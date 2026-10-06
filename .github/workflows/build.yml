@@ -6,6 +6,9 @@ on:
 permissions:
   contents: write
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -55,3 +58,10 @@ jobs:
         run: |
           $tag = "build-$($env:GITHUB_SHA.Substring(0,7))"
           gh release create $tag dist\*.zip --prerelease --title "Test build $tag" --notes "Automatic test build of $env:GITHUB_SHA" --target $env:GITHUB_SHA
+      - name: Publish test build (private prerelease "ci-latest")
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete ci-latest --yes --cleanup-tag 2>$null
+          gh release create ci-latest dist\*.zip --prerelease --title "Test build ${{ github.sha }}" --notes "Untested CI build of ${{ github.sha }}" --target ${{ github.sha }}
