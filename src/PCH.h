@@ -9,7 +9,9 @@
 #include <array>
 #include <atomic>
 #include <chrono>
+#include <cfloat>
 #include <cmath>
+#include <cwctype>
 #include <cstdint>
 #include <deque>
 #include <mutex>

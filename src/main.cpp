@@ -68,7 +68,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 	if (g_booted.exchange(true)) {
 		return false;  // the .asi copy is already running
 	}
-	SKSE::Init(a_skse, false);
+	SKSE::Init(a_skse, { .log = false });
 	SetupLog();
 	logger::info("BO3 Zombies {} loading as SKSE plugin", bo3z::kVersion);
 	bo3z::Events::InstallMenuWatch();
