@@ -12,6 +12,7 @@ namespace bo3z
 			{
 				func(a_this, a_delta);
 				try {
+					DevTools::RunQueuedOnMain();
 					Director::Tick(a_delta);
 					Gun::Tick(a_delta);
 				} catch (const std::exception& e) {

@@ -246,6 +246,19 @@ namespace bo3z
 			g_toSpawn = 0;
 		}
 
+		void LogState()
+		{
+			logger::info("dev: director phase={} current={} toSpawn={} alive={} corpses={} special={} night={}", static_cast<int>(g_phase), g_current, g_toSpawn,
+				g_alive.size(), g_corpses.size(), g_special, IsNight());
+			for (auto& s : g_alive) {
+				if (auto a = s.handle.get()) {
+					const auto p = a->GetPosition();
+					logger::info("dev:   {} {:08X} hp={:.0f} combat={} pos=({:.0f},{:.0f},{:.0f})", gen::kEnemies[s.enemy].id, a->GetFormID(),
+						a->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth), a->IsInCombat(), p.x, p.y, p.z);
+				}
+			}
+		}
+
 		bool IsRoundUndead(RE::Actor* a_actor) { return a_actor && g_ours.contains(a_actor->GetFormID()); }
 
 		std::string_view HeadNodeFor(RE::Actor* a_actor)

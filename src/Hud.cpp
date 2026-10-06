@@ -145,6 +145,7 @@ namespace bo3z
 			const float dt = std::clamp(std::chrono::duration<float>(now - g_last).count(), 0.0001f, 0.25f);
 			g_last = now;
 
+			DevTools::PollFromRender();
 			Hud::State s;
 			{
 				std::scoped_lock l(g_lock);
@@ -153,7 +154,11 @@ namespace bo3z
 				g_state.hitTime = std::max(0.0f, g_state.hitTime - dt);
 				s = g_state;
 			}
-			if (!InGame() || !Init(a_swap)) {
+			if (!Init(a_swap)) {
+				return;
+			}
+			if (!InGame()) {
+				DevTools::CaptureIfRequested(g_context, a_swap);  // menus and loading screens too
 				return;
 			}
 			DXGI_SWAP_CHAIN_DESC desc{};
@@ -186,6 +191,7 @@ namespace bo3z
 			if (oldRtv) oldRtv->Release();
 			if (oldDsv) oldDsv->Release();
 			rtv->Release();
+			DevTools::CaptureIfRequested(g_context, a_swap);
 		}
 
 		HRESULT WINAPI PresentHook(IDXGISwapChain* a_swap, UINT a_sync, UINT a_flags)

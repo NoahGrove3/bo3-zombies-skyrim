@@ -107,6 +107,17 @@
    "state": "ImGui context",
    "step": 1,
    "verify": []
+  },
+  {
+   "id": "devtools",
+   "does": "test channel: save game frames on request, set the clock, log state (file-driven, used for automated in-game tests and listing screenshots)",
+   "reads": [
+    "hooks:present",
+    "hooks:player_update"
+   ],
+   "state": "command queue, pending shot",
+   "step": 1,
+   "verify": []
   }
  ]
 }

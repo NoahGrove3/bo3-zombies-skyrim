@@ -34,6 +34,7 @@ namespace bo3z
 		void Tick(float a_delta);
 		void Reset();                         // load game
 		bool IsRoundUndead(RE::Actor* a_actor);
+		void LogState();
 		std::string_view HeadNodeFor(RE::Actor* a_actor);
 	}
 
@@ -68,6 +69,13 @@ namespace bo3z
 		std::mutex& Lock();
 		void Banner(std::string a_text, float a_seconds = 4.0f);
 		void Install();          // Present hook
+	}
+
+	namespace DevTools
+	{
+		void PollFromRender();
+		void CaptureIfRequested(ID3D11DeviceContext* a_context, IDXGISwapChain* a_swap);
+		void RunQueuedOnMain();
 	}
 
 	namespace Events
