@@ -1,0 +1,112 @@
+{
+ "sheet": "systems",
+ "about": "The mashup's own systems in step 1. Each row is one C++ module.",
+ "columns": [
+  "id",
+  "does",
+  "reads",
+  "state",
+  "step",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "boot",
+   "does": "start a thread from DllMain, wait for the game, install hooks",
+   "reads": [
+    "hooks:asi_entry",
+    "hooks:data_loaded",
+    "hooks:present",
+    "hooks:player_update",
+    "hooks:input",
+    "hooks:death",
+    "hooks:load_game",
+    "hooks:new_game"
+   ],
+   "state": "installed flag",
+   "step": 1,
+   "verify": []
+  },
+  {
+   "id": "persistence",
+   "does": "load/save round, points and ammo on the player; give the start kit once",
+   "reads": [
+    "persistence:initialized",
+    "persistence:round",
+    "persistence:points",
+    "persistence:clip",
+    "persistence:reserve",
+    "economy:start",
+    "weapons:m1911"
+   ],
+   "state": "none (lives on the player)",
+   "step": 1,
+   "verify": []
+  },
+  {
+   "id": "round_director",
+   "does": "start rounds at nightfall, spawn scaling undead around the player, end rounds, crumble the undead at dawn",
+   "reads": [
+    "rounds:night_rounds",
+    "enemies:skeleton",
+    "enemies:draugr_1h",
+    "enemies:draugr_2h",
+    "enemies:draugr_archer",
+    "enemies:draugr_warlock",
+    "enemies:death_hound",
+    "quests:MQ101",
+    "sounds:round_start",
+    "sounds:round_end"
+   ],
+   "state": "round, toSpawn, alive list, spawn timer, break timer",
+   "step": 1,
+   "verify": []
+  },
+  {
+   "id": "points",
+   "does": "award BO3 points for hits and kills on round undead",
+   "reads": [
+    "economy:hit",
+    "economy:kill",
+    "economy:headshot_kill",
+    "economy:melee_kill",
+    "hud:points_popup"
+   ],
+   "state": "points, lastGain",
+   "step": 1,
+   "verify": []
+  },
+  {
+   "id": "gun",
+   "does": "hitscan M1911 from the camera: clip, reserve, reload, fire rate, headshots",
+   "reads": [
+    "weapons:m1911",
+    "input:fire",
+    "input:reload",
+    "input:swap",
+    "sounds:crossbow_fire",
+    "sounds:crossbow_reload",
+    "sounds:bow_nock"
+   ],
+   "state": "out, clip, reserve, cooldown, reload timer",
+   "step": 1,
+   "verify": []
+  },
+  {
+   "id": "hud",
+   "does": "draw the BO3 HUD",
+   "reads": [
+    "hud:round_counter",
+    "hud:points",
+    "hud:ammo",
+    "hud:crosshair",
+    "hud:points_popup",
+    "hud:banner",
+    "hud:hitmarker"
+   ],
+   "state": "ImGui context",
+   "step": 1,
+   "verify": []
+  }
+ ]
+}

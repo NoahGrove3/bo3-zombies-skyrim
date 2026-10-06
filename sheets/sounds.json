@@ -1,0 +1,12 @@
+{
+  "sheet": "sounds",
+  "about": "Sound descriptors (SNDR) from the player's own Skyrim, placeholders until BO3 sounds come from the player's BO3 (step 5).",
+  "columns": ["id","plugin","localId","editorId","bo3Replacement","verify"],
+  "rows": [
+    {"id":"crossbow_fire","plugin":"Dawnguard.esm","localId":"0x008E35","editorId":"WPNCrossbowFire2D","bo3Replacement":"M1911 fire","verify":[]},
+    {"id":"crossbow_reload","plugin":"Dawnguard.esm","localId":"0x008E3A","editorId":"WPNCrossbowReload","bo3Replacement":"M1911 reload","verify":[]},
+    {"id":"bow_nock","plugin":"Skyrim.esm","localId":"0x03E7B4","editorId":"WPNBowNockSD","bo3Replacement":"dry fire click","verify":[]},
+    {"id":"round_start","plugin":"Skyrim.esm","localId":"0x03C7D0","editorId":"UIQuestNew","bo3Replacement":"round start jingle","verify":[]},
+    {"id":"round_end","plugin":"Skyrim.esm","localId":"0x057B44","editorId":"UILevelUpSD","bo3Replacement":"round end jingle","verify":[]}
+  ]
+}

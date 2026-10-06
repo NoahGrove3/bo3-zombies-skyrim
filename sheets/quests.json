@@ -1,0 +1,8 @@
+{
+  "sheet": "quests",
+  "about": "Skyrim quests the mashup reads.",
+  "columns": ["id","plugin","localId","editorId","use","verify"],
+  "rows": [
+    {"id":"MQ101","plugin":"Skyrim.esm","localId":"0x03372B","editorId":"MQ101","use":"Helgen intro: rounds stay off until it is completed (stage done or quest not running after Helgen)","verify":["use"]}
+  ]
+}

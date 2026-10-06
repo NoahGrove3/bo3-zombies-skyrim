@@ -1,0 +1,115 @@
+{
+ "sheet": "hud",
+ "about": "BO3-style HUD drawn over Skyrim's frame with Dear ImGui (Present hook). Anchors are screen corners; offsets in pixels at 1080p, scaled by height.",
+ "columns": [
+  "id",
+  "shows",
+  "source",
+  "anchor",
+  "offset",
+  "fontPx",
+  "color",
+  "visibleWhen",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "round_counter",
+   "shows": "round number as tally marks (1-5) then digits",
+   "source": "system:round_director.round",
+   "anchor": "bottom_left",
+   "offset": [
+    60,
+    -70
+   ],
+   "fontPx": 72,
+   "color": "#B01010",
+   "visibleWhen": "round>0",
+   "verify": []
+  },
+  {
+   "id": "points",
+   "shows": "points",
+   "source": "system:points.points",
+   "anchor": "bottom_right",
+   "offset": [
+    -60,
+    -150
+   ],
+   "fontPx": 34,
+   "color": "#F2E6B8",
+   "visibleWhen": "always_in_game",
+   "verify": []
+  },
+  {
+   "id": "ammo",
+   "shows": "clip / reserve and gun name",
+   "source": "system:gun.clip",
+   "anchor": "bottom_right",
+   "offset": [
+    -60,
+    -90
+   ],
+   "fontPx": 34,
+   "color": "#FFFFFF",
+   "visibleWhen": "gun_out",
+   "verify": []
+  },
+  {
+   "id": "crosshair",
+   "shows": "4-line BO3 crosshair",
+   "source": "system:gun.out",
+   "anchor": "center",
+   "offset": [
+    0,
+    0
+   ],
+   "fontPx": 0,
+   "color": "#FFFFFF",
+   "visibleWhen": "gun_out",
+   "verify": []
+  },
+  {
+   "id": "points_popup",
+   "shows": "+10 / +50 / +100 floating next to points",
+   "source": "system:points.lastGain",
+   "anchor": "bottom_right",
+   "offset": [
+    -200,
+    -150
+   ],
+   "fontPx": 28,
+   "color": "#F2D24A",
+   "visibleWhen": "recent_gain",
+   "verify": []
+  },
+  {
+   "id": "banner",
+   "shows": "ROUND N / night falls / dawn messages",
+   "source": "system:round_director.banner",
+   "anchor": "top_center",
+   "offset": [
+    0,
+    120
+   ],
+   "fontPx": 40,
+   "color": "#B01010",
+   "visibleWhen": "banner_timer",
+   "verify": []
+  },
+  {
+   "id": "hitmarker",
+   "shows": "X hit marker on a gun hit (red on a kill)",
+   "source": "system:gun.lastHit",
+   "anchor": "center",
+   "offset": [
+    0,
+    0
+   ],
+   "fontPx": 0,
+   "color": "#FFFFFF",
+   "visibleWhen": "0.2s after a hit",
+   "verify": []
+  }
+ ]
+}

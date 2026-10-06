@@ -1,0 +1,80 @@
+{
+ "sheet": "rounds",
+ "about": "How the night rounds run. One row: the BO3 round rules, adapted to Skyrim's clock. HP is in BO3 units; divide by hpScale for Skyrim health.",
+ "columns": [
+  "id",
+  "nightStartHour",
+  "nightEndHour",
+  "breakSeconds",
+  "firstBreakSeconds",
+  "maxAlive",
+  "aiMaxBase",
+  "aiPerPlayer",
+  "earlyRoundScale",
+  "hpStart",
+  "hpLinearPerRound",
+  "hpLinearUntil",
+  "hpMultAfter",
+  "hpScale",
+  "spawnDelayStart",
+  "spawnDelayDecay",
+  "spawnDelayMin",
+  "specialEveryRounds",
+  "specialFirstRound",
+  "dawn",
+  "unfinishedRound",
+  "pauseUntilQuest",
+  "spawnRingExterior",
+  "spawnRingInterior",
+  "spawnHeightOffset",
+  "maxCorpses",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "night_rounds",
+   "nightStartHour": 20.0,
+   "nightEndHour": 6.0,
+   "breakSeconds": 10.0,
+   "firstBreakSeconds": 4.0,
+   "maxAlive": 12,
+   "aiMaxBase": 24,
+   "aiPerPlayer": 6,
+   "earlyRoundScale": [
+    0.25,
+    0.3,
+    0.5,
+    0.7,
+    0.9
+   ],
+   "hpStart": 150,
+   "hpLinearPerRound": 100,
+   "hpLinearUntil": 9,
+   "hpMultAfter": 1.1,
+   "hpScale": 8.0,
+   "spawnDelayStart": 2.0,
+   "spawnDelayDecay": 0.95,
+   "spawnDelayMin": 0.5,
+   "specialEveryRounds": 6,
+   "specialFirstRound": 5,
+   "dawn": "crumble",
+   "unfinishedRound": "resume",
+   "pauseUntilQuest": "quest:MQ101",
+   "spawnRingExterior": [
+    1500,
+    2500
+   ],
+   "spawnRingInterior": [
+    500,
+    1100
+   ],
+   "spawnHeightOffset": 120,
+   "verify": [
+    "spawnRingInterior",
+    "spawnHeightOffset",
+    "maxAlive"
+   ],
+   "maxCorpses": 20
+  }
+ ]
+}

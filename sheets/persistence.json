@@ -1,0 +1,12 @@
+{
+  "sheet": "persistence",
+  "about": "State kept in the player's save without the Script Extender: the player's own unused AI variable actor values, which Skyrim saves with the player.",
+  "columns": ["id","field","actorValue","default","verify"],
+  "rows": [
+    {"id":"initialized","field":"initialized","actorValue":"kVariable06","default":0,"verify":["actorValue"]},
+    {"id":"round","field":"round","actorValue":"kVariable07","default":0,"verify":["actorValue"]},
+    {"id":"points","field":"points","actorValue":"kVariable08","default":0,"verify":["actorValue"]},
+    {"id":"clip","field":"clip","actorValue":"kVariable09","default":0,"verify":["actorValue"]},
+    {"id":"reserve","field":"reserve","actorValue":"kVariable10","default":0,"verify":["actorValue"]}
+  ]
+}

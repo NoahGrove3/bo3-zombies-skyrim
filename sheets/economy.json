@@ -1,0 +1,13 @@
+{
+  "sheet": "economy",
+  "about": "Points, BO3 Zombies values. One row per way of earning or spending.",
+  "columns": ["id","event","points","verify"],
+  "rows": [
+    {"id":"start","event":"new_game_after_intro","points":500,"verify":[]},
+    {"id":"hit","event":"gun_hit_round_undead","points":10,"verify":[]},
+    {"id":"kill","event":"kill_round_undead","points":50,"verify":[]},
+    {"id":"headshot_kill","event":"headshot_kill_round_undead","points":100,"verify":[]},
+    {"id":"melee_kill","event":"skyrim_weapon_or_spell_kill_round_undead","points":130,"verify":[]},
+    {"id":"round_survived","event":"round_cleared","points":0,"verify":[]}
+  ]
+}

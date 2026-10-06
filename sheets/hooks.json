@@ -1,0 +1,87 @@
+{
+ "sheet": "hooks",
+ "about": "Every place the plugin attaches to Skyrim 1.7.104. Loaded as an .asi by Ultimate ASI Loader (no Script Extender).",
+ "columns": [
+  "id",
+  "kind",
+  "target",
+  "calls",
+  "thread",
+  "source",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "asi_entry",
+   "kind": "DllMain",
+   "target": "BO3Zombies.asi",
+   "calls": "system:boot",
+   "thread": "loader",
+   "source": "Melty game_info note (SkyCraft 0.1.2 on 1.7.104)",
+   "verify": []
+  },
+  {
+   "id": "data_loaded",
+   "kind": "event:MenuOpenCloseEvent",
+   "target": "first menu event after LookupByID(0x7)",
+   "calls": "system:boot",
+   "thread": "main",
+   "source": "Melty game_info note",
+   "verify": []
+  },
+  {
+   "id": "new_game",
+   "kind": "event:MenuOpenCloseEvent",
+   "target": "Loading Menu closes after Main Menu closed",
+   "calls": "system:persistence",
+   "thread": "main",
+   "source": "Melty game_info note",
+   "verify": []
+  },
+  {
+   "id": "load_game",
+   "kind": "event:TESLoadGameEvent",
+   "target": "ScriptEventSourceHolder",
+   "calls": "system:persistence",
+   "thread": "main",
+   "source": "CommonLib",
+   "verify": []
+  },
+  {
+   "id": "player_update",
+   "kind": "vfunc",
+   "target": "VTABLE_PlayerCharacter[0] index 0xAD Update(float)",
+   "calls": "system:round_director",
+   "thread": "main",
+   "source": "CommonLib Actor.h",
+   "verify": []
+  },
+  {
+   "id": "present",
+   "kind": "vtable",
+   "target": "IDXGISwapChain::Present (index 8)",
+   "calls": "system:hud",
+   "thread": "render",
+   "source": "SkyCraft Overlay.cpp (MIT)",
+   "verify": []
+  },
+  {
+   "id": "input",
+   "kind": "event:InputEvent*",
+   "target": "BSInputDeviceManager",
+   "calls": "system:gun",
+   "thread": "main",
+   "source": "CommonLib",
+   "verify": []
+  },
+  {
+   "id": "death",
+   "kind": "event:TESDeathEvent",
+   "target": "ScriptEventSourceHolder",
+   "calls": "system:points",
+   "thread": "main",
+   "source": "CommonLib",
+   "verify": []
+  }
+ ]
+}

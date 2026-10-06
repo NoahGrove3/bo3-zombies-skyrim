@@ -1,0 +1,53 @@
+{
+ "sheet": "weapons",
+ "about": "BO3 guns. Damage in BO3 units (divided by rounds.hpScale in game). Ranges in Skyrim units (70 per metre). Until the BO3 converter (step 5) the gun has no model: crosshair, muzzle flash and sound only.",
+ "columns": [
+  "id",
+  "label",
+  "slot",
+  "damage",
+  "headMult",
+  "clip",
+  "reserve",
+  "fireDelayMs",
+  "reloadMs",
+  "range",
+  "hitRadius",
+  "headRadius",
+  "fireSound",
+  "reloadSound",
+  "emptySound",
+  "startOwned",
+  "wallBuyCost",
+  "boxWeight",
+  "targets",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "m1911",
+   "label": "M1911",
+   "slot": "pistol",
+   "damage": 75,
+   "headMult": 2.0,
+   "clip": 8,
+   "reserve": 80,
+   "fireDelayMs": 160,
+   "reloadMs": 1600,
+   "range": 4200,
+   "hitRadius": 28,
+   "headRadius": 14,
+   "fireSound": "sound:crossbow_fire",
+   "reloadSound": "sound:crossbow_reload",
+   "emptySound": "sound:bow_nock",
+   "startOwned": true,
+   "wallBuyCost": 0,
+   "boxWeight": 0,
+   "verify": [
+    "hitRadius",
+    "headRadius"
+   ],
+   "targets": "round_undead+hostile"
+  }
+ ]
+}
