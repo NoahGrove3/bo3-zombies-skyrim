@@ -3,6 +3,9 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -46,3 +49,9 @@ jobs:
         with:
           name: BO3Zombies
           path: dist\*.zip
+      - name: Test release for this commit (private repo)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "build-$($env:GITHUB_SHA.Substring(0,7))"
+          gh release create $tag dist\*.zip --prerelease --title "Test build $tag" --notes "Automatic test build of $env:GITHUB_SHA" --target $env:GITHUB_SHA
