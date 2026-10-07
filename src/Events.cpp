@@ -117,6 +117,9 @@ namespace bo3z
 				for (auto* e = *a_event; e; e = e->next) {
 					if (auto* b = e->AsButtonEvent()) {
 						if (!Intro::OnButton(b)) {
+							if (Shops::OnButton(b)) {
+								continue;
+							}
 							Movement::OnButton(b);
 							Gun::OnButton(b);
 						}

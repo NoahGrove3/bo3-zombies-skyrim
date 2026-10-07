@@ -1,6 +1,6 @@
 {
   "sheet": "weapons",
-  "about": "Dwemer firearms, tuned to handle like classic round-based zombie guns. Damage in game-design units (divided by rounds.hpScale in game). Spread in degrees. fire: semi|auto|burst|pump.",
+  "about": "Spell tomes and grimoires (the only weapons; the old Dwemer guns are retired and swapped out of saves). Damage in design units (divided by rounds.hpScale in game). fire: semi|auto|burst|pump.",
   "columns": [
     "id",
     "label",
@@ -32,6 +32,8 @@
     "special",
     "spell",
     "spellOn",
+    "retired",
+    "template",
     "verify"
   ],
   "rows": [
@@ -71,7 +73,9 @@
       ],
       "special": "none",
       "spell": "none",
-      "spellOn": "none"
+      "spellOn": "none",
+      "retired": true,
+      "template": "crossbow"
     },
     {
       "id": "centurion",
@@ -92,7 +96,7 @@
       "splashDamage": 0,
       "wallBuyCost": 0,
       "ammoCost": 0,
-      "boxWeight": 1,
+      "boxWeight": 0,
       "class": "pistol",
       "hitRadius": 28,
       "headRadius": 14,
@@ -109,7 +113,9 @@
       ],
       "special": "none",
       "spell": "none",
-      "spellOn": "none"
+      "spellOn": "none",
+      "retired": true,
+      "template": "crossbow"
     },
     {
       "id": "triad",
@@ -128,9 +134,9 @@
       "range": 4500,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 500,
+      "wallBuyCost": 0,
       "ammoCost": 250,
-      "boxWeight": 1,
+      "boxWeight": 0,
       "class": "pistol",
       "hitRadius": 28,
       "headRadius": 14,
@@ -147,7 +153,9 @@
       ],
       "special": "none",
       "spell": "none",
-      "spellOn": "none"
+      "spellOn": "none",
+      "retired": true,
+      "template": "crossbow"
     },
     {
       "id": "spider",
@@ -166,9 +174,9 @@
       "range": 4000,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 1000,
+      "wallBuyCost": 0,
       "ammoCost": 500,
-      "boxWeight": 1,
+      "boxWeight": 0,
       "class": "smg",
       "hitRadius": 28,
       "headRadius": 14,
@@ -185,7 +193,9 @@
       ],
       "special": "none",
       "spell": "none",
-      "spellOn": "none"
+      "spellOn": "none",
+      "retired": true,
+      "template": "crossbow"
     },
     {
       "id": "drill",
@@ -204,9 +214,9 @@
       "range": 4000,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 1300,
+      "wallBuyCost": 0,
       "ammoCost": 650,
-      "boxWeight": 1,
+      "boxWeight": 0,
       "class": "smg",
       "hitRadius": 28,
       "headRadius": 14,
@@ -223,7 +233,9 @@
       ],
       "special": "none",
       "spell": "none",
-      "spellOn": "none"
+      "spellOn": "none",
+      "retired": true,
+      "template": "crossbow"
     },
     {
       "id": "steampump",
@@ -242,9 +254,9 @@
       "range": 1600,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 900,
+      "wallBuyCost": 0,
       "ammoCost": 450,
-      "boxWeight": 1,
+      "boxWeight": 0,
       "class": "shotgun",
       "hitRadius": 28,
       "headRadius": 14,
@@ -261,7 +273,9 @@
       ],
       "special": "none",
       "spell": "none",
-      "spellOn": "none"
+      "spellOn": "none",
+      "retired": true,
+      "template": "crossbow"
     },
     {
       "id": "marksman",
@@ -280,9 +294,9 @@
       "range": 6000,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 900,
+      "wallBuyCost": 0,
       "ammoCost": 450,
-      "boxWeight": 1,
+      "boxWeight": 0,
       "class": "ar",
       "hitRadius": 28,
       "headRadius": 14,
@@ -299,7 +313,9 @@
       ],
       "special": "none",
       "spell": "none",
-      "spellOn": "none"
+      "spellOn": "none",
+      "retired": true,
+      "template": "crossbow"
     },
     {
       "id": "animunculi",
@@ -320,7 +336,7 @@
       "splashDamage": 0,
       "wallBuyCost": 0,
       "ammoCost": 0,
-      "boxWeight": 1,
+      "boxWeight": 0,
       "class": "ar",
       "hitRadius": 28,
       "headRadius": 14,
@@ -337,7 +353,9 @@
       ],
       "special": "none",
       "spell": "none",
-      "spellOn": "none"
+      "spellOn": "none",
+      "retired": true,
+      "template": "crossbow"
     },
     {
       "id": "kagrenac",
@@ -358,7 +376,7 @@
       "splashDamage": 0,
       "wallBuyCost": 0,
       "ammoCost": 0,
-      "boxWeight": 1,
+      "boxWeight": 0,
       "class": "ar",
       "hitRadius": 28,
       "headRadius": 14,
@@ -375,7 +393,9 @@
       ],
       "special": "none",
       "spell": "none",
-      "spellOn": "none"
+      "spellOn": "none",
+      "retired": true,
+      "template": "crossbow"
     },
     {
       "id": "mammothlmg",
@@ -396,7 +416,7 @@
       "splashDamage": 0,
       "wallBuyCost": 0,
       "ammoCost": 0,
-      "boxWeight": 1,
+      "boxWeight": 0,
       "class": "lmg",
       "hitRadius": 28,
       "headRadius": 14,
@@ -413,7 +433,9 @@
       ],
       "special": "none",
       "spell": "none",
-      "spellOn": "none"
+      "spellOn": "none",
+      "retired": true,
+      "template": "crossbow"
     },
     {
       "id": "longshot",
@@ -434,7 +456,7 @@
       "splashDamage": 0,
       "wallBuyCost": 0,
       "ammoCost": 0,
-      "boxWeight": 1,
+      "boxWeight": 0,
       "class": "sniper",
       "hitRadius": 28,
       "headRadius": 14,
@@ -451,7 +473,9 @@
       ],
       "special": "none",
       "spell": "none",
-      "spellOn": "none"
+      "spellOn": "none",
+      "retired": true,
+      "template": "crossbow"
     },
     {
       "id": "aetherium",
@@ -472,7 +496,7 @@
       "splashDamage": 600,
       "wallBuyCost": 0,
       "ammoCost": 0,
-      "boxWeight": 1,
+      "boxWeight": 0,
       "class": "wonder",
       "hitRadius": 28,
       "headRadius": 14,
@@ -489,11 +513,13 @@
       ],
       "special": "splash",
       "spell": "none",
-      "spellOn": "none"
+      "spellOn": "none",
+      "retired": true,
+      "template": "crossbow"
     },
     {
       "id": "flamerepeater",
-      "label": "Flame Repeater",
+      "label": "Tome of Flames",
       "fire": "auto",
       "damage": 80,
       "headMult": 1.5,
@@ -508,8 +534,8 @@
       "range": 2600,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 0,
-      "ammoCost": 0,
+      "wallBuyCost": 1250,
+      "ammoCost": 625,
       "boxWeight": 1,
       "class": "smg",
       "hitRadius": 28,
@@ -517,7 +543,7 @@
       "fireSound": "sound:shot_smg",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
+      "standinModel": "UndyingNights\\tome\\tome_fire.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -527,11 +553,13 @@
       ],
       "special": "none",
       "spell": "spells:firebolt",
-      "spellOn": "every4"
+      "spellOn": "every4",
+      "retired": false,
+      "template": "staff"
     },
     {
       "id": "frostlancer",
-      "label": "Frost Lancer",
+      "label": "Tome of Frost",
       "fire": "semi",
       "damage": 260,
       "headMult": 3.0,
@@ -546,8 +574,8 @@
       "range": 6000,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 0,
-      "ammoCost": 0,
+      "wallBuyCost": 1500,
+      "ammoCost": 750,
       "boxWeight": 1,
       "class": "ar",
       "hitRadius": 28,
@@ -555,7 +583,7 @@
       "fireSound": "sound:shot_ar",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "UndyingNights\\tome\\tome_frost.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -565,11 +593,13 @@
       ],
       "special": "none",
       "spell": "spells:icespike",
-      "spellOn": "hit"
+      "spellOn": "hit",
+      "retired": false,
+      "template": "staff"
     },
     {
       "id": "stormcaller",
-      "label": "Storm Caller",
+      "label": "Tome of Storms",
       "fire": "burst",
       "damage": 140,
       "headMult": 2.0,
@@ -584,8 +614,8 @@
       "range": 4500,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 0,
-      "ammoCost": 0,
+      "wallBuyCost": 1400,
+      "ammoCost": 700,
       "boxWeight": 1,
       "class": "ar",
       "hitRadius": 28,
@@ -593,7 +623,7 @@
       "fireSound": "sound:shot_ar",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "UndyingNights\\tome\\tome_storm.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -603,11 +633,13 @@
       ],
       "special": "none",
       "spell": "spells:lightningbolt",
-      "spellOn": "hit"
+      "spellOn": "hit",
+      "retired": false,
+      "template": "staff"
     },
     {
       "id": "embermortar",
-      "label": "Ember Mortar",
+      "label": "Tome of Embers",
       "fire": "semi",
       "damage": 400,
       "headMult": 1.0,
@@ -622,8 +654,8 @@
       "range": 3500,
       "splashRadius": 260,
       "splashDamage": 600,
-      "wallBuyCost": 0,
-      "ammoCost": 0,
+      "wallBuyCost": 2000,
+      "ammoCost": 1000,
       "boxWeight": 1,
       "class": "shotgun",
       "hitRadius": 28,
@@ -631,7 +663,7 @@
       "fireSound": "sound:shot_shotgun",
       "reloadSound": "sound:reload_shell",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "UndyingNights\\tome\\tome_ember.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -641,11 +673,13 @@
       ],
       "special": "splash",
       "spell": "spells:fireball",
-      "spellOn": "fire"
+      "spellOn": "fire",
+      "retired": false,
+      "template": "staff"
     },
     {
       "id": "wabbajack",
-      "label": "Wabbajack",
+      "label": "Grimoire of Madness",
       "fire": "semi",
       "damage": 1500,
       "headMult": 1.0,
@@ -669,7 +703,7 @@
       "fireSound": "sound:shot_ray",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "Weapons\\Wabbajack\\Wabbajack.nif",
+      "standinModel": "UndyingNights\\grimoire\\wabbajack.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -679,11 +713,13 @@
       ],
       "special": "wabbajack",
       "spell": "spells:wabbajack",
-      "spellOn": "hit"
+      "spellOn": "hit",
+      "retired": false,
+      "template": "staff"
     },
     {
       "id": "thuumcannon",
-      "label": "Thu'um Cannon",
+      "label": "Grimoire of the Thu'um",
       "fire": "semi",
       "damage": 5000,
       "headMult": 1.0,
@@ -707,7 +743,7 @@
       "fireSound": "sound:shot_shotgun",
       "reloadSound": "sound:reload_shell",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "UndyingNights\\grimoire\\thuum.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -717,11 +753,13 @@
       ],
       "special": "cone",
       "spell": "spells:unrelenting",
-      "spellOn": "fire"
+      "spellOn": "fire",
+      "retired": false,
+      "template": "staff"
     },
     {
       "id": "skyforgearc",
-      "label": "Skyforge Arc",
+      "label": "Grimoire of the Skyforge",
       "fire": "semi",
       "damage": 3000,
       "headMult": 1.0,
@@ -745,7 +783,7 @@
       "fireSound": "sound:shot_ray",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "UndyingNights\\grimoire\\skyforge.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -755,7 +793,49 @@
       ],
       "special": "chain",
       "spell": "spells:chainlightning",
-      "spellOn": "fire"
+      "spellOn": "fire",
+      "retired": false,
+      "template": "staff"
+    },
+    {
+      "id": "apprentice",
+      "label": "Apprentice's Tome",
+      "fire": "semi",
+      "damage": 80,
+      "headMult": 2.0,
+      "pellets": 1,
+      "spreadHip": 1.5,
+      "spreadAds": 0.4,
+      "clip": 10,
+      "reserve": 600,
+      "fireDelayMs": 160,
+      "burst": 1,
+      "reloadMs": 1600,
+      "range": 4200,
+      "splashRadius": 0,
+      "splashDamage": 0,
+      "wallBuyCost": 0,
+      "ammoCost": 0,
+      "boxWeight": 0,
+      "class": "pistol",
+      "hitRadius": 28,
+      "headRadius": 14,
+      "fireSound": "sound:shot_ray",
+      "reloadSound": "sound:reload_mag",
+      "emptySound": "sound:dry_click",
+      "standinModel": "UndyingNights\\tome\\tome_apprentice.nif",
+      "targets": "round_undead+hostile",
+      "verify": [
+        "hitRadius",
+        "headRadius",
+        "spreadHip",
+        "spreadAds"
+      ],
+      "special": "none",
+      "spell": "spells:firebolt",
+      "spellOn": "fire",
+      "retired": false,
+      "template": "staff"
     }
   ]
 }

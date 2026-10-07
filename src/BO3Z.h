@@ -109,6 +109,7 @@ namespace bo3z
 		void Tick(float a_delta);
 		void Reset();
 		void OnActivate(RE::TESObjectREFR* a_ref);
+		bool OnButton(const RE::ButtonEvent* a_event);  // brew machine menu keys (true = used)
 		std::string BoxTown();
 	}
 
@@ -155,6 +156,10 @@ namespace bo3z
 			bool        crewScreen{ false };
 			int         crewHighlight{ 0 };
 			float       countdown{ 0 };  // seconds until the next night starts (0 = none)
+			float       hp{ 0 }, hpMax{ 0 }, mp{ 0 }, mpMax{ 0 }, sp{ 0 }, spMax{ 0 };
+			float       hurtTime{ 0 };   // red vignette after taking a hit
+			bool        perkMenu{ false };
+			int         perkSel{ 0 };
 		};
 		State&      Edit();
 		std::mutex& Lock();

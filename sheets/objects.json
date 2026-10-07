@@ -10,6 +10,7 @@
     "cost",
     "refs",
     "scale",
+    "retired",
     "verify"
   ],
   "rows": [
@@ -18,13 +19,40 @@
       "kind": "box",
       "label": "Sheogorath's Coffer",
       "activateText": "Tempt fate",
-      "model": "Clutter\\Ruins\\Ruins_LargeChest.nif",
+      "model": "UndyingNights\\coffer\\coffer.nif",
       "cost": 950,
       "refs": "none",
       "verify": [
         "model"
       ],
-      "scale": 1.25
+      "scale": 1.0,
+      "retired": false
+    },
+    {
+      "id": "brew_machine",
+      "kind": "perkmenu",
+      "label": "Brew Machine",
+      "activateText": "Browse brews",
+      "model": "UndyingNights\\brewmachine\\brewmachine.nif",
+      "cost": 0,
+      "refs": "none",
+      "scale": 1.0,
+      "retired": false,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "ammo_cache",
+      "kind": "ammo",
+      "label": "Ammo Cache",
+      "activateText": "Restock all ammo",
+      "model": "DLC02\\Furniture\\DLC2DarkElfCrate01.nif",
+      "cost": 750,
+      "refs": "none",
+      "scale": 1.0,
+      "retired": false,
+      "verify": []
     },
     {
       "id": "ammo_crate",
@@ -37,7 +65,8 @@
       "scale": 1.0,
       "verify": [
         "model"
-      ]
+      ],
+      "retired": true
     },
     {
       "id": "perk_trollshide",
@@ -51,7 +80,8 @@
         "model",
         "scale"
       ],
-      "scale": 1.5
+      "scale": 1.5,
+      "retired": true
     },
     {
       "id": "perk_quicksilver",
@@ -65,7 +95,8 @@
         "model",
         "scale"
       ],
-      "scale": 1.6
+      "scale": 1.6,
+      "retired": true
     },
     {
       "id": "perk_twinstrike",
@@ -79,7 +110,8 @@
         "model",
         "scale"
       ],
-      "scale": 0.9
+      "scale": 0.9,
+      "retired": true
     },
     {
       "id": "perk_hearthfire",
@@ -93,7 +125,8 @@
         "model",
         "scale"
       ],
-      "scale": 1.0
+      "scale": 1.0,
+      "retired": true
     },
     {
       "id": "perk_windrunner",
@@ -107,7 +140,8 @@
         "model",
         "scale"
       ],
-      "scale": 1.0
+      "scale": 1.0,
+      "retired": true
     },
     {
       "id": "perk_hawkeye",
@@ -121,7 +155,8 @@
         "model",
         "scale"
       ],
-      "scale": 1.6
+      "scale": 1.6,
+      "retired": true
     },
     {
       "id": "perk_mammoth",
@@ -135,7 +170,8 @@
         "model",
         "scale"
       ],
-      "scale": 1.0
+      "scale": 1.0,
+      "retired": true
     },
     {
       "id": "perk_frostbite",
@@ -149,7 +185,8 @@
         "model",
         "scale"
       ],
-      "scale": 1.5
+      "scale": 1.5,
+      "retired": true
     },
     {
       "id": "perk_stormcrown",
@@ -163,72 +200,78 @@
         "model",
         "scale"
       ],
-      "scale": 0.5
+      "scale": 0.5,
+      "retired": true
     },
     {
       "id": "wall_triad",
       "kind": "wallbuy",
-      "label": "Triad Burst",
+      "label": "Tome of Flames",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-      "cost": 500,
-      "refs": "weapons:triad",
+      "cost": 1250,
+      "refs": "weapons:flamerepeater",
       "verify": [
         "model"
       ],
-      "scale": 1.0
+      "scale": 1.0,
+      "retired": false
     },
     {
       "id": "wall_spider",
       "kind": "wallbuy",
-      "label": "Spider SMG",
+      "label": "Tome of Frost",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-      "cost": 1000,
-      "refs": "weapons:spider",
+      "cost": 1500,
+      "refs": "weapons:frostlancer",
       "verify": [
         "model"
       ],
-      "scale": 1.0
+      "scale": 1.0,
+      "retired": false
     },
     {
       "id": "wall_drill",
       "kind": "wallbuy",
-      "label": "Sphere Drill",
+      "label": "Tome of Flames",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-      "cost": 1300,
-      "refs": "weapons:drill",
+      "cost": 1250,
+      "refs": "weapons:flamerepeater",
       "verify": [
         "model"
       ],
-      "scale": 1.0
+      "scale": 1.0,
+      "retired": false
     },
     {
       "id": "wall_steampump",
       "kind": "wallbuy",
-      "label": "Steam Pump",
+      "label": "Tome of Storms",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-      "cost": 900,
-      "refs": "weapons:steampump",
+      "cost": 1400,
+      "refs": "weapons:stormcaller",
       "verify": [
         "model"
       ],
-      "scale": 1.0
+      "scale": 1.0,
+      "retired": false
     },
     {
       "id": "wall_marksman",
       "kind": "wallbuy",
-      "label": "Arkngthand Marksman",
+      "label": "Tome of Embers",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-      "cost": 900,
-      "refs": "weapons:marksman",
+      "cost": 2000,
+      "refs": "weapons:embermortar",
       "verify": [
         "model"
       ],
-      "scale": 1.0
+      "scale": 1.0,
+      "retired": false
     }
   ]
 }

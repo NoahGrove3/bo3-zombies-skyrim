@@ -43,6 +43,7 @@ def dressing(S):
                                     'color': perk['color'] if r['color'] == '$perk' else r['color'], 'radius': r['radius']}
             pieces.append((oi, kind, key, r))
     for w in S['weapons']['rows']:
+        records[('STAT', '1st_' + w['id'])] = {'model': w['standinModel'], 'color': '', 'radius': 0}
         records[('STAT', 'show_' + w['id'])] = {'model': w['standinModel'], 'color': '', 'radius': 0}
     records[('STAT', 'show_cheese')] = {'model': S['dressing']['show']['cheeseModel'], 'color': '', 'radius': 0}
     records[('STAT', 'rise_fx')] = {'model': S['dressing']['show']['riseFxModel'], 'color': '', 'radius': 0}

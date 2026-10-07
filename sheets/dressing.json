@@ -648,56 +648,6 @@
       ]
     },
     {
-      "id": "coffer_cheese1",
-      "for": "box",
-      "type": "stat",
-      "model": "Clutter\\Food\\CheeseWheel01A.nif",
-      "color": "none",
-      "radius": 0,
-      "x": -55,
-      "y": 5,
-      "z": 0,
-      "scale": 1.6,
-      "spin": 0,
-      "verify": [
-        "x",
-        "z"
-      ]
-    },
-    {
-      "id": "coffer_cheese2",
-      "for": "box",
-      "type": "stat",
-      "model": "Clutter\\Food\\CheeseWheel02A.nif",
-      "color": "none",
-      "radius": 0,
-      "x": -55,
-      "y": 5,
-      "z": 14,
-      "scale": 1.4,
-      "spin": 0,
-      "verify": [
-        "x",
-        "z"
-      ]
-    },
-    {
-      "id": "coffer_crystal",
-      "for": "box",
-      "type": "stat",
-      "model": "Dungeons\\AzurasStar\\AzuraSmallCrystal03.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 55,
-      "y": 0,
-      "z": 0,
-      "scale": 0.35,
-      "spin": 15,
-      "verify": [
-        "scale"
-      ]
-    },
-    {
       "id": "ammo_quiver",
       "for": "ammo",
       "type": "stat",
@@ -737,6 +687,20 @@
       "x": 0,
       "y": 30,
       "z": 100,
+      "scale": 1,
+      "spin": 0,
+      "verify": []
+    },
+    {
+      "id": "brew_light",
+      "for": "perkmenu",
+      "type": "light",
+      "model": "none",
+      "color": "FFC27A",
+      "radius": 420,
+      "x": 0,
+      "y": 60,
+      "z": 120,
       "scale": 1,
       "spin": 0,
       "verify": []

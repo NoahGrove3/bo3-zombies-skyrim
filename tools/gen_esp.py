@@ -5,7 +5,7 @@ import json, struct, pathlib
 from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
-T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh']}
+T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
 def z(s): return s.encode('cp1252') + b'\0'
 def sub(name, data):
@@ -33,20 +33,21 @@ for p in S['perks']['rows']:
 
 def obnd(r): return struct.pack('<6h', -r, -r, 0, r, r, r * 2)
 for o in S['objects']['rows']:
-    radius = {'box': 45, 'perk': 40, 'wallbuy': 40, 'ammo': 40}[o['kind']]
+    radius = {'box': 50, 'perk': 40, 'wallbuy': 40, 'ammo': 40, 'perkmenu': 50}[o['kind']]
     verb = f"{o['activateText']} ({o['cost']})"
     recs['ACTI'].append(record('ACTI', fid('ACTI', o['id']), [
         sub('EDID', z('BO3Z_' + o['id'])), sub('OBND', obnd(radius)), sub('FULL', z(o['label'])),
         sub('MODL', z(o['model'])), sub('RNAM', z(verb)), sub('FNAM', b'\0\0')]))
 
 for w in S['weapons']['rows']:
-    tpl = 'weap_crossbow' if 'Weapons\\Crossbow' in w['standinModel'] else 'weap_dwarven'
+    tpl = 'weap_staff' if w.get('template') == 'staff' else ('weap_crossbow' if 'Weapons\\Crossbow' in w['standinModel'] else 'weap_dwarven')
     subs = []
     for name, hx in T[tpl]['subs']:
         b = bytes.fromhex(hx)
         if name == 'EDID': b = z('BO3Z_Gun_' + w['id'])
         elif name == 'FULL': b = z(w['label'])
         elif name == 'MODL': b = z(w['standinModel'])
+        elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_' + w['id']))  # first-person model: our own mesh
         elif name in ('MODT', 'DESC', 'EITM', 'EAMT'): continue
         elif name == 'DATA': b = struct.pack('<IfH', 0, 4.0, 0)
         subs.append(sub(name, b))

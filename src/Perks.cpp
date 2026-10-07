@@ -62,6 +62,10 @@ namespace bo3z
 			const float jug = Has(gen::kPerk_trollshide) ? gen::kPerks[gen::kPerk_trollshide].value : 0.0f;
 			const float baseHealth = std::max(50.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth) - jug);
 			av->DamageActorValue(RE::ActorValue::kHealth, baseHealth * gen::kHitDamageFraction);
+			{
+				std::scoped_lock l(Hud::Lock());
+				Hud::Edit().hurtTime = 1.0f;
+			}
 			if (Has(gen::kPerk_frostbite)) {
 				Director::Web(player->GetPosition(), 350.0f, gen::kPerks[gen::kPerk_frostbite].value);
 			}

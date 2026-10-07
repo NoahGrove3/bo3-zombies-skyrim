@@ -473,8 +473,68 @@ namespace bo3z
 			return true;
 		}
 
+		bool g_migrated = false;
+
+		// The old Dwemer guns are retired: take them out of the inventory (slots follow) and make sure
+		// the player has the Apprentice's Tome.
+		void MigrateRetired()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || g_migrated) {
+				return;
+			}
+			g_migrated = true;
+			int removed = 0;
+			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
+				if (!gen::kGuns[i].retired) {
+					continue;
+				}
+				auto* w = Forms::Gun(i);
+				const auto counts = p->GetInventoryCounts([w](RE::TESBoundObject& o) { return &o == w; });
+				for (auto& [obj, n] : counts) {
+					p->RemoveItem(obj, n, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+					++removed;
+				}
+			}
+			for (int s = 0; s < 3; ++s) {
+				auto sl = Save::GetSlot(s);
+				if (sl.gun >= 0 && gen::kGuns[sl.gun].retired) {
+					Save::SetSlot(s, {});
+				}
+			}
+			bool any = false;
+			for (int s = 0; s < 3; ++s) {
+				any |= Save::GetSlot(s).gun >= 0;
+			}
+			if (Save::Crew() >= 0 && !any) {
+				Gun::Give(gen::kGunIdx_apprentice);
+			}
+			if (removed) {
+				logger::info("gun: retired {} old guns from the inventory", removed);
+				Hud::Banner("Your guns crumble to dust. The tomes remain.", 4.0f);
+			}
+		}
+
+		void HideVanillaBars()
+		{
+			static auto next = std::chrono::steady_clock::now();
+			if (std::chrono::steady_clock::now() < next) {
+				return;
+			}
+			next = std::chrono::steady_clock::now() + 1s;
+			auto* ui = RE::UI::GetSingleton();
+			auto  hud = ui ? ui->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr;
+			if (!hud || !hud->uiMovie) {
+				return;
+			}
+			for (const char* bar : { "_root.HUDMovieBaseInstance.Health._alpha", "_root.HUDMovieBaseInstance.Magica._alpha", "_root.HUDMovieBaseInstance.Stamina._alpha" }) {
+				hud->uiMovie->SetVariable(bar, RE::GFxValue(0.0));
+			}
+		}
+
 		void Reset()
 		{
+			g_migrated = false;
 			g_hits.clear();
 			g_trigger = g_adsHeld = false;
 			g_reload = g_cooldown = 0;
@@ -541,6 +601,8 @@ namespace bo3z
 				hooked = true;
 				logger::info("gun: attack/ready input hooks installed");
 			}
+			MigrateRetired();
+			HideVanillaBars();
 			g_cooldown = std::max(0.0f, g_cooldown - a_delta);
 			g_knifeCd = std::max(0.0f, g_knifeCd - a_delta);
 			if (g_reload > 0 && (g_reload -= a_delta) <= 0) {
@@ -591,6 +653,12 @@ namespace bo3z
 			}
 			h.points = Points::Get();
 			h.perks = Save::PerkBits();
+			{
+				auto* pav = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner();
+				h.hp = pav->GetActorValue(RE::ActorValue::kHealth), h.hpMax = pav->GetPermanentActorValue(RE::ActorValue::kHealth);
+				h.mp = pav->GetActorValue(RE::ActorValue::kMagicka), h.mpMax = pav->GetPermanentActorValue(RE::ActorValue::kMagicka);
+				h.sp = pav->GetActorValue(RE::ActorValue::kStamina), h.spMax = pav->GetPermanentActorValue(RE::ActorValue::kStamina);
+			}
 		}
 
 		std::pair<bool, bool> RecentHit(RE::FormID a_actor)

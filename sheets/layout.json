@@ -1,6 +1,6 @@
 {
   "sheet": "layout",
-  "about": "Brew alley: where each piece stands in a town, relative to the alley centre (+y toward the Coffer), and which way it faces (degrees, 0 = +y). The game finds open, flat, walkable ground near the town marker for the whole alley.",
+  "about": "Town plaza: where each piece stands relative to its centre (+y toward the Coffer) and which way it faces (degrees, 0 = +y).",
   "columns": [
     "id",
     "x",
@@ -12,99 +12,43 @@
     {
       "id": "box",
       "x": 0,
-      "y": 430,
+      "y": 260,
       "faceDeg": 180,
       "verify": []
     },
     {
-      "id": "ammo",
-      "x": 0,
-      "y": -430,
-      "faceDeg": 0,
-      "verify": []
-    },
-    {
-      "id": "wall_0",
-      "x": -150,
-      "y": -430,
-      "faceDeg": 0,
-      "verify": []
-    },
-    {
-      "id": "wall_1",
-      "x": 150,
-      "y": -430,
-      "faceDeg": 0,
-      "verify": []
-    },
-    {
-      "id": "wall_2",
-      "x": -260,
-      "y": -400,
-      "faceDeg": 30,
-      "verify": []
-    },
-    {
-      "id": "perk_0",
-      "x": -175,
-      "y": -280,
-      "faceDeg": 90,
-      "verify": []
-    },
-    {
-      "id": "perk_1",
-      "x": -175,
-      "y": -140,
-      "faceDeg": 90,
-      "verify": []
-    },
-    {
-      "id": "perk_2",
-      "x": -175,
+      "id": "brew",
+      "x": -230,
       "y": 0,
       "faceDeg": 90,
       "verify": []
     },
     {
-      "id": "perk_3",
-      "x": -175,
-      "y": 140,
-      "faceDeg": 90,
-      "verify": []
-    },
-    {
-      "id": "perk_4",
-      "x": -175,
-      "y": 280,
-      "faceDeg": 90,
-      "verify": []
-    },
-    {
-      "id": "perk_5",
-      "x": 175,
-      "y": -210,
+      "id": "ammo",
+      "x": 230,
+      "y": 0,
       "faceDeg": 270,
       "verify": []
     },
     {
-      "id": "perk_6",
-      "x": 175,
-      "y": -70,
-      "faceDeg": 270,
+      "id": "wall_0",
+      "x": -150,
+      "y": -250,
+      "faceDeg": 0,
       "verify": []
     },
     {
-      "id": "perk_7",
-      "x": 175,
-      "y": 70,
-      "faceDeg": 270,
+      "id": "wall_1",
+      "x": 0,
+      "y": -260,
+      "faceDeg": 0,
       "verify": []
     },
     {
-      "id": "perk_8",
-      "x": 175,
-      "y": 210,
-      "faceDeg": 270,
+      "id": "wall_2",
+      "x": 150,
+      "y": -250,
+      "faceDeg": 0,
       "verify": []
     }
   ],

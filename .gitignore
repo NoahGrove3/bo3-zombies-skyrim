@@ -2,3 +2,4 @@ build/
 dist/
 .vcpkg-cache/
 __pycache__/
+assets/models/

@@ -56,7 +56,7 @@ o = ['', '// ---- v0.2 ----', '#include <string_view>', 'namespace bo3z::gen', '
      f'\tinline constexpr std::string_view kPlugin = {cs(esp_ids.PLUGIN)};']
 fires = {'semi': 0, 'auto': 1, 'burst': 2, 'pump': 3}
 o.append('\tenum class Fire : int { Semi = 0, Auto = 1, Burst = 2, Pump = 3 };')
-o.append('\tstruct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; int special, spell, spellOn; };')
+o.append('\tstruct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; int special, spell, spellOn; bool retired; };')
 W = S['weapons']['rows']
 sid = lambda v: 'Sound::' + v.split(':')[1]
 SP = S['spells']['rows']
@@ -68,7 +68,7 @@ for s in SP: o.append(f'\t\tFormRef{{ {cs(s["plugin"])}, 0x{int(s["localId"], 16
 o.append('\t} };')
 o.append(f'\tinline constexpr std::array<GunDef, {len(W)}> kGuns{{ {{')
 for w in W:
-    o.append(f'\t\tGunDef{{ {cs(w["id"])}, {cs(w["label"])}, {cs(w["class"])}, Fire({fires[w["fire"]]}), {F(w["damage"])}, {F(w["headMult"])}, {w["pellets"]}, {F(w["spreadHip"])}, {F(w["spreadAds"])}, {w["clip"]}, {w["reserve"]}, {w["fireDelayMs"]}, {w["burst"]}, {w["reloadMs"]}, {F(w["range"])}, {F(w["splashRadius"])}, {F(w["splashDamage"])}, {F(w["hitRadius"])}, {F(w["headRadius"])}, {sid(w["fireSound"])}, {sid(w["reloadSound"])}, {sid(w["emptySound"])}, {w["wallBuyCost"]}, {w["ammoCost"]}, {w["boxWeight"]}, 0x{IDS[("WEAP", w["id"])]:03X}, {specials[w["special"]]}, {spidx(w["spell"])}, {spellon[w["spellOn"]]} }},')
+    o.append(f'\t\tGunDef{{ {cs(w["id"])}, {cs(w["label"])}, {cs(w["class"])}, Fire({fires[w["fire"]]}), {F(w["damage"])}, {F(w["headMult"])}, {w["pellets"]}, {F(w["spreadHip"])}, {F(w["spreadAds"])}, {w["clip"]}, {w["reserve"]}, {w["fireDelayMs"]}, {w["burst"]}, {w["reloadMs"]}, {F(w["range"])}, {F(w["splashRadius"])}, {F(w["splashDamage"])}, {F(w["hitRadius"])}, {F(w["headRadius"])}, {sid(w["fireSound"])}, {sid(w["reloadSound"])}, {sid(w["emptySound"])}, {w["wallBuyCost"]}, {w["ammoCost"]}, {w["boxWeight"]}, 0x{IDS[("WEAP", w["id"])]:03X}, {specials[w["special"]]}, {spidx(w["spell"])}, {spellon[w["spellOn"]]}, {str(w.get("retired", False)).lower()} }},')
 o.append('\t} };')
 for i, w in enumerate(W): o.append(f'\tinline constexpr int kGunIdx_{w["id"]} = {i};')
 k = S['melee']['rows'][0]
@@ -81,6 +81,7 @@ o.append(f'\tinline constexpr std::array<PerkDef, {len(P)}> kPerks{{ {{')
 for p in P: o.append(f'\t\tPerkDef{{ {cs(p["id"])}, {cs(p["label"])}, {p["cost"]}, {effects[p["effect"]]}, {F(p["value"])}, 0x{IDS[("MGEF", p["id"])]:03X}, 0x{IDS[("ALCH", p["id"])]:03X} }},')
 o.append('\t} };')
 for i, p in enumerate(P): o.append(f'\tinline constexpr int kPerk_{p["id"]} = {i};')
+o.append(f'\tinline constexpr std::array<std::string_view, {len(P)}> kPerkDesc{{ {{ {", ".join(cs(p["description"]) for p in P)} }} }};')
 o.append(f'\tinline constexpr int kMaxPerks = {S["perks"]["limits"]["maxPerks"]};')
 C = S['crew']['rows']; passives = {'gun_damage_mult': 0, 'bonus_health': 1, 'knife_damage_mult': 2, 'box_cost': 3}
 o.append('\tstruct CrewDef { std::string_view id, label, quote; int passive; float value; std::string_view passiveText; };')
@@ -88,14 +89,14 @@ o.append(f'\tinline constexpr std::array<CrewDef, {len(C)}> kCrew{{ {{')
 for c in C: o.append(f'\t\tCrewDef{{ {cs(c["id"])}, {cs(c["label"])}, {cs(c["quote"])}, {passives[c["passive"]]}, {F(c["passiveValue"])}, {cs(c["passiveText"])} }},')
 o.append('\t} };')
 for r in S['identity']['rows']: o.append(f'\tinline constexpr std::string_view kText_{r["id"]} = {cs(r["text"])};')
-O = S['objects']['rows']; kinds = {'box': 0, 'perk': 1, 'wallbuy': 2, 'ammo': 3}
+O = S['objects']['rows']; kinds = {'box': 0, 'perk': 1, 'wallbuy': 2, 'ammo': 3, 'perkmenu': 4}
 def refidx(r):
     if r == 'none': return -1
     sh, i = r.split(':'); rows = {'perks': P, 'weapons': W}[sh]
     return [x['id'] for x in rows].index(i)
-o.append('\tstruct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; float scale; };')
+o.append('\tstruct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; float scale; bool retired; };')
 o.append(f'\tinline constexpr std::array<ObjectDef, {len(O)}> kObjects{{ {{')
-for x in O: o.append(f'\t\tObjectDef{{ {cs(x["id"])}, {cs(x["label"])}, {kinds[x["kind"]]}, {x["cost"]}, {refidx(x["refs"])}, 0x{IDS[("ACTI", x["id"])]:03X}, {F(x.get("scale", 1.0))} }},')
+for x in O: o.append(f'\t\tObjectDef{{ {cs(x["id"])}, {cs(x["label"])}, {kinds[x["kind"]]}, {x["cost"]}, {refidx(x["refs"])}, 0x{IDS[("ACTI", x["id"])]:03X}, {F(x.get("scale", 1.0))}, {str(x.get("retired", False)).lower()} }},')
 o.append('\t} };')
 DREC, DPIECES = esp_ids.dressing(S)
 o.append('\tstruct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; };')

@@ -125,7 +125,13 @@ namespace bo3z
 					const float k = std::min(1.0f, g_show.t / gen::kShowSpin);
 					if ((g_show.step -= a_delta) <= 0) {
 						g_show.step = 0.07f + 0.30f * k * k;  // flicker slows down like a wheel of fortune
-						const int pick = std::uniform_int_distribution<int>(0, static_cast<int>(gen::kGuns.size()) - 1)(g_rng);
+						std::vector<int> pool;
+						for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
+							if (gen::kGuns[i].boxWeight > 0) {
+								pool.push_back(i);
+							}
+						}
+						const int pick = pool.empty() ? 0 : pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
 						ShowModel(Forms::Ours(gen::kShowStat[pick]), gen::kShowRise * k);
 					} else if (auto d = g_show.display.get()) {
 						d->SetPosition(Local(chest.get(), 0, 0, 40.0f + gen::kShowRise * k));
@@ -353,7 +359,13 @@ namespace bo3z
 		bool AdoptExisting(int a_town, RE::TESObjectREFR* a_anchor)
 		{
 			// Alleys built by the v0.4.0 fallback sit right at the marker (Whiterun's gate): rebuild those.
-			if (auto* ammoBase = Forms::Object(1)) {
+			int ammoIdx = -1;
+			for (int i = 0; i < static_cast<int>(gen::kObjects.size()); ++i) {
+				if (gen::kObjects[i].kind == 3 && !gen::kObjects[i].retired) {
+					ammoIdx = i;
+				}
+			}
+			if (auto* ammoBase = ammoIdx >= 0 ? Forms::Object(ammoIdx) : nullptr) {
 				bool atMarker = false;
 				RE::TES::GetSingleton()->ForEachReferenceInRange(a_anchor, 900.0f, [&](RE::TESObjectREFR* r) {
 					if (r && !r->IsDeleted() && r->GetBaseObject() == ammoBase && NearDoor(a_anchor, r->GetPosition())) {
@@ -369,7 +381,7 @@ namespace bo3z
 			RE::TESForm* ammo = nullptr;
 			int          ammoSlot = -1;
 			for (const auto& l : gen::kLocations) {
-				if (l.town == a_town && gen::kObjects[l.object].kind == 3) {
+				if (l.town == a_town && gen::kObjects[l.object].kind == 3 && !gen::kObjects[l.object].retired) {
 					ammo = Forms::Object(l.object), ammoSlot = l.slot;
 				}
 			}
@@ -566,9 +578,12 @@ namespace bo3z
 			g_show.phase = Show::Idle;
 		}
 
-		void BuyPerk(const gen::ObjectDef& a_obj, RE::TESObjectREFR* a_ref)
+		bool                g_menu = false;
+		int                 g_sel = 0;
+		RE::ObjectRefHandle g_menuRef;
+
+		void BuyPerk(int perk, RE::TESObjectREFR* a_ref)
 		{
-			const int perk = a_obj.ref;
 			auto*     potion = Forms::PerkPotion(perk);
 			if (!potion) {
 				return;
@@ -581,7 +596,7 @@ namespace bo3z
 				Hud::Banner("Perk limit reached (" + std::to_string(gen::kMaxPerks) + ")", 2.0f);
 				return;
 			}
-			if (!Points::Spend(a_obj.cost)) {
+			if (!Points::Spend(gen::kPerks[perk].cost)) {
 				return;
 			}
 			RE::PlayerCharacter::GetSingleton()->AddObjectToContainer(potion, nullptr, 1, nullptr);
@@ -646,8 +661,59 @@ namespace bo3z
 
 		std::string BoxTown() { return std::string(gen::kTowns[ActiveBoxTown()]); }
 
+		bool OnButton(const RE::ButtonEvent* a_event)
+		{
+			if (!g_menu || !a_event || !a_event->IsDown()) {
+				return false;
+			}
+			const auto code = a_event->GetIDCode();
+			const auto dev = a_event->GetDevice();
+			const int  n = static_cast<int>(gen::kPerks.size());
+			if (dev == RE::INPUT_DEVICE::kKeyboard) {
+				if (code >= 0x02 && code < 0x02 + static_cast<std::uint32_t>(n)) {  // 1..9
+					g_sel = static_cast<int>(code - 0x02);
+					BuyPerk(g_sel, g_menuRef.get().get());
+				} else if (code == 0xC8) {
+					g_sel = (g_sel + n - 1) % n;
+				} else if (code == 0xD0) {
+					g_sel = (g_sel + 1) % n;
+				} else if (code == 0x1C) {
+					BuyPerk(g_sel, g_menuRef.get().get());
+				} else if (code == 0x0F || code == 0x0E) {
+					g_menu = false;
+				} else {
+					return false;
+				}
+				return true;
+			}
+			if (dev == RE::INPUT_DEVICE::kMouse && (code == 8 || code == 9)) {
+				g_sel = (g_sel + (code == 8 ? n - 1 : 1)) % n;
+				return true;
+			}
+			if (dev == RE::INPUT_DEVICE::kGamepad) {
+				if (code == 0x0001) g_sel = (g_sel + n - 1) % n;       // dpad up
+				else if (code == 0x0002) g_sel = (g_sel + 1) % n;      // dpad down
+				else if (code == 0x2000) g_menu = false;               // B
+				else return false;
+				return true;
+			}
+			return false;
+		}
+
 		void Tick(float a_delta)
 		{
+			if (g_menu) {
+				auto r = g_menuRef.get();
+				auto* player = RE::PlayerCharacter::GetSingleton();
+				if (!r || !player || r->GetPosition().GetDistance(player->GetPosition()) > 300.0f) {
+					g_menu = false;
+				}
+			}
+			{
+				std::scoped_lock l(Hud::Lock());
+				Hud::Edit().perkMenu = g_menu;
+				Hud::Edit().perkSel = g_sel;
+			}
 			for (auto& s : g_spinners) {
 				if (auto r = s.ref.get(); r && r->Is3DLoaded()) {
 					auto a = r->GetAngle();
@@ -673,7 +739,16 @@ namespace bo3z
 			logger::info("shops: activated {} ({} points)", o.id, Points::Get());
 			switch (o.kind) {
 			case 0: SpinBox(a_ref); break;
-			case 1: BuyPerk(o, a_ref); break;
+			case 1: BuyPerk(o.ref, a_ref); break;
+			case 4:
+				if (!g_menu) {
+					g_menu = true, g_sel = 0;
+					g_menuRef = a_ref->CreateRefHandle();
+					Forms::Play(gen::Sound::coffer_open);
+				} else {
+					BuyPerk(g_sel, a_ref);
+				}
+				break;
 			case 3: BuyAmmo(o); break;
 			default: BuyWall(o); break;
 			}
