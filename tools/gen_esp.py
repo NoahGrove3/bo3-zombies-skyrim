@@ -18,7 +18,7 @@ def group(label, recs):
     data = b''.join(recs)
     return b'GRUP' + struct.pack('<I', 24 + len(data)) + label.encode() + struct.pack('<iHHHH', 0, 0, 0, 44, 0) + data
 fid = lambda kind, key: SELF | IDS[(kind, key)]
-recs = {'PROJ': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
+recs = {'AMMO': [], 'PROJ': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
 
 for p in S['perks']['rows']:
     data = bytearray(tsub('mgef', 'DATA'))
@@ -113,6 +113,20 @@ for p in S['projectiles']['rows']:
     recs['SPEL'].append(record('SPEL', fid('SPEL', key), [
         sub('EDID', z('UN_' + key + 'Spell')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
         sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', key))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+# blank round: the guns are crossbow-type WEAPs; with a bolt equipped attackStart plays the shot + reload instead of
+# the empty-crossbow bash. Its projectile has no model, no damage and dies after one unit (hitscan does the damage).
+pd = bytearray(tsub('proj_bullet', 'DATA'))
+struct.pack_into('<f', pd, 4, 0.0); struct.pack_into('<f', pd, 8, 10000.0); struct.pack_into('<f', pd, 12, 1.0)  # gravity, speed, range
+struct.pack_into('<I', pd, 36, 0); struct.pack_into('<I', pd, 40, 0)
+recs['PROJ'].append(record('PROJ', fid('PROJ', 'blank'), [
+    sub('EDID', z('UN_BlankRoundProj')), sub('OBND', tsub('proj_bullet', 'OBND')), sub('MODL', z('')),
+    sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', struct.pack('<I', 0))]))
+recs['AMMO'].append(record('AMMO', fid('AMMO', 'blank'), [
+    sub('EDID', z('UN_BlankRound')), sub('OBND', bytes(12)), sub('FULL', z('Arcane Rounds')),
+    sub('MODL', z('Weapons\\Iron\\IronArrow.nif')),
+    sub('DATA', struct.pack('<IIfI', fid('PROJ', 'blank'), 0x0, 0.0, 0)),  # playable bolt (equippable on the player), 0 damage, no value
+    sub('ONAM', z('Rounds'))]))
+
 # muzzle flash light
 ld = bytearray(tsub('ligh', 'DATA'))
 struct.pack_into('<I', ld, 4, 320); struct.pack_into('<BBBB', ld, 8, 255, 170, 70, 0)
@@ -142,7 +156,7 @@ count = sum(len(v) for v in recs.values())
 hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('Undying Nights: round-based undead survival for Skyrim'))]
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
-for k in ['PROJ', 'SPEL', 'ARMA', 'ARMO', 'NPC_', 'STAT', 'LIGH', 'SNDR', 'MGEF', 'ACTI', 'WEAP', 'ALCH']: out += group(k, recs[k])
+for k in ['AMMO', 'PROJ', 'SPEL', 'ARMA', 'ARMO', 'NPC_', 'STAT', 'LIGH', 'SNDR', 'MGEF', 'ACTI', 'WEAP', 'ALCH']: out += group(k, recs[k])
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')

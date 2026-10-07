@@ -221,6 +221,8 @@
   "PROJ:bullet_sun": "0x8d9",
   "MGEF:bullet_sun": "0x8da",
   "SPEL:bullet_sun": "0x8db",
-  "LIGH:muzzle": "0x8dc"
+  "LIGH:muzzle": "0x8dc",
+  "PROJ:blank": "0x8dd",
+  "AMMO:blank": "0x8de"
  }
 }

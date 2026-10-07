@@ -12,6 +12,8 @@
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
 #include "NifFile.hpp"
+#include "bhk.hpp"
+#include <cfloat>
 #include <cstdio>
 #include <fstream>
 #include <map>
@@ -38,6 +40,7 @@ int main(int argc, char** argv)
 	std::string   in, out, line;
 	float         scale = 1, rx = 0, ry = 0, rz = 0, ox = 0, oy = 0, oz = 0;
 	bool          ground = false;
+	bool          collide = false;  // add a static box collision (placed furniture)
 	float         fit = 0;  // if set: scale so the longest side is this many units
 	std::set<std::string>      skip;
 	std::map<std::string, aiVector3D> meshOffset;  // final-units nudge per source mesh (e.g. a lid resting open)
@@ -52,6 +55,7 @@ int main(int argc, char** argv)
 		else if (k == "rotate") ss >> rx >> ry >> rz;
 		else if (k == "offset") ss >> ox >> oy >> oz;
 		else if (k == "ground") ss >> ground;
+		else if (k == "collide") ss >> collide;
 		else if (k == "fit") ss >> fit;
 		else if (k == "meshoffset") { std::string n; float x, y, z; ss >> n >> x >> y >> z; meshOffset[n] = { x, y, z }; }
 		else if (k == "skip") { std::string n; std::getline(ss >> std::ws, n); skip.insert(n); }
@@ -117,6 +121,13 @@ int main(int argc, char** argv)
 
 	NifFile nif;
 	nif.Create(NiVersion::getSSE());
+	{
+		// Statics in Skyrim are rooted on a BSFadeNode (distance fade, LOD); keep the "Scene Root" name.
+		auto fade = std::make_unique<BSFadeNode>();
+		fade->name.get() = "Scene Root";
+		nif.GetHeader().ReplaceBlock(nif.GetBlockID(nif.GetRootNode()), std::move(fade));
+	}
+	Vector3 bmin(FLT_MAX, FLT_MAX, FLT_MAX), bmax(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 	int n = 0;
 	for (unsigned m = 0; m < sc->mNumMeshes; ++m) {
 		const aiMesh* me = sc->mMeshes[m];
@@ -136,6 +147,9 @@ int main(int argc, char** argv)
 			auto p = rot((meshGlobal[me] * me->mVertices[v]) * scale);
 			aiVector3D mo = meshOffset.count(me->mName.C_Str()) ? meshOffset[me->mName.C_Str()] : aiVector3D(0, 0, 0);
 			verts.emplace_back(p.x + shift.x + mo.x, p.y + shift.y + mo.y, p.z + shift.z + mo.z);
+			const auto& vv = verts.back();
+			bmin = Vector3(std::min(bmin.x, vv.x), std::min(bmin.y, vv.y), std::min(bmin.z, vv.z));
+			bmax = Vector3(std::max(bmax.x, vv.x), std::max(bmax.y, vv.y), std::max(bmax.z, vv.z));
 			auto nn = me->HasNormals() ? rot(aiMatrix3x3(meshGlobal[me]) * me->mNormals[v]) : aiVector3D(0, 0, 1);
 			nn.Normalize();
 			norms.emplace_back(nn.x, nn.y, nn.z);
@@ -172,7 +186,40 @@ int main(int argc, char** argv)
 			nif.AssignAlphaProperty(shape, std::move(a));
 		}
 	}
-	nif.GetRootNode()->name.get() = "Scene Root";
+	auto* root = nif.GetRootNode();
+	root->name.get() = "Scene Root";
+	if (collide && n > 0) {
+		// One fixed box around the whole model on the static layer: blocks the player and takes the crosshair.
+		constexpr float kHavok = 69.99124f;
+		auto box = std::make_unique<bhkBoxShape>();
+		box->SetMaterial(500811281);  // SKY_HAV_MAT_WOOD
+		box->radius = 0.01f;
+		box->dimensions = Vector3((bmax.x - bmin.x) / 2 / kHavok, (bmax.y - bmin.y) / 2 / kHavok, (bmax.z - bmin.z) / 2 / kHavok);
+		const uint32_t boxId = nif.GetHeader().AddBlock(std::move(box));
+		auto body = std::make_unique<bhkRigidBodyT>();
+		body->shapeRef.index = boxId;
+		body->collisionFilter.layer = 1;  // SKYL_STATIC
+		body->collisionFilterCopy = body->collisionFilter;
+		body->broadPhaseType = 1;
+		body->collisionResponse = RESPONSE_SIMPLE_CONTACT;
+		body->translation = Vector4((bmin.x + bmax.x) / 2 / kHavok, (bmin.y + bmax.y) / 2 / kHavok, (bmin.z + bmax.z) / 2 / kHavok, 0);
+		body->rotation = QuaternionXYZW{ 0, 0, 0, 1 };
+		body->mass = 0;
+		body->motionSystem = 7;     // MO_SYS_FIXED
+		body->deactivatorType = 1;  // never
+		body->solverDeactivation = 1;
+		body->qualityType = 1;      // MO_QUAL_FIXED
+		const uint32_t bodyId = nif.GetHeader().AddBlock(std::move(body));
+		auto col = std::make_unique<bhkCollisionObject>();
+		col->flags = 1;
+		col->targetRef.index = nif.GetBlockID(root);
+		col->bodyRef.index = bodyId;
+		root->collisionRef.index = nif.GetHeader().AddBlock(std::move(col));
+		auto bsx = std::make_unique<BSXFlags>();
+		bsx->name.get() = "BSX";
+		bsx->integerData = 2;  // havok
+		nif.AssignExtraData(root, std::move(bsx));
+	}
 	if (nif.Save(out)) {
 		fprintf(stderr, "save failed\n");
 		return 1;

@@ -47,7 +47,7 @@
       "kind": "ammo",
       "label": "Ammo Cache",
       "activateText": "Restock all ammo",
-      "model": "DLC02\\Furniture\\DLC2DarkElfCrate01.nif",
+      "model": "UndyingNights\\ammobox\\ammobox.nif",
       "cost": 750,
       "refs": "none",
       "scale": 1.0,

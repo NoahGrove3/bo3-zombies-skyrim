@@ -38,6 +38,10 @@
     "hpCapRound",
     "hpGrowthAfterCap",
     "skyrimHitShare",
+    "chaseRelocateDist",
+    "chaseRelocateSeconds",
+    "chaseStallSeconds",
+    "zombieWeapons",
     "verify"
   ],
   "rows": [
@@ -117,7 +121,11 @@
         "melee": 0.34,
         "bow": 0.5,
         "spell": 0.2
-      }
+      },
+      "chaseRelocateDist": 4000,
+      "chaseRelocateSeconds": 3.0,
+      "chaseStallSeconds": 2.5,
+      "zombieWeapons": "melee"
     }
   ]
 }

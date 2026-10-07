@@ -39,6 +39,24 @@ namespace bo3z
 		}
 		bool GunOut() { return CurrentGun() >= 0 && Drawn() && !Intro::CrewScreenOpen(); }
 
+		// Crossbow-type guns need a bolt equipped, or attackStart plays the empty-crossbow bash (looks like a sword swing).
+		void LoadBlank(RE::PlayerCharacter* a_player)
+		{
+			auto* blank = Forms::Ours(gen::kBlankAmmo);
+			auto* ammo = blank ? blank->As<RE::TESAmmo>() : nullptr;
+			if (!a_player || !ammo) {
+				return;
+			}
+			auto       inv = a_player->GetInventory([&](RE::TESBoundObject& a_obj) { return &a_obj == ammo; });
+			const auto have = inv.empty() ? 0 : inv.begin()->second.first;
+			if (have < 200) {
+				a_player->AddObjectToContainer(ammo, nullptr, 999 - have, nullptr);
+			}
+			if (a_player->GetCurrentAmmo() != ammo) {
+				RE::ActorEquipManager::GetSingleton()->EquipObject(a_player, ammo, nullptr, 1, nullptr, true, false, false, true);
+			}
+		}
+
 		void Equip(int a_gun)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -47,6 +65,9 @@ namespace bo3z
 				return;
 			}
 			RE::ActorEquipManager::GetSingleton()->EquipObject(p, w);
+			if (!gen::kGuns[a_gun].staff) {
+				LoadBlank(p);
+			}
 			if (!Drawn()) {
 				p->DrawWeaponMagicHands(true);
 			}
@@ -664,6 +685,110 @@ namespace bo3z
 			return false;
 		}
 
+		// ---- aim down sights: pull the first-person gun onto the view line so you look down its barrel ----
+		struct Quat { float w, x, y, z; };
+		Quat ToQuat(const RE::NiMatrix3& m)
+		{
+			const auto& e = m.entry;
+			const float tr = e[0][0] + e[1][1] + e[2][2];
+			Quat q{};
+			if (tr > 0) {
+				const float s = std::sqrt(tr + 1.0f) * 2;
+				q = { 0.25f * s, (e[2][1] - e[1][2]) / s, (e[0][2] - e[2][0]) / s, (e[1][0] - e[0][1]) / s };
+			} else if (e[0][0] > e[1][1] && e[0][0] > e[2][2]) {
+				const float s = std::sqrt(1.0f + e[0][0] - e[1][1] - e[2][2]) * 2;
+				q = { (e[2][1] - e[1][2]) / s, 0.25f * s, (e[0][1] + e[1][0]) / s, (e[0][2] + e[2][0]) / s };
+			} else if (e[1][1] > e[2][2]) {
+				const float s = std::sqrt(1.0f + e[1][1] - e[0][0] - e[2][2]) * 2;
+				q = { (e[0][2] - e[2][0]) / s, (e[0][1] + e[1][0]) / s, 0.25f * s, (e[1][2] + e[2][1]) / s };
+			} else {
+				const float s = std::sqrt(1.0f + e[2][2] - e[0][0] - e[1][1]) * 2;
+				q = { (e[1][0] - e[0][1]) / s, (e[0][2] + e[2][0]) / s, (e[1][2] + e[2][1]) / s, 0.25f * s };
+			}
+			return q;
+		}
+		RE::NiMatrix3 FromQuat(Quat q)
+		{
+			const float n = std::sqrt(q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z);
+			q = { q.w / n, q.x / n, q.y / n, q.z / n };
+			RE::NiMatrix3 m;
+			m.entry[0][0] = 1 - 2 * (q.y * q.y + q.z * q.z), m.entry[0][1] = 2 * (q.x * q.y - q.z * q.w), m.entry[0][2] = 2 * (q.x * q.z + q.y * q.w);
+			m.entry[1][0] = 2 * (q.x * q.y + q.z * q.w), m.entry[1][1] = 1 - 2 * (q.x * q.x + q.z * q.z), m.entry[1][2] = 2 * (q.y * q.z - q.x * q.w);
+			m.entry[2][0] = 2 * (q.x * q.z - q.y * q.w), m.entry[2][1] = 2 * (q.y * q.z + q.x * q.w), m.entry[2][2] = 1 - 2 * (q.x * q.x + q.y * q.y);
+			return m;
+		}
+		Quat Nlerp(Quat a, Quat b, float t)
+		{
+			if (a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z < 0) {
+				b = { -b.w, -b.x, -b.y, -b.z };
+			}
+			return { a.w + (b.w - a.w) * t, a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t };
+		}
+
+		RE::NiPointer<RE::NiAVObject> g_adsModel;
+		RE::NiTransform               g_adsRest;
+
+		void AimViewmodel(RE::PlayerCharacter* a_player, float a_t)
+		{
+			auto* fp = a_player ? a_player->Get3D(true) : nullptr;
+			auto* bone = fp ? fp->GetObjectByName("WEAPON") : nullptr;
+			auto* boneNode = bone ? bone->AsNode() : nullptr;
+			RE::NiAVObject* model = nullptr;
+			if (boneNode) {
+				for (auto& c : boneNode->GetChildren()) {
+					if (c) {
+						model = c.get();
+						break;
+					}
+				}
+			}
+			if (model != g_adsModel.get()) {  // gun swapped: put the old one back, remember the new one's rest pose
+				if (g_adsModel) {
+					g_adsModel->local = g_adsRest;
+				}
+				g_adsModel.reset(model);
+				if (model) {
+					g_adsRest = model->local;
+				}
+			}
+			if (!model) {
+				return;
+			}
+			if (a_t <= 0.001f) {
+				model->local = g_adsRest;
+				return;
+			}
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (!cam || !cam->cameraRoot) {
+				return;
+			}
+			// Camera basis from the view angles (pitch +down): forward f, up u, right r.
+			const float pitch = a_player->data.angle.x, yaw = a_player->data.angle.z;
+			const RE::NiPoint3 f{ std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch) };
+			const RE::NiPoint3 u{ std::sin(yaw) * std::sin(pitch), std::cos(yaw) * std::sin(pitch), std::cos(pitch) };
+			const RE::NiPoint3 r{ std::cos(yaw), -std::sin(yaw), 0 };
+			// Handguns of Skyrim models: muzzle toward -Y, sights up +Z.
+			RE::NiMatrix3 want;
+			for (int i = 0; i < 3; ++i) {
+				const float rv[3] = { r.x, r.y, r.z }, fv[3] = { f.x, f.y, f.z }, uv[3] = { u.x, u.y, u.z };
+				want.entry[i][0] = -rv[i], want.entry[i][1] = -fv[i], want.entry[i][2] = uv[i];
+			}
+			const auto& pw = bone->world;
+			const float  scale = pw.scale * g_adsRest.scale;
+			const RE::NiPoint3 eye = cam->cameraRoot->world.translate;
+			const RE::NiPoint3 at = eye + f * gen::kAdsEyeDistance - u * (gen::kAdsSightHeight * scale);
+			const RE::NiMatrix3 inv = pw.rotate.Transpose();
+			RE::NiTransform aim;
+			aim.rotate = inv * want;
+			aim.translate = (inv * (at - pw.translate)) / std::max(0.001f, pw.scale);
+			aim.scale = g_adsRest.scale;
+			// Ease in/out so the raise looks like a motion, not a snap.
+			const float t = a_t * a_t * (3 - 2 * a_t);
+			model->local.rotate = FromQuat(Nlerp(ToQuat(g_adsRest.rotate), ToQuat(aim.rotate), t));
+			model->local.translate = g_adsRest.translate + (aim.translate - g_adsRest.translate) * t;
+			model->local.scale = g_adsRest.scale;
+		}
+
 		void Tick(float a_delta)
 		{
 			static bool hooked = false;
@@ -696,6 +821,9 @@ namespace bo3z
 			if ((sync -= a_delta) <= 0) {
 				sync = 1.0f;
 				SyncSlots();
+				if (const int gun = CurrentGun(); gun >= 0 && !gen::kGuns[gun].staff) {
+					LoadBlank(RE::PlayerCharacter::GetSingleton());
+				}
 			}
 			const bool out = GunOut();
 			const int  gun = CurrentGun();
@@ -718,8 +846,9 @@ namespace bo3z
 				// Wider base view (sheet: movement.world_fov / viewmodel_fov), narrowing while aiming.
 				auto& rd = cam->GetRuntimeData2();
 				rd.worldFOV = gen::kWorldFov + (gen::kAdsFov - gen::kWorldFov) * g_ads;
-				rd.firstPersonFOV = gen::kViewmodelFov;
+				rd.firstPersonFOV = gen::kViewmodelFov + (gen::kAdsViewmodelFov - gen::kViewmodelFov) * g_ads;
 			}
+			AimViewmodel(RE::PlayerCharacter::GetSingleton(), out ? g_ads : 0.0f);
 			const auto now = Clock::now();
 			std::erase_if(g_hits, [&](const auto& kv) { return now - kv.second.first > 2s; });
 

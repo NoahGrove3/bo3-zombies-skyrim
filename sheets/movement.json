@@ -125,6 +125,33 @@
       "value": 175,
       "durationMs": 0,
       "verify": []
+    },
+    {
+      "id": "ads_eye_distance",
+      "what": "How far in front of the eye the gun grip sits while aiming down sights (units)",
+      "value": 20,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "ads_sight_height",
+      "what": "Height of the iron sights above the bore line in the gun model (units)",
+      "value": 3.5,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "ads_viewmodel_fov",
+      "what": "First-person weapon field of view while aiming down sights (degrees)",
+      "value": 62,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
     }
   ]
 }

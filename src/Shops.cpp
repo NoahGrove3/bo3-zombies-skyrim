@@ -242,6 +242,30 @@ namespace bo3z
 			return a_base && ours.contains(a_base);
 		}
 
+		// Highest solid surface (statics, terrain) under (x,y), casting down from well above a_top.
+		std::optional<float> FloorZ(RE::TESObjectREFR* a_anchor, const RE::NiPoint3& a_xy, float a_top)
+		{
+			auto* cell = a_anchor ? a_anchor->GetParentCell() : nullptr;
+			auto* world = cell ? cell->GetbhkWorld() : nullptr;
+			if (!world) {
+				return std::nullopt;
+			}
+			const float s = RE::bhkWorld::GetWorldScale();
+			const RE::NiPoint3 from{ a_xy.x, a_xy.y, a_top + 300.0f }, to{ a_xy.x, a_xy.y, a_top - 2000.0f };
+			RE::bhkPickData pick;
+			pick.rayInput.from = RE::hkVector4(from * s);
+			pick.rayInput.to = RE::hkVector4(to * s);
+			pick.rayInput.filterInfo.SetCollisionLayer(RE::COL_LAYER::kLOS);
+			{
+				RE::BSReadLockGuard lock(world->worldLock);
+				world->PickObject(pick);
+			}
+			if (!pick.rayOutput.HasHit()) {
+				return std::nullopt;
+			}
+			return from.z + (to.z - from.z) * pick.rayOutput.hitFraction;
+		}
+
 		// Nearest walkable point (navmesh) to a_at, via an invisible marker; nullopt if there is none close.
 		std::optional<RE::NiPoint3> Snap(RE::TESObjectREFR* a_anchor, const RE::NiPoint3& a_at)
 		{
@@ -262,10 +286,14 @@ namespace bo3z
 			}
 			probe->SetPosition(at);
 			probe->MoveToNearestNavmesh();
-			const auto got = probe->GetPosition();
+			auto got = probe->GetPosition();
 			const float dxy = std::hypot(got.x - at.x, got.y - at.y);
 			if (dxy > gen::kPlanSnap) {
 				return std::nullopt;
+			}
+			// Navmesh/land heights sit under town paving and bridges: stand on what the physics world says is there.
+			if (auto z = FloorZ(a_anchor, got, std::max(got.z, a_at.z))) {
+				got.z = *z;
 			}
 			return got;
 		}
@@ -440,9 +468,111 @@ namespace bo3z
 				ref->SetAngle({ 0, 0, SlotFacing(plan, loc.slot) });
 				found = ref.get();
 				logger::info("shops: placed {} in {} at ({:.0f},{:.0f},{:.0f})", gen::kObjects[loc.object].id, gen::kTowns[loc.town], want.x, want.y, want.z);
+			} else if (auto pos = found->GetPosition(); true) {
+				// Pieces from earlier builds were sunk under the paving: lift them onto the floor.
+				// Sample a ring outside the piece's footprint so the ray never lands on the piece itself.
+				std::vector<float> ring;
+				for (int k = 0; k < 6; ++k) {
+					const float a = k * RE::NI_PI / 3.0f;
+					if (auto h = FloorZ(anchor, { pos.x + 130.0f * std::cos(a), pos.y + 130.0f * std::sin(a), pos.z }, pos.z + 150.0f)) {
+						ring.push_back(*h);
+					}
+				}
+				std::optional<float> z;
+				if (ring.size() >= 3) {
+					std::nth_element(ring.begin(), ring.begin() + ring.size() / 2, ring.end());
+					z = ring[ring.size() / 2];
+				}
+				if (z && std::abs(*z - pos.z) > 8.0f) {
+					logger::info("shops: lifted {} in {} from z {:.0f} to {:.0f}", gen::kObjects[loc.object].id, gen::kTowns[loc.town], pos.z, *z);
+					pos.z = *z;
+					found->SetPosition(pos);
+				}
 			}
 			g_placed[a_index] = found->CreateRefHandle();
 			Dress(a_index, found);
+		}
+
+		// ---- world-map markers: one "Undying Nights Station" per town, at the plaza once it is built ----
+		std::array<RE::ObjectRefHandle, gen::kTowns.size()> g_markers{};
+		float g_markerTimer = 0;
+
+		RE::MapMarkerData* TemplateMarkerData(RE::PlayerCharacter* a_player)
+		{
+			for (auto& h : a_player->GetPlayerRuntimeData().currentMapMarkers) {
+				if (auto r = h.get()) {
+					if (auto* x = r->extraList.GetByType<RE::ExtraMapMarker>(); x && x->mapData) {
+						return x->mapData;
+					}
+				}
+			}
+			return nullptr;
+		}
+
+		void EnsureMarker(RE::PlayerCharacter* a_player, int a_town)
+		{
+			auto* anchor = TownAnchor(a_town);
+			auto* markerBase = RE::TESForm::LookupByID<RE::TESBoundObject>(0x10);  // MapMarker
+			if (!anchor || !markerBase) {
+				return;
+			}
+			const auto& plan = g_towns[a_town];
+			const RE::NiPoint3 at = plan.state == TownPlan::State::Ready ? plan.center : anchor->GetPosition();
+			auto ref = g_markers[a_town].get();
+			if (!ref) {
+				// From an earlier session: a placed (0xFF) map marker near the town marker is ours.
+				RE::TES::GetSingleton()->ForEachReferenceInRange(anchor, gen::kPlanSweep * 1.5f, [&](RE::TESObjectREFR* r) {
+					if (r && r != anchor && r->GetBaseObject() == markerBase && (r->GetFormID() >> 24) == 0xFF && !r->IsDeleted()) {
+						ref = RE::NiPointer<RE::TESObjectREFR>(r);
+						return RE::BSContainer::ForEachResult::kStop;
+					}
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+			}
+			if (!ref) {
+				ref = anchor->PlaceObjectAtMe(markerBase, true);
+				if (!ref) {
+					return;
+				}
+			}
+			g_markers[a_town] = ref->CreateRefHandle();
+			if (ref->GetPosition().GetDistance(at) > 50.0f) {
+				ref->SetPosition(at);
+			}
+			if (!ref->extraList.GetByType<RE::ExtraMapMarker>()) {
+				auto* tmpl = TemplateMarkerData(a_player);
+				if (!tmpl) {
+					return;
+				}
+				// Clone a game-made marker record (keeps the engine's vtable), then give it our own name.
+				auto* data = static_cast<RE::MapMarkerData*>(RE::malloc(sizeof(RE::MapMarkerData)));
+				std::memcpy(static_cast<void*>(data), tmpl, sizeof(RE::MapMarkerData));
+				const std::string name = std::string(gen::kText_station_marker) + " - " + std::string(gen::kTowns[a_town]);
+				new (&data->locationName.fullName) RE::BSFixedString(name.c_str());
+				data->flags.reset(RE::MapMarkerData::Flag::kShowAllHidden);
+				data->flags.set(RE::MapMarkerData::Flag::kVisible, RE::MapMarkerData::Flag::kCanTravelTo);
+				data->type = RE::MARKER_TYPE::kShrine;
+				auto* x = RE::BSExtraData::Create<RE::ExtraMapMarker>();
+				x->mapData = data;
+				ref->extraList.Add(x);
+				logger::info("shops: map marker '{}' at ({:.0f},{:.0f})", name, at.x, at.y);
+			}
+			auto& list = a_player->GetPlayerRuntimeData().currentMapMarkers;
+			const auto handle = ref->CreateRefHandle();
+			if (std::none_of(list.begin(), list.end(), [&](const RE::ObjectRefHandle& h) { return h.native_handle() == handle.native_handle(); })) {
+				list.push_back(handle);
+			}
+		}
+
+		void TickMarkers(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			if ((g_markerTimer -= a_delta) > 0) {
+				return;
+			}
+			g_markerTimer = 5.0f;
+			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
+				EnsureMarker(a_player, t);
+			}
 		}
 
 		void TickTowns()
@@ -721,6 +851,9 @@ namespace bo3z
 				}
 			}
 			TickShow(a_delta);
+			if (auto* pl = RE::PlayerCharacter::GetSingleton()) {
+				TickMarkers(pl, a_delta);
+			}
 			const bool searching = std::any_of(g_towns.begin(), g_towns.end(), [](const TownPlan& p) { return p.state == TownPlan::State::Searching; });
 			if (!searching && (g_scan -= a_delta) > 0) {
 				return;

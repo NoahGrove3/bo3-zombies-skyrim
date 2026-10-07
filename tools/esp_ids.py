@@ -15,7 +15,7 @@ def assign(S=None, write=False):
              [('SNDR', s['id']) for s in S['sounds']['rows'] if s['plugin'] == PLUGIN] + \
              list(dressing(S)[0].keys()) + \
              [(k, c['id']) for c in S['creatures']['rows'] for k in ('ARMA', 'ARMO', 'NPC_')] + \
-             [(k, 'bullet_' + p['id']) for p in S['projectiles']['rows'] for k in ('PROJ', 'MGEF', 'SPEL')] + [('LIGH', 'muzzle')]
+             [(k, 'bullet_' + p['id']) for p in S['projectiles']['rows'] for k in ('PROJ', 'MGEF', 'SPEL')] + [('LIGH', 'muzzle'), ('PROJ', 'blank'), ('AMMO', 'blank')]
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:

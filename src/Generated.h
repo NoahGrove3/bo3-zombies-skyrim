@@ -7,6 +7,8 @@
 namespace bo3z::gen
 {
 	struct FormRef { std::string_view plugin; std::uint32_t localId; std::string_view editorId; };
+	inline constexpr float kChaseRelocateDist = 4000.0f, kChaseRelocateSeconds = 3.0f, kChaseStallSeconds = 2.5f;
+	inline constexpr bool kZombieMeleeWeapons = true;  // keep swords/axes/maces; strip bows, staves, spells
 	struct Rounds {
 		float nightStartHour, nightEndHour, breakSeconds, firstBreakSeconds; int maxAlive, aiMaxBase, aiPerPlayer;
 		std::array<float, 5> earlyRoundScale; int hpStart, hpLinearPerRound, hpLinearUntil; float hpMultAfter, hpScale;
@@ -253,6 +255,7 @@ namespace bo3z::gen
 	inline constexpr std::string_view kText_shrine = "Brew Shrine";
 	inline constexpr std::string_view kText_forge = "Atronach Reforge";
 	inline constexpr std::string_view kText_round_word = "Night";
+	inline constexpr std::string_view kText_station_marker = "Undying Nights Station";
 	struct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; float scale; bool retired; };
 	inline constexpr std::array<ObjectDef, 19> kObjects{ {
 		ObjectDef{ "coffer", "Sheogorath's Coffer", 0, 950, -1, 0x807, 1.0f, false },
@@ -412,6 +415,7 @@ namespace bo3z::gen
 	} };
 	inline constexpr float kRunBoost = 30.0f, kSprintBoost = 60.0f, kSlideSpeed = 900.0f, kSlideSeconds = 0.95f, kSlideBoost = 220.0f, kSlideJump = 0.95f, kAirControl = 0.0f, kAirMax = 760.0f, kSprintStamina = 0.35f, kJumpHeight = 1.2f;
 	inline constexpr float kAdsFov = 55.0f, kAdsSeconds = 0.12f, kAdsSpeed = -30.0f, kWorldFov = 95.0f, kViewmodelFov = 80.0f, kFpsCap = 175.0f;
+	inline constexpr float kAdsEyeDistance = 20.0f, kAdsSightHeight = 3.5f, kAdsViewmodelFov = 62.0f;
 	inline constexpr FormRef kQ_MQQuickstart{ "Skyrim.esm", 0x04679E, "MQQuickstart" };
 	inline constexpr FormRef kQ_MQ102Marker{ "Skyrim.esm", 0x038B08, "MQ102OutsideRiverwoodMarker" };
 	inline constexpr FormRef kQ_MQ102A{ "Skyrim.esm", 0x02BF9C, "MQ102A" };
@@ -435,6 +439,7 @@ namespace bo3z::gen
 	namespace elite { inline constexpr float healthMult = 6.0f; inline constexpr float maxAlive = 2.0f; inline constexpr float hitShare = 0.5f; inline constexpr float lungeEvery = 8.0f; inline constexpr float lungeMin = 350.0f; inline constexpr float lungeMax = 1100.0f; inline constexpr float shriekEvery = 12.0f; inline constexpr float shriekRange = 550.0f; inline constexpr float shriekSlow = 40.0f; inline constexpr float shriekSeconds = 3.0f; inline constexpr float shriekDamage = 0.1f; inline constexpr float drainShare = 0.08f; inline constexpr float killPoints = 400.0f; }
 	inline constexpr std::string_view kAnimFireCrossbow = "attackStart", kAnimReloadCrossbow = "reloadStart", kAnimFireStaff = "BeginCastRight", kAnimReloadStaff = "none";
 	inline constexpr std::uint32_t kMuzzleLight = 0x8DC;
+	inline constexpr std::uint32_t kBlankAmmo = 0x8DE;  // keeps crossbow-type guns loaded so attackStart plays the shot, not a bash
 	inline constexpr float kRegenDelay = 5.0f, kRegenPerSecond = 0.35f;
 	inline constexpr float kSpawnMultiplier = 3.0f, kHitDamageFraction = 0.34f, kZombieWeaponDamageMult = 0.1f;
 	inline constexpr bool kIgnoreNpcs = true;

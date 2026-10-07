@@ -18,6 +18,9 @@ namespace bo3z
 			bool            inCombat{ false };
 			float           combatRetry{ 0 };
 			float           webbed{ 0 };
+			float           far{ 0 };       // seconds spent too far away / unloaded
+			float           stall{ 0 };     // seconds spent not closing in
+			float           lastDist{ -1 };
 		};
 
 		Phase                   g_phase = Phase::Day;
@@ -170,6 +173,22 @@ namespace bo3z
 			return a_base && a_base->Is(RE::FormType::NPC) ? a_base : nullptr;
 		}
 
+		// Mostly behind the player, like BO3 windows you can't see.
+		RE::NiPoint3 SpawnSpot(RE::PlayerCharacter* a_player)
+		{
+			const bool  interior = a_player->GetParentCell() && a_player->GetParentCell()->IsInteriorCell();
+			const auto& ring = interior ? R.spawnRingInterior : R.spawnRingExterior;
+			const float angle = a_player->GetAngleZ() + RE::NI_PI + Uniform(-2.1f, 2.1f);
+			const float dist = Uniform(ring[0], ring[1]);
+			const auto  base = a_player->GetPosition();
+			RE::NiPoint3 pos{ base.x + std::sin(angle) * dist, base.y + std::cos(angle) * dist, base.z + R.spawnHeightOffset };
+			float land = 0;
+			if (!interior && RE::TES::GetSingleton()->GetLandHeight(pos, land)) {
+				pos.z = land + R.spawnHeightOffset;
+			}
+			return pos;
+		}
+
 		bool SpawnOne(RE::PlayerCharacter* a_player, int a_force = -1, const RE::NiPoint3* a_at = nullptr)
 		{
 			const auto pick = a_force >= 0 ? std::optional<std::size_t>(static_cast<std::size_t>(a_force)) : PickEnemy();
@@ -178,16 +197,8 @@ namespace bo3z
 			}
 			auto* cell = a_player->GetParentCell();
 			const bool interior = cell->IsInteriorCell();
-			const auto& ring = interior ? R.spawnRingInterior : R.spawnRingExterior;
-			// Mostly behind the player, like BO3 windows you can't see.
-			const float angle = a_player->GetAngleZ() + RE::NI_PI + Uniform(-2.1f, 2.1f);
-			const float dist = Uniform(ring[0], ring[1]);
-			const auto  base = a_player->GetPosition();
-			RE::NiPoint3 pos{ base.x + std::sin(angle) * dist, base.y + std::cos(angle) * dist, base.z + R.spawnHeightOffset };
-			if (a_at) {
-				pos = *a_at;
-			}
-			if (!interior) {
+			RE::NiPoint3 pos = a_at ? *a_at : SpawnSpot(a_player);
+			if (a_at && !interior) {
 				float land = 0;
 				if (RE::TES::GetSingleton()->GetLandHeight(pos, land)) {
 					pos.z = land + R.spawnHeightOffset;
@@ -234,24 +245,39 @@ namespace bo3z
 				}
 				av->SetActorValue(RE::ActorValue::kAggression, 2);  // very aggressive: no hesitating; KeepThemComing keeps them on players
 			}
-			// Fists only: take every weapon (and bow/arrows) they carry so they fight bare-handed.
+			// Close range only: bows, crossbows, staves, arrows and attack spells go; swords, axes and maces stay.
 			{
-				auto inv = actor->GetInventory([](RE::TESBoundObject& a_obj) { return a_obj.IsWeapon() || a_obj.IsAmmo(); });
+				auto ranged = [](RE::TESBoundObject& a_obj) {
+					if (a_obj.IsAmmo()) {
+						return true;
+					}
+					auto* w = a_obj.As<RE::TESObjectWEAP>();
+					return w && (!gen::kZombieMeleeWeapons || w->IsBow() || w->IsCrossbow() || w->IsStaff());
+				};
+				auto inv = actor->GetInventory(ranged);
 				for (auto& [obj, data] : inv) {
 					if (data.first > 0) {
 						actor->RemoveItem(obj, data.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 					}
 				}
-				if (auto* eq = actor->GetEquippedObject(false)) {
-					if (eq->IsWeapon()) {
-						RE::ActorEquipManager::GetSingleton()->UnequipObject(actor, eq->As<RE::TESBoundObject>());
+				for (bool left : { false, true }) {
+					if (auto* eq = actor->GetEquippedObject(left)) {
+						if (auto* b = eq->As<RE::TESBoundObject>(); b && eq->IsWeapon() && ranged(*b)) {
+							RE::ActorEquipManager::GetSingleton()->UnequipObject(actor, b);
+						}
 					}
 				}
-				if (auto* eq = actor->GetEquippedObject(true)) {
-					if (eq->IsWeapon()) {
-						RE::ActorEquipManager::GetSingleton()->UnequipObject(actor, eq->As<RE::TESBoundObject>());
+				if (auto* base = actor->GetActorBase(); base && base->actorEffects) {
+					auto* list = base->actorEffects;
+					for (std::uint32_t i = 0; list->spells && i < list->numSpells; ++i) {
+						auto* sp = list->spells[i];
+						if (sp && sp->GetCastingType() != RE::MagicSystem::CastingType::kConstantEffect && sp->GetDelivery() != RE::MagicSystem::Delivery::kSelf) {
+							actor->RemoveSpell(sp);
+						}
 					}
 				}
+				actor->GetActorRuntimeData().selectedSpells[0] = nullptr;
+				actor->GetActorRuntimeData().selectedSpells[1] = nullptr;
 			}
 			if (gen::kEnemies[*pick].elite) {
 				const float want = HealthFor(g_current) * gen::elite::healthMult;
@@ -562,20 +588,46 @@ namespace bo3z
 				if (!gen::kEnemies[s.enemy].forceCombat || (s.combatRetry -= a_delta) > 0) {
 					continue;
 				}
-				s.combatRetry = 0.75f;
+				constexpr float kStep = 0.75f;
+				s.combatRetry = kStep;
 				auto a = s.handle.get();
-				if (!a || !a->Is3DLoaded() || a->IsDead()) {
+				if (!a || a->IsDead()) {
 					continue;
 				}
+				const bool  boss = gen::kEnemies[s.enemy].bossEvery > 0;
+				const float dist = a->GetPosition().GetDistance(a_player->GetPosition());
+				// Left behind (too far, or its cell unloaded): climb out of the ground again near the player, BO3-style.
+				if (!boss && (dist > gen::kChaseRelocateDist || !a->Is3DLoaded())) {
+					if ((s.far += kStep) >= gen::kChaseRelocateSeconds) {
+						a->StopCombat();
+						a->MoveTo(a_player);
+						a->SetPosition(SpawnSpot(a_player), true);
+						a->MoveToNearestNavmesh();
+						a->StartCombat(a_player);
+						s.far = 0, s.stall = 0, s.lastDist = -1;
+						logger::info("night: relocated {} that fell behind ({:.0f} away)", gen::kEnemies[s.enemy].id, dist);
+					}
+					continue;
+				}
+				s.far = 0;
+				if (!a->Is3DLoaded()) {
+					continue;
+				}
+				// Not closing in while still out of reach: it lost track of the player, so re-target from scratch.
+				const bool closing = s.lastDist < 0 || dist < s.lastDist - 30.0f || dist < 350.0f;
+				s.lastDist = dist;
+				s.stall = closing ? 0 : s.stall + kStep;
 				auto target = a->GetActorRuntimeData().currentCombatTarget.get();
-				if (a->IsInCombat() && target.get() == a_player) {
+				if (a->IsInCombat() && target.get() == a_player && s.stall < gen::kChaseStallSeconds) {
 					s.inCombat = true;
 					continue;
 				}
 				if (a->IsInCombat()) {
-					a->StopCombat();  // fighting an NPC: back to the player
+					a->StopCombat();  // fighting an NPC or searching: back to the player
 				}
+				s.stall = 0;
 				a->StartCombat(a_player);
+				a->EvaluatePackage(true, false);
 			}
 			// NPCs that picked a fight with our undead drop it.
 			if (gen::kIgnoreNpcs) {

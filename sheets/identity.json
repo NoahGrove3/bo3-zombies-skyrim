@@ -46,6 +46,11 @@
       "id": "round_word",
       "text": "Night",
       "verify": []
+    },
+    {
+      "id": "station_marker",
+      "text": "Undying Nights Station",
+      "verify": []
     }
   ]
 }

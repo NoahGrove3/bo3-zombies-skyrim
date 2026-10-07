@@ -325,6 +325,18 @@ int main(int argc, char** argv)
 			std::unordered_map<uint16_t, float> wm;
 			for (uint32_t v = 0; v < g.w.size(); ++v) if (auto it = g.w[v].find(bones[bi]); it != g.w[v].end()) wm[uint16_t(v)] = it->second;
 			nif.SetShapeBoneWeights(name, bi, wm);
+			// Per-bone bounding sphere in bone space: the engine culls skinned meshes with these (radius 0 = never drawn).
+			const MatTransform toBone = bind.InverseTransform();
+			std::vector<Vector3> pts;
+			for (auto& [v, wt] : wm) pts.push_back(toBone.ApplyTransform(g.v[v]));
+			if (pts.empty()) pts.push_back(toBone.ApplyTransform(Vector3()));
+			Vector3 c;
+			for (auto& p : pts) c += p;
+			c /= float(pts.size());
+			float r = 0;
+			for (auto& p : pts) r = std::max(r, (p - c).length());
+			BoundingSphere bs(c, r + 1.0f);
+			nif.SetShapeBoneBounds(name, bi, bs);
 		}
 		nif.UpdateSkinPartitions(sh);
 		nif.CalcTangentsForShape(sh);
