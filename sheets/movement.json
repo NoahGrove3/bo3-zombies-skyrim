@@ -1,6 +1,6 @@
 {
   "sheet": "movement",
-  "about": "BO3 movement on top of Skyrim's controller.",
+  "about": "Movement, tuned toward fast arena-shooter feel (Apex-style) on Skyrim's controller. Speeds in Skyrim units per second unless noted.",
   "columns": [
     "id",
     "what",
@@ -10,9 +10,18 @@
   ],
   "rows": [
     {
+      "id": "run_boost",
+      "what": "extra SpeedMult always (Skyrim's run feels sluggish)",
+      "value": 30,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
       "id": "sprint_boost",
       "what": "extra SpeedMult while sprinting",
-      "value": 25,
+      "value": 60,
       "durationMs": 0,
       "verify": [
         "value"
@@ -20,12 +29,64 @@
     },
     {
       "id": "slide",
-      "what": "sprint + crouch: burst of speed while crouched",
-      "value": 90,
-      "durationMs": 700,
+      "what": "sprint + crouch: slide starting at this speed, locked to the direction you were running, easing off over durationMs",
+      "value": 900,
+      "durationMs": 950,
       "verify": [
         "value",
         "durationMs"
+      ]
+    },
+    {
+      "id": "slide_boost",
+      "what": "extra SpeedMult during the slide (backup if the game re-drives velocity)",
+      "value": 220,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "slide_jump",
+      "what": "jumping out of a slide keeps this share of slide speed into the air",
+      "value": 0.95,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "air_control",
+      "what": "air strafing: acceleration toward your input while airborne (units/s^2)",
+      "value": 700,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "air_max",
+      "what": "cap on horizontal air speed gained by strafing",
+      "value": 760,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "sprint_stamina",
+      "what": "multiplier on Skyrim's sprint stamina drain",
+      "value": 0.35,
+      "durationMs": 0,
+      "verify": []
+    },
+    {
+      "id": "jump_height",
+      "what": "multiplier on Skyrim's jump height",
+      "value": 1.2,
+      "durationMs": 0,
+      "verify": [
+        "value"
       ]
     },
     {
