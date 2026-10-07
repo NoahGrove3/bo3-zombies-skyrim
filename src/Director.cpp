@@ -536,13 +536,24 @@ namespace bo3z
 		void Dawn()
 		{
 			int n = 0;
+			// Dawn: the dead (standing or fallen) are gone with the light.
 			for (auto& s : g_alive) {
-				if (auto a = s.handle.get(); a && !a->IsDead()) {
-					a->KillImmediate();  // no killer: no points
+				if (auto a = s.handle.get()) {
+					g_ours.erase(a->GetFormID());
+					a->Disable();
+					a->SetDelete(true);
 					++n;
 				}
 			}
 			g_alive.clear();
+			for (auto& h : g_corpses) {
+				if (auto a = h.get()) {
+					g_ours.erase(a->GetFormID());
+					a->Disable();
+					a->SetDelete(true);
+				}
+			}
+			g_corpses.clear();
 			if (g_phase == Phase::Fighting) {
 				// Dawn ends the round: one more night survived (one more tally on the board).
 				Save::Set(gen::kAV_round, g_current);

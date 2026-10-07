@@ -9,7 +9,7 @@ namespace bo3z::gen
 	struct FormRef { std::string_view plugin; std::uint32_t localId; std::string_view editorId; };
 	inline constexpr float kChaseRelocateDist = 4000.0f, kChaseRelocateSeconds = 3.0f, kChaseStallSeconds = 2.5f;
 	inline constexpr float kCycleMinutes = 30.0f;  // a full Skyrim day; night is nightStart..nightEnd (20:00-05:36 = 40%)
-	inline constexpr float kManaRegenPerSecond = 0.12f, kManaRegenDelay = 1.0f;
+	inline constexpr float kManaRegenPerSecond = 0.35f, kManaRegenDelay = 1.0f;
 	inline constexpr bool kZombieMeleeWeapons = true;  // keep swords/axes/maces; strip bows, staves, spells
 	struct Rounds {
 		float nightStartHour, nightEndHour, breakSeconds, firstBreakSeconds; int maxAlive, aiMaxBase, aiPerPlayer;
@@ -201,14 +201,14 @@ namespace bo3z::gen
 		GunDef{ "mammothlmg", "Galewind Wand", "lmg", Fire(1), 125.0f, 2.0f, 1, 3.0f, 0.5f, 0, 0, 85, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_rapid, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x81D, 9, -1, 0, false, 0x901, 0, 0.0f, 0.1f, 0x000, "Gale: knocks the dead back", 0xBFE9F2 },
 		GunDef{ "longshot", "Starfall Wand", "sniper", Fire(0), 540.0f, 3.0f, 1, 4.0f, 0.05f, 0, 0, 520, 1, 0, 12000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_heavy, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x81E, 10, -1, 0, false, 0x904, 0, 0.0f, 8.0f, 0x000, "Starfall: pierces every foe", 0x9FB6FF },
 		GunDef{ "aetherium", "Wand of Auriel's Dawn", "wonder", Fire(0), 1000.0f, 2.0f, 1, 1.0f, 0.5f, 0, 0, 330, 1, 0, 5000.0f, 200.0f, 600.0f, 28.0f, 14.0f, Sound::cast_heavy, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x81F, 1, -1, 0, false, 0x907, 0, 0.0f, 0.0f, 0x000, "Dawn: bursts of sunlight", 0xFFD86A },
-		GunDef{ "flamerepeater", "Tome of Flames", "smg", Fire(1), 80.0f, 1.5f, 1, 2.2f, 1.0f, 0, 0, 95, 1, 0, 2600.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_smg, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x894, 0, 0, 3, false, 0x000, 1, 3.0f, 0.0f, 0x916, "Stream of fire", 0xFF6A20 },
-		GunDef{ "frostlancer", "Tome of Frost", "ar", Fire(0), 260.0f, 3.0f, 1, 1.2f, 0.2f, 0, 0, 260, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x895, 0, 2, 1, false, 0x000, 1, 12.0f, 0.0f, 0x918, "Ice spikes", 0x8CD2FF },
-		GunDef{ "stormcaller", "Tome of Storms", "ar", Fire(2), 140.0f, 2.0f, 1, 1.5f, 0.4f, 0, 0, 320, 3, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x896, 0, 3, 1, false, 0x000, 1, 6.0f, 0.0f, 0x91A, "Lightning bursts", 0xB47CFF },
-		GunDef{ "embermortar", "Tome of Embers", "shotgun", Fire(0), 400.0f, 1.0f, 1, 1.0f, 0.5f, 0, 0, 700, 1, 0, 3500.0f, 260.0f, 600.0f, 28.0f, 14.0f, Sound::shot_shotgun, Sound::reload_shell, Sound::mana_empty, 0, 0, 1, 0x897, 1, 1, 2, false, 0x000, 1, 30.0f, 0.0f, 0x91C, "Exploding fireballs", 0xFFA028 },
-		GunDef{ "wabbajack", "Grimoire of Madness", "wonder", Fire(0), 1500.0f, 1.0f, 1, 1.0f, 0.5f, 0, 0, 450, 1, 0, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ray, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x898, 4, 6, 1, false, 0x000, 2, 45.0f, 0.0f, 0x91E, "Madness", 0xAAFF5A },
-		GunDef{ "thuumcannon", "Grimoire of the Thu'um", "wonder", Fire(0), 5000.0f, 1.0f, 1, 22.0f, 22.0f, 0, 0, 900, 1, 0, 1100.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_shotgun, Sound::reload_shell, Sound::mana_empty, 0, 0, 1, 0x899, 3, 5, 2, false, 0x000, 2, 70.0f, 0.0f, 0x920, "Unrelenting Force", 0xFFD25A },
-		GunDef{ "skyforgearc", "Grimoire of the Skyforge", "wonder", Fire(0), 3000.0f, 1.0f, 1, 1.5f, 0.5f, 0, 0, 600, 1, 0, 3500.0f, 420.0f, 3000.0f, 28.0f, 14.0f, Sound::shot_ray, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x89A, 2, 4, 2, false, 0x000, 2, 55.0f, 0.0f, 0x922, "Chain lightning", 0x78DCFF },
-		GunDef{ "apprentice", "Apprentice's Tome", "pistol", Fire(0), 80.0f, 2.0f, 1, 1.5f, 0.4f, 0, 0, 160, 1, 0, 4200.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ray, Sound::reload_mag, Sound::mana_empty, 0, 0, 0, 0x8AA, 0, 0, 2, true, 0x000, 1, 8.0f, 0.0f, 0x924, "Firebolts", 0xFFB060 },
+		GunDef{ "flamerepeater", "Tome of Flames", "smg", Fire(1), 80.0f, 1.5f, 1, 2.2f, 1.0f, 0, 0, 95, 1, 0, 2600.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_smg, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x894, 0, 0, 3, false, 0x000, 1, 2.0f, 0.0f, 0x916, "Stream of fire", 0xFF6A20 },
+		GunDef{ "frostlancer", "Tome of Frost", "ar", Fire(0), 260.0f, 3.0f, 1, 1.2f, 0.2f, 0, 0, 260, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x895, 0, 2, 1, false, 0x000, 1, 7.0f, 0.0f, 0x918, "Ice spikes", 0x8CD2FF },
+		GunDef{ "stormcaller", "Tome of Storms", "ar", Fire(2), 140.0f, 2.0f, 1, 1.5f, 0.4f, 0, 0, 320, 3, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x896, 0, 3, 1, false, 0x000, 1, 4.0f, 0.0f, 0x91A, "Lightning bursts", 0xB47CFF },
+		GunDef{ "embermortar", "Tome of Embers", "shotgun", Fire(0), 400.0f, 1.0f, 1, 1.0f, 0.5f, 0, 0, 700, 1, 0, 3500.0f, 260.0f, 600.0f, 28.0f, 14.0f, Sound::shot_shotgun, Sound::reload_shell, Sound::mana_empty, 0, 0, 1, 0x897, 1, 1, 2, false, 0x000, 1, 16.0f, 0.0f, 0x91C, "Exploding fireballs", 0xFFA028 },
+		GunDef{ "wabbajack", "Grimoire of Madness", "wonder", Fire(0), 1500.0f, 1.0f, 1, 1.0f, 0.5f, 0, 0, 450, 1, 0, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ray, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x898, 4, 6, 1, false, 0x000, 2, 25.0f, 0.0f, 0x91E, "Madness", 0xAAFF5A },
+		GunDef{ "thuumcannon", "Grimoire of the Thu'um", "wonder", Fire(0), 5000.0f, 1.0f, 1, 22.0f, 22.0f, 0, 0, 900, 1, 0, 1100.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_shotgun, Sound::reload_shell, Sound::mana_empty, 0, 0, 1, 0x899, 3, 5, 2, false, 0x000, 2, 40.0f, 0.0f, 0x920, "Unrelenting Force", 0xFFD25A },
+		GunDef{ "skyforgearc", "Grimoire of the Skyforge", "wonder", Fire(0), 3000.0f, 1.0f, 1, 1.5f, 0.5f, 0, 0, 600, 1, 0, 3500.0f, 420.0f, 3000.0f, 28.0f, 14.0f, Sound::shot_ray, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x89A, 2, 4, 2, false, 0x000, 2, 30.0f, 0.0f, 0x922, "Chain lightning", 0x78DCFF },
+		GunDef{ "apprentice", "Apprentice's Tome", "pistol", Fire(0), 80.0f, 2.0f, 1, 1.5f, 0.4f, 0, 0, 160, 1, 0, 4200.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ray, Sound::reload_mag, Sound::mana_empty, 0, 0, 0, 0x8AA, 0, 0, 2, true, 0x000, 1, 5.0f, 0.0f, 0x924, "Firebolts", 0xFFB060 },
 	} };
 	inline constexpr int kGunIdx_sidearm = 0;
 	inline constexpr int kGunIdx_centurion = 1;
@@ -460,5 +460,5 @@ namespace bo3z::gen
 	inline constexpr float kRegenDelay = 5.0f, kRegenPerSecond = 0.35f;
 	inline constexpr float kSpawnMultiplier = 3.0f, kHitDamageFraction = 0.34f, kZombieWeaponDamageMult = 0.1f;
 	inline constexpr bool kIgnoreNpcs = true;
-	inline constexpr std::array<std::array<float, 2>, 4> kSpeedTiers{ { { 1.0f, 70.0f }, { 5.0f, 90.0f }, { 10.0f, 110.0f }, { 15.0f, 125.0f } } };
+	inline constexpr std::array<std::array<float, 2>, 4> kSpeedTiers{ { { 1.0f, 100.0f }, { 3.0f, 115.0f }, { 6.0f, 130.0f }, { 10.0f, 145.0f } } };
 }

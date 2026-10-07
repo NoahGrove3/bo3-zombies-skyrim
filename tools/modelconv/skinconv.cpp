@@ -235,8 +235,37 @@ int main(int argc, char** argv)
 		aff[t] = a;
 	}
 	const bool noRetarget = getenv("SKINCONV_RAW") != nullptr;
+	// The trunk (pelvis..head) moves as one: a continuous remap of height along the spine joints (source heights ->
+	// target heights, with the spine's sideways offset), so neighbouring trunk bones never pull the torso apart.
+	static const std::vector<std::string> trunkNames = { "NPC Pelvis [Pelv]", "NPC Spine [Spn0]", "NPC Spine1 [Spn1]", "NPC Spine2 [Spn2]", "NPC Neck [Neck]", "NPC Head [Head]" };
+	struct Knot { double sz, tz; V3 off; };
+	std::vector<Knot> trunk;
+	for (auto& n : trunkNames) {
+		if (!primary.count(n)) continue;
+		const V3 sj = norm(srcJoint[primary[n]]), tj = T(n);
+		trunk.push_back({ sj.z, tj.z, V3{ tj.x - sj.x, tj.y - sj.y, 0 } });
+	}
+	std::sort(trunk.begin(), trunk.end(), [](const Knot& a, const Knot& b) { return a.sz < b.sz; });
+	auto trunkMap = [&](V3 v) {
+		if (trunk.empty()) return v;
+		if (v.z <= trunk.front().sz) return V3{ v.x + trunk.front().off.x, v.y + trunk.front().off.y, v.z + (trunk.front().tz - trunk.front().sz) };
+		if (v.z >= trunk.back().sz) return V3{ v.x + trunk.back().off.x, v.y + trunk.back().off.y, v.z + (trunk.back().tz - trunk.back().sz) };
+		for (size_t i = 0; i + 1 < trunk.size(); ++i) {
+			const auto& a = trunk[i];
+			const auto& b = trunk[i + 1];
+			if (v.z >= a.sz && v.z <= b.sz) {
+				const double t = b.sz > a.sz ? (v.z - a.sz) / (b.sz - a.sz) : 0;
+				const V3 off = a.off * (1 - t) + b.off * t;
+				return V3{ v.x + off.x, v.y + off.y, a.tz + (b.tz - a.tz) * t };
+			}
+		}
+		return v;
+	};
+	std::set<std::string> trunkSet(trunkNames.begin(), trunkNames.end());
+	trunkSet.insert("NPC Head [Jaw]");
 	auto applyBone = [&](const std::string& t, V3 v) {
 		if (noRetarget) return v;
+		if (trunkSet.count(t)) return trunkMap(v);
 		const auto& a = aff[t];
 		V3     r = a.R * (v - a.S);                   // turned, relative to the target joint
 		double u = r.dot(a.axis);                     // distance along the target bone

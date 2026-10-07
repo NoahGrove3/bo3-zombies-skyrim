@@ -43,7 +43,9 @@ int main(int argc, char** argv)
 	bool          collide = false;  // add a static box collision (placed furniture)
 	std::string   prn;
 	bool          keepOrigin = false;  // authored in place: don't recentre
-	bool          boxSet = false;      // collidebox: explicit collision bounds (model units, after transforms)
+	bool          boxSet = false;
+	bool          frustum = false;  // collidefrustum: walkable sloped sides (top rect + base grown by 'grow')
+	float         fx0 = 0, fy0 = 0, fx1 = 0, fy1 = 0, fzt = 0, fzb = 0, fgrow = 0;      // collidebox: explicit collision bounds (model units, after transforms)
 	Vector3       boxLo, boxHi;              // weapons: attach point (Prn extra data), e.g. WeaponStaff
 	float         fit = 0;  // if set: scale so the longest side is this many units
 	std::set<std::string>      skip;
@@ -62,6 +64,7 @@ int main(int argc, char** argv)
 		else if (k == "collide") ss >> collide;
 		else if (k == "prn") ss >> prn;
 		else if (k == "origin") ss >> keepOrigin;
+		else if (k == "collidefrustum") { ss >> fx0 >> fy0 >> fx1 >> fy1 >> fzt >> fzb >> fgrow; frustum = collide = true; }
 		else if (k == "collidebox") { ss >> boxLo.x >> boxLo.y >> boxLo.z >> boxHi.x >> boxHi.y >> boxHi.z; boxSet = collide = true; }
 		else if (k == "fit") ss >> fit;
 		else if (k == "meshoffset") { std::string n; float x, y, z; ss >> n >> x >> y >> z; meshOffset[n] = { x, y, z }; }
@@ -188,7 +191,8 @@ int main(int argc, char** argv)
 		}
 		if (mat.alpha != "0") {
 			auto a = std::make_unique<NiAlphaProperty>();
-			a->flags = mat.alpha == "blend" ? 0x00ED : 0x12EC;  // blend: src alpha / inv src alpha; test: alpha test >= threshold
+			a->flags = mat.alpha == "add" ? 0x000D : mat.alpha == "blend" ? 0x00ED : 0x12EC;  // add: src alpha + one (glows, see-through); blend: src alpha / inv src alpha; test: alpha test >= threshold
+			if (mat.alpha == "add") if (auto* ls = dynamic_cast<BSLightingShaderProperty*>(nif.GetShader(shape))) ls->shaderFlags2 &= ~SLSF2_ZBUFFER_WRITE;
 			a->threshold = 96;
 			nif.AssignAlphaProperty(shape, std::move(a));
 		}
@@ -201,11 +205,38 @@ int main(int argc, char** argv)
 	if (collide && n > 0) {
 		// One fixed box around the whole model on the static layer: blocks the player and takes the crosshair.
 		constexpr float kHavok = 69.99124f;
-		auto box = std::make_unique<bhkBoxShape>();
-		box->SetMaterial(500811281);  // SKY_HAV_MAT_WOOD
-		box->radius = 0.01f;
-		box->dimensions = Vector3((bmax.x - bmin.x) / 2 / kHavok, (bmax.y - bmin.y) / 2 / kHavok, (bmax.z - bmin.z) / 2 / kHavok);
-		const uint32_t boxId = nif.GetHeader().AddBlock(std::move(box));
+		uint32_t boxId = 0;
+		if (frustum) {
+			// convex hull: top rectangle at fzt, base rectangle grown by fgrow at fzb (havok units, body at the origin)
+			auto cv = std::make_unique<bhkConvexVerticesShape>();
+			cv->SetMaterial(131151687);  // SKY_HAV_MAT_STONE
+			cv->radius = 0.01f;
+			const float g = fgrow;
+			const float xs[2][2] = { { fx0, fx1 }, { fx0 - g, fx1 + g } }, ys[2][2] = { { fy0, fy1 }, { fy0 - g, fy1 + g } }, zs[2] = { fzt, fzb };
+			for (int l = 0; l < 2; ++l)
+				for (int i = 0; i < 2; ++i)
+					for (int j = 0; j < 2; ++j) { Vector4 q(xs[l][i] / kHavok, ys[l][j] / kHavok, zs[l] / kHavok, 0); cv->verts.push_back(q); }
+			auto plane = [&](float nx, float ny, float nz, float px, float py, float pz) {
+				const float L = std::sqrt(nx * nx + ny * ny + nz * nz);
+				nx /= L, ny /= L, nz /= L;
+				Vector4 q(nx, ny, nz, -(nx * px + ny * py + nz * pz) / kHavok); cv->normals.push_back(q);
+			};
+			const float h = fzt - fzb;
+			plane(0, 0, 1, 0, 0, fzt);
+			plane(0, 0, -1, 0, 0, fzb);
+			plane(h, 0, g, fx1, 0, fzt);
+			plane(-h, 0, g, fx0, 0, fzt);
+			plane(0, h, g, 0, fy1, fzt);
+			plane(0, -h, g, 0, fy0, fzt);
+			boxId = nif.GetHeader().AddBlock(std::move(cv));
+			bmin = Vector3(0, 0, 0), bmax = Vector3(0, 0, 0);  // body translation 0: hull is in model space
+		} else {
+			auto box = std::make_unique<bhkBoxShape>();
+			box->SetMaterial(500811281);  // SKY_HAV_MAT_WOOD
+			box->radius = 0.01f;
+			box->dimensions = Vector3((bmax.x - bmin.x) / 2 / kHavok, (bmax.y - bmin.y) / 2 / kHavok, (bmax.z - bmin.z) / 2 / kHavok);
+			boxId = nif.GetHeader().AddBlock(std::move(box));
+		}
 		auto body = std::make_unique<bhkRigidBodyT>();
 		body->shapeRef.index = boxId;
 		body->collisionFilter.layer = 1;  // SKYL_STATIC

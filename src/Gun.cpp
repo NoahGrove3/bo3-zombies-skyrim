@@ -421,7 +421,7 @@ namespace bo3z
 			if (g.spell >= 0 && g.spellOn == 2) {
 				Cast(g.spell, firstHit);  // fired spell flies at what you hit (or straight ahead)
 			}
-			if (g.bulletSpell) {  // the visible element bolt, out of the wand tip (or the casting hand) at the crosshair
+			if (g.bulletSpell && g.fire == gen::Fire::Auto) {  // rapid wands: a bolt per shot (the staff cast itself launches one per release)
 				const RE::NiPoint3 to = firstHit ? HeadPos(firstHit) - RE::NiPoint3{ 0, 0, 20 } : origin + aim * std::min(g.range, 4000.0f);
 				LaunchBolt(player, g, to);
 			}
@@ -773,16 +773,26 @@ namespace bo3z
 		// Night magic: magicka comes back fast once you stop casting (Quicksilver doubles it).
 		void TickMana(float a_delta)
 		{
-			g_manaQuiet += a_delta;
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p || !Director::NightNow() || g_manaQuiet < gen::kManaRegenDelay) {
+			if (!p) {
 				return;
 			}
-			auto*       av = p->AsActorValueOwner();
-			const float max = av->GetPermanentActorValue(RE::ActorValue::kMagicka), cur = av->GetActorValue(RE::ActorValue::kMagicka);
-			if (cur < max) {
-				av->RestoreActorValue(RE::ActorValue::kMagicka, std::min(max - cur, max * gen::kManaRegenPerSecond / Perks::ManaMult() * a_delta));
+			auto* av = p->AsActorValueOwner();
+			// Magicka and stamina both come back fast once you stop spending them (Quicksilver doubles magicka).
+			g_manaQuiet += a_delta;
+			if (g_manaQuiet >= gen::kManaRegenDelay) {
+				const float max = av->GetPermanentActorValue(RE::ActorValue::kMagicka), cur = av->GetActorValue(RE::ActorValue::kMagicka);
+				if (cur < max) {
+					av->RestoreActorValue(RE::ActorValue::kMagicka, std::min(max - cur, max * gen::kManaRegenPerSecond / Perks::ManaMult() * a_delta));
+				}
 			}
+			static float lastSp = -1, spQuiet = 0;
+			const float  spMax = av->GetPermanentActorValue(RE::ActorValue::kStamina), sp = av->GetActorValue(RE::ActorValue::kStamina);
+			spQuiet = (lastSp >= 0 && sp < lastSp - 0.01f) || p->AsActorState()->IsSprinting() ? 0 : spQuiet + a_delta;
+			if (spQuiet >= gen::kManaRegenDelay && sp < spMax) {
+				av->RestoreActorValue(RE::ActorValue::kStamina, std::min(spMax - sp, spMax * gen::kManaRegenPerSecond * a_delta));
+			}
+			lastSp = av->GetActorValue(RE::ActorValue::kStamina);
 		}
 
 		// ---- aim down sights: pull the first-person gun onto the view line so you look down its barrel ----

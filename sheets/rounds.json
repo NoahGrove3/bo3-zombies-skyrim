@@ -98,19 +98,19 @@
       "speedTiers": [
         [
           1,
-          70
+          100
         ],
         [
-          5,
-          90
+          3,
+          115
+        ],
+        [
+          6,
+          130
         ],
         [
           10,
-          110
-        ],
-        [
-          15,
-          125
+          145
         ]
       ],
       "hitDamageFraction": 0.34,
@@ -129,7 +129,7 @@
       "chaseRelocateSeconds": 3.0,
       "chaseStallSeconds": 2.5,
       "zombieWeapons": "melee",
-      "manaRegenPerSecond": 0.12,
+      "manaRegenPerSecond": 0.35,
       "manaRegenDelay": 1.0,
       "cycleMinutes": 30
     }

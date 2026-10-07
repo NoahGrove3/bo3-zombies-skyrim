@@ -69,10 +69,11 @@ for w in S['weapons']['rows']:
     kind = w.get('kind', 'wand')
     if kind == 'wand':
         # enchantment: concentration, aimed, staff-type, free (infinite casts)
-        enit = struct.pack('<iIIiIIfII', 0, 0x1, 2, 3000, 0, 0x0C, 0.0, 0, 0)  # concentration, self, staff enchantment, free
+        # staff cast (point and release), aimed: Skyrim launches the wand's own element bolt from the tip
+        enit = struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 2, 0x0C, 0.0, 0, 0)  # fire-and-forget, aimed, staff enchantment, free
         recs['ENCH'].append(record('ENCH', fid('ENCH', w['id']), [
             sub('EDID', z('UN_WandEnch_' + w['id'])), sub('OBND', bytes(12)), sub('FULL', z(w['label'])), sub('ENIT', enit),
-            sub('EFID', struct.pack('<I', fid('MGEF', 'wandcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+            sub('EFID', struct.pack('<I', fid('MGEF', 'bullet_' + w['projectile']))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
         subs = []
         for name, hx in T['weap_staff']['subs']:
             b = bytes.fromhex(hx)
@@ -143,6 +144,7 @@ for (kind, key), r in DREC.items():
 for p in S['projectiles']['rows']:
     key = 'bullet_' + p['id']
     pd = bytearray(tsub('proj_bullet', 'DATA'))
+    struct.pack_into('<H', pd, 0, 0x0)                # plain magic missile: not a supersonic bullet (those draw no model)
     struct.pack_into('<f', pd, 4, 0.0)                # no drop
     struct.pack_into('<f', pd, 8, float(p['speed']))  # speed
     struct.pack_into('<I', pd, 36, 0)                 # no explosion

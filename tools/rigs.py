@@ -19,8 +19,7 @@ def finger_maps(side_src, side_tgt, names):
 def side(s): return 'L' if s == 'L' else 'R'
 
 def humanoid_aims():
-    aims = [('NPC Spine [Spn0]', 'NPC Spine1 [Spn1]'), ('NPC Spine1 [Spn1]', 'NPC Spine2 [Spn2]'), ('NPC Spine2 [Spn2]', 'NPC Neck [Neck]'),
-            ('NPC Neck [Neck]', 'NPC Head [Head]')]
+    aims = []  # the trunk (pelvis..head) is remapped as one piece by skinconv: no per-bone turning there
     for S in 'LR':
         foot = 'NPC L Foot [LLft ]' if S == 'L' else 'NPC R Foot [Rft ]'
         aims += [(f'NPC {S} Clavicle [{S}Clv]', f'NPC {S} UpperArm [{S}Uar]'), (f'NPC {S} UpperArm [{S}Uar]', f'NPC {S} Forearm [{S}Lar]'),

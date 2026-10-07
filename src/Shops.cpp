@@ -740,10 +740,6 @@ namespace bo3z
 			}
 			const int town = TownOf(a_ref);
 			logger::info("box: activated in {} (Coffer is in {}), phase {}", gen::kTowns[town], gen::kTowns[ActiveBoxTown()], static_cast<int>(g_show.phase));
-			if (town != ActiveBoxTown()) {
-				Hud::Banner(std::string(gen::kText_box_short) + " is in " + std::string(gen::kTowns[ActiveBoxTown()]), 3.0f);
-				return;
-			}
 			const int crew = Save::Crew();
 			const int cost = crew >= 0 && gen::kCrew[crew].passive == 3 ? static_cast<int>(gen::kCrew[crew].value) : gen::kObjects[0].cost;
 			if (!Points::Spend(cost)) {
@@ -758,9 +754,7 @@ namespace bo3z
 			// Cheese wheel (the Coffer gets bored): never in the first 4 spins at a spot, then 1 in 6. Points back.
 			if (spins > 4 && std::uniform_int_distribution<int>(1, 6)(g_rng) == 1) {
 				Points::Add(cost);
-				auto towns = BoxTowns();
-				std::erase(towns, town);
-				g_show.cheeseTown = towns.empty() ? town : towns[std::uniform_int_distribution<std::size_t>(0, towns.size() - 1)(g_rng)];
+				g_show.cheeseTown = town;  // every town's Coffer works: the dragon skull just resets this one's luck
 				g_show.cheese = true;
 				SetBox(g_show.cheeseTown, 0);
 				logger::info("box: cheese, moving to {}", gen::kTowns[g_show.cheeseTown]);

@@ -13,7 +13,8 @@ CONV = '/home/claude/tools/modelconv'
 rng = np.random.default_rng(5)
 
 # slab extents (keep in sync with sheets/layout.json: back row y=-70 / front row y=+120 in this frame)
-X0, X1, Y0, Y1, TOP, BOTTOM = -330, 330, -150, 185, 0, -90
+X0, X1, Y0, Y1, TOP, BOTTOM = -330, 330, -150, 185, 0, -100
+GROW = 170  # skirt reach: ~30 degree walkable slope
 
 parts = {}
 def add(mat, V, UV, F):
@@ -59,8 +60,17 @@ def crystal(mat, cx, cy, z0, h, r, sides=6):
 def build():
     box('stone', X0, Y0, BOTTOM, X1, Y1, TOP)                                   # the slab
     box('stonedark', X0 - 6, Y0 - 6, -10, X1 + 6, Y1 + 6, -3)                   # lip under the top edge
-    box('stonedark', -210, Y1, BOTTOM, 210, Y1 + 32, -14)                       # two front steps
-    box('stonedark', -210, Y1 + 32, BOTTOM, 210, Y1 + 64, -30)
+    # sloped stone skirt all round: walk up onto the stand from any side, even where the ground drops away
+    t, b = -9, BOTTOM
+    corners_top = [(X0, Y0), (X1, Y0), (X1, Y1), (X0, Y1)]
+    corners_bot = [(X0 - GROW, Y0 - GROW), (X1 + GROW, Y0 - GROW), (X1 + GROW, Y1 + GROW), (X0 - GROW, Y1 + GROW)]
+    for i in range(4):
+        (ax, ay), (bx, by) = corners_top[i], corners_top[(i + 1) % 4]
+        (cx, cy), (dx, dy) = corners_bot[(i + 1) % 4], corners_bot[i]
+        q = [(ax, ay, t), (bx, by, t), (cx, cy, b), (dx, dy, b)]
+        L = math.hypot(bx - ax, by - ay)
+        uv = [(0, 0), (L / 96, 0), (L / 96, 2.4), (0, 2.4)]
+        add('stonedark', q, uv, [(0, 2, 1), (0, 3, 2)])
     for px in (X0 + 22, X1 - 22):
         for py in (Y0 + 22, Y1 - 22):
             box('stonedark', px - 18, py - 18, TOP, px + 18, py + 18, 150, 64)  # pillar
@@ -117,7 +127,7 @@ def main():
          'rune_g': save(Image.new('RGB', (64, 64), (190, 110, 255)), 'rune_g.dds'),
          'flat_n': save(Image.new('RGBA', (64, 64), (128, 128, 255, 160)), 'flat_n.dds', True)}
     out = OUT / 'Meshes' / 'UndyingNights' / 'stand' / 'stand.nif'; out.parent.mkdir(parents=True, exist_ok=True)
-    job = [f'in {obj}', f'out {out}', 'origin 1', f'collidebox {X0} {Y0} {BOTTOM} {X1} {Y1} {TOP}',
+    job = [f'in {obj}', f'out {out}', 'origin 1', f'collidefrustum {X0} {Y0} {X1} {Y1} {TOP} {BOTTOM} {GROW}',
            f'mat stone diffuse={t["stone_d"]} normal={t["stone_n"]} spec=0.2 gloss=20',
            f'mat stonedark diffuse={t["dark_d"]} normal={t["dark_n"]} spec=0.2 gloss=20',
            f'mat rune diffuse={t["rune_d"]} normal={t["flat_n"]} glow={t["rune_g"]} emit=0.75,0.43,1.0 emitmult=3 spec=0.5',
