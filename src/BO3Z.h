@@ -78,6 +78,7 @@ namespace bo3z
 		void             Tick(float a_delta);
 		void             Reset();
 		bool             IsRoundUndead(RE::Actor* a_actor);
+		bool             IsSpared(RE::Actor* a_actor);  // night truce: townsfolk and followers can't be hurt
 		bool             NightNow();  // night hours (the undead are out)
 		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
 		bool             IsElite(RE::Actor* a_actor);

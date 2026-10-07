@@ -47,7 +47,11 @@
     "chargeCooldown",
     "chargeMana",
     "verify",
-    "chargeStyle"
+    "chargeStyle",
+    "tapBlast",
+    "chargeBlast",
+    "chargeAura",
+    "chargeSpell"
   ],
   "rows": [
     {
@@ -101,7 +105,11 @@
       "chargeSeconds": 0.9,
       "chargeCooldown": 4,
       "chargeMana": 0,
-      "chargeStyle": "thrust"
+      "chargeStyle": "thrust",
+      "tapBlast": "light",
+      "chargeBlast": "lightmassive",
+      "chargeAura": "shock",
+      "chargeSpell": "none"
     },
     {
       "id": "centurion",
@@ -154,7 +162,11 @@
       "chargeSeconds": 0.9,
       "chargeCooldown": 6,
       "chargeMana": 0,
-      "chargeStyle": "slam"
+      "chargeStyle": "slam",
+      "tapBlast": "dark",
+      "chargeBlast": "darkmassive",
+      "chargeAura": "frost",
+      "chargeSpell": "none"
     },
     {
       "id": "triad",
@@ -207,7 +219,11 @@
       "chargeSeconds": 1.0,
       "chargeCooldown": 6,
       "chargeMana": 0,
-      "chargeStyle": "twirl"
+      "chargeStyle": "twirl",
+      "tapBlast": "dark",
+      "chargeBlast": "priestlarge",
+      "chargeAura": "shock",
+      "chargeSpell": "none"
     },
     {
       "id": "spider",
@@ -260,7 +276,11 @@
       "chargeSeconds": 1.0,
       "chargeCooldown": 6,
       "chargeMana": 0,
-      "chargeStyle": "slam"
+      "chargeStyle": "slam",
+      "tapBlast": "dark",
+      "chargeBlast": "dragondust",
+      "chargeAura": "frost",
+      "chargeSpell": "none"
     },
     {
       "id": "drill",
@@ -313,7 +333,11 @@
       "chargeSeconds": 1.0,
       "chargeCooldown": 7,
       "chargeMana": 0,
-      "chargeStyle": "sweep"
+      "chargeStyle": "sweep",
+      "tapBlast": "priestsmall",
+      "chargeBlast": "priestlarge",
+      "chargeAura": "fire",
+      "chargeSpell": "none"
     },
     {
       "id": "steampump",
@@ -366,7 +390,11 @@
       "chargeSeconds": 1.0,
       "chargeCooldown": 7,
       "chargeMana": 0,
-      "chargeStyle": "sweep"
+      "chargeStyle": "sweep",
+      "tapBlast": "giantslam",
+      "chargeBlast": "giantslambig",
+      "chargeAura": "frost",
+      "chargeSpell": "none"
     },
     {
       "id": "marksman",
@@ -419,7 +447,11 @@
       "chargeSeconds": 1.0,
       "chargeCooldown": 5,
       "chargeMana": 0,
-      "chargeStyle": "thrust"
+      "chargeStyle": "thrust",
+      "tapBlast": "light",
+      "chargeBlast": "lightmassive",
+      "chargeAura": "frost",
+      "chargeSpell": "none"
     },
     {
       "id": "animunculi",
@@ -472,7 +504,11 @@
       "chargeSeconds": 1.0,
       "chargeCooldown": 6,
       "chargeMana": 0,
-      "chargeStyle": "slam"
+      "chargeStyle": "slam",
+      "tapBlast": "dark",
+      "chargeBlast": "darkmassive",
+      "chargeAura": "shock",
+      "chargeSpell": "none"
     },
     {
       "id": "kagrenac",
@@ -525,7 +561,11 @@
       "chargeSeconds": 1.0,
       "chargeCooldown": 8,
       "chargeMana": 0,
-      "chargeStyle": "slam"
+      "chargeStyle": "slam",
+      "tapBlast": "atrofrost",
+      "chargeBlast": "icevolley",
+      "chargeAura": "frost",
+      "chargeSpell": "icyspear"
     },
     {
       "id": "mammothlmg",
@@ -578,7 +618,11 @@
       "chargeSeconds": 1.0,
       "chargeCooldown": 6,
       "chargeMana": 0,
-      "chargeStyle": "sweep"
+      "chargeStyle": "sweep",
+      "tapBlast": "dragondust",
+      "chargeBlast": "giantslambig",
+      "chargeAura": "frost",
+      "chargeSpell": "none"
     },
     {
       "id": "longshot",
@@ -631,7 +675,11 @@
       "chargeSeconds": 1.2,
       "chargeCooldown": 8,
       "chargeMana": 0,
-      "chargeStyle": "raise"
+      "chargeStyle": "raise",
+      "tapBlast": "shockmass",
+      "chargeBlast": "shockmass",
+      "chargeAura": "shock",
+      "chargeSpell": "thunderbolt"
     },
     {
       "id": "aetherium",
@@ -684,7 +732,11 @@
       "chargeSeconds": 1.2,
       "chargeCooldown": 9,
       "chargeMana": 0,
-      "chargeStyle": "slam"
+      "chargeStyle": "slam",
+      "tapBlast": "light",
+      "chargeBlast": "lightmassive",
+      "chargeAura": "fire",
+      "chargeSpell": "firestormspell"
     },
     {
       "id": "flamerepeater",
@@ -737,7 +789,11 @@
       "chargeSeconds": 1.0,
       "chargeCooldown": 4,
       "chargeMana": 6,
-      "chargeStyle": "sweep"
+      "chargeStyle": "sweep",
+      "tapBlast": "fireball",
+      "chargeBlast": "firestorm",
+      "chargeAura": "fire",
+      "chargeSpell": "incinerate"
     },
     {
       "id": "frostlancer",
@@ -790,7 +846,11 @@
       "chargeSeconds": 1.0,
       "chargeCooldown": 4,
       "chargeMana": 4,
-      "chargeStyle": "thrust"
+      "chargeStyle": "thrust",
+      "tapBlast": "frost",
+      "chargeBlast": "icevolley",
+      "chargeAura": "frost",
+      "chargeSpell": "icyspear"
     },
     {
       "id": "stormcaller",
@@ -843,7 +903,11 @@
       "chargeSeconds": 1.0,
       "chargeCooldown": 4,
       "chargeMana": 6,
-      "chargeStyle": "raise"
+      "chargeStyle": "raise",
+      "tapBlast": "runeshock",
+      "chargeBlast": "shockmass",
+      "chargeAura": "shock",
+      "chargeSpell": "thunderbolt"
     },
     {
       "id": "embermortar",
@@ -896,7 +960,11 @@
       "chargeSeconds": 1.2,
       "chargeCooldown": 5,
       "chargeMana": 3,
-      "chargeStyle": "slam"
+      "chargeStyle": "slam",
+      "tapBlast": "fireball",
+      "chargeBlast": "atrofire",
+      "chargeAura": "fire",
+      "chargeSpell": "fireball"
     },
     {
       "id": "wabbajack",
@@ -949,7 +1017,11 @@
       "chargeSeconds": 1.5,
       "chargeCooldown": 8,
       "chargeMana": 3,
-      "chargeStyle": "twirl"
+      "chargeStyle": "twirl",
+      "tapBlast": "light",
+      "chargeBlast": "darkmassive",
+      "chargeAura": "shock",
+      "chargeSpell": "none"
     },
     {
       "id": "thuumcannon",
@@ -1002,7 +1074,11 @@
       "chargeSeconds": 1.5,
       "chargeCooldown": 8,
       "chargeMana": 2,
-      "chargeStyle": "surge"
+      "chargeStyle": "surge",
+      "tapBlast": "giantslam",
+      "chargeBlast": "giantslambig",
+      "chargeAura": "frost",
+      "chargeSpell": "unrelenting"
     },
     {
       "id": "skyforgearc",
@@ -1055,7 +1131,11 @@
       "chargeSeconds": 1.5,
       "chargeCooldown": 8,
       "chargeMana": 3,
-      "chargeStyle": "raise"
+      "chargeStyle": "raise",
+      "tapBlast": "runeshock",
+      "chargeBlast": "shockmass",
+      "chargeAura": "shock",
+      "chargeSpell": "chainlightning"
     },
     {
       "id": "apprentice",
@@ -1108,7 +1188,11 @@
       "chargeSeconds": 0.9,
       "chargeCooldown": 4,
       "chargeMana": 3,
-      "chargeStyle": "thrust"
+      "chargeStyle": "thrust",
+      "tapBlast": "light",
+      "chargeBlast": "lightmassive",
+      "chargeAura": "shock",
+      "chargeSpell": "none"
     }
   ]
 }

@@ -71,6 +71,69 @@
       "localId": "0x016D45",
       "editorId": "DragonVoiceUnrelentingForce",
       "verify": []
+    },
+    {
+      "id": "incinerate",
+      "plugin": "Skyrim.esm",
+      "localId": "0x10F7ED",
+      "editorId": "Incinerate",
+      "verify": []
+    },
+    {
+      "id": "thunderbolt",
+      "plugin": "Skyrim.esm",
+      "localId": "0x10F7EE",
+      "editorId": "Thunderbolt",
+      "verify": []
+    },
+    {
+      "id": "icyspear",
+      "plugin": "Skyrim.esm",
+      "localId": "0x10F7EC",
+      "editorId": "IcySpear",
+      "verify": []
+    },
+    {
+      "id": "icestorm",
+      "plugin": "Skyrim.esm",
+      "localId": "0x045F9C",
+      "editorId": "IceStorm",
+      "verify": []
+    },
+    {
+      "id": "firestormspell",
+      "plugin": "Skyrim.esm",
+      "localId": "0x07A82B",
+      "editorId": "FireStorm",
+      "verify": []
+    },
+    {
+      "id": "blizzard",
+      "plugin": "Skyrim.esm",
+      "localId": "0x07E8E4",
+      "editorId": "Blizzard",
+      "verify": []
+    },
+    {
+      "id": "aura_fire",
+      "plugin": "Skyrim.esm",
+      "localId": "0x080E34",
+      "editorId": "AbFireStormCastBodyFX",
+      "verify": []
+    },
+    {
+      "id": "aura_frost",
+      "plugin": "Skyrim.esm",
+      "localId": "0x0B92CE",
+      "editorId": "AbBlizzardCastBodyFX",
+      "verify": []
+    },
+    {
+      "id": "aura_shock",
+      "plugin": "Skyrim.esm",
+      "localId": "0x0592D8",
+      "editorId": "AbLightningStormCastBodyFX",
+      "verify": []
     }
   ]
 }

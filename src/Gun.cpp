@@ -155,7 +155,7 @@ namespace bo3z
 
 		bool Targetable(RE::Actor* a, RE::PlayerCharacter* player)
 		{
-			return a && a != player && !a->IsDead() && a->Is3DLoaded() && (Director::IsRoundUndead(a) || (!Director::NightNow() && a->IsHostileToActor(player)));  // nights: only the undead
+			return a && a != player && !a->IsDead() && a->Is3DLoaded() && (Director::IsRoundUndead(a) || (a->IsHostileToActor(player) && !(Director::NightNow() && Director::IsSpared(a))));  // nights: the undead and real enemies, never townsfolk
 		}
 
 		RE::NiPoint3 HeadPos(RE::Actor* a)
@@ -312,6 +312,105 @@ namespace bo3z
 			}
 		}
 
+		// Where the crosshair lands (physics ray), and the eye and aim it was cast from.
+		struct Aim { RE::NiPoint3 eye, dir, hit; };
+		Aim AimAt(float a_range)
+		{
+			Aim  r;
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			const auto& w = cam->cameraRoot->world;
+			r.eye = w.translate;
+			r.dir = { w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] };
+			r.dir.Unitize();
+			r.hit = r.eye + r.dir * a_range;
+			if (auto* world = player->GetParentCell() ? player->GetParentCell()->GetbhkWorld() : nullptr) {
+				const float s = RE::bhkWorld::GetWorldScale();
+				RE::bhkPickData pick;
+				pick.rayInput.from = RE::hkVector4(r.eye * s);
+				pick.rayInput.to = RE::hkVector4(r.hit * s);
+				pick.rayInput.filterInfo.SetCollisionLayer(RE::COL_LAYER::kLOS);
+				{
+					RE::BSReadLockGuard lock(world->worldLock);
+					world->PickObject(pick);
+				}
+				if (pick.rayOutput.HasHit()) {
+					r.hit = r.eye + r.dir * (a_range * pick.rayOutput.hitFraction);
+				}
+			}
+			return r;
+		}
+
+
+		// ================================================================ spell blasts
+		// Skyrim's own explosion looks (no-damage copies in our plugin) at a point: the impact of every shot and the
+		// finale of every signature move. A marker is moved to the spot and the blast is placed on it.
+		struct PendingBlast
+		{
+			RE::NiPoint3  at;
+			float         delay;
+			std::uint32_t expl;
+		};
+		std::vector<PendingBlast> g_blasts;
+		RE::ObjectRefHandle       g_blastMarker;
+
+		void Blast(std::uint32_t a_expl, const RE::NiPoint3& a_at, float a_delay = 0.0f)
+		{
+			if (a_expl && g_blasts.size() < 32) {
+				g_blasts.push_back({ a_at, a_delay, a_expl });
+			}
+		}
+
+		void Detonate(const PendingBlast& b)
+		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			auto* ex = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSExplosion>(b.expl, gen::kPlugin);
+			if (!player || !ex || !player->GetParentCell() || b.at.GetDistance(player->GetPosition()) > 9000.0f) {
+				return;
+			}
+			auto m = g_blastMarker.get();
+			if (!m || m->IsDeleted() || m->GetParentCell() != player->GetParentCell()) {
+				if (m) {
+					m->Disable();
+					m->SetDelete(true);
+				}
+				auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(0x3B);  // XMarker
+				auto  r = xm ? player->PlaceObjectAtMe(xm, false) : nullptr;
+				if (!r) {
+					return;
+				}
+				g_blastMarker = r->GetHandle();
+				m = r;
+			}
+			m->SetPosition(b.at);
+			m->PlaceObjectAtMe(ex, false);
+		}
+
+		void TickBlasts(float a_delta)
+		{
+			std::vector<PendingBlast> now;
+			for (auto& b : g_blasts) {
+				if ((b.delay -= a_delta) <= 0) {
+					now.push_back(b);
+				}
+			}
+			std::erase_if(g_blasts, [](const PendingBlast& b) { return b.delay <= 0; });
+			for (const auto& b : now) {
+				Detonate(b);
+			}
+		}
+
+		float BoltDelay(const gen::GunDef& g, const RE::NiPoint3& a_from, const RE::NiPoint3& a_to)
+		{
+			float speed = 3000.0f;
+			if (auto* raw = g.bulletSpell ? RE::TESDataHandler::GetSingleton()->LookupForm(g.bulletSpell, gen::kPlugin) : nullptr) {
+				if (auto* sp = raw->As<RE::SpellItem>(); sp && !sp->effects.empty() && sp->effects[0] && sp->effects[0]->baseEffect && sp->effects[0]->baseEffect->data.projectileBase) {
+					speed = std::max(500.0f, sp->effects[0]->baseEffect->data.projectileBase->data.speed);
+				}
+			}
+			return std::min(1.5f, a_from.GetDistance(a_to) / speed);
+		}
+
 		void FireOnce(const gen::GunDef& g)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -462,9 +561,17 @@ namespace bo3z
 			if (g.spell >= 0 && g.spellOn == 2) {
 				Cast(g.spell, firstHit);  // fired spell flies at what you hit (or straight ahead)
 			}
-			if (g.bulletSpell) {  // a bolt per shot from the wand tip (the staff cast launches its own on release too)
-				const RE::NiPoint3 to = firstHit ? HeadPos(firstHit) - RE::NiPoint3{ 0, 0, 20 } : origin + aim * std::min(g.range, 4000.0f);
-				LaunchBolt(player, g, to);
+			{
+				// one bolt per shot from the wand tip, and the element's blast where it lands
+				const Aim          a = AimAt(std::min(g.range, 6000.0f));
+				const bool         landed = firstHit || a.hit.GetDistance(a.eye) < std::min(g.range, 6000.0f) - 5.0f;
+				const RE::NiPoint3 to = firstHit ? HeadPos(firstHit) - RE::NiPoint3{ 0, 0, 30 } : a.hit;
+				if (g.bulletSpell) {
+					LaunchBolt(player, g, to);
+				}
+				if (landed) {
+					Blast(g.tapBlast, to, BoltDelay(g, origin, to));
+				}
 			}
 			Perks::OnCast(g_shots);
 		}
@@ -527,35 +634,6 @@ namespace bo3z
 			}
 			std::sort(out.begin(), out.end(), [&](RE::Actor* x, RE::Actor* y) { return x->GetPosition().GetDistance(a_at) < y->GetPosition().GetDistance(a_at); });
 			return out;
-		}
-
-		// Where the crosshair lands (physics ray), and the eye and aim it was cast from.
-		struct Aim { RE::NiPoint3 eye, dir, hit; };
-		Aim AimAt(float a_range)
-		{
-			Aim  r;
-			auto* cam = RE::PlayerCamera::GetSingleton();
-			auto* player = RE::PlayerCharacter::GetSingleton();
-			const auto& w = cam->cameraRoot->world;
-			r.eye = w.translate;
-			r.dir = { w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] };
-			r.dir.Unitize();
-			r.hit = r.eye + r.dir * a_range;
-			if (auto* world = player->GetParentCell() ? player->GetParentCell()->GetbhkWorld() : nullptr) {
-				const float s = RE::bhkWorld::GetWorldScale();
-				RE::bhkPickData pick;
-				pick.rayInput.from = RE::hkVector4(r.eye * s);
-				pick.rayInput.to = RE::hkVector4(r.hit * s);
-				pick.rayInput.filterInfo.SetCollisionLayer(RE::COL_LAYER::kLOS);
-				{
-					RE::BSReadLockGuard lock(world->worldLock);
-					world->PickObject(pick);
-				}
-				if (pick.rayOutput.HasHit()) {
-					r.hit = r.eye + r.dir * (a_range * pick.rayOutput.hitFraction);
-				}
-			}
-			return r;
 		}
 
 		std::vector<RE::Actor*> InLine(const Aim& a, float a_range, float a_width)
@@ -705,6 +783,42 @@ namespace bo3z
 		}
 
 		void StartRelease(const gen::GunDef& g);
+		// The finale every signature move shares: big blasts where it lands and on who it hit (or a ring around you
+		// for the sweeping moves), and the element's master spell on top.
+		void Finale(const gen::GunDef& g, const RE::NiPoint3& a_eye, const RE::NiPoint3& a_hit)
+		{
+			auto*                     p = RE::PlayerCharacter::GetSingleton();
+			const bool                around = g.chargeStyle == gen::kSweep;
+			const RE::NiPoint3        centre = around ? p->GetPosition() : a_hit;
+			std::vector<RE::NiPoint3> spots;
+			if (around) {
+				for (int k = 0; k < 6; ++k) {
+					const float a = k * RE::NI_PI / 3.0f;
+					spots.push_back(centre + RE::NiPoint3{ std::cos(a) * 280.0f, std::sin(a) * 280.0f, 40.0f });
+				}
+			} else {
+				spots.push_back(a_hit);
+			}
+			auto foes = Foes(centre, around ? 650.0f : 520.0f);
+			if (foes.size() > 5) {
+				foes.resize(5);
+			}
+			for (auto* f : foes) {
+				spots.push_back(f->GetPosition() + RE::NiPoint3{ 0, 0, 60 });
+			}
+			for (std::size_t i = 0; i < spots.size(); ++i) {
+				Blast(g.chargeBlast, spots[i], (around ? 0.0f : BoltDelay(g, a_eye, spots[i])) + 0.07f * i);
+			}
+			if (g.chargeSpell >= 0) {
+				if (foes.empty()) {
+					Cast(g.chargeSpell, nullptr);
+				}
+				for (std::size_t i = 0; i < foes.size() && i < 3; ++i) {
+					Cast(g.chargeSpell, foes[i]);
+				}
+			}
+		}
+
 		void TryUnleash(bool a_released)
 		{
 			const int gun = CurrentGun();
@@ -729,6 +843,10 @@ namespace bo3z
 			g_chargeCd = g.chargeCooldown;
 			StartRelease(g);
 			Unleash(gun);
+			{
+				const Aim aim = AimAt(std::min(g.range * 1.5f, 8000.0f));
+				Finale(g, aim.eye, aim.hit);
+			}
 		}
 
 		// ================================================================ signature-move animation
@@ -769,6 +887,27 @@ namespace bo3z
 			{ -0.12f, 0.0f, 0.0f, 30, 0, 0.050f, 0 } };
 		constexpr float kFovKick[6] = { -9.0f, 7.0f, 5.0f, 4.0f, 6.0f, 12.0f };
 
+		// While charging, the element's storm wraps the caster (Skyrim's fire storm / blizzard / lightning storm cast look).
+		int g_aura = -1;
+		void SetAura(int a_spell)
+		{
+			if (a_spell == g_aura) {
+				return;
+			}
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (g_aura >= 0) {
+				if (auto* sp = Forms::Spell(g_aura) ? Forms::Spell(g_aura)->As<RE::SpellItem>() : nullptr) {
+					p->RemoveSpell(sp);
+				}
+			}
+			g_aura = a_spell;
+			if (a_spell >= 0) {
+				if (auto* sp = Forms::Spell(a_spell) ? Forms::Spell(a_spell)->As<RE::SpellItem>() : nullptr) {
+					p->AddSpell(sp);
+				}
+			}
+		}
+
 		void StartRelease(const gen::GunDef& g)
 		{
 			g_relT = 0.0f;
@@ -796,6 +935,7 @@ namespace bo3z
 				if (!g_trigger) {
 					g_chargeSaid = g_readySaid = false;
 				}
+				SetAura(charging ? g.chargeAura : -1);
 				out = Scale(kChargePose[style], c);
 				out.shake *= 0.5f + c;  // trembles harder as it fills
 				if (g_relT >= 0) {
@@ -813,6 +953,7 @@ namespace bo3z
 				}
 			} else {
 				g_relT = -1.0f;
+				SetAura(-1);
 			}
 			g_spin += out.spinRate * a_delta;
 			if (out.spinRate <= 0.01f) {  // settle the spin back to rest the short way
@@ -1351,6 +1492,13 @@ namespace bo3z
 				ReadyBlock::func = rw.write_vfunc(0x1, ReadyBlock::thunk);
 				hooked = true;
 				logger::info("gun: attack/ready input hooks installed");
+				for (const auto& gg : gen::kGuns) {  // a charge aura saved mid-charge never sticks
+					if (auto* m = gg.chargeAura >= 0 ? Forms::Spell(gg.chargeAura) : nullptr) {
+						if (auto* sp = m->As<RE::SpellItem>()) {
+							RE::PlayerCharacter::GetSingleton()->RemoveSpell(sp);
+						}
+					}
+				}
 			}
 			MigrateRetired();
 			HideVanillaBars();
@@ -1378,6 +1526,7 @@ namespace bo3z
 			g_chargeCd = std::max(0.0f, g_chargeCd - a_delta);
 			g_charge = out && g_trigger ? g_charge + a_delta : 0.0f;
 			TickPose(a_delta);
+			TickBlasts(a_delta);
 			if (out) {
 				const auto& g = gen::kGuns[gun];
 				if (g_burstLeft > 0 && (g_burstTimer -= a_delta) <= 0) {

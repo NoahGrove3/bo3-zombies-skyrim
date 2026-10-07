@@ -2,7 +2,7 @@
 Records: Perk-a-Cola magic effects (MGEF) and potions (ALCH), gun items (WEAP, stand-in crossbow models),
 and activators (ACTI) for the Mystery Box, perk machines and wall-buys."""
 import json, struct, pathlib
-from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing
+from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing, blasts
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
 T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt']}
@@ -18,7 +18,7 @@ def group(label, recs):
     data = b''.join(recs)
     return b'GRUP' + struct.pack('<I', 24 + len(data)) + label.encode() + struct.pack('<iHHHH', 0, 0, 0, 44, 0) + data
 fid = lambda kind, key: SELF | IDS[(kind, key)]
-recs = {'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
+recs = {'EXPL': [], 'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
 
 for p in S['perks']['rows']:
     data = bytearray(tsub('mgef', 'DATA'))
@@ -63,17 +63,17 @@ def cast_mgef(key, label, cast=2):
     for off in (92, 96, 100, 116): struct.pack_into('<I', md, off, 0)  # casting art set at runtime from the matching vanilla spell
     recs['MGEF'].append(record('MGEF', fid('MGEF', key), [
         sub('EDID', z('UN_' + key)), sub('FULL', z(label)), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
-cast_mgef('wandcast', 'Wand Cast')
+cast_mgef('wandcast', 'Wand Cast', 1)
 
 for w in S['weapons']['rows']:
     kind = w.get('kind', 'wand')
     if kind == 'wand':
         # enchantment: concentration, aimed, staff-type, free (infinite casts)
         # staff cast (point and release), aimed: Skyrim launches the wand's own element bolt from the tip
-        enit = struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 2, 0x0C, 0.0, 0, 0)  # fire-and-forget, aimed, staff enchantment, free
+        enit = struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 0, 0x0C, 0.0, 0, 0)  # fire-and-forget, self (nothing launched natively), staff enchantment, free
         recs['ENCH'].append(record('ENCH', fid('ENCH', w['id']), [
             sub('EDID', z('UN_WandEnch_' + w['id'])), sub('OBND', bytes(12)), sub('FULL', z(w['label'])), sub('ENIT', enit),
-            sub('EFID', struct.pack('<I', fid('MGEF', 'bullet_' + w['projectile']))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+            sub('EFID', struct.pack('<I', fid('MGEF', 'wandcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))  # staff cast look only: the bolt is ours (one per click)
         subs = []
         for name, hx in T['weap_staff']['subs']:
             b = bytes.fromhex(hx)
@@ -204,11 +204,30 @@ recs['FACT'].append(record('FACT', fid('FACT', 'undead'), [
     sub('XNAM', struct.pack('<IiI', 0x00000DB1, -100, 1)),             # PlayerFaction: enemy
     sub('DATA', struct.pack('<I', 0))]))
 
+# spell blasts: Skyrim's explosion looks (fire, frost, shock, light, dark, dust...) with no damage, no
+# enchantment and no knockdown: our code does the hurting, these are only the show
+for b in blasts():
+    t = json.load(open(ROOT / 'tools/templates/expl' / (b + '.json')))
+    subs = []
+    for name, hx in t['subs']:
+        raw = bytes.fromhex(hx)
+        if name == 'EITM': continue
+        if name == 'EDID': raw = z('UN_Blast_' + b)
+        if name == 'DATA':
+            dd = bytearray(raw)
+            struct.pack_into('<f', dd, 24, min(struct.unpack_from('<f', dd, 24)[0], 40.0))  # gentle push (corpses fly a bit)
+            struct.pack_into('<f', dd, 28, 0.0)                                             # no damage
+            fl = struct.unpack_from('<I', dd, 44)[0] & ~(0x4 | 0x8)                         # never knocks anyone down
+            struct.pack_into('<I', dd, 44, fl)
+            raw = bytes(dd)
+        subs.append(sub(name, raw))
+    recs['EXPL'].append(record('EXPL', fid('EXPL', 'blast_' + b), subs))
+
 count = sum(len(v) for v in recs.values())
 hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('Undying Nights: round-based undead survival for Skyrim'))]
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
-for k in ['FACT', 'MGEF', 'ENCH', 'SPEL', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
+for k in ['FACT', 'MGEF', 'ENCH', 'SPEL', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'EXPL', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')

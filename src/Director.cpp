@@ -40,6 +40,7 @@ namespace bo3z
 		};
 		std::vector<Settle> g_settle;
 		std::unordered_map<RE::FormID, std::size_t> g_ours;  // every undead we raised -> enemy row
+		bool IsOursRaw(RE::Actor* a) { return a && g_ours.contains(a->GetFormID()); }
 		std::vector<std::pair<RE::ObjectRefHandle, float>> g_fx;
 		struct Elite
 		{
@@ -257,6 +258,14 @@ namespace bo3z
 					actor->AddToFaction(fac, 0);
 				}
 				av->SetActorValue(RE::ActorValue::kAggression, 1);
+			}
+			// Armed: an ancient Nord sword, an iron sword or a dagger (bare-handed undead swing slowly).
+			if (!actor->GetEquippedObject(false)) {
+				static constexpr RE::FormID kBlades[] = { 0x02C66F, 0x012EB7, 0x01397E, 0x02C66F };
+				if (auto* w = RE::TESForm::LookupByID<RE::TESObjectWEAP>(kBlades[std::uniform_int_distribution<int>(0, 3)(g_rng)])) {
+					actor->AddObjectToContainer(w, nullptr, 1, nullptr);
+					RE::ActorEquipManager::GetSingleton()->EquipObject(actor, w);
+				}
 			}
 			// Close range only: bows, crossbows, staves, arrows and attack spells go; swords, axes and maces stay.
 			{
@@ -545,27 +554,55 @@ namespace bo3z
 			logger::info("round {} starts (lasts the night): up to {} undead at once, {:.0f} Skyrim health each{}", a_round, g_toSpawn, HealthFor(a_round), g_special ? " (hound night)" : "");
 		}
 
+		// Despawning: out of combat and hidden now, deleted a moment later (deleting an actor others are still
+		// fighting mid-frame can crash the game).
+		std::vector<std::pair<RE::ActorHandle, float>> g_purge;
+		void Vanish(RE::Actor* a)
+		{
+			g_ours.erase(a->GetFormID());
+			a->StopCombat();
+			a->Disable();
+			g_purge.push_back({ a->GetHandle(), 2.0f });
+		}
+		void TickPurge(float a_delta)
+		{
+			for (auto& [h, t] : g_purge) {
+				if ((t -= a_delta) <= 0) {
+					if (auto a = h.get()) {
+						a->SetDelete(true);
+					}
+				}
+			}
+			std::erase_if(g_purge, [](const auto& e) { return e.second <= 0; });
+		}
+
 		void Dawn()
 		{
 			int n = 0;
+			// Anyone still fighting our undead lets go first.
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				if (auto npc = h.get(); npc && !IsOursRaw(npc.get()) && npc->IsInCombat()) {
+					auto tgt = npc->GetActorRuntimeData().currentCombatTarget.get();
+					if (tgt && IsOursRaw(tgt.get())) {
+						npc->StopCombat();
+					}
+				}
+			}
 			// Dawn: the dead (standing or fallen) are gone with the light.
 			for (auto& s : g_alive) {
 				if (auto a = s.handle.get()) {
-					g_ours.erase(a->GetFormID());
-					a->Disable();
-					a->SetDelete(true);
+					Vanish(a.get());
 					++n;
 				}
 			}
 			g_alive.clear();
 			for (auto& h : g_corpses) {
 				if (auto a = h.get()) {
-					g_ours.erase(a->GetFormID());
-					a->Disable();
-					a->SetDelete(true);
+					Vanish(a.get());
 				}
 			}
 			g_corpses.clear();
+			g_settle.clear();
 			if (g_phase == Phase::Fighting) {
 				// Dawn ends the round: one more night survived (one more tally on the board).
 				Save::Set(gen::kAV_round, g_current);
@@ -594,9 +631,7 @@ namespace bo3z
 			}
 			while (static_cast<int>(g_corpses.size()) > R.maxCorpses) {
 				if (auto a = g_corpses.front().get()) {
-					g_ours.erase(a->GetFormID());
-					a->Disable();
-					a->SetDelete(true);
+					Vanish(a.get());
 				}
 				g_corpses.pop_front();
 			}
@@ -783,10 +818,40 @@ namespace bo3z
 		}
 
 		// ---- night truce: townsfolk can't be hurt or killed while the undead are out ----
+		// One of our undead by its base record (BO3Zombies.esp), whether or not this session raised it.
+		bool IsOurBase(RE::Actor* a)
+		{
+			auto* base = a ? a->GetActorBase() : nullptr;
+			auto* file = base ? base->GetFile(0) : nullptr;
+			return file && file->GetFilename() == gen::kPlugin;
+		}
+
+		// Undead left over from a save (raised in an earlier session, so not on our books): they would be
+		// immune to the night truce rules and fight followers forever. They crumble.
+		void SweepStrays(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			static float t = 0;
+			if ((t -= a_delta) > 0) {
+				return;
+			}
+			t = 2.0f;
+			int n = 0;
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				if (auto a = h.get(); a && a.get() != a_player && !g_ours.contains(a->GetFormID()) && IsOurBase(a.get()) && !a->IsDisabled()) {
+					Vanish(a.get());
+					++n;
+				}
+			}
+			if (n) {
+				logger::info("night: {} undead from an earlier session crumbled", n);
+			}
+		}
+
 		struct Protected
 		{
 			RE::ActorHandle handle;
 			bool            wasEssential;
+			bool            spared = true;
 		};
 		std::vector<Protected> g_protected;
 		float                  g_protectTimer = 0;
@@ -800,7 +865,7 @@ namespace bo3z
 			const bool night = IsNight();
 			if (!night) {
 				for (auto& p : g_protected) {
-					if (auto a = p.handle.get(); a && !p.wasEssential) {
+					if (auto a = p.handle.get(); a && p.spared && !p.wasEssential) {
 						a->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kEssential);
 					}
 				}
@@ -809,13 +874,23 @@ namespace bo3z
 			}
 			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 				auto a = h.get();
-				if (!a || a.get() == a_player || a->IsDead() || g_ours.contains(a->GetFormID())) {
+				if (!a || a.get() == a_player || a->IsDead() || g_ours.contains(a->GetFormID()) || IsOurBase(a.get())) {
 					continue;
 				}
-				if (std::none_of(g_protected.begin(), g_protected.end(), [&](const Protected& p) { return p.handle.get() == a; })) {
+				auto it = std::find_if(g_protected.begin(), g_protected.end(), [&](const Protected& p) { return p.handle.get() == a; });
+				if (it == g_protected.end()) {
+					// Townsfolk, followers and anyone friendly are spared for the night; Skyrim's own monsters and
+					// bandits that are out for you stay fair game.
+					const bool spare = a->IsPlayerTeammate() || !a->IsHostileToActor(a_player);
 					const bool ess = a->GetActorRuntimeData().boolFlags.all(RE::Actor::BOOL_FLAGS::kEssential);
-					g_protected.push_back({ a->GetHandle(), ess });
-					a->GetActorRuntimeData().boolFlags.set(RE::Actor::BOOL_FLAGS::kEssential);
+					g_protected.push_back({ a->GetHandle(), ess, spare });
+					if (spare) {
+						a->GetActorRuntimeData().boolFlags.set(RE::Actor::BOOL_FLAGS::kEssential);
+					}
+					it = std::prev(g_protected.end());
+				}
+				if (!it->spared) {
+					continue;
 				}
 				auto*       av = a->AsActorValueOwner();
 				const float missing = av->GetPermanentActorValue(RE::ActorValue::kHealth) - av->GetActorValue(RE::ActorValue::kHealth);
@@ -829,6 +904,11 @@ namespace bo3z
 					}
 				}
 			}
+		}
+
+		bool IsSpared(RE::Actor* a_actor)
+		{
+			return a_actor && std::any_of(g_protected.begin(), g_protected.end(), [&](const Protected& p) { return p.spared && p.handle.get().get() == a_actor; });
 		}
 
 		// Shorter days and nights (sheet: rounds.cycleMinutes): Skyrim's TimeScale global.
@@ -867,6 +947,8 @@ namespace bo3z
 			if (!player) {
 				return;
 			}
+			TickPurge(a_delta);
+			SweepStrays(player, a_delta);
 			TickTruce(player, a_delta);
 			Prune();
 			{

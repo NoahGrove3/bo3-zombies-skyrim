@@ -17,7 +17,8 @@ def assign(S=None, write=False):
              [(k, c['id']) for c in S['creatures']['rows'] for k in ('ARMA', 'ARMO', 'NPC_')] + \
              [(k, 'bullet_' + p['id']) for p in S['projectiles']['rows'] for k in ('PROJ', 'MGEF', 'SPEL')] + [('LIGH', 'muzzle'), ('PROJ', 'castflame'), ('MGEF', 'wandcast'), ('FACT', 'undead')] + \
              [('ENCH', w['id']) for w in S['weapons']['rows'] if w.get('kind') == 'wand'] + \
-             [(k, 'hand_' + w['id']) for w in S['weapons']['rows'] if w.get('kind') in ('tome', 'wonder') for k in ('SPEL', 'MGEF')]
+             [(k, 'hand_' + w['id']) for w in S['weapons']['rows'] if w.get('kind') in ('tome', 'wonder') for k in ('SPEL', 'MGEF')] + \
+             [('EXPL', 'blast_' + b) for b in blasts()]
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:
@@ -28,6 +29,9 @@ def assign(S=None, write=False):
         IDFILE.write_text(json.dumps(store, indent=1))
     return ids, nxt
 PLUGIN = 'BO3Zombies.esp'
+def blasts():
+    """Spell blasts: no-damage copies of Skyrim's explosions (tools/templates/expl/<name>.json)."""
+    return sorted(q.stem for q in (ROOT / 'tools' / 'templates' / 'expl').glob('*.json'))
 MASTERS = ['Skyrim.esm', 'Update.esm', 'Dawnguard.esm']
 
 def dressing(S):

@@ -318,6 +318,24 @@
   "SNDR:cast_apprentice": "0x93a",
   "FACT:undead": "0x93b",
   "SNDR:charge_up": "0x93c",
-  "SNDR:charge_ready": "0x93d"
+  "SNDR:charge_ready": "0x93d",
+  "EXPL:blast_atrofire": "0x93e",
+  "EXPL:blast_atrofrost": "0x93f",
+  "EXPL:blast_dark": "0x940",
+  "EXPL:blast_darkmassive": "0x941",
+  "EXPL:blast_dragondust": "0x942",
+  "EXPL:blast_dragonstorm": "0x943",
+  "EXPL:blast_fireball": "0x944",
+  "EXPL:blast_firestorm": "0x945",
+  "EXPL:blast_frost": "0x946",
+  "EXPL:blast_giantslam": "0x947",
+  "EXPL:blast_giantslambig": "0x948",
+  "EXPL:blast_icevolley": "0x949",
+  "EXPL:blast_light": "0x94a",
+  "EXPL:blast_lightmassive": "0x94b",
+  "EXPL:blast_priestlarge": "0x94c",
+  "EXPL:blast_priestsmall": "0x94d",
+  "EXPL:blast_runeshock": "0x94e",
+  "EXPL:blast_shockmass": "0x94f"
  }
 }
