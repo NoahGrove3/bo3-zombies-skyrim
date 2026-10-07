@@ -704,6 +704,7 @@ namespace bo3z
 			}
 		}
 
+		void StartRelease(const gen::GunDef& g);
 		void TryUnleash(bool a_released)
 		{
 			const int gun = CurrentGun();
