@@ -22,6 +22,19 @@
   adopted stands that fail it are rebuilt.
 - Dev: `hold <mouse id> <secs>` (fire = 0) holds the button for charge tests.
 
+## Built 2026-10-07 15:30 (8789a91, installed, not yet seen in game)
+- Arm pose hook confirmed live in game ("pose: arm animation live").
+- Spell blasts: 18 no-damage EXPL copies (tools/templates/expl, sheet weapons.tapBlast/chargeBlast) placed via a
+  moved XMarker; tap blast lands when the bolt arrives; charged finale = big blasts at impact + up to 5 foes (ring
+  around you for sweep moves) + weapons.chargeSpell (vanilla master spells) + weapons.chargeAura body FX while charging.
+- Double bolts: the wand ENCH now uses the no-projectile wandcast effect (self), so only our bolt flies.
+- Crash at dawn (spamming drill at 15:16:18, log ended at "dawn ... crumbled"): despawn now StopCombat + Disable,
+  delete 2 s later; NPCs fighting our undead let go first.
+- Untouchable zombies fighting a follower: undead saved in an earlier session were not in g_ours (truce made them
+  essential + healed). SweepStrays vanishes any of our-plugin-based actors not on the books; the truce only spares
+  friendlies/teammates, hostile monsters are targetable at night.
+- Zombies carry a Draugr sword / iron sword / iron dagger.
+
 ## Open issues (in priority order)
 1. (fix built, verify) Falkreath stand still floats: adoption keeps it ("alley already built"). Add a dev command that forces a town rebuild
    (Sweep + plan reset) and log GroundTop/low/coffer z on adoption to see why the 30-unit / slope checks pass.
