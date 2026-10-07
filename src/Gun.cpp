@@ -155,6 +155,26 @@ namespace bo3z
 			return c >= 0 && gen::kCrew[c].passive == a_passive ? gen::kCrew[c].value : 1.0f;
 		}
 
+		int g_shots = 0;
+
+		void Cast(int a_spell, RE::Actor* a_target)
+		{
+			auto* m = Forms::Spell(a_spell);
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (!m || !player) {
+				return;
+			}
+			if (auto* caster = player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
+				caster->CastSpellImmediate(m, false, a_target, 1.0f, false, 0.0f, player);
+			}
+		}
+
+		float AngleDeg(const RE::NiPoint3& a, const RE::NiPoint3& b)
+		{
+			const float d = std::clamp(a.Dot(b) / std::max(1e-4f, a.Length() * b.Length()), -1.0f, 1.0f);
+			return std::acos(d) * 180.0f / RE::NI_PI;
+		}
+
 		void FireOnce(const gen::GunDef& g)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -180,6 +200,22 @@ namespace bo3z
 			const float headMult = g.headMult * Perks::HeadMult();
 			const float headRadius = g.headRadius * (Perks::HeadMult() > 1.0f ? 1.5f : 1.0f);
 			const float dmg = g.damage * Perks::DamageMult() * CrewMult(0);
+			++g_shots;
+			if (g.special == 3) {  // cone blast (Thu'um Cannon): everything in front of you, harder up close
+				bool los = false;
+				for (auto* a : candidates) {
+					const auto to = HeadPos(a) - origin;
+					if (!a->IsDead() && AngleDeg(aim, to) <= g.spreadHip && player->HasLineOfSight(a, los)) {
+						const float fall = 1.0f - 0.6f * std::min(1.0f, to.Length() / g.range);
+						Damage(a, dmg * fall, false, false);
+					}
+				}
+				if (g.spell >= 0) {
+					Cast(g.spell, nullptr);
+				}
+				return;
+			}
+			RE::Actor* firstHit = nullptr;
 			for (int p = 0; p < g.pellets; ++p) {
 				const auto dir = Spread(aim, spread);
 				RE::Actor* best = nullptr;
@@ -199,10 +235,38 @@ namespace bo3z
 				if (!best || !player->HasLineOfSight(best, los)) {
 					continue;
 				}
+				if (!firstHit) {
+					firstHit = best;
+				}
+				if (g.spell >= 0 && (g.spellOn == 1 || (g.spellOn == 3 && g_shots % 4 == 0)) && p == 0) {
+					Cast(g.spell, best);  // spell visuals/effects on the target (Wabbajack: its own madness)
+				}
 				if (!best->IsDead()) {
 					Damage(best, dmg * (head ? headMult : 1.0f), head, false);
 				}
-				if (g.splashRadius > 0) {  // Ray Gun
+				if (g.special == 2) {  // chain (Skyforge Arc): jumps between nearby dead
+					std::vector<RE::Actor*> hit{ best };
+					RE::Actor*              cur = best;
+					for (int k = 0; k < 6; ++k) {
+						RE::Actor* next = nullptr;
+						float      nd = g.splashRadius;
+						for (auto* a : candidates) {
+							if (a->IsDead() || std::find(hit.begin(), hit.end(), a) != hit.end()) {
+								continue;
+							}
+							if (const float d = a->GetPosition().GetDistance(cur->GetPosition()); d < nd) {
+								nd = d, next = a;
+							}
+						}
+						if (!next) {
+							break;
+						}
+						Damage(next, g.splashDamage * Perks::DamageMult(), false, false);
+						hit.push_back(next);
+						cur = next;
+					}
+				}
+				if (g.special == 1 && g.splashRadius > 0) {  // splash (Aetherium Ray, Ember Mortar)
 					const auto at = origin + dir * bestT;
 					for (auto* a : candidates) {
 						if (a != best && !a->IsDead() && a->GetPosition().GetDistance(at) <= g.splashRadius) {
@@ -210,6 +274,9 @@ namespace bo3z
 						}
 					}
 				}
+			}
+			if (g.spell >= 0 && g.spellOn == 2) {
+				Cast(g.spell, firstHit);  // fired spell flies at what you hit (or straight ahead)
 			}
 		}
 

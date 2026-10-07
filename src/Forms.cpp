@@ -146,6 +146,29 @@ namespace bo3z
 			}
 		}
 
+		RE::MagicItem* Spell(int a_spell)
+		{
+			static std::array<RE::MagicItem*, gen::kSpells.size()> cache{};
+			static std::array<bool, gen::kSpells.size()>           tried{};
+			if (a_spell < 0 || a_spell >= static_cast<int>(gen::kSpells.size())) {
+				return nullptr;
+			}
+			if (!tried[a_spell]) {
+				tried[a_spell] = true;
+				const auto& r = gen::kSpells[a_spell];
+				auto*       f = RE::TESDataHandler::GetSingleton()->LookupForm(r.localId, r.plugin);
+				if (auto* m = f ? f->As<RE::MagicItem>() : nullptr) {
+					cache[a_spell] = m;
+				} else if (auto* w = f ? f->As<RE::TESObjectWEAP>() : nullptr) {
+					cache[a_spell] = w->formEnchanting;
+				}
+				if (!cache[a_spell]) {
+					logger::warn("spells: {} not found", r.editorId);
+				}
+			}
+			return cache[a_spell];
+		}
+
 		RE::TESBoundObject* Ours(std::uint32_t a_localId)
 		{
 			static std::unordered_map<std::uint32_t, RE::TESBoundObject*> cache;
@@ -170,7 +193,7 @@ namespace bo3z
 				return Play(a_sound);
 			}
 			RE::BSSoundHandle h;
-			if (RE::BSAudioManager::GetSingleton()->BuildSoundDataFromDescriptor(h, static_cast<RE::BSISoundDescriptor*>(g_sounds[i]))) {
+			if (RE::BSAudioManager::GetSingleton()->GetSoundHandle(h, static_cast<RE::BSISoundDescriptor*>(g_sounds[i]))) {
 				h.SetPosition(a_at->GetPosition());
 				if (auto* node = a_at->Get3D()) {
 					h.SetObjectToFollow(node);

@@ -23,6 +23,7 @@ namespace bo3z
 		RE::TESObjectACTI*   Object(int a_object);
 		int                  ObjectIndexOf(const RE::TESForm* a_base); // -1
 		RE::TESBoundObject*  Ours(std::uint32_t a_localId);              // any record in our plugin
+		RE::MagicItem*       Spell(int a_spell);                         // sheet: spells (a WEAP row = its enchantment)
 		void                 Play(gen::Sound a_sound);
 		void                 PlayAt(gen::Sound a_sound, RE::TESObjectREFR* a_at);  // 3D, follows the reference
 		inline gen::Sound    Brew(int a_perk) { return static_cast<gen::Sound>(static_cast<int>(gen::Sound::brew_trollshide) + a_perk); }

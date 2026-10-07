@@ -29,6 +29,9 @@
     "boxWeight",
     "standinModel",
     "targets",
+    "special",
+    "spell",
+    "spellOn",
     "verify"
   ],
   "rows": [
@@ -58,14 +61,17 @@
       "fireSound": "sound:shot_pistol",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
         "headRadius",
         "spreadHip",
         "spreadAds"
-      ]
+      ],
+      "special": "none",
+      "spell": "none",
+      "spellOn": "none"
     },
     {
       "id": "centurion",
@@ -93,14 +99,17 @@
       "fireSound": "sound:shot_pistol",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
         "headRadius",
         "spreadHip",
         "spreadAds"
-      ]
+      ],
+      "special": "none",
+      "spell": "none",
+      "spellOn": "none"
     },
     {
       "id": "triad",
@@ -128,14 +137,17 @@
       "fireSound": "sound:shot_pistol",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
         "headRadius",
         "spreadHip",
         "spreadAds"
-      ]
+      ],
+      "special": "none",
+      "spell": "none",
+      "spellOn": "none"
     },
     {
       "id": "spider",
@@ -163,14 +175,17 @@
       "fireSound": "sound:shot_smg",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
         "headRadius",
         "spreadHip",
         "spreadAds"
-      ]
+      ],
+      "special": "none",
+      "spell": "none",
+      "spellOn": "none"
     },
     {
       "id": "drill",
@@ -198,14 +213,17 @@
       "fireSound": "sound:shot_smg",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
         "headRadius",
         "spreadHip",
         "spreadAds"
-      ]
+      ],
+      "special": "none",
+      "spell": "none",
+      "spellOn": "none"
     },
     {
       "id": "steampump",
@@ -233,14 +251,17 @@
       "fireSound": "sound:shot_shotgun",
       "reloadSound": "sound:reload_shell",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
+      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
         "headRadius",
         "spreadHip",
         "spreadAds"
-      ]
+      ],
+      "special": "none",
+      "spell": "none",
+      "spellOn": "none"
     },
     {
       "id": "marksman",
@@ -268,14 +289,17 @@
       "fireSound": "sound:shot_ar",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
+      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
         "headRadius",
         "spreadHip",
         "spreadAds"
-      ]
+      ],
+      "special": "none",
+      "spell": "none",
+      "spellOn": "none"
     },
     {
       "id": "animunculi",
@@ -303,14 +327,17 @@
       "fireSound": "sound:shot_ar",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
+      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
         "headRadius",
         "spreadHip",
         "spreadAds"
-      ]
+      ],
+      "special": "none",
+      "spell": "none",
+      "spellOn": "none"
     },
     {
       "id": "kagrenac",
@@ -338,14 +365,17 @@
       "fireSound": "sound:shot_ar",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
+      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
         "headRadius",
         "spreadHip",
         "spreadAds"
-      ]
+      ],
+      "special": "none",
+      "spell": "none",
+      "spellOn": "none"
     },
     {
       "id": "mammothlmg",
@@ -373,14 +403,17 @@
       "fireSound": "sound:shot_lmg",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
+      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
         "headRadius",
         "spreadHip",
         "spreadAds"
-      ]
+      ],
+      "special": "none",
+      "spell": "none",
+      "spellOn": "none"
     },
     {
       "id": "longshot",
@@ -408,14 +441,17 @@
       "fireSound": "sound:shot_sniper",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
+      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
         "headRadius",
         "spreadHip",
         "spreadAds"
-      ]
+      ],
+      "special": "none",
+      "spell": "none",
+      "spellOn": "none"
     },
     {
       "id": "aetherium",
@@ -450,7 +486,276 @@
         "headRadius",
         "spreadHip",
         "spreadAds"
-      ]
+      ],
+      "special": "splash",
+      "spell": "none",
+      "spellOn": "none"
+    },
+    {
+      "id": "flamerepeater",
+      "label": "Flame Repeater",
+      "fire": "auto",
+      "damage": 80,
+      "headMult": 1.5,
+      "pellets": 1,
+      "spreadHip": 2.2,
+      "spreadAds": 1.0,
+      "clip": 40,
+      "reserve": 280,
+      "fireDelayMs": 95,
+      "burst": 1,
+      "reloadMs": 2300,
+      "range": 2600,
+      "splashRadius": 0,
+      "splashDamage": 0,
+      "wallBuyCost": 0,
+      "ammoCost": 0,
+      "boxWeight": 3,
+      "class": "smg",
+      "hitRadius": 28,
+      "headRadius": 14,
+      "fireSound": "sound:shot_smg",
+      "reloadSound": "sound:reload_mag",
+      "emptySound": "sound:dry_click",
+      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
+      "targets": "round_undead+hostile",
+      "verify": [
+        "hitRadius",
+        "headRadius",
+        "spreadHip",
+        "spreadAds"
+      ],
+      "special": "none",
+      "spell": "spells:firebolt",
+      "spellOn": "every4"
+    },
+    {
+      "id": "frostlancer",
+      "label": "Frost Lancer",
+      "fire": "semi",
+      "damage": 260,
+      "headMult": 3.0,
+      "pellets": 1,
+      "spreadHip": 1.2,
+      "spreadAds": 0.2,
+      "clip": 10,
+      "reserve": 90,
+      "fireDelayMs": 260,
+      "burst": 1,
+      "reloadMs": 2100,
+      "range": 6000,
+      "splashRadius": 0,
+      "splashDamage": 0,
+      "wallBuyCost": 0,
+      "ammoCost": 0,
+      "boxWeight": 3,
+      "class": "ar",
+      "hitRadius": 28,
+      "headRadius": 14,
+      "fireSound": "sound:shot_ar",
+      "reloadSound": "sound:reload_mag",
+      "emptySound": "sound:dry_click",
+      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "targets": "round_undead+hostile",
+      "verify": [
+        "hitRadius",
+        "headRadius",
+        "spreadHip",
+        "spreadAds"
+      ],
+      "special": "none",
+      "spell": "spells:icespike",
+      "spellOn": "hit"
+    },
+    {
+      "id": "stormcaller",
+      "label": "Storm Caller",
+      "fire": "burst",
+      "damage": 140,
+      "headMult": 2.0,
+      "pellets": 1,
+      "spreadHip": 1.5,
+      "spreadAds": 0.4,
+      "clip": 24,
+      "reserve": 192,
+      "fireDelayMs": 320,
+      "burst": 3,
+      "reloadMs": 2000,
+      "range": 4500,
+      "splashRadius": 0,
+      "splashDamage": 0,
+      "wallBuyCost": 0,
+      "ammoCost": 0,
+      "boxWeight": 3,
+      "class": "ar",
+      "hitRadius": 28,
+      "headRadius": 14,
+      "fireSound": "sound:shot_ar",
+      "reloadSound": "sound:reload_mag",
+      "emptySound": "sound:dry_click",
+      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "targets": "round_undead+hostile",
+      "verify": [
+        "hitRadius",
+        "headRadius",
+        "spreadHip",
+        "spreadAds"
+      ],
+      "special": "none",
+      "spell": "spells:lightningbolt",
+      "spellOn": "hit"
+    },
+    {
+      "id": "embermortar",
+      "label": "Ember Mortar",
+      "fire": "semi",
+      "damage": 400,
+      "headMult": 1.0,
+      "pellets": 1,
+      "spreadHip": 1.0,
+      "spreadAds": 0.5,
+      "clip": 4,
+      "reserve": 24,
+      "fireDelayMs": 700,
+      "burst": 1,
+      "reloadMs": 3000,
+      "range": 3500,
+      "splashRadius": 260,
+      "splashDamage": 600,
+      "wallBuyCost": 0,
+      "ammoCost": 0,
+      "boxWeight": 2,
+      "class": "shotgun",
+      "hitRadius": 28,
+      "headRadius": 14,
+      "fireSound": "sound:shot_shotgun",
+      "reloadSound": "sound:reload_shell",
+      "emptySound": "sound:dry_click",
+      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "targets": "round_undead+hostile",
+      "verify": [
+        "hitRadius",
+        "headRadius",
+        "spreadHip",
+        "spreadAds"
+      ],
+      "special": "splash",
+      "spell": "spells:fireball",
+      "spellOn": "fire"
+    },
+    {
+      "id": "wabbajack",
+      "label": "Wabbajack",
+      "fire": "semi",
+      "damage": 1500,
+      "headMult": 1.0,
+      "pellets": 1,
+      "spreadHip": 1.0,
+      "spreadAds": 0.5,
+      "clip": 8,
+      "reserve": 40,
+      "fireDelayMs": 450,
+      "burst": 1,
+      "reloadMs": 2600,
+      "range": 4000,
+      "splashRadius": 0,
+      "splashDamage": 0,
+      "wallBuyCost": 0,
+      "ammoCost": 0,
+      "boxWeight": 1,
+      "class": "wonder",
+      "hitRadius": 28,
+      "headRadius": 14,
+      "fireSound": "sound:shot_ray",
+      "reloadSound": "sound:reload_mag",
+      "emptySound": "sound:dry_click",
+      "standinModel": "Weapons\\Wabbajack\\Wabbajack.nif",
+      "targets": "round_undead+hostile",
+      "verify": [
+        "hitRadius",
+        "headRadius",
+        "spreadHip",
+        "spreadAds"
+      ],
+      "special": "wabbajack",
+      "spell": "spells:wabbajack",
+      "spellOn": "hit"
+    },
+    {
+      "id": "thuumcannon",
+      "label": "Thu'um Cannon",
+      "fire": "semi",
+      "damage": 5000,
+      "headMult": 1.0,
+      "pellets": 1,
+      "spreadHip": 22.0,
+      "spreadAds": 22.0,
+      "clip": 2,
+      "reserve": 12,
+      "fireDelayMs": 900,
+      "burst": 1,
+      "reloadMs": 3200,
+      "range": 1100,
+      "splashRadius": 0,
+      "splashDamage": 0,
+      "wallBuyCost": 0,
+      "ammoCost": 0,
+      "boxWeight": 1,
+      "class": "wonder",
+      "hitRadius": 28,
+      "headRadius": 14,
+      "fireSound": "sound:shot_shotgun",
+      "reloadSound": "sound:reload_shell",
+      "emptySound": "sound:dry_click",
+      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "targets": "round_undead+hostile",
+      "verify": [
+        "hitRadius",
+        "headRadius",
+        "spreadHip",
+        "spreadAds"
+      ],
+      "special": "cone",
+      "spell": "spells:unrelenting",
+      "spellOn": "fire"
+    },
+    {
+      "id": "skyforgearc",
+      "label": "Skyforge Arc",
+      "fire": "semi",
+      "damage": 3000,
+      "headMult": 1.0,
+      "pellets": 1,
+      "spreadHip": 1.5,
+      "spreadAds": 0.5,
+      "clip": 6,
+      "reserve": 36,
+      "fireDelayMs": 600,
+      "burst": 1,
+      "reloadMs": 2800,
+      "range": 3500,
+      "splashRadius": 420,
+      "splashDamage": 3000,
+      "wallBuyCost": 0,
+      "ammoCost": 0,
+      "boxWeight": 1,
+      "class": "wonder",
+      "hitRadius": 28,
+      "headRadius": 14,
+      "fireSound": "sound:shot_ray",
+      "reloadSound": "sound:reload_mag",
+      "emptySound": "sound:dry_click",
+      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "targets": "round_undead+hostile",
+      "verify": [
+        "hitRadius",
+        "headRadius",
+        "spreadHip",
+        "spreadAds"
+      ],
+      "special": "chain",
+      "spell": "spells:chainlightning",
+      "spellOn": "fire"
     }
   ]
 }

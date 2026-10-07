@@ -56,12 +56,19 @@ o = ['', '// ---- v0.2 ----', '#include <string_view>', 'namespace bo3z::gen', '
      f'\tinline constexpr std::string_view kPlugin = {cs(esp_ids.PLUGIN)};']
 fires = {'semi': 0, 'auto': 1, 'burst': 2, 'pump': 3}
 o.append('\tenum class Fire : int { Semi = 0, Auto = 1, Burst = 2, Pump = 3 };')
-o.append('\tstruct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; };')
+o.append('\tstruct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; int special, spell, spellOn; };')
 W = S['weapons']['rows']
 o.append(f'\tinline constexpr std::array<GunDef, {len(W)}> kGuns{{ {{')
 sid = lambda v: 'Sound::' + v.split(':')[1]
+SP = S['spells']['rows']
+specials = {'none': 0, 'splash': 1, 'chain': 2, 'cone': 3, 'wabbajack': 4}
+spellon = {'none': 0, 'hit': 1, 'fire': 2, 'every4': 3}
+spidx = lambda v: -1 if v == 'none' else [s['id'] for s in SP].index(v.split(':')[1])
+o.append(f'\tinline constexpr std::array<FormRef, {len(SP)}> kSpells{{ {{')
+for s in SP: o.append(f'\t\tFormRef{{ {cs(s["plugin"])}, 0x{int(s["localId"], 16):06X}, {cs(s["editorId"])} }},')
+o.append('\t} };')
 for w in W:
-    o.append(f'\t\tGunDef{{ {cs(w["id"])}, {cs(w["label"])}, {cs(w["class"])}, Fire({fires[w["fire"]]}), {F(w["damage"])}, {F(w["headMult"])}, {w["pellets"]}, {F(w["spreadHip"])}, {F(w["spreadAds"])}, {w["clip"]}, {w["reserve"]}, {w["fireDelayMs"]}, {w["burst"]}, {w["reloadMs"]}, {F(w["range"])}, {F(w["splashRadius"])}, {F(w["splashDamage"])}, {F(w["hitRadius"])}, {F(w["headRadius"])}, {sid(w["fireSound"])}, {sid(w["reloadSound"])}, {sid(w["emptySound"])}, {w["wallBuyCost"]}, {w["ammoCost"]}, {w["boxWeight"]}, 0x{IDS[("WEAP", w["id"])]:03X} }},')
+    o.append(f'\t\tGunDef{{ {cs(w["id"])}, {cs(w["label"])}, {cs(w["class"])}, Fire({fires[w["fire"]]}), {F(w["damage"])}, {F(w["headMult"])}, {w["pellets"]}, {F(w["spreadHip"])}, {F(w["spreadAds"])}, {w["clip"]}, {w["reserve"]}, {w["fireDelayMs"]}, {w["burst"]}, {w["reloadMs"]}, {F(w["range"])}, {F(w["splashRadius"])}, {F(w["splashDamage"])}, {F(w["hitRadius"])}, {F(w["headRadius"])}, {sid(w["fireSound"])}, {sid(w["reloadSound"])}, {sid(w["emptySound"])}, {w["wallBuyCost"]}, {w["ammoCost"]}, {w["boxWeight"]}, 0x{IDS[("WEAP", w["id"])]:03X}, {specials[w["special"]]}, {spidx(w["spell"])}, {spellon[w["spellOn"]]} }},')
 o.append('\t} };')
 for i, w in enumerate(W): o.append(f'\tinline constexpr int kGunIdx_{w["id"]} = {i};')
 k = S['melee']['rows'][0]
@@ -89,6 +96,7 @@ def refidx(r):
 o.append('\tstruct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; float scale; };')
 o.append(f'\tinline constexpr std::array<ObjectDef, {len(O)}> kObjects{{ {{')
 for x in O: o.append(f'\t\tObjectDef{{ {cs(x["id"])}, {cs(x["label"])}, {kinds[x["kind"]]}, {x["cost"]}, {refidx(x["refs"])}, 0x{IDS[("ACTI", x["id"])]:03X}, {F(x.get("scale", 1.0))} }},')
+o.append('\t} };')
 DREC, DPIECES = esp_ids.dressing(S)
 o.append('\tstruct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; };')
 o.append(f'\tinline constexpr std::array<DressDef, {len(DPIECES)}> kDress{{ {{')
@@ -99,7 +107,6 @@ sh = S['dressing']['show']
 o.append(f'\tinline constexpr std::uint32_t kShowCheese = 0x{IDS[("STAT", "show_cheese")]:03X};')
 o.append(f'\tinline constexpr float kShowRise = {F(sh["riseUnits"])}, kShowSpin = {F(sh["spinSeconds"])}, kShowOffer = {F(sh["offerSeconds"])};')
 o.append(f'\tinline constexpr std::array<std::uint32_t, {len(P)}> kPerkColor{{ {{ {", ".join("0x%sFF" % p["color"] for p in P)} }} }};')
-o.append('\t} };')
 L = S['locations']['rows']; oid = [x['id'] for x in O]
 towns = []
 for l in L:

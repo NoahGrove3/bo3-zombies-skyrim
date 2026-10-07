@@ -1,0 +1,62 @@
+{
+  "sheet": "spells",
+  "about": "Skyrim's own spells and artifacts that our spell guns and wonder weapons cast (for their visuals and effects). A WEAP row means: cast that weapon's enchantment.",
+  "columns": [
+    "id",
+    "plugin",
+    "localId",
+    "editorId",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "firebolt",
+      "plugin": "Skyrim.esm",
+      "localId": "0x012FD0",
+      "editorId": "Firebolt",
+      "verify": []
+    },
+    {
+      "id": "fireball",
+      "plugin": "Skyrim.esm",
+      "localId": "0x01C789",
+      "editorId": "Fireball",
+      "verify": []
+    },
+    {
+      "id": "icespike",
+      "plugin": "Skyrim.esm",
+      "localId": "0x02B96C",
+      "editorId": "IceSpike",
+      "verify": []
+    },
+    {
+      "id": "lightningbolt",
+      "plugin": "Skyrim.esm",
+      "localId": "0x02DD29",
+      "editorId": "LightningBolt",
+      "verify": []
+    },
+    {
+      "id": "chainlightning",
+      "plugin": "Skyrim.esm",
+      "localId": "0x045F9D",
+      "editorId": "ChainLightning",
+      "verify": []
+    },
+    {
+      "id": "unrelenting",
+      "plugin": "Skyrim.esm",
+      "localId": "0x013F3A",
+      "editorId": "VoiceUnrelentingForce3",
+      "verify": []
+    },
+    {
+      "id": "wabbajack",
+      "plugin": "Skyrim.esm",
+      "localId": "0x02AC6F",
+      "editorId": "DA15Wabbajack",
+      "verify": []
+    }
+  ]
+}

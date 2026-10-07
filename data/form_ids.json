@@ -148,6 +148,20 @@
   "STAT:glow_frostbite": "0x890",
   "STAT:bottle_stormcrown_perk_stormcrown": "0x891",
   "STAT:stormcrown_shard": "0x892",
-  "STAT:glow_stormcrown": "0x893"
+  "STAT:glow_stormcrown": "0x893",
+  "WEAP:flamerepeater": "0x894",
+  "WEAP:frostlancer": "0x895",
+  "WEAP:stormcaller": "0x896",
+  "WEAP:embermortar": "0x897",
+  "WEAP:wabbajack": "0x898",
+  "WEAP:thuumcannon": "0x899",
+  "WEAP:skyforgearc": "0x89a",
+  "STAT:show_flamerepeater": "0x89b",
+  "STAT:show_frostlancer": "0x89c",
+  "STAT:show_stormcaller": "0x89d",
+  "STAT:show_embermortar": "0x89e",
+  "STAT:show_wabbajack": "0x89f",
+  "STAT:show_thuumcannon": "0x8a0",
+  "STAT:show_skyforgearc": "0x8a1"
  }
 }

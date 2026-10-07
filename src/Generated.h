@@ -145,20 +145,36 @@ namespace bo3z::gen
 {
 	inline constexpr std::string_view kPlugin = "BO3Zombies.esp";
 	enum class Fire : int { Semi = 0, Auto = 1, Burst = 2, Pump = 3 };
-	struct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; };
-	inline constexpr std::array<GunDef, 12> kGuns{ {
-		GunDef{ "sidearm", "Brass Sidearm", "pistol", Fire(0), 75.0f, 2.0f, 1, 1.5f, 0.4f, 8, 80, 160, 1, 1600, 4200.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_pistol, Sound::reload_mag, Sound::dry_click, 0, 0, 0, 0x814 },
-		GunDef{ "centurion", "Centurion Pistol", "pistol", Fire(0), 90.0f, 2.5f, 1, 1.4f, 0.3f, 12, 96, 140, 1, 1500, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_pistol, Sound::reload_mag, Sound::dry_click, 0, 0, 3, 0x815 },
-		GunDef{ "triad", "Triad Burst", "pistol", Fire(2), 100.0f, 2.0f, 1, 1.6f, 0.4f, 18, 126, 330, 3, 1700, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_pistol, Sound::reload_mag, Sound::dry_click, 500, 250, 3, 0x816 },
-		GunDef{ "spider", "Spider SMG", "smg", Fire(1), 110.0f, 2.0f, 1, 2.5f, 0.6f, 30, 150, 90, 1, 2100, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_smg, Sound::reload_mag, Sound::dry_click, 1000, 500, 4, 0x817 },
-		GunDef{ "drill", "Sphere Drill", "smg", Fire(1), 100.0f, 2.0f, 1, 2.8f, 0.7f, 40, 200, 70, 1, 2300, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_smg, Sound::reload_mag, Sound::dry_click, 1300, 650, 4, 0x818 },
-		GunDef{ "steampump", "Steam Pump", "shotgun", Fire(3), 90.0f, 1.5f, 8, 6.0f, 4.0f, 8, 56, 850, 1, 3000, 1600.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_shotgun, Sound::reload_shell, Sound::dry_click, 900, 450, 3, 0x819 },
-		GunDef{ "marksman", "Arkngthand Marksman", "ar", Fire(0), 160.0f, 2.5f, 1, 1.8f, 0.2f, 24, 144, 140, 1, 2200, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::dry_click, 900, 450, 3, 0x81A },
-		GunDef{ "animunculi", "Animunculi AR", "ar", Fire(1), 120.0f, 2.0f, 1, 2.0f, 0.3f, 30, 180, 100, 1, 2300, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::dry_click, 0, 0, 4, 0x81B },
-		GunDef{ "kagrenac", "Kagrenac AR", "ar", Fire(1), 135.0f, 2.0f, 1, 2.2f, 0.35f, 30, 180, 105, 1, 2400, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::dry_click, 0, 0, 4, 0x81C },
-		GunDef{ "mammothlmg", "Mammoth LMG", "lmg", Fire(1), 130.0f, 2.0f, 1, 3.0f, 0.5f, 80, 240, 85, 1, 4200, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_lmg, Sound::reload_mag, Sound::dry_click, 0, 0, 3, 0x81D },
-		GunDef{ "longshot", "Falmer Longshot", "sniper", Fire(0), 500.0f, 3.0f, 1, 4.0f, 0.05f, 10, 50, 300, 1, 2600, 12000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_sniper, Sound::reload_mag, Sound::dry_click, 0, 0, 2, 0x81E },
-		GunDef{ "aetherium", "Aetherium Ray", "wonder", Fire(0), 1000.0f, 1.0f, 1, 1.0f, 0.5f, 20, 160, 330, 1, 2800, 5000.0f, 180.0f, 600.0f, 28.0f, 14.0f, Sound::shot_ray, Sound::reload_mag, Sound::dry_click, 0, 0, 1, 0x81F },
+	struct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; int special, spell, spellOn; };
+	inline constexpr std::array<GunDef, 19> kGuns{ {
+	inline constexpr std::array<FormRef, 7> kSpells{ {
+		FormRef{ "Skyrim.esm", 0x012FD0, "Firebolt" },
+		FormRef{ "Skyrim.esm", 0x01C789, "Fireball" },
+		FormRef{ "Skyrim.esm", 0x02B96C, "IceSpike" },
+		FormRef{ "Skyrim.esm", 0x02DD29, "LightningBolt" },
+		FormRef{ "Skyrim.esm", 0x045F9D, "ChainLightning" },
+		FormRef{ "Skyrim.esm", 0x013F3A, "VoiceUnrelentingForce3" },
+		FormRef{ "Skyrim.esm", 0x02AC6F, "DA15Wabbajack" },
+	} };
+		GunDef{ "sidearm", "Brass Sidearm", "pistol", Fire(0), 75.0f, 2.0f, 1, 1.5f, 0.4f, 8, 80, 160, 1, 1600, 4200.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_pistol, Sound::reload_mag, Sound::dry_click, 0, 0, 0, 0x814, 0, -1, 0 },
+		GunDef{ "centurion", "Centurion Pistol", "pistol", Fire(0), 90.0f, 2.5f, 1, 1.4f, 0.3f, 12, 96, 140, 1, 1500, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_pistol, Sound::reload_mag, Sound::dry_click, 0, 0, 3, 0x815, 0, -1, 0 },
+		GunDef{ "triad", "Triad Burst", "pistol", Fire(2), 100.0f, 2.0f, 1, 1.6f, 0.4f, 18, 126, 330, 3, 1700, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_pistol, Sound::reload_mag, Sound::dry_click, 500, 250, 3, 0x816, 0, -1, 0 },
+		GunDef{ "spider", "Spider SMG", "smg", Fire(1), 110.0f, 2.0f, 1, 2.5f, 0.6f, 30, 150, 90, 1, 2100, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_smg, Sound::reload_mag, Sound::dry_click, 1000, 500, 4, 0x817, 0, -1, 0 },
+		GunDef{ "drill", "Sphere Drill", "smg", Fire(1), 100.0f, 2.0f, 1, 2.8f, 0.7f, 40, 200, 70, 1, 2300, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_smg, Sound::reload_mag, Sound::dry_click, 1300, 650, 4, 0x818, 0, -1, 0 },
+		GunDef{ "steampump", "Steam Pump", "shotgun", Fire(3), 90.0f, 1.5f, 8, 6.0f, 4.0f, 8, 56, 850, 1, 3000, 1600.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_shotgun, Sound::reload_shell, Sound::dry_click, 900, 450, 3, 0x819, 0, -1, 0 },
+		GunDef{ "marksman", "Arkngthand Marksman", "ar", Fire(0), 160.0f, 2.5f, 1, 1.8f, 0.2f, 24, 144, 140, 1, 2200, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::dry_click, 900, 450, 3, 0x81A, 0, -1, 0 },
+		GunDef{ "animunculi", "Animunculi AR", "ar", Fire(1), 120.0f, 2.0f, 1, 2.0f, 0.3f, 30, 180, 100, 1, 2300, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::dry_click, 0, 0, 4, 0x81B, 0, -1, 0 },
+		GunDef{ "kagrenac", "Kagrenac AR", "ar", Fire(1), 135.0f, 2.0f, 1, 2.2f, 0.35f, 30, 180, 105, 1, 2400, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::dry_click, 0, 0, 4, 0x81C, 0, -1, 0 },
+		GunDef{ "mammothlmg", "Mammoth LMG", "lmg", Fire(1), 130.0f, 2.0f, 1, 3.0f, 0.5f, 80, 240, 85, 1, 4200, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_lmg, Sound::reload_mag, Sound::dry_click, 0, 0, 3, 0x81D, 0, -1, 0 },
+		GunDef{ "longshot", "Falmer Longshot", "sniper", Fire(0), 500.0f, 3.0f, 1, 4.0f, 0.05f, 10, 50, 300, 1, 2600, 12000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_sniper, Sound::reload_mag, Sound::dry_click, 0, 0, 2, 0x81E, 0, -1, 0 },
+		GunDef{ "aetherium", "Aetherium Ray", "wonder", Fire(0), 1000.0f, 1.0f, 1, 1.0f, 0.5f, 20, 160, 330, 1, 2800, 5000.0f, 180.0f, 600.0f, 28.0f, 14.0f, Sound::shot_ray, Sound::reload_mag, Sound::dry_click, 0, 0, 1, 0x81F, 1, -1, 0 },
+		GunDef{ "flamerepeater", "Flame Repeater", "smg", Fire(1), 80.0f, 1.5f, 1, 2.2f, 1.0f, 40, 280, 95, 1, 2300, 2600.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_smg, Sound::reload_mag, Sound::dry_click, 0, 0, 3, 0x894, 0, 0, 3 },
+		GunDef{ "frostlancer", "Frost Lancer", "ar", Fire(0), 260.0f, 3.0f, 1, 1.2f, 0.2f, 10, 90, 260, 1, 2100, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::dry_click, 0, 0, 3, 0x895, 0, 2, 1 },
+		GunDef{ "stormcaller", "Storm Caller", "ar", Fire(2), 140.0f, 2.0f, 1, 1.5f, 0.4f, 24, 192, 320, 3, 2000, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::dry_click, 0, 0, 3, 0x896, 0, 3, 1 },
+		GunDef{ "embermortar", "Ember Mortar", "shotgun", Fire(0), 400.0f, 1.0f, 1, 1.0f, 0.5f, 4, 24, 700, 1, 3000, 3500.0f, 260.0f, 600.0f, 28.0f, 14.0f, Sound::shot_shotgun, Sound::reload_shell, Sound::dry_click, 0, 0, 2, 0x897, 1, 1, 2 },
+		GunDef{ "wabbajack", "Wabbajack", "wonder", Fire(0), 1500.0f, 1.0f, 1, 1.0f, 0.5f, 8, 40, 450, 1, 2600, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ray, Sound::reload_mag, Sound::dry_click, 0, 0, 1, 0x898, 4, 6, 1 },
+		GunDef{ "thuumcannon", "Thu'um Cannon", "wonder", Fire(0), 5000.0f, 1.0f, 1, 22.0f, 22.0f, 2, 12, 900, 1, 3200, 1100.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_shotgun, Sound::reload_shell, Sound::dry_click, 0, 0, 1, 0x899, 3, 5, 2 },
+		GunDef{ "skyforgearc", "Skyforge Arc", "wonder", Fire(0), 3000.0f, 1.0f, 1, 1.5f, 0.5f, 6, 36, 600, 1, 2800, 3500.0f, 420.0f, 3000.0f, 28.0f, 14.0f, Sound::shot_ray, Sound::reload_mag, Sound::dry_click, 0, 0, 1, 0x89A, 2, 4, 2 },
 	} };
 	inline constexpr int kGunIdx_sidearm = 0;
 	inline constexpr int kGunIdx_centurion = 1;
@@ -172,6 +188,13 @@ namespace bo3z::gen
 	inline constexpr int kGunIdx_mammothlmg = 9;
 	inline constexpr int kGunIdx_longshot = 10;
 	inline constexpr int kGunIdx_aetherium = 11;
+	inline constexpr int kGunIdx_flamerepeater = 12;
+	inline constexpr int kGunIdx_frostlancer = 13;
+	inline constexpr int kGunIdx_stormcaller = 14;
+	inline constexpr int kGunIdx_embermortar = 15;
+	inline constexpr int kGunIdx_wabbajack = 16;
+	inline constexpr int kGunIdx_thuumcannon = 17;
+	inline constexpr int kGunIdx_skyforgearc = 18;
 	struct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };
 	inline constexpr KnifeDef kKnife{ 47, 150.0f, 170.0f, 45.0f, 650 };
 	struct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };
@@ -228,6 +251,7 @@ namespace bo3z::gen
 		ObjectDef{ "wall_drill", "Sphere Drill", 2, 1300, 4, 0x811, 1.0f },
 		ObjectDef{ "wall_steampump", "Steam Pump", 2, 900, 5, 0x812, 1.0f },
 		ObjectDef{ "wall_marksman", "Arkngthand Marksman", 2, 900, 6, 0x813, 1.0f },
+	} };
 	struct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; };
 	inline constexpr std::array<DressDef, 60> kDress{ {
 		DressDef{ 0, 0x84D, false, 0.0f, 0.0f, 0.0f, 0.45f, 0.0f },
@@ -291,11 +315,10 @@ namespace bo3z::gen
 		DressDef{ 13, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
 		DressDef{ 14, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
 	} };
-	inline constexpr std::array<std::uint32_t, 12> kShowStat{ { 0x864, 0x865, 0x866, 0x867, 0x868, 0x869, 0x86A, 0x86B, 0x86C, 0x86D, 0x86E, 0x86F } };
+	inline constexpr std::array<std::uint32_t, 19> kShowStat{ { 0x864, 0x865, 0x866, 0x867, 0x868, 0x869, 0x86A, 0x86B, 0x86C, 0x86D, 0x86E, 0x86F, 0x89B, 0x89C, 0x89D, 0x89E, 0x89F, 0x8A0, 0x8A1 } };
 	inline constexpr std::uint32_t kShowCheese = 0x870;
 	inline constexpr float kShowRise = 45.0f, kShowSpin = 4.2f, kShowOffer = 12.0f;
 	inline constexpr std::array<std::uint32_t, 9> kPerkColor{ { 0xD02020FF, 0x30C040FF, 0xE0A020FF, 0x3070F0FF, 0xF0D840FF, 0xB0B8C0FF, 0x7AA040FF, 0x9040E0FF, 0x40D0F0FF } };
-	} };
 	inline constexpr std::array<std::string_view, 10> kTowns{ { "Riverwood", "Whiterun", "Solitude", "Windhelm", "Markarth", "Riften", "Falkreath", "Morthal", "Dawnstar", "Winterhold" } };
 	struct LocationDef { int town; std::uint32_t anchor; int object; float angleDeg, distance; };
 	inline constexpr std::array<LocationDef, 38> kLocations{ {
