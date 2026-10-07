@@ -8,8 +8,22 @@
 - One round per night, tally counter, 30-min day cycle (60/40), dawn despawn, night truce for NPCs, sprint OK on fresh character.
 - Station stand with sloped walkable skirt, map markers, clutter cleared from the footprint.
 
+## Built 2026-10-07 afternoon (9dfaa60, installed, NOT yet seen in game)
+- Signature moves get their own motion: arm/wand poses per style (sheet weapons.chargeStyle: thrust, slam, sweep,
+  twirl, raise, surge) applied after Skyrim's animation (PlayerCharacter::UpdateAnimation hook, upper arm bone);
+  charge hum + ready ping, FOV kick on release. Log line "pose: arm animation live" confirms the hook moves bones.
+  If the arm doesn't move in game, the bone write happens before Skyrim's own pose: move PoseArm to a later hook.
+- One native cast per click: after 0.12 s held, Skyrim is told the button was released (AttackBlockHandler
+  ProcessButton hook); tome hand spells are fire-and-forget. All formerly automatic weapons are semi (+40% damage).
+- 2x zombies: spawnMultiplier 6, at-once floor 12, maxAlive 64, spawn delay halved.
+- Undead faction (UN_UndeadFaction, allies to each other, enemy of PlayerFaction), aggression 1: no infighting.
+- Standing corpses get knocked over (KnockExplosion) if not ragdolled 0.5 s after death; KillImpl only if not dead.
+- Falkreath stand: GroundTop now needs 16/20 ground hits and hi-lo <= 110, sinks into slopes (top <= low + 40);
+  adopted stands that fail it are rebuilt.
+- Dev: `hold <mouse id> <secs>` (fire = 0) holds the button for charge tests.
+
 ## Open issues (in priority order)
-1. Falkreath stand still floats: adoption keeps it ("alley already built"). Add a dev command that forces a town rebuild
+1. (fix built, verify) Falkreath stand still floats: adoption keeps it ("alley already built"). Add a dev command that forces a town rebuild
    (Sweep + plan reset) and log GroundTop/low/coffer z on adoption to see why the 30-unit / slope checks pass.
 2. Confirm bolts are visible (screenshot right after a real click); Nightshade + Bloodthirst use our own PROJ (no vanilla match).
 3. Wand staff cast: ENCH is fire-and-forget aimed with the bolt effect; check the animation now that the enchant has effects.
