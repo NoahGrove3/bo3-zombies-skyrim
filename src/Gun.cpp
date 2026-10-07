@@ -743,6 +743,7 @@ namespace bo3z
 			float pitch = 0, yaw = 0, roll = 0, push = 0, lift = 0, shake = 0, spinRate = 0;
 		};
 		PoseOut g_pose;
+		float   g_jx = 0, g_jy = 0;  // this frame's tremble (rolled on the main thread)
 
 		PoseOut Scale(const PoseOut& a, float k) { return { a.pitch * k, a.yaw * k, a.roll * k, a.push * k, a.lift * k, a.shake * k, a.spinRate * k }; }
 		PoseOut Lerp(const PoseOut& a, const PoseOut& b, float t)
@@ -819,6 +820,8 @@ namespace bo3z
 				g_spin += (rest - g_spin) * std::min(1.0f, a_delta * 10.0f);
 			}
 			g_fovKick += (0.0f - g_fovKick) * std::min(1.0f, a_delta * 6.0f);
+			g_jx = out.shake > 0 ? Rand(-out.shake, out.shake) : 0.0f;
+			g_jy = out.shake > 0 ? Rand(-out.shake, out.shake) : 0.0f;
 			g_pose = out;
 		}
 
@@ -864,7 +867,7 @@ namespace bo3z
 				g_armBone = nullptr;
 				return;
 			}
-			const float jx = o.shake > 0 ? Rand(-o.shake, o.shake) : 0.0f, jy = o.shake > 0 ? Rand(-o.shake, o.shake) : 0.0f;
+			const float jx = g_jx, jy = g_jy;
 			const float pitch = a_player->data.angle.x, yaw = a_player->data.angle.z;
 			const RE::NiPoint3 f{ std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch) };
 			const RE::NiPoint3 u{ std::sin(yaw) * std::sin(pitch), std::cos(yaw) * std::sin(pitch), std::cos(pitch) };

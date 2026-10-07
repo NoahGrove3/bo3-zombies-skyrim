@@ -25,7 +25,9 @@ namespace bo3z
 			RE::INPUT_DEVICE  device;
 			std::uint32_t     id;
 			RE::BSFixedString ev;
-			int               stage;  // 0 press, 1 release
+			int               stage;  // 0 press, 1 release (or held until hold seconds pass)
+			float             hold = 0.0f;
+			std::chrono::steady_clock::time_point t0{};
 		};
 		std::vector<PendingKey> g_pendingKeys;
 		int                      g_frame = 0;
@@ -184,6 +186,14 @@ namespace bo3z
 						break;
 					}
 				}
+			} else if (cmd == "hold") {
+				// hold <mouse id> <seconds>: press a mouse button and keep it down (charge-up tests)
+				std::uint32_t id = 0;
+				float         secs = 1.0f;
+				in >> id >> secs;
+				const RE::BSFixedString ev(RE::ControlMap::GetSingleton()->GetUserEventName(id, RE::INPUT_DEVICE::kMouse, RE::UserEvents::INPUT_CONTEXT_ID::kGameplay));
+				g_pendingKeys.push_back({ RE::INPUT_DEVICE::kMouse, id, ev, 0, secs });
+				logger::info("dev: hold mouse {} for {:.1f}s ({})", id, secs, ev.c_str());
 			} else if (cmd == "key" || cmd == "mouse") {
 				// key <dik> [menu]: press and release a key inside Skyrim's own input queue (no window focus needed)
 				std::uint32_t id = 0;
@@ -256,7 +266,7 @@ namespace bo3z
 			for (auto& s : lines) {
 				if (s.rfind("shot ", 0) == 0) {
 					g_shotName = s.substr(5);
-				} else if (s.rfind("key ", 0) == 0 || s.rfind("mouse ", 0) == 0 || s.rfind("close ", 0) == 0) {
+				} else if (s.rfind("key ", 0) == 0 || s.rfind("mouse ", 0) == 0 || s.rfind("hold ", 0) == 0 || s.rfind("close ", 0) == 0) {
 					g_mainQueue.push_back(s);
 				} else {
 					g_gameQueue.push_back(s);
@@ -296,12 +306,18 @@ namespace bo3z
 				return;
 			}
 			for (auto it = g_pendingKeys.begin(); it != g_pendingKeys.end();) {
+				const auto now = std::chrono::steady_clock::now();
+				const float held = it->stage == 0 ? 0.0f : std::chrono::duration<float>(now - it->t0).count();
 				if (it->stage == 0) {
 					q->AddButtonEvent(it->device, static_cast<std::int32_t>(it->id), 1.0f, 0.0f, it->ev);
 					it->stage = 1;
+					it->t0 = now;
+					++it;
+				} else if (held < it->hold) {
+					q->AddButtonEvent(it->device, static_cast<std::int32_t>(it->id), 1.0f, std::max(0.01f, held), it->ev);
 					++it;
 				} else {
-					q->AddButtonEvent(it->device, static_cast<std::int32_t>(it->id), 0.0f, 0.1f, it->ev);
+					q->AddButtonEvent(it->device, static_cast<std::int32_t>(it->id), 0.0f, std::max(0.1f, held), it->ev);
 					it = g_pendingKeys.erase(it);
 				}
 			}
