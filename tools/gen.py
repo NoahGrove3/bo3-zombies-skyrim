@@ -29,12 +29,6 @@ out.append('\t};')
 out.append(f'\tinline constexpr std::array<FormRef, {len(snd)}> kSounds{{ {{')
 for s in snd: out.append(f'\t\tFormRef{{ {cs(s["plugin"])}, 0x{hexid(s["localId"]):06X}, {cs(s["editorId"])} }},')
 out.append('\t} };')
-# weapons
-out.append('\tstruct Gun { std::string_view id, label; float damage, headMult; int clip, reserve, fireDelayMs, reloadMs; float range, hitRadius, headRadius; Sound fire, reload, empty; bool startOwned; };')
-ws = S['weapons']['rows']
-for w in ws:
-    sid = lambda v: 'Sound::' + v.split(':')[1]
-    out.append(f'\tinline constexpr Gun kGun_{w["id"]}{{ {cs(w["id"])}, {cs(w["label"])}, {w["damage"]}.f, {w["headMult"]}f, {w["clip"]}, {w["reserve"]}, {w["fireDelayMs"]}, {w["reloadMs"]}, {w["range"]}.f, {w["hitRadius"]}.f, {w["headRadius"]}.f, {sid(w["fireSound"])}, {sid(w["reloadSound"])}, {sid(w["emptySound"])}, {str(w["startOwned"]).lower()} }};')
 # economy
 for e in S['economy']['rows']: out.append(f'\tinline constexpr int kPoints_{e["id"]} = {e["points"]};  // {e["event"]}')
 # input
@@ -52,3 +46,62 @@ out.append('}')
 (root / 'src').mkdir(exist_ok=True)
 (root / 'src/Generated.h').write_text('\n'.join(out) + '\n')
 print('wrote src/Generated.h', len(out), 'lines')
+
+# ---------------- v0.2 tables (appended to Generated.h) ----------------
+import esp_ids
+IDS, _ = esp_ids.assign(S)
+o = ['', '// ---- v0.2 ----', '#include <string_view>', 'namespace bo3z::gen', '{',
+     f'\tinline constexpr std::string_view kPlugin = {cs(esp_ids.PLUGIN)};']
+fires = {'semi': 0, 'auto': 1, 'burst': 2, 'pump': 3}
+o.append('\tenum class Fire : int { Semi = 0, Auto = 1, Burst = 2, Pump = 3 };')
+o.append('\tstruct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; };')
+W = S['weapons']['rows']
+o.append(f'\tinline constexpr std::array<GunDef, {len(W)}> kGuns{{ {{')
+sid = lambda v: 'Sound::' + v.split(':')[1]
+for w in W:
+    o.append(f'\t\tGunDef{{ {cs(w["id"])}, {cs(w["label"])}, {cs(w["class"])}, Fire({fires[w["fire"]]}), {w["damage"]}.f, {w["headMult"]}f, {w["pellets"]}, {w["spreadHip"]}f, {w["spreadAds"]}f, {w["clip"]}, {w["reserve"]}, {w["fireDelayMs"]}, {w["burst"]}, {w["reloadMs"]}, {w["range"]}.f, {w["splashRadius"]}.f, {w["splashDamage"]}.f, {w["hitRadius"]}.f, {w["headRadius"]}.f, {sid(w["fireSound"])}, {sid(w["reloadSound"])}, {sid(w["emptySound"])}, {w["wallBuyCost"]}, {w["ammoCost"]}, {w["boxWeight"]}, 0x{IDS[("WEAP", w["id"])]:03X} }},')
+o.append('\t} };')
+for i, w in enumerate(W): o.append(f'\tinline constexpr int kGunIdx_{w["id"]} = {i};')
+k = S['melee']['rows'][0]
+o.append('\tstruct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };')
+o.append(f'\tinline constexpr KnifeDef kKnife{{ {k["key"]}, {k["damage"]}.f, {k["range"]}.f, {k["coneDeg"]}.f, {k["cooldownMs"]} }};')
+effects = {'health': 0, 'reload_mult': 1, 'fire_rate_and_damage': 2, 'self_revive': 3, 'speed_and_stamina': 4, 'headshots': 5, 'third_gun': 6}
+P = S['perks']['rows']
+o.append('\tstruct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };')
+o.append(f'\tinline constexpr std::array<PerkDef, {len(P)}> kPerks{{ {{')
+for p in P: o.append(f'\t\tPerkDef{{ {cs(p["id"])}, {cs(p["label"])}, {p["cost"]}, {effects[p["effect"]]}, {p["value"]}f, 0x{IDS[("MGEF", p["id"])]:03X}, 0x{IDS[("ALCH", p["id"])]:03X} }},')
+o.append('\t} };')
+for i, p in enumerate(P): o.append(f'\tinline constexpr int kPerk_{p["id"]} = {i};')
+o.append(f'\tinline constexpr int kMaxPerks = {S["perks"]["limits"]["maxPerks"]};')
+C = S['crew']['rows']; passives = {'gun_damage_mult': 0, 'bonus_health': 1, 'knife_damage_mult': 2, 'box_cost': 3}
+o.append('\tstruct CrewDef { std::string_view id, label, quote; int passive; float value; };')
+o.append(f'\tinline constexpr std::array<CrewDef, {len(C)}> kCrew{{ {{')
+for c in C: o.append(f'\t\tCrewDef{{ {cs(c["id"])}, {cs(c["label"])}, {cs(c["quote"])}, {passives[c["passive"]]}, {c["passiveValue"]}f }},')
+o.append('\t} };')
+O = S['objects']['rows']; kinds = {'box': 0, 'perk': 1, 'wallbuy': 2}
+def refidx(r):
+    if r == 'none': return -1
+    sh, i = r.split(':'); rows = {'perks': P, 'weapons': W}[sh]
+    return [x['id'] for x in rows].index(i)
+o.append('\tstruct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; };')
+o.append(f'\tinline constexpr std::array<ObjectDef, {len(O)}> kObjects{{ {{')
+for x in O: o.append(f'\t\tObjectDef{{ {cs(x["id"])}, {cs(x["label"])}, {kinds[x["kind"]]}, {x["cost"]}, {refidx(x["refs"])}, 0x{IDS[("ACTI", x["id"])]:03X} }},')
+o.append('\t} };')
+L = S['locations']['rows']; oid = [x['id'] for x in O]
+towns = []
+for l in L:
+    if l['town'] not in towns: towns.append(l['town'])
+o.append(f'\tinline constexpr std::array<std::string_view, {len(towns)}> kTowns{{ {{ {", ".join(cs(t) for t in towns)} }} }};')
+o.append('\tstruct LocationDef { int town; std::uint32_t anchor; int object; float angleDeg, distance; };')
+o.append(f'\tinline constexpr std::array<LocationDef, {len(L)}> kLocations{{ {{')
+for l in L: o.append(f'\t\tLocationDef{{ {towns.index(l["town"])}, 0x{int(l["anchor"],16):06X}, {oid.index(l["object"].split(":")[1])}, {l["angleDeg"]}.f, {l["distance"]}.f }},')
+o.append('\t} };')
+M = {r['id']: r for r in S['movement']['rows']}
+o.append(f'\tinline constexpr float kSprintBoost = {M["sprint_boost"]["value"]}.f, kSlideBoost = {M["slide"]["value"]}.f, kSlideSeconds = {M["slide"]["durationMs"]/1000}f, kAdsFov = {M["ads_fov"]["value"]}.f, kAdsSeconds = {M["ads_fov"]["durationMs"]/1000}f, kAdsSpeed = {M["ads_speed"]["value"]}.f;')
+Q = {r['id']: r for r in S['quests']['rows']}
+for qid in ('MQQuickstart', 'MQ102Marker'):
+    if qid in Q: o.append(f'\tinline constexpr FormRef kQ_{qid}{{ {cs(Q[qid]["plugin"])}, 0x{int(Q[qid]["localId"],16):06X}, {cs(Q[qid]["editorId"])} }};')
+for i in S['input']['rows']: o.append(f'\tinline constexpr std::uint32_t kKey2_{i["id"]} = {i["code"]};')
+o.append('}')
+with open(root / 'src/Generated.h', 'a') as f: f.write('\n'.join(o) + '\n')
+print('appended v0.2 tables')

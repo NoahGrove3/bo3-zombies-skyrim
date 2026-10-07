@@ -31,13 +31,14 @@
    "id": "persistence",
    "does": "load/save round, points and ammo on the player; give the start kit once",
    "reads": [
-    "persistence:initialized",
+    "persistence:slot0",
+    "persistence:slot1",
+    "persistence:slot2",
+    "persistence:flags",
+    "persistence:box",
     "persistence:round",
     "persistence:points",
-    "persistence:clip",
-    "persistence:reserve",
-    "economy:start",
-    "weapons:m1911"
+    "economy:start"
    ],
    "state": "none (lives on the player)",
    "step": 1,
@@ -78,15 +79,21 @@
   },
   {
    "id": "gun",
-   "does": "hitscan M1911 from the camera: clip, reserve, reload, fire rate, headshots",
+   "does": "BO3 arsenal: each gun is a Skyrim weapon item; while one is drawn, hitscan fire (semi/auto/burst/pump, pellets, splash), ADS, reload, 2 slots (3 with Mule Kick), quick knife",
    "reads": [
     "weapons:m1911",
+    "melee:knife",
     "input:fire",
+    "input:ads",
     "input:reload",
     "input:swap",
-    "sounds:crossbow_fire",
-    "sounds:crossbow_reload",
-    "sounds:bow_nock"
+    "input:knife",
+    "perks:speedcola",
+    "perks:doubletap",
+    "perks:deadshot",
+    "perks:mulekick",
+    "crew:dempsey",
+    "crew:takeo"
    ],
    "state": "out, clip, reserve, cooldown, reload timer",
    "step": 1,
@@ -117,6 +124,82 @@
    ],
    "state": "command queue, pending shot",
    "step": 1,
+   "verify": []
+  },
+  {
+   "id": "intro",
+   "does": "new games skip Helgen with Bethesda's MQQuickstart, then land outside Riverwood and open the crew screen",
+   "reads": [
+    "quests:MQ101",
+    "quests:MQQuickstart",
+    "quests:MQ102Marker",
+    "input:crew1",
+    "input:crew2",
+    "input:crew3",
+    "input:crew4",
+    "input:confirm",
+    "crew:dempsey",
+    "crew:nikolai",
+    "crew:takeo",
+    "crew:richtofen"
+   ],
+   "state": "flags on the player",
+   "step": 2,
+   "verify": []
+  },
+  {
+   "id": "shops",
+   "does": "place Mystery Box, perk machines and wall-buys in towns; sell guns, ammo and Perk-a-Colas for points; move the box on a teddy bear",
+   "reads": [
+    "locations:riverwood_0",
+    "objects:mysterybox",
+    "objects:perk_juggernog",
+    "objects:wall_kuda",
+    "perks:juggernog"
+   ],
+   "state": "placed refs this session, box town/spins on the player",
+   "step": 2,
+   "verify": []
+  },
+  {
+   "id": "perks",
+   "does": "drinking a Perk-a-Cola potion grants its perk (max 4) and applies its effect",
+   "reads": [
+    "perks:juggernog",
+    "perks:speedcola",
+    "perks:doubletap",
+    "perks:quickrevive",
+    "perks:staminup",
+    "perks:deadshot",
+    "perks:mulekick"
+   ],
+   "state": "perk bits on the player",
+   "step": 2,
+   "verify": []
+  },
+  {
+   "id": "movement",
+   "does": "BO3 sprint boost, slide, aim-down-sights zoom and speed",
+   "reads": [
+    "movement:sprint_boost",
+    "movement:slide",
+    "movement:ads_fov",
+    "movement:ads_speed"
+   ],
+   "state": "slide timer, ADS blend",
+   "step": 2,
+   "verify": []
+  },
+  {
+   "id": "plugin",
+   "does": "BO3Zombies.esp holds the gun items, potions, perk effects and town objects; the .asi adds it to Plugins.txt",
+   "reads": [
+    "objects:mysterybox",
+    "weapons:m1911",
+    "perks:juggernog"
+   ],
+   "state": "none",
+   "step": 2,
    "verify": []
   }
  ]

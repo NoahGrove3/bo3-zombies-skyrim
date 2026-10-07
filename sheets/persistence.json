@@ -1,12 +1,84 @@
 {
-  "sheet": "persistence",
-  "about": "State kept in the player's save without the Script Extender: the player's own unused AI variable actor values, which Skyrim saves with the player.",
-  "columns": ["id","field","actorValue","default","verify"],
-  "rows": [
-    {"id":"initialized","field":"initialized","actorValue":"kVariable06","default":0,"verify":["actorValue"]},
-    {"id":"round","field":"round","actorValue":"kVariable07","default":0,"verify":["actorValue"]},
-    {"id":"points","field":"points","actorValue":"kVariable08","default":0,"verify":["actorValue"]},
-    {"id":"clip","field":"clip","actorValue":"kVariable09","default":0,"verify":["actorValue"]},
-    {"id":"reserve","field":"reserve","actorValue":"kVariable10","default":0,"verify":["actorValue"]}
-  ]
+ "sheet": "persistence",
+ "about": "State kept in the player's save without the Script Extender: the player's unused AI variable actor values (saved with the player). Packed fields fit the float's 24 exact integer bits.",
+ "columns": [
+  "id",
+  "field",
+  "actorValue",
+  "layout",
+  "default",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "slot0",
+   "field": "gun slot 1",
+   "actorValue": "kVariable01",
+   "layout": "gun+1:5 | clip:8 | reserve:11",
+   "default": 0,
+   "verify": [
+    "actorValue"
+   ]
+  },
+  {
+   "id": "slot1",
+   "field": "gun slot 2",
+   "actorValue": "kVariable02",
+   "layout": "gun+1:5 | clip:8 | reserve:11",
+   "default": 0,
+   "verify": [
+    "actorValue"
+   ]
+  },
+  {
+   "id": "slot2",
+   "field": "gun slot 3 (Mule Kick)",
+   "actorValue": "kVariable03",
+   "layout": "gun+1:5 | clip:8 | reserve:11",
+   "default": 0,
+   "verify": [
+    "actorValue"
+   ]
+  },
+  {
+   "id": "flags",
+   "field": "initialized, crew, perks, moved to Riverwood",
+   "actorValue": "kVariable04",
+   "layout": "init:1 | crew:3 | perks:7 | moved:1 | slot:2",
+   "default": 0,
+   "verify": [
+    "actorValue"
+   ]
+  },
+  {
+   "id": "box",
+   "field": "Mystery Box town and spins there",
+   "actorValue": "kVariable05",
+   "layout": "town+1:5 | spins:8",
+   "default": 0,
+   "verify": [
+    "actorValue"
+   ]
+  },
+  {
+   "id": "round",
+   "field": "last round cleared",
+   "actorValue": "kVariable07",
+   "layout": "int",
+   "default": 0,
+   "verify": [
+    "actorValue"
+   ]
+  },
+  {
+   "id": "points",
+   "field": "points",
+   "actorValue": "kVariable08",
+   "layout": "int",
+   "default": 0,
+   "verify": [
+    "actorValue"
+   ]
+  }
+ ]
 }

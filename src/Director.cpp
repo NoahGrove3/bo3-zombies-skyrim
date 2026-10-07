@@ -166,12 +166,12 @@ namespace bo3z
 				}
 			}
 
-			auto* base = ResolveSpawnable(Forms::Enemy(*pick), a_player);
-			if (!base) {
+			auto* npc = ResolveSpawnable(Forms::Enemy(*pick), a_player);
+			if (!npc) {
 				logger::warn("could not resolve {} to an NPC", gen::kEnemies[*pick].id);
 				return false;
 			}
-			auto ref = a_player->PlaceObjectAtMe(base, false);
+			auto ref = a_player->PlaceObjectAtMe(npc, false);
 			auto* actor = ref ? ref->As<RE::Actor>() : nullptr;
 			if (!actor) {
 				logger::warn("spawn failed for {}", gen::kEnemies[*pick].id);

@@ -1,8 +1,42 @@
 {
-  "sheet": "quests",
-  "about": "Skyrim quests the mashup reads.",
-  "columns": ["id","plugin","localId","editorId","use","verify"],
-  "rows": [
-    {"id":"MQ101","plugin":"Skyrim.esm","localId":"0x03372B","editorId":"MQ101","use":"Helgen intro: rounds stay off until it is completed (stage done or quest not running after Helgen)","verify":["use"]}
-  ]
+ "sheet": "quests",
+ "about": "Skyrim quests the mashup reads.",
+ "columns": [
+  "id",
+  "plugin",
+  "localId",
+  "editorId",
+  "use",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "MQ101",
+   "plugin": "Skyrim.esm",
+   "localId": "0x03372B",
+   "editorId": "MQ101",
+   "use": "Intro quest. With MQQuickstart=3 its stage 0 runs Bethesda's skip fragment (Fragment_27): character creation, choose Hadvar/Ralof, start MQ102, complete MQ101. Rounds stay off until it is completed.",
+   "verify": []
+  },
+  {
+   "id": "MQQuickstart",
+   "plugin": "Skyrim.esm",
+   "localId": "0x04679E",
+   "editorId": "MQQuickstart",
+   "use": "Global read by MQ101 stage 0: value 3 selects the quick-start skip (found in QF_MQ101_0003372B VMAD: stage 0 log 3 -> Fragment_27, condition GetGlobalValue MQQuickstart == 3)",
+   "verify": [
+    "use"
+   ]
+  },
+  {
+   "id": "MQ102Marker",
+   "plugin": "Skyrim.esm",
+   "localId": "0x038B08",
+   "editorId": "MQ102OutsideRiverwoodMarker",
+   "use": "Where a new game lands after the skip: just outside Riverwood on the Before the Storm route",
+   "verify": [
+    "use"
+   ]
+  }
+ ]
 }

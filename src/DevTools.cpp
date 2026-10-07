@@ -43,11 +43,45 @@ namespace bo3z
 			} else if (cmd == "state" && player) {
 				const auto p = player->GetPosition();
 				auto*      cell = player->GetParentCell();
-				logger::info("dev: state round={} points={} clip={} reserve={} pos=({:.0f},{:.0f},{:.0f}) cell={} hour={:.2f} introDone={}",
-					Save::Get(gen::kAV_round), Save::Get(gen::kAV_points), Save::Get(gen::kAV_clip), Save::Get(gen::kAV_reserve), p.x, p.y, p.z,
-					cell ? cell->GetFormEditorID() : "?", RE::Calendar::GetSingleton() ? RE::Calendar::GetSingleton()->GetHour() : -1.0f,
-					Forms::IntroQuest() && Forms::IntroQuest()->IsCompleted());
+				std::string slots;
+				for (int i = 0; i < 3; ++i) {
+					const auto s = Save::GetSlot(i);
+					slots += fmt::format(" [{}:{} {}/{}]", i, s.gun >= 0 ? gen::kGuns[s.gun].id : "-", s.clip, s.reserve);
+				}
+				logger::info("dev: state round={} points={} crew={} perks={:07b}{} pos=({:.0f},{:.0f},{:.0f}) cell={} hour={:.2f} introDone={} box={}", Save::Get(gen::kAV_round),
+					Points::Get(), Save::Crew(), (Save::Flags() >> 4) & 0x7F, slots, p.x, p.y, p.z, cell ? cell->GetFormEditorID() : "?",
+					RE::Calendar::GetSingleton() ? RE::Calendar::GetSingleton()->GetHour() : -1.0f, Forms::IntroQuest() && Forms::IntroQuest()->IsCompleted(), Shops::BoxTown());
 				Director::LogState();
+			} else if (cmd == "points") {
+				int n = 0;
+				in >> n;
+				Points::Add(n);
+			} else if (cmd == "give") {
+				std::string id;
+				in >> id;
+				for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
+					if (gen::kGuns[i].id == id) {
+						Gun::Give(i);
+					}
+				}
+			} else if (cmd == "tp" && player) {
+				std::string town;
+				in >> town;
+				for (const auto& l : gen::kLocations) {
+					std::string t(gen::kTowns[l.town]);
+					std::transform(t.begin(), t.end(), t.begin(), ::tolower);
+					if (t == town) {
+						if (auto* a = RE::TESForm::LookupByID<RE::TESObjectREFR>(l.anchor)) {
+							player->MoveTo(a);
+							logger::info("dev: moved to {}", town);
+						}
+						break;
+					}
+				}
+			} else if (cmd == "crew") {
+				int c = 0;
+				in >> c;
+				Save::SetCrew(c);
 			} else {
 				logger::warn("dev: unknown command '{}'", a_line);
 			}

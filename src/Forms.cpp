@@ -4,18 +4,25 @@ namespace bo3z
 {
 	namespace
 	{
-		std::array<RE::TESBoundObject*, gen::kEnemies.size()>            g_enemies{};
-		std::array<RE::BGSSoundDescriptorForm*, gen::kSounds.size()>     g_sounds{};
-		RE::TESQuest*                                                     g_intro = nullptr;
+		std::array<RE::TESBoundObject*, gen::kEnemies.size()>        g_enemies{};
+		std::array<RE::BGSSoundDescriptorForm*, gen::kSounds.size()> g_sounds{};
+		std::array<RE::TESObjectWEAP*, gen::kGuns.size()>            g_guns{};
+		std::array<RE::AlchemyItem*, gen::kPerks.size()>             g_potions{};
+		std::array<RE::FormID, gen::kPerks.size()>                   g_effects{};
+		std::array<RE::TESObjectACTI*, gen::kObjects.size()>         g_objects{};
+		RE::TESQuest*      g_intro = nullptr;
+		RE::TESGlobal*     g_quick = nullptr;
+		RE::TESObjectREFR* g_riverwood = nullptr;
 
-		RE::TESForm* Lookup(const gen::FormRef& a_ref)
+		RE::TESForm* Lookup(std::string_view a_plugin, std::uint32_t a_id, std::string_view a_what)
 		{
-			auto* form = RE::TESDataHandler::GetSingleton()->LookupForm(a_ref.localId, a_ref.plugin);
+			auto* form = RE::TESDataHandler::GetSingleton()->LookupForm(a_id, a_plugin);
 			if (!form) {
-				logger::error("missing form {} {:06X} ({})", a_ref.plugin, a_ref.localId, a_ref.editorId);
+				logger::error("missing form {} {:06X} ({})", a_plugin, a_id, a_what);
 			}
 			return form;
 		}
+		RE::TESForm* Lookup(const gen::FormRef& a_ref) { return Lookup(a_ref.plugin, a_ref.localId, a_ref.editorId); }
 	}
 
 	namespace Forms
@@ -26,11 +33,7 @@ namespace bo3z
 			for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
 				auto* f = Lookup(gen::kEnemies[i].form);
 				g_enemies[i] = f ? f->As<RE::TESBoundObject>() : nullptr;
-				if (g_enemies[i]) {
-					logger::info("enemy {} = {:08X} {}", gen::kEnemies[i].id, f->GetFormID(), gen::kEnemies[i].form.editorId);
-				} else {
-					ok = false;
-				}
+				ok = ok && g_enemies[i];
 			}
 			for (std::size_t i = 0; i < gen::kSounds.size(); ++i) {
 				auto* f = Lookup(gen::kSounds[i]);
@@ -38,18 +41,123 @@ namespace bo3z
 			}
 			auto* q = Lookup(gen::kIntroQuest);
 			g_intro = q ? q->As<RE::TESQuest>() : nullptr;
-			ok = ok && g_intro;
-			return ok;
+			auto* g = Lookup(gen::kQ_MQQuickstart);
+			g_quick = g ? g->As<RE::TESGlobal>() : nullptr;
+			auto* m = Lookup(gen::kQ_MQ102Marker);
+			g_riverwood = m ? m->As<RE::TESObjectREFR>() : nullptr;
+
+			int plugin = 0;
+			for (std::size_t i = 0; i < gen::kGuns.size(); ++i) {
+				auto* f = Lookup(gen::kPlugin, gen::kGuns[i].weapId, gen::kGuns[i].id);
+				g_guns[i] = f ? f->As<RE::TESObjectWEAP>() : nullptr;
+				plugin += g_guns[i] != nullptr;
+			}
+			for (std::size_t i = 0; i < gen::kPerks.size(); ++i) {
+				auto* a = Lookup(gen::kPlugin, gen::kPerks[i].alchId, gen::kPerks[i].id);
+				auto* e = Lookup(gen::kPlugin, gen::kPerks[i].mgefId, gen::kPerks[i].id);
+				g_potions[i] = a ? a->As<RE::AlchemyItem>() : nullptr;
+				g_effects[i] = e ? e->GetFormID() : 0;
+			}
+			for (std::size_t i = 0; i < gen::kObjects.size(); ++i) {
+				auto* f = Lookup(gen::kPlugin, gen::kObjects[i].actiId, gen::kObjects[i].id);
+				g_objects[i] = f ? f->As<RE::TESObjectACTI>() : nullptr;
+			}
+			logger::info("forms: {} of {} guns from {}, intro quest {}, quickstart global {}, Riverwood marker {}", plugin, gen::kGuns.size(), gen::kPlugin,
+				g_intro != nullptr, g_quick != nullptr, g_riverwood != nullptr);
+			if (plugin == 0) {
+				logger::error("{} is not loaded: check Plugins.txt", gen::kPlugin);
+				ok = false;
+			}
+			return ok && g_intro;
 		}
 
 		RE::TESBoundObject* Enemy(std::size_t a_index) { return a_index < g_enemies.size() ? g_enemies[a_index] : nullptr; }
 		RE::TESQuest*       IntroQuest() { return g_intro; }
+		RE::TESGlobal*      Quickstart() { return g_quick; }
+		RE::TESObjectREFR*  RiverwoodMarker() { return g_riverwood; }
+		RE::TESObjectWEAP*  Gun(int a_gun) { return a_gun >= 0 && a_gun < static_cast<int>(g_guns.size()) ? g_guns[a_gun] : nullptr; }
+		int GunIndexOf(const RE::TESForm* a_form)
+		{
+			for (int i = 0; a_form && i < static_cast<int>(g_guns.size()); ++i) {
+				if (g_guns[i] == a_form) {
+					return i;
+				}
+			}
+			return -1;
+		}
+		RE::AlchemyItem* PerkPotion(int a_perk) { return a_perk >= 0 && a_perk < static_cast<int>(g_potions.size()) ? g_potions[a_perk] : nullptr; }
+		int PerkIndexOfEffect(RE::FormID a_mgef)
+		{
+			for (int i = 0; a_mgef && i < static_cast<int>(g_effects.size()); ++i) {
+				if (g_effects[i] == a_mgef) {
+					return i;
+				}
+			}
+			return -1;
+		}
+		RE::TESObjectACTI* Object(int a_object) { return a_object >= 0 && a_object < static_cast<int>(g_objects.size()) ? g_objects[a_object] : nullptr; }
+		int ObjectIndexOf(const RE::TESForm* a_base)
+		{
+			for (int i = 0; a_base && i < static_cast<int>(g_objects.size()); ++i) {
+				if (g_objects[i] == a_base) {
+					return i;
+				}
+			}
+			return -1;
+		}
 
 		void Play(gen::Sound a_sound)
 		{
 			const auto i = static_cast<std::size_t>(a_sound);
 			if (i < g_sounds.size() && g_sounds[i]) {
 				RE::BSAudioManager::GetSingleton()->Play(static_cast<RE::BSISoundDescriptor*>(g_sounds[i]));
+			}
+		}
+	}
+
+	namespace PluginList
+	{
+		// %LOCALAPPDATA%\Skyrim Special Edition\Plugins.txt: append "*BO3Zombies.esp" if it isn't listed.
+		void Ensure()
+		{
+			wchar_t local[MAX_PATH]{};
+			if (!::GetEnvironmentVariableW(L"LOCALAPPDATA", local, MAX_PATH)) {
+				return;
+			}
+			for (const wchar_t* folder : { L"\\Skyrim Special Edition", L"\\Skyrim Special Edition GOG", L"\\Skyrim Special Edition EPIC" }) {
+				std::wstring dir = std::wstring(local) + folder;
+				if (::GetFileAttributesW(dir.c_str()) == INVALID_FILE_ATTRIBUTES) {
+					continue;
+				}
+				const std::wstring path = dir + L"\\Plugins.txt";
+				std::string        text;
+				if (HANDLE h = ::CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr); h != INVALID_HANDLE_VALUE) {
+					char  buf[8192];
+					DWORD n = 0;
+					while (::ReadFile(h, buf, sizeof(buf), &n, nullptr) && n) {
+						text.append(buf, n);
+					}
+					::CloseHandle(h);
+				}
+				std::string lower = text;
+				std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				std::string name(gen::kPlugin);
+				std::string nameLower = name;
+				std::transform(nameLower.begin(), nameLower.end(), nameLower.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				if (lower.find("*" + nameLower) != std::string::npos) {
+					return;
+				}
+				std::string line = (text.empty() || text.back() == '\n' ? "" : "\r\n") + std::string("*") + name + "\r\n";
+				// An unticked "BO3Zombies.esp" line (no *) is the player's choice: leave it.
+				if (lower.find(nameLower) != std::string::npos) {
+					return;
+				}
+				if (HANDLE h = ::CreateFileW(path.c_str(), FILE_APPEND_DATA, FILE_SHARE_READ, nullptr, OPEN_ALWAYS, 0, nullptr); h != INVALID_HANDLE_VALUE) {
+					DWORD n = 0;
+					::WriteFile(h, line.data(), static_cast<DWORD>(line.size()), &n, nullptr);
+					::CloseHandle(h);
+				}
+				return;
 			}
 		}
 	}
@@ -61,33 +169,65 @@ namespace bo3z
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			return p ? static_cast<int>(std::lround(p->AsActorValueOwner()->GetActorValue(static_cast<RE::ActorValue>(a_av)))) : 0;
 		}
-
 		void Set(int a_av, int a_value)
 		{
 			if (auto* p = RE::PlayerCharacter::GetSingleton()) {
 				p->AsActorValueOwner()->SetActorValue(static_cast<RE::ActorValue>(a_av), static_cast<float>(a_value));
 			}
 		}
+		static int SlotAV(int a_slot) { return a_slot == 0 ? gen::kAV_slot0 : a_slot == 1 ? gen::kAV_slot1 : gen::kAV_slot2; }
+		Slot GetSlot(int a_slot)
+		{
+			const int v = Get(SlotAV(a_slot));
+			Slot      s;
+			s.gun = ((v >> 19) & 0x1F) - 1;
+			s.clip = (v >> 11) & 0xFF;
+			s.reserve = v & 0x7FF;
+			return s;
+		}
+		void SetSlot(int a_slot, const Slot& a_value)
+		{
+			const int v = a_value.gun < 0 ? 0 : (((a_value.gun + 1) & 0x1F) << 19) | ((std::clamp(a_value.clip, 0, 255)) << 11) | std::clamp(a_value.reserve, 0, 2047);
+			Set(SlotAV(a_slot), v);
+		}
+		int  Flags() { return Get(gen::kAV_flags); }
+		void SetFlags(int a_flags) { Set(gen::kAV_flags, a_flags & 0xFFFFFF); }
+		bool Flag(int a_bit) { return (Flags() >> a_bit) & 1; }
+		void SetFlag(int a_bit, bool a_on) { SetFlags(a_on ? (Flags() | (1 << a_bit)) : (Flags() & ~(1 << a_bit))); }
+		int  Crew() { return ((Flags() >> 1) & 0x7) - 1; }
+		void SetCrew(int a_crew) { SetFlags((Flags() & ~(0x7 << 1)) | (((a_crew + 1) & 0x7) << 1)); }
+		bool HasPerk(int a_perk) { return (Flags() >> (4 + a_perk)) & 1; }
+		void SetPerk(int a_perk, bool a_on) { SetFlag(4 + a_perk, a_on); }
+		int  PerkCount()
+		{
+			int n = 0;
+			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
+				n += HasPerk(i);
+			}
+			return n;
+		}
+		int  ActiveSlot() { return (Flags() >> 12) & 0x3; }
+		void SetActiveSlot(int a_slot) { SetFlags((Flags() & ~(0x3 << 12)) | ((a_slot & 0x3) << 12)); }
 
 		void OnWorldReady()
 		{
-			if (Get(gen::kAV_initialized) == 0) {
-				Set(gen::kAV_initialized, 1);
+			if (!Flag(kFlagInit)) {
+				SetFlags(1 << kFlagInit);
 				Set(gen::kAV_round, 0);
 				Set(gen::kAV_points, gen::kPoints_start);
-				Set(gen::kAV_clip, gen::kGun_m1911.clip);
-				Set(gen::kAV_reserve, gen::kGun_m1911.reserve);
-				logger::info("start kit: {} points, {} {}/{}", gen::kPoints_start, gen::kGun_m1911.label, gen::kGun_m1911.clip, gen::kGun_m1911.reserve);
-				Hud::Banner("Press G for your M1911", 6.0f);
+				Set(gen::kAV_box, 0);
+				for (int s = 0; s < 3; ++s) {
+					SetSlot(s, {});
+				}
+				logger::info("new BO3 save state: {} points", gen::kPoints_start);
 			}
-			logger::info("world ready: round {} cleared, {} points", Get(gen::kAV_round), Get(gen::kAV_points));
+			logger::info("world ready: round {} cleared, {} points, crew {}, perks {:07b}", Get(gen::kAV_round), Get(gen::kAV_points), Crew(), (Flags() >> 4) & 0x7F);
 		}
 	}
 
 	namespace Points
 	{
 		int Get() { return Save::Get(gen::kAV_points); }
-
 		void Add(int a_points)
 		{
 			if (a_points <= 0) {
@@ -98,6 +238,19 @@ namespace bo3z
 			auto& h = Hud::Edit();
 			h.lastGain = a_points;
 			h.gainTime = 1.0f;
+		}
+		bool Spend(int a_points)
+		{
+			if (Get() < a_points) {
+				Hud::Banner("Not enough points (" + std::to_string(a_points) + ")", 2.0f);
+				return false;
+			}
+			Save::Set(gen::kAV_points, Get() - a_points);
+			std::scoped_lock l(Hud::Lock());
+			auto& h = Hud::Edit();
+			h.lastGain = -a_points;
+			h.gainTime = 1.0f;
+			return true;
 		}
 	}
 }

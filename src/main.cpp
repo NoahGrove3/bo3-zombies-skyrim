@@ -56,6 +56,7 @@ BOOL APIENTRY DllMain(HMODULE a_module, DWORD a_reason, LPVOID)
 {
 	if (a_reason == DLL_PROCESS_ATTACH && IsAsi(a_module) && !g_booted.exchange(true)) {
 		::DisableThreadLibraryCalls(a_module);
+		bo3z::PluginList::Ensure();  // before the game reads Plugins.txt
 		if (auto h = ::CreateThread(nullptr, 0, BootThread, nullptr, 0, nullptr)) {
 			::CloseHandle(h);
 		}
@@ -69,6 +70,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 		return false;  // the .asi copy is already running
 	}
 	SKSE::Init(a_skse, { .log = false });
+	bo3z::PluginList::Ensure();
 	SetupLog();
 	logger::info("BO3 Zombies {} loading as SKSE plugin", bo3z::kVersion);
 	bo3z::Events::InstallMenuWatch();

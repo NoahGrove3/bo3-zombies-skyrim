@@ -6,6 +6,9 @@
 #include <spdlog/sinks/basic_file_sink.h>
 
 #include <algorithm>
+#include <cctype>
+#include <functional>
+#include <map>
 #include <array>
 #include <atomic>
 #include <chrono>

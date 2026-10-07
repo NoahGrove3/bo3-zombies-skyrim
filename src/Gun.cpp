@@ -1,77 +1,105 @@
 #include "BO3Z.h"
 
-// The M1911 (sheet: weapons). Hitscan from the camera; no Skyrim item. While it is out, Skyrim's
-// fighting controls are off so the attack button only fires the gun. G swaps back to Skyrim weapons.
+// BO3 arsenal (sheet: weapons). Each gun is a Skyrim weapon item from BO3Zombies.esp. While one is drawn,
+// Skyrim's attack/block and ready-weapon input are blocked (input handler hooks) and the mouse and R drive
+// the gun: hitscan from the camera with spread, pellets, bursts and splash. Two slots, three with Mule Kick.
 namespace bo3z
 {
 	namespace
 	{
-		constexpr auto& G = gen::kGun_m1911;
+		using Clock = std::chrono::steady_clock;
 
-		bool  g_out = false;
-		bool  g_weTookFighting = false;
-		float g_cooldown = 0;
-		float g_reload = 0;
-		std::unordered_map<RE::FormID, std::pair<std::chrono::steady_clock::time_point, bool>> g_hits;
+		bool  g_trigger = false, g_adsHeld = false;
+		float g_ads = 0, g_cooldown = 0, g_reload = 0, g_knifeCd = 0, g_burstTimer = 0;
+		int   g_burstLeft = 0;
+		Clock::time_point g_swapDown{};
+		bool  g_swapHeld = false;
+		std::unordered_map<RE::FormID, std::pair<Clock::time_point, bool>> g_hits;
+		std::mt19937 g_rng{ std::random_device{}() };
+		float g_baseFov = 0;
 		bool  g_loggedAim = false;
 
-		bool CanAct()
+		int CurrentGun()
 		{
-			auto* ui = RE::UI::GetSingleton();
-			auto* player = RE::PlayerCharacter::GetSingleton();
-			return ui && player && !ui->GameIsPaused() && !ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME) && player->Is3DLoaded() && !player->IsDead();
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			return p ? Forms::GunIndexOf(p->GetEquippedObject(false)) : -1;
 		}
-
-		void PutAway()
+		bool Drawn()
 		{
-			if (g_weTookFighting) {
-				RE::ControlMap::GetSingleton()->ToggleControls(RE::ControlMap::UEFlag::kFighting, true, false);
-				g_weTookFighting = false;
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			return p && p->AsActorState()->IsWeaponDrawn();
+		}
+		int SlotOf(int a_gun)
+		{
+			for (int s = 0; s < Gun::SlotCount(); ++s) {
+				if (Save::GetSlot(s).gun == a_gun) {
+					return s;
+				}
 			}
-			g_out = false;
-			g_reload = 0;
+			return -1;
 		}
+		bool GunOut() { return CurrentGun() >= 0 && Drawn() && !Intro::CrewScreenOpen(); }
 
-		void TakeOut()
+		void Equip(int a_gun)
 		{
-			auto* controls = RE::ControlMap::GetSingleton();
-			if (!controls->IsFightingControlsEnabled()) {
-				Hud::Banner("Can't draw now", 1.5f);  // a scene (like Helgen's bound hands) has fighting off
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* w = Forms::Gun(a_gun);
+			if (!p || !w) {
 				return;
 			}
-			auto* player = RE::PlayerCharacter::GetSingleton();
-			if (player->AsActorState()->IsWeaponDrawn()) {
-				player->DrawWeaponMagicHands(false);
+			RE::ActorEquipManager::GetSingleton()->EquipObject(p, w);
+			if (!Drawn()) {
+				p->DrawWeaponMagicHands(true);
 			}
-			controls->ToggleControls(RE::ControlMap::UEFlag::kFighting, false, false);
-			g_weTookFighting = true;
-			g_out = true;
 		}
 
-		void StartReload()
+		struct InputBlock
 		{
-			const int clip = Save::Get(gen::kAV_clip), reserve = Save::Get(gen::kAV_reserve);
-			if (g_reload > 0 || clip >= G.clip || reserve <= 0) {
-				return;
+			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
+			{
+				if (GunOut()) {
+					return false;
+				}
+				return func(a_this, a_event);
 			}
-			g_reload = G.reloadMs / 1000.0f;
-			Forms::Play(G.reload);
-		}
-
-		void FinishReload()
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+		struct ReadyBlock
 		{
-			const int clip = Save::Get(gen::kAV_clip), reserve = Save::Get(gen::kAV_reserve);
-			const int moved = std::min(G.clip - clip, reserve);
-			Save::Set(gen::kAV_clip, clip + moved);
-			Save::Set(gen::kAV_reserve, reserve - moved);
+			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
+			{
+				if (GunOut()) {
+					return false;
+				}
+				return func(a_this, a_event);
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+
+		float Rand(float a, float b) { return std::uniform_real_distribution<float>(a, b)(g_rng); }
+
+		RE::NiPoint3 Spread(const RE::NiPoint3& a_dir, float a_deg)
+		{
+			if (a_deg <= 0) {
+				return a_dir;
+			}
+			const float r = std::tan(a_deg * RE::NI_PI / 180.0f) * std::sqrt(Rand(0, 1)), t = Rand(0, 2 * RE::NI_PI);
+			RE::NiPoint3 up{ 0, 0, 1 };
+			RE::NiPoint3 right = a_dir.Cross(up);
+			if (right.Length() < 1e-3f) {
+				right = { 1, 0, 0 };
+			}
+			right.Unitize();
+			RE::NiPoint3 u = right.Cross(a_dir);
+			RE::NiPoint3 d = a_dir + right * (r * std::cos(t)) + u * (r * std::sin(t));
+			d.Unitize();
+			return d;
 		}
 
-		// Closest distance between the ray (o + s d, s >= 0, d unit) and segment [a, b]; returns {distance, s}.
 		std::pair<float, float> RaySegment(const RE::NiPoint3& o, const RE::NiPoint3& d, const RE::NiPoint3& a, const RE::NiPoint3& b)
 		{
 			const RE::NiPoint3 v = b - a;
 			const float        C = v.Dot(v);
-			// Two projection passes: ray point nearest the segment, then segment point nearest that.
 			float t = C > 1e-6f ? std::clamp((o - a).Dot(v) / C, 0.0f, 1.0f) : 0.0f;
 			float s = std::max(0.0f, (a + v * t - o).Dot(d));
 			for (int i = 0; i < 2; ++i) {
@@ -81,85 +109,39 @@ namespace bo3z
 			return { ((o + d * s) - (a + v * t)).Length(), s };
 		}
 
-		struct Hit
+		bool Targetable(RE::Actor* a, RE::PlayerCharacter* player)
 		{
-			RE::Actor* actor{ nullptr };
-			float      t{ FLT_MAX };
-			bool       head{ false };
-		};
+			return a && a != player && !a->IsDead() && a->Is3DLoaded() && (Director::IsRoundUndead(a) || a->IsHostileToActor(player));
+		}
 
-		void Fire()
+		RE::NiPoint3 HeadPos(RE::Actor* a)
 		{
-			auto* player = RE::PlayerCharacter::GetSingleton();
-			auto* cam = RE::PlayerCamera::GetSingleton();
-			if (!cam || !cam->cameraRoot) {
-				return;
+			if (auto* node = a->GetNodeByName(std::string(Director::HeadNodeFor(a)))) {
+				return node->world.translate;
 			}
-			const auto&  world = cam->cameraRoot->world;
-			RE::NiPoint3 origin = world.translate;
-			RE::NiPoint3 dir{ world.rotate.entry[0][1], world.rotate.entry[1][1], world.rotate.entry[2][1] };
-			dir.Unitize();
-			if (!g_loggedAim) {
-				const float yaw = player->GetAngleZ(), pitch = player->GetAngleX();
-				logger::info("aim check: camera dir ({:.2f},{:.2f},{:.2f}) vs player angles ({:.2f},{:.2f},{:.2f})", dir.x, dir.y, dir.z,
-					std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch));
-				g_loggedAim = true;
-			}
+			return a->GetPosition() + RE::NiPoint3{ 0, 0, 110 };
+		}
 
-			Hit best;
-			auto consider = [&](RE::Actor* a) {
-				if (!a || a == player || a->IsDead() || !a->Is3DLoaded()) {
-					return;
-				}
-				const bool ours = Director::IsRoundUndead(a);
-				if (!ours && !a->IsHostileToActor(player)) {
-					return;  // no accidental murders
-				}
-				const auto feet = a->GetPosition();
-				if (feet.GetDistance(origin) > G.range) {
-					return;
-				}
-				RE::NiPoint3 headPos = feet + RE::NiPoint3{ 0, 0, 110 };
-				if (auto* node = a->GetNodeByName(std::string(Director::HeadNodeFor(a)))) {
-					headPos = node->world.translate;
-				}
-				const auto [hd, ht] = RaySegment(origin, dir, headPos, headPos);
-				if (hd <= G.headRadius && ht < best.t) {
-					best = { a, ht, true };
-					return;
-				}
-				const auto [bd, bt] = RaySegment(origin, dir, feet + RE::NiPoint3{ 0, 0, 15 }, headPos);
-				if (bd <= G.hitRadius && bt < best.t) {
-					best = { a, bt, false };
-				}
-			};
-			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
-				if (auto a = h.get()) {
-					consider(a.get());
-				}
-			}
-			if (!best.actor) {
-				return;
-			}
-			bool losFlag = false;
-			if (!player->HasLineOfSight(best.actor, losFlag)) {
-				return;
-			}
-
-			auto*       av = best.actor->AsActorValueOwner();
-			const float damage = G.damage * (best.head ? G.headMult : 1.0f) / gen::kRounds.hpScale;
+		void Damage(RE::Actor* a_target, float a_bo3Damage, bool a_head, bool a_melee)
+		{
+			auto*       player = RE::PlayerCharacter::GetSingleton();
+			auto*       av = a_target->AsActorValueOwner();
+			const float damage = a_bo3Damage / gen::kRounds.hpScale;
 			av->DamageActorValue(RE::ActorValue::kHealth, damage);
-			const bool ours = Director::IsRoundUndead(best.actor);
-			g_hits[best.actor->GetFormID()] = { std::chrono::steady_clock::now(), best.head };
+			const bool ours = Director::IsRoundUndead(a_target);
+			g_hits[a_target->GetFormID()] = { Clock::now(), a_head && !a_melee };
 			const bool kill = av->GetActorValue(RE::ActorValue::kHealth) <= 0;
 			if (kill) {
-				best.actor->KillImpl(player, damage, true, false);
+				if (a_melee) {
+					g_hits.erase(a_target->GetFormID());  // knife kills pay the melee bonus
+				}
+				a_target->KillImpl(player, damage, true, false);
 			} else {
-				if (ours) {
+				if (ours && !a_melee) {
 					Points::Add(gen::kPoints_hit);
 				}
-				if (!best.actor->IsInCombat()) {
-					best.actor->StartCombat(player);
+				if (!a_target->IsInCombat()) {
+					a_target->StartCombat(player);
 				}
 			}
 			std::scoped_lock l(Hud::Lock());
@@ -167,52 +149,314 @@ namespace bo3z
 			Hud::Edit().hitKill = kill;
 		}
 
-		void TryFire()
+		float CrewMult(int a_passive)
 		{
-			if (g_cooldown > 0 || g_reload > 0) {
+			const int c = Save::Crew();
+			return c >= 0 && gen::kCrew[c].passive == a_passive ? gen::kCrew[c].value : 1.0f;
+		}
+
+		void FireOnce(const gen::GunDef& g)
+		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (!cam || !cam->cameraRoot) {
 				return;
 			}
-			const int clip = Save::Get(gen::kAV_clip);
-			if (clip <= 0) {
-				Forms::Play(G.empty);
+			const auto&  world = cam->cameraRoot->world;
+			const auto   origin = world.translate;
+			RE::NiPoint3 aim{ world.rotate.entry[0][1], world.rotate.entry[1][1], world.rotate.entry[2][1] };
+			aim.Unitize();
+			if (!g_loggedAim) {
+				logger::info("aim check: camera dir ({:.2f},{:.2f},{:.2f}) yaw {:.2f} pitch {:.2f}", aim.x, aim.y, aim.z, player->GetAngleZ(), player->GetAngleX());
+				g_loggedAim = true;
+			}
+			std::vector<RE::Actor*> candidates;
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				if (auto a = h.get(); a && Targetable(a.get(), player) && a->GetPosition().GetDistance(origin) <= g.range) {
+					candidates.push_back(a.get());
+				}
+			}
+			const float spread = g.spreadHip + (g.spreadAds - g.spreadHip) * g_ads;
+			const float headMult = g.headMult * Perks::HeadMult();
+			const float headRadius = g.headRadius * (Perks::HeadMult() > 1.0f ? 1.5f : 1.0f);
+			const float dmg = g.damage * Perks::DamageMult() * CrewMult(0);
+			for (int p = 0; p < g.pellets; ++p) {
+				const auto dir = Spread(aim, spread);
+				RE::Actor* best = nullptr;
+				float      bestT = FLT_MAX;
+				bool       head = false;
+				for (auto* a : candidates) {
+					const auto hp = HeadPos(a);
+					if (auto [hd, ht] = RaySegment(origin, dir, hp, hp); hd <= headRadius && ht < bestT) {
+						best = a, bestT = ht, head = true;
+						continue;
+					}
+					if (auto [bd, bt] = RaySegment(origin, dir, a->GetPosition() + RE::NiPoint3{ 0, 0, 15 }, hp); bd <= g.hitRadius && bt < bestT) {
+						best = a, bestT = bt, head = false;
+					}
+				}
+				bool los = false;
+				if (!best || !player->HasLineOfSight(best, los)) {
+					continue;
+				}
+				if (!best->IsDead()) {
+					Damage(best, dmg * (head ? headMult : 1.0f), head, false);
+				}
+				if (g.splashRadius > 0) {  // Ray Gun
+					const auto at = origin + dir * bestT;
+					for (auto* a : candidates) {
+						if (a != best && !a->IsDead() && a->GetPosition().GetDistance(at) <= g.splashRadius) {
+							Damage(a, g.splashDamage * Perks::DamageMult(), false, false);
+						}
+					}
+				}
+			}
+		}
+
+		void StartReload()
+		{
+			const int gun = CurrentGun(), slot = SlotOf(gun);
+			if (gun < 0 || slot < 0 || g_reload > 0) {
+				return;
+			}
+			const auto s = Save::GetSlot(slot);
+			const auto& g = gen::kGuns[gun];
+			if (s.clip >= g.clip || s.reserve <= 0) {
+				return;
+			}
+			g_reload = g.reloadMs / 1000.0f * Perks::ReloadMult();
+			g_burstLeft = 0;
+			Forms::Play(g.reloadSnd);
+		}
+
+		void FinishReload()
+		{
+			const int gun = CurrentGun(), slot = SlotOf(gun);
+			if (gun < 0 || slot < 0) {
+				return;
+			}
+			auto s = Save::GetSlot(slot);
+			const int moved = std::min(gen::kGuns[gun].clip - s.clip, s.reserve);
+			s.clip += moved;
+			s.reserve -= moved;
+			Save::SetSlot(slot, s);
+		}
+
+		void TryFire(bool a_fromTrigger)
+		{
+			const int gun = CurrentGun(), slot = SlotOf(gun);
+			if (gun < 0 || slot < 0 || g_cooldown > 0 || g_reload > 0) {
+				return;
+			}
+			const auto& g = gen::kGuns[gun];
+			auto s = Save::GetSlot(slot);
+			if (s.clip <= 0) {
+				if (a_fromTrigger) {
+					Forms::Play(g.emptySnd);
+				}
 				StartReload();
 				return;
 			}
-			Save::Set(gen::kAV_clip, clip - 1);
-			g_cooldown = G.fireDelayMs / 1000.0f;
-			Forms::Play(G.fire);
-			Fire();
+			s.clip -= 1;
+			Save::SetSlot(slot, s);
+			Forms::Play(g.fireSnd);
+			FireOnce(g);
+			if (g.fire == gen::Fire::Burst) {
+				if (a_fromTrigger) {
+					g_burstLeft = std::min(g.burst - 1, s.clip);
+				}
+				g_burstTimer = 0.07f;
+				g_cooldown = g_burstLeft > 0 ? 0.07f : g.fireDelayMs / 1000.0f * Perks::FireDelayMult();
+			} else {
+				g_cooldown = g.fireDelayMs / 1000.0f * Perks::FireDelayMult();
+			}
+		}
+
+		void Knife()
+		{
+			if (g_knifeCd > 0) {
+				return;
+			}
+			g_knifeCd = gen::kKnife.cooldownMs / 1000.0f;
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			const float yaw = player->GetAngleZ();
+			const RE::NiPoint3 fwd{ std::sin(yaw), std::cos(yaw), 0 };
+			RE::Actor* best = nullptr;
+			float      bestD = gen::kKnife.range;
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				auto a = h.get();
+				if (!a || !Targetable(a.get(), player)) {
+					continue;
+				}
+				RE::NiPoint3 to = a->GetPosition() - player->GetPosition();
+				to.z = 0;
+				const float d = to.Length();
+				if (d > bestD || d < 1) {
+					continue;
+				}
+				to.Unitize();
+				if (to.Dot(fwd) < std::cos(gen::kKnife.coneDeg * RE::NI_PI / 180.0f)) {
+					continue;
+				}
+				best = a.get(), bestD = d;
+			}
+			Forms::Play(gen::Sound::bow_nock);
+			if (best) {
+				Damage(best, gen::kKnife.damage * CrewMult(2), false, true);
+			}
+		}
+
+		void Cycle()
+		{
+			const int n = Gun::SlotCount();
+			int       cur = SlotOf(CurrentGun());
+			for (int k = 1; k <= n; ++k) {
+				const int s = ((cur < 0 ? Save::ActiveSlot() - 1 : cur) + k + n) % n;
+				if (const auto sl = Save::GetSlot(s); sl.gun >= 0) {
+					Save::SetActiveSlot(s);
+					Equip(sl.gun);
+					g_reload = 0;
+					return;
+				}
+			}
+		}
+
+		void Holster()
+		{
+			if (auto* p = RE::PlayerCharacter::GetSingleton(); p && Drawn()) {
+				p->DrawWeaponMagicHands(false);
+			}
+		}
+
+		// Keep slots and inventory in step: a gun dropped or sold leaves its slot.
+		void SyncSlots()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) {
+				return;
+			}
+			for (int s = 0; s < 3; ++s) {
+				auto sl = Save::GetSlot(s);
+				if (sl.gun < 0) {
+					continue;
+				}
+				auto* w = Forms::Gun(sl.gun);
+				const auto counts = p->GetInventoryCounts([w](RE::TESBoundObject& o) { return &o == w; });
+				if (counts.empty() || s >= Gun::SlotCount()) {
+					if (s >= Gun::SlotCount() && !counts.empty()) {
+						p->RemoveItem(w, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);  // lost Mule Kick
+					}
+					Save::SetSlot(s, {});
+				}
+			}
 		}
 	}
 
 	namespace Gun
 	{
+		int   SlotCount() { return Save::HasPerk(gen::kPerk_mulekick) ? 3 : 2; }
+		float AdsBlend() { return g_ads; }
+		bool  Owns(int a_gun) { return SlotOf(a_gun) >= 0; }
+
+		void RefillAmmo(int a_gun)
+		{
+			if (const int s = SlotOf(a_gun); s >= 0) {
+				auto sl = Save::GetSlot(s);
+				sl.reserve = gen::kGuns[a_gun].reserve;
+				Save::SetSlot(s, sl);
+			}
+		}
+
+		bool Give(int a_gun)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* w = Forms::Gun(a_gun);
+			if (!p || !w) {
+				return false;
+			}
+			if (Owns(a_gun)) {
+				auto sl = Save::GetSlot(SlotOf(a_gun));
+				sl.clip = gen::kGuns[a_gun].clip;
+				sl.reserve = gen::kGuns[a_gun].reserve;
+				Save::SetSlot(SlotOf(a_gun), sl);
+				Equip(a_gun);
+				return true;
+			}
+			int slot = -1;
+			for (int s = 0; s < SlotCount() && slot < 0; ++s) {
+				if (Save::GetSlot(s).gun < 0) {
+					slot = s;
+				}
+			}
+			if (slot < 0) {  // full: replace the gun in hand (or the active slot)
+				slot = SlotOf(CurrentGun());
+				if (slot < 0) {
+					slot = Save::ActiveSlot() % SlotCount();
+				}
+				if (auto* old = Forms::Gun(Save::GetSlot(slot).gun)) {
+					p->RemoveItem(old, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				}
+			}
+			Save::SetSlot(slot, { a_gun, gen::kGuns[a_gun].clip, gen::kGuns[a_gun].reserve });
+			Save::SetActiveSlot(slot);
+			p->AddObjectToContainer(w, nullptr, 1, nullptr);
+			Equip(a_gun);
+			logger::info("gun: {} -> slot {}", gen::kGuns[a_gun].id, slot);
+			return true;
+		}
+
 		void Reset()
 		{
-			PutAway();
 			g_hits.clear();
+			g_trigger = g_adsHeld = false;
+			g_reload = g_cooldown = 0;
+			g_burstLeft = 0;
 		}
 
 		bool OnButton(const RE::ButtonEvent* a_event)
 		{
-			if (!a_event->IsDown() || !CanAct()) {
+			auto* ui = RE::UI::GetSingleton();
+			if (!ui || ui->GameIsPaused() || ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME) || Intro::CrewScreenOpen()) {
 				return false;
 			}
-			const auto device = a_event->GetDevice();
+			const auto dev = a_event->GetDevice();
 			const auto code = a_event->GetIDCode();
-			if (device == RE::INPUT_DEVICE::kKeyboard && code == gen::kKey_swap) {
-				g_out ? PutAway() : TakeOut();
+			const bool down = a_event->IsDown(), up = !a_event->IsPressed();
+			if (dev == RE::INPUT_DEVICE::kKeyboard && code == gen::kKey2_swap) {
+				if (down) {
+					g_swapDown = Clock::now();
+					g_swapHeld = true;
+				} else if (up && g_swapHeld) {
+					g_swapHeld = false;
+					if (Clock::now() - g_swapDown > 400ms) {
+						Holster();
+					} else {
+						Cycle();
+					}
+				}
 				return true;
 			}
-			if (!g_out) {
+			if (dev == RE::INPUT_DEVICE::kKeyboard && code == gen::kKnife.key && down) {
+				Knife();
+				return true;
+			}
+			if (!GunOut()) {
+				g_trigger = g_adsHeld = false;
 				return false;
 			}
-			if (device == RE::INPUT_DEVICE::kKeyboard && code == gen::kKey_reload) {
+			if (dev == RE::INPUT_DEVICE::kKeyboard && code == gen::kKey2_reload && down) {
 				StartReload();
 				return true;
 			}
-			if ((gen::kFireIsMouse ? device == RE::INPUT_DEVICE::kMouse : device == RE::INPUT_DEVICE::kKeyboard) && code == gen::kKey_fire) {
-				TryFire();
+			if (dev == RE::INPUT_DEVICE::kMouse && code == gen::kKey2_fire) {
+				g_trigger = !up;
+				if (down) {
+					TryFire(true);
+				}
+				return true;
+			}
+			if (dev == RE::INPUT_DEVICE::kMouse && code == gen::kKey2_ads) {
+				g_adsHeld = !up;
 				return true;
 			}
 			return false;
@@ -220,30 +464,71 @@ namespace bo3z
 
 		void Tick(float a_delta)
 		{
+			static bool hooked = false;
+			if (!hooked) {
+				REL::Relocation<std::uintptr_t> ab{ RE::VTABLE_AttackBlockHandler[0] };
+				InputBlock::func = ab.write_vfunc(0x1, InputBlock::thunk);
+				REL::Relocation<std::uintptr_t> rw{ RE::VTABLE_ReadyWeaponHandler[0] };
+				ReadyBlock::func = rw.write_vfunc(0x1, ReadyBlock::thunk);
+				hooked = true;
+				logger::info("gun: attack/ready input hooks installed");
+			}
 			g_cooldown = std::max(0.0f, g_cooldown - a_delta);
+			g_knifeCd = std::max(0.0f, g_knifeCd - a_delta);
 			if (g_reload > 0 && (g_reload -= a_delta) <= 0) {
 				g_reload = 0;
 				FinishReload();
 			}
-			if (g_out && RE::ControlMap::GetSingleton()->IsFightingControlsEnabled()) {
-				// Something re-enabled fighting behind our back (a scene ended): take it again.
-				RE::ControlMap::GetSingleton()->ToggleControls(RE::ControlMap::UEFlag::kFighting, false, false);
+			static float sync = 0;
+			if ((sync -= a_delta) <= 0) {
+				sync = 1.0f;
+				SyncSlots();
 			}
-			const auto now = std::chrono::steady_clock::now();
+			const bool out = GunOut();
+			const int  gun = CurrentGun();
+			if (out) {
+				const auto& g = gen::kGuns[gun];
+				if (g_burstLeft > 0 && (g_burstTimer -= a_delta) <= 0) {
+					--g_burstLeft;
+					TryFire(false);
+				} else if (g_trigger && g.fire == gen::Fire::Auto) {
+					TryFire(false);
+				}
+			} else {
+				g_trigger = g_adsHeld = false;
+			}
+			// Aim down sights: blend the field of view.
+			const float target = out && g_adsHeld ? 1.0f : 0.0f;
+			const float step = a_delta / std::max(0.01f, gen::kAdsSeconds);
+			g_ads = target > g_ads ? std::min(target, g_ads + step) : std::max(target, g_ads - step);
+			if (auto* cam = RE::PlayerCamera::GetSingleton()) {
+				if (g_ads <= 0.0f) {
+					g_baseFov = cam->GetRuntimeData2().worldFOV;
+				} else if (g_baseFov > 0) {
+					cam->GetRuntimeData2().worldFOV = g_baseFov + (gen::kAdsFov - g_baseFov) * g_ads;
+				}
+			}
+			const auto now = Clock::now();
 			std::erase_if(g_hits, [&](const auto& kv) { return now - kv.second.first > 2s; });
 
 			std::scoped_lock l(Hud::Lock());
 			auto& h = Hud::Edit();
-			h.gunOut = g_out;
-			h.clip = Save::Get(gen::kAV_clip);
-			h.reserve = Save::Get(gen::kAV_reserve);
+			h.gunOut = out;
+			h.ads = g_ads;
 			h.reloading = g_reload > 0;
+			if (out) {
+				const auto s = Save::GetSlot(SlotOf(gun));
+				h.gunName = std::string(gen::kGuns[gun].label);
+				h.clip = s.clip;
+				h.reserve = s.reserve;
+			}
 			h.points = Points::Get();
+			h.perks = (Save::Flags() >> 4) & 0x7F;
 		}
 
 		std::pair<bool, bool> RecentHit(RE::FormID a_actor)
 		{
-			if (auto it = g_hits.find(a_actor); it != g_hits.end() && std::chrono::steady_clock::now() - it->second.first < 500ms) {
+			if (auto it = g_hits.find(a_actor); it != g_hits.end() && Clock::now() - it->second.first < 500ms) {
 				return { true, it->second.second };
 			}
 			return { false, false };

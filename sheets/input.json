@@ -1,10 +1,120 @@
 {
-  "sheet": "input",
-  "about": "Keys the mashup reads. Scancodes are DirectInput (Skyrim's). While the gun is out Skyrim's fighting controls are switched off so the click only fires the gun.",
-  "columns": ["id","action","device","code","whenGunOut","whenGunAway","conflictsWithSkyrimDefault","verify"],
-  "rows": [
-    {"id":"fire","action":"fire_gun","device":"mouse","code":0,"whenGunOut":true,"whenGunAway":false,"conflictsWithSkyrimDefault":"Right Attack (disabled while gun out)","verify":[]},
-    {"id":"reload","action":"reload_gun","device":"keyboard","code":19,"whenGunOut":true,"whenGunAway":false,"conflictsWithSkyrimDefault":"Ready Weapon R (disabled while gun out)","verify":[]},
-    {"id":"swap","action":"swap_gun_and_skyrim_weapons","device":"keyboard","code":34,"whenGunOut":true,"whenGunAway":true,"conflictsWithSkyrimDefault":"none (G is unbound by default)","verify":["conflictsWithSkyrimDefault"]}
-  ]
+ "sheet": "input",
+ "about": "Keys the mashup reads (DirectInput scancodes; mouse 0=left, 1=right). While a BO3 gun is drawn, Skyrim's fighting controls are off so the mouse and R only drive the gun.",
+ "columns": [
+  "id",
+  "action",
+  "device",
+  "code",
+  "whenGunOut",
+  "whenGunAway",
+  "conflictsWithSkyrimDefault",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "fire",
+   "action": "fire_gun",
+   "device": "mouse",
+   "code": 0,
+   "whenGunOut": true,
+   "whenGunAway": false,
+   "conflictsWithSkyrimDefault": "Right attack (off while gun drawn)",
+   "verify": []
+  },
+  {
+   "id": "ads",
+   "action": "aim_down_sights",
+   "device": "mouse",
+   "code": 1,
+   "whenGunOut": true,
+   "whenGunAway": false,
+   "conflictsWithSkyrimDefault": "Left attack/block (off while gun drawn)",
+   "verify": []
+  },
+  {
+   "id": "reload",
+   "action": "reload_gun",
+   "device": "keyboard",
+   "code": 19,
+   "whenGunOut": true,
+   "whenGunAway": false,
+   "conflictsWithSkyrimDefault": "Ready weapon R (off while gun drawn)",
+   "verify": []
+  },
+  {
+   "id": "swap",
+   "action": "tap: next gun / hold: holster",
+   "device": "keyboard",
+   "code": 34,
+   "whenGunOut": true,
+   "whenGunAway": true,
+   "conflictsWithSkyrimDefault": "none (G unbound by default)",
+   "verify": [
+    "conflictsWithSkyrimDefault"
+   ]
+  },
+  {
+   "id": "knife",
+   "action": "quick knife",
+   "device": "keyboard",
+   "code": 47,
+   "whenGunOut": true,
+   "whenGunAway": true,
+   "conflictsWithSkyrimDefault": "none (V unbound by default)",
+   "verify": [
+    "conflictsWithSkyrimDefault"
+   ]
+  },
+  {
+   "id": "crew1",
+   "action": "pick crew 1",
+   "device": "keyboard",
+   "code": 2,
+   "whenGunOut": false,
+   "whenGunAway": true,
+   "conflictsWithSkyrimDefault": "favorite 1 (only while the crew screen is up)",
+   "verify": []
+  },
+  {
+   "id": "crew2",
+   "action": "pick crew 2",
+   "device": "keyboard",
+   "code": 3,
+   "whenGunOut": false,
+   "whenGunAway": true,
+   "conflictsWithSkyrimDefault": "favorite 2 (only while the crew screen is up)",
+   "verify": []
+  },
+  {
+   "id": "crew3",
+   "action": "pick crew 3",
+   "device": "keyboard",
+   "code": 4,
+   "whenGunOut": false,
+   "whenGunAway": true,
+   "conflictsWithSkyrimDefault": "favorite 3 (only while the crew screen is up)",
+   "verify": []
+  },
+  {
+   "id": "crew4",
+   "action": "pick crew 4",
+   "device": "keyboard",
+   "code": 5,
+   "whenGunOut": false,
+   "whenGunAway": true,
+   "conflictsWithSkyrimDefault": "favorite 4 (only while the crew screen is up)",
+   "verify": []
+  },
+  {
+   "id": "confirm",
+   "action": "confirm crew",
+   "device": "keyboard",
+   "code": 28,
+   "whenGunOut": false,
+   "whenGunAway": true,
+   "conflictsWithSkyrimDefault": "Enter (only while the crew screen is up)",
+   "verify": []
+  }
+ ]
 }

@@ -19,7 +19,8 @@ jobs:
         run: |
           python tools/preflight.py
           python tools/gen.py
-          git diff --exit-code src/Generated.h
+          python tools/gen_esp.py
+          git diff --exit-code src/Generated.h data/BO3Zombies.esp
       - uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
@@ -43,10 +44,11 @@ jobs:
           }
       - name: Package
         run: |
-          $v = "0.1.0"
+          $v = "0.2.0"
           $stage = "dist\stage"
           New-Item -ItemType Directory -Force "$stage\Data\SKSE\Plugins" | Out-Null
           Copy-Item build\BO3Zombies.dll "$stage\BO3Zombies.asi"
+          Copy-Item data\BO3Zombies.esp "$stage\Data\BO3Zombies.esp"
           Copy-Item third_party\address-library\versionlib-1-7-104-0.bin "$stage\Data\SKSE\Plugins\"
           Copy-Item README.md "$stage\BO3Zombies-README.md"
           Copy-Item third_party\address-library\CREDITS.md "$stage\BO3Zombies-ADDRESS-LIBRARY-CREDITS.md"

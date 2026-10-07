@@ -13,8 +13,12 @@ namespace bo3z
 				func(a_this, a_delta);
 				try {
 					DevTools::RunQueuedOnMain();
+					Intro::Tick();
 					Director::Tick(a_delta);
 					Gun::Tick(a_delta);
+					Shops::Tick(a_delta);
+					Perks::Tick();
+					Movement::Tick(a_delta);
 				} catch (const std::exception& e) {
 					logger::error("tick: {}", e.what());
 				}
@@ -40,6 +44,9 @@ namespace bo3z
 					dataLoaded = true;
 					OnDataLoaded();
 				}
+				if (dataLoaded) {
+					Intro::Install();  // keep MQQuickstart at 3 for the next new game
+				}
 				if (a_event->menuName == RE::LoadingMenu::MENU_NAME && !a_event->opening && dataLoaded) {
 					// After a new game, a save from the main menu, or a save loaded in game.
 					Save::OnWorldReady();
@@ -61,6 +68,8 @@ namespace bo3z
 			{
 				Director::Reset();
 				Gun::Reset();
+				Shops::Reset();
+				Movement::Reset();
 				return RE::BSEventNotifyControl::kContinue;
 			}
 		};
@@ -107,8 +116,44 @@ namespace bo3z
 				}
 				for (auto* e = *a_event; e; e = e->next) {
 					if (auto* b = e->AsButtonEvent()) {
-						Gun::OnButton(b);
+						if (!Intro::OnButton(b)) {
+							Gun::OnButton(b);
+						}
 					}
+				}
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+
+		class ActivateWatch : public RE::BSTEventSink<RE::TESActivateEvent>
+		{
+		public:
+			static ActivateWatch* Get()
+			{
+				static ActivateWatch s;
+				return &s;
+			}
+			RE::BSEventNotifyControl ProcessEvent(const RE::TESActivateEvent* a_event, RE::BSTEventSource<RE::TESActivateEvent>*) override
+			{
+				if (a_event && a_event->actionRef.get() == RE::PlayerCharacter::GetSingleton() && a_event->objectActivated) {
+					Shops::OnActivate(a_event->objectActivated.get());
+				}
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+
+		class EffectWatch : public RE::BSTEventSink<RE::TESMagicEffectApplyEvent>
+		{
+		public:
+			static EffectWatch* Get()
+			{
+				static EffectWatch s;
+				return &s;
+			}
+			RE::BSEventNotifyControl ProcessEvent(const RE::TESMagicEffectApplyEvent* a_event, RE::BSTEventSource<RE::TESMagicEffectApplyEvent>*) override
+			{
+				if (a_event && a_event->target.get() == RE::PlayerCharacter::GetSingleton()) {
+					Perks::OnEffect(a_event->magicEffect);
 				}
 				return RE::BSEventNotifyControl::kContinue;
 			}
@@ -127,6 +172,9 @@ namespace bo3z
 			auto* events = RE::ScriptEventSourceHolder::GetSingleton();
 			events->AddEventSink<RE::TESDeathEvent>(DeathWatch::Get());
 			events->AddEventSink<RE::TESLoadGameEvent>(LoadWatch::Get());
+			events->AddEventSink<RE::TESActivateEvent>(ActivateWatch::Get());
+			events->AddEventSink<RE::TESMagicEffectApplyEvent>(EffectWatch::Get());
+			Intro::Install();
 			RE::BSInputDeviceManager::GetSingleton()->AddEventSink(InputWatch::Get());
 			Hud::Install();
 			logger::info("all hooks installed");

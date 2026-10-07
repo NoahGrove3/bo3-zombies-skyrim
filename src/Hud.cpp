@@ -72,19 +72,42 @@ namespace bo3z
 
 			Text(dl, gen::kHud_points, size, k, std::to_string(s.points), 1.0f);
 			if (s.gainTime > 0) {
-				Text(dl, gen::kHud_points_popup, size, k, "+" + std::to_string(s.lastGain), 1.0f, s.gainTime);
+				Text(dl, gen::kHud_points_popup, size, k, (s.lastGain > 0 ? "+" : "") + std::to_string(s.lastGain), 1.0f, s.gainTime, s.lastGain < 0 ? 0xE03030FF : 0);
+			}
+			// Perk bottles: a coloured circle per perk owned, above the points.
+			{
+				static constexpr std::array<std::uint32_t, 7> colors{ 0xD01818FF, 0x2EB82EFF, 0xE0A020FF, 0x3070E0FF, 0xE8D040FF, 0x606060FF, 0x6A9A40FF };
+				auto        p = Anchor(gen::kHud_points, size, k);
+				float       x = p.x - 18 * k;
+				const float y = p.y - 52 * k;
+				for (int i = static_cast<int>(gen::kPerks.size()) - 1; i >= 0; --i) {
+					if ((s.perks >> i) & 1) {
+						dl->AddCircleFilled({ x, y }, 15 * k, Col(colors[i % colors.size()]));
+						dl->AddText(g_font, 18 * k, { x - 5 * k, y - 10 * k }, IM_COL32(255, 255, 255, 230), std::string(1, gen::kPerks[i].label[0]).c_str());
+						x -= 38 * k;
+					}
+				}
+			}
+			if (s.crew >= 0) {
+				constexpr gen::HudItem crewItem{ "crew", 1, gen::kHud_points.ox, gen::kHud_points.oy + 36, 24, 0xB8B8B8FF };
+				Text(dl, crewItem, size, k, std::string(gen::kCrew[s.crew].label), 1.0f, 0.8f);
 			}
 
 			if (s.gunOut) {
-				Text(dl, gen::kHud_ammo, size, k, s.reloading ? "RELOADING" : std::string(gen::kGun_m1911.label) + "   " + std::to_string(s.clip) + " / " + std::to_string(s.reserve), 1.0f,
+				Text(dl, gen::kHud_ammo, size, k, s.reloading ? "RELOADING" : s.gunName + "   " + std::to_string(s.clip) + " / " + std::to_string(s.reserve), 1.0f,
 					1.0f, s.clip == 0 && !s.reloading ? 0xE03030FF : 0);
-				const auto  c = Anchor(gen::kHud_crosshair, size, k);
-				const float g = 10 * k, l = 9 * k;
-				const auto  col = Col(gen::kHud_crosshair.rgba, 0.9f);
-				dl->AddLine({ c.x - g - l, c.y }, { c.x - g, c.y }, col, 2 * k);
-				dl->AddLine({ c.x + g, c.y }, { c.x + g + l, c.y }, col, 2 * k);
-				dl->AddLine({ c.x, c.y - g - l }, { c.x, c.y - g }, col, 2 * k);
-				dl->AddLine({ c.x, c.y + g }, { c.x, c.y + g + l }, col, 2 * k);
+				if (s.ads < 0.95f) {
+					const auto  c = Anchor(gen::kHud_crosshair, size, k);
+					const float g = 10 * k * (1.0f - s.ads * 0.6f), l = 9 * k;
+					const auto  col = Col(gen::kHud_crosshair.rgba, 0.9f * (1.0f - s.ads));
+					dl->AddLine({ c.x - g - l, c.y }, { c.x - g, c.y }, col, 2 * k);
+					dl->AddLine({ c.x + g, c.y }, { c.x + g + l, c.y }, col, 2 * k);
+					dl->AddLine({ c.x, c.y - g - l }, { c.x, c.y - g }, col, 2 * k);
+					dl->AddLine({ c.x, c.y + g }, { c.x, c.y + g + l }, col, 2 * k);
+				} else {
+					const auto c = Anchor(gen::kHud_crosshair, size, k);
+					dl->AddCircleFilled(c, 2.5f * k, IM_COL32(255, 60, 60, 230));
+				}
 			}
 			if (s.hitTime > 0) {
 				const auto  c = Anchor(gen::kHud_hitmarker, size, k);
@@ -98,6 +121,28 @@ namespace bo3z
 			}
 			if (s.bannerTime > 0 && !s.banner.empty()) {
 				Text(dl, gen::kHud_banner, size, k, s.banner, 0.5f, std::min(1.0f, s.bannerTime));
+			}
+			if (s.crewScreen) {
+				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, 170));
+				const char* title = "CHOOSE YOUR CHARACTER";
+				const auto  ts = g_font->CalcTextSizeA(56 * k, FLT_MAX, 0, title);
+				dl->AddText(g_font, 56 * k, { (size.x - ts.x) / 2, size.y * 0.16f }, IM_COL32(200, 20, 20, 255), title);
+				const float w = size.x * 0.19f, gap = size.x * 0.02f, x0 = (size.x - (4 * w + 3 * gap)) / 2, y0 = size.y * 0.30f, h = size.y * 0.42f;
+				for (int i = 0; i < 4; ++i) {
+					const auto& c = gen::kCrew[i];
+					const float x = x0 + i * (w + gap);
+					const bool  on = i == s.crewHighlight;
+					dl->AddRectFilled({ x, y0 }, { x + w, y0 + h }, on ? IM_COL32(70, 10, 10, 235) : IM_COL32(25, 25, 25, 220), 6 * k);
+					dl->AddRect({ x, y0 }, { x + w, y0 + h }, on ? IM_COL32(230, 40, 40, 255) : IM_COL32(90, 90, 90, 255), 6 * k, 0, on ? 4 * k : 2 * k);
+					dl->AddText(g_font, 30 * k, { x + 16 * k, y0 + 14 * k }, IM_COL32(150, 150, 150, 255), std::to_string(i + 1).c_str());
+					dl->AddText(g_font, 38 * k, { x + 16 * k, y0 + 60 * k }, IM_COL32(240, 230, 200, 255), std::string(c.label).c_str());
+					dl->AddText(g_font, 22 * k, { x + 16 * k, y0 + 120 * k }, IM_COL32(200, 200, 200, 255), std::string(c.quote).c_str(), nullptr, w - 32 * k);
+					static constexpr std::array<const char*, 4> passive{ "+10% gun damage", "+50 health", "Knife does double damage", "Mystery Box costs 750" };
+					dl->AddText(g_font, 24 * k, { x + 16 * k, y0 + h - 60 * k }, IM_COL32(230, 200, 60, 255), passive[c.passive]);
+				}
+				const char* hint = "Press 1-4 to pick, Enter to confirm";
+				const auto  hs = g_font->CalcTextSizeA(30 * k, FLT_MAX, 0, hint);
+				dl->AddText(g_font, 30 * k, { (size.x - hs.x) / 2, y0 + h + 40 * k }, IM_COL32(220, 220, 220, 255), hint);
 			}
 		}
 
