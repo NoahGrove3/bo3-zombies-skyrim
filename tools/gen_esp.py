@@ -5,7 +5,7 @@ import json, struct, pathlib
 from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
-T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff']}
+T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
 def z(s): return s.encode('cp1252') + b'\0'
 def sub(name, data):
@@ -18,7 +18,7 @@ def group(label, recs):
     data = b''.join(recs)
     return b'GRUP' + struct.pack('<I', 24 + len(data)) + label.encode() + struct.pack('<iHHHH', 0, 0, 0, 44, 0) + data
 fid = lambda kind, key: SELF | IDS[(kind, key)]
-recs = {'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
+recs = {'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
 
 for p in S['perks']['rows']:
     data = bytearray(tsub('mgef', 'DATA'))
@@ -84,11 +84,31 @@ for (kind, key), r in DREC.items():
         recs['LIGH'].append(record('LIGH', fid('LIGH', key), [
             sub('EDID', z('UN_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.0))]))
 
+for c in S['creatures']['rows']:
+    model = z(c['model'])
+    recs['ARMA'].append(record('ARMA', fid('ARMA', c['id']), [
+        sub('EDID', z('UN_' + c['id'] + 'AA')), sub('BODT', tsub('arma_skin', 'BODT')), sub('RNAM', struct.pack('<I', 0x000D53)),
+        sub('DNAM', tsub('arma_skin', 'DNAM')), sub('MOD2', model), sub('MOD3', model)]))
+    recs['ARMO'].append(record('ARMO', fid('ARMO', c['id']), [
+        sub('EDID', z('UN_Skin_' + c['id'])), sub('OBND', tsub('armo_skin', 'OBND')), sub('BODT', tsub('armo_skin', 'BODT')),
+        sub('RNAM', struct.pack('<I', 0x000D53)), sub('MODL', struct.pack('<I', fid('ARMA', c['id']))), sub('DATA', tsub('armo_skin', 'DATA')), sub('DNAM', tsub('armo_skin', 'DNAM'))]))
+    acbs = bytearray(tsub('npc_draugr', 'ACBS'))
+    struct.pack_into('<H', acbs, 8, int(c['level']))   # level
+    struct.pack_into('<H', acbs, 18, 0)                # no template: everything comes from this record
+    aidt = bytearray(tsub('npc_draugr', 'AIDT')); aidt[0] = 2; aidt[1] = 4   # very aggressive, foolhardy
+    recs['NPC_'].append(record('NPC_', fid('NPC_', c['id']), [
+        sub('EDID', z('UN_' + c['id'])), sub('OBND', tsub('npc_draugr', 'OBND')), sub('ACBS', bytes(acbs)),
+        sub('VTCK', tsub('npc_draugr', 'VTCK')), sub('RNAM', struct.pack('<I', 0x000D53)), sub('WNAM', struct.pack('<I', fid('ARMO', c['id']))),
+        sub('AIDT', bytes(aidt)), sub('CNAM', tsub('npc_draugr', 'CNAM')), sub('FULL', z(c['label'])), sub('DATA', b''),
+        sub('DNAM', tsub('npc_draugr', 'DNAM')), sub('ZNAM', tsub('npc_draugr', 'ZNAM')), sub('NAM5', tsub('npc_draugr', 'NAM5')),
+        sub('NAM6', struct.pack('<f', float(c['heightScale']))), sub('NAM7', tsub('npc_draugr', 'NAM7')), sub('NAM8', tsub('npc_draugr', 'NAM8')),
+        sub('QNAM', tsub('npc_draugr', 'QNAM'))]))
+
 count = sum(len(v) for v in recs.values())
 hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('Undying Nights: round-based undead survival for Skyrim'))]
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
-for k in ['STAT', 'LIGH', 'SNDR', 'MGEF', 'ACTI', 'WEAP', 'ALCH']: out += group(k, recs[k])
+for k in ['ARMA', 'ARMO', 'NPC_', 'STAT', 'LIGH', 'SNDR', 'MGEF', 'ACTI', 'WEAP', 'ALCH']: out += group(k, recs[k])
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')

@@ -258,6 +258,16 @@ namespace bo3z
 				TxtC(dl, g_title, 22 * k, c.x, c.y + R + 10 * k, Fade(kGold, 0.9f), "NIGHT " + Roman(s.round + 1) + " APPROACHES");
 			}
 
+			// Boss bar: name over a long ornate bar at the top.
+			if (!s.bossName.empty()) {
+				const float w = size.x * 0.42f, h = 14 * k, x = size.x * 0.5f - w / 2, y = 64 * k;
+				TxtC(dl, g_title, 26 * k, size.x * 0.5f, y - 36 * k, s.bossEnraged ? IM_COL32(255, 120, 60, 255) : kParch, s.bossName, s.bossEnraged ? 3 * k : 0, IM_COL32(255, 60, 20, 255));
+				static float bossGhost = 1;
+				bossGhost = s.bossHp > bossGhost ? s.bossHp : std::max(s.bossHp, bossGhost - dt * 0.25f);
+				Bar(dl, { x, y }, w, h, s.bossHp, bossGhost, s.bossEnraged ? IM_COL32(230, 90, 20, 255) : IM_COL32(150, 20, 20, 255), k);
+				Divider(dl, size.x * 0.5f, y + h + 12 * k, w * 0.3f, k);
+			}
+
 			// Banner: centred line between ornaments, fades and drifts in.
 			if (s.bannerTime > 0 && !s.banner.empty()) {
 				const float a = std::min(1.0f, s.bannerTime * 2), y = size.y * 0.11f + (1.0f - a) * 10 * k;

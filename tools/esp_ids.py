@@ -13,7 +13,8 @@ def assign(S=None, write=False):
     wanted = [('MGEF', p['id']) for p in S['perks']['rows']] + [('ACTI', o['id']) for o in S['objects']['rows']] + \
              [('WEAP', w['id']) for w in S['weapons']['rows']] + [('ALCH', p['id']) for p in S['perks']['rows']] + \
              [('SNDR', s['id']) for s in S['sounds']['rows'] if s['plugin'] == PLUGIN] + \
-             list(dressing(S)[0].keys())
+             list(dressing(S)[0].keys()) + \
+             [(k, c['id']) for c in S['creatures']['rows'] for k in ('ARMA', 'ARMO', 'NPC_')]
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:

@@ -193,6 +193,12 @@
   "STAT:1st_thuumcannon": "0x8bd",
   "STAT:1st_skyforgearc": "0x8be",
   "STAT:1st_apprentice": "0x8bf",
-  "STAT:show_apprentice": "0x8c0"
+  "STAT:show_apprentice": "0x8c0",
+  "ARMA:zombie": "0x8c1",
+  "ARMO:zombie": "0x8c2",
+  "NPC_:zombie": "0x8c3",
+  "ARMA:boss": "0x8c4",
+  "ARMO:boss": "0x8c5",
+  "NPC_:boss": "0x8c6"
  }
 }

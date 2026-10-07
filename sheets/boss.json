@@ -1,0 +1,93 @@
+{
+  "sheet": "boss",
+  "about": "Grimmvar, the Undying Wyrm: rises every bossEvery nights (enemies sheet), partway into the night. Times in seconds, ranges in Skyrim units, health as a multiple of a zombie's round health.",
+  "columns": [
+    "id",
+    "value",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "spawnDelay",
+      "value": 10,
+      "verify": []
+    },
+    {
+      "id": "healthMult",
+      "value": 45,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "breathEvery",
+      "value": 9,
+      "verify": []
+    },
+    {
+      "id": "breathRange",
+      "value": 1400,
+      "verify": []
+    },
+    {
+      "id": "roarEvery",
+      "value": 14,
+      "verify": []
+    },
+    {
+      "id": "roarRange",
+      "value": 650,
+      "verify": []
+    },
+    {
+      "id": "summonEvery",
+      "value": 22,
+      "verify": []
+    },
+    {
+      "id": "summonCount",
+      "value": 5,
+      "verify": []
+    },
+    {
+      "id": "stepEvery",
+      "value": 26,
+      "verify": []
+    },
+    {
+      "id": "slamEvery",
+      "value": 5,
+      "verify": []
+    },
+    {
+      "id": "slamRange",
+      "value": 260,
+      "verify": []
+    },
+    {
+      "id": "slamDamage",
+      "value": 0.3,
+      "verify": []
+    },
+    {
+      "id": "enrageAt",
+      "value": 0.5,
+      "verify": []
+    },
+    {
+      "id": "enrageSpeed",
+      "value": 35,
+      "verify": []
+    },
+    {
+      "id": "enrageCooldownMult",
+      "value": 0.65,
+      "verify": []
+    },
+    {
+      "id": "killPoints",
+      "value": 2500,
+      "verify": []
+    }
+  ]
+}

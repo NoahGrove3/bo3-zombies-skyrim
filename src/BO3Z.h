@@ -159,6 +159,9 @@ namespace bo3z
 			float       hp{ 0 }, hpMax{ 0 }, mp{ 0 }, mpMax{ 0 }, sp{ 0 }, spMax{ 0 };
 			float       hurtTime{ 0 };   // red vignette after taking a hit
 			bool        perkMenu{ false };
+			std::string bossName;  // empty = no boss
+			float       bossHp{ 0 };
+			bool        bossEnraged{ false };
 			int         perkSel{ 0 };
 		};
 		State&      Edit();

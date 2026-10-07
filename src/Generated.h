@@ -17,14 +17,11 @@ namespace bo3z::gen
 		2.0f, 0.95f, 0.3f, 6, 5,
 		{ 1500.f, 2500.f }, { 500.f, 1100.f }, 120.f, 20 };
 	inline constexpr FormRef kIntroQuest{ "Skyrim.esm", 0x03372B, "MQ101" };
-	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; };
-	inline constexpr std::array<Enemy, 6> kEnemies{ {
-		Enemy{ "skeleton", "Skeleton", { "Skyrim.esm", 0x02D2D4, "LCharSkeletonMeleeMixed" }, true, 1, 3, false, "NPC Head [Head]", true },
-		Enemy{ "draugr_1h", "Draugr", { "Skyrim.esm", 0x055936, "LCharDraugrMelee1HMale" }, true, 1, 4, false, "NPC Head [Head]", true },
-		Enemy{ "draugr_2h", "Draugr Brute", { "Skyrim.esm", 0x01E772, "LCharDraugrMelee2HMale" }, true, 3, 2, false, "NPC Head [Head]", true },
-		Enemy{ "draugr_archer", "Draugr Archer", { "Skyrim.esm", 0x01E7AA, "LCharDraugrMissile" }, true, 6, 1, false, "NPC Head [Head]", true },
-		Enemy{ "draugr_warlock", "Draugr Warlock", { "Skyrim.esm", 0x01E7AB, "LCharDraugrWarlock" }, true, 10, 1, false, "NPC Head [Head]", true },
-		Enemy{ "death_hound", "Death Hound", { "Dawnguard.esm", 0x00C5EF, "DLC1encDeathHound" }, false, 1, 1, true, "Canine_Head", true },
+	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; };
+	inline constexpr std::array<Enemy, 3> kEnemies{ {
+		Enemy{ "zombie", "Risen Dead", { "BO3Zombies.esp", 0x0008C3, "UN_zombie" }, false, 1, 1, false, "NPC Head [Head]", true, 0 },
+		Enemy{ "death_hound", "Death Hound", { "Dawnguard.esm", 0x00C5EF, "DLC1encDeathHound" }, false, 1, 1, true, "Canine_Head", true, 0 },
+		Enemy{ "boss", "Grimmvar, the Undying Wyrm", { "BO3Zombies.esp", 0x0008C6, "UN_boss" }, false, 10, 0, false, "NPC Head [Head]", true, 10 },
 	} };
 	enum class Sound : int {
 		crossbow_fire = 0,
@@ -151,7 +148,7 @@ namespace bo3z::gen
 	inline constexpr std::string_view kPlugin = "BO3Zombies.esp";
 	enum class Fire : int { Semi = 0, Auto = 1, Burst = 2, Pump = 3 };
 	struct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; int special, spell, spellOn; bool retired; };
-	inline constexpr std::array<FormRef, 7> kSpells{ {
+	inline constexpr std::array<FormRef, 9> kSpells{ {
 		FormRef{ "Skyrim.esm", 0x012FD0, "Firebolt" },
 		FormRef{ "Skyrim.esm", 0x01C789, "Fireball" },
 		FormRef{ "Skyrim.esm", 0x02B96C, "IceSpike" },
@@ -159,7 +156,18 @@ namespace bo3z::gen
 		FormRef{ "Skyrim.esm", 0x045F9D, "ChainLightning" },
 		FormRef{ "Skyrim.esm", 0x013F3A, "VoiceUnrelentingForce3" },
 		FormRef{ "Skyrim.esm", 0x02AC6F, "DA15Wabbajack" },
+		FormRef{ "Skyrim.esm", 0x03F9ED, "VoiceFireBreath3" },
+		FormRef{ "Skyrim.esm", 0x016D45, "DragonVoiceUnrelentingForce" },
 	} };
+	inline constexpr int kSpell_firebolt = 0;
+	inline constexpr int kSpell_fireball = 1;
+	inline constexpr int kSpell_icespike = 2;
+	inline constexpr int kSpell_lightningbolt = 3;
+	inline constexpr int kSpell_chainlightning = 4;
+	inline constexpr int kSpell_unrelenting = 5;
+	inline constexpr int kSpell_wabbajack = 6;
+	inline constexpr int kSpell_firebreath = 7;
+	inline constexpr int kSpell_dragonforce = 8;
 	inline constexpr std::array<GunDef, 20> kGuns{ {
 		GunDef{ "sidearm", "Brass Sidearm", "pistol", Fire(0), 75.0f, 2.0f, 1, 1.5f, 0.4f, 8, 480, 160, 1, 1600, 4200.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_pistol, Sound::reload_mag, Sound::dry_click, 0, 0, 0, 0x814, 0, -1, 0, true },
 		GunDef{ "centurion", "Centurion Pistol", "pistol", Fire(0), 90.0f, 2.5f, 1, 1.4f, 0.3f, 12, 576, 140, 1, 1500, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_pistol, Sound::reload_mag, Sound::dry_click, 0, 0, 0, 0x815, 0, -1, 0, true },
@@ -405,6 +413,7 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kKey2_crew4 = 5;
 	inline constexpr std::uint32_t kKey2_confirm = 28;
 	inline constexpr float kHpCapRound = 10.0f, kHpGrowthAfterCap = 1.02f, kShareMelee = 0.34f, kShareBow = 0.5f, kShareSpell = 0.2f;
+	namespace boss { inline constexpr float spawnDelay = 10.0f; inline constexpr float healthMult = 45.0f; inline constexpr float breathEvery = 9.0f; inline constexpr float breathRange = 1400.0f; inline constexpr float roarEvery = 14.0f; inline constexpr float roarRange = 650.0f; inline constexpr float summonEvery = 22.0f; inline constexpr float summonCount = 5.0f; inline constexpr float stepEvery = 26.0f; inline constexpr float slamEvery = 5.0f; inline constexpr float slamRange = 260.0f; inline constexpr float slamDamage = 0.3f; inline constexpr float enrageAt = 0.5f; inline constexpr float enrageSpeed = 35.0f; inline constexpr float enrageCooldownMult = 0.65f; inline constexpr float killPoints = 2500.0f; }
 	inline constexpr float kRegenDelay = 5.0f, kRegenPerSecond = 0.35f;
 	inline constexpr float kSpawnMultiplier = 3.0f, kHitDamageFraction = 0.34f, kZombieWeaponDamageMult = 0.1f;
 	inline constexpr bool kIgnoreNpcs = true;

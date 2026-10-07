@@ -152,9 +152,9 @@ namespace bo3z
 			return a_base && a_base->Is(RE::FormType::NPC) ? a_base : nullptr;
 		}
 
-		bool SpawnOne(RE::PlayerCharacter* a_player)
+		bool SpawnOne(RE::PlayerCharacter* a_player, int a_force = -1, const RE::NiPoint3* a_at = nullptr)
 		{
-			const auto pick = PickEnemy();
+			const auto pick = a_force >= 0 ? std::optional<std::size_t>(static_cast<std::size_t>(a_force)) : PickEnemy();
 			if (!pick) {
 				return false;
 			}
@@ -166,6 +166,9 @@ namespace bo3z
 			const float dist = Uniform(ring[0], ring[1]);
 			const auto  base = a_player->GetPosition();
 			RE::NiPoint3 pos{ base.x + std::sin(angle) * dist, base.y + std::cos(angle) * dist, base.z + R.spawnHeightOffset };
+			if (a_at) {
+				pos = *a_at;
+			}
 			if (!interior) {
 				float land = 0;
 				if (RE::TES::GetSingleton()->GetLandHeight(pos, land)) {
@@ -246,6 +249,151 @@ namespace bo3z
 
 		bool IsOurs(RE::Actor* a) { return a && g_ours.contains(a->GetFormID()); }
 
+		// ---- Grimmvar, the Undying Wyrm (sheet: boss) ----
+		struct BossState
+		{
+			RE::ActorHandle handle;
+			float           spawnIn{ -1 };  // seconds until it rises this night (-1 = not tonight)
+			float           breath{ 0 }, roar{ 0 }, summon{ 0 }, step{ 0 }, slam{ 0 };
+			bool            enraged{ false };
+			float           maxHp{ 1 };
+		} g_boss;
+
+		int BossRow()
+		{
+			for (int i = 0; i < static_cast<int>(gen::kEnemies.size()); ++i) {
+				if (gen::kEnemies[i].bossEvery > 0) {
+					return i;
+				}
+			}
+			return -1;
+		}
+
+		void CastAt(RE::Actor* a_caster, int a_spell, RE::Actor* a_target)
+		{
+			auto* m = Forms::Spell(a_spell);
+			if (m && a_caster) {
+				if (auto* c = a_caster->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
+					c->CastSpellImmediate(m, false, a_target, 1.0f, false, 0.0f, a_caster);
+				}
+			}
+		}
+
+		void PublishBoss(RE::Actor* a_boss)
+		{
+			std::scoped_lock l(Hud::Lock());
+			auto& h = Hud::Edit();
+			if (!a_boss || a_boss->IsDead()) {
+				h.bossName.clear();
+				return;
+			}
+			h.bossName = std::string(gen::kEnemies[BossRow()].label);
+			h.bossHp = std::max(0.0f, a_boss->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth)) / g_boss.maxHp;
+			h.bossEnraged = g_boss.enraged;
+		}
+
+		void SpawnBoss(RE::PlayerCharacter* a_player)
+		{
+			const int row = BossRow();
+			if (row < 0) {
+				return;
+			}
+			const auto p = a_player->GetPosition();
+			const float a = a_player->GetAngleZ();
+			RE::NiPoint3 at{ p.x + std::sin(a) * 900.0f, p.y + std::cos(a) * 900.0f, p.z + 60.0f };  // in front: you should see it rise
+			if (!SpawnOne(a_player, row, &at)) {
+				return;
+			}
+			auto boss = g_alive.back().handle.get();
+			if (!boss) {
+				return;
+			}
+			auto* av = boss->AsActorValueOwner();
+			const float want = HealthFor(g_current) * gen::boss::healthMult;
+			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
+			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, 100.0f - av->GetActorValue(RE::ActorValue::kSpeedMult));
+			g_boss.handle = boss->GetHandle();
+			g_boss.maxHp = want;
+			g_boss.enraged = false;
+			g_boss.breath = 4, g_boss.roar = 7, g_boss.summon = 10, g_boss.step = gen::boss::stepEvery, g_boss.slam = 2;
+			Forms::Play(gen::Sound::hound_night);
+			Hud::Banner(std::string(gen::kEnemies[row].label).append(" rises!"), 5.0f);
+			logger::info("boss: {} risen with {:.0f} health", gen::kEnemies[row].id, want);
+		}
+
+		void TickBoss(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			if (g_boss.spawnIn > 0 && (g_boss.spawnIn -= a_delta) <= 0) {
+				g_boss.spawnIn = -1;
+				SpawnBoss(a_player);
+			}
+			auto boss = g_boss.handle.get();
+			if (!boss) {
+				return;
+			}
+			if (boss->IsDead()) {
+				Points::Add(static_cast<int>(gen::boss::killPoints));
+				Forms::Play(gen::Sound::night_end);
+				Hud::Banner("The Undying Wyrm falls! +" + std::to_string(static_cast<int>(gen::boss::killPoints)), 6.0f);
+				logger::info("boss: slain");
+				g_boss.handle = {};
+				PublishBoss(nullptr);
+				return;
+			}
+			auto* av = boss->AsActorValueOwner();
+			const float hpFrac = av->GetActorValue(RE::ActorValue::kHealth) / std::max(1.0f, g_boss.maxHp);
+			if (!g_boss.enraged && hpFrac <= gen::boss::enrageAt) {
+				g_boss.enraged = true;
+				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, gen::boss::enrageSpeed);
+				CastAt(boss.get(), gen::kSpell_dragonforce, a_player);
+				Hud::Banner("Grimmvar is ENRAGED!", 3.0f);
+			}
+			const float cd = g_boss.enraged ? gen::boss::enrageCooldownMult : 1.0f;
+			const float dist = boss->GetPosition().GetDistance(a_player->GetPosition());
+			if ((g_boss.breath -= a_delta) <= 0 && dist < gen::boss::breathRange && dist > gen::boss::slamRange) {
+				CastAt(boss.get(), gen::kSpell_firebreath, a_player);
+				g_boss.breath = gen::boss::breathEvery * cd;
+			}
+			if ((g_boss.roar -= a_delta) <= 0 && dist < gen::boss::roarRange) {
+				CastAt(boss.get(), gen::kSpell_dragonforce, a_player);
+				g_boss.roar = gen::boss::roarEvery * cd;
+			}
+			if ((g_boss.slam -= a_delta) <= 0 && dist < gen::boss::slamRange) {
+				auto* pav = a_player->AsActorValueOwner();
+				pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::boss::slamDamage);
+				Forms::PlayAt(gen::Sound::rise, boss.get());
+				{
+					std::scoped_lock l(Hud::Lock());
+					Hud::Edit().hurtTime = 1.0f;
+				}
+				g_boss.slam = gen::boss::slamEvery * cd;
+			}
+			if ((g_boss.summon -= a_delta) <= 0) {
+				const auto bp = boss->GetPosition();
+				for (int i = 0; i < static_cast<int>(gen::boss::summonCount); ++i) {
+					const float a = i * 2.0f * RE::NI_PI / gen::boss::summonCount;
+					RE::NiPoint3 at{ bp.x + std::sin(a) * 220.0f, bp.y + std::cos(a) * 220.0f, bp.z + 40.0f };
+					SpawnOne(a_player, 0, &at);
+				}
+				Hud::Banner("The Wyrm calls the dead!", 2.5f);
+				g_boss.summon = gen::boss::summonEvery * cd;
+			}
+			if ((g_boss.step -= a_delta) <= 0 && dist > 500.0f) {
+				// Wyrm Step: sinks away and bursts out of the ground beside you.
+				const auto p = a_player->GetPosition();
+				const float a = a_player->GetAngleZ() + Uniform(-2.5f, 2.5f);
+				boss->SetPosition({ p.x + std::sin(a) * 300.0f, p.y + std::cos(a) * 300.0f, p.z + 40.0f }, true);
+				if (auto* fx = Forms::Ours(gen::kRiseFx)) {
+					if (auto puff = boss->PlaceObjectAtMe(fx, false)) {
+						g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
+					}
+				}
+				Forms::PlayAt(gen::Sound::rise, boss.get());
+				g_boss.step = gen::boss::stepEvery * cd;
+			}
+			PublishBoss(boss.get());
+		}
+
 		void TickFx(float a_delta)
 		{
 			for (auto& [h, t] : g_fx) {
@@ -266,6 +414,9 @@ namespace bo3z
 			g_toSpawn = static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier));
 			g_spawnTimer = 0;
 			g_phase = Phase::Fighting;
+			if (const int row = BossRow(); row >= 0 && a_round >= gen::kEnemies[row].minRound && a_round % gen::kEnemies[row].bossEvery == 0) {
+				g_boss.spawnIn = gen::boss::spawnDelay;
+			}
 			{
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().countdown = 0;
@@ -399,6 +550,9 @@ namespace bo3z
 			g_corpses.clear();
 			g_ours.clear();
 			g_toSpawn = 0;
+			g_boss = {};
+			std::scoped_lock l(Hud::Lock());
+			Hud::Edit().bossName.clear();
 		}
 
 		void LogState()
@@ -486,6 +640,7 @@ namespace bo3z
 					}
 				}
 				KeepThemComing(player, a_delta);
+				TickBoss(player, a_delta);
 				if (g_toSpawn > 0) {
 					if ((g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < R.maxAlive) {
 						if (SpawnOne(player)) {
@@ -493,7 +648,7 @@ namespace bo3z
 						}
 						g_spawnTimer = SpawnDelay(g_current);
 					}
-				} else if (g_alive.empty()) {
+				} else if (g_alive.empty() && g_boss.spawnIn < 0 && !g_boss.handle.get()) {
 					EndRound();
 				}
 				break;

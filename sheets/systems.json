@@ -1,206 +1,203 @@
 {
- "sheet": "systems",
- "about": "The mashup's own systems in step 1. Each row is one C++ module.",
- "columns": [
-  "id",
-  "does",
-  "reads",
-  "state",
-  "step",
-  "verify"
- ],
- "rows": [
-  {
-   "id": "boot",
-   "does": "start a thread from DllMain, wait for the game, install hooks",
-   "reads": [
-    "hooks:asi_entry",
-    "hooks:data_loaded",
-    "hooks:present",
-    "hooks:player_update",
-    "hooks:input",
-    "hooks:death",
-    "hooks:load_game",
-    "hooks:new_game"
-   ],
-   "state": "installed flag",
-   "step": 1,
-   "verify": []
-  },
-  {
-   "id": "persistence",
-   "does": "load/save round, points and ammo on the player; give the start kit once",
-   "reads": [
-    "persistence:slot0",
-    "persistence:slot1",
-    "persistence:slot2",
-    "persistence:flags",
-    "persistence:box",
-    "persistence:round",
-    "persistence:points",
-    "economy:start"
-   ],
-   "state": "none (lives on the player)",
-   "step": 1,
-   "verify": []
-  },
-  {
-   "id": "round_director",
-   "does": "start rounds at nightfall, spawn scaling undead around the player, end rounds, crumble the undead at dawn",
-   "reads": [
-    "rounds:night_rounds",
-    "enemies:skeleton",
-    "enemies:draugr_1h",
-    "enemies:draugr_2h",
-    "enemies:draugr_archer",
-    "enemies:draugr_warlock",
-    "enemies:death_hound",
-    "quests:MQ101",
-    "sounds:round_start",
-    "sounds:round_end"
-   ],
-   "state": "round, toSpawn, alive list, spawn timer, break timer",
-   "step": 1,
-   "verify": []
-  },
-  {
-   "id": "points",
-   "does": "award BO3 points for hits and kills on round undead",
-   "reads": [
-    "economy:hit",
-    "economy:kill",
-    "economy:headshot_kill",
-    "economy:melee_kill",
-    "hud:points_popup"
-   ],
-   "state": "points, lastGain",
-   "step": 1,
-   "verify": []
-  },
-  {
-   "id": "gun",
-   "does": "BO3 arsenal: each gun is a Skyrim weapon item; while one is drawn, hitscan fire (semi/auto/burst/pump, pellets, splash), ADS, reload, 2 slots (3 with Mule Kick), quick knife",
-   "reads": [
-    "weapons:sidearm",
-    "melee:knife",
-    "input:fire",
-    "input:ads",
-    "input:reload",
-    "input:swap",
-    "input:knife",
-    "perks:quicksilver",
-    "perks:twinstrike",
-    "perks:hawkeye",
-    "perks:mammoth",
-    "crew:halvard",
-    "crew:saffir"
-   ],
-   "state": "out, clip, reserve, cooldown, reload timer",
-   "step": 1,
-   "verify": []
-  },
-  {
-   "id": "hud",
-   "does": "draw the BO3 HUD",
-   "reads": [
-    "hud:round_counter",
-    "hud:points",
-    "hud:ammo",
-    "hud:crosshair",
-    "hud:points_popup",
-    "hud:banner",
-    "hud:hitmarker"
-   ],
-   "state": "ImGui context",
-   "step": 1,
-   "verify": []
-  },
-  {
-   "id": "devtools",
-   "does": "test channel: save game frames on request, set the clock, log state (file-driven, used for automated in-game tests and listing screenshots)",
-   "reads": [
-    "hooks:present",
-    "hooks:player_update"
-   ],
-   "state": "command queue, pending shot",
-   "step": 1,
-   "verify": []
-  },
-  {
-   "id": "intro",
-   "does": "new games skip Helgen with Bethesda's MQQuickstart, then land outside Riverwood and open the crew screen",
-   "reads": [
-    "quests:MQ101",
-    "quests:MQQuickstart",
-    "quests:MQ102Marker",
-    "input:crew1",
-    "input:crew2",
-    "input:crew3",
-    "input:crew4",
-    "input:confirm",
-    "crew:halvard",
-    "crew:gorza",
-    "crew:saffir",
-    "crew:eldrith"
-   ],
-   "state": "flags on the player",
-   "step": 2,
-   "verify": []
-  },
-  {
-   "id": "shops",
-   "does": "place Mystery Box, perk machines and wall-buys in towns; sell guns, ammo and Perk-a-Colas for points; move the box on a teddy bear",
-   "reads": [
-    "locations:riverwood_0",
-    "objects:coffer",
-    "objects:perk_trollshide",
-    "objects:wall_spider",
-    "perks:trollshide"
-   ],
-   "state": "placed refs this session, box town/spins on the player",
-   "step": 2,
-   "verify": []
-  },
-  {
-   "id": "perks",
-   "does": "drinking a Perk-a-Cola potion grants its perk (max 4) and applies its effect",
-   "reads": [
-    "perks:trollshide",
-    "perks:quicksilver",
-    "perks:twinstrike",
-    "perks:hearthfire",
-    "perks:windrunner",
-    "perks:hawkeye",
-    "perks:mammoth"
-   ],
-   "state": "perk bits on the player",
-   "step": 2,
-   "verify": []
-  },
-  {
-   "id": "movement",
-   "does": "BO3 sprint boost, slide, aim-down-sights zoom and speed",
-   "reads": [
-    "movement:sprint_boost",
-    "movement:slide",
-    "movement:ads_fov",
-    "movement:ads_speed"
-   ],
-   "state": "slide timer, ADS blend",
-   "step": 2,
-   "verify": []
-  },
-  {
-   "id": "plugin",
-   "does": "BO3Zombies.esp holds the gun items, potions, perk effects and town objects; the .asi adds it to Plugins.txt",
-   "reads": [
-    "objects:coffer",
-    "weapons:sidearm",
-    "perks:trollshide"
-   ],
-   "state": "none",
-   "step": 2,
-   "verify": []
-  }
- ]
+  "sheet": "systems",
+  "about": "The mashup's own systems in step 1. Each row is one C++ module.",
+  "columns": [
+    "id",
+    "does",
+    "reads",
+    "state",
+    "step",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "boot",
+      "does": "start a thread from DllMain, wait for the game, install hooks",
+      "reads": [
+        "hooks:asi_entry",
+        "hooks:data_loaded",
+        "hooks:present",
+        "hooks:player_update",
+        "hooks:input",
+        "hooks:death",
+        "hooks:load_game",
+        "hooks:new_game"
+      ],
+      "state": "installed flag",
+      "step": 1,
+      "verify": []
+    },
+    {
+      "id": "persistence",
+      "does": "load/save round, points and ammo on the player; give the start kit once",
+      "reads": [
+        "persistence:slot0",
+        "persistence:slot1",
+        "persistence:slot2",
+        "persistence:flags",
+        "persistence:box",
+        "persistence:round",
+        "persistence:points",
+        "economy:start"
+      ],
+      "state": "none (lives on the player)",
+      "step": 1,
+      "verify": []
+    },
+    {
+      "id": "round_director",
+      "does": "start rounds at nightfall, spawn scaling undead around the player, end rounds, crumble the undead at dawn",
+      "reads": [
+        "rounds:night_rounds",
+        "enemies:death_hound",
+        "quests:MQ101",
+        "sounds:round_start",
+        "sounds:round_end",
+        "enemies:zombie",
+        "enemies:boss"
+      ],
+      "state": "round, toSpawn, alive list, spawn timer, break timer",
+      "step": 1,
+      "verify": []
+    },
+    {
+      "id": "points",
+      "does": "award BO3 points for hits and kills on round undead",
+      "reads": [
+        "economy:hit",
+        "economy:kill",
+        "economy:headshot_kill",
+        "economy:melee_kill",
+        "hud:points_popup"
+      ],
+      "state": "points, lastGain",
+      "step": 1,
+      "verify": []
+    },
+    {
+      "id": "gun",
+      "does": "BO3 arsenal: each gun is a Skyrim weapon item; while one is drawn, hitscan fire (semi/auto/burst/pump, pellets, splash), ADS, reload, 2 slots (3 with Mule Kick), quick knife",
+      "reads": [
+        "weapons:sidearm",
+        "melee:knife",
+        "input:fire",
+        "input:ads",
+        "input:reload",
+        "input:swap",
+        "input:knife",
+        "perks:quicksilver",
+        "perks:twinstrike",
+        "perks:hawkeye",
+        "perks:mammoth",
+        "crew:halvard",
+        "crew:saffir"
+      ],
+      "state": "out, clip, reserve, cooldown, reload timer",
+      "step": 1,
+      "verify": []
+    },
+    {
+      "id": "hud",
+      "does": "draw the BO3 HUD",
+      "reads": [
+        "hud:round_counter",
+        "hud:points",
+        "hud:ammo",
+        "hud:crosshair",
+        "hud:points_popup",
+        "hud:banner",
+        "hud:hitmarker"
+      ],
+      "state": "ImGui context",
+      "step": 1,
+      "verify": []
+    },
+    {
+      "id": "devtools",
+      "does": "test channel: save game frames on request, set the clock, log state (file-driven, used for automated in-game tests and listing screenshots)",
+      "reads": [
+        "hooks:present",
+        "hooks:player_update"
+      ],
+      "state": "command queue, pending shot",
+      "step": 1,
+      "verify": []
+    },
+    {
+      "id": "intro",
+      "does": "new games skip Helgen with Bethesda's MQQuickstart, then land outside Riverwood and open the crew screen",
+      "reads": [
+        "quests:MQ101",
+        "quests:MQQuickstart",
+        "quests:MQ102Marker",
+        "input:crew1",
+        "input:crew2",
+        "input:crew3",
+        "input:crew4",
+        "input:confirm",
+        "crew:halvard",
+        "crew:gorza",
+        "crew:saffir",
+        "crew:eldrith"
+      ],
+      "state": "flags on the player",
+      "step": 2,
+      "verify": []
+    },
+    {
+      "id": "shops",
+      "does": "place Mystery Box, perk machines and wall-buys in towns; sell guns, ammo and Perk-a-Colas for points; move the box on a teddy bear",
+      "reads": [
+        "locations:riverwood_0",
+        "objects:coffer",
+        "objects:perk_trollshide",
+        "objects:wall_spider",
+        "perks:trollshide"
+      ],
+      "state": "placed refs this session, box town/spins on the player",
+      "step": 2,
+      "verify": []
+    },
+    {
+      "id": "perks",
+      "does": "drinking a Perk-a-Cola potion grants its perk (max 4) and applies its effect",
+      "reads": [
+        "perks:trollshide",
+        "perks:quicksilver",
+        "perks:twinstrike",
+        "perks:hearthfire",
+        "perks:windrunner",
+        "perks:hawkeye",
+        "perks:mammoth"
+      ],
+      "state": "perk bits on the player",
+      "step": 2,
+      "verify": []
+    },
+    {
+      "id": "movement",
+      "does": "BO3 sprint boost, slide, aim-down-sights zoom and speed",
+      "reads": [
+        "movement:sprint_boost",
+        "movement:slide",
+        "movement:ads_fov",
+        "movement:ads_speed"
+      ],
+      "state": "slide timer, ADS blend",
+      "step": 2,
+      "verify": []
+    },
+    {
+      "id": "plugin",
+      "does": "BO3Zombies.esp holds the gun items, potions, perk effects and town objects; the .asi adds it to Plugins.txt",
+      "reads": [
+        "objects:coffer",
+        "weapons:sidearm",
+        "perks:trollshide"
+      ],
+      "state": "none",
+      "step": 2,
+      "verify": []
+    }
+  ]
 }

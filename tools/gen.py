@@ -15,11 +15,12 @@ assert r['dawn'] == 'crumble' and r['unfinishedRound'] == 'resume'
 q = row('quests', r['pauseUntilQuest'].split(':')[1])
 out.append(f'\tinline constexpr FormRef kIntroQuest{{ {cs(q["plugin"])}, 0x{hexid(q["localId"]):06X}, {cs(q["editorId"])} }};')
 # enemies
-out.append('\tstruct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; };')
+out.append('\tstruct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; };')
 en = S['enemies']['rows']
 out.append(f'\tinline constexpr std::array<Enemy, {len(en)}> kEnemies{{ {{')
+sys.path.insert(0, str(root / 'tools')); import esp_ids as _eids; _EIDS, _ = _eids.assign(S)
 for e in en:
-    out.append(f'\t\tEnemy{{ {cs(e["id"])}, {cs(e["label"])}, {{ {cs(e["plugin"])}, 0x{hexid(e["localId"]):06X}, {cs(e["editorId"])} }}, {str(e["recordType"]=="LVLN").lower()}, {e["minRound"]}, {e["weight"]}, {str(e["specialRound"]).lower()}, {cs(e["headNode"])}, {str(e["forceCombat"]).lower()} }},')
+    out.append(f'\t\tEnemy{{ {cs(e["id"])}, {cs(e["label"])}, {{ {cs(e["plugin"])}, 0x{(_EIDS[("NPC_", e["localId"][5:])] if e["localId"].startswith("auto:") else hexid(e["localId"])):06X}, {cs(e["editorId"])} }}, {str(e["recordType"]=="LVLN").lower()}, {e["minRound"]}, {e["weight"]}, {str(e["specialRound"]).lower()}, {cs(e["headNode"])}, {str(e["forceCombat"]).lower()}, {e.get("bossEvery", 0)} }},')
 out.append('\t} };')
 # sounds
 out.append('\tenum class Sound : int {')
@@ -66,6 +67,7 @@ spidx = lambda v: -1 if v == 'none' else [s['id'] for s in SP].index(v.split(':'
 o.append(f'\tinline constexpr std::array<FormRef, {len(SP)}> kSpells{{ {{')
 for s in SP: o.append(f'\t\tFormRef{{ {cs(s["plugin"])}, 0x{int(s["localId"], 16):06X}, {cs(s["editorId"])} }},')
 o.append('\t} };')
+for i, s in enumerate(SP): o.append(f'\tinline constexpr int kSpell_{s["id"]} = {i};')
 o.append(f'\tinline constexpr std::array<GunDef, {len(W)}> kGuns{{ {{')
 for w in W:
     o.append(f'\t\tGunDef{{ {cs(w["id"])}, {cs(w["label"])}, {cs(w["class"])}, Fire({fires[w["fire"]]}), {F(w["damage"])}, {F(w["headMult"])}, {w["pellets"]}, {F(w["spreadHip"])}, {F(w["spreadAds"])}, {w["clip"]}, {w["reserve"]}, {w["fireDelayMs"]}, {w["burst"]}, {w["reloadMs"]}, {F(w["range"])}, {F(w["splashRadius"])}, {F(w["splashDamage"])}, {F(w["hitRadius"])}, {F(w["headRadius"])}, {sid(w["fireSound"])}, {sid(w["reloadSound"])}, {sid(w["emptySound"])}, {w["wallBuyCost"]}, {w["ammoCost"]}, {w["boxWeight"]}, 0x{IDS[("WEAP", w["id"])]:03X}, {specials[w["special"]]}, {spidx(w["spell"])}, {spellon[w["spellOn"]]}, {str(w.get("retired", False)).lower()} }},')
@@ -135,6 +137,7 @@ for qid in ('MQQuickstart', 'MQ102Marker', 'MQ102A', 'MQ102B', 'MQ102'):
 for i in S['input']['rows']: o.append(f'\tinline constexpr std::uint32_t kKey2_{i["id"]} = {i["code"]};')
 R0 = S['rounds']['rows'][0]
 o.append(f'\tinline constexpr float kHpCapRound = {F(S["rounds"]["rows"][0]["hpCapRound"])}, kHpGrowthAfterCap = {F(S["rounds"]["rows"][0]["hpGrowthAfterCap"])}, kShareMelee = {F(S["rounds"]["rows"][0]["skyrimHitShare"]["melee"])}, kShareBow = {F(S["rounds"]["rows"][0]["skyrimHitShare"]["bow"])}, kShareSpell = {F(S["rounds"]["rows"][0]["skyrimHitShare"]["spell"])};')
+o.append('\tnamespace boss { ' + ' '.join(f'inline constexpr float {r["id"]} = {F(r["value"])};' for r in S['boss']['rows']) + ' }')
 o.append(f'\tinline constexpr float kRegenDelay = {F(S["rounds"]["rows"][0]["regenDelaySeconds"])}, kRegenPerSecond = {F(S["rounds"]["rows"][0]["regenPerSecond"])};')
 o.append(f'\tinline constexpr float kSpawnMultiplier = {F(R0["spawnMultiplier"])}, kHitDamageFraction = {F(R0["hitDamageFraction"])}, kZombieWeaponDamageMult = {F(R0["weaponDamageMult"])};')
 o.append(f'\tinline constexpr bool kIgnoreNpcs = {str(R0["ignoreNpcs"]).lower()};')

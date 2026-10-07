@@ -57,6 +57,20 @@
       "localId": "0x02AC6F",
       "editorId": "DA15Wabbajack",
       "verify": []
+    },
+    {
+      "id": "firebreath",
+      "plugin": "Skyrim.esm",
+      "localId": "0x03F9ED",
+      "editorId": "VoiceFireBreath3",
+      "verify": []
+    },
+    {
+      "id": "dragonforce",
+      "plugin": "Skyrim.esm",
+      "localId": "0x016D45",
+      "editorId": "DragonVoiceUnrelentingForce",
+      "verify": []
     }
   ]
 }

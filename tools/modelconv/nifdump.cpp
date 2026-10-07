@@ -19,6 +19,18 @@ int main(int argc, char** argv) {
 		std::vector<std::string> bones; nif.GetShapeBoneList(s, bones);
 		if (!bones.empty()) { printf("  skinned to %zu bones:", bones.size()); for (auto& b : bones) printf(" [%s]", b.c_str()); printf("\n"); }
 	}
+	if (argc > 2 && std::string(argv[2]) == "obj") {
+		FILE* f = fopen(argv[3], "w"); int base = 1;
+		for (auto* s : nif.GetShapes()) {
+			std::vector<Vector3> v; nif.GetVertsForShape(s, v);
+			auto tr = s->GetTransformToParent();
+			for (auto& p : v) fprintf(f, "v %f %f %f\n", p.x + tr.translation.x, p.y + tr.translation.y, p.z + tr.translation.z);
+			std::vector<Triangle> tris; s->GetTriangles(tris);
+			for (auto& t : tris) fprintf(f, "f %d %d %d\n", t.p1 + base, t.p2 + base, t.p3 + base);
+			base += (int)v.size();
+		}
+		fclose(f); return 0;
+	}
 	if (argc > 2) for (auto* n : nif.GetNodes()) {
 		MatTransform g; nif.GetNodeTransformToGlobal(n->name.get(), g);
 		auto* p = nif.GetParentNode(n);

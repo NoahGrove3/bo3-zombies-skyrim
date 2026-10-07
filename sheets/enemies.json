@@ -1,13 +1,69 @@
 {
   "sheet": "enemies",
   "about": "Undead that rise during rounds. Forms are read from the player's own Skyrim. localId is the record's id inside its plugin file (load-order byte stripped), checked by scanning the player's .esm files.",
-  "columns": ["id","label","plugin","localId","editorId","recordType","minRound","weight","specialRound","headNode","forceCombat","verify"],
+  "columns": [
+    "id",
+    "label",
+    "plugin",
+    "localId",
+    "editorId",
+    "recordType",
+    "minRound",
+    "weight",
+    "specialRound",
+    "headNode",
+    "forceCombat",
+    "bossEvery",
+    "verify"
+  ],
   "rows": [
-    {"id":"skeleton","label":"Skeleton","plugin":"Skyrim.esm","localId":"0x02D2D4","editorId":"LCharSkeletonMeleeMixed","recordType":"LVLN","minRound":1,"weight":3,"specialRound":false,"headNode":"NPC Head [Head]","forceCombat":true,"verify":["headNode"]},
-    {"id":"draugr_1h","label":"Draugr","plugin":"Skyrim.esm","localId":"0x055936","editorId":"LCharDraugrMelee1HMale","recordType":"LVLN","minRound":1,"weight":4,"specialRound":false,"headNode":"NPC Head [Head]","forceCombat":true,"verify":[]},
-    {"id":"draugr_2h","label":"Draugr Brute","plugin":"Skyrim.esm","localId":"0x01E772","editorId":"LCharDraugrMelee2HMale","recordType":"LVLN","minRound":3,"weight":2,"specialRound":false,"headNode":"NPC Head [Head]","forceCombat":true,"verify":[]},
-    {"id":"draugr_archer","label":"Draugr Archer","plugin":"Skyrim.esm","localId":"0x01E7AA","editorId":"LCharDraugrMissile","recordType":"LVLN","minRound":6,"weight":1,"specialRound":false,"headNode":"NPC Head [Head]","forceCombat":true,"verify":[]},
-    {"id":"draugr_warlock","label":"Draugr Warlock","plugin":"Skyrim.esm","localId":"0x01E7AB","editorId":"LCharDraugrWarlock","recordType":"LVLN","minRound":10,"weight":1,"specialRound":false,"headNode":"NPC Head [Head]","forceCombat":true,"verify":[]},
-    {"id":"death_hound","label":"Death Hound","plugin":"Dawnguard.esm","localId":"0x00C5EF","editorId":"DLC1encDeathHound","recordType":"NPC_","minRound":1,"weight":1,"specialRound":true,"headNode":"Canine_Head","forceCombat":true,"verify":["headNode","forceCombat"]}
+    {
+      "id": "zombie",
+      "label": "Risen Dead",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto:zombie",
+      "editorId": "UN_zombie",
+      "recordType": "NPC_",
+      "minRound": 1,
+      "weight": 1,
+      "specialRound": false,
+      "headNode": "NPC Head [Head]",
+      "forceCombat": true,
+      "bossEvery": 0,
+      "verify": []
+    },
+    {
+      "id": "death_hound",
+      "label": "Death Hound",
+      "plugin": "Dawnguard.esm",
+      "localId": "0x00C5EF",
+      "editorId": "DLC1encDeathHound",
+      "recordType": "NPC_",
+      "minRound": 1,
+      "weight": 1,
+      "specialRound": true,
+      "headNode": "Canine_Head",
+      "forceCombat": true,
+      "verify": [
+        "headNode",
+        "forceCombat"
+      ],
+      "bossEvery": 0
+    },
+    {
+      "id": "boss",
+      "label": "Grimmvar, the Undying Wyrm",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto:boss",
+      "editorId": "UN_boss",
+      "recordType": "NPC_",
+      "minRound": 10,
+      "weight": 0,
+      "specialRound": false,
+      "headNode": "NPC Head [Head]",
+      "forceCombat": true,
+      "bossEvery": 10,
+      "verify": []
+    }
   ]
 }

@@ -1,0 +1,34 @@
+{
+  "sheet": "creatures",
+  "about": "Our own creatures: re-rigged models on Skyrim's draugr skeleton (so draugr animations drive them), as NPC records in the plugin. No weapons, no outfit.",
+  "columns": [
+    "id",
+    "label",
+    "model",
+    "heightScale",
+    "level",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "zombie",
+      "label": "Risen Dead",
+      "model": "UndyingNights\\zombie\\zombie.nif",
+      "heightScale": 1.0,
+      "level": 10,
+      "verify": [
+        "heightScale"
+      ]
+    },
+    {
+      "id": "boss",
+      "label": "Grimmvar, the Undying Wyrm",
+      "model": "UndyingNights\\boss\\boss.nif",
+      "heightScale": 2.4,
+      "level": 50,
+      "verify": [
+        "heightScale"
+      ]
+    }
+  ]
+}
