@@ -133,6 +133,7 @@ for qid in ('MQQuickstart', 'MQ102Marker', 'MQ102A', 'MQ102B', 'MQ102'):
     if qid in Q: o.append(f'\tinline constexpr FormRef kQ_{qid}{{ {cs(Q[qid]["plugin"])}, 0x{int(Q[qid]["localId"],16):06X}, {cs(Q[qid]["editorId"])} }};')
 for i in S['input']['rows']: o.append(f'\tinline constexpr std::uint32_t kKey2_{i["id"]} = {i["code"]};')
 R0 = S['rounds']['rows'][0]
+o.append(f'\tinline constexpr float kHpCapRound = {F(S["rounds"]["rows"][0]["hpCapRound"])}, kHpGrowthAfterCap = {F(S["rounds"]["rows"][0]["hpGrowthAfterCap"])}, kShareMelee = {F(S["rounds"]["rows"][0]["skyrimHitShare"]["melee"])}, kShareBow = {F(S["rounds"]["rows"][0]["skyrimHitShare"]["bow"])}, kShareSpell = {F(S["rounds"]["rows"][0]["skyrimHitShare"]["spell"])};')
 o.append(f'\tinline constexpr float kRegenDelay = {F(S["rounds"]["rows"][0]["regenDelaySeconds"])}, kRegenPerSecond = {F(S["rounds"]["rows"][0]["regenPerSecond"])};')
 o.append(f'\tinline constexpr float kSpawnMultiplier = {F(R0["spawnMultiplier"])}, kHitDamageFraction = {F(R0["hitDamageFraction"])}, kZombieWeaponDamageMult = {F(R0["weaponDamageMult"])};')
 o.append(f'\tinline constexpr bool kIgnoreNpcs = {str(R0["ignoreNpcs"]).lower()};')

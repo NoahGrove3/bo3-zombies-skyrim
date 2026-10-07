@@ -61,7 +61,7 @@ namespace bo3z
 		int  ActiveSlot();
 		void SetActiveSlot(int a_slot);
 		void OnWorldReady();
-		inline constexpr int kFlagInit = 0, kFlagMoved = 11, kPerkShift = 14, kFlagPerksV2 = 23;  // bits: init | crew 1-3 | (old perks 4-10) | moved 11 | slot 12-13 | perks 14-22 | v2 23
+		inline constexpr int kFlagInit = 0, kFlagReserveV2 = 4, kFlagMoved = 11, kPerkShift = 14, kFlagPerksV2 = 23;  // bits: init | crew 1-3 | (old perks 4-10) | moved 11 | slot 12-13 | perks 14-22 | v2 23
 	}
 
 	namespace Points
@@ -76,6 +76,7 @@ namespace bo3z
 		void             Tick(float a_delta);
 		void             Reset();
 		bool             IsRoundUndead(RE::Actor* a_actor);
+		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
 		std::string_view HeadNodeFor(RE::Actor* a_actor);
 		void             LogState();
 		void             Web(const RE::NiPoint3& a_at, float a_radius, float a_seconds);   // Widow's Wine

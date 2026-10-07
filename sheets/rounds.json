@@ -1,6 +1,6 @@
 {
   "sheet": "rounds",
-  "about": "How the night rounds run. One row: the BO3 round rules, adapted to Skyrim's clock. HP is in BO3 units; divide by hpScale for Skyrim health.",
+  "about": "How the night rounds run. One row: the BO3 round rules, adapted to Skyrim's clock. HP is in BO3 units; divide by hpScale for Skyrim health. v0.4: numbers make it hard, not health: zombie health stops climbing steeply after hpCapRound (then grows slowly), while counts keep climbing. Skyrim weapons and spells take a share of a zombie's round health per hit (skyrimHitShare) so they keep up.",
   "columns": [
     "id",
     "nightStartHour",
@@ -35,6 +35,9 @@
     "ignoreNpcs",
     "regenDelaySeconds",
     "regenPerSecond",
+    "hpCapRound",
+    "hpGrowthAfterCap",
+    "skyrimHitShare",
     "verify"
   ],
   "rows": [
@@ -44,7 +47,7 @@
       "nightEndHour": 6.0,
       "breakSeconds": 10.0,
       "firstBreakSeconds": 4.0,
-      "maxAlive": 24,
+      "maxAlive": 32,
       "aiMaxBase": 24,
       "aiPerPlayer": 6,
       "earlyRoundScale": [
@@ -61,7 +64,7 @@
       "hpScale": 8.0,
       "spawnDelayStart": 2.0,
       "spawnDelayDecay": 0.95,
-      "spawnDelayMin": 0.5,
+      "spawnDelayMin": 0.3,
       "specialEveryRounds": 6,
       "specialFirstRound": 5,
       "dawn": "crumble",
@@ -84,7 +87,7 @@
         "hitDamageFraction"
       ],
       "maxCorpses": 20,
-      "spawnMultiplier": 2.0,
+      "spawnMultiplier": 3.0,
       "speedTiers": [
         [
           1,
@@ -103,7 +106,14 @@
       "weaponDamageMult": 0.1,
       "ignoreNpcs": true,
       "regenDelaySeconds": 5,
-      "regenPerSecond": 0.35
+      "regenPerSecond": 0.35,
+      "hpCapRound": 10,
+      "hpGrowthAfterCap": 1.02,
+      "skyrimHitShare": {
+        "melee": 0.34,
+        "bow": 0.5,
+        "spell": 0.2
+      }
     }
   ]
 }

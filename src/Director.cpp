@@ -56,11 +56,16 @@ namespace bo3z
 
 		float HealthFor(int a_round)
 		{
-			float hp = static_cast<float>(R.hpStart);
-			for (int r = 2; r <= a_round; ++r) {
+			// Classic curve up to the cap round, then only gentle growth: the horde's size is the threat.
+			const int cap = static_cast<int>(gen::kHpCapRound);
+			float     hp = static_cast<float>(R.hpStart);
+			for (int r = 2; r <= std::min(a_round, cap); ++r) {
 				hp = r <= R.hpLinearUntil ? hp + R.hpLinearPerRound : hp * R.hpMultAfter;
 			}
-			return hp / R.hpScale;  // BO3 health -> Skyrim health
+			if (a_round > cap) {
+				hp *= std::pow(gen::kHpGrowthAfterCap, static_cast<float>(a_round - cap));
+			}
+			return hp / R.hpScale;  // design units -> Skyrim health
 		}
 
 		float SpawnDelay(int a_round)
@@ -405,6 +410,7 @@ namespace bo3z
 			}
 		}
 
+		float RoundHealth() { return HealthFor(std::max(1, g_current)); }
 		bool IsRoundUndead(RE::Actor* a_actor) { return a_actor && g_ours.contains(a_actor->GetFormID()); }
 
 		std::string_view HeadNodeFor(RE::Actor* a_actor)

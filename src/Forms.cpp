@@ -264,19 +264,24 @@ namespace bo3z
 			}
 		}
 		static int SlotAV(int a_slot) { return a_slot == 0 ? gen::kAV_slot0 : a_slot == 1 ? gen::kAV_slot1 : gen::kAV_slot2; }
+		int ReserveAV(int a_slot) { return a_slot == 0 ? gen::kAV_reserve0 : a_slot == 1 ? gen::kAV_reserve1 : gen::kAV_reserve2; }
+
 		Slot GetSlot(int a_slot)
 		{
 			const int v = Get(SlotAV(a_slot));
 			Slot      s;
 			s.gun = ((v >> 19) & 0x1F) - 1;
 			s.clip = (v >> 11) & 0xFF;
-			s.reserve = v & 0x7FF;
+			s.reserve = Flag(kFlagReserveV2) ? Get(ReserveAV(a_slot)) : (v & 0x7FF);
 			return s;
 		}
 		void SetSlot(int a_slot, const Slot& a_value)
 		{
 			const int v = a_value.gun < 0 ? 0 : (((a_value.gun + 1) & 0x1F) << 19) | ((std::clamp(a_value.clip, 0, 255)) << 11) | std::clamp(a_value.reserve, 0, 2047);
 			Set(SlotAV(a_slot), v);
+			if (Flag(kFlagReserveV2)) {
+				Set(ReserveAV(a_slot), std::clamp(a_value.reserve, 0, 9999999));
+			}
 		}
 		int  Flags() { return Get(gen::kAV_flags); }
 		void SetFlags(int a_flags) { Set(gen::kAV_flags, a_flags & 0xFFFFFF); }
@@ -311,6 +316,13 @@ namespace bo3z
 				}
 				SetFlag(kFlagPerksV2, true);
 				logger::info("new BO3 save state: {} points", gen::kPoints_start);
+			}
+			if (!Flag(kFlagReserveV2)) {
+				for (int s = 0; s < 3; ++s) {
+					Set(ReserveAV(s), Get(SlotAV(s)) & 0x7FF);
+				}
+				SetFlag(kFlagReserveV2, true);
+				logger::info("save moved reserve ammo to its own slots");
 			}
 			if (!Flag(kFlagPerksV2)) {
 				const int old = (Flags() >> 4) & 0x7F;

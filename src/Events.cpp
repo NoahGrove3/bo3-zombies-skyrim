@@ -156,6 +156,38 @@ namespace bo3z
 			}
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESHitEvent* a_event, RE::BSTEventSource<RE::TESHitEvent>*) override
 			{
+				auto* player = RE::PlayerCharacter::GetSingleton();
+				// Skyrim weapons and spells keep up with the rounds: each hit takes a share of a zombie's round health.
+				if (a_event && a_event->cause.get() == player && a_event->target) {
+					auto* z = a_event->target->As<RE::Actor>();
+					if (z && !z->IsDead() && Director::IsRoundUndead(z)) {
+						auto* src = RE::TESForm::LookupByID(a_event->source);
+						bool  ourSpell = false;
+						for (int i = 0; i < static_cast<int>(gen::kSpells.size()); ++i) {
+							if (auto* m = Forms::Spell(i); m && src == m) {
+								ourSpell = true;
+							}
+						}
+						if (src && !ourSpell && Forms::GunIndexOf(src) < 0) {
+							static std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> last;
+							const auto now = std::chrono::steady_clock::now();
+							auto&      t = last[z->GetFormID()];
+							if (now - t > 250ms) {
+								t = now;
+								float share = gen::kShareSpell;
+								if (auto* w = src->As<RE::TESObjectWEAP>()) {
+									share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow : gen::kShareMelee;
+								}
+								auto*       av = z->AsActorValueOwner();
+								const float dmg = Director::RoundHealth() * share;
+								av->DamageActorValue(RE::ActorValue::kHealth, dmg);
+								if (av->GetActorValue(RE::ActorValue::kHealth) <= 0) {
+									z->KillImpl(player, dmg, true, false);
+								}
+							}
+						}
+					}
+				}
 				if (a_event && a_event->target.get() == RE::PlayerCharacter::GetSingleton() && a_event->cause) {
 					if (auto* z = a_event->cause->As<RE::Actor>(); z && Director::IsRoundUndead(z)) {
 						Perks::OnZombieHit(z);
