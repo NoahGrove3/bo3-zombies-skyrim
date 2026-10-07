@@ -429,7 +429,7 @@ namespace bo3z
 				const float  maxHp = av->GetPermanentActorValue(RE::ActorValue::kHealth);
 				quiet = (last >= 0 && hp < last - 0.01f) ? 0 : quiet + a_delta;
 				if (IsNight() && quiet >= gen::kRegenDelay && hp < maxHp && !player->IsDead()) {
-					av->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, std::min(maxHp - hp, maxHp * gen::kRegenPerSecond * a_delta));
+					av->RestoreActorValue(RE::ActorValue::kHealth, std::min(maxHp - hp, maxHp * gen::kRegenPerSecond * a_delta));
 				}
 				last = av->GetActorValue(RE::ActorValue::kHealth);
 			}
