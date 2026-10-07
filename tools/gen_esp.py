@@ -18,7 +18,7 @@ def group(label, recs):
     data = b''.join(recs)
     return b'GRUP' + struct.pack('<I', 24 + len(data)) + label.encode() + struct.pack('<iHHHH', 0, 0, 0, 44, 0) + data
 fid = lambda kind, key: SELF | IDS[(kind, key)]
-recs = {'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
+recs = {'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
 
 for p in S['perks']['rows']:
     data = bytearray(tsub('mgef', 'DATA'))
@@ -50,7 +50,7 @@ recs['PROJ'].append(record('PROJ', fid('PROJ', 'castflame'), [
     sub('EDID', z('UN_CastCarrier')), sub('OBND', tsub('proj_bullet', 'OBND')), sub('MODL', z('')),
     sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', struct.pack('<I', 0))]))
 
-def cast_mgef(key, label):
+def cast_mgef(key, label, cast=2):
     md = bytearray(tsub('mgef_firebolt', 'DATA'))
     struct.pack_into('<I', md, 0, 0x200 | 0x400 | 0x800)  # no magnitude/duration/area; not hostile (no crime, no aggro)
     struct.pack_into('<f', md, 4, 0.0)                 # base cost
@@ -58,7 +58,7 @@ def cast_mgef(key, label):
     struct.pack_into('<I', md, 64, 1); struct.pack_into('<i', md, 68, -1)   # script archetype: does nothing itself
     struct.pack_into('<I', md, 72, 0)                  # no projectile: the cast is only the animation (our bolts fly)
     struct.pack_into('<I', md, 76, 0)
-    struct.pack_into('<I', md, 80, 2)                  # concentration
+    struct.pack_into('<I', md, 80, cast)               # 1 fire-and-forget (one cast per click), 2 concentration
     struct.pack_into('<I', md, 84, 0)                  # self (nothing launched natively)
     for off in (92, 96, 100, 116): struct.pack_into('<I', md, off, 0)  # casting art set at runtime from the matching vanilla spell
     recs['MGEF'].append(record('MGEF', fid('MGEF', key), [
@@ -88,10 +88,10 @@ for w in S['weapons']['rows']:
             subs.append(sub(name, b))
         recs['WEAP'].append(record('WEAP', fid('WEAP', w['id']), subs))
     else:
-        # tomes and grimoires: a spell in the hand (concentration), magicka is spent by our code per shot
-        cast_mgef('hand_' + w['id'], w['label'])
+        # tomes and grimoires: a spell in the hand (fire-and-forget), magicka is spent by our code per shot
+        cast_mgef('hand_' + w['id'], w['label'], 1)
         sp = bytearray(tsub('spel_firebolt', 'SPIT'))
-        struct.pack_into('<IIIfIIffI', sp, 0, 0, 0x1, 0, 0.0, 2, 0, 0.0, 0.0, 0)  # free, concentration, self
+        struct.pack_into('<IIIfIIffI', sp, 0, 0, 0x1, 0, 0.0, 1, 0, 0.0, 0.0, 0)  # free, fire-and-forget (one push per click), self
         recs['SPEL'].append(record('SPEL', fid('SPEL', 'hand_' + w['id']), [
             sub('EDID', z('UN_Hand_' + w['id'])), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(w['label'])),
             sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')), sub('DESC', z('')),
@@ -197,11 +197,18 @@ for c in S['creatures']['rows']:
         sub('NAM6', struct.pack('<f', float(c['heightScale']))), sub('NAM7', tsub('npc_draugr', 'NAM7')), sub('NAM8', tsub('npc_draugr', 'NAM8')),
         sub('QNAM', tsub('npc_draugr', 'QNAM'))]))
 
+# the night's undead: one faction, allies to each other (no infighting), enemies of the player
+recs['FACT'].append(record('FACT', fid('FACT', 'undead'), [
+    sub('EDID', z('UN_UndeadFaction')), sub('FULL', z('Undying')),
+    sub('XNAM', struct.pack('<IiI', fid('FACT', 'undead'), 0, 2)),     # self: ally
+    sub('XNAM', struct.pack('<IiI', 0x00000DB1, -100, 1)),             # PlayerFaction: enemy
+    sub('DATA', struct.pack('<I', 0))]))
+
 count = sum(len(v) for v in recs.values())
 hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('Undying Nights: round-based undead survival for Skyrim'))]
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
-for k in ['MGEF', 'ENCH', 'SPEL', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
+for k in ['FACT', 'MGEF', 'ENCH', 'SPEL', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')

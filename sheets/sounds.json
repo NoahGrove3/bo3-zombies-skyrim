@@ -586,6 +586,24 @@
       "file": "fx\\UndyingNights\\cast_apprentice.wav",
       "space": "2d",
       "verify": []
+    },
+    {
+      "id": "charge_up",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_charge_up",
+      "file": "fx\\UndyingNights\\charge_up.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "charge_ready",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_charge_ready",
+      "file": "fx\\UndyingNights\\charge_ready.wav",
+      "space": "2d",
+      "verify": []
     }
   ]
 }

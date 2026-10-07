@@ -54,7 +54,7 @@
       "nightEndHour": 5.6,
       "breakSeconds": 15.0,
       "firstBreakSeconds": 15.0,
-      "maxAlive": 32,
+      "maxAlive": 64,
       "aiMaxBase": 24,
       "aiPerPlayer": 6,
       "earlyRoundScale": [
@@ -69,9 +69,9 @@
       "hpLinearUntil": 9,
       "hpMultAfter": 1.1,
       "hpScale": 8.0,
-      "spawnDelayStart": 2.0,
+      "spawnDelayStart": 1.0,
       "spawnDelayDecay": 0.95,
-      "spawnDelayMin": 0.3,
+      "spawnDelayMin": 0.15,
       "specialEveryRounds": 6,
       "specialFirstRound": 5,
       "dawn": "crumble",
@@ -93,8 +93,8 @@
         "speedTiers",
         "hitDamageFraction"
       ],
-      "maxCorpses": 20,
-      "spawnMultiplier": 3.0,
+      "maxCorpses": 30,
+      "spawnMultiplier": 6.0,
       "speedTiers": [
         [
           1,

@@ -15,7 +15,7 @@ def assign(S=None, write=False):
              [('SNDR', s['id']) for s in S['sounds']['rows'] if s['plugin'] == PLUGIN] + \
              list(dressing(S)[0].keys()) + \
              [(k, c['id']) for c in S['creatures']['rows'] for k in ('ARMA', 'ARMO', 'NPC_')] + \
-             [(k, 'bullet_' + p['id']) for p in S['projectiles']['rows'] for k in ('PROJ', 'MGEF', 'SPEL')] + [('LIGH', 'muzzle'), ('PROJ', 'castflame'), ('MGEF', 'wandcast')] + \
+             [(k, 'bullet_' + p['id']) for p in S['projectiles']['rows'] for k in ('PROJ', 'MGEF', 'SPEL')] + [('LIGH', 'muzzle'), ('PROJ', 'castflame'), ('MGEF', 'wandcast'), ('FACT', 'undead')] + \
              [('ENCH', w['id']) for w in S['weapons']['rows'] if w.get('kind') == 'wand'] + \
              [(k, 'hand_' + w['id']) for w in S['weapons']['rows'] if w.get('kind') in ('tome', 'wonder') for k in ('SPEL', 'MGEF')]
     for kind, key in wanted:

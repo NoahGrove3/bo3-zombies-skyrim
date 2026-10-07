@@ -315,6 +315,9 @@
   "SNDR:cast_wabbajack": "0x937",
   "SNDR:cast_thuumcannon": "0x938",
   "SNDR:cast_skyforgearc": "0x939",
-  "SNDR:cast_apprentice": "0x93a"
+  "SNDR:cast_apprentice": "0x93a",
+  "FACT:undead": "0x93b",
+  "SNDR:charge_up": "0x93c",
+  "SNDR:charge_ready": "0x93d"
  }
 }

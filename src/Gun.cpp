@@ -80,6 +80,34 @@ namespace bo3z
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
+		// One native cast per click. Skyrim keeps re-casting a staff (and streams a concentration spell) while the
+		// button is held; after a short tap window it is told the button was let go, and the rest of the hold is ours
+		// (the charge-up and the signature move's own animation).
+		bool g_nativeCut = false;
+		struct FireButton
+		{
+			static void thunk(RE::PlayerInputHandler* a_this, RE::ButtonEvent* a_event, RE::PlayerControlsData* a_data)
+			{
+				if (GunOut() && a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kMouse && a_event->GetIDCode() == gen::kKey2_fire) {
+					auto& rd = a_event->GetRuntimeData();
+					if (a_event->IsDown()) {
+						g_nativeCut = false;
+					} else if (g_nativeCut) {
+						return;  // held on, or the real release after we already let go
+					} else if (a_event->IsHeld() && rd.heldDownSecs >= 0.12f) {
+						const float v = rd.value;
+						rd.value = 0.0f;  // reads as a release
+						func(a_this, a_event, a_data);
+						rd.value = v;
+						g_nativeCut = true;
+						return;
+					}
+				}
+				func(a_this, a_event, a_data);
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+
 		struct ReadyBlock
 		{
 			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
@@ -151,7 +179,9 @@ namespace bo3z
 				if (a_melee) {
 					g_hits.erase(a_target->GetFormID());  // knife kills pay the melee bonus
 				}
-				a_target->KillImpl(player, damage, true, false);
+				if (!a_target->IsDead()) {
+					a_target->KillImpl(player, damage, true, false);
+				}
 			} else {
 				if (ours && !a_melee) {
 					Points::Add(gen::kPoints_hit);
@@ -696,8 +726,176 @@ namespace bo3z
 				g_manaQuiet = 0;
 			}
 			g_chargeCd = g.chargeCooldown;
+			StartRelease(g);
 			Unleash(gun);
 		}
+
+		// ================================================================ signature-move animation
+		// The charge-up and release of every signature move have their own motion of the casting arm (and wand):
+		// thrust (lances), slam (impact moves), sweep (around-you moves), twirl (wand spin), raise (call from
+		// the sky) and surge (wonder blasts). Built on top of Skyrim's animation each frame, after it ran.
+		float g_relT = -1.0f, g_spin = 0.0f, g_fovKick = 0.0f;
+		int   g_relStyle = 0;
+		bool  g_chargeSaid = false, g_readySaid = false, g_armLive = false;
+		struct PoseOut
+		{
+			float pitch = 0, yaw = 0, roll = 0, push = 0, lift = 0, shake = 0, spinRate = 0;
+		};
+		PoseOut g_pose;
+
+		PoseOut Scale(const PoseOut& a, float k) { return { a.pitch * k, a.yaw * k, a.roll * k, a.push * k, a.lift * k, a.shake * k, a.spinRate * k }; }
+		PoseOut Lerp(const PoseOut& a, const PoseOut& b, float t)
+		{
+			return { a.pitch + (b.pitch - a.pitch) * t, a.yaw + (b.yaw - a.yaw) * t, a.roll + (b.roll - a.roll) * t, a.push + (b.push - a.push) * t,
+				a.lift + (b.lift - a.lift) * t, a.shake + (b.shake - a.shake) * t, a.spinRate + (b.spinRate - a.spinRate) * t };
+		}
+		float EaseOut(float x) { x = std::clamp(x, 0.0f, 1.0f); return 1 - (1 - x) * (1 - x) * (1 - x); }
+		float EaseInOut(float x) { x = std::clamp(x, 0.0f, 1.0f); return x * x * (3 - 2 * x); }
+
+		//                                     pitch  yaw   roll   push  lift  shake  spin
+		constexpr PoseOut kChargePose[6] = { { 0.10f, 0.05f, 0.35f, -12, 0, 0.010f, 0 },     // thrust: drawn back, twisted
+			{ 0.75f, -0.10f, -0.25f, -4, 6, 0.012f, 0 },                                          // slam: raised high
+			{ 0.15f, -0.65f, 0.45f, -3, 0, 0.010f, 0 },                                           // sweep: wound up to the right
+			{ 0.40f, 0.0f, 0.0f, 0, 4, 0.006f, 16.0f },                                           // twirl: raised, spinning
+			{ 1.05f, 0.0f, 0.0f, 6, 10, 0.016f, 0 },                                              // raise: up to the sky
+			{ -0.05f, 0.0f, 0.0f, -14, -2, 0.030f, 0 } };                                         // surge: pulled in, shaking
+		constexpr PoseOut kStrikePose[6] = { { 0.0f, 0.0f, 0.0f, 26, 0, 0.004f, 0 },
+			{ -0.45f, 0.10f, 0.15f, 8, -4, 0.010f, 0 },
+			{ 0.10f, 0.90f, -0.40f, 4, 0, 0.004f, 0 },
+			{ 0.10f, 0.0f, 0.0f, 10, 0, 0.004f, 34.0f },
+			{ -0.30f, 0.0f, 0.0f, 10, -6, 0.020f, 0 },
+			{ -0.12f, 0.0f, 0.0f, 30, 0, 0.050f, 0 } };
+		constexpr float kFovKick[6] = { -9.0f, 7.0f, 5.0f, 4.0f, 6.0f, 12.0f };
+
+		void StartRelease(const gen::GunDef& g)
+		{
+			g_relT = 0.0f;
+			g_relStyle = std::clamp(g.chargeStyle, 0, 5);
+			g_fovKick = kFovKick[g_relStyle];
+		}
+
+		void TickPose(float a_delta)
+		{
+			const int gun = CurrentGun();
+			PoseOut   out;
+			if (gun >= 0 && GunOut()) {
+				const auto& g = gen::kGuns[gun];
+				const int   style = std::clamp(g.chargeStyle, 0, 5);
+				const bool  charging = g_trigger && g.chargeSeconds > 0 && g_chargeCd <= 0 && g_charge > 0.18f;
+				const float c = charging ? EaseInOut((g_charge - 0.18f) / std::max(0.1f, g.chargeSeconds - 0.18f)) : 0.0f;
+				if (charging && !g_chargeSaid) {
+					Forms::Play(gen::Sound::charge_up);
+					g_chargeSaid = true;
+				}
+				if (charging && c >= 1.0f && !g_readySaid) {
+					Forms::Play(gen::Sound::charge_ready);
+					g_readySaid = true;
+				}
+				if (!g_trigger) {
+					g_chargeSaid = g_readySaid = false;
+				}
+				out = Scale(kChargePose[style], c);
+				out.shake *= 0.5f + c;  // trembles harder as it fills
+				if (g_relT >= 0) {
+					const int   rs = g_relStyle;
+					const float dur = rs == gen::kRaise ? 0.75f : 0.55f;
+					float       u = g_relT / dur;
+					if (rs == gen::kRaise) {  // hold up high for a beat, then bring it down
+						u = u < 0.25f ? 0.0f : (u - 0.25f) / 0.75f;
+					}
+					constexpr float k = 0.22f;
+					out = u < k ? Lerp(kChargePose[rs], kStrikePose[rs], EaseOut(u / k)) : Lerp(kStrikePose[rs], PoseOut{}, EaseInOut((u - k) / (1 - k)));
+					if ((g_relT += a_delta) >= dur) {
+						g_relT = -1.0f;
+					}
+				}
+			} else {
+				g_relT = -1.0f;
+			}
+			g_spin += out.spinRate * a_delta;
+			if (out.spinRate <= 0.01f) {  // settle the spin back to rest the short way
+				const float rest = std::round(g_spin / (2 * RE::NI_PI)) * 2 * RE::NI_PI;
+				g_spin += (rest - g_spin) * std::min(1.0f, a_delta * 10.0f);
+			}
+			g_fovKick += (0.0f - g_fovKick) * std::min(1.0f, a_delta * 6.0f);
+			g_pose = out;
+		}
+
+		RE::NiMatrix3 AxisAngle(RE::NiPoint3 a, float t)
+		{
+			a.Unitize();
+			const float c = std::cos(t), s = std::sin(t), C = 1 - c;
+			RE::NiMatrix3 m;
+			m.entry[0][0] = c + a.x * a.x * C, m.entry[0][1] = a.x * a.y * C - a.z * s, m.entry[0][2] = a.x * a.z * C + a.y * s;
+			m.entry[1][0] = a.y * a.x * C + a.z * s, m.entry[1][1] = c + a.y * a.y * C, m.entry[1][2] = a.y * a.z * C - a.x * s;
+			m.entry[2][0] = a.z * a.x * C - a.y * s, m.entry[2][1] = a.z * a.y * C + a.x * s, m.entry[2][2] = c + a.z * a.z * C;
+			return m;
+		}
+
+		// Wand: the twirl spins it in the hand (its local frame, so it follows the hand whatever the arm does).
+		void PoseWand(RE::NiAVObject* a_model)
+		{
+			if (!a_model || std::abs(std::remainder(g_spin, 2 * RE::NI_PI)) < 1e-3f) {
+				return;
+			}
+			a_model->local.rotate = a_model->local.rotate * AxisAngle({ 1, 0, 0 }, g_spin);
+		}
+
+		RE::NiTransform g_armOrig, g_armWritten;
+		RE::NiAVObject* g_armBone = nullptr;
+		void PoseArm(RE::PlayerCharacter* a_player)
+		{
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			auto* fp = a_player->Get3D(true);
+			if (!cam || !fp || !cam->IsInFirstPerson()) {
+				return;
+			}
+			auto* bone = fp->GetObjectByName("NPC R UpperArm [RUar]");
+			if (!bone || !bone->parent) {
+				return;
+			}
+			if (bone == g_armBone && std::memcmp(&bone->local, &g_armWritten, sizeof(RE::NiTransform)) == 0) {
+				bone->local = g_armOrig;  // the animation did not rewrite it this frame: start from the clean pose
+			}
+			g_armBone = bone;
+			const PoseOut& o = g_pose;
+			if (std::abs(o.pitch) + std::abs(o.yaw) + std::abs(o.roll) + std::abs(o.push) + std::abs(o.lift) + o.shake < 1e-3f) {
+				g_armBone = nullptr;
+				return;
+			}
+			const float jx = o.shake > 0 ? Rand(-o.shake, o.shake) : 0.0f, jy = o.shake > 0 ? Rand(-o.shake, o.shake) : 0.0f;
+			const float pitch = a_player->data.angle.x, yaw = a_player->data.angle.z;
+			const RE::NiPoint3 f{ std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch) };
+			const RE::NiPoint3 u{ std::sin(yaw) * std::sin(pitch), std::cos(yaw) * std::sin(pitch), std::cos(pitch) };
+			const RE::NiPoint3 r{ std::cos(yaw), -std::sin(yaw), 0 };
+			const RE::NiMatrix3 D = AxisAngle(u, o.yaw + jx) * AxisAngle(r, o.pitch + jy) * AxisAngle(f, o.roll);
+			const RE::NiMatrix3 P = bone->parent->world.rotate;
+			const RE::NiMatrix3 Pt = P.Transpose();
+			g_armOrig = bone->local;
+			bone->local.rotate = Pt * D * P * bone->local.rotate;
+			bone->local.translate += Pt * (f * o.push + u * o.lift) * (1.0f / std::max(0.01f, bone->parent->world.scale));
+			g_armWritten = bone->local;
+			RE::NiUpdateData ud;
+			ud.time = 0.0f;
+			bone->UpdateDownwardPass(ud, 0);
+			if (!g_armLive) {
+				g_armLive = true;
+				logger::info("pose: arm animation live (first person)");
+			}
+		}
+
+		struct PoseHook
+		{
+			static void thunk(RE::PlayerCharacter* a_this, float a_delta)
+			{
+				func(a_this, a_delta);
+				try {
+					PoseArm(a_this);
+				} catch (...) {
+				}
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
 
 		void Knife()
 		{
@@ -1142,6 +1340,9 @@ namespace bo3z
 			if (!hooked) {
 				REL::Relocation<std::uintptr_t> ab{ RE::VTABLE_AttackBlockHandler[0] };
 				InputBlock::func = ab.write_vfunc(0x1, InputBlock::thunk);
+				FireButton::func = ab.write_vfunc(0x4, FireButton::thunk);
+				REL::Relocation<std::uintptr_t> pc{ RE::VTABLE_PlayerCharacter[0] };
+				PoseHook::func = pc.write_vfunc(0x7D, PoseHook::thunk);
 				REL::Relocation<std::uintptr_t> rw{ RE::VTABLE_ReadyWeaponHandler[0] };
 				ReadyBlock::func = rw.write_vfunc(0x1, ReadyBlock::thunk);
 				hooked = true;
@@ -1172,6 +1373,7 @@ namespace bo3z
 			const int  gun = CurrentGun();
 			g_chargeCd = std::max(0.0f, g_chargeCd - a_delta);
 			g_charge = out && g_trigger ? g_charge + a_delta : 0.0f;
+			TickPose(a_delta);
 			if (out) {
 				const auto& g = gen::kGuns[gun];
 				if (g_burstLeft > 0 && (g_burstTimer -= a_delta) <= 0) {
@@ -1190,10 +1392,11 @@ namespace bo3z
 			if (auto* cam = RE::PlayerCamera::GetSingleton()) {
 				// Wider base view (sheet: movement.world_fov / viewmodel_fov), narrowing while aiming.
 				auto& rd = cam->GetRuntimeData2();
-				rd.worldFOV = gen::kWorldFov + (gen::kAdsFov - gen::kWorldFov) * g_ads;
+				rd.worldFOV = gen::kWorldFov + (gen::kAdsFov - gen::kWorldFov) * g_ads + g_fovKick;
 				rd.firstPersonFOV = gen::kViewmodelFov + (gen::kAdsViewmodelFov - gen::kViewmodelFov) * g_ads;
 			}
 			AimViewmodel(RE::PlayerCharacter::GetSingleton(), out && gen::kGuns[gun].kind == gen::kKindWand ? g_ads : 0.0f);  // hand spells: just the zoom
+			PoseWand(out && gen::kGuns[gun].kind == gen::kKindWand ? g_adsModel.get() : nullptr);
 			const auto now = Clock::now();
 			std::erase_if(g_hits, [&](const auto& kv) { return now - kv.second.first > 2s; });
 

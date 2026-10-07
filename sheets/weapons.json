@@ -46,7 +46,8 @@
     "chargeSeconds",
     "chargeCooldown",
     "chargeMana",
-    "verify"
+    "verify",
+    "chargeStyle"
   ],
   "rows": [
     {
@@ -99,7 +100,8 @@
       "chargeText": "pierces everything in a line",
       "chargeSeconds": 0.9,
       "chargeCooldown": 4,
-      "chargeMana": 0
+      "chargeMana": 0,
+      "chargeStyle": "thrust"
     },
     {
       "id": "centurion",
@@ -151,7 +153,8 @@
       "chargeText": "a poison cloud where it lands",
       "chargeSeconds": 0.9,
       "chargeCooldown": 6,
-      "chargeMana": 0
+      "chargeMana": 0,
+      "chargeStyle": "slam"
     },
     {
       "id": "triad",
@@ -203,20 +206,21 @@
       "chargeText": "souls hunt the five nearest dead",
       "chargeSeconds": 1.0,
       "chargeCooldown": 6,
-      "chargeMana": 0
+      "chargeMana": 0,
+      "chargeStyle": "twirl"
     },
     {
       "id": "spider",
       "label": "Sporecaller Wand",
-      "fire": "auto",
-      "damage": 75,
+      "fire": "semi",
+      "damage": 105.0,
       "headMult": 2.0,
       "pellets": 1,
       "spreadHip": 2.5,
       "spreadAds": 0.6,
       "clip": 0,
       "reserve": 0,
-      "fireDelayMs": 110,
+      "fireDelayMs": 140,
       "burst": 1,
       "reloadMs": 0,
       "range": 4000,
@@ -255,20 +259,21 @@
       "chargeText": "slows and chokes everything nearby",
       "chargeSeconds": 1.0,
       "chargeCooldown": 6,
-      "chargeMana": 0
+      "chargeMana": 0,
+      "chargeStyle": "slam"
     },
     {
       "id": "drill",
       "label": "Bloodthirst Wand",
-      "fire": "auto",
-      "damage": 80,
+      "fire": "semi",
+      "damage": 112.0,
       "headMult": 2.0,
       "pellets": 1,
       "spreadHip": 2.8,
       "spreadAds": 0.7,
       "clip": 0,
       "reserve": 0,
-      "fireDelayMs": 95,
+      "fireDelayMs": 140,
       "burst": 1,
       "reloadMs": 0,
       "range": 4000,
@@ -307,7 +312,8 @@
       "chargeText": "drains every foe around you",
       "chargeSeconds": 1.0,
       "chargeCooldown": 7,
-      "chargeMana": 0
+      "chargeMana": 0,
+      "chargeStyle": "sweep"
     },
     {
       "id": "steampump",
@@ -359,7 +365,8 @@
       "chargeText": "roots everything in front of you",
       "chargeSeconds": 1.0,
       "chargeCooldown": 7,
-      "chargeMana": 0
+      "chargeMana": 0,
+      "chargeStyle": "sweep"
     },
     {
       "id": "marksman",
@@ -411,20 +418,21 @@
       "chargeText": "a moonbeam through every foe",
       "chargeSeconds": 1.0,
       "chargeCooldown": 5,
-      "chargeMana": 0
+      "chargeMana": 0,
+      "chargeStyle": "thrust"
     },
     {
       "id": "animunculi",
       "label": "Nightshade Wand",
-      "fire": "auto",
-      "damage": 95,
+      "fire": "semi",
+      "damage": 133.0,
       "headMult": 3.0,
       "pellets": 1,
       "spreadHip": 2.0,
       "spreadAds": 0.3,
       "clip": 0,
       "reserve": 0,
-      "fireDelayMs": 110,
+      "fireDelayMs": 140,
       "burst": 1,
       "reloadMs": 0,
       "range": 6000,
@@ -463,20 +471,21 @@
       "chargeText": "shadow explodes where it lands",
       "chargeSeconds": 1.0,
       "chargeCooldown": 6,
-      "chargeMana": 0
+      "chargeMana": 0,
+      "chargeStyle": "slam"
     },
     {
       "id": "kagrenac",
       "label": "Amberglass Wand",
-      "fire": "auto",
-      "damage": 105,
+      "fire": "semi",
+      "damage": 147.0,
       "headMult": 2.0,
       "pellets": 1,
       "spreadHip": 2.2,
       "spreadAds": 0.35,
       "clip": 0,
       "reserve": 0,
-      "fireDelayMs": 120,
+      "fireDelayMs": 140,
       "burst": 1,
       "reloadMs": 0,
       "range": 6000,
@@ -515,20 +524,21 @@
       "chargeText": "encases every foe nearby",
       "chargeSeconds": 1.0,
       "chargeCooldown": 8,
-      "chargeMana": 0
+      "chargeMana": 0,
+      "chargeStyle": "slam"
     },
     {
       "id": "mammothlmg",
       "label": "Galewind Wand",
-      "fire": "auto",
-      "damage": 95,
+      "fire": "semi",
+      "damage": 133.0,
       "headMult": 2.0,
       "pellets": 1,
       "spreadHip": 3.0,
       "spreadAds": 0.5,
       "clip": 0,
       "reserve": 0,
-      "fireDelayMs": 90,
+      "fireDelayMs": 140,
       "burst": 1,
       "reloadMs": 0,
       "range": 6000,
@@ -567,7 +577,8 @@
       "chargeText": "hurls the dead back in a wide cone",
       "chargeSeconds": 1.0,
       "chargeCooldown": 6,
-      "chargeMana": 0
+      "chargeMana": 0,
+      "chargeStyle": "sweep"
     },
     {
       "id": "longshot",
@@ -619,7 +630,8 @@
       "chargeText": "a shower of stars on the target",
       "chargeSeconds": 1.2,
       "chargeCooldown": 8,
-      "chargeMana": 0
+      "chargeMana": 0,
+      "chargeStyle": "raise"
     },
     {
       "id": "aetherium",
@@ -671,20 +683,21 @@
       "chargeText": "a blinding sunburst",
       "chargeSeconds": 1.2,
       "chargeCooldown": 9,
-      "chargeMana": 0
+      "chargeMana": 0,
+      "chargeStyle": "slam"
     },
     {
       "id": "flamerepeater",
       "label": "Tome of Flames",
-      "fire": "auto",
-      "damage": 80,
+      "fire": "semi",
+      "damage": 112.0,
       "headMult": 1.5,
       "pellets": 1,
       "spreadHip": 2.2,
       "spreadAds": 1.0,
       "clip": 0,
       "reserve": 0,
-      "fireDelayMs": 95,
+      "fireDelayMs": 140,
       "burst": 1,
       "reloadMs": 0,
       "range": 2600,
@@ -723,7 +736,8 @@
       "chargeText": "a ring of fire bursts around you",
       "chargeSeconds": 1.0,
       "chargeCooldown": 4,
-      "chargeMana": 6
+      "chargeMana": 6,
+      "chargeStyle": "sweep"
     },
     {
       "id": "frostlancer",
@@ -775,7 +789,8 @@
       "chargeText": "pierces and freezes a line of foes",
       "chargeSeconds": 1.0,
       "chargeCooldown": 4,
-      "chargeMana": 4
+      "chargeMana": 4,
+      "chargeStyle": "thrust"
     },
     {
       "id": "stormcaller",
@@ -827,7 +842,8 @@
       "chargeText": "lightning strikes six foes",
       "chargeSeconds": 1.0,
       "chargeCooldown": 4,
-      "chargeMana": 6
+      "chargeMana": 6,
+      "chargeStyle": "raise"
     },
     {
       "id": "embermortar",
@@ -879,7 +895,8 @@
       "chargeText": "a huge fireball crashes down",
       "chargeSeconds": 1.2,
       "chargeCooldown": 5,
-      "chargeMana": 3
+      "chargeMana": 3,
+      "chargeStyle": "slam"
     },
     {
       "id": "wabbajack",
@@ -931,7 +948,8 @@
       "chargeText": "madness takes every foe nearby",
       "chargeSeconds": 1.5,
       "chargeCooldown": 8,
-      "chargeMana": 3
+      "chargeMana": 3,
+      "chargeStyle": "twirl"
     },
     {
       "id": "thuumcannon",
@@ -983,7 +1001,8 @@
       "chargeText": "the full shout: everything flies",
       "chargeSeconds": 1.5,
       "chargeCooldown": 8,
-      "chargeMana": 2
+      "chargeMana": 2,
+      "chargeStyle": "surge"
     },
     {
       "id": "skyforgearc",
@@ -1035,7 +1054,8 @@
       "chargeText": "lightning chains through twelve foes",
       "chargeSeconds": 1.5,
       "chargeCooldown": 8,
-      "chargeMana": 3
+      "chargeMana": 3,
+      "chargeStyle": "raise"
     },
     {
       "id": "apprentice",
@@ -1087,7 +1107,8 @@
       "chargeText": "pierces everything in a line",
       "chargeSeconds": 0.9,
       "chargeCooldown": 4,
-      "chargeMana": 3
+      "chargeMana": 3,
+      "chargeStyle": "thrust"
     }
   ]
 }

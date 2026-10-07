@@ -418,6 +418,13 @@ def cast_scatter(): # a burst of bone shards: wide whoosh + crackle + thump
     return hall(norm(mix(_whoosh(0.5, 3000, 300) * 1.4, crack, kick(0.4, 130, 45) * 0.8), 0.85), 0.3, 1.8)
 def cast_heavy():   # a big release: deep push, choir sting, long tail
     return hall(norm(mix(_whoosh(0.8, 4000, 200) * 1.3, kick(0.6, 110, 38) * 1.1, chord(choir, ['E3', 'B3', 'G4'], 0.7, vowel='a', bright=1.3) * 0.45, _sparkle(0.6, 2000, 10)), 0.9), 0.35, 2.4)
+def charge_up():    # power gathering: rising hum and shimmer
+    d = 0.9; n = int(d * SR)
+    hum = _sweep(70, 210, d, tau=10) * np.linspace(0.2, 1, n)
+    sh = bp(noise(n), 1500, 6000) * np.linspace(0, 0.6, n) ** 2
+    return hall(norm(mix(hum * 0.7, sh * 0.5, _sweep(400, 1600, d, tau=10) * np.linspace(0, 0.35, n)), 0.6), 0.25, 1.2)
+def charge_ready(): # fully charged: a bright ping
+    return hall(norm(mix(_tone(1318, 0.5, 0.15), _tone(1976, 0.5, 0.12) * 0.6, _sparkle(0.4, 3000, 5) * 0.4), 0.55), 0.35, 1.5)
 def mana_empty():   # magic fizzles out
     n = int(0.35 * SR)
     return hall(norm(mix(bp(noise(n), 2000, 7000) * env(n, 0.005, 0.05, 0.3, 0.25) * 0.5, zap(900, 220, 0.3) * 0.5), 0.5), 0.2, 1.0)
@@ -465,7 +472,7 @@ SOUNDS = {
     'shot_pistol': shot_pistol, 'shot_smg': shot_smg, 'shot_ar': shot_ar, 'shot_lmg': shot_lmg,
     'shot_shotgun': shot_shotgun, 'shot_sniper': shot_sniper, 'shot_ray': shot_ray,
     'reload_mag': reload_mag, 'reload_shell': reload_shell, 'dry_click': dry_click,
-    'cast_light': cast_light, 'cast_rapid': cast_rapid, 'cast_scatter': cast_scatter, 'cast_heavy': cast_heavy, 'mana_empty': mana_empty,
+    'cast_light': cast_light, 'cast_rapid': cast_rapid, 'cast_scatter': cast_scatter, 'cast_heavy': cast_heavy, 'charge_up': charge_up, 'charge_ready': charge_ready, 'mana_empty': mana_empty,
     'buy': buy, 'forge_upgrade': forge_upgrade, 'hitmarker': hitmarker, 'headshot': headshot, 'drink': drink, 'knife': knife, 'rise': rise,
 }
 

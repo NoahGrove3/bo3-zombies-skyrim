@@ -32,6 +32,13 @@ namespace bo3z
 		bool                    g_special = false;
 		std::vector<Spawned>    g_alive;
 		std::deque<RE::ActorHandle> g_corpses;
+		struct Settle
+		{
+			RE::ActorHandle handle;
+			float           age;
+			int             tries = 0;
+		};
+		std::vector<Settle> g_settle;
 		std::unordered_map<RE::FormID, std::size_t> g_ours;  // every undead we raised -> enemy row
 		std::vector<std::pair<RE::ObjectRefHandle, float>> g_fx;
 		struct Elite
@@ -244,7 +251,12 @@ namespace bo3z
 						}
 					}
 				}
-				av->SetActorValue(RE::ActorValue::kAggression, 2);  // very aggressive: no hesitating; KeepThemComing keeps them on players
+				// One undead faction: allies to each other (no infighting), enemies of the player. Aggressive (not
+				// very aggressive) so neutral townsfolk and each other are ignored; KeepThemComing keeps them on players.
+				if (auto* fac = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(gen::kUndeadFaction, gen::kPlugin)) {
+					actor->AddToFaction(fac, 0);
+				}
+				av->SetActorValue(RE::ActorValue::kAggression, 1);
 			}
 			// Close range only: bows, crossbows, staves, arrows and attack spells go; swords, axes and maces stay.
 			{
@@ -518,7 +530,7 @@ namespace bo3z
 			g_current = a_round;
 			g_special = a_round >= R.specialFirstRound && (a_round - R.specialFirstRound) % R.specialEveryRounds == 0;
 			// One round per night: the dead keep coming until dawn. How many walk at once grows night by night.
-			g_toSpawn = std::clamp(static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier / 3.0f)), 6, R.maxAlive);
+			g_toSpawn = std::clamp(static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier / 3.0f)), 12, R.maxAlive);
 			g_spawnTimer = 0;
 			g_phase = Phase::Fighting;
 			if (const int row = BossRow(); row >= 0 && a_round >= gen::kEnemies[row].minRound && a_round % gen::kEnemies[row].bossEvery == 0) {
@@ -574,6 +586,7 @@ namespace bo3z
 					it = g_alive.erase(it);
 				} else if (a->IsDead()) {
 					g_corpses.push_back(it->handle);
+					g_settle.push_back({ it->handle, 0.0f });
 					it = g_alive.erase(it);
 				} else {
 					++it;
@@ -589,8 +602,32 @@ namespace bo3z
 			}
 		}
 
+		// Corpses that died without going limp (killed mid-animation, the body stays standing): knock them over.
+		void SettleCorpses(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			auto* proc = a_player->GetActorRuntimeData().currentProcess;
+			for (auto& c : g_settle) {
+				c.age += a_delta;
+				auto a = c.handle.get();
+				if (!a || !proc || c.age < 0.5f) {
+					continue;
+				}
+				if (a->Is3DLoaded() && !a->IsInRagdollState()) {
+					const RE::NiPoint3 from = a->GetPosition() + (a->GetPosition() - a_player->GetPosition()) * -0.05f - RE::NiPoint3{ 0, 0, 20 };
+					proc->KnockExplosion(a.get(), from, c.age < 1.0f ? 0.8f : 2.0f);
+					if (c.tries++ == 0) {
+						logger::info("night: knocked over a standing corpse");
+					}
+				} else {
+					c.age = 99.0f;
+				}
+			}
+			std::erase_if(g_settle, [](const Settle& c) { return c.age > 3.0f || c.tries > 3; });
+		}
+
 		void KeepThemComing(RE::PlayerCharacter* a_player, float a_delta)
 		{
+			SettleCorpses(a_player, a_delta);
 			for (auto& s : g_alive) {
 				if (!gen::kEnemies[s.enemy].forceCombat || (s.combatRetry -= a_delta) > 0) {
 					continue;
