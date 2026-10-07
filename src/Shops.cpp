@@ -327,9 +327,10 @@ namespace bo3z
 		bool Obstructed(RE::TESObjectREFR* a_anchor, const TownPlan& a_plan, float a_overhead = 0.0f)
 		{
 			float glo = FLT_MAX, ghi = -FLT_MAX;
-			for (int gx = 0; gx < 5; ++gx) {
-				for (int gy = 0; gy < 4; ++gy) {
-					const float x = -gen::kStandHalfX + gx * (2 * gen::kStandHalfX / 4), y = gen::kStandFrontY + gy * ((gen::kStandBackY - gen::kStandFrontY) / 3);
+			constexpr int NX = 12, NY = 7;  // ~60 units apart: fences and posts can't slip between the rays
+			for (int gx = 0; gx < NX; ++gx) {
+				for (int gy = 0; gy < NY; ++gy) {
+					const float x = -gen::kStandHalfX + gx * (2 * gen::kStandHalfX / (NX - 1)), y = gen::kStandFrontY + gy * ((gen::kStandBackY - gen::kStandFrontY) / (NY - 1));
 					const float a = a_plan.yaw;
 					const RE::NiPoint3 at{ a_plan.center.x + x * std::cos(a) + y * std::sin(a), a_plan.center.y - x * std::sin(a) + y * std::cos(a), a_plan.center.z };
 					if (auto z = FloorZ(a_anchor, at, a_plan.center.z + 700.0f)) {
@@ -340,7 +341,7 @@ namespace bo3z
 			if (a_overhead > 0) {
 				return ghi > a_plan.top + a_overhead;
 			}
-			return ghi > glo && ghi - glo > 50.0f;
+			return ghi > glo && ghi - glo > 35.0f;
 		}
 
 		bool TryCandidate(int a_town, RE::TESObjectREFR* a_anchor, int a_index)
@@ -411,6 +412,7 @@ namespace bo3z
 
 		// Existing stand from an earlier session? The Coffer with the stand under it marks it; older layouts
 		// (separate machines on the ground) are swept and rebuilt as a stand.
+		void ClearSite(int a_town, RE::TESObjectREFR* a_anchor);
 		bool AdoptExisting(int a_town, RE::TESObjectREFR* a_anchor)
 		{
 			RE::TESForm* coffer = nullptr;
@@ -460,7 +462,47 @@ namespace bo3z
 				return false;
 			}
 			g_towns[a_town] = plan;
+			ClearSite(a_town, a_anchor);
 			return true;
+		}
+
+		// Tidy the site: small statics, plants and furniture standing on the stand's footprint are hidden (never
+		// buildings, doors, containers, actors, lights, quest-persistent objects or our own pieces).
+		void ClearSite(int a_town, RE::TESObjectREFR* a_anchor)
+		{
+			const auto& plan = g_towns[a_town];
+			int         n = 0;
+			RE::TES::GetSingleton()->ForEachReferenceInRange(a_anchor, gen::kPlanSweep, [&](RE::TESObjectREFR* r) {
+				auto* base = r ? r->GetBaseObject() : nullptr;
+				if (!base || r->IsDisabled() || r->IsDeleted() || IsOurBase(base) || (r->GetFormFlags() & RE::TESForm::RecordFlags::kPersistent)) {
+					return RE::BSContainer::ForEachResult::kContinue;
+				}
+				const auto t = base->GetFormType();
+				if (t != RE::FormType::Static && t != RE::FormType::MovableStatic && t != RE::FormType::Tree && t != RE::FormType::Flora &&
+					t != RE::FormType::Furniture && t != RE::FormType::Misc && t != RE::FormType::Grass) {
+					return RE::BSContainer::ForEachResult::kContinue;
+				}
+				auto* bo = base->As<RE::TESBoundObject>();
+				if (bo) {
+					const auto& b = bo->boundData;
+					const int   size = std::max({ b.boundMax.x - b.boundMin.x, b.boundMax.y - b.boundMin.y, b.boundMax.z - b.boundMin.z }) * static_cast<int>(std::max(1.0f, r->GetScale()));
+					if (size > 450) {
+						return RE::BSContainer::ForEachResult::kContinue;  // something big (a building, a wall): leave it
+					}
+				}
+				// in stand space?
+				const auto  p = r->GetPosition();
+				const float dx = p.x - plan.center.x, dy = p.y - plan.center.y, a = plan.yaw;
+				const float lx = dx * std::cos(a) - dy * std::sin(a), ly = dx * std::sin(a) + dy * std::cos(a);
+				if (std::abs(lx) <= gen::kStandHalfX + 40.0f && ly >= gen::kStandFrontY - 80.0f && ly <= gen::kStandBackY + 40.0f && std::abs(p.z - plan.top) < 300.0f) {
+					r->Disable();
+					++n;
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			if (n) {
+				logger::info("shops: cleared {} bits of clutter off the {} stand", n, gen::kTowns[a_town]);
+			}
 		}
 
 		// The stand's floor height: the highest ground under its footprint (so no corner digs in), a hair above.
@@ -483,6 +525,7 @@ namespace bo3z
 			}
 			plan.top = got > 0 ? hi + 1.0f : plan.center.z;
 			plan.topSet = true;
+			ClearSite(a_town, a_anchor);
 			logger::info("shops: {} stand floor at z {:.0f} ({} ground samples)", gen::kTowns[a_town], plan.top, got);
 		}
 
