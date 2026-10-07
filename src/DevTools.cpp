@@ -17,7 +17,8 @@ namespace bo3z
 	namespace
 	{
 		std::mutex               g_lock;
-		std::vector<std::string> g_mainQueue;
+		std::vector<std::string> g_mainQueue;   // render-safe: key, mouse, close
+		std::vector<std::string> g_gameQueue;   // run from PlayerCharacter::Update: console, hour, give, tp, ...
 		std::string              g_shotName;
 		struct PendingKey
 		{
@@ -89,11 +90,11 @@ namespace bo3z
 			} else if (cmd == "key" || cmd == "mouse") {
 				// key <dik> [menu]: press and release a key inside Skyrim's own input queue (no window focus needed)
 				std::uint32_t id = 0;
-				std::string   ctx;
-				in >> id >> ctx;
+				std::string   ctx, name;
+				in >> id >> ctx >> name;
 				const auto device = cmd == "key" ? RE::INPUT_DEVICE::kKeyboard : RE::INPUT_DEVICE::kMouse;
 				const auto context = ctx == "menu" ? RE::UserEvents::INPUT_CONTEXT_ID::kMenuMode : RE::UserEvents::INPUT_CONTEXT_ID::kGameplay;
-				const RE::BSFixedString ev(RE::ControlMap::GetSingleton()->GetUserEventName(id, device, context));
+				const RE::BSFixedString ev(!name.empty() ? std::string_view(name) : RE::ControlMap::GetSingleton()->GetUserEventName(id, device, context));
 				g_pendingKeys.push_back({ device, id, ev, 0 });
 				logger::info("dev: {} {} ({})", cmd, id, ev.c_str());
 			} else if (cmd == "console") {
@@ -158,8 +159,10 @@ namespace bo3z
 			for (auto& s : lines) {
 				if (s.rfind("shot ", 0) == 0) {
 					g_shotName = s.substr(5);
-				} else {
+				} else if (s.rfind("key ", 0) == 0 || s.rfind("mouse ", 0) == 0 || s.rfind("close ", 0) == 0) {
 					g_mainQueue.push_back(s);
+				} else {
+					g_gameQueue.push_back(s);
 				}
 			}
 		}
@@ -214,6 +217,18 @@ namespace bo3z
 			{
 				std::scoped_lock l(g_lock);
 				q.swap(g_mainQueue);
+			}
+			for (auto& s : q) {
+				RunMain(s);
+			}
+		}
+
+		void RunQueuedInGame()
+		{
+			std::vector<std::string> q;
+			{
+				std::scoped_lock l(g_lock);
+				q.swap(g_gameQueue);
 			}
 			for (auto& s : q) {
 				RunMain(s);

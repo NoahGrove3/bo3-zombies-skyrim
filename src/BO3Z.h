@@ -153,6 +153,7 @@ namespace bo3z
 		void PollFromRender();
 		void CaptureIfRequested(ID3D11DeviceContext* a_context, IDXGISwapChain* a_swap);
 		void RunQueuedOnMain();
+		void RunQueuedInGame();
 	}
 
 	namespace Events

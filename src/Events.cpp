@@ -12,6 +12,7 @@ namespace bo3z
 			{
 				func(a_this, a_delta);
 				try {
+					DevTools::RunQueuedInGame();
 					Intro::Tick();
 					Director::Tick(a_delta);
 					Gun::Tick(a_delta);
