@@ -18,7 +18,7 @@ namespace bo3z
 			bool            inCombat{ false };
 			float           combatRetry{ 0 };
 			float           webbed{ 0 };
-			float           far{ 0 };       // seconds spent too far away / unloaded
+			float           behind{ 0 };       // seconds spent too far away / unloaded
 			float           stall{ 0 };     // seconds spent not closing in
 			float           lastDist{ -1 };
 		};
@@ -598,18 +598,18 @@ namespace bo3z
 				const float dist = a->GetPosition().GetDistance(a_player->GetPosition());
 				// Left behind (too far, or its cell unloaded): climb out of the ground again near the player, BO3-style.
 				if (!boss && (dist > gen::kChaseRelocateDist || !a->Is3DLoaded())) {
-					if ((s.far += kStep) >= gen::kChaseRelocateSeconds) {
+					if ((s.behind += kStep) >= gen::kChaseRelocateSeconds) {
 						a->StopCombat();
 						a->MoveTo(a_player);
 						a->SetPosition(SpawnSpot(a_player), true);
 						a->MoveToNearestNavmesh();
 						a->StartCombat(a_player);
-						s.far = 0, s.stall = 0, s.lastDist = -1;
+						s.behind = 0, s.stall = 0, s.lastDist = -1;
 						logger::info("night: relocated {} that fell behind ({:.0f} away)", gen::kEnemies[s.enemy].id, dist);
 					}
 					continue;
 				}
-				s.far = 0;
+				s.behind = 0;
 				if (!a->Is3DLoaded()) {
 					continue;
 				}
