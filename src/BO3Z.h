@@ -12,6 +12,7 @@ namespace bo3z
 		bool                 Resolve();  // after data loaded
 		RE::TESBoundObject*  Enemy(std::size_t a_index);
 		RE::TESQuest*        IntroQuest();
+		bool                 IntroDone();
 		RE::TESGlobal*       Quickstart();
 		RE::TESObjectREFR*   RiverwoodMarker();
 		RE::TESObjectWEAP*   Gun(int a_gun);

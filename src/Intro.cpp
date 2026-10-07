@@ -52,7 +52,7 @@ namespace bo3z
 			if (!player || !intro || !ui || ui->GameIsPaused()) {
 				return;
 			}
-			if (!Save::Flag(Save::kFlagMoved) && intro->IsCompleted()) {
+			if (!Save::Flag(Save::kFlagMoved) && Forms::IntroDone()) {
 				if (FreshQuickstartGame(player)) {
 					if (++g_settle < 60) {  // let the skip fragment finish (race menu, choose sides) before moving
 						return;
@@ -64,7 +64,7 @@ namespace bo3z
 				}
 				Save::SetFlag(Save::kFlagMoved, true);
 			}
-			if (Save::Flag(Save::kFlagMoved) && intro->IsCompleted() && Save::Crew() < 0 && !g_crewOpen) {
+			if (Save::Flag(Save::kFlagMoved) && Forms::IntroDone() && Save::Crew() < 0 && !g_crewOpen) {
 				g_crewOpen = true;
 				g_highlight = 0;
 				logger::info("intro: crew screen open");

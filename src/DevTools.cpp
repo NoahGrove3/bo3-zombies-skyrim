@@ -59,7 +59,7 @@ namespace bo3z
 				}
 				logger::info("dev: state round={} points={} crew={} perks={:07b}{} pos=({:.0f},{:.0f},{:.0f}) cell={} hour={:.2f} introDone={} box={}", Save::Get(gen::kAV_round),
 					Points::Get(), Save::Crew(), (Save::Flags() >> 4) & 0x7F, slots, p.x, p.y, p.z, cell ? cell->GetFormEditorID() : "?",
-					RE::Calendar::GetSingleton() ? RE::Calendar::GetSingleton()->GetHour() : -1.0f, Forms::IntroQuest() && Forms::IntroQuest()->IsCompleted(), Shops::BoxTown());
+					RE::Calendar::GetSingleton() ? RE::Calendar::GetSingleton()->GetHour() : -1.0f, Forms::IntroDone(), Shops::BoxTown());
 				Director::LogState();
 			} else if (cmd == "points") {
 				int n = 0;

@@ -79,7 +79,7 @@ namespace bo3z
 		bool Allowed(RE::PlayerCharacter* a_player)
 		{
 			auto* intro = Forms::IntroQuest();
-			if (!intro || !intro->IsCompleted()) {
+			if (!Forms::IntroDone()) {
 				if (!g_loggedBlocked) {
 					logger::info("rounds wait for the Helgen intro (MQ101) to finish");
 					g_loggedBlocked = true;
