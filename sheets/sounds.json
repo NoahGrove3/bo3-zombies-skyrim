@@ -343,6 +343,15 @@
       "file": "fx\\UndyingNights\\rise.wav",
       "space": "3d",
       "verify": []
+    },
+    {
+      "id": "coffer_skull",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_coffer_skull",
+      "file": "fx\\UndyingNights\\coffer_skull.wav",
+      "space": "3d",
+      "verify": []
     }
   ]
 }

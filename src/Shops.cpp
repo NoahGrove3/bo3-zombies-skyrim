@@ -134,12 +134,15 @@ namespace bo3z
 						g_show.t = 0;
 						if (g_show.cheese) {
 							ShowModel(Forms::Ours(gen::kShowCheese), gen::kShowRise);
-							Forms::PlayAt(gen::Sound::coffer_cheese, chest.get());
+							if (auto d = g_show.display.get()) {
+								d->SetScale(gen::kSkullScale);
+							}
+							Forms::PlayAt(gen::Sound::coffer_skull, chest.get());
 							Hud::Banner(std::string(gen::kText_box_joke) + " (" + std::string(gen::kTowns[g_show.cheeseTown]) + ")", 6.0f);
 							g_show.phase = Show::Cheese;
 						} else {
 							ShowModel(Forms::Ours(gen::kShowStat[g_show.gun]), gen::kShowRise);
-							Hud::Banner("Take the " + std::string(gen::kGuns[g_show.gun].label) + " from " + std::string(gen::kText_box_short) + "!", 3.0f);
+							Hud::Banner(std::string(gen::kGuns[g_show.gun].label) + "  -  press Activate on the Coffer to take it", 4.0f);
 							g_show.phase = Show::Offering;
 						}
 					}
@@ -167,13 +170,6 @@ namespace bo3z
 			}
 		}
 
-		RE::NiPoint3 Target(const gen::LocationDef& a_loc, RE::TESObjectREFR* a_anchor)
-		{
-			const float a = a_loc.angleDeg * RE::NI_PI / 180.0f;
-			const auto  p = a_anchor->GetPosition();
-			return { p.x + std::sin(a) * a_loc.distance, p.y + std::cos(a) * a_loc.distance, p.z };
-		}
-
 		int ActiveBoxTown()
 		{
 			const int v = Save::Get(gen::kAV_box);
@@ -194,53 +190,256 @@ namespace bo3z
 			return t;
 		}
 
+		// ---- Brew alley layout (sheets: layout, locations) ----
+		// Per town: find open, flat, walkable ground near the map marker for the whole alley, clear out
+		// anything we placed there under an older layout, then place every piece on its slot.
+		struct TownPlan
+		{
+			enum class State { Unknown, Searching, Ready } state{ State::Unknown };
+			RE::NiPoint3 center{};
+			float        yaw{ 0 };
+			int          candidate{ 0 };
+		};
+		std::array<TownPlan, gen::kTowns.size()> g_towns{};
+		RE::ObjectRefHandle                       g_probe;
+
+		RE::TESObjectREFR* TownAnchor(int a_town)
+		{
+			for (const auto& l : gen::kLocations) {
+				if (l.town == a_town) {
+					return RE::TESForm::LookupByID<RE::TESObjectREFR>(l.anchor);
+				}
+			}
+			return nullptr;
+		}
+
+		RE::NiPoint3 SlotPos(const TownPlan& a_plan, int a_slot)
+		{
+			const auto& s = gen::kSlots[a_slot];
+			const float a = a_plan.yaw;
+			return { a_plan.center.x + s.x * std::cos(a) + s.y * std::sin(a), a_plan.center.y - s.x * std::sin(a) + s.y * std::cos(a), a_plan.center.z };
+		}
+		float SlotFacing(const TownPlan& a_plan, int a_slot) { return a_plan.yaw + gen::kSlots[a_slot].faceDeg * RE::NI_PI / 180.0f; }
+
+		bool IsOurBase(RE::TESForm* a_base)
+		{
+			static std::unordered_set<RE::TESForm*> ours;
+			if (ours.empty()) {
+				for (int i = 0; i < static_cast<int>(gen::kObjects.size()); ++i) {
+					ours.insert(Forms::Object(i));
+				}
+				for (const auto& d : gen::kDress) {
+					ours.insert(Forms::Ours(d.formId));
+				}
+				ours.erase(nullptr);
+			}
+			return a_base && ours.contains(a_base);
+		}
+
+		// Nearest walkable point (navmesh) to a_at, via an invisible marker; nullopt if there is none close.
+		std::optional<RE::NiPoint3> Snap(RE::TESObjectREFR* a_anchor, const RE::NiPoint3& a_at)
+		{
+			auto probe = g_probe.get();
+			if (!probe) {
+				auto* marker = RE::TESForm::LookupByID<RE::TESBoundObject>(0x3B);  // XMarker
+				auto  ref = marker ? a_anchor->PlaceObjectAtMe(marker, false) : nullptr;
+				if (!ref) {
+					return std::nullopt;
+				}
+				g_probe = ref->CreateRefHandle();
+				probe = ref;
+			}
+			RE::NiPoint3 at = a_at;
+			float        land = 0;
+			if (RE::TES::GetSingleton()->GetLandHeight(at, land)) {
+				at.z = land;
+			}
+			probe->SetPosition(at);
+			probe->MoveToNearestNavmesh();
+			const auto got = probe->GetPosition();
+			const float dxy = std::hypot(got.x - at.x, got.y - at.y);
+			if (dxy > gen::kPlanSnap) {
+				return std::nullopt;
+			}
+			return got;
+		}
+
+		bool TryCandidate(int a_town, RE::TESObjectREFR* a_anchor, int a_index)
+		{
+			const int perDist = gen::kPlanAngles * static_cast<int>(gen::kPlanYaw.size());
+			const int di = a_index / perDist, rest = a_index % perDist;
+			const int ai = rest / static_cast<int>(gen::kPlanYaw.size()), yi = rest % static_cast<int>(gen::kPlanYaw.size());
+			if (gen::kPlanDist[di] == 0 && ai > 0) {
+				return false;
+			}
+			const float ang = ai * 2.0f * RE::NI_PI / gen::kPlanAngles;
+			const auto  a = a_anchor->GetPosition();
+			TownPlan    plan;
+			plan.center = { a.x + std::sin(ang) * gen::kPlanDist[di], a.y + std::cos(ang) * gen::kPlanDist[di], a.z };
+			plan.yaw = gen::kPlanYaw[yi] * RE::NI_PI / 180.0f;
+			float lo = FLT_MAX, hi = -FLT_MAX;
+			for (const auto& l : gen::kLocations) {
+				if (l.town != a_town) {
+					continue;
+				}
+				auto p = Snap(a_anchor, SlotPos(plan, l.slot));
+				if (!p) {
+					return false;
+				}
+				lo = std::min(lo, p->z), hi = std::max(hi, p->z);
+			}
+			if (hi - lo > gen::kPlanHeight) {
+				return false;
+			}
+			auto c = Snap(a_anchor, plan.center);
+			plan.center.z = c ? c->z : (lo + hi) * 0.5f;
+			plan.state = TownPlan::State::Ready;
+			g_towns[a_town] = plan;
+			logger::info("shops: {} alley at ({:.0f},{:.0f}) yaw {:.0f} (candidate {})", gen::kTowns[a_town], plan.center.x, plan.center.y, gen::kPlanYaw[yi], a_index);
+			return true;
+		}
+
+		void Sweep(int a_town, RE::TESObjectREFR* a_anchor)
+		{
+			int n = 0;
+			RE::TES::GetSingleton()->ForEachReferenceInRange(a_anchor, gen::kPlanSweep, [&](RE::TESObjectREFR* r) {
+				if (r && !r->IsDeleted() && IsOurBase(r->GetBaseObject())) {
+					r->Disable();
+					r->SetDelete(true);
+					++n;
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			for (std::size_t i = 0; i < gen::kLocations.size(); ++i) {
+				if (gen::kLocations[i].town == a_town) {
+					g_placed[i] = {};
+					g_dressed[i] = false;
+				}
+			}
+			std::erase_if(g_spinners, [](const Spinner& s) { return !s.ref.get(); });
+			logger::info("shops: cleared {} old pieces in {}", n, gen::kTowns[a_town]);
+		}
+
+		// Existing alley from an earlier session? The ammo cache only exists in this layout, so it marks it.
+		bool AdoptExisting(int a_town, RE::TESObjectREFR* a_anchor)
+		{
+			RE::TESForm* ammo = nullptr;
+			int          ammoSlot = -1;
+			for (const auto& l : gen::kLocations) {
+				if (l.town == a_town && gen::kObjects[l.object].kind == 3) {
+					ammo = Forms::Object(l.object), ammoSlot = l.slot;
+				}
+			}
+			RE::TESObjectREFR* found = nullptr;
+			RE::TES::GetSingleton()->ForEachReferenceInRange(a_anchor, gen::kPlanSweep, [&](RE::TESObjectREFR* r) {
+				if (r && !r->IsDeleted() && r->GetBaseObject() == ammo) {
+					found = r;
+					return RE::BSContainer::ForEachResult::kStop;
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			if (!found || ammoSlot < 0) {
+				return false;
+			}
+			TownPlan plan;
+			plan.yaw = found->GetAngleZ() - gen::kSlots[ammoSlot].faceDeg * RE::NI_PI / 180.0f;
+			const auto& s = gen::kSlots[ammoSlot];
+			const auto  p = found->GetPosition();
+			plan.center = { p.x - (s.x * std::cos(plan.yaw) + s.y * std::sin(plan.yaw)), p.y - (-s.x * std::sin(plan.yaw) + s.y * std::cos(plan.yaw)), p.z };
+			plan.state = TownPlan::State::Ready;
+			g_towns[a_town] = plan;
+			return true;
+		}
+
 		void PlaceIfMissing(std::size_t a_index)
 		{
 			const auto& loc = gen::kLocations[a_index];
 			if (auto ref = g_placed[a_index].get(); ref && !ref->IsDeleted()) {
 				return;
 			}
-			auto* anchor = RE::TESForm::LookupByID<RE::TESObjectREFR>(loc.anchor);
-			auto* base = Forms::Object(loc.object);
-			if (!anchor || !base) {
+			const auto& plan = g_towns[loc.town];
+			auto*       anchor = TownAnchor(loc.town);
+			auto*       base = Forms::Object(loc.object);
+			if (plan.state != TownPlan::State::Ready || !anchor || !base) {
 				return;
 			}
-			auto* cell = anchor->GetParentCell();
-			auto* player = RE::PlayerCharacter::GetSingleton();
-			if (!cell || !cell->IsAttached() || !player || anchor->GetPosition().GetDistance(player->GetPosition()) > 6000.0f) {
-				return;
-			}
-			const auto want = Target(loc, anchor);
-			// Already in the world (placed in an earlier session and saved)?
+			auto want = SlotPos(plan, loc.slot);
 			RE::TESObjectREFR* found = nullptr;
-			RE::TES::GetSingleton()->ForEachReferenceInRange(anchor, loc.distance + 600.0f, [&](RE::TESObjectREFR* r) {
-				if (r && r->GetBaseObject() == base && !r->IsDeleted() && r->GetPosition().GetDistance(want) < 500.0f) {
+			RE::TES::GetSingleton()->ForEachReferenceInRange(anchor, gen::kPlanSweep, [&](RE::TESObjectREFR* r) {
+				if (r && r->GetBaseObject() == base && !r->IsDeleted() && std::hypot(r->GetPosition().x - want.x, r->GetPosition().y - want.y) < 80.0f) {
 					found = r;
 					return RE::BSContainer::ForEachResult::kStop;
 				}
 				return RE::BSContainer::ForEachResult::kContinue;
 			});
-			if (found) {
-				g_placed[a_index] = found->CreateRefHandle();
-				if (std::abs(found->GetScale() - gen::kObjects[loc.object].scale) > 0.01f) {
-					found->SetScale(gen::kObjects[loc.object].scale);
+			if (!found) {
+				if (auto p = Snap(anchor, want)) {
+					want.z = p->z;
 				}
-				Dress(a_index, found);
+				auto ref = anchor->PlaceObjectAtMe(base, false);
+				if (!ref) {
+					return;
+				}
+				ref->SetScale(gen::kObjects[loc.object].scale);
+				ref->SetPosition(want);
+				ref->SetAngle({ 0, 0, SlotFacing(plan, loc.slot) });
+				found = ref.get();
+				logger::info("shops: placed {} in {} at ({:.0f},{:.0f},{:.0f})", gen::kObjects[loc.object].id, gen::kTowns[loc.town], want.x, want.y, want.z);
+			}
+			g_placed[a_index] = found->CreateRefHandle();
+			Dress(a_index, found);
+		}
+
+		void TickTowns()
+		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (!player) {
 				return;
 			}
-			auto ref = anchor->PlaceObjectAtMe(base, false);
-			if (!ref) {
-				return;
+			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
+				auto* anchor = TownAnchor(t);
+				auto* cell = anchor ? anchor->GetParentCell() : nullptr;
+				if (!cell || !cell->IsAttached() || anchor->GetPosition().GetDistance(player->GetPosition()) > 6000.0f) {
+					continue;
+				}
+				auto& plan = g_towns[t];
+				if (plan.state == TownPlan::State::Unknown) {
+					if (AdoptExisting(t, anchor)) {
+						logger::info("shops: {} alley already built", gen::kTowns[t]);
+					} else {
+						Sweep(t, anchor);
+						plan.state = TownPlan::State::Searching;
+						plan.candidate = 0;
+					}
+				}
+				if (plan.state == TownPlan::State::Searching) {
+					const int total = static_cast<int>(gen::kPlanDist.size()) * gen::kPlanAngles * static_cast<int>(gen::kPlanYaw.size());
+					for (int k = 0; k < 3 && plan.state == TownPlan::State::Searching; ++k) {
+						if (plan.candidate >= total) {
+							// Nowhere fully clear: build it around the marker anyway.
+							plan.center = anchor->GetPosition();
+							plan.yaw = 0;
+							plan.state = TownPlan::State::Ready;
+							logger::warn("shops: no clear spot in {}, building at the marker", gen::kTowns[t]);
+							break;
+						}
+						TryCandidate(t, anchor, plan.candidate++);
+					}
+					if (plan.state == TownPlan::State::Searching) {
+						return;  // keep searching next frame
+					}
+					if (auto probe = g_probe.get()) {
+						probe->Disable();
+						probe->SetDelete(true);
+						g_probe = {};
+					}
+				}
+				for (std::size_t i = 0; i < gen::kLocations.size(); ++i) {
+					if (gen::kLocations[i].town == t) {
+						PlaceIfMissing(i);
+					}
+				}
 			}
-			ref->SetScale(gen::kObjects[loc.object].scale);
-			ref->SetPosition(want);
-			ref->MoveToNearestNavmesh();
-			const auto at = ref->GetPosition();
-			const float face = std::atan2(anchor->GetPosition().x - at.x, anchor->GetPosition().y - at.y);  // face the town marker
-			ref->SetAngle({ 0, 0, face });
-			g_placed[a_index] = ref->CreateRefHandle();
-			Dress(a_index, ref.get());
-			logger::info("shops: placed {} in {} at ({:.0f},{:.0f},{:.0f})", gen::kObjects[loc.object].id, gen::kTowns[loc.town], at.x, at.y, at.z);
 		}
 
 		int TownOf(RE::TESObjectREFR* a_ref)
@@ -279,6 +478,7 @@ namespace bo3z
 				return;  // the Coffer is busy
 			}
 			const int town = TownOf(a_ref);
+			logger::info("box: activated in {} (Coffer is in {}), phase {}", gen::kTowns[town], gen::kTowns[ActiveBoxTown()], static_cast<int>(g_show.phase));
 			if (town != ActiveBoxTown()) {
 				Hud::Banner(std::string(gen::kText_box_short) + " is in " + std::string(gen::kTowns[ActiveBoxTown()]), 3.0f);
 				return;
@@ -347,6 +547,28 @@ namespace bo3z
 			Hud::Banner(std::string(gen::kPerks[perk].label) + " added to your potions. Drink it!", 3.0f);
 		}
 
+		void BuyAmmo(const gen::ObjectDef& a_obj)
+		{
+			std::vector<int> owned;
+			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
+				if (Gun::Owns(i)) {
+					owned.push_back(i);
+				}
+			}
+			if (owned.empty()) {
+				Hud::Banner("No weapons to restock", 2.0f);
+				return;
+			}
+			if (!Points::Spend(a_obj.cost)) {
+				return;
+			}
+			for (int g : owned) {
+				Gun::RefillAmmo(g);
+			}
+			Forms::Play(gen::Sound::reload_mag);
+			Hud::Banner("All ammo restocked", 2.0f);
+		}
+
 		void BuyWall(const gen::ObjectDef& a_obj)
 		{
 			const int   gun = a_obj.ref;
@@ -373,6 +595,8 @@ namespace bo3z
 		{
 			g_placed.fill({});
 			g_dressed.fill(false);
+			g_towns.fill({});
+			g_probe = {};
 			g_spinners.clear();
 			g_show = {};
 		}
@@ -388,13 +612,12 @@ namespace bo3z
 				}
 			}
 			TickShow(a_delta);
-			if ((g_scan -= a_delta) > 0) {
+			const bool searching = std::any_of(g_towns.begin(), g_towns.end(), [](const TownPlan& p) { return p.state == TownPlan::State::Searching; });
+			if (!searching && (g_scan -= a_delta) > 0) {
 				return;
 			}
 			g_scan = 2.0f;
-			for (std::size_t i = 0; i < gen::kLocations.size(); ++i) {
-				PlaceIfMissing(i);
-			}
+			TickTowns();
 		}
 
 		void OnActivate(RE::TESObjectREFR* a_ref)
@@ -404,9 +627,11 @@ namespace bo3z
 				return;
 			}
 			const auto& o = gen::kObjects[obj];
+			logger::info("shops: activated {} ({} points)", o.id, Points::Get());
 			switch (o.kind) {
 			case 0: SpinBox(a_ref); break;
 			case 1: BuyPerk(o, a_ref); break;
+			case 3: BuyAmmo(o); break;
 			default: BuyWall(o); break;
 			}
 		}

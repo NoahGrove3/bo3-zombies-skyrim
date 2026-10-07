@@ -88,7 +88,7 @@ o.append(f'\tinline constexpr std::array<CrewDef, {len(C)}> kCrew{{ {{')
 for c in C: o.append(f'\t\tCrewDef{{ {cs(c["id"])}, {cs(c["label"])}, {cs(c["quote"])}, {passives[c["passive"]]}, {F(c["passiveValue"])}, {cs(c["passiveText"])} }},')
 o.append('\t} };')
 for r in S['identity']['rows']: o.append(f'\tinline constexpr std::string_view kText_{r["id"]} = {cs(r["text"])};')
-O = S['objects']['rows']; kinds = {'box': 0, 'perk': 1, 'wallbuy': 2}
+O = S['objects']['rows']; kinds = {'box': 0, 'perk': 1, 'wallbuy': 2, 'ammo': 3}
 def refidx(r):
     if r == 'none': return -1
     sh, i = r.split(':'); rows = {'perks': P, 'weapons': W}[sh]
@@ -105,6 +105,7 @@ o.append('\t} };')
 o.append(f'\tinline constexpr std::array<std::uint32_t, {len(W)}> kShowStat{{ {{ {", ".join("0x%03X" % IDS[("STAT", "show_" + w["id"])] for w in W)} }} }};')
 sh = S['dressing']['show']
 o.append(f'\tinline constexpr std::uint32_t kShowCheese = 0x{IDS[("STAT", "show_cheese")]:03X}, kRiseFx = 0x{IDS[("STAT", "rise_fx")]:03X};')
+o.append(f'\tinline constexpr float kSkullScale = {F(sh["cheeseScale"])};')
 o.append(f'\tinline constexpr float kShowRise = {F(sh["riseUnits"])}, kShowSpin = {F(sh["spinSeconds"])}, kShowOffer = {F(sh["offerSeconds"])};')
 o.append(f'\tinline constexpr std::array<std::uint32_t, {len(P)}> kPerkColor{{ {{ {", ".join("0x%sFF" % p["color"] for p in P)} }} }};')
 L = S['locations']['rows']; oid = [x['id'] for x in O]
@@ -112,9 +113,17 @@ towns = []
 for l in L:
     if l['town'] not in towns: towns.append(l['town'])
 o.append(f'\tinline constexpr std::array<std::string_view, {len(towns)}> kTowns{{ {{ {", ".join(cs(t) for t in towns)} }} }};')
-o.append('\tstruct LocationDef { int town; std::uint32_t anchor; int object; float angleDeg, distance; };')
+LAY = S['layout']; slots = [s['id'] for s in LAY['rows']]
+o.append('\tstruct SlotDef { float x, y, faceDeg; };')
+o.append(f'\tinline constexpr std::array<SlotDef, {len(slots)}> kSlots{{ {{ {", ".join(f"SlotDef{{ {F(s["x"])}, {F(s["y"])}, {F(s["faceDeg"])} }}" for s in LAY["rows"])} }} }};')
+se = LAY['search']
+o.append(f'\tinline constexpr std::array<float, {len(se["distances"])}> kPlanDist{{ {{ {", ".join(F(x) for x in se["distances"])} }} }};')
+o.append(f'\tinline constexpr std::array<float, {len(se["yawsDeg"])}> kPlanYaw{{ {{ {", ".join(F(x) for x in se["yawsDeg"])} }} }};')
+o.append(f'\tinline constexpr int kPlanAngles = {se["angles"]};')
+o.append(f'\tinline constexpr float kPlanSnap = {F(se["snapTolerance"])}, kPlanHeight = {F(se["maxHeightSpread"])}, kPlanSweep = {F(se["sweepRadius"])};')
+o.append('\tstruct LocationDef { int town; std::uint32_t anchor; int object; int slot; };')
 o.append(f'\tinline constexpr std::array<LocationDef, {len(L)}> kLocations{{ {{')
-for l in L: o.append(f'\t\tLocationDef{{ {towns.index(l["town"])}, 0x{int(l["anchor"],16):06X}, {oid.index(l["object"].split(":")[1])}, {F(l["angleDeg"])}, {F(l["distance"])} }},')
+for l in L: o.append(f'\t\tLocationDef{{ {towns.index(l["town"])}, 0x{int(l["anchor"],16):06X}, {oid.index(l["object"].split(":")[1])}, {slots.index(l["slot"].split(":")[1])} }},')
 o.append('\t} };')
 M = {r['id']: r for r in S['movement']['rows']}
 o.append(f'\tinline constexpr float kRunBoost = {F(M["run_boost"]["value"])}, kSprintBoost = {F(M["sprint_boost"]["value"])}, kSlideSpeed = {F(M["slide"]["value"])}, kSlideSeconds = {F(M["slide"]["durationMs"]/1000)}, kSlideBoost = {F(M["slide_boost"]["value"])}, kSlideJump = {F(M["slide_jump"]["value"])}, kAirControl = {F(M["air_control"]["value"])}, kAirMax = {F(M["air_max"]["value"])}, kSprintStamina = {F(M["sprint_stamina"]["value"])}, kJumpHeight = {F(M["jump_height"]["value"])};')
@@ -124,6 +133,7 @@ for qid in ('MQQuickstart', 'MQ102Marker', 'MQ102A', 'MQ102B', 'MQ102'):
     if qid in Q: o.append(f'\tinline constexpr FormRef kQ_{qid}{{ {cs(Q[qid]["plugin"])}, 0x{int(Q[qid]["localId"],16):06X}, {cs(Q[qid]["editorId"])} }};')
 for i in S['input']['rows']: o.append(f'\tinline constexpr std::uint32_t kKey2_{i["id"]} = {i["code"]};')
 R0 = S['rounds']['rows'][0]
+o.append(f'\tinline constexpr float kRegenDelay = {F(S["rounds"]["rows"][0]["regenDelaySeconds"])}, kRegenPerSecond = {F(S["rounds"]["rows"][0]["regenPerSecond"])};')
 o.append(f'\tinline constexpr float kSpawnMultiplier = {F(R0["spawnMultiplier"])}, kHitDamageFraction = {F(R0["hitDamageFraction"])}, kZombieWeaponDamageMult = {F(R0["weaponDamageMult"])};')
 o.append(f'\tinline constexpr bool kIgnoreNpcs = {str(R0["ignoreNpcs"]).lower()};')
 o.append(f'\tinline constexpr std::array<std::array<float, 2>, {len(R0["speedTiers"])}> kSpeedTiers{{ {{ ' + ', '.join('{ %s, %s }' % (F(a), F(b)) for a, b in R0["speedTiers"]) + ' } };')

@@ -62,6 +62,7 @@ jobs:
           python -m pip install --quiet numpy scipy pillow
           python tools/synth.py "$stage\Data\Sound"
           python tools/icons.py "$stage\Data\Interface\UndyingNights"
+          Copy-Item assets\sound\*.wav "$stage\Data\Sound\fx\UndyingNights\"
           Copy-Item README.md "$stage\BO3Zombies-README.md"
           Copy-Item third_party\address-library\CREDITS.md "$stage\BO3Zombies-ADDRESS-LIBRARY-CREDITS.md"
           python tools/zipdir.py "$stage" "dist\BO3Zombies-$v.zip"

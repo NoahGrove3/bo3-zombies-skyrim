@@ -1,472 +1,1113 @@
 {
- "sheet": "locations",
- "about": "Where BO3 objects stand. Each is placed at runtime at angleDeg/distance from the town's map marker (anchor REFR in Skyrim.esm), snapped to the nearest walkable navmesh point, once per town (re-used if already there).",
- "columns": [
-  "id",
-  "town",
-  "worldspace",
-  "anchor",
-  "object",
-  "angleDeg",
-  "distance",
-  "verify"
- ],
- "rows": [
-  {
-   "id": "riverwood_0",
-   "town": "Riverwood",
-   "worldspace": "Tamriel",
-   "anchor": "0x0162A4",
-   "object": "objects:coffer",
-   "angleDeg": 0,
-   "distance": 350,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "riverwood_1",
-   "town": "Riverwood",
-   "worldspace": "Tamriel",
-   "anchor": "0x0162A4",
-   "object": "objects:perk_trollshide",
-   "angleDeg": 90,
-   "distance": 450,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "riverwood_2",
-   "town": "Riverwood",
-   "worldspace": "Tamriel",
-   "anchor": "0x0162A4",
-   "object": "objects:perk_hearthfire",
-   "angleDeg": 180,
-   "distance": 400,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "riverwood_3",
-   "town": "Riverwood",
-   "worldspace": "Tamriel",
-   "anchor": "0x0162A4",
-   "object": "objects:wall_triad",
-   "angleDeg": 270,
-   "distance": 350,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "riverwood_4",
-   "town": "Riverwood",
-   "worldspace": "Tamriel",
-   "anchor": "0x0162A4",
-   "object": "objects:wall_steampump",
-   "angleDeg": 315,
-   "distance": 500,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "whiterun_0",
-   "town": "Whiterun",
-   "worldspace": "WhiterunWorld",
-   "anchor": "0x0162CE",
-   "object": "objects:coffer",
-   "angleDeg": 30,
-   "distance": 700,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "whiterun_1",
-   "town": "Whiterun",
-   "worldspace": "WhiterunWorld",
-   "anchor": "0x0162CE",
-   "object": "objects:perk_quicksilver",
-   "angleDeg": 120,
-   "distance": 600,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "whiterun_2",
-   "town": "Whiterun",
-   "worldspace": "WhiterunWorld",
-   "anchor": "0x0162CE",
-   "object": "objects:perk_twinstrike",
-   "angleDeg": 210,
-   "distance": 600,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "whiterun_3",
-   "town": "Whiterun",
-   "worldspace": "WhiterunWorld",
-   "anchor": "0x0162CE",
-   "object": "objects:wall_spider",
-   "angleDeg": 300,
-   "distance": 500,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "whiterun_4",
-   "town": "Whiterun",
-   "worldspace": "WhiterunWorld",
-   "anchor": "0x0162CE",
-   "object": "objects:wall_marksman",
-   "angleDeg": 0,
-   "distance": 900,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "solitude_0",
-   "town": "Solitude",
-   "worldspace": "SolitudeWorld",
-   "anchor": "0x04D0F4",
-   "object": "objects:coffer",
-   "angleDeg": 0,
-   "distance": 700,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "solitude_1",
-   "town": "Solitude",
-   "worldspace": "SolitudeWorld",
-   "anchor": "0x04D0F4",
-   "object": "objects:perk_windrunner",
-   "angleDeg": 90,
-   "distance": 600,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "solitude_2",
-   "town": "Solitude",
-   "worldspace": "SolitudeWorld",
-   "anchor": "0x04D0F4",
-   "object": "objects:perk_hawkeye",
-   "angleDeg": 180,
-   "distance": 600,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "solitude_3",
-   "town": "Solitude",
-   "worldspace": "SolitudeWorld",
-   "anchor": "0x04D0F4",
-   "object": "objects:wall_drill",
-   "angleDeg": 270,
-   "distance": 500,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "windhelm_0",
-   "town": "Windhelm",
-   "worldspace": "WindhelmWorld",
-   "anchor": "0x038436",
-   "object": "objects:coffer",
-   "angleDeg": 0,
-   "distance": 700,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "windhelm_1",
-   "town": "Windhelm",
-   "worldspace": "WindhelmWorld",
-   "anchor": "0x038436",
-   "object": "objects:perk_mammoth",
-   "angleDeg": 90,
-   "distance": 600,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "windhelm_2",
-   "town": "Windhelm",
-   "worldspace": "WindhelmWorld",
-   "anchor": "0x038436",
-   "object": "objects:perk_trollshide",
-   "angleDeg": 180,
-   "distance": 600,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "windhelm_3",
-   "town": "Windhelm",
-   "worldspace": "WindhelmWorld",
-   "anchor": "0x038436",
-   "object": "objects:wall_spider",
-   "angleDeg": 270,
-   "distance": 500,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "markarth_0",
-   "town": "Markarth",
-   "worldspace": "MarkarthWorld",
-   "anchor": "0x01C38A",
-   "object": "objects:coffer",
-   "angleDeg": 0,
-   "distance": 700,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "markarth_1",
-   "town": "Markarth",
-   "worldspace": "MarkarthWorld",
-   "anchor": "0x01C38A",
-   "object": "objects:perk_quicksilver",
-   "angleDeg": 90,
-   "distance": 600,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "markarth_2",
-   "town": "Markarth",
-   "worldspace": "MarkarthWorld",
-   "anchor": "0x01C38A",
-   "object": "objects:perk_hearthfire",
-   "angleDeg": 180,
-   "distance": 600,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "markarth_3",
-   "town": "Markarth",
-   "worldspace": "MarkarthWorld",
-   "anchor": "0x01C38A",
-   "object": "objects:wall_marksman",
-   "angleDeg": 270,
-   "distance": 500,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "riften_0",
-   "town": "Riften",
-   "worldspace": "RiftenWorld",
-   "anchor": "0x01C390",
-   "object": "objects:coffer",
-   "angleDeg": 0,
-   "distance": 700,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "riften_1",
-   "town": "Riften",
-   "worldspace": "RiftenWorld",
-   "anchor": "0x01C390",
-   "object": "objects:perk_twinstrike",
-   "angleDeg": 90,
-   "distance": 600,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "riften_2",
-   "town": "Riften",
-   "worldspace": "RiftenWorld",
-   "anchor": "0x01C390",
-   "object": "objects:perk_windrunner",
-   "angleDeg": 180,
-   "distance": 600,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "riften_3",
-   "town": "Riften",
-   "worldspace": "RiftenWorld",
-   "anchor": "0x01C390",
-   "object": "objects:wall_steampump",
-   "angleDeg": 270,
-   "distance": 500,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "falkreath_0",
-   "town": "Falkreath",
-   "worldspace": "Tamriel",
-   "anchor": "0x017760",
-   "object": "objects:perk_hawkeye",
-   "angleDeg": 0,
-   "distance": 400,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "falkreath_1",
-   "town": "Falkreath",
-   "worldspace": "Tamriel",
-   "anchor": "0x017760",
-   "object": "objects:wall_triad",
-   "angleDeg": 120,
-   "distance": 400,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "morthal_0",
-   "town": "Morthal",
-   "worldspace": "Tamriel",
-   "anchor": "0x0177B0",
-   "object": "objects:perk_trollshide",
-   "angleDeg": 0,
-   "distance": 400,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "morthal_1",
-   "town": "Morthal",
-   "worldspace": "Tamriel",
-   "anchor": "0x0177B0",
-   "object": "objects:wall_spider",
-   "angleDeg": 120,
-   "distance": 400,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "dawnstar_0",
-   "town": "Dawnstar",
-   "worldspace": "Tamriel",
-   "anchor": "0x01773A",
-   "object": "objects:perk_quicksilver",
-   "angleDeg": 0,
-   "distance": 400,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "dawnstar_1",
-   "town": "Dawnstar",
-   "worldspace": "Tamriel",
-   "anchor": "0x01773A",
-   "object": "objects:wall_marksman",
-   "angleDeg": 120,
-   "distance": 400,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "winterhold_0",
-   "town": "Winterhold",
-   "worldspace": "Tamriel",
-   "anchor": "0x0177EF",
-   "object": "objects:perk_mammoth",
-   "angleDeg": 0,
-   "distance": 400,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "winterhold_1",
-   "town": "Winterhold",
-   "worldspace": "Tamriel",
-   "anchor": "0x0177EF",
-   "object": "objects:wall_drill",
-   "angleDeg": 120,
-   "distance": 400,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "whiterun_5",
-   "town": "Whiterun",
-   "worldspace": "WhiterunWorld",
-   "anchor": "0x0162CE",
-   "object": "objects:perk_frostbite",
-   "angleDeg": 160,
-   "distance": 800,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "riverwood_5",
-   "town": "Riverwood",
-   "worldspace": "Tamriel",
-   "anchor": "0x0162A4",
-   "object": "objects:perk_stormcrown",
-   "angleDeg": 225,
-   "distance": 450,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "riften_4",
-   "town": "Riften",
-   "worldspace": "RiftenWorld",
-   "anchor": "0x01C390",
-   "object": "objects:perk_frostbite",
-   "angleDeg": 45,
-   "distance": 700,
-   "verify": [
-    "distance"
-   ]
-  },
-  {
-   "id": "solitude_4",
-   "town": "Solitude",
-   "worldspace": "SolitudeWorld",
-   "anchor": "0x04D0F4",
-   "object": "objects:perk_stormcrown",
-   "angleDeg": 135,
-   "distance": 700,
-   "verify": [
-    "distance"
-   ]
-  }
- ]
+  "sheet": "locations",
+  "about": "Every town gets the full set: Sheogorath's Coffer, an ammo cache, all nine brew shrines and its wall weapons, laid out as a brew alley (sheet: layout) near the town's map marker (anchor).",
+  "columns": [
+    "id",
+    "town",
+    "worldspace",
+    "anchor",
+    "object",
+    "slot",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "riverwood_0",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:coffer",
+      "slot": "layout:box",
+      "verify": []
+    },
+    {
+      "id": "riverwood_1",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:ammo_crate",
+      "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "riverwood_2",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:perk_trollshide",
+      "slot": "layout:perk_0",
+      "verify": []
+    },
+    {
+      "id": "riverwood_3",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:perk_quicksilver",
+      "slot": "layout:perk_1",
+      "verify": []
+    },
+    {
+      "id": "riverwood_4",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:perk_twinstrike",
+      "slot": "layout:perk_2",
+      "verify": []
+    },
+    {
+      "id": "riverwood_5",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:perk_hearthfire",
+      "slot": "layout:perk_3",
+      "verify": []
+    },
+    {
+      "id": "riverwood_6",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:perk_windrunner",
+      "slot": "layout:perk_4",
+      "verify": []
+    },
+    {
+      "id": "riverwood_7",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:perk_hawkeye",
+      "slot": "layout:perk_5",
+      "verify": []
+    },
+    {
+      "id": "riverwood_8",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:perk_mammoth",
+      "slot": "layout:perk_6",
+      "verify": []
+    },
+    {
+      "id": "riverwood_9",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:perk_frostbite",
+      "slot": "layout:perk_7",
+      "verify": []
+    },
+    {
+      "id": "riverwood_10",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:perk_stormcrown",
+      "slot": "layout:perk_8",
+      "verify": []
+    },
+    {
+      "id": "riverwood_11",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:wall_triad",
+      "slot": "layout:wall_0",
+      "verify": []
+    },
+    {
+      "id": "riverwood_12",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:wall_steampump",
+      "slot": "layout:wall_1",
+      "verify": []
+    },
+    {
+      "id": "whiterun_0",
+      "town": "Whiterun",
+      "worldspace": "WhiterunWorld",
+      "anchor": "0x0162CE",
+      "object": "objects:coffer",
+      "slot": "layout:box",
+      "verify": []
+    },
+    {
+      "id": "whiterun_1",
+      "town": "Whiterun",
+      "worldspace": "WhiterunWorld",
+      "anchor": "0x0162CE",
+      "object": "objects:ammo_crate",
+      "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "whiterun_2",
+      "town": "Whiterun",
+      "worldspace": "WhiterunWorld",
+      "anchor": "0x0162CE",
+      "object": "objects:perk_trollshide",
+      "slot": "layout:perk_0",
+      "verify": []
+    },
+    {
+      "id": "whiterun_3",
+      "town": "Whiterun",
+      "worldspace": "WhiterunWorld",
+      "anchor": "0x0162CE",
+      "object": "objects:perk_quicksilver",
+      "slot": "layout:perk_1",
+      "verify": []
+    },
+    {
+      "id": "whiterun_4",
+      "town": "Whiterun",
+      "worldspace": "WhiterunWorld",
+      "anchor": "0x0162CE",
+      "object": "objects:perk_twinstrike",
+      "slot": "layout:perk_2",
+      "verify": []
+    },
+    {
+      "id": "whiterun_5",
+      "town": "Whiterun",
+      "worldspace": "WhiterunWorld",
+      "anchor": "0x0162CE",
+      "object": "objects:perk_hearthfire",
+      "slot": "layout:perk_3",
+      "verify": []
+    },
+    {
+      "id": "whiterun_6",
+      "town": "Whiterun",
+      "worldspace": "WhiterunWorld",
+      "anchor": "0x0162CE",
+      "object": "objects:perk_windrunner",
+      "slot": "layout:perk_4",
+      "verify": []
+    },
+    {
+      "id": "whiterun_7",
+      "town": "Whiterun",
+      "worldspace": "WhiterunWorld",
+      "anchor": "0x0162CE",
+      "object": "objects:perk_hawkeye",
+      "slot": "layout:perk_5",
+      "verify": []
+    },
+    {
+      "id": "whiterun_8",
+      "town": "Whiterun",
+      "worldspace": "WhiterunWorld",
+      "anchor": "0x0162CE",
+      "object": "objects:perk_mammoth",
+      "slot": "layout:perk_6",
+      "verify": []
+    },
+    {
+      "id": "whiterun_9",
+      "town": "Whiterun",
+      "worldspace": "WhiterunWorld",
+      "anchor": "0x0162CE",
+      "object": "objects:perk_frostbite",
+      "slot": "layout:perk_7",
+      "verify": []
+    },
+    {
+      "id": "whiterun_10",
+      "town": "Whiterun",
+      "worldspace": "WhiterunWorld",
+      "anchor": "0x0162CE",
+      "object": "objects:perk_stormcrown",
+      "slot": "layout:perk_8",
+      "verify": []
+    },
+    {
+      "id": "whiterun_11",
+      "town": "Whiterun",
+      "worldspace": "WhiterunWorld",
+      "anchor": "0x0162CE",
+      "object": "objects:wall_spider",
+      "slot": "layout:wall_0",
+      "verify": []
+    },
+    {
+      "id": "whiterun_12",
+      "town": "Whiterun",
+      "worldspace": "WhiterunWorld",
+      "anchor": "0x0162CE",
+      "object": "objects:wall_marksman",
+      "slot": "layout:wall_1",
+      "verify": []
+    },
+    {
+      "id": "solitude_0",
+      "town": "Solitude",
+      "worldspace": "SolitudeWorld",
+      "anchor": "0x04D0F4",
+      "object": "objects:coffer",
+      "slot": "layout:box",
+      "verify": []
+    },
+    {
+      "id": "solitude_1",
+      "town": "Solitude",
+      "worldspace": "SolitudeWorld",
+      "anchor": "0x04D0F4",
+      "object": "objects:ammo_crate",
+      "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "solitude_2",
+      "town": "Solitude",
+      "worldspace": "SolitudeWorld",
+      "anchor": "0x04D0F4",
+      "object": "objects:perk_trollshide",
+      "slot": "layout:perk_0",
+      "verify": []
+    },
+    {
+      "id": "solitude_3",
+      "town": "Solitude",
+      "worldspace": "SolitudeWorld",
+      "anchor": "0x04D0F4",
+      "object": "objects:perk_quicksilver",
+      "slot": "layout:perk_1",
+      "verify": []
+    },
+    {
+      "id": "solitude_4",
+      "town": "Solitude",
+      "worldspace": "SolitudeWorld",
+      "anchor": "0x04D0F4",
+      "object": "objects:perk_twinstrike",
+      "slot": "layout:perk_2",
+      "verify": []
+    },
+    {
+      "id": "solitude_5",
+      "town": "Solitude",
+      "worldspace": "SolitudeWorld",
+      "anchor": "0x04D0F4",
+      "object": "objects:perk_hearthfire",
+      "slot": "layout:perk_3",
+      "verify": []
+    },
+    {
+      "id": "solitude_6",
+      "town": "Solitude",
+      "worldspace": "SolitudeWorld",
+      "anchor": "0x04D0F4",
+      "object": "objects:perk_windrunner",
+      "slot": "layout:perk_4",
+      "verify": []
+    },
+    {
+      "id": "solitude_7",
+      "town": "Solitude",
+      "worldspace": "SolitudeWorld",
+      "anchor": "0x04D0F4",
+      "object": "objects:perk_hawkeye",
+      "slot": "layout:perk_5",
+      "verify": []
+    },
+    {
+      "id": "solitude_8",
+      "town": "Solitude",
+      "worldspace": "SolitudeWorld",
+      "anchor": "0x04D0F4",
+      "object": "objects:perk_mammoth",
+      "slot": "layout:perk_6",
+      "verify": []
+    },
+    {
+      "id": "solitude_9",
+      "town": "Solitude",
+      "worldspace": "SolitudeWorld",
+      "anchor": "0x04D0F4",
+      "object": "objects:perk_frostbite",
+      "slot": "layout:perk_7",
+      "verify": []
+    },
+    {
+      "id": "solitude_10",
+      "town": "Solitude",
+      "worldspace": "SolitudeWorld",
+      "anchor": "0x04D0F4",
+      "object": "objects:perk_stormcrown",
+      "slot": "layout:perk_8",
+      "verify": []
+    },
+    {
+      "id": "solitude_11",
+      "town": "Solitude",
+      "worldspace": "SolitudeWorld",
+      "anchor": "0x04D0F4",
+      "object": "objects:wall_drill",
+      "slot": "layout:wall_0",
+      "verify": []
+    },
+    {
+      "id": "windhelm_0",
+      "town": "Windhelm",
+      "worldspace": "WindhelmWorld",
+      "anchor": "0x038436",
+      "object": "objects:coffer",
+      "slot": "layout:box",
+      "verify": []
+    },
+    {
+      "id": "windhelm_1",
+      "town": "Windhelm",
+      "worldspace": "WindhelmWorld",
+      "anchor": "0x038436",
+      "object": "objects:ammo_crate",
+      "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "windhelm_2",
+      "town": "Windhelm",
+      "worldspace": "WindhelmWorld",
+      "anchor": "0x038436",
+      "object": "objects:perk_trollshide",
+      "slot": "layout:perk_0",
+      "verify": []
+    },
+    {
+      "id": "windhelm_3",
+      "town": "Windhelm",
+      "worldspace": "WindhelmWorld",
+      "anchor": "0x038436",
+      "object": "objects:perk_quicksilver",
+      "slot": "layout:perk_1",
+      "verify": []
+    },
+    {
+      "id": "windhelm_4",
+      "town": "Windhelm",
+      "worldspace": "WindhelmWorld",
+      "anchor": "0x038436",
+      "object": "objects:perk_twinstrike",
+      "slot": "layout:perk_2",
+      "verify": []
+    },
+    {
+      "id": "windhelm_5",
+      "town": "Windhelm",
+      "worldspace": "WindhelmWorld",
+      "anchor": "0x038436",
+      "object": "objects:perk_hearthfire",
+      "slot": "layout:perk_3",
+      "verify": []
+    },
+    {
+      "id": "windhelm_6",
+      "town": "Windhelm",
+      "worldspace": "WindhelmWorld",
+      "anchor": "0x038436",
+      "object": "objects:perk_windrunner",
+      "slot": "layout:perk_4",
+      "verify": []
+    },
+    {
+      "id": "windhelm_7",
+      "town": "Windhelm",
+      "worldspace": "WindhelmWorld",
+      "anchor": "0x038436",
+      "object": "objects:perk_hawkeye",
+      "slot": "layout:perk_5",
+      "verify": []
+    },
+    {
+      "id": "windhelm_8",
+      "town": "Windhelm",
+      "worldspace": "WindhelmWorld",
+      "anchor": "0x038436",
+      "object": "objects:perk_mammoth",
+      "slot": "layout:perk_6",
+      "verify": []
+    },
+    {
+      "id": "windhelm_9",
+      "town": "Windhelm",
+      "worldspace": "WindhelmWorld",
+      "anchor": "0x038436",
+      "object": "objects:perk_frostbite",
+      "slot": "layout:perk_7",
+      "verify": []
+    },
+    {
+      "id": "windhelm_10",
+      "town": "Windhelm",
+      "worldspace": "WindhelmWorld",
+      "anchor": "0x038436",
+      "object": "objects:perk_stormcrown",
+      "slot": "layout:perk_8",
+      "verify": []
+    },
+    {
+      "id": "windhelm_11",
+      "town": "Windhelm",
+      "worldspace": "WindhelmWorld",
+      "anchor": "0x038436",
+      "object": "objects:wall_spider",
+      "slot": "layout:wall_0",
+      "verify": []
+    },
+    {
+      "id": "markarth_0",
+      "town": "Markarth",
+      "worldspace": "MarkarthWorld",
+      "anchor": "0x01C38A",
+      "object": "objects:coffer",
+      "slot": "layout:box",
+      "verify": []
+    },
+    {
+      "id": "markarth_1",
+      "town": "Markarth",
+      "worldspace": "MarkarthWorld",
+      "anchor": "0x01C38A",
+      "object": "objects:ammo_crate",
+      "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "markarth_2",
+      "town": "Markarth",
+      "worldspace": "MarkarthWorld",
+      "anchor": "0x01C38A",
+      "object": "objects:perk_trollshide",
+      "slot": "layout:perk_0",
+      "verify": []
+    },
+    {
+      "id": "markarth_3",
+      "town": "Markarth",
+      "worldspace": "MarkarthWorld",
+      "anchor": "0x01C38A",
+      "object": "objects:perk_quicksilver",
+      "slot": "layout:perk_1",
+      "verify": []
+    },
+    {
+      "id": "markarth_4",
+      "town": "Markarth",
+      "worldspace": "MarkarthWorld",
+      "anchor": "0x01C38A",
+      "object": "objects:perk_twinstrike",
+      "slot": "layout:perk_2",
+      "verify": []
+    },
+    {
+      "id": "markarth_5",
+      "town": "Markarth",
+      "worldspace": "MarkarthWorld",
+      "anchor": "0x01C38A",
+      "object": "objects:perk_hearthfire",
+      "slot": "layout:perk_3",
+      "verify": []
+    },
+    {
+      "id": "markarth_6",
+      "town": "Markarth",
+      "worldspace": "MarkarthWorld",
+      "anchor": "0x01C38A",
+      "object": "objects:perk_windrunner",
+      "slot": "layout:perk_4",
+      "verify": []
+    },
+    {
+      "id": "markarth_7",
+      "town": "Markarth",
+      "worldspace": "MarkarthWorld",
+      "anchor": "0x01C38A",
+      "object": "objects:perk_hawkeye",
+      "slot": "layout:perk_5",
+      "verify": []
+    },
+    {
+      "id": "markarth_8",
+      "town": "Markarth",
+      "worldspace": "MarkarthWorld",
+      "anchor": "0x01C38A",
+      "object": "objects:perk_mammoth",
+      "slot": "layout:perk_6",
+      "verify": []
+    },
+    {
+      "id": "markarth_9",
+      "town": "Markarth",
+      "worldspace": "MarkarthWorld",
+      "anchor": "0x01C38A",
+      "object": "objects:perk_frostbite",
+      "slot": "layout:perk_7",
+      "verify": []
+    },
+    {
+      "id": "markarth_10",
+      "town": "Markarth",
+      "worldspace": "MarkarthWorld",
+      "anchor": "0x01C38A",
+      "object": "objects:perk_stormcrown",
+      "slot": "layout:perk_8",
+      "verify": []
+    },
+    {
+      "id": "markarth_11",
+      "town": "Markarth",
+      "worldspace": "MarkarthWorld",
+      "anchor": "0x01C38A",
+      "object": "objects:wall_marksman",
+      "slot": "layout:wall_0",
+      "verify": []
+    },
+    {
+      "id": "riften_0",
+      "town": "Riften",
+      "worldspace": "RiftenWorld",
+      "anchor": "0x01C390",
+      "object": "objects:coffer",
+      "slot": "layout:box",
+      "verify": []
+    },
+    {
+      "id": "riften_1",
+      "town": "Riften",
+      "worldspace": "RiftenWorld",
+      "anchor": "0x01C390",
+      "object": "objects:ammo_crate",
+      "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "riften_2",
+      "town": "Riften",
+      "worldspace": "RiftenWorld",
+      "anchor": "0x01C390",
+      "object": "objects:perk_trollshide",
+      "slot": "layout:perk_0",
+      "verify": []
+    },
+    {
+      "id": "riften_3",
+      "town": "Riften",
+      "worldspace": "RiftenWorld",
+      "anchor": "0x01C390",
+      "object": "objects:perk_quicksilver",
+      "slot": "layout:perk_1",
+      "verify": []
+    },
+    {
+      "id": "riften_4",
+      "town": "Riften",
+      "worldspace": "RiftenWorld",
+      "anchor": "0x01C390",
+      "object": "objects:perk_twinstrike",
+      "slot": "layout:perk_2",
+      "verify": []
+    },
+    {
+      "id": "riften_5",
+      "town": "Riften",
+      "worldspace": "RiftenWorld",
+      "anchor": "0x01C390",
+      "object": "objects:perk_hearthfire",
+      "slot": "layout:perk_3",
+      "verify": []
+    },
+    {
+      "id": "riften_6",
+      "town": "Riften",
+      "worldspace": "RiftenWorld",
+      "anchor": "0x01C390",
+      "object": "objects:perk_windrunner",
+      "slot": "layout:perk_4",
+      "verify": []
+    },
+    {
+      "id": "riften_7",
+      "town": "Riften",
+      "worldspace": "RiftenWorld",
+      "anchor": "0x01C390",
+      "object": "objects:perk_hawkeye",
+      "slot": "layout:perk_5",
+      "verify": []
+    },
+    {
+      "id": "riften_8",
+      "town": "Riften",
+      "worldspace": "RiftenWorld",
+      "anchor": "0x01C390",
+      "object": "objects:perk_mammoth",
+      "slot": "layout:perk_6",
+      "verify": []
+    },
+    {
+      "id": "riften_9",
+      "town": "Riften",
+      "worldspace": "RiftenWorld",
+      "anchor": "0x01C390",
+      "object": "objects:perk_frostbite",
+      "slot": "layout:perk_7",
+      "verify": []
+    },
+    {
+      "id": "riften_10",
+      "town": "Riften",
+      "worldspace": "RiftenWorld",
+      "anchor": "0x01C390",
+      "object": "objects:perk_stormcrown",
+      "slot": "layout:perk_8",
+      "verify": []
+    },
+    {
+      "id": "riften_11",
+      "town": "Riften",
+      "worldspace": "RiftenWorld",
+      "anchor": "0x01C390",
+      "object": "objects:wall_steampump",
+      "slot": "layout:wall_0",
+      "verify": []
+    },
+    {
+      "id": "falkreath_0",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:coffer",
+      "slot": "layout:box",
+      "verify": []
+    },
+    {
+      "id": "falkreath_1",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:ammo_crate",
+      "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "falkreath_2",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:perk_trollshide",
+      "slot": "layout:perk_0",
+      "verify": []
+    },
+    {
+      "id": "falkreath_3",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:perk_quicksilver",
+      "slot": "layout:perk_1",
+      "verify": []
+    },
+    {
+      "id": "falkreath_4",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:perk_twinstrike",
+      "slot": "layout:perk_2",
+      "verify": []
+    },
+    {
+      "id": "falkreath_5",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:perk_hearthfire",
+      "slot": "layout:perk_3",
+      "verify": []
+    },
+    {
+      "id": "falkreath_6",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:perk_windrunner",
+      "slot": "layout:perk_4",
+      "verify": []
+    },
+    {
+      "id": "falkreath_7",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:perk_hawkeye",
+      "slot": "layout:perk_5",
+      "verify": []
+    },
+    {
+      "id": "falkreath_8",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:perk_mammoth",
+      "slot": "layout:perk_6",
+      "verify": []
+    },
+    {
+      "id": "falkreath_9",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:perk_frostbite",
+      "slot": "layout:perk_7",
+      "verify": []
+    },
+    {
+      "id": "falkreath_10",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:perk_stormcrown",
+      "slot": "layout:perk_8",
+      "verify": []
+    },
+    {
+      "id": "falkreath_11",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:wall_triad",
+      "slot": "layout:wall_0",
+      "verify": []
+    },
+    {
+      "id": "morthal_0",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:coffer",
+      "slot": "layout:box",
+      "verify": []
+    },
+    {
+      "id": "morthal_1",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:ammo_crate",
+      "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "morthal_2",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:perk_trollshide",
+      "slot": "layout:perk_0",
+      "verify": []
+    },
+    {
+      "id": "morthal_3",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:perk_quicksilver",
+      "slot": "layout:perk_1",
+      "verify": []
+    },
+    {
+      "id": "morthal_4",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:perk_twinstrike",
+      "slot": "layout:perk_2",
+      "verify": []
+    },
+    {
+      "id": "morthal_5",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:perk_hearthfire",
+      "slot": "layout:perk_3",
+      "verify": []
+    },
+    {
+      "id": "morthal_6",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:perk_windrunner",
+      "slot": "layout:perk_4",
+      "verify": []
+    },
+    {
+      "id": "morthal_7",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:perk_hawkeye",
+      "slot": "layout:perk_5",
+      "verify": []
+    },
+    {
+      "id": "morthal_8",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:perk_mammoth",
+      "slot": "layout:perk_6",
+      "verify": []
+    },
+    {
+      "id": "morthal_9",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:perk_frostbite",
+      "slot": "layout:perk_7",
+      "verify": []
+    },
+    {
+      "id": "morthal_10",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:perk_stormcrown",
+      "slot": "layout:perk_8",
+      "verify": []
+    },
+    {
+      "id": "morthal_11",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:wall_spider",
+      "slot": "layout:wall_0",
+      "verify": []
+    },
+    {
+      "id": "dawnstar_0",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:coffer",
+      "slot": "layout:box",
+      "verify": []
+    },
+    {
+      "id": "dawnstar_1",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:ammo_crate",
+      "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "dawnstar_2",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:perk_trollshide",
+      "slot": "layout:perk_0",
+      "verify": []
+    },
+    {
+      "id": "dawnstar_3",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:perk_quicksilver",
+      "slot": "layout:perk_1",
+      "verify": []
+    },
+    {
+      "id": "dawnstar_4",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:perk_twinstrike",
+      "slot": "layout:perk_2",
+      "verify": []
+    },
+    {
+      "id": "dawnstar_5",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:perk_hearthfire",
+      "slot": "layout:perk_3",
+      "verify": []
+    },
+    {
+      "id": "dawnstar_6",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:perk_windrunner",
+      "slot": "layout:perk_4",
+      "verify": []
+    },
+    {
+      "id": "dawnstar_7",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:perk_hawkeye",
+      "slot": "layout:perk_5",
+      "verify": []
+    },
+    {
+      "id": "dawnstar_8",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:perk_mammoth",
+      "slot": "layout:perk_6",
+      "verify": []
+    },
+    {
+      "id": "dawnstar_9",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:perk_frostbite",
+      "slot": "layout:perk_7",
+      "verify": []
+    },
+    {
+      "id": "dawnstar_10",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:perk_stormcrown",
+      "slot": "layout:perk_8",
+      "verify": []
+    },
+    {
+      "id": "dawnstar_11",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:wall_marksman",
+      "slot": "layout:wall_0",
+      "verify": []
+    },
+    {
+      "id": "winterhold_0",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:coffer",
+      "slot": "layout:box",
+      "verify": []
+    },
+    {
+      "id": "winterhold_1",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:ammo_crate",
+      "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "winterhold_2",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:perk_trollshide",
+      "slot": "layout:perk_0",
+      "verify": []
+    },
+    {
+      "id": "winterhold_3",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:perk_quicksilver",
+      "slot": "layout:perk_1",
+      "verify": []
+    },
+    {
+      "id": "winterhold_4",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:perk_twinstrike",
+      "slot": "layout:perk_2",
+      "verify": []
+    },
+    {
+      "id": "winterhold_5",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:perk_hearthfire",
+      "slot": "layout:perk_3",
+      "verify": []
+    },
+    {
+      "id": "winterhold_6",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:perk_windrunner",
+      "slot": "layout:perk_4",
+      "verify": []
+    },
+    {
+      "id": "winterhold_7",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:perk_hawkeye",
+      "slot": "layout:perk_5",
+      "verify": []
+    },
+    {
+      "id": "winterhold_8",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:perk_mammoth",
+      "slot": "layout:perk_6",
+      "verify": []
+    },
+    {
+      "id": "winterhold_9",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:perk_frostbite",
+      "slot": "layout:perk_7",
+      "verify": []
+    },
+    {
+      "id": "winterhold_10",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:perk_stormcrown",
+      "slot": "layout:perk_8",
+      "verify": []
+    },
+    {
+      "id": "winterhold_11",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:wall_drill",
+      "slot": "layout:wall_0",
+      "verify": []
+    }
+  ]
 }

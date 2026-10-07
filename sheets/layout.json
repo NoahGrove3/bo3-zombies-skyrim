@@ -1,0 +1,130 @@
+{
+  "sheet": "layout",
+  "about": "Brew alley: where each piece stands in a town, relative to the alley centre (+y toward the Coffer), and which way it faces (degrees, 0 = +y). The game finds open, flat, walkable ground near the town marker for the whole alley.",
+  "columns": [
+    "id",
+    "x",
+    "y",
+    "faceDeg",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "box",
+      "x": 0,
+      "y": 430,
+      "faceDeg": 180,
+      "verify": []
+    },
+    {
+      "id": "ammo",
+      "x": 0,
+      "y": -430,
+      "faceDeg": 0,
+      "verify": []
+    },
+    {
+      "id": "wall_0",
+      "x": -150,
+      "y": -430,
+      "faceDeg": 0,
+      "verify": []
+    },
+    {
+      "id": "wall_1",
+      "x": 150,
+      "y": -430,
+      "faceDeg": 0,
+      "verify": []
+    },
+    {
+      "id": "wall_2",
+      "x": -260,
+      "y": -400,
+      "faceDeg": 30,
+      "verify": []
+    },
+    {
+      "id": "perk_0",
+      "x": -175,
+      "y": -280,
+      "faceDeg": 90,
+      "verify": []
+    },
+    {
+      "id": "perk_1",
+      "x": -175,
+      "y": -140,
+      "faceDeg": 90,
+      "verify": []
+    },
+    {
+      "id": "perk_2",
+      "x": -175,
+      "y": 0,
+      "faceDeg": 90,
+      "verify": []
+    },
+    {
+      "id": "perk_3",
+      "x": -175,
+      "y": 140,
+      "faceDeg": 90,
+      "verify": []
+    },
+    {
+      "id": "perk_4",
+      "x": -175,
+      "y": 280,
+      "faceDeg": 90,
+      "verify": []
+    },
+    {
+      "id": "perk_5",
+      "x": 175,
+      "y": -210,
+      "faceDeg": 270,
+      "verify": []
+    },
+    {
+      "id": "perk_6",
+      "x": 175,
+      "y": -70,
+      "faceDeg": 270,
+      "verify": []
+    },
+    {
+      "id": "perk_7",
+      "x": 175,
+      "y": 70,
+      "faceDeg": 270,
+      "verify": []
+    },
+    {
+      "id": "perk_8",
+      "x": 175,
+      "y": 210,
+      "faceDeg": 270,
+      "verify": []
+    }
+  ],
+  "search": {
+    "distances": [
+      0,
+      300,
+      600,
+      900,
+      1200
+    ],
+    "angles": 12,
+    "yawsDeg": [
+      0,
+      45,
+      90,
+      135
+    ],
+    "snapTolerance": 45,
+    "maxHeightSpread": 90,
+    "sweepRadius": 2500
+  }
+}

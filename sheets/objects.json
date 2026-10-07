@@ -27,6 +27,19 @@
       "scale": 1.25
     },
     {
+      "id": "ammo_crate",
+      "kind": "ammo",
+      "label": "Ammo Cache",
+      "activateText": "Restock all ammo",
+      "model": "DLC02\\Furniture\\DLC2DarkElfCrate01.nif",
+      "cost": 750,
+      "refs": "none",
+      "scale": 1.0,
+      "verify": [
+        "model"
+      ]
+    },
+    {
       "id": "perk_trollshide",
       "kind": "perk",
       "label": "Troll's Hide Mead",

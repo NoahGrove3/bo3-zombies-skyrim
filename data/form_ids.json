@@ -163,6 +163,11 @@
   "STAT:show_wabbajack": "0x89f",
   "STAT:show_thuumcannon": "0x8a0",
   "STAT:show_skyforgearc": "0x8a1",
-  "STAT:rise_fx": "0x8a2"
+  "STAT:rise_fx": "0x8a2",
+  "ACTI:ammo_crate": "0x8a3",
+  "STAT:ammo_quiver": "0x8a4",
+  "STAT:ammo_glow": "0x8a5",
+  "LIGH:ammo_light": "0x8a6",
+  "SNDR:coffer_skull": "0x8a7"
  }
 }

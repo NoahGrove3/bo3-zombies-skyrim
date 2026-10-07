@@ -20,6 +20,10 @@ namespace bo3z
 		float        g_carry = 0;   // horizontal speed carried into a jump from a slide (units/s)
 		bool         g_wasAir = false;
 		bool         g_gmst = false;
+		bool         g_wantSlide = false;   // crouch pressed while sprinting
+		bool         g_wantJumpCarry = false;
+		float        g_air = 0;             // seconds airborne
+		bool         g_forcedSneak = false;
 
 		void Apply(float a_want)
 		{
@@ -97,10 +101,28 @@ namespace bo3z
 
 	namespace Movement
 	{
+		void OnButton(const RE::ButtonEvent* a_event)
+		{
+			if (!a_event || !a_event->IsDown()) {
+				return;
+			}
+			auto*       ue = RE::UserEvents::GetSingleton();
+			auto*       player = RE::PlayerCharacter::GetSingleton();
+			const auto& ev = a_event->QUserEvent();
+			if (!ue || !player) {
+				return;
+			}
+			if (ev == ue->sneak && (player->AsActorState()->IsSprinting() || g_applied >= gen::kRunBoost + gen::kSprintBoost * 0.9f)) {
+				g_wantSlide = true;
+			} else if (ev == ue->jump && g_slide > 0) {
+				g_wantJumpCarry = true;
+			}
+		}
+
 		void Reset()
 		{
-			g_applied = 0, g_slide = 0, g_carry = 0;
-			g_wasAir = false;
+			g_applied = 0, g_slide = 0, g_carry = 0, g_air = 0;
+			g_wasAir = false, g_wantSlide = false, g_wantJumpCarry = false, g_forcedSneak = false;
 		}
 
 		void Tick(float a_delta)
@@ -112,45 +134,43 @@ namespace bo3z
 			TuneGameSettings();
 			auto*      st = player->AsActorState();
 			auto*      cc = player->GetCharController();
-			const bool sprint = st->IsSprinting(), sneak = st->IsSneaking();
+			const bool sprint = st->IsSprinting();
 			const bool air = cc && cc->context.currentState != RE::hkpCharacterStateType::kOnGround;
+			g_air = air ? g_air + a_delta : 0;
 
-			// Start a slide: crouch pressed while sprinting (or still carrying sprint speed), on the ground.
-			if (sneak && !g_wasSneaking && !air && (sprint || g_applied >= gen::kRunBoost + gen::kSprintBoost * 0.9f)) {
-				g_slide = gen::kSlideSeconds;
-				g_slideDir = Heading(player);
-				if (auto w = WishDir(player); w.x != 0 || w.y != 0) {
-					g_slideDir = w;
+			if (g_wantSlide) {
+				g_wantSlide = false;
+				if (!air) {
+					g_slide = gen::kSlideSeconds;
+					g_slideDir = Heading(player);
+					if (auto w = WishDir(player); w.x != 0 || w.y != 0) {
+						g_slideDir = w;
+					}
+					if (!st->IsSneaking()) {
+						st->actorState1.sneaking = 1;  // drop into a crouch for the slide
+						g_forcedSneak = true;
+					}
+					Forms::Play(gen::Sound::knife);  // whoosh
 				}
-				Forms::Play(gen::Sound::knife);  // whoosh
 			}
-			if (!sneak) {
-				g_slide = std::min(g_slide, 0.12f);  // standing up ends the slide quickly
+			if (g_slide > 0) {
+				g_carry = (gen::kSlideSpeed * std::pow(g_slide / gen::kSlideSeconds, 0.6f)) * gen::kSlideJump;
 			}
-			g_wasSneaking = sneak;
 
 			if (cc) {
 				RE::NiPoint3 v;
-				GetVel(cc, v);
-				if (g_slide > 0 && !air) {
-					const float k = g_slide / gen::kSlideSeconds;         // 1 -> 0
-					const float speed = gen::kSlideSpeed * std::pow(k, 0.6f);
-					const float along = v.x * g_slideDir.x + v.y * g_slideDir.y;
-					if (speed > along) {
-						SetVel(cc, { g_slideDir.x * speed, g_slideDir.y * speed, v.z });
-					}
-					g_carry = speed * gen::kSlideJump;
-				}
-				if (air && !g_wasAir && g_carry > 0) {
-					// Jumped out of a slide: keep the momentum.
+				// Slide-jump: once we are actually off the ground, keep the slide's speed (horizontal only).
+				if (g_wantJumpCarry && air && g_air > 0.08f) {
+					g_wantJumpCarry = false;
+					GetVel(cc, v);
 					const float h = std::sqrt(v.x * v.x + v.y * v.y);
-					if (g_carry > h) {
+					if (g_carry > h && v.z > 0) {
 						SetVel(cc, { g_slideDir.x * g_carry, g_slideDir.y * g_carry, v.z });
 					}
 					g_slide = 0;
 				}
-				if (air) {
-					// Air strafing: accelerate toward the input, never past the cap (unless already faster).
+				// Optional air strafing (off by default): small horizontal nudges after takeoff, never touching vertical.
+				if (air && gen::kAirControl > 0 && g_air > 0.3f) {
 					if (auto w = WishDir(player); w.x != 0 || w.y != 0) {
 						GetVel(cc, v);
 						RE::NiPoint3 h{ v.x + w.x * gen::kAirControl * a_delta, v.y + w.y * gen::kAirControl * a_delta, 0 };
@@ -161,12 +181,18 @@ namespace bo3z
 						}
 						SetVel(cc, { h.x, h.y, v.z });
 					}
-				} else if (g_slide <= 0) {
-					g_carry = 0;
 				}
 			}
+			if (!air && !g_wantJumpCarry && g_slide <= 0) {
+				g_carry = 0;
+			}
 			g_wasAir = air;
+			const float before = g_slide;
 			g_slide = std::max(0.0f, g_slide - a_delta);
+			if (before > 0 && g_slide <= 0 && g_forcedSneak) {
+				st->actorState1.sneaking = 0;  // stand back up
+				g_forcedSneak = false;
+			}
 
 			float want = gen::kRunBoost;
 			if (g_slide > 0) {

@@ -208,6 +208,25 @@ namespace bo3z
 				}
 				av->SetActorValue(RE::ActorValue::kAggression, 1);  // aggressive only toward enemies: none, except the player we point them at
 			}
+			// Fists only: take every weapon (and bow/arrows) they carry so they fight bare-handed.
+			{
+				auto inv = actor->GetInventory([](RE::TESBoundObject& a_obj) { return a_obj.IsWeapon() || a_obj.IsAmmo(); });
+				for (auto& [obj, data] : inv) {
+					if (data.first > 0) {
+						actor->RemoveItem(obj, data.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+					}
+				}
+				if (auto* eq = actor->GetEquippedObject(false)) {
+					if (eq->IsWeapon()) {
+						RE::ActorEquipManager::GetSingleton()->UnequipObject(actor, eq->As<RE::TESBoundObject>());
+					}
+				}
+				if (auto* eq = actor->GetEquippedObject(true)) {
+					if (eq->IsWeapon()) {
+						RE::ActorEquipManager::GetSingleton()->UnequipObject(actor, eq->As<RE::TESBoundObject>());
+					}
+				}
+			}
 			g_ours[actor->GetFormID()] = *pick;
 			g_alive.push_back({ actor->GetHandle(), *pick });
 			Forms::PlayAt(gen::Sound::rise, actor);
@@ -402,6 +421,18 @@ namespace bo3z
 		{
 			TickFx(a_delta);
 			auto* player = RE::PlayerCharacter::GetSingleton();
+			// Night regen: after a few seconds without taking damage, health surges back (nights only).
+			if (player) {
+				static float last = -1, quiet = 0;
+				auto*        av = player->AsActorValueOwner();
+				const float  hp = av->GetActorValue(RE::ActorValue::kHealth);
+				const float  maxHp = av->GetPermanentActorValue(RE::ActorValue::kHealth);
+				quiet = (last >= 0 && hp < last - 0.01f) ? 0 : quiet + a_delta;
+				if (IsNight() && quiet >= gen::kRegenDelay && hp < maxHp && !player->IsDead()) {
+					av->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, std::min(maxHp - hp, maxHp * gen::kRegenPerSecond * a_delta));
+				}
+				last = av->GetActorValue(RE::ActorValue::kHealth);
+			}
 			if (!player) {
 				return;
 			}

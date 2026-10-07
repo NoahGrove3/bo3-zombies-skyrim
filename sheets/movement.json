@@ -57,8 +57,8 @@
     },
     {
       "id": "air_control",
-      "what": "air strafing: acceleration toward your input while airborne (units/s^2)",
-      "value": 700,
+      "what": "air strafing acceleration (units/s^2); 0 = off (it was cancelling jumps in the first test)",
+      "value": 0,
       "durationMs": 0,
       "verify": [
         "value"

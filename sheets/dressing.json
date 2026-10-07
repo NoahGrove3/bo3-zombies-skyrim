@@ -696,13 +696,58 @@
       "verify": [
         "scale"
       ]
+    },
+    {
+      "id": "ammo_quiver",
+      "for": "ammo",
+      "type": "stat",
+      "model": "DLC02\\Weapons\\DwarvenBolts\\BoltsQuiver.nif",
+      "color": "none",
+      "radius": 0,
+      "x": 0,
+      "y": 0,
+      "z": 62,
+      "scale": 2.0,
+      "spin": 30,
+      "verify": [
+        "z"
+      ]
+    },
+    {
+      "id": "ammo_glow",
+      "for": "ammo",
+      "type": "stat",
+      "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
+      "color": "none",
+      "radius": 0,
+      "x": 0,
+      "y": 0,
+      "z": 75,
+      "scale": 0.5,
+      "spin": 0,
+      "verify": []
+    },
+    {
+      "id": "ammo_light",
+      "for": "ammo",
+      "type": "light",
+      "model": "none",
+      "color": "FFB040",
+      "radius": 380,
+      "x": 0,
+      "y": 30,
+      "z": 100,
+      "scale": 1,
+      "spin": 0,
+      "verify": []
     }
   ],
   "show": {
-    "cheeseModel": "Clutter\\Food\\CheeseWheel01A.nif",
+    "cheeseModel": "DLC02\\Clutter\\DragonBones\\DLC2DragonBoneHead.nif",
     "riseUnits": 45,
     "spinSeconds": 4.2,
     "offerSeconds": 12,
-    "riseFxModel": "DLC01\\Effects\\DraugrEmergeGround01.nif"
+    "riseFxModel": "DLC01\\Effects\\DraugrEmergeGround01.nif",
+    "cheeseScale": 0.3
   }
 }

@@ -125,6 +125,7 @@ namespace bo3z
 
 	namespace Movement
 	{
+		void OnButton(const RE::ButtonEvent* a_event);  // crouch/jump keys (Skyrim ignores crouch while sprinting)
 		void Tick(float a_delta);
 		void Reset();
 	}
