@@ -111,6 +111,40 @@ namespace bo3z
 			return std::nullopt;
 		}
 
+		// A leveled list (LVLN) can't be placed as-is: resolve it to one NPC for the player's level, the
+		// way the game does for encounter zones. Falls back to any NPC the list contains.
+		RE::TESBoundObject* ResolveSpawnable(RE::TESBoundObject* a_base, RE::PlayerCharacter* a_player)
+		{
+			for (int depth = 0; depth < 6 && a_base; ++depth) {
+				auto* lev = a_base->As<RE::TESLevCharacter>();
+				if (!lev) {
+					return a_base;
+				}
+				RE::BSScrapArray<RE::CALCED_OBJECT> picked;
+				lev->CalculateCurrentFormList(a_player->GetLevel(), 1, picked, 0, true);
+				RE::TESBoundObject* next = nullptr;
+				for (auto& c : picked) {
+					if (c.form && (next = c.form->As<RE::TESBoundObject>())) {
+						break;
+					}
+				}
+				if (!next) {
+					std::vector<RE::TESBoundObject*> npcs;
+					for (auto* f : lev->GetContainedForms()) {
+						if (f && f->Is(RE::FormType::NPC)) {
+							npcs.push_back(f->As<RE::TESBoundObject>());
+						}
+					}
+					if (npcs.empty()) {
+						return nullptr;
+					}
+					next = npcs[std::uniform_int_distribution<std::size_t>(0, npcs.size() - 1)(g_rng)];
+				}
+				a_base = next;
+			}
+			return a_base && a_base->Is(RE::FormType::NPC) ? a_base : nullptr;
+		}
+
 		bool SpawnOne(RE::PlayerCharacter* a_player)
 		{
 			const auto pick = PickEnemy();
@@ -132,7 +166,12 @@ namespace bo3z
 				}
 			}
 
-			auto ref = a_player->PlaceObjectAtMe(Forms::Enemy(*pick), false);
+			auto* base = ResolveSpawnable(Forms::Enemy(*pick), a_player);
+			if (!base) {
+				logger::warn("could not resolve {} to an NPC", gen::kEnemies[*pick].id);
+				return false;
+			}
+			auto ref = a_player->PlaceObjectAtMe(base, false);
 			auto* actor = ref ? ref->As<RE::Actor>() : nullptr;
 			if (!actor) {
 				logger::warn("spawn failed for {}", gen::kEnemies[*pick].id);
