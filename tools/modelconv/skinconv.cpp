@@ -338,6 +338,20 @@ int main(int argc, char** argv)
 			BoundingSphere bs(c, r + 1.0f);
 			nif.SetShapeBoneBounds(name, bi, bs);
 		}
+		// SSE draws from the per-vertex weights in BSTriShape/NiSkinPartition (SetShapeBoneWeights only fills NiSkinData).
+		for (uint32_t v = 0; v < g.w.size(); ++v) {
+			std::vector<std::pair<float, uint8_t>> ws;
+			for (auto& [b, x] : g.w[v]) {
+				const auto it = std::find(bones.begin(), bones.end(), b);
+				if (it != bones.end() && x > 0) ws.push_back({ x, static_cast<uint8_t>(it - bones.begin()) });
+			}
+			std::sort(ws.begin(), ws.end(), [](auto& a, auto& b) { return a.first > b.first; });
+			if (ws.size() > 4) ws.resize(4);
+			std::vector<uint8_t> ids;
+			std::vector<float>   wts;
+			for (auto& [x, i] : ws) ids.push_back(i), wts.push_back(x);
+			nif.SetShapeVertWeights(name, v, ids, wts);
+		}
 		nif.UpdateSkinPartitions(sh);
 		nif.CalcTangentsForShape(sh);
 		Mat mat = mats.count(matName) ? mats[matName] : mats["*"];
