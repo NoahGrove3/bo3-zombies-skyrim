@@ -205,6 +205,8 @@ namespace bo3z
 			RE::NiPoint3 center{};
 			float        yaw{ 0 };
 			int          candidate{ 0 };
+			float        top{ 0 };        // the stand's floor: every machine stands at this height
+			bool         topSet{ false };
 		};
 		std::array<TownPlan, gen::kTowns.size()> g_towns{};
 		RE::ObjectRefHandle                       g_probe;
@@ -383,55 +385,76 @@ namespace bo3z
 			logger::info("shops: cleared {} old pieces in {}", n, gen::kTowns[a_town]);
 		}
 
-		// Existing alley from an earlier session? The ammo cache only exists in this layout, so it marks it.
+		// Existing stand from an earlier session? The Coffer with the stand under it marks it; older layouts
+		// (separate machines on the ground) are swept and rebuilt as a stand.
 		bool AdoptExisting(int a_town, RE::TESObjectREFR* a_anchor)
 		{
-			// Alleys built by the v0.4.0 fallback sit right at the marker (Whiterun's gate): rebuild those.
-			int ammoIdx = -1;
-			for (int i = 0; i < static_cast<int>(gen::kObjects.size()); ++i) {
-				if (gen::kObjects[i].kind == 3 && !gen::kObjects[i].retired) {
-					ammoIdx = i;
-				}
-			}
-			if (auto* ammoBase = ammoIdx >= 0 ? Forms::Object(ammoIdx) : nullptr) {
-				bool atMarker = false;
-				RE::TES::GetSingleton()->ForEachReferenceInRange(a_anchor, 900.0f, [&](RE::TESObjectREFR* r) {
-					if (r && !r->IsDeleted() && r->GetBaseObject() == ammoBase && NearDoor(a_anchor, r->GetPosition())) {
-						atMarker = true;
-					}
-					return RE::BSContainer::ForEachResult::kContinue;
-				});
-				if (atMarker) {
-					logger::info("shops: {} alley blocks a door, rebuilding", gen::kTowns[a_town]);
-					return false;
-				}
-			}
-			RE::TESForm* ammo = nullptr;
-			int          ammoSlot = -1;
+			RE::TESForm* coffer = nullptr;
+			int          slot = -1;
 			for (const auto& l : gen::kLocations) {
-				if (l.town == a_town && gen::kObjects[l.object].kind == 3 && !gen::kObjects[l.object].retired) {
-					ammo = Forms::Object(l.object), ammoSlot = l.slot;
+				if (l.town == a_town && gen::kObjects[l.object].kind == 0 && !gen::kObjects[l.object].retired) {
+					coffer = Forms::Object(l.object), slot = l.slot;
 				}
+			}
+			auto* stand = Forms::Ours(gen::kStandStat);
+			if (!coffer || !stand || slot < 0) {
+				return false;
 			}
 			RE::TESObjectREFR* found = nullptr;
 			RE::TES::GetSingleton()->ForEachReferenceInRange(a_anchor, gen::kPlanSweep, [&](RE::TESObjectREFR* r) {
-				if (r && !r->IsDeleted() && r->GetBaseObject() == ammo) {
+				if (r && !r->IsDeleted() && r->GetBaseObject() == coffer) {
 					found = r;
 					return RE::BSContainer::ForEachResult::kStop;
 				}
 				return RE::BSContainer::ForEachResult::kContinue;
 			});
-			if (!found || ammoSlot < 0) {
+			if (!found) {
+				return false;
+			}
+			bool hasStand = false;
+			RE::TES::GetSingleton()->ForEachReferenceInRange(found, 300.0f, [&](RE::TESObjectREFR* r) {
+				if (r && !r->IsDeleted() && r->GetBaseObject() == stand) {
+					hasStand = true;
+					return RE::BSContainer::ForEachResult::kStop;
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			if (!hasStand) {
+				logger::info("shops: {} has the old ground layout, rebuilding as a stand", gen::kTowns[a_town]);
 				return false;
 			}
 			TownPlan plan;
-			plan.yaw = found->GetAngleZ() - gen::kSlots[ammoSlot].faceDeg * RE::NI_PI / 180.0f;
-			const auto& s = gen::kSlots[ammoSlot];
+			plan.yaw = found->GetAngleZ() - gen::kSlots[slot].faceDeg * RE::NI_PI / 180.0f;
+			const auto& s = gen::kSlots[slot];
 			const auto  p = found->GetPosition();
 			plan.center = { p.x - (s.x * std::cos(plan.yaw) + s.y * std::sin(plan.yaw)), p.y - (-s.x * std::sin(plan.yaw) + s.y * std::cos(plan.yaw)), p.z };
+			plan.top = p.z, plan.topSet = true;
 			plan.state = TownPlan::State::Ready;
 			g_towns[a_town] = plan;
 			return true;
+		}
+
+		// The stand's floor height: the highest ground under its footprint (so no corner digs in), a hair above.
+		void SettleStand(int a_town, RE::TESObjectREFR* a_anchor)
+		{
+			auto& plan = g_towns[a_town];
+			if (plan.topSet) {
+				return;
+			}
+			const float hx = gen::kStandHalfX, fy = gen::kStandFrontY, by = gen::kStandBackY;
+			const std::array<std::pair<float, float>, 9> pts{ { { 0, 0 }, { -hx, fy }, { hx, fy }, { -hx, by }, { hx, by }, { 0, fy }, { 0, by }, { -hx, 0 }, { hx, 0 } } };
+			float hi = -FLT_MAX;
+			int   got = 0;
+			for (auto [x, y] : pts) {
+				const float a = plan.yaw;
+				const RE::NiPoint3 at{ plan.center.x + x * std::cos(a) + y * std::sin(a), plan.center.y - x * std::sin(a) + y * std::cos(a), plan.center.z };
+				if (auto z = FloorZ(a_anchor, at, plan.center.z + 150.0f)) {
+					hi = std::max(hi, *z), ++got;
+				}
+			}
+			plan.top = got > 0 ? hi + 1.0f : plan.center.z;
+			plan.topSet = true;
+			logger::info("shops: {} stand floor at z {:.0f} ({} ground samples)", gen::kTowns[a_town], plan.top, got);
 		}
 
 		void PlaceIfMissing(std::size_t a_index)
@@ -443,9 +466,10 @@ namespace bo3z
 			const auto& plan = g_towns[loc.town];
 			auto*       anchor = TownAnchor(loc.town);
 			auto*       base = Forms::Object(loc.object);
-			if (plan.state != TownPlan::State::Ready || !anchor || !base) {
+			if (plan.state != TownPlan::State::Ready || !anchor || !base || gen::kObjects[loc.object].retired) {
 				return;
 			}
+			SettleStand(loc.town, anchor);
 			auto want = SlotPos(plan, loc.slot);
 			RE::TESObjectREFR* found = nullptr;
 			RE::TES::GetSingleton()->ForEachReferenceInRange(anchor, gen::kPlanSweep, [&](RE::TESObjectREFR* r) {
@@ -455,10 +479,8 @@ namespace bo3z
 				}
 				return RE::BSContainer::ForEachResult::kContinue;
 			});
+			want.z = plan.top;  // on the stand
 			if (!found) {
-				if (auto p = Snap(anchor, want)) {
-					want.z = p->z;
-				}
 				auto ref = anchor->PlaceObjectAtMe(base, false);
 				if (!ref) {
 					return;
@@ -468,26 +490,9 @@ namespace bo3z
 				ref->SetAngle({ 0, 0, SlotFacing(plan, loc.slot) });
 				found = ref.get();
 				logger::info("shops: placed {} in {} at ({:.0f},{:.0f},{:.0f})", gen::kObjects[loc.object].id, gen::kTowns[loc.town], want.x, want.y, want.z);
-			} else if (auto pos = found->GetPosition(); true) {
-				// Pieces from earlier builds were sunk under the paving: lift them onto the floor.
-				// Sample a ring outside the piece's footprint so the ray never lands on the piece itself.
-				std::vector<float> ring;
-				for (int k = 0; k < 6; ++k) {
-					const float a = k * RE::NI_PI / 3.0f;
-					if (auto h = FloorZ(anchor, { pos.x + 130.0f * std::cos(a), pos.y + 130.0f * std::sin(a), pos.z }, pos.z + 150.0f)) {
-						ring.push_back(*h);
-					}
-				}
-				std::optional<float> z;
-				if (ring.size() >= 3) {
-					std::nth_element(ring.begin(), ring.begin() + ring.size() / 2, ring.end());
-					z = ring[ring.size() / 2];
-				}
-				if (z && std::abs(*z - pos.z) > 8.0f) {
-					logger::info("shops: lifted {} in {} from z {:.0f} to {:.0f}", gen::kObjects[loc.object].id, gen::kTowns[loc.town], pos.z, *z);
-					pos.z = *z;
-					found->SetPosition(pos);
-				}
+			} else if (auto pos = found->GetPosition(); std::abs(pos.z - plan.top) > 4.0f) {
+				pos.z = plan.top;  // keep every machine on the stand's floor
+				found->SetPosition(pos);
 			}
 			g_placed[a_index] = found->CreateRefHandle();
 			Dress(a_index, found);

@@ -113,16 +113,6 @@ namespace bo3z
 			dl->AddRect({ a.x - 2 * k, a.y - 2 * k }, { b.x + 2 * k, b.y + 2 * k }, kGoldDim, 3 * k, 0, 1.0f * k);
 		}
 
-		std::string Roman(int n)
-		{
-			if (n <= 0 || n > 39) {
-				return std::to_string(n);
-			}
-			static const char* t[] = { "", "X", "XX", "XXX" };
-			static const char* o[] = { "", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX" };
-			return std::string(t[n / 10]) + o[n % 10];
-		}
-
 		void Draw(const Hud::State& s, ImVec2 size)
 		{
 			auto*       dl = ImGui::GetForegroundDrawList();
@@ -149,12 +139,39 @@ namespace bo3z
 				dl->AddRectFilledMultiColor({ size.x - e, 0 }, size, z, r, r, z);
 			}
 
-			// Night counter, top-left: Roman numeral in blood red with a pulse when a night begins.
+			// Night counter, top-left: chalk tally marks in blood red, one per night (groups of five, struck through).
+			// By day it reads NIGHTS SURVIVED; when the next night begins its tally is scratched in.
 			if (s.round > 0) {
-				const float px = (78 + 26 * std::min(1.0f, roundFlash)) * k;
-				const ImVec2 p{ 46 * k, 26 * k };
-				Txt(dl, g_title, 20 * k, p, Fade(kGold, 0.85f), "NIGHT");
-				Txt(dl, g_title, px, { p.x - 2 * k, p.y + 18 * k }, kBlood, Roman(s.round), 3 * k + 6 * k * std::min(1.0f, roundFlash), IM_COL32(255, 40, 20, 255));
+				const ImVec2 p{ 46 * k, 22 * k };
+				Txt(dl, g_title, 20 * k, p, Fade(kGold, 0.85f), s.nightActive ? "NIGHT" : "NIGHTS SURVIVED");
+				const float h = 70 * k, step = 17 * k, gap = 22 * k, top = p.y + 30 * k;
+				const float draw = std::clamp(1.0f - (roundFlash - 1.5f), 0.0f, 1.0f);  // newest mark scratches in
+				auto jit = [](int i, int j) { return static_cast<float>(((i * 73 + j * 151) % 17) - 8) / 8.0f; };
+				const int  shown = std::min(s.round, 15);
+				float      x = p.x + 4 * k;
+				for (int i = 0; i < shown; ++i) {
+					const int   inGroup = i % 5;
+					const bool  newest = i == s.round - 1;
+					const float t = newest ? draw : 1.0f;
+					const ImU32 col = newest && roundFlash > 0 ? IM_COL32(255, 60, 40, 255) : kBlood;
+					if (inGroup < 4) {
+						const ImVec2 a{ x + jit(i, 1) * 2 * k, top + jit(i, 2) * 3 * k }, b{ x + jit(i, 3) * 3 * k, top + h + jit(i, 4) * 3 * k };
+						const ImVec2 e{ a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t };
+						dl->AddLine(a, e, Fade(col, 0.35f), 11 * k);
+						dl->AddLine(a, e, col, 6 * k);
+						x += step;
+					} else {
+						// the fifth strikes through the four
+						const ImVec2 a{ x - 4 * step - 8 * k, top + h * 0.78f }, b{ x + 4 * k, top + h * 0.18f };
+						const ImVec2 e{ a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t };
+						dl->AddLine(a, e, Fade(col, 0.35f), 11 * k);
+						dl->AddLine(a, e, col, 6 * k);
+						x += gap;
+					}
+				}
+				if (s.round > 15) {  // past three full groups: the count in numerals beside them
+					Txt(dl, g_title, 60 * k, { x + 10 * k, top }, kBlood, std::to_string(s.round), 3 * k, IM_COL32(255, 40, 20, 255));
+				}
 			}
 
 			// Points, bottom-left panel.
@@ -163,7 +180,7 @@ namespace bo3z
 				Panel(dl, a, b, k);
 				Txt(dl, g_body, 15 * k, { a.x + 14 * k, a.y + 7 * k }, Fade(kGold, 0.9f), "SEPTIMS OF THE DEAD");
 				Txt(dl, g_num, 34 * k, { a.x + 14 * k, a.y + 22 * k }, kParch, std::to_string(s.points));
-				if (s.crew >= 0) {
+				if (s.crew >= 0 && s.crew < static_cast<int>(gen::kCrew.size())) {
 					const std::string c(gen::kCrew[s.crew].label);
 					Txt(dl, g_body, 16 * k, { b.x - Measure(g_body, 16 * k, c).x - 14 * k, a.y + 34 * k }, IM_COL32(190, 190, 190, 220), c);
 				}
@@ -221,15 +238,25 @@ namespace bo3z
 						dl->AddLine({ tx + i * 9 * k, a.y + 12 * k }, { tx + i * 9 * k + 2 * k, a.y + 30 * k }, nameCol, 3 * k);
 					}
 				}
-				const std::string clip = std::to_string(s.clip), res = std::to_string(s.reserve);
-				const auto        cs = Measure(g_num, 40 * k, clip), rs = Measure(g_num, 22 * k, res);
-				const ImU32       cc = s.clip == 0 ? IM_COL32(230, 60, 50, 255) : IM_COL32(250, 250, 250, 255);
-				Txt(dl, g_num, 22 * k, { b.x - 14 * k - rs.x, b.y - 36 * k }, IM_COL32(180, 180, 180, 255), res);
-				Txt(dl, g_num, 40 * k, { b.x - 24 * k - rs.x - cs.x, b.y - 52 * k }, cc, clip);
-				if (s.reloading) {
-					const float p = std::fmod(now * 1.6f, 1.0f);
-					dl->AddRectFilled({ a.x + 14 * k, b.y - 12 * k }, { a.x + 14 * k + (b.x - a.x - 28 * k) * p, b.y - 8 * k }, kGold);
-					Txt(dl, g_body, 16 * k, { a.x + 14 * k, b.y - 34 * k }, Fade(kGold, 0.6f + 0.4f * std::sin(now * 8)), "RECHARGING");
+				{
+					const ImU32 el = IM_COL32((s.gunColor >> 16) & 0xFF, (s.gunColor >> 8) & 0xFF, s.gunColor & 0xFF, 255);
+					// element pip + ability under the name
+					dl->AddCircleFilled({ a.x + 22 * k, b.y - 22 * k }, 6 * k, el);
+					dl->AddCircle({ a.x + 22 * k, b.y - 22 * k }, 9 * k + 2 * k * std::sin(now * 3), Fade(el, 0.5f), 0, 1.5f * k);
+					Txt(dl, g_body, 16 * k, { a.x + 36 * k, b.y - 32 * k }, IM_COL32(200, 195, 185, 255), s.gunElement);
+					if (s.gunKind == 0) {
+						// wands never run dry: a big infinity sign
+						const std::string inf = "\xE2\x88\x9E";
+						const auto        is = Measure(g_num, 44 * k, inf);
+						Txt(dl, g_num, 44 * k, { b.x - 18 * k - is.x, b.y - 56 * k }, IM_COL32(250, 250, 250, 255), inf);
+					} else {
+						// tomes/grimoires: magicka per cast, red when you can't afford it
+						const bool        can = s.mp >= s.manaCost;
+						const std::string cost = std::to_string(static_cast<int>(std::ceil(s.manaCost)));
+						const auto        cs = Measure(g_num, 36 * k, cost);
+						Txt(dl, g_num, 36 * k, { b.x - 64 * k - cs.x, b.y - 52 * k }, can ? IM_COL32(150, 190, 255, 255) : IM_COL32(230, 60, 50, 255), cost);
+						Txt(dl, g_body, 15 * k, { b.x - 58 * k, b.y - 40 * k }, IM_COL32(150, 170, 210, 255), "mana");
+					}
 				}
 				// crosshair: four ticks that tighten when aiming, a dot at full aim
 				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f };
@@ -264,7 +291,7 @@ namespace bo3z
 				dl->PathStroke(kGold, 0, 4 * k);
 				const std::string n = std::to_string(static_cast<int>(std::ceil(s.countdown)));
 				TxtC(dl, g_num, 44 * k, c.x, c.y - 28 * k, kParch, n);
-				TxtC(dl, g_title, 22 * k, c.x, c.y + R + 10 * k, Fade(kGold, 0.9f), "NIGHT " + Roman(s.round + 1) + " APPROACHES");
+				TxtC(dl, g_title, 22 * k, c.x, c.y + R + 10 * k, Fade(kGold, 0.9f), "NIGHT " + std::to_string(s.round + 1) + " APPROACHES");
 			}
 
 			// Boss bar: name over a long ornate bar at the top.
@@ -357,9 +384,10 @@ namespace bo3z
 			auto& io = ImGui::GetIO();
 			io.IniFilename = nullptr;
 			io.LogFilename = nullptr;
+			static const ImWchar kRanges[] = { 0x0020, 0x00FF, 0x2190, 0x21FF, 0x2200, 0x22FF, 0 };  // Latin + arrows + math (the wand's infinity)
 			auto font = [&](const char* a_file) -> ImFont* {
 				const std::string p = std::string("C:\\Windows\\Fonts\\") + a_file;
-				return ::GetFileAttributesA(p.c_str()) != INVALID_FILE_ATTRIBUTES ? io.Fonts->AddFontFromFileTTF(p.c_str(), 64.0f) : nullptr;
+				return ::GetFileAttributesA(p.c_str()) != INVALID_FILE_ATTRIBUTES ? io.Fonts->AddFontFromFileTTF(p.c_str(), 64.0f, nullptr, kRanges) : nullptr;
 			};
 			g_title = font("georgiab.ttf");
 			g_num = font("seguisb.ttf");

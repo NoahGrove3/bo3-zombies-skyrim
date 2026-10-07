@@ -23,6 +23,7 @@ namespace bo3z
 		RE::TESObjectACTI*   Object(int a_object);
 		int                  ObjectIndexOf(const RE::TESForm* a_base); // -1
 		RE::TESBoundObject*  Ours(std::uint32_t a_localId);              // any record in our plugin
+		RE::SpellItem*       GunSpell(int a_gun);                        // tomes/grimoires: the spell held in the hand
 		RE::MagicItem*       Spell(int a_spell);                         // sheet: spells (a WEAP row = its enchantment)
 		void                 Play(gen::Sound a_sound);
 		void                 PlayAt(gen::Sound a_sound, RE::TESObjectREFR* a_at);  // 3D, follows the reference
@@ -62,7 +63,7 @@ namespace bo3z
 		int  ActiveSlot();
 		void SetActiveSlot(int a_slot);
 		void OnWorldReady();
-		inline constexpr int kFlagInit = 0, kFlagReserveV2 = 4, kFlagMoved = 11, kPerkShift = 14, kFlagPerksV2 = 23;  // bits: init | crew 1-3 | (old perks 4-10) | moved 11 | slot 12-13 | perks 14-22 | v2 23
+		inline constexpr int kFlagInit = 0, kFlagReserveV2 = 4, kFlagStarted = 5, kFlagMoved = 11, kPerkShift = 14, kFlagPerksV2 = 23;  // bits: init | crew 1-3 | (old perks 4-10) | moved 11 | slot 12-13 | perks 14-22 | v2 23
 	}
 
 	namespace Points
@@ -77,11 +78,12 @@ namespace bo3z
 		void             Tick(float a_delta);
 		void             Reset();
 		bool             IsRoundUndead(RE::Actor* a_actor);
+		bool             NightNow();  // night hours (the undead are out)
 		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
 		bool             IsElite(RE::Actor* a_actor);
 		std::string_view HeadNodeFor(RE::Actor* a_actor);
 		void             LogState();
-		void             Web(const RE::NiPoint3& a_at, float a_radius, float a_seconds);   // Widow's Wine
+		void             Web(const RE::NiPoint3& a_at, float a_radius, float a_seconds, float a_amount = 60.0f, bool a_frostFx = false);   // Widow's Wine / wand slows
 		void             Shock(const RE::NiPoint3& a_at, float a_radius, float a_bo3Damage);  // Electric Cherry
 	}
 
@@ -121,9 +123,9 @@ namespace bo3z
 	{
 		void OnEffect(RE::FormID a_mgef);
 		void OnZombieHit(RE::Actor* a_zombie);  // a round zombie hit the player
-		void OnReload(float a_emptyFraction);
+		void OnCast(int a_shots);  // Stormcrown
 		void Tick();
-		float ReloadMult();
+		float ManaMult();          // Quicksilver: magicka cost/regen
 		float FireDelayMult();
 		float DamageMult();
 		float HeadMult();
@@ -142,6 +144,7 @@ namespace bo3z
 		{
 			bool        inGame{ false };
 			int         round{ 0 };
+			bool        nightActive{ false };  // a night (round) is being fought; otherwise round = nights survived
 			int         points{ 0 };
 			bool        gunOut{ false };
 			std::string gunName;
@@ -149,6 +152,10 @@ namespace bo3z
 			int         clip{ 0 };
 			int         reserve{ 0 };
 			bool        reloading{ false };
+			int         gunKind{ 0 };     // 0 wand (infinite), 1 tome, 2 grimoire (magicka)
+			float       manaCost{ 0 };    // per shot
+			std::string gunElement;       // wand ability / element line under the name
+			std::uint32_t gunColor{ 0 };  // element colour RRGGBB
 			float       ads{ 0 };
 			std::string banner;
 			float       bannerTime{ 0 };

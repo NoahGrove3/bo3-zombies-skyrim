@@ -41,6 +41,10 @@ int main(int argc, char** argv)
 	float         scale = 1, rx = 0, ry = 0, rz = 0, ox = 0, oy = 0, oz = 0;
 	bool          ground = false;
 	bool          collide = false;  // add a static box collision (placed furniture)
+	std::string   prn;
+	bool          keepOrigin = false;  // authored in place: don't recentre
+	bool          boxSet = false;      // collidebox: explicit collision bounds (model units, after transforms)
+	Vector3       boxLo, boxHi;              // weapons: attach point (Prn extra data), e.g. WeaponStaff
 	float         fit = 0;  // if set: scale so the longest side is this many units
 	std::set<std::string>      skip;
 	std::map<std::string, aiVector3D> meshOffset;  // final-units nudge per source mesh (e.g. a lid resting open)
@@ -56,6 +60,9 @@ int main(int argc, char** argv)
 		else if (k == "offset") ss >> ox >> oy >> oz;
 		else if (k == "ground") ss >> ground;
 		else if (k == "collide") ss >> collide;
+		else if (k == "prn") ss >> prn;
+		else if (k == "origin") ss >> keepOrigin;
+		else if (k == "collidebox") { ss >> boxLo.x >> boxLo.y >> boxLo.z >> boxHi.x >> boxHi.y >> boxHi.z; boxSet = collide = true; }
 		else if (k == "fit") ss >> fit;
 		else if (k == "meshoffset") { std::string n; float x, y, z; ss >> n >> x >> y >> z; meshOffset[n] = { x, y, z }; }
 		else if (k == "skip") { std::string n; std::getline(ss >> std::ws, n); skip.insert(n); }
@@ -117,7 +124,7 @@ int main(int argc, char** argv)
 		const float k = fit / std::max(1e-6f, longest);
 		scale *= k, lo = lo * k, hi = hi * k;
 	}
-	const Vector3 shift(-(lo.x + hi.x) / 2 + ox, -(lo.y + hi.y) / 2 + oy, (ground ? -lo.z : -(lo.z + hi.z) / 2) + oz);
+	const Vector3 shift = keepOrigin ? Vector3(ox, oy, oz) : Vector3(-(lo.x + hi.x) / 2 + ox, -(lo.y + hi.y) / 2 + oy, (ground ? -lo.z : -(lo.z + hi.z) / 2) + oz);
 
 	NifFile nif;
 	nif.Create(NiVersion::getSSE());
@@ -188,6 +195,9 @@ int main(int argc, char** argv)
 	}
 	auto* root = nif.GetRootNode();
 	root->name.get() = "Scene Root";
+	if (boxSet) {
+		bmin = boxLo, bmax = boxHi;
+	}
 	if (collide && n > 0) {
 		// One fixed box around the whole model on the static layer: blocks the player and takes the crosshair.
 		constexpr float kHavok = 69.99124f;
@@ -219,6 +229,13 @@ int main(int argc, char** argv)
 		bsx->name.get() = "BSX";
 		bsx->integerData = 2;  // havok
 		nif.AssignExtraData(root, std::move(bsx));
+	}
+	if (!prn.empty()) {
+		// Without Prn the engine has nowhere to hang the weapon: it ends up at the actor's root (by the feet).
+		auto x = std::make_unique<NiStringExtraData>();
+		x->name.get() = "Prn";
+		x->stringData.get() = prn;
+		nif.AssignExtraData(root, std::move(x));
 	}
 	if (nif.Save(out)) {
 		fprintf(stderr, "save failed\n");

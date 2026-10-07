@@ -51,7 +51,7 @@
       "cost": 750,
       "refs": "none",
       "scale": 1.0,
-      "retired": false,
+      "retired": true,
       "verify": []
     },
     {
@@ -220,7 +220,7 @@
     {
       "id": "wall_triad",
       "kind": "wallbuy",
-      "label": "Imperial Burst Pistol",
+      "label": "Soulrend Wand",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
       "cost": 500,
@@ -234,7 +234,7 @@
     {
       "id": "wall_spider",
       "kind": "wallbuy",
-      "label": "Stormcloak Repeater",
+      "label": "Sporecaller Wand",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
       "cost": 1000,
@@ -248,7 +248,7 @@
     {
       "id": "wall_drill",
       "kind": "wallbuy",
-      "label": "Dwemer Drill",
+      "label": "Bloodthirst Wand",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
       "cost": 1300,
@@ -262,7 +262,7 @@
     {
       "id": "wall_steampump",
       "kind": "wallbuy",
-      "label": "Orcish Blunderbuss",
+      "label": "Wand of the Grave",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
       "cost": 900,
@@ -276,7 +276,7 @@
     {
       "id": "wall_marksman",
       "kind": "wallbuy",
-      "label": "Elven Marksman",
+      "label": "Moonshard Wand",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
       "cost": 900,

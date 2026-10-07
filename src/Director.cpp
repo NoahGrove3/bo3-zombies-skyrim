@@ -18,6 +18,7 @@ namespace bo3z
 			bool            inCombat{ false };
 			float           combatRetry{ 0 };
 			float           webbed{ 0 };
+			float           webAmount{ 0 };
 			float           behind{ 0 };       // seconds spent too far away / unloaded
 			float           stall{ 0 };     // seconds spent not closing in
 			float           lastDist{ -1 };
@@ -516,7 +517,8 @@ namespace bo3z
 		{
 			g_current = a_round;
 			g_special = a_round >= R.specialFirstRound && (a_round - R.specialFirstRound) % R.specialEveryRounds == 0;
-			g_toSpawn = static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier));
+			// One round per night: the dead keep coming until dawn. How many walk at once grows night by night.
+			g_toSpawn = std::clamp(static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier / 3.0f)), 6, R.maxAlive);
 			g_spawnTimer = 0;
 			g_phase = Phase::Fighting;
 			if (const int row = BossRow(); row >= 0 && a_round >= gen::kEnemies[row].minRound && a_round % gen::kEnemies[row].bossEvery == 0) {
@@ -527,18 +529,8 @@ namespace bo3z
 				Hud::Edit().countdown = 0;
 			}
 			Forms::Play(g_special ? gen::Sound::hound_night : gen::Sound::night_start);
-			Hud::Banner(g_special ? "NIGHT " + std::to_string(a_round) + " - THE HOUNDS ARE LOOSE" : "NIGHT " + std::to_string(a_round));
-			logger::info("round {} starts: {} undead, {:.0f} Skyrim health each{}", a_round, g_toSpawn, HealthFor(a_round), g_special ? " (hound round)" : "");
-		}
-
-		void EndRound()
-		{
-			Save::Set(gen::kAV_round, g_current);
-			Points::Add(gen::kPoints_round_survived);
-			Forms::Play(gen::Sound::night_end);
-			logger::info("round {} cleared", g_current);
-			g_phase = Phase::Break;
-			g_breakTimer = R.breakSeconds;
+			Hud::Banner(g_special ? "NIGHT " + std::to_string(a_round) + " - THE HOUNDS ARE LOOSE" : "NIGHT " + std::to_string(a_round) + " - SURVIVE UNTIL DAWN");
+			logger::info("round {} starts (lasts the night): up to {} undead at once, {:.0f} Skyrim health each{}", a_round, g_toSpawn, HealthFor(a_round), g_special ? " (hound night)" : "");
 		}
 
 		void Dawn()
@@ -552,8 +544,12 @@ namespace bo3z
 			}
 			g_alive.clear();
 			if (g_phase == Phase::Fighting) {
-				Hud::Banner("DAWN - NIGHT " + std::to_string(g_current + 1) + " BEGINS AT DUSK", 5.0f);
-				logger::info("dawn: round {} unfinished, {} undead crumbled", g_current, n);
+				// Dawn ends the round: one more night survived (one more tally on the board).
+				Save::Set(gen::kAV_round, g_current);
+				Points::Add(gen::kPoints_round_survived);
+				Forms::Play(gen::Sound::night_end);
+				Hud::Banner("DAWN - NIGHT " + std::to_string(g_current) + " SURVIVED", 6.0f);
+				logger::info("dawn: night {} survived, {} undead crumbled", g_current, n);
 			}
 			g_phase = Phase::Day;
 			g_toSpawn = 0;
@@ -647,12 +643,30 @@ namespace bo3z
 
 	namespace Director
 	{
-		void Web(const RE::NiPoint3& a_at, float a_radius, float a_seconds)
+		// A vanilla spell (sheet: spells) flung from the player at a target: the visible half of a perk.
+		void CastFx(int a_spell, RE::Actor* a_target)
 		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			auto* m = Forms::Spell(a_spell);
+			if (!player || !m || !a_target) {
+				return;
+			}
+			if (auto* caster = player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
+				caster->CastSpellImmediate(m, false, a_target, 1.0f, false, 0.0f, player);
+			}
+		}
+
+		void Web(const RE::NiPoint3& a_at, float a_radius, float a_seconds, float a_amount, bool a_frostFx)
+		{
+			int fx = 0;
 			for (auto& s : g_alive) {
 				if (auto a = s.handle.get(); a && !a->IsDead() && a->GetPosition().GetDistance(a_at) <= a_radius && s.webbed <= 0) {
-					a->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -60.0f);
+					a->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -a_amount);
 					s.webbed = a_seconds;
+					s.webAmount = a_amount;
+					if (a_frostFx && fx++ < 8) {
+						CastFx(gen::kSpell_icespike, a.get());  // Frostbite: ice spikes pin them
+					}
 				}
 			}
 		}
@@ -660,10 +674,14 @@ namespace bo3z
 		void Shock(const RE::NiPoint3& a_at, float a_radius, float a_bo3Damage)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
+			int   fx = 0;
 			for (auto& s : g_alive) {
 				auto a = s.handle.get();
 				if (!a || a->IsDead() || a->GetPosition().GetDistance(a_at) > a_radius) {
 					continue;
+				}
+				if (fx++ < 8) {
+					CastFx(gen::kSpell_lightningbolt, a.get());  // Stormcrown: a bolt to each of them
 				}
 				auto* av = a->AsActorValueOwner();
 				const float dmg = a_bo3Damage / R.hpScale;
@@ -704,6 +722,7 @@ namespace bo3z
 		float RoundHealth() { return HealthFor(std::max(1, g_current)); }
 		bool  IsElite(RE::Actor* a_actor) { return a_actor && g_elites.contains(a_actor->GetFormID()); }
 		bool IsRoundUndead(RE::Actor* a_actor) { return a_actor && g_ours.contains(a_actor->GetFormID()); }
+		bool NightNow() { return IsNight(); }
 
 		std::string_view HeadNodeFor(RE::Actor* a_actor)
 		{
@@ -715,9 +734,75 @@ namespace bo3z
 			return "NPC Head [Head]";
 		}
 
+		// ---- night truce: townsfolk can't be hurt or killed while the undead are out ----
+		struct Protected
+		{
+			RE::ActorHandle handle;
+			bool            wasEssential;
+		};
+		std::vector<Protected> g_protected;
+		float                  g_protectTimer = 0;
+
+		void TickTruce(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			if ((g_protectTimer -= a_delta) > 0) {
+				return;
+			}
+			g_protectTimer = 0.2f;
+			const bool night = IsNight();
+			if (!night) {
+				for (auto& p : g_protected) {
+					if (auto a = p.handle.get(); a && !p.wasEssential) {
+						a->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kEssential);
+					}
+				}
+				g_protected.clear();
+				return;
+			}
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				auto a = h.get();
+				if (!a || a.get() == a_player || a->IsDead() || g_ours.contains(a->GetFormID())) {
+					continue;
+				}
+				if (std::none_of(g_protected.begin(), g_protected.end(), [&](const Protected& p) { return p.handle.get() == a; })) {
+					const bool ess = a->GetActorRuntimeData().boolFlags.all(RE::Actor::BOOL_FLAGS::kEssential);
+					g_protected.push_back({ a->GetHandle(), ess });
+					a->GetActorRuntimeData().boolFlags.set(RE::Actor::BOOL_FLAGS::kEssential);
+				}
+				auto*       av = a->AsActorValueOwner();
+				const float missing = av->GetPermanentActorValue(RE::ActorValue::kHealth) - av->GetActorValue(RE::ActorValue::kHealth);
+				if (missing > 0) {
+					av->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, missing);
+				}
+				if (a->IsInCombat()) {
+					auto tgt = a->GetActorRuntimeData().currentCombatTarget.get();
+					if (tgt && tgt.get() == a_player) {
+						a->StopCombat();  // a stray shot doesn't start a fight at night
+					}
+				}
+			}
+		}
+
+		// Shorter days and nights (sheet: rounds.cycleMinutes): Skyrim's TimeScale global.
+		void TickClock(float a_delta)
+		{
+			static float t = 0;
+			if ((t -= a_delta) > 0) {
+				return;
+			}
+			t = 5.0f;
+			static auto* ts = RE::TESForm::LookupByID<RE::TESGlobal>(0x3A);  // TimeScale
+			const float  want = 24.0f * 60.0f / gen::kCycleMinutes;
+			if (ts && std::abs(ts->value - want) > 0.01f) {
+				logger::info("clock: timescale {:.1f} -> {:.1f} (a full day in {:.0f} minutes)", ts->value, want, gen::kCycleMinutes);
+				ts->value = want;
+			}
+		}
+
 		void Tick(float a_delta)
 		{
 			TickFx(a_delta);
+			TickClock(a_delta);
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			// Night regen: after a few seconds without taking damage, health surges back (nights only).
 			if (player) {
@@ -734,11 +819,13 @@ namespace bo3z
 			if (!player) {
 				return;
 			}
+			TickTruce(player, a_delta);
 			Prune();
 			{
 				std::scoped_lock l(Hud::Lock());
 				auto& h = Hud::Edit();
 				h.round = g_phase == Phase::Fighting ? g_current : Save::Get(gen::kAV_round);
+				h.nightActive = g_phase == Phase::Fighting;
 			}
 			if (!Allowed(player)) {
 				return;
@@ -769,22 +856,16 @@ namespace bo3z
 				for (auto& s : g_alive) {
 					if (s.webbed > 0 && (s.webbed -= a_delta) <= 0) {
 						if (auto a = s.handle.get()) {
-							a->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 60.0f);
+							a->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, s.webAmount);
 						}
 					}
 				}
 				KeepThemComing(player, a_delta);
 				TickBoss(player, a_delta);
 				TickElites(player, a_delta);
-				if (g_toSpawn > 0) {
-					if ((g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < R.maxAlive) {
-						if (SpawnOne(player)) {
-							--g_toSpawn;
-						}
-						g_spawnTimer = SpawnDelay(g_current);
-					}
-				} else if (g_alive.empty() && g_boss.spawnIn < 0 && !g_boss.handle.get()) {
-					EndRound();
+				if ((g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < g_toSpawn) {
+					SpawnOne(player);
+					g_spawnTimer = SpawnDelay(g_current);
 				}
 				break;
 			}

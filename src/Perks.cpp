@@ -14,7 +14,7 @@ namespace bo3z
 
 	namespace Perks
 	{
-		float ReloadMult() { return Has(gen::kPerk_quicksilver) ? gen::kPerks[gen::kPerk_quicksilver].value : 1.0f; }
+		float ManaMult() { return Has(gen::kPerk_quicksilver) ? gen::kPerks[gen::kPerk_quicksilver].value : 1.0f; }
 		float FireDelayMult() { return Has(gen::kPerk_twinstrike) ? 0.75f : 1.0f; }
 		float DamageMult() { return Has(gen::kPerk_twinstrike) ? gen::kPerks[gen::kPerk_twinstrike].value : 1.0f; }
 		float HeadMult() { return Has(gen::kPerk_hawkeye) ? gen::kPerks[gen::kPerk_hawkeye].value : 1.0f; }
@@ -72,14 +72,15 @@ namespace bo3z
 				Hud::Edit().hurtTime = 1.0f;
 			}
 			if (Has(gen::kPerk_frostbite)) {
-				Director::Web(player->GetPosition(), 350.0f, gen::kPerks[gen::kPerk_frostbite].value);
+				Director::Web(player->GetPosition(), 350.0f, gen::kPerks[gen::kPerk_frostbite].value, 60.0f, true);  // ice spikes show it
 			}
 		}
 
-		void OnReload(float a_emptyFraction)
+		// Stormcrown: every 12th cast looses a lightning burst around you.
+		void OnCast(int a_shots)
 		{
-			if (Has(gen::kPerk_stormcrown) && a_emptyFraction > 0.05f) {
-				Director::Shock(RE::PlayerCharacter::GetSingleton()->GetPosition(), 120.0f + 200.0f * a_emptyFraction, gen::kPerks[gen::kPerk_stormcrown].value * a_emptyFraction);
+			if (Has(gen::kPerk_stormcrown) && a_shots % 12 == 0) {
+				Director::Shock(RE::PlayerCharacter::GetSingleton()->GetPosition(), 320.0f, gen::kPerks[gen::kPerk_stormcrown].value);
 			}
 		}
 

@@ -1,6 +1,6 @@
 {
   "sheet": "layout",
-  "about": "Town plaza: where each piece stands relative to its centre (+y toward the Coffer) and which way it faces (degrees, 0 = +y).",
+  "about": "Station stand (tools/stand.py): one stone platform carries everything. Back row (+y): Brew Machine, Sheogorath's Coffer, Atronach Reforge; front row (-y, where you walk up): wall-buy cases. All face -y. The stand itself is dressing on the Coffer (dressing.stand). Positions relative to the platform centre.",
   "columns": [
     "id",
     "x",
@@ -11,51 +11,51 @@
   "rows": [
     {
       "id": "box",
-      "x": 0,
-      "y": 270,
+      "x": -80,
+      "y": 70,
       "faceDeg": 180,
       "verify": []
     },
     {
       "id": "brew",
-      "x": -250,
-      "y": 30,
-      "faceDeg": 90,
+      "x": -235,
+      "y": 70,
+      "faceDeg": 180,
       "verify": []
     },
     {
       "id": "ammo",
-      "x": 250,
-      "y": 30,
-      "faceDeg": 270,
+      "x": 0,
+      "y": 0,
+      "faceDeg": 180,
       "verify": []
     },
     {
       "id": "forge",
-      "x": 0,
-      "y": -300,
-      "faceDeg": 0,
+      "x": 165,
+      "y": 70,
+      "faceDeg": 180,
       "verify": []
     },
     {
       "id": "wall_0",
-      "x": -260,
-      "y": -230,
-      "faceDeg": 45,
+      "x": -200,
+      "y": -120,
+      "faceDeg": 180,
       "verify": []
     },
     {
       "id": "wall_1",
-      "x": 260,
-      "y": -230,
-      "faceDeg": 315,
+      "x": 200,
+      "y": -120,
+      "faceDeg": 180,
       "verify": []
     },
     {
       "id": "wall_2",
-      "x": -260,
-      "y": 250,
-      "faceDeg": 135,
+      "x": 0,
+      "y": -150,
+      "faceDeg": 180,
       "verify": []
     }
   ],
@@ -78,7 +78,7 @@
       135
     ],
     "snapTolerance": 70,
-    "maxHeightSpread": 90,
+    "maxHeightSpread": 70,
     "sweepRadius": 2500,
     "doorClearance": 450
   }

@@ -361,6 +361,51 @@
       "file": "fx\\UndyingNights\\forge_upgrade.wav",
       "space": "3d",
       "verify": []
+    },
+    {
+      "id": "cast_light",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_light",
+      "file": "fx\\UndyingNights\\cast_light.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_rapid",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_rapid",
+      "file": "fx\\UndyingNights\\cast_rapid.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_scatter",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_scatter",
+      "file": "fx\\UndyingNights\\cast_scatter.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_heavy",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_heavy",
+      "file": "fx\\UndyingNights\\cast_heavy.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "mana_empty",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_mana_empty",
+      "file": "fx\\UndyingNights\\mana_empty.wav",
+      "space": "2d",
+      "verify": []
     }
   ]
 }

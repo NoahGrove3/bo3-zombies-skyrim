@@ -10,6 +10,8 @@ out.append('\tstruct FormRef { std::string_view plugin; std::uint32_t localId; s
 # rounds
 r = row('rounds', 'night_rounds')
 out.append(f'\tinline constexpr float kChaseRelocateDist = {float(r["chaseRelocateDist"])}f, kChaseRelocateSeconds = {float(r["chaseRelocateSeconds"])}f, kChaseStallSeconds = {float(r["chaseStallSeconds"])}f;')
+out.append(f'\tinline constexpr float kCycleMinutes = {float(r["cycleMinutes"])}f;  // a full Skyrim day; night is nightStart..nightEnd (20:00-05:36 = 40%)')
+out.append(f'\tinline constexpr float kManaRegenPerSecond = {float(r["manaRegenPerSecond"])}f, kManaRegenDelay = {float(r["manaRegenDelay"])}f;')
 out.append(f'\tinline constexpr bool kZombieMeleeWeapons = {str(r["zombieWeapons"] == "melee").lower()};  // keep swords/axes/maces; strip bows, staves, spells')
 out.append('\tstruct Rounds {\n\t\tfloat nightStartHour, nightEndHour, breakSeconds, firstBreakSeconds; int maxAlive, aiMaxBase, aiPerPlayer;\n\t\tstd::array<float, 5> earlyRoundScale; int hpStart, hpLinearPerRound, hpLinearUntil; float hpMultAfter, hpScale;\n\t\tfloat spawnDelayStart, spawnDelayDecay, spawnDelayMin; int specialEveryRounds, specialFirstRound;\n\t\tstd::array<float, 2> spawnRingExterior, spawnRingInterior; float spawnHeightOffset; int maxCorpses; };')
 out.append(f'\tinline constexpr Rounds kRounds{{ {r["nightStartHour"]}f, {r["nightEndHour"]}f, {r["breakSeconds"]}f, {r["firstBreakSeconds"]}f, {r["maxAlive"]}, {r["aiMaxBase"]}, {r["aiPerPlayer"]},\n\t\t{{ {", ".join(str(x)+"f" for x in r["earlyRoundScale"])} }}, {r["hpStart"]}, {r["hpLinearPerRound"]}, {r["hpLinearUntil"]}, {r["hpMultAfter"]}f, {r["hpScale"]}f,\n\t\t{r["spawnDelayStart"]}f, {r["spawnDelayDecay"]}f, {r["spawnDelayMin"]}f, {r["specialEveryRounds"]}, {r["specialFirstRound"]},\n\t\t{{ {r["spawnRingExterior"][0]}.f, {r["spawnRingExterior"][1]}.f }}, {{ {r["spawnRingInterior"][0]}.f, {r["spawnRingInterior"][1]}.f }}, {r["spawnHeightOffset"]}.f, {r["maxCorpses"]} }};')
@@ -59,11 +61,15 @@ o = ['', '// ---- v0.2 ----', '#include <string_view>', 'namespace bo3z::gen', '
      f'\tinline constexpr std::string_view kPlugin = {cs(esp_ids.PLUGIN)};']
 fires = {'semi': 0, 'auto': 1, 'burst': 2, 'pump': 3}
 o.append('\tenum class Fire : int { Semi = 0, Auto = 1, Burst = 2, Pump = 3 };')
-o.append('\tstruct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; int special, spell, spellOn; bool retired; std::uint32_t bulletSpell; bool staff; };')
+o.append('\tenum class Special : int { None = 0, Splash, Chain, Cone, Wabbajack, Poison, Soul, Slow, Lifesteal, Stagger, Pierce, Stasis };')
+o.append('\tinline constexpr int kKindWand = 0, kKindTome = 1, kKindWonder = 2;')
+o.append(f'\tinline constexpr std::uint32_t kWandCastEffect = 0x{IDS[("MGEF", "wandcast")]:03X};')
+o.append('\tstruct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; int special, spell, spellOn; bool retired; std::uint32_t bulletSpell; int kind; float mana, abilityValue; std::uint32_t handSpell; std::string_view abilityText; std::uint32_t color; };')
 W = S['weapons']['rows']
 sid = lambda v: 'Sound::' + v.split(':')[1]
 SP = S['spells']['rows']
-specials = {'none': 0, 'splash': 1, 'chain': 2, 'cone': 3, 'wabbajack': 4}
+specials = {'none': 0, 'splash': 1, 'chain': 2, 'cone': 3, 'wabbajack': 4, 'poison': 5, 'soul': 6, 'slow': 7, 'lifesteal': 8, 'stagger': 9, 'pierce': 10, 'stasis': 11}
+wkinds = {'wand': 0, 'tome': 1, 'wonder': 2}
 spellon = {'none': 0, 'hit': 1, 'fire': 2, 'every4': 3}
 spidx = lambda v: -1 if v == 'none' else [s['id'] for s in SP].index(v.split(':')[1])
 o.append(f'\tinline constexpr std::array<FormRef, {len(SP)}> kSpells{{ {{')
@@ -72,13 +78,13 @@ o.append('\t} };')
 for i, s in enumerate(SP): o.append(f'\tinline constexpr int kSpell_{s["id"]} = {i};')
 o.append(f'\tinline constexpr std::array<GunDef, {len(W)}> kGuns{{ {{')
 for w in W:
-    o.append(f'\t\tGunDef{{ {cs(w["id"])}, {cs(w["label"])}, {cs(w["class"])}, Fire({fires[w["fire"]]}), {F(w["damage"])}, {F(w["headMult"])}, {w["pellets"]}, {F(w["spreadHip"])}, {F(w["spreadAds"])}, {w["clip"]}, {w["reserve"]}, {w["fireDelayMs"]}, {w["burst"]}, {w["reloadMs"]}, {F(w["range"])}, {F(w["splashRadius"])}, {F(w["splashDamage"])}, {F(w["hitRadius"])}, {F(w["headRadius"])}, {sid(w["fireSound"])}, {sid(w["reloadSound"])}, {sid(w["emptySound"])}, {w["wallBuyCost"]}, {w["ammoCost"]}, {w["boxWeight"]}, 0x{IDS[("WEAP", w["id"])]:03X}, {specials[w["special"]]}, {spidx(w["spell"])}, {spellon[w["spellOn"]]}, {str(w.get("retired", False)).lower()}, 0x{(IDS[("SPEL", "bullet_" + w["projectile"])] if w.get("projectile", "none") != "none" else 0):03X}, {str(w.get("template") == "staff").lower()} }},')
+    o.append(f'\t\tGunDef{{ {cs(w["id"])}, {cs(w["label"])}, {cs(w["class"])}, Fire({fires[w["fire"]]}), {F(w["damage"])}, {F(w["headMult"])}, {w["pellets"]}, {F(w["spreadHip"])}, {F(w["spreadAds"])}, {w["clip"]}, {w["reserve"]}, {w["fireDelayMs"]}, {w["burst"]}, {w["reloadMs"]}, {F(w["range"])}, {F(w["splashRadius"])}, {F(w["splashDamage"])}, {F(w["hitRadius"])}, {F(w["headRadius"])}, {sid(w["fireSound"])}, {sid(w["reloadSound"])}, {sid(w["emptySound"])}, {w["wallBuyCost"]}, {w["ammoCost"]}, {w["boxWeight"]}, 0x{IDS[("WEAP", w["id"])]:03X}, {specials[w["special"]]}, {spidx(w["spell"])}, {spellon[w["spellOn"]]}, {str(w.get("retired", False)).lower()}, 0x{(IDS[("SPEL", "bullet_" + w["projectile"])] if w.get("projectile", "none") != "none" else 0):03X}, {wkinds[w["kind"]]}, {F(w["mana"])}, {F(w["abilityValue"])}, 0x{(IDS[("SPEL", "hand_" + w["id"])] if w["kind"] != "wand" else 0):03X}, {cs(w["abilityText"])}, 0x{w["element"]} }},')
 o.append('\t} };')
 for i, w in enumerate(W): o.append(f'\tinline constexpr int kGunIdx_{w["id"]} = {i};')
 k = S['melee']['rows'][0]
 o.append('\tstruct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };')
 o.append(f'\tinline constexpr KnifeDef kKnife{{ {k["key"]}, {F(k["damage"])}, {F(k["range"])}, {F(k["coneDeg"])}, {k["cooldownMs"]} }};')
-effects = {'health': 0, 'reload_mult': 1, 'fire_rate_and_damage': 2, 'self_revive': 3, 'speed_and_stamina': 4, 'headshots': 5, 'third_gun': 6, 'web_grenade': 7, 'reload_shock': 8}
+effects = {'health': 0, 'mana_mult': 1, 'fire_rate_and_damage': 2, 'self_revive': 3, 'speed_and_stamina': 4, 'headshots': 5, 'third_gun': 6, 'web_grenade': 7, 'cast_shock': 8}
 P = S['perks']['rows']
 o.append('\tstruct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };')
 o.append(f'\tinline constexpr std::array<PerkDef, {len(P)}> kPerks{{ {{')
@@ -149,7 +155,8 @@ o.append('\tnamespace elite { ' + ' '.join(f'inline constexpr float {r["id"]} = 
 AN = {r['id']: r for r in S['animations']['rows']}
 o.append(f'\tinline constexpr std::string_view kAnimFireCrossbow = {cs(AN["crossbow"]["fire"])}, kAnimReloadCrossbow = {cs(AN["crossbow"]["reload"])}, kAnimFireStaff = {cs(AN["staff"]["fire"])}, kAnimReloadStaff = {cs(AN["staff"]["reload"])};')
 o.append(f'\tinline constexpr std::uint32_t kMuzzleLight = 0x{IDS[("LIGH", "muzzle")]:03X};')
-o.append(f'\tinline constexpr std::uint32_t kBlankAmmo = 0x{IDS[("AMMO", "blank")]:03X};  // keeps crossbow-type guns loaded so attackStart plays the shot, not a bash')
+o.append(f'\tinline constexpr std::uint32_t kStandStat = 0x{IDS[("STAT", "stand")]:03X};  // the station platform (dressing on the Coffer)')
+o.append('\tinline constexpr float kStandHalfX = 330.0f, kStandFrontY = -185.0f, kStandBackY = 150.0f;  // footprint in plan space (tools/stand.py)')
 o.append(f'\tinline constexpr float kRegenDelay = {F(S["rounds"]["rows"][0]["regenDelaySeconds"])}, kRegenPerSecond = {F(S["rounds"]["rows"][0]["regenPerSecond"])};')
 o.append(f'\tinline constexpr float kSpawnMultiplier = {F(R0["spawnMultiplier"])}, kHitDamageFraction = {F(R0["hitDamageFraction"])}, kZombieWeaponDamageMult = {F(R0["weaponDamageMult"])};')
 o.append(f'\tinline constexpr bool kIgnoreNpcs = {str(R0["ignoreNpcs"]).lower()};')

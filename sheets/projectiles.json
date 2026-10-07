@@ -43,6 +43,114 @@
       "model": "DLC01\\Magic\\DLC1AurielSunBeam01.nif",
       "speed": 7000,
       "verify": []
+    },
+    {
+      "id": "arcane",
+      "sourceFormId": "none",
+      "model": "Magic\\IllusionProjectile01.nif",
+      "speed": 6500,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "venom",
+      "sourceFormId": "none",
+      "model": "Magic\\MagChaurusSpitProjectile.nif",
+      "speed": 6500,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "soul",
+      "sourceFormId": "none",
+      "model": "DLC01\\Magic\\DLC01_SoulRendProjectile.nif",
+      "speed": 6500,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "spore",
+      "sourceFormId": "none",
+      "model": "Magic\\MagSprigganBugSprayProjectile.nif",
+      "speed": 6500,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "blood",
+      "sourceFormId": "none",
+      "model": "DLC01\\Magic\\DLC1VampireAbsorbProj01.nif",
+      "speed": 6500,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "bone",
+      "sourceFormId": "none",
+      "model": "Magic\\ReanimateProjectile.nif",
+      "speed": 6500,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "moon",
+      "sourceFormId": "none",
+      "model": "Magic\\LightSpellProjectile.nif",
+      "speed": 6500,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "shadow",
+      "sourceFormId": "none",
+      "model": "Magic\\NightingaleStrifeProjectile01.nif",
+      "speed": 6500,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "amber",
+      "sourceFormId": "none",
+      "model": "Magic\\ParalyzeProjectile.nif",
+      "speed": 6500,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "gale",
+      "sourceFormId": "none",
+      "model": "Magic\\AuraWhisperProjectile.nif",
+      "speed": 6500,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "astral",
+      "sourceFormId": "none",
+      "model": "Magic\\AlterPosProjectile.nif",
+      "speed": 9000,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "dawn",
+      "sourceFormId": "none",
+      "model": "DLC01\\Magic\\DLC1SunlightProjectile.nif",
+      "speed": 6500,
+      "verify": [
+        "model"
+      ]
     }
   ]
 }

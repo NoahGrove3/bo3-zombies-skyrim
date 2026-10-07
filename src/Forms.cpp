@@ -7,6 +7,7 @@ namespace bo3z
 		std::array<RE::TESBoundObject*, gen::kEnemies.size()>        g_enemies{};
 		std::array<RE::BGSSoundDescriptorForm*, gen::kSounds.size()> g_sounds{};
 		std::array<RE::TESObjectWEAP*, gen::kGuns.size()>            g_guns{};
+		std::array<RE::SpellItem*, gen::kGuns.size()>                g_gunSpells{};
 		std::array<RE::AlchemyItem*, gen::kPerks.size()>             g_potions{};
 		std::array<RE::FormID, gen::kPerks.size()>                   g_effects{};
 		std::array<RE::TESObjectACTI*, gen::kObjects.size()>         g_objects{};
@@ -57,6 +58,27 @@ namespace bo3z
 				auto* f = Lookup(gen::kPlugin, gen::kGuns[i].weapId, gen::kGuns[i].id);
 				g_guns[i] = f ? f->As<RE::TESObjectWEAP>() : nullptr;
 				plugin += g_guns[i] != nullptr;
+				if (gen::kGuns[i].handSpell) {
+					auto* sf = Lookup(gen::kPlugin, gen::kGuns[i].handSpell, gen::kGuns[i].id);
+					g_gunSpells[i] = sf ? sf->As<RE::SpellItem>() : nullptr;
+				}
+			}
+			// Hand spells borrow the look of the vanilla spell they unleash: fire hands for flames, frost for frost...
+			for (std::size_t i = 0; i < gen::kGuns.size(); ++i) {
+				auto* hs = g_gunSpells[i];
+				auto* src = gen::kGuns[i].spell >= 0 ? Spell(gen::kGuns[i].spell) : nullptr;
+				if (!hs || !src || hs->effects.empty() || src->effects.empty()) {
+					continue;
+				}
+				auto* ours = hs->effects[0]->baseEffect;
+				for (auto* e : src->effects) {
+					if (auto* b = e ? e->baseEffect : nullptr; b && ours && (b->data.castingArt || b->data.light)) {
+						ours->data.castingArt = b->data.castingArt;
+						ours->data.light = b->data.light;
+						ours->data.castingSoundLevel = b->data.castingSoundLevel;
+						break;
+					}
+				}
 			}
 			for (std::size_t i = 0; i < gen::kPerks.size(); ++i) {
 				auto* a = Lookup(gen::kPlugin, gen::kPerks[i].alchId, gen::kPerks[i].id);
@@ -108,10 +130,11 @@ namespace bo3z
 		RE::TESGlobal*      Quickstart() { return g_quick; }
 		RE::TESObjectREFR*  RiverwoodMarker() { return g_riverwood; }
 		RE::TESObjectWEAP*  Gun(int a_gun) { return a_gun >= 0 && a_gun < static_cast<int>(g_guns.size()) ? g_guns[a_gun] : nullptr; }
+		RE::SpellItem* GunSpell(int a_gun) { return a_gun >= 0 && a_gun < static_cast<int>(g_gunSpells.size()) ? g_gunSpells[a_gun] : nullptr; }
 		int GunIndexOf(const RE::TESForm* a_form)
 		{
 			for (int i = 0; a_form && i < static_cast<int>(g_guns.size()); ++i) {
-				if (g_guns[i] == a_form) {
+				if (g_guns[i] == a_form || (g_gunSpells[i] && g_gunSpells[i] == a_form)) {
 					return i;
 				}
 			}

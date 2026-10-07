@@ -1,6 +1,6 @@
 {
   "sheet": "locations",
-  "about": "Every town: Sheogorath's Coffer, a brew machine (all nine brews), an ammo cache and its wall tomes, as a small plaza near the map marker.",
+  "about": "Every town: one station stand (Sheogorath's Coffer, the Brew Machine with all nine brews, the Atronach Reforge and wall wands) near the map marker.",
   "columns": [
     "id",
     "town",

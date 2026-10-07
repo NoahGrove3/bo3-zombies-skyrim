@@ -17,6 +17,20 @@
   ],
   "rows": [
     {
+      "id": "stand",
+      "for": "objects:coffer",
+      "type": "stat",
+      "model": "UndyingNights\\stand\\stand.nif",
+      "color": "none",
+      "radius": 0,
+      "x": -80,
+      "y": 70,
+      "z": 0,
+      "scale": 1.0,
+      "spin": 0,
+      "verify": []
+    },
+    {
       "id": "perk_beam",
       "for": "perk",
       "type": "stat",

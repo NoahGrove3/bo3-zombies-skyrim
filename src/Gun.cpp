@@ -1,8 +1,10 @@
 #include "BO3Z.h"
 
-// BO3 arsenal (sheet: weapons). Each gun is a Skyrim weapon item from BO3Zombies.esp. While one is drawn,
-// Skyrim's attack/block and ready-weapon input are blocked (input handler hooks) and the mouse and R drive
-// the gun: hitscan from the camera with spread, pellets, bursts and splash. Two slots, three with Mule Kick.
+// The arsenal (sheet: weapons). Wands are staff-type weapons with a free concentration enchantment; tomes and
+// grimoires are concentration spells held in the right hand. Skyrim plays the cast (staff thrust / open hand) from
+// the attack button; this file does the shots: hitscan from the camera with spread, pellets, bursts, element bolts
+// and each wand's ability. Wands never run dry; tomes and grimoires spend magicka per shot. Two slots, three with
+// Mammoth Back Porter.
 namespace bo3z
 {
 	namespace
@@ -39,34 +41,21 @@ namespace bo3z
 		}
 		bool GunOut() { return CurrentGun() >= 0 && Drawn() && !Intro::CrewScreenOpen(); }
 
-		// Crossbow-type guns need a bolt equipped, or attackStart plays the empty-crossbow bash (looks like a sword swing).
-		void LoadBlank(RE::PlayerCharacter* a_player)
-		{
-			auto* blank = Forms::Ours(gen::kBlankAmmo);
-			auto* ammo = blank ? blank->As<RE::TESAmmo>() : nullptr;
-			if (!a_player || !ammo) {
-				return;
-			}
-			auto       inv = a_player->GetInventory([&](RE::TESBoundObject& a_obj) { return &a_obj == ammo; });
-			const auto have = inv.empty() ? 0 : inv.begin()->second.first;
-			if (have < 200) {
-				a_player->AddObjectToContainer(ammo, nullptr, 999 - have, nullptr);
-			}
-			if (a_player->GetCurrentAmmo() != ammo) {
-				RE::ActorEquipManager::GetSingleton()->EquipObject(a_player, ammo, nullptr, 1, nullptr, true, false, false, true);
-			}
-		}
-
 		void Equip(int a_gun)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* w = Forms::Gun(a_gun);
-			if (!p || !w) {
+			if (!p || (!w && !Forms::GunSpell(a_gun))) {
 				return;
 			}
-			RE::ActorEquipManager::GetSingleton()->EquipObject(p, w);
-			if (!gen::kGuns[a_gun].staff) {
-				LoadBlank(p);
+			if (auto* sp = Forms::GunSpell(a_gun)) {
+				if (!p->HasSpell(sp)) {
+					p->AddSpell(sp);
+				}
+				auto* right = RE::BGSDefaultObjectManager::GetSingleton()->GetObject<RE::BGSEquipSlot>(RE::DEFAULT_OBJECT::kRightHandEquip);
+				RE::ActorEquipManager::GetSingleton()->EquipSpell(p, sp, right);
+			} else {
+				RE::ActorEquipManager::GetSingleton()->EquipObject(p, w);
 			}
 			if (!Drawn()) {
 				p->DrawWeaponMagicHands(true);
@@ -78,6 +67,12 @@ namespace bo3z
 			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
 			{
 				if (GunOut()) {
+					// The fire button goes through: Skyrim plays the staff/hand cast. Right mouse (left-hand
+					// attack/block) stays ours for aiming.
+					auto* b = a_event ? a_event->AsButtonEvent() : nullptr;
+					if (b && b->GetDevice() == RE::INPUT_DEVICE::kMouse && b->GetIDCode() == gen::kKey2_fire) {
+						return func(a_this, a_event);
+					}
 					return false;
 				}
 				return func(a_this, a_event);
@@ -131,7 +126,7 @@ namespace bo3z
 
 		bool Targetable(RE::Actor* a, RE::PlayerCharacter* player)
 		{
-			return a && a != player && !a->IsDead() && a->Is3DLoaded() && (Director::IsRoundUndead(a) || a->IsHostileToActor(player));
+			return a && a != player && !a->IsDead() && a->Is3DLoaded() && (Director::IsRoundUndead(a) || (!Director::NightNow() && a->IsHostileToActor(player)));  // nights: only the undead
 		}
 
 		RE::NiPoint3 HeadPos(RE::Actor* a)
@@ -142,7 +137,7 @@ namespace bo3z
 			return a->GetPosition() + RE::NiPoint3{ 0, 0, 110 };
 		}
 
-		void Damage(RE::Actor* a_target, float a_bo3Damage, bool a_head, bool a_melee)
+		bool Damage(RE::Actor* a_target, float a_bo3Damage, bool a_head, bool a_melee, bool a_quiet = false)
 		{
 			auto*       player = RE::PlayerCharacter::GetSingleton();
 			auto*       av = a_target->AsActorValueOwner();
@@ -164,10 +159,41 @@ namespace bo3z
 					a_target->StartCombat(player);
 				}
 			}
-			Forms::Play(a_head && !a_melee ? gen::Sound::headshot : gen::Sound::hitmarker);
-			std::scoped_lock l(Hud::Lock());
-			Hud::Edit().hitTime = 0.2f;
-			Hud::Edit().hitKill = kill;
+			if (!a_quiet || kill) {
+				Forms::Play(a_head && !a_melee ? gen::Sound::headshot : gen::Sound::hitmarker);
+				std::scoped_lock l(Hud::Lock());
+				Hud::Edit().hitTime = 0.2f;
+				Hud::Edit().hitKill = kill;
+			}
+			return kill;
+		}
+
+		// Venom wand: damage over time (BO3 units per second) on top of the hit.
+		struct Dot
+		{
+			RE::ActorHandle target;
+			float           perSecond, left;
+		};
+		std::vector<Dot> g_dots;
+		void TickDots(float a_delta)
+		{
+			for (auto& d : g_dots) {
+				auto a = d.target.get();
+				if (!a || a->IsDead()) {
+					d.left = 0;
+					continue;
+				}
+				const float step = std::min(a_delta, d.left);
+				Damage(a.get(), d.perSecond * step, false, false, true);
+				d.left -= step;
+			}
+			std::erase_if(g_dots, [](const Dot& d) { return d.left <= 0; });
+		}
+
+		void Stagger(RE::Actor* a, float a_mag)
+		{
+			a->SetGraphVariableFloat("staggerMagnitude", a_mag);
+			a->NotifyAnimationGraph("staggerStart");
 		}
 
 		float CrewMult(int a_passive)
@@ -197,31 +223,6 @@ namespace bo3z
 		}
 
 		std::vector<std::pair<RE::ObjectRefHandle, float>> g_flashes;  // muzzle lights, removed after a blink
-
-		void Anim(std::string_view a_event)
-		{
-			if (!a_event.empty() && a_event != "none") {
-				RE::PlayerCharacter::GetSingleton()->NotifyAnimationGraph(RE::BSFixedString(std::string(a_event).c_str()));
-			}
-		}
-
-		void MuzzleFlash(RE::PlayerCharacter* a_player)
-		{
-			auto* light = Forms::Ours(gen::kMuzzleLight);
-			if (!light) {
-				return;
-			}
-			RE::NiPoint3 at = a_player->GetPosition() + RE::NiPoint3{ 0, 0, 110 };
-			if (auto* root = a_player->Get3D(); root) {
-				if (auto* node = root->GetObjectByName("WEAPON")) {
-					at = node->world.translate;
-				}
-			}
-			if (auto ref = a_player->PlaceObjectAtMe(light, false)) {
-				ref->SetPosition(at);
-				g_flashes.push_back({ ref->CreateRefHandle(), 0.07f });
-			}
-		}
 
 		void FireOnce(const gen::GunDef& g)
 		{
@@ -265,61 +266,107 @@ namespace bo3z
 				return;
 			}
 			RE::Actor* firstHit = nullptr;
+			const auto sp = static_cast<gen::Special>(g.special);
+			auto*      pav = player->AsActorValueOwner();
 			for (int p = 0; p < g.pellets; ++p) {
 				const auto dir = Spread(aim, spread);
-				RE::Actor* best = nullptr;
-				float      bestT = FLT_MAX;
-				bool       head = false;
+				// everything this ray passes through, nearest first (pierce wands keep going)
+				struct Hit { RE::Actor* a; float t; bool head; };
+				std::vector<Hit> hits;
 				for (auto* a : candidates) {
 					const auto hp = HeadPos(a);
-					if (auto [hd, ht] = RaySegment(origin, dir, hp, hp); hd <= headRadius && ht < bestT) {
-						best = a, bestT = ht, head = true;
+					if (auto [hd, ht] = RaySegment(origin, dir, hp, hp); hd <= headRadius) {
+						hits.push_back({ a, ht, true });
+					} else if (auto [bd, bt] = RaySegment(origin, dir, a->GetPosition() + RE::NiPoint3{ 0, 0, 15 }, hp); bd <= g.hitRadius) {
+						hits.push_back({ a, bt, false });
+					}
+				}
+				std::sort(hits.begin(), hits.end(), [](const Hit& x, const Hit& y) { return x.t < y.t; });
+				const int pierce = sp == gen::Special::Pierce ? std::max(1, static_cast<int>(g.abilityValue)) : 1;
+				int       taken = 0;
+				for (auto& h : hits) {
+					if (taken >= pierce) {
+						break;
+					}
+					bool los = false;
+					if (!player->HasLineOfSight(h.a, los)) {
 						continue;
 					}
-					if (auto [bd, bt] = RaySegment(origin, dir, a->GetPosition() + RE::NiPoint3{ 0, 0, 15 }, hp); bd <= g.hitRadius && bt < bestT) {
-						best = a, bestT = bt, head = false;
+					++taken;
+					RE::Actor* best = h.a;
+					const bool head = h.head;
+					const float bestT = h.t;
+					if (!firstHit) {
+						firstHit = best;
 					}
-				}
-				bool los = false;
-				if (!best || !player->HasLineOfSight(best, los)) {
-					continue;
-				}
-				if (!firstHit) {
-					firstHit = best;
-				}
-				if (g.spell >= 0 && (g.spellOn == 1 || (g.spellOn == 3 && g_shots % 4 == 0)) && p == 0) {
-					Cast(g.spell, best);  // spell visuals/effects on the target (Wabbajack: its own madness)
-				}
-				if (!best->IsDead()) {
-					Damage(best, dmg * (head ? headMult : 1.0f), head, false);
-				}
-				if (g.special == 2) {  // chain (Skyforge Arc): jumps between nearby dead
-					std::vector<RE::Actor*> hit{ best };
-					RE::Actor*              cur = best;
-					for (int k = 0; k < 6; ++k) {
-						RE::Actor* next = nullptr;
-						float      nd = g.splashRadius;
+					if (g.spell >= 0 && (g.spellOn == 1 || (g.spellOn == 3 && g_shots % 4 == 0)) && p == 0 && taken == 1) {
+						Cast(g.spell, best);  // spell visuals/effects on the target (Wabbajack: its own madness)
+					}
+					const float hitDmg = dmg * (head ? headMult : 1.0f) * (taken > 1 ? 0.8f : 1.0f);
+					bool        killed = false;
+					if (!best->IsDead()) {
+						killed = Damage(best, hitDmg, head, false);
+					}
+					switch (sp) {
+					case gen::Special::Poison:
+						if (!killed) {
+							g_dots.push_back({ best->GetHandle(), hitDmg * g.abilityValue / 3.0f, 3.0f });
+						}
+						break;
+					case gen::Special::Soul:
+						if (killed) {
+							Points::Add(static_cast<int>(100 * g.abilityValue));  // soul harvest
+						}
+						break;
+					case gen::Special::Slow:
+						if (!killed) {
+							Director::Web(best->GetPosition(), 40.0f, 2.0f, 100.0f * g.abilityValue);
+						}
+						break;
+					case gen::Special::Lifesteal:
+						pav->RestoreActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * g.abilityValue * 0.25f);
+						break;
+					case gen::Special::Stagger:
+						if (!killed && Rand(0, 1) < g.abilityValue) {
+							Stagger(best, 0.8f);
+						}
+						break;
+					case gen::Special::Stasis:
+						if (!killed && Rand(0, 1) < g.abilityValue) {
+							Director::Web(best->GetPosition(), 40.0f, 2.5f, 95.0f);  // locked in amber
+						}
+						break;
+					default:
+						break;
+					}
+					if (sp == gen::Special::Chain) {  // chain (Skyforge): jumps between nearby dead
+						std::vector<RE::Actor*> chained{ best };
+						RE::Actor*              cur = best;
+						for (int k = 0; k < 6; ++k) {
+							RE::Actor* next = nullptr;
+							float      nd = g.splashRadius;
+							for (auto* a : candidates) {
+								if (a->IsDead() || std::find(chained.begin(), chained.end(), a) != chained.end()) {
+									continue;
+								}
+								if (const float d = a->GetPosition().GetDistance(cur->GetPosition()); d < nd) {
+									nd = d, next = a;
+								}
+							}
+							if (!next) {
+								break;
+							}
+							Damage(next, g.splashDamage * Perks::DamageMult(), false, false);
+							chained.push_back(next);
+							cur = next;
+						}
+					}
+					if (sp == gen::Special::Splash && g.splashRadius > 0) {  // splash (Auriel's Dawn, Embers)
+						const auto at = origin + dir * bestT;
 						for (auto* a : candidates) {
-							if (a->IsDead() || std::find(hit.begin(), hit.end(), a) != hit.end()) {
-								continue;
+							if (a != best && !a->IsDead() && a->GetPosition().GetDistance(at) <= g.splashRadius) {
+								Damage(a, g.splashDamage * Perks::DamageMult(), false, false);
 							}
-							if (const float d = a->GetPosition().GetDistance(cur->GetPosition()); d < nd) {
-								nd = d, next = a;
-							}
-						}
-						if (!next) {
-							break;
-						}
-						Damage(next, g.splashDamage * Perks::DamageMult(), false, false);
-						hit.push_back(next);
-						cur = next;
-					}
-				}
-				if (g.special == 1 && g.splashRadius > 0) {  // splash (Aetherium Ray, Ember Mortar)
-					const auto at = origin + dir * bestT;
-					for (auto* a : candidates) {
-						if (a != best && !a->IsDead() && a->GetPosition().GetDistance(at) <= g.splashRadius) {
-							Damage(a, g.splashDamage * Perks::DamageMult(), false, false);
 						}
 					}
 				}
@@ -327,7 +374,7 @@ namespace bo3z
 			if (g.spell >= 0 && g.spellOn == 2) {
 				Cast(g.spell, firstHit);  // fired spell flies at what you hit (or straight ahead)
 			}
-			if (g.bulletSpell) {  // the visible bullet
+			if (g.bulletSpell) {  // the visible element bolt
 				if (auto* f = Forms::Ours(g.bulletSpell); f) {
 					if (auto* m = f->As<RE::MagicItem>(); m) {
 						if (auto* caster = player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
@@ -335,69 +382,46 @@ namespace bo3z
 						}
 					}
 				}
-				MuzzleFlash(player);
 			}
-			Anim(g.staff ? gen::kAnimFireStaff : gen::kAnimFireCrossbow);
+			Perks::OnCast(g_shots);
 		}
 
-		void StartReload()
-		{
-			const int gun = CurrentGun(), slot = SlotOf(gun);
-			if (gun < 0 || slot < 0 || g_reload > 0) {
-				return;
-			}
-			const auto s = Save::GetSlot(slot);
-			const auto& g = gen::kGuns[gun];
-			if (s.clip >= g.clip || s.reserve <= 0) {
-				return;
-			}
-			g_reload = g.reloadMs / 1000.0f * Perks::ReloadMult();
-			g_burstLeft = 0;
-			Forms::Play(g.reloadSnd);
-			Anim(g.staff ? gen::kAnimReloadStaff : gen::kAnimReloadCrossbow);
-			Perks::OnReload(1.0f - static_cast<float>(s.clip) / static_cast<float>(g.clip));
-		}
-
-		void FinishReload()
-		{
-			const int gun = CurrentGun(), slot = SlotOf(gun);
-			if (gun < 0 || slot < 0) {
-				return;
-			}
-			auto s = Save::GetSlot(slot);
-			const int moved = std::min(gen::kGuns[gun].clip - s.clip, s.reserve);
-			s.clip += moved;
-			s.reserve -= moved;
-			Save::SetSlot(slot, s);
-		}
+		float g_manaQuiet = 0;  // seconds since the last magicka shot (regen waits for it)
 
 		void TryFire(bool a_fromTrigger)
 		{
 			const int gun = CurrentGun(), slot = SlotOf(gun);
-			if (gun < 0 || slot < 0 || g_cooldown > 0 || g_reload > 0) {
+			if (gun < 0 || slot < 0 || g_cooldown > 0) {
 				return;
 			}
 			const auto& g = gen::kGuns[gun];
-			auto s = Save::GetSlot(slot);
-			if (s.clip <= 0) {
-				if (a_fromTrigger) {
-					Forms::Play(g.emptySnd);
+			auto*       player = RE::PlayerCharacter::GetSingleton();
+			if (g.mana > 0) {  // tomes and grimoires run on magicka
+				auto*       av = player->AsActorValueOwner();
+				const float cost = g.mana * Perks::ManaMult();
+				if (av->GetActorValue(RE::ActorValue::kMagicka) < cost) {
+					if (a_fromTrigger) {
+						Forms::Play(g.emptySnd);
+						Hud::Banner("Not enough magicka", 1.2f);
+					}
+					g_burstLeft = 0;
+					g_cooldown = 0.35f;
+					return;
 				}
-				StartReload();
-				return;
+				av->DamageActorValue(RE::ActorValue::kMagicka, cost);
+				g_manaQuiet = 0;
 			}
-			s.clip -= 1;
-			Save::SetSlot(slot, s);
 			Forms::Play(g.fireSnd);
 			FireOnce(g);
+			const float delay = g.fireDelayMs / 1000.0f * Perks::FireDelayMult();
 			if (g.fire == gen::Fire::Burst) {
 				if (a_fromTrigger) {
-					g_burstLeft = std::min(g.burst - 1, s.clip);
+					g_burstLeft = g.burst - 1;
 				}
 				g_burstTimer = 0.07f;
-				g_cooldown = g_burstLeft > 0 ? 0.07f : g.fireDelayMs / 1000.0f * Perks::FireDelayMult();
+				g_cooldown = g_burstLeft > 0 ? 0.07f : delay;
 			} else {
-				g_cooldown = g.fireDelayMs / 1000.0f * Perks::FireDelayMult();
+				g_cooldown = delay;
 			}
 		}
 
@@ -469,11 +493,18 @@ namespace bo3z
 				if (sl.gun < 0) {
 					continue;
 				}
+				if (auto* sp = Forms::GunSpell(sl.gun)) {
+					if (!p->HasSpell(sp) || s >= Gun::SlotCount()) {
+						p->RemoveSpell(sp);
+						Save::SetSlot(s, {});
+					}
+					continue;
+				}
 				auto* w = Forms::Gun(sl.gun);
 				const auto counts = p->GetInventoryCounts([w](RE::TESBoundObject& o) { return &o == w; });
 				if (counts.empty() || s >= Gun::SlotCount()) {
 					if (s >= Gun::SlotCount() && !counts.empty()) {
-						p->RemoveItem(w, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);  // lost Mule Kick
+						p->RemoveItem(w, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);  // lost the third slot
 					}
 					Save::SetSlot(s, {});
 				}
@@ -489,25 +520,18 @@ namespace bo3z
 
 		void RefillAmmo(int a_gun)
 		{
-			if (const int s = SlotOf(a_gun); s >= 0) {
-				auto sl = Save::GetSlot(s);
-				sl.reserve = gen::kGuns[a_gun].reserve;
-				Save::SetSlot(s, sl);
-			}
+			(void)a_gun;  // wands never run dry; tomes run on magicka
 		}
 
 		bool Give(int a_gun)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* w = Forms::Gun(a_gun);
-			if (!p || !w) {
+			auto* spell = Forms::GunSpell(a_gun);
+			if (!p || (!w && !spell)) {
 				return false;
 			}
 			if (Owns(a_gun)) {
-				auto sl = Save::GetSlot(SlotOf(a_gun));
-				sl.clip = gen::kGuns[a_gun].clip;
-				sl.reserve = gen::kGuns[a_gun].reserve;
-				Save::SetSlot(SlotOf(a_gun), sl);
 				Equip(a_gun);
 				return true;
 			}
@@ -522,13 +546,20 @@ namespace bo3z
 				if (slot < 0) {
 					slot = Save::ActiveSlot() % SlotCount();
 				}
-				if (auto* old = Forms::Gun(Save::GetSlot(slot).gun)) {
+				const int oldGun = Save::GetSlot(slot).gun;
+				if (auto* oldSpell = Forms::GunSpell(oldGun)) {
+					p->RemoveSpell(oldSpell);
+				} else if (auto* old = Forms::Gun(oldGun)) {
 					p->RemoveItem(old, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 				}
 			}
 			Save::SetSlot(slot, { a_gun, gen::kGuns[a_gun].clip, gen::kGuns[a_gun].reserve });
 			Save::SetActiveSlot(slot);
-			p->AddObjectToContainer(w, nullptr, 1, nullptr);
+			if (spell) {
+				p->AddSpell(spell);
+			} else {
+				p->AddObjectToContainer(w, nullptr, 1, nullptr);
+			}
 			Equip(a_gun);
 			logger::info("gun: {} -> slot {}", gen::kGuns[a_gun].id, slot);
 			return true;
@@ -563,11 +594,27 @@ namespace bo3z
 					Save::SetSlot(s, {});
 				}
 			}
+			// Tomes and grimoires used to be carried as staff items; now they live in your hands as spells.
+			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
+				auto* sp = Forms::GunSpell(i);
+				auto* w = Forms::Gun(i);
+				if (!sp || !w) {
+					continue;
+				}
+				const auto counts = p->GetInventoryCounts([w](RE::TESBoundObject& o) { return &o == w; });
+				for (auto& [obj, n] : counts) {
+					p->RemoveItem(obj, n, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+					++removed;
+				}
+				if (SlotOf(i) >= 0 && !p->HasSpell(sp)) {
+					p->AddSpell(sp);
+				}
+			}
 			bool any = false;
 			for (int s = 0; s < 3; ++s) {
 				any |= Save::GetSlot(s).gun >= 0;
 			}
-			if (Save::Crew() >= 0 && !any) {
+			if (Save::Flag(Save::kFlagStarted) && !any) {
 				Gun::Give(gen::kGunIdx_sidearm);
 			}
 			if (removed) {
@@ -667,10 +714,6 @@ namespace bo3z
 				g_trigger = g_adsHeld = false;
 				return false;
 			}
-			if (dev == RE::INPUT_DEVICE::kKeyboard && code == gen::kKey2_reload && down) {
-				StartReload();
-				return true;
-			}
 			if (dev == RE::INPUT_DEVICE::kMouse && code == gen::kKey2_fire) {
 				g_trigger = !up;
 				if (down) {
@@ -683,6 +726,21 @@ namespace bo3z
 				return true;
 			}
 			return false;
+		}
+
+		// Night magic: magicka comes back fast once you stop casting (Quicksilver doubles it).
+		void TickMana(float a_delta)
+		{
+			g_manaQuiet += a_delta;
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || !Director::NightNow() || g_manaQuiet < gen::kManaRegenDelay) {
+				return;
+			}
+			auto*       av = p->AsActorValueOwner();
+			const float max = av->GetPermanentActorValue(RE::ActorValue::kMagicka), cur = av->GetActorValue(RE::ActorValue::kMagicka);
+			if (cur < max) {
+				av->RestoreActorValue(RE::ActorValue::kMagicka, std::min(max - cur, max * gen::kManaRegenPerSecond / Perks::ManaMult() * a_delta));
+			}
 		}
 
 		// ---- aim down sights: pull the first-person gun onto the view line so you look down its barrel ----
@@ -767,11 +825,11 @@ namespace bo3z
 			const RE::NiPoint3 f{ std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch) };
 			const RE::NiPoint3 u{ std::sin(yaw) * std::sin(pitch), std::cos(yaw) * std::sin(pitch), std::cos(pitch) };
 			const RE::NiPoint3 r{ std::cos(yaw), -std::sin(yaw), 0 };
-			// Handguns of Skyrim models: muzzle toward -Y, sights up +Z.
+			// Wand models: tip toward +Y, up +Z (point it where you look).
 			RE::NiMatrix3 want;
 			for (int i = 0; i < 3; ++i) {
 				const float rv[3] = { r.x, r.y, r.z }, fv[3] = { f.x, f.y, f.z }, uv[3] = { u.x, u.y, u.z };
-				want.entry[i][0] = -rv[i], want.entry[i][1] = -fv[i], want.entry[i][2] = uv[i];
+				want.entry[i][0] = rv[i], want.entry[i][1] = fv[i], want.entry[i][2] = uv[i];
 			}
 			const auto& pw = bone->world;
 			const float  scale = pw.scale * g_adsRest.scale;
@@ -813,17 +871,13 @@ namespace bo3z
 			std::erase_if(g_flashes, [](const auto& e) { return e.second <= 0; });
 			g_cooldown = std::max(0.0f, g_cooldown - a_delta);
 			g_knifeCd = std::max(0.0f, g_knifeCd - a_delta);
-			if (g_reload > 0 && (g_reload -= a_delta) <= 0) {
-				g_reload = 0;
-				FinishReload();
-			}
+			TickDots(a_delta);
+			TickMana(a_delta);
 			static float sync = 0;
 			if ((sync -= a_delta) <= 0) {
 				sync = 1.0f;
 				SyncSlots();
-				if (const int gun = CurrentGun(); gun >= 0 && !gen::kGuns[gun].staff) {
-					LoadBlank(RE::PlayerCharacter::GetSingleton());
-				}
+
 			}
 			const bool out = GunOut();
 			const int  gun = CurrentGun();
@@ -848,7 +902,7 @@ namespace bo3z
 				rd.worldFOV = gen::kWorldFov + (gen::kAdsFov - gen::kWorldFov) * g_ads;
 				rd.firstPersonFOV = gen::kViewmodelFov + (gen::kAdsViewmodelFov - gen::kViewmodelFov) * g_ads;
 			}
-			AimViewmodel(RE::PlayerCharacter::GetSingleton(), out ? g_ads : 0.0f);
+			AimViewmodel(RE::PlayerCharacter::GetSingleton(), out && gen::kGuns[gun].kind == gen::kKindWand ? g_ads : 0.0f);  // hand spells: just the zoom
 			const auto now = Clock::now();
 			std::erase_if(g_hits, [&](const auto& kv) { return now - kv.second.first > 2s; });
 
@@ -856,13 +910,17 @@ namespace bo3z
 			auto& h = Hud::Edit();
 			h.gunOut = out;
 			h.ads = g_ads;
-			h.reloading = g_reload > 0;
+			h.reloading = false;
 			if (out) {
 				const auto s = Save::GetSlot(SlotOf(gun));
 				h.gunName = std::string(gen::kGuns[gun].label);
 				h.gunLevel = SlotOf(gun) >= 0 ? Save::GetSlot(SlotOf(gun)).level : 0;
 				h.clip = s.clip;
 				h.reserve = s.reserve;
+				h.gunKind = gen::kGuns[gun].kind;
+				h.manaCost = gen::kGuns[gun].mana * Perks::ManaMult();
+				h.gunElement = std::string(gen::kGuns[gun].abilityText);
+				h.gunColor = gen::kGuns[gun].color;
 			}
 			h.points = Points::Get();
 			h.perks = Save::PerkBits();

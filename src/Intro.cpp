@@ -68,10 +68,16 @@ namespace bo3z
 				}
 				Save::SetFlag(Save::kFlagMoved, true);
 			}
-			if (Save::Flag(Save::kFlagMoved) && Forms::IntroDone() && Save::Crew() < 0 && !g_crewOpen) {
-				g_crewOpen = true;
-				g_highlight = 0;
-				logger::info("intro: crew screen open");
+			// No crew pick any more: you play your own Skyrim character. First time in, you get the starting wand.
+			if (Save::Flag(Save::kFlagMoved) && Forms::IntroDone() && !Save::Flag(Save::kFlagStarted)) {
+				if (Save::Crew() >= 0) {
+					Save::SetCrew(-1);  // older saves: drop the crew character
+				} else {
+					Gun::Give(gen::kGunIdx_sidearm);
+				}
+				Save::SetFlag(Save::kFlagStarted, true);
+				g_crewOpen = false;
+				logger::info("intro: started (no crew screen)");
 			}
 			std::scoped_lock l(Hud::Lock());
 			auto& h = Hud::Edit();

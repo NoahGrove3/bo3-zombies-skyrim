@@ -137,8 +137,8 @@
     },
     {
       "id": "ads_sight_height",
-      "what": "Height of the iron sights above the bore line in the gun model (units)",
-      "value": 3.5,
+      "what": "How far below the line of sight the wand sits while aiming (units)",
+      "value": 5,
       "durationMs": 0,
       "verify": [
         "value"

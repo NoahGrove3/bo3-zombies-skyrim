@@ -399,6 +399,29 @@ def forge_upgrade():
     x = place(x, crack, 1.0)
     return hall(norm(x), 0.3, 2.5)
 
+# ---- wands: no powder, just magic -- shimmering release, airy whoosh, a soft low push
+def _whoosh(d, f_hi, f_lo, bands=20):
+    n = int(d * SR)
+    return np.concatenate([bp(c, f, f * 1.8) for c, f in zip(np.array_split(noise(n), bands), np.geomspace(f_hi, f_lo, bands))]) * env(n, 0.004, d * 0.3, 0.4, d * 0.5)
+def _sparkle(d, f, count=6):
+    x = np.zeros(int(d * SR))
+    for k in range(count):
+        ff = f * rng.uniform(0.8, 1.6); tt = t_(0.12)
+        x = place(x, np.sin(2 * np.pi * ff * tt) * np.exp(-tt / 0.03) * 0.3, rng.uniform(0, d * 0.6))[:len(x)]
+    return x
+def cast_light():   # a quick bolt: bright shimmer + short whoosh
+    return hall(norm(mix(_whoosh(0.32, 5000, 700) * 1.2, _sparkle(0.3, 2600), zap(1400, 500, 0.18) * 0.5, kick(0.2, 160, 70) * 0.25), 0.8), 0.25, 1.6)
+def cast_rapid():   # tight, short so it can repeat fast
+    return hall(norm(mix(_whoosh(0.14, 6000, 1200, 12), zap(1800, 700, 0.09) * 0.6, _sparkle(0.12, 3200, 3)), 0.7), 0.12, 0.9)
+def cast_scatter(): # a burst of bone shards: wide whoosh + crackle + thump
+    crack = bp(noise(int(0.4 * SR)), 900, 5000) * (np.random.default_rng(7).random(int(0.4 * SR)) > 0.985) * 1.6
+    return hall(norm(mix(_whoosh(0.5, 3000, 300) * 1.4, crack, kick(0.4, 130, 45) * 0.8), 0.85), 0.3, 1.8)
+def cast_heavy():   # a big release: deep push, choir sting, long tail
+    return hall(norm(mix(_whoosh(0.8, 4000, 200) * 1.3, kick(0.6, 110, 38) * 1.1, chord(choir, ['E3', 'B3', 'G4'], 0.7, vowel='a', bright=1.3) * 0.45, _sparkle(0.6, 2000, 10)), 0.9), 0.35, 2.4)
+def mana_empty():   # magic fizzles out
+    n = int(0.35 * SR)
+    return hall(norm(mix(bp(noise(n), 2000, 7000) * env(n, 0.005, 0.05, 0.3, 0.25) * 0.5, zap(900, 220, 0.3) * 0.5), 0.5), 0.2, 1.0)
+
 SOUNDS = {
     'brew_trollshide': j_trollshide, 'brew_quicksilver': j_quicksilver, 'brew_twinstrike': j_twinstrike,
     'brew_hearthfire': j_hearthfire, 'brew_windrunner': j_windrunner, 'brew_hawkeye': j_hawkeye,
@@ -408,6 +431,7 @@ SOUNDS = {
     'shot_pistol': shot_pistol, 'shot_smg': shot_smg, 'shot_ar': shot_ar, 'shot_lmg': shot_lmg,
     'shot_shotgun': shot_shotgun, 'shot_sniper': shot_sniper, 'shot_ray': shot_ray,
     'reload_mag': reload_mag, 'reload_shell': reload_shell, 'dry_click': dry_click,
+    'cast_light': cast_light, 'cast_rapid': cast_rapid, 'cast_scatter': cast_scatter, 'cast_heavy': cast_heavy, 'mana_empty': mana_empty,
     'buy': buy, 'forge_upgrade': forge_upgrade, 'hitmarker': hitmarker, 'headshot': headshot, 'drink': drink, 'knife': knife, 'rise': rise,
 }
 

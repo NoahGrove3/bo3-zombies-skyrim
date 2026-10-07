@@ -134,7 +134,7 @@ def forge():
     flat_n = save_dds(Image.new('RGBA', (64, 64), (128, 128, 255, 50)), 'forge/flat_n.dds', alpha=True)
     glow_d = save_dds(Image.new('RGB', (64, 64), (255, 170, 80)), 'forge/glow_d.dds')
     glow_g = save_dds(Image.new('RGB', (64, 64), (255, 200, 120)), 'forge/glow_g.dds')
-    run_job([f'in {d}/source/Day 05 - Magic Gate optim2.fbx', f'out {mesh_out("forge/forge.nif")}', 'fit 230', 'rotate 0 0 90', 'ground 1', 'collide 1',
+    run_job([f'in {d}/source/Day 05 - Magic Gate optim2.fbx', f'out {mesh_out("forge/forge.nif")}', 'fit 230', 'ground 1', 'collide 1',
              f'mat rock diffuse={dif} normal={flat_n} spec=0.2 gloss=20',
              f'mat glow diffuse={glow_d} normal={flat_n} glow={glow_g} emit=1.0,0.55,0.2 emitmult=4 doublesided=1'])
 
