@@ -27,6 +27,7 @@
 #include <Windows.h>
 #include <d3d11.h>
 #include <dxgi.h>
+#include <dxgi1_3.h>
 
 namespace logger = SKSE::log;
 using namespace std::literals;

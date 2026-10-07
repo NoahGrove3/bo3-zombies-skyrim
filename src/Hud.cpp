@@ -191,6 +191,7 @@ namespace bo3z
 			g_last = now;
 
 			DevTools::PollFromRender();
+			DevTools::RunQueuedOnMain();  // Present runs on the main thread, also while menus pause the game
 			Hud::State s;
 			{
 				std::scoped_lock l(g_lock);
@@ -234,6 +235,21 @@ namespace bo3z
 			ImGui::Render();
 			if (static int n = 0; n++ % 600 == 0) {
 				auto* dd = ImGui::GetDrawData();
+				D3D11_VIEWPORT vp[4]{};
+				UINT           nvp = 4;
+				g_context->RSGetViewports(&nvp, vp);
+				UINT          sw = 0, sh = 0;
+				IDXGISwapChain2* sc2 = nullptr;
+				if (SUCCEEDED(a_swap->QueryInterface(__uuidof(IDXGISwapChain2), reinterpret_cast<void**>(&sc2))) && sc2) {
+					sc2->GetSourceSize(&sw, &sh);
+					sc2->Release();
+				}
+				auto* win = RE::BSGraphics::Renderer::GetCurrentRenderWindow();
+				auto* st = RE::BSGraphics::State::GetSingleton();
+				logger::info("hud: sizes window {}x{} at {},{} | state screen {}x{} fbvp {}x{} dynres {:.2f}x{:.2f} | viewport[{}] {:.0f}x{:.0f}+{:.0f},{:.0f} | sourceSize {}x{}",
+					win ? win->windowWidth : -1, win ? win->windowHeight : -1, win ? win->windowX : -1, win ? win->windowY : -1, st ? st->screenWidth : 0, st ? st->screenHeight : 0,
+					st ? st->frameBufferViewport[0] : 0, st ? st->frameBufferViewport[1] : 0, st ? st->GetRuntimeData().dynamicResolutionWidthRatio : 0.0f,
+					st ? st->GetRuntimeData().dynamicResolutionHeightRatio : 0.0f, nvp, vp[0].Width, vp[0].Height, vp[0].TopLeftX, vp[0].TopLeftY, sw, sh);
 				logger::info("hud: frame {} display {}x{} fmt {} lists {} verts {} font {} imgui {}", n, desc.BufferDesc.Width, desc.BufferDesc.Height,
 					static_cast<int>(desc.BufferDesc.Format), dd ? dd->CmdListsCount : -1, dd ? dd->TotalVtxCount : -1, g_font != nullptr, IMGUI_VERSION);
 			}

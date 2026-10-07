@@ -19,6 +19,14 @@ namespace bo3z
 		std::mutex               g_lock;
 		std::vector<std::string> g_mainQueue;
 		std::string              g_shotName;
+		struct PendingKey
+		{
+			RE::INPUT_DEVICE  device;
+			std::uint32_t     id;
+			RE::BSFixedString ev;
+			int               stage;  // 0 press, 1 release
+		};
+		std::vector<PendingKey> g_pendingKeys;
 		int                      g_frame = 0;
 
 		std::optional<std::filesystem::path> Dir()
@@ -78,6 +86,35 @@ namespace bo3z
 						break;
 					}
 				}
+			} else if (cmd == "key" || cmd == "mouse") {
+				// key <dik> [menu]: press and release a key inside Skyrim's own input queue (no window focus needed)
+				std::uint32_t id = 0;
+				std::string   ctx;
+				in >> id >> ctx;
+				const auto device = cmd == "key" ? RE::INPUT_DEVICE::kKeyboard : RE::INPUT_DEVICE::kMouse;
+				const auto context = ctx == "menu" ? RE::UserEvents::INPUT_CONTEXT_ID::kMenuMode : RE::UserEvents::INPUT_CONTEXT_ID::kGameplay;
+				const RE::BSFixedString ev(RE::ControlMap::GetSingleton()->GetUserEventName(id, device, context));
+				g_pendingKeys.push_back({ device, id, ev, 0 });
+				logger::info("dev: {} {} ({})", cmd, id, ev.c_str());
+			} else if (cmd == "console") {
+				std::string rest;
+				std::getline(in, rest);
+				if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::Script>()) {
+					if (auto* script = factory->Create()) {
+						script->SetCommand(rest);
+						script->CompileAndRun(player);
+						delete script;
+						logger::info("dev: console{}", rest);
+					}
+				}
+			} else if (cmd == "close") {
+				std::string menu;
+				std::getline(in, menu);
+				if (!menu.empty() && menu[0] == ' ') {
+					menu.erase(0, 1);
+				}
+				RE::UIMessageQueue::GetSingleton()->AddMessage(menu, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+				logger::info("dev: close '{}'", menu);
 			} else if (cmd == "crew") {
 				int c = 0;
 				in >> c;
@@ -152,8 +189,27 @@ namespace bo3z
 			logger::info("dev: shot {} -> {} (hr {:08X})", name, path.string(), static_cast<std::uint32_t>(hr));
 		}
 
+		void FeedKeys()
+		{
+			auto* q = RE::BSInputEventQueue::GetSingleton();
+			if (!q) {
+				return;
+			}
+			for (auto it = g_pendingKeys.begin(); it != g_pendingKeys.end();) {
+				if (it->stage == 0) {
+					q->AddButtonEvent(it->device, static_cast<std::int32_t>(it->id), 1.0f, 0.0f, it->ev);
+					it->stage = 1;
+					++it;
+				} else {
+					q->AddButtonEvent(it->device, static_cast<std::int32_t>(it->id), 0.0f, 0.1f, it->ev);
+					it = g_pendingKeys.erase(it);
+				}
+			}
+		}
+
 		void RunQueuedOnMain()
 		{
+			FeedKeys();
 			std::vector<std::string> q;
 			{
 				std::scoped_lock l(g_lock);
