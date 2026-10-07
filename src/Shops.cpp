@@ -294,7 +294,8 @@ namespace bo3z
 				return std::nullopt;
 			}
 			// Navmesh/land heights sit under town paving and bridges: stand on what the physics world says is there.
-			if (auto z = FloorZ(a_anchor, got, std::max(got.z, a_at.z))) {
+			// only just above the navmesh: a roof or awning overhead must not count as the floor
+			if (auto z = FloorZ(a_anchor, got, got.z - 220.0f); z && *z > got.z - 150.0f && *z < got.z + 80.0f) {
 				got.z = *z;
 			}
 			return got;
@@ -413,6 +414,7 @@ namespace bo3z
 		// Existing stand from an earlier session? The Coffer with the stand under it marks it; older layouts
 		// (separate machines on the ground) are swept and rebuilt as a stand.
 		void ClearSite(int a_town, RE::TESObjectREFR* a_anchor);
+		std::optional<float> GroundTop(RE::TESObjectREFR* a_anchor, const TownPlan& a_plan);
 		bool AdoptExisting(int a_town, RE::TESObjectREFR* a_anchor)
 		{
 			RE::TESForm* coffer = nullptr;
@@ -457,6 +459,10 @@ namespace bo3z
 			plan.top = p.z, plan.topSet = true;
 			plan.state = TownPlan::State::Ready;
 			plan.center.z = p.z;
+			if (auto g = GroundTop(a_anchor, plan); g && std::abs(*g - p.z) > 30.0f) {
+				logger::info("shops: {} stand floats {:.0f} off the ground, rebuilding", gen::kTowns[a_town], p.z - *g);
+				return false;
+			}
 			if (Obstructed(a_anchor, plan, 220.0f)) {
 				logger::info("shops: {} stand is boxed in by trees or buildings, moving it", gen::kTowns[a_town]);
 				return false;
@@ -505,29 +511,45 @@ namespace bo3z
 			}
 		}
 
-		// The stand's floor height: the highest ground under its footprint (so no corner digs in), a hair above.
+		// The stand's floor: the ground under its footprint, measured from the walkable (navmesh) height so roofs,
+		// branches and awnings above are never mistaken for ground. Highest ground point wins (no corner digs in).
+		std::optional<float> GroundTop(RE::TESObjectREFR* a_anchor, const TownPlan& a_plan)
+		{
+			float ref = a_plan.center.z;
+			if (auto c = Snap(a_anchor, a_plan.center)) {
+				ref = c->z;
+			}
+			const float hx = gen::kStandHalfX, fy = gen::kStandFrontY, by = gen::kStandBackY;
+			float hi = -FLT_MAX;
+			int   got = 0;
+			for (int gx = 0; gx < 5; ++gx) {
+				for (int gy = 0; gy < 4; ++gy) {
+					const float x = -hx + gx * (2 * hx / 4), y = fy + gy * ((by - fy) / 3), a = a_plan.yaw;
+					const RE::NiPoint3 at{ a_plan.center.x + x * std::cos(a) + y * std::sin(a), a_plan.center.y - x * std::sin(a) + y * std::cos(a), ref };
+					if (auto z = FloorZ(a_anchor, at, ref - 220.0f); z && *z > ref - 150.0f && *z < ref + 80.0f) {
+						hi = std::max(hi, *z), ++got;
+					}
+				}
+			}
+			if (got == 0) {
+				return std::nullopt;
+			}
+			return hi + 1.0f;
+		}
+
 		void SettleStand(int a_town, RE::TESObjectREFR* a_anchor)
 		{
 			auto& plan = g_towns[a_town];
 			if (plan.topSet) {
 				return;
 			}
-			const float hx = gen::kStandHalfX, fy = gen::kStandFrontY, by = gen::kStandBackY;
-			const std::array<std::pair<float, float>, 9> pts{ { { 0, 0 }, { -hx, fy }, { hx, fy }, { -hx, by }, { hx, by }, { 0, fy }, { 0, by }, { -hx, 0 }, { hx, 0 } } };
-			float hi = -FLT_MAX;
-			int   got = 0;
-			for (auto [x, y] : pts) {
-				const float a = plan.yaw;
-				const RE::NiPoint3 at{ plan.center.x + x * std::cos(a) + y * std::sin(a), plan.center.y - x * std::sin(a) + y * std::cos(a), plan.center.z };
-				if (auto z = FloorZ(a_anchor, at, plan.center.z + 150.0f)) {
-					hi = std::max(hi, *z), ++got;
-				}
-			}
-			plan.top = got > 0 ? hi + 1.0f : plan.center.z;
+			const auto top = GroundTop(a_anchor, plan);
+			plan.top = top ? *top : plan.center.z;
 			plan.topSet = true;
+			logger::info("shops: {} stand floor at z {:.0f}", gen::kTowns[a_town], plan.top);
 			ClearSite(a_town, a_anchor);
-			logger::info("shops: {} stand floor at z {:.0f} ({} ground samples)", gen::kTowns[a_town], plan.top, got);
 		}
+
 
 		void PlaceIfMissing(std::size_t a_index)
 		{
