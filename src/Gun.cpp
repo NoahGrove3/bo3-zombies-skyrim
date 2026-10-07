@@ -224,6 +224,53 @@ namespace bo3z
 
 		std::vector<std::pair<RE::ObjectRefHandle, float>> g_flashes;  // muzzle lights, removed after a blink
 
+		// Where the bolt leaves from: the wand's tip in first person, else the right hand's magic node, else the eyes.
+		RE::NiPoint3 BoltOrigin(RE::PlayerCharacter* a_player, const gen::GunDef& g)
+		{
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			RE::NiPoint3 eye = cam && cam->cameraRoot ? cam->cameraRoot->world.translate : a_player->GetPosition() + RE::NiPoint3{ 0, 0, 120 };
+			for (bool first : { true, false }) {
+				auto* root = a_player->Get3D(first);
+				if (!root) {
+					continue;
+				}
+				if (g.kind == gen::kKindWand) {
+					if (auto* w = root->GetObjectByName("WEAPON"); w && w->AsNode()) {
+						for (auto& c : w->AsNode()->GetChildren()) {
+							if (c) {
+								return c->world.translate + c->world.rotate * RE::NiPoint3{ 0, 33.0f, 0 } * c->world.scale;  // wand tip (+Y)
+							}
+						}
+					}
+				}
+				if (auto* m = root->GetObjectByName("NPC R MagicNode [RMag]")) {
+					return m->world.translate;
+				}
+			}
+			return eye;
+		}
+
+		void LaunchBolt(RE::PlayerCharacter* a_player, const gen::GunDef& g, const RE::NiPoint3& a_to)
+		{
+			auto* f = Forms::Ours(g.bulletSpell);
+			auto* spell = f ? f->As<RE::MagicItem>() : nullptr;
+			auto* proj = spell && !spell->effects.empty() && spell->effects[0]->baseEffect ? spell->effects[0]->baseEffect->data.projectileBase : nullptr;
+			if (!proj) {
+				return;
+			}
+			const RE::NiPoint3 from = BoltOrigin(a_player, g);
+			RE::NiPoint3       d = a_to - from;
+			const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
+			RE::Projectile::ProjectileRot rot{ -std::atan2(d.z, std::max(1e-3f, flat)), std::atan2(d.x, d.y) };
+			RE::Projectile::LaunchData    ld(proj, a_player, from, rot);
+			ld.useOrigin = true;
+			ld.autoAim = false;
+			ld.spell = spell;
+			ld.castingSource = RE::MagicSystem::CastingSource::kRightHand;
+			RE::ProjectileHandle h;
+			RE::Projectile::Launch(&h, ld);
+		}
+
 		void FireOnce(const gen::GunDef& g)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -374,14 +421,9 @@ namespace bo3z
 			if (g.spell >= 0 && g.spellOn == 2) {
 				Cast(g.spell, firstHit);  // fired spell flies at what you hit (or straight ahead)
 			}
-			if (g.bulletSpell) {  // the visible element bolt
-				if (auto* f = Forms::Ours(g.bulletSpell); f) {
-					if (auto* m = f->As<RE::MagicItem>(); m) {
-						if (auto* caster = player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
-							caster->CastSpellImmediate(m, true, firstHit, 1.0f, false, 0.0f, player);
-						}
-					}
-				}
+			if (g.bulletSpell) {  // the visible element bolt, out of the wand tip (or the casting hand) at the crosshair
+				const RE::NiPoint3 to = firstHit ? HeadPos(firstHit) - RE::NiPoint3{ 0, 0, 20 } : origin + aim * std::min(g.range, 4000.0f);
+				LaunchBolt(player, g, to);
 			}
 			Perks::OnCast(g_shots);
 		}

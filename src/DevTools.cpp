@@ -102,6 +102,46 @@ namespace bo3z
 					static_cast<int>(st->actorState1.sneaking), static_cast<int>(st->actorState1.sprinting), static_cast<int>(st->actorState1.walking), static_cast<int>(st->actorState1.running),
 					cm ? static_cast<std::uint32_t>(cm->GetRuntimeData().enabledControls.underlying()) : 0u, st->IsWeaponDrawn(), player->IsInCombat(),
 					RE::Calendar::GetSingleton() ? RE::Calendar::GetSingleton()->GetHour() : -1.0f);
+			} else if (cmd == "z3d" && player) {
+				// what did the engine attach to the nearest undead? (invisible-zombie hunt)
+				RE::Actor* best = nullptr;
+				float      bd = 1e9f;
+				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+					auto a = h.get();
+					if (a && a.get() != player && Director::IsRoundUndead(a.get())) {
+						if (const float d = a->GetPosition().GetDistance(player->GetPosition()); d < bd) {
+							bd = d, best = a.get();
+						}
+					}
+				}
+				if (!best) {
+					logger::info("dev: z3d no undead loaded");
+				} else {
+					auto* npc = best->GetActorBase();
+					auto* race = best->GetRace();
+					logger::info("dev: z3d {:08X} dist {:.0f} base {:08X} race {:08X} skin {:08X} female {} 3D {} loaded {} scale {:.2f}", best->GetFormID(), bd, npc ? npc->GetFormID() : 0,
+						race ? race->GetFormID() : 0, npc && npc->skin ? npc->skin->GetFormID() : 0, npc ? npc->IsFemale() : false, best->Get3D() != nullptr, best->Is3DLoaded(), best->GetScale());
+					int lines = 0;
+					std::function<void(RE::NiAVObject*, int)> walk = [&](RE::NiAVObject* o, int depth) {
+						if (!o || lines > 120) {
+							return;
+						}
+						if (auto* g = o->AsGeometry()) {
+							++lines;
+							logger::info("dev: z3d   geom '{}' hidden {} culled {} world ({:.0f},{:.0f},{:.0f}) r {:.0f} skinned {}", o->name.c_str(), (o->GetFlags().any(RE::NiAVObject::Flag::kHidden)),
+								o->GetAppCulled(), o->world.translate.x, o->world.translate.y, o->world.translate.z, o->worldBound.radius, g->GetGeometryRuntimeData().skinInstance != nullptr);
+						} else if (depth <= 1) {
+							++lines;
+							logger::info("dev: z3d   node '{}' hidden {}", o->name.c_str(), o->GetFlags().any(RE::NiAVObject::Flag::kHidden));
+						}
+						if (auto* n = o->AsNode()) {
+							for (auto& c : n->GetChildren()) {
+								walk(c.get(), depth + 1);
+							}
+						}
+					};
+					walk(best->Get3D(), 0);
+				}
 			} else if (cmd == "points") {
 				int n = 0;
 				in >> n;

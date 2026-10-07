@@ -106,7 +106,7 @@
     {
       "id": "world_fov",
       "what": "Camera field of view, first and third person (Skyrim default 70)",
-      "value": 95,
+      "value": 115,
       "durationMs": 0,
       "verify": []
     },

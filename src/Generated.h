@@ -430,7 +430,7 @@ namespace bo3z::gen
 		LocationDef{ 9, 0x0177EF, 16, 4 },
 	} };
 	inline constexpr float kRunBoost = 30.0f, kSprintBoost = 60.0f, kSlideSpeed = 900.0f, kSlideSeconds = 0.95f, kSlideBoost = 220.0f, kSlideJump = 0.95f, kAirControl = 0.0f, kAirMax = 760.0f, kSprintStamina = 0.35f, kJumpHeight = 1.2f;
-	inline constexpr float kAdsFov = 55.0f, kAdsSeconds = 0.12f, kAdsSpeed = -30.0f, kWorldFov = 95.0f, kViewmodelFov = 80.0f, kFpsCap = 175.0f;
+	inline constexpr float kAdsFov = 55.0f, kAdsSeconds = 0.12f, kAdsSpeed = -30.0f, kWorldFov = 115.0f, kViewmodelFov = 80.0f, kFpsCap = 175.0f;
 	inline constexpr float kAdsEyeDistance = 20.0f, kAdsSightHeight = 5.0f, kAdsViewmodelFov = 62.0f;
 	inline constexpr FormRef kQ_MQQuickstart{ "Skyrim.esm", 0x04679E, "MQQuickstart" };
 	inline constexpr FormRef kQ_MQ102Marker{ "Skyrim.esm", 0x038B08, "MQ102OutsideRiverwoodMarker" };
