@@ -201,7 +201,7 @@ count = sum(len(v) for v in recs.values())
 hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('Undying Nights: round-based undead survival for Skyrim'))]
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
-for k in ['AMMO', 'PROJ', 'ENCH', 'SPEL', 'ARMA', 'ARMO', 'NPC_', 'STAT', 'LIGH', 'SNDR', 'MGEF', 'ACTI', 'WEAP', 'ALCH']: out += group(k, recs[k])
+for k in ['MGEF', 'ENCH', 'SPEL', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')
