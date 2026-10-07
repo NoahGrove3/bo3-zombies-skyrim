@@ -90,6 +90,18 @@ namespace bo3z
 				in >> ev;
 				const bool ok = player->NotifyAnimationGraph(RE::BSFixedString(ev.c_str()));
 				logger::info("dev: anim {} -> {}", ev, ok);
+			} else if (cmd == "why" && player) {
+				// movement diagnostics: why can't the player sprint?
+				auto*       av = player->AsActorValueOwner();
+				auto*       st = player->AsActorState();
+				auto*       cm = RE::ControlMap::GetSingleton();
+				logger::info("dev: why stamina {:.0f}/{:.0f} carry {:.0f} inv {:.0f} speed {:.0f} overenc {} sneakFlag {} sprintFlag {} walking {} running {} controls {:08X} drawn {} inCombat {} hour {:.2f}",
+					av->GetActorValue(RE::ActorValue::kStamina), av->GetPermanentActorValue(RE::ActorValue::kStamina),
+					av->GetActorValue(RE::ActorValue::kCarryWeight), av->GetActorValue(RE::ActorValue::kInventoryWeight),
+					av->GetActorValue(RE::ActorValue::kSpeedMult), player->IsOverEncumbered(),
+					static_cast<int>(st->actorState1.sneaking), static_cast<int>(st->actorState1.sprinting), static_cast<int>(st->actorState1.walking), static_cast<int>(st->actorState1.running),
+					cm ? static_cast<std::uint32_t>(cm->GetRuntimeData().enabledControls.underlying()) : 0u, st->IsWeaponDrawn(), player->IsInCombat(),
+					RE::Calendar::GetSingleton() ? RE::Calendar::GetSingleton()->GetHour() : -1.0f);
 			} else if (cmd == "points") {
 				int n = 0;
 				in >> n;

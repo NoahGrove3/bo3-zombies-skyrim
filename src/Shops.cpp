@@ -321,6 +321,24 @@ namespace bo3z
 		}
 
 		// Score a candidate alley (lower is better); 0 failures + flat + no doors near = accept immediately.
+		// Clear sky over the whole stand: cast down from high above on a grid; trees, porches and roofs stand
+		// out as hits far above the ground and rule the spot out.
+		bool Obstructed(RE::TESObjectREFR* a_anchor, const TownPlan& a_plan)
+		{
+			float glo = FLT_MAX, ghi = -FLT_MAX;
+			for (int gx = 0; gx < 5; ++gx) {
+				for (int gy = 0; gy < 4; ++gy) {
+					const float x = -gen::kStandHalfX + gx * (2 * gen::kStandHalfX / 4), y = gen::kStandFrontY + gy * ((gen::kStandBackY - gen::kStandFrontY) / 3);
+					const float a = a_plan.yaw;
+					const RE::NiPoint3 at{ a_plan.center.x + x * std::cos(a) + y * std::sin(a), a_plan.center.y - x * std::sin(a) + y * std::cos(a), a_plan.center.z };
+					if (auto z = FloorZ(a_anchor, at, a_plan.center.z + 700.0f)) {
+						glo = std::min(glo, *z), ghi = std::max(ghi, *z);
+					}
+				}
+			}
+			return ghi > glo && ghi - glo > 50.0f;
+		}
+
 		bool TryCandidate(int a_town, RE::TESObjectREFR* a_anchor, int a_index)
 		{
 			const int perDist = gen::kPlanAngles * static_cast<int>(gen::kPlanYaw.size());
@@ -348,6 +366,8 @@ namespace bo3z
 				}
 				doors += NearDoor(a_anchor, want) ? 1 : 0;
 			}
+			const int blocked = Obstructed(a_anchor, plan) ? 1 : 0;
+			fails += blocked * 3;
 			const float spread = hi > lo ? hi - lo : 0;
 			auto        c = Snap(a_anchor, plan.center);
 			plan.center.z = c ? c->z : (lo < hi ? (lo + hi) * 0.5f : a.z);
@@ -430,6 +450,11 @@ namespace bo3z
 			plan.center = { p.x - (s.x * std::cos(plan.yaw) + s.y * std::sin(plan.yaw)), p.y - (-s.x * std::sin(plan.yaw) + s.y * std::cos(plan.yaw)), p.z };
 			plan.top = p.z, plan.topSet = true;
 			plan.state = TownPlan::State::Ready;
+			plan.center.z = p.z;
+			if (Obstructed(a_anchor, plan)) {
+				logger::info("shops: {} stand is boxed in by trees or buildings, moving it", gen::kTowns[a_town]);
+				return false;
+			}
 			g_towns[a_town] = plan;
 			return true;
 		}

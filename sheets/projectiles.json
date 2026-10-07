@@ -74,7 +74,7 @@
     {
       "id": "spore",
       "sourceFormId": "none",
-      "model": "Magic\\MagSprigganBugSprayProjectile.nif",
+      "model": "Magic\\MagSpiderSpitProjectile.nif",
       "speed": 6500,
       "verify": [
         "model"
@@ -83,7 +83,7 @@
     {
       "id": "blood",
       "sourceFormId": "none",
-      "model": "DLC01\\Magic\\DLC1VampireAbsorbProj01.nif",
+      "model": "DLC01\\Magic\\DLC1DrainVitalityProject01.nif",
       "speed": 6500,
       "verify": [
         "model"
@@ -128,7 +128,7 @@
     {
       "id": "gale",
       "sourceFormId": "none",
-      "model": "Magic\\AuraWhisperProjectile.nif",
+      "model": "Magic\\FXFrostBallWispyProjectile.nif",
       "speed": 6500,
       "verify": [
         "model"

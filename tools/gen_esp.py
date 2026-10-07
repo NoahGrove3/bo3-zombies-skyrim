@@ -56,10 +56,10 @@ def cast_mgef(key, label):
     struct.pack_into('<f', md, 4, 0.0)                 # base cost
     struct.pack_into('<I', md, 24, 0); struct.pack_into('<I', md, 32, 0); struct.pack_into('<I', md, 36, 0)
     struct.pack_into('<I', md, 64, 1); struct.pack_into('<i', md, 68, -1)   # script archetype: does nothing itself
-    struct.pack_into('<I', md, 72, fid('PROJ', 'castflame'))
+    struct.pack_into('<I', md, 72, 0)                  # no projectile: the cast is only the animation (our bolts fly)
     struct.pack_into('<I', md, 76, 0)
     struct.pack_into('<I', md, 80, 2)                  # concentration
-    struct.pack_into('<I', md, 84, 2)                  # aimed
+    struct.pack_into('<I', md, 84, 0)                  # self (nothing launched natively)
     for off in (92, 96, 100, 116): struct.pack_into('<I', md, off, 0)  # casting art set at runtime from the matching vanilla spell
     recs['MGEF'].append(record('MGEF', fid('MGEF', key), [
         sub('EDID', z('UN_' + key)), sub('FULL', z(label)), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
@@ -69,7 +69,7 @@ for w in S['weapons']['rows']:
     kind = w.get('kind', 'wand')
     if kind == 'wand':
         # enchantment: concentration, aimed, staff-type, free (infinite casts)
-        enit = struct.pack('<iIIiIIfII', 0, 0x1, 2, 3000, 2, 0x0C, 0.0, 0, 0)
+        enit = struct.pack('<iIIiIIfII', 0, 0x1, 2, 3000, 0, 0x0C, 0.0, 0, 0)  # concentration, self, staff enchantment, free
         recs['ENCH'].append(record('ENCH', fid('ENCH', w['id']), [
             sub('EDID', z('UN_WandEnch_' + w['id'])), sub('OBND', bytes(12)), sub('FULL', z(w['label'])), sub('ENIT', enit),
             sub('EFID', struct.pack('<I', fid('MGEF', 'wandcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
@@ -90,7 +90,7 @@ for w in S['weapons']['rows']:
         # tomes and grimoires: a spell in the hand (concentration), magicka is spent by our code per shot
         cast_mgef('hand_' + w['id'], w['label'])
         sp = bytearray(tsub('spel_firebolt', 'SPIT'))
-        struct.pack_into('<IIIfIIffI', sp, 0, 0, 0x1, 0, 0.0, 2, 2, 0.0, 0.0, 0)
+        struct.pack_into('<IIIfIIffI', sp, 0, 0, 0x1, 0, 0.0, 2, 0, 0.0, 0.0, 0)  # free, concentration, self
         recs['SPEL'].append(record('SPEL', fid('SPEL', 'hand_' + w['id']), [
             sub('EDID', z('UN_Hand_' + w['id'])), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(w['label'])),
             sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')), sub('DESC', z('')),
