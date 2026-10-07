@@ -642,29 +642,11 @@
       "verify": []
     },
     {
-      "id": "unleash_drill",
-      "plugin": "BO3Zombies.esp",
-      "localId": "auto",
-      "editorId": "UN_unleash_drill",
-      "file": "fx\\UndyingNights\\unleash_drill.wav",
-      "space": "2d",
-      "verify": []
-    },
-    {
       "id": "unleash_triad",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_unleash_triad",
       "file": "fx\\UndyingNights\\unleash_triad.wav",
-      "space": "2d",
-      "verify": []
-    },
-    {
-      "id": "unleash_spider",
-      "plugin": "BO3Zombies.esp",
-      "localId": "auto",
-      "editorId": "UN_unleash_spider",
-      "file": "fx\\UndyingNights\\unleash_spider.wav",
       "space": "2d",
       "verify": []
     },
@@ -710,6 +692,24 @@
       "localId": "auto",
       "editorId": "UN_unleash_embermortar",
       "file": "fx\\UndyingNights\\unleash_embermortar.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_kagrenac",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_kagrenac",
+      "file": "fx\\UndyingNights\\unleash_kagrenac.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_longshot",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_longshot",
+      "file": "fx\\UndyingNights\\unleash_longshot.wav",
       "space": "2d",
       "verify": []
     }

@@ -356,6 +356,8 @@
   "SNDR:unleash_flamerepeater": "0x960",
   "SNDR:unleash_frostlancer": "0x961",
   "SNDR:unleash_stormcaller": "0x962",
-  "SNDR:unleash_embermortar": "0x963"
+  "SNDR:unleash_embermortar": "0x963",
+  "SNDR:unleash_kagrenac": "0x964",
+  "SNDR:unleash_longshot": "0x965"
  }
 }

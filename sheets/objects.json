@@ -234,11 +234,11 @@
     {
       "id": "wall_spider",
       "kind": "wallbuy",
-      "label": "Ancestral Seed",
+      "label": "Prismheart",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
       "cost": 1000,
-      "refs": "weapons:spider",
+      "refs": "weapons:longshot",
       "verify": [
         "model"
       ],
@@ -248,11 +248,11 @@
     {
       "id": "wall_drill",
       "kind": "wallbuy",
-      "label": "Crimson Heartbeat",
+      "label": "Chronos Hourglass",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
       "cost": 1300,
-      "refs": "weapons:drill",
+      "refs": "weapons:kagrenac",
       "verify": [
         "model"
       ],

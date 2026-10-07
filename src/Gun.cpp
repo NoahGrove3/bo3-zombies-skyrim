@@ -493,6 +493,23 @@ namespace bo3z
 		};
 		std::vector<Well> g_wells;
 
+		// Time Stop (Chronos Hourglass): frozen zombies take the stored blow when time starts again.
+		struct Frozen
+		{
+			RE::ActorHandle who;
+			float           left, damage;
+		};
+		std::vector<Frozen> g_frozen;
+
+		// Prism Sentinel (Prismheart): a crystal hanging in the air that beams the nearest zombies.
+		struct Prism
+		{
+			RE::NiPoint3 at;
+			float        left, tick, base;
+			int          gun;
+		};
+		std::vector<Prism> g_prisms;
+
 		void FireOnce(const gen::GunDef& g)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -809,21 +826,17 @@ namespace bo3z
 			} else if (id == "animunculi") {  // umbral burst at the impact
 				for (auto* f : Foes(aim.hit, 240.0f)) { hit(f, 4.0f); Stagger(f, 0.8f); }
 				LaunchBolt(p, g, aim.hit);
-			} else if (id == "kagrenac") {  // amber tomb: freeze all nearby the impact
-				auto foes = Foes(aim.hit, 300.0f);
-				for (auto* f : foes) { hit(f, 1.5f); Director::Web(f->GetPosition(), 40.0f, 4.0f, 95.0f); }
-				Bolts(p, g, foes, 6);
+			} else if (id == "kagrenac") {  // time stop: every zombie in sight freezes, then every blow lands at once
+				for (auto* f : Foes(p->GetPosition(), 1500.0f)) {
+					hit(f, 0.5f);
+					Director::Web(f->GetPosition(), 40.0f, 4.0f, 100.0f, false);
+					g_frozen.push_back({ f->GetHandle(), 4.0f, base * 4.0f });
+				}
 			} else if (id == "mammothlmg") {  // black hole: a singularity drags them in, then collapses
 				g_wells.push_back({ aim.hit, 3.0f, base, 0.0f });
 				LaunchBolt(p, g, aim.hit);
-			} else if (id == "longshot") {  // starfall: six stars from the sky around the impact
-				for (int k = 0; k < 6; ++k) {
-					const float a = k * RE::NI_PI / 3.0f;
-					const RE::NiPoint3 at = aim.hit + RE::NiPoint3{ std::cos(a) * 140.0f, std::sin(a) * 140.0f, 0 };
-					const RE::NiPoint3 sky = at + RE::NiPoint3{ 60.0f, 40.0f, 1100.0f };
-					LaunchBolt(p, g, at, &sky);
-				}
-				for (auto* f : Foes(aim.hit, 320.0f)) hit(f, 3.0f);
+			} else if (id == "longshot") {  // prism sentinel: a floating crystal that beams everything near it
+				g_prisms.push_back({ aim.hit + RE::NiPoint3{ 0, 0, 90.0f }, 5.0f, 0.0f, base, a_gun });
 			} else if (id == "aetherium") {  // auriel's wrath: huge sunburst
 				for (auto* f : Foes(aim.hit, 450.0f)) { hit(f, 2.5f); Stagger(f, 1.0f); }
 				LaunchBolt(p, g, aim.hit);
@@ -892,6 +905,40 @@ namespace bo3z
 				}
 			}
 			return -1;
+		}
+
+		void TickTimeAndPrisms(float a_delta)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			for (auto& f : g_frozen) {
+				if ((f.left -= a_delta) <= 0) {
+					if (auto a = f.who.get(); a && !a->IsDead()) {
+						Blast(BlastIndex("light"), a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f });
+						Damage(a.get(), f.damage, false, false);
+						if (!a->IsDead()) {
+							Stagger(a.get(), 1.0f);
+						}
+					}
+				}
+			}
+			std::erase_if(g_frozen, [](const Frozen& f) { return f.left <= 0; });
+			for (auto& pr : g_prisms) {
+				pr.left -= a_delta;
+				if ((pr.tick -= a_delta) > 0) {
+					continue;
+				}
+				pr.tick = 0.3f;
+				Blast(BlastIndex("light"), pr.at);
+				auto foes = Foes(pr.at, 1100.0f);
+				if (foes.size() > 3) {
+					foes.resize(3);
+				}
+				for (auto* f : foes) {
+					LaunchBolt(p, gen::kGuns[pr.gun], HeadPos(f) - RE::NiPoint3{ 0, 0, 20.0f }, &pr.at);
+					Damage(f, pr.base * 0.9f, false, false, true);
+				}
+			}
+			std::erase_if(g_prisms, [](const Prism& pr) { return pr.left <= 0; });
 		}
 
 		void TickWells(float a_delta)
@@ -967,15 +1014,15 @@ namespace bo3z
 			}
 		}
 
-		void TryUnleash(bool a_released)
+		bool TryUnleash(bool a_released)
 		{
 			const int gun = CurrentGun();
 			if (gun < 0 || !a_released) {
-				return;
+				return false;
 			}
 			const auto& g = gen::kGuns[gun];
 			if (g_charge < g.chargeSeconds || g_chargeCd > 0) {
-				return;
+				return false;
 			}
 			if (g.mana > 0) {
 				auto*       av = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner();
@@ -983,7 +1030,7 @@ namespace bo3z
 				if (av->GetActorValue(RE::ActorValue::kMagicka) < cost) {
 					Forms::Play(g.emptySnd);
 					Hud::Banner("Not enough magicka", 1.2f);
-					return;
+					return true;
 				}
 				av->DamageActorValue(RE::ActorValue::kMagicka, cost);
 				g_manaQuiet = 0;
@@ -995,6 +1042,7 @@ namespace bo3z
 				const Aim aim = AimAt(std::min(g.range * 1.5f, 8000.0f));
 				Finale(g, aim.eye, aim.hit);
 			}
+			return true;
 		}
 
 		// ================================================================ signature-move animation
@@ -1504,18 +1552,15 @@ namespace bo3z
 				return false;
 			}
 			if (dev == RE::INPUT_DEVICE::kMouse && code == gen::kKey2_fire) {
-				const bool bow = gen::kGuns[CurrentGun()].kind == gen::kKindBow;
+				// One or the other, on release: a full charge unleashes the signature move, anything shorter is the
+				// weapon's normal shot (never both).
 				if (down) {
 					g_charge = 0;
-					if (!bow) {
-						TryFire(true);
-					}
 				}
 				if (up && g_trigger) {
-					if (bow) {
-						TryFire(true);  // bows loose on release (Skyrim draws and fires the arrow itself)
+					if (!TryUnleash(true)) {
+						TryFire(true);
 					}
-					TryUnleash(true);
 					g_charge = 0;
 				}
 				g_trigger = !up;
@@ -1709,6 +1754,7 @@ namespace bo3z
 			TickPose(a_delta);
 			TickBlasts(a_delta);
 			TickWells(a_delta);
+			TickTimeAndPrisms(a_delta);
 			if (out) {
 				const auto& g = gen::kGuns[gun];
 				if (g_burstLeft > 0 && (g_burstTimer -= a_delta) <= 0) {

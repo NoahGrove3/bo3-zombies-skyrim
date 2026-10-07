@@ -527,9 +527,21 @@ def u_ice():     return _boom(_lay(_crackle(1.2, 0.94, 2500, 10000, 13) * 1.6, _
 def u_storm():   return _boom(_lay(thunder(1.6) * 1.1, zap(3600, 300, 0.5) * 1.2, _crackle(1.4, 0.94, 1500, 9000, 14) * 1.4), 800, 9000, 1.8)
 def u_wind():    return _boom(_lay(_whoosh(1.6, 4000, 150, 20) * 1.8, _hiss(1.4, 300, 3000) * 1.2), 200, 3000, 1.8)
 
+def _ticks(d, rate=9, seed=2):
+    n = int(d * SR); out = np.zeros(n); k = 0
+    while True:
+        st = int(k / rate * SR)
+        if st >= n - 600: break
+        m = 600; out[st:st + m] += bp(noise(m), 3000, 9000) * expdec(m, 0.002) * (1.0 if k % 2 else 0.6); k += 1
+    return out
+def e_time():    return _energy(_lay(_ticks(0.35) * 1.2, _fm(1568, 1568, 2.76, 2, 0.6, 0.25) * 0.6, _whoosh(0.3, 5000, 800)[::-1] * 0.5), _tail(0.3, 2500, 8000) * 0.4, _sub(100, 45, 0.25) * 0.6, wet=.35, size=1.8)
+def e_prism():   return _energy(_lay(_fm(2637, 2637, 3.01, 2, 0.5, 0.2) * 0.6, _fm(3951, 3520, 1.5, 2, 0.4, 0.15) * 0.4, _sparkle(0.4, 3500, 10) * 0.6), _tail(0.3, 5000, 12000) * 0.4, _sub(110, 55, 0.2) * 0.5, wet=.4, size=2.0)
+def u_time():    return _boom(_lay(_ticks(1.4, 14) * 1.2, chord(choir, ['A3', 'E4', 'A4'], 1.4, vowel='o', bright=1.2) * 0.5, _fm(196, 98, 2.0, 5, 1.4) * 0.6), 1500, 7000, 1.8)
+def u_prism():   return _boom(_lay(_fm(2093, 1046, 3.01, 4, 1.2, 0.5) * 0.6, _sparkle(1.4, 3500, 24) * 0.8, chord(choir, ['E5', 'B5'], 1.0, vowel='e', bright=1.6) * 0.4), 4000, 12000, 1.6)
+
 ENERGY = {  # weapon id -> element kit
-    'sidearm': 'arcane', 'aetherium': 'holy', 'animunculi': 'shadow', 'mammothlmg': 'vortex', 'drill': 'blood', 'triad': 'soul',
-    'spider': 'nature', 'centurion': 'venom', 'flamerepeater': 'fire', 'frostlancer': 'ice', 'stormcaller': 'storm', 'embermortar': 'wind'}
+    'sidearm': 'arcane', 'aetherium': 'holy', 'animunculi': 'shadow', 'mammothlmg': 'vortex', 'triad': 'soul',
+    'kagrenac': 'time', 'longshot': 'prism', 'centurion': 'venom', 'flamerepeater': 'fire', 'frostlancer': 'ice', 'stormcaller': 'storm', 'embermortar': 'wind'}
 
 CASTS = {k[2:]: v for k, v in globals().items() if k.startswith('c_') and callable(v)}
 CASTS.update({wid: globals()['e_' + el] for wid, el in ENERGY.items()})        # the new kit replaces the old casts
