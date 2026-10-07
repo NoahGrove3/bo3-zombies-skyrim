@@ -118,6 +118,13 @@
       "verify": [
         "value"
       ]
+    },
+    {
+      "id": "fps_cap",
+      "what": "frame rate cap (needs VSync off in SkyrimPrefs.ini and [HAVOK] fMaxTime = 1/cap in Skyrim.ini); 0 = no cap",
+      "value": 175,
+      "durationMs": 0,
+      "verify": []
     }
   ]
 }

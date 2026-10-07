@@ -292,6 +292,25 @@ namespace bo3z
 				Frame(a_swap);
 			} catch (...) {
 			}
+			// Frame cap (sheet: movement.fps_cap): sleep most of the gap, spin the last bit for an even pace.
+			if (gen::kFpsCap > 0) {
+				using C = std::chrono::steady_clock;
+				static C::time_point next = C::now();
+				static const bool fineTimer = (::timeBeginPeriod(1) == TIMERR_NOERROR);  // 1 ms sleeps
+				(void)fineTimer;
+				const auto frame = std::chrono::duration_cast<C::duration>(std::chrono::duration<double>(1.0 / gen::kFpsCap));
+				auto now = C::now();
+				if (next > now) {
+					if (next - now > 2ms) {
+						std::this_thread::sleep_for(next - now - 1500us);
+					}
+					while (C::now() < next) {
+						_mm_pause();
+					}
+				}
+				now = C::now();
+				next = (now - next > frame * 4) ? now + frame : next + frame;
+			}
 			return g_present(a_swap, a_sync, a_flags);
 		}
 	}

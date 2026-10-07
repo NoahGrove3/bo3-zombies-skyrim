@@ -29,6 +29,8 @@
 #include <d3d11.h>
 #include <dxgi.h>
 #include <dxgi1_3.h>
+#include <timeapi.h>
+#include <thread>
 
 namespace logger = SKSE::log;
 using namespace std::literals;
