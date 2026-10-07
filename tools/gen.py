@@ -156,7 +156,7 @@ AN = {r['id']: r for r in S['animations']['rows']}
 o.append(f'\tinline constexpr std::string_view kAnimFireCrossbow = {cs(AN["crossbow"]["fire"])}, kAnimReloadCrossbow = {cs(AN["crossbow"]["reload"])}, kAnimFireStaff = {cs(AN["staff"]["fire"])}, kAnimReloadStaff = {cs(AN["staff"]["reload"])};')
 o.append(f'\tinline constexpr std::uint32_t kMuzzleLight = 0x{IDS[("LIGH", "muzzle")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kStandStat = 0x{IDS[("STAT", "stand")]:03X};  // the station platform (dressing on the Coffer)')
-o.append('\tinline constexpr float kStandHalfX = 330.0f, kStandFrontY = -185.0f, kStandBackY = 150.0f;  // footprint in plan space (tools/stand.py)')
+o.append('\tinline constexpr float kStandHalfX = 330.0f, kStandFrontY = -185.0f, kStandBackY = 150.0f, kStandMaxSlope = 70.0f;  // footprint in plan space (tools/stand.py)')
 o.append(f'\tinline constexpr float kRegenDelay = {F(S["rounds"]["rows"][0]["regenDelaySeconds"])}, kRegenPerSecond = {F(S["rounds"]["rows"][0]["regenPerSecond"])};')
 o.append(f'\tinline constexpr float kSpawnMultiplier = {F(R0["spawnMultiplier"])}, kHitDamageFraction = {F(R0["hitDamageFraction"])}, kZombieWeaponDamageMult = {F(R0["weaponDamageMult"])};')
 o.append(f'\tinline constexpr bool kIgnoreNpcs = {str(R0["ignoreNpcs"]).lower()};')

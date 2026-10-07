@@ -209,6 +209,7 @@ namespace bo3z
 			bool         topSet{ false };
 		};
 		std::array<TownPlan, gen::kTowns.size()> g_towns{};
+		std::optional<float> GroundTop(RE::TESObjectREFR* a_anchor, const TownPlan& a_plan, float* a_low = nullptr);
 		RE::ObjectRefHandle                       g_probe;
 
 		RE::TESObjectREFR* TownAnchor(int a_town)
@@ -372,7 +373,13 @@ namespace bo3z
 				}
 				doors += NearDoor(a_anchor, want) ? 1 : 0;
 			}
-			const int blocked = Obstructed(a_anchor, plan) ? 1 : 0;
+			int blocked = Obstructed(a_anchor, plan) ? 1 : 0;
+			{
+				float low = 0;
+				if (auto g = GroundTop(a_anchor, plan, &low); !g || *g - low > gen::kStandMaxSlope) {
+					blocked = 1;  // the ground drops away under part of the stand: it would hang in the air
+				}
+			}
 			fails += blocked * 3;
 			const float spread = hi > lo ? hi - lo : 0;
 			auto        c = Snap(a_anchor, plan.center);
@@ -414,7 +421,6 @@ namespace bo3z
 		// Existing stand from an earlier session? The Coffer with the stand under it marks it; older layouts
 		// (separate machines on the ground) are swept and rebuilt as a stand.
 		void ClearSite(int a_town, RE::TESObjectREFR* a_anchor);
-		std::optional<float> GroundTop(RE::TESObjectREFR* a_anchor, const TownPlan& a_plan);
 		bool AdoptExisting(int a_town, RE::TESObjectREFR* a_anchor)
 		{
 			RE::TESForm* coffer = nullptr;
@@ -459,7 +465,8 @@ namespace bo3z
 			plan.top = p.z, plan.topSet = true;
 			plan.state = TownPlan::State::Ready;
 			plan.center.z = p.z;
-			if (auto g = GroundTop(a_anchor, plan); g && std::abs(*g - p.z) > 30.0f) {
+			float low = 0;
+			if (auto g = GroundTop(a_anchor, plan, &low); g && (std::abs(*g - p.z) > 30.0f || *g - low > gen::kStandMaxSlope)) {
 				logger::info("shops: {} stand floats {:.0f} off the ground, rebuilding", gen::kTowns[a_town], p.z - *g);
 				return false;
 			}
@@ -513,26 +520,29 @@ namespace bo3z
 
 		// The stand's floor: the ground under its footprint, measured from the walkable (navmesh) height so roofs,
 		// branches and awnings above are never mistaken for ground. Highest ground point wins (no corner digs in).
-		std::optional<float> GroundTop(RE::TESObjectREFR* a_anchor, const TownPlan& a_plan)
+		std::optional<float> GroundTop(RE::TESObjectREFR* a_anchor, const TownPlan& a_plan, float* a_low)
 		{
 			float ref = a_plan.center.z;
 			if (auto c = Snap(a_anchor, a_plan.center)) {
 				ref = c->z;
 			}
 			const float hx = gen::kStandHalfX, fy = gen::kStandFrontY, by = gen::kStandBackY;
-			float hi = -FLT_MAX;
+			float hi = -FLT_MAX, lo = FLT_MAX;
 			int   got = 0;
 			for (int gx = 0; gx < 5; ++gx) {
 				for (int gy = 0; gy < 4; ++gy) {
 					const float x = -hx + gx * (2 * hx / 4), y = fy + gy * ((by - fy) / 3), a = a_plan.yaw;
 					const RE::NiPoint3 at{ a_plan.center.x + x * std::cos(a) + y * std::sin(a), a_plan.center.y - x * std::sin(a) + y * std::cos(a), ref };
-					if (auto z = FloorZ(a_anchor, at, ref - 220.0f); z && *z > ref - 150.0f && *z < ref + 80.0f) {
-						hi = std::max(hi, *z), ++got;
+					if (auto z = FloorZ(a_anchor, at, ref - 220.0f); z && *z > ref - 300.0f && *z < ref + 80.0f) {
+						hi = std::max(hi, *z), lo = std::min(lo, *z), ++got;
 					}
 				}
 			}
 			if (got == 0) {
 				return std::nullopt;
+			}
+			if (a_low) {
+				*a_low = lo;
 			}
 			return hi + 1.0f;
 		}

@@ -496,7 +496,7 @@ namespace bo3z::gen
 	inline constexpr std::string_view kAnimFireCrossbow = "attackStart", kAnimReloadCrossbow = "reloadStart", kAnimFireStaff = "BeginCastRight", kAnimReloadStaff = "none";
 	inline constexpr std::uint32_t kMuzzleLight = 0x8DC;
 	inline constexpr std::uint32_t kStandStat = 0x926;  // the station platform (dressing on the Coffer)
-	inline constexpr float kStandHalfX = 330.0f, kStandFrontY = -185.0f, kStandBackY = 150.0f;  // footprint in plan space (tools/stand.py)
+	inline constexpr float kStandHalfX = 330.0f, kStandFrontY = -185.0f, kStandBackY = 150.0f, kStandMaxSlope = 70.0f;  // footprint in plan space (tools/stand.py)
 	inline constexpr float kRegenDelay = 5.0f, kRegenPerSecond = 0.35f;
 	inline constexpr float kSpawnMultiplier = 3.0f, kHitDamageFraction = 0.34f, kZombieWeaponDamageMult = 0.1f;
 	inline constexpr bool kIgnoreNpcs = true;

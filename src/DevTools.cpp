@@ -142,6 +142,22 @@ namespace bo3z
 					};
 					walk(best->Get3D(), 0);
 				}
+			} else if (cmd == "boltinfo") {
+				for (const auto& g : gen::kGuns) {
+					if (!g.bulletSpell) {
+						continue;
+					}
+					auto* raw = RE::TESDataHandler::GetSingleton()->LookupForm(g.bulletSpell, gen::kPlugin);
+					auto* sp = raw ? raw->As<RE::SpellItem>() : nullptr;
+					auto* eff = sp && !sp->effects.empty() ? sp->effects[0] : nullptr;
+					auto* base = eff ? eff->baseEffect : nullptr;
+					auto* projForm = RE::TESDataHandler::GetSingleton()->LookupForm(g.bulletSpell - 2, gen::kPlugin);
+					logger::info("dev: boltinfo {} spell {:08X} type {} effects {} base {:08X} arch {} cast {} deliv {} proj {:08X} | PROJ? {:03X} -> {:08X} type {}", g.id,
+						raw ? raw->GetFormID() : 0, raw ? static_cast<int>(raw->GetFormType()) : -1, sp ? sp->effects.size() : 0, base ? base->GetFormID() : 0,
+						base ? static_cast<int>(base->data.archetype) : -1, base ? static_cast<int>(base->data.castingType) : -1, base ? static_cast<int>(base->data.delivery) : -1,
+						base && base->data.projectileBase ? base->data.projectileBase->GetFormID() : 0, g.bulletSpell - 2, projForm ? projForm->GetFormID() : 0,
+						projForm ? static_cast<int>(projForm->GetFormType()) : -1);
+				}
 			} else if (cmd == "points") {
 				int n = 0;
 				in >> n;
