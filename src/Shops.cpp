@@ -466,8 +466,8 @@ namespace bo3z
 			plan.state = TownPlan::State::Ready;
 			plan.center.z = p.z;
 			float low = 0;
-			if (auto g = GroundTop(a_anchor, plan, &low); g && (std::abs(*g - p.z) > 30.0f || *g - low > gen::kStandMaxSlope)) {
-				logger::info("shops: {} stand floats {:.0f} off the ground, rebuilding", gen::kTowns[a_town], p.z - *g);
+			if (auto g = GroundTop(a_anchor, plan, &low); !g || std::abs(*g - p.z) > 30.0f || *g - low > gen::kStandMaxSlope) {
+				logger::info("shops: {} stand floats {:.0f} off the ground, rebuilding", gen::kTowns[a_town], g ? p.z - *g : 999.0f);
 				return false;
 			}
 			if (Obstructed(a_anchor, plan, 220.0f)) {
@@ -538,13 +538,18 @@ namespace bo3z
 					}
 				}
 			}
-			if (got == 0) {
-				return std::nullopt;
+			if (got < 16) {
+				return std::nullopt;  // the ground drops away (ledge, cliff, water) under part of the footprint
+			}
+			if (hi - lo > gen::kStandMaxSlope + 40.0f) {
+				return std::nullopt;  // too steep: one side buried deep or the other hanging
 			}
 			if (a_low) {
 				*a_low = lo;
 			}
-			return hi + 1.0f;
+			// On a slope the slab sinks into the high side (a terrace cut into the hill) rather than perching on the
+			// highest point and hanging over the low side: never more than 40 units above the lowest ground.
+			return std::min(hi, lo + 40.0f) + 1.0f;
 		}
 
 		void SettleStand(int a_town, RE::TESObjectREFR* a_anchor)
