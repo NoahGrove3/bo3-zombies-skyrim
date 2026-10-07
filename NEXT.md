@@ -22,6 +22,19 @@
   adopted stands that fail it are rebuilt.
 - Dev: `hold <mouse id> <secs>` (fire = 0) holds the button for charge tests.
 
+## Built 2026-10-07 16:30 (e7788b1 + un_weapons_v6 assets, installed, not yet seen in game)
+- Roster: 8 staffs (tools/staffs.py from the staff pack: heaven/void/heart/seed bases x 2 palettes + add-ons; NIF Prn
+  WeaponStaff, grip at origin, head y=62) and 4 bows (tools/bows.py + tools/modelconv/bowconv.cpp: mesh skinned to the
+  iron bow's Bow_* bones, template keeps its behavior graph). Bow ids reuse the old tome rows (flamerepeater fire,
+  frostlancer ice, stormcaller lightning, embermortar wind); steampump/marksman/kagrenac/longshot + grimoires retired.
+- Bows: native draw + arrow (AMMO/PROJ arrow_<id>, damage 0, gravity 0, speed 5200, element flight model + light),
+  TryFire on release, quiver topped to 80 each second; charge = hold >= 1.6 s.
+- Blasts are runtime clones of Skyrim explosions (BlastForm): EXPL records in the ESL crashed the game at load.
+- Sounds: energy kit e_<element> (casts) and u_<element> (unleash_<id>) in tools/synth.py.
+- Ragdolls: every kill gets KnockExplosion 2.5 immediately, re-knocked if still upright.
+- Verify in game: bow string bends with the draw, staffs held right (grip/orientation), arrow flight models visible,
+  Black Hole pull, unleash sounds, blasts appear.
+
 ## Built 2026-10-07 15:30 (8789a91, installed, not yet seen in game)
 - Arm pose hook confirmed live in game ("pose: arm animation live").
 - Spell blasts: 18 no-damage EXPL copies (tools/templates/expl, sheet weapons.tapBlast/chargeBlast) placed via a
