@@ -1,0 +1,48 @@
+{
+  "sheet": "projectiles",
+  "about": "Bullet tracers fired with each gun shot: projectile records copied from Handguns of Skyrim's plugin (meshes from that mod), turned into fast spell missiles that do no damage themselves (our hitscan does).",
+  "columns": [
+    "id",
+    "sourceFormId",
+    "model",
+    "speed",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "lead",
+      "sourceFormId": "0x000818",
+      "model": "FirearmWeapons\\Bullet\\CheapBullet.nif",
+      "speed": 9000,
+      "verify": []
+    },
+    {
+      "id": "quality",
+      "sourceFormId": "0x0008C4",
+      "model": "FirearmWeapons\\Bullet\\QualityBullet.nif",
+      "speed": 9500,
+      "verify": []
+    },
+    {
+      "id": "glass",
+      "sourceFormId": "0x000819",
+      "model": "FirearmWeapons\\Bullet\\GlassBullet.nif",
+      "speed": 11000,
+      "verify": []
+    },
+    {
+      "id": "daedric",
+      "sourceFormId": "0x00081B",
+      "model": "FirearmWeapons\\Bullet\\DaedricBullet.nif",
+      "speed": 10000,
+      "verify": []
+    },
+    {
+      "id": "sun",
+      "sourceFormId": "0x0008A6",
+      "model": "DLC01\\Magic\\DLC1AurielSunBeam01.nif",
+      "speed": 7000,
+      "verify": []
+    }
+  ]
+}

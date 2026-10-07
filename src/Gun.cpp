@@ -175,6 +175,33 @@ namespace bo3z
 			return std::acos(d) * 180.0f / RE::NI_PI;
 		}
 
+		std::vector<std::pair<RE::ObjectRefHandle, float>> g_flashes;  // muzzle lights, removed after a blink
+
+		void Anim(std::string_view a_event)
+		{
+			if (!a_event.empty() && a_event != "none") {
+				RE::PlayerCharacter::GetSingleton()->NotifyAnimationGraph(RE::BSFixedString(std::string(a_event).c_str()));
+			}
+		}
+
+		void MuzzleFlash(RE::PlayerCharacter* a_player)
+		{
+			auto* light = Forms::Ours(gen::kMuzzleLight);
+			if (!light) {
+				return;
+			}
+			RE::NiPoint3 at = a_player->GetPosition() + RE::NiPoint3{ 0, 0, 110 };
+			if (auto* root = a_player->Get3D(); root) {
+				if (auto* node = root->GetObjectByName("WEAPON")) {
+					at = node->world.translate;
+				}
+			}
+			if (auto ref = a_player->PlaceObjectAtMe(light, false)) {
+				ref->SetPosition(at);
+				g_flashes.push_back({ ref->CreateRefHandle(), 0.07f });
+			}
+		}
+
 		void FireOnce(const gen::GunDef& g)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -279,6 +306,17 @@ namespace bo3z
 			if (g.spell >= 0 && g.spellOn == 2) {
 				Cast(g.spell, firstHit);  // fired spell flies at what you hit (or straight ahead)
 			}
+			if (g.bulletSpell) {  // the visible bullet
+				if (auto* f = Forms::Ours(g.bulletSpell); f) {
+					if (auto* m = f->As<RE::MagicItem>(); m) {
+						if (auto* caster = player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
+							caster->CastSpellImmediate(m, true, firstHit, 1.0f, false, 0.0f, player);
+						}
+					}
+				}
+				MuzzleFlash(player);
+			}
+			Anim(g.staff ? gen::kAnimFireStaff : gen::kAnimFireCrossbow);
 		}
 
 		void StartReload()
@@ -295,6 +333,7 @@ namespace bo3z
 			g_reload = g.reloadMs / 1000.0f * Perks::ReloadMult();
 			g_burstLeft = 0;
 			Forms::Play(g.reloadSnd);
+			Anim(g.staff ? gen::kAnimReloadStaff : gen::kAnimReloadCrossbow);
 			Perks::OnReload(1.0f - static_cast<float>(s.clip) / static_cast<float>(g.clip));
 		}
 
@@ -508,11 +547,11 @@ namespace bo3z
 				any |= Save::GetSlot(s).gun >= 0;
 			}
 			if (Save::Crew() >= 0 && !any) {
-				Gun::Give(gen::kGunIdx_apprentice);
+				Gun::Give(gen::kGunIdx_sidearm);
 			}
 			if (removed) {
 				logger::info("gun: retired {} old guns from the inventory", removed);
-				Hud::Banner("Your guns crumble to dust. The tomes remain.", 4.0f);
+				Hud::Banner("Old weapons swapped for the new arsenal.", 4.0f);
 			}
 		}
 
@@ -638,6 +677,15 @@ namespace bo3z
 			}
 			MigrateRetired();
 			HideVanillaBars();
+			for (auto& [h, t] : g_flashes) {
+				if ((t -= a_delta) <= 0) {
+					if (auto r = h.get()) {
+						r->Disable();
+						r->SetDelete(true);
+					}
+				}
+			}
+			std::erase_if(g_flashes, [](const auto& e) { return e.second <= 0; });
 			g_cooldown = std::max(0.0f, g_cooldown - a_delta);
 			g_knifeCd = std::max(0.0f, g_knifeCd - a_delta);
 			if (g_reload > 0 && (g_reload -= a_delta) <= 0) {

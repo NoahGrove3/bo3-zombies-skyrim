@@ -26,7 +26,7 @@ namespace bo3z
 				RE::PlayerCharacter::GetSingleton()->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, c.value);
 			}
 			g_crewOpen = false;
-			Gun::Give(gen::kGunIdx_apprentice);
+			Gun::Give(gen::kGunIdx_sidearm);
 			Hud::Banner(std::string(c.label) + ": \"" + std::string(c.quote) + "\"", 6.0f);
 			logger::info("crew chosen: {}", c.id);
 		}

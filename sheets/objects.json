@@ -220,11 +220,11 @@
     {
       "id": "wall_triad",
       "kind": "wallbuy",
-      "label": "Tome of Flames",
+      "label": "Imperial Burst Pistol",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-      "cost": 1250,
-      "refs": "weapons:flamerepeater",
+      "cost": 500,
+      "refs": "weapons:triad",
       "verify": [
         "model"
       ],
@@ -234,11 +234,11 @@
     {
       "id": "wall_spider",
       "kind": "wallbuy",
-      "label": "Tome of Frost",
+      "label": "Stormcloak Repeater",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-      "cost": 1500,
-      "refs": "weapons:frostlancer",
+      "cost": 1000,
+      "refs": "weapons:spider",
       "verify": [
         "model"
       ],
@@ -248,11 +248,11 @@
     {
       "id": "wall_drill",
       "kind": "wallbuy",
-      "label": "Tome of Flames",
+      "label": "Dwemer Drill",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-      "cost": 1250,
-      "refs": "weapons:flamerepeater",
+      "cost": 1300,
+      "refs": "weapons:drill",
       "verify": [
         "model"
       ],
@@ -262,11 +262,11 @@
     {
       "id": "wall_steampump",
       "kind": "wallbuy",
-      "label": "Tome of Storms",
+      "label": "Orcish Blunderbuss",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-      "cost": 1400,
-      "refs": "weapons:stormcaller",
+      "cost": 900,
+      "refs": "weapons:steampump",
       "verify": [
         "model"
       ],
@@ -276,11 +276,11 @@
     {
       "id": "wall_marksman",
       "kind": "wallbuy",
-      "label": "Tome of Embers",
+      "label": "Elven Marksman",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-      "cost": 2000,
-      "refs": "weapons:embermortar",
+      "cost": 900,
+      "refs": "weapons:marksman",
       "verify": [
         "model"
       ],

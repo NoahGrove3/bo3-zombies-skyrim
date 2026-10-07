@@ -1,6 +1,6 @@
 {
   "sheet": "weapons",
-  "about": "Spell tomes and grimoires (the only weapons; the old Dwemer guns are retired and swapped out of saves). Damage in design units (divided by rounds.hpScale in game). fire: semi|auto|burst|pump.",
+  "about": "Handguns of Skyrim firearms (wall-buys and the Coffer) plus spell tomes and grimoires (Coffer only). Damage in design units. projectile: tracer each shot (sheet: projectiles) for guns; tomes use their spell.",
   "columns": [
     "id",
     "label",
@@ -34,12 +34,13 @@
     "spellOn",
     "retired",
     "template",
+    "projectile",
     "verify"
   ],
   "rows": [
     {
       "id": "sidearm",
-      "label": "Brass Sidearm",
+      "label": "Iron Handgun",
       "fire": "semi",
       "damage": 75,
       "headMult": 2.0,
@@ -63,7 +64,7 @@
       "fireSound": "sound:shot_pistol",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
+      "standinModel": "FirearmWeapons\\Handguns\\IronRifle.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -74,12 +75,13 @@
       "special": "none",
       "spell": "none",
       "spellOn": "none",
-      "retired": true,
-      "template": "crossbow"
+      "retired": false,
+      "template": "crossbow",
+      "projectile": "lead"
     },
     {
       "id": "centurion",
-      "label": "Centurion Pistol",
+      "label": "Steel Handgun",
       "fire": "semi",
       "damage": 90,
       "headMult": 2.5,
@@ -96,14 +98,14 @@
       "splashDamage": 0,
       "wallBuyCost": 0,
       "ammoCost": 0,
-      "boxWeight": 0,
+      "boxWeight": 1,
       "class": "pistol",
       "hitRadius": 28,
       "headRadius": 14,
       "fireSound": "sound:shot_pistol",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
+      "standinModel": "FirearmWeapons\\Handguns\\SteelRifle.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -114,12 +116,13 @@
       "special": "none",
       "spell": "none",
       "spellOn": "none",
-      "retired": true,
-      "template": "crossbow"
+      "retired": false,
+      "template": "crossbow",
+      "projectile": "lead"
     },
     {
       "id": "triad",
-      "label": "Triad Burst",
+      "label": "Imperial Burst Pistol",
       "fire": "burst",
       "damage": 100,
       "headMult": 2.0,
@@ -134,16 +137,16 @@
       "range": 4500,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 0,
+      "wallBuyCost": 500,
       "ammoCost": 250,
-      "boxWeight": 0,
+      "boxWeight": 1,
       "class": "pistol",
       "hitRadius": 28,
       "headRadius": 14,
       "fireSound": "sound:shot_pistol",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
+      "standinModel": "FirearmWeapons\\Handguns\\ImperialSteelRifle.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -154,12 +157,13 @@
       "special": "none",
       "spell": "none",
       "spellOn": "none",
-      "retired": true,
-      "template": "crossbow"
+      "retired": false,
+      "template": "crossbow",
+      "projectile": "lead"
     },
     {
       "id": "spider",
-      "label": "Spider SMG",
+      "label": "Stormcloak Repeater",
       "fire": "auto",
       "damage": 110,
       "headMult": 2.0,
@@ -174,16 +178,16 @@
       "range": 4000,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 0,
+      "wallBuyCost": 1000,
       "ammoCost": 500,
-      "boxWeight": 0,
+      "boxWeight": 1,
       "class": "smg",
       "hitRadius": 28,
       "headRadius": 14,
       "fireSound": "sound:shot_smg",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
+      "standinModel": "FirearmWeapons\\Handguns\\StormcloakSteelRifle.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -194,12 +198,13 @@
       "special": "none",
       "spell": "none",
       "spellOn": "none",
-      "retired": true,
-      "template": "crossbow"
+      "retired": false,
+      "template": "crossbow",
+      "projectile": "lead"
     },
     {
       "id": "drill",
-      "label": "Sphere Drill",
+      "label": "Dwemer Drill",
       "fire": "auto",
       "damage": 100,
       "headMult": 2.0,
@@ -214,16 +219,16 @@
       "range": 4000,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 0,
+      "wallBuyCost": 1300,
       "ammoCost": 650,
-      "boxWeight": 0,
+      "boxWeight": 1,
       "class": "smg",
       "hitRadius": 28,
       "headRadius": 14,
       "fireSound": "sound:shot_smg",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Crossbow\\Crossbow.nif",
+      "standinModel": "FirearmWeapons\\Handguns\\DwarvenRifle.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -234,12 +239,13 @@
       "special": "none",
       "spell": "none",
       "spellOn": "none",
-      "retired": true,
-      "template": "crossbow"
+      "retired": false,
+      "template": "crossbow",
+      "projectile": "quality"
     },
     {
       "id": "steampump",
-      "label": "Steam Pump",
+      "label": "Orcish Blunderbuss",
       "fire": "pump",
       "damage": 90,
       "headMult": 1.5,
@@ -254,16 +260,16 @@
       "range": 1600,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 0,
+      "wallBuyCost": 900,
       "ammoCost": 450,
-      "boxWeight": 0,
+      "boxWeight": 1,
       "class": "shotgun",
       "hitRadius": 28,
       "headRadius": 14,
       "fireSound": "sound:shot_shotgun",
       "reloadSound": "sound:reload_shell",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "FirearmWeapons\\Handguns\\OrcishRifle.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -274,12 +280,13 @@
       "special": "none",
       "spell": "none",
       "spellOn": "none",
-      "retired": true,
-      "template": "crossbow"
+      "retired": false,
+      "template": "crossbow",
+      "projectile": "lead"
     },
     {
       "id": "marksman",
-      "label": "Arkngthand Marksman",
+      "label": "Elven Marksman",
       "fire": "semi",
       "damage": 160,
       "headMult": 2.5,
@@ -294,16 +301,16 @@
       "range": 6000,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 0,
+      "wallBuyCost": 900,
       "ammoCost": 450,
-      "boxWeight": 0,
+      "boxWeight": 1,
       "class": "ar",
       "hitRadius": 28,
       "headRadius": 14,
       "fireSound": "sound:shot_ar",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "FirearmWeapons\\Handguns\\ElvenRifle.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -314,12 +321,13 @@
       "special": "none",
       "spell": "none",
       "spellOn": "none",
-      "retired": true,
-      "template": "crossbow"
+      "retired": false,
+      "template": "crossbow",
+      "projectile": "glass"
     },
     {
       "id": "animunculi",
-      "label": "Animunculi AR",
+      "label": "Blades Carbine",
       "fire": "auto",
       "damage": 120,
       "headMult": 2.0,
@@ -336,14 +344,14 @@
       "splashDamage": 0,
       "wallBuyCost": 0,
       "ammoCost": 0,
-      "boxWeight": 0,
+      "boxWeight": 1,
       "class": "ar",
       "hitRadius": 28,
       "headRadius": 14,
       "fireSound": "sound:shot_ar",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "FirearmWeapons\\Handguns\\BladesRifle.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -354,12 +362,13 @@
       "special": "none",
       "spell": "none",
       "spellOn": "none",
-      "retired": true,
-      "template": "crossbow"
+      "retired": false,
+      "template": "crossbow",
+      "projectile": "quality"
     },
     {
       "id": "kagrenac",
-      "label": "Kagrenac AR",
+      "label": "Ebony Rifle",
       "fire": "auto",
       "damage": 135,
       "headMult": 2.0,
@@ -376,14 +385,14 @@
       "splashDamage": 0,
       "wallBuyCost": 0,
       "ammoCost": 0,
-      "boxWeight": 0,
+      "boxWeight": 1,
       "class": "ar",
       "hitRadius": 28,
       "headRadius": 14,
       "fireSound": "sound:shot_ar",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "FirearmWeapons\\Handguns\\EbonyRifle.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -394,12 +403,13 @@
       "special": "none",
       "spell": "none",
       "spellOn": "none",
-      "retired": true,
-      "template": "crossbow"
+      "retired": false,
+      "template": "crossbow",
+      "projectile": "daedric"
     },
     {
       "id": "mammothlmg",
-      "label": "Mammoth LMG",
+      "label": "Stalhrim Hailstorm",
       "fire": "auto",
       "damage": 130,
       "headMult": 2.0,
@@ -416,14 +426,14 @@
       "splashDamage": 0,
       "wallBuyCost": 0,
       "ammoCost": 0,
-      "boxWeight": 0,
+      "boxWeight": 1,
       "class": "lmg",
       "hitRadius": 28,
       "headRadius": 14,
       "fireSound": "sound:shot_lmg",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "FirearmWeapons\\Handguns\\StalhrimRifle.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -434,12 +444,13 @@
       "special": "none",
       "spell": "none",
       "spellOn": "none",
-      "retired": true,
-      "template": "crossbow"
+      "retired": false,
+      "template": "crossbow",
+      "projectile": "quality"
     },
     {
       "id": "longshot",
-      "label": "Falmer Longshot",
+      "label": "Dwemer Longshot",
       "fire": "semi",
       "damage": 500,
       "headMult": 3.0,
@@ -456,14 +467,14 @@
       "splashDamage": 0,
       "wallBuyCost": 0,
       "ammoCost": 0,
-      "boxWeight": 0,
+      "boxWeight": 1,
       "class": "sniper",
       "hitRadius": 28,
       "headRadius": 14,
       "fireSound": "sound:shot_sniper",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "FirearmWeapons\\Handguns\\SpecialSniperRifle.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -474,12 +485,13 @@
       "special": "none",
       "spell": "none",
       "spellOn": "none",
-      "retired": true,
-      "template": "crossbow"
+      "retired": false,
+      "template": "crossbow",
+      "projectile": "glass"
     },
     {
       "id": "aetherium",
-      "label": "Aetherium Ray",
+      "label": "Auriel's Sunshot",
       "fire": "semi",
       "damage": 1000,
       "headMult": 1.0,
@@ -496,14 +508,14 @@
       "splashDamage": 600,
       "wallBuyCost": 0,
       "ammoCost": 0,
-      "boxWeight": 0,
+      "boxWeight": 1,
       "class": "wonder",
       "hitRadius": 28,
       "headRadius": 14,
       "fireSound": "sound:shot_ray",
       "reloadSound": "sound:reload_mag",
       "emptySound": "sound:dry_click",
-      "standinModel": "DLC01\\Weapons\\Dwarven Crossbow\\DwarvenCrossbow.nif",
+      "standinModel": "FirearmWeapons\\Handguns\\AurielGun.nif",
       "targets": "round_undead+hostile",
       "verify": [
         "hitRadius",
@@ -514,8 +526,9 @@
       "special": "splash",
       "spell": "none",
       "spellOn": "none",
-      "retired": true,
-      "template": "crossbow"
+      "retired": false,
+      "template": "crossbow",
+      "projectile": "sun"
     },
     {
       "id": "flamerepeater",
@@ -534,8 +547,8 @@
       "range": 2600,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 1250,
-      "ammoCost": 625,
+      "wallBuyCost": 0,
+      "ammoCost": 0,
       "boxWeight": 1,
       "class": "smg",
       "hitRadius": 28,
@@ -555,7 +568,8 @@
       "spell": "spells:firebolt",
       "spellOn": "every4",
       "retired": false,
-      "template": "staff"
+      "template": "staff",
+      "projectile": "none"
     },
     {
       "id": "frostlancer",
@@ -574,8 +588,8 @@
       "range": 6000,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 1500,
-      "ammoCost": 750,
+      "wallBuyCost": 0,
+      "ammoCost": 0,
       "boxWeight": 1,
       "class": "ar",
       "hitRadius": 28,
@@ -595,7 +609,8 @@
       "spell": "spells:icespike",
       "spellOn": "hit",
       "retired": false,
-      "template": "staff"
+      "template": "staff",
+      "projectile": "none"
     },
     {
       "id": "stormcaller",
@@ -614,8 +629,8 @@
       "range": 4500,
       "splashRadius": 0,
       "splashDamage": 0,
-      "wallBuyCost": 1400,
-      "ammoCost": 700,
+      "wallBuyCost": 0,
+      "ammoCost": 0,
       "boxWeight": 1,
       "class": "ar",
       "hitRadius": 28,
@@ -635,7 +650,8 @@
       "spell": "spells:lightningbolt",
       "spellOn": "hit",
       "retired": false,
-      "template": "staff"
+      "template": "staff",
+      "projectile": "none"
     },
     {
       "id": "embermortar",
@@ -654,8 +670,8 @@
       "range": 3500,
       "splashRadius": 260,
       "splashDamage": 600,
-      "wallBuyCost": 2000,
-      "ammoCost": 1000,
+      "wallBuyCost": 0,
+      "ammoCost": 0,
       "boxWeight": 1,
       "class": "shotgun",
       "hitRadius": 28,
@@ -675,7 +691,8 @@
       "spell": "spells:fireball",
       "spellOn": "fire",
       "retired": false,
-      "template": "staff"
+      "template": "staff",
+      "projectile": "none"
     },
     {
       "id": "wabbajack",
@@ -715,7 +732,8 @@
       "spell": "spells:wabbajack",
       "spellOn": "hit",
       "retired": false,
-      "template": "staff"
+      "template": "staff",
+      "projectile": "none"
     },
     {
       "id": "thuumcannon",
@@ -755,7 +773,8 @@
       "spell": "spells:unrelenting",
       "spellOn": "fire",
       "retired": false,
-      "template": "staff"
+      "template": "staff",
+      "projectile": "none"
     },
     {
       "id": "skyforgearc",
@@ -795,7 +814,8 @@
       "spell": "spells:chainlightning",
       "spellOn": "fire",
       "retired": false,
-      "template": "staff"
+      "template": "staff",
+      "projectile": "none"
     },
     {
       "id": "apprentice",
@@ -834,8 +854,9 @@
       "special": "none",
       "spell": "spells:firebolt",
       "spellOn": "fire",
-      "retired": false,
-      "template": "staff"
+      "retired": true,
+      "template": "staff",
+      "projectile": "none"
     }
   ]
 }

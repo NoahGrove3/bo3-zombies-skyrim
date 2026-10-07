@@ -85,6 +85,11 @@ namespace bo3z
 				if (best) {
 					best->ActivateRef(player, 0, nullptr, 1, false);
 				}
+			} else if (cmd == "anim" && player) {
+				std::string ev;
+				in >> ev;
+				const bool ok = player->NotifyAnimationGraph(RE::BSFixedString(ev.c_str()));
+				logger::info("dev: anim {} -> {}", ev, ok);
 			} else if (cmd == "points") {
 				int n = 0;
 				in >> n;

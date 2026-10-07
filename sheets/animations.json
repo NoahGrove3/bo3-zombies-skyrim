@@ -1,0 +1,29 @@
+{
+  "sheet": "animations",
+  "about": "Behaviour-graph events sent to the player for weapon animations (our firing bypasses Skyrim's attack input, so we trigger the animations ourselves). Tested and tuned in game with the test channel 'anim <event>'.",
+  "columns": [
+    "id",
+    "fire",
+    "reload",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "crossbow",
+      "fire": "attackStart",
+      "reload": "reloadStart",
+      "verify": [
+        "fire",
+        "reload"
+      ]
+    },
+    {
+      "id": "staff",
+      "fire": "BeginCastRight",
+      "reload": "none",
+      "verify": [
+        "fire"
+      ]
+    }
+  ]
+}
