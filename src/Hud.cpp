@@ -158,6 +158,12 @@ namespace bo3z
 				return;
 			}
 			if (!InGame()) {
+				if (static int m = 0; m++ % 1200 == 0) {
+					auto* ui = RE::UI::GetSingleton();
+					auto* pl = RE::PlayerCharacter::GetSingleton();
+					logger::info("hud: hidden (paused={} mainMenu={} loading={} player3D={})", ui && ui->GameIsPaused(), ui && ui->IsMenuOpen(RE::MainMenu::MENU_NAME),
+						ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME), pl && pl->Is3DLoaded());
+				}
 				DevTools::CaptureIfRequested(g_context, a_swap);  // menus and loading screens too
 				return;
 			}
@@ -181,6 +187,11 @@ namespace bo3z
 			ImGui::NewFrame();
 			Draw(s, io.DisplaySize);
 			ImGui::Render();
+			if (static int n = 0; n++ % 600 == 0) {
+				auto* dd = ImGui::GetDrawData();
+				logger::info("hud: frame {} display {}x{} fmt {} lists {} verts {} font {} imgui {}", n, desc.BufferDesc.Width, desc.BufferDesc.Height,
+					static_cast<int>(desc.BufferDesc.Format), dd ? dd->CmdListsCount : -1, dd ? dd->TotalVtxCount : -1, g_font != nullptr, IMGUI_VERSION);
+			}
 
 			ID3D11RenderTargetView* oldRtv = nullptr;
 			ID3D11DepthStencilView* oldDsv = nullptr;
