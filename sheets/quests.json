@@ -37,6 +37,30 @@
    "verify": [
     "use"
    ]
+  },
+  {
+   "id": "MQ102A",
+   "plugin": "Skyrim.esm",
+   "localId": "0x02BF9C",
+   "editorId": "MQ102A",
+   "use": "Before the Storm (started by the quick-start skip): when it is running or done, the intro is over",
+   "verify": []
+  },
+  {
+   "id": "MQ102B",
+   "plugin": "Skyrim.esm",
+   "localId": "0x02610A",
+   "editorId": "MQ102B",
+   "use": "Before the Storm (started by the quick-start skip): when it is running or done, the intro is over",
+   "verify": []
+  },
+  {
+   "id": "MQ102",
+   "plugin": "Skyrim.esm",
+   "localId": "0x04E50D",
+   "editorId": "MQ102",
+   "use": "Before the Storm (started by the quick-start skip): when it is running or done, the intro is over",
+   "verify": []
   }
  ]
 }

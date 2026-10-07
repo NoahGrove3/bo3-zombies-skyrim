@@ -100,7 +100,7 @@ o.append('\t} };')
 M = {r['id']: r for r in S['movement']['rows']}
 o.append(f'\tinline constexpr float kSprintBoost = {F(M["sprint_boost"]["value"])}, kSlideBoost = {F(M["slide"]["value"])}, kSlideSeconds = {F(M["slide"]["durationMs"]/1000)}, kAdsFov = {F(M["ads_fov"]["value"])}, kAdsSeconds = {F(M["ads_fov"]["durationMs"]/1000)}, kAdsSpeed = {F(M["ads_speed"]["value"])};')
 Q = {r['id']: r for r in S['quests']['rows']}
-for qid in ('MQQuickstart', 'MQ102Marker'):
+for qid in ('MQQuickstart', 'MQ102Marker', 'MQ102A', 'MQ102B', 'MQ102'):
     if qid in Q: o.append(f'\tinline constexpr FormRef kQ_{qid}{{ {cs(Q[qid]["plugin"])}, 0x{int(Q[qid]["localId"],16):06X}, {cs(Q[qid]["editorId"])} }};')
 for i in S['input']['rows']: o.append(f'\tinline constexpr std::uint32_t kKey2_{i["id"]} = {i["code"]};')
 o.append('}')

@@ -191,6 +191,9 @@ namespace bo3z::gen
 	inline constexpr float kSprintBoost = 25.0f, kSlideBoost = 90.0f, kSlideSeconds = 0.7f, kAdsFov = 55.0f, kAdsSeconds = 0.12f, kAdsSpeed = -30.0f;
 	inline constexpr FormRef kQ_MQQuickstart{ "Skyrim.esm", 0x04679E, "MQQuickstart" };
 	inline constexpr FormRef kQ_MQ102Marker{ "Skyrim.esm", 0x038B08, "MQ102OutsideRiverwoodMarker" };
+	inline constexpr FormRef kQ_MQ102A{ "Skyrim.esm", 0x02BF9C, "MQ102A" };
+	inline constexpr FormRef kQ_MQ102B{ "Skyrim.esm", 0x02610A, "MQ102B" };
+	inline constexpr FormRef kQ_MQ102{ "Skyrim.esm", 0x04E50D, "MQ102" };
 	inline constexpr std::uint32_t kKey2_fire = 0;
 	inline constexpr std::uint32_t kKey2_ads = 1;
 	inline constexpr std::uint32_t kKey2_reload = 19;

@@ -46,6 +46,10 @@ namespace bo3z
 
 		void Tick()
 		{
+			static int dbg = 0;
+			if (dbg++ % 1800 == 0) {
+				logger::info("intro: {} moved={} crew={}", Forms::IntroDebug(), Save::Flag(Save::kFlagMoved), Save::Crew());
+			}
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			auto* intro = Forms::IntroQuest();
 			auto* ui = RE::UI::GetSingleton();

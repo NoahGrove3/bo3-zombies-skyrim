@@ -13,6 +13,7 @@ namespace bo3z
 		RE::TESQuest*      g_intro = nullptr;
 		RE::TESGlobal*     g_quick = nullptr;
 		RE::TESObjectREFR* g_riverwood = nullptr;
+		std::array<RE::TESQuest*, 3> g_mq102{};
 
 		RE::TESForm* Lookup(std::string_view a_plugin, std::uint32_t a_id, std::string_view a_what)
 		{
@@ -43,6 +44,11 @@ namespace bo3z
 			g_intro = q ? q->As<RE::TESQuest>() : nullptr;
 			auto* g = Lookup(gen::kQ_MQQuickstart);
 			g_quick = g ? g->As<RE::TESGlobal>() : nullptr;
+			int qi = 0;
+			for (const auto* r : { &gen::kQ_MQ102A, &gen::kQ_MQ102B, &gen::kQ_MQ102 }) {
+				auto* f = Lookup(*r);
+				g_mq102[qi++] = f ? f->As<RE::TESQuest>() : nullptr;
+			}
 			auto* m = Lookup(gen::kQ_MQ102Marker);
 			g_riverwood = m ? m->As<RE::TESObjectREFR>() : nullptr;
 
@@ -77,7 +83,27 @@ namespace bo3z
 		// fragment has run: it sets stages 25/26/1000 and then Stop()s the quest without completing it.
 		bool IntroDone()
 		{
-			return g_intro && (g_intro->IsCompleted() || (!g_intro->IsRunning() && !g_intro->IsStarting() && g_intro->GetCurrentStageID() >= 25));
+			if (!g_intro) {
+				return false;
+			}
+			if (g_intro->IsCompleted() || (!g_intro->IsRunning() && !g_intro->IsStarting() && g_intro->GetCurrentStageID() >= 25)) {
+				return true;
+			}
+			for (auto* q : g_mq102) {  // Before the Storm has started: Helgen is behind us
+				if (q && (q->IsRunning() || q->IsCompleted())) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		std::string IntroDebug()
+		{
+			auto one = [](const char* n, RE::TESQuest* q) {
+				return q ? fmt::format("{}[stage {} run {} start {} done {}]", n, q->GetCurrentStageID(), q->IsRunning(), q->IsStarting(), q->IsCompleted()) : fmt::format("{}[missing]", n);
+			};
+			return one("MQ101", g_intro) + " " + one("MQ102A", g_mq102[0]) + " " + one("MQ102B", g_mq102[1]) + " " + one("MQ102", g_mq102[2]) +
+			       fmt::format(" quickstart={}", g_quick ? g_quick->value : -1.0f);
 		}
 		RE::TESGlobal*      Quickstart() { return g_quick; }
 		RE::TESObjectREFR*  RiverwoodMarker() { return g_riverwood; }
