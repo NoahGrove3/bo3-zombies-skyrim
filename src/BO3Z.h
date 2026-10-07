@@ -156,6 +156,9 @@ namespace bo3z
 			float       manaCost{ 0 };    // per shot
 			std::string gunElement;       // wand ability / element line under the name
 			std::uint32_t gunColor{ 0 };  // element colour RRGGBB
+			float       charge{ 0 };      // 0..1 while holding fire
+			float       chargeCd{ 0 };    // 1..0 cooldown of the signature move
+			std::string chargeName;
 			float       ads{ 0 };
 			std::string banner;
 			float       bannerTime{ 0 };

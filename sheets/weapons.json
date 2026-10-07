@@ -41,6 +41,11 @@
     "wandStyle",
     "abilityValue",
     "abilityText",
+    "chargeName",
+    "chargeText",
+    "chargeSeconds",
+    "chargeCooldown",
+    "chargeMana",
     "verify"
   ],
   "rows": [
@@ -89,7 +94,12 @@
       "element": "8A7CFF",
       "wandStyle": "crystal",
       "abilityValue": 0,
-      "abilityText": "Arcane bolts"
+      "abilityText": "Arcane bolts",
+      "chargeName": "Arcane Lance",
+      "chargeText": "pierces everything in a line",
+      "chargeSeconds": 0.9,
+      "chargeCooldown": 4,
+      "chargeMana": 0
     },
     {
       "id": "centurion",
@@ -136,7 +146,12 @@
       "element": "7BE04A",
       "wandStyle": "fang",
       "abilityValue": 0.6,
-      "abilityText": "Venom: poisons what it hits"
+      "abilityText": "Venom: poisons what it hits",
+      "chargeName": "Toxic Cloud",
+      "chargeText": "a poison cloud where it lands",
+      "chargeSeconds": 0.9,
+      "chargeCooldown": 6,
+      "chargeMana": 0
     },
     {
       "id": "triad",
@@ -183,7 +198,12 @@
       "element": "5FD7FF",
       "wandStyle": "orb",
       "abilityValue": 0.5,
-      "abilityText": "Soul harvest: kills pay extra"
+      "abilityText": "Soul harvest: kills pay extra",
+      "chargeName": "Soul Harvest",
+      "chargeText": "souls hunt the five nearest dead",
+      "chargeSeconds": 1.0,
+      "chargeCooldown": 6,
+      "chargeMana": 0
     },
     {
       "id": "spider",
@@ -230,7 +250,12 @@
       "element": "B9D650",
       "wandStyle": "bloom",
       "abilityValue": 0.25,
-      "abilityText": "Spores: slow the dead"
+      "abilityText": "Spores: slow the dead",
+      "chargeName": "Spore Bloom",
+      "chargeText": "slows and chokes everything nearby",
+      "chargeSeconds": 1.0,
+      "chargeCooldown": 6,
+      "chargeMana": 0
     },
     {
       "id": "drill",
@@ -277,7 +302,12 @@
       "element": "D0143A",
       "wandStyle": "fang",
       "abilityValue": 0.04,
-      "abilityText": "Bloodthirst: every hit heals you"
+      "abilityText": "Bloodthirst: every hit heals you",
+      "chargeName": "Blood Siphon",
+      "chargeText": "drains every foe around you",
+      "chargeSeconds": 1.0,
+      "chargeCooldown": 7,
+      "chargeMana": 0
     },
     {
       "id": "steampump",
@@ -324,20 +354,25 @@
       "element": "E3DCC0",
       "wandStyle": "skull",
       "abilityValue": 0.35,
-      "abilityText": "Grave burst: staggers the dead"
+      "abilityText": "Grave burst: staggers the dead",
+      "chargeName": "Bone Prison",
+      "chargeText": "roots everything in front of you",
+      "chargeSeconds": 1.0,
+      "chargeCooldown": 7,
+      "chargeMana": 0
     },
     {
       "id": "marksman",
       "label": "Moonshard Wand",
       "fire": "semi",
-      "damage": 165,
+      "damage": 140,
       "headMult": 2.0,
       "pellets": 1,
       "spreadHip": 1.8,
       "spreadAds": 0.2,
       "clip": 0,
       "reserve": 0,
-      "fireDelayMs": 170,
+      "fireDelayMs": 220,
       "burst": 1,
       "reloadMs": 0,
       "range": 6000,
@@ -371,20 +406,25 @@
       "element": "CFE0FF",
       "wandStyle": "crystal",
       "abilityValue": 3,
-      "abilityText": "Moonshard: pierces 3"
+      "abilityText": "Moonshard: pierces 3",
+      "chargeName": "Lunar Lance",
+      "chargeText": "a moonbeam through every foe",
+      "chargeSeconds": 1.0,
+      "chargeCooldown": 5,
+      "chargeMana": 0
     },
     {
       "id": "animunculi",
       "label": "Nightshade Wand",
       "fire": "auto",
-      "damage": 115,
+      "damage": 95,
       "headMult": 3.0,
       "pellets": 1,
       "spreadHip": 2.0,
       "spreadAds": 0.3,
       "clip": 0,
       "reserve": 0,
-      "fireDelayMs": 100,
+      "fireDelayMs": 110,
       "burst": 1,
       "reloadMs": 0,
       "range": 6000,
@@ -418,20 +458,25 @@
       "element": "7A45C8",
       "wandStyle": "thorn",
       "abilityValue": 0,
-      "abilityText": "Nightshade: brutal headshots"
+      "abilityText": "Nightshade: brutal headshots",
+      "chargeName": "Umbral Burst",
+      "chargeText": "shadow explodes where it lands",
+      "chargeSeconds": 1.0,
+      "chargeCooldown": 6,
+      "chargeMana": 0
     },
     {
       "id": "kagrenac",
       "label": "Amberglass Wand",
       "fire": "auto",
-      "damage": 125,
+      "damage": 105,
       "headMult": 2.0,
       "pellets": 1,
       "spreadHip": 2.2,
       "spreadAds": 0.35,
       "clip": 0,
       "reserve": 0,
-      "fireDelayMs": 115,
+      "fireDelayMs": 120,
       "burst": 1,
       "reloadMs": 0,
       "range": 6000,
@@ -465,20 +510,25 @@
       "element": "FFB02E",
       "wandStyle": "orb",
       "abilityValue": 0.12,
-      "abilityText": "Amber: may freeze the dead"
+      "abilityText": "Amber: may freeze the dead",
+      "chargeName": "Amber Tomb",
+      "chargeText": "encases every foe nearby",
+      "chargeSeconds": 1.0,
+      "chargeCooldown": 8,
+      "chargeMana": 0
     },
     {
       "id": "mammothlmg",
       "label": "Galewind Wand",
       "fire": "auto",
-      "damage": 125,
+      "damage": 95,
       "headMult": 2.0,
       "pellets": 1,
       "spreadHip": 3.0,
       "spreadAds": 0.5,
       "clip": 0,
       "reserve": 0,
-      "fireDelayMs": 85,
+      "fireDelayMs": 90,
       "burst": 1,
       "reloadMs": 0,
       "range": 6000,
@@ -512,7 +562,12 @@
       "element": "BFE9F2",
       "wandStyle": "spiral",
       "abilityValue": 0.1,
-      "abilityText": "Gale: knocks the dead back"
+      "abilityText": "Gale: knocks the dead back",
+      "chargeName": "Cyclone",
+      "chargeText": "hurls the dead back in a wide cone",
+      "chargeSeconds": 1.0,
+      "chargeCooldown": 6,
+      "chargeMana": 0
     },
     {
       "id": "longshot",
@@ -559,25 +614,30 @@
       "element": "9FB6FF",
       "wandStyle": "star",
       "abilityValue": 8,
-      "abilityText": "Starfall: pierces every foe"
+      "abilityText": "Starfall: pierces every foe",
+      "chargeName": "Starfall",
+      "chargeText": "a shower of stars on the target",
+      "chargeSeconds": 1.2,
+      "chargeCooldown": 8,
+      "chargeMana": 0
     },
     {
       "id": "aetherium",
       "label": "Wand of Auriel's Dawn",
       "fire": "semi",
-      "damage": 1000,
+      "damage": 700,
       "headMult": 2.0,
       "pellets": 1,
       "spreadHip": 1.0,
       "spreadAds": 0.5,
       "clip": 0,
       "reserve": 0,
-      "fireDelayMs": 330,
+      "fireDelayMs": 400,
       "burst": 1,
       "reloadMs": 0,
       "range": 5000,
       "splashRadius": 200,
-      "splashDamage": 600,
+      "splashDamage": 400,
       "wallBuyCost": 0,
       "ammoCost": 0,
       "boxWeight": 1,
@@ -606,7 +666,12 @@
       "element": "FFD86A",
       "wandStyle": "sun",
       "abilityValue": 0,
-      "abilityText": "Dawn: bursts of sunlight"
+      "abilityText": "Dawn: bursts of sunlight",
+      "chargeName": "Auriel's Wrath",
+      "chargeText": "a blinding sunburst",
+      "chargeSeconds": 1.2,
+      "chargeCooldown": 9,
+      "chargeMana": 0
     },
     {
       "id": "flamerepeater",
@@ -653,7 +718,12 @@
       "element": "FF6A20",
       "wandStyle": "none",
       "abilityValue": 0,
-      "abilityText": "Stream of fire"
+      "abilityText": "Stream of fire",
+      "chargeName": "Firestorm",
+      "chargeText": "a ring of fire bursts around you",
+      "chargeSeconds": 1.0,
+      "chargeCooldown": 4,
+      "chargeMana": 6
     },
     {
       "id": "frostlancer",
@@ -700,7 +770,12 @@
       "element": "8CD2FF",
       "wandStyle": "none",
       "abilityValue": 0,
-      "abilityText": "Ice spikes"
+      "abilityText": "Ice spikes",
+      "chargeName": "Glacial Spear",
+      "chargeText": "pierces and freezes a line of foes",
+      "chargeSeconds": 1.0,
+      "chargeCooldown": 4,
+      "chargeMana": 4
     },
     {
       "id": "stormcaller",
@@ -747,7 +822,12 @@
       "element": "B47CFF",
       "wandStyle": "none",
       "abilityValue": 0,
-      "abilityText": "Lightning bursts"
+      "abilityText": "Lightning bursts",
+      "chargeName": "Thunderclap",
+      "chargeText": "lightning strikes six foes",
+      "chargeSeconds": 1.0,
+      "chargeCooldown": 4,
+      "chargeMana": 6
     },
     {
       "id": "embermortar",
@@ -794,7 +874,12 @@
       "element": "FFA028",
       "wandStyle": "none",
       "abilityValue": 0,
-      "abilityText": "Exploding fireballs"
+      "abilityText": "Exploding fireballs",
+      "chargeName": "Meteor",
+      "chargeText": "a huge fireball crashes down",
+      "chargeSeconds": 1.2,
+      "chargeCooldown": 5,
+      "chargeMana": 3
     },
     {
       "id": "wabbajack",
@@ -841,7 +926,12 @@
       "element": "AAFF5A",
       "wandStyle": "none",
       "abilityValue": 0,
-      "abilityText": "Madness"
+      "abilityText": "Madness",
+      "chargeName": "Mass Madness",
+      "chargeText": "madness takes every foe nearby",
+      "chargeSeconds": 1.5,
+      "chargeCooldown": 8,
+      "chargeMana": 3
     },
     {
       "id": "thuumcannon",
@@ -888,7 +978,12 @@
       "element": "FFD25A",
       "wandStyle": "none",
       "abilityValue": 0,
-      "abilityText": "Unrelenting Force"
+      "abilityText": "Unrelenting Force",
+      "chargeName": "FUS RO DAH",
+      "chargeText": "the full shout: everything flies",
+      "chargeSeconds": 1.5,
+      "chargeCooldown": 8,
+      "chargeMana": 2
     },
     {
       "id": "skyforgearc",
@@ -935,7 +1030,12 @@
       "element": "78DCFF",
       "wandStyle": "none",
       "abilityValue": 0,
-      "abilityText": "Chain lightning"
+      "abilityText": "Chain lightning",
+      "chargeName": "Storm Call",
+      "chargeText": "lightning chains through twelve foes",
+      "chargeSeconds": 1.5,
+      "chargeCooldown": 8,
+      "chargeMana": 3
     },
     {
       "id": "apprentice",
@@ -982,7 +1082,12 @@
       "element": "FFB060",
       "wandStyle": "none",
       "abilityValue": 0,
-      "abilityText": "Firebolts"
+      "abilityText": "Firebolts",
+      "chargeName": "Arcane Lance",
+      "chargeText": "pierces everything in a line",
+      "chargeSeconds": 0.9,
+      "chargeCooldown": 4,
+      "chargeMana": 3
     }
   ]
 }

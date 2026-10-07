@@ -258,6 +258,23 @@ namespace bo3z
 						Txt(dl, g_body, 15 * k, { b.x - 58 * k, b.y - 40 * k }, IM_COL32(150, 170, 210, 255), "mana");
 					}
 				}
+				// signature move: a ring fills round the crosshair while you hold fire; gold and pulsing when ready
+				{
+					const ImVec2 cc{ size.x * 0.5f, size.y * 0.5f };
+					const float  R = 30 * k;
+					const ImU32  el = IM_COL32((s.gunColor >> 16) & 0xFF, (s.gunColor >> 8) & 0xFF, s.gunColor & 0xFF, 255);
+					if (s.chargeCd > 0.001f) {
+						dl->PathArcTo(cc, R, -IM_PI / 2, -IM_PI / 2 + 2 * IM_PI * (1.0f - s.chargeCd), 48);
+						dl->PathStroke(IM_COL32(120, 120, 120, 120), 0, 2 * k);
+					} else if (s.charge > 0.0f) {
+						const bool ready = s.charge >= 1.0f;
+						dl->PathArcTo(cc, R + (ready ? 3 * k * std::sin(now * 12) : 0), -IM_PI / 2, -IM_PI / 2 + 2 * IM_PI * s.charge, 48);
+						dl->PathStroke(ready ? kGold : el, 0, (ready ? 4 : 3) * k);
+						if (ready) {
+							TxtC(dl, g_title, 18 * k, cc.x, cc.y + R + 10 * k, Fade(kGold, 0.9f), "RELEASE: " + s.chargeName);
+						}
+					}
+				}
 				// crosshair: four ticks that tighten when aiming, a dot at full aim
 				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f };
 				if (s.ads < 0.95f) {

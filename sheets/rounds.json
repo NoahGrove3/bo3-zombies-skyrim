@@ -64,8 +64,8 @@
         0.7,
         0.9
       ],
-      "hpStart": 150,
-      "hpLinearPerRound": 100,
+      "hpStart": 400,
+      "hpLinearPerRound": 120,
       "hpLinearUntil": 9,
       "hpMultAfter": 1.1,
       "hpScale": 8.0,

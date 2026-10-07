@@ -12,6 +12,7 @@ namespace bo3z
 		using Clock = std::chrono::steady_clock;
 
 		bool  g_trigger = false, g_adsHeld = false;
+		float g_charge = 0, g_chargeCd = 0;  // hold-to-charge signature moves
 		float g_ads = 0, g_cooldown = 0, g_reload = 0, g_knifeCd = 0, g_burstTimer = 0;
 		int   g_burstLeft = 0;
 		Clock::time_point g_swapDown{};
@@ -212,7 +213,7 @@ namespace bo3z
 				return;
 			}
 			if (auto* caster = player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
-				caster->CastSpellImmediate(m, false, a_target, 1.0f, false, 0.0f, player);
+				caster->CastSpellImmediate(m, false, a_target, 0.25f, false, 0.0f, player);  // the look; our numbers do the damage
 			}
 		}
 
@@ -250,7 +251,7 @@ namespace bo3z
 			return eye;
 		}
 
-		void LaunchBolt(RE::PlayerCharacter* a_player, const gen::GunDef& g, const RE::NiPoint3& a_to)
+		void LaunchBolt(RE::PlayerCharacter* a_player, const gen::GunDef& g, const RE::NiPoint3& a_to, const RE::NiPoint3* a_from = nullptr)
 		{
 			auto* raw = RE::TESDataHandler::GetSingleton()->LookupForm(g.bulletSpell, gen::kPlugin);
 			auto* spell = raw ? raw->As<RE::SpellItem>() : nullptr;
@@ -262,7 +263,7 @@ namespace bo3z
 				}
 				return;
 			}
-			const RE::NiPoint3 from = BoltOrigin(a_player, g);
+			const RE::NiPoint3 from = a_from ? *a_from : BoltOrigin(a_player, g);
 			RE::NiPoint3       d = a_to - from;
 			const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
 			RE::Projectile::ProjectileRot rot{ -std::atan2(d.z, std::max(1e-3f, flat)), std::atan2(d.x, d.y) };
@@ -475,6 +476,227 @@ namespace bo3z
 			} else {
 				g_cooldown = delay;
 			}
+		}
+
+
+		// ================================================================ signature moves (hold, then release)
+		float BaseDamage(const gen::GunDef& g)
+		{
+			const int lvl = SlotOf(CurrentGun()) >= 0 ? Save::GetSlot(SlotOf(CurrentGun())).level : 0;
+			return g.damage * Perks::DamageMult() * CrewMult(0) * (1.0f + gen::kForgeStep * lvl);
+		}
+
+		std::vector<RE::Actor*> Foes(const RE::NiPoint3& a_at, float a_radius)
+		{
+			auto*                   player = RE::PlayerCharacter::GetSingleton();
+			std::vector<RE::Actor*> out;
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				if (auto a = h.get(); a && Targetable(a.get(), player) && a->GetPosition().GetDistance(a_at) <= a_radius) {
+					out.push_back(a.get());
+				}
+			}
+			std::sort(out.begin(), out.end(), [&](RE::Actor* x, RE::Actor* y) { return x->GetPosition().GetDistance(a_at) < y->GetPosition().GetDistance(a_at); });
+			return out;
+		}
+
+		// Where the crosshair lands (physics ray), and the eye and aim it was cast from.
+		struct Aim { RE::NiPoint3 eye, dir, hit; };
+		Aim AimAt(float a_range)
+		{
+			Aim  r;
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			const auto& w = cam->cameraRoot->world;
+			r.eye = w.translate;
+			r.dir = { w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] };
+			r.dir.Unitize();
+			r.hit = r.eye + r.dir * a_range;
+			if (auto* world = player->GetParentCell() ? player->GetParentCell()->GetbhkWorld() : nullptr) {
+				const float s = RE::bhkWorld::GetWorldScale();
+				RE::bhkPickData pick;
+				pick.rayInput.from = RE::hkVector4(r.eye * s);
+				pick.rayInput.to = RE::hkVector4(r.hit * s);
+				pick.rayInput.filterInfo.SetCollisionLayer(RE::COL_LAYER::kLOS);
+				{
+					RE::BSReadLockGuard lock(world->worldLock);
+					world->PickObject(pick);
+				}
+				if (pick.rayOutput.HasHit()) {
+					r.hit = r.eye + r.dir * (a_range * pick.rayOutput.hitFraction);
+				}
+			}
+			return r;
+		}
+
+		std::vector<RE::Actor*> InLine(const Aim& a, float a_range, float a_width)
+		{
+			auto*                   player = RE::PlayerCharacter::GetSingleton();
+			std::vector<RE::Actor*> out;
+			for (auto* f : Foes(a.eye, a_range)) {
+				const auto hp = HeadPos(f);
+				if (auto [d, t] = RaySegment(a.eye, a.dir, f->GetPosition() + RE::NiPoint3{ 0, 0, 15 }, hp); d <= a_width) {
+					bool los = false;
+					(void)player->HasLineOfSight(f, los);
+					out.push_back(f);
+				}
+			}
+			return out;
+		}
+
+		std::vector<RE::Actor*> InCone(const Aim& a, float a_range, float a_deg)
+		{
+			std::vector<RE::Actor*> out;
+			for (auto* f : Foes(a.eye, a_range)) {
+				if (AngleDeg(a.dir, HeadPos(f) - a.eye) <= a_deg) {
+					out.push_back(f);
+				}
+			}
+			return out;
+		}
+
+		void Bolts(RE::PlayerCharacter* p, const gen::GunDef& g, const std::vector<RE::Actor*>& a_to, int a_max)
+		{
+			int n = 0;
+			for (auto* f : a_to) {
+				if (n++ >= a_max) {
+					break;
+				}
+				if (g.bulletSpell) {
+					LaunchBolt(p, g, HeadPos(f) - RE::NiPoint3{ 0, 0, 20 });
+				} else if (g.spell >= 0) {
+					Cast(g.spell, f);
+				}
+			}
+		}
+
+		// The signature move of each weapon (sheet: weapons.chargeName/chargeText).
+		void Unleash(int a_gun)
+		{
+			const auto& g = gen::kGuns[a_gun];
+			auto*       p = RE::PlayerCharacter::GetSingleton();
+			const float base = BaseDamage(g);
+			const Aim   aim = AimAt(std::min(g.range * 1.5f, 8000.0f));
+			auto        hit = [&](RE::Actor* f, float a_mult) { if (!f->IsDead()) { Damage(f, base * a_mult, false, false); } };
+			const std::string_view id = g.id;
+			Forms::Play(g.fireSnd);
+			Forms::Play(gen::Sound::cast_heavy);
+			Hud::Banner(std::string(g.chargeName), 1.2f);
+			logger::info("charge: {} unleashes {}", g.id, g.chargeName);
+
+			if (id == "sidearm" || id == "apprentice" || id == "marksman") {  // lances: everything in the line
+				auto line = InLine(aim, g.range * 1.5f, 45.0f);
+				for (auto* f : line) hit(f, id == "marksman" ? 5.0f : 4.0f);
+				Bolts(p, g, line, 6);
+				if (line.empty()) LaunchBolt(p, g, aim.hit);
+			} else if (id == "centurion") {  // toxic cloud at the impact
+				for (auto* f : Foes(aim.hit, 260.0f)) {
+					hit(f, 1.5f);
+					g_dots.push_back({ f->GetHandle(), base * 1.2f, 5.0f });
+				}
+				LaunchBolt(p, g, aim.hit);
+			} else if (id == "triad") {  // soul harvest: homing souls to the five nearest
+				auto near = Foes(p->GetPosition(), 1600.0f);
+				if (near.size() > 5) near.resize(5);
+				for (auto* f : near) hit(f, 3.0f);
+				Bolts(p, g, near, 5);
+			} else if (id == "spider") {  // spore bloom around the impact
+				Director::Web(aim.hit, 320.0f, 4.0f, 70.0f);
+				for (auto* f : Foes(aim.hit, 320.0f)) hit(f, 2.0f);
+				LaunchBolt(p, g, aim.hit);
+			} else if (id == "drill") {  // blood siphon around you
+				auto near = Foes(p->GetPosition(), 450.0f);
+				for (auto* f : near) hit(f, 2.0f);
+				auto* av = p->AsActorValueOwner();
+				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * std::min(0.6f, 0.08f * near.size()));
+				Bolts(p, g, near, 6);
+			} else if (id == "steampump") {  // bone prison: cone root + stagger
+				auto cone = InCone(aim, 700.0f, 35.0f);
+				for (auto* f : cone) {
+					hit(f, 4.0f);
+					Stagger(f, 1.0f);
+					Director::Web(f->GetPosition(), 40.0f, 3.0f, 95.0f);
+				}
+				Bolts(p, g, cone, 6);
+			} else if (id == "animunculi") {  // umbral burst at the impact
+				for (auto* f : Foes(aim.hit, 240.0f)) { hit(f, 4.0f); Stagger(f, 0.8f); }
+				LaunchBolt(p, g, aim.hit);
+			} else if (id == "kagrenac") {  // amber tomb: freeze all nearby the impact
+				auto near = Foes(aim.hit, 300.0f);
+				for (auto* f : near) { hit(f, 1.5f); Director::Web(f->GetPosition(), 40.0f, 4.0f, 95.0f); }
+				Bolts(p, g, near, 6);
+			} else if (id == "mammothlmg") {  // cyclone: wide cone, hurled back
+				auto cone = InCone(aim, 900.0f, 50.0f);
+				for (auto* f : cone) { hit(f, 2.5f); Stagger(f, 1.0f); }
+				Bolts(p, g, cone, 6);
+			} else if (id == "longshot") {  // starfall: six stars from the sky around the impact
+				for (int k = 0; k < 6; ++k) {
+					const float a = k * RE::NI_PI / 3.0f;
+					const RE::NiPoint3 at = aim.hit + RE::NiPoint3{ std::cos(a) * 140.0f, std::sin(a) * 140.0f, 0 };
+					const RE::NiPoint3 sky = at + RE::NiPoint3{ 60.0f, 40.0f, 1100.0f };
+					LaunchBolt(p, g, at, &sky);
+				}
+				for (auto* f : Foes(aim.hit, 320.0f)) hit(f, 3.0f);
+			} else if (id == "aetherium") {  // auriel's wrath: huge sunburst
+				for (auto* f : Foes(aim.hit, 450.0f)) { hit(f, 2.5f); Stagger(f, 1.0f); }
+				LaunchBolt(p, g, aim.hit);
+			} else if (id == "flamerepeater") {  // firestorm ring around you
+				auto near = Foes(p->GetPosition(), 380.0f);
+				for (auto* f : near) hit(f, 5.0f);
+				Bolts(p, g, near, 6);
+			} else if (id == "frostlancer") {  // glacial spear: pierce + freeze
+				auto line = InLine(aim, 4000.0f, 50.0f);
+				for (auto* f : line) { hit(f, 3.0f); Director::Web(f->GetPosition(), 40.0f, 3.5f, 95.0f); }
+				Bolts(p, g, line, 6);
+				if (line.empty() && g.spell >= 0) Cast(g.spell, nullptr);
+			} else if (id == "stormcaller") {  // thunderclap: six strikes
+				auto near = Foes(p->GetPosition(), 1600.0f);
+				if (near.size() > 6) near.resize(6);
+				for (auto* f : near) { hit(f, 3.0f); Stagger(f, 0.6f); }
+				Bolts(p, g, near, 6);
+			} else if (id == "embermortar") {  // meteor
+				for (auto* f : Foes(aim.hit, 450.0f)) { hit(f, 2.5f); Stagger(f, 1.0f); }
+				if (g.spell >= 0) Cast(g.spell, nullptr);
+			} else if (id == "wabbajack") {  // mass madness
+				std::uniform_real_distribution<float> roll(0, 1);
+				for (auto* f : Foes(aim.hit, 600.0f)) {
+					if (roll(g_rng) < 0.5f) hit(f, 100.0f); else { hit(f, 1.0f); Stagger(f, 1.0f); }
+				}
+				Bolts(p, g, Foes(aim.hit, 600.0f), 6);
+			} else if (id == "thuumcannon") {  // the full shout
+				auto cone = InCone(aim, 1600.0f, 40.0f);
+				for (auto* f : cone) hit(f, 1.5f);
+				if (g.spell >= 0) Cast(g.spell, nullptr);
+			} else if (id == "skyforgearc") {  // storm call: chain through twelve
+				auto near = Foes(aim.hit, 2000.0f);
+				if (near.size() > 12) near.resize(12);
+				for (auto* f : near) hit(f, 1.2f);
+				Bolts(p, g, near, 8);
+			}
+		}
+
+		void TryUnleash(bool a_released)
+		{
+			const int gun = CurrentGun();
+			if (gun < 0 || !a_released) {
+				return;
+			}
+			const auto& g = gen::kGuns[gun];
+			if (g_charge < g.chargeSeconds || g_chargeCd > 0) {
+				return;
+			}
+			if (g.mana > 0) {
+				auto*       av = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner();
+				const float cost = g.mana * g.chargeMana * Perks::ManaMult();
+				if (av->GetActorValue(RE::ActorValue::kMagicka) < cost) {
+					Forms::Play(g.emptySnd);
+					Hud::Banner("Not enough magicka", 1.2f);
+					return;
+				}
+				av->DamageActorValue(RE::ActorValue::kMagicka, cost);
+				g_manaQuiet = 0;
+			}
+			g_chargeCd = g.chargeCooldown;
+			Unleash(gun);
 		}
 
 		void Knife()
@@ -767,10 +989,15 @@ namespace bo3z
 				return false;
 			}
 			if (dev == RE::INPUT_DEVICE::kMouse && code == gen::kKey2_fire) {
-				g_trigger = !up;
 				if (down) {
+					g_charge = 0;
 					TryFire(true);
 				}
+				if (up && g_trigger) {
+					TryUnleash(true);
+					g_charge = 0;
+				}
+				g_trigger = !up;
 				return true;
 			}
 			if (dev == RE::INPUT_DEVICE::kMouse && code == gen::kKey2_ads) {
@@ -943,6 +1170,8 @@ namespace bo3z
 			}
 			const bool out = GunOut();
 			const int  gun = CurrentGun();
+			g_chargeCd = std::max(0.0f, g_chargeCd - a_delta);
+			g_charge = out && g_trigger ? g_charge + a_delta : 0.0f;
 			if (out) {
 				const auto& g = gen::kGuns[gun];
 				if (g_burstLeft > 0 && (g_burstTimer -= a_delta) <= 0) {
@@ -981,8 +1210,12 @@ namespace bo3z
 				h.reserve = s.reserve;
 				h.gunKind = gen::kGuns[gun].kind;
 				h.manaCost = gen::kGuns[gun].mana * Perks::ManaMult();
-				h.gunElement = std::string(gen::kGuns[gun].abilityText);
+				h.gunElement = std::string(gen::kGuns[gun].abilityText) + "   \xC2\xB7   Hold: " + std::string(gen::kGuns[gun].chargeName);
 				h.gunColor = gen::kGuns[gun].color;
+				const auto& gg = gen::kGuns[gun];
+				h.charge = g_charge > 0.2f ? std::min(1.0f, g_charge / gg.chargeSeconds) : 0.0f;
+				h.chargeCd = gg.chargeCooldown > 0 ? g_chargeCd / gg.chargeCooldown : 0.0f;
+				h.chargeName = std::string(gg.chargeName);
 			}
 			h.points = Points::Get();
 			h.perks = Save::PerkBits();
