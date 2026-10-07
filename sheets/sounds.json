@@ -406,6 +406,186 @@
       "file": "fx\\UndyingNights\\mana_empty.wav",
       "space": "2d",
       "verify": []
+    },
+    {
+      "id": "cast_sidearm",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_sidearm",
+      "file": "fx\\UndyingNights\\cast_sidearm.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_centurion",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_centurion",
+      "file": "fx\\UndyingNights\\cast_centurion.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_triad",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_triad",
+      "file": "fx\\UndyingNights\\cast_triad.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_spider",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_spider",
+      "file": "fx\\UndyingNights\\cast_spider.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_drill",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_drill",
+      "file": "fx\\UndyingNights\\cast_drill.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_steampump",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_steampump",
+      "file": "fx\\UndyingNights\\cast_steampump.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_marksman",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_marksman",
+      "file": "fx\\UndyingNights\\cast_marksman.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_animunculi",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_animunculi",
+      "file": "fx\\UndyingNights\\cast_animunculi.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_kagrenac",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_kagrenac",
+      "file": "fx\\UndyingNights\\cast_kagrenac.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_mammothlmg",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_mammothlmg",
+      "file": "fx\\UndyingNights\\cast_mammothlmg.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_longshot",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_longshot",
+      "file": "fx\\UndyingNights\\cast_longshot.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_aetherium",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_aetherium",
+      "file": "fx\\UndyingNights\\cast_aetherium.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_flamerepeater",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_flamerepeater",
+      "file": "fx\\UndyingNights\\cast_flamerepeater.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_frostlancer",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_frostlancer",
+      "file": "fx\\UndyingNights\\cast_frostlancer.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_stormcaller",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_stormcaller",
+      "file": "fx\\UndyingNights\\cast_stormcaller.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_embermortar",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_embermortar",
+      "file": "fx\\UndyingNights\\cast_embermortar.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_wabbajack",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_wabbajack",
+      "file": "fx\\UndyingNights\\cast_wabbajack.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_thuumcannon",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_thuumcannon",
+      "file": "fx\\UndyingNights\\cast_thuumcannon.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_skyforgearc",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_skyforgearc",
+      "file": "fx\\UndyingNights\\cast_skyforgearc.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_apprentice",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_apprentice",
+      "file": "fx\\UndyingNights\\cast_apprentice.wav",
+      "space": "2d",
+      "verify": []
     }
   ]
 }

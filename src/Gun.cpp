@@ -269,6 +269,12 @@ namespace bo3z
 			ld.castingSource = RE::MagicSystem::CastingSource::kRightHand;
 			RE::ProjectileHandle h;
 			RE::Projectile::Launch(&h, ld);
+			static int logged = 0;
+			if (logged++ < 6) {
+				auto pr = h.get();
+				logger::info("bolt: {} proj {:08X} from ({:.0f},{:.0f},{:.0f}) to ({:.0f},{:.0f},{:.0f}) -> {}", g.id, proj->GetFormID(), from.x, from.y, from.z, a_to.x, a_to.y, a_to.z,
+					pr ? fmt::format("launched {:08X} 3D {}", pr->GetFormID(), pr->Get3D() != nullptr) : std::string("no projectile"));
+			}
 		}
 
 		void FireOnce(const gen::GunDef& g)
@@ -421,7 +427,7 @@ namespace bo3z
 			if (g.spell >= 0 && g.spellOn == 2) {
 				Cast(g.spell, firstHit);  // fired spell flies at what you hit (or straight ahead)
 			}
-			if (g.bulletSpell && g.fire == gen::Fire::Auto) {  // rapid wands: a bolt per shot (the staff cast itself launches one per release)
+			if (g.bulletSpell) {  // a bolt per shot from the wand tip (the staff cast launches its own on release too)
 				const RE::NiPoint3 to = firstHit ? HeadPos(firstHit) - RE::NiPoint3{ 0, 0, 20 } : origin + aim * std::min(g.range, 4000.0f);
 				LaunchBolt(player, g, to);
 			}

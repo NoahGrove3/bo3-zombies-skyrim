@@ -63,6 +63,39 @@ namespace bo3z
 					g_gunSpells[i] = sf ? sf->As<RE::SpellItem>() : nullptr;
 				}
 			}
+			// Wand bolts fly on Skyrim's own projectile records (the ones its spells use with the same model), so
+			// they carry Bethesda's settings for those effects (lights, sizing, particle setup).
+			{
+				std::unordered_map<std::string, RE::BGSProjectile*> byModel;
+				for (auto* pr : RE::TESDataHandler::GetSingleton()->GetFormArray<RE::BGSProjectile>()) {
+					if (!pr || (pr->GetFormID() >> 24) >= 0xFE || !pr->IsMissile()) {
+						continue;
+					}
+					std::string m = pr->GetModel() ? pr->GetModel() : "";
+					std::transform(m.begin(), m.end(), m.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+					if (!m.empty() && !byModel.contains(m)) {
+						byModel[m] = pr;
+					}
+				}
+				std::unordered_set<RE::EffectSetting*> done;
+				for (const auto& g : gen::kGuns) {
+					auto* f = g.bulletSpell ? Ours(g.bulletSpell) : nullptr;
+					auto* sp = f ? f->As<RE::MagicItem>() : nullptr;
+					auto* e = sp && !sp->effects.empty() ? sp->effects[0]->baseEffect : nullptr;
+					if (!e || done.contains(e) || !e->data.projectileBase) {
+						continue;
+					}
+					done.insert(e);
+					std::string m = e->data.projectileBase->GetModel() ? e->data.projectileBase->GetModel() : "";
+					std::transform(m.begin(), m.end(), m.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+					if (auto it = byModel.find(m); it != byModel.end()) {
+						logger::info("forms: {} bolt flies on Skyrim's projectile {:08X} ({})", g.id, it->second->GetFormID(), m);
+						e->data.projectileBase = it->second;
+					} else {
+						logger::info("forms: {} bolt keeps our projectile ({}: no vanilla match)", g.id, m);
+					}
+				}
+			}
 			// Hand spells borrow the look of the vanilla spell they unleash: fire hands for flames, frost for frost...
 			for (std::size_t i = 0; i < gen::kGuns.size(); ++i) {
 				auto* hs = g_gunSpells[i];

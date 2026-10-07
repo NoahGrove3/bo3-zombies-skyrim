@@ -422,6 +422,40 @@ def mana_empty():   # magic fizzles out
     n = int(0.35 * SR)
     return hall(norm(mix(bp(noise(n), 2000, 7000) * env(n, 0.005, 0.05, 0.3, 0.25) * 0.5, zap(900, 220, 0.3) * 0.5), 0.5), 0.2, 1.0)
 
+# ---- one signature cast per weapon (sheet: weapons.fireSound -> sound:cast_<id>)
+def _tone(f, d, tau=0.08, harm=(1, 2.0, 3.0), amp=(1, .4, .2)):
+    tt = t_(d); return sum(a * np.sin(2 * np.pi * f * h * tt) for h, a in zip(harm, amp)) * np.exp(-tt / tau)
+def _sweep(f0, f1, d, tau=None):
+    tt = t_(d); f = f0 * (f1 / f0) ** (tt / d); return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-tt / (tau or d / 2))
+def _hiss(d, lo, hi, a=0.004, r=None):
+    n = int(d * SR); return bp(noise(n), lo, hi) * env(n, a, d * 0.2, 0.5, r or d * 0.6)
+def _crackle(d, dens=0.992, lo=900, hi=6000, seed=1):
+    n = int(d * SR); return bp(noise(n), lo, hi) * (np.random.default_rng(seed).random(n) > dens) * 2.0
+def _pack(x, wet=0.25, size=1.4, peak=0.85): return hall(norm(x, peak), wet, size)
+
+def c_sidearm():    return _pack(mix(_whoosh(0.3, 5000, 900), _sparkle(0.28, 2400, 7), _tone(1320, 0.3, 0.09) * 0.4))               # arcane: chime + glitter
+def c_centurion():  return _pack(mix(_hiss(0.35, 2500, 9000) * 1.3, _sweep(500, 180, 0.25) * 0.5, _crackle(0.3, 0.995, 300, 1500, 2)))  # venom: hiss + gurgle
+def c_triad():      return _pack(mix(chord(choir, ['E4', 'B4'], 0.35, vowel='o', bright=1.4) * 0.7, _sweep(900, 300, 0.25) * 0.5, _whoosh(0.2, 4000, 800)), .35, 2.0)  # soul wail
+def c_spider():     return _pack(mix(lpb(noise(int(0.18 * SR)), 1400) * env(int(0.18 * SR), 0.003, 0.03, 0.4, 0.1) * 1.4, _crackle(0.15, 0.99, 600, 3000, 3)), .12, 0.8)  # spore puff
+def c_drill():      return _pack(mix(_sweep(220, 90, 0.16, 0.06) * 1.2, lpb(noise(int(0.12 * SR)), 900) * expdec(int(0.12 * SR), 0.03), kick(0.12, 140, 60) * 0.6), .12, 0.8)  # blood squelch
+def c_steampump():  return _pack(mix(_whoosh(0.45, 2500, 300) * 1.2, _crackle(0.4, 0.97, 1200, 5000, 4) * 1.4, kick(0.4, 120, 45) * 0.9), .3, 1.8)  # bone burst
+def c_marksman():   return _pack(mix(_tone(2093, 0.5, 0.18) * 0.6, _tone(3136, 0.5, 0.12) * 0.35, _whoosh(0.3, 7000, 1500) * 0.8), .4, 2.2)  # moonshard chime
+def c_animunculi(): return _pack(mix(_whoosh(0.16, 900, 3500, 10)[::-1] * 1.2, _sweep(160, 80, 0.15) * 0.6), .15, 0.9)  # shadow: reverse rush
+def c_kagrenac():   return _pack(mix(_tone(1760, 0.2, 0.05, (1, 2.76, 5.4), (1, .5, .25)) * 0.7, _crackle(0.15, 0.993, 2000, 8000, 5)), .15, 0.9)  # amber: glassy ping
+def c_mammothlmg(): return _pack(mix(_hiss(0.18, 400, 2600) * 1.4, _sweep(700, 1400, 0.12) * 0.3), .12, 0.8)  # gale gust
+def c_longshot():   return _pack(mix(_sweep(300, 2400, 0.35, 0.3) * 0.7, chord(choir, ['A4', 'E5', 'A5'], 0.6, vowel='e', bright=1.5) * 0.5, kick(0.4, 100, 40) * 0.8, _sparkle(0.6, 3000, 12)), .45, 2.6)  # starfall
+def c_aetherium():  return _pack(mix(chord(horn, ['C4', 'G4', 'E5'], 0.7) * 0.6, _whoosh(0.7, 5000, 400) * 1.2, kick(0.5, 120, 40), _sparkle(0.5, 2600, 10)), .4, 2.4)  # dawn burst
+def c_flamerepeater(): return _pack(mix(lpb(noise(int(0.2 * SR)), 2200) * env(int(0.2 * SR), 0.01, 0.05, 0.7, 0.1) * 1.4, _crackle(0.2, 0.985, 800, 4000, 6)), .1, 0.7)  # fire stream
+def c_frostlancer(): return _pack(mix(_crackle(0.35, 0.97, 2500, 9000, 7) * 1.5, _tone(2600, 0.3, 0.06, (1, 1.5, 2.2), (1, .5, .3)) * 0.5, _hiss(0.3, 4000, 10000) * 0.6), .35, 1.8)  # ice crack
+def c_stormcaller(): return _pack(mix(zap(2400, 300, 0.25) * 1.2, _crackle(0.3, 0.96, 1500, 8000, 8) * 1.4), .25, 1.2)  # lightning
+def c_embermortar(): return _pack(mix(kick(0.6, 110, 35) * 1.3, lpb(noise(int(0.6 * SR)), 1200) * env(int(0.6 * SR), 0.01, 0.1, 0.5, 0.4) * 1.2, _crackle(0.6, 0.99, 600, 3000, 9)), .35, 2.0)  # fireball
+def c_wabbajack():  tt = t_(0.6); w = np.sin(2 * np.pi * np.cumsum(500 + 300 * np.sin(2 * np.pi * 9 * tt)) / SR) * env(len(tt), 0.01, 0.1, 0.6, 0.3); return _pack(mix(w * 0.8, _sparkle(0.5, 1800, 9), _sweep(1200, 300, 0.4) * 0.4), .35, 1.8)  # madness warble
+def c_thuumcannon(): return _pack(mix(chord(choir, ['D2', 'A2', 'D3'], 0.9, vowel='a', bright=0.9) * 1.2, kick(0.8, 90, 30) * 1.3, _whoosh(0.9, 2000, 120) * 1.3), .45, 3.0)  # FUS RO DAH
+def c_skyforgearc(): return _pack(mix(thunder(1.2) * 0.9, zap(3000, 400, 0.35) * 1.1, _crackle(0.6, 0.96, 1500, 9000, 10)), .4, 2.4)  # skyforge chain
+def c_apprentice(): return c_sidearm()
+
+CASTS = {k[2:]: v for k, v in globals().items() if k.startswith('c_') and callable(v)}
+
 SOUNDS = {
     'brew_trollshide': j_trollshide, 'brew_quicksilver': j_quicksilver, 'brew_twinstrike': j_twinstrike,
     'brew_hearthfire': j_hearthfire, 'brew_windrunner': j_windrunner, 'brew_hawkeye': j_hawkeye,
@@ -434,6 +468,8 @@ SOUNDS = {
     'cast_light': cast_light, 'cast_rapid': cast_rapid, 'cast_scatter': cast_scatter, 'cast_heavy': cast_heavy, 'mana_empty': mana_empty,
     'buy': buy, 'forge_upgrade': forge_upgrade, 'hitmarker': hitmarker, 'headshot': headshot, 'drink': drink, 'knife': knife, 'rise': rise,
 }
+
+SOUNDS.update({f'cast_{k}': v for k, v in CASTS.items()})
 
 def write(path, x):
     x = norm(x - np.mean(x))

@@ -295,6 +295,26 @@
   "MGEF:hand_skyforgearc": "0x923",
   "SPEL:hand_apprentice": "0x924",
   "MGEF:hand_apprentice": "0x925",
-  "STAT:stand": "0x926"
+  "STAT:stand": "0x926",
+  "SNDR:cast_sidearm": "0x927",
+  "SNDR:cast_centurion": "0x928",
+  "SNDR:cast_triad": "0x929",
+  "SNDR:cast_spider": "0x92a",
+  "SNDR:cast_drill": "0x92b",
+  "SNDR:cast_steampump": "0x92c",
+  "SNDR:cast_marksman": "0x92d",
+  "SNDR:cast_animunculi": "0x92e",
+  "SNDR:cast_kagrenac": "0x92f",
+  "SNDR:cast_mammothlmg": "0x930",
+  "SNDR:cast_longshot": "0x931",
+  "SNDR:cast_aetherium": "0x932",
+  "SNDR:cast_flamerepeater": "0x933",
+  "SNDR:cast_frostlancer": "0x934",
+  "SNDR:cast_stormcaller": "0x935",
+  "SNDR:cast_embermortar": "0x936",
+  "SNDR:cast_wabbajack": "0x937",
+  "SNDR:cast_thuumcannon": "0x938",
+  "SNDR:cast_skyforgearc": "0x939",
+  "SNDR:cast_apprentice": "0x93a"
  }
 }
