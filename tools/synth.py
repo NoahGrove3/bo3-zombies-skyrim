@@ -386,6 +386,19 @@ def rise():
     groan = choir(hz('A1'), 1.1, vowel='o', voices=2, bright=.6) * 0.8
     return hall(norm(mix(dirt, crumble, place(np.zeros(1), groan, 0.3))), 0.25)
 
+def forge_upgrade():
+    # three anvil strikes, a rising choir and a crackle of fire
+    x = np.zeros(1)
+    for k, f in enumerate((1180, 1240, 1310)):
+        n = int(0.9 * SR); tt = t_(0.9)
+        ring = sum(np.sin(2 * np.pi * f * r * tt) * np.exp(-tt / (0.35 / r)) / r for r in (1, 2.76, 5.4, 8.9))
+        hit = bp(noise(int(0.04 * SR)), 1500, 6000) * 0.8
+        x = place(x, ring * 0.35, k * 0.42); x = place(x, hit, k * 0.42)
+    x = place(x, chord(choir, ['D3', 'A3', 'F#4', 'D4'], 2.4, vowel='a', bright=1.2) * 0.7, 1.1)
+    crack = bp(noise(int(2.2 * SR)), 800, 6000) * (np.random.default_rng(3).random(int(2.2 * SR)) > 0.996) * 2.0
+    x = place(x, crack, 1.0)
+    return hall(norm(x), 0.3, 2.5)
+
 SOUNDS = {
     'brew_trollshide': j_trollshide, 'brew_quicksilver': j_quicksilver, 'brew_twinstrike': j_twinstrike,
     'brew_hearthfire': j_hearthfire, 'brew_windrunner': j_windrunner, 'brew_hawkeye': j_hawkeye,
@@ -395,7 +408,7 @@ SOUNDS = {
     'shot_pistol': shot_pistol, 'shot_smg': shot_smg, 'shot_ar': shot_ar, 'shot_lmg': shot_lmg,
     'shot_shotgun': shot_shotgun, 'shot_sniper': shot_sniper, 'shot_ray': shot_ray,
     'reload_mag': reload_mag, 'reload_shell': reload_shell, 'dry_click': dry_click,
-    'buy': buy, 'hitmarker': hitmarker, 'headshot': headshot, 'drink': drink, 'knife': knife, 'rise': rise,
+    'buy': buy, 'forge_upgrade': forge_upgrade, 'hitmarker': hitmarker, 'headshot': headshot, 'drink': drink, 'knife': knife, 'rise': rise,
 }
 
 def write(path, x):

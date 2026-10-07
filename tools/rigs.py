@@ -98,7 +98,29 @@ def boss():
             maps.append((b, 'NPC Spine2 [Spn2]'))
     write_job('boss/boss.nif', d / 'source/Dragon Character 3d by Oscar Creativo.fbx', maps, mats)
 
+# ---------------------------------------------------------------- shadow elite (Mixamo rig)
+def shadow():
+    d = A.SRC / 'shadow'; T = lambda n: d / 'textures' / n
+    dif = A.save_dds(A.load(T('Image_1_1.jpeg'), 2048), 'shadow/shadow_d.dds')
+    nrm = A.save_dds(A.normal_with_spec(T('Image_2_0.jpeg'), T('Image_0_2@channels=G.jpeg'), 2048), 'shadow/shadow_n.dds', alpha=True)
+    # violet ember glow in the creature's cracks: brightest bits of the albedo, tinted
+    a = np.asarray(A.load(T('Image_1_1.jpeg'), 1024, 'L'), dtype=np.float32)
+    g = np.clip((a - 70) * 3, 0, 255)
+    glow = A.save_dds(Image.fromarray(np.dstack([g * 0.7, g * 0.3, g]).astype(np.uint8), 'RGB'), 'shadow/shadow_g.dds')
+    X = 'mixamorig:'
+    maps = [(f'{X}Hips', 'NPC Pelvis [Pelv]'), (f'{X}Spine', 'NPC Spine [Spn0]'), (f'{X}Spine1', 'NPC Spine1 [Spn1]'), (f'{X}Spine2', 'NPC Spine2 [Spn2]'),
+            (f'{X}Neck', 'NPC Neck [Neck]'), (f'{X}Head', 'NPC Head [Head]'), (f'{X}HeadTop_End', 'NPC Head [Head]')]
+    for side, S in (('Left', 'L'), ('Right', 'R')):
+        foot = 'NPC L Foot [LLft ]' if S == 'L' else 'NPC R Foot [Rft ]'
+        maps += [(f'{X}{side}Shoulder', f'NPC {S} Clavicle [{S}Clv]'), (f'{X}{side}Arm', f'NPC {S} UpperArm [{S}Uar]'), (f'{X}{side}ForeArm', f'NPC {S} Forearm [{S}Lar]'),
+                 (f'{X}{side}Hand', f'NPC {S} Hand [{S}Hnd]'), (f'{X}{side}HandIndex1', f'NPC {S} Finger10 [{S}F10]'), (f'{X}{side}HandIndex2', f'NPC {S} Finger11 [{S}F11]'),
+                 (f'{X}{side}HandIndex3', f'NPC {S} Finger12 [{S}F12]'), (f'{X}{side}HandIndex4', f'NPC {S} Finger12 [{S}F12]'),
+                 (f'{X}{side}UpLeg', f'NPC {S} Thigh [{S}Thg]'), (f'{X}{side}Leg', f'NPC {S} Calf [{S}Clf]'), (f'{X}{side}Foot', foot),
+                 (f'{X}{side}ToeBase', f'NPC {S} Toe0 [{S}Toe]'), (f'{X}{side}Toe_End', f'NPC {S} Toe0 [{S}Toe]')]
+    write_job('shadow/shadow.nif', d / 'source/lesnoy.glb', maps,
+              [f'mat * diffuse={dif} normal={nrm} glow={glow} emit=0.7,0.3,1.0 emitmult=2.2 spec=0.25 gloss=30'])
+
 if __name__ == '__main__':
-    for n, fn in {'zombie': zombie, 'boss': boss}.items():
+    for n, fn in {'zombie': zombie, 'boss': boss, 'shadow': shadow}.items():
         if not ONLY or n in ONLY:
             print('==', n); fn()

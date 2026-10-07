@@ -750,6 +750,11 @@ namespace bo3z
 				}
 				break;
 			case 3: BuyAmmo(o); break;
+			case 5:
+				if (Gun::Reforge()) {
+					Forms::PlayAt(gen::Sound::forge_upgrade, a_ref);
+				}
+				break;
 			default: BuyWall(o); break;
 			}
 		}

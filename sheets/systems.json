@@ -54,7 +54,8 @@
         "sounds:round_start",
         "sounds:round_end",
         "enemies:zombie",
-        "enemies:boss"
+        "enemies:boss",
+        "enemies:shadow"
       ],
       "state": "round, toSpawn, alive list, spawn timer, break timer",
       "step": 1,

@@ -1,0 +1,51 @@
+{
+  "sheet": "forge",
+  "about": "Atronach Reforge: reforge the weapon in your hands up to maxLevel times. Each level adds damagePerLevel (x base damage), refills ammo and recolours the name; tally marks show the level.",
+  "columns": [
+    "id",
+    "value",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "maxLevel",
+      "value": 3,
+      "verify": []
+    },
+    {
+      "id": "damagePerLevel",
+      "value": 0.5,
+      "verify": []
+    },
+    {
+      "id": "cost1",
+      "value": 4000,
+      "verify": []
+    },
+    {
+      "id": "cost2",
+      "value": 6000,
+      "verify": []
+    },
+    {
+      "id": "cost3",
+      "value": 8000,
+      "verify": []
+    },
+    {
+      "id": "color1",
+      "value": "4FA8FF",
+      "verify": []
+    },
+    {
+      "id": "color2",
+      "value": "B266FF",
+      "verify": []
+    },
+    {
+      "id": "color3",
+      "value": "FFC83D",
+      "verify": []
+    }
+  ]
+}

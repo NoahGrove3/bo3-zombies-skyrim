@@ -211,7 +211,16 @@ namespace bo3z
 			if (s.gunOut) {
 				const ImVec2 a{ size.x - 360 * k, size.y - 196 * k }, b{ size.x - 40 * k, size.y - 120 * k };
 				Panel(dl, a, b, k);
-				Txt(dl, g_title, 20 * k, { a.x + 14 * k, a.y + 8 * k }, kParch, s.gunName);
+				{
+					const auto  c = gen::kForgeColor[std::clamp(s.gunLevel, 0, 3)];
+					const ImU32 nameCol = IM_COL32((c >> 24) & 0xFF, (c >> 16) & 0xFF, (c >> 8) & 0xFF, 255);
+					Txt(dl, g_title, 20 * k, { a.x + 14 * k, a.y + 8 * k }, nameCol, s.gunName, s.gunLevel > 0 ? 2 * k : 0, nameCol);
+					// tally marks: one stroke per reforge level
+					const float tx = a.x + 20 * k + Measure(g_title, 20 * k, s.gunName).x;
+					for (int i = 0; i < s.gunLevel; ++i) {
+						dl->AddLine({ tx + i * 9 * k, a.y + 12 * k }, { tx + i * 9 * k + 2 * k, a.y + 30 * k }, nameCol, 3 * k);
+					}
+				}
 				const std::string clip = std::to_string(s.clip), res = std::to_string(s.reserve);
 				const auto        cs = Measure(g_num, 40 * k, clip), rs = Measure(g_num, 22 * k, res);
 				const ImU32       cc = s.clip == 0 ? IM_COL32(230, 60, 50, 255) : IM_COL32(250, 250, 250, 255);

@@ -704,6 +704,20 @@
       "scale": 1,
       "spin": 0,
       "verify": []
+    },
+    {
+      "id": "forge_light",
+      "for": "forge",
+      "type": "light",
+      "model": "none",
+      "color": "FF8A30",
+      "radius": 520,
+      "x": 0,
+      "y": 40,
+      "z": 110,
+      "scale": 1,
+      "spin": 0,
+      "verify": []
     }
   ],
   "show": {

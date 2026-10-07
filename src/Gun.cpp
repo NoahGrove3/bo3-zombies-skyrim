@@ -199,7 +199,8 @@ namespace bo3z
 			const float spread = g.spreadHip + (g.spreadAds - g.spreadHip) * g_ads;
 			const float headMult = g.headMult * Perks::HeadMult();
 			const float headRadius = g.headRadius * (Perks::HeadMult() > 1.0f ? 1.5f : 1.0f);
-			const float dmg = g.damage * Perks::DamageMult() * CrewMult(0);
+			const int   lvl = SlotOf(CurrentGun()) >= 0 ? Save::GetSlot(SlotOf(CurrentGun())).level : 0;
+			const float dmg = g.damage * Perks::DamageMult() * CrewMult(0) * (1.0f + gen::kForgeStep * lvl);
 			++g_shots;
 			if (g.special == 3) {  // cone blast (Thu'um Cannon): everything in front of you, harder up close
 				bool los = false;
@@ -541,6 +542,40 @@ namespace bo3z
 			g_burstLeft = 0;
 		}
 
+		// Atronach Reforge: the weapon in your hands goes up a level (more damage, full ammo).
+		int ReforgeCost()
+		{
+			const int gun = CurrentGun(), slot = SlotOf(gun);
+			if (gun < 0 || slot < 0) {
+				return -1;
+			}
+			const int lvl = Save::GetSlot(slot).level;
+			return lvl >= gen::kForgeMax ? 0 : gen::kForgeCost[lvl];
+		}
+		bool Reforge()
+		{
+			const int gun = CurrentGun(), slot = SlotOf(gun);
+			if (gun < 0 || slot < 0) {
+				Hud::Banner("Hold the tome you want reforged", 2.5f);
+				return false;
+			}
+			auto s = Save::GetSlot(slot);
+			if (s.level >= gen::kForgeMax) {
+				Hud::Banner(std::string(gen::kGuns[gun].label) + " cannot hold more power", 2.5f);
+				return false;
+			}
+			if (!Points::Spend(gen::kForgeCost[s.level])) {
+				return false;
+			}
+			s.level += 1;
+			s.clip = gen::kGuns[gun].clip;
+			s.reserve = gen::kGuns[gun].reserve;
+			Save::SetSlot(slot, s);
+			logger::info("forge: {} -> level {}", gen::kGuns[gun].id, s.level);
+			Hud::Banner(std::string(gen::kGuns[gun].label) + " reforged  " + std::string(s.level, '|') + "  (+" + std::to_string(static_cast<int>(gen::kForgeStep * 100 * s.level)) + "% damage)", 4.0f);
+			return true;
+		}
+
 		bool OnButton(const RE::ButtonEvent* a_event)
 		{
 			auto* ui = RE::UI::GetSingleton();
@@ -648,6 +683,7 @@ namespace bo3z
 			if (out) {
 				const auto s = Save::GetSlot(SlotOf(gun));
 				h.gunName = std::string(gen::kGuns[gun].label);
+				h.gunLevel = SlotOf(gun) >= 0 ? Save::GetSlot(SlotOf(gun)).level : 0;
 				h.clip = s.clip;
 				h.reserve = s.reserve;
 			}

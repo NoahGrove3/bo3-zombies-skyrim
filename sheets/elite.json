@@ -1,0 +1,76 @@
+{
+  "sheet": "elite",
+  "about": "Gloomstalker elites: tougher than the dead, weaker than the Wyrm. Health as a multiple of a zombie's round health; hitShare = share of your health per hit. Times in seconds, ranges in units.",
+  "columns": [
+    "id",
+    "value",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "healthMult",
+      "value": 6,
+      "verify": []
+    },
+    {
+      "id": "maxAlive",
+      "value": 2,
+      "verify": []
+    },
+    {
+      "id": "hitShare",
+      "value": 0.5,
+      "verify": []
+    },
+    {
+      "id": "lungeEvery",
+      "value": 8,
+      "verify": []
+    },
+    {
+      "id": "lungeMin",
+      "value": 350,
+      "verify": []
+    },
+    {
+      "id": "lungeMax",
+      "value": 1100,
+      "verify": []
+    },
+    {
+      "id": "shriekEvery",
+      "value": 12,
+      "verify": []
+    },
+    {
+      "id": "shriekRange",
+      "value": 550,
+      "verify": []
+    },
+    {
+      "id": "shriekSlow",
+      "value": 40,
+      "verify": []
+    },
+    {
+      "id": "shriekSeconds",
+      "value": 3,
+      "verify": []
+    },
+    {
+      "id": "shriekDamage",
+      "value": 0.1,
+      "verify": []
+    },
+    {
+      "id": "drainShare",
+      "value": 0.08,
+      "verify": []
+    },
+    {
+      "id": "killPoints",
+      "value": 400,
+      "verify": []
+    }
+  ]
+}

@@ -199,6 +199,12 @@
   "NPC_:zombie": "0x8c3",
   "ARMA:boss": "0x8c4",
   "ARMO:boss": "0x8c5",
-  "NPC_:boss": "0x8c6"
+  "NPC_:boss": "0x8c6",
+  "ACTI:forge": "0x8c7",
+  "SNDR:forge_upgrade": "0x8c8",
+  "LIGH:forge_light": "0x8c9",
+  "ARMA:shadow": "0x8ca",
+  "ARMO:shadow": "0x8cb",
+  "NPC_:shadow": "0x8cc"
  }
 }

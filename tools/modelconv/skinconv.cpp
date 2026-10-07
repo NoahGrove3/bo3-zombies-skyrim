@@ -192,14 +192,20 @@ int main(int argc, char** argv)
 		for (unsigned v = 0; v < me->mNumVertices; ++v) { auto p = meshGlobal[me] * me->mVertices[v]; floorZ = std::min<double>(floorZ, p.z); }
 	}
 	const V3 pel = srcJoint[primary["NPC Pelvis [Pelv]"]];
-	double   facing = 1;  // +1: source already faces +Y
+	// Facing: turn about Z so the feet point along +Y (Skyrim's forward).
+	double yaw = 0;
 	if (primary.count("NPC L Foot [LLft ]") && primary.count("NPC L Toe0 [LToe]")) {
-		facing = (srcJoint[primary["NPC L Toe0 [LToe]"]].y - srcJoint[primary["NPC L Foot [LLft ]"]].y) >= 0 ? 1 : -1;
+		V3 f = srcJoint[primary["NPC L Toe0 [LToe]"]] - srcJoint[primary["NPC L Foot [LLft ]"]];
+		if (primary.count("NPC R Foot [Rft ]") && primary.count("NPC R Toe0 [RToe]")) f = f + (srcJoint[primary["NPC R Toe0 [RToe]"]] - srcJoint[primary["NPC R Foot [Rft ]"]]);
+		yaw = std::atan2(f.x, f.y);  // angle of the toes from +Y toward +X
 	}
-	const double s = T("NPC Pelvis [Pelv]").z / (pel.z - floorZ) ;
-	auto norm = [&](V3 p) { V3 q{ (p.x - pel.x) * s * facing, (p.y - pel.y) * s * facing, (p.z - floorZ) * s }; return q; };
-	auto normDir = [&](V3 d) { return V3{ d.x * facing, d.y * facing, d.z }; };
-	printf("source: scale %.4f, facing %s, floor %.2f\n", s, facing > 0 ? "+Y" : "-Y (turned)", floorZ);
+	const double cy = std::cos(yaw), sy = std::sin(yaw);
+	auto turn = [&](V3 d) { return V3{ d.x * cy - d.y * sy, d.x * sy + d.y * cy, d.z }; };  // rotates the toe direction onto +Y
+	const double s = T("NPC Pelvis [Pelv]").z / (pel.z - floorZ);
+	auto norm = [&](V3 p) { V3 q = turn(V3{ p.x - pel.x, p.y - pel.y, 0 }); return V3{ q.x * s, q.y * s, (p.z - floorZ) * s }; };
+	auto normDir = [&](V3 d) { return turn(d); };
+	const double facing = yaw;
+	printf("source: scale %.4f, turned %.0f deg to face +Y, floor %.2f\n", s, facing * 57.2958, floorZ);
 
 	// ---- per target bone: affine A(v) = Tj + M * (v - Sj)
 	struct Aff { V3 S, Tj; M3 M; M3 R; V3 axis; double len = 0, stretch = 1; };
@@ -228,7 +234,9 @@ int main(int argc, char** argv)
 		a.axis = std::get<0>(st), a.len = std::get<1>(st), a.stretch = std::get<2>(st);
 		aff[t] = a;
 	}
+	const bool noRetarget = getenv("SKINCONV_RAW") != nullptr;
 	auto applyBone = [&](const std::string& t, V3 v) {
+		if (noRetarget) return v;
 		const auto& a = aff[t];
 		V3     r = a.R * (v - a.S);                   // turned, relative to the target joint
 		double u = r.dot(a.axis);                     // distance along the target bone

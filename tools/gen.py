@@ -15,12 +15,12 @@ assert r['dawn'] == 'crumble' and r['unfinishedRound'] == 'resume'
 q = row('quests', r['pauseUntilQuest'].split(':')[1])
 out.append(f'\tinline constexpr FormRef kIntroQuest{{ {cs(q["plugin"])}, 0x{hexid(q["localId"]):06X}, {cs(q["editorId"])} }};')
 # enemies
-out.append('\tstruct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; };')
+out.append('\tstruct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; };')
 en = S['enemies']['rows']
 out.append(f'\tinline constexpr std::array<Enemy, {len(en)}> kEnemies{{ {{')
 sys.path.insert(0, str(root / 'tools')); import esp_ids as _eids; _EIDS, _ = _eids.assign(S)
 for e in en:
-    out.append(f'\t\tEnemy{{ {cs(e["id"])}, {cs(e["label"])}, {{ {cs(e["plugin"])}, 0x{(_EIDS[("NPC_", e["localId"][5:])] if e["localId"].startswith("auto:") else hexid(e["localId"])):06X}, {cs(e["editorId"])} }}, {str(e["recordType"]=="LVLN").lower()}, {e["minRound"]}, {e["weight"]}, {str(e["specialRound"]).lower()}, {cs(e["headNode"])}, {str(e["forceCombat"]).lower()}, {e.get("bossEvery", 0)} }},')
+    out.append(f'\t\tEnemy{{ {cs(e["id"])}, {cs(e["label"])}, {{ {cs(e["plugin"])}, 0x{(_EIDS[("NPC_", e["localId"][5:])] if e["localId"].startswith("auto:") else hexid(e["localId"])):06X}, {cs(e["editorId"])} }}, {str(e["recordType"]=="LVLN").lower()}, {e["minRound"]}, {e["weight"]}, {str(e["specialRound"]).lower()}, {cs(e["headNode"])}, {str(e["forceCombat"]).lower()}, {e.get("bossEvery", 0)}, {str(e.get("elite", False)).lower()} }},')
 out.append('\t} };')
 # sounds
 out.append('\tenum class Sound : int {')
@@ -91,7 +91,7 @@ o.append(f'\tinline constexpr std::array<CrewDef, {len(C)}> kCrew{{ {{')
 for c in C: o.append(f'\t\tCrewDef{{ {cs(c["id"])}, {cs(c["label"])}, {cs(c["quote"])}, {passives[c["passive"]]}, {F(c["passiveValue"])}, {cs(c["passiveText"])} }},')
 o.append('\t} };')
 for r in S['identity']['rows']: o.append(f'\tinline constexpr std::string_view kText_{r["id"]} = {cs(r["text"])};')
-O = S['objects']['rows']; kinds = {'box': 0, 'perk': 1, 'wallbuy': 2, 'ammo': 3, 'perkmenu': 4}
+O = S['objects']['rows']; kinds = {'box': 0, 'perk': 1, 'wallbuy': 2, 'ammo': 3, 'perkmenu': 4, 'forge': 5}
 def refidx(r):
     if r == 'none': return -1
     sh, i = r.split(':'); rows = {'perks': P, 'weapons': W}[sh]
@@ -138,6 +138,11 @@ for i in S['input']['rows']: o.append(f'\tinline constexpr std::uint32_t kKey2_{
 R0 = S['rounds']['rows'][0]
 o.append(f'\tinline constexpr float kHpCapRound = {F(S["rounds"]["rows"][0]["hpCapRound"])}, kHpGrowthAfterCap = {F(S["rounds"]["rows"][0]["hpGrowthAfterCap"])}, kShareMelee = {F(S["rounds"]["rows"][0]["skyrimHitShare"]["melee"])}, kShareBow = {F(S["rounds"]["rows"][0]["skyrimHitShare"]["bow"])}, kShareSpell = {F(S["rounds"]["rows"][0]["skyrimHitShare"]["spell"])};')
 o.append('\tnamespace boss { ' + ' '.join(f'inline constexpr float {r["id"]} = {F(r["value"])};' for r in S['boss']['rows']) + ' }')
+FG = {r['id']: r['value'] for r in S['forge']['rows']}
+o.append(f'\tinline constexpr int kForgeMax = {FG["maxLevel"]}; inline constexpr float kForgeStep = {F(FG["damagePerLevel"])};')
+o.append(f'\tinline constexpr std::array<int, 3> kForgeCost{{ {{ {FG["cost1"]}, {FG["cost2"]}, {FG["cost3"]} }} }};')
+o.append(f'\tinline constexpr std::array<std::uint32_t, 4> kForgeColor{{ {{ 0xECE2C8FF, 0x{FG["color1"]}FF, 0x{FG["color2"]}FF, 0x{FG["color3"]}FF }} }};')
+o.append('\tnamespace elite { ' + ' '.join(f'inline constexpr float {r["id"]} = {F(r["value"])};' for r in S['elite']['rows']) + ' }')
 o.append(f'\tinline constexpr float kRegenDelay = {F(S["rounds"]["rows"][0]["regenDelaySeconds"])}, kRegenPerSecond = {F(S["rounds"]["rows"][0]["regenPerSecond"])};')
 o.append(f'\tinline constexpr float kSpawnMultiplier = {F(R0["spawnMultiplier"])}, kHitDamageFraction = {F(R0["hitDamageFraction"])}, kZombieWeaponDamageMult = {F(R0["weaponDamageMult"])};')
 o.append(f'\tinline constexpr bool kIgnoreNpcs = {str(R0["ignoreNpcs"]).lower()};')

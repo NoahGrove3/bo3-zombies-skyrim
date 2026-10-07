@@ -61,7 +61,12 @@ namespace bo3z
 			auto* av = player->AsActorValueOwner();
 			const float jug = Has(gen::kPerk_trollshide) ? gen::kPerks[gen::kPerk_trollshide].value : 0.0f;
 			const float baseHealth = std::max(50.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth) - jug);
-			av->DamageActorValue(RE::ActorValue::kHealth, baseHealth * gen::kHitDamageFraction);
+			const bool elite = Director::IsElite(a_zombie);
+			av->DamageActorValue(RE::ActorValue::kHealth, baseHealth * (elite ? gen::elite::hitShare : gen::kHitDamageFraction));
+			if (elite) {  // Life Drain
+				auto* zav = a_zombie->AsActorValueOwner();
+				zav->RestoreActorValue(RE::ActorValue::kHealth, zav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::elite::drainShare);
+			}
 			{
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().hurtTime = 1.0f;

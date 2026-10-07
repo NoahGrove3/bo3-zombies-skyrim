@@ -29,6 +29,16 @@
       "verify": [
         "heightScale"
       ]
+    },
+    {
+      "id": "shadow",
+      "label": "Gloomstalker",
+      "model": "UndyingNights\\shadow\\shadow.nif",
+      "heightScale": 1.15,
+      "level": 30,
+      "verify": [
+        "heightScale"
+      ]
     }
   ]
 }

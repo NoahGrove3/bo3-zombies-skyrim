@@ -43,6 +43,7 @@ namespace bo3z
 			int gun{ -1 };
 			int clip{ 0 };
 			int reserve{ 0 };
+			int level{ 0 };  // Atronach Reforge level 0-3
 		};
 		int  Get(int a_av);
 		void Set(int a_av, int a_value);
@@ -77,6 +78,7 @@ namespace bo3z
 		void             Reset();
 		bool             IsRoundUndead(RE::Actor* a_actor);
 		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
+		bool             IsElite(RE::Actor* a_actor);
 		std::string_view HeadNodeFor(RE::Actor* a_actor);
 		void             LogState();
 		void             Web(const RE::NiPoint3& a_at, float a_radius, float a_seconds);   // Widow's Wine
@@ -100,6 +102,8 @@ namespace bo3z
 		bool                  Give(int a_gun);                // buy/box: put in a slot, equip it
 		bool                  Owns(int a_gun);
 		void                  RefillAmmo(int a_gun);
+		bool                  Reforge();      // Atronach Reforge on the weapon in hand
+		int                   ReforgeCost();  // -1 no weapon, 0 maxed
 		int                   SlotCount();
 		float                 AdsBlend();                     // 0..1, for movement and HUD
 	}
@@ -141,6 +145,7 @@ namespace bo3z
 			int         points{ 0 };
 			bool        gunOut{ false };
 			std::string gunName;
+			int         gunLevel{ 0 };
 			int         clip{ 0 };
 			int         reserve{ 0 };
 			bool        reloading{ false };

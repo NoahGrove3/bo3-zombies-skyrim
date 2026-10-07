@@ -115,7 +115,7 @@ def coffer():
     dif = save_dds(load(T('albedo'), 1024), 'coffer/coffer_d.dds')
     nrm = save_dds(normal_with_spec(T('normal'), T('roughness')), 'coffer/coffer_n.dds', alpha=True)
     gl = save_dds(tint(load(T('emissive'), 1024), (190, 110, 255)), 'coffer/coffer_g.dds')
-    run_job([f'in {d}/source/Weapon Chest Animated.fbx', f'out {mesh_out("coffer/coffer.nif")}', 'fit 95', 'rotate 90 0 0', 'ground 1',
+    run_job([f'in {d}/source/Weapon Chest Animated.fbx', f'out {mesh_out("coffer/coffer.nif")}', 'fit 95', 'rotate 90 0 90', 'ground 1', 'meshoffset polySurface82 0 0 -16.2',
              f'mat * diffuse={dif} normal={nrm} glow={gl} emit=0.75,0.45,1.0 emitmult=2.0 spec=0.5'])
 
 # ---------------------------------------------------------------- brew machine (one per town, menu of all nine)
@@ -127,7 +127,18 @@ def brewmachine():
     run_job([f'in {d}/source/vendingmachine1.fbx', f'out {mesh_out("brewmachine/brewmachine.nif")}', 'fit 160', 'rotate 90 0 0', 'ground 1',
              f'mat * diffuse={dif} normal={nrm} glow={gl} emit=1,0.85,0.6 emitmult=1.5 spec=0.6 gloss=80'])
 
-STEPS = {'tomes': tomes, 'grimoires': grimoires, 'coffer': coffer, 'brewmachine': brewmachine}
+# ---------------------------------------------------------------- Atronach Reforge (the magic gate)
+def forge():
+    d = SRC / 'gate'
+    dif = save_dds(load(d / 'textures/rock gate baked.png', 2048), 'forge/forge_d.dds')
+    flat_n = save_dds(Image.new('RGBA', (64, 64), (128, 128, 255, 50)), 'forge/flat_n.dds', alpha=True)
+    glow_d = save_dds(Image.new('RGB', (64, 64), (255, 170, 80)), 'forge/glow_d.dds')
+    glow_g = save_dds(Image.new('RGB', (64, 64), (255, 200, 120)), 'forge/glow_g.dds')
+    run_job([f'in {d}/source/Day 05 - Magic Gate optim2.fbx', f'out {mesh_out("forge/forge.nif")}', 'fit 230', 'rotate 0 0 90', 'ground 1',
+             f'mat rock diffuse={dif} normal={flat_n} spec=0.2 gloss=20',
+             f'mat glow diffuse={glow_d} normal={flat_n} glow={glow_g} emit=1.0,0.55,0.2 emitmult=4 doublesided=1'])
+
+STEPS = {'tomes': tomes, 'grimoires': grimoires, 'coffer': coffer, 'brewmachine': brewmachine, 'forge': forge}
 if __name__ == '__main__':
     for name, fn in STEPS.items():
         if not ONLY or name in ONLY:

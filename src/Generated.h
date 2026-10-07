@@ -17,11 +17,12 @@ namespace bo3z::gen
 		2.0f, 0.95f, 0.3f, 6, 5,
 		{ 1500.f, 2500.f }, { 500.f, 1100.f }, 120.f, 20 };
 	inline constexpr FormRef kIntroQuest{ "Skyrim.esm", 0x03372B, "MQ101" };
-	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; };
-	inline constexpr std::array<Enemy, 3> kEnemies{ {
-		Enemy{ "zombie", "Risen Dead", { "BO3Zombies.esp", 0x0008C3, "UN_zombie" }, false, 1, 1, false, "NPC Head [Head]", true, 0 },
-		Enemy{ "death_hound", "Death Hound", { "Dawnguard.esm", 0x00C5EF, "DLC1encDeathHound" }, false, 1, 1, true, "Canine_Head", true, 0 },
-		Enemy{ "boss", "Grimmvar, the Undying Wyrm", { "BO3Zombies.esp", 0x0008C6, "UN_boss" }, false, 10, 0, false, "NPC Head [Head]", true, 10 },
+	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; };
+	inline constexpr std::array<Enemy, 4> kEnemies{ {
+		Enemy{ "zombie", "Risen Dead", { "BO3Zombies.esp", 0x0008C3, "UN_zombie" }, false, 1, 14, false, "NPC Head [Head]", true, 0, false },
+		Enemy{ "shadow", "Gloomstalker", { "BO3Zombies.esp", 0x0008CC, "UN_shadow" }, false, 5, 1, false, "NPC Head [Head]", true, 0, true },
+		Enemy{ "death_hound", "Death Hound", { "Dawnguard.esm", 0x00C5EF, "DLC1encDeathHound" }, false, 1, 1, true, "Canine_Head", true, 0, false },
+		Enemy{ "boss", "Grimmvar, the Undying Wyrm", { "BO3Zombies.esp", 0x0008C6, "UN_boss" }, false, 10, 0, false, "NPC Head [Head]", true, 10, false },
 	} };
 	enum class Sound : int {
 		crossbow_fire = 0,
@@ -62,8 +63,9 @@ namespace bo3z::gen
 		knife = 35,
 		rise = 36,
 		coffer_skull = 37,
+		forge_upgrade = 38,
 	};
-	inline constexpr std::array<FormRef, 38> kSounds{ {
+	inline constexpr std::array<FormRef, 39> kSounds{ {
 		FormRef{ "Dawnguard.esm", 0x008E35, "WPNCrossbowFire2D" },
 		FormRef{ "Dawnguard.esm", 0x008E3A, "WPNCrossbowReload" },
 		FormRef{ "Skyrim.esm", 0x03E7B4, "WPNBowNockSD" },
@@ -102,6 +104,7 @@ namespace bo3z::gen
 		FormRef{ "BO3Zombies.esp", 0x00084B, "UN_knife" },
 		FormRef{ "BO3Zombies.esp", 0x00084C, "UN_rise" },
 		FormRef{ "BO3Zombies.esp", 0x0008A7, "UN_coffer_skull" },
+		FormRef{ "BO3Zombies.esp", 0x0008C8, "UN_forge_upgrade" },
 	} };
 	inline constexpr int kPoints_start = 500;  // new_game_after_intro
 	inline constexpr int kPoints_hit = 10;  // gun_hit_round_undead
@@ -251,10 +254,11 @@ namespace bo3z::gen
 	inline constexpr std::string_view kText_forge = "Atronach Reforge";
 	inline constexpr std::string_view kText_round_word = "Night";
 	struct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; float scale; bool retired; };
-	inline constexpr std::array<ObjectDef, 18> kObjects{ {
+	inline constexpr std::array<ObjectDef, 19> kObjects{ {
 		ObjectDef{ "coffer", "Sheogorath's Coffer", 0, 950, -1, 0x807, 1.0f, false },
 		ObjectDef{ "brew_machine", "Brew Machine", 4, 0, -1, 0x8A8, 1.0f, false },
 		ObjectDef{ "ammo_cache", "Ammo Cache", 3, 750, -1, 0x8A9, 1.0f, false },
+		ObjectDef{ "forge", "Atronach Reforge", 5, 4000, -1, 0x8C7, 1.0f, false },
 		ObjectDef{ "ammo_crate", "Ammo Cache", 3, 750, -1, 0x8A3, 1.0f, true },
 		ObjectDef{ "perk_trollshide", "Troll's Hide Mead", 1, 2500, 0, 0x808, 1.5f, true },
 		ObjectDef{ "perk_quicksilver", "Quicksilver Draught", 1, 3000, 1, 0x809, 1.6f, true },
@@ -272,7 +276,7 @@ namespace bo3z::gen
 		ObjectDef{ "wall_marksman", "Tome of Embers", 2, 2000, 15, 0x813, 1.0f, false },
 	} };
 	struct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; };
-	inline constexpr std::array<DressDef, 64> kDress{ {
+	inline constexpr std::array<DressDef, 65> kDress{ {
 		DressDef{ 0, 0x84D, false, 0.0f, 0.0f, 0.0f, 0.45f, 0.0f },
 		DressDef{ 0, 0x84E, true, 0.0f, 30.0f, 90.0f, 1.0f, 0.0f },
 		DressDef{ 0, 0x871, false, 0.0f, 0.0f, 70.0f, 0.8f, 0.0f },
@@ -280,63 +284,64 @@ namespace bo3z::gen
 		DressDef{ 2, 0x8A4, false, 0.0f, 0.0f, 62.0f, 2.0f, 30.0f },
 		DressDef{ 2, 0x8A5, false, 0.0f, 0.0f, 75.0f, 0.5f, 0.0f },
 		DressDef{ 2, 0x8A6, true, 0.0f, 30.0f, 100.0f, 1.0f, 0.0f },
-		DressDef{ 3, 0x8A4, false, 0.0f, 0.0f, 62.0f, 2.0f, 30.0f },
-		DressDef{ 3, 0x8A5, false, 0.0f, 0.0f, 75.0f, 0.5f, 0.0f },
-		DressDef{ 3, 0x8A6, true, 0.0f, 30.0f, 100.0f, 1.0f, 0.0f },
-		DressDef{ 4, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
-		DressDef{ 4, 0x852, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
-		DressDef{ 4, 0x875, false, 0.0f, 0.0f, 120.0f, 3.0f, 40.0f },
-		DressDef{ 4, 0x876, false, 0.0f, 10.0f, 95.0f, 1.3f, 0.0f },
-		DressDef{ 4, 0x877, false, 0.0f, 0.0f, 135.0f, 0.6f, 0.0f },
+		DressDef{ 3, 0x8C9, true, 0.0f, 40.0f, 110.0f, 1.0f, 0.0f },
+		DressDef{ 4, 0x8A4, false, 0.0f, 0.0f, 62.0f, 2.0f, 30.0f },
+		DressDef{ 4, 0x8A5, false, 0.0f, 0.0f, 75.0f, 0.5f, 0.0f },
+		DressDef{ 4, 0x8A6, true, 0.0f, 30.0f, 100.0f, 1.0f, 0.0f },
 		DressDef{ 5, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
-		DressDef{ 5, 0x854, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
-		DressDef{ 5, 0x878, false, 0.0f, 0.0f, 110.0f, 3.0f, 40.0f },
-		DressDef{ 5, 0x879, false, -14.0f, 8.0f, 92.0f, 1.6f, 0.0f },
-		DressDef{ 5, 0x87A, false, 14.0f, 8.0f, 92.0f, 1.6f, 0.0f },
-		DressDef{ 5, 0x87B, false, 0.0f, 0.0f, 125.0f, 0.6f, 0.0f },
+		DressDef{ 5, 0x852, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 5, 0x875, false, 0.0f, 0.0f, 120.0f, 3.0f, 40.0f },
+		DressDef{ 5, 0x876, false, 0.0f, 10.0f, 95.0f, 1.3f, 0.0f },
+		DressDef{ 5, 0x877, false, 0.0f, 0.0f, 135.0f, 0.6f, 0.0f },
 		DressDef{ 6, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
-		DressDef{ 6, 0x856, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
-		DressDef{ 6, 0x87C, false, 0.0f, 0.0f, 140.0f, 3.0f, 40.0f },
-		DressDef{ 6, 0x87D, false, -18.0f, 12.0f, 110.0f, 1.8f, 0.0f },
-		DressDef{ 6, 0x87E, false, 18.0f, 12.0f, 110.0f, 1.8f, 0.0f },
-		DressDef{ 6, 0x87F, false, 0.0f, 0.0f, 155.0f, 0.6f, 0.0f },
+		DressDef{ 6, 0x854, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 6, 0x878, false, 0.0f, 0.0f, 110.0f, 3.0f, 40.0f },
+		DressDef{ 6, 0x879, false, -14.0f, 8.0f, 92.0f, 1.6f, 0.0f },
+		DressDef{ 6, 0x87A, false, 14.0f, 8.0f, 92.0f, 1.6f, 0.0f },
+		DressDef{ 6, 0x87B, false, 0.0f, 0.0f, 125.0f, 0.6f, 0.0f },
 		DressDef{ 7, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
-		DressDef{ 7, 0x858, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
-		DressDef{ 7, 0x880, false, 0.0f, 0.0f, 120.0f, 3.0f, 40.0f },
-		DressDef{ 7, 0x881, false, 30.0f, 0.0f, 70.0f, 1.6f, 0.0f },
-		DressDef{ 7, 0x882, false, 0.0f, 0.0f, 135.0f, 0.6f, 0.0f },
+		DressDef{ 7, 0x856, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 7, 0x87C, false, 0.0f, 0.0f, 140.0f, 3.0f, 40.0f },
+		DressDef{ 7, 0x87D, false, -18.0f, 12.0f, 110.0f, 1.8f, 0.0f },
+		DressDef{ 7, 0x87E, false, 18.0f, 12.0f, 110.0f, 1.8f, 0.0f },
+		DressDef{ 7, 0x87F, false, 0.0f, 0.0f, 155.0f, 0.6f, 0.0f },
 		DressDef{ 8, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
-		DressDef{ 8, 0x85A, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
-		DressDef{ 8, 0x883, false, 0.0f, 0.0f, 110.0f, 3.0f, 40.0f },
-		DressDef{ 8, 0x884, false, -16.0f, 6.0f, 95.0f, 4.0f, 0.0f },
-		DressDef{ 8, 0x885, false, 16.0f, 6.0f, 95.0f, 4.0f, 0.0f },
-		DressDef{ 8, 0x886, false, 0.0f, 0.0f, 125.0f, 0.6f, 0.0f },
+		DressDef{ 8, 0x858, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 8, 0x880, false, 0.0f, 0.0f, 120.0f, 3.0f, 40.0f },
+		DressDef{ 8, 0x881, false, 30.0f, 0.0f, 70.0f, 1.6f, 0.0f },
+		DressDef{ 8, 0x882, false, 0.0f, 0.0f, 135.0f, 0.6f, 0.0f },
 		DressDef{ 9, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
-		DressDef{ 9, 0x85C, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
-		DressDef{ 9, 0x887, false, 0.0f, 0.0f, 130.0f, 3.0f, 40.0f },
-		DressDef{ 9, 0x888, false, 0.0f, 10.0f, 100.0f, 0.25f, 25.0f },
-		DressDef{ 9, 0x889, false, 0.0f, 0.0f, 145.0f, 0.6f, 0.0f },
+		DressDef{ 9, 0x85A, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 9, 0x883, false, 0.0f, 0.0f, 110.0f, 3.0f, 40.0f },
+		DressDef{ 9, 0x884, false, -16.0f, 6.0f, 95.0f, 4.0f, 0.0f },
+		DressDef{ 9, 0x885, false, 16.0f, 6.0f, 95.0f, 4.0f, 0.0f },
+		DressDef{ 9, 0x886, false, 0.0f, 0.0f, 125.0f, 0.6f, 0.0f },
 		DressDef{ 10, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
-		DressDef{ 10, 0x85E, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
-		DressDef{ 10, 0x88A, false, 0.0f, 0.0f, 150.0f, 3.0f, 40.0f },
-		DressDef{ 10, 0x88B, false, 0.0f, 0.0f, 40.0f, 0.8f, 0.0f },
-		DressDef{ 10, 0x88C, false, 0.0f, 0.0f, 165.0f, 0.6f, 0.0f },
+		DressDef{ 10, 0x85C, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 10, 0x887, false, 0.0f, 0.0f, 130.0f, 3.0f, 40.0f },
+		DressDef{ 10, 0x888, false, 0.0f, 10.0f, 100.0f, 0.25f, 25.0f },
+		DressDef{ 10, 0x889, false, 0.0f, 0.0f, 145.0f, 0.6f, 0.0f },
 		DressDef{ 11, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
-		DressDef{ 11, 0x860, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
-		DressDef{ 11, 0x88D, false, 0.0f, 0.0f, 110.0f, 3.0f, 40.0f },
-		DressDef{ 11, 0x88E, false, 20.0f, 10.0f, 60.0f, 4.0f, 0.0f },
-		DressDef{ 11, 0x88F, false, -20.0f, 10.0f, 60.0f, 3.0f, 0.0f },
-		DressDef{ 11, 0x890, false, 0.0f, 0.0f, 125.0f, 0.6f, 0.0f },
+		DressDef{ 11, 0x85E, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 11, 0x88A, false, 0.0f, 0.0f, 150.0f, 3.0f, 40.0f },
+		DressDef{ 11, 0x88B, false, 0.0f, 0.0f, 40.0f, 0.8f, 0.0f },
+		DressDef{ 11, 0x88C, false, 0.0f, 0.0f, 165.0f, 0.6f, 0.0f },
 		DressDef{ 12, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
-		DressDef{ 12, 0x862, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
-		DressDef{ 12, 0x891, false, 0.0f, 0.0f, 140.0f, 3.0f, 40.0f },
-		DressDef{ 12, 0x892, false, 0.0f, 0.0f, 170.0f, 0.3f, -30.0f },
-		DressDef{ 12, 0x893, false, 0.0f, 0.0f, 155.0f, 0.6f, 0.0f },
-		DressDef{ 13, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
+		DressDef{ 12, 0x860, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 12, 0x88D, false, 0.0f, 0.0f, 110.0f, 3.0f, 40.0f },
+		DressDef{ 12, 0x88E, false, 20.0f, 10.0f, 60.0f, 4.0f, 0.0f },
+		DressDef{ 12, 0x88F, false, -20.0f, 10.0f, 60.0f, 3.0f, 0.0f },
+		DressDef{ 12, 0x890, false, 0.0f, 0.0f, 125.0f, 0.6f, 0.0f },
+		DressDef{ 13, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
+		DressDef{ 13, 0x862, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 13, 0x891, false, 0.0f, 0.0f, 140.0f, 3.0f, 40.0f },
+		DressDef{ 13, 0x892, false, 0.0f, 0.0f, 170.0f, 0.3f, -30.0f },
+		DressDef{ 13, 0x893, false, 0.0f, 0.0f, 155.0f, 0.6f, 0.0f },
 		DressDef{ 14, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
 		DressDef{ 15, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
 		DressDef{ 16, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
 		DressDef{ 17, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
+		DressDef{ 18, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
 	} };
 	inline constexpr std::array<std::uint32_t, 20> kShowStat{ { 0x864, 0x865, 0x866, 0x867, 0x868, 0x869, 0x86A, 0x86B, 0x86C, 0x86D, 0x86E, 0x86F, 0x89B, 0x89C, 0x89D, 0x89E, 0x89F, 0x8A0, 0x8A1, 0x8C0 } };
 	inline constexpr std::uint32_t kShowCheese = 0x870, kRiseFx = 0x8A2;
@@ -345,55 +350,65 @@ namespace bo3z::gen
 	inline constexpr std::array<std::uint32_t, 9> kPerkColor{ { 0xD02020FF, 0x30C040FF, 0xE0A020FF, 0x3070F0FF, 0xF0D840FF, 0xB0B8C0FF, 0x7AA040FF, 0x9040E0FF, 0x40D0F0FF } };
 	inline constexpr std::array<std::string_view, 10> kTowns{ { "Riverwood", "Whiterun", "Solitude", "Windhelm", "Markarth", "Riften", "Falkreath", "Morthal", "Dawnstar", "Winterhold" } };
 	struct SlotDef { float x, y, faceDeg; };
-	inline constexpr std::array<SlotDef, 6> kSlots{ { SlotDef{ 0.0f, 260.0f, 180.0f }, SlotDef{ -230.0f, 0.0f, 90.0f }, SlotDef{ 230.0f, 0.0f, 270.0f }, SlotDef{ -150.0f, -250.0f, 0.0f }, SlotDef{ 0.0f, -260.0f, 0.0f }, SlotDef{ 150.0f, -250.0f, 0.0f } } };
+	inline constexpr std::array<SlotDef, 7> kSlots{ { SlotDef{ 0.0f, 270.0f, 180.0f }, SlotDef{ -250.0f, 30.0f, 90.0f }, SlotDef{ 250.0f, 30.0f, 270.0f }, SlotDef{ 0.0f, -300.0f, 0.0f }, SlotDef{ -260.0f, -230.0f, 45.0f }, SlotDef{ 260.0f, -230.0f, 315.0f }, SlotDef{ -260.0f, 250.0f, 135.0f } } };
 	inline constexpr std::array<float, 8> kPlanDist{ { 0.0f, 300.0f, 600.0f, 900.0f, 1200.0f, 1500.0f, 1800.0f, 2100.0f } };
 	inline constexpr std::array<float, 4> kPlanYaw{ { 0.0f, 45.0f, 90.0f, 135.0f } };
 	inline constexpr int kPlanAngles = 12;
 	inline constexpr float kPlanSnap = 70.0f, kPlanHeight = 90.0f, kPlanSweep = 2500.0f, kPlanDoor = 450.0f;
 	struct LocationDef { int town; std::uint32_t anchor; int object; int slot; };
-	inline constexpr std::array<LocationDef, 42> kLocations{ {
+	inline constexpr std::array<LocationDef, 52> kLocations{ {
 		LocationDef{ 0, 0x0162A4, 0, 0 },
 		LocationDef{ 0, 0x0162A4, 1, 1 },
 		LocationDef{ 0, 0x0162A4, 2, 2 },
-		LocationDef{ 0, 0x0162A4, 13, 3 },
-		LocationDef{ 0, 0x0162A4, 16, 4 },
+		LocationDef{ 0, 0x0162A4, 3, 3 },
+		LocationDef{ 0, 0x0162A4, 14, 4 },
+		LocationDef{ 0, 0x0162A4, 17, 5 },
 		LocationDef{ 1, 0x0162CE, 0, 0 },
 		LocationDef{ 1, 0x0162CE, 1, 1 },
 		LocationDef{ 1, 0x0162CE, 2, 2 },
-		LocationDef{ 1, 0x0162CE, 14, 3 },
-		LocationDef{ 1, 0x0162CE, 17, 4 },
+		LocationDef{ 1, 0x0162CE, 3, 3 },
+		LocationDef{ 1, 0x0162CE, 15, 4 },
+		LocationDef{ 1, 0x0162CE, 18, 5 },
 		LocationDef{ 2, 0x04D0F4, 0, 0 },
 		LocationDef{ 2, 0x04D0F4, 1, 1 },
 		LocationDef{ 2, 0x04D0F4, 2, 2 },
-		LocationDef{ 2, 0x04D0F4, 15, 3 },
+		LocationDef{ 2, 0x04D0F4, 3, 3 },
+		LocationDef{ 2, 0x04D0F4, 16, 4 },
 		LocationDef{ 3, 0x038436, 0, 0 },
 		LocationDef{ 3, 0x038436, 1, 1 },
 		LocationDef{ 3, 0x038436, 2, 2 },
-		LocationDef{ 3, 0x038436, 14, 3 },
+		LocationDef{ 3, 0x038436, 3, 3 },
+		LocationDef{ 3, 0x038436, 15, 4 },
 		LocationDef{ 4, 0x01C38A, 0, 0 },
 		LocationDef{ 4, 0x01C38A, 1, 1 },
 		LocationDef{ 4, 0x01C38A, 2, 2 },
-		LocationDef{ 4, 0x01C38A, 17, 3 },
+		LocationDef{ 4, 0x01C38A, 3, 3 },
+		LocationDef{ 4, 0x01C38A, 18, 4 },
 		LocationDef{ 5, 0x01C390, 0, 0 },
 		LocationDef{ 5, 0x01C390, 1, 1 },
 		LocationDef{ 5, 0x01C390, 2, 2 },
-		LocationDef{ 5, 0x01C390, 16, 3 },
+		LocationDef{ 5, 0x01C390, 3, 3 },
+		LocationDef{ 5, 0x01C390, 17, 4 },
 		LocationDef{ 6, 0x017760, 0, 0 },
 		LocationDef{ 6, 0x017760, 1, 1 },
 		LocationDef{ 6, 0x017760, 2, 2 },
-		LocationDef{ 6, 0x017760, 13, 3 },
+		LocationDef{ 6, 0x017760, 3, 3 },
+		LocationDef{ 6, 0x017760, 14, 4 },
 		LocationDef{ 7, 0x0177B0, 0, 0 },
 		LocationDef{ 7, 0x0177B0, 1, 1 },
 		LocationDef{ 7, 0x0177B0, 2, 2 },
-		LocationDef{ 7, 0x0177B0, 14, 3 },
+		LocationDef{ 7, 0x0177B0, 3, 3 },
+		LocationDef{ 7, 0x0177B0, 15, 4 },
 		LocationDef{ 8, 0x01773A, 0, 0 },
 		LocationDef{ 8, 0x01773A, 1, 1 },
 		LocationDef{ 8, 0x01773A, 2, 2 },
-		LocationDef{ 8, 0x01773A, 17, 3 },
+		LocationDef{ 8, 0x01773A, 3, 3 },
+		LocationDef{ 8, 0x01773A, 18, 4 },
 		LocationDef{ 9, 0x0177EF, 0, 0 },
 		LocationDef{ 9, 0x0177EF, 1, 1 },
 		LocationDef{ 9, 0x0177EF, 2, 2 },
-		LocationDef{ 9, 0x0177EF, 15, 3 },
+		LocationDef{ 9, 0x0177EF, 3, 3 },
+		LocationDef{ 9, 0x0177EF, 16, 4 },
 	} };
 	inline constexpr float kRunBoost = 30.0f, kSprintBoost = 60.0f, kSlideSpeed = 900.0f, kSlideSeconds = 0.95f, kSlideBoost = 220.0f, kSlideJump = 0.95f, kAirControl = 0.0f, kAirMax = 760.0f, kSprintStamina = 0.35f, kJumpHeight = 1.2f;
 	inline constexpr float kAdsFov = 55.0f, kAdsSeconds = 0.12f, kAdsSpeed = -30.0f, kWorldFov = 95.0f, kViewmodelFov = 80.0f, kFpsCap = 175.0f;
@@ -414,6 +429,10 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kKey2_confirm = 28;
 	inline constexpr float kHpCapRound = 10.0f, kHpGrowthAfterCap = 1.02f, kShareMelee = 0.34f, kShareBow = 0.5f, kShareSpell = 0.2f;
 	namespace boss { inline constexpr float spawnDelay = 10.0f; inline constexpr float healthMult = 45.0f; inline constexpr float breathEvery = 9.0f; inline constexpr float breathRange = 1400.0f; inline constexpr float roarEvery = 14.0f; inline constexpr float roarRange = 650.0f; inline constexpr float summonEvery = 22.0f; inline constexpr float summonCount = 5.0f; inline constexpr float stepEvery = 26.0f; inline constexpr float slamEvery = 5.0f; inline constexpr float slamRange = 260.0f; inline constexpr float slamDamage = 0.3f; inline constexpr float enrageAt = 0.5f; inline constexpr float enrageSpeed = 35.0f; inline constexpr float enrageCooldownMult = 0.65f; inline constexpr float killPoints = 2500.0f; }
+	inline constexpr int kForgeMax = 3; inline constexpr float kForgeStep = 0.5f;
+	inline constexpr std::array<int, 3> kForgeCost{ { 4000, 6000, 8000 } };
+	inline constexpr std::array<std::uint32_t, 4> kForgeColor{ { 0xECE2C8FF, 0x4FA8FFFF, 0xB266FFFF, 0xFFC83DFF } };
+	namespace elite { inline constexpr float healthMult = 6.0f; inline constexpr float maxAlive = 2.0f; inline constexpr float hitShare = 0.5f; inline constexpr float lungeEvery = 8.0f; inline constexpr float lungeMin = 350.0f; inline constexpr float lungeMax = 1100.0f; inline constexpr float shriekEvery = 12.0f; inline constexpr float shriekRange = 550.0f; inline constexpr float shriekSlow = 40.0f; inline constexpr float shriekSeconds = 3.0f; inline constexpr float shriekDamage = 0.1f; inline constexpr float drainShare = 0.08f; inline constexpr float killPoints = 400.0f; }
 	inline constexpr float kRegenDelay = 5.0f, kRegenPerSecond = 0.35f;
 	inline constexpr float kSpawnMultiplier = 3.0f, kHitDamageFraction = 0.34f, kZombieWeaponDamageMult = 0.1f;
 	inline constexpr bool kIgnoreNpcs = true;

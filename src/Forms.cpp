@@ -273,11 +273,12 @@ namespace bo3z
 			s.gun = ((v >> 19) & 0x1F) - 1;
 			s.clip = (v >> 11) & 0xFF;
 			s.reserve = Flag(kFlagReserveV2) ? Get(ReserveAV(a_slot)) : (v & 0x7FF);
+			s.level = Flag(kFlagReserveV2) ? (v & 0x3) : 0;  // v0.4+: the old reserve bits hold the forge level
 			return s;
 		}
 		void SetSlot(int a_slot, const Slot& a_value)
 		{
-			const int v = a_value.gun < 0 ? 0 : (((a_value.gun + 1) & 0x1F) << 19) | ((std::clamp(a_value.clip, 0, 255)) << 11) | std::clamp(a_value.reserve, 0, 2047);
+			const int v = a_value.gun < 0 ? 0 : (((a_value.gun + 1) & 0x1F) << 19) | ((std::clamp(a_value.clip, 0, 255)) << 11) | (Flag(kFlagReserveV2) ? std::clamp(a_value.level, 0, 3) : std::clamp(a_value.reserve, 0, 2047));
 			Set(SlotAV(a_slot), v);
 			if (Flag(kFlagReserveV2)) {
 				Set(ReserveAV(a_slot), std::clamp(a_value.reserve, 0, 9999999));

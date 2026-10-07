@@ -14,6 +14,7 @@
     "headNode",
     "forceCombat",
     "bossEvery",
+    "elite",
     "verify"
   ],
   "rows": [
@@ -25,11 +26,28 @@
       "editorId": "UN_zombie",
       "recordType": "NPC_",
       "minRound": 1,
+      "weight": 14,
+      "specialRound": false,
+      "headNode": "NPC Head [Head]",
+      "forceCombat": true,
+      "bossEvery": 0,
+      "verify": [],
+      "elite": false
+    },
+    {
+      "id": "shadow",
+      "label": "Gloomstalker",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto:shadow",
+      "editorId": "UN_shadow",
+      "recordType": "NPC_",
+      "minRound": 5,
       "weight": 1,
       "specialRound": false,
       "headNode": "NPC Head [Head]",
       "forceCombat": true,
       "bossEvery": 0,
+      "elite": true,
       "verify": []
     },
     {
@@ -48,7 +66,8 @@
         "headNode",
         "forceCombat"
       ],
-      "bossEvery": 0
+      "bossEvery": 0,
+      "elite": false
     },
     {
       "id": "boss",
@@ -63,7 +82,8 @@
       "headNode": "NPC Head [Head]",
       "forceCombat": true,
       "bossEvery": 10,
-      "verify": []
+      "verify": [],
+      "elite": false
     }
   ]
 }

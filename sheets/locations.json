@@ -39,6 +39,15 @@
       "verify": []
     },
     {
+      "id": "riverwood_forge",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:forge",
+      "slot": "layout:forge",
+      "verify": []
+    },
+    {
       "id": "riverwood_3",
       "town": "Riverwood",
       "worldspace": "Tamriel",
@@ -81,6 +90,15 @@
       "anchor": "0x0162CE",
       "object": "objects:ammo_cache",
       "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "whiterun_forge",
+      "town": "Whiterun",
+      "worldspace": "WhiterunWorld",
+      "anchor": "0x0162CE",
+      "object": "objects:forge",
+      "slot": "layout:forge",
       "verify": []
     },
     {
@@ -129,6 +147,15 @@
       "verify": []
     },
     {
+      "id": "solitude_forge",
+      "town": "Solitude",
+      "worldspace": "SolitudeWorld",
+      "anchor": "0x04D0F4",
+      "object": "objects:forge",
+      "slot": "layout:forge",
+      "verify": []
+    },
+    {
       "id": "solitude_3",
       "town": "Solitude",
       "worldspace": "SolitudeWorld",
@@ -162,6 +189,15 @@
       "anchor": "0x038436",
       "object": "objects:ammo_cache",
       "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "windhelm_forge",
+      "town": "Windhelm",
+      "worldspace": "WindhelmWorld",
+      "anchor": "0x038436",
+      "object": "objects:forge",
+      "slot": "layout:forge",
       "verify": []
     },
     {
@@ -201,6 +237,15 @@
       "verify": []
     },
     {
+      "id": "markarth_forge",
+      "town": "Markarth",
+      "worldspace": "MarkarthWorld",
+      "anchor": "0x01C38A",
+      "object": "objects:forge",
+      "slot": "layout:forge",
+      "verify": []
+    },
+    {
       "id": "markarth_3",
       "town": "Markarth",
       "worldspace": "MarkarthWorld",
@@ -234,6 +279,15 @@
       "anchor": "0x01C390",
       "object": "objects:ammo_cache",
       "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "riften_forge",
+      "town": "Riften",
+      "worldspace": "RiftenWorld",
+      "anchor": "0x01C390",
+      "object": "objects:forge",
+      "slot": "layout:forge",
       "verify": []
     },
     {
@@ -273,6 +327,15 @@
       "verify": []
     },
     {
+      "id": "falkreath_forge",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:forge",
+      "slot": "layout:forge",
+      "verify": []
+    },
+    {
       "id": "falkreath_3",
       "town": "Falkreath",
       "worldspace": "Tamriel",
@@ -306,6 +369,15 @@
       "anchor": "0x0177B0",
       "object": "objects:ammo_cache",
       "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "morthal_forge",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:forge",
+      "slot": "layout:forge",
       "verify": []
     },
     {
@@ -345,6 +417,15 @@
       "verify": []
     },
     {
+      "id": "dawnstar_forge",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:forge",
+      "slot": "layout:forge",
+      "verify": []
+    },
+    {
       "id": "dawnstar_3",
       "town": "Dawnstar",
       "worldspace": "Tamriel",
@@ -378,6 +459,15 @@
       "anchor": "0x0177EF",
       "object": "objects:ammo_cache",
       "slot": "layout:ammo",
+      "verify": []
+    },
+    {
+      "id": "winterhold_forge",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:forge",
+      "slot": "layout:forge",
       "verify": []
     },
     {

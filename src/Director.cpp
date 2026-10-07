@@ -29,7 +29,15 @@ namespace bo3z
 		std::vector<Spawned>    g_alive;
 		std::deque<RE::ActorHandle> g_corpses;
 		std::unordered_map<RE::FormID, std::size_t> g_ours;  // every undead we raised -> enemy row
-		std::vector<std::pair<RE::ObjectRefHandle, float>> g_fx;  // short-lived effects (rise bursts)
+		std::vector<std::pair<RE::ObjectRefHandle, float>> g_fx;
+		struct Elite
+		{
+			RE::ActorHandle handle;
+			float           lunge, shriek;
+			bool            paid;
+		};
+		std::unordered_map<RE::FormID, Elite> g_elites;
+		float g_slowLeft = 0;  // Terror Shriek slow on the player  // short-lived effects (rise bursts)
 		std::mt19937            g_rng{ std::random_device{}() };
 		bool                    g_loggedBlocked = false;
 
@@ -97,12 +105,22 @@ namespace bo3z
 			return a_player->Is3DLoaded() && !a_player->IsDead() && a_player->GetParentCell();
 		}
 
+		int EliteCount()
+		{
+			int n = 0;
+			for (auto& s : g_alive) {
+				n += gen::kEnemies[s.enemy].elite ? 1 : 0;
+			}
+			return n;
+		}
+		int Weight(const gen::Enemy& e) { return e.elite && EliteCount() >= static_cast<int>(gen::elite::maxAlive) ? 0 : e.weight; }
+
 		std::optional<std::size_t> PickEnemy()
 		{
 			int total = 0;
 			for (const auto& e : gen::kEnemies) {
 				if (e.specialRound == g_special && (g_special || e.minRound <= g_current)) {
-					total += e.weight;
+					total += Weight(e);
 				}
 			}
 			if (total <= 0) {
@@ -111,7 +129,7 @@ namespace bo3z
 			int roll = std::uniform_int_distribution<int>(1, total)(g_rng);
 			for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
 				const auto& e = gen::kEnemies[i];
-				if (e.specialRound == g_special && (g_special || e.minRound <= g_current) && (roll -= e.weight) <= 0) {
+				if (e.specialRound == g_special && (g_special || e.minRound <= g_current) && Weight(e) > 0 && (roll -= Weight(e)) <= 0) {
 					return Forms::Enemy(i) ? std::optional{ i } : std::nullopt;
 				}
 			}
@@ -235,6 +253,11 @@ namespace bo3z
 					}
 				}
 			}
+			if (gen::kEnemies[*pick].elite) {
+				const float want = HealthFor(g_current) * gen::elite::healthMult;
+				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
+				g_elites[actor->GetFormID()] = { actor->GetHandle(), 3.0f, 5.0f, false };
+			}
 			g_ours[actor->GetFormID()] = *pick;
 			g_alive.push_back({ actor->GetHandle(), *pick });
 			Forms::PlayAt(gen::Sound::rise, actor);
@@ -290,6 +313,62 @@ namespace bo3z
 			h.bossName = std::string(gen::kEnemies[BossRow()].label);
 			h.bossHp = std::max(0.0f, a_boss->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth)) / g_boss.maxHp;
 			h.bossEnraged = g_boss.enraged;
+		}
+
+		// ---- Gloomstalkers (sheet: elite) ----
+		void TickElites(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			if (g_slowLeft > 0 && (g_slowLeft -= a_delta) <= 0) {
+				a_player->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, gen::elite::shriekSlow);
+			}
+			for (auto it = g_elites.begin(); it != g_elites.end();) {
+				auto& e = it->second;
+				auto  a = e.handle.get();
+				if (!a) {
+					it = g_elites.erase(it);
+					continue;
+				}
+				if (a->IsDead()) {
+					if (!e.paid) {
+						e.paid = true;
+						Points::Add(static_cast<int>(gen::elite::killPoints));
+						Hud::Banner("Gloomstalker banished +" + std::to_string(static_cast<int>(gen::elite::killPoints)), 2.5f);
+					}
+					it = g_elites.erase(it);
+					continue;
+				}
+				const float dist = a->GetPosition().GetDistance(a_player->GetPosition());
+				// Shadow Lunge: blink to the player's side from mid range.
+				if ((e.lunge -= a_delta) <= 0 && dist > gen::elite::lungeMin && dist < gen::elite::lungeMax) {
+					const auto  p = a_player->GetPosition();
+					const float ang = a_player->GetAngleZ() + Uniform(-1.8f, 1.8f);
+					a->SetPosition({ p.x + std::sin(ang) * 150.0f, p.y + std::cos(ang) * 150.0f, p.z + 20.0f }, true);
+					Forms::PlayAt(gen::Sound::knife, a.get());
+					if (auto* fx = Forms::Ours(gen::kRiseFx)) {
+						if (auto puff = a->PlaceObjectAtMe(fx, false)) {
+							g_fx.push_back({ puff->CreateRefHandle(), 2.0f });
+						}
+					}
+					e.lunge = gen::elite::lungeEvery;
+				}
+				// Terror Shriek: slows and wounds the player nearby.
+				if ((e.shriek -= a_delta) <= 0 && dist < gen::elite::shriekRange) {
+					auto* pav = a_player->AsActorValueOwner();
+					pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::elite::shriekDamage);
+					if (g_slowLeft <= 0) {
+						pav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -gen::elite::shriekSlow);
+					}
+					g_slowLeft = gen::elite::shriekSeconds;
+					Forms::PlayAt(gen::Sound::hound_night, a.get());
+					{
+						std::scoped_lock l(Hud::Lock());
+						Hud::Edit().hurtTime = 0.8f;
+					}
+					Hud::Banner("A Gloomstalker shrieks!", 1.5f);
+					e.shriek = gen::elite::shriekEvery;
+				}
+				++it;
+			}
 		}
 
 		void SpawnBoss(RE::PlayerCharacter* a_player)
@@ -551,6 +630,8 @@ namespace bo3z
 			g_ours.clear();
 			g_toSpawn = 0;
 			g_boss = {};
+			g_elites.clear();
+			g_slowLeft = 0;
 			std::scoped_lock l(Hud::Lock());
 			Hud::Edit().bossName.clear();
 		}
@@ -569,6 +650,7 @@ namespace bo3z
 		}
 
 		float RoundHealth() { return HealthFor(std::max(1, g_current)); }
+		bool  IsElite(RE::Actor* a_actor) { return a_actor && g_elites.contains(a_actor->GetFormID()); }
 		bool IsRoundUndead(RE::Actor* a_actor) { return a_actor && g_ours.contains(a_actor->GetFormID()); }
 
 		std::string_view HeadNodeFor(RE::Actor* a_actor)
@@ -641,6 +723,7 @@ namespace bo3z
 				}
 				KeepThemComing(player, a_delta);
 				TickBoss(player, a_delta);
+				TickElites(player, a_delta);
 				if (g_toSpawn > 0) {
 					if ((g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < R.maxAlive) {
 						if (SpawnOne(player)) {

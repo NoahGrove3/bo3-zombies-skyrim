@@ -55,6 +55,20 @@
       "verify": []
     },
     {
+      "id": "forge",
+      "kind": "forge",
+      "label": "Atronach Reforge",
+      "activateText": "Reforge your weapon",
+      "model": "UndyingNights\\forge\\forge.nif",
+      "cost": 4000,
+      "refs": "none",
+      "scale": 1.0,
+      "retired": false,
+      "verify": [
+        "model"
+      ]
+    },
+    {
       "id": "ammo_crate",
       "kind": "ammo",
       "label": "Ammo Cache",

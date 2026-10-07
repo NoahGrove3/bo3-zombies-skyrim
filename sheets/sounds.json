@@ -352,6 +352,15 @@
       "file": "fx\\UndyingNights\\coffer_skull.wav",
       "space": "3d",
       "verify": []
+    },
+    {
+      "id": "forge_upgrade",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_forge_upgrade",
+      "file": "fx\\UndyingNights\\forge_upgrade.wav",
+      "space": "3d",
+      "verify": []
     }
   ]
 }

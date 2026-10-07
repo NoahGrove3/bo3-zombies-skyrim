@@ -17,6 +17,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include <functional>
 using namespace nifly;
 
 struct Mat
@@ -39,6 +40,7 @@ int main(int argc, char** argv)
 	bool          ground = false;
 	float         fit = 0;  // if set: scale so the longest side is this many units
 	std::set<std::string>      skip;
+	std::map<std::string, aiVector3D> meshOffset;  // final-units nudge per source mesh (e.g. a lid resting open)
 	std::map<std::string, Mat> mats;
 	while (std::getline(jf, line)) {
 		std::istringstream ss(line);
@@ -51,6 +53,7 @@ int main(int argc, char** argv)
 		else if (k == "offset") ss >> ox >> oy >> oz;
 		else if (k == "ground") ss >> ground;
 		else if (k == "fit") ss >> fit;
+		else if (k == "meshoffset") { std::string n; float x, y, z; ss >> n >> x >> y >> z; meshOffset[n] = { x, y, z }; }
 		else if (k == "skip") { std::string n; std::getline(ss >> std::ws, n); skip.insert(n); }
 		else if (k == "mat") {
 			std::string name, kv;
@@ -74,12 +77,19 @@ int main(int argc, char** argv)
 	}
 
 	Assimp::Importer imp;
-	const aiScene*   sc = imp.ReadFile(in, aiProcess_Triangulate | aiProcess_PreTransformVertices | aiProcess_GenSmoothNormals |
+	const aiScene*   sc = imp.ReadFile(in, aiProcess_Triangulate | aiProcess_GenSmoothNormals |
 	                                           aiProcess_JoinIdenticalVertices | aiProcess_FlipUVs | aiProcess_ImproveCacheLocality);
 	if (!sc) {
 		fprintf(stderr, "load failed: %s\n", imp.GetErrorString());
 		return 1;
 	}
+	std::function<aiMatrix4x4(const aiNode*)> globalOf = [&](const aiNode* n) { return n->mParent ? globalOf(n->mParent) * n->mTransformation : n->mTransformation; };
+	std::map<const aiMesh*, aiMatrix4x4> meshGlobal;
+	std::function<void(const aiNode*)> findMeshes = [&](const aiNode* n) {
+		for (unsigned i = 0; i < n->mNumMeshes; ++i) meshGlobal[sc->mMeshes[n->mMeshes[i]]] = globalOf(n);
+		for (unsigned c = 0; c < n->mNumChildren; ++c) findMeshes(n->mChildren[c]);
+	};
+	findMeshes(sc->mRootNode);
 	// Transform: scale, rotate X then Y then Z (degrees).
 	auto rot = [&](aiVector3D p) {
 		const float d = 3.14159265f / 180.0f;
@@ -93,7 +103,7 @@ int main(int argc, char** argv)
 	for (unsigned m = 0; m < sc->mNumMeshes; ++m) {
 		if (skip.count(sc->mMeshes[m]->mName.C_Str())) continue;
 		for (unsigned v = 0; v < sc->mMeshes[m]->mNumVertices; ++v) {
-			auto p = rot(sc->mMeshes[m]->mVertices[v] * scale);
+			auto p = rot((meshGlobal[sc->mMeshes[m]] * sc->mMeshes[m]->mVertices[v]) * scale);
 			lo.x = std::min(lo.x, p.x), lo.y = std::min(lo.y, p.y), lo.z = std::min(lo.z, p.z);
 			hi.x = std::max(hi.x, p.x), hi.y = std::max(hi.y, p.y), hi.z = std::max(hi.z, p.z);
 		}
@@ -123,9 +133,10 @@ int main(int argc, char** argv)
 		std::vector<Vector2>  uvs;
 		std::vector<Triangle> tris;
 		for (unsigned v = 0; v < me->mNumVertices; ++v) {
-			auto p = rot(me->mVertices[v] * scale);
-			verts.emplace_back(p.x + shift.x, p.y + shift.y, p.z + shift.z);
-			auto nn = me->HasNormals() ? rot(me->mNormals[v]) : aiVector3D(0, 0, 1);
+			auto p = rot((meshGlobal[me] * me->mVertices[v]) * scale);
+			aiVector3D mo = meshOffset.count(me->mName.C_Str()) ? meshOffset[me->mName.C_Str()] : aiVector3D(0, 0, 0);
+			verts.emplace_back(p.x + shift.x + mo.x, p.y + shift.y + mo.y, p.z + shift.z + mo.z);
+			auto nn = me->HasNormals() ? rot(aiMatrix3x3(meshGlobal[me]) * me->mNormals[v]) : aiVector3D(0, 0, 1);
 			nn.Normalize();
 			norms.emplace_back(nn.x, nn.y, nn.z);
 			uvs.emplace_back(me->HasTextureCoords(0) ? me->mTextureCoords[0][v].x : 0.0f, me->HasTextureCoords(0) ? me->mTextureCoords[0][v].y : 0.0f);
