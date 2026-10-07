@@ -63,7 +63,7 @@
       "splashDamage": 0,
       "wallBuyCost": 0,
       "ammoCost": 0,
-      "boxWeight": 0,
+      "boxWeight": 1,
       "class": "pistol",
       "hitRadius": 28,
       "headRadius": 14,

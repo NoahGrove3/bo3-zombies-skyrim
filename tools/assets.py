@@ -116,7 +116,7 @@ def coffer():
     nrm = save_dds(normal_with_spec(T('normal'), T('roughness')), 'coffer/coffer_n.dds', alpha=True)
     gl = save_dds(tint(load(T('emissive'), 1024), (190, 110, 255)), 'coffer/coffer_g.dds')
     run_job([f'in {d}/source/Weapon Chest Animated.fbx', f'out {mesh_out("coffer/coffer.nif")}', 'fit 95', 'rotate 90 0 90', 'ground 1', 'collide 1', 'meshoffset polySurface82 0 0 -16.2',
-             f'mat * diffuse={dif} normal={nrm} glow={gl} emit=0.75,0.45,1.0 emitmult=2.0 spec=0.5'])
+             f'mat * diffuse={dif} normal={nrm} glow={gl} emit=0.75,0.45,1.0 emitmult=0.8 spec=0.5'])
 
 # ---------------------------------------------------------------- brew machine (one per town, menu of all nine)
 def brewmachine():

@@ -79,10 +79,18 @@ namespace bo3z
 				}
 				std::unordered_set<RE::EffectSetting*> done;
 				for (const auto& g : gen::kGuns) {
-					auto* f = g.bulletSpell ? Ours(g.bulletSpell) : nullptr;
-					auto* sp = f ? f->As<RE::MagicItem>() : nullptr;
-					auto* e = sp && !sp->effects.empty() ? sp->effects[0]->baseEffect : nullptr;
-					if (!e || done.contains(e) || !e->data.projectileBase) {
+					if (!g.bulletSpell) {
+						continue;
+					}
+					auto* raw = RE::TESDataHandler::GetSingleton()->LookupForm(g.bulletSpell, gen::kPlugin);
+					auto* sp = raw ? raw->As<RE::SpellItem>() : nullptr;
+					auto* e = sp && !sp->effects.empty() && sp->effects[0] ? sp->effects[0]->baseEffect : nullptr;
+					if (!e || !e->data.projectileBase) {
+						logger::warn("forms: {} bolt: spell {:03X} form {} spell {} effects {} effect {} projectile {}", g.id, g.bulletSpell, raw != nullptr, sp != nullptr,
+							sp ? sp->effects.size() : 0, e != nullptr, e && e->data.projectileBase);
+						continue;
+					}
+					if (done.contains(e)) {
 						continue;
 					}
 					done.insert(e);

@@ -72,7 +72,7 @@
       "x": 0,
       "y": 0,
       "z": 0,
-      "scale": 0.45,
+      "scale": 0.25,
       "spin": 0,
       "verify": [
         "scale"
@@ -84,7 +84,7 @@
       "type": "light",
       "model": "none",
       "color": "A040FF",
-      "radius": 500,
+      "radius": 260,
       "x": 0,
       "y": 30,
       "z": 90,
@@ -655,7 +655,7 @@
       "x": 0,
       "y": 0,
       "z": 70,
-      "scale": 0.8,
+      "scale": 0.35,
       "spin": 0,
       "verify": [
         "scale"

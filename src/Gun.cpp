@@ -252,10 +252,14 @@ namespace bo3z
 
 		void LaunchBolt(RE::PlayerCharacter* a_player, const gen::GunDef& g, const RE::NiPoint3& a_to)
 		{
-			auto* f = Forms::Ours(g.bulletSpell);
-			auto* spell = f ? f->As<RE::MagicItem>() : nullptr;
-			auto* proj = spell && !spell->effects.empty() && spell->effects[0]->baseEffect ? spell->effects[0]->baseEffect->data.projectileBase : nullptr;
+			auto* raw = RE::TESDataHandler::GetSingleton()->LookupForm(g.bulletSpell, gen::kPlugin);
+			auto* spell = raw ? raw->As<RE::SpellItem>() : nullptr;
+			auto* proj = spell && !spell->effects.empty() && spell->effects[0] && spell->effects[0]->baseEffect ? spell->effects[0]->baseEffect->data.projectileBase : nullptr;
 			if (!proj) {
+				static int warned = 0;
+				if (warned++ < 3) {
+					logger::warn("bolt: {} has no projectile (spell {:03X} found {})", g.id, g.bulletSpell, spell != nullptr);
+				}
 				return;
 			}
 			const RE::NiPoint3 from = BoltOrigin(a_player, g);

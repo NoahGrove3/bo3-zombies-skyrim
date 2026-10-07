@@ -229,7 +229,7 @@ namespace bo3z::gen
 	inline constexpr int kSpell_firebreath = 7;
 	inline constexpr int kSpell_dragonforce = 8;
 	inline constexpr std::array<GunDef, 20> kGuns{ {
-		GunDef{ "sidearm", "Ashwood Wand of Arcana", "pistol", Fire(0), 90.0f, 2.0f, 1, 1.5f, 0.4f, 0, 0, 230, 1, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_sidearm, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x814, 0, -1, 0, false, 0x8E6, 0, 0.0f, 0.0f, 0x000, "Arcane bolts", 0x8A7CFF },
+		GunDef{ "sidearm", "Ashwood Wand of Arcana", "pistol", Fire(0), 90.0f, 2.0f, 1, 1.5f, 0.4f, 0, 0, 230, 1, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_sidearm, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x814, 0, -1, 0, false, 0x8E6, 0, 0.0f, 0.0f, 0x000, "Arcane bolts", 0x8A7CFF },
 		GunDef{ "centurion", "Wand of Venom", "pistol", Fire(0), 80.0f, 2.0f, 1, 1.4f, 0.3f, 0, 0, 210, 1, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_centurion, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x815, 5, -1, 0, false, 0x8E9, 0, 0.0f, 0.6f, 0x000, "Venom: poisons what it hits", 0x7BE04A },
 		GunDef{ "triad", "Soulrend Wand", "pistol", Fire(2), 95.0f, 2.0f, 1, 1.6f, 0.4f, 0, 0, 360, 3, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_triad, Sound::cast_light, Sound::mana_empty, 500, 0, 1, 0x816, 6, -1, 0, false, 0x8EC, 0, 0.0f, 0.5f, 0x000, "Soul harvest: kills pay extra", 0x5FD7FF },
 		GunDef{ "spider", "Sporecaller Wand", "smg", Fire(1), 75.0f, 2.0f, 1, 2.5f, 0.6f, 0, 0, 110, 1, 0, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_spider, Sound::cast_light, Sound::mana_empty, 1000, 0, 1, 0x817, 7, -1, 0, false, 0x8EF, 0, 0.0f, 0.25f, 0x000, "Spores: slow the dead", 0xB9D650 },
@@ -336,9 +336,9 @@ namespace bo3z::gen
 	struct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; };
 	inline constexpr std::array<DressDef, 66> kDress{ {
 		DressDef{ 0, 0x926, false, -80.0f, 70.0f, 0.0f, 1.0f, 0.0f },
-		DressDef{ 0, 0x84D, false, 0.0f, 0.0f, 0.0f, 0.45f, 0.0f },
+		DressDef{ 0, 0x84D, false, 0.0f, 0.0f, 0.0f, 0.25f, 0.0f },
 		DressDef{ 0, 0x84E, true, 0.0f, 30.0f, 90.0f, 1.0f, 0.0f },
-		DressDef{ 0, 0x871, false, 0.0f, 0.0f, 70.0f, 0.8f, 0.0f },
+		DressDef{ 0, 0x871, false, 0.0f, 0.0f, 70.0f, 0.35f, 0.0f },
 		DressDef{ 1, 0x8AB, true, 0.0f, 60.0f, 120.0f, 1.0f, 0.0f },
 		DressDef{ 2, 0x8A4, false, 0.0f, 0.0f, 62.0f, 2.0f, 30.0f },
 		DressDef{ 2, 0x8A5, false, 0.0f, 0.0f, 75.0f, 0.5f, 0.0f },
