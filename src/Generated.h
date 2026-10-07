@@ -12,7 +12,7 @@ namespace bo3z::gen
 		std::array<float, 5> earlyRoundScale; int hpStart, hpLinearPerRound, hpLinearUntil; float hpMultAfter, hpScale;
 		float spawnDelayStart, spawnDelayDecay, spawnDelayMin; int specialEveryRounds, specialFirstRound;
 		std::array<float, 2> spawnRingExterior, spawnRingInterior; float spawnHeightOffset; int maxCorpses; };
-	inline constexpr Rounds kRounds{ 20.0f, 6.0f, 10.0f, 4.0f, 32, 24, 6,
+	inline constexpr Rounds kRounds{ 20.0f, 6.0f, 15.0f, 15.0f, 32, 24, 6,
 		{ 0.25f, 0.3f, 0.5f, 0.7f, 0.9f }, 150, 100, 9, 1.1f, 8.0f,
 		2.0f, 0.95f, 0.3f, 6, 5,
 		{ 1500.f, 2500.f }, { 500.f, 1100.f }, 120.f, 20 };
@@ -332,10 +332,10 @@ namespace bo3z::gen
 	inline constexpr std::array<std::string_view, 10> kTowns{ { "Riverwood", "Whiterun", "Solitude", "Windhelm", "Markarth", "Riften", "Falkreath", "Morthal", "Dawnstar", "Winterhold" } };
 	struct SlotDef { float x, y, faceDeg; };
 	inline constexpr std::array<SlotDef, 14> kSlots{ { SlotDef{ 0.0f, 430.0f, 180.0f }, SlotDef{ 0.0f, -430.0f, 0.0f }, SlotDef{ -150.0f, -430.0f, 0.0f }, SlotDef{ 150.0f, -430.0f, 0.0f }, SlotDef{ -260.0f, -400.0f, 30.0f }, SlotDef{ -175.0f, -280.0f, 90.0f }, SlotDef{ -175.0f, -140.0f, 90.0f }, SlotDef{ -175.0f, 0.0f, 90.0f }, SlotDef{ -175.0f, 140.0f, 90.0f }, SlotDef{ -175.0f, 280.0f, 90.0f }, SlotDef{ 175.0f, -210.0f, 270.0f }, SlotDef{ 175.0f, -70.0f, 270.0f }, SlotDef{ 175.0f, 70.0f, 270.0f }, SlotDef{ 175.0f, 210.0f, 270.0f } } };
-	inline constexpr std::array<float, 5> kPlanDist{ { 0.0f, 300.0f, 600.0f, 900.0f, 1200.0f } };
+	inline constexpr std::array<float, 8> kPlanDist{ { 0.0f, 300.0f, 600.0f, 900.0f, 1200.0f, 1500.0f, 1800.0f, 2100.0f } };
 	inline constexpr std::array<float, 4> kPlanYaw{ { 0.0f, 45.0f, 90.0f, 135.0f } };
 	inline constexpr int kPlanAngles = 12;
-	inline constexpr float kPlanSnap = 45.0f, kPlanHeight = 90.0f, kPlanSweep = 2500.0f;
+	inline constexpr float kPlanSnap = 70.0f, kPlanHeight = 90.0f, kPlanSweep = 2500.0f, kPlanDoor = 450.0f;
 	struct LocationDef { int town; std::uint32_t anchor; int object; int slot; };
 	inline constexpr std::array<LocationDef, 122> kLocations{ {
 		LocationDef{ 0, 0x0162A4, 0, 0 },
@@ -482,5 +482,5 @@ namespace bo3z::gen
 	inline constexpr float kRegenDelay = 5.0f, kRegenPerSecond = 0.35f;
 	inline constexpr float kSpawnMultiplier = 3.0f, kHitDamageFraction = 0.34f, kZombieWeaponDamageMult = 0.1f;
 	inline constexpr bool kIgnoreNpcs = true;
-	inline constexpr std::array<std::array<float, 2>, 3> kSpeedTiers{ { { 1.0f, 100.0f }, { 4.0f, 150.0f }, { 8.0f, 200.0f } } };
+	inline constexpr std::array<std::array<float, 2>, 4> kSpeedTiers{ { { 1.0f, 70.0f }, { 5.0f, 90.0f }, { 10.0f, 110.0f }, { 15.0f, 125.0f } } };
 }

@@ -120,7 +120,7 @@ se = LAY['search']
 o.append(f'\tinline constexpr std::array<float, {len(se["distances"])}> kPlanDist{{ {{ {", ".join(F(x) for x in se["distances"])} }} }};')
 o.append(f'\tinline constexpr std::array<float, {len(se["yawsDeg"])}> kPlanYaw{{ {{ {", ".join(F(x) for x in se["yawsDeg"])} }} }};')
 o.append(f'\tinline constexpr int kPlanAngles = {se["angles"]};')
-o.append(f'\tinline constexpr float kPlanSnap = {F(se["snapTolerance"])}, kPlanHeight = {F(se["maxHeightSpread"])}, kPlanSweep = {F(se["sweepRadius"])};')
+o.append(f'\tinline constexpr float kPlanSnap = {F(se["snapTolerance"])}, kPlanHeight = {F(se["maxHeightSpread"])}, kPlanSweep = {F(se["sweepRadius"])}, kPlanDoor = {F(se["doorClearance"])};')
 o.append('\tstruct LocationDef { int town; std::uint32_t anchor; int object; int slot; };')
 o.append(f'\tinline constexpr std::array<LocationDef, {len(L)}> kLocations{{ {{')
 for l in L: o.append(f'\t\tLocationDef{{ {towns.index(l["town"])}, 0x{int(l["anchor"],16):06X}, {oid.index(l["object"].split(":")[1])}, {slots.index(l["slot"].split(":")[1])} }},')

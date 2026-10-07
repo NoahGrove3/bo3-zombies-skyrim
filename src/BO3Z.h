@@ -154,6 +154,7 @@ namespace bo3z
 			int         crew{ -1 };
 			bool        crewScreen{ false };
 			int         crewHighlight{ 0 };
+			float       countdown{ 0 };  // seconds until the next night starts (0 = none)
 		};
 		State&      Edit();
 		std::mutex& Lock();

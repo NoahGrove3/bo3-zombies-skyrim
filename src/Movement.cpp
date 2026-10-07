@@ -147,7 +147,10 @@ namespace bo3z
 						g_slideDir = w;
 					}
 					if (!st->IsSneaking()) {
-						st->actorState1.sneaking = 1;  // drop into a crouch for the slide
+						// Drop into a crouch for the slide: state flag + the behaviour graph's own sneak events.
+						st->actorState1.sneaking = 1;
+						player->SetGraphVariableBool("IsSneaking", true);
+						player->NotifyAnimationGraph("SneakStart");
 						g_forcedSneak = true;
 					}
 					Forms::Play(gen::Sound::knife);  // whoosh
@@ -191,6 +194,8 @@ namespace bo3z
 			g_slide = std::max(0.0f, g_slide - a_delta);
 			if (before > 0 && g_slide <= 0 && g_forcedSneak) {
 				st->actorState1.sneaking = 0;  // stand back up
+				player->SetGraphVariableBool("IsSneaking", false);
+				player->NotifyAnimationGraph("SneakStop");
 				g_forcedSneak = false;
 			}
 

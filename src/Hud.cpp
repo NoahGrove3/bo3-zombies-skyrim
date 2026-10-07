@@ -77,6 +77,14 @@ namespace bo3z
 			if (s.gainTime > 0) {
 				Text(dl, gen::kHud_points_popup, size, k, (s.lastGain > 0 ? "+" : "") + std::to_string(s.lastGain), 1.0f, s.gainTime, s.lastGain < 0 ? 0xE03030FF : 0);
 			}
+			if (s.countdown > 0.05f) {  // between nights
+				const std::string line = "NIGHT " + std::to_string(s.round + 1) + " IN " + std::to_string(static_cast<int>(std::ceil(s.countdown)));
+				const float       fs = 46 * k;
+				const auto        ts = g_font->CalcTextSizeA(fs, FLT_MAX, 0, line.c_str());
+				const float       pulse = 0.75f + 0.25f * std::sin(s.countdown * 6.0f);
+				dl->AddText(g_font, fs, { size.x * 0.5f - ts.x * 0.5f + 2 * k, size.y * 0.16f + 2 * k }, IM_COL32(0, 0, 0, 180), line.c_str());
+				dl->AddText(g_font, fs, { size.x * 0.5f - ts.x * 0.5f, size.y * 0.16f }, IM_COL32(200, 30, 30, static_cast<int>(255 * pulse)), line.c_str());
+			}
 			// Perk row above Skyrim's health bar (bottom centre), up to 9.
 			{
 				int n = 0;

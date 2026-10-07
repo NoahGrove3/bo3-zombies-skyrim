@@ -211,7 +211,7 @@ namespace bo3z
 						}
 					}
 				}
-				av->SetActorValue(RE::ActorValue::kAggression, 1);  // aggressive only toward enemies: none, except the player we point them at
+				av->SetActorValue(RE::ActorValue::kAggression, 2);  // very aggressive: no hesitating; KeepThemComing keeps them on players
 			}
 			// Fists only: take every weapon (and bow/arrows) they carry so they fight bare-handed.
 			{
@@ -266,6 +266,10 @@ namespace bo3z
 			g_toSpawn = static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier));
 			g_spawnTimer = 0;
 			g_phase = Phase::Fighting;
+			{
+				std::scoped_lock l(Hud::Lock());
+				Hud::Edit().countdown = 0;
+			}
 			Forms::Play(g_special ? gen::Sound::hound_night : gen::Sound::night_start);
 			Hud::Banner(g_special ? "NIGHT " + std::to_string(a_round) + " - THE HOUNDS ARE LOOSE" : "NIGHT " + std::to_string(a_round));
 			logger::info("round {} starts: {} undead, {:.0f} Skyrim health each{}", a_round, g_toSpawn, HealthFor(a_round), g_special ? " (hound round)" : "");
@@ -465,6 +469,10 @@ namespace bo3z
 				Forms::Play(gen::Sound::night_falls);
 				break;
 			case Phase::Break:
+				{
+					std::scoped_lock l(Hud::Lock());
+					Hud::Edit().countdown = std::max(0.0f, g_breakTimer - a_delta);
+				}
 				if ((g_breakTimer -= a_delta) <= 0) {
 					StartRound(Save::Get(gen::kAV_round) + 1);
 				}

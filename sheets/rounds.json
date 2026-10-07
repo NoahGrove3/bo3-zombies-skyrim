@@ -45,8 +45,8 @@
       "id": "night_rounds",
       "nightStartHour": 20.0,
       "nightEndHour": 6.0,
-      "breakSeconds": 10.0,
-      "firstBreakSeconds": 4.0,
+      "breakSeconds": 15.0,
+      "firstBreakSeconds": 15.0,
       "maxAlive": 32,
       "aiMaxBase": 24,
       "aiPerPlayer": 6,
@@ -91,15 +91,19 @@
       "speedTiers": [
         [
           1,
-          100
+          70
         ],
         [
-          4,
-          150
+          5,
+          90
         ],
         [
-          8,
-          200
+          10,
+          110
+        ],
+        [
+          15,
+          125
         ]
       ],
       "hitDamageFraction": 0.34,

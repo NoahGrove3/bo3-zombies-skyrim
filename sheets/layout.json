@@ -114,7 +114,10 @@
       300,
       600,
       900,
-      1200
+      1200,
+      1500,
+      1800,
+      2100
     ],
     "angles": 12,
     "yawsDeg": [
@@ -123,8 +126,9 @@
       90,
       135
     ],
-    "snapTolerance": 45,
+    "snapTolerance": 70,
     "maxHeightSpread": 90,
-    "sweepRadius": 2500
+    "sweepRadius": 2500,
+    "doorClearance": 450
   }
 }

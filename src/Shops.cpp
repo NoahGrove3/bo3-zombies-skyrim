@@ -264,6 +264,27 @@ namespace bo3z
 			return got;
 		}
 
+		struct Best
+		{
+			float    score{ FLT_MAX };
+			TownPlan plan;
+		};
+		std::array<Best, gen::kTowns.size()> g_best{};
+
+		bool NearDoor(RE::TESObjectREFR* a_anchor, const RE::NiPoint3& a_at)
+		{
+			bool door = false;
+			RE::TES::GetSingleton()->ForEachReferenceInRange(a_anchor, gen::kPlanSweep + gen::kPlanDoor * 2, [&](RE::TESObjectREFR* r) {
+				if (r && r->GetBaseObject() && r->GetBaseObject()->Is(RE::FormType::Door) && std::hypot(r->GetPosition().x - a_at.x, r->GetPosition().y - a_at.y) < gen::kPlanDoor) {
+					door = true;
+					return RE::BSContainer::ForEachResult::kStop;
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			return door;
+		}
+
+		// Score a candidate alley (lower is better); 0 failures + flat + no doors near = accept immediately.
 		bool TryCandidate(int a_town, RE::TESObjectREFR* a_anchor, int a_index)
 		{
 			const int perDist = gen::kPlanAngles * static_cast<int>(gen::kPlanYaw.size());
@@ -278,25 +299,33 @@ namespace bo3z
 			plan.center = { a.x + std::sin(ang) * gen::kPlanDist[di], a.y + std::cos(ang) * gen::kPlanDist[di], a.z };
 			plan.yaw = gen::kPlanYaw[yi] * RE::NI_PI / 180.0f;
 			float lo = FLT_MAX, hi = -FLT_MAX;
+			int   fails = 0, doors = 0;
 			for (const auto& l : gen::kLocations) {
 				if (l.town != a_town) {
 					continue;
 				}
-				auto p = Snap(a_anchor, SlotPos(plan, l.slot));
-				if (!p) {
-					return false;
+				const auto want = SlotPos(plan, l.slot);
+				if (auto p = Snap(a_anchor, want)) {
+					lo = std::min(lo, p->z), hi = std::max(hi, p->z);
+				} else {
+					++fails;
 				}
-				lo = std::min(lo, p->z), hi = std::max(hi, p->z);
+				doors += NearDoor(a_anchor, want) ? 1 : 0;
 			}
-			if (hi - lo > gen::kPlanHeight) {
-				return false;
-			}
-			auto c = Snap(a_anchor, plan.center);
-			plan.center.z = c ? c->z : (lo + hi) * 0.5f;
+			const float spread = hi > lo ? hi - lo : 0;
+			auto        c = Snap(a_anchor, plan.center);
+			plan.center.z = c ? c->z : (lo < hi ? (lo + hi) * 0.5f : a.z);
 			plan.state = TownPlan::State::Ready;
-			g_towns[a_town] = plan;
-			logger::info("shops: {} alley at ({:.0f},{:.0f}) yaw {:.0f} (candidate {})", gen::kTowns[a_town], plan.center.x, plan.center.y, gen::kPlanYaw[yi], a_index);
-			return true;
+			const float score = fails * 1000.0f + doors * 400.0f + std::max(0.0f, spread - gen::kPlanHeight) * 5.0f + gen::kPlanDist[di] * 0.05f;
+			if (score < g_best[a_town].score) {
+				g_best[a_town] = { score, plan };
+			}
+			if (fails == 0 && doors == 0 && spread <= gen::kPlanHeight) {
+				g_towns[a_town] = plan;
+				logger::info("shops: {} alley at ({:.0f},{:.0f}) yaw {:.0f} (candidate {})", gen::kTowns[a_town], plan.center.x, plan.center.y, gen::kPlanYaw[yi], a_index);
+				return true;
+			}
+			return false;
 		}
 
 		void Sweep(int a_town, RE::TESObjectREFR* a_anchor)
@@ -323,6 +352,20 @@ namespace bo3z
 		// Existing alley from an earlier session? The ammo cache only exists in this layout, so it marks it.
 		bool AdoptExisting(int a_town, RE::TESObjectREFR* a_anchor)
 		{
+			// Alleys built by the v0.4.0 fallback sit right at the marker (Whiterun's gate): rebuild those.
+			if (auto* ammoBase = Forms::Object(1)) {
+				bool atMarker = false;
+				RE::TES::GetSingleton()->ForEachReferenceInRange(a_anchor, 900.0f, [&](RE::TESObjectREFR* r) {
+					if (r && !r->IsDeleted() && r->GetBaseObject() == ammoBase && NearDoor(a_anchor, r->GetPosition())) {
+						atMarker = true;
+					}
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				if (atMarker) {
+					logger::info("shops: {} alley blocks a door, rebuilding", gen::kTowns[a_town]);
+					return false;
+				}
+			}
 			RE::TESForm* ammo = nullptr;
 			int          ammoSlot = -1;
 			for (const auto& l : gen::kLocations) {
@@ -416,11 +459,10 @@ namespace bo3z
 					const int total = static_cast<int>(gen::kPlanDist.size()) * gen::kPlanAngles * static_cast<int>(gen::kPlanYaw.size());
 					for (int k = 0; k < 3 && plan.state == TownPlan::State::Searching; ++k) {
 						if (plan.candidate >= total) {
-							// Nowhere fully clear: build it around the marker anyway.
-							plan.center = anchor->GetPosition();
-							plan.yaw = 0;
+							// Nowhere perfect: take the best-scoring spot found.
+							plan = g_best[t].score < FLT_MAX ? g_best[t].plan : TownPlan{ TownPlan::State::Ready, anchor->GetPosition(), 0, 0 };
 							plan.state = TownPlan::State::Ready;
-							logger::warn("shops: no clear spot in {}, building at the marker", gen::kTowns[t]);
+							logger::warn("shops: no perfect spot in {}, best score {:.0f} at ({:.0f},{:.0f})", gen::kTowns[t], g_best[t].score, plan.center.x, plan.center.y);
 							break;
 						}
 						TryCandidate(t, anchor, plan.candidate++);
@@ -596,6 +638,7 @@ namespace bo3z
 			g_placed.fill({});
 			g_dressed.fill(false);
 			g_towns.fill({});
+			g_best.fill({});
 			g_probe = {};
 			g_spinners.clear();
 			g_show = {};
