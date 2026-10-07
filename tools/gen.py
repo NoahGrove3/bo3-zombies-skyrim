@@ -58,7 +58,6 @@ fires = {'semi': 0, 'auto': 1, 'burst': 2, 'pump': 3}
 o.append('\tenum class Fire : int { Semi = 0, Auto = 1, Burst = 2, Pump = 3 };')
 o.append('\tstruct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; int special, spell, spellOn; };')
 W = S['weapons']['rows']
-o.append(f'\tinline constexpr std::array<GunDef, {len(W)}> kGuns{{ {{')
 sid = lambda v: 'Sound::' + v.split(':')[1]
 SP = S['spells']['rows']
 specials = {'none': 0, 'splash': 1, 'chain': 2, 'cone': 3, 'wabbajack': 4}
@@ -67,6 +66,7 @@ spidx = lambda v: -1 if v == 'none' else [s['id'] for s in SP].index(v.split(':'
 o.append(f'\tinline constexpr std::array<FormRef, {len(SP)}> kSpells{{ {{')
 for s in SP: o.append(f'\t\tFormRef{{ {cs(s["plugin"])}, 0x{int(s["localId"], 16):06X}, {cs(s["editorId"])} }},')
 o.append('\t} };')
+o.append(f'\tinline constexpr std::array<GunDef, {len(W)}> kGuns{{ {{')
 for w in W:
     o.append(f'\t\tGunDef{{ {cs(w["id"])}, {cs(w["label"])}, {cs(w["class"])}, Fire({fires[w["fire"]]}), {F(w["damage"])}, {F(w["headMult"])}, {w["pellets"]}, {F(w["spreadHip"])}, {F(w["spreadAds"])}, {w["clip"]}, {w["reserve"]}, {w["fireDelayMs"]}, {w["burst"]}, {w["reloadMs"]}, {F(w["range"])}, {F(w["splashRadius"])}, {F(w["splashDamage"])}, {F(w["hitRadius"])}, {F(w["headRadius"])}, {sid(w["fireSound"])}, {sid(w["reloadSound"])}, {sid(w["emptySound"])}, {w["wallBuyCost"]}, {w["ammoCost"]}, {w["boxWeight"]}, 0x{IDS[("WEAP", w["id"])]:03X}, {specials[w["special"]]}, {spidx(w["spell"])}, {spellon[w["spellOn"]]} }},')
 o.append('\t} };')
@@ -104,7 +104,7 @@ for oi, kind, key, r in DPIECES: o.append(f'\t\tDressDef{{ {oi}, 0x{IDS[(kind, k
 o.append('\t} };')
 o.append(f'\tinline constexpr std::array<std::uint32_t, {len(W)}> kShowStat{{ {{ {", ".join("0x%03X" % IDS[("STAT", "show_" + w["id"])] for w in W)} }} }};')
 sh = S['dressing']['show']
-o.append(f'\tinline constexpr std::uint32_t kShowCheese = 0x{IDS[("STAT", "show_cheese")]:03X};')
+o.append(f'\tinline constexpr std::uint32_t kShowCheese = 0x{IDS[("STAT", "show_cheese")]:03X}, kRiseFx = 0x{IDS[("STAT", "rise_fx")]:03X};')
 o.append(f'\tinline constexpr float kShowRise = {F(sh["riseUnits"])}, kShowSpin = {F(sh["spinSeconds"])}, kShowOffer = {F(sh["offerSeconds"])};')
 o.append(f'\tinline constexpr std::array<std::uint32_t, {len(P)}> kPerkColor{{ {{ {", ".join("0x%sFF" % p["color"] for p in P)} }} }};')
 L = S['locations']['rows']; oid = [x['id'] for x in O]

@@ -162,6 +162,7 @@
   "STAT:show_embermortar": "0x89e",
   "STAT:show_wabbajack": "0x89f",
   "STAT:show_thuumcannon": "0x8a0",
-  "STAT:show_skyforgearc": "0x8a1"
+  "STAT:show_skyforgearc": "0x8a1",
+  "STAT:rise_fx": "0x8a2"
  }
 }

@@ -29,6 +29,7 @@ namespace bo3z
 		std::vector<Spawned>    g_alive;
 		std::deque<RE::ActorHandle> g_corpses;
 		std::unordered_map<RE::FormID, std::size_t> g_ours;  // every undead we raised -> enemy row
+		std::vector<std::pair<RE::ObjectRefHandle, float>> g_fx;  // short-lived effects (rise bursts)
 		std::mt19937            g_rng{ std::random_device{}() };
 		bool                    g_loggedBlocked = false;
 
@@ -210,10 +211,29 @@ namespace bo3z
 			g_ours[actor->GetFormID()] = *pick;
 			g_alive.push_back({ actor->GetHandle(), *pick });
 			Forms::PlayAt(gen::Sound::rise, actor);
+			if (auto* fx = Forms::Ours(gen::kRiseFx)) {  // the ground bursts where they climb out
+				if (auto puff = actor->PlaceObjectAtMe(fx, false)) {
+					puff->SetPosition(actor->GetPosition());
+					g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
+				}
+			}
 			return true;
 		}
 
 		bool IsOurs(RE::Actor* a) { return a && g_ours.contains(a->GetFormID()); }
+
+		void TickFx(float a_delta)
+		{
+			for (auto& [h, t] : g_fx) {
+				if ((t -= a_delta) <= 0) {
+					if (auto r = h.get()) {
+						r->Disable();
+						r->SetDelete(true);
+					}
+				}
+			}
+			std::erase_if(g_fx, [](const auto& e) { return e.second <= 0; });
+		}
 
 		void StartRound(int a_round)
 		{
@@ -380,6 +400,7 @@ namespace bo3z
 
 		void Tick(float a_delta)
 		{
+			TickFx(a_delta);
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			if (!player) {
 				return;

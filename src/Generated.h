@@ -146,7 +146,6 @@ namespace bo3z::gen
 	inline constexpr std::string_view kPlugin = "BO3Zombies.esp";
 	enum class Fire : int { Semi = 0, Auto = 1, Burst = 2, Pump = 3 };
 	struct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; int special, spell, spellOn; };
-	inline constexpr std::array<GunDef, 19> kGuns{ {
 	inline constexpr std::array<FormRef, 7> kSpells{ {
 		FormRef{ "Skyrim.esm", 0x012FD0, "Firebolt" },
 		FormRef{ "Skyrim.esm", 0x01C789, "Fireball" },
@@ -156,6 +155,7 @@ namespace bo3z::gen
 		FormRef{ "Skyrim.esm", 0x013F3A, "VoiceUnrelentingForce3" },
 		FormRef{ "Skyrim.esm", 0x02AC6F, "DA15Wabbajack" },
 	} };
+	inline constexpr std::array<GunDef, 19> kGuns{ {
 		GunDef{ "sidearm", "Brass Sidearm", "pistol", Fire(0), 75.0f, 2.0f, 1, 1.5f, 0.4f, 8, 80, 160, 1, 1600, 4200.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_pistol, Sound::reload_mag, Sound::dry_click, 0, 0, 0, 0x814, 0, -1, 0 },
 		GunDef{ "centurion", "Centurion Pistol", "pistol", Fire(0), 90.0f, 2.5f, 1, 1.4f, 0.3f, 12, 96, 140, 1, 1500, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_pistol, Sound::reload_mag, Sound::dry_click, 0, 0, 3, 0x815, 0, -1, 0 },
 		GunDef{ "triad", "Triad Burst", "pistol", Fire(2), 100.0f, 2.0f, 1, 1.6f, 0.4f, 18, 126, 330, 3, 1700, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_pistol, Sound::reload_mag, Sound::dry_click, 500, 250, 3, 0x816, 0, -1, 0 },
@@ -316,7 +316,7 @@ namespace bo3z::gen
 		DressDef{ 14, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
 	} };
 	inline constexpr std::array<std::uint32_t, 19> kShowStat{ { 0x864, 0x865, 0x866, 0x867, 0x868, 0x869, 0x86A, 0x86B, 0x86C, 0x86D, 0x86E, 0x86F, 0x89B, 0x89C, 0x89D, 0x89E, 0x89F, 0x8A0, 0x8A1 } };
-	inline constexpr std::uint32_t kShowCheese = 0x870;
+	inline constexpr std::uint32_t kShowCheese = 0x870, kRiseFx = 0x8A2;
 	inline constexpr float kShowRise = 45.0f, kShowSpin = 4.2f, kShowOffer = 12.0f;
 	inline constexpr std::array<std::uint32_t, 9> kPerkColor{ { 0xD02020FF, 0x30C040FF, 0xE0A020FF, 0x3070F0FF, 0xF0D840FF, 0xB0B8C0FF, 0x7AA040FF, 0x9040E0FF, 0x40D0F0FF } };
 	inline constexpr std::array<std::string_view, 10> kTowns{ { "Riverwood", "Whiterun", "Solitude", "Windhelm", "Markarth", "Riften", "Falkreath", "Morthal", "Dawnstar", "Winterhold" } };

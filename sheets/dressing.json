@@ -702,6 +702,7 @@
     "cheeseModel": "Clutter\\Food\\CheeseWheel01A.nif",
     "riseUnits": 45,
     "spinSeconds": 4.2,
-    "offerSeconds": 12
+    "offerSeconds": 12,
+    "riseFxModel": "DLC01\\Effects\\DraugrEmergeGround01.nif"
   }
 }
