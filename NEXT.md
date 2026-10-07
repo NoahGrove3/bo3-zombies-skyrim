@@ -22,6 +22,12 @@
   adopted stands that fail it are rebuilt.
 - Dev: `hold <mouse id> <secs>` (fire = 0) holds the button for charge tests.
 
+## Built 2026-10-07 17:00 (2857ca4 + un_staffs_v7, installed)
+- Release decides: full charge -> signature move only, shorter -> normal shot (OnButton; TryUnleash returns bool).
+- Dirt/rock blasts (giantslam*, dragondust) deleted. drill + spider retired; kagrenac = Chronos Hourglass (Time Stop:
+  freeze 4 s then 4x damage), longshot = Prismheart (Prism Sentinel: crystal beams 3 nearest for 5 s); models from
+  tools/staffs_proc.py (procedural), sounds e_time/e_prism, u_time/u_prism.
+
 ## Built 2026-10-07 16:30 (e7788b1 + un_weapons_v6 assets, installed, not yet seen in game)
 - Roster: 8 staffs (tools/staffs.py from the staff pack: heaven/void/heart/seed bases x 2 palettes + add-ons; NIF Prn
   WeaponStaff, grip at origin, head y=62) and 4 bows (tools/bows.py + tools/modelconv/bowconv.cpp: mesh skinned to the
