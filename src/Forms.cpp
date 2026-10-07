@@ -73,6 +73,12 @@ namespace bo3z
 
 		RE::TESBoundObject* Enemy(std::size_t a_index) { return a_index < g_enemies.size() ? g_enemies[a_index] : nullptr; }
 		RE::TESQuest*       IntroQuest() { return g_intro; }
+		// The intro is over when MQ101 is completed (a normal playthrough) or when Bethesda's quick-start
+		// fragment has run: it sets stages 25/26/1000 and then Stop()s the quest without completing it.
+		bool IntroDone()
+		{
+			return g_intro && (g_intro->IsCompleted() || (!g_intro->IsRunning() && !g_intro->IsStarting() && g_intro->GetCurrentStageID() >= 25));
+		}
 		RE::TESGlobal*      Quickstart() { return g_quick; }
 		RE::TESObjectREFR*  RiverwoodMarker() { return g_riverwood; }
 		RE::TESObjectWEAP*  Gun(int a_gun) { return a_gun >= 0 && a_gun < static_cast<int>(g_guns.size()) ? g_guns[a_gun] : nullptr; }
