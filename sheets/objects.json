@@ -1,6 +1,6 @@
 {
   "sheet": "objects",
-  "about": "Things placed in towns (activators in BO3Zombies.esp, stand-in Skyrim models). Activate text shows on the crosshair.",
+  "about": "Things placed in towns: brew shrines, Sheogorath's Coffer and weapon plaques, built from Skyrim's own meshes plus the dressing sheet. Activate text shows on the crosshair.",
   "columns": [
     "id",
     "kind",
@@ -9,6 +9,7 @@
     "model",
     "cost",
     "refs",
+    "scale",
     "verify"
   ],
   "rows": [
@@ -17,120 +18,139 @@
       "kind": "box",
       "label": "Sheogorath's Coffer",
       "activateText": "Tempt fate",
-      "model": "Clutter\\Containers\\Chest01\\Chest01.nif",
+      "model": "Clutter\\Ruins\\Ruins_LargeChest.nif",
       "cost": 950,
       "refs": "none",
       "verify": [
         "model"
-      ]
+      ],
+      "scale": 1.25
     },
     {
       "id": "perk_trollshide",
       "kind": "perk",
       "label": "Troll's Hide Mead",
       "activateText": "Drink",
-      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "model": "Clutter\\Meadery\\MeadBarrel01.nif",
       "cost": 2500,
       "refs": "perks:trollshide",
       "verify": [
-        "model"
-      ]
+        "model",
+        "scale"
+      ],
+      "scale": 1.5
     },
     {
       "id": "perk_quicksilver",
       "kind": "perk",
       "label": "Quicksilver Draught",
       "activateText": "Drink",
-      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "model": "Dungeons\\Dwemer\\Clutter\\DweClutterPedestal01.nif",
       "cost": 3000,
       "refs": "perks:quicksilver",
       "verify": [
-        "model"
-      ]
+        "model",
+        "scale"
+      ],
+      "scale": 1.6
     },
     {
       "id": "perk_twinstrike",
       "kind": "perk",
       "label": "Twin Strike Ale",
       "activateText": "Drink",
-      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "model": "Clutter\\Sovngarde\\SovLargeMeadBarrel01.nif",
       "cost": 2000,
       "refs": "perks:twinstrike",
       "verify": [
-        "model"
-      ]
+        "model",
+        "scale"
+      ],
+      "scale": 0.9
     },
     {
       "id": "perk_hearthfire",
       "kind": "perk",
       "label": "Hearthfire Tonic",
       "activateText": "Drink",
-      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "model": "Architecture\\Windhelm\\WHFireBrazier01.nif",
       "cost": 500,
       "refs": "perks:hearthfire",
       "verify": [
-        "model"
-      ]
+        "model",
+        "scale"
+      ],
+      "scale": 1.0
     },
     {
       "id": "perk_windrunner",
       "kind": "perk",
       "label": "Windrunner Brew",
       "activateText": "Drink",
-      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "model": "Clutter\\Ruins\\Ruins_Altar01.nif",
       "cost": 2000,
       "refs": "perks:windrunner",
       "verify": [
-        "model"
-      ]
+        "model",
+        "scale"
+      ],
+      "scale": 1.0
     },
     {
       "id": "perk_hawkeye",
       "kind": "perk",
       "label": "Hawkeye Tincture",
       "activateText": "Drink",
-      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "model": "Clutter\\SkullPedestal\\SkullPedestalEmpty.nif",
       "cost": 1500,
       "refs": "perks:hawkeye",
       "verify": [
-        "model"
-      ]
+        "model",
+        "scale"
+      ],
+      "scale": 1.6
     },
     {
       "id": "perk_mammoth",
       "kind": "perk",
       "label": "Mammoth Back Porter",
       "activateText": "Drink",
-      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "model": "Clutter\\Bones\\MammothSkull1.nif",
       "cost": 4000,
       "refs": "perks:mammoth",
       "verify": [
-        "model"
-      ]
+        "model",
+        "scale"
+      ],
+      "scale": 1.0
     },
     {
       "id": "perk_frostbite",
       "kind": "perk",
       "label": "Frostbite Venom",
       "activateText": "Drink",
-      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "model": "Clutter\\ChaurusEggs\\EggSacs01.nif",
       "cost": 4000,
       "refs": "perks:frostbite",
       "verify": [
-        "model"
-      ]
+        "model",
+        "scale"
+      ],
+      "scale": 1.5
     },
     {
       "id": "perk_stormcrown",
       "kind": "perk",
       "label": "Stormcrown Cider",
       "activateText": "Drink",
-      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "model": "Dungeons\\AzurasStar\\AzurasCrystalCluster01.nif",
       "cost": 2000,
       "refs": "perks:stormcrown",
       "verify": [
-        "model"
-      ]
+        "model",
+        "scale"
+      ],
+      "scale": 0.5
     },
     {
       "id": "wall_triad",
@@ -142,7 +162,8 @@
       "refs": "weapons:triad",
       "verify": [
         "model"
-      ]
+      ],
+      "scale": 1.0
     },
     {
       "id": "wall_spider",
@@ -154,7 +175,8 @@
       "refs": "weapons:spider",
       "verify": [
         "model"
-      ]
+      ],
+      "scale": 1.0
     },
     {
       "id": "wall_drill",
@@ -166,7 +188,8 @@
       "refs": "weapons:drill",
       "verify": [
         "model"
-      ]
+      ],
+      "scale": 1.0
     },
     {
       "id": "wall_steampump",
@@ -178,7 +201,8 @@
       "refs": "weapons:steampump",
       "verify": [
         "model"
-      ]
+      ],
+      "scale": 1.0
     },
     {
       "id": "wall_marksman",
@@ -190,7 +214,8 @@
       "refs": "weapons:marksman",
       "verify": [
         "model"
-      ]
+      ],
+      "scale": 1.0
     }
   ]
 }

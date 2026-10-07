@@ -86,9 +86,19 @@ def refidx(r):
     if r == 'none': return -1
     sh, i = r.split(':'); rows = {'perks': P, 'weapons': W}[sh]
     return [x['id'] for x in rows].index(i)
-o.append('\tstruct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; };')
+o.append('\tstruct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; float scale; };')
 o.append(f'\tinline constexpr std::array<ObjectDef, {len(O)}> kObjects{{ {{')
-for x in O: o.append(f'\t\tObjectDef{{ {cs(x["id"])}, {cs(x["label"])}, {kinds[x["kind"]]}, {x["cost"]}, {refidx(x["refs"])}, 0x{IDS[("ACTI", x["id"])]:03X} }},')
+for x in O: o.append(f'\t\tObjectDef{{ {cs(x["id"])}, {cs(x["label"])}, {kinds[x["kind"]]}, {x["cost"]}, {refidx(x["refs"])}, 0x{IDS[("ACTI", x["id"])]:03X}, {F(x.get("scale", 1.0))} }},')
+DREC, DPIECES = esp_ids.dressing(S)
+o.append('\tstruct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; };')
+o.append(f'\tinline constexpr std::array<DressDef, {len(DPIECES)}> kDress{{ {{')
+for oi, kind, key, r in DPIECES: o.append(f'\t\tDressDef{{ {oi}, 0x{IDS[(kind, key)]:03X}, {str(kind == "LIGH").lower()}, {F(r["x"])}, {F(r["y"])}, {F(r["z"])}, {F(r["scale"])}, {F(r["spin"])} }},')
+o.append('\t} };')
+o.append(f'\tinline constexpr std::array<std::uint32_t, {len(W)}> kShowStat{{ {{ {", ".join("0x%03X" % IDS[("STAT", "show_" + w["id"])] for w in W)} }} }};')
+sh = S['dressing']['show']
+o.append(f'\tinline constexpr std::uint32_t kShowCheese = 0x{IDS[("STAT", "show_cheese")]:03X};')
+o.append(f'\tinline constexpr float kShowRise = {F(sh["riseUnits"])}, kShowSpin = {F(sh["spinSeconds"])}, kShowOffer = {F(sh["offerSeconds"])};')
+o.append(f'\tinline constexpr std::array<std::uint32_t, {len(P)}> kPerkColor{{ {{ {", ".join("0x%sFF" % p["color"] for p in P)} }} }};')
 o.append('\t} };')
 L = S['locations']['rows']; oid = [x['id'] for x in O]
 towns = []
@@ -100,7 +110,7 @@ o.append(f'\tinline constexpr std::array<LocationDef, {len(L)}> kLocations{{ {{'
 for l in L: o.append(f'\t\tLocationDef{{ {towns.index(l["town"])}, 0x{int(l["anchor"],16):06X}, {oid.index(l["object"].split(":")[1])}, {F(l["angleDeg"])}, {F(l["distance"])} }},')
 o.append('\t} };')
 M = {r['id']: r for r in S['movement']['rows']}
-o.append(f'\tinline constexpr float kSprintBoost = {F(M["sprint_boost"]["value"])}, kSlideBoost = {F(M["slide"]["value"])}, kSlideSeconds = {F(M["slide"]["durationMs"]/1000)}, kAdsFov = {F(M["ads_fov"]["value"])}, kAdsSeconds = {F(M["ads_fov"]["durationMs"]/1000)}, kAdsSpeed = {F(M["ads_speed"]["value"])};')
+o.append(f'\tinline constexpr float kSprintBoost = {F(M["sprint_boost"]["value"])}, kSlideBoost = {F(M["slide"]["value"])}, kSlideSeconds = {F(M["slide"]["durationMs"]/1000)}, kAdsFov = {F(M["ads_fov"]["value"])}, kAdsSeconds = {F(M["ads_fov"]["durationMs"]/1000)}, kAdsSpeed = {F(M["ads_speed"]["value"])}, kWorldFov = {F(M["world_fov"]["value"])}, kViewmodelFov = {F(M["viewmodel_fov"]["value"])};')
 Q = {r['id']: r for r in S['quests']['rows']}
 for qid in ('MQQuickstart', 'MQ102Marker', 'MQ102A', 'MQ102B', 'MQ102'):
     if qid in Q: o.append(f'\tinline constexpr FormRef kQ_{qid}{{ {cs(Q[qid]["plugin"])}, 0x{int(Q[qid]["localId"],16):06X}, {cs(Q[qid]["editorId"])} }};')

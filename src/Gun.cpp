@@ -16,7 +16,6 @@ namespace bo3z
 		bool  g_swapHeld = false;
 		std::unordered_map<RE::FormID, std::pair<Clock::time_point, bool>> g_hits;
 		std::mt19937 g_rng{ std::random_device{}() };
-		float g_baseFov = 0;
 		bool  g_loggedAim = false;
 
 		int CurrentGun()
@@ -504,11 +503,10 @@ namespace bo3z
 			const float step = a_delta / std::max(0.01f, gen::kAdsSeconds);
 			g_ads = target > g_ads ? std::min(target, g_ads + step) : std::max(target, g_ads - step);
 			if (auto* cam = RE::PlayerCamera::GetSingleton()) {
-				if (g_ads <= 0.0f) {
-					g_baseFov = cam->GetRuntimeData2().worldFOV;
-				} else if (g_baseFov > 0) {
-					cam->GetRuntimeData2().worldFOV = g_baseFov + (gen::kAdsFov - g_baseFov) * g_ads;
-				}
+				// Wider base view (sheet: movement.world_fov / viewmodel_fov), narrowing while aiming.
+				auto& rd = cam->GetRuntimeData2();
+				rd.worldFOV = gen::kWorldFov + (gen::kAdsFov - gen::kWorldFov) * g_ads;
+				rd.firstPersonFOV = gen::kViewmodelFov;
 			}
 			const auto now = Clock::now();
 			std::erase_if(g_hits, [&](const auto& kv) { return now - kv.second.first > 2s; });

@@ -211,23 +211,90 @@ namespace bo3z::gen
 	inline constexpr std::string_view kText_shrine = "Brew Shrine";
 	inline constexpr std::string_view kText_forge = "Atronach Reforge";
 	inline constexpr std::string_view kText_round_word = "Night";
-	struct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; };
+	struct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; float scale; };
 	inline constexpr std::array<ObjectDef, 15> kObjects{ {
-		ObjectDef{ "coffer", "Sheogorath's Coffer", 0, 950, -1, 0x807 },
-		ObjectDef{ "perk_trollshide", "Troll's Hide Mead", 1, 2500, 0, 0x808 },
-		ObjectDef{ "perk_quicksilver", "Quicksilver Draught", 1, 3000, 1, 0x809 },
-		ObjectDef{ "perk_twinstrike", "Twin Strike Ale", 1, 2000, 2, 0x80A },
-		ObjectDef{ "perk_hearthfire", "Hearthfire Tonic", 1, 500, 3, 0x80B },
-		ObjectDef{ "perk_windrunner", "Windrunner Brew", 1, 2000, 4, 0x80C },
-		ObjectDef{ "perk_hawkeye", "Hawkeye Tincture", 1, 1500, 5, 0x80D },
-		ObjectDef{ "perk_mammoth", "Mammoth Back Porter", 1, 4000, 6, 0x80E },
-		ObjectDef{ "perk_frostbite", "Frostbite Venom", 1, 4000, 7, 0x829 },
-		ObjectDef{ "perk_stormcrown", "Stormcrown Cider", 1, 2000, 8, 0x82A },
-		ObjectDef{ "wall_triad", "Triad Burst", 2, 500, 2, 0x80F },
-		ObjectDef{ "wall_spider", "Spider SMG", 2, 1000, 3, 0x810 },
-		ObjectDef{ "wall_drill", "Sphere Drill", 2, 1300, 4, 0x811 },
-		ObjectDef{ "wall_steampump", "Steam Pump", 2, 900, 5, 0x812 },
-		ObjectDef{ "wall_marksman", "Arkngthand Marksman", 2, 900, 6, 0x813 },
+		ObjectDef{ "coffer", "Sheogorath's Coffer", 0, 950, -1, 0x807, 1.25f },
+		ObjectDef{ "perk_trollshide", "Troll's Hide Mead", 1, 2500, 0, 0x808, 1.5f },
+		ObjectDef{ "perk_quicksilver", "Quicksilver Draught", 1, 3000, 1, 0x809, 1.6f },
+		ObjectDef{ "perk_twinstrike", "Twin Strike Ale", 1, 2000, 2, 0x80A, 0.9f },
+		ObjectDef{ "perk_hearthfire", "Hearthfire Tonic", 1, 500, 3, 0x80B, 1.0f },
+		ObjectDef{ "perk_windrunner", "Windrunner Brew", 1, 2000, 4, 0x80C, 1.0f },
+		ObjectDef{ "perk_hawkeye", "Hawkeye Tincture", 1, 1500, 5, 0x80D, 1.6f },
+		ObjectDef{ "perk_mammoth", "Mammoth Back Porter", 1, 4000, 6, 0x80E, 1.0f },
+		ObjectDef{ "perk_frostbite", "Frostbite Venom", 1, 4000, 7, 0x829, 1.5f },
+		ObjectDef{ "perk_stormcrown", "Stormcrown Cider", 1, 2000, 8, 0x82A, 0.5f },
+		ObjectDef{ "wall_triad", "Triad Burst", 2, 500, 2, 0x80F, 1.0f },
+		ObjectDef{ "wall_spider", "Spider SMG", 2, 1000, 3, 0x810, 1.0f },
+		ObjectDef{ "wall_drill", "Sphere Drill", 2, 1300, 4, 0x811, 1.0f },
+		ObjectDef{ "wall_steampump", "Steam Pump", 2, 900, 5, 0x812, 1.0f },
+		ObjectDef{ "wall_marksman", "Arkngthand Marksman", 2, 900, 6, 0x813, 1.0f },
+	struct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; };
+	inline constexpr std::array<DressDef, 60> kDress{ {
+		DressDef{ 0, 0x84D, false, 0.0f, 0.0f, 0.0f, 0.45f, 0.0f },
+		DressDef{ 0, 0x84E, true, 0.0f, 30.0f, 90.0f, 1.0f, 0.0f },
+		DressDef{ 0, 0x871, false, 0.0f, 0.0f, 70.0f, 0.8f, 0.0f },
+		DressDef{ 0, 0x872, false, -55.0f, 5.0f, 0.0f, 1.6f, 0.0f },
+		DressDef{ 0, 0x873, false, -55.0f, 5.0f, 14.0f, 1.4f, 0.0f },
+		DressDef{ 0, 0x874, false, 55.0f, 0.0f, 0.0f, 0.35f, 15.0f },
+		DressDef{ 1, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
+		DressDef{ 1, 0x852, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 1, 0x875, false, 0.0f, 0.0f, 120.0f, 3.0f, 40.0f },
+		DressDef{ 1, 0x876, false, 0.0f, 10.0f, 95.0f, 1.3f, 0.0f },
+		DressDef{ 1, 0x877, false, 0.0f, 0.0f, 135.0f, 0.6f, 0.0f },
+		DressDef{ 2, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
+		DressDef{ 2, 0x854, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 2, 0x878, false, 0.0f, 0.0f, 110.0f, 3.0f, 40.0f },
+		DressDef{ 2, 0x879, false, -14.0f, 8.0f, 92.0f, 1.6f, 0.0f },
+		DressDef{ 2, 0x87A, false, 14.0f, 8.0f, 92.0f, 1.6f, 0.0f },
+		DressDef{ 2, 0x87B, false, 0.0f, 0.0f, 125.0f, 0.6f, 0.0f },
+		DressDef{ 3, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
+		DressDef{ 3, 0x856, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 3, 0x87C, false, 0.0f, 0.0f, 140.0f, 3.0f, 40.0f },
+		DressDef{ 3, 0x87D, false, -18.0f, 12.0f, 110.0f, 1.8f, 0.0f },
+		DressDef{ 3, 0x87E, false, 18.0f, 12.0f, 110.0f, 1.8f, 0.0f },
+		DressDef{ 3, 0x87F, false, 0.0f, 0.0f, 155.0f, 0.6f, 0.0f },
+		DressDef{ 4, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
+		DressDef{ 4, 0x858, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 4, 0x880, false, 0.0f, 0.0f, 120.0f, 3.0f, 40.0f },
+		DressDef{ 4, 0x881, false, 30.0f, 0.0f, 70.0f, 1.6f, 0.0f },
+		DressDef{ 4, 0x882, false, 0.0f, 0.0f, 135.0f, 0.6f, 0.0f },
+		DressDef{ 5, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
+		DressDef{ 5, 0x85A, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 5, 0x883, false, 0.0f, 0.0f, 110.0f, 3.0f, 40.0f },
+		DressDef{ 5, 0x884, false, -16.0f, 6.0f, 95.0f, 4.0f, 0.0f },
+		DressDef{ 5, 0x885, false, 16.0f, 6.0f, 95.0f, 4.0f, 0.0f },
+		DressDef{ 5, 0x886, false, 0.0f, 0.0f, 125.0f, 0.6f, 0.0f },
+		DressDef{ 6, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
+		DressDef{ 6, 0x85C, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 6, 0x887, false, 0.0f, 0.0f, 130.0f, 3.0f, 40.0f },
+		DressDef{ 6, 0x888, false, 0.0f, 10.0f, 100.0f, 0.25f, 25.0f },
+		DressDef{ 6, 0x889, false, 0.0f, 0.0f, 145.0f, 0.6f, 0.0f },
+		DressDef{ 7, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
+		DressDef{ 7, 0x85E, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 7, 0x88A, false, 0.0f, 0.0f, 150.0f, 3.0f, 40.0f },
+		DressDef{ 7, 0x88B, false, 0.0f, 0.0f, 40.0f, 0.8f, 0.0f },
+		DressDef{ 7, 0x88C, false, 0.0f, 0.0f, 165.0f, 0.6f, 0.0f },
+		DressDef{ 8, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
+		DressDef{ 8, 0x860, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 8, 0x88D, false, 0.0f, 0.0f, 110.0f, 3.0f, 40.0f },
+		DressDef{ 8, 0x88E, false, 20.0f, 10.0f, 60.0f, 4.0f, 0.0f },
+		DressDef{ 8, 0x88F, false, -20.0f, 10.0f, 60.0f, 3.0f, 0.0f },
+		DressDef{ 8, 0x890, false, 0.0f, 0.0f, 125.0f, 0.6f, 0.0f },
+		DressDef{ 9, 0x851, false, 0.0f, 0.0f, 0.0f, 0.3f, 0.0f },
+		DressDef{ 9, 0x862, true, 0.0f, 20.0f, 130.0f, 1.0f, 0.0f },
+		DressDef{ 9, 0x891, false, 0.0f, 0.0f, 140.0f, 3.0f, 40.0f },
+		DressDef{ 9, 0x892, false, 0.0f, 0.0f, 170.0f, 0.3f, -30.0f },
+		DressDef{ 9, 0x893, false, 0.0f, 0.0f, 155.0f, 0.6f, 0.0f },
+		DressDef{ 10, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
+		DressDef{ 11, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
+		DressDef{ 12, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
+		DressDef{ 13, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
+		DressDef{ 14, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
+	} };
+	inline constexpr std::array<std::uint32_t, 12> kShowStat{ { 0x864, 0x865, 0x866, 0x867, 0x868, 0x869, 0x86A, 0x86B, 0x86C, 0x86D, 0x86E, 0x86F } };
+	inline constexpr std::uint32_t kShowCheese = 0x870;
+	inline constexpr float kShowRise = 45.0f, kShowSpin = 4.2f, kShowOffer = 12.0f;
+	inline constexpr std::array<std::uint32_t, 9> kPerkColor{ { 0xD02020FF, 0x30C040FF, 0xE0A020FF, 0x3070F0FF, 0xF0D840FF, 0xB0B8C0FF, 0x7AA040FF, 0x9040E0FF, 0x40D0F0FF } };
 	} };
 	inline constexpr std::array<std::string_view, 10> kTowns{ { "Riverwood", "Whiterun", "Solitude", "Windhelm", "Markarth", "Riften", "Falkreath", "Morthal", "Dawnstar", "Winterhold" } };
 	struct LocationDef { int town; std::uint32_t anchor; int object; float angleDeg, distance; };
@@ -271,7 +338,7 @@ namespace bo3z::gen
 		LocationDef{ 5, 0x01C390, 8, 45.0f, 700.0f },
 		LocationDef{ 2, 0x04D0F4, 9, 135.0f, 700.0f },
 	} };
-	inline constexpr float kSprintBoost = 25.0f, kSlideBoost = 90.0f, kSlideSeconds = 0.7f, kAdsFov = 55.0f, kAdsSeconds = 0.12f, kAdsSpeed = -30.0f;
+	inline constexpr float kSprintBoost = 25.0f, kSlideBoost = 90.0f, kSlideSeconds = 0.7f, kAdsFov = 55.0f, kAdsSeconds = 0.12f, kAdsSpeed = -30.0f, kWorldFov = 95.0f, kViewmodelFov = 80.0f;
 	inline constexpr FormRef kQ_MQQuickstart{ "Skyrim.esm", 0x04679E, "MQQuickstart" };
 	inline constexpr FormRef kQ_MQ102Marker{ "Skyrim.esm", 0x038B08, "MQ102OutsideRiverwoodMarker" };
 	inline constexpr FormRef kQ_MQ102A{ "Skyrim.esm", 0x02BF9C, "MQ102A" };

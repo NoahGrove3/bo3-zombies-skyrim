@@ -1,46 +1,62 @@
 {
- "sheet": "movement",
- "about": "BO3 movement on top of Skyrim's controller.",
- "columns": [
-  "id",
-  "what",
-  "value",
-  "durationMs",
-  "verify"
- ],
- "rows": [
-  {
-   "id": "sprint_boost",
-   "what": "extra SpeedMult while sprinting",
-   "value": 25,
-   "durationMs": 0,
-   "verify": [
-    "value"
-   ]
-  },
-  {
-   "id": "slide",
-   "what": "sprint + crouch: burst of speed while crouched",
-   "value": 90,
-   "durationMs": 700,
-   "verify": [
+  "sheet": "movement",
+  "about": "BO3 movement on top of Skyrim's controller.",
+  "columns": [
+    "id",
+    "what",
     "value",
-    "durationMs"
-   ]
-  },
-  {
-   "id": "ads_fov",
-   "what": "field of view while aiming down sights with a gun (degrees)",
-   "value": 55,
-   "durationMs": 120,
-   "verify": []
-  },
-  {
-   "id": "ads_speed",
-   "what": "SpeedMult change while aiming down sights",
-   "value": -30,
-   "durationMs": 0,
-   "verify": []
-  }
- ]
+    "durationMs",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "sprint_boost",
+      "what": "extra SpeedMult while sprinting",
+      "value": 25,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "slide",
+      "what": "sprint + crouch: burst of speed while crouched",
+      "value": 90,
+      "durationMs": 700,
+      "verify": [
+        "value",
+        "durationMs"
+      ]
+    },
+    {
+      "id": "ads_fov",
+      "what": "field of view while aiming down sights with a gun (degrees)",
+      "value": 55,
+      "durationMs": 120,
+      "verify": []
+    },
+    {
+      "id": "ads_speed",
+      "what": "SpeedMult change while aiming down sights",
+      "value": -30,
+      "durationMs": 0,
+      "verify": []
+    },
+    {
+      "id": "world_fov",
+      "what": "Camera field of view, first and third person (Skyrim default 70)",
+      "value": 95,
+      "durationMs": 0,
+      "verify": []
+    },
+    {
+      "id": "viewmodel_fov",
+      "what": "First-person hands/weapon field of view (Skyrim default 65)",
+      "value": 80,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    }
+  ]
 }

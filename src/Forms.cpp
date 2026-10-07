@@ -146,6 +146,20 @@ namespace bo3z
 			}
 		}
 
+		RE::TESBoundObject* Ours(std::uint32_t a_localId)
+		{
+			static std::unordered_map<std::uint32_t, RE::TESBoundObject*> cache;
+			if (auto it = cache.find(a_localId); it != cache.end()) {
+				return it->second;
+			}
+			auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(a_localId, gen::kPlugin);
+			auto* b = f ? f->As<RE::TESBoundObject>() : nullptr;
+			if (!b) {
+				logger::warn("forms: record {:03X} missing from {}", a_localId, gen::kPlugin);
+			}
+			return cache[a_localId] = b;
+		}
+
 		void PlayAt(gen::Sound a_sound, RE::TESObjectREFR* a_at)
 		{
 			const auto i = static_cast<std::size_t>(a_sound);

@@ -120,116 +120,206 @@ def melody(inst, notes, bpm, **kw):
         at += b * beat
     return out
 
-# ---------- brew jingles (original compositions) ----------
-def j_trollshide():
-    bpm = 84; b = 60 / bpm
-    mel = melody(brass, [('D3', 1), ('F3', 0.5), ('A3', 0.5), ('G3', 1), ('F3', 0.5), ('E3', 0.5), ('D3', 2), (None, 0.5), ('A2', 0.5), ('D3', 2)], bpm, bright=0.4)
-    dr = np.zeros(1)
-    for k in range(9): dr = place(dr, taiko() * (1.0 if k % 2 == 0 else 0.6), k * b)
-    low = melody(brass, [('D2', 4), ('A1', 2), ('D2', 2)], bpm, bright=0.2)
-    return reverb(mix(mel, dr * 0.8, low * 0.7), 0.3)
-def j_quicksilver():
-    bpm = 150; s = 0.25
-    arp = []
-    for root in ('A3', 'C4', 'G3', 'A3'):
-        r = hz(root)
-        for k, iv in enumerate((0, 3, 7, 10, 12, 10, 7, 3)): arp.append((r * 2 ** (iv / 12), s))
-    out = np.zeros(1); at = 0
-    for f, bt in arp:
-        out = place(out, pluck(f, 0.5, bright=0.8), at); at += bt * 60 / bpm
-    bells = melody(bell, [('E5', 2), ('D5', 2), ('B4', 2), ('A5', 2)], bpm)
-    return reverb(mix(out, bells * 0.5), 0.2)
-def j_twinstrike():
-    bpm = 120; b = 60 / bpm
-    dr = np.zeros(1)
-    for bar in range(4):
-        for off in (0, 0.25, 1.5, 1.75):
-            dr = place(dr, frame_drum() * 0.9, (bar * 2 + off) * b)
-    call = melody(brass, [('G3', 0.5), ('G3', 0.5), (None, 1), ('Bb3', 0.5), ('Bb3', 0.5), (None, 1), ('C4', 0.5), ('C4', 0.5), ('D4', 1), ('G3', 2)], bpm, bright=0.8)
-    resp = melody(pluck, [(None, 1), ('D4', 1), (None, 1), ('F4', 1), (None, 2), ('G4', 2)], bpm)
-    return reverb(mix(dr, call, resp * 0.6), 0.2)
-def j_hearthfire():
-    bpm = 76
-    lute = melody(pluck, [('F3', 0.5), ('A3', 0.5), ('C4', 0.5), ('F4', 0.5), ('E4', 0.5), ('C4', 0.5), ('D4', 1), ('Bb3', 0.5), ('D4', 0.5), ('F4', 0.5), ('A4', 0.5), ('G4', 1), ('F4', 2)], bpm, bright=0.3)
-    ch = mix(choir(hz('F3'), 3.2), place(np.zeros(1), choir(hz('Bb3'), 2.0), 3.0), place(np.zeros(1), choir(hz('C4'), 2.4), 4.6))
-    return reverb(mix(lute, ch * 0.5), 0.35)
-def j_windrunner():
-    bpm = 140
-    run = melody(flute, [('E4', 0.25), ('F#4', 0.25), ('G#4', 0.25), ('A4', 0.25), ('B4', 0.25), ('C#5', 0.25), ('D5', 0.25), ('E5', 0.25), ('E5', 1), ('D5', 0.5), ('B4', 0.5), ('E5', 0.5), ('F#5', 0.5), ('E5', 2)], bpm)
-    dr = np.zeros(1)
-    for k in range(16): dr = place(dr, frame_drum(0.15) * (0.7 if k % 4 == 0 else 0.35), k * 0.5 * 60 / bpm)
-    return reverb(mix(run, dr), 0.25)
-def j_hawkeye():
-    bpm = 96
-    pz = melody(pluck, [('B3', 0.5), (None, 0.5), ('F#4', 0.5), (None, 0.5), ('D4', 0.5), ('E4', 0.5), ('F#4', 1), (None, 0.5), ('B3', 0.5), ('A3', 0.5), ('B3', 2)], bpm, bright=0.9, decay=0.99)
-    bl = melody(bell, [(None, 2), ('F#5', 2), (None, 1), ('B5', 3)], bpm, ratio=3.5, idx=2)
-    return reverb(mix(pz, bl * 0.4), 0.3, 1.3)
-def j_mammoth():
-    bpm = 108; b = 60 / bpm
-    oom = np.zeros(1)
-    for k, n in enumerate(['G1', 'D2', 'G1', 'D2', 'C2', 'G1', 'D2', 'G1']):
-        oom = place(oom, brass(hz(n), b * 0.5, bright=0.25), k * b)
-        oom = place(oom, pluck(hz('B3'), 0.3) * 0.4, (k + 0.5) * b)
-    tune = melody(brass, [('G3', 1), ('B3', 1), ('D4', 1.5), ('B3', 0.5), ('C4', 1), ('A3', 1), ('G3', 2)], bpm, bright=0.5)
-    return reverb(mix(oom * 0.9, tune), 0.2)
-def j_frostbite():
-    bpm = 100
-    crawl = melody(bell, [('E5', 0.25), ('F5', 0.25), ('E5', 0.25), ('D#5', 0.25), ('E5', 0.5), (None, 0.5), ('B4', 0.25), ('C5', 0.25), ('B4', 0.25), ('A#4', 0.25), ('B4', 1), ('G5', 0.5), ('F#5', 0.5), ('E5', 2)], bpm, ratio=5.4, idx=1.5)
-    glass = pad(hz('E5'), 4.5) * 0.3 + pad(hz('B5'), 4.5) * 0.15
-    return reverb(mix(crawl, glass), 0.45, 1.4)
-def j_stormcrown():
-    bpm = 132; b = 60 / bpm
-    dr = np.zeros(1)
-    for k in range(16):
-        dr = place(dr, kick(0.25, 140, 50) * 0.8, k * 0.5 * b) if k % 2 == 0 else place(dr, frame_drum(0.12) * 0.5, k * 0.5 * b)
-    z = np.zeros(1)
-    for k, f in enumerate([hz('C5'), hz('Db5'), hz('C5'), hz('G4'), hz('C5'), hz('Db5'), hz('Eb5'), hz('C5')]):
-        z = place(z, zap(f * 2, f, 0.22), k * 0.5 * b)
-    riff = melody(brass, [('C3', 0.5), ('C3', 0.5), ('Db3', 0.5), ('C3', 0.5), ('Bb2', 1), ('C3', 2)], bpm, bright=0.9)
-    return reverb(mix(dr, z * 0.6, riff * 0.8), 0.2)
+# ---------- Skyrim-style instruments (v2: no chiptune) ----------
+from scipy.signal import butter, sosfilt, fftconvolve
+def bp(x, lo, hi, order=2):
+    return sosfilt(butter(order, [lo / (SR / 2), min(hi, SR / 2 - 100) / (SR / 2)], 'band', output='sos'), x)
+def lpb(x, f, order=2): return sosfilt(butter(order, f / (SR / 2), 'low', output='sos'), x)
+def hpb(x, f, order=2): return sosfilt(butter(order, f / (SR / 2), 'high', output='sos'), x)
+_IR = {}
+def hall(x, wet=0.35, secs=2.8):
+    """Stone-hall convolution reverb (synthetic impulse: early reflections + dark decaying tail)."""
+    key = secs
+    if key not in _IR:
+        n = int(secs * SR); r = np.random.default_rng(11)
+        tail = r.standard_normal(n) * np.exp(-np.arange(n) / (secs / 6.9 * SR))
+        tail = lpb(tail, 4500) + 0.5 * lpb(tail, 900)
+        for k, (dly, g) in enumerate(((0.011, .5), (0.019, .4), (0.027, .35), (0.041, .3), (0.053, .25))):
+            tail[int(dly * SR)] += g * 8
+        _IR[key] = tail / np.sqrt(np.sum(tail ** 2))
+    y = fftconvolve(x, _IR[key])
+    out = np.pad(x, (0, len(y) - len(x)))
+    return out * (1 - wet) + y * wet * 0.9
+def saw_bl(f, tt, vib=None):
+    """band-limited sawtooth (additive), optional vibrato array in ratio."""
+    ph = 2 * np.pi * np.cumsum(f * (vib if vib is not None else 1.0) * np.ones_like(tt)) / SR
+    x = np.zeros_like(tt); K = int(min(40, (SR / 2.2) / f))
+    for k in range(1, K + 1): x += np.sin(k * ph) / k
+    return x
+def vib_of(tt, rate=5.0, depth=0.006, delay=0.2):
+    ramp = np.clip((tt - delay) / 0.4, 0, 1)
+    return 1 + depth * ramp * np.sin(2 * np.pi * rate * tt + rng.uniform(0, 6))
+VOWELS = {'a': ((700, 1220, 2600), (1, .5, .25)), 'o': ((450, 800, 2830), (1, .35, .15)), 'u': ((325, 700, 2530), (1, .25, .1)), 'e': ((400, 1700, 2600), (1, .4, .25))}
+def choir(f, d, vowel='a', voices=7, bright=1.0):
+    """Male choir section: glottal sources through vowel formants, detuned voices."""
+    tt = t_(d); src = np.zeros(len(tt))
+    for v in range(voices):
+        det = 2 ** (rng.uniform(-9, 9) / 1200)
+        src += saw_bl(f * det, tt, vib_of(tt, rng.uniform(4.6, 5.6), 0.005, rng.uniform(.1, .4))) * rng.uniform(.7, 1)
+    src = lpb(src, 3000 * bright) + lpb(noise(len(tt)), 2500) * 0.04 * voices
+    fr, gs = VOWELS[vowel]; out = np.zeros(len(tt))
+    for F, g in zip(fr, gs): out += bp(src, F * 0.85, F * 1.18) * g
+    return out / voices * 3 * env(len(tt), min(0.35, d * 0.3), 0.2, 0.9, min(0.6, d * 0.35))
+def horn(f, d, bright=0.6):
+    """Nord war horn: brassy saw, filter opens with breath, scoop up into pitch."""
+    tt = t_(d); scoop = 1 - 0.03 * np.exp(-tt * 18)
+    x = saw_bl(f, tt, scoop * vib_of(tt, 4.5, 0.003, 0.4))
+    e = env(len(tt), 0.12, 0.2, 0.85, 0.25)
+    cutoff = 300 + 2600 * bright * e
+    y = np.zeros_like(x); chunk = 512
+    for i in range(0, len(x), chunk):
+        y[i:i + chunk] = lpb(x[max(0, i - 2048):i + chunk], max(120, cutoff[i]), 2)[-len(x[i:i + chunk]):]
+    breath = bp(noise(len(tt)), 500, 2500) * 0.05
+    return (y + breath) * e * 0.6
+def fiddle(f, d, bright=0.7, trem=False):
+    """Bowed string (nyckelharpa/fiddle): saw through a wooden body, vibrato, bow hiss."""
+    tt = t_(d); x = saw_bl(f, tt, vib_of(tt, 5.5, 0.007, 0.15))
+    body = bp(x, 250, 600) * 0.8 + bp(x, 900, 1400) * 0.6 + bp(x, 2400, 3400) * 0.35 * bright + lpb(x, 400) * 0.5
+    bow = bp(noise(len(tt)), 2000, 6000) * 0.02
+    e = env(len(tt), 0.08, 0.1, 0.85, 0.15)
+    if trem: e *= 0.6 + 0.4 * np.abs(np.sin(2 * np.pi * 7 * tt))
+    return (body + bow) * e * 0.8
+def drone(f, d): return fiddle(f, d, 0.4) * 0.6 + fiddle(f * 1.5, d, 0.3) * 0.3
+def lute(f, d, bright=0.4):
+    x = pluck(f, d, bright=bright, decay=0.997)
+    return bp(x, 90, 3500) + bp(x, 200, 400) * 0.6 + bp(x, 1800, 2600) * 0.3
+def woodflute(f, d):
+    tt = t_(d); vib = vib_of(tt, 5.0, 0.008, 0.15)
+    x = np.sin(2 * np.pi * np.cumsum(f * vib) / SR) + 0.12 * np.sin(4 * np.pi * np.cumsum(f * vib) / SR)
+    breath = bp(noise(len(tt)), f * 0.8, f * 3) * 0.12
+    return (x + breath) * env(len(tt), 0.07, 0.1, 0.8, 0.12) * 0.45
+def wardrum(d=1.4, pitch=1.0, hit=1.0):
+    """Big skin drum: inharmonic membrane modes with pitch drop, beater thud, long body."""
+    tt = t_(d); out = np.zeros(len(tt)); f0 = 62 * pitch
+    for ratio, g, tau in ((1.0, 1.0, .45), (1.59, .5, .25), (2.14, .35, .18), (2.30, .3, .15), (2.65, .2, .1)):
+        f = f0 * ratio * (1 + 0.25 * np.exp(-tt * 25))
+        out += np.sin(2 * np.pi * np.cumsum(f) / SR) * g * np.exp(-tt / tau)
+    thud = lpb(noise(len(tt)), 1200) * np.exp(-tt / 0.03) * 0.8
+    return np.tanh((out + thud) * hit * 1.2) * 0.8
+def framedrum(d=0.35, hit=1.0):
+    tt = t_(d); f = 180 * (1 + 0.3 * np.exp(-tt * 40))
+    return (np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-tt / 0.08) * 0.6 + bp(noise(len(tt)), 800, 5000) * np.exp(-tt / 0.03) * 0.5) * hit
+def thunder(d=3.0):
+    tt = t_(d); x = lpb(noise(len(tt)), 260, 4) * 6
+    crack = bp(noise(len(tt)), 300, 3000) * np.exp(-tt / 0.15)
+    return np.tanh((x * env(len(tt), 0.05, 0.3, 0.5, d * 0.6) + crack) * 1.5) * 0.7
 
-# ---------- the Coffer ----------
+def seq(inst, notes, bpm, legato=1.1, **kw):
+    """notes: (note|None, beats[, vel]). Each note lasts beats*legato (lute rings longer)."""
+    beat = 60 / bpm; out = np.zeros(1); at = 0.0
+    for item in notes:
+        n, b = item[0], item[1]; vel = item[2] if len(item) > 2 else 1.0
+        if n:
+            dur = max(b * beat * legato, 0.9) if inst is lute else b * beat * legato
+            out = place(out, inst(hz(n), dur, **kw) * vel, at)
+        at += b * beat
+    return out
+def chord(inst, notes, d, **kw): return mix(*[inst(hz(n), d, **kw) for n in notes]) / len(notes) * 1.6
+def drums(pattern, bpm, inst=wardrum, **kw):
+    """pattern: list of (beat, velocity)."""
+    out = np.zeros(1)
+    for b, v in pattern: out = place(out, inst(**kw) * v, b * 60 / bpm)
+    return out
+
+# ---------- brew jingles (original, Skyrim-style) ----------
+def j_trollshide():   # heavy: war drums, low horns, humming choir, D minor
+    bpm = 80
+    dr = drums([(k, 1.0 if k % 2 == 0 else 0.65) for k in range(8)] + [(7.5, .7)], bpm)
+    hn = seq(horn, [('D3', 1.5), ('F3', .5), ('A3', 1), ('G3', 1), ('F3', 1), ('E3', 1), ('D3', 2.5)], bpm, bright=.5)
+    ch = mix(chord(choir, ['D2', 'A2', 'D3'], 4.5, vowel='u'), place(np.zeros(1), chord(choir, ['A1', 'E2', 'A2'], 2.6, vowel='u'), 4.4))
+    return hall(mix(dr * .9, hn, ch * .8), .3)
+def j_quicksilver():  # nimble: fast lute arpeggios + fiddle line, A dorian
+    bpm = 144; notes = []
+    for root, ivs in (('A3', (0, 7, 12, 15)), ('G3', (0, 7, 12, 14)), ('F3', (0, 7, 12, 16)), ('E3', (0, 7, 12, 15))):
+        for _ in range(2):
+            for iv in ivs: notes.append((root, 0.25, iv))
+    out = np.zeros(1); at = 0
+    for root, b, iv in notes:
+        out = place(out, lute(hz(root) * 2 ** (iv / 12), 0.9, .55), at); at += b * 60 / bpm
+    fd = seq(fiddle, [('E5', 1), ('D5', .5), ('C5', .5), ('D5', 1), ('B4', 1), ('C5', .5), ('B4', .5), ('A4', 2)], bpm)
+    dr = drums([(k * .5, .5) for k in range(16)], bpm, framedrum)
+    return hall(mix(out, fd * .7, dr * .5), .25)
+def j_twinstrike():   # double hits, fiddle call and horn answer, G minor
+    bpm = 116
+    dr = drums([(b + o, v) for b in (0, 2, 4, 6) for o, v in ((0, 1), (.33, .8))], bpm)
+    fd = seq(fiddle, [('G4', .5), ('G4', .5), (None, 1), ('Bb4', .5), ('Bb4', .5), (None, 1), ('C5', .5), ('D5', .5), ('C5', .5), ('Bb4', .5), ('G4', 2)], bpm)
+    hn = seq(horn, [(None, 1), ('D3', 1), (None, 1), ('F3', 1), (None, 2), ('G3', 2)], bpm)
+    return hall(mix(dr * .9, fd, hn * .7), .3)
+def j_hearthfire():   # warm: lute lullaby, soft choir, F major
+    bpm = 72
+    lt = seq(lute, [('F3', .5), ('A3', .5), ('C4', .5), ('F4', .5), ('E4', .5), ('C4', .5), ('D4', 1), ('Bb3', .5), ('D4', .5), ('F4', .5), ('A4', .5), ('G4', 1), ('F4', 2)], bpm, bright=.3)
+    ch = mix(chord(choir, ['F2', 'C3', 'A3'], 3.4, vowel='o'), place(np.zeros(1), chord(choir, ['Bb2', 'F3', 'D4'], 2.2, vowel='o'), 3.2), place(np.zeros(1), chord(choir, ['C3', 'G3', 'E4'], 1.6, vowel='o'), 5.0), place(np.zeros(1), chord(choir, ['F2', 'C3', 'A3'], 2.5, vowel='o'), 6.4))
+    return hall(mix(lt, ch * .6), .38, 3.2)
+def j_windrunner():   # gallop: wooden flute run over frame-drum hoofbeats, E mixolydian
+    bpm = 138
+    fl = seq(woodflute, [('E4', .25), ('F#4', .25), ('G#4', .25), ('A4', .25), ('B4', .25), ('C#5', .25), ('D5', .25), ('E5', .25), ('E5', 1), ('D5', .5), ('B4', .5), ('E5', .5), ('F#5', .5), ('E5', 2)], bpm)
+    dr = drums([(k * .5 + o, v) for k in range(14) for o, v in ((0, .9), (.17, .5), (.33, .6))], bpm, framedrum)
+    dn = drone(hz('E2'), 5.0)
+    return hall(mix(fl, dr * .6, dn * .4), .28)
+def j_hawkeye():      # stealth: sparse lute harmonics over a low drone and whispered choir, B minor
+    bpm = 90
+    lt = seq(lute, [('B3', .5), (None, .5), ('F#4', .5), (None, .5), ('D4', .5), ('E4', .5), ('F#4', 1), (None, .5), ('B3', .5), ('A3', .5), ('B3', 2)], bpm, bright=.8)
+    dn = drone(hz('B1'), 5.5)
+    wh = chord(choir, ['B2', 'F#3'], 5.0, vowel='u', bright=.5)
+    return hall(mix(lt, dn * .5, wh * .35), .4, 3.2)
+def j_mammoth():      # giant steps: deep horns, stomping drum, G
+    bpm = 96
+    dr = drums([(k, 1.0) for k in range(8)], bpm, wardrum, pitch=.75, hit=1.3)
+    hn = seq(horn, [('G2', 1), ('B2', 1), ('D3', 1.5), ('B2', .5), ('C3', 1), ('A2', 1), ('G2', 2)], bpm, bright=.35)
+    lo = seq(horn, [('G1', 4), ('D2', 2), ('G1', 2)], bpm, bright=.2)
+    return hall(mix(dr * .9, hn, lo * .6), .3)
+def j_frostbite():    # icy: tremolo high fiddles, low choir, creeping half-steps, E minor
+    bpm = 96
+    cr = seq(fiddle, [('E5', .25), ('F5', .25), ('E5', .25), ('D#5', .25), ('E5', .5), (None, .5), ('B4', .25), ('C5', .25), ('B4', .25), ('A#4', .25), ('B4', 1), ('G5', .5), ('F#5', .5), ('E5', 2)], bpm, bright=1.0)
+    ice = chord(fiddle, ['E5', 'B5'], 5.0, trem=True, bright=1.0) * .35
+    ch = chord(choir, ['E2', 'B2'], 5.0, vowel='o')
+    return hall(mix(cr, ice, ch * .5), .45, 3.5)
+def j_stormcrown():   # storm: thunder, driving drums, horn call, shouted choir chord, C phrygian
+    bpm = 128
+    dr = drums([(k * .5, 1.0 if k % 2 == 0 else .55) for k in range(16)], bpm)
+    hn = seq(horn, [('C3', .5), ('C3', .5), ('Db3', .5), ('C3', .5), ('Bb2', 1), ('C3', 2)], bpm, bright=.9)
+    ch = place(np.zeros(1), chord(choir, ['C3', 'G3', 'C4'], 2.2, vowel='a', bright=1.3), 2.9)
+    return hall(mix(place(np.zeros(1), thunder(3.5) * .7, 0), dr * .8, hn, ch * .8), .3)
+
+# ---------- the Coffer (Sheogorath: mad, jolly, off-kilter) ----------
 def coffer_spin():
-    bpm = 168
-    waltz = []
-    for bar, (bass, a, c) in enumerate([('D3', 'F#4', 'A4'), ('A2', 'E4', 'G4'), ('D3', 'F#4', 'A4'), ('G2', 'D4', 'B4'), ('A2', 'C#4', 'E4'), ('D3', 'D4', 'F#4')]):
-        waltz += [(bass, 1), (a, 0.5), (c, 0.5), (a, 1)]
-    box = melody(bell, waltz, bpm, ratio=4.0, idx=1.2)
-    # a mad giggle of rising wobbly zaps
+    bpm = 150; tune = [('D5', .5), ('F#5', .5), ('A5', .5), ('G5', .5), ('F#5', .5), ('E5', .5), ('D5', .5), ('C#5', .5), ('E5', .5), ('G5', .5), ('F#5', .5), ('D5', .5), ('A4', 1), ('D5', 1)]
+    fd = seq(fiddle, tune, bpm, legato=.9, bright=.9)
+    lt = seq(lute, [('D3', 1), ('A3', 1), ('A2', 1), ('E3', 1), ('D3', 1), ('A3', 1), ('D3', 2)], bpm)
+    dr = drums([(k * 1.0, .6) for k in range(8)], bpm, framedrum)
+    # a giggle: little fiddle squeaks bending up
     gig = np.zeros(1)
-    for k in range(5): gig = place(gig, zap(600 + 120 * k, 900 + 160 * k, 0.12) * 0.25, 3.3 + k * 0.11)
-    return reverb(mix(box, gig), 0.3)
+    for k in range(4): gig = place(gig, fiddle(hz('A5') * (1 + .06 * k), .12, 1.0) * .5, 3.3 + k * .1)
+    return hall(mix(fd, lt * .8, dr * .5, gig), .28)
 def coffer_open():
     n = int(0.9 * SR)
     creak = np.sin(2 * np.pi * np.cumsum(140 + 60 * np.sin(np.linspace(0, 9, n)) + 30 * noise(n)) / SR) * env(n, 0.05, 0.3, 0.5, 0.3)
-    creak = lp_fast(creak * (1 + 0.5 * noise(n)), 1500, 2) * 0.6
-    chime = mix(bell(hz('A5'), 1.2), place(np.zeros(1), bell(hz('E6'), 1.2), 0.12))
-    return reverb(mix(creak, place(np.zeros(1), chime * 0.5, 0.5)), 0.3)
+    creak = lpb(creak * (1 + 0.5 * noise(n)), 1500) * 0.6
+    sigh = place(np.zeros(1), chord(choir, ['D3', 'A3', 'F#4'], 1.8, vowel='a'), 0.35)
+    return hall(mix(creak, sigh * .7), .35)
 def coffer_cheese():
-    sad = melody(brass, [('G3', 0.75), ('F#3', 0.75), ('F3', 0.75), ('E3', 2.5)], 100, bright=0.7)
-    tt = t_(2.6); wob = np.sin(2 * np.pi * np.cumsum(500 + 180 * np.sin(2 * np.pi * 9 * tt) * np.exp(-tt)) / SR) * expdec(len(tt), 0.7) * 0.25
-    return reverb(mix(sad, place(np.zeros(1), wob, 0.4)), 0.25)
+    sad = seq(fiddle, [('G4', .75), ('F#4', .75), ('F4', .75), ('E4', 2.5)], 100, bright=.8)
+    ohh = place(np.zeros(1), chord(choir, ['C3', 'G3', 'E4'], 2.0, vowel='o'), 1.9)
+    return hall(mix(sad, ohh * .6), .3)
 
 # ---------- nights ----------
 def night_start():
-    n = int(3.5 * SR); tt = t_(3.5)
-    horn = brass(hz('D2'), 3.2, bright=0.35) + brass(hz('A2'), 3.2, bright=0.3) * 0.6
-    dr = np.zeros(1)
-    for k, at in enumerate((0, 0.75, 1.5, 1.9, 2.3)): dr = place(dr, taiko() * (1.0 if k < 3 else 0.8), at)
-    rumble = lp_fast(noise(n), 120, 2) * env(n, 1.0, 0.5, 0.6, 1.5) * 1.5
-    return reverb(mix(horn, dr, rumble), 0.35, 1.3)
+    hn = mix(seq(horn, [('D3', 2.2), ('A3', 1.0), ('D3', 1.8)], 90, bright=.45), seq(horn, [('D2', 5.0)], 90, bright=.25) * .6)
+    dr = drums([(0, 1), (1.5, .8), (3, 1), (3.5, .7), (4, 1), (4.5, .8), (5, 1.1)], 90)
+    rumble = lpb(noise(int(4 * SR)), 110, 4) * env(int(4 * SR), 1.0, 0.5, 0.6, 1.5) * 4
+    return hall(mix(hn, dr, rumble), .35, 3.2)
 def night_end():
-    ch = mix(choir(hz('D3'), 3.5), choir(hz('F3'), 3.5) * 0.8, choir(hz('A3'), 3.5) * 0.7,
-             place(np.zeros(1), mix(choir(hz('D3'), 2.5), choir(hz('F#3'), 2.5) * 0.8, choir(hz('A3'), 2.5) * 0.7), 2.2))
-    return reverb(mix(ch, place(np.zeros(1), bell(hz('D5'), 2.5) * 0.3, 2.2)), 0.4, 1.4)
+    ch = mix(chord(choir, ['D2', 'A2', 'F3'], 3.2, vowel='a'), place(np.zeros(1), chord(choir, ['D2', 'A2', 'F#3', 'D4'], 3.0, vowel='a'), 2.6))
+    st = place(np.zeros(1), chord(fiddle, ['D4', 'F#4', 'A4'], 3.0, bright=.5) * .4, 2.6)
+    return hall(mix(ch, st), .42, 3.5)
 def hound_night():
     tt = t_(2.4); howl = np.sin(2 * np.pi * np.cumsum(300 + 250 * np.sin(np.pi * tt / 2.4) + 8 * np.sin(2 * np.pi * 6 * tt)) / SR)
-    howl = lp_fast(howl + 0.3 * noise(len(tt)) * 0.2, 2500, 1) * env(len(tt), 0.3, 0.3, 0.8, 0.8) * 0.5
-    dr = np.zeros(1)
-    for k in range(6): dr = place(dr, taiko() * 0.8, 1.2 + k * 0.28)
-    return reverb(mix(howl, dr), 0.4, 1.4)
+    howl = bp(howl + 0.2 * noise(len(tt)), 200, 2500) * env(len(tt), 0.3, 0.3, 0.8, 0.8) * 0.6
+    dr = drums([(1.2 + k * .3, .9) for k in range(6)], 60)
+    hn = place(np.zeros(1), horn(hz('C3'), 1.6, .6), 2.0)
+    return hall(mix(howl, dr, hn * .8), .4, 3.2)
 def night_falls():
-    return mix(night_start() * 0.8, place(np.zeros(1), choir(hz('D3'), 3.0) * 0.4, 0.5))
+    return mix(night_start() * 0.8, place(np.zeros(1), chord(choir, ['D2', 'A2'], 3.0, vowel='u') * 0.5, 0.5))
 
 # ---------- weapons ----------
 def gunshot(body_hz, crack, tail, sub=1.0, d=0.6):
@@ -246,7 +336,10 @@ def shot_shotgun(): return reverb(gunshot(900, 0.01, 0.12, 1.4, 0.9), 0.2)
 def shot_sniper():
     x = gunshot(1300, 0.008, 0.1, 1.5, 1.0); return reverb(x, 0.35, 1.5)
 def shot_ray():
-    return reverb(mix(zap(2400, 300, 0.35), zap(1200, 150, 0.4) * 0.6, bell(hz('E6'), 0.4) * 0.3), 0.2)
+    n = int(0.6 * SR); tt = t_(0.6)
+    whoosh = np.concatenate([bp(c, f, f * 2.2) for c, f in zip(np.array_split(noise(n), 24), np.geomspace(3000, 300, 24))]) * env(n, 0.005, 0.1, 0.5, 0.3)
+    shimmer = chord(choir, ['A4', 'E5'], 0.5, vowel='e', bright=1.5) * 0.4
+    return hall(mix(whoosh * 1.4, shimmer, kick(0.3, 110, 45) * 0.5), .3)
 def click(f=3000, d=0.03):
     n = int(d * SR); return hp(noise(n), f) * expdec(n, 0.004) + np.sin(2 * np.pi * f / 3 * t_(d)) * expdec(n, 0.006) * 0.5
 def reload_mag():
@@ -264,10 +357,13 @@ def reload_shell():
     return norm(x, 0.75)
 def dry_click(): return norm(click(3500, 0.05), 0.5)
 def buy():
-    x = np.zeros(1)
-    for k, f in enumerate((2637, 3136, 3951, 3520, 4186)):
-        x = place(x, bell(f, 0.5, ratio=1.41, idx=1.0), k * 0.06)
-    return reverb(norm(x, 0.7), 0.2)
+    x = np.zeros(1)   # septims spilling into a purse
+    for k in range(7):
+        n = int(0.25 * SR); tt = t_(0.25); f = rng.uniform(2800, 4800)
+        coin = (np.sin(2 * np.pi * f * tt) + .5 * np.sin(2 * np.pi * f * 2.7 * tt)) * np.exp(-tt / 0.05) * 0.4
+        x = place(x, coin, k * 0.045 + rng.uniform(0, .02))
+    x = place(x, lpb(noise(int(0.2 * SR)), 1500) * env(int(0.2 * SR), .01, .05, .4, .1) * .4, 0.3)
+    return hall(norm(x, 0.7), 0.2, 1.5)
 def hitmarker(): return norm(click(4200, 0.06), 0.45)
 def headshot(): return norm(mix(click(2000, 0.06) * 1.3, lp_fast(noise(int(0.08 * SR)), 900, 2) * expdec(int(0.08 * SR), 0.02)), 0.6)
 def drink():
@@ -276,8 +372,8 @@ def drink():
         n = int(0.14 * SR); tt = t_(0.14)
         g = np.sin(2 * np.pi * np.cumsum(180 + 220 * tt / 0.14) / SR) * env(n, 0.01, 0.04, 0.5, 0.05)
         x = place(x, lp_fast(g, 800, 1), k * 0.22)
-    x = place(x, mix(bell(hz('C6'), 0.8), bell(hz('G6'), 0.8) * 0.6), 0.95)
-    return reverb(norm(x, 0.7), 0.25)
+    x = place(x, chord(choir, ['C3', 'G3', 'E4'], 1.2, vowel='a') * 0.6, 0.95)
+    return hall(norm(x, 0.7), 0.3)
 def knife():
     n = int(0.25 * SR); sweep = np.linspace(500, 4000, n)
     nz = noise(n); w = np.concatenate([lp_fast(c, f, 1) for c, f in zip(np.array_split(nz, 32), np.linspace(500, 4000, 32))])
@@ -287,8 +383,8 @@ def rise():
     dirt = lp_fast(noise(n), 400, 2) * env(n, 0.2, 0.3, 0.7, 0.5) * 2
     crumble = np.zeros(n)
     for k in range(14): crumble = place(crumble, lp_fast(noise(int(0.05 * SR)), 1500, 1) * expdec(int(0.05 * SR), 0.01) * 0.4, rng.uniform(0.1, 1.1))[:n]
-    groan = brass(hz('A1'), 1.0, bright=0.1) * 0.6
-    return reverb(norm(mix(dirt, crumble, place(np.zeros(1), groan, 0.3))), 0.2)
+    groan = choir(hz('A1'), 1.1, vowel='o', voices=2, bright=.6) * 0.8
+    return hall(norm(mix(dirt, crumble, place(np.zeros(1), groan, 0.3))), 0.25)
 
 SOUNDS = {
     'brew_trollshide': j_trollshide, 'brew_quicksilver': j_quicksilver, 'brew_twinstrike': j_twinstrike,
@@ -303,7 +399,9 @@ SOUNDS = {
 }
 
 def write(path, x):
-    x = fade_tail(norm(x))
+    x = norm(x - np.mean(x))
+    loud = np.nonzero(np.abs(x) > 0.004)[0]
+    x = fade_tail(x[:min(len(x), (loud[-1] if len(loud) else len(x)) + int(0.05 * SR))])
     pcm = (np.clip(x, -1, 1) * 32767).astype('<i2')
     with wave.open(str(path), 'wb') as w:
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes(pcm.tobytes())

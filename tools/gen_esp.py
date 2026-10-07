@@ -2,10 +2,10 @@
 Records: Perk-a-Cola magic effects (MGEF) and potions (ALCH), gun items (WEAP, stand-in crossbow models),
 and activators (ACTI) for the Mystery Box, perk machines and wall-buys."""
 import json, struct, pathlib
-from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS
+from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
-T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d']}
+T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
 def z(s): return s.encode('cp1252') + b'\0'
 def sub(name, data):
@@ -18,7 +18,7 @@ def group(label, recs):
     data = b''.join(recs)
     return b'GRUP' + struct.pack('<I', 24 + len(data)) + label.encode() + struct.pack('<iHHHH', 0, 0, 0, 44, 0) + data
 fid = lambda kind, key: SELF | IDS[(kind, key)]
-recs = {'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
+recs = {'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
 
 for p in S['perks']['rows']:
     data = bytearray(tsub('mgef', 'DATA'))
@@ -69,11 +69,25 @@ for s in S['sounds']['rows']:
         sub('EDID', z(s['editorId'])), sub('CNAM', tsub(tpl, 'CNAM')), sub('GNAM', tsub(tpl, 'GNAM')),
         sub('ANAM', z(s['file'])), sub('ONAM', tsub(tpl, 'ONAM')), sub('LNAM', tsub(tpl, 'LNAM')), sub('BNAM', bnam)]))
 
+DREC, _ = dressing(S)
+for (kind, key), r in DREC.items():
+    if kind == 'STAT':
+        recs['STAT'].append(record('STAT', fid('STAT', key), [
+            sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -30, -30, 0, 30, 30, 60)),
+            sub('MODL', z(r['model'])), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
+    else:
+        data = bytearray(tsub('ligh', 'DATA'))
+        c = int(r['color'], 16)
+        struct.pack_into('<I', data, 4, int(r['radius']))
+        struct.pack_into('<BBBB', data, 8, c >> 16, (c >> 8) & 255, c & 255, 0)
+        recs['LIGH'].append(record('LIGH', fid('LIGH', key), [
+            sub('EDID', z('UN_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.0))]))
+
 count = sum(len(v) for v in recs.values())
 hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('Undying Nights: round-based undead survival for Skyrim'))]
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
-for k in ['SNDR', 'MGEF', 'ACTI', 'WEAP', 'ALCH']: out += group(k, recs[k])
+for k in ['STAT', 'LIGH', 'SNDR', 'MGEF', 'ACTI', 'WEAP', 'ALCH']: out += group(k, recs[k])
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')

@@ -2,6 +2,7 @@
 
 #include <imgui.h>
 #include <imgui_impl_dx11.h>
+#include <WICTextureLoader.h>
 
 // BO3-style HUD (sheet: hud), drawn with Dear ImGui over Skyrim's frame from a Present hook
 // (the hook itself follows SkyCraft's Overlay.cpp, MIT, chasmlol).
@@ -17,6 +18,7 @@ namespace bo3z
 		ID3D11Device*        g_device = nullptr;
 		ID3D11DeviceContext* g_context = nullptr;
 		ImFont*              g_font = nullptr;
+		std::array<ID3D11ShaderResourceView*, gen::kPerks.size()> g_perkIcons{};
 		auto                 g_last = std::chrono::steady_clock::now();
 
 		ImU32 Col(std::uint32_t a_rgba, float a_alpha = 1.0f)
@@ -77,23 +79,26 @@ namespace bo3z
 			}
 			// Perk row above Skyrim's health bar (bottom centre), up to 9.
 			{
-				static constexpr std::array<std::uint32_t, 9> colors{ 0xD01818FF, 0x2EB82EFF, 0xE0A020FF, 0x3070E0FF, 0xE8D040FF, 0x606060FF, 0x6A9A40FF, 0x8A1E8AFF, 0x40C8E8FF };
 				int n = 0;
 				for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
 					n += (s.perks >> i) & 1;
 				}
-				const float r = 17 * k, gap = 40 * k;
+				const float r = 20 * k, gap = 46 * k;
 				auto        c = Anchor(gen::kHud_perk_row, size, k);
 				float       x = c.x - (n - 1) * gap * 0.5f;
 				for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
 					if (!((s.perks >> i) & 1)) {
 						continue;
 					}
-					dl->AddCircleFilled({ x, c.y }, r, Col(colors[i % colors.size()]));
-					dl->AddCircle({ x, c.y }, r, IM_COL32(0, 0, 0, 200), 0, 2 * k);
-					const std::string letter(1, gen::kPerks[i].label[0]);
-					const auto ts = g_font->CalcTextSizeA(20 * k, FLT_MAX, 0, letter.c_str());
-					dl->AddText(g_font, 20 * k, { x - ts.x / 2, c.y - ts.y / 2 }, IM_COL32(255, 255, 255, 235), letter.c_str());
+					if (auto* icon = g_perkIcons[i]) {
+						dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { x - r, c.y - r }, { x + r, c.y + r });
+					} else {
+						dl->AddCircleFilled({ x, c.y }, r, Col(gen::kPerkColor[i]));
+						dl->AddCircle({ x, c.y }, r, IM_COL32(0, 0, 0, 200), 0, 2 * k);
+						const std::string letter(1, gen::kPerks[i].label[0]);
+						const auto        ts = g_font->CalcTextSizeA(20 * k, FLT_MAX, 0, letter.c_str());
+						dl->AddText(g_font, 20 * k, { x - ts.x / 2, c.y - ts.y / 2 }, IM_COL32(255, 255, 255, 235), letter.c_str());
+					}
 					x += gap;
 				}
 			}
@@ -180,8 +185,15 @@ namespace bo3z
 				logger::error("hud: ImGui DX11 init failed");
 				return false;
 			}
+			int icons = 0;
+			for (std::size_t i = 0; i < gen::kPerks.size(); ++i) {
+				const auto path = L"Data\\Interface\\UndyingNights\\" + std::wstring(gen::kPerks[i].id.begin(), gen::kPerks[i].id.end()) + L".png";
+				if (SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, path.c_str(), nullptr, &g_perkIcons[i]))) {
+					++icons;
+				}
+			}
 			g_init = true;
-			logger::info("hud: ready");
+			logger::info("hud: ready ({} perk icons)", icons);
 			return true;
 		}
 
