@@ -52,7 +52,7 @@ namespace bo3z
 				if (!p->HasSpell(sp)) {
 					p->AddSpell(sp);
 				}
-				auto* right = RE::BGSDefaultObjectManager::GetSingleton()->GetObject<RE::BGSEquipSlot>(RE::DEFAULT_OBJECT::kRightHandEquip);
+				auto* right = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42);  // RightHand equip slot
 				RE::ActorEquipManager::GetSingleton()->EquipSpell(p, sp, right);
 			} else {
 				RE::ActorEquipManager::GetSingleton()->EquipObject(p, w);
