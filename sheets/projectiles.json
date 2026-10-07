@@ -83,7 +83,7 @@
     {
       "id": "blood",
       "sourceFormId": "none",
-      "model": "DLC01\\Magic\\DLC1DrainVitalityProject01.nif",
+      "model": "DLC01\\Magic\\DLC1VampireAbsorbProj01.nif",
       "speed": 6500,
       "verify": [
         "model"
@@ -110,7 +110,7 @@
     {
       "id": "shadow",
       "sourceFormId": "none",
-      "model": "Magic\\NightingaleStrifeProjectile01.nif",
+      "model": "Magic\\ReanimateProjectile.nif",
       "speed": 6500,
       "verify": [
         "model"

@@ -604,6 +604,114 @@
       "file": "fx\\UndyingNights\\charge_ready.wav",
       "space": "2d",
       "verify": []
+    },
+    {
+      "id": "unleash_sidearm",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_sidearm",
+      "file": "fx\\UndyingNights\\unleash_sidearm.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_aetherium",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_aetherium",
+      "file": "fx\\UndyingNights\\unleash_aetherium.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_animunculi",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_animunculi",
+      "file": "fx\\UndyingNights\\unleash_animunculi.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_mammothlmg",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_mammothlmg",
+      "file": "fx\\UndyingNights\\unleash_mammothlmg.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_drill",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_drill",
+      "file": "fx\\UndyingNights\\unleash_drill.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_triad",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_triad",
+      "file": "fx\\UndyingNights\\unleash_triad.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_spider",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_spider",
+      "file": "fx\\UndyingNights\\unleash_spider.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_centurion",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_centurion",
+      "file": "fx\\UndyingNights\\unleash_centurion.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_flamerepeater",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_flamerepeater",
+      "file": "fx\\UndyingNights\\unleash_flamerepeater.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_frostlancer",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_frostlancer",
+      "file": "fx\\UndyingNights\\unleash_frostlancer.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_stormcaller",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_stormcaller",
+      "file": "fx\\UndyingNights\\unleash_stormcaller.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_embermortar",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_embermortar",
+      "file": "fx\\UndyingNights\\unleash_embermortar.wav",
+      "space": "2d",
+      "verify": []
     }
   ]
 }

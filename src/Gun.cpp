@@ -42,6 +42,27 @@ namespace bo3z
 		}
 		bool GunOut() { return CurrentGun() >= 0 && Drawn() && !Intro::CrewScreenOpen(); }
 
+		// Bows: their elemental arrows never run out (topped up quietly, kept on the string).
+		void TopUpArrows(int a_gun, bool a_equip)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || a_gun < 0 || gen::kGuns[a_gun].kind != gen::kKindBow || !gen::kGuns[a_gun].ammo) {
+				return;
+			}
+			auto* ammo = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESAmmo>(gen::kGuns[a_gun].ammo, gen::kPlugin);
+			if (!ammo) {
+				return;
+			}
+			const auto counts = p->GetInventoryCounts([ammo](RE::TESBoundObject& o) { return &o == ammo; });
+			const int  have = counts.empty() ? 0 : counts.begin()->second;
+			if (have < 40) {
+				p->AddObjectToContainer(ammo, nullptr, 80 - have, nullptr);
+			}
+			if (a_equip || p->GetCurrentAmmo() != ammo) {
+				RE::ActorEquipManager::GetSingleton()->EquipObject(p, ammo, nullptr, static_cast<std::uint32_t>(std::max(have, 80)), nullptr, true, false, false);
+			}
+		}
+
 		void Equip(int a_gun)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -57,6 +78,7 @@ namespace bo3z
 				RE::ActorEquipManager::GetSingleton()->EquipSpell(p, sp, right);
 			} else {
 				RE::ActorEquipManager::GetSingleton()->EquipObject(p, w);
+				TopUpArrows(a_gun, true);
 			}
 			if (!Drawn()) {
 				p->DrawWeaponMagicHands(true);
@@ -88,7 +110,7 @@ namespace bo3z
 		{
 			static void thunk(RE::PlayerInputHandler* a_this, RE::ButtonEvent* a_event, RE::PlayerControlsData* a_data)
 			{
-				if (GunOut() && a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kMouse && a_event->GetIDCode() == gen::kKey2_fire) {
+				if (GunOut() && gen::kGuns[CurrentGun()].kind != gen::kKindBow && a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kMouse && a_event->GetIDCode() == gen::kKey2_fire) {
 					auto& rd = a_event->GetRuntimeData();
 					if (a_event->IsDown()) {
 						g_nativeCut = false;
@@ -269,7 +291,7 @@ namespace bo3z
 					if (auto* w = root->GetObjectByName("WEAPON"); w && w->AsNode()) {
 						for (auto& c : w->AsNode()->GetChildren()) {
 							if (c) {
-								return c->world.translate + c->world.rotate * RE::NiPoint3{ 0, 33.0f, 0 } * c->world.scale;  // wand tip (+Y)
+								return c->world.translate + c->world.rotate * RE::NiPoint3{ 0, 62.0f, 0 } * c->world.scale;  // staff head (+Y, tools/staffs.py)
 							}
 						}
 					}
@@ -347,16 +369,48 @@ namespace bo3z
 		// finale of every signature move. A marker is moved to the spot and the blast is placed on it.
 		struct PendingBlast
 		{
-			RE::NiPoint3  at;
-			float         delay;
-			std::uint32_t expl;
+			RE::NiPoint3 at;
+			float        delay;
+			int          expl;
 		};
 		std::vector<PendingBlast> g_blasts;
 		RE::ObjectRefHandle       g_blastMarker;
 
-		void Blast(std::uint32_t a_expl, const RE::NiPoint3& a_at, float a_delay = 0.0f)
+		// A no-damage copy of a Skyrim explosion, made once at runtime: same model, light, sounds and screen effect,
+		// no enchantment, no damage, no knockdown (our code does the hurting).
+		RE::BGSExplosion* BlastForm(int a_index)
 		{
-			if (a_expl && g_blasts.size() < 32) {
+			static std::vector<RE::BGSExplosion*> made(gen::kBlasts.size(), nullptr);
+			static std::vector<bool>              tried(gen::kBlasts.size(), false);
+			if (a_index < 0 || a_index >= static_cast<int>(made.size())) {
+				return nullptr;
+			}
+			if (!tried[a_index]) {
+				tried[a_index] = true;
+				auto* src = RE::TESForm::LookupByID<RE::BGSExplosion>(gen::kBlasts[a_index].second);
+				auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::BGSExplosion>();
+				if (src && factory) {
+					if (auto* ex = factory->Create()) {
+						ex->boundData = src->boundData;
+						ex->SetModel(src->GetModel());
+						ex->data = src->data;
+						ex->data.damage = 0.0f;
+						ex->data.force = std::min(src->data.force, 40.0f);
+						ex->data.flags.reset(RE::BGSExplosionData::Flag::kKnockDown_Always, RE::BGSExplosionData::Flag::kKnockDown_ByFormula);
+						ex->data.spawnProjectile = nullptr;
+						ex->formEnchanting = nullptr;
+						ex->imageSpaceModifying = src->imageSpaceModifying;
+						made[a_index] = ex;
+					}
+				}
+				logger::info("blast: {} ({:06X}) {}", gen::kBlasts[a_index].first, gen::kBlasts[a_index].second, made[a_index] ? "ready" : "missing");
+			}
+			return made[a_index];
+		}
+
+		void Blast(int a_expl, const RE::NiPoint3& a_at, float a_delay = 0.0f)
+		{
+			if (a_expl >= 0 && g_blasts.size() < 32) {
 				g_blasts.push_back({ a_at, a_delay, a_expl });
 			}
 		}
@@ -364,7 +418,7 @@ namespace bo3z
 		void Detonate(const PendingBlast& b)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
-			auto* ex = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSExplosion>(b.expl, gen::kPlugin);
+			auto* ex = BlastForm(b.expl);
 			if (!player || !ex || !player->GetParentCell() || b.at.GetDistance(player->GetPosition()) > 9000.0f) {
 				return;
 			}
@@ -402,7 +456,7 @@ namespace bo3z
 
 		float BoltDelay(const gen::GunDef& g, const RE::NiPoint3& a_from, const RE::NiPoint3& a_to)
 		{
-			float speed = 3000.0f;
+			float speed = g.kind == gen::kKindBow ? 5200.0f : 3000.0f;
 			if (auto* raw = g.bulletSpell ? RE::TESDataHandler::GetSingleton()->LookupForm(g.bulletSpell, gen::kPlugin) : nullptr) {
 				if (auto* sp = raw->As<RE::SpellItem>(); sp && !sp->effects.empty() && sp->effects[0] && sp->effects[0]->baseEffect && sp->effects[0]->baseEffect->data.projectileBase) {
 					speed = std::max(500.0f, sp->effects[0]->baseEffect->data.projectileBase->data.speed);
@@ -410,6 +464,34 @@ namespace bo3z
 			}
 			return std::min(1.5f, a_from.GetDistance(a_to) / speed);
 		}
+
+		// An elemental arrow (bows): the arrow's own projectile, launched from a point (the bow, or the sky).
+		void LaunchArrow(RE::PlayerCharacter* a_player, const gen::GunDef& g, const RE::NiPoint3& a_to, const RE::NiPoint3* a_from = nullptr)
+		{
+			auto* ammo = g.ammo ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESAmmo>(g.ammo, gen::kPlugin) : nullptr;
+			auto* proj = ammo ? ammo->data.projectile : nullptr;
+			if (!proj) {
+				return;
+			}
+			const RE::NiPoint3 from = a_from ? *a_from : BoltOrigin(a_player, g);
+			RE::NiPoint3       d = a_to - from;
+			const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
+			RE::Projectile::ProjectileRot rot{ -std::atan2(d.z, std::max(1e-3f, flat)), std::atan2(d.x, d.y) };
+			RE::Projectile::LaunchData    ld(proj, a_player, from, rot);
+			ld.useOrigin = true;
+			ld.autoAim = false;
+			ld.ammoSource = ammo;
+			RE::ProjectileHandle h;
+			RE::Projectile::Launch(&h, ld);
+		}
+
+		// Black holes (Event Horizon): pull every undead in toward the centre, then collapse.
+		struct Well
+		{
+			RE::NiPoint3 at;
+			float        left, base, pulse;
+		};
+		std::vector<Well> g_wells;
 
 		void FireOnce(const gen::GunDef& g)
 		{
@@ -686,8 +768,7 @@ namespace bo3z
 			const Aim   aim = AimAt(std::min(g.range * 1.5f, 8000.0f));
 			auto        hit = [&](RE::Actor* f, float a_mult) { if (!f->IsDead()) { Damage(f, base * a_mult, false, false); } };
 			const std::string_view id = g.id;
-			Forms::Play(g.fireSnd);
-			Forms::Play(gen::Sound::cast_heavy);
+			Forms::Play(g.chargeSnd);
 			Hud::Banner(std::string(g.chargeName), 1.2f);
 			logger::info("charge: {} unleashes {}", g.id, g.chargeName);
 
@@ -732,10 +813,9 @@ namespace bo3z
 				auto foes = Foes(aim.hit, 300.0f);
 				for (auto* f : foes) { hit(f, 1.5f); Director::Web(f->GetPosition(), 40.0f, 4.0f, 95.0f); }
 				Bolts(p, g, foes, 6);
-			} else if (id == "mammothlmg") {  // cyclone: wide cone, hurled back
-				auto cone = InCone(aim, 900.0f, 50.0f);
-				for (auto* f : cone) { hit(f, 2.5f); Stagger(f, 1.0f); }
-				Bolts(p, g, cone, 6);
+			} else if (id == "mammothlmg") {  // black hole: a singularity drags them in, then collapses
+				g_wells.push_back({ aim.hit, 3.0f, base, 0.0f });
+				LaunchBolt(p, g, aim.hit);
 			} else if (id == "longshot") {  // starfall: six stars from the sky around the impact
 				for (int k = 0; k < 6; ++k) {
 					const float a = k * RE::NI_PI / 3.0f;
@@ -747,23 +827,45 @@ namespace bo3z
 			} else if (id == "aetherium") {  // auriel's wrath: huge sunburst
 				for (auto* f : Foes(aim.hit, 450.0f)) { hit(f, 2.5f); Stagger(f, 1.0f); }
 				LaunchBolt(p, g, aim.hit);
-			} else if (id == "flamerepeater") {  // firestorm ring around you
-				auto foes = Foes(p->GetPosition(), 380.0f);
-				for (auto* f : foes) hit(f, 5.0f);
-				Bolts(p, g, foes, 6);
-			} else if (id == "frostlancer") {  // glacial spear: pierce + freeze
-				auto line = InLine(aim, 4000.0f, 50.0f);
-				for (auto* f : line) { hit(f, 3.0f); Director::Web(f->GetPosition(), 40.0f, 3.5f, 95.0f); }
-				Bolts(p, g, line, 6);
-				if (line.empty() && g.spell >= 0) Cast(g.spell, nullptr);
-			} else if (id == "stormcaller") {  // thunderclap: six strikes
-				auto foes = Foes(p->GetPosition(), 1600.0f);
-				if (foes.size() > 6) foes.resize(6);
-				for (auto* f : foes) { hit(f, 3.0f); Stagger(f, 0.6f); }
-				Bolts(p, g, foes, 6);
-			} else if (id == "embermortar") {  // meteor
-				for (auto* f : Foes(aim.hit, 450.0f)) { hit(f, 2.5f); Stagger(f, 1.0f); }
-				if (g.spell >= 0) Cast(g.spell, nullptr);
+			} else if (id == "flamerepeater") {  // meteor arrow: a burning star falls where it lands
+				const RE::NiPoint3 sky = aim.hit + RE::NiPoint3{ 120.0f, 80.0f, 1500.0f };
+				LaunchArrow(p, g, aim.hit, &sky);
+				for (auto* f : Foes(aim.hit, 460.0f)) {
+					hit(f, 5.0f);
+					g_dots.push_back({ f->GetHandle(), base * 0.8f, 4.0f });  // burning
+					Stagger(f, 1.0f);
+				}
+			} else if (id == "frostlancer") {  // glacier arrow: everything near the impact freezes solid
+				for (int k = 0; k < 6; ++k) {
+					const float a = k * RE::NI_PI / 3.0f;
+					const RE::NiPoint3 at = aim.hit + RE::NiPoint3{ std::cos(a) * 170.0f, std::sin(a) * 170.0f, 0 };
+					const RE::NiPoint3 sky = at + RE::NiPoint3{ 0, 0, 1200.0f };
+					LaunchArrow(p, g, at, &sky);
+				}
+				for (auto* f : Foes(aim.hit, 420.0f)) { hit(f, 3.0f); Director::Web(f->GetPosition(), 40.0f, 4.0f, 96.0f, true); }
+			} else if (id == "stormcaller") {  // thunderstrike: lightning chains through ten
+				auto foes = Foes(aim.hit, 1400.0f);
+				if (foes.size() > 10) foes.resize(10);
+				for (auto* f : foes) {
+					hit(f, 2.5f);
+					Stagger(f, 0.8f);
+					const RE::NiPoint3 at = f->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f };
+					const RE::NiPoint3 sky = at + RE::NiPoint3{ 30.0f, 0, 1300.0f };
+					LaunchArrow(p, g, at, &sky);
+				}
+			} else if (id == "embermortar") {  // tempest volley: a fan of wind arrows, everything ahead blown away
+				for (int k = -3; k <= 3; ++k) {
+					const float yaw = k * 0.09f, c = std::cos(yaw), sn = std::sin(yaw);
+					const RE::NiPoint3 d{ aim.dir.x * c - aim.dir.y * sn, aim.dir.x * sn + aim.dir.y * c, aim.dir.z };
+					LaunchArrow(p, g, aim.eye + d * 2500.0f);
+				}
+				auto* proc = p->GetActorRuntimeData().currentProcess;
+				for (auto* f : InCone(aim, 1500.0f, 32.0f)) {
+					hit(f, 2.5f);
+					if (proc && !f->IsDead()) {
+						proc->KnockExplosion(f, f->GetPosition() - aim.dir * 120.0f, 4.0f);  // blown off their feet
+					}
+				}
 			} else if (id == "wabbajack") {  // mass madness
 				std::uniform_real_distribution<float> roll(0, 1);
 				for (auto* f : Foes(aim.hit, 600.0f)) {
@@ -780,6 +882,52 @@ namespace bo3z
 				for (auto* f : foes) hit(f, 1.2f);
 				Bolts(p, g, foes, 8);
 			}
+		}
+
+		int BlastIndex(std::string_view a_name)
+		{
+			for (std::size_t i = 0; i < gen::kBlasts.size(); ++i) {
+				if (gen::kBlasts[i].first == a_name) {
+					return static_cast<int>(i);
+				}
+			}
+			return -1;
+		}
+
+		void TickWells(float a_delta)
+		{
+			for (auto& w : g_wells) {
+				w.left -= a_delta;
+				w.pulse -= a_delta;
+				for (auto* f : Foes(w.at, 950.0f)) {
+					auto       pos = f->GetPosition();
+					RE::NiPoint3 to = w.at - pos;
+					to.z = 0;
+					const float d = to.Length();
+					if (d > 70.0f) {
+						pos += to * (std::min(d - 60.0f, 340.0f * a_delta) / d);  // dragged toward the centre
+						f->SetPosition(pos, true);
+					}
+				}
+				if (w.pulse <= 0) {
+					w.pulse = 0.5f;
+					Blast(BlastIndex("dark"), w.at + RE::NiPoint3{ 0, 0, 60.0f });
+					for (auto* f : Foes(w.at, 260.0f)) {
+						Damage(f, w.base * 0.4f, false, false, true);
+					}
+				}
+				if (w.left <= 0) {  // collapse
+					Blast(BlastIndex("darkmassive"), w.at + RE::NiPoint3{ 0, 0, 60.0f });
+					Forms::Play(gen::Sound::cast_heavy);
+					for (auto* f : Foes(w.at, 420.0f)) {
+						Damage(f, w.base * 6.0f, false, false);
+						if (!f->IsDead()) {
+							Stagger(f, 1.0f);
+						}
+					}
+				}
+			}
+			std::erase_if(g_wells, [](const Well& w) { return w.left <= 0; });
 		}
 
 		void StartRelease(const gen::GunDef& g);
@@ -922,6 +1070,7 @@ namespace bo3z
 			if (gun >= 0 && GunOut()) {
 				const auto& g = gen::kGuns[gun];
 				const int   style = std::clamp(g.chargeStyle, 0, 5);
+				const bool  bow = g.kind == gen::kKindBow;  // the draw is the animation
 				const bool  charging = g_trigger && g.chargeSeconds > 0 && g_chargeCd <= 0 && g_charge > 0.18f;
 				const float c = charging ? EaseInOut((g_charge - 0.18f) / std::max(0.1f, g.chargeSeconds - 0.18f)) : 0.0f;
 				if (charging && !g_chargeSaid) {
@@ -936,8 +1085,11 @@ namespace bo3z
 					g_chargeSaid = g_readySaid = false;
 				}
 				SetAura(charging ? g.chargeAura : -1);
-				out = Scale(kChargePose[style], c);
+				out = bow ? PoseOut{} : Scale(kChargePose[style], c);
 				out.shake *= 0.5f + c;  // trembles harder as it fills
+				if (g_relT >= 0 && bow) {
+					g_relT = -1.0f;
+				}
 				if (g_relT >= 0) {
 					const int   rs = g_relStyle;
 					const float dur = rs == gen::kRaise ? 0.75f : 0.55f;
@@ -1227,6 +1379,26 @@ namespace bo3z
 					p->AddSpell(sp);
 				}
 			}
+			// The four tomes became the elemental bows: a slot that held one gets the bow (and its arrows).
+			for (int s = 0; s < 3; ++s) {
+				const int gun = Save::GetSlot(s).gun;
+				if (gun >= 0 && gen::kGuns[gun].kind == gen::kKindBow) {
+					if (auto* w = Forms::Gun(gun)) {
+						const auto counts = p->GetInventoryCounts([w](RE::TESBoundObject& o) { return &o == w; });
+						if (counts.empty()) {
+							p->AddObjectToContainer(w, nullptr, 1, nullptr);
+							TopUpArrows(gun, false);
+							++removed;
+						}
+					}
+				}
+			}
+			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
+				if (auto* sp = gen::kGuns[i].retired ? Forms::GunSpell(i) : nullptr; sp && p->HasSpell(sp)) {
+					p->RemoveSpell(sp);
+					++removed;
+				}
+			}
 			bool any = false;
 			for (int s = 0; s < 3; ++s) {
 				any |= Save::GetSlot(s).gun >= 0;
@@ -1332,11 +1504,17 @@ namespace bo3z
 				return false;
 			}
 			if (dev == RE::INPUT_DEVICE::kMouse && code == gen::kKey2_fire) {
+				const bool bow = gen::kGuns[CurrentGun()].kind == gen::kKindBow;
 				if (down) {
 					g_charge = 0;
-					TryFire(true);
+					if (!bow) {
+						TryFire(true);
+					}
 				}
 				if (up && g_trigger) {
+					if (bow) {
+						TryFire(true);  // bows loose on release (Skyrim draws and fires the arrow itself)
+					}
 					TryUnleash(true);
 					g_charge = 0;
 				}
@@ -1519,6 +1697,9 @@ namespace bo3z
 			if ((sync -= a_delta) <= 0) {
 				sync = 1.0f;
 				SyncSlots();
+				if (GunOut()) {
+					TopUpArrows(CurrentGun(), false);
+				}
 
 			}
 			const bool out = GunOut();
@@ -1527,6 +1708,7 @@ namespace bo3z
 			g_charge = out && g_trigger ? g_charge + a_delta : 0.0f;
 			TickPose(a_delta);
 			TickBlasts(a_delta);
+			TickWells(a_delta);
 			if (out) {
 				const auto& g = gen::kGuns[gun];
 				if (g_burstLeft > 0 && (g_burstTimer -= a_delta) <= 0) {
@@ -1548,7 +1730,7 @@ namespace bo3z
 				rd.worldFOV = gen::kWorldFov + (gen::kAdsFov - gen::kWorldFov) * g_ads + g_fovKick;
 				rd.firstPersonFOV = gen::kViewmodelFov + (gen::kAdsViewmodelFov - gen::kViewmodelFov) * g_ads;
 			}
-			AimViewmodel(RE::PlayerCharacter::GetSingleton(), out && gen::kGuns[gun].kind == gen::kKindWand ? g_ads : 0.0f);  // hand spells: just the zoom
+			AimViewmodel(RE::PlayerCharacter::GetSingleton(), 0.0f);  // staffs and bows stay in Skyrim's own pose; aiming is the zoom
 			PoseWand(out && gen::kGuns[gun].kind == gen::kKindWand ? g_adsModel.get() : nullptr);
 			const auto now = Clock::now();
 			std::erase_if(g_hits, [&](const auto& kv) { return now - kv.second.first > 2s; });

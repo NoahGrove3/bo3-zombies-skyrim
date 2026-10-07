@@ -5,7 +5,7 @@ import json, struct, pathlib
 from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing, blasts
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
-T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt']}
+T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
 def z(s): return s.encode('cp1252') + b'\0'
 def sub(name, data):
@@ -18,7 +18,7 @@ def group(label, recs):
     data = b''.join(recs)
     return b'GRUP' + struct.pack('<I', 24 + len(data)) + label.encode() + struct.pack('<iHHHH', 0, 0, 0, 44, 0) + data
 fid = lambda kind, key: SELF | IDS[(kind, key)]
-recs = {'EXPL': [], 'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
+recs = {'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
 
 for p in S['perks']['rows']:
     data = bytearray(tsub('mgef', 'DATA'))
@@ -82,6 +82,32 @@ for w in S['weapons']['rows']:
             elif name == 'MODL': b = z(w['standinModel'])
             elif name == 'EITM': b = struct.pack('<I', fid('ENCH', w['id']))
             elif name == 'EAMT': b = struct.pack('<H', 3000)
+            elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_' + w['id']))
+            elif name in ('MODT', 'DESC'): continue
+            elif name == 'DATA': b = struct.pack('<IfH', 0, 1.0, 0)
+            subs.append(sub(name, b))
+        recs['WEAP'].append(record('WEAP', fid('WEAP', w['id']), subs))
+    elif kind == 'bow':
+        # elemental bows: Skyrim's bow (draw animation, nocked arrow) with our model; arrows fly as elemental bolts.
+        # Damage 0 on bow and arrow: our code does the hits (the arrow is the look).
+        pd = bytearray(tsub('proj_arrow', 'DATA'))
+        struct.pack_into('<f', pd, 4, 0.0)                 # no drop: flies straight where you aim
+        struct.pack_into('<f', pd, 8, 5200.0)              # speed
+        struct.pack_into('<I', pd, 16, int(w['arrowLight'], 16))   # glows in flight
+        recs['PROJ'].append(record('PROJ', fid('PROJ', 'arrow_' + w['id']), [
+            sub('EDID', z('UN_ArrowProj_' + w['id'])), sub('OBND', tsub('proj_arrow', 'OBND')), sub('FULL', z(w['label'] + ' Arrow')),
+            sub('MODL', z(w['arrowFlight'])), sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', tsub('proj_arrow', 'VNAM'))]))
+        ad = struct.pack('<IIfIf', fid('PROJ', 'arrow_' + w['id']), 0x4, 0.0, 0, 0.0)   # projectile, flags (arrow, not bolt), damage, value, weight
+        recs['AMMO'].append(record('AMMO', fid('AMMO', 'arrow_' + w['id']), [
+            sub('EDID', z('UN_Arrow_' + w['id'])), sub('OBND', tsub('ammo_iron', 'OBND')), sub('FULL', z(w['label'] + ' Arrow')),
+            sub('MODL', z(w['arrowModel'])), sub('YNAM', tsub('ammo_iron', 'YNAM')), sub('ZNAM', tsub('ammo_iron', 'ZNAM')),
+            sub('KSIZ', tsub('ammo_iron', 'KSIZ')), sub('KWDA', tsub('ammo_iron', 'KWDA')), sub('DATA', ad)]))
+        subs = []
+        for name, hx in T['weap_longbow']['subs']:
+            b = bytes.fromhex(hx)
+            if name == 'EDID': b = z('BO3Z_Bow_' + w['id'])
+            elif name == 'FULL': b = z(w['label'])
+            elif name == 'MODL': b = z(w['standinModel'])
             elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_' + w['id']))
             elif name in ('MODT', 'DESC'): continue
             elif name == 'DATA': b = struct.pack('<IfH', 0, 1.0, 0)
@@ -204,30 +230,12 @@ recs['FACT'].append(record('FACT', fid('FACT', 'undead'), [
     sub('XNAM', struct.pack('<IiI', 0x00000DB1, -100, 1)),             # PlayerFaction: enemy
     sub('DATA', struct.pack('<I', 0))]))
 
-# spell blasts: Skyrim's explosion looks (fire, frost, shock, light, dark, dust...) with no damage, no
-# enchantment and no knockdown: our code does the hurting, these are only the show
-for b in blasts():
-    t = json.load(open(ROOT / 'tools/templates/expl' / (b + '.json')))
-    subs = []
-    for name, hx in t['subs']:
-        raw = bytes.fromhex(hx)
-        if name == 'EITM': continue
-        if name == 'EDID': raw = z('UN_Blast_' + b)
-        if name == 'DATA':
-            dd = bytearray(raw)
-            struct.pack_into('<f', dd, 24, min(struct.unpack_from('<f', dd, 24)[0], 40.0))  # gentle push (corpses fly a bit)
-            struct.pack_into('<f', dd, 28, 0.0)                                             # no damage
-            fl = struct.unpack_from('<I', dd, 44)[0] & ~(0x4 | 0x8)                         # never knocks anyone down
-            struct.pack_into('<I', dd, 44, fl)
-            raw = bytes(dd)
-        subs.append(sub(name, raw))
-    recs['EXPL'].append(record('EXPL', fid('EXPL', 'blast_' + b), subs))
-
+# (spell blasts are cloned from Skyrim's explosions at runtime: EXPL records in an ESL crashed the game at load)
 count = sum(len(v) for v in recs.values())
 hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('Undying Nights: round-based undead survival for Skyrim'))]
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
-for k in ['FACT', 'MGEF', 'ENCH', 'SPEL', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'EXPL', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
+for k in ['FACT', 'MGEF', 'ENCH', 'SPEL', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')

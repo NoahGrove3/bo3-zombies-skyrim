@@ -244,7 +244,7 @@ namespace bo3z
 					dl->AddCircleFilled({ a.x + 22 * k, b.y - 22 * k }, 6 * k, el);
 					dl->AddCircle({ a.x + 22 * k, b.y - 22 * k }, 9 * k + 2 * k * std::sin(now * 3), Fade(el, 0.5f), 0, 1.5f * k);
 					Txt(dl, g_body, 16 * k, { a.x + 36 * k, b.y - 32 * k }, IM_COL32(200, 195, 185, 255), s.gunElement);
-					if (s.gunKind == 0) {
+					if (s.gunKind == 0 || s.gunKind == 3) {  // staffs and bows never run dry
 						// wands never run dry: a big infinity sign
 						const std::string inf = "\xE2\x88\x9E";
 						const auto        is = Measure(g_num, 44 * k, inf);

@@ -644,20 +644,30 @@ namespace bo3z
 			for (auto& c : g_settle) {
 				c.age += a_delta;
 				auto a = c.handle.get();
-				if (!a || !proc || c.age < 0.5f) {
+				if (!a || !proc || !a->Is3DLoaded()) {
+					c.age = 99.0f;
 					continue;
 				}
-				if (a->Is3DLoaded() && !a->IsInRagdollState()) {
-					const RE::NiPoint3 from = a->GetPosition() + (a->GetPosition() - a_player->GetPosition()) * -0.05f - RE::NiPoint3{ 0, 0, 20 };
-					proc->KnockExplosion(a.get(), from, c.age < 1.0f ? 0.8f : 2.0f);
-					if (c.tries++ == 0) {
+				// Every kill goes limp at once and is thrown back from the player (BO3 ragdolls); a body still
+				// upright after that is knocked again, harder.
+				RE::NiPoint3 away = a->GetPosition() - a_player->GetPosition();
+				away.z = 0;
+				away.Unitize();
+				const RE::NiPoint3 from = a->GetPosition() - away * 60.0f - RE::NiPoint3{ 0, 0, 10.0f };
+				if (c.tries == 0) {
+					proc->KnockExplosion(a.get(), from, 2.5f);
+					++c.tries;
+				} else if (c.age > 0.6f && !a->IsInRagdollState()) {
+					proc->KnockExplosion(a.get(), from, 3.0f + c.tries);
+					if (c.tries++ == 1) {
 						logger::info("night: knocked over a standing corpse");
 					}
-				} else {
+					c.age = 0.1f;
+				} else if (c.age > 2.5f) {
 					c.age = 99.0f;
 				}
 			}
-			std::erase_if(g_settle, [](const Settle& c) { return c.age > 3.0f || c.tries > 3; });
+			std::erase_if(g_settle, [](const Settle& c) { return c.age > 3.0f || c.tries > 5; });
 		}
 
 		void KeepThemComing(RE::PlayerCharacter* a_player, float a_delta)

@@ -336,6 +336,26 @@
   "EXPL:blast_priestlarge": "0x94c",
   "EXPL:blast_priestsmall": "0x94d",
   "EXPL:blast_runeshock": "0x94e",
-  "EXPL:blast_shockmass": "0x94f"
+  "EXPL:blast_shockmass": "0x94f",
+  "AMMO:arrow_flamerepeater": "0x950",
+  "PROJ:arrow_flamerepeater": "0x951",
+  "AMMO:arrow_frostlancer": "0x952",
+  "PROJ:arrow_frostlancer": "0x953",
+  "AMMO:arrow_stormcaller": "0x954",
+  "PROJ:arrow_stormcaller": "0x955",
+  "AMMO:arrow_embermortar": "0x956",
+  "PROJ:arrow_embermortar": "0x957",
+  "SNDR:unleash_sidearm": "0x958",
+  "SNDR:unleash_aetherium": "0x959",
+  "SNDR:unleash_animunculi": "0x95a",
+  "SNDR:unleash_mammothlmg": "0x95b",
+  "SNDR:unleash_drill": "0x95c",
+  "SNDR:unleash_triad": "0x95d",
+  "SNDR:unleash_spider": "0x95e",
+  "SNDR:unleash_centurion": "0x95f",
+  "SNDR:unleash_flamerepeater": "0x960",
+  "SNDR:unleash_frostlancer": "0x961",
+  "SNDR:unleash_stormcaller": "0x962",
+  "SNDR:unleash_embermortar": "0x963"
  }
 }

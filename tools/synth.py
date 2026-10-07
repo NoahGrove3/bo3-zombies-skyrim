@@ -461,7 +461,79 @@ def c_thuumcannon(): return _pack(mix(chord(choir, ['D2', 'A2', 'D3'], 0.9, vowe
 def c_skyforgearc(): return _pack(mix(thunder(1.2) * 0.9, zap(3000, 400, 0.35) * 1.1, _crackle(0.6, 0.96, 1500, 9000, 10)), .4, 2.4)  # skyforge chain
 def c_apprentice(): return c_sidearm()
 
+
+# ---- energy kit (v0.5): every staff and bow cast layered from a transient, an element body, a sub thump and a tail
+def _pad(x, n): return np.pad(x, (0, max(0, n - len(x))))[:n] if n else x
+def _lay(*parts):
+    n = max(len(p) for p in parts); return sum(_pad(p, n) for p in parts)
+def _click(d=0.012, lo=2500, hi=12000): n = int(d * SR); return bp(noise(n), lo, hi) * expdec(n, d / 3) * 1.6
+def _fm(fc0, fc1, ratio, index, d, tau=None):
+    """FM energy: a swept carrier with a modulator; the index decays so the tone blooms then rings clean"""
+    tt = t_(d); fc = fc0 * (fc1 / fc0) ** (tt / d)
+    ph = 2 * np.pi * np.cumsum(fc) / SR
+    mod = index * np.exp(-tt / (d / 3)) * np.sin(ph * ratio)
+    return np.sin(ph + mod) * np.exp(-tt / (tau or d / 2.2))
+def _sub(f0=90, f1=38, d=0.35): return kick(d, f0, f1)
+def _tail(d, lo, hi, a=0.01): n = int(d * SR); return bp(noise(n), lo, hi) * env(n, a, d * 0.25, 0.35, d * 0.6)
+def _sat(x, drive=2.0): return np.tanh(x * drive) / np.tanh(drive)
+def _pluck(f, d, damp=0.996):
+    """Karplus-Strong string: the bowstring"""
+    n = int(d * SR); N = max(2, int(SR / f)); buf = rng.uniform(-1, 1, N); out = np.zeros(n)
+    for i in range(n):
+        out[i] = buf[i % N]; buf[i % N] = damp * 0.5 * (buf[i % N] + buf[(i + 1) % N])
+    return out * np.exp(-np.arange(n) / (0.25 * SR))
+def _bubbles(d, count=14, seed=3):
+    r = np.random.default_rng(seed); n = int(d * SR); out = np.zeros(n)
+    for _ in range(count):
+        st = r.integers(0, max(1, n - 4000)); f = r.uniform(300, 900); m = int(r.uniform(0.02, 0.05) * SR)
+        tt = np.arange(m) / SR; out[st:st + m] += np.sin(2 * np.pi * (f + 900 * tt / tt[-1]) * tt) * np.exp(-tt / 0.012)
+    return out
+def _rumble(d, f=55): tt = t_(d); return lpb(noise(len(tt)), 160) * 3 * np.exp(-tt / (d / 2)) + np.sin(2 * np.pi * f * tt) * np.exp(-tt / (d / 2)) * 0.6
+def _energy(body, tail, sub=None, click=True, wet=.3, size=1.6, peak=0.9):
+    parts = [body, tail] + ([sub] if sub is not None else []) + ([_click()] if click else [])
+    return hall(norm(_sat(_lay(*parts), 1.6), peak), wet, size)
+
+# staffs (tap casts)
+def e_arcane():  return _energy(_lay(_fm(1400, 900, 3.5, 4, 0.45) * 0.8, _sparkle(0.35, 2600, 9) * 0.5), _tail(0.35, 3000, 9000) * 0.5, _sub(110, 50, 0.25) * 0.7)
+def e_holy():    return _energy(_lay(_fm(880, 990, 2.0, 2.5, 0.8, 0.5) * 0.6, chord(choir, ['C5', 'G5', 'E6'], 0.7, vowel='a', bright=1.5) * 0.5, _sparkle(0.6, 3200, 12) * 0.5), _tail(0.6, 2500, 9000) * 0.5, _sub(120, 45, 0.45), wet=.45, size=2.6)
+def e_shadow():  return _energy(_lay(_fm(160, 70, 1.5, 6, 0.4) * 1.1, _whoosh(0.3, 900, 4000, 10)[::-1] * 0.9), _tail(0.3, 200, 1500) * 0.6, _sub(80, 30, 0.4) * 1.1, wet=.25, size=1.2)
+def e_vortex():  return _energy(_lay(_fm(900, 120, 0.5, 5, 0.6) * 0.9, _whoosh(0.5, 300, 5000, 12)[::-1] * 0.8), _rumble(0.6) * 0.6, _sub(70, 28, 0.6), wet=.35, size=2.0)
+def e_blood():   return _energy(_lay(lpb(noise(int(0.2 * SR)), 700) * expdec(int(0.2 * SR), 0.05) * 2.0, _fm(220, 90, 1.0, 3, 0.25) * 0.7), _tail(0.2, 300, 1800) * 0.4, _lay(_sub(130, 50, 0.18), np.pad(_sub(120, 45, 0.2), (int(0.16 * SR), 0)) * 0.7), wet=.15, size=0.9)
+def e_soul():    return _energy(_lay(chord(choir, ['E4', 'B4', 'G5'], 0.5, vowel='o', bright=1.4) * 0.7, _fm(1300, 600, 2.01, 3, 0.4) * 0.5), _tail(0.4, 1500, 7000) * 0.4, _sub(100, 40, 0.3) * 0.6, wet=.4, size=2.2)
+def e_nature():  return _energy(_lay(_pluck(196, 0.4) * 0.9, _pluck(294, 0.35) * 0.5, _crackle(0.3, 0.985, 800, 5000, 4) * 0.8), _tail(0.3, 1500, 6000) * 0.5, _sub(110, 50, 0.22) * 0.6, wet=.2, size=1.2)
+def e_venom():   return _energy(_lay(_bubbles(0.4) * 0.9, _hiss(0.35, 2500, 9000) * 0.9, _fm(500, 180, 1.5, 4, 0.3) * 0.5), _tail(0.3, 3000, 9000) * 0.4, _sub(100, 45, 0.2) * 0.5, wet=.2, size=1.0)
+# bows (release: the bowstring snap + the element)
+def _snap(): return _lay(_pluck(110, 0.35) * 0.8, _click(0.02, 1200, 6000), _whoosh(0.25, 6000, 900) * 0.7)
+def e_fire():    return _energy(_lay(_snap(), lpb(noise(int(0.35 * SR)), 2400) * env(int(0.35 * SR), 0.005, 0.08, 0.5, 0.2) * 1.3, _crackle(0.4, 0.98, 800, 5000, 6) * 1.2), _tail(0.3, 500, 3000) * 0.4, _sub(110, 45, 0.25) * 0.7)
+def e_ice():     return _energy(_lay(_snap(), _fm(2600, 2200, 1.41, 3, 0.4, 0.15) * 0.5, _crackle(0.35, 0.97, 2500, 9000, 7) * 1.2), _tail(0.35, 4000, 11000) * 0.5, _sub(120, 55, 0.2) * 0.5, wet=.35, size=1.8)
+def e_storm():   return _energy(_lay(_snap(), zap(3200, 400, 0.25) * 1.1, _crackle(0.35, 0.95, 1500, 9000, 8) * 1.4), _tail(0.3, 2000, 9000) * 0.5, _sub(100, 40, 0.25) * 0.7, wet=.3, size=1.5)
+def e_wind():    return _energy(_lay(_snap(), _whoosh(0.5, 3000, 300) * 1.4, _hiss(0.45, 600, 3500) * 0.8), _tail(0.4, 300, 2500) * 0.6, _sub(90, 40, 0.3) * 0.6, wet=.3, size=1.6)
+
+# signature-move releases: the same element, bigger: sweeping riser into a detonation with a long tail
+def _boom(body, color_lo, color_hi, d=1.4, wet=.45, size=3.0):
+    riser = _sweep(180, 1800, 0.25, 0.2) * np.linspace(0.2, 1, int(0.25 * SR)) * 0.6
+    det = _lay(kick(0.9, 90, 26) * 1.6, _rumble(d) * 0.9, _tail(d, color_lo, color_hi) * 0.9, body)
+    return hall(norm(_sat(np.concatenate([riser, det]), 2.0), 0.95), wet, size)
+def u_arcane():  return _boom(_lay(_fm(1200, 400, 3.5, 6, 1.0) * 0.7, _sparkle(1.0, 2600, 18) * 0.6), 2500, 9000)
+def u_holy():    return _boom(_lay(chord(choir, ['C4', 'G4', 'E5', 'C6'], 1.4, vowel='a', bright=1.6) * 0.7, chord(horn, ['C3', 'G3'], 1.2) * 0.4, _sparkle(1.2, 3000, 20) * 0.6), 2000, 9000, 1.8)
+def u_shadow():  return _boom(_lay(_fm(120, 40, 1.5, 8, 1.2) * 1.0, _whoosh(1.0, 600, 4000, 14)[::-1] * 0.8), 150, 1600)
+def u_vortex():  return _boom(_lay(_fm(1400, 60, 0.5, 7, 1.6) * 0.9, _whoosh(1.4, 200, 6000, 16)[::-1] * 1.0, _rumble(1.6, 40)), 80, 1200, 1.8)
+def u_blood():   return _boom(_lay(lpb(noise(int(0.8 * SR)), 600) * expdec(int(0.8 * SR), 0.2) * 1.6, chord(choir, ['A2', 'E3'], 1.0, vowel='o', bright=0.8) * 0.5), 200, 2000)
+def u_soul():    return _boom(_lay(chord(choir, ['E3', 'B3', 'G4', 'E5'], 1.4, vowel='o', bright=1.4) * 0.8, _fm(900, 300, 2.01, 4, 1.0) * 0.5), 1200, 7000, 1.6)
+def u_nature():  return _boom(_lay(_pluck(98, 1.0) * 0.9, _crackle(1.0, 0.97, 600, 4000, 11) * 1.2, _rumble(1.0)), 400, 3500)
+def u_venom():   return _boom(_lay(_bubbles(1.2, 40, 5) * 1.0, _hiss(1.2, 2000, 9000) * 1.0), 1500, 9000)
+def u_fire():    return _boom(_lay(lpb(noise(int(1.4 * SR)), 1600) * env(int(1.4 * SR), 0.01, 0.3, 0.6, 0.9) * 1.6, _crackle(1.4, 0.97, 600, 5000, 12) * 1.4), 300, 3500, 1.8)
+def u_ice():     return _boom(_lay(_crackle(1.2, 0.94, 2500, 10000, 13) * 1.6, _fm(2200, 1500, 1.41, 4, 1.0, 0.4) * 0.6), 3000, 11000)
+def u_storm():   return _boom(_lay(thunder(1.6) * 1.1, zap(3600, 300, 0.5) * 1.2, _crackle(1.4, 0.94, 1500, 9000, 14) * 1.4), 800, 9000, 1.8)
+def u_wind():    return _boom(_lay(_whoosh(1.6, 4000, 150, 20) * 1.8, _hiss(1.4, 300, 3000) * 1.2), 200, 3000, 1.8)
+
+ENERGY = {  # weapon id -> element kit
+    'sidearm': 'arcane', 'aetherium': 'holy', 'animunculi': 'shadow', 'mammothlmg': 'vortex', 'drill': 'blood', 'triad': 'soul',
+    'spider': 'nature', 'centurion': 'venom', 'flamerepeater': 'fire', 'frostlancer': 'ice', 'stormcaller': 'storm', 'embermortar': 'wind'}
+
 CASTS = {k[2:]: v for k, v in globals().items() if k.startswith('c_') and callable(v)}
+CASTS.update({wid: globals()['e_' + el] for wid, el in ENERGY.items()})        # the new kit replaces the old casts
+UNLEASH = {wid: globals()['u_' + el] for wid, el in ENERGY.items()}
 
 SOUNDS = {
     'brew_trollshide': j_trollshide, 'brew_quicksilver': j_quicksilver, 'brew_twinstrike': j_twinstrike,
@@ -477,6 +549,7 @@ SOUNDS = {
 }
 
 SOUNDS.update({f'cast_{k}': v for k, v in CASTS.items()})
+SOUNDS.update({f'unleash_{k}': v for k, v in UNLEASH.items()})
 
 def write(path, x):
     x = norm(x - np.mean(x))

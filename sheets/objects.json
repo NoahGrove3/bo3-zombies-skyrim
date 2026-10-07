@@ -220,7 +220,7 @@
     {
       "id": "wall_triad",
       "kind": "wallbuy",
-      "label": "Soulrend Wand",
+      "label": "Soulbinder",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
       "cost": 500,
@@ -234,7 +234,7 @@
     {
       "id": "wall_spider",
       "kind": "wallbuy",
-      "label": "Sporecaller Wand",
+      "label": "Ancestral Seed",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
       "cost": 1000,
@@ -248,7 +248,7 @@
     {
       "id": "wall_drill",
       "kind": "wallbuy",
-      "label": "Bloodthirst Wand",
+      "label": "Crimson Heartbeat",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
       "cost": 1300,
@@ -262,11 +262,11 @@
     {
       "id": "wall_steampump",
       "kind": "wallbuy",
-      "label": "Wand of the Grave",
+      "label": "Witherroot",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
       "cost": 900,
-      "refs": "weapons:steampump",
+      "refs": "weapons:centurion",
       "verify": [
         "model"
       ],
@@ -276,11 +276,11 @@
     {
       "id": "wall_marksman",
       "kind": "wallbuy",
-      "label": "Moonshard Wand",
+      "label": "Rimefang",
       "activateText": "Buy",
       "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
       "cost": 900,
-      "refs": "weapons:marksman",
+      "refs": "weapons:frostlancer",
       "verify": [
         "model"
       ],
