@@ -595,20 +595,20 @@ namespace bo3z
 				}
 				LaunchBolt(p, g, aim.hit);
 			} else if (id == "triad") {  // soul harvest: homing souls to the five nearest
-				auto near = Foes(p->GetPosition(), 1600.0f);
-				if (near.size() > 5) near.resize(5);
-				for (auto* f : near) hit(f, 3.0f);
-				Bolts(p, g, near, 5);
+				auto foes = Foes(p->GetPosition(), 1600.0f);
+				if (foes.size() > 5) foes.resize(5);
+				for (auto* f : foes) hit(f, 3.0f);
+				Bolts(p, g, foes, 5);
 			} else if (id == "spider") {  // spore bloom around the impact
 				Director::Web(aim.hit, 320.0f, 4.0f, 70.0f);
 				for (auto* f : Foes(aim.hit, 320.0f)) hit(f, 2.0f);
 				LaunchBolt(p, g, aim.hit);
 			} else if (id == "drill") {  // blood siphon around you
-				auto near = Foes(p->GetPosition(), 450.0f);
-				for (auto* f : near) hit(f, 2.0f);
+				auto foes = Foes(p->GetPosition(), 450.0f);
+				for (auto* f : foes) hit(f, 2.0f);
 				auto* av = p->AsActorValueOwner();
-				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * std::min(0.6f, 0.08f * near.size()));
-				Bolts(p, g, near, 6);
+				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * std::min(0.6f, 0.08f * foes.size()));
+				Bolts(p, g, foes, 6);
 			} else if (id == "steampump") {  // bone prison: cone root + stagger
 				auto cone = InCone(aim, 700.0f, 35.0f);
 				for (auto* f : cone) {
@@ -621,9 +621,9 @@ namespace bo3z
 				for (auto* f : Foes(aim.hit, 240.0f)) { hit(f, 4.0f); Stagger(f, 0.8f); }
 				LaunchBolt(p, g, aim.hit);
 			} else if (id == "kagrenac") {  // amber tomb: freeze all nearby the impact
-				auto near = Foes(aim.hit, 300.0f);
-				for (auto* f : near) { hit(f, 1.5f); Director::Web(f->GetPosition(), 40.0f, 4.0f, 95.0f); }
-				Bolts(p, g, near, 6);
+				auto foes = Foes(aim.hit, 300.0f);
+				for (auto* f : foes) { hit(f, 1.5f); Director::Web(f->GetPosition(), 40.0f, 4.0f, 95.0f); }
+				Bolts(p, g, foes, 6);
 			} else if (id == "mammothlmg") {  // cyclone: wide cone, hurled back
 				auto cone = InCone(aim, 900.0f, 50.0f);
 				for (auto* f : cone) { hit(f, 2.5f); Stagger(f, 1.0f); }
@@ -640,19 +640,19 @@ namespace bo3z
 				for (auto* f : Foes(aim.hit, 450.0f)) { hit(f, 2.5f); Stagger(f, 1.0f); }
 				LaunchBolt(p, g, aim.hit);
 			} else if (id == "flamerepeater") {  // firestorm ring around you
-				auto near = Foes(p->GetPosition(), 380.0f);
-				for (auto* f : near) hit(f, 5.0f);
-				Bolts(p, g, near, 6);
+				auto foes = Foes(p->GetPosition(), 380.0f);
+				for (auto* f : foes) hit(f, 5.0f);
+				Bolts(p, g, foes, 6);
 			} else if (id == "frostlancer") {  // glacial spear: pierce + freeze
 				auto line = InLine(aim, 4000.0f, 50.0f);
 				for (auto* f : line) { hit(f, 3.0f); Director::Web(f->GetPosition(), 40.0f, 3.5f, 95.0f); }
 				Bolts(p, g, line, 6);
 				if (line.empty() && g.spell >= 0) Cast(g.spell, nullptr);
 			} else if (id == "stormcaller") {  // thunderclap: six strikes
-				auto near = Foes(p->GetPosition(), 1600.0f);
-				if (near.size() > 6) near.resize(6);
-				for (auto* f : near) { hit(f, 3.0f); Stagger(f, 0.6f); }
-				Bolts(p, g, near, 6);
+				auto foes = Foes(p->GetPosition(), 1600.0f);
+				if (foes.size() > 6) foes.resize(6);
+				for (auto* f : foes) { hit(f, 3.0f); Stagger(f, 0.6f); }
+				Bolts(p, g, foes, 6);
 			} else if (id == "embermortar") {  // meteor
 				for (auto* f : Foes(aim.hit, 450.0f)) { hit(f, 2.5f); Stagger(f, 1.0f); }
 				if (g.spell >= 0) Cast(g.spell, nullptr);
@@ -667,10 +667,10 @@ namespace bo3z
 				for (auto* f : cone) hit(f, 1.5f);
 				if (g.spell >= 0) Cast(g.spell, nullptr);
 			} else if (id == "skyforgearc") {  // storm call: chain through twelve
-				auto near = Foes(aim.hit, 2000.0f);
-				if (near.size() > 12) near.resize(12);
-				for (auto* f : near) hit(f, 1.2f);
-				Bolts(p, g, near, 8);
+				auto foes = Foes(aim.hit, 2000.0f);
+				if (foes.size() > 12) foes.resize(12);
+				for (auto* f : foes) hit(f, 1.2f);
+				Bolts(p, g, foes, 8);
 			}
 		}
 
