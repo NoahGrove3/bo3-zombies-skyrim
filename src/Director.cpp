@@ -772,7 +772,7 @@ namespace bo3z
 				auto*       av = a->AsActorValueOwner();
 				const float missing = av->GetPermanentActorValue(RE::ActorValue::kHealth) - av->GetActorValue(RE::ActorValue::kHealth);
 				if (missing > 0) {
-					av->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, missing);
+					av->RestoreActorValue(RE::ActorValue::kHealth, missing);
 				}
 				if (a->IsInCombat()) {
 					auto tgt = a->GetActorRuntimeData().currentCombatTarget.get();
