@@ -33,7 +33,14 @@ jobs:
       - name: Configure
         run: cmake --preset release
       - name: Build
-        run: cmake --build --preset release
+        run: |
+          cmake --build --preset release *> build.log
+          $code = $LASTEXITCODE
+          Get-Content build.log -Tail 30
+          if ($code -ne 0) {
+            Select-String -Path build.log -Pattern ' error |error C|error LNK|fatal error' | Select-Object -First 40 | ForEach-Object { Write-Output "::error::$($_.Line.Trim())" }
+            exit $code
+          }
       - name: Package
         run: |
           $v = "0.1.0"

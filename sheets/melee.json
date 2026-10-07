@@ -1,0 +1,28 @@
+{
+ "sheet": "melee",
+ "about": "BO3 quick knife (V).",
+ "columns": [
+  "id",
+  "label",
+  "key",
+  "damage",
+  "range",
+  "coneDeg",
+  "cooldownMs",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "knife",
+   "label": "Knife",
+   "key": 47,
+   "damage": 150,
+   "range": 170,
+   "coneDeg": 45,
+   "cooldownMs": 650,
+   "verify": [
+    "range"
+   ]
+  }
+ ]
+}

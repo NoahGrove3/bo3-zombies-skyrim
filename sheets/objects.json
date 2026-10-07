@@ -1,0 +1,172 @@
+{
+ "sheet": "objects",
+ "about": "Things placed in towns (activators in BO3Zombies.esp, stand-in Skyrim models). Activate text shows on the crosshair.",
+ "columns": [
+  "id",
+  "kind",
+  "label",
+  "activateText",
+  "model",
+  "cost",
+  "refs",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "mysterybox",
+   "kind": "box",
+   "label": "Mystery Box",
+   "activateText": "Spin",
+   "model": "Clutter\\Containers\\Chest01\\Chest01.nif",
+   "cost": 950,
+   "refs": "none",
+   "verify": [
+    "model"
+   ]
+  },
+  {
+   "id": "perk_juggernog",
+   "kind": "perk",
+   "label": "Juggernog",
+   "activateText": "Buy",
+   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+   "cost": 2500,
+   "refs": "perks:juggernog",
+   "verify": [
+    "model"
+   ]
+  },
+  {
+   "id": "perk_speedcola",
+   "kind": "perk",
+   "label": "Speed Cola",
+   "activateText": "Buy",
+   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+   "cost": 3000,
+   "refs": "perks:speedcola",
+   "verify": [
+    "model"
+   ]
+  },
+  {
+   "id": "perk_doubletap",
+   "kind": "perk",
+   "label": "Double Tap Root Beer",
+   "activateText": "Buy",
+   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+   "cost": 2000,
+   "refs": "perks:doubletap",
+   "verify": [
+    "model"
+   ]
+  },
+  {
+   "id": "perk_quickrevive",
+   "kind": "perk",
+   "label": "Quick Revive",
+   "activateText": "Buy",
+   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+   "cost": 500,
+   "refs": "perks:quickrevive",
+   "verify": [
+    "model"
+   ]
+  },
+  {
+   "id": "perk_staminup",
+   "kind": "perk",
+   "label": "Stamin-Up",
+   "activateText": "Buy",
+   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+   "cost": 2000,
+   "refs": "perks:staminup",
+   "verify": [
+    "model"
+   ]
+  },
+  {
+   "id": "perk_deadshot",
+   "kind": "perk",
+   "label": "Deadshot Daiquiri",
+   "activateText": "Buy",
+   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+   "cost": 1500,
+   "refs": "perks:deadshot",
+   "verify": [
+    "model"
+   ]
+  },
+  {
+   "id": "perk_mulekick",
+   "kind": "perk",
+   "label": "Mule Kick",
+   "activateText": "Buy",
+   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+   "cost": 4000,
+   "refs": "perks:mulekick",
+   "verify": [
+    "model"
+   ]
+  },
+  {
+   "id": "wall_rk5",
+   "kind": "wallbuy",
+   "label": "RK5",
+   "activateText": "Buy",
+   "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
+   "cost": 500,
+   "refs": "weapons:rk5",
+   "verify": [
+    "model"
+   ]
+  },
+  {
+   "id": "wall_kuda",
+   "kind": "wallbuy",
+   "label": "Kuda",
+   "activateText": "Buy",
+   "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
+   "cost": 1000,
+   "refs": "weapons:kuda",
+   "verify": [
+    "model"
+   ]
+  },
+  {
+   "id": "wall_vmp",
+   "kind": "wallbuy",
+   "label": "VMP",
+   "activateText": "Buy",
+   "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
+   "cost": 1300,
+   "refs": "weapons:vmp",
+   "verify": [
+    "model"
+   ]
+  },
+  {
+   "id": "wall_krm262",
+   "kind": "wallbuy",
+   "label": "KRM-262",
+   "activateText": "Buy",
+   "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
+   "cost": 900,
+   "refs": "weapons:krm262",
+   "verify": [
+    "model"
+   ]
+  },
+  {
+   "id": "wall_sheiva",
+   "kind": "wallbuy",
+   "label": "Sheiva",
+   "activateText": "Buy",
+   "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
+   "cost": 900,
+   "refs": "weapons:sheiva",
+   "verify": [
+    "model"
+   ]
+  }
+ ]
+}

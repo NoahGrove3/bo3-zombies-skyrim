@@ -1,0 +1,89 @@
+{
+ "sheet": "perks",
+ "about": "Perk-a-Colas. Bought with points at a perk machine; you get the bottle as a Skyrim potion and its perk takes effect when you drink it. Max 4 perks.",
+ "columns": [
+  "id",
+  "label",
+  "cost",
+  "effect",
+  "value",
+  "potionModel",
+  "description",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "juggernog",
+   "label": "Juggernog",
+   "cost": 2500,
+   "effect": "health",
+   "value": 100,
+   "description": "Take more hits: +100 health.",
+   "potionModel": "Clutter\\Potions\\PotionHealthGreat.nif",
+   "verify": []
+  },
+  {
+   "id": "speedcola",
+   "label": "Speed Cola",
+   "cost": 3000,
+   "effect": "reload_mult",
+   "value": 0.5,
+   "description": "Reload guns twice as fast.",
+   "potionModel": "Clutter\\Potions\\PotionFortifyStaminaGreat.nif",
+   "verify": []
+  },
+  {
+   "id": "doubletap",
+   "label": "Double Tap Root Beer",
+   "cost": 2000,
+   "effect": "fire_rate_and_damage",
+   "value": 2.0,
+   "description": "Guns fire faster and deal double damage.",
+   "potionModel": "Clutter\\Potions\\MeadHonningBrew01.nif",
+   "verify": []
+  },
+  {
+   "id": "quickrevive",
+   "label": "Quick Revive",
+   "cost": 500,
+   "effect": "self_revive",
+   "value": 1,
+   "description": "Solo: when you would go down, get back up once.",
+   "potionModel": "Clutter\\Potions\\PotionMagickaLesser.nif",
+   "verify": []
+  },
+  {
+   "id": "staminup",
+   "label": "Stamin-Up",
+   "cost": 2000,
+   "effect": "speed_and_stamina",
+   "value": 15,
+   "description": "Run faster and sprint longer.",
+   "potionModel": "Clutter\\Potions\\PotionStaminaGreat.nif",
+   "verify": []
+  },
+  {
+   "id": "deadshot",
+   "label": "Deadshot Daiquiri",
+   "cost": 1500,
+   "effect": "headshots",
+   "value": 1.5,
+   "description": "Headshots hit harder and are easier to land.",
+   "potionModel": "Clutter\\Potions\\PotionInvisibiltyGreat.nif",
+   "verify": []
+  },
+  {
+   "id": "mulekick",
+   "label": "Mule Kick",
+   "cost": 4000,
+   "effect": "third_gun",
+   "value": 3,
+   "description": "Carry a third gun.",
+   "potionModel": "Clutter\\Potions\\PotionHealthExtreme.nif",
+   "verify": []
+  }
+ ],
+ "limits": {
+  "maxPerks": 4
+ }
+}

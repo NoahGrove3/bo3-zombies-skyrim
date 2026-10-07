@@ -1,0 +1,424 @@
+{
+ "sheet": "locations",
+ "about": "Where BO3 objects stand. Each is placed at runtime at angleDeg/distance from the town's map marker (anchor REFR in Skyrim.esm), snapped to the nearest walkable navmesh point, once per town (re-used if already there).",
+ "columns": [
+  "id",
+  "town",
+  "worldspace",
+  "anchor",
+  "object",
+  "angleDeg",
+  "distance",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "riverwood_0",
+   "town": "Riverwood",
+   "worldspace": "Tamriel",
+   "anchor": "0x0162A4",
+   "object": "objects:mysterybox",
+   "angleDeg": 0,
+   "distance": 350,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "riverwood_1",
+   "town": "Riverwood",
+   "worldspace": "Tamriel",
+   "anchor": "0x0162A4",
+   "object": "objects:perk_juggernog",
+   "angleDeg": 90,
+   "distance": 450,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "riverwood_2",
+   "town": "Riverwood",
+   "worldspace": "Tamriel",
+   "anchor": "0x0162A4",
+   "object": "objects:perk_quickrevive",
+   "angleDeg": 180,
+   "distance": 400,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "riverwood_3",
+   "town": "Riverwood",
+   "worldspace": "Tamriel",
+   "anchor": "0x0162A4",
+   "object": "objects:wall_rk5",
+   "angleDeg": 270,
+   "distance": 350,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "riverwood_4",
+   "town": "Riverwood",
+   "worldspace": "Tamriel",
+   "anchor": "0x0162A4",
+   "object": "objects:wall_krm262",
+   "angleDeg": 315,
+   "distance": 500,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "whiterun_0",
+   "town": "Whiterun",
+   "worldspace": "WhiterunWorld",
+   "anchor": "0x0162CE",
+   "object": "objects:mysterybox",
+   "angleDeg": 30,
+   "distance": 700,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "whiterun_1",
+   "town": "Whiterun",
+   "worldspace": "WhiterunWorld",
+   "anchor": "0x0162CE",
+   "object": "objects:perk_speedcola",
+   "angleDeg": 120,
+   "distance": 600,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "whiterun_2",
+   "town": "Whiterun",
+   "worldspace": "WhiterunWorld",
+   "anchor": "0x0162CE",
+   "object": "objects:perk_doubletap",
+   "angleDeg": 210,
+   "distance": 600,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "whiterun_3",
+   "town": "Whiterun",
+   "worldspace": "WhiterunWorld",
+   "anchor": "0x0162CE",
+   "object": "objects:wall_kuda",
+   "angleDeg": 300,
+   "distance": 500,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "whiterun_4",
+   "town": "Whiterun",
+   "worldspace": "WhiterunWorld",
+   "anchor": "0x0162CE",
+   "object": "objects:wall_sheiva",
+   "angleDeg": 0,
+   "distance": 900,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "solitude_0",
+   "town": "Solitude",
+   "worldspace": "SolitudeWorld",
+   "anchor": "0x04D0F4",
+   "object": "objects:mysterybox",
+   "angleDeg": 0,
+   "distance": 700,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "solitude_1",
+   "town": "Solitude",
+   "worldspace": "SolitudeWorld",
+   "anchor": "0x04D0F4",
+   "object": "objects:perk_staminup",
+   "angleDeg": 90,
+   "distance": 600,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "solitude_2",
+   "town": "Solitude",
+   "worldspace": "SolitudeWorld",
+   "anchor": "0x04D0F4",
+   "object": "objects:perk_deadshot",
+   "angleDeg": 180,
+   "distance": 600,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "solitude_3",
+   "town": "Solitude",
+   "worldspace": "SolitudeWorld",
+   "anchor": "0x04D0F4",
+   "object": "objects:wall_vmp",
+   "angleDeg": 270,
+   "distance": 500,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "windhelm_0",
+   "town": "Windhelm",
+   "worldspace": "WindhelmWorld",
+   "anchor": "0x038436",
+   "object": "objects:mysterybox",
+   "angleDeg": 0,
+   "distance": 700,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "windhelm_1",
+   "town": "Windhelm",
+   "worldspace": "WindhelmWorld",
+   "anchor": "0x038436",
+   "object": "objects:perk_mulekick",
+   "angleDeg": 90,
+   "distance": 600,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "windhelm_2",
+   "town": "Windhelm",
+   "worldspace": "WindhelmWorld",
+   "anchor": "0x038436",
+   "object": "objects:perk_juggernog",
+   "angleDeg": 180,
+   "distance": 600,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "windhelm_3",
+   "town": "Windhelm",
+   "worldspace": "WindhelmWorld",
+   "anchor": "0x038436",
+   "object": "objects:wall_kuda",
+   "angleDeg": 270,
+   "distance": 500,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "markarth_0",
+   "town": "Markarth",
+   "worldspace": "MarkarthWorld",
+   "anchor": "0x01C38A",
+   "object": "objects:mysterybox",
+   "angleDeg": 0,
+   "distance": 700,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "markarth_1",
+   "town": "Markarth",
+   "worldspace": "MarkarthWorld",
+   "anchor": "0x01C38A",
+   "object": "objects:perk_speedcola",
+   "angleDeg": 90,
+   "distance": 600,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "markarth_2",
+   "town": "Markarth",
+   "worldspace": "MarkarthWorld",
+   "anchor": "0x01C38A",
+   "object": "objects:perk_quickrevive",
+   "angleDeg": 180,
+   "distance": 600,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "markarth_3",
+   "town": "Markarth",
+   "worldspace": "MarkarthWorld",
+   "anchor": "0x01C38A",
+   "object": "objects:wall_sheiva",
+   "angleDeg": 270,
+   "distance": 500,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "riften_0",
+   "town": "Riften",
+   "worldspace": "RiftenWorld",
+   "anchor": "0x01C390",
+   "object": "objects:mysterybox",
+   "angleDeg": 0,
+   "distance": 700,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "riften_1",
+   "town": "Riften",
+   "worldspace": "RiftenWorld",
+   "anchor": "0x01C390",
+   "object": "objects:perk_doubletap",
+   "angleDeg": 90,
+   "distance": 600,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "riften_2",
+   "town": "Riften",
+   "worldspace": "RiftenWorld",
+   "anchor": "0x01C390",
+   "object": "objects:perk_staminup",
+   "angleDeg": 180,
+   "distance": 600,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "riften_3",
+   "town": "Riften",
+   "worldspace": "RiftenWorld",
+   "anchor": "0x01C390",
+   "object": "objects:wall_krm262",
+   "angleDeg": 270,
+   "distance": 500,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "falkreath_0",
+   "town": "Falkreath",
+   "worldspace": "Tamriel",
+   "anchor": "0x017760",
+   "object": "objects:perk_deadshot",
+   "angleDeg": 0,
+   "distance": 400,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "falkreath_1",
+   "town": "Falkreath",
+   "worldspace": "Tamriel",
+   "anchor": "0x017760",
+   "object": "objects:wall_rk5",
+   "angleDeg": 120,
+   "distance": 400,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "morthal_0",
+   "town": "Morthal",
+   "worldspace": "Tamriel",
+   "anchor": "0x0177B0",
+   "object": "objects:perk_juggernog",
+   "angleDeg": 0,
+   "distance": 400,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "morthal_1",
+   "town": "Morthal",
+   "worldspace": "Tamriel",
+   "anchor": "0x0177B0",
+   "object": "objects:wall_kuda",
+   "angleDeg": 120,
+   "distance": 400,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "dawnstar_0",
+   "town": "Dawnstar",
+   "worldspace": "Tamriel",
+   "anchor": "0x01773A",
+   "object": "objects:perk_speedcola",
+   "angleDeg": 0,
+   "distance": 400,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "dawnstar_1",
+   "town": "Dawnstar",
+   "worldspace": "Tamriel",
+   "anchor": "0x01773A",
+   "object": "objects:wall_sheiva",
+   "angleDeg": 120,
+   "distance": 400,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "winterhold_0",
+   "town": "Winterhold",
+   "worldspace": "Tamriel",
+   "anchor": "0x0177EF",
+   "object": "objects:perk_mulekick",
+   "angleDeg": 0,
+   "distance": 400,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "winterhold_1",
+   "town": "Winterhold",
+   "worldspace": "Tamriel",
+   "anchor": "0x0177EF",
+   "object": "objects:wall_vmp",
+   "angleDeg": 120,
+   "distance": 400,
+   "verify": [
+    "distance"
+   ]
+  }
+ ]
+}
