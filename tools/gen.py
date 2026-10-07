@@ -79,8 +79,8 @@ C = S['crew']['rows']; passives = {'gun_damage_mult': 0, 'bonus_health': 1, 'kni
 o.append('\tstruct CrewDef { std::string_view id, label, quote; int passive; float value; std::string_view passiveText; };')
 o.append(f'\tinline constexpr std::array<CrewDef, {len(C)}> kCrew{{ {{')
 for c in C: o.append(f'\t\tCrewDef{{ {cs(c["id"])}, {cs(c["label"])}, {cs(c["quote"])}, {passives[c["passive"]]}, {F(c["passiveValue"])}, {cs(c["passiveText"])} }},')
-for r in S['identity']['rows']: o.append(f'\tinline constexpr std::string_view kText_{r["id"]} = {cs(r["text"])};')
 o.append('\t} };')
+for r in S['identity']['rows']: o.append(f'\tinline constexpr std::string_view kText_{r["id"]} = {cs(r["text"])};')
 O = S['objects']['rows']; kinds = {'box': 0, 'perk': 1, 'wallbuy': 2}
 def refidx(r):
     if r == 'none': return -1

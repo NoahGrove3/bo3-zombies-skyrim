@@ -202,6 +202,7 @@ namespace bo3z::gen
 		CrewDef{ "gorza", "Gorza gra-Bor", "I forged my own hammer. You will not like where it lands.", 1, 50.0f, "+50 health" },
 		CrewDef{ "saffir", "Saffir al-Rihad", "Steel is a song. The dead never learn the words.", 2, 2.0f, "Knife does double damage" },
 		CrewDef{ "eldrith", "Eldrith Vael", "I have read what the Thalmor buried. The Coffer and I understand each other.", 3, 750.0f, "The Coffer costs 750" },
+	} };
 	inline constexpr std::string_view kText_mode = "Undying Nights";
 	inline constexpr std::string_view kText_tagline = "Every night the dead rise. Every night, more of them.";
 	inline constexpr std::string_view kText_box = "Sheogorath's Coffer";
@@ -210,7 +211,6 @@ namespace bo3z::gen
 	inline constexpr std::string_view kText_shrine = "Brew Shrine";
 	inline constexpr std::string_view kText_forge = "Atronach Reforge";
 	inline constexpr std::string_view kText_round_word = "Night";
-	} };
 	struct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; };
 	inline constexpr std::array<ObjectDef, 15> kObjects{ {
 		ObjectDef{ "coffer", "Sheogorath's Coffer", 0, 950, -1, 0x807 },
