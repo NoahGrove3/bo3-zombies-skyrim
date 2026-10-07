@@ -49,6 +49,7 @@ print('wrote src/Generated.h', len(out), 'lines')
 
 # ---------------- v0.2 tables (appended to Generated.h) ----------------
 import esp_ids
+def F(v): return repr(float(v)) + 'f'
 IDS, _ = esp_ids.assign(S)
 o = ['', '// ---- v0.2 ----', '#include <string_view>', 'namespace bo3z::gen', '{',
      f'\tinline constexpr std::string_view kPlugin = {cs(esp_ids.PLUGIN)};']
@@ -59,24 +60,24 @@ W = S['weapons']['rows']
 o.append(f'\tinline constexpr std::array<GunDef, {len(W)}> kGuns{{ {{')
 sid = lambda v: 'Sound::' + v.split(':')[1]
 for w in W:
-    o.append(f'\t\tGunDef{{ {cs(w["id"])}, {cs(w["label"])}, {cs(w["class"])}, Fire({fires[w["fire"]]}), {w["damage"]}.f, {w["headMult"]}f, {w["pellets"]}, {w["spreadHip"]}f, {w["spreadAds"]}f, {w["clip"]}, {w["reserve"]}, {w["fireDelayMs"]}, {w["burst"]}, {w["reloadMs"]}, {w["range"]}.f, {w["splashRadius"]}.f, {w["splashDamage"]}.f, {w["hitRadius"]}.f, {w["headRadius"]}.f, {sid(w["fireSound"])}, {sid(w["reloadSound"])}, {sid(w["emptySound"])}, {w["wallBuyCost"]}, {w["ammoCost"]}, {w["boxWeight"]}, 0x{IDS[("WEAP", w["id"])]:03X} }},')
+    o.append(f'\t\tGunDef{{ {cs(w["id"])}, {cs(w["label"])}, {cs(w["class"])}, Fire({fires[w["fire"]]}), {F(w["damage"])}, {F(w["headMult"])}, {w["pellets"]}, {F(w["spreadHip"])}, {F(w["spreadAds"])}, {w["clip"]}, {w["reserve"]}, {w["fireDelayMs"]}, {w["burst"]}, {w["reloadMs"]}, {F(w["range"])}, {F(w["splashRadius"])}, {F(w["splashDamage"])}, {F(w["hitRadius"])}, {F(w["headRadius"])}, {sid(w["fireSound"])}, {sid(w["reloadSound"])}, {sid(w["emptySound"])}, {w["wallBuyCost"]}, {w["ammoCost"]}, {w["boxWeight"]}, 0x{IDS[("WEAP", w["id"])]:03X} }},')
 o.append('\t} };')
 for i, w in enumerate(W): o.append(f'\tinline constexpr int kGunIdx_{w["id"]} = {i};')
 k = S['melee']['rows'][0]
 o.append('\tstruct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };')
-o.append(f'\tinline constexpr KnifeDef kKnife{{ {k["key"]}, {k["damage"]}.f, {k["range"]}.f, {k["coneDeg"]}.f, {k["cooldownMs"]} }};')
+o.append(f'\tinline constexpr KnifeDef kKnife{{ {k["key"]}, {F(k["damage"])}, {F(k["range"])}, {F(k["coneDeg"])}, {k["cooldownMs"]} }};')
 effects = {'health': 0, 'reload_mult': 1, 'fire_rate_and_damage': 2, 'self_revive': 3, 'speed_and_stamina': 4, 'headshots': 5, 'third_gun': 6}
 P = S['perks']['rows']
 o.append('\tstruct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };')
 o.append(f'\tinline constexpr std::array<PerkDef, {len(P)}> kPerks{{ {{')
-for p in P: o.append(f'\t\tPerkDef{{ {cs(p["id"])}, {cs(p["label"])}, {p["cost"]}, {effects[p["effect"]]}, {p["value"]}f, 0x{IDS[("MGEF", p["id"])]:03X}, 0x{IDS[("ALCH", p["id"])]:03X} }},')
+for p in P: o.append(f'\t\tPerkDef{{ {cs(p["id"])}, {cs(p["label"])}, {p["cost"]}, {effects[p["effect"]]}, {F(p["value"])}, 0x{IDS[("MGEF", p["id"])]:03X}, 0x{IDS[("ALCH", p["id"])]:03X} }},')
 o.append('\t} };')
 for i, p in enumerate(P): o.append(f'\tinline constexpr int kPerk_{p["id"]} = {i};')
 o.append(f'\tinline constexpr int kMaxPerks = {S["perks"]["limits"]["maxPerks"]};')
 C = S['crew']['rows']; passives = {'gun_damage_mult': 0, 'bonus_health': 1, 'knife_damage_mult': 2, 'box_cost': 3}
 o.append('\tstruct CrewDef { std::string_view id, label, quote; int passive; float value; };')
 o.append(f'\tinline constexpr std::array<CrewDef, {len(C)}> kCrew{{ {{')
-for c in C: o.append(f'\t\tCrewDef{{ {cs(c["id"])}, {cs(c["label"])}, {cs(c["quote"])}, {passives[c["passive"]]}, {c["passiveValue"]}f }},')
+for c in C: o.append(f'\t\tCrewDef{{ {cs(c["id"])}, {cs(c["label"])}, {cs(c["quote"])}, {passives[c["passive"]]}, {F(c["passiveValue"])} }},')
 o.append('\t} };')
 O = S['objects']['rows']; kinds = {'box': 0, 'perk': 1, 'wallbuy': 2}
 def refidx(r):
@@ -94,10 +95,10 @@ for l in L:
 o.append(f'\tinline constexpr std::array<std::string_view, {len(towns)}> kTowns{{ {{ {", ".join(cs(t) for t in towns)} }} }};')
 o.append('\tstruct LocationDef { int town; std::uint32_t anchor; int object; float angleDeg, distance; };')
 o.append(f'\tinline constexpr std::array<LocationDef, {len(L)}> kLocations{{ {{')
-for l in L: o.append(f'\t\tLocationDef{{ {towns.index(l["town"])}, 0x{int(l["anchor"],16):06X}, {oid.index(l["object"].split(":")[1])}, {l["angleDeg"]}.f, {l["distance"]}.f }},')
+for l in L: o.append(f'\t\tLocationDef{{ {towns.index(l["town"])}, 0x{int(l["anchor"],16):06X}, {oid.index(l["object"].split(":")[1])}, {F(l["angleDeg"])}, {F(l["distance"])} }},')
 o.append('\t} };')
 M = {r['id']: r for r in S['movement']['rows']}
-o.append(f'\tinline constexpr float kSprintBoost = {M["sprint_boost"]["value"]}.f, kSlideBoost = {M["slide"]["value"]}.f, kSlideSeconds = {M["slide"]["durationMs"]/1000}f, kAdsFov = {M["ads_fov"]["value"]}.f, kAdsSeconds = {M["ads_fov"]["durationMs"]/1000}f, kAdsSpeed = {M["ads_speed"]["value"]}.f;')
+o.append(f'\tinline constexpr float kSprintBoost = {F(M["sprint_boost"]["value"])}, kSlideBoost = {F(M["slide"]["value"])}, kSlideSeconds = {F(M["slide"]["durationMs"]/1000)}, kAdsFov = {F(M["ads_fov"]["value"])}, kAdsSeconds = {F(M["ads_fov"]["durationMs"]/1000)}, kAdsSpeed = {F(M["ads_speed"]["value"])};')
 Q = {r['id']: r for r in S['quests']['rows']}
 for qid in ('MQQuickstart', 'MQ102Marker'):
     if qid in Q: o.append(f'\tinline constexpr FormRef kQ_{qid}{{ {cs(Q[qid]["plugin"])}, 0x{int(Q[qid]["localId"],16):06X}, {cs(Q[qid]["editorId"])} }};')

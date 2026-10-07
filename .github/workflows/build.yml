@@ -31,6 +31,15 @@ jobs:
           path: ${{ github.workspace }}\.vcpkg-cache
           key: vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-configuration.json') }}
           restore-keys: vcpkg-
+      - name: Pin library timestamps (so the cached CommonLib build is reused)
+        run: |
+          $old = Get-Date '2020-01-01'
+          Get-ChildItem extern -Recurse -File | ForEach-Object { $_.LastWriteTime = $old }
+      - uses: actions/cache@v4
+        with:
+          path: build
+          key: build-${{ hashFiles('.gitmodules', 'vcpkg.json', 'vcpkg-configuration.json', 'CMakePresets.json') }}-${{ github.sha }}
+          restore-keys: build-${{ hashFiles('.gitmodules', 'vcpkg.json', 'vcpkg-configuration.json', 'CMakePresets.json') }}-
       - name: Configure
         run: cmake --preset release
       - name: Build
