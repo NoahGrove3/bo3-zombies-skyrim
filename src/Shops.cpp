@@ -323,7 +323,8 @@ namespace bo3z
 		// Score a candidate alley (lower is better); 0 failures + flat + no doors near = accept immediately.
 		// Clear sky over the whole stand: cast down from high above on a grid; trees, porches and roofs stand
 		// out as hits far above the ground and rule the spot out.
-		bool Obstructed(RE::TESObjectREFR* a_anchor, const TownPlan& a_plan)
+		// a_overhead > 0 (an existing stand, whose own machines are in the way): only count things that far above the floor.
+		bool Obstructed(RE::TESObjectREFR* a_anchor, const TownPlan& a_plan, float a_overhead = 0.0f)
 		{
 			float glo = FLT_MAX, ghi = -FLT_MAX;
 			for (int gx = 0; gx < 5; ++gx) {
@@ -335,6 +336,9 @@ namespace bo3z
 						glo = std::min(glo, *z), ghi = std::max(ghi, *z);
 					}
 				}
+			}
+			if (a_overhead > 0) {
+				return ghi > a_plan.top + a_overhead;
 			}
 			return ghi > glo && ghi - glo > 50.0f;
 		}
@@ -451,7 +455,7 @@ namespace bo3z
 			plan.top = p.z, plan.topSet = true;
 			plan.state = TownPlan::State::Ready;
 			plan.center.z = p.z;
-			if (Obstructed(a_anchor, plan)) {
+			if (Obstructed(a_anchor, plan, 220.0f)) {
 				logger::info("shops: {} stand is boxed in by trees or buildings, moving it", gen::kTowns[a_town]);
 				return false;
 			}
