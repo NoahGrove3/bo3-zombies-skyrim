@@ -11,7 +11,8 @@ def assign(S=None, write=False):
     nxt = max(frozen.values(), default=0x7FF) + 1
     ids = {}
     wanted = [('MGEF', p['id']) for p in S['perks']['rows']] + [('ACTI', o['id']) for o in S['objects']['rows']] + \
-             [('WEAP', w['id']) for w in S['weapons']['rows']] + [('ALCH', p['id']) for p in S['perks']['rows']]
+             [('WEAP', w['id']) for w in S['weapons']['rows']] + [('ALCH', p['id']) for p in S['perks']['rows']] + \
+             [('SNDR', s['id']) for s in S['sounds']['rows'] if s['plugin'] == PLUGIN]
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:

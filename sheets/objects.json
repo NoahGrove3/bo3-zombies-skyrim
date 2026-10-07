@@ -1,196 +1,196 @@
 {
- "sheet": "objects",
- "about": "Things placed in towns (activators in BO3Zombies.esp, stand-in Skyrim models). Activate text shows on the crosshair.",
- "columns": [
-  "id",
-  "kind",
-  "label",
-  "activateText",
-  "model",
-  "cost",
-  "refs",
-  "verify"
- ],
- "rows": [
-  {
-   "id": "mysterybox",
-   "kind": "box",
-   "label": "Mystery Box",
-   "activateText": "Spin",
-   "model": "Clutter\\Containers\\Chest01\\Chest01.nif",
-   "cost": 950,
-   "refs": "none",
-   "verify": [
-    "model"
-   ]
-  },
-  {
-   "id": "perk_juggernog",
-   "kind": "perk",
-   "label": "Juggernog",
-   "activateText": "Buy",
-   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
-   "cost": 2500,
-   "refs": "perks:juggernog",
-   "verify": [
-    "model"
-   ]
-  },
-  {
-   "id": "perk_speedcola",
-   "kind": "perk",
-   "label": "Speed Cola",
-   "activateText": "Buy",
-   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
-   "cost": 3000,
-   "refs": "perks:speedcola",
-   "verify": [
-    "model"
-   ]
-  },
-  {
-   "id": "perk_doubletap",
-   "kind": "perk",
-   "label": "Double Tap Root Beer",
-   "activateText": "Buy",
-   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
-   "cost": 2000,
-   "refs": "perks:doubletap",
-   "verify": [
-    "model"
-   ]
-  },
-  {
-   "id": "perk_quickrevive",
-   "kind": "perk",
-   "label": "Quick Revive",
-   "activateText": "Buy",
-   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
-   "cost": 500,
-   "refs": "perks:quickrevive",
-   "verify": [
-    "model"
-   ]
-  },
-  {
-   "id": "perk_staminup",
-   "kind": "perk",
-   "label": "Stamin-Up",
-   "activateText": "Buy",
-   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
-   "cost": 2000,
-   "refs": "perks:staminup",
-   "verify": [
-    "model"
-   ]
-  },
-  {
-   "id": "perk_deadshot",
-   "kind": "perk",
-   "label": "Deadshot Daiquiri",
-   "activateText": "Buy",
-   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
-   "cost": 1500,
-   "refs": "perks:deadshot",
-   "verify": [
-    "model"
-   ]
-  },
-  {
-   "id": "perk_mulekick",
-   "kind": "perk",
-   "label": "Mule Kick",
-   "activateText": "Buy",
-   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
-   "cost": 4000,
-   "refs": "perks:mulekick",
-   "verify": [
-    "model"
-   ]
-  },
-  {
-   "id": "perk_widowswine",
-   "kind": "perk",
-   "label": "Widow's Wine",
-   "activateText": "Buy",
-   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
-   "cost": 4000,
-   "refs": "perks:widowswine",
-   "verify": [
-    "model"
-   ]
-  },
-  {
-   "id": "perk_electriccherry",
-   "kind": "perk",
-   "label": "Electric Cherry",
-   "activateText": "Buy",
-   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
-   "cost": 2000,
-   "refs": "perks:electriccherry",
-   "verify": [
-    "model"
-   ]
-  },
-  {
-   "id": "wall_rk5",
-   "kind": "wallbuy",
-   "label": "RK5",
-   "activateText": "Buy",
-   "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-   "cost": 500,
-   "refs": "weapons:rk5",
-   "verify": [
-    "model"
-   ]
-  },
-  {
-   "id": "wall_kuda",
-   "kind": "wallbuy",
-   "label": "Kuda",
-   "activateText": "Buy",
-   "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-   "cost": 1000,
-   "refs": "weapons:kuda",
-   "verify": [
-    "model"
-   ]
-  },
-  {
-   "id": "wall_vmp",
-   "kind": "wallbuy",
-   "label": "VMP",
-   "activateText": "Buy",
-   "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-   "cost": 1300,
-   "refs": "weapons:vmp",
-   "verify": [
-    "model"
-   ]
-  },
-  {
-   "id": "wall_krm262",
-   "kind": "wallbuy",
-   "label": "KRM-262",
-   "activateText": "Buy",
-   "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-   "cost": 900,
-   "refs": "weapons:krm262",
-   "verify": [
-    "model"
-   ]
-  },
-  {
-   "id": "wall_sheiva",
-   "kind": "wallbuy",
-   "label": "Sheiva",
-   "activateText": "Buy",
-   "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
-   "cost": 900,
-   "refs": "weapons:sheiva",
-   "verify": [
-    "model"
-   ]
-  }
- ]
+  "sheet": "objects",
+  "about": "Things placed in towns (activators in BO3Zombies.esp, stand-in Skyrim models). Activate text shows on the crosshair.",
+  "columns": [
+    "id",
+    "kind",
+    "label",
+    "activateText",
+    "model",
+    "cost",
+    "refs",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "coffer",
+      "kind": "box",
+      "label": "Sheogorath's Coffer",
+      "activateText": "Tempt fate",
+      "model": "Clutter\\Containers\\Chest01\\Chest01.nif",
+      "cost": 950,
+      "refs": "none",
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "perk_trollshide",
+      "kind": "perk",
+      "label": "Troll's Hide Mead",
+      "activateText": "Drink",
+      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "cost": 2500,
+      "refs": "perks:trollshide",
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "perk_quicksilver",
+      "kind": "perk",
+      "label": "Quicksilver Draught",
+      "activateText": "Drink",
+      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "cost": 3000,
+      "refs": "perks:quicksilver",
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "perk_twinstrike",
+      "kind": "perk",
+      "label": "Twin Strike Ale",
+      "activateText": "Drink",
+      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "cost": 2000,
+      "refs": "perks:twinstrike",
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "perk_hearthfire",
+      "kind": "perk",
+      "label": "Hearthfire Tonic",
+      "activateText": "Drink",
+      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "cost": 500,
+      "refs": "perks:hearthfire",
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "perk_windrunner",
+      "kind": "perk",
+      "label": "Windrunner Brew",
+      "activateText": "Drink",
+      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "cost": 2000,
+      "refs": "perks:windrunner",
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "perk_hawkeye",
+      "kind": "perk",
+      "label": "Hawkeye Tincture",
+      "activateText": "Drink",
+      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "cost": 1500,
+      "refs": "perks:hawkeye",
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "perk_mammoth",
+      "kind": "perk",
+      "label": "Mammoth Back Porter",
+      "activateText": "Drink",
+      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "cost": 4000,
+      "refs": "perks:mammoth",
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "perk_frostbite",
+      "kind": "perk",
+      "label": "Frostbite Venom",
+      "activateText": "Drink",
+      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "cost": 4000,
+      "refs": "perks:frostbite",
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "perk_stormcrown",
+      "kind": "perk",
+      "label": "Stormcrown Cider",
+      "activateText": "Drink",
+      "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+      "cost": 2000,
+      "refs": "perks:stormcrown",
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "wall_triad",
+      "kind": "wallbuy",
+      "label": "Triad Burst",
+      "activateText": "Buy",
+      "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
+      "cost": 500,
+      "refs": "weapons:triad",
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "wall_spider",
+      "kind": "wallbuy",
+      "label": "Spider SMG",
+      "activateText": "Buy",
+      "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
+      "cost": 1000,
+      "refs": "weapons:spider",
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "wall_drill",
+      "kind": "wallbuy",
+      "label": "Sphere Drill",
+      "activateText": "Buy",
+      "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
+      "cost": 1300,
+      "refs": "weapons:drill",
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "wall_steampump",
+      "kind": "wallbuy",
+      "label": "Steam Pump",
+      "activateText": "Buy",
+      "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
+      "cost": 900,
+      "refs": "weapons:steampump",
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "wall_marksman",
+      "kind": "wallbuy",
+      "label": "Arkngthand Marksman",
+      "activateText": "Buy",
+      "model": "Clutter\\WeaponRack\\WRDisplayCase01.nif",
+      "cost": 900,
+      "refs": "weapons:marksman",
+      "verify": [
+        "model"
+      ]
+    }
+  ]
 }

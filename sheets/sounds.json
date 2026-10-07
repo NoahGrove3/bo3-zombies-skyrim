@@ -1,12 +1,348 @@
 {
   "sheet": "sounds",
-  "about": "Sound descriptors (SNDR) from the player's own Skyrim, placeholders until BO3 sounds come from the player's BO3 (step 5).",
-  "columns": ["id","plugin","localId","editorId","bo3Replacement","verify"],
+  "about": "Sound descriptors. Rows with plugin BO3Zombies.esp are our own sounds, synthesized by tools/synth.py into Data/Sound/fx/UndyingNights; the rest are Skyrim's own.",
+  "columns": [
+    "id",
+    "plugin",
+    "localId",
+    "editorId",
+    "file",
+    "space",
+    "verify"
+  ],
   "rows": [
-    {"id":"crossbow_fire","plugin":"Dawnguard.esm","localId":"0x008E35","editorId":"WPNCrossbowFire2D","bo3Replacement":"M1911 fire","verify":[]},
-    {"id":"crossbow_reload","plugin":"Dawnguard.esm","localId":"0x008E3A","editorId":"WPNCrossbowReload","bo3Replacement":"M1911 reload","verify":[]},
-    {"id":"bow_nock","plugin":"Skyrim.esm","localId":"0x03E7B4","editorId":"WPNBowNockSD","bo3Replacement":"dry fire click","verify":[]},
-    {"id":"round_start","plugin":"Skyrim.esm","localId":"0x03C7D0","editorId":"UIQuestNew","bo3Replacement":"round start jingle","verify":[]},
-    {"id":"round_end","plugin":"Skyrim.esm","localId":"0x057B44","editorId":"UILevelUpSD","bo3Replacement":"round end jingle","verify":[]}
+    {
+      "id": "crossbow_fire",
+      "plugin": "Dawnguard.esm",
+      "localId": "0x008E35",
+      "editorId": "WPNCrossbowFire2D",
+      "verify": [],
+      "file": "",
+      "space": "2d"
+    },
+    {
+      "id": "crossbow_reload",
+      "plugin": "Dawnguard.esm",
+      "localId": "0x008E3A",
+      "editorId": "WPNCrossbowReload",
+      "verify": [],
+      "file": "",
+      "space": "2d"
+    },
+    {
+      "id": "bow_nock",
+      "plugin": "Skyrim.esm",
+      "localId": "0x03E7B4",
+      "editorId": "WPNBowNockSD",
+      "verify": [],
+      "file": "",
+      "space": "2d"
+    },
+    {
+      "id": "round_start",
+      "plugin": "Skyrim.esm",
+      "localId": "0x03C7D0",
+      "editorId": "UIQuestNew",
+      "verify": [],
+      "file": "",
+      "space": "2d"
+    },
+    {
+      "id": "round_end",
+      "plugin": "Skyrim.esm",
+      "localId": "0x057B44",
+      "editorId": "UILevelUpSD",
+      "verify": [],
+      "file": "",
+      "space": "2d"
+    },
+    {
+      "id": "brew_trollshide",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_brew_trollshide",
+      "file": "fx\\UndyingNights\\brew_trollshide.wav",
+      "space": "3d",
+      "verify": []
+    },
+    {
+      "id": "brew_quicksilver",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_brew_quicksilver",
+      "file": "fx\\UndyingNights\\brew_quicksilver.wav",
+      "space": "3d",
+      "verify": []
+    },
+    {
+      "id": "brew_twinstrike",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_brew_twinstrike",
+      "file": "fx\\UndyingNights\\brew_twinstrike.wav",
+      "space": "3d",
+      "verify": []
+    },
+    {
+      "id": "brew_hearthfire",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_brew_hearthfire",
+      "file": "fx\\UndyingNights\\brew_hearthfire.wav",
+      "space": "3d",
+      "verify": []
+    },
+    {
+      "id": "brew_windrunner",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_brew_windrunner",
+      "file": "fx\\UndyingNights\\brew_windrunner.wav",
+      "space": "3d",
+      "verify": []
+    },
+    {
+      "id": "brew_hawkeye",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_brew_hawkeye",
+      "file": "fx\\UndyingNights\\brew_hawkeye.wav",
+      "space": "3d",
+      "verify": []
+    },
+    {
+      "id": "brew_mammoth",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_brew_mammoth",
+      "file": "fx\\UndyingNights\\brew_mammoth.wav",
+      "space": "3d",
+      "verify": []
+    },
+    {
+      "id": "brew_frostbite",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_brew_frostbite",
+      "file": "fx\\UndyingNights\\brew_frostbite.wav",
+      "space": "3d",
+      "verify": []
+    },
+    {
+      "id": "brew_stormcrown",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_brew_stormcrown",
+      "file": "fx\\UndyingNights\\brew_stormcrown.wav",
+      "space": "3d",
+      "verify": []
+    },
+    {
+      "id": "coffer_spin",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_coffer_spin",
+      "file": "fx\\UndyingNights\\coffer_spin.wav",
+      "space": "3d",
+      "verify": []
+    },
+    {
+      "id": "coffer_open",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_coffer_open",
+      "file": "fx\\UndyingNights\\coffer_open.wav",
+      "space": "3d",
+      "verify": []
+    },
+    {
+      "id": "coffer_cheese",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_coffer_cheese",
+      "file": "fx\\UndyingNights\\coffer_cheese.wav",
+      "space": "3d",
+      "verify": []
+    },
+    {
+      "id": "night_start",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_night_start",
+      "file": "fx\\UndyingNights\\night_start.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "night_end",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_night_end",
+      "file": "fx\\UndyingNights\\night_end.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "hound_night",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_hound_night",
+      "file": "fx\\UndyingNights\\hound_night.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "night_falls",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_night_falls",
+      "file": "fx\\UndyingNights\\night_falls.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "shot_pistol",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shot_pistol",
+      "file": "fx\\UndyingNights\\shot_pistol.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "shot_smg",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shot_smg",
+      "file": "fx\\UndyingNights\\shot_smg.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "shot_ar",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shot_ar",
+      "file": "fx\\UndyingNights\\shot_ar.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "shot_lmg",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shot_lmg",
+      "file": "fx\\UndyingNights\\shot_lmg.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "shot_shotgun",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shot_shotgun",
+      "file": "fx\\UndyingNights\\shot_shotgun.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "shot_sniper",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shot_sniper",
+      "file": "fx\\UndyingNights\\shot_sniper.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "shot_ray",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shot_ray",
+      "file": "fx\\UndyingNights\\shot_ray.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "reload_mag",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_reload_mag",
+      "file": "fx\\UndyingNights\\reload_mag.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "reload_shell",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_reload_shell",
+      "file": "fx\\UndyingNights\\reload_shell.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "dry_click",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_dry_click",
+      "file": "fx\\UndyingNights\\dry_click.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "buy",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_buy",
+      "file": "fx\\UndyingNights\\buy.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "hitmarker",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_hitmarker",
+      "file": "fx\\UndyingNights\\hitmarker.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "headshot",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_headshot",
+      "file": "fx\\UndyingNights\\headshot.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "drink",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_drink",
+      "file": "fx\\UndyingNights\\drink.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "knife",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_knife",
+      "file": "fx\\UndyingNights\\knife.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "rise",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_rise",
+      "file": "fx\\UndyingNights\\rise.wav",
+      "space": "3d",
+      "verify": []
+    }
   ]
 }

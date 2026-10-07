@@ -27,7 +27,8 @@ snd = S['sounds']['rows']
 for i, s in enumerate(snd): out.append(f'\t\t{s["id"]} = {i},')
 out.append('\t};')
 out.append(f'\tinline constexpr std::array<FormRef, {len(snd)}> kSounds{{ {{')
-for s in snd: out.append(f'\t\tFormRef{{ {cs(s["plugin"])}, 0x{hexid(s["localId"]):06X}, {cs(s["editorId"])} }},')
+sys.path.insert(0, str(root / 'tools')); import esp_ids as _ids; _SIDS, _ = _ids.assign(S)
+for s in snd: out.append(f'\t\tFormRef{{ {cs(s["plugin"])}, 0x{(_SIDS[("SNDR", s["id"])] if s["localId"] == "auto" else hexid(s["localId"])):06X}, {cs(s["editorId"])} }},')
 out.append('\t} };')
 # economy
 for e in S['economy']['rows']: out.append(f'\tinline constexpr int kPoints_{e["id"]} = {e["points"]};  // {e["event"]}')
@@ -75,9 +76,10 @@ o.append('\t} };')
 for i, p in enumerate(P): o.append(f'\tinline constexpr int kPerk_{p["id"]} = {i};')
 o.append(f'\tinline constexpr int kMaxPerks = {S["perks"]["limits"]["maxPerks"]};')
 C = S['crew']['rows']; passives = {'gun_damage_mult': 0, 'bonus_health': 1, 'knife_damage_mult': 2, 'box_cost': 3}
-o.append('\tstruct CrewDef { std::string_view id, label, quote; int passive; float value; };')
+o.append('\tstruct CrewDef { std::string_view id, label, quote; int passive; float value; std::string_view passiveText; };')
 o.append(f'\tinline constexpr std::array<CrewDef, {len(C)}> kCrew{{ {{')
-for c in C: o.append(f'\t\tCrewDef{{ {cs(c["id"])}, {cs(c["label"])}, {cs(c["quote"])}, {passives[c["passive"]]}, {F(c["passiveValue"])} }},')
+for c in C: o.append(f'\t\tCrewDef{{ {cs(c["id"])}, {cs(c["label"])}, {cs(c["quote"])}, {passives[c["passive"]]}, {F(c["passiveValue"])}, {cs(c["passiveText"])} }},')
+for r in S['identity']['rows']: o.append(f'\tinline constexpr std::string_view kText_{r["id"]} = {cs(r["text"])};')
 o.append('\t} };')
 O = S['objects']['rows']; kinds = {'box': 0, 'perk': 1, 'wallbuy': 2}
 def refidx(r):

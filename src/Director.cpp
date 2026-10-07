@@ -209,6 +209,7 @@ namespace bo3z
 			}
 			g_ours[actor->GetFormID()] = *pick;
 			g_alive.push_back({ actor->GetHandle(), *pick });
+			Forms::PlayAt(gen::Sound::rise, actor);
 			return true;
 		}
 
@@ -221,8 +222,8 @@ namespace bo3z
 			g_toSpawn = static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier));
 			g_spawnTimer = 0;
 			g_phase = Phase::Fighting;
-			Forms::Play(gen::Sound::round_start);
-			Hud::Banner(g_special ? "ROUND " + std::to_string(a_round) + " - THE HOUNDS ARE LOOSE" : "ROUND " + std::to_string(a_round));
+			Forms::Play(g_special ? gen::Sound::hound_night : gen::Sound::night_start);
+			Hud::Banner(g_special ? "NIGHT " + std::to_string(a_round) + " - THE HOUNDS ARE LOOSE" : "NIGHT " + std::to_string(a_round));
 			logger::info("round {} starts: {} undead, {:.0f} Skyrim health each{}", a_round, g_toSpawn, HealthFor(a_round), g_special ? " (hound round)" : "");
 		}
 
@@ -230,7 +231,7 @@ namespace bo3z
 		{
 			Save::Set(gen::kAV_round, g_current);
 			Points::Add(gen::kPoints_round_survived);
-			Forms::Play(gen::Sound::round_end);
+			Forms::Play(gen::Sound::night_end);
 			logger::info("round {} cleared", g_current);
 			g_phase = Phase::Break;
 			g_breakTimer = R.breakSeconds;
@@ -247,7 +248,7 @@ namespace bo3z
 			}
 			g_alive.clear();
 			if (g_phase == Phase::Fighting) {
-				Hud::Banner("DAWN - ROUND " + std::to_string(g_current) + " RETURNS AT NIGHTFALL", 5.0f);
+				Hud::Banner("DAWN - NIGHT " + std::to_string(g_current + 1) + " BEGINS AT DUSK", 5.0f);
 				logger::info("dawn: round {} unfinished, {} undead crumbled", g_current, n);
 			}
 			g_phase = Phase::Day;
@@ -403,6 +404,7 @@ namespace bo3z
 				g_phase = Phase::Break;
 				g_breakTimer = R.firstBreakSeconds;
 				Hud::Banner("NIGHT FALLS. THE DEAD RISE.", 4.0f);
+				Forms::Play(gen::Sound::night_falls);
 				break;
 			case Phase::Break:
 				if ((g_breakTimer -= a_delta) <= 0) {

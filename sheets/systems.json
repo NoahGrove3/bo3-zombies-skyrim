@@ -81,19 +81,19 @@
    "id": "gun",
    "does": "BO3 arsenal: each gun is a Skyrim weapon item; while one is drawn, hitscan fire (semi/auto/burst/pump, pellets, splash), ADS, reload, 2 slots (3 with Mule Kick), quick knife",
    "reads": [
-    "weapons:m1911",
+    "weapons:sidearm",
     "melee:knife",
     "input:fire",
     "input:ads",
     "input:reload",
     "input:swap",
     "input:knife",
-    "perks:speedcola",
-    "perks:doubletap",
-    "perks:deadshot",
-    "perks:mulekick",
-    "crew:dempsey",
-    "crew:takeo"
+    "perks:quicksilver",
+    "perks:twinstrike",
+    "perks:hawkeye",
+    "perks:mammoth",
+    "crew:halvard",
+    "crew:saffir"
    ],
    "state": "out, clip, reserve, cooldown, reload timer",
    "step": 1,
@@ -138,10 +138,10 @@
     "input:crew3",
     "input:crew4",
     "input:confirm",
-    "crew:dempsey",
-    "crew:nikolai",
-    "crew:takeo",
-    "crew:richtofen"
+    "crew:halvard",
+    "crew:gorza",
+    "crew:saffir",
+    "crew:eldrith"
    ],
    "state": "flags on the player",
    "step": 2,
@@ -152,10 +152,10 @@
    "does": "place Mystery Box, perk machines and wall-buys in towns; sell guns, ammo and Perk-a-Colas for points; move the box on a teddy bear",
    "reads": [
     "locations:riverwood_0",
-    "objects:mysterybox",
-    "objects:perk_juggernog",
-    "objects:wall_kuda",
-    "perks:juggernog"
+    "objects:coffer",
+    "objects:perk_trollshide",
+    "objects:wall_spider",
+    "perks:trollshide"
    ],
    "state": "placed refs this session, box town/spins on the player",
    "step": 2,
@@ -165,13 +165,13 @@
    "id": "perks",
    "does": "drinking a Perk-a-Cola potion grants its perk (max 4) and applies its effect",
    "reads": [
-    "perks:juggernog",
-    "perks:speedcola",
-    "perks:doubletap",
-    "perks:quickrevive",
-    "perks:staminup",
-    "perks:deadshot",
-    "perks:mulekick"
+    "perks:trollshide",
+    "perks:quicksilver",
+    "perks:twinstrike",
+    "perks:hearthfire",
+    "perks:windrunner",
+    "perks:hawkeye",
+    "perks:mammoth"
    ],
    "state": "perk bits on the player",
    "step": 2,
@@ -194,9 +194,9 @@
    "id": "plugin",
    "does": "BO3Zombies.esp holds the gun items, potions, perk effects and town objects; the .asi adds it to Plugins.txt",
    "reads": [
-    "objects:mysterybox",
-    "weapons:m1911",
-    "perks:juggernog"
+    "objects:coffer",
+    "weapons:sidearm",
+    "perks:trollshide"
    ],
    "state": "none",
    "step": 2,

@@ -145,6 +145,25 @@ namespace bo3z
 				RE::BSAudioManager::GetSingleton()->Play(static_cast<RE::BSISoundDescriptor*>(g_sounds[i]));
 			}
 		}
+
+		void PlayAt(gen::Sound a_sound, RE::TESObjectREFR* a_at)
+		{
+			const auto i = static_cast<std::size_t>(a_sound);
+			if (i >= g_sounds.size() || !g_sounds[i]) {
+				return;
+			}
+			if (!a_at) {
+				return Play(a_sound);
+			}
+			RE::BSSoundHandle h;
+			if (RE::BSAudioManager::GetSingleton()->BuildSoundDataFromDescriptor(h, static_cast<RE::BSISoundDescriptor*>(g_sounds[i]))) {
+				h.SetPosition(a_at->GetPosition());
+				if (auto* node = a_at->Get3D()) {
+					h.SetObjectToFollow(node);
+				}
+				h.Play();
+			}
+		}
 	}
 
 	namespace PluginList

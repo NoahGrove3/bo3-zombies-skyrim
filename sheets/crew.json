@@ -1,46 +1,51 @@
 {
- "sheet": "crew",
- "about": "Playable BO3 crew, chosen on the select screen after character creation. Bodies and voices come from the player's BO3 once the converter exists; until then the pick sets name, quote and a small passive.",
- "columns": [
-  "id",
-  "label",
-  "quote",
-  "passive",
-  "passiveValue",
-  "verify"
- ],
- "rows": [
-  {
-   "id": "dempsey",
-   "label": "Tank Dempsey",
-   "quote": "Ooh-rah! Let's kill some zombies!",
-   "passive": "gun_damage_mult",
-   "passiveValue": 1.1,
-   "verify": []
-  },
-  {
-   "id": "nikolai",
-   "label": "Nikolai Belinski",
-   "quote": "Bring me vodka. And zombies.",
-   "passive": "bonus_health",
-   "passiveValue": 50,
-   "verify": []
-  },
-  {
-   "id": "takeo",
-   "label": "Takeo Masaki",
-   "quote": "The honor of the blade guides me.",
-   "passive": "knife_damage_mult",
-   "passiveValue": 2.0,
-   "verify": []
-  },
-  {
-   "id": "richtofen",
-   "label": "Edward Richtofen",
-   "quote": "Ze box knows what I want, ja?",
-   "passive": "box_cost",
-   "passiveValue": 750,
-   "verify": []
-  }
- ]
+  "sheet": "crew",
+  "about": "Four original heroes, chosen after character creation. Each sets a name, a line and a small passive.",
+  "columns": [
+    "id",
+    "label",
+    "quote",
+    "passive",
+    "passiveValue",
+    "verify",
+    "passiveText"
+  ],
+  "rows": [
+    {
+      "id": "halvard",
+      "label": "Halvard Stone-Fist",
+      "quote": "Legion taught me to march. The dead taught me to run.",
+      "passive": "gun_damage_mult",
+      "passiveValue": 1.1,
+      "verify": [],
+      "passiveText": "+10% weapon damage"
+    },
+    {
+      "id": "gorza",
+      "label": "Gorza gra-Bor",
+      "quote": "I forged my own hammer. You will not like where it lands.",
+      "passive": "bonus_health",
+      "passiveValue": 50,
+      "verify": [],
+      "passiveText": "+50 health"
+    },
+    {
+      "id": "saffir",
+      "label": "Saffir al-Rihad",
+      "quote": "Steel is a song. The dead never learn the words.",
+      "passive": "knife_damage_mult",
+      "passiveValue": 2.0,
+      "verify": [],
+      "passiveText": "Knife does double damage"
+    },
+    {
+      "id": "eldrith",
+      "label": "Eldrith Vael",
+      "quote": "I have read what the Thalmor buried. The Coffer and I understand each other.",
+      "passive": "box_cost",
+      "passiveValue": 750,
+      "verify": [],
+      "passiveText": "The Coffer costs 750"
+    }
+  ]
 }

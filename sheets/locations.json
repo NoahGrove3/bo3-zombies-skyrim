@@ -17,7 +17,7 @@
    "town": "Riverwood",
    "worldspace": "Tamriel",
    "anchor": "0x0162A4",
-   "object": "objects:mysterybox",
+   "object": "objects:coffer",
    "angleDeg": 0,
    "distance": 350,
    "verify": [
@@ -29,7 +29,7 @@
    "town": "Riverwood",
    "worldspace": "Tamriel",
    "anchor": "0x0162A4",
-   "object": "objects:perk_juggernog",
+   "object": "objects:perk_trollshide",
    "angleDeg": 90,
    "distance": 450,
    "verify": [
@@ -41,7 +41,7 @@
    "town": "Riverwood",
    "worldspace": "Tamriel",
    "anchor": "0x0162A4",
-   "object": "objects:perk_quickrevive",
+   "object": "objects:perk_hearthfire",
    "angleDeg": 180,
    "distance": 400,
    "verify": [
@@ -53,7 +53,7 @@
    "town": "Riverwood",
    "worldspace": "Tamriel",
    "anchor": "0x0162A4",
-   "object": "objects:wall_rk5",
+   "object": "objects:wall_triad",
    "angleDeg": 270,
    "distance": 350,
    "verify": [
@@ -65,7 +65,7 @@
    "town": "Riverwood",
    "worldspace": "Tamriel",
    "anchor": "0x0162A4",
-   "object": "objects:wall_krm262",
+   "object": "objects:wall_steampump",
    "angleDeg": 315,
    "distance": 500,
    "verify": [
@@ -77,7 +77,7 @@
    "town": "Whiterun",
    "worldspace": "WhiterunWorld",
    "anchor": "0x0162CE",
-   "object": "objects:mysterybox",
+   "object": "objects:coffer",
    "angleDeg": 30,
    "distance": 700,
    "verify": [
@@ -89,7 +89,7 @@
    "town": "Whiterun",
    "worldspace": "WhiterunWorld",
    "anchor": "0x0162CE",
-   "object": "objects:perk_speedcola",
+   "object": "objects:perk_quicksilver",
    "angleDeg": 120,
    "distance": 600,
    "verify": [
@@ -101,7 +101,7 @@
    "town": "Whiterun",
    "worldspace": "WhiterunWorld",
    "anchor": "0x0162CE",
-   "object": "objects:perk_doubletap",
+   "object": "objects:perk_twinstrike",
    "angleDeg": 210,
    "distance": 600,
    "verify": [
@@ -113,7 +113,7 @@
    "town": "Whiterun",
    "worldspace": "WhiterunWorld",
    "anchor": "0x0162CE",
-   "object": "objects:wall_kuda",
+   "object": "objects:wall_spider",
    "angleDeg": 300,
    "distance": 500,
    "verify": [
@@ -125,7 +125,7 @@
    "town": "Whiterun",
    "worldspace": "WhiterunWorld",
    "anchor": "0x0162CE",
-   "object": "objects:wall_sheiva",
+   "object": "objects:wall_marksman",
    "angleDeg": 0,
    "distance": 900,
    "verify": [
@@ -137,7 +137,7 @@
    "town": "Solitude",
    "worldspace": "SolitudeWorld",
    "anchor": "0x04D0F4",
-   "object": "objects:mysterybox",
+   "object": "objects:coffer",
    "angleDeg": 0,
    "distance": 700,
    "verify": [
@@ -149,7 +149,7 @@
    "town": "Solitude",
    "worldspace": "SolitudeWorld",
    "anchor": "0x04D0F4",
-   "object": "objects:perk_staminup",
+   "object": "objects:perk_windrunner",
    "angleDeg": 90,
    "distance": 600,
    "verify": [
@@ -161,7 +161,7 @@
    "town": "Solitude",
    "worldspace": "SolitudeWorld",
    "anchor": "0x04D0F4",
-   "object": "objects:perk_deadshot",
+   "object": "objects:perk_hawkeye",
    "angleDeg": 180,
    "distance": 600,
    "verify": [
@@ -173,7 +173,7 @@
    "town": "Solitude",
    "worldspace": "SolitudeWorld",
    "anchor": "0x04D0F4",
-   "object": "objects:wall_vmp",
+   "object": "objects:wall_drill",
    "angleDeg": 270,
    "distance": 500,
    "verify": [
@@ -185,7 +185,7 @@
    "town": "Windhelm",
    "worldspace": "WindhelmWorld",
    "anchor": "0x038436",
-   "object": "objects:mysterybox",
+   "object": "objects:coffer",
    "angleDeg": 0,
    "distance": 700,
    "verify": [
@@ -197,7 +197,7 @@
    "town": "Windhelm",
    "worldspace": "WindhelmWorld",
    "anchor": "0x038436",
-   "object": "objects:perk_mulekick",
+   "object": "objects:perk_mammoth",
    "angleDeg": 90,
    "distance": 600,
    "verify": [
@@ -209,7 +209,7 @@
    "town": "Windhelm",
    "worldspace": "WindhelmWorld",
    "anchor": "0x038436",
-   "object": "objects:perk_juggernog",
+   "object": "objects:perk_trollshide",
    "angleDeg": 180,
    "distance": 600,
    "verify": [
@@ -221,7 +221,7 @@
    "town": "Windhelm",
    "worldspace": "WindhelmWorld",
    "anchor": "0x038436",
-   "object": "objects:wall_kuda",
+   "object": "objects:wall_spider",
    "angleDeg": 270,
    "distance": 500,
    "verify": [
@@ -233,7 +233,7 @@
    "town": "Markarth",
    "worldspace": "MarkarthWorld",
    "anchor": "0x01C38A",
-   "object": "objects:mysterybox",
+   "object": "objects:coffer",
    "angleDeg": 0,
    "distance": 700,
    "verify": [
@@ -245,7 +245,7 @@
    "town": "Markarth",
    "worldspace": "MarkarthWorld",
    "anchor": "0x01C38A",
-   "object": "objects:perk_speedcola",
+   "object": "objects:perk_quicksilver",
    "angleDeg": 90,
    "distance": 600,
    "verify": [
@@ -257,7 +257,7 @@
    "town": "Markarth",
    "worldspace": "MarkarthWorld",
    "anchor": "0x01C38A",
-   "object": "objects:perk_quickrevive",
+   "object": "objects:perk_hearthfire",
    "angleDeg": 180,
    "distance": 600,
    "verify": [
@@ -269,7 +269,7 @@
    "town": "Markarth",
    "worldspace": "MarkarthWorld",
    "anchor": "0x01C38A",
-   "object": "objects:wall_sheiva",
+   "object": "objects:wall_marksman",
    "angleDeg": 270,
    "distance": 500,
    "verify": [
@@ -281,7 +281,7 @@
    "town": "Riften",
    "worldspace": "RiftenWorld",
    "anchor": "0x01C390",
-   "object": "objects:mysterybox",
+   "object": "objects:coffer",
    "angleDeg": 0,
    "distance": 700,
    "verify": [
@@ -293,7 +293,7 @@
    "town": "Riften",
    "worldspace": "RiftenWorld",
    "anchor": "0x01C390",
-   "object": "objects:perk_doubletap",
+   "object": "objects:perk_twinstrike",
    "angleDeg": 90,
    "distance": 600,
    "verify": [
@@ -305,7 +305,7 @@
    "town": "Riften",
    "worldspace": "RiftenWorld",
    "anchor": "0x01C390",
-   "object": "objects:perk_staminup",
+   "object": "objects:perk_windrunner",
    "angleDeg": 180,
    "distance": 600,
    "verify": [
@@ -317,7 +317,7 @@
    "town": "Riften",
    "worldspace": "RiftenWorld",
    "anchor": "0x01C390",
-   "object": "objects:wall_krm262",
+   "object": "objects:wall_steampump",
    "angleDeg": 270,
    "distance": 500,
    "verify": [
@@ -329,7 +329,7 @@
    "town": "Falkreath",
    "worldspace": "Tamriel",
    "anchor": "0x017760",
-   "object": "objects:perk_deadshot",
+   "object": "objects:perk_hawkeye",
    "angleDeg": 0,
    "distance": 400,
    "verify": [
@@ -341,7 +341,7 @@
    "town": "Falkreath",
    "worldspace": "Tamriel",
    "anchor": "0x017760",
-   "object": "objects:wall_rk5",
+   "object": "objects:wall_triad",
    "angleDeg": 120,
    "distance": 400,
    "verify": [
@@ -353,7 +353,7 @@
    "town": "Morthal",
    "worldspace": "Tamriel",
    "anchor": "0x0177B0",
-   "object": "objects:perk_juggernog",
+   "object": "objects:perk_trollshide",
    "angleDeg": 0,
    "distance": 400,
    "verify": [
@@ -365,7 +365,7 @@
    "town": "Morthal",
    "worldspace": "Tamriel",
    "anchor": "0x0177B0",
-   "object": "objects:wall_kuda",
+   "object": "objects:wall_spider",
    "angleDeg": 120,
    "distance": 400,
    "verify": [
@@ -377,7 +377,7 @@
    "town": "Dawnstar",
    "worldspace": "Tamriel",
    "anchor": "0x01773A",
-   "object": "objects:perk_speedcola",
+   "object": "objects:perk_quicksilver",
    "angleDeg": 0,
    "distance": 400,
    "verify": [
@@ -389,7 +389,7 @@
    "town": "Dawnstar",
    "worldspace": "Tamriel",
    "anchor": "0x01773A",
-   "object": "objects:wall_sheiva",
+   "object": "objects:wall_marksman",
    "angleDeg": 120,
    "distance": 400,
    "verify": [
@@ -401,7 +401,7 @@
    "town": "Winterhold",
    "worldspace": "Tamriel",
    "anchor": "0x0177EF",
-   "object": "objects:perk_mulekick",
+   "object": "objects:perk_mammoth",
    "angleDeg": 0,
    "distance": 400,
    "verify": [
@@ -413,7 +413,7 @@
    "town": "Winterhold",
    "worldspace": "Tamriel",
    "anchor": "0x0177EF",
-   "object": "objects:wall_vmp",
+   "object": "objects:wall_drill",
    "angleDeg": 120,
    "distance": 400,
    "verify": [
@@ -425,7 +425,7 @@
    "town": "Whiterun",
    "worldspace": "WhiterunWorld",
    "anchor": "0x0162CE",
-   "object": "objects:perk_widowswine",
+   "object": "objects:perk_frostbite",
    "angleDeg": 160,
    "distance": 800,
    "verify": [
@@ -437,7 +437,7 @@
    "town": "Riverwood",
    "worldspace": "Tamriel",
    "anchor": "0x0162A4",
-   "object": "objects:perk_electriccherry",
+   "object": "objects:perk_stormcrown",
    "angleDeg": 225,
    "distance": 450,
    "verify": [
@@ -449,7 +449,7 @@
    "town": "Riften",
    "worldspace": "RiftenWorld",
    "anchor": "0x01C390",
-   "object": "objects:perk_widowswine",
+   "object": "objects:perk_frostbite",
    "angleDeg": 45,
    "distance": 700,
    "verify": [
@@ -461,7 +461,7 @@
    "town": "Solitude",
    "worldspace": "SolitudeWorld",
    "anchor": "0x04D0F4",
-   "object": "objects:perk_electriccherry",
+   "object": "objects:perk_stormcrown",
    "angleDeg": 135,
    "distance": 700,
    "verify": [

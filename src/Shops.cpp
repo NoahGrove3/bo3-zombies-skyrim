@@ -106,7 +106,7 @@ namespace bo3z
 		{
 			const int town = TownOf(a_ref);
 			if (town != ActiveBoxTown()) {
-				Hud::Banner("The Mystery Box is in " + std::string(gen::kTowns[ActiveBoxTown()]), 3.0f);
+				Hud::Banner(std::string(gen::kText_box_short) + " is in " + std::string(gen::kTowns[ActiveBoxTown()]), 3.0f);
 				return;
 			}
 			const int crew = Save::Crew();
@@ -114,19 +114,22 @@ namespace bo3z
 			if (!Points::Spend(cost)) {
 				return;
 			}
+			Forms::PlayAt(gen::Sound::coffer_open, a_ref);
 			const int spins = BoxSpins() + 1;
-			// Teddy bear: never in the first 4 spins at a spot, then 1 in 6.
+			// Cheese wheel (the Coffer gets bored): never in the first 4 spins at a spot, then 1 in 6.
 			if (spins > 4 && std::uniform_int_distribution<int>(1, 6)(g_rng) == 1) {
 				Points::Add(cost);
 				auto towns = BoxTowns();
 				std::erase(towns, town);
 				const int next = towns.empty() ? town : towns[std::uniform_int_distribution<std::size_t>(0, towns.size() - 1)(g_rng)];
 				SetBox(next, 0);
-				Hud::Banner("Bye bye! The box moved to " + std::string(gen::kTowns[next]), 5.0f);
-				logger::info("box: teddy bear, moved to {}", gen::kTowns[next]);
+				Forms::PlayAt(gen::Sound::coffer_cheese, a_ref);
+				Hud::Banner(std::string(gen::kText_box_joke) + " (" + std::string(gen::kTowns[next]) + ")", 6.0f);
+				logger::info("box: cheese, moved to {}", gen::kTowns[next]);
 				return;
 			}
 			SetBox(town, spins);
+			Forms::PlayAt(gen::Sound::coffer_spin, a_ref);
 			int total = 0;
 			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
 				total += Gun::Owns(i) ? 0 : gen::kGuns[i].boxWeight;
@@ -136,14 +139,14 @@ namespace bo3z
 				const int w = Gun::Owns(i) ? 0 : gen::kGuns[i].boxWeight;
 				if (w > 0 && (roll -= w) <= 0) {
 					Gun::Give(i);
-					Hud::Banner("Mystery Box: " + std::string(gen::kGuns[i].label), 3.0f);
+					Hud::Banner(std::string(gen::kText_box_short) + ": " + std::string(gen::kGuns[i].label), 3.0f);
 					logger::info("box: {}", gen::kGuns[i].id);
 					return;
 				}
 			}
 		}
 
-		void BuyPerk(const gen::ObjectDef& a_obj)
+		void BuyPerk(const gen::ObjectDef& a_obj, RE::TESObjectREFR* a_ref)
 		{
 			const int perk = a_obj.ref;
 			auto*     potion = Forms::PerkPotion(perk);
@@ -162,6 +165,7 @@ namespace bo3z
 				return;
 			}
 			RE::PlayerCharacter::GetSingleton()->AddObjectToContainer(potion, nullptr, 1, nullptr);
+			Forms::PlayAt(Forms::Brew(perk), a_ref);
 			Hud::Banner(std::string(gen::kPerks[perk].label) + " added to your potions. Drink it!", 3.0f);
 		}
 
@@ -172,12 +176,14 @@ namespace bo3z
 			if (Gun::Owns(gun)) {
 				if (Points::Spend(g.ammoCost)) {
 					Gun::RefillAmmo(gun);
+					Forms::Play(gen::Sound::buy);
 					Hud::Banner(std::string(g.label) + " ammo", 2.0f);
 				}
 				return;
 			}
 			if (Points::Spend(g.wallBuyCost)) {
 				Gun::Give(gun);
+				Forms::Play(gen::Sound::buy);
 				Hud::Banner(std::string(g.label), 2.0f);
 			}
 		}
@@ -209,7 +215,7 @@ namespace bo3z
 			const auto& o = gen::kObjects[obj];
 			switch (o.kind) {
 			case 0: SpinBox(a_ref); break;
-			case 1: BuyPerk(o); break;
+			case 1: BuyPerk(o, a_ref); break;
 			default: BuyWall(o); break;
 			}
 		}

@@ -32,13 +32,77 @@ namespace bo3z::gen
 		bow_nock = 2,
 		round_start = 3,
 		round_end = 4,
+		brew_trollshide = 5,
+		brew_quicksilver = 6,
+		brew_twinstrike = 7,
+		brew_hearthfire = 8,
+		brew_windrunner = 9,
+		brew_hawkeye = 10,
+		brew_mammoth = 11,
+		brew_frostbite = 12,
+		brew_stormcrown = 13,
+		coffer_spin = 14,
+		coffer_open = 15,
+		coffer_cheese = 16,
+		night_start = 17,
+		night_end = 18,
+		hound_night = 19,
+		night_falls = 20,
+		shot_pistol = 21,
+		shot_smg = 22,
+		shot_ar = 23,
+		shot_lmg = 24,
+		shot_shotgun = 25,
+		shot_sniper = 26,
+		shot_ray = 27,
+		reload_mag = 28,
+		reload_shell = 29,
+		dry_click = 30,
+		buy = 31,
+		hitmarker = 32,
+		headshot = 33,
+		drink = 34,
+		knife = 35,
+		rise = 36,
 	};
-	inline constexpr std::array<FormRef, 5> kSounds{ {
+	inline constexpr std::array<FormRef, 37> kSounds{ {
 		FormRef{ "Dawnguard.esm", 0x008E35, "WPNCrossbowFire2D" },
 		FormRef{ "Dawnguard.esm", 0x008E3A, "WPNCrossbowReload" },
 		FormRef{ "Skyrim.esm", 0x03E7B4, "WPNBowNockSD" },
 		FormRef{ "Skyrim.esm", 0x03C7D0, "UIQuestNew" },
 		FormRef{ "Skyrim.esm", 0x057B44, "UILevelUpSD" },
+		FormRef{ "BO3Zombies.esp", 0x00082D, "UN_brew_trollshide" },
+		FormRef{ "BO3Zombies.esp", 0x00082E, "UN_brew_quicksilver" },
+		FormRef{ "BO3Zombies.esp", 0x00082F, "UN_brew_twinstrike" },
+		FormRef{ "BO3Zombies.esp", 0x000830, "UN_brew_hearthfire" },
+		FormRef{ "BO3Zombies.esp", 0x000831, "UN_brew_windrunner" },
+		FormRef{ "BO3Zombies.esp", 0x000832, "UN_brew_hawkeye" },
+		FormRef{ "BO3Zombies.esp", 0x000833, "UN_brew_mammoth" },
+		FormRef{ "BO3Zombies.esp", 0x000834, "UN_brew_frostbite" },
+		FormRef{ "BO3Zombies.esp", 0x000835, "UN_brew_stormcrown" },
+		FormRef{ "BO3Zombies.esp", 0x000836, "UN_coffer_spin" },
+		FormRef{ "BO3Zombies.esp", 0x000837, "UN_coffer_open" },
+		FormRef{ "BO3Zombies.esp", 0x000838, "UN_coffer_cheese" },
+		FormRef{ "BO3Zombies.esp", 0x000839, "UN_night_start" },
+		FormRef{ "BO3Zombies.esp", 0x00083A, "UN_night_end" },
+		FormRef{ "BO3Zombies.esp", 0x00083B, "UN_hound_night" },
+		FormRef{ "BO3Zombies.esp", 0x00083C, "UN_night_falls" },
+		FormRef{ "BO3Zombies.esp", 0x00083D, "UN_shot_pistol" },
+		FormRef{ "BO3Zombies.esp", 0x00083E, "UN_shot_smg" },
+		FormRef{ "BO3Zombies.esp", 0x00083F, "UN_shot_ar" },
+		FormRef{ "BO3Zombies.esp", 0x000840, "UN_shot_lmg" },
+		FormRef{ "BO3Zombies.esp", 0x000841, "UN_shot_shotgun" },
+		FormRef{ "BO3Zombies.esp", 0x000842, "UN_shot_sniper" },
+		FormRef{ "BO3Zombies.esp", 0x000843, "UN_shot_ray" },
+		FormRef{ "BO3Zombies.esp", 0x000844, "UN_reload_mag" },
+		FormRef{ "BO3Zombies.esp", 0x000845, "UN_reload_shell" },
+		FormRef{ "BO3Zombies.esp", 0x000846, "UN_dry_click" },
+		FormRef{ "BO3Zombies.esp", 0x000847, "UN_buy" },
+		FormRef{ "BO3Zombies.esp", 0x000848, "UN_hitmarker" },
+		FormRef{ "BO3Zombies.esp", 0x000849, "UN_headshot" },
+		FormRef{ "BO3Zombies.esp", 0x00084A, "UN_drink" },
+		FormRef{ "BO3Zombies.esp", 0x00084B, "UN_knife" },
+		FormRef{ "BO3Zombies.esp", 0x00084C, "UN_rise" },
 	} };
 	inline constexpr int kPoints_start = 500;  // new_game_after_intro
 	inline constexpr int kPoints_hit = 10;  // gun_hit_round_undead
@@ -83,79 +147,87 @@ namespace bo3z::gen
 	enum class Fire : int { Semi = 0, Auto = 1, Burst = 2, Pump = 3 };
 	struct GunDef { std::string_view id, label, cls; Fire fire; float damage, headMult; int pellets; float spreadHip, spreadAds; int clip, reserve, fireDelayMs, burst, reloadMs; float range, splashRadius, splashDamage, hitRadius, headRadius; Sound fireSnd, reloadSnd, emptySnd; int wallBuyCost, ammoCost, boxWeight; std::uint32_t weapId; };
 	inline constexpr std::array<GunDef, 12> kGuns{ {
-		GunDef{ "m1911", "M1911", "pistol", Fire(0), 75.0f, 2.0f, 1, 1.5f, 0.4f, 8, 80, 160, 1, 1600, 4200.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::crossbow_fire, Sound::crossbow_reload, Sound::bow_nock, 0, 0, 0, 0x814 },
-		GunDef{ "mr6", "MR6", "pistol", Fire(0), 90.0f, 2.5f, 1, 1.4f, 0.3f, 12, 96, 140, 1, 1500, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::crossbow_fire, Sound::crossbow_reload, Sound::bow_nock, 0, 0, 3, 0x815 },
-		GunDef{ "rk5", "RK5", "pistol", Fire(2), 100.0f, 2.0f, 1, 1.6f, 0.4f, 18, 126, 330, 3, 1700, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::crossbow_fire, Sound::crossbow_reload, Sound::bow_nock, 500, 250, 3, 0x816 },
-		GunDef{ "kuda", "Kuda", "smg", Fire(1), 110.0f, 2.0f, 1, 2.5f, 0.6f, 30, 150, 90, 1, 2100, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::crossbow_fire, Sound::crossbow_reload, Sound::bow_nock, 1000, 500, 4, 0x817 },
-		GunDef{ "vmp", "VMP", "smg", Fire(1), 100.0f, 2.0f, 1, 2.8f, 0.7f, 40, 200, 70, 1, 2300, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::crossbow_fire, Sound::crossbow_reload, Sound::bow_nock, 1300, 650, 4, 0x818 },
-		GunDef{ "krm262", "KRM-262", "shotgun", Fire(3), 90.0f, 1.5f, 8, 6.0f, 4.0f, 8, 56, 850, 1, 3000, 1600.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::crossbow_fire, Sound::crossbow_reload, Sound::bow_nock, 900, 450, 3, 0x819 },
-		GunDef{ "sheiva", "Sheiva", "ar", Fire(0), 160.0f, 2.5f, 1, 1.8f, 0.2f, 24, 144, 140, 1, 2200, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::crossbow_fire, Sound::crossbow_reload, Sound::bow_nock, 900, 450, 3, 0x81A },
-		GunDef{ "icr1", "ICR-1", "ar", Fire(1), 120.0f, 2.0f, 1, 2.0f, 0.3f, 30, 180, 100, 1, 2300, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::crossbow_fire, Sound::crossbow_reload, Sound::bow_nock, 0, 0, 4, 0x81B },
-		GunDef{ "kn44", "KN-44", "ar", Fire(1), 135.0f, 2.0f, 1, 2.2f, 0.35f, 30, 180, 105, 1, 2400, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::crossbow_fire, Sound::crossbow_reload, Sound::bow_nock, 0, 0, 4, 0x81C },
-		GunDef{ "dingo", "Dingo", "lmg", Fire(1), 130.0f, 2.0f, 1, 3.0f, 0.5f, 80, 240, 85, 1, 4200, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::crossbow_fire, Sound::crossbow_reload, Sound::bow_nock, 0, 0, 3, 0x81D },
-		GunDef{ "drakon", "Drakon", "sniper", Fire(0), 500.0f, 3.0f, 1, 4.0f, 0.05f, 10, 50, 300, 1, 2600, 12000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::crossbow_fire, Sound::crossbow_reload, Sound::bow_nock, 0, 0, 2, 0x81E },
-		GunDef{ "raygun", "Ray Gun", "wonder", Fire(0), 1000.0f, 1.0f, 1, 1.0f, 0.5f, 20, 160, 330, 1, 2800, 5000.0f, 180.0f, 600.0f, 28.0f, 14.0f, Sound::crossbow_fire, Sound::crossbow_reload, Sound::bow_nock, 0, 0, 1, 0x81F },
+		GunDef{ "sidearm", "Brass Sidearm", "pistol", Fire(0), 75.0f, 2.0f, 1, 1.5f, 0.4f, 8, 80, 160, 1, 1600, 4200.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_pistol, Sound::reload_mag, Sound::dry_click, 0, 0, 0, 0x814 },
+		GunDef{ "centurion", "Centurion Pistol", "pistol", Fire(0), 90.0f, 2.5f, 1, 1.4f, 0.3f, 12, 96, 140, 1, 1500, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_pistol, Sound::reload_mag, Sound::dry_click, 0, 0, 3, 0x815 },
+		GunDef{ "triad", "Triad Burst", "pistol", Fire(2), 100.0f, 2.0f, 1, 1.6f, 0.4f, 18, 126, 330, 3, 1700, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_pistol, Sound::reload_mag, Sound::dry_click, 500, 250, 3, 0x816 },
+		GunDef{ "spider", "Spider SMG", "smg", Fire(1), 110.0f, 2.0f, 1, 2.5f, 0.6f, 30, 150, 90, 1, 2100, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_smg, Sound::reload_mag, Sound::dry_click, 1000, 500, 4, 0x817 },
+		GunDef{ "drill", "Sphere Drill", "smg", Fire(1), 100.0f, 2.0f, 1, 2.8f, 0.7f, 40, 200, 70, 1, 2300, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_smg, Sound::reload_mag, Sound::dry_click, 1300, 650, 4, 0x818 },
+		GunDef{ "steampump", "Steam Pump", "shotgun", Fire(3), 90.0f, 1.5f, 8, 6.0f, 4.0f, 8, 56, 850, 1, 3000, 1600.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_shotgun, Sound::reload_shell, Sound::dry_click, 900, 450, 3, 0x819 },
+		GunDef{ "marksman", "Arkngthand Marksman", "ar", Fire(0), 160.0f, 2.5f, 1, 1.8f, 0.2f, 24, 144, 140, 1, 2200, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::dry_click, 900, 450, 3, 0x81A },
+		GunDef{ "animunculi", "Animunculi AR", "ar", Fire(1), 120.0f, 2.0f, 1, 2.0f, 0.3f, 30, 180, 100, 1, 2300, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::dry_click, 0, 0, 4, 0x81B },
+		GunDef{ "kagrenac", "Kagrenac AR", "ar", Fire(1), 135.0f, 2.0f, 1, 2.2f, 0.35f, 30, 180, 105, 1, 2400, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_ar, Sound::reload_mag, Sound::dry_click, 0, 0, 4, 0x81C },
+		GunDef{ "mammothlmg", "Mammoth LMG", "lmg", Fire(1), 130.0f, 2.0f, 1, 3.0f, 0.5f, 80, 240, 85, 1, 4200, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_lmg, Sound::reload_mag, Sound::dry_click, 0, 0, 3, 0x81D },
+		GunDef{ "longshot", "Falmer Longshot", "sniper", Fire(0), 500.0f, 3.0f, 1, 4.0f, 0.05f, 10, 50, 300, 1, 2600, 12000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::shot_sniper, Sound::reload_mag, Sound::dry_click, 0, 0, 2, 0x81E },
+		GunDef{ "aetherium", "Aetherium Ray", "wonder", Fire(0), 1000.0f, 1.0f, 1, 1.0f, 0.5f, 20, 160, 330, 1, 2800, 5000.0f, 180.0f, 600.0f, 28.0f, 14.0f, Sound::shot_ray, Sound::reload_mag, Sound::dry_click, 0, 0, 1, 0x81F },
 	} };
-	inline constexpr int kGunIdx_m1911 = 0;
-	inline constexpr int kGunIdx_mr6 = 1;
-	inline constexpr int kGunIdx_rk5 = 2;
-	inline constexpr int kGunIdx_kuda = 3;
-	inline constexpr int kGunIdx_vmp = 4;
-	inline constexpr int kGunIdx_krm262 = 5;
-	inline constexpr int kGunIdx_sheiva = 6;
-	inline constexpr int kGunIdx_icr1 = 7;
-	inline constexpr int kGunIdx_kn44 = 8;
-	inline constexpr int kGunIdx_dingo = 9;
-	inline constexpr int kGunIdx_drakon = 10;
-	inline constexpr int kGunIdx_raygun = 11;
+	inline constexpr int kGunIdx_sidearm = 0;
+	inline constexpr int kGunIdx_centurion = 1;
+	inline constexpr int kGunIdx_triad = 2;
+	inline constexpr int kGunIdx_spider = 3;
+	inline constexpr int kGunIdx_drill = 4;
+	inline constexpr int kGunIdx_steampump = 5;
+	inline constexpr int kGunIdx_marksman = 6;
+	inline constexpr int kGunIdx_animunculi = 7;
+	inline constexpr int kGunIdx_kagrenac = 8;
+	inline constexpr int kGunIdx_mammothlmg = 9;
+	inline constexpr int kGunIdx_longshot = 10;
+	inline constexpr int kGunIdx_aetherium = 11;
 	struct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };
 	inline constexpr KnifeDef kKnife{ 47, 150.0f, 170.0f, 45.0f, 650 };
 	struct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };
 	inline constexpr std::array<PerkDef, 9> kPerks{ {
-		PerkDef{ "juggernog", "Juggernog", 2500, 0, 100.0f, 0x800, 0x820 },
-		PerkDef{ "speedcola", "Speed Cola", 3000, 1, 0.5f, 0x801, 0x821 },
-		PerkDef{ "doubletap", "Double Tap Root Beer", 2000, 2, 2.0f, 0x802, 0x822 },
-		PerkDef{ "quickrevive", "Quick Revive", 500, 3, 1.0f, 0x803, 0x823 },
-		PerkDef{ "staminup", "Stamin-Up", 2000, 4, 15.0f, 0x804, 0x824 },
-		PerkDef{ "deadshot", "Deadshot Daiquiri", 1500, 5, 1.5f, 0x805, 0x825 },
-		PerkDef{ "mulekick", "Mule Kick", 4000, 6, 3.0f, 0x806, 0x826 },
-		PerkDef{ "widowswine", "Widow's Wine", 4000, 7, 4.0f, 0x827, 0x82B },
-		PerkDef{ "electriccherry", "Electric Cherry", 2000, 8, 500.0f, 0x828, 0x82C },
+		PerkDef{ "trollshide", "Troll's Hide Mead", 2500, 0, 100.0f, 0x800, 0x820 },
+		PerkDef{ "quicksilver", "Quicksilver Draught", 3000, 1, 0.5f, 0x801, 0x821 },
+		PerkDef{ "twinstrike", "Twin Strike Ale", 2000, 2, 2.0f, 0x802, 0x822 },
+		PerkDef{ "hearthfire", "Hearthfire Tonic", 500, 3, 1.0f, 0x803, 0x823 },
+		PerkDef{ "windrunner", "Windrunner Brew", 2000, 4, 15.0f, 0x804, 0x824 },
+		PerkDef{ "hawkeye", "Hawkeye Tincture", 1500, 5, 1.5f, 0x805, 0x825 },
+		PerkDef{ "mammoth", "Mammoth Back Porter", 4000, 6, 3.0f, 0x806, 0x826 },
+		PerkDef{ "frostbite", "Frostbite Venom", 4000, 7, 4.0f, 0x827, 0x82B },
+		PerkDef{ "stormcrown", "Stormcrown Cider", 2000, 8, 500.0f, 0x828, 0x82C },
 	} };
-	inline constexpr int kPerk_juggernog = 0;
-	inline constexpr int kPerk_speedcola = 1;
-	inline constexpr int kPerk_doubletap = 2;
-	inline constexpr int kPerk_quickrevive = 3;
-	inline constexpr int kPerk_staminup = 4;
-	inline constexpr int kPerk_deadshot = 5;
-	inline constexpr int kPerk_mulekick = 6;
-	inline constexpr int kPerk_widowswine = 7;
-	inline constexpr int kPerk_electriccherry = 8;
+	inline constexpr int kPerk_trollshide = 0;
+	inline constexpr int kPerk_quicksilver = 1;
+	inline constexpr int kPerk_twinstrike = 2;
+	inline constexpr int kPerk_hearthfire = 3;
+	inline constexpr int kPerk_windrunner = 4;
+	inline constexpr int kPerk_hawkeye = 5;
+	inline constexpr int kPerk_mammoth = 6;
+	inline constexpr int kPerk_frostbite = 7;
+	inline constexpr int kPerk_stormcrown = 8;
 	inline constexpr int kMaxPerks = 9;
-	struct CrewDef { std::string_view id, label, quote; int passive; float value; };
+	struct CrewDef { std::string_view id, label, quote; int passive; float value; std::string_view passiveText; };
 	inline constexpr std::array<CrewDef, 4> kCrew{ {
-		CrewDef{ "dempsey", "Tank Dempsey", "Ooh-rah! Let's kill some zombies!", 0, 1.1f },
-		CrewDef{ "nikolai", "Nikolai Belinski", "Bring me vodka. And zombies.", 1, 50.0f },
-		CrewDef{ "takeo", "Takeo Masaki", "The honor of the blade guides me.", 2, 2.0f },
-		CrewDef{ "richtofen", "Edward Richtofen", "Ze box knows what I want, ja?", 3, 750.0f },
+		CrewDef{ "halvard", "Halvard Stone-Fist", "Legion taught me to march. The dead taught me to run.", 0, 1.1f, "+10% weapon damage" },
+		CrewDef{ "gorza", "Gorza gra-Bor", "I forged my own hammer. You will not like where it lands.", 1, 50.0f, "+50 health" },
+		CrewDef{ "saffir", "Saffir al-Rihad", "Steel is a song. The dead never learn the words.", 2, 2.0f, "Knife does double damage" },
+		CrewDef{ "eldrith", "Eldrith Vael", "I have read what the Thalmor buried. The Coffer and I understand each other.", 3, 750.0f, "The Coffer costs 750" },
+	inline constexpr std::string_view kText_mode = "Undying Nights";
+	inline constexpr std::string_view kText_tagline = "Every night the dead rise. Every night, more of them.";
+	inline constexpr std::string_view kText_box = "Sheogorath's Coffer";
+	inline constexpr std::string_view kText_box_short = "The Coffer";
+	inline constexpr std::string_view kText_box_joke = "Cheese! Everyone gets cheese! ...Except you. The Coffer is bored. Off it goes.";
+	inline constexpr std::string_view kText_shrine = "Brew Shrine";
+	inline constexpr std::string_view kText_forge = "Atronach Reforge";
+	inline constexpr std::string_view kText_round_word = "Night";
 	} };
 	struct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; };
 	inline constexpr std::array<ObjectDef, 15> kObjects{ {
-		ObjectDef{ "mysterybox", "Mystery Box", 0, 950, -1, 0x807 },
-		ObjectDef{ "perk_juggernog", "Juggernog", 1, 2500, 0, 0x808 },
-		ObjectDef{ "perk_speedcola", "Speed Cola", 1, 3000, 1, 0x809 },
-		ObjectDef{ "perk_doubletap", "Double Tap Root Beer", 1, 2000, 2, 0x80A },
-		ObjectDef{ "perk_quickrevive", "Quick Revive", 1, 500, 3, 0x80B },
-		ObjectDef{ "perk_staminup", "Stamin-Up", 1, 2000, 4, 0x80C },
-		ObjectDef{ "perk_deadshot", "Deadshot Daiquiri", 1, 1500, 5, 0x80D },
-		ObjectDef{ "perk_mulekick", "Mule Kick", 1, 4000, 6, 0x80E },
-		ObjectDef{ "perk_widowswine", "Widow's Wine", 1, 4000, 7, 0x829 },
-		ObjectDef{ "perk_electriccherry", "Electric Cherry", 1, 2000, 8, 0x82A },
-		ObjectDef{ "wall_rk5", "RK5", 2, 500, 2, 0x80F },
-		ObjectDef{ "wall_kuda", "Kuda", 2, 1000, 3, 0x810 },
-		ObjectDef{ "wall_vmp", "VMP", 2, 1300, 4, 0x811 },
-		ObjectDef{ "wall_krm262", "KRM-262", 2, 900, 5, 0x812 },
-		ObjectDef{ "wall_sheiva", "Sheiva", 2, 900, 6, 0x813 },
+		ObjectDef{ "coffer", "Sheogorath's Coffer", 0, 950, -1, 0x807 },
+		ObjectDef{ "perk_trollshide", "Troll's Hide Mead", 1, 2500, 0, 0x808 },
+		ObjectDef{ "perk_quicksilver", "Quicksilver Draught", 1, 3000, 1, 0x809 },
+		ObjectDef{ "perk_twinstrike", "Twin Strike Ale", 1, 2000, 2, 0x80A },
+		ObjectDef{ "perk_hearthfire", "Hearthfire Tonic", 1, 500, 3, 0x80B },
+		ObjectDef{ "perk_windrunner", "Windrunner Brew", 1, 2000, 4, 0x80C },
+		ObjectDef{ "perk_hawkeye", "Hawkeye Tincture", 1, 1500, 5, 0x80D },
+		ObjectDef{ "perk_mammoth", "Mammoth Back Porter", 1, 4000, 6, 0x80E },
+		ObjectDef{ "perk_frostbite", "Frostbite Venom", 1, 4000, 7, 0x829 },
+		ObjectDef{ "perk_stormcrown", "Stormcrown Cider", 1, 2000, 8, 0x82A },
+		ObjectDef{ "wall_triad", "Triad Burst", 2, 500, 2, 0x80F },
+		ObjectDef{ "wall_spider", "Spider SMG", 2, 1000, 3, 0x810 },
+		ObjectDef{ "wall_drill", "Sphere Drill", 2, 1300, 4, 0x811 },
+		ObjectDef{ "wall_steampump", "Steam Pump", 2, 900, 5, 0x812 },
+		ObjectDef{ "wall_marksman", "Arkngthand Marksman", 2, 900, 6, 0x813 },
 	} };
 	inline constexpr std::array<std::string_view, 10> kTowns{ { "Riverwood", "Whiterun", "Solitude", "Windhelm", "Markarth", "Riften", "Falkreath", "Morthal", "Dawnstar", "Winterhold" } };
 	struct LocationDef { int town; std::uint32_t anchor; int object; float angleDeg, distance; };

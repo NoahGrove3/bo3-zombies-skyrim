@@ -144,6 +144,7 @@ namespace bo3z
 					a_target->StartCombat(player);
 				}
 			}
+			Forms::Play(a_head && !a_melee ? gen::Sound::headshot : gen::Sound::hitmarker);
 			std::scoped_lock l(Hud::Lock());
 			Hud::Edit().hitTime = 0.2f;
 			Hud::Edit().hitKill = kill;
@@ -301,7 +302,7 @@ namespace bo3z
 				}
 				best = a.get(), bestD = d;
 			}
-			Forms::Play(gen::Sound::bow_nock);
+			Forms::Play(gen::Sound::knife);
 			if (best) {
 				Damage(best, gen::kKnife.damage * CrewMult(2), false, true);
 			}
@@ -355,7 +356,7 @@ namespace bo3z
 
 	namespace Gun
 	{
-		int   SlotCount() { return Save::HasPerk(gen::kPerk_mulekick) ? 3 : 2; }
+		int   SlotCount() { return Save::HasPerk(gen::kPerk_mammoth) ? 3 : 2; }
 		float AdsBlend() { return g_ads; }
 		bool  Owns(int a_gun) { return SlotOf(a_gun) >= 0; }
 

@@ -146,8 +146,7 @@ namespace bo3z
 					dl->AddText(g_font, 30 * k, { x + 16 * k, y0 + 14 * k }, IM_COL32(150, 150, 150, 255), std::to_string(i + 1).c_str());
 					dl->AddText(g_font, 38 * k, { x + 16 * k, y0 + 60 * k }, IM_COL32(240, 230, 200, 255), std::string(c.label).c_str());
 					dl->AddText(g_font, 22 * k, { x + 16 * k, y0 + 120 * k }, IM_COL32(200, 200, 200, 255), std::string(c.quote).c_str(), nullptr, w - 32 * k);
-					static constexpr std::array<const char*, 4> passive{ "+10% gun damage", "+50 health", "Knife does double damage", "Mystery Box costs 750" };
-					dl->AddText(g_font, 24 * k, { x + 16 * k, y0 + h - 60 * k }, IM_COL32(230, 200, 60, 255), passive[c.passive]);
+					dl->AddText(g_font, 24 * k, { x + 16 * k, y0 + h - 60 * k }, IM_COL32(230, 200, 60, 255), c.passiveText.data());
 				}
 				const char* hint = "Press 1-4 to pick, Enter to confirm";
 				const auto  hs = g_font->CalcTextSizeA(30 * k, FLT_MAX, 0, hint);

@@ -1,0 +1,51 @@
+{
+  "sheet": "identity",
+  "about": "Our own name and voice for the mode. Everything player-facing comes from here or the other sheets.",
+  "columns": [
+    "id",
+    "text",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "mode",
+      "text": "Undying Nights",
+      "verify": []
+    },
+    {
+      "id": "tagline",
+      "text": "Every night the dead rise. Every night, more of them.",
+      "verify": []
+    },
+    {
+      "id": "box",
+      "text": "Sheogorath's Coffer",
+      "verify": []
+    },
+    {
+      "id": "box_short",
+      "text": "The Coffer",
+      "verify": []
+    },
+    {
+      "id": "box_joke",
+      "text": "Cheese! Everyone gets cheese! ...Except you. The Coffer is bored. Off it goes.",
+      "verify": []
+    },
+    {
+      "id": "shrine",
+      "text": "Brew Shrine",
+      "verify": []
+    },
+    {
+      "id": "forge",
+      "text": "Atronach Reforge",
+      "verify": []
+    },
+    {
+      "id": "round_word",
+      "text": "Night",
+      "verify": []
+    }
+  ]
+}

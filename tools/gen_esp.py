@@ -5,7 +5,7 @@ import json, struct, pathlib
 from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
-T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti']}
+T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
 def z(s): return s.encode('cp1252') + b'\0'
 def sub(name, data):
@@ -18,7 +18,7 @@ def group(label, recs):
     data = b''.join(recs)
     return b'GRUP' + struct.pack('<I', 24 + len(data)) + label.encode() + struct.pack('<iHHHH', 0, 0, 0, 44, 0) + data
 fid = lambda kind, key: SELF | IDS[(kind, key)]
-recs = {'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
+recs = {'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
 
 for p in S['perks']['rows']:
     data = bytearray(tsub('mgef', 'DATA'))
@@ -61,11 +61,19 @@ for p in S['perks']['rows']:
         sub('YNAM', tsub('alch', 'YNAM')), sub('ZNAM', tsub('alch', 'ZNAM')), sub('DATA', struct.pack('<f', 0.5)),
         sub('ENIT', bytes(enit)), sub('EFID', struct.pack('<I', fid('MGEF', p['id']))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
+for s in S['sounds']['rows']:
+    if s['plugin'] != PLUGIN: continue
+    tpl = 'sndr_3d' if s['space'] == '3d' else 'sndr_ui'
+    bnam = struct.pack('<BBBBH', 0, 0, 128, 0, 0)  # no pitch/volume variance, priority 128, no extra attenuation
+    recs['SNDR'].append(record('SNDR', fid('SNDR', s['id']), [
+        sub('EDID', z(s['editorId'])), sub('CNAM', tsub(tpl, 'CNAM')), sub('GNAM', tsub(tpl, 'GNAM')),
+        sub('ANAM', z(s['file'])), sub('ONAM', tsub(tpl, 'ONAM')), sub('LNAM', tsub(tpl, 'LNAM')), sub('BNAM', bnam)]))
+
 count = sum(len(v) for v in recs.values())
-hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('BO3 Zombies x Skyrim: guns, Perk-a-Colas, Mystery Box and wall-buys'))]
+hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('Undying Nights: round-based undead survival for Skyrim'))]
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
-for k in ['MGEF', 'ACTI', 'WEAP', 'ALCH']: out += group(k, recs[k])
+for k in ['SNDR', 'MGEF', 'ACTI', 'WEAP', 'ALCH']: out += group(k, recs[k])
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')
