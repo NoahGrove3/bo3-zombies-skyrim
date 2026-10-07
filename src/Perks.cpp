@@ -25,6 +25,7 @@ namespace bo3z
 			if (perk < 0) {
 				return;
 			}
+			logger::info("perk: drank {} (owned {:09b}, count {})", gen::kPerks[perk].id, Save::PerkBits(), Save::PerkCount());
 			const auto& p = gen::kPerks[perk];
 			if (Has(perk)) {
 				Hud::Banner("You already have " + std::string(p.label), 2.0f);

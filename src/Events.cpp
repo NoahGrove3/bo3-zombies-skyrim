@@ -137,6 +137,9 @@ namespace bo3z
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESActivateEvent* a_event, RE::BSTEventSource<RE::TESActivateEvent>*) override
 			{
 				if (a_event && a_event->actionRef.get() == RE::PlayerCharacter::GetSingleton() && a_event->objectActivated) {
+					if (auto* base = a_event->objectActivated->GetBaseObject()) {
+						logger::info("activate: {} ({:08X})", base->GetName(), base->GetFormID());
+					}
 					Shops::OnActivate(a_event->objectActivated.get());
 				}
 				return RE::BSEventNotifyControl::kContinue;

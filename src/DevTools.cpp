@@ -57,10 +57,34 @@ namespace bo3z
 					const auto s = Save::GetSlot(i);
 					slots += fmt::format(" [{}:{} {}/{}]", i, s.gun >= 0 ? gen::kGuns[s.gun].id : "-", s.clip, s.reserve);
 				}
-				logger::info("dev: state round={} points={} crew={} perks={:07b}{} pos=({:.0f},{:.0f},{:.0f}) cell={} hour={:.2f} introDone={} box={}", Save::Get(gen::kAV_round),
-					Points::Get(), Save::Crew(), (Save::Flags() >> 4) & 0x7F, slots, p.x, p.y, p.z, cell ? cell->GetFormEditorID() : "?",
+				logger::info("dev: state round={} points={} crew={} perks={:09b}{} pos=({:.0f},{:.0f},{:.0f}) cell={} hour={:.2f} introDone={} box={}", Save::Get(gen::kAV_round),
+					Points::Get(), Save::Crew(), Save::PerkBits(), slots, p.x, p.y, p.z, cell ? cell->GetFormEditorID() : "?",
 					RE::Calendar::GetSingleton() ? RE::Calendar::GetSingleton()->GetHour() : -1.0f, Forms::IntroDone(), Shops::BoxTown());
 				Director::LogState();
+			} else if (cmd == "use" && player) {
+				// use <object id>: activate the nearest placed one exactly as the player would.
+				std::string id;
+				in >> id;
+				RE::TESObjectREFR* best = nullptr;
+				float              bestD = 8000.0f;
+				for (int i = 0; i < static_cast<int>(gen::kObjects.size()); ++i) {
+					if (gen::kObjects[i].id != id) {
+						continue;
+					}
+					auto* base = Forms::Object(i);
+					RE::TES::GetSingleton()->ForEachReferenceInRange(player, 8000.0f, [&](RE::TESObjectREFR* r) {
+						if (r && r->GetBaseObject() == base && !r->IsDeleted()) {
+							if (const float d = r->GetPosition().GetDistance(player->GetPosition()); d < bestD) {
+								bestD = d, best = r;
+							}
+						}
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
+				}
+				logger::info("dev: use {} -> {}", id, best ? fmt::format("ref {:08X} at {:.0f}", best->GetFormID(), bestD) : "none nearby");
+				if (best) {
+					best->ActivateRef(player, 0, nullptr, 1, false);
+				}
 			} else if (cmd == "points") {
 				int n = 0;
 				in >> n;
