@@ -264,11 +264,11 @@ namespace bo3z
 					const float  R = 30 * k;
 					const ImU32  el = IM_COL32((s.gunColor >> 16) & 0xFF, (s.gunColor >> 8) & 0xFF, s.gunColor & 0xFF, 255);
 					if (s.chargeCd > 0.001f) {
-						dl->PathArcTo(cc, R, -IM_PI / 2, -IM_PI / 2 + 2 * IM_PI * (1.0f - s.chargeCd), 48);
+						dl->PathArcTo(cc, R, -3.14159265f / 2, -3.14159265f / 2 + 2 * 3.14159265f * (1.0f - s.chargeCd), 48);
 						dl->PathStroke(IM_COL32(120, 120, 120, 120), 0, 2 * k);
 					} else if (s.charge > 0.0f) {
 						const bool ready = s.charge >= 1.0f;
-						dl->PathArcTo(cc, R + (ready ? 3 * k * std::sin(now * 12) : 0), -IM_PI / 2, -IM_PI / 2 + 2 * IM_PI * s.charge, 48);
+						dl->PathArcTo(cc, R + (ready ? 3 * k * std::sin(now * 12) : 0), -3.14159265f / 2, -3.14159265f / 2 + 2 * 3.14159265f * s.charge, 48);
 						dl->PathStroke(ready ? kGold : el, 0, (ready ? 4 : 3) * k);
 						if (ready) {
 							TxtC(dl, g_title, 18 * k, cc.x, cc.y + R + 10 * k, Fade(kGold, 0.9f), "RELEASE: " + s.chargeName);
