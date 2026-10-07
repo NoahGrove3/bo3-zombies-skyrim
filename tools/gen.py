@@ -38,7 +38,7 @@ out.append(f'\tinline constexpr bool kFireIsMouse = {str(row("input","fire")["de
 for p in S['persistence']['rows']: out.append(f'\tinline constexpr int kAV_{p["id"]} = /*{p["actorValue"]}*/ {68 + int(p["actorValue"][-2:]) - 1};')
 # hud
 out.append('\tstruct HudItem { std::string_view id; int anchor; float ox, oy, fontPx; std::uint32_t rgba; };')
-anchors = {'bottom_left':0,'bottom_right':1,'center':2,'top_center':3}
+anchors = {'bottom_left':0,'bottom_right':1,'center':2,'top_center':3,'bottom_center':4}
 for h in S['hud']['rows']:
     c = int(h['color'][1:], 16)
     out.append(f'\tinline constexpr HudItem kHud_{h["id"]}{{ {cs(h["id"])}, {anchors[h["anchor"]]}, {h["offset"][0]}.f, {h["offset"][1]}.f, {h["fontPx"]}.f, 0x{(c<<8)|0xFF:08X} }};')
@@ -66,7 +66,7 @@ for i, w in enumerate(W): o.append(f'\tinline constexpr int kGunIdx_{w["id"]} = 
 k = S['melee']['rows'][0]
 o.append('\tstruct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };')
 o.append(f'\tinline constexpr KnifeDef kKnife{{ {k["key"]}, {F(k["damage"])}, {F(k["range"])}, {F(k["coneDeg"])}, {k["cooldownMs"]} }};')
-effects = {'health': 0, 'reload_mult': 1, 'fire_rate_and_damage': 2, 'self_revive': 3, 'speed_and_stamina': 4, 'headshots': 5, 'third_gun': 6}
+effects = {'health': 0, 'reload_mult': 1, 'fire_rate_and_damage': 2, 'self_revive': 3, 'speed_and_stamina': 4, 'headshots': 5, 'third_gun': 6, 'web_grenade': 7, 'reload_shock': 8}
 P = S['perks']['rows']
 o.append('\tstruct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };')
 o.append(f'\tinline constexpr std::array<PerkDef, {len(P)}> kPerks{{ {{')
@@ -103,6 +103,10 @@ Q = {r['id']: r for r in S['quests']['rows']}
 for qid in ('MQQuickstart', 'MQ102Marker', 'MQ102A', 'MQ102B', 'MQ102'):
     if qid in Q: o.append(f'\tinline constexpr FormRef kQ_{qid}{{ {cs(Q[qid]["plugin"])}, 0x{int(Q[qid]["localId"],16):06X}, {cs(Q[qid]["editorId"])} }};')
 for i in S['input']['rows']: o.append(f'\tinline constexpr std::uint32_t kKey2_{i["id"]} = {i["code"]};')
+R0 = S['rounds']['rows'][0]
+o.append(f'\tinline constexpr float kSpawnMultiplier = {F(R0["spawnMultiplier"])}, kHitDamageFraction = {F(R0["hitDamageFraction"])}, kZombieWeaponDamageMult = {F(R0["weaponDamageMult"])};')
+o.append(f'\tinline constexpr bool kIgnoreNpcs = {str(R0["ignoreNpcs"]).lower()};')
+o.append(f'\tinline constexpr std::array<std::array<float, 2>, {len(R0["speedTiers"])}> kSpeedTiers{{ {{ ' + ', '.join('{ %s, %s }' % (F(a), F(b)) for a, b in R0["speedTiers"]) + ' } };')
 o.append('}')
 with open(root / 'src/Generated.h', 'a') as f: f.write('\n'.join(o) + '\n')
 print('appended v0.2 tables')

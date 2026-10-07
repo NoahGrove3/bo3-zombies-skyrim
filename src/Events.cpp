@@ -142,6 +142,25 @@ namespace bo3z
 			}
 		};
 
+		class HitWatch : public RE::BSTEventSink<RE::TESHitEvent>
+		{
+		public:
+			static HitWatch* Get()
+			{
+				static HitWatch s;
+				return &s;
+			}
+			RE::BSEventNotifyControl ProcessEvent(const RE::TESHitEvent* a_event, RE::BSTEventSource<RE::TESHitEvent>*) override
+			{
+				if (a_event && a_event->target.get() == RE::PlayerCharacter::GetSingleton() && a_event->cause) {
+					if (auto* z = a_event->cause->As<RE::Actor>(); z && Director::IsRoundUndead(z)) {
+						Perks::OnZombieHit(z);
+					}
+				}
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+
 		class EffectWatch : public RE::BSTEventSink<RE::TESMagicEffectApplyEvent>
 		{
 		public:
@@ -174,6 +193,7 @@ namespace bo3z
 			events->AddEventSink<RE::TESLoadGameEvent>(LoadWatch::Get());
 			events->AddEventSink<RE::TESActivateEvent>(ActivateWatch::Get());
 			events->AddEventSink<RE::TESMagicEffectApplyEvent>(EffectWatch::Get());
+			events->AddEventSink<RE::TESHitEvent>(HitWatch::Get());
 			Intro::Install();
 			RE::BSInputDeviceManager::GetSingleton()->AddEventSink(InputWatch::Get());
 			Hud::Install();

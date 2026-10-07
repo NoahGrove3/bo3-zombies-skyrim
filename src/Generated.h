@@ -12,7 +12,7 @@ namespace bo3z::gen
 		std::array<float, 5> earlyRoundScale; int hpStart, hpLinearPerRound, hpLinearUntil; float hpMultAfter, hpScale;
 		float spawnDelayStart, spawnDelayDecay, spawnDelayMin; int specialEveryRounds, specialFirstRound;
 		std::array<float, 2> spawnRingExterior, spawnRingInterior; float spawnHeightOffset; int maxCorpses; };
-	inline constexpr Rounds kRounds{ 20.0f, 6.0f, 10.0f, 4.0f, 12, 24, 6,
+	inline constexpr Rounds kRounds{ 20.0f, 6.0f, 10.0f, 4.0f, 24, 24, 6,
 		{ 0.25f, 0.3f, 0.5f, 0.7f, 0.9f }, 150, 100, 9, 1.1f, 8.0f,
 		2.0f, 0.95f, 0.5f, 6, 5,
 		{ 1500.f, 2500.f }, { 500.f, 1100.f }, 120.f, 20 };
@@ -72,6 +72,7 @@ namespace bo3z::gen
 	inline constexpr HudItem kHud_points_popup{ "points_popup", 1, -200.f, -150.f, 28.f, 0xF2D24AFF };
 	inline constexpr HudItem kHud_banner{ "banner", 3, 0.f, 120.f, 40.f, 0xB01010FF };
 	inline constexpr HudItem kHud_hitmarker{ "hitmarker", 2, 0.f, 0.f, 0.f, 0xFFFFFFFF };
+	inline constexpr HudItem kHud_perk_row{ "perk_row", 4, 0.f, -108.f, 34.f, 0xFFFFFFFF };
 }
 
 // ---- v0.2 ----
@@ -110,7 +111,7 @@ namespace bo3z::gen
 	struct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };
 	inline constexpr KnifeDef kKnife{ 47, 150.0f, 170.0f, 45.0f, 650 };
 	struct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };
-	inline constexpr std::array<PerkDef, 7> kPerks{ {
+	inline constexpr std::array<PerkDef, 9> kPerks{ {
 		PerkDef{ "juggernog", "Juggernog", 2500, 0, 100.0f, 0x800, 0x820 },
 		PerkDef{ "speedcola", "Speed Cola", 3000, 1, 0.5f, 0x801, 0x821 },
 		PerkDef{ "doubletap", "Double Tap Root Beer", 2000, 2, 2.0f, 0x802, 0x822 },
@@ -118,6 +119,8 @@ namespace bo3z::gen
 		PerkDef{ "staminup", "Stamin-Up", 2000, 4, 15.0f, 0x804, 0x824 },
 		PerkDef{ "deadshot", "Deadshot Daiquiri", 1500, 5, 1.5f, 0x805, 0x825 },
 		PerkDef{ "mulekick", "Mule Kick", 4000, 6, 3.0f, 0x806, 0x826 },
+		PerkDef{ "widowswine", "Widow's Wine", 4000, 7, 4.0f, 0x827, 0x82B },
+		PerkDef{ "electriccherry", "Electric Cherry", 2000, 8, 500.0f, 0x828, 0x82C },
 	} };
 	inline constexpr int kPerk_juggernog = 0;
 	inline constexpr int kPerk_speedcola = 1;
@@ -126,7 +129,9 @@ namespace bo3z::gen
 	inline constexpr int kPerk_staminup = 4;
 	inline constexpr int kPerk_deadshot = 5;
 	inline constexpr int kPerk_mulekick = 6;
-	inline constexpr int kMaxPerks = 4;
+	inline constexpr int kPerk_widowswine = 7;
+	inline constexpr int kPerk_electriccherry = 8;
+	inline constexpr int kMaxPerks = 9;
 	struct CrewDef { std::string_view id, label, quote; int passive; float value; };
 	inline constexpr std::array<CrewDef, 4> kCrew{ {
 		CrewDef{ "dempsey", "Tank Dempsey", "Ooh-rah! Let's kill some zombies!", 0, 1.1f },
@@ -135,7 +140,7 @@ namespace bo3z::gen
 		CrewDef{ "richtofen", "Edward Richtofen", "Ze box knows what I want, ja?", 3, 750.0f },
 	} };
 	struct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; };
-	inline constexpr std::array<ObjectDef, 13> kObjects{ {
+	inline constexpr std::array<ObjectDef, 15> kObjects{ {
 		ObjectDef{ "mysterybox", "Mystery Box", 0, 950, -1, 0x807 },
 		ObjectDef{ "perk_juggernog", "Juggernog", 1, 2500, 0, 0x808 },
 		ObjectDef{ "perk_speedcola", "Speed Cola", 1, 3000, 1, 0x809 },
@@ -144,6 +149,8 @@ namespace bo3z::gen
 		ObjectDef{ "perk_staminup", "Stamin-Up", 1, 2000, 4, 0x80C },
 		ObjectDef{ "perk_deadshot", "Deadshot Daiquiri", 1, 1500, 5, 0x80D },
 		ObjectDef{ "perk_mulekick", "Mule Kick", 1, 4000, 6, 0x80E },
+		ObjectDef{ "perk_widowswine", "Widow's Wine", 1, 4000, 7, 0x829 },
+		ObjectDef{ "perk_electriccherry", "Electric Cherry", 1, 2000, 8, 0x82A },
 		ObjectDef{ "wall_rk5", "RK5", 2, 500, 2, 0x80F },
 		ObjectDef{ "wall_kuda", "Kuda", 2, 1000, 3, 0x810 },
 		ObjectDef{ "wall_vmp", "VMP", 2, 1300, 4, 0x811 },
@@ -152,41 +159,45 @@ namespace bo3z::gen
 	} };
 	inline constexpr std::array<std::string_view, 10> kTowns{ { "Riverwood", "Whiterun", "Solitude", "Windhelm", "Markarth", "Riften", "Falkreath", "Morthal", "Dawnstar", "Winterhold" } };
 	struct LocationDef { int town; std::uint32_t anchor; int object; float angleDeg, distance; };
-	inline constexpr std::array<LocationDef, 34> kLocations{ {
+	inline constexpr std::array<LocationDef, 38> kLocations{ {
 		LocationDef{ 0, 0x0162A4, 0, 0.0f, 350.0f },
 		LocationDef{ 0, 0x0162A4, 1, 90.0f, 450.0f },
 		LocationDef{ 0, 0x0162A4, 4, 180.0f, 400.0f },
-		LocationDef{ 0, 0x0162A4, 8, 270.0f, 350.0f },
-		LocationDef{ 0, 0x0162A4, 11, 315.0f, 500.0f },
+		LocationDef{ 0, 0x0162A4, 10, 270.0f, 350.0f },
+		LocationDef{ 0, 0x0162A4, 13, 315.0f, 500.0f },
 		LocationDef{ 1, 0x0162CE, 0, 30.0f, 700.0f },
 		LocationDef{ 1, 0x0162CE, 2, 120.0f, 600.0f },
 		LocationDef{ 1, 0x0162CE, 3, 210.0f, 600.0f },
-		LocationDef{ 1, 0x0162CE, 9, 300.0f, 500.0f },
-		LocationDef{ 1, 0x0162CE, 12, 0.0f, 900.0f },
+		LocationDef{ 1, 0x0162CE, 11, 300.0f, 500.0f },
+		LocationDef{ 1, 0x0162CE, 14, 0.0f, 900.0f },
 		LocationDef{ 2, 0x04D0F4, 0, 0.0f, 700.0f },
 		LocationDef{ 2, 0x04D0F4, 5, 90.0f, 600.0f },
 		LocationDef{ 2, 0x04D0F4, 6, 180.0f, 600.0f },
-		LocationDef{ 2, 0x04D0F4, 10, 270.0f, 500.0f },
+		LocationDef{ 2, 0x04D0F4, 12, 270.0f, 500.0f },
 		LocationDef{ 3, 0x038436, 0, 0.0f, 700.0f },
 		LocationDef{ 3, 0x038436, 7, 90.0f, 600.0f },
 		LocationDef{ 3, 0x038436, 1, 180.0f, 600.0f },
-		LocationDef{ 3, 0x038436, 9, 270.0f, 500.0f },
+		LocationDef{ 3, 0x038436, 11, 270.0f, 500.0f },
 		LocationDef{ 4, 0x01C38A, 0, 0.0f, 700.0f },
 		LocationDef{ 4, 0x01C38A, 2, 90.0f, 600.0f },
 		LocationDef{ 4, 0x01C38A, 4, 180.0f, 600.0f },
-		LocationDef{ 4, 0x01C38A, 12, 270.0f, 500.0f },
+		LocationDef{ 4, 0x01C38A, 14, 270.0f, 500.0f },
 		LocationDef{ 5, 0x01C390, 0, 0.0f, 700.0f },
 		LocationDef{ 5, 0x01C390, 3, 90.0f, 600.0f },
 		LocationDef{ 5, 0x01C390, 5, 180.0f, 600.0f },
-		LocationDef{ 5, 0x01C390, 11, 270.0f, 500.0f },
+		LocationDef{ 5, 0x01C390, 13, 270.0f, 500.0f },
 		LocationDef{ 6, 0x017760, 6, 0.0f, 400.0f },
-		LocationDef{ 6, 0x017760, 8, 120.0f, 400.0f },
+		LocationDef{ 6, 0x017760, 10, 120.0f, 400.0f },
 		LocationDef{ 7, 0x0177B0, 1, 0.0f, 400.0f },
-		LocationDef{ 7, 0x0177B0, 9, 120.0f, 400.0f },
+		LocationDef{ 7, 0x0177B0, 11, 120.0f, 400.0f },
 		LocationDef{ 8, 0x01773A, 2, 0.0f, 400.0f },
-		LocationDef{ 8, 0x01773A, 12, 120.0f, 400.0f },
+		LocationDef{ 8, 0x01773A, 14, 120.0f, 400.0f },
 		LocationDef{ 9, 0x0177EF, 7, 0.0f, 400.0f },
-		LocationDef{ 9, 0x0177EF, 10, 120.0f, 400.0f },
+		LocationDef{ 9, 0x0177EF, 12, 120.0f, 400.0f },
+		LocationDef{ 1, 0x0162CE, 8, 160.0f, 800.0f },
+		LocationDef{ 0, 0x0162A4, 9, 225.0f, 450.0f },
+		LocationDef{ 5, 0x01C390, 8, 45.0f, 700.0f },
+		LocationDef{ 2, 0x04D0F4, 9, 135.0f, 700.0f },
 	} };
 	inline constexpr float kSprintBoost = 25.0f, kSlideBoost = 90.0f, kSlideSeconds = 0.7f, kAdsFov = 55.0f, kAdsSeconds = 0.12f, kAdsSpeed = -30.0f;
 	inline constexpr FormRef kQ_MQQuickstart{ "Skyrim.esm", 0x04679E, "MQQuickstart" };
@@ -204,4 +215,7 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kKey2_crew3 = 4;
 	inline constexpr std::uint32_t kKey2_crew4 = 5;
 	inline constexpr std::uint32_t kKey2_confirm = 28;
+	inline constexpr float kSpawnMultiplier = 2.0f, kHitDamageFraction = 0.34f, kZombieWeaponDamageMult = 0.1f;
+	inline constexpr bool kIgnoreNpcs = true;
+	inline constexpr std::array<std::array<float, 2>, 3> kSpeedTiers{ { { 1.0f, 100.0f }, { 4.0f, 150.0f }, { 8.0f, 200.0f } } };
 }

@@ -53,10 +53,11 @@ namespace bo3z
 		bool HasPerk(int a_perk);
 		void SetPerk(int a_perk, bool a_on);
 		int  PerkCount();
+		int  PerkBits();
 		int  ActiveSlot();
 		void SetActiveSlot(int a_slot);
 		void OnWorldReady();
-		inline constexpr int kFlagInit = 0, kFlagMoved = 11;
+		inline constexpr int kFlagInit = 0, kFlagMoved = 11, kPerkShift = 14, kFlagPerksV2 = 23;  // bits: init | crew 1-3 | (old perks 4-10) | moved 11 | slot 12-13 | perks 14-22 | v2 23
 	}
 
 	namespace Points
@@ -73,6 +74,8 @@ namespace bo3z
 		bool             IsRoundUndead(RE::Actor* a_actor);
 		std::string_view HeadNodeFor(RE::Actor* a_actor);
 		void             LogState();
+		void             Web(const RE::NiPoint3& a_at, float a_radius, float a_seconds);   // Widow's Wine
+		void             Shock(const RE::NiPoint3& a_at, float a_radius, float a_bo3Damage);  // Electric Cherry
 	}
 
 	namespace Intro
@@ -107,6 +110,8 @@ namespace bo3z
 	namespace Perks
 	{
 		void OnEffect(RE::FormID a_mgef);
+		void OnZombieHit(RE::Actor* a_zombie);  // a round zombie hit the player
+		void OnReload(float a_emptyFraction);
 		void Tick();
 		float ReloadMult();
 		float FireDelayMult();

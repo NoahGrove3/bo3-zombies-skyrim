@@ -228,8 +228,10 @@ namespace bo3z
 		void SetFlag(int a_bit, bool a_on) { SetFlags(a_on ? (Flags() | (1 << a_bit)) : (Flags() & ~(1 << a_bit))); }
 		int  Crew() { return ((Flags() >> 1) & 0x7) - 1; }
 		void SetCrew(int a_crew) { SetFlags((Flags() & ~(0x7 << 1)) | (((a_crew + 1) & 0x7) << 1)); }
-		bool HasPerk(int a_perk) { return (Flags() >> (4 + a_perk)) & 1; }
-		void SetPerk(int a_perk, bool a_on) { SetFlag(4 + a_perk, a_on); }
+		// v0.3 layout: perks moved to bits 14-22 so nine fit (v0.2 kept seven at bits 4-10).
+		bool HasPerk(int a_perk) { return (Flags() >> (kPerkShift + a_perk)) & 1; }
+		void SetPerk(int a_perk, bool a_on) { SetFlag(kPerkShift + a_perk, a_on); }
+		int  PerkBits() { return (Flags() >> kPerkShift) & 0x1FF; }
 		int  PerkCount()
 		{
 			int n = 0;
@@ -251,9 +253,15 @@ namespace bo3z
 				for (int s = 0; s < 3; ++s) {
 					SetSlot(s, {});
 				}
+				SetFlag(kFlagPerksV2, true);
 				logger::info("new BO3 save state: {} points", gen::kPoints_start);
 			}
-			logger::info("world ready: round {} cleared, {} points, crew {}, perks {:07b}", Get(gen::kAV_round), Get(gen::kAV_points), Crew(), (Flags() >> 4) & 0x7F);
+			if (!Flag(kFlagPerksV2)) {
+				const int old = (Flags() >> 4) & 0x7F;
+				SetFlags((Flags() & ~(0x7F << 4)) | (old << kPerkShift) | (1 << kFlagPerksV2));
+				logger::info("save moved to v0.3 perk layout ({:07b})", old);
+			}
+			logger::info("world ready: round {} cleared, {} points, crew {}, perks {:09b}", Get(gen::kAV_round), Get(gen::kAV_points), Crew(), PerkBits());
 		}
 	}
 

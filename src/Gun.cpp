@@ -227,6 +227,7 @@ namespace bo3z
 			g_reload = g.reloadMs / 1000.0f * Perks::ReloadMult();
 			g_burstLeft = 0;
 			Forms::Play(g.reloadSnd);
+			Perks::OnReload(1.0f - static_cast<float>(s.clip) / static_cast<float>(g.clip));
 		}
 
 		void FinishReload()
@@ -523,7 +524,7 @@ namespace bo3z
 				h.reserve = s.reserve;
 			}
 			h.points = Points::Get();
-			h.perks = (Save::Flags() >> 4) & 0x7F;
+			h.perks = Save::PerkBits();
 		}
 
 		std::pair<bool, bool> RecentHit(RE::FormID a_actor)

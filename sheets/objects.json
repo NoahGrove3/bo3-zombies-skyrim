@@ -109,6 +109,30 @@
    ]
   },
   {
+   "id": "perk_widowswine",
+   "kind": "perk",
+   "label": "Widow's Wine",
+   "activateText": "Buy",
+   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+   "cost": 4000,
+   "refs": "perks:widowswine",
+   "verify": [
+    "model"
+   ]
+  },
+  {
+   "id": "perk_electriccherry",
+   "kind": "perk",
+   "label": "Electric Cherry",
+   "activateText": "Buy",
+   "model": "DLC02\\Dungeons\\Dwemer\\Clutter\\DLC2NchardakConsole.nif",
+   "cost": 2000,
+   "refs": "perks:electriccherry",
+   "verify": [
+    "model"
+   ]
+  },
+  {
    "id": "wall_rk5",
    "kind": "wallbuy",
    "label": "RK5",

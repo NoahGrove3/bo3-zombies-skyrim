@@ -81,9 +81,29 @@
    "description": "Carry a third gun.",
    "potionModel": "Clutter\\Potions\\PotionHealthExtreme.nif",
    "verify": []
+  },
+  {
+   "id": "widowswine",
+   "label": "Widow's Wine",
+   "cost": 4000,
+   "effect": "web_grenade",
+   "value": 4.0,
+   "potionModel": "Clutter\\Potions\\PotionResistMagicka50.nif",
+   "description": "When a zombie hits you, nearby zombies are webbed and slowed; knife hits slow too.",
+   "verify": []
+  },
+  {
+   "id": "electriccherry",
+   "label": "Electric Cherry",
+   "cost": 2000,
+   "effect": "reload_shock",
+   "value": 500,
+   "potionModel": "Clutter\\Potions\\PotionFortifyMagickaExtreme.nif",
+   "description": "Reloading releases an electric blast that hurts nearby zombies (bigger when the clip was emptier).",
+   "verify": []
   }
  ],
  "limits": {
-  "maxPerks": 4
+  "maxPerks": 9
  }
 }

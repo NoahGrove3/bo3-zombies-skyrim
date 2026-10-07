@@ -419,6 +419,54 @@
    "verify": [
     "distance"
    ]
+  },
+  {
+   "id": "whiterun_5",
+   "town": "Whiterun",
+   "worldspace": "WhiterunWorld",
+   "anchor": "0x0162CE",
+   "object": "objects:perk_widowswine",
+   "angleDeg": 160,
+   "distance": 800,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "riverwood_5",
+   "town": "Riverwood",
+   "worldspace": "Tamriel",
+   "anchor": "0x0162A4",
+   "object": "objects:perk_electriccherry",
+   "angleDeg": 225,
+   "distance": 450,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "riften_4",
+   "town": "Riften",
+   "worldspace": "RiftenWorld",
+   "anchor": "0x01C390",
+   "object": "objects:perk_widowswine",
+   "angleDeg": 45,
+   "distance": 700,
+   "verify": [
+    "distance"
+   ]
+  },
+  {
+   "id": "solitude_4",
+   "town": "Solitude",
+   "worldspace": "SolitudeWorld",
+   "anchor": "0x04D0F4",
+   "object": "objects:perk_electriccherry",
+   "angleDeg": 135,
+   "distance": 700,
+   "verify": [
+    "distance"
+   ]
   }
  ]
 }

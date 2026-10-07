@@ -32,6 +32,7 @@ namespace bo3z
 			case 0: return { ox, a_size.y + oy };                   // bottom_left
 			case 1: return { a_size.x + ox, a_size.y + oy };        // bottom_right
 			case 2: return { a_size.x * 0.5f + ox, a_size.y * 0.5f + oy };  // center
+			case 4: return { a_size.x * 0.5f + ox, a_size.y + oy };  // bottom_center
 			default: return { a_size.x * 0.5f + ox, oy };           // top_center
 			}
 		}
@@ -74,18 +75,26 @@ namespace bo3z
 			if (s.gainTime > 0) {
 				Text(dl, gen::kHud_points_popup, size, k, (s.lastGain > 0 ? "+" : "") + std::to_string(s.lastGain), 1.0f, s.gainTime, s.lastGain < 0 ? 0xE03030FF : 0);
 			}
-			// Perk bottles: a coloured circle per perk owned, above the points.
+			// Perk row above Skyrim's health bar (bottom centre), up to 9.
 			{
-				static constexpr std::array<std::uint32_t, 7> colors{ 0xD01818FF, 0x2EB82EFF, 0xE0A020FF, 0x3070E0FF, 0xE8D040FF, 0x606060FF, 0x6A9A40FF };
-				auto        p = Anchor(gen::kHud_points, size, k);
-				float       x = p.x - 18 * k;
-				const float y = p.y - 52 * k;
-				for (int i = static_cast<int>(gen::kPerks.size()) - 1; i >= 0; --i) {
-					if ((s.perks >> i) & 1) {
-						dl->AddCircleFilled({ x, y }, 15 * k, Col(colors[i % colors.size()]));
-						dl->AddText(g_font, 18 * k, { x - 5 * k, y - 10 * k }, IM_COL32(255, 255, 255, 230), std::string(1, gen::kPerks[i].label[0]).c_str());
-						x -= 38 * k;
+				static constexpr std::array<std::uint32_t, 9> colors{ 0xD01818FF, 0x2EB82EFF, 0xE0A020FF, 0x3070E0FF, 0xE8D040FF, 0x606060FF, 0x6A9A40FF, 0x8A1E8AFF, 0x40C8E8FF };
+				int n = 0;
+				for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
+					n += (s.perks >> i) & 1;
+				}
+				const float r = 17 * k, gap = 40 * k;
+				auto        c = Anchor(gen::kHud_perk_row, size, k);
+				float       x = c.x - (n - 1) * gap * 0.5f;
+				for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
+					if (!((s.perks >> i) & 1)) {
+						continue;
 					}
+					dl->AddCircleFilled({ x, c.y }, r, Col(colors[i % colors.size()]));
+					dl->AddCircle({ x, c.y }, r, IM_COL32(0, 0, 0, 200), 0, 2 * k);
+					const std::string letter(1, gen::kPerks[i].label[0]);
+					const auto ts = g_font->CalcTextSizeA(20 * k, FLT_MAX, 0, letter.c_str());
+					dl->AddText(g_font, 20 * k, { x - ts.x / 2, c.y - ts.y / 2 }, IM_COL32(255, 255, 255, 235), letter.c_str());
+					x += gap;
 				}
 			}
 			if (s.crew >= 0) {

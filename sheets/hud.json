@@ -110,6 +110,22 @@
    "color": "#FFFFFF",
    "visibleWhen": "0.2s after a hit",
    "verify": []
+  },
+  {
+   "id": "perk_row",
+   "shows": "perk icons in a line above Skyrim's health bar (real logos once converted from BO3 Mod Tools)",
+   "source": "system:perks",
+   "anchor": "bottom_center",
+   "offset": [
+    0,
+    -108
+   ],
+   "fontPx": 34,
+   "color": "#FFFFFF",
+   "visibleWhen": "perks>0",
+   "verify": [
+    "offset"
+   ]
   }
  ]
 }

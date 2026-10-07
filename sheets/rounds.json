@@ -28,6 +28,11 @@
   "spawnRingInterior",
   "spawnHeightOffset",
   "maxCorpses",
+  "spawnMultiplier",
+  "speedTiers",
+  "hitDamageFraction",
+  "weaponDamageMult",
+  "ignoreNpcs",
   "verify"
  ],
  "rows": [
@@ -37,7 +42,7 @@
    "nightEndHour": 6.0,
    "breakSeconds": 10.0,
    "firstBreakSeconds": 4.0,
-   "maxAlive": 12,
+   "maxAlive": 24,
    "aiMaxBase": 24,
    "aiPerPlayer": 6,
    "earlyRoundScale": [
@@ -72,9 +77,29 @@
    "verify": [
     "spawnRingInterior",
     "spawnHeightOffset",
-    "maxAlive"
+    "maxAlive",
+    "speedTiers",
+    "hitDamageFraction"
    ],
-   "maxCorpses": 20
+   "maxCorpses": 20,
+   "spawnMultiplier": 2.0,
+   "speedTiers": [
+    [
+     1,
+     100
+    ],
+    [
+     4,
+     150
+    ],
+    [
+     8,
+     200
+    ]
+   ],
+   "hitDamageFraction": 0.34,
+   "weaponDamageMult": 0.1,
+   "ignoreNpcs": true
   }
  ]
 }

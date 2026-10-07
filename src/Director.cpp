@@ -17,6 +17,7 @@ namespace bo3z
 			std::size_t     enemy;
 			bool            inCombat{ false };
 			float           combatRetry{ 0 };
+			float           webbed{ 0 };
 		};
 
 		Phase                   g_phase = Phase::Day;
@@ -185,16 +186,39 @@ namespace bo3z
 			const float want = HealthFor(g_current);
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
 
+			// BO3 tuning: speed tier by round, damage comes from our hit rule (weapon damage turned down),
+			// and no faction ties so they only go for players and NPCs leave them alone.
+			float speed = 100.0f;
+			for (const auto& tier : gen::kSpeedTiers) {
+				if (g_current >= static_cast<int>(tier[0])) {
+					speed = tier[1];
+				}
+			}
+			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, speed - av->GetBaseActorValue(RE::ActorValue::kSpeedMult));
+			av->SetActorValue(RE::ActorValue::kAttackDamageMult, gen::kZombieWeaponDamageMult);
+			av->SetActorValue(RE::ActorValue::kConfidence, 4);
+			if (gen::kIgnoreNpcs) {
+				if (auto* base = actor->GetActorBase()) {
+					for (auto& f : base->factions) {
+						if (f.faction) {
+							actor->RemoveFromFaction(f.faction);
+						}
+					}
+				}
+				av->SetActorValue(RE::ActorValue::kAggression, 1);  // aggressive only toward enemies: none, except the player we point them at
+			}
 			g_ours[actor->GetFormID()] = *pick;
 			g_alive.push_back({ actor->GetHandle(), *pick });
 			return true;
 		}
 
+		bool IsOurs(RE::Actor* a) { return a && g_ours.contains(a->GetFormID()); }
+
 		void StartRound(int a_round)
 		{
 			g_current = a_round;
 			g_special = a_round >= R.specialFirstRound && (a_round - R.specialFirstRound) % R.specialEveryRounds == 0;
-			g_toSpawn = TotalFor(a_round);
+			g_toSpawn = static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier));
 			g_spawnTimer = 0;
 			g_phase = Phase::Fighting;
 			Forms::Play(gen::Sound::round_start);
@@ -256,18 +280,34 @@ namespace bo3z
 		void KeepThemComing(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			for (auto& s : g_alive) {
-				if (s.inCombat || !gen::kEnemies[s.enemy].forceCombat) {
+				if (!gen::kEnemies[s.enemy].forceCombat || (s.combatRetry -= a_delta) > 0) {
 					continue;
 				}
-				if ((s.combatRetry -= a_delta) > 0) {
+				s.combatRetry = 0.75f;
+				auto a = s.handle.get();
+				if (!a || !a->Is3DLoaded() || a->IsDead()) {
 					continue;
 				}
-				s.combatRetry = 1.0f;
-				if (auto a = s.handle.get(); a && a->Is3DLoaded()) {
-					if (a->IsInCombat()) {
-						s.inCombat = true;
-					} else {
-						a->StartCombat(a_player);
+				auto target = a->GetActorRuntimeData().currentCombatTarget.get();
+				if (a->IsInCombat() && target.get() == a_player) {
+					s.inCombat = true;
+					continue;
+				}
+				if (a->IsInCombat()) {
+					a->StopCombat();  // fighting an NPC: back to the player
+				}
+				a->StartCombat(a_player);
+			}
+			// NPCs that picked a fight with our undead drop it.
+			if (gen::kIgnoreNpcs) {
+				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+					auto npc = h.get();
+					if (!npc || npc.get() == a_player || IsOurs(npc.get()) || !npc->IsInCombat()) {
+						continue;
+					}
+					auto tgt = npc->GetActorRuntimeData().currentCombatTarget.get();
+					if (tgt && IsOurs(tgt.get())) {
+						npc->StopCombat();
 					}
 				}
 			}
@@ -276,6 +316,33 @@ namespace bo3z
 
 	namespace Director
 	{
+		void Web(const RE::NiPoint3& a_at, float a_radius, float a_seconds)
+		{
+			for (auto& s : g_alive) {
+				if (auto a = s.handle.get(); a && !a->IsDead() && a->GetPosition().GetDistance(a_at) <= a_radius && s.webbed <= 0) {
+					a->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -60.0f);
+					s.webbed = a_seconds;
+				}
+			}
+		}
+
+		void Shock(const RE::NiPoint3& a_at, float a_radius, float a_bo3Damage)
+		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			for (auto& s : g_alive) {
+				auto a = s.handle.get();
+				if (!a || a->IsDead() || a->GetPosition().GetDistance(a_at) > a_radius) {
+					continue;
+				}
+				auto* av = a->AsActorValueOwner();
+				const float dmg = a_bo3Damage / R.hpScale;
+				av->DamageActorValue(RE::ActorValue::kHealth, dmg);
+				if (av->GetActorValue(RE::ActorValue::kHealth) <= 0) {
+					a->KillImpl(player, dmg, true, false);
+				}
+			}
+		}
+
 		void Reset()
 		{
 			g_phase = Phase::Day;
@@ -343,6 +410,13 @@ namespace bo3z
 				}
 				break;
 			case Phase::Fighting:
+				for (auto& s : g_alive) {
+					if (s.webbed > 0 && (s.webbed -= a_delta) <= 0) {
+						if (auto a = s.handle.get()) {
+							a->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 60.0f);
+						}
+					}
+				}
 				KeepThemComing(player, a_delta);
 				if (g_toSpawn > 0) {
 					if ((g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < R.maxAlive) {

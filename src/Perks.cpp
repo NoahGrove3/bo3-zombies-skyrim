@@ -45,6 +45,34 @@ namespace bo3z
 			logger::info("perk: {}", p.id);
 		}
 
+		// BO3 hits: each zombie hit takes a fixed share of the player's health without Juggernog,
+		// so Juggernog's extra health means more hits to go down.
+		void OnZombieHit(RE::Actor* a_zombie)
+		{
+			static std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> last;
+			const auto now = std::chrono::steady_clock::now();
+			auto& t = last[a_zombie->GetFormID()];
+			if (now - t < 600ms) {
+				return;
+			}
+			t = now;
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			auto* av = player->AsActorValueOwner();
+			const float jug = Has(gen::kPerk_juggernog) ? gen::kPerks[gen::kPerk_juggernog].value : 0.0f;
+			const float baseHealth = std::max(50.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth) - jug);
+			av->DamageActorValue(RE::ActorValue::kHealth, baseHealth * gen::kHitDamageFraction);
+			if (Has(gen::kPerk_widowswine)) {
+				Director::Web(player->GetPosition(), 350.0f, gen::kPerks[gen::kPerk_widowswine].value);
+			}
+		}
+
+		void OnReload(float a_emptyFraction)
+		{
+			if (Has(gen::kPerk_electriccherry) && a_emptyFraction > 0.05f) {
+				Director::Shock(RE::PlayerCharacter::GetSingleton()->GetPosition(), 120.0f + 200.0f * a_emptyFraction, gen::kPerks[gen::kPerk_electriccherry].value * a_emptyFraction);
+			}
+		}
+
 		// Quick Revive (solo): when health drops near zero, get back up once.
 		void Tick()
 		{

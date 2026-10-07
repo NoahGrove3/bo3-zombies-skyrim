@@ -3,7 +3,7 @@ Records: Perk-a-Cola magic effects (MGEF) and potions (ALCH), gun items (WEAP, s
 and activators (ACTI) for the Mystery Box, perk machines and wall-buys."""
 import json, struct, pathlib
 from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS
-S = sheets(); IDS, NEXT = assign(S)
+S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
 T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
