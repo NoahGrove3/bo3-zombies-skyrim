@@ -74,14 +74,13 @@ namespace bo3z
 			g_movt = true;
 			using D = RE::Movement::SPEED_DIRECTIONS;
 			int n = 0;
-			for (auto* mt : RE::TESDataHandler::GetSingleton()->GetFormArray<RE::BGSMovementType>()) {
+			// Skyrim.esm: NPC_Default, Sneaking, Sprinting, 1HM, 2HM, Bow, BowDrawn, Magic, MagicCasting, Attacking, Blocking
+			for (const RE::FormID id : { 0x03580D, 0x03580B, 0x034D9C, 0x069CD8, 0x069CD9, 0x069CDA, 0x03580C, 0x069CDB, 0x069CDC, 0x0A0BC2, 0x035B4C }) {
+				auto* mt = RE::TESForm::LookupByID<RE::BGSMovementType>(id);
 				if (!mt) {
 					continue;
 				}
 				const std::string name(mt->movementTypeData.typeName.c_str());
-				if (name != "NPC_Default_MT" && name != "NPC_Sneaking_MT" && name != "NPC_Sprinting_MT" && name != "NPC_Attacking_MT" && name != "NPC_Magic_Casting_MT") {
-					continue;
-				}
 				auto& sp = mt->movementTypeData.defaultData;
 				for (int k = 0; k < 2; ++k) {
 					const float fwd = sp.speeds[D::kForward][k];

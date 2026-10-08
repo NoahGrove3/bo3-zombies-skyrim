@@ -91,7 +91,7 @@
   "sweepRadius": 5400,
   "doorClearance": 900,
   "buildingClearance": 900,
-  "clutterClearance": 200,
+  "clutterClearance": 120,
   "maxSlope": 30
  }
 }

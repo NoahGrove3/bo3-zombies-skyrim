@@ -358,7 +358,7 @@ namespace bo3z
 					return RE::BSContainer::ForEachResult::kContinue;  // pebbles, cups, small clutter
 				}
 				if (t == RE::FormType::Tree) {
-					list.push_back({ p.x, p.y, std::min(horiz * 0.5f, 140.0f), 2 });  // the trunk; the canopy is the sky test's job
+					list.push_back({ p.x, p.y, std::min(horiz * 0.15f, 40.0f) - 120.0f, 2 });  // just the trunk (the canopy is the sky test's job); forests are fine
 				} else {
 					list.push_back({ p.x, p.y, horiz * 0.5f, size > 450.0f ? 1 : 2 });
 				}
@@ -439,21 +439,20 @@ namespace bo3z
 			{
 				float low = 0;
 				if (auto g = GroundTop(a_anchor, plan, &low); !g || *g - low > gen::kStandMaxSlope) {
-					blocked = 1;  // the ground drops away under part of the stand: it would hang in the air
+					fails += 3;  // the ground drops away under part of the stand (or isn't there): never acceptable
 				} else {
 					slope = std::max(0.0f, *g - 1.0f - low);
 				}
 			}
-			fails += blocked * 3;
 			const float spread = hi > lo ? hi - lo : 0;
 			auto        c = Snap(a_anchor, plan.center);
 			plan.center.z = c ? c->z : (lo < hi ? (lo + hi) * 0.5f : a.z);
 			plan.state = TownPlan::State::Ready;
-			const float score = fails * 1000.0f + crowd * 2.0f + std::max(0.0f, slope - gen::kPlanFlat) * 20.0f + std::max(0.0f, spread - gen::kPlanHeight) * 5.0f + gen::kPlanDist[di] * 0.05f;
+			const float score = fails * 1.0e7f + blocked * 1.0e5f + std::min(crowd * 2.0f, 5.0e4f) + std::max(0.0f, slope - gen::kPlanFlat) * 20.0f + std::max(0.0f, spread - gen::kPlanHeight) * 5.0f + gen::kPlanDist[di] * 0.05f;
 			if (score < g_best[a_town].score) {
 				g_best[a_town] = { score, plan };
 			}
-			if (fails == 0 && crowd <= 0.0f && slope <= gen::kPlanFlat && spread <= gen::kPlanHeight) {
+			if (fails == 0 && !blocked && crowd <= 0.0f && slope <= gen::kPlanFlat && spread <= gen::kPlanHeight) {
 				g_towns[a_town] = plan;
 				MarkLayout(a_town);
 				logger::info("shops: {} alley at ({:.0f},{:.0f}) yaw {:.0f} (candidate {})", gen::kTowns[a_town], plan.center.x, plan.center.y, gen::kPlanYaw[yi], a_index);
@@ -652,7 +651,20 @@ namespace bo3z
 			if (plan.topSet) {
 				return;
 			}
-			const auto top = GroundTop(a_anchor, plan);
+			auto top = GroundTop(a_anchor, plan);
+			if (!top) {  // no clean footprint: stand on whatever is under its centre, never at the anchor's height
+				if (auto c = Snap(a_anchor, plan.center)) {
+					top = c->z + 2.0f;
+				} else if (auto z = FloorZ(a_anchor, plan.center, plan.center.z + 3000.0f)) {
+					top = *z + 2.0f;
+				} else {
+					float land = 0;
+					RE::NiPoint3 at = plan.center;
+					if (RE::TES::GetSingleton()->GetLandHeight(at, land)) {
+						top = land + 2.0f;
+					}
+				}
+			}
 			plan.top = top ? *top : plan.center.z;
 			plan.topSet = true;
 			logger::info("shops: {} stand floor at z {:.0f}", gen::kTowns[a_town], plan.top);
@@ -725,7 +737,8 @@ namespace bo3z
 				return;
 			}
 			const auto& plan = g_towns[a_town];
-			const RE::NiPoint3 at = plan.state == TownPlan::State::Ready ? plan.center : anchor->GetPosition();
+			const bool   ready = plan.state == TownPlan::State::Ready;
+			const RE::NiPoint3 at = ready ? plan.center : anchor->GetPosition();
 			auto ref = g_markers[a_town].get();
 			if (!ref) {
 				// From an earlier session: a placed (0xFF) map marker near the town marker is ours.
@@ -738,14 +751,17 @@ namespace bo3z
 				});
 			}
 			if (!ref) {
+				if (!ready) {
+					return;  // no station here yet: no icon sitting on top of the city's own
+				}
 				ref = anchor->PlaceObjectAtMe(markerBase, true);
 				if (!ref) {
 					return;
 				}
 			}
 			g_markers[a_town] = ref->CreateRefHandle();
-			if (ref->GetPosition().GetDistance(at) > 50.0f) {
-				ref->SetPosition(at);
+			if (ready && ref->GetPosition().GetDistance(at) > 50.0f) {
+				ref->SetPosition(at);  // on the station (an icon from an earlier session stays where its station was)
 			}
 			if (!ref->extraList.GetByType<RE::ExtraMapMarker>()) {
 				auto* tmpl = TemplateMarkerData(a_player);
