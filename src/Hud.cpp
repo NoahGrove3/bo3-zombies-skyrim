@@ -258,6 +258,21 @@ namespace bo3z
 						Txt(dl, g_body, 15 * k, { b.x - 58 * k, b.y - 40 * k }, IM_COL32(150, 170, 210, 255), "mana");
 					}
 				}
+				// power-ups running (BO3 style, bottom centre): name and seconds left, blinking near the end
+				{
+					struct PU { const char* name; float t; ImU32 col; } pus[] = { { "INSTA-KILL", s.puInsta, IM_COL32(255, 70, 60, 255) },
+						{ "DOUBLE POINTS", s.puDouble, IM_COL32(255, 210, 80, 255) }, { "FIRE SALE", s.puFireSale, IM_COL32(190, 120, 255, 255) } };
+					float y = size.y - 150 * k;
+					for (auto& pu : pus) {
+						if (pu.t <= 0 || (pu.t < 5 && std::fmod(now, 0.5f) < 0.2f)) {
+							continue;
+						}
+						const std::string txt = std::string(pu.name) + "  " + std::to_string(static_cast<int>(std::ceil(pu.t)));
+						const auto        ts = Measure(g_body, 22 * k, txt);
+						Txt(dl, g_body, 22 * k, { size.x * 0.5f - ts.x * 0.5f, y }, pu.col, txt);
+						y -= 28 * k;
+					}
+				}
 				// signature move: a ring fills round the crosshair while you hold fire; gold and pulsing when ready
 				{
 					const ImVec2 cc{ size.x * 0.5f, size.y * 0.5f };

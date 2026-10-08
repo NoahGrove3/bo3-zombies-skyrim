@@ -358,6 +358,23 @@
   "SNDR:unleash_stormcaller": "0x962",
   "SNDR:unleash_embermortar": "0x963",
   "SNDR:unleash_kagrenac": "0x964",
-  "SNDR:unleash_longshot": "0x965"
+  "SNDR:unleash_longshot": "0x965",
+  "ARMA:reaper": "0x966",
+  "ARMO:reaper": "0x967",
+  "NPC_:reaper": "0x968",
+  "ARMA:necro": "0x969",
+  "ARMO:necro": "0x96a",
+  "NPC_:necro": "0x96b",
+  "WEAP:reaper_scythe": "0x96c",
+  "STAT:pu_instakill": "0x96d",
+  "LIGH:pu_instakill": "0x96e",
+  "STAT:pu_double": "0x96f",
+  "LIGH:pu_double": "0x970",
+  "STAT:pu_kaboom": "0x971",
+  "LIGH:pu_kaboom": "0x972",
+  "STAT:pu_firesale": "0x973",
+  "LIGH:pu_firesale": "0x974",
+  "SNDR:powerup_spawn": "0x975",
+  "SNDR:powerup_grab": "0x976"
  }
 }

@@ -712,6 +712,24 @@
       "file": "fx\\UndyingNights\\unleash_longshot.wav",
       "space": "2d",
       "verify": []
+    },
+    {
+      "id": "powerup_spawn",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_powerup_spawn",
+      "file": "fx\\UndyingNights\\powerup_spawn.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "powerup_grab",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_powerup_grab",
+      "file": "fx\\UndyingNights\\powerup_grab.wav",
+      "space": "2d",
+      "verify": []
     }
   ]
 }

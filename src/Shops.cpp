@@ -476,6 +476,21 @@ namespace bo3z
 			}
 			g_towns[a_town] = plan;
 			ClearSite(a_town, a_anchor);
+			// machines that were retired (wall-buys, the old ammo cache) leave the stand
+			int gone = 0;
+			RE::TES::GetSingleton()->ForEachReferenceInRange(a_anchor, gen::kPlanSweep, [&](RE::TESObjectREFR* r) {
+				for (std::size_t i = 0; r && i < gen::kObjects.size(); ++i) {
+					if (gen::kObjects[i].retired && r->GetBaseObject() == Forms::Object(static_cast<int>(i)) && !r->IsDisabled()) {
+						r->Disable();
+						r->SetDelete(true);
+						++gone;
+					}
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			if (gone) {
+				logger::info("shops: removed {} retired machines from the {} stand", gone, gen::kTowns[a_town]);
+			}
 			return true;
 		}
 
@@ -778,7 +793,7 @@ namespace bo3z
 			const int town = TownOf(a_ref);
 			logger::info("box: activated in {} (Coffer is in {}), phase {}", gen::kTowns[town], gen::kTowns[ActiveBoxTown()], static_cast<int>(g_show.phase));
 			const int crew = Save::Crew();
-			const int cost = crew >= 0 && gen::kCrew[crew].passive == 3 ? static_cast<int>(gen::kCrew[crew].value) : gen::kObjects[0].cost;
+			const int cost = PowerUps::FireSale() ? 10 : crew >= 0 && gen::kCrew[crew].passive == 3 ? static_cast<int>(gen::kCrew[crew].value) : gen::kObjects[0].cost;
 			if (!Points::Spend(cost)) {
 				return;
 			}

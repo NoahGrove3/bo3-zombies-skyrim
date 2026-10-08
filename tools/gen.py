@@ -19,12 +19,12 @@ assert r['dawn'] == 'crumble' and r['unfinishedRound'] == 'resume'
 q = row('quests', r['pauseUntilQuest'].split(':')[1])
 out.append(f'\tinline constexpr FormRef kIntroQuest{{ {cs(q["plugin"])}, 0x{hexid(q["localId"]):06X}, {cs(q["editorId"])} }};')
 # enemies
-out.append('\tstruct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; };')
+out.append('\tstruct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; };')
 en = S['enemies']['rows']
 out.append(f'\tinline constexpr std::array<Enemy, {len(en)}> kEnemies{{ {{')
 sys.path.insert(0, str(root / 'tools')); import esp_ids as _eids; _EIDS, _ = _eids.assign(S)
 for e in en:
-    out.append(f'\t\tEnemy{{ {cs(e["id"])}, {cs(e["label"])}, {{ {cs(e["plugin"])}, 0x{(_EIDS[("NPC_", e["localId"][5:])] if e["localId"].startswith("auto:") else hexid(e["localId"])):06X}, {cs(e["editorId"])} }}, {str(e["recordType"]=="LVLN").lower()}, {e["minRound"]}, {e["weight"]}, {str(e["specialRound"]).lower()}, {cs(e["headNode"])}, {str(e["forceCombat"]).lower()}, {e.get("bossEvery", 0)}, {str(e.get("elite", False)).lower()} }},')
+    out.append(f'\t\tEnemy{{ {cs(e["id"])}, {cs(e["label"])}, {{ {cs(e["plugin"])}, 0x{(_EIDS[("NPC_", e["localId"][5:])] if e["localId"].startswith("auto:") else hexid(e["localId"])):06X}, {cs(e["editorId"])} }}, {str(e["recordType"]=="LVLN").lower()}, {e["minRound"]}, {e["weight"]}, {str(e["specialRound"]).lower()}, {cs(e["headNode"])}, {str(e["forceCombat"]).lower()}, {e.get("bossEvery", 0)}, {str(e.get("elite", False)).lower()}, {["zombie", "reaper", "necro", "minion"].index(e.get("kind", "zombie"))}, {float(e.get("healthMult", 1.0))}f, {float(e.get("speedMult", 1.0))}f }},')
 out.append('\t} };')
 # sounds
 out.append('\tenum class Sound : int {')
@@ -61,7 +61,7 @@ o = ['', '// ---- v0.2 ----', '#include <string_view>', 'namespace bo3z::gen', '
      f'\tinline constexpr std::string_view kPlugin = {cs(esp_ids.PLUGIN)};']
 fires = {'semi': 0, 'auto': 1, 'burst': 2, 'pump': 3}
 o.append('\tenum class Fire : int { Semi = 0, Auto = 1, Burst = 2, Pump = 3 };')
-o.append('\tenum class Special : int { None = 0, Splash, Chain, Cone, Wabbajack, Poison, Soul, Slow, Lifesteal, Stagger, Pierce, Stasis };')
+o.append('\tenum class Special : int { None = 0, Splash, Chain, Cone, Wabbajack, Poison, Soul, Slow, Lifesteal, Stagger, Pierce, Stasis, Hex, Plague, Daze };')
 o.append('\tinline constexpr int kKindWand = 0, kKindTome = 1, kKindWonder = 2, kKindBow = 3;')
 o.append(f'\tinline constexpr std::uint32_t kWandCastEffect = 0x{IDS[("MGEF", "wandcast")]:03X};')
 import json as _json
@@ -73,7 +73,7 @@ o.append('\tenum ChargeStyle : int { kThrust = 0, kSlam = 1, kSweep = 2, kTwirl 
 W = S['weapons']['rows']
 sid = lambda v: 'Sound::' + v.split(':')[1]
 SP = S['spells']['rows']
-specials = {'none': 0, 'splash': 1, 'chain': 2, 'cone': 3, 'wabbajack': 4, 'poison': 5, 'soul': 6, 'slow': 7, 'lifesteal': 8, 'stagger': 9, 'pierce': 10, 'stasis': 11}
+specials = {'none': 0, 'splash': 1, 'chain': 2, 'cone': 3, 'wabbajack': 4, 'poison': 5, 'soul': 6, 'slow': 7, 'lifesteal': 8, 'stagger': 9, 'pierce': 10, 'stasis': 11, 'hex': 12, 'plague': 13, 'daze': 14}
 wkinds = {'wand': 0, 'tome': 1, 'wonder': 2, 'bow': 3}
 spellon = {'none': 0, 'hit': 1, 'fire': 2, 'every4': 3}
 spidx = lambda v: -1 if v == 'none' else [s['id'] for s in SP].index(v.split(':')[1])
@@ -159,6 +159,10 @@ o.append(f'\tinline constexpr std::array<std::uint32_t, 4> kForgeColor{{ {{ 0xEC
 o.append('\tnamespace elite { ' + ' '.join(f'inline constexpr float {r["id"]} = {F(r["value"])};' for r in S['elite']['rows']) + ' }')
 AN = {r['id']: r for r in S['animations']['rows']}
 o.append(f'\tinline constexpr std::string_view kAnimFireCrossbow = {cs(AN["crossbow"]["fire"])}, kAnimReloadCrossbow = {cs(AN["crossbow"]["reload"])}, kAnimFireStaff = {cs(AN["staff"]["fire"])}, kAnimReloadStaff = {cs(AN["staff"]["reload"])};')
+import esp_ids as _pu
+o.append('\t// BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale (token STAT, light)')
+o.append('\tinline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 4> kPowerups{ {' + ', '.join(f'{{ 0x{IDS[("STAT", "pu_" + k)]:03X}, 0x{IDS[("LIGH", "pu_" + k)]:03X} }}' for k, _ in _pu.POWERUPS) + '} };')
+o.append(f'\tinline constexpr std::uint32_t kReaperScythe = 0x{IDS[("WEAP", "reaper_scythe")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kUndeadFaction = 0x{IDS[("FACT", "undead")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kMuzzleLight = 0x{IDS[("LIGH", "muzzle")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kStandStat = 0x{IDS[("STAT", "stand")]:03X};  // the station platform (dressing on the Coffer)')

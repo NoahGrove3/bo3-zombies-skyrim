@@ -8,6 +8,8 @@ The staff dir holds <base>.obj (world space, metres, Y up), tex<N>.* and mats.tx
 Output: Meshes/UndyingNights/staff/<id>.nif (Prn WeaponStaff, grip at the origin, head toward +Y) and textures.
 Writes tools/staff_tips.json: the head centre of each staff in model units (bolts leave from there)."""
 import json, math, pathlib, subprocess, sys
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import skymat
 import numpy as np
 from PIL import Image, ImageFilter
 
@@ -20,35 +22,42 @@ GRIP = 0.40             # grip point, share of the height from the foot
 BUDGET = 9000           # triangles per material group at most
 
 # material roles per base model (material index in mats.txt -> role)
+SRC2 = pathlib.Path('/home/claude/work/staffs2')   # 'magic staffs basic bundle' (objexp of MagicalStaffsSet1.fbx)
 BASES = {
     'heart': ('Latido_de_Adrodita', {4: 'particle', 5: 'accent', 6: 'wood', 7: 'gem'}),
     'void': ('Ojos_del_vacio', {8: 'metal', 9: 'gem', 10: 'dark'}),
     'seed': ('Semilla_Ancestral', {11: 'leaf', 12: 'leaf', 13: 'gem', 14: 'wood', 15: 'accent', 16: 'leaf', 17: 'leaf'}),
     'heaven': ('Sexto_cielo.003', {18: 'gem', 19: 'wood', 20: 'wings', 21: 'particle'}),
+    'oak': ('Oak_Staff', {13: 'wood', 14: 'band', 15: 'wrap', 16: 'gem'}, SRC2),
+    'spire': ('Staff3', {2: 'shaft', 3: 'band', 4: 'coil', 5: 'gem'}, SRC2),
+    'crookgem': ('Staff2', {2: 'band', 5: 'gem', 6: 'wood', 7: 'wood', 8: 'wood', 9: 'leaf'}, SRC2),
+    'crook': ('Staff1', {10: 'wood', 11: 'wood', 12: 'wood', 3: 'band'}, SRC2),
 }
 
 # id -> (base, roles colour table, glow colour, add-on)
 # colours are RGB 0-255; 'tint' roles multiply the source texture, others are flat
+# role -> ('tex', tint): the model's own texture recoloured; (kind, tint): a skymat material; RGB: a glowing part
 STAFFS = {
-    'sidearm':    ('heaven', {'wood': (70, 52, 92), 'wings': (205, 200, 225), 'gem': (170, 90, 255), 'particle': (200, 150, 255)}, (0.67, 0.35, 1.0), 'runes'),
-    'aetherium':  ('heaven', {'wood': (235, 220, 190), 'wings': (255, 214, 120), 'gem': (255, 245, 200), 'particle': (255, 230, 150)}, (1.0, 0.85, 0.45), 'halo'),
-    'animunculi': ('void', {'dark': (16, 10, 24), 'metal': (120, 110, 140), 'gem': (130, 40, 255)}, (0.55, 0.15, 1.0), 'shards'),
-    'mammothlmg': ('void', {'dark': (6, 6, 10), 'metal': (90, 120, 130), 'gem': (60, 240, 230)}, (0.25, 0.95, 0.9), 'disk'),
-    'drill':      ('heart', {'accent': (150, 10, 24), 'wood': (60, 20, 22), 'gem': (255, 30, 50), 'particle': (255, 40, 60)}, (1.0, 0.1, 0.18), 'drops'),
-    'triad':      ('heart', {'accent': (120, 200, 230), 'wood': (40, 60, 80), 'gem': (130, 255, 255), 'particle': (170, 255, 255)}, (0.45, 1.0, 1.0), 'wisps'),
-    'spider':     ('seed', {'wood': (150, 120, 90), 'leaf': (90, 200, 80), 'accent': (230, 200, 80), 'gem': (190, 255, 120)}, (0.65, 1.0, 0.35), 'spores'),
-    'centurion':  ('seed', {'wood': (70, 60, 80), 'leaf': (120, 60, 150), 'accent': (150, 255, 60), 'gem': (130, 255, 40)}, (0.45, 1.0, 0.1), 'drops'),
+    'sidearm':    ('heaven', {'wood': ('tex', (96, 78, 118)), 'wings': ('silver', (186, 188, 200)), 'gem': (170, 90, 255), 'particle': (200, 150, 255)}, (0.67, 0.35, 1.0), 'runes'),
+    'aetherium':  ('heaven', {'wood': ('tex', (230, 214, 182)), 'wings': ('gold', (200, 160, 78)), 'gem': (255, 240, 196), 'particle': (255, 226, 150)}, (1.0, 0.85, 0.45), 'halo'),
+    'mammothlmg': ('void', {'dark': ('iron', (40, 42, 50)), 'metal': ('steel', (128, 134, 146)), 'gem': (60, 240, 230)}, (0.25, 0.95, 0.9), 'disk'),
+    'triad':      ('heart', {'accent': ('silver', (150, 178, 196)), 'wood': ('wood_dark', (46, 50, 62)), 'gem': (130, 255, 255), 'particle': (170, 255, 255)}, (0.45, 1.0, 1.0), 'wisps'),
+    'animunculi': ('oak', {'wood': ('wood_dark', (46, 30, 40)), 'band': ('bronze', None), 'wrap': ('leather', (66, 38, 76)), 'gem': (205, 60, 255)}, (0.8, 0.25, 1.0), 'hexring'),
+    'longshot':   ('spire', {'shaft': ('steel', (118, 124, 140)), 'band': ('gold', None), 'coil': (120, 180, 255), 'gem': (210, 235, 255)}, (0.55, 0.75, 1.0), 'stars'),
+    'centurion':  ('crookgem', {'wood': ('wood_dark', (60, 64, 36)), 'band': ('iron', (74, 76, 62)), 'gem': (130, 255, 60), 'leaf': ('vines', (64, 84, 32))}, (0.5, 1.0, 0.2), 'drops'),
+    'kagrenac':   ('crook', {'wood': ('wood', (86, 60, 74)), 'band': ('silver', None)}, (1.0, 0.35, 0.8), 'mindeye'),
 }
-GLOWING = {'gem', 'particle'}
+GLOWING = {'gem', 'particle', 'coil'}
 TEXTURED = {'wood', 'leaf', 'wings', 'accent', 'metal', 'dark'}
 
-def load_mats():
+def load_mats(src=None):
+    SRC_ = src or SRC
     m = {}
-    for line in open(SRC / 'mats.txt'):
+    for line in open(SRC_ / 'mats.txt'):
         p = line.split(); i = int(p[0]); tex = nrm = None; col = (1, 1, 1)
         for q in p[2:]:
-            if q.startswith(('1=*', '12=*')): tex = next(SRC.glob(f'tex{q.split("*")[1]}.*'))
-            if q.startswith('6=*'): nrm = next(SRC.glob(f'tex{q.split("*")[1]}.*'))
+            if q.startswith(('1=*', '12=*')): tex = next(SRC_.glob(f'tex{q.split("*")[1]}.*'))
+            if q.startswith('6=*'): nrm = next(SRC_.glob(f'tex{q.split("*")[1]}.*'))
             if q.startswith('col='): col = tuple(float(v) for v in q[4:].split(','))
         m[i] = (tex, nrm, col)
     return m
@@ -178,6 +187,15 @@ def addon(kind, head, top, rng):
     if kind == 'wisps':
         parts = [sphere(math.cos(a) * 8, hy + 6 + math.sin(a * 2) * 4, math.sin(a) * 8, 1.3, 8) for a in np.linspace(0, 2 * math.pi, 6)[:-1]]
         return {'glow_add': merge(parts)}
+    if kind == 'hexring':  # hex sigils turning around the crystal
+        parts = [ring(0, hy + 2, 0, 9.5, 10.5, axis='z', tilt=0.2), ring(0, hy + 2, 0, 12.5, 13.0, tilt=0.5)]
+        parts += [crystal(math.cos(a) * 11, hy + 2 + math.sin(a) * 11, 0, 2.4, 0.9, sides=3, rot=a) for a in np.linspace(0, 2 * math.pi, 7)[:-1]]
+        return {'glow_add': merge(parts)}
+    if kind == 'stars':    # little stars caught in the spire's orbit
+        parts = [crystal(math.cos(a) * 8, hy + 6 + 3 * math.sin(2 * a), math.sin(a) * 8, 2.2, 0.8, sides=4, rot=a) for a in np.linspace(0, 2 * math.pi, 6)[:-1]]
+        return {'glow_add': merge(parts + [ring(0, hy + 6, 0, 7.5, 8.0, tilt=0.3)])}
+    if kind == 'mindeye':  # a glowing eye hanging in the crook, ringed by a turning halo
+        return {'glow': sphere(0, top - 9, 0, 3.4, 18), 'glow_add': merge([ring(0, top - 9, 0, 5.2, 5.8, axis='z', tilt=0.4), ring(0, top - 9, 0, 6.6, 7.0, tilt=1.1)])}
     if kind == 'drops':
         parts = [crystal(rng.uniform(-3, 3), hy - 14 - k * 9, rng.uniform(-3, 3), -4.5, 1.1, 5) for k in range(4)]
         return {'glow': merge(parts)}
@@ -188,9 +206,10 @@ def addon(kind, head, top, rng):
 
 def build(sid):
     base, cols, glow, extra = STAFFS[sid]
-    objname, roles = BASES[base]
-    mats = load_mats()
-    V, T, groups = load_obj(SRC / f'{objname}.obj')
+    objname, roles = BASES[base][:2]
+    src = BASES[base][2] if len(BASES[base]) > 2 else SRC
+    mats = load_mats(src)
+    V, T, groups = load_obj(src / f'{objname}.obj')
     allF = np.concatenate(list(groups.values()))
     used = np.unique(allF)
     lo, hi = V[used].min(0), V[used].max(0)
@@ -244,14 +263,21 @@ def build(sid):
             alpha = ' alpha=add' if role in ('glow_add', 'particle') else ''
             job_mats.append(f'mat {gname} diffuse={d} normal={flat_n} glow={g} emit={ec} emitmult={mult} spec=1.2 gloss=120 doublesided=1{alpha}')
         else:
-            col = cols.get(role, (180, 180, 180))
-            im = tinted(tex, col) if tex is not None else solid(col)
-            d = save_dds(im, f'{sid}_{gname}_d.dds', size=512)
-            n = flat_n
-            if nrm is not None:
-                n = save_dds(Image.open(nrm).convert('RGBA'), f'{base}_{mi}_n.dds', alpha=True, size=512)
-            spec = {'metal': 1.0, 'wings': 0.6, 'dark': 0.9}.get(role, 0.3)
-            job_mats.append(f'mat {gname} diffuse={d} normal={n} spec={spec} gloss=60 doublesided=1')
+            spec_ = cols.get(role, ('wood', None))
+            kind, tint = spec_ if isinstance(spec_[0], str) else ('tex', spec_)
+            if kind == 'tex' and tex is not None:
+                im = tinted(tex, tint)
+                d = save_dds(im, f'{sid}_{gname}_d.dds', size=1024)
+                n = save_dds(Image.open(nrm).convert('RGBA'), f'{base}_{mi}_n.dds', alpha=True, size=1024) if nrm is not None else \
+                    save_dds(skymat.make('wood', tint, seed=mi)[1], f'{sid}_{gname}_n.dds', alpha=True)
+                spec, gloss = 0.4, 40
+            else:
+                kind = 'wood' if kind == 'tex' else kind
+                dif, nm = skymat.make(kind, tint, seed=len(sid) * 31 + max(mi, 0))
+                d = save_dds(dif, f'{sid}_{gname}_d.dds'); n = save_dds(nm, f'{sid}_{gname}_n.dds', alpha=True)
+                spec, gloss = {'iron': (1.2, 60), 'steel': (1.6, 90), 'bronze': (1.4, 70), 'gold': (1.8, 90), 'silver': (1.8, 100),
+                               'leather': (0.4, 30), 'wood': (0.4, 30), 'wood_dark': (0.45, 35), 'vines': (0.3, 25), 'bone': (0.5, 30)}.get(kind, (0.5, 40))
+            job_mats.append(f'mat {gname} diffuse={d} normal={n} spec={spec} gloss={gloss} doublesided=1')
     obj.write_text('\n'.join(lines) + '\n')
     (work / f'{sid}.mtl').write_text(''.join(mtl))
     nif = OUT / 'Meshes' / 'UndyingNights' / 'staff' / f'{sid}.nif'; nif.parent.mkdir(parents=True, exist_ok=True)

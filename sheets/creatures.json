@@ -7,7 +7,9 @@
     "model",
     "heightScale",
     "level",
-    "verify"
+    "verify",
+    "race",
+    "weapon"
   ],
   "rows": [
     {
@@ -18,7 +20,9 @@
       "level": 10,
       "verify": [
         "heightScale"
-      ]
+      ],
+      "race": "draugr",
+      "weapon": "none"
     },
     {
       "id": "boss",
@@ -28,7 +32,9 @@
       "level": 50,
       "verify": [
         "heightScale"
-      ]
+      ],
+      "race": "draugr",
+      "weapon": "none"
     },
     {
       "id": "shadow",
@@ -38,7 +44,33 @@
       "level": 30,
       "verify": [
         "heightScale"
-      ]
+      ],
+      "race": "draugr",
+      "weapon": "none"
+    },
+    {
+      "id": "reaper",
+      "label": "Iron Reaper",
+      "model": "UndyingNights\\reaper\\reaper.nif",
+      "heightScale": 1.05,
+      "level": 30,
+      "verify": [
+        "heightScale"
+      ],
+      "race": "draugr",
+      "weapon": "scythe"
+    },
+    {
+      "id": "necro",
+      "label": "Voidbound Necromancer",
+      "model": "UndyingNights\\necro\\necro.nif",
+      "heightScale": 1.0,
+      "level": 30,
+      "verify": [
+        "heightScale"
+      ],
+      "race": "breton",
+      "weapon": "none"
     }
   ]
 }

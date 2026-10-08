@@ -188,11 +188,32 @@ namespace bo3z
 			return a->GetPosition() + RE::NiPoint3{ 0, 0, 110 };
 		}
 
+		// Hexbinder / Plaguebringer marks (by form id): hexed take more damage, doomed explode on death, plagued pass it on.
+		std::unordered_map<RE::FormID, float> g_hexed;              // -> seconds left
+		std::unordered_map<RE::FormID, float> g_doomed;             // -> blast damage when it dies
+		std::unordered_map<RE::FormID, float> g_plagued;            // -> plague damage per second
+		struct Detonation
+		{
+			RE::NiPoint3 at;
+			float        damage, delay;
+			int          kind;  // 0 doom, 1 plague jump, 2 falling star
+			int          gun = -1;
+		};
+		std::vector<Detonation> g_detonations;
+
 		bool Damage(RE::Actor* a_target, float a_bo3Damage, bool a_head, bool a_melee, bool a_quiet = false)
 		{
 			auto*       player = RE::PlayerCharacter::GetSingleton();
 			auto*       av = a_target->AsActorValueOwner();
-			const float damage = a_bo3Damage / gen::kRounds.hpScale;
+			const auto  tid = a_target->GetFormID();
+			const float hexMult = g_hexed.contains(tid) ? 1.5f : 1.0f;
+			float       damage = a_bo3Damage * hexMult / gen::kRounds.hpScale;
+			if (PowerUps::InstaKill() && Director::IsRoundUndead(a_target)) {
+				const int row = Director::EnemyRow(a_target);
+				if (row < 0 || gen::kEnemies[row].bossEvery == 0) {
+					damage = av->GetActorValue(RE::ActorValue::kHealth) + 1.0f;  // Insta-Kill
+				}
+			}
 			av->DamageActorValue(RE::ActorValue::kHealth, damage);
 			const bool ours = Director::IsRoundUndead(a_target);
 			g_hits[a_target->GetFormID()] = { Clock::now(), a_head && !a_melee };
@@ -204,6 +225,15 @@ namespace bo3z
 				if (!a_target->IsDead()) {
 					a_target->KillImpl(player, damage, true, false);
 				}
+				if (auto it = g_doomed.find(tid); it != g_doomed.end()) {  // Doom Mark: it goes off, and takes the next ones with it
+					g_detonations.push_back({ a_target->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, it->second, 0.15f, 0 });
+					g_doomed.erase(it);
+				}
+				if (auto it = g_plagued.find(tid); it != g_plagued.end()) {  // the plague looks for its next host
+					g_detonations.push_back({ a_target->GetPosition(), it->second, 0.3f, 1 });
+					g_plagued.erase(it);
+				}
+				g_hexed.erase(tid);
 			} else {
 				if (ours && !a_melee) {
 					Points::Add(gen::kPoints_hit);
@@ -622,6 +652,26 @@ namespace bo3z
 							Director::Web(best->GetPosition(), 40.0f, 2.5f, 95.0f);  // locked in amber
 						}
 						break;
+					case gen::Special::Hex:
+						if (!killed) {
+							g_hexed[best->GetFormID()] = 5.0f;
+						}
+						break;
+					case gen::Special::Plague:
+						if (!killed) {
+							const float dps = hitDmg * g.abilityValue / 3.0f;
+							g_dots.push_back({ best->GetHandle(), dps, 3.0f });
+							g_plagued[best->GetFormID()] = dps;
+						}
+						break;
+					case gen::Special::Daze:
+						if (!killed) {
+							Stagger(best, 0.6f);
+							if (Rand(0, 1) < g.abilityValue) {
+								Director::Web(best->GetPosition(), 40.0f, 1.5f, 60.0f);
+							}
+						}
+						break;
 					default:
 						break;
 					}
@@ -794,12 +844,13 @@ namespace bo3z
 				for (auto* f : line) hit(f, id == "marksman" ? 5.0f : 4.0f);
 				Bolts(p, g, line, 6);
 				if (line.empty()) LaunchBolt(p, g, aim.hit);
-			} else if (id == "centurion") {  // toxic cloud at the impact
-				for (auto* f : Foes(aim.hit, 260.0f)) {
-					hit(f, 1.5f);
-					g_dots.push_back({ f->GetHandle(), base * 1.2f, 5.0f });
+			} else if (id == "centurion") {  // pestilence: a plague burst that spreads from body to body
+				for (auto* f : Foes(aim.hit, 700.0f)) {
+					hit(f, 1.0f);
+					g_dots.push_back({ f->GetHandle(), base * 0.8f, 6.0f });
+					g_plagued[f->GetFormID()] = base * 0.8f;
 				}
-				LaunchBolt(p, g, aim.hit);
+				Bolts(p, g, Foes(aim.hit, 700.0f), 6);
 			} else if (id == "triad") {  // soul harvest: homing souls to the five nearest
 				auto foes = Foes(p->GetPosition(), 1600.0f);
 				if (foes.size() > 5) foes.resize(5);
@@ -823,20 +874,28 @@ namespace bo3z
 					Director::Web(f->GetPosition(), 40.0f, 3.0f, 95.0f);
 				}
 				Bolts(p, g, cone, 6);
-			} else if (id == "animunculi") {  // umbral burst at the impact
-				for (auto* f : Foes(aim.hit, 240.0f)) { hit(f, 4.0f); Stagger(f, 0.8f); }
-				LaunchBolt(p, g, aim.hit);
-			} else if (id == "kagrenac") {  // time stop: every zombie in sight freezes, then every blow lands at once
-				for (auto* f : Foes(p->GetPosition(), 1500.0f)) {
+			} else if (id == "animunculi") {  // doom mark: every zombie nearby hexed and doomed to explode
+				for (auto* f : Foes(aim.hit, 1300.0f)) {
+					g_hexed[f->GetFormID()] = 10.0f;
+					g_doomed[f->GetFormID()] = base * 3.0f;
 					hit(f, 0.5f);
-					Director::Web(f->GetPosition(), 40.0f, 4.0f, 100.0f, false);
-					g_frozen.push_back({ f->GetHandle(), 4.0f, base * 4.0f });
 				}
+				LaunchBolt(p, g, aim.hit);
+			} else if (id == "kagrenac") {  // mass frenzy: they turn on their own kind
+				for (auto* f : Foes(aim.hit, 1100.0f)) {
+					Director::Frenzy(f, 8.0f);
+					Stagger(f, 0.5f);
+				}
+				LaunchBolt(p, g, aim.hit);
 			} else if (id == "mammothlmg") {  // black hole: a singularity drags them in, then collapses
 				g_wells.push_back({ aim.hit, 3.0f, base, 0.0f });
 				LaunchBolt(p, g, aim.hit);
-			} else if (id == "longshot") {  // prism sentinel: a floating crystal that beams everything near it
-				g_prisms.push_back({ aim.hit + RE::NiPoint3{ 0, 0, 90.0f }, 5.0f, 0.0f, base, a_gun });
+			} else if (id == "longshot") {  // orbital strike: six stars fall one after another
+				for (int k = 0; k < 6; ++k) {
+					const float a = k * 2.1f;
+					const float r = 60.0f + 45.0f * k;
+					g_detonations.push_back({ aim.hit + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 }, base * 3.0f, 0.25f + 0.32f * k, 2, a_gun });
+				}
 			} else if (id == "aetherium") {  // auriel's wrath: huge sunburst
 				for (auto* f : Foes(aim.hit, 450.0f)) { hit(f, 2.5f); Stagger(f, 1.0f); }
 				LaunchBolt(p, g, aim.hit);
@@ -866,18 +925,22 @@ namespace bo3z
 					const RE::NiPoint3 sky = at + RE::NiPoint3{ 30.0f, 0, 1300.0f };
 					LaunchArrow(p, g, at, &sky);
 				}
-			} else if (id == "embermortar") {  // tempest volley: a fan of wind arrows, everything ahead blown away
+			} else if (id == "embermortar") {  // FUS RO DAH: the Unrelenting Force through an arrow, everything ahead hurled away
 				for (int k = -3; k <= 3; ++k) {
-					const float yaw = k * 0.09f, c = std::cos(yaw), sn = std::sin(yaw);
+					const float yaw = k * 0.11f, c = std::cos(yaw), sn = std::sin(yaw);
 					const RE::NiPoint3 d{ aim.dir.x * c - aim.dir.y * sn, aim.dir.x * sn + aim.dir.y * c, aim.dir.z };
 					LaunchArrow(p, g, aim.eye + d * 2500.0f);
 				}
 				auto* proc = p->GetActorRuntimeData().currentProcess;
-				for (auto* f : InCone(aim, 1500.0f, 32.0f)) {
-					hit(f, 2.5f);
+				for (auto* f : InCone(aim, 2400.0f, 45.0f)) {
+					hit(f, 4.0f);
 					if (proc && !f->IsDead()) {
-						proc->KnockExplosion(f, f->GetPosition() - aim.dir * 120.0f, 4.0f);  // blown off their feet
+						const float near = 1.0f - std::min(1.0f, f->GetPosition().GetDistance(aim.eye) / 2400.0f);
+						proc->KnockExplosion(f, f->GetPosition() - aim.dir * 150.0f, 8.0f + 10.0f * near);  // the closer, the farther they fly
 					}
+				}
+				for (int k = 1; k <= 4; ++k) {
+					Blast(BlastIndex("priestlarge"), aim.eye + aim.dir * (380.0f * k), 0.06f * k);
 				}
 			} else if (id == "wabbajack") {  // mass madness
 				std::uniform_real_distribution<float> roll(0, 1);
@@ -905,6 +968,47 @@ namespace bo3z
 				}
 			}
 			return -1;
+		}
+
+		void TickMarks(float a_delta)
+		{
+			for (auto it = g_hexed.begin(); it != g_hexed.end();) {
+				it = (it->second -= a_delta) <= 0 ? g_hexed.erase(it) : std::next(it);
+			}
+			std::vector<Detonation> now;
+			for (auto& d : g_detonations) {
+				if ((d.delay -= a_delta) <= 0) {
+					now.push_back(d);
+				}
+			}
+			std::erase_if(g_detonations, [](const Detonation& d) { return d.delay <= 0; });
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			for (auto& d : now) {
+				if (d.kind == 0) {         // a doomed one goes off
+					Blast(BlastIndex("dark"), d.at);
+					for (auto* f : Foes(d.at, 230.0f)) {
+						Damage(f, d.damage, false, false, true);
+					}
+				} else if (d.kind == 1) {  // the plague jumps to the two nearest
+					auto foes = Foes(d.at, 300.0f);
+					for (std::size_t i = 0; i < foes.size() && i < 2; ++i) {
+						if (!g_plagued.contains(foes[i]->GetFormID())) {
+							g_dots.push_back({ foes[i]->GetHandle(), d.damage, 3.0f });
+							g_plagued[foes[i]->GetFormID()] = d.damage;
+						}
+					}
+				} else if (d.kind == 2 && d.gun >= 0) {  // a star falls
+					const RE::NiPoint3 sky = d.at + RE::NiPoint3{ 80.0f, 40.0f, 1400.0f };
+					LaunchBolt(p, gen::kGuns[d.gun], d.at, &sky);
+					Blast(BlastIndex("shockmass"), d.at, 0.2f);
+					for (auto* f : Foes(d.at, 260.0f)) {
+						Damage(f, d.damage, false, false, true);
+						if (!f->IsDead()) {
+							Stagger(f, 0.7f);
+						}
+					}
+				}
+			}
 		}
 
 		void TickTimeAndPrisms(float a_delta)
@@ -1558,8 +1662,13 @@ namespace bo3z
 					g_charge = 0;
 				}
 				if (up && g_trigger) {
+					const bool bow = gen::kGuns[CurrentGun()].kind == gen::kKindBow;
 					if (!TryUnleash(true)) {
-						TryFire(true);
+						if (!bow) {
+							TryFire(true);
+						} else if (g_charge > 0.25f) {
+							Hud::Banner("Draw fully to loose", 0.8f);  // bows only fire their charged shot
+						}
 					}
 					g_charge = 0;
 				}
@@ -1755,6 +1864,7 @@ namespace bo3z
 			TickBlasts(a_delta);
 			TickWells(a_delta);
 			TickTimeAndPrisms(a_delta);
+			TickMarks(a_delta);
 			if (out) {
 				const auto& g = gen::kGuns[gun];
 				if (g_burstLeft > 0 && (g_burstTimer -= a_delta) <= 0) {

@@ -1,0 +1,205 @@
+"""Auto-rig an unrigged character mesh onto a Skyrim skeleton (draugr or human) and write a skinned NIF.
+
+The mesh is turned into Skyrim space (Y forward, Z up), scaled to the skeleton's height and stood on the ground.
+Joints default to the skeleton's own (relaxed) pose; per-model landmarks move the joints that differ (arms out,
+an arm reaching forward). Limb bones are re-aimed at their moved children, so the bind pose matches the mesh and
+Skyrim's animations bend the mesh from there. Weights: distance to each bone's segment, smooth falloff, top 4,
+props (a scythe, a staff) locked to a hand.
+
+    python tools/autorig.py <job name>      (jobs are defined in JOBS below)"""
+import math, pathlib, re, subprocess, sys
+import numpy as np
+from PIL import Image, ImageDraw
+
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import meshlib as M
+
+WORK = pathlib.Path('/home/claude/work')
+WRITER = '/home/claude/tools/rigwrite'
+
+def read_nodes(path):
+    """nifnodes dump -> {name: (world translation (3,), world rotation (3,3))}"""
+    lines = open(path).read().split('\n'); out = {}
+    for i, l in enumerate(lines):
+        m = re.match(r'\s*\d+ (.+?)\s+local t\(.*?\) world t\(([-\d. ]+)\)', l)
+        if m and i + 1 < len(lines):
+            r = re.findall(r'-?\d+\.\d+', lines[i + 1])
+            if len(r) == 9:
+                out[m.group(1).strip()] = (np.array([float(x) for x in m.group(2).split()]), np.array([float(x) for x in r]).reshape(3, 3))
+    return out
+
+def L(s): return s  # readability in tables
+
+TRUNK = ['NPC Pelvis [Pelv]', 'NPC Spine [Spn0]', 'NPC Spine1 [Spn1]', 'NPC Spine2 [Spn2]', 'NPC Neck [Neck]', 'NPC Head [Head]']
+FOOT = {}
+def limbs(S):
+    foot = FOOT.get(S, 'NPC L Foot [LLft ]' if S == 'L' else 'NPC R Foot [Rft ]')
+    return {'arm': [f'NPC {S} Clavicle [{S}Clv]', f'NPC {S} UpperArm [{S}Uar]', f'NPC {S} Forearm [{S}Lar]', f'NPC {S} Hand [{S}Hnd]'],
+            'leg': [f'NPC {S} Thigh [{S}Thg]', f'NPC {S} Calf [{S}Clf]', foot, f'NPC {S} Toe0 [{S}Toe]']}
+
+def rot_between(a, b):
+    a = a / np.linalg.norm(a); b = b / np.linalg.norm(b)
+    v = np.cross(a, b); c = float(np.dot(a, b))
+    if np.linalg.norm(v) < 1e-8:
+        return np.eye(3) if c > 0 else -np.eye(3)
+    vx = np.array([[0, -v[2], v[1]], [v[2], 0, -v[0]], [-v[1], v[0], 0]])
+    return np.eye(3) + vx + vx @ vx * (1 / (1 + c))
+
+def seg_dist(P, a, b):
+    ab = b - a; t = np.clip(((P - a) @ ab) / max(1e-9, ab @ ab), 0, 1)
+    return np.linalg.norm(P - (a + t[:, None] * ab), axis=1)
+
+R_ARM = ['NPC R Clavicle [RClv]', 'NPC R UpperArm [RUar]', 'NPC R Forearm [RLar]', 'NPC R Hand [RHnd]']
+L_ARM = ['NPC L Clavicle [LClv]', 'NPC L UpperArm [LUar]', 'NPC L Forearm [LLar]', 'NPC L Hand [LHnd]']
+JOBS = {
+    # Iron Reaper: draugr skeleton, bulky plate, scythe in the right hand (model's right = Skyrim +X)
+    'reaper': dict(obj=WORK / 'enemies/reaper_s2.obj', skel=WORK / 'skel/draugr_nodes.txt', top=152.0, out='reaper/reaper.nif',
+                   joints={R_ARM[0]: (6, -5, 122), R_ARM[1]: (24, -3, 117), R_ARM[2]: (30, 0, 99), R_ARM[3]: (40, 14, 88),
+                           L_ARM[0]: (-6, -5, 122), L_ARM[1]: (-24, -3, 117), L_ARM[2]: (-31, -3, 96), L_ARM[3]: (-35, 0, 77),
+                           'NPC R Thigh [RThg]': (9, -2, 80), 'NPC R Calf [RClf]': (14, -1, 45), 'NPC R Foot [Rft ]': (17, -4, 9), 'NPC R Toe0 [RToe]': (19, 8, 1),
+                           'NPC L Thigh [LThg]': (-9, -2, 80), 'NPC L Calf [LClf]': (-15, -1, 45), 'NPC L Foot [LLft ]': (-20, -4, 9), 'NPC L Toe0 [LToe]': (-22, 8, 1)},
+                   props=[((44, -200, 0), (300, 200, 300), R_ARM[3]), ((26, 12, 55), (44, 200, 130), R_ARM[3])],
+                   tex=dict(base=pathlib.Path('/home/claude/models_in/reaper/textures/Zyklus5_Zeile6_basecolor.jpeg'),
+                            normal=pathlib.Path('/home/claude/models_in/reaper/textures/Zyklus5_Zeile6_normal.jpeg'),
+                            rough=pathlib.Path('/home/claude/models_in/reaper/textures/Zyklus5_Zeile6_roughness.jpeg')),
+                   glow=None, spec=0.6, gloss=40),
+    # Voidbound Necromancer: human skeleton, skull staff in the right hand, left hand reaching forward
+    'necro': dict(obj=WORK / 'enemies/necro_s2.obj', skel=WORK / 'skel/human_nodes.txt', top=144.0, shift=(30.0, 0.0), out='necro/necro.nif',
+                  joints={R_ARM[1]: (13, -4, 108), R_ARM[2]: (23, 0, 86), R_ARM[3]: (28, 4, 96),
+                          L_ARM[1]: (-13, -4, 106), L_ARM[2]: (-22, 20, 104), L_ARM[3]: (-28, 45, 104)},
+                  props=[((20, -200, 98), (300, 200, 300), R_ARM[3])],
+                  tex=dict(base=pathlib.Path('/home/claude/work/enemies/necro/tex0.jpg'), normal=None, rough=None),
+                  glow=(0.55, 0.25, 1.0), spec=0.25, gloss=20),
+}
+
+def to_skyrim(V, top, shift=(0, 0)):
+    P = np.stack([-V[:, 0], V[:, 2], V[:, 1]], 1).astype(np.float64)
+    P *= top / np.ptp(P[:, 2])
+    P[:, 2] -= P[:, 2].min()
+    head = P[P[:, 2] > 0.86 * top]
+    torso = P[(P[:, 2] > 0.55 * top) & (P[:, 2] < 0.8 * top)]
+    P[:, 0] -= np.median(head[:, 0]) - shift[0]; P[:, 1] -= np.median(torso[:, 1]) - shift[1]
+    return P
+
+def debug_view(P, F, joints, path, size=800):
+    out = Image.new('RGB', (size * 2, size), (28, 28, 34))
+    for k, (ax, flip) in enumerate((((0, 2), 1), ((1, 2), 1))):
+        im = Image.new('RGB', (size, size), (28, 28, 34)); d = ImageDraw.Draw(im)
+        Q = P[:, ax]; sc = size / 170.0; ox = size / 2
+        to = lambda p: (ox + p[0] * sc, size - 20 - p[1] * sc)
+        depth = P[:, 1 - ax[0] if ax[0] < 2 else 0]
+        tri = P[F]; n = np.cross(tri[:, 1] - tri[:, 0], tri[:, 2] - tri[:, 0]); n /= np.linalg.norm(n, axis=1, keepdims=True) + 1e-9
+        l = np.clip(np.abs(n @ np.array([0.3, 0.5, 0.8])), 0.25, 1)
+        dcol = [i for i in range(3) if i not in ax][0]
+        for i in np.argsort(tri[:, :, dcol].mean(1) * (1 if k == 0 else -1)):
+            c = int(150 * l[i]); d.polygon([to((p[ax[0]], p[ax[1]])) for p in tri[i]], fill=(c, c, c))
+        for g in range(-80, 90, 10):
+            x, _ = to((g, 0)); d.line([(x, 0), (x, size)], fill=(60, 60, 90) if g else (120, 60, 60))
+            d.text((x + 2, 2), str(g), fill=(140, 140, 200))
+        for g in range(0, 170, 10):
+            _, y = to((0, g)); d.line([(0, y), (size, y)], fill=(60, 60, 90)); d.text((2, y - 10), str(g), fill=(140, 140, 200))
+        for name, (pos, _) in joints.items():
+            x, y = to((pos[ax[0]], pos[ax[1]]))
+            col = (255, 80, 80) if ' R ' in name else (80, 160, 255) if ' L ' in name else (255, 220, 60)
+            d.ellipse([x - 4, y - 4, x + 4, y + 4], fill=col)
+        out.paste(im, (k * size, 0))
+    out.save(path)
+
+def build(name, preview_only=False):
+    J = JOBS[name]
+    V, T, F = M.load_obj(J['obj'])
+    P = to_skyrim(V, J['top'], J.get('shift', (0, 0)))
+    skel = read_nodes(J['skel'])
+    for S in 'LR':
+        FOOT[S] = next(k for k in skel if k.startswith(f'NPC {S} Foot ['))
+    joints = {k: (v[0].copy(), v[1].copy()) for k, v in skel.items() if k.startswith('NPC ')}
+    for k, pos in J['joints'].items():
+        joints[k] = (np.array(pos, float), joints[k][1])
+    if preview_only:
+        debug_view(P, F, {k: joints[k] for k in TRUNK + sum([sum(limbs(S).values(), []) for S in 'LR'], [])}, WORK / f'prev/rig_{name}.png')
+        return
+    # bind rotations: limbs re-aimed at their moved child joints; everything else keeps the skeleton's rotation
+    bind = {}
+    chains = [TRUNK] + [c for S in 'LR' for c in limbs(S).values()]
+    for chain in chains:
+        for i, b in enumerate(chain):
+            pos, rot = joints[b]
+            if i + 1 < len(chain) and b in J['joints'] or (i + 1 < len(chain) and chain[i + 1] in J['joints']):
+                c = chain[i + 1]
+                d0 = skel[c][0] - skel[b][0]; d1 = joints[c][0] - pos
+                rot = rot_between(d0, d1) @ skel[b][1]
+            bind[b] = (pos, rot)
+    # hands follow their forearm's re-aim
+    for S in 'LR':
+        arm = limbs(S)['arm']
+        if arm[3] not in J['joints'] and arm[2] in bind:
+            bind[arm[3]] = (joints[arm[3]][0], bind[arm[2]][1] @ skel[arm[2]][1].T @ skel[arm[3]][1])
+    # segments for weighting
+    segs = []
+    for chain in chains:
+        for i, b in enumerate(chain):
+            a = bind[b][0]
+            e = bind[chain[i + 1]][0] if i + 1 < len(chain) else a + (a - bind[chain[i - 1]][0]) * 0.5
+            segs.append((b, a, e))
+    D = np.stack([seg_dist(P, a, e) for _, a, e in segs], 1)
+    names = [s[0] for s in segs]
+    # keep arms off the legs and torso-hugging robe off the arms: penalise far-side bones
+    W = 1.0 / np.maximum(D, 0.5) ** 4
+    for lo, hi, bone in J['props']:
+        inside = np.all((P >= np.array(lo)) & (P <= np.array(hi)), 1)
+        W[inside] = 0; W[inside, names.index(bone)] = 1.0
+    top = np.argsort(-W, 1)[:, :4]
+    tw = np.take_along_axis(W, top, 1); tw /= tw.sum(1, keepdims=True)
+    used = sorted(set(top[tw > 0.01].ravel()))
+    idx = {b: k for k, b in enumerate(used)}
+    N = M_normals(P, F)
+    lines = ['bones ' + str(len(used))]
+    for b in used:
+        pos, rot = bind[names[b]]
+        lines.append('bone ' + names[b] + '|' + ' '.join(f'{x:.5f}' for x in list(pos) + list(rot.ravel())))
+    lines.append(f'shape {name} ' + J['matline'])
+    for v in range(len(P)):
+        ws = [(idx[top[v, k]], tw[v, k]) for k in range(4) if tw[v, k] > 0.01]
+        s = sum(w for _, w in ws)
+        lines.append(f'v {P[v,0]:.4f} {P[v,1]:.4f} {P[v,2]:.4f} {T[v,0]:.5f} {T[v,1]:.5f} {N[v,0]:.4f} {N[v,1]:.4f} {N[v,2]:.4f} ' + ' '.join(f'{b} {w / s:.4f}' for b, w in ws))
+    lines += [f't {a} {b} {c}' for a, b, c in F]
+    return lines
+
+def M_normals(P, F):
+    N = np.zeros_like(P); fn = np.cross(P[F[:, 1]] - P[F[:, 0]], P[F[:, 2]] - P[F[:, 0]])
+    for k in range(3): np.add.at(N, F[:, k], fn)
+    return N / (np.linalg.norm(N, axis=1, keepdims=True) + 1e-9)
+
+def textures(name, J, out):
+    import assets as A
+    A.OUT = out
+    t = J['tex']
+    d = A.save_dds(A.load(t['base'], 2048), f'{name}/{name}_d.dds')
+    if t['normal'] is not None:
+        n = A.save_dds(A.normal_with_spec(t['normal'], t['rough'], 2048), f'{name}/{name}_n.dds', alpha=True)
+    else:  # no normal map: derive one from the albedo's light/dark detail
+        g = np.asarray(A.load(t['base'], 2048, 'L'), np.float32) / 255
+        gx = np.gradient(g, axis=1); gy = np.gradient(g, axis=0)
+        nm = np.dstack([np.clip(128 - gx * 900, 0, 255), np.clip(128 + gy * 900, 0, 255), np.full_like(g, 255), np.full_like(g, 60)]).astype(np.uint8)
+        n = A.save_dds(Image.fromarray(nm, 'RGBA'), f'{name}/{name}_n.dds', alpha=True)
+    line = f'diffuse={d} normal={n} spec={J["spec"]} gloss={J["gloss"]}'
+    if J['glow']:
+        a = np.asarray(A.load(t['base'], 1024, 'L'), np.float32)
+        g = np.clip((a - 150) * 4, 0, 255)  # only the brightest bits glow (eyes, runes)
+        gl = A.save_dds(Image.fromarray(np.dstack([g * J['glow'][0], g * J['glow'][1], g * J['glow'][2]]).astype(np.uint8), 'RGB'), f'{name}/{name}_g.dds')
+        line += f' glow={gl} emit={",".join(str(c) for c in J["glow"])} emitmult=2.0'
+    return line
+
+if __name__ == '__main__':
+    name = sys.argv[1]
+    if len(sys.argv) > 2 and sys.argv[2] == 'preview':
+        build(name, preview_only=True); sys.exit()
+    out = pathlib.Path(sys.argv[2] if len(sys.argv) > 2 else '/home/claude/work/out/Data')
+    J = JOBS[name]
+    J['matline'] = textures(name, J, out)
+    lines = build(name)
+    nif = out / 'Meshes' / 'UndyingNights' / J['out']; nif.parent.mkdir(parents=True, exist_ok=True)
+    job = WORK / f'enemies/{name}.rig'; job.write_text('\n'.join([f'out {nif}'] + lines) + '\n')
+    r = subprocess.run([WRITER, str(job)], capture_output=True, text=True)
+    print(r.stdout.strip()[-300:], r.stderr.strip()[-500:])
+    if r.returncode: raise SystemExit('rigwrite failed')

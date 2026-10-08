@@ -22,6 +22,11 @@ namespace bo3z
 			float           behind{ 0 };       // seconds spent too far away / unloaded
 			float           stall{ 0 };     // seconds spent not closing in
 			float           lastDist{ -1 };
+			float           ability{ 4.0f };   // Iron Reaper: next reap / Necromancer: next summon
+			float           windup{ -1.0f };   // Iron Reaper: seconds until the telegraphed sweep lands
+			bool            enraged{ false };
+			float           frenzy{ 0 };       // Mindbreaker: seconds left fighting its own kind
+			float           tear{ 0 };
 		};
 
 		Phase                   g_phase = Phase::Day;
@@ -230,7 +235,8 @@ namespace bo3z
 
 			// Round health (BO3 curve). Permanent modifier so leveled base health doesn't matter.
 			auto*       av = actor->AsActorValueOwner();
-			const float want = HealthFor(g_current);
+			const auto& kindRow = gen::kEnemies[*pick];
+			const float want = HealthFor(g_current) * kindRow.healthMult;
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
 
 			// BO3 tuning: speed tier by round, damage comes from our hit rule (weapon damage turned down),
@@ -241,6 +247,7 @@ namespace bo3z
 					speed = tier[1];
 				}
 			}
+			speed *= kindRow.speedMult;
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, speed - av->GetBaseActorValue(RE::ActorValue::kSpeedMult));
 			av->SetActorValue(RE::ActorValue::kAttackDamageMult, gen::kZombieWeaponDamageMult);
 			av->SetActorValue(RE::ActorValue::kConfidence, 4);
@@ -259,8 +266,13 @@ namespace bo3z
 				}
 				av->SetActorValue(RE::ActorValue::kAggression, 1);
 			}
-			// Armed: an ancient Nord sword, an iron sword or a dagger (bare-handed undead swing slowly).
-			if (!actor->GetEquippedObject(false)) {
+			// Armed: an ancient Nord sword, an iron sword or a dagger (bare-handed undead swing slowly); the Iron
+			// Reaper swings its scythe two-handed; necromancers fight with spells; raised skeletons keep their own.
+			if (kindRow.kind == 1) {
+				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kReaperScythe, gen::kPlugin)) {
+					RE::ActorEquipManager::GetSingleton()->EquipObject(actor, w);
+				}
+			} else if (kindRow.kind == 0 && !actor->GetEquippedObject(false)) {
 				static constexpr RE::FormID kBlades[] = { 0x02C66F, 0x012EB7, 0x01397E, 0x02C66F };
 				if (auto* w = RE::TESForm::LookupByID<RE::TESObjectWEAP>(kBlades[std::uniform_int_distribution<int>(0, 3)(g_rng)])) {
 					actor->AddObjectToContainer(w, nullptr, 1, nullptr);
@@ -268,7 +280,8 @@ namespace bo3z
 				}
 			}
 			// Close range only: bows, crossbows, staves, arrows and attack spells go; swords, axes and maces stay.
-			{
+			// (Necromancers keep their spells: they are the ranged ones.)
+			if (kindRow.kind != 2) {
 				auto ranged = [](RE::TESBoundObject& a_obj) {
 					if (a_obj.IsAmmo()) {
 						return true;
@@ -624,6 +637,7 @@ namespace bo3z
 				} else if (a->IsDead()) {
 					g_corpses.push_back(it->handle);
 					g_settle.push_back({ it->handle, 0.0f });
+					PowerUps::MaybeDrop(a->GetPosition());
 					it = g_alive.erase(it);
 				} else {
 					++it;
@@ -670,6 +684,135 @@ namespace bo3z
 			std::erase_if(g_settle, [](const Settle& c) { return c.age > 3.0f || c.tries > 5; });
 		}
 
+		// ---- night's champions: the Iron Reaper's sweep and the Necromancer's raised dead ----
+		int KindIndex(int a_kind)
+		{
+			for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
+				if (gen::kEnemies[i].kind == a_kind) {
+					return static_cast<int>(i);
+				}
+			}
+			return -1;
+		}
+
+		void TickChampions(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			static int  minionRow = KindIndex(3);
+			std::vector<RE::NiPoint3> raise;
+			int minions = 0;
+			for (auto& s : g_alive) {
+				minions += gen::kEnemies[s.enemy].kind == 3;
+			}
+			for (auto& s : g_alive) {
+				const int kind = gen::kEnemies[s.enemy].kind;
+				if (kind != 1 && kind != 2) {
+					continue;
+				}
+				auto a = s.handle.get();
+				if (!a || a->IsDead() || !a->Is3DLoaded()) {
+					continue;
+				}
+				const float dist = a->GetPosition().GetDistance(a_player->GetPosition());
+				auto*       av = a->AsActorValueOwner();
+				if (kind == 1) {
+					// enraged below a third of its health: faster, and it reaps more often
+					if (!s.enraged && av->GetActorValue(RE::ActorValue::kHealth) < av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.35f) {
+						s.enraged = true;
+						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 35.0f);
+						Forms::PlayAt(gen::Sound::hound_night, a.get());
+					}
+					if (s.windup >= 0) {
+						if ((s.windup -= a_delta) < 0) {  // the sweep lands: everything in reach is cut and thrown
+							if (dist < 300.0f && !a_player->IsDead()) {
+								auto* pav = a_player->AsActorValueOwner();
+								pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * (s.enraged ? 0.32f : 0.24f));
+								a_player->SetGraphVariableFloat("staggerMagnitude", 0.7f);
+								a_player->NotifyAnimationGraph("staggerStart");
+								Hud::Banner("REAPED", 0.8f);
+							}
+							Forms::PlayAt(gen::Sound::knife, a.get());
+							s.ability = s.enraged ? 4.0f : 6.5f;
+						}
+					} else if ((s.ability -= a_delta) <= 0 && dist < 280.0f) {
+						s.windup = 0.7f;  // telegraph: a heavy breath and a raised scythe before it falls
+						a->NotifyAnimationGraph("attackPowerStartForward");
+						Forms::PlayAt(gen::Sound::rise, a.get());
+					}
+				} else if (kind == 2) {
+					if ((s.ability -= a_delta) <= 0 && dist < 3500.0f) {
+						s.ability = 11.0f;
+						if (minions < 8 && minionRow >= 0) {
+							for (int k = 0; k < 2; ++k) {
+								const float ang = Uniform(0.0f, 2.0f * RE::NI_PI);
+								raise.push_back(a->GetPosition() + RE::NiPoint3{ std::cos(ang) * 140.0f, std::sin(ang) * 140.0f, 0.0f });
+							}
+							minions += 2;
+							Forms::PlayAt(gen::Sound::hound_night, a.get());
+						}
+					}
+				}
+			}
+			for (auto& at : raise) {
+				SpawnOne(a_player, minionRow, &at);
+			}
+		}
+
+		RE::TESFaction* UndeadFaction() { return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(gen::kUndeadFaction, gen::kPlugin); }
+
+		// Mass Frenzy: out of the undead faction, set on the nearest of its kind, and the blows are real.
+		void TickFrenzy(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			for (auto& s : g_alive) {
+				if (s.frenzy <= 0) {
+					continue;
+				}
+				auto a = s.handle.get();
+				if (!a || a->IsDead()) {
+					s.frenzy = 0;
+					continue;
+				}
+				if ((s.frenzy -= a_delta) <= 0) {  // back to the hunt
+					if (auto* fac = UndeadFaction()) {
+						a->AddToFaction(fac, 0);
+					}
+					a->StopCombat();
+					a->StartCombat(a_player);
+					continue;
+				}
+				if ((s.tear -= a_delta) > 0) {
+					continue;
+				}
+				s.tear = 0.5f;
+				RE::Actor* best = nullptr;
+				float      bd = 900.0f;
+				for (auto& o : g_alive) {
+					auto b = o.handle.get();
+					if (b && b.get() != a.get() && !b->IsDead()) {
+						if (const float d = b->GetPosition().GetDistance(a->GetPosition()); d < bd) {
+							bd = d, best = b.get();
+						}
+					}
+				}
+				if (!best) {
+					continue;
+				}
+				auto tgt = a->GetActorRuntimeData().currentCombatTarget.get();
+				if (!tgt || tgt.get() != best) {
+					a->StopCombat();
+					a->StartCombat(best);
+				}
+				if (bd < 220.0f) {  // in reach: it tears into the other one
+					auto*       bav = best->AsActorValueOwner();
+					const float hurt = bav->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.12f;
+					bav->DamageActorValue(RE::ActorValue::kHealth, hurt);
+					if (bav->GetActorValue(RE::ActorValue::kHealth) <= 0 && !best->IsDead()) {
+						best->KillImpl(a_player, hurt, true, false);
+						Points::Add(gen::kPoints_hit * 5);
+					}
+				}
+			}
+		}
+
 		void KeepThemComing(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			SettleCorpses(a_player, a_delta);
@@ -682,6 +825,9 @@ namespace bo3z
 				auto a = s.handle.get();
 				if (!a || a->IsDead()) {
 					continue;
+				}
+				if (s.frenzy > 0) {
+					continue;  // turned on its own kind (TickFrenzy)
 				}
 				const bool  boss = gen::kEnemies[s.enemy].bossEvery > 0;
 				const float dist = a->GetPosition().GetDistance(a_player->GetPosition());
@@ -703,7 +849,7 @@ namespace bo3z
 					continue;
 				}
 				// Not closing in while still out of reach: it lost track of the player, so re-target from scratch.
-				const bool closing = s.lastDist < 0 || dist < s.lastDist - 30.0f || dist < 350.0f;
+				const bool closing = s.lastDist < 0 || dist < s.lastDist - 30.0f || dist < 350.0f || (gen::kEnemies[s.enemy].kind == 2 && dist < 2600.0f);  // casters hold their range
 				s.lastDist = dist;
 				s.stall = closing ? 0 : s.stall + kStep;
 				auto target = a->GetActorRuntimeData().currentCombatTarget.get();
@@ -815,6 +961,13 @@ namespace bo3z
 		float RoundHealth() { return HealthFor(std::max(1, g_current)); }
 		bool  IsElite(RE::Actor* a_actor) { return a_actor && g_elites.contains(a_actor->GetFormID()); }
 		bool IsRoundUndead(RE::Actor* a_actor) { return a_actor && g_ours.contains(a_actor->GetFormID()); }
+		int  EnemyRow(RE::Actor* a_actor)
+		{
+			if (auto it = a_actor ? g_ours.find(a_actor->GetFormID()) : g_ours.end(); it != g_ours.end()) {
+				return static_cast<int>(it->second);
+			}
+			return -1;
+		}
 		bool NightNow() { return IsNight(); }
 
 		std::string_view HeadNodeFor(RE::Actor* a_actor)
@@ -916,6 +1069,21 @@ namespace bo3z
 			}
 		}
 
+		void Frenzy(RE::Actor* a_actor, float a_seconds)
+		{
+			for (auto& s : g_alive) {
+				if (auto a = s.handle.get(); a && a.get() == a_actor && !a->IsDead()) {
+					if (s.frenzy <= 0) {
+						if (auto* fac = UndeadFaction()) {
+							a->RemoveFromFaction(fac);
+						}
+					}
+					s.frenzy = a_seconds;
+					s.tear = 0.2f;
+				}
+			}
+		}
+
 		bool IsSpared(RE::Actor* a_actor)
 		{
 			return a_actor && std::any_of(g_protected.begin(), g_protected.end(), [&](const Protected& p) { return p.spared && p.handle.get().get() == a_actor; });
@@ -939,6 +1107,7 @@ namespace bo3z
 
 		void Tick(float a_delta)
 		{
+			PowerUps::Tick(a_delta);
 			TickFx(a_delta);
 			TickClock(a_delta);
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -1001,6 +1170,8 @@ namespace bo3z
 					}
 				}
 				KeepThemComing(player, a_delta);
+				TickChampions(player, a_delta);
+				TickFrenzy(player, a_delta);
 				TickBoss(player, a_delta);
 				TickElites(player, a_delta);
 				if ((g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < g_toSpawn) {
@@ -1009,6 +1180,147 @@ namespace bo3z
 				}
 				break;
 			}
+		}
+	}
+
+	// ---- BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale ----
+	namespace PowerUps
+	{
+		namespace
+		{
+			struct Drop
+			{
+				RE::ObjectRefHandle token, light;
+				int                 kind;
+				float               left;
+			};
+			std::vector<Drop> g_drops;
+			float             g_timers[4] = {};   // seconds left: insta-kill, double points, (kaboom), fire sale
+			int               g_dropsThisNight = 0, g_night = -1;
+			std::mt19937      g_prng{ std::random_device{}() };
+			constexpr const char* kNames[4] = { "INSTA-KILL", "DOUBLE POINTS", "KABOOM", "FIRE SALE" };
+		}
+
+		bool InstaKill() { return g_timers[0] > 0; }
+		int  PointsMult() { return g_timers[1] > 0 ? 2 : 1; }
+		bool FireSale() { return g_timers[3] > 0; }
+
+		void MaybeDrop(const RE::NiPoint3& a_at)
+		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (!player || !Director::NightNow()) {
+				return;
+			}
+			const int night = Save::Get(gen::kAV_round);
+			if (night != g_night) {
+				g_night = night, g_dropsThisNight = 0;
+			}
+			// like BO3: a few per round, never two on the ground at once
+			if (!g_drops.empty() || g_dropsThisNight >= 4 || std::uniform_real_distribution<float>(0, 1)(g_prng) > 0.035f) {
+				return;
+			}
+			const int kind = std::uniform_int_distribution<int>(0, 3)(g_prng);
+			auto*     dh = RE::TESDataHandler::GetSingleton();
+			auto*     stat = dh->LookupForm<RE::TESBoundObject>(gen::kPowerups[kind].first, gen::kPlugin);
+			auto*     ligh = dh->LookupForm<RE::TESBoundObject>(gen::kPowerups[kind].second, gen::kPlugin);
+			if (!stat) {
+				return;
+			}
+			Drop d{ {}, {}, kind, 26.0f };
+			if (auto t = player->PlaceObjectAtMe(stat, false)) {
+				t->SetPosition(a_at + RE::NiPoint3{ 0, 0, 10.0f });
+				d.token = t->GetHandle();
+			}
+			if (ligh) {
+				if (auto l = player->PlaceObjectAtMe(ligh, false)) {
+					l->SetPosition(a_at + RE::NiPoint3{ 0, 0, 50.0f });
+					d.light = l->GetHandle();
+				}
+			}
+			g_drops.push_back(d);
+			++g_dropsThisNight;
+			Forms::PlayAt(gen::Sound::powerup_spawn, player);
+			logger::info("powerup: {} dropped", kNames[kind]);
+		}
+
+		void Remove(Drop& d)
+		{
+			for (auto h : { d.token, d.light }) {
+				if (auto r = h.get()) {
+					r->Disable();
+					r->SetDelete(true);
+				}
+			}
+		}
+
+		void Grab(int a_kind, RE::PlayerCharacter* a_player)
+		{
+			Forms::Play(gen::Sound::powerup_grab);
+			Hud::Banner(kNames[a_kind], 2.5f);
+			if (a_kind == 2) {  // Kaboom: every undead on the field drops
+				int n = 0;
+				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+					if (auto a = h.get(); a && !a->IsDead() && Director::IsRoundUndead(a.get())) {
+						const int row = Director::EnemyRow(a.get());
+						if (row < 0 || gen::kEnemies[row].bossEvery == 0) {  // the wyrm shrugs it off
+							a->KillImpl(a_player, 9999.0f, true, false);
+							++n;
+						}
+					}
+				}
+				Points::Add(400);
+				logger::info("powerup: kaboom took {}", n);
+			} else {
+				g_timers[a_kind] = 30.0f;
+			}
+		}
+
+		void Tick(float a_delta)
+		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			for (auto& t : g_timers) {
+				t = std::max(0.0f, t - a_delta);
+			}
+			if (!player) {
+				return;
+			}
+			for (auto& d : g_drops) {
+				d.left -= a_delta;
+				auto t = d.token.get();
+				if (!t) {
+					d.left = -1;
+					continue;
+				}
+				// turning slowly, and blinking in its last five seconds
+				if (auto* n = t->Get3D()) {
+					const float yaw = d.left * 1.6f;
+					n->local.rotate.SetEulerAnglesXYZ(0.0f, 0.0f, yaw);
+					n->local.translate.z = std::sin(d.left * 3.0f) * 4.0f;
+					const bool hidden = d.left < 5.0f && std::fmod(d.left, 0.5f) < 0.2f;
+					if (hidden) {
+						n->GetFlags().set(RE::NiAVObject::Flag::kHidden);
+					} else {
+						n->GetFlags().reset(RE::NiAVObject::Flag::kHidden);
+					}
+					RE::NiUpdateData ud;
+					n->Update(ud);
+				}
+				RE::NiPoint3 to = t->GetPosition() - player->GetPosition();
+				to.z *= 0.4f;
+				if (to.Length() < 110.0f) {
+					Grab(d.kind, player);
+					d.left = -1;
+				}
+			}
+			for (auto& d : g_drops) {
+				if (d.left <= 0) {
+					Remove(d);
+				}
+			}
+			std::erase_if(g_drops, [](const Drop& d) { return d.left <= 0; });
+			std::scoped_lock l(Hud::Lock());
+			auto& h = Hud::Edit();
+			h.puInsta = g_timers[0], h.puDouble = g_timers[1], h.puFireSale = g_timers[3];
 		}
 	}
 }

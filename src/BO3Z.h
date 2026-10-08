@@ -66,6 +66,15 @@ namespace bo3z
 		inline constexpr int kFlagInit = 0, kFlagReserveV2 = 4, kFlagStarted = 5, kFlagMoved = 11, kPerkShift = 14, kFlagPerksV2 = 23;  // bits: init | crew 1-3 | (old perks 4-10) | moved 11 | slot 12-13 | perks 14-22 | v2 23
 	}
 
+	namespace PowerUps
+	{
+		void Tick(float a_delta);
+		void MaybeDrop(const RE::NiPoint3& a_at);
+		bool InstaKill();
+		int  PointsMult();
+		bool FireSale();
+	}
+
 	namespace Points
 	{
 		void Add(int a_points);
@@ -78,7 +87,9 @@ namespace bo3z
 		void             Tick(float a_delta);
 		void             Reset();
 		bool             IsRoundUndead(RE::Actor* a_actor);
-		bool             IsSpared(RE::Actor* a_actor);  // night truce: townsfolk and followers can't be hurt
+		int              EnemyRow(RE::Actor* a_actor);  // sheet row of one of ours, -1 otherwise
+		bool             IsSpared(RE::Actor* a_actor);
+		void             Frenzy(RE::Actor* a_actor, float a_seconds);  // Mindbreaker: turns on its own kind  // night truce: townsfolk and followers can't be hurt
 		bool             NightNow();  // night hours (the undead are out)
 		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
 		bool             IsElite(RE::Actor* a_actor);
@@ -145,7 +156,8 @@ namespace bo3z
 		{
 			bool        inGame{ false };
 			int         round{ 0 };
-			bool        nightActive{ false };  // a night (round) is being fought; otherwise round = nights survived
+			bool        nightActive{ false };
+			float       puInsta{ 0 }, puDouble{ 0 }, puFireSale{ 0 };  // power-up seconds left  // a night (round) is being fought; otherwise round = nights survived
 			int         points{ 0 };
 			bool        gunOut{ false };
 			std::string gunName;

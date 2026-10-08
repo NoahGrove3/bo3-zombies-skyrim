@@ -406,6 +406,7 @@ namespace bo3z
 			if (a_points <= 0) {
 				return;
 			}
+			a_points *= PowerUps::PointsMult();
 			Save::Set(gen::kAV_points, Get() + a_points);
 			std::scoped_lock l(Hud::Lock());
 			auto& h = Hud::Edit();

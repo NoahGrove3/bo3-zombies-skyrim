@@ -5,7 +5,7 @@ import json, struct, pathlib
 from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing, blasts
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
-T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow']}
+T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
 def z(s): return s.encode('cp1252') + b'\0'
 def sub(name, data):
@@ -202,26 +202,52 @@ ld = bytearray(tsub('ligh', 'DATA'))
 struct.pack_into('<I', ld, 4, 320); struct.pack_into('<BBBB', ld, 8, 255, 170, 70, 0)
 recs['LIGH'].append(record('LIGH', fid('LIGH', 'muzzle'), [sub('EDID', z('UN_MuzzleFlash')), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(ld)), sub('FNAM', struct.pack('<f', 1.0))]))
 
+RACES = {'draugr': 0x000D53, 'breton': 0x013741}
+# the Iron Reaper's weapon: a draugr greatsword's two-handed swings, no visible blade (the scythe is part of its body)
+ws = []
+for name, hx in T['weap_draugr_gs']['subs']:
+    b = bytes.fromhex(hx)
+    if name == 'EDID': b = z('UN_ReaperScythe')
+    elif name == 'FULL': b = z('Reaper Scythe')
+    elif name == 'MODL': b = z('UndyingNights\\reaper\\scythe_hidden.nif')
+    elif name in ('MODT', 'DESC'): continue
+    ws.append(sub(name, b))
+recs['WEAP'].append(record('WEAP', fid('WEAP', 'reaper_scythe'), ws))
+
+def tmpl_sub(t, name):
+    return [bytes.fromhex(h) for n, h in T[t]['subs'] if n == name]
+
 for c in S['creatures']['rows']:
     model = z(c['model'])
+    race = RACES[c.get('race', 'draugr')]
+    human = c.get('race', 'draugr') != 'draugr'
+    bodt = bytearray(tsub('arma_skin', 'BODT'))
+    if human:  # the whole figure is the skin: head, hair, body, hands, feet (the race's own parts stay hidden)
+        struct.pack_into('<I', bodt, 0, 0x1 | 0x2 | 0x4 | 0x8 | 0x80)
     recs['ARMA'].append(record('ARMA', fid('ARMA', c['id']), [
-        sub('EDID', z('UN_' + c['id'] + 'AA')), sub('BODT', tsub('arma_skin', 'BODT')), sub('RNAM', struct.pack('<I', 0x000D53)),
+        sub('EDID', z('UN_' + c['id'] + 'AA')), sub('BODT', bytes(bodt)), sub('RNAM', struct.pack('<I', race)),
         sub('DNAM', tsub('arma_skin', 'DNAM')), sub('MOD2', model), sub('MOD3', model)]))
     recs['ARMO'].append(record('ARMO', fid('ARMO', c['id']), [
-        sub('EDID', z('UN_Skin_' + c['id'])), sub('OBND', tsub('armo_skin', 'OBND')), sub('BODT', tsub('armo_skin', 'BODT')),
-        sub('RNAM', struct.pack('<I', 0x000D53)), sub('MODL', struct.pack('<I', fid('ARMA', c['id']))), sub('DATA', tsub('armo_skin', 'DATA')), sub('DNAM', tsub('armo_skin', 'DNAM'))]))
-    acbs = bytearray(tsub('npc_draugr', 'ACBS'))
+        sub('EDID', z('UN_Skin_' + c['id'])), sub('OBND', tsub('armo_skin', 'OBND')), sub('BODT', bytes(bodt)),
+        sub('RNAM', struct.pack('<I', race)), sub('MODL', struct.pack('<I', fid('ARMA', c['id']))), sub('DATA', tsub('armo_skin', 'DATA')), sub('DNAM', tsub('armo_skin', 'DNAM'))]))
+    src = 'npc_necro_tmpl' if human else 'npc_draugr'
+    acbs = bytearray(tsub(src, 'ACBS'))
     struct.pack_into('<H', acbs, 8, int(c['level']))   # level
     struct.pack_into('<H', acbs, 18, 0)                # no template: everything comes from this record
-    struct.pack_into('<I', acbs, 0, struct.unpack_from('<I', acbs, 0)[0] & ~0x1)  # male: DraugrRace has no female body/skeleton (female = invisible)
-    aidt = bytearray(tsub('npc_draugr', 'AIDT')); aidt[0] = 2; aidt[1] = 4   # very aggressive, foolhardy
-    recs['NPC_'].append(record('NPC_', fid('NPC_', c['id']), [
-        sub('EDID', z('UN_' + c['id'])), sub('OBND', tsub('npc_draugr', 'OBND')), sub('ACBS', bytes(acbs)),
-        sub('VTCK', tsub('npc_draugr', 'VTCK')), sub('RNAM', struct.pack('<I', 0x000D53)), sub('WNAM', struct.pack('<I', fid('ARMO', c['id']))),
-        sub('AIDT', bytes(aidt)), sub('CNAM', tsub('npc_draugr', 'CNAM')), sub('FULL', z(c['label'])), sub('DATA', b''),
-        sub('DNAM', tsub('npc_draugr', 'DNAM')), sub('ZNAM', tsub('npc_draugr', 'ZNAM')), sub('NAM5', tsub('npc_draugr', 'NAM5')),
-        sub('NAM6', struct.pack('<f', float(c['heightScale']))), sub('NAM7', tsub('npc_draugr', 'NAM7')), sub('NAM8', tsub('npc_draugr', 'NAM8')),
-        sub('QNAM', tsub('npc_draugr', 'QNAM'))]))
+    struct.pack_into('<I', acbs, 0, struct.unpack_from('<I', acbs, 0)[0] & ~0x1)  # male (DraugrRace has no female body)
+    aidt = bytearray(tsub(src, 'AIDT')); aidt[0] = 2; aidt[1] = 4   # very aggressive, foolhardy
+    subs = [sub('EDID', z('UN_' + c['id'])), sub('OBND', tsub(src, 'OBND')), sub('ACBS', bytes(acbs)),
+            sub('VTCK', tsub('npc_draugr', 'VTCK')), sub('RNAM', struct.pack('<I', race)), sub('WNAM', struct.pack('<I', fid('ARMO', c['id'])))]
+    if human:  # the necromancer keeps a Skyrim necromancer's spells (frost, conjuration) and caster combat style
+        spl = tmpl_sub(src, 'SPLO')
+        subs += [sub('SPCT', struct.pack('<I', len(spl)))] + [sub('SPLO', b) for b in spl]
+    if c.get('weapon') == 'scythe':
+        subs += [sub('COCT', struct.pack('<I', 1)), sub('CNTO', struct.pack('<Ii', fid('WEAP', 'reaper_scythe'), 1))]
+    subs += [sub('AIDT', bytes(aidt)), sub('CNAM', tsub(src, 'CNAM')), sub('FULL', z(c['label'])), sub('DATA', b''),
+             sub('DNAM', tsub(src, 'DNAM')), sub('ZNAM', tsub(src, 'ZNAM')), sub('NAM5', tsub(src, 'NAM5')),
+             sub('NAM6', struct.pack('<f', float(c['heightScale']))), sub('NAM7', tsub(src, 'NAM7')), sub('NAM8', tsub(src, 'NAM8')),
+             sub('QNAM', tsub(src, 'QNAM'))]
+    recs['NPC_'].append(record('NPC_', fid('NPC_', c['id']), subs))
 
 # the night's undead: one faction, allies to each other (no infighting), enemies of the player
 recs['FACT'].append(record('FACT', fid('FACT', 'undead'), [

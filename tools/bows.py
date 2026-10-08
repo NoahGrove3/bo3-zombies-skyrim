@@ -19,11 +19,15 @@ GRIP_X, STRING_X, STRING_Y = 1.31, -13.69, 54.8
 MID, LO1, LO2, SB1, UP1, UP2, SB2 = range(7)
 
 # id -> (source object, body colour, trim/string glow colour)
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import skymat
+# limb material per bow (Skyrim-style finishes: ebony, stalhrim-pale bone, dark iron, weathered ash)
+BODY_KIND = {'embermortar': 'wood', 'flamerepeater': 'wood_dark', 'stormcaller': 'iron', 'frostlancer': 'bone'}
 BOWS = {
-    'embermortar':   ('Bow-03', (196, 214, 210), (0.55, 1.0, 0.85)),    # wind: pale ash-white limbs, sea-green gale glow
-    'flamerepeater': ('Mesh.002', (70, 18, 10), (1.0, 0.42, 0.08)),     # fire: charred red horn, ember glow
-    'stormcaller':   ('Bow-18', (34, 38, 64), (0.45, 0.6, 1.0)),        # lightning: storm-blue steel, electric glow
-    'frostlancer':   ('Bow-20', (150, 190, 220), (0.55, 0.85, 1.0)),    # ice: glacier blue blades, frost glow
+    'embermortar':   ('Bow-03', (150, 140, 118), (0.55, 1.0, 0.85)),    # wind: pale ash-white limbs, sea-green gale glow
+    'flamerepeater': ('Mesh.002', (64, 30, 22), (1.0, 0.42, 0.08)),     # fire: charred red horn, ember glow
+    'stormcaller':   ('Bow-18', (74, 78, 96), (0.45, 0.6, 1.0)),        # lightning: storm-blue steel, electric glow
+    'frostlancer':   ('Bow-20', (186, 204, 218), (0.55, 0.85, 1.0)),    # ice: glacier blue blades, frost glow
 }
 
 def load_obj(path):
@@ -119,7 +123,8 @@ def build(bid):
     trim = (~fs) & ((off > 3.2) | (np.abs(cen[:, 2]) > 2.6))
     groups = {'string': F[fs], 'trim': F[trim], 'body': F[(~fs) & (~trim)]}
     N = normals(P, F)
-    d, n = lacquer(body_col, seed=len(bid))
+    kind = BODY_KIND[bid]
+    d, n = skymat.make(kind, body_col, seed=len(bid))
     tex = {'d': save_dds(d, f'{bid}_d.dds'), 'n': save_dds(n, f'{bid}_n.dds', True),
            'flat': save_dds(Image.new('RGBA', (32, 32), (128, 128, 255, 200)), 'flat_n.dds', True)}
     gcol = tuple(int(c * 255) for c in glow)
@@ -136,7 +141,7 @@ def build(bid):
         elif g == 'trim':
             lines.append(f'shape {bid}_trim diffuse={tex["glow_d"]} normal={tex["flat"]} glow={tex["glow_g"]} emit={ec} emitmult=2.4 spec=1.2 gloss=150')
         else:
-            lines.append(f'shape {bid}_body diffuse={tex["d"]} normal={tex["n"]} spec=0.8 gloss=90')
+            lines.append(f'shape {bid}_body diffuse={tex["d"]} normal={tex["n"]} spec={ {"wood": 0.4, "wood_dark": 0.5, "iron": 1.3, "bone": 0.6}[kind] } gloss=60')
         for v in vid:
             x, y, z = P[v]; u, w = (T[v] if len(T) > v else (0, 0))
             if g == 'string':

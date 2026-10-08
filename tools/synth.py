@@ -525,7 +525,11 @@ def u_venom():   return _boom(_lay(_bubbles(1.2, 40, 5) * 1.0, _hiss(1.2, 2000, 
 def u_fire():    return _boom(_lay(lpb(noise(int(1.4 * SR)), 1600) * env(int(1.4 * SR), 0.01, 0.3, 0.6, 0.9) * 1.6, _crackle(1.4, 0.97, 600, 5000, 12) * 1.4), 300, 3500, 1.8)
 def u_ice():     return _boom(_lay(_crackle(1.2, 0.94, 2500, 10000, 13) * 1.6, _fm(2200, 1500, 1.41, 4, 1.0, 0.4) * 0.6), 3000, 11000)
 def u_storm():   return _boom(_lay(thunder(1.6) * 1.1, zap(3600, 300, 0.5) * 1.2, _crackle(1.4, 0.94, 1500, 9000, 14) * 1.4), 800, 9000, 1.8)
-def u_wind():    return _boom(_lay(_whoosh(1.6, 4000, 150, 20) * 1.8, _hiss(1.4, 300, 3000) * 1.2), 200, 3000, 1.8)
+def u_wind():      # FUS RO DAH: three shouted syllables, then the force
+    syl = [chord(choir, ns, d, vowel=v, bright=0.9) * 1.3 for ns, d, v in ((['D2', 'A2', 'D3'], 0.22, 'u'), (['E2', 'B2', 'E3'], 0.22, 'o'), (['D2', 'A2', 'D3', 'F3'], 0.5, 'a'))]
+    voice = np.concatenate([syl[0], np.zeros(int(0.06 * SR)), syl[1], np.zeros(int(0.06 * SR)), syl[2]])
+    force = _lay(kick(1.0, 80, 24) * 1.8, _whoosh(1.6, 3000, 120, 24) * 2.0, _rumble(1.6, 36) * 1.2)
+    return hall(norm(_sat(np.concatenate([voice, force]), 1.8), 0.95), 0.45, 3.0)
 
 def _ticks(d, rate=9, seed=2):
     n = int(d * SR); out = np.zeros(n); k = 0
@@ -539,9 +543,25 @@ def e_prism():   return _energy(_lay(_fm(2637, 2637, 3.01, 2, 0.5, 0.2) * 0.6, _
 def u_time():    return _boom(_lay(_ticks(1.4, 14) * 1.2, chord(choir, ['A3', 'E4', 'A4'], 1.4, vowel='o', bright=1.2) * 0.5, _fm(196, 98, 2.0, 5, 1.4) * 0.6), 1500, 7000, 1.8)
 def u_prism():   return _boom(_lay(_fm(2093, 1046, 3.01, 4, 1.2, 0.5) * 0.6, _sparkle(1.4, 3500, 24) * 0.8, chord(choir, ['E5', 'B5'], 1.0, vowel='e', bright=1.6) * 0.4), 4000, 12000, 1.6)
 
+def e_hex():     return _energy(_lay(_fm(330, 165, 1.33, 7, 0.45) * 0.9, chord(choir, ['C3', 'F#3'], 0.4, vowel='u', bright=0.8) * 0.5, _whoosh(0.3, 800, 4000, 10)[::-1] * 0.6), _tail(0.3, 300, 2500) * 0.5, _sub(90, 35, 0.35), wet=.3, size=1.6)
+def e_star():    return _energy(_lay(_fm(1760, 2640, 2.0, 3, 0.4, 0.2) * 0.6, _sparkle(0.4, 3000, 12) * 0.7, zap(4000, 1200, 0.2) * 0.4), _tail(0.35, 4000, 11000) * 0.5, _sub(110, 50, 0.25) * 0.6, wet=.4, size=2.2)
+def e_plague():  return _energy(_lay(_bubbles(0.5, 18, 7) * 1.0, _hiss(0.4, 1800, 7000) * 0.9, _fm(260, 110, 1.5, 5, 0.35) * 0.5), _tail(0.35, 1500, 6000) * 0.4, _sub(90, 40, 0.25) * 0.6, wet=.2, size=1.0)
+def e_mind():    tt = t_(0.5); w = np.sin(2 * np.pi * np.cumsum(700 + 350 * np.sin(2 * np.pi * 11 * tt)) / SR) * np.exp(-tt / 0.2); return _energy(_lay(w * 0.8, _fm(1200, 600, 1.01, 4, 0.4) * 0.5, _sparkle(0.4, 2000, 8) * 0.5), _tail(0.3, 2000, 8000) * 0.4, _sub(100, 45, 0.25) * 0.5, wet=.45, size=2.2)
+def u_hex():     return _boom(_lay(chord(choir, ['C2', 'F#2', 'C3'], 1.4, vowel='u', bright=0.8) * 0.9, _fm(220, 55, 1.33, 9, 1.4) * 0.7), 150, 2000, 1.8)
+def u_star():    return _boom(_lay(_sweep(4000, 300, 1.2, 0.6) * 0.8, _sparkle(1.4, 3000, 30) * 0.8, thunder(1.4) * 0.6), 2500, 11000, 1.8)
+def u_plague():  return _boom(_lay(_bubbles(1.4, 50, 9) * 1.2, _hiss(1.4, 1500, 8000) * 1.1, chord(choir, ['A2', 'D#3'], 1.0, vowel='o', bright=0.7) * 0.4), 800, 7000, 1.6)
+def u_mind():    tt = t_(1.4); w = np.sin(2 * np.pi * np.cumsum(500 + 400 * np.sin(2 * np.pi * 7 * tt)) / SR) * np.exp(-tt / 0.7); return _boom(_lay(w * 0.9, chord(choir, ['E4', 'A#4', 'E5'], 1.2, vowel='e', bright=1.4) * 0.5), 1500, 9000, 1.8)
+
+def powerup_spawn():  # a shimmering bell as it drops
+    return hall(norm(_lay(_fm(1568, 1568, 2.0, 2, 0.8, 0.4) * 0.6, _fm(2349, 2349, 3.0, 1.5, 0.8, 0.35) * 0.4, _sparkle(0.8, 3000, 14) * 0.5), 0.7), 0.4, 2.0)
+def powerup_grab():   # bright rising arpeggio
+    notes = [hz(n) for n in ('C5', 'E5', 'G5', 'C6')]
+    x = np.concatenate([_tone(f, 0.12, 0.06) for f in notes] + [_tone(hz('E6'), 0.5, 0.2)])
+    return hall(norm(_lay(x, _sparkle(0.7, 3500, 14) * 0.5), 0.85), 0.4, 2.0)
+
 ENERGY = {  # weapon id -> element kit
     'sidearm': 'arcane', 'aetherium': 'holy', 'animunculi': 'shadow', 'mammothlmg': 'vortex', 'triad': 'soul',
-    'kagrenac': 'time', 'longshot': 'prism', 'centurion': 'venom', 'flamerepeater': 'fire', 'frostlancer': 'ice', 'stormcaller': 'storm', 'embermortar': 'wind'}
+    'kagrenac': 'mind', 'longshot': 'star', 'centurion': 'plague', 'animunculi': 'hex', 'flamerepeater': 'fire', 'frostlancer': 'ice', 'stormcaller': 'storm', 'embermortar': 'wind'}
 
 CASTS = {k[2:]: v for k, v in globals().items() if k.startswith('c_') and callable(v)}
 CASTS.update({wid: globals()['e_' + el] for wid, el in ENERGY.items()})        # the new kit replaces the old casts
@@ -556,7 +576,7 @@ SOUNDS = {
     'shot_pistol': shot_pistol, 'shot_smg': shot_smg, 'shot_ar': shot_ar, 'shot_lmg': shot_lmg,
     'shot_shotgun': shot_shotgun, 'shot_sniper': shot_sniper, 'shot_ray': shot_ray,
     'reload_mag': reload_mag, 'reload_shell': reload_shell, 'dry_click': dry_click,
-    'cast_light': cast_light, 'cast_rapid': cast_rapid, 'cast_scatter': cast_scatter, 'cast_heavy': cast_heavy, 'charge_up': charge_up, 'charge_ready': charge_ready, 'mana_empty': mana_empty,
+    'cast_light': cast_light, 'cast_rapid': cast_rapid, 'cast_scatter': cast_scatter, 'cast_heavy': cast_heavy, 'charge_up': charge_up, 'charge_ready': charge_ready, 'powerup_spawn': powerup_spawn, 'powerup_grab': powerup_grab, 'mana_empty': mana_empty,
     'buy': buy, 'forge_upgrade': forge_upgrade, 'hitmarker': hitmarker, 'headshot': headshot, 'drink': drink, 'knife': knife, 'rise': rise,
 }
 

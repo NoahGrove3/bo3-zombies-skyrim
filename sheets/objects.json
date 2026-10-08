@@ -229,7 +229,7 @@
         "model"
       ],
       "scale": 1.0,
-      "retired": false
+      "retired": true
     },
     {
       "id": "wall_spider",
@@ -243,7 +243,7 @@
         "model"
       ],
       "scale": 1.0,
-      "retired": false
+      "retired": true
     },
     {
       "id": "wall_drill",
@@ -257,7 +257,7 @@
         "model"
       ],
       "scale": 1.0,
-      "retired": false
+      "retired": true
     },
     {
       "id": "wall_steampump",
@@ -271,7 +271,7 @@
         "model"
       ],
       "scale": 1.0,
-      "retired": false
+      "retired": true
     },
     {
       "id": "wall_marksman",
@@ -285,7 +285,7 @@
         "model"
       ],
       "scale": 1.0,
-      "retired": false
+      "retired": true
     }
   ]
 }

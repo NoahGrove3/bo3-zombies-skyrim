@@ -14,7 +14,7 @@ def assign(S=None, write=False):
              [('WEAP', w['id']) for w in S['weapons']['rows']] + [('ALCH', p['id']) for p in S['perks']['rows']] + \
              [('SNDR', s['id']) for s in S['sounds']['rows'] if s['plugin'] == PLUGIN] + \
              list(dressing(S)[0].keys()) + \
-             [(k, c['id']) for c in S['creatures']['rows'] for k in ('ARMA', 'ARMO', 'NPC_')] + \
+             [(k, c['id']) for c in S['creatures']['rows'] for k in ('ARMA', 'ARMO', 'NPC_')] + [('WEAP', 'reaper_scythe')] + \
              [(k, 'bullet_' + p['id']) for p in S['projectiles']['rows'] for k in ('PROJ', 'MGEF', 'SPEL')] + [('LIGH', 'muzzle'), ('PROJ', 'castflame'), ('MGEF', 'wandcast'), ('FACT', 'undead')] + \
              [('ENCH', w['id']) for w in S['weapons']['rows'] if w.get('kind') == 'wand'] + \
              [(k, 'hand_' + w['id']) for w in S['weapons']['rows'] if w.get('kind') in ('tome', 'wonder') for k in ('SPEL', 'MGEF')] + \
@@ -33,6 +33,8 @@ def blasts():
     """Spell blasts: no-damage copies of Skyrim's explosions (tools/templates/expl/<name>.json)."""
     return sorted(q.stem for q in (ROOT / 'tools' / 'templates' / 'expl').glob('*.json'))
 MASTERS = ['Skyrim.esm', 'Update.esm', 'Dawnguard.esm']
+
+POWERUPS = [('instakill', 'FF3030'), ('double', 'FFD040'), ('kaboom', 'FF8A20'), ('firesale', 'B060FF')]
 
 def dressing(S):
     """Expand the dressing sheet into concrete pieces: one per (dressing row x town object it applies to)
@@ -55,4 +57,7 @@ def dressing(S):
         records[('STAT', 'show_' + w['id'])] = {'model': w['standinModel'], 'color': '', 'radius': 0}
     records[('STAT', 'show_cheese')] = {'model': S['dressing']['show']['cheeseModel'], 'color': '', 'radius': 0}
     records[('STAT', 'rise_fx')] = {'model': S['dressing']['show']['riseFxModel'], 'color': '', 'radius': 0}
+    for k, col in POWERUPS:   # BO3 power-up drops: a glowing token and its light
+        records[('STAT', 'pu_' + k)] = {'model': f'UndyingNights\\powerup\\{k}.nif', 'color': '', 'radius': 0}
+        records[('LIGH', 'pu_' + k)] = {'model': '', 'color': col, 'radius': 260}
     return records, pieces

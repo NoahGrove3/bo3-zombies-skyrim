@@ -21,12 +21,15 @@ namespace bo3z::gen
 		1.0f, 0.95f, 0.15f, 6, 5,
 		{ 1500.f, 2500.f }, { 500.f, 1100.f }, 120.f, 30 };
 	inline constexpr FormRef kIntroQuest{ "Skyrim.esm", 0x03372B, "MQ101" };
-	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; };
-	inline constexpr std::array<Enemy, 4> kEnemies{ {
-		Enemy{ "zombie", "Risen Dead", { "BO3Zombies.esp", 0x0008C3, "UN_zombie" }, false, 1, 14, false, "NPC Head [Head]", true, 0, false },
-		Enemy{ "shadow", "Gloomstalker", { "BO3Zombies.esp", 0x0008CC, "UN_shadow" }, false, 5, 1, false, "NPC Head [Head]", true, 0, true },
-		Enemy{ "death_hound", "Death Hound", { "Dawnguard.esm", 0x00C5EF, "DLC1encDeathHound" }, false, 1, 1, true, "Canine_Head", true, 0, false },
-		Enemy{ "boss", "Grimmvar, the Undying Wyrm", { "BO3Zombies.esp", 0x0008C6, "UN_boss" }, false, 10, 0, false, "NPC Head [Head]", true, 10, false },
+	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; };
+	inline constexpr std::array<Enemy, 7> kEnemies{ {
+		Enemy{ "zombie", "Risen Dead", { "BO3Zombies.esp", 0x0008C3, "UN_zombie" }, false, 1, 14, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f },
+		Enemy{ "shadow", "Gloomstalker", { "BO3Zombies.esp", 0x0008CC, "UN_shadow" }, false, 5, 1, false, "NPC Head [Head]", true, 0, true, 0, 1.0f, 1.0f },
+		Enemy{ "death_hound", "Death Hound", { "Dawnguard.esm", 0x00C5EF, "DLC1encDeathHound" }, false, 1, 1, true, "Canine_Head", true, 0, false, 0, 1.0f, 1.0f },
+		Enemy{ "boss", "Grimmvar, the Undying Wyrm", { "BO3Zombies.esp", 0x0008C6, "UN_boss" }, false, 10, 0, false, "NPC Head [Head]", true, 10, false, 0, 1.0f, 1.0f },
+		Enemy{ "reaper", "Iron Reaper", { "BO3Zombies.esp", 0x000968, "UN_reaper" }, false, 2, 5, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.85f },
+		Enemy{ "necro", "Voidbound Necromancer", { "BO3Zombies.esp", 0x00096B, "UN_necro" }, false, 3, 5, false, "NPC Head [Head]", true, 0, false, 2, 1.6f, 1.0f },
+		Enemy{ "skeleton", "Raised Skeleton", { "Skyrim.esm", 0x0EB876, "EncSkeletonNecro01Melee1H" }, false, 99, 0, false, "NPC Head [Head]", true, 0, false, 3, 0.5f, 1.1f },
 	} };
 	enum class Sound : int {
 		crossbow_fire = 0,
@@ -107,8 +110,10 @@ namespace bo3z::gen
 		unleash_embermortar = 75,
 		unleash_kagrenac = 76,
 		unleash_longshot = 77,
+		powerup_spawn = 78,
+		powerup_grab = 79,
 	};
-	inline constexpr std::array<FormRef, 78> kSounds{ {
+	inline constexpr std::array<FormRef, 80> kSounds{ {
 		FormRef{ "Dawnguard.esm", 0x008E35, "WPNCrossbowFire2D" },
 		FormRef{ "Dawnguard.esm", 0x008E3A, "WPNCrossbowReload" },
 		FormRef{ "Skyrim.esm", 0x03E7B4, "WPNBowNockSD" },
@@ -187,6 +192,8 @@ namespace bo3z::gen
 		FormRef{ "BO3Zombies.esp", 0x000963, "UN_unleash_embermortar" },
 		FormRef{ "BO3Zombies.esp", 0x000964, "UN_unleash_kagrenac" },
 		FormRef{ "BO3Zombies.esp", 0x000965, "UN_unleash_longshot" },
+		FormRef{ "BO3Zombies.esp", 0x000975, "UN_powerup_spawn" },
+		FormRef{ "BO3Zombies.esp", 0x000976, "UN_powerup_grab" },
 	} };
 	inline constexpr int kPoints_start = 500;  // new_game_after_intro
 	inline constexpr int kPoints_hit = 10;  // gun_hit_round_undead
@@ -232,7 +239,7 @@ namespace bo3z::gen
 {
 	inline constexpr std::string_view kPlugin = "BO3Zombies.esp";
 	enum class Fire : int { Semi = 0, Auto = 1, Burst = 2, Pump = 3 };
-	enum class Special : int { None = 0, Splash, Chain, Cone, Wabbajack, Poison, Soul, Slow, Lifesteal, Stagger, Pierce, Stasis };
+	enum class Special : int { None = 0, Splash, Chain, Cone, Wabbajack, Poison, Soul, Slow, Lifesteal, Stagger, Pierce, Stasis, Hex, Plague, Daze };
 	inline constexpr int kKindWand = 0, kKindTome = 1, kKindWonder = 2, kKindBow = 3;
 	inline constexpr std::uint32_t kWandCastEffect = 0x909;
 	// spell blasts: Skyrim.esm explosions cloned at runtime with no damage (tools/templates/expl)
@@ -278,25 +285,25 @@ namespace bo3z::gen
 	inline constexpr int kSpell_aura_frost = 16;
 	inline constexpr int kSpell_aura_shock = 17;
 	inline constexpr std::array<GunDef, 20> kGuns{ {
-		GunDef{ "sidearm", "Halo of the Apprentice", "pistol", Fire(0), 95.0f, 2.0f, 1, 1.5f, 0.4f, 0, 0, 230, 1, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_sidearm, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x814, 0, -1, 0, false, 0x8E6, 0, 0.0f, 0.0f, 0x000, "Arcane bolts that never run dry", 0xA35BFF, "Arcane Lance", "a lance of force through everything in the line", 0.9f, 4.0f, 0.0f, 0, 9, 10, 17, -1, 0x000, Sound::unleash_sidearm },
-		GunDef{ "centurion", "Witherroot", "pistol", Fire(0), 85.0f, 2.0f, 1, 1.4f, 0.3f, 0, 0, 210, 1, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_centurion, Sound::cast_light, Sound::mana_empty, 900, 0, 1, 0x815, 5, -1, 0, false, 0x8E9, 0, 0.0f, 30.0f, 0x000, "Venom bolts: poison keeps eating them", 0x82FF28, "Toxic Cloud", "a poison cloud bursts where it lands", 0.9f, 6.0f, 0.0f, 1, 2, 3, 16, -1, 0x000, Sound::unleash_centurion },
-		GunDef{ "triad", "Soulbinder", "pistol", Fire(2), 95.0f, 2.0f, 1, 1.6f, 0.4f, 0, 0, 360, 3, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_triad, Sound::cast_light, Sound::mana_empty, 500, 0, 1, 0x816, 6, -1, 0, false, 0x8EC, 0, 0.0f, 0.0f, 0x000, "Three soul bolts per cast; kills feed you points", 0x7DFFFF, "Soul Harvest", "homing souls rip into the five nearest", 1.0f, 6.0f, 0.0f, 3, 2, 11, 17, -1, 0x000, Sound::unleash_triad },
+		GunDef{ "sidearm", "Halo of the Apprentice", "pistol", Fire(0), 95.0f, 2.0f, 1, 1.5f, 0.4f, 0, 0, 750, 1, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_sidearm, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x814, 0, -1, 0, false, 0x8E6, 0, 0.0f, 0.0f, 0x000, "Arcane bolts that never run dry", 0xA35BFF, "Arcane Lance", "a lance of force through everything in the line", 2.0f, 4.0f, 0.0f, 0, 9, 10, 17, -1, 0x000, Sound::unleash_sidearm },
+		GunDef{ "centurion", "Plaguebringer", "pistol", Fire(0), 110.0f, 2.0f, 1, 1.4f, 0.3f, 0, 0, 750, 1, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_centurion, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x815, 13, -1, 0, false, 0x8E9, 0, 0.0f, 0.5f, 0x000, "Plague bolts: the sickness eats them and jumps to the next when they fall", 0x82FF28, "Pestilence", "a plague bursts outward, infecting every zombie near the impact", 2.0f, 11.0f, 0.0f, 1, 2, 3, 16, -1, 0x000, Sound::unleash_centurion },
+		GunDef{ "triad", "Soulbinder", "pistol", Fire(2), 95.0f, 2.0f, 1, 1.6f, 0.4f, 0, 0, 900, 3, 0, 4500.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_triad, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x816, 6, -1, 0, false, 0x8EC, 0, 0.0f, 0.0f, 0x000, "Three soul bolts per cast; kills feed you points", 0x7DFFFF, "Soul Harvest", "homing souls rip into the five nearest", 2.0f, 6.0f, 0.0f, 3, 2, 11, 17, -1, 0x000, Sound::unleash_triad },
 		GunDef{ "spider", "Ancestral Seed", "smg", Fire(0), 110.0f, 2.0f, 1, 2.5f, 0.6f, 0, 0, 230, 1, 0, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_spider, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x817, 7, -1, 0, true, 0x8EF, 0, 0.0f, 35.0f, 0x000, "Thorn bolts that root the dead in place", 0xA8FF60, "Bramble Prison", "roots burst from the ground and hold everything near the impact", 1.0f, 6.0f, 0.0f, 1, 12, 10, 16, -1, 0x000, Sound::cast_heavy },
 		GunDef{ "drill", "Crimson Heartbeat", "smg", Fire(0), 115.0f, 2.0f, 1, 2.8f, 0.7f, 0, 0, 200, 1, 0, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_drill, Sound::cast_light, Sound::mana_empty, 0, 0, 0, 0x818, 8, -1, 0, true, 0x8F2, 0, 0.0f, 0.04f, 0x000, "Bloodthirst: every hit heals you", 0xE0142E, "Blood Siphon", "drains every foe around you", 1.0f, 7.0f, 0.0f, 2, 12, 11, 15, -1, 0x000, Sound::cast_heavy },
 		GunDef{ "steampump", "Wand of the Grave", "shotgun", Fire(3), 85.0f, 1.5f, 7, 7.0f, 5.0f, 0, 0, 800, 1, 0, 1700.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_steampump, Sound::cast_light, Sound::mana_empty, 900, 0, 0, 0x819, 9, -1, 0, true, 0x8F5, 0, 0.0f, 0.35f, 0x000, "Grave burst: staggers the dead", 0xE3DCC0, "Bone Prison", "roots everything in front of you", 1.0f, 7.0f, 0.0f, 2, 9, 10, 16, -1, 0x000, Sound::cast_heavy },
 		GunDef{ "marksman", "Moonshard Wand", "ar", Fire(0), 140.0f, 2.0f, 1, 1.8f, 0.2f, 0, 0, 220, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_marksman, Sound::cast_light, Sound::mana_empty, 900, 0, 0, 0x81A, 10, -1, 0, true, 0x8F8, 0, 0.0f, 3.0f, 0x000, "Moonshard: pierces 3", 0xCFE0FF, "Lunar Lance", "a moonbeam through every foe", 1.0f, 5.0f, 0.0f, 0, 9, 10, 16, -1, 0x000, Sound::cast_heavy },
-		GunDef{ "animunculi", "Eyes of the Void", "ar", Fire(0), 140.0f, 3.0f, 1, 2.0f, 0.3f, 0, 0, 240, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_animunculi, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x81B, 10, -1, 0, false, 0x8FB, 0, 0.0f, 0.0f, 0x000, "Shadow bolts that pierce and blind", 0x8C28FF, "Umbral Burst", "the void tears open where it lands", 1.0f, 6.0f, 0.0f, 1, 2, 3, 17, -1, 0x000, Sound::unleash_animunculi },
-		GunDef{ "kagrenac", "Chronos Hourglass", "ar", Fire(0), 120.0f, 2.0f, 1, 2.2f, 0.35f, 0, 0, 240, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_kagrenac, Sound::cast_light, Sound::mana_empty, 1300, 0, 1, 0x81C, 11, -1, 0, false, 0x8FE, 0, 0.0f, 0.6f, 0x000, "Amber bolts: every hit freezes them in time for a moment", 0xFFB43C, "Time Stop", "time stops for every zombie in sight, and every blow lands at once when it starts again", 1.2f, 10.0f, 0.0f, 4, 9, 10, 17, -1, 0x000, Sound::unleash_kagrenac },
-		GunDef{ "mammothlmg", "Event Horizon", "lmg", Fire(0), 135.0f, 2.0f, 1, 3.0f, 0.5f, 0, 0, 260, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_mammothlmg, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x81D, 7, -1, 0, false, 0x901, 0, 0.0f, 25.0f, 0x000, "Gravity bolts that drag the dead toward the impact", 0x3CF0E6, "Black Hole", "a singularity pulls every zombie in, then collapses", 1.0f, 6.0f, 0.0f, 3, 2, 3, 17, -1, 0x000, Sound::unleash_mammothlmg },
-		GunDef{ "longshot", "Prismheart", "sniper", Fire(0), 150.0f, 3.0f, 1, 4.0f, 0.05f, 0, 0, 260, 1, 0, 12000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_longshot, Sound::cast_light, Sound::mana_empty, 1600, 0, 1, 0x81E, 10, -1, 0, false, 0x904, 0, 0.0f, 0.0f, 0x000, "Prism bolts pierce through every zombie in the line", 0xB4F0FF, "Prism Sentinel", "a floating crystal lands where you aim and fires beams at every zombie near it", 1.2f, 12.0f, 0.0f, 0, 9, 14, 16, -1, 0x000, Sound::unleash_longshot },
-		GunDef{ "aetherium", "Sixth Heaven", "wonder", Fire(0), 640.0f, 2.0f, 1, 1.0f, 0.5f, 0, 0, 420, 1, 0, 5000.0f, 200.0f, 400.0f, 28.0f, 14.0f, Sound::cast_aetherium, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x81F, 1, -1, 0, false, 0x907, 0, 0.0f, 0.0f, 0x000, "Holy fire: bursts on impact and burns the undead", 0xFFD873, "Auriel's Wrath", "a sunburst that scorches everything around the impact", 1.2f, 9.0f, 0.0f, 4, 9, 10, 15, 13, 0x000, Sound::unleash_aetherium },
-		GunDef{ "flamerepeater", "Cinderwing", "smg", Fire(0), 230.0f, 2.5f, 1, 2.2f, 1.0f, 0, 0, 150, 1, 0, 6000.0f, 160.0f, 115.0f, 28.0f, 14.0f, Sound::cast_flamerepeater, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x894, 1, -1, 0, false, 0x000, 3, 0.0f, 0.0f, 0x000, "Fire arrows: burst and set the dead burning", 0xFF6A14, "Meteor Arrow", "a full draw calls a meteor down where it lands", 1.6f, 6.0f, 0.0f, 0, 5, 6, 15, 1, 0x950, Sound::unleash_flamerepeater },
-		GunDef{ "frostlancer", "Rimefang", "ar", Fire(0), 220.0f, 2.5f, 1, 1.2f, 0.2f, 0, 0, 150, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_frostlancer, Sound::reload_mag, Sound::mana_empty, 1500, 0, 1, 0x895, 7, -1, 0, false, 0x000, 3, 0.0f, 40.0f, 0x000, "Ice arrows slow everything they hit", 0x8CDCFF, "Glacier Arrow", "a full draw freezes everything around the impact solid", 1.6f, 6.0f, 0.0f, 0, 7, 8, 16, 11, 0x952, Sound::unleash_frostlancer },
-		GunDef{ "stormcaller", "Stormstring", "ar", Fire(0), 210.0f, 2.5f, 1, 1.5f, 0.4f, 0, 0, 150, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_stormcaller, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x896, 2, -1, 0, false, 0x000, 3, 0.0f, 0.0f, 0x000, "Lightning arrows arc to two more", 0x7398FF, "Thunderstrike", "a full draw chains lightning through ten of them", 1.6f, 6.0f, 0.0f, 0, 13, 14, 17, 10, 0x954, Sound::unleash_stormcaller },
-		GunDef{ "embermortar", "Galecaller", "shotgun", Fire(0), 200.0f, 2.5f, 1, 1.0f, 0.5f, 0, 0, 150, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_embermortar, Sound::reload_shell, Sound::mana_empty, 0, 0, 1, 0x897, 9, -1, 0, false, 0x000, 3, 0.0f, 0.0f, 0x000, "Wind arrows knock the dead off their feet", 0x8CFFD8, "Tempest Volley", "a full draw blasts a storm wind through everything ahead", 1.6f, 6.0f, 0.0f, 0, 12, 11, 16, -1, 0x956, Sound::unleash_embermortar },
+		GunDef{ "animunculi", "Hexbinder", "ar", Fire(0), 150.0f, 3.0f, 1, 2.0f, 0.3f, 0, 0, 750, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_animunculi, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x81B, 12, -1, 0, false, 0x8FB, 0, 0.0f, 0.5f, 0x000, "Hex bolts: hexed zombies take half again as much damage", 0xC83CFF, "Doom Mark", "every zombie nearby is marked; marked zombies explode when they die and set off the ones around them", 2.0f, 12.0f, 0.0f, 1, 2, 3, 17, -1, 0x000, Sound::unleash_animunculi },
+		GunDef{ "kagrenac", "Mindbreaker", "ar", Fire(0), 125.0f, 2.0f, 1, 2.2f, 0.35f, 0, 0, 750, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_kagrenac, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x81C, 14, -1, 0, false, 0x8F8, 0, 0.0f, 0.6f, 0x000, "Mind bolts daze whatever they hit", 0xFF5AC8, "Mass Frenzy", "every zombie near the impact turns on its own kind for eight seconds", 2.0f, 14.0f, 0.0f, 3, 9, 10, 17, -1, 0x000, Sound::unleash_kagrenac },
+		GunDef{ "mammothlmg", "Event Horizon", "lmg", Fire(0), 135.0f, 2.0f, 1, 3.0f, 0.5f, 0, 0, 750, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_mammothlmg, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x81D, 7, -1, 0, false, 0x901, 0, 0.0f, 25.0f, 0x000, "Gravity bolts that drag the dead toward the impact", 0x3CF0E6, "Black Hole", "a singularity pulls every zombie in, then collapses", 2.0f, 6.0f, 0.0f, 3, 2, 3, 17, -1, 0x000, Sound::unleash_mammothlmg },
+		GunDef{ "longshot", "Starforge Spire", "sniper", Fire(0), 150.0f, 3.0f, 1, 4.0f, 0.05f, 0, 0, 750, 1, 0, 12000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_longshot, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x81E, 10, -1, 0, false, 0x904, 0, 0.0f, 3.0f, 0x000, "Star bolts pierce through three zombies in a line", 0x8CB4FF, "Orbital Strike", "six stars fall one after another around where you aim", 2.0f, 12.0f, 0.0f, 4, 9, 14, 17, -1, 0x000, Sound::unleash_longshot },
+		GunDef{ "aetherium", "Sixth Heaven", "wonder", Fire(0), 640.0f, 2.0f, 1, 1.0f, 0.5f, 0, 0, 750, 1, 0, 5000.0f, 200.0f, 400.0f, 28.0f, 14.0f, Sound::cast_aetherium, Sound::cast_light, Sound::mana_empty, 0, 0, 1, 0x81F, 1, -1, 0, false, 0x907, 0, 0.0f, 0.0f, 0x000, "Holy fire: bursts on impact and burns the undead", 0xFFD873, "Auriel's Wrath", "a sunburst that scorches everything around the impact", 2.0f, 9.0f, 0.0f, 4, 9, 10, 15, -1, 0x000, Sound::unleash_aetherium },
+		GunDef{ "flamerepeater", "Cinderwing", "smg", Fire(0), 230.0f, 2.5f, 1, 2.2f, 1.0f, 0, 0, 150, 1, 0, 6000.0f, 160.0f, 115.0f, 28.0f, 14.0f, Sound::cast_flamerepeater, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x894, 1, -1, 0, false, 0x000, 3, 0.0f, 0.0f, 0x000, "Fire arrows: burst and set the dead burning", 0xFF6A14, "Meteor Arrow", "a full draw calls a meteor down where it lands", 2.6f, 6.0f, 0.0f, 0, 5, 6, 15, -1, 0x950, Sound::unleash_flamerepeater },
+		GunDef{ "frostlancer", "Rimefang", "ar", Fire(0), 220.0f, 2.5f, 1, 1.2f, 0.2f, 0, 0, 150, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_frostlancer, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x895, 7, -1, 0, false, 0x000, 3, 0.0f, 40.0f, 0x000, "Ice arrows slow everything they hit", 0x8CDCFF, "Glacier Arrow", "a full draw freezes everything around the impact solid", 2.6f, 6.0f, 0.0f, 0, 7, 8, 16, -1, 0x952, Sound::unleash_frostlancer },
+		GunDef{ "stormcaller", "Stormstring", "ar", Fire(0), 210.0f, 2.5f, 1, 1.5f, 0.4f, 0, 0, 150, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_stormcaller, Sound::reload_mag, Sound::mana_empty, 0, 0, 1, 0x896, 2, -1, 0, false, 0x000, 3, 0.0f, 0.0f, 0x000, "Lightning arrows arc to two more", 0x7398FF, "Thunderstrike", "a full draw chains lightning through ten of them", 2.6f, 6.0f, 0.0f, 0, 13, 14, 17, -1, 0x954, Sound::unleash_stormcaller },
+		GunDef{ "embermortar", "Galecaller", "shotgun", Fire(0), 200.0f, 2.5f, 1, 1.0f, 0.5f, 0, 0, 150, 1, 0, 6000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_embermortar, Sound::reload_shell, Sound::mana_empty, 0, 0, 1, 0x897, 9, -1, 0, false, 0x000, 3, 0.0f, 0.0f, 0x000, "Wind arrows that stagger whatever they hit", 0x8CFFD8, "FUS RO DAH", "a full draw looses the Unrelenting Force: everything ahead is blown away", 2.6f, 8.0f, 0.0f, 0, 12, 11, 16, -1, 0x956, Sound::unleash_embermortar },
 		GunDef{ "wabbajack", "Grimoire of Madness", "wonder", Fire(0), 1500.0f, 1.0f, 1, 1.0f, 0.5f, 0, 0, 450, 1, 0, 4000.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_wabbajack, Sound::reload_mag, Sound::mana_empty, 0, 0, 0, 0x898, 4, 6, 1, true, 0x000, 2, 25.0f, 0.0f, 0x91E, "Madness", 0xAAFF5A, "Mass Madness", "madness takes every foe nearby", 1.5f, 8.0f, 3.0f, 3, 9, 3, 17, -1, 0x000, Sound::cast_heavy },
-		GunDef{ "thuumcannon", "Grimoire of the Thu'um", "wonder", Fire(0), 5000.0f, 1.0f, 1, 22.0f, 22.0f, 0, 0, 900, 1, 0, 1100.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_thuumcannon, Sound::reload_shell, Sound::mana_empty, 0, 0, 0, 0x899, 3, 5, 2, true, 0x000, 2, 40.0f, 0.0f, 0x920, "Unrelenting Force", 0xFFD25A, "FUS RO DAH", "the full shout: everything flies", 1.5f, 8.0f, 2.0f, 5, 9, 10, 16, 5, 0x000, Sound::cast_heavy },
-		GunDef{ "skyforgearc", "Grimoire of the Skyforge", "wonder", Fire(0), 3000.0f, 1.0f, 1, 1.5f, 0.5f, 0, 0, 600, 1, 0, 3500.0f, 420.0f, 3000.0f, 28.0f, 14.0f, Sound::cast_skyforgearc, Sound::reload_mag, Sound::mana_empty, 0, 0, 0, 0x89A, 2, 4, 2, true, 0x000, 2, 30.0f, 0.0f, 0x922, "Chain lightning", 0x78DCFF, "Storm Call", "lightning chains through twelve foes", 1.5f, 8.0f, 3.0f, 4, 13, 14, 17, 4, 0x000, Sound::cast_heavy },
+		GunDef{ "thuumcannon", "Grimoire of the Thu'um", "wonder", Fire(0), 5000.0f, 1.0f, 1, 22.0f, 22.0f, 0, 0, 900, 1, 0, 1100.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_thuumcannon, Sound::reload_shell, Sound::mana_empty, 0, 0, 0, 0x899, 3, 5, 2, true, 0x000, 2, 40.0f, 0.0f, 0x920, "Unrelenting Force", 0xFFD25A, "FUS RO DAH", "the full shout: everything flies", 1.5f, 8.0f, 2.0f, 5, 9, 10, 16, -1, 0x000, Sound::cast_heavy },
+		GunDef{ "skyforgearc", "Grimoire of the Skyforge", "wonder", Fire(0), 3000.0f, 1.0f, 1, 1.5f, 0.5f, 0, 0, 600, 1, 0, 3500.0f, 420.0f, 3000.0f, 28.0f, 14.0f, Sound::cast_skyforgearc, Sound::reload_mag, Sound::mana_empty, 0, 0, 0, 0x89A, 2, 4, 2, true, 0x000, 2, 30.0f, 0.0f, 0x922, "Chain lightning", 0x78DCFF, "Storm Call", "lightning chains through twelve foes", 1.5f, 8.0f, 3.0f, 4, 13, 14, 17, -1, 0x000, Sound::cast_heavy },
 		GunDef{ "apprentice", "Apprentice's Tome", "pistol", Fire(0), 80.0f, 2.0f, 1, 1.5f, 0.4f, 0, 0, 160, 1, 0, 4200.0f, 0.0f, 0.0f, 28.0f, 14.0f, Sound::cast_apprentice, Sound::reload_mag, Sound::mana_empty, 0, 0, 0, 0x8AA, 0, 0, 2, true, 0x000, 1, 5.0f, 0.0f, 0x924, "Firebolts", 0xFFB060, "Arcane Lance", "pierces everything in a line", 0.9f, 4.0f, 3.0f, 0, 9, 10, 17, -1, 0x000, Sound::cast_heavy },
 	} };
 	inline constexpr int kGunIdx_sidearm = 0;
@@ -376,11 +383,11 @@ namespace bo3z::gen
 		ObjectDef{ "perk_mammoth", "Mammoth Back Porter", 1, 4000, 6, 0x80E, 1.0f, true },
 		ObjectDef{ "perk_frostbite", "Frostbite Venom", 1, 4000, 7, 0x829, 1.5f, true },
 		ObjectDef{ "perk_stormcrown", "Stormcrown Cider", 1, 2000, 8, 0x82A, 0.5f, true },
-		ObjectDef{ "wall_triad", "Soulbinder", 2, 500, 2, 0x80F, 1.0f, false },
-		ObjectDef{ "wall_spider", "Prismheart", 2, 1000, 10, 0x810, 1.0f, false },
-		ObjectDef{ "wall_drill", "Chronos Hourglass", 2, 1300, 8, 0x811, 1.0f, false },
-		ObjectDef{ "wall_steampump", "Witherroot", 2, 900, 1, 0x812, 1.0f, false },
-		ObjectDef{ "wall_marksman", "Rimefang", 2, 900, 13, 0x813, 1.0f, false },
+		ObjectDef{ "wall_triad", "Soulbinder", 2, 500, 2, 0x80F, 1.0f, true },
+		ObjectDef{ "wall_spider", "Prismheart", 2, 1000, 10, 0x810, 1.0f, true },
+		ObjectDef{ "wall_drill", "Chronos Hourglass", 2, 1300, 8, 0x811, 1.0f, true },
+		ObjectDef{ "wall_steampump", "Witherroot", 2, 900, 1, 0x812, 1.0f, true },
+		ObjectDef{ "wall_marksman", "Rimefang", 2, 900, 13, 0x813, 1.0f, true },
 	} };
 	struct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; };
 	inline constexpr std::array<DressDef, 66> kDress{ {
@@ -543,6 +550,9 @@ namespace bo3z::gen
 	inline constexpr std::array<std::uint32_t, 4> kForgeColor{ { 0xECE2C8FF, 0x4FA8FFFF, 0xB266FFFF, 0xFFC83DFF } };
 	namespace elite { inline constexpr float healthMult = 6.0f; inline constexpr float maxAlive = 2.0f; inline constexpr float hitShare = 0.5f; inline constexpr float lungeEvery = 8.0f; inline constexpr float lungeMin = 350.0f; inline constexpr float lungeMax = 1100.0f; inline constexpr float shriekEvery = 12.0f; inline constexpr float shriekRange = 550.0f; inline constexpr float shriekSlow = 40.0f; inline constexpr float shriekSeconds = 3.0f; inline constexpr float shriekDamage = 0.1f; inline constexpr float drainShare = 0.08f; inline constexpr float killPoints = 400.0f; }
 	inline constexpr std::string_view kAnimFireCrossbow = "attackStart", kAnimReloadCrossbow = "reloadStart", kAnimFireStaff = "BeginCastRight", kAnimReloadStaff = "none";
+	// BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale (token STAT, light)
+	inline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 4> kPowerups{ {{ 0x96D, 0x96E }, { 0x96F, 0x970 }, { 0x971, 0x972 }, { 0x973, 0x974 }} };
+	inline constexpr std::uint32_t kReaperScythe = 0x96C;
 	inline constexpr std::uint32_t kUndeadFaction = 0x93B;
 	inline constexpr std::uint32_t kMuzzleLight = 0x8DC;
 	inline constexpr std::uint32_t kStandStat = 0x926;  // the station platform (dressing on the Coffer)

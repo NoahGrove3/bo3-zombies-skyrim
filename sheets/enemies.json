@@ -15,7 +15,10 @@
     "forceCombat",
     "bossEvery",
     "elite",
-    "verify"
+    "verify",
+    "kind",
+    "healthMult",
+    "speedMult"
   ],
   "rows": [
     {
@@ -32,7 +35,10 @@
       "forceCombat": true,
       "bossEvery": 0,
       "verify": [],
-      "elite": false
+      "elite": false,
+      "kind": "zombie",
+      "healthMult": 1.0,
+      "speedMult": 1.0
     },
     {
       "id": "shadow",
@@ -48,7 +54,10 @@
       "forceCombat": true,
       "bossEvery": 0,
       "elite": true,
-      "verify": []
+      "verify": [],
+      "kind": "zombie",
+      "healthMult": 1.0,
+      "speedMult": 1.0
     },
     {
       "id": "death_hound",
@@ -67,7 +76,10 @@
         "forceCombat"
       ],
       "bossEvery": 0,
-      "elite": false
+      "elite": false,
+      "kind": "zombie",
+      "healthMult": 1.0,
+      "speedMult": 1.0
     },
     {
       "id": "boss",
@@ -83,7 +95,67 @@
       "forceCombat": true,
       "bossEvery": 10,
       "verify": [],
-      "elite": false
+      "elite": false,
+      "kind": "zombie",
+      "healthMult": 1.0,
+      "speedMult": 1.0
+    },
+    {
+      "plugin": "BO3Zombies.esp",
+      "recordType": "NPC_",
+      "specialRound": false,
+      "headNode": "NPC Head [Head]",
+      "forceCombat": true,
+      "bossEvery": 0,
+      "elite": false,
+      "verify": [],
+      "id": "reaper",
+      "label": "Iron Reaper",
+      "localId": "auto:reaper",
+      "editorId": "UN_reaper",
+      "minRound": 2,
+      "weight": 5,
+      "kind": "reaper",
+      "healthMult": 3.0,
+      "speedMult": 0.85
+    },
+    {
+      "plugin": "BO3Zombies.esp",
+      "recordType": "NPC_",
+      "specialRound": false,
+      "headNode": "NPC Head [Head]",
+      "forceCombat": true,
+      "bossEvery": 0,
+      "elite": false,
+      "verify": [],
+      "id": "necro",
+      "label": "Voidbound Necromancer",
+      "localId": "auto:necro",
+      "editorId": "UN_necro",
+      "minRound": 3,
+      "weight": 5,
+      "kind": "necro",
+      "healthMult": 1.6,
+      "speedMult": 1.0
+    },
+    {
+      "plugin": "Skyrim.esm",
+      "recordType": "NPC_",
+      "specialRound": false,
+      "headNode": "NPC Head [Head]",
+      "forceCombat": true,
+      "bossEvery": 0,
+      "elite": false,
+      "verify": [],
+      "id": "skeleton",
+      "label": "Raised Skeleton",
+      "localId": "0x0EB876",
+      "editorId": "EncSkeletonNecro01Melee1H",
+      "minRound": 99,
+      "weight": 0,
+      "kind": "minion",
+      "healthMult": 0.5,
+      "speedMult": 1.1
     }
   ]
 }
