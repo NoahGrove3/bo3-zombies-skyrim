@@ -1,85 +1,90 @@
 {
-  "sheet": "layout",
-  "about": "Station stand (tools/stand.py): one stone platform carries everything. Back row (+y): Brew Machine, Sheogorath's Coffer, Atronach Reforge; front row (-y, where you walk up): wall-buy cases. All face -y. The stand itself is dressing on the Coffer (dressing.stand). Positions relative to the platform centre.",
-  "columns": [
-    "id",
-    "x",
-    "y",
-    "faceDeg",
-    "verify"
-  ],
-  "rows": [
-    {
-      "id": "box",
-      "x": -80,
-      "y": 70,
-      "faceDeg": 180,
-      "verify": []
-    },
-    {
-      "id": "brew",
-      "x": -235,
-      "y": 70,
-      "faceDeg": 180,
-      "verify": []
-    },
-    {
-      "id": "ammo",
-      "x": 0,
-      "y": 0,
-      "faceDeg": 180,
-      "verify": []
-    },
-    {
-      "id": "forge",
-      "x": 165,
-      "y": 70,
-      "faceDeg": 180,
-      "verify": []
-    },
-    {
-      "id": "wall_0",
-      "x": -200,
-      "y": -120,
-      "faceDeg": 180,
-      "verify": []
-    },
-    {
-      "id": "wall_1",
-      "x": 200,
-      "y": -120,
-      "faceDeg": 180,
-      "verify": []
-    },
-    {
-      "id": "wall_2",
-      "x": 0,
-      "y": -150,
-      "faceDeg": 180,
-      "verify": []
-    }
-  ],
-  "search": {
-    "distances": [
-      0,
-      300,
-      600,
-      900,
-      1200,
-      1500,
-      1800,
-      2100
-    ],
-    "angles": 12,
-    "yawsDeg": [
-      0,
-      45,
-      90,
-      135
-    ],
-    "snapTolerance": 70,
-    "maxHeightSpread": 70,
-    "sweepRadius": 2500,
-    "doorClearance": 450
+ "sheet": "layout",
+ "about": "Station stand (tools/stand.py): one stone platform carries everything. Back row (+y): Brew Machine, Sheogorath's Coffer, Atronach Reforge; front row (-y, where you walk up): wall-buy cases. All face -y. The stand itself is dressing on the Coffer (dressing.stand). Positions relative to the platform centre.",
+ "columns": [
+  "id",
+  "x",
+  "y",
+  "faceDeg",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "box",
+   "x": -80,
+   "y": 70,
+   "faceDeg": 180,
+   "verify": []
+  },
+  {
+   "id": "brew",
+   "x": -235,
+   "y": 70,
+   "faceDeg": 180,
+   "verify": []
+  },
+  {
+   "id": "ammo",
+   "x": 0,
+   "y": 0,
+   "faceDeg": 180,
+   "verify": []
+  },
+  {
+   "id": "forge",
+   "x": 165,
+   "y": 70,
+   "faceDeg": 180,
+   "verify": []
+  },
+  {
+   "id": "wall_0",
+   "x": -200,
+   "y": -120,
+   "faceDeg": 180,
+   "verify": []
+  },
+  {
+   "id": "wall_1",
+   "x": 200,
+   "y": -120,
+   "faceDeg": 180,
+   "verify": []
+  },
+  {
+   "id": "wall_2",
+   "x": 0,
+   "y": -150,
+   "faceDeg": 180,
+   "verify": []
   }
+ ],
+ "search": {
+  "distances": [
+   900,
+   1200,
+   1500,
+   1800,
+   2100,
+   2400,
+   2700,
+   3000,
+   3300,
+   3600
+  ],
+  "angles": 12,
+  "yawsDeg": [
+   0,
+   45,
+   90,
+   135
+  ],
+  "snapTolerance": 70,
+  "maxHeightSpread": 70,
+  "sweepRadius": 4800,
+  "doorClearance": 900,
+  "buildingClearance": 550,
+  "clutterClearance": 160,
+  "maxSlope": 30
+ }
 }

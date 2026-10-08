@@ -18,7 +18,7 @@ def group(label, recs):
     data = b''.join(recs)
     return b'GRUP' + struct.pack('<I', 24 + len(data)) + label.encode() + struct.pack('<iHHHH', 0, 0, 0, 44, 0) + data
 fid = lambda kind, key: SELF | IDS[(kind, key)]
-recs = {'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
+recs = {'GLOB': [], 'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
 
 for p in S['perks']['rows']:
     data = bytearray(tsub('mgef', 'DATA'))
@@ -256,12 +256,16 @@ recs['FACT'].append(record('FACT', fid('FACT', 'undead'), [
     sub('XNAM', struct.pack('<IiI', 0x00000DB1, -100, 1)),             # PlayerFaction: enemy
     sub('DATA', struct.pack('<I', 0))]))
 
+# the Undying Dirge: each city's progress (step*1000 + progress) and whether the prologue was read; saved with the game
+for key, edid in [('curse_' + c['town'], 'UN_Curse_' + c['town']) for c in S['curse']['cities']] + [('curse_intro', 'UN_CurseIntro')]:
+    recs['GLOB'].append(record('GLOB', fid('GLOB', key), [sub('EDID', z(edid)), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
+
 # (spell blasts are cloned from Skyrim's explosions at runtime: EXPL records in an ESL crashed the game at load)
 count = sum(len(v) for v in recs.values())
 hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('Undying Nights: round-based undead survival for Skyrim'))]
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
-for k in ['FACT', 'MGEF', 'ENCH', 'SPEL', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
+for k in ['GLOB', 'FACT', 'MGEF', 'ENCH', 'SPEL', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')

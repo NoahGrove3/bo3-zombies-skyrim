@@ -1,0 +1,94 @@
+{
+  "sheet": "events",
+  "about": "Event nights: at nightfall there is a `chance` that the night is one of these (picked evenly), never on a hound night. Weather is forced for the night (plugin|localId of a WTHR) and the HUD tints the screen (tint RRGGBBAA). spawnMult scales how many walk at once and how fast they climb out; speedMult their speed; pointsMult every kill's points; championWeight multiplies the Iron Reaper / Necromancer weights; dropMult the power-up drop chance; boss: Grimmvar rises 20 s in.",
+  "chance": 0.25,
+  "columns": [
+    "id",
+    "label",
+    "banner",
+    "weather",
+    "spawnMult",
+    "speedMult",
+    "pointsMult",
+    "championWeight",
+    "dropMult",
+    "boss",
+    "tint",
+    "sound",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "bloodmoon",
+      "label": "BLOOD MOON",
+      "banner": "BLOOD MOON - THE DEAD RISE FASTER",
+      "weather": "Dawnguard.esm|0x006AEC",
+      "spawnMult": 1.5,
+      "speedMult": 1.0,
+      "pointsMult": 1,
+      "championWeight": 1.0,
+      "dropMult": 1.0,
+      "boss": false,
+      "tint": "B4101A46",
+      "sound": "sound:event_bloodmoon",
+      "verify": [
+        "weather",
+        "tint"
+      ]
+    },
+    {
+      "id": "fog",
+      "label": "FOG NIGHT",
+      "banner": "FOG NIGHT - SOMETHING HUNTS IN THE MIST",
+      "weather": "Skyrim.esm|0x0C821E",
+      "spawnMult": 0.75,
+      "speedMult": 1.0,
+      "pointsMult": 1,
+      "championWeight": 1.0,
+      "dropMult": 1.0,
+      "boss": true,
+      "tint": "2A2E3460",
+      "sound": "sound:event_fog",
+      "verify": [
+        "weather",
+        "tint"
+      ]
+    },
+    {
+      "id": "ashstorm",
+      "label": "ASH STORM",
+      "banner": "ASH STORM - THE DEAD RUN, DOUBLE POINTS",
+      "weather": "Dragonborn.esm|0x032336",
+      "spawnMult": 1.0,
+      "speedMult": 1.25,
+      "pointsMult": 2,
+      "championWeight": 1.0,
+      "dropMult": 1.0,
+      "boss": false,
+      "tint": "5A341838",
+      "sound": "sound:event_ash",
+      "verify": [
+        "weather",
+        "tint"
+      ]
+    },
+    {
+      "id": "champions",
+      "label": "NIGHT OF IRON",
+      "banner": "NIGHT OF IRON - THE CHAMPIONS MARCH",
+      "weather": "Skyrim.esm|0x0C8220",
+      "spawnMult": 1.0,
+      "speedMult": 1.0,
+      "pointsMult": 1,
+      "championWeight": 4.0,
+      "dropMult": 2.0,
+      "boss": false,
+      "tint": "40506030",
+      "sound": "sound:event_champions",
+      "verify": [
+        "weather",
+        "tint"
+      ]
+    }
+  ]
+}

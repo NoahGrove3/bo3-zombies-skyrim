@@ -1,6 +1,6 @@
 {
   "sheet": "locations",
-  "about": "Every town: one station stand (Sheogorath's Coffer, the Brew Machine with all nine brews, the Atronach Reforge and wall wands) near the map marker.",
+  "about": "Every town: one station stand (Sheogorath's Coffer, the Brew Machine, the Atronach Reforge) on open, flat ground just outside the town. Walled cities are anchored on their main gate on the Tamriel (outside) side; towns on their map marker.",
   "columns": [
     "id",
     "town",
@@ -68,8 +68,8 @@
     {
       "id": "whiterun_0",
       "town": "Whiterun",
-      "worldspace": "WhiterunWorld",
-      "anchor": "0x0162CE",
+      "worldspace": "Tamriel",
+      "anchor": "0x01B1F1",
       "object": "objects:coffer",
       "slot": "layout:box",
       "verify": []
@@ -77,8 +77,8 @@
     {
       "id": "whiterun_1",
       "town": "Whiterun",
-      "worldspace": "WhiterunWorld",
-      "anchor": "0x0162CE",
+      "worldspace": "Tamriel",
+      "anchor": "0x01B1F1",
       "object": "objects:brew_machine",
       "slot": "layout:brew",
       "verify": []
@@ -86,8 +86,8 @@
     {
       "id": "whiterun_2",
       "town": "Whiterun",
-      "worldspace": "WhiterunWorld",
-      "anchor": "0x0162CE",
+      "worldspace": "Tamriel",
+      "anchor": "0x01B1F1",
       "object": "objects:ammo_cache",
       "slot": "layout:ammo",
       "verify": []
@@ -95,8 +95,8 @@
     {
       "id": "whiterun_forge",
       "town": "Whiterun",
-      "worldspace": "WhiterunWorld",
-      "anchor": "0x0162CE",
+      "worldspace": "Tamriel",
+      "anchor": "0x01B1F1",
       "object": "objects:forge",
       "slot": "layout:forge",
       "verify": []
@@ -104,8 +104,8 @@
     {
       "id": "whiterun_3",
       "town": "Whiterun",
-      "worldspace": "WhiterunWorld",
-      "anchor": "0x0162CE",
+      "worldspace": "Tamriel",
+      "anchor": "0x01B1F1",
       "object": "objects:wall_spider",
       "slot": "layout:wall_0",
       "verify": []
@@ -113,8 +113,8 @@
     {
       "id": "whiterun_4",
       "town": "Whiterun",
-      "worldspace": "WhiterunWorld",
-      "anchor": "0x0162CE",
+      "worldspace": "Tamriel",
+      "anchor": "0x01B1F1",
       "object": "objects:wall_marksman",
       "slot": "layout:wall_1",
       "verify": []
@@ -122,8 +122,8 @@
     {
       "id": "solitude_0",
       "town": "Solitude",
-      "worldspace": "SolitudeWorld",
-      "anchor": "0x04D0F4",
+      "worldspace": "Tamriel",
+      "anchor": "0x01C386",
       "object": "objects:coffer",
       "slot": "layout:box",
       "verify": []
@@ -131,8 +131,8 @@
     {
       "id": "solitude_1",
       "town": "Solitude",
-      "worldspace": "SolitudeWorld",
-      "anchor": "0x04D0F4",
+      "worldspace": "Tamriel",
+      "anchor": "0x01C386",
       "object": "objects:brew_machine",
       "slot": "layout:brew",
       "verify": []
@@ -140,8 +140,8 @@
     {
       "id": "solitude_2",
       "town": "Solitude",
-      "worldspace": "SolitudeWorld",
-      "anchor": "0x04D0F4",
+      "worldspace": "Tamriel",
+      "anchor": "0x01C386",
       "object": "objects:ammo_cache",
       "slot": "layout:ammo",
       "verify": []
@@ -149,8 +149,8 @@
     {
       "id": "solitude_forge",
       "town": "Solitude",
-      "worldspace": "SolitudeWorld",
-      "anchor": "0x04D0F4",
+      "worldspace": "Tamriel",
+      "anchor": "0x01C386",
       "object": "objects:forge",
       "slot": "layout:forge",
       "verify": []
@@ -158,8 +158,8 @@
     {
       "id": "solitude_3",
       "town": "Solitude",
-      "worldspace": "SolitudeWorld",
-      "anchor": "0x04D0F4",
+      "worldspace": "Tamriel",
+      "anchor": "0x01C386",
       "object": "objects:wall_drill",
       "slot": "layout:wall_0",
       "verify": []
@@ -167,8 +167,8 @@
     {
       "id": "windhelm_0",
       "town": "Windhelm",
-      "worldspace": "WindhelmWorld",
-      "anchor": "0x038436",
+      "worldspace": "Tamriel",
+      "anchor": "0x055FCB",
       "object": "objects:coffer",
       "slot": "layout:box",
       "verify": []
@@ -176,8 +176,8 @@
     {
       "id": "windhelm_1",
       "town": "Windhelm",
-      "worldspace": "WindhelmWorld",
-      "anchor": "0x038436",
+      "worldspace": "Tamriel",
+      "anchor": "0x055FCB",
       "object": "objects:brew_machine",
       "slot": "layout:brew",
       "verify": []
@@ -185,8 +185,8 @@
     {
       "id": "windhelm_2",
       "town": "Windhelm",
-      "worldspace": "WindhelmWorld",
-      "anchor": "0x038436",
+      "worldspace": "Tamriel",
+      "anchor": "0x055FCB",
       "object": "objects:ammo_cache",
       "slot": "layout:ammo",
       "verify": []
@@ -194,8 +194,8 @@
     {
       "id": "windhelm_forge",
       "town": "Windhelm",
-      "worldspace": "WindhelmWorld",
-      "anchor": "0x038436",
+      "worldspace": "Tamriel",
+      "anchor": "0x055FCB",
       "object": "objects:forge",
       "slot": "layout:forge",
       "verify": []
@@ -203,8 +203,8 @@
     {
       "id": "windhelm_3",
       "town": "Windhelm",
-      "worldspace": "WindhelmWorld",
-      "anchor": "0x038436",
+      "worldspace": "Tamriel",
+      "anchor": "0x055FCB",
       "object": "objects:wall_spider",
       "slot": "layout:wall_0",
       "verify": []
@@ -212,8 +212,8 @@
     {
       "id": "markarth_0",
       "town": "Markarth",
-      "worldspace": "MarkarthWorld",
-      "anchor": "0x01C38A",
+      "worldspace": "Tamriel",
+      "anchor": "0x01C389",
       "object": "objects:coffer",
       "slot": "layout:box",
       "verify": []
@@ -221,8 +221,8 @@
     {
       "id": "markarth_1",
       "town": "Markarth",
-      "worldspace": "MarkarthWorld",
-      "anchor": "0x01C38A",
+      "worldspace": "Tamriel",
+      "anchor": "0x01C389",
       "object": "objects:brew_machine",
       "slot": "layout:brew",
       "verify": []
@@ -230,8 +230,8 @@
     {
       "id": "markarth_2",
       "town": "Markarth",
-      "worldspace": "MarkarthWorld",
-      "anchor": "0x01C38A",
+      "worldspace": "Tamriel",
+      "anchor": "0x01C389",
       "object": "objects:ammo_cache",
       "slot": "layout:ammo",
       "verify": []
@@ -239,8 +239,8 @@
     {
       "id": "markarth_forge",
       "town": "Markarth",
-      "worldspace": "MarkarthWorld",
-      "anchor": "0x01C38A",
+      "worldspace": "Tamriel",
+      "anchor": "0x01C389",
       "object": "objects:forge",
       "slot": "layout:forge",
       "verify": []
@@ -248,8 +248,8 @@
     {
       "id": "markarth_3",
       "town": "Markarth",
-      "worldspace": "MarkarthWorld",
-      "anchor": "0x01C38A",
+      "worldspace": "Tamriel",
+      "anchor": "0x01C389",
       "object": "objects:wall_marksman",
       "slot": "layout:wall_0",
       "verify": []
@@ -257,8 +257,8 @@
     {
       "id": "riften_0",
       "town": "Riften",
-      "worldspace": "RiftenWorld",
-      "anchor": "0x01C390",
+      "worldspace": "Tamriel",
+      "anchor": "0x042286",
       "object": "objects:coffer",
       "slot": "layout:box",
       "verify": []
@@ -266,8 +266,8 @@
     {
       "id": "riften_1",
       "town": "Riften",
-      "worldspace": "RiftenWorld",
-      "anchor": "0x01C390",
+      "worldspace": "Tamriel",
+      "anchor": "0x042286",
       "object": "objects:brew_machine",
       "slot": "layout:brew",
       "verify": []
@@ -275,8 +275,8 @@
     {
       "id": "riften_2",
       "town": "Riften",
-      "worldspace": "RiftenWorld",
-      "anchor": "0x01C390",
+      "worldspace": "Tamriel",
+      "anchor": "0x042286",
       "object": "objects:ammo_cache",
       "slot": "layout:ammo",
       "verify": []
@@ -284,8 +284,8 @@
     {
       "id": "riften_forge",
       "town": "Riften",
-      "worldspace": "RiftenWorld",
-      "anchor": "0x01C390",
+      "worldspace": "Tamriel",
+      "anchor": "0x042286",
       "object": "objects:forge",
       "slot": "layout:forge",
       "verify": []
@@ -293,8 +293,8 @@
     {
       "id": "riften_3",
       "town": "Riften",
-      "worldspace": "RiftenWorld",
-      "anchor": "0x01C390",
+      "worldspace": "Tamriel",
+      "anchor": "0x042286",
       "object": "objects:wall_steampump",
       "slot": "layout:wall_0",
       "verify": []

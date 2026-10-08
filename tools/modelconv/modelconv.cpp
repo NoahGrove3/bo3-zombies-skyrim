@@ -44,6 +44,7 @@ int main(int argc, char** argv)
 	std::string   prn;
 	bool          keepOrigin = false;  // authored in place: don't recentre
 	bool          boxSet = false;
+	std::vector<std::pair<Vector3, Vector3>> extraBoxes;  // collidebox2: more solid boxes (walls, posts), each on its own node
 	bool          frustum = false;  // collidefrustum: walkable sloped sides (top rect + base grown by 'grow')
 	float         fx0 = 0, fy0 = 0, fx1 = 0, fy1 = 0, fzt = 0, fzb = 0, fgrow = 0;      // collidebox: explicit collision bounds (model units, after transforms)
 	Vector3       boxLo, boxHi;              // weapons: attach point (Prn extra data), e.g. WeaponStaff
@@ -65,6 +66,7 @@ int main(int argc, char** argv)
 		else if (k == "prn") ss >> prn;
 		else if (k == "origin") ss >> keepOrigin;
 		else if (k == "collidefrustum") { ss >> fx0 >> fy0 >> fx1 >> fy1 >> fzt >> fzb >> fgrow; frustum = collide = true; }
+		else if (k == "collidebox2") { Vector3 a, b; ss >> a.x >> a.y >> a.z >> b.x >> b.y >> b.z; extraBoxes.push_back({ a, b }); }
 		else if (k == "collidebox") { ss >> boxLo.x >> boxLo.y >> boxLo.z >> boxHi.x >> boxHi.y >> boxHi.z; boxSet = collide = true; }
 		else if (k == "fit") ss >> fit;
 		else if (k == "meshoffset") { std::string n; float x, y, z; ss >> n >> x >> y >> z; meshOffset[n] = { x, y, z }; }
@@ -260,6 +262,39 @@ int main(int argc, char** argv)
 		bsx->name.get() = "BSX";
 		bsx->integerData = 2;  // havok
 		nif.AssignExtraData(root, std::move(bsx));
+	}
+	for (std::size_t i = 0; i < extraBoxes.size(); ++i) {
+		constexpr float kHavok = 69.99124f;
+		const auto [lo2, hi2] = extraBoxes[i];
+		auto node = std::make_unique<NiNode>();
+		node->name.get() = "UNCollision" + std::to_string(i);
+		const uint32_t nodeId = nif.GetHeader().AddBlock(std::move(node));
+		root->childRefs.AddBlockRef(nodeId);
+		auto box = std::make_unique<bhkBoxShape>();
+		box->SetMaterial(131151687);  // SKY_HAV_MAT_STONE
+		box->radius = 0.01f;
+		box->dimensions = Vector3((hi2.x - lo2.x) / 2 / kHavok, (hi2.y - lo2.y) / 2 / kHavok, (hi2.z - lo2.z) / 2 / kHavok);
+		const uint32_t boxId = nif.GetHeader().AddBlock(std::move(box));
+		auto body = std::make_unique<bhkRigidBodyT>();
+		body->shapeRef.index = boxId;
+		body->collisionFilter.layer = 1;
+		body->collisionFilterCopy = body->collisionFilter;
+		body->broadPhaseType = 1;
+		body->collisionResponse = RESPONSE_SIMPLE_CONTACT;
+		body->translation = Vector4((lo2.x + hi2.x) / 2 / kHavok, (lo2.y + hi2.y) / 2 / kHavok, (lo2.z + hi2.z) / 2 / kHavok, 0);
+		body->rotation = QuaternionXYZW{ 0, 0, 0, 1 };
+		body->mass = 0;
+		body->motionSystem = 7;
+		body->deactivatorType = 1;
+		body->solverDeactivation = 1;
+		body->qualityType = 1;
+		const uint32_t bodyId = nif.GetHeader().AddBlock(std::move(body));
+		auto col = std::make_unique<bhkCollisionObject>();
+		col->flags = 1;
+		col->targetRef.index = nodeId;
+		col->bodyRef.index = bodyId;
+		auto* nn = nif.GetHeader().GetBlock<NiNode>(nodeId);
+		nn->collisionRef.index = nif.GetHeader().AddBlock(std::move(col));
 	}
 	if (!prn.empty()) {
 		// Without Prn the engine has nowhere to hang the weapon: it ends up at the actor's root (by the feet).

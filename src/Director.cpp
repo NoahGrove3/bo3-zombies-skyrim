@@ -57,6 +57,10 @@ namespace bo3z
 		float g_slowLeft = 0;  // Terror Shriek slow on the player  // short-lived effects (rise bursts)
 		std::mt19937            g_rng{ std::random_device{}() };
 		bool                    g_loggedBlocked = false;
+		int                     g_event = -1;     // this night's event (sheet: events), -1 none
+		bool                    g_weatherForced = false;
+		float                   g_pause = 0;      // Nuke: seconds before the dead rise again
+		float                   g_sanctuarySaid = 0;
 
 		float Uniform(float a, float b) { return std::uniform_real_distribution<float>(a, b)(g_rng); }
 
@@ -130,7 +134,16 @@ namespace bo3z
 			}
 			return n;
 		}
-		int Weight(const gen::Enemy& e) { return e.elite && EliteCount() >= static_cast<int>(gen::elite::maxAlive) ? 0 : e.weight; }
+		int Weight(const gen::Enemy& e)
+		{
+			if (e.elite && EliteCount() >= static_cast<int>(gen::elite::maxAlive)) {
+				return 0;
+			}
+			if (g_event >= 0 && (e.kind == 1 || e.kind == 2)) {  // Night of Iron: the champions march
+				return static_cast<int>(std::lround(e.weight * gen::kEvents[g_event].championWeight));
+			}
+			return e.weight;
+		}
 
 		std::optional<std::size_t> PickEnemy()
 		{
@@ -247,7 +260,7 @@ namespace bo3z
 					speed = tier[1];
 				}
 			}
-			speed *= kindRow.speedMult;
+			speed *= kindRow.speedMult * (g_event >= 0 ? gen::kEvents[g_event].speedMult : 1.0f);
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, speed - av->GetBaseActorValue(RE::ActorValue::kSpeedMult));
 			av->SetActorValue(RE::ActorValue::kAttackDamageMult, gen::kZombieWeaponDamageMult);
 			av->SetActorValue(RE::ActorValue::kConfidence, 4);
@@ -476,6 +489,7 @@ namespace bo3z
 				Forms::Play(gen::Sound::night_end);
 				Hud::Banner("The Undying Wyrm falls! +" + std::to_string(static_cast<int>(gen::boss::killPoints)), 6.0f);
 				logger::info("boss: slain");
+				Curse::OnBossSlain();
 				g_boss.handle = {};
 				PublishBoss(nullptr);
 				return;
@@ -547,6 +561,36 @@ namespace bo3z
 			std::erase_if(g_fx, [](const auto& e) { return e.second <= 0; });
 		}
 
+		// The night's sky and sound; Fog Night brings Grimmvar out of the mist.
+		void StartEvent(int a_event)
+		{
+			const auto& ev = gen::kEvents[a_event];
+			if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESWeather>(ev.weatherId, ev.weatherPlugin)) {
+				if (auto* sky = RE::Sky::GetSingleton()) {
+					sky->ForceWeather(w, true);
+					g_weatherForced = true;
+				}
+			} else {
+				logger::warn("event: weather {}|{:06X} not found", ev.weatherPlugin, ev.weatherId);
+			}
+			Forms::Play(ev.sound);
+			if (ev.boss && g_boss.spawnIn < 0 && !g_boss.handle.get()) {
+				g_boss.spawnIn = gen::kCurseHeraldDelay;
+			}
+			logger::info("event: {} night", ev.id);
+		}
+		void EndEvent()
+		{
+			if (g_weatherForced) {
+				if (auto* sky = RE::Sky::GetSingleton()) {
+					sky->ReleaseWeatherOverride();
+					sky->ResetWeather();
+				}
+				g_weatherForced = false;
+			}
+			g_event = -1;
+		}
+
 		void StartRound(int a_round)
 		{
 			g_current = a_round;
@@ -562,8 +606,20 @@ namespace bo3z
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().countdown = 0;
 			}
-			Forms::Play(g_special ? gen::Sound::hound_night : gen::Sound::night_start);
-			Hud::Banner(g_special ? "NIGHT " + std::to_string(a_round) + " - THE HOUNDS ARE LOOSE" : "NIGHT " + std::to_string(a_round) + " - SURVIVE UNTIL DAWN");
+			// Event nights: a one-in-four chance (never on a hound night).
+			g_event = -1;
+			if (!g_special && std::uniform_real_distribution<float>(0, 1)(g_rng) < gen::kEventChance) {
+				g_event = std::uniform_int_distribution<int>(0, static_cast<int>(gen::kEvents.size()) - 1)(g_rng);
+			}
+			if (g_event >= 0) {
+				StartEvent(g_event);
+				const auto& ev = gen::kEvents[g_event];
+				g_toSpawn = std::clamp(static_cast<int>(std::ceil(g_toSpawn * ev.spawnMult)), 8, R.maxAlive * 3 / 2);
+				Hud::Banner("NIGHT " + std::to_string(a_round) + " - " + std::string(ev.banner), 6.0f);
+			} else {
+				Forms::Play(g_special ? gen::Sound::hound_night : gen::Sound::night_start);
+				Hud::Banner(g_special ? "NIGHT " + std::to_string(a_round) + " - THE HOUNDS ARE LOOSE" : "NIGHT " + std::to_string(a_round) + " - SURVIVE UNTIL DAWN");
+			}
 			logger::info("round {} starts (lasts the night): up to {} undead at once, {:.0f} Skyrim health each{}", a_round, g_toSpawn, HealthFor(a_round), g_special ? " (hound night)" : "");
 		}
 
@@ -626,6 +682,8 @@ namespace bo3z
 			}
 			g_phase = Phase::Day;
 			g_toSpawn = 0;
+			g_pause = 0;
+			EndEvent();
 		}
 
 		void Prune()
@@ -638,6 +696,7 @@ namespace bo3z
 					g_corpses.push_back(it->handle);
 					g_settle.push_back({ it->handle, 0.0f });
 					PowerUps::MaybeDrop(a->GetPosition());
+					Curse::OnUndeadDeath(a.get());
 					it = g_alive.erase(it);
 				} else {
 					++it;
@@ -941,6 +1000,9 @@ namespace bo3z
 			g_boss = {};
 			g_elites.clear();
 			g_slowLeft = 0;
+			g_pause = 0;
+			EndEvent();
+			Curse::Reset();
 			std::scoped_lock l(Hud::Lock());
 			Hud::Edit().bossName.clear();
 		}
@@ -969,6 +1031,48 @@ namespace bo3z
 			return -1;
 		}
 		bool NightNow() { return IsNight(); }
+		int   EventNow() { return g_phase == Phase::Fighting ? g_event : -1; }
+		int   EventPointsMult() { return g_phase == Phase::Fighting && g_event >= 0 ? gen::kEvents[g_event].pointsMult : 1; }
+		float EventDropMult() { return g_phase == Phase::Fighting && g_event >= 0 ? gen::kEvents[g_event].dropMult : 1.0f; }
+		void  Pause(float a_seconds) { g_pause = std::max(g_pause, a_seconds); }
+		float Paused() { return g_pause; }
+		bool  Fighting() { return g_phase == Phase::Fighting; }
+		bool  BossAlive() { auto b = g_boss.handle.get(); return (b && !b->IsDead()) || g_boss.spawnIn > 0; }
+		void  CallHerald()
+		{
+			if (g_phase != Phase::Fighting || BossAlive()) {
+				return;
+			}
+			const int fog = gen::kEvent_fog;
+			if (g_event != fog) {
+				EndEvent();
+				g_event = fog;
+				StartEvent(fog);
+			}
+			g_boss.spawnIn = gen::kCurseHeraldDelay;
+			Hud::Banner("THE FOG ROLLS IN - THE HERALD OF THE DIRGE IS COMING", 6.0f);
+		}
+		void CrumbleNear(const RE::NiPoint3& a_at, float a_radius)
+		{
+			int  n = 0;
+			auto boss = g_boss.handle.get();
+			for (auto& sp : g_alive) {
+				auto a = sp.handle.get();
+				if (a && !a->IsDead() && a != boss && a->GetPosition().GetDistance(a_at) < a_radius) {
+					if (auto* fx = Forms::Ours(gen::kRiseFx)) {
+						if (auto puff = a->PlaceObjectAtMe(fx, false)) {
+							g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
+						}
+					}
+					Vanish(a.get());
+					++n;
+				}
+			}
+			std::erase_if(g_alive, [](const Spawned& sp) { auto a = sp.handle.get(); return !a || a->IsDisabled(); });
+			if (n) {
+				logger::info("curse: {} undead crumbled in a freed city", n);
+			}
+		}
 
 		std::string_view HeadNodeFor(RE::Actor* a_actor)
 		{
@@ -1135,7 +1239,11 @@ namespace bo3z
 				auto& h = Hud::Edit();
 				h.round = g_phase == Phase::Fighting ? g_current : Save::Get(gen::kAV_round);
 				h.nightActive = g_phase == Phase::Fighting;
+				h.nightEvent = g_phase == Phase::Fighting ? g_event : -1;
+				h.nukeLeft = g_pause;
 			}
+			g_pause = std::max(0.0f, g_pause - a_delta);
+			Curse::Tick(a_delta);
 			if (!Allowed(player)) {
 				return;
 			}
@@ -1174,9 +1282,21 @@ namespace bo3z
 				TickFrenzy(player, a_delta);
 				TickBoss(player, a_delta);
 				TickElites(player, a_delta);
-				if ((g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < g_toSpawn) {
-					SpawnOne(player);
-					g_spawnTimer = SpawnDelay(g_current);
+				if (Curse::SafeHere(player)) {
+					// a freed city: the dead cannot enter (any that followed you in fall where they stand)
+					if ((g_sanctuarySaid -= a_delta) <= 0 && !g_alive.empty()) {
+						CrumbleNear(player->GetPosition(), 1.0e9f);
+						g_sanctuarySaid = 1.0f;
+					}
+					break;
+				}
+				{
+					const float boost = Curse::SpawnBoost() * (g_event >= 0 ? gen::kEvents[g_event].spawnMult : 1.0f);
+					const int   want = std::min(static_cast<int>(g_toSpawn * Curse::SpawnBoost()), R.maxAlive * 3 / 2);
+					if (g_pause <= 0 && (g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < want) {
+						SpawnOne(player);
+						g_spawnTimer = SpawnDelay(g_current) / std::max(0.25f, boost);
+					}
 				}
 				break;
 			}
@@ -1198,11 +1318,11 @@ namespace bo3z
 			float             g_timers[4] = {};   // seconds left: insta-kill, double points, (kaboom), fire sale
 			int               g_dropsThisNight = 0, g_night = -1;
 			std::mt19937      g_prng{ std::random_device{}() };
-			constexpr const char* kNames[4] = { "INSTA-KILL", "DOUBLE POINTS", "KABOOM", "FIRE SALE" };
+			constexpr const char* kNames[4] = { "INSTA-KILL", "DOUBLE POINTS", "NUKE", "FIRE SALE" };
 		}
 
 		bool InstaKill() { return g_timers[0] > 0; }
-		int  PointsMult() { return g_timers[1] > 0 ? 2 : 1; }
+		int  PointsMult() { return (g_timers[1] > 0 ? 2 : 1) * Director::EventPointsMult(); }
 		bool FireSale() { return g_timers[3] > 0; }
 
 		void MaybeDrop(const RE::NiPoint3& a_at)
@@ -1216,7 +1336,7 @@ namespace bo3z
 				g_night = night, g_dropsThisNight = 0;
 			}
 			// like BO3: a few per round, never two on the ground at once
-			if (!g_drops.empty() || g_dropsThisNight >= 4 || std::uniform_real_distribution<float>(0, 1)(g_prng) > 0.035f) {
+			if (!g_drops.empty() || g_dropsThisNight >= 4 || std::uniform_real_distribution<float>(0, 1)(g_prng) > 0.035f * Director::EventDropMult()) {
 				return;
 			}
 			const int kind = std::uniform_int_distribution<int>(0, 3)(g_prng);
@@ -1257,7 +1377,7 @@ namespace bo3z
 		{
 			Forms::Play(gen::Sound::powerup_grab);
 			Hud::Banner(kNames[a_kind], 2.5f);
-			if (a_kind == 2) {  // Kaboom: every undead on the field drops
+			if (a_kind == 2) {  // Nuke: every undead on the field drops, and none rise for 20 seconds
 				int n = 0;
 				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 					if (auto a = h.get(); a && !a->IsDead() && Director::IsRoundUndead(a.get())) {
@@ -1269,7 +1389,13 @@ namespace bo3z
 					}
 				}
 				Points::Add(400);
-				logger::info("powerup: kaboom took {}", n);
+				Director::Pause(20.0f);
+				Forms::Play(gen::Sound::nuke);
+				{
+					std::scoped_lock l(Hud::Lock());
+					Hud::Edit().nukeFlash = 1.0f;
+				}
+				logger::info("powerup: nuke took {}, 20 s before they rise again", n);
 			} else {
 				g_timers[a_kind] = 30.0f;
 			}

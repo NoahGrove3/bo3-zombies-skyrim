@@ -11,6 +11,7 @@
 #include <map>
 #include <array>
 #include <atomic>
+#include <bit>
 #include <chrono>
 #include <cfloat>
 #include <cmath>

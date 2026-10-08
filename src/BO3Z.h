@@ -97,6 +97,28 @@ namespace bo3z
 		void             LogState();
 		void             Web(const RE::NiPoint3& a_at, float a_radius, float a_seconds, float a_amount = 60.0f, bool a_frostFx = false);   // Widow's Wine / wand slows
 		void             Shock(const RE::NiPoint3& a_at, float a_radius, float a_bo3Damage);  // Electric Cherry
+		// event nights (sheet: events) and the nuke
+		int              EventNow();          // -1 none, else gen::kEvents index (this night)
+		int              EventPointsMult();   // Ash Storm: 2
+		float            EventDropMult();
+		void             Pause(float a_seconds);  // Nuke: no undead rise for a while
+		float            Paused();
+		bool             Fighting();          // a night is being fought
+		bool             BossAlive();
+		void             CallHerald();        // the Herald quest: fog rolls in and Grimmvar rises
+		void             CrumbleNear(const RE::NiPoint3& a_at, float a_radius);  // a freed city: its undead fall
+	}
+
+	// The Undying Dirge (sheet: curse): four night quests per city; a freed city is a sanctuary.
+	namespace Curse
+	{
+		void  Tick(float a_delta);
+		void  Reset();
+		void  OnUndeadDeath(RE::Actor* a_actor);
+		void  OnBossSlain();
+		bool  SafeHere(RE::PlayerCharacter* a_player);  // in a freed city: no undead rise here
+		float SpawnBoost();                              // holding a shrine: the night pushes harder
+		int   ZoneTown();                                // city the player is in (-1)
 	}
 
 	namespace Intro
@@ -129,6 +151,7 @@ namespace bo3z
 		void OnActivate(RE::TESObjectREFR* a_ref);
 		bool OnButton(const RE::ButtonEvent* a_event);  // brew machine menu keys (true = used)
 		std::string BoxTown();
+		bool        StandFrame(int a_town, RE::NiPoint3& a_center, float& a_yaw, RE::TESWorldSpace*& a_world);  // true: the station is placed
 	}
 
 	namespace Perks
@@ -191,10 +214,20 @@ namespace bo3z
 			float       bossHp{ 0 };
 			bool        bossEnraged{ false };
 			int         perkSel{ 0 };
+			int         nightEvent{ -1 };   // gen::kEvents index while it runs
+			std::string questCity, questTitle, questGoal;  // the city's current curse quest (empty = none)
+			float       questFrac{ 0 };
+			int         questStep{ 0 };
+			std::string sanctuary;         // in a freed city at night: its name
+			std::string loreTitle, loreText;
+			float       loreTime{ 0 }, loreTotal{ 0 };
+			float       wardFrac{ 0 };     // kindling a ward-fire
+			float       nukeLeft{ 0 }, nukeFlash{ 0 };
 		};
 		State&      Edit();
 		std::mutex& Lock();
 		void        Banner(std::string a_text, float a_seconds = 4.0f);
+		void        Lore(std::string a_title, std::string a_text, float a_seconds = 14.0f);  // a scroll of the Dirge
 		void        Install();
 	}
 

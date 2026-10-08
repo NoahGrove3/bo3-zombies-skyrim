@@ -137,6 +137,7 @@ o.append(f'\tinline constexpr std::array<float, {len(se["distances"])}> kPlanDis
 o.append(f'\tinline constexpr std::array<float, {len(se["yawsDeg"])}> kPlanYaw{{ {{ {", ".join(F(x) for x in se["yawsDeg"])} }} }};')
 o.append(f'\tinline constexpr int kPlanAngles = {se["angles"]};')
 o.append(f'\tinline constexpr float kPlanSnap = {F(se["snapTolerance"])}, kPlanHeight = {F(se["maxHeightSpread"])}, kPlanSweep = {F(se["sweepRadius"])}, kPlanDoor = {F(se["doorClearance"])};')
+o.append(f'\tinline constexpr float kPlanBuilding = {F(se["buildingClearance"])}, kPlanClutter = {F(se["clutterClearance"])}, kPlanFlat = {F(se["maxSlope"])};')
 o.append('\tstruct LocationDef { int town; std::uint32_t anchor; int object; int slot; };')
 o.append(f'\tinline constexpr std::array<LocationDef, {len(L)}> kLocations{{ {{')
 for l in L: o.append(f'\t\tLocationDef{{ {towns.index(l["town"])}, 0x{int(l["anchor"],16):06X}, {oid.index(l["object"].split(":")[1])}, {slots.index(l["slot"].split(":")[1])} }},')
@@ -171,6 +172,35 @@ o.append(f'\tinline constexpr float kRegenDelay = {F(S["rounds"]["rows"][0]["reg
 o.append(f'\tinline constexpr float kSpawnMultiplier = {F(R0["spawnMultiplier"])}, kHitDamageFraction = {F(R0["hitDamageFraction"])}, kZombieWeaponDamageMult = {F(R0["weaponDamageMult"])};')
 o.append(f'\tinline constexpr bool kIgnoreNpcs = {str(R0["ignoreNpcs"]).lower()};')
 o.append(f'\tinline constexpr std::array<std::array<float, 2>, {len(R0["speedTiers"])}> kSpeedTiers{{ {{ ' + ', '.join('{ %s, %s }' % (F(a), F(b)) for a, b in R0["speedTiers"]) + ' } };')
+# event nights (sheet: events)
+EV = S['events']
+o.append('\tstruct EventDef { std::string_view id, label, banner, weatherPlugin; std::uint32_t weatherId; float spawnMult, speedMult; int pointsMult; float championWeight, dropMult; bool boss; std::uint32_t tint; Sound sound; };')
+o.append(f'\tinline constexpr float kEventChance = {F(EV["chance"])};')
+o.append(f'\tinline constexpr std::array<EventDef, {len(EV["rows"])}> kEvents{{ {{')
+for e in EV['rows']:
+    wp, wid = e['weather'].split('|')
+    o.append(f'\t\tEventDef{{ {cs(e["id"])}, {cs(e["label"])}, {cs(e["banner"])}, {cs(wp)}, 0x{int(wid, 16):06X}, {F(e["spawnMult"])}, {F(e["speedMult"])}, {e["pointsMult"]}, {F(e["championWeight"])}, {F(e["dropMult"])}, {str(e["boss"]).lower()}, 0x{e["tint"]}, Sound::{e["sound"].split(":")[1]} }},')
+o.append('\t} };')
+o.append('\tenum EventId : int { ' + ', '.join(f'kEvent_{e["id"]} = {i}' for i, e in enumerate(EV['rows'])) + ' };')
+# the Undying Dirge (sheet: curse): per town in kTowns order
+CU = S['curse']
+cityOf = {c['town']: c for c in CU['cities']}
+assert all(t in cityOf for t in towns), 'curse.cities must list every town'
+o.append('\tstruct CurseCity { std::string_view landmark; std::uint32_t location; std::uint32_t global; };')
+o.append(f'\tinline constexpr std::array<CurseCity, {len(towns)}> kCurseCities{{ {{')
+for t in towns:
+    c = cityOf[t]
+    o.append(f'\t\tCurseCity{{ {cs(c["landmark"])}, 0x{int(c["location"], 16):06X}, 0x{IDS[("GLOB", "curse_" + t)]:03X} }},')
+o.append('\t} };')
+o.append('\tstruct CurseStep { std::string_view id, title, goal, text; int target; };')
+o.append(f'\tinline constexpr std::array<CurseStep, {len(CU["rows"])}> kCurseSteps{{ {{')
+for r in CU['rows']:
+    o.append(f'\t\tCurseStep{{ {cs(r["id"])}, {cs(r["title"])}, {cs(r["goal"])}, {cs(r["text"])}, {r["target"]} }},')
+o.append('\t} };')
+o.append(f'\tinline constexpr std::uint32_t kCurseIntroGlobal = 0x{IDS[("GLOB", "curse_intro")]:03X};')
+o.append(f'\tinline constexpr std::string_view kCursePrologueTitle = {cs(CU["prologueTitle"])}, kCursePrologue = {cs(CU["prologue"])}, kCurseLiftedBanner = {cs(CU["liftedBanner"])}, kCurseLiftedText = {cs(CU["liftedText"])}, kCurseFreedAll = {cs(CU["freedAll"])};')
+o.append(f'\tinline constexpr float kCurseZone = {F(CU["zoneRadius"])}, kCurseHoldRadius = {F(CU["holdRadius"])}, kCurseWardRadius = {F(CU["wardRadius"])}, kCurseWardSeconds = {F(CU["wardSeconds"])}, kCurseWardDistance = {F(CU["wardDistance"])}, kCurseHeraldDelay = {F(CU["heraldDelay"])};')
+o.append(f'\tinline constexpr std::uint32_t kWardBrazier = 0x{IDS[("STAT", "ward_brazier")]:03X}, kWardFire = 0x{IDS[("STAT", "ward_fire")]:03X}, kWardLight = 0x{IDS[("LIGH", "ward_light")]:03X};')
 o.append('}')
 with open(root / 'src/Generated.h', 'a') as f: f.write('\n'.join(o) + '\n')
 print('appended v0.2 tables')

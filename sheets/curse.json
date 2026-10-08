@@ -1,0 +1,109 @@
+{
+  "sheet": "curse",
+  "about": "The Undying Dirge (lore and the four night quests every city must finish to be freed). Progress lives in one global per city (UN_Curse_<town>: step*1000 + progress), saved with the game. {city} and {landmark} are filled per city, {n} with the step's target. A freed city is a sanctuary: no undead rise within zoneRadius of its station or anywhere in its own location (interiors included).",
+  "prologueTitle": "THE UNDYING DIRGE",
+  "prologue": "Helgen burned, and you lived. But as the World-Eater rose from the ash he sang a word older than the Thu'um: the Undying Dirge. Every grave in Skyrim heard it. Now when the sun goes down, the dead claw their way up to finish what he began. The Dirge has taken root in the cities of the holds. Break it, city by city, and their dead will sleep again.",
+  "liftedBanner": "THE CURSE OVER {CITY} IS BROKEN",
+  "liftedText": "The Dirge's root beneath {city} shatters. Its dead sleep again: no undead will rise within its bounds.",
+  "freedAll": "Every city of Skyrim stands free of the Dirge. Its echo lingers only in the wild places, and it will not fall silent until the World-Eater does.",
+  "zoneRadius": 6500,
+  "holdRadius": 900,
+  "wardRadius": 150,
+  "wardSeconds": 5,
+  "wardDistance": 650,
+  "heraldDelay": 20,
+  "cities": [
+    {
+      "town": "Riverwood",
+      "landmark": "the Sleeping Giant Inn",
+      "location": "0x013163"
+    },
+    {
+      "town": "Whiterun",
+      "landmark": "the Gildergreen",
+      "location": "0x018A56"
+    },
+    {
+      "town": "Solitude",
+      "landmark": "the Blue Palace",
+      "location": "0x018A5A"
+    },
+    {
+      "town": "Windhelm",
+      "landmark": "the Palace of the Kings",
+      "location": "0x018A57"
+    },
+    {
+      "town": "Markarth",
+      "landmark": "the Hall of the Dead",
+      "location": "0x018A59"
+    },
+    {
+      "town": "Riften",
+      "landmark": "the Temple of Mara",
+      "location": "0x018A58"
+    },
+    {
+      "town": "Falkreath",
+      "landmark": "the old graveyard",
+      "location": "0x018A49"
+    },
+    {
+      "town": "Morthal",
+      "landmark": "the edge of the marsh",
+      "location": "0x018A53"
+    },
+    {
+      "town": "Dawnstar",
+      "landmark": "the frozen harbour",
+      "location": "0x018A50"
+    },
+    {
+      "town": "Winterhold",
+      "landmark": "the bridge to the College",
+      "location": "0x018A51"
+    }
+  ],
+  "columns": [
+    "id",
+    "title",
+    "goal",
+    "text",
+    "target",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "tithe",
+      "title": "The Ashen Tithe",
+      "goal": "Slay the risen within {city}",
+      "text": "The dead of {city} rise thickest near {landmark}, drawn to the Dirge like moths to a flame. Every one you put back in the ground loosens the curse's grip on the city. Slay {n} of the risen within {city}'s bounds.",
+      "target": 30,
+      "verify": []
+    },
+    {
+      "id": "wards",
+      "title": "The Ward-Fires of {city}",
+      "goal": "Light the ward-fires around the shrine",
+      "text": "Long ago the priests of {city} kept three ward-fires burning against the restless dead, until the Dirge snuffed them out. Three cold braziers now stand around your shrine. Stand by each one until it catches, and keep the dead off you while it does.",
+      "target": 3,
+      "verify": []
+    },
+    {
+      "id": "herald",
+      "title": "The Herald in the Fog",
+      "goal": "Slay the Herald of the Dirge",
+      "text": "Wounded, the Dirge calls its Herald: Grimmvar, the Undying Wyrm, who walks only in fog. The next night you face in {city}, the fog will roll in and the Herald will come for you. Slay it before dawn.",
+      "target": 1,
+      "verify": []
+    },
+    {
+      "id": "dawn",
+      "title": "Dawn over {city}",
+      "goal": "Hold the shrine of {city}",
+      "text": "The last root of the curse lies beneath {city}'s shrine. Stand your ground there while the night throws everything it has at you. Hold the shrine for {n} seconds and the root will break.",
+      "target": 180,
+      "verify": []
+    }
+  ]
+}

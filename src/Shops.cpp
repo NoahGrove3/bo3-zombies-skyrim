@@ -309,23 +309,79 @@ namespace bo3z
 		};
 		std::array<Best, gen::kTowns.size()> g_best{};
 
-		bool NearDoor(RE::TESObjectREFR* a_anchor, const RE::NiPoint3& a_at)
+		// What stands around a town, gathered once per search: doors, buildings/walls/cliffs (big) and fences, rocks,
+		// carts, trees (clutter). The stand goes out where none of them are close: open ground just outside town.
+		struct Obstacle
 		{
-			bool door = false;
-			RE::TES::GetSingleton()->ForEachReferenceInRange(a_anchor, gen::kPlanSweep + gen::kPlanDoor * 2, [&](RE::TESObjectREFR* r) {
-				if (r && r->GetBaseObject() && r->GetBaseObject()->Is(RE::FormType::Door) && std::hypot(r->GetPosition().x - a_at.x, r->GetPosition().y - a_at.y) < gen::kPlanDoor) {
-					door = true;
-					return RE::BSContainer::ForEachResult::kStop;
+			float x, y, r;
+			int   kind;  // 0 door, 1 big, 2 clutter
+		};
+		std::array<std::vector<Obstacle>, gen::kTowns.size()> g_obstacles{};
+		constexpr float kStandRadius = 370.0f;  // half-diagonal of the platform
+
+		void GatherObstacles(int a_town, RE::TESObjectREFR* a_anchor)
+		{
+			auto& list = g_obstacles[a_town];
+			list.clear();
+			RE::TES::GetSingleton()->ForEachReferenceInRange(a_anchor, gen::kPlanSweep, [&](RE::TESObjectREFR* r) {
+				auto* base = r ? r->GetBaseObject() : nullptr;
+				if (!base || r->IsDisabled() || r->IsDeleted() || IsOurBase(base) || r->As<RE::Actor>()) {
+					return RE::BSContainer::ForEachResult::kContinue;
+				}
+				const auto p = r->GetPosition();
+				const auto t = base->GetFormType();
+				if (t == RE::FormType::Door) {
+					list.push_back({ p.x, p.y, 0.0f, 0 });
+					return RE::BSContainer::ForEachResult::kContinue;
+				}
+				if (t != RE::FormType::Static && t != RE::FormType::MovableStatic && t != RE::FormType::Tree && t != RE::FormType::Furniture &&
+					t != RE::FormType::Container && t != RE::FormType::Activator && t != RE::FormType::Light) {
+					return RE::BSContainer::ForEachResult::kContinue;  // grass, flora, items: tidied off the footprint anyway
+				}
+				auto* bo = base->As<RE::TESBoundObject>();
+				if (!bo) {
+					return RE::BSContainer::ForEachResult::kContinue;
+				}
+				const auto& b = bo->boundData;
+				const float sc = std::max(0.1f, r->GetScale());
+				const float wx = (b.boundMax.x - b.boundMin.x) * sc, wy = (b.boundMax.y - b.boundMin.y) * sc, wz = (b.boundMax.z - b.boundMin.z) * sc;
+				const float horiz = std::max(wx, wy), size = std::max(horiz, wz);
+				if (size < 70.0f) {
+					return RE::BSContainer::ForEachResult::kContinue;  // pebbles, cups, small clutter
+				}
+				if (t == RE::FormType::Tree) {
+					list.push_back({ p.x, p.y, std::min(horiz * 0.5f, 140.0f), 2 });  // the trunk; the canopy is the sky test's job
+				} else {
+					list.push_back({ p.x, p.y, horiz * 0.5f, size > 450.0f ? 1 : 2 });
 				}
 				return RE::BSContainer::ForEachResult::kContinue;
 			});
-			return door;
+			logger::info("shops: {} has {} doors/buildings/clutter around it", gen::kTowns[a_town], list.size());
+		}
+
+		// How much the surroundings crowd a stand centred at a_at: 0 = open ground, nothing near.
+		float Crowding(int a_town, const RE::NiPoint3& a_at, int* a_doors = nullptr)
+		{
+			float pen = 0;
+			int   doors = 0;
+			for (const auto& o : g_obstacles[a_town]) {
+				const float d = std::hypot(o.x - a_at.x, o.y - a_at.y);
+				const float need = o.kind == 0 ? gen::kPlanDoor : kStandRadius + o.r + (o.kind == 1 ? gen::kPlanBuilding : gen::kPlanClutter);
+				if (d < need) {
+					pen += (need - d) * (o.kind == 0 ? 2.0f : o.kind == 1 ? 1.5f : 1.0f);
+					doors += o.kind == 0;
+				}
+			}
+			if (a_doors) {
+				*a_doors = doors;
+			}
+			return pen;
 		}
 
 		// Score a candidate alley (lower is better); 0 failures + flat + no doors near = accept immediately.
 		// Clear sky over the whole stand: cast down from high above on a grid; trees, porches and roofs stand
 		// out as hits far above the ground and rule the spot out.
-		// a_overhead > 0 (an existing stand, whose own machines are in the way): only count things that far above the floor.
+		// a_overhead > 0 (an existing stand, whose own wall and machines are in the way, up to ~350): only count things that far above the floor.
 		bool Obstructed(RE::TESObjectREFR* a_anchor, const TownPlan& a_plan, float a_overhead = 0.0f)
 		{
 			float glo = FLT_MAX, ghi = -FLT_MAX;
@@ -351,9 +407,6 @@ namespace bo3z
 			const int perDist = gen::kPlanAngles * static_cast<int>(gen::kPlanYaw.size());
 			const int di = a_index / perDist, rest = a_index % perDist;
 			const int ai = rest / static_cast<int>(gen::kPlanYaw.size()), yi = rest % static_cast<int>(gen::kPlanYaw.size());
-			if (gen::kPlanDist[di] == 0 && ai > 0) {
-				return false;
-			}
 			const float ang = ai * 2.0f * RE::NI_PI / gen::kPlanAngles;
 			const auto  a = a_anchor->GetPosition();
 			TownPlan    plan;
@@ -361,6 +414,7 @@ namespace bo3z
 			plan.yaw = gen::kPlanYaw[yi] * RE::NI_PI / 180.0f;
 			float lo = FLT_MAX, hi = -FLT_MAX;
 			int   fails = 0, doors = 0;
+			const float crowd = Crowding(a_town, plan.center, &doors);
 			for (const auto& l : gen::kLocations) {
 				if (l.town != a_town) {
 					continue;
@@ -371,13 +425,15 @@ namespace bo3z
 				} else {
 					++fails;
 				}
-				doors += NearDoor(a_anchor, want) ? 1 : 0;
 			}
 			int blocked = Obstructed(a_anchor, plan) ? 1 : 0;
+			float slope = 0;
 			{
 				float low = 0;
 				if (auto g = GroundTop(a_anchor, plan, &low); !g || *g - low > gen::kStandMaxSlope) {
 					blocked = 1;  // the ground drops away under part of the stand: it would hang in the air
+				} else {
+					slope = std::max(0.0f, *g - 1.0f - low);
 				}
 			}
 			fails += blocked * 3;
@@ -385,11 +441,11 @@ namespace bo3z
 			auto        c = Snap(a_anchor, plan.center);
 			plan.center.z = c ? c->z : (lo < hi ? (lo + hi) * 0.5f : a.z);
 			plan.state = TownPlan::State::Ready;
-			const float score = fails * 1000.0f + doors * 400.0f + std::max(0.0f, spread - gen::kPlanHeight) * 5.0f + gen::kPlanDist[di] * 0.05f;
+			const float score = fails * 1000.0f + crowd * 2.0f + std::max(0.0f, slope - gen::kPlanFlat) * 20.0f + std::max(0.0f, spread - gen::kPlanHeight) * 5.0f + gen::kPlanDist[di] * 0.05f;
 			if (score < g_best[a_town].score) {
 				g_best[a_town] = { score, plan };
 			}
-			if (fails == 0 && doors == 0 && spread <= gen::kPlanHeight) {
+			if (fails == 0 && crowd <= 0.0f && slope <= gen::kPlanFlat && spread <= gen::kPlanHeight) {
 				g_towns[a_town] = plan;
 				logger::info("shops: {} alley at ({:.0f},{:.0f}) yaw {:.0f} (candidate {})", gen::kTowns[a_town], plan.center.x, plan.center.y, gen::kPlanYaw[yi], a_index);
 				return true;
@@ -466,12 +522,18 @@ namespace bo3z
 			plan.state = TownPlan::State::Ready;
 			plan.center.z = p.z;
 			float low = 0;
-			if (auto g = GroundTop(a_anchor, plan, &low); !g || std::abs(*g - p.z) > 30.0f || *g - low > gen::kStandMaxSlope) {
+			const auto g = GroundTop(a_anchor, plan, &low);
+			if (!g || std::abs(*g - p.z) > 30.0f || *g - low > gen::kStandMaxSlope) {
 				logger::info("shops: {} stand floats {:.0f} off the ground, rebuilding", gen::kTowns[a_town], g ? p.z - *g : 999.0f);
 				return false;
 			}
-			if (Obstructed(a_anchor, plan, 220.0f)) {
+			if (Obstructed(a_anchor, plan, 440.0f)) {
 				logger::info("shops: {} stand is boxed in by trees or buildings, moving it", gen::kTowns[a_town]);
+				return false;
+			}
+			GatherObstacles(a_town, a_anchor);
+			if (const float c = Crowding(a_town, plan.center); c > 0.0f || (g && *g - low > gen::kPlanFlat + 10.0f)) {
+				logger::info("shops: {} stand is in town (crowding {:.0f}), moving it out to open ground", gen::kTowns[a_town], c);
 				return false;
 			}
 			g_towns[a_town] = plan;
@@ -704,16 +766,60 @@ namespace bo3z
 			}
 		}
 
+		// Pieces from older layouts that no town owns any more (stands that used to be inside a city, before stands
+		// moved outside): gone once the player is near them.
+		void SweepOldStands(RE::PlayerCharacter* a_player)
+		{
+			auto* ws = a_player->GetWorldspace();
+			if (!ws) {
+				return;
+			}
+			int n = 0;
+			RE::TES::GetSingleton()->ForEachReferenceInRange(a_player, 6000.0f, [&](RE::TESObjectREFR* r) {
+				if (!r || r->IsDeleted() || !IsOurBase(r->GetBaseObject())) {
+					return RE::BSContainer::ForEachResult::kContinue;
+				}
+				if (auto* b = r->GetBaseObject(); b == Forms::Ours(gen::kWardBrazier) || b == Forms::Ours(gen::kWardFire) || b == Forms::Ours(gen::kWardLight)) {
+					return RE::BSContainer::ForEachResult::kContinue;  // the Dirge's ward-fires (Curse.cpp keeps them)
+				}
+				for (const auto& h : g_placed) {
+					if (h.get().get() == r) {
+						return RE::BSContainer::ForEachResult::kContinue;
+					}
+				}
+				bool owned = false;
+				for (int t = 0; t < static_cast<int>(gen::kTowns.size()) && !owned; ++t) {
+					auto* a = TownAnchor(t);
+					if (!a || a->GetWorldspace() != ws || a->GetPosition().GetDistance(r->GetPosition()) > gen::kPlanSweep) {
+						continue;
+					}
+					// a stand that is still being placed, or one that will be adopted: not ours to judge yet
+					owned = g_towns[t].state != TownPlan::State::Ready || std::hypot(r->GetPosition().x - g_towns[t].center.x, r->GetPosition().y - g_towns[t].center.y) < 700.0f;
+				}
+				if (!owned) {
+					r->Disable();
+					r->SetDelete(true);
+					++n;
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			if (n) {
+				std::erase_if(g_spinners, [](const Spinner& s) { return !s.ref.get() || s.ref.get()->IsDeleted(); });
+				logger::info("shops: removed {} pieces of an old in-town stand", n);
+			}
+		}
+
 		void TickTowns()
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			if (!player) {
 				return;
 			}
+			SweepOldStands(player);
 			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
 				auto* anchor = TownAnchor(t);
 				auto* cell = anchor ? anchor->GetParentCell() : nullptr;
-				if (!cell || !cell->IsAttached() || anchor->GetPosition().GetDistance(player->GetPosition()) > 6000.0f) {
+				if (!cell || !cell->IsAttached() || anchor->GetPosition().GetDistance(player->GetPosition()) > 3200.0f) {
 					continue;
 				}
 				auto& plan = g_towns[t];
@@ -722,6 +828,7 @@ namespace bo3z
 						logger::info("shops: {} alley already built", gen::kTowns[t]);
 					} else {
 						Sweep(t, anchor);
+						GatherObstacles(t, anchor);
 						plan.state = TownPlan::State::Searching;
 						plan.candidate = 0;
 					}
@@ -910,6 +1017,25 @@ namespace bo3z
 			g_probe = {};
 			g_spinners.clear();
 			g_show = {};
+		}
+
+		bool StandFrame(int a_town, RE::NiPoint3& a_center, float& a_yaw, RE::TESWorldSpace*& a_world)
+		{
+			auto* anchor = a_town >= 0 && a_town < static_cast<int>(gen::kTowns.size()) ? TownAnchor(a_town) : nullptr;
+			a_world = anchor ? anchor->GetWorldspace() : nullptr;
+			if (!anchor) {
+				return false;
+			}
+			const auto& plan = g_towns[a_town];
+			if (plan.state == TownPlan::State::Ready) {
+				a_center = plan.center;
+				a_center.z = plan.topSet ? plan.top : plan.center.z;
+				a_yaw = plan.yaw;
+				return true;
+			}
+			a_center = anchor->GetPosition();
+			a_yaw = 0;
+			return false;
 		}
 
 		std::string BoxTown() { return std::string(gen::kTowns[ActiveBoxTown()]); }

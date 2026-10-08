@@ -559,6 +559,46 @@ def powerup_grab():   # bright rising arpeggio
     x = np.concatenate([_tone(f, 0.12, 0.06) for f in notes] + [_tone(hz('E6'), 0.5, 0.2)])
     return hall(norm(_lay(x, _sparkle(0.7, 3500, 14) * 0.5), 0.85), 0.4, 2.0)
 
+# ---------- event nights, the curse quests, the nuke ----------
+def event_bloodmoon():  # a cracked bell tolls three times over a low choir, a heartbeat under it
+    toll = mix(*[place(np.zeros(1), bell(hz('D3'), 2.4, 2.4, 4.0) * (1.0 - 0.15 * k), 1.1 * k) for k in range(3)])
+    ch = chord(choir, ['D2', 'A2', 'C3', 'F3'], 4.2, vowel='o', bright=0.6) * 0.55
+    beat = mix(*[place(np.zeros(1), kick(0.35, 90, 40) * 0.9, 0.5 + 0.8 * k) for k in range(5)] + [place(np.zeros(1), kick(0.3, 80, 35) * 0.6, 0.72 + 0.8 * k) for k in range(5)])
+    return hall(mix(toll, ch, beat), 0.45, 3.8)
+def event_fog():  # wind through the mist, a far horn, a drone that never resolves
+    tt = t_(5.0)
+    wind = bp(noise(len(tt)), 250, 1400) * (0.5 + 0.5 * np.sin(2 * np.pi * 0.35 * tt) ** 2) * env(len(tt), 1.2, 0.5, 0.8, 1.5) * 0.8
+    horn_ = place(np.zeros(1), horn(hz('A1'), 3.0, 0.3) * 0.8, 1.0)
+    dr = drone(hz('D2'), 5.0) * env(len(tt), 1.5, 0.5, 0.7, 1.5) * 0.5
+    return hall(mix(wind, horn_, dr), 0.5, 4.0)
+def event_ash():  # a rolling rumble, hissing ash, war drums racing
+    rumble = lpb(noise(int(4.5 * SR)), 90, 4) * env(int(4.5 * SR), 0.6, 0.5, 0.7, 1.4) * 5
+    hiss = _hiss(4.0, 2500, 9000) * 0.35
+    dr = drums([(k * 0.25, 0.6 + 0.4 * (k % 4 == 0)) for k in range(14)], 120)
+    return hall(mix(rumble, hiss, dr), 0.35, 3.0)
+def event_champions():  # iron on iron: a war horn and an anvil beat
+    hn = mix(seq(horn, [('G2', 1.2), ('D3', 0.8), ('G2', 2.0)], 80, bright=.55), seq(horn, [('G1', 4.0)], 80, bright=.3) * .6)
+    anv = mix(*[place(np.zeros(1), _fm(880, 880, 3.5, 6, 0.4, 0.12) * 0.5, 0.75 * k) for k in range(5)])
+    return hall(mix(hn, anv, drums([(0, 1), (0.75, 1), (1.5, 1), (2.25, 1.2)], 80)), 0.4, 3.0)
+def quest_start():  # a low choir swells and a single bell
+    return hall(mix(chord(choir, ['A2', 'E3', 'A3'], 2.6, vowel='a', bright=0.7) * 0.7, place(np.zeros(1), bell(hz('E4'), 2.0, 2.76, 3.0) * 0.6, 0.4)), 0.45, 3.2)
+def quest_step():  # two rising bells
+    return hall(mix(bell(hz('A4'), 1.4, 2.76, 2.5) * 0.7, place(np.zeros(1), bell(hz('E5'), 1.6, 2.76, 2.5) * 0.7, 0.25)), 0.4, 2.5)
+def curse_lifted():  # the dirge breaks: a full major choir, a horn call, bells
+    ch = mix(chord(choir, ['D3', 'F#3', 'A3', 'D4'], 4.5, vowel='a', bright=1.1), place(np.zeros(1), chord(choir, ['G3', 'B3', 'D4', 'G4'], 3.5, vowel='a', bright=1.2), 2.0))
+    hn = place(np.zeros(1), seq(horn, [('D4', 0.8), ('A4', 0.8), ('D5', 2.0)], 100, bright=.7) * 0.7, 0.6)
+    bl = mix(*[place(np.zeros(1), bell(hz(n), 2.5, 2.76, 2.0) * 0.4, 1.4 + 0.3 * k) for k, n in enumerate(('D5', 'F#5', 'A5', 'D6'))])
+    return hall(mix(ch, hn, bl), 0.5, 4.5)
+def ward_lit():  # a brazier roars into flame, a bright ping
+    n = int(1.6 * SR)
+    roar = bp(noise(n), 200, 3000) * env(n, 0.05, 0.3, 0.4, 1.0) * 1.2 + lpb(noise(n), 120, 2) * expdec(n, 0.4) * 2
+    return hall(mix(roar, bell(hz('B4'), 1.2, 2.76, 2.0) * 0.6), 0.3, 2.0)
+def nuke():  # a blinding crack, a long falling boom
+    n = int(3.5 * SR)
+    crack = hp(noise(n), 1200) * expdec(n, 0.05) * 2
+    boom = lpb(noise(n), 160, 4) * expdec(n, 1.1) * 7 + kick(3.5, 70, 25) * 1.5
+    return hall(norm(np.tanh(1.5 * mix(crack, boom, _sweep(3000, 200, 2.0, 0.6) * 0.5))), 0.45, 3.5)
+
 ENERGY = {  # weapon id -> element kit
     'sidearm': 'arcane', 'aetherium': 'holy', 'animunculi': 'shadow', 'mammothlmg': 'vortex', 'triad': 'soul',
     'kagrenac': 'mind', 'longshot': 'star', 'centurion': 'plague', 'animunculi': 'hex', 'flamerepeater': 'fire', 'frostlancer': 'ice', 'stormcaller': 'storm', 'embermortar': 'wind'}
@@ -576,7 +616,7 @@ SOUNDS = {
     'shot_pistol': shot_pistol, 'shot_smg': shot_smg, 'shot_ar': shot_ar, 'shot_lmg': shot_lmg,
     'shot_shotgun': shot_shotgun, 'shot_sniper': shot_sniper, 'shot_ray': shot_ray,
     'reload_mag': reload_mag, 'reload_shell': reload_shell, 'dry_click': dry_click,
-    'cast_light': cast_light, 'cast_rapid': cast_rapid, 'cast_scatter': cast_scatter, 'cast_heavy': cast_heavy, 'charge_up': charge_up, 'charge_ready': charge_ready, 'powerup_spawn': powerup_spawn, 'powerup_grab': powerup_grab, 'mana_empty': mana_empty,
+    'cast_light': cast_light, 'cast_rapid': cast_rapid, 'cast_scatter': cast_scatter, 'cast_heavy': cast_heavy, 'charge_up': charge_up, 'charge_ready': charge_ready, 'powerup_spawn': powerup_spawn, 'powerup_grab': powerup_grab, 'event_bloodmoon': event_bloodmoon, 'event_fog': event_fog, 'event_ash': event_ash, 'event_champions': event_champions, 'quest_start': quest_start, 'quest_step': quest_step, 'curse_lifted': curse_lifted, 'ward_lit': ward_lit, 'nuke': nuke, 'mana_empty': mana_empty,
     'buy': buy, 'forge_upgrade': forge_upgrade, 'hitmarker': hitmarker, 'headshot': headshot, 'drink': drink, 'knife': knife, 'rise': rise,
 }
 

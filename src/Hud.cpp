@@ -139,6 +139,24 @@ namespace bo3z
 				dl->AddRectFilledMultiColor({ size.x - e, 0 }, size, z, r, r, z);
 			}
 
+			// Event nights colour the screen: a red haze under the Blood Moon, grey murk on a Fog Night, ash, iron.
+			if (s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size())) {
+				const auto  t = gen::kEvents[s.nightEvent].tint;
+				const int   r = (t >> 24) & 0xFF, g = (t >> 16) & 0xFF, b = (t >> 8) & 0xFF, a = t & 0xFF;
+				const bool  fog = s.nightEvent == gen::kEvent_fog;
+				const float pulse = 0.85f + 0.15f * std::sin(now * 0.8f);
+				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(r, g, b, static_cast<int>(a * (fog ? 0.9f : 0.35f) * pulse)));
+				const ImU32 e = IM_COL32(r, g, b, std::min(255, static_cast<int>(a * (fog ? 2.4f : 2.0f)))), z = IM_COL32(r, g, b, 0);
+				const float w = size.y * (fog ? 0.45f : 0.3f);
+				dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, w }, e, e, z, z);
+				dl->AddRectFilledMultiColor({ 0, size.y - w }, size, z, z, e, e);
+				dl->AddRectFilledMultiColor({ 0, 0 }, { w, size.y }, e, z, z, e);
+				dl->AddRectFilledMultiColor({ size.x - w, 0 }, size, z, e, e, z);
+			}
+			if (s.nukeFlash > 0) {
+				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(255, 250, 235, static_cast<int>(230 * std::min(1.0f, s.nukeFlash))));
+			}
+
 			// Night counter, top-left: chalk tally marks in blood red, one per night (groups of five, struck through).
 			// By day it reads NIGHTS SURVIVED; when the next night begins its tally is scratched in.
 			if (s.round > 0) {
@@ -171,6 +189,11 @@ namespace bo3z
 				}
 				if (s.round > 15) {  // past three full groups: the count in numerals beside them
 					Txt(dl, g_title, 60 * k, { x + 10 * k, top }, kBlood, std::to_string(s.round), 3 * k, IM_COL32(255, 40, 20, 255));
+				}
+				if (s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size())) {
+					const auto  t = gen::kEvents[s.nightEvent].tint;
+					const ImU32 c = IM_COL32(std::min(255, static_cast<int>(((t >> 24) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 16) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 8) & 0xFF) * 1.6f) + 60), 255);
+					Txt(dl, g_title, 24 * k, { p.x, top + h + 14 * k }, c, std::string(gen::kEvents[s.nightEvent].label), 2 * k, c);
 				}
 			}
 
@@ -336,6 +359,50 @@ namespace bo3z
 				Divider(dl, size.x * 0.5f, y + h + 12 * k, w * 0.3f, k);
 			}
 
+			// The city's curse quest, top-right: city, quest title, goal and a thin progress bar.
+			if (!s.questTitle.empty()) {
+				const float w = 400 * k;
+				const ImVec2 a{ size.x - w - 40 * k, 30 * k }, b{ size.x - 40 * k, 30 * k + 104 * k };
+				Panel(dl, a, b, k, 0.92f);
+				Txt(dl, g_body, 14 * k, { a.x + 14 * k, a.y + 8 * k }, Fade(kGold, 0.85f), s.questCity + "  -  THE UNDYING DIRGE  " + std::to_string(s.questStep + 1) + "/4");
+				Txt(dl, g_title, 22 * k, { a.x + 14 * k, a.y + 28 * k }, kParch, s.questTitle);
+				Txt(dl, g_body, 16 * k, { a.x + 14 * k, a.y + 58 * k }, IM_COL32(205, 200, 185, 240), s.questGoal);
+				static float qGhost = 0;
+				qGhost = s.questFrac < qGhost ? s.questFrac : qGhost + (s.questFrac - qGhost) * std::min(1.0f, dt * 4);
+				Bar(dl, { a.x + 14 * k, b.y - 16 * k }, w - 28 * k, 5 * k, qGhost, s.questFrac, IM_COL32(214, 178, 96, 255), k);
+			}
+			if (!s.sanctuary.empty()) {
+				TxtC(dl, g_title, 24 * k, size.x * 0.5f, 104 * k, Fade(kGold, 0.9f), "SANCTUARY OF " + s.sanctuary, 2 * k, IM_COL32(255, 220, 120, 255));
+				TxtC(dl, g_body, 16 * k, size.x * 0.5f, 134 * k, IM_COL32(220, 215, 200, 220), "The Dirge is broken here. The dead cannot rise.");
+			}
+			// Kindling a ward-fire: an ember ring round the crosshair.
+			if (s.wardFrac > 0.001f) {
+				const ImVec2 cc{ size.x * 0.5f, size.y * 0.5f };
+				const float  R = 46 * k;
+				dl->AddCircle(cc, R, IM_COL32(40, 30, 20, 160), 64, 5 * k);
+				dl->PathArcTo(cc, R, -RE::NI_PI / 2, -RE::NI_PI / 2 + 2 * RE::NI_PI * s.wardFrac, 64);
+				dl->PathStroke(IM_COL32(255, 150, 50, 255), 0, 5 * k);
+				TxtC(dl, g_title, 20 * k, cc.x, cc.y + R + 12 * k, IM_COL32(255, 190, 110, 255), "KINDLING THE WARD-FIRE", 2 * k, IM_COL32(255, 100, 20, 255));
+			}
+			// Nuke: the dead regroup.
+			if (s.nukeLeft > 0.05f && (s.nukeLeft > 5 || std::fmod(now, 0.5f) >= 0.2f)) {
+				const std::string txt = "NUKE  -  THE DEAD REGROUP  " + std::to_string(static_cast<int>(std::ceil(s.nukeLeft)));
+				TxtC(dl, g_body, 22 * k, size.x * 0.5f, size.y - 236 * k, IM_COL32(255, 160, 60, 255), txt);
+			}
+			// A scroll of the Dirge: the lore of each quest, fading in and out.
+			if (s.loreTime > 0 && !s.loreText.empty()) {
+				const float in = std::clamp((s.loreTotal - s.loreTime) * 2.0f, 0.0f, 1.0f), out = std::clamp(s.loreTime * 1.0f, 0.0f, 1.0f), al = std::min(in, out);
+				const float w = 780 * k, pad = 28 * k, tp = 30 * k, bp = 21 * k;
+				const auto  body = g_body ? g_body->CalcTextSizeA(bp, FLT_MAX, w - 2 * pad, s.loreText.c_str()) : ImVec2{ w, 200 * k };
+				const float h = pad * 2 + tp + 26 * k + body.y;
+				const ImVec2 a{ size.x * 0.5f - w / 2, size.y * 0.30f - h / 2 }, b{ a.x + w, a.y + h };
+				dl->AddRectFilled({ a.x - 6 * k, a.y - 6 * k }, { b.x + 6 * k, b.y + 6 * k }, IM_COL32(0, 0, 0, static_cast<int>(90 * al)), 6 * k);
+				Panel(dl, a, b, k, al);
+				TxtC(dl, g_title, tp, size.x * 0.5f, a.y + pad - 6 * k, Fade(kGold, al), s.loreTitle, 2 * k, IM_COL32(120, 60, 255, static_cast<int>(255 * al)));
+				Divider(dl, size.x * 0.5f, a.y + pad + tp + 6 * k, w * 0.3f, k, al);
+				dl->AddText(g_body, bp, { a.x + pad, a.y + pad + tp + 22 * k }, Fade(kParch, al), s.loreText.c_str(), nullptr, w - 2 * pad);
+			}
+
 			// Banner: centred line between ornaments, fades and drifts in.
 			if (s.bannerTime > 0 && !s.banner.empty()) {
 				const float a = std::min(1.0f, s.bannerTime * 2), y = size.y * 0.11f + (1.0f - a) * 10 * k;
@@ -470,6 +537,8 @@ namespace bo3z
 				g_state.gainTime = std::max(0.0f, g_state.gainTime - dt);
 				g_state.hitTime = std::max(0.0f, g_state.hitTime - dt);
 				g_state.hurtTime = std::max(0.0f, g_state.hurtTime - dt);
+				g_state.loreTime = std::max(0.0f, g_state.loreTime - dt);
+				g_state.nukeFlash = std::max(0.0f, g_state.nukeFlash - dt * 1.25f);
 				s = g_state;
 			}
 			if (!Init(a_swap)) {
@@ -577,6 +646,14 @@ namespace bo3z
 			std::scoped_lock l(g_lock);
 			g_state.banner = std::move(a_text);
 			g_state.bannerTime = a_seconds;
+		}
+
+		void Lore(std::string a_title, std::string a_text, float a_seconds)
+		{
+			std::scoped_lock l(g_lock);
+			g_state.loreTitle = std::move(a_title);
+			g_state.loreText = std::move(a_text);
+			g_state.loreTime = g_state.loreTotal = a_seconds;
 		}
 
 		void Install()

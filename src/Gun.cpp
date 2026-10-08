@@ -102,14 +102,24 @@ namespace bo3z
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
-		// One native cast per click. Skyrim keeps re-casting a staff (and streams a concentration spell) while the
-		// button is held; after a short tap window it is told the button was let go, and the rest of the hold is ours
-		// (the charge-up and the signature move's own animation).
+		// Staffs: Skyrim's own staff swing plays when the shot leaves, not when the button goes down. The press and
+		// the hold never reach Skyrim (the hold is our charge-up, the staff held steady); on release, when a shot or
+		// a signature move actually goes, Skyrim gets a short synthetic tap and plays its staff cast animation.
+		RE::PlayerInputHandler* g_abHandler = nullptr;
+		RE::PlayerControlsData* g_abData = nullptr;
+		float                   g_swingUp = -1.0f;  // >= 0: a synthetic tap is down; let go when it runs out
+		bool                    g_swingWanted = false;
+		bool IsStaff(int a_gun) { return a_gun >= 0 && gen::kGuns[a_gun].kind == gen::kKindWand; }
+
 		bool g_nativeCut = false;
 		struct FireButton
 		{
 			static void thunk(RE::PlayerInputHandler* a_this, RE::ButtonEvent* a_event, RE::PlayerControlsData* a_data)
 			{
+				if (GunOut() && IsStaff(CurrentGun()) && a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kMouse && a_event->GetIDCode() == gen::kKey2_fire) {
+					g_abHandler = a_this, g_abData = a_data;
+					return;  // ours: the staff swing is played on release (TickSwing)
+				}
 				if (GunOut() && gen::kGuns[CurrentGun()].kind != gen::kKindBow && a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kMouse && a_event->GetIDCode() == gen::kKey2_fire) {
 					auto& rd = a_event->GetRuntimeData();
 					if (a_event->IsDown()) {
@@ -129,6 +139,39 @@ namespace bo3z
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
+
+		void SendFire(float a_value, float a_held)
+		{
+			if (!g_abHandler || !g_abData) {
+				return;
+			}
+			auto* ue = RE::UserEvents::GetSingleton();
+			auto* ev = RE::ButtonEvent::Create(RE::INPUT_DEVICE::kMouse, ue ? ue->rightAttack : RE::BSFixedString("Right Attack/Block"), gen::kKey2_fire, a_value, a_held);
+			if (!ev) {
+				return;
+			}
+			FireButton::func(g_abHandler, ev, g_abData);
+			RE::free(ev);
+		}
+
+		// The staff cast animation, in step with the shot: tap down now, let go 0.15 s later.
+		void TickSwing(float a_delta)
+		{
+			if (g_swingUp >= 0.0f) {
+				if ((g_swingUp += a_delta) >= 0.15f) {
+					SendFire(0.0f, 0.15f);
+					g_swingUp = -1.0f;
+				}
+				return;
+			}
+			if (g_swingWanted) {
+				g_swingWanted = false;
+				if (GunOut() && IsStaff(CurrentGun())) {
+					SendFire(1.0f, 0.0f);
+					g_swingUp = 0.0f;
+				}
+			}
+		}
 
 		struct ReadyBlock
 		{
@@ -1186,6 +1229,10 @@ namespace bo3z
 			{ 0.10f, 0.0f, 0.0f, 10, 0, 0.004f, 34.0f },
 			{ -0.30f, 0.0f, 0.0f, 10, -6, 0.020f, 0 },
 			{ -0.12f, 0.0f, 0.0f, 30, 0, 0.050f, 0 } };
+		// Staffs keep Skyrim's staff stance: the charge only draws the staff in a little and lifts its head, with the
+		// power trembling through it; the release drives it forward (no spinning, no hand-casting gestures).
+		constexpr PoseOut kStaffCharge{ 0.18f, 0.0f, 0.0f, -6, 3, 0.008f, 0 };
+		constexpr PoseOut kStaffStrike{ -0.08f, 0.0f, 0.0f, 16, 0, 0.006f, 0 };
 		constexpr float kFovKick[6] = { -9.0f, 7.0f, 5.0f, 4.0f, 6.0f, 12.0f };
 
 		// While charging, the element's storm wraps the caster (Skyrim's fire storm / blizzard / lightning storm cast look).
@@ -1238,7 +1285,8 @@ namespace bo3z
 					g_chargeSaid = g_readySaid = false;
 				}
 				SetAura(charging ? g.chargeAura : -1);
-				out = bow ? PoseOut{} : Scale(kChargePose[style], c);
+				const bool staff = g.kind == gen::kKindWand;
+				out = bow ? PoseOut{} : staff ? Scale(kStaffCharge, c) : Scale(kChargePose[style], c);
 				out.shake *= 0.5f + c;  // trembles harder as it fills
 				if (g_relT >= 0 && bow) {
 					g_relT = -1.0f;
@@ -1251,7 +1299,9 @@ namespace bo3z
 						u = u < 0.25f ? 0.0f : (u - 0.25f) / 0.75f;
 					}
 					constexpr float k = 0.22f;
-					out = u < k ? Lerp(kChargePose[rs], kStrikePose[rs], EaseOut(u / k)) : Lerp(kStrikePose[rs], PoseOut{}, EaseInOut((u - k) / (1 - k)));
+					const PoseOut& from = staff ? kStaffCharge : kChargePose[rs];
+					const PoseOut& to = staff ? kStaffStrike : kStrikePose[rs];
+					out = u < k ? Lerp(from, to, EaseOut(u / k)) : Lerp(to, PoseOut{}, EaseInOut((u - k) / (1 - k)));
 					if ((g_relT += a_delta) >= dur) {
 						g_relT = -1.0f;
 					}
@@ -1280,15 +1330,6 @@ namespace bo3z
 			m.entry[1][0] = a.y * a.x * C + a.z * s, m.entry[1][1] = c + a.y * a.y * C, m.entry[1][2] = a.y * a.z * C - a.x * s;
 			m.entry[2][0] = a.z * a.x * C - a.y * s, m.entry[2][1] = a.z * a.y * C + a.x * s, m.entry[2][2] = c + a.z * a.z * C;
 			return m;
-		}
-
-		// Wand: the twirl spins it in the hand (its local frame, so it follows the hand whatever the arm does).
-		void PoseWand(RE::NiAVObject* a_model)
-		{
-			if (!a_model || std::abs(std::remainder(g_spin, 2 * RE::NI_PI)) < 1e-3f) {
-				return;
-			}
-			a_model->local.rotate = a_model->local.rotate * AxisAngle({ 1, 0, 0 }, g_spin);
 		}
 
 		RE::NiTransform g_armOrig, g_armWritten;
@@ -1664,9 +1705,13 @@ namespace bo3z
 				}
 				if (up && g_trigger) {
 					const bool bow = gen::kGuns[CurrentGun()].kind == gen::kKindBow;
-					if (!TryUnleash(true)) {
+					const float cdBefore = g_cooldown;
+					if (TryUnleash(true)) {
+						g_swingWanted = IsStaff(CurrentGun());
+					} else {
 						if (!bow) {
 							TryFire(true);
+							g_swingWanted = IsStaff(CurrentGun()) && g_cooldown > cdBefore;  // a shot actually left
 						} else if (g_charge > 0.25f) {
 							Hud::Banner("Draw fully to loose", 0.8f);  // bows only fire their charged shot
 						}
@@ -1862,6 +1907,7 @@ namespace bo3z
 			g_chargeCd = std::max(0.0f, g_chargeCd - a_delta);
 			g_charge = out && g_trigger ? g_charge + a_delta : 0.0f;
 			TickPose(a_delta);
+			TickSwing(a_delta);
 			TickBlasts(a_delta);
 			TickWells(a_delta);
 			TickTimeAndPrisms(a_delta);
@@ -1888,7 +1934,7 @@ namespace bo3z
 				rd.firstPersonFOV = gen::kViewmodelFov + (gen::kAdsViewmodelFov - gen::kViewmodelFov) * g_ads;
 			}
 			AimViewmodel(RE::PlayerCharacter::GetSingleton(), 0.0f);  // staffs and bows stay in Skyrim's own pose; aiming is the zoom
-			PoseWand(out && gen::kGuns[gun].kind == gen::kKindWand ? g_adsModel.get() : nullptr);
+			// (staffs never spin: the twirl was a wand thing)
 			const auto now = Clock::now();
 			std::erase_if(g_hits, [&](const auto& kv) { return now - kv.second.first > 2s; });
 

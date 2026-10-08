@@ -730,6 +730,87 @@
       "file": "fx\\UndyingNights\\powerup_grab.wav",
       "space": "2d",
       "verify": []
+    },
+    {
+      "id": "event_bloodmoon",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_event_bloodmoon",
+      "file": "fx\\UndyingNights\\event_bloodmoon.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "event_fog",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_event_fog",
+      "file": "fx\\UndyingNights\\event_fog.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "event_ash",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_event_ash",
+      "file": "fx\\UndyingNights\\event_ash.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "event_champions",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_event_champions",
+      "file": "fx\\UndyingNights\\event_champions.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "quest_start",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_quest_start",
+      "file": "fx\\UndyingNights\\quest_start.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "quest_step",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_quest_step",
+      "file": "fx\\UndyingNights\\quest_step.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "curse_lifted",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_curse_lifted",
+      "file": "fx\\UndyingNights\\curse_lifted.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "ward_lit",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_ward_lit",
+      "file": "fx\\UndyingNights\\ward_lit.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "nuke",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_nuke",
+      "file": "fx\\UndyingNights\\nuke.wav",
+      "space": "2d",
+      "verify": []
     }
   ]
 }

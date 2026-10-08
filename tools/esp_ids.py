@@ -18,7 +18,8 @@ def assign(S=None, write=False):
              [(k, 'bullet_' + p['id']) for p in S['projectiles']['rows'] for k in ('PROJ', 'MGEF', 'SPEL')] + [('LIGH', 'muzzle'), ('PROJ', 'castflame'), ('MGEF', 'wandcast'), ('FACT', 'undead')] + \
              [('ENCH', w['id']) for w in S['weapons']['rows'] if w.get('kind') == 'wand'] + \
              [(k, 'hand_' + w['id']) for w in S['weapons']['rows'] if w.get('kind') in ('tome', 'wonder') for k in ('SPEL', 'MGEF')] + \
-             [(k, 'arrow_' + w['id']) for w in S['weapons']['rows'] if w.get('kind') == 'bow' for k in ('AMMO', 'PROJ')]
+             [(k, 'arrow_' + w['id']) for w in S['weapons']['rows'] if w.get('kind') == 'bow' for k in ('AMMO', 'PROJ')] + \
+             [('GLOB', 'curse_' + c['town']) for c in S['curse']['cities']] + [('GLOB', 'curse_intro')]
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:

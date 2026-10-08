@@ -112,8 +112,17 @@ namespace bo3z::gen
 		unleash_longshot = 77,
 		powerup_spawn = 78,
 		powerup_grab = 79,
+		event_bloodmoon = 80,
+		event_fog = 81,
+		event_ash = 82,
+		event_champions = 83,
+		quest_start = 84,
+		quest_step = 85,
+		curse_lifted = 86,
+		ward_lit = 87,
+		nuke = 88,
 	};
-	inline constexpr std::array<FormRef, 80> kSounds{ {
+	inline constexpr std::array<FormRef, 89> kSounds{ {
 		FormRef{ "Dawnguard.esm", 0x008E35, "WPNCrossbowFire2D" },
 		FormRef{ "Dawnguard.esm", 0x008E3A, "WPNCrossbowReload" },
 		FormRef{ "Skyrim.esm", 0x03E7B4, "WPNBowNockSD" },
@@ -194,6 +203,15 @@ namespace bo3z::gen
 		FormRef{ "BO3Zombies.esp", 0x000965, "UN_unleash_longshot" },
 		FormRef{ "BO3Zombies.esp", 0x000975, "UN_powerup_spawn" },
 		FormRef{ "BO3Zombies.esp", 0x000976, "UN_powerup_grab" },
+		FormRef{ "BO3Zombies.esp", 0x000977, "UN_event_bloodmoon" },
+		FormRef{ "BO3Zombies.esp", 0x000978, "UN_event_fog" },
+		FormRef{ "BO3Zombies.esp", 0x000979, "UN_event_ash" },
+		FormRef{ "BO3Zombies.esp", 0x00097A, "UN_event_champions" },
+		FormRef{ "BO3Zombies.esp", 0x00097B, "UN_quest_start" },
+		FormRef{ "BO3Zombies.esp", 0x00097C, "UN_quest_step" },
+		FormRef{ "BO3Zombies.esp", 0x00097D, "UN_curse_lifted" },
+		FormRef{ "BO3Zombies.esp", 0x00097E, "UN_ward_lit" },
+		FormRef{ "BO3Zombies.esp", 0x00097F, "UN_nuke" },
 	} };
 	inline constexpr int kPoints_start = 500;  // new_game_after_intro
 	inline constexpr int kPoints_hit = 10;  // gun_hit_round_undead
@@ -390,15 +408,30 @@ namespace bo3z::gen
 		ObjectDef{ "wall_marksman", "Rimefang", 2, 900, 13, 0x813, 1.0f, true },
 	} };
 	struct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; };
-	inline constexpr std::array<DressDef, 66> kDress{ {
+	inline constexpr std::array<DressDef, 81> kDress{ {
 		DressDef{ 0, 0x926, false, -80.0f, 70.0f, 0.0f, 1.0f, 0.0f },
 		DressDef{ 0, 0x84D, false, 0.0f, 0.0f, 0.0f, 0.25f, 0.0f },
 		DressDef{ 0, 0x84E, true, 0.0f, 30.0f, 90.0f, 1.0f, 0.0f },
 		DressDef{ 0, 0x871, false, 0.0f, 0.0f, 70.0f, 0.35f, 0.0f },
+		DressDef{ 0, 0x980, false, -372.0f, 220.0f, 25.0f, 0.75f, 0.0f },
+		DressDef{ 0, 0x981, false, -372.0f, 220.0f, 106.0f, 0.42f, 0.0f },
+		DressDef{ 0, 0x982, true, -372.0f, 220.0f, 150.0f, 1.0f, 0.0f },
+		DressDef{ 0, 0x983, false, -376.0f, 110.0f, 0.0f, 0.75f, 0.0f },
+		DressDef{ 0, 0x984, false, 212.0f, 220.0f, 25.0f, 0.75f, 0.0f },
+		DressDef{ 0, 0x985, false, 212.0f, 220.0f, 106.0f, 0.42f, 0.0f },
+		DressDef{ 0, 0x986, true, 212.0f, 220.0f, 150.0f, 1.0f, 0.0f },
+		DressDef{ 0, 0x987, false, 216.0f, 110.0f, 0.0f, 0.75f, 0.0f },
+		DressDef{ 0, 0x988, false, -81.5f, -34.0f, 26.0f, 1.0f, 0.0f },
+		DressDef{ 0, 0x989, true, -81.5f, -20.0f, 70.0f, 1.0f, 0.0f },
+		DressDef{ 0, 0x98A, false, 79.0f, -34.0f, 26.0f, 1.0f, 0.0f },
+		DressDef{ 0, 0x98B, true, 79.0f, -20.0f, 70.0f, 1.0f, 0.0f },
 		DressDef{ 1, 0x8AB, true, 0.0f, 60.0f, 120.0f, 1.0f, 0.0f },
 		DressDef{ 2, 0x8A4, false, 0.0f, 0.0f, 62.0f, 2.0f, 30.0f },
 		DressDef{ 2, 0x8A5, false, 0.0f, 0.0f, 75.0f, 0.5f, 0.0f },
 		DressDef{ 2, 0x8A6, true, 0.0f, 30.0f, 100.0f, 1.0f, 0.0f },
+		DressDef{ 2, 0x997, false, 0.0f, 0.0f, 0.0f, 0.75f, 0.0f },
+		DressDef{ 2, 0x998, false, 0.0f, 0.0f, 0.0f, 0.42f, 0.0f },
+		DressDef{ 2, 0x999, true, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f },
 		DressDef{ 3, 0x8C9, true, 0.0f, 40.0f, 110.0f, 1.0f, 0.0f },
 		DressDef{ 4, 0x8A4, false, 0.0f, 0.0f, 62.0f, 2.0f, 30.0f },
 		DressDef{ 4, 0x8A5, false, 0.0f, 0.0f, 75.0f, 0.5f, 0.0f },
@@ -466,10 +499,11 @@ namespace bo3z::gen
 	inline constexpr std::array<std::string_view, 10> kTowns{ { "Riverwood", "Whiterun", "Solitude", "Windhelm", "Markarth", "Riften", "Falkreath", "Morthal", "Dawnstar", "Winterhold" } };
 	struct SlotDef { float x, y, faceDeg; };
 	inline constexpr std::array<SlotDef, 7> kSlots{ { SlotDef{ -80.0f, 70.0f, 180.0f }, SlotDef{ -235.0f, 70.0f, 180.0f }, SlotDef{ 0.0f, 0.0f, 180.0f }, SlotDef{ 165.0f, 70.0f, 180.0f }, SlotDef{ -200.0f, -120.0f, 180.0f }, SlotDef{ 200.0f, -120.0f, 180.0f }, SlotDef{ 0.0f, -150.0f, 180.0f } } };
-	inline constexpr std::array<float, 8> kPlanDist{ { 0.0f, 300.0f, 600.0f, 900.0f, 1200.0f, 1500.0f, 1800.0f, 2100.0f } };
+	inline constexpr std::array<float, 10> kPlanDist{ { 900.0f, 1200.0f, 1500.0f, 1800.0f, 2100.0f, 2400.0f, 2700.0f, 3000.0f, 3300.0f, 3600.0f } };
 	inline constexpr std::array<float, 4> kPlanYaw{ { 0.0f, 45.0f, 90.0f, 135.0f } };
 	inline constexpr int kPlanAngles = 12;
-	inline constexpr float kPlanSnap = 70.0f, kPlanHeight = 70.0f, kPlanSweep = 2500.0f, kPlanDoor = 450.0f;
+	inline constexpr float kPlanSnap = 70.0f, kPlanHeight = 70.0f, kPlanSweep = 4800.0f, kPlanDoor = 900.0f;
+	inline constexpr float kPlanBuilding = 550.0f, kPlanClutter = 160.0f, kPlanFlat = 30.0f;
 	struct LocationDef { int town; std::uint32_t anchor; int object; int slot; };
 	inline constexpr std::array<LocationDef, 52> kLocations{ {
 		LocationDef{ 0, 0x0162A4, 0, 0 },
@@ -478,32 +512,32 @@ namespace bo3z::gen
 		LocationDef{ 0, 0x0162A4, 3, 3 },
 		LocationDef{ 0, 0x0162A4, 14, 4 },
 		LocationDef{ 0, 0x0162A4, 17, 5 },
-		LocationDef{ 1, 0x0162CE, 0, 0 },
-		LocationDef{ 1, 0x0162CE, 1, 1 },
-		LocationDef{ 1, 0x0162CE, 2, 2 },
-		LocationDef{ 1, 0x0162CE, 3, 3 },
-		LocationDef{ 1, 0x0162CE, 15, 4 },
-		LocationDef{ 1, 0x0162CE, 18, 5 },
-		LocationDef{ 2, 0x04D0F4, 0, 0 },
-		LocationDef{ 2, 0x04D0F4, 1, 1 },
-		LocationDef{ 2, 0x04D0F4, 2, 2 },
-		LocationDef{ 2, 0x04D0F4, 3, 3 },
-		LocationDef{ 2, 0x04D0F4, 16, 4 },
-		LocationDef{ 3, 0x038436, 0, 0 },
-		LocationDef{ 3, 0x038436, 1, 1 },
-		LocationDef{ 3, 0x038436, 2, 2 },
-		LocationDef{ 3, 0x038436, 3, 3 },
-		LocationDef{ 3, 0x038436, 15, 4 },
-		LocationDef{ 4, 0x01C38A, 0, 0 },
-		LocationDef{ 4, 0x01C38A, 1, 1 },
-		LocationDef{ 4, 0x01C38A, 2, 2 },
-		LocationDef{ 4, 0x01C38A, 3, 3 },
-		LocationDef{ 4, 0x01C38A, 18, 4 },
-		LocationDef{ 5, 0x01C390, 0, 0 },
-		LocationDef{ 5, 0x01C390, 1, 1 },
-		LocationDef{ 5, 0x01C390, 2, 2 },
-		LocationDef{ 5, 0x01C390, 3, 3 },
-		LocationDef{ 5, 0x01C390, 17, 4 },
+		LocationDef{ 1, 0x01B1F1, 0, 0 },
+		LocationDef{ 1, 0x01B1F1, 1, 1 },
+		LocationDef{ 1, 0x01B1F1, 2, 2 },
+		LocationDef{ 1, 0x01B1F1, 3, 3 },
+		LocationDef{ 1, 0x01B1F1, 15, 4 },
+		LocationDef{ 1, 0x01B1F1, 18, 5 },
+		LocationDef{ 2, 0x01C386, 0, 0 },
+		LocationDef{ 2, 0x01C386, 1, 1 },
+		LocationDef{ 2, 0x01C386, 2, 2 },
+		LocationDef{ 2, 0x01C386, 3, 3 },
+		LocationDef{ 2, 0x01C386, 16, 4 },
+		LocationDef{ 3, 0x055FCB, 0, 0 },
+		LocationDef{ 3, 0x055FCB, 1, 1 },
+		LocationDef{ 3, 0x055FCB, 2, 2 },
+		LocationDef{ 3, 0x055FCB, 3, 3 },
+		LocationDef{ 3, 0x055FCB, 15, 4 },
+		LocationDef{ 4, 0x01C389, 0, 0 },
+		LocationDef{ 4, 0x01C389, 1, 1 },
+		LocationDef{ 4, 0x01C389, 2, 2 },
+		LocationDef{ 4, 0x01C389, 3, 3 },
+		LocationDef{ 4, 0x01C389, 18, 4 },
+		LocationDef{ 5, 0x042286, 0, 0 },
+		LocationDef{ 5, 0x042286, 1, 1 },
+		LocationDef{ 5, 0x042286, 2, 2 },
+		LocationDef{ 5, 0x042286, 3, 3 },
+		LocationDef{ 5, 0x042286, 17, 4 },
 		LocationDef{ 6, 0x017760, 0, 0 },
 		LocationDef{ 6, 0x017760, 1, 1 },
 		LocationDef{ 6, 0x017760, 2, 2 },
@@ -561,4 +595,37 @@ namespace bo3z::gen
 	inline constexpr float kSpawnMultiplier = 6.0f, kHitDamageFraction = 0.34f, kZombieWeaponDamageMult = 0.1f;
 	inline constexpr bool kIgnoreNpcs = true;
 	inline constexpr std::array<std::array<float, 2>, 4> kSpeedTiers{ { { 1.0f, 100.0f }, { 3.0f, 115.0f }, { 6.0f, 130.0f }, { 10.0f, 145.0f } } };
+	struct EventDef { std::string_view id, label, banner, weatherPlugin; std::uint32_t weatherId; float spawnMult, speedMult; int pointsMult; float championWeight, dropMult; bool boss; std::uint32_t tint; Sound sound; };
+	inline constexpr float kEventChance = 0.25f;
+	inline constexpr std::array<EventDef, 4> kEvents{ {
+		EventDef{ "bloodmoon", "BLOOD MOON", "BLOOD MOON - THE DEAD RISE FASTER", "Dawnguard.esm", 0x006AEC, 1.5f, 1.0f, 1, 1.0f, 1.0f, false, 0xB4101A46, Sound::event_bloodmoon },
+		EventDef{ "fog", "FOG NIGHT", "FOG NIGHT - SOMETHING HUNTS IN THE MIST", "Skyrim.esm", 0x0C821E, 0.75f, 1.0f, 1, 1.0f, 1.0f, true, 0x2A2E3460, Sound::event_fog },
+		EventDef{ "ashstorm", "ASH STORM", "ASH STORM - THE DEAD RUN, DOUBLE POINTS", "Dragonborn.esm", 0x032336, 1.0f, 1.25f, 2, 1.0f, 1.0f, false, 0x5A341838, Sound::event_ash },
+		EventDef{ "champions", "NIGHT OF IRON", "NIGHT OF IRON - THE CHAMPIONS MARCH", "Skyrim.esm", 0x0C8220, 1.0f, 1.0f, 1, 4.0f, 2.0f, false, 0x40506030, Sound::event_champions },
+	} };
+	enum EventId : int { kEvent_bloodmoon = 0, kEvent_fog = 1, kEvent_ashstorm = 2, kEvent_champions = 3 };
+	struct CurseCity { std::string_view landmark; std::uint32_t location; std::uint32_t global; };
+	inline constexpr std::array<CurseCity, 10> kCurseCities{ {
+		CurseCity{ "the Sleeping Giant Inn", 0x013163, 0x98C },
+		CurseCity{ "the Gildergreen", 0x018A56, 0x98D },
+		CurseCity{ "the Blue Palace", 0x018A5A, 0x98E },
+		CurseCity{ "the Palace of the Kings", 0x018A57, 0x98F },
+		CurseCity{ "the Hall of the Dead", 0x018A59, 0x990 },
+		CurseCity{ "the Temple of Mara", 0x018A58, 0x991 },
+		CurseCity{ "the old graveyard", 0x018A49, 0x992 },
+		CurseCity{ "the edge of the marsh", 0x018A53, 0x993 },
+		CurseCity{ "the frozen harbour", 0x018A50, 0x994 },
+		CurseCity{ "the bridge to the College", 0x018A51, 0x995 },
+	} };
+	struct CurseStep { std::string_view id, title, goal, text; int target; };
+	inline constexpr std::array<CurseStep, 4> kCurseSteps{ {
+		CurseStep{ "tithe", "The Ashen Tithe", "Slay the risen within {city}", "The dead of {city} rise thickest near {landmark}, drawn to the Dirge like moths to a flame. Every one you put back in the ground loosens the curse's grip on the city. Slay {n} of the risen within {city}'s bounds.", 30 },
+		CurseStep{ "wards", "The Ward-Fires of {city}", "Light the ward-fires around the shrine", "Long ago the priests of {city} kept three ward-fires burning against the restless dead, until the Dirge snuffed them out. Three cold braziers now stand around your shrine. Stand by each one until it catches, and keep the dead off you while it does.", 3 },
+		CurseStep{ "herald", "The Herald in the Fog", "Slay the Herald of the Dirge", "Wounded, the Dirge calls its Herald: Grimmvar, the Undying Wyrm, who walks only in fog. The next night you face in {city}, the fog will roll in and the Herald will come for you. Slay it before dawn.", 1 },
+		CurseStep{ "dawn", "Dawn over {city}", "Hold the shrine of {city}", "The last root of the curse lies beneath {city}'s shrine. Stand your ground there while the night throws everything it has at you. Hold the shrine for {n} seconds and the root will break.", 180 },
+	} };
+	inline constexpr std::uint32_t kCurseIntroGlobal = 0x996;
+	inline constexpr std::string_view kCursePrologueTitle = "THE UNDYING DIRGE", kCursePrologue = "Helgen burned, and you lived. But as the World-Eater rose from the ash he sang a word older than the Thu'um: the Undying Dirge. Every grave in Skyrim heard it. Now when the sun goes down, the dead claw their way up to finish what he began. The Dirge has taken root in the cities of the holds. Break it, city by city, and their dead will sleep again.", kCurseLiftedBanner = "THE CURSE OVER {CITY} IS BROKEN", kCurseLiftedText = "The Dirge's root beneath {city} shatters. Its dead sleep again: no undead will rise within its bounds.", kCurseFreedAll = "Every city of Skyrim stands free of the Dirge. Its echo lingers only in the wild places, and it will not fall silent until the World-Eater does.";
+	inline constexpr float kCurseZone = 6500.0f, kCurseHoldRadius = 900.0f, kCurseWardRadius = 150.0f, kCurseWardSeconds = 5.0f, kCurseWardDistance = 650.0f, kCurseHeraldDelay = 20.0f;
+	inline constexpr std::uint32_t kWardBrazier = 0x997, kWardFire = 0x998, kWardLight = 0x999;
 }
