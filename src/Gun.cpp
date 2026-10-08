@@ -152,6 +152,10 @@ namespace bo3z
 			}
 			FireButton::func(g_abHandler, ev, g_abData);
 			RE::free(ev);
+			static int said = 0;
+			if (said++ < 4) {
+				logger::info("staff: native swing {} (Skyrim's staff cast plays with the shot)", a_value > 0 ? "down" : "up");
+			}
 		}
 
 		// The staff cast animation, in step with the shot: tap down now, let go 0.15 s later.
@@ -812,6 +816,9 @@ namespace bo3z
 				g_manaQuiet = 0;
 			}
 			Forms::Play(g.fireSnd);
+			if (static int said = 0; said++ < 3) {
+				logger::info("gun: {} cast sound {}", g.id, static_cast<int>(g.fireSnd));
+			}
 			FireOnce(g);
 			const float delay = g.fireDelayMs / 1000.0f * Perks::FireDelayMult();
 			if (g.fire == gen::Fire::Burst) {
