@@ -287,9 +287,6 @@ namespace bo3z
 			const std::uint32_t    own = kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : 0;
 			if (own) {  // their own fighting style: the Reaper's scythe, Grimmvar's raking claws, the Gloomstalker's quick slashes
 				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(own, gen::kPlugin)) {
-					if (actor->GetItemCount(w) <= 0) {
-						actor->AddObjectToContainer(w, nullptr, 1, nullptr);
-					}
 					RE::ActorEquipManager::GetSingleton()->EquipObject(actor, w);
 				}
 			} else if (kindRow.kind == 0 && !actor->GetEquippedObject(false)) {
