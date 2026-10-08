@@ -151,9 +151,8 @@ namespace bo3z
 			if (!ue || !player) {
 				return;
 			}
-			if (ev == ue->sneak && (player->AsActorState()->IsSprinting() || g_applied >= gen::kRunBoost + gen::kSprintBoost * 0.9f)) {
-				g_wantSlide = true;
-			} else if (ev == ue->jump && g_slide > 0) {
+			// (the slide is gone: crouch is Skyrim's crouch again)
+			if (ev == ue->jump && g_slide > 0) {
 				g_wantJumpCarry = true;
 			}
 		}

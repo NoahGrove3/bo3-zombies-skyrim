@@ -19,7 +19,7 @@ by city.
   Fog, Dawn over the city). A freed city is a sanctuary, and gives you its **relic**, one of ten wonder weapons.
   The lore is in a book in your pack.
 - **Power-ups**: Insta-Kill, Double Points, Nuke, Fire Sale.
-- **Faster movement**: quicker running, a sprint slide, jumps that keep your momentum, light air control.
+- **Faster movement**: quicker running, strafing as fast as running forward, jumps that keep your momentum, light air control.
 - Townsfolk and followers are safe from the night's magic; Skyrim's own enemies still fight you as normal.
 
 ## Controls
@@ -29,7 +29,6 @@ by city.
 | Left mouse | fire (hold and release for the charged move) |
 | Right mouse | aim |
 | V | quick knife |
-| Sprint + Crouch | slide |
 | E on a station | use it (Coffer, Brew Machine: 1-9 to pick, Reforge, Shrine of the Dirge) |
 
 ## Requirements
