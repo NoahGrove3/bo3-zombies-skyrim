@@ -8,6 +8,18 @@
 - One round per night, tally counter, 30-min day cycle (60/40), dawn despawn, night truce for NPCs, sprint OK on fresh character.
 - Station stand with sloped walkable skirt, map markers, clutter cleared from the footprint.
 
+## PLAN for when Noah is back home (saved 2026-10-08 19:00 ET)
+1. Re-link the PC; install UN-f408882.zip (boss/elite styles); refresh Party Pack + Melty zip.
+2. Co-op option 2: keep Skyrim Together for players; our own Steam networking (steam_api64 flat API: ISteamNetworkingMessages,
+   friends in Skyrim found via ISteamFriends) carrying host-authoritative zombies-game state: night/round/countdown, event
+   night (weather, mist, boss), power-up activations (Nuke etc. for all), Coffer town, curse globals/freed cities, boss HP.
+   Test with a friend (two PCs).
+3. Custom animated main menu in the cover-art style (blood moon, shrine, embers, fog drift). Options: replace the menu
+   background/logo meshes, or draw our own layer behind the Scaleform buttons (our Present hook already runs on the menu).
+4. Lobby in the menu: Host / Join buttons, Steam invites (ISteamMatchmaking lobby + invite overlay), so no Party.txt.
+5. Remove the "choose character" button at launch. Find out which component adds it (Skyrim Together's UI? the Melty
+   launcher?): ask Noah for a screenshot if unclear.
+
 ## Built 2026-10-08 22:36 (f408882, NOT installed: PC link dropped. Install UN-f408882.zip, refresh pack + Melty zip)
 - Boss / Gloomstalker: hidden weapons wyrm_claws (2H anim, speed 0.7, reach 1.9) / shadow_claws (dagger anim, 1.45) via CNTO + equip; no sword.
 - Hazards (Director): telegraphed ground bursts. Grimmvar: Grave Slam (power-attack windup), Grave Eruption line, Ash Fall when enraged. Gloomstalker: Umbral Pounce after lunge. Reaper: Chain Hook (420-1100).
