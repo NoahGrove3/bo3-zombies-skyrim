@@ -8,6 +8,13 @@
 - One round per night, tally counter, 30-min day cycle (60/40), dawn despawn, night truce for NPCs, sprint OK on fresh character.
 - Station stand with sloped walkable skirt, map markers, clutter cleared from the footprint.
 
+## Built 2026-10-08 20:48 (12e023b + brewmachine.nif rotated 180, installed, Melty zip + party pack refreshed, NOT yet seen in game)
+- Aim ray skips the player's collision group and anything within 140 of the camera (light shot burst at the feet: the ray hit the player).
+- Staff native swing: attack handler from PlayerControls (our input hook eats the press, so FireButton never saw one); tap held 0.35 s. Check log for "staff: native swing".
+- charge_up / charge_ready / mana_empty / cast_* in the dark kit.
+- Map icons for every town from the start (preview spot 2200 out, no fast travel until built); icons found in the worldspace persistent cell (no doubles); active Coffer town named on its icon.
+- One Coffer at a time: other towns' chests sleep; the dragon skull moves it to a random other town.
+
 ## Built 2026-10-07 afternoon (9dfaa60, installed, NOT yet seen in game)
 - Signature moves get their own motion: arm/wand poses per style (sheet weapons.chargeStyle: thrust, slam, sweep,
   twirl, raise, surge) applied after Skyrim's animation (PlayerCharacter::UpdateAnimation hook, upper arm bone);
