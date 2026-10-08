@@ -610,7 +610,7 @@ namespace bo3z
 				static C::time_point next = C::now();
 				static const bool fineTimer = (::timeBeginPeriod(1) == TIMERR_NOERROR);  // 1 ms sleeps
 				(void)fineTimer;
-				const auto frame = std::chrono::duration_cast<C::duration>(std::chrono::duration<double>(1.0 / gen::kFpsCap));
+				const auto frame = std::chrono::duration_cast<C::duration>(std::chrono::duration<double>(1.0 / std::max(1.0, static_cast<double>(gen::kFpsCap))));
 				auto now = C::now();
 				if (next > now) {
 					if (next - now > 2ms) {
