@@ -22,6 +22,26 @@
   adopted stands that fail it are rebuilt.
 - Dev: `hold <mouse id> <secs>` (fire = 0) holds the button for charge tests.
 
+## Built 2026-10-08 00:20 (69fdf39 + un_v10 assets, installed, NOT yet seen in game)
+- Reforge upright (assets.py forge: rotate 90 0 90, ground splash Mesh.003 skipped, fit 230).
+- Stations move OUT of towns: walled cities anchored on their main gate on the Tamriel side (Whiterun 01B1F1, Solitude
+  01C386, Windhelm 055FCB, Markarth 01C389, Riften 042286); search 900-3600 from the anchor; obstacles gathered once
+  (doors 900, buildings/walls/cliffs >450 + 550, clutter/trees +160), slope <= 30 for a perfect spot; in-town stands
+  from older saves fail adoption (crowding) and SweepOldStands clears our pieces in worldspaces/places no town owns.
+- Station = Nordic shrine (tools/stand.py): Whiterun textures by path, alcoves per machine with carved panels,
+  timber lintels, canopy on posts, steps, knotwork trim; collision via new modelconv `collidebox2`. Dressing:
+  WH fire braziers + fire FX + lights, urns, candle lanterns. Adopt overhead tolerance 440 (the wall is ~314 tall).
+- Staffs: native press/hold swallowed; on release (shot or move) a synthetic 0.15 s tap plays Skyrim's staff cast.
+  Charge pose = kStaffCharge (no spin); PoseWand removed.
+- Event nights (sheets/events.json, 25%): Blood Moon (DLC1Eclipse, x1.5), Fog Night (SkyrimFog, Grimmvar 20 s in),
+  Ash Storm (DLC02VolcanicAshStorm01, speed x1.25, points x2), Night of Iron (storm, champions x4, drops x2). HUD tint.
+- Nuke (was Kaboom): kills all but the boss, +400, no spawns for 20 s, white flash + HUD timer.
+- The Undying Dirge (sheets/curse.json, src/Curse.cpp): per city 4 night quests (tithe 30 kills / 3 ward-fires /
+  Herald = Grimmvar in fog / hold the station 180 s at double pressure); GLOB UN_Curse_<town> = step*1000+progress;
+  freed city = sanctuary (city location chain incl. interiors, or 6500 of its station). Lore scrolls on the HUD.
+- VERIFY: stand look + collision, braziers' fire FX, Reforge upright, new stand spots outside each city, staff swing on
+  release (no cast on press), event weather, ward-fire placement on open ground, Herald spawn, sanctuary crumble.
+
 ## Built 2026-10-07 20:50 (c2374f9 + un_v9_a/b/c assets, installed; graphics mods installed, launch via skse64_loader.exe)
 - Enemies: Iron Reaper (draugr skeleton, autorig.py + rigwrite, invisible 2H 'Reaper Scythe' for swings; reap sweep
   every 6.5 s in reach, enrage <35%) and Voidbound Necromancer (BretonRace, skin covers head/hands/feet, spells from
