@@ -438,6 +438,16 @@ namespace bo3z
 			return made[a_index];
 		}
 
+		int BlastIndex(std::string_view a_name)
+		{
+			for (std::size_t i = 0; i < gen::kBlasts.size(); ++i) {
+				if (gen::kBlasts[i].first == a_name) {
+					return static_cast<int>(i);
+				}
+			}
+			return -1;
+		}
+
 		void Blast(int a_expl, const RE::NiPoint3& a_at, float a_delay = 0.0f)
 		{
 			if (a_expl >= 0 && g_blasts.size() < 32) {
@@ -935,8 +945,8 @@ namespace bo3z
 				for (auto* f : InCone(aim, 2400.0f, 45.0f)) {
 					hit(f, 4.0f);
 					if (proc && !f->IsDead()) {
-						const float near = 1.0f - std::min(1.0f, f->GetPosition().GetDistance(aim.eye) / 2400.0f);
-						proc->KnockExplosion(f, f->GetPosition() - aim.dir * 150.0f, 8.0f + 10.0f * near);  // the closer, the farther they fly
+						const float closeness = 1.0f - std::min(1.0f, f->GetPosition().GetDistance(aim.eye) / 2400.0f);
+						proc->KnockExplosion(f, f->GetPosition() - aim.dir * 150.0f, 8.0f + 10.0f * closeness);  // the closer, the farther they fly
 					}
 				}
 				for (int k = 1; k <= 4; ++k) {
@@ -960,15 +970,6 @@ namespace bo3z
 			}
 		}
 
-		int BlastIndex(std::string_view a_name)
-		{
-			for (std::size_t i = 0; i < gen::kBlasts.size(); ++i) {
-				if (gen::kBlasts[i].first == a_name) {
-					return static_cast<int>(i);
-				}
-			}
-			return -1;
-		}
 
 		void TickMarks(float a_delta)
 		{
