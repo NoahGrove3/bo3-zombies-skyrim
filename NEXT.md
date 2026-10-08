@@ -8,6 +8,11 @@
 - One round per night, tally counter, 30-min day cycle (60/40), dawn despawn, night truce for NPCs, sprint OK on fresh character.
 - Station stand with sloped walkable skirt, map markers, clutter cleared from the footprint.
 
+## Built 2026-10-08 21:05 (f5a81e1, installed, Melty zip + pack refreshed, NOT yet seen in game)
+- Station icons hidden until the town's own map marker is discovered (kCanTravelTo); skull moves the Coffer only to discovered towns (stays if none).
+- Dais floor kStandLift 34 above ground (old stands lifted in place on adopt); ClearSite also clears the approach (front -420, sides +160).
+- Coffer scale 1.6 (show models rise with its scale).
+
 ## Built 2026-10-08 20:48 (12e023b + brewmachine.nif rotated 180, installed, Melty zip + party pack refreshed, NOT yet seen in game)
 - Aim ray skips the player's collision group and anything within 140 of the camera (light shot burst at the feet: the ray hit the player).
 - Staff native swing: attack handler from PlayerControls (our input hook eats the press, so FireButton never saw one); tap held 0.35 s. Check log for "staff: native swing".
