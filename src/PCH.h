@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cctype>
 #include <functional>
+#include <fstream>
 #include <map>
 #include <array>
 #include <atomic>

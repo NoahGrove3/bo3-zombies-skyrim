@@ -282,6 +282,9 @@ namespace bo3z
 					g_plagued.erase(it);
 				}
 				g_hexed.erase(tid);
+				if (Coop::Client() && ours) {
+					Curse::OnUndeadDeath(a_target);  // (the host's game prunes its own dead; here the kill is the count)
+				}
 			} else {
 				if (ours && !a_melee) {
 					Points::Add(gen::kPoints_hit);

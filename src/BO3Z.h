@@ -109,6 +109,15 @@ namespace bo3z
 		void             CrumbleNear(const RE::NiPoint3& a_at, float a_radius);  // a freed city: its undead fall
 	}
 
+	// Co-op with Skyrim Together (UndyingNights.ini: Role=host|client|solo)
+	namespace Coop
+	{
+		enum class Role { Solo, Host, Client };
+		Role Get();
+		bool Client();          // a friend's game: the host raises the dead
+		bool TogetherLoaded();  // Skyrim Together runs the clock
+	}
+
 	// The Undying Dirge (sheet: curse): four night quests per city; a freed city is a sanctuary.
 	namespace Curse
 	{

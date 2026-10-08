@@ -599,7 +599,7 @@ namespace bo3z
 			g_toSpawn = std::clamp(static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier / 3.0f)), 12, R.maxAlive);
 			g_spawnTimer = 0;
 			g_phase = Phase::Fighting;
-			if (const int row = BossRow(); row >= 0 && a_round >= gen::kEnemies[row].minRound && a_round % gen::kEnemies[row].bossEvery == 0) {
+			if (const int row = BossRow(); !Coop::Client() && row >= 0 && a_round >= gen::kEnemies[row].minRound && a_round % gen::kEnemies[row].bossEvery == 0) {
 				g_boss.spawnIn = gen::boss::spawnDelay;
 			}
 			{
@@ -610,6 +610,9 @@ namespace bo3z
 			g_event = -1;
 			if (!g_special && std::uniform_real_distribution<float>(0, 1)(g_rng) < gen::kEventChance) {
 				g_event = std::uniform_int_distribution<int>(0, static_cast<int>(gen::kEvents.size()) - 1)(g_rng);
+			}
+			if (Coop::Client()) {
+				g_event = -1;  // the host's game rolls the night
 			}
 			if (g_event >= 0) {
 				StartEvent(g_event);
@@ -1022,7 +1025,21 @@ namespace bo3z
 
 		float RoundHealth() { return HealthFor(std::max(1, g_current)); }
 		bool  IsElite(RE::Actor* a_actor) { return a_actor && g_elites.contains(a_actor->GetFormID()); }
-		bool IsRoundUndead(RE::Actor* a_actor) { return a_actor && g_ours.contains(a_actor->GetFormID()); }
+		bool IsRoundUndead(RE::Actor* a_actor)
+		{
+			if (!a_actor) {
+				return false;
+			}
+			if (g_ours.contains(a_actor->GetFormID())) {
+				return true;
+			}
+			if (Coop::Client()) {  // the host's undead, shown here by Skyrim Together
+				auto* base = a_actor->GetActorBase();
+				auto* file = base ? base->GetFile(0) : nullptr;
+				return file && file->GetFilename() == gen::kPlugin;
+			}
+			return false;
+		}
 		int  EnemyRow(RE::Actor* a_actor)
 		{
 			if (auto it = a_actor ? g_ours.find(a_actor->GetFormID()) : g_ours.end(); it != g_ours.end()) {
@@ -1040,7 +1057,7 @@ namespace bo3z
 		bool  BossAlive() { auto b = g_boss.handle.get(); return (b && !b->IsDead()) || g_boss.spawnIn > 0; }
 		void  CallHerald()
 		{
-			if (g_phase != Phase::Fighting || BossAlive()) {
+			if (g_phase != Phase::Fighting || BossAlive() || Coop::Client()) {
 				return;
 			}
 			const int fog = gen::kEvent_fog;
@@ -1213,7 +1230,9 @@ namespace bo3z
 		{
 			PowerUps::Tick(a_delta);
 			TickFx(a_delta);
-			TickClock(a_delta);
+			if (!Coop::TogetherLoaded()) {
+				TickClock(a_delta);  // with Skyrim Together the server's uTimeScale runs the clock (the party pack sets 48)
+			}
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			// Night regen: after a few seconds without taking damage, health surges back (nights only).
 			if (player) {
@@ -1231,7 +1250,9 @@ namespace bo3z
 				return;
 			}
 			TickPurge(a_delta);
-			SweepStrays(player, a_delta);
+			if (!Coop::Client()) {
+				SweepStrays(player, a_delta);  // (on a client every undead is the host's)
+			}
 			TickTruce(player, a_delta);
 			Prune();
 			{
@@ -1282,6 +1303,9 @@ namespace bo3z
 				TickFrenzy(player, a_delta);
 				TickBoss(player, a_delta);
 				TickElites(player, a_delta);
+				if (Coop::Client()) {
+					break;  // the host raises the dead; the night here is for counting and the HUD
+				}
 				if (Curse::SafeHere(player)) {
 					// a freed city: the dead cannot enter (any that followed you in fall where they stand)
 					if ((g_sanctuarySaid -= a_delta) <= 0 && !g_alive.empty()) {
