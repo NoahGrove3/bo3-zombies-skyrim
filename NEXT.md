@@ -8,6 +8,15 @@
 - One round per night, tally counter, 30-min day cycle (60/40), dawn despawn, night truce for NPCs, sprint OK on fresh character.
 - Station stand with sloped walkable skirt, map markers, clutter cleared from the footprint.
 
+## Built 2026-10-08 22:05 (0556f96 + UN-staffs-v12 re-textured staffs + brewmachine.nif, installed, Melty zip + pack refreshed, NOT yet seen in game)
+- Staffs: WEAP DNAM anim type 4 (one-handed mace grip) instead of 8 (staff: open-hand cast in 1st person); our jab/charge/thrust poses; no native swing.
+- Unlimited fps: Present SyncInterval 0, fMaxTime:HAVOK = frame time (1/300..1/30) every frame; movement.fps_cap 0.
+- Coffer staffs: own tap/charge blasts (new expl templates: poisongas, tentacle, daedraball, paralyze, icewraith, constellation, skybolt, turnundead; DLC ids as runtime 02/04). Arcane Lance = burst chain along the line.
+- Fog Night: FXMistLow* ring round the player (Director::TickMist), no HUD tint for fog.
+- staffs.py: seam-aware decimation (UV in the cluster key), cylindrical UVs for skymat parts, budget 40000.
+- HUD: weapon dock (active card + other slots, icons from tools/weaponicons.py -> assets/ui, copied by CI), power-up pills, points count-up.
+- Walled cities' map markers by id (they live in WhiterunWorld etc.).
+
 ## Built 2026-10-08 21:05 (f5a81e1, installed, Melty zip + pack refreshed, NOT yet seen in game)
 - Station icons hidden until the town's own map marker is discovered (kCanTravelTo); skull moves the Coffer only to discovered towns (stays if none).
 - Dais floor kStandLift 34 above ground (old stands lifted in place on adopt); ClearSite also clears the approach (front -420, sides +160).
