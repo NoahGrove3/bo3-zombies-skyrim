@@ -19,17 +19,17 @@
     },
     {
       "id": "cost1",
-      "value": 4000,
+      "value": 5000,
       "verify": []
     },
     {
       "id": "cost2",
-      "value": 6000,
+      "value": 8000,
       "verify": []
     },
     {
       "id": "cost3",
-      "value": 8000,
+      "value": 12000,
       "verify": []
     },
     {

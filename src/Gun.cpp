@@ -251,6 +251,11 @@ namespace bo3z
 			const auto  tid = a_target->GetFormID();
 			const float hexMult = g_hexed.contains(tid) ? 1.5f : 1.0f;
 			float       damage = a_bo3Damage * hexMult / gen::kRounds.hpScale;
+			if (!Director::IsRoundUndead(a_target)) {
+				// Skyrim's own enemies (bandits, draugr, dragons) are tuned to the player's level, not to the night: our
+				// weapons hit them like gear of your level would (half strength at level 1, full at 25, 1.5x at 50+).
+				damage *= std::clamp(0.5f + 0.02f * static_cast<float>(player->GetLevel()), 0.5f, 1.5f);
+			}
 			if (PowerUps::InstaKill() && Director::IsRoundUndead(a_target)) {
 				const int row = Director::EnemyRow(a_target);
 				if (row < 0 || gen::kEnemies[row].bossEvery == 0) {
@@ -819,10 +824,11 @@ namespace bo3z
 
 
 		// ================================================================ signature moves (hold, then release)
+		float g_unleashMult = 1.0f;  // Ascendant moves (Reforge level 3): 1.25 for the strike, 0.75 for its echo
+		int   ForgeLevel() { return SlotOf(CurrentGun()) >= 0 ? Save::GetSlot(SlotOf(CurrentGun())).level : 0; }
 		float BaseDamage(const gen::GunDef& g)
 		{
-			const int lvl = SlotOf(CurrentGun()) >= 0 ? Save::GetSlot(SlotOf(CurrentGun())).level : 0;
-			return g.damage * Perks::DamageMult() * CrewMult(0) * (1.0f + gen::kForgeStep * lvl);
+			return g.damage * Perks::DamageMult() * CrewMult(0) * (1.0f + gen::kForgeStep * ForgeLevel()) * g_unleashMult;
 		}
 
 		std::vector<RE::Actor*> Foes(const RE::NiPoint3& a_at, float a_radius)
@@ -880,7 +886,7 @@ namespace bo3z
 		}
 
 		// The signature move of each weapon (sheet: weapons.chargeName/chargeText).
-		void Unleash(int a_gun)
+		void Unleash(int a_gun, bool a_echo = false)
 		{
 			const auto& g = gen::kGuns[a_gun];
 			auto*       p = RE::PlayerCharacter::GetSingleton();
@@ -889,7 +895,9 @@ namespace bo3z
 			auto        hit = [&](RE::Actor* f, float a_mult) { if (!f->IsDead()) { Damage(f, base * a_mult, false, false); } };
 			const std::string_view id = g.id;
 			Forms::Play(g.chargeSnd);
-			Hud::Banner(std::string(g.chargeName), 1.2f);
+			if (!a_echo) {
+				Hud::Banner(std::string(g.chargeName) + (ForgeLevel() >= gen::kForgeMax ? "  -  ASCENDANT" : ""), 1.2f);
+			}
 			logger::info("charge: {} unleashes {}", g.id, g.chargeName);
 
 			if (id == "sidearm" || id == "apprentice" || id == "marksman") {  // lances: everything in the line
@@ -1249,6 +1257,23 @@ namespace bo3z
 			}
 		}
 
+		int   g_echoGun = -1;
+		float g_echoT = 0;
+		void TickEcho(float a_delta)
+		{
+			if (g_echoGun < 0 || (g_echoT -= a_delta) > 0) {
+				return;
+			}
+			const int gun = g_echoGun;
+			g_echoGun = -1;
+			if (gun != CurrentGun() || !GunOut()) {
+				return;
+			}
+			g_unleashMult = 0.75f;
+			Unleash(gun, true);
+			g_unleashMult = 1.0f;
+		}
+
 		bool TryUnleash(bool a_released)
 		{
 			const int gun = CurrentGun();
@@ -1270,9 +1295,16 @@ namespace bo3z
 				av->DamageActorValue(RE::ActorValue::kMagicka, cost);
 				g_manaQuiet = 0;
 			}
-			g_chargeCd = g.chargeCooldown;
+			const bool ascendant = ForgeLevel() >= gen::kForgeMax;
+			g_chargeCd = g.chargeCooldown * (ascendant ? 0.75f : 1.0f);
 			StartRelease(g);
+			g_unleashMult = ascendant ? 1.25f : 1.0f;
 			Unleash(gun);
+			g_unleashMult = 1.0f;
+			if (ascendant) {  // the echo: the same move again, a heartbeat later
+				g_echoGun = gun;
+				g_echoT = 0.7f;
+			}
 			{
 				const Aim aim = AimAt(std::min(g.range * 1.5f, 8000.0f));
 				Finale(g, aim.eye, aim.hit);
@@ -1749,7 +1781,11 @@ namespace bo3z
 			s.reserve = gen::kGuns[gun].reserve;
 			Save::SetSlot(slot, s);
 			logger::info("forge: {} -> level {}", gen::kGuns[gun].id, s.level);
-			Hud::Banner(std::string(gen::kGuns[gun].label) + " reforged  " + std::string(s.level, '|') + "  (+" + std::to_string(static_cast<int>(gen::kForgeStep * 100 * s.level)) + "% damage)", 4.0f);
+			if (s.level >= gen::kForgeMax) {
+				Hud::Banner(std::string(gen::kGuns[gun].label) + " ASCENDED  |||  " + std::string(gen::kGuns[gun].chargeName) + " now strikes twice", 5.0f);
+			} else {
+				Hud::Banner(std::string(gen::kGuns[gun].label) + " reforged  " + std::string(s.level, '|') + "  (+" + std::to_string(static_cast<int>(gen::kForgeStep * 100 * s.level)) + "% damage)", 4.0f);
+			}
 			return true;
 		}
 
@@ -1995,6 +2031,7 @@ namespace bo3z
 			g_charge = out && g_trigger ? g_charge + a_delta : 0.0f;
 			TickPose(a_delta);
 			TickSwing(a_delta);
+			TickEcho(a_delta);
 			TickBlasts(a_delta);
 			TickWells(a_delta);
 			TickTimeAndPrisms(a_delta);
@@ -2043,7 +2080,7 @@ namespace bo3z
 				const auto& gg = gen::kGuns[gun];
 				h.charge = g_charge > 0.2f ? std::min(1.0f, g_charge / gg.chargeSeconds) : 0.0f;
 				h.chargeCd = gg.chargeCooldown > 0 ? g_chargeCd / gg.chargeCooldown : 0.0f;
-				h.chargeName = std::string(gg.chargeName);
+				h.chargeName = std::string(gg.chargeName) + (ForgeLevel() >= gen::kForgeMax ? " ASCENDANT" : "");
 			}
 			h.points = Points::Get();
 			h.perks = Save::PerkBits();
