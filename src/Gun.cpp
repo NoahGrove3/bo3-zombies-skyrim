@@ -142,7 +142,18 @@ namespace bo3z
 
 		void SendFire(float a_value, float a_held)
 		{
+			if (auto* pc = RE::PlayerControls::GetSingleton(); pc && (!g_abHandler || !g_abData)) {
+				// our input handler takes the fire button before Skyrim's attack handler ever sees it, so the
+				// handler is fetched from the player controls (it never had a press to remember it by)
+				g_abHandler = reinterpret_cast<RE::PlayerInputHandler*>(pc->attackBlockHandler);
+				g_abData = &pc->data;
+			}
 			if (!g_abHandler || !g_abData) {
+				static bool warned = false;
+				if (!warned) {
+					warned = true;
+					logger::warn("staff: no attack handler for the native swing");
+				}
 				return;
 			}
 			auto* ue = RE::UserEvents::GetSingleton();
@@ -158,12 +169,13 @@ namespace bo3z
 			}
 		}
 
-		// The staff cast animation, in step with the shot: tap down now, let go 0.15 s later.
+		// The staff cast animation, in step with the shot: press now, let go 0.35 s later (long enough for Skyrim to
+		// commit to the staff cast).
 		void TickSwing(float a_delta)
 		{
 			if (g_swingUp >= 0.0f) {
-				if ((g_swingUp += a_delta) >= 0.15f) {
-					SendFire(0.0f, 0.15f);
+				if ((g_swingUp += a_delta) >= 0.35f) {
+					SendFire(0.0f, 0.35f);
 					g_swingUp = -1.0f;
 				}
 				return;
@@ -432,17 +444,32 @@ namespace bo3z
 			r.dir.Unitize();
 			r.hit = r.eye + r.dir * a_range;
 			if (auto* world = player->GetParentCell() ? player->GetParentCell()->GetbhkWorld() : nullptr) {
-				const float s = RE::bhkWorld::GetWorldScale();
-				RE::bhkPickData pick;
-				pick.rayInput.from = RE::hkVector4(r.eye * s);
-				pick.rayInput.to = RE::hkVector4(r.hit * s);
-				pick.rayInput.filterInfo.SetCollisionLayer(RE::COL_LAYER::kLOS);
-				{
-					RE::BSReadLockGuard lock(world->worldLock);
-					world->PickObject(pick);
-				}
-				if (pick.rayOutput.HasHit()) {
-					r.hit = r.eye + r.dir * (a_range * pick.rayOutput.hitFraction);
+				// The ray skips your own body and staff (your collision group), and starts a step out from the
+				// camera; a hit right in your face (your own capsule, the staff, a bush you stand in) is passed
+				// through, so a shot never bursts at your feet.
+				const float  s = RE::bhkWorld::GetWorldScale();
+				RE::CFilter  self{};
+				player->GetCollisionFilterInfo(self);
+				float        start = 25.0f;
+				for (int tries = 0; tries < 4 && start < a_range; ++tries) {
+					RE::bhkPickData pick;
+					pick.rayInput.from = RE::hkVector4((r.eye + r.dir * start) * s);
+					pick.rayInput.to = RE::hkVector4((r.eye + r.dir * a_range) * s);
+					pick.rayInput.filterInfo.SetSystemGroup(self.GetSystemGroup());
+					pick.rayInput.filterInfo.SetCollisionLayer(RE::COL_LAYER::kLOS);
+					{
+						RE::BSReadLockGuard lock(world->worldLock);
+						world->PickObject(pick);
+					}
+					if (!pick.rayOutput.HasHit()) {
+						break;
+					}
+					const float d = start + (a_range - start) * pick.rayOutput.hitFraction;
+					if (d >= 140.0f) {
+						r.hit = r.eye + r.dir * d;
+						break;
+					}
+					start = d + 15.0f;  // too close to be the target: look past it
 				}
 			}
 			return r;

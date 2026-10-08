@@ -144,7 +144,7 @@ namespace bo3z
 								d->SetScale(gen::kSkullScale);
 							}
 							Forms::PlayAt(gen::Sound::coffer_skull, chest.get());
-							Hud::Banner(std::string(gen::kText_box_joke) + " (" + std::string(gen::kTowns[g_show.cheeseTown]) + ")", 6.0f);
+							Hud::Banner(std::string(gen::kText_box_joke) + " It has gone to " + std::string(gen::kTowns[g_show.cheeseTown]) + ".", 6.0f);
 							g_show.phase = Show::Cheese;
 						} else {
 							ShowModel(Forms::Ours(gen::kShowStat[g_show.gun]), gen::kShowRise);
@@ -729,6 +729,60 @@ namespace bo3z
 			return nullptr;
 		}
 
+		// Our station icons from earlier sessions. Map markers are persistent, so they live in the worldspace's
+		// persistent cell wherever they stand: found there even when the town is far away and not loaded (a range
+		// search only sees loaded cells, and would make a new icon every session).
+		std::array<bool, gen::kTowns.size()> g_markerScanned{};
+		RE::TESObjectREFR* FindOurMarker(int a_town, RE::TESObjectREFR* a_anchor, RE::TESBoundObject* a_base)
+		{
+			auto* ws = a_anchor->GetWorldspace();
+			auto* cell = ws ? ws->persistentCell : nullptr;
+			if (!cell) {
+				return nullptr;
+			}
+			std::vector<RE::TESObjectREFR*> mine;
+			cell->ForEachReference([&](RE::TESObjectREFR* r) {
+				if (r && r->GetBaseObject() == a_base && (r->GetFormID() >> 24) == 0xFF && !r->IsDeleted() && !r->IsDisabled() &&
+					r->GetPosition().GetDistance(a_anchor->GetPosition()) < gen::kPlanSweep * 1.5f) {
+					mine.push_back(r);
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			if (mine.empty()) {
+				return nullptr;
+			}
+			// the one nearest the station (or the town), any doubles from older builds go
+			const RE::NiPoint3 want = g_towns[a_town].state == TownPlan::State::Ready ? g_towns[a_town].center : a_anchor->GetPosition();
+			std::sort(mine.begin(), mine.end(), [&](auto* x, auto* y) { return x->GetPosition().GetDistance(want) < y->GetPosition().GetDistance(want); });
+			for (std::size_t i = 1; i < mine.size(); ++i) {
+				mine[i]->Disable();
+				mine[i]->SetDelete(true);
+			}
+			if (mine.size() > 1) {
+				logger::info("shops: removed {} doubled map icons for {}", mine.size() - 1, gen::kTowns[a_town]);
+			}
+			return mine[0];
+		}
+
+		// Before a town's station is built (it is placed when you first come near), its icon stands out in the
+		// open on that town's side of the outskirts, clear of the city's own icon; it moves onto the station once
+		// the station is up.
+		RE::NiPoint3 PreviewSpot(int a_town, RE::TESObjectREFR* a_anchor)
+		{
+			const auto  p = a_anchor->GetPosition();
+			const float a = 2.4f + 0.63f * static_cast<float>(a_town);  // a different side for each town
+			return { p.x + std::cos(a) * 2200.0f, p.y + std::sin(a) * 2200.0f, p.z };
+		}
+
+		std::string MarkerName(int a_town)
+		{
+			std::string name = std::string(gen::kText_station_marker) + " - " + std::string(gen::kTowns[a_town]);
+			if (a_town == ActiveBoxTown()) {
+				name += " (" + std::string(gen::kText_box_short) + ")";
+			}
+			return name;
+		}
+
 		void EnsureMarker(RE::PlayerCharacter* a_player, int a_town)
 		{
 			auto* anchor = TownAnchor(a_town);
@@ -738,32 +792,28 @@ namespace bo3z
 			}
 			const auto& plan = g_towns[a_town];
 			const bool   ready = plan.state == TownPlan::State::Ready;
-			const RE::NiPoint3 at = ready ? plan.center : anchor->GetPosition();
+			const RE::NiPoint3 at = ready ? plan.center : PreviewSpot(a_town, anchor);
 			auto ref = g_markers[a_town].get();
-			if (!ref) {
-				// From an earlier session: a placed (0xFF) map marker near the town marker is ours.
-				RE::TES::GetSingleton()->ForEachReferenceInRange(anchor, gen::kPlanSweep * 1.5f, [&](RE::TESObjectREFR* r) {
-					if (r && r != anchor && r->GetBaseObject() == markerBase && (r->GetFormID() >> 24) == 0xFF && !r->IsDeleted()) {
-						ref = RE::NiPointer<RE::TESObjectREFR>(r);
-						return RE::BSContainer::ForEachResult::kStop;
-					}
-					return RE::BSContainer::ForEachResult::kContinue;
-				});
+			if (!ref && !g_markerScanned[a_town]) {
+				g_markerScanned[a_town] = true;
+				if (auto* r = FindOurMarker(a_town, anchor, markerBase)) {
+					ref = RE::NiPointer<RE::TESObjectREFR>(r);
+				}
 			}
 			if (!ref) {
-				if (!ready) {
-					return;  // no station here yet: no icon sitting on top of the city's own
-				}
 				ref = anchor->PlaceObjectAtMe(markerBase, true);
 				if (!ref) {
 					return;
 				}
+				ref->SetPosition(at);
 			}
 			g_markers[a_town] = ref->CreateRefHandle();
 			if (ready && ref->GetPosition().GetDistance(at) > 50.0f) {
-				ref->SetPosition(at);  // on the station (an icon from an earlier session stays where its station was)
+				ref->SetPosition(at);  // onto the station once it is built
 			}
-			if (!ref->extraList.GetByType<RE::ExtraMapMarker>()) {
+			const std::string name = MarkerName(a_town);
+			auto* x = ref->extraList.GetByType<RE::ExtraMapMarker>();
+			if (!x) {
 				auto* tmpl = TemplateMarkerData(a_player);
 				if (!tmpl) {
 					return;
@@ -771,15 +821,28 @@ namespace bo3z
 				// Clone a game-made marker record (keeps the engine's vtable), then give it our own name.
 				auto* data = static_cast<RE::MapMarkerData*>(RE::malloc(sizeof(RE::MapMarkerData)));
 				std::memcpy(static_cast<void*>(data), tmpl, sizeof(RE::MapMarkerData));
-				const std::string name = std::string(gen::kText_station_marker) + " - " + std::string(gen::kTowns[a_town]);
 				new (&data->locationName.fullName) RE::BSFixedString(name.c_str());
 				data->flags.reset(RE::MapMarkerData::Flag::kShowAllHidden);
-				data->flags.set(RE::MapMarkerData::Flag::kVisible, RE::MapMarkerData::Flag::kCanTravelTo);
+				data->flags.set(RE::MapMarkerData::Flag::kVisible);
 				data->type = RE::MARKER_TYPE::kShrine;
-				auto* x = RE::BSExtraData::Create<RE::ExtraMapMarker>();
+				x = RE::BSExtraData::Create<RE::ExtraMapMarker>();
 				x->mapData = data;
 				ref->extraList.Add(x);
-				logger::info("shops: map marker '{}' at ({:.0f},{:.0f})", name, at.x, at.y);
+				logger::info("shops: map marker '{}' at ({:.0f},{:.0f}){}", name, at.x, at.y, ready ? "" : " (until the station is built)");
+			} else if (x->mapData) {
+				if (std::string_view(x->mapData->locationName.fullName.c_str()) != name) {
+					x->mapData->locationName.fullName = name.c_str();  // the Coffer moved: the icon says where it is
+				}
+			}
+			if (auto* md = x->mapData) {
+				// seen on the map from the start; fast travel once the station is built (the preview spot has no
+				// known ground under it)
+				md->flags.set(RE::MapMarkerData::Flag::kVisible);
+				if (ready) {
+					md->flags.set(RE::MapMarkerData::Flag::kCanTravelTo);
+				} else {
+					md->flags.reset(RE::MapMarkerData::Flag::kCanTravelTo);
+				}
 			}
 			auto& list = a_player->GetPlayerRuntimeData().currentMapMarkers;
 			const auto handle = ref->CreateRefHandle();
@@ -934,6 +997,12 @@ namespace bo3z
 			}
 			const int town = TownOf(a_ref);
 			logger::info("box: activated in {} (Coffer is in {}), phase {}", gen::kTowns[town], gen::kTowns[ActiveBoxTown()], static_cast<int>(g_show.phase));
+			if (const auto towns = BoxTowns(); town != ActiveBoxTown() && std::find(towns.begin(), towns.end(), ActiveBoxTown()) != towns.end()) {
+				// one Coffer in all of Skyrim at a time: this chest sleeps until the skull sends it here
+				Forms::PlayAt(gen::Sound::coffer_skull, a_ref);
+				Hud::Banner(std::string(gen::kText_box) + " is in " + std::string(gen::kTowns[ActiveBoxTown()]) + ". This chest sleeps.", 3.5f);
+				return;
+			}
 			const int crew = Save::Crew();
 			const int cost = PowerUps::FireSale() ? 10 : crew >= 0 && gen::kCrew[crew].passive == 3 ? static_cast<int>(gen::kCrew[crew].value) : gen::kObjects[0].cost;
 			if (!Points::Spend(cost)) {
@@ -948,9 +1017,13 @@ namespace bo3z
 			// Cheese wheel (the Coffer gets bored): never in the first 4 spins at a spot, then 1 in 6. Points back.
 			if (spins > 4 && std::uniform_int_distribution<int>(1, 6)(g_rng) == 1) {
 				Points::Add(cost);
-				g_show.cheeseTown = town;  // every town's Coffer works: the dragon skull just resets this one's luck
+				// the dragon skull: the Coffer leaves for another town (its map icon follows)
+				auto towns = BoxTowns();
+				std::erase(towns, town);
+				g_show.cheeseTown = towns.empty() ? town : towns[std::uniform_int_distribution<std::size_t>(0, towns.size() - 1)(g_rng)];
 				g_show.cheese = true;
 				SetBox(g_show.cheeseTown, 0);
+				g_markerTimer = 0;  // rename the icons now
 				logger::info("box: cheese, moving to {}", gen::kTowns[g_show.cheeseTown]);
 				return;
 			}

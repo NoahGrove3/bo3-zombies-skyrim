@@ -608,6 +608,23 @@ def u_plague():  return _boom(_lay(lpb(_bubbles(1.4, 50, 9), 1000) * 1.3, _whisp
 def u_venom():   return _boom(_lay(lpb(_bubbles(1.2, 40, 5), 1000) * 1.2, bp(noise(int(1.2 * SR)), 800, 3000) * expdec(int(1.2 * SR), 0.4)), 400, 3000)
 def u_nature():  return _boom(_lay(_pluck(55, 1.2) * 0.9, _crackle(1.0, 0.98, 300, 2000, 11) * 1.2, _choir_low(['G2', 'D3'], 1.2, 'o') * 0.4), 300, 2500)
 
+# charging and the generic casts, in the dark kit too (no rising sci-fi hum, no ping)
+def charge_up():    # power gathering in the staff: a breath drawn in, stone groaning, a low choir swelling
+    d = 1.1; n = int(d * SR); ramp = np.linspace(0.15, 1, n) ** 1.5
+    breath = _whoom(d, 120, 1400, 0.6)[::-1] * 1.1
+    groan = _growl(48, d, 0.25) * ramp * 0.6
+    choir_ = _choir_low(['D2', 'A2'], d, 'u', 0.5) * ramp * 0.5
+    return _dark(_lay(breath, groan, choir_, _rumble(d, 34) * ramp * 0.5), 2600, .45, 2.6)
+def charge_ready(): # full: a deep struck-stone toll, the power settling in the wood
+    return _dark(_lay(_ring(98, 1.4, 0.7) * 0.8, _thud(70, 30, 0.6) * 0.9, _choir_low(['D2', 'A2', 'D3'], 1.0, 'o', 0.6) * 0.4), 3200, .5, 2.8)
+def mana_empty():   # the staff gutters: a dry hiss and a dull knock
+    n = int(0.4 * SR)
+    return _dark(_lay(lpb(noise(n), 1800) * env(n, 0.005, 0.05, 0.3, 0.3) * 0.7, _thud(110, 50, 0.25) * 0.6), 2500, .25, 1.2)
+def cast_light():   return e_arcane()
+def cast_rapid():   return _dark(_lay(_whoom(0.25, 200, 2200, 0.01), _thud(100, 44, 0.2) * 0.7), 4500, .2, 1.2)
+def cast_scatter(): return _dark(_lay(_whoom(0.5, 150, 2000), _crackle(0.4, 0.985, 400, 2500, 7) * 1.1, _thud(85, 32, 0.4)), 4500)
+def cast_heavy():   return _dark(_lay(_whoom(0.9, 100, 1800) * 1.2, _choir_low(['E2', 'B2', 'E3'], 0.9, 'u', 0.6) * 0.5, _thud(70, 28, 0.6) * 1.1), 3500, .5, 3.0)
+
 def powerup_spawn():  # a shimmering bell as it drops
     return hall(norm(_lay(_fm(1568, 1568, 2.0, 2, 0.8, 0.4) * 0.6, _fm(2349, 2349, 3.0, 1.5, 0.8, 0.35) * 0.4, _sparkle(0.8, 3000, 14) * 0.5), 0.7), 0.4, 2.0)
 def powerup_grab():   # bright rising arpeggio

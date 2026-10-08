@@ -124,7 +124,7 @@ def brewmachine():
     dif = save_dds(load(T('Base_color'), 2048), 'brewmachine/brewmachine_d.dds')
     nrm = save_dds(normal_with_spec(T('Normal_DirectX'), T('Roughness'), 2048, flip_green=True), 'brewmachine/brewmachine_n.dds', alpha=True)
     gl = save_dds(load(T('Emissive'), 2048), 'brewmachine/brewmachine_g.dds')
-    run_job([f'in {d}/source/vendingmachine1.fbx', f'out {mesh_out("brewmachine/brewmachine.nif")}', 'fit 160', 'rotate 90 0 0', 'ground 1', 'collide 1',
+    run_job([f'in {d}/source/vendingmachine1.fbx', f'out {mesh_out("brewmachine/brewmachine.nif")}', 'fit 160', 'rotate 90 0 180', 'ground 1', 'collide 1',
              f'mat * diffuse={dif} normal={nrm} glow={gl} emit=1,0.85,0.6 emitmult=1.5 spec=0.6 gloss=80'])
 
 # ---------------------------------------------------------------- Atronach Reforge (the magic gate)
