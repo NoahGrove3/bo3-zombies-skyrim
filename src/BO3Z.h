@@ -238,6 +238,12 @@ namespace bo3z
 			float       nukeLeft{ 0 }, nukeFlash{ 0 };
 			std::string questNote;        // quest news in the tracker
 			float       questNoteTime{ 0 };
+			// weapon slots (2, or 3 with the brew): the weapon in each (gen::kGuns index, -1 empty), its Reforge level
+			int                slotCount{ 2 };
+			std::array<int, 3> slotGun{ -1, -1, -1 };
+			std::array<int, 3> slotLevel{ 0, 0, 0 };
+			int                activeSlot{ -1 };
+			int                gunIndex{ -1 };
 		};
 		State&      Edit();
 		std::mutex& Lock();

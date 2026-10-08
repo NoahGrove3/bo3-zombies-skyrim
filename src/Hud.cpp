@@ -19,6 +19,7 @@ namespace bo3z
 		ID3D11DeviceContext* g_context = nullptr;
 		ImFont*              g_font = nullptr;
 		std::array<ID3D11ShaderResourceView*, gen::kPerks.size()> g_perkIcons{};
+		std::array<ID3D11ShaderResourceView*, gen::kGuns.size()>  g_weaponIcons{};
 		auto                 g_last = std::chrono::steady_clock::now();
 
 		ImU32 Col(std::uint32_t a_rgba, float a_alpha = 1.0f)
@@ -140,7 +141,8 @@ namespace bo3z
 			}
 
 			// Event nights colour the screen: a red haze under the Blood Moon, grey murk on a Fog Night, ash, iron.
-			if (s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size())) {
+			// (Fog Night has no screen tint: its fog is real ground mist in the world, Director::TickMist.)
+			if (s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size()) && s.nightEvent != gen::kEvent_fog) {
 				const auto  t = gen::kEvents[s.nightEvent].tint;
 				const int   r = (t >> 24) & 0xFF, g = (t >> 16) & 0xFF, b = (t >> 8) & 0xFF, a = t & 0xFF;
 				const bool  fog = s.nightEvent == gen::kEvent_fog;
@@ -202,7 +204,11 @@ namespace bo3z
 				const ImVec2 a{ 40 * k, size.y - 196 * k }, b{ 300 * k, size.y - 132 * k };
 				Panel(dl, a, b, k);
 				Txt(dl, g_body, 15 * k, { a.x + 14 * k, a.y + 7 * k }, Fade(kGold, 0.9f), "SEPTIMS OF THE DEAD");
-				Txt(dl, g_num, 34 * k, { a.x + 14 * k, a.y + 22 * k }, kParch, std::to_string(s.points));
+				static float shownPts = 0;
+				shownPts += (s.points - shownPts) * std::min(1.0f, dt * 9.0f);
+				if (std::abs(s.points - shownPts) < 1.0f) shownPts = static_cast<float>(s.points);
+				const bool rising = shownPts < s.points - 0.5f;
+				Txt(dl, g_num, 34 * k, { a.x + 14 * k, a.y + 22 * k }, rising ? IM_COL32(255, 228, 150, 255) : kParch, std::to_string(static_cast<int>(std::lround(shownPts))), rising ? 2 * k : 0, IM_COL32(255, 200, 80, 255));
 				if (s.crew >= 0 && s.crew < static_cast<int>(gen::kCrew.size())) {
 					const std::string c(gen::kCrew[s.crew].label);
 					Txt(dl, g_body, 16 * k, { b.x - Measure(g_body, 16 * k, c).x - 14 * k, a.y + 34 * k }, IM_COL32(190, 190, 190, 220), c);
@@ -247,40 +253,99 @@ namespace bo3z
 				}
 			}
 
-			// Weapon panel, bottom-right.
-			if (s.gunOut) {
-				const ImVec2 a{ size.x - 360 * k, size.y - 196 * k }, b{ size.x - 40 * k, size.y - 120 * k };
-				Panel(dl, a, b, k);
-				{
-					const auto  c = gen::kForgeColor[std::clamp(s.gunLevel, 0, 3)];
-					const ImU32 nameCol = IM_COL32((c >> 24) & 0xFF, (c >> 16) & 0xFF, (c >> 8) & 0xFF, 255);
-					Txt(dl, g_title, 20 * k, { a.x + 14 * k, a.y + 8 * k }, nameCol, s.gunName, s.gunLevel > 0 ? 2 * k : 0, nameCol);
-					// tally marks: one stroke per reforge level
-					const float tx = a.x + 20 * k + Measure(g_title, 20 * k, s.gunName).x;
-					for (int i = 0; i < s.gunLevel; ++i) {
-						dl->AddLine({ tx + i * 9 * k, a.y + 12 * k }, { tx + i * 9 * k + 2 * k, a.y + 30 * k }, nameCol, 3 * k);
-					}
+			// Weapon dock, bottom-right: the weapon in hand as a large card (its picture, Reforge marks, ability and
+			// signature move), the other slots as small cards above it with their keys. Dimmed while sheathed.
+			{
+				const bool any = std::any_of(s.slotGun.begin(), s.slotGun.begin() + std::clamp(s.slotCount, 0, 3), [](int g) { return g >= 0; });
+				static float shown = 0, swap = 0;
+				static int   lastActive = -2;
+				shown += ((s.gunOut ? 1.0f : 0.55f) - shown) * std::min(1.0f, dt * 8);
+				if (s.activeSlot != lastActive) {
+					swap = lastActive == -2 ? 0.0f : 1.0f, lastActive = s.activeSlot;
 				}
-				{
-					const ImU32 el = IM_COL32((s.gunColor >> 16) & 0xFF, (s.gunColor >> 8) & 0xFF, s.gunColor & 0xFF, 255);
-					// element pip + ability under the name
-					dl->AddCircleFilled({ a.x + 22 * k, b.y - 22 * k }, 6 * k, el);
-					dl->AddCircle({ a.x + 22 * k, b.y - 22 * k }, 9 * k + 2 * k * std::sin(now * 3), Fade(el, 0.5f), 0, 1.5f * k);
-					Txt(dl, g_body, 16 * k, { a.x + 36 * k, b.y - 32 * k }, IM_COL32(200, 195, 185, 255), s.gunElement);
-					if (s.gunKind == 0 || s.gunKind == 3) {  // staffs and bows never run dry
-						// wands never run dry: a big infinity sign
-						const std::string inf = "\xE2\x88\x9E";
-						const auto        is = Measure(g_num, 44 * k, inf);
-						Txt(dl, g_num, 44 * k, { b.x - 18 * k - is.x, b.y - 56 * k }, IM_COL32(250, 250, 250, 255), inf);
+				swap = std::max(0.0f, swap - dt * 3.5f);
+				const int act = s.activeSlot >= 0 && s.activeSlot < s.slotCount ? s.activeSlot : -1;
+				const int ag = act >= 0 ? s.slotGun[act] : -1;
+				if (any) {
+					const float al = shown;
+					const ImVec2 a{ size.x - 470 * k, size.y - 218 * k + swap * 18 * k }, b{ size.x - 40 * k, size.y - 92 * k + swap * 18 * k };
+					const std::uint32_t ec = ag >= 0 ? gen::kGuns[ag].color : 0xB0A890;
+					const ImU32 el = IM_COL32((ec >> 16) & 0xFF, (ec >> 8) & 0xFF, ec & 0xFF, 255);
+					Panel(dl, a, b, k, al);
+					// the element's light washing in from the left edge
+					dl->AddRectFilledMultiColor({ a.x + 1 * k, a.y + 1 * k }, { a.x + 190 * k, b.y - 1 * k }, Fade(el, 0.20f * al), Fade(el, 0.0f), Fade(el, 0.0f), Fade(el, 0.28f * al));
+					dl->AddRectFilled({ a.x, a.y }, { a.x + 4 * k, b.y }, Fade(el, al));
+					if (ag >= 0) {
+						const auto& g = gen::kGuns[ag];
+						const int   lvl = std::clamp(s.slotLevel[act], 0, 3);
+						if (auto* icon = g_weaponIcons[ag]) {
+							const float iw = 250 * k, ih = iw * 192.0f / 512.0f, bob = 2 * k * std::sin(now * 1.6f);
+							dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { b.x - iw - 8 * k, a.y - 30 * k + bob }, { b.x - 8 * k, a.y - 30 * k + ih + bob }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * al)));
+						}
+						const auto  fc = gen::kForgeColor[lvl];
+						const ImU32 nameCol = lvl > 0 ? IM_COL32((fc >> 24) & 0xFF, (fc >> 16) & 0xFF, (fc >> 8) & 0xFF, 255) : kParch;
+						Txt(dl, g_title, 24 * k, { a.x + 18 * k, a.y + 40 * k }, Fade(nameCol, al), std::string(g.label), lvl > 0 ? 2 * k : 0, nameCol);
+						// Reforge marks: three diamonds, lit by level; ASCENDANT at the top
+						float dx = a.x + 22 * k;
+						const float dy = a.y + 80 * k;
+						for (int i = 0; i < 3; ++i) {
+							const bool on = i < lvl;
+							const ImVec2 c{ dx + i * 18 * k, dy };
+							dl->AddQuadFilled({ c.x, c.y - 6 * k }, { c.x + 6 * k, c.y }, { c.x, c.y + 6 * k }, { c.x - 6 * k, c.y }, on ? Fade(nameCol, al) : IM_COL32(60, 56, 50, static_cast<int>(200 * al)));
+							dl->AddQuad({ c.x, c.y - 6 * k }, { c.x + 6 * k, c.y }, { c.x, c.y + 6 * k }, { c.x - 6 * k, c.y }, Fade(kGoldDim, al), 1.0f * k);
+						}
+						Txt(dl, g_body, 14 * k, { dx + 60 * k, dy - 9 * k }, Fade(IM_COL32(200, 190, 170, 255), al), lvl >= 3 ? "ASCENDANT" : lvl > 0 ? "REFORGED " + std::string(lvl == 1 ? "I" : "II") : "UNFORGED");
+						// ability and signature move
+						Txt(dl, g_body, 15 * k, { a.x + 18 * k, a.y + 92 * k }, Fade(IM_COL32(205, 198, 182, 255), al), std::string(g.abilityText));
+						dl->AddCircleFilled({ a.x + 24 * k, b.y - 13 * k }, 4 * k, Fade(el, al));
+						Txt(dl, g_body, 15 * k, { a.x + 34 * k, b.y - 23 * k }, Fade(el, al), "HOLD  " + std::string(g.chargeName) + (lvl >= 3 ? "  -  ASCENDANT" : ""));
+						// what it runs on, right
+						if (s.gunKind == 0 || s.gunKind == 3 || !s.gunOut) {
+							const std::string inf = "\xE2\x88\x9E";
+							const auto        is = Measure(g_num, 40 * k, inf);
+							Txt(dl, g_num, 40 * k, { b.x - 18 * k - is.x, b.y - 56 * k }, Fade(IM_COL32(250, 246, 236, 255), al), inf);
+						} else {
+							const bool        can = s.mp >= s.manaCost;
+							const std::string cost = std::to_string(static_cast<int>(std::ceil(s.manaCost)));
+							const auto        cs = Measure(g_num, 34 * k, cost);
+							Txt(dl, g_num, 34 * k, { b.x - 64 * k - cs.x, b.y - 52 * k }, can ? IM_COL32(150, 190, 255, 255) : IM_COL32(230, 60, 50, 255), cost);
+							Txt(dl, g_body, 15 * k, { b.x - 58 * k, b.y - 40 * k }, IM_COL32(150, 170, 210, 255), "mana");
+						}
 					} else {
-						// tomes/grimoires: magicka per cast, red when you can't afford it
-						const bool        can = s.mp >= s.manaCost;
-						const std::string cost = std::to_string(static_cast<int>(std::ceil(s.manaCost)));
-						const auto        cs = Measure(g_num, 36 * k, cost);
-						Txt(dl, g_num, 36 * k, { b.x - 64 * k - cs.x, b.y - 52 * k }, can ? IM_COL32(150, 190, 255, 255) : IM_COL32(230, 60, 50, 255), cost);
-						Txt(dl, g_body, 15 * k, { b.x - 58 * k, b.y - 40 * k }, IM_COL32(150, 170, 210, 255), "mana");
+						Txt(dl, g_title, 22 * k, { a.x + 18 * k, a.y + 48 * k }, Fade(IM_COL32(150, 145, 135, 255), al), "Empty hands");
+					}
+					Txt(dl, g_num, 15 * k, { a.x + 18 * k, a.y + 10 * k }, Fade(kGold, 0.85f * al), "SLOT " + std::to_string(act + 1));
+					// the other slots, small, stacked above; G cycles
+					float y = a.y - 12 * k;
+					for (int i = s.slotCount - 1; i >= 0; --i) {
+						if (i == act) {
+							continue;
+						}
+						const ImVec2 c0{ b.x - 300 * k, y - 50 * k }, c1{ b.x, y };
+						y -= 58 * k;
+						Panel(dl, c0, c1, k, 0.7f * al);
+						const int og = s.slotGun[i];
+						Txt(dl, g_num, 14 * k, { c0.x + 10 * k, c0.y + 6 * k }, Fade(kGoldDim, al), std::to_string(i + 1));
+						if (og >= 0) {
+							if (auto* icon = g_weaponIcons[og]) {
+								const float iw = 120 * k, ih = iw * 192.0f / 512.0f;
+								dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { c1.x - iw - 4 * k, c0.y + (50 * k - ih) / 2 }, { c1.x - 4 * k, c0.y + (50 * k + ih) / 2 }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(200 * al)));
+							}
+							const int   ol = std::clamp(s.slotLevel[i], 0, 3);
+							const auto  fc = gen::kForgeColor[ol];
+							const ImU32 nc = ol > 0 ? IM_COL32((fc >> 24) & 0xFF, (fc >> 16) & 0xFF, (fc >> 8) & 0xFF, 255) : IM_COL32(210, 202, 186, 255);
+							Txt(dl, g_title, 16 * k, { c0.x + 30 * k, c0.y + 14 * k }, Fade(nc, 0.9f * al), std::string(gen::kGuns[og].label));
+						} else {
+							Txt(dl, g_body, 15 * k, { c0.x + 30 * k, c0.y + 15 * k }, Fade(IM_COL32(140, 136, 128, 255), al), "empty - a staff or bow from the Coffer");
+						}
+					}
+					if (s.slotCount > 1) {
+						const std::string hint = "G  next weapon";
+						Txt(dl, g_body, 13 * k, { b.x - Measure(g_body, 13 * k, hint).x, b.y + 6 * k }, Fade(IM_COL32(180, 172, 156, 200), al), hint);
 					}
 				}
+			}
+			if (s.gunOut) {
 				// power-ups running (BO3 style, bottom centre): name and seconds left, blinking near the end
 				{
 					struct PU { const char* name; float t; ImU32 col; } pus[] = { { "INSTA-KILL", s.puInsta, IM_COL32(255, 70, 60, 255) },
@@ -290,10 +355,17 @@ namespace bo3z
 						if (pu.t <= 0 || (pu.t < 5 && std::fmod(now, 0.5f) < 0.2f)) {
 							continue;
 						}
-						const std::string txt = std::string(pu.name) + "  " + std::to_string(static_cast<int>(std::ceil(pu.t)));
-						const auto        ts = Measure(g_body, 22 * k, txt);
-						Txt(dl, g_body, 22 * k, { size.x * 0.5f - ts.x * 0.5f, y }, pu.col, txt);
-						y -= 28 * k;
+						// a dark pill in the power-up's colour, its seconds draining along the bottom
+						const std::string txt = pu.name;
+						const std::string sec = std::to_string(static_cast<int>(std::ceil(pu.t)));
+						const auto        ts = Measure(g_title, 20 * k, txt);
+						const float       w = ts.x + 90 * k, x0 = size.x * 0.5f - w * 0.5f;
+						dl->AddRectFilled({ x0, y - 4 * k }, { x0 + w, y + 30 * k }, IM_COL32(8, 8, 10, 190), 15 * k);
+						dl->AddRect({ x0, y - 4 * k }, { x0 + w, y + 30 * k }, Fade(pu.col, 0.8f), 15 * k, 0, 1.5f * k);
+						dl->AddRectFilled({ x0 + 14 * k, y + 25 * k }, { x0 + 14 * k + (w - 28 * k) * std::clamp(pu.t / 30.0f, 0.0f, 1.0f), y + 27 * k }, pu.col);
+						Txt(dl, g_title, 20 * k, { x0 + 18 * k, y }, pu.col, txt, 1.5f * k, pu.col);
+						Txt(dl, g_num, 20 * k, { x0 + w - 18 * k - Measure(g_num, 20 * k, sec).x, y }, kParch, sec);
+						y -= 40 * k;
 					}
 				}
 				// signature move: a ring fills round the crosshair while you hold fire; gold and pulsing when ready
@@ -500,8 +572,15 @@ namespace bo3z
 					++icons;
 				}
 			}
+			int wicons = 0;
+			for (std::size_t i = 0; i < gen::kGuns.size(); ++i) {
+				const auto path = L"Data\\Interface\\UndyingNights\\w_" + std::wstring(gen::kGuns[i].id.begin(), gen::kGuns[i].id.end()) + L".png";
+				if (SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, path.c_str(), nullptr, &g_weaponIcons[i]))) {
+					++wicons;
+				}
+			}
 			g_init = true;
-			logger::info("hud: ready ({} perk icons)", icons);
+			logger::info("hud: ready ({} perk icons, {} weapon icons)", icons, wicons);
 			return true;
 		}
 

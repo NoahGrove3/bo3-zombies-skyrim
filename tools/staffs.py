@@ -19,7 +19,7 @@ OUT = pathlib.Path(sys.argv[2] if len(sys.argv) > 2 else ROOT / 'build' / 'asset
 CONV = '/home/claude/tools/modelconv'
 LENGTH = 132.0          # Skyrim units, foot to crown (vanilla staves run 115-125)
 GRIP = 0.40             # grip point, share of the height from the foot
-BUDGET = 9000           # triangles per material group at most
+BUDGET = 40000          # triangles per material group at most (decimating smears the UVs: only for very dense parts)
 
 # material roles per base model (material index in mats.txt -> role)
 SRC2 = pathlib.Path('/home/claude/work/staffs2')   # 'magic staffs basic bundle' (objexp of MagicalStaffsSet1.fbx)
@@ -91,7 +91,8 @@ def decimate(V, T, F, budget):
     for div in (400, 300, 220, 160, 120, 90, 70, 50):
         cell = diag / div
         key = np.floor((V - V.min(0)) / cell).astype(np.int64)
-        k = key[:, 0] * 73856093 ^ key[:, 1] * 19349663 ^ key[:, 2] * 83492791
+        tk = np.floor(T * 64).astype(np.int64)   # never merge across a UV seam (that stretches the texture)
+        k = key[:, 0] * 73856093 ^ key[:, 1] * 19349663 ^ key[:, 2] * 83492791 ^ tk[:, 0] * 2654435761 ^ tk[:, 1] * 40503
         uniq, inv = np.unique(k, return_inverse=True)
         cnt = np.bincount(inv)
         NV = np.stack([np.bincount(inv, V[:, j]) / cnt for j in range(3)], 1)
@@ -113,7 +114,8 @@ def save_dds(im, rel, alpha=False, size=None):
 
 def tinted(tex, col, keep=0.35):
     """recolour a texture toward col, keeping its light/dark detail"""
-    im = np.asarray(Image.open(tex).convert('RGB').resize((1024, 1024), Image.LANCZOS), np.float32) / 255
+    src_im = Image.open(tex).convert('RGB'); n_ = 2048 if min(src_im.size) >= 2048 else 1024
+    im = np.asarray(src_im.resize((n_, n_), Image.LANCZOS), np.float32) / 255
     lum = im @ np.array([0.3, 0.59, 0.11], np.float32)
     lum = lum / max(1e-3, lum.mean())
     c = np.array(col, np.float32) / 255
@@ -171,6 +173,27 @@ def sphere(cx, cy, cz, r, seg=16):
             a = i * (seg + 1) + j; b = a + seg + 1
             F += [(a, b, a + 1), (a + 1, b, b + 1)]
     return np.array(V), np.array(T), np.array(F)
+
+def cyl_uv(v, f, tile_v=24.0):
+    """Even texel density for the procedural Skyrim materials: wrap the texture round the staff (u = angle, one
+    repeat per turn) and run it along the staff (v = height / tile_v), so grain follows the shaft and nothing is
+    stretched by the source model's atlas UVs. Triangles across the wrap seam get their own vertex copies."""
+    u = (np.arctan2(v[:, 2], v[:, 0]) / (2 * math.pi)) % 1.0
+    t = np.stack([u, v[:, 1] / tile_v], 1)
+    V2, T2, F2 = list(v), list(t), []
+    for tri in f:
+        us = t[tri, 0]
+        if us.max() - us.min() > 0.5:
+            nt = []
+            for i in tri:
+                if t[i, 0] < 0.5:
+                    V2.append(v[i]); T2.append((t[i, 0] + 1.0, t[i, 1])); nt.append(len(V2) - 1)
+                else:
+                    nt.append(i)
+            F2.append(nt)
+        else:
+            F2.append(list(tri))
+    return np.array(V2), np.array(T2), np.array(F2)
 
 def merge(parts):
     V, T, F = [], [], []; o = 0
@@ -249,6 +272,13 @@ def build(sid):
     flat_n = save_dds(Image.new('RGBA', (64, 64), (128, 128, 255, 140)), 'flat_n.dds', alpha=True)
     glow_hex = tuple(int(c * 255) for c in glow)
     job_mats = []
+    for gname, (role, mi, v, t, f) in list(out_groups.items()):
+        spec_ = cols.get(role, ('wood', None))
+        kind_ = spec_[0] if isinstance(spec_[0], str) else 'tex'
+        procedural = role not in ('glow', 'glow_add', 'core') and role not in GLOWING and not (kind_ == 'tex' and mats.get(mi, (None,))[0] is not None)
+        if procedural:
+            v, t, f = cyl_uv(v, f)
+            out_groups[gname] = (role, mi, v, t, f)
     for gname, (role, mi, v, t, f) in out_groups.items():
         lines += [f'o {gname}', f'usemtl {gname}']
         lines += [f'v {x:.4f} {y:.4f} {z:.4f}' for x, y, z in v]
@@ -274,13 +304,13 @@ def build(sid):
             kind, tint = spec_ if isinstance(spec_[0], str) else ('tex', spec_)
             if kind == 'tex' and tex is not None:
                 im = tinted(tex, tint)
-                d = save_dds(im, f'{sid}_{gname}_d.dds', size=1024)
+                d = save_dds(im, f'{sid}_{gname}_d.dds')
                 n = save_dds(Image.open(nrm).convert('RGBA'), f'{base}_{mi}_n.dds', alpha=True, size=1024) if nrm is not None else \
                     save_dds(skymat.make('wood', tint, seed=mi)[1], f'{sid}_{gname}_n.dds', alpha=True)
                 spec, gloss = 0.4, 40
             else:
                 kind = 'wood' if kind == 'tex' else kind
-                dif, nm = skymat.make(kind, tint, seed=len(sid) * 31 + max(mi, 0))
+                dif, nm = skymat.make(kind, tint, seed=len(sid) * 31 + max(mi, 0), size=1024)
                 d = save_dds(dif, f'{sid}_{gname}_d.dds'); n = save_dds(nm, f'{sid}_{gname}_n.dds', alpha=True)
                 spec, gloss = {'iron': (1.2, 60), 'steel': (1.6, 90), 'bronze': (1.4, 70), 'gold': (1.8, 90), 'silver': (1.8, 100),
                                'leather': (0.4, 30), 'wood': (0.4, 30), 'wood_dark': (0.45, 35), 'vines': (0.3, 25), 'bone': (0.5, 30)}.get(kind, (0.5, 40))

@@ -561,6 +561,73 @@ namespace bo3z
 			std::erase_if(g_fx, [](const auto& e) { return e.second <= 0; });
 		}
 
+		// Fog Night's ground mist: Skyrim's own low mist (the swirling marsh fog of the Hjaalmarch) laid on the ground
+		// in a ring round you, so the fog drifts at knee to chest height instead of greying the screen. The ring
+		// follows you; every piece goes at dawn.
+		std::vector<RE::ObjectRefHandle> g_mist;
+		RE::NiPoint3                     g_mistAt{};
+		float                            g_mistTimer = 0;
+		void ClearMist()
+		{
+			for (auto& h : g_mist) {
+				if (auto r = h.get()) {
+					r->Disable();
+					r->SetDelete(true);
+				}
+			}
+			g_mist.clear();
+		}
+		void TickMist(float a_delta, bool a_on)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!a_on || !p || !p->GetParentCell() || p->GetParentCell()->IsInteriorCell()) {
+				if (!g_mist.empty()) {
+					ClearMist();
+				}
+				return;
+			}
+			if ((g_mistTimer -= a_delta) > 0) {
+				return;
+			}
+			g_mistTimer = 1.0f;
+			const auto here = p->GetPosition();
+			if (!g_mist.empty() && std::hypot(here.x - g_mistAt.x, here.y - g_mistAt.y) < 900.0f) {
+				return;
+			}
+			ClearMist();
+			g_mistAt = here;
+			static const RE::FormID kMist[] = { 0x0B946C, 0x0B945E, 0x0B9466, 0x0B9456, 0x0B9468, 0x0B945B };  // FXMistLowSmokey/Swirls
+			std::uniform_real_distribution<float> jitter(-220.0f, 220.0f), yaw(0.0f, 6.2832f);
+			int placed = 0;
+			for (int ring = 0; ring < 4; ++ring) {
+				const float r = 250.0f + ring * 700.0f;
+				const int   n = ring == 0 ? 3 : 6 + ring * 4;
+				for (int k = 0; k < n; ++k) {
+					const float a = (k + 0.5f * ring) * 6.2832f / n;
+					RE::NiPoint3 at{ here.x + std::cos(a) * r + jitter(g_rng), here.y + std::sin(a) * r + jitter(g_rng), here.z };
+					float land = at.z;
+					if (RE::TES::GetSingleton()->GetLandHeight(at, land)) {
+						at.z = land;
+					}
+					auto* base = RE::TESForm::LookupByID<RE::TESBoundObject>(kMist[(k + ring) % std::size(kMist)]);
+					auto  ref = base ? p->PlaceObjectAtMe(base, false) : nullptr;
+					if (!ref) {
+						continue;
+					}
+					ref->SetPosition(at + RE::NiPoint3{ 0, 0, 20.0f });
+					ref->SetAngle({ 0, 0, yaw(g_rng) });
+					ref->SetScale(1.6f);
+					g_mist.push_back(ref->CreateRefHandle());
+					++placed;
+				}
+			}
+			static bool said = false;
+			if (!said) {
+				said = true;
+				logger::info("event: fog night ground mist, {} pieces round the player", placed);
+			}
+		}
+
 		// The night's sky and sound; Fog Night brings Grimmvar out of the mist.
 		void StartEvent(int a_event)
 		{
@@ -1230,6 +1297,7 @@ namespace bo3z
 		{
 			PowerUps::Tick(a_delta);
 			TickFx(a_delta);
+			TickMist(a_delta, g_phase == Phase::Fighting && g_event == gen::kEvent_fog);
 			if (!Coop::TogetherLoaded()) {
 				TickClock(a_delta);  // with Skyrim Together the server's uTimeScale runs the clock (the party pack sets 48)
 			}

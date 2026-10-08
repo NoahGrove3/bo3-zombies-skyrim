@@ -64,6 +64,7 @@ jobs:
           python tools/icons.py "$stage\Data\Interface\UndyingNights"
           python tools/bookart.py "$stage\Data"
           Copy-Item assets\sound\*.wav "$stage\Data\Sound\fx\UndyingNights\"
+          Copy-Item assets\ui\*.png "$stage\Data\Interface\UndyingNights\"
           Copy-Item README.md "$stage\BO3Zombies-README.md"
           Copy-Item third_party\address-library\CREDITS.md "$stage\BO3Zombies-ADDRESS-LIBRARY-CREDITS.md"
           python tools/zipdir.py "$stage" "dist\BO3Zombies-$v.zip"

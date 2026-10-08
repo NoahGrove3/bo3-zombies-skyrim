@@ -937,12 +937,22 @@ namespace bo3z
 			}
 			logger::info("charge: {} unleashes {}", g.id, g.chargeName);
 
-			if (id == "sidearm" || id == "apprentice" || id == "marksman") {  // lances: everything in the line
-				auto line = InLine(aim, g.range * 1.5f, 45.0f);
-				for (auto* f : line) hit(f, id == "marksman" ? 5.0f : 4.0f);
+			if (id == "sidearm" || id == "apprentice" || id == "marksman") {  // lances: a beam of force, everything in the line
+				auto line = InLine(aim, g.range * 1.5f, 75.0f);
+				for (auto* f : line) { hit(f, id == "marksman" ? 5.0f : 4.0f); Stagger(f, 0.9f); }
 				Bolts(p, g, line, 6);
-				if (line.empty()) LaunchBolt(p, g, aim.hit);
+				LaunchBolt(p, g, aim.hit);
+				// the lance itself: bursts racing down the line from the staff to where it lands
+				const float len = std::min(aim.hit.GetDistance(aim.eye), g.range * 1.5f);
+				int         n = 0;
+				for (float t = 160.0f; t < len - 60.0f && n < 14; t += 170.0f, ++n) {
+					Blast(BlastIndex("light"), aim.eye + aim.dir * t - RE::NiPoint3{ 0, 0, 25.0f }, 0.025f * n);
+				}
 			} else if (id == "centurion") {  // pestilence: a plague burst that spreads from body to body
+				for (int k = 0; k < 5; ++k) {  // a spreading cloud of rot
+					const float a = k * 1.2566f;
+					Blast(g.chargeBlast, aim.hit + RE::NiPoint3{ std::cos(a) * 260.0f, std::sin(a) * 260.0f, 20.0f }, 0.15f + 0.08f * k);
+				}
 				for (auto* f : Foes(aim.hit, 700.0f)) {
 					hit(f, 1.0f);
 					g_dots.push_back({ f->GetHandle(), base * 0.8f, 6.0f });
@@ -952,8 +962,15 @@ namespace bo3z
 			} else if (id == "triad") {  // soul harvest: homing souls to the five nearest
 				auto foes = Foes(p->GetPosition(), 1600.0f);
 				if (foes.size() > 5) foes.resize(5);
-				for (auto* f : foes) hit(f, 3.0f);
+				for (std::size_t i = 0; i < foes.size(); ++i) {
+					hit(foes[i], 3.0f);
+					Blast(g.chargeBlast, foes[i]->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.25f + 0.1f * i);  // the soul torn out
+				}
 				Bolts(p, g, foes, 5);
+				if (!foes.empty()) {  // the harvest returns to you
+					auto* av = p->AsActorValueOwner();
+					av->RestoreActorValue(RE::ActorValue::kMagicka, 15.0f * foes.size());
+				}
 			} else if (id == "spider") {  // spore bloom around the impact
 				Director::Web(aim.hit, 320.0f, 4.0f, 70.0f);
 				for (auto* f : Foes(aim.hit, 320.0f)) hit(f, 2.0f);
@@ -983,6 +1000,7 @@ namespace bo3z
 				for (auto* f : Foes(aim.hit, 1100.0f)) {
 					Director::Frenzy(f, 8.0f);
 					Stagger(f, 0.5f);
+					Blast(BlastIndex("paralyze"), f->GetPosition() + RE::NiPoint3{ 0, 0, 90.0f }, 0.2f);  // their minds break
 				}
 				LaunchBolt(p, g, aim.hit);
 			} else if (id == "mammothlmg") {  // black hole: a singularity drags them in, then collapses
@@ -997,6 +1015,12 @@ namespace bo3z
 			} else if (id == "aetherium") {  // auriel's wrath: huge sunburst
 				for (auto* f : Foes(aim.hit, 450.0f)) { hit(f, 2.5f); Stagger(f, 1.0f); }
 				LaunchBolt(p, g, aim.hit);
+				for (int k = 0; k < 5; ++k) {  // Auriel's sky-bolts ring the sunburst
+					const float a = k * 1.2566f + 0.4f;
+					const RE::NiPoint3 at = aim.hit + RE::NiPoint3{ std::cos(a) * 300.0f, std::sin(a) * 300.0f, 0 };
+					Blast(BlastIndex("skybolt"), at, 0.3f + 0.12f * k);
+					for (auto* f : Foes(at, 200.0f)) hit(f, 1.0f);
+				}
 			} else if (id == "flamerepeater") {  // meteor arrow: a burning star falls where it lands
 				const RE::NiPoint3 sky = aim.hit + RE::NiPoint3{ 120.0f, 80.0f, 1500.0f };
 				LaunchArrow(p, g, aim.hit, &sky);
@@ -1156,8 +1180,8 @@ namespace bo3z
 			std::erase_if(g_detonations, [](const Detonation& d) { return d.delay <= 0; });
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			for (auto& d : now) {
-				if (d.kind == 0) {         // a doomed one goes off
-					Blast(BlastIndex("dark"), d.at);
+				if (d.kind == 0) {         // a doomed one goes off: the dark reaches up out of it
+					Blast(BlastIndex("tentacle"), d.at);
 					for (auto* f : Foes(d.at, 230.0f)) {
 						Damage(f, d.damage, false, false, true);
 					}
@@ -1176,7 +1200,7 @@ namespace bo3z
 					} else {
 						LaunchBolt(p, gen::kGuns[d.gun], d.at, &sky);
 					}
-					Blast(BlastIndex("shockmass"), d.at, 0.2f);
+					Blast(gen::kGuns[d.gun].chargeBlast >= 0 ? gen::kGuns[d.gun].chargeBlast : BlastIndex("shockmass"), d.at, 0.2f);  // each weapon's own fall
 					for (auto* f : Foes(d.at, 260.0f)) {
 						Damage(f, d.damage, false, false, true);
 						if (!f->IsDead()) {
@@ -2132,6 +2156,14 @@ namespace bo3z
 			}
 			h.points = Points::Get();
 			h.perks = Save::PerkBits();
+			h.slotCount = SlotCount();
+			for (int i = 0; i < 3; ++i) {
+				const auto sl = i < h.slotCount ? Save::GetSlot(i) : Save::Slot{};
+				h.slotGun[i] = i < h.slotCount && sl.gun >= 0 && sl.gun < static_cast<int>(gen::kGuns.size()) ? sl.gun : -1;
+				h.slotLevel[i] = sl.level;
+			}
+			h.gunIndex = out ? gun : -1;
+			h.activeSlot = out && SlotOf(gun) >= 0 ? SlotOf(gun) : (h.slotCount > 0 ? Save::ActiveSlot() % h.slotCount : -1);
 			{
 				auto* pav = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner();
 				h.hp = pav->GetActorValue(RE::ActorValue::kHealth), h.hpMax = pav->GetPermanentActorValue(RE::ActorValue::kHealth);
