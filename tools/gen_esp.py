@@ -218,6 +218,21 @@ for name, hx in T['weap_draugr_gs']['subs']:
     elif name in ('MODT', 'DESC'): continue
     ws.append(sub(name, b))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'reaper_scythe'), ws))
+# Grimmvar's claws (great two-handed rakes, slow and long) and the Gloomstalker's (quick dagger slashes): hidden weapons
+# that give each its own native swing set; the scripted moves are in Director.cpp
+for key, edid, label, anim, speed, reach, dmg in (('wyrm_claws', 'UN_WyrmClaws', 'Wyrm Claws', 5, 0.7, 1.9, 34),
+                                                  ('shadow_claws', 'UN_ShadowClaws', 'Shadow Claws', 2, 1.45, 1.1, 14)):
+    ws = []
+    for name, hx in T['weap_draugr_gs']['subs']:
+        b = bytearray(bytes.fromhex(hx))
+        if name == 'EDID': b = z(edid)
+        elif name == 'FULL': b = z(label)
+        elif name == 'MODL': b = z('UndyingNights\\reaper\\scythe_hidden.nif')
+        elif name in ('MODT', 'DESC'): continue
+        elif name == 'DNAM': b[0] = anim; struct.pack_into('<ff', b, 4, speed, reach)
+        elif name == 'DATA': struct.pack_into('<H', b, 8, dmg)
+        ws.append(sub(name, bytes(b)))
+    recs['WEAP'].append(record('WEAP', fid('WEAP', key), ws))
 
 def tmpl_sub(t, name):
     return [bytes.fromhex(h) for n, h in T[t]['subs'] if n == name]
@@ -246,8 +261,9 @@ for c in S['creatures']['rows']:
     if human:  # the necromancer keeps a Skyrim necromancer's spells (frost, conjuration) and caster combat style
         spl = tmpl_sub(src, 'SPLO')
         subs += [sub('SPCT', struct.pack('<I', len(spl)))] + [sub('SPLO', b) for b in spl]
-    if c.get('weapon') == 'scythe':
-        subs += [sub('COCT', struct.pack('<I', 1)), sub('CNTO', struct.pack('<Ii', fid('WEAP', 'reaper_scythe'), 1))]
+    wkey = {'scythe': 'reaper_scythe', 'wyrmclaws': 'wyrm_claws', 'shadowclaws': 'shadow_claws'}.get(c.get('weapon', 'none'))
+    if wkey:
+        subs += [sub('COCT', struct.pack('<I', 1)), sub('CNTO', struct.pack('<Ii', fid('WEAP', wkey), 1))]
     subs += [sub('AIDT', bytes(aidt)), sub('CNAM', tsub(src, 'CNAM')), sub('FULL', z(c['label'])), sub('DATA', b''),
              sub('DNAM', tsub(src, 'DNAM')), sub('ZNAM', tsub(src, 'ZNAM')), sub('NAM5', tsub(src, 'NAM5')),
              sub('NAM6', struct.pack('<f', float(c['heightScale']))), sub('NAM7', tsub(src, 'NAM7')), sub('NAM8', tsub(src, 'NAM8')),

@@ -24,6 +24,8 @@ namespace bo3z
 			float           lastDist{ -1 };
 			float           ability{ 4.0f };   // Iron Reaper: next reap / Necromancer: next summon
 			float           windup{ -1.0f };   // Iron Reaper: seconds until the telegraphed sweep lands
+			float           hook{ 6.0f };      // Iron Reaper: next chain hook (mid range)
+			float           hookWind{ -1.0f }; // Iron Reaper: the hook is thrown
 			bool            enraged{ false };
 			float           frenzy{ 0 };       // Mindbreaker: seconds left fighting its own kind
 			float           tear{ 0 };
@@ -281,8 +283,13 @@ namespace bo3z
 			}
 			// Armed: an ancient Nord sword, an iron sword or a dagger (bare-handed undead swing slowly); the Iron
 			// Reaper swings its scythe two-handed; necromancers fight with spells; raised skeletons keep their own.
-			if (kindRow.kind == 1) {
-				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kReaperScythe, gen::kPlugin)) {
+			const std::string_view eid = gen::kEnemies[*pick].id;
+			const std::uint32_t    own = kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : 0;
+			if (own) {  // their own fighting style: the Reaper's scythe, Grimmvar's raking claws, the Gloomstalker's quick slashes
+				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(own, gen::kPlugin)) {
+					if (actor->GetItemCount(w) <= 0) {
+						actor->AddObjectToContainer(w, nullptr, 1, nullptr);
+					}
 					RE::ActorEquipManager::GetSingleton()->EquipObject(actor, w);
 				}
 			} else if (kindRow.kind == 0 && !actor->GetEquippedObject(false)) {
@@ -346,12 +353,52 @@ namespace bo3z
 
 		bool IsOurs(RE::Actor* a) { return a && g_ours.contains(a->GetFormID()); }
 
+		// ---- telegraphed hazards: a mark on the ground, then it erupts; stand clear or be hurt (boss and champions) ----
+		struct Hazard
+		{
+			RE::NiPoint3     at;
+			float            t, radius, share;  // seconds to go, reach, share of the player's health
+			std::string_view look;              // blast name (Gun::FxBlast)
+			bool             stagger;
+		};
+		std::vector<Hazard> g_hazards;
+		void Hazards(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			for (auto& h : g_hazards) {
+				if ((h.t -= a_delta) > 0) {
+					continue;
+				}
+				Gun::FxBlast(h.look, h.at);
+				const auto  pp = a_player->GetPosition();
+				const float d = std::hypot(pp.x - h.at.x, pp.y - h.at.y);
+				if (d < h.radius && std::abs(pp.z - h.at.z) < 220.0f && !a_player->IsDead()) {
+					auto* pav = a_player->AsActorValueOwner();
+					pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * h.share);
+					if (h.stagger) {
+						a_player->SetGraphVariableFloat("staggerMagnitude", 0.6f);
+						a_player->NotifyAnimationGraph("staggerStart");
+					}
+					std::scoped_lock l(Hud::Lock());
+					Hud::Edit().hurtTime = 0.9f;
+				}
+			}
+			std::erase_if(g_hazards, [](const Hazard& h) { return h.t <= 0; });
+		}
+		RE::NiPoint3 OnGround(RE::NiPoint3 a_at)
+		{
+			float z = a_at.z;
+			if (RE::TES::GetSingleton()->GetLandHeight(a_at, z) && std::abs(z - a_at.z) < 400.0f) {
+				a_at.z = z;
+			}
+			return a_at;
+		}
+
 		// ---- Grimmvar, the Undying Wyrm (sheet: boss) ----
 		struct BossState
 		{
 			RE::ActorHandle handle;
 			float           spawnIn{ -1 };  // seconds until it rises this night (-1 = not tonight)
-			float           breath{ 0 }, roar{ 0 }, summon{ 0 }, step{ 0 }, slam{ 0 };
+			float           breath{ 0 }, roar{ 0 }, summon{ 0 }, step{ 0 }, slam{ 0 }, eruption{ 0 }, meteors{ 0 }, slamWindup{ -1 };
 			bool            enraged{ false };
 			float           maxHp{ 1 };
 		} g_boss;
@@ -423,6 +470,9 @@ namespace bo3z
 							g_fx.push_back({ puff->CreateRefHandle(), 2.0f });
 						}
 					}
+					// Umbral Pounce: out of the shadow straight into a flurry; the dark claws up where you stand
+					g_hazards.push_back({ OnGround(p), 0.45f, 150.0f, 0.10f, "tentacle", true });
+					a->NotifyAnimationGraph("attackPowerStartForward");
 					e.lunge = gen::elite::lungeEvery;
 				}
 				// Terror Shriek: slows and wounds the player nearby.
@@ -468,7 +518,7 @@ namespace bo3z
 			g_boss.handle = boss->GetHandle();
 			g_boss.maxHp = want;
 			g_boss.enraged = false;
-			g_boss.breath = 4, g_boss.roar = 7, g_boss.summon = 10, g_boss.step = gen::boss::stepEvery, g_boss.slam = 2;
+			g_boss.breath = 4, g_boss.roar = 7, g_boss.summon = 10, g_boss.step = gen::boss::stepEvery, g_boss.slam = 2, g_boss.eruption = 6, g_boss.meteors = 8, g_boss.slamWindup = -1;
 			Forms::Play(gen::Sound::hound_night);
 			Hud::Banner(std::string(gen::kEnemies[row].label).append(" rises!"), 5.0f);
 			logger::info("boss: {} risen with {:.0f} health", gen::kEnemies[row].id, want);
@@ -476,6 +526,7 @@ namespace bo3z
 
 		void TickBoss(RE::PlayerCharacter* a_player, float a_delta)
 		{
+			Hazards(a_player, a_delta);
 			if (g_boss.spawnIn > 0 && (g_boss.spawnIn -= a_delta) <= 0) {
 				g_boss.spawnIn = -1;
 				SpawnBoss(a_player);
@@ -512,15 +563,49 @@ namespace bo3z
 				CastAt(boss.get(), gen::kSpell_dragonforce, a_player);
 				g_boss.roar = gen::boss::roarEvery * cd;
 			}
-			if ((g_boss.slam -= a_delta) <= 0 && dist < gen::boss::slamRange) {
-				auto* pav = a_player->AsActorValueOwner();
-				pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::boss::slamDamage);
-				Forms::PlayAt(gen::Sound::rise, boss.get());
-				{
-					std::scoped_lock l(Hud::Lock());
-					Hud::Edit().hurtTime = 1.0f;
+			// Grave Slam: rears up (a power attack), then the ground round it bursts; get out of reach in time
+			if (g_boss.slamWindup >= 0) {
+				if ((g_boss.slamWindup -= a_delta) < 0) {
+					const auto bp = OnGround(boss->GetPosition());
+					g_hazards.push_back({ bp, 0.0f, gen::boss::slamRange + 60.0f, gen::boss::slamDamage, "giantslam", true });
+					for (int k = 0; k < 6; ++k) {
+						const float a = k * 1.0472f;
+						Gun::FxBlast("giantslam", OnGround(bp + RE::NiPoint3{ std::cos(a) * 200.0f, std::sin(a) * 200.0f, 0 }), 0.08f + 0.03f * k);
+					}
+					Forms::PlayAt(gen::Sound::rise, boss.get());
 				}
+			} else if ((g_boss.slam -= a_delta) <= 0 && dist < gen::boss::slamRange + 80.0f) {
+				g_boss.slamWindup = g_boss.enraged ? 0.6f : 0.9f;
+				boss->NotifyAnimationGraph("attackPowerStartForward");
+				Forms::PlayAt(gen::Sound::hound_night, boss.get());
 				g_boss.slam = gen::boss::slamEvery * cd;
+			}
+			// Grave Eruption: the earth splits in a line from the Wyrm to you, burst after burst; sidestep it
+			if ((g_boss.eruption -= a_delta) <= 0 && dist > 380.0f && dist < 1800.0f) {
+				const auto  bp = boss->GetPosition(), pp = a_player->GetPosition();
+				RE::NiPoint3 dir = pp - bp;
+				dir.z = 0;
+				const float len = dir.Length();
+				dir.Unitize();
+				int k = 0;
+				for (float t = 160.0f; t < len + 260.0f && k < 14; t += 150.0f, ++k) {
+					g_hazards.push_back({ OnGround(bp + dir * t), 0.55f + 0.11f * k, 130.0f, 0.14f, "giantslam", true });
+				}
+				Hud::Banner("The ground splits toward you!", 1.6f);
+				Forms::PlayAt(gen::Sound::rise, boss.get());
+				g_boss.eruption = 11.0f * cd;
+			}
+			// Enraged, Ash Fall: burning stars fall round you; each marks the ground a moment before it lands
+			if (g_boss.enraged && (g_boss.meteors -= a_delta) <= 0) {
+				const auto pp = a_player->GetPosition();
+				for (int k = 0; k < 7; ++k) {
+					const float a = Uniform(0.0f, 6.2832f), r = k == 0 ? 0.0f : Uniform(120.0f, 520.0f);
+					const auto  at = OnGround(pp + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 });
+					Gun::FxBlast("dragonfire", at + RE::NiPoint3{ 0, 0, 10 }, 0.05f + 0.1f * k);   // the warning scorch
+					g_hazards.push_back({ at, 1.3f + 0.12f * k, 170.0f, 0.12f, "fireball", false });
+				}
+				Hud::Banner("Ash falls from the Wyrm's sky!", 1.6f);
+				g_boss.meteors = 13.0f;
 			}
 			if ((g_boss.summon -= a_delta) <= 0) {
 				const auto bp = boss->GetPosition();
@@ -866,6 +951,30 @@ namespace bo3z
 						s.windup = 0.7f;  // telegraph: a heavy breath and a raised scythe before it falls
 						a->NotifyAnimationGraph("attackPowerStartForward");
 						Forms::PlayAt(gen::Sound::rise, a.get());
+					}
+					// Chain Hook: from mid range it hurls a chain and drags you into scythe reach
+					if (s.hookWind >= 0) {
+						if ((s.hookWind -= a_delta) < 0 && dist > 300.0f && dist < 1300.0f && !a_player->IsDead()) {
+							const auto ap = a->GetPosition(), pp = a_player->GetPosition();
+							RE::NiPoint3 to = ap - pp;
+							to.z = 0;
+							const float d = to.Length();
+							to.Unitize();
+							RE::NiPoint3 land = OnGround(pp + to * std::max(0.0f, d - 190.0f));
+							land.z += 10.0f;
+							a_player->SetPosition(land, true);
+							a_player->SetGraphVariableFloat("staggerMagnitude", 0.5f);
+							a_player->NotifyAnimationGraph("staggerStart");
+							Gun::FxBlast("dark", land + RE::NiPoint3{ 0, 0, 60 });
+							Forms::PlayAt(gen::Sound::knife, a.get());
+							Hud::Banner("HOOKED", 0.9f);
+							s.ability = std::min(s.ability, 0.6f);  // and the scythe comes right after
+						}
+					} else if ((s.hook -= a_delta) <= 0 && dist > 420.0f && dist < 1100.0f) {
+						s.hookWind = 0.6f;
+						s.hook = s.enraged ? 7.0f : 10.0f;
+						a->NotifyAnimationGraph("attackStart");
+						Forms::PlayAt(gen::Sound::hound_night, a.get());
 					}
 				} else if (kind == 2) {
 					if ((s.ability -= a_delta) <= 0 && dist < 3500.0f) {

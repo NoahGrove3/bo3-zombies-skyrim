@@ -1669,6 +1669,7 @@ namespace bo3z
 	namespace Gun
 	{
 		int   SlotCount() { return Save::HasPerk(gen::kPerk_mammoth) ? 3 : 2; }
+		void  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay) { Blast(BlastIndex(a_name), a_at, a_delay); }
 		float AdsBlend() { return g_ads; }
 		bool  Owns(int a_gun) { return SlotOf(a_gun) >= 0; }
 

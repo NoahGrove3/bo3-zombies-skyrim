@@ -34,7 +34,7 @@
         "heightScale"
       ],
       "race": "draugr",
-      "weapon": "none"
+      "weapon": "wyrmclaws"
     },
     {
       "id": "shadow",
@@ -46,7 +46,7 @@
         "heightScale"
       ],
       "race": "draugr",
-      "weapon": "none"
+      "weapon": "shadowclaws"
     },
     {
       "id": "reaper",

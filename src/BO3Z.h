@@ -153,6 +153,7 @@ namespace bo3z
 		int                   ReforgeCost();  // -1 no weapon, 0 maxed
 		int                   SlotCount();
 		float                 AdsBlend();                     // 0..1, for movement and HUD
+		void                  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay = 0.0f);  // a no-damage Skyrim explosion (look only)
 	}
 
 	namespace Shops

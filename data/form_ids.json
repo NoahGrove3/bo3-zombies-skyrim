@@ -477,6 +477,8 @@
   "PROJ:arrow_nightmare": "0x9d9",
   "ACTI:relic_altar": "0x9da",
   "GLOB:stand_layout": "0x9db",
-  "BOOK:dirge": "0x9dc"
+  "BOOK:dirge": "0x9dc",
+  "WEAP:wyrm_claws": "0x9dd",
+  "WEAP:shadow_claws": "0x9de"
  }
 }
