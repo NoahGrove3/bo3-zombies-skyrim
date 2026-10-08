@@ -564,7 +564,7 @@ namespace bo3z::gen
 	inline constexpr std::array<float, 4> kPlanYaw{ { 0.0f, 45.0f, 90.0f, 135.0f } };
 	inline constexpr int kPlanAngles = 12;
 	inline constexpr float kPlanSnap = 70.0f, kPlanHeight = 70.0f, kPlanSweep = 5400.0f, kPlanDoor = 900.0f;
-	inline constexpr float kPlanBuilding = 900.0f, kPlanClutter = 200.0f, kPlanFlat = 30.0f;
+	inline constexpr float kPlanBuilding = 900.0f, kPlanClutter = 120.0f, kPlanFlat = 30.0f;
 	struct LocationDef { int town; std::uint32_t anchor; int object; int slot; };
 	inline constexpr std::array<LocationDef, 62> kLocations{ {
 		LocationDef{ 0, 0x0162A4, 0, 0 },
