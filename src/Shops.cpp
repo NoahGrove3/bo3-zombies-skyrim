@@ -820,6 +820,21 @@ namespace bo3z
 			}
 			auto ref = g_cityMarkers[a_town].get();
 			if (!ref && !g_cityLooked[a_town]) {
+				// the walled cities' own icons stand in their city worldspaces (WhiterunWorld...), not out in Tamriel
+				static const std::pair<std::string_view, RE::FormID> kWalled[] = { { "Whiterun", 0x0162CE }, { "Solitude", 0x04D0F4 },
+					{ "Windhelm", 0x038436 }, { "Markarth", 0x01C38A }, { "Riften", 0x01C390 } };
+				for (const auto& [name, id] : kWalled) {
+					if (name == gen::kTowns[a_town]) {
+						if (auto* r = RE::TESForm::LookupByID<RE::TESObjectREFR>(id); r && r->extraList.GetByType<RE::ExtraMapMarker>()) {
+							g_cityMarkers[a_town] = r->CreateRefHandle();
+							ref = RE::NiPointer<RE::TESObjectREFR>(r);
+							g_cityLooked[a_town] = true;
+							logger::info("shops: {} is found by its map marker {:08X}", gen::kTowns[a_town], id);
+						}
+					}
+				}
+			}
+			if (!ref && !g_cityLooked[a_town]) {
 				g_cityLooked[a_town] = true;
 				auto* anchor = TownAnchor(a_town);
 				auto* ws = anchor ? anchor->GetWorldspace() : nullptr;

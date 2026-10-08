@@ -623,7 +623,25 @@ namespace bo3z
 				now = C::now();
 				next = (now - next > frame * 4) ? now + frame : next + frame;
 			}
-			return g_present(a_swap, a_sync, a_flags);
+			// Unlimited frame rate: VSync off whatever SkyrimPrefs.ini says (the launcher keeps resetting it), and
+			// Havok's step follows the real frame time so physics stays at normal speed at any frame rate.
+			{
+				using C = std::chrono::steady_clock;
+				static C::time_point last = C::now();
+				const auto  now = C::now();
+				const float dt = std::chrono::duration<float>(now - last).count();
+				last = now;
+				static RE::Setting* maxTime = RE::INISettingCollection::GetSingleton() ? RE::INISettingCollection::GetSingleton()->GetSetting("fMaxTime:HAVOK") : nullptr;
+				if (maxTime && dt > 0.0f) {
+					maxTime->data.f = std::clamp(dt, 1.0f / 300.0f, 1.0f / 30.0f);
+				}
+				static bool said = false;
+				if (!said) {
+					said = true;
+					logger::info("hud: frame rate unlimited (VSync {} -> off, Havok step follows the frame){}", a_sync, maxTime ? "" : " [no fMaxTime setting found]");
+				}
+			}
+			return g_present(a_swap, gen::kFpsCap > 0 ? a_sync : 0, a_flags);
 		}
 	}
 

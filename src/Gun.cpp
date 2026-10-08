@@ -109,6 +109,7 @@ namespace bo3z
 		RE::PlayerControlsData* g_abData = nullptr;
 		float                   g_swingUp = -1.0f;  // >= 0: a synthetic tap is down; let go when it runs out
 		bool                    g_swingWanted = false;
+		float                   g_tapT = -1.0f;   // >= 0: the staff's short thrust for a normal shot is playing
 		bool IsStaff(int a_gun) { return a_gun >= 0 && gen::kGuns[a_gun].kind == gen::kKindWand; }
 
 		bool g_nativeCut = false;
@@ -181,11 +182,10 @@ namespace bo3z
 				return;
 			}
 			if (g_swingWanted) {
+				// Staffs are held with a mace grip now (see gen_esp.py): the shot's motion is ours (a short thrust in
+				// TickPose), Skyrim's own attack never plays (it would be a mace swing).
 				g_swingWanted = false;
-				if (GunOut() && IsStaff(CurrentGun())) {
-					SendFire(1.0f, 0.0f);
-					g_swingUp = 0.0f;
-				}
+				g_tapT = 0.0f;
 			}
 		}
 
@@ -1387,8 +1387,11 @@ namespace bo3z
 			{ -0.12f, 0.0f, 0.0f, 30, 0, 0.050f, 0 } };
 		// Staffs keep Skyrim's staff stance: the charge only draws the staff in a little and lifts its head, with the
 		// power trembling through it; the release drives it forward (no spinning, no hand-casting gestures).
-		constexpr PoseOut kStaffCharge{ 0.18f, 0.0f, 0.0f, -6, 3, 0.008f, 0 };
-		constexpr PoseOut kStaffStrike{ -0.08f, 0.0f, 0.0f, 16, 0, 0.006f, 0 };
+		// Charge: the staff drawn back and raised, its head lifted, the power trembling through it. Release: driven
+		// forward, the head dipping toward the target. Tap shot: a short jab.
+		constexpr PoseOut kStaffCharge{ 0.38f, 0.0f, 0.12f, -16, 9, 0.010f, 0 };
+		constexpr PoseOut kStaffStrike{ -0.22f, 0.0f, -0.05f, 34, -2, 0.008f, 0 };
+		constexpr PoseOut kStaffTap{ -0.12f, 0.0f, 0.0f, 20, 0, 0.0f, 0 };
 		constexpr float kFovKick[6] = { -9.0f, 7.0f, 5.0f, 4.0f, 6.0f, 12.0f };
 
 		// While charging, the element's storm wraps the caster (Skyrim's fire storm / blizzard / lightning storm cast look).
@@ -1447,7 +1450,15 @@ namespace bo3z
 				if (g_relT >= 0 && bow) {
 					g_relT = -1.0f;
 				}
+				if (staff && g_tapT >= 0 && g_relT < 0 && !charging) {
+					const float u = g_tapT / 0.32f;   // in fast, settle back
+					out = u < 0.25f ? Lerp(PoseOut{}, kStaffTap, EaseOut(u / 0.25f)) : Lerp(kStaffTap, PoseOut{}, EaseInOut((u - 0.25f) / 0.75f));
+					if ((g_tapT += a_delta) >= 0.32f) {
+						g_tapT = -1.0f;
+					}
+				}
 				if (g_relT >= 0) {
+					g_tapT = -1.0f;
 					const int   rs = g_relStyle;
 					const float dur = rs == gen::kRaise ? 0.75f : 0.55f;
 					float       u = g_relT / dur;

@@ -85,6 +85,11 @@ for w in S['weapons']['rows']:
             elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_' + w['id']))
             elif name in ('MODT', 'DESC'): continue
             elif name == 'DATA': b = struct.pack('<IfH', 0, 1.0, 0)
+            elif name == 'DNAM':
+                # held like a one-handed mace, not as a Skyrim staff: in first person Skyrim's staff set is the
+                # open-handed spell cast with the staff floating in the palm. A mace grip keeps the staff in the
+                # fist; our code animates the charge and the thrust (the native attack never fires).
+                b = bytearray(b); b[0] = 4; b = bytes(b)
             subs.append(sub(name, b))
         recs['WEAP'].append(record('WEAP', fid('WEAP', w['id']), subs))
     elif kind == 'bow':

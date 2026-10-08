@@ -121,8 +121,8 @@
     },
     {
       "id": "fps_cap",
-      "what": "frame rate cap (needs VSync off in SkyrimPrefs.ini and [HAVOK] fMaxTime = 1/cap in Skyrim.ini); 0 = no cap",
-      "value": 175,
+      "what": "frame rate cap; 0 = unlimited (VSync is switched off by the mod and Havok's step follows the frame time, so any frame rate is safe)",
+      "value": 0,
       "durationMs": 0,
       "verify": []
     },
