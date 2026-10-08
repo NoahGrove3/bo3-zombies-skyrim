@@ -630,7 +630,8 @@ namespace bo3z::gen
 		LocationDef{ 8, 0x01773A, 19, 7 },
 		LocationDef{ 9, 0x0177EF, 19, 7 },
 	} };
-	inline constexpr float kRunBoost = 30.0f, kSprintBoost = 60.0f, kSlideSpeed = 900.0f, kSlideSeconds = 0.95f, kSlideBoost = 220.0f, kSlideJump = 0.95f, kAirControl = 0.0f, kAirMax = 760.0f, kSprintStamina = 0.35f, kJumpHeight = 1.2f;
+	inline constexpr float kRunBoost = 30.0f, kSprintBoost = 60.0f, kSlideSpeed = 720.0f, kSlideSeconds = 0.9f, kSlideBoost = 0.0f, kSlideJump = 1.0f, kAirControl = 520.0f, kAirMax = 0.0f, kSprintStamina = 0.35f, kJumpHeight = 1.2f;
+	inline constexpr float kStrafeSpeed = 0.97f, kBackSpeed = 0.85f, kGroundAccel = 14.0f, kTurnRate = 2.0f;
 	inline constexpr float kAdsFov = 55.0f, kAdsSeconds = 0.12f, kAdsSpeed = -30.0f, kWorldFov = 115.0f, kViewmodelFov = 80.0f, kFpsCap = 175.0f;
 	inline constexpr float kAdsEyeDistance = 20.0f, kAdsSightHeight = 5.0f, kAdsViewmodelFov = 62.0f;
 	inline constexpr FormRef kQ_MQQuickstart{ "Skyrim.esm", 0x04679E, "MQQuickstart" };

@@ -24,6 +24,11 @@ namespace bo3z
 		bool         g_wantJumpCarry = false;
 		float        g_air = 0;             // seconds airborne
 		bool         g_forcedSneak = false;
+		float        g_smooth = 0;          // SpeedMult boost, eased toward what we want (no jolts sprint <-> run <-> strafe)
+		float        g_slideSpeed = 0;      // this slide's starting speed
+		RE::NiPoint3 g_groundVel{};         // last horizontal velocity on the ground (carried into jumps)
+		RE::NiPoint3 g_takeoff{};           // horizontal velocity to keep through the start of a jump
+		bool         g_movt = false;
 
 		void Apply(float a_want)
 		{
@@ -57,6 +62,40 @@ namespace bo3z
 			};
 			scale("fSprintStaminaDrainMult", gen::kSprintStamina);
 			scale("fJumpHeightMin", gen::kJumpHeight);
+		}
+
+		// Skyrim runs slower sideways and backwards than forwards, and turns stiffly while running: strafing
+		// left/right felt like wading. The humanoid movement types get Apex-like strafe/back speeds and quicker turns.
+		void TuneMovementTypes()
+		{
+			if (g_movt) {
+				return;
+			}
+			g_movt = true;
+			using D = RE::Movement::SPEED_DIRECTIONS;
+			int n = 0;
+			for (auto* mt : RE::TESDataHandler::GetSingleton()->GetFormArray<RE::BGSMovementType>()) {
+				if (!mt) {
+					continue;
+				}
+				const std::string name(mt->movementTypeData.typeName.c_str());
+				if (name != "NPC_Default_MT" && name != "NPC_Sneaking_MT" && name != "NPC_Sprinting_MT" && name != "NPC_Attacking_MT" && name != "NPC_Magic_Casting_MT") {
+					continue;
+				}
+				auto& sp = mt->movementTypeData.defaultData;
+				for (int k = 0; k < 2; ++k) {
+					const float fwd = sp.speeds[D::kForward][k];
+					sp.speeds[D::kLeft][k] = std::max(sp.speeds[D::kLeft][k], fwd * gen::kStrafeSpeed);
+					sp.speeds[D::kRight][k] = std::max(sp.speeds[D::kRight][k], fwd * gen::kStrafeSpeed);
+					sp.speeds[D::kBack][k] = std::max(sp.speeds[D::kBack][k], fwd * gen::kBackSpeed);
+				}
+				sp.rotateWhileMovingRun *= gen::kTurnRate;
+				logger::info("movement: {} run fwd {:.0f} side {:.0f} back {:.0f}, turn {:.2f}", name, sp.speeds[D::kForward][1], sp.speeds[D::kLeft][1], sp.speeds[D::kBack][1], sp.rotateWhileMovingRun);
+				++n;
+			}
+			if (!n) {
+				logger::warn("movement: no humanoid movement types found");
+			}
 		}
 
 		RE::NiPoint3 Heading(RE::PlayerCharacter* a_player)
@@ -121,7 +160,7 @@ namespace bo3z
 
 		void Reset()
 		{
-			g_applied = 0, g_slide = 0, g_carry = 0, g_air = 0;
+			g_applied = 0, g_slide = 0, g_carry = 0, g_air = 0, g_smooth = 0;
 			g_wasAir = false, g_wantSlide = false, g_wantJumpCarry = false, g_forcedSneak = false;
 		}
 
@@ -132,64 +171,86 @@ namespace bo3z
 				return;
 			}
 			TuneGameSettings();
+			TuneMovementTypes();
 			auto*      st = player->AsActorState();
 			auto*      cc = player->GetCharController();
 			const bool sprint = st->IsSprinting();
 			const bool air = cc && cc->context.currentState != RE::hkpCharacterStateType::kOnGround;
 			g_air = air ? g_air + a_delta : 0;
+			RE::NiPoint3 v{};
+			if (cc) {
+				GetVel(cc, v);
+			}
+			const RE::NiPoint3 hv{ v.x, v.y, 0 };
+			const float        hs = std::sqrt(hv.x * hv.x + hv.y * hv.y);
 
+			// ---- slide: sprint + crouch. You keep (and boost) your speed, can steer a little, and it eases off.
 			if (g_wantSlide) {
 				g_wantSlide = false;
-				if (!air) {
+				if (!air && cc) {
 					g_slide = gen::kSlideSeconds;
-					g_slideDir = Heading(player);
+					g_slideDir = hs > 50.0f ? hv / hs : Heading(player);
 					if (auto w = WishDir(player); w.x != 0 || w.y != 0) {
 						g_slideDir = w;
 					}
-					if (!st->IsSneaking()) {
-						// Drop into a crouch for the slide: state flag + the behaviour graph's own sneak events.
-						st->actorState1.sneaking = 1;
-						player->SetGraphVariableBool("IsSneaking", true);
-						player->NotifyAnimationGraph("SneakStart");
-						g_forcedSneak = true;
-					}
+					g_slideSpeed = std::max(gen::kSlideSpeed, hs * 1.2f);
+					// the crouch key also toggles Skyrim's sneak: the slide owns that crouch and stands you up after
+					st->actorState1.sneaking = 1;
+					player->SetGraphVariableBool("IsSneaking", true);
+					player->NotifyAnimationGraph("SneakStart");
+					g_forcedSneak = true;
 					Forms::Play(gen::Sound::knife);  // whoosh
 				}
 			}
-			if (g_slide > 0) {
-				g_carry = (gen::kSlideSpeed * std::pow(g_slide / gen::kSlideSeconds, 0.6f)) * gen::kSlideJump;
+			const bool sliding = g_slide > 0;
+			if (sliding && cc && !air) {
+				// steer toward the stick, slowly (about 70 degrees a second)
+				if (auto w = WishDir(player); w.x != 0 || w.y != 0) {
+					const float cross = g_slideDir.x * w.y - g_slideDir.y * w.x, dot = g_slideDir.x * w.x + g_slideDir.y * w.y;
+					const float turn = std::clamp(std::atan2(cross, dot), -1.2f * a_delta, 1.2f * a_delta);
+					const float c = std::cos(turn), sn = std::sin(turn);
+					g_slideDir = { g_slideDir.x * c - g_slideDir.y * sn, g_slideDir.x * sn + g_slideDir.y * c, 0 };
+				}
+				// ease out: full speed first, settling to ~60% by the end (a smooth curve, no step)
+				const float t = 1.0f - g_slide / gen::kSlideSeconds;
+				const float speed = g_slideSpeed * (1.0f - 0.4f * t * t);
+				SetVel(cc, { g_slideDir.x * speed, g_slideDir.y * speed, std::min(v.z, 0.0f) });
 			}
 
-			if (cc) {
-				RE::NiPoint3 v;
-				// Slide-jump: once we are actually off the ground, keep the slide's speed (horizontal only).
-				if (g_wantJumpCarry && air && g_air > 0.08f) {
-					g_wantJumpCarry = false;
-					GetVel(cc, v);
-					const float h = std::sqrt(v.x * v.x + v.y * v.y);
-					if (g_carry > h && v.z > 0) {
-						SetVel(cc, { g_slideDir.x * g_carry, g_slideDir.y * g_carry, v.z });
-					}
-					g_slide = 0;
+			// ---- momentum: whatever speed you leave the ground with (run, sprint or slide), you keep in the air
+			if (!air) {
+				g_groundVel = sliding ? g_slideDir * (g_slideSpeed * (1.0f - 0.4f * std::pow(1.0f - g_slide / gen::kSlideSeconds, 2.0f))) : hv;
+			}
+			if (air && !g_wasAir) {
+				g_takeoff = g_groundVel * gen::kSlideJump;
+				if (sliding) {  // jumping cancels the slide (stand up in the air)
+					g_slide = 0.0001f;
 				}
-				// Optional air strafing (off by default): small horizontal nudges after takeoff, never touching vertical.
-				if (air && gen::kAirControl > 0 && g_air > 0.3f) {
+			}
+			if (cc && air) {
+				const float ts = std::sqrt(g_takeoff.x * g_takeoff.x + g_takeoff.y * g_takeoff.y);
+				RE::NiPoint3 h = hv;
+				// Skyrim's jump drops your run speed on takeoff: the first moments of the jump keep what you had
+				if (g_air < 0.25f && hs < ts * 0.97f) {
+					h = g_takeoff;
+				}
+				// air strafing: small steering, never faster than you took off (or the sheet's cap)
+				if (gen::kAirControl > 0 && g_air > 0.12f) {
 					if (auto w = WishDir(player); w.x != 0 || w.y != 0) {
-						GetVel(cc, v);
-						RE::NiPoint3 h{ v.x + w.x * gen::kAirControl * a_delta, v.y + w.y * gen::kAirControl * a_delta, 0 };
-						const float  before = std::sqrt(v.x * v.x + v.y * v.y), after = std::sqrt(h.x * h.x + h.y * h.y);
-						const float  cap = std::max(before, gen::kAirMax);
+						h = { h.x + w.x * gen::kAirControl * a_delta, h.y + w.y * gen::kAirControl * a_delta, 0 };
+						const float cap = std::max({ gen::kAirMax, ts, 300.0f }), after = std::sqrt(h.x * h.x + h.y * h.y);
 						if (after > cap) {
 							h = h * (cap / after);
 						}
-						SetVel(cc, { h.x, h.y, v.z });
 					}
 				}
-			}
-			if (!air && !g_wantJumpCarry && g_slide <= 0) {
-				g_carry = 0;
+				if (std::abs(h.x - hv.x) + std::abs(h.y - hv.y) > 1.0f) {
+					SetVel(cc, { h.x, h.y, v.z });
+				}
 			}
 			g_wasAir = air;
+			g_wantJumpCarry = false;
+
 			const float before = g_slide;
 			g_slide = std::max(0.0f, g_slide - a_delta);
 			if (before > 0 && g_slide <= 0 && g_forcedSneak) {
@@ -199,14 +260,13 @@ namespace bo3z
 				g_forcedSneak = false;
 			}
 
-			float want = gen::kRunBoost;
+			// ---- run/sprint speed, eased so switching sprint <-> run <-> strafe never jolts
+			float want = gen::kRunBoost + (sprint ? gen::kSprintBoost : 0.0f) + gen::kAdsSpeed * Gun::AdsBlend();
 			if (g_slide > 0) {
-				want += gen::kSlideBoost * (g_slide / gen::kSlideSeconds);
-			} else if (sprint) {
-				want += gen::kSprintBoost;
+				want += gen::kSprintBoost;  // the crouch would otherwise drag the controller back to sneak speed
 			}
-			want += gen::kAdsSpeed * Gun::AdsBlend();
-			Apply(want);
+			g_smooth += (want - g_smooth) * std::min(1.0f, a_delta * gen::kGroundAccel * 0.5f);
+			Apply(g_smooth);
 		}
 	}
 }

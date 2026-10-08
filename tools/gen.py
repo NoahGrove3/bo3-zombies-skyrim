@@ -147,6 +147,7 @@ for l in L: o.append(f'\t\tLocationDef{{ {towns.index(l["town"])}, 0x{int(l["anc
 o.append('\t} };')
 M = {r['id']: r for r in S['movement']['rows']}
 o.append(f'\tinline constexpr float kRunBoost = {F(M["run_boost"]["value"])}, kSprintBoost = {F(M["sprint_boost"]["value"])}, kSlideSpeed = {F(M["slide"]["value"])}, kSlideSeconds = {F(M["slide"]["durationMs"]/1000)}, kSlideBoost = {F(M["slide_boost"]["value"])}, kSlideJump = {F(M["slide_jump"]["value"])}, kAirControl = {F(M["air_control"]["value"])}, kAirMax = {F(M["air_max"]["value"])}, kSprintStamina = {F(M["sprint_stamina"]["value"])}, kJumpHeight = {F(M["jump_height"]["value"])};')
+o.append(f'\tinline constexpr float kStrafeSpeed = {F(M["strafe_speed"]["value"])}, kBackSpeed = {F(M["back_speed"]["value"])}, kGroundAccel = {F(M["ground_accel"]["value"])}, kTurnRate = {F(M["turn_rate"]["value"])};')
 o.append(f'\tinline constexpr float kAdsFov = {F(M["ads_fov"]["value"])}, kAdsSeconds = {F(M["ads_fov"]["durationMs"]/1000)}, kAdsSpeed = {F(M["ads_speed"]["value"])}, kWorldFov = {F(M["world_fov"]["value"])}, kViewmodelFov = {F(M["viewmodel_fov"]["value"])}, kFpsCap = {F(M["fps_cap"]["value"])};')
 o.append(f'\tinline constexpr float kAdsEyeDistance = {F(M["ads_eye_distance"]["value"])}, kAdsSightHeight = {F(M["ads_sight_height"]["value"])}, kAdsViewmodelFov = {F(M["ads_viewmodel_fov"]["value"])};')
 Q = {r['id']: r for r in S['quests']['rows']}

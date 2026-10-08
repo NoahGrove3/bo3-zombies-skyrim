@@ -29,9 +29,9 @@
     },
     {
       "id": "slide",
-      "what": "sprint + crouch: slide starting at this speed, locked to the direction you were running, easing off over durationMs",
-      "value": 900,
-      "durationMs": 950,
+      "what": "sprint + crouch: slide at max(this, your speed x1.2), steerable a little, easing off over durationMs (Apex-style)",
+      "value": 720,
+      "durationMs": 900,
       "verify": [
         "value",
         "durationMs"
@@ -39,25 +39,7 @@
     },
     {
       "id": "slide_boost",
-      "what": "extra SpeedMult during the slide (backup if the game re-drives velocity)",
-      "value": 220,
-      "durationMs": 0,
-      "verify": [
-        "value"
-      ]
-    },
-    {
-      "id": "slide_jump",
-      "what": "jumping out of a slide keeps this share of slide speed into the air",
-      "value": 0.95,
-      "durationMs": 0,
-      "verify": [
-        "value"
-      ]
-    },
-    {
-      "id": "air_control",
-      "what": "air strafing acceleration (units/s^2); 0 = off (it was cancelling jumps in the first test)",
+      "what": "(unused: the slide drives velocity directly now)",
       "value": 0,
       "durationMs": 0,
       "verify": [
@@ -65,9 +47,27 @@
       ]
     },
     {
+      "id": "slide_jump",
+      "what": "jumping keeps this share of your ground or slide speed into the air (momentum carry)",
+      "value": 1.0,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "air_control",
+      "what": "air strafing acceleration (units/s^2), from 0.12 s after takeoff; never touches vertical speed",
+      "value": 520,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
       "id": "air_max",
-      "what": "cap on horizontal air speed gained by strafing",
-      "value": 760,
+      "what": "cap on horizontal air speed from strafing; 0 = your takeoff speed",
+      "value": 0,
       "durationMs": 0,
       "verify": [
         "value"
@@ -148,6 +148,42 @@
       "id": "ads_viewmodel_fov",
       "what": "First-person weapon field of view while aiming down sights (degrees)",
       "value": 62,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "strafe_speed",
+      "what": "left/right running speed as a share of forward (Skyrim ~0.8; Apex-like 0.97)",
+      "value": 0.97,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "back_speed",
+      "what": "backward running speed as a share of forward",
+      "value": 0.85,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "ground_accel",
+      "what": "how fast ground speed follows your input (1/s): higher = snappier direction changes, no ice-skating",
+      "value": 14,
+      "durationMs": 0,
+      "verify": [
+        "value"
+      ]
+    },
+    {
+      "id": "turn_rate",
+      "what": "turning while running/sprinting (Skyrim rotateWhileMovingRun multiplier)",
+      "value": 2.0,
       "durationMs": 0,
       "verify": [
         "value"
