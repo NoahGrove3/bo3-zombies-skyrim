@@ -8,6 +8,11 @@
 - One round per night, tally counter, 30-min day cycle (60/40), dawn despawn, night truce for NPCs, sprint OK on fresh character.
 - Station stand with sloped walkable skirt, map markers, clutter cleared from the footprint.
 
+## Built 2026-10-08 22:36 (f408882, NOT installed: PC link dropped. Install UN-f408882.zip, refresh pack + Melty zip)
+- Boss / Gloomstalker: hidden weapons wyrm_claws (2H anim, speed 0.7, reach 1.9) / shadow_claws (dagger anim, 1.45) via CNTO + equip; no sword.
+- Hazards (Director): telegraphed ground bursts. Grimmvar: Grave Slam (power-attack windup), Grave Eruption line, Ash Fall when enraged. Gloomstalker: Umbral Pounce after lunge. Reaper: Chain Hook (420-1100).
+- New expl templates giantslam (crGiantSlamExplosion), dragonfire.
+
 ## Built 2026-10-08 22:05 (0556f96 + UN-staffs-v12 re-textured staffs + brewmachine.nif, installed, Melty zip + pack refreshed, NOT yet seen in game)
 - Staffs: WEAP DNAM anim type 4 (one-handed mace grip) instead of 8 (staff: open-hand cast in 1st person); our jab/charge/thrust poses; no native swing.
 - Unlimited fps: Present SyncInterval 0, fMaxTime:HAVOK = frame time (1/300..1/30) every frame; movement.fps_cap 0.
