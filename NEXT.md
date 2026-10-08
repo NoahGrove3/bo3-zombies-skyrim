@@ -17,8 +17,9 @@
 3. Custom animated main menu in the cover-art style (blood moon, shrine, embers, fog drift). Options: replace the menu
    background/logo meshes, or draw our own layer behind the Scaleform buttons (our Present hook already runs on the menu).
 4. Lobby in the menu: Host / Join buttons, Steam invites (ISteamMatchmaking lobby + invite overlay), so no Party.txt.
-5. Remove the "choose character" button at launch. Find out which component adds it (Skyrim Together's UI? the Melty
-   launcher?): ask Noah for a screenshot if unclear.
+5. Remove the "choose character" button at launch: Noah says it's left over from the BO3 crew picker (Dempsey, Takeo...).
+   Remove the crew picker everywhere it can still show (Intro.cpp crew screen, Hud "CHOOSE YOUR HERO", any menu entry),
+   keeping saves working (crew -1 = none).
 
 ## Built 2026-10-08 22:36 (f408882, NOT installed: PC link dropped. Install UN-f408882.zip, refresh pack + Melty zip)
 - Boss / Gloomstalker: hidden weapons wyrm_claws (2H anim, speed 0.7, reach 1.9) / shadow_claws (dagger anim, 1.45) via CNTO + equip; no sword.
