@@ -257,15 +257,65 @@ recs['FACT'].append(record('FACT', fid('FACT', 'undead'), [
     sub('DATA', struct.pack('<I', 0))]))
 
 # the Undying Dirge: each city's progress (step*1000 + progress) and whether the prologue was read; saved with the game
-for key, edid in [('curse_' + c['town'], 'UN_Curse_' + c['town']) for c in S['curse']['cities']] + [('curse_intro', 'UN_CurseIntro')]:
+for key, edid in [('curse_' + c['town'], 'UN_Curse_' + c['town']) for c in S['curse']['cities']] + [('curse_intro', 'UN_CurseIntro'), ('stand_layout', 'UN_StandLayout')]:
     recs['GLOB'].append(record('GLOB', fid('GLOB', key), [sub('EDID', z(edid)), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
+
+# The Undying Dirge: the lore book (given at the first night; the Shrine of the Dirge gives it again)
+def dirge_text():
+    img = lambda n, w, h: f"<p align='center'><img src='img://Textures/UndyingNights/Book/{n}.png' width='{w}' height='{h}'></p>"
+    cu = S['curse']; steps = {r['id']: r for r in cu['rows']}
+    towns = []
+    for l in S['locations']['rows']:
+        if l['town'] not in towns: towns.append(l['town'])
+    land = {c['town']: c['landmark'] for c in cu['cities']}
+    relic = {w['relicTown']: w for w in S['weapons']['rows'] if w.get('relicTown', 'none') != 'none'}
+    gen_city = lambda t: t.replace('{city}', 'the city').replace("{city}'s", "the city's").replace('{landmark}', 'its oldest holy place').replace('{n}', '')
+    out = [f"<font face='$HandwrittenFont'>", img('sigil', 200, 200),
+           "<p align='center'><font size='30'>THE UNDYING DIRGE</font></p>",
+           "<p align='center'>Being a true account of the curse that walks by night, set down by one who lived through Helgen</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>I. Helgen</font></p>", img('helgen', 300, 176),
+           f"<p>{cu['prologue']}</p>",
+           "<p>The priests say the Dirge is no ordinary shout. It was sung, not spoken: a slow word that sank into the earth and stayed there. "
+           "By day it sleeps. When the sun goes down it wakes, and every grave in the holds remembers it.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>II. The Nights</font></p>", img('graves', 300, 176),
+           "<p>From dusk until the first light the dead climb out of the earth: the Risen first, then the Iron Reapers with their great blades, "
+           "then the Voidbound who raise skeletons to fight for them. Each night they come in greater number and harder to kill. "
+           "At dawn they crumble to ash.</p>",
+           "<p>Outside every city stands a shrine raised against them. At its alcoves you will find Sheogorath's Coffer, which gives a weapon to anyone willing to gamble for it; "
+           "the Brew Machine, whose brews make the drinker stronger; and the Atronach Reforge, which makes any weapon fiercer. A weapon reforged three times becomes Ascendant, and its great strike falls twice.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>III. Breaking the Dirge</font></p>", img('wards', 300, 176),
+           "<p>The Dirge has taken root beneath each city. To tear out the root you must perform four rites, one after another, and all of them by night.</p>"]
+    for k, sid in enumerate(('tithe', 'wards', 'herald', 'dawn')):
+        st = steps[sid]
+        out.append(f"<p><b>{k + 1}. {st['title'].replace('{city}', 'the City')}.</b> {gen_city(st['text']).replace('Slay  of', 'Slay '+str(st['target'])+' of').replace('for  seconds', 'for '+str(st['target'])+' seconds')}</p>")
+        if sid == 'wards':
+            out.append(img('herald', 300, 176))
+    out += ["<p>When all four rites are done, the Dirge loses its hold on that city. Its dead sleep again, and none will rise within its bounds.</p>",
+            "[pagebreak]", "<p align='center'><font size='24'>IV. The Relics of the Holds</font></p>",
+            "<p>Each freed city gives its deliverer a relic, a weapon made for this war. A lost relic waits on the Shrine of the Dirge at that city's station.</p>"]
+    for t in towns:
+        w = relic.get(t)
+        if w:
+            out.append(f"<p><b>{t}</b> ({land[t]}): <i>{w['label']}</i>. {w['abilityText']}. When fully charged: {w['chargeName']}, {w['chargeText']}.</p>")
+    out += ["[pagebreak]", "<p align='center'><font size='24'>V. Nights of Omen</font></p>", img('omen', 300, 152),
+            "<p>Some nights are worse than others. Under the <b>Blood Moon</b> the dead rise faster. On a <b>Fog Night</b> the mist hides a great wyrm of bone, Grimmvar, Herald of the Dirge. "
+            "In an <b>Ash Storm</b> the dead run, and every kill is worth twice as much. On the <b>Night of Iron</b> the Reapers and the Voidbound march in force.</p>",
+            "<p>Watch the dead for tokens. A skull gives Insta-Kill. A coin gives Double Points. A falling star is the Nuke: it destroys every risen corpse and buys a little quiet. "
+            "A chest is a Fire Sale, when the Coffer asks almost nothing.</p>",
+            f"<p>{cu['freedAll']}</p>", "</font>"]
+    return '\n'.join(out)
+recs.setdefault('BOOK', []).append(record('BOOK', fid('BOOK', 'dirge'), [
+    sub('EDID', z('UN_UndyingDirgeBook')), sub('OBND', bytes.fromhex('f5fff1fffdff0b000f000300')), sub('FULL', z('The Undying Dirge')),
+    sub('MODL', z('Clutter\\Books\\Book02LowPoly02.nif')), sub('DESC', z(dirge_text())),
+    sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x000937A2)),
+    sub('DATA', struct.pack('<BBHIIf', 0, 0, 0, 0, 25, 1.0)), sub('INAM', struct.pack('<I', 0x0008ADAE)), sub('CNAM', struct.pack('<I', 0))]))
 
 # (spell blasts are cloned from Skyrim's explosions at runtime: EXPL records in an ESL crashed the game at load)
 count = sum(len(v) for v in recs.values())
 hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('Undying Nights: round-based undead survival for Skyrim'))]
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
-for k in ['GLOB', 'FACT', 'MGEF', 'ENCH', 'SPEL', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
+for k in ['GLOB', 'FACT', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')

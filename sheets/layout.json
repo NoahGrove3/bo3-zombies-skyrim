@@ -68,8 +68,6 @@
  ],
  "search": {
   "distances": [
-   900,
-   1200,
    1500,
    1800,
    2100,
@@ -77,7 +75,9 @@
    2700,
    3000,
    3300,
-   3600
+   3600,
+   3900,
+   4200
   ],
   "angles": 12,
   "yawsDeg": [
@@ -88,10 +88,10 @@
   ],
   "snapTolerance": 70,
   "maxHeightSpread": 70,
-  "sweepRadius": 4800,
+  "sweepRadius": 5400,
   "doorClearance": 900,
-  "buildingClearance": 550,
-  "clutterClearance": 160,
+  "buildingClearance": 900,
+  "clutterClearance": 200,
   "maxSlope": 30
  }
 }

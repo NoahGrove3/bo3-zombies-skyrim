@@ -212,6 +212,14 @@ namespace bo3z
 		std::optional<float> GroundTop(RE::TESObjectREFR* a_anchor, const TownPlan& a_plan, float* a_low = nullptr);
 		RE::ObjectRefHandle                       g_probe;
 
+		// Stands placed under the outskirts layout (v2): one bit per town in UN_StandLayout (saved with the game).
+		void MarkLayout(int a_town)
+		{
+			if (auto* g = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(gen::kStandLayoutGlobal, gen::kPlugin)) {
+				g->value = static_cast<float>(static_cast<int>(g->value) | (1 << a_town));
+			}
+		}
+
 		RE::TESObjectREFR* TownAnchor(int a_town)
 		{
 			for (const auto& l : gen::kLocations) {
@@ -447,6 +455,7 @@ namespace bo3z
 			}
 			if (fails == 0 && crowd <= 0.0f && slope <= gen::kPlanFlat && spread <= gen::kPlanHeight) {
 				g_towns[a_town] = plan;
+				MarkLayout(a_town);
 				logger::info("shops: {} alley at ({:.0f},{:.0f}) yaw {:.0f} (candidate {})", gen::kTowns[a_town], plan.center.x, plan.center.y, gen::kPlanYaw[yi], a_index);
 				return true;
 			}
@@ -525,6 +534,14 @@ namespace bo3z
 			const auto g = GroundTop(a_anchor, plan, &low);
 			if (!g || std::abs(*g - p.z) > 30.0f || *g - low > gen::kStandMaxSlope) {
 				logger::info("shops: {} stand floats {:.0f} off the ground, rebuilding", gen::kTowns[a_town], g ? p.z - *g : 999.0f);
+				return false;
+			}
+			if (auto* v2 = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(gen::kStandLayoutGlobal, gen::kPlugin); v2 && !((static_cast<int>(v2->value) >> a_town) & 1)) {
+				logger::info("shops: {} stand predates the outskirts layout, moving it", gen::kTowns[a_town]);
+				return false;
+			}
+			if (g && *g - p.z > 8.0f) {
+				logger::info("shops: {} stand sits {:.0f} into the ground, rebuilding", gen::kTowns[a_town], *g - p.z);
 				return false;
 			}
 			if (Obstructed(a_anchor, plan, 440.0f)) {
@@ -624,9 +641,9 @@ namespace bo3z
 			if (a_low) {
 				*a_low = lo;
 			}
-			// On a slope the slab sinks into the high side (a terrace cut into the hill) rather than perching on the
-			// highest point and hanging over the low side: never more than 40 units above the lowest ground.
-			return std::min(hi, lo + 40.0f) + 1.0f;
+			// The dais sits ON the ground: its floor at the highest point under it (its skirt reaches 100 down, so the low
+			// side is covered). Only on a real slope does it cut into the hill rather than float over the low side.
+			return (hi - lo <= 60.0f ? hi : std::min(hi, lo + 60.0f)) + 2.0f;
 		}
 
 		void SettleStand(int a_town, RE::TESObjectREFR* a_anchor)
@@ -826,6 +843,7 @@ namespace bo3z
 				if (plan.state == TownPlan::State::Unknown) {
 					if (AdoptExisting(t, anchor)) {
 						logger::info("shops: {} alley already built", gen::kTowns[t]);
+						MarkLayout(t);
 					} else {
 						Sweep(t, anchor);
 						GatherObstacles(t, anchor);
@@ -840,6 +858,7 @@ namespace bo3z
 							// Nowhere perfect: take the best-scoring spot found.
 							plan = g_best[t].score < FLT_MAX ? g_best[t].plan : TownPlan{ TownPlan::State::Ready, anchor->GetPosition(), 0, 0 };
 							plan.state = TownPlan::State::Ready;
+							MarkLayout(t);
 							logger::warn("shops: no perfect spot in {}, best score {:.0f} at ({:.0f},{:.0f})", gen::kTowns[t], g_best[t].score, plan.center.x, plan.center.y);
 							break;
 						}

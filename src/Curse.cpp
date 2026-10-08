@@ -55,6 +55,28 @@ namespace bo3z
 			return s;
 		}
 
+		// Quest news lives in the tracker (top right): a line under the goal for a few seconds. No pop-ups.
+		void Note(std::string a_text, float a_seconds = 5.0f)
+		{
+			std::scoped_lock l(Hud::Lock());
+			Hud::Edit().questNote = std::move(a_text);
+			Hud::Edit().questNoteTime = a_seconds;
+		}
+		// The lore lives in a book, "The Undying Dirge", in the player's pack.
+		bool GiveBook(RE::PlayerCharacter* a_player)
+		{
+			auto* book = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(gen::kDirgeBook, gen::kPlugin);
+			if (!book || !a_player) {
+				return false;
+			}
+			auto inv = a_player->GetInventory([&](RE::TESBoundObject& o) { return &o == book; });
+			if (!inv.empty() && inv.begin()->second.first > 0) {
+				return false;
+			}
+			a_player->AddObjectToContainer(book, nullptr, 1, nullptr);
+			return true;
+		}
+
 		int   g_zone = -1;
 		float g_zoneTimer = 0;
 		std::unordered_set<int> g_loreShown;  // town*10+step, this session
@@ -193,7 +215,7 @@ namespace bo3z
 			const auto& st = gen::kCurseSteps[std::clamp(s, 0, 3)];
 			Set(a_town, s + 1, 0);
 			Forms::Play(gen::Sound::quest_step);
-			Hud::Banner(Upper(Fill(st.title, a_town)) + " - COMPLETE", 5.0f);
+			Note(Fill(st.title, a_town) + " - complete", 6.0f);
 			Points::Add(500 * (s + 1));
 			logger::info("curse: {} step {} ({}) done", gen::kTowns[a_town], s, st.id);
 		}
@@ -256,15 +278,13 @@ namespace bo3z
 			Set(a_town, kFreed, 0);
 			g_holding = false;
 			Forms::Play(gen::Sound::curse_lifted);
-			Hud::Banner(Fill(gen::kCurseLiftedBanner, a_town), 7.0f);
-			std::string text = Fill(gen::kCurseLiftedText, a_town);
+			std::string text = Fill(gen::kCurseLiftedBanner, a_town);
 			if (const int relic = Relic(a_town); relic >= 0) {
 				// the city's relic: yours now (lose it, and it waits on the Shrine of the Dirge at this station)
 				Gun::Give(relic);
-				text += " The city gives you its relic: " + std::string(gen::kGuns[relic].label) + " - " + std::string(gen::kGuns[relic].chargeName) +
-				        ". Should you ever lose it, claim it again at the Shrine of the Dirge at " + std::string(gen::kTowns[a_town]) + "'s station.";
+				text += " - relic: " + std::string(gen::kGuns[relic].label);
 			}
-			Hud::Lore(Fill(gen::kCurseLiftedBanner, a_town), text, 18.0f);
+			Note(text, 10.0f);
 			Director::CrumbleNear(a_player->GetPosition(), 1.0e9f);
 			Points::Add(5000);
 			logger::info("curse: {} is freed", gen::kTowns[a_town]);
@@ -273,7 +293,7 @@ namespace bo3z
 				all &= Step(t) >= kFreed;
 			}
 			if (all) {
-				Hud::Lore("THE DIRGE IS BROKEN", std::string(gen::kCurseFreedAll), 18.0f);
+				Note("Every city is free. The Dirge echoes only in the wilds.", 12.0f);
 			}
 		}
 
@@ -323,6 +343,9 @@ namespace bo3z
 			const std::string name(gen::kGuns[relic].label);
 			if (Step(a_town) < kFreed) {
 				Hud::Banner(name + " waits until the Dirge over " + std::string(gen::kTowns[a_town]) + " is broken", 3.5f);
+				if (GiveBook(RE::PlayerCharacter::GetSingleton())) {
+					Note("The Undying Dirge is back in your pack", 5.0f);
+				}
 				return;
 			}
 			if (Gun::Owns(relic)) {
@@ -386,10 +409,11 @@ namespace bo3z
 			TickRelicShow(player, a_delta);
 			// The prologue: the first night after Helgen
 			if (fighting) {
-				if (auto* intro = Global(gen::kCurseIntroGlobal); intro && intro->value < 0.5f) {
-					intro->value = 1.0f;
-					Hud::Lore(std::string(gen::kCursePrologueTitle), std::string(gen::kCursePrologue), 16.0f);
+				if (auto* intro = Global(gen::kCurseIntroGlobal); intro && intro->value < 1.5f) {  // (1 = an older save saw the pop-up: it gets the book too)
+					intro->value = 2.0f;
+					GiveBook(player);
 					Forms::Play(gen::Sound::quest_start);
+					Note("A book is in your pack: The Undying Dirge", 8.0f);
 					g_loreShown.insert(-1);
 					return;
 				}
@@ -419,14 +443,9 @@ namespace bo3z
 				RemoveWards();
 			}
 			// each quest's scroll, once per session, the first time you're in the city at night with it open
-			if (const int key = z * 10 + s; !g_loreShown.contains(key)) {
-				const bool prologueUp = [] { std::scoped_lock l(Hud::Lock()); return Hud::Edit().loreTime > 2.0f; }();
-				if (!prologueUp) {
-					g_loreShown.insert(key);
-					const auto& st = gen::kCurseSteps[s];
-					Hud::Lore(Upper(std::string(gen::kTowns[z])) + ": " + Fill(st.title, z, st.target), Fill(st.text, z, st.target), 14.0f);
-					Forms::Play(gen::Sound::quest_start);
-				}
+			if (const int key = z * 10 + s; !g_loreShown.contains(key)) {  // a new rite: a toll in the dark, and the tracker updates
+				g_loreShown.insert(key);
+				Forms::Play(gen::Sound::quest_start);
 			}
 			float wardFrac = 0;
 			switch (s) {
@@ -458,7 +477,7 @@ namespace bo3z
 							Advance(z);
 						} else {
 							Set(z, 1, nb);
-							Hud::Banner("WARD-FIRE KINDLED (" + std::to_string(lit) + "/3)", 3.0f);
+							Note("Ward-fire kindled", 4.0f);
 						}
 					}
 				}

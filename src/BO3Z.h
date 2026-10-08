@@ -236,6 +236,8 @@ namespace bo3z
 			float       loreTime{ 0 }, loreTotal{ 0 };
 			float       wardFrac{ 0 };     // kindling a ward-fire
 			float       nukeLeft{ 0 }, nukeFlash{ 0 };
+			std::string questNote;        // quest news in the tracker
+			float       questNoteTime{ 0 };
 		};
 		State&      Edit();
 		std::mutex& Lock();

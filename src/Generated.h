@@ -560,11 +560,11 @@ namespace bo3z::gen
 	inline constexpr std::array<std::string_view, 10> kTowns{ { "Riverwood", "Whiterun", "Solitude", "Windhelm", "Markarth", "Riften", "Falkreath", "Morthal", "Dawnstar", "Winterhold" } };
 	struct SlotDef { float x, y, faceDeg; };
 	inline constexpr std::array<SlotDef, 8> kSlots{ { SlotDef{ -80.0f, 70.0f, 180.0f }, SlotDef{ -235.0f, 70.0f, 180.0f }, SlotDef{ 0.0f, 0.0f, 180.0f }, SlotDef{ 165.0f, 70.0f, 180.0f }, SlotDef{ -200.0f, -120.0f, 180.0f }, SlotDef{ 200.0f, -120.0f, 180.0f }, SlotDef{ 0.0f, -150.0f, 180.0f }, SlotDef{ 0.0f, -70.0f, 180.0f } } };
-	inline constexpr std::array<float, 10> kPlanDist{ { 900.0f, 1200.0f, 1500.0f, 1800.0f, 2100.0f, 2400.0f, 2700.0f, 3000.0f, 3300.0f, 3600.0f } };
+	inline constexpr std::array<float, 10> kPlanDist{ { 1500.0f, 1800.0f, 2100.0f, 2400.0f, 2700.0f, 3000.0f, 3300.0f, 3600.0f, 3900.0f, 4200.0f } };
 	inline constexpr std::array<float, 4> kPlanYaw{ { 0.0f, 45.0f, 90.0f, 135.0f } };
 	inline constexpr int kPlanAngles = 12;
-	inline constexpr float kPlanSnap = 70.0f, kPlanHeight = 70.0f, kPlanSweep = 4800.0f, kPlanDoor = 900.0f;
-	inline constexpr float kPlanBuilding = 550.0f, kPlanClutter = 160.0f, kPlanFlat = 30.0f;
+	inline constexpr float kPlanSnap = 70.0f, kPlanHeight = 70.0f, kPlanSweep = 5400.0f, kPlanDoor = 900.0f;
+	inline constexpr float kPlanBuilding = 900.0f, kPlanClutter = 200.0f, kPlanFlat = 30.0f;
 	struct LocationDef { int town; std::uint32_t anchor; int object; int slot; };
 	inline constexpr std::array<LocationDef, 62> kLocations{ {
 		LocationDef{ 0, 0x0162A4, 0, 0 },
@@ -696,7 +696,7 @@ namespace bo3z::gen
 		CurseStep{ "herald", "The Herald in the Fog", "Slay the Herald of the Dirge", "Wounded, the Dirge calls its Herald: Grimmvar, the Undying Wyrm, who walks only in fog. The next night you face in {city}, the fog will roll in and the Herald will come for you. Slay it before dawn.", 1 },
 		CurseStep{ "dawn", "Dawn over {city}", "Hold the shrine of {city}", "The last root of the curse lies beneath {city}'s shrine. Stand your ground there while the night throws everything it has at you. Hold the shrine for {n} seconds and the root will break.", 180 },
 	} };
-	inline constexpr std::uint32_t kCurseIntroGlobal = 0x996;
+	inline constexpr std::uint32_t kCurseIntroGlobal = 0x996, kStandLayoutGlobal = 0x9DB, kDirgeBook = 0x9DC;
 	inline constexpr std::string_view kCursePrologueTitle = "THE UNDYING DIRGE", kCursePrologue = "Helgen burned, and you lived. But as the World-Eater rose from the ash he sang a word older than the Thu'um: the Undying Dirge. Every grave in Skyrim heard it. Now when the sun goes down, the dead claw their way up to finish what he began. The Dirge has taken root in the cities of the holds. Break it, city by city, and their dead will sleep again.", kCurseLiftedBanner = "THE CURSE OVER {CITY} IS BROKEN", kCurseLiftedText = "The Dirge's root beneath {city} shatters. Its dead sleep again: no undead will rise within its bounds.", kCurseFreedAll = "Every city of Skyrim stands free of the Dirge. Its echo lingers only in the wild places, and it will not fall silent until the World-Eater does.";
 	inline constexpr float kCurseZone = 6500.0f, kCurseHoldRadius = 900.0f, kCurseWardRadius = 150.0f, kCurseWardSeconds = 5.0f, kCurseWardDistance = 650.0f, kCurseHeraldDelay = 20.0f;
 	inline constexpr std::uint32_t kWardBrazier = 0x997, kWardFire = 0x998, kWardLight = 0x999;

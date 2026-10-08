@@ -552,6 +552,62 @@ def u_star():    return _boom(_lay(_sweep(4000, 300, 1.2, 0.6) * 0.8, _sparkle(1
 def u_plague():  return _boom(_lay(_bubbles(1.4, 50, 9) * 1.2, _hiss(1.4, 1500, 8000) * 1.1, chord(choir, ['A2', 'D#3'], 1.0, vowel='o', bright=0.7) * 0.4), 800, 7000, 1.6)
 def u_mind():    tt = t_(1.4); w = np.sin(2 * np.pi * np.cumsum(500 + 400 * np.sin(2 * np.pi * 7 * tt)) / SR) * np.exp(-tt / 0.7); return _boom(_lay(w * 0.9, chord(choir, ['E4', 'A#4', 'E5'], 1.2, vowel='e', bright=1.4) * 0.5), 1500, 9000, 1.8)
 
+# ============ v1.0: dark fantasy kit. Skyrim's magic is breath, stone and iron, not chimes: every cast is a dark
+# swell of air, a low resonance, a choir under it and a thud; nothing sparkles. (These replace the energy kit above.)
+def _whoom(d, lo=150, hi=2200, a=0.05):
+    n = int(d * SR); return bp(noise(n), lo, hi) * env(n, a, d * 0.25, 0.45, d * 0.6) * 1.4
+def _ring(f, d, tau=None):
+    """struck iron / stone resonance: inharmonic partials, dark"""
+    tt = t_(d); x = sum(a * np.sin(2 * np.pi * f * h * tt + h) for h, a in ((1, 1.0), (2.32, 0.5), (3.86, 0.25), (5.1, 0.1)))
+    return lpb(x * np.exp(-tt / (tau or d / 3)), 3500)
+def _growl(f, d, depth=0.35):
+    tt = t_(d); ph = 2 * np.pi * np.cumsum(f * (1 + depth * np.sin(2 * np.pi * 23 * tt))) / SR
+    return lpb(np.tanh(2.5 * np.sin(ph)), 900) * env(len(tt), 0.02, d * 0.3, 0.6, d * 0.5)
+def _whisper(d, lo=1200, hi=4500):
+    tt = t_(d); return bp(noise(len(tt)), lo, hi) * (0.5 + 0.5 * np.sin(2 * np.pi * 7 * tt) ** 2) * env(len(tt), 0.08, d * 0.3, 0.6, d * 0.5) * 0.8
+def _thud(f0=85, f1=34, d=0.45): return kick(d, f0, f1) * 1.2 + lpb(noise(int(d * SR)), 300) * expdec(int(d * SR), 0.06) * 1.2
+def _sparkle(d, f, count=6):   # (embers now: low crackle, no chimes)
+    return _crackle(d, 0.993, 500, 2800, 21) * 0.8
+def _dark(x, cut=6500, wet=.4, size=2.4): return hall(norm(_sat(lpb(x, cut, 2), 1.4), 0.9), wet, size)
+def _choir_low(notes, d, vowel='u', bright=0.6): return chord(choir, notes, d, vowel=vowel, bright=bright)
+
+def e_arcane():  return _dark(_lay(_whoom(0.7, 180, 2400), _ring(196, 0.9) * 0.45, _choir_low(['D3', 'A3'], 0.7) * 0.35, _thud(90, 38, 0.4) * 0.8))
+def e_holy():    return _dark(_lay(_whoom(0.9, 250, 3000), _choir_low(['C3', 'G3', 'C4'], 0.9, 'a', 0.8) * 0.6, _ring(262, 1.0) * 0.35, _thud(100, 40, 0.5) * 0.7), wet=.5, size=3.0)
+def e_shadow():  return _dark(_lay(_whoom(0.6, 90, 900)[::-1] * 1.2, _growl(55, 0.6) * 0.8, _thud(70, 28, 0.5)), 3000)
+def e_vortex():  return _dark(_lay(_whoom(0.8, 80, 1600)[::-1] * 1.2, _rumble(0.8, 38) * 0.8, _growl(45, 0.7, 0.6) * 0.5, _thud(60, 26, 0.6)), 3500)
+def e_soul():    return _dark(_lay(_choir_low(['E3', 'B3'], 0.9, 'o', 0.9) * 0.7, _whisper(0.9) * 0.9, _whoom(0.8, 200, 2400) * 0.7, _thud(90, 36, 0.4) * 0.6), wet=.5, size=3.0)
+def e_nature():  return _dark(_lay(_pluck(82, 0.7) * 0.9, _crackle(0.6, 0.99, 300, 1800, 4) * 1.2, _whoom(0.6, 150, 1800), _thud(90, 40, 0.35) * 0.7), 5000)
+def e_venom():   return _dark(_lay(lpb(_bubbles(0.6, 16), 1200) * 1.2, bp(noise(int(0.6 * SR)), 900, 3500) * env(int(0.6 * SR), 0.01, 0.15, 0.4, 0.3) * 0.8, _thud(80, 34, 0.4) * 0.7), 4500)
+def e_blood():   return _dark(_lay(lpb(noise(int(0.4 * SR)), 500) * expdec(int(0.4 * SR), 0.08) * 2.0, _growl(70, 0.4) * 0.6, _thud(110, 40, 0.3), np.pad(_thud(100, 36, 0.3), (int(0.18 * SR), 0)) * 0.7), 3000, .3, 1.6)
+def e_time():    return _dark(_lay(bp(_ticks(0.7, 6), 600, 2500) * 1.4, _ring(147, 1.1, 0.5) * 0.6, _choir_low(['A2', 'E3'], 0.8, 'o') * 0.4, _thud(80, 34, 0.4) * 0.6))
+def e_prism():   return _dark(_lay(_ring(392, 1.0, 0.4) * 0.5, _ring(587, 0.8, 0.3) * 0.3, _whoom(0.7, 400, 3500), _choir_low(['E3', 'B3'], 0.7, 'e', 0.8) * 0.35, _thud(90, 40, 0.35) * 0.6), 7000)
+def e_hex():     return _dark(_lay(_choir_low(['C3', 'F#3'], 0.8, 'u', 0.6) * 0.6, _growl(65, 0.6) * 0.6, _whoom(0.6, 120, 1400)[::-1], _thud(75, 30, 0.45)), 3500)
+def e_star():    return _dark(_lay(_whoosh(0.7, 2200, 150, 16) * 1.2, _ring(165, 1.0) * 0.4, _thud(70, 28, 0.6) * 1.1), 5500)
+def e_plague():  return _dark(_lay(lpb(_bubbles(0.7, 22, 7), 1000) * 1.3, _whisper(0.6, 600, 2500) * 0.6, _growl(60, 0.5) * 0.4, _thud(80, 34, 0.4) * 0.7), 4000)
+def e_mind():    tt = t_(0.8); w = lpb(np.sin(2 * np.pi * np.cumsum(170 + 60 * np.sin(2 * np.pi * 5 * tt)) / SR), 1200) * env(len(tt), 0.05, 0.2, 0.6, 0.4); return _dark(_lay(w * 0.9, _whisper(0.8) * 0.9, _choir_low(['D3', 'G#3'], 0.8, 'e', 0.7) * 0.4, _thud(90, 38, 0.35) * 0.5), wet=.5, size=3.0)
+# bows: a heavy bowstring and the element riding the arrow
+def _snap(): return _lay(_pluck(73, 0.45) * 0.9, lpb(_click(0.02, 800, 4000), 3000), _whoosh(0.3, 2500, 300) * 0.8)
+def e_fire():    return _dark(_lay(_snap(), lpb(noise(int(0.6 * SR)), 1200) * env(int(0.6 * SR), 0.01, 0.15, 0.6, 0.35) * 1.5, _crackle(0.6, 0.985, 400, 2500, 6) * 1.2, _thud(90, 36, 0.35) * 0.7), 5000)
+def e_ice():     return _dark(_lay(_snap(), _crackle(0.5, 0.97, 1200, 5000, 7) * 1.3, _ring(330, 0.7, 0.25) * 0.4, bp(noise(int(0.6 * SR)), 1500, 5000) * env(int(0.6 * SR), 0.05, 0.2, 0.4, 0.3) * 0.5, _thud(100, 44, 0.3) * 0.6), 6500)
+def e_storm():   return _dark(_lay(_snap(), thunder(0.9) * 0.9, zap(1400, 160, 0.3) * 0.8, _crackle(0.5, 0.96, 800, 4500, 8) * 1.2), 6000)
+def e_wind():    return _dark(_lay(_snap(), _whoosh(0.8, 1500, 120, 18) * 1.5, _rumble(0.6, 40) * 0.5, _thud(80, 34, 0.4) * 0.6), 4500)
+
+def _boom(body, color_lo, color_hi, d=1.4, wet=.5, size=3.2):
+    riser = lpb(_whoom(0.35, 120, 1500, 0.3), 2500) * np.linspace(0.2, 1, int(0.35 * SR))
+    det = _lay(_thud(80, 24, 1.0) * 1.6, _rumble(d, 36) * 1.0, _tail(d, min(color_lo, 1200), min(color_hi, 4500)) * 0.8, body)
+    return hall(norm(_sat(lpb(np.concatenate([riser, det]), 6000), 2.0), 0.95), wet, size)
+def u_arcane():  return _boom(_lay(_ring(147, 1.3, 0.6) * 0.6, _choir_low(['D2', 'A2', 'D3'], 1.4, 'u', 0.8) * 0.7), 300, 3000)
+def u_holy():    return _boom(_lay(_choir_low(['C3', 'G3', 'C4', 'E4'], 1.6, 'a', 1.0) * 0.8, chord(horn, ['C2', 'G2'], 1.4, bright=0.4) * 0.5), 300, 4000, 1.8)
+def u_soul():    return _boom(_lay(_choir_low(['E2', 'B2', 'E3', 'G3'], 1.6, 'o', 0.9) * 0.8, _whisper(1.4) * 0.8), 300, 3500, 1.8)
+def u_prism():   return _boom(_lay(_ring(294, 1.4, 0.6) * 0.5, _ring(440, 1.2, 0.5) * 0.3, _choir_low(['E3', 'B3', 'E4'], 1.2, 'e', 0.9) * 0.5), 600, 5000, 1.6)
+def u_time():    return _boom(_lay(bp(_ticks(1.4, 10), 500, 2500) * 1.3, _ring(98, 1.6, 0.8) * 0.6, _choir_low(['A2', 'E3', 'A3'], 1.4, 'o') * 0.5), 400, 3500, 1.8)
+def u_star():    return _boom(_lay(_whoosh(1.2, 2500, 100, 20) * 1.3, thunder(1.4) * 0.7), 300, 4000, 1.8)
+def u_mind():    tt = t_(1.4); w = lpb(np.sin(2 * np.pi * np.cumsum(140 + 50 * np.sin(2 * np.pi * 4 * tt)) / SR), 1000) * np.exp(-tt / 0.8); return _boom(_lay(w * 0.9, _whisper(1.4) * 1.0, _choir_low(['D2', 'G#2', 'D3'], 1.3, 'e', 0.7) * 0.6), 400, 3500, 1.8)
+def u_hex():     return _boom(_lay(_choir_low(['C2', 'F#2', 'C3'], 1.4, 'u', 0.7) * 0.9, _growl(50, 1.2) * 0.7), 150, 2000, 1.8)
+def u_plague():  return _boom(_lay(lpb(_bubbles(1.4, 50, 9), 1000) * 1.3, _whisper(1.2, 600, 2500) * 0.8, _choir_low(['A2', 'D#3'], 1.0, 'o', 0.7) * 0.4), 400, 3000, 1.6)
+def u_venom():   return _boom(_lay(lpb(_bubbles(1.2, 40, 5), 1000) * 1.2, bp(noise(int(1.2 * SR)), 800, 3000) * expdec(int(1.2 * SR), 0.4)), 400, 3000)
+def u_nature():  return _boom(_lay(_pluck(55, 1.2) * 0.9, _crackle(1.0, 0.98, 300, 2000, 11) * 1.2, _choir_low(['G2', 'D3'], 1.2, 'o') * 0.4), 300, 2500)
+
 def powerup_spawn():  # a shimmering bell as it drops
     return hall(norm(_lay(_fm(1568, 1568, 2.0, 2, 0.8, 0.4) * 0.6, _fm(2349, 2349, 3.0, 1.5, 0.8, 0.35) * 0.4, _sparkle(0.8, 3000, 14) * 0.5), 0.7), 0.4, 2.0)
 def powerup_grab():   # bright rising arpeggio
@@ -610,14 +666,14 @@ ROOTS = {'hearth': 'D', 'gildergreen': 'G', 'lorkhan': 'C', 'arkay': 'E', 'mires
 def _relic_unleash(wid):
     el, r = RELICS[wid], ROOTS[wid]
     def f():
-        sting = mix(chord(choir, [r + '3', r + '4'], 2.4, vowel='a', bright=1.0) * 0.45, place(np.zeros(1), bell(hz(r + '5'), 2.0, 2.76, 2.5) * 0.35, 0.15))
+        sting = mix(chord(choir, [r + '2', r + '3'], 2.4, vowel='u', bright=0.7) * 0.45, place(np.zeros(1), bell(hz(r + '3'), 2.4, 2.76, 2.5) * 0.35, 0.15))
         return norm(mix(globals()['u_' + el](), sting))
     return f
 def _relic_cast(wid):
     el = RELICS[wid]
     def f():
         x = globals()['e_' + el]()
-        return norm(mix(x, bell(hz(ROOTS[wid] + '6'), 0.6, 2.76, 1.5) * 0.18))
+        return norm(mix(x, _ring(hz(ROOTS[wid] + '3'), 0.8) * 0.2))
     return f
 CASTS = {k[2:]: v for k, v in globals().items() if k.startswith('c_') and callable(v)}
 CASTS.update({wid: globals()['e_' + el] for wid, el in ENERGY.items()})        # the new kit replaces the old casts

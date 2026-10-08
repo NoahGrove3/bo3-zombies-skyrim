@@ -360,16 +360,20 @@ namespace bo3z
 			}
 
 			// The city's curse quest, top-right: city, quest title, goal and a thin progress bar.
-			if (!s.questTitle.empty()) {
+			if (!s.questTitle.empty() || s.questNoteTime > 0) {
 				const float w = 400 * k;
-				const ImVec2 a{ size.x - w - 40 * k, 30 * k }, b{ size.x - 40 * k, 30 * k + 104 * k };
+				const bool  note = s.questNoteTime > 0 && !s.questNote.empty();
+				const ImVec2 a{ size.x - w - 40 * k, 30 * k }, b{ size.x - 40 * k, 30 * k + (note ? 128 : 104) * k };
 				Panel(dl, a, b, k, 0.92f);
 				Txt(dl, g_body, 14 * k, { a.x + 14 * k, a.y + 8 * k }, Fade(kGold, 0.85f), s.questCity + "  -  THE UNDYING DIRGE  " + std::to_string(s.questStep + 1) + "/4");
 				Txt(dl, g_title, 22 * k, { a.x + 14 * k, a.y + 28 * k }, kParch, s.questTitle);
 				Txt(dl, g_body, 16 * k, { a.x + 14 * k, a.y + 58 * k }, IM_COL32(205, 200, 185, 240), s.questGoal);
 				static float qGhost = 0;
 				qGhost = s.questFrac < qGhost ? s.questFrac : qGhost + (s.questFrac - qGhost) * std::min(1.0f, dt * 4);
-				Bar(dl, { a.x + 14 * k, b.y - 16 * k }, w - 28 * k, 5 * k, qGhost, s.questFrac, IM_COL32(214, 178, 96, 255), k);
+				Bar(dl, { a.x + 14 * k, a.y + 88 * k }, w - 28 * k, 5 * k, qGhost, s.questFrac, IM_COL32(214, 178, 96, 255), k);
+				if (note) {
+					Txt(dl, g_body, 15 * k, { a.x + 14 * k, a.y + 100 * k }, Fade(IM_COL32(255, 200, 110, 255), std::min(1.0f, s.questNoteTime)), s.questNote);
+				}
 			}
 			if (!s.sanctuary.empty()) {
 				TxtC(dl, g_title, 24 * k, size.x * 0.5f, 104 * k, Fade(kGold, 0.9f), "SANCTUARY OF " + s.sanctuary, 2 * k, IM_COL32(255, 220, 120, 255));
@@ -389,20 +393,6 @@ namespace bo3z
 				const std::string txt = "NUKE  -  THE DEAD REGROUP  " + std::to_string(static_cast<int>(std::ceil(s.nukeLeft)));
 				TxtC(dl, g_body, 22 * k, size.x * 0.5f, size.y - 236 * k, IM_COL32(255, 160, 60, 255), txt);
 			}
-			// A scroll of the Dirge: the lore of each quest, fading in and out.
-			if (s.loreTime > 0 && !s.loreText.empty()) {
-				const float in = std::clamp((s.loreTotal - s.loreTime) * 2.0f, 0.0f, 1.0f), out = std::clamp(s.loreTime * 1.0f, 0.0f, 1.0f), al = std::min(in, out);
-				const float w = 780 * k, pad = 28 * k, tp = 30 * k, bp = 21 * k;
-				const auto  body = g_body ? g_body->CalcTextSizeA(bp, FLT_MAX, w - 2 * pad, s.loreText.c_str()) : ImVec2{ w, 200 * k };
-				const float h = pad * 2 + tp + 26 * k + body.y;
-				const ImVec2 a{ size.x * 0.5f - w / 2, size.y * 0.30f - h / 2 }, b{ a.x + w, a.y + h };
-				dl->AddRectFilled({ a.x - 6 * k, a.y - 6 * k }, { b.x + 6 * k, b.y + 6 * k }, IM_COL32(0, 0, 0, static_cast<int>(90 * al)), 6 * k);
-				Panel(dl, a, b, k, al);
-				TxtC(dl, g_title, tp, size.x * 0.5f, a.y + pad - 6 * k, Fade(kGold, al), s.loreTitle, 2 * k, IM_COL32(120, 60, 255, static_cast<int>(255 * al)));
-				Divider(dl, size.x * 0.5f, a.y + pad + tp + 6 * k, w * 0.3f, k, al);
-				dl->AddText(g_body, bp, { a.x + pad, a.y + pad + tp + 22 * k }, Fade(kParch, al), s.loreText.c_str(), nullptr, w - 2 * pad);
-			}
-
 			// Banner: centred line between ornaments, fades and drifts in.
 			if (s.bannerTime > 0 && !s.banner.empty()) {
 				const float a = std::min(1.0f, s.bannerTime * 2), y = size.y * 0.11f + (1.0f - a) * 10 * k;
@@ -538,6 +528,7 @@ namespace bo3z
 				g_state.hitTime = std::max(0.0f, g_state.hitTime - dt);
 				g_state.hurtTime = std::max(0.0f, g_state.hurtTime - dt);
 				g_state.loreTime = std::max(0.0f, g_state.loreTime - dt);
+				g_state.questNoteTime = std::max(0.0f, g_state.questNoteTime - dt);
 				g_state.nukeFlash = std::max(0.0f, g_state.nukeFlash - dt * 1.25f);
 				s = g_state;
 			}

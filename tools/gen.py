@@ -201,7 +201,7 @@ o.append(f'\tinline constexpr std::array<CurseStep, {len(CU["rows"])}> kCurseSte
 for r in CU['rows']:
     o.append(f'\t\tCurseStep{{ {cs(r["id"])}, {cs(r["title"])}, {cs(r["goal"])}, {cs(r["text"])}, {r["target"]} }},')
 o.append('\t} };')
-o.append(f'\tinline constexpr std::uint32_t kCurseIntroGlobal = 0x{IDS[("GLOB", "curse_intro")]:03X};')
+o.append(f'\tinline constexpr std::uint32_t kCurseIntroGlobal = 0x{IDS[("GLOB", "curse_intro")]:03X}, kStandLayoutGlobal = 0x{IDS[("GLOB", "stand_layout")]:03X}, kDirgeBook = 0x{IDS[("BOOK", "dirge")]:03X};')
 o.append(f'\tinline constexpr std::string_view kCursePrologueTitle = {cs(CU["prologueTitle"])}, kCursePrologue = {cs(CU["prologue"])}, kCurseLiftedBanner = {cs(CU["liftedBanner"])}, kCurseLiftedText = {cs(CU["liftedText"])}, kCurseFreedAll = {cs(CU["freedAll"])};')
 o.append(f'\tinline constexpr float kCurseZone = {F(CU["zoneRadius"])}, kCurseHoldRadius = {F(CU["holdRadius"])}, kCurseWardRadius = {F(CU["wardRadius"])}, kCurseWardSeconds = {F(CU["wardSeconds"])}, kCurseWardDistance = {F(CU["wardDistance"])}, kCurseHeraldDelay = {F(CU["heraldDelay"])};')
 o.append(f'\tinline constexpr std::uint32_t kWardBrazier = 0x{IDS[("STAT", "ward_brazier")]:03X}, kWardFire = 0x{IDS[("STAT", "ward_fire")]:03X}, kWardLight = 0x{IDS[("LIGH", "ward_light")]:03X};')

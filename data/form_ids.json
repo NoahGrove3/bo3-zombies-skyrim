@@ -475,6 +475,8 @@
   "PROJ:arrow_nightingale": "0x9d7",
   "AMMO:arrow_nightmare": "0x9d8",
   "PROJ:arrow_nightmare": "0x9d9",
-  "ACTI:relic_altar": "0x9da"
+  "ACTI:relic_altar": "0x9da",
+  "GLOB:stand_layout": "0x9db",
+  "BOOK:dirge": "0x9dc"
  }
 }
