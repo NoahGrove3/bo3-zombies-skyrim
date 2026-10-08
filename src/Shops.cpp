@@ -29,7 +29,7 @@ namespace bo3z
 			int                 gun{ -1 };
 			bool                cheese{ false };
 			float               t{ 0 }, step{ 0 };
-			int                 cheeseTown{ 0 };
+			int                 cheeseTown{ 0 }, fromTown{ -1 };
 		} g_show;
 
 		RE::NiPoint3 Local(RE::TESObjectREFR* a_ref, float a_x, float a_y, float a_z)
@@ -102,7 +102,7 @@ namespace bo3z
 			if (!ref) {
 				return;
 			}
-			ref->SetPosition(Local(chest.get(), 0, 0, 40.0f + a_rise));
+			ref->SetPosition(Local(chest.get(), 0, 0, 40.0f * chest->GetScale() + a_rise));
 			ref->SetAngle({ 0, 0, chest->GetAngleZ() + RE::NI_PI / 2 });
 			g_show.display = ref->CreateRefHandle();
 		}
@@ -134,7 +134,7 @@ namespace bo3z
 						const int pick = pool.empty() ? 0 : pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
 						ShowModel(Forms::Ours(gen::kShowStat[pick]), gen::kShowRise * k);
 					} else if (auto d = g_show.display.get()) {
-						d->SetPosition(Local(chest.get(), 0, 0, 40.0f + gen::kShowRise * k));
+						d->SetPosition(Local(chest.get(), 0, 0, 40.0f * chest->GetScale() + gen::kShowRise * k));
 					}
 					if (g_show.t >= gen::kShowSpin) {
 						g_show.t = 0;
@@ -144,7 +144,10 @@ namespace bo3z
 								d->SetScale(gen::kSkullScale);
 							}
 							Forms::PlayAt(gen::Sound::coffer_skull, chest.get());
-							Hud::Banner(std::string(gen::kText_box_joke) + " It has gone to " + std::string(gen::kTowns[g_show.cheeseTown]) + ".", 6.0f);
+							Hud::Banner(g_show.cheeseTown == g_show.fromTown ?
+											std::string(gen::kText_box_joke) + " But it knows no other town you have found, so it stays." :
+											std::string(gen::kText_box_joke) + " It has gone to " + std::string(gen::kTowns[g_show.cheeseTown]) + ".",
+								6.0f);
 							g_show.phase = Show::Cheese;
 						} else {
 							ShowModel(Forms::Ours(gen::kShowStat[g_show.gun]), gen::kShowRise);
@@ -158,7 +161,7 @@ namespace bo3z
 				if (auto d = g_show.display.get()) {
 					auto a = d->GetAngle();
 					d->SetAngle({ 0, 0, a.z + a_delta * 1.2f });
-					d->SetPosition(Local(chest.get(), 0, 0, 40.0f + gen::kShowRise + 4.0f * std::sin(g_show.t * 3.0f)));
+					d->SetPosition(Local(chest.get(), 0, 0, 40.0f * chest->GetScale() + gen::kShowRise + 4.0f * std::sin(g_show.t * 3.0f)));
 				}
 				if (g_show.t >= gen::kShowOffer) {
 					Remove(g_show.display);
@@ -326,6 +329,7 @@ namespace bo3z
 		};
 		std::array<std::vector<Obstacle>, gen::kTowns.size()> g_obstacles{};
 		constexpr float kStandRadius = 370.0f;  // half-diagonal of the platform
+		constexpr float kStandLift = 34.0f;     // the dais floor above the highest ground under it (its skirt reaches 100 down)
 
 		void GatherObstacles(int a_town, RE::TESObjectREFR* a_anchor)
 		{
@@ -438,10 +442,10 @@ namespace bo3z
 			float slope = 0;
 			{
 				float low = 0;
-				if (auto g = GroundTop(a_anchor, plan, &low); !g || *g - low > gen::kStandMaxSlope) {
+				if (auto g = GroundTop(a_anchor, plan, &low); !g || (*g - kStandLift) - low > gen::kStandMaxSlope) {
 					fails += 3;  // the ground drops away under part of the stand (or isn't there): never acceptable
 				} else {
-					slope = std::max(0.0f, *g - 1.0f - low);
+					slope = std::max(0.0f, *g - kStandLift - low);
 				}
 			}
 			const float spread = hi > lo ? hi - lo : 0;
@@ -530,8 +534,25 @@ namespace bo3z
 			plan.state = TownPlan::State::Ready;
 			plan.center.z = p.z;
 			float low = 0;
-			const auto g = GroundTop(a_anchor, plan, &low);
-			if (!g || std::abs(*g - p.z) > 30.0f || *g - low > gen::kStandMaxSlope) {
+			auto g = GroundTop(a_anchor, plan, &low);
+			if (g && *g - p.z > 8.0f && *g - p.z <= kStandLift + 12.0f) {
+				// a stand from before the raised dais: lift it and everything on it in place
+				const float dz = *g - p.z;
+				int         moved = 0;
+				RE::TES::GetSingleton()->ForEachReferenceInRange(a_anchor, gen::kPlanSweep, [&](RE::TESObjectREFR* r) {
+					if (r && !r->IsDeleted() && IsOurBase(r->GetBaseObject()) && std::hypot(r->GetPosition().x - plan.center.x, r->GetPosition().y - plan.center.y) < 600.0f) {
+						auto q = r->GetPosition();
+						q.z += dz;
+						r->SetPosition(q);
+						++moved;
+					}
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				plan.top = plan.center.z = p.z + dz;
+				logger::info("shops: {} stand raised {:.0f} above the grass ({} pieces)", gen::kTowns[a_town], dz, moved);
+				g = plan.top;
+			}
+			if (!g || std::abs(*g - plan.top) > 30.0f || (*g - kStandLift) - low > gen::kStandMaxSlope) {
 				logger::info("shops: {} stand floats {:.0f} off the ground, rebuilding", gen::kTowns[a_town], g ? p.z - *g : 999.0f);
 				return false;
 			}
@@ -539,8 +560,8 @@ namespace bo3z
 				logger::info("shops: {} stand predates the outskirts layout, moving it", gen::kTowns[a_town]);
 				return false;
 			}
-			if (g && *g - p.z > 8.0f) {
-				logger::info("shops: {} stand sits {:.0f} into the ground, rebuilding", gen::kTowns[a_town], *g - p.z);
+			if (g && *g - plan.top > 8.0f) {
+				logger::info("shops: {} stand sits {:.0f} into the ground, rebuilding", gen::kTowns[a_town], *g - plan.top);
 				return false;
 			}
 			if (Obstructed(a_anchor, plan, 440.0f)) {
@@ -548,7 +569,7 @@ namespace bo3z
 				return false;
 			}
 			GatherObstacles(a_town, a_anchor);
-			if (const float c = Crowding(a_town, plan.center); c > 0.0f || (g && *g - low > gen::kPlanFlat + 10.0f)) {
+			if (const float c = Crowding(a_town, plan.center); c > 0.0f || (g && (*g - kStandLift) - low > gen::kPlanFlat + 10.0f)) {
 				logger::info("shops: {} stand is in town (crowding {:.0f}), moving it out to open ground", gen::kTowns[a_town], c);
 				return false;
 			}
@@ -600,7 +621,8 @@ namespace bo3z
 				const auto  p = r->GetPosition();
 				const float dx = p.x - plan.center.x, dy = p.y - plan.center.y, a = plan.yaw;
 				const float lx = dx * std::cos(a) - dy * std::sin(a), ly = dx * std::sin(a) + dy * std::cos(a);
-				if (std::abs(lx) <= gen::kStandHalfX + 40.0f && ly >= gen::kStandFrontY - 80.0f && ly <= gen::kStandBackY + 40.0f && std::abs(p.z - plan.top) < 300.0f) {
+				// the footprint, plus the approach in front of it (bushes there hide the machines from the path)
+				if (std::abs(lx) <= gen::kStandHalfX + 160.0f && ly >= gen::kStandFrontY - 420.0f && ly <= gen::kStandBackY + 80.0f && std::abs(p.z - plan.top) < 300.0f) {
 					r->Disable();
 					++n;
 				}
@@ -642,7 +664,8 @@ namespace bo3z
 			}
 			// The dais sits ON the ground: its floor at the highest point under it (its skirt reaches 100 down, so the low
 			// side is covered). Only on a real slope does it cut into the hill rather than float over the low side.
-			return (hi - lo <= 60.0f ? hi : std::min(hi, lo + 60.0f)) + 2.0f;
+			// Raised a step above the ground (kStandLift) so the grass round it never hides the machines.
+			return (hi - lo <= 60.0f ? hi : std::min(hi, lo + 60.0f)) + kStandLift;
 		}
 
 		void SettleStand(int a_town, RE::TESObjectREFR* a_anchor)
@@ -654,14 +677,14 @@ namespace bo3z
 			auto top = GroundTop(a_anchor, plan);
 			if (!top) {  // no clean footprint: stand on whatever is under its centre, never at the anchor's height
 				if (auto c = Snap(a_anchor, plan.center)) {
-					top = c->z + 2.0f;
+					top = c->z + kStandLift;
 				} else if (auto z = FloorZ(a_anchor, plan.center, plan.center.z + 3000.0f)) {
-					top = *z + 2.0f;
+					top = *z + kStandLift;
 				} else {
 					float land = 0;
 					RE::NiPoint3 at = plan.center;
 					if (RE::TES::GetSingleton()->GetLandHeight(at, land)) {
-						top = land + 2.0f;
+						top = land + kStandLift;
 					}
 				}
 			}
@@ -708,6 +731,9 @@ namespace bo3z
 			} else if (auto pos = found->GetPosition(); std::abs(pos.z - plan.top) > 4.0f) {
 				pos.z = plan.top;  // keep every machine on the stand's floor
 				found->SetPosition(pos);
+			}
+			if (std::abs(found->GetScale() - gen::kObjects[loc.object].scale) > 0.01f) {
+				found->SetScale(gen::kObjects[loc.object].scale);  // (the Coffer grew)
 			}
 			g_placed[a_index] = found->CreateRefHandle();
 			Dress(a_index, found);
@@ -783,6 +809,59 @@ namespace bo3z
 			return name;
 		}
 
+		// Has the player found this town yet? Its own map marker (the city/town icon by that name, nearest the
+		// town's anchor) is discovered. Station icons and the Coffer's travels wait for it.
+		std::array<RE::ObjectRefHandle, gen::kTowns.size()> g_cityMarkers{};
+		std::array<bool, gen::kTowns.size()>                g_cityLooked{};
+		bool TownDiscovered(int a_town)
+		{
+			if (a_town < 0 || a_town >= static_cast<int>(gen::kTowns.size())) {
+				return false;
+			}
+			auto ref = g_cityMarkers[a_town].get();
+			if (!ref && !g_cityLooked[a_town]) {
+				g_cityLooked[a_town] = true;
+				auto* anchor = TownAnchor(a_town);
+				auto* ws = anchor ? anchor->GetWorldspace() : nullptr;
+				if (auto* cell = ws ? ws->persistentCell : nullptr) {
+					RE::TESObjectREFR* best = nullptr;
+					float              bestD = 9000.0f;
+					bool               named = false;
+					int                seen = 0;
+					cell->ForEachReference([&](RE::TESObjectREFR* r) {
+						++seen;
+						auto* x = r ? r->extraList.GetByType<RE::ExtraMapMarker>() : nullptr;
+						if (!x || !x->mapData || (r->GetFormID() >> 24) == 0xFF) {
+							return RE::BSContainer::ForEachResult::kContinue;
+						}
+						const bool  isTown = x->mapData->type == RE::MARKER_TYPE::kCity || x->mapData->type == RE::MARKER_TYPE::kTown;
+						const bool  sameName = std::string_view(x->mapData->locationName.fullName.c_str()) == gen::kTowns[a_town];
+						const float d = r->GetPosition().GetDistance(anchor->GetPosition());
+						if ((sameName && (!named || d < bestD)) || (!named && isTown && d < bestD)) {
+							best = r, bestD = d, named = sameName;
+						}
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
+					if (!best && seen < 200) {
+						g_cityLooked[a_town] = false;  // the world isn't loaded yet: look again later
+						return false;
+					}
+					if (best) {
+						g_cityMarkers[a_town] = best->CreateRefHandle();
+						ref = RE::NiPointer<RE::TESObjectREFR>(best);
+						logger::info("shops: {} is found by its map marker {:08X}{}", gen::kTowns[a_town], best->GetFormID(), named ? "" : " (nearest town icon)");
+					} else {
+						logger::warn("shops: no map marker for {}; its station shows from the start", gen::kTowns[a_town]);
+					}
+				}
+			}
+			if (!ref) {
+				return g_cityLooked[a_town];  // no marker to go by: treat as found
+			}
+			auto* x = ref->extraList.GetByType<RE::ExtraMapMarker>();
+			return x && x->mapData && x->mapData->flags.all(RE::MapMarkerData::Flag::kCanTravelTo);
+		}
+
 		void EnsureMarker(RE::PlayerCharacter* a_player, int a_town)
 		{
 			auto* anchor = TownAnchor(a_town);
@@ -793,6 +872,21 @@ namespace bo3z
 			const auto& plan = g_towns[a_town];
 			const bool   ready = plan.state == TownPlan::State::Ready;
 			const RE::NiPoint3 at = ready ? plan.center : PreviewSpot(a_town, anchor);
+			if (!TownDiscovered(a_town)) {
+				// not found yet: no station icon (one from an earlier build is hidden until then)
+				if (!g_markers[a_town].get() && !g_markerScanned[a_town]) {
+					g_markerScanned[a_town] = true;
+					if (auto* r = FindOurMarker(a_town, anchor, markerBase)) {
+						g_markers[a_town] = r->CreateRefHandle();
+					}
+				}
+				if (auto r = g_markers[a_town].get()) {
+					if (auto* x = r->extraList.GetByType<RE::ExtraMapMarker>(); x && x->mapData) {
+						x->mapData->flags.reset(RE::MapMarkerData::Flag::kVisible, RE::MapMarkerData::Flag::kCanTravelTo);
+					}
+				}
+				return;
+			}
 			auto ref = g_markers[a_town].get();
 			if (!ref && !g_markerScanned[a_town]) {
 				g_markerScanned[a_town] = true;
@@ -1020,8 +1114,10 @@ namespace bo3z
 				// the dragon skull: the Coffer leaves for another town (its map icon follows)
 				auto towns = BoxTowns();
 				std::erase(towns, town);
+				std::erase_if(towns, [](int t) { return !TownDiscovered(t); });  // only to stations in cities you have found
 				g_show.cheeseTown = towns.empty() ? town : towns[std::uniform_int_distribution<std::size_t>(0, towns.size() - 1)(g_rng)];
 				g_show.cheese = true;
+				g_show.fromTown = town;
 				SetBox(g_show.cheeseTown, 0);
 				g_markerTimer = 0;  // rename the icons now
 				logger::info("box: cheese, moving to {}", gen::kTowns[g_show.cheeseTown]);

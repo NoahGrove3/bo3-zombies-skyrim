@@ -447,7 +447,7 @@ namespace bo3z::gen
 	inline constexpr std::string_view kText_station_marker = "Undying Nights Station";
 	struct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; float scale; bool retired; };
 	inline constexpr std::array<ObjectDef, 20> kObjects{ {
-		ObjectDef{ "coffer", "Sheogorath's Coffer", 0, 950, -1, 0x807, 1.0f, false },
+		ObjectDef{ "coffer", "Sheogorath's Coffer", 0, 950, -1, 0x807, 1.6f, false },
 		ObjectDef{ "brew_machine", "Brew Machine", 4, 0, -1, 0x8A8, 1.0f, false },
 		ObjectDef{ "ammo_cache", "Ammo Cache", 3, 750, -1, 0x8A9, 1.0f, true },
 		ObjectDef{ "forge", "Atronach Reforge", 5, 4000, -1, 0x8C7, 1.0f, false },
