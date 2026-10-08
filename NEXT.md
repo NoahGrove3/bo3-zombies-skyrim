@@ -22,6 +22,20 @@
   adopted stands that fail it are rebuilt.
 - Dev: `hold <mouse id> <secs>` (fire = 0) holds the button for charge tests.
 
+## Built 2026-10-07 20:50 (c2374f9 + un_v9_a/b/c assets, installed; graphics mods installed, launch via skse64_loader.exe)
+- Enemies: Iron Reaper (draugr skeleton, autorig.py + rigwrite, invisible 2H 'Reaper Scythe' for swings; reap sweep
+  every 6.5 s in reach, enrage <35%) and Voidbound Necromancer (BretonRace, skin covers head/hands/feet, spells from
+  EncWarlock07TemplateNecro, holds range, raises 2 vanilla necro skeletons every 11 s, max 8). Weights 14/5/5.
+  VERIFY: necromancer head hidden (no FaceGen), reaper swings with draugr 2H anims, skeleton minions hostile.
+- Staffs kept: sidearm, aetherium, mammothlmg, triad. Remade from the 'magic staffs basic bundle': animunculi
+  Hexbinder (Doom Mark), longshot Starforge Spire (Orbital Strike), centurion Plaguebringer (Pestilence), kagrenac
+  Mindbreaker (Mass Frenzy: out of undead faction, StartCombat on nearest zombie, 12%/0.5 s tearing).
+- Materials: tools/skymat.py (wood/iron/steel/bronze/gold/silver/leather/bone/crystal/vines, 1024 + spec-in-alpha).
+- Bows charge-only (2.6 s); staffs 0.75 s delay, 2.0 s charge; no wall-buys (retired + removed from stands);
+  chargeSpell none everywhere (vanilla area spells hurt NPCs); FUS RO DAH wind bow.
+- Power-ups (PowerUps namespace in Director.cpp): 3.5% drop, max 4/night, one at a time, 26 s; Insta-Kill,
+  Double Points, Kaboom, Fire Sale (Coffer 10 points), HUD timers.
+
 ## Built 2026-10-07 17:00 (2857ca4 + un_staffs_v7, installed)
 - Release decides: full charge -> signature move only, shorter -> normal shot (OnButton; TryUnleash returns bool).
 - Dirt/rock blasts (giantslam*, dragondust) deleted. drill + spider retired; kagrenac = Chronos Hourglass (Time Stop:
