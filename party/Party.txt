@@ -1,0 +1,4 @@
+# Noah fills these in before sharing the folder. Address = your Tailscale (or Radmin VPN) address, or your public IP if you forwarded UDP 10578.
+Address=PUT-NOAHS-ADDRESS-HERE
+Port=10578
+Password=PUT-A-PASSWORD-HERE

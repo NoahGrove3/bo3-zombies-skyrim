@@ -1,0 +1,28 @@
+UNDYING NIGHTS - PARTY PACK
+===========================
+
+What you need: Skyrim Special Edition (or Anniversary Edition) on Steam, up to date, run once.
+
+JOINING (friends)
+ 1. If Noah uses Tailscale: install Tailscale (tailscale.com), sign in, and accept Noah's invite.
+ 2. Close Skyrim. Double-click  JOIN THE PARTY.bat  (Windows may ask "Run anyway" - it's the installer).
+ 3. Open "Undying Nights Co-op" on your desktop. Load a save or make a character.
+ 4. Open the Skyrim Together menu in game, choose Connect, paste the address (already copied for you)
+    and type the password from Party.txt.
+ 5. You're in Noah's party. When night falls, his game raises the dead and you fight them together.
+
+HOSTING (Noah)
+ 1. Fill in Party.txt (your Tailscale address and a password) before sharing this folder.
+ 2. Double-click  HOST THE PARTY (Noah only).bat  once.
+ 3. Each session: open "Undying Nights Server", then "Undying Nights Co-op", connect to 127.0.0.1.
+
+GOOD TO KNOW
+ - Nights are run by the host: only Noah's game raises the horde, events and bosses; you all see and fight them.
+ - Your points, weapons, brews, Reforge levels and city quests are saved in YOUR OWN save.
+ - Going down: Skyrim Together's death system picks you back up (no save loss).
+ - Graphics: Noah's look comes from optional mods (Skyland, Azurite Weathers, Realistic Water Two, Lux, Lux Via,
+   Happy Little Trees, Skoglendi, SMIM). They are not needed to play together.
+ - Uninstall: delete BO3Zombies.asi, dinput8.dll and UndyingNights.ini from the Skyrim folder and
+   Data\BO3Zombies.esp, Data\SkyrimTogetherReborn.
+
+Built with Claude. Fan project, not affiliated with Bethesda. Skyrim Together Reborn by Tilted Phoques.
