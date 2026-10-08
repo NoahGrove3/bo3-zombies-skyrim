@@ -12,7 +12,14 @@ namespace bo3z::Coop
 	{
 		Role Read()
 		{
-			std::ifstream f("UndyingNights.ini");
+			// next to SkyrimSE.exe (Skyrim Together's launcher may start the game from its own folder)
+			wchar_t exe[MAX_PATH]{};
+			::GetModuleFileNameW(nullptr, exe, MAX_PATH);
+			std::filesystem::path path = std::filesystem::path(exe).parent_path() / "UndyingNights.ini";
+			if (!std::filesystem::exists(path)) {
+				path = std::filesystem::path(exe).parent_path() / "Data" / "UndyingNights.ini";
+			}
+			std::ifstream f(path);
 			std::string   line;
 			Role          r = Role::Solo;
 			while (std::getline(f, line)) {

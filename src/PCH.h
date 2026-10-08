@@ -9,6 +9,7 @@
 #include <cctype>
 #include <functional>
 #include <fstream>
+#include <filesystem>
 #include <map>
 #include <array>
 #include <atomic>
