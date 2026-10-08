@@ -119,6 +119,8 @@ namespace bo3z
 		bool  SafeHere(RE::PlayerCharacter* a_player);  // in a freed city: no undead rise here
 		float SpawnBoost();                              // holding a shrine: the night pushes harder
 		int   ZoneTown();                                // city the player is in (-1)
+		int   RelicOf(int a_town);                       // the city's relic weapon (gun index, -1)
+		void  ClaimRelic(int a_town);                    // the Shrine of the Dirge at a freed city's station
 	}
 
 	namespace Intro
@@ -152,6 +154,8 @@ namespace bo3z
 		bool OnButton(const RE::ButtonEvent* a_event);  // brew machine menu keys (true = used)
 		std::string BoxTown();
 		bool        StandFrame(int a_town, RE::NiPoint3& a_center, float& a_yaw, RE::TESWorldSpace*& a_world);  // true: the station is placed
+		RE::TESObjectREFR* Placed(int a_town, int a_kind);  // the town's machine of that object kind (6 = relic shrine), if placed
+		int         TownOfRef(RE::TESObjectREFR* a_ref);
 	}
 
 	namespace Perks

@@ -198,13 +198,73 @@ namespace bo3z
 			logger::info("curse: {} step {} ({}) done", gen::kTowns[a_town], s, st.id);
 		}
 
+		int Relic(int a_town)
+		{
+			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
+				if (gen::kGuns[i].relicTown == a_town && !gen::kGuns[i].retired) {
+					return i;
+				}
+			}
+			return -1;
+		}
+
+		// The relic hangs turning over the Shrine of the Dirge once the city is freed.
+		std::unordered_map<int, RE::ObjectRefHandle> g_relicShow;
+		float                                         g_relicTimer = 0;
+		void TickRelicShow(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			for (auto& [t, h] : g_relicShow) {
+				if (auto r = h.get(); r && r->Is3DLoaded()) {
+					auto a = r->GetAngle();
+					r->SetAngle({ a.x, a.y, a.z + 0.9f * a_delta });
+				}
+			}
+			if ((g_relicTimer -= a_delta) > 0) {
+				return;
+			}
+			g_relicTimer = 2.0f;
+			const int z = g_zone;
+			const int relic = z >= 0 ? Relic(z) : -1;
+			if (relic < 0 || Step(z) < kFreed) {
+				return;
+			}
+			auto* altar = Shops::Placed(z, 6);
+			if (!altar || (g_relicShow.contains(z) && g_relicShow[z].get())) {
+				return;
+			}
+			auto* base = Forms::Ours(gen::kShowStat[relic]);
+			if (!base) {
+				return;
+			}
+			const auto at = altar->GetPosition() + RE::NiPoint3{ 0, 0, 105.0f };
+			RE::TES::GetSingleton()->ForEachReferenceInRange(altar, 400.0f, [&](RE::TESObjectREFR* r) {  // one from an earlier session
+				if (r && r->GetBaseObject() == base && !r->IsDeleted()) {
+					r->Disable();
+					r->SetDelete(true);
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			if (auto ref = a_player->PlaceObjectAtMe(base, false)) {
+				ref->SetPosition(at);
+				ref->SetAngle({ 0, 0, altar->GetAngleZ() });
+				g_relicShow[z] = ref->CreateRefHandle();
+			}
+		}
+
 		void Lift(RE::PlayerCharacter* a_player, int a_town)
 		{
 			Set(a_town, kFreed, 0);
 			g_holding = false;
 			Forms::Play(gen::Sound::curse_lifted);
 			Hud::Banner(Fill(gen::kCurseLiftedBanner, a_town), 7.0f);
-			Hud::Lore(Fill(gen::kCurseLiftedBanner, a_town), Fill(gen::kCurseLiftedText, a_town), 14.0f);
+			std::string text = Fill(gen::kCurseLiftedText, a_town);
+			if (const int relic = Relic(a_town); relic >= 0) {
+				// the city's relic: yours now (lose it, and it waits on the Shrine of the Dirge at this station)
+				Gun::Give(relic);
+				text += " The city gives you its relic: " + std::string(gen::kGuns[relic].label) + " - " + std::string(gen::kGuns[relic].chargeName) +
+				        ". Should you ever lose it, claim it again at the Shrine of the Dirge at " + std::string(gen::kTowns[a_town]) + "'s station.";
+			}
+			Hud::Lore(Fill(gen::kCurseLiftedBanner, a_town), text, 18.0f);
 			Director::CrumbleNear(a_player->GetPosition(), 1.0e9f);
 			Points::Add(5000);
 			logger::info("curse: {} is freed", gen::kTowns[a_town]);
@@ -252,6 +312,29 @@ namespace bo3z
 	namespace Curse
 	{
 		int  ZoneTown() { return g_zone; }
+		int  RelicOf(int a_town) { return a_town >= 0 ? Relic(a_town) : -1; }
+
+		void ClaimRelic(int a_town)
+		{
+			const int relic = a_town >= 0 ? Relic(a_town) : -1;
+			if (relic < 0) {
+				return;
+			}
+			const std::string name(gen::kGuns[relic].label);
+			if (Step(a_town) < kFreed) {
+				Hud::Banner(name + " waits until the Dirge over " + std::string(gen::kTowns[a_town]) + " is broken", 3.5f);
+				return;
+			}
+			if (Gun::Owns(relic)) {
+				Hud::Banner("You already carry " + name, 2.5f);
+				Gun::Give(relic);  // (puts it in your hands)
+				return;
+			}
+			Gun::Give(relic);
+			Forms::Play(gen::Sound::buy);
+			Hud::Banner(name + " RECLAIMED", 3.0f);
+			logger::info("curse: {} reclaimed at {}", gen::kGuns[relic].id, gen::kTowns[a_town]);
+		}
 		bool SafeHere(RE::PlayerCharacter*) { return g_zone >= 0 && Step(g_zone) >= kFreed; }
 		float SpawnBoost() { return g_holding ? 2.0f : 1.0f; }
 
@@ -260,6 +343,7 @@ namespace bo3z
 			RemoveWards();
 			g_zone = -1, g_zoneTimer = 0, g_heraldTown = -1, g_holding = false, g_holdAcc = 0;
 			g_loreShown.clear();
+			g_relicShow.clear();
 		}
 
 		void OnUndeadDeath(RE::Actor*)
@@ -299,6 +383,7 @@ namespace bo3z
 			}
 			const bool fighting = Director::Fighting();
 			Publish(g_zone, fighting);
+			TickRelicShow(player, a_delta);
 			// The prologue: the first night after Helgen
 			if (fighting) {
 				if (auto* intro = Global(gen::kCurseIntroGlobal); intro && intro->value < 0.5f) {

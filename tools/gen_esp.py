@@ -33,8 +33,8 @@ for p in S['perks']['rows']:
 
 def obnd(r): return struct.pack('<6h', -r, -r, 0, r, r, r * 2)
 for o in S['objects']['rows']:
-    radius = {'box': 50, 'perk': 40, 'wallbuy': 40, 'ammo': 40, 'perkmenu': 50, 'forge': 90}[o['kind']]
-    verb = f"{o['activateText']} ({o['cost']})"
+    radius = {'box': 50, 'perk': 40, 'wallbuy': 40, 'ammo': 40, 'perkmenu': 50, 'forge': 90, 'relic': 50}[o['kind']]
+    verb = f"{o['activateText']} ({o['cost']})" if o['cost'] else o['activateText']
     recs['ACTI'].append(record('ACTI', fid('ACTI', o['id']), [
         sub('EDID', z('BO3Z_' + o['id'])), sub('OBND', obnd(radius)), sub('FULL', z(o['label'])),
         sub('MODL', z(o['model'])), sub('RNAM', z(verb)), sub('FNAM', b'\0\0')]))

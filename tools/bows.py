@@ -22,12 +22,18 @@ MID, LO1, LO2, SB1, UP1, UP2, SB2 = range(7)
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import skymat
 # limb material per bow (Skyrim-style finishes: ebony, stalhrim-pale bone, dark iron, weathered ash)
-BODY_KIND = {'embermortar': 'wood', 'flamerepeater': 'wood_dark', 'stormcaller': 'iron', 'frostlancer': 'bone'}
+BODY_KIND = {'embermortar': 'wood', 'flamerepeater': 'wood_dark', 'stormcaller': 'iron', 'frostlancer': 'bone',
+             'wolfqueen': 'wood_dark', 'ysgramor': 'steel', 'nightingale': 'iron', 'nightmare': 'bronze'}
 BOWS = {
     'embermortar':   ('Bow-03', (150, 140, 118), (0.55, 1.0, 0.85)),    # wind: pale ash-white limbs, sea-green gale glow
     'flamerepeater': ('Mesh.002', (64, 30, 22), (1.0, 0.42, 0.08)),     # fire: charred red horn, ember glow
     'stormcaller':   ('Bow-18', (74, 78, 96), (0.45, 0.6, 1.0)),        # lightning: storm-blue steel, electric glow
     'frostlancer':   ('Bow-20', (186, 204, 218), (0.55, 0.85, 1.0)),    # ice: glacier blue blades, frost glow
+    # city relics
+    'wolfqueen':     ('Bow-03', (52, 40, 66), (0.72, 0.5, 1.0)),        # Solitude: violet-black ebony, necromantic glow
+    'ysgramor':      ('Bow-18', (176, 194, 210), (0.6, 0.86, 1.0)),     # Windhelm: stalhrim steel, storm-frost glow
+    'nightingale':   ('Mesh.002', (34, 32, 44), (0.5, 0.36, 1.0)),      # Riften: shadow iron, twilight glow
+    'nightmare':     ('Bow-20', (150, 64, 92), (1.0, 0.35, 0.6)),       # Dawnstar: dream-bronze, nightmare rose glow
 }
 
 def load_obj(path):
@@ -141,7 +147,7 @@ def build(bid):
         elif g == 'trim':
             lines.append(f'shape {bid}_trim diffuse={tex["glow_d"]} normal={tex["flat"]} glow={tex["glow_g"]} emit={ec} emitmult=2.4 spec=1.2 gloss=150')
         else:
-            lines.append(f'shape {bid}_body diffuse={tex["d"]} normal={tex["n"]} spec={ {"wood": 0.4, "wood_dark": 0.5, "iron": 1.3, "bone": 0.6}[kind] } gloss=60')
+            lines.append(f'shape {bid}_body diffuse={tex["d"]} normal={tex["n"]} spec={ {"wood": 0.4, "wood_dark": 0.5, "iron": 1.3, "bone": 0.6, "steel": 1.6, "bronze": 1.4}[kind] } gloss=60')
         for v in vid:
             x, y, z = P[v]; u, w = (T[v] if len(T) > v else (0, 0))
             if g == 'string':

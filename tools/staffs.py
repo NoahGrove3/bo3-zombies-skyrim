@@ -32,6 +32,7 @@ BASES = {
     'spire': ('Staff3', {2: 'shaft', 3: 'band', 4: 'coil', 5: 'gem'}, SRC2),
     'crookgem': ('Staff2', {2: 'band', 5: 'gem', 6: 'wood', 7: 'wood', 8: 'wood', 9: 'leaf'}, SRC2),
     'crook': ('Staff1', {10: 'wood', 11: 'wood', 12: 'wood', 3: 'band'}, SRC2),
+    'vine': ('Staff', {0: 'wood', 1: 'leaf'}, SRC2),
 }
 
 # id -> (base, roles colour table, glow colour, add-on)
@@ -46,6 +47,11 @@ STAFFS = {
     'longshot':   ('spire', {'shaft': ('steel', (118, 124, 140)), 'band': ('gold', None), 'coil': (120, 180, 255), 'gem': (210, 235, 255)}, (0.55, 0.75, 1.0), 'stars'),
     'centurion':  ('crookgem', {'wood': ('wood_dark', (60, 64, 36)), 'band': ('iron', (74, 76, 62)), 'gem': (130, 255, 60), 'leaf': ('vines', (64, 84, 32))}, (0.5, 1.0, 0.2), 'drops'),
     'kagrenac':   ('crook', {'wood': ('wood', (86, 60, 74)), 'band': ('silver', None)}, (1.0, 0.35, 0.8), 'mindeye'),
+    # city relics (rewards of the Undying Dirge): grander finishes, two add-ons each
+    'hearth':     ('seed', {'wood': ('wood', (112, 72, 44)), 'accent': ('gold', None), 'leaf': ('tex', (190, 80, 34)), 'gem': (255, 130, 40)}, (1.0, 0.5, 0.15), ('wisps', 'halo')),
+    'gildergreen': ('vine', {'wood': ('tex', (170, 140, 96)), 'leaf': ('vines', (96, 160, 64))}, (0.65, 1.0, 0.4), ('spores', 'halo')),
+    'arkay':      ('heaven', {'wood': ('bone', (226, 220, 204)), 'wings': ('silver', (212, 214, 228)), 'gem': (236, 232, 255), 'particle': (222, 216, 255)}, (0.9, 0.9, 1.0), ('halo', 'runes')),
+    'mirestaff':  ('void', {'dark': ('wood_dark', (32, 42, 26)), 'metal': ('bronze', (96, 112, 62)), 'gem': (130, 222, 60)}, (0.5, 0.9, 0.25), ('disk', 'drops')),
 }
 GLOWING = {'gem', 'particle', 'coil'}
 TEXTURED = {'wood', 'leaf', 'wings', 'accent', 'metal', 'dark'}
@@ -233,8 +239,9 @@ def build(sid):
         v, t, f = compact(P, T, F)
         v, t, f = decimate(v, t, f, BUDGET)
         out_groups[f'{role}_{mi}'] = (role, mi, v, t, f)
-    for name, (v, t, f) in addon(extra, head, top, rng).items():
-        out_groups[f'{name}_x'] = (name, -1, v, t, f)
+    for xi, ex in enumerate(extra if isinstance(extra, tuple) else (extra,)):
+        for name, (v, t, f) in addon(ex, head, top, rng).items():
+            out_groups[f'{name}_x{xi}'] = (name, -1, v, t, f)
     # ---- textures and job
     work = OUT.parent / 'staffs' / sid; work.mkdir(parents=True, exist_ok=True)
     obj = work / f'{sid}.obj'

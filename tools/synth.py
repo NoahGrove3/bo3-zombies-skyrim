@@ -603,9 +603,27 @@ ENERGY = {  # weapon id -> element kit
     'sidearm': 'arcane', 'aetherium': 'holy', 'animunculi': 'shadow', 'mammothlmg': 'vortex', 'triad': 'soul',
     'kagrenac': 'mind', 'longshot': 'star', 'centurion': 'plague', 'animunculi': 'hex', 'flamerepeater': 'fire', 'frostlancer': 'ice', 'stormcaller': 'storm', 'embermortar': 'wind'}
 
+RELICS = {  # city relics: their element kit, and a choir and bell stinger under every signature move
+    'hearth': 'fire', 'gildergreen': 'nature', 'lorkhan': 'time', 'arkay': 'soul', 'mirestaff': 'venom', 'magnus': 'prism',
+    'wolfqueen': 'mind', 'ysgramor': 'ice', 'nightingale': 'shadow', 'nightmare': 'blood'}
+ROOTS = {'hearth': 'D', 'gildergreen': 'G', 'lorkhan': 'C', 'arkay': 'E', 'mirestaff': 'A', 'magnus': 'F', 'wolfqueen': 'B', 'ysgramor': 'D', 'nightingale': 'C', 'nightmare': 'A'}
+def _relic_unleash(wid):
+    el, r = RELICS[wid], ROOTS[wid]
+    def f():
+        sting = mix(chord(choir, [r + '3', r + '4'], 2.4, vowel='a', bright=1.0) * 0.45, place(np.zeros(1), bell(hz(r + '5'), 2.0, 2.76, 2.5) * 0.35, 0.15))
+        return norm(mix(globals()['u_' + el](), sting))
+    return f
+def _relic_cast(wid):
+    el = RELICS[wid]
+    def f():
+        x = globals()['e_' + el]()
+        return norm(mix(x, bell(hz(ROOTS[wid] + '6'), 0.6, 2.76, 1.5) * 0.18))
+    return f
 CASTS = {k[2:]: v for k, v in globals().items() if k.startswith('c_') and callable(v)}
 CASTS.update({wid: globals()['e_' + el] for wid, el in ENERGY.items()})        # the new kit replaces the old casts
 UNLEASH = {wid: globals()['u_' + el] for wid, el in ENERGY.items()}
+CASTS.update({wid: _relic_cast(wid) for wid in RELICS})
+UNLEASH.update({wid: _relic_unleash(wid) for wid in RELICS})
 
 SOUNDS = {
     'brew_trollshide': j_trollshide, 'brew_quicksilver': j_quicksilver, 'brew_twinstrike': j_twinstrike,

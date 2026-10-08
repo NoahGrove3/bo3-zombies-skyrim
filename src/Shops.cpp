@@ -1019,6 +1019,19 @@ namespace bo3z
 			g_show = {};
 		}
 
+		RE::TESObjectREFR* Placed(int a_town, int a_kind)
+		{
+			for (std::size_t i = 0; i < gen::kLocations.size(); ++i) {
+				if (gen::kLocations[i].town == a_town && gen::kObjects[gen::kLocations[i].object].kind == a_kind) {
+					if (auto r = g_placed[i].get(); r && !r->IsDeleted()) {
+						return r.get();
+					}
+				}
+			}
+			return nullptr;
+		}
+		int TownOfRef(RE::TESObjectREFR* a_ref) { return a_ref ? TownOf(a_ref) : -1; }
+
 		bool StandFrame(int a_town, RE::NiPoint3& a_center, float& a_yaw, RE::TESWorldSpace*& a_world)
 		{
 			auto* anchor = a_town >= 0 && a_town < static_cast<int>(gen::kTowns.size()) ? TownAnchor(a_town) : nullptr;
@@ -1132,6 +1145,9 @@ namespace bo3z
 				}
 				break;
 			case 3: BuyAmmo(o); break;
+			case 6:
+				Curse::ClaimRelic(TownOf(a_ref));
+				break;
 			case 5:
 				if (Gun::Reforge()) {
 					Forms::PlayAt(gen::Sound::forge_upgrade, a_ref);

@@ -113,8 +113,10 @@ def write(sid, parts, glow):
             ec = ','.join(f'{c / 255:.3f}' for c in col)
             mats.append(f'mat {name} diffuse={d} normal={flat_n} glow={g} emit={ec} emitmult={3.0 if role == "gem" else 2.0} spec=1.5 gloss=200 doublesided=1' + (' alpha=add' if role == 'glow_add' else ''))
         else:
-            d = S.save_dds(S.solid(col, noise=0.18), f'{sid}_{name}_d.dds')
-            mats.append(f'mat {name} diffuse={d} normal={flat_n} spec={1.4 if role == "metal" else 0.7} gloss={110 if role == "metal" else 60} doublesided=1')
+            import skymat
+            dif, nm = skymat.make('bronze' if role == 'metal' else 'iron', col, seed=len(sid) + len(name))
+            d = S.save_dds(dif, f'{sid}_{name}_d.dds'); n = S.save_dds(nm, f'{sid}_{name}_n.dds', alpha=True)
+            mats.append(f'mat {name} diffuse={d} normal={n} spec={1.4 if role == "metal" else 0.9} gloss={90 if role == "metal" else 60} doublesided=1')
     obj.write_text('\n'.join(lines) + '\n'); (work / f'{sid}.mtl').write_text(''.join(mtl))
     nif = S.OUT / 'Meshes' / 'UndyingNights' / 'staff' / f'{sid}.nif'; nif.parent.mkdir(parents=True, exist_ok=True)
     job = [f'in {obj}', f'out {nif}', 'origin 1', 'prn WeaponStaff', *mats]
@@ -125,5 +127,6 @@ def write(sid, parts, glow):
     print(f'{sid}: {sum(len(p[1][2]) for p in parts.values())} tris')
 
 if __name__ == '__main__':
-    write('kagrenac', chronos(), (1.0, 0.7, 0.3))
-    write('longshot', prism(), (0.7, 0.95, 1.0))
+    # (kagrenac and longshot are bundle remakes now, built by staffs.py; these two shapes became city relics)
+    write('lorkhan', chronos(), (1.0, 0.6, 0.2))
+    write('magnus', prism(), (0.55, 0.85, 1.0))

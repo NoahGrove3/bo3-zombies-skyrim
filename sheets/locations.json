@@ -478,6 +478,96 @@
       "object": "objects:wall_drill",
       "slot": "layout:wall_0",
       "verify": []
+    },
+    {
+      "id": "riverwood_relic",
+      "town": "Riverwood",
+      "worldspace": "Tamriel",
+      "anchor": "0x0162A4",
+      "object": "objects:relic_altar",
+      "slot": "layout:relic",
+      "verify": []
+    },
+    {
+      "id": "whiterun_relic",
+      "town": "Whiterun",
+      "worldspace": "Tamriel",
+      "anchor": "0x01B1F1",
+      "object": "objects:relic_altar",
+      "slot": "layout:relic",
+      "verify": []
+    },
+    {
+      "id": "solitude_relic",
+      "town": "Solitude",
+      "worldspace": "Tamriel",
+      "anchor": "0x01C386",
+      "object": "objects:relic_altar",
+      "slot": "layout:relic",
+      "verify": []
+    },
+    {
+      "id": "windhelm_relic",
+      "town": "Windhelm",
+      "worldspace": "Tamriel",
+      "anchor": "0x055FCB",
+      "object": "objects:relic_altar",
+      "slot": "layout:relic",
+      "verify": []
+    },
+    {
+      "id": "markarth_relic",
+      "town": "Markarth",
+      "worldspace": "Tamriel",
+      "anchor": "0x01C389",
+      "object": "objects:relic_altar",
+      "slot": "layout:relic",
+      "verify": []
+    },
+    {
+      "id": "riften_relic",
+      "town": "Riften",
+      "worldspace": "Tamriel",
+      "anchor": "0x042286",
+      "object": "objects:relic_altar",
+      "slot": "layout:relic",
+      "verify": []
+    },
+    {
+      "id": "falkreath_relic",
+      "town": "Falkreath",
+      "worldspace": "Tamriel",
+      "anchor": "0x017760",
+      "object": "objects:relic_altar",
+      "slot": "layout:relic",
+      "verify": []
+    },
+    {
+      "id": "morthal_relic",
+      "town": "Morthal",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177B0",
+      "object": "objects:relic_altar",
+      "slot": "layout:relic",
+      "verify": []
+    },
+    {
+      "id": "dawnstar_relic",
+      "town": "Dawnstar",
+      "worldspace": "Tamriel",
+      "anchor": "0x01773A",
+      "object": "objects:relic_altar",
+      "slot": "layout:relic",
+      "verify": []
+    },
+    {
+      "id": "winterhold_relic",
+      "town": "Winterhold",
+      "worldspace": "Tamriel",
+      "anchor": "0x0177EF",
+      "object": "objects:relic_altar",
+      "slot": "layout:relic",
+      "verify": []
     }
   ]
 }

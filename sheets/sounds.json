@@ -811,6 +811,186 @@
       "file": "fx\\UndyingNights\\nuke.wav",
       "space": "2d",
       "verify": []
+    },
+    {
+      "id": "cast_hearth",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_hearth",
+      "file": "fx\\UndyingNights\\cast_hearth.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_hearth",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_hearth",
+      "file": "fx\\UndyingNights\\unleash_hearth.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_gildergreen",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_gildergreen",
+      "file": "fx\\UndyingNights\\cast_gildergreen.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_gildergreen",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_gildergreen",
+      "file": "fx\\UndyingNights\\unleash_gildergreen.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_lorkhan",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_lorkhan",
+      "file": "fx\\UndyingNights\\cast_lorkhan.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_lorkhan",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_lorkhan",
+      "file": "fx\\UndyingNights\\unleash_lorkhan.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_arkay",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_arkay",
+      "file": "fx\\UndyingNights\\cast_arkay.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_arkay",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_arkay",
+      "file": "fx\\UndyingNights\\unleash_arkay.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_mirestaff",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_mirestaff",
+      "file": "fx\\UndyingNights\\cast_mirestaff.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_mirestaff",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_mirestaff",
+      "file": "fx\\UndyingNights\\unleash_mirestaff.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_magnus",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_magnus",
+      "file": "fx\\UndyingNights\\cast_magnus.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_magnus",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_magnus",
+      "file": "fx\\UndyingNights\\unleash_magnus.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_wolfqueen",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_wolfqueen",
+      "file": "fx\\UndyingNights\\cast_wolfqueen.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_wolfqueen",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_wolfqueen",
+      "file": "fx\\UndyingNights\\unleash_wolfqueen.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_ysgramor",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_ysgramor",
+      "file": "fx\\UndyingNights\\cast_ysgramor.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_ysgramor",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_ysgramor",
+      "file": "fx\\UndyingNights\\unleash_ysgramor.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_nightingale",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_nightingale",
+      "file": "fx\\UndyingNights\\cast_nightingale.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_nightingale",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_nightingale",
+      "file": "fx\\UndyingNights\\unleash_nightingale.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "cast_nightmare",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_cast_nightmare",
+      "file": "fx\\UndyingNights\\cast_nightmare.wav",
+      "space": "2d",
+      "verify": []
+    },
+    {
+      "id": "unleash_nightmare",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_nightmare",
+      "file": "fx\\UndyingNights\\unleash_nightmare.wav",
+      "space": "2d",
+      "verify": []
     }
   ]
 }

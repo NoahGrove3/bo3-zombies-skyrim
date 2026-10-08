@@ -1011,6 +1011,89 @@ namespace bo3z
 				for (auto* f : foes) hit(f, 1.2f);
 				Bolts(p, g, foes, 8);
 			}
+			// ---- the city relics (rewards of the Undying Dirge) ----
+			else if (id == "hearth") {  // Riverwood, Hearthfire Nova: six meteors round you, everything near you burns
+				const auto pp = p->GetPosition();
+				for (int k = 0; k < 6; ++k) {
+					const float a = k * RE::NI_PI / 3.0f;
+					g_detonations.push_back({ pp + RE::NiPoint3{ std::cos(a) * 360.0f, std::sin(a) * 360.0f, 0 }, base * 4.0f, 0.2f + 0.15f * k, 2, a_gun });
+				}
+				for (auto* f : Foes(pp, 700.0f)) {
+					hit(f, 1.5f);
+					g_dots.push_back({ f->GetHandle(), base * 0.8f, 5.0f });
+				}
+				Blast(BlastIndex("firestorm"), pp);
+			} else if (id == "gildergreen") {  // Whiterun, Kyne's Bloom: living wood roots them, you are healed whole
+				const auto pp = p->GetPosition();
+				for (auto* f : Foes(pp, 900.0f)) {
+					hit(f, 3.0f);
+					Director::Web(f->GetPosition(), 40.0f, 5.0f, 96.0f);
+				}
+				auto* av = p->AsActorValueOwner();
+				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth));
+				Blast(BlastIndex("lightmassive"), pp);
+				Bolts(p, g, Foes(pp, 900.0f), 6);
+			} else if (id == "lorkhan") {  // Markarth, Tonal Stillness: time stops for them, then they shatter
+				for (auto* f : Foes(p->GetPosition(), 1500.0f)) {
+					Director::Web(f->GetPosition(), 40.0f, 4.0f, 100.0f);
+					g_frozen.push_back({ f->GetHandle(), 4.0f, base * 5.0f });
+				}
+				Blast(BlastIndex("shockmass"), p->GetPosition());
+			} else if (id == "arkay") {  // Falkreath, Return to the Grave: Arkay's judgement on every undead near you
+				auto foes = Foes(p->GetPosition(), 1200.0f);
+				for (auto* f : foes) hit(f, 6.0f);
+				Bolts(p, g, foes, 8);
+				auto* av = p->AsActorValueOwner();
+				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.3f);
+				Blast(BlastIndex("priestlarge"), p->GetPosition());
+			} else if (id == "mirestaff") {  // Morthal, Drowning Mire: a bog drags them in and the plague runs through them
+				g_wells.push_back({ aim.hit, 4.0f, base * 1.5f, 0.0f });
+				for (auto* f : Foes(aim.hit, 900.0f)) {
+					g_dots.push_back({ f->GetHandle(), base * 0.8f, 6.0f });
+					g_plagued[f->GetFormID()] = base * 0.8f;
+				}
+				LaunchBolt(p, g, aim.hit);
+			} else if (id == "magnus") {  // Winterhold, Gaze of Magnus: three crystal eyes burn them for eight seconds
+				for (int k = 0; k < 3; ++k) {
+					const float a = k * 2.0944f;
+					g_prisms.push_back({ aim.hit + RE::NiPoint3{ std::cos(a) * 220.0f, std::sin(a) * 220.0f, 140.0f }, 8.0f, 0.1f * k, base * 1.5f, a_gun });
+				}
+				LaunchBolt(p, g, aim.hit);
+			} else if (id == "wolfqueen") {  // Solitude, Potema's Requiem: nine arrows, and the dead they strike turn on their own
+				for (int k = -4; k <= 4; ++k) {
+					const float yaw = k * 0.09f, c = std::cos(yaw), sn = std::sin(yaw);
+					const RE::NiPoint3 d{ aim.dir.x * c - aim.dir.y * sn, aim.dir.x * sn + aim.dir.y * c, aim.dir.z };
+					LaunchArrow(p, g, aim.eye + d * 2600.0f);
+				}
+				for (auto* f : InCone(aim, 2600.0f, 40.0f)) {
+					hit(f, 2.5f);
+					Director::Frenzy(f, 10.0f);
+				}
+			} else if (id == "ysgramor") {  // Windhelm, Wrath of Ysgramor: ice and lightning on twelve at once
+				auto foes = Foes(aim.hit, 1600.0f);
+				if (foes.size() > 12) foes.resize(12);
+				for (auto* f : foes) {
+					hit(f, 3.5f);
+					Director::Web(f->GetPosition(), 40.0f, 4.0f, 96.0f, true);
+					const RE::NiPoint3 at = f->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f };
+					const RE::NiPoint3 sky = at + RE::NiPoint3{ 30.0f, 0, 1300.0f };
+					LaunchArrow(p, g, at, &sky);
+				}
+				Blast(BlastIndex("icevolley"), aim.hit);
+			} else if (id == "nightingale") {  // Riften, Twilight's Eclipse: all in sight marked; each that falls takes the next
+				for (auto* f : Foes(p->GetPosition(), 2200.0f)) {
+					g_hexed[f->GetFormID()] = 12.0f;
+					g_doomed[f->GetFormID()] = base * 4.0f;
+					hit(f, 0.5f);
+				}
+				LaunchArrow(p, g, aim.hit);
+				Blast(BlastIndex("darkmassive"), p->GetPosition());
+			} else if (id == "nightmare") {  // Dawnstar, Nightmare Rain: ten burning stars from a dreaming sky
+				for (int k = 0; k < 10; ++k) {
+					const float a = k * 2.4f, r = 40.0f + 38.0f * k;
+					g_detonations.push_back({ aim.hit + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 }, base * 4.0f, 0.2f + 0.22f * k, 2, a_gun });
+				}
+			}
 		}
 
 
@@ -1043,7 +1126,11 @@ namespace bo3z
 					}
 				} else if (d.kind == 2 && d.gun >= 0) {  // a star falls
 					const RE::NiPoint3 sky = d.at + RE::NiPoint3{ 80.0f, 40.0f, 1400.0f };
-					LaunchBolt(p, gen::kGuns[d.gun], d.at, &sky);
+					if (gen::kGuns[d.gun].kind == gen::kKindBow) {
+						LaunchArrow(p, gen::kGuns[d.gun], d.at, &sky);
+					} else {
+						LaunchBolt(p, gen::kGuns[d.gun], d.at, &sky);
+					}
 					Blast(BlastIndex("shockmass"), d.at, 0.2f);
 					for (auto* f : Foes(d.at, 260.0f)) {
 						Damage(f, d.damage, false, false, true);

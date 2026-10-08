@@ -286,6 +286,20 @@
       ],
       "scale": 1.0,
       "retired": true
+    },
+    {
+      "id": "relic_altar",
+      "kind": "relic",
+      "label": "Shrine of the Dirge",
+      "activateText": "Claim the city's relic",
+      "model": "Clutter\\Ruins\\Ruins_Altar01.nif",
+      "cost": 0,
+      "refs": "none",
+      "scale": 0.8,
+      "retired": false,
+      "verify": [
+        "scale"
+      ]
     }
   ]
 }
