@@ -1,34 +1,51 @@
-# BO3 Zombies: Skyrim (working title)
+# Undying Nights
 
-Play Skyrim's main quest as a Black Ops III Zombies crew member. Every night the dead rise in rounds that
-never stop getting harder; by day you quest as normal.
+**Every night after Helgen, the dead rise.** Undying Nights turns Skyrim's nights into round-based undead survival in
+the spirit of classic zombies modes, told as Skyrim lore: at Helgen the World-Eater sang the *Undying Dirge*, and now
+every grave in the holds answers it after dark. Survive the night, earn septims of the dead, and break the curse city
+by city.
 
-**Status: step 1 of 6, early test build.** Back up your saves.
+## What you get
+- **Nights of the dead.** From dusk to dawn the Risen climb out of the earth around you, more and stronger each
+  night. Iron Reapers swing great blades; Voidbound Necromancers raise skeletons. Dawn turns them to ash.
+- **Event nights** (1 in 4): Blood Moon (more dead, faster), Fog Night (Grimmvar, the Undying Wyrm, hunts you),
+  Ash Storm (the dead run, double points), Night of Iron (the champions march).
+- **Stations outside every city**: a Nordic shrine with Sheogorath's Coffer (a random magic staff or elemental bow),
+  the Brew Machine (nine brews) and the Atronach Reforge (three levels; level 3 makes a weapon's charged move
+  Ascendant: harder, sooner, and it strikes twice).
+- **Staffs and bows built for it.** Every weapon has a normal shot and a charged signature move (hold, release):
+  black holes, orbital star strikes, doom marks, a plague that spreads, a FUS RO DAH bow, and more.
+- **The Undying Dirge**: four night quests in each of ten cities (the Ashen Tithe, the Ward-Fires, the Herald in the
+  Fog, Dawn over the city). A freed city is a sanctuary, and gives you its **relic**, one of ten wonder weapons.
+  The lore is in a book in your pack.
+- **Power-ups**: Insta-Kill, Double Points, Nuke, Fire Sale.
+- **Faster movement**: quicker running, a sprint slide, jumps that keep your momentum, light air control.
+- Townsfolk and followers are safe from the night's magic; Skyrim's own enemies still fight you as normal.
 
-## Step 1: what it does
-- **Night rounds.** From 8 pm to 6 am on Skyrim's clock, undead (skeletons, draugr, and later archers and
-  warlocks) rise around you in BO3 Zombies rounds: BO3's zombie count and health curve, scaled to Skyrim.
-  Every 6th round from round 5 is a **Death Hound round**. Clear a round to get the next one. Dawn cuts the
-  round short: the undead collapse and that round starts again at nightfall.
-- **Rounds start after Helgen** (once the intro quest "Unbound" is done).
-- **Points.** 500 to start, +10 per gun hit, +50 per kill, +100 per headshot kill, +130 per kill with Skyrim
-  weapons or spells. (Points become spendable in step 2.)
-- **M1911.** Press **G** to take out the pistol and again to go back to Skyrim weapons, magic and shouts.
-  Left click fires, **R** reloads. 8-round clip, 80 in reserve. Headshots do double damage. No gun model yet:
-  crosshair, hit markers and sound only, until the BO3 converter (step 5).
-- **BO3 HUD.** Round tallies, points with +popups, ammo, crosshair and hit markers.
-
-Round, points and ammo are stored in your save.
+## Controls
+| Key | Action |
+|---|---|
+| G | tap: next weapon / hold: put weapons away |
+| Left mouse | fire (hold and release for the charged move) |
+| Right mouse | aim |
+| V | quick knife |
+| Sprint + Crouch | slide |
+| E on a station | use it (Coffer, Brew Machine: 1-9 to pick, Reforge, Shrine of the Dirge) |
 
 ## Requirements
-- The Elder Scrolls V: Skyrim Special Edition / Anniversary Edition **1.7.104** (current Steam version),
-  with Dawnguard (included in SE/AE).
-- Ultimate ASI Loader (Melty installs it).
-- Call of Duty: Black Ops III will be needed from step 5 (its guns, characters and sounds are converted
-  from your own copy; none of BO3's files are included).
+- Skyrim Special Edition / Anniversary Edition **1.7.104** (the current Steam version), with Dawnguard and Dragonborn
+  (included in SE/AE).
+- Melty installs everything else it needs. Start a new game or load one: the nights begin once you've escaped Helgen.
+
+**Optional look** (not required): Skyland AIO, Azurite Weathers III, Realistic Water Two, Lux, Lux Via, Lux Orbis,
+Happy Little Trees, Skoglendi, SMIM.
+
+**Co-op** with friends runs through Skyrim Together Reborn and the separate Undying Nights Party Pack.
 
 ## Credits
+- Built by Noah Grove with Claude (AI).
 - Address Library for SKSE Plugins by meh321 (bundled `versionlib-1-7-104-0.bin`, with permission for free mods).
-- CommonLibSSE-NG (GPL-3.0 with modding exceptions), Dear ImGui (MIT), spdlog (MIT).
-- Present-hook approach from SkyCraft by chasmlol (MIT).
-- Built with Claude (AI). Fan project: not affiliated with Bethesda, Activision or Treyarch. You need to own the games.
+- CommonLibSSE-NG (GPL-3.0 with modding exceptions), Dear ImGui (MIT), spdlog (MIT); Present hook after SkyCraft by
+  chasmlol (MIT).
+- Station architecture uses Skyrim's own Whiterun textures by reference (nothing of the game is included).
+- Fan project, not affiliated with Bethesda. You need to own Skyrim.
