@@ -39,7 +39,7 @@ by city.
 **Optional look** (not required): Skyland AIO, Azurite Weathers III, Realistic Water Two, Lux, Lux Via, Lux Orbis,
 Happy Little Trees, Skoglendi, SMIM.
 
-**Co-op** with friends runs through Skyrim Together Reborn and the separate Undying Nights Party Pack.
+**Single player.** This release is played solo.
 
 ## Credits
 - Built by Noah Grove with Claude (AI).
