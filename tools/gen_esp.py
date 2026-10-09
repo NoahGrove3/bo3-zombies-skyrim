@@ -298,7 +298,7 @@ for key, edid in [('curse_' + c['town'], 'UN_Curse_' + c['town']) for c in S['cu
 # The Undying Dirge: the lore book (given at the first night; the Shrine of the Dirge gives it again)
 def dirge_text():
     img = lambda n, w, h: f"<p align='center'><img src='img://Textures/UndyingNights/Book/{n}.png' width='{w}' height='{h}'></p>"
-    cu = S['curse']; steps = {r['id']: r for r in cu['rows']}
+    cu = S['curse']
     towns = []
     for l in S['locations']['rows']:
         if l['town'] not in towns: towns.append(l['town'])
@@ -316,14 +316,16 @@ def dirge_text():
            "<p>From dusk until the first light the dead climb out of the earth: the Risen first, then the Iron Reapers with their great blades, "
            "then the Voidbound who raise skeletons to fight for them. Each night they come in greater number and harder to kill. "
            "At dawn they crumble to ash.</p>",
-           "<p>Outside every city stands a shrine raised against them. At its alcoves you will find Sheogorath's Coffer, which gives a weapon to anyone willing to gamble for it; "
-           "the Brew Machine, whose brews make the drinker stronger; and the Atronach Reforge, which makes any weapon fiercer. A weapon reforged three times becomes Ascendant, and its great strike falls twice.</p>",
+           "<p>In the heart of every city stands a shrine raised against them. At its alcoves you will find Sheogorath's Coffer, which gives a spell to anyone willing to gamble for it; "
+           "the Brew Machine, whose brews make the drinker stronger; and the Atronach Reforge, which makes any spell fiercer. A spell reforged three times becomes Ascendant, and its great strike falls twice.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>III. Breaking the Dirge</font></p>", img('wards', 300, 176),
-           "<p>The Dirge has taken root beneath each city. To tear out the root you must perform four rites, one after another, and all of them by night.</p>"]
-    for k, sid in enumerate(('tithe', 'wards', 'dawn', 'herald')):
-        st = steps[sid]
-        out.append(f"<p><b>{k + 1}. {st['title'].replace('{city}', 'the City')}.</b> {gen_city(st['text']).replace('Slay  of', 'Slay '+str(st['target'])+' of').replace('for  seconds', 'for '+str(st['target'])+' seconds')}</p>")
-        if sid == 'dawn':
+           "<p>The Dirge has taken root beneath each city, and each city must be freed its own way: four rites, one after another. Most must be done by night.</p>"]
+    for t in towns:
+        out.append(f"<p><b>{t}</b></p>")
+        for k, r in enumerate(cu['rites'][t]):
+            txt = r['text'].replace('{city}', t).replace('{n}', str(r['target']))
+            out.append(f"<p>{k + 1}. <i>{r['title'].replace('{city}', t)}.</i> {txt}</p>")
+        if t == 'Riverwood':
             out.append(img('herald', 300, 176))
     out += ["<p>When all four rites are done, the Dirge loses its hold on that city. Its dead sleep again, and none will rise within its bounds.</p>",
             "[pagebreak]", "<p align='center'><font size='24'>IV. The Voices of the Holds</font></p>",

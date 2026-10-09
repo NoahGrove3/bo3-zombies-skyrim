@@ -118,7 +118,10 @@ namespace bo3z
 		void             HurtPlayer(float a_share, bool a_stagger);
 		void             RaiseAt(const RE::NiPoint3& a_at);
 		void             EndNight();
-		bool             BossPos(RE::NiPoint3& a_at);  // Grimmvar, if he walks          // a city freed: dawn comes now, the next night brings the next round
+		bool             BossPos(RE::NiPoint3& a_at);  // Grimmvar, if he walks
+		bool             RaiseChampion(int a_town, std::string_view a_row, std::string_view a_name, float a_healthMult, const RE::NiPoint3& a_at);  // a city's named champion
+		bool             ChampionActive(int a_town);  // walking, or slain this night
+		bool             ChampionPos(RE::NiPoint3& a_at);          // a city freed: dawn comes now, the next night brings the next round
 	}
 
 	// The new dead (Undead.cpp): body language and attacks of our own on the draugr skeleton
@@ -191,6 +194,7 @@ namespace bo3z
 		void  Reset();
 		void  OnUndeadDeath(RE::Actor* a_actor);
 		void  OnBossSlain();
+		void  OnChampionSlain(int a_town);  // a city's champion fell (Director)
 		bool  SafeHere(RE::PlayerCharacter* a_player);  // in a freed city: no undead rise here
 		float SpawnBoost();                              // holding a shrine: the night pushes harder
 		int   ZoneTown();                                // city the player is in (-1)

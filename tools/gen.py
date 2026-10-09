@@ -215,6 +215,14 @@ o.append(f'\tinline constexpr std::array<CurseStep, {len(CU["rows"])}> kCurseSte
 for r in CU['rows']:
     o.append(f'\t\tCurseStep{{ {cs(r["id"])}, {cs(r["title"])}, {cs(r["goal"])}, {cs(r["text"])}, {r["target"]} }},')
 o.append('\t} };')
+RT = {'slay': 0, 'wards': 1, 'hold': 2, 'herald': 3, 'champion': 4, 'relics': 5, 'circle': 6, 'order': 7}
+o.append('\tenum RiteType : int { kRiteSlay = 0, kRiteWards, kRiteHold, kRiteHerald, kRiteChampion, kRiteRelics, kRiteCircle, kRiteOrder };')
+o.append('\tstruct RiteDef { int type, target; std::string_view title, goal, text, order, champion, championName; float championHealth; };')
+o.append(f'\tinline constexpr std::array<std::array<RiteDef, 4>, {len(towns)}> kRites{{ {{')
+for t in towns:
+    rs = CU['rites'][t]; assert len(rs) == 4, t
+    o.append('\t\t{ { ' + ', '.join(f'RiteDef{{ {RT[r["type"]]}, {r["target"]}, {cs(r["title"])}, {cs(r["goal"])}, {cs(r["text"])}, {cs(r["order"])}, {cs(r["champion"])}, {cs(r["championName"])}, {F(r["championHealth"])} }}' for r in rs) + ' } },')
+o.append('\t} };')
 o.append(f'\tinline constexpr std::uint32_t kCurseIntroGlobal = 0x{IDS[("GLOB", "curse_intro")]:03X}, kStandLayoutGlobal = 0x{IDS[("GLOB", "stand_layout")]:03X}, kDirgeBook = 0x{IDS[("BOOK", "dirge")]:03X};')
 o.append(f'\tinline constexpr std::string_view kCursePrologueTitle = {cs(CU["prologueTitle"])}, kCursePrologue = {cs(CU["prologue"])}, kCurseLiftedBanner = {cs(CU["liftedBanner"])}, kCurseLiftedText = {cs(CU["liftedText"])}, kCurseFreedAll = {cs(CU["freedAll"])};')
 o.append(f'\tinline constexpr float kCurseZone = {F(CU["zoneRadius"])}, kCurseHoldRadius = {F(CU["holdRadius"])}, kCurseWardRadius = {F(CU["wardRadius"])}, kCurseWardSeconds = {F(CU["wardSeconds"])}, kCurseWardDistance = {F(CU["wardDistance"])}, kCurseHeraldDelay = {F(CU["heraldDelay"])};')

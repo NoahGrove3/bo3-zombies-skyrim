@@ -454,6 +454,47 @@ namespace bo3z
 			h.bossEnraged = g_boss.enraged;
 		}
 
+		// ---- the cities' champions (sheet: curse.rites, type champion): a named undead hunted for a rite ----
+		struct Champion
+		{
+			RE::ActorHandle handle;
+			int             town{ -1 };
+			std::string     name;
+			float           maxHp{ 1 };
+			bool            slainTonight{ false };
+		} g_champ;
+		void TickChampion()
+		{
+			auto c = g_champ.handle.get();
+			if (!c) {
+				return;
+			}
+			if (c->IsDead()) {
+				Points::Add(1000);
+				Forms::Play(gen::Sound::night_end);
+				Hud::Banner(g_champ.name + " falls! +1000", 5.0f);
+				logger::info("champion: {} slain", g_champ.name);
+				const int town = g_champ.town;
+				g_champ.handle = {};
+				g_champ.slainTonight = true;
+				{
+					std::scoped_lock l(Hud::Lock());
+					if (!g_boss.handle.get()) {
+						Hud::Edit().bossName.clear();
+					}
+				}
+				Curse::OnChampionSlain(town);
+				return;
+			}
+			if (!g_boss.handle.get()) {  // its own bar while Grimmvar is away
+				std::scoped_lock l(Hud::Lock());
+				auto& h = Hud::Edit();
+				h.bossName = g_champ.name;
+				h.bossHp = std::max(0.0f, c->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth)) / g_champ.maxHp;
+				h.bossEnraged = false;
+			}
+		}
+
 		// ---- Gloomstalkers (sheet: elite) ----
 		void TickElites(RE::PlayerCharacter* a_player, float a_delta)
 		{
@@ -908,6 +949,7 @@ namespace bo3z
 			g_spawnTimer = 0;
 			g_phase = Phase::Fighting;
 			g_boss.slainTonight = false;
+			g_champ.slainTonight = false;
 			if (const int row = BossRow(); !Coop::Client() && row >= 0 && a_round >= gen::kEnemies[row].minRound && a_round % gen::kEnemies[row].bossEvery == 0) {
 				g_boss.spawnIn = gen::boss::spawnDelay;
 			}
@@ -1336,6 +1378,7 @@ namespace bo3z
 			g_ours.clear();
 			g_toSpawn = 0;
 			g_boss = {};
+			g_champ = {};
 			g_elites.clear();
 			g_slowLeft = 0;
 			g_pause = 0;
@@ -1368,6 +1411,45 @@ namespace bo3z
 				return false;
 			}
 			a_at = b->GetPosition() + RE::NiPoint3{ 0, 0, 260.0f };
+			return true;
+		}
+		bool ChampionActive(int a_town) { return g_champ.town == a_town && (g_champ.handle.get() || g_champ.slainTonight); }
+		bool ChampionPos(RE::NiPoint3& a_at)
+		{
+			auto c = g_champ.handle.get();
+			if (!c || c->IsDead()) {
+				return false;
+			}
+			a_at = c->GetPosition() + RE::NiPoint3{ 0, 0, 170.0f };
+			return true;
+		}
+		bool RaiseChampion(int a_town, std::string_view a_row, std::string_view a_name, float a_healthMult, const RE::NiPoint3& a_at)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || g_phase != Phase::Fighting || Coop::Client() || g_champ.handle.get()) {
+				return false;
+			}
+			int row = -1;
+			for (int i = 0; i < static_cast<int>(gen::kEnemies.size()); ++i) {
+				if (gen::kEnemies[i].id == a_row) {
+					row = i;
+				}
+			}
+			if (row < 0 || !SpawnOne(p, row, &a_at)) {
+				return false;
+			}
+			auto c = g_alive.back().handle.get();
+			if (!c) {
+				return false;
+			}
+			auto*       av = c->AsActorValueOwner();
+			const float want = std::max(HealthFor(g_current) * a_healthMult, 6000.0f / R.hpScale);
+			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
+			c->SetScale(1.35f);
+			g_champ = { c->GetHandle(), a_town, std::string(a_name), want, false };
+			Forms::Play(gen::Sound::hound_night);
+			Hud::Banner(std::string(a_name) + " walks the night!", 5.0f);
+			logger::info("champion: {} risen in {} ({:.0f} health)", a_name, gen::kTowns[a_town], want);
 			return true;
 		}
 		void EndNight()
@@ -1706,6 +1788,7 @@ namespace bo3z
 				TickChampions(player, a_delta);
 				TickFrenzy(player, a_delta);
 				TickBoss(player, a_delta);
+				TickChampion();
 				TickElites(player, a_delta);
 				if (Coop::Client()) {
 					break;  // the host raises the dead; the night here is for counting and the HUD
