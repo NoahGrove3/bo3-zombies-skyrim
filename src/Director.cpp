@@ -1361,6 +1361,29 @@ namespace bo3z
 
 		float RoundHealth() { return HealthFor(std::max(1, g_current)); }
 		bool  IsElite(RE::Actor* a_actor) { return a_actor && g_elites.contains(a_actor->GetFormID()); }
+		void EndNight()
+		{
+			auto* cal = RE::Calendar::GetSingleton();
+			if (!cal || !IsNight() || Coop::Client()) {
+				return;
+			}
+			// the clock jumps to first light; the night's round counts as survived (Dawn, from the Director's tick)
+			const float h = cal->GetHour();
+			const float hours = std::fmod(R.nightEndHour - h + 24.0f, 24.0f) + 0.05f;
+			if (cal->gameHour && cal->gameDaysPassed) {
+				float nh = cal->gameHour->value + hours;
+				if (nh >= 24.0f) {
+					nh -= 24.0f;
+					if (cal->gameDay) {
+						cal->gameDay->value += 1.0f;
+					}
+				}
+				cal->gameHour->value = nh;
+				cal->gameDaysPassed->value += hours / 24.0f;
+				Hud::Banner("THE CITY IS FREE - DAWN BREAKS", 5.0f);
+				logger::info("night: ended early by a freed city ({:.1f} hours skipped)", hours);
+			}
+		}
 		void  Hazard(const RE::NiPoint3& a_at, float a_delay, float a_radius, float a_share, std::string_view a_look, bool a_stagger)
 		{
 			g_hazards.push_back({ a_at, a_delay, a_radius, a_share, a_look, a_stagger });

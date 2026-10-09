@@ -2297,5 +2297,171 @@ namespace bo3z
 			}
 			return { false, false };
 		}
+
+		// ================================================================ the cities' shouts (sheet: shouts)
+		void Console(const std::string& a_cmd)
+		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::Script>(); factory && player) {
+				if (auto* script = factory->Create()) {
+					script->SetCommand(a_cmd);
+					script->CompileAndRun(player);
+					delete script;
+				}
+			}
+		}
+		RE::TESShout* ShoutForm(int a_i)
+		{
+			return a_i >= 0 && a_i < static_cast<int>(gen::kShouts.size()) ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESShout>(gen::kShouts[a_i].shout, gen::kPlugin) : nullptr;
+		}
+		bool KnowsShout(int a_i)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* sh = ShoutForm(a_i);
+			return p && sh && p->HasShout(sh);
+		}
+		void LearnShout(int a_i)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* sh = ShoutForm(a_i);
+			if (!p || !sh) {
+				return;
+			}
+			// the three words learned and unlocked (no dragon souls asked), the shout in the Magic menu
+			for (auto w : gen::kShouts[a_i].words) {
+				if (auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(w, gen::kPlugin)) {
+					Console(fmt::format("player.teachword {:08X}", f->GetFormID()));
+					Console(fmt::format("player.unlockword {:08X}", f->GetFormID()));
+				}
+			}
+			p->AddShout(sh);
+			logger::info("shout: learned {} ({:08X})", gen::kShouts[a_i].id, sh->GetFormID());
+		}
+		int ShoutOfSpell(RE::FormID a_spell, int& a_level)
+		{
+			for (int i = 0; i < static_cast<int>(gen::kShouts.size()); ++i) {
+				for (int n = 0; n < 3; ++n) {
+					if (auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kShouts[i].spells[n], gen::kPlugin); f && f->GetFormID() == a_spell) {
+						a_level = n + 1;
+						return i;
+					}
+				}
+			}
+			return -1;
+		}
+
+		// One word, two or all three: every effect grows with the words spoken.
+		void Shout(int a_i, int a_level)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || a_i < 0 || a_i >= static_cast<int>(gen::kShouts.size())) {
+				return;
+			}
+			const auto& sh = gen::kShouts[a_i];
+			const int   L = std::clamp(a_level, 1, 3);
+			const float pick[3] = { 1.0f, 1.8f, 3.2f };
+			const float k = pick[L - 1];
+			const float base = Director::RoundHealth() * gen::kRounds.hpScale * 0.8f * k;   // BO3 units: most of a zombie's night health per word
+			const Aim   aim = AimAt(4000.0f);
+			const auto  me = p->GetPosition();
+			auto*       proc = p->GetActorRuntimeData().currentProcess;
+			auto        blastAt = [&](std::string_view a_look, const RE::NiPoint3& a_at, float a_delay, float a_scale) { Blast(BlastIndex(a_look), a_at, a_delay, a_scale); };
+			auto        burn = [&](RE::Actor* a, float a_perSec, float a_secs) { g_dots.push_back({ a->GetHandle(), a_perSec, a_secs }); };
+			const std::string_view id = sh.id;
+			if (id == "ember") {        // a cone of fire, the ground left burning
+				const float range = 900.0f + 450.0f * L;
+				for (auto* f : InCone(aim, range, 40.0f)) {
+					Damage(f, base, false, false);
+					burn(f, base * 0.15f, 4.0f);
+				}
+				for (int s = 1; s <= 3 + L; ++s) {
+					blastAt(L == 3 && s == 3 + L ? "firestorm" : "fireball", aim.eye + aim.dir * (range * s / (3.0f + L)), 0.05f * s, 0.55f);
+				}
+			} else if (id == "gale") {  // a storm wall: everything ahead thrown flat where it stands
+				const float range = 800.0f + 500.0f * L;
+				for (auto* f : InCone(aim, range, 50.0f)) {
+					Damage(f, base * 0.35f, false, false);
+					if (proc && !f->IsDead()) {
+						proc->KnockExplosion(f, f->GetPosition() + RE::NiPoint3{ 0, 0, 140.0f }, 1.2f + 0.4f * L);
+					}
+				}
+				for (int s = 1; s <= 4; ++s) {
+					blastAt("priestsmall", aim.eye + aim.dir * (range * s / 4.0f), 0.05f * s, 0.5f);
+				}
+			} else if (id == "wail") {  // the dead nearest turn on their own
+				int n = 0;
+				for (auto* f : Foes(me, 600.0f + 400.0f * L)) {
+					if (n++ >= 3 + 4 * (L - 1)) {
+						break;
+					}
+					Director::Frenzy(f, 5.0f + 4.0f * L);
+					blastAt("dark", f->GetPosition() + RE::NiPoint3{ 0, 0, 60 }, 0.05f * n, 0.4f);
+				}
+			} else if (id == "rime") {  // a line of frost: frozen solid, then shattered
+				const float range = 1100.0f + 600.0f * L;
+				for (auto* f : InLine(aim, range, 130.0f)) {
+					Director::Web(f->GetPosition(), 60.0f, 2.0f + 1.5f * L, 95.0f, true);
+					Damage(f, base * (L == 3 ? 1.4f : 0.6f), false, false);
+				}
+				for (int s = 1; s <= 5; ++s) {
+					blastAt("frost", aim.eye + aim.dir * (range * s / 5.0f), 0.06f * s, 0.5f);
+				}
+			} else if (id == "quake") {  // a shockwave through the ground around you
+				const float r = 400.0f + 350.0f * L;
+				for (auto* f : Foes(me, r)) {
+					Damage(f, base, false, false);
+					Stagger(f, 0.9f);
+				}
+				for (int s = 0; s < 6 + 2 * L; ++s) {
+					const float a = s * 6.2832f / (6 + 2 * L), rr = r * 0.7f;
+					blastAt("giantslam", me + RE::NiPoint3{ std::cos(a) * rr, std::sin(a) * rr, 0 }, 0.04f * s, 0.45f);
+				}
+			} else if (id == "shroud") {  // the dead lose you in the dark
+				for (auto* f : Foes(me, 1000.0f + 700.0f * L)) {
+					Director::Web(f->GetPosition(), 60.0f, 2.0f + 2.5f * L, 95.0f);
+				}
+				blastAt("dark", me + RE::NiPoint3{ 0, 0, 40 }, 0.0f, 0.6f);
+			} else if (id == "toll") {  // the grave-bell: the weakened crumble
+				const float cut = 0.25f + 0.17f * L;
+				for (auto* f : Foes(me, 700.0f + 400.0f * L)) {
+					auto*       av = f->AsActorValueOwner();
+					const float frac = av->GetActorValue(RE::ActorValue::kHealth) / std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth));
+					const bool  boss = Director::IsBoss(f);
+					Damage(f, frac <= cut && !boss ? 1.0e7f : base * 0.4f, false, false);
+				}
+				blastAt("turnundead", me + RE::NiPoint3{ 0, 0, 60 }, 0.0f, 0.5f + 0.15f * L);
+			} else if (id == "mire") {  // a rot that spreads as they fall
+				for (auto* f : InCone(aim, 700.0f + 400.0f * L, 55.0f)) {
+					const float dps = base * 0.22f;
+					burn(f, dps, 6.0f);
+					g_plagued[f->GetFormID()] = dps;
+				}
+				blastAt("poisongas", aim.eye + aim.dir * 500.0f, 0.1f, 0.5f + 0.1f * L);
+			} else if (id == "dread") {  // hurled back in terror, burning
+				for (auto* f : Foes(me, 600.0f + 400.0f * L)) {
+					if (proc && !f->IsDead()) {
+						RE::NiPoint3 away = f->GetPosition() - me;
+						away.z = 0;
+						away.Unitize();
+						proc->KnockExplosion(f, f->GetPosition() - away * 120.0f, 2.0f + 2.5f * L);
+					}
+					burn(f, base * 0.2f, 4.0f);
+				}
+				blastAt("dragonfire", me + RE::NiPoint3{ 0, 0, 30 }, 0.0f, 0.5f);
+			} else if (id == "shatter") {  // crystal shards rain round you
+				const int n = 4 + 5 * L;
+				for (int s = 0; s < n; ++s) {
+					const float a = Rand(0.0f, 6.2832f), r = Rand(150.0f, 900.0f);
+					const RE::NiPoint3 at = me + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 };
+					blastAt(s % 3 ? "constellation" : "skybolt", at, 0.12f * s, 0.45f);
+					for (auto* f : Foes(at, 170.0f)) {
+						Damage(f, base * 0.45f, false, false);
+					}
+				}
+			}
+			Forms::Play(gen::Sound::cast_heavy);
+			Hud::Banner(std::string(L >= 1 ? sh.w1 : "") + (L >= 2 ? std::string(" ") + std::string(sh.w2) : "") + (L >= 3 ? std::string(" ") + std::string(sh.w3) + "!" : ""), 1.6f);
+			logger::info("shout: {} level {}", sh.id, L);
+		}
 	}
 }

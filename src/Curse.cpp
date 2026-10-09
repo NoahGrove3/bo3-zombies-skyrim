@@ -220,6 +220,17 @@ namespace bo3z
 			logger::info("curse: {} step {} ({}) done", gen::kTowns[a_town], s, st.id);
 		}
 
+		// The city's shout (sheet: shouts): what freeing it earns, claimed at the Shrine of the Dirge.
+		int ShoutOf(int a_town)
+		{
+			for (int i = 0; i < static_cast<int>(gen::kShouts.size()); ++i) {
+				if (gen::kShouts[i].town == a_town) {
+					return i;
+				}
+			}
+			return -1;
+		}
+
 		int Relic(int a_town)
 		{
 			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
@@ -279,12 +290,12 @@ namespace bo3z
 			g_holding = false;
 			Forms::Play(gen::Sound::curse_lifted);
 			std::string text = Fill(gen::kCurseLiftedBanner, a_town);
-			if (const int relic = Relic(a_town); relic >= 0) {
-				// the city's relic: yours now (lose it, and it waits on the Shrine of the Dirge at this station)
-				Gun::Give(relic);
-				text += " - relic: " + std::string(gen::kGuns[relic].label);
+			if (const int sh = ShoutOf(a_town); sh >= 0) {
+				// its shout waits on the Shrine of the Dirge at the station (nothing is forced into your hands)
+				text += " - its Thu'um, " + std::string(gen::kShouts[sh].label) + ", waits at the Shrine of the Dirge";
 			}
 			Note(text, 10.0f);
+			Director::EndNight();  // the city's last rite ends the night: dawn breaks, the next night brings the next round
 			Director::CrumbleNear(a_player->GetPosition(), 1.0e9f);
 			Points::Add(5000);
 			logger::info("curse: {} is freed", gen::kTowns[a_town]);
@@ -336,6 +347,22 @@ namespace bo3z
 
 		void ClaimRelic(int a_town)
 		{
+			if (const int sh = a_town >= 0 ? ShoutOf(a_town) : -1; sh >= 0) {
+				const std::string name(gen::kShouts[sh].label);
+				if (Step(a_town) < kFreed) {
+					Hud::Banner(name + " sleeps here until the Dirge over " + std::string(gen::kTowns[a_town]) + " is broken", 3.5f);
+					return;
+				}
+				if (Gun::KnowsShout(sh)) {
+					Hud::Banner("You already know " + name, 2.5f);
+					return;
+				}
+				Gun::LearnShout(sh);
+				Forms::Play(gen::Sound::curse_lifted);
+				Note("THU'UM LEARNED: " + name + "  (" + std::string(gen::kShouts[sh].w1) + " " + std::string(gen::kShouts[sh].w2) + " " + std::string(gen::kShouts[sh].w3) + ") - equip it in the Magic menu", 8.0f);
+				logger::info("curse: {} learned at {}", gen::kShouts[sh].id, gen::kTowns[a_town]);
+				return;
+			}
 			const int relic = a_town >= 0 ? Relic(a_town) : -1;
 			if (relic < 0) {
 				return;

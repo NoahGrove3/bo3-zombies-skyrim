@@ -1,0 +1,247 @@
+{
+  "sheet": "shouts",
+  "about": "Each freed city teaches its own Thu'um (replacing the old relic weapons). Three words each: tap the shout key for the first word, hold it to speak the second and the full third. Recovery in seconds per word count; the effect grows with every word (Gun.cpp: Gun::Shout).",
+  "columns": [
+    "id",
+    "town",
+    "label",
+    "words",
+    "translations",
+    "recovery",
+    "text",
+    "color",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "ember",
+      "town": "Riverwood",
+      "label": "Ember Roar",
+      "words": [
+        "VUL",
+        "KREIN",
+        "YOLAAR"
+      ],
+      "translations": [
+        "Ember",
+        "Hunger",
+        "Burning"
+      ],
+      "recovery": [
+        18,
+        32,
+        55
+      ],
+      "text": "A roar of fire that sets the ground ablaze before you",
+      "color": "FF6A20",
+      "verify": []
+    },
+    {
+      "id": "gale",
+      "town": "Whiterun",
+      "label": "Kyne's Gale",
+      "words": [
+        "KYN",
+        "SUULE",
+        "BROM"
+      ],
+      "translations": [
+        "Kyne",
+        "Gale",
+        "Fall"
+      ],
+      "recovery": [
+        18,
+        32,
+        55
+      ],
+      "text": "A storm wall that throws the horde flat where it stands",
+      "color": "BFE8FF",
+      "verify": []
+    },
+    {
+      "id": "wail",
+      "town": "Solitude",
+      "label": "Wolf Queen's Wail",
+      "words": [
+        "POTAH",
+        "ZAHRAAN",
+        "DOVOR"
+      ],
+      "translations": [
+        "Queen",
+        "Wail",
+        "Obey"
+      ],
+      "recovery": [
+        18,
+        32,
+        55
+      ],
+      "text": "The dead nearest you turn and fight for you",
+      "color": "B07BFF",
+      "verify": []
+    },
+    {
+      "id": "rime",
+      "town": "Windhelm",
+      "label": "Ysgramor's Frost",
+      "words": [
+        "YSGAR",
+        "IIZ",
+        "KRENDAL"
+      ],
+      "translations": [
+        "Ysgramor",
+        "Ice",
+        "Shatter"
+      ],
+      "recovery": [
+        18,
+        32,
+        55
+      ],
+      "text": "A line of frost that freezes the dead solid, then breaks them",
+      "color": "9ED8FF",
+      "verify": []
+    },
+    {
+      "id": "quake",
+      "town": "Markarth",
+      "label": "Tonal Quake",
+      "words": [
+        "DWEM",
+        "MUL",
+        "RAHGOL"
+      ],
+      "translations": [
+        "Deep",
+        "Strength",
+        "Tremor"
+      ],
+      "recovery": [
+        18,
+        32,
+        55
+      ],
+      "text": "A Dwemer shockwave rolls out through the ground around you",
+      "color": "FFB050",
+      "verify": []
+    },
+    {
+      "id": "shroud",
+      "town": "Riften",
+      "label": "Nocturnal's Shroud",
+      "words": [
+        "NOK",
+        "FAAZ",
+        "GRIK"
+      ],
+      "translations": [
+        "Night",
+        "Veil",
+        "Unseen"
+      ],
+      "recovery": [
+        18,
+        32,
+        55
+      ],
+      "text": "The dead lose you in the dark and stand dazed",
+      "color": "7A4DFF",
+      "verify": []
+    },
+    {
+      "id": "toll",
+      "town": "Falkreath",
+      "label": "Arkay's Toll",
+      "words": [
+        "ARK",
+        "DUUN",
+        "NAHKRIIN"
+      ],
+      "translations": [
+        "Arkay",
+        "Toll",
+        "Rest"
+      ],
+      "recovery": [
+        18,
+        32,
+        55
+      ],
+      "text": "A grave-bell tolls: the weakened dead crumble to dust",
+      "color": "E8E4FF",
+      "verify": []
+    },
+    {
+      "id": "mire",
+      "town": "Morthal",
+      "label": "Mire Breath",
+      "words": [
+        "HJAL",
+        "SOVUN",
+        "KRIIL"
+      ],
+      "translations": [
+        "Marsh",
+        "Rot",
+        "Spread"
+      ],
+      "recovery": [
+        18,
+        32,
+        55
+      ],
+      "text": "A poison fog that eats the dead and spreads as they fall",
+      "color": "7CC23A",
+      "verify": []
+    },
+    {
+      "id": "dread",
+      "town": "Dawnstar",
+      "label": "Nightmare Cry",
+      "words": [
+        "VAER",
+        "NUZ",
+        "KAAN"
+      ],
+      "translations": [
+        "Dream",
+        "Terror",
+        "Burn"
+      ],
+      "recovery": [
+        18,
+        32,
+        55
+      ],
+      "text": "The dead are hurled back in terror and burn",
+      "color": "FF4F8F",
+      "verify": []
+    },
+    {
+      "id": "shatter",
+      "town": "Winterhold",
+      "label": "Magnus Shatter",
+      "words": [
+        "MAG",
+        "KRIST",
+        "VAAHRUN"
+      ],
+      "translations": [
+        "Magnus",
+        "Crystal",
+        "Rain"
+      ],
+      "recovery": [
+        18,
+        32,
+        55
+      ],
+      "text": "Crystal shards fall from the sky around you",
+      "color": "7FD8FF",
+      "verify": []
+    }
+  ]
+}

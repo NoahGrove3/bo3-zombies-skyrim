@@ -254,10 +254,10 @@ namespace bo3z::gen
 		FormRef{ "BO3Zombies.esp", 0x0009B7, "UN_unleash_nightmare" },
 	} };
 	inline constexpr int kPoints_start = 500;  // new_game_after_intro
-	inline constexpr int kPoints_hit = 10;  // gun_hit_round_undead
-	inline constexpr int kPoints_kill = 50;  // kill_round_undead
-	inline constexpr int kPoints_headshot_kill = 100;  // headshot_kill_round_undead
-	inline constexpr int kPoints_melee_kill = 130;  // skyrim_weapon_or_spell_kill_round_undead
+	inline constexpr int kPoints_hit = 5;  // gun_hit_round_undead
+	inline constexpr int kPoints_kill = 30;  // kill_round_undead
+	inline constexpr int kPoints_headshot_kill = 60;  // headshot_kill_round_undead
+	inline constexpr int kPoints_melee_kill = 70;  // skyrim_weapon_or_spell_kill_round_undead
 	inline constexpr int kPoints_round_survived = 0;  // round_cleared
 	inline constexpr std::uint32_t kKey_fire = 0;  // mouse: fire_gun
 	inline constexpr std::uint32_t kKey_ads = 1;  // mouse: aim_down_sights
@@ -606,6 +606,19 @@ namespace bo3z::gen
 		StationDef{ true, 0x00003C, 30928.0f, 104698.0f, -13862.0f, 0.0f, 0.8f },
 		StationDef{ true, 0x00003C, 109208.0f, 102864.0f, -9013.0f, 180.0f, 0.8f },
 	} };
+	struct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; };
+	inline constexpr std::array<ShoutDef, 10> kShouts{ {
+		ShoutDef{ "ember", "Ember Roar", "A roar of fire that sets the ground ablaze before you", 0, 0xA43, { 0xA07, 0xA09, 0xA0B }, { 0xA08, 0xA0A, 0xA0C }, 0xFF6A20, "VUL", "KREIN", "YOLAAR" },
+		ShoutDef{ "gale", "Kyne's Gale", "A storm wall that throws the horde flat where it stands", 1, 0xA44, { 0xA0D, 0xA0F, 0xA11 }, { 0xA0E, 0xA10, 0xA12 }, 0xBFE8FF, "KYN", "SUULE", "BROM" },
+		ShoutDef{ "wail", "Wolf Queen's Wail", "The dead nearest you turn and fight for you", 2, 0xA45, { 0xA13, 0xA15, 0xA17 }, { 0xA14, 0xA16, 0xA18 }, 0xB07BFF, "POTAH", "ZAHRAAN", "DOVOR" },
+		ShoutDef{ "rime", "Ysgramor's Frost", "A line of frost that freezes the dead solid, then breaks them", 3, 0xA46, { 0xA19, 0xA1B, 0xA1D }, { 0xA1A, 0xA1C, 0xA1E }, 0x9ED8FF, "YSGAR", "IIZ", "KRENDAL" },
+		ShoutDef{ "quake", "Tonal Quake", "A Dwemer shockwave rolls out through the ground around you", 4, 0xA47, { 0xA1F, 0xA21, 0xA23 }, { 0xA20, 0xA22, 0xA24 }, 0xFFB050, "DWEM", "MUL", "RAHGOL" },
+		ShoutDef{ "shroud", "Nocturnal's Shroud", "The dead lose you in the dark and stand dazed", 5, 0xA48, { 0xA25, 0xA27, 0xA29 }, { 0xA26, 0xA28, 0xA2A }, 0x7A4DFF, "NOK", "FAAZ", "GRIK" },
+		ShoutDef{ "toll", "Arkay's Toll", "A grave-bell tolls: the weakened dead crumble to dust", 6, 0xA49, { 0xA2B, 0xA2D, 0xA2F }, { 0xA2C, 0xA2E, 0xA30 }, 0xE8E4FF, "ARK", "DUUN", "NAHKRIIN" },
+		ShoutDef{ "mire", "Mire Breath", "A poison fog that eats the dead and spreads as they fall", 7, 0xA4A, { 0xA31, 0xA33, 0xA35 }, { 0xA32, 0xA34, 0xA36 }, 0x7CC23A, "HJAL", "SOVUN", "KRIIL" },
+		ShoutDef{ "dread", "Nightmare Cry", "The dead are hurled back in terror and burn", 8, 0xA4B, { 0xA37, 0xA39, 0xA3B }, { 0xA38, 0xA3A, 0xA3C }, 0xFF4F8F, "VAER", "NUZ", "KAAN" },
+		ShoutDef{ "shatter", "Magnus Shatter", "Crystal shards fall from the sky around you", 9, 0xA4C, { 0xA3D, 0xA3F, 0xA41 }, { 0xA3E, 0xA40, 0xA42 }, 0x7FD8FF, "MAG", "KRIST", "VAAHRUN" },
+	} };
 	struct LocationDef { int town; std::uint32_t anchor; int object; int slot; };
 	inline constexpr std::array<LocationDef, 62> kLocations{ {
 		LocationDef{ 0, 0x0162A4, 0, 0 },
@@ -695,7 +708,7 @@ namespace bo3z::gen
 	inline constexpr int kForgeMax = 3; inline constexpr float kForgeStep = 0.6f;
 	inline constexpr std::array<int, 3> kForgeCost{ { 5000, 8000, 12000 } };
 	inline constexpr std::array<std::uint32_t, 4> kForgeColor{ { 0xECE2C8FF, 0x4FA8FFFF, 0xB266FFFF, 0xFFC83DFF } };
-	namespace elite { inline constexpr float healthMult = 6.0f; inline constexpr float maxAlive = 2.0f; inline constexpr float hitShare = 0.5f; inline constexpr float lungeEvery = 8.0f; inline constexpr float lungeMin = 350.0f; inline constexpr float lungeMax = 1100.0f; inline constexpr float shriekEvery = 12.0f; inline constexpr float shriekRange = 550.0f; inline constexpr float shriekSlow = 40.0f; inline constexpr float shriekSeconds = 3.0f; inline constexpr float shriekDamage = 0.1f; inline constexpr float drainShare = 0.08f; inline constexpr float killPoints = 400.0f; }
+	namespace elite { inline constexpr float healthMult = 6.0f; inline constexpr float maxAlive = 2.0f; inline constexpr float hitShare = 0.5f; inline constexpr float lungeEvery = 8.0f; inline constexpr float lungeMin = 350.0f; inline constexpr float lungeMax = 1100.0f; inline constexpr float shriekEvery = 12.0f; inline constexpr float shriekRange = 550.0f; inline constexpr float shriekSlow = 40.0f; inline constexpr float shriekSeconds = 3.0f; inline constexpr float shriekDamage = 0.1f; inline constexpr float drainShare = 0.08f; inline constexpr float killPoints = 250.0f; }
 	inline constexpr std::string_view kAnimFireCrossbow = "attackStart", kAnimReloadCrossbow = "reloadStart", kAnimFireStaff = "BeginCastRight", kAnimReloadStaff = "none";
 	// BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale (token STAT, light)
 	inline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 4> kPowerups{ {{ 0x96D, 0x96E }, { 0x96F, 0x970 }, { 0x971, 0x972 }, { 0x973, 0x974 }} };

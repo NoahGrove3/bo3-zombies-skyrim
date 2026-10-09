@@ -117,6 +117,7 @@ namespace bo3z
 		void             Hazard(const RE::NiPoint3& a_at, float a_delay, float a_radius, float a_share, std::string_view a_look, bool a_stagger);
 		void             HurtPlayer(float a_share, bool a_stagger);
 		void             RaiseAt(const RE::NiPoint3& a_at);
+		void             EndNight();          // a city freed: dawn comes now, the next night brings the next round
 	}
 
 	// The new dead (Undead.cpp): body language and attacks of our own on the draugr skeleton
@@ -213,6 +214,10 @@ namespace bo3z
 		bool                  OnButton(const RE::ButtonEvent* a_event);
 		std::pair<bool, bool> RecentHit(RE::FormID a_actor);  // {gun kill, headshot}
 		bool                  Give(int a_gun);                // buy/box: put in a slot, equip it
+		bool                  KnowsShout(int a_shout);        // the cities' shouts (sheet: shouts)
+		void                  LearnShout(int a_shout);
+		int                   ShoutOfSpell(RE::FormID a_spell, int& a_level);
+		void                  Shout(int a_shout, int a_level);
 		bool                  Owns(int a_gun);
 		void                  RefillAmmo(int a_gun);
 		bool                  Reforge();      // Atronach Reforge on the weapon in hand

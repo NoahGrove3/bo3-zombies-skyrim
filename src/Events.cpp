@@ -203,6 +203,27 @@ namespace bo3z
 			}
 		};
 
+		// The player's shout spells: one of the cities' Thu'ums was spoken (its word count is the spell)
+		class CastWatch : public RE::BSTEventSink<RE::TESSpellCastEvent>
+		{
+		public:
+			static CastWatch* Get()
+			{
+				static CastWatch s;
+				return &s;
+			}
+			RE::BSEventNotifyControl ProcessEvent(const RE::TESSpellCastEvent* a_event, RE::BSTEventSource<RE::TESSpellCastEvent>*) override
+			{
+				if (a_event && a_event->object && a_event->object.get() == RE::PlayerCharacter::GetSingleton()) {
+					int level = 0;
+					if (const int sh = Gun::ShoutOfSpell(a_event->spell, level); sh >= 0) {
+						Gun::Shout(sh, level);
+					}
+				}
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+
 		class EffectWatch : public RE::BSTEventSink<RE::TESMagicEffectApplyEvent>
 		{
 		public:
@@ -235,6 +256,7 @@ namespace bo3z
 			events->AddEventSink<RE::TESLoadGameEvent>(LoadWatch::Get());
 			events->AddEventSink<RE::TESActivateEvent>(ActivateWatch::Get());
 			events->AddEventSink<RE::TESMagicEffectApplyEvent>(EffectWatch::Get());
+			events->AddEventSink<RE::TESSpellCastEvent>(CastWatch::Get());
 			events->AddEventSink<RE::TESHitEvent>(HitWatch::Get());
 			Intro::Install();
 			RE::BSInputDeviceManager::GetSingleton()->AddEventSink(InputWatch::Get());
