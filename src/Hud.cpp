@@ -46,6 +46,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 	float a = smoothstep(0.20, 0.40, l);
 	float2 d = pos.xy - cursor;
 	if (d.x > -6 && d.x < 46 && d.y > -6 && d.y < 56) a = 0;
+	// only the lower right (the buttons and their yes/no prompts): Skyrim's emblem, the Bethesda mark and the
+	// Anniversary banner are never laid over the picture
+	if (uv.x < 0.62 || uv.y < 0.58) a = 0;
 	return float4(c.rgb, a * col.a);
 }
 )";
