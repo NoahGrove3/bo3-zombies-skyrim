@@ -27,9 +27,13 @@ def trollshide(d):   # shield with claw marks
     d.polygon(P((.5, .22), (.74, .3), (.72, .55), (.5, .8), (.28, .55), (.26, .3)), outline=W, width=22)
     for k in range(3):
         x = .40 + k * .08; d.line(P((x, .36), (x + .06, .62)), fill=W, width=18)
-def quicksilver(d):  # droplet with a spark
-    d.polygon(P((.5, .2), (.66, .48), (.68, .58), (.62, .7), (.5, .76), (.38, .7), (.32, .58), (.34, .48)), fill=W)
-    d.line(P((.52, .38), (.44, .55), (.56, .55), (.48, .7)), fill=(20, 20, 20, 255), width=16)
+def quicksilver(d):  # power rising up a staff: three chevrons and a spark at the tip
+    d.line(P((.5, .78), (.5, .34)), fill=W, width=18)
+    for k in range(3):
+        y = .62 - k * .12; d.line(P((.36, y + .08), (.5, y - .02), (.64, y + .08)), fill=W, width=16, joint='curve')
+    for a in range(8):
+        t = a * math.pi / 4; r = .07 if a % 2 else .12
+        d.line(P((.5, .24), (.5 + r * math.cos(t), .24 + r * math.sin(t))), fill=W, width=10)
 def twinstrike(d):   # two arrows
     for off in (-.09, .09):
         d.line(P((.3 + off, .72), (.66 + off, .32)), fill=W, width=22)
@@ -65,11 +69,62 @@ def stormcrown(d):   # crown with a bolt
 DRAW = {'trollshide': trollshide, 'quicksilver': quicksilver, 'twinstrike': twinstrike, 'hearthfire': hearthfire,
         'windrunner': windrunner, 'hawkeye': hawkeye, 'mammoth': mammoth, 'frostbite': frostbite, 'stormcrown': stormcrown}
 
+def medallion(color, glyph):
+    """Dark fantasy medallion: hammered black iron, a bronze rim chased with knotwork dots, the perk's sigil cut
+    into the face and burning with its colour."""
+    import numpy as np
+    c = rgb(color); R = S // 2
+    yy, xx = np.mgrid[0:S, 0:S].astype(np.float32); r = np.hypot(xx - R, yy - R) / R
+    rng = np.random.default_rng(len(color) * 7 + sum(c))
+    noise = np.asarray(Image.fromarray((rng.random((64, 64)) * 255).astype(np.uint8)).resize((S, S), Image.BICUBIC), np.float32) / 255
+    ang = np.arctan2(yy - R, xx - R)
+    light = 0.5 + 0.5 * np.cos(ang + 2.3)                       # lit from the upper left
+    face = np.stack([28, 26, 27], -1) * (0.75 + 0.5 * noise[..., None]) * (1.05 - 0.45 * r[..., None])
+    bronze = np.array([112, 84, 50], np.float32)
+    rim_band = (r > .80) & (r <= .97)
+    rim = bronze * (0.45 + 0.75 * light[..., None]) * (0.85 + 0.3 * noise[..., None])
+    inner_lip = (r > .74) & (r <= .80)
+    lip = np.stack([18, 16, 16], -1) * np.ones_like(face)
+    img = np.where(rim_band[..., None], rim, np.where(inner_lip[..., None], lip, face))
+    alpha = np.clip((0.985 - r) * 60, 0, 1)
+    # knotwork: bronze studs round the rim
+    out = Image.fromarray(np.clip(img, 0, 255).astype(np.uint8), 'RGB').convert('RGBA'); out.putalpha(Image.fromarray((alpha * 255).astype(np.uint8)))
+    d = ImageDraw.Draw(out)
+    for k in range(8):
+        a = k * math.pi / 4 + math.pi / 8; x, y = R + .885 * R * math.cos(a), R + .885 * R * math.sin(a)
+        rr = 11
+        d.ellipse((x - rr, y - rr, x + rr, y + rr), fill=(40, 30, 20, 255)); d.ellipse((x - rr + 3, y - rr + 2, x + rr - 5, y + rr - 5), fill=(160, 126, 80, 255))
+    # the sigil: drawn white on a mask, then cut in (dark groove), lit edge, and a coloured fire inside
+    m = Image.new('L', (S, S), 0); md = ImageDraw.Draw(m); glyph(_Mask(md))
+    m = m.resize((S, S))
+    mi = m.filter(ImageFilter.GaussianBlur(1.2))
+    glow = Image.new('RGBA', (S, S), c + (0,)); glow.putalpha(m.filter(ImageFilter.GaussianBlur(22)).point(lambda v: int(min(255, v * 1.5))))
+    out = Image.alpha_composite(out, glow)
+    groove = Image.new('RGBA', (S, S), (6, 4, 4, 0)); groove.putalpha(m.filter(ImageFilter.MaxFilter(9)).point(lambda v: int(v * 0.9)))
+    out = Image.alpha_composite(out, groove)
+    hot = tuple(min(255, int(v * 0.6 + 110)) for v in c)
+    fire = Image.new('RGBA', (S, S), hot + (0,)); fire.putalpha(mi)
+    out = Image.alpha_composite(out, fire)
+    core = Image.new('RGBA', (S, S), (255, 248, 230, 0)); core.putalpha(m.filter(ImageFilter.MinFilter(7)).point(lambda v: int(v * 0.55)))
+    out = Image.alpha_composite(out, core)
+    a = np.asarray(out.getchannel('A'), np.float32) * alpha
+    out.putalpha(Image.fromarray(a.astype(np.uint8)))
+    return out
+
+class _Mask:
+    """lets the shape functions (written for an RGBA draw with W fill) draw onto an L mask"""
+    def __init__(self, d): self.d = d
+    def __getattr__(self, name):
+        f = getattr(self.d, name)
+        def call(*a, **k):
+            for key in ('fill', 'outline'):
+                if key in k and k[key] is not None: k[key] = 255 if k[key] == W else 0
+            return f(*a, **k)
+        return call
+
 if __name__ == '__main__':
     out = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else 'build/icons'); out.mkdir(parents=True, exist_ok=True)
     perks = json.load(open(ROOT / 'sheets' / 'perks.json'))['rows']
     for p in perks:
-        im, d = badge(p['color']); DRAW[p['id']](d)
-        shadow = im.filter(ImageFilter.GaussianBlur(3))
-        im.resize((128, 128), Image.LANCZOS).save(out / f"{p['id']}.png")
+        medallion(p['color'], DRAW[p['id']]).resize((256, 256), Image.LANCZOS).save(out / f"{p['id']}.png")
         print('icon', p['id'])

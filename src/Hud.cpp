@@ -799,12 +799,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 				}
 			}
-			// Skyrim's buttons (bottom-right) laid back over the picture: only the words, not its old backdrop
+			// Skyrim's menu laid back over the picture, the whole screen of it: its buttons and every question it asks
+			// (Load your last save? New game?), only the bright words and lines, never its old backdrop (its 3D logo
+			// and smoke are gone: Meshes/Interface/Logo/logo.nif is an empty model in our pack).
 			if (g_frameSrv && g_keyPs) {
-				g_keyCursor = Cursor(size);
-				const ImVec2 a0{ size.x * 0.74f, size.y * 0.58f }, a1{ size.x, size.y * 0.97f };
+				g_keyCursor = { -1000, -1000 };  // (Skyrim's own cursor is switched off while our menu shows)
 				fg->AddCallback(KeyOn, nullptr);
-				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_frameSrv)), a0, a1, { 0.74f, 0.58f }, { 1.0f, 0.97f });
+				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_frameSrv)), { 0, 0 }, size, { 0, 0 }, { 1, 1 });
 				fg->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 			}
 			(void)dl;
@@ -840,9 +841,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const std::string p = std::string("C:\\Windows\\Fonts\\") + a_file;
 				return ::GetFileAttributesA(p.c_str()) != INVALID_FILE_ATTRIBUTES ? io.Fonts->AddFontFromFileTTF(p.c_str(), 64.0f, nullptr, kRanges) : nullptr;
 			};
-			g_title = font("georgiab.ttf");
-			g_num = font("seguisb.ttf");
-			g_body = font("segoeui.ttf");
+			// our own type (SIL Open Font License, in Data/Interface/UndyingNights/fonts): Cinzel for titles and numbers,
+			// Cormorant Garamond for the words; Windows' Georgia / Segoe if they are missing
+			auto own = [&](const char* a_file) -> ImFont* {
+				const std::string p = std::string("Data\\Interface\\UndyingNights\\fonts\\") + a_file;
+				return ::GetFileAttributesA(p.c_str()) != INVALID_FILE_ATTRIBUTES ? io.Fonts->AddFontFromFileTTF(p.c_str(), 64.0f, nullptr, kRanges) : nullptr;
+			};
+			g_title = own("Cinzel-Bold.ttf");
+			g_num = own("Cinzel-Medium.ttf");
+			g_body = own("CormorantGaramond-SemiBold.ttf");
+			g_title = g_title ? g_title : font("georgiab.ttf");
+			g_num = g_num ? g_num : font("seguisb.ttf");
+			g_body = g_body ? g_body : font("segoeui.ttf");
 			g_font = g_title ? g_title : font("impact.ttf");
 			if (!g_font) {
 				g_font = io.Fonts->AddFontDefault();
@@ -920,6 +930,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 			const bool mainMenu = uiM && uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) && !popup;
+			// Skyrim's cursor goes while our menu (with its own cursor) shows, and comes back for everything else
+			{
+				static bool hidden = false;
+				if (mainMenu != hidden && uiM) {
+					if (auto cm = uiM->GetMenu(RE::CursorMenu::MENU_NAME); cm && cm->uiMovie) {
+						cm->uiMovie->SetVisible(!mainMenu);
+						hidden = mainMenu;
+					} else if (!mainMenu) {
+						hidden = false;
+					}
+				}
+			}
 			// the Tab menu (Skills / Magic / Items / Map), on its own: the party panel sits in its empty top-left corner
 			const bool journal = uiM && uiM->IsMenuOpen(RE::TweenMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) &&
 			                     !uiM->IsMenuOpen(RE::InventoryMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MagicMenu::MENU_NAME) &&
