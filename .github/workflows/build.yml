@@ -57,6 +57,8 @@ jobs:
           $stage = "dist\stage"
           New-Item -ItemType Directory -Force "$stage\Data\SKSE\Plugins" | Out-Null
           Copy-Item build\BO3Zombies.dll "$stage\BO3Zombies.asi"
+          New-Item -ItemType Directory -Force -Path "$stage\Data\SKSE\Plugins" | Out-Null
+          Copy-Item build\BO3Zombies.dll "$stage\Data\SKSE\Plugins\BO3Zombies.dll"  # Skyrim Together runs the game from its own folder (no ASI loader there): SKSE loads this copy
           Copy-Item data\BO3Zombies.esp "$stage\Data\BO3Zombies.esp"
           Copy-Item third_party\address-library\versionlib-1-7-104-0.bin "$stage\Data\SKSE\Plugins\"
           python -m pip install --quiet numpy scipy pillow
