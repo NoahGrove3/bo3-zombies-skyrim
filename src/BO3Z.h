@@ -113,6 +113,25 @@ namespace bo3z
 		void             CallHerald();        // the Herald quest: fog rolls in and Grimmvar rises
 		void             CrumbleNear(const RE::NiPoint3& a_at, float a_radius);  // a freed city: its undead fall
 		void             NetFill(Net::State& a_state);  // host: the night as the party should see it
+		// for the new dead (Undead.cpp): a telegraphed blow on the ground, a hit on the player, one more risen
+		void             Hazard(const RE::NiPoint3& a_at, float a_delay, float a_radius, float a_share, std::string_view a_look, bool a_stagger);
+		void             HurtPlayer(float a_share, bool a_stagger);
+		void             RaiseAt(const RE::NiPoint3& a_at);
+	}
+
+	// The new dead (Undead.cpp): body language and attacks of our own on the draugr skeleton
+	namespace Undead
+	{
+		enum class Type { Shambler, Runner, Crawler, Wailer, Bloater, Stalker, Reaper, Necro, Wyrm };
+		enum Cue { kCueNone = 0, kCueRoar, kCueScream, kCueGrab, kCueSwipeL, kCueSwipeR, kCueCrouch, kCueChannel };
+		void  Assign(RE::Actor* a_actor, Type a_type);
+		void  Forget(RE::Actor* a_actor);
+		void  CueFor(RE::Actor* a_actor, int a_cue, float a_seconds);
+		Type  Roll(int a_round);         // which of the risen dead this one is
+		float SpeedMult(Type a_type);
+		float HealthMult(Type a_type);
+		void  Tick(RE::PlayerCharacter* a_player, float a_delta);
+		void  Reset();
 	}
 
 	// Co-op, our own layer over Steam (Net.cpp): a friends-only lobby, the host's zombies game sent to the party

@@ -479,6 +479,7 @@
   "GLOB:stand_layout": "0x9db",
   "BOOK:dirge": "0x9dc",
   "WEAP:wyrm_claws": "0x9dd",
-  "WEAP:shadow_claws": "0x9de"
+  "WEAP:shadow_claws": "0x9de",
+  "WEAP:zombie_claws": "0x9df"
  }
 }

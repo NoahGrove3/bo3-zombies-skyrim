@@ -659,7 +659,7 @@ namespace bo3z::gen
 	// BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale (token STAT, light)
 	inline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 4> kPowerups{ {{ 0x96D, 0x96E }, { 0x96F, 0x970 }, { 0x971, 0x972 }, { 0x973, 0x974 }} };
 	inline constexpr std::uint32_t kReaperScythe = 0x96C;
-	inline constexpr std::uint32_t kWyrmClaws = 0x9DD, kShadowClaws = 0x9DE;
+	inline constexpr std::uint32_t kWyrmClaws = 0x9DD, kShadowClaws = 0x9DE, kZombieClaws = 0x9DF;
 	inline constexpr std::uint32_t kUndeadFaction = 0x93B;
 	inline constexpr std::uint32_t kMuzzleLight = 0x8DC;
 	inline constexpr std::uint32_t kStandStat = 0x926;  // the station platform (dressing on the Coffer)

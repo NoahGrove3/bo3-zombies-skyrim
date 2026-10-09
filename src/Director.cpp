@@ -251,7 +251,21 @@ namespace bo3z
 			// Round health (BO3 curve). Permanent modifier so leveled base health doesn't matter.
 			auto*       av = actor->AsActorValueOwner();
 			const auto& kindRow = gen::kEnemies[*pick];
-			const float want = HealthFor(g_current) * kindRow.healthMult;
+			// which of the new dead it is (Undead.cpp): its body, its gait and its own attacks
+			const std::string_view rowId = kindRow.id;
+			std::optional<Undead::Type> type;
+			if (rowId == "zombie") {
+				type = Undead::Roll(g_current);
+			} else if (rowId == "shadow") {
+				type = Undead::Type::Stalker;
+			} else if (rowId == "boss") {
+				type = Undead::Type::Wyrm;
+			} else if (kindRow.kind == 1) {
+				type = Undead::Type::Reaper;
+			} else if (kindRow.kind == 2) {
+				type = Undead::Type::Necro;
+			}
+			const float want = HealthFor(g_current) * kindRow.healthMult * (type ? Undead::HealthMult(*type) : 1.0f);
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
 
 			// BO3 tuning: speed tier by round, damage comes from our hit rule (weapon damage turned down),
@@ -262,7 +276,7 @@ namespace bo3z
 					speed = tier[1];
 				}
 			}
-			speed *= kindRow.speedMult * (g_event >= 0 ? gen::kEvents[g_event].speedMult : 1.0f);
+			speed *= kindRow.speedMult * (g_event >= 0 ? gen::kEvents[g_event].speedMult : 1.0f) * (type ? Undead::SpeedMult(*type) : 1.0f);
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, speed - av->GetBaseActorValue(RE::ActorValue::kSpeedMult));
 			av->SetActorValue(RE::ActorValue::kAttackDamageMult, gen::kZombieWeaponDamageMult);
 			av->SetActorValue(RE::ActorValue::kConfidence, 4);
@@ -284,7 +298,7 @@ namespace bo3z
 			// Armed: an ancient Nord sword, an iron sword or a dagger (bare-handed undead swing slowly); the Iron
 			// Reaper swings its scythe two-handed; necromancers fight with spells; raised skeletons keep their own.
 			const std::string_view eid = gen::kEnemies[*pick].id;
-			const std::uint32_t    own = kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : 0;
+			const std::uint32_t    own = kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : eid == "zombie" ? gen::kZombieClaws : 0;
 			if (own) {  // their own fighting style: the Reaper's scythe, Grimmvar's raking claws, the Gloomstalker's quick slashes
 				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(own, gen::kPlugin)) {
 					RE::ActorEquipManager::GetSingleton()->EquipObject(actor, w);
@@ -338,6 +352,9 @@ namespace bo3z
 			}
 			g_ours[actor->GetFormID()] = *pick;
 			g_alive.push_back({ actor->GetHandle(), *pick });
+			if (type) {
+				Undead::Assign(actor, *type);
+			}
 			Forms::PlayAt(gen::Sound::rise, actor);
 			if (auto* fx = Forms::Ours(gen::kRiseFx)) {  // the ground bursts where they climb out
 				if (auto puff = actor->PlaceObjectAtMe(fx, false)) {
@@ -560,6 +577,7 @@ namespace bo3z
 					Gun::FxBlast("dragonfire", OnGround(bp + RE::NiPoint3{ std::cos(a) * 260.0f, std::sin(a) * 260.0f, 0 }), 0.04f * k);
 				}
 				g_boss.summon = 0;  // and the dead answer his howl
+				Undead::CueFor(boss.get(), Undead::kCueRoar, 1.6f);
 				Forms::PlayAt(gen::Sound::hound_night, boss.get());
 				Hud::Banner("Grimmvar is ENRAGED!", 3.0f);
 			}
@@ -584,6 +602,7 @@ namespace bo3z
 						boss->SetPosition(bp + dir * lunge, true);
 					}
 					boss->NotifyAnimationGraph(last ? "attackPowerStartForward" : (g_boss.comboLeft % 2 ? "attackStart" : "attackStartLeft"));
+					Undead::CueFor(boss.get(), last ? Undead::kCueRoar : (g_boss.comboLeft % 2 ? Undead::kCueSwipeR : Undead::kCueSwipeL), last ? 0.5f : 0.45f);
 					const auto front = OnGround(boss->GetPosition() + dir * 170.0f);
 					g_hazards.push_back({ front, last ? 0.35f : 0.22f, last ? 230.0f : 170.0f, last ? gen::boss::clawLast : gen::boss::clawHit, last ? "giantslam" : "", last });  // (the rakes hurt unseen; the finisher rips the ground)
 					Forms::PlayAt(gen::Sound::rise, boss.get());
@@ -609,6 +628,7 @@ namespace bo3z
 			} else if ((g_boss.roar -= a_delta) <= 0 && dist > 600.0f && dist < 1800.0f && g_boss.comboLeft == 0) {
 				g_boss.leapAt = OnGround(a_player->GetPosition());
 				g_boss.leapT = 1.1f;
+				Undead::CueFor(boss.get(), Undead::kCueCrouch, 0.3f);
 				g_hazards.push_back({ g_boss.leapAt, 1.1f, 240.0f, gen::boss::leapDamage, "giantslam", true });
 				Gun::FxBlast("paralyze", g_boss.leapAt + RE::NiPoint3{ 0, 0, 8 }, 0.0f);  // where he will land
 				if (auto* fx = Forms::Ours(gen::kRiseFx)) {
@@ -634,6 +654,7 @@ namespace bo3z
 				}
 			} else if ((g_boss.slam -= a_delta) <= 0 && dist < gen::boss::slamRange + 80.0f && g_boss.comboLeft == 0 && g_boss.leapT < 0) {
 				g_boss.slamWindup = g_boss.enraged ? 0.6f : 0.9f;
+				Undead::CueFor(boss.get(), Undead::kCueRoar, g_boss.slamWindup);
 				boss->NotifyAnimationGraph("attackPowerStartForward");
 				Forms::PlayAt(gen::Sound::hound_night, boss.get());
 				g_boss.slam = gen::boss::slamEvery * cd;
@@ -673,6 +694,7 @@ namespace bo3z
 					SpawnOne(a_player, 0, &at);
 				}
 				Hud::Banner("Grimmvar calls the dead!", 2.5f);
+				Undead::CueFor(boss.get(), Undead::kCueRoar, 1.3f);
 				g_boss.summon = gen::boss::summonEvery * cd;
 			}
 			if ((g_boss.step -= a_delta) <= 0 && dist > 500.0f && g_boss.leapT < 0) {
@@ -1122,6 +1144,7 @@ namespace bo3z
 							}
 							minions += 2;
 							Forms::PlayAt(gen::Sound::hound_night, a.get());
+							Undead::CueFor(a.get(), Undead::kCueChannel, 1.5f);
 						}
 					}
 				}
@@ -1317,6 +1340,7 @@ namespace bo3z
 			g_slowLeft = 0;
 			g_pause = 0;
 			EndEvent();
+			Undead::Reset();
 			Curse::Reset();
 			std::scoped_lock l(Hud::Lock());
 			Hud::Edit().bossName.clear();
@@ -1337,6 +1361,32 @@ namespace bo3z
 
 		float RoundHealth() { return HealthFor(std::max(1, g_current)); }
 		bool  IsElite(RE::Actor* a_actor) { return a_actor && g_elites.contains(a_actor->GetFormID()); }
+		void  Hazard(const RE::NiPoint3& a_at, float a_delay, float a_radius, float a_share, std::string_view a_look, bool a_stagger)
+		{
+			g_hazards.push_back({ a_at, a_delay, a_radius, a_share, a_look, a_stagger });
+		}
+		void HurtPlayer(float a_share, bool a_stagger)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || p->IsDead()) {
+				return;
+			}
+			auto* pav = p->AsActorValueOwner();
+			pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * a_share);
+			if (a_stagger) {
+				p->SetGraphVariableFloat("staggerMagnitude", 0.35f);
+				p->NotifyAnimationGraph("staggerStart");
+			}
+			std::scoped_lock l(Hud::Lock());
+			Hud::Edit().hurtTime = 0.9f;
+		}
+		void RaiseAt(const RE::NiPoint3& a_at)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (p && g_phase == Phase::Fighting && !Coop::Client() && static_cast<int>(g_alive.size()) < R.maxAlive + 6) {
+				SpawnOne(p, 0, &a_at);
+			}
+		}
 		bool  IsBoss(RE::Actor* a_actor) { auto b = g_boss.handle.get(); return a_actor && b && b.get() == a_actor; }
 		bool IsRoundUndead(RE::Actor* a_actor)
 		{
@@ -1550,6 +1600,7 @@ namespace bo3z
 				TickClock(a_delta);  // with Skyrim Together the server's uTimeScale runs the clock (the party pack sets 48)
 			}
 			auto* player = RE::PlayerCharacter::GetSingleton();
+			Undead::Tick(player, a_delta);
 			// Night regen: after a few seconds without taking damage, health surges back (nights only).
 			if (player) {
 				static float last = -1, quiet = 0;

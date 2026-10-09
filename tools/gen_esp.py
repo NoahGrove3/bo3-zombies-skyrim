@@ -218,7 +218,8 @@ recs['WEAP'].append(record('WEAP', fid('WEAP', 'reaper_scythe'), ws))
 # Grimmvar's claws (one-handed rakes: a draugr's one-hand swings with nothing in the hand read as claw swipes) and the Gloomstalker's (quick dagger slashes): hidden weapons
 # that give each its own native swing set; the scripted moves are in Director.cpp
 for key, edid, label, anim, speed, reach, dmg in (('wyrm_claws', 'UN_WyrmClaws', 'Wyrm Claws', 1, 0.9, 1.6, 20),
-                                                  ('shadow_claws', 'UN_ShadowClaws', 'Shadow Claws', 2, 1.45, 1.1, 14)):
+                                                  ('shadow_claws', 'UN_ShadowClaws', 'Shadow Claws', 2, 1.45, 1.1, 14),
+                                                  ('zombie_claws', 'UN_ZombieClaws', 'Grave Hands', 1, 1.15, 0.85, 6)):
     ws = []
     for name, hx in T['weap_draugr_gs']['subs']:
         b = bytearray(bytes.fromhex(hx))
