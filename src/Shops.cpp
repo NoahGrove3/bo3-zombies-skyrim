@@ -49,8 +49,10 @@ namespace bo3z
 			a_h = {};
 		}
 
-		void Dress(std::size_t a_index, RE::TESObjectREFR* a_main)
+		float CompactOf(int a_town);  // a fixed station's layout scale (1 = full size)
+		void  Dress(std::size_t a_index, RE::TESObjectREFR* a_main)
 		{
+			const float c = CompactOf(gen::kLocations[a_index].town);
 			if (g_dressed[a_index]) {
 				return;
 			}
@@ -64,7 +66,7 @@ namespace bo3z
 				if (!base) {
 					continue;
 				}
-				const auto want = Local(a_main, d.x, d.y, d.z);
+				const auto want = Local(a_main, d.x * c, d.y * c, d.z);
 				RE::TESObjectREFR* found = nullptr;
 				RE::TES::GetSingleton()->ForEachReferenceInRange(a_main, 400.0f, [&](RE::TESObjectREFR* r) {
 					if (r && r->GetBaseObject() == base && !r->IsDeleted() && r->GetPosition().GetDistance(want) < 80.0f) {
@@ -81,7 +83,7 @@ namespace bo3z
 					ref->SetPosition(want);
 					ref->SetAngle({ 0, 0, a_main->GetAngleZ() });
 					if (!d.light) {
-						ref->SetScale(d.scale);
+						ref->SetScale(d.scale * c);
 					}
 					found = ref.get();
 				}
@@ -210,6 +212,7 @@ namespace bo3z
 			int          candidate{ 0 };
 			float        top{ 0 };        // the stand's floor: every machine stands at this height
 			bool         topSet{ false };
+			float        compact{ 1.0f };  // fixed stations in city streets: the layout drawn in
 		};
 		std::array<TownPlan, gen::kTowns.size()> g_towns{};
 		std::optional<float> GroundTop(RE::TESObjectREFR* a_anchor, const TownPlan& a_plan, float* a_low = nullptr);
@@ -223,7 +226,11 @@ namespace bo3z
 			}
 		}
 
-		RE::TESObjectREFR* TownAnchor(int a_town)
+		float CompactOf(int a_town) { return a_town >= 0 && a_town < static_cast<int>(g_towns.size()) ? g_towns[a_town].compact : 1.0f; }
+
+		// The town's own reference in Skyrim (a walled city's gate outside, a town's map marker): where its world-map
+		// icon goes and how the town is recognised.
+		RE::TESObjectREFR* MapAnchor(int a_town)
 		{
 			for (const auto& l : gen::kLocations) {
 				if (l.town == a_town) {
@@ -233,11 +240,55 @@ namespace bo3z
 			return nullptr;
 		}
 
+		// Where the station is built from. A fixed station (sheet: stations) is anchored on a marker of ours set at
+		// its spot the first time you come near it (inside a walled city: in the city's own world); the marker stays
+		// in the save and is found again next time.
+		std::array<RE::ObjectRefHandle, gen::kTowns.size()> g_anchors{};
+		RE::TESObjectREFR* TownAnchor(int a_town)
+		{
+			const auto& st = gen::kStations[a_town];
+			if (!st.fixed) {
+				return MapAnchor(a_town);
+			}
+			if (auto a = g_anchors[a_town].get(); a && !a->IsDeleted()) {
+				return a.get();
+			}
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* ws = p ? p->GetWorldspace() : nullptr;
+			const RE::NiPoint3 at{ st.x, st.y, st.z };
+			if (!ws || ws->GetFormID() != st.world || p->GetPosition().GetDistance(at) > 6000.0f) {
+				return nullptr;
+			}
+			auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(0x3B);  // XMarker
+			if (!xm) {
+				return nullptr;
+			}
+			RE::TESObjectREFR* found = nullptr;
+			RE::TES::GetSingleton()->ForEachReferenceInRange(p, 7000.0f, [&](RE::TESObjectREFR* r) {
+				if (r && r->GetBaseObject() == xm && (r->GetFormID() >> 24) == 0xFF && !r->IsDeleted() && r->GetPosition().GetDistance(at) < 5.0f) {
+					found = r;
+					return RE::BSContainer::ForEachResult::kStop;
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			if (!found) {
+				auto ref = p->PlaceObjectAtMe(xm, true);
+				if (!ref) {
+					return nullptr;
+				}
+				ref->SetPosition(at);
+				found = ref.get();
+				logger::info("shops: {} station anchor set at ({:.0f},{:.0f},{:.0f})", gen::kTowns[a_town], at.x, at.y, at.z);
+			}
+			g_anchors[a_town] = found->CreateRefHandle();
+			return found;
+		}
+
 		RE::NiPoint3 SlotPos(const TownPlan& a_plan, int a_slot)
 		{
 			const auto& s = gen::kSlots[a_slot];
-			const float a = a_plan.yaw;
-			return { a_plan.center.x + s.x * std::cos(a) + s.y * std::sin(a), a_plan.center.y - s.x * std::sin(a) + s.y * std::cos(a), a_plan.center.z };
+			const float a = a_plan.yaw, x = s.x * a_plan.compact, y = s.y * a_plan.compact;
+			return { a_plan.center.x + x * std::cos(a) + y * std::sin(a), a_plan.center.y - x * std::sin(a) + y * std::cos(a), a_plan.center.z };
 		}
 		float SlotFacing(const TownPlan& a_plan, int a_slot) { return a_plan.yaw + gen::kSlots[a_slot].faceDeg * RE::NI_PI / 180.0f; }
 
@@ -641,7 +692,7 @@ namespace bo3z
 			if (auto c = Snap(a_anchor, a_plan.center)) {
 				ref = c->z;
 			}
-			const float hx = gen::kStandHalfX, fy = gen::kStandFrontY, by = gen::kStandBackY;
+			const float hx = gen::kStandHalfX * a_plan.compact, fy = gen::kStandFrontY * a_plan.compact, by = gen::kStandBackY * a_plan.compact;
 			float hi = -FLT_MAX, lo = FLT_MAX;
 			int   got = 0;
 			for (int gx = 0; gx < 5; ++gx) {
@@ -836,7 +887,7 @@ namespace bo3z
 			}
 			if (!ref && !g_cityLooked[a_town]) {
 				g_cityLooked[a_town] = true;
-				auto* anchor = TownAnchor(a_town);
+				auto* anchor = MapAnchor(a_town);
 				auto* ws = anchor ? anchor->GetWorldspace() : nullptr;
 				if (auto* cell = ws ? ws->persistentCell : nullptr) {
 					RE::TESObjectREFR* best = nullptr;
@@ -879,14 +930,19 @@ namespace bo3z
 
 		void EnsureMarker(RE::PlayerCharacter* a_player, int a_town)
 		{
-			auto* anchor = TownAnchor(a_town);
+			auto* anchor = MapAnchor(a_town);
 			auto* markerBase = RE::TESForm::LookupByID<RE::TESBoundObject>(0x10);  // MapMarker
 			if (!anchor || !markerBase) {
 				return;
 			}
 			const auto& plan = g_towns[a_town];
-			const bool   ready = plan.state == TownPlan::State::Ready;
-			const RE::NiPoint3 at = ready ? plan.center : PreviewSpot(a_town, anchor);
+			const auto& st = gen::kStations[a_town];
+			auto*        aws = anchor->GetWorldspace();
+			// a fixed station: its icon on the spot (a walled city's world has no map of its own: there the icon
+			// stands at the city gate outside)
+			const bool   fixedHere = st.fixed && aws && aws->GetFormID() == st.world;
+			const bool   ready = st.fixed || plan.state == TownPlan::State::Ready;
+			const RE::NiPoint3 at = st.fixed ? (fixedHere ? RE::NiPoint3{ st.x, st.y, st.z } : anchor->GetPosition()) : ready ? plan.center : PreviewSpot(a_town, anchor);
 			if (!TownDiscovered(a_town)) {
 				// not found yet: no station icon (one from an earlier build is hidden until then)
 				if (!g_markers[a_town].get() && !g_markerScanned[a_town]) {
@@ -1028,6 +1084,18 @@ namespace bo3z
 					continue;
 				}
 				auto& plan = g_towns[t];
+				if (plan.state == TownPlan::State::Unknown && gen::kStations[t].fixed) {
+					// its spot is known (sheet: stations): build there; machines already standing on it are kept
+					const auto& st = gen::kStations[t];
+					plan = TownPlan{};
+					plan.state = TownPlan::State::Ready;
+					plan.center = { st.x, st.y, st.z };
+					plan.yaw = st.yaw * RE::NI_PI / 180.0f;
+					plan.compact = st.compact;
+					MarkLayout(t);
+					ClearSite(t, anchor);
+					logger::info("shops: {} station at its fixed spot ({:.0f},{:.0f}) yaw {:.0f}", gen::kTowns[t], st.x, st.y, st.yaw);
+				}
 				if (plan.state == TownPlan::State::Unknown) {
 					if (AdoptExisting(t, anchor)) {
 						logger::info("shops: {} alley already built", gen::kTowns[t]);

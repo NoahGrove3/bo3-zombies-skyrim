@@ -1,0 +1,146 @@
+{
+  "sheet": "stations",
+  "about": "Where each town's Undying Nights station stands: inside the walled cities (their own worldspaces: the market or main square) and in the heart of each town. Picked offline from Skyrim.esm's navmesh (tools/stationspots.py: the whole compacted stand and its approach on walkable, near-level ground, clear of doors), then checked in game. x, y, z in the worldspace; yawDeg turns the stand (its front, where you walk up, faces local -y); compact shrinks the stand's layout to fit city streets. The world-map icon of a walled city stays at its gate outside.",
+  "columns": [
+    "town",
+    "worldspace",
+    "x",
+    "y",
+    "z",
+    "yawDeg",
+    "compact",
+    "verify"
+  ],
+  "rows": [
+    {
+      "town": "Whiterun",
+      "worldspace": "0x01A26F",
+      "x": 24900,
+      "y": -7250,
+      "z": -3392,
+      "yawDeg": 30,
+      "compact": 0.8,
+      "verify": [
+        "x",
+        "y"
+      ]
+    },
+    {
+      "town": "Solitude",
+      "worldspace": "0x037EDF",
+      "x": -61400,
+      "y": 104870,
+      "z": -8333,
+      "yawDeg": 90,
+      "compact": 0.8,
+      "verify": [
+        "x",
+        "y"
+      ]
+    },
+    {
+      "town": "Windhelm",
+      "worldspace": "0x01691D",
+      "x": 130920,
+      "y": 36100,
+      "z": -12272,
+      "yawDeg": 300,
+      "compact": 0.8,
+      "verify": [
+        "x",
+        "y"
+      ]
+    },
+    {
+      "town": "Markarth",
+      "worldspace": "0x016D71",
+      "x": -173740,
+      "y": 5420,
+      "z": -3389,
+      "yawDeg": 30,
+      "compact": 0.8,
+      "verify": [
+        "x",
+        "y"
+      ]
+    },
+    {
+      "town": "Riften",
+      "worldspace": "0x016BB4",
+      "x": 172560,
+      "y": -96520,
+      "z": 11133,
+      "yawDeg": 150,
+      "compact": 0.8,
+      "verify": [
+        "x",
+        "y"
+      ]
+    },
+    {
+      "town": "Riverwood",
+      "worldspace": "0x00003C",
+      "x": 22061,
+      "y": -44912,
+      "z": -144,
+      "yawDeg": 180,
+      "compact": 0.8,
+      "verify": [
+        "x",
+        "y"
+      ]
+    },
+    {
+      "town": "Falkreath",
+      "worldspace": "0x00003C",
+      "x": -30296,
+      "y": -86284,
+      "z": -3112,
+      "yawDeg": 120,
+      "compact": 0.8,
+      "verify": [
+        "x",
+        "y"
+      ]
+    },
+    {
+      "town": "Morthal",
+      "worldspace": "0x00003C",
+      "x": -38400,
+      "y": 68174,
+      "z": -14089,
+      "yawDeg": 180,
+      "compact": 0.8,
+      "verify": [
+        "x",
+        "y"
+      ]
+    },
+    {
+      "town": "Dawnstar",
+      "worldspace": "0x00003C",
+      "x": 30928,
+      "y": 104698,
+      "z": -13862,
+      "yawDeg": 0,
+      "compact": 0.8,
+      "verify": [
+        "x",
+        "y"
+      ]
+    },
+    {
+      "town": "Winterhold",
+      "worldspace": "0x00003C",
+      "x": 109208,
+      "y": 102864,
+      "z": -9013,
+      "yawDeg": 180,
+      "compact": 0.8,
+      "verify": [
+        "x",
+        "y"
+      ]
+    }
+  ]
+}

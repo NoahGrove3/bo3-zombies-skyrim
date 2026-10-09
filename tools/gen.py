@@ -141,6 +141,13 @@ o.append(f'\tinline constexpr std::array<float, {len(se["yawsDeg"])}> kPlanYaw{{
 o.append(f'\tinline constexpr int kPlanAngles = {se["angles"]};')
 o.append(f'\tinline constexpr float kPlanSnap = {F(se["snapTolerance"])}, kPlanHeight = {F(se["maxHeightSpread"])}, kPlanSweep = {F(se["sweepRadius"])}, kPlanDoor = {F(se["doorClearance"])};')
 o.append(f'\tinline constexpr float kPlanBuilding = {F(se["buildingClearance"])}, kPlanClutter = {F(se["clutterClearance"])}, kPlanFlat = {F(se["maxSlope"])};')
+ST = {r['town']: r for r in S['stations']['rows']}
+o.append('\tstruct StationDef { bool fixed; std::uint32_t world; float x, y, z, yaw, compact; };  // sheet: stations (by town)')
+o.append(f'\tinline constexpr std::array<StationDef, {len(towns)}> kStations{{ {{')
+for t in towns:
+    r = ST.get(t)
+    o.append(f'\t\tStationDef{{ true, 0x{int(r["worldspace"],16):06X}, {F(r["x"])}, {F(r["y"])}, {F(r["z"])}, {F(r["yawDeg"])}, {F(r["compact"])} }},' if r else '\t\tStationDef{ false, 0, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f },')
+o.append('\t} };')
 o.append('\tstruct LocationDef { int town; std::uint32_t anchor; int object; int slot; };')
 o.append(f'\tinline constexpr std::array<LocationDef, {len(L)}> kLocations{{ {{')
 for l in L: o.append(f'\t\tLocationDef{{ {towns.index(l["town"])}, 0x{int(l["anchor"],16):06X}, {oid.index(l["object"].split(":")[1])}, {slots.index(l["slot"].split(":")[1])} }},')
