@@ -902,8 +902,20 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				return;
 			}
 			auto*      uiM = RE::UI::GetSingleton();
-			const bool mainMenu = uiM && uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::LoadingMenu::MENU_NAME);
-			const bool journal = uiM && uiM->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !mainMenu;
+			// our picture only while the main menu itself is up: any of Skyrim's pop-ups over it (Load, settings, a
+			// question, Creations, credits) shows as Skyrim draws it
+			bool popup = false;
+			if (uiM) {
+				static const std::array<std::string_view, 6> kQuiet{ "Main Menu", "Cursor Menu", "Fader Menu", "Mist Menu", "HUD Menu", "Kinect Menu" };
+				for (auto& [name, entry] : uiM->menuMap) {
+					if (entry.menu && uiM->IsMenuOpen(name) && std::find(kQuiet.begin(), kQuiet.end(), std::string_view(name.c_str())) == kQuiet.end()) {
+						popup = true;
+						break;
+					}
+				}
+			}
+			const bool mainMenu = uiM && uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) && !popup;
+			const bool journal = uiM && uiM->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MainMenu::MENU_NAME);  // in game only
 			const int  clicks = g_clicks.exchange(0);
 			if (!InGame() && !mainMenu && !journal) {
 				if (static int m = 0; m++ % 1200 == 0) {
