@@ -1361,6 +1361,15 @@ namespace bo3z
 
 		float RoundHealth() { return HealthFor(std::max(1, g_current)); }
 		bool  IsElite(RE::Actor* a_actor) { return a_actor && g_elites.contains(a_actor->GetFormID()); }
+		bool BossPos(RE::NiPoint3& a_at)
+		{
+			auto b = g_boss.handle.get();
+			if (!b || b->IsDead()) {
+				return false;
+			}
+			a_at = b->GetPosition() + RE::NiPoint3{ 0, 0, 260.0f };
+			return true;
+		}
 		void EndNight()
 		{
 			auto* cal = RE::Calendar::GetSingleton();

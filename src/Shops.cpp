@@ -1319,6 +1319,28 @@ namespace bo3z
 		}
 		int TownOfRef(RE::TESObjectREFR* a_ref) { return a_ref ? TownOf(a_ref) : -1; }
 
+		bool Discovered(int a_town) { return a_town >= 0 && a_town < static_cast<int>(gen::kTowns.size()) && TownDiscovered(a_town); }
+		bool StationTarget(int a_town, RE::NiPoint3& a_at)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* ws = p ? p->GetWorldspace() : nullptr;
+			if (!ws || a_town < 0 || a_town >= static_cast<int>(gen::kTowns.size())) {
+				return false;
+			}
+			if (const auto& st = gen::kStations[a_town]; st.fixed && ws->GetFormID() == st.world) {
+				a_at = { st.x, st.y, st.z + 60.0f };
+				return true;
+			}
+			if (g_towns[a_town].state == TownPlan::State::Ready && TownAnchor(a_town) && TownAnchor(a_town)->GetWorldspace() == ws) {
+				a_at = g_towns[a_town].center + RE::NiPoint3{ 0, 0, 60.0f };
+				return true;
+			}
+			if (auto* m = MapAnchor(a_town); m && m->GetWorldspace() == ws) {
+				a_at = m->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f };
+				return true;
+			}
+			return false;
+		}
 		bool StandFrame(int a_town, RE::NiPoint3& a_center, float& a_yaw, RE::TESWorldSpace*& a_world)
 		{
 			auto* anchor = a_town >= 0 && a_town < static_cast<int>(gen::kTowns.size()) ? TownAnchor(a_town) : nullptr;

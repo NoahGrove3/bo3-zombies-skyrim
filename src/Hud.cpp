@@ -587,6 +587,49 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Divider(dl, size.x * 0.5f, y + ts.y + 10 * k, std::min(size.x * 0.4f, ts.x * 0.6f + 40 * k), k, a);
 			}
 
+			// The quest's way-mark: a burning diamond over the objective, or at the screen's edge pointing the way.
+			if (s.objOn && !s.perkMenu) {
+				const ImU32 col = IM_COL32(236, 168, 72, 255), dark = IM_COL32(20, 12, 8, 230);
+				const float m = 70 * k;
+				ImVec2      p{ s.objX * size.x, s.objY * size.y };
+				const bool  onScreen = s.objFront && p.x > m && p.x < size.x - m && p.y > m && p.y < size.y - m;
+				const int   meters = static_cast<int>(s.objDist * 0.01428f);
+				const std::string dist = std::to_string(meters) + " m";
+				const float pulse = 0.75f + 0.25f * std::sin(now * 3.0f);
+				auto diamond = [&](ImVec2 c, float r) {
+					for (int i = 3; i >= 1; --i) {
+						const float g = r * (1.0f + 0.45f * i);
+						dl->AddQuadFilled({ c.x, c.y - g }, { c.x + g * 0.7f, c.y }, { c.x, c.y + g }, { c.x - g * 0.7f, c.y }, Fade(col, 0.07f * pulse));
+					}
+					dl->AddQuadFilled({ c.x, c.y - r }, { c.x + r * 0.7f, c.y }, { c.x, c.y + r }, { c.x - r * 0.7f, c.y }, dark);
+					dl->AddQuad({ c.x, c.y - r }, { c.x + r * 0.7f, c.y }, { c.x, c.y + r }, { c.x - r * 0.7f, c.y }, col, 2.0f * k);
+					const float q = r * 0.42f;
+					dl->AddQuadFilled({ c.x, c.y - q }, { c.x + q * 0.7f, c.y }, { c.x, c.y + q }, { c.x - q * 0.7f, c.y }, Fade(IM_COL32(255, 210, 120, 255), pulse));
+				};
+				if (onScreen) {
+					diamond(p, 15 * k);
+					TxtC(dl, g_title, 17 * k, p.x, p.y - 46 * k, IM_COL32(236, 222, 190, 235), s.objLabel, 1.5f * k, col);
+					TxtC(dl, g_num, 15 * k, p.x, p.y + 20 * k, IM_COL32(220, 196, 150, 220), dist);
+				} else {
+					ImVec2 d{ p.x - size.x * 0.5f, p.y - size.y * 0.5f };
+					if (!s.objFront) {
+						d = { -d.x, -d.y };
+						if (std::abs(d.y) < 1.0f) d.y = 1.0f;
+						d.y = std::abs(d.y) * 0.25f + size.y * 0.2f;  // behind you: shown low on the screen, turned the right way
+					}
+					const float len = std::max(1.0f, std::sqrt(d.x * d.x + d.y * d.y));
+					const ImVec2 u{ d.x / len, d.y / len };
+					const float  hx = size.x * 0.5f - m, hy = size.y * 0.5f - m;
+					const float  t = std::min(std::abs(u.x) > 1e-4f ? hx / std::abs(u.x) : 1e9f, std::abs(u.y) > 1e-4f ? hy / std::abs(u.y) : 1e9f);
+					const ImVec2 c{ size.x * 0.5f + u.x * t, size.y * 0.5f + u.y * t };
+					diamond(c, 13 * k);
+					const ImVec2 tip{ c.x + u.x * 34 * k, c.y + u.y * 34 * k }, n{ -u.y, u.x };
+					const ImVec2 b0{ c.x + u.x * 20 * k + n.x * 9 * k, c.y + u.y * 20 * k + n.y * 9 * k }, b1{ c.x + u.x * 20 * k - n.x * 9 * k, c.y + u.y * 20 * k - n.y * 9 * k };
+					dl->AddTriangleFilled(tip, b0, b1, Fade(col, pulse));
+					TxtC(dl, g_num, 14 * k, c.x - u.x * 34 * k, c.y - u.y * 34 * k - 8 * k, IM_COL32(220, 196, 150, 220), dist);
+				}
+			}
+
 			// Brew machine menu: a tall iron-framed cabinet of medallions.
 			if (s.perkMenu) {
 				const float w = 640 * k, rowH = 70 * k, h = 170 * k + rowH * gen::kPerks.size();

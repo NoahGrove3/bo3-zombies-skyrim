@@ -117,7 +117,8 @@ namespace bo3z
 		void             Hazard(const RE::NiPoint3& a_at, float a_delay, float a_radius, float a_share, std::string_view a_look, bool a_stagger);
 		void             HurtPlayer(float a_share, bool a_stagger);
 		void             RaiseAt(const RE::NiPoint3& a_at);
-		void             EndNight();          // a city freed: dawn comes now, the next night brings the next round
+		void             EndNight();
+		bool             BossPos(RE::NiPoint3& a_at);  // Grimmvar, if he walks          // a city freed: dawn comes now, the next night brings the next round
 	}
 
 	// The new dead (Undead.cpp): body language and attacks of our own on the draugr skeleton
@@ -237,6 +238,8 @@ namespace bo3z
 		bool        StandFrame(int a_town, RE::NiPoint3& a_center, float& a_yaw, RE::TESWorldSpace*& a_world);  // true: the station is placed
 		RE::TESObjectREFR* Placed(int a_town, int a_kind);  // the town's machine of that object kind (6 = relic shrine), if placed
 		int         TownOfRef(RE::TESObjectREFR* a_ref);
+		bool        StationTarget(int a_town, RE::NiPoint3& a_at);  // where to head for the town's station, in your current world (a walled city from outside: its gate)
+		bool        Discovered(int a_town);
 	}
 
 	namespace Perks
@@ -310,6 +313,11 @@ namespace bo3z
 			float       wardFrac{ 0 };     // kindling a ward-fire
 			float       nukeLeft{ 0 }, nukeFlash{ 0 };
 			std::string questNote;        // quest news in the tracker
+			// the quest's objective marker: where on screen (0..1), in front of you or not, how far (units), what
+			bool        objOn{ false }, objFront{ false };
+			float       objX{ 0 }, objY{ 0 }, objDist{ 0 };
+			std::string objLabel;
+			std::uint32_t objColor{ 0xD6B260 };
 			float       questNoteTime{ 0 };
 			// weapon slots (2, or 3 with the brew): the weapon in each (gen::kGuns index, -1 empty), its Reforge level
 			int                slotCount{ 2 };

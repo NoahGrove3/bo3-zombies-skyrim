@@ -308,6 +308,97 @@ namespace bo3z
 			}
 		}
 
+		// Where the quest wants you now (in your current world): the next ward-fire, the shrine to hold, the Herald,
+		// a freed city's waiting shout, or from the wilds the nearest city still under the Dirge.
+		bool ObjectiveTarget(RE::PlayerCharacter* a_player, RE::NiPoint3& a_at, std::string& a_label)
+		{
+			const int z = g_zone;
+			if (z >= 0) {
+				const int s = Step(z);
+				if (s >= kFreed) {
+					const int sh = ShoutOf(z);
+					if (sh >= 0 && !Gun::KnowsShout(sh)) {
+						if (auto* altar = Shops::Placed(z, 6)) {
+							a_at = altar->GetPosition() + RE::NiPoint3{ 0, 0, 110.0f };
+							a_label = "Claim " + std::string(gen::kShouts[sh].label);
+							return true;
+						}
+					}
+					return false;
+				}
+				switch (s) {
+				case 1: {  // the nearest ward-fire still cold
+					const int bits = Prog(z);
+					float     best = FLT_MAX;
+					for (int i = 0; i < 3; ++i) {
+						if (!((bits >> i) & 1) && g_wards[i].brazier.get()) {
+							const float d = g_wards[i].pos.GetDistance(a_player->GetPosition());
+							if (d < best) {
+								best = d, a_at = g_wards[i].pos + RE::NiPoint3{ 0, 0, 120.0f };
+							}
+						}
+					}
+					if (best < FLT_MAX) {
+						a_label = "Ward-fire";
+						return true;
+					}
+					break;
+				}
+				case 3:
+					if (Director::BossPos(a_at)) {
+						a_label = "The Herald";
+						return true;
+					}
+					break;
+				default:
+					break;
+				}
+				if (Shops::StationTarget(z, a_at)) {
+					a_label = s == 2 ? "Hold the shrine" : s == 0 ? "The Dirge's heart" : "The shrine";
+					return true;
+				}
+				return false;
+			}
+			// out in the wilds: the nearest discovered city whose rites are unfinished, or whose shout waits
+			float best = FLT_MAX;
+			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
+				const int  sh = ShoutOf(t);
+				const bool wants = Step(t) < kFreed || (sh >= 0 && !Gun::KnowsShout(sh));
+				RE::NiPoint3 at;
+				if (!wants || !Shops::Discovered(t) || !Shops::StationTarget(t, at)) {
+					continue;
+				}
+				if (const float d = at.GetDistance(a_player->GetPosition()); d < best) {
+					best = d, a_at = at;
+					a_label = std::string(gen::kTowns[t]) + (Step(t) < kFreed ? ": " + Fill(gen::kCurseSteps[std::clamp(Step(t), 0, 3)].title, t) : ": its shout waits");
+				}
+			}
+			return best < FLT_MAX;
+		}
+
+		void PublishObjective(RE::PlayerCharacter* a_player)
+		{
+			RE::NiPoint3 at;
+			std::string  label;
+			const bool   on = ObjectiveTarget(a_player, at, label);
+			float        x = 0, y = 0, zc = 0;
+			bool         front = false;
+			if (on) {
+				if (auto* cam = RE::Main::WorldRootCamera()) {
+					cam->WorldPtToScreenPt3(at, x, y, zc, 1e-5f);
+					front = zc > 0.0f;
+					y = 1.0f - y;  // (Skyrim's screen y runs up)
+				}
+			}
+			std::scoped_lock l(Hud::Lock());
+			auto& h = Hud::Edit();
+			h.objOn = on;
+			h.objFront = front;
+			h.objX = x, h.objY = y;
+			h.objDist = on ? at.GetDistance(a_player->GetPosition()) : 0.0f;
+			h.objLabel = label;
+		}
+
 		void Publish(int a_zone, bool a_night)
 		{
 			std::scoped_lock l(Hud::Lock());
@@ -436,6 +527,7 @@ namespace bo3z
 			}
 			const bool fighting = Director::Fighting();
 			Publish(g_zone, fighting);
+			PublishObjective(player);
 			TickRelicShow(player, a_delta);
 			// The prologue: as soon as the new character is made (out of Helgen, at Riverwood), the book is in the pack
 			if (Save::Flag(Save::kFlagStarted)) {
