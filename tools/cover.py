@@ -1,6 +1,6 @@
 """Undying Nights cover art (original, procedural): a blood moon over the Shrine of the Dirge, its three alcoves
 lit (Atronach Reforge, Sheogorath's Coffer, Brew Machine), the Risen climbing out of a barrow-yard, an Iron Reaper,
-and a caster whose staff hurls an arcane lance.   python cover.py out.png [width]"""
+and a caster who hurls an arcane lance from bare hands.   python cover.py out.png [width]"""
 import math, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
@@ -242,23 +242,37 @@ for hx, hy, hs in [(1500, 2120, 1.0), (2300, 2140, 0.9), (2600, 2090, 0.7), (100
            (hx + 4 * hs, hy - 205 * hs), (hx + 6 * hs, hy - 150 * hs), (hx + 18 * hs, hy - 195 * hs), (hx + 30 * hs, hy - 190 * hs), (hx + 22 * hs, hy - 130 * hs), (hx + 25 * hs, hy)]
     over(mask(poly(pts)), C('#060607'))
 
-# ---------------------------------------------------------------- the caster: back to us, staff raised, an arcane lance
+# ---------------------------------------------------------------- the caster: back to us, both hands thrust out, an arcane lance
 HX, HY = 2700, 2200
 cloak = [(HX - 300, HY), (HX - 250, HY - 300), (HX - 215, HY - 500), (HX - 190, HY - 585), (HX - 120, HY - 640), (HX - 80, HY - 720), (HX - 20, HY - 760), (HX + 50, HY - 745),
          (HX + 105, HY - 690), (HX + 150, HY - 630), (HX + 205, HY - 585), (HX + 235, HY - 480), (HX + 260, HY - 300), (HX + 320, HY)]
 hm = mask(poly(cloak))
-hm = np.maximum(hm, mask(poly([(HX - 150, HY - 620), (HX - 230, HY - 740), (HX - 262, HY - 760), (HX - 290, HY - 730), (HX - 250, HY - 700), (HX - 190, HY - 560)])))   # raised arm, gripping the staff
+# both arms reach forward and up toward the horde, sleeves hanging; open hands with the spell between them
+OX, OY = 2330, 1500          # the spell held between the palms
+hm = np.maximum(hm, mask(poly([(HX - 120, HY - 640), (HX - 200, HY - 600), (OX + 20, OY + 60), (OX + 60, OY + 20), (HX - 150, HY - 690)])))      # near arm (left)
+hm = np.maximum(hm, mask(poly([(HX + 110, HY - 690), (HX + 40, HY - 720), (OX + 110, OY - 95), (OX + 150, OY - 60), (HX + 150, HY - 630)])))    # far arm, over the shoulder
+for hx, hy, ang0 in ((OX + 40, OY + 40, 2.55), (OX + 125, OY - 80, 3.6)):   # hands: palm and splayed fingers
+    hm = np.maximum(hm, mask(ell(hx, hy, 26, 22)))
+    for f in range(4):
+        a_ = ang0 + (f - 1.5) * 0.32
+        hm = np.maximum(hm, mask(poly([(hx + math.cos(a_ + 1.57) * 6, hy + math.sin(a_ + 1.57) * 6), (hx + math.cos(a_) * 58, hy + math.sin(a_) * 58),
+                                       (hx + math.cos(a_ - 1.57) * 6, hy + math.sin(a_ - 1.57) * 6)])))
 hm = np.maximum(hm, mask(poly([(HX - 80, HY - 720), (HX - 10, HY - 860), (HX + 60, HY - 760)])))   # the hood's point
 over(hm, C('#030304'))
 rim = np.clip(hm - np.roll(np.roll(hm, int(6 * k), axis=0), int(6 * k), axis=1), 0, 1)
 add(rim, '#ff7a4a', 0.9)
+near = np.exp(-(((xx / k - OX) ** 2 + (yy / k - OY) ** 2) / 420.0 ** 2))
 rim2 = np.clip(hm - np.roll(hm, -int(7 * k), axis=1), 0, 1) * (yy / k < HY - 300)
-add(rim2, '#60ffc0', 0.7)   # the staff's light on the far side
-TX, TY = 2340, 1260   # staff head
-staff = mask(poly([(HX - 4, HY - 250), (HX + 24, HY - 245), (TX + 16, TY + 14), (TX - 10, TY + 6)]))
-over(staff, C('#140e0c')); add(np.clip(staff - np.roll(staff, int(5 * k), axis=1), 0, 1), '#60ffc0', 0.8)
-gem = mask(ell(TX, TY, 26, 34))
-add(gem, '#9effd8', 2.0); glow(gem, '#40ffb0', 60, 1.6); glow(gem, '#20c080', 220, 0.6)
+add(rim2 * (0.4 + near), '#60ffc0', 0.8)   # the spell's light on arms and hood
+TX, TY = OX - 30, OY - 10
+gem = mask(ell(TX, TY, 34, 34))
+add(gem, '#9effd8', 2.0); glow(gem, '#40ffb0', 60, 1.8); glow(gem, '#20c080', 240, 0.7)
+for i in range(9):   # wisps curling off the hands
+    a0 = rng.uniform(0, 2 * math.pi); pts = []
+    for s in np.linspace(0, 1, 7):
+        r_ = 40 + 110 * s; a1 = a0 + 1.4 * s
+        pts.append((TX + math.cos(a1) * r_, TY + math.sin(a1) * r_ * 0.8))
+    add(mask(lambda d, pts=pts: d.line([P(*q) for q in pts], fill=255, width=max(1, int(3 * k)))), '#90ffd8', 0.5)
 # the lance: a bright core to the risen at the left, with a burst where it strikes
 EX, EY = 905, 1660
 L = math.hypot(EX - TX, EY - TY)
@@ -348,7 +362,7 @@ for sgn in (-1, 1):   # knotwork-ish rules either side of the line
     d.line([(x0, ty + 175 * kk), (x1, ty + 175 * kk)], fill=(200, 120, 80, 200), width=max(1, int(3 * kk)))
     d.polygon([(x0, ty + 175 * kk - 12 * kk), (x0 + sgn * 18 * kk, ty + 175 * kk), (x0, ty + 175 * kk + 12 * kk), (x0 - sgn * 18 * kk, ty + 175 * kk)], fill=(230, 140, 90, 230))
 fB = ImageFont.truetype(FR, int(50 * kk))
-if not MENU: draw_text(lay, 'ROUND-BASED UNDEAD SURVIVAL  •  STAFFS & ELEMENTAL BOWS  •  THE UNDYING DIRGE', fB, h - 90 * kk, 10 * kk, (210, 190, 170, 200))
+if not MENU: draw_text(lay, 'ROUND-BASED UNDEAD SURVIVAL  •  HAND MAGIC & THE THU\'UM  •  THE UNDYING DIRGE', fB, h - 90 * kk, 10 * kk, (210, 190, 170, 200))
 out = Image.alpha_composite(out.convert('RGBA'), lay).convert('RGB')
 if MENU:  # Skyrim's own buttons (Continue, New, Load...) are drawn over the bottom-right: a darker, quieter corner for them
     ww, hh = out.size
