@@ -129,8 +129,8 @@
       "chaseRelocateSeconds": 3.0,
       "chaseStallSeconds": 2.5,
       "zombieWeapons": "melee",
-      "manaRegenPerSecond": 0.35,
-      "manaRegenDelay": 1.0,
+      "manaRegenPerSecond": 0.3,
+      "manaRegenDelay": 0.5,
       "cycleMinutes": 30
     }
   ]

@@ -151,6 +151,51 @@
       "verify": [
         "model"
       ]
+    },
+    {
+      "id": "fire",
+      "sourceFormId": "none",
+      "model": "Magic\\FireBoltProjectile.nif",
+      "speed": 5200,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "frost",
+      "sourceFormId": "none",
+      "model": "Magic\\IceProjectile01.nif",
+      "speed": 5600,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "shock",
+      "sourceFormId": "none",
+      "model": "Magic\\LightningBolt02.nif",
+      "speed": 9000,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "void",
+      "sourceFormId": "none",
+      "model": "Magic\\IllusionNegProjectile01.nif",
+      "speed": 4200,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "wind",
+      "sourceFormId": "none",
+      "model": "Magic\\VoicePushProjectile01.nif",
+      "speed": 5200,
+      "verify": [
+        "model"
+      ]
     }
   ]
 }

@@ -75,7 +75,9 @@ namespace bo3z
 					p->AddSpell(sp);
 				}
 				auto* right = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42);  // RightHand equip slot
+				auto* left = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43);   // LeftHand: both hands carry the spell (the dual-cast charge)
 				RE::ActorEquipManager::GetSingleton()->EquipSpell(p, sp, right);
+				RE::ActorEquipManager::GetSingleton()->EquipSpell(p, sp, left);
 			} else {
 				RE::ActorEquipManager::GetSingleton()->EquipObject(p, w);
 				TopUpArrows(a_gun, true);
@@ -110,8 +112,10 @@ namespace bo3z
 		RE::PlayerControlsData* g_abData = nullptr;
 		float                   g_swingUp = -1.0f;  // >= 0: a synthetic tap is down; let go when it runs out
 		bool                    g_swingWanted = false;
+		bool                    g_dual = false;     // hand spells: the left hand has come up for the charge
 		float                   g_tapT = -1.0f;   // >= 0: the staff's short thrust for a normal shot is playing
 		bool IsStaff(int a_gun) { return a_gun >= 0 && gen::kGuns[a_gun].kind == gen::kKindWand; }
+		bool IsSpell(int a_gun) { return a_gun >= 0 && (gen::kGuns[a_gun].kind == gen::kKindTome || gen::kGuns[a_gun].kind == gen::kKindWonder); }
 
 		// Controllers (Xbox, and PlayStation through Steam Input, which Skyrim reads as an Xbox pad):
 		//   RT fire / charge, LT aim, D-pad right next weapon (hold: holster), D-pad down quick knife (Skyrim's hotkeys
@@ -133,7 +137,7 @@ namespace bo3z
 		{
 			static void thunk(RE::PlayerInputHandler* a_this, RE::ButtonEvent* a_event, RE::PlayerControlsData* a_data)
 			{
-				if (GunOut() && IsStaff(CurrentGun()) && IsFireButton(a_event)) {
+				if (GunOut() && (IsStaff(CurrentGun()) || IsSpell(CurrentGun())) && IsFireButton(a_event)) {
 					g_abHandler = a_this, g_abData = a_data;
 					return;  // ours: the staff swing is played on release (TickSwing)
 				}
@@ -157,7 +161,9 @@ namespace bo3z
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
-		void SendFire(float a_value, float a_held)
+		void SendAttack(bool a_left, float a_value, float a_held);
+		void SendFire(float a_value, float a_held) { SendAttack(false, a_value, a_held); }
+		void SendAttack(bool a_left, float a_value, float a_held)
 		{
 			if (auto* pc = RE::PlayerControls::GetSingleton(); pc && (!g_abHandler || !g_abData)) {
 				// our input handler takes the fire button before Skyrim's attack handler ever sees it, so the
@@ -174,7 +180,8 @@ namespace bo3z
 				return;
 			}
 			auto* ue = RE::UserEvents::GetSingleton();
-			auto* ev = RE::ButtonEvent::Create(RE::INPUT_DEVICE::kMouse, ue ? ue->rightAttack : RE::BSFixedString("Right Attack/Block"), gen::kKey2_fire, a_value, a_held);
+			auto* ev = a_left ? RE::ButtonEvent::Create(RE::INPUT_DEVICE::kMouse, ue ? ue->leftAttack : RE::BSFixedString("Left Attack/Block"), gen::kKey2_ads, a_value, a_held)
+			                  : RE::ButtonEvent::Create(RE::INPUT_DEVICE::kMouse, ue ? ue->rightAttack : RE::BSFixedString("Right Attack/Block"), gen::kKey2_fire, a_value, a_held);
 			if (!ev) {
 				return;
 			}
@@ -647,6 +654,10 @@ namespace bo3z
 		// An elemental arrow (bows): the arrow's own projectile, launched from a point (the bow, or the sky).
 		void LaunchArrow(RE::PlayerCharacter* a_player, const gen::GunDef& g, const RE::NiPoint3& a_to, const RE::NiPoint3* a_from = nullptr)
 		{
+			if (g.kind != gen::kKindBow) {  // (the bows became spells: their volleys fly as the spell's bolts)
+				LaunchBolt(a_player, g, a_to, a_from);
+				return;
+			}
 			auto* ammo = g.ammo ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESAmmo>(g.ammo, gen::kPlugin) : nullptr;
 			auto* proj = ammo ? ammo->data.projectile : nullptr;
 			if (!proj) {
@@ -1532,7 +1543,11 @@ namespace bo3z
 				}
 				SetAura(charging ? g.chargeAura : -1);
 				const bool staff = g.kind == gen::kKindWand;
-				out = bow ? Scale(kBowDraw, c) : staff ? Scale(kStaffCharge, c) : Scale(kChargePose[style], c);
+				const bool spell = IsSpell(gun);  // hand spells: Skyrim's own casting animations, nothing laid on top
+				out = spell ? PoseOut{} : bow ? Scale(kBowDraw, c) : staff ? Scale(kStaffCharge, c) : Scale(kChargePose[style], c);
+				if (spell) {
+					g_relT = -1.0f;
+				}
 				out.shake *= 0.5f + c;  // trembles harder as it fills
 				if (g_relT >= 0 && bow) {
 					g_relT = -1.0f;
@@ -1975,8 +1990,19 @@ namespace bo3z
 			if (IsFireButton(a_event)) {
 				// One or the other, on release: a full charge unleashes the signature move, anything shorter is the
 				// weapon's normal shot (never both).
+				const bool spell = IsSpell(CurrentGun());
 				if (down) {
 					g_charge = 0;
+					if (spell) {  // the right hand comes up with the spell
+						SendAttack(false, 1.0f, 0.0f);
+						g_dual = false;
+					}
+				}
+				if (up && g_trigger && spell) {  // both hands let go together: the cast (a dual cast after a charge)
+					SendAttack(false, 0.0f, std::max(0.05f, g_charge));
+					if (g_dual) {
+						SendAttack(true, 0.0f, std::max(0.05f, g_charge));
+					}
 				}
 				if (up && g_trigger) {
 					const bool bow = gen::kGuns[CurrentGun()].kind == gen::kKindBow;
@@ -2183,6 +2209,10 @@ namespace bo3z
 			const int  gun = CurrentGun();
 			g_chargeCd = std::max(0.0f, g_chargeCd - a_delta);
 			g_charge = out && g_trigger ? g_charge + a_delta / Perks::ChargeMult() : 0.0f;
+			if (out && g_trigger && !g_dual && g_charge > 0.3f && IsSpell(CurrentGun()) && g_chargeCd <= 0) {
+				SendAttack(true, 1.0f, 0.0f);  // held on: the other hand joins, the power gathers in both
+				g_dual = true;
+			}
 			TickPose(a_delta);
 			TickSwing(a_delta);
 			TickEcho(a_delta);

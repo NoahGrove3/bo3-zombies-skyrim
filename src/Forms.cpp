@@ -107,7 +107,8 @@ namespace bo3z
 			// Hand spells borrow the look of the vanilla spell they unleash: fire hands for flames, frost for frost...
 			for (std::size_t i = 0; i < gen::kGuns.size(); ++i) {
 				auto* hs = g_gunSpells[i];
-				auto* src = gen::kGuns[i].spell >= 0 ? Spell(gen::kGuns[i].spell) : nullptr;
+				const int look = gen::kGuns[i].handLook >= 0 ? gen::kGuns[i].handLook : gen::kGuns[i].spell;  // the hands' glow
+				auto* src = look >= 0 ? Spell(look) : nullptr;
 				if (!hs || !src || hs->effects.empty() || src->effects.empty()) {
 					continue;
 				}

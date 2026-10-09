@@ -134,6 +134,104 @@
       "localId": "0x0592D8",
       "editorId": "AbLightningStormCastBodyFX",
       "verify": []
+    },
+    {
+      "id": "look_magelight",
+      "plugin": "Skyrim.esm",
+      "localId": "0x043323",
+      "editorId": "Magelight",
+      "verify": []
+    },
+    {
+      "id": "look_paralyze",
+      "plugin": "Skyrim.esm",
+      "localId": "0x05AD5F",
+      "editorId": "Paralyze",
+      "verify": []
+    },
+    {
+      "id": "look_fear",
+      "plugin": "Skyrim.esm",
+      "localId": "0x04DEEA",
+      "editorId": "Fear",
+      "verify": []
+    },
+    {
+      "id": "look_harmony",
+      "plugin": "Skyrim.esm",
+      "localId": "0x07E8DB",
+      "editorId": "Harmony",
+      "verify": []
+    },
+    {
+      "id": "look_frenzy",
+      "plugin": "Skyrim.esm",
+      "localId": "0x04DEEE",
+      "editorId": "Frenzy",
+      "verify": []
+    },
+    {
+      "id": "look_raisezombie",
+      "plugin": "Skyrim.esm",
+      "localId": "0x07E8E1",
+      "editorId": "RaiseZombie",
+      "verify": []
+    },
+    {
+      "id": "look_candlelight",
+      "plugin": "Skyrim.esm",
+      "localId": "0x043324",
+      "editorId": "Candlelight",
+      "verify": []
+    },
+    {
+      "id": "look_mayhem",
+      "plugin": "Skyrim.esm",
+      "localId": "0x07E8DA",
+      "editorId": "Mayhem",
+      "verify": []
+    },
+    {
+      "id": "look_fury",
+      "plugin": "Skyrim.esm",
+      "localId": "0x04DEEB",
+      "editorId": "Fury",
+      "verify": []
+    },
+    {
+      "id": "look_rout",
+      "plugin": "Skyrim.esm",
+      "localId": "0x04DEEF",
+      "editorId": "Rout",
+      "verify": []
+    },
+    {
+      "id": "look_telekinesis",
+      "plugin": "Skyrim.esm",
+      "localId": "0x01A4CC",
+      "editorId": "Telekinesis",
+      "verify": []
+    },
+    {
+      "id": "look_sunfire",
+      "plugin": "Dawnguard.esm",
+      "localId": "0x003F52",
+      "editorId": "DLC1SunFire",
+      "verify": []
+    },
+    {
+      "id": "look_turnundead",
+      "plugin": "Skyrim.esm",
+      "localId": "0x05DD5D",
+      "editorId": "TurnUndead",
+      "verify": []
+    },
+    {
+      "id": "look_deadthrall",
+      "plugin": "Skyrim.esm",
+      "localId": "0x07E8DF",
+      "editorId": "DeadThrall",
+      "verify": []
     }
   ]
 }
