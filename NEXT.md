@@ -1,4 +1,17 @@
-# Undying Nights — state and next steps (2026-10-07)
+# Undying Nights — state and next steps (2026-10-09)
+
+
+## Built 2026-10-09 (f04fc1c, INSTALLED in the game folder; Party Pack + Melty zip rebuilt in Downloads; not yet seen in game)
+- One-piece Shrine of the Dirge (tools/shrine.py -> Meshes/UndyingNights/shrine/shrine.nif, built locally, not in CI) is the
+  coffer ACTI; brew machine, forge, relic altar retired; layout v3 takedown (global bits 16+town) clears old stations once.
+- Shrine menu (Shops.cpp OnButton + Hud.cpp): 1 roll / 2 reforge / 3 brew (wheel, arrows) / 4 shout / E, Backspace close;
+  pad X/Y/A/D-pad/B. Shops::MenuEats blocks Activate, Jump, MenuOpen, hotkeys, camera wheel while open.
+- Roll: Charging 1.1 s -> Spinning (every spell in order over the crown, kOrbZ 236) -> Offering; equal odds among unowned.
+- Spells: tap = bolt only; charged = unique compact blast per spell (6 new expl templates), no ISM, explosion sounds nulled;
+  SNDR static attenuation column (unleash 9 dB, cast/shout 5 dB).
+- Zombies: grab/lunge/crawler removed, bone scales 1.0, disabled minds dropped; Reaper chain no longer teleports.
+- To verify: shrine sits on the ground in all 10 cities (z = top - kStandLift - 6), orb height over the crown, menu keys,
+  blast sizes, attenuation strength.
 
 ## Working (verified in game)
 - Zombies visible (skinconv now writes per-vertex SSE weights); torso fix (continuous trunk remap) built, needs a close look.
