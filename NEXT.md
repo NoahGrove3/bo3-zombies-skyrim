@@ -8,6 +8,13 @@
 - One round per night, tally counter, 30-min day cycle (60/40), dawn despawn, night truce for NPCs, sprint OK on fresh character.
 - Station stand with sloped walkable skirt, map markers, clutter cleared from the footprint.
 
+## Built 2026-10-08 21:20 (2c644e9, NOT installed yet: Skyrim was running. Install _un_builds/UN-2c644e9-core.zip; pack + Melty zip refreshed)
+- STR auto-join: Relay.cpp (UDP, no PCH) + Net tunnel on Steam channel 8; friend's STR -> 127.0.0.1:10578; host forwards to its
+  server (uPort from STServer.ini), starts SkyrimTogetherServer.exe if the port is free; lobby data str_pw.
+  STR UI main.js patched once (backup main.js.before-undying-nights) to poll UI/undying_connect.json and call skyrimtogether.connect.
+- Main menu: full picture; Skyrim's button words luma-keyed back (D3DCompile ps_4_0 via d3dcompiler_47), own cursor, lightning bolts;
+  picture hidden whenever any other menu is open (pop-ups). Lore book given once the character is made.
+
 ## Built 2026-10-08 20:50 (0f17fe6, installed via UN-0f17fe6-core.zip, pack + Melty zip refreshed, NOT yet seen in game)
 - Net.cpp: Steam flat API (steam_api64 v009/v017/v021/v010, NetworkingMessages v002), friends-only lobby, invite overlay,
   GameLobbyJoinRequested (333) callback, +connect_lobby, friends-in-parties list; channel 7; host State 4 Hz; client curse max-merge.
