@@ -23,6 +23,8 @@ namespace bo3z
 		std::array<ID3D11ShaderResourceView*, gen::kGuns.size()>  g_weaponIcons{};
 		ID3D11ShaderResourceView* g_menuBg = nullptr;   // the main menu's backdrop (tools/cover.py, MENU=1)
 		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
+		ID3D11ShaderResourceView* g_frame = nullptr;    // nine-slice panel: black field, iron and bronze border (tools/uiart.py)
+		ID3D11ShaderResourceView* g_divider = nullptr;  // bronze line with a winged diamond
 		std::atomic<int>          g_clicks{ 0 };        // left clicks since the last frame (menus)
 		// Skyrim's main-menu buttons are kept over our picture: the frame as Skyrim drew it is copied, and in the
 		// buttons' corner only its bright pixels (the words) are laid back on top (a luma key; the cursor is ours).
@@ -148,8 +150,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ImFont* g_num = nullptr;    // Segoe UI Semibold
 		ImFont* g_body = nullptr;   // Segoe UI
 
-		constexpr ImU32 kGold = IM_COL32(214, 178, 96, 255);
-		constexpr ImU32 kGoldDim = IM_COL32(214, 178, 96, 110);
+		constexpr ImU32 kGold = IM_COL32(200, 160, 92, 255);     // aged bronze
+		constexpr ImU32 kGoldDim = IM_COL32(200, 160, 92, 110);
 		constexpr ImU32 kBlood = IM_COL32(178, 22, 22, 255);
 		constexpr ImU32 kParch = IM_COL32(236, 226, 200, 255);
 		constexpr ImU32 kGlass = IM_COL32(10, 10, 12, 170);
@@ -175,9 +177,24 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			Txt(dl, f, px, { cx - Measure(f, px, s).x * 0.5f, y }, col, s, glow, glowCol);
 		}
 
-		// Panel: translucent dark glass with a thin gold frame and corner ticks.
+		// Panel: a smoky black field in an iron-and-bronze frame with Nordic corner brackets (nine-slice of
+		// frame.png: 80px corners of 256), or, without the art, dark glass with gold ticks.
 		void Panel(ImDrawList* dl, ImVec2 a, ImVec2 b, float k, float alpha = 1.0f)
 		{
+			if (g_frame) {
+				const auto  tex = ImTextureID(reinterpret_cast<std::uintptr_t>(g_frame));
+				const float c = std::min({ 40.0f * k, (b.x - a.x) * 0.5f, (b.y - a.y) * 0.5f });
+				const float u = 80.0f / 256.0f;
+				const float xs[4] = { a.x, a.x + c, b.x - c, b.x }, ys[4] = { a.y, a.y + c, b.y - c, b.y };
+				const float us[4] = { 0, u, 1 - u, 1 };
+				const ImU32 tint = Fade(IM_COL32(255, 255, 255, 255), alpha);
+				for (int i = 0; i < 3; ++i) {
+					for (int j = 0; j < 3; ++j) {
+						dl->AddImage(tex, { xs[i], ys[j] }, { xs[i + 1], ys[j + 1] }, { us[i], us[j] }, { us[i + 1], us[j + 1] }, tint);
+					}
+				}
+				return;
+			}
 			dl->AddRectFilledMultiColor(a, b, Fade(kGlass, alpha), Fade(kGlass, alpha), Fade(IM_COL32(4, 4, 6, 210), alpha), Fade(IM_COL32(4, 4, 6, 210), alpha));
 			dl->AddRect(a, b, Fade(kGoldDim, alpha), 0, 0, 1.2f * k);
 			const float t = 10 * k;
@@ -190,6 +207,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// Ornamental divider: line - diamond - line.
 		void Divider(ImDrawList* dl, float cx, float y, float half, float k, float alpha = 1.0f)
 		{
+			if (g_divider) {
+				const float h = std::max(14.0f * k, half * 48.0f / 512.0f);
+				dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_divider)), { cx - half, y - h / 2 }, { cx + half, y + h / 2 }, { 0, 0 }, { 1, 1 }, Fade(IM_COL32(255, 255, 255, 255), alpha));
+				return;
+			}
 			dl->AddLine({ cx - half, y }, { cx - 8 * k, y }, Fade(kGoldDim, alpha), 1.2f * k);
 			dl->AddLine({ cx + 8 * k, y }, { cx + half, y }, Fade(kGoldDim, alpha), 1.2f * k);
 			dl->AddQuadFilled({ cx, y - 5 * k }, { cx + 5 * k, y }, { cx, y + 5 * k }, { cx - 5 * k, y }, Fade(kGold, alpha));
@@ -565,39 +587,57 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Divider(dl, size.x * 0.5f, y + ts.y + 10 * k, std::min(size.x * 0.4f, ts.x * 0.6f + 40 * k), k, a);
 			}
 
-			// Brew machine menu.
+			// Brew machine menu: a tall iron-framed cabinet of medallions.
 			if (s.perkMenu) {
-				const float w = 560 * k, rowH = 58 * k, h = 140 * k + rowH * gen::kPerks.size();
-				const ImVec2 a{ size.x * 0.5f - w / 2, size.y * 0.5f - h / 2 }, b{ a.x + w, a.y + h };
-				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, 90));
+				const float w = 640 * k, rowH = 70 * k, h = 170 * k + rowH * gen::kPerks.size();
+				const ImVec2 a{ size.x * 0.5f - w / 2, std::max(20 * k, size.y * 0.5f - h / 2) }, b{ a.x + w, a.y + h };
+				dl->AddRectFilledMultiColor({ 0, 0 }, size, IM_COL32(0, 0, 0, 170), IM_COL32(0, 0, 0, 170), IM_COL32(20, 0, 0, 190), IM_COL32(20, 0, 0, 190));
 				Panel(dl, a, b, k);
-				TxtC(dl, g_title, 34 * k, size.x * 0.5f, a.y + 16 * k, kGold, "BREW MACHINE", 2 * k, IM_COL32(255, 180, 60, 255));
-				Divider(dl, size.x * 0.5f, a.y + 62 * k, w * 0.38f, k);
+				TxtC(dl, g_title, 38 * k, size.x * 0.5f, a.y + 22 * k, IM_COL32(232, 214, 176, 255), "THE BREW MACHINE", 3 * k, IM_COL32(255, 120, 40, 255));
+				TxtC(dl, g_body, 18 * k, size.x * 0.5f, a.y + 66 * k, IM_COL32(190, 170, 140, 220), "Drink deep. The dead do not tire, and neither shall you.");
+				Divider(dl, size.x * 0.5f, a.y + 98 * k, w * 0.42f, k);
 				int owned = 0;
 				for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
 					owned += (s.perks >> i) & 1;
 				}
 				for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
 					const auto& p = gen::kPerks[i];
-					const float y = a.y + 78 * k + i * rowH;
+					const float y = a.y + 112 * k + i * rowH;
 					const bool  sel = i == s.perkSel, have = (s.perks >> i) & 1;
 					const bool  afford = s.points >= p.cost;
-					if (sel) {
-						dl->AddRectFilledMultiColor({ a.x + 10 * k, y }, { b.x - 10 * k, y + rowH - 6 * k }, IM_COL32(214, 178, 96, 70), IM_COL32(214, 178, 96, 10), IM_COL32(214, 178, 96, 10), IM_COL32(214, 178, 96, 70));
-						dl->AddRect({ a.x + 10 * k, y }, { b.x - 10 * k, y + rowH - 6 * k }, kGoldDim, 0, 0, 1.2f * k);
+					const ImVec2 r0{ a.x + 22 * k, y }, r1{ b.x - 22 * k, y + rowH - 8 * k };
+					if (sel) {  // an ember glow behind the chosen brew
+						dl->AddRectFilledMultiColor(r0, r1, IM_COL32(150, 40, 20, 120), IM_COL32(60, 16, 8, 30), IM_COL32(60, 16, 8, 30), IM_COL32(150, 40, 20, 120));
+						dl->AddRectFilled(r0, { r0.x + 4 * k, r1.y }, IM_COL32(230, 90, 40, 255));
+						dl->AddLine({ r0.x, r1.y }, r1, kGoldDim, 1.0f * k);
 					}
-					const float r = 20 * k;
+					const float d = 54 * k;
 					if (auto* icon = g_perkIcons[i]) {
-						dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { a.x + 22 * k, y + 6 * k }, { a.x + 22 * k + 2 * r, y + 6 * k + 2 * r }, { 0, 0 }, { 1, 1 }, have ? IM_COL32(255, 255, 255, 110) : IM_COL32(255, 255, 255, 255));
+						const float pulse = sel ? 1.0f + 0.04f * std::sin(now * 4) : 1.0f;
+						const ImVec2 c{ r0.x + 16 * k + d / 2, y + (rowH - 8 * k) / 2 };
+						dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { c.x - d / 2 * pulse, c.y - d / 2 * pulse }, { c.x + d / 2 * pulse, c.y + d / 2 * pulse }, { 0, 0 }, { 1, 1 },
+							have ? IM_COL32(150, 150, 150, 150) : IM_COL32(255, 255, 255, 255));
 					}
-					const ImU32 nameCol = have ? IM_COL32(150, 150, 150, 255) : kParch;
-					Txt(dl, g_title, 22 * k, { a.x + 78 * k, y + 4 * k }, nameCol, std::to_string(i + 1) + "   " + std::string(p.label));
-					Txt(dl, g_body, 15 * k, { a.x + 78 * k, y + 30 * k }, IM_COL32(200, 195, 180, have ? 140 : 230), std::string(gen::kPerkDesc[i]));
-					const std::string price = have ? "OWNED" : std::to_string(p.cost);
-					Txt(dl, g_num, 22 * k, { b.x - 24 * k - Measure(g_num, 22 * k, price).x, y + 12 * k }, have ? IM_COL32(120, 200, 120, 255) : (afford ? kGold : IM_COL32(200, 70, 60, 255)), price);
+					const float tx = r0.x + 30 * k + d;
+					const ImU32 nameCol = have ? IM_COL32(130, 124, 112, 255) : (sel ? IM_COL32(250, 236, 205, 255) : IM_COL32(222, 208, 180, 255));
+					Txt(dl, g_title, 22 * k, { tx, y + 6 * k }, nameCol, std::string(p.label));
+					Txt(dl, g_body, 18 * k, { tx, y + 34 * k }, IM_COL32(190, 178, 156, have ? 130 : 235), std::string(gen::kPerkDesc[i]));
+					if (have) {
+						const std::string st = "DRUNK";
+						Txt(dl, g_title, 18 * k, { r1.x - 14 * k - Measure(g_title, 18 * k, st).x, y + 20 * k }, IM_COL32(120, 170, 110, 220), st);
+					} else {
+						const std::string price = std::to_string(p.cost);
+						const float       pw = Measure(g_num, 24 * k, price).x;
+						const ImU32       pc = afford ? IM_COL32(236, 196, 112, 255) : IM_COL32(190, 70, 56, 255);
+						Txt(dl, g_num, 24 * k, { r1.x - 14 * k - pw, y + 14 * k }, pc, price);
+						const ImVec2 coin{ r1.x - 30 * k - pw, y + 30 * k };  // a septim
+						dl->AddCircleFilled(coin, 8 * k, Fade(pc, 0.9f));
+						dl->AddCircle(coin, 5 * k, IM_COL32(60, 40, 20, 200), 0, 1.4f * k);
+					}
 				}
-				const std::string foot = "1-9 or Up/Down + Activate to drink   |   Tab to close   |   " + std::to_string(owned) + "/" + std::to_string(gen::kMaxPerks) + " brews";
-				TxtC(dl, g_body, 16 * k, size.x * 0.5f, b.y - 34 * k, IM_COL32(200, 195, 180, 220), foot);
+				Divider(dl, size.x * 0.5f, b.y - 52 * k, w * 0.42f, k, 0.7f);
+				const std::string foot = "Select and Activate to drink   \xC2\xB7   Tab / B to leave   \xC2\xB7   " + std::to_string(owned) + " of " + std::to_string(gen::kMaxPerks) + " brews";
+				TxtC(dl, g_body, 18 * k, size.x * 0.5f, b.y - 40 * k, IM_COL32(200, 186, 160, 220), foot);
 			}
 		}
 
@@ -881,6 +921,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			const bool bg = SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_bg.png", nullptr, &g_menuBg));
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_fog.png", nullptr, &g_menuFog);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\frame.png", nullptr, &g_frame);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\divider.png", nullptr, &g_divider);
 			g_init = true;
 			logger::info("hud: ready ({} perk icons, {} weapon icons, menu art {})", icons, wicons, bg);
 			return true;
