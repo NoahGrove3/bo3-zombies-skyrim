@@ -173,3 +173,15 @@
 - UI: Cinzel/Cormorant fonts (assets/fonts), frame.png/divider.png (tools/uiart.py), Brew Machine redone, medallion perk icons.
 - Coffer textures: tools/coffer_tex.py (local asset build; installed via UN-coffer-dark.zip). Melty zip NOT rebuilt yet.
 - TODO: Whiterun station (use dev channel shots), verify rigs, Melty/Party zip rebuild.
+
+## bb3881e (installed 2026-10-08 23:48) - the big rehaul
+- Balance: BO3 curve (150,+100..9, x1.1), spells 200 / 520-900, Reforge +60%, points 30/60/5, boss min 18000.
+- Stations inside cities: sheets/stations.json (fixed spots from navmesh, tools/stationspots), compact 0.8, our XMarker anchor; walled cities' map icon at the gate. UNVERIFIED in game.
+- Coffer = 18 hand spells (kind tome): synthetic right/left attack events (SendAttack), dual charge after 0.3 s; mana small, regen 30%/s after 0.5 s. handLook column = hands' glow source spell.
+- Relics retired -> shouts (sheets/shouts.json): WOOP/SHOU/SPEL voice records; learned at the shrine (Curse::ClaimRelic -> Gun::LearnShout: console teachword/unlockword + AddShout); TESSpellCastEvent -> Gun::Shout(level). UNTESTED: console word commands.
+- Freed city -> Director::EndNight (clock to dawn).
+- Rites per city (curse.rites): slay/wards/order/relics/circle/hold/champion/herald; champions via Director::RaiseChampion.
+- Way-mark HUD (objX/objY via NiCamera::WorldPtToScreenPt3).
+- Sounds: tools/darksounds.py -> vanilla BSA files with pitch shift + kSoundLayer.
+- Spell icons: tools/spellicons.py.
+- TODO: in-game verification (stations, spells hands, shouts, rites, rigs), Melty/Party zip rebuild.
