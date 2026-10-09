@@ -199,7 +199,8 @@ namespace bo3z
 		float SpawnBoost();                              // holding a shrine: the night pushes harder
 		int   ZoneTown();                                // city the player is in (-1)
 		int   RelicOf(int a_town);                       // the city's relic weapon (gun index, -1)
-		void  ClaimRelic(int a_town);                    // the Shrine of the Dirge at a freed city's station
+		void  ClaimRelic(int a_town);                    // learn a freed city's Thu'um (the shrine's menu)
+		int   ClaimableShout(int a_town);                // the freed city's Thu'um not yet learned (-1)
 		int   Raw(int a_town);                           // the city's progress value (step*1000 + progress)
 		void  SetRaw(int a_town, int a_value);
 	}
@@ -237,7 +238,8 @@ namespace bo3z
 		void Tick(float a_delta);
 		void Reset();
 		void OnActivate(RE::TESObjectREFR* a_ref);
-		bool OnButton(const RE::ButtonEvent* a_event);  // brew machine menu keys (true = used)
+		bool OnButton(const RE::ButtonEvent* a_event);  // the shrine menu's keys (true = used)
+		bool MenuEats(RE::InputEvent* a_event);          // Skyrim's own handlers must not see this key (the shrine menu has it)
 		std::string BoxTown();
 		bool        StandFrame(int a_town, RE::NiPoint3& a_center, float& a_yaw, RE::TESWorldSpace*& a_world);  // true: the station is placed
 		RE::TESObjectREFR* Placed(int a_town, int a_kind);  // the town's machine of that object kind (6 = relic shrine), if placed
@@ -307,6 +309,9 @@ namespace bo3z
 			float       bossHp{ 0 };
 			bool        bossEnraged{ false };
 			int         perkSel{ 0 };
+			// the shrine: its roll (0 idle, 1 charging, 2 spinning, 3 offering), progress 0..1, the spell shown, the price; a Thu'um to learn there
+			int         rollPhase{ 0 }, rollGun{ -1 }, rollCost{ 0 }, shrineShout{ -1 };
+			float       rollT{ 0 };
 			int         nightEvent{ -1 };   // gen::kEvents index while it runs
 			std::string questCity, questTitle, questGoal;  // the city's current curse quest (empty = none)
 			float       questFrac{ 0 };

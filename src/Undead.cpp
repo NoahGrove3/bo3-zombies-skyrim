@@ -29,15 +29,15 @@ namespace bo3z
 		};
 		//                         hunch sway  tilt  twitch reach spread elbow limp  lean  crawl lift  bob   hands chest head  swing
 		constexpr Def kDefs[] = {
-			/* shambler  */ { 0.38f, 0.10f, 0.30f, 0.6f, 1.05f, 0.18f, 0.35f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 1.35f, 1.0f, 1.0f, 0.0f },
-			/* runner    */ { 0.30f, 0.05f, 0.12f, 0.9f, 0.0f, 0.10f, 0.9f, 0.0f, 0.42f, 0.0f, 0.0f, 0.0f, 1.3f, 1.0f, 0.95f, 1.0f },
-			/* crawler   */ { 0.0f, 0.12f, 0.20f, 0.7f, 0.0f, 0.25f, 0.4f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.45f, 1.0f, 1.0f, 0.0f },
-			/* wailer    */ { 0.15f, 0.06f, 0.45f, 1.0f, 0.35f, 0.55f, 0.15f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.6f, 0.92f, 1.12f, 0.0f },
-			/* bloater   */ { 0.12f, 0.22f, 0.15f, 0.2f, 0.45f, 0.45f, 0.25f, 0.8f, 0.0f, 0.0f, 0.0f, 0.0f, 1.2f, 1.45f, 0.85f, 0.0f },
-			/* stalker   */ { 0.62f, 0.05f, 0.55f, 0.8f, 0.55f, 0.55f, 0.55f, 0.0f, 0.18f, 0.0f, -18.0f, 0.0f, 1.75f, 1.0f, 0.95f, 0.0f },
-			/* reaper    */ { 0.18f, 0.04f, 0.10f, 0.1f, 0.0f, 0.12f, 0.1f, 0.3f, 0.0f, 0.0f, 0.0f, 0.0f, 1.25f, 1.12f, 0.9f, 0.0f },
-			/* necro     */ { 0.10f, 0.03f, 0.10f, 0.0f, 0.55f, 0.75f, 0.5f, 0.0f, 0.0f, 0.0f, 42.0f, 7.0f, 1.2f, 1.0f, 1.0f, 0.0f },
-			/* wyrm      */ { 0.50f, 0.07f, 0.20f, 0.2f, 0.70f, 0.40f, 0.45f, 0.0f, 0.12f, 0.0f, 0.0f, 0.0f, 1.9f, 1.18f, 1.08f, 0.0f },
+			/* shambler  */ { 0.38f, 0.10f, 0.30f, 0.6f, 1.05f, 0.18f, 0.35f, 0.5f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f },
+			/* runner    */ { 0.30f, 0.05f, 0.12f, 0.9f, 0.0f, 0.10f, 0.9f, 0.0f, 0.42f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f },
+			/* crawler   */ { 0.0f, 0.12f, 0.20f, 0.7f, 0.0f, 0.25f, 0.4f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f },
+			/* wailer    */ { 0.15f, 0.06f, 0.45f, 1.0f, 0.35f, 0.55f, 0.15f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f },
+			/* bloater   */ { 0.12f, 0.22f, 0.15f, 0.2f, 0.45f, 0.45f, 0.25f, 0.8f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f },
+			/* stalker   */ { 0.62f, 0.05f, 0.55f, 0.8f, 0.55f, 0.55f, 0.55f, 0.0f, 0.18f, 0.0f, -18.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f },
+			/* reaper    */ { 0.18f, 0.04f, 0.10f, 0.1f, 0.0f, 0.12f, 0.1f, 0.3f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f },
+			/* necro     */ { 0.10f, 0.03f, 0.10f, 0.0f, 0.55f, 0.75f, 0.5f, 0.0f, 0.0f, 0.0f, 42.0f, 7.0f, 1.0f, 1.0f, 1.0f, 0.0f },
+			/* wyrm      */ { 0.50f, 0.07f, 0.20f, 0.2f, 0.70f, 0.40f, 0.45f, 0.0f, 0.12f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f },
 		};
 
 		enum Bone { kCOM, kPelvis, kSpine1, kSpine2, kNeck, kHead, kLClav, kRClav, kLArm, kRArm, kLFore, kRFore, kLHand, kRHand, kLThigh, kRThigh, kBones };
@@ -399,7 +399,7 @@ namespace bo3z
 		{
 			const float u = Rand(0.0f, 1.0f);
 			const float runners = a_round >= 3 ? std::min(0.32f, 0.10f + 0.02f * a_round) : 0.0f;
-			const float crawlers = a_round >= 2 ? 0.14f : 0.0f;
+			const float crawlers = 0.0f;  // (retired: the crawl rig slid along the ground)
 			const float wailers = a_round >= 6 ? 0.05f : 0.0f;
 			const float bloaters = a_round >= 4 ? 0.07f : 0.0f;
 			if (u < runners) return Type::Runner;
@@ -412,7 +412,7 @@ namespace bo3z
 		float SpeedMult(Type a_type)
 		{
 			switch (a_type) {
-			case Type::Runner: return 1.55f;
+			case Type::Runner: return 1.3f;
 			case Type::Crawler: return 0.8f;
 			case Type::Bloater: return 0.72f;
 			case Type::Wailer: return 0.95f;
@@ -458,6 +458,13 @@ namespace bo3z
 					m.cd = -99;
 					continue;
 				}
+				if (a->IsDisabled() || a->IsDeleted()) {  // dawn took it: a disabled body must not reach for anyone
+					m.cd = -99;
+					continue;
+				}
+				if (!a->Is3DLoaded()) {
+					continue;
+				}
 				if (a->IsDead()) {
 					if (m.type == Type::Bloater && !m.burst) {  // pops: a cloud of grave-rot that hurts everyone near
 						m.burst = true;
@@ -476,25 +483,6 @@ namespace bo3z
 				}
 				const float dist = a->GetPosition().GetDistance(pp);
 				m.cd -= a_delta;
-				// the lunge in flight: it throws itself at you
-				if (m.lunge >= 0) {
-					m.lunge -= a_delta;
-					const float step = (m.type == Type::Crawler ? 480.0f : 760.0f) * a_delta;
-					if (dist > 70.0f) {
-						a->SetPosition(a->GetPosition() + m.lungeDir * step, true);
-					}
-					if (m.lunge < 0 || dist < 80.0f) {
-						m.lunge = -1;
-						if (dist < 110.0f && g_grabbed <= 0) {
-							g_grabbed = 1.2f;
-							g_grabSlow = m.type == Type::Crawler ? 1.6f : 1.1f;
-							Director::HurtPlayer(m.type == Type::Crawler ? 0.08f : 0.12f, m.type != Type::Crawler);
-							Forms::PlayAt(gen::Sound::grab, a.get());
-							Hud::Banner(m.type == Type::Crawler ? "It has your ankle!" : "GRABBED!", 0.9f);
-						}
-					}
-					continue;
-				}
 				if (m.wind >= 0) {
 					if ((m.wind -= a_delta) < 0) {
 						if (m.type == Type::Wailer) {  // the scream: the horde comes, faster
@@ -510,15 +498,6 @@ namespace bo3z
 							}
 							Hud::Banner("A Wailer screams - the dead come running!", 2.0f);
 							Forms::PlayAt(gen::Sound::wailer_scream, a.get());
-						} else {
-							RE::NiPoint3 dir = pp - a->GetPosition();
-							dir.z = 0;
-							const float len = dir.Length();
-							if (len > 1.0f) {
-								m.lungeDir = dir * (1.0f / len);
-								m.lunge = m.type == Type::Crawler ? 0.28f : 0.22f;
-								SetCue(a.get(), kCueGrab, 0.6f);
-							}
 						}
 					}
 					continue;
@@ -527,21 +506,6 @@ namespace bo3z
 					continue;
 				}
 				switch (m.type) {
-				case Type::Shambler:
-				case Type::Runner:
-					if (dist < (m.type == Type::Runner ? 330.0f : 240.0f) && dist > 90.0f) {
-						m.wind = m.type == Type::Runner ? 0.25f : 0.45f;  // arms come up, then it throws itself at you
-						SetCue(a.get(), kCueGrab, m.wind + 0.5f);
-						Forms::PlayAt(gen::Sound::rise, a.get());
-						m.cd = Rand(4.5f, 7.0f);
-					}
-					break;
-				case Type::Crawler:
-					if (dist < 200.0f && dist > 60.0f) {
-						m.wind = 0.3f;
-						m.cd = Rand(3.0f, 5.0f);
-					}
-					break;
 				case Type::Wailer:
 					if (dist < 1800.0f) {
 						m.wind = 1.1f;

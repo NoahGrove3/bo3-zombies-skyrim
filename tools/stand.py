@@ -1,13 +1,13 @@
-"""The Undying Nights station: a Nordic shrine built like Whiterun's own stonework. A stone dais carries the
-Atronach Reforge, Sheogorath's Coffer and the Brew Machine, each set into its own alcove in a carved back wall
-(stone piers, timber lintels, carved dragon panels at the back of every alcove), under a timber-and-shingle
-canopy on carved posts, with Nordic knotwork trim round the dais. Every texture is Skyrim's own Whiterun set,
-referenced by path (nothing of the game is shipped), so texture overhauls restyle the station with the city.
+"""The Undying Nights station: an open Nordic shrine you can walk up to from every side. An eight-sided stone dais
+(Whiterun's own stonework, a knotwork band round its edge, a cobbled skirt sloping down on every side) carries a
+carved rune-stone at its heart; the Coffer, the Brew Machine, the Atronach Reforge and the Shrine of the Dirge stand
+round it with their backs to the stone, each facing out to its own side, with a brazier on each of the four
+corners between them. Every texture is Skyrim's own Whiterun set, referenced by path (nothing of the game is
+shipped), so texture overhauls restyle the station with the city.
 
-Model frame: origin = centre of the dais top, front (where you walk up) = +Y, up = +Z. Machines (layout sheet,
-seen from this frame): Reforge x=-165, Coffer x=80, Brew Machine x=235, all at y=-70, facing +Y.
-Collision: the dais (walkable sloped skirt), the wall piers and backs, the posts. The canopy is see-through to
-the physics (it never counts as an overhead obstruction when the station is checked).
+Model frame: origin = centre of the dais top, +Y = the Coffer's side, up = +Z. Machines (layout sheet, plan frame):
+Coffer (0,-175) facing out, Reforge (0,175), Brew Machine (175,0), Shrine (-175,0).
+Collision: the dais (walkable sloped skirt on every side) and the rune-stone.
     python tools/stand.py <out Data dir>"""
 import math, pathlib, subprocess, sys
 import numpy as np
@@ -17,13 +17,11 @@ ROOT = pathlib.Path(__file__).parent.parent
 OUT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ROOT / 'build' / 'assets' / 'Data')
 CONV = '/home/claude/tools/modelconv'
 
-X0, X1, Y0, Y1, TOP, BOTTOM = -330, 330, -150, 185, 0, -100   # dais (layout sheet footprint)
-GROW = 170                                                     # skirt reach: ~30 degree walkable slope
-WALL_BACK, NICHE_BACK, WALL_FRONT, WALL_H = -150, -140, -112, 300
-# alcoves: (x0, x1, opening height, glyph colour) for the Reforge, the Coffer and the Brew Machine
-ALCOVES = [(-305, -25, 235, (1.0, 0.45, 0.12)), (25, 135, 165, (0.70, 0.35, 1.0)), (180, 290, 215, (1.0, 0.75, 0.25))]
-POSTS = [(-318, -14), (318, -14)]
-EAVE_Y, EAVE_Z, RIDGE_Z = 12, 276, 352                         # canopy: from the wall top down to the eave
+R = 300                                                       # dais: across the flats, half
+X0, X1, Y0, Y1, TOP, BOTTOM = -R, R, -R, R, 0, -100            # (the walkable collision frustum)
+GROW = 110                                                     # skirt reach: ~30 degree walkable slope
+STONE_R, STONE_H = 40, 230                                     # the rune-stone at the heart
+ALCOVES = [(0, 0, 0, (1.0, 0.45, 0.12)), (0, 0, 0, (0.70, 0.35, 1.0)), (0, 0, 0, (1.0, 0.75, 0.25))]  # (glyph colours: Reforge, Coffer, Brew)
 
 W = 'textures\\architecture\\whiterun\\'
 TEX = {   # Skyrim's Whiterun textures (diffuse, normal)
@@ -115,88 +113,51 @@ def disc(mat, cx, cy, z, r, seg=48, tile=128.0):
     UV = [(x / tile, y / tile) for x, y, _ in V]
     add(mat, V, UV, [(0, 1 + i, 1 + (i + 1) % seg) for i in range(seg)])
 
-def piers():
-    """the wall's solid parts between the alcoves"""
-    xs = [X0] + [v for a in ALCOVES for v in a[:2]] + [X1]
-    return [(xs[i], xs[i + 1]) for i in range(0, len(xs), 2)]
+def octagon(r, z):
+    return [(r / math.cos(math.pi / 8) * math.cos(math.pi / 8 + k * math.pi / 4), r / math.cos(math.pi / 8) * math.sin(math.pi / 8 + k * math.pi / 4), z) for k in range(8)]
 
 def build():
-    # ---- the dais: Whiterun stone blocks on top, a knotwork band round the edge, a cobbled skirt
-    box('floor', X0, Y0, BOTTOM, X1, Y1, TOP, tile=150, skip=('bottom',))
-    for (a, b, out) in (((X0, Y1), (X1, Y1), (0, 1)), ((X1, Y1), (X1, Y0), (1, 0)), ((X0, Y0), (X0, Y1), (-1, 0))):
-        band('trim', a, b, -22, 0, (out[0] * 0.8, out[1] * 0.8), KNOT_BROWN, tile=150)
-    t, bt = -22, BOTTOM
-    corners_top = [(X0, Y0), (X1, Y0), (X1, Y1), (X0, Y1)]
-    corners_bot = [(X0 - GROW, Y0 - GROW), (X1 + GROW, Y0 - GROW), (X1 + GROW, Y1 + GROW), (X0 - GROW, Y1 + GROW)]
-    for i in range(4):
-        (ax, ay), (bx, by) = corners_top[i], corners_top[(i + 1) % 4]
-        (cx, cy), (dx, dy) = corners_bot[(i + 1) % 4], corners_bot[i]
-        q = [(ax, ay, t), (bx, by, t), (cx, cy, bt), (dx, dy, bt)]
-        L = math.hypot(bx - ax, by - ay)
-        uv = [(0, 0), (L / 140, 0), (L / 140, 1.6), (0, 1.6)]
-        add('cobble', q, uv, [(0, 2, 1), (0, 3, 2)])
-    # broad stone steps up the front, flanked by low knotwork-trimmed cheek walls
-    for i, (ya, yb, zt) in enumerate(((Y1, Y1 + 34, -26), (Y1 + 34, Y1 + 68, -52), (Y1 + 68, Y1 + 102, -78))):
-        box('floor', -150, ya, BOTTOM, 150, yb, zt, tile=150, skip=('bottom', 'back'))
-        band('trim', (-150, yb), (150, yb), zt - 10, zt, (0, 0.6), KNOT_BROWN, tile=150)
-    for sx in (-1, 1):
-        xa, xb = (150, 168) if sx > 0 else (-168, -150)
-        box('stone', xa, Y1, BOTTOM, xb, Y1 + 102, 8, skip=('bottom', 'back'))
-    # the seal in the floor before the machines: a knotwork ring round a cobbled disc, a faint rune of the curse
-    disc('cobble', 0, 70, TOP + 0.5, 64)
-    ring('trim', 0, 70, TOP + 0.6, 64, 86, vband=KNOT_BLUE)
-    ring('rune', 0, 70, TOP + 0.8, 88, 91)
-    ring('rune', 0, 70, TOP + 0.8, 58, 60)
-
-    # ---- the back wall: stone piers, an alcove for each machine with a carved dragon panel at its back
-    for x0, x1 in piers():
-        box('stone', x0, WALL_BACK, TOP, x1, WALL_FRONT, WALL_H, skip=('bottom',))
-        box('stone', x0 - 4, WALL_FRONT, TOP, x1 + 4, WALL_FRONT + 10, 26, skip=('bottom',))   # plinth course
-    for x0, x1, h, col in ALCOVES:
-        box('stone', x0, WALL_BACK, TOP, x1, NICHE_BACK, h, skip=('bottom', 'left', 'right'))     # alcove back
-        quad('panel', (x0 + 6, NICHE_BACK + 0.6, 18), (x1 - 6, NICHE_BACK + 0.6, 18), (x1 - 6, NICHE_BACK + 0.6, h - 8), (x0 + 6, NICHE_BACK + 0.6, h - 8),
-             uv=((0, 0), (1, 0), (1, min(1.0, (h - 26) / (x1 - x0 - 12) * 0.5)), (0, min(1.0, (h - 26) / (x1 - x0 - 12) * 0.5))))
-        box('stone', x0, WALL_BACK, h + 22, x1, WALL_FRONT, WALL_H, skip=('bottom', 'left', 'right'))  # wall over the lintel
-        box('wood', x0 - 12, WALL_FRONT - 18, h, x1 + 12, WALL_FRONT + 8, h + 22, tile=96)        # timber lintel
-        # the station's glyph above its alcove: a glowing diamond in a knotwork frame
-        cx, gz = (x0 + x1) / 2, h + 22 + (WALL_H - 24 - h - 22) / 2
-        r = min(18, (WALL_H - 24 - h - 22) / 2 - 4)
-        if r > 6:
-            quad('glyph%d' % ALCOVES.index((x0, x1, h, col)), (cx, WALL_FRONT + 0.7, gz - r), (cx + r * 0.75, WALL_FRONT + 0.7, gz), (cx, WALL_FRONT + 0.7, gz + r), (cx - r * 0.75, WALL_FRONT + 0.7, gz))
-    # the wall's crown: blue knotwork along the top, a timber cap
-    band('trim', (X0, WALL_FRONT), (X1, WALL_FRONT), WALL_H - 26, WALL_H, (0, 1.5), KNOT_BLUE)
-    box('wood', X0 - 8, WALL_BACK - 8, WALL_H, X1 + 8, WALL_FRONT + 10, WALL_H + 14, tile=96)
-    # ---- the canopy: carved posts, an eave beam, rafters and a shingled roof sloping to the front
-    for px, py in POSTS:
-        box('wood', px - 11, py - 11, TOP, px + 11, py + 11, EAVE_Z, tile=96)
-        box('stone', px - 17, py - 17, TOP, px + 17, py + 17, 18, skip=('bottom',))          # footing
-        band('trim', (px - 11, py + 11), (px + 11, py + 11), 150, 186, (0, 0.8), KNOT_BROWN, tile=60)  # carved collar
-    box('wood', X0 - 14, POSTS[0][1] - 12, EAVE_Z, X1 + 14, POSTS[0][1] + 12, EAVE_Z + 20, tile=96)  # eave beam
-    for k in range(7):
-        x = X0 + 10 + k * (X1 - X0 - 20) / 6
-        slanted('wood', (x, WALL_BACK - 6, WALL_H + 22), (x, EAVE_Y + 8, EAVE_Z + 16), 12, 14)
-    # roof: shingles above, planks beneath
-    lo, hi = (X0 - 22, EAVE_Y + 16, EAVE_Z + 24), (X1 + 22, WALL_BACK - 14, WALL_H + 34)
-    Lr = math.hypot(hi[1] - lo[1], hi[2] - lo[2])
-    quad('roof', (lo[0], lo[1], lo[2]), (hi[0], lo[1], lo[2]), (hi[0], hi[1], hi[2]), (lo[0], hi[1], hi[2]),
-         uv=((0, 0), ((hi[0] - lo[0]) / 120, 0), ((hi[0] - lo[0]) / 120, Lr / 120), (0, Lr / 120)))
-    quad('wood', (lo[0], hi[1], hi[2] - 4), (hi[0], hi[1], hi[2] - 4), (hi[0], lo[1], lo[2] - 4), (lo[0], lo[1], lo[2] - 4),
-         uv=((0, 0), ((hi[0] - lo[0]) / 96, 0), ((hi[0] - lo[0]) / 96, Lr / 96), (0, Lr / 96)))
-    for x in (lo[0], hi[0]):   # gable edges
-        box('wood', x - 4, hi[1], lo[2] - 6, x + 4, lo[1], lo[2] + 2, tile=96)
-    # banners hanging from the eave over the two inner piers
-    for x0, x1 in piers()[1:-1]:
-        cx, w = (x0 + x1) / 2, min(54, x1 - x0 + 10)
-        y = POSTS[0][1] - 14
-        quad('banner', (cx - w / 2, y, EAVE_Z - 118), (cx + w / 2, y, EAVE_Z - 118), (cx + w / 2, y, EAVE_Z - 2), (cx - w / 2, y, EAVE_Z - 2), both=True)
-        box('wood', cx - w / 2 - 6, y - 3, EAVE_Z - 6, cx + w / 2 + 6, y + 3, EAVE_Z, tile=96)
+    # ---- the dais: eight sides of Whiterun stone, a knotwork band round the edge, a cobbled skirt all round
+    top = octagon(R, TOP)
+    add('floor', [(0, 0, TOP)] + top, [(0, 0)] + [(x / 150, y / 150) for x, y, _ in top], [(0, 1 + k, 1 + (k + 1) % 8) for k in range(8)])
+    under = octagon(R, -22); bot = octagon(R + GROW, BOTTOM)
+    for k in range(8):
+        a, b = top[k], top[(k + 1) % 8]
+        out = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2); L = math.hypot(*out); out = (out[0] / L, out[1] / L)
+        band('trim', a[:2], b[:2], -22, 0, (out[0] * 0.8, out[1] * 0.8), KNOT_BROWN, tile=150)
+        c, d = under[k], under[(k + 1) % 8]; e, f = bot[(k + 1) % 8], bot[k]
+        Lr = math.hypot(d[0] - c[0], d[1] - c[1])
+        add('cobble', [c, d, e, f], [(0, 0), (Lr / 140, 0), (Lr / 140, 1.6), (0, 1.6)], [(0, 2, 1), (0, 3, 2)])
+    # the seal in the floor: a knotwork ring round the heart, a faint rune of the curse
+    ring('trim', 0, 0, TOP + 0.6, 92, 116, vband=KNOT_BLUE)
+    ring('rune', 0, 0, TOP + 0.8, 118, 121)
+    ring('rune', 0, 0, TOP + 0.8, 86, 88)
+    ring('rune', 0, 0, TOP + 0.8, 268, 271)
+    # ---- the rune-stone: a stepped plinth, an eight-sided carved shaft, a glowing glyph on each face, a cap
+    for i, (rr, z0, z1) in enumerate(((70, TOP, 14), (54, 14, 30))):
+        o0, o1 = octagon(rr, z0), octagon(rr, z1)
+        add('stone', o1 + [(0, 0, z1)], [(x / 128, y / 128) for x, y, _ in o1] + [(0, 0)], [(8, k, (k + 1) % 8) for k in range(8)])
+        for k in range(8):
+            a, b = o0[k], o0[(k + 1) % 8]; c, d = o1[(k + 1) % 8], o1[k]
+            quad('stone', a, b, c, d, uv=((0, 0), (0.6, 0), (0.6, 0.15), (0, 0.15)))
+    s0, s1 = octagon(STONE_R, 30), octagon(STONE_R * 0.82, 30 + STONE_H)
+    for k in range(8):
+        a, b = s0[k], s0[(k + 1) % 8]; c, d = s1[(k + 1) % 8], s1[k]
+        quad('panel' if k % 2 == 0 else 'stone', a, b, c, d, uv=((0, 0), (0.25, 0), (0.25, 1.0), (0, 1.0)))
+        if k % 2 == 1:  # a glyph on every other face
+            mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2; L = math.hypot(mx, my); nx, ny = mx / L, my / L
+            tx, ty = -ny, nx; gz = 30 + STONE_H * 0.62; r = 13
+            px, py = mx * 0.94 + nx * 1.5, my * 0.94 + ny * 1.5
+            quad('glyph%d' % (k // 2 % 3), (px - tx * r * 0.75, py - ty * r * 0.75, gz), (px, py, gz - r), (px + tx * r * 0.75, py + ty * r * 0.75, gz), (px, py, gz + r), both=True)
+    cap = octagon(STONE_R * 0.95, 30 + STONE_H + 14)
+    add('wood', cap + [(0, 0, 30 + STONE_H + 30)], [(x / 96, y / 96) for x, y, _ in cap] + [(0, 0)], [(8, k, (k + 1) % 8) for k in range(8)])
+    for k in range(8):
+        a, b = s1[k], s1[(k + 1) % 8]; c, d = cap[(k + 1) % 8], cap[k]
+        quad('wood', a, b, c, d, uv=((0, 0), (0.3, 0), (0.3, 0.12), (0, 0.12)))
 
 def collision_boxes():
-    """solid parts beyond the dais: the piers, the alcove backs and the posts (model units)"""
-    out = [(x0, WALL_BACK, TOP, x1, WALL_FRONT, WALL_H) for x0, x1 in piers()]
-    out += [(x0, WALL_BACK, TOP, x1, NICHE_BACK, h) for x0, x1, h, _ in ALCOVES]
-    out += [(px - 11, py - 11, TOP, px + 11, py + 11, EAVE_Z) for px, py in POSTS]
-    return out
+    """solid beyond the dais: the rune-stone (model units)"""
+    return [(-STONE_R, -STONE_R, TOP, STONE_R, STONE_R, 30 + STONE_H + 30), (-70, -70, TOP, 70, 70, 30)]
 
 def write_obj(path):
     lines = [f'mtllib {path.stem}.mtl']; vo = 1
@@ -225,6 +186,8 @@ def main():
     job = [f'in {obj}', f'out {out}', 'origin 1', f'collidefrustum {X0} {Y0} {X1} {Y1} {TOP} {BOTTOM} {GROW}']
     job += [f'collidebox2 {" ".join(str(v) for v in b)}' for b in collision_boxes()]
     for m, (d, n) in TEX.items():
+        if m not in parts:
+            continue
         extra = {'banner': ' doublesided=1 alpha=1', 'roof': ' doublesided=1', 'panel': ''}.get(m, '')
         spec = {'stone': 0.25, 'floor': 0.3, 'cobble': 0.25, 'wood': 0.2, 'trim': 0.25, 'panel': 0.2, 'roof': 0.15, 'banner': 0.1}[m]
         job.append(f'mat {m} diffuse={W}{d}.dds normal={W}{n}.dds spec={spec} gloss=30{extra}')

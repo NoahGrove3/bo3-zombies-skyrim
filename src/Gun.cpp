@@ -221,6 +221,23 @@ namespace bo3z
 				if (GunOut() && b && b->GetDevice() == RE::INPUT_DEVICE::kGamepad && (b->GetIDCode() == kPadRight || b->GetIDCode() == kPadDown)) {
 					return false;
 				}
+				if (Shops::MenuEats(a_event)) {  // the shrine's keys (1-4, D-pad) never reach the hotkeys
+					return false;
+				}
+				return func(a_this, a_event);
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+
+		// While the shrine's menu is open its keys belong to it: Activate, jump, the menu key, the camera's wheel zoom.
+		template <int N>
+		struct MenuEater
+		{
+			static bool thunk(void* a_this, RE::InputEvent* a_event)
+			{
+				if (Shops::MenuEats(a_event)) {
+					return false;
+				}
 				return func(a_this, a_event);
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
@@ -230,7 +247,7 @@ namespace bo3z
 		{
 			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
 			{
-				if (GunOut()) {
+				if (GunOut() || Shops::MenuEats(a_event)) {
 					return false;
 				}
 				return func(a_this, a_event);
@@ -525,7 +542,7 @@ namespace bo3z
 		};
 		// Skyrim's explosions are built for dragons and Dragonborn shouts: ours are shrunk so a hit reads as a hit,
 		// not a screen-filling burst. Shots use the small size, signature moves the larger one.
-		constexpr float kTapBlastScale = 0.45f, kBlastScale = 0.7f;
+		constexpr float kTapBlastScale = 0.35f, kBlastScale = 0.42f;  // compact: a burst the size of a cart, never the screen
 		std::vector<std::pair<RE::ObjectRefHandle, std::pair<float, float>>> g_shrink;  // explosion, (scale, seconds left)
 		std::vector<PendingBlast> g_blasts;
 		RE::ObjectRefHandle       g_blastMarker;
@@ -555,8 +572,14 @@ namespace bo3z
 						ex->formEnchanting = nullptr;
 						// screen flashes only for the great storms; a shot's impact never whites out the screen
 						const std::string_view nm = gen::kBlasts[a_index].first;
-						const bool             big = nm.find("massive") != std::string_view::npos || nm.find("storm") != std::string_view::npos || nm == "skybolt";
-						ex->imageSpaceModifying = big ? src->imageSpaceModifying : nullptr;
+						(void)nm;
+						ex->imageSpaceModifying = nullptr;  // no blast ever tints the screen
+						ex->data.imageSpaceRadius = 0.0f;
+						ex->data.radius = std::min(src->data.radius, 220.0f);
+						// Skyrim's explosion sounds are built for dragons (and roar over everything): ours are silent,
+						// the spell's own (quieter, layered) sound plays instead
+						ex->data.sound1 = nullptr;
+						ex->data.sound2 = nullptr;
 						made[a_index] = ex;
 					}
 				}
@@ -871,7 +894,7 @@ namespace bo3z
 				if (g.bulletSpell) {
 					LaunchBolt(player, g, to);
 				}
-				if (landed) {
+				if (landed && g.kind != gen::kKindTome && g.kind != gen::kKindWonder) {  // a quick spell is a bolt, not a bomb: only the gathered cast bursts
 					Blast(g.tapBlast, to, BoltDelay(g, origin, to), kTapBlastScale);
 					// every bolt and arrow splashes a little where it lands: the burst weapons (Splash) hard and wide,
 					// the rest a third of the hit within an arm's reach
@@ -1374,8 +1397,8 @@ namespace bo3z
 			if (foes.size() > 5) {
 				foes.resize(5);
 			}
-			for (auto* f : foes) {
-				spots.push_back(f->GetPosition() + RE::NiPoint3{ 0, 0, 60 });
+			for (std::size_t i = 0; i < foes.size() && i < 2; ++i) {  // one burst where it lands and a couple on the caught - not a carpet
+				spots.push_back(foes[i]->GetPosition() + RE::NiPoint3{ 0, 0, 60 });
 			}
 			for (std::size_t i = 0; i < spots.size(); ++i) {
 				Blast(g.chargeBlast, spots[i], (around ? 0.0f : BoltDelay(g, a_eye, spots[i])) + 0.07f * i);
@@ -1542,7 +1565,7 @@ namespace bo3z
 				if (!(IsSpell(gun) ? g_dualHeld : g_trigger)) {
 					g_chargeSaid = g_readySaid = false;
 				}
-				SetAura(charging ? g.chargeAura : -1);
+				SetAura(charging && !IsSpell(gun) ? g.chargeAura : -1);  // (the storm cloaks filled the first-person screen)
 				const bool staff = g.kind == gen::kKindWand;
 				const bool spell = IsSpell(gun);  // hand spells: Skyrim's own casting animations, nothing laid on top
 				out = spell ? PoseOut{} : bow ? Scale(kBowDraw, c) : staff ? Scale(kStaffCharge, c) : Scale(kChargePose[style], c);
@@ -2191,6 +2214,18 @@ namespace bo3z
 				ReadyBlock::func = rw.write_vfunc(0x1, ReadyBlock::thunk);
 				REL::Relocation<std::uintptr_t> fv{ RE::VTABLE_FavoritesHandler[0] };
 				FavBlock::func = fv.write_vfunc(0x1, FavBlock::thunk);
+				{
+					REL::Relocation<std::uintptr_t> v0{ RE::VTABLE_ActivateHandler[0] };
+					MenuEater<0>::func = v0.write_vfunc(0x1, MenuEater<0>::thunk);
+					REL::Relocation<std::uintptr_t> v1{ RE::VTABLE_JumpHandler[0] };
+					MenuEater<1>::func = v1.write_vfunc(0x1, MenuEater<1>::thunk);
+					REL::Relocation<std::uintptr_t> v2{ RE::VTABLE_MenuOpenHandler[0] };
+					MenuEater<2>::func = v2.write_vfunc(0x1, MenuEater<2>::thunk);
+					REL::Relocation<std::uintptr_t> v3{ RE::VTABLE_FirstPersonState[1] };
+					MenuEater<3>::func = v3.write_vfunc(0x1, MenuEater<3>::thunk);
+					REL::Relocation<std::uintptr_t> v4{ RE::VTABLE_ThirdPersonState[1] };
+					MenuEater<4>::func = v4.write_vfunc(0x1, MenuEater<4>::thunk);
+				}
 				hooked = true;
 				logger::info("gun: attack/ready input hooks installed");
 				for (const auto& gg : gen::kGuns) {  // a charge aura saved mid-charge never sticks

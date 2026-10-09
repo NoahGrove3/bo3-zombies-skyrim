@@ -17,15 +17,15 @@
     {
       "id": "coffer",
       "kind": "box",
-      "label": "Sheogorath's Coffer",
-      "activateText": "Tempt fate",
-      "model": "UndyingNights\\coffer\\coffer.nif",
+      "label": "Shrine of the Dirge",
+      "activateText": "Commune",
+      "model": "UndyingNights\\shrine\\shrine.nif",
       "cost": 950,
       "refs": "none",
       "verify": [
         "model"
       ],
-      "scale": 1.6,
+      "scale": 1.0,
       "retired": false
     },
     {
@@ -37,7 +37,7 @@
       "cost": 0,
       "refs": "none",
       "scale": 1.0,
-      "retired": false,
+      "retired": true,
       "verify": [
         "model"
       ]
@@ -63,7 +63,7 @@
       "cost": 4000,
       "refs": "none",
       "scale": 1.0,
-      "retired": false,
+      "retired": true,
       "verify": [
         "model"
       ]
@@ -296,7 +296,7 @@
       "cost": 0,
       "refs": "none",
       "scale": 0.8,
-      "retired": false,
+      "retired": true,
       "verify": [
         "scale"
       ]

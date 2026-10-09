@@ -196,6 +196,42 @@
       "verify": [
         "model"
       ]
+    },
+    {
+      "id": "mind",
+      "sourceFormId": "none",
+      "model": "Magic\\NightingaleStrifeProjectile01.nif",
+      "speed": 5600,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "daedra",
+      "sourceFormId": "none",
+      "model": "DLC02\\Effects\\DLC2HMDaedraHandProjectile01.nif",
+      "speed": 5000,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "hex",
+      "sourceFormId": "none",
+      "model": "DLC02\\Effects\\MiraakStaffProjectile.nif",
+      "speed": 5000,
+      "verify": [
+        "model"
+      ]
+    },
+    {
+      "id": "storm",
+      "sourceFormId": "none",
+      "model": "Magic\\LightningBolt04.nif",
+      "speed": 9000,
+      "verify": [
+        "model"
+      ]
     }
   ]
 }

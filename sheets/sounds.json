@@ -11,7 +11,8 @@
     "verify",
     "files",
     "shift",
-    "layer"
+    "layer",
+    "atten"
   ],
   "rows": [
     {
@@ -24,7 +25,8 @@
       "space": "2d",
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "crossbow_reload",
@@ -36,7 +38,8 @@
       "space": "2d",
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "bow_nock",
@@ -48,7 +51,8 @@
       "space": "2d",
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "round_start",
@@ -60,7 +64,8 @@
       "space": "2d",
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "round_end",
@@ -72,7 +77,8 @@
       "space": "2d",
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "brew_trollshide",
@@ -86,7 +92,8 @@
         "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav"
       ],
       "shift": -6,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "brew_quicksilver",
@@ -100,7 +107,8 @@
         "fx\\dlc02\\mag\\mag_standingstoneactivate_a_01.wav"
       ],
       "shift": -9,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "brew_twinstrike",
@@ -114,7 +122,8 @@
         "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav"
       ],
       "shift": -12,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "brew_hearthfire",
@@ -128,7 +137,8 @@
         "fx\\dlc02\\mag\\mag_standingstoneactivate_a_01.wav"
       ],
       "shift": -15,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "brew_windrunner",
@@ -142,7 +152,8 @@
         "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav"
       ],
       "shift": -18,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "brew_hawkeye",
@@ -156,7 +167,8 @@
         "fx\\dlc02\\mag\\mag_standingstoneactivate_a_01.wav"
       ],
       "shift": -21,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "brew_mammoth",
@@ -170,7 +182,8 @@
         "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav"
       ],
       "shift": -24,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "brew_frostbite",
@@ -184,7 +197,8 @@
         "fx\\dlc02\\mag\\mag_standingstoneactivate_a_01.wav"
       ],
       "shift": -27,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "brew_stormcrown",
@@ -198,7 +212,8 @@
         "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav"
       ],
       "shift": -30,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "coffer_spin",
@@ -212,7 +227,8 @@
         "fx\\dlc02\\mag\\blackbookpowers\\mag_blackbookpowers_b_01.wav"
       ],
       "shift": -22,
-      "layer": "coffer_open"
+      "layer": "coffer_open",
+      "atten": 0
     },
     {
       "id": "coffer_open",
@@ -226,7 +242,8 @@
         "fx\\drs\\drs_coffinnightmother_open.wav"
       ],
       "shift": -15,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "coffer_cheese",
@@ -241,7 +258,8 @@
         "fx\\npc\\wisp\\npc_wisp_death_02.wav"
       ],
       "shift": -25,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "night_start",
@@ -257,7 +275,8 @@
         "fx\\npc\\wolf\\howl\\npc_wolf_howl_03.wav"
       ],
       "shift": -15,
-      "layer": "night_thunder"
+      "layer": "night_thunder",
+      "atten": 0
     },
     {
       "id": "night_end",
@@ -271,7 +290,8 @@
         "fx\\dlc01\\qst\\stonetombserana\\qst_serana_tomb_puzzle_solve_01.wav"
       ],
       "shift": -5,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "hound_night",
@@ -288,7 +308,8 @@
         "fx\\npc\\dragon\\attack\\npc_dragon_attack_04.wav"
       ],
       "shift": -18,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "night_falls",
@@ -304,7 +325,8 @@
         "fx\\npc\\wolf\\howl\\npc_wolf_howl_03.wav"
       ],
       "shift": -25,
-      "layer": "night_thunder"
+      "layer": "night_thunder",
+      "atten": 0
     },
     {
       "id": "shot_pistol",
@@ -316,7 +338,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "shot_smg",
@@ -328,7 +351,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "shot_ar",
@@ -340,7 +364,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "shot_lmg",
@@ -352,7 +377,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "shot_shotgun",
@@ -364,7 +390,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "shot_sniper",
@@ -376,7 +403,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "shot_ray",
@@ -388,7 +416,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "reload_mag",
@@ -400,7 +429,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "reload_shell",
@@ -412,7 +442,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "dry_click",
@@ -424,7 +455,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "buy",
@@ -438,7 +470,8 @@
         "fx\\ui\\enchanting\\ui_enchanting_learneffect_01.wav"
       ],
       "shift": -18,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "hitmarker",
@@ -454,7 +487,8 @@
         "fx\\fx\\melee\\punchmedium\\fx_melee_punchmedium_03.wav"
       ],
       "shift": -35,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "headshot",
@@ -469,7 +503,8 @@
         "fx\\fx\\melee\\metalimpact\\large\\flesh\\fx_melee_metalimpactlarge_flesh_02.wav"
       ],
       "shift": -25,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "drink",
@@ -487,7 +522,8 @@
         "fx\\npc\\human\\drink\\npc_human_drink_05.wav"
       ],
       "shift": -10,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "knife",
@@ -504,7 +540,8 @@
         "fx\\fx\\melee\\clawsmall\\flesh\\fx_melee_clawsmall_04.wav"
       ],
       "shift": -15,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "rise",
@@ -521,7 +558,8 @@
         "fx\\npc\\draugr\\alcoveexit\\b\\npc_draugr_alcoveexit_b_02.wav"
       ],
       "shift": -22,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "coffer_skull",
@@ -535,7 +573,8 @@
         "fx\\dlc01\\qst\\arkngthamzpuzzle\\qst_arkngthamz_puzzle_fail.wav"
       ],
       "shift": -15,
-      "layer": "hound_night"
+      "layer": "hound_night",
+      "atten": 0
     },
     {
       "id": "forge_upgrade",
@@ -550,7 +589,8 @@
         "fx\\ui\\smithing\\ui_smithing_improveweapon_02.wav"
       ],
       "shift": -15,
-      "layer": "forge_ritual"
+      "layer": "forge_ritual",
+      "atten": 0
     },
     {
       "id": "cast_light",
@@ -564,7 +604,8 @@
         "fx\\mag\\illusion\\release\\mag_illusion_release_01.wav"
       ],
       "shift": -18,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_rapid",
@@ -578,7 +619,8 @@
         "fx\\mgk\\firebolt\\mgk_firebolt_03_fire.wav"
       ],
       "shift": -15,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_scatter",
@@ -594,7 +636,8 @@
         "fx\\mag\\shock\\concentrationbolt\\mag_shock_concentration_bolt_03.wav"
       ],
       "shift": -15,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_heavy",
@@ -608,7 +651,8 @@
         "fx\\mag\\conjure\\impact\\mag_conjure_impact_01.wav"
       ],
       "shift": -30,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "mana_empty",
@@ -622,7 +666,8 @@
         "fx\\mgk\\firebolt\\mag_firebolt_fail.wav"
       ],
       "shift": -20,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "cast_sidearm",
@@ -636,7 +681,8 @@
         "fx\\mag\\illusion\\release\\mag_illusion_release_01.wav"
       ],
       "shift": -18,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_centurion",
@@ -652,7 +698,8 @@
         "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_fire_03.wav"
       ],
       "shift": -12,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_triad",
@@ -666,7 +713,8 @@
         "fx\\mag\\mysticism\\soultrap\\mag_mysticism_soultrap_capture.wav"
       ],
       "shift": -15,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_spider",
@@ -681,7 +729,8 @@
         "fx\\dlc02\\mag\\power\\morasgrasp\\mag_power_moras_grasp_projectile_02.wav"
       ],
       "shift": -10,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_drill",
@@ -695,7 +744,8 @@
         "fx\\dlc01\\mag\\alteration\\mag_alteration_vampiredrainrelease_01.wav"
       ],
       "shift": -12,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_steampump",
@@ -711,7 +761,8 @@
         "fx\\npc\\skeleton\\attack\\npc_skeleton_attack_03.wav"
       ],
       "shift": -25,
-      "layer": "cast_heavy"
+      "layer": "cast_heavy",
+      "atten": 5
     },
     {
       "id": "cast_marksman",
@@ -725,7 +776,8 @@
         "fx\\mag\\light\\mag_light_fire.wav"
       ],
       "shift": -28,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_animunculi",
@@ -740,7 +792,8 @@
         "fx\\dlc02\\mag\\blackbookpowers\\mag_blackbookpowers_c_01.wav"
       ],
       "shift": -12,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_kagrenac",
@@ -754,7 +807,8 @@
         "fx\\mag\\illusion\\releaseaimed\\mag_illusion_release_aimed_01.wav"
       ],
       "shift": -22,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_mammothlmg",
@@ -768,7 +822,8 @@
         "fx\\mag\\conjure\\mag_conjure_fire.wav"
       ],
       "shift": -32,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_longshot",
@@ -782,7 +837,8 @@
         "fx\\mag\\alteration\\mag_alteration_release.wav"
       ],
       "shift": -18,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_aetherium",
@@ -796,7 +852,8 @@
         "fx\\dlc01\\mag\\destruction\\stendarrsaura\\mag_destruction_stendarrsaura_fire.wav"
       ],
       "shift": -8,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_flamerepeater",
@@ -810,7 +867,8 @@
         "fx\\mgk\\firebolt\\mgk_firebolt_03_fire.wav"
       ],
       "shift": -12,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_frostlancer",
@@ -824,7 +882,8 @@
         "fx\\mag\\icicle\\fire\\mag_icicle_fire.wav"
       ],
       "shift": -15,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_stormcaller",
@@ -840,7 +899,8 @@
         "fx\\mag\\shock\\concentrationbolt\\mag_shock_concentration_bolt_03.wav"
       ],
       "shift": -12,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_embermortar",
@@ -854,7 +914,8 @@
         "fx\\voc\\shout\\projectile\\push\\voc_shout_projectile_push.wav"
       ],
       "shift": -18,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_wabbajack",
@@ -868,7 +929,8 @@
         "fx\\mag\\illusion\\release\\mag_illusion_release_01.wav"
       ],
       "shift": -40,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_thuumcannon",
@@ -880,7 +942,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_skyforgearc",
@@ -897,7 +960,8 @@
         "fx\\amb\\weather\\thunder\\amb_weather_extrathunder_04.wav"
       ],
       "shift": -5,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "cast_apprentice",
@@ -909,7 +973,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "charge_up",
@@ -923,7 +988,8 @@
         "fx\\mag\\conjure\\mag_conjuration_charge_050.wav"
       ],
       "shift": -30,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "charge_ready",
@@ -937,21 +1003,23 @@
         "fx\\mag\\mysticism\\soultrap\\mag_mysticism_captureshader.wav"
       ],
       "shift": -25,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "unleash_sidearm",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_unleash_sidearm",
-      "file": "fx\\mag\\conjure\\impact\\mag_conjure_impact_01.wav",
+      "file": "fx\\mag\\illusion\\releaseaimed\\mag_illusion_release_aimed_01.wav",
       "space": "2d",
       "verify": [],
       "files": [
-        "fx\\mag\\conjure\\impact\\mag_conjure_impact_01.wav"
+        "fx\\mag\\illusion\\releaseaimed\\mag_illusion_release_aimed_01.wav"
       ],
-      "shift": -25,
-      "layer": "cast_sidearm"
+      "shift": -30,
+      "layer": "unleash_dread",
+      "atten": 9
     },
     {
       "id": "unleash_aetherium",
@@ -966,7 +1034,8 @@
         "fx\\dlc01\\fx\\explosions\\aurielssun\\fx_explosion_aurielssun_near_02.wav"
       ],
       "shift": -10,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "unleash_animunculi",
@@ -981,7 +1050,8 @@
         "fx\\dlc02\\fx\\explosion\\fx_explosion_fishman_tentacle_02.wav"
       ],
       "shift": -15,
-      "layer": "unleash_dread"
+      "layer": "unleash_dread",
+      "atten": 9
     },
     {
       "id": "unleash_mammothlmg",
@@ -995,7 +1065,8 @@
         "fx\\dlc01\\qst\\soulcairnportal\\qst_soul_cairn_portal_open_01.wav"
       ],
       "shift": -20,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "unleash_triad",
@@ -1009,7 +1080,8 @@
         "fx\\mag\\mysticism\\soultrap\\mag_mysticism_captureshader.wav"
       ],
       "shift": -20,
-      "layer": "unleash_dread"
+      "layer": "unleash_dread",
+      "atten": 9
     },
     {
       "id": "unleash_centurion",
@@ -1025,7 +1097,8 @@
         "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_impact_03.wav"
       ],
       "shift": -15,
-      "layer": "unleash_dread"
+      "layer": "unleash_dread",
+      "atten": 9
     },
     {
       "id": "unleash_flamerepeater",
@@ -1040,7 +1113,8 @@
         "fx\\fx\\explosion\\firestorm\\fx_explosion_firestorm_near_02.wav"
       ],
       "shift": -12,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "unleash_frostlancer",
@@ -1054,7 +1128,8 @@
         "fx\\mag\\destruction\\frostbitedragon\\mag_destruction_forstbitedragon_explosion_01.wav"
       ],
       "shift": -12,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "unleash_stormcaller",
@@ -1071,7 +1146,8 @@
         "fx\\amb\\weather\\thunder\\amb_weather_extrathunder_04.wav"
       ],
       "shift": -12,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "unleash_embermortar",
@@ -1086,7 +1162,8 @@
         "fx\\qst\\hrothgarpushback\\qst_windhrothgarpushback_02.wav"
       ],
       "shift": -12,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "unleash_kagrenac",
@@ -1100,7 +1177,8 @@
         "fx\\mag\\illusion\\charm\\mag_illusion_charm_on_01.wav"
       ],
       "shift": -25,
-      "layer": "unleash_dread"
+      "layer": "unleash_dread",
+      "atten": 9
     },
     {
       "id": "unleash_longshot",
@@ -1114,7 +1192,8 @@
         "fx\\dlc02\\obj\\standingstone\\obj_standing_stone_explode_01_mono.wav"
       ],
       "shift": -10,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "powerup_spawn",
@@ -1128,7 +1207,8 @@
         "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav"
       ],
       "shift": -20,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "powerup_grab",
@@ -1142,7 +1222,8 @@
         "fx\\ui\\enchanting\\ui_enchanting_learneffect_01.wav"
       ],
       "shift": -10,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "event_bloodmoon",
@@ -1154,7 +1235,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "event_fog",
@@ -1166,7 +1248,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "event_ash",
@@ -1178,7 +1261,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "event_champions",
@@ -1190,7 +1274,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "quest_start",
@@ -1204,7 +1289,8 @@
         "fx\\dlc02\\qst\\blackbookrewards\\qst_black_book_open_01.wav"
       ],
       "shift": -15,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "quest_step",
@@ -1218,7 +1304,8 @@
         "fx\\dlc02\\mag\\mag_standingstoneblessing_01.wav"
       ],
       "shift": -12,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "curse_lifted",
@@ -1232,7 +1319,8 @@
         "fx\\qst\\sovengardeportal\\qst_sovengarde_portal_open_01.wav"
       ],
       "shift": -8,
-      "layer": "shout_dragon"
+      "layer": "shout_dragon",
+      "atten": 0
     },
     {
       "id": "ward_lit",
@@ -1246,7 +1334,8 @@
         "fx\\mag\\altars\\mag_altars_blessing_fire_02_2d.wav"
       ],
       "shift": -15,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "nuke",
@@ -1261,7 +1350,8 @@
         "fx\\fx\\explosion\\firestorm\\fx_explosion_firestorm_near_02.wav"
       ],
       "shift": -25,
-      "layer": "shout_dragon"
+      "layer": "shout_dragon",
+      "atten": 0
     },
     {
       "id": "cast_hearth",
@@ -1273,7 +1363,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "unleash_hearth",
@@ -1285,7 +1376,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "cast_gildergreen",
@@ -1297,7 +1389,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "unleash_gildergreen",
@@ -1309,7 +1402,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "cast_lorkhan",
@@ -1321,7 +1415,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "unleash_lorkhan",
@@ -1333,7 +1428,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "cast_arkay",
@@ -1345,7 +1441,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "unleash_arkay",
@@ -1357,7 +1454,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "cast_mirestaff",
@@ -1369,7 +1467,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "unleash_mirestaff",
@@ -1381,7 +1480,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "cast_magnus",
@@ -1393,7 +1493,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "unleash_magnus",
@@ -1405,7 +1506,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "cast_wolfqueen",
@@ -1417,7 +1519,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "unleash_wolfqueen",
@@ -1429,7 +1532,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "cast_ysgramor",
@@ -1441,7 +1545,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "unleash_ysgramor",
@@ -1453,7 +1558,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "cast_nightingale",
@@ -1465,7 +1571,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "unleash_nightingale",
@@ -1477,7 +1584,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "cast_nightmare",
@@ -1489,7 +1597,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "unleash_nightmare",
@@ -1501,7 +1610,8 @@
       "verify": [],
       "files": [],
       "shift": 0,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "unleash_dread",
@@ -1519,7 +1629,8 @@
         "fx\\npc\\dragon\\flightroar\\npc_dragon_flightroar_05.wav"
       ],
       "shift": -22,
-      "layer": "none"
+      "layer": "none",
+      "atten": 9
     },
     {
       "id": "shout_ember",
@@ -1534,7 +1645,8 @@
         "fx\\fx\\explosion\\firestorm\\fx_explosion_firestorm_near_02.wav"
       ],
       "shift": -10,
-      "layer": "shout_roar"
+      "layer": "shout_roar",
+      "atten": 5
     },
     {
       "id": "shout_gale",
@@ -1549,7 +1661,8 @@
         "fx\\qst\\hrothgarpushback\\qst_windhrothgarpushback_02.wav"
       ],
       "shift": -8,
-      "layer": "shout_roar"
+      "layer": "shout_roar",
+      "atten": 5
     },
     {
       "id": "shout_wail",
@@ -1563,7 +1676,8 @@
         "fx\\npc\\wisp\\npc_wisp_ambush.wav"
       ],
       "shift": -20,
-      "layer": "shout_roar"
+      "layer": "shout_roar",
+      "atten": 5
     },
     {
       "id": "shout_rime",
@@ -1577,7 +1691,8 @@
         "fx\\mag\\destruction\\frostbitedragon\\mag_destruction_forstbitedragon_explosion_01.wav"
       ],
       "shift": -10,
-      "layer": "shout_roar"
+      "layer": "shout_roar",
+      "atten": 5
     },
     {
       "id": "shout_quake",
@@ -1591,7 +1706,8 @@
         "fx\\npc\\dragon\\landcrash\\long\\npc_dragon_landcrash_long.wav"
       ],
       "shift": -15,
-      "layer": "shout_roar"
+      "layer": "shout_roar",
+      "atten": 5
     },
     {
       "id": "shout_shroud",
@@ -1605,7 +1721,8 @@
         "fx\\mag\\illusion\\invisibility\\mag_illusion_invisibility_in.wav"
       ],
       "shift": -25,
-      "layer": "shout_roar"
+      "layer": "shout_roar",
+      "atten": 5
     },
     {
       "id": "shout_toll",
@@ -1619,7 +1736,8 @@
         "fx\\dlc01\\qst\\stonetombserana\\qst_serana_tomb_puzzle_solve_01.wav"
       ],
       "shift": -20,
-      "layer": "shout_roar"
+      "layer": "shout_roar",
+      "atten": 5
     },
     {
       "id": "shout_mire",
@@ -1635,7 +1753,8 @@
         "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_impact_03.wav"
       ],
       "shift": -18,
-      "layer": "shout_roar"
+      "layer": "shout_roar",
+      "atten": 5
     },
     {
       "id": "shout_dread",
@@ -1650,7 +1769,8 @@
         "fx\\dlc01\\npc\\dogdeathhound\\npc_dogdeathhound_attack_a_02.wav"
       ],
       "shift": -25,
-      "layer": "shout_roar"
+      "layer": "shout_roar",
+      "atten": 5
     },
     {
       "id": "shout_shatter",
@@ -1664,7 +1784,8 @@
         "fx\\dlc02\\obj\\standingstone\\obj_standing_stone_explode_01_mono.wav"
       ],
       "shift": -12,
-      "layer": "shout_roar"
+      "layer": "shout_roar",
+      "atten": 5
     },
     {
       "id": "shout_roar",
@@ -1678,7 +1799,8 @@
         "fx\\voc\\shout\\projectile\\push\\voc_shout_projectile_push.wav"
       ],
       "shift": -20,
-      "layer": "shout_dragon"
+      "layer": "shout_dragon",
+      "atten": 5
     },
     {
       "id": "shout_dragon",
@@ -1696,7 +1818,8 @@
         "fx\\npc\\dragon\\flightroar\\npc_dragon_flightroar_05.wav"
       ],
       "shift": -15,
-      "layer": "none"
+      "layer": "none",
+      "atten": 5
     },
     {
       "id": "wailer_scream",
@@ -1710,7 +1833,8 @@
         "fx\\npc\\wisp\\npc_wisp_ambush.wav"
       ],
       "shift": -28,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "bloater_burst",
@@ -1725,7 +1849,8 @@
         "fx\\dlc02\\fx\\explosion\\fx_explosion_fishman_tentacle_02.wav"
       ],
       "shift": -25,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "grab",
@@ -1740,7 +1865,8 @@
         "fx\\fx\\melee\\clawmedium\\flesh\\fx_melee_clawmedium_flesh_02.wav"
       ],
       "shift": -20,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "forge_ritual",
@@ -1754,7 +1880,8 @@
         "fx\\mag\\altars\\mag_altars_blessing_fire_01_2d.wav"
       ],
       "shift": -20,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
     },
     {
       "id": "night_thunder",
@@ -1771,7 +1898,104 @@
         "fx\\amb\\weather\\thunder\\amb_weather_thunder_distant_04.wav"
       ],
       "shift": -10,
-      "layer": "none"
+      "layer": "none",
+      "atten": 0
+    },
+    {
+      "id": "unleash_spider",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_spider",
+      "file": "fx\\npc\\spriggan\\attack\\npc_spriggan_attack_a_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\npc\\spriggan\\attack\\npc_spriggan_attack_a_01.wav",
+        "fx\\npc\\spriggan\\attack\\npc_spriggan_attack_a_02.wav"
+      ],
+      "shift": -10,
+      "layer": "none",
+      "atten": 9
+    },
+    {
+      "id": "unleash_drill",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_drill",
+      "file": "fx\\dlc01\\mag\\alteration\\mag_alteration_vampiredrainrelease_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\dlc01\\mag\\alteration\\mag_alteration_vampiredrainrelease_01.wav"
+      ],
+      "shift": -15,
+      "layer": "unleash_dread",
+      "atten": 9
+    },
+    {
+      "id": "unleash_steampump",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_steampump",
+      "file": "fx\\phy\\body\\bones\\phy_body_bones_h_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\phy\\body\\bones\\phy_body_bones_h_01.wav",
+        "fx\\phy\\body\\bones\\phy_body_bones_h_02.wav",
+        "fx\\phy\\body\\bones\\phy_body_bones_h_03.wav"
+      ],
+      "shift": -20,
+      "layer": "cast_heavy",
+      "atten": 9
+    },
+    {
+      "id": "unleash_marksman",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_marksman",
+      "file": "fx\\dlc01\\qst\\moondial\\qst_moon_dial_crest_activate_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\dlc01\\qst\\moondial\\qst_moon_dial_crest_activate_01.wav",
+        "fx\\dlc01\\qst\\moondial\\qst_moon_dial_crest_activate_02.wav",
+        "fx\\dlc01\\qst\\moondial\\qst_moon_dial_crest_activate_03.wav"
+      ],
+      "shift": -10,
+      "layer": "none",
+      "atten": 9
+    },
+    {
+      "id": "unleash_wabbajack",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_wabbajack",
+      "file": "fx\\dlc02\\obj\\bloodskalpuzzle\\obj_bloodskal_puzzle_energy_rise_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\obj\\bloodskalpuzzle\\obj_bloodskal_puzzle_energy_rise_01.wav"
+      ],
+      "shift": -15,
+      "layer": "none",
+      "atten": 9
+    },
+    {
+      "id": "unleash_skyforgearc",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_skyforgearc",
+      "file": "fx\\mag\\shock\\ff\\mag_shock_ff_fire_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\mag\\shock\\ff\\mag_shock_ff_fire_01.wav",
+        "fx\\mag\\shock\\ff\\mag_shock_ff_fire_02.wav"
+      ],
+      "shift": -25,
+      "layer": "night_thunder",
+      "atten": 9
     }
   ]
 }

@@ -1,97 +1,97 @@
 {
- "sheet": "layout",
- "about": "Station stand (tools/stand.py): one stone platform carries everything. Back row (+y): Brew Machine, Sheogorath's Coffer, Atronach Reforge; front row (-y, where you walk up): wall-buy cases. All face -y. The stand itself is dressing on the Coffer (dressing.stand). Positions relative to the platform centre.",
- "columns": [
-  "id",
-  "x",
-  "y",
-  "faceDeg",
-  "verify"
- ],
- "rows": [
-  {
-   "id": "box",
-   "x": -80,
-   "y": 70,
-   "faceDeg": 180,
-   "verify": []
-  },
-  {
-   "id": "brew",
-   "x": -235,
-   "y": 70,
-   "faceDeg": 180,
-   "verify": []
-  },
-  {
-   "id": "ammo",
-   "x": 0,
-   "y": 0,
-   "faceDeg": 180,
-   "verify": []
-  },
-  {
-   "id": "forge",
-   "x": 165,
-   "y": 70,
-   "faceDeg": 180,
-   "verify": []
-  },
-  {
-   "id": "wall_0",
-   "x": -200,
-   "y": -120,
-   "faceDeg": 180,
-   "verify": []
-  },
-  {
-   "id": "wall_1",
-   "x": 200,
-   "y": -120,
-   "faceDeg": 180,
-   "verify": []
-  },
-  {
-   "id": "wall_2",
-   "x": 0,
-   "y": -150,
-   "faceDeg": 180,
-   "verify": []
-  },
-  {
-   "id": "relic",
-   "x": 0,
-   "y": -70,
-   "faceDeg": 180,
-   "verify": []
+  "sheet": "layout",
+  "about": "Station stand (tools/stand.py): an open eight-sided dais you walk up to from every side, a rune-stone at its heart. The Coffer, the Atronach Reforge, the Brew Machine and the Shrine of the Dirge stand round the stone, backs to it, each facing out to its own side (faceDeg). The stand itself is dressing on the Coffer (dressing.stand). Positions relative to the dais centre; the old wall-buy slots are retired.",
+  "columns": [
+    "id",
+    "x",
+    "y",
+    "faceDeg",
+    "verify"
+  ],
+  "rows": [
+    {
+      "id": "box",
+      "x": 0,
+      "y": 0,
+      "faceDeg": 0,
+      "verify": []
+    },
+    {
+      "id": "brew",
+      "x": 175,
+      "y": 0,
+      "faceDeg": 90,
+      "verify": []
+    },
+    {
+      "id": "ammo",
+      "x": 0,
+      "y": 0,
+      "faceDeg": 180,
+      "verify": []
+    },
+    {
+      "id": "forge",
+      "x": 0,
+      "y": 175,
+      "faceDeg": 0,
+      "verify": []
+    },
+    {
+      "id": "wall_0",
+      "x": -200,
+      "y": -120,
+      "faceDeg": 180,
+      "verify": []
+    },
+    {
+      "id": "wall_1",
+      "x": 200,
+      "y": -120,
+      "faceDeg": 180,
+      "verify": []
+    },
+    {
+      "id": "wall_2",
+      "x": 0,
+      "y": -150,
+      "faceDeg": 180,
+      "verify": []
+    },
+    {
+      "id": "relic",
+      "x": -175,
+      "y": 0,
+      "faceDeg": 270,
+      "verify": []
+    }
+  ],
+  "search": {
+    "distances": [
+      1500,
+      1800,
+      2100,
+      2400,
+      2700,
+      3000,
+      3300,
+      3600,
+      3900,
+      4200
+    ],
+    "angles": 12,
+    "yawsDeg": [
+      0,
+      45,
+      90,
+      135
+    ],
+    "snapTolerance": 70,
+    "maxHeightSpread": 70,
+    "sweepRadius": 5400,
+    "doorClearance": 900,
+    "buildingClearance": 900,
+    "clutterClearance": 120,
+    "maxSlope": 30
   }
- ],
- "search": {
-  "distances": [
-   1500,
-   1800,
-   2100,
-   2400,
-   2700,
-   3000,
-   3300,
-   3600,
-   3900,
-   4200
-  ],
-  "angles": 12,
-  "yawsDeg": [
-   0,
-   45,
-   90,
-   135
-  ],
-  "snapTolerance": 70,
-  "maxHeightSpread": 70,
-  "sweepRadius": 5400,
-  "doorClearance": 900,
-  "buildingClearance": 900,
-  "clutterClearance": 120,
-  "maxSlope": 30
- }
 }

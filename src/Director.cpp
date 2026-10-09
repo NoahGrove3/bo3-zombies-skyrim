@@ -1026,6 +1026,7 @@ namespace bo3z
 			}
 			g_corpses.clear();
 			g_settle.clear();
+			Undead::Reset();  // no mind outlives the night (they reached for people while disabled)
 			if (g_phase == Phase::Fighting) {
 				// Dawn ends the round: one more night survived (one more tally on the board).
 				Save::Set(gen::kAV_round, g_current);
@@ -1155,19 +1156,14 @@ namespace bo3z
 					// Chain Hook: from mid range it hurls a chain and drags you into scythe reach
 					if (s.hookWind >= 0) {
 						if ((s.hookWind -= a_delta) < 0 && dist > 300.0f && dist < 1300.0f && !a_player->IsDead()) {
-							const auto ap = a->GetPosition(), pp = a_player->GetPosition();
-							RE::NiPoint3 to = ap - pp;
-							to.z = 0;
-							const float d = to.Length();
-							to.Unitize();
-							RE::NiPoint3 land = OnGround(pp + to * std::max(0.0f, d - 190.0f));
-							land.z += 10.0f;
-							a_player->SetPosition(land, true);
+							// the chain bites and staggers - it no longer drags you (it pulled people through bridges)
+							const RE::NiPoint3 land = a_player->GetPosition();
+							Director::HurtPlayer(0.08f, true);
 							a_player->SetGraphVariableFloat("staggerMagnitude", 0.5f);
 							a_player->NotifyAnimationGraph("staggerStart");
 							Gun::FxBlast("dark", land + RE::NiPoint3{ 0, 0, 60 });
 							Forms::PlayAt(gen::Sound::knife, a.get());
-							Hud::Banner("HOOKED", 0.9f);
+							Hud::Banner("CHAINED", 0.9f);
 							s.ability = std::min(s.ability, 0.6f);  // and the scythe comes right after
 						}
 					} else if ((s.hook -= a_delta) <= 0 && dist > 420.0f && dist < 1100.0f) {

@@ -19,12 +19,12 @@
     },
     {
       "id": "box",
-      "text": "Sheogorath's Coffer",
+      "text": "The Shrine of the Dirge",
       "verify": []
     },
     {
       "id": "box_short",
-      "text": "The Coffer",
+      "text": "The shrine",
       "verify": []
     },
     {

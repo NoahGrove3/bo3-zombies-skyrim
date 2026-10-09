@@ -167,7 +167,7 @@ for s in S['sounds']['rows']:
     tpl = 'sndr_3d' if s['space'] == '3d' else 'sndr_ui'
     files = s.get('files') or [s['file']]
     # Skyrim's own effects pitched down (frequency shift, percent) with a touch of variance; ours as they are
-    bnam = struct.pack('<bBBBH', int(s.get('shift', 0)), 4 if s.get('files') else 0, 128, 0, 0)
+    bnam = struct.pack('<bBBBH', int(s.get('shift', 0)), 4 if s.get('files') else 0, 128, 0, int(float(s.get('atten', 0)) * 100))  # static attenuation in dB*100
     recs['SNDR'].append(record('SNDR', fid('SNDR', s['id']), [
         sub('EDID', z(s['editorId'])), sub('CNAM', tsub(tpl, 'CNAM')), sub('GNAM', tsub(tpl, 'GNAM'))] +
         [sub('ANAM', z(fl)) for fl in files] + [sub('ONAM', tsub(tpl, 'ONAM')), sub('LNAM', tsub(tpl, 'LNAM')), sub('BNAM', bnam)]))

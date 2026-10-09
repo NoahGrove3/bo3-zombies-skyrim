@@ -450,7 +450,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							const ImU32 nc = ol > 0 ? IM_COL32((fc >> 24) & 0xFF, (fc >> 16) & 0xFF, (fc >> 8) & 0xFF, 255) : IM_COL32(210, 202, 186, 255);
 							Txt(dl, g_title, 16 * k, { c0.x + 30 * k, c0.y + 14 * k }, Fade(nc, 0.9f * al), std::string(gen::kGuns[og].label));
 						} else {
-							Txt(dl, g_body, 15 * k, { c0.x + 30 * k, c0.y + 15 * k }, Fade(IM_COL32(140, 136, 128, 255), al), "empty - a spell from the Coffer");
+							Txt(dl, g_body, 15 * k, { c0.x + 30 * k, c0.y + 15 * k }, Fade(IM_COL32(140, 136, 128, 255), al), "empty - call a spell at the shrine");
 						}
 					}
 					if (s.slotCount > 1) {
@@ -630,57 +630,165 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 
-			// Brew machine menu: a tall iron-framed cabinet of medallions.
+			// The shrine's menu: docked at the right edge and see-through (the dead keep coming while it is open),
+			// every choice one key away. Its roll is drawn here too, and a small strip under the crosshair while the
+			// menu is closed.
+			const auto spellCol = [](int g, float a) {
+				const std::uint32_t c = g >= 0 ? gen::kGuns[g].color : 0xC8A060;
+				return IM_COL32((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF, static_cast<int>(255 * std::clamp(a, 0.0f, 1.0f)));
+			};
+			const auto rollOrb = [&](ImVec2 c, float R) {  // the roll: a ring that fills, then the spells flicker past, then the one it chose
+				const ImU32 rc = s.rollPhase >= 2 ? spellCol(s.rollGun, 1.0f) : IM_COL32(170, 110, 255, 255);
+				dl->AddCircleFilled(c, R, IM_COL32(8, 6, 10, 200), 48);
+				dl->AddCircle(c, R, Fade(kGold, 0.55f), 48, 1.5f * k);
+				if (s.rollPhase == 1) {  // gathering: the ring fills and the light swells
+					dl->PathArcTo(c, R - 4 * k, -RE::NI_PI / 2, -RE::NI_PI / 2 + 2 * RE::NI_PI * s.rollT, 48);
+					dl->PathStroke(rc, 0, 4 * k);
+					dl->AddCircleFilled(c, R * 0.55f * s.rollT, Fade(rc, 0.35f + 0.3f * std::sin(now * 18.0f)), 32);
+				} else if (s.rollPhase >= 2) {
+					const float spin = s.rollPhase == 2 ? now * (9.0f - 7.0f * s.rollT) : now * 0.8f;
+					for (int q = 0; q < 6; ++q) {  // runes turning round the rim
+						const float a = spin + q * RE::NI_PI / 3.0f;
+						dl->AddCircleFilled({ c.x + std::cos(a) * (R - 5 * k), c.y + std::sin(a) * (R - 5 * k) }, 2.6f * k, rc, 8);
+					}
+					dl->AddCircleFilled(c, R * 0.82f, Fade(rc, 0.16f), 40);
+					if (auto* icon = s.rollGun >= 0 ? g_weaponIcons[s.rollGun] : nullptr) {
+						const float ih = R * 1.5f, iw = ih * 512.0f / 192.0f;  // the sigil end of the strip sits in the orb
+						const float pop = s.rollPhase == 3 ? 1.0f + 0.05f * std::sin(now * 4.0f) : 1.0f;
+						dl->PushClipRect({ c.x - R * 0.85f, c.y - R * 0.85f }, { c.x + R * 0.85f, c.y + R * 0.85f }, true);
+						dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { c.x - ih * 0.5f * pop, c.y - ih * 0.5f * pop }, { c.x - ih * 0.5f * pop + iw * pop, c.y + ih * 0.5f * pop }, { 0, 0 }, { 1, 1 });
+						dl->PopClipRect();
+					}
+					if (s.rollPhase == 3) {  // the time left to take it
+						dl->PathArcTo(c, R + 4 * k, -RE::NI_PI / 2, -RE::NI_PI / 2 + 2 * RE::NI_PI * (1.0f - s.rollT), 48);
+						dl->PathStroke(Fade(rc, 0.9f), 0, 3 * k);
+					}
+				} else {
+					dl->AddCircle(c, R * 0.6f, Fade(IM_COL32(170, 110, 255, 255), 0.35f + 0.15f * std::sin(now * 2.0f)), 6, 1.5f * k);  // a sleeping hexagram
+					dl->AddCircle(c, R * 0.35f, Fade(kGold, 0.35f), 32, 1.0f * k);
+				}
+			};
+			const auto keyCap = [&](ImVec2 at, const std::string& key, bool live) {
+				const ImVec2 kb{ at.x + 26 * k, at.y + 26 * k };
+				dl->AddRectFilled(at, kb, live ? IM_COL32(60, 30, 18, 230) : IM_COL32(26, 22, 20, 210), 3 * k);
+				dl->AddRect(at, kb, live ? kGold : kGoldDim, 3 * k, 0, 1.2f * k);
+				TxtC(dl, g_num, 17 * k, at.x + 13 * k, at.y + 3 * k, live ? kParch : IM_COL32(150, 140, 125, 255), key);
+			};
 			if (s.perkMenu) {
-				const float w = 640 * k, rowH = 70 * k, h = 170 * k + rowH * gen::kPerks.size();
-				const ImVec2 a{ size.x * 0.5f - w / 2, std::max(20 * k, size.y * 0.5f - h / 2) }, b{ a.x + w, a.y + h };
-				dl->AddRectFilledMultiColor({ 0, 0 }, size, IM_COL32(0, 0, 0, 170), IM_COL32(0, 0, 0, 170), IM_COL32(20, 0, 0, 190), IM_COL32(20, 0, 0, 190));
-				Panel(dl, a, b, k);
-				TxtC(dl, g_title, 38 * k, size.x * 0.5f, a.y + 22 * k, IM_COL32(232, 214, 176, 255), "THE BREW MACHINE", 3 * k, IM_COL32(255, 120, 40, 255));
-				TxtC(dl, g_body, 18 * k, size.x * 0.5f, a.y + 66 * k, IM_COL32(190, 170, 140, 220), "Drink deep. The dead do not tire, and neither shall you.");
-				Divider(dl, size.x * 0.5f, a.y + 98 * k, w * 0.42f, k);
-				int owned = 0;
-				for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
-					owned += (s.perks >> i) & 1;
+				const float w = 470 * k;
+				const bool  shout = s.shrineShout >= 0 && s.shrineShout < static_cast<int>(gen::kShouts.size());
+				const float h = (shout ? 590 : 512) * k;
+				const ImVec2 a{ size.x - w - 36 * k, std::max(24 * k, size.y * 0.5f - h * 0.5f - 30 * k) }, b{ a.x + w, a.y + h };
+				Panel(dl, a, b, k, 0.92f);
+				const float cx = (a.x + b.x) * 0.5f;
+				TxtC(dl, g_title, 27 * k, cx, a.y + 16 * k, IM_COL32(232, 214, 176, 255), "SHRINE OF THE DIRGE", 2.5f * k, IM_COL32(150, 70, 255, 255));
+				Divider(dl, cx, a.y + 54 * k, w * 0.38f, k);
+				float y = a.y + 68 * k;
+				const float L = a.x + 20 * k, Rr = b.x - 20 * k;
+				auto price = [&](float py, int cost, bool can) {
+					const std::string pr = std::to_string(cost);
+					const float pw = Measure(g_num, 21 * k, pr).x;
+					const ImU32 pc = can ? IM_COL32(236, 196, 112, 255) : IM_COL32(190, 70, 56, 255);
+					Txt(dl, g_num, 21 * k, { Rr - pw, py }, pc, pr);
+					const ImVec2 coin{ Rr - pw - 13 * k, py + 12 * k };
+					dl->AddCircleFilled(coin, 7 * k, Fade(pc, 0.9f));
+					dl->AddCircle(coin, 4.5f * k, IM_COL32(60, 40, 20, 200), 0, 1.3f * k);
+				};
+				// [1] roll a spell
+				{
+					const float R = 46 * k;
+					rollOrb({ L + R, y + R + 4 * k }, R);
+					const float tx = L + 2 * R + 16 * k;
+					keyCap({ tx, y + 4 * k }, "1", s.rollPhase == 0);
+					Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? "CALL A SPELL" : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? "THE SPELLS TURN..." : std::string(gen::kGuns[std::max(0, s.rollGun)].label));
+					Txt(dl, g_body, 17 * k, { tx, y + 38 * k }, IM_COL32(196, 182, 160, 235),
+						s.rollPhase == 3 ? "Activate the shrine to take it" : "Every spell you lack has an equal chance");
+					if (s.rollPhase == 0) {
+						price(y + 66 * k, s.rollCost, s.points >= s.rollCost);
+					}
+					y += 2 * R + 22 * k;
 				}
-				for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
-					const auto& p = gen::kPerks[i];
-					const float y = a.y + 112 * k + i * rowH;
-					const bool  sel = i == s.perkSel, have = (s.perks >> i) & 1;
-					const bool  afford = s.points >= p.cost;
-					const ImVec2 r0{ a.x + 22 * k, y }, r1{ b.x - 22 * k, y + rowH - 8 * k };
-					if (sel) {  // an ember glow behind the chosen brew
-						dl->AddRectFilledMultiColor(r0, r1, IM_COL32(150, 40, 20, 120), IM_COL32(60, 16, 8, 30), IM_COL32(60, 16, 8, 30), IM_COL32(150, 40, 20, 120));
-						dl->AddRectFilled(r0, { r0.x + 4 * k, r1.y }, IM_COL32(230, 90, 40, 255));
-						dl->AddLine({ r0.x, r1.y }, r1, kGoldDim, 1.0f * k);
+				Divider(dl, cx, y, w * 0.30f, k, 0.6f);
+				y += 14 * k;
+				// [2] reforge the spell in hand
+				{
+					const int  act = s.activeSlot >= 0 && s.activeSlot < s.slotCount ? s.activeSlot : -1;
+					const int  g = act >= 0 ? s.slotGun[act] : -1;
+					const int  lvl = act >= 0 ? std::clamp(s.slotLevel[act], 0, gen::kForgeMax) : 0;
+					const bool can = g >= 0 && lvl < gen::kForgeMax;
+					keyCap({ L, y + 2 * k }, "2", can);
+					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "REFORGE");
+					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235),
+						g < 0 ? "Hold a spell to reforge it" : std::string(gen::kGuns[g].label) + (lvl >= gen::kForgeMax ? "  -  ascended" : "  -  more power, and its signature grows"));
+					for (int q = 0; q < gen::kForgeMax; ++q) {  // the forge marks
+						const ImVec2 pc{ L + 150 * k + q * 18 * k, y + 14 * k };
+						dl->AddQuadFilled({ pc.x, pc.y - 6 * k }, { pc.x + 5 * k, pc.y }, { pc.x, pc.y + 6 * k }, { pc.x - 5 * k, pc.y }, q < lvl ? spellCol(g, 1.0f) : IM_COL32(60, 52, 46, 220));
 					}
-					const float d = 54 * k;
-					if (auto* icon = g_perkIcons[i]) {
-						const float pulse = sel ? 1.0f + 0.04f * std::sin(now * 4) : 1.0f;
-						const ImVec2 c{ r0.x + 16 * k + d / 2, y + (rowH - 8 * k) / 2 };
-						dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { c.x - d / 2 * pulse, c.y - d / 2 * pulse }, { c.x + d / 2 * pulse, c.y + d / 2 * pulse }, { 0, 0 }, { 1, 1 },
-							have ? IM_COL32(150, 150, 150, 150) : IM_COL32(255, 255, 255, 255));
+					if (can) {
+						price(y + 2 * k, gen::kForgeCost[lvl], s.points >= gen::kForgeCost[lvl]);
 					}
-					const float tx = r0.x + 30 * k + d;
-					const ImU32 nameCol = have ? IM_COL32(130, 124, 112, 255) : (sel ? IM_COL32(250, 236, 205, 255) : IM_COL32(222, 208, 180, 255));
-					Txt(dl, g_title, 22 * k, { tx, y + 6 * k }, nameCol, std::string(p.label));
-					Txt(dl, g_body, 18 * k, { tx, y + 34 * k }, IM_COL32(190, 178, 156, have ? 130 : 235), std::string(gen::kPerkDesc[i]));
+					y += 64 * k;
+				}
+				Divider(dl, cx, y, w * 0.30f, k, 0.6f);
+				y += 14 * k;
+				// [3] brews: a row of medallions, the chosen one described under it
+				{
+					const int n = static_cast<int>(gen::kPerks.size());
+					int owned = 0;
+					for (int q = 0; q < n; ++q) {
+						owned += (s.perks >> q) & 1;
+					}
+					const int  sel = std::clamp(s.perkSel, 0, n - 1);
+					const auto& p = gen::kPerks[sel];
+					const bool have = (s.perks >> sel) & 1;
+					keyCap({ L, y + 2 * k }, "3", !have);
+					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "DRINK A BREW");
+					Txt(dl, g_body, 16 * k, { Rr - Measure(g_body, 16 * k, std::to_string(owned) + " of " + std::to_string(gen::kMaxPerks)).x, y + 6 * k }, IM_COL32(170, 156, 132, 220), std::to_string(owned) + " of " + std::to_string(gen::kMaxPerks));
+					y += 36 * k;
+					const float d = std::min(44 * k, (Rr - L) / n - 4 * k), gap = ((Rr - L) - d * n) / std::max(1, n - 1);
+					for (int q = 0; q < n; ++q) {
+						const ImVec2 c{ L + d * 0.5f + q * (d + gap), y + d * 0.5f };
+						const bool   on = q == sel, drunk = (s.perks >> q) & 1;
+						if (on) {
+							dl->AddCircleFilled(c, d * 0.62f, IM_COL32(200, 80, 30, 90), 32);
+							dl->AddCircle(c, d * 0.62f, kGold, 32, 2.0f * k);
+						}
+						if (auto* icon = g_perkIcons[q]) {
+							const float r = d * 0.5f * (on ? 1.08f : 1.0f);
+							dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { c.x - r, c.y - r }, { c.x + r, c.y + r }, { 0, 0 }, { 1, 1 }, drunk ? IM_COL32(120, 120, 120, 150) : IM_COL32(255, 255, 255, on ? 255 : 200));
+						}
+					}
+					y += d + 12 * k;
+					Txt(dl, g_title, 19 * k, { L, y }, have ? IM_COL32(130, 124, 112, 255) : IM_COL32(250, 236, 205, 255), std::string(p.label));
 					if (have) {
-						const std::string st = "DRUNK";
-						Txt(dl, g_title, 18 * k, { r1.x - 14 * k - Measure(g_title, 18 * k, st).x, y + 20 * k }, IM_COL32(120, 170, 110, 220), st);
+						Txt(dl, g_title, 17 * k, { Rr - Measure(g_title, 17 * k, "DRUNK").x, y + 2 * k }, IM_COL32(120, 170, 110, 220), "DRUNK");
 					} else {
-						const std::string price = std::to_string(p.cost);
-						const float       pw = Measure(g_num, 24 * k, price).x;
-						const ImU32       pc = afford ? IM_COL32(236, 196, 112, 255) : IM_COL32(190, 70, 56, 255);
-						Txt(dl, g_num, 24 * k, { r1.x - 14 * k - pw, y + 14 * k }, pc, price);
-						const ImVec2 coin{ r1.x - 30 * k - pw, y + 30 * k };  // a septim
-						dl->AddCircleFilled(coin, 8 * k, Fade(pc, 0.9f));
-						dl->AddCircle(coin, 5 * k, IM_COL32(60, 40, 20, 200), 0, 1.4f * k);
+						price(y, p.cost, s.points >= p.cost);
 					}
+					Txt(dl, g_body, 16 * k, { L, y + 28 * k }, IM_COL32(190, 178, 156, have ? 130 : 230), std::string(gen::kPerkDesc[sel]));
+					y += 58 * k;
 				}
-				Divider(dl, size.x * 0.5f, b.y - 52 * k, w * 0.42f, k, 0.7f);
-				const std::string foot = "Select and Activate to drink   \xC2\xB7   Tab / B to leave   \xC2\xB7   " + std::to_string(owned) + " of " + std::to_string(gen::kMaxPerks) + " brews";
-				TxtC(dl, g_body, 18 * k, size.x * 0.5f, b.y - 40 * k, IM_COL32(200, 186, 160, 220), foot);
+				// [4] the freed city's Thu'um
+				if (shout) {
+					const auto& sh = gen::kShouts[s.shrineShout];
+					const ImU32 scol = IM_COL32((sh.color >> 16) & 0xFF, (sh.color >> 8) & 0xFF, sh.color & 0xFF, 255);
+					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
+					y += 14 * k;
+					keyCap({ L, y + 2 * k }, "4", true);
+					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, scol, "LEARN THE THU'UM: " + std::string(sh.label), 1.5f * k, scol);
+					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(210, 196, 170, 235), std::string(sh.w1) + "  " + std::string(sh.w2) + "  " + std::string(sh.w3) + "  -  freely given");
+					y += 64 * k;
+				}
+				Divider(dl, cx, b.y - 58 * k, w * 0.38f, k, 0.7f);
+				TxtC(dl, g_body, 16 * k, cx, b.y - 48 * k, IM_COL32(200, 186, 160, 225), "Wheel or Left / Right: choose a brew   \xC2\xB7   E or Backspace leave");
+				TxtC(dl, g_body, 15 * k, cx, b.y - 27 * k, IM_COL32(160, 148, 128, 200), "Pad: X call  \xC2\xB7  Y reforge  \xC2\xB7  A drink  \xC2\xB7  D-pad choose / up Thu'um  \xC2\xB7  B leave");
+			} else if (s.rollPhase > 0) {
+				// the roll with the menu closed: a small strip under the crosshair
+				const float R = 30 * k;
+				const ImVec2 c{ size.x * 0.5f - 90 * k, size.y * 0.5f + 150 * k };
+				rollOrb(c, R);
+				const std::string t = s.rollPhase == 1 ? "The shrine gathers..." : s.rollPhase == 2 ? "The spells turn..." : std::string(gen::kGuns[std::max(0, s.rollGun)].label) + "  -  take it at the shrine";
+				Txt(dl, g_title, 19 * k, { c.x + R + 12 * k, c.y - 12 * k }, s.rollPhase == 3 ? spellCol(s.rollGun, 1.0f) : kParch, t, 1.5f * k, IM_COL32(0, 0, 0, 255));
 			}
 		}
 

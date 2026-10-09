@@ -20,17 +20,19 @@ namespace bo3z
 		std::array<bool, gen::kLocations.size()> g_dressed{};
 		std::vector<Spinner>                     g_spinners;
 
-		// Sheogorath's Coffer show: weapons flicker above the chest, then one is offered for a few seconds.
-		enum class Show { Idle, Spinning, Offering, Cheese };
+		// The shrine's roll: it gathers power (Charging), every spell in the pool flickers over the crown, slowing
+		// (Spinning), then one is held there as a ball of light until you take it (Offering).
+		enum class Show { Idle, Charging, Spinning, Offering };
 		struct ShowState
 		{
 			Show                phase{ Show::Idle };
 			RE::ObjectRefHandle chest, display;
-			int                 gun{ -1 };
-			bool                cheese{ false };
+			int                 gun{ -1 }, shown{ -1 };
 			float               t{ 0 }, step{ 0 };
-			int                 cheeseTown{ 0 }, fromTown{ -1 };
 		} g_show;
+		constexpr float kChargeTime = 1.1f;
+		constexpr float kOrbZ = 236.0f;   // the shrine's crown (tools/shrine.py: the cradle of prongs at z 257)
+		constexpr float kOrbScale = 1.6f;
 
 		RE::NiPoint3 Local(RE::TESObjectREFR* a_ref, float a_x, float a_y, float a_z)
 		{
@@ -104,9 +106,21 @@ namespace bo3z
 			if (!ref) {
 				return;
 			}
-			ref->SetPosition(Local(chest.get(), 0, 0, 40.0f * chest->GetScale() + a_rise));
+			ref->SetPosition(Local(chest.get(), 0, 0, kOrbZ * chest->GetScale() + a_rise));
 			ref->SetAngle({ 0, 0, chest->GetAngleZ() + RE::NI_PI / 2 });
+			ref->SetScale(kOrbScale);
 			g_show.display = ref->CreateRefHandle();
+		}
+
+		std::vector<int> RollPool()
+		{
+			std::vector<int> pool;
+			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
+				if (gen::kGuns[i].boxWeight > 0 && !gen::kGuns[i].retired) {
+					pool.push_back(i);
+				}
+			}
+			return pool;
 		}
 
 		void TickShow(float a_delta)
@@ -122,40 +136,37 @@ namespace bo3z
 				return;
 			}
 			switch (g_show.phase) {
+			case Show::Charging:
+				if (g_show.t >= kChargeTime) {
+					g_show.t = 0;
+					g_show.step = 0;
+					g_show.phase = Show::Spinning;
+					Forms::PlayAt(gen::Sound::coffer_spin, chest.get());
+				}
+				break;
 			case Show::Spinning:
 				{
 					const float k = std::min(1.0f, g_show.t / gen::kShowSpin);
 					if ((g_show.step -= a_delta) <= 0) {
-						g_show.step = 0.07f + 0.30f * k * k;  // flicker slows down like a wheel of fortune
-						std::vector<int> pool;
-						for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
-							if (gen::kGuns[i].boxWeight > 0) {
-								pool.push_back(i);
-							}
+						g_show.step = 0.07f + 0.32f * k * k;  // flickers through the whole pool, slowing like a wheel of fortune
+						const auto pool = RollPool();
+						if (!pool.empty()) {
+							auto it = std::find(pool.begin(), pool.end(), g_show.shown);
+							g_show.shown = it == pool.end() || ++it == pool.end() ? pool.front() : *it;  // in order: every spell passes by
 						}
-						const int pick = pool.empty() ? 0 : pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
-						ShowModel(Forms::Ours(gen::kShowStat[pick]), gen::kShowRise * k);
+						if (g_show.shown >= 0) {
+							ShowModel(Forms::Ours(gen::kShowStat[g_show.shown]), gen::kShowRise * k);
+						}
 					} else if (auto d = g_show.display.get()) {
-						d->SetPosition(Local(chest.get(), 0, 0, 40.0f * chest->GetScale() + gen::kShowRise * k));
+						d->SetPosition(Local(chest.get(), 0, 0, kOrbZ * chest->GetScale() + gen::kShowRise * k));
 					}
 					if (g_show.t >= gen::kShowSpin) {
 						g_show.t = 0;
-						if (g_show.cheese) {
-							ShowModel(Forms::Ours(gen::kShowCheese), gen::kShowRise);
-							if (auto d = g_show.display.get()) {
-								d->SetScale(gen::kSkullScale);
-							}
-							Forms::PlayAt(gen::Sound::coffer_skull, chest.get());
-							Hud::Banner(g_show.cheeseTown == g_show.fromTown ?
-											std::string(gen::kText_box_joke) + " But it knows no other town you have found, so it stays." :
-											std::string(gen::kText_box_joke) + " It has gone to " + std::string(gen::kTowns[g_show.cheeseTown]) + ".",
-								6.0f);
-							g_show.phase = Show::Cheese;
-						} else {
-							ShowModel(Forms::Ours(gen::kShowStat[g_show.gun]), gen::kShowRise);
-							Hud::Banner(std::string(gen::kGuns[g_show.gun].label) + "  -  press Activate on the Coffer to take it", 4.0f);
-							g_show.phase = Show::Offering;
-						}
+						g_show.shown = g_show.gun;
+						ShowModel(Forms::Ours(gen::kShowStat[g_show.gun]), gen::kShowRise);
+						Forms::PlayAt(gen::Sound::charge_ready, chest.get());
+						Hud::Banner(std::string(gen::kGuns[g_show.gun].label) + "  -  Activate the shrine to take it", 4.0f);
+						g_show.phase = Show::Offering;
 					}
 					break;
 				}
@@ -163,17 +174,11 @@ namespace bo3z
 				if (auto d = g_show.display.get()) {
 					auto a = d->GetAngle();
 					d->SetAngle({ 0, 0, a.z + a_delta * 1.2f });
-					d->SetPosition(Local(chest.get(), 0, 0, 40.0f * chest->GetScale() + gen::kShowRise + 4.0f * std::sin(g_show.t * 3.0f)));
+					d->SetPosition(Local(chest.get(), 0, 0, kOrbZ * chest->GetScale() + gen::kShowRise + 4.0f * std::sin(g_show.t * 3.0f)));
 				}
 				if (g_show.t >= gen::kShowOffer) {
 					Remove(g_show.display);
-					Hud::Banner(std::string(gen::kText_box_short) + " took it back.", 2.5f);
-					g_show.phase = Show::Idle;
-				}
-				break;
-			case Show::Cheese:
-				if (g_show.t >= 3.5f) {
-					Remove(g_show.display);
+					Hud::Banner("The shrine took it back.", 2.5f);
 					g_show.phase = Show::Idle;
 				}
 				break;
@@ -187,20 +192,6 @@ namespace bo3z
 			const int town = ((v >> 8) & 0x1F) - 1;
 			return town >= 0 ? town : 0;  // Riverwood first
 		}
-		int  BoxSpins() { return Save::Get(gen::kAV_box) & 0xFF; }
-		void SetBox(int a_town, int a_spins) { Save::Set(gen::kAV_box, ((a_town + 1) << 8) | std::clamp(a_spins, 0, 255)); }
-
-		std::vector<int> BoxTowns()
-		{
-			std::vector<int> t;
-			for (const auto& l : gen::kLocations) {
-				if (gen::kObjects[l.object].kind == 0 && std::find(t.begin(), t.end(), l.town) == t.end()) {
-					t.push_back(l.town);
-				}
-			}
-			return t;
-		}
-
 		// ---- Brew alley layout (sheets: layout, locations) ----
 		// Per town: find open, flat, walkable ground near the map marker for the whole alley, clear out
 		// anything we placed there under an older layout, then place every piece on its slot.
@@ -768,7 +759,8 @@ namespace bo3z
 				}
 				return RE::BSContainer::ForEachResult::kContinue;
 			});
-			want.z = plan.top;  // on the stand
+			const float floorZ = gen::kObjects[loc.object].kind == 0 ? plan.top - kStandLift - 6.0f : plan.top;  // the shrine brings its own dais
+			want.z = floorZ;
 			if (!found) {
 				auto ref = anchor->PlaceObjectAtMe(base, false);
 				if (!ref) {
@@ -779,8 +771,8 @@ namespace bo3z
 				ref->SetAngle({ 0, 0, SlotFacing(plan, loc.slot) });
 				found = ref.get();
 				logger::info("shops: placed {} in {} at ({:.0f},{:.0f},{:.0f})", gen::kObjects[loc.object].id, gen::kTowns[loc.town], want.x, want.y, want.z);
-			} else if (auto pos = found->GetPosition(); std::abs(pos.z - plan.top) > 4.0f) {
-				pos.z = plan.top;  // keep every machine on the stand's floor
+			} else if (auto pos = found->GetPosition(); std::abs(pos.z - floorZ) > 4.0f) {
+				pos.z = floorZ;  // keep every machine on the stand's floor
 				found->SetPosition(pos);
 			}
 			if (std::abs(found->GetScale() - gen::kObjects[loc.object].scale) > 0.01f) {
@@ -854,9 +846,6 @@ namespace bo3z
 		std::string MarkerName(int a_town)
 		{
 			std::string name = std::string(gen::kText_station_marker) + " - " + std::string(gen::kTowns[a_town]);
-			if (a_town == ActiveBoxTown()) {
-				name += " (" + std::string(gen::kText_box_short) + ")";
-			}
 			return name;
 		}
 
@@ -1092,6 +1081,27 @@ namespace bo3z
 					plan.center = { st.x, st.y, st.z };
 					plan.yaw = st.yaw * RE::NI_PI / 180.0f;
 					plan.compact = st.compact;
+					// the one-piece shrine (layout v3): a station built to an older layout here comes down first
+					if (auto* g = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(gen::kStandLayoutGlobal, gen::kPlugin); g && !((static_cast<int>(g->value) >> (16 + t)) & 1)) {
+						int gone = 0;
+						RE::TES::GetSingleton()->ForEachReferenceInRange(anchor, 1200.0f, [&](RE::TESObjectREFR* r) {
+							auto* b = r ? r->GetBaseObject() : nullptr;
+							if (b && IsOurBase(b) && !r->IsDeleted() && b != Forms::Ours(gen::kWardBrazier) && b != Forms::Ours(gen::kWardFire) && b != Forms::Ours(gen::kWardLight)) {
+								r->Disable();
+								r->SetDelete(true);
+								++gone;
+							}
+							return RE::BSContainer::ForEachResult::kContinue;
+						});
+						g->value = static_cast<float>(static_cast<int>(g->value) | (1 << (16 + t)));
+						for (std::size_t i = 0; i < gen::kLocations.size(); ++i) {
+							if (gen::kLocations[i].town == t) {
+								g_placed[i] = {};
+								g_dressed[i] = false;
+							}
+						}
+						logger::info("shops: {} old station taken down for the round shrine ({} pieces)", gen::kTowns[t], gone);
+					}
 					MarkLayout(t);
 					ClearSite(t, anchor);
 					logger::info("shops: {} station at its fixed spot ({:.0f},{:.0f}) yaw {:.0f}", gen::kTowns[t], st.x, st.y, st.yaw);
@@ -1158,71 +1168,57 @@ namespace bo3z
 			return best;
 		}
 
+		// Take the offered spell (Activate on the shrine while it is held over the crown).
+		bool TakeOffer(RE::TESObjectREFR* a_ref)
+		{
+			if (g_show.phase != Show::Offering || g_show.chest.get().get() != a_ref) {
+				return false;
+			}
+			Gun::Give(g_show.gun);
+			Forms::Play(gen::Sound::buy);
+			Hud::Banner(std::string(gen::kGuns[g_show.gun].label), 2.5f);
+			logger::info("shrine: took {}", gen::kGuns[g_show.gun].id);
+			Remove(g_show.display);
+			g_show.phase = Show::Idle;
+			return true;
+		}
+
+		int RollCost()
+		{
+			const int crew = Save::Crew();
+			return PowerUps::FireSale() ? 10 : crew >= 0 && gen::kCrew[crew].passive == 3 ? static_cast<int>(gen::kCrew[crew].value) : gen::kObjects[0].cost;
+		}
+
+		// Roll a spell: every spell you do not carry has the same chance.
 		void SpinBox(RE::TESObjectREFR* a_ref)
 		{
-			if (g_show.phase == Show::Offering && g_show.chest.get().get() == a_ref) {
-				Gun::Give(g_show.gun);
-				Forms::Play(gen::Sound::buy);
-				Hud::Banner(std::string(gen::kGuns[g_show.gun].label), 2.5f);
-				logger::info("box: took {}", gen::kGuns[g_show.gun].id);
-				Remove(g_show.display);
-				g_show.phase = Show::Idle;
+			if (!a_ref || g_show.phase != Show::Idle) {
+				if (g_show.phase != Show::Idle) {
+					Hud::Banner("The shrine is still turning", 1.5f);
+				}
 				return;
 			}
-			if (g_show.phase != Show::Idle) {
-				return;  // the Coffer is busy
+			std::vector<int> pool;
+			for (int i : RollPool()) {
+				if (!Gun::Owns(i)) {
+					pool.push_back(i);
+				}
 			}
-			const int town = TownOf(a_ref);
-			logger::info("box: activated in {} (Coffer is in {}), phase {}", gen::kTowns[town], gen::kTowns[ActiveBoxTown()], static_cast<int>(g_show.phase));
-			if (const auto towns = BoxTowns(); town != ActiveBoxTown() && std::find(towns.begin(), towns.end(), ActiveBoxTown()) != towns.end()) {
-				// one Coffer in all of Skyrim at a time: this chest sleeps until the skull sends it here
-				Forms::PlayAt(gen::Sound::coffer_skull, a_ref);
-				Hud::Banner(std::string(gen::kText_box) + " is in " + std::string(gen::kTowns[ActiveBoxTown()]) + ". This chest sleeps.", 3.5f);
+			if (pool.empty()) {
+				Hud::Banner("You already carry every spell", 2.0f);
 				return;
 			}
-			const int crew = Save::Crew();
-			const int cost = PowerUps::FireSale() ? 10 : crew >= 0 && gen::kCrew[crew].passive == 3 ? static_cast<int>(gen::kCrew[crew].value) : gen::kObjects[0].cost;
+			const int cost = RollCost();
 			if (!Points::Spend(cost)) {
 				return;
 			}
-			Forms::PlayAt(gen::Sound::coffer_open, a_ref);
-			Forms::PlayAt(gen::Sound::coffer_spin, a_ref);
 			g_show = {};
 			g_show.chest = a_ref->CreateRefHandle();
-			g_show.phase = Show::Spinning;
-			const int spins = BoxSpins() + 1;
-			// Cheese wheel (the Coffer gets bored): never in the first 4 spins at a spot, then 1 in 6. Points back.
-			if (spins > 4 && std::uniform_int_distribution<int>(1, 6)(g_rng) == 1) {
-				Points::Add(cost);
-				// the dragon skull: the Coffer leaves for another town (its map icon follows)
-				auto towns = BoxTowns();
-				std::erase(towns, town);
-				std::erase_if(towns, [](int t) { return !TownDiscovered(t); });  // only to stations in cities you have found
-				g_show.cheeseTown = towns.empty() ? town : towns[std::uniform_int_distribution<std::size_t>(0, towns.size() - 1)(g_rng)];
-				g_show.cheese = true;
-				g_show.fromTown = town;
-				SetBox(g_show.cheeseTown, 0);
-				g_markerTimer = 0;  // rename the icons now
-				logger::info("box: cheese, moving to {}", gen::kTowns[g_show.cheeseTown]);
-				return;
-			}
-			SetBox(town, spins);
-			int total = 0;
-			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
-				total += Gun::Owns(i) ? 0 : gen::kGuns[i].boxWeight;
-			}
-			int roll = total > 0 ? std::uniform_int_distribution<int>(1, total)(g_rng) : 0;
-			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
-				const int w = Gun::Owns(i) ? 0 : gen::kGuns[i].boxWeight;
-				if (w > 0 && (roll -= w) <= 0) {
-					g_show.gun = i;
-					logger::info("box: rolling {}", gen::kGuns[i].id);
-					return;
-				}
-			}
-			// Nothing left to give: refund.
-			Points::Add(cost);
-			g_show.phase = Show::Idle;
+			g_show.phase = Show::Charging;
+			g_show.gun = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
+			Forms::PlayAt(gen::Sound::coffer_open, a_ref);
+			Forms::PlayAt(gen::Sound::charge_up, a_ref);
+			logger::info("shrine: rolling {} (1 in {})", gen::kGuns[g_show.gun].id, pool.size());
 		}
 
 		bool                g_menu = false;
@@ -1362,6 +1358,31 @@ namespace bo3z
 
 		std::string BoxTown() { return std::string(gen::kTowns[ActiveBoxTown()]); }
 
+		static bool IsMenuKey(const RE::ButtonEvent* b)
+		{
+			const auto code = b->GetIDCode();
+			switch (b->GetDevice()) {
+			case RE::INPUT_DEVICE::kKeyboard: return (code >= 0x02 && code <= 0x05) || code == 0x12 || code == 0xCB || code == 0xCD || code == 0x0E;
+			case RE::INPUT_DEVICE::kMouse: return code == 8 || code == 9;
+			case RE::INPUT_DEVICE::kGamepad: return code == 0x4000 || code == 0x8000 || code == 0x1000 || code == 0x2000 || code == 0x0001 || code == 0x0004 || code == 0x0008;
+			default: return false;
+			}
+		}
+		// (a key that closed the menu is still eaten a moment after, so Activate does not open it again behind you)
+		std::chrono::steady_clock::time_point g_closedAt{};
+		bool MenuEats(RE::InputEvent* a_event)
+		{
+			auto* b = a_event ? a_event->AsButtonEvent() : nullptr;
+			if (!b || !IsMenuKey(b)) {
+				return false;
+			}
+			return g_menu || std::chrono::steady_clock::now() - g_closedAt < std::chrono::milliseconds(350);
+		}
+
+		// The shrine's keys (the menu never pauses: the dead keep coming, so everything is one press away).
+		// Keyboard: 1 roll a spell, 2 reforge, 3 drink the chosen brew, 4 learn the city's Thu'um, mouse wheel or
+		// Left/Right picks a brew, Activate (E) or Backspace leaves; walking away closes it too.
+		// Gamepad: X roll, Y reforge, A drink, D-pad left/right pick, D-pad up Thu'um, B leave.
 		bool OnButton(const RE::ButtonEvent* a_event)
 		{
 			if (!g_menu || !a_event || !a_event->IsDown()) {
@@ -1370,34 +1391,59 @@ namespace bo3z
 			const auto code = a_event->GetIDCode();
 			const auto dev = a_event->GetDevice();
 			const int  n = static_cast<int>(gen::kPerks.size());
-			if (dev == RE::INPUT_DEVICE::kKeyboard) {
-				if (code >= 0x02 && code < 0x02 + static_cast<std::uint32_t>(n)) {  // 1..9
-					g_sel = static_cast<int>(code - 0x02);
-					BuyPerk(g_sel, g_menuRef.get().get());
-				} else if (code == 0xC8) {
-					g_sel = (g_sel + n - 1) % n;
-				} else if (code == 0xD0) {
-					g_sel = (g_sel + 1) % n;
-				} else if (code == 0x1C) {
-					BuyPerk(g_sel, g_menuRef.get().get());
-				} else if (code == 0x0F || code == 0x0E) {
+			auto*      ref = g_menuRef.get().get();
+			auto act = [&](int a) {
+				switch (a) {
+				case 0:
+					if (!TakeOffer(ref)) {
+						SpinBox(ref);
+					}
+					break;
+				case 1:
+					if (Gun::Reforge() && ref) {
+						Forms::PlayAt(gen::Sound::forge_upgrade, ref);
+					}
+					break;
+				case 2: BuyPerk(g_sel, ref); break;
+				case 3: Curse::ClaimRelic(ref ? TownOf(ref) : -1); break;
+				case 4:
 					g_menu = false;
-				} else {
-					return false;
+					g_closedAt = std::chrono::steady_clock::now();
+					break;
 				}
-				return true;
+			};
+			if (dev == RE::INPUT_DEVICE::kKeyboard) {
+				switch (code) {
+				case 0x02: act(0); return true;                 // 1
+				case 0x03: act(1); return true;                 // 2
+				case 0x04: act(2); return true;                 // 3
+				case 0x05: act(3); return true;                 // 4
+				case 0xCB: g_sel = (g_sel + n - 1) % n; return true;  // left arrow
+				case 0xCD: g_sel = (g_sel + 1) % n; return true;      // right arrow
+				case 0x0E: act(4); return true;                 // backspace
+				case 0x12:                                      // E (Activate): takes a waiting spell, else leaves
+					if (!TakeOffer(ref)) {
+						act(4);
+					}
+					return true;
+				default: return false;
+				}
 			}
 			if (dev == RE::INPUT_DEVICE::kMouse && (code == 8 || code == 9)) {
 				g_sel = (g_sel + (code == 8 ? n - 1 : 1)) % n;
 				return true;
 			}
 			if (dev == RE::INPUT_DEVICE::kGamepad) {
-				if (code == 0x0001) g_sel = (g_sel + n - 1) % n;       // dpad up
-				else if (code == 0x0002) g_sel = (g_sel + 1) % n;      // dpad down
-				else if (code == 0x2000) g_menu = false;               // B (PlayStation: circle)
-				else if (code == 0x1000) BuyPerk(g_sel, g_menuRef.get().get());  // A (PlayStation: cross)
-				else return false;
-				return true;
+				switch (code) {
+				case 0x4000: act(0); return true;  // X (square)
+				case 0x8000: act(1); return true;  // Y (triangle)
+				case 0x1000: act(2); return true;  // A (cross)
+				case 0x0001: act(3); return true;  // dpad up
+				case 0x0004: g_sel = (g_sel + n - 1) % n; return true;  // dpad left
+				case 0x0008: g_sel = (g_sel + 1) % n; return true;      // dpad right
+				case 0x2000: act(4); return true;  // B (circle)
+				default: return false;
+				}
 			}
 			return false;
 		}
@@ -1407,14 +1453,25 @@ namespace bo3z
 			if (g_menu) {
 				auto r = g_menuRef.get();
 				auto* player = RE::PlayerCharacter::GetSingleton();
-				if (!r || !player || r->GetPosition().GetDistance(player->GetPosition()) > 300.0f) {
+				if (!r || !player || r->GetPosition().GetDistance(player->GetPosition()) > 420.0f) {
 					g_menu = false;
 				}
 			}
 			{
 				std::scoped_lock l(Hud::Lock());
-				Hud::Edit().perkMenu = g_menu;
-				Hud::Edit().perkSel = g_sel;
+				auto& h = Hud::Edit();
+				h.perkMenu = g_menu;
+				h.perkSel = g_sel;
+				h.rollPhase = static_cast<int>(g_show.phase);
+				h.rollT = g_show.phase == Show::Charging ? std::min(1.0f, g_show.t / kChargeTime) : g_show.phase == Show::Spinning ? std::min(1.0f, g_show.t / gen::kShowSpin) : g_show.phase == Show::Offering ? std::min(1.0f, g_show.t / gen::kShowOffer) : 0.0f;
+				h.rollGun = g_show.phase == Show::Idle || g_show.phase == Show::Charging ? -1 : g_show.shown;
+				h.rollCost = RollCost();
+				h.shrineShout = -1;
+				if (g_menu) {
+					if (auto r = g_menuRef.get()) {
+						h.shrineShout = Curse::ClaimableShout(TownOf(r.get()));
+					}
+				}
 			}
 			for (auto& s : g_spinners) {
 				if (auto r = s.ref.get(); r && r->Is3DLoaded()) {
@@ -1443,7 +1500,19 @@ namespace bo3z
 			const auto& o = gen::kObjects[obj];
 			logger::info("shops: activated {} ({} points)", o.id, Points::Get());
 			switch (o.kind) {
-			case 0: SpinBox(a_ref); break;
+			case 0:  // the shrine: take a waiting spell, else open (or close) its menu
+				if (TakeOffer(a_ref)) {
+					break;
+				}
+				if (g_menu && g_menuRef.get().get() == a_ref) {
+					g_menu = false;
+					g_closedAt = std::chrono::steady_clock::now();
+				} else {
+					g_menu = true;
+					g_menuRef = a_ref->CreateRefHandle();
+					Forms::PlayAt(gen::Sound::coffer_open, a_ref);
+				}
+				break;
 			case 1: BuyPerk(o.ref, a_ref); break;
 			case 4:
 				if (!g_menu) {

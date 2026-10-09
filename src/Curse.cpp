@@ -352,7 +352,7 @@ namespace bo3z
 			if (relic < 0 || Step(z) < kFreed) {
 				return;
 			}
-			auto* altar = Shops::Placed(z, 6);
+			auto* altar = Shops::Placed(z, 6);  // (retired: the shout is claimed in the shrine's menu now, nothing hangs over it)
 			if (!altar || (g_relicShow.contains(z) && g_relicShow[z].get())) {
 				return;
 			}
@@ -383,7 +383,7 @@ namespace bo3z
 			std::string text = Fill(gen::kCurseLiftedBanner, a_town);
 			if (const int sh = ShoutOf(a_town); sh >= 0) {
 				// its shout waits on the Shrine of the Dirge at the station (nothing is forced into your hands)
-				text += " - its Thu'um, " + std::string(gen::kShouts[sh].label) + ", waits at the Shrine of the Dirge";
+				text += " - its Thu'um, " + std::string(gen::kShouts[sh].label) + ", waits at the city's shrine (press 4 in its menu)";
 			}
 			Note(text, 10.0f);
 			Director::EndNight();  // the city's last rite ends the night: dawn breaks, the next night brings the next round
@@ -409,8 +409,8 @@ namespace bo3z
 				if (s >= kFreed) {
 					const int sh = ShoutOf(z);
 					if (sh >= 0 && !Gun::KnowsShout(sh)) {
-						if (auto* altar = Shops::Placed(z, 6)) {
-							a_at = altar->GetPosition() + RE::NiPoint3{ 0, 0, 110.0f };
+						if (auto* altar = Shops::Placed(z, 0)) {
+							a_at = altar->GetPosition() + RE::NiPoint3{ 0, 0, 200.0f };
 							a_label = "Claim " + std::string(gen::kShouts[sh].label);
 							return true;
 						}
@@ -602,6 +602,11 @@ namespace bo3z
 			Forms::Play(gen::Sound::buy);
 			Hud::Banner(name + " RECLAIMED", 3.0f);
 			logger::info("curse: {} reclaimed at {}", gen::kGuns[relic].id, gen::kTowns[a_town]);
+		}
+		int ClaimableShout(int a_town)
+		{
+			const int sh = a_town >= 0 ? ShoutOf(a_town) : -1;
+			return sh >= 0 && Step(a_town) >= kFreed && !Gun::KnowsShout(sh) ? sh : -1;
 		}
 		bool SafeHere(RE::PlayerCharacter*) { return g_zone >= 0 && Step(g_zone) >= kFreed; }
 		float SpawnBoost() { return g_holding ? 2.0f : 1.0f; }
