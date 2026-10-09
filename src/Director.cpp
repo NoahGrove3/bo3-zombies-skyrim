@@ -530,7 +530,7 @@ namespace bo3z
 				return;
 			}
 			auto* av = boss->AsActorValueOwner();
-			const float want = HealthFor(g_current) * gen::boss::healthMult;
+			const float want = std::max(HealthFor(g_current) * gen::boss::healthMult, gen::boss::minHealth / R.hpScale);
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, 100.0f - av->GetActorValue(RE::ActorValue::kSpeedMult));
 			g_boss.handle = boss->GetHandle();
