@@ -112,11 +112,14 @@ def grimoires():
 # ---------------------------------------------------------------- Sheogorath's Coffer
 def coffer():
     d = SRC / 'coffer'; T = lambda n: d / 'textures' / f'initialShadingGroup_{n}.jpeg'
-    dif = save_dds(load(T('albedo'), 1024), 'coffer/coffer_d.dds')
-    nrm = save_dds(normal_with_spec(T('normal'), T('roughness')), 'coffer/coffer_n.dds', alpha=True)
-    gl = save_dds(tint(load(T('emissive'), 1024), (190, 110, 255)), 'coffer/coffer_g.dds')
+    # the source albedo is a flat white placeholder: dark iron and stained wood with glowing sigils instead
+    tmp = OUT.parent / 'coffer_tex'; tmp.mkdir(parents=True, exist_ok=True)
+    subprocess.run([sys.executable, str(ROOT / 'tools' / 'coffer_tex.py'), str(d / 'textures'), str(tmp / 'd.png'), str(tmp / 'g.png')], check=True)
+    dif = save_dds(Image.open(tmp / 'd.png'), 'coffer/coffer_d.dds')
+    nrm = save_dds(normal_with_spec(T('normal'), None), 'coffer/coffer_n.dds', alpha=True)   # a dull sheen, not polished
+    gl = save_dds(Image.open(tmp / 'g.png'), 'coffer/coffer_g.dds')
     run_job([f'in {d}/source/Weapon Chest Animated.fbx', f'out {mesh_out("coffer/coffer.nif")}', 'fit 95', 'rotate 90 0 90', 'ground 1', 'collide 1', 'meshoffset polySurface82 0 0 -16.2',
-             f'mat * diffuse={dif} normal={nrm} glow={gl} emit=0.75,0.45,1.0 emitmult=0.8 spec=0.5'])
+             f'mat * diffuse={dif} normal={nrm} glow={gl} emit=0.7,0.35,1.0 emitmult=1.6 spec=0.25'])
 
 # ---------------------------------------------------------------- brew machine (one per town, menu of all nine)
 def brewmachine():
