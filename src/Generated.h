@@ -141,8 +141,26 @@ namespace bo3z::gen
 		unleash_nightingale = 106,
 		cast_nightmare = 107,
 		unleash_nightmare = 108,
+		unleash_dread = 109,
+		shout_ember = 110,
+		shout_gale = 111,
+		shout_wail = 112,
+		shout_rime = 113,
+		shout_quake = 114,
+		shout_shroud = 115,
+		shout_toll = 116,
+		shout_mire = 117,
+		shout_dread = 118,
+		shout_shatter = 119,
+		shout_roar = 120,
+		shout_dragon = 121,
+		wailer_scream = 122,
+		bloater_burst = 123,
+		grab = 124,
+		forge_ritual = 125,
+		night_thunder = 126,
 	};
-	inline constexpr std::array<FormRef, 109> kSounds{ {
+	inline constexpr std::array<FormRef, 127> kSounds{ {
 		FormRef{ "Dawnguard.esm", 0x008E35, "WPNCrossbowFire2D" },
 		FormRef{ "Dawnguard.esm", 0x008E3A, "WPNCrossbowReload" },
 		FormRef{ "Skyrim.esm", 0x03E7B4, "WPNBowNockSD" },
@@ -252,7 +270,26 @@ namespace bo3z::gen
 		FormRef{ "BO3Zombies.esp", 0x0009B5, "UN_unleash_nightingale" },
 		FormRef{ "BO3Zombies.esp", 0x0009B6, "UN_cast_nightmare" },
 		FormRef{ "BO3Zombies.esp", 0x0009B7, "UN_unleash_nightmare" },
+		FormRef{ "BO3Zombies.esp", 0x000A4E, "UN_unleash_dread" },
+		FormRef{ "BO3Zombies.esp", 0x000A4F, "UN_shout_ember" },
+		FormRef{ "BO3Zombies.esp", 0x000A50, "UN_shout_gale" },
+		FormRef{ "BO3Zombies.esp", 0x000A51, "UN_shout_wail" },
+		FormRef{ "BO3Zombies.esp", 0x000A52, "UN_shout_rime" },
+		FormRef{ "BO3Zombies.esp", 0x000A53, "UN_shout_quake" },
+		FormRef{ "BO3Zombies.esp", 0x000A54, "UN_shout_shroud" },
+		FormRef{ "BO3Zombies.esp", 0x000A55, "UN_shout_toll" },
+		FormRef{ "BO3Zombies.esp", 0x000A56, "UN_shout_mire" },
+		FormRef{ "BO3Zombies.esp", 0x000A57, "UN_shout_dread" },
+		FormRef{ "BO3Zombies.esp", 0x000A58, "UN_shout_shatter" },
+		FormRef{ "BO3Zombies.esp", 0x000A59, "UN_shout_roar" },
+		FormRef{ "BO3Zombies.esp", 0x000A5A, "UN_shout_dragon" },
+		FormRef{ "BO3Zombies.esp", 0x000A5B, "UN_wailer_scream" },
+		FormRef{ "BO3Zombies.esp", 0x000A5C, "UN_bloater_burst" },
+		FormRef{ "BO3Zombies.esp", 0x000A5D, "UN_grab" },
+		FormRef{ "BO3Zombies.esp", 0x000A5E, "UN_forge_ritual" },
+		FormRef{ "BO3Zombies.esp", 0x000A5F, "UN_night_thunder" },
 	} };
+	inline constexpr std::array<int, 127> kSoundLayer{ { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 15, -1, -1, 126, -1, -1, 126, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 19, 125, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 42, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 44, -1, 109, -1, 109, 109, -1, -1, -1, -1, 109, -1, -1, -1, -1, -1, -1, -1, -1, -1, 121, -1, 121, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 121, -1, -1, -1, -1, -1, -1 } };  // a second sound played with each (-1 none)
 	inline constexpr int kPoints_start = 500;  // new_game_after_intro
 	inline constexpr int kPoints_hit = 5;  // gun_hit_round_undead
 	inline constexpr int kPoints_kill = 30;  // kill_round_undead
@@ -606,18 +643,18 @@ namespace bo3z::gen
 		StationDef{ true, 0x00003C, 30928.0f, 104698.0f, -13862.0f, 0.0f, 0.8f },
 		StationDef{ true, 0x00003C, 109208.0f, 102864.0f, -9013.0f, 180.0f, 0.8f },
 	} };
-	struct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; };
+	struct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; int sound; };
 	inline constexpr std::array<ShoutDef, 10> kShouts{ {
-		ShoutDef{ "ember", "Ember Roar", "A roar of fire that sets the ground ablaze before you", 0, 0xA43, { 0xA07, 0xA09, 0xA0B }, { 0xA08, 0xA0A, 0xA0C }, 0xFF6A20, "VUL", "KREIN", "YOLAAR" },
-		ShoutDef{ "gale", "Kyne's Gale", "A storm wall that throws the horde flat where it stands", 1, 0xA44, { 0xA0D, 0xA0F, 0xA11 }, { 0xA0E, 0xA10, 0xA12 }, 0xBFE8FF, "KYN", "SUULE", "BROM" },
-		ShoutDef{ "wail", "Wolf Queen's Wail", "The dead nearest you turn and fight for you", 2, 0xA45, { 0xA13, 0xA15, 0xA17 }, { 0xA14, 0xA16, 0xA18 }, 0xB07BFF, "POTAH", "ZAHRAAN", "DOVOR" },
-		ShoutDef{ "rime", "Ysgramor's Frost", "A line of frost that freezes the dead solid, then breaks them", 3, 0xA46, { 0xA19, 0xA1B, 0xA1D }, { 0xA1A, 0xA1C, 0xA1E }, 0x9ED8FF, "YSGAR", "IIZ", "KRENDAL" },
-		ShoutDef{ "quake", "Tonal Quake", "A Dwemer shockwave rolls out through the ground around you", 4, 0xA47, { 0xA1F, 0xA21, 0xA23 }, { 0xA20, 0xA22, 0xA24 }, 0xFFB050, "DWEM", "MUL", "RAHGOL" },
-		ShoutDef{ "shroud", "Nocturnal's Shroud", "The dead lose you in the dark and stand dazed", 5, 0xA48, { 0xA25, 0xA27, 0xA29 }, { 0xA26, 0xA28, 0xA2A }, 0x7A4DFF, "NOK", "FAAZ", "GRIK" },
-		ShoutDef{ "toll", "Arkay's Toll", "A grave-bell tolls: the weakened dead crumble to dust", 6, 0xA49, { 0xA2B, 0xA2D, 0xA2F }, { 0xA2C, 0xA2E, 0xA30 }, 0xE8E4FF, "ARK", "DUUN", "NAHKRIIN" },
-		ShoutDef{ "mire", "Mire Breath", "A poison fog that eats the dead and spreads as they fall", 7, 0xA4A, { 0xA31, 0xA33, 0xA35 }, { 0xA32, 0xA34, 0xA36 }, 0x7CC23A, "HJAL", "SOVUN", "KRIIL" },
-		ShoutDef{ "dread", "Nightmare Cry", "The dead are hurled back in terror and burn", 8, 0xA4B, { 0xA37, 0xA39, 0xA3B }, { 0xA38, 0xA3A, 0xA3C }, 0xFF4F8F, "VAER", "NUZ", "KAAN" },
-		ShoutDef{ "shatter", "Magnus Shatter", "Crystal shards fall from the sky around you", 9, 0xA4C, { 0xA3D, 0xA3F, 0xA41 }, { 0xA3E, 0xA40, 0xA42 }, 0x7FD8FF, "MAG", "KRIST", "VAAHRUN" },
+		ShoutDef{ "ember", "Ember Roar", "A roar of fire that sets the ground ablaze before you", 0, 0xA43, { 0xA07, 0xA09, 0xA0B }, { 0xA08, 0xA0A, 0xA0C }, 0xFF6A20, "VUL", "KREIN", "YOLAAR", 110 },
+		ShoutDef{ "gale", "Kyne's Gale", "A storm wall that throws the horde flat where it stands", 1, 0xA44, { 0xA0D, 0xA0F, 0xA11 }, { 0xA0E, 0xA10, 0xA12 }, 0xBFE8FF, "KYN", "SUULE", "BROM", 111 },
+		ShoutDef{ "wail", "Wolf Queen's Wail", "The dead nearest you turn and fight for you", 2, 0xA45, { 0xA13, 0xA15, 0xA17 }, { 0xA14, 0xA16, 0xA18 }, 0xB07BFF, "POTAH", "ZAHRAAN", "DOVOR", 112 },
+		ShoutDef{ "rime", "Ysgramor's Frost", "A line of frost that freezes the dead solid, then breaks them", 3, 0xA46, { 0xA19, 0xA1B, 0xA1D }, { 0xA1A, 0xA1C, 0xA1E }, 0x9ED8FF, "YSGAR", "IIZ", "KRENDAL", 113 },
+		ShoutDef{ "quake", "Tonal Quake", "A Dwemer shockwave rolls out through the ground around you", 4, 0xA47, { 0xA1F, 0xA21, 0xA23 }, { 0xA20, 0xA22, 0xA24 }, 0xFFB050, "DWEM", "MUL", "RAHGOL", 114 },
+		ShoutDef{ "shroud", "Nocturnal's Shroud", "The dead lose you in the dark and stand dazed", 5, 0xA48, { 0xA25, 0xA27, 0xA29 }, { 0xA26, 0xA28, 0xA2A }, 0x7A4DFF, "NOK", "FAAZ", "GRIK", 115 },
+		ShoutDef{ "toll", "Arkay's Toll", "A grave-bell tolls: the weakened dead crumble to dust", 6, 0xA49, { 0xA2B, 0xA2D, 0xA2F }, { 0xA2C, 0xA2E, 0xA30 }, 0xE8E4FF, "ARK", "DUUN", "NAHKRIIN", 116 },
+		ShoutDef{ "mire", "Mire Breath", "A poison fog that eats the dead and spreads as they fall", 7, 0xA4A, { 0xA31, 0xA33, 0xA35 }, { 0xA32, 0xA34, 0xA36 }, 0x7CC23A, "HJAL", "SOVUN", "KRIIL", 117 },
+		ShoutDef{ "dread", "Nightmare Cry", "The dead are hurled back in terror and burn", 8, 0xA4B, { 0xA37, 0xA39, 0xA3B }, { 0xA38, 0xA3A, 0xA3C }, 0xFF4F8F, "VAER", "NUZ", "KAAN", 118 },
+		ShoutDef{ "shatter", "Magnus Shatter", "Crystal shards fall from the sky around you", 9, 0xA4C, { 0xA3D, 0xA3F, 0xA41 }, { 0xA3E, 0xA40, 0xA42 }, 0x7FD8FF, "MAG", "KRIST", "VAAHRUN", 119 },
 	} };
 	struct LocationDef { int town; std::uint32_t anchor; int object; int slot; };
 	inline constexpr std::array<LocationDef, 62> kLocations{ {

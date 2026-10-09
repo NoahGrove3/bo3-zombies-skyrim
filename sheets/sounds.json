@@ -1,6 +1,6 @@
 {
   "sheet": "sounds",
-  "about": "Sound descriptors. Rows with plugin BO3Zombies.esp are our own sounds, synthesized by tools/synth.py into Data/Sound/fx/UndyingNights; the rest are Skyrim's own.",
+  "about": "Sound descriptors. Rows with plugin BO3Zombies.esp are ours: with 'files', Skyrim's own effects from the player's Skyrim - Sounds.bsa (tools/darksounds.py: pitched by 'shift' percent, 'layer' another of ours played with it); without, synthesized by tools/synth.py into Data/Sound/fx/UndyingNights. The rest are Skyrim's own descriptors.",
   "columns": [
     "id",
     "plugin",
@@ -8,7 +8,10 @@
     "editorId",
     "file",
     "space",
-    "verify"
+    "verify",
+    "files",
+    "shift",
+    "layer"
   ],
   "rows": [
     {
@@ -18,7 +21,10 @@
       "editorId": "WPNCrossbowFire2D",
       "verify": [],
       "file": "(Skyrim)",
-      "space": "2d"
+      "space": "2d",
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "crossbow_reload",
@@ -27,7 +33,10 @@
       "editorId": "WPNCrossbowReload",
       "verify": [],
       "file": "(Skyrim)",
-      "space": "2d"
+      "space": "2d",
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "bow_nock",
@@ -36,7 +45,10 @@
       "editorId": "WPNBowNockSD",
       "verify": [],
       "file": "(Skyrim)",
-      "space": "2d"
+      "space": "2d",
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "round_start",
@@ -45,7 +57,10 @@
       "editorId": "UIQuestNew",
       "verify": [],
       "file": "(Skyrim)",
-      "space": "2d"
+      "space": "2d",
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "round_end",
@@ -54,151 +69,242 @@
       "editorId": "UILevelUpSD",
       "verify": [],
       "file": "(Skyrim)",
-      "space": "2d"
+      "space": "2d",
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "brew_trollshide",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_brew_trollshide",
-      "file": "fx\\UndyingNights\\brew_trollshide.wav",
+      "file": "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav"
+      ],
+      "shift": -6,
+      "layer": "none"
     },
     {
       "id": "brew_quicksilver",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_brew_quicksilver",
-      "file": "fx\\UndyingNights\\brew_quicksilver.wav",
+      "file": "fx\\dlc02\\mag\\mag_standingstoneactivate_a_01.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\mag_standingstoneactivate_a_01.wav"
+      ],
+      "shift": -9,
+      "layer": "none"
     },
     {
       "id": "brew_twinstrike",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_brew_twinstrike",
-      "file": "fx\\UndyingNights\\brew_twinstrike.wav",
+      "file": "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav"
+      ],
+      "shift": -12,
+      "layer": "none"
     },
     {
       "id": "brew_hearthfire",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_brew_hearthfire",
-      "file": "fx\\UndyingNights\\brew_hearthfire.wav",
+      "file": "fx\\dlc02\\mag\\mag_standingstoneactivate_a_01.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\mag_standingstoneactivate_a_01.wav"
+      ],
+      "shift": -15,
+      "layer": "none"
     },
     {
       "id": "brew_windrunner",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_brew_windrunner",
-      "file": "fx\\UndyingNights\\brew_windrunner.wav",
+      "file": "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav"
+      ],
+      "shift": -18,
+      "layer": "none"
     },
     {
       "id": "brew_hawkeye",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_brew_hawkeye",
-      "file": "fx\\UndyingNights\\brew_hawkeye.wav",
+      "file": "fx\\dlc02\\mag\\mag_standingstoneactivate_a_01.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\mag_standingstoneactivate_a_01.wav"
+      ],
+      "shift": -21,
+      "layer": "none"
     },
     {
       "id": "brew_mammoth",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_brew_mammoth",
-      "file": "fx\\UndyingNights\\brew_mammoth.wav",
+      "file": "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav"
+      ],
+      "shift": -24,
+      "layer": "none"
     },
     {
       "id": "brew_frostbite",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_brew_frostbite",
-      "file": "fx\\UndyingNights\\brew_frostbite.wav",
+      "file": "fx\\dlc02\\mag\\mag_standingstoneactivate_a_01.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\mag_standingstoneactivate_a_01.wav"
+      ],
+      "shift": -27,
+      "layer": "none"
     },
     {
       "id": "brew_stormcrown",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_brew_stormcrown",
-      "file": "fx\\UndyingNights\\brew_stormcrown.wav",
+      "file": "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav"
+      ],
+      "shift": -30,
+      "layer": "none"
     },
     {
       "id": "coffer_spin",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_coffer_spin",
-      "file": "fx\\UndyingNights\\coffer_spin.wav",
+      "file": "fx\\dlc02\\mag\\blackbookpowers\\mag_blackbookpowers_b_01.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\blackbookpowers\\mag_blackbookpowers_b_01.wav"
+      ],
+      "shift": -22,
+      "layer": "coffer_open"
     },
     {
       "id": "coffer_open",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_coffer_open",
-      "file": "fx\\UndyingNights\\coffer_open.wav",
+      "file": "fx\\drs\\drs_coffinnightmother_open.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\drs\\drs_coffinnightmother_open.wav"
+      ],
+      "shift": -15,
+      "layer": "none"
     },
     {
       "id": "coffer_cheese",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_coffer_cheese",
-      "file": "fx\\UndyingNights\\coffer_cheese.wav",
+      "file": "fx\\npc\\wisp\\npc_wisp_death_01.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\npc\\wisp\\npc_wisp_death_01.wav",
+        "fx\\npc\\wisp\\npc_wisp_death_02.wav"
+      ],
+      "shift": -25,
+      "layer": "none"
     },
     {
       "id": "night_start",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_night_start",
-      "file": "fx\\UndyingNights\\night_start.wav",
+      "file": "fx\\npc\\wolf\\howl\\npc_wolf_howl_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\npc\\wolf\\howl\\npc_wolf_howl_01.wav",
+        "fx\\npc\\wolf\\howl\\npc_wolf_howl_02.wav",
+        "fx\\npc\\wolf\\howl\\npc_wolf_howl_03.wav"
+      ],
+      "shift": -15,
+      "layer": "night_thunder"
     },
     {
       "id": "night_end",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_night_end",
-      "file": "fx\\UndyingNights\\night_end.wav",
+      "file": "fx\\dlc01\\qst\\stonetombserana\\qst_serana_tomb_puzzle_solve_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc01\\qst\\stonetombserana\\qst_serana_tomb_puzzle_solve_01.wav"
+      ],
+      "shift": -5,
+      "layer": "none"
     },
     {
       "id": "hound_night",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_hound_night",
-      "file": "fx\\UndyingNights\\hound_night.wav",
+      "file": "fx\\npc\\dragon\\attack\\npc_dragon_attack_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\npc\\dragon\\attack\\npc_dragon_attack_01.wav",
+        "fx\\npc\\dragon\\attack\\npc_dragon_attack_02.wav",
+        "fx\\npc\\dragon\\attack\\npc_dragon_attack_03.wav",
+        "fx\\npc\\dragon\\attack\\npc_dragon_attack_04.wav"
+      ],
+      "shift": -18,
+      "layer": "none"
     },
     {
       "id": "night_falls",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_night_falls",
-      "file": "fx\\UndyingNights\\night_falls.wav",
+      "file": "fx\\npc\\wolf\\howl\\npc_wolf_howl_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\npc\\wolf\\howl\\npc_wolf_howl_01.wav",
+        "fx\\npc\\wolf\\howl\\npc_wolf_howl_02.wav",
+        "fx\\npc\\wolf\\howl\\npc_wolf_howl_03.wav"
+      ],
+      "shift": -25,
+      "layer": "night_thunder"
     },
     {
       "id": "shot_pistol",
@@ -207,7 +313,10 @@
       "editorId": "UN_shot_pistol",
       "file": "fx\\UndyingNights\\shot_pistol.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "shot_smg",
@@ -216,7 +325,10 @@
       "editorId": "UN_shot_smg",
       "file": "fx\\UndyingNights\\shot_smg.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "shot_ar",
@@ -225,7 +337,10 @@
       "editorId": "UN_shot_ar",
       "file": "fx\\UndyingNights\\shot_ar.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "shot_lmg",
@@ -234,7 +349,10 @@
       "editorId": "UN_shot_lmg",
       "file": "fx\\UndyingNights\\shot_lmg.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "shot_shotgun",
@@ -243,7 +361,10 @@
       "editorId": "UN_shot_shotgun",
       "file": "fx\\UndyingNights\\shot_shotgun.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "shot_sniper",
@@ -252,7 +373,10 @@
       "editorId": "UN_shot_sniper",
       "file": "fx\\UndyingNights\\shot_sniper.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "shot_ray",
@@ -261,7 +385,10 @@
       "editorId": "UN_shot_ray",
       "file": "fx\\UndyingNights\\shot_ray.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "reload_mag",
@@ -270,7 +397,10 @@
       "editorId": "UN_reload_mag",
       "file": "fx\\UndyingNights\\reload_mag.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "reload_shell",
@@ -279,7 +409,10 @@
       "editorId": "UN_reload_shell",
       "file": "fx\\UndyingNights\\reload_shell.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "dry_click",
@@ -288,277 +421,454 @@
       "editorId": "UN_dry_click",
       "file": "fx\\UndyingNights\\dry_click.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "buy",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_buy",
-      "file": "fx\\UndyingNights\\buy.wav",
+      "file": "fx\\ui\\enchanting\\ui_enchanting_learneffect_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\ui\\enchanting\\ui_enchanting_learneffect_01.wav"
+      ],
+      "shift": -18,
+      "layer": "none"
     },
     {
       "id": "hitmarker",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_hitmarker",
-      "file": "fx\\UndyingNights\\hitmarker.wav",
+      "file": "fx\\fx\\melee\\punchmedium\\fx_melee_punchmedium_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\fx\\melee\\punchmedium\\fx_melee_punchmedium_01.wav",
+        "fx\\fx\\melee\\punchmedium\\fx_melee_punchmedium_02.wav",
+        "fx\\fx\\melee\\punchmedium\\fx_melee_punchmedium_03.wav"
+      ],
+      "shift": -35,
+      "layer": "none"
     },
     {
       "id": "headshot",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_headshot",
-      "file": "fx\\UndyingNights\\headshot.wav",
+      "file": "fx\\fx\\melee\\metalimpact\\large\\flesh\\fx_melee_metalimpactlarge_flesh_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\fx\\melee\\metalimpact\\large\\flesh\\fx_melee_metalimpactlarge_flesh_01.wav",
+        "fx\\fx\\melee\\metalimpact\\large\\flesh\\fx_melee_metalimpactlarge_flesh_02.wav"
+      ],
+      "shift": -25,
+      "layer": "none"
     },
     {
       "id": "drink",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_drink",
-      "file": "fx\\UndyingNights\\drink.wav",
+      "file": "fx\\npc\\human\\drink\\npc_human_drink_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\npc\\human\\drink\\npc_human_drink_01.wav",
+        "fx\\npc\\human\\drink\\npc_human_drink_02.wav",
+        "fx\\npc\\human\\drink\\npc_human_drink_03.wav",
+        "fx\\npc\\human\\drink\\npc_human_drink_04.wav",
+        "fx\\npc\\human\\drink\\npc_human_drink_05.wav"
+      ],
+      "shift": -10,
+      "layer": "none"
     },
     {
       "id": "knife",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_knife",
-      "file": "fx\\UndyingNights\\knife.wav",
+      "file": "fx\\fx\\melee\\clawsmall\\flesh\\fx_melee_clawsmall_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\fx\\melee\\clawsmall\\flesh\\fx_melee_clawsmall_01.wav",
+        "fx\\fx\\melee\\clawsmall\\flesh\\fx_melee_clawsmall_02.wav",
+        "fx\\fx\\melee\\clawsmall\\flesh\\fx_melee_clawsmall_03.wav",
+        "fx\\fx\\melee\\clawsmall\\flesh\\fx_melee_clawsmall_04.wav"
+      ],
+      "shift": -15,
+      "layer": "none"
     },
     {
       "id": "rise",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_rise",
-      "file": "fx\\UndyingNights\\rise.wav",
+      "file": "fx\\npc\\draugr\\alcoveexit\\a\\npc_draugr_alcoveexit_a_01.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\npc\\draugr\\alcoveexit\\a\\npc_draugr_alcoveexit_a_01.wav",
+        "fx\\npc\\draugr\\alcoveexit\\a\\npc_draugr_alcoveexit_a_02.wav",
+        "fx\\npc\\draugr\\alcoveexit\\b\\npc_draugr_alcoveexit_b_01.wav",
+        "fx\\npc\\draugr\\alcoveexit\\b\\npc_draugr_alcoveexit_b_02.wav"
+      ],
+      "shift": -22,
+      "layer": "none"
     },
     {
       "id": "coffer_skull",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_coffer_skull",
-      "file": "fx\\UndyingNights\\coffer_skull.wav",
+      "file": "fx\\dlc01\\qst\\arkngthamzpuzzle\\qst_arkngthamz_puzzle_fail.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc01\\qst\\arkngthamzpuzzle\\qst_arkngthamz_puzzle_fail.wav"
+      ],
+      "shift": -15,
+      "layer": "hound_night"
     },
     {
       "id": "forge_upgrade",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_forge_upgrade",
-      "file": "fx\\UndyingNights\\forge_upgrade.wav",
+      "file": "fx\\ui\\smithing\\ui_smithing_improveweapon_01.wav",
       "space": "3d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\ui\\smithing\\ui_smithing_improveweapon_01.wav",
+        "fx\\ui\\smithing\\ui_smithing_improveweapon_02.wav"
+      ],
+      "shift": -15,
+      "layer": "forge_ritual"
     },
     {
       "id": "cast_light",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_light",
-      "file": "fx\\UndyingNights\\cast_light.wav",
+      "file": "fx\\mag\\illusion\\release\\mag_illusion_release_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\illusion\\release\\mag_illusion_release_01.wav"
+      ],
+      "shift": -18,
+      "layer": "none"
     },
     {
       "id": "cast_rapid",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_rapid",
-      "file": "fx\\UndyingNights\\cast_rapid.wav",
+      "file": "fx\\mgk\\firebolt\\mgk_firebolt_03_fire.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mgk\\firebolt\\mgk_firebolt_03_fire.wav"
+      ],
+      "shift": -15,
+      "layer": "none"
     },
     {
       "id": "cast_scatter",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_scatter",
-      "file": "fx\\UndyingNights\\cast_scatter.wav",
+      "file": "fx\\mag\\shock\\concentrationbolt\\mag_shock_concentration_bolt_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\shock\\concentrationbolt\\mag_shock_concentration_bolt_01.wav",
+        "fx\\mag\\shock\\concentrationbolt\\mag_shock_concentration_bolt_02.wav",
+        "fx\\mag\\shock\\concentrationbolt\\mag_shock_concentration_bolt_03.wav"
+      ],
+      "shift": -15,
+      "layer": "none"
     },
     {
       "id": "cast_heavy",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_heavy",
-      "file": "fx\\UndyingNights\\cast_heavy.wav",
+      "file": "fx\\mag\\conjure\\impact\\mag_conjure_impact_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\conjure\\impact\\mag_conjure_impact_01.wav"
+      ],
+      "shift": -30,
+      "layer": "none"
     },
     {
       "id": "mana_empty",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_mana_empty",
-      "file": "fx\\UndyingNights\\mana_empty.wav",
+      "file": "fx\\mgk\\firebolt\\mag_firebolt_fail.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mgk\\firebolt\\mag_firebolt_fail.wav"
+      ],
+      "shift": -20,
+      "layer": "none"
     },
     {
       "id": "cast_sidearm",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_sidearm",
-      "file": "fx\\UndyingNights\\cast_sidearm.wav",
+      "file": "fx\\mag\\illusion\\release\\mag_illusion_release_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\illusion\\release\\mag_illusion_release_01.wav"
+      ],
+      "shift": -18,
+      "layer": "none"
     },
     {
       "id": "cast_centurion",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_centurion",
-      "file": "fx\\UndyingNights\\cast_centurion.wav",
+      "file": "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_fire_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_fire_01.wav",
+        "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_fire_02.wav",
+        "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_fire_03.wav"
+      ],
+      "shift": -12,
+      "layer": "none"
     },
     {
       "id": "cast_triad",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_triad",
-      "file": "fx\\UndyingNights\\cast_triad.wav",
+      "file": "fx\\mag\\mysticism\\soultrap\\mag_mysticism_soultrap_capture.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\mysticism\\soultrap\\mag_mysticism_soultrap_capture.wav"
+      ],
+      "shift": -15,
+      "layer": "none"
     },
     {
       "id": "cast_spider",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_spider",
-      "file": "fx\\UndyingNights\\cast_spider.wav",
+      "file": "fx\\dlc02\\mag\\power\\morasgrasp\\mag_power_moras_grasp_projectile_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\power\\morasgrasp\\mag_power_moras_grasp_projectile_01.wav",
+        "fx\\dlc02\\mag\\power\\morasgrasp\\mag_power_moras_grasp_projectile_02.wav"
+      ],
+      "shift": -10,
+      "layer": "none"
     },
     {
       "id": "cast_drill",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_drill",
-      "file": "fx\\UndyingNights\\cast_drill.wav",
+      "file": "fx\\dlc01\\mag\\alteration\\mag_alteration_vampiredrainrelease_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc01\\mag\\alteration\\mag_alteration_vampiredrainrelease_01.wav"
+      ],
+      "shift": -12,
+      "layer": "none"
     },
     {
       "id": "cast_steampump",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_steampump",
-      "file": "fx\\UndyingNights\\cast_steampump.wav",
+      "file": "fx\\npc\\skeleton\\attack\\npc_skeleton_attack_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\npc\\skeleton\\attack\\npc_skeleton_attack_01.wav",
+        "fx\\npc\\skeleton\\attack\\npc_skeleton_attack_02.wav",
+        "fx\\npc\\skeleton\\attack\\npc_skeleton_attack_03.wav"
+      ],
+      "shift": -25,
+      "layer": "cast_heavy"
     },
     {
       "id": "cast_marksman",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_marksman",
-      "file": "fx\\UndyingNights\\cast_marksman.wav",
+      "file": "fx\\mag\\light\\mag_light_fire.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\light\\mag_light_fire.wav"
+      ],
+      "shift": -28,
+      "layer": "none"
     },
     {
       "id": "cast_animunculi",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_animunculi",
-      "file": "fx\\UndyingNights\\cast_animunculi.wav",
+      "file": "fx\\dlc02\\mag\\blackbookpowers\\mag_blackbookpowers_a_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\blackbookpowers\\mag_blackbookpowers_a_01.wav",
+        "fx\\dlc02\\mag\\blackbookpowers\\mag_blackbookpowers_c_01.wav"
+      ],
+      "shift": -12,
+      "layer": "none"
     },
     {
       "id": "cast_kagrenac",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_kagrenac",
-      "file": "fx\\UndyingNights\\cast_kagrenac.wav",
+      "file": "fx\\mag\\illusion\\releaseaimed\\mag_illusion_release_aimed_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\illusion\\releaseaimed\\mag_illusion_release_aimed_01.wav"
+      ],
+      "shift": -22,
+      "layer": "none"
     },
     {
       "id": "cast_mammothlmg",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_mammothlmg",
-      "file": "fx\\UndyingNights\\cast_mammothlmg.wav",
+      "file": "fx\\mag\\conjure\\mag_conjure_fire.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\conjure\\mag_conjure_fire.wav"
+      ],
+      "shift": -32,
+      "layer": "none"
     },
     {
       "id": "cast_longshot",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_longshot",
-      "file": "fx\\UndyingNights\\cast_longshot.wav",
+      "file": "fx\\mag\\alteration\\mag_alteration_release.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\alteration\\mag_alteration_release.wav"
+      ],
+      "shift": -18,
+      "layer": "none"
     },
     {
       "id": "cast_aetherium",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_aetherium",
-      "file": "fx\\UndyingNights\\cast_aetherium.wav",
+      "file": "fx\\dlc01\\mag\\destruction\\stendarrsaura\\mag_destruction_stendarrsaura_fire.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc01\\mag\\destruction\\stendarrsaura\\mag_destruction_stendarrsaura_fire.wav"
+      ],
+      "shift": -8,
+      "layer": "none"
     },
     {
       "id": "cast_flamerepeater",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_flamerepeater",
-      "file": "fx\\UndyingNights\\cast_flamerepeater.wav",
+      "file": "fx\\mgk\\firebolt\\mgk_firebolt_03_fire.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mgk\\firebolt\\mgk_firebolt_03_fire.wav"
+      ],
+      "shift": -12,
+      "layer": "none"
     },
     {
       "id": "cast_frostlancer",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_frostlancer",
-      "file": "fx\\UndyingNights\\cast_frostlancer.wav",
+      "file": "fx\\mag\\icicle\\fire\\mag_icicle_fire.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\icicle\\fire\\mag_icicle_fire.wav"
+      ],
+      "shift": -15,
+      "layer": "none"
     },
     {
       "id": "cast_stormcaller",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_stormcaller",
-      "file": "fx\\UndyingNights\\cast_stormcaller.wav",
+      "file": "fx\\mag\\shock\\concentrationbolt\\mag_shock_concentration_bolt_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\shock\\concentrationbolt\\mag_shock_concentration_bolt_01.wav",
+        "fx\\mag\\shock\\concentrationbolt\\mag_shock_concentration_bolt_02.wav",
+        "fx\\mag\\shock\\concentrationbolt\\mag_shock_concentration_bolt_03.wav"
+      ],
+      "shift": -12,
+      "layer": "none"
     },
     {
       "id": "cast_embermortar",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_embermortar",
-      "file": "fx\\UndyingNights\\cast_embermortar.wav",
+      "file": "fx\\voc\\shout\\projectile\\push\\voc_shout_projectile_push.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\voc\\shout\\projectile\\push\\voc_shout_projectile_push.wav"
+      ],
+      "shift": -18,
+      "layer": "none"
     },
     {
       "id": "cast_wabbajack",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_wabbajack",
-      "file": "fx\\UndyingNights\\cast_wabbajack.wav",
+      "file": "fx\\mag\\illusion\\release\\mag_illusion_release_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\illusion\\release\\mag_illusion_release_01.wav"
+      ],
+      "shift": -40,
+      "layer": "none"
     },
     {
       "id": "cast_thuumcannon",
@@ -567,16 +877,27 @@
       "editorId": "UN_cast_thuumcannon",
       "file": "fx\\UndyingNights\\cast_thuumcannon.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "cast_skyforgearc",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_cast_skyforgearc",
-      "file": "fx\\UndyingNights\\cast_skyforgearc.wav",
+      "file": "fx\\amb\\weather\\thunder\\amb_weather_extrathunder_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\amb\\weather\\thunder\\amb_weather_extrathunder_01.wav",
+        "fx\\amb\\weather\\thunder\\amb_weather_extrathunder_02.wav",
+        "fx\\amb\\weather\\thunder\\amb_weather_extrathunder_03.wav",
+        "fx\\amb\\weather\\thunder\\amb_weather_extrathunder_04.wav"
+      ],
+      "shift": -5,
+      "layer": "none"
     },
     {
       "id": "cast_apprentice",
@@ -585,151 +906,243 @@
       "editorId": "UN_cast_apprentice",
       "file": "fx\\UndyingNights\\cast_apprentice.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "charge_up",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_charge_up",
-      "file": "fx\\UndyingNights\\charge_up.wav",
+      "file": "fx\\mag\\conjure\\mag_conjuration_charge_050.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\conjure\\mag_conjuration_charge_050.wav"
+      ],
+      "shift": -30,
+      "layer": "none"
     },
     {
       "id": "charge_ready",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_charge_ready",
-      "file": "fx\\UndyingNights\\charge_ready.wav",
+      "file": "fx\\mag\\mysticism\\soultrap\\mag_mysticism_captureshader.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\mysticism\\soultrap\\mag_mysticism_captureshader.wav"
+      ],
+      "shift": -25,
+      "layer": "none"
     },
     {
       "id": "unleash_sidearm",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_unleash_sidearm",
-      "file": "fx\\UndyingNights\\unleash_sidearm.wav",
+      "file": "fx\\mag\\conjure\\impact\\mag_conjure_impact_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\conjure\\impact\\mag_conjure_impact_01.wav"
+      ],
+      "shift": -25,
+      "layer": "cast_sidearm"
     },
     {
       "id": "unleash_aetherium",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_unleash_aetherium",
-      "file": "fx\\UndyingNights\\unleash_aetherium.wav",
+      "file": "fx\\dlc01\\fx\\explosions\\aurielssun\\fx_explosion_aurielssun_near_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc01\\fx\\explosions\\aurielssun\\fx_explosion_aurielssun_near_01.wav",
+        "fx\\dlc01\\fx\\explosions\\aurielssun\\fx_explosion_aurielssun_near_02.wav"
+      ],
+      "shift": -10,
+      "layer": "none"
     },
     {
       "id": "unleash_animunculi",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_unleash_animunculi",
-      "file": "fx\\UndyingNights\\unleash_animunculi.wav",
+      "file": "fx\\dlc02\\fx\\explosion\\fx_explosion_fishman_tentacle_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\fx\\explosion\\fx_explosion_fishman_tentacle_01.wav",
+        "fx\\dlc02\\fx\\explosion\\fx_explosion_fishman_tentacle_02.wav"
+      ],
+      "shift": -15,
+      "layer": "unleash_dread"
     },
     {
       "id": "unleash_mammothlmg",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_unleash_mammothlmg",
-      "file": "fx\\UndyingNights\\unleash_mammothlmg.wav",
+      "file": "fx\\dlc01\\qst\\soulcairnportal\\qst_soul_cairn_portal_open_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc01\\qst\\soulcairnportal\\qst_soul_cairn_portal_open_01.wav"
+      ],
+      "shift": -20,
+      "layer": "none"
     },
     {
       "id": "unleash_triad",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_unleash_triad",
-      "file": "fx\\UndyingNights\\unleash_triad.wav",
+      "file": "fx\\mag\\mysticism\\soultrap\\mag_mysticism_captureshader.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\mysticism\\soultrap\\mag_mysticism_captureshader.wav"
+      ],
+      "shift": -20,
+      "layer": "unleash_dread"
     },
     {
       "id": "unleash_centurion",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_unleash_centurion",
-      "file": "fx\\UndyingNights\\unleash_centurion.wav",
+      "file": "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_impact_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_impact_01.wav",
+        "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_impact_02.wav",
+        "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_impact_03.wav"
+      ],
+      "shift": -15,
+      "layer": "unleash_dread"
     },
     {
       "id": "unleash_flamerepeater",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_unleash_flamerepeater",
-      "file": "fx\\UndyingNights\\unleash_flamerepeater.wav",
+      "file": "fx\\fx\\explosion\\firestorm\\fx_explosion_firestorm_near_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\fx\\explosion\\firestorm\\fx_explosion_firestorm_near_01.wav",
+        "fx\\fx\\explosion\\firestorm\\fx_explosion_firestorm_near_02.wav"
+      ],
+      "shift": -12,
+      "layer": "none"
     },
     {
       "id": "unleash_frostlancer",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_unleash_frostlancer",
-      "file": "fx\\UndyingNights\\unleash_frostlancer.wav",
+      "file": "fx\\mag\\destruction\\frostbitedragon\\mag_destruction_forstbitedragon_explosion_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\destruction\\frostbitedragon\\mag_destruction_forstbitedragon_explosion_01.wav"
+      ],
+      "shift": -12,
+      "layer": "none"
     },
     {
       "id": "unleash_stormcaller",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_unleash_stormcaller",
-      "file": "fx\\UndyingNights\\unleash_stormcaller.wav",
+      "file": "fx\\amb\\weather\\thunder\\amb_weather_extrathunder_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\amb\\weather\\thunder\\amb_weather_extrathunder_01.wav",
+        "fx\\amb\\weather\\thunder\\amb_weather_extrathunder_02.wav",
+        "fx\\amb\\weather\\thunder\\amb_weather_extrathunder_03.wav",
+        "fx\\amb\\weather\\thunder\\amb_weather_extrathunder_04.wav"
+      ],
+      "shift": -12,
+      "layer": "none"
     },
     {
       "id": "unleash_embermortar",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_unleash_embermortar",
-      "file": "fx\\UndyingNights\\unleash_embermortar.wav",
+      "file": "fx\\qst\\hrothgarpushback\\qst_windhrothgarpushback_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\qst\\hrothgarpushback\\qst_windhrothgarpushback_01.wav",
+        "fx\\qst\\hrothgarpushback\\qst_windhrothgarpushback_02.wav"
+      ],
+      "shift": -12,
+      "layer": "none"
     },
     {
       "id": "unleash_kagrenac",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_unleash_kagrenac",
-      "file": "fx\\UndyingNights\\unleash_kagrenac.wav",
+      "file": "fx\\mag\\illusion\\charm\\mag_illusion_charm_on_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\illusion\\charm\\mag_illusion_charm_on_01.wav"
+      ],
+      "shift": -25,
+      "layer": "unleash_dread"
     },
     {
       "id": "unleash_longshot",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_unleash_longshot",
-      "file": "fx\\UndyingNights\\unleash_longshot.wav",
+      "file": "fx\\dlc02\\obj\\standingstone\\obj_standing_stone_explode_01_mono.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\obj\\standingstone\\obj_standing_stone_explode_01_mono.wav"
+      ],
+      "shift": -10,
+      "layer": "none"
     },
     {
       "id": "powerup_spawn",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_powerup_spawn",
-      "file": "fx\\UndyingNights\\powerup_spawn.wav",
+      "file": "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\mag_standingstoneactivate_b_01.wav"
+      ],
+      "shift": -20,
+      "layer": "none"
     },
     {
       "id": "powerup_grab",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_powerup_grab",
-      "file": "fx\\UndyingNights\\powerup_grab.wav",
+      "file": "fx\\ui\\enchanting\\ui_enchanting_learneffect_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\ui\\enchanting\\ui_enchanting_learneffect_01.wav"
+      ],
+      "shift": -10,
+      "layer": "none"
     },
     {
       "id": "event_bloodmoon",
@@ -738,7 +1151,10 @@
       "editorId": "UN_event_bloodmoon",
       "file": "fx\\UndyingNights\\event_bloodmoon.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "event_fog",
@@ -747,7 +1163,10 @@
       "editorId": "UN_event_fog",
       "file": "fx\\UndyingNights\\event_fog.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "event_ash",
@@ -756,7 +1175,10 @@
       "editorId": "UN_event_ash",
       "file": "fx\\UndyingNights\\event_ash.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "event_champions",
@@ -765,52 +1187,81 @@
       "editorId": "UN_event_champions",
       "file": "fx\\UndyingNights\\event_champions.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "quest_start",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_quest_start",
-      "file": "fx\\UndyingNights\\quest_start.wav",
+      "file": "fx\\dlc02\\qst\\blackbookrewards\\qst_black_book_open_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\qst\\blackbookrewards\\qst_black_book_open_01.wav"
+      ],
+      "shift": -15,
+      "layer": "none"
     },
     {
       "id": "quest_step",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_quest_step",
-      "file": "fx\\UndyingNights\\quest_step.wav",
+      "file": "fx\\dlc02\\mag\\mag_standingstoneblessing_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\mag_standingstoneblessing_01.wav"
+      ],
+      "shift": -12,
+      "layer": "none"
     },
     {
       "id": "curse_lifted",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_curse_lifted",
-      "file": "fx\\UndyingNights\\curse_lifted.wav",
+      "file": "fx\\qst\\sovengardeportal\\qst_sovengarde_portal_open_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\qst\\sovengardeportal\\qst_sovengarde_portal_open_01.wav"
+      ],
+      "shift": -8,
+      "layer": "shout_dragon"
     },
     {
       "id": "ward_lit",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_ward_lit",
-      "file": "fx\\UndyingNights\\ward_lit.wav",
+      "file": "fx\\mag\\altars\\mag_altars_blessing_fire_02_2d.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\mag\\altars\\mag_altars_blessing_fire_02_2d.wav"
+      ],
+      "shift": -15,
+      "layer": "none"
     },
     {
       "id": "nuke",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
       "editorId": "UN_nuke",
-      "file": "fx\\UndyingNights\\nuke.wav",
+      "file": "fx\\fx\\explosion\\firestorm\\fx_explosion_firestorm_near_01.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [
+        "fx\\fx\\explosion\\firestorm\\fx_explosion_firestorm_near_01.wav",
+        "fx\\fx\\explosion\\firestorm\\fx_explosion_firestorm_near_02.wav"
+      ],
+      "shift": -25,
+      "layer": "shout_dragon"
     },
     {
       "id": "cast_hearth",
@@ -819,7 +1270,10 @@
       "editorId": "UN_cast_hearth",
       "file": "fx\\UndyingNights\\cast_hearth.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "unleash_hearth",
@@ -828,7 +1282,10 @@
       "editorId": "UN_unleash_hearth",
       "file": "fx\\UndyingNights\\unleash_hearth.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "cast_gildergreen",
@@ -837,7 +1294,10 @@
       "editorId": "UN_cast_gildergreen",
       "file": "fx\\UndyingNights\\cast_gildergreen.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "unleash_gildergreen",
@@ -846,7 +1306,10 @@
       "editorId": "UN_unleash_gildergreen",
       "file": "fx\\UndyingNights\\unleash_gildergreen.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "cast_lorkhan",
@@ -855,7 +1318,10 @@
       "editorId": "UN_cast_lorkhan",
       "file": "fx\\UndyingNights\\cast_lorkhan.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "unleash_lorkhan",
@@ -864,7 +1330,10 @@
       "editorId": "UN_unleash_lorkhan",
       "file": "fx\\UndyingNights\\unleash_lorkhan.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "cast_arkay",
@@ -873,7 +1342,10 @@
       "editorId": "UN_cast_arkay",
       "file": "fx\\UndyingNights\\cast_arkay.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "unleash_arkay",
@@ -882,7 +1354,10 @@
       "editorId": "UN_unleash_arkay",
       "file": "fx\\UndyingNights\\unleash_arkay.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "cast_mirestaff",
@@ -891,7 +1366,10 @@
       "editorId": "UN_cast_mirestaff",
       "file": "fx\\UndyingNights\\cast_mirestaff.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "unleash_mirestaff",
@@ -900,7 +1378,10 @@
       "editorId": "UN_unleash_mirestaff",
       "file": "fx\\UndyingNights\\unleash_mirestaff.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "cast_magnus",
@@ -909,7 +1390,10 @@
       "editorId": "UN_cast_magnus",
       "file": "fx\\UndyingNights\\cast_magnus.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "unleash_magnus",
@@ -918,7 +1402,10 @@
       "editorId": "UN_unleash_magnus",
       "file": "fx\\UndyingNights\\unleash_magnus.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "cast_wolfqueen",
@@ -927,7 +1414,10 @@
       "editorId": "UN_cast_wolfqueen",
       "file": "fx\\UndyingNights\\cast_wolfqueen.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "unleash_wolfqueen",
@@ -936,7 +1426,10 @@
       "editorId": "UN_unleash_wolfqueen",
       "file": "fx\\UndyingNights\\unleash_wolfqueen.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "cast_ysgramor",
@@ -945,7 +1438,10 @@
       "editorId": "UN_cast_ysgramor",
       "file": "fx\\UndyingNights\\cast_ysgramor.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "unleash_ysgramor",
@@ -954,7 +1450,10 @@
       "editorId": "UN_unleash_ysgramor",
       "file": "fx\\UndyingNights\\unleash_ysgramor.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "cast_nightingale",
@@ -963,7 +1462,10 @@
       "editorId": "UN_cast_nightingale",
       "file": "fx\\UndyingNights\\cast_nightingale.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "unleash_nightingale",
@@ -972,7 +1474,10 @@
       "editorId": "UN_unleash_nightingale",
       "file": "fx\\UndyingNights\\unleash_nightingale.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "cast_nightmare",
@@ -981,7 +1486,10 @@
       "editorId": "UN_cast_nightmare",
       "file": "fx\\UndyingNights\\cast_nightmare.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
     },
     {
       "id": "unleash_nightmare",
@@ -990,7 +1498,280 @@
       "editorId": "UN_unleash_nightmare",
       "file": "fx\\UndyingNights\\unleash_nightmare.wav",
       "space": "2d",
-      "verify": []
+      "verify": [],
+      "files": [],
+      "shift": 0,
+      "layer": "none"
+    },
+    {
+      "id": "unleash_dread",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_unleash_dread",
+      "file": "fx\\npc\\dragon\\flightroar\\npc_dragon_flightroar_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\npc\\dragon\\flightroar\\npc_dragon_flightroar_01.wav",
+        "fx\\npc\\dragon\\flightroar\\npc_dragon_flightroar_02.wav",
+        "fx\\npc\\dragon\\flightroar\\npc_dragon_flightroar_03.wav",
+        "fx\\npc\\dragon\\flightroar\\npc_dragon_flightroar_04.wav",
+        "fx\\npc\\dragon\\flightroar\\npc_dragon_flightroar_05.wav"
+      ],
+      "shift": -22,
+      "layer": "none"
+    },
+    {
+      "id": "shout_ember",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shout_ember",
+      "file": "fx\\fx\\explosion\\firestorm\\fx_explosion_firestorm_near_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\fx\\explosion\\firestorm\\fx_explosion_firestorm_near_01.wav",
+        "fx\\fx\\explosion\\firestorm\\fx_explosion_firestorm_near_02.wav"
+      ],
+      "shift": -10,
+      "layer": "shout_roar"
+    },
+    {
+      "id": "shout_gale",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shout_gale",
+      "file": "fx\\qst\\hrothgarpushback\\qst_windhrothgarpushback_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\qst\\hrothgarpushback\\qst_windhrothgarpushback_01.wav",
+        "fx\\qst\\hrothgarpushback\\qst_windhrothgarpushback_02.wav"
+      ],
+      "shift": -8,
+      "layer": "shout_roar"
+    },
+    {
+      "id": "shout_wail",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shout_wail",
+      "file": "fx\\npc\\wisp\\npc_wisp_ambush.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\npc\\wisp\\npc_wisp_ambush.wav"
+      ],
+      "shift": -20,
+      "layer": "shout_roar"
+    },
+    {
+      "id": "shout_rime",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shout_rime",
+      "file": "fx\\mag\\destruction\\frostbitedragon\\mag_destruction_forstbitedragon_explosion_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\mag\\destruction\\frostbitedragon\\mag_destruction_forstbitedragon_explosion_01.wav"
+      ],
+      "shift": -10,
+      "layer": "shout_roar"
+    },
+    {
+      "id": "shout_quake",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shout_quake",
+      "file": "fx\\npc\\dragon\\landcrash\\long\\npc_dragon_landcrash_long.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\npc\\dragon\\landcrash\\long\\npc_dragon_landcrash_long.wav"
+      ],
+      "shift": -15,
+      "layer": "shout_roar"
+    },
+    {
+      "id": "shout_shroud",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shout_shroud",
+      "file": "fx\\mag\\illusion\\invisibility\\mag_illusion_invisibility_in.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\mag\\illusion\\invisibility\\mag_illusion_invisibility_in.wav"
+      ],
+      "shift": -25,
+      "layer": "shout_roar"
+    },
+    {
+      "id": "shout_toll",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shout_toll",
+      "file": "fx\\dlc01\\qst\\stonetombserana\\qst_serana_tomb_puzzle_solve_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\dlc01\\qst\\stonetombserana\\qst_serana_tomb_puzzle_solve_01.wav"
+      ],
+      "shift": -20,
+      "layer": "shout_roar"
+    },
+    {
+      "id": "shout_mire",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shout_mire",
+      "file": "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_impact_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_impact_01.wav",
+        "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_impact_02.wav",
+        "fx\\dlc02\\mag\\morasagony\\mag_morasagony_projectile_impact_03.wav"
+      ],
+      "shift": -18,
+      "layer": "shout_roar"
+    },
+    {
+      "id": "shout_dread",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shout_dread",
+      "file": "fx\\dlc01\\npc\\dogdeathhound\\npc_dogdeathhound_attack_a_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\dlc01\\npc\\dogdeathhound\\npc_dogdeathhound_attack_a_01.wav",
+        "fx\\dlc01\\npc\\dogdeathhound\\npc_dogdeathhound_attack_a_02.wav"
+      ],
+      "shift": -25,
+      "layer": "shout_roar"
+    },
+    {
+      "id": "shout_shatter",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shout_shatter",
+      "file": "fx\\dlc02\\obj\\standingstone\\obj_standing_stone_explode_01_mono.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\obj\\standingstone\\obj_standing_stone_explode_01_mono.wav"
+      ],
+      "shift": -12,
+      "layer": "shout_roar"
+    },
+    {
+      "id": "shout_roar",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shout_roar",
+      "file": "fx\\voc\\shout\\projectile\\push\\voc_shout_projectile_push.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\voc\\shout\\projectile\\push\\voc_shout_projectile_push.wav"
+      ],
+      "shift": -20,
+      "layer": "shout_dragon"
+    },
+    {
+      "id": "shout_dragon",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shout_dragon",
+      "file": "fx\\npc\\dragon\\flightroar\\npc_dragon_flightroar_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\npc\\dragon\\flightroar\\npc_dragon_flightroar_01.wav",
+        "fx\\npc\\dragon\\flightroar\\npc_dragon_flightroar_02.wav",
+        "fx\\npc\\dragon\\flightroar\\npc_dragon_flightroar_03.wav",
+        "fx\\npc\\dragon\\flightroar\\npc_dragon_flightroar_04.wav",
+        "fx\\npc\\dragon\\flightroar\\npc_dragon_flightroar_05.wav"
+      ],
+      "shift": -15,
+      "layer": "none"
+    },
+    {
+      "id": "wailer_scream",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_wailer_scream",
+      "file": "fx\\npc\\wisp\\npc_wisp_ambush.wav",
+      "space": "3d",
+      "verify": [],
+      "files": [
+        "fx\\npc\\wisp\\npc_wisp_ambush.wav"
+      ],
+      "shift": -28,
+      "layer": "none"
+    },
+    {
+      "id": "bloater_burst",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_bloater_burst",
+      "file": "fx\\dlc02\\fx\\explosion\\fx_explosion_fishman_tentacle_01.wav",
+      "space": "3d",
+      "verify": [],
+      "files": [
+        "fx\\dlc02\\fx\\explosion\\fx_explosion_fishman_tentacle_01.wav",
+        "fx\\dlc02\\fx\\explosion\\fx_explosion_fishman_tentacle_02.wav"
+      ],
+      "shift": -25,
+      "layer": "none"
+    },
+    {
+      "id": "grab",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_grab",
+      "file": "fx\\fx\\melee\\clawmedium\\flesh\\fx_melee_clawmedium_flesh_01.wav",
+      "space": "3d",
+      "verify": [],
+      "files": [
+        "fx\\fx\\melee\\clawmedium\\flesh\\fx_melee_clawmedium_flesh_01.wav",
+        "fx\\fx\\melee\\clawmedium\\flesh\\fx_melee_clawmedium_flesh_02.wav"
+      ],
+      "shift": -20,
+      "layer": "none"
+    },
+    {
+      "id": "forge_ritual",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_forge_ritual",
+      "file": "fx\\mag\\altars\\mag_altars_blessing_fire_01_2d.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\mag\\altars\\mag_altars_blessing_fire_01_2d.wav"
+      ],
+      "shift": -20,
+      "layer": "none"
+    },
+    {
+      "id": "night_thunder",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_night_thunder",
+      "file": "fx\\amb\\weather\\thunder\\amb_weather_thunder_distant_01.wav",
+      "space": "2d",
+      "verify": [],
+      "files": [
+        "fx\\amb\\weather\\thunder\\amb_weather_thunder_distant_01.wav",
+        "fx\\amb\\weather\\thunder\\amb_weather_thunder_distant_02.wav",
+        "fx\\amb\\weather\\thunder\\amb_weather_thunder_distant_03.wav",
+        "fx\\amb\\weather\\thunder\\amb_weather_thunder_distant_04.wav"
+      ],
+      "shift": -10,
+      "layer": "none"
     }
   ]
 }

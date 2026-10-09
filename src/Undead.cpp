@@ -469,7 +469,7 @@ namespace bo3z
 								z->AsActorValueOwner()->DamageActorValue(RE::ActorValue::kHealth, Director::RoundHealth() * 0.6f);
 							}
 						}
-						Forms::PlayAt(gen::Sound::rise, a.get());
+						Forms::PlayAt(gen::Sound::bloater_burst, a.get());
 					}
 					m.cd = -99;
 					continue;
@@ -489,6 +489,7 @@ namespace bo3z
 							g_grabbed = 1.2f;
 							g_grabSlow = m.type == Type::Crawler ? 1.6f : 1.1f;
 							Director::HurtPlayer(m.type == Type::Crawler ? 0.08f : 0.12f, m.type != Type::Crawler);
+							Forms::PlayAt(gen::Sound::grab, a.get());
 							Hud::Banner(m.type == Type::Crawler ? "It has your ankle!" : "GRABBED!", 0.9f);
 						}
 					}
@@ -508,6 +509,7 @@ namespace bo3z
 								}
 							}
 							Hud::Banner("A Wailer screams - the dead come running!", 2.0f);
+							Forms::PlayAt(gen::Sound::wailer_scream, a.get());
 						} else {
 							RE::NiPoint3 dir = pp - a->GetPosition();
 							dir.z = 0;

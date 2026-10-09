@@ -35,6 +35,8 @@ out.append(f'\tinline constexpr std::array<FormRef, {len(snd)}> kSounds{{ {{')
 sys.path.insert(0, str(root / 'tools')); import esp_ids as _ids; _SIDS, _ = _ids.assign(S)
 for s in snd: out.append(f'\t\tFormRef{{ {cs(s["plugin"])}, 0x{(_SIDS[("SNDR", s["id"])] if s["localId"] == "auto" else hexid(s["localId"])):06X}, {cs(s["editorId"])} }},')
 out.append('\t} };')
+ids_ = [x['id'] for x in snd]
+out.append(f'\tinline constexpr std::array<int, {len(snd)}> kSoundLayer{{ {{ ' + ', '.join(str(ids_.index(x['layer'])) if x.get('layer', 'none') != 'none' else '-1' for x in snd) + ' } };  // a second sound played with each (-1 none)')
 # economy
 for e in S['economy']['rows']: out.append(f'\tinline constexpr int kPoints_{e["id"]} = {e["points"]};  // {e["event"]}')
 # input
@@ -149,10 +151,10 @@ for t in towns:
     o.append(f'\t\tStationDef{{ true, 0x{int(r["worldspace"],16):06X}, {F(r["x"])}, {F(r["y"])}, {F(r["z"])}, {F(r["yawDeg"])}, {F(r["compact"])} }},' if r else '\t\tStationDef{ false, 0, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f },')
 o.append('\t} };')
 SH = S['shouts']['rows']
-o.append('\tstruct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; };')
+o.append('\tstruct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; int sound; };')
 o.append(f'\tinline constexpr std::array<ShoutDef, {len(SH)}> kShouts{{ {{')
 for h in SH:
-    o.append(f'\t\tShoutDef{{ {cs(h["id"])}, {cs(h["label"])}, {cs(h["text"])}, {towns.index(h["town"])}, 0x{IDS[("SHOU", h["id"])]:03X}, {{ ' + ', '.join(f'0x{IDS[("WOOP", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + ' }, { ' + ', '.join(f'0x{IDS[("SPEL", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + f' }}, 0x{h["color"]}, {cs(h["words"][0])}, {cs(h["words"][1])}, {cs(h["words"][2])} }},')
+    o.append(f'\t\tShoutDef{{ {cs(h["id"])}, {cs(h["label"])}, {cs(h["text"])}, {towns.index(h["town"])}, 0x{IDS[("SHOU", h["id"])]:03X}, {{ ' + ', '.join(f'0x{IDS[("WOOP", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + ' }, { ' + ', '.join(f'0x{IDS[("SPEL", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + f' }}, 0x{h["color"]}, {cs(h["words"][0])}, {cs(h["words"][1])}, {cs(h["words"][2])}, {[x["id"] for x in S["sounds"]["rows"]].index("shout_" + h["id"])} }},')
 o.append('\t} };')
 o.append('\tstruct LocationDef { int town; std::uint32_t anchor; int object; int slot; };')
 o.append(f'\tinline constexpr std::array<LocationDef, {len(L)}> kLocations{{ {{')

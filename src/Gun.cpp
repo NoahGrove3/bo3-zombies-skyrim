@@ -2459,7 +2459,7 @@ namespace bo3z
 					}
 				}
 			}
-			Forms::Play(gen::Sound::cast_heavy);
+			Forms::Play(static_cast<gen::Sound>(sh.sound));
 			Hud::Banner(std::string(L >= 1 ? sh.w1 : "") + (L >= 2 ? std::string(" ") + std::string(sh.w2) : "") + (L >= 3 ? std::string(" ") + std::string(sh.w3) + "!" : ""), 1.6f);
 			logger::info("shout: {} level {}", sh.id, L);
 		}

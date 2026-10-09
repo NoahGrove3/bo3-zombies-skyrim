@@ -590,6 +590,24 @@
   "SHOU:mire": "0xa4a",
   "SHOU:dread": "0xa4b",
   "SHOU:shatter": "0xa4c",
-  "MGEF:shoutcast": "0xa4d"
+  "MGEF:shoutcast": "0xa4d",
+  "SNDR:unleash_dread": "0xa4e",
+  "SNDR:shout_ember": "0xa4f",
+  "SNDR:shout_gale": "0xa50",
+  "SNDR:shout_wail": "0xa51",
+  "SNDR:shout_rime": "0xa52",
+  "SNDR:shout_quake": "0xa53",
+  "SNDR:shout_shroud": "0xa54",
+  "SNDR:shout_toll": "0xa55",
+  "SNDR:shout_mire": "0xa56",
+  "SNDR:shout_dread": "0xa57",
+  "SNDR:shout_shatter": "0xa58",
+  "SNDR:shout_roar": "0xa59",
+  "SNDR:shout_dragon": "0xa5a",
+  "SNDR:wailer_scream": "0xa5b",
+  "SNDR:bloater_burst": "0xa5c",
+  "SNDR:grab": "0xa5d",
+  "SNDR:forge_ritual": "0xa5e",
+  "SNDR:night_thunder": "0xa5f"
  }
 }

@@ -209,6 +209,9 @@ namespace bo3z
 			if (i < g_sounds.size() && g_sounds[i]) {
 				RE::BSAudioManager::GetSingleton()->Play(static_cast<RE::BSISoundDescriptor*>(g_sounds[i]));
 			}
+			if (i < gen::kSoundLayer.size() && gen::kSoundLayer[i] >= 0 && gen::kSoundLayer[i] != static_cast<int>(i)) {
+				Play(static_cast<gen::Sound>(gen::kSoundLayer[i]));  // its layer (dark Skyrim effects are built from two)
+			}
 		}
 
 		RE::MagicItem* Spell(int a_spell)
@@ -264,6 +267,9 @@ namespace bo3z
 					h.SetObjectToFollow(node);
 				}
 				h.Play();
+			}
+			if (i < gen::kSoundLayer.size() && gen::kSoundLayer[i] >= 0 && gen::kSoundLayer[i] != static_cast<int>(i)) {
+				PlayAt(static_cast<gen::Sound>(gen::kSoundLayer[i]), a_at);
 			}
 		}
 	}
