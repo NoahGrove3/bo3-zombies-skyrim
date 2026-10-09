@@ -342,7 +342,7 @@ namespace bo3z
 		std::mt19937      g_rng{ std::random_device{}() };
 		float             Rand(float a, float b) { return std::uniform_real_distribution<float>(a, b)(g_rng); }
 
-		void Cue(RE::Actor* a, int a_cue, float a_seconds)
+		void SetCue(RE::Actor* a, int a_cue, float a_seconds)
 		{
 			std::shared_lock l(g_lock);
 			if (auto it = g_rigs.find(a->GetFormID()); it != g_rigs.end()) {
@@ -391,7 +391,7 @@ namespace bo3z
 		void CueFor(RE::Actor* a_actor, int a_cue, float a_seconds)
 		{
 			if (a_actor) {
-				Cue(a_actor, a_cue, a_seconds);
+				SetCue(a_actor, a_cue, a_seconds);
 			}
 		}
 
@@ -515,7 +515,7 @@ namespace bo3z
 							if (len > 1.0f) {
 								m.lungeDir = dir * (1.0f / len);
 								m.lunge = m.type == Type::Crawler ? 0.28f : 0.22f;
-								Cue(a.get(), kCueGrab, 0.6f);
+								SetCue(a.get(), kCueGrab, 0.6f);
 							}
 						}
 					}
@@ -529,7 +529,7 @@ namespace bo3z
 				case Type::Runner:
 					if (dist < (m.type == Type::Runner ? 330.0f : 240.0f) && dist > 90.0f) {
 						m.wind = m.type == Type::Runner ? 0.25f : 0.45f;  // arms come up, then it throws itself at you
-						Cue(a.get(), kCueGrab, m.wind + 0.5f);
+						SetCue(a.get(), kCueGrab, m.wind + 0.5f);
 						Forms::PlayAt(gen::Sound::rise, a.get());
 						m.cd = Rand(4.5f, 7.0f);
 					}
@@ -543,7 +543,7 @@ namespace bo3z
 				case Type::Wailer:
 					if (dist < 1800.0f) {
 						m.wind = 1.1f;
-						Cue(a.get(), kCueScream, 1.6f);
+						SetCue(a.get(), kCueScream, 1.6f);
 						Forms::PlayAt(gen::Sound::hound_night, a.get());
 						m.cd = Rand(9.0f, 13.0f);
 					}
