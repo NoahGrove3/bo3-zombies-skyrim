@@ -12,6 +12,7 @@ namespace bo3z
 		using Clock = std::chrono::steady_clock;
 
 		bool  g_trigger = false, g_adsHeld = false;
+		bool  g_dualHeld = false;  // hand spells: right mouse held, both hands gathering the signature move
 		float g_charge = 0, g_chargeCd = 0;  // hold-to-charge signature moves
 		float g_ads = 0, g_cooldown = 0, g_reload = 0, g_knifeCd = 0, g_burstTimer = 0;
 		int   g_burstLeft = 0;
@@ -1528,7 +1529,7 @@ namespace bo3z
 				const auto& g = gen::kGuns[gun];
 				const int   style = std::clamp(g.chargeStyle, 0, 5);
 				const bool  bow = g.kind == gen::kKindBow;  // the draw is the animation
-				const bool  charging = g_trigger && g.chargeSeconds > 0 && g_chargeCd <= 0 && g_charge > 0.18f;
+				const bool  charging = (IsSpell(gun) ? g_dualHeld : g_trigger) && g.chargeSeconds > 0 && g_chargeCd <= 0 && g_charge > 0.18f;
 				const float c = charging ? EaseInOut((g_charge - 0.18f) / std::max(0.1f, g.chargeSeconds - 0.18f)) : 0.0f;
 				if (charging && !g_chargeSaid) {
 					Forms::Play(gen::Sound::charge_up);
@@ -1538,7 +1539,7 @@ namespace bo3z
 					Forms::Play(gen::Sound::charge_ready);
 					g_readySaid = true;
 				}
-				if (!g_trigger) {
+				if (!(IsSpell(gun) ? g_dualHeld : g_trigger)) {
 					g_chargeSaid = g_readySaid = false;
 				}
 				SetAura(charging ? g.chargeAura : -1);
@@ -1912,7 +1913,7 @@ namespace bo3z
 		{
 			g_migrated = false;
 			g_hits.clear();
-			g_trigger = g_adsHeld = false;
+			g_trigger = g_adsHeld = g_dualHeld = false;
 			g_reload = g_cooldown = 0;
 			g_burstLeft = 0;
 		}
@@ -1984,25 +1985,26 @@ namespace bo3z
 				return true;
 			}
 			if (!GunOut()) {
-				g_trigger = g_adsHeld = false;
+				g_trigger = g_adsHeld = g_dualHeld = false;
 				return false;
 			}
 			if (IsFireButton(a_event)) {
 				// One or the other, on release: a full charge unleashes the signature move, anything shorter is the
 				// weapon's normal shot (never both).
 				const bool spell = IsSpell(CurrentGun());
+				if (spell) {  // left mouse: a quick cast from the right hand (the charge is right mouse's)
+					if (down && !g_dualHeld) {
+						SendAttack(false, 1.0f, 0.0f);
+					}
+					if (up && g_trigger && !g_dualHeld) {
+						SendAttack(false, 0.0f, 0.1f);
+						TryFire(true);
+					}
+					g_trigger = !up;
+					return true;
+				}
 				if (down) {
 					g_charge = 0;
-					if (spell) {  // the right hand comes up with the spell
-						SendAttack(false, 1.0f, 0.0f);
-						g_dual = false;
-					}
-				}
-				if (up && g_trigger && spell) {  // both hands let go together: the cast (a dual cast after a charge)
-					SendAttack(false, 0.0f, std::max(0.05f, g_charge));
-					if (g_dual) {
-						SendAttack(true, 0.0f, std::max(0.05f, g_charge));
-					}
 				}
 				if (up && g_trigger) {
 					const bool bow = gen::kGuns[CurrentGun()].kind == gen::kKindBow;
@@ -2023,6 +2025,24 @@ namespace bo3z
 				return true;
 			}
 			if (IsAimButton(a_event)) {
+				if (IsSpell(CurrentGun())) {  // right mouse: both hands up, the power gathers; let go to unleash it
+					if (down) {
+						g_charge = 0;
+						SendAttack(false, 1.0f, 0.0f);
+						SendAttack(true, 1.0f, 0.0f);
+						g_dualHeld = true;
+					} else if (up && g_dualHeld) {
+						SendAttack(false, 0.0f, std::max(0.05f, g_charge));
+						SendAttack(true, 0.0f, std::max(0.05f, g_charge));
+						if (!TryUnleash(true) && g_charge < 0.35f) {
+							TryFire(true);  // a quick dual tap is still a shot
+						}
+						g_dualHeld = false;
+						g_charge = 0;
+					}
+					g_adsHeld = false;
+					return true;
+				}
 				g_adsHeld = !up;
 				return true;
 			}
@@ -2208,11 +2228,9 @@ namespace bo3z
 			const bool out = GunOut();
 			const int  gun = CurrentGun();
 			g_chargeCd = std::max(0.0f, g_chargeCd - a_delta);
-			g_charge = out && g_trigger ? g_charge + a_delta / Perks::ChargeMult() : 0.0f;
-			if (out && g_trigger && !g_dual && g_charge > 0.3f && IsSpell(CurrentGun()) && g_chargeCd <= 0) {
-				SendAttack(true, 1.0f, 0.0f);  // held on: the other hand joins, the power gathers in both
-				g_dual = true;
-			}
+			// spells charge with right mouse (both hands), everything else by holding fire
+			const bool held = IsSpell(gun) ? g_dualHeld : g_trigger;
+			g_charge = out && held ? g_charge + a_delta / Perks::ChargeMult() : 0.0f;
 			TickPose(a_delta);
 			TickSwing(a_delta);
 			TickEcho(a_delta);
@@ -2229,7 +2247,7 @@ namespace bo3z
 					TryFire(false);
 				}
 			} else {
-				g_trigger = g_adsHeld = false;
+				g_trigger = g_adsHeld = g_dualHeld = false;
 			}
 			// Aim down sights: blend the field of view.
 			const float target = out && g_adsHeld ? 1.0f : 0.0f;

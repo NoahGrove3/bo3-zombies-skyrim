@@ -450,7 +450,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							const ImU32 nc = ol > 0 ? IM_COL32((fc >> 24) & 0xFF, (fc >> 16) & 0xFF, (fc >> 8) & 0xFF, 255) : IM_COL32(210, 202, 186, 255);
 							Txt(dl, g_title, 16 * k, { c0.x + 30 * k, c0.y + 14 * k }, Fade(nc, 0.9f * al), std::string(gen::kGuns[og].label));
 						} else {
-							Txt(dl, g_body, 15 * k, { c0.x + 30 * k, c0.y + 15 * k }, Fade(IM_COL32(140, 136, 128, 255), al), "empty - a staff or bow from the Coffer");
+							Txt(dl, g_body, 15 * k, { c0.x + 30 * k, c0.y + 15 * k }, Fade(IM_COL32(140, 136, 128, 255), al), "empty - a spell from the Coffer");
 						}
 					}
 					if (s.slotCount > 1) {
