@@ -116,6 +116,9 @@ namespace bo3z
 				}
 				for (auto* e = *a_event; e; e = e->next) {
 					if (auto* b = e->AsButtonEvent()) {
+						if (b->GetDevice() == RE::INPUT_DEVICE::kMouse && b->GetIDCode() == 0 && b->IsDown()) {
+							Hud::OnClick();
+						}
 						if (!Intro::OnButton(b)) {
 							if (Shops::OnButton(b)) {
 								continue;

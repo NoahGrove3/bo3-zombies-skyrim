@@ -511,5 +511,16 @@ namespace bo3z
 			std::scoped_lock l(Hud::Lock());
 			Hud::Edit().wardFrac = wardFrac;
 		}
+
+		int  Raw(int a_town) { return a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size()) ? Value(a_town) : 0; }
+		void SetRaw(int a_town, int a_value)
+		{
+			if (a_town < 0 || a_town >= static_cast<int>(gen::kCurseCities.size())) {
+				return;
+			}
+			if (auto* g = Global(gen::kCurseCities[a_town].global)) {
+				g->value = static_cast<float>(a_value);
+			}
+		}
 	}
 }

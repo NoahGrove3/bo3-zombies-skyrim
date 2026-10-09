@@ -723,7 +723,7 @@ namespace bo3z
 				logger::warn("event: weather {}|{:06X} not found", ev.weatherPlugin, ev.weatherId);
 			}
 			Forms::Play(ev.sound);
-			if (ev.boss && g_boss.spawnIn < 0 && !g_boss.handle.get()) {
+			if (ev.boss && !Coop::Client() && g_boss.spawnIn < 0 && !g_boss.handle.get()) {
 				g_boss.spawnIn = gen::kCurseHeraldDelay;
 			}
 			logger::info("event: {} night", ev.id);
@@ -738,6 +738,82 @@ namespace bo3z
 				g_weatherForced = false;
 			}
 			g_event = -1;
+		}
+
+		// ---- co-op: the host's night, followed by the party's games ----
+		void NetFillImpl(Net::State& s)
+		{
+			s.phase = g_phase == Phase::Fighting ? 2 : g_phase == Phase::Break ? 1 : 0;
+			s.event = static_cast<std::int8_t>(g_phase == Phase::Fighting ? g_event : -1);
+			s.round = g_phase == Phase::Fighting ? g_current : Save::Get(gen::kAV_round);
+			s.countdown = g_phase == Phase::Break ? g_breakTimer : 0.0f;
+			auto boss = g_boss.handle.get();
+			s.bossHp = boss && !boss->IsDead() ? std::max(0.0f, boss->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth)) / std::max(1.0f, g_boss.maxHp) : -1.0f;
+			s.bossEnraged = g_boss.enraged;
+			for (int k = 0; k < 4; ++k) {
+				s.pu[k] = PowerUps::Timer(k);
+			}
+			s.nuke = g_pause;
+		}
+
+		void StartRound(int a_round);
+		void Dawn();
+		// A friend's game: the night, the event, the boss bar and the city quests follow the host's.
+		void NetFollow()
+		{
+			const auto& s = Net::Last();
+			if (s.phase == 2) {
+				if (g_phase != Phase::Fighting || g_current != s.round) {
+					Save::Set(gen::kAV_round, std::max(0, s.round - 1));
+					StartRound(s.round);  // (raises nothing here: the host's undead come through Skyrim Together)
+				}
+				if (g_event != s.event) {
+					EndEvent();
+					g_event = s.event;
+					if (g_event >= 0 && g_event < static_cast<int>(gen::kEvents.size())) {
+						StartEvent(g_event);
+						Hud::Banner("NIGHT " + std::to_string(s.round) + " - " + std::string(gen::kEvents[g_event].banner), 6.0f);
+					}
+				}
+			} else if (s.phase == 1) {
+				if (g_phase == Phase::Fighting) {
+					Dawn();
+				}
+				if (g_phase == Phase::Day) {
+					Hud::Banner("NIGHT FALLS. THE DEAD RISE.", 4.0f);
+					Forms::Play(gen::Sound::night_falls);
+				}
+				g_phase = Phase::Break;
+				g_breakTimer = s.countdown;
+				std::scoped_lock l(Hud::Lock());
+				Hud::Edit().countdown = s.countdown;
+			} else if (g_phase != Phase::Day) {
+				Dawn();
+			}
+			for (int k = 0; k < 4; ++k) {  // the party shares power-ups
+				if (k != 2 && s.pu[k] > PowerUps::Timer(k) + 0.5f) {
+					PowerUps::SetTimer(k, s.pu[k]);
+				}
+			}
+			g_pause = std::max(g_pause, s.nuke);
+			for (int t = 0; t < static_cast<int>(gen::kCurseCities.size()) && t < 10; ++t) {
+				if (s.curse[t] > Curse::Raw(t)) {
+					Curse::SetRaw(t, s.curse[t]);
+				}
+			}
+			if (s.boxAv != Save::Get(gen::kAV_box)) {
+				Save::Set(gen::kAV_box, s.boxAv);
+			}
+			std::scoped_lock l(Hud::Lock());
+			auto& h = Hud::Edit();
+			const int row = BossRow();
+			if (s.bossHp >= 0 && row >= 0) {
+				h.bossName = std::string(gen::kEnemies[row].label);
+				h.bossHp = s.bossHp;
+				h.bossEnraged = s.bossEnraged;
+			} else if (!g_boss.handle.get()) {
+				h.bossName.clear();
+			}
 		}
 
 		void StartRound(int a_round)
@@ -1227,6 +1303,7 @@ namespace bo3z
 		void  Pause(float a_seconds) { g_pause = std::max(g_pause, a_seconds); }
 		float Paused() { return g_pause; }
 		bool  Fighting() { return g_phase == Phase::Fighting; }
+		void  NetFill(Net::State& a_state) { NetFillImpl(a_state); }
 		bool  BossAlive() { auto b = g_boss.handle.get(); return (b && !b->IsDead()) || g_boss.spawnIn > 0; }
 		void  CallHerald()
 		{
@@ -1442,7 +1519,12 @@ namespace bo3z
 			if (!Allowed(player)) {
 				return;
 			}
-			if (!IsNight()) {
+			if (Net::Fresh()) {
+				NetFollow();  // the host's night (its clock, its events)
+				if (g_phase != Phase::Fighting) {
+					return;
+				}
+			} else if (!IsNight()) {
 				if (g_phase != Phase::Day) {
 					Dawn();
 				}
@@ -1520,6 +1602,13 @@ namespace bo3z
 		}
 
 		bool InstaKill() { return g_timers[0] > 0; }
+		float Timer(int a_kind) { return a_kind >= 0 && a_kind < 4 ? g_timers[a_kind] : 0.0f; }
+		void  SetTimer(int a_kind, float a_seconds)
+		{
+			if (a_kind >= 0 && a_kind < 4) {
+				g_timers[a_kind] = a_seconds;
+			}
+		}
 		int  PointsMult() { return (g_timers[1] > 0 ? 2 : 1) * Director::EventPointsMult(); }
 		bool FireSale() { return g_timers[3] > 0; }
 
@@ -1571,12 +1660,22 @@ namespace bo3z
 			}
 		}
 
-		void Grab(int a_kind, RE::PlayerCharacter* a_player)
+		void Grab(int a_kind, RE::PlayerCharacter* a_player, bool a_remote = false)
 		{
 			Forms::Play(gen::Sound::powerup_grab);
 			Hud::Banner(kNames[a_kind], 2.5f);
+			if (!a_remote) {
+				Net::PowerUpTaken(a_kind);  // the whole party gets it
+			}
 			if (a_kind == 2) {  // Nuke: every undead on the field drops, and none rise for 20 seconds
 				int n = 0;
+				if (a_remote && Coop::Client()) {  // the host's game kills them (Skyrim Together shows it); here the flash and the quiet
+					Director::Pause(20.0f);
+					Forms::Play(gen::Sound::nuke);
+					std::scoped_lock l(Hud::Lock());
+					Hud::Edit().nukeFlash = 1.0f;
+					return;
+				}
 				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 					if (auto a = h.get(); a && !a->IsDead() && Director::IsRoundUndead(a.get())) {
 						const int row = Director::EnemyRow(a.get());
@@ -1607,6 +1706,11 @@ namespace bo3z
 			}
 			if (!player) {
 				return;
+			}
+			for (int k : Net::TakeRemotePowerUps()) {  // taken by a friend in the party
+				if (k >= 0 && k < 4) {
+					Grab(k, player, true);
+				}
 			}
 			for (auto& d : g_drops) {
 				d.left -= a_delta;

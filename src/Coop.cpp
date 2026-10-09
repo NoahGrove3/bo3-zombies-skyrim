@@ -43,7 +43,7 @@ namespace bo3z::Coop
 		}();
 		return r;
 	}
-	bool Client() { return Get() == Role::Client; }
+	bool Client() { return Get() == Role::Client || Net::IsClient(); }  // a Steam party joined from the menu counts too
 	bool TogetherLoaded()
 	{
 		static const bool loaded = [] {

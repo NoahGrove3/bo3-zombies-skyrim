@@ -73,6 +73,8 @@ namespace bo3z
 		bool InstaKill();
 		int  PointsMult();
 		bool FireSale();
+		float Timer(int a_kind);
+		void  SetTimer(int a_kind, float a_seconds);
 	}
 
 	namespace Points
@@ -81,6 +83,8 @@ namespace bo3z
 		bool Spend(int a_points);
 		int  Get();
 	}
+
+	namespace Net { struct State; }
 
 	namespace Director
 	{
@@ -107,6 +111,45 @@ namespace bo3z
 		bool             BossAlive();
 		void             CallHerald();        // the Herald quest: fog rolls in and Grimmvar rises
 		void             CrumbleNear(const RE::NiPoint3& a_at, float a_radius);  // a freed city: its undead fall
+		void             NetFill(Net::State& a_state);  // host: the night as the party should see it
+	}
+
+	// Co-op, our own layer over Steam (Net.cpp): a friends-only lobby, the host's zombies game sent to the party
+	namespace Net
+	{
+#pragma pack(push, 1)
+		struct State  // host -> everyone, 4 times a second
+		{
+			std::uint8_t  type, version, phase;  // phase: 0 day, 1 dusk (countdown), 2 fighting
+			std::int8_t   event;                 // gen::kEvents index, -1 none
+			std::int32_t  round;
+			float         countdown;
+			float         bossHp;                // 0..1, -1 no boss
+			std::uint8_t  bossEnraged, pad[3];
+			float         pu[4];                 // power-up seconds left: insta-kill, double points, -, fire sale
+			float         nuke;                  // seconds the dead still lie low
+			std::int32_t  boxAv;                 // the Coffer's town and spins (save AV)
+			std::int32_t  curse[10];             // the Dirge in every city
+		};
+#pragma pack(pop)
+		struct FriendGame { std::uint64_t id, lobby; std::string name; };
+		bool        Available();     // Steam is there
+		void        Tick(float a_delta);
+		bool        InLobby();
+		bool        IsHost();
+		bool        IsClient();
+		bool        Fresh();         // a client with recent word from the host
+		const State& Last();
+		std::string Status();
+		std::string HostName();
+		int         Members();       // others in the party
+		void        HostLobby();     // open a party and the Steam invite dialog
+		void        InviteFriends();
+		void        JoinLobby(std::uint64_t a_lobby);
+		void        LeaveLobby();
+		std::vector<FriendGame> FriendsInParties();  // friends in Skyrim with a party open
+		void        PowerUpTaken(int a_kind);
+		std::vector<int> TakeRemotePowerUps();
 	}
 
 	// Co-op with Skyrim Together (UndyingNights.ini: Role=host|client|solo)
@@ -130,6 +173,8 @@ namespace bo3z
 		int   ZoneTown();                                // city the player is in (-1)
 		int   RelicOf(int a_town);                       // the city's relic weapon (gun index, -1)
 		void  ClaimRelic(int a_town);                    // the Shrine of the Dirge at a freed city's station
+		int   Raw(int a_town);                           // the city's progress value (step*1000 + progress)
+		void  SetRaw(int a_town, int a_value);
 	}
 
 	namespace Intro
@@ -251,6 +296,7 @@ namespace bo3z
 		void        Banner(std::string a_text, float a_seconds = 4.0f);
 		void        Lore(std::string a_title, std::string a_text, float a_seconds = 14.0f);  // a scroll of the Dirge
 		void        Install();
+		void        OnClick();  // a left click (menus: the party panel's buttons)
 	}
 
 	namespace DevTools

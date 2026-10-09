@@ -7,6 +7,8 @@ from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else 'cover.png'
 W0 = int(sys.argv[2]) if len(sys.argv) > 2 else 1920
+import os
+MENU = os.environ.get('MENU') == '1'   # main-menu backdrop: the cover with the bottom-right left open for Skyrim's buttons
 S = 2                                   # supersample
 W, H = W0 * S, int(W0 * 9 / 16) * S
 k = W / 3840                            # layout is in 3840x2160 units
@@ -227,14 +229,13 @@ def risen(x, y, s, lean, arm, eye='#7fe8ff', blade=False):
         ex_, ey_ = p(48 + side * 13, -488)
         e = mask(lambda d, ex_=ex_, ey_=ey_: d.ellipse([P(ex_ - 6 * s, ey_ - 4 * s), P(ex_ + 6 * s, ey_ + 4 * s)], fill=255))
         add(e, eye, 2.5); glow(e, eye, 16 * s, 1.6)
-risen(1240, 1880, 0.42, 50, 1)
-risen(1010, 1930, 0.55, 30, 1)
-risen(780, 2000, 0.8, 60, 1)
-risen(250, 2200, 1.45, 40, 1)
-risen(560, 2150, 1.15, 70, 1, eye='#a0f0ff')
-risen(2680, 1900, 0.5, -30, -1)
-risen(3040, 1990, 0.85, -40, -1)
-risen(3420, 2180, 1.7, -50, -1, eye='#ff6a40', blade=True)
+for args, kw in [((1240, 1880, 0.42, 50, 1), {}), ((1010, 1930, 0.55, 30, 1), {}), ((780, 2000, 0.8, 60, 1), {}), ((250, 2200, 1.45, 40, 1), {}),
+                 ((560, 2150, 1.15, 70, 1), {'eye': '#a0f0ff'}), ((2680, 1900, 0.5, -30, -1), {}), ((3040, 1990, 0.85, -40, -1), {}),
+                 ((3420, 2180, 1.7, -50, -1), {'eye': '#ff6a40', 'blade': True})]:
+    if MENU and args[0] == 3420:
+        continue   # the menu's buttons stand there
+    risen(*args, **kw)
+
 # hands clawing up out of the barrow earth
 for hx, hy, hs in [(1500, 2120, 1.0), (2300, 2140, 0.9), (2600, 2090, 0.7), (1000, 2130, 0.8)]:
     pts = [(hx - 25 * hs, hy), (hx - 20 * hs, hy - 120 * hs), (hx - 45 * hs, hy - 170 * hs), (hx - 30 * hs, hy - 175 * hs), (hx - 12 * hs, hy - 140 * hs), (hx - 10 * hs, hy - 205 * hs),
@@ -347,7 +348,18 @@ for sgn in (-1, 1):   # knotwork-ish rules either side of the line
     d.line([(x0, ty + 175 * kk), (x1, ty + 175 * kk)], fill=(200, 120, 80, 200), width=max(1, int(3 * kk)))
     d.polygon([(x0, ty + 175 * kk - 12 * kk), (x0 + sgn * 18 * kk, ty + 175 * kk), (x0, ty + 175 * kk + 12 * kk), (x0 - sgn * 18 * kk, ty + 175 * kk)], fill=(230, 140, 90, 230))
 fB = ImageFont.truetype(FR, int(50 * kk))
-draw_text(lay, 'ROUND-BASED UNDEAD SURVIVAL  •  STAFFS & ELEMENTAL BOWS  •  THE UNDYING DIRGE', fB, h - 90 * kk, 10 * kk, (210, 190, 170, 200))
+if not MENU: draw_text(lay, 'ROUND-BASED UNDEAD SURVIVAL  •  STAFFS & ELEMENTAL BOWS  •  THE UNDYING DIRGE', fB, h - 90 * kk, 10 * kk, (210, 190, 170, 200))
 out = Image.alpha_composite(out.convert('RGBA'), lay).convert('RGB')
+if MENU:  # open the centre-bottom for Skyrim's own menu buttons: a soft dark well instead of the picture
+    out = out.convert('RGBA')
+    ww, hh = out.size
+    yy_, xx_ = np.mgrid[0:hh, 0:ww].astype(np.float32)
+    # Skyrim's buttons (Continue, New, Load...) stand bottom-right
+    dx = np.clip((0.84 - xx_ / ww) / 0.05, 0, None); dy = np.maximum(np.clip((0.66 - yy_ / hh) / 0.05, 0, None), np.clip((yy_ / hh - 0.92) / 0.04, 0, None))
+    hole = np.clip(1.0 - np.sqrt(dx ** 2 + dy ** 2), 0, 1)
+    hole = np.clip(hole * 2.2, 0, 1)
+    a_ = (255 * (1 - 0.92 * hole)).astype(np.uint8)
+    rgb = np.asarray(out, np.float32)[..., :3] * (1 - 0.6 * hole[..., None])
+    out = Image.fromarray(np.dstack([rgb.astype(np.uint8), a_]), 'RGBA')
 out.save(OUT, quality=95)
 print('wrote', OUT, out.size)

@@ -20,6 +20,9 @@ namespace bo3z
 		ImFont*              g_font = nullptr;
 		std::array<ID3D11ShaderResourceView*, gen::kPerks.size()> g_perkIcons{};
 		std::array<ID3D11ShaderResourceView*, gen::kGuns.size()>  g_weaponIcons{};
+		ID3D11ShaderResourceView* g_menuBg = nullptr;   // the main menu's backdrop (tools/cover.py, MENU=1)
+		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
+		std::atomic<int>          g_clicks{ 0 };        // left clicks since the last frame (menus)
 		auto                 g_last = std::chrono::steady_clock::now();
 
 		ImU32 Col(std::uint32_t a_rgba, float a_alpha = 1.0f)
@@ -507,26 +510,169 @@ namespace bo3z
 				const std::string foot = "1-9 or Up/Down + Activate to drink   |   Tab to close   |   " + std::to_string(owned) + "/" + std::to_string(gen::kMaxPerks) + " brews";
 				TxtC(dl, g_body, 16 * k, size.x * 0.5f, b.y - 34 * k, IM_COL32(200, 195, 180, 220), foot);
 			}
+		}
 
-			if (s.crewScreen) {
-				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, 175));
-				TxtC(dl, g_title, 54 * k, size.x * 0.5f, size.y * 0.15f, kGold, "CHOOSE YOUR HERO", 3 * k, IM_COL32(255, 160, 40, 255));
-				Divider(dl, size.x * 0.5f, size.y * 0.15f + 72 * k, size.x * 0.2f, k);
-				const float w = size.x * 0.19f, gap = size.x * 0.02f, x0 = (size.x - (4 * w + 3 * gap)) / 2, y0 = size.y * 0.30f, h = size.y * 0.42f;
-				for (int i = 0; i < 4; ++i) {
-					const auto& c = gen::kCrew[i];
-					const float x = x0 + i * (w + gap);
-					const bool  on = i == s.crewHighlight;
-					Panel(dl, { x, y0 }, { x + w, y0 + h }, k, on ? 1.0f : 0.7f);
-					if (on) {
-						dl->AddRect({ x - 3 * k, y0 - 3 * k }, { x + w + 3 * k, y0 + h + 3 * k }, kGold, 0, 0, 2.5f * k);
-					}
-					Txt(dl, g_num, 26 * k, { x + 16 * k, y0 + 14 * k }, Fade(kGold, 0.8f), std::to_string(i + 1));
-					Txt(dl, g_title, 30 * k, { x + 16 * k, y0 + 56 * k }, kParch, std::string(c.label));
-					dl->AddText(g_body, 19 * k, { x + 16 * k, y0 + 108 * k }, IM_COL32(205, 200, 185, 255), std::string(c.quote).c_str(), nullptr, w - 32 * k);
-					Txt(dl, g_body, 19 * k, { x + 16 * k, y0 + h - 52 * k }, kGold, c.passiveText.data());
+		// ---- main menu and party panel ----
+		ImVec2 Cursor(ImVec2 a_size)
+		{
+			auto* mc = RE::MenuCursor::GetSingleton();
+			if (!mc) {
+				return { -1, -1 };
+			}
+			const auto& r = mc->GetRuntimeData();
+			const float sx = r.screenWidthX > 1 ? a_size.x / r.screenWidthX : 1.0f, sy = r.screenWidthY > 1 ? a_size.y / r.screenWidthY : 1.0f;
+			return { r.cursorPosX * sx, r.cursorPosY * sy };
+		}
+
+		bool Button(ImDrawList* dl, ImVec2 a, ImVec2 b, const std::string& label, ImVec2 cur, bool click, float k, ImU32 accent = kGold)
+		{
+			const bool hover = cur.x >= a.x && cur.x <= b.x && cur.y >= a.y && cur.y <= b.y;
+			dl->AddRectFilledMultiColor(a, b, IM_COL32(20, 16, 14, hover ? 235 : 200), IM_COL32(20, 16, 14, hover ? 235 : 200), IM_COL32(8, 6, 6, 235), IM_COL32(8, 6, 6, 235));
+			dl->AddRect(a, b, hover ? accent : Fade(accent, 0.45f), 2 * k, 0, (hover ? 2.0f : 1.2f) * k);
+			if (hover) {
+				dl->AddRectFilled({ a.x, a.y }, { a.x + 4 * k, b.y }, accent);
+			}
+			const auto ts = Measure(g_title, 20 * k, label);
+			Txt(dl, g_title, 20 * k, { a.x + (b.x - a.x - ts.x) / 2, a.y + (b.y - a.y - ts.y) / 2 }, hover ? kParch : IM_COL32(220, 210, 190, 235), label);
+			return hover && click;
+		}
+
+		// The co-op party: host a Steam party and invite, or join a friend's.
+		void PartyPanel(ImDrawList* dl, ImVec2 size, ImVec2 a, float k, bool click)
+		{
+			if (!Net::Available()) {
+				return;
+			}
+			const ImVec2 cur = Cursor(size);
+			static std::vector<Net::FriendGame> friends;
+			static float refresh = 0;
+			if ((refresh -= ImGui::GetIO().DeltaTime) <= 0) {
+				refresh = 2.0f;
+				friends = Net::InLobby() ? std::vector<Net::FriendGame>{} : Net::FriendsInParties();
+			}
+			const float w = 420 * k, rowH = 46 * k;
+			const int   rows = Net::InLobby() ? 2 : 1 + static_cast<int>(std::min<std::size_t>(friends.size(), 4));
+			const float h = 92 * k + rows * (rowH + 8 * k) + 30 * k;
+			const ImVec2 b{ a.x + w, a.y + h };
+			Panel(dl, { a.x, a.y - h }, { b.x, a.y }, k, 0.95f);
+			float y = a.y - h + 14 * k;
+			Txt(dl, g_title, 26 * k, { a.x + 18 * k, y }, kGold, "CO-OP PARTY", 2 * k, IM_COL32(255, 160, 60, 255));
+			y += 36 * k;
+			Txt(dl, g_body, 16 * k, { a.x + 18 * k, y }, IM_COL32(210, 202, 186, 240), Net::Status() + (Net::InLobby() ? "   (" + std::to_string(Net::Members() + 1) + " in party)" : ""));
+			y += 34 * k;
+			auto row = [&](const std::string& label, ImU32 accent = kGold) {
+				const bool hit = Button(dl, { a.x + 18 * k, y }, { b.x - 18 * k, y + rowH }, label, cur, click, k, accent);
+				y += rowH + 8 * k;
+				return hit;
+			};
+			if (!Net::InLobby()) {
+				if (row("HOST A PARTY  -  INVITE FRIENDS")) {
+					Net::HostLobby();
 				}
-				TxtC(dl, g_body, 24 * k, size.x * 0.5f, y0 + h + 36 * k, IM_COL32(220, 215, 200, 255), "Press 1-4 to choose, Enter to confirm");
+				for (std::size_t i = 0; i < friends.size() && i < 4; ++i) {
+					if (row("JOIN " + friends[i].name, IM_COL32(120, 200, 255, 255))) {
+						Net::JoinLobby(friends[i].lobby);
+					}
+				}
+			} else if (Net::IsHost()) {
+				if (row("INVITE FRIENDS (STEAM)")) {
+					Net::InviteFriends();
+				}
+				if (row("CLOSE THE PARTY", IM_COL32(220, 90, 70, 255))) {
+					Net::LeaveLobby();
+				}
+			} else {
+				if (row("LEAVE " + Net::HostName() + "'S PARTY", IM_COL32(220, 90, 70, 255))) {
+					Net::LeaveLobby();
+				}
+				y += rowH + 8 * k;
+			}
+			Txt(dl, g_body, 13 * k, { a.x + 18 * k, a.y - 24 * k }, IM_COL32(170, 162, 146, 200), "Players meet in Skyrim Together; the party shares the nights.");
+		}
+
+		// The main menu: the cover's world, alive (fog drifting, embers rising, the moon breathing).
+		void DrawMenu(ImVec2 size, float now, bool click)
+		{
+			auto*       dl = ImGui::GetBackgroundDrawList();
+			auto*       fg = ImGui::GetForegroundDrawList();
+			const float k = size.y / 1080.0f;
+			// the picture, cropped to fill the screen (16:9 art)
+			float iw = size.x, ih = size.x * 9.0f / 16.0f;
+			if (ih < size.y) {
+				ih = size.y, iw = size.y * 16.0f / 9.0f;
+			}
+			const ImVec2 o{ (size.x - iw) / 2, (size.y - ih) / 2 };
+			auto at = [&](float u, float v) { return ImVec2{ o.x + u * iw, o.y + v * ih }; };
+			if (g_menuBg) {
+				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuBg)), o, { o.x + iw, o.y + ih });
+			}
+			// the blood moon breathes
+			{
+				const ImVec2 m = at(0.5f, 0.333f);
+				const float  pulse = 0.5f + 0.5f * std::sin(now * 0.7f);
+				for (int i = 0; i < 6; ++i) {
+					fg->AddCircleFilled(m, ih * (0.20f + 0.04f * i), IM_COL32(255, 70, 30, static_cast<int>((6 + 5 * pulse) * (6 - i) / 6)), 64);
+				}
+			}
+			// the staff's gem and the lance's strike flicker
+			{
+				const float f = 0.6f + 0.4f * std::sin(now * 9.0f) * std::sin(now * 3.1f);
+				for (auto [u, v, r] : { std::tuple{ 0.609f, 0.583f, 0.022f }, { 0.236f, 0.768f, 0.04f } }) {
+					const ImVec2 c = at(u, v);
+					for (int i = 0; i < 4; ++i) {
+						fg->AddCircleFilled(c, ih * r * (1 + i * 0.6f), IM_COL32(90, 255, 190, static_cast<int>(28 * f * (4 - i) / 4)), 32);
+					}
+				}
+			}
+			// fog: two layers drifting across the barrow-yard at different speeds
+			if (g_menuFog) {
+				for (auto [speed, top, alpha, scale] : { std::tuple{ 0.012f, 0.62f, 150, 1.0f }, { -0.007f, 0.74f, 120, 1.6f } }) {
+					const float u0 = now * speed;
+					fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuFog)), at(0, top), at(1, 1.0f), { u0, 0 }, { u0 + 1.0f / scale * 2.0f, 1.0f / scale },
+						IM_COL32(255, 255, 255, alpha));
+				}
+			}
+			// embers rising from the braziers and the strike
+			{
+				struct Ember { float u, v, sp, sway, ph, r; bool green; };
+				static std::vector<Ember> em;
+				static std::mt19937 rng{ 7 };
+				std::uniform_real_distribution<float> U(0, 1);
+				if (em.empty()) {
+					for (int i = 0; i < 160; ++i) {
+						em.push_back({ U(rng), U(rng), 0.015f + 0.03f * U(rng), 0.004f + 0.01f * U(rng), U(rng) * 6.28f, 1.0f + 2.2f * U(rng), U(rng) < 0.18f });
+					}
+				}
+				const float dt = ImGui::GetIO().DeltaTime;
+				for (auto& e : em) {
+					e.v -= e.sp * dt;
+					if (e.v < 0.05f) {
+						const float src = U(rng);
+						e.u = src < 0.3f ? 0.24f + 0.02f * (U(rng) - 0.5f) : src < 0.6f ? 0.76f + 0.02f * (U(rng) - 0.5f) : U(rng);
+						e.v = 0.85f + 0.12f * U(rng);
+					}
+					const float u = e.u + std::sin(now * 0.8f + e.ph) * e.sway;
+					const float tw = 0.55f + 0.45f * std::sin(now * 6.0f + e.ph * 3);
+					const ImU32 c = e.green ? IM_COL32(140, 255, 210, static_cast<int>(200 * tw)) : IM_COL32(255, 170, 80, static_cast<int>(220 * tw));
+					const ImVec2 p = at(u, e.v);
+					fg->AddCircleFilled(p, e.r * k * 2.2f, Fade(c, 0.18f));
+					fg->AddCircleFilled(p, e.r * k, c);
+				}
+			}
+			// now and then, far lightning behind the mountains
+			{
+				const float t = std::fmod(now, 11.0f);
+				if (t < 0.18f || (t > 0.3f && t < 0.38f)) {
+					fg->AddRectFilledMultiColor(at(0, 0), at(1, 0.55f), IM_COL32(220, 210, 255, 26), IM_COL32(220, 210, 255, 26), IM_COL32(220, 210, 255, 0), IM_COL32(220, 210, 255, 0));
+				}
+			}
+			(void)dl;
+			PartyPanel(fg, size, { 40 * k, size.y - 40 * k }, k, click);
+			// the menu's own cursor, on top of our picture
+			const ImVec2 c = Cursor(size);
+			if (c.x >= 0) {
+				fg->AddTriangleFilled(c, { c.x + 4 * k, c.y + 20 * k }, { c.x + 14 * k, c.y + 13 * k }, IM_COL32(240, 230, 210, 240));
+				fg->AddTriangle(c, { c.x + 4 * k, c.y + 20 * k }, { c.x + 14 * k, c.y + 13 * k }, IM_COL32(0, 0, 0, 200), 1.5f * k);
 			}
 		}
 
@@ -579,8 +725,10 @@ namespace bo3z
 					++wicons;
 				}
 			}
+			const bool bg = SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_bg.png", nullptr, &g_menuBg));
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_fog.png", nullptr, &g_menuFog);
 			g_init = true;
-			logger::info("hud: ready ({} perk icons, {} weapon icons)", icons, wicons);
+			logger::info("hud: ready ({} perk icons, {} weapon icons, menu art {})", icons, wicons, bg);
 			return true;
 		}
 
@@ -614,7 +762,11 @@ namespace bo3z
 			if (!Init(a_swap)) {
 				return;
 			}
-			if (!InGame()) {
+			auto*      uiM = RE::UI::GetSingleton();
+			const bool mainMenu = uiM && uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::LoadingMenu::MENU_NAME);
+			const bool journal = uiM && uiM->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !mainMenu;
+			const int  clicks = g_clicks.exchange(0);
+			if (!InGame() && !mainMenu && !journal) {
 				if (static int m = 0; m++ % 1200 == 0) {
 					auto* ui = RE::UI::GetSingleton();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
@@ -642,7 +794,14 @@ namespace bo3z
 
 			ImGui_ImplDX11_NewFrame();
 			ImGui::NewFrame();
-			Draw(s, io.DisplaySize);
+			if (mainMenu) {
+				DrawMenu(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks > 0);
+			} else if (journal) {
+				const float k = io.DisplaySize.y / 1080.0f;
+				PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { 40 * k, io.DisplaySize.y - 40 * k }, k, clicks > 0);
+			} else {
+				Draw(s, io.DisplaySize);
+			}
 			ImGui::Render();
 			if (static int n = 0; n++ % 600 == 0) {
 				auto* dd = ImGui::GetDrawData();
@@ -679,6 +838,13 @@ namespace bo3z
 
 		HRESULT WINAPI PresentHook(IDXGISwapChain* a_swap, UINT a_sync, UINT a_flags)
 		{
+			try {
+				static auto netLast = std::chrono::steady_clock::now();
+				const auto  netNow = std::chrono::steady_clock::now();
+				Net::Tick(std::clamp(std::chrono::duration<float>(netNow - netLast).count(), 0.0f, 0.25f));  // the co-op party (menus too)
+				netLast = netNow;
+			} catch (...) {
+			}
 			try {
 				Frame(a_swap);
 			} catch (...) {
@@ -735,6 +901,8 @@ namespace bo3z
 			g_state.banner = std::move(a_text);
 			g_state.bannerTime = a_seconds;
 		}
+
+		void OnClick() { ++g_clicks; }
 
 		void Lore(std::string a_title, std::string a_text, float a_seconds)
 		{
