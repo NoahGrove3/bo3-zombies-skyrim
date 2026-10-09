@@ -1,6 +1,6 @@
 {
   "sheet": "boss",
-  "about": "Grimmvar, the Undying Wyrm: rises every bossEvery nights (enemies sheet), partway into the night. Times in seconds, ranges in Skyrim units, health as a multiple of a zombie's round health.",
+  "about": "Grimmvar, the Undying Wyrm: rises every bossEvery nights (enemies sheet), partway into the night. Times in seconds, ranges in Skyrim units, health as a multiple of a zombie's round health. Damage values (slamDamage, clawHit, clawLast, leapDamage, eruptionDamage) are shares of the player's health. roarEvery/roarRange: the Wyrm Leap (he springs up and crashes down where you stand). breathStrength scales his fire breath. meleeShare: share of your health each claw swing takes.",
   "columns": [
     "id",
     "value",
@@ -31,12 +31,12 @@
     },
     {
       "id": "roarEvery",
-      "value": 14,
+      "value": 12,
       "verify": []
     },
     {
       "id": "roarRange",
-      "value": 650,
+      "value": 1800,
       "verify": []
     },
     {
@@ -66,7 +66,7 @@
     },
     {
       "id": "slamDamage",
-      "value": 0.3,
+      "value": 0.18,
       "verify": []
     },
     {
@@ -82,6 +82,41 @@
     {
       "id": "enrageCooldownMult",
       "value": 0.65,
+      "verify": []
+    },
+    {
+      "id": "comboEvery",
+      "value": 6,
+      "verify": []
+    },
+    {
+      "id": "clawHit",
+      "value": 0.05,
+      "verify": []
+    },
+    {
+      "id": "clawLast",
+      "value": 0.1,
+      "verify": []
+    },
+    {
+      "id": "leapDamage",
+      "value": 0.14,
+      "verify": []
+    },
+    {
+      "id": "eruptionDamage",
+      "value": 0.08,
+      "verify": []
+    },
+    {
+      "id": "breathStrength",
+      "value": 0.45,
+      "verify": []
+    },
+    {
+      "id": "meleeShare",
+      "value": 0.14,
       "verify": []
     },
     {

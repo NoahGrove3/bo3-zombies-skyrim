@@ -90,19 +90,19 @@
       "verify": []
     },
     {
-      "id": "herald",
-      "title": "The Herald in the Fog",
-      "goal": "Slay the Herald of the Dirge",
-      "text": "Wounded, the Dirge calls its Herald: Grimmvar, the Undying Wyrm, who walks only in fog. The next night you face in {city}, the fog will roll in and the Herald will come for you. Slay it before dawn.",
-      "target": 1,
+      "id": "dawn",
+      "title": "The Vigil of {city}",
+      "goal": "Hold the shrine of {city}",
+      "text": "The curse's root lies beneath {city}'s shrine. Stand your ground there while the night throws everything it has at you. Hold the shrine for {n} seconds and the root will crack.",
+      "target": 180,
       "verify": []
     },
     {
-      "id": "dawn",
-      "title": "Dawn over {city}",
-      "goal": "Hold the shrine of {city}",
-      "text": "The last root of the curse lies beneath {city}'s shrine. Stand your ground there while the night throws everything it has at you. Hold the shrine for {n} seconds and the root will break.",
-      "target": 180,
+      "id": "herald",
+      "title": "The Herald in the Fog",
+      "goal": "Slay the Herald of the Dirge",
+      "text": "Its root cracked, the Dirge calls its Herald: Grimmvar, the Undying Wyrm, who walks only in fog. The next night you face in {city}, the fog will roll in and the Herald will come for you. Slay it before dawn and the city is free.",
+      "target": 1,
       "verify": []
     }
   ]

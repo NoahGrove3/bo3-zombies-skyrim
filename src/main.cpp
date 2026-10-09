@@ -23,9 +23,39 @@ namespace
 		spdlog::set_pattern("[%H:%M:%S.%e] [%l] %v");
 	}
 
+	// The game window must fit the screen it is on: SkyrimPrefs.ini keeps the size of whatever monitor the game
+	// was first set up on, and a 2560x1600 window on a 2560x1440 screen hides the bottom of every menu and HUD.
+	// At start, if the saved size is bigger than the main screen, it is set to the screen's own size (the game
+	// reads the file a moment later; if it was quicker, the next start is right).
+	void FitResolution()
+	{
+		auto dir = SKSE::log::log_directory();
+		if (!dir) {
+			return;
+		}
+		const auto prefs = (dir->parent_path() / "SkyrimPrefs.ini").wstring();
+		DEVMODEW   dm{};
+		dm.dmSize = sizeof(dm);
+		if (!::EnumDisplaySettingsW(nullptr, ENUM_CURRENT_SETTINGS, &dm) || dm.dmPelsWidth < 640 || dm.dmPelsHeight < 480) {
+			return;
+		}
+		const UINT w = ::GetPrivateProfileIntW(L"Display", L"iSize W", 0, prefs.c_str());
+		const UINT h = ::GetPrivateProfileIntW(L"Display", L"iSize H", 0, prefs.c_str());
+		const UINT full = ::GetPrivateProfileIntW(L"Display", L"bFull Screen", 0, prefs.c_str());
+		if (w == 0 || h == 0 || full || (w <= dm.dmPelsWidth && h <= dm.dmPelsHeight)) {
+			logger::info("display: window {}x{} fits the main screen {}x{}", w, h, dm.dmPelsWidth, dm.dmPelsHeight);
+			return;
+		}
+		const auto W = std::to_wstring(dm.dmPelsWidth), H = std::to_wstring(dm.dmPelsHeight);
+		::WritePrivateProfileStringW(L"Display", L"iSize W", W.c_str(), prefs.c_str());
+		::WritePrivateProfileStringW(L"Display", L"iSize H", H.c_str(), prefs.c_str());
+		logger::info("display: window {}x{} was bigger than the main screen; set to {}x{}", w, h, dm.dmPelsWidth, dm.dmPelsHeight);
+	}
+
 	DWORD WINAPI BootThread(LPVOID)
 	{
 		SetupLog();
+		FitResolution();
 		logger::info("BO3 Zombies {} loading as .asi", bo3z::kVersion);
 		for (int i = 0; i < 6000 && !RE::UI::GetSingleton(); ++i) {  // up to 10 minutes
 			::Sleep(100);

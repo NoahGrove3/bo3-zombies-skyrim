@@ -92,7 +92,7 @@ for i, w in enumerate(W): o.append(f'\tinline constexpr int kGunIdx_{w["id"]} = 
 k = S['melee']['rows'][0]
 o.append('\tstruct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };')
 o.append(f'\tinline constexpr KnifeDef kKnife{{ {k["key"]}, {F(k["damage"])}, {F(k["range"])}, {F(k["coneDeg"])}, {k["cooldownMs"]} }};')
-effects = {'health': 0, 'mana_mult': 1, 'fire_rate_and_damage': 2, 'self_revive': 3, 'speed_and_stamina': 4, 'headshots': 5, 'third_gun': 6, 'web_grenade': 7, 'cast_shock': 8}
+effects = {'health': 0, 'charge_speed': 1, 'fire_rate_and_damage': 2, 'self_revive': 3, 'speed_and_stamina': 4, 'headshots': 5, 'third_gun': 6, 'web_grenade': 7, 'cast_shock': 8}
 P = S['perks']['rows']
 o.append('\tstruct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };')
 o.append(f'\tinline constexpr std::array<PerkDef, {len(P)}> kPerks{{ {{')

@@ -14,7 +14,8 @@ namespace bo3z
 
 	namespace Perks
 	{
-		float ManaMult() { return Has(gen::kPerk_quicksilver) ? gen::kPerks[gen::kPerk_quicksilver].value : 1.0f; }
+		float ManaMult() { return 1.0f; }  // (staffs and bows run on nothing; tomes keep their plain cost)
+		float ChargeMult() { return Has(gen::kPerk_quicksilver) ? gen::kPerks[gen::kPerk_quicksilver].value : 1.0f; }
 		float FireDelayMult() { return Has(gen::kPerk_twinstrike) ? 0.75f : 1.0f; }
 		float DamageMult() { return Has(gen::kPerk_twinstrike) ? gen::kPerks[gen::kPerk_twinstrike].value : 1.0f; }
 		float HeadMult() { return Has(gen::kPerk_hawkeye) ? gen::kPerks[gen::kPerk_hawkeye].value : 1.0f; }
@@ -62,7 +63,8 @@ namespace bo3z
 			const float jug = Has(gen::kPerk_trollshide) ? gen::kPerks[gen::kPerk_trollshide].value : 0.0f;
 			const float baseHealth = std::max(50.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth) - jug);
 			const bool elite = Director::IsElite(a_zombie);
-			av->DamageActorValue(RE::ActorValue::kHealth, baseHealth * (elite ? gen::elite::hitShare : gen::kHitDamageFraction));
+			const bool boss = Director::IsBoss(a_zombie);  // his claws come in flurries: each rake takes less
+			av->DamageActorValue(RE::ActorValue::kHealth, baseHealth * (boss ? gen::boss::meleeShare : elite ? gen::elite::hitShare : gen::kHitDamageFraction));
 			if (elite) {  // Life Drain
 				auto* zav = a_zombie->AsActorValueOwner();
 				zav->RestoreActorValue(RE::ActorValue::kHealth, zav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::elite::drainShare);

@@ -4,8 +4,8 @@
 // cities of the holds. Each city has four night quests, in order:
 //   0 The Ashen Tithe      slay the risen within the city's bounds
 //   1 The Ward-Fires       kindle three braziers around the city's station (stand by each until it catches)
-//   2 The Herald in Fog    fog rolls in, Grimmvar rises; slay it
-//   3 Dawn over the city   hold the station while the night pushes harder
+//   2 The Vigil            hold the station while the night pushes harder
+//   3 The Herald in Fog    fog rolls in, Grimmvar rises; slay it and the city is free
 // then the city is freed: a sanctuary where no undead rise. Progress: one global per city (step*1000 + progress).
 namespace bo3z
 {
@@ -322,7 +322,7 @@ namespace bo3z
 			switch (s) {
 			case 0: goal += "  " + std::to_string(p) + "/" + std::to_string(st.target); h.questFrac = static_cast<float>(p) / st.target; break;
 			case 1: { const int lit = std::popcount(static_cast<unsigned>(p & 7)); goal += "  " + std::to_string(lit) + "/3"; h.questFrac = lit / 3.0f; break; }
-			case 2: goal += a_night ? "" : "  (at night)"; h.questFrac = 0; break;
+			case 3: goal += a_night ? "" : "  (at night)"; h.questFrac = 0; break;
 			default: goal += "  " + std::to_string(p) + "/" + std::to_string(st.target) + "s"; h.questFrac = static_cast<float>(p) / st.target; break;
 			}
 			h.questGoal = goal;
@@ -384,8 +384,11 @@ namespace bo3z
 
 		void OnBossSlain()
 		{
-			if (g_heraldTown >= 0 && Step(g_heraldTown) == 2) {
-				Advance(g_heraldTown);
+			if (g_heraldTown >= 0 && Step(g_heraldTown) == 3) {
+				if (auto* player = RE::PlayerCharacter::GetSingleton()) {
+					Advance(g_heraldTown);
+					Lift(player, g_heraldTown);
+				}
 			}
 			g_heraldTown = -1;
 		}
@@ -482,13 +485,13 @@ namespace bo3z
 					}
 				}
 				break;
-			case 2:  // the Herald in the fog
+			case 3:  // the Herald in the fog
 				g_heraldTown = z;
 				if (!Director::BossAlive()) {
 					Director::CallHerald();
 				}
 				break;
-			case 3:  // hold the shrine
+			case 2:  // hold the shrine
 				{
 					RE::NiPoint3       c;
 					float              yaw = 0;
@@ -497,10 +500,11 @@ namespace bo3z
 					if (g_holding && (g_holdAcc += a_delta) >= 1.0f) {
 						g_holdAcc -= 1.0f;
 						const int p = Prog(z) + 1;
-						if (p >= gen::kCurseSteps[3].target) {
-							Lift(player, z);
+						if (p >= gen::kCurseSteps[2].target) {
+							g_holding = false;
+							Advance(z);
 						} else {
-							Set(z, 3, p);
+							Set(z, 2, p);
 						}
 					}
 				}

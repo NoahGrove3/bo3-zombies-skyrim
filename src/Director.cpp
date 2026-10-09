@@ -396,7 +396,11 @@ namespace bo3z
 			RE::ActorHandle handle;
 			float           spawnIn{ -1 };  // seconds until it rises this night (-1 = not tonight)
 			float           breath{ 0 }, roar{ 0 }, summon{ 0 }, step{ 0 }, slam{ 0 }, eruption{ 0 }, meteors{ 0 }, slamWindup{ -1 };
+			float           combo{ 0 }, comboT{ 0 }, leapT{ -1 };  // Rending Flurry cooldown / time to the next rake; Wyrm Leap airtime
+			int             comboLeft{ 0 };
+			RE::NiPoint3    leapAt{};
 			bool            enraged{ false };
+			bool            slainTonight{ false };  // one Grimmvar a night: once he falls nothing calls him again before dawn
 			float           maxHp{ 1 };
 		} g_boss;
 
@@ -410,12 +414,12 @@ namespace bo3z
 			return -1;
 		}
 
-		void CastAt(RE::Actor* a_caster, int a_spell, RE::Actor* a_target)
+		void CastAt(RE::Actor* a_caster, int a_spell, RE::Actor* a_target, float a_strength = 1.0f)
 		{
 			auto* m = Forms::Spell(a_spell);
 			if (m && a_caster) {
 				if (auto* c = a_caster->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
-					c->CastSpellImmediate(m, false, a_target, 1.0f, false, 0.0f, a_caster);
+					c->CastSpellImmediate(m, false, a_target, a_strength, false, 0.0f, a_caster);
 				}
 			}
 		}
@@ -516,6 +520,7 @@ namespace bo3z
 			g_boss.maxHp = want;
 			g_boss.enraged = false;
 			g_boss.breath = 4, g_boss.roar = 7, g_boss.summon = 10, g_boss.step = gen::boss::stepEvery, g_boss.slam = 2, g_boss.eruption = 6, g_boss.meteors = 8, g_boss.slamWindup = -1;
+			g_boss.combo = 3, g_boss.comboLeft = 0, g_boss.leapT = -1;
 			Forms::Play(gen::Sound::hound_night);
 			Hud::Banner(std::string(gen::kEnemies[row].label).append(" rises!"), 5.0f);
 			logger::info("boss: {} risen with {:.0f} health", gen::kEnemies[row].id, want);
@@ -537,8 +542,10 @@ namespace bo3z
 				Forms::Play(gen::Sound::night_end);
 				Hud::Banner("The Undying Wyrm falls! +" + std::to_string(static_cast<int>(gen::boss::killPoints)), 6.0f);
 				logger::info("boss: slain");
-				Curse::OnBossSlain();
 				g_boss.handle = {};
+				g_boss.spawnIn = -1;
+				g_boss.slainTonight = true;
+				Curse::OnBossSlain();
 				PublishBoss(nullptr);
 				return;
 			}
@@ -547,17 +554,71 @@ namespace bo3z
 			if (!g_boss.enraged && hpFrac <= gen::boss::enrageAt) {
 				g_boss.enraged = true;
 				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, gen::boss::enrageSpeed);
-				CastAt(boss.get(), gen::kSpell_dragonforce, a_player);
+				const auto bp = OnGround(boss->GetPosition());
+				for (int k = 0; k < 10; ++k) {  // a ring of fire bursts out round him
+					const float a = k * 0.6283f;
+					Gun::FxBlast("dragonfire", OnGround(bp + RE::NiPoint3{ std::cos(a) * 260.0f, std::sin(a) * 260.0f, 0 }), 0.04f * k);
+				}
+				g_boss.summon = 0;  // and the dead answer his howl
+				Forms::PlayAt(gen::Sound::hound_night, boss.get());
 				Hud::Banner("Grimmvar is ENRAGED!", 3.0f);
 			}
 			const float cd = g_boss.enraged ? gen::boss::enrageCooldownMult : 1.0f;
 			const float dist = boss->GetPosition().GetDistance(a_player->GetPosition());
 			if ((g_boss.breath -= a_delta) <= 0 && dist < gen::boss::breathRange && dist > gen::boss::slamRange) {
-				CastAt(boss.get(), gen::kSpell_firebreath, a_player);
+				CastAt(boss.get(), gen::kSpell_firebreath, a_player, gen::boss::breathStrength);
 				g_boss.breath = gen::boss::breathEvery * cd;
 			}
-			if ((g_boss.roar -= a_delta) <= 0 && dist < gen::boss::roarRange) {
-				CastAt(boss.get(), gen::kSpell_dragonforce, a_player);
+			// Rending Flurry: three (enraged, five) raking claw swipes, each lunging him forward; the last one rips the ground
+			if (g_boss.comboLeft > 0) {
+				if ((g_boss.comboT -= a_delta) <= 0) {
+					const bool last = --g_boss.comboLeft == 0;
+					const auto bp = boss->GetPosition(), pp = a_player->GetPosition();
+					RE::NiPoint3 dir = pp - bp;
+					dir.z = 0;
+					const float len = dir.Length();
+					if (len > 1.0f) {
+						dir = dir * (1.0f / len);
+						boss->SetHeading(std::atan2(dir.x, dir.y));
+						const float lunge = std::clamp(len - 170.0f, 0.0f, 140.0f);  // closes in, never through you
+						boss->SetPosition(bp + dir * lunge, true);
+					}
+					boss->NotifyAnimationGraph(last ? "attackPowerStartForward" : (g_boss.comboLeft % 2 ? "attackStart" : "attackStartLeft"));
+					const auto front = OnGround(boss->GetPosition() + dir * 170.0f);
+					g_hazards.push_back({ front, last ? 0.35f : 0.22f, last ? 230.0f : 170.0f, last ? gen::boss::clawLast : gen::boss::clawHit, last ? "giantslam" : "", last });  // (the rakes hurt unseen; the finisher rips the ground)
+					Forms::PlayAt(gen::Sound::rise, boss.get());
+					g_boss.comboT = g_boss.enraged ? 0.42f : 0.55f;
+				}
+			} else if ((g_boss.combo -= a_delta) <= 0 && dist < 520.0f && g_boss.slamWindup < 0 && g_boss.leapT < 0) {
+				g_boss.comboLeft = g_boss.enraged ? 5 : 3;
+				g_boss.comboT = 0.35f;
+				g_boss.combo = gen::boss::comboEvery * cd;
+				Forms::PlayAt(gen::Sound::hound_night, boss.get());
+			}
+			// Wyrm Leap: he springs into the air, his shadow follows you, then he crashes down where it falls
+			if (g_boss.leapT >= 0) {
+				if ((g_boss.leapT -= a_delta) < 0) {
+					boss->SetPosition(g_boss.leapAt + RE::NiPoint3{ 0, 0, 30.0f }, true);
+					boss->NotifyAnimationGraph("attackPowerStartForward");
+					for (int k = 0; k < 6; ++k) {
+						const float a = k * 1.0472f;
+						Gun::FxBlast("dragonfire", OnGround(g_boss.leapAt + RE::NiPoint3{ std::cos(a) * 170.0f, std::sin(a) * 170.0f, 0 }), 0.05f + 0.03f * k);
+					}
+					Forms::PlayAt(gen::Sound::rise, boss.get());
+				}
+			} else if ((g_boss.roar -= a_delta) <= 0 && dist > 600.0f && dist < 1800.0f && g_boss.comboLeft == 0) {
+				g_boss.leapAt = OnGround(a_player->GetPosition());
+				g_boss.leapT = 1.1f;
+				g_hazards.push_back({ g_boss.leapAt, 1.1f, 240.0f, gen::boss::leapDamage, "giantslam", true });
+				Gun::FxBlast("paralyze", g_boss.leapAt + RE::NiPoint3{ 0, 0, 8 }, 0.0f);  // where he will land
+				if (auto* fx = Forms::Ours(gen::kRiseFx)) {
+					if (auto puff = boss->PlaceObjectAtMe(fx, false)) {
+						g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
+					}
+				}
+				boss->SetPosition(boss->GetPosition() + RE::NiPoint3{ 0, 0, 2400.0f }, false);  // gone into the night sky
+				Hud::Banner("Grimmvar leaps - move!", 1.4f);
+				Forms::PlayAt(gen::Sound::hound_night, boss.get());
 				g_boss.roar = gen::boss::roarEvery * cd;
 			}
 			// Grave Slam: rears up (a power attack), then the ground round it bursts; get out of reach in time
@@ -571,7 +632,7 @@ namespace bo3z
 					}
 					Forms::PlayAt(gen::Sound::rise, boss.get());
 				}
-			} else if ((g_boss.slam -= a_delta) <= 0 && dist < gen::boss::slamRange + 80.0f) {
+			} else if ((g_boss.slam -= a_delta) <= 0 && dist < gen::boss::slamRange + 80.0f && g_boss.comboLeft == 0 && g_boss.leapT < 0) {
 				g_boss.slamWindup = g_boss.enraged ? 0.6f : 0.9f;
 				boss->NotifyAnimationGraph("attackPowerStartForward");
 				Forms::PlayAt(gen::Sound::hound_night, boss.get());
@@ -586,7 +647,7 @@ namespace bo3z
 				dir.Unitize();
 				int k = 0;
 				for (float t = 160.0f; t < len + 260.0f && k < 14; t += 150.0f, ++k) {
-					g_hazards.push_back({ OnGround(bp + dir * t), 0.55f + 0.11f * k, 130.0f, 0.14f, "giantslam", true });
+					g_hazards.push_back({ OnGround(bp + dir * t), 0.55f + 0.11f * k, 110.0f, gen::boss::eruptionDamage, "fireball", false });
 				}
 				Hud::Banner("The ground splits toward you!", 1.6f);
 				Forms::PlayAt(gen::Sound::rise, boss.get());
@@ -599,7 +660,7 @@ namespace bo3z
 					const float a = Uniform(0.0f, 6.2832f), r = k == 0 ? 0.0f : Uniform(120.0f, 520.0f);
 					const auto  at = OnGround(pp + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 });
 					Gun::FxBlast("dragonfire", at + RE::NiPoint3{ 0, 0, 10 }, 0.05f + 0.1f * k);   // the warning scorch
-					g_hazards.push_back({ at, 1.3f + 0.12f * k, 170.0f, 0.12f, "fireball", false });
+					g_hazards.push_back({ at, 1.3f + 0.12f * k, 150.0f, gen::boss::eruptionDamage, "fireball", false });
 				}
 				Hud::Banner("Ash falls from the Wyrm's sky!", 1.6f);
 				g_boss.meteors = 13.0f;
@@ -611,10 +672,10 @@ namespace bo3z
 					RE::NiPoint3 at{ bp.x + std::sin(a) * 220.0f, bp.y + std::cos(a) * 220.0f, bp.z + 40.0f };
 					SpawnOne(a_player, 0, &at);
 				}
-				Hud::Banner("The Wyrm calls the dead!", 2.5f);
+				Hud::Banner("Grimmvar calls the dead!", 2.5f);
 				g_boss.summon = gen::boss::summonEvery * cd;
 			}
-			if ((g_boss.step -= a_delta) <= 0 && dist > 500.0f) {
+			if ((g_boss.step -= a_delta) <= 0 && dist > 500.0f && g_boss.leapT < 0) {
 				// Wyrm Step: sinks away and bursts out of the ground beside you.
 				const auto p = a_player->GetPosition();
 				const float a = a_player->GetAngleZ() + Uniform(-2.5f, 2.5f);
@@ -723,7 +784,7 @@ namespace bo3z
 				logger::warn("event: weather {}|{:06X} not found", ev.weatherPlugin, ev.weatherId);
 			}
 			Forms::Play(ev.sound);
-			if (ev.boss && !Coop::Client() && g_boss.spawnIn < 0 && !g_boss.handle.get()) {
+			if (ev.boss && !Coop::Client() && g_boss.spawnIn < 0 && !g_boss.handle.get() && !g_boss.slainTonight) {
 				g_boss.spawnIn = gen::kCurseHeraldDelay;
 			}
 			logger::info("event: {} night", ev.id);
@@ -824,6 +885,7 @@ namespace bo3z
 			g_toSpawn = std::clamp(static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier / 3.0f)), 12, R.maxAlive);
 			g_spawnTimer = 0;
 			g_phase = Phase::Fighting;
+			g_boss.slainTonight = false;
 			if (const int row = BossRow(); !Coop::Client() && row >= 0 && a_round >= gen::kEnemies[row].minRound && a_round % gen::kEnemies[row].bossEvery == 0) {
 				g_boss.spawnIn = gen::boss::spawnDelay;
 			}
@@ -1274,6 +1336,7 @@ namespace bo3z
 
 		float RoundHealth() { return HealthFor(std::max(1, g_current)); }
 		bool  IsElite(RE::Actor* a_actor) { return a_actor && g_elites.contains(a_actor->GetFormID()); }
+		bool  IsBoss(RE::Actor* a_actor) { auto b = g_boss.handle.get(); return a_actor && b && b.get() == a_actor; }
 		bool IsRoundUndead(RE::Actor* a_actor)
 		{
 			if (!a_actor) {
@@ -1304,7 +1367,8 @@ namespace bo3z
 		float Paused() { return g_pause; }
 		bool  Fighting() { return g_phase == Phase::Fighting; }
 		void  NetFill(Net::State& a_state) { NetFillImpl(a_state); }
-		bool  BossAlive() { auto b = g_boss.handle.get(); return (b && !b->IsDead()) || g_boss.spawnIn > 0; }
+		// (a fallen boss counts until TickBoss has dealt with him, and once he has, nothing calls another this night)
+		bool  BossAlive() { return g_boss.handle.get() || g_boss.spawnIn > 0 || g_boss.slainTonight; }
 		void  CallHerald()
 		{
 			if (g_phase != Phase::Fighting || BossAlive() || Coop::Client()) {

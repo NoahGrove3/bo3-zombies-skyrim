@@ -97,6 +97,7 @@ namespace bo3z
 		bool             NightNow();  // night hours (the undead are out)
 		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
 		bool             IsElite(RE::Actor* a_actor);
+		bool             IsBoss(RE::Actor* a_actor);
 		std::string_view HeadNodeFor(RE::Actor* a_actor);
 		void             LogState();
 		void             Web(const RE::NiPoint3& a_at, float a_radius, float a_seconds, float a_amount = 60.0f, bool a_frostFx = false);   // Widow's Wine / wand slows
@@ -220,7 +221,8 @@ namespace bo3z
 		void OnZombieHit(RE::Actor* a_zombie);  // a round zombie hit the player
 		void OnCast(int a_shots);  // Stormcrown
 		void Tick();
-		float ManaMult();          // Quicksilver: magicka cost/regen
+		float ManaMult();          // magicka cost (tomes)
+		float ChargeMult();        // Quicksilver: charge time and cooldown of signature moves (x)
 		float FireDelayMult();
 		float DamageMult();
 		float HeadMult();

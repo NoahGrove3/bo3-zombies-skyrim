@@ -28,9 +28,9 @@
       "id": "quicksilver",
       "label": "Quicksilver Draught",
       "cost": 3000,
-      "effect": "mana_mult",
-      "value": 0.5,
-      "description": "Mana flows like quicksilver: tomes and grimoires cost half the magicka, and it comes back twice as fast.",
+      "effect": "charge_speed",
+      "value": 0.6,
+      "description": "Power floods your weapon: signature moves charge 40% faster and come back sooner.",
       "potionModel": "Clutter\\Potions\\PotionFortifyStaminaGreat.nif",
       "verify": [],
       "color": "30C040"
@@ -41,7 +41,7 @@
       "cost": 2000,
       "effect": "fire_rate_and_damage",
       "value": 2.0,
-      "description": "Cast faster and hit twice as hard.",
+      "description": "Shoot faster and hit twice as hard.",
       "potionModel": "Clutter\\Potions\\MeadHonningBrew01.nif",
       "verify": [],
       "color": "E0A020"
@@ -108,7 +108,7 @@
       "effect": "cast_shock",
       "value": 500,
       "potionModel": "Clutter\\Potions\\PotionFortifyMagickaExtreme.nif",
-      "description": "Every 12th cast looses a lightning burst around you.",
+      "description": "Every 12th shot looses a lightning burst around you.",
       "verify": [],
       "color": "40D0F0"
     }

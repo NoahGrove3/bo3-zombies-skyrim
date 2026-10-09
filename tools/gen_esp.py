@@ -85,11 +85,8 @@ for w in S['weapons']['rows']:
             elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_' + w['id']))
             elif name in ('MODT', 'DESC'): continue
             elif name == 'DATA': b = struct.pack('<IfH', 0, 1.0, 0)
-            elif name == 'DNAM':
-                # held like a one-handed mace, not as a Skyrim staff: in first person Skyrim's staff set is the
-                # open-handed spell cast with the staff floating in the palm. A mace grip keeps the staff in the
-                # fist; our code animates the charge and the thrust (the native attack never fires).
-                b = bytearray(b); b[0] = 4; b = bytes(b)
+            # DNAM stays Skyrim's staff (a mace grip left the staff at the feet in third person, unseen in first):
+            # Skyrim's own staff cast never plays; our code animates the charge, the thrust and the shot.
             subs.append(sub(name, b))
         recs['WEAP'].append(record('WEAP', fid('WEAP', w['id']), subs))
     elif kind == 'bow':
@@ -218,9 +215,9 @@ for name, hx in T['weap_draugr_gs']['subs']:
     elif name in ('MODT', 'DESC'): continue
     ws.append(sub(name, b))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'reaper_scythe'), ws))
-# Grimmvar's claws (great two-handed rakes, slow and long) and the Gloomstalker's (quick dagger slashes): hidden weapons
+# Grimmvar's claws (one-handed rakes: a draugr's one-hand swings with nothing in the hand read as claw swipes) and the Gloomstalker's (quick dagger slashes): hidden weapons
 # that give each its own native swing set; the scripted moves are in Director.cpp
-for key, edid, label, anim, speed, reach, dmg in (('wyrm_claws', 'UN_WyrmClaws', 'Wyrm Claws', 5, 0.7, 1.9, 34),
+for key, edid, label, anim, speed, reach, dmg in (('wyrm_claws', 'UN_WyrmClaws', 'Wyrm Claws', 1, 0.9, 1.6, 20),
                                                   ('shadow_claws', 'UN_ShadowClaws', 'Shadow Claws', 2, 1.45, 1.1, 14)):
     ws = []
     for name, hx in T['weap_draugr_gs']['subs']:
@@ -306,10 +303,10 @@ def dirge_text():
            "the Brew Machine, whose brews make the drinker stronger; and the Atronach Reforge, which makes any weapon fiercer. A weapon reforged three times becomes Ascendant, and its great strike falls twice.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>III. Breaking the Dirge</font></p>", img('wards', 300, 176),
            "<p>The Dirge has taken root beneath each city. To tear out the root you must perform four rites, one after another, and all of them by night.</p>"]
-    for k, sid in enumerate(('tithe', 'wards', 'herald', 'dawn')):
+    for k, sid in enumerate(('tithe', 'wards', 'dawn', 'herald')):
         st = steps[sid]
         out.append(f"<p><b>{k + 1}. {st['title'].replace('{city}', 'the City')}.</b> {gen_city(st['text']).replace('Slay  of', 'Slay '+str(st['target'])+' of').replace('for  seconds', 'for '+str(st['target'])+' seconds')}</p>")
-        if sid == 'wards':
+        if sid == 'dawn':
             out.append(img('herald', 300, 176))
     out += ["<p>When all four rites are done, the Dirge loses its hold on that city. Its dead sleep again, and none will rise within its bounds.</p>",
             "[pagebreak]", "<p align='center'><font size='24'>IV. The Relics of the Holds</font></p>",
@@ -317,7 +314,7 @@ def dirge_text():
     for t in towns:
         w = relic.get(t)
         if w:
-            out.append(f"<p><b>{t}</b> ({land[t]}): <i>{w['label']}</i>. {w['abilityText']}. When fully charged: {w['chargeName']}, {w['chargeText']}.</p>")
+            out.append(f"<p><b>{t}</b> ({land[t]}): <i>{w['label']}</i>. {w['abilityText'].rstrip('.')}. Fully charged, <i>{w['chargeName']}</i>: {w['chargeText']}.</p>")
     out += ["[pagebreak]", "<p align='center'><font size='24'>V. Nights of Omen</font></p>", img('omen', 300, 152),
             "<p>Some nights are worse than others. Under the <b>Blood Moon</b> the dead rise faster. On a <b>Fog Night</b> the mist hides a great wyrm of bone, Grimmvar, Herald of the Dirge. "
             "In an <b>Ash Storm</b> the dead run, and every kill is worth twice as much. On the <b>Night of Iron</b> the Reapers and the Voidbound march in force.</p>",

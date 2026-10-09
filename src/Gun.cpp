@@ -484,7 +484,12 @@ namespace bo3z
 			RE::NiPoint3 at;
 			float        delay;
 			int          expl;
+			float        scale;
 		};
+		// Skyrim's explosions are built for dragons and Dragonborn shouts: ours are shrunk so a hit reads as a hit,
+		// not a screen-filling burst. Shots use the small size, signature moves the larger one.
+		constexpr float kTapBlastScale = 0.45f, kBlastScale = 0.7f;
+		std::vector<std::pair<RE::ObjectRefHandle, std::pair<float, float>>> g_shrink;  // explosion, (scale, seconds left)
 		std::vector<PendingBlast> g_blasts;
 		RE::ObjectRefHandle       g_blastMarker;
 
@@ -511,7 +516,10 @@ namespace bo3z
 						ex->data.flags.reset(RE::BGSExplosionData::Flag::kKnockDown_Always, RE::BGSExplosionData::Flag::kKnockDown_ByFormula);
 						ex->data.spawnProjectile = nullptr;
 						ex->formEnchanting = nullptr;
-						ex->imageSpaceModifying = src->imageSpaceModifying;
+						// screen flashes only for the great storms; a shot's impact never whites out the screen
+						const std::string_view nm = gen::kBlasts[a_index].first;
+						const bool             big = nm.find("massive") != std::string_view::npos || nm.find("storm") != std::string_view::npos || nm == "skybolt";
+						ex->imageSpaceModifying = big ? src->imageSpaceModifying : nullptr;
 						made[a_index] = ex;
 					}
 				}
@@ -530,10 +538,10 @@ namespace bo3z
 			return -1;
 		}
 
-		void Blast(int a_expl, const RE::NiPoint3& a_at, float a_delay = 0.0f)
+		void Blast(int a_expl, const RE::NiPoint3& a_at, float a_delay = 0.0f, float a_scale = kBlastScale)
 		{
 			if (a_expl >= 0 && g_blasts.size() < 32) {
-				g_blasts.push_back({ a_at, a_delay, a_expl });
+				g_blasts.push_back({ a_at, a_delay, a_expl, a_scale });
 			}
 		}
 
@@ -559,7 +567,26 @@ namespace bo3z
 				m = r;
 			}
 			m->SetPosition(b.at);
-			m->PlaceObjectAtMe(ex, false);
+			if (auto r = m->PlaceObjectAtMe(ex, false)) {
+				r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(b.scale, 0.1f, 5.0f) * 100.0f);
+				g_shrink.push_back({ r->CreateRefHandle(), { b.scale, 0.6f } });
+				if (g_shrink.size() > 64) {
+					g_shrink.erase(g_shrink.begin());
+				}
+			}
+		}
+		// The explosion's model, once it has one, is held at the shrunken size for its first moments.
+		void TickShrink(float a_delta)
+		{
+			for (auto& [h, v] : g_shrink) {
+				v.second -= a_delta;
+				if (auto r = h.get()) {
+					if (auto* o = r->Get3D(); o && std::abs(o->local.scale - v.first) > 0.01f) {
+						o->local.scale = v.first;
+					}
+				}
+			}
+			std::erase_if(g_shrink, [](const auto& e) { return e.second.second <= 0; });
 		}
 
 		void TickBlasts(float a_delta)
@@ -574,6 +601,7 @@ namespace bo3z
 			for (const auto& b : now) {
 				Detonate(b);
 			}
+			TickShrink(a_delta);
 		}
 
 		float BoltDelay(const gen::GunDef& g, const RE::NiPoint3& a_from, const RE::NiPoint3& a_to)
@@ -789,14 +817,6 @@ namespace bo3z
 							cur = next;
 						}
 					}
-					if (sp == gen::Special::Splash && g.splashRadius > 0) {  // splash (Auriel's Dawn, Embers)
-						const auto at = origin + dir * bestT;
-						for (auto* a : candidates) {
-							if (a != best && !a->IsDead() && a->GetPosition().GetDistance(at) <= g.splashRadius) {
-								Damage(a, g.splashDamage * Perks::DamageMult(), false, false);
-							}
-						}
-					}
 				}
 			}
 			if (g.spell >= 0 && g.spellOn == 2) {
@@ -811,7 +831,17 @@ namespace bo3z
 					LaunchBolt(player, g, to);
 				}
 				if (landed) {
-					Blast(g.tapBlast, to, BoltDelay(g, origin, to));
+					Blast(g.tapBlast, to, BoltDelay(g, origin, to), kTapBlastScale);
+					// every bolt and arrow splashes a little where it lands: the burst weapons (Splash) hard and wide,
+					// the rest a third of the hit within an arm's reach
+					const bool  burst = sp == gen::Special::Splash && g.splashRadius > 0;
+					const float r = burst ? g.splashRadius : (g.kind == gen::kKindBow ? 70.0f : 90.0f);
+					const float sd = burst ? g.splashDamage * Perks::DamageMult() : dmg * 0.33f;
+					for (auto* a : candidates) {
+						if (a != firstHit && !a->IsDead() && a->GetPosition().GetDistance(to) <= r + 20.0f) {
+							Damage(a, sd, false, false);
+						}
+					}
 				}
 			}
 			Perks::OnCast(g_shots);
@@ -1047,22 +1077,23 @@ namespace bo3z
 					const RE::NiPoint3 sky = at + RE::NiPoint3{ 30.0f, 0, 1300.0f };
 					LaunchArrow(p, g, at, &sky);
 				}
-			} else if (id == "embermortar") {  // FUS RO DAH: the Unrelenting Force through an arrow, everything ahead hurled away
-				for (int k = -3; k <= 3; ++k) {
-					const float yaw = k * 0.11f, c = std::cos(yaw), sn = std::sin(yaw);
+			} else if (id == "embermortar") {  // Gale Volley: a fan of wind arrows; every dead thing in the spray is knocked flat where it stands
+				for (int k = -4; k <= 4; ++k) {
+					const float yaw = k * 0.075f, c = std::cos(yaw), sn = std::sin(yaw);
 					const RE::NiPoint3 d{ aim.dir.x * c - aim.dir.y * sn, aim.dir.x * sn + aim.dir.y * c, aim.dir.z };
-					LaunchArrow(p, g, aim.eye + d * 2500.0f);
+					LaunchArrow(p, g, aim.eye + d * 2200.0f);
 				}
 				auto* proc = p->GetActorRuntimeData().currentProcess;
-				for (auto* f : InCone(aim, 2400.0f, 45.0f)) {
-					hit(f, 4.0f);
+				int   n = 0;
+				for (auto* f : InCone(aim, 2000.0f, 32.0f)) {
+					hit(f, 3.0f);
 					if (proc && !f->IsDead()) {
-						const float closeness = 1.0f - std::min(1.0f, f->GetPosition().GetDistance(aim.eye) / 2400.0f);
-						proc->KnockExplosion(f, f->GetPosition() - aim.dir * 150.0f, 8.0f + 10.0f * closeness);  // the closer, the farther they fly
+						// pushed from straight above: down they go on the spot, no flying across the field
+						proc->KnockExplosion(f, f->GetPosition() + RE::NiPoint3{ 0, 0, 140.0f }, 1.2f);
+						if (n++ < 8) {
+							Blast(BlastIndex("priestsmall"), f->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, BoltDelay(g, aim.eye, f->GetPosition()), 0.4f);
+						}
 					}
-				}
-				for (int k = 1; k <= 4; ++k) {
-					Blast(BlastIndex("priestlarge"), aim.eye + aim.dir * (380.0f * k), 0.06f * k);
 				}
 			} else if (id == "wabbajack") {  // mass madness
 				std::uniform_real_distribution<float> roll(0, 1);
@@ -1357,7 +1388,7 @@ namespace bo3z
 				g_manaQuiet = 0;
 			}
 			const bool ascendant = ForgeLevel() >= gen::kForgeMax;
-			g_chargeCd = g.chargeCooldown * (ascendant ? 0.75f : 1.0f);
+			g_chargeCd = g.chargeCooldown * (ascendant ? 0.75f : 1.0f) * Perks::ChargeMult();
 			StartRelease(g);
 			g_unleashMult = ascendant ? 1.25f : 1.0f;
 			Unleash(gun);
@@ -1416,6 +1447,9 @@ namespace bo3z
 		constexpr PoseOut kStaffCharge{ 0.38f, 0.0f, 0.12f, -16, 9, 0.010f, 0 };
 		constexpr PoseOut kStaffStrike{ -0.22f, 0.0f, -0.05f, 34, -2, 0.008f, 0 };
 		constexpr PoseOut kStaffTap{ -0.12f, 0.0f, 0.0f, 20, 0, 0.0f, 0 };
+		// Bows: drawn in toward the cheek as the shot charges, a sharp kick when the arrow leaves.
+		constexpr PoseOut kBowDraw{ 0.06f, 0.04f, 0.0f, -7, 2, 0.006f, 0 };
+		constexpr PoseOut kBowLoose{ 0.16f, -0.05f, 0.0f, -12, 4, 0.0f, 0 };
 		constexpr float kFovKick[6] = { -9.0f, 7.0f, 5.0f, 4.0f, 6.0f, 12.0f };
 
 		// While charging, the element's storm wraps the caster (Skyrim's fire storm / blizzard / lightning storm cast look).
@@ -1469,14 +1503,16 @@ namespace bo3z
 				}
 				SetAura(charging ? g.chargeAura : -1);
 				const bool staff = g.kind == gen::kKindWand;
-				out = bow ? PoseOut{} : staff ? Scale(kStaffCharge, c) : Scale(kChargePose[style], c);
+				out = bow ? Scale(kBowDraw, c) : staff ? Scale(kStaffCharge, c) : Scale(kChargePose[style], c);
 				out.shake *= 0.5f + c;  // trembles harder as it fills
 				if (g_relT >= 0 && bow) {
 					g_relT = -1.0f;
+					g_tapT = 0.0f;  // the loose
 				}
-				if (staff && g_tapT >= 0 && g_relT < 0 && !charging) {
+				if ((staff || bow) && g_tapT >= 0 && g_relT < 0 && !charging) {
 					const float u = g_tapT / 0.32f;   // in fast, settle back
-					out = u < 0.25f ? Lerp(PoseOut{}, kStaffTap, EaseOut(u / 0.25f)) : Lerp(kStaffTap, PoseOut{}, EaseInOut((u - 0.25f) / 0.75f));
+					const PoseOut& tap = bow ? kBowLoose : kStaffTap;
+					out = u < 0.25f ? Lerp(PoseOut{}, tap, EaseOut(u / 0.25f)) : Lerp(tap, PoseOut{}, EaseInOut((u - 0.25f) / 0.75f));
 					if ((g_tapT += a_delta) >= 0.32f) {
 						g_tapT = -1.0f;
 					}
@@ -1523,26 +1559,39 @@ namespace bo3z
 			return m;
 		}
 
-		RE::NiTransform g_armOrig, g_armWritten;
-		RE::NiAVObject* g_armBone = nullptr;
+		// One per skeleton (first person, third person): the arm as the animation left it, and as we wrote it.
+		struct ArmState
+		{
+			RE::NiTransform orig, written;
+			RE::NiAVObject* bone = nullptr;
+		};
+		ArmState g_arm1st, g_arm3rd;
 		void PoseArm(RE::PlayerCharacter* a_player)
 		{
 			auto* cam = RE::PlayerCamera::GetSingleton();
-			auto* fp = a_player->Get3D(true);
-			if (!cam || !fp || !cam->IsInFirstPerson()) {
+			if (!cam) {
 				return;
 			}
-			auto* bone = fp->GetObjectByName("NPC R UpperArm [RUar]");
+			const bool first = cam->IsInFirstPerson();
+			auto*      root = a_player->Get3D(first);
+			if (!root) {
+				return;
+			}
+			ArmState& st = first ? g_arm1st : g_arm3rd;
+			auto*     bone = root->GetObjectByName("NPC R UpperArm [RUar]");
 			if (!bone || !bone->parent) {
 				return;
 			}
-			if (bone == g_armBone && std::memcmp(&bone->local, &g_armWritten, sizeof(RE::NiTransform)) == 0) {
-				bone->local = g_armOrig;  // the animation did not rewrite it this frame: start from the clean pose
+			if (bone == st.bone && std::memcmp(&bone->local, &st.written, sizeof(RE::NiTransform)) == 0) {
+				bone->local = st.orig;  // the animation did not rewrite it this frame: start from the clean pose
 			}
-			g_armBone = bone;
-			const PoseOut& o = g_pose;
+			st.bone = bone;
+			PoseOut o = g_pose;
+			if (!first) {  // the third-person body is seen from outside: the same motion, a little broader
+				o.pitch *= 1.25f, o.yaw *= 1.25f, o.roll *= 1.25f, o.push *= 0.8f, o.lift *= 0.8f;
+			}
 			if (std::abs(o.pitch) + std::abs(o.yaw) + std::abs(o.roll) + std::abs(o.push) + std::abs(o.lift) + o.shake < 1e-3f) {
-				g_armBone = nullptr;
+				st.bone = nullptr;
 				return;
 			}
 			const float jx = g_jx, jy = g_jy;
@@ -1553,16 +1602,16 @@ namespace bo3z
 			const RE::NiMatrix3 D = AxisAngle(u, o.yaw + jx) * AxisAngle(r, o.pitch + jy) * AxisAngle(f, o.roll);
 			const RE::NiMatrix3 P = bone->parent->world.rotate;
 			const RE::NiMatrix3 Pt = P.Transpose();
-			g_armOrig = bone->local;
+			st.orig = bone->local;
 			bone->local.rotate = Pt * D * P * bone->local.rotate;
 			bone->local.translate += Pt * (f * o.push + u * o.lift) * (1.0f / std::max(0.01f, bone->parent->world.scale));
-			g_armWritten = bone->local;
+			st.written = bone->local;
 			RE::NiUpdateData ud;
 			ud.time = 0.0f;
 			bone->UpdateDownwardPass(ud, 0);
 			if (!g_armLive) {
 				g_armLive = true;
-				logger::info("pose: arm animation live (first person)");
+				logger::info("pose: arm animation live ({} person)", first ? "first" : "third");
 			}
 		}
 
@@ -1669,7 +1718,7 @@ namespace bo3z
 	namespace Gun
 	{
 		int   SlotCount() { return Save::HasPerk(gen::kPerk_mammoth) ? 3 : 2; }
-		void  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay) { Blast(BlastIndex(a_name), a_at, a_delay); }
+		void  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay) { Blast(BlastIndex(a_name), a_at, a_delay, 0.6f); }
 		float AdsBlend() { return g_ads; }
 		bool  Owns(int a_gun) { return SlotOf(a_gun) >= 0; }
 
@@ -2101,7 +2150,7 @@ namespace bo3z
 			const bool out = GunOut();
 			const int  gun = CurrentGun();
 			g_chargeCd = std::max(0.0f, g_chargeCd - a_delta);
-			g_charge = out && g_trigger ? g_charge + a_delta : 0.0f;
+			g_charge = out && g_trigger ? g_charge + a_delta / Perks::ChargeMult() : 0.0f;
 			TickPose(a_delta);
 			TickSwing(a_delta);
 			TickEcho(a_delta);
@@ -2148,7 +2197,13 @@ namespace bo3z
 				h.reserve = s.reserve;
 				h.gunKind = gen::kGuns[gun].kind;
 				h.manaCost = gen::kGuns[gun].mana * Perks::ManaMult();
-				h.gunElement = std::string(gen::kGuns[gun].abilityText) + "   \xC2\xB7   Hold: " + std::string(gen::kGuns[gun].chargeName);
+				{
+					std::string ab(gen::kGuns[gun].abilityText);
+					if (!ab.empty() && ab.back() == '.') {
+						ab.pop_back();
+					}
+					h.gunElement = ab + "   \xC2\xB7   Hold: " + std::string(gen::kGuns[gun].chargeName);
+				}
 				h.gunColor = gen::kGuns[gun].color;
 				const auto& gg = gen::kGuns[gun];
 				h.charge = g_charge > 0.2f ? std::min(1.0f, g_charge / gg.chargeSeconds) : 0.0f;

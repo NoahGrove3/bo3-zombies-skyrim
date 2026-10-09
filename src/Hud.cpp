@@ -627,7 +627,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 
 		// The co-op party: host a Steam party and invite, or join a friend's.
-		void PartyPanel(ImDrawList* dl, ImVec2 size, ImVec2 a, float k, bool click)
+		// a: the panel's bottom-left corner (or its top-left, a_fromTop)
+		void PartyPanel(ImDrawList* dl, ImVec2 size, ImVec2 a, float k, bool click, bool a_fromTop = false)
 		{
 			if (!Net::Available()) {
 				return;
@@ -642,6 +643,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const float w = 420 * k, rowH = 46 * k;
 			const int   rows = Net::InLobby() ? 2 : 1 + static_cast<int>(std::min<std::size_t>(friends.size(), 4));
 			const float h = 92 * k + rows * (rowH + 8 * k) + 30 * k;
+			if (a_fromTop) {
+				a.y += h;
+			}
+			a.y = std::min(a.y, size.y - 12 * k);  // never below the screen
 			const ImVec2 b{ a.x + w, a.y + h };
 			Panel(dl, { a.x, a.y - h }, { b.x, a.y }, k, 0.95f);
 			float y = a.y - h + 14 * k;
@@ -915,7 +920,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 			const bool mainMenu = uiM && uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) && !popup;
-			const bool journal = uiM && uiM->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MainMenu::MENU_NAME);  // in game only
+			// the Tab menu (Skills / Magic / Items / Map), on its own: the party panel sits in its empty top-left corner
+			const bool journal = uiM && uiM->IsMenuOpen(RE::TweenMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) &&
+			                     !uiM->IsMenuOpen(RE::InventoryMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MagicMenu::MENU_NAME) &&
+			                     !uiM->IsMenuOpen(RE::MapMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::StatsMenu::MENU_NAME);
 			const int  clicks = g_clicks.exchange(0);
 			if (!InGame() && !mainMenu && !journal) {
 				if (static int m = 0; m++ % 1200 == 0) {
@@ -953,7 +961,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DrawMenu(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks > 0);
 			} else if (journal) {
 				const float k = io.DisplaySize.y / 1080.0f;
-				PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { 40 * k, io.DisplaySize.y - 40 * k }, k, clicks > 0);
+				PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { 48 * k, 48 * k }, k, clicks > 0, true);
 			} else {
 				Draw(s, io.DisplaySize);
 			}
