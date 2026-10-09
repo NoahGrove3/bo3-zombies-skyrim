@@ -69,6 +69,7 @@ jobs:
           Copy-Item assets\fonts\* "$stage\Data\Interface\UndyingNights\fonts\"
           New-Item -ItemType Directory -Force "$stage\Data\Meshes\Interface\Logo" | Out-Null
           Copy-Item assets\meshes\logo_empty.nif "$stage\Data\Meshes\Interface\Logo\logo.nif"
+          Copy-Item assets\meshes\logo_empty.nif "$stage\Data\Meshes\Interface\Logo\logo01ae.nif"
           Copy-Item README.md "$stage\BO3Zombies-README.md"
           Copy-Item third_party\address-library\CREDITS.md "$stage\BO3Zombies-ADDRESS-LIBRARY-CREDITS.md"
           python tools/zipdir.py "$stage" "dist\BO3Zombies-$v.zip"
