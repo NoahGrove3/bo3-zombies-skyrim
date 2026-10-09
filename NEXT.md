@@ -8,6 +8,15 @@
 - One round per night, tally counter, 30-min day cycle (60/40), dawn despawn, night truce for NPCs, sprint OK on fresh character.
 - Station stand with sloped walkable skirt, map markers, clutter cleared from the footprint.
 
+## Built 2026-10-08 20:50 (0f17fe6, installed via UN-0f17fe6-core.zip, pack + Melty zip refreshed, NOT yet seen in game)
+- Net.cpp: Steam flat API (steam_api64 v009/v017/v021/v010, NetworkingMessages v002), friends-only lobby, invite overlay,
+  GameLobbyJoinRequested (333) callback, +connect_lobby, friends-in-parties list; channel 7; host State 4 Hz; client curse max-merge.
+- Coop::Client() also true for a Steam party member. Director::NetFollow drives the client's night from the host.
+- Main menu: assets/ui/menu_bg.png (cover.py MENU=1, bottom-right open for Skyrim's buttons) + drifting fog, embers,
+  moon pulse, lightning; party panel bottom-left (also in the Journal menu); clicks via InputWatch -> Hud::OnClick.
+- "Character Selection" on the main menu is Skyrim Together's own (string in SkyrimTogether.exe); the menu art covers it.
+- Still to do: STR players still connect to the host's STR server themselves; two-PC test.
+
 ## PLAN for when Noah is back home (saved 2026-10-08 19:00 ET)
 1. Re-link the PC; install UN-f408882.zip (boss/elite styles); refresh Party Pack + Melty zip.
 2. Co-op option 2: keep Skyrim Together for players; our own Steam networking (steam_api64 flat API: ISteamNetworkingMessages,
