@@ -407,8 +407,8 @@ namespace bo3z
 			const bool fighting = Director::Fighting();
 			Publish(g_zone, fighting);
 			TickRelicShow(player, a_delta);
-			// The prologue: the first night after Helgen
-			if (fighting) {
+			// The prologue: as soon as the new character is made (out of Helgen, at Riverwood), the book is in the pack
+			if (Save::Flag(Save::kFlagStarted)) {
 				if (auto* intro = Global(gen::kCurseIntroGlobal); intro && intro->value < 1.5f) {  // (1 = an older save saw the pop-up: it gets the book too)
 					intro->value = 2.0f;
 					GiveBook(player);

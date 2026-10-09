@@ -350,16 +350,12 @@ for sgn in (-1, 1):   # knotwork-ish rules either side of the line
 fB = ImageFont.truetype(FR, int(50 * kk))
 if not MENU: draw_text(lay, 'ROUND-BASED UNDEAD SURVIVAL  •  STAFFS & ELEMENTAL BOWS  •  THE UNDYING DIRGE', fB, h - 90 * kk, 10 * kk, (210, 190, 170, 200))
 out = Image.alpha_composite(out.convert('RGBA'), lay).convert('RGB')
-if MENU:  # open the centre-bottom for Skyrim's own menu buttons: a soft dark well instead of the picture
-    out = out.convert('RGBA')
+if MENU:  # Skyrim's own buttons (Continue, New, Load...) are drawn over the bottom-right: a darker, quieter corner for them
     ww, hh = out.size
     yy_, xx_ = np.mgrid[0:hh, 0:ww].astype(np.float32)
-    # Skyrim's buttons (Continue, New, Load...) stand bottom-right
-    dx = np.clip((0.84 - xx_ / ww) / 0.05, 0, None); dy = np.maximum(np.clip((0.66 - yy_ / hh) / 0.05, 0, None), np.clip((yy_ / hh - 0.92) / 0.04, 0, None))
-    hole = np.clip(1.0 - np.sqrt(dx ** 2 + dy ** 2), 0, 1)
-    hole = np.clip(hole * 2.2, 0, 1)
-    a_ = (255 * (1 - 0.92 * hole)).astype(np.uint8)
-    rgb = np.asarray(out, np.float32)[..., :3] * (1 - 0.6 * hole[..., None])
-    out = Image.fromarray(np.dstack([rgb.astype(np.uint8), a_]), 'RGBA')
+    dx = np.clip((0.80 - xx_ / ww) / 0.10, 0, None); dy = np.clip((0.62 - yy_ / hh) / 0.08, 0, None)
+    shade = np.clip(1.0 - np.sqrt(dx ** 2 + dy ** 2), 0, 1)
+    rgb = np.asarray(out, np.float32) * (1 - 0.55 * shade[..., None])
+    out = Image.fromarray(rgb.astype(np.uint8), 'RGB')
 out.save(OUT, quality=95)
 print('wrote', OUT, out.size)

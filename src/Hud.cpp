@@ -3,6 +3,7 @@
 #include <imgui.h>
 #include <imgui_impl_dx11.h>
 #include <WICTextureLoader.h>
+#include <d3dcompiler.h>
 
 // BO3-style HUD (sheet: hud), drawn with Dear ImGui over Skyrim's frame from a Present hook
 // (the hook itself follows SkyCraft's Overlay.cpp, MIT, chasmlol).
@@ -23,6 +24,94 @@ namespace bo3z
 		ID3D11ShaderResourceView* g_menuBg = nullptr;   // the main menu's backdrop (tools/cover.py, MENU=1)
 		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
 		std::atomic<int>          g_clicks{ 0 };        // left clicks since the last frame (menus)
+		// Skyrim's main-menu buttons are kept over our picture: the frame as Skyrim drew it is copied, and in the
+		// buttons' corner only its bright pixels (the words) are laid back on top (a luma key; the cursor is ours).
+		ID3D11Texture2D*          g_frameCopy = nullptr;
+		ID3D11ShaderResourceView* g_frameSrv = nullptr;
+		UINT                      g_frameW = 0, g_frameH = 0;
+		ID3D11PixelShader*        g_keyPs = nullptr;
+		ID3D11Buffer*             g_keyCb = nullptr;
+		ImVec2                    g_keyCursor{ -1000, -1000 };
+
+		constexpr const char* kKeyHlsl = R"(
+cbuffer K : register(b0) { float2 cursor; float2 pad; };
+sampler s0 : register(s0);
+Texture2D t0 : register(t0);
+float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0) : SV_Target
+{
+	float4 c = t0.Sample(s0, uv);
+	float l = dot(c.rgb, float3(0.299, 0.587, 0.114));
+	float a = smoothstep(0.20, 0.40, l);
+	float2 d = pos.xy - cursor;
+	if (d.x > -6 && d.x < 46 && d.y > -6 && d.y < 56) a = 0;
+	return float4(c.rgb, a * col.a);
+}
+)";
+
+		void MakeKeyShader()
+		{
+			if (g_keyPs || !g_device) {
+				return;
+			}
+			HMODULE dc = ::LoadLibraryW(L"d3dcompiler_47.dll");
+			auto*   compile = dc ? reinterpret_cast<pD3DCompile>(::GetProcAddress(dc, "D3DCompile")) : nullptr;
+			if (!compile) {
+				logger::warn("hud: no d3dcompiler_47; the menu keeps Skyrim's buttons uncovered");
+				return;
+			}
+			ID3DBlob *code = nullptr, *err = nullptr;
+			if (FAILED(compile(kKeyHlsl, std::strlen(kKeyHlsl), nullptr, nullptr, nullptr, "main", "ps_4_0", 0, 0, &code, &err)) || !code) {
+				logger::warn("hud: key shader: {}", err ? static_cast<const char*>(err->GetBufferPointer()) : "?");
+				if (err) err->Release();
+				return;
+			}
+			g_device->CreatePixelShader(code->GetBufferPointer(), code->GetBufferSize(), nullptr, &g_keyPs);
+			code->Release();
+			D3D11_BUFFER_DESC bd{};
+			bd.ByteWidth = 16;
+			bd.Usage = D3D11_USAGE_DYNAMIC;
+			bd.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+			bd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+			g_device->CreateBuffer(&bd, nullptr, &g_keyCb);
+		}
+
+		void KeyOn(const ImDrawList*, const ImDrawCmd*)
+		{
+			if (!g_keyPs) {
+				return;
+			}
+			D3D11_MAPPED_SUBRESOURCE m{};
+			if (g_keyCb && SUCCEEDED(g_context->Map(g_keyCb, 0, D3D11_MAP_WRITE_DISCARD, 0, &m))) {
+				const float v[4]{ g_keyCursor.x, g_keyCursor.y, 0, 0 };
+				std::memcpy(m.pData, v, sizeof(v));
+				g_context->Unmap(g_keyCb, 0);
+			}
+			g_context->PSSetShader(g_keyPs, nullptr, 0);
+			g_context->PSSetConstantBuffers(0, 1, &g_keyCb);
+		}
+
+		// The frame as Skyrim drew it (menus included), for the key.
+		void CopyFrame(ID3D11Texture2D* a_back)
+		{
+			D3D11_TEXTURE2D_DESC d{};
+			a_back->GetDesc(&d);
+			if (d.SampleDesc.Count != 1) {
+				return;
+			}
+			if (!g_frameCopy || d.Width != g_frameW || d.Height != g_frameH) {
+				if (g_frameSrv) g_frameSrv->Release(), g_frameSrv = nullptr;
+				if (g_frameCopy) g_frameCopy->Release(), g_frameCopy = nullptr;
+				d.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+				d.Usage = D3D11_USAGE_DEFAULT;
+				d.CPUAccessFlags = 0;
+				d.MiscFlags = 0;
+				if (FAILED(g_device->CreateTexture2D(&d, nullptr, &g_frameCopy)) || FAILED(g_device->CreateShaderResourceView(g_frameCopy, nullptr, &g_frameSrv))) {
+					return;
+				}
+				g_frameW = d.Width, g_frameH = d.Height;
+			}
+			g_context->CopyResource(g_frameCopy, a_back);
+		}
 		auto                 g_last = std::chrono::steady_clock::now();
 
 		ImU32 Col(std::uint32_t a_rgba, float a_alpha = 1.0f)
@@ -659,20 +748,70 @@ namespace bo3z
 					fg->AddCircleFilled(p, e.r * k, c);
 				}
 			}
-			// now and then, far lightning behind the mountains
+			// now and then, a lightning bolt far off over the mountains (never twice in the same place)
 			{
-				const float t = std::fmod(now, 11.0f);
-				if (t < 0.18f || (t > 0.3f && t < 0.38f)) {
-					fg->AddRectFilledMultiColor(at(0, 0), at(1, 0.55f), IM_COL32(220, 210, 255, 26), IM_COL32(220, 210, 255, 26), IM_COL32(220, 210, 255, 0), IM_COL32(220, 210, 255, 0));
+				static float next = 4.0f, life = 0;
+				static std::vector<std::vector<ImVec2>> bolt;
+				static std::mt19937 lr{ 11 };
+				std::uniform_real_distribution<float> L(0, 1);
+				if (now > next && life <= 0) {
+					life = 0.55f;
+					next = now + 5.0f + 7.0f * L(lr);
+					bolt.clear();
+					const float u0 = L(lr) < 0.5f ? 0.06f + 0.22f * L(lr) : 0.72f + 0.2f * L(lr);
+					std::vector<ImVec2> main{ { u0, 0.0f } };
+					float u = u0, v = 0.0f;
+					while (v < 0.40f) {
+						v += 0.018f + 0.02f * L(lr);
+						u += (L(lr) - 0.5f) * 0.03f;
+						main.push_back({ u, v });
+						if (L(lr) < 0.18f && bolt.size() < 4) {  // a fork
+							std::vector<ImVec2> br{ { u, v } };
+							float bu = u, bv = v;
+							const float dir = L(lr) < 0.5f ? -1.0f : 1.0f;
+							for (int i = 0; i < 6; ++i) {
+								bv += 0.015f + 0.012f * L(lr);
+								bu += dir * (0.006f + 0.012f * L(lr));
+								br.push_back({ bu, bv });
+							}
+							bolt.push_back(br);
+						}
+					}
+					bolt.insert(bolt.begin(), main);
 				}
+				if (life > 0) {
+					life -= ImGui::GetIO().DeltaTime;
+					const float flick = (life > 0.42f || (life > 0.2f && life < 0.3f)) ? 1.0f : 0.35f;  // it strikes, dims, strikes again
+					fg->AddRectFilledMultiColor(at(0, 0), at(1, 0.6f), IM_COL32(200, 190, 255, static_cast<int>(22 * flick)), IM_COL32(200, 190, 255, static_cast<int>(22 * flick)),
+						IM_COL32(200, 190, 255, 0), IM_COL32(200, 190, 255, 0));
+					for (std::size_t b = 0; b < bolt.size(); ++b) {
+						std::vector<ImVec2> pts;
+						for (auto& q : bolt[b]) pts.push_back(at(q.x, q.y));
+						const float w = (b == 0 ? 3.0f : 1.6f) * k;
+						fg->AddPolyline(pts.data(), static_cast<int>(pts.size()), IM_COL32(150, 130, 255, static_cast<int>(60 * flick)), 0, w * 6);
+						fg->AddPolyline(pts.data(), static_cast<int>(pts.size()), IM_COL32(190, 180, 255, static_cast<int>(130 * flick)), 0, w * 2.5f);
+						fg->AddPolyline(pts.data(), static_cast<int>(pts.size()), IM_COL32(250, 248, 255, static_cast<int>(255 * flick)), 0, w);
+					}
+				}
+			}
+			// Skyrim's buttons (bottom-right) laid back over the picture: only the words, not its old backdrop
+			if (g_frameSrv && g_keyPs) {
+				g_keyCursor = Cursor(size);
+				const ImVec2 a0{ size.x * 0.74f, size.y * 0.58f }, a1{ size.x, size.y * 0.97f };
+				fg->AddCallback(KeyOn, nullptr);
+				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_frameSrv)), a0, a1, { 0.74f, 0.58f }, { 1.0f, 0.97f });
+				fg->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 			}
 			(void)dl;
 			PartyPanel(fg, size, { 40 * k, size.y - 40 * k }, k, click);
-			// the menu's own cursor, on top of our picture
+			// our cursor: a gold-edged iron arrowhead with an ember at its tip
 			const ImVec2 c = Cursor(size);
 			if (c.x >= 0) {
-				fg->AddTriangleFilled(c, { c.x + 4 * k, c.y + 20 * k }, { c.x + 14 * k, c.y + 13 * k }, IM_COL32(240, 230, 210, 240));
-				fg->AddTriangle(c, { c.x + 4 * k, c.y + 20 * k }, { c.x + 14 * k, c.y + 13 * k }, IM_COL32(0, 0, 0, 200), 1.5f * k);
+				const ImVec2 p1{ c.x + 5 * k, c.y + 26 * k }, p2{ c.x + 11 * k, c.y + 18 * k }, p3{ c.x + 20 * k, c.y + 17 * k };
+				fg->AddQuadFilled(c, p1, p2, p3, IM_COL32(28, 24, 22, 240));
+				fg->AddQuad(c, p1, p2, p3, kGold, 1.6f * k);
+				fg->AddCircleFilled(c, 3.0f * k, IM_COL32(255, 170, 80, 255));
+				fg->AddCircleFilled(c, 7.0f * k, IM_COL32(255, 120, 40, 50));
 			}
 		}
 
@@ -781,6 +920,10 @@ namespace bo3z
 			ID3D11Texture2D* back = nullptr;
 			if (FAILED(a_swap->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back)))) {
 				return;
+			}
+			if (mainMenu) {
+				MakeKeyShader();
+				CopyFrame(back);
 			}
 			ID3D11RenderTargetView* rtv = nullptr;
 			g_device->CreateRenderTargetView(back, nullptr, &rtv);

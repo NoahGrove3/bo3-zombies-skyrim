@@ -134,6 +134,7 @@ namespace bo3z
 #pragma pack(pop)
 		struct FriendGame { std::uint64_t id, lobby; std::string name; };
 		bool        Available();     // Steam is there
+		void        PatchTogether(); // once at start: Skyrim Together's menu follows the party
 		void        Tick(float a_delta);
 		bool        InLobby();
 		bool        IsHost();

@@ -36,6 +36,7 @@ namespace
 		}
 		logger::info("game UI is up; Skyrim runtime {}", REL::Module::get().version().string());
 		bo3z::Events::InstallMenuWatch();
+		bo3z::Net::PatchTogether();
 		return 0;
 	}
 

@@ -29,7 +29,8 @@ add_commonlibsse_plugin(
 
 target_include_directories(BO3Zombies PRIVATE src)
 target_precompile_headers(BO3Zombies PRIVATE src/PCH.h)
-target_link_libraries(BO3Zombies PRIVATE imgui::imgui Microsoft::DirectXTK d3d11.lib dxgi.lib windowscodecs.lib ole32.lib winmm.lib)
+set_source_files_properties(src/Relay.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)  # winsock before windows.h
+target_link_libraries(BO3Zombies PRIVATE imgui::imgui Microsoft::DirectXTK d3d11.lib dxgi.lib windowscodecs.lib ole32.lib winmm.lib ws2_32.lib)
 target_compile_definitions(BO3Zombies PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
 if(MSVC)
 	target_compile_options(BO3Zombies PRIVATE /W4 /permissive- /Zc:preprocessor /utf-8 /wd4200)

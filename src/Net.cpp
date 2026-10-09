@@ -1,5 +1,8 @@
 #include "BO3Z.h"
 
+#include <atomic>
+#include <thread>
+
 // Co-op, our own layer (Skyrim Together moves the players; this carries the zombies game).
 //
 // Lobby: Steam friends-only lobby. The host makes it from the main menu (or in game) and invites through the
@@ -12,6 +15,17 @@
 //   client -> host, once a second: its Dirge progress (the larger of the two wins, so anyone's quest work counts)
 //   anyone -> everyone: a power-up taken (the host relays a client's)
 // Everything goes through steam_api64.dll's flat C API, loaded at run time (Skyrim ships it and runs its callbacks).
+namespace bo3z::Relay
+{
+	bool          PortInUse(std::uint16_t a_port);
+	bool          OpenClient(std::uint16_t a_port);
+	int           RecvFromApp(std::uint8_t* a_buf, int a_cap);
+	void          SendToApp(const std::uint8_t* a_data, int a_size);
+	void          SendToServer(std::uint64_t a_peer, std::uint16_t a_port, const std::uint8_t* a_data, int a_size);
+	std::uint64_t RecvFromServer(std::uint8_t* a_buf, int a_cap, int& a_size);
+	void          CloseAll();
+}
+
 namespace bo3z::Net
 {
 	namespace
@@ -59,6 +73,7 @@ namespace bo3z::Net
 			u64 (*GetLobbyMemberByIndex)(void*, u64, int){};
 			bool (*SetLobbyData)(void*, u64, const char*, const char*){};
 			bool (*SetLobbyJoinable)(void*, u64, bool){};
+			const char* (*GetLobbyData)(void*, u64, const char*){};
 			void (*InviteDialog)(void*, u64){};
 			int (*GetFriendCount)(void*, int){};
 			u64 (*GetFriendByIndex)(void*, int, int){};
@@ -102,7 +117,7 @@ namespace bo3z::Net
 			      Load(h, A.JoinLobby, "SteamAPI_ISteamMatchmaking_JoinLobby") & Load(h, A.LeaveLobby, "SteamAPI_ISteamMatchmaking_LeaveLobby") &
 			      Load(h, A.GetLobbyOwner, "SteamAPI_ISteamMatchmaking_GetLobbyOwner") & Load(h, A.GetNumLobbyMembers, "SteamAPI_ISteamMatchmaking_GetNumLobbyMembers") &
 			      Load(h, A.GetLobbyMemberByIndex, "SteamAPI_ISteamMatchmaking_GetLobbyMemberByIndex") & Load(h, A.SetLobbyData, "SteamAPI_ISteamMatchmaking_SetLobbyData") &
-			      Load(h, A.SetLobbyJoinable, "SteamAPI_ISteamMatchmaking_SetLobbyJoinable") &
+			      Load(h, A.SetLobbyJoinable, "SteamAPI_ISteamMatchmaking_SetLobbyJoinable") & Load(h, A.GetLobbyData, "SteamAPI_ISteamMatchmaking_GetLobbyData") &
 			      Load(h, A.InviteDialog, "SteamAPI_ISteamFriends_ActivateGameOverlayInviteDialog") & Load(h, A.GetFriendCount, "SteamAPI_ISteamFriends_GetFriendCount") &
 			      Load(h, A.GetFriendByIndex, "SteamAPI_ISteamFriends_GetFriendByIndex") & Load(h, A.GetFriendGamePlayed, "SteamAPI_ISteamFriends_GetFriendGamePlayed") &
 			      Load(h, A.GetFriendPersonaName, "SteamAPI_ISteamFriends_GetFriendPersonaName") & Load(h, A.IsAPICallCompleted, "SteamAPI_ISteamUtils_IsAPICallCompleted") &
@@ -204,6 +219,145 @@ namespace bo3z::Net
 			}
 		}
 
+		// ---- Skyrim Together, automatically: the friend's Skyrim Together connects to 127.0.0.1, and the packets
+		// ride Steam to the host's game and on to the host's server (no IP addresses, no port forwarding) ----
+		constexpr int           kTunnel = 8;
+		constexpr std::uint16_t kLocalPort = 10578;
+		std::uint16_t           g_serverPort = 10578;
+		std::atomic_bool        g_relayOn{ false };
+		std::thread             g_relay;
+
+		std::filesystem::path TogetherDir()
+		{
+			wchar_t exe[MAX_PATH]{};
+			::GetModuleFileNameW(nullptr, exe, MAX_PATH);
+			const auto dir = std::filesystem::path(exe).parent_path();
+			for (const auto& d : { dir / "Data" / "SkyrimTogetherReborn", dir, dir.parent_path() }) {
+				if (std::filesystem::exists(d / "UI" / "main.js")) {
+					return d;
+				}
+			}
+			return {};
+		}
+
+		// the host's server settings (port, password) from Skyrim Together's own config
+		std::pair<std::uint16_t, std::string> ServerConfig()
+		{
+			std::uint16_t port = 10578;
+			std::string   pw;
+			const auto    dir = TogetherDir();
+			std::ifstream f(dir / "config" / "STServer.ini");
+			for (std::string line; std::getline(f, line);) {
+				if (!line.empty() && line.back() == '\r') line.pop_back();
+				if (line.starts_with("uPort=")) port = static_cast<std::uint16_t>(std::atoi(line.c_str() + 6));
+				if (line.starts_with("sPassword=")) pw = line.substr(10);
+			}
+			return { port ? port : std::uint16_t{ 10578 }, pw };
+		}
+
+		// Tells Skyrim Together's own menu (patched once, see PatchTogether) to connect or disconnect.
+		void TellTogether(const char* a_action, const std::string& a_password = {})
+		{
+			const auto dir = TogetherDir();
+			if (dir.empty()) {
+				return;
+			}
+			std::string esc;
+			for (char c : a_password) {
+				if (c == '"' || c == '\\') esc += '\\';
+				esc += c;
+			}
+			std::ofstream f(dir / "UI" / "undying_connect.json", std::ios::trunc);
+			f << "{\"action\":\"" << a_action << "\",\"host\":\"127.0.0.1\",\"port\":" << kLocalPort << ",\"password\":\"" << esc << "\",\"nonce\":\""
+			  << std::chrono::steady_clock::now().time_since_epoch().count() << "\"}";
+			logger::info("net: Skyrim Together told to {}", a_action);
+		}
+
+		void StartServerIfNeeded()
+		{
+			const auto [port, pw] = ServerConfig();
+			g_serverPort = port;
+			if (Relay::PortInUse(port)) {
+				return;  // already running
+			}
+			const auto exe = TogetherDir() / "SkyrimTogetherServer.exe";
+			if (!std::filesystem::exists(exe)) {
+				return;
+			}
+			STARTUPINFOW si{ sizeof(si) };
+			si.dwFlags = STARTF_USESHOWWINDOW;
+			si.wShowWindow = SW_SHOWMINNOACTIVE;
+			PROCESS_INFORMATION pi{};
+			std::wstring cmd = L"\"" + exe.wstring() + L"\"";
+			if (::CreateProcessW(nullptr, cmd.data(), nullptr, nullptr, FALSE, CREATE_NEW_CONSOLE, nullptr, exe.parent_path().c_str(), &si, &pi)) {
+				::CloseHandle(pi.hThread);
+				::CloseHandle(pi.hProcess);
+				logger::info("net: started the Skyrim Together server (port {})", port);
+			} else {
+				logger::warn("net: could not start the Skyrim Together server ({})", ::GetLastError());
+			}
+		}
+
+		void RelayLoop(bool a_host, u64 a_owner)
+		{
+			std::vector<std::uint8_t> buf(65536);
+			Message*                  msgs[64];
+			while (g_relayOn) {
+				bool busy = false;
+				if (a_host) {
+					int n = 0;
+					while (const u64 peer = Relay::RecvFromServer(buf.data(), static_cast<int>(buf.size()), n)) {
+						A.SendMessageToUser(A.nm, Id(peer), buf.data(), n, 1, kTunnel);  // unreliable, no delay (the game's own protocol handles loss)
+						busy = true;
+					}
+					const int m = A.ReceiveMessagesOnChannel(A.nm, kTunnel, msgs, 64);
+					for (int i = 0; i < m; ++i) {
+						Relay::SendToServer(msgs[i]->peer.steamId, g_serverPort, static_cast<const std::uint8_t*>(msgs[i]->data), msgs[i]->size);
+						A.Release(msgs[i]);
+					}
+					busy |= m > 0;
+				} else {
+					int n;
+					while ((n = Relay::RecvFromApp(buf.data(), static_cast<int>(buf.size()))) > 0) {
+						A.SendMessageToUser(A.nm, Id(a_owner), buf.data(), n, 1, kTunnel);
+						busy = true;
+					}
+					const int m = A.ReceiveMessagesOnChannel(A.nm, kTunnel, msgs, 64);
+					for (int i = 0; i < m; ++i) {
+						Relay::SendToApp(static_cast<const std::uint8_t*>(msgs[i]->data), msgs[i]->size);
+						A.Release(msgs[i]);
+					}
+					busy |= m > 0;
+				}
+				if (!busy) {
+					std::this_thread::sleep_for(std::chrono::milliseconds(1));
+				}
+			}
+		}
+
+		void StopRelay()
+		{
+			if (g_relayOn.exchange(false) && g_relay.joinable()) {
+				g_relay.join();
+			}
+			Relay::CloseAll();
+		}
+
+		void StartRelay(bool a_host, u64 a_owner)
+		{
+			StopRelay();
+			if (TogetherDir().empty()) {
+				return;  // no Skyrim Together here: the party still shares the nights
+			}
+			if (!a_host && !Relay::OpenClient(kLocalPort)) {
+				logger::warn("net: port {} is busy here; Skyrim Together can't use the tunnel", kLocalPort);
+				return;
+			}
+			g_relayOn = true;
+			g_relay = std::thread(RelayLoop, a_host, a_owner);
+			logger::info("net: Skyrim Together tunnel open ({})", a_host ? "host" : "friend");
+		}
+
 		void Entered(u64 a_lobby, bool a_host)
 		{
 			g_lobby = a_lobby;
@@ -213,6 +367,17 @@ namespace bo3z::Net
 			if (!a_host) {
 				const std::uint8_t hello[2]{ kHello, kVersion };
 				Send(g_owner, hello, 2, true);
+				StartRelay(false, g_owner);
+				const char* pw = A.GetLobbyData(A.mm, a_lobby, "str_pw");
+				TellTogether("connect", pw ? pw : "");
+			} else {
+				StartServerIfNeeded();
+				const auto [port, pw] = ServerConfig();
+				A.SetLobbyData(A.mm, a_lobby, "str_pw", pw.c_str());  // friends-only party: their Skyrim Together logs in with it
+				StartRelay(true, g_me);
+				if (port == kLocalPort) {
+					TellTogether("connect", pw);  // your own Skyrim Together joins your server too
+				}
 			}
 			Hud::Banner(a_host ? "Co-op party open: invite friends from the Steam overlay" : "Joined the party - the host runs the nights", 4.0f);
 			logger::info("net: {} lobby {:016X} ({} others)", a_host ? "hosting" : "joined", a_lobby, g_members.size());
@@ -300,6 +465,34 @@ namespace bo3z::Net
 		}
 	}
 
+	// Once per install: a few lines added to Skyrim Together's menu script (its browser runs with file access on),
+	// so it connects or disconnects when our party says so (UI/undying_connect.json). A backup is kept.
+	void PatchTogether()
+	{
+		const auto dir = TogetherDir();
+		if (dir.empty()) {
+			return;
+		}
+		const auto js = dir / "UI" / "main.js";
+		std::ifstream in(js, std::ios::binary);
+		std::string   text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+		in.close();
+		TellTogether("none");  // nothing stale from last time
+		constexpr std::string_view kMark = "/*undying-nights-connect*/";
+		if (text.find(kMark) != std::string::npos) {
+			return;
+		}
+		std::error_code ec;
+		std::filesystem::copy_file(js, dir / "UI" / "main.js.before-undying-nights", std::filesystem::copy_options::skip_existing, ec);
+		std::ofstream out(js, std::ios::binary | std::ios::app);
+		out << "\n" << kMark
+			<< ";(function(){var last=null;function poll(){try{var x=new XMLHttpRequest();x.open('GET','undying_connect.json?'+Date.now(),true);"
+			   "x.onload=function(){try{var j=JSON.parse(x.responseText);if(!j||!j.nonce)return;if(last===null){last=j.nonce;return;}if(j.nonce===last)return;last=j.nonce;"
+			   "if(j.action==='connect'){skyrimtogether.connect(j.host,j.port,j.password||'');}else if(j.action==='disconnect'){skyrimtogether.disconnect();}}catch(e){}};"
+			   "x.send();}catch(e){}}setInterval(poll,1500);})();\n";
+		logger::info("net: Skyrim Together's menu taught to follow the party");
+	}
+
 	bool Available() { return Init(); }
 	bool InLobby() { return g_lobby != 0; }
 	bool IsHost() { return g_lobby && g_owner == g_me; }
@@ -346,6 +539,11 @@ namespace bo3z::Net
 		if (A.ok && g_lobby) {
 			A.LeaveLobby(A.mm, g_lobby);
 			logger::info("net: left lobby {:016X}", g_lobby);
+		}
+		const bool wasClient = IsClient();
+		StopRelay();
+		if (wasClient) {
+			TellTogether("disconnect");
 		}
 		g_lobby = g_owner = 0;
 		g_members.clear();
