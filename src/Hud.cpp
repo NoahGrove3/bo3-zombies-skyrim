@@ -1040,8 +1040,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float dt = std::chrono::duration<float>(now - last).count();
 				last = now;
 				static RE::Setting* maxTime = RE::INISettingCollection::GetSingleton() ? RE::INISettingCollection::GetSingleton()->GetSetting("fMaxTime:HAVOK") : nullptr;
-				if (maxTime && dt > 0.0f) {
-					maxTime->data.f = std::clamp(dt, 1.0f / 300.0f, 1.0f / 30.0f);
+				static RE::Setting* maxComplex = RE::INISettingCollection::GetSingleton() ? RE::INISettingCollection::GetSingleton()->GetSetting("fMaxTimeComplex:HAVOK") : nullptr;
+				// smoothed: one long frame must not slow the ragdolls (a too-short step leaves bodies drifting down slowly)
+				static float avg = 1.0f / 60.0f;
+				if (dt > 0.0f && dt < 0.25f) {
+					avg += (dt - avg) * 0.1f;
+				}
+				const float step = std::clamp(avg, 1.0f / 300.0f, 1.0f / 30.0f);
+				if (maxTime) {
+					maxTime->data.f = step;
+				}
+				if (maxComplex) {
+					maxComplex->data.f = std::max(step, 1.0f / 60.0f);
 				}
 				static bool said = false;
 				if (!said) {

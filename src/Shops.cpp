@@ -1304,7 +1304,8 @@ namespace bo3z
 			if (dev == RE::INPUT_DEVICE::kGamepad) {
 				if (code == 0x0001) g_sel = (g_sel + n - 1) % n;       // dpad up
 				else if (code == 0x0002) g_sel = (g_sel + 1) % n;      // dpad down
-				else if (code == 0x2000) g_menu = false;               // B
+				else if (code == 0x2000) g_menu = false;               // B (PlayStation: circle)
+				else if (code == 0x1000) BuyPerk(g_sel, g_menuRef.get().get());  // A (PlayStation: cross)
 				else return false;
 				return true;
 			}

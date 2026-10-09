@@ -93,7 +93,8 @@ namespace bo3z
 					// The fire button goes through: Skyrim plays the staff/hand cast. Right mouse (left-hand
 					// attack/block) stays ours for aiming.
 					auto* b = a_event ? a_event->AsButtonEvent() : nullptr;
-					if (b && b->GetDevice() == RE::INPUT_DEVICE::kMouse && b->GetIDCode() == gen::kKey2_fire) {
+					if (b && ((b->GetDevice() == RE::INPUT_DEVICE::kMouse && b->GetIDCode() == gen::kKey2_fire) ||
+					             (b->GetDevice() == RE::INPUT_DEVICE::kGamepad && b->GetIDCode() == 0x000A))) {  // (RT on a pad)
 						return func(a_this, a_event);
 					}
 					return false;
@@ -112,16 +113,31 @@ namespace bo3z
 		float                   g_tapT = -1.0f;   // >= 0: the staff's short thrust for a normal shot is playing
 		bool IsStaff(int a_gun) { return a_gun >= 0 && gen::kGuns[a_gun].kind == gen::kKindWand; }
 
+		// Controllers (Xbox, and PlayStation through Steam Input, which Skyrim reads as an Xbox pad):
+		//   RT fire / charge, LT aim, D-pad right next weapon (hold: holster), D-pad down quick knife (Skyrim's hotkeys
+		// on those two wait while a weapon of ours is out).
+		constexpr std::uint32_t kPadRT = 0x000A, kPadLT = 0x0009, kPadRight = 0x0008, kPadDown = 0x0002;
+		bool IsFireButton(const RE::ButtonEvent* b)
+		{
+			return b && ((b->GetDevice() == RE::INPUT_DEVICE::kMouse && b->GetIDCode() == gen::kKey2_fire) ||
+			                (b->GetDevice() == RE::INPUT_DEVICE::kGamepad && b->GetIDCode() == kPadRT));
+		}
+		bool IsAimButton(const RE::ButtonEvent* b)
+		{
+			return b && ((b->GetDevice() == RE::INPUT_DEVICE::kMouse && b->GetIDCode() == gen::kKey2_ads) ||
+			                (b->GetDevice() == RE::INPUT_DEVICE::kGamepad && b->GetIDCode() == kPadLT));
+		}
+
 		bool g_nativeCut = false;
 		struct FireButton
 		{
 			static void thunk(RE::PlayerInputHandler* a_this, RE::ButtonEvent* a_event, RE::PlayerControlsData* a_data)
 			{
-				if (GunOut() && IsStaff(CurrentGun()) && a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kMouse && a_event->GetIDCode() == gen::kKey2_fire) {
+				if (GunOut() && IsStaff(CurrentGun()) && IsFireButton(a_event)) {
 					g_abHandler = a_this, g_abData = a_data;
 					return;  // ours: the staff swing is played on release (TickSwing)
 				}
-				if (GunOut() && gen::kGuns[CurrentGun()].kind != gen::kKindBow && a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kMouse && a_event->GetIDCode() == gen::kKey2_fire) {
+				if (GunOut() && gen::kGuns[CurrentGun()].kind != gen::kKindBow && IsFireButton(a_event)) {
 					auto& rd = a_event->GetRuntimeData();
 					if (a_event->IsDown()) {
 						g_nativeCut = false;
@@ -188,6 +204,19 @@ namespace bo3z
 				g_tapT = 0.0f;
 			}
 		}
+
+		struct FavBlock  // the pad's D-pad right / down are ours while a weapon of ours is drawn
+		{
+			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
+			{
+				auto* b = a_event ? a_event->AsButtonEvent() : nullptr;
+				if (GunOut() && b && b->GetDevice() == RE::INPUT_DEVICE::kGamepad && (b->GetIDCode() == kPadRight || b->GetIDCode() == kPadDown)) {
+					return false;
+				}
+				return func(a_this, a_event);
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
 
 		struct ReadyBlock
 		{
@@ -1920,7 +1949,8 @@ namespace bo3z
 			const auto dev = a_event->GetDevice();
 			const auto code = a_event->GetIDCode();
 			const bool down = a_event->IsDown(), up = !a_event->IsPressed();
-			if (dev == RE::INPUT_DEVICE::kKeyboard && code == gen::kKey2_swap) {
+			const bool pad = dev == RE::INPUT_DEVICE::kGamepad;
+			if ((dev == RE::INPUT_DEVICE::kKeyboard && code == gen::kKey2_swap) || (pad && code == kPadRight && (GunOut() || Save::GetSlot(0).gun >= 0))) {
 				if (down) {
 					g_swapDown = Clock::now();
 					g_swapHeld = true;
@@ -1934,7 +1964,7 @@ namespace bo3z
 				}
 				return true;
 			}
-			if (dev == RE::INPUT_DEVICE::kKeyboard && code == gen::kKnife.key && down) {
+			if (((dev == RE::INPUT_DEVICE::kKeyboard && code == gen::kKnife.key) || (pad && code == kPadDown && GunOut())) && down) {
 				Knife();
 				return true;
 			}
@@ -1942,7 +1972,7 @@ namespace bo3z
 				g_trigger = g_adsHeld = false;
 				return false;
 			}
-			if (dev == RE::INPUT_DEVICE::kMouse && code == gen::kKey2_fire) {
+			if (IsFireButton(a_event)) {
 				// One or the other, on release: a full charge unleashes the signature move, anything shorter is the
 				// weapon's normal shot (never both).
 				if (down) {
@@ -1966,7 +1996,7 @@ namespace bo3z
 				g_trigger = !up;
 				return true;
 			}
-			if (dev == RE::INPUT_DEVICE::kMouse && code == gen::kKey2_ads) {
+			if (IsAimButton(a_event)) {
 				g_adsHeld = !up;
 				return true;
 			}
@@ -2113,6 +2143,8 @@ namespace bo3z
 				PoseHook::func = pc.write_vfunc(0x7D, PoseHook::thunk);
 				REL::Relocation<std::uintptr_t> rw{ RE::VTABLE_ReadyWeaponHandler[0] };
 				ReadyBlock::func = rw.write_vfunc(0x1, ReadyBlock::thunk);
+				REL::Relocation<std::uintptr_t> fv{ RE::VTABLE_FavoritesHandler[0] };
+				FavBlock::func = fv.write_vfunc(0x1, FavBlock::thunk);
 				hooked = true;
 				logger::info("gun: attack/ready input hooks installed");
 				for (const auto& gg : gen::kGuns) {  // a charge aura saved mid-charge never sticks

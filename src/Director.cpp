@@ -1016,9 +1016,10 @@ namespace bo3z
 				RE::NiPoint3 away = a->GetPosition() - a_player->GetPosition();
 				away.z = 0;
 				away.Unitize();
-				const RE::NiPoint3 from = a->GetPosition() - away * 60.0f - RE::NiPoint3{ 0, 0, 10.0f };
+				// pushed from waist height behind: they fold and drop (a push from below the feet floated them up)
+				const RE::NiPoint3 from = a->GetPosition() - away * 60.0f + RE::NiPoint3{ 0, 0, 55.0f };
 				if (c.tries == 0) {
-					proc->KnockExplosion(a.get(), from, 2.5f);
+					proc->KnockExplosion(a.get(), from, 1.6f);
 					++c.tries;
 				} else if (c.age > 0.6f && !a->IsInRagdollState()) {
 					proc->KnockExplosion(a.get(), from, 3.0f + c.tries);
