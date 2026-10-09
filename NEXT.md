@@ -160,3 +160,16 @@
 - Apex-style movement polish: slide momentum curve, slide-hop, mantle onto ledges, wall-bounce, air strafe tuning.
 - Creative content: special night events (blood moon, fog night), traps on the stand, Pack-a-Punch-style wand
   alt-fires at Reforge level 3, easter-egg quest per town, more elites, boss arena at Bleak Falls.
+
+## a40b70b (installed 2026-10-08 23:03) + 4b logo01ae pack fix
+- Grimmvar: claws only, Rending Flurry, Wyrm Leap (roarEvery), fire ring on enrage, no Unrelenting Force; meleeShare 0.14; Herald = 4th rite, never twice a night (slainTonight).
+- Staffs back on staff DNAM (mace grip put the staff at the feet); arm poses 1st+3rd person; bow draw/loose poses.
+- Blasts shrunk (kTapBlastScale 0.45 / 0.7), no imagespace on small blasts; every shot splashes (bow 70, wand 90, 33%).
+- Galecaller = Gale Volley (knockdown in place). Quicksilver = charge speed (ChargeMult 0.6).
+- FitResolution (main.cpp) writes SkyrimPrefs iSize to the main screen if bigger.
+- Party panel: TweenMenu top-left. Controllers: RT/LT/DpadRight/DpadDown/A. FavBlock hook.
+- Undead.cpp: procedural rigs (Character::UpdateAnimation hook 0x7D), types Shambler/Runner/Crawler/Wailer/Bloater + Stalker/Reaper/Necro/Wyrm; zombie_claws WEAP. UNTESTED in game: signs of the bends may be wrong.
+- Main menu: whole-screen luma key, Skyrim cursor movie hidden, empty logo.nif/logo01ae.nif (device backup logo01ae.nif.before-undying-nights).
+- UI: Cinzel/Cormorant fonts (assets/fonts), frame.png/divider.png (tools/uiart.py), Brew Machine redone, medallion perk icons.
+- Coffer textures: tools/coffer_tex.py (local asset build; installed via UN-coffer-dark.zip). Melty zip NOT rebuilt yet.
+- TODO: Whiterun station (use dev channel shots), verify rigs, Melty/Party zip rebuild.
