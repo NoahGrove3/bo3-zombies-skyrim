@@ -1,6 +1,6 @@
 {
   "sheet": "rounds",
-  "about": "How the night rounds run. One row: the BO3 round rules, adapted to Skyrim's clock. HP is in BO3 units; divide by hpScale for Skyrim health. v0.4: numbers make it hard, not health: zombie health stops climbing steeply after hpCapRound (then grows slowly), while counts keep climbing. Skyrim weapons and spells take a share of a zombie's round health per hit (skyrimHitShare) so they keep up.",
+  "about": "How the night rounds run (one round per night). BO3's zombie health curve: hpStart, +hpLinearPerRound each night until hpLinearUntil, then x hpMultAfter per night (gentler after hpCapRound). HP is in BO3 units; divide by hpScale for Skyrim health. Weapons are tiered against it (weapons sheet): the starting staff falls off around night 8, Coffer weapons around night 20-25, relics later, the Reforge (+60% a level) pushes each further. Skyrim weapons and spells take a share of a zombie's night health per hit (skyrimHitShare).",
   "columns": [
     "id",
     "nightStartHour",
@@ -64,8 +64,8 @@
         0.7,
         0.9
       ],
-      "hpStart": 400,
-      "hpLinearPerRound": 120,
+      "hpStart": 150,
+      "hpLinearPerRound": 100,
       "hpLinearUntil": 9,
       "hpMultAfter": 1.1,
       "hpScale": 8.0,
@@ -118,8 +118,8 @@
       "ignoreNpcs": true,
       "regenDelaySeconds": 5,
       "regenPerSecond": 0.35,
-      "hpCapRound": 10,
-      "hpGrowthAfterCap": 1.02,
+      "hpCapRound": 60,
+      "hpGrowthAfterCap": 1.03,
       "skyrimHitShare": {
         "melee": 0.34,
         "bow": 0.5,

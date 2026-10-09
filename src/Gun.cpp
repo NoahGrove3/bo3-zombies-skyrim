@@ -1987,8 +1987,8 @@ namespace bo3z
 						if (!bow) {
 							TryFire(true);
 							g_swingWanted = IsStaff(CurrentGun()) && g_cooldown > cdBefore;  // a shot actually left
-						} else if (g_charge > 0.25f) {
-							Hud::Banner("Draw fully to loose", 0.8f);  // bows only fire their charged shot
+						} else if (g_charge >= 0.5f) {
+							TryFire(true);  // a quick loose (Skyrim's own arrow flies; the hit and its splash are ours)
 						}
 					}
 					g_charge = 0;
