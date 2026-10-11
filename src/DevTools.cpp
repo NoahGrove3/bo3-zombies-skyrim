@@ -21,6 +21,7 @@ namespace bo3z
 		std::vector<std::string> g_gameQueue;   // run from PlayerCharacter::Update: console, hour, give, tp, ...
 		std::string              g_shotName;
 		std::atomic<bool>        g_hudOff{ false };
+		std::chrono::steady_clock::time_point g_lastGameTick{};
 		struct PendingKey
 		{
 			RE::INPUT_DEVICE  device;
@@ -31,6 +32,7 @@ namespace bo3z
 			std::chrono::steady_clock::time_point t0{};
 		};
 		std::vector<PendingKey> g_pendingKeys;
+		std::deque<std::uint32_t> g_pendingChars;  // 'type <text>': one character a frame into Skyrim's text boxes
 		int                      g_frame = 0;
 
 		std::optional<std::filesystem::path> Dir()
@@ -205,6 +207,13 @@ namespace bo3z
 				const RE::BSFixedString ev(!name.empty() ? std::string_view(name) : RE::ControlMap::GetSingleton()->GetUserEventName(id, device, context));
 				g_pendingKeys.push_back({ device, id, ev, 0 });
 				logger::info("dev: {} {} ({})", cmd, id, ev.c_str());
+			} else if (cmd == "type") {
+				std::string rest;
+				std::getline(in, rest);
+				for (std::size_t i = 1; i < rest.size(); ++i) {
+					g_pendingChars.push_back(static_cast<unsigned char>(rest[i]));
+				}
+				logger::info("dev: type '{}'", rest.size() > 1 ? rest.substr(1) : "");
 			} else if (cmd == "console") {
 				std::string rest;
 				std::getline(in, rest);
@@ -283,6 +292,27 @@ namespace bo3z
 					fc->rotation.y = yaw * 0.0174533f;
 					logger::info("dev: cam at {:.0f},{:.0f},{:.0f} yaw {:.1f} pitch {:.1f}", at.x, at.y, at.z, yaw, pitch);
 				}
+			} else if (cmd == "fp") {
+				// fp 0|1: hide/show your first-person arms (art captures from your own eyes)
+				int v = 1;
+				in >> v;
+				if (auto* root = player ? player->Get3D(true) : nullptr) {
+					root->GetFlags().set(RE::NiAVObject::Flag::kHidden);
+					if (v) {
+						root->GetFlags().reset(RE::NiAVObject::Flag::kHidden);
+					}
+				}
+				logger::info("dev: first-person arms {}", v ? "shown" : "hidden");
+			} else if (cmd == "menus") {
+				std::string open;
+				if (auto* ui = RE::UI::GetSingleton()) {
+					for (auto& [name, entry] : ui->menuMap) {
+						if (entry.menu && ui->IsMenuOpen(name)) {
+							open += std::string(name.c_str()) + ", ";
+						}
+					}
+					logger::info("dev: menus open: {} (pauses {})", open, ui->numPausesGame);
+				}
 			} else if (cmd == "camget") {
 				auto* pc = RE::PlayerCamera::GetSingleton();
 				if (pc && pc->cameraRoot) {
@@ -291,6 +321,7 @@ namespace bo3z
 					if (pc->IsInFreeCameraMode() && pc->currentState) {
 						auto* fc = static_cast<RE::FreeCameraState*>(pc->currentState.get());
 						yaw = fc->rotation.y / 0.0174533f, pitch = fc->rotation.x / 0.0174533f;
+						logger::info("dev: camget free: t {:.0f},{:.0f},{:.0f} rot {:.3f},{:.3f} zud {:.3f},{:.3f}", fc->translation.x, fc->translation.y, fc->translation.z, fc->rotation.x, fc->rotation.y, fc->zUpDown.x, fc->zUpDown.y);
 					} else if (player) {
 						yaw = player->GetAngleZ() / 0.0174533f, pitch = player->GetAngleX() / 0.0174533f;
 					}
@@ -342,7 +373,7 @@ namespace bo3z
 			for (auto& s : lines) {
 				if (s.rfind("shot ", 0) == 0) {
 					g_shotName = s.substr(5);
-				} else if (s.rfind("key ", 0) == 0 || s.rfind("mouse ", 0) == 0 || s.rfind("hold ", 0) == 0 || s.rfind("close ", 0) == 0) {
+				} else if (s.rfind("key ", 0) == 0 || s.rfind("type ", 0) == 0 || s.rfind("mouse ", 0) == 0 || s.rfind("hold ", 0) == 0 || s.rfind("close ", 0) == 0) {
 					g_mainQueue.push_back(s);
 				} else {
 					g_gameQueue.push_back(s);
@@ -381,6 +412,10 @@ namespace bo3z
 			if (!q) {
 				return;
 			}
+			if (!g_pendingChars.empty()) {
+				q->AddCharEvent(g_pendingChars.front());
+				g_pendingChars.pop_front();
+			}
 			for (auto it = g_pendingKeys.begin(); it != g_pendingKeys.end();) {
 				const auto now = std::chrono::steady_clock::now();
 				const float held = it->stage == 0 ? 0.0f : std::chrono::duration<float>(now - it->t0).count();
@@ -402,6 +437,18 @@ namespace bo3z
 		void RunQueuedOnMain()
 		{
 			FeedKeys();
+			// the game queue normally runs from the player's update; when that stops (free camera, a stuck menu)
+			// its lines still run from here after a moment, so the test channel can never lock itself out
+			if (std::chrono::steady_clock::now() - g_lastGameTick > std::chrono::milliseconds(1500)) {
+				std::vector<std::string> g;
+				{
+					std::scoped_lock l(g_lock);
+					g.swap(g_gameQueue);
+				}
+				for (auto& s : g) {
+					RunMain(s);
+				}
+			}
 			std::vector<std::string> q;
 			{
 				std::scoped_lock l(g_lock);
@@ -414,6 +461,7 @@ namespace bo3z
 
 		void RunQueuedInGame()
 		{
+			g_lastGameTick = std::chrono::steady_clock::now();
 			std::vector<std::string> q;
 			{
 				std::scoped_lock l(g_lock);
