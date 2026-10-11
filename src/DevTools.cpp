@@ -256,6 +256,8 @@ namespace bo3z
 				float        yaw = 0;
 				in >> id >> at.x >> at.y >> at.z >> yaw;
 				Director::DevSpawnAt(id, at, yaw);
+			} else if (cmd == "audio") {
+				logger::info("dev: audio {}", Audio::Stats());
 			} else if (cmd == "intro") {
 				Hud::IntroStart();
 			} else if (cmd == "undead") {

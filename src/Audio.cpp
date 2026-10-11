@@ -41,6 +41,7 @@ namespace bo3z::Audio
 			bool              attacking{ false }, died{ false };
 		};
 		std::unordered_map<RE::FormID, VoiceState> g_voice;
+		std::atomic<int> g_statSteps{ 0 }, g_statStepEvents{ 0 }, g_statFlesh{ 0 }, g_statPlays{ 0 }, g_statFails{ 0 };  // DevTools 'audio'
 		std::deque<Clock::time_point>              g_idles;  // horde-wide idle chatter
 
 		RE::BGSSoundDescriptorForm* Desc(gen::Sound a_s)
@@ -86,8 +87,10 @@ namespace bo3z::Audio
 		{
 			auto* d = Desc(a_s);
 			if (!d || !RE::BSAudioManager::GetSingleton()->GetSoundHandle(a_h, static_cast<RE::BSISoundDescriptor*>(d))) {
+				++g_statFails;
 				return false;
 			}
+			++g_statPlays;
 			if (a_follow) {
 				a_h.SetPosition(a_follow->GetPosition());
 				if (auto* node = a_follow->Get3D()) {
@@ -242,6 +245,7 @@ namespace bo3z::Audio
 				if (!a_e) {
 					return RE::BSEventNotifyControl::kContinue;
 				}
+				++g_statStepEvents;
 				auto  ap = a_e->actor.get();
 				auto* a = ap.get();
 				if (!a || a->IsDead() || a->IsDisabled() || !Director::IsRoundUndead(a)) {
@@ -266,9 +270,16 @@ namespace bo3z::Audio
 				                 a->IsRunning();
 				RE::BSSoundHandle h;
 				Start(h, run ? kSteps[v].run : kSteps[v].walk, a, nullptr, d < 400.0f ? 1.0f : 0.8f);
+				++g_statSteps;
 				return RE::BSEventNotifyControl::kContinue;
 			}
 		};
+	}
+
+	std::string Stats()
+	{
+		return fmt::format("footfall events {}, steps played {}, flesh hits {}, sounds started {}, failed {}", g_statStepEvents.load(), g_statSteps.load(), g_statFlesh.load(),
+			g_statPlays.load(), g_statFails.load());
 	}
 
 	void InstallSteps()
@@ -295,6 +306,7 @@ namespace bo3z::Audio
 			return;  // a beam or a burst lands many times a second: the flesh answers a few
 		}
 		st.flesh = now;
+		++g_statFlesh;
 		At(gen::Sound::flesh_hit, a_actor, 0.9f);
 	}
 

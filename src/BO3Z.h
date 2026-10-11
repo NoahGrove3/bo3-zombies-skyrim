@@ -142,7 +142,8 @@ namespace bo3z
 		bool Looping(std::uint64_t a_key);
 		void Voice(RE::Actor* a_actor, VoiceEvent a_ev);
 		void Flesh(RE::Actor* a_actor, bool a_death);  // the wet hit of a spell landing (rate-limited per body), the fall when it dies
-		void InstallSteps();                            // our undead's footsteps, on their animation's footfalls
+		void InstallSteps();
+		std::string Stats();                            // our undead's footsteps, on their animation's footfalls
 		void Tick(float a_delta);
 		void StopAll();
 		void BossMusic(bool a_on);
