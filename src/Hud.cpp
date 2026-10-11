@@ -960,6 +960,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (!hi.GetVisible() || hi.GetAlpha() < 20.0) {
 				return out;  // a sub-panel (Load, Creations, a question) has the screen
 			}
+			if (RE::GFxValue conf; mv->GetVariable(&conf, "_root.MenuHolder.Menu_mc.ConfirmPanel_mc") && conf.IsDisplayObject()) {
+				RE::GFxValue::DisplayInfo ci;
+				conf.GetDisplayInfo(&ci);
+				if (ci.GetVisible() && ci.GetAlpha() > 20.0) {
+					return out;  // a question is asked (Continue? New game?): it speaks alone
+				}
+			}
 			RE::GFxValue list, entries, selV;
 			if (!mv->GetVariable(&list, "_root.MenuHolder.Menu_mc.MainList") || !list.IsDisplayObject()) {
 				return out;
