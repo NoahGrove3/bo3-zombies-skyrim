@@ -47,7 +47,7 @@ def zombie():
     glow = A.save_dds(A.load(T('zombie_emission.png'), 1024), 'zombie/zombie_g.dds')
     B = 'Base Human'
     maps = [(f'{B}Pelvis', 'NPC Pelvis [Pelv]'), (f'{B}Spine1', 'NPC Spine [Spn0]'), (f'{B}Spine2', 'NPC Spine1 [Spn1]'), (f'{B}Ribcage', 'NPC Spine2 [Spn2]'),
-            (f'{B}Neck', 'NPC Neck [Neck]'), (f'{B}Head', 'NPC Head [Head]'), (f'{B}HeadJaw', 'NPC Head [Jaw]')]
+            (f'{B}Neck', 'NPC Neck [Neck]'), (f'{B}Head', 'NPC Head [Head]'), (f'{B}HeadJaw', 'NPC Head [Head]')]  # (jaw on the head: the draugr's jaw drops wide in its animations and tore the throat open)
     for S in 'LR':
         leg = 'LLeg' if S == 'L' else 'R'
         foot = 'NPC L Foot [LLft ]' if S == 'L' else 'NPC R Foot [Rft ]'
