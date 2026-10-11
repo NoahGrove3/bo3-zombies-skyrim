@@ -78,9 +78,11 @@ jobs:
           python tools/zipdir.py "$stage" "dist\BO3Zombies-$v.zip"
           python tools/zipdir.py build "dist\BO3Zombies-$v-pdb.zip" --only BO3Zombies.pdb
       - uses: actions/upload-artifact@v4
+        continue-on-error: true   # (the release below is what we install; artifacts only add to the storage quota)
         with:
           name: BO3Zombies
           path: dist\*.zip
+          retention-days: 1
       - name: Test release for this commit (private repo)
         env:
           GH_TOKEN: ${{ github.token }}
