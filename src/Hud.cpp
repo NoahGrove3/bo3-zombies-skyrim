@@ -591,6 +591,22 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Divider(dl, size.x * 0.5f, y + ts.y + 10 * k, std::min(size.x * 0.4f, ts.x * 0.6f + 40 * k), k, a);
 			}
 
+			// health bars over the wounded dead: a thin iron frame, the blood draining from the right
+			if (!s.perkMenu) {
+				for (const auto& b : s.enemyBars) {
+					const float w = 86 * k * b.scale, h = 7 * k * b.scale;
+					const ImVec2 c{ b.x * size.x, b.y * size.y };
+					const ImVec2 a{ c.x - w / 2, c.y - h / 2 }, z{ c.x + w / 2, c.y + h / 2 };
+					const ImU32  col = IM_COL32((b.color >> 16) & 0xFF, (b.color >> 8) & 0xFF, b.color & 0xFF, 235);
+					dl->AddRectFilled({ a.x - 2 * k, a.y - 2 * k }, { z.x + 2 * k, z.y + 2 * k }, IM_COL32(6, 6, 8, 200), 2 * k);
+					dl->AddRectFilledMultiColor(a, { a.x + w * b.frac, z.y }, col, col, Fade(col, 0.55f), Fade(col, 0.55f));
+					dl->AddRect({ a.x - 2 * k, a.y - 2 * k }, { z.x + 2 * k, z.y + 2 * k }, b.name.empty() ? IM_COL32(90, 90, 100, 160) : kGoldDim, 2 * k, 0, 1.0f * k);
+					if (!b.name.empty()) {
+						TxtC(dl, g_title, 15 * k * b.scale, c.x, a.y - 22 * k * b.scale, IM_COL32(236, 222, 190, 230), b.name, 1.2f * k, IM_COL32(0, 0, 0, 255));
+					}
+				}
+			}
+
 			// The ritual circle: a ring of runes on the ground round the shrine. Its lit arc is the rite's progress; it
 			// flashes red when the dead break it (and the timer starts over).
 			if (s.ringOn && s.ringPts.size() > 8 && !s.perkMenu) {

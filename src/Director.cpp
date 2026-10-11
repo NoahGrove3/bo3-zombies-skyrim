@@ -605,6 +605,58 @@ namespace bo3z
 			logger::info("boss: {} risen with {:.0f} health", gen::kEnemies[row].id, want);
 		}
 
+		// Health bars over the wounded dead near you: the nearest twelve, a named, coloured bar for the great ones.
+		void PublishEnemyBars(RE::PlayerCharacter* a_player)
+		{
+			std::vector<Hud::State::EnemyBar> bars;
+			auto* cam = RE::Main::WorldRootCamera();
+			if (cam) {
+				struct Near { RE::Actor* a; float d; int row; };
+				std::vector<Near> near;
+				const auto pp = a_player->GetPosition();
+				for (auto& s : g_alive) {
+					auto a = s.handle.get();
+					if (!a || a->IsDead() || a->IsDisabled() || !a->Is3DLoaded()) {
+						continue;
+					}
+					auto* av = a->AsActorValueOwner();
+					const float mx = av->GetPermanentActorValue(RE::ActorValue::kHealth);
+					const float hp = av->GetActorValue(RE::ActorValue::kHealth);
+					const bool  great = gen::kEnemies[s.enemy].kind == 1 || gen::kEnemies[s.enemy].kind == 2 || gen::kEnemies[s.enemy].elite;
+					const float d = a->GetPosition().GetDistance(pp);
+					if (d < 2200.0f && mx > 0 && (hp < mx * 0.999f || great) && a.get() != g_boss.handle.get().get()) {
+						near.push_back({ a.get(), d, static_cast<int>(s.enemy) });
+					}
+				}
+				std::sort(near.begin(), near.end(), [](const Near& l, const Near& r) { return l.d < r.d; });
+				if (near.size() > 12) {
+					near.resize(12);
+				}
+				for (auto& n : near) {
+					RE::NiPoint3 head = n.a->GetPosition();
+					head.z += n.a->GetHeight() * 1.08f + 12.0f;
+					float x = 0, y = 0, z = 0;
+					cam->WorldPtToScreenPt3(head, x, y, z, 1e-5f);
+					if (z <= 0 || x < 0 || x > 1 || y < 0 || y > 1) {
+						continue;
+					}
+					auto*       av = n.a->AsActorValueOwner();
+					const auto& e = gen::kEnemies[n.row];
+					const bool  champ = g_champ.handle.get().get() == n.a;
+					const bool  great = e.kind == 1 || e.kind == 2 || e.elite || champ;
+					Hud::State::EnemyBar b;
+					b.x = x, b.y = 1.0f - y;
+					b.frac = std::clamp(av->GetActorValue(RE::ActorValue::kHealth) / std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth)), 0.0f, 1.0f);
+					b.scale = std::clamp(900.0f / std::max(300.0f, n.d), 0.45f, 1.0f) * (great ? 1.25f : 1.0f);
+					b.name = champ ? g_champ.name : great ? std::string(e.label) : std::string();
+					b.color = champ ? 0xE0B050 : great ? 0xB070FF : 0xC03028;
+					bars.push_back(std::move(b));
+				}
+			}
+			std::scoped_lock l(Hud::Lock());
+			Hud::Edit().enemyBars = std::move(bars);
+		}
+
 		void TickBoss(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			Hazards(a_player, a_delta);
@@ -1775,6 +1827,7 @@ namespace bo3z
 			}
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			Undead::Tick(player, a_delta);
+			PublishEnemyBars(player);
 			// Night regen: after a few seconds without taking damage, health surges back (nights only).
 			if (player) {
 				static float last = -1, quiet = 0;

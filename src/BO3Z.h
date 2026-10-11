@@ -343,6 +343,9 @@ namespace bo3z
 			float       nukeLeft{ 0 }, nukeFlash{ 0 };
 			std::string questNote;        // quest news in the tracker
 			// the quest's objective marker: where on screen (0..1), in front of you or not, how far (units), what
+			// floating health bars over the wounded undead near you (screen x, y 0..1, health 0..1, a name for the great ones)
+			struct EnemyBar { float x, y, frac, scale; std::string name; std::uint32_t color; };
+			std::vector<EnemyBar> enemyBars;
 			// the ritual circle (Circle / Hold rites): ring points on screen (x, y 0..1, depth), progress, reset flash
 			bool        ringOn{ false }, ringHold{ false };
 			std::vector<std::array<float, 3>> ringPts;
