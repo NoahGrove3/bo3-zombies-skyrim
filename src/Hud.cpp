@@ -1278,6 +1278,233 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 		}
 
+
+		// ---- The Undying Nights intro: once, when a new character first stands outside Riverwood. A short film of
+		// stills captured in the game itself (Data/Interface/UndyingNights/intro_*.jpg), slow camera moves, the story in
+		// a few lines, its own music (our MUSC) and stingers. The world waits (the game is paused) and it can be skipped
+		// (hold Space / Enter / E / pad A). Textures load when it starts and are released when it ends.
+		struct FilmScene
+		{
+			const char* tex;
+			float       dur;
+			float       z0, z1;            // zoom from, to
+			float       x0, y0, x1, y1;    // pan (fraction of the spare picture, -1..1)
+			const char* big;               // a title over the picture (or none)
+			const char* l1;
+			const char* l2;
+			gen::Sound  cue;
+			float       cueAt;
+			bool        embers;
+		};
+		using GS = gen::Sound;
+		const FilmScene kFilm[] = {
+			{ nullptr, 4.0f, 1, 1, 0, 0, 0, 0, nullptr, "THE FOURTH ERA, 201", "HELGEN", GS::intro_graves, 0.3f, false },
+			{ "intro_helgen", 7.5f, 1.04f, 1.14f, -0.6f, 0.2f, 0.4f, -0.2f, nullptr, "Helgen burned, and you lived.", "But as the World-Eater rose from the ash, he sang a word older than the Thu'um.", GS::intro_helgen, 0.4f, true },
+			{ "intro_sky", 6.0f, 1.12f, 1.02f, 0.0f, -0.6f, 0.0f, 0.3f, "THE UNDYING DIRGE", nullptr, "Every grave in Skyrim heard it.", GS::intro_dirge, 0.6f, false },
+			{ "intro_graves", 7.0f, 1.03f, 1.12f, 0.5f, 0.3f, -0.3f, 0.0f, nullptr, "By day it sleeps beneath the holds.", "When the sun goes down it wakes, and the dead remember.", GS::intro_graves, 0.5f, false },
+			{ "intro_horde", 7.0f, 1.14f, 1.04f, -0.3f, 0.0f, 0.3f, 0.1f, nullptr, "They come at dusk, more each night, and harder to kill.", "Hollow Brides that run you down. Wailers that call the horde. Abominations that burst.", GS::intro_horde, 0.5f, false },
+			{ "intro_champions", 6.5f, 1.02f, 1.10f, 0.0f, 0.4f, 0.0f, -0.2f, nullptr, "Champions walk among them:", "the Horned Bone Knight, the Barrow King, the Lich of the Dirge.", GS::intro_champions, 0.4f, true },
+			{ "intro_wyrm", 6.5f, 1.10f, 1.02f, 0.4f, -0.2f, -0.2f, 0.2f, nullptr, "And when the fog rolls in,", "Grimmvar, the Undying Wyrm, Herald of the Dirge, hunts.", GS::intro_wyrm, 0.8f, false },
+			{ "intro_shrine", 8.0f, 1.03f, 1.13f, 0.2f, 0.3f, -0.1f, -0.1f, nullptr, "In every city a Shrine of the Dirge still stands.", "Take its spells. Hold its circle. Break the Dirge, city by city.", GS::intro_shrine, 0.5f, true },
+			{ "menu_title", 7.0f, 1, 1, 0, 0, 0, 0, nullptr, nullptr, "Survive the night.", GS::intro_title, 0.2f, true },
+		};
+		constexpr int kFilmScenes = static_cast<int>(std::size(kFilm));
+		constexpr float kFilmXfade = 1.2f;
+		std::atomic<bool>         g_filmReq{ false };
+		std::atomic<bool>         g_filmOn{ false };
+		std::atomic<bool>         g_filmSkipHeld{ false };
+		float                     g_filmT = 0, g_filmSkip = 0, g_filmEnd = -1;
+		int                       g_filmCue = -1;
+		bool                      g_filmPaused = false;
+		ID3D11ShaderResourceView* g_filmTex[kFilmScenes]{};
+
+		void FilmRelease()
+		{
+			for (auto*& t : g_filmTex) {
+				if (t && t != g_mTitle) {
+					t->Release();
+				}
+				t = nullptr;
+			}
+		}
+
+		void FilmStop()
+		{
+			FilmRelease();
+			if (g_filmPaused) {
+				if (auto* ui = RE::UI::GetSingleton(); ui && ui->numPausesGame > 0) {
+					--ui->numPausesGame;
+				}
+				g_filmPaused = false;
+			}
+			Audio::IntroMusic(false);
+			g_filmOn = false;
+			logger::info("intro: film ended at {:.1f}s", g_filmT);
+		}
+
+		void FilmStart()
+		{
+			int loaded = 0;
+			for (int i = 0; i < kFilmScenes; ++i) {
+				if (!kFilm[i].tex) {
+					continue;
+				}
+				if (std::string_view(kFilm[i].tex) == "menu_title") {
+					g_filmTex[i] = g_mTitle;
+					continue;
+				}
+				const std::string  n = std::string("Data\\Interface\\UndyingNights\\") + kFilm[i].tex + ".jpg";
+				const std::wstring w(n.begin(), n.end());
+				if (SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, w.c_str(), nullptr, &g_filmTex[i]))) {
+					++loaded;
+				}
+			}
+			if (auto* ui = RE::UI::GetSingleton()) {
+				++ui->numPausesGame;  // the world waits while the film plays
+				g_filmPaused = true;
+			}
+			Audio::IntroMusic(true);
+			g_filmT = 0, g_filmSkip = 0, g_filmEnd = -1, g_filmCue = -1;
+			g_filmOn = true;
+			logger::info("intro: film starts ({} stills)", loaded);
+		}
+
+		void DrawFilm(ImVec2 size, float dt)
+		{
+			auto*       fg = ImGui::GetForegroundDrawList();
+			const float k = size.y / 1080.0f;
+			g_filmT += std::min(dt, 0.1f);
+			float total = 0;
+			for (const auto& sc : kFilm) total += sc.dur;
+			// skip: hold for a moment (a stray key must not throw the film away)
+			g_filmSkip = g_filmSkipHeld ? g_filmSkip + dt : std::max(0.0f, g_filmSkip - dt * 2);
+			if (g_filmEnd < 0 && (g_filmT >= total || g_filmSkip >= 0.9f)) {
+				g_filmEnd = g_filmT;
+			}
+			const float outFade = g_filmEnd < 0 ? 0.0f : std::clamp((g_filmT - g_filmEnd) / 1.2f, 0.0f, 1.0f);
+			fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, 255));
+			// which scene (and the next, while they cross)
+			float start = 0;
+			int   cur = kFilmScenes - 1;
+			for (int i = 0; i < kFilmScenes; ++i) {
+				if (g_filmT < start + kFilm[i].dur) {
+					cur = i;
+					break;
+				}
+				start += kFilm[i].dur;
+			}
+			const float local = g_filmT - start;
+			if (g_filmEnd < 0 && cur != g_filmCue && local >= kFilm[cur].cueAt) {  // each scene's sound, once
+				g_filmCue = cur;
+				Audio::Ui(kFilm[cur].cue, 0.9f);
+			}
+			float cw = size.x, ch = size.x * 9.0f / 16.0f;
+			if (ch < size.y) {
+				ch = size.y, cw = size.y * 16.0f / 9.0f;
+			}
+			auto picture = [&](int i, float t, float alpha) {
+				const auto& sc = kFilm[i];
+				if (!g_filmTex[i] || alpha <= 0) {
+					return;
+				}
+				const float u = std::clamp(t / sc.dur, 0.0f, 1.0f);
+				const float e = u * u * (3 - 2 * u) * 0.35f + u * 0.65f;  // a slow, steady move with soft ends
+				const float z = sc.z0 + (sc.z1 - sc.z0) * e;
+				const float w = cw * z, h = ch * z;
+				const float px = sc.x0 + (sc.x1 - sc.x0) * e, py = sc.y0 + (sc.y1 - sc.y0) * e;
+				ImVec2 a{ (size.x - w) / 2 + px * (w - cw) / 2, (size.y - h) / 2 + py * (h - ch) / 2 };
+				if (std::string_view(sc.tex) == "menu_title") {  // the title card: the logo on black
+					const float tw = size.x * 0.66f, th = tw * 396.0f / 2479.0f, s2 = 1.0f + 0.03f * u;
+					a = { (size.x - tw * s2) / 2, size.y * 0.40f - th * s2 / 2 };
+					fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_filmTex[i])), a, { a.x + tw * s2, a.y + th * s2 }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * alpha)));
+					return;
+				}
+				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_filmTex[i])), a, { a.x + w, a.y + h }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * alpha)));
+			};
+			const float inA = std::clamp(local / kFilmXfade, 0.0f, 1.0f);
+			if (cur > 0 && local < kFilmXfade) {
+				picture(cur - 1, kFilm[cur - 1].dur + local, 1.0f);
+			}
+			picture(cur, local, cur == 0 ? 1.0f : inA);
+			// embers drifting up over the fire-lit scenes
+			if (kFilm[cur].embers) {
+				struct Ember { float x, y, sp, ph, r; };
+				static std::vector<Ember> em;
+				static std::mt19937 rng{ 3 };
+				std::uniform_real_distribution<float> U(0, 1);
+				if (em.empty()) {
+					for (int i = 0; i < 90; ++i) em.push_back({ U(rng), U(rng), 0.03f + 0.06f * U(rng), U(rng) * 6.28f, 0.8f + 1.8f * U(rng) });
+				}
+				const float ea = std::clamp(local / 1.5f, 0.0f, 1.0f) * std::clamp((kFilm[cur].dur - local) / 1.0f, 0.0f, 1.0f);
+				for (auto& m : em) {
+					m.y -= m.sp * dt;
+					if (m.y < -0.02f) m.y = 1.02f, m.x = U(rng);
+					const ImVec2 p{ (m.x + 0.01f * std::sin(g_filmT * 0.8f + m.ph)) * size.x, m.y * size.y };
+					const float tw = 0.5f + 0.5f * std::sin(g_filmT * 6 + m.ph * 4);
+					fg->AddCircleFilled(p, m.r * k * 2.6f, IM_COL32(255, 120, 50, static_cast<int>(30 * tw * ea)));
+					fg->AddCircleFilled(p, m.r * k, IM_COL32(255, 180, 90, static_cast<int>(200 * tw * ea)));
+				}
+			}
+			// a far flash in the fog
+			if (cur > 0 && std::string_view(kFilm[cur].tex ? kFilm[cur].tex : "") == "intro_wyrm") {
+				const float f = std::max(0.0f, 1.0f - std::abs(local - 2.4f) * 6.0f) + 0.5f * std::max(0.0f, 1.0f - std::abs(local - 2.75f) * 9.0f);
+				fg->AddRectFilled({ 0, 0 }, size, IM_COL32(170, 190, 230, static_cast<int>(40 * f)));
+			}
+			// vignette and the letterbox
+			fg->AddRectFilledMultiColor({ 0, 0 }, { size.x * 0.22f, size.y }, IM_COL32(0, 0, 0, 150), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 150));
+			fg->AddRectFilledMultiColor({ size.x * 0.78f, 0 }, size, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 150), IM_COL32(0, 0, 0, 150), IM_COL32(0, 0, 0, 0));
+			const float bar = size.y * 0.115f;
+			fg->AddRectFilled({ 0, 0 }, { size.x, bar }, IM_COL32(0, 0, 0, 255));
+			fg->AddRectFilled({ 0, size.y - bar * 1.25f }, size, IM_COL32(0, 0, 0, 255));
+			fg->AddRectFilledMultiColor({ 0, bar }, { size.x, bar + 60 * k }, IM_COL32(0, 0, 0, 200), IM_COL32(0, 0, 0, 200), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
+			fg->AddRectFilledMultiColor({ 0, size.y - bar * 1.25f - 80 * k }, { size.x, size.y - bar * 1.25f }, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 220), IM_COL32(0, 0, 0, 220));
+			// the words: line one, then line two; they leave before the scene does
+			const auto& sc = kFilm[cur];
+			auto lineA = [&](float at) { return std::clamp((local - at) / 0.9f, 0.0f, 1.0f) * std::clamp((sc.dur - 0.5f - local) / 0.7f, 0.0f, 1.0f); };
+			const float ty = size.y - bar * 1.25f + 14 * k;
+			const ImU32 bone = IM_COL32(232, 224, 206, 255), dim = IM_COL32(170, 176, 186, 255);
+			if (cur == 0) {
+				const float a = lineA(0.4f), b = lineA(1.4f);
+				TxtC(fg, g_num, 26 * k, size.x / 2, size.y * 0.44f, Fade(dim, a), sc.l1);
+				TxtC(fg, g_title, 54 * k, size.x / 2, size.y * 0.49f, Fade(bone, b), sc.l2, 2 * k, IM_COL32(200, 60, 40, static_cast<int>(120 * b)));
+			} else {
+				if (sc.big) {
+					const float a = lineA(0.5f);
+					const float grow = 1.0f + 0.04f * std::clamp(local / sc.dur, 0.0f, 1.0f);
+					TxtC(fg, g_title, 92 * k * grow, size.x / 2, size.y * 0.42f, Fade(bone, a), sc.big, 4 * k, IM_COL32(200, 40, 30, static_cast<int>(160 * a)));
+				}
+				if (sc.l1) {
+					TxtC(fg, g_body, 34 * k, size.x / 2, ty, Fade(bone, lineA(0.5f)), sc.l1);
+				}
+				if (sc.l2) {
+					TxtC(fg, g_body, 34 * k, size.x / 2, sc.l1 ? ty + 46 * k : ty + 20 * k, Fade(sc.l1 ? dim : bone, lineA(sc.l1 ? 2.2f : 1.2f)), sc.l2);
+				}
+				if (cur == kFilmScenes - 1) {  // the last words
+					TxtC(fg, g_num, 24 * k, size.x / 2, size.y * 0.62f, Fade(IM_COL32(200, 70, 50, 255), lineA(3.2f)), "DUSK IS COMING");
+				}
+			}
+			// skip: a quiet hint, and a ring that fills while the key is held
+			{
+				const float ha = std::clamp((g_filmT - 2.0f) / 1.0f, 0.0f, 1.0f) * (1.0f - outFade);
+				const ImVec2 c{ size.x - 70 * k, size.y - bar * 0.6f };
+				const std::string hint = "HOLD SPACE TO SKIP";
+				const ImVec2 ts = Measure(g_num, 18 * k, hint);
+				Txt(fg, g_num, 18 * k, { c.x - 26 * k - ts.x, c.y - ts.y / 2 }, IM_COL32(150, 156, 166, static_cast<int>(170 * ha)), hint);
+				fg->AddCircle(c, 12 * k, IM_COL32(150, 156, 166, static_cast<int>(120 * ha)), 32, 1.5f * k);
+				if (g_filmSkip > 0) {
+					fg->PathArcTo(c, 12 * k, -1.5708f, -1.5708f + 6.2832f * std::min(1.0f, g_filmSkip / 0.9f), 32);
+					fg->PathStroke(IM_COL32(110, 255, 190, 255), 0, 3 * k);
+				}
+			}
+			// fade in from black at the start, out to the world at the end
+			const float inFade = 1.0f - std::clamp(g_filmT / 1.0f, 0.0f, 1.0f);
+			if (inFade > 0) fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(255 * inFade)));
+			if (outFade > 0) fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(255 * outFade)));
+			if (outFade >= 1.0f) {
+				FilmStop();
+			}
+		}
+
 		bool Init(IDXGISwapChain* a_swap)
 		{
 			if (g_init || g_failed) {
@@ -1411,7 +1638,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			                     !uiM->IsMenuOpen(RE::InventoryMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MagicMenu::MENU_NAME) &&
 			                     !uiM->IsMenuOpen(RE::MapMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::StatsMenu::MENU_NAME);
 			const int  clicks = g_clicks.exchange(0);
-			if ((!InGame() && !mainMenu && !journal) || (DevTools::HudOff() && !mainMenu)) {
+			if (g_filmReq.exchange(false) && !g_filmOn) {
+				FilmStart();
+			}
+			const bool film = g_filmOn;
+			if (film) {  // another pausing menu opened over the film (the journal, a loading screen): the film yields
+				auto* ui = RE::UI::GetSingleton();
+				if (ui && (ui->numPausesGame > 1 || ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME) || mainMenu)) {
+					FilmStop();
+				}
+			}
+			if (((!InGame() && !mainMenu && !journal) || (DevTools::HudOff() && !mainMenu)) && !g_filmOn) {
 				if (static int m = 0; m++ % 1200 == 0) {
 					auto* ui = RE::UI::GetSingleton();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
@@ -1443,7 +1680,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 			ImGui_ImplDX11_NewFrame();
 			ImGui::NewFrame();
-			if (mainMenu) {
+			if (g_filmOn) {
+				DrawFilm(io.DisplaySize, dt);
+			} else if (mainMenu) {
 				DrawMenu(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks > 0);
 			} else if (journal) {
 				const float k = io.DisplaySize.y / 1080.0f;
@@ -1562,6 +1801,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 
 		void OnClick() { ++g_clicks; }
+		void IntroStart() { g_filmReq = true; }
+		bool IntroActive() { return g_filmOn || g_filmReq; }
+		void IntroSkipHeld(bool a_held) { g_filmSkipHeld = a_held; }
 
 		void Lore(std::string a_title, std::string a_text, float a_seconds)
 		{

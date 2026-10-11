@@ -146,6 +146,15 @@ S('rite_fail', 'rite_reset', -20, use='a rite failed')
 S('ward_lit', 'sp_ignite_small', -10, '3d', use='a ward-fire kindled')
 S('curse_lifted', 'shout_learned', -10, use='a city freed (with the music stinger)')
 S('shout_learned', 'shout_learned', 0, use="a Thu'um learned")
+# ---- the intro (plays once, after character creation; UI category: it plays while the game waits)
+S('intro_helgen', 'boss_growl', -15, cat='ui', use='intro: the World-Eater over Helgen')
+S('intro_dirge', 'boss_arrive', -10, cat='ui', use='intro: THE UNDYING DIRGE title hit')
+S('intro_graves', GHOST, -30, cat='ui', use='intro: the graves wake')
+S('intro_horde', 'en_roar', -20, cat='ui', use='intro: the horde')
+S('intro_champions', 'champ_arrive', -10, cat='ui', use='intro: the champions')
+S('intro_wyrm', 'boss_breath', -10, cat='ui', use='intro: Grimmvar in the fog')
+S('intro_shrine', 'coffer_charge', -10, cat='ui', use='intro: the Shrine of the Dirge')
+S('intro_title', 'champ_arrive', -20, cat='ui', use='intro: UNDYING NIGHTS')
 
 rows = []
 for id, (clips, shift, space, cat, loop, atten, use) in M.items():

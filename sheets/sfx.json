@@ -81,6 +81,17 @@
       "fadeOut": 2500
     },
     {
+      "id": "mus_intro",
+      "src": "menu",
+      "use": "the Undying Nights intro (after character creation): the menu theme's rising second half",
+      "t0": 85.0,
+      "t1": 152.0,
+      "stereo": true,
+      "peak": -5,
+      "fadeIn": 2500,
+      "fadeOut": 3000
+    },
+    {
       "id": "sp_beam_loop",
       "src": "beam",
       "use": "shock charge hum (Storm Lash, Sky Sunder)",

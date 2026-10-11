@@ -247,6 +247,8 @@ namespace bo3z
 				float        yaw = 0;
 				in >> id >> at.x >> at.y >> at.z >> yaw;
 				Director::DevSpawnAt(id, at, yaw);
+			} else if (cmd == "intro") {
+				Hud::IntroStart();
 			} else if (cmd == "undead") {
 				std::string v;
 				in >> v;

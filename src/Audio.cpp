@@ -354,7 +354,7 @@ namespace bo3z::Audio
 	{
 		RE::BGSMusicType* Music(std::string_view a_key)
 		{
-			const auto  id = a_key == "boss" ? gen::kMusicBoss : gen::kMusicFreed;
+			const auto  id = a_key == "boss" ? gen::kMusicBoss : a_key == "intro" ? gen::kMusicIntro : gen::kMusicFreed;
 			auto*       f = RE::TESDataHandler::GetSingleton()->LookupForm(id, gen::kPlugin);
 			return f ? f->As<RE::BGSMusicType>() : nullptr;
 		}
@@ -373,6 +373,17 @@ namespace bo3z::Audio
 				m->DoFinish(true);
 			}
 			g_bossMusic = a_on;
+		}
+	}
+
+	void IntroMusic(bool a_on)
+	{
+		if (auto* m = Music("intro")) {
+			if (a_on) {
+				m->DoPlay();
+			} else {
+				m->DoFinish(true);
+			}
 		}
 	}
 

@@ -70,6 +70,19 @@ namespace bo3z
 			h.crew = -1;
 		}
 
-		bool OnButton(const RE::ButtonEvent*) { return false; }
+		// while the intro film plays every key is its own: Space / Enter / E / pad A held skips it
+		bool OnButton(const RE::ButtonEvent* a_b)
+		{
+			if (!a_b || !Hud::IntroActive()) {
+				return false;
+			}
+			const auto dev = a_b->GetDevice();
+			const auto id = a_b->GetIDCode();
+			const bool skipKey = (dev == RE::INPUT_DEVICE::kKeyboard && (id == 57 || id == 28 || id == 18)) || (dev == RE::INPUT_DEVICE::kGamepad && id == 0x1000);
+			if (skipKey) {
+				Hud::IntroSkipHeld(a_b->IsPressed());
+			}
+			return true;
+		}
 	}
 }

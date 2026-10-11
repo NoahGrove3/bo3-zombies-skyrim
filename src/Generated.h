@@ -293,8 +293,16 @@ namespace bo3z::gen
 		ward_lit = 252,
 		curse_lifted = 253,
 		shout_learned = 254,
+		intro_helgen = 255,
+		intro_dirge = 256,
+		intro_graves = 257,
+		intro_horde = 258,
+		intro_champions = 259,
+		intro_wyrm = 260,
+		intro_shrine = 261,
+		intro_title = 262,
 	};
-	inline constexpr std::array<FormRef, 255> kSounds{ {
+	inline constexpr std::array<FormRef, 263> kSounds{ {
 		FormRef{ "BO3Zombies.esp", 0x000927, "UN_cast_sidearm" },
 		FormRef{ "BO3Zombies.esp", 0x000A88, "UN_charge_sidearm" },
 		FormRef{ "BO3Zombies.esp", 0x000958, "UN_unleash_sidearm" },
@@ -550,9 +558,17 @@ namespace bo3z::gen
 		FormRef{ "BO3Zombies.esp", 0x00097E, "UN_ward_lit" },
 		FormRef{ "BO3Zombies.esp", 0x00097D, "UN_curse_lifted" },
 		FormRef{ "BO3Zombies.esp", 0x000B06, "UN_shout_learned" },
+		FormRef{ "BO3Zombies.esp", 0x000B0D, "UN_intro_helgen" },
+		FormRef{ "BO3Zombies.esp", 0x000B0E, "UN_intro_dirge" },
+		FormRef{ "BO3Zombies.esp", 0x000B0F, "UN_intro_graves" },
+		FormRef{ "BO3Zombies.esp", 0x000B10, "UN_intro_horde" },
+		FormRef{ "BO3Zombies.esp", 0x000B16, "UN_intro_champions" },
+		FormRef{ "BO3Zombies.esp", 0x000B11, "UN_intro_wyrm" },
+		FormRef{ "BO3Zombies.esp", 0x000B12, "UN_intro_shrine" },
+		FormRef{ "BO3Zombies.esp", 0x000B13, "UN_intro_title" },
 	} };
-	inline constexpr std::array<int, 255> kSoundLayer{ { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 } };  // a second sound played with each (-1 none)
-	inline constexpr std::uint32_t kMusicBoss = 0xB09, kMusicFreed = 0xB0B;  // our MUSC records
+	inline constexpr std::array<int, 263> kSoundLayer{ { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 } };  // a second sound played with each (-1 none)
+	inline constexpr std::uint32_t kMusicBoss = 0xB09, kMusicFreed = 0xB0B, kMusicIntro = 0xB15;  // our MUSC records
 	inline constexpr int kPoints_start = 500;  // new_game_after_intro
 	inline constexpr int kPoints_hit = 5;  // gun_hit_round_undead
 	inline constexpr int kPoints_kill = 30;  // kill_round_undead

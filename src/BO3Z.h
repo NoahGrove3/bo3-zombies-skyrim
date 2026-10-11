@@ -143,6 +143,7 @@ namespace bo3z
 		void StopAll();
 		void BossMusic(bool a_on);
 		void FreedMusic();
+		void IntroMusic(bool a_on);  // the intro's music (our MUSC: the music slider applies, the hold's music waits)
 		void SetMenuMusic();
 		void MenuUiSounds(bool a_on);  // the main menu's own focus/accept/back sounds play ours while it is up
 		inline constexpr std::uint64_t kLoopCharge = 1, kLoopRite = 2;
@@ -372,6 +373,9 @@ namespace bo3z
 		void        Lore(std::string a_title, std::string a_text, float a_seconds = 14.0f);  // a scroll of the Dirge
 		void        Install();
 		void        OnClick();  // a left click (menus: the party panel's buttons)
+		void        IntroStart();             // the Undying Nights intro film (once, for a new character)
+		bool        IntroActive();
+		void        IntroSkipHeld(bool a_held);
 	}
 
 	namespace DevTools

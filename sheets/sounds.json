@@ -4855,6 +4855,152 @@
       "atten": 0,
       "loop": false,
       "use": "a Thu'um learned"
+    },
+    {
+      "id": "intro_helgen",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_intro_helgen",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\boss_growl.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\boss_growl.wav"
+      ],
+      "shift": -15,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro: the World-Eater over Helgen"
+    },
+    {
+      "id": "intro_dirge",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_intro_dirge",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\boss_arrive.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\boss_arrive.wav"
+      ],
+      "shift": -10,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro: THE UNDYING DIRGE title hit"
+    },
+    {
+      "id": "intro_graves",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_intro_graves",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\en_ghost_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\en_ghost_0.wav",
+        "fx\\UndyingNights\\un\\en_ghost_1.wav",
+        "fx\\UndyingNights\\un\\en_ghost_2.wav"
+      ],
+      "shift": -30,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro: the graves wake"
+    },
+    {
+      "id": "intro_horde",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_intro_horde",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\en_roar.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\en_roar.wav"
+      ],
+      "shift": -20,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro: the horde"
+    },
+    {
+      "id": "intro_champions",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_intro_champions",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\champ_arrive.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\champ_arrive.wav"
+      ],
+      "shift": -10,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro: the champions"
+    },
+    {
+      "id": "intro_wyrm",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_intro_wyrm",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\boss_breath.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\boss_breath.wav"
+      ],
+      "shift": -10,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro: Grimmvar in the fog"
+    },
+    {
+      "id": "intro_shrine",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_intro_shrine",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\coffer_charge.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\coffer_charge.wav"
+      ],
+      "shift": -10,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro: the Shrine of the Dirge"
+    },
+    {
+      "id": "intro_title",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_intro_title",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\champ_arrive.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\champ_arrive.wav"
+      ],
+      "shift": -20,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro: UNDYING NIGHTS"
     }
   ]
 }

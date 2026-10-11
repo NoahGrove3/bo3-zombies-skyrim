@@ -780,6 +780,17 @@
   "MUST:boss": "0xb08",
   "MUSC:boss": "0xb09",
   "MUST:freed": "0xb0a",
-  "MUSC:freed": "0xb0b"
+  "MUSC:freed": "0xb0b",
+  "SNDR:intro_bed": "0xb0c",
+  "SNDR:intro_helgen": "0xb0d",
+  "SNDR:intro_dirge": "0xb0e",
+  "SNDR:intro_graves": "0xb0f",
+  "SNDR:intro_horde": "0xb10",
+  "SNDR:intro_wyrm": "0xb11",
+  "SNDR:intro_shrine": "0xb12",
+  "SNDR:intro_title": "0xb13",
+  "MUST:intro": "0xb14",
+  "MUSC:intro": "0xb15",
+  "SNDR:intro_champions": "0xb16"
  }
 }
