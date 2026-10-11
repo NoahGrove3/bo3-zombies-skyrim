@@ -628,6 +628,22 @@ namespace bo3z
 						close.push_back({ a.get(), d, static_cast<int>(s.enemy) });
 					}
 				}
+				// anyone else fighting you (bandits, wolves, dragons): their bar sits over them too (Skyrim's own bar under the compass is hidden)
+				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+					auto a = h.get();
+					if (!a || a.get() == a_player || a->IsDead() || a->IsDisabled() || !a->Is3DLoaded() || IsOursRaw(a.get()) || a.get() == g_boss.handle.get().get()) {
+						continue;
+					}
+					if (!a->IsInCombat() || !a->IsHostileToActor(a_player)) {
+						continue;
+					}
+					auto* av = a->AsActorValueOwner();
+					const float mx = av->GetPermanentActorValue(RE::ActorValue::kHealth), hp = av->GetActorValue(RE::ActorValue::kHealth);
+					const float d = a->GetPosition().GetDistance(pp);
+					if (d < 2600.0f && mx > 0 && hp < mx * 0.999f) {
+						close.push_back({ a.get(), d, -1 });
+					}
+				}
 				std::sort(close.begin(), close.end(), [](const Close& l, const Close& r) { return l.d < r.d; });
 				if (close.size() > 12) {
 					close.resize(12);
@@ -640,16 +656,18 @@ namespace bo3z
 					if (z <= 0 || x < 0 || x > 1 || y < 0 || y > 1) {
 						continue;
 					}
-					auto*       av = n.a->AsActorValueOwner();
-					const auto& e = gen::kEnemies[n.row];
-					const bool  champ = g_champ.handle.get().get() == n.a;
-					const bool  great = e.kind == 1 || e.kind == 2 || e.elite || champ;
+					auto*      av = n.a->AsActorValueOwner();
+					const bool other = n.row < 0;
+					const bool champ = !other && g_champ.handle.get().get() == n.a;
+					const bool great = !other && (gen::kEnemies[n.row].kind == 1 || gen::kEnemies[n.row].kind == 2 || gen::kEnemies[n.row].elite || champ);
 					Hud::State::EnemyBar b;
 					b.x = x, b.y = 1.0f - y;
+					b.id = n.a->GetFormID();
 					b.frac = std::clamp(av->GetActorValue(RE::ActorValue::kHealth) / std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth)), 0.0f, 1.0f);
 					b.scale = std::clamp(900.0f / std::max(300.0f, n.d), 0.45f, 1.0f) * (great ? 1.25f : 1.0f);
-					b.name = champ ? g_champ.name : great ? std::string(e.label) : std::string();
-					b.color = champ ? 0xE0B050 : great ? 0xB070FF : 0xC03028;
+					b.name = other ? std::string(n.a->GetDisplayFullName()) : champ ? g_champ.name : great ? std::string(gen::kEnemies[n.row].label) : std::string();
+					b.rank = other ? 3 : champ ? 2 : great ? 1 : 0;
+					b.color = champ ? 0xE0B050 : great ? 0xB070FF : other ? 0xA83A2A : 0xC03028;
 					bars.push_back(std::move(b));
 				}
 			}

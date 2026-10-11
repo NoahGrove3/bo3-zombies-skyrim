@@ -591,18 +591,56 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Divider(dl, size.x * 0.5f, y + ts.y + 10 * k, std::min(size.x * 0.4f, ts.x * 0.6f + 40 * k), k, a);
 			}
 
-			// health bars over the wounded dead: a thin iron frame, the blood draining from the right
+			// health bars over the wounded: black iron plates with chamfered ends and bronze caps, the blood draining
+			// from the right with a pale wound that follows it down; champions in gold with their names, the great in
+			// violet, other foes with their names in iron (these replace Skyrim's bar under the compass)
 			if (!s.perkMenu) {
+				static std::unordered_map<std::uint32_t, std::pair<float, float>> wound;  // id -> (pale wound, fade in)
+				static float sweep = 0;
+				if ((sweep += dt) > 5.0f) {
+					sweep = 0;
+					std::erase_if(wound, [&](const auto& e) { return std::none_of(s.enemyBars.begin(), s.enemyBars.end(), [&](const auto& b) { return b.id == e.first; }); });
+				}
 				for (const auto& b : s.enemyBars) {
-					const float w = 86 * k * b.scale, h = 7 * k * b.scale;
+					auto& [pale, in] = wound.try_emplace(b.id, b.frac, 0.0f).first->second;
+					pale = b.frac > pale ? b.frac : std::max(b.frac, pale - dt * 0.35f);
+					in = std::min(1.0f, in + dt * 5.0f);
+					const float sc = b.scale * (0.85f + 0.15f * EaseOut(in));
+					const float w = (b.rank == 2 ? 150 : b.rank == 1 ? 124 : 100) * k * sc, h = (b.rank >= 1 && b.rank <= 2 ? 9 : 7) * k * sc;
 					const ImVec2 c{ b.x * size.x, b.y * size.y };
 					const ImVec2 a{ c.x - w / 2, c.y - h / 2 }, z{ c.x + w / 2, c.y + h / 2 };
-					const ImU32  col = IM_COL32((b.color >> 16) & 0xFF, (b.color >> 8) & 0xFF, b.color & 0xFF, 235);
-					dl->AddRectFilled({ a.x - 2 * k, a.y - 2 * k }, { z.x + 2 * k, z.y + 2 * k }, IM_COL32(6, 6, 8, 200), 2 * k);
-					dl->AddRectFilledMultiColor(a, { a.x + w * b.frac, z.y }, col, col, Fade(col, 0.55f), Fade(col, 0.55f));
-					dl->AddRect({ a.x - 2 * k, a.y - 2 * k }, { z.x + 2 * k, z.y + 2 * k }, b.name.empty() ? IM_COL32(90, 90, 100, 160) : kGoldDim, 2 * k, 0, 1.0f * k);
+					const float  al = in;
+					const ImU32  col = IM_COL32((b.color >> 16) & 0xFF, (b.color >> 8) & 0xFF, b.color & 0xFF, 255);
+					const ImU32  deep = IM_COL32(((b.color >> 16) & 0xFF) * 4 / 10, ((b.color >> 8) & 0xFF) * 4 / 10, (b.color & 0xFF) * 4 / 10, 255);
+					const ImU32  trim = b.rank == 2 ? kGold : b.rank == 1 ? IM_COL32(150, 110, 210, 255) : IM_COL32(118, 104, 86, 255);
+					const float  p = 3.0f * k * sc, e = h * 0.5f + p + 4.0f * k * sc;  // plate margin, chamfer reach
+					const ImVec2 plate[6] = { { a.x - e, c.y }, { a.x - p, a.y - p }, { z.x + p, a.y - p }, { z.x + e, c.y }, { z.x + p, z.y + p }, { a.x - p, z.y + p } };
+					dl->AddConvexPolyFilled(plate, 6, Fade(IM_COL32(9, 8, 10, 225), al));
+					dl->AddPolyline(plate, 6, Fade(trim, 0.85f * al), ImDrawFlags_Closed, 1.2f * k);
+					dl->AddRectFilled(a, z, Fade(IM_COL32(28, 8, 8, 235), al));                                       // the empty trough
+					if (pale > b.frac) {
+						dl->AddRectFilled({ a.x + w * b.frac, a.y }, { a.x + w * pale, z.y }, Fade(IM_COL32(222, 196, 160, 150), al));  // the fresh wound
+					}
+					dl->AddRectFilledMultiColor(a, { a.x + w * b.frac, z.y }, Fade(col, al), Fade(col, al), Fade(deep, al), Fade(deep, al));
+					dl->AddLine({ a.x, a.y + 0.5f * k }, { a.x + w * b.frac, a.y + 0.5f * k }, Fade(IM_COL32(255, 210, 190, 120), al), 1.0f * k);  // wet sheen
+					if (b.rank == 1 || b.rank == 2) {  // quarters, notched into the iron
+						for (int q = 1; q < 4; ++q) {
+							const float x = a.x + w * q / 4.0f;
+							dl->AddLine({ x, a.y }, { x, z.y }, Fade(IM_COL32(0, 0, 0, 200), al), 1.2f * k);
+						}
+					}
+					for (float ex : { a.x - e, z.x + e }) {  // bronze rivets on the points
+						const float r = 2.6f * k * sc;
+						dl->AddQuadFilled({ ex, c.y - r }, { ex + r, c.y }, { ex, c.y + r }, { ex - r, c.y }, Fade(trim, al));
+					}
 					if (!b.name.empty()) {
-						TxtC(dl, g_title, 15 * k * b.scale, c.x, a.y - 22 * k * b.scale, IM_COL32(236, 222, 190, 230), b.name, 1.2f * k, IM_COL32(0, 0, 0, 255));
+						const float fs = (b.rank == 2 ? 17.0f : b.rank == 1 ? 15.0f : 13.0f) * k * sc;
+						const ImU32 nc = b.rank == 2 ? IM_COL32(240, 206, 130, 255) : b.rank == 1 ? IM_COL32(214, 190, 255, 255) : IM_COL32(222, 212, 192, 255);
+						std::string up = b.name;
+						if (b.rank == 2 || b.rank == 1) {
+							std::transform(up.begin(), up.end(), up.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+						}
+						TxtC(dl, b.rank == 3 ? g_body : g_title, fs, c.x, a.y - p - fs * 1.25f, Fade(nc, al), up, 1.2f * k, IM_COL32(0, 0, 0, 255));
 					}
 				}
 			}
@@ -1689,6 +1727,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { 48 * k, 48 * k }, k, clicks > 0, true);
 			} else {
 				Draw(s, io.DisplaySize);
+				// Skyrim's enemy bar under the compass gives way to ours over each foe
+				if (static int vb = 0; vb++ % 15 == 0) {
+					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
+						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.EnemyHealth_mc._visible", RE::GFxValue(false));
+					}
+				}
 			}
 			ImGui::Render();
 			if (static int n = 0; n++ % 600 == 0) {
