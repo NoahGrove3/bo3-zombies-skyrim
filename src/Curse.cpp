@@ -219,8 +219,17 @@ namespace bo3z
 		void EnsureWards(RE::PlayerCharacter* a_player, int a_town)
 		{
 			const int step = Step(a_town), key = a_town * 10 + step;
-			if (g_wardKey == key && g_wardCount > 0 && g_wards[0].brazier.get()) {
-				return;
+			if (g_wardKey == key && g_wardCount > 0) {
+				// placed already: stay as long as any piece still stands (found relics leave gaps, so not just the first)
+				const int bitsNow = Prog(a_town);
+				bool      standing = false, allFound = Rite(a_town, step).type == gen::kRiteRelics;
+				for (int i = 0; i < g_wardCount; ++i) {
+					standing |= static_cast<bool>(g_wards[i].brazier.get());
+					allFound &= ((bitsNow >> i) & 1) != 0;
+				}
+				if (standing || allFound) {
+					return;
+				}
 			}
 			RemoveWards();
 			RE::NiPoint3       c;

@@ -1411,7 +1411,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			                     !uiM->IsMenuOpen(RE::InventoryMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MagicMenu::MENU_NAME) &&
 			                     !uiM->IsMenuOpen(RE::MapMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::StatsMenu::MENU_NAME);
 			const int  clicks = g_clicks.exchange(0);
-			if (!InGame() && !mainMenu && !journal) {
+			if ((!InGame() && !mainMenu && !journal) || (DevTools::HudOff() && !mainMenu)) {
 				if (static int m = 0; m++ % 1200 == 0) {
 					auto* ui = RE::UI::GetSingleton();
 					auto* pl = RE::PlayerCharacter::GetSingleton();

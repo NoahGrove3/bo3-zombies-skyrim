@@ -1622,6 +1622,39 @@ namespace bo3z
 			}
 			logger::warn("dev: no enemy row '{}'", a_row);
 		}
+		void DevSpawnAt(std::string_view a_row, const RE::NiPoint3& a_at, float a_yawDeg)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			for (std::size_t i = 0; p && i < gen::kEnemies.size(); ++i) {
+				if (gen::kEnemies[i].id == a_row) {
+					SpawnOne(p, static_cast<int>(i), &a_at);
+					for (auto& [id, row] : g_ours) {  // the newest one: face it the way asked
+						auto* a = RE::TESForm::LookupByID<RE::Actor>(id);
+						if (a && row == i && a->GetPosition().GetDistance(a_at) < 120.0f) {
+							a->SetAngle({ 0.0f, 0.0f, a_yawDeg * 0.0174533f });
+						}
+					}
+					logger::info("dev: spawned {} at {:.0f},{:.0f},{:.0f}", a_row, a_at.x, a_at.y, a_at.z);
+					return;
+				}
+			}
+			logger::warn("dev: no enemy row '{}'", a_row);
+		}
+		void DevShowUndead(bool a_show)
+		{
+			int n = 0;
+			for (auto& [id, row] : g_ours) {
+				auto* a = RE::TESForm::LookupByID<RE::Actor>(id);
+				if (auto* root = a ? a->Get3D() : nullptr) {
+					root->GetFlags().set(RE::NiAVObject::Flag::kHidden);
+					if (a_show) {
+						root->GetFlags().reset(RE::NiAVObject::Flag::kHidden);
+					}
+					++n;
+				}
+			}
+			logger::info("dev: undead {} ({})", a_show ? "shown" : "hidden", n);
+		}
 		void RaiseAt(const RE::NiPoint3& a_at)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();

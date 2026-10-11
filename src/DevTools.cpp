@@ -20,6 +20,7 @@ namespace bo3z
 		std::vector<std::string> g_mainQueue;   // render-safe: key, mouse, close
 		std::vector<std::string> g_gameQueue;   // run from PlayerCharacter::Update: console, hour, give, tp, ...
 		std::string              g_shotName;
+		std::atomic<bool>        g_hudOff{ false };
 		struct PendingKey
 		{
 			RE::INPUT_DEVICE  device;
@@ -239,6 +240,62 @@ namespace bo3z
 						logger::info("dev: sound {}", id);
 					}
 				}
+			} else if (cmd == "spawnat" && player) {
+				// spawnat <row> <x> <y> <z> [yaw deg]: raise that undead at a point (art captures)
+				std::string  id;
+				RE::NiPoint3 at;
+				float        yaw = 0;
+				in >> id >> at.x >> at.y >> at.z >> yaw;
+				Director::DevSpawnAt(id, at, yaw);
+			} else if (cmd == "undead") {
+				std::string v;
+				in >> v;
+				Director::DevShowUndead(v != "hide");
+			} else if (cmd == "hud") {
+				int v = 1;
+				in >> v;
+				g_hudOff = v == 0;
+				logger::info("dev: hud {}", v);
+			} else if (cmd == "cam") {
+				// cam <x> <y> <z> <yaw deg> <pitch deg>: free camera (tfc) placed exactly there (art captures); 'cam off' leaves it
+				auto* pc = RE::PlayerCamera::GetSingleton();
+				std::string first;
+				in >> first;
+				if (first == "off") {
+					if (pc && pc->IsInFreeCameraMode()) {
+						pc->ToggleFreeCameraMode(false);
+					}
+					return;
+				}
+				RE::NiPoint3 at;
+				float        yaw = 0, pitch = 0;
+				at.x = std::stof(first);
+				in >> at.y >> at.z >> yaw >> pitch;
+				if (pc && !pc->IsInFreeCameraMode()) {
+					pc->ToggleFreeCameraMode(false);
+				}
+				if (pc && pc->currentState && pc->IsInFreeCameraMode()) {
+					auto* fc = static_cast<RE::FreeCameraState*>(pc->currentState.get());
+					fc->translation = at;
+					fc->rotation.x = pitch * 0.0174533f;
+					fc->rotation.y = yaw * 0.0174533f;
+					logger::info("dev: cam at {:.0f},{:.0f},{:.0f} yaw {:.1f} pitch {:.1f}", at.x, at.y, at.z, yaw, pitch);
+				}
+			} else if (cmd == "camget") {
+				auto* pc = RE::PlayerCamera::GetSingleton();
+				if (pc && pc->cameraRoot) {
+					const auto& t = pc->cameraRoot->world.translate;
+					float yaw = 0, pitch = 0;
+					if (pc->IsInFreeCameraMode() && pc->currentState) {
+						auto* fc = static_cast<RE::FreeCameraState*>(pc->currentState.get());
+						yaw = fc->rotation.y / 0.0174533f, pitch = fc->rotation.x / 0.0174533f;
+					} else if (player) {
+						yaw = player->GetAngleZ() / 0.0174533f, pitch = player->GetAngleX() / 0.0174533f;
+					}
+					logger::info("dev: camget {:.0f} {:.0f} {:.0f} yaw {:.1f} pitch {:.1f} | player {:.0f} {:.0f} {:.0f} | cell {}", t.x, t.y, t.z, yaw, pitch,
+						player ? player->GetPositionX() : 0.f, player ? player->GetPositionY() : 0.f, player ? player->GetPositionZ() : 0.f,
+						player && player->GetParentCell() ? player->GetParentCell()->GetFormEditorID() : "");
+				}
 			} else if (cmd == "crew") {
 				int c = 0;
 				in >> c;
@@ -251,6 +308,7 @@ namespace bo3z
 
 	namespace DevTools
 	{
+		bool HudOff() { return g_hudOff.load(); }
 		void PollFromRender()
 		{
 			if (++g_frame % 30 != 0) {

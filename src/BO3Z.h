@@ -118,6 +118,8 @@ namespace bo3z
 		void             HurtPlayer(float a_share, bool a_stagger);
 		void             RaiseAt(const RE::NiPoint3& a_at);
 		void             DevSpawn(std::string_view a_row, int a_count);  // DevTools: raise that undead in front of you
+		void             DevSpawnAt(std::string_view a_row, const RE::NiPoint3& a_at, float a_yawDeg);  // DevTools: ...at a point, facing yaw
+		void             DevShowUndead(bool a_show);  // DevTools: hide/show every undead we raised (clean plates for art captures)
 		void             EndNight();
 		bool             BossPos(RE::NiPoint3& a_at);  // Grimmvar, if he walks
 		bool             RaiseChampion(int a_town, std::string_view a_row, std::string_view a_name, float a_healthMult, const RE::NiPoint3& a_at);  // a city's named champion
@@ -378,6 +380,7 @@ namespace bo3z
 		void CaptureIfRequested(ID3D11DeviceContext* a_context, IDXGISwapChain* a_swap);
 		void RunQueuedOnMain();
 		void RunQueuedInGame();
+		bool HudOff();  // DevTools 'hud 0': our overlay draws nothing (art captures)
 	}
 
 	namespace Events
