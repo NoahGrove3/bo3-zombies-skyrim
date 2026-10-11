@@ -362,6 +362,9 @@ namespace bo3z
 				if (ours && !a_quiet) {
 					Audio::Voice(a_target, Audio::VoiceEvent::kHurt);  // its own cry (limited per body)
 				}
+				if (ours) {
+					Audio::Flesh(a_target, false);  // the flesh taking the hit (the spell's own impact plays where it lands)
+				}
 				if (!a_target->IsInCombat()) {
 					a_target->StartCombat(player);
 				}

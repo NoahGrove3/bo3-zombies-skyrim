@@ -37,6 +37,7 @@ namespace bo3z::Audio
 		struct VoiceState
 		{
 			Clock::time_point idle{}, attack{}, hurt{};
+			Clock::time_point flesh{};
 			bool              attacking{ false }, died{ false };
 		};
 		std::unordered_map<RE::FormID, VoiceState> g_voice;
@@ -217,6 +218,84 @@ namespace bo3z::Audio
 			if (id == "boss") return 10;
 			return 0;
 		}
+	}
+
+	// ---- the body: wet flesh when a spell lands, the fall when it dies, and its own footsteps
+	namespace
+	{
+		struct StepSet { gen::Sound walk, run; };
+		constexpr StepSet kSteps[] = {  // the same order as kVoices
+			{ S::step_shambler, S::step_shambler_run }, { S::step_runner, S::step_runner_run }, { S::step_wailer, S::step_wailer_run },
+			{ S::step_bloater, S::step_bloater_run }, { S::step_stalker, S::step_stalker_run }, { S::step_reaper, S::step_reaper_run },
+			{ S::step_necro, S::step_necro_run }, { S::step_knight, S::step_knight_run }, { S::step_king, S::step_king_run },
+			{ S::step_lich, S::step_lich_run }, { S::step_boss, S::step_boss_run },
+		};
+		std::deque<Clock::time_point> g_steps;  // footfalls heard in the last moment (a horde must not drum)
+
+		// Skyrim tells every footfall of every animated body (the foot hitting the ground in the animation):
+		// our undead step with the mod's own sounds (their skins carry a silent footstep set, so the race's are gone)
+		class StepSink : public RE::BSTEventSink<RE::BGSFootstepEvent>
+		{
+		public:
+			RE::BSEventNotifyControl ProcessEvent(const RE::BGSFootstepEvent* a_e, RE::BSTEventSource<RE::BGSFootstepEvent>*) override
+			{
+				if (!a_e) {
+					return RE::BSEventNotifyControl::kContinue;
+				}
+				auto  ap = a_e->actor.get();
+				auto* a = ap.get();
+				if (!a || a->IsDead() || a->IsDisabled() || !Director::IsRoundUndead(a)) {
+					return RE::BSEventNotifyControl::kContinue;
+				}
+				auto* player = RE::PlayerCharacter::GetSingleton();
+				const float d = player ? a->GetPosition().GetDistance(player->GetPosition()) : 0.0f;
+				const int   v = VoiceOf(a);
+				if (v < 0 || d > (v == 10 ? 6000.0f : 2200.0f)) {
+					return RE::BSEventNotifyControl::kContinue;
+				}
+				const auto now = Clock::now();
+				while (!g_steps.empty() && now - g_steps.front() > 200ms) {
+					g_steps.pop_front();
+				}
+				if (g_steps.size() >= (d < 700.0f ? 6u : 3u)) {
+					return RE::BSEventNotifyControl::kContinue;  // the nearest few carry the horde's tread
+				}
+				g_steps.push_back(now);
+				const std::string_view tag = a_e->tag.c_str() ? a_e->tag.c_str() : "";
+				const bool run = tag.find("Sprint") != std::string_view::npos || tag.find("Run") != std::string_view::npos || a->AsActorState()->IsSprinting() ||
+				                 a->IsRunning();
+				RE::BSSoundHandle h;
+				Start(h, run ? kSteps[v].run : kSteps[v].walk, a, nullptr, d < 400.0f ? 1.0f : 0.8f);
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+	}
+
+	void InstallSteps()
+	{
+		static StepSink sink;
+		if (auto* m = RE::BGSFootstepManager::GetSingleton()) {
+			m->AddEventSink(&sink);
+			logger::info("audio: undead footsteps on the animation footfalls");
+		}
+	}
+
+	void Flesh(RE::Actor* a_actor, bool a_death)
+	{
+		if (!a_actor || a_actor->IsDisabled()) {
+			return;
+		}
+		if (a_death) {
+			At(gen::Sound::flesh_death, a_actor);
+			return;
+		}
+		auto&      st = g_voice[a_actor->GetFormID()];
+		const auto now = Clock::now();
+		if (a_actor->IsDead() || now - st.flesh < 160ms) {
+			return;  // a beam or a burst lands many times a second: the flesh answers a few
+		}
+		st.flesh = now;
+		At(gen::Sound::flesh_hit, a_actor, 0.9f);
 	}
 
 	void Voice(RE::Actor* a_actor, VoiceEvent a_ev)

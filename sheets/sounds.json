@@ -83,18 +83,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_bright_0.wav",
+      "file": "fx\\UndyingNights\\un\\hit_sidearm.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_bright_0.wav",
-        "fx\\UndyingNights\\un\\sp_bright_1.wav",
-        "fx\\UndyingNights\\un\\sp_bright_2.wav",
-        "fx\\UndyingNights\\un\\sp_bright_3.wav"
+        "fx\\UndyingNights\\un\\hit_sidearm.wav"
       ],
-      "shift": 5,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "sidearm: bolt impact where it lands"
+      "use": "sidearm: bolt impact where it lands (its own sound, sheet sfx hit_sidearm)"
     },
     {
       "id": "boom_sidearm",
@@ -178,15 +175,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_crunch_low.wav",
+      "file": "fx\\UndyingNights\\un\\hit_centurion.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_crunch_low.wav"
+        "fx\\UndyingNights\\un\\hit_centurion.wav"
       ],
-      "shift": 15,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "centurion: bolt impact where it lands"
+      "use": "centurion: bolt impact where it lands (its own sound, sheet sfx hit_centurion)"
     },
     {
       "id": "boom_centurion",
@@ -274,18 +271,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_bright_0.wav",
+      "file": "fx\\UndyingNights\\un\\hit_triad.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_bright_0.wav",
-        "fx\\UndyingNights\\un\\sp_bright_1.wav",
-        "fx\\UndyingNights\\un\\sp_bright_2.wav",
-        "fx\\UndyingNights\\un\\sp_bright_3.wav"
+        "fx\\UndyingNights\\un\\hit_triad.wav"
       ],
-      "shift": -10,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "triad: bolt impact where it lands"
+      "use": "triad: bolt impact where it lands (its own sound, sheet sfx hit_triad)"
     },
     {
       "id": "boom_triad",
@@ -367,15 +361,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_crunch_low.wav",
+      "file": "fx\\UndyingNights\\un\\hit_spider.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_crunch_low.wav"
+        "fx\\UndyingNights\\un\\hit_spider.wav"
       ],
       "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "spider: bolt impact where it lands"
+      "use": "spider: bolt impact where it lands (its own sound, sheet sfx hit_spider)"
     },
     {
       "id": "boom_spider",
@@ -464,15 +458,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_crunch_low.wav",
+      "file": "fx\\UndyingNights\\un\\hit_drill.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_crunch_low.wav"
+        "fx\\UndyingNights\\un\\hit_drill.wav"
       ],
-      "shift": -15,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "drill: bolt impact where it lands"
+      "use": "drill: bolt impact where it lands (its own sound, sheet sfx hit_drill)"
     },
     {
       "id": "boom_drill",
@@ -554,15 +548,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_crunch_low.wav",
+      "file": "fx\\UndyingNights\\un\\hit_steampump.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_crunch_low.wav"
+        "fx\\UndyingNights\\un\\hit_steampump.wav"
       ],
-      "shift": -25,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "steampump: bolt impact where it lands"
+      "use": "steampump: bolt impact where it lands (its own sound, sheet sfx hit_steampump)"
     },
     {
       "id": "boom_steampump",
@@ -650,19 +644,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_ice_0.wav",
+      "file": "fx\\UndyingNights\\un\\hit_marksman.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_ice_0.wav",
-        "fx\\UndyingNights\\un\\sp_ice_1.wav",
-        "fx\\UndyingNights\\un\\sp_ice_2.wav",
-        "fx\\UndyingNights\\un\\sp_ice_3.wav",
-        "fx\\UndyingNights\\un\\sp_ice_4.wav"
+        "fx\\UndyingNights\\un\\hit_marksman.wav"
       ],
-      "shift": 10,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "marksman: bolt impact where it lands"
+      "use": "marksman: bolt impact where it lands (its own sound, sheet sfx hit_marksman)"
     },
     {
       "id": "boom_marksman",
@@ -755,15 +745,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_ignite_small.wav",
+      "file": "fx\\UndyingNights\\un\\hit_animunculi.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_ignite_small.wav"
+        "fx\\UndyingNights\\un\\hit_animunculi.wav"
       ],
-      "shift": 15,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "animunculi: bolt impact where it lands"
+      "use": "animunculi: bolt impact where it lands (its own sound, sheet sfx hit_animunculi)"
     },
     {
       "id": "boom_animunculi",
@@ -848,18 +838,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_bright_0.wav",
+      "file": "fx\\UndyingNights\\un\\hit_kagrenac.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_bright_0.wav",
-        "fx\\UndyingNights\\un\\sp_bright_1.wav",
-        "fx\\UndyingNights\\un\\sp_bright_2.wav",
-        "fx\\UndyingNights\\un\\sp_bright_3.wav"
+        "fx\\UndyingNights\\un\\hit_kagrenac.wav"
       ],
-      "shift": 20,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "kagrenac: bolt impact where it lands"
+      "use": "kagrenac: bolt impact where it lands (its own sound, sheet sfx hit_kagrenac)"
     },
     {
       "id": "boom_kagrenac",
@@ -941,15 +928,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_crunch_low.wav",
+      "file": "fx\\UndyingNights\\un\\hit_mammothlmg.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_crunch_low.wav"
+        "fx\\UndyingNights\\un\\hit_mammothlmg.wav"
       ],
-      "shift": -30,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "mammothlmg: bolt impact where it lands"
+      "use": "mammothlmg: bolt impact where it lands (its own sound, sheet sfx hit_mammothlmg)"
     },
     {
       "id": "boom_mammothlmg",
@@ -1034,17 +1021,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_strike_0.wav",
+      "file": "fx\\UndyingNights\\un\\hit_longshot.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_strike_0.wav",
-        "fx\\UndyingNights\\un\\sp_strike_1.wav",
-        "fx\\UndyingNights\\un\\sp_strike_2.wav"
+        "fx\\UndyingNights\\un\\hit_longshot.wav"
       ],
-      "shift": 15,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "longshot: bolt impact where it lands"
+      "use": "longshot: bolt impact where it lands (its own sound, sheet sfx hit_longshot)"
     },
     {
       "id": "boom_longshot",
@@ -1133,15 +1118,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_ignite_small.wav",
+      "file": "fx\\UndyingNights\\un\\hit_aetherium.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_ignite_small.wav"
+        "fx\\UndyingNights\\un\\hit_aetherium.wav"
       ],
-      "shift": 25,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "aetherium: bolt impact where it lands"
+      "use": "aetherium: bolt impact where it lands (its own sound, sheet sfx hit_aetherium)"
     },
     {
       "id": "boom_aetherium",
@@ -1230,15 +1215,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_ignite_small.wav",
+      "file": "fx\\UndyingNights\\un\\hit_flamerepeater.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_ignite_small.wav"
+        "fx\\UndyingNights\\un\\hit_flamerepeater.wav"
       ],
       "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "flamerepeater: bolt impact where it lands"
+      "use": "flamerepeater: bolt impact where it lands (its own sound, sheet sfx hit_flamerepeater)"
     },
     {
       "id": "boom_flamerepeater",
@@ -1327,19 +1312,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_ice_0.wav",
+      "file": "fx\\UndyingNights\\un\\hit_frostlancer.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_ice_0.wav",
-        "fx\\UndyingNights\\un\\sp_ice_1.wav",
-        "fx\\UndyingNights\\un\\sp_ice_2.wav",
-        "fx\\UndyingNights\\un\\sp_ice_3.wav",
-        "fx\\UndyingNights\\un\\sp_ice_4.wav"
+        "fx\\UndyingNights\\un\\hit_frostlancer.wav"
       ],
-      "shift": -5,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "frostlancer: bolt impact where it lands"
+      "use": "frostlancer: bolt impact where it lands (its own sound, sheet sfx hit_frostlancer)"
     },
     {
       "id": "boom_frostlancer",
@@ -1426,17 +1407,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_strike_0.wav",
+      "file": "fx\\UndyingNights\\un\\hit_stormcaller.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_strike_0.wav",
-        "fx\\UndyingNights\\un\\sp_strike_1.wav",
-        "fx\\UndyingNights\\un\\sp_strike_2.wav"
+        "fx\\UndyingNights\\un\\hit_stormcaller.wav"
       ],
       "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "stormcaller: bolt impact where it lands"
+      "use": "stormcaller: bolt impact where it lands (its own sound, sheet sfx hit_stormcaller)"
     },
     {
       "id": "boom_stormcaller",
@@ -1518,15 +1497,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_cold_whoosh.wav",
+      "file": "fx\\UndyingNights\\un\\hit_embermortar.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_cold_whoosh.wav"
+        "fx\\UndyingNights\\un\\hit_embermortar.wav"
       ],
-      "shift": -20,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "embermortar: bolt impact where it lands"
+      "use": "embermortar: bolt impact where it lands (its own sound, sheet sfx hit_embermortar)"
     },
     {
       "id": "boom_embermortar",
@@ -1611,18 +1590,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_bright_0.wav",
+      "file": "fx\\UndyingNights\\un\\hit_wabbajack.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_bright_0.wav",
-        "fx\\UndyingNights\\un\\sp_bright_1.wav",
-        "fx\\UndyingNights\\un\\sp_bright_2.wav",
-        "fx\\UndyingNights\\un\\sp_bright_3.wav"
+        "fx\\UndyingNights\\un\\hit_wabbajack.wav"
       ],
-      "shift": -20,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "wabbajack: bolt impact where it lands"
+      "use": "wabbajack: bolt impact where it lands (its own sound, sheet sfx hit_wabbajack)"
     },
     {
       "id": "boom_wabbajack",
@@ -1705,17 +1681,15 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\sp_strike_0.wav",
+      "file": "fx\\UndyingNights\\un\\hit_skyforgearc.wav",
       "files": [
-        "fx\\UndyingNights\\un\\sp_strike_0.wav",
-        "fx\\UndyingNights\\un\\sp_strike_1.wav",
-        "fx\\UndyingNights\\un\\sp_strike_2.wav"
+        "fx\\UndyingNights\\un\\hit_skyforgearc.wav"
       ],
-      "shift": -10,
+      "shift": 0,
       "layer": "none",
       "atten": 0,
       "loop": false,
-      "use": "skyforgearc: bolt impact where it lands"
+      "use": "skyforgearc: bolt impact where it lands (its own sound, sheet sfx hit_skyforgearc)"
     },
     {
       "id": "boom_skyforgearc",
@@ -2900,13 +2874,16 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\en_ghost_0.wav",
+      "file": "fx\\UndyingNights\\un\\en_breath_0.wav",
       "files": [
-        "fx\\UndyingNights\\un\\en_ghost_0.wav",
-        "fx\\UndyingNights\\un\\en_ghost_1.wav",
-        "fx\\UndyingNights\\un\\en_ghost_2.wav"
+        "fx\\UndyingNights\\un\\en_breath_0.wav",
+        "fx\\UndyingNights\\un\\en_breath_1.wav",
+        "fx\\UndyingNights\\un\\en_breath_2.wav",
+        "fx\\UndyingNights\\un\\en_breath_3.wav",
+        "fx\\UndyingNights\\un\\en_breath_4.wav",
+        "fx\\UndyingNights\\un\\en_breath_5.wav"
       ],
-      "shift": -45,
+      "shift": -10,
       "layer": "none",
       "atten": 4,
       "loop": false,
@@ -3128,11 +3105,16 @@
       "verify": [],
       "space": "3d",
       "cat": "sfx",
-      "file": "fx\\UndyingNights\\un\\en_roar.wav",
+      "file": "fx\\UndyingNights\\un\\en_breath_0.wav",
       "files": [
-        "fx\\UndyingNights\\un\\en_roar.wav"
+        "fx\\UndyingNights\\un\\en_breath_0.wav",
+        "fx\\UndyingNights\\un\\en_breath_1.wav",
+        "fx\\UndyingNights\\un\\en_breath_2.wav",
+        "fx\\UndyingNights\\un\\en_breath_3.wav",
+        "fx\\UndyingNights\\un\\en_breath_4.wav",
+        "fx\\UndyingNights\\un\\en_breath_5.wav"
       ],
-      "shift": -40,
+      "shift": -30,
       "layer": "none",
       "atten": 4,
       "loop": false,
@@ -3651,6 +3633,547 @@
       "cat": "sfx",
       "loop": false,
       "use": "the dead climb out of the earth"
+    },
+    {
+      "id": "step_shambler",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_shambler",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_walk_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_walk_0.wav",
+        "fx\\UndyingNights\\un\\step_walk_1.wav",
+        "fx\\UndyingNights\\un\\step_walk_2.wav",
+        "fx\\UndyingNights\\un\\step_walk_3.wav",
+        "fx\\UndyingNights\\un\\step_walk_4.wav",
+        "fx\\UndyingNights\\un\\step_walk_5.wav"
+      ],
+      "shift": -15,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "shambler: footstep (walking)"
+    },
+    {
+      "id": "step_shambler_run",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_shambler_run",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_jog_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_jog_0.wav",
+        "fx\\UndyingNights\\un\\step_jog_1.wav",
+        "fx\\UndyingNights\\un\\step_jog_2.wav",
+        "fx\\UndyingNights\\un\\step_jog_3.wav",
+        "fx\\UndyingNights\\un\\step_jog_4.wav",
+        "fx\\UndyingNights\\un\\step_jog_5.wav"
+      ],
+      "shift": -15,
+      "layer": "none",
+      "atten": 4,
+      "loop": false,
+      "use": "shambler: footstep (running)"
+    },
+    {
+      "id": "step_runner",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_runner",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_jog_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_jog_0.wav",
+        "fx\\UndyingNights\\un\\step_jog_1.wav",
+        "fx\\UndyingNights\\un\\step_jog_2.wav",
+        "fx\\UndyingNights\\un\\step_jog_3.wav",
+        "fx\\UndyingNights\\un\\step_jog_4.wav",
+        "fx\\UndyingNights\\un\\step_jog_5.wav"
+      ],
+      "shift": 5,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "runner: footstep (walking)"
+    },
+    {
+      "id": "step_runner_run",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_runner_run",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_sprint_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_sprint_0.wav",
+        "fx\\UndyingNights\\un\\step_sprint_1.wav",
+        "fx\\UndyingNights\\un\\step_sprint_2.wav",
+        "fx\\UndyingNights\\un\\step_sprint_3.wav",
+        "fx\\UndyingNights\\un\\step_sprint_4.wav"
+      ],
+      "shift": 5,
+      "layer": "none",
+      "atten": 4,
+      "loop": false,
+      "use": "runner: footstep (running)"
+    },
+    {
+      "id": "step_wailer",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_wailer",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_walk_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_walk_0.wav",
+        "fx\\UndyingNights\\un\\step_walk_1.wav",
+        "fx\\UndyingNights\\un\\step_walk_2.wav",
+        "fx\\UndyingNights\\un\\step_walk_3.wav",
+        "fx\\UndyingNights\\un\\step_walk_4.wav",
+        "fx\\UndyingNights\\un\\step_walk_5.wav"
+      ],
+      "shift": 10,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "wailer: footstep (walking)"
+    },
+    {
+      "id": "step_wailer_run",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_wailer_run",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_jog_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_jog_0.wav",
+        "fx\\UndyingNights\\un\\step_jog_1.wav",
+        "fx\\UndyingNights\\un\\step_jog_2.wav",
+        "fx\\UndyingNights\\un\\step_jog_3.wav",
+        "fx\\UndyingNights\\un\\step_jog_4.wav",
+        "fx\\UndyingNights\\un\\step_jog_5.wav"
+      ],
+      "shift": 10,
+      "layer": "none",
+      "atten": 4,
+      "loop": false,
+      "use": "wailer: footstep (running)"
+    },
+    {
+      "id": "step_bloater",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_bloater",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_walk_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_walk_0.wav",
+        "fx\\UndyingNights\\un\\step_walk_1.wav",
+        "fx\\UndyingNights\\un\\step_walk_2.wav",
+        "fx\\UndyingNights\\un\\step_walk_3.wav",
+        "fx\\UndyingNights\\un\\step_walk_4.wav",
+        "fx\\UndyingNights\\un\\step_walk_5.wav"
+      ],
+      "shift": -35,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "bloater: footstep (walking)"
+    },
+    {
+      "id": "step_bloater_run",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_bloater_run",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_jog_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_jog_0.wav",
+        "fx\\UndyingNights\\un\\step_jog_1.wav",
+        "fx\\UndyingNights\\un\\step_jog_2.wav",
+        "fx\\UndyingNights\\un\\step_jog_3.wav",
+        "fx\\UndyingNights\\un\\step_jog_4.wav",
+        "fx\\UndyingNights\\un\\step_jog_5.wav"
+      ],
+      "shift": -35,
+      "layer": "none",
+      "atten": 4,
+      "loop": false,
+      "use": "bloater: footstep (running)"
+    },
+    {
+      "id": "step_stalker",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_stalker",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_sprint_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_sprint_0.wav",
+        "fx\\UndyingNights\\un\\step_sprint_1.wav",
+        "fx\\UndyingNights\\un\\step_sprint_2.wav",
+        "fx\\UndyingNights\\un\\step_sprint_3.wav",
+        "fx\\UndyingNights\\un\\step_sprint_4.wav"
+      ],
+      "shift": 10,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "stalker: footstep (walking)"
+    },
+    {
+      "id": "step_stalker_run",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_stalker_run",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_sprint_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_sprint_0.wav",
+        "fx\\UndyingNights\\un\\step_sprint_1.wav",
+        "fx\\UndyingNights\\un\\step_sprint_2.wav",
+        "fx\\UndyingNights\\un\\step_sprint_3.wav",
+        "fx\\UndyingNights\\un\\step_sprint_4.wav"
+      ],
+      "shift": 15,
+      "layer": "none",
+      "atten": 4,
+      "loop": false,
+      "use": "stalker: footstep (running)"
+    },
+    {
+      "id": "step_reaper",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_reaper",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_jog_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_jog_0.wav",
+        "fx\\UndyingNights\\un\\step_jog_1.wav",
+        "fx\\UndyingNights\\un\\step_jog_2.wav",
+        "fx\\UndyingNights\\un\\step_jog_3.wav",
+        "fx\\UndyingNights\\un\\step_jog_4.wav",
+        "fx\\UndyingNights\\un\\step_jog_5.wav"
+      ],
+      "shift": -40,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "reaper: footstep (walking)"
+    },
+    {
+      "id": "step_reaper_run",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_reaper_run",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_jog_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_jog_0.wav",
+        "fx\\UndyingNights\\un\\step_jog_1.wav",
+        "fx\\UndyingNights\\un\\step_jog_2.wav",
+        "fx\\UndyingNights\\un\\step_jog_3.wav",
+        "fx\\UndyingNights\\un\\step_jog_4.wav",
+        "fx\\UndyingNights\\un\\step_jog_5.wav"
+      ],
+      "shift": -40,
+      "layer": "none",
+      "atten": 4,
+      "loop": false,
+      "use": "reaper: footstep (running)"
+    },
+    {
+      "id": "step_necro",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_necro",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_walk_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_walk_0.wav",
+        "fx\\UndyingNights\\un\\step_walk_1.wav",
+        "fx\\UndyingNights\\un\\step_walk_2.wav",
+        "fx\\UndyingNights\\un\\step_walk_3.wav",
+        "fx\\UndyingNights\\un\\step_walk_4.wav",
+        "fx\\UndyingNights\\un\\step_walk_5.wav"
+      ],
+      "shift": -5,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "necro: footstep (walking)"
+    },
+    {
+      "id": "step_necro_run",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_necro_run",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_walk_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_walk_0.wav",
+        "fx\\UndyingNights\\un\\step_walk_1.wav",
+        "fx\\UndyingNights\\un\\step_walk_2.wav",
+        "fx\\UndyingNights\\un\\step_walk_3.wav",
+        "fx\\UndyingNights\\un\\step_walk_4.wav",
+        "fx\\UndyingNights\\un\\step_walk_5.wav"
+      ],
+      "shift": -5,
+      "layer": "none",
+      "atten": 4,
+      "loop": false,
+      "use": "necro: footstep (running)"
+    },
+    {
+      "id": "step_knight",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_knight",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_jog_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_jog_0.wav",
+        "fx\\UndyingNights\\un\\step_jog_1.wav",
+        "fx\\UndyingNights\\un\\step_jog_2.wav",
+        "fx\\UndyingNights\\un\\step_jog_3.wav",
+        "fx\\UndyingNights\\un\\step_jog_4.wav",
+        "fx\\UndyingNights\\un\\step_jog_5.wav"
+      ],
+      "shift": -25,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "knight: footstep (walking)"
+    },
+    {
+      "id": "step_knight_run",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_knight_run",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_jog_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_jog_0.wav",
+        "fx\\UndyingNights\\un\\step_jog_1.wav",
+        "fx\\UndyingNights\\un\\step_jog_2.wav",
+        "fx\\UndyingNights\\un\\step_jog_3.wav",
+        "fx\\UndyingNights\\un\\step_jog_4.wav",
+        "fx\\UndyingNights\\un\\step_jog_5.wav"
+      ],
+      "shift": -25,
+      "layer": "none",
+      "atten": 4,
+      "loop": false,
+      "use": "knight: footstep (running)"
+    },
+    {
+      "id": "step_king",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_king",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_walk_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_walk_0.wav",
+        "fx\\UndyingNights\\un\\step_walk_1.wav",
+        "fx\\UndyingNights\\un\\step_walk_2.wav",
+        "fx\\UndyingNights\\un\\step_walk_3.wav",
+        "fx\\UndyingNights\\un\\step_walk_4.wav",
+        "fx\\UndyingNights\\un\\step_walk_5.wav"
+      ],
+      "shift": -30,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "king: footstep (walking)"
+    },
+    {
+      "id": "step_king_run",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_king_run",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_jog_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_jog_0.wav",
+        "fx\\UndyingNights\\un\\step_jog_1.wav",
+        "fx\\UndyingNights\\un\\step_jog_2.wav",
+        "fx\\UndyingNights\\un\\step_jog_3.wav",
+        "fx\\UndyingNights\\un\\step_jog_4.wav",
+        "fx\\UndyingNights\\un\\step_jog_5.wav"
+      ],
+      "shift": -30,
+      "layer": "none",
+      "atten": 4,
+      "loop": false,
+      "use": "king: footstep (running)"
+    },
+    {
+      "id": "step_lich",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_lich",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_walk_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_walk_0.wav",
+        "fx\\UndyingNights\\un\\step_walk_1.wav",
+        "fx\\UndyingNights\\un\\step_walk_2.wav",
+        "fx\\UndyingNights\\un\\step_walk_3.wav",
+        "fx\\UndyingNights\\un\\step_walk_4.wav",
+        "fx\\UndyingNights\\un\\step_walk_5.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "lich: footstep (walking)"
+    },
+    {
+      "id": "step_lich_run",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_lich_run",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_walk_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_walk_0.wav",
+        "fx\\UndyingNights\\un\\step_walk_1.wav",
+        "fx\\UndyingNights\\un\\step_walk_2.wav",
+        "fx\\UndyingNights\\un\\step_walk_3.wav",
+        "fx\\UndyingNights\\un\\step_walk_4.wav",
+        "fx\\UndyingNights\\un\\step_walk_5.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 4,
+      "loop": false,
+      "use": "lich: footstep (running)"
+    },
+    {
+      "id": "step_boss",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_boss",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_jog_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_jog_0.wav",
+        "fx\\UndyingNights\\un\\step_jog_1.wav",
+        "fx\\UndyingNights\\un\\step_jog_2.wav",
+        "fx\\UndyingNights\\un\\step_jog_3.wav",
+        "fx\\UndyingNights\\un\\step_jog_4.wav",
+        "fx\\UndyingNights\\un\\step_jog_5.wav"
+      ],
+      "shift": -60,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "boss: footstep (walking)"
+    },
+    {
+      "id": "step_boss_run",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_step_boss_run",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\step_jog_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\step_jog_0.wav",
+        "fx\\UndyingNights\\un\\step_jog_1.wav",
+        "fx\\UndyingNights\\un\\step_jog_2.wav",
+        "fx\\UndyingNights\\un\\step_jog_3.wav",
+        "fx\\UndyingNights\\un\\step_jog_4.wav",
+        "fx\\UndyingNights\\un\\step_jog_5.wav"
+      ],
+      "shift": -60,
+      "layer": "none",
+      "atten": 4,
+      "loop": false,
+      "use": "boss: footstep (running)"
+    },
+    {
+      "id": "flesh_hit",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_flesh_hit",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\flesh_hit_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\flesh_hit_0.wav",
+        "fx\\UndyingNights\\un\\flesh_hit_1.wav",
+        "fx\\UndyingNights\\un\\flesh_hit_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "an undead takes spell damage (wet flesh, under the spell's own impact)"
+    },
+    {
+      "id": "flesh_death",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_flesh_death",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\flesh_death.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\flesh_death.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "an undead is killed (the body gives way)"
     },
     {
       "id": "claw_swing",

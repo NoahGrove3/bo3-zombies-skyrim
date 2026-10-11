@@ -16,6 +16,8 @@ def V(base, n): return [f'{base}_{i}' for i in range(n)]
 FIRE, ICE, STRIKE, BRIGHT = V('sp_fire', 8), V('sp_ice', 5), V('sp_strike', 3), V('sp_bright', 4)
 GHOST, WAIL, RUNNER = V('en_ghost', 3), V('en_wail', 2), V('en_runner_idle', 4)
 QUAKE = V('boss_quake', 3)
+BREATH, FLESH = V('en_breath', 6), V('flesh_hit', 3)
+WALK, JOG, SPRINT = V('step_walk', 6), V('step_jog', 6), V('step_sprint', 5)
 
 M = {}   # id -> (clips, shift, space, cat, loop, atten, use)
 def S(id, clips, shift=0, space='2d', cat='sfx', loop=False, atten=0, use=''):
@@ -46,7 +48,7 @@ for w, (c, cs, l, ls, u, us, h, hs, b, bs) in SP.items():
     S('cast_' + w, c, cs, use=f'{w}: quick cast')
     S('charge_' + w, l, ls, loop=True, atten=4, use=f'{w}: charge hum (loops while both hands gather)')
     S('unleash_' + w, u, us, use=f'{w}: signature release')
-    S('hit_' + w, h, hs, '3d', use=f'{w}: bolt impact where it lands')
+    S('hit_' + w, 'hit_' + w, 0, '3d', use=f'{w}: bolt impact where it lands (its own sound, sheet sfx hit_{w})')
     S('boom_' + w, b, bs, '3d', use=f'{w}: gathered burst at the target')
 S('charge_ready', 'sp_bright_1', -15, atten=2, use='full charge reached (both hands glow)')
 S('charge_up', 'sp_cold_whoosh', 25, atten=8, use='charge begins (hands come up)')
@@ -69,10 +71,10 @@ for k, (c, s) in {'ember': ('sp_ignite', -10), 'gale': ('sp_wind_unleash', -10),
     S('shout_' + k, c, s, use=f"Thu'um: {k}")
 # ---- the undead (3D, from the body)
 VO = {  # type: idle, attack, hurt, death
- 'shambler': ((GHOST, -45), ('en_roar', -25), ('en_demon', -30), ('en_demon_low', -20)),
+ 'shambler': ((BREATH, -10), ('en_roar', -25), ('en_demon', -30), ('en_demon_low', -20)),
  'runner':   ((RUNNER, 0), ('en_runner_attack', 0), (RUNNER, 15), ('en_runner_death', 0)),
  'wailer':   ((GHOST, 0), (WAIL, 20), (WAIL, 35), ('en_hag_death', 0)),
- 'bloater':  (('en_roar', -40), ('en_roar_hi', 0), ('en_roar', -20), ('en_demon_low', -30)),
+ 'bloater':  ((BREATH, -30), ('en_roar_hi', 0), ('en_roar', -20), ('en_demon_low', -30)),
  'stalker':  ((GHOST, 15), ('champ_telegraph', 20), (GHOST, 30), ('en_hag_death', -20)),
  'reaper':   (('en_roar', -55), ('champ_telegraph', -10), ('en_demon', -45), ('en_demon_low', -40)),
  'necro':    ((GHOST, -20), ('sp_hex', 10), ('en_demon', 0), ('en_demon', -10)),
@@ -84,6 +86,16 @@ for t, (i, a, h, de) in VO.items():
     for ev, (c, s) in (('idle', i), ('attack', a), ('hurt', h), ('death', de)):
         S(f'vo_{t}_{ev}', c, s, '3d', atten=4 if ev == 'idle' else 0, use=f'{t}: {ev}')
 S('rise', GHOST, -50, '3d', atten=6, use='the dead climb out of the earth')
+# footsteps: played on the body's own animation footfalls (BGSFootstepEvent), walk or run set by its gait
+STEPS = {'shambler': ((WALK, -15), (JOG, -15)), 'runner': ((JOG, 5), (SPRINT, 5)), 'wailer': ((WALK, 10), (JOG, 10)),
+         'bloater': ((WALK, -35), (JOG, -35)), 'stalker': ((SPRINT, 10), (SPRINT, 15)), 'reaper': ((JOG, -40), (JOG, -40)),
+         'necro': ((WALK, -5), (WALK, -5)), 'knight': ((JOG, -25), (JOG, -25)), 'king': ((WALK, -30), (JOG, -30)),
+         'lich': ((WALK, 0), (WALK, 0)), 'boss': ((JOG, -60), (JOG, -60))}
+for t, ((wc, ws), (rc, rs)) in STEPS.items():
+    S(f'step_{t}', wc, ws, '3d', atten=6, use=f'{t}: footstep (walking)')
+    S(f'step_{t}_run', rc, rs, '3d', atten=4, use=f'{t}: footstep (running)')
+S('flesh_hit', FLESH, 0, '3d', atten=2, use='an undead takes spell damage (wet flesh, under the spell\'s own impact)')
+S('flesh_death', 'flesh_death', 0, '3d', use='an undead is killed (the body gives way)')
 S('claw_swing', 'sp_cold_whoosh', -40, '3d', atten=4, use='an undead swings (claws, scythe)')
 S('wailer_scream', WAIL, 0, '3d', use='Wailer screams: the horde comes faster')
 S('bloater_burst', 'en_burst', 0, '3d', use='Bloater bursts')

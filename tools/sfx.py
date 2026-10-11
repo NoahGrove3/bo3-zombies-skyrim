@@ -87,9 +87,19 @@ def write_wav(path, x):
         w.setnchannels(x.shape[1]); w.setsampwidth(2); w.setframerate(SR); w.writeframes(pcm.tobytes())
 
 
-def clip(lib, src_file, c):
+def clip(lib, src_file, c, sources=None):
     ch = 2 if c.get('stereo') else 1
     x = decode(lib / src_file, 2)
+    if 'onset' in c:   # the k-th step/hit found by its attack (footsteps: quiet takes the silence finder misses)
+        m = np.abs(x).max(1); w = int(0.005 * SR); env = np.convolve(m, np.ones(w) / w, 'same')
+        th = max(np.percentile(env, 30) * 6, 10 ** (-50 / 20)); pk = []; i = 0
+        while i < len(env):
+            if env[i] > th:
+                j = i + int(np.argmax(env[i:i + int(0.06 * SR)])); pk.append(j); i = j + int(0.18 * SR)
+            else:
+                i += w
+        p = pk[c['onset']]
+        x = x[max(0, p - int(0.015 * SR)):p + int(c.get('len', 0.22) * SR)]
     if 'take' in c:
         t = takes(x)
         a, b = t[c['take']]
@@ -106,6 +116,12 @@ def clip(lib, src_file, c):
         x = x.mean(1, keepdims=True)
     if c.get('loop'):
         x = make_loop(x)
+    if c.get('layer') and sources is not None:   # a second sound under the first (an element over a wet hit, a shimmer over a crack)
+        lc = dict(c['layer']); g = lc.pop('gain', -6)
+        x = x * (10 ** (c.get('peak', -3.0) / 20) / (np.abs(x).max() + 1e-9))
+        y = clip(lib, sources[lc['src']], {**lc, 'peak': c.get('peak', -3.0) + g, 'stereo': c.get('stereo', False)}, sources)
+        n = max(len(x), len(y)); z = np.zeros((n, x.shape[1]), np.float32); z[:len(x)] += x; z[:len(y)] += y[:, :x.shape[1]]
+        x = z
     fi, fo = int(c.get('fadeIn', 4) * SR / 1000), int(c.get('fadeOut', 60) * SR / 1000)
     if not c.get('loop'):
         if fi: x[:fi] *= np.linspace(0, 1, fi)[:, None]
@@ -126,7 +142,9 @@ def main():
     out = pathlib.Path(sys.argv[3])
     src = sheet['sources']
     for c in sheet['rows']:
-        x = clip(lib, src[c['src']], c)
+        if len(sys.argv) > 4 and c['id'] not in sys.argv[4].split(','):
+            continue
+        x = clip(lib, src[c['src']], c, src)
         write_wav(out / f"{c['id']}.wav", x)
         print(f"{c['id']:28s} {len(x) / SR:6.2f}s {'loop' if c.get('loop') else ''}")
 

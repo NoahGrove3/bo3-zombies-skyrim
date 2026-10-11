@@ -99,6 +99,7 @@ namespace bo3z
 					return RE::BSEventNotifyControl::kContinue;
 				}
 				Audio::Voice(dying, Audio::VoiceEvent::kDeath);
+				Audio::Flesh(dying, true);
 				if (a_event->actorKiller.get() != player) {
 					return RE::BSEventNotifyControl::kContinue;  // dawn, followers, guards: no points
 				}
@@ -254,6 +255,7 @@ namespace bo3z
 			if (!Forms::Resolve()) {
 				logger::error("a form the mashup needs is missing; rounds stay off");
 			}
+			Audio::InstallSteps();
 			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
 			PlayerUpdate::func = vtbl.write_vfunc(0xAD, PlayerUpdate::thunk);
 			logger::info("hooked PlayerCharacter::Update");
