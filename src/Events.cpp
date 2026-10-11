@@ -41,6 +41,9 @@ namespace bo3z
 					return RE::BSEventNotifyControl::kContinue;
 				}
 				Audio::SetMenuMusic();  // the main menu plays our track (read by the game when the menu opens)
+				if (a_event->menuName == RE::MainMenu::MENU_NAME) {
+					Audio::MenuUiSounds(a_event->opening);
+				}
 				// "Data loaded" without the Script Extender: the first menu event once the player form exists.
 				if (!dataLoaded && RE::TESForm::LookupByID(0x7)) {
 					dataLoaded = true;

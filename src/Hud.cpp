@@ -161,6 +161,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 		ImU32 Fade(ImU32 c, float a) { return (c & 0x00FFFFFF) | (static_cast<ImU32>(((c >> 24) & 0xFF) * std::clamp(a, 0.0f, 1.0f)) << 24); }
 
+		float EaseOut(float t) { t = std::clamp(t, 0.0f, 1.0f); return 1.0f - (1.0f - t) * (1.0f - t) * (1.0f - t); }
 		ImVec2 Measure(ImFont* f, float px, const std::string& s) { return f ? f->CalcTextSizeA(px, FLT_MAX, 0, s.c_str()) : ImVec2{ px * s.size() * 0.5f, px }; }
 
 		// Text with a soft dark shadow; glow > 0 adds a coloured halo.
@@ -917,140 +918,348 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			Txt(dl, g_body, 13 * k, { a.x + 18 * k, a.y - 24 * k }, IM_COL32(170, 162, 146, 200), "Players meet in Skyrim Together; the party shares the nights.");
 		}
 
-		// The main menu: the cover's world, alive (fog drifting, embers rising, the moon breathing).
+		// ---- the main menu (Spec 13): the Undying Nights entrance
+		// Layered art (tools/menuart.py) with parallax that follows the cursor and drifts slowly, fog in two depths,
+		// the rune-stone's soul-fire and the ground ring pulsing, braziers flickering, embers and ash rising, now and
+		// then a cold lightning flash; the title; Skyrim's own menu entries redrawn as our buttons (Skyrim keeps
+		// doing the work: mouse, keyboard and pad act on its real list, we only draw over it).
+		struct MenuEntry { std::string text; ImVec2 a, b; bool sel, disabled; };
+		// Skyrim's main list as it stands (entries, where on the screen, which is selected). Empty if it isn't up.
+		std::vector<MenuEntry> ReadMainList(ImVec2 size)
+		{
+			std::vector<MenuEntry> out;
+			auto* ui = RE::UI::GetSingleton();
+			auto  menu = ui ? ui->GetMenu(RE::MainMenu::MENU_NAME) : nullptr;
+			RE::GFxMovieView* mv = menu ? menu->uiMovie.get() : nullptr;
+			if (!mv) {
+				return out;
+			}
+			RE::GFxValue holder;
+			if (!mv->GetVariable(&holder, "_root.MenuHolder.Menu_mc.MainListHolder") || !holder.IsDisplayObject()) {
+				return out;
+			}
+			RE::GFxValue::DisplayInfo hi;
+			holder.GetDisplayInfo(&hi);
+			if (!hi.GetVisible() || hi.GetAlpha() < 20.0) {
+				return out;  // a sub-panel (Load, Creations, a question) has the screen
+			}
+			RE::GFxValue list, entries, selV;
+			if (!mv->GetVariable(&list, "_root.MenuHolder.Menu_mc.MainList") || !list.IsDisplayObject()) {
+				return out;
+			}
+			list.GetMember("entryList", &entries);
+			list.GetMember("selectedIndex", &selV);
+			const int  sel = selV.IsNumber() ? static_cast<int>(selV.GetNumber()) : -1;
+			const auto vis = mv->GetVisibleFrameRect();
+			const float sw = vis.right - vis.left, sh = vis.bottom - vis.top;
+			if (sw <= 1 || sh <= 1 || !entries.IsArray()) {
+				return out;
+			}
+			for (int c = 0; c < 17; ++c) {
+				RE::GFxValue clip;
+				if (!list.GetMember(("Entry" + std::to_string(c)).c_str(), &clip) || !clip.IsDisplayObject()) {
+					continue;
+				}
+				RE::GFxValue::DisplayInfo ci;
+				clip.GetDisplayInfo(&ci);
+				RE::GFxValue idxV;
+				clip.GetMember("itemIndex", &idxV);
+				if (!ci.GetVisible() || !idxV.IsNumber()) {
+					continue;
+				}
+				const int idx = static_cast<int>(idxV.GetNumber());
+				if (idx < 0 || idx >= static_cast<int>(entries.GetArraySize())) {
+					continue;
+				}
+				RE::GFxValue e, t, dis;
+				entries.GetElement(idx, &e);
+				e.GetMember("text", &t);
+				if (!t.IsString()) {
+					continue;
+				}
+				e.GetMember("disabled", &dis);
+				// the clip's box on the stage, then on the screen
+				RE::GFxValue pt0, pt1;
+				mv->CreateObject(&pt0);
+				mv->CreateObject(&pt1);
+				RE::GFxValue hgt;
+				clip.GetMember("_height", &hgt);
+				RE::GFxValue wdt;
+				clip.GetMember("_width", &wdt);
+				pt0.SetMember("x", 0.0), pt0.SetMember("y", 0.0);
+				pt1.SetMember("x", wdt.IsNumber() ? wdt.GetNumber() : 200.0), pt1.SetMember("y", hgt.IsNumber() ? hgt.GetNumber() : 30.0);
+				clip.Invoke("localToGlobal", nullptr, &pt0, 1);
+				clip.Invoke("localToGlobal", nullptr, &pt1, 1);
+				RE::GFxValue x0, y0, x1, y1;
+				pt0.GetMember("x", &x0), pt0.GetMember("y", &y0), pt1.GetMember("x", &x1), pt1.GetMember("y", &y1);
+				if (!x0.IsNumber() || !y0.IsNumber()) {
+					continue;
+				}
+				auto S = [&](double x, double y) { return ImVec2{ static_cast<float>((x - vis.left) / sw) * size.x, static_cast<float>((y - vis.top) / sh) * size.y }; };
+				MenuEntry me;
+				me.text = t.GetString();
+				me.a = S(x0.GetNumber(), y0.GetNumber());
+				me.b = S(x1.IsNumber() ? x1.GetNumber() : x0.GetNumber() + 200, y1.IsNumber() ? y1.GetNumber() : y0.GetNumber() + 30);
+				me.sel = idx == sel;
+				me.disabled = dis.IsBool() && dis.GetBool();
+				out.push_back(std::move(me));
+			}
+			std::sort(out.begin(), out.end(), [](const MenuEntry& l, const MenuEntry& r) { return l.a.y < r.a.y; });
+			return out;
+		}
+
+		ID3D11ShaderResourceView* g_mSky = nullptr;
+		ID3D11ShaderResourceView* g_mFar = nullptr;
+		ID3D11ShaderResourceView* g_mMid = nullptr;
+		ID3D11ShaderResourceView* g_mNear = nullptr;
+		ID3D11ShaderResourceView* g_mTitle = nullptr;
+
 		void DrawMenu(ImVec2 size, float now, bool click)
 		{
-			auto*       dl = ImGui::GetBackgroundDrawList();
 			auto*       fg = ImGui::GetForegroundDrawList();
 			const float k = size.y / 1080.0f;
-			// the picture, cropped to fill the screen (16:9 art)
-			float iw = size.x, ih = size.x * 9.0f / 16.0f;
-			if (ih < size.y) {
-				ih = size.y, iw = size.y * 16.0f / 9.0f;
+			const float dt = ImGui::GetIO().DeltaTime;
+			// opening: the scene fades up from black and the title settles in (a moment, never a wait)
+			static float lastSeen = -10.0f, openT = 0.0f;
+			if (now - lastSeen > 0.5f) {
+				openT = 0.0f;
 			}
-			const ImVec2 o{ (size.x - iw) / 2, (size.y - ih) / 2 };
-			auto at = [&](float u, float v) { return ImVec2{ o.x + u * iw, o.y + v * ih }; };
-			if (g_menuBg) {
-				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuBg)), o, { o.x + iw, o.y + ih });
+			lastSeen = now;
+			openT += dt;
+			const float fade = std::clamp(openT / 1.1f, 0.0f, 1.0f);
+			// parallax: the cursor leans the world a little, and it breathes on its own
+			const ImVec2 cur = Cursor(size);
+			static ImVec2 lean{ 0, 0 };
+			const ImVec2 want = cur.x >= 0 ? ImVec2{ std::clamp(cur.x / size.x - 0.5f, -0.5f, 0.5f), std::clamp(cur.y / size.y - 0.5f, -0.5f, 0.5f) } : ImVec2{ 0, 0 };
+			lean.x += (want.x - lean.x) * std::min(1.0f, dt * 1.5f);
+			lean.y += (want.y - lean.y) * std::min(1.0f, dt * 1.5f);
+			const ImVec2 drift{ std::sin(now * 0.05f) * 0.5f, std::cos(now * 0.037f) * 0.5f };
+			// the art covers the screen (16:9, 6% overscan for the parallax)
+			float cw = size.x, ch = size.x * 9.0f / 16.0f;
+			if (ch < size.y) {
+				ch = size.y, cw = size.y * 16.0f / 9.0f;
 			}
-			// the blood moon breathes
-			{
-				const ImVec2 m = at(0.5f, 0.333f);
-				const float  pulse = 0.5f + 0.5f * std::sin(now * 0.7f);
-				for (int i = 0; i < 6; ++i) {
-					fg->AddCircleFilled(m, ih * (0.20f + 0.04f * i), IM_COL32(255, 70, 30, static_cast<int>((6 + 5 * pulse) * (6 - i) / 6)), 64);
+			const float iw = cw * 1.06f, ih = ch * 1.06f;
+			auto origin = [&](float depth) {
+				return ImVec2{ (size.x - iw) / 2 - (lean.x + drift.x * 0.6f) * depth * iw * 0.05f, (size.y - ih) / 2 - (lean.y + drift.y * 0.6f) * depth * ih * 0.03f };
+			};
+			auto D = [&](float depth, float x, float y) { const ImVec2 o = origin(depth); return ImVec2{ o.x + x / 3840.0f * iw, o.y + y / 2160.0f * ih }; };
+			const ImU32 white = IM_COL32(255, 255, 255, static_cast<int>(255 * fade));
+			auto layer = [&](ID3D11ShaderResourceView* t, float depth) {
+				if (t) {
+					const ImVec2 o = origin(depth);
+					fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(t)), o, { o.x + iw, o.y + ih }, { 0, 0 }, { 1, 1 }, white);
 				}
-			}
-			// the staff's gem and the lance's strike flicker
-			{
-				const float f = 0.6f + 0.4f * std::sin(now * 9.0f) * std::sin(now * 3.1f);
-				for (auto [u, v, r] : { std::tuple{ 0.609f, 0.583f, 0.022f }, { 0.236f, 0.768f, 0.04f } }) {
-					const ImVec2 c = at(u, v);
-					for (int i = 0; i < 4; ++i) {
-						fg->AddCircleFilled(c, ih * r * (1 + i * 0.6f), IM_COL32(90, 255, 190, static_cast<int>(28 * f * (4 - i) / 4)), 32);
+			};
+			fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, 255));
+			if (!g_mSky) {  // (the new layers are missing: the old single picture)
+				if (g_menuBg) {
+					fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuBg)), { (size.x - cw) / 2, (size.y - ch) / 2 }, { (size.x + cw) / 2, (size.y + ch) / 2 });
+				}
+			} else {
+				layer(g_mSky, 0.15f);
+				{  // the blood moon breathes
+					const ImVec2 m = D(0.15f, 1460, 610);
+					const float  pulse = 0.5f + 0.5f * std::sin(now * 0.6f);
+					for (int i = 0; i < 5; ++i) {
+						fg->AddCircleFilled(m, ih * (0.13f + 0.035f * i), IM_COL32(200, 50, 30, static_cast<int>((5 + 4 * pulse) * (5 - i) / 5 * fade)), 64);
 					}
 				}
+				layer(g_mFar, 0.35f);
 			}
-			// fog: two layers drifting across the barrow-yard at different speeds
+			// far fog
 			if (g_menuFog) {
-				for (auto [speed, top, alpha, scale] : { std::tuple{ 0.012f, 0.62f, 150, 1.0f }, { -0.007f, 0.74f, 120, 1.6f } }) {
-					const float u0 = now * speed;
-					fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuFog)), at(0, top), at(1, 1.0f), { u0, 0 }, { u0 + 1.0f / scale * 2.0f, 1.0f / scale },
-						IM_COL32(255, 255, 255, alpha));
+				const float u0 = now * 0.008f;
+				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuFog)), { 0, size.y * 0.50f }, { size.x, size.y * 0.78f }, { u0, 0 }, { u0 + 1.4f, 0.8f },
+					IM_COL32(150, 170, 200, static_cast<int>(110 * fade)));
+			}
+			if (g_mSky) {
+				layer(g_mMid, 0.6f);
+				// the rune-stone's crown: green soul-fire, breathing, with a slow flare now and then
+				{
+					const ImVec2 c = D(0.6f, 1470, 1000);
+					const float  flare = std::pow(std::max(0.0f, std::sin(now * 0.31f)), 12.0f);
+					const float  br = 0.75f + 0.25f * std::sin(now * 2.3f) * std::sin(now * 0.9f) + 0.6f * flare;
+					for (int i = 0; i < 6; ++i) {
+						fg->AddCircleFilled(c, ih * (0.006f + 0.012f * i), IM_COL32(90, 255, 170, static_cast<int>(40 * br * (6 - i) / 6 * fade)), 32);
+					}
+					fg->AddCircleFilled(c, ih * 0.006f, IM_COL32(220, 255, 235, static_cast<int>(230 * fade)), 24);
+				}
+				// the ground ring: a light running round it, the runes waking in turn
+				{
+					const ImVec2 c = D(0.6f, 1470, 1500);
+					const float  rx = 430.0f / 3840.0f * iw, ry = 95.0f / 2160.0f * ih;
+					for (int i = 0; i < 16; ++i) {
+						const float a = i * 6.2832f / 16.0f;
+						const float w = std::pow(0.5f + 0.5f * std::cos(a - now * 0.9f), 6.0f);
+						const ImVec2 p{ c.x + std::cos(a) * (rx + 30 * k), c.y + std::sin(a) * (ry + 8 * k) };
+						fg->AddCircleFilled(p, (5 + 9 * w) * k, IM_COL32(110, 255, 180, static_cast<int>((20 + 120 * w) * fade)), 16);
+					}
+				}
+				// braziers: fire that never burns the same way twice
+				for (auto [bx, by] : { std::pair{ 1010.0f, 1300.0f }, std::pair{ 1930.0f, 1300.0f } }) {
+					const ImVec2 c = D(0.6f, bx, by - 30);
+					const float  f = 0.7f + 0.3f * std::sin(now * 11.0f + bx) * std::sin(now * 4.7f + by) + 0.1f * std::sin(now * 23.0f);
+					for (int i = 0; i < 5; ++i) {
+						fg->AddCircleFilled(c, ih * (0.01f + 0.018f * i), IM_COL32(255, 120, 40, static_cast<int>(26 * f * (5 - i) / 5 * fade)), 32);
+					}
+				}
+				layer(g_mNear, 1.0f);
+				// the risen's eyes: cold, and they blink
+				for (auto [ex, ey, ph] : { std::tuple{ 420.0f, 1500.0f, 0.0f }, { 880.0f, 1540.0f, 1.3f }, { 2380.0f, 1520.0f, 2.1f }, { 3200.0f, 1490.0f, 0.7f }, { 3580.0f, 1555.0f, 2.9f } }) {
+					if (std::fmod(now * 0.7f + ph * 3.0f, 6.0f) < 0.12f) {
+						continue;
+					}
+					const ImVec2 e = D(1.0f, ex, ey);
+					fg->AddCircleFilled(e, 2.2f * k, IM_COL32(150, 220, 255, static_cast<int>(200 * fade)));
+					fg->AddCircleFilled({ e.x + 7 * k, e.y }, 2.2f * k, IM_COL32(150, 220, 255, static_cast<int>(200 * fade)));
+					fg->AddCircleFilled({ e.x + 3.5f * k, e.y }, 9 * k, IM_COL32(100, 180, 255, static_cast<int>(25 * fade)));
 				}
 			}
-			// embers rising from the braziers and the strike
+			// near fog, drifting the other way
+			if (g_menuFog) {
+				const float u0 = -now * 0.006f;
+				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuFog)), { 0, size.y * 0.66f }, { size.x, size.y }, { u0, 0 }, { u0 + 0.9f, 0.7f },
+					IM_COL32(120, 140, 170, static_cast<int>(130 * fade)));
+			}
+			// embers from the braziers, ash and soul-motes adrift
 			{
-				struct Ember { float u, v, sp, sway, ph, r; bool green; };
-				static std::vector<Ember> em;
+				struct Mote { float x, y, sp, sway, ph, r; int kind; };
+				static std::vector<Mote> mo;
 				static std::mt19937 rng{ 7 };
 				std::uniform_real_distribution<float> U(0, 1);
-				if (em.empty()) {
-					for (int i = 0; i < 160; ++i) {
-						em.push_back({ U(rng), U(rng), 0.015f + 0.03f * U(rng), 0.004f + 0.01f * U(rng), U(rng) * 6.28f, 1.0f + 2.2f * U(rng), U(rng) < 0.18f });
+				if (mo.empty()) {
+					for (int i = 0; i < 140; ++i) {
+						mo.push_back({ U(rng) * 3840, U(rng) * 2160, 30 + 60 * U(rng), 10 + 30 * U(rng), U(rng) * 6.28f, 1.0f + 2.0f * U(rng), i % 7 == 0 ? 1 : (i % 3 == 0 ? 2 : 0) });
 					}
 				}
-				const float dt = ImGui::GetIO().DeltaTime;
-				for (auto& e : em) {
-					e.v -= e.sp * dt;
-					if (e.v < 0.05f) {
+				for (auto& m : mo) {
+					m.y -= m.sp * dt * (m.kind == 2 ? 0.4f : 1.0f);
+					if (m.y < 200) {
 						const float src = U(rng);
-						e.u = src < 0.3f ? 0.24f + 0.02f * (U(rng) - 0.5f) : src < 0.6f ? 0.76f + 0.02f * (U(rng) - 0.5f) : U(rng);
-						e.v = 0.85f + 0.12f * U(rng);
+						if (m.kind == 0) {  // embers rise from the braziers
+							m.x = (src < 0.5f ? 1010.0f : 1930.0f) + (U(rng) - 0.5f) * 60;
+							m.y = 1270 + 40 * U(rng);
+						} else if (m.kind == 1) {  // soul-motes from the rune-stone
+							m.x = 1470 + (U(rng) - 0.5f) * 80, m.y = 1010;
+						} else {
+							m.x = U(rng) * 3840, m.y = 1700 + 400 * U(rng);
+						}
 					}
-					const float u = e.u + std::sin(now * 0.8f + e.ph) * e.sway;
-					const float tw = 0.55f + 0.45f * std::sin(now * 6.0f + e.ph * 3);
-					const ImU32 c = e.green ? IM_COL32(140, 255, 210, static_cast<int>(200 * tw)) : IM_COL32(255, 170, 80, static_cast<int>(220 * tw));
-					const ImVec2 p = at(u, e.v);
-					fg->AddCircleFilled(p, e.r * k * 2.2f, Fade(c, 0.18f));
-					fg->AddCircleFilled(p, e.r * k, c);
+					const float x = m.x + std::sin(now * 0.7f + m.ph) * m.sway;
+					const float tw = 0.55f + 0.45f * std::sin(now * 5.0f + m.ph * 3);
+					const ImU32 c = m.kind == 0 ? IM_COL32(255, 160, 70, static_cast<int>(210 * tw * fade)) : m.kind == 1 ? IM_COL32(140, 255, 200, static_cast<int>(200 * tw * fade)) : IM_COL32(170, 180, 200, static_cast<int>(90 * fade));
+					const ImVec2 p = D(0.6f, x, m.y);
+					fg->AddCircleFilled(p, m.r * k * 2.4f, Fade(c, 0.18f));
+					fg->AddCircleFilled(p, m.r * k, c);
 				}
 			}
-			// now and then, a lightning bolt far off over the mountains (never twice in the same place)
+			// now and then, far off, a cold flash and a thin bolt over the mountains (rare, short, never bright)
 			{
-				static float next = 4.0f, life = 0;
-				static std::vector<std::vector<ImVec2>> bolt;
+				static float next = 7.0f, life = 0;
+				static std::vector<ImVec2> bolt;
 				static std::mt19937 lr{ 11 };
 				std::uniform_real_distribution<float> L(0, 1);
 				if (now > next && life <= 0) {
-					life = 0.55f;
-					next = now + 5.0f + 7.0f * L(lr);
+					life = 0.45f;
+					next = now + 9.0f + 10.0f * L(lr);
 					bolt.clear();
-					const float u0 = L(lr) < 0.5f ? 0.06f + 0.22f * L(lr) : 0.72f + 0.2f * L(lr);
-					std::vector<ImVec2> main{ { u0, 0.0f } };
-					float u = u0, v = 0.0f;
-					while (v < 0.40f) {
-						v += 0.018f + 0.02f * L(lr);
-						u += (L(lr) - 0.5f) * 0.03f;
-						main.push_back({ u, v });
-						if (L(lr) < 0.18f && bolt.size() < 4) {  // a fork
-							std::vector<ImVec2> br{ { u, v } };
-							float bu = u, bv = v;
-							const float dir = L(lr) < 0.5f ? -1.0f : 1.0f;
-							for (int i = 0; i < 6; ++i) {
-								bv += 0.015f + 0.012f * L(lr);
-								bu += dir * (0.006f + 0.012f * L(lr));
-								br.push_back({ bu, bv });
-							}
-							bolt.push_back(br);
-						}
+					float x = L(lr) < 0.5f ? 300 + 600 * L(lr) : 2500 + 900 * L(lr), y = 200;
+					bolt.push_back({ x, y });
+					while (y < 1150) {
+						y += 50 + 60 * L(lr);
+						x += (L(lr) - 0.5f) * 110;
+						bolt.push_back({ x, y });
 					}
-					bolt.insert(bolt.begin(), main);
 				}
 				if (life > 0) {
-					life -= ImGui::GetIO().DeltaTime;
-					const float flick = (life > 0.42f || (life > 0.2f && life < 0.3f)) ? 1.0f : 0.35f;  // it strikes, dims, strikes again
-					fg->AddRectFilledMultiColor(at(0, 0), at(1, 0.6f), IM_COL32(200, 190, 255, static_cast<int>(22 * flick)), IM_COL32(200, 190, 255, static_cast<int>(22 * flick)),
-						IM_COL32(200, 190, 255, 0), IM_COL32(200, 190, 255, 0));
-					for (std::size_t b = 0; b < bolt.size(); ++b) {
-						std::vector<ImVec2> pts;
-						for (auto& q : bolt[b]) pts.push_back(at(q.x, q.y));
-						const float w = (b == 0 ? 3.0f : 1.6f) * k;
-						fg->AddPolyline(pts.data(), static_cast<int>(pts.size()), IM_COL32(150, 130, 255, static_cast<int>(60 * flick)), 0, w * 6);
-						fg->AddPolyline(pts.data(), static_cast<int>(pts.size()), IM_COL32(190, 180, 255, static_cast<int>(130 * flick)), 0, w * 2.5f);
-						fg->AddPolyline(pts.data(), static_cast<int>(pts.size()), IM_COL32(250, 248, 255, static_cast<int>(255 * flick)), 0, w);
-					}
+					life -= dt;
+					const float flick = (life > 0.33f || (life > 0.15f && life < 0.22f)) ? 1.0f : 0.3f;
+					fg->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.55f }, IM_COL32(150, 170, 220, static_cast<int>(14 * flick)), IM_COL32(150, 170, 220, static_cast<int>(14 * flick)), IM_COL32(150, 170, 220, 0), IM_COL32(150, 170, 220, 0));
+					std::vector<ImVec2> pts;
+					for (auto& q : bolt) pts.push_back(D(0.35f, q.x, q.y));
+					fg->AddPolyline(pts.data(), static_cast<int>(pts.size()), IM_COL32(140, 160, 255, static_cast<int>(50 * flick)), 0, 7 * k);
+					fg->AddPolyline(pts.data(), static_cast<int>(pts.size()), IM_COL32(230, 236, 255, static_cast<int>(200 * flick)), 0, 1.6f * k);
 				}
 			}
-			// Skyrim's menu laid back over the picture, the whole screen of it: its buttons and every question it asks
-			// (Load your last save? New game?), only the bright words and lines, never its old backdrop (its 3D logo
-			// and smoke are gone: Meshes/Interface/Logo/logo.nif is an empty model in our pack).
+			// vignette
+			fg->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.25f }, IM_COL32(0, 0, 0, 120), IM_COL32(0, 0, 0, 120), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
+			fg->AddRectFilledMultiColor({ 0, size.y * 0.75f }, size, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 150), IM_COL32(0, 0, 0, 150));
+			// the title, settling in
+			if (g_mTitle) {
+				const float tw = size.x * 0.62f, th = tw * 396.0f / 2479.0f;
+				const float ty = size.y * 0.06f + (1.0f - EaseOut(std::clamp(openT / 1.6f, 0.0f, 1.0f))) * 14 * k;
+				const ImVec2 a{ (size.x - tw) / 2 - lean.x * 6 * k, ty };
+				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_mTitle)), a, { a.x + tw, a.y + th }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * std::clamp(openT / 1.6f, 0.0f, 1.0f))));
+			}
+			// Skyrim's questions and hints (lower right) laid back over the picture: only the bright words
 			if (g_frameSrv && g_keyPs) {
-				g_keyCursor = { -1000, -1000 };  // (Skyrim's own cursor is switched off while our menu shows)
+				g_keyCursor = { -1000, -1000 };
 				fg->AddCallback(KeyOn, nullptr);
 				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_frameSrv)), { 0, 0 }, size, { 0, 0 }, { 1, 1 });
 				fg->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 			}
-			(void)dl;
+			// Skyrim's entries, redrawn as ours over its own (it still takes the clicks and the keys)
+			{
+				const auto entries = ReadMainList(size);
+				static float selY = -1;
+				static int   lastSel = -1;
+				for (std::size_t i = 0; i < entries.size(); ++i) {
+					const auto& e = entries[i];
+					const float cy = (e.a.y + e.b.y) * 0.5f;
+					const float right = std::max(e.b.x, size.x - 60 * k);
+					const ImVec2 pa{ right - 430 * k, cy - 24 * k }, pb{ right, cy + 24 * k };
+					const float stagger = std::clamp((openT - 0.25f - 0.07f * i) / 0.4f, 0.0f, 1.0f);  // they slide in one after another
+					const float dx = (1.0f - EaseOut(stagger)) * 40 * k;
+					// a plate that covers Skyrim's own words (and reads as our button)
+					fg->AddRectFilledMultiColor({ pa.x + dx, pa.y }, { pb.x + dx, pb.y }, IM_COL32(4, 6, 10, 0), IM_COL32(6, 8, 12, static_cast<int>(235 * stagger)), IM_COL32(6, 8, 12, static_cast<int>(235 * stagger)), IM_COL32(4, 6, 10, 0));
+					if (e.sel) {
+						if (lastSel != static_cast<int>(i)) {
+							lastSel = static_cast<int>(i);
+						}
+						if (selY < 0) {
+							selY = cy;
+						}
+					}
+					const ImU32 tc = e.disabled ? IM_COL32(110, 110, 115, static_cast<int>(200 * stagger)) : e.sel ? IM_COL32(245, 236, 214, static_cast<int>(255 * stagger)) : IM_COL32(176, 186, 198, static_cast<int>(220 * stagger));
+					std::string up = e.text;
+					std::transform(up.begin(), up.end(), up.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+					const float fs = (e.sel ? 30.0f : 26.0f) * k;
+					const ImVec2 ts = Measure(g_title, fs, up);
+					Txt(fg, g_title, fs, { pb.x - 40 * k - ts.x + dx, cy - ts.y * 0.5f }, tc, up, e.sel ? 2.0f * k : 0.0f, IM_COL32(90, 255, 170, 255));
+				}
+				// the selection: a soul-fire rune that glides to the chosen entry
+				for (const auto& e : entries) {
+					if (!e.sel) {
+						continue;
+					}
+					const float cy = (e.a.y + e.b.y) * 0.5f;
+					selY = selY < 0 ? cy : selY + (cy - selY) * std::min(1.0f, dt * 14.0f);
+					const float right = std::max(e.b.x, size.x - 60 * k);
+					const float x = right - 400 * k;
+					const float pulse = 0.75f + 0.25f * std::sin(now * 4.0f);
+					const float r = 9 * k;
+					fg->AddLine({ x + 18 * k, selY + 22 * k }, { right - 30 * k, selY + 22 * k }, IM_COL32(90, 255, 170, static_cast<int>(120 * pulse)), 1.5f * k);
+					fg->AddCircleFilled({ x, selY }, r * 2.6f, IM_COL32(90, 255, 170, static_cast<int>(40 * pulse)), 24);
+					fg->AddQuadFilled({ x, selY - r }, { x + r * 0.7f, selY }, { x, selY + r }, { x - r * 0.7f, selY }, IM_COL32(170, 255, 210, static_cast<int>(255 * pulse)));
+				}
+				if (entries.empty()) {
+					selY = -1;
+				}
+			}
 			PartyPanel(fg, size, { 40 * k, size.y - 40 * k }, k, click);
-			// our cursor: a gold-edged iron arrowhead with an ember at its tip
-			const ImVec2 c = Cursor(size);
+			// the curtain that lifts as the menu opens
+			if (fade < 1.0f) {
+				fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(255 * (1.0f - fade))));
+			}
+			// our cursor: a soul-fire arrowhead in iron
+			const ImVec2 c = cur;
 			if (c.x >= 0) {
 				const ImVec2 p1{ c.x + 5 * k, c.y + 26 * k }, p2{ c.x + 11 * k, c.y + 18 * k }, p3{ c.x + 20 * k, c.y + 17 * k };
-				fg->AddQuadFilled(c, p1, p2, p3, IM_COL32(28, 24, 22, 240));
-				fg->AddQuad(c, p1, p2, p3, kGold, 1.6f * k);
-				fg->AddCircleFilled(c, 3.0f * k, IM_COL32(255, 170, 80, 255));
-				fg->AddCircleFilled(c, 7.0f * k, IM_COL32(255, 120, 40, 50));
+				fg->AddQuadFilled(c, p1, p2, p3, IM_COL32(18, 20, 24, 240));
+				fg->AddQuad(c, p1, p2, p3, IM_COL32(150, 170, 190, 255), 1.6f * k);
+				fg->AddCircleFilled(c, 3.0f * k, IM_COL32(140, 255, 200, 255));
+				fg->AddCircleFilled(c, 7.0f * k, IM_COL32(90, 255, 170, 50));
 			}
 		}
 
@@ -1114,6 +1323,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			const bool bg = SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_bg.png", nullptr, &g_menuBg));
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_fog.png", nullptr, &g_menuFog);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_sky.png", nullptr, &g_mSky);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_far.png", nullptr, &g_mFar);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_mid.png", nullptr, &g_mMid);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_near.png", nullptr, &g_mNear);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_title.png", nullptr, &g_mTitle);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\frame.png", nullptr, &g_frame);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\divider.png", nullptr, &g_divider);
 			g_init = true;

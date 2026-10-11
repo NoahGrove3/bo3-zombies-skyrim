@@ -141,6 +141,7 @@ namespace bo3z
 		void BossMusic(bool a_on);
 		void FreedMusic();
 		void SetMenuMusic();
+		void MenuUiSounds(bool a_on);  // the main menu's own focus/accept/back sounds play ours while it is up
 		inline constexpr std::uint64_t kLoopCharge = 1, kLoopRite = 2;
 	}
 

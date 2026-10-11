@@ -395,4 +395,32 @@ namespace bo3z::Audio
 			logger::info("audio: main menu music set to {}", kPath);
 		}
 	}
+
+	// While the main menu is up its own interface sounds (focus, accept, back, start) are ours: Skyrim's menu
+	// keeps calling its sound records, which play the Undying Nights clips until the menu closes.
+	void MenuUiSounds(bool a_on)
+	{
+		struct Swap { RE::FormID vanilla; gen::Sound ours; RE::BGSSoundDescriptor* saved{ nullptr }; };
+		static std::array<Swap, 5> swaps{ { { 0x03C759, gen::Sound::ui_move }, { 0x03C753, gen::Sound::ui_move }, { 0x03C751, gen::Sound::ui_select },
+			{ 0x03C752, gen::Sound::ui_close }, { 0x0B5691, gen::Sound::coffer_land } } };
+		static bool on = false;
+		if (a_on == on) {
+			return;
+		}
+		for (auto& sw : swaps) {
+			auto* v = RE::TESForm::LookupByID<RE::BGSSoundDescriptorForm>(sw.vanilla);
+			auto* o = Desc(sw.ours);
+			if (!v || !o) {
+				continue;
+			}
+			if (a_on) {
+				sw.saved = v->soundDescriptor;
+				v->soundDescriptor = o->soundDescriptor;
+			} else if (sw.saved) {
+				v->soundDescriptor = sw.saved;
+				sw.saved = nullptr;
+			}
+		}
+		on = a_on;
+	}
 }
