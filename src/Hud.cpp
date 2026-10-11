@@ -634,13 +634,16 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						dl->AddQuadFilled({ ex, c.y - r }, { ex + r, c.y }, { ex, c.y + r }, { ex - r, c.y }, Fade(trim, al));
 					}
 					if (!b.name.empty()) {
-						const float fs = (b.rank == 2 ? 17.0f : b.rank == 1 ? 15.0f : 13.0f) * k * sc;
+						const float fs = std::max(9.0f * k, (b.rank == 2 ? 12.5f : b.rank == 1 ? 11.5f : 11.0f) * k * sc);
 						const ImU32 nc = b.rank == 2 ? IM_COL32(240, 206, 130, 255) : b.rank == 1 ? IM_COL32(214, 190, 255, 255) : IM_COL32(222, 212, 192, 255);
 						std::string up = b.name;
 						if (b.rank == 2 || b.rank == 1) {
 							std::transform(up.begin(), up.end(), up.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
 						}
-						TxtC(dl, b.rank == 3 ? g_body : g_title, fs, c.x, a.y - p - fs * 1.25f, Fade(nc, al), up, 1.2f * k, IM_COL32(0, 0, 0, 255));
+						ImFont*      nf = b.rank == 3 ? g_body : g_title;
+						const ImVec2 ts = Measure(nf, fs, up);
+						const ImVec2 tp{ std::round(c.x - ts.x * 0.5f), std::round(a.y - p - 3.0f * k - ts.y) };  // centred on the bar, just above it
+						Txt(dl, nf, fs, tp, Fade(nc, al), up, 1.0f * k, IM_COL32(0, 0, 0, 255));
 					}
 				}
 			}
