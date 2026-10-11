@@ -335,12 +335,29 @@ def dirge_text():
            "<p>The priests say the Dirge is no ordinary shout. It was sung, not spoken: a slow word that sank into the earth and stayed there. "
            "By day it sleeps. When the sun goes down it wakes, and every grave in the holds remembers it.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>II. The Nights</font></p>", img('graves', 300, 176),
-           "<p>From dusk until the first light the dead climb out of the earth: the Risen first, then the Iron Reapers with their great blades, "
-           "then the Voidbound who raise skeletons to fight for them. Each night they come in greater number and harder to kill. "
-           "At dawn they crumble to ash.</p>",
-           "<p>In the heart of every city stands a shrine raised against them. At its alcoves you will find Sheogorath's Coffer, which gives a spell to anyone willing to gamble for it; "
-           "the Brew Machine, whose brews make the drinker stronger; and the Atronach Reforge, which makes any spell fiercer. A spell reforged three times becomes Ascendant, and its great strike falls twice.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>III. Breaking the Dirge</font></p>", img('wards', 300, 176),
+           "<p>From dusk until first light the dead climb out of the earth, more each night and harder to kill. At dawn they crumble to ash. "
+           "I have learned to know them apart:</p>",
+           "<p><b>The Risen Dead</b>, slow, many, and never tired.</p>",
+           "<p><b>Hollow Brides</b>, veiled and fast. They run you down before you hear them.</p>",
+           "<p><b>Drowned Wailers</b>, river-hags whose scream calls the rest of the horde to them. Kill them first.</p>",
+           "<p><b>Stitched Abominations</b>, sewn from many bodies. Strike them from afar: they burst.</p>",
+           "<p><b>Gloomstalkers</b> in the dark, <b>Iron Reapers</b> with their great blades and chains, and the <b>Voidbound</b> who raise skeletons to fight for them.</p>",
+           "<p>Champions walk among them: the <b>Horned Bone Knight</b>, the <b>Barrow King</b> and the <b>Lich of the Dirge</b>. "
+           "Look at a wounded thing and you will see how much life it has left, a pale bar above it; the champions' bars burn gold and bear their names.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>III. The Shrine of the Dirge</font></p>", img('wards', 300, 176),
+           "<p>In the heart of every city stands a Shrine of the Dirge, open on every side. Its power is yours for the septims of the dead, "
+           "the coin each kill leaves in your purse, and the night does not stop while you bargain.</p>",
+           "<p><b>Call a spell.</b> The shrine gathers its power, the spells turn over its crown, and one stays there for you to take. "
+           "Every spell you lack has the same chance.</p>",
+           "<p><b>Reforge.</b> The spell in your hands grows fiercer, three times over. A spell reforged three times is Ascendant: its great strike falls twice.</p>",
+           "<p><b>Brews.</b> Nine draughts, each one a gift that lasts until you fall: "
+           + ", ".join(f"<i>{x['label']}</i>" for x in S['perks']['rows'][:-1]) + f" and <i>{S['perks']['rows'][-1]['label']}</i>.</p>",
+           "<p><b>The Thu'um.</b> When a city is freed, its shrine keeps that city's voice for you (see VI).</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>IV. The Eighteen Spells</font></p>",
+           "<p>Tap to throw a bolt from one hand. Hold, and both hands gather the spell's full power: the longer you hold, the harder it strikes. "
+           "Let go too soon and the power gutters out. Magicka comes back fast.</p>",
+           "<p>" + ", ".join(w['label'] for w in S['weapons']['rows'] if w.get('kind') == 'tome' and not w.get('retired')) + ".</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>V. Breaking the Dirge</font></p>",
            "<p>The Dirge has taken root beneath each city, and each city must be freed its own way: four rites, one after another. Most must be done by night.</p>"]
     for t in towns:
         out.append(f"<p><b>{t}</b></p>")
@@ -349,16 +366,19 @@ def dirge_text():
             out.append(f"<p>{k + 1}. <i>{r['title'].replace('{city}', t)}.</i> {txt}</p>")
         if t == 'Riverwood':
             out.append(img('herald', 300, 176))
-    out += ["<p>When all four rites are done, the Dirge loses its hold on that city. Its dead sleep again, and none will rise within its bounds.</p>",
-            "[pagebreak]", "<p align='center'><font size='24'>IV. The Voices of the Holds</font></p>",
+    out += ["<p>Of the ritual circle: when that rite begins, a ring of light rises over the shrine and floats there. While no dead thing stands inside it, its count runs down. "
+            "Let them cross it and the count begins again. Stand at its edge and keep them out.</p>",
+            "<p>When all four rites are done, the Dirge loses its hold on that city. Its dead sleep again, and none will rise within its bounds.</p>",
+            "[pagebreak]", "<p align='center'><font size='24'>VI. The Voices of the Holds</font></p>",
             "<p>Each freed city keeps a Thu'um of its own, sleeping in the Shrine of the Dirge at its station. Go to the shrine and it is yours. Speak one word, or hold your breath and speak all three.</p>"]
     for h in S['shouts']['rows']:
         out.append(f"<p><b>{h['town']}</b>: <i>{h['label']}</i> ({' '.join(h['words'])}, '{' '.join(h['translations'])}'). {h['text']}.</p>")
-    out += ["[pagebreak]", "<p align='center'><font size='24'>V. Nights of Omen</font></p>", img('omen', 300, 152),
-            "<p>Some nights are worse than others. Under the <b>Blood Moon</b> the dead rise faster. On a <b>Fog Night</b> the mist hides a great wyrm of bone, Grimmvar, Herald of the Dirge. "
+    out += ["[pagebreak]", "<p align='center'><font size='24'>VII. Nights of Omen</font></p>", img('omen', 300, 152),
+            "<p>Some nights are worse than others. Under the <b>Blood Moon</b> the dead rise faster. On a <b>Fog Night</b> the mist hides a great wyrm of bone, Grimmvar, Herald of the Dirge: "
+            "when he draws breath, run from the fire that follows. "
             "In an <b>Ash Storm</b> the dead run, and every kill is worth twice as much. On the <b>Night of Iron</b> the Reapers and the Voidbound march in force.</p>",
             "<p>Watch the dead for tokens. A skull gives Insta-Kill. A coin gives Double Points. A falling star is the Nuke: it destroys every risen corpse and buys a little quiet. "
-            "A chest is a Fire Sale, when the Coffer asks almost nothing.</p>",
+            "A chest is a Fire Sale, when the shrine asks almost nothing for a spell.</p>",
             f"<p>{cu['freedAll']}</p>", "</font>"]
     return '\n'.join(out)
 recs.setdefault('BOOK', []).append(record('BOOK', fid('BOOK', 'dirge'), [
