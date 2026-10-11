@@ -1,0 +1,135 @@
+"""Undying Nights SFX: cuts the supplied sound library into game-ready clips (sheet: sfx).
+
+    python tools/sfx.py scan  <library dir>              list every file's takes (non-silent stretches)
+    python tools/sfx.py build <library dir> <out dir>    write every clip in sheets/sfx.json as 16-bit PCM WAV
+
+The library files are never modified. Each clip names its source by alias (sheet 'sources'), then picks:
+  take: n            the n-th take (silence-separated stretch, -45 dB / 0.25 s)
+  t0, t1             or an explicit window in seconds
+  split: [k, n]      then the k-th of n parts, cut at the quietest points (one long growl -> several)
+and shapes it: gain to a target peak (dB), fades (ms), mono or stereo, pitch (semitones), optional seamless
+loop (the tail crossfaded into the head, for charge hums, beams and ritual drones), a length cap.
+"""
+import json, pathlib, subprocess, sys
+import numpy as np
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+SR = 44100
+
+
+def decode(path, ch=2):
+    raw = subprocess.run(['ffmpeg', '-v', 'error', '-i', str(path), '-f', 'f32le', '-ac', str(ch), '-ar', str(SR), '-'],
+                         capture_output=True, check=True).stdout
+    return np.frombuffer(raw, np.float32).reshape(-1, ch).copy()
+
+
+def takes(x, floor_db=-45.0, min_gap=0.25):
+    """non-silent stretches [(s0, s1)] in samples"""
+    env = np.abs(x).max(1)
+    win = int(0.02 * SR)
+    env = np.convolve(env, np.ones(win) / win, 'same')
+    on = env > 10 ** (floor_db / 20)
+    out, start, quiet = [], None, 0
+    for i in range(0, len(on), win):
+        if on[i]:
+            if start is None:
+                start = i
+            quiet = 0
+        elif start is not None:
+            quiet += win
+            if quiet >= min_gap * SR:
+                out.append((start, i - quiet + win)); start = None; quiet = 0
+    if start is not None:
+        out.append((start, len(x)))
+    return [(a, b) for a, b in out if b - a > 0.05 * SR]
+
+
+def split_at_quiet(x, k, n):
+    if n <= 1:
+        return x
+    env = np.sqrt(np.convolve((x ** 2).mean(1), np.ones(int(0.05 * SR)) / int(0.05 * SR), 'same'))
+    cuts = [0]
+    for j in range(1, n):
+        c = int(len(x) * j / n); w = int(len(x) / n * 0.35)
+        lo, hi = max(1, c - w), min(len(x) - 1, c + w)
+        cuts.append(lo + int(np.argmin(env[lo:hi])))
+    cuts.append(len(x))
+    return x[cuts[k]:cuts[k + 1]]
+
+
+def trim(x, floor_db=-50.0):
+    env = np.abs(x).max(1); thr = 10 ** (floor_db / 20)
+    idx = np.nonzero(env > thr)[0]
+    return x[max(0, idx[0] - int(0.005 * SR)):idx[-1] + int(0.02 * SR)] if len(idx) else x
+
+
+def pitch(x, semis):
+    if not semis:
+        return x
+    f = 2 ** (semis / 12)   # resample (tape-style: lower is slower and darker, which suits the undead)
+    n = int(len(x) / f)
+    t = np.linspace(0, len(x) - 1, n)
+    return np.stack([np.interp(t, np.arange(len(x)), x[:, c]) for c in range(x.shape[1])], 1).astype(np.float32)
+
+
+def make_loop(x, xf_ms=400):
+    xf = min(int(xf_ms * SR / 1000), len(x) // 3)
+    head, body, tail = x[:xf], x[xf:len(x) - xf], x[len(x) - xf:]
+    r = np.linspace(0, 1, xf)[:, None]
+    return np.concatenate([body, tail * (1 - r) + head * r])  # the end flows straight into the start
+
+
+def write_wav(path, x):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pcm = (np.clip(x, -1, 1) * 32767).astype('<i2')
+    import wave
+    with wave.open(str(path), 'wb') as w:
+        w.setnchannels(x.shape[1]); w.setsampwidth(2); w.setframerate(SR); w.writeframes(pcm.tobytes())
+
+
+def clip(lib, src_file, c):
+    ch = 2 if c.get('stereo') else 1
+    x = decode(lib / src_file, 2)
+    if 'take' in c:
+        t = takes(x)
+        a, b = t[c['take']]
+        x = x[a:b]
+    elif 't0' in c:
+        x = x[int(c['t0'] * SR):int(c.get('t1', len(x) / SR) * SR)]
+    if 'split' in c:
+        x = split_at_quiet(x, *c['split'])
+    x = trim(x)
+    x = pitch(x, c.get('pitch', 0))
+    if c.get('maxLen'):
+        x = x[:int(c['maxLen'] * SR)]
+    if ch == 1:
+        x = x.mean(1, keepdims=True)
+    if c.get('loop'):
+        x = make_loop(x)
+    fi, fo = int(c.get('fadeIn', 4) * SR / 1000), int(c.get('fadeOut', 60) * SR / 1000)
+    if not c.get('loop'):
+        if fi: x[:fi] *= np.linspace(0, 1, fi)[:, None]
+        if fo: x[-fo:] *= np.linspace(1, 0, min(fo, len(x)))[:, None]
+    peak = np.abs(x).max() + 1e-9
+    x *= 10 ** (c.get('peak', -3.0) / 20) / peak
+    return x
+
+
+def main():
+    cmd, lib = sys.argv[1], pathlib.Path(sys.argv[2])
+    sheet = json.load(open(ROOT / 'sheets/sfx.json'))
+    if cmd == 'scan':
+        for f in sorted(lib.glob('*.mp3')):
+            x = decode(f)
+            print(f'{len(x) / SR:7.2f}s  takes ' + ' '.join(f'[{a / SR:.2f}-{b / SR:.2f}]' for a, b in takes(x)) + f'  {f.name}')
+        return
+    out = pathlib.Path(sys.argv[3])
+    src = sheet['sources']
+    for c in sheet['rows']:
+        x = clip(lib, src[c['src']], c)
+        write_wav(out / f"{c['id']}.wav", x)
+        print(f"{c['id']:28s} {len(x) / SR:6.2f}s {'loop' if c.get('loop') else ''}")
+
+
+if __name__ == '__main__':
+    main()

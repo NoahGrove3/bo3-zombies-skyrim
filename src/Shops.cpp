@@ -164,7 +164,7 @@ namespace bo3z
 						g_show.t = 0;
 						g_show.shown = g_show.gun;
 						ShowModel(Forms::Ours(gen::kShowStat[g_show.gun]), gen::kShowRise);
-						Forms::PlayAt(gen::Sound::charge_ready, chest.get());
+						Forms::PlayAt(gen::Sound::coffer_land, chest.get());
 						Hud::Banner(std::string(gen::kGuns[g_show.gun].label) + "  -  Activate the shrine to take it", 4.0f);
 						g_show.phase = Show::Offering;
 					}
@@ -1175,7 +1175,7 @@ namespace bo3z
 				return false;
 			}
 			Gun::Give(g_show.gun);
-			Forms::Play(gen::Sound::buy);
+			Forms::Play(gen::Sound::coffer_take);
 			Hud::Banner(std::string(gen::kGuns[g_show.gun].label), 2.5f);
 			logger::info("shrine: took {}", gen::kGuns[g_show.gun].id);
 			Remove(g_show.display);
@@ -1216,8 +1216,7 @@ namespace bo3z
 			g_show.chest = a_ref->CreateRefHandle();
 			g_show.phase = Show::Charging;
 			g_show.gun = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
-			Forms::PlayAt(gen::Sound::coffer_open, a_ref);
-			Forms::PlayAt(gen::Sound::charge_up, a_ref);
+			Forms::PlayAt(gen::Sound::coffer_charge, a_ref);
 			logger::info("shrine: rolling {} (1 in {})", gen::kGuns[g_show.gun].id, pool.size());
 		}
 
@@ -1407,6 +1406,7 @@ namespace bo3z
 				case 2: BuyPerk(g_sel, ref); break;
 				case 3: Curse::ClaimRelic(ref ? TownOf(ref) : -1); break;
 				case 4:
+					Forms::Play(gen::Sound::ui_close);
 					g_menu = false;
 					g_closedAt = std::chrono::steady_clock::now();
 					break;
@@ -1418,8 +1418,8 @@ namespace bo3z
 				case 0x03: act(1); return true;                 // 2
 				case 0x04: act(2); return true;                 // 3
 				case 0x05: act(3); return true;                 // 4
-				case 0xCB: g_sel = (g_sel + n - 1) % n; return true;  // left arrow
-				case 0xCD: g_sel = (g_sel + 1) % n; return true;      // right arrow
+				case 0xCB: g_sel = (g_sel + n - 1) % n; Forms::Play(gen::Sound::ui_move); return true;  // left arrow
+				case 0xCD: g_sel = (g_sel + 1) % n; Forms::Play(gen::Sound::ui_move); return true;      // right arrow
 				case 0x0E: act(4); return true;                 // backspace
 				case 0x12:                                      // E (Activate): takes a waiting spell, else leaves
 					if (!TakeOffer(ref)) {
@@ -1431,6 +1431,7 @@ namespace bo3z
 			}
 			if (dev == RE::INPUT_DEVICE::kMouse && (code == 8 || code == 9)) {
 				g_sel = (g_sel + (code == 8 ? n - 1 : 1)) % n;
+				Forms::Play(gen::Sound::ui_move);
 				return true;
 			}
 			if (dev == RE::INPUT_DEVICE::kGamepad) {
@@ -1439,8 +1440,8 @@ namespace bo3z
 				case 0x8000: act(1); return true;  // Y (triangle)
 				case 0x1000: act(2); return true;  // A (cross)
 				case 0x0001: act(3); return true;  // dpad up
-				case 0x0004: g_sel = (g_sel + n - 1) % n; return true;  // dpad left
-				case 0x0008: g_sel = (g_sel + 1) % n; return true;      // dpad right
+				case 0x0004: g_sel = (g_sel + n - 1) % n; Forms::Play(gen::Sound::ui_move); return true;  // dpad left
+				case 0x0008: g_sel = (g_sel + 1) % n; Forms::Play(gen::Sound::ui_move); return true;      // dpad right
 				case 0x2000: act(4); return true;  // B (circle)
 				default: return false;
 				}
@@ -1505,6 +1506,7 @@ namespace bo3z
 					break;
 				}
 				if (g_menu && g_menuRef.get().get() == a_ref) {
+					Forms::Play(gen::Sound::ui_close);
 					g_menu = false;
 					g_closedAt = std::chrono::steady_clock::now();
 				} else {

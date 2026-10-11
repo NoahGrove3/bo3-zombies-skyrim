@@ -148,7 +148,7 @@
         "goal": "Slay Hrothgar the Barrow-Lord",
         "text": "Bound out of his barrow, the Barrow-Lord walks Riverwood himself. Find Hrothgar in the night and end him.",
         "order": "",
-        "champion": "reaper",
+        "champion": "king",
         "championName": "Hrothgar the Barrow-Lord",
         "championHealth": 25
       }
@@ -172,7 +172,7 @@
         "goal": "Hunt down the Ash-Skald",
         "text": "A dead bard of Jorrvaskr sings the Dirge in the streets, and the dead dance to it. Hunt the Ash-Skald down before dawn.",
         "order": "",
-        "champion": "shadow",
+        "champion": "knight",
         "championName": "The Ash-Skald",
         "championHealth": 18
       },
@@ -229,7 +229,7 @@
         "goal": "Destroy Potema's Last Thrall",
         "text": "Her last thrall still serves her and raises the dead in her name. Destroy it.",
         "order": "",
-        "champion": "necro",
+        "champion": "lich",
         "championName": "Potema's Last Thrall",
         "championHealth": 22
       },
@@ -286,7 +286,7 @@
         "goal": "Slay the Frost-Jarl Hrolvar",
         "text": "A jarl of the old Kings walks again, frozen and furious. Find Hrolvar in the night and break him.",
         "order": "",
-        "champion": "reaper",
+        "champion": "king",
         "championName": "Frost-Jarl Hrolvar",
         "championHealth": 30
       }
@@ -321,7 +321,7 @@
         "goal": "Destroy the Forsworn Witch-Bones",
         "text": "A briarheart witch, long dead, raises the Reach's dead against the city. Destroy her.",
         "order": "",
-        "champion": "necro",
+        "champion": "wailer",
         "championName": "The Forsworn Witch-Bones",
         "championHealth": 22
       },
@@ -356,7 +356,7 @@
         "goal": "Hunt the Nightingale's Shade",
         "text": "A dead Nightingale hunts the rooftops, quick and silent. Catch it before dawn.",
         "order": "",
-        "champion": "shadow",
+        "champion": "runner",
         "championName": "The Nightingale's Shade",
         "championHealth": 20
       },
@@ -424,7 +424,7 @@
         "goal": "Slay the Gravewarden",
         "text": "The Gravewarden guarded Falkreath's dead for a thousand years. Now he leads them. Lay him to rest.",
         "order": "",
-        "champion": "reaper",
+        "champion": "knight",
         "championName": "The Gravewarden",
         "championHealth": 28
       }
@@ -459,7 +459,7 @@
         "goal": "Destroy Movarth's Blood-Thrall",
         "text": "A thrall of the old vampire lord leads the marsh dead. Destroy it.",
         "order": "",
-        "champion": "necro",
+        "champion": "bloater",
         "championName": "Movarth's Blood-Thrall",
         "championHealth": 22
       },
@@ -505,7 +505,7 @@
         "goal": "Hunt Vaermina's Hound",
         "text": "A hound of the Daedric dream stalks Dawnstar's dead. Hunt it down.",
         "order": "",
-        "champion": "shadow",
+        "champion": "bloater",
         "championName": "Vaermina's Hound",
         "championHealth": 22
       },
@@ -540,7 +540,7 @@
         "goal": "Destroy the Drowned Archmage",
         "text": "An archmage lost in the Great Collapse walks out of the sea. Destroy what is left of him.",
         "order": "",
-        "champion": "necro",
+        "champion": "lich",
         "championName": "The Drowned Archmage",
         "championHealth": 24
       },

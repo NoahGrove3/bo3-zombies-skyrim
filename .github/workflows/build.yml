@@ -62,10 +62,11 @@ jobs:
           Copy-Item data\BO3Zombies.esp "$stage\Data\BO3Zombies.esp"
           Copy-Item third_party\address-library\versionlib-1-7-104-0.bin "$stage\Data\SKSE\Plugins\"
           python -m pip install --quiet numpy scipy pillow
-          python tools/synth.py "$stage\Data\Sound"
           python tools/icons.py "$stage\Data\Interface\UndyingNights"
           python tools/bookart.py "$stage\Data"
-          Copy-Item assets\sound\*.wav "$stage\Data\Sound\fx\UndyingNights\"
+          New-Item -ItemType Directory -Force "$stage\Data\Sound\fx\UndyingNights\un", "$stage\Data\Music\UndyingNights" | Out-Null
+          Copy-Item assets\sound\un\*.wav "$stage\Data\Sound\fx\UndyingNights\un\"   # the Undying Nights SFX library, cut by tools/sfx.py
+          Copy-Item assets\music\*.wav "$stage\Data\Music\UndyingNights\"
           Copy-Item assets\ui\*.png "$stage\Data\Interface\UndyingNights\"
           New-Item -ItemType Directory -Force "$stage\Data\Interface\UndyingNights\fonts" | Out-Null
           Copy-Item assets\fonts\* "$stage\Data\Interface\UndyingNights\fonts\"

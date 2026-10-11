@@ -18,7 +18,7 @@ def group(label, recs):
     data = b''.join(recs)
     return b'GRUP' + struct.pack('<I', 24 + len(data)) + label.encode() + struct.pack('<iHHHH', 0, 0, 0, 44, 0) + data
 fid = lambda kind, key: SELF | IDS[(kind, key)]
-recs = {'WOOP': [], 'SHOU': [], 'GLOB': [], 'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': []}
+recs = {'WOOP': [], 'SHOU': [], 'GLOB': [], 'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': [], 'MUSC': [], 'MUST': [], 'VTYP': []}
 
 for p in S['perks']['rows']:
     data = bytearray(tsub('mgef', 'DATA'))
@@ -29,7 +29,7 @@ for p in S['perks']['rows']:
     struct.pack_into('<I', data, 96, 0)                      # no hit art
     recs['MGEF'].append(record('MGEF', fid('MGEF', p['id']), [
         sub('EDID', z('BO3Z_Perk_' + p['id'])), sub('FULL', z(p['label'])), sub('MDOB', tsub('mgef', 'MDOB')),
-        sub('DATA', bytes(data)), sub('SNDD', tsub('mgef', 'SNDD')), sub('DNAM', z(p['description']))]))
+        sub('DATA', bytes(data)), sub('DNAM', z(p['description']))]))  # (no SNDD: no Skyrim sounds on the brews)
 
 def obnd(r): return struct.pack('<6h', -r, -r, 0, r, r, r * 2)
 for o in S['objects']['rows']:
@@ -166,11 +166,26 @@ for s in S['sounds']['rows']:
     if s['plugin'] != PLUGIN: continue
     tpl = 'sndr_3d' if s['space'] == '3d' else 'sndr_ui'
     files = s.get('files') or [s['file']]
-    # Skyrim's own effects pitched down (frequency shift, percent) with a touch of variance; ours as they are
-    bnam = struct.pack('<bBBBH', int(s.get('shift', 0)), 4 if s.get('files') else 0, 128, 0, int(float(s.get('atten', 0)) * 100))  # static attenuation in dB*100
+    # category: UI sounds in Skyrim's UI category, everything else in SFX (so the effects slider governs it)
+    gnam = tsub('sndr_ui', 'GNAM') if s.get('cat') == 'ui' else struct.pack('<I', 0x000172A1)
+    lnam = bytearray(tsub(tpl, 'LNAM'))
+    if s.get('loop'):
+        lnam[1] = 0x08                                  # loop (charge hums, the ritual circle)
+    # engine pitch shift (percent) for variety; random variance only when there are several takes
+    bnam = struct.pack('<bBBBH', int(s.get('shift', 0)), 6 if len(files) > 1 else 3, 128, 0, int(float(s.get('atten', 0)) * 100))  # static attenuation in dB*100
     recs['SNDR'].append(record('SNDR', fid('SNDR', s['id']), [
-        sub('EDID', z(s['editorId'])), sub('CNAM', tsub(tpl, 'CNAM')), sub('GNAM', tsub(tpl, 'GNAM'))] +
-        [sub('ANAM', z(fl)) for fl in files] + [sub('ONAM', tsub(tpl, 'ONAM')), sub('LNAM', tsub(tpl, 'LNAM')), sub('BNAM', bnam)]))
+        sub('EDID', z(s['editorId'])), sub('CNAM', tsub(tpl, 'CNAM')), sub('GNAM', gnam)] +
+        [sub('ANAM', z(fl)) for fl in files] + [sub('ONAM', tsub(tpl, 'ONAM')), sub('LNAM', bytes(lnam)), sub('BNAM', bnam)]))
+
+# music: Grimmvar's fight and a city freed play through Skyrim's own music system (music slider, ducking, no clash
+# with the combat music: higher priority), from tracks cut out of the supplied library
+for key, edid, track, flags, prio, fade in (('boss', 'UN_MUSBoss', 'Data\\Music\\UndyingNights\\mus_boss.wav', 0x24, 1, 3.0),
+                                           ('freed', 'UN_MUSFreed', 'Data\\Music\\UndyingNights\\mus_freed.wav', 0x21, 1, 1.0)):
+    recs['MUST'].append(record('MUST', fid('MUST', key), [sub('EDID', z(edid + 'Track')), sub('CNAM', struct.pack('<I', 0x6ED7E048)), sub('ANAM', z(track))]))
+    recs['MUSC'].append(record('MUSC', fid('MUSC', key), [sub('EDID', z(edid)), sub('FNAM', struct.pack('<I', flags)),
+        sub('PNAM', struct.pack('<HH', prio, 10000)), sub('WNAM', struct.pack('<f', fade)), sub('TNAM', struct.pack('<I', fid('MUST', key)))]))
+# the undead speak only with the mod's own voice: a voice type no dialogue uses (Skyrim's draugr groans stay out)
+recs['VTYP'].append(record('VTYP', fid('VTYP', 'silent'), [sub('EDID', z('UN_SilentVoice')), sub('DNAM', b'\0')]))
 
 DREC, _ = dressing(S)
 for (kind, key), r in DREC.items():
@@ -195,6 +210,7 @@ for p in S['projectiles']['rows']:
     struct.pack_into('<f', pd, 8, float(p['speed']))  # speed
     struct.pack_into('<I', pd, 36, 0)                 # no explosion
     struct.pack_into('<I', pd, 40, 0)                 # no flight sound
+    struct.pack_into('<I', pd, 56, 0); struct.pack_into('<I', pd, 60, 0)   # no countdown / disable sounds
     recs['PROJ'].append(record('PROJ', fid('PROJ', key), [
         sub('EDID', z('UN_' + key)), sub('OBND', tsub('proj_bullet', 'OBND')), sub('MODL', z(p['model'])),
         sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', struct.pack('<I', 0))]))
@@ -247,7 +263,10 @@ for key, edid, label, anim, speed, reach, dmg in (('wyrm_claws', 'UN_WyrmClaws',
         elif name in ('MODT', 'DESC'): continue
         elif name == 'DNAM': b[0] = anim; struct.pack_into('<ff', b, 4, speed, reach)
         elif name == 'DATA': struct.pack_into('<H', b, 8, dmg)
+        elif name in ('TNAM', 'NAM9', 'NAM8'): b = struct.pack('<I', 0)   # no Skyrim weapon sounds
+        elif name == 'INAM': b = struct.pack('<I', 0)                     # no Skyrim impact set (its sounds)
         ws.append(sub(name, bytes(b)))
+    ws.insert(ws.index(next(x for x in ws if x[:4] == b'WNAM')) + 1, sub('SNAM', struct.pack('<I', fid('SNDR', 'claw_swing'))))  # the swing: ours
     recs['WEAP'].append(record('WEAP', fid('WEAP', key), ws))
 
 def tmpl_sub(t, name):
@@ -273,8 +292,8 @@ for c in S['creatures']['rows']:
     struct.pack_into('<I', acbs, 0, struct.unpack_from('<I', acbs, 0)[0] & ~0x1)  # male (DraugrRace has no female body)
     aidt = bytearray(tsub(src, 'AIDT')); aidt[0] = 2; aidt[1] = 4   # very aggressive, foolhardy
     subs = [sub('EDID', z('UN_' + c['id'])), sub('OBND', tsub(src, 'OBND')), sub('ACBS', bytes(acbs)),
-            sub('VTCK', tsub('npc_draugr', 'VTCK')), sub('RNAM', struct.pack('<I', race)), sub('WNAM', struct.pack('<I', fid('ARMO', c['id'])))]
-    if human:  # the necromancer keeps a Skyrim necromancer's spells (frost, conjuration) and caster combat style
+            sub('VTCK', struct.pack('<I', fid('VTYP', 'silent'))), sub('RNAM', struct.pack('<I', race)), sub('WNAM', struct.pack('<I', fid('ARMO', c['id'])))]
+    if False:  # (no Skyrim spells on our undead: their sounds are Skyrim's; the Voidbound cast our Void Hex instead) (frost, conjuration) and caster combat style
         spl = tmpl_sub(src, 'SPLO')
         subs += [sub('SPCT', struct.pack('<I', len(spl)))] + [sub('SPLO', b) for b in spl]
     wkey = {'scythe': 'reaper_scythe', 'wyrmclaws': 'wyrm_claws', 'shadowclaws': 'shadow_claws'}.get(c.get('weapon', 'none'))
@@ -352,7 +371,7 @@ count = sum(len(v) for v in recs.values())
 hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('Undying Nights: round-based undead survival for Skyrim'))]
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
-for k in ['GLOB', 'FACT', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
+for k in ['GLOB', 'FACT', 'VTYP', 'MUSC', 'MUST', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')

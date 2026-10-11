@@ -220,9 +220,20 @@ namespace bo3z
 
 		bool SpawnOne(RE::PlayerCharacter* a_player, int a_force = -1, const RE::NiPoint3* a_at = nullptr)
 		{
-			const auto pick = a_force >= 0 ? std::optional<std::size_t>(static_cast<std::size_t>(a_force)) : PickEnemy();
+			auto pick = a_force >= 0 ? std::optional<std::size_t>(static_cast<std::size_t>(a_force)) : PickEnemy();
 			if (!pick) {
 				return false;
+			}
+			// which of the risen dead it is: the Runner, the Wailer and the Bloater have bodies of their own
+			std::optional<Undead::Type> rolled;
+			if (gen::kEnemies[*pick].id == "zombie") {
+				rolled = Undead::Roll(g_current);
+				const std::string_view alt = *rolled == Undead::Type::Runner ? "runner" : *rolled == Undead::Type::Wailer ? "wailer" : *rolled == Undead::Type::Bloater ? "bloater" : "";
+				for (std::size_t i = 0; !alt.empty() && i < gen::kEnemies.size(); ++i) {
+					if (gen::kEnemies[i].id == alt && Forms::Enemy(i)) {
+						pick = i;
+					}
+				}
 			}
 			auto* cell = a_player->GetParentCell();
 			const bool interior = cell->IsInteriorCell();
@@ -254,8 +265,16 @@ namespace bo3z
 			// which of the new dead it is (Undead.cpp): its body, its gait and its own attacks
 			const std::string_view rowId = kindRow.id;
 			std::optional<Undead::Type> type;
-			if (rowId == "zombie") {
+			if (rolled) {
+				type = rolled;
+			} else if (rowId == "zombie") {
 				type = Undead::Roll(g_current);
+			} else if (rowId == "runner") {
+				type = Undead::Type::Runner;
+			} else if (rowId == "wailer") {
+				type = Undead::Type::Wailer;
+			} else if (rowId == "bloater") {
+				type = Undead::Type::Bloater;
 			} else if (rowId == "shadow") {
 				type = Undead::Type::Stalker;
 			} else if (rowId == "boss") {
@@ -298,7 +317,7 @@ namespace bo3z
 			// Armed: an ancient Nord sword, an iron sword or a dagger (bare-handed undead swing slowly); the Iron
 			// Reaper swings its scythe two-handed; necromancers fight with spells; raised skeletons keep their own.
 			const std::string_view eid = gen::kEnemies[*pick].id;
-			const std::uint32_t    own = kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : eid == "zombie" ? gen::kZombieClaws : 0;
+			const std::uint32_t    own = kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : (eid == "zombie" || eid == "runner" || eid == "wailer" || eid == "bloater" || eid == "lich") ? gen::kZombieClaws : 0;
 			if (own) {  // their own fighting style: the Reaper's scythe, Grimmvar's raking claws, the Gloomstalker's quick slashes
 				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(own, gen::kPlugin)) {
 					RE::ActorEquipManager::GetSingleton()->EquipObject(actor, w);
@@ -412,7 +431,7 @@ namespace bo3z
 		{
 			RE::ActorHandle handle;
 			float           spawnIn{ -1 };  // seconds until it rises this night (-1 = not tonight)
-			float           breath{ 0 }, roar{ 0 }, summon{ 0 }, step{ 0 }, slam{ 0 }, eruption{ 0 }, meteors{ 0 }, slamWindup{ -1 };
+			float           breath{ 0 }, roar{ 0 }, summon{ 0 }, step{ 0 }, slam{ 0 }, eruption{ 0 }, meteors{ 0 }, slamWindup{ -1 }, breathWind{ -1 };
 			float           combo{ 0 }, comboT{ 0 }, leapT{ -1 };  // Rending Flurry cooldown / time to the next rake; Wyrm Leap airtime
 			int             comboLeft{ 0 };
 			RE::NiPoint3    leapAt{};
@@ -523,7 +542,7 @@ namespace bo3z
 					const auto  p = a_player->GetPosition();
 					const float ang = a_player->GetAngleZ() + Uniform(-1.8f, 1.8f);
 					a->SetPosition({ p.x + std::sin(ang) * 150.0f, p.y + std::cos(ang) * 150.0f, p.z + 20.0f }, true);
-					Forms::PlayAt(gen::Sound::knife, a.get());
+					Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
 					if (auto* fx = Forms::Ours(gen::kRiseFx)) {
 						if (auto puff = a->PlaceObjectAtMe(fx, false)) {
 							g_fx.push_back({ puff->CreateRefHandle(), 2.0f });
@@ -542,7 +561,7 @@ namespace bo3z
 						pav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -gen::elite::shriekSlow);
 					}
 					g_slowLeft = gen::elite::shriekSeconds;
-					Forms::PlayAt(gen::Sound::hound_night, a.get());
+					Forms::PlayAt(gen::Sound::wailer_scream, a.get());
 					{
 						std::scoped_lock l(Hud::Lock());
 						Hud::Edit().hurtTime = 0.8f;
@@ -578,8 +597,10 @@ namespace bo3z
 			g_boss.maxHp = want;
 			g_boss.enraged = false;
 			g_boss.breath = 4, g_boss.roar = 7, g_boss.summon = 10, g_boss.step = gen::boss::stepEvery, g_boss.slam = 2, g_boss.eruption = 6, g_boss.meteors = 8, g_boss.slamWindup = -1;
-			g_boss.combo = 3, g_boss.comboLeft = 0, g_boss.leapT = -1;
-			Forms::Play(gen::Sound::hound_night);
+			g_boss.combo = 3, g_boss.comboLeft = 0, g_boss.leapT = -1, g_boss.breathWind = -1;
+			Forms::Play(gen::Sound::boss_arrive);
+			Forms::PlayAt(gen::Sound::boss_growl, boss);
+			Audio::BossMusic(true);
 			Hud::Banner(std::string(gen::kEnemies[row].label).append(" rises!"), 5.0f);
 			logger::info("boss: {} risen with {:.0f} health", gen::kEnemies[row].id, want);
 		}
@@ -592,12 +613,14 @@ namespace bo3z
 				SpawnBoss(a_player);
 			}
 			auto boss = g_boss.handle.get();
-			if (!boss) {
+			if (!boss || boss->IsDisabled()) {
+				Audio::BossMusic(false);  // gone with the dawn (or never was)
 				return;
 			}
 			if (boss->IsDead()) {
 				Points::Add(static_cast<int>(gen::boss::killPoints));
-				Forms::Play(gen::Sound::night_end);
+				Forms::PlayAt(gen::Sound::boss_death, boss.get());
+				Audio::BossMusic(false);
 				Hud::Banner("The Undying Wyrm falls! +" + std::to_string(static_cast<int>(gen::boss::killPoints)), 6.0f);
 				logger::info("boss: slain");
 				g_boss.handle = {};
@@ -619,13 +642,36 @@ namespace bo3z
 				}
 				g_boss.summon = 0;  // and the dead answer his howl
 				Undead::CueFor(boss.get(), Undead::kCueRoar, 1.6f);
-				Forms::PlayAt(gen::Sound::hound_night, boss.get());
+				Forms::PlayAt(gen::Sound::boss_growl, boss.get());
 				Hud::Banner("Grimmvar is ENRAGED!", 3.0f);
 			}
 			const float cd = g_boss.enraged ? gen::boss::enrageCooldownMult : 1.0f;
 			const float dist = boss->GetPosition().GetDistance(a_player->GetPosition());
-			if ((g_boss.breath -= a_delta) <= 0 && dist < gen::boss::breathRange && dist > gen::boss::slamRange) {
-				CastAt(boss.get(), gen::kSpell_firebreath, a_player, gen::boss::breathStrength);
+			// Fire Breath: he rears and draws breath (a second to get clear), then breathes a cone of fire at you
+			if (g_boss.breathWind >= 0) {
+				if ((g_boss.breathWind -= a_delta) < 0) {
+					const auto bp = OnGround(boss->GetPosition()), pp = a_player->GetPosition();
+					RE::NiPoint3 dir = pp - bp;
+					dir.z = 0;
+					dir.Unitize();
+					const RE::NiPoint3 side{ -dir.y, dir.x, 0 };
+					boss->SetHeading(std::atan2(dir.x, dir.y));
+					boss->NotifyAnimationGraph("attackPowerStartForward");
+					int k = 0;
+					for (float t = 170.0f; t < gen::boss::breathRange && k < 12; t += 140.0f, ++k) {
+						const float spread = t * 0.32f;  // the cone widens
+						for (int j = -1; j <= 1; ++j) {
+							const auto at = OnGround(bp + dir * t + side * (spread * j));
+							g_hazards.push_back({ at, 0.12f + 0.07f * k, 90.0f + t * 0.12f, gen::boss::eruptionDamage * 0.6f, j == 0 ? "dragonfire" : "", false });
+						}
+					}
+					Forms::PlayAt(gen::Sound::boss_breath, boss.get());
+				}
+			} else if ((g_boss.breath -= a_delta) <= 0 && dist < gen::boss::breathRange && dist > gen::boss::slamRange && g_boss.leapT < 0 && g_boss.comboLeft == 0) {
+				g_boss.breathWind = g_boss.enraged ? 0.75f : 1.05f;
+				Undead::CueFor(boss.get(), Undead::kCueRoar, g_boss.breathWind);
+				Forms::PlayAt(gen::Sound::boss_breath_wind, boss.get());
+				Hud::Banner("Grimmvar draws breath - get out of the way!", 1.2f);
 				g_boss.breath = gen::boss::breathEvery * cd;
 			}
 			// Rending Flurry: three (enraged, five) raking claw swipes, each lunging him forward; the last one rips the ground
@@ -646,14 +692,14 @@ namespace bo3z
 					Undead::CueFor(boss.get(), last ? Undead::kCueRoar : (g_boss.comboLeft % 2 ? Undead::kCueSwipeR : Undead::kCueSwipeL), last ? 0.5f : 0.45f);
 					const auto front = OnGround(boss->GetPosition() + dir * 170.0f);
 					g_hazards.push_back({ front, last ? 0.35f : 0.22f, last ? 230.0f : 170.0f, last ? gen::boss::clawLast : gen::boss::clawHit, last ? "giantslam" : "", last });  // (the rakes hurt unseen; the finisher rips the ground)
-					Forms::PlayAt(gen::Sound::rise, boss.get());
+					Audio::AtPoint(last ? gen::Sound::boss_land : gen::Sound::boss_claw, front, last ? 0.35f : 0.22f);  // when the claws land
 					g_boss.comboT = g_boss.enraged ? 0.42f : 0.55f;
 				}
 			} else if ((g_boss.combo -= a_delta) <= 0 && dist < 520.0f && g_boss.slamWindup < 0 && g_boss.leapT < 0) {
 				g_boss.comboLeft = g_boss.enraged ? 5 : 3;
 				g_boss.comboT = 0.35f;
 				g_boss.combo = gen::boss::comboEvery * cd;
-				Forms::PlayAt(gen::Sound::hound_night, boss.get());
+				Forms::PlayAt(gen::Sound::boss_claw_wind, boss.get());
 			}
 			// Wyrm Leap: he springs into the air, his shadow follows you, then he crashes down where it falls
 			if (g_boss.leapT >= 0) {
@@ -664,7 +710,7 @@ namespace bo3z
 						const float a = k * 1.0472f;
 						Gun::FxBlast("dragonfire", OnGround(g_boss.leapAt + RE::NiPoint3{ std::cos(a) * 170.0f, std::sin(a) * 170.0f, 0 }), 0.05f + 0.03f * k);
 					}
-					Forms::PlayAt(gen::Sound::rise, boss.get());
+					Forms::PlayAt(gen::Sound::boss_land, boss.get());
 				}
 			} else if ((g_boss.roar -= a_delta) <= 0 && dist > 600.0f && dist < 1800.0f && g_boss.comboLeft == 0) {
 				g_boss.leapAt = OnGround(a_player->GetPosition());
@@ -679,7 +725,7 @@ namespace bo3z
 				}
 				boss->SetPosition(boss->GetPosition() + RE::NiPoint3{ 0, 0, 2400.0f }, false);  // gone into the night sky
 				Hud::Banner("Grimmvar leaps - move!", 1.4f);
-				Forms::PlayAt(gen::Sound::hound_night, boss.get());
+				Audio::AtPoint(gen::Sound::boss_leap_wind, g_boss.leapAt);  // from where he will land: the shadow growls
 				g_boss.roar = gen::boss::roarEvery * cd;
 			}
 			// Grave Slam: rears up (a power attack), then the ground round it bursts; get out of reach in time
@@ -691,13 +737,14 @@ namespace bo3z
 						const float a = k * 1.0472f;
 						Gun::FxBlast("giantslam", OnGround(bp + RE::NiPoint3{ std::cos(a) * 200.0f, std::sin(a) * 200.0f, 0 }), 0.08f + 0.03f * k);
 					}
-					Forms::PlayAt(gen::Sound::rise, boss.get());
+					Forms::PlayAt(gen::Sound::boss_land, boss.get());
+					Forms::PlayAt(gen::Sound::boss_quake, boss.get());
 				}
 			} else if ((g_boss.slam -= a_delta) <= 0 && dist < gen::boss::slamRange + 80.0f && g_boss.comboLeft == 0 && g_boss.leapT < 0) {
 				g_boss.slamWindup = g_boss.enraged ? 0.6f : 0.9f;
 				Undead::CueFor(boss.get(), Undead::kCueRoar, g_boss.slamWindup);
 				boss->NotifyAnimationGraph("attackPowerStartForward");
-				Forms::PlayAt(gen::Sound::hound_night, boss.get());
+				Forms::PlayAt(gen::Sound::boss_quake_wind, boss.get());
 				g_boss.slam = gen::boss::slamEvery * cd;
 			}
 			// Grave Eruption: the earth splits in a line from the Wyrm to you, burst after burst; sidestep it
@@ -712,7 +759,10 @@ namespace bo3z
 					g_hazards.push_back({ OnGround(bp + dir * t), 0.55f + 0.11f * k, 110.0f, gen::boss::eruptionDamage, "fireball", false });
 				}
 				Hud::Banner("The ground splits toward you!", 1.6f);
-				Forms::PlayAt(gen::Sound::rise, boss.get());
+				Forms::PlayAt(gen::Sound::boss_quake_wind, boss.get());
+				for (int q = 0; q < k; q += 3) {  // the bursts racing toward you
+					Audio::AtPoint(gen::Sound::boss_quake, OnGround(bp + dir * (160.0f + 150.0f * q)), 0.55f + 0.11f * q, 0.8f);
+				}
 				g_boss.eruption = 11.0f * cd;
 			}
 			// Enraged, Ash Fall: burning stars fall round you; each marks the ground a moment before it lands
@@ -725,6 +775,7 @@ namespace bo3z
 					g_hazards.push_back({ at, 1.3f + 0.12f * k, 150.0f, gen::boss::eruptionDamage, "fireball", false });
 				}
 				Hud::Banner("Ash falls from the Wyrm's sky!", 1.6f);
+				Audio::AtPoint(gen::Sound::boss_quake, pp, 1.3f, 0.7f);
 				g_boss.meteors = 13.0f;
 			}
 			if ((g_boss.summon -= a_delta) <= 0) {
@@ -735,6 +786,7 @@ namespace bo3z
 					SpawnOne(a_player, 0, &at);
 				}
 				Hud::Banner("Grimmvar calls the dead!", 2.5f);
+				Forms::PlayAt(gen::Sound::boss_growl, boss.get());
 				Undead::CueFor(boss.get(), Undead::kCueRoar, 1.3f);
 				g_boss.summon = gen::boss::summonEvery * cd;
 			}
@@ -748,7 +800,7 @@ namespace bo3z
 						g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
 					}
 				}
-				Forms::PlayAt(gen::Sound::rise, boss.get());
+				Forms::PlayAt(gen::Sound::boss_quake, boss.get());
 				g_boss.step = gen::boss::stepEvery * cd;
 			}
 			PublishBoss(boss.get());
@@ -971,7 +1023,7 @@ namespace bo3z
 				g_toSpawn = std::clamp(static_cast<int>(std::ceil(g_toSpawn * ev.spawnMult)), 8, R.maxAlive * 3 / 2);
 				Hud::Banner("NIGHT " + std::to_string(a_round) + " - " + std::string(ev.banner), 6.0f);
 			} else {
-				Forms::Play(g_special ? gen::Sound::hound_night : gen::Sound::night_start);
+				Forms::Play(g_special ? gen::Sound::event_bloodmoon : gen::Sound::night_start);
 				Hud::Banner(g_special ? "NIGHT " + std::to_string(a_round) + " - THE HOUNDS ARE LOOSE" : "NIGHT " + std::to_string(a_round) + " - SURVIVE UNTIL DAWN");
 			}
 			logger::info("round {} starts (lasts the night): up to {} undead at once, {:.0f} Skyrim health each{}", a_round, g_toSpawn, HealthFor(a_round), g_special ? " (hound night)" : "");
@@ -1134,7 +1186,7 @@ namespace bo3z
 					if (!s.enraged && av->GetActorValue(RE::ActorValue::kHealth) < av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.35f) {
 						s.enraged = true;
 						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 35.0f);
-						Forms::PlayAt(gen::Sound::hound_night, a.get());
+						Forms::PlayAt(gen::Sound::champ_enrage, a.get());
 					}
 					if (s.windup >= 0) {
 						if ((s.windup -= a_delta) < 0) {  // the sweep lands: everything in reach is cut and thrown
@@ -1145,13 +1197,13 @@ namespace bo3z
 								a_player->NotifyAnimationGraph("staggerStart");
 								Hud::Banner("REAPED", 0.8f);
 							}
-							Forms::PlayAt(gen::Sound::knife, a.get());
+							Forms::PlayAt(gen::Sound::boss_land, a.get());
 							s.ability = s.enraged ? 4.0f : 6.5f;
 						}
 					} else if ((s.ability -= a_delta) <= 0 && dist < 280.0f) {
 						s.windup = 0.7f;  // telegraph: a heavy breath and a raised scythe before it falls
 						a->NotifyAnimationGraph("attackPowerStartForward");
-						Forms::PlayAt(gen::Sound::rise, a.get());
+						Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
 					}
 					// Chain Hook: from mid range it hurls a chain and drags you into scythe reach
 					if (s.hookWind >= 0) {
@@ -1162,7 +1214,7 @@ namespace bo3z
 							a_player->SetGraphVariableFloat("staggerMagnitude", 0.5f);
 							a_player->NotifyAnimationGraph("staggerStart");
 							Gun::FxBlast("dark", land + RE::NiPoint3{ 0, 0, 60 });
-							Forms::PlayAt(gen::Sound::knife, a.get());
+							Forms::PlayAt(gen::Sound::champ_chain, a_player);
 							Hud::Banner("CHAINED", 0.9f);
 							s.ability = std::min(s.ability, 0.6f);  // and the scythe comes right after
 						}
@@ -1170,9 +1222,19 @@ namespace bo3z
 						s.hookWind = 0.6f;
 						s.hook = s.enraged ? 7.0f : 10.0f;
 						a->NotifyAnimationGraph("attackStart");
-						Forms::PlayAt(gen::Sound::hound_night, a.get());
+						Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
 					}
 				} else if (kind == 2) {
+					// Void Hex: a mark of dark fire under your feet a moment before it bursts (its own sound, no Skyrim spell)
+					if ((s.hook -= a_delta) <= 0 && dist > 250.0f && dist < 1800.0f) {
+						s.hook = s.enraged ? 3.0f : 4.5f;
+						const auto at = OnGround(a_player->GetPosition());
+						Gun::FxBlast("paralyze", at + RE::NiPoint3{ 0, 0, 8 }, 0.0f);
+						g_hazards.push_back({ at, 0.9f, 120.0f, 0.07f, "dark", false });
+						Forms::PlayAt(gen::Sound::vo_necro_attack, a.get());
+						Audio::AtPoint(gen::Sound::boom_animunculi, at, 0.9f, 0.8f);
+						Undead::CueFor(a.get(), Undead::kCueChannel, 0.8f);
+					}
 					if ((s.ability -= a_delta) <= 0 && dist < 3500.0f) {
 						s.ability = 11.0f;
 						if (minions < 8 && minionRow >= 0) {
@@ -1181,7 +1243,7 @@ namespace bo3z
 								raise.push_back(a->GetPosition() + RE::NiPoint3{ std::cos(ang) * 140.0f, std::sin(ang) * 140.0f, 0.0f });
 							}
 							minions += 2;
-							Forms::PlayAt(gen::Sound::hound_night, a.get());
+							Forms::PlayAt(gen::Sound::champ_summon, a.get());
 							Undead::CueFor(a.get(), Undead::kCueChannel, 1.5f);
 						}
 					}
@@ -1368,6 +1430,7 @@ namespace bo3z
 
 		void Reset()
 		{
+			Audio::BossMusic(false);
 			g_phase = Phase::Day;
 			g_alive.clear();
 			g_corpses.clear();
@@ -1443,7 +1506,8 @@ namespace bo3z
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
 			c->SetScale(1.35f);
 			g_champ = { c->GetHandle(), a_town, std::string(a_name), want, false };
-			Forms::Play(gen::Sound::hound_night);
+			Forms::Play(gen::Sound::champ_arrive);
+			Forms::PlayAt(gen::Sound::champ_enrage, c);
 			Hud::Banner(std::string(a_name) + " walks the night!", 5.0f);
 			logger::info("champion: {} risen in {} ({:.0f} health)", a_name, gen::kTowns[a_town], want);
 			return true;

@@ -359,6 +359,9 @@ namespace bo3z
 				if (ours && !a_melee) {
 					Points::Add(gen::kPoints_hit);
 				}
+				if (ours && !a_quiet) {
+					Audio::Voice(a_target, Audio::VoiceEvent::kHurt);  // its own cry (limited per body)
+				}
 				if (!a_target->IsInCombat()) {
 					a_target->StartCombat(player);
 				}
@@ -894,6 +897,9 @@ namespace bo3z
 				if (g.bulletSpell) {
 					LaunchBolt(player, g, to);
 				}
+				if (const int gi = static_cast<int>(&g - gen::kGuns.data()); landed && gi >= 0 && gi < static_cast<int>(gen::kGuns.size()) && gen::kGunSounds[gi].hit >= 0) {
+					Audio::AtPoint(static_cast<gen::Sound>(gen::kGunSounds[gi].hit), to, BoltDelay(g, origin, to), 0.9f);  // the bolt's impact, when it gets there
+				}
 				if (landed && g.kind != gen::kKindTome && g.kind != gen::kKindWonder) {  // a quick spell is a bolt, not a bomb: only the gathered cast bursts
 					Blast(g.tapBlast, to, BoltDelay(g, origin, to), kTapBlastScale);
 					// every bolt and arrow splashes a little where it lands: the burst weapons (Splash) hard and wide,
@@ -1403,6 +1409,9 @@ namespace bo3z
 			for (std::size_t i = 0; i < spots.size(); ++i) {
 				Blast(g.chargeBlast, spots[i], (around ? 0.0f : BoltDelay(g, a_eye, spots[i])) + 0.07f * i);
 			}
+			if (const int gi = static_cast<int>(&g - gen::kGuns.data()); gi >= 0 && gi < static_cast<int>(gen::kGuns.size()) && gen::kGunSounds[gi].boom >= 0 && !spots.empty()) {
+				Audio::AtPoint(static_cast<gen::Sound>(gen::kGunSounds[gi].boom), spots[0], around ? 0.0f : BoltDelay(g, a_eye, spots[0]));  // the burst where it lands
+			}
 			if (g.chargeSpell >= 0) {
 				if (foes.empty()) {
 					Cast(g.chargeSpell, nullptr);
@@ -1556,11 +1565,17 @@ namespace bo3z
 				const float c = charging ? EaseInOut((g_charge - 0.18f) / std::max(0.1f, g.chargeSeconds - 0.18f)) : 0.0f;
 				if (charging && !g_chargeSaid) {
 					Forms::Play(gen::Sound::charge_up);
+					if (const int hum = gen::kGunSounds[gun].charge; hum >= 0) {
+						Audio::LoopStart(Audio::kLoopCharge, static_cast<gen::Sound>(hum));  // the spell's own hum while it gathers
+					}
 					g_chargeSaid = true;
 				}
 				if (charging && c >= 1.0f && !g_readySaid) {
 					Forms::Play(gen::Sound::charge_ready);
 					g_readySaid = true;
+				}
+				if (!charging && Audio::Looping(Audio::kLoopCharge)) {
+					Audio::LoopStop(Audio::kLoopCharge, 250);
 				}
 				if (!(IsSpell(gun) ? g_dualHeld : g_trigger)) {
 					g_chargeSaid = g_readySaid = false;
@@ -2057,9 +2072,14 @@ namespace bo3z
 					} else if (up && g_dualHeld) {
 						SendAttack(false, 0.0f, std::max(0.05f, g_charge));
 						SendAttack(true, 0.0f, std::max(0.05f, g_charge));
-						if (!TryUnleash(true) && g_charge < 0.35f) {
-							TryFire(true);  // a quick dual tap is still a shot
+						if (!TryUnleash(true)) {
+							if (g_charge < 0.35f) {
+								TryFire(true);  // a quick dual tap is still a shot
+							} else {
+								Forms::Play(gen::Sound::charge_fizzle);  // let go too early: the gathered power gutters out
+							}
 						}
+						Audio::LoopStop(Audio::kLoopCharge, 150);
 						g_dualHeld = false;
 						g_charge = 0;
 					}

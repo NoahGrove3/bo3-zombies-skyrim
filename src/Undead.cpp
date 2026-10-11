@@ -510,7 +510,7 @@ namespace bo3z
 					if (dist < 1800.0f) {
 						m.wind = 1.1f;
 						SetCue(a.get(), kCueScream, 1.6f);
-						Forms::PlayAt(gen::Sound::hound_night, a.get());
+						Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
 						m.cd = Rand(9.0f, 13.0f);
 					}
 					break;

@@ -19,6 +19,7 @@ namespace bo3z
 					Shops::Tick(a_delta);
 					Perks::Tick();
 					Movement::Tick(a_delta);
+					Audio::Tick(a_delta);
 				} catch (const std::exception& e) {
 					logger::error("tick: {}", e.what());
 				}
@@ -39,6 +40,7 @@ namespace bo3z
 				if (!a_event) {
 					return RE::BSEventNotifyControl::kContinue;
 				}
+				Audio::SetMenuMusic();  // the main menu plays our track (read by the game when the menu opens)
 				// "Data loaded" without the Script Extender: the first menu event once the player form exists.
 				if (!dataLoaded && RE::TESForm::LookupByID(0x7)) {
 					dataLoaded = true;
@@ -66,6 +68,7 @@ namespace bo3z
 			}
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESLoadGameEvent*, RE::BSTEventSource<RE::TESLoadGameEvent>*) override
 			{
+				Audio::StopAll();
 				Director::Reset();
 				Gun::Reset();
 				Shops::Reset();
@@ -92,6 +95,7 @@ namespace bo3z
 				if (!dying || !Director::IsRoundUndead(dying)) {
 					return RE::BSEventNotifyControl::kContinue;
 				}
+				Audio::Voice(dying, Audio::VoiceEvent::kDeath);
 				if (a_event->actorKiller.get() != player) {
 					return RE::BSEventNotifyControl::kContinue;  // dawn, followers, guards: no points
 				}

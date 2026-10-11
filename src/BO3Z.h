@@ -125,6 +125,25 @@ namespace bo3z
 	}
 
 	// The new dead (Undead.cpp): body language and attacks of our own on the draugr skeleton
+	// Sound (Audio.cpp): one-shots with rate limits, keyed loops, undead voices, music
+	namespace Audio
+	{
+		enum class VoiceEvent { kIdle, kAttack, kHurt, kDeath };
+		void Ui(gen::Sound a_s, float a_vol = 1.0f);                                   // 2D (menus, your own casts)
+		void At(gen::Sound a_s, RE::TESObjectREFR* a_ref, float a_vol = 1.0f);         // 3D, follows the reference
+		void AtPoint(gen::Sound a_s, const RE::NiPoint3& a_at, float a_delay = 0.0f, float a_vol = 1.0f);
+		void LoopStart(std::uint64_t a_key, gen::Sound a_s, RE::TESObjectREFR* a_owner = nullptr);
+		void LoopStop(std::uint64_t a_key, int a_fadeMs = 200);
+		bool Looping(std::uint64_t a_key);
+		void Voice(RE::Actor* a_actor, VoiceEvent a_ev);
+		void Tick(float a_delta);
+		void StopAll();
+		void BossMusic(bool a_on);
+		void FreedMusic();
+		void SetMenuMusic();
+		inline constexpr std::uint64_t kLoopCharge = 1, kLoopRite = 2;
+	}
+
 	namespace Undead
 	{
 		enum class Type { Shambler, Runner, Crawler, Wailer, Bloater, Stalker, Reaper, Necro, Wyrm };
@@ -323,6 +342,11 @@ namespace bo3z
 			float       nukeLeft{ 0 }, nukeFlash{ 0 };
 			std::string questNote;        // quest news in the tracker
 			// the quest's objective marker: where on screen (0..1), in front of you or not, how far (units), what
+			// the ritual circle (Circle / Hold rites): ring points on screen (x, y 0..1, depth), progress, reset flash
+			bool        ringOn{ false }, ringHold{ false };
+			std::vector<std::array<float, 3>> ringPts;
+			float       ringFrac{ 0 }, ringFlash{ 0 };
+			int         ringSeconds{ 0 }, ringInside{ 0 };
 			bool        objOn{ false }, objFront{ false };
 			float       objX{ 0 }, objY{ 0 }, objDist{ 0 };
 			std::string objLabel;

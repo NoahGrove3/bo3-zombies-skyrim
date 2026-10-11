@@ -590,6 +590,45 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Divider(dl, size.x * 0.5f, y + ts.y + 10 * k, std::min(size.x * 0.4f, ts.x * 0.6f + 40 * k), k, a);
 			}
 
+			// The ritual circle: a ring of runes on the ground round the shrine. Its lit arc is the rite's progress; it
+			// flashes red when the dead break it (and the timer starts over).
+			if (s.ringOn && s.ringPts.size() > 8 && !s.perkMenu) {
+				const float fl = std::clamp(s.ringFlash, 0.0f, 1.0f);
+				const ImU32 base = s.ringHold ? IM_COL32(236, 168, 72, 255) : IM_COL32(170, 110, 255, 255);
+				const ImU32 hot = IM_COL32(255, 60, 40, 255);
+				const ImU32 col = fl > 0.01f ? hot : base;
+				const int   n = static_cast<int>(s.ringPts.size());
+				const int   lit = static_cast<int>(s.ringFrac * (n - 1));
+				ImVec2      sum{ 0, 0 };
+				int         front = 0;
+				for (int i = 0; i + 1 < n; ++i) {
+					const auto& p0 = s.ringPts[i];
+					const auto& p1 = s.ringPts[i + 1];
+					if (p0[2] <= 0 || p1[2] <= 0) {
+						continue;  // behind the camera
+					}
+					const ImVec2 a{ p0[0] * size.x, p0[1] * size.y }, b{ p1[0] * size.x, p1[1] * size.y };
+					if (std::abs(a.x - b.x) > size.x * 0.5f) {
+						continue;
+					}
+					const bool on = i < lit;
+					dl->AddLine(a, b, Fade(col, (on ? 0.30f : 0.12f) + 0.25f * fl), (on ? 14.0f : 9.0f) * k);   // the glow
+					dl->AddLine(a, b, Fade(on ? IM_COL32(255, 236, 200, 255) : col, on ? 0.95f : 0.55f), (on ? 3.0f : 2.0f) * k);
+					if (i % 6 == 0) {  // runes along the ring, pulsing in turn
+						const float pr = 0.5f + 0.5f * std::sin(now * 3.0f - i * 0.3f);
+						const float r = (4.0f + 2.0f * pr) * k;
+						dl->AddQuadFilled({ a.x, a.y - r }, { a.x + r * 0.7f, a.y }, { a.x, a.y + r }, { a.x - r * 0.7f, a.y }, Fade(on ? IM_COL32(255, 230, 170, 255) : col, 0.5f + 0.5f * pr));
+					}
+					sum.x += a.x, sum.y += a.y, ++front;
+				}
+				if (front > 0) {
+					const ImVec2 c{ sum.x / front, sum.y / front - 70 * k };
+					const std::string head = s.ringHold ? (s.ringInside ? "STAND IN THE CIRCLE" : "HOLD THE SHRINE") : (s.ringInside ? "THE DEAD ARE IN THE CIRCLE" : "KEEP THE DEAD OUT");
+					TxtC(dl, g_title, 20 * k, c.x, c.y, fl > 0.01f || s.ringInside ? IM_COL32(255, 120, 100, 255) : kParch, head, 2 * k, col);
+					TxtC(dl, g_num, 26 * k, c.x, c.y + 26 * k, IM_COL32(236, 222, 190, 240), std::to_string(std::max(0, s.ringSeconds)) + "s", 1.5f * k, col);
+				}
+			}
+
 			// The quest's way-mark: a burning diamond over the objective, or at the screen's edge pointing the way.
 			if (s.objOn && !s.perkMenu) {
 				const ImU32 col = IM_COL32(236, 168, 72, 255), dark = IM_COL32(20, 12, 8, 230);

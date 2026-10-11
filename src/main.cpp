@@ -58,8 +58,12 @@ namespace
 		FitResolution();
 		logger::info("BO3 Zombies {} loading as .asi", bo3z::kVersion);
 		for (int i = 0; i < 6000 && !RE::UI::GetSingleton(); ++i) {  // up to 10 minutes
+			if (i % 5 == 0) {
+				bo3z::Audio::SetMenuMusic();  // as soon as the game's settings exist, before the main menu plays
+			}
 			::Sleep(100);
 		}
+		bo3z::Audio::SetMenuMusic();
 		if (!RE::UI::GetSingleton()) {
 			logger::error("game UI never came up; not starting");
 			return 0;

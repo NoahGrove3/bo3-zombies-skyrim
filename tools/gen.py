@@ -37,6 +37,7 @@ for s in snd: out.append(f'\t\tFormRef{{ {cs(s["plugin"])}, 0x{(_SIDS[("SNDR", s
 out.append('\t} };')
 ids_ = [x['id'] for x in snd]
 out.append(f'\tinline constexpr std::array<int, {len(snd)}> kSoundLayer{{ {{ ' + ', '.join(str(ids_.index(x['layer'])) if x.get('layer', 'none') != 'none' else '-1' for x in snd) + ' } };  // a second sound played with each (-1 none)')
+out.append(f'\tinline constexpr std::uint32_t kMusicBoss = 0x{_SIDS[("MUSC", "boss")]:03X}, kMusicFreed = 0x{_SIDS[("MUSC", "freed")]:03X};  // our MUSC records')
 # economy
 for e in S['economy']['rows']: out.append(f'\tinline constexpr int kPoints_{e["id"]} = {e["points"]};  // {e["event"]}')
 # input
@@ -91,6 +92,10 @@ for w in W:
     o.append(f'\t\tGunDef{{ {cs(w["id"])}, {cs(w["label"])}, {cs(w["class"])}, Fire({fires[w["fire"]]}), {F(w["damage"])}, {F(w["headMult"])}, {w["pellets"]}, {F(w["spreadHip"])}, {F(w["spreadAds"])}, {w["clip"]}, {w["reserve"]}, {w["fireDelayMs"]}, {w["burst"]}, {w["reloadMs"]}, {F(w["range"])}, {F(w["splashRadius"])}, {F(w["splashDamage"])}, {F(w["hitRadius"])}, {F(w["headRadius"])}, {sid(w["fireSound"])}, {sid(w["reloadSound"])}, {sid(w["emptySound"])}, {w["wallBuyCost"]}, {w["ammoCost"]}, {w["boxWeight"]}, 0x{IDS[("WEAP", w["id"])]:03X}, {specials[w["special"]]}, {spidx(w["spell"])}, {spellon[w["spellOn"]]}, {str(w.get("retired", False)).lower()}, 0x{(IDS[("SPEL", "bullet_" + w["projectile"])] if w.get("projectile", "none") != "none" else 0):03X}, {wkinds[w["kind"]]}, {F(w["mana"])}, {F(w["abilityValue"])}, 0x{(IDS[("SPEL", "hand_" + w["id"])] if w["kind"] in ("tome", "wonder") else 0):03X}, {cs(w["abilityText"])}, 0x{w["element"]}, {cs(w["chargeName"])}, {cs(w["chargeText"])}, {F(w["chargeSeconds"])}, {F(w["chargeCooldown"])}, {F(w["chargeMana"])}, {["thrust","slam","sweep","twirl","raise","surge"].index(w["chargeStyle"])}, {BL.index(w["tapBlast"])}, {BL.index(w["chargeBlast"])}, {spidx("spells:aura_" + w["chargeAura"])}, {spidx(w["chargeSpell"] if w["chargeSpell"] == "none" else "spells:" + w["chargeSpell"])}, 0x{(IDS[("AMMO", "arrow_" + w["id"])] if w["kind"] == "bow" else 0):03X}, {sid(w["chargeSound"])}, {RELIC_TOWNS.index(w["relicTown"]) if w["relicTown"] != "none" else -1}, {spidx(w.get("handLook", "none"))} }},')
 o.append('\t} };')
 for i, w in enumerate(W): o.append(f'\tinline constexpr int kGunIdx_{w["id"]} = {i};')
+_sid = [x['id'] for x in S['sounds']['rows']]
+_gs = lambda pre, w: str(_sid.index(pre + w['id'])) if (pre + w['id']) in _sid else '-1'
+o.append('\tstruct GunSounds { int charge, hit, boom; };  // per spell: charge hum (loop), bolt impact, gathered burst (sound index, -1 none)')
+o.append(f'\tinline constexpr std::array<GunSounds, {len(W)}> kGunSounds{{ {{ ' + ', '.join('GunSounds{ ' + _gs('charge_', w) + ', ' + _gs('hit_', w) + ', ' + _gs('boom_', w) + ' }' for w in W) + ' } };')
 k = S['melee']['rows'][0]
 o.append('\tstruct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };')
 o.append(f'\tinline constexpr KnifeDef kKnife{{ {k["key"]}, {F(k["damage"])}, {F(k["range"])}, {F(k["coneDeg"])}, {k["cooldownMs"]} }};')

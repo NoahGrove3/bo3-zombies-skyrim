@@ -380,6 +380,7 @@ namespace bo3z
 			Set(a_town, kFreed, 0);
 			g_holding = false;
 			Forms::Play(gen::Sound::curse_lifted);
+			Audio::FreedMusic();
 			std::string text = Fill(gen::kCurseLiftedBanner, a_town);
 			if (const int sh = ShoutOf(a_town); sh >= 0) {
 				// its shout waits on the Shrine of the Dirge at the station (nothing is forced into your hands)
@@ -490,6 +491,43 @@ namespace bo3z
 			return best < FLT_MAX;
 		}
 
+		// The floating ritual circle of the Circle and Hold rites: a ring of runes drawn on the ground round the
+		// shrine (projected to the screen here, drawn by the HUD), how far the rite has come, and a flash when the
+		// dead break it.
+		struct RingState
+		{
+			bool         on{ false };
+			RE::NiPoint3 center{};
+			float        radius{ 0 }, frac{ 0 }, flash{ 0 };
+			int          seconds{ 0 }, inside{ 0 };
+			bool         hold{ false };
+		} g_ring;
+		void PublishRing(float a_delta)
+		{
+			g_ring.flash = std::max(0.0f, g_ring.flash - a_delta);
+			std::vector<std::array<float, 3>> pts;
+			auto* cam = RE::Main::WorldRootCamera();
+			if (g_ring.on && cam) {
+				constexpr int N = 72;
+				for (int i = 0; i <= N; ++i) {
+					const float a = i * 2.0f * RE::NI_PI / N;
+					RE::NiPoint3 w = g_ring.center + RE::NiPoint3{ std::cos(a) * g_ring.radius, std::sin(a) * g_ring.radius, 18.0f };
+					float x = 0, y = 0, zc = 0;
+					cam->WorldPtToScreenPt3(w, x, y, zc, 1e-5f);
+					pts.push_back({ x, 1.0f - y, zc });
+				}
+			}
+			std::scoped_lock l(Hud::Lock());
+			auto& h = Hud::Edit();
+			h.ringOn = g_ring.on && !pts.empty();
+			h.ringPts = std::move(pts);
+			h.ringFrac = g_ring.frac;
+			h.ringFlash = g_ring.flash;
+			h.ringSeconds = g_ring.seconds;
+			h.ringInside = g_ring.inside;
+			h.ringHold = g_ring.hold;
+		}
+
 		void PublishObjective(RE::PlayerCharacter* a_player)
 		{
 			RE::NiPoint3 at;
@@ -550,7 +588,7 @@ namespace bo3z
 				h.questFrac = static_cast<float>(p) / st.target;
 				break;
 			}
-			case gen::kRiteCircle: goal += "  " + std::to_string(p) + "/" + std::to_string(st.target) + "s   circle " + std::to_string(static_cast<int>(g_circleHp)) + "%" + night; h.questFrac = static_cast<float>(p) / st.target; break;
+			case gen::kRiteCircle: goal += "  " + std::to_string(p) + "/" + std::to_string(st.target) + "s   keep the dead out of the circle" + night; h.questFrac = static_cast<float>(p) / st.target; break;
 			case gen::kRiteHold: goal += "  " + std::to_string(p) + "/" + std::to_string(st.target) + "s" + night; h.questFrac = static_cast<float>(p) / st.target; break;
 			default: goal += night; h.questFrac = 0; break;
 			}
@@ -576,7 +614,7 @@ namespace bo3z
 					return;
 				}
 				Gun::LearnShout(sh);
-				Forms::Play(gen::Sound::curse_lifted);
+				Forms::Play(gen::Sound::shout_learned);
 				Note("THU'UM LEARNED: " + name + "  (" + std::string(gen::kShouts[sh].w1) + " " + std::string(gen::kShouts[sh].w2) + " " + std::string(gen::kShouts[sh].w3) + ") - equip it in the Magic menu", 8.0f);
 				logger::info("curse: {} learned at {}", gen::kShouts[sh].id, gen::kTowns[a_town]);
 				return;
@@ -708,6 +746,9 @@ namespace bo3z
 			if (!fighting || z < 0 || s >= kFreed) {
 				g_holding = false;
 				g_holdAcc = 0;
+				g_ring.on = false;
+				PublishRing(a_delta);
+				Audio::LoopStop(Audio::kLoopRite, 800);
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().wardFrac = 0;
 				return;
@@ -722,6 +763,12 @@ namespace bo3z
 			float              yaw = 0;
 			RE::TESWorldSpace* ws = nullptr;
 			const bool         here = Shops::StandFrame(z, c, yaw, ws) && ws == player->GetWorldspace();
+			g_ring.on = false;
+			if ((rite.type == gen::kRiteCircle || rite.type == gen::kRiteHold) && here) {
+				Audio::LoopStart(Audio::kLoopRite, gen::Sound::rite_hum, Shops::Placed(z, 0));
+			} else {
+				Audio::LoopStop(Audio::kLoopRite, 800);
+			}
 			switch (rite.type) {
 			case gen::kRiteWards:
 			case gen::kRiteOrder:
@@ -755,7 +802,7 @@ namespace bo3z
 							const float a = k * 1.5708f;
 							Director::RaiseAt(pp + RE::NiPoint3{ std::cos(a) * 350.0f, std::sin(a) * 350.0f, 40.0f });
 						}
-						Forms::Play(gen::Sound::hound_night);
+						Forms::Play(gen::Sound::rite_fail);
 						Note("Wrong order - the fires die and the dead answer", 5.0f);
 						break;
 					}
@@ -772,32 +819,41 @@ namespace bo3z
 					}
 				}
 				break;
-			case gen::kRiteCircle:  // keep them out: the circle's strength falls while the dead are inside
+			case gen::kRiteCircle:  // keep them out: while no dead thing stands in the circle it burns on; one inside and it starts again
 				EnsureWards(player, z);
-				if (here && (g_circleAcc += a_delta) >= 1.0f) {
-					g_circleAcc -= 1.0f;
-					const auto center = c + RE::NiPoint3{ -std::sin(yaw) * 120.0f, -std::cos(yaw) * 120.0f, 0 };
-					int        inside = 0;
+				if (here) {
+					constexpr float kRing = 430.0f;
+					int inside = 0;
 					for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
-						if (auto a = h.get(); a && !a->IsDead() && Director::IsRoundUndead(a.get()) && a->GetPosition().GetDistance(center) < 430.0f) {
+						if (auto a = h.get(); a && !a->IsDead() && !a->IsDisabled() && Director::IsRoundUndead(a.get()) && std::hypot(a->GetPosition().x - c.x, a->GetPosition().y - c.y) < kRing) {
 							++inside;
 						}
 					}
-					g_circleHp = inside ? g_circleHp - 7.0f * inside : std::min(100.0f, g_circleHp + 2.0f);
-					if (g_circleHp <= 0) {
-						g_circleHp = 100.0f;
-						Set(z, s, 0);
-						Forms::Play(gen::Sound::hound_night);
-						Note("The circle breaks! The rite begins again", 5.0f);
-					} else if (const int p = Prog(z) + 1; p >= rite.target) {
-						Advance(z);
-					} else {
-						Set(z, s, p);
+					g_ring = { true, c, kRing, static_cast<float>(Prog(z)) / std::max(1, rite.target), g_ring.flash, rite.target - Prog(z), inside, false };
+					if (inside > 0) {
+						g_circleAcc = 0;
+						if (Prog(z) > 0) {  // the dead crossed it: the timer starts over
+							Set(z, s, 0);
+							g_ring.flash = 1.0f;
+							Forms::Play(gen::Sound::rite_reset);
+							Note("The dead broke the circle - the rite begins again", 3.5f);
+						}
+					} else if ((g_circleAcc += a_delta) >= 1.0f) {
+						g_circleAcc -= 1.0f;
+						if (const int p = Prog(z) + 1; p >= rite.target) {
+							g_ring.on = false;
+							Advance(z);
+						} else {
+							Set(z, s, p);
+						}
 					}
 				}
 				break;
 			case gen::kRiteHold:
 				g_holding = here && player->GetPosition().GetDistance(c) < gen::kCurseHoldRadius;
+				if (here) {
+					g_ring = { true, c, gen::kCurseHoldRadius, static_cast<float>(Prog(z)) / std::max(1, rite.target), g_ring.flash, rite.target - Prog(z), g_holding ? 0 : 1, true };
+				}
 				if (g_holding && (g_holdAcc += a_delta) >= 1.0f) {
 					g_holdAcc -= 1.0f;
 					if (const int p = Prog(z) + 1; p >= rite.target) {
@@ -830,6 +886,7 @@ namespace bo3z
 			default:
 				break;
 			}
+			PublishRing(a_delta);
 			std::scoped_lock l(Hud::Lock());
 			Hud::Edit().wardFrac = wardFrac;
 		}

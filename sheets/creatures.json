@@ -71,6 +71,66 @@
       ],
       "race": "breton",
       "weapon": "none"
+    },
+    {
+      "id": "runner",
+      "label": "Hollow Bride",
+      "model": "UndyingNights\\hooded\\hooded.nif",
+      "heightScale": 1.0,
+      "level": 10,
+      "verify": [],
+      "race": "breton",
+      "weapon": "none"
+    },
+    {
+      "id": "wailer",
+      "label": "Drowned Wailer",
+      "model": "UndyingNights\\hag\\hag.nif",
+      "heightScale": 1.0,
+      "level": 15,
+      "verify": [],
+      "race": "draugr",
+      "weapon": "none"
+    },
+    {
+      "id": "bloater",
+      "label": "Stitched Abomination",
+      "model": "UndyingNights\\abom\\abom.nif",
+      "heightScale": 1.12,
+      "level": 20,
+      "verify": [],
+      "race": "draugr",
+      "weapon": "none"
+    },
+    {
+      "id": "knight",
+      "label": "Horned Bone Knight",
+      "model": "UndyingNights\\knight\\knight.nif",
+      "heightScale": 1.08,
+      "level": 35,
+      "verify": [],
+      "race": "draugr",
+      "weapon": "scythe"
+    },
+    {
+      "id": "king",
+      "label": "Barrow King",
+      "model": "UndyingNights\\king\\king.nif",
+      "heightScale": 1.1,
+      "level": 40,
+      "verify": [],
+      "race": "draugr",
+      "weapon": "scythe"
+    },
+    {
+      "id": "lich",
+      "label": "Lich of the Dirge",
+      "model": "UndyingNights\\lich\\lich.nif",
+      "heightScale": 1.12,
+      "level": 40,
+      "verify": [],
+      "race": "draugr",
+      "weapon": "none"
     }
   ]
 }

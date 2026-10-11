@@ -203,16 +203,7 @@ namespace bo3z
 			return -1;
 		}
 
-		void Play(gen::Sound a_sound)
-		{
-			const auto i = static_cast<std::size_t>(a_sound);
-			if (i < g_sounds.size() && g_sounds[i]) {
-				RE::BSAudioManager::GetSingleton()->Play(static_cast<RE::BSISoundDescriptor*>(g_sounds[i]));
-			}
-			if (i < gen::kSoundLayer.size() && gen::kSoundLayer[i] >= 0 && gen::kSoundLayer[i] != static_cast<int>(i)) {
-				Play(static_cast<gen::Sound>(gen::kSoundLayer[i]));  // its layer (dark Skyrim effects are built from two)
-			}
-		}
+		void Play(gen::Sound a_sound) { Audio::Ui(a_sound); }  // (all sound goes through Audio: rate limits, loops, voices)
 
 		RE::MagicItem* Spell(int a_spell)
 		{
@@ -251,27 +242,7 @@ namespace bo3z
 			return cache[a_localId] = b;
 		}
 
-		void PlayAt(gen::Sound a_sound, RE::TESObjectREFR* a_at)
-		{
-			const auto i = static_cast<std::size_t>(a_sound);
-			if (i >= g_sounds.size() || !g_sounds[i]) {
-				return;
-			}
-			if (!a_at) {
-				return Play(a_sound);
-			}
-			RE::BSSoundHandle h;
-			if (RE::BSAudioManager::GetSingleton()->GetSoundHandle(h, static_cast<RE::BSISoundDescriptor*>(g_sounds[i]))) {
-				h.SetPosition(a_at->GetPosition());
-				if (auto* node = a_at->Get3D()) {
-					h.SetObjectToFollow(node);
-				}
-				h.Play();
-			}
-			if (i < gen::kSoundLayer.size() && gen::kSoundLayer[i] >= 0 && gen::kSoundLayer[i] != static_cast<int>(i)) {
-				PlayAt(static_cast<gen::Sound>(gen::kSoundLayer[i]), a_at);
-			}
-		}
+		void PlayAt(gen::Sound a_sound, RE::TESObjectREFR* a_at) { Audio::At(a_sound, a_at); }
 	}
 
 	namespace PluginList
