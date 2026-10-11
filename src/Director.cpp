@@ -599,7 +599,7 @@ namespace bo3z
 			g_boss.breath = 4, g_boss.roar = 7, g_boss.summon = 10, g_boss.step = gen::boss::stepEvery, g_boss.slam = 2, g_boss.eruption = 6, g_boss.meteors = 8, g_boss.slamWindup = -1;
 			g_boss.combo = 3, g_boss.comboLeft = 0, g_boss.leapT = -1, g_boss.breathWind = -1;
 			Forms::Play(gen::Sound::boss_arrive);
-			Forms::PlayAt(gen::Sound::boss_growl, boss);
+			Forms::PlayAt(gen::Sound::boss_growl, boss.get());
 			Audio::BossMusic(true);
 			Hud::Banner(std::string(gen::kEnemies[row].label).append(" rises!"), 5.0f);
 			logger::info("boss: {} risen with {:.0f} health", gen::kEnemies[row].id, want);
@@ -1507,7 +1507,7 @@ namespace bo3z
 			c->SetScale(1.35f);
 			g_champ = { c->GetHandle(), a_town, std::string(a_name), want, false };
 			Forms::Play(gen::Sound::champ_arrive);
-			Forms::PlayAt(gen::Sound::champ_enrage, c);
+			Forms::PlayAt(gen::Sound::champ_enrage, c.get());
 			Hud::Banner(std::string(a_name) + " walks the night!", 5.0f);
 			logger::info("champion: {} risen in {} ({:.0f} health)", a_name, gen::kTowns[a_town], want);
 			return true;
