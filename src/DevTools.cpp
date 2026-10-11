@@ -223,6 +223,22 @@ namespace bo3z
 				}
 				RE::UIMessageQueue::GetSingleton()->AddMessage(menu, RE::UI_MESSAGE_TYPE::kHide, nullptr);
 				logger::info("dev: close '{}'", menu);
+			} else if (cmd == "spawn" && player) {
+				// spawn <enemy row id> [count]: raise that undead in front of you (model and sound checks)
+				std::string id;
+				int         n = 1;
+				in >> id >> n;
+				Director::DevSpawn(id, std::max(1, n));
+			} else if (cmd == "sound") {
+				// sound <sound id>: play one of the mod's sounds (2D)
+				std::string id;
+				in >> id;
+				for (std::size_t i = 0; i < gen::kSounds.size(); ++i) {
+					if (gen::kSounds[i].editorId == "UN_" + id) {
+						Audio::Ui(static_cast<gen::Sound>(i));
+						logger::info("dev: sound {}", id);
+					}
+				}
 			} else if (cmd == "crew") {
 				int c = 0;
 				in >> c;

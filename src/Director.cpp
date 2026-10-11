@@ -1606,6 +1606,22 @@ namespace bo3z
 			std::scoped_lock l(Hud::Lock());
 			Hud::Edit().hurtTime = 0.9f;
 		}
+		void DevSpawn(std::string_view a_row, int a_count)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			for (std::size_t i = 0; p && i < gen::kEnemies.size(); ++i) {
+				if (gen::kEnemies[i].id == a_row) {
+					for (int k = 0; k < a_count; ++k) {
+						const float a = p->GetAngleZ() + (k - a_count / 2) * 0.35f;
+						const RE::NiPoint3 at = p->GetPosition() + RE::NiPoint3{ std::sin(a) * 450.0f, std::cos(a) * 450.0f, 30.0f };
+						SpawnOne(p, static_cast<int>(i), &at);
+					}
+					logger::info("dev: spawned {} x{}", a_row, a_count);
+					return;
+				}
+			}
+			logger::warn("dev: no enemy row '{}'", a_row);
+		}
 		void RaiseAt(const RE::NiPoint3& a_at)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();

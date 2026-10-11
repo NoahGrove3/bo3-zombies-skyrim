@@ -117,6 +117,7 @@ namespace bo3z
 		void             Hazard(const RE::NiPoint3& a_at, float a_delay, float a_radius, float a_share, std::string_view a_look, bool a_stagger);
 		void             HurtPlayer(float a_share, bool a_stagger);
 		void             RaiseAt(const RE::NiPoint3& a_at);
+		void             DevSpawn(std::string_view a_row, int a_count);  // DevTools: raise that undead in front of you
 		void             EndNight();
 		bool             BossPos(RE::NiPoint3& a_at);  // Grimmvar, if he walks
 		bool             RaiseChampion(int a_town, std::string_view a_row, std::string_view a_name, float a_healthMult, const RE::NiPoint3& a_at);  // a city's named champion
