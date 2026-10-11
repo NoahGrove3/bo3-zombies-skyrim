@@ -611,8 +611,8 @@ namespace bo3z
 			std::vector<Hud::State::EnemyBar> bars;
 			auto* cam = RE::Main::WorldRootCamera();
 			if (cam) {
-				struct Near { RE::Actor* a; float d; int row; };
-				std::vector<Near> near;
+				struct Close { RE::Actor* a; float d; int row; };
+				std::vector<Close> close;
 				const auto pp = a_player->GetPosition();
 				for (auto& s : g_alive) {
 					auto a = s.handle.get();
@@ -625,14 +625,14 @@ namespace bo3z
 					const bool  great = gen::kEnemies[s.enemy].kind == 1 || gen::kEnemies[s.enemy].kind == 2 || gen::kEnemies[s.enemy].elite;
 					const float d = a->GetPosition().GetDistance(pp);
 					if (d < 2200.0f && mx > 0 && (hp < mx * 0.999f || great) && a.get() != g_boss.handle.get().get()) {
-						near.push_back({ a.get(), d, static_cast<int>(s.enemy) });
+						close.push_back({ a.get(), d, static_cast<int>(s.enemy) });
 					}
 				}
-				std::sort(near.begin(), near.end(), [](const Near& l, const Near& r) { return l.d < r.d; });
-				if (near.size() > 12) {
-					near.resize(12);
+				std::sort(close.begin(), close.end(), [](const Close& l, const Close& r) { return l.d < r.d; });
+				if (close.size() > 12) {
+					close.resize(12);
 				}
-				for (auto& n : near) {
+				for (auto& n : close) {
 					RE::NiPoint3 head = n.a->GetPosition();
 					head.z += n.a->GetHeight() * 1.08f + 12.0f;
 					float x = 0, y = 0, z = 0;
