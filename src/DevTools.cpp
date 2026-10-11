@@ -303,6 +303,23 @@ namespace bo3z
 					}
 				}
 				logger::info("dev: first-person arms {}", v ? "shown" : "hidden");
+			} else if (cmd == "gfx") {
+				// gfx <menu, '_' for spaces> <callback> [number]: call one of a menu's own Scaleform callbacks (the button
+				// a message box would get from a click: 'gfx MessageBoxMenu buttonPress 0')
+				std::string menu, fn;
+				double      num = 0;
+				in >> menu >> fn;
+				const bool hasNum = static_cast<bool>(in >> num);
+				std::replace(menu.begin(), menu.end(), '_', ' ');
+				if (auto* ui = RE::UI::GetSingleton()) {
+					if (auto m = ui->GetMenu(menu); m && m->fxDelegate && m->uiMovie) {
+						RE::GFxValue arg(num);
+						m->fxDelegate->Callback(m->uiMovie.get(), fn.c_str(), hasNum ? &arg : nullptr, hasNum ? 1 : 0);
+						logger::info("dev: gfx {} {}({})", menu, fn, hasNum ? std::to_string(num) : "");
+					} else {
+						logger::warn("dev: gfx: menu '{}' not open or has no delegate", menu);
+					}
+				}
 			} else if (cmd == "menus") {
 				std::string open;
 				if (auto* ui = RE::UI::GetSingleton()) {
@@ -373,7 +390,7 @@ namespace bo3z
 			for (auto& s : lines) {
 				if (s.rfind("shot ", 0) == 0) {
 					g_shotName = s.substr(5);
-				} else if (s.rfind("key ", 0) == 0 || s.rfind("type ", 0) == 0 || s.rfind("mouse ", 0) == 0 || s.rfind("hold ", 0) == 0 || s.rfind("close ", 0) == 0) {
+				} else if (s.rfind("key ", 0) == 0 || s.rfind("type ", 0) == 0 || s.rfind("gfx ", 0) == 0 || s.rfind("menus", 0) == 0 || s.rfind("mouse ", 0) == 0 || s.rfind("hold ", 0) == 0 || s.rfind("close ", 0) == 0) {
 					g_mainQueue.push_back(s);
 				} else {
 					g_gameQueue.push_back(s);
