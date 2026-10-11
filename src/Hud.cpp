@@ -939,9 +939,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// the rune-stone's soul-fire and the ground ring pulsing, braziers flickering, embers and ash rising, now and
 		// then a cold lightning flash; the title; Skyrim's own menu entries redrawn as our buttons (Skyrim keeps
 		// doing the work: mouse, keyboard and pad act on its real list, we only draw over it).
-		struct MenuEntry { std::string text; ImVec2 a, b; bool sel, disabled; };
-		// Skyrim's main list as it stands (entries, where on the screen, which is selected). Empty if it isn't up.
-		std::vector<MenuEntry> ReadMainList(ImVec2 size)
+		struct MenuEntry { std::string text; int index; bool sel, disabled; };
+		// Skyrim's main list as it stands (its entries and which is selected); empty if it isn't up. Its own list is
+		// moved off the screen while ours shows (the keys still drive it; our buttons drive it by mouse).
+		std::vector<MenuEntry> ReadMainList(RE::GFxMovieView** a_movie = nullptr)
 		{
 			std::vector<MenuEntry> out;
 			auto* ui = RE::UI::GetSingleton();
@@ -965,63 +966,51 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			list.GetMember("entryList", &entries);
 			list.GetMember("selectedIndex", &selV);
-			const int  sel = selV.IsNumber() ? static_cast<int>(selV.GetNumber()) : -1;
-			const auto vis = mv->GetVisibleFrameRect();
-			const float sw = vis.right - vis.left, sh = vis.bottom - vis.top;
-			if (sw <= 1 || sh <= 1 || !entries.IsArray()) {
+			if (!entries.IsArray()) {
 				return out;
 			}
-			for (int c = 0; c < 17; ++c) {
-				RE::GFxValue clip;
-				if (!list.GetMember(("Entry" + std::to_string(c)).c_str(), &clip) || !clip.IsDisplayObject()) {
-					continue;
-				}
-				RE::GFxValue::DisplayInfo ci;
-				clip.GetDisplayInfo(&ci);
-				RE::GFxValue idxV;
-				clip.GetMember("itemIndex", &idxV);
-				if (!ci.GetVisible() || !idxV.IsNumber()) {
-					continue;
-				}
-				const int idx = static_cast<int>(idxV.GetNumber());
-				if (idx < 0 || idx >= static_cast<int>(entries.GetArraySize())) {
-					continue;
-				}
+			const int sel = selV.IsNumber() ? static_cast<int>(selV.GetNumber()) : -1;
+			for (std::uint32_t i = 0; i < entries.GetArraySize(); ++i) {
 				RE::GFxValue e, t, dis;
-				entries.GetElement(idx, &e);
+				entries.GetElement(i, &e);
 				e.GetMember("text", &t);
 				if (!t.IsString()) {
 					continue;
 				}
 				e.GetMember("disabled", &dis);
-				// the clip's box on the stage, then on the screen
-				RE::GFxValue pt0, pt1;
-				mv->CreateObject(&pt0);
-				mv->CreateObject(&pt1);
-				RE::GFxValue hgt;
-				clip.GetMember("_height", &hgt);
-				RE::GFxValue wdt;
-				clip.GetMember("_width", &wdt);
-				pt0.SetMember("x", 0.0), pt0.SetMember("y", 0.0);
-				pt1.SetMember("x", wdt.IsNumber() ? wdt.GetNumber() : 200.0), pt1.SetMember("y", hgt.IsNumber() ? hgt.GetNumber() : 30.0);
-				clip.Invoke("localToGlobal", nullptr, &pt0, 1);
-				clip.Invoke("localToGlobal", nullptr, &pt1, 1);
-				RE::GFxValue x0, y0, x1, y1;
-				pt0.GetMember("x", &x0), pt0.GetMember("y", &y0), pt1.GetMember("x", &x1), pt1.GetMember("y", &y1);
-				if (!x0.IsNumber() || !y0.IsNumber()) {
-					continue;
+				std::string txt = t.GetString();
+				if (!txt.empty() && txt[0] == '$') {  // a translation key ($CONTINUE): our own words for it
+					txt = txt.substr(1);
 				}
-				auto S = [&](double x, double y) { return ImVec2{ static_cast<float>((x - vis.left) / sw) * size.x, static_cast<float>((y - vis.top) / sh) * size.y }; };
-				MenuEntry me;
-				me.text = t.GetString();
-				me.a = S(x0.GetNumber(), y0.GetNumber());
-				me.b = S(x1.IsNumber() ? x1.GetNumber() : x0.GetNumber() + 200, y1.IsNumber() ? y1.GetNumber() : y0.GetNumber() + 30);
-				me.sel = idx == sel;
-				me.disabled = dis.IsBool() && dis.GetBool();
-				out.push_back(std::move(me));
+				out.push_back({ txt, static_cast<int>(i), static_cast<int>(i) == sel, dis.IsBool() && dis.GetBool() });
 			}
-			std::sort(out.begin(), out.end(), [](const MenuEntry& l, const MenuEntry& r) { return l.a.y < r.a.y; });
+			// Skyrim's own list leaves the screen (it keeps working for keys and pad)
+			RE::GFxValue::DisplayInfo li;
+			list.GetDisplayInfo(&li);
+			if (li.GetX() < 5000.0) {
+				li.SetX(li.GetX() + 10000.0);
+				list.SetDisplayInfo(li);
+			}
+			if (a_movie) {
+				*a_movie = mv;
+			}
 			return out;
+		}
+		void PressMainList(RE::GFxMovieView* a_mv, int a_index, bool a_press)
+		{
+			RE::GFxValue list;
+			if (!a_mv || !a_mv->GetVariable(&list, "_root.MenuHolder.Menu_mc.MainList") || !list.IsDisplayObject()) {
+				return;
+			}
+			RE::GFxValue cur;
+			list.GetMember("selectedIndex", &cur);
+			if (!cur.IsNumber() || static_cast<int>(cur.GetNumber()) != a_index) {
+				list.SetMember("selectedIndex", RE::GFxValue(static_cast<double>(a_index)));
+			}
+			if (a_press) {
+				RE::GFxValue arg(0.0);
+				list.Invoke("onItemPress", nullptr, &arg, 1);
+			}
 		}
 
 		ID3D11ShaderResourceView* g_mSky = nullptr;
@@ -1215,51 +1204,54 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_frameSrv)), { 0, 0 }, size, { 0, 0 }, { 1, 1 });
 				fg->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 			}
-			// Skyrim's entries, redrawn as ours over its own (it still takes the clicks and the keys)
+			// the menu: Skyrim's entries as our buttons, in a column on the right (keys and pad move Skyrim's own
+			// selection, the mouse moves it by hovering ours; a click or Enter does what Skyrim would)
 			{
-				const auto entries = ReadMainList(size);
+				RE::GFxMovieView* mv = nullptr;
+				const auto entries = ReadMainList(&mv);
 				static float selY = -1;
-				static int   lastSel = -1;
+				static int   hoverIdx = -1;
+				const float  rowH = 58 * k;
+				const float  right = size.x - 90 * k, left = right - 420 * k;
+				const float  top = size.y * 0.60f - rowH * entries.size() * 0.5f;
+				int hovered = -1;
 				for (std::size_t i = 0; i < entries.size(); ++i) {
 					const auto& e = entries[i];
-					const float cy = (e.a.y + e.b.y) * 0.5f;
-					const float right = std::max(e.b.x, size.x - 60 * k);
-					const ImVec2 pa{ right - 430 * k, cy - 24 * k }, pb{ right, cy + 24 * k };
+					const float cy = top + rowH * (i + 0.5f);
 					const float stagger = std::clamp((openT - 0.25f - 0.07f * i) / 0.4f, 0.0f, 1.0f);  // they slide in one after another
 					const float dx = (1.0f - EaseOut(stagger)) * 40 * k;
-					// a plate that covers Skyrim's own words (and reads as our button)
-					fg->AddRectFilledMultiColor({ pa.x + dx, pa.y }, { pb.x + dx, pb.y }, IM_COL32(4, 6, 10, 0), IM_COL32(6, 8, 12, static_cast<int>(235 * stagger)), IM_COL32(6, 8, 12, static_cast<int>(235 * stagger)), IM_COL32(4, 6, 10, 0));
-					if (e.sel) {
-						if (lastSel != static_cast<int>(i)) {
-							lastSel = static_cast<int>(i);
-						}
-						if (selY < 0) {
-							selY = cy;
-						}
+					const ImVec2 pa{ left + dx, cy - rowH * 0.42f }, pb{ right + dx, cy + rowH * 0.42f };
+					const bool over = cur.x >= pa.x && cur.x <= pb.x && cur.y >= pa.y && cur.y <= pb.y && !e.disabled;
+					if (over) {
+						hovered = static_cast<int>(i);
 					}
-					const ImU32 tc = e.disabled ? IM_COL32(110, 110, 115, static_cast<int>(200 * stagger)) : e.sel ? IM_COL32(245, 236, 214, static_cast<int>(255 * stagger)) : IM_COL32(176, 186, 198, static_cast<int>(220 * stagger));
+					fg->AddRectFilledMultiColor(pa, pb, IM_COL32(4, 6, 10, 0), IM_COL32(8, 10, 14, static_cast<int>((e.sel ? 230 : 150) * stagger)), IM_COL32(8, 10, 14, static_cast<int>((e.sel ? 230 : 150) * stagger)), IM_COL32(4, 6, 10, 0));
+					const ImU32 tc = e.disabled ? IM_COL32(100, 102, 108, static_cast<int>(200 * stagger)) : e.sel ? IM_COL32(245, 236, 214, static_cast<int>(255 * stagger)) : IM_COL32(170, 182, 196, static_cast<int>(225 * stagger));
 					std::string up = e.text;
 					std::transform(up.begin(), up.end(), up.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
-					const float fs = (e.sel ? 30.0f : 26.0f) * k;
+					const float fs = (e.sel ? 32.0f : 27.0f) * k;
 					const ImVec2 ts = Measure(g_title, fs, up);
-					Txt(fg, g_title, fs, { pb.x - 40 * k - ts.x + dx, cy - ts.y * 0.5f }, tc, up, e.sel ? 2.0f * k : 0.0f, IM_COL32(90, 255, 170, 255));
-				}
-				// the selection: a soul-fire rune that glides to the chosen entry
-				for (const auto& e : entries) {
-					if (!e.sel) {
-						continue;
+					Txt(fg, g_title, fs, { pb.x - 24 * k - ts.x, cy - ts.y * 0.5f }, tc, up, e.sel ? 2.0f * k : 0.0f, IM_COL32(90, 255, 170, 255));
+					if (e.sel) {
+						selY = selY < 0 ? cy : selY + (cy - selY) * std::min(1.0f, dt * 14.0f);
 					}
-					const float cy = (e.a.y + e.b.y) * 0.5f;
-					selY = selY < 0 ? cy : selY + (cy - selY) * std::min(1.0f, dt * 14.0f);
-					const float right = std::max(e.b.x, size.x - 60 * k);
-					const float x = right - 400 * k;
+				}
+				if (!entries.empty()) {
+					// the selection: a soul-fire rune that glides to the chosen entry, with a line under it
 					const float pulse = 0.75f + 0.25f * std::sin(now * 4.0f);
-					const float r = 9 * k;
-					fg->AddLine({ x + 18 * k, selY + 22 * k }, { right - 30 * k, selY + 22 * k }, IM_COL32(90, 255, 170, static_cast<int>(120 * pulse)), 1.5f * k);
+					const float x = left + 30 * k, r = 9 * k;
+					fg->AddLine({ x + 18 * k, selY + rowH * 0.36f }, { right - 10 * k, selY + rowH * 0.36f }, IM_COL32(90, 255, 170, static_cast<int>(110 * pulse)), 1.5f * k);
 					fg->AddCircleFilled({ x, selY }, r * 2.6f, IM_COL32(90, 255, 170, static_cast<int>(40 * pulse)), 24);
 					fg->AddQuadFilled({ x, selY - r }, { x + r * 0.7f, selY }, { x, selY + r }, { x - r * 0.7f, selY }, IM_COL32(170, 255, 210, static_cast<int>(255 * pulse)));
-				}
-				if (entries.empty()) {
+					// the mouse: hover moves Skyrim's selection (it plays its focus sound, ours while the menu is up), a click presses
+					if (hovered >= 0 && hovered != hoverIdx && !entries[hovered].sel) {
+						PressMainList(mv, entries[hovered].index, false);
+					}
+					hoverIdx = hovered;
+					if (click && hovered >= 0) {
+						PressMainList(mv, entries[hovered].index, true);
+					}
+				} else {
 					selY = -1;
 				}
 			}
