@@ -62,6 +62,8 @@ namespace bo3z
 		int  PerkBits();
 		int  ActiveSlot();
 		void SetActiveSlot(int a_slot);
+		void Guard();           // every tick: puts the mod's values back if something wiped them (see Forms.cpp)
+		void ForgetSnapshot();  // a load or the main menu: the next values are a different game's
 		void OnWorldReady();
 		inline constexpr int kFlagInit = 0, kFlagReserveV2 = 4, kFlagStarted = 5, kFlagMoved = 11, kPerkShift = 14, kFlagPerksV2 = 23;  // bits: init | crew 1-3 | (old perks 4-10) | moved 11 | slot 12-13 | perks 14-22 | v2 23
 	}
@@ -233,6 +235,7 @@ namespace bo3z
 
 	namespace Intro
 	{
+		void OnMainMenu();  // the next new game moves its character again
 		void Install();                 // data loaded: set MQQuickstart
 		void Tick();
 		bool CrewScreenOpen();

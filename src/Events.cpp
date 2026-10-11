@@ -12,6 +12,7 @@ namespace bo3z
 			{
 				func(a_this, a_delta);
 				try {
+					Save::Guard();
 					DevTools::RunQueuedInGame();
 					Intro::Tick();
 					Director::Tick(a_delta);
@@ -43,6 +44,8 @@ namespace bo3z
 				Audio::SetMenuMusic();  // the main menu plays our track (read by the game when the menu opens)
 				if (a_event->menuName == RE::MainMenu::MENU_NAME) {
 					Audio::MenuUiSounds(a_event->opening);
+					Save::ForgetSnapshot();
+					Intro::OnMainMenu();
 				}
 				// "Data loaded" without the Script Extender: the first menu event once the player form exists.
 				if (!dataLoaded && RE::TESForm::LookupByID(0x7)) {
@@ -51,6 +54,9 @@ namespace bo3z
 				}
 				if (dataLoaded) {
 					Intro::Install();  // keep MQQuickstart at 3 for the next new game
+				}
+				if (a_event->menuName == RE::LoadingMenu::MENU_NAME && a_event->opening) {
+					Save::ForgetSnapshot();  // whatever comes next may be another game
 				}
 				if (a_event->menuName == RE::LoadingMenu::MENU_NAME && !a_event->opening && dataLoaded) {
 					// After a new game, a save from the main menu, or a save loaded in game.
@@ -72,6 +78,7 @@ namespace bo3z
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESLoadGameEvent*, RE::BSTEventSource<RE::TESLoadGameEvent>*) override
 			{
 				Audio::StopAll();
+				Save::ForgetSnapshot();
 				Director::Reset();
 				Gun::Reset();
 				Shops::Reset();

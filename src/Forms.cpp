@@ -347,6 +347,35 @@ namespace bo3z
 		int  ActiveSlot() { return (Flags() >> 12) & 0x3; }
 		void SetActiveSlot(int a_slot) { SetFlags((Flags() & ~(0x3 << 12)) | ((a_slot & 0x3) << 12)); }
 
+		// The mod's save lives in ten of the player's spare actor values. A new game's start-up scripts (the race being
+		// set, survival mode) can wipe them a moment after we wrote them, which sent the new character back to Riverwood
+		// in a loop. A snapshot taken every tick puts them back when they all vanish at once without a load in between.
+		namespace
+		{
+			constexpr int kSavedAVs[] = { gen::kAV_slot0, gen::kAV_slot1, gen::kAV_slot2, gen::kAV_flags, gen::kAV_box, gen::kAV_round, gen::kAV_points,
+				gen::kAV_reserve0, gen::kAV_reserve1, gen::kAV_reserve2 };
+			int  g_snap[std::size(kSavedAVs)]{};
+			bool g_snapValid = false;
+		}
+		void ForgetSnapshot() { g_snapValid = false; }
+		void Guard()
+		{
+			const int f = Get(gen::kAV_flags);
+			if (g_snapValid && f == 0 && (g_snap[3] & (1 << kFlagInit))) {
+				for (std::size_t i = 0; i < std::size(kSavedAVs); ++i) {
+					Set(kSavedAVs[i], g_snap[i]);
+				}
+				logger::warn("save: the mod's values were wiped by something else; put back (flags {:06X}, {} points)", g_snap[3], g_snap[6]);
+				return;
+			}
+			if (f & (1 << kFlagInit)) {
+				for (std::size_t i = 0; i < std::size(kSavedAVs); ++i) {
+					g_snap[i] = Get(kSavedAVs[i]);
+				}
+				g_snapValid = true;
+			}
+		}
+
 		void OnWorldReady()
 		{
 			if (!Flag(kFlagInit)) {

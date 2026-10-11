@@ -229,7 +229,7 @@ def build(name, preview_only=False):
     for v in range(len(P)):
         ws = [(idx[top[v, k]], tw[v, k]) for k in range(4) if tw[v, k] > 0.01]
         s = sum(w for _, w in ws)
-        lines.append(f'v {P[v,0]:.4f} {P[v,1]:.4f} {P[v,2]:.4f} {T[v,0]:.5f} {T[v,1]:.5f} {N[v,0]:.4f} {N[v,1]:.4f} {N[v,2]:.4f} ' + ' '.join(f'{b} {w / s:.4f}' for b, w in ws))
+        lines.append(f'v {P[v,0]:.4f} {P[v,1]:.4f} {P[v,2]:.4f} {T[v,0]:.5f} {1.0 - T[v,1]:.5f} {N[v,0]:.4f} {N[v,1]:.4f} {N[v,2]:.4f} ' + ' '.join(f'{b} {w / s:.4f}' for b, w in ws))
     lines += [f't {a} {b} {c}' for a, b, c in F]
     return lines
 

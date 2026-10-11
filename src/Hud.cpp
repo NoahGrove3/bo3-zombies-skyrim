@@ -1354,6 +1354,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		float                     g_filmT = 0, g_filmSkip = 0, g_filmEnd = -1;
 		int                       g_filmCue = -1;
 		bool                      g_filmPaused = false;
+		std::uint32_t             g_filmPauses = 0;  // pauses already in force when the film began
 		ID3D11ShaderResourceView* g_filmTex[kFilmScenes]{};
 
 		void FilmRelease()
@@ -1398,6 +1399,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 			if (auto* ui = RE::UI::GetSingleton()) {
+				g_filmPauses = ui->numPausesGame;
 				++ui->numPausesGame;  // the world waits while the film plays
 				g_filmPaused = true;
 			}
@@ -1676,14 +1678,25 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			                     !uiM->IsMenuOpen(RE::InventoryMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MagicMenu::MENU_NAME) &&
 			                     !uiM->IsMenuOpen(RE::MapMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::StatsMenu::MENU_NAME);
 			const int  clicks = g_clicks.exchange(0);
-			if (g_filmReq.exchange(false) && !g_filmOn) {
-				FilmStart();
+			if (g_filmReq && !g_filmOn) {  // the film waits until the world has settled (the move to Riverwood loads a cell)
+				static auto settled = std::chrono::steady_clock::now();
+				if (!InGame()) {
+					settled = std::chrono::steady_clock::now();
+				} else if (std::chrono::steady_clock::now() - settled > std::chrono::milliseconds(2500)) {
+					g_filmReq = false;
+					FilmStart();
+				}
 			}
 			const bool film = g_filmOn;
 			if (film) {  // another pausing menu opened over the film (the journal, a loading screen): the film yields
 				auto* ui = RE::UI::GetSingleton();
-				if (ui && (ui->numPausesGame > 1 || ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME) || mainMenu)) {
+				const bool loading = ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME);
+				if (ui && (ui->numPausesGame > g_filmPauses + 1 || loading || mainMenu)) {
+					logger::info("intro: film yields (pauses {} vs {}, loading {}, main menu {})", ui->numPausesGame, g_filmPauses + 1, loading, mainMenu);
 					FilmStop();
+					if (!mainMenu && g_filmT < 20.0f) {
+						g_filmReq = true;  // a prompt (survival mode, a quest box) came up first: the film starts again once it is answered
+					}
 				}
 			}
 			if (((!InGame() && !mainMenu && !journal) || (DevTools::HudOff() && !mainMenu)) && !g_filmOn) {
