@@ -1116,12 +1116,30 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (!ci.GetVisible() || ci.GetAlpha() <= 20.0) {
 				return false;
 			}
-			RE::GFxValue b;
-			if (!conf.Invoke("getBounds", &b, &root, 1) || !b.IsObject()) {
-				return false;
-			}
-			auto num = [&](const char* n) { RE::GFxValue v; return b.GetMember(n, &v) && v.IsNumber() ? static_cast<float>(v.GetNumber()) : 0.0f; };
-			const float x0 = num("xMin"), x1 = num("xMax"), y0 = num("yMin"), y1 = num("yMax");
+			// the union of its visible parts (the panel itself also holds a full-height backdrop we don't want)
+			float x0 = 1e9f, y0 = 1e9f, x1 = -1e9f, y1 = -1e9f;
+			static bool listed = false;
+			conf.VisitMembers([&](const char* a_name, const RE::GFxValue& a_val) {
+				if (!a_val.IsDisplayObject()) {
+					return;
+				}
+				RE::GFxValue::DisplayInfo di;
+				const_cast<RE::GFxValue&>(a_val).GetDisplayInfo(&di);
+				RE::GFxValue b;
+				if (!di.GetVisible() || di.GetAlpha() < 10.0 || !const_cast<RE::GFxValue&>(a_val).Invoke("getBounds", &b, &root, 1) || !b.IsObject()) {
+					return;
+				}
+				auto num = [&](const char* n) { RE::GFxValue v; return b.GetMember(n, &v) && v.IsNumber() ? static_cast<float>(v.GetNumber()) : 0.0f; };
+				const float bx0 = num("xMin"), bx1 = num("xMax"), by0 = num("yMin"), by1 = num("yMax");
+				if (!listed) {
+					logger::info("menu: question part '{}' ({:.0f},{:.0f})-({:.0f},{:.0f})", a_name, bx0, by0, bx1, by1);
+				}
+				if (by1 - by0 > 400 || bx1 <= bx0) {
+					return;  // the full-height backdrop
+				}
+				x0 = std::min(x0, bx0), y0 = std::min(y0, by0), x1 = std::max(x1, bx1), y1 = std::max(y1, by1);
+			});
+			listed = true;
 			const auto vis = mv->GetVisibleFrameRect();
 			RE::GViewport vp;
 			mv->GetViewport(&vp);
@@ -1324,8 +1342,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				if (qa > 0 && last.z > last.x) {
 					fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(90 * qa)));
-					const ImVec2 a{ last.x - 8 * k, last.y - 8 * k }, z{ last.z + 8 * k, last.w + 8 * k };
-					fg->AddRectFilled(a, z, IM_COL32(6, 6, 9, static_cast<int>(235 * qa)), 2 * k);
+					const ImVec2 a{ last.x - 34 * k, last.y - 26 * k }, z{ last.z + 34 * k, last.w + 22 * k };
+					fg->AddRectFilled(a, z, IM_COL32(6, 6, 9, static_cast<int>(232 * qa)), 2 * k);
+					fg->AddRect(a, z, IM_COL32(118, 104, 86, static_cast<int>(160 * qa)), 2 * k, 0, 1.2f * k);
 				}
 			}
 			// Skyrim's questions and hints laid back over the picture: only the bright words
