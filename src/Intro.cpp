@@ -30,6 +30,7 @@ namespace bo3z
 		}
 
 		bool CrewScreenOpen() { return false; }
+		bool NewGameThisSession() { return g_moved; }
 		void OnMainMenu() { g_moved = false, g_settle = 0; }  // the BO3 crew picker is gone: you play your own character
 
 		void Tick()
@@ -50,6 +51,7 @@ namespace bo3z
 						return;
 					}
 					g_moved = true;
+					Hud::IntroVeil(14.0f);
 					if (auto* marker = Forms::RiverwoodMarker()) {
 						player->MoveTo(marker);
 						logger::info("intro: moved the new character to Riverwood");

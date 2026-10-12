@@ -239,6 +239,7 @@ namespace bo3z
 	namespace Intro
 	{
 		void OnMainMenu();  // the next new game moves its character again
+		bool NewGameThisSession();  // a new game was started from the main menu and its character made (not Continue / Load)
 		void Install();                 // data loaded: set MQQuickstart
 		void Tick();
 		bool CrewScreenOpen();
@@ -383,6 +384,7 @@ namespace bo3z
 		void        OnClick();  // a left click (menus: the party panel's buttons)
 		void        IntroStart();             // the Undying Nights intro film (once, for a new character)
 		bool        IntroActive();
+		void IntroVeil(float a_seconds);  // black over the game for a while (a new character's trip to Riverwood, before the film)
 		void        IntroSkipHeld(bool a_held);
 	}
 

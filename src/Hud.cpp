@@ -535,7 +535,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->PathArcTo(c, R, -RE::NI_PI / 2, -RE::NI_PI / 2 + 2 * RE::NI_PI * frac, 64);
 				dl->PathStroke(kGold, 0, 4 * k);
 				const std::string n = std::to_string(static_cast<int>(std::ceil(s.countdown)));
-				TxtC(dl, g_num, 44 * k, c.x, c.y - 28 * k, kParch, n);
+				TxtC(dl, g_num, std::round(44 * k), std::round(c.x), std::round(c.y - 23.5f * k), kParch, n);  // the digits' own middle on the ring's
 				TxtC(dl, g_title, 22 * k, c.x, c.y + R + 10 * k, Fade(kGold, 0.9f), "NIGHT " + std::to_string(s.round + 1) + " APPROACHES");
 			}
 
@@ -1359,20 +1359,26 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		};
 		using GS = gen::Sound;
 		const FilmScene kFilm[] = {  // timed to the narration (vo_01..vo_09: the line starts at voAt, its second sentence at l2At)
-			{ nullptr, 4.4f, 1, 1, 0, 0, 0, 0, nullptr, "THE FOURTH ERA, 201", "HELGEN BURNED", GS::intro_graves, 0.3f, false, GS::vo_01, 0.6f, 2.12f },
-			{ "intro_helgen", 10.8f, 1.04f, 1.14f, -0.6f, 0.2f, 0.4f, -0.2f, nullptr, "You lived.", "But as the World-Eater rose from the ash, he sang a word older than the Thu'um itself.", GS::intro_helgen, 0.4f, true, GS::vo_02, 0.3f, 2.36f },
-			{ "intro_sky", 6.3f, 1.12f, 1.02f, 0.0f, -0.6f, 0.0f, 0.3f, "THE UNDYING DIRGE", nullptr, "And every grave in Skyrim heard it.", GS::intro_dirge, 0.6f, false, GS::vo_03, 0.3f, 2.88f },
-			{ "intro_graves", 8.1f, 1.03f, 1.12f, 0.5f, 0.3f, -0.3f, 0.0f, nullptr, "By day, it sleeps beneath the holds.", "But when the sun goes down... the dead remember.", GS::intro_graves, 0.5f, false, GS::vo_04, 0.3f, 3.90f },
-			{ "intro_horde", 10.0f, 1.14f, 1.04f, -0.3f, 0.0f, 0.3f, 0.1f, nullptr, "They come with the dusk. More each night, and harder to kill.", "Brides who run you down. Wailers who call the horde to feed.", GS::intro_horde, 0.5f, false, GS::vo_05, 0.3f, 4.92f },
-			{ "intro_champions", 8.5f, 1.02f, 1.10f, 0.0f, 0.4f, 0.0f, -0.2f, nullptr, "Champions walk among them.", "The Bone Knight. The Barrow King. The Lich of the Dirge.", GS::intro_champions, 0.4f, true, GS::vo_06, 0.3f, 2.24f },
-			{ "intro_wyrm", 8.9f, 1.10f, 1.02f, 0.4f, -0.2f, -0.2f, 0.2f, nullptr, "And when the fog rolls in...", "Grimmvar, the Undying Wyrm, comes hunting.", GS::intro_wyrm, 0.8f, false, GS::vo_07, 0.3f, 4.28f },
-			{ "intro_shrine", 8.3f, 1.03f, 1.13f, 0.2f, 0.3f, -0.1f, -0.1f, nullptr, "Yet in every city, a Shrine of the Dirge still stands.", "Take up its spells. Hold its circle. Break the curse, city by city.", GS::intro_shrine, 0.5f, true, GS::vo_08, 0.3f, 3.04f },
-			{ "menu_title", 6.0f, 1, 1, 0, 0, 0, 0, nullptr, nullptr, "Survive the night.", GS::intro_title, 0.2f, true, GS::vo_09, 0.5f, 0.50f },
+			{ nullptr, 5.3f, 1, 1, 0, 0, 0, 0, nullptr, "THE FOURTH ERA, 201", "HELGEN BURNED", GS::intro_graves, 0.3f, false, GS::vo_01, 0.9f, 2.42f },
+			{ "intro_helgen", 12.1f, 1.04f, 1.14f, -0.6f, 0.2f, 0.4f, -0.2f, nullptr, "You lived.", "But as the World-Eater rose from the ash, he sang a word older than the Thu'um itself.", GS::intro_helgen, 0.4f, true, GS::vo_02, 0.8f, 2.86f },
+			{ "intro_sky", 7.5f, 1.12f, 1.02f, 0.0f, -0.6f, 0.0f, 0.3f, "THE UNDYING DIRGE", nullptr, "And every grave in Skyrim heard it.", GS::intro_dirge, 0.6f, false, GS::vo_03, 0.8f, 3.38f },
+			{ "intro_graves", 9.4f, 1.03f, 1.12f, 0.5f, 0.3f, -0.3f, 0.0f, nullptr, "By day, it sleeps beneath the holds.", "But when the sun goes down... the dead remember.", GS::intro_graves, 0.5f, false, GS::vo_04, 0.8f, 4.40f },
+			{ "intro_horde", 11.3f, 1.14f, 1.04f, -0.3f, 0.0f, 0.3f, 0.1f, nullptr, "They come with the dusk. More each night, and harder to kill.", "Brides who run you down. Wailers who call the horde to feed.", GS::intro_horde, 0.5f, false, GS::vo_05, 0.8f, 5.42f },
+			{ "intro_champions", 9.8f, 1.02f, 1.10f, 0.0f, 0.4f, 0.0f, -0.2f, nullptr, "Champions walk among them.", "The Bone Knight. The Barrow King. The Lich of the Dirge.", GS::intro_champions, 0.4f, true, GS::vo_06, 0.8f, 2.74f },
+			{ "intro_wyrm", 10.2f, 1.10f, 1.02f, 0.4f, -0.2f, -0.2f, 0.2f, nullptr, "And when the fog rolls in...", "Grimmvar, the Undying Wyrm, comes hunting.", GS::intro_wyrm, 0.8f, false, GS::vo_07, 0.8f, 4.78f },
+			{ "intro_shrine", 9.4f, 1.03f, 1.13f, 0.2f, 0.3f, -0.1f, -0.1f, nullptr, "Yet in every city, a Shrine of the Dirge still stands.", "Take up its spells. Hold its circle. Break the curse, city by city.", GS::intro_shrine, 0.5f, true, GS::vo_08, 0.8f, 3.54f },
+			{ "menu_title", 6.9f, 1, 1, 0, 0, 0, 0, nullptr, nullptr, "Survive the night.", GS::intro_title, 0.2f, true, GS::vo_09, 0.9f, 0.90f },
 		};
 		constexpr int kFilmScenes = static_cast<int>(std::size(kFilm));
 		constexpr float kFilmXfade = 1.2f;
 		std::atomic<bool>         g_filmReq{ false };
 		std::atomic<bool>         g_filmOn{ false };
+		// the veil: black over everything while a new game turns into the film and the film into the game, so the
+		// start prompts (answered for you) never flash and the world fades in only once it has settled
+		float                                 g_veil = 0;
+		bool                                  g_outro = false;
+		std::chrono::steady_clock::time_point g_outroStart, g_outroBusy, g_reqSince;
+		std::atomic<long long>                g_holdUntilMs{ 0 };  // a new character is on its way to Riverwood: black until the film takes over
 		std::atomic<bool>         g_filmSkipHeld{ false };
 		float                     g_filmT = 0, g_filmSkip = 0, g_filmEnd = -1;
 		int                       g_filmCue = -1;
@@ -1539,8 +1545,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			} else {
 				if (sc.big) {
 					const float a = lineA(sc.voAt - 0.3f);
-					const float grow = 1.0f + 0.04f * std::clamp(local / sc.dur, 0.0f, 1.0f);
-					TxtC(fg, g_title, 92 * k * grow, size.x / 2, size.y * 0.42f, Fade(bone, a), sc.big, 4 * k, IM_COL32(200, 40, 30, static_cast<int>(160 * a)));
+					TxtC(fg, g_title, std::round(92 * k), size.x / 2, size.y * 0.42f, Fade(bone, a), sc.big, 4 * k, IM_COL32(200, 40, 30, static_cast<int>(160 * a)));
 				}
 				if (sc.l1) {
 					TxtC(fg, g_body, 34 * k, size.x / 2, ty, Fade(bone, lineA(sc.voAt - 0.3f)), sc.l1);
@@ -1571,6 +1576,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (outFade > 0) fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(255 * outFade)));
 			if (outFade >= 1.0f) {
 				FilmStop();
+				g_outro = true, g_veil = 1.0f;
+				g_outroStart = g_outroBusy = std::chrono::steady_clock::now();
+				SKSE::GetTaskInterface()->AddTask([] {  // into the game in first person
+					if (auto* cam = RE::PlayerCamera::GetSingleton()) {
+						cam->ForceFirstPerson();
+					}
+				});
 			}
 		}
 
@@ -1806,7 +1818,28 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 				}
 			}
-			if (((!InGame() && !mainMenu && !journal) || (DevTools::HudOff() && !mainMenu)) && !g_filmOn) {
+			{
+				const auto t = std::chrono::steady_clock::now();
+				auto*      ui = RE::UI::GetSingleton();
+				const bool busy = ui && (ui->IsMenuOpen(RE::MessageBoxMenu::MENU_NAME) || ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME) || ui->GameIsPaused());
+				if (g_outro) {
+					if (busy) {
+						g_outroBusy = t;
+					}
+					const float since = std::chrono::duration<float>(t - g_outroStart).count(), quiet = std::chrono::duration<float>(t - g_outroBusy).count();
+					if (since > 8.0f || (since > 2.6f && quiet > 0.9f)) {
+						g_outro = false;
+						logger::info("intro: into the game after {:.1f}s of black", since);
+					}
+				}
+				if (!g_filmReq) {
+					g_reqSince = t;
+				}
+				const long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(t.time_since_epoch()).count();
+			const bool want = !mainMenu && (g_filmOn || g_outro || ms < g_holdUntilMs || (g_filmReq && t - g_reqSince < std::chrono::seconds(20)));
+				g_veil = mainMenu ? 0.0f : want ? std::min(1.0f, g_veil + dt * 4.0f) : std::max(0.0f, g_veil - dt / 1.8f);
+			}
+			if (((!InGame() && !mainMenu && !journal) || (DevTools::HudOff() && !mainMenu)) && !g_filmOn && g_veil <= 0) {
 				if (static int m = 0; m++ % 1200 == 0) {
 					auto* ui = RE::UI::GetSingleton();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
@@ -1845,7 +1878,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			} else if (journal) {
 				const float k = io.DisplaySize.y / 1080.0f;
 				PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { 48 * k, 48 * k }, k, clicks > 0, true);
-			} else {
+			} else if (InGame() && !DevTools::HudOff()) {
 				Draw(s, io.DisplaySize);
 				// Skyrim's enemy bar under the compass gives way to ours over each foe
 				if (static int vb = 0; vb++ % 15 == 0) {
@@ -1853,6 +1886,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.EnemyHealth_mc._visible", RE::GFxValue(false));
 					}
 				}
+			}
+			if (g_veil > 0 && !g_filmOn && !mainMenu) {
+				ImGui::GetForegroundDrawList()->AddRectFilled({ 0, 0 }, io.DisplaySize, IM_COL32(0, 0, 0, static_cast<int>(255 * g_veil * g_veil * (3 - 2 * g_veil))));
 			}
 			ImGui::Render();
 			if (static int n = 0; n++ % 600 == 0) {
@@ -1967,6 +2003,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		void OnClick() { ++g_clicks; }
 		void IntroStart() { g_filmReq = true; }
 		bool IntroActive() { return g_filmOn || g_filmReq; }
+		void IntroVeil(float a_seconds)
+		{
+			g_holdUntilMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() + static_cast<long long>(a_seconds * 1000);
+		}
 		void IntroSkipHeld(bool a_held) { g_filmSkipHeld = a_held; }
 
 		void Lore(std::string a_title, std::string a_text, float a_seconds)
