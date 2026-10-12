@@ -1382,7 +1382,7 @@ namespace Spellcraft
 					au.Attach(node->AsNode());
 					g_auraSpin[side] += dtp * (1.6f + 11.0f * c) * (side ? -1.0f : 1.0f);
 					const float flick = 1.0f + 0.14f * std::sin(g_time * 23.0f + side * 2.0f) + 0.09f * std::sin(g_time * 37.0f + side) + 0.05f * std::sin(g_time * 61.0f);
-					const float as = (first ? 0.3f : 0.5f) * (0.42f + 0.9f * c) * flick * (ready ? 1.2f : 1.0f);
+					const float as = (first ? 0.17f : 0.32f) * (0.45f + 0.8f * c) * flick * (ready ? 1.2f : 1.0f);
 					au.Show(true);
 					au.Place(node->world.translate, AxisAngle({ 0, 0, 1 }, g_auraSpin[side]) * AxisAngle({ 1, 0, 0 }, g_auraSpin[side] * 0.37f), as);
 				} else {
