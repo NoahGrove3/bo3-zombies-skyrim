@@ -90,6 +90,17 @@ namespace bo3z
 							sp ? sp->effects.size() : 0, e != nullptr, e && e->data.projectileBase);
 						continue;
 					}
+					// the bolt in flight hums with its own loop (Spec 12.3), whatever projectile carries it; Skyrim's own
+					// flight and fade sounds are taken off (only the mod's library plays)
+					auto fly = [&](RE::BGSProjectile* a_p) {
+						const int gi = static_cast<int>(&g - gen::kGuns.data());
+						if (a_p && gi >= 0 && gi < static_cast<int>(gen::kGunSounds.size())) {
+							const int tr = gen::kGunSounds[gi].travel;
+							a_p->data.activeSoundLoop = tr >= 0 ? Audio::Descriptor(static_cast<gen::Sound>(tr)) : nullptr;
+							a_p->data.countdownSound = nullptr;
+							a_p->data.deactivateSound = nullptr;
+						}
+					};
 					if (done.contains(e)) {
 						continue;
 					}
@@ -102,6 +113,7 @@ namespace bo3z
 					} else {
 						logger::info("forms: {} bolt keeps our projectile ({}: no vanilla match)", g.id, m);
 					}
+					fly(e->data.projectileBase);
 				}
 			}
 			// Hand spells borrow the look of the vanilla spell they unleash: fire hands for flames, frost for frost...

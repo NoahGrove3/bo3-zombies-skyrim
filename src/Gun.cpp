@@ -845,6 +845,7 @@ namespace bo3z
 					case gen::Special::Hex:
 						if (!killed) {
 							g_hexed[best->GetFormID()] = 5.0f;
+							Audio::At(gen::Sound::linger_hex, best, 0.8f);
 						}
 						break;
 					case gen::Special::Plague:
@@ -852,6 +853,7 @@ namespace bo3z
 							const float dps = hitDmg * g.abilityValue / 3.0f;
 							g_dots.push_back({ best->GetHandle(), dps, 3.0f });
 							g_plagued[best->GetFormID()] = dps;
+							Audio::At(gen::Sound::linger_plague, best, 0.8f);
 						}
 						break;
 					case gen::Special::Daze:
@@ -1093,6 +1095,7 @@ namespace bo3z
 				}
 				Bolts(p, g, cone, 6);
 			} else if (id == "animunculi") {  // doom mark: every zombie nearby hexed and doomed to explode
+				Audio::AtPoint(gen::Sound::linger_hex, aim.hit);
 				for (auto* f : Foes(aim.hit, 1300.0f)) {
 					g_hexed[f->GetFormID()] = 10.0f;
 					g_doomed[f->GetFormID()] = base * 3.0f;
@@ -1221,6 +1224,7 @@ namespace bo3z
 				Blast(BlastIndex("priestlarge"), p->GetPosition());
 			} else if (id == "mirestaff") {  // Morthal, Drowning Mire: a bog drags them in and the plague runs through them
 				g_wells.push_back({ aim.hit, 4.0f, base * 1.5f, 0.0f });
+				Audio::AtPoint(gen::Sound::linger_plague, aim.hit);
 				for (auto* f : Foes(aim.hit, 900.0f)) {
 					g_dots.push_back({ f->GetHandle(), base * 0.8f, 6.0f });
 					g_plagued[f->GetFormID()] = base * 0.8f;
@@ -1286,11 +1290,15 @@ namespace bo3z
 			for (auto& d : now) {
 				if (d.kind == 0) {         // a doomed one goes off: the dark reaches up out of it
 					Blast(BlastIndex("tentacle"), d.at);
+					Audio::AtPoint(gen::Sound::linger_doom, d.at);
 					for (auto* f : Foes(d.at, 230.0f)) {
 						Damage(f, d.damage, false, false, true);
 					}
 				} else if (d.kind == 1) {  // the plague jumps to the two nearest
 					auto foes = Foes(d.at, 300.0f);
+					if (!foes.empty()) {
+						Audio::AtPoint(gen::Sound::linger_jump, d.at);
+					}
 					for (std::size_t i = 0; i < foes.size() && i < 2; ++i) {
 						if (!g_plagued.contains(foes[i]->GetFormID())) {
 							g_dots.push_back({ foes[i]->GetHandle(), d.damage, 3.0f });
@@ -1567,14 +1575,16 @@ namespace bo3z
 				const bool  charging = (IsSpell(gun) ? g_dualHeld : g_trigger) && g.chargeSeconds > 0 && g_chargeCd <= 0 && g_charge > 0.18f;
 				const float c = charging ? EaseInOut((g_charge - 0.18f) / std::max(0.1f, g.chargeSeconds - 0.18f)) : 0.0f;
 				if (charging && !g_chargeSaid) {
-					Forms::Play(gen::Sound::charge_up);
+					const int st = gen::kGunSounds[gun].start;
+					Audio::Ui(st >= 0 ? static_cast<gen::Sound>(st) : gen::Sound::charge_up);  // the spell's own swell as its power begins to gather
 					if (const int hum = gen::kGunSounds[gun].charge; hum >= 0) {
 						Audio::LoopStart(Audio::kLoopCharge, static_cast<gen::Sound>(hum));  // the spell's own hum while it gathers
 					}
 					g_chargeSaid = true;
 				}
 				if (charging && c >= 1.0f && !g_readySaid) {
-					Forms::Play(gen::Sound::charge_ready);
+					const int fu = gen::kGunSounds[gun].full;
+					Audio::Ui(fu >= 0 ? static_cast<gen::Sound>(fu) : gen::Sound::charge_ready);  // full: its own peak
 					g_readySaid = true;
 				}
 				if (!charging && Audio::Looping(Audio::kLoopCharge)) {
@@ -2075,12 +2085,16 @@ namespace bo3z
 					} else if (up && g_dualHeld) {
 						SendAttack(false, 0.0f, std::max(0.05f, g_charge));
 						SendAttack(true, 0.0f, std::max(0.05f, g_charge));
+						const int cur = CurrentGun();
 						if (!TryUnleash(true)) {
 							if (g_charge < 0.35f) {
 								TryFire(true);  // a quick dual tap is still a shot
 							} else {
-								Forms::Play(gen::Sound::charge_fizzle);  // let go too early: the gathered power gutters out
+								const int fz = cur >= 0 ? gen::kGunSounds[cur].fizzle : -1;
+								Audio::Ui(fz >= 0 ? static_cast<gen::Sound>(fz) : gen::Sound::charge_fizzle);  // let go too early: this spell's power gutters out
 							}
+						} else {
+							Audio::Ui(gen::Sound::release_power, 0.8f);  // a full release lands with weight under the spell's own unleash
 						}
 						Audio::LoopStop(Audio::kLoopCharge, 150);
 						g_dualHeld = false;

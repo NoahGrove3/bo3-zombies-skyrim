@@ -1274,6 +1274,82 @@
         "take": 2,
         "gain": -4
       }
+    },
+    {
+      "id": "tr_fire",
+      "src": "ignite",
+      "use": "a fire bolt in flight (loop)",
+      "t0": 2.9,
+      "t1": 5.1,
+      "peak": -10,
+      "loop": true
+    },
+    {
+      "id": "tr_ice",
+      "src": "coldwhoosh",
+      "use": "a frost bolt in flight (loop)",
+      "t0": 0.6,
+      "t1": 2.0,
+      "peak": -10,
+      "loop": true
+    },
+    {
+      "id": "tr_wind",
+      "src": "wind",
+      "use": "a gust in flight (loop)",
+      "t0": 0.6,
+      "t1": 3.6,
+      "peak": -10,
+      "loop": true
+    },
+    {
+      "id": "tr_shock",
+      "src": "beam",
+      "use": "a lightning bolt in flight (loop)",
+      "take": 2,
+      "pitch": 3,
+      "maxLen": 3.0,
+      "peak": -12,
+      "loop": true
+    },
+    {
+      "id": "tr_holy",
+      "src": "portal",
+      "use": "a holy bolt in flight (loop)",
+      "t0": 4.2,
+      "t1": 5.9,
+      "pitch": 4,
+      "peak": -11,
+      "loop": true
+    },
+    {
+      "id": "tr_dark",
+      "src": "drone",
+      "use": "a dark bolt in flight (loop)",
+      "t0": 0.5,
+      "t1": 3.5,
+      "pitch": 4,
+      "peak": -11,
+      "loop": true
+    },
+    {
+      "id": "tr_arcane",
+      "src": "ethereal",
+      "use": "an arcane bolt in flight (loop)",
+      "t0": 2.0,
+      "t1": 5.0,
+      "pitch": 3,
+      "peak": -12,
+      "loop": true
+    },
+    {
+      "id": "sp_holy_swell",
+      "src": "portal",
+      "use": "holy power gathering (charge begins)",
+      "t0": 3.98,
+      "t1": 5.2,
+      "peak": -8,
+      "fadeOut": 300
     }
   ]
 }

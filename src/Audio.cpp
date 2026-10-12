@@ -276,6 +276,8 @@ namespace bo3z::Audio
 		};
 	}
 
+	RE::BGSSoundDescriptorForm* Descriptor(gen::Sound a_s) { return Desc(a_s); }
+
 	std::string Stats()
 	{
 		return fmt::format("footfall events {}, steps played {}, flesh hits {}, sounds started {}, failed {}", g_statStepEvents.load(), g_statSteps.load(), g_statFlesh.load(),

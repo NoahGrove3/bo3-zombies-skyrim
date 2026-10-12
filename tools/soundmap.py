@@ -50,6 +50,34 @@ for w, (c, cs, l, ls, u, us, h, hs, b, bs) in SP.items():
     S('unleash_' + w, u, us, use=f'{w}: signature release')
     S('hit_' + w, 'hit_' + w, 0, '3d', use=f'{w}: bolt impact where it lands (its own sound, sheet sfx hit_{w})')
     S('boom_' + w, b, bs, '3d', use=f'{w}: gathered burst at the target')
+# ---- every spell's other stages (Spec 12.3): charging begins, full charge, an early release, the bolt in flight
+FAM = {  # element: (charge begins, full charge, early release (gutters out), bolt in flight (loop))
+ 'arcane': ('sp_bright_1', 'sp_bright_3', 'sp_crunch', 'tr_arcane'),
+ 'dark':   (GHOST, 'sp_hex', 'en_ghost_2', 'tr_dark'),
+ 'fire':   ('sp_fire_1', 'sp_ignite_small', 'sp_fire_6', 'tr_fire'),
+ 'ice':    ('sp_cold_whoosh', 'sp_ice_4', 'sp_ice_3', 'tr_ice'),
+ 'shock':  ('sp_shock_cast', 'sp_strike_2', 'sp_strike_1', 'tr_shock'),
+ 'holy':   ('sp_holy_swell', 'sp_bright_0', 'sp_bright_2', 'tr_holy'),
+ 'wind':   ('sp_wind_cast', 'sp_cold_whoosh', 'sp_wind_cast', 'tr_wind'),
+}
+ELEM = {  # spell: (element, pitch offset that sets it apart from its kin)
+ 'sidearm': ('arcane', 15), 'triad': ('arcane', 30), 'kagrenac': ('arcane', -10), 'wabbajack': ('arcane', -30),
+ 'centurion': ('dark', 20), 'drill': ('dark', -15), 'steampump': ('dark', -35), 'mammothlmg': ('dark', -50),
+ 'animunculi': ('fire', -20), 'flamerepeater': ('fire', 5), 'marksman': ('ice', 20), 'frostlancer': ('ice', -15),
+ 'stormcaller': ('shock', 5), 'skyforgearc': ('shock', -20), 'longshot': ('holy', 10), 'aetherium': ('holy', -15),
+ 'spider': ('wind', 25), 'embermortar': ('wind', -10),
+}
+for w, (el, off) in ELEM.items():
+    st, fu, fz, tr = FAM[el]
+    S('start_' + w, st, off, atten=6, use=f'{w}: charging begins ({el})')
+    S('full_' + w, fu, off, atten=2, use=f'{w}: full charge reached ({el})')
+    S('fizzle_' + w, fz, off - 15, atten=6, use=f'{w}: let go too early, the power gutters out ({el})')
+    S('travel_' + w, tr, off, '3d', loop=True, atten=4, use=f'{w}: the bolt in flight ({el}, loops on the projectile)')
+S('release_power', 'champ_arrive', -25, atten=4, use='a full-charge release: the weight under every signature move')
+S('linger_hex', 'sp_hex', 10, '3d', atten=2, use='a doom mark takes hold (Hexfire, Void Orb)')
+S('linger_plague', BREATH, 25, '3d', atten=4, use='the plague takes a host')
+S('linger_doom', 'en_demon_low', 10, '3d', use='a doomed one bursts: the dark reaches out of it')
+S('linger_jump', GHOST, 30, '3d', atten=4, use='the plague jumps to the next')
 S('charge_ready', 'sp_bright_1', -15, atten=2, use='full charge reached (both hands glow)')
 S('charge_up', 'sp_cold_whoosh', 25, atten=8, use='charge begins (hands come up)')
 S('charge_fizzle', 'sp_crunch', 20, atten=6, use='early release: the gathered power gutters out')

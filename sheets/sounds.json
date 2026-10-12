@@ -1710,6 +1710,1407 @@
       "use": "skyforgearc: gathered burst at the target"
     },
     {
+      "id": "start_sidearm",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_sidearm",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_bright_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_bright_1.wav"
+      ],
+      "shift": 15,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "sidearm: charging begins (arcane)"
+    },
+    {
+      "id": "full_sidearm",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_sidearm",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_bright_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_bright_3.wav"
+      ],
+      "shift": 15,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "sidearm: full charge reached (arcane)"
+    },
+    {
+      "id": "fizzle_sidearm",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_sidearm",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_crunch.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_crunch.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "sidearm: let go too early, the power gutters out (arcane)"
+    },
+    {
+      "id": "travel_sidearm",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_sidearm",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_arcane.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_arcane.wav"
+      ],
+      "shift": 15,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "sidearm: the bolt in flight (arcane, loops on the projectile)"
+    },
+    {
+      "id": "start_triad",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_triad",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_bright_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_bright_1.wav"
+      ],
+      "shift": 30,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "triad: charging begins (arcane)"
+    },
+    {
+      "id": "full_triad",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_triad",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_bright_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_bright_3.wav"
+      ],
+      "shift": 30,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "triad: full charge reached (arcane)"
+    },
+    {
+      "id": "fizzle_triad",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_triad",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_crunch.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_crunch.wav"
+      ],
+      "shift": 15,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "triad: let go too early, the power gutters out (arcane)"
+    },
+    {
+      "id": "travel_triad",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_triad",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_arcane.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_arcane.wav"
+      ],
+      "shift": 30,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "triad: the bolt in flight (arcane, loops on the projectile)"
+    },
+    {
+      "id": "start_kagrenac",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_kagrenac",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_bright_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_bright_1.wav"
+      ],
+      "shift": -10,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "kagrenac: charging begins (arcane)"
+    },
+    {
+      "id": "full_kagrenac",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_kagrenac",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_bright_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_bright_3.wav"
+      ],
+      "shift": -10,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "kagrenac: full charge reached (arcane)"
+    },
+    {
+      "id": "fizzle_kagrenac",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_kagrenac",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_crunch.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_crunch.wav"
+      ],
+      "shift": -25,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "kagrenac: let go too early, the power gutters out (arcane)"
+    },
+    {
+      "id": "travel_kagrenac",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_kagrenac",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_arcane.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_arcane.wav"
+      ],
+      "shift": -10,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "kagrenac: the bolt in flight (arcane, loops on the projectile)"
+    },
+    {
+      "id": "start_wabbajack",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_wabbajack",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_bright_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_bright_1.wav"
+      ],
+      "shift": -30,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "wabbajack: charging begins (arcane)"
+    },
+    {
+      "id": "full_wabbajack",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_wabbajack",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_bright_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_bright_3.wav"
+      ],
+      "shift": -30,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "wabbajack: full charge reached (arcane)"
+    },
+    {
+      "id": "fizzle_wabbajack",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_wabbajack",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_crunch.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_crunch.wav"
+      ],
+      "shift": -45,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "wabbajack: let go too early, the power gutters out (arcane)"
+    },
+    {
+      "id": "travel_wabbajack",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_wabbajack",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_arcane.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_arcane.wav"
+      ],
+      "shift": -30,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "wabbajack: the bolt in flight (arcane, loops on the projectile)"
+    },
+    {
+      "id": "start_centurion",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_centurion",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\en_ghost_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\en_ghost_0.wav",
+        "fx\\UndyingNights\\un\\en_ghost_1.wav",
+        "fx\\UndyingNights\\un\\en_ghost_2.wav"
+      ],
+      "shift": 20,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "centurion: charging begins (dark)"
+    },
+    {
+      "id": "full_centurion",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_centurion",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_hex.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_hex.wav"
+      ],
+      "shift": 20,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "centurion: full charge reached (dark)"
+    },
+    {
+      "id": "fizzle_centurion",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_centurion",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\en_ghost_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\en_ghost_2.wav"
+      ],
+      "shift": 5,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "centurion: let go too early, the power gutters out (dark)"
+    },
+    {
+      "id": "travel_centurion",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_centurion",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_dark.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_dark.wav"
+      ],
+      "shift": 20,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "centurion: the bolt in flight (dark, loops on the projectile)"
+    },
+    {
+      "id": "start_drill",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_drill",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\en_ghost_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\en_ghost_0.wav",
+        "fx\\UndyingNights\\un\\en_ghost_1.wav",
+        "fx\\UndyingNights\\un\\en_ghost_2.wav"
+      ],
+      "shift": -15,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "drill: charging begins (dark)"
+    },
+    {
+      "id": "full_drill",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_drill",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_hex.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_hex.wav"
+      ],
+      "shift": -15,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "drill: full charge reached (dark)"
+    },
+    {
+      "id": "fizzle_drill",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_drill",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\en_ghost_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\en_ghost_2.wav"
+      ],
+      "shift": -30,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "drill: let go too early, the power gutters out (dark)"
+    },
+    {
+      "id": "travel_drill",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_drill",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_dark.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_dark.wav"
+      ],
+      "shift": -15,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "drill: the bolt in flight (dark, loops on the projectile)"
+    },
+    {
+      "id": "start_steampump",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_steampump",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\en_ghost_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\en_ghost_0.wav",
+        "fx\\UndyingNights\\un\\en_ghost_1.wav",
+        "fx\\UndyingNights\\un\\en_ghost_2.wav"
+      ],
+      "shift": -35,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "steampump: charging begins (dark)"
+    },
+    {
+      "id": "full_steampump",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_steampump",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_hex.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_hex.wav"
+      ],
+      "shift": -35,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "steampump: full charge reached (dark)"
+    },
+    {
+      "id": "fizzle_steampump",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_steampump",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\en_ghost_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\en_ghost_2.wav"
+      ],
+      "shift": -50,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "steampump: let go too early, the power gutters out (dark)"
+    },
+    {
+      "id": "travel_steampump",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_steampump",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_dark.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_dark.wav"
+      ],
+      "shift": -35,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "steampump: the bolt in flight (dark, loops on the projectile)"
+    },
+    {
+      "id": "start_mammothlmg",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_mammothlmg",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\en_ghost_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\en_ghost_0.wav",
+        "fx\\UndyingNights\\un\\en_ghost_1.wav",
+        "fx\\UndyingNights\\un\\en_ghost_2.wav"
+      ],
+      "shift": -50,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "mammothlmg: charging begins (dark)"
+    },
+    {
+      "id": "full_mammothlmg",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_mammothlmg",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_hex.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_hex.wav"
+      ],
+      "shift": -50,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "mammothlmg: full charge reached (dark)"
+    },
+    {
+      "id": "fizzle_mammothlmg",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_mammothlmg",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\en_ghost_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\en_ghost_2.wav"
+      ],
+      "shift": -65,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "mammothlmg: let go too early, the power gutters out (dark)"
+    },
+    {
+      "id": "travel_mammothlmg",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_mammothlmg",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_dark.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_dark.wav"
+      ],
+      "shift": -50,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "mammothlmg: the bolt in flight (dark, loops on the projectile)"
+    },
+    {
+      "id": "start_animunculi",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_animunculi",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_fire_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_fire_1.wav"
+      ],
+      "shift": -20,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "animunculi: charging begins (fire)"
+    },
+    {
+      "id": "full_animunculi",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_animunculi",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_ignite_small.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_ignite_small.wav"
+      ],
+      "shift": -20,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "animunculi: full charge reached (fire)"
+    },
+    {
+      "id": "fizzle_animunculi",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_animunculi",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_fire_6.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_fire_6.wav"
+      ],
+      "shift": -35,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "animunculi: let go too early, the power gutters out (fire)"
+    },
+    {
+      "id": "travel_animunculi",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_animunculi",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_fire.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_fire.wav"
+      ],
+      "shift": -20,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "animunculi: the bolt in flight (fire, loops on the projectile)"
+    },
+    {
+      "id": "start_flamerepeater",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_flamerepeater",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_fire_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_fire_1.wav"
+      ],
+      "shift": 5,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "flamerepeater: charging begins (fire)"
+    },
+    {
+      "id": "full_flamerepeater",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_flamerepeater",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_ignite_small.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_ignite_small.wav"
+      ],
+      "shift": 5,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "flamerepeater: full charge reached (fire)"
+    },
+    {
+      "id": "fizzle_flamerepeater",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_flamerepeater",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_fire_6.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_fire_6.wav"
+      ],
+      "shift": -10,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "flamerepeater: let go too early, the power gutters out (fire)"
+    },
+    {
+      "id": "travel_flamerepeater",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_flamerepeater",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_fire.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_fire.wav"
+      ],
+      "shift": 5,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "flamerepeater: the bolt in flight (fire, loops on the projectile)"
+    },
+    {
+      "id": "start_marksman",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_marksman",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_cold_whoosh.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_cold_whoosh.wav"
+      ],
+      "shift": 20,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "marksman: charging begins (ice)"
+    },
+    {
+      "id": "full_marksman",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_marksman",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_ice_4.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_ice_4.wav"
+      ],
+      "shift": 20,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "marksman: full charge reached (ice)"
+    },
+    {
+      "id": "fizzle_marksman",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_marksman",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_ice_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_ice_3.wav"
+      ],
+      "shift": 5,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "marksman: let go too early, the power gutters out (ice)"
+    },
+    {
+      "id": "travel_marksman",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_marksman",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_ice.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_ice.wav"
+      ],
+      "shift": 20,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "marksman: the bolt in flight (ice, loops on the projectile)"
+    },
+    {
+      "id": "start_frostlancer",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_frostlancer",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_cold_whoosh.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_cold_whoosh.wav"
+      ],
+      "shift": -15,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "frostlancer: charging begins (ice)"
+    },
+    {
+      "id": "full_frostlancer",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_frostlancer",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_ice_4.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_ice_4.wav"
+      ],
+      "shift": -15,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "frostlancer: full charge reached (ice)"
+    },
+    {
+      "id": "fizzle_frostlancer",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_frostlancer",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_ice_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_ice_3.wav"
+      ],
+      "shift": -30,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "frostlancer: let go too early, the power gutters out (ice)"
+    },
+    {
+      "id": "travel_frostlancer",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_frostlancer",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_ice.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_ice.wav"
+      ],
+      "shift": -15,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "frostlancer: the bolt in flight (ice, loops on the projectile)"
+    },
+    {
+      "id": "start_stormcaller",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_stormcaller",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_shock_cast.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_shock_cast.wav"
+      ],
+      "shift": 5,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "stormcaller: charging begins (shock)"
+    },
+    {
+      "id": "full_stormcaller",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_stormcaller",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_strike_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_strike_2.wav"
+      ],
+      "shift": 5,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "stormcaller: full charge reached (shock)"
+    },
+    {
+      "id": "fizzle_stormcaller",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_stormcaller",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_strike_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_strike_1.wav"
+      ],
+      "shift": -10,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "stormcaller: let go too early, the power gutters out (shock)"
+    },
+    {
+      "id": "travel_stormcaller",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_stormcaller",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_shock.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_shock.wav"
+      ],
+      "shift": 5,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "stormcaller: the bolt in flight (shock, loops on the projectile)"
+    },
+    {
+      "id": "start_skyforgearc",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_skyforgearc",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_shock_cast.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_shock_cast.wav"
+      ],
+      "shift": -20,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "skyforgearc: charging begins (shock)"
+    },
+    {
+      "id": "full_skyforgearc",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_skyforgearc",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_strike_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_strike_2.wav"
+      ],
+      "shift": -20,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "skyforgearc: full charge reached (shock)"
+    },
+    {
+      "id": "fizzle_skyforgearc",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_skyforgearc",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_strike_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_strike_1.wav"
+      ],
+      "shift": -35,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "skyforgearc: let go too early, the power gutters out (shock)"
+    },
+    {
+      "id": "travel_skyforgearc",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_skyforgearc",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_shock.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_shock.wav"
+      ],
+      "shift": -20,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "skyforgearc: the bolt in flight (shock, loops on the projectile)"
+    },
+    {
+      "id": "start_longshot",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_longshot",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_holy_swell.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_holy_swell.wav"
+      ],
+      "shift": 10,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "longshot: charging begins (holy)"
+    },
+    {
+      "id": "full_longshot",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_longshot",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_bright_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_bright_0.wav"
+      ],
+      "shift": 10,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "longshot: full charge reached (holy)"
+    },
+    {
+      "id": "fizzle_longshot",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_longshot",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_bright_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_bright_2.wav"
+      ],
+      "shift": -5,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "longshot: let go too early, the power gutters out (holy)"
+    },
+    {
+      "id": "travel_longshot",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_longshot",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_holy.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_holy.wav"
+      ],
+      "shift": 10,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "longshot: the bolt in flight (holy, loops on the projectile)"
+    },
+    {
+      "id": "start_aetherium",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_aetherium",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_holy_swell.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_holy_swell.wav"
+      ],
+      "shift": -15,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "aetherium: charging begins (holy)"
+    },
+    {
+      "id": "full_aetherium",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_aetherium",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_bright_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_bright_0.wav"
+      ],
+      "shift": -15,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "aetherium: full charge reached (holy)"
+    },
+    {
+      "id": "fizzle_aetherium",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_aetherium",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_bright_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_bright_2.wav"
+      ],
+      "shift": -30,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "aetherium: let go too early, the power gutters out (holy)"
+    },
+    {
+      "id": "travel_aetherium",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_aetherium",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_holy.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_holy.wav"
+      ],
+      "shift": -15,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "aetherium: the bolt in flight (holy, loops on the projectile)"
+    },
+    {
+      "id": "start_spider",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_spider",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_wind_cast.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_wind_cast.wav"
+      ],
+      "shift": 25,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "spider: charging begins (wind)"
+    },
+    {
+      "id": "full_spider",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_spider",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_cold_whoosh.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_cold_whoosh.wav"
+      ],
+      "shift": 25,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "spider: full charge reached (wind)"
+    },
+    {
+      "id": "fizzle_spider",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_spider",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_wind_cast.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_wind_cast.wav"
+      ],
+      "shift": 10,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "spider: let go too early, the power gutters out (wind)"
+    },
+    {
+      "id": "travel_spider",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_spider",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_wind.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_wind.wav"
+      ],
+      "shift": 25,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "spider: the bolt in flight (wind, loops on the projectile)"
+    },
+    {
+      "id": "start_embermortar",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_start_embermortar",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_wind_cast.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_wind_cast.wav"
+      ],
+      "shift": -10,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "embermortar: charging begins (wind)"
+    },
+    {
+      "id": "full_embermortar",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_full_embermortar",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_cold_whoosh.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_cold_whoosh.wav"
+      ],
+      "shift": -10,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "embermortar: full charge reached (wind)"
+    },
+    {
+      "id": "fizzle_embermortar",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_fizzle_embermortar",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_wind_cast.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_wind_cast.wav"
+      ],
+      "shift": -25,
+      "layer": "none",
+      "atten": 6,
+      "loop": false,
+      "use": "embermortar: let go too early, the power gutters out (wind)"
+    },
+    {
+      "id": "travel_embermortar",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_travel_embermortar",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_wind.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_wind.wav"
+      ],
+      "shift": -10,
+      "layer": "none",
+      "atten": 4,
+      "loop": true,
+      "use": "embermortar: the bolt in flight (wind, loops on the projectile)"
+    },
+    {
+      "id": "release_power",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_release_power",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\champ_arrive.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\champ_arrive.wav"
+      ],
+      "shift": -25,
+      "layer": "none",
+      "atten": 4,
+      "loop": false,
+      "use": "a full-charge release: the weight under every signature move"
+    },
+    {
+      "id": "linger_hex",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_linger_hex",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_hex.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_hex.wav"
+      ],
+      "shift": 10,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "a doom mark takes hold (Hexfire, Void Orb)"
+    },
+    {
+      "id": "linger_plague",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_linger_plague",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\en_breath_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\en_breath_0.wav",
+        "fx\\UndyingNights\\un\\en_breath_1.wav",
+        "fx\\UndyingNights\\un\\en_breath_2.wav",
+        "fx\\UndyingNights\\un\\en_breath_3.wav",
+        "fx\\UndyingNights\\un\\en_breath_4.wav",
+        "fx\\UndyingNights\\un\\en_breath_5.wav"
+      ],
+      "shift": 25,
+      "layer": "none",
+      "atten": 4,
+      "loop": false,
+      "use": "the plague takes a host"
+    },
+    {
+      "id": "linger_doom",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_linger_doom",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\en_demon_low.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\en_demon_low.wav"
+      ],
+      "shift": 10,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "a doomed one bursts: the dark reaches out of it"
+    },
+    {
+      "id": "linger_jump",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_linger_jump",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\en_ghost_0.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\en_ghost_0.wav",
+        "fx\\UndyingNights\\un\\en_ghost_1.wav",
+        "fx\\UndyingNights\\un\\en_ghost_2.wav"
+      ],
+      "shift": 30,
+      "layer": "none",
+      "atten": 4,
+      "loop": false,
+      "use": "the plague jumps to the next"
+    },
+    {
       "id": "charge_ready",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",

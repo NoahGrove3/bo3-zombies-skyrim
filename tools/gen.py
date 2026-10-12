@@ -94,8 +94,8 @@ o.append('\t} };')
 for i, w in enumerate(W): o.append(f'\tinline constexpr int kGunIdx_{w["id"]} = {i};')
 _sid = [x['id'] for x in S['sounds']['rows']]
 _gs = lambda pre, w: str(_sid.index(pre + w['id'])) if (pre + w['id']) in _sid else '-1'
-o.append('\tstruct GunSounds { int charge, hit, boom; };  // per spell: charge hum (loop), bolt impact, gathered burst (sound index, -1 none)')
-o.append(f'\tinline constexpr std::array<GunSounds, {len(W)}> kGunSounds{{ {{ ' + ', '.join('GunSounds{ ' + _gs('charge_', w) + ', ' + _gs('hit_', w) + ', ' + _gs('boom_', w) + ' }' for w in W) + ' } };')
+o.append('\tstruct GunSounds { int charge, hit, boom, start, full, fizzle, travel; };  // per spell (Spec 12.3): charge hum (loop), bolt impact, gathered burst, charging begins, full charge, early release, bolt in flight (loop); sound index, -1 none')
+o.append(f'\tinline constexpr std::array<GunSounds, {len(W)}> kGunSounds{{ {{ ' + ', '.join('GunSounds{ ' + ', '.join(_gs(p_, w) for p_ in ('charge_', 'hit_', 'boom_', 'start_', 'full_', 'fizzle_', 'travel_')) + ' }' for w in W) + ' } };')
 k = S['melee']['rows'][0]
 o.append('\tstruct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };')
 o.append(f'\tinline constexpr KnifeDef kKnife{{ {k["key"]}, {F(k["damage"])}, {F(k["range"])}, {F(k["coneDeg"])}, {k["cooldownMs"]} }};')
