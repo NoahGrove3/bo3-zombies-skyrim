@@ -1128,16 +1128,16 @@ namespace bo3z::gen
 	inline constexpr float kPlanBuilding = 900.0f, kPlanClutter = 120.0f, kPlanFlat = 30.0f;
 	struct StationDef { bool fixed; std::uint32_t world; float x, y, z, yaw, compact; };  // sheet: stations (by town)
 	inline constexpr std::array<StationDef, 10> kStations{ {
-		StationDef{ true, 0x00003C, 22061.0f, -44912.0f, -144.0f, 180.0f, 0.8f },
-		StationDef{ true, 0x01A26F, 24900.0f, -7250.0f, -3392.0f, 30.0f, 0.8f },
-		StationDef{ true, 0x037EDF, -61400.0f, 104870.0f, -8333.0f, 90.0f, 0.8f },
-		StationDef{ true, 0x01691D, 130920.0f, 36100.0f, -12272.0f, 300.0f, 0.8f },
-		StationDef{ true, 0x016D71, -173740.0f, 5420.0f, -3389.0f, 30.0f, 0.8f },
-		StationDef{ true, 0x016BB4, 172560.0f, -96520.0f, 11133.0f, 150.0f, 0.8f },
-		StationDef{ true, 0x00003C, -30296.0f, -86284.0f, -3112.0f, 120.0f, 0.8f },
-		StationDef{ true, 0x00003C, -38400.0f, 68174.0f, -14089.0f, 180.0f, 0.8f },
-		StationDef{ true, 0x00003C, 30928.0f, 104698.0f, -13862.0f, 0.0f, 0.8f },
-		StationDef{ true, 0x00003C, 109208.0f, 102864.0f, -9013.0f, 180.0f, 0.8f },
+		StationDef{ true, 0x00003C, 22180.0f, -44700.0f, -144.0f, 180.0f, 0.8f },
+		StationDef{ true, 0x01A26F, 24180.0f, -7620.0f, -3401.0f, 30.0f, 0.8f },
+		StationDef{ true, 0x037EDF, -61460.0f, 105700.0f, -8388.0f, 90.0f, 0.8f },
+		StationDef{ true, 0x01691D, 130860.0f, 36100.0f, -12272.0f, 300.0f, 0.8f },
+		StationDef{ true, 0x016D71, -173820.0f, 5340.0f, -3394.0f, 30.0f, 0.8f },
+		StationDef{ true, 0x016BB4, 172500.0f, -96220.0f, 11128.0f, 150.0f, 0.8f },
+		StationDef{ true, 0x00003C, -30620.0f, -86820.0f, -3125.0f, 120.0f, 0.8f },
+		StationDef{ true, 0x00003C, -38180.0f, 68300.0f, -14088.0f, 180.0f, 0.8f },
+		StationDef{ true, 0x00003C, 30620.0f, 105740.0f, -14094.0f, 0.0f, 0.8f },
+		StationDef{ true, 0x00003C, 109020.0f, 103500.0f, -9013.0f, 180.0f, 0.8f },
 	} };
 	struct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; int sound; };
 	inline constexpr std::array<ShoutDef, 10> kShouts{ {
