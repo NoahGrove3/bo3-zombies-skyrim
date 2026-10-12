@@ -206,8 +206,8 @@ namespace Spellcraft
 				return;
 			}
 			Detach();
-			glow = Fx{ Load(Def(a_row).id, "glow") };
-			rings = Fx{ Load(Def(a_row).id, "orb") };
+			glow = Fx{ Load(gen::kSpellcraft[a_row].id, "glow") };
+			rings = Fx{ Load(gen::kSpellcraft[a_row].id, "orb") };
 			row = a_row;
 		}
 		void Attach(RE::NiNode* a_parent) { glow.Attach(a_parent), rings.Attach(a_parent); }
