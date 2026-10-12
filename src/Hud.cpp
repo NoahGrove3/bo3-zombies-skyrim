@@ -1096,8 +1096,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ID3D11ShaderResourceView* g_mFar = nullptr;
 		ID3D11ShaderResourceView* g_mMid = nullptr;
 		ID3D11ShaderResourceView* g_mNear = nullptr;
-		constexpr float kMenuRune[2] = { 1794.0f, 642.0f };  // the rune-stone's runes in the painting (menu_glow.json)
-		constexpr float kMenuArch[2] = { 1184.0f, 395.0f };  // the barrow door
+		constexpr float kMenuRune[2] = { 1812.0f, 992.0f };  // the middle of the rune-stone's face in the painting
+		constexpr float kMenuArch[2] = { 1176.0f, 455.0f };  // the barrow door
 		ID3D11ShaderResourceView* g_mTitle = nullptr;
 
 		float g_pressT = -10, g_pressY = 0;  // the main menu entry last pressed (its flare)
@@ -1250,10 +1250,25 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// the front: the rune-stone (its runes pulse, a soft violet light on the snow), the graves, the outcrop
 			layer(g_mNear, 1.25f, white);
 			{
+				// the runes cut down its face, lit from within: each glows up in turn, the light spilling onto the snow
 				const ImVec2 r = toScreen(1.25f, kMenuRune[0], kMenuRune[1]);
 				const float  br = 0.55f + 0.45f * std::sin(now * 1.7f) * std::sin(now * 0.43f + 1.0f);
-				fg->AddCircleFilled(r, 70 * k, IM_COL32(150, 70, 255, static_cast<int>((10 + 16 * br) * fade)), 40);
-				fg->AddCircleFilled(r, 26 * k, IM_COL32(190, 120, 255, static_cast<int>((12 + 24 * br) * fade)), 32);
+				const float  u = (cw * (1.04f + 0.03f * 1.25f) * push) / 2560.0f;  // painting pixels -> screen
+				fg->AddCircleFilled({ r.x, r.y + 150 * u }, 120 * u, IM_COL32(150, 70, 255, static_cast<int>((8 + 10 * br) * fade)), 40);
+				fg->AddCircleFilled(r, 60 * u, IM_COL32(150, 70, 255, static_cast<int>((10 + 14 * br) * fade)), 40);
+				static const float kRune[6][8] = {  // each rune as up to two strokes (x0 y0 x1 y1, painting pixels from its centre)
+					{ 0, -14, 0, 14, 0, -6, 9, -14 }, { -8, 12, 0, -14, 8, 12, 0, -14 }, { 0, -14, 0, 14, -9, 0, 9, 0 },
+					{ -8, -14, 8, 14, 8, -14, -8, 14 }, { 0, -14, 0, 14, 0, 2, 9, 12 }, { -8, -12, 8, -12, 0, -12, 0, 14 } };
+				for (int i = 0; i < 6; ++i) {
+					const float ry = r.y + (i - 2.5f) * 34 * u, rx = r.x + ((i % 2) ? 2.0f : -2.0f) * u;
+					const float lit = std::clamp(0.45f + 0.55f * std::sin(now * 1.4f - i * 0.9f), 0.0f, 1.0f) * fade;
+					for (int sgm = 0; sgm < 2; ++sgm) {
+						const float* q = kRune[i] + sgm * 4;
+						const ImVec2 p0{ rx + q[0] * u, ry + q[1] * u }, p1{ rx + q[2] * u, ry + q[3] * u };
+						fg->AddLine(p0, p1, IM_COL32(150, 80, 255, static_cast<int>(70 * lit)), 7.0f * u);
+						fg->AddLine(p0, p1, IM_COL32(215, 170, 255, static_cast<int>(235 * lit)), 2.4f * u);
+					}
+				}
 			}
 			if (g_menuFog) {  // near mist, the other way
 				const float u0 = now * 0.004f;
