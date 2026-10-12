@@ -470,12 +470,42 @@ namespace Spellcraft
 		auto* root = p->Get3D(cam && cam->IsInFirstPerson());
 		return root ? root->GetObjectByName(a_name) : nullptr;
 	}
+	// Where a spell leaves the hands, in the world. In first person the arms are drawn by their own camera (their
+	// nodes do not sit where they appear in the world), so the point is taken from the view itself: just below and
+	// right of the eye for the right hand, centre-low for the orb between both.
+	bool FirstPerson()
+	{
+		auto* cam = RE::PlayerCamera::GetSingleton();
+		return cam && cam->IsInFirstPerson();
+	}
+	RE::NiPoint3 ViewPoint(float a_fwd, float a_right, float a_down)
+	{
+		auto* cam = RE::PlayerCamera::GetSingleton();
+		if (!cam || !cam->cameraRoot) {
+			return RE::PlayerCharacter::GetSingleton()->GetPosition() + RE::NiPoint3{ 0, 0, 110 };
+		}
+		const auto&  w = cam->cameraRoot->world;
+		const RE::NiPoint3 f{ w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] };
+		const RE::NiPoint3 r{ w.rotate.entry[0][0], w.rotate.entry[1][0], w.rotate.entry[2][0] };
+		const RE::NiPoint3 u{ w.rotate.entry[0][2], w.rotate.entry[1][2], w.rotate.entry[2][2] };
+		return w.translate + f * a_fwd + r * a_right - u * a_down;
+	}
 	RE::NiPoint3 HandAt(RE::PlayerCharacter* p)
 	{
+		if (FirstPerson()) {
+			return ViewPoint(48.0f, 13.0f, 15.0f);
+		}
 		if (auto* m = Bone(p, "NPC R MagicNode [RMag]")) {
 			return m->world.translate;
 		}
 		return AimAt(100.0f).eye;
+	}
+	RE::NiPoint3 OrbAt(RE::PlayerCharacter* p)
+	{
+		if (FirstPerson()) {
+			return ViewPoint(52.0f, 0.0f, 16.0f);
+		}
+		return g_orbAtValid ? g_orbAt : HandAt(p);
 	}
 
 	// ---------------------------------------------------------------- projectiles
@@ -894,7 +924,7 @@ namespace Spellcraft
 		g_ultCd = g.chargeCooldown * Perks::ChargeMult();
 		auto*       p = RE::PlayerCharacter::GetSingleton();
 		const Aim   aim = AimAt(8000.0f);
-		const RE::NiPoint3 from = g_orbAtValid ? g_orbAt : HandAt(p);
+		const RE::NiPoint3 from = OrbAt(p);
 		const RE::NiPoint3 feet = p->GetPosition() + RE::NiPoint3{ 0, 0, 40 };
 		RE::NiPoint3       dir = aim.hit - from;
 		dir.Unitize();
@@ -998,14 +1028,14 @@ namespace Spellcraft
 		}
 		const auto& d = Def(g_beamRow);
 		const Aim   aim = AimAt(4500.0f);
-		RE::NiPoint3 from = g_orbAtValid ? g_orbAt : HandAt(RE::PlayerCharacter::GetSingleton());
+		RE::NiPoint3 from = OrbAt(RE::PlayerCharacter::GetSingleton());
 		{  // the beam leaves a little ahead of the hands, so it does not fill the view
 			RE::NiPoint3 fd = aim.hit - from;
 			fd.Unitize();
-			from += fd * 35.0f;
+			from += fd * 20.0f;
 		}
 		const float grow = std::min(1.0f, (kBeamSeconds - g_beamT) / 0.15f) * std::min(1.0f, g_beamT / 0.2f);
-		g_beam.Lay(from, aim.hit, (d.ultRadius / 70.0f) * (0.4f + 0.6f * grow) * (1.0f + 0.07f * std::sin(g_time * 40.0f)));
+		g_beam.Lay(from, aim.hit, (d.ultRadius / 55.0f) * (0.4f + 0.6f * grow) * (1.0f + 0.07f * std::sin(g_time * 40.0f)));
 		if (!Audio::Looping(Audio::kLoopCharge)) {
 			if (const int hum = Snd(gun, &gen::GunSounds::charge); hum >= 0) {
 				Audio::LoopStart(Audio::kLoopCharge, static_cast<gen::Sound>(hum));
@@ -1160,7 +1190,7 @@ namespace Spellcraft
 			g_orb.Attach(root);
 			const float full = gen::kGuns[gun].chargeSeconds * Perks::ChargeMult();
 			const float c = g_beamT > 0 ? 1.0f : std::clamp(g_orbT / std::max(0.1f, full), 0.0f, 1.0f);
-			float       sz = (first ? 0.08f : 0.2f) + (first ? 0.24f : 0.5f) * EaseOut(c);  // the orb mesh's glow is 30 across: a fist-sized ball at full
+			float       sz = (first ? 0.06f : 0.2f) + (first ? 0.16f : 0.5f) * EaseOut(c);  // the orb mesh's glow is 30 across: a fist-sized ball at full
 			if (g_beamT > 0) {
 				sz *= 0.55f;  // the beam carries the power away: the ball between the hands shrinks so the beam reads
 			}

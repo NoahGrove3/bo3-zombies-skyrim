@@ -14,6 +14,7 @@ T = '/home/claude/tools/'
 W = pathlib.Path('/home/claude/work')
 UP = pathlib.Path('/mnt/user-data/uploads/common--Skyrim Special Edition/Data/Meshes/UndyingNights')
 ICE, EMBER, VIOLET = (0.62, 0.85, 1.0), (1.0, 0.48, 0.16), (0.78, 0.5, 1.0)
+RED = (1.0, 0.10, 0.06)
 MODELS = {  # creature id: (nif, glow colour, size)
     'zombie': (W / 'out4/Data/Meshes/UndyingNights/zombie/zombie.nif', ICE, 1.0),
     'runner': (W / 'out3/Data/Meshes/UndyingNights/hooded/hooded.nif', ICE, 0.9),
@@ -113,15 +114,21 @@ def write_glow(cid, nif, color, size, out_root):
     additive effect mesh in the head bone's own space (where the skin's head vertices are), a hot core in a soft halo,
     set a little out in front of the face so nothing hides it"""
     ht, hr, eyes = find_eyes(nif)
+    import json
+    sock = pathlib.Path(__file__).with_name('eyes_sockets.json')
+    picked = json.loads(sock.read_text()).get(cid) if sock.exists() else None
+    if picked:  # the sockets, picked on a front render of each model (x, surface y, z in model space)
+        eyes = [(x, y - 0.7, z) for x, y, z in picked]
+    color = RED   # Noah: red eyes, set in the sockets
     out = pathlib.Path(out_root) / 'Meshes' / 'UndyingNights' / 'eyes' / f'{cid}_glow.nif'
     out.parent.mkdir(parents=True, exist_ok=True)
     R = hr.reshape(3, 3)
     lines = [f'out {out}']
-    for name, tex, scale, half in (('halo', 'UndyingNights\\fx\\soft.dds', 1.6, 2.6 * size), ('core', 'UndyingNights\\fx\\core.dds', 3.0, 1.0 * size)):
+    for name, tex, scale, half in (('halo', 'UndyingNights\\fx\\soft.dds', 1.8, 1.9 * size), ('core', 'UndyingNights\\fx\\core.dds', 3.2, 0.75 * size)):
         lines.append(f"shape {name} tex={tex} color={color[0]:.3f},{color[1]:.3f},{color[2]:.3f},1 scale={scale} blend=add falloff=0")
         vi = 0
         for (x, y, z) in eyes:
-            e = np.array([x, y + 1.2, z])            # a hair in front of the face
+            e = np.array([x, y, z])                   # in the socket
             loc = R.T @ (e - ht)                      # into the head bone's space (as the skin binds it)
             for ax in range(3):
                 u, v = [(0, 2), (1, 2), (0, 1)][ax]

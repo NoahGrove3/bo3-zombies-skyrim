@@ -146,6 +146,26 @@ class Mesh:
             s['v'].append((*p, uu, vv, *cc))
         s['t'] += [(b, b + 1, b + 2), (b, b + 2, b + 3)]
 
+    @staticmethod
+    def ring(s, ax_u, ax_v, radius, width, seg=56):
+        """a circle of radius in the plane (ax_u, ax_v): a band in the plane and a band across it, each width wide"""
+        u = np.asarray(ax_u, float); v = np.asarray(ax_v, float); u /= np.linalg.norm(u); v /= np.linalg.norm(v)
+        n = np.cross(u, v); n /= np.linalg.norm(n)
+        for k in range(seg):
+            a0, a1 = 2 * math.pi * k / seg, 2 * math.pi * (k + 1) / seg
+            for side in (0, 1):
+                pts = []
+                for a in (a0, a1):
+                    rdir = math.cos(a) * u + math.sin(a) * v
+                    c = rdir * radius
+                    off = rdir * (width / 2) if side == 0 else n * (width / 2)
+                    pts.append((c - off, c + off))
+                b = len(s['v'])
+                vv0, vv1 = k / seg, (k + 1) / seg
+                for p, uu, vv in ((pts[0][0], 0, vv0), (pts[0][1], 1, vv0), (pts[1][1], 1, vv1), (pts[1][0], 0, vv1)):
+                    s['v'].append((*p, uu, vv, 1, 1, 1, 1))
+                s['t'] += [(b, b + 1, b + 2), (b, b + 2, b + 3)]
+
     def billboard(self, s, c, size, axes=3):
         X, Y, Z = (1, 0, 0), (0, 1, 0), (0, 0, 1)
         for au, av in [(X, Z), (Y, Z), (X, Y)][:axes]:
@@ -221,9 +241,11 @@ def build(spell, t):
     core = m.shape('core', t['core'], (*pale, 1), 2.6); m.billboard(core, (0, 0, 0), 8)
     inner = m.shape('inner', main_tex, (*col, 1), 1.8); m.billboard(inner, (0, 0, 0), 16)
     outer = m.shape('outer', t['soft'], (*col, 1), 0.9); m.billboard(outer, (0, 0, 0), 30)
-    ring = m.shape('ring', t['ring'] if style != 'wind' else t['swirl'], (*acc, 1), 1.4)
-    for au, av in (((1, 0, 0), (0, 0, 1)), ((0.7, 0.7, 0), (0, 0, 1)), ((1, 0, 0), (0, 0.7, 0.7))):
-        Mesh.quad(ring, (0, 0, 0), au, av, 21, 21)
+    # the rings: thin circular lines orbiting the glowing core (each a narrow band in its plane and one across it,
+    # so it reads as a line from every side, never as a flat disc)
+    ring = m.shape('ring', t['beam'], (*acc, 1), 1.9)
+    for au, av, rad in (((1, 0, 0), (0, 0, 1), 19.0), ((0.7071, 0.7071, 0), (0, 0, 1), 16.0), ((1, 0, 0), (0, 0.7071, 0.7071), 22.0)):
+        Mesh.ring(ring, au, av, rad, 0.9)
     m.write(MESH / f'{sid}_orb.nif')
     # ---- the beam: a 64-unit segment along +Y (two crossed planes, the core and the glow)
     m = Mesh()
