@@ -234,33 +234,33 @@ namespace bo3z::Party
 			}
 		}
 		// reviving a fallen friend: stand by them and hold Activate
-		std::uint64_t near = 0;
+		std::uint64_t nearId = 0;
 		if (g_life == Life::Alive) {
 			for (auto& [id, r] : g_remote) {
 				if (r.state == static_cast<std::uint8_t>(Life::Down) && Clock::now() - r.heard < std::chrono::seconds(3) && r.at.GetDistance(g_at) < kReviveReach) {
-					near = id;
+					nearId = id;
 				}
 			}
 		}
-		if (near && g_activateHeld) {
-			if (near != g_reviveWho) {
-				g_reviveWho = near, g_reviveT = 0;
+		if (nearId && g_activateHeld) {
+			if (nearId != g_reviveWho) {
+				g_reviveWho = nearId, g_reviveT = 0;
 			}
 			if ((g_reviveT += a_delta) >= kReviveSeconds) {
 				g_outRevive.resize(8);
-				std::memcpy(g_outRevive.data(), &near, 8);
-				Hud::Banner("You revived " + g_remote[near].name, 2.5f);
+				std::memcpy(g_outRevive.data(), &nearId, 8);
+				Hud::Banner("You revived " + g_remote[nearId].name, 2.5f);
 				Points::Add(100);
 				g_reviveT = 0, g_reviveWho = 0;
 			}
 		} else {
 			g_reviveT = std::max(0.0f, g_reviveT - a_delta * 2);
-			if (!near) {
+			if (!nearId) {
 				g_reviveWho = 0;
 			}
 		}
-		if (near && !g_reviveWho) {
-			g_reviveWho = near;
+		if (nearId && !g_reviveWho) {
+			g_reviveWho = nearId;
 		}
 	}
 
