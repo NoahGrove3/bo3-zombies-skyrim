@@ -230,6 +230,7 @@ namespace bo3z
 				const float v = std::hypot(pos.x - r.lastPos.x, pos.y - r.lastPos.y) / dt;
 				r.speed += (std::min(v, 900.0f) - r.speed) * std::min(1.0f, dt * 6.0f);
 			}
+			const RE::NiPoint3 prevPos = r.lastPos;
 			r.lastPos = pos;
 			const float moving = std::clamp(r.speed / 160.0f, 0.0f, 1.0f);
 			r.phase += dt * (1.6f + 4.5f * moving) * (r.type == Type::Runner ? 1.6f : 1.0f);
@@ -321,7 +322,16 @@ namespace bo3z
 			// ---- legs: planted feet and steps, from scratch (see Gait)
 			const float scale = r.root ? std::max(0.3f, r.root->world.scale) : 1.0f;
 			const Gait& g = kGaits[static_cast<int>(r.type)];
-			const RE::NiPoint3 vdir = f;  // the body walks where it faces (Skyrim turns it toward its path)
+			// the way the body is actually going (sideways, backwards too: the feet step that way, nothing slides)
+			RE::NiPoint3 vdir = f;
+			{
+				RE::NiPoint3 mv{ pos.x - prevPos.x, pos.y - prevPos.y, 0 };
+				if (dt > 0 && mv.Length() / dt > 25.0f && mv.Length() < 200.0f) {
+					mv.Unitize();
+					vdir = mv;
+				}
+			}
+			std::array<RE::NiPoint3, 2> tgt{};
 			if (g.step > 0 && B[kLThigh].node && B[kRThigh].node && B[kLCalf].node && B[kRCalf].node && B[kLFoot].node && B[kRFoot].node) {
 				const float ground = pos.z;
 				const float ankle = 9.0f * scale;
@@ -361,7 +371,8 @@ namespace bo3z
 						at = ft.plant;
 					}
 					// the knee points forward (and a little out)
-					TwoBone(B[side == 0 ? kLThigh : kRThigh], B[side == 0 ? kLCalf : kRCalf], B[side == 0 ? kLFoot : kRFoot], at, vdir + rt * (0.15f * sg), 1.0f);
+					tgt[side] = at;
+					TwoBone(B[side == 0 ? kLThigh : kRThigh], B[side == 0 ? kLCalf : kRCalf], B[side == 0 ? kLFoot : kRFoot], at, f + rt * (0.15f * sg), 1.0f);  // (knees always point the way it faces)
 				}
 				// the hips settle: low enough that both planted feet are reached (nothing floats), with the step's bob
 				{
@@ -371,15 +382,14 @@ namespace bo3z
 						auto& ca = B[side == 0 ? kLCalf : kRCalf];
 						auto& fo = B[side == 0 ? kLFoot : kRFoot];
 						(void)th, (void)ca;
-						const float miss = fo.node->world.translate.z - (r.feet[side].t >= 0 ? fo.node->world.translate.z : r.feet[side].plant.z);
+						const float miss = fo.node->world.translate.z - tgt[side].z;  // a foot left hanging above where it should be
 						need = std::max(need, miss);
 					}
 					if (need > 0.5f) {  // a foot could not reach its plant: drop the body by that much and solve again
-						Shift(B[kCOM], RE::NiPoint3{ 0, 0, -std::min(need, 30.0f * scale) });
+						Shift(B[kCOM], RE::NiPoint3{ 0, 0, -std::min(need, 45.0f * scale) });
 						Refresh(B[kCOM]);
 						for (int side = 0; side < 2; ++side) {
-							const RE::NiPoint3 at = r.feet[side].t >= 0 ? B[side == 0 ? kLFoot : kRFoot].node->world.translate : r.feet[side].plant;
-							TwoBone(B[side == 0 ? kLThigh : kRThigh], B[side == 0 ? kLCalf : kRCalf], B[side == 0 ? kLFoot : kRFoot], at, vdir + rt * (0.15f * (side == 0 ? -1.0f : 1.0f)), 1.0f);
+							TwoBone(B[side == 0 ? kLThigh : kRThigh], B[side == 0 ? kLCalf : kRCalf], B[side == 0 ? kLFoot : kRFoot], tgt[side], f + rt * (0.15f * (side == 0 ? -1.0f : 1.0f)), 1.0f);
 						}
 					}
 				}

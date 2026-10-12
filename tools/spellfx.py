@@ -261,6 +261,21 @@ def build(spell, t):
     core = m.shape('core', t['core'], (*pale, 1), 1.6); m.billboard(core, (0, 0, 0), 3)
     halo = m.shape('halo', main_tex, (*col, 1), 1.2); m.billboard(halo, (0, 0, 0), 9)
     m.write(MESH / f'{sid}_hand.nif')
+    # ---- the aura round a casting hand: tongues of the spell's power flaring out from a glow (the code spins it,
+    # flickers it and grows it with the charge)
+    m = Mesh()
+    gl = m.shape('glow', t['soft'], (*col, 1), 1.4); m.billboard(gl, (0, 0, 0), 13)
+    tongue_tex = {'fire': t['flame'], 'ice': t['crystal'], 'shock': t['bolt'], 'thorn': t['thorn'], 'blood': t['drop'],
+                  'wind': t['swirl'], 'soul': t['wisp'], 'dawn': t['rays']}.get(style, t['streak'])
+    tg = m.shape('tongues', tongue_tex, (*mix(col, acc, 0.35), 1), 1.8)
+    golden = math.pi * (3 - math.sqrt(5))
+    for k in range(14):
+        zz = 1 - 2 * (k + 0.5) / 14; rr = math.sqrt(1 - zz * zz); th = golden * k
+        d = np.array([math.cos(th) * rr, math.sin(th) * rr, zz])
+        side = np.cross(d, [0, 0, 1] if abs(zz) < 0.9 else [1, 0, 0]); side /= np.linalg.norm(side)
+        Mesh.quad(tg, d * 9.0, side, d, 3.2, 8.0, uv=(0, 1, 1, 0))
+    sp = m.shape('motes', t['sparks'], (*acc, 1), 1.6); m.billboard(sp, (0, 0, 0), 16, axes=2)
+    m.write(MESH / f'{sid}_aura.nif')
     # ---- the burst (unit size ~40; the code expands and fades it)
     m = Mesh()
     fl = m.shape('flash', t['soft'], (*pale, 1), 2.0); m.billboard(fl, (0, 0, 0), 40)
@@ -268,6 +283,17 @@ def build(spell, t):
     Mesh.quad(rg, (0, 0, 0), (1, 0, 0), (0, 1, 0), 60, 60)
     Mesh.quad(rg, (0, 0, 0), (1, 0, 0), (0, 0, 1), 50, 50)
     sp = m.shape('sparks', t['sparks'] if style not in ('ice',) else t['crystal'], (*acc, 1), 1.6); m.billboard(sp, (0, 0, 0), 55)
+    # tongues of the spell's power thrown outward, and a flat shockwave across the ground
+    tg = m.shape('tongues', {'fire': t['flame'], 'ice': t['crystal'], 'shock': t['bolt'], 'thorn': t['thorn'], 'blood': t['drop'],
+                             'wind': t['swirl'], 'soul': t['wisp'], 'dawn': t['rays']}.get(style, t['streak']), (*mix(col, acc, 0.3), 1), 1.9)
+    golden = math.pi * (3 - math.sqrt(5))
+    for k in range(20):
+        zz = 1 - 2 * (k + 0.5) / 20; rr = math.sqrt(1 - zz * zz); th = golden * k
+        d = np.array([math.cos(th) * rr, math.sin(th) * rr, zz])
+        side = np.cross(d, [0, 0, 1] if abs(zz) < 0.9 else [1, 0, 0]); side /= np.linalg.norm(side)
+        Mesh.quad(tg, d * 30.0, side, d, 9.0, 22.0, uv=(0, 1, 1, 0))
+    sw = m.shape('shock', t['ring'], (*col, 1), 1.5)
+    Mesh.quad(sw, (0, 0, -6), (1, 0, 0), (0, 1, 0), 75, 75)
     m.write(MESH / f'{sid}_burst.nif')
     # ---- the spell's logo as a model: the Magic menu's display and the shrine's roll (the medallion in its flames)
     ic = np.asarray(Image.open(ROOT / 'assets' / 'ui' / f'w_{sid}.png').convert('RGBA').resize((512, 512), Image.LANCZOS)).astype(np.float32) / 255

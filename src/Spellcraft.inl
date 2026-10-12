@@ -265,7 +265,9 @@ namespace Spellcraft
 	Beam  g_beam;
 	Fx    g_orb, g_hand;
 	int   g_orbRow = -1, g_handRow = -1;
-	Fx    g_ball[2];
+	Fx    g_ball[2], g_aura[2], g_flash[2];
+	int   g_auraRow[2] = { -1, -1 }, g_flashRow[2] = { -1, -1 };
+	float g_flashT[2] = { -1, -1 }, g_auraSpin[2] = { 0, 0 };
 	int   g_ballRow[2] = { -1, -1 };
 	float g_ballSpin[2] = { 0, 0 };
 	RE::NiPoint3 g_orbAt{};
@@ -883,6 +885,7 @@ namespace Spellcraft
 		const float k = a_empowered ? kTapEmpower : 1.0f;
 		const float dmg = d.damage * Mult() * k;
 		Forms::Play(g.fireSnd);
+		g_flashT[1] = 0.0f;  // the right hand flares as the shot leaves
 		++g_shots;
 		// aim from the hand to what the crosshair is on
 		RE::NiPoint3 dir = aim.hit - from;
@@ -930,6 +933,7 @@ namespace Spellcraft
 		dir.Unitize();
 		const float dmg = d.ultDamage * Mult();
 		Forms::Play(g.chargeSnd);  // the spell's own unleash
+		g_flashT[0] = g_flashT[1] = 0.0f;
 		Audio::Ui(gen::Sound::release_power, 0.7f);
 		Hud::Banner(std::string(d.ultName), 1.2f);
 		g_pushT = 0.0f;
@@ -1062,6 +1066,10 @@ namespace Spellcraft
 			return;
 		}
 		if (a_down) {
+			if (g_cd > 0.05f) {  // still recovering from the last cast: the click does nothing (no gesture, no sound)
+				g_tapHeld = false;
+				return;
+			}
 			g_tapHeld = true, g_tapT = 0, g_tapFullSaid = false;
 			SendAttack(false, 1.0f, 0.0f);
 		} else if (a_up && g_tapHeld) {
@@ -1220,8 +1228,10 @@ namespace Spellcraft
 				g_ballRow[side] = row;
 			}
 			if (!ballsOn || !fx.obj || !node || !node->AsNode()) {
-				if (fx.obj) {
-					fx.Show(false);
+				for (Fx* x : { &fx, &g_aura[side], &g_flash[side] }) {
+					if (x->obj) {
+						x->Show(false);
+					}
 				}
 				continue;
 			}
@@ -1239,6 +1249,48 @@ namespace Spellcraft
 			}
 			fx.Show(true);
 			fx.Place(node->world.translate, AxisAngle({ 0.25f, 0.3f, 1.0f }, g_ballSpin[side]) * AxisAngle({ 1, 0, 0 }, 0.6f), sz);
+			// the aura: the hand burns with the spell while a cast gathers, growing and flaring with the charge
+			auto& au = g_aura[side];
+			if (g_auraRow[side] != row) {
+				au.Detach();
+				au = Fx{ Load(Def(row).id, "aura") };
+				g_auraRow[side] = row;
+			}
+			if (au.obj) {
+				if (c > 0.02f) {
+					au.Attach(node->AsNode());
+					g_auraSpin[side] += dtp * (3.0f + 9.0f * c) * (side ? -1.0f : 1.0f);
+					const float flick = 1.0f + 0.12f * std::sin(g_time * 23.0f + side * 2.0f) + 0.08f * std::sin(g_time * 37.0f);
+					const float as = (first ? 0.3f : 0.5f) * (0.35f + 0.85f * c) * flick * (ready ? 1.15f : 1.0f);
+					au.Show(true);
+					au.Place(node->world.translate, AxisAngle({ 0, 0, 1 }, g_auraSpin[side]) * AxisAngle({ 1, 0, 0 }, g_auraSpin[side] * 0.37f), as);
+				} else {
+					au.Show(false);
+				}
+			}
+			// the flare as a cast leaves the hand
+			auto& fl = g_flash[side];
+			if (g_flashRow[side] != row) {
+				fl.Detach();
+				fl = Fx{ Load(Def(row).id, "burst") };
+				g_flashRow[side] = row;
+			}
+			if (fl.obj) {
+				if (g_flashT[side] >= 0) {
+					g_flashT[side] += dtp;
+					const float u = g_flashT[side] / 0.22f;
+					if (u >= 1.0f) {
+						g_flashT[side] = -1;
+						fl.Show(false);
+					} else {
+						fl.Attach(node->AsNode());
+						fl.Show(true);
+						fl.Place(node->world.translate, AxisAngle({ 0, 0, 1 }, g_time * 4.0f), (first ? 0.16f : 0.3f) * std::sin(u * RE::NI_PI) * (1.0f + 0.5f * u));
+					}
+				} else {
+					fl.Show(false);
+				}
+			}
 		}
 	}
 
@@ -1346,9 +1398,9 @@ namespace Spellcraft
 		g_beamT = -1;
 		g_orb.Detach(), g_hand.Detach();
 		for (int i = 0; i < 2; ++i) {
-			g_ball[i].Detach();
-			g_ball[i] = {};
-			g_ballRow[i] = -1;
+			g_ball[i].Detach(), g_aura[i].Detach(), g_flash[i].Detach();
+			g_ball[i] = {}, g_aura[i] = {}, g_flash[i] = {};
+			g_ballRow[i] = g_auraRow[i] = g_flashRow[i] = -1;
 		}
 		g_orb = {}, g_hand = {};
 		g_orbRow = g_handRow = -1;
