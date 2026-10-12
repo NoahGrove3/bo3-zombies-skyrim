@@ -2161,13 +2161,25 @@ namespace bo3z
 				return;
 			}
 			auto* av = p->AsActorValueOwner();
-			// Magicka and stamina both come back fast once you stop spending them (Quicksilver doubles magicka).
-			g_manaQuiet += a_delta;
-			if (g_manaQuiet >= gen::kManaRegenDelay) {
-				const float max = av->GetPermanentActorValue(RE::ActorValue::kMagicka), cur = av->GetActorValue(RE::ActorValue::kMagicka);
-				if (cur < max) {
-					av->RestoreActorValue(RE::ActorValue::kMagicka, std::min(max - cur, max * gen::kManaRegenPerSecond / Perks::ManaMult() * a_delta));
+			// Magicka: nothing comes back until kManaRegenDelay (5 s) after the last magicka spent on anything (our
+			// spells or Skyrim's); then it comes back fast (Quicksilver doubles it). Skyrim's own trickle is taken
+			// back while it waits; a potion (a big jump at once) is kept.
+			{
+				static float last = -1;
+				const float  max = av->GetPermanentActorValue(RE::ActorValue::kMagicka), cur = av->GetActorValue(RE::ActorValue::kMagicka);
+				if (last >= 0 && cur < last - 0.01f) {
+					g_manaQuiet = 0;  // spent
+				} else {
+					g_manaQuiet += a_delta;
 				}
+				if (last >= 0 && cur > last + 0.001f && cur - last < 0.02f * max + 0.5f && g_manaQuiet < gen::kManaRegenDelay) {
+					av->DamageActorValue(RE::ActorValue::kMagicka, cur - last);  // Skyrim's own regeneration: not yet
+				}
+				const float now = av->GetActorValue(RE::ActorValue::kMagicka);
+				if (g_manaQuiet >= gen::kManaRegenDelay && now < max) {
+					av->RestoreActorValue(RE::ActorValue::kMagicka, std::min(max - now, max * gen::kManaRegenPerSecond / Perks::ManaMult() * a_delta));
+				}
+				last = av->GetActorValue(RE::ActorValue::kMagicka);
 			}
 			static float lastSp = -1, spQuiet = 0;
 			const float  spMax = av->GetPermanentActorValue(RE::ActorValue::kStamina), sp = av->GetActorValue(RE::ActorValue::kStamina);

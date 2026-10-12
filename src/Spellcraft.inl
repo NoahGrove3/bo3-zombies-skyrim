@@ -1435,11 +1435,20 @@ namespace Spellcraft
 			}
 			g_tapHeld = g_orbHeld = false;
 		}
-		// the engine's own charge for casting the hand spell is handed back (ours is spent in Spend)
+		// the engine's own charge for casting the hand spell is handed back (ours is spent in Spend); never while a
+		// Skyrim spell is being cast in the other hand: those cost their magicka as they always did
 		{
-			auto*       av = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner();
+			auto*       pl = RE::PlayerCharacter::GetSingleton();
+			auto*       av = pl->AsActorValueOwner();
 			const float mp = av->GetActorValue(RE::ActorValue::kMagicka);
-			if (live && g_mpLast >= 0 && mp < g_mpLast - 0.01f) {
+			bool        skyrimCasting = false;
+			for (auto src : { RE::MagicSystem::CastingSource::kLeftHand, RE::MagicSystem::CastingSource::kRightHand, RE::MagicSystem::CastingSource::kOther }) {
+				auto* mc = pl->GetMagicCaster(src);
+				if (mc && mc->currentSpell && mc->state.get() != RE::MagicCaster::State::kNone && Forms::GunIndexOf(mc->currentSpell) < 0) {
+					skyrimCasting = true;
+				}
+			}
+			if (live && !skyrimCasting && g_mpLast >= 0 && mp < g_mpLast - 0.01f) {
 				av->RestoreActorValue(RE::ActorValue::kMagicka, g_mpLast - mp);
 			}
 			g_mpLast = av->GetActorValue(RE::ActorValue::kMagicka);
