@@ -65,8 +65,8 @@ def sky():
     col = top + (mid - top) * smooth(0.0, 0.55, v)[..., None] + (low - mid) * smooth(0.45, 0.85, v)[..., None]
     # moon glow: a wide red-orange bloom, a tight halo ring
     d = np.sqrt((xx - MOON[0]) ** 2 + (yy - MOON[1]) ** 2) / MOON_R
-    bloom = np.exp(-((d - 0.0) / 7.0) ** 2) * 0.22 + np.exp(-((d - 0.0) / 2.4) ** 2) * 0.26   # a quieter glow (Noah: less shine)
-    ring = np.exp(-((d - 2.35) / 0.18) ** 2) * 0.04
+    bloom = np.exp(-((d - 0.0) / 5.0) ** 2) * 0.09 + np.exp(-((d - 0.0) / 1.9) ** 2) * 0.16   # a quieter glow (Noah: less shine)
+    ring = np.exp(-((d - 2.35) / 0.18) ** 2) * 0.0
     col = col + (bloom[..., None] * np.array([0.33, 0.10, 0.06])) + ring[..., None] * np.array([0.9, 0.5, 0.4])
     # the Milky Way: a faint band of dust and light slanting across the sky, dark lanes through it
     band_c = 0.20 + 0.55 * (xx / W)                                                       # its centre line (v) along x

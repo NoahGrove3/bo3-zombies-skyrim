@@ -1102,6 +1102,54 @@ namespace bo3z
 						}
 						logger::info("shops: {} old station taken down for the round shrine ({} pieces)", gen::kTowns[t], gone);
 					}
+					// the spot moved (sheet: stations, re-picked where paths meet with room all round): a shrine still standing
+					// at the old spot comes down and is raised again at the new one
+					{
+						std::vector<RE::TESObjectREFR*> ours;
+						RE::NiPoint3 sum{};
+						std::unordered_set<RE::TESForm*> station;  // only the station's own machines (never a rite's bones)
+						for (const auto& l : gen::kLocations) {
+							if (l.town == t) {
+								if (auto* f = Forms::Object(l.object)) {
+									station.insert(f);
+								}
+							}
+						}
+						RE::TES::GetSingleton()->ForEachReferenceInRange(anchor, 1800.0f, [&](RE::TESObjectREFR* r) {
+							auto* b = r ? r->GetBaseObject() : nullptr;
+							if (b && station.contains(b) && !r->IsDeleted() && !r->IsDisabled()) {
+								ours.push_back(r);
+								sum += r->GetPosition();
+							}
+							return RE::BSContainer::ForEachResult::kContinue;
+						});
+						if (!ours.empty()) {
+							const RE::NiPoint3 c = sum / static_cast<float>(ours.size());
+							if (std::hypot(c.x - plan.center.x, c.y - plan.center.y) > 140.0f) {
+								for (auto* r : ours) {
+									r->Disable();
+									r->SetDelete(true);
+								}
+								// and the shrine's own body and dressing standing with them (ours, close round the old spot)
+								RE::TES::GetSingleton()->ForEachReferenceInRange(anchor, 1800.0f, [&](RE::TESObjectREFR* r) {
+									auto* b = r ? r->GetBaseObject() : nullptr;
+									if (b && IsOurBase(b) && !r->IsDeleted() && !r->IsDisabled() && !r->As<RE::Actor>() && std::hypot(r->GetPosition().x - c.x, r->GetPosition().y - c.y) < 420.0f &&
+										b != Forms::Ours(gen::kWardBrazier) && b != Forms::Ours(gen::kWardFire) && b != Forms::Ours(gen::kWardLight)) {
+										r->Disable();
+										r->SetDelete(true);
+									}
+									return RE::BSContainer::ForEachResult::kContinue;
+								});
+								for (std::size_t i = 0; i < gen::kLocations.size(); ++i) {
+									if (gen::kLocations[i].town == t) {
+										g_placed[i] = {};
+										g_dressed[i] = false;
+									}
+								}
+								logger::info("shops: {} station moved to its new spot ({} pieces taken down at the old one)", gen::kTowns[t], ours.size());
+							}
+						}
+					}
 					MarkLayout(t);
 					ClearSite(t, anchor);
 					logger::info("shops: {} station at its fixed spot ({:.0f},{:.0f}) yaw {:.0f}", gen::kTowns[t], st.x, st.y, st.yaw);

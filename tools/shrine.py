@@ -27,6 +27,16 @@ def build():
         c, d = under[k], under[(k + 1) % 8]; e, f = bot[(k + 1) % 8], bot[k]
         Lr = math.hypot(d[0] - c[0], d[1] - c[1])
         S.add('cobble', [c, d, e, f], [(0, 0), (Lr / 140, 0), (Lr / 140, 1.2), (0, 1.2)], [(0, 2, 1), (0, 3, 2)])
+    # runes of the Dirge engraved round the base: a band of purple glyphs cut into each face of the skirt, and round
+    # the two stone steps at the heart
+    for k in range(8):
+        c, d = under[k], under[(k + 1) % 8]; e, f = bot[(k + 1) % 8], bot[k]
+        def lerp(p, q, t): return tuple(p[i] + (q[i] - p[i]) * t for i in range(3))
+        t0, t1 = 0.16, 0.52
+        a0, b0, b1, a1 = lerp(c, f, t0), lerp(d, e, t0), lerp(d, e, t1), lerp(c, f, t1)
+        mx, my = (c[0] + d[0]) / 2, (c[1] + d[1]) / 2; L = math.hypot(mx, my); nx, ny = mx / L * 0.7, my / L * 0.7
+        off = lambda p: (p[0] + nx, p[1] + ny, p[2] + 0.5)
+        S.quad('runes', off(a1), off(b1), off(b0), off(a0), uv=((0, 0), (2, 0), (2, 1), (0, 1)))
     S.ring('trim', 0, 0, TOP + 0.6, 70, 92, vband=S.KNOT_BLUE)
     S.ring('rune', 0, 0, TOP + 0.8, 94, 97)
     S.ring('rune', 0, 0, TOP + 0.8, 128, 130)
@@ -36,6 +46,9 @@ def build():
         S.add('stone', o1 + [(0, 0, z1)], [(x / 128, y / 128) for x, y, _ in o1] + [(0, 0)], [(8, k, (k + 1) % 8) for k in range(8)])
         for k in range(8):
             S.quad('stone', o0[k], o0[(k + 1) % 8], o1[(k + 1) % 8], o1[k], uv=((0, 0), (0.5, 0), (0.5, 0.12), (0, 0.12)))
+            mx, my = (o0[k][0] + o0[(k + 1) % 8][0]) / 2, (o0[k][1] + o0[(k + 1) % 8][1]) / 2; L = math.hypot(mx, my); nx, ny = mx / L * 0.5, my / L * 0.5
+            off = lambda p: (p[0] + nx, p[1] + ny, p[2])
+            S.quad('runes', off(o0[k]), off(o0[(k + 1) % 8]), off(o1[(k + 1) % 8]), off(o1[k]), uv=((0, 1), (1, 1), (1, 0), (0, 0)))
     z0 = base + 26
     s0, s1 = oct_(STONE_R, z0), oct_(STONE_R * 0.8, z0 + STONE_H)
     for k in range(8):
@@ -61,6 +74,35 @@ def build():
     S.ring('rune', 0, 0, ztop + 19, 12, 17, seg=24)
     return ztop
 
+def rune_strip(w=1024, h=256):
+    """a band of the Dirge's runes cut into stone: each glyph a groove (dark edge) with purple light inside, on a
+    transparent ground (alpha-tested), four to a tile"""
+    from PIL import ImageDraw, ImageFilter
+    import random
+    rnd = random.Random(7)
+    mask = Image.new('L', (w, h), 0); dr = ImageDraw.Draw(mask)
+    strokes = [[(0, -1, 0, 1), (0, -0.3, 0.6, -0.9)], [(-0.5, 1, 0, -1), (0.5, 1, 0, -1), (-0.3, 0.3, 0.3, 0.3)],
+               [(0, -1, 0, 1), (-0.6, 0, 0.6, 0)], [(-0.6, -1, 0.6, 1), (0.6, -1, -0.6, 1)], [(0, -1, 0, 1), (0, 0.1, 0.6, 0.9)],
+               [(-0.6, -0.8, 0.6, -0.8), (0, -0.8, 0, 1)], [(-0.5, -1, -0.5, 1), (-0.5, 0, 0.5, -0.6), (-0.5, 0, 0.5, 0.6)],
+               [(0, -1, 0.6, 0), (0.6, 0, 0, 1), (0, 1, -0.6, 0), (-0.6, 0, 0, -1)]]
+    n = 6
+    for i in range(n):
+        cx, cy = (i + 0.5) * w / n, h / 2; sx, sy = w / n * 0.32, h * 0.36
+        for x0, y0, x1, y1 in strokes[(i * 3 + 1) % len(strokes)]:
+            dr.line([(cx + x0 * sx, cy + y0 * sy), (cx + x1 * sx, cy + y1 * sy)], fill=255, width=int(h * 0.075))
+    # border lines above and below the glyphs
+    dr.line([(0, h * 0.06), (w, h * 0.06)], fill=200, width=int(h * 0.03)); dr.line([(0, h * 0.94), (w, h * 0.94)], fill=200, width=int(h * 0.03))
+    soft = mask.filter(ImageFilter.GaussianBlur(3))
+    core = mask.filter(ImageFilter.MinFilter(5)).filter(ImageFilter.GaussianBlur(2))
+    a = soft.point(lambda v: 255 if v > 40 else 0)
+    import numpy as np
+    sm = np.asarray(soft, np.float32) / 255; cm = np.asarray(core, np.float32) / 255
+    rgb = np.dstack([0.10 + 0.55 * cm, 0.06 + 0.25 * cm, 0.14 + 0.80 * cm]) * (0.6 + 0.4 * sm[..., None])   # dark groove, purple light inside
+    d = Image.fromarray((np.clip(rgb, 0, 1) * 255).astype(np.uint8), 'RGB'); d.putalpha(a)
+    g = Image.fromarray((np.clip(np.dstack([0.75 * cm, 0.38 * cm, 1.0 * cm]), 0, 1) * 255).astype(np.uint8), 'RGB')
+    return d, g
+
+
 def main():
     ztop = build()
     work = OUT.parent / 'shrine'; work.mkdir(parents=True, exist_ok=True)
@@ -75,6 +117,8 @@ def main():
         spec = {'stone': 0.25, 'floor': 0.3, 'cobble': 0.25, 'wood': 0.2, 'trim': 0.25, 'panel': 0.2}.get(m, 0.2)
         job.append(f'mat {m} diffuse={S.W}{d}.dds normal={S.W}{n}.dds spec={spec} gloss=30')
     job.append(f'mat rune diffuse={rune_d} normal={flat} glow={rune_g} emit=0.75,0.43,1.0 emitmult=2.5 spec=0.5')
+    rd, rg = rune_strip()
+    job.append(f'mat runes diffuse={S.save(rd, "runes_d.dds", True)} normal={flat} glow={S.save(rg, "runes_g.dds")} emit=0.72,0.38,1.0 emitmult=2.2 alpha=1 spec=0.3')
     for i, col in enumerate(((1.0, 0.45, 0.12), (0.70, 0.35, 1.0), (1.0, 0.75, 0.25))):
         rgb = tuple(int(c * 255) for c in col)
         gd = S.save(Image.new('RGB', (32, 32), rgb), f'glyph{i}_d.dds'); gg = S.save(Image.new('RGB', (32, 32), tuple(min(255, c + 40) for c in rgb)), f'glyph{i}_g.dds')

@@ -1113,7 +1113,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ID3D11ShaderResourceView* g_mFar = nullptr;
 		ID3D11ShaderResourceView* g_mMid = nullptr;
 		ID3D11ShaderResourceView* g_mNear = nullptr;
-		ID3D11ShaderResourceView* g_mGroundFog = nullptr;  // fog wisps that tile left-right (tools/menuscene.py ground_fog)
+		ID3D11ShaderResourceView* g_mGroundFog = nullptr;
+		ID3D11ShaderResourceView* g_mClouds2 = nullptr;    // drifting night clouds that tile left-right (tools/menuscene.py drift_clouds)  // fog wisps that tile left-right (tools/menuscene.py ground_fog)
 		constexpr float kMenuRune[2] = { 1812.0f, 992.0f };  // the middle of the rune-stone's face in the painting
 		constexpr float kMenuArch[2] = { 1176.0f, 455.0f };  // the barrow door
 		ID3D11ShaderResourceView* g_mTitle = nullptr;
@@ -1237,8 +1238,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			{
 				const ImVec2 m = toScreen(0.2f, 0.255f * 2560, 0.315f * 1440);
 				const float  br = 0.5f + 0.5f * std::sin(now * 0.6f);
-				fg->AddCircleFilled(m, 130 * k, IM_COL32(255, 90, 60, static_cast<int>((4 + 4 * br) * fade)), 48);
-				fg->AddCircleFilled(m, 72 * k, IM_COL32(255, 120, 80, static_cast<int>((5 + 4 * br) * fade)), 48);
+				fg->AddCircleFilled(m, 62 * k, IM_COL32(255, 110, 80, static_cast<int>((3 + 3 * br) * fade)), 48);  // (a faint breath only)
 			}
 			// the brightest stars twinkle, and now and then a shooting star crosses the sky
 			{
@@ -1302,6 +1302,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 			layer(g_mClouds, 0.25f, IM_COL32(255, 255, 255, static_cast<int>(200 * fade)), { std::fmod(now * 0.0035f, 1.0f), 0 });
+			// clouds drifting across the night: two banks at their own speeds (the near one faster), passing over the moon
+			if (g_mClouds2) {
+				const auto tex = ImTextureID(reinterpret_cast<std::uintptr_t>(g_mClouds2));
+				const float u0 = std::fmod(now * 0.0045f, 1.0f), u1 = std::fmod(now * 0.0075f + 0.4f, 1.0f);
+				fg->AddImage(tex, { 0, 0 }, { size.x, size.y * 0.40f }, { u0, 0 }, { u0 + 1.0f, 1 }, IM_COL32(255, 255, 255, static_cast<int>(150 * fade)));
+				fg->AddImage(tex, { 0, size.y * 0.06f }, { size.x, size.y * 0.46f }, { u1, 0.15f }, { u1 + 0.7f, 1 }, IM_COL32(220, 220, 235, static_cast<int>(120 * fade)));
+			}
 			// lightning: now and then a forked bolt strikes the far range (drawn behind it, so the peaks cut it off), the
 			// clouds flaring with it; it flickers a few times and is gone
 			{
@@ -1376,12 +1383,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// ground mist rolling between the horde and the front
 			groundFog(size.y * 0.40f, size.y * 0.80f, 0.009f, 1.2f, 255, IM_COL32(140, 150, 188, 0));
 			// the front: the rune-stone (its runes pulse, a soft violet light on the snow), the graves, the outcrop
-			layer(g_mNear, 1.25f, IM_COL32(215, 215, 222, static_cast<int>(255 * fade)));  // the front sits in shadow
+			layer(g_mNear, 0.95f, IM_COL32(215, 215, 222, static_cast<int>(255 * fade)));  // the front sits in shadow (leans almost with the ground it stands on)
 			{
 				// the runes cut down its face, lit from within: each glows up in turn, the light spilling onto the snow
-				const ImVec2 r = toScreen(1.25f, kMenuRune[0], kMenuRune[1]);
+				const ImVec2 r = toScreen(0.95f, kMenuRune[0], kMenuRune[1]);
 				const float  br = 0.55f + 0.45f * std::sin(now * 1.7f) * std::sin(now * 0.43f + 1.0f);
-				const float  u = (cw * (1.04f + 0.03f * 1.25f) * push) / 2560.0f;  // painting pixels -> screen
+				const float  u = (cw * (1.04f + 0.03f * 0.95f) * push) / 2560.0f;  // painting pixels -> screen
 				fg->AddCircleFilled({ r.x, r.y + 150 * u }, 120 * u, IM_COL32(150, 70, 255, static_cast<int>((8 + 10 * br) * fade)), 40);
 				fg->AddCircleFilled(r, 60 * u, IM_COL32(150, 70, 255, static_cast<int>((10 + 14 * br) * fade)), 40);
 				static const float kRune[6][8] = {  // each rune as up to two strokes (x0 y0 x1 y1, painting pixels from its centre)
@@ -1410,7 +1417,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						mo.push_back({ U(rng), U(rng), 0.02f + 0.05f * U(rng), 0.004f + 0.012f * U(rng), U(rng) * 6.28f, 0.6f + 1.6f * U(rng), i % 10 == 0 ? 1 : 0 });
 					}
 				}
-				const ImVec2 rs = toScreen(1.25f, kMenuRune[0], kMenuRune[1]);
+				const ImVec2 rs = toScreen(0.95f, kMenuRune[0], kMenuRune[1]);
 				for (auto& m : mo) {
 					m.y += (m.kind == 1 ? -0.5f : 1.0f) * m.sp * dt;
 					m.x += (m.kind == 1 ? 0.0f : 0.012f) * dt;  // the wind
@@ -1918,7 +1925,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const bool bg = SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_bg.png", nullptr, &g_menuBg));
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_fog.png", nullptr, &g_menuFog);
 			for (auto [file, tex] : { std::pair{ L"menu_sky.jpg", &g_mSky }, { L"menu_clouds.png", &g_mClouds }, { L"menu_aurora.png", &g_mAurora },
-					 { L"menu_far.png", &g_mFar }, { L"menu_mid.png", &g_mMid }, { L"menu_near.png", &g_mNear }, { L"menu_groundfog.png", &g_mGroundFog } }) {
+					 { L"menu_far.png", &g_mFar }, { L"menu_mid.png", &g_mMid }, { L"menu_near.png", &g_mNear }, { L"menu_groundfog.png", &g_mGroundFog }, { L"menu_clouds2.png", &g_mClouds2 } }) {
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\UndyingNights\\") + file).c_str(), nullptr, tex);
 			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_title.png", nullptr, &g_mTitle);

@@ -109,13 +109,21 @@ def snow(pw):
     base = np.array([0.46, 0.55, 0.76])
     rock = np.array([0.12, 0.12, 0.14])
     patch = np.clip((0.40 - n) * 6, 0, 1) * np.clip((0.5 - n2) * 4 + 0.5, 0, 1)
-    c = base * (0.88 + 0.12 * n2)[..., None]
+    n3 = sample(NT2, x * 1.7 + y * 0.3, y * 5.0, 140)        # wind-drift streaks
+    n4 = sample(NT, x * 4.0, y * 4.0, 90)                     # crust and footprints of the dead
+    c = base * (0.80 + 0.12 * n2 + 0.10 * n3 - 0.08 * np.clip((n4 - 0.6) * 4, 0, 1))[..., None]
+    # dirty tracks where the horde has trampled (darker, bluish-grey)
+    trod = np.clip((sample(NT2, x * 0.6, y * 0.25, 700) - 0.55) * 5, 0, 1) * np.clip((y - 300) / 600, 0, 1)
+    c = c * (1 - 0.35 * trod[..., None]) + np.array([0.22, 0.24, 0.32]) * (0.35 * trod)[..., None]
     return c * (1 - patch[..., None]) + rock * patch[..., None]
 
 def stone(pw):
     x, y, z = pw[..., 0], pw[..., 1], pw[..., 2]
     n = sample(NT, x + z * 0.7, y - z * 0.4, 300); n2 = sample(NT2, x * 1.3, z, 120)
-    c = np.array([0.17, 0.17, 0.19]) * (0.45 + 0.9 * n)[..., None] * (0.8 + 0.4 * n2)[..., None]
+    n3 = sample(NT3, x * 2.2 + z, y * 2.2 - z, 60)
+    strata = 0.5 + 0.5 * np.sin(z * 0.07 + n * 5.0)                       # layered rock, bent by the noise
+    base = np.array([0.14, 0.15, 0.17]) * (1 - 0.35 * n3)[..., None] + np.array([0.20, 0.19, 0.18]) * (0.35 * n3)[..., None]
+    c = base * (0.45 + 0.9 * n)[..., None] * (0.75 + 0.45 * n2)[..., None] * (0.9 + 0.14 * strata)[..., None]
     lichen = np.clip((n2 - 0.62) * 5, 0, 1)
     c = c * (1 - lichen[..., None] * 0.5) + np.array([0.24, 0.26, 0.20]) * lichen[..., None] * 0.5
     snowcap = np.clip((n2 - 0.35) * 3, 0, 1) * 0.0
@@ -124,12 +132,15 @@ def stone(pw):
 NT3 = noise_tex(1024, 17, beta=2.1)   # detail noise: grit, pores, cracks (smooth enough not to sparkle)
 
 
-def relief(scale, amp, grime=0.0, sparkle=0.0, crack=0.0):
+def relief(scale, amp, grime=0.0, sparkle=0.0, crack=0.0, fine=False, snowcap=0.0):
     """surface detail in world space: a bump from layered noise (its gradient tilts the normal), grime darkening the
     hollows, ice glints on snow, dark crack lines on stone"""
     def h(p):
         x, y, z = p[..., 0], p[..., 1], p[..., 2]
-        return (sample(NT3, x + z * 0.61, y - z * 0.47, scale) * 0.6 + sample(NT, x * 1.9 - z * 0.8, y * 1.9 + z * 0.9, scale * 1.7) * 0.4)
+        v = sample(NT3, x + z * 0.61, y - z * 0.47, scale) * 0.6 + sample(NT, x * 1.9 - z * 0.8, y * 1.9 + z * 0.9, scale * 1.7) * 0.4
+        if fine:  # a finer octave: wind-cut ripples and grit
+            v = v * 0.75 + sample(NT2, x * 3.1 + z, y * 3.1 - z * 0.5, scale * 0.9) * 0.25
+        return v
     def f(pw, nv, alb):
         e = scale * 0.05
         h0 = h(pw)
@@ -141,6 +152,9 @@ def relief(scale, amp, grime=0.0, sparkle=0.0, crack=0.0):
         if crack > 0:
             c = np.abs(sample(NT3, pw[..., 0] + pw[..., 2], pw[..., 1] - pw[..., 2] * 0.3, scale * 3.0) - 0.5)
             a2 = a2 * (1 - crack * np.clip(1 - c / 0.025, 0, 1))[..., None]
+        if snowcap > 0:  # snow lying on the tops of the rocks
+            up = np.clip((n2[..., 2] - 0.55) / 0.3, 0, 1) * np.clip((sample(NT, pw[..., 0], pw[..., 1], 180) - 0.3) * 3, 0, 1)
+            a2 = a2 * (1 - snowcap * up[..., None]) + np.array([0.50, 0.56, 0.72]) * (snowcap * up)[..., None]
         if sparkle > 0:
             gl = np.clip((sample(NT3, pw[..., 0] * 2.3, pw[..., 1] * 2.3, scale) - 0.965) * 25, 0, 1)
             a2 = a2 + sparkle * gl[..., None]
@@ -179,8 +193,9 @@ def build():
     a_, b_, c_, d_ = idx[:-1, :-1].ravel(), idx[:-1, 1:].ravel(), idx[1:, 1:].ravel(), idx[1:, :-1].ravel()
     T = np.r_[np.c_[a_, b_, c_], np.c_[a_, c_, d_]]
     cy = V[T].mean(1)[:, 1]
-    for it, lay in ((sc.add(V, T[cy < 760], UV, proc=snow), 'near'), (sc.add(V, T[cy >= 700], UV, proc=snow), 'mid')):
-        it.layer = lay; it.nfun = ground_n; it.detail = relief(60, 0.22, grime=0.08, sparkle=0.35)
+    # the ground is one piece in the mid layer (split across layers it showed a seam when the layers lean apart)
+    it = sc.add(V, T, UV, proc=snow); it.layer = 'mid'; it.nfun = ground_n; it.detail = relief(70, 0.2, grime=0.12, sparkle=0.4, fine=True)
+    _ = cy
     rng = np.random.default_rng(31)
     # the barrow: an arch of standing slabs on the ridge, a lintel, a broken capstone, stones round it
     ax, ay = -560.0, 2650.0; az = float(ground_h(np.array(ax), np.array(ay)))
@@ -190,15 +205,15 @@ def build():
         V = V @ Rm.T
         z = float(ground_h(np.array(x), np.array(y)))
         it = sc.add(V + np.array([x, y, z + sz * 0.2 - 4]), T, UV, proc=stone); it.layer = layer
-        it.detail = relief(90, 0.55, grime=0.35, crack=0.45)
+        it.detail = relief(70, 0.6, grime=0.4, crack=0.45, fine=True, snowcap=0.7)
         return it
     s1 = slab(1, ax - 190, ay, 62, 52, 290, 8, (0, -3))
     s2 = slab(2, ax + 190, ay + 20, 64, 54, 300, -6, (0, 4))
     top = min(s1.V[:, 2].max(), s2.V[:, 2].max()) - az - 12
     lin = S.rock_mesh(3, 290, 60, 50, sub=3, rough=0.5)
-    _it = sc.add(lin[0] + np.array([ax, ay + 10, az + top + 10]), lin[1], lin[2], proc=stone); _it.layer = 'mid'; _it.detail = relief(90, 0.55, grime=0.35, crack=0.45)
+    _it = sc.add(lin[0] + np.array([ax, ay + 10, az + top + 10]), lin[1], lin[2], proc=stone); _it.layer = 'mid'; _it.detail = relief(70, 0.6, grime=0.4, crack=0.45, fine=True, snowcap=0.7)
     cap = S.rock_mesh(4, 110, 60, 56, sub=2)
-    _it = sc.add(cap[0] @ S.rot((0, 1, 0), 25).T + np.array([ax - 50, ay + 10, az + top + 62]), cap[1], cap[2], proc=stone); _it.layer = 'mid'; _it.detail = relief(90, 0.55, grime=0.35, crack=0.45)
+    _it = sc.add(cap[0] @ S.rot((0, 1, 0), 25).T + np.array([ax - 50, ay + 10, az + top + 62]), cap[1], cap[2], proc=stone); _it.layer = 'mid'; _it.detail = relief(70, 0.6, grime=0.4, crack=0.45, fine=True, snowcap=0.7)
     for i, (dx, dy, hh) in enumerate([(-420, 60, 160), (-300, -40, 110), (340, -30, 150), (470, 80, 200), (620, 0, 100), (-600, 140, 120)]):
         slab(10 + i, ax + dx, ay + dy, 36 + rng.uniform(-6, 8), 30, hh, rng.uniform(-30, 30), (rng.uniform(-6, 6), rng.uniform(-8, 8)))
     # the rune-stone of the Dirge, in front, with glowing runes (a separate emissive strip down its face)
@@ -233,12 +248,47 @@ def build():
             path, tex = MODELS[n]
             models[n] = S.Model(path, tex, f'/tmp/claude-0/ex/{n}', tex_size=1024)
         return models[n]
+    import json
+    sockets = json.loads((pathlib.Path(__file__).parent / 'eyes_sockets.json').read_text())
+    sock_id = {'zombie': 'zombie', 'hooded': 'runner', 'hag': 'wailer', 'abom': 'bloater', 'reaper': 'reaper', 'necro': 'necro',
+               'knight': 'knight', 'king': 'king', 'lich': 'lich'}
+    camf = np.array(CAM['look'], float) - np.array(CAM['eye'], float); camf /= np.linalg.norm(camf)
+    camr = np.cross(camf, [0, 0, 1]); camr /= np.linalg.norm(camr); camu = np.cross(camr, camf)
+    glow_disc = np.zeros((32, 32, 4), np.float32); yy_, xx_ = np.mgrid[0:32, 0:32]
+    dd = np.sqrt((xx_ - 15.5) ** 2 + (yy_ - 15.5) ** 2) / 16
+    glow_disc[..., 0] = 1.0; glow_disc[..., 1] = 0.12; glow_disc[..., 2] = 0.06; glow_disc[..., 3] = (dd < 0.9).astype(np.float32)
     def put(n, pose, x, y, yaw, scale=1.0, layer='mid', emit=1.0):
         m = model(n); posed = m.pose(POSES[pose])
         z = float(ground_h(np.array(x), np.array(y)))
         n0 = len(sc.items)
-        sc.add_model(m, posed, S.place(x, y, z - 2, yaw, scale), emit=emit)
+        xf = S.place(x, y, z - 2, yaw, scale)
+        sc.add_model(m, posed, xf, emit=emit)
         for it in sc.items[n0:]:
+            it.layer = layer
+        # red eyes burning in its sockets: each socket skinned like the nearest vertex of the face, then a small
+        # glowing disc there (it lights the bloom; the face around it hides it where it should)
+        T = S.SKEL.transforms(POSES[pose])
+        for e in sockets.get(sock_id.get(n, ''), []):
+            e = np.array(e, float)
+            best = None
+            for si, sh in enumerate(m.shapes):
+                d2 = ((sh.pos - e) ** 2).sum(1); vi = int(np.argmin(d2))
+                if best is None or d2[vi] < best[0]:
+                    best = (d2[vi], si, vi)
+            _, si, vi = best; sh = m.shapes[si]
+            acc = np.zeros(3); tot = 0.0
+            for k in range(4):
+                w = sh.ww[vi, k]
+                if w <= 0:
+                    continue
+                M = T.get(sh.bones[sh.wb[vi, k]], np.eye(4))
+                acc += w * (M[:3, :3] @ e + M[:3, 3]); tot += w
+            pe = acc / max(tot, 1e-6)
+            pw = xf[:3, :3] @ pe + xf[:3, 3]
+            pw = pw - camf * 0.6 * scale                      # a hair toward the eye, out of the socket's shadow
+            r_ = 1.0 * scale
+            V = np.array([pw - camr * r_ - camu * r_, pw + camr * r_ - camu * r_, pw + camr * r_ + camu * r_, pw - camr * r_ + camu * r_])
+            it = sc.add(V, np.array([[0, 1, 2], [0, 2, 3]]), np.array([[0, 1], [1, 1], [1, 0], [0, 0]], float), albedo=glow_disc, glow=glow_disc, emit=5.0, alpha_test=True)
             it.layer = layer
             it.detail = relief(22, 0.3, grime=0.3)   # rot, grit and torn skin over the model's own maps
     # champions: the lich in the barrow door, staff raised; the knight and the king leading the horde down the ridge
@@ -287,7 +337,7 @@ def shade(sc, layer, D, G, camv, sm, rw, rh):
     mie = np.clip((-V * MOON_DIR).sum(-1), 0, 1) ** 8
     fc = FOG_C + np.array([0.26, 0.07, 0.04]) * mie[..., None]
     col = col * (1 - fog[..., None]) + fc * fog[..., None]
-    if layer == 'near':  # the foreground sits in shadow: darker the closer it is, so the eye goes to the horde
+    if True:  # the foreground sits in shadow: darker the closer it is, so the eye goes to the horde
         col = col * (0.28 + 0.72 * np.clip((dist - 300) / 1400, 0, 1) ** 1.3)[..., None]
     col = tonemap(col)
     return np.where(hit[..., None], col, 0), hit.astype(np.float32)
@@ -339,6 +389,17 @@ def post(col, a, size, G=None):
     return Image.fromarray((np.clip(np.dstack([C2, A2]), 0, 1) * 255).astype(np.uint8), 'RGBA')
 
 
+def drift_clouds(w=2048, h=640):
+    """night clouds that drift across the sky: wisps that tile left-right, lit warm on the moon side, thin at the bottom"""
+    a1 = noise_tex(1024, 77, beta=2.3); a2 = noise_tex(1024, 78, beta=1.8)
+    x = np.arange(w)[None, :] / w; y = np.arange(h)[:, None] / h
+    n = sample(a1, x * 1024, y * 1024 * 0.55, 1024) * 0.7 + sample(a2, x * 1024 * 2, y * 1024 * 1.2, 1024) * 0.3
+    a = np.clip((n - 0.42) / 0.38, 0, 1) ** 1.5 * np.clip(1.2 - y * 1.3, 0, 1) * 0.85
+    lit = np.clip((n - np.roll(n, 6, axis=1)) * 8 + 0.5, 0, 1)   # the side toward the moon (left) catches its light
+    rgb = np.dstack([0.16 + 0.22 * lit, 0.15 + 0.10 * lit, 0.20 + 0.06 * lit]) * np.ones((h, w, 1))
+    return Image.fromarray((np.dstack([np.clip(rgb, 0, 1), a]) * 255).astype(np.uint8), 'RGBA')
+
+
 def ground_fog(w=1024, h=256):
     """the fog that rolls over the ground: wisps that tile left-right (the menu scrolls two copies against each other),
     thin at the top edge, thick low down"""
@@ -359,13 +420,16 @@ def main():
     cv, ca = MP.clouds_veil(); MP.to_img(cv, ca).save(OUT / 'menu_clouds.png')
     ar, aa = MP.aurora(); MP.to_img(ar, aa).resize((1280, 720), Image.LANCZOS).save(OUT / 'menu_aurora.png')
     ground_fog().save(OUT / 'menu_groundfog.png')
+    drift_clouds().save(OUT / 'menu_clouds2.png')
     layers, glow = render_layers()
     far_rgb, far_a, _ = MP.range_layer(61, H * 0.47, H * 0.20, 7, 1.0, 0.55, snow=1.0)
     farther_rgb, farther_a, _ = MP.range_layer(62, H * 0.42, H * 0.16, 6, 0.8, 0.72, snow=1.0, xscale=1.6)
     fa = np.clip(far_a + farther_a * (1 - far_a), 0, 1)
     frgb = (farther_rgb * farther_a[..., None] * (1 - far_a[..., None]) + far_rgb * far_a[..., None]) / np.maximum(fa[..., None], 1e-4)
+    from scipy.ndimage import gaussian_filter
+    fa = np.clip(gaussian_filter(fa, 2.2) * 1.05, 0, 1)        # no cut-out edges: the peaks melt into the night
     yy = np.mgrid[0:H, 0:W][0] / H
-    frgb = frgb * np.array([0.62, 0.62, 0.80]) * 0.85
+    frgb = frgb * np.array([0.62, 0.62, 0.80]) * 0.58           # darker: far away, under a night sky
     frgb = frgb * (1 - 0.55 * np.clip((yy - 0.38) / 0.12, 0, 1)[..., None]) + np.array([0.09, 0.10, 0.17]) * 0.55 * np.clip((yy - 0.38) / 0.12, 0, 1)[..., None]
     MP.to_img(MP.grain(frgb), fa).save(OUT / 'menu_far.png')
     for name in ('mid', 'near'):
