@@ -1645,7 +1645,7 @@ namespace bo3z
 		void HurtPlayer(float a_share, bool a_stagger)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p || p->IsDead()) {
+			if (!p || p->IsDead() || RE::PlayerCharacter::IsGodMode()) {
 				return;
 			}
 			auto* pav = p->AsActorValueOwner();

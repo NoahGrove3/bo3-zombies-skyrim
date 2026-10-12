@@ -1993,6 +1993,8 @@ namespace bo3z
 			} else if (a_mode == "orb") {
 				Spellcraft::g_orbHeld = !Spellcraft::g_orbHeld;
 				Spellcraft::g_orbT = 0;
+			} else if (a_mode == "probe") {
+				Spellcraft::SpawnProbe(Spellcraft::Row(gun));
 			} else if (a_mode == "hand") {
 				Spellcraft::g_tapHeld = !Spellcraft::g_tapHeld;
 				Spellcraft::g_tapT = 0;

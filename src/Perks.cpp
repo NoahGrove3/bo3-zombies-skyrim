@@ -59,6 +59,9 @@ namespace bo3z
 			}
 			t = now;
 			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (RE::PlayerCharacter::IsGodMode()) {
+				return;  // (console god mode: the dead's hands pass through)
+			}
 			auto* av = player->AsActorValueOwner();
 			const float jug = Has(gen::kPerk_trollshide) ? gen::kPerks[gen::kPerk_trollshide].value : 0.0f;
 			const float baseHealth = std::max(50.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth) - jug);

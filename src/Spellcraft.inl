@@ -813,8 +813,31 @@ namespace Spellcraft
 		(void)player;
 	}
 
+	// dev: three of this spell's meshes held still in front of the eye (bolt, burst, orb), to see what renders
+	struct Probe { Fx fx; RE::NiPoint3 at; float t; float scale; };
+	std::vector<Probe> g_probes;
+	void SpawnProbe(int a_row)
+	{
+		const char* parts[] = { "bolt", "burst", "orb" };
+		for (int i = 0; i < 3; ++i) {
+			Probe p{ { Load(Def(a_row).id, parts[i]) }, ViewPoint(180.0f, (i - 1) * 60.0f, -10.0f), 8.0f, i == 1 ? 0.6f : 1.0f };
+			if (p.fx.obj) {
+				p.fx.Attach(WorldRoot());
+				g_probes.push_back(std::move(p));
+			}
+		}
+		logger::info("probe: {} meshes placed", g_probes.size());
+	}
 	void TickFx(float a_dt)
 	{
+		for (auto& p : g_probes) {
+			p.t -= a_dt;
+			p.fx.Place(p.at, Spin(g_time), p.scale);
+			if (p.t <= 0) {
+				p.fx.Detach();
+			}
+		}
+		std::erase_if(g_probes, [](const Probe& p) { return p.t <= 0; });
 		for (auto& b : g_bursts) {
 			b.t += a_dt;
 			const float u = b.t / b.dur;
