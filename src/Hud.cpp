@@ -1061,10 +1061,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 		}
 
-		ID3D11ShaderResourceView* g_mSky = nullptr;
-		ID3D11ShaderResourceView* g_mFar = nullptr;
-		ID3D11ShaderResourceView* g_mMid = nullptr;
-		ID3D11ShaderResourceView* g_mNear = nullptr;
+		ID3D11ShaderResourceView* g_mPlate = nullptr;   // menu_plate.jpg: the in-game night (tools/plates.py)
+		ID3D11ShaderResourceView* g_mAurora = nullptr;  // menu_aurora.png: its aurora alone, for the shimmer
 		ID3D11ShaderResourceView* g_mTitle = nullptr;
 
 		void DrawMenu(ImVec2 size, float now, bool click)
@@ -1093,146 +1091,96 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				ch = size.y, cw = size.y * 16.0f / 9.0f;
 			}
 			const float iw = cw * 1.06f, ih = ch * 1.06f;
-			auto origin = [&](float depth) {
-				return ImVec2{ (size.x - iw) / 2 - (lean.x + drift.x * 0.6f) * depth * iw * 0.05f, (size.y - ih) / 2 - (lean.y + drift.y * 0.6f) * depth * ih * 0.03f };
-			};
-			auto D = [&](float depth, float x, float y) { const ImVec2 o = origin(depth); return ImVec2{ o.x + x / 3840.0f * iw, o.y + y / 2160.0f * ih }; };
 			const ImU32 white = IM_COL32(255, 255, 255, static_cast<int>(255 * fade));
-			auto layer = [&](ID3D11ShaderResourceView* t, float depth) {
-				if (t) {
-					const ImVec2 o = origin(depth);
-					fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(t)), o, { o.x + iw, o.y + ih }, { 0, 0 }, { 1, 1 }, white);
-				}
-			};
 			fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, 255));
-			if (!g_mSky) {  // (the new layers are missing: the old single picture)
-				if (g_menuBg) {
-					fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuBg)), { (size.x - cw) / 2, (size.y - ch) / 2 }, { (size.x + cw) / 2, (size.y + ch) / 2 });
-				}
-			} else {
-				layer(g_mSky, 0.15f);
-				{  // the blood moon breathes
-					const ImVec2 m = D(0.15f, 1460, 610);
-					const float  pulse = 0.5f + 0.5f * std::sin(now * 0.6f);
-					for (int i = 0; i < 5; ++i) {
-						fg->AddCircleFilled(m, ih * (0.13f + 0.035f * i), IM_COL32(200, 50, 30, static_cast<int>((5 + 4 * pulse) * (5 - i) / 5 * fade)), 64);
-					}
-				}
-				layer(g_mFar, 0.35f);
+			// the picture: a night staged in Skyrim itself (tools/plates.py), the horde coming down from Bleak Falls
+			// Barrow under the aurora. It breathes with a very slow push-in; the cursor leans it a little.
+			const float push = 1.0f + 0.012f * (0.5f + 0.5f * std::sin(now * 0.035f));
+			const float pw = iw * push, ph = ih * push;
+			const ImVec2 po{ (size.x - pw) / 2 - (lean.x + drift.x * 0.6f) * pw * 0.02f, (size.y - ph) / 2 - (lean.y + drift.y * 0.6f) * ph * 0.012f };
+			auto P = [&](float x, float y) { return ImVec2{ po.x + x / 2560.0f * pw, po.y + y / 1440.0f * ph }; };  // plate pixels -> screen
+			if (g_mPlate) {
+				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_mPlate)), po, { po.x + pw, po.y + ph }, { 0, 0 }, { 1, 1 }, white);
+			} else if (g_menuBg) {  // (the plate is missing: the old single picture)
+				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuBg)), { (size.x - cw) / 2, (size.y - ch) / 2 }, { (size.x + cw) / 2, (size.y + ch) / 2 });
 			}
-			// far fog
+			// the aurora moves: its own cut-out, brightened in slow waves and slid a hair to and fro
+			if (g_mAurora) {
+				for (int band = 0; band < 2; ++band) {
+					const float w8 = 0.5f + 0.5f * std::sin(now * (0.21f + 0.07f * band) + band * 2.1f);
+					const float du = std::sin(now * (0.05f + 0.02f * band) + band) * 0.004f;
+					fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_mAurora)), po, { po.x + pw, po.y + ph }, { du, 0 }, { 1 + du, 1 },
+						IM_COL32(150, 255, 210, static_cast<int>((26 + 44 * w8) * fade)));
+				}
+			}
+			// far fog over the snow, drifting
 			if (g_menuFog) {
-				const float u0 = now * 0.008f;
-				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuFog)), { 0, size.y * 0.50f }, { size.x, size.y * 0.78f }, { u0, 0 }, { u0 + 1.4f, 0.8f },
-					IM_COL32(150, 170, 200, static_cast<int>(110 * fade)));
+				const float u0 = now * 0.006f;
+				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuFog)), { 0, size.y * 0.42f }, { size.x, size.y * 0.70f }, { u0, 0 }, { u0 + 1.4f, 0.8f },
+					IM_COL32(150, 170, 200, static_cast<int>(60 * fade)));
 			}
-			if (g_mSky) {
-				layer(g_mMid, 0.6f);
-				// the rune-stone's crown: green soul-fire, breathing, with a slow flare now and then
-				{
-					const ImVec2 c = D(0.6f, 1470, 1000);
-					const float  flare = std::pow(std::max(0.0f, std::sin(now * 0.31f)), 12.0f);
-					const float  br = 0.75f + 0.25f * std::sin(now * 2.3f) * std::sin(now * 0.9f) + 0.6f * flare;
-					for (int i = 0; i < 6; ++i) {
-						fg->AddCircleFilled(c, ih * (0.006f + 0.012f * i), IM_COL32(90, 255, 170, static_cast<int>(40 * br * (6 - i) / 6 * fade)), 32);
-					}
-					fg->AddCircleFilled(c, ih * 0.006f, IM_COL32(220, 255, 235, static_cast<int>(230 * fade)), 24);
-				}
-				// the ground ring: a light running round it, the runes waking in turn
-				{
-					const ImVec2 c = D(0.6f, 1470, 1500);
-					const float  rx = 430.0f / 3840.0f * iw, ry = 95.0f / 2160.0f * ih;
-					for (int i = 0; i < 16; ++i) {
-						const float a = i * 6.2832f / 16.0f;
-						const float w = std::pow(0.5f + 0.5f * std::cos(a - now * 0.9f), 6.0f);
-						const ImVec2 p{ c.x + std::cos(a) * (rx + 30 * k), c.y + std::sin(a) * (ry + 8 * k) };
-						fg->AddCircleFilled(p, (5 + 9 * w) * k, IM_COL32(110, 255, 180, static_cast<int>((20 + 120 * w) * fade)), 16);
-					}
-				}
-				// braziers: fire that never burns the same way twice
-				for (auto [bx, by] : { std::pair{ 1010.0f, 1300.0f }, std::pair{ 1930.0f, 1300.0f } }) {
-					const ImVec2 c = D(0.6f, bx, by - 30);
-					const float  f = 0.7f + 0.3f * std::sin(now * 11.0f + bx) * std::sin(now * 4.7f + by) + 0.1f * std::sin(now * 23.0f);
-					for (int i = 0; i < 5; ++i) {
-						fg->AddCircleFilled(c, ih * (0.01f + 0.018f * i), IM_COL32(255, 120, 40, static_cast<int>(26 * f * (5 - i) / 5 * fade)), 32);
-					}
-				}
-				layer(g_mNear, 1.0f);
-				// the risen's eyes: cold, and they blink
-				for (auto [ex, ey, ph] : { std::tuple{ 420.0f, 1500.0f, 0.0f }, { 880.0f, 1540.0f, 1.3f }, { 2380.0f, 1520.0f, 2.1f }, { 3200.0f, 1490.0f, 0.7f }, { 3580.0f, 1555.0f, 2.9f } }) {
-					if (std::fmod(now * 0.7f + ph * 3.0f, 6.0f) < 0.12f) {
+			// the risen's eyes: cold and pale, each pair on its own breath, now and then a blink
+			{
+				struct Eye { float x, y, gap, ph; };
+				static const Eye eyes[] = { { 195, 912, 9, 0.0f }, { 368, 868, 11, 1.3f }, { 662, 838, 8, 2.1f }, { 838, 824, 8, 0.7f },
+					{ 1042, 648, 10, 2.9f }, { 1160, 684, 6, 1.7f }, { 1203, 676, 6, 0.4f }, { 1252, 688, 6, 2.4f } };
+				for (const auto& e : eyes) {
+					if (std::fmod(now * 0.6f + e.ph * 3.0f, 7.0f) < 0.13f) {
 						continue;
 					}
-					const ImVec2 e = D(1.0f, ex, ey);
-					fg->AddCircleFilled(e, 2.2f * k, IM_COL32(150, 220, 255, static_cast<int>(200 * fade)));
-					fg->AddCircleFilled({ e.x + 7 * k, e.y }, 2.2f * k, IM_COL32(150, 220, 255, static_cast<int>(200 * fade)));
-					fg->AddCircleFilled({ e.x + 3.5f * k, e.y }, 9 * k, IM_COL32(100, 180, 255, static_cast<int>(25 * fade)));
+					const float br = 0.75f + 0.25f * std::sin(now * 1.7f + e.ph * 2.0f);
+					const ImVec2 c = P(e.x, e.y);
+					const float  g = e.gap / 2560.0f * pw * 0.5f;
+					for (float sx : { -g, g }) {
+						fg->AddCircleFilled({ c.x + sx, c.y }, 7.0f * k, IM_COL32(110, 200, 255, static_cast<int>(28 * br * fade)), 16);
+						fg->AddCircleFilled({ c.x + sx, c.y }, 1.9f * k, IM_COL32(200, 240, 255, static_cast<int>(235 * br * fade)), 8);
+					}
 				}
 			}
-			// near fog, drifting the other way
+			// near fog, the other way
 			if (g_menuFog) {
-				const float u0 = -now * 0.006f;
-				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuFog)), { 0, size.y * 0.66f }, { size.x, size.y }, { u0, 0 }, { u0 + 0.9f, 0.7f },
-					IM_COL32(120, 140, 170, static_cast<int>(130 * fade)));
+				const float u0 = -now * 0.005f;
+				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuFog)), { 0, size.y * 0.70f }, { size.x, size.y }, { u0, 0 }, { u0 + 0.9f, 0.7f },
+					IM_COL32(120, 140, 170, static_cast<int>(90 * fade)));
 			}
-			// embers from the braziers, ash and soul-motes adrift
+			// snow and grave-ash drifting down on the wind, a few soul-motes rising
 			{
 				struct Mote { float x, y, sp, sway, ph, r; int kind; };
 				static std::vector<Mote> mo;
 				static std::mt19937 rng{ 7 };
 				std::uniform_real_distribution<float> U(0, 1);
 				if (mo.empty()) {
-					for (int i = 0; i < 140; ++i) {
-						mo.push_back({ U(rng) * 3840, U(rng) * 2160, 30 + 60 * U(rng), 10 + 30 * U(rng), U(rng) * 6.28f, 1.0f + 2.0f * U(rng), i % 7 == 0 ? 1 : (i % 3 == 0 ? 2 : 0) });
+					for (int i = 0; i < 160; ++i) {
+						mo.push_back({ U(rng), U(rng), 0.02f + 0.05f * U(rng), 0.004f + 0.012f * U(rng), U(rng) * 6.28f, 0.6f + 1.6f * U(rng), i % 9 == 0 ? 1 : 0 });
 					}
 				}
 				for (auto& m : mo) {
-					m.y -= m.sp * dt * (m.kind == 2 ? 0.4f : 1.0f);
-					if (m.y < 200) {
-						const float src = U(rng);
-						if (m.kind == 0) {  // embers rise from the braziers
-							m.x = (src < 0.5f ? 1010.0f : 1930.0f) + (U(rng) - 0.5f) * 60;
-							m.y = 1270 + 40 * U(rng);
-						} else if (m.kind == 1) {  // soul-motes from the rune-stone
-							m.x = 1470 + (U(rng) - 0.5f) * 80, m.y = 1010;
-						} else {
-							m.x = U(rng) * 3840, m.y = 1700 + 400 * U(rng);
-						}
-					}
-					const float x = m.x + std::sin(now * 0.7f + m.ph) * m.sway;
-					const float tw = 0.55f + 0.45f * std::sin(now * 5.0f + m.ph * 3);
-					const ImU32 c = m.kind == 0 ? IM_COL32(255, 160, 70, static_cast<int>(210 * tw * fade)) : m.kind == 1 ? IM_COL32(140, 255, 200, static_cast<int>(200 * tw * fade)) : IM_COL32(170, 180, 200, static_cast<int>(90 * fade));
-					const ImVec2 p = D(0.6f, x, m.y);
-					fg->AddCircleFilled(p, m.r * k * 2.4f, Fade(c, 0.18f));
+					m.y += (m.kind == 1 ? -0.6f : 1.0f) * m.sp * dt;
+					m.x += (m.kind == 1 ? 0.0f : 0.012f) * dt;  // the wind
+					if (m.y > 1.03f) m.y = -0.03f, m.x = U(rng);
+					if (m.y < -0.03f) m.y = 0.9f + 0.1f * U(rng), m.x = 0.05f + 0.5f * U(rng);
+					if (m.x > 1.03f) m.x = -0.03f;
+					const ImVec2 p{ (m.x + std::sin(now * 0.8f + m.ph) * m.sway) * size.x, m.y * size.y };
+					const float  tw = 0.6f + 0.4f * std::sin(now * 3.0f + m.ph * 3);
+					const ImU32  c = m.kind == 1 ? IM_COL32(140, 255, 210, static_cast<int>(170 * tw * fade)) : IM_COL32(220, 228, 240, static_cast<int>(120 * fade));
+					if (m.kind == 1) fg->AddCircleFilled(p, m.r * k * 3.0f, Fade(c, 0.15f));
 					fg->AddCircleFilled(p, m.r * k, c);
 				}
 			}
-			// now and then, far off, a cold flash and a thin bolt over the mountains (rare, short, never bright)
+			// now and then, far off, a cold flash behind the barrow (rare, short, never bright)
 			{
-				static float next = 7.0f, life = 0;
-				static std::vector<ImVec2> bolt;
+				static float next = 9.0f, life = 0;
 				static std::mt19937 lr{ 11 };
 				std::uniform_real_distribution<float> L(0, 1);
 				if (now > next && life <= 0) {
-					life = 0.45f;
-					next = now + 9.0f + 10.0f * L(lr);
-					bolt.clear();
-					float x = L(lr) < 0.5f ? 300 + 600 * L(lr) : 2500 + 900 * L(lr), y = 200;
-					bolt.push_back({ x, y });
-					while (y < 1150) {
-						y += 50 + 60 * L(lr);
-						x += (L(lr) - 0.5f) * 110;
-						bolt.push_back({ x, y });
-					}
+					life = 0.42f;
+					next = now + 11.0f + 12.0f * L(lr);
 				}
 				if (life > 0) {
 					life -= dt;
-					const float flick = (life > 0.33f || (life > 0.15f && life < 0.22f)) ? 1.0f : 0.3f;
-					fg->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.55f }, IM_COL32(150, 170, 220, static_cast<int>(14 * flick)), IM_COL32(150, 170, 220, static_cast<int>(14 * flick)), IM_COL32(150, 170, 220, 0), IM_COL32(150, 170, 220, 0));
-					std::vector<ImVec2> pts;
-					for (auto& q : bolt) pts.push_back(D(0.35f, q.x, q.y));
-					fg->AddPolyline(pts.data(), static_cast<int>(pts.size()), IM_COL32(140, 160, 255, static_cast<int>(50 * flick)), 0, 7 * k);
-					fg->AddPolyline(pts.data(), static_cast<int>(pts.size()), IM_COL32(230, 236, 255, static_cast<int>(200 * flick)), 0, 1.6f * k);
+					const float flick = (life > 0.30f || (life > 0.12f && life < 0.2f)) ? 1.0f : 0.25f;
+					fg->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.5f }, IM_COL32(170, 190, 235, static_cast<int>(22 * flick)), IM_COL32(170, 190, 235, static_cast<int>(22 * flick)),
+						IM_COL32(170, 190, 235, 0), IM_COL32(170, 190, 235, 0));
 				}
 			}
 			// vignette
@@ -1687,10 +1635,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			const bool bg = SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_bg.png", nullptr, &g_menuBg));
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_fog.png", nullptr, &g_menuFog);
-			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_sky.png", nullptr, &g_mSky);
-			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_far.png", nullptr, &g_mFar);
-			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_mid.png", nullptr, &g_mMid);
-			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_near.png", nullptr, &g_mNear);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_plate.jpg", nullptr, &g_mPlate);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_aurora.png", nullptr, &g_mAurora);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_title.png", nullptr, &g_mTitle);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\frame.png", nullptr, &g_frame);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\divider.png", nullptr, &g_divider);
