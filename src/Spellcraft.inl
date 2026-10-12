@@ -265,6 +265,9 @@ namespace Spellcraft
 	Beam  g_beam;
 	Fx    g_orb, g_hand;
 	int   g_orbRow = -1, g_handRow = -1;
+	Fx    g_ball[2];
+	int   g_ballRow[2] = { -1, -1 };
+	float g_ballSpin[2] = { 0, 0 };
 	RE::NiPoint3 g_orbAt{};
 	bool  g_orbAtValid = false;
 	float g_mpLast = -1;
@@ -1172,25 +1175,40 @@ namespace Spellcraft
 		} else if (g_orb.obj) {
 			g_orb.Show(false);
 		}
-		// the right hand's glow while the left click is held
-		const bool handOn = row >= 0 && rm && g_tapHeld && g_tapT > 0.12f && GunOut();
-		if (handOn && g_handRow != row) {
-			g_hand.Detach();
-			g_hand = Fx{ Load(Def(row).id, "hand") };
-			g_handRow = row;
-		}
-		if (handOn && g_hand.obj && rm->AsNode()) {
-			g_hand.Attach(rm->AsNode());
-			const float c = std::clamp((g_tapT - 0.12f) / (kTapFull - 0.12f), 0.0f, 1.0f);
-			float       sz = 0.3f + 0.6f * EaseOut(c);
-			if (c >= 1.0f) {
-				const float beat = std::fmod(g_time * 2.5f, 1.0f);
-				sz *= 1.0f + 0.15f * std::sin(g_time * 16.0f) + (beat < 0.12f ? 0.4f * (1.0f - beat / 0.12f) : 0.0f);
+		// a ball of the spell's power turning in each hand, always while the spell is out; it spins faster as a cast
+		// gathers (the right hand for a left-click charge, both for the two-handed charge) and pulses when full
+		static float lastT = g_time;
+		const float  dtp = std::clamp(g_time - lastT, 0.0f, 0.1f);
+		lastT = g_time;
+		const bool ballsOn = row >= 0 && rm && lm && GunOut() && g_beamT <= 0;
+		for (int side = 0; side < 2; ++side) {
+			auto& fx = g_ball[side];
+			auto* node = side == 1 ? rm : lm;
+			if (ballsOn && g_ballRow[side] != row) {
+				fx.Detach();
+				fx = Fx{ Load(Def(row).id, "orb") };
+				g_ballRow[side] = row;
 			}
-			g_hand.Show(true);
-			g_hand.Place(rm->world.translate, rm->world.rotate, sz);
-		} else if (g_hand.obj) {
-			g_hand.Show(false);
+			if (!ballsOn || !fx.obj || !node || !node->AsNode()) {
+				if (fx.obj) {
+					fx.Show(false);
+				}
+				continue;
+			}
+			fx.Attach(node->AsNode());
+			const float full = gen::kGuns[gun].chargeSeconds * Perks::ChargeMult();
+			const float tapC = side == 1 && g_tapHeld ? std::clamp((g_tapT - 0.12f) / (kTapFull - 0.12f), 0.0f, 1.0f) : 0.0f;
+			const float orbC = g_orbHeld ? std::clamp(g_orbT / std::max(0.1f, full), 0.0f, 1.0f) : 0.0f;
+			const float c = std::max(tapC, orbC);
+			g_ballSpin[side] += dtp * (2.2f + 16.0f * c * c) * (side ? 1.0f : -1.0f);
+			float sz = (first ? 0.13f : 0.2f) * (1.0f + 0.6f * tapC) * (1.0f - 0.55f * orbC);  // (both pour into the orb between the hands)
+			const bool ready = (tapC >= 1.0f) || (orbC >= 1.0f);
+			if (ready) {
+				const float beat = std::fmod(g_time * 2.5f, 1.0f);
+				sz *= 1.0f + 0.12f * std::sin(g_time * 16.0f) + (beat < 0.12f ? 0.35f * (1.0f - beat / 0.12f) : 0.0f);
+			}
+			fx.Show(true);
+			fx.Place(node->world.translate, AxisAngle({ 0.25f, 0.3f, 1.0f }, g_ballSpin[side]) * AxisAngle({ 1, 0, 0 }, 0.6f), sz);
 		}
 	}
 
@@ -1297,6 +1315,11 @@ namespace Spellcraft
 		g_beam.Clear();
 		g_beamT = -1;
 		g_orb.Detach(), g_hand.Detach();
+		for (int i = 0; i < 2; ++i) {
+			g_ball[i].Detach();
+			g_ball[i] = {};
+			g_ballRow[i] = -1;
+		}
 		g_orb = {}, g_hand = {};
 		g_orbRow = g_handRow = -1;
 		g_tapHeld = g_orbHeld = false;

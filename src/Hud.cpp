@@ -299,7 +299,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const bool  fog = s.nightEvent == gen::kEvent_fog;
 				const float pulse = 0.85f + 0.15f * std::sin(now * 0.8f);
 				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(r, g, b, static_cast<int>(a * (fog ? 0.9f : 0.35f) * pulse)));
-				const ImU32 e = IM_COL32(r, g, b, std::min(255, static_cast<int>(a * (fog ? 2.4f : 2.0f)))), z = IM_COL32(r, g, b, 0);
+				const ImU32 e = IM_COL32(r, g, b, std::min(255, static_cast<int>(a * (fog ? 2.4f : 1.5f)))), z = IM_COL32(r, g, b, 0);  // (subtle: a haze at the edges)
 				const float w = size.y * (fog ? 0.45f : 0.3f);
 				dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, w }, e, e, z, z);
 				dl->AddRectFilledMultiColor({ 0, size.y - w }, size, z, z, e, e);

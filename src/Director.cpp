@@ -297,7 +297,7 @@ namespace bo3z
 			}
 			speed *= kindRow.speedMult * (g_event >= 0 ? gen::kEvents[g_event].speedMult : 1.0f) * (type ? Undead::SpeedMult(*type) : 1.0f);
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, speed - av->GetBaseActorValue(RE::ActorValue::kSpeedMult));
-			av->SetActorValue(RE::ActorValue::kAttackDamageMult, gen::kZombieWeaponDamageMult);
+			av->SetActorValue(RE::ActorValue::kAttackDamageMult, gen::kZombieWeaponDamageMult * (type ? Undead::DamageMult(*type) : 1.0f));
 			av->SetActorValue(RE::ActorValue::kConfidence, 4);
 			if (gen::kIgnoreNpcs) {
 				if (auto* base = actor->GetActorBase()) {

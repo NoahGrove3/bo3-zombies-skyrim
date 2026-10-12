@@ -155,8 +155,8 @@ for w in S['weapons']['rows']:
                 name = bytes(body[i:i + 4]); ln = struct.unpack_from('<H', body, i + 4)[0]
                 if name == b'DATA':
                     struct.pack_into('<I', body, i + 6 + 24, fid('LIGH', 'fx_' + w['id'] + '_light'))   # casting light
-                    struct.pack_into('<I', body, i + 6 + 92, fid('ARTO', 'fx_' + w['id'] + '_hand'))    # casting art (the hand glow)
-                    struct.pack_into('<I', body, i + 6 + 108, fid('ARTO', 'fx_' + w['id'] + '_hand'))   # dual-cast art
+                    struct.pack_into('<I', body, i + 6 + 92, 0)     # no casting art: the code turns a ball of the spell in each hand (Spellcraft.inl)
+                    struct.pack_into('<I', body, i + 6 + 108, 0)    # (nor dual-cast art)
                 if name == b'MDOB':
                     struct.pack_into('<I', body, i + 6, fid('STAT', 'fx_' + w['id'] + '_orb'))          # the spell menu shows its logo
                 i += 6 + ln

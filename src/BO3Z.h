@@ -169,6 +169,7 @@ namespace bo3z
 		Type  Roll(int a_round);         // which of the risen dead this one is
 		float SpeedMult(Type a_type);
 		float HealthMult(Type a_type);
+		float DamageMult(Type a_type);
 		void  Tick(RE::PlayerCharacter* a_player, float a_delta);
 		void  Reset();
 	}

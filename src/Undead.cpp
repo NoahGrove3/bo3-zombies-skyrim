@@ -65,6 +65,17 @@ namespace bo3z
 		                            /* reaper   */ { 40.0f, 10.0f, 12.0f, 0.30f, 0.36f },
 		                            /* necro    */ { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },    // floats: no steps
 		                            /* wyrm     */ { 44.0f, 12.0f, 18.0f, 0.32f, 0.40f } };
+		// each kind's own strike: how long, one arm or both, a rake across or a slam from overhead
+		struct Strike { float dur; bool both, overhead; };
+		constexpr Strike kStrikes[] = { /* shambler */ { 0.62f, true, false },    // both arms reach and seize
+		                                /* runner   */ { 0.34f, false, false },   // quick alternating swipes
+		                                /* crawler  */ { 0.40f, false, false },
+		                                /* wailer   */ { 0.50f, false, false },   // a long raking claw
+		                                /* bloater  */ { 0.85f, true, true },     // a two-fisted slam from overhead
+		                                /* stalker  */ { 0.30f, false, false },
+		                                /* reaper   */ { 0.70f, true, true },
+		                                /* necro    */ { 0.55f, false, false },
+		                                /* wyrm     */ { 0.70f, false, false } };
 		struct Foot
 		{
 			RE::NiPoint3 plant{}, from{}, to{};
@@ -376,6 +387,7 @@ namespace bo3z
 			done(kLThigh), done(kRThigh), done(kLCalf), done(kRCalf), done(kLFoot), done(kRFoot);
 
 			// ---- its own strike (no draugr swing): when Skyrim starts an attack, an arm rears back and rakes down
+			const Strike& sk = kStrikes[static_cast<int>(r.type)];
 			if (attacking && !r.wasAttacking) {
 				r.atkT = 0.0f, r.atkSide = (r.atkSide + 1) % 2;
 			}
@@ -383,7 +395,7 @@ namespace bo3z
 			float atk = -1.0f;
 			if (r.atkT >= 0) {
 				r.atkT += dt;
-				atk = r.atkT / 0.55f;
+				atk = r.atkT / sk.dur;
 				if (atk >= 1.0f) {
 					r.atkT = -1.0f, atk = -1.0f;
 				}
@@ -425,12 +437,22 @@ namespace bo3z
 					if (cue == Undead::kCueChannel) {
 						fw = fw * (1 - cueK) + 20.0f * cueK, upz = upz * (1 - cueK) + 40.0f * cueK;
 					}
-					if (atk >= 0 && side == r.atkSide) {  // rear back high, then rake down across in front
+					if (atk >= 0 && (sk.both || side == r.atkSide)) {
 						const float u = atk < 0.35f ? Ease(atk / 0.35f) : 1.0f;
 						const float v = atk < 0.35f ? 0.0f : Ease((atk - 0.35f) / 0.45f);
-						fw = (1 - u) * fw + u * (-4.0f + 62.0f * v);
-						out = (1 - u) * out + u * (26.0f - 34.0f * v);
-						upz = (1 - u) * upz + u * (34.0f - 64.0f * v);
+						if (sk.overhead) {  // both fists high over the head, then down hard in front
+							fw = (1 - u) * fw + u * (6.0f + 50.0f * v);
+							out = (1 - u) * out + u * (12.0f - 4.0f * v);
+							upz = (1 - u) * upz + u * (58.0f - 80.0f * v);
+						} else if (sk.both) {  // both arms thrown forward to seize
+							fw = (1 - u) * fw + u * (10.0f + 56.0f * v);
+							out = (1 - u) * out + u * (24.0f - 16.0f * v);
+							upz = (1 - u) * upz + u * (16.0f - 12.0f * v);
+						} else {  // rear back high, then rake down across in front
+							fw = (1 - u) * fw + u * (-4.0f + 62.0f * v);
+							out = (1 - u) * out + u * (26.0f - 34.0f * v);
+							upz = (1 - u) * upz + u * (34.0f - 64.0f * v);
+						}
 					}
 					const RE::NiPoint3 target = chest + f * (fw * sh) + rt * (sg * out * sh) + up * (upz * sh);
 					// the elbow bends out and down
@@ -613,21 +635,36 @@ namespace bo3z
 
 		float SpeedMult(Type a_type)
 		{
-			switch (a_type) {
-			case Type::Runner: return 1.3f;
+			switch (a_type) {  // each kind its own pace (Noah: diversity)
+			case Type::Runner: return 1.45f;   // the Hollow Bride sprints
 			case Type::Crawler: return 0.8f;
-			case Type::Bloater: return 0.72f;
-			case Type::Wailer: return 0.95f;
+			case Type::Bloater: return 0.62f;  // the Abomination lumbers
+			case Type::Wailer: return 0.88f;
+			case Type::Stalker: return 1.25f;
+			case Type::Reaper: return 0.9f;
+			case Type::Necro: return 0.8f;
 			default: return 1.0f;
 			}
 		}
 		float HealthMult(Type a_type)
 		{
 			switch (a_type) {
-			case Type::Runner: return 0.8f;
+			case Type::Runner: return 0.7f;
 			case Type::Crawler: return 0.6f;
-			case Type::Bloater: return 2.2f;
-			case Type::Wailer: return 1.2f;
+			case Type::Bloater: return 2.4f;
+			case Type::Wailer: return 1.1f;
+			default: return 1.0f;
+			}
+		}
+		float DamageMult(Type a_type)
+		{
+			switch (a_type) {  // how hard each kind hits
+			case Type::Runner: return 0.75f;
+			case Type::Bloater: return 1.6f;
+			case Type::Wailer: return 0.8f;
+			case Type::Stalker: return 1.2f;
+			case Type::Reaper: return 1.4f;
+			case Type::Necro: return 0.9f;
 			default: return 1.0f;
 			}
 		}
@@ -701,7 +738,6 @@ namespace bo3z
 									z->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 4.0f);  // (little by little: it stacks with every scream)
 								}
 							}
-							Hud::Banner("A Wailer screams - the dead come running!", 2.0f);
 							Forms::PlayAt(gen::Sound::wailer_scream, a.get());
 						}
 					}

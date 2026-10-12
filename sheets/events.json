@@ -29,7 +29,7 @@
       "championWeight": 1.0,
       "dropMult": 1.0,
       "boss": false,
-      "tint": "B4101A46",
+      "tint": "B4101A1C",
       "sound": "sound:event_bloodmoon",
       "verify": [
         "weather",

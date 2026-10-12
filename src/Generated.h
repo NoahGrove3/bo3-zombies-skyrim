@@ -1258,7 +1258,7 @@ namespace bo3z::gen
 	struct EventDef { std::string_view id, label, banner, weatherPlugin; std::uint32_t weatherId; float spawnMult, speedMult; int pointsMult; float championWeight, dropMult; bool boss; std::uint32_t tint; Sound sound; };
 	inline constexpr float kEventChance = 0.25f;
 	inline constexpr std::array<EventDef, 4> kEvents{ {
-		EventDef{ "bloodmoon", "BLOOD MOON", "BLOOD MOON - THE DEAD RISE FASTER", "Dawnguard.esm", 0x006AEC, 1.5f, 1.0f, 1, 1.0f, 1.0f, false, 0xB4101A46, Sound::event_bloodmoon },
+		EventDef{ "bloodmoon", "BLOOD MOON", "BLOOD MOON - THE DEAD RISE FASTER", "Dawnguard.esm", 0x006AEC, 1.5f, 1.0f, 1, 1.0f, 1.0f, false, 0xB4101A1C, Sound::event_bloodmoon },
 		EventDef{ "fog", "FOG NIGHT", "FOG NIGHT - SOMETHING HUNTS IN THE MIST", "Skyrim.esm", 0x0C821E, 0.75f, 1.0f, 1, 1.0f, 1.0f, true, 0x2A2E3460, Sound::event_fog },
 		EventDef{ "ashstorm", "ASH STORM", "ASH STORM - THE DEAD RUN, DOUBLE POINTS", "Dragonborn.esm", 0x032336, 1.0f, 1.25f, 2, 1.0f, 1.0f, false, 0x5A341838, Sound::event_ash },
 		EventDef{ "champions", "NIGHT OF IRON", "NIGHT OF IRON - THE CHAMPIONS MARCH", "Skyrim.esm", 0x0C8220, 1.0f, 1.0f, 1, 4.0f, 2.0f, false, 0x40506030, Sound::event_champions },
