@@ -1910,7 +1910,7 @@ namespace bo3z
 			}
 			t = 5.0f;
 			static auto* ts = RE::TESForm::LookupByID<RE::TESGlobal>(0x3A);  // TimeScale
-			const float  want = 24.0f * 60.0f / gen::kCycleMinutes;
+			const float  want = std::round(24.0f * 60.0f / gen::kCycleMinutes);  // (whole numbers: Skyrim Together's server runs the same 58)
 			if (ts && std::abs(ts->value - want) > 0.01f) {
 				logger::info("clock: timescale {:.1f} -> {:.1f} (a full day in {:.0f} minutes)", ts->value, want, gen::kCycleMinutes);
 				ts->value = want;
@@ -1922,9 +1922,7 @@ namespace bo3z
 			PowerUps::Tick(a_delta);
 			TickFx(a_delta);
 			TickMist(a_delta, g_phase == Phase::Fighting && g_event == gen::kEvent_fog);
-			if (!Coop::TogetherLoaded()) {
-				TickClock(a_delta);  // with Skyrim Together the server's uTimeScale runs the clock (the party pack sets 58: 15 min of day, 10 of night)
-			}
+			TickClock(a_delta);  // (Skyrim Together's server sets the same uTimeScale, 58: 15 minutes of day, 10 of night)
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			Undead::Tick(player, a_delta);
 			PublishEnemyBars(player);
