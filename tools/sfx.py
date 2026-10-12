@@ -7,7 +7,7 @@ The library files are never modified. Each clip names its source by alias (sheet
   take: n            the n-th take (silence-separated stretch, -45 dB / 0.25 s)
   t0, t1             or an explicit window in seconds
   split: [k, n]      then the k-th of n parts, cut at the quietest points (one long growl -> several)
-and shapes it: gain to a target peak (dB), fades (ms), mono or stereo, pitch (semitones), optional seamless
+and shapes it: gain to a target peak (dB) or a fixed gain (dB), fades (ms), mono or stereo, pitch (semitones), optional seamless
 loop (the tail crossfaded into the head, for charge hums, beams and ritual drones), a length cap.
 """
 import json, pathlib, subprocess, sys
@@ -126,6 +126,8 @@ def clip(lib, src_file, c, sources=None):
     if not c.get('loop'):
         if fi: x[:fi] *= np.linspace(0, 1, fi)[:, None]
         if fo: x[-fo:] *= np.linspace(1, 0, min(fo, len(x)))[:, None]
+    if 'gain' in c:   # a fixed gain instead of peak-normalising: clips cut from one performance keep their levels
+        return x * 10 ** (c['gain'] / 20)
     peak = np.abs(x).max() + 1e-9
     x *= 10 ** (c.get('peak', -3.0) / 20) / peak
     return x

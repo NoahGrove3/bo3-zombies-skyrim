@@ -124,6 +124,19 @@ namespace bo3z::Audio
 		Start(h, a_s, nullptr, nullptr, a_vol);
 	}
 
+	// The intro's narrator: one line at a time on its own handle, so a skip (or the film's end) cuts it off cleanly.
+	void Voice(std::optional<gen::Sound> a_s)
+	{
+		static RE::BSSoundHandle h;
+		if (h.IsValid()) {
+			h.FadeOutAndRelease(250);
+		}
+		h = RE::BSSoundHandle{};
+		if (a_s) {
+			Start(h, *a_s, nullptr, nullptr, 1.0f);
+		}
+	}
+
 	void At(gen::Sound a_s, RE::TESObjectREFR* a_ref, float a_vol)
 	{
 		if (!a_ref) {

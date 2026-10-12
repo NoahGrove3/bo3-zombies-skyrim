@@ -7015,6 +7015,168 @@
       "atten": 0,
       "loop": false,
       "use": "intro: UNDYING NIGHTS"
+    },
+    {
+      "id": "vo_01",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_vo_01",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\vo_01.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\vo_01.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro narration, scene 1"
+    },
+    {
+      "id": "vo_02",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_vo_02",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\vo_02.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\vo_02.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro narration, scene 2"
+    },
+    {
+      "id": "vo_03",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_vo_03",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\vo_03.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\vo_03.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro narration, scene 3"
+    },
+    {
+      "id": "vo_04",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_vo_04",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\vo_04.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\vo_04.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro narration, scene 4"
+    },
+    {
+      "id": "vo_05",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_vo_05",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\vo_05.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\vo_05.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro narration, scene 5"
+    },
+    {
+      "id": "vo_06",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_vo_06",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\vo_06.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\vo_06.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro narration, scene 6"
+    },
+    {
+      "id": "vo_07",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_vo_07",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\vo_07.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\vo_07.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro narration, scene 7"
+    },
+    {
+      "id": "vo_08",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_vo_08",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\vo_08.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\vo_08.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro narration, scene 8"
+    },
+    {
+      "id": "vo_09",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_vo_09",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\vo_09.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\vo_09.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "intro narration, scene 9"
     }
   ]
 }

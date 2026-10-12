@@ -39,7 +39,8 @@
     "zbreath": "../../sfx2/ES_Creatures_Humanoid_Zombie_Breath_Regular_-_Epidemic_Sound.mp3",
     "gore13": "../../sfx2/ES_Gore_Flesh_Drop_Impact_Hit_Short_Bloody_Wet_13_-_Epidemic_Sound.mp3",
     "gore16": "../../sfx2/ES_Gore_Flesh_Drop_Impact_Hit_Short_Bloody_Wet_16_-_Epidemic_Sound.mp3",
-    "guts35": "../../sfx2/ES_Impact_Hit_Hard_Drop_Wet_Flesh_Guts_35_-_Epidemic_Sound.mp3"
+    "guts35": "../../sfx2/ES_Impact_Hit_Hard_Drop_Wet_Flesh_Guts_35_-_Epidemic_Sound.mp3",
+    "narration": "../../vo/vo_full_v1.mp3"
   },
   "columns": [
     "id",
@@ -90,13 +91,13 @@
     {
       "id": "mus_intro",
       "src": "menu",
-      "use": "the Undying Nights intro (after character creation): the menu theme's rising second half",
-      "t0": 85.0,
-      "t1": 152.0,
+      "use": "the Undying Nights intro (after character creation): the menu theme's rising second half, under the narration",
+      "t0": 82.0,
+      "t1": 157.6,
       "stereo": true,
-      "peak": -5,
+      "peak": -11,
       "fadeIn": 2500,
-      "fadeOut": 3000
+      "fadeOut": 4000
     },
     {
       "id": "sp_beam_loop",
@@ -1358,6 +1359,96 @@
       "take": 0,
       "peak": -14,
       "loop": true
+    },
+    {
+      "id": "vo_01",
+      "src": "narration",
+      "use": "intro narration, scene 1: \"The Fourth Era, 201. Helgen burned.\"",
+      "t0": 0.08,
+      "t1": 3.5,
+      "fadeIn": 15,
+      "fadeOut": 150,
+      "gain": 2.0
+    },
+    {
+      "id": "vo_02",
+      "src": "narration",
+      "use": "intro narration, scene 2: \"You lived. But as the World-Eater rose from the ash...\"",
+      "t0": 3.86,
+      "t1": 14.1,
+      "fadeIn": 15,
+      "fadeOut": 150,
+      "gain": 2.0
+    },
+    {
+      "id": "vo_03",
+      "src": "narration",
+      "use": "intro narration, scene 3: \"The Undying Dirge. And every grave in Skyrim heard it.\"",
+      "t0": 15.34,
+      "t1": 21.15,
+      "fadeIn": 15,
+      "fadeOut": 150,
+      "gain": 2.0
+    },
+    {
+      "id": "vo_04",
+      "src": "narration",
+      "use": "intro narration, scene 4: \"By day, it sleeps... the dead remember.\"",
+      "t0": 21.42,
+      "t1": 29.0,
+      "fadeIn": 15,
+      "fadeOut": 150,
+      "gain": 2.0
+    },
+    {
+      "id": "vo_05",
+      "src": "narration",
+      "use": "intro narration, scene 5: \"They come with the dusk... Wailers who call the horde to feed.\"",
+      "t0": 29.18,
+      "t1": 38.72,
+      "fadeIn": 15,
+      "fadeOut": 150,
+      "gain": 2.0
+    },
+    {
+      "id": "vo_06",
+      "src": "narration",
+      "use": "intro narration, scene 6: \"Champions walk among them...\"",
+      "t0": 38.84,
+      "t1": 46.8,
+      "fadeIn": 15,
+      "fadeOut": 150,
+      "gain": 2.0
+    },
+    {
+      "id": "vo_07",
+      "src": "narration",
+      "use": "intro narration, scene 7: \"And when the fog rolls in... Grimmvar comes hunting.\"",
+      "t0": 46.92,
+      "t1": 55.22,
+      "fadeIn": 15,
+      "fadeOut": 150,
+      "gain": 2.0
+    },
+    {
+      "id": "vo_08",
+      "src": "narration",
+      "use": "intro narration, scene 8: \"Yet in every city, a Shrine of the Dirge still stands...\"",
+      "t0": 55.26,
+      "t1": 62.56,
+      "fadeIn": 15,
+      "fadeOut": 150,
+      "gain": 2.0
+    },
+    {
+      "id": "vo_09",
+      "src": "narration",
+      "use": "intro narration, scene 9: \"Survive the night.\"",
+      "t0": 62.7,
+      "t1": 64.52,
+      "fadeIn": 15,
+      "fadeOut": 150,
+      "gain": 2.0
     }
   ]
 }

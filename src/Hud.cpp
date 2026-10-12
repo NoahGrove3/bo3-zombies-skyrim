@@ -1294,18 +1294,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			gen::Sound  cue;
 			float       cueAt;
 			bool        embers;
+			gen::Sound  vo;                // the narrator's line for this scene
+			float       voAt;              // when it starts (seconds into the scene)
+			float       l2At;              // when the second line's words are spoken (seconds into the scene)
 		};
 		using GS = gen::Sound;
-		const FilmScene kFilm[] = {  // timed to the narration (vo_01..vo_09)
-			{ nullptr, 4.0f, 1, 1, 0, 0, 0, 0, nullptr, "THE FOURTH ERA, 201", "HELGEN BURNED", GS::intro_graves, 0.3f, false },
-			{ "intro_helgen", 7.0f, 1.04f, 1.14f, -0.6f, 0.2f, 0.4f, -0.2f, nullptr, "You lived.", "But as the World-Eater rose from the ash, he sang a word older than the Thu'um itself.", GS::intro_helgen, 0.4f, true },
-			{ "intro_sky", 6.0f, 1.12f, 1.02f, 0.0f, -0.6f, 0.0f, 0.3f, "THE UNDYING DIRGE", nullptr, "And every grave in Skyrim heard it.", GS::intro_dirge, 0.6f, false },
-			{ "intro_graves", 7.0f, 1.03f, 1.12f, 0.5f, 0.3f, -0.3f, 0.0f, nullptr, "By day, it sleeps beneath the holds.", "But when the sun goes down... the dead remember.", GS::intro_graves, 0.5f, false },
-			{ "intro_horde", 7.0f, 1.14f, 1.04f, -0.3f, 0.0f, 0.3f, 0.1f, nullptr, "They come with the dusk. More each night, and harder to kill.", "Brides who run you down. Wailers who call the horde to feed.", GS::intro_horde, 0.5f, false },
-			{ "intro_champions", 6.0f, 1.02f, 1.10f, 0.0f, 0.4f, 0.0f, -0.2f, nullptr, "Champions walk among them.", "The Bone Knight. The Barrow King. The Lich of the Dirge.", GS::intro_champions, 0.4f, true },
-			{ "intro_wyrm", 7.0f, 1.10f, 1.02f, 0.4f, -0.2f, -0.2f, 0.2f, nullptr, "And when the fog rolls in...", "Grimmvar, the Undying Wyrm, comes hunting.", GS::intro_wyrm, 0.8f, false },
-			{ "intro_shrine", 8.0f, 1.03f, 1.13f, 0.2f, 0.3f, -0.1f, -0.1f, nullptr, "Yet in every city, a Shrine of the Dirge still stands.", "Take up its spells. Hold its circle. Break the curse, city by city.", GS::intro_shrine, 0.5f, true },
-			{ "menu_title", 8.0f, 1, 1, 0, 0, 0, 0, nullptr, nullptr, "Survive the night.", GS::intro_title, 0.2f, true },
+		const FilmScene kFilm[] = {  // timed to the narration (vo_01..vo_09: the line starts at voAt, its second sentence at l2At)
+			{ nullptr, 4.4f, 1, 1, 0, 0, 0, 0, nullptr, "THE FOURTH ERA, 201", "HELGEN BURNED", GS::intro_graves, 0.3f, false, GS::vo_01, 0.6f, 2.12f },
+			{ "intro_helgen", 10.8f, 1.04f, 1.14f, -0.6f, 0.2f, 0.4f, -0.2f, nullptr, "You lived.", "But as the World-Eater rose from the ash, he sang a word older than the Thu'um itself.", GS::intro_helgen, 0.4f, true, GS::vo_02, 0.3f, 2.36f },
+			{ "intro_sky", 6.3f, 1.12f, 1.02f, 0.0f, -0.6f, 0.0f, 0.3f, "THE UNDYING DIRGE", nullptr, "And every grave in Skyrim heard it.", GS::intro_dirge, 0.6f, false, GS::vo_03, 0.3f, 2.88f },
+			{ "intro_graves", 8.1f, 1.03f, 1.12f, 0.5f, 0.3f, -0.3f, 0.0f, nullptr, "By day, it sleeps beneath the holds.", "But when the sun goes down... the dead remember.", GS::intro_graves, 0.5f, false, GS::vo_04, 0.3f, 3.90f },
+			{ "intro_horde", 10.0f, 1.14f, 1.04f, -0.3f, 0.0f, 0.3f, 0.1f, nullptr, "They come with the dusk. More each night, and harder to kill.", "Brides who run you down. Wailers who call the horde to feed.", GS::intro_horde, 0.5f, false, GS::vo_05, 0.3f, 4.92f },
+			{ "intro_champions", 8.5f, 1.02f, 1.10f, 0.0f, 0.4f, 0.0f, -0.2f, nullptr, "Champions walk among them.", "The Bone Knight. The Barrow King. The Lich of the Dirge.", GS::intro_champions, 0.4f, true, GS::vo_06, 0.3f, 2.24f },
+			{ "intro_wyrm", 8.9f, 1.10f, 1.02f, 0.4f, -0.2f, -0.2f, 0.2f, nullptr, "And when the fog rolls in...", "Grimmvar, the Undying Wyrm, comes hunting.", GS::intro_wyrm, 0.8f, false, GS::vo_07, 0.3f, 4.28f },
+			{ "intro_shrine", 8.3f, 1.03f, 1.13f, 0.2f, 0.3f, -0.1f, -0.1f, nullptr, "Yet in every city, a Shrine of the Dirge still stands.", "Take up its spells. Hold its circle. Break the curse, city by city.", GS::intro_shrine, 0.5f, true, GS::vo_08, 0.3f, 3.04f },
+			{ "menu_title", 6.0f, 1, 1, 0, 0, 0, 0, nullptr, nullptr, "Survive the night.", GS::intro_title, 0.2f, true, GS::vo_09, 0.5f, 0.50f },
 		};
 		constexpr int kFilmScenes = static_cast<int>(std::size(kFilm));
 		constexpr float kFilmXfade = 1.2f;
@@ -1314,6 +1317,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		std::atomic<bool>         g_filmSkipHeld{ false };
 		float                     g_filmT = 0, g_filmSkip = 0, g_filmEnd = -1;
 		int                       g_filmCue = -1;
+		int                       g_filmVo = -1;
 		bool                      g_filmPaused = false;
 		std::uint32_t             g_filmPauses = 0;  // pauses already in force when the film began
 		ID3D11ShaderResourceView* g_filmTex[kFilmScenes]{};
@@ -1338,6 +1342,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_filmPaused = false;
 			}
 			Audio::IntroMusic(false);
+			Audio::Voice(std::nullopt);
 			g_filmOn = false;
 			logger::info("intro: film ended at {:.1f}s", g_filmT);
 		}
@@ -1365,7 +1370,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_filmPaused = true;
 			}
 			Audio::IntroMusic(true);
-			g_filmT = 0, g_filmSkip = 0, g_filmEnd = -1, g_filmCue = -1;
+			g_filmT = 0, g_filmSkip = 0, g_filmEnd = -1, g_filmCue = -1, g_filmVo = -1;
 			g_filmOn = true;
 			logger::info("intro: film starts ({} stills)", loaded);
 		}
@@ -1397,7 +1402,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const float local = g_filmT - start;
 			if (g_filmEnd < 0 && cur != g_filmCue && local >= kFilm[cur].cueAt) {  // each scene's sound, once
 				g_filmCue = cur;
-				Audio::Ui(kFilm[cur].cue, 0.9f);
+				Audio::Ui(kFilm[cur].cue, 0.45f);  // under the narrator
+			}
+			if (g_filmEnd < 0 && cur != g_filmVo && local >= kFilm[cur].voAt) {  // the narrator's line, once
+				g_filmVo = cur;
+				Audio::Voice(kFilm[cur].vo);
 			}
 			float cw = size.x, ch = size.x * 9.0f / 16.0f;
 			if (ch < size.y) {
@@ -1465,23 +1474,23 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const float ty = size.y - bar * 1.25f + 14 * k;
 			const ImU32 bone = IM_COL32(232, 224, 206, 255), dim = IM_COL32(170, 176, 186, 255);
 			if (cur == 0) {
-				const float a = lineA(0.4f), b = lineA(1.4f);
+				const float a = lineA(sc.voAt - 0.3f), b = lineA(sc.l2At - 0.3f);
 				TxtC(fg, g_num, 26 * k, size.x / 2, size.y * 0.44f, Fade(dim, a), sc.l1);
 				TxtC(fg, g_title, 54 * k, size.x / 2, size.y * 0.49f, Fade(bone, b), sc.l2, 2 * k, IM_COL32(200, 60, 40, static_cast<int>(120 * b)));
 			} else {
 				if (sc.big) {
-					const float a = lineA(0.5f);
+					const float a = lineA(sc.voAt - 0.3f);
 					const float grow = 1.0f + 0.04f * std::clamp(local / sc.dur, 0.0f, 1.0f);
 					TxtC(fg, g_title, 92 * k * grow, size.x / 2, size.y * 0.42f, Fade(bone, a), sc.big, 4 * k, IM_COL32(200, 40, 30, static_cast<int>(160 * a)));
 				}
 				if (sc.l1) {
-					TxtC(fg, g_body, 34 * k, size.x / 2, ty, Fade(bone, lineA(0.5f)), sc.l1);
+					TxtC(fg, g_body, 34 * k, size.x / 2, ty, Fade(bone, lineA(sc.voAt - 0.3f)), sc.l1);
 				}
 				if (sc.l2) {
-					TxtC(fg, g_body, 34 * k, size.x / 2, sc.l1 ? ty + 46 * k : ty + 20 * k, Fade(sc.l1 ? dim : bone, lineA(sc.l1 ? 2.2f : 1.2f)), sc.l2);
+					TxtC(fg, g_body, 34 * k, size.x / 2, sc.l1 ? ty + 46 * k : ty + 20 * k, Fade(sc.l1 ? dim : bone, lineA((sc.l1 || sc.big ? sc.l2At : sc.voAt) - 0.3f)), sc.l2);
 				}
 				if (cur == kFilmScenes - 1) {  // the last words
-					TxtC(fg, g_num, 24 * k, size.x / 2, size.y * 0.62f, Fade(IM_COL32(200, 70, 50, 255), lineA(3.2f)), "DUSK IS COMING");
+					TxtC(fg, g_num, 24 * k, size.x / 2, size.y * 0.62f, Fade(IM_COL32(200, 70, 50, 255), lineA(sc.voAt + 2.2f)), "DUSK IS COMING");
 				}
 			}
 			// skip: a quiet hint, and a ring that fills while the key is held

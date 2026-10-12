@@ -921,6 +921,15 @@
   "ARMA:eyes_bloater": "0xb95",
   "ARMA:eyes_knight": "0xb96",
   "ARMA:eyes_king": "0xb97",
-  "ARMA:eyes_lich": "0xb98"
+  "ARMA:eyes_lich": "0xb98",
+  "SNDR:vo_01": "0xb99",
+  "SNDR:vo_02": "0xb9a",
+  "SNDR:vo_03": "0xb9b",
+  "SNDR:vo_04": "0xb9c",
+  "SNDR:vo_05": "0xb9d",
+  "SNDR:vo_06": "0xb9e",
+  "SNDR:vo_07": "0xb9f",
+  "SNDR:vo_08": "0xba0",
+  "SNDR:vo_09": "0xba1"
  }
 }
