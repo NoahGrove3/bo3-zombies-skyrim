@@ -1338,16 +1338,16 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			bool        embers;
 		};
 		using GS = gen::Sound;
-		const FilmScene kFilm[] = {
-			{ nullptr, 4.0f, 1, 1, 0, 0, 0, 0, nullptr, "THE FOURTH ERA, 201", "HELGEN", GS::intro_graves, 0.3f, false },
-			{ "intro_helgen", 7.5f, 1.04f, 1.14f, -0.6f, 0.2f, 0.4f, -0.2f, nullptr, "Helgen burned, and you lived.", "But as the World-Eater rose from the ash, he sang a word older than the Thu'um.", GS::intro_helgen, 0.4f, true },
-			{ "intro_sky", 6.0f, 1.12f, 1.02f, 0.0f, -0.6f, 0.0f, 0.3f, "THE UNDYING DIRGE", nullptr, "Every grave in Skyrim heard it.", GS::intro_dirge, 0.6f, false },
-			{ "intro_graves", 7.0f, 1.03f, 1.12f, 0.5f, 0.3f, -0.3f, 0.0f, nullptr, "By day it sleeps beneath the holds.", "When the sun goes down it wakes, and the dead remember.", GS::intro_graves, 0.5f, false },
-			{ "intro_horde", 7.0f, 1.14f, 1.04f, -0.3f, 0.0f, 0.3f, 0.1f, nullptr, "They come at dusk, more each night, and harder to kill.", "Hollow Brides that run you down. Wailers that call the horde. Abominations that burst.", GS::intro_horde, 0.5f, false },
-			{ "intro_champions", 6.5f, 1.02f, 1.10f, 0.0f, 0.4f, 0.0f, -0.2f, nullptr, "Champions walk among them:", "the Horned Bone Knight, the Barrow King, the Lich of the Dirge.", GS::intro_champions, 0.4f, true },
-			{ "intro_wyrm", 6.5f, 1.10f, 1.02f, 0.4f, -0.2f, -0.2f, 0.2f, nullptr, "And when the fog rolls in,", "Grimmvar, the Undying Wyrm, Herald of the Dirge, hunts.", GS::intro_wyrm, 0.8f, false },
-			{ "intro_shrine", 8.0f, 1.03f, 1.13f, 0.2f, 0.3f, -0.1f, -0.1f, nullptr, "In every city a Shrine of the Dirge still stands.", "Take its spells. Hold its circle. Break the Dirge, city by city.", GS::intro_shrine, 0.5f, true },
-			{ "menu_title", 7.0f, 1, 1, 0, 0, 0, 0, nullptr, nullptr, "Survive the night.", GS::intro_title, 0.2f, true },
+		const FilmScene kFilm[] = {  // timed to the narration (vo_01..vo_09)
+			{ nullptr, 4.0f, 1, 1, 0, 0, 0, 0, nullptr, "THE FOURTH ERA, 201", "HELGEN BURNED", GS::intro_graves, 0.3f, false },
+			{ "intro_helgen", 7.0f, 1.04f, 1.14f, -0.6f, 0.2f, 0.4f, -0.2f, nullptr, "You lived.", "But as the World-Eater rose from the ash, he sang a word older than the Thu'um itself.", GS::intro_helgen, 0.4f, true },
+			{ "intro_sky", 6.0f, 1.12f, 1.02f, 0.0f, -0.6f, 0.0f, 0.3f, "THE UNDYING DIRGE", nullptr, "And every grave in Skyrim heard it.", GS::intro_dirge, 0.6f, false },
+			{ "intro_graves", 7.0f, 1.03f, 1.12f, 0.5f, 0.3f, -0.3f, 0.0f, nullptr, "By day, it sleeps beneath the holds.", "But when the sun goes down... the dead remember.", GS::intro_graves, 0.5f, false },
+			{ "intro_horde", 7.0f, 1.14f, 1.04f, -0.3f, 0.0f, 0.3f, 0.1f, nullptr, "They come with the dusk. More each night, and harder to kill.", "Brides who run you down. Wailers who call the horde to feed.", GS::intro_horde, 0.5f, false },
+			{ "intro_champions", 6.0f, 1.02f, 1.10f, 0.0f, 0.4f, 0.0f, -0.2f, nullptr, "Champions walk among them.", "The Bone Knight. The Barrow King. The Lich of the Dirge.", GS::intro_champions, 0.4f, true },
+			{ "intro_wyrm", 7.0f, 1.10f, 1.02f, 0.4f, -0.2f, -0.2f, 0.2f, nullptr, "And when the fog rolls in...", "Grimmvar, the Undying Wyrm, comes hunting.", GS::intro_wyrm, 0.8f, false },
+			{ "intro_shrine", 8.0f, 1.03f, 1.13f, 0.2f, 0.3f, -0.1f, -0.1f, nullptr, "Yet in every city, a Shrine of the Dirge still stands.", "Take up its spells. Hold its circle. Break the curse, city by city.", GS::intro_shrine, 0.5f, true },
+			{ "menu_title", 8.0f, 1, 1, 0, 0, 0, 0, nullptr, nullptr, "Survive the night.", GS::intro_title, 0.2f, true },
 		};
 		constexpr int kFilmScenes = static_cast<int>(std::size(kFilm));
 		constexpr float kFilmXfade = 1.2f;
@@ -1548,6 +1548,85 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 		}
 
+
+		// ---- The new-game prompts answered for you: a new character always escaped with Ralof (Stormcloaks), and
+		// survival mode stays off. Their message boxes are read the moment they open and pressed before they show.
+		std::string GfxText(RE::GFxMovieView* a_mv, const char* a_path)
+		{
+			RE::GFxValue v;
+			if (a_mv && a_mv->GetVariable(&v, a_path) && v.IsString()) {
+				return v.GetString();
+			}
+			return {};
+		}
+		std::vector<std::string> GfxButtons(RE::GFxMovieView* a_mv)
+		{
+			std::vector<std::string> out;
+			RE::GFxValue arr;
+			if (!a_mv || !a_mv->GetVariable(&arr, "_root.MessageMenu.MessageButtons") || !arr.IsArray()) {
+				return out;
+			}
+			for (std::uint32_t i = 0; i < arr.GetArraySize(); ++i) {
+				RE::GFxValue b, t, s;
+				std::string  label;
+				if (arr.GetElement(i, &b) && b.IsObject()) {
+					if (b.GetMember("ButtonText", &t) && t.IsObject() && t.GetMember("text", &s) && s.IsString()) {
+						label = s.GetString();
+					} else if (b.GetMember("label", &s) && s.IsString()) {
+						label = s.GetString();
+					}
+				}
+				out.push_back(label);
+			}
+			return out;
+		}
+		std::string Lower(std::string a) { std::transform(a.begin(), a.end(), a.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); }); return a; }
+
+		void AnswerStartPrompts(RE::UI* a_ui)
+		{
+			static int  tries = 0;
+			static bool decided = false;
+			auto        m = a_ui ? a_ui->GetMenu(RE::MessageBoxMenu::MENU_NAME) : nullptr;
+			if (!m || !m->uiMovie || !a_ui->IsMenuOpen(RE::MessageBoxMenu::MENU_NAME)) {
+				tries = 0, decided = false;
+				return;
+			}
+			if (decided) {
+				return;
+			}
+			auto* mv = m->uiMovie.get();
+			const std::string text = Lower(GfxText(mv, "_root.MessageMenu.MessageText.text"));
+			const auto        buttons = GfxButtons(mv);
+			if (text.empty() || buttons.empty()) {
+				mv->SetVisible(false);  // still filling in: unseen until we know what it asks
+				if (++tries > 20) {
+					mv->SetVisible(true), decided = true;
+					logger::info("prompts: a message box we could not read (text '{}', {} buttons)", text, buttons.size());
+				}
+				return;
+			}
+			decided = true;
+			int pick = -1;
+			const bool sides = text.find("befriend") != std::string::npos || text.find("escaping from helgen") != std::string::npos;
+			const bool survival = text.find("survival mode") != std::string::npos && text.find("enable") != std::string::npos;
+			for (int i = 0; i < static_cast<int>(buttons.size()); ++i) {
+				const std::string b = Lower(buttons[i]);
+				if (sides && (b.find("ralof") != std::string::npos || b.find("stormcloak") != std::string::npos)) {
+					pick = i;
+				}
+				if (survival && (b == "no" || b.rfind("no", 0) == 0)) {
+					pick = i;
+				}
+			}
+			if ((sides || survival) && pick >= 0 && m->fxDelegate) {
+				RE::GFxValue arg(static_cast<double>(pick));
+				m->fxDelegate->Callback(mv, "buttonPress", &arg, 1);
+				logger::info("prompts: answered '{}' with '{}' (hidden)", sides ? "who did you befriend" : "enable survival mode", buttons[pick]);
+				return;
+			}
+			mv->SetVisible(true);
+		}
+
 		bool Init(IDXGISwapChain* a_swap)
 		{
 			if (g_init || g_failed) {
@@ -1681,6 +1760,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			                     !uiM->IsMenuOpen(RE::InventoryMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MagicMenu::MENU_NAME) &&
 			                     !uiM->IsMenuOpen(RE::MapMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::StatsMenu::MENU_NAME);
 			const int  clicks = g_clicks.exchange(0);
+			AnswerStartPrompts(uiM);
 			if (g_filmReq && !g_filmOn) {  // the film waits until the world has settled (the move to Riverwood loads a cell)
 				static auto settled = std::chrono::steady_clock::now();
 				if (!InGame()) {
