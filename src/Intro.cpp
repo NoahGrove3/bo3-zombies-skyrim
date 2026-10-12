@@ -42,6 +42,13 @@ namespace bo3z
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			auto* intro = Forms::IntroQuest();
 			auto* ui = RE::UI::GetSingleton();
+			if (player && g_moved && Hud::IntroBusy() && !player->IsDead()) {  // nothing hurts a newcomer who cannot yet see
+				auto* av = player->AsActorValueOwner();
+				const float mx = av->GetPermanentActorValue(RE::ActorValue::kHealth), hp = av->GetActorValue(RE::ActorValue::kHealth);
+				if (hp < mx) {
+					av->RestoreActorValue(RE::ActorValue::kHealth, mx - hp);
+				}
+			}
 			if (player && g_moved) {  // a new character's first minute: health and place, once a second, so a death can be traced
 				static auto last = std::chrono::steady_clock::now();
 				static int  n = 0;

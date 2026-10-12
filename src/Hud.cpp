@@ -2298,6 +2298,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		void OnClick() { ++g_clicks; }
 		void IntroStart() { g_filmReq = true; }
 		bool IntroActive() { return g_filmOn || g_filmReq; }
+		bool IntroBusy()
+		{
+			const long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+			return g_filmOn || g_filmReq || g_outro || ms < g_holdUntilMs;
+		}
 		void IntroVeil(float a_seconds)
 		{
 			g_holdUntilMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() + static_cast<long long>(a_seconds * 1000);

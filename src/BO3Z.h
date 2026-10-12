@@ -390,6 +390,7 @@ namespace bo3z
 		void        OnClick();  // a left click (menus: the party panel's buttons)
 		void        IntroStart();             // the Undying Nights intro film (once, for a new character)
 		bool        IntroActive();
+		bool        IntroBusy();  // the film, or the black before or after it (a new character's arrival)
 		void IntroVeil(float a_seconds);  // black over the game for a while (a new character's trip to Riverwood, before the film)
 		void        IntroSkipHeld(bool a_held);
 	}

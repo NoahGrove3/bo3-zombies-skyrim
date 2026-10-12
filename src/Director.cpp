@@ -125,6 +125,16 @@ namespace bo3z
 				return false;
 			}
 			g_loggedBlocked = false;
+			// a new character's arrival (the black, the film, the black after it) and a grace after it: no night begins
+			// on a player who cannot yet see or move (it used to start under the veil and kill the newcomer)
+			static auto calm = std::chrono::steady_clock::now();
+			if (Hud::IntroBusy()) {
+				calm = std::chrono::steady_clock::now() + std::chrono::seconds(12);
+				return false;
+			}
+			if (std::chrono::steady_clock::now() < calm) {
+				return false;
+			}
 			return a_player->Is3DLoaded() && !a_player->IsDead() && a_player->GetParentCell();
 		}
 
