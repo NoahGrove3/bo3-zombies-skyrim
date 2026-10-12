@@ -40,9 +40,23 @@ if ($ver -notlike '1.7.104*') { Say "Undying Nights is built for Skyrim 1.7.104 
 $data = Join-Path $game 'Data'
 Say 'Copying Undying Nights...'
 Copy-Item (Join-Path $pack 'files\Game\*') $game -Recurse -Force
-Copy-Item (Join-Path $pack 'files\Data\*') $data -Recurse -Force
 Say 'Copying Skyrim Together Reborn...'
 Copy-Item (Join-Path $pack 'files\SkyrimTogether\*') $data -Recurse -Force
+Say 'Copying Undying Nights data (last, so its menu art wins)...'
+Copy-Item (Join-Path $pack 'files\Data\*') $data -Recurse -Force
+
+# ---- Noah's graphics (optional, the same look as the host: weathers, lighting, roads, water, trees, grass,
+#      armour (Cathedral), NPC faces (Pandorable)). Everything is in files\Graphics\Data, already installed and sorted.
+$gfx = Join-Path $pack 'files\Graphics\Data'
+$gfxOn = $false
+if (Test-Path $gfx) {
+    $ans = Read-Host "`nAlso install Noah's graphics mods (about 16 GB: the same look as the host)? [Y/n]"
+    if ($ans -notmatch '^\s*[nN]') {
+        Say 'Copying the graphics mods (this takes a few minutes)...'
+        robocopy $gfx $data /E /MT:16 /NFL /NDL /NJH /NJS /NP | Out-Null
+        if ($LASTEXITCODE -ge 8) { Say 'Some graphics files could not be copied (is the disk full?).' Red } else { $gfxOn = $true; Say 'Graphics mods installed.' Green }
+    }
+}
 
 # ---- co-op role
 Set-Content -Path (Join-Path $game 'UndyingNights.ini') -Value "[Coop]`r`n; host = your game raises the nights; client = you join the host's nights`r`nRole=$Role" -Encoding ASCII
@@ -52,8 +66,15 @@ $pdir = Join-Path $env:LOCALAPPDATA 'Skyrim Special Edition'
 New-Item -ItemType Directory -Force -Path $pdir | Out-Null
 $plist = Join-Path $pdir 'Plugins.txt'
 $lines = @(); if (Test-Path $plist) { $lines = Get-Content $plist }
-$keep = $lines | Where-Object { $_ -notmatch '^\*?(SkyrimTogether\.esp|SkyrimTogetherQuestPatches\.esp|BO3Zombies\.esp)\s*$' }
-$out = @($keep | Where-Object { $_ -match '^\s*#' }) + @('*SkyrimTogether.esp', '*SkyrimTogetherQuestPatches.esp') + @($keep | Where-Object { $_ -notmatch '^\s*#' -and $_.Trim() }) + @('*BO3Zombies.esp')
+# the graphics plugins, in the host's load order (each needs the ones before it)
+$gfxPlugins = @('RealisticWaterTwo - Resources.esm', 'Lux Orbis - Master plugin.esm', 'Lux - Resources.esp', 'Lux Via.esp', 'SMIM-SE-Merged-All.esp',
+    'Lit Road Signs.esp', 'HappyLittleTrees.esp', 'Skoglendi - A Grass Mod.esp', 'RealisticWaterTwo.esp', 'Skyland Watercolor - Slow Green-RW2.esp',
+    'Azurite Weathers III.esp', 'Lux Orbis.esp', 'Lux Via - plugin.esp', 'Lux Via - Blended Roads Bridges Texture sets.esp', 'PAN_NPCs.esp')
+$ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'BO3Zombies.esp', 'UndyingNights.esp') + $gfxPlugins
+$keep = $lines | Where-Object { $n = ($_ -replace '^\*', '').Trim(); -not ($ours -contains $n) }
+$mid = @()
+if ($gfxOn -or (Test-Path (Join-Path $data 'Lux Via.esp'))) { $mid = $gfxPlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ } }
+$out = @($keep | Where-Object { $_ -match '^\s*#' }) + @('*SkyrimTogether.esp', '*SkyrimTogetherQuestPatches.esp') + @($keep | Where-Object { $_ -notmatch '^\s*#' -and $_.Trim() }) + $mid + @('*BO3Zombies.esp')
 Set-Content -Path $plist -Value $out -Encoding UTF8
 Say 'Plugins turned on.' Green
 
@@ -87,12 +108,10 @@ if ($Role -eq 'host') {
     $lnk2.Save()
 }
 Say "`nDone! Shortcut 'Undying Nights Co-op' is on your desktop.`n" Yellow
+Say "Always start the game from that shortcut (not Steam's Play button)." Cyan
 if ($Role -eq 'host') {
-    Say "To host: open 'Undying Nights Server' first, then 'Undying Nights Co-op', load your save," Cyan
-    Say "open the Skyrim Together menu and connect to 127.0.0.1 with your password." Cyan
+    Say "In the Undying Nights main menu: CO-OP PARTY > HOST A PARTY - INVITE FRIENDS, invite your friend in the Steam overlay." Cyan
 } else {
-    Say "To join: open 'Undying Nights Co-op', load or make a character, open the Skyrim Together menu," Cyan
-    Say ("and connect to  " + $party['Address'] + ":" + $party['Port'] + "  with password  " + $party['Password']) Cyan
-    try { Set-Clipboard -Value ($party['Address'] + ':' + $party['Port']) ; Say '(The address is copied - paste it with Ctrl+V.)' } catch {}
+    Say "Wait in the Undying Nights main menu, then accept the host's invite there (Shift+Tab) or click JOIN <host> in the CO-OP PARTY panel." Cyan
 }
 Read-Host "`nPress Enter to close"

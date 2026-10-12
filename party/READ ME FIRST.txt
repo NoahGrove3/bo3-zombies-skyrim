@@ -1,27 +1,47 @@
 UNDYING NIGHTS - PARTY PACK
 ===========================
 
-What you need: Skyrim Special Edition (or Anniversary Edition) on Steam, up to date, run once.
+You need: Skyrim Special Edition or Anniversary Edition on Steam, updated, started once. Both players need
+this SAME pack (an older pack loads an older Undying Nights, or none at all).
 
-JOINING (friends)
- 1. If Noah uses Tailscale: install Tailscale (tailscale.com), sign in, and accept Noah's invite.
- 2. Close Skyrim. Double-click  JOIN THE PARTY.bat  (Windows may ask "Run anyway" - it's the installer).
- 3. Open "Undying Nights Co-op" on your desktop. Load a save or make a character.
- 4. Open the Skyrim Together menu in game, choose Connect, paste the address (already copied for you)
-    and type the password from Party.txt.
- 5. You're in Noah's party. When night falls, his game raises the dead and you fight them together.
+ONE-TIME SETUP (both players)
+ 1. Close Skyrim.
+ 2. Unzip this pack anywhere (Desktop is fine) and double-click  JOIN THE PARTY.bat
+    (the host - Noah - runs  HOST THE PARTY (Noah only).bat  instead).
+    If Windows says "Windows protected your PC": More info > Run anyway.
+ 3. It finds Skyrim, installs Undying Nights + Skyrim Together Reborn, turns the plugins on and puts
+    "Undying Nights Co-op" on your desktop.
 
-HOSTING (Noah)
- 1. Fill in Party.txt (your Tailscale address and a password) before sharing this folder.
- 2. Double-click  HOST THE PARTY (Noah only).bat  once.
- 3. Each session: open "Undying Nights Server", then "Undying Nights Co-op", connect to 127.0.0.1.
+EVERY TIME YOU PLAY
+ 1. Start the game with the "Undying Nights Co-op" desktop shortcut. NOT the Steam Play button, not the
+    Skyrim launcher - those start Skyrim without Skyrim Together, so you can't see each other.
+ 2. Wait for the Undying Nights main menu (dark, with a CO-OP PARTY panel). If you see the normal Skyrim menu,
+    the mod didn't load - run the .bat again and check the Troubleshooting list below.
+ 3. HOST (Noah): in the main menu's CO-OP PARTY panel click  HOST A PARTY - INVITE FRIENDS.
+    The Steam overlay opens - invite your friend.
+ 4. FRIEND: stay in the Undying Nights main menu and accept the invite there - press Shift+Tab to open the
+    Steam overlay and click Accept - or click  JOIN <Noah's name>  in the CO-OP PARTY panel.
+    Do not accept the invite from Steam while the game is closed: Steam would start plain Skyrim.
+ 5. Both: load a save or start a new character. Skyrim Together connects you by itself (no address, no
+    password to type). Each of you starts where your own save is - meet up in game (Skyrim Together's
+    party list shows the others).
 
 GOOD TO KNOW
- - Nights are run by the host: only Noah's game raises the horde, events and bosses; you all see and fight them.
- - Your points, weapons, brews, Reforge levels and city quests are saved in YOUR OWN save.
- - Going down: Skyrim Together's death system picks you back up (no save loss).
- - Graphics: Noah's look comes from optional mods (Skyland, Azurite Weathers, Realistic Water Two, Lux, Lux Via,
-   Happy Little Trees, Skoglendi, SMIM). They are not needed to play together.
+ - The host's game runs the nights: the horde, events and bosses. You both see and fight them.
+ - Points, spells, brews, Reforge levels and your city quests are kept in YOUR OWN save.
+ - Going down: Skyrim Together's death system picks you back up.
+ - Noah's look comes from graphics mods, and they are all in this pack (files\Graphics, about 16 GB):
+   the installer asks if you want them. Say Y to see the game exactly as the host does, N to keep your own.
+   They are: Azurite Weathers III, Lux Orbis + Lux Via (lighting, roads), Realistic Water Two, Happy Little
+   Trees, Skoglendi grass, Skyland AIO, SMIM, Lit Road Signs, Cathedral Armory, Pandorable's NPCs.
+
+TROUBLESHOOTING
+ - Normal Skyrim menu / you start on the Helgen cart: Undying Nights isn't loaded. Close Skyrim, run the
+   .bat again, start from the desktop shortcut. The installer prints your Skyrim version - it must be
+   current (Steam: right-click Skyrim > Properties > Updates > keep it updated).
+ - Antivirus removed dinput8.dll or BO3Zombies.asi from the Skyrim folder: allow them and run the .bat again.
+ - Accepted the invite and nothing happened: you were not in the Undying Nights main menu, or one of you
+   has an older pack. Both re-run the .bat from this pack, start from the shortcut, try again.
  - Uninstall: delete BO3Zombies.asi, dinput8.dll and UndyingNights.ini from the Skyrim folder and
    Data\BO3Zombies.esp, Data\SkyrimTogetherReborn.
 
