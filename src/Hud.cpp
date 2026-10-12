@@ -2349,6 +2349,28 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 		void IntroSkipHeld(bool a_held) { g_filmSkipHeld = a_held; }
 
+		// DevTools: press an entry of Skyrim's main list (0 Continue, 1 New, ...), or drive the party panel
+		void DevMain(int a_index)
+		{
+			auto* ui = RE::UI::GetSingleton();
+			auto  menu = ui ? ui->GetMenu(RE::MainMenu::MENU_NAME) : nullptr;
+			if (menu && menu->uiMovie) {
+				PressMainList(menu->uiMovie.get(), a_index, true);
+				logger::info("dev: main list {} pressed", a_index);
+			}
+		}
+		void DevParty(const std::string& a_what)
+		{
+			if (a_what == "host") {
+				Net::HostLobby();
+			} else if (a_what == "invite") {
+				Net::InviteFriends();
+			} else if (a_what == "leave") {
+				Net::LeaveLobby();
+			}
+			logger::info("dev: party {}", a_what);
+		}
+
 		void Lore(std::string a_title, std::string a_text, float a_seconds)
 		{
 			std::scoped_lock l(g_lock);

@@ -264,6 +264,14 @@ namespace bo3z
 				logger::info("dev: audio {}", Audio::Stats());
 			} else if (cmd == "intro") {
 				Hud::IntroStart();
+			} else if (cmd == "mainlist") {  // mainlist <index>: press an entry of Skyrim's main menu list (1 = New)
+				int i = 0;
+				in >> i;
+				Hud::DevMain(i);
+			} else if (cmd == "party") {  // party host|invite|leave
+				std::string w;
+				in >> w;
+				Hud::DevParty(w);
 			} else if (cmd == "undead") {
 				std::string v;
 				in >> v;
