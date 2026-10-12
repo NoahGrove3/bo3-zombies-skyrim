@@ -18,7 +18,7 @@ def group(label, recs):
     data = b''.join(recs)
     return b'GRUP' + struct.pack('<I', 24 + len(data)) + label.encode() + struct.pack('<iHHHH', 0, 0, 0, 44, 0) + data
 fid = lambda kind, key: SELF | IDS[(kind, key)]
-recs = {'WOOP': [], 'SHOU': [], 'GLOB': [], 'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': [], 'MUSC': [], 'MUST': [], 'VTYP': [], 'FSTS': [], 'LSCR': []}
+recs = {'WOOP': [], 'SHOU': [], 'GLOB': [], 'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': [], 'MUSC': [], 'MUST': [], 'VTYP': [], 'FSTS': [], 'LSCR': [], 'ARTO': []}
 
 for p in S['perks']['rows']:
     data = bytearray(tsub('mgef', 'DATA'))
@@ -81,6 +81,19 @@ for h in S['shouts']['rows']:
     recs['SHOU'].append(record('SHOU', fid('SHOU', h['id']), [sub('EDID', z('UN_Shout_' + h['id'])), sub('FULL', z(h['label'])), sub('DESC', z(h['text'] + '.'))] + snam))
 
 
+SCRAFT = {r['id']: r for r in S['spellcraft']['rows']}
+def arto(key, model, kind):
+    recs['ARTO'].append(record('ARTO', fid('ARTO', key), [sub('EDID', z('UN_Art_' + key)), sub('OBND', struct.pack('<6h', -20, -20, -20, 20, 20, 20)),
+        sub('MODL', z(model)), sub('DNAM', struct.pack('<I', kind))]))
+for r in SCRAFT.values():
+    arto('fx_' + r['id'] + '_hand', 'UndyingNights\\fx\\' + r['id'] + '_hand.nif', 0)          # magic casting art
+    recs['STAT'].append(record('STAT', fid('STAT', 'fx_' + r['id'] + '_orb'), [sub('EDID', z('UN_Orb_' + r['id'])), sub('OBND', struct.pack('<6h', -30, -30, -30, 30, 30, 30)),
+        sub('MODL', z('UndyingNights\\fx\\' + r['id'] + '_orb.nif')), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
+    data = bytearray(tsub('ligh', 'DATA')); c = int(r['color'], 16)
+    struct.pack_into('<I', data, 4, 160); struct.pack_into('<BBBB', data, 8, c >> 16, (c >> 8) & 255, c & 255, 0)
+    recs['LIGH'].append(record('LIGH', fid('LIGH', 'fx_' + r['id'] + '_light'), [sub('EDID', z('UN_SpellLight_' + r['id'])), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.0))]))
+for n in ('iceshell', 'roots', 'burn', 'poison'):
+    arto('fx_' + n, 'UndyingNights\\fx\\status_' + n + '.nif', 1)                             # magic hit effect art
 for w in S['weapons']['rows']:
     kind = w.get('kind', 'wand')
     if kind == 'wand':
@@ -134,6 +147,20 @@ for w in S['weapons']['rows']:
     else:
         # tomes and grimoires: a spell in the hand (fire-and-forget), magicka is spent by our code per shot
         cast_mgef('hand_' + w['id'], w['label'], 1)
+        if w['id'] in SCRAFT:  # the ten spells: their own glow on the hands, light and spell-menu orb (tools/spellfx.py)
+            m = recs['MGEF'][-1]
+            body = bytearray(m[24:])
+            i = 0
+            while i < len(body):
+                name = bytes(body[i:i + 4]); ln = struct.unpack_from('<H', body, i + 4)[0]
+                if name == b'DATA':
+                    struct.pack_into('<I', body, i + 6 + 24, fid('LIGH', 'fx_' + w['id'] + '_light'))   # casting light
+                    struct.pack_into('<I', body, i + 6 + 92, fid('ARTO', 'fx_' + w['id'] + '_hand'))    # casting art (the hand glow)
+                    struct.pack_into('<I', body, i + 6 + 108, fid('ARTO', 'fx_' + w['id'] + '_hand'))   # dual-cast art
+                if name == b'MDOB':
+                    struct.pack_into('<I', body, i + 6, fid('STAT', 'fx_' + w['id'] + '_orb'))          # the spell menu shows its orb
+                i += 6 + ln
+            recs['MGEF'][-1] = m[:24] + bytes(body)
         sp = bytearray(tsub('spel_firebolt', 'SPIT'))
         struct.pack_into('<IIIfIIffI', sp, 0, 0, 0x1, 0, 0.0, 1, 0, 0.0, 0.0, 0)  # free, fire-and-forget (one push per click), self
         recs['SPEL'].append(record('SPEL', fid('SPEL', 'hand_' + w['id']), [
@@ -425,7 +452,7 @@ count = sum(len(v) for v in recs.values())
 hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('Undying Nights: round-based undead survival for Skyrim'))]
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
-for k in ['GLOB', 'FACT', 'VTYP', 'FSTS', 'LSCR', 'MUSC', 'MUST', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
+for k in ['GLOB', 'FACT', 'VTYP', 'FSTS', 'LSCR', 'MUSC', 'MUST', 'ARTO', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')

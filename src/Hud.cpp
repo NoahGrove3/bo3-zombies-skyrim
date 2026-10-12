@@ -23,6 +23,7 @@ namespace bo3z
 		std::array<ID3D11ShaderResourceView*, gen::kGuns.size()>  g_weaponIcons{};
 		ID3D11ShaderResourceView* g_menuBg = nullptr;   // the main menu's backdrop (tools/cover.py, MENU=1)
 		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
+		ID3D11ShaderResourceView* g_flame = nullptr;    // the aura round a spell emblem: 4x4 atlas of a looping white flame ring (tools/flameaura.py)
 		ID3D11ShaderResourceView* g_frame = nullptr;    // nine-slice panel: black field, iron and bronze border (tools/uiart.py)
 		ID3D11ShaderResourceView* g_divider = nullptr;  // bronze line with a winged diamond
 		std::atomic<int>          g_clicks{ 0 };        // left clicks since the last frame (menus)
@@ -183,6 +184,38 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 		// Panel: a smoky black field in an iron-and-bronze frame with Nordic corner brackets (nine-slice of
 		// frame.png: 80px corners of 256), or, without the art, dark glass with gold ticks.
+		// A spell's emblem (256x256 medallion, rim at 104/128 of its half-width) wrapped in its living aura: the flame
+		// ring (rim at 0.62 of the frame's half-width) tinted with the spell's colour, a hotter inner pass in its accent,
+		// 16 frames a second; then the medallion on top. R is the medallion's rim radius on screen.
+		void DrawEmblem(ImDrawList* dl, int gun, ImVec2 c, float R, float alpha, float now, float flame = 1.0f)
+		{
+			if (gun < 0 || gun >= static_cast<int>(gen::kGuns.size())) {
+				return;
+			}
+			std::uint32_t col = gen::kGuns[gun].color, acc = 0xFFFFFF;
+			for (const auto& sc : gen::kSpellcraft) {
+				if (sc.id == gen::kGuns[gun].id) {
+					col = sc.color, acc = sc.accent;
+				}
+			}
+			const auto rgb = [](std::uint32_t v, float a) { return IM_COL32((v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF, static_cast<int>(255 * std::clamp(a, 0.0f, 1.0f))); };
+			if (g_flame && flame > 0.0f) {
+				const auto tex = ImTextureID(reinterpret_cast<std::uintptr_t>(g_flame));
+				const auto frame = [&](float t, float h, ImU32 tint) {
+					const int   f = static_cast<int>(t * 16.0f) % 16;
+					const float u = (f % 4) * 0.25f, v = (f / 4) * 0.25f;
+					dl->AddImage(tex, { c.x - h, c.y - h }, { c.x + h, c.y + h }, { u, v }, { u + 0.25f, v + 0.25f }, tint);
+				};
+				const float h = R / 0.62f;
+				frame(now, h * 1.04f, rgb(col, 0.95f * alpha * flame));         // the outer flame, the spell's colour
+				frame(now + 0.5f, h * 0.93f, rgb(acc, 0.55f * alpha * flame));  // a hotter tongue inside, half a loop out of step
+			}
+			if (auto* icon = g_weaponIcons[gun]) {
+				const float h = R * 128.0f / 104.0f;
+				dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { c.x - h, c.y - h }, { c.x + h, c.y + h }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * std::clamp(alpha, 0.0f, 1.0f))));
+			}
+		}
+
 		void Panel(ImDrawList* dl, ImVec2 a, ImVec2 b, float k, float alpha = 1.0f)
 		{
 			if (g_frame) {
@@ -396,10 +429,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (ag >= 0) {
 						const auto& g = gen::kGuns[ag];
 						const int   lvl = std::clamp(s.slotLevel[act], 0, 3);
-						if (auto* icon = g_weaponIcons[ag]) {
-							const float iw = 250 * k, ih = iw * 192.0f / 512.0f, bob = 2 * k * std::sin(now * 1.6f);
-							dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { b.x - iw - 8 * k, a.y - 30 * k + bob }, { b.x - 8 * k, a.y - 30 * k + ih + bob }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * al)));
-						}
+						DrawEmblem(dl, ag, { a.x - 74 * k, (a.y + b.y) * 0.5f + 2 * k * std::sin(now * 1.6f) }, 46 * k, al, now);  // left of the panel, aflame
 						const auto  fc = gen::kForgeColor[lvl];
 						const ImU32 nameCol = lvl > 0 ? IM_COL32((fc >> 24) & 0xFF, (fc >> 16) & 0xFF, (fc >> 8) & 0xFF, 255) : kParch;
 						Txt(dl, g_title, 24 * k, { a.x + 18 * k, a.y + 40 * k }, Fade(nameCol, al), std::string(g.label), lvl > 0 ? 2 * k : 0, nameCol);
@@ -445,10 +475,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const int og = s.slotGun[i];
 						Txt(dl, g_num, 14 * k, { c0.x + 10 * k, c0.y + 6 * k }, Fade(kGoldDim, al), std::to_string(i + 1));
 						if (og >= 0) {
-							if (auto* icon = g_weaponIcons[og]) {
-								const float iw = 120 * k, ih = iw * 192.0f / 512.0f;
-								dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { c1.x - iw - 4 * k, c0.y + (50 * k - ih) / 2 }, { c1.x - 4 * k, c0.y + (50 * k + ih) / 2 }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(200 * al)));
-							}
+							DrawEmblem(dl, og, { c1.x - 30 * k, c0.y + 25 * k }, 19 * k, 0.8f * al, now, 0.7f);
 							const int   ol = std::clamp(s.slotLevel[i], 0, 3);
 							const auto  fc = gen::kForgeColor[ol];
 							const ImU32 nc = ol > 0 ? IM_COL32((fc >> 24) & 0xFF, (fc >> 16) & 0xFF, (fc >> 8) & 0xFF, 255) : IM_COL32(210, 202, 186, 255);
@@ -486,23 +513,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						y -= 40 * k;
 					}
 				}
-				// signature move: a ring fills round the crosshair while you hold fire; gold and pulsing when ready
-				{
-					const ImVec2 cc{ size.x * 0.5f, size.y * 0.5f };
-					const float  R = 30 * k;
-					const ImU32  el = IM_COL32((s.gunColor >> 16) & 0xFF, (s.gunColor >> 8) & 0xFF, s.gunColor & 0xFF, 255);
-					if (s.chargeCd > 0.001f) {
-						dl->PathArcTo(cc, R, -3.14159265f / 2, -3.14159265f / 2 + 2 * 3.14159265f * (1.0f - s.chargeCd), 48);
-						dl->PathStroke(IM_COL32(120, 120, 120, 120), 0, 2 * k);
-					} else if (s.charge > 0.0f) {
-						const bool ready = s.charge >= 1.0f;
-						dl->PathArcTo(cc, R + (ready ? 3 * k * std::sin(now * 12) : 0), -3.14159265f / 2, -3.14159265f / 2 + 2 * 3.14159265f * s.charge, 48);
-						dl->PathStroke(ready ? kGold : el, 0, (ready ? 4 : 3) * k);
-						if (ready) {
-							TxtC(dl, g_title, 18 * k, cc.x, cc.y + R + 10 * k, Fade(kGold, 0.9f), "RELEASE: " + s.chargeName);
-						}
-					}
-				}
+				// (no charge ring: a full charge shows in the spell itself, which pulses and flashes in the hands)
 				// crosshair: four ticks that tighten when aiming, a dot at full aim
 				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f };
 				if (s.ads < 0.95f) {
@@ -780,12 +791,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						dl->AddCircleFilled({ c.x + std::cos(a) * (R - 5 * k), c.y + std::sin(a) * (R - 5 * k) }, 2.6f * k, rc, 8);
 					}
 					dl->AddCircleFilled(c, R * 0.82f, Fade(rc, 0.16f), 40);
-					if (auto* icon = s.rollGun >= 0 ? g_weaponIcons[s.rollGun] : nullptr) {
-						const float ih = R * 1.5f, iw = ih * 512.0f / 192.0f;  // the sigil end of the strip sits in the orb
+					if (s.rollGun >= 0) {  // the emblem the roll stopped on (or flickers past) sits in the orb, aflame
 						const float pop = s.rollPhase == 3 ? 1.0f + 0.05f * std::sin(now * 4.0f) : 1.0f;
-						dl->PushClipRect({ c.x - R * 0.85f, c.y - R * 0.85f }, { c.x + R * 0.85f, c.y + R * 0.85f }, true);
-						dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { c.x - ih * 0.5f * pop, c.y - ih * 0.5f * pop }, { c.x - ih * 0.5f * pop + iw * pop, c.y + ih * 0.5f * pop }, { 0, 0 }, { 1, 1 });
-						dl->PopClipRect();
+						DrawEmblem(dl, s.rollGun, c, R * 0.62f * pop, 1.0f, now);
 					}
 					if (s.rollPhase == 3) {  // the time left to take it
 						dl->PathArcTo(c, R + 4 * k, -RE::NI_PI / 2, -RE::NI_PI / 2 + 2 * RE::NI_PI * (1.0f - s.rollT), 48);
@@ -1817,6 +1825,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_title.png", nullptr, &g_mTitle);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\frame.png", nullptr, &g_frame);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\flame_ring.png", nullptr, &g_flame);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\divider.png", nullptr, &g_divider);
 			g_init = true;
 			logger::info("hud: ready ({} perk icons, {} weapon icons, menu art {})", icons, wicons, bg);

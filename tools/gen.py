@@ -234,6 +234,21 @@ o.append(f'\tinline constexpr std::uint32_t kCurseIntroGlobal = 0x{IDS[("GLOB", 
 o.append(f'\tinline constexpr std::string_view kCursePrologueTitle = {cs(CU["prologueTitle"])}, kCursePrologue = {cs(CU["prologue"])}, kCurseLiftedBanner = {cs(CU["liftedBanner"])}, kCurseLiftedText = {cs(CU["liftedText"])}, kCurseFreedAll = {cs(CU["freedAll"])};')
 o.append(f'\tinline constexpr float kCurseZone = {F(CU["zoneRadius"])}, kCurseHoldRadius = {F(CU["holdRadius"])}, kCurseWardRadius = {F(CU["wardRadius"])}, kCurseWardSeconds = {F(CU["wardSeconds"])}, kCurseWardDistance = {F(CU["wardDistance"])}, kCurseHeraldDelay = {F(CU["heraldDelay"])};')
 o.append(f'\tinline constexpr std::uint32_t kWardBrazier = 0x{IDS[("STAT", "ward_brazier")]:03X}, kWardFire = 0x{IDS[("STAT", "ward_fire")]:03X}, kWardLight = 0x{IDS[("LIGH", "ward_light")]:03X};')
+# the ten spells (sheet: spellcraft): their numbers, colours and attacks for src/Spellcraft.inl
+SC = S['spellcraft']['rows']
+TAPS = ['bolt', 'fan', 'chain', 'gust', 'wisp']
+EFFECTS = ['none', 'ignite', 'freeze', 'chain', 'poison', 'drain', 'push', 'holy', 'pull']
+ULTS = ['lance', 'mortar', 'nova', 'thunder', 'roots', 'bloodnova', 'windball', 'soulstorm', 'sunburst', 'singularity']
+STYLES = ['arcane', 'fire', 'ice', 'shock', 'thorn', 'blood', 'wind', 'soul', 'dawn', 'void']
+o.append('\tenum SpellTap : int { kTapBolt = 0, kTapFan, kTapChain, kTapGust, kTapWisp };')
+o.append('\tenum SpellEffect : int { kFxNone = 0, kFxIgnite, kFxFreeze, kFxChain, kFxPoison, kFxDrain, kFxPush, kFxHoly, kFxPull };')
+o.append('\tenum SpellUlt : int { kUltLance = 0, kUltMortar, kUltNova, kUltThunder, kUltRoots, kUltBloodNova, kUltWindBall, kUltSoulStorm, kUltSunburst, kUltSingularity };')
+o.append('\tstruct SpellcraftDef { std::string_view id, name; std::uint32_t color, accent; int style, tap; float speed, radius, damage; int count; float spread; int pierce; float homing; int effect, ult; std::string_view ultName; float ultDamage, ultRadius; std::string_view text; std::uint32_t handArt, orbStat; };')
+o.append(f'\tinline constexpr std::array<SpellcraftDef, {len(SC)}> kSpellcraft{{ {{')
+for r in SC:
+    o.append(f'\t\tSpellcraftDef{{ {cs(r["id"])}, {cs(r["name"])}, 0x{r["color"]}, 0x{r["accent"]}, {STYLES.index(r["style"])}, {TAPS.index(r["tap"])}, {F(r["speed"])}, {F(r["radius"])}, {F(r["damage"])}, {r["count"]}, {F(r["spread"])}, {r["pierce"]}, {F(r["homing"])}, {EFFECTS.index(r["effect"])}, {ULTS.index(r["ult"])}, {cs(r["ultName"])}, {F(r["ultDamage"])}, {F(r["ultRadius"])}, {cs(r["text"])}, 0x{IDS[("ARTO", "fx_" + r["id"] + "_hand")]:03X}, 0x{IDS[("STAT", "fx_" + r["id"] + "_orb")]:03X} }},')
+o.append('\t} };')
+o.append(f'\tinline constexpr std::uint32_t kArtIceShell = 0x{IDS[("ARTO", "fx_iceshell")]:03X}, kArtRoots = 0x{IDS[("ARTO", "fx_roots")]:03X}, kArtBurn = 0x{IDS[("ARTO", "fx_burn")]:03X}, kArtPoison = 0x{IDS[("ARTO", "fx_poison")]:03X};  // status looks on the struck')
 o.append('}')
 with open(root / 'src/Generated.h', 'a') as f: f.write('\n'.join(o) + '\n')
 print('appended v0.2 tables')

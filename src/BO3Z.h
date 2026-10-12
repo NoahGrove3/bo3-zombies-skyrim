@@ -141,6 +141,8 @@ namespace bo3z
 		void LoopStart(std::uint64_t a_key, gen::Sound a_s, RE::TESObjectREFR* a_owner = nullptr);
 		void LoopStop(std::uint64_t a_key, int a_fadeMs = 200);
 		bool Looping(std::uint64_t a_key);
+		void LoopAt(std::uint64_t a_key, gen::Sound a_s, const RE::NiPoint3& a_at, float a_vol = 1.0f);  // a moving loop (a bolt's flight)
+		void LoopMove(std::uint64_t a_key, const RE::NiPoint3& a_at);
 		void Voice(RE::Actor* a_actor, VoiceEvent a_ev);
 		void Flesh(RE::Actor* a_actor, bool a_death);  // the wet hit of a spell landing (rate-limited per body), the fall when it dies
 		void InstallSteps();

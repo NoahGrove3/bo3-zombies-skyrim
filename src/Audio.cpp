@@ -196,6 +196,24 @@ namespace bo3z::Audio
 
 	bool Looping(std::uint64_t a_key) { return g_loops.contains(a_key); }
 
+	// a loop that plays at a point and is moved along by its owner (a spell bolt in flight)
+	void LoopAt(std::uint64_t a_key, gen::Sound a_s, const RE::NiPoint3& a_at, float a_vol)
+	{
+		if (g_loops.contains(a_key)) {
+			return;
+		}
+		Loop l;
+		if (Start(l.handle, a_s, nullptr, &a_at, a_vol)) {
+			g_loops[a_key] = std::move(l);
+		}
+	}
+	void LoopMove(std::uint64_t a_key, const RE::NiPoint3& a_at)
+	{
+		if (auto it = g_loops.find(a_key); it != g_loops.end()) {
+			it->second.handle.SetPosition(a_at);
+		}
+	}
+
 	// ---- the undead's voices
 	namespace
 	{
