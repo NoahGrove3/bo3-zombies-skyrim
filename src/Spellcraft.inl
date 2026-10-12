@@ -881,9 +881,14 @@ namespace Spellcraft
 		}
 		const auto& d = Def(g_beamRow);
 		const Aim   aim = AimAt(4500.0f);
-		const RE::NiPoint3 from = g_orbAtValid ? g_orbAt : HandAt(RE::PlayerCharacter::GetSingleton());
+		RE::NiPoint3 from = g_orbAtValid ? g_orbAt : HandAt(RE::PlayerCharacter::GetSingleton());
+		{  // the beam leaves a little ahead of the hands, so it does not fill the view
+			RE::NiPoint3 fd = aim.hit - from;
+			fd.Unitize();
+			from += fd * 35.0f;
+		}
 		const float grow = std::min(1.0f, (kBeamSeconds - g_beamT) / 0.15f) * std::min(1.0f, g_beamT / 0.2f);
-		g_beam.Lay(from, aim.hit, (d.ultRadius / 30.0f) * (0.4f + 0.6f * grow) * (1.0f + 0.07f * std::sin(g_time * 40.0f)));
+		g_beam.Lay(from, aim.hit, (d.ultRadius / 70.0f) * (0.4f + 0.6f * grow) * (1.0f + 0.07f * std::sin(g_time * 40.0f)));
 		if (!Audio::Looping(Audio::kLoopCharge)) {
 			if (const int hum = Snd(gun, &gen::GunSounds::charge); hum >= 0) {
 				Audio::LoopStart(Audio::kLoopCharge, static_cast<gen::Sound>(hum));
@@ -1038,7 +1043,7 @@ namespace Spellcraft
 			g_orb.Attach(root);
 			const float full = gen::kGuns[gun].chargeSeconds * Perks::ChargeMult();
 			const float c = g_beamT > 0 ? 1.0f : std::clamp(g_orbT / std::max(0.1f, full), 0.0f, 1.0f);
-			float       sz = (first ? 0.35f : 0.5f) + (first ? 0.75f : 1.0f) * EaseOut(c);
+			float       sz = (first ? 0.08f : 0.2f) + (first ? 0.24f : 0.5f) * EaseOut(c);  // the orb mesh's glow is 30 across: a fist-sized ball at full
 			if (c >= 1.0f && g_beamT <= 0) {  // full: it pulses, and flashes bright on each beat
 				const float beat = std::fmod(g_time * 2.2f, 1.0f);
 				sz *= 1.0f + 0.16f * std::sin(g_time * 14.0f) + (beat < 0.12f ? 0.35f * (1.0f - beat / 0.12f) : 0.0f);
@@ -1060,7 +1065,7 @@ namespace Spellcraft
 		if (handOn && g_hand.obj && rm->AsNode()) {
 			g_hand.Attach(rm->AsNode());
 			const float c = std::clamp((g_tapT - 0.12f) / (kTapFull - 0.12f), 0.0f, 1.0f);
-			float       sz = 0.5f + 0.9f * EaseOut(c);
+			float       sz = 0.3f + 0.6f * EaseOut(c);
 			if (c >= 1.0f) {
 				const float beat = std::fmod(g_time * 2.5f, 1.0f);
 				sz *= 1.0f + 0.15f * std::sin(g_time * 16.0f) + (beat < 0.12f ? 0.4f * (1.0f - beat / 0.12f) : 0.0f);
