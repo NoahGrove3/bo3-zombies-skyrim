@@ -1166,8 +1166,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// the risen's eyes: cold and pale, each pair on its own breath, now and then a blink
 			{
 				struct Eye { float x, y, gap, ph; };
-				static const Eye eyes[] = { { 195, 912, 9, 0.0f }, { 368, 868, 11, 1.3f }, { 662, 838, 8, 2.1f }, { 838, 824, 8, 0.7f },
-					{ 1042, 648, 10, 2.9f }, { 1160, 684, 6, 1.7f }, { 1203, 676, 6, 0.4f }, { 1252, 688, 6, 2.4f } };
+				// only the faces that look out of the plate (the Hollow Bride and the risen on the barrow steps), at their
+				// eye sockets in menu_plate.jpg's own pixels
+				static const Eye eyes[] = { { 651, 825.5f, 7.5f, 2.1f }, { 1158, 685, 6.7f, 1.7f }, { 1135, 704.5f, 7, 0.4f }, { 1250, 689, 6, 2.4f } };
 				for (const auto& e : eyes) {
 					if (std::fmod(now * 0.6f + e.ph * 3.0f, 7.0f) < 0.13f) {
 						continue;
@@ -1176,8 +1177,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImVec2 c = P(e.x, e.y);
 					const float  g = e.gap / 2560.0f * pw * 0.5f;
 					for (float sx : { -g, g }) {
-						fg->AddCircleFilled({ c.x + sx, c.y }, 7.0f * k, IM_COL32(110, 200, 255, static_cast<int>(28 * br * fade)), 16);
-						fg->AddCircleFilled({ c.x + sx, c.y }, 1.9f * k, IM_COL32(200, 240, 255, static_cast<int>(235 * br * fade)), 8);
+						fg->AddCircleFilled({ c.x + sx, c.y }, 3.6f * k, IM_COL32(110, 200, 255, static_cast<int>(34 * br * fade)), 12);
+						fg->AddCircleFilled({ c.x + sx, c.y }, 1.1f * k, IM_COL32(205, 242, 255, static_cast<int>(240 * br * fade)), 8);
 					}
 				}
 			}

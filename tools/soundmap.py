@@ -78,7 +78,6 @@ S('amb_bloodmoon', 'sp_drone_loop', -45, loop=True, atten=12, use='Blood Moon: a
 S('amb_fog', 'amb_ghosts', -20, loop=True, atten=10, use='Fog Night: ghost-roars drifting in the mist')
 S('amb_ash', 'tr_wind', -35, loop=True, atten=10, use='Ash Storm: the wind that carries the ash')
 S('amb_iron', 'sp_beam_loop2', -60, loop=True, atten=12, use='Night of Iron: a cold iron hum')
-S('amb_menu', 'tr_wind', -45, cat='ui', loop=True, atten=16, use='main menu: a cold wind under the music (loop while the menu is up)')
 S('release_power', 'champ_arrive', -25, atten=4, use='a full-charge release: the weight under every signature move')
 S('linger_hex', 'sp_hex', 10, '3d', atten=2, use='a doom mark takes hold (Hexfire, Void Orb)')
 S('linger_plague', BREATH, 25, '3d', atten=4, use='the plague takes a host')

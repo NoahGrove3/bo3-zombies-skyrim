@@ -3086,24 +3086,6 @@
       "use": "Night of Iron: a cold iron hum"
     },
     {
-      "id": "amb_menu",
-      "plugin": "BO3Zombies.esp",
-      "localId": "auto",
-      "editorId": "UN_amb_menu",
-      "verify": [],
-      "space": "2d",
-      "cat": "ui",
-      "file": "fx\\UndyingNights\\un\\tr_wind.wav",
-      "files": [
-        "fx\\UndyingNights\\un\\tr_wind.wav"
-      ],
-      "shift": -45,
-      "layer": "none",
-      "atten": 16,
-      "loop": true,
-      "use": "main menu: a cold wind under the music (loop while the menu is up)"
-    },
-    {
       "id": "release_power",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",
