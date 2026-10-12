@@ -256,8 +256,37 @@ namespace bo3z
 			}
 		};
 
+		// The nights are a little darker (Noah: 'make night time a little bit darker'): every weather's night light -
+		// ambient, moon light, the directional ambient, fog, sky and horizon - turned down once at start-up. Day,
+		// dusk and dawn are untouched; whatever weather mod is installed is darkened the same way.
+		void DarkenNights()
+		{
+			auto  scale = [](RE::Color& c, float f) { c.red = static_cast<std::uint8_t>(c.red * f), c.green = static_cast<std::uint8_t>(c.green * f), c.blue = static_cast<std::uint8_t>(c.blue * f); };
+			using CT = RE::TESWeather::ColorTypes;
+			constexpr auto N = RE::TESWeather::ColorTimes::kNight;
+			int n = 0;
+			for (auto* w : RE::TESDataHandler::GetSingleton()->GetFormArray<RE::TESWeather>()) {
+				if (!w) {
+					continue;
+				}
+				for (auto t : { CT::kAmbient, CT::kSunlight, CT::kEffectLighting, CT::kCloudLODAmbient, CT::kCloudLODDiffuse, CT::kSkyStatics }) {
+					scale(w->colorData[t][N], 0.72f);
+				}
+				for (auto t : { CT::kFogNear, CT::kFogFar, CT::kSkyLower, CT::kHorizon, CT::kSkyUpper }) {
+					scale(w->colorData[t][N], 0.85f);
+				}
+				auto& d = w->directionalAmbientLightingColors[N].directional;
+				for (auto* c : { &d.x.max, &d.x.min, &d.y.max, &d.y.min, &d.z.max, &d.z.min }) {
+					scale(*c, 0.72f);
+				}
+				++n;
+			}
+			logger::info("world: nights darkened in {} weathers", n);
+		}
+
 		void OnDataLoaded()
 		{
+			DarkenNights();
 			logger::info("data loaded");
 			if (!Forms::Resolve()) {
 				logger::error("a form the mashup needs is missing; rounds stay off");

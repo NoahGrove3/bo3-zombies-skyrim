@@ -910,6 +910,17 @@
   "LSCR:ls_7": "0xb8a",
   "LSCR:ls_8": "0xb8b",
   "LSCR:ls_9": "0xb8c",
-  "SNDR:amb_menu": "0xb8d"
+  "SNDR:amb_menu": "0xb8d",
+  "ARMA:eyes_zombie": "0xb8e",
+  "ARMA:eyes_boss": "0xb8f",
+  "ARMA:eyes_shadow": "0xb90",
+  "ARMA:eyes_reaper": "0xb91",
+  "ARMA:eyes_necro": "0xb92",
+  "ARMA:eyes_runner": "0xb93",
+  "ARMA:eyes_wailer": "0xb94",
+  "ARMA:eyes_bloater": "0xb95",
+  "ARMA:eyes_knight": "0xb96",
+  "ARMA:eyes_king": "0xb97",
+  "ARMA:eyes_lich": "0xb98"
  }
 }
