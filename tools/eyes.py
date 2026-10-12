@@ -108,7 +108,43 @@ def write(cid, nif, color, size):
     return eyes
 
 
+def write_glow(cid, nif, color, size, out_root):
+    """the eyes as a lit-from-within glow the game hangs on the head bone at run time (src/Undead.cpp Eyes): an unlit,
+    additive effect mesh in the head bone's own space (where the skin's head vertices are), a hot core in a soft halo,
+    set a little out in front of the face so nothing hides it"""
+    ht, hr, eyes = find_eyes(nif)
+    out = pathlib.Path(out_root) / 'Meshes' / 'UndyingNights' / 'eyes' / f'{cid}_glow.nif'
+    out.parent.mkdir(parents=True, exist_ok=True)
+    R = hr.reshape(3, 3)
+    lines = [f'out {out}']
+    for name, tex, scale, half in (('halo', 'UndyingNights\\fx\\soft.dds', 1.6, 2.6 * size), ('core', 'UndyingNights\\fx\\core.dds', 3.0, 1.0 * size)):
+        lines.append(f"shape {name} tex={tex} color={color[0]:.3f},{color[1]:.3f},{color[2]:.3f},1 scale={scale} blend=add falloff=0")
+        vi = 0
+        for (x, y, z) in eyes:
+            e = np.array([x, y + 1.2, z])            # a hair in front of the face
+            loc = R.T @ (e - ht)                      # into the head bone's space (as the skin binds it)
+            for ax in range(3):
+                u, v = [(0, 2), (1, 2), (0, 1)][ax]
+                for (a, b, uu, vv) in ((-half, -half, 0, 1), (half, -half, 1, 1), (half, half, 1, 0), (-half, half, 0, 0)):
+                    q = list(e); q[u] += a; q[v] += b
+                    ql = R.T @ (np.array(q) - ht)
+                    lines.append(f'v {ql[0]:.4f} {ql[1]:.4f} {ql[2]:.4f} {uu} {vv}')
+                lines += [f't {vi} {vi + 1} {vi + 2}', f't {vi} {vi + 2} {vi + 3}']
+                vi += 4
+    job = pathlib.Path('/tmp/claude-0') / f'eyeglow_{cid}.txt'; job.write_text('\n'.join(lines) + '\n')
+    r = subprocess.run([T + 'fxwrite', str(job)], capture_output=True, text=True)
+    print(cid, 'glow', (r.stdout + r.stderr).strip()[-80:])
+
+
 if __name__ == '__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == 'glow':
+        root = sys.argv[2] if len(sys.argv) > 2 else str(pathlib.Path(__file__).resolve().parent.parent / 'assets' / 'fx')
+        for cid, (nif, col, size) in MODELS.items():
+            if pathlib.Path(nif).exists():
+                write_glow(cid, nif, col, size, root)
+            else:
+                print(cid, 'model missing:', nif)
+        sys.exit(0)
     for cid, (nif, col, size) in MODELS.items():
         if pathlib.Path(nif).exists():
             write(cid, nif, col, size)

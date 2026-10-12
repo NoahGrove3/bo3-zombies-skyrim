@@ -165,6 +165,7 @@ namespace bo3z
 		void  Assign(RE::Actor* a_actor, Type a_type);
 		void  Forget(RE::Actor* a_actor);
 		void  CueFor(RE::Actor* a_actor, int a_cue, float a_seconds);
+		void  SetEyes(RE::Actor* a_actor, std::string_view a_id);  // its glowing eyes (meshes/UndyingNights/eyes/<id>_glow.nif)
 		Type  Roll(int a_round);         // which of the risen dead this one is
 		float SpeedMult(Type a_type);
 		float HealthMult(Type a_type);

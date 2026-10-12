@@ -374,6 +374,9 @@ namespace bo3z
 			if (type) {
 				Undead::Assign(actor, *type);
 			}
+			if (rowId != "death_hound" && rowId != "skeleton") {
+				Undead::SetEyes(actor, rowId);
+			}
 			Forms::PlayAt(gen::Sound::rise, actor);
 			if (auto* fx = Forms::Ours(gen::kRiseFx)) {  // the ground bursts where they climb out
 				if (auto puff = actor->PlaceObjectAtMe(fx, false)) {

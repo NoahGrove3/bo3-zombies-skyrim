@@ -485,6 +485,51 @@ namespace bo3z
 			bool            burst = false;    // bloater: has it popped
 		};
 		std::vector<Mind> g_minds;
+
+		// Glowing eyes: a glow mesh per creature (tools/eyes.py glow), hung on the head bone once the body has loaded,
+		// so the eyes burn wherever the head turns, in the dark and in the light
+		struct EyeState
+		{
+			std::string     id;
+			RE::NiAVObject* root = nullptr;  // the 3D they were hung on (new 3D: hang them again)
+		};
+		std::unordered_map<RE::FormID, EyeState> g_eyes;
+		void HangEyes(RE::Actor* a, EyeState& e)
+		{
+			auto* root = a->Get3D(false);
+			if (!root || root == e.root) {
+				return;
+			}
+			auto* head = root->GetObjectByName("NPC Head [Head]");
+			auto* hn = head ? head->AsNode() : nullptr;
+			if (!hn) {
+				return;
+			}
+			static std::unordered_map<std::string, RE::NiPointer<RE::NiNode>> cache;
+			auto& c = cache[e.id];
+			if (!c) {
+				const std::string path = "UndyingNights\\eyes\\" + e.id + "_glow.nif";
+				RE::BSModelDB::DBTraits::ArgsType args{};
+				if (RE::BSModelDB::Demand(path.c_str(), c, args) != RE::BSResource::ErrorCode::kNone || !c) {
+					c.reset();
+					e.root = root;  // (no glow for this one: don't ask every frame)
+					static int warned = 0;
+					if (warned++ < 4) {
+						logger::warn("undead: no eye glow {}", path);
+					}
+					return;
+				}
+			}
+			if (auto* clone = c->Clone()) {
+				auto* obj = static_cast<RE::NiAVObject*>(clone);
+				obj->local = RE::NiTransform{};
+				hn->AttachChild(obj, true);
+				RE::NiUpdateData ud;
+				ud.time = 0.0f;
+				obj->Update(ud);
+			}
+			e.root = root;
+		}
 		float             g_grabbed = 0, g_grabSlow = 0, g_wailBoost = 0;
 		bool              g_slowed = false;  // the grab's slow is on the player
 		std::mt19937      g_rng{ std::random_device{}() };
@@ -534,6 +579,13 @@ namespace bo3z
 			}
 			std::unique_lock l(g_lock);
 			g_rigs.erase(a_actor->GetFormID());
+		}
+
+		void SetEyes(RE::Actor* a_actor, std::string_view a_id)
+		{
+			if (a_actor) {
+				g_eyes[a_actor->GetFormID()] = { std::string(a_id), nullptr };
+			}
 		}
 
 		void CueFor(RE::Actor* a_actor, int a_cue, float a_seconds)
@@ -615,6 +667,9 @@ namespace bo3z
 				if (!a->Is3DLoaded()) {
 					continue;
 				}
+				if (auto it = g_eyes.find(a->GetFormID()); it != g_eyes.end()) {
+					HangEyes(a.get(), it->second);
+				}
 				if (a->IsDead()) {
 					if (m.type == Type::Bloater && !m.burst) {  // pops: a cloud of grave-rot that hurts everyone near
 						m.burst = true;
@@ -675,6 +730,10 @@ namespace bo3z
 			if ((sweep += a_delta) > 5.0f) {
 				sweep = 0;
 				std::unique_lock l(g_lock);
+				std::erase_if(g_eyes, [](const auto& e) {
+					auto* f = RE::TESForm::LookupByID<RE::Actor>(e.first);
+					return !f || f->IsDeleted();
+				});
 				std::erase_if(g_rigs, [](const auto& e) {
 					auto* f = RE::TESForm::LookupByID<RE::Actor>(e.first);
 					return !f || f->IsDeleted() || f->IsDead();
@@ -687,6 +746,7 @@ namespace bo3z
 			std::unique_lock l(g_lock);
 			g_rigs.clear();
 			g_minds.clear();
+			g_eyes.clear();
 			g_grabbed = g_grabSlow = g_wailBoost = 0;
 			if (g_slowed) {
 				if (auto* p = RE::PlayerCharacter::GetSingleton()) {
