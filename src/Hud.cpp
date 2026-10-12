@@ -429,7 +429,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (ag >= 0) {
 						const auto& g = gen::kGuns[ag];
 						const int   lvl = std::clamp(s.slotLevel[act], 0, 3);
-						DrawEmblem(dl, ag, { a.x - 74 * k, (a.y + b.y) * 0.5f + 2 * k * std::sin(now * 1.6f) }, 46 * k, al, now);  // left of the panel, aflame
+						DrawEmblem(dl, ag, { b.x - 60 * k, (a.y + b.y) * 0.5f + 1.5f * k * std::sin(now * 1.6f) }, 33 * k, al, now);  // inside the slot, at its right end, aflame
 						const auto  fc = gen::kForgeColor[lvl];
 						const ImU32 nameCol = lvl > 0 ? IM_COL32((fc >> 24) & 0xFF, (fc >> 16) & 0xFF, (fc >> 8) & 0xFF, 255) : kParch;
 						Txt(dl, g_title, 24 * k, { a.x + 18 * k, a.y + 40 * k }, Fade(nameCol, al), std::string(g.label), lvl > 0 ? 2 * k : 0, nameCol);
@@ -444,20 +444,22 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 						Txt(dl, g_body, 14 * k, { dx + 60 * k, dy - 9 * k }, Fade(IM_COL32(200, 190, 170, 255), al), lvl >= 3 ? "ASCENDANT" : lvl > 0 ? "REFORGED " + std::string(lvl == 1 ? "I" : "II") : "UNFORGED");
 						// ability and signature move
+						dl->PushClipRect(a, { b.x - 118 * k, b.y }, true);  // (the emblem has the right end)
 						Txt(dl, g_body, 15 * k, { a.x + 18 * k, a.y + 92 * k }, Fade(IM_COL32(205, 198, 182, 255), al), std::string(g.abilityText));
+						dl->PopClipRect();
 						dl->AddCircleFilled({ a.x + 24 * k, b.y - 13 * k }, 4 * k, Fade(el, al));
 						Txt(dl, g_body, 15 * k, { a.x + 34 * k, b.y - 23 * k }, Fade(el, al), "HOLD  " + std::string(g.chargeName) + (lvl >= 3 ? "  -  ASCENDANT" : ""));
 						// what it runs on, right
 						if (s.gunKind == 0 || s.gunKind == 3 || !s.gunOut) {
 							const std::string inf = "\xE2\x88\x9E";
 							const auto        is = Measure(g_num, 40 * k, inf);
-							Txt(dl, g_num, 40 * k, { b.x - 18 * k - is.x, b.y - 56 * k }, Fade(IM_COL32(250, 246, 236, 255), al), inf);
+							Txt(dl, g_num, 40 * k, { b.x - 112 * k - is.x, b.y - 56 * k }, Fade(IM_COL32(250, 246, 236, 255), al), inf);
 						} else {
 							const bool        can = s.mp >= s.manaCost;
 							const std::string cost = std::to_string(static_cast<int>(std::ceil(s.manaCost)));
 							const auto        cs = Measure(g_num, 34 * k, cost);
-							Txt(dl, g_num, 34 * k, { b.x - 64 * k - cs.x, b.y - 52 * k }, can ? IM_COL32(150, 190, 255, 255) : IM_COL32(230, 60, 50, 255), cost);
-							Txt(dl, g_body, 15 * k, { b.x - 58 * k, b.y - 40 * k }, IM_COL32(150, 170, 210, 255), "mana");
+							Txt(dl, g_num, 34 * k, { b.x - 158 * k - cs.x, b.y - 52 * k }, can ? IM_COL32(150, 190, 255, 255) : IM_COL32(230, 60, 50, 255), cost);
+							Txt(dl, g_body, 15 * k, { b.x - 152 * k, b.y - 40 * k }, IM_COL32(150, 170, 210, 255), "mana");
 						}
 					} else {
 						Txt(dl, g_title, 22 * k, { a.x + 18 * k, a.y + 48 * k }, Fade(IM_COL32(150, 145, 135, 255), al), "Empty hands");
