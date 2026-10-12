@@ -318,7 +318,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float h = 70 * k, step = 17 * k, gap = 22 * k, top = p.y + 30 * k;
 				const float draw = std::clamp(1.0f - (roundFlash - 1.5f), 0.0f, 1.0f);  // newest mark scratches in
 				auto jit = [](int i, int j) { return static_cast<float>(((i * 73 + j * 151) % 17) - 8) / 8.0f; };
-				const int  shown = std::min(s.round, 15);
+				const int  shown = s.round <= 10 ? s.round : 0;  // tallies to night 10, then the number alone
 				float      x = p.x + 4 * k;
 				for (int i = 0; i < shown; ++i) {
 					const int   inGroup = i % 5;
@@ -340,8 +340,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						x += gap;
 					}
 				}
-				if (s.round > 15) {  // past three full groups: the count in numerals beside them
-					Txt(dl, g_title, 60 * k, { x + 10 * k, top }, kBlood, std::to_string(s.round), 3 * k, IM_COL32(255, 40, 20, 255));
+				if (s.round > 10) {  // from night 11: the count in blood-red numerals (the newest scratched in red)
+					const ImU32 col = roundFlash > 0 ? IM_COL32(255, 60, 40, 255) : kBlood;
+					Txt(dl, g_title, 72 * k, { p.x + 2 * k, top - 6 * k }, Fade(col, std::max(0.35f, draw)), std::to_string(s.round), 3 * k, IM_COL32(255, 40, 20, 255));
 				}
 				if (s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size())) {
 					const auto  t = gen::kEvents[s.nightEvent].tint;
