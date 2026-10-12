@@ -1104,6 +1104,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ID3D11ShaderResourceView* g_mFar = nullptr;
 		ID3D11ShaderResourceView* g_mMid = nullptr;
 		ID3D11ShaderResourceView* g_mNear = nullptr;
+		ID3D11ShaderResourceView* g_mGroundFog = nullptr;  // fog wisps that tile left-right (tools/menuscene.py ground_fog)
 		constexpr float kMenuRune[2] = { 1812.0f, 992.0f };  // the middle of the rune-stone's face in the painting
 		constexpr float kMenuArch[2] = { 1176.0f, 455.0f };  // the barrow door
 		ID3D11ShaderResourceView* g_mTitle = nullptr;
@@ -1227,8 +1228,63 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			{
 				const ImVec2 m = toScreen(0.2f, 0.255f * 2560, 0.315f * 1440);
 				const float  br = 0.5f + 0.5f * std::sin(now * 0.6f);
-				fg->AddCircleFilled(m, 150 * k, IM_COL32(255, 90, 60, static_cast<int>((10 + 8 * br) * fade)), 48);
-				fg->AddCircleFilled(m, 80 * k, IM_COL32(255, 120, 80, static_cast<int>((10 + 8 * br) * fade)), 48);
+				fg->AddCircleFilled(m, 130 * k, IM_COL32(255, 90, 60, static_cast<int>((4 + 4 * br) * fade)), 48);
+				fg->AddCircleFilled(m, 72 * k, IM_COL32(255, 120, 80, static_cast<int>((5 + 4 * br) * fade)), 48);
+			}
+			// the brightest stars twinkle, and now and then a shooting star crosses the sky
+			{
+				struct Star { float x, y, ph, sp, sz; };
+				static std::vector<Star> stars;
+				static std::mt19937 sr{ 23 };
+				std::uniform_real_distribution<float> U(0, 1);
+				if (stars.empty()) {
+					while (stars.size() < 46) {
+						const float x = U(sr), y = 0.02f + 0.40f * U(sr) * U(sr);
+						if (std::hypot((x - 0.255f) * 16.0f / 9.0f, y - 0.315f) < 0.16f || (x > 0.2f && x < 0.8f && y < 0.2f)) {
+							continue;  // clear of the moon and the title
+						}
+						stars.push_back({ x, y, U(sr) * 6.28f, 0.8f + 2.6f * U(sr), 0.7f + 1.3f * U(sr) * U(sr) });
+					}
+				}
+				for (const auto& st : stars) {
+					const ImVec2 p = toScreen(0.2f, st.x * 2560, st.y * 1440);
+					const float  tw = std::pow(0.5f + 0.5f * std::sin(now * st.sp + st.ph), 3.0f);
+					const float  r = (1.2f + 2.6f * st.sz * tw) * k;
+					const int    al = static_cast<int>((60 + 170 * tw) * fade);
+					fg->AddLine({ p.x - r * 2.2f, p.y }, { p.x + r * 2.2f, p.y }, IM_COL32(205, 220, 255, al / 2), 1.0f * k);
+					fg->AddLine({ p.x, p.y - r * 2.2f }, { p.x, p.y + r * 2.2f }, IM_COL32(205, 220, 255, al / 2), 1.0f * k);
+					fg->AddCircleFilled(p, std::max(0.8f * k, r * 0.45f), IM_COL32(235, 240, 255, al), 8);
+				}
+				static float nextShoot = 4.0f, shootT = -1.0f;
+				static ImVec2 s0{}, sd{};
+				if (shootT < 0 && now > nextShoot) {
+					shootT = 0;
+					const float dir = U(sr) < 0.5f ? 1.0f : -1.0f;
+					s0 = { size.x * (0.15f + 0.7f * U(sr)), size.y * (0.04f + 0.18f * U(sr)) };
+					sd = { dir * size.x * (0.22f + 0.12f * U(sr)), size.y * (0.10f + 0.08f * U(sr)) };
+					nextShoot = now + 7.0f + 10.0f * U(sr);
+				}
+				if (shootT >= 0) {
+					shootT += dt;
+					const float life = 0.85f, t = shootT / life;
+					if (t >= 1.0f) {
+						shootT = -1;
+					} else {
+						const float  head = EaseOut(std::min(1.0f, t * 1.15f));
+						const float  bright = std::sin(std::clamp(t, 0.0f, 1.0f) * 3.14159f) * fade;
+						const ImVec2 h{ s0.x + sd.x * head, s0.y + sd.y * head };
+						for (int i = 0; i < 14; ++i) {  // the tail: brightest at the head, fading back
+							const float a0 = head - 0.022f * i, a1 = head - 0.022f * (i + 1);
+							if (a1 < 0) {
+								break;
+							}
+							const int al = static_cast<int>(230 * bright * (1.0f - i / 14.0f));
+							fg->AddLine({ s0.x + sd.x * a0, s0.y + sd.y * a0 }, { s0.x + sd.x * a1, s0.y + sd.y * a1 }, IM_COL32(220, 230, 255, al), (2.2f - 0.12f * i) * k);
+						}
+						fg->AddCircleFilled(h, 4.5f * k, IM_COL32(200, 215, 255, static_cast<int>(60 * bright)), 12);
+						fg->AddCircleFilled(h, 1.8f * k, IM_COL32(255, 255, 255, static_cast<int>(255 * bright)), 8);
+					}
+				}
 			}
 			if (g_mAurora) {
 				for (int band = 0; band < 2; ++band) {
@@ -1237,29 +1293,70 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 			layer(g_mClouds, 0.25f, IM_COL32(255, 255, 255, static_cast<int>(200 * fade)), { std::fmod(now * 0.0035f, 1.0f), 0 });
-			// a far lightning flash now and then, lighting the clouds from behind the mountains (short, never bright)
+			// lightning: now and then a forked bolt strikes the far range (drawn behind it, so the peaks cut it off), the
+			// clouds flaring with it; it flickers a few times and is gone
 			{
-				static float next = 9.0f, life = 0;
+				static float next = 6.0f, life = 0;
 				static std::mt19937 lr{ 11 };
+				static std::vector<std::vector<ImVec2>> bolt;  // painting pixels: the main channel, then its forks
 				std::uniform_real_distribution<float> L(0, 1);
 				if (now > next && life <= 0) {
-					life = 0.42f;
-					next = now + 11.0f + 12.0f * L(lr);
+					life = 0.55f;
+					next = now + 9.0f + 11.0f * L(lr);
+					bolt.clear();
+					const float x0 = 2560 * (0.40f + 0.52f * L(lr));
+					std::vector<ImVec2> main{ { x0, 1440 * 0.05f } };
+					float x = x0, y = 1440 * 0.05f;
+					while (y < 1440 * 0.47f) {
+						y += 1440 * (0.012f + 0.02f * L(lr));
+						x += (L(lr) - 0.5f) * 70.0f;
+						main.push_back({ x, y });
+						if (L(lr) < 0.16f && bolt.size() < 4) {  // a fork wanders off and dies out
+							std::vector<ImVec2> fork{ { x, y } };
+							float fx = x, fy = y;
+							const float side = L(lr) < 0.5f ? -1.0f : 1.0f;
+							for (int i = 0, n = 3 + static_cast<int>(L(lr) * 5); i < n; ++i) {
+								fy += 1440 * (0.01f + 0.015f * L(lr));
+								fx += side * (14.0f + 40.0f * L(lr));
+								fork.push_back({ fx, fy });
+							}
+							bolt.push_back(std::move(fork));
+						}
+					}
+					bolt.insert(bolt.begin(), std::move(main));
 				}
 				if (life > 0) {
 					life -= dt;
-					const float flick = (life > 0.30f || (life > 0.12f && life < 0.2f)) ? 1.0f : 0.25f;
-					fg->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.5f }, IM_COL32(170, 190, 235, static_cast<int>(20 * flick)), IM_COL32(170, 190, 235, static_cast<int>(20 * flick)),
-						IM_COL32(170, 190, 235, 0), IM_COL32(170, 190, 235, 0));
+					const float flick = (life > 0.43f || (life > 0.26f && life < 0.33f) || (life > 0.08f && life < 0.13f)) ? 1.0f : (life > 0 ? 0.18f : 0.0f);
+					fg->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.55f }, IM_COL32(170, 190, 240, static_cast<int>(26 * flick * fade)), IM_COL32(170, 190, 240, static_cast<int>(26 * flick * fade)),
+						IM_COL32(170, 190, 240, 0), IM_COL32(170, 190, 240, 0));
+					for (std::size_t b = 0; b < bolt.size(); ++b) {
+						const float w = b == 0 ? 1.0f : 0.55f;
+						for (std::size_t i = 1; i < bolt[b].size(); ++i) {
+							const ImVec2 p0 = toScreen(0.45f, bolt[b][i - 1].x, bolt[b][i - 1].y), p1 = toScreen(0.45f, bolt[b][i].x, bolt[b][i].y);
+							fg->AddLine(p0, p1, IM_COL32(120, 140, 255, static_cast<int>(40 * flick * fade)), 14.0f * w * k);
+							fg->AddLine(p0, p1, IM_COL32(170, 190, 255, static_cast<int>(110 * flick * fade)), 5.0f * w * k);
+							fg->AddLine(p0, p1, IM_COL32(240, 245, 255, static_cast<int>(255 * flick * fade)), 1.8f * w * k);
+						}
+					}
 				}
 			}
 			// the far range, then mist drifting in the valley in front of it
 			layer(g_mFar, 0.45f, white);
-			if (g_menuFog) {
-				const float u0 = now * 0.006f;
-				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuFog)), { 0, size.y * 0.30f }, { size.x, size.y * 0.58f }, { u0, 0 }, { u0 + 1.4f, 0.8f },
-					IM_COL32(120, 135, 175, static_cast<int>(55 * fade)));
-			}
+			// fog rolling over the ground: two copies of the wisps sliding past each other at different speeds, so it
+			// churns as it drifts (valley fog here, ground fog over the slope, a thick bank across the front)
+			auto groundFog = [&](float y0, float y1, float speed, float rep, int al, ImU32 rgb) {
+				ID3D11ShaderResourceView* t = g_mGroundFog ? g_mGroundFog : g_menuFog;
+				if (!t) {
+					return;
+				}
+				const auto tex = ImTextureID(reinterpret_cast<std::uintptr_t>(t));
+				const float u0 = std::fmod(now * speed, 1.0f), u1 = std::fmod(-now * speed * 0.63f + 0.37f, 1.0f);
+				const float bob = std::sin(now * 0.21f) * 0.012f * size.y;
+				fg->AddImage(tex, { 0, y0 + bob }, { size.x, y1 + bob }, { u0, 0 }, { u0 + rep, 1 }, (rgb & 0x00FFFFFF) | (static_cast<ImU32>(al * 0.6f * fade) << 24));
+				fg->AddImage(tex, { 0, y0 - bob * 0.6f + (y1 - y0) * 0.08f }, { size.x, y1 }, { u1, 0 }, { u1 + rep * 0.7f, 1 }, (rgb & 0x00FFFFFF) | (static_cast<ImU32>(al * 0.5f * fade) << 24));
+			};
+			groundFog(size.y * 0.30f, size.y * 0.56f, 0.006f, 1.6f, 120, IM_COL32(120, 135, 175, 0));
 			// the barrow ridge and the horde coming down it; the champions' violet light in the barrow door breathing
 			layer(g_mMid, 0.8f, white);
 			{
@@ -1268,13 +1365,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				fg->AddCircleFilled(a, 90 * k, IM_COL32(150, 80, 255, static_cast<int>(10 * br * fade)), 40);
 			}
 			// ground mist rolling between the horde and the front
-			if (g_menuFog) {
-				const float u0 = -now * 0.008f;
-				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuFog)), { 0, size.y * 0.50f }, { size.x, size.y * 0.80f }, { u0, 0.1f }, { u0 + 1.1f, 0.9f },
-					IM_COL32(110, 125, 165, static_cast<int>(70 * fade)));
-			}
+			groundFog(size.y * 0.42f, size.y * 0.82f, 0.009f, 1.2f, 150, IM_COL32(110, 122, 160, 0));
 			// the front: the rune-stone (its runes pulse, a soft violet light on the snow), the graves, the outcrop
-			layer(g_mNear, 1.25f, white);
+			layer(g_mNear, 1.25f, IM_COL32(215, 215, 222, static_cast<int>(255 * fade)));  // the front sits in shadow
 			{
 				// the runes cut down its face, lit from within: each glows up in turn, the light spilling onto the snow
 				const ImVec2 r = toScreen(1.25f, kMenuRune[0], kMenuRune[1]);
@@ -1296,11 +1389,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 				}
 			}
-			if (g_menuFog) {  // near mist, the other way
-				const float u0 = now * 0.004f;
-				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_menuFog)), { 0, size.y * 0.74f }, { size.x, size.y }, { u0, 0 }, { u0 + 0.9f, 0.7f },
-					IM_COL32(100, 115, 150, static_cast<int>(80 * fade)));
-			}
+			groundFog(size.y * 0.66f, size.y * 1.02f, 0.013f, 0.9f, 170, IM_COL32(88, 98, 130, 0));  // the thick bank across the front, darker
 			// snow and grave-ash drifting down on the wind, a few soul-motes rising from the rune-stone
 			{
 				struct Mote { float x, y, sp, sway, ph, r; int kind; };
@@ -1820,7 +1909,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const bool bg = SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_bg.png", nullptr, &g_menuBg));
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_fog.png", nullptr, &g_menuFog);
 			for (auto [file, tex] : { std::pair{ L"menu_sky.jpg", &g_mSky }, { L"menu_clouds.png", &g_mClouds }, { L"menu_aurora.png", &g_mAurora },
-					 { L"menu_far.png", &g_mFar }, { L"menu_mid.png", &g_mMid }, { L"menu_near.png", &g_mNear } }) {
+					 { L"menu_far.png", &g_mFar }, { L"menu_mid.png", &g_mMid }, { L"menu_near.png", &g_mNear }, { L"menu_groundfog.png", &g_mGroundFog } }) {
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\UndyingNights\\") + file).c_str(), nullptr, tex);
 			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_title.png", nullptr, &g_mTitle);

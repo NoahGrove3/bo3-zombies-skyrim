@@ -121,6 +121,33 @@ def stone(pw):
     snowcap = np.clip((n2 - 0.35) * 3, 0, 1) * 0.0
     return c
 
+NT3 = noise_tex(1024, 17, beta=2.1)   # detail noise: grit, pores, cracks (smooth enough not to sparkle)
+
+
+def relief(scale, amp, grime=0.0, sparkle=0.0, crack=0.0):
+    """surface detail in world space: a bump from layered noise (its gradient tilts the normal), grime darkening the
+    hollows, ice glints on snow, dark crack lines on stone"""
+    def h(p):
+        x, y, z = p[..., 0], p[..., 1], p[..., 2]
+        return (sample(NT3, x + z * 0.61, y - z * 0.47, scale) * 0.6 + sample(NT, x * 1.9 - z * 0.8, y * 1.9 + z * 0.9, scale * 1.7) * 0.4)
+    def f(pw, nv, alb):
+        e = scale * 0.05
+        h0 = h(pw)
+        g = np.stack([(h(pw + np.array([e, 0, 0])) - h0) / e, (h(pw + np.array([0, e, 0])) - h0) / e, (h(pw + np.array([0, 0, e])) - h0) / e], -1)
+        g = g - (g * nv).sum(-1, keepdims=True) * nv
+        n2 = nv - g * (scale * amp)
+        n2 = n2 / (np.linalg.norm(n2, axis=-1, keepdims=True) + 1e-9)
+        a2 = alb * (1 - grime + grime * 2 * np.clip(h0, 0, 1))[..., None]
+        if crack > 0:
+            c = np.abs(sample(NT3, pw[..., 0] + pw[..., 2], pw[..., 1] - pw[..., 2] * 0.3, scale * 3.0) - 0.5)
+            a2 = a2 * (1 - crack * np.clip(1 - c / 0.025, 0, 1))[..., None]
+        if sparkle > 0:
+            gl = np.clip((sample(NT3, pw[..., 0] * 2.3, pw[..., 1] * 2.3, scale) - 0.965) * 25, 0, 1)
+            a2 = a2 + sparkle * gl[..., None]
+        return n2, a2
+    return f
+
+
 MTN = None
 def far_mountains(sc):
     global MTN
@@ -153,7 +180,7 @@ def build():
     T = np.r_[np.c_[a_, b_, c_], np.c_[a_, c_, d_]]
     cy = V[T].mean(1)[:, 1]
     for it, lay in ((sc.add(V, T[cy < 760], UV, proc=snow), 'near'), (sc.add(V, T[cy >= 700], UV, proc=snow), 'mid')):
-        it.layer = lay; it.nfun = ground_n
+        it.layer = lay; it.nfun = ground_n; it.detail = relief(60, 0.22, grime=0.08, sparkle=0.35)
     rng = np.random.default_rng(31)
     # the barrow: an arch of standing slabs on the ridge, a lintel, a broken capstone, stones round it
     ax, ay = -560.0, 2650.0; az = float(ground_h(np.array(ax), np.array(ay)))
@@ -163,14 +190,15 @@ def build():
         V = V @ Rm.T
         z = float(ground_h(np.array(x), np.array(y)))
         it = sc.add(V + np.array([x, y, z + sz * 0.2 - 4]), T, UV, proc=stone); it.layer = layer
+        it.detail = relief(90, 0.55, grime=0.35, crack=0.45)
         return it
     s1 = slab(1, ax - 190, ay, 62, 52, 290, 8, (0, -3))
     s2 = slab(2, ax + 190, ay + 20, 64, 54, 300, -6, (0, 4))
     top = min(s1.V[:, 2].max(), s2.V[:, 2].max()) - az - 12
     lin = S.rock_mesh(3, 290, 60, 50, sub=3, rough=0.5)
-    sc.add(lin[0] + np.array([ax, ay + 10, az + top + 10]), lin[1], lin[2], proc=stone).layer = 'mid'
+    _it = sc.add(lin[0] + np.array([ax, ay + 10, az + top + 10]), lin[1], lin[2], proc=stone); _it.layer = 'mid'; _it.detail = relief(90, 0.55, grime=0.35, crack=0.45)
     cap = S.rock_mesh(4, 110, 60, 56, sub=2)
-    sc.add(cap[0] @ S.rot((0, 1, 0), 25).T + np.array([ax - 50, ay + 10, az + top + 62]), cap[1], cap[2], proc=stone).layer = 'mid'
+    _it = sc.add(cap[0] @ S.rot((0, 1, 0), 25).T + np.array([ax - 50, ay + 10, az + top + 62]), cap[1], cap[2], proc=stone); _it.layer = 'mid'; _it.detail = relief(90, 0.55, grime=0.35, crack=0.45)
     for i, (dx, dy, hh) in enumerate([(-420, 60, 160), (-300, -40, 110), (340, -30, 150), (470, 80, 200), (620, 0, 100), (-600, 140, 120)]):
         slab(10 + i, ax + dx, ay + dy, 36 + rng.uniform(-6, 8), 30, hh, rng.uniform(-30, 30), (rng.uniform(-6, 6), rng.uniform(-8, 8)))
     # the rune-stone of the Dirge, in front, with glowing runes (a separate emissive strip down its face)
@@ -212,6 +240,7 @@ def build():
         sc.add_model(m, posed, S.place(x, y, z - 2, yaw, scale), emit=emit)
         for it in sc.items[n0:]:
             it.layer = layer
+            it.detail = relief(22, 0.3, grime=0.3)   # rot, grit and torn skin over the model's own maps
     # champions: the lich in the barrow door, staff raised; the knight and the king leading the horde down the ridge
     put('lich', 'lich', ax + 10, ay - 40, 190, 1.15)
     put('knight', 'knight', -360, 1650, 200, 1.12)
@@ -258,6 +287,8 @@ def shade(sc, layer, D, G, camv, sm, rw, rh):
     mie = np.clip((-V * MOON_DIR).sum(-1), 0, 1) ** 8
     fc = FOG_C + np.array([0.26, 0.07, 0.04]) * mie[..., None]
     col = col * (1 - fog[..., None]) + fc * fog[..., None]
+    if layer == 'near':  # the foreground sits in shadow: darker the closer it is, so the eye goes to the horde
+        col = col * (0.28 + 0.72 * np.clip((dist - 300) / 1400, 0, 1) ** 1.3)[..., None]
     col = tonemap(col)
     return np.where(hit[..., None], col, 0), hit.astype(np.float32)
 
@@ -308,12 +339,26 @@ def post(col, a, size, G=None):
     return Image.fromarray((np.clip(np.dstack([C2, A2]), 0, 1) * 255).astype(np.uint8), 'RGBA')
 
 
+def ground_fog(w=1024, h=256):
+    """the fog that rolls over the ground: wisps that tile left-right (the menu scrolls two copies against each other),
+    thin at the top edge, thick low down"""
+    a1 = noise_tex(1024, 91, beta=2.2); a2 = noise_tex(1024, 92, beta=1.7)
+    x = np.arange(w)[None, :] / w; y = np.arange(h)[:, None] / h
+    n = sample(a1, x * 1024 * 1, y * 1024 * 0.25 + 0 * x, 1024) * 0.65 + sample(a2, x * 1024 * 3, y * 1024 * 0.8, 1024) * 0.35
+    wisps = np.clip((n - 0.30) / 0.45, 0, 1) ** 1.4
+    prof = np.clip(y / 0.45, 0, 1) ** 1.6 * (0.75 + 0.25 * np.clip((y - 0.45) / 0.55, 0, 1))
+    a = np.clip(wisps * prof * 1.15, 0, 1)
+    rgb = np.ones((h, w, 3), np.float32) * np.array([0.78, 0.82, 0.92])
+    return Image.fromarray((np.dstack([rgb, a[..., None] * np.ones((h, w, 1))]) * 255).astype(np.uint8)[..., :4], 'RGBA')
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     sky = MP.sky()
     Image.fromarray((np.clip(MP.grain(sky), 0, 1) * 255).astype(np.uint8)).save(OUT / 'menu_sky.jpg', quality=92)
     cv, ca = MP.clouds_veil(); MP.to_img(cv, ca).save(OUT / 'menu_clouds.png')
     ar, aa = MP.aurora(); MP.to_img(ar, aa).resize((1280, 720), Image.LANCZOS).save(OUT / 'menu_aurora.png')
+    ground_fog().save(OUT / 'menu_groundfog.png')
     layers, glow = render_layers()
     far_rgb, far_a, _ = MP.range_layer(61, H * 0.47, H * 0.20, 7, 1.0, 0.55, snow=1.0)
     farther_rgb, farther_a, _ = MP.range_layer(62, H * 0.42, H * 0.16, 6, 0.8, 0.72, snow=1.0, xscale=1.6)

@@ -280,6 +280,8 @@ class Scene:
                             tn = it.normal[ty, tx, :3] * 2 - 1
                             nv = tn[..., 0:1] * T_ - tn[..., 1:2] * B_ + tn[..., 2:3] * nv
                             nv /= np.linalg.norm(nv, axis=-1, keepdims=True) + 1e-9
+                    if getattr(it, 'detail', None) is not None:  # fine surface relief and grime laid over (menuscene)
+                        nv, alb = it.detail(p0[..., None] * it.V[a] + p1[..., None] * it.V[b] + p2[..., None] * it.V[c], nv, alb)
                     em = np.zeros_like(alb)
                     if it.glow is not None:
                         th, tw_ = it.glow.shape[:2]

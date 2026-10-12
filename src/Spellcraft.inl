@@ -1158,6 +1158,9 @@ namespace Spellcraft
 			const float full = gen::kGuns[gun].chargeSeconds * Perks::ChargeMult();
 			const float c = g_beamT > 0 ? 1.0f : std::clamp(g_orbT / std::max(0.1f, full), 0.0f, 1.0f);
 			float       sz = (first ? 0.08f : 0.2f) + (first ? 0.24f : 0.5f) * EaseOut(c);  // the orb mesh's glow is 30 across: a fist-sized ball at full
+			if (g_beamT > 0) {
+				sz *= 0.55f;  // the beam carries the power away: the ball between the hands shrinks so the beam reads
+			}
 			if (c >= 1.0f && g_beamT <= 0) {  // full: it pulses, and flashes bright on each beat
 				const float beat = std::fmod(g_time * 2.2f, 1.0f);
 				sz *= 1.0f + 0.16f * std::sin(g_time * 14.0f) + (beat < 0.12f ? 0.35f * (1.0f - beat / 0.12f) : 0.0f);

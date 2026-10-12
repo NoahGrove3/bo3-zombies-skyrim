@@ -65,16 +65,32 @@ def sky():
     col = top + (mid - top) * smooth(0.0, 0.55, v)[..., None] + (low - mid) * smooth(0.45, 0.85, v)[..., None]
     # moon glow: a wide red-orange bloom, a tight halo ring
     d = np.sqrt((xx - MOON[0]) ** 2 + (yy - MOON[1]) ** 2) / MOON_R
-    bloom = np.exp(-((d - 0.0) / 9.0) ** 2) * 0.55 + np.exp(-((d - 0.0) / 3.2) ** 2) * 0.5
-    ring = np.exp(-((d - 2.35) / 0.18) ** 2) * 0.08
+    bloom = np.exp(-((d - 0.0) / 7.0) ** 2) * 0.22 + np.exp(-((d - 0.0) / 2.4) ** 2) * 0.26   # a quieter glow (Noah: less shine)
+    ring = np.exp(-((d - 2.35) / 0.18) ** 2) * 0.04
     col = col + (bloom[..., None] * np.array([0.33, 0.10, 0.06])) + ring[..., None] * np.array([0.9, 0.5, 0.4])
-    # stars, fewer near the moon and the horizon
-    st = R.random((H, W))
-    mask = (st > 0.9993) * smooth(0.75, 0.2, v) * smooth(3.0, 9.0, d)
-    stars = np.asarray(Image.fromarray((mask * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(0.6)), np.float32) / 255 * 2.2
-    tw = R.random((H, W)) > 0.99985
-    big = np.asarray(Image.fromarray((tw * smooth(0.7, 0.2, v) * smooth(4, 10, d) * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.4)), np.float32) / 255 * 5
-    col = col + (stars + big)[..., None] * np.array([0.85, 0.9, 1.0])
+    # the Milky Way: a faint band of dust and light slanting across the sky, dark lanes through it
+    band_c = 0.20 + 0.55 * (xx / W)                                                       # its centre line (v) along x
+    bd = np.exp(-((v - band_c * 0.62) / 0.11) ** 2) * smooth(0.8, 0.25, v) * smooth(2.5, 7.0, d)
+    dust = fbm(H, W, 7, 6, seed=71); lanes = smooth(0.42, 0.62, fbm(H, W, 6, 10, seed=72))
+    col = col + (bd * (0.35 + 0.65 * dust) * (1 - 0.7 * lanes))[..., None] * np.array([0.050, 0.055, 0.080])
+    # stars in every size and colour, many more inside the band, fewer by the moon and the horizon
+    vis = smooth(0.78, 0.2, v) * smooth(3.0, 9.0, d)
+    stars = np.zeros((H, W, 3), np.float32)
+    tints = np.array([[0.75, 0.85, 1.0], [1.0, 1.0, 1.0], [1.0, 0.92, 0.75], [1.0, 0.75, 0.6]])
+    for mag, (dens, blur, gain) in enumerate(((0.0011, 0.45, 0.8), (0.0004, 0.6, 1.7), (0.00018, 0.9, 3.2), (0.00003, 1.4, 6.0))):
+        m = (R.random((H, W)) < dens * (1 + 2.5 * bd)) * vis
+        g = np.asarray(Image.fromarray((m * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(blur)), np.float32) / 255 * gain
+        tint = tints[R.integers(0, 4, (H, W))]
+        stars += g[..., None] * tint
+    # the brightest few with a soft cross of light
+    for _ in range(14):
+        sx_, sy_ = R.uniform(0.04, 0.96) * W, R.uniform(0.03, 0.42) * H
+        if np.hypot(sx_ - MOON[0], sy_ - MOON[1]) < MOON_R * 6:
+            continue
+        dx_, dy_ = np.abs(xx - sx_), np.abs(yy - sy_)
+        spk = (np.exp(-dy_ / 0.8) * np.exp(-dx_ / 14) + np.exp(-dx_ / 0.8) * np.exp(-dy_ / 14)) * 0.9 + np.exp(-(dx_ ** 2 + dy_ ** 2) / 5.0) * 2.5
+        stars += spk[..., None] * tints[R.integers(0, 3)]
+    col = col + stars * np.array([0.85, 0.9, 1.0])
     # cloud banks: fbm, thicker low, lit on the moon side (simple self-shadow: compare with a copy shifted toward the moon)
     n = fbm(H, W, 7, 3, seed=5)
     n2 = fbm(H, W, 5, 6, seed=9)
@@ -88,8 +104,19 @@ def sky():
     # the moon itself: a crimson disc with mottled maria, limb darkening, a soft edge
     m = np.clip(1.2 - d, 0, 1); disc = smooth(1.02, 0.98, d)
     mar = fbm(H, W, 5, 24, seed=21)
-    face = np.array([0.95, 0.42, 0.26]) * (0.72 + 0.28 * smooth(0.35, 0.65, mar))[..., None] * (0.55 + 0.45 * np.sqrt(np.clip(1 - d ** 2, 0, 1)))[..., None]
-    face = face + np.array([0.25, 0.15, 0.1]) * smooth(0.6, 0.0, d)[..., None]
+    mar2 = fbm(H, W, 6, 60, seed=22)
+    face = np.array([0.95, 0.42, 0.26]) * (0.62 + 0.26 * smooth(0.35, 0.65, mar) + 0.18 * (mar2 - 0.5))[..., None] * (0.50 + 0.50 * np.sqrt(np.clip(1 - d ** 2, 0, 1)))[..., None]
+    # craters: dark floors, a bright rim on the lit (lower right) side, a few rays from the biggest
+    cr = np.zeros((H, W), np.float32)
+    rr = np.random.default_rng(23)
+    for _ in range(20):
+        ca = rr.uniform(0, 2 * np.pi); cd = np.sqrt(rr.uniform(0, 0.85)); csz = rr.uniform(0.04, 0.16) * (1.3 if rr.random() < 0.15 else 1)
+        cx_, cy_ = MOON[0] + np.cos(ca) * cd * MOON_R, MOON[1] + np.sin(ca) * cd * MOON_R
+        q = np.sqrt((xx - cx_) ** 2 + (yy - cy_) ** 2) / (csz * MOON_R)
+        side = ((xx - cx_) + (yy - cy_)) / (csz * MOON_R + 1e-3)
+        cr += -0.10 * smooth(1.0, 0.2, q) + 0.08 * np.exp(-((q - 1.0) / 0.25) ** 2) * np.clip(side, 0, 1)
+    face = face * (1 + cr * disc)[..., None]
+    face = face + np.array([0.18, 0.10, 0.07]) * smooth(0.6, 0.0, d)[..., None]
     col = col * (1 - disc[..., None]) + face * disc[..., None]
     # a thin cloud bar across the moon's lower half
     bar = smooth(0.62, 0.8, fbm(H, W, 5, 10, seed=33)) * np.exp(-((yy - (MOON[1] + MOON_R * 0.35)) / (MOON_R * 0.25)) ** 2) * smooth(2.2, 0.0, d)
@@ -128,7 +155,7 @@ def range_layer(seed, base_y, amp, octs, rough, haze, snow=0.0, ridged=True, xsc
     top = base_y - prof * amp
     a = smooth(top - 1.5, top + 1.5, yy)
     # surface detail: ridged noise as a height field, its x-gradient as the light
-    hf = fbm(H, W, 7, int(12 * xscale), seed=seed + 1, ridged=True)
+    hf = fbm(H, W, 9, int(12 * xscale), seed=seed + 1, ridged=True)
     gx = np.gradient(hf, axis=1) * 60 + np.gradient(hf, axis=0) * 25
     light = np.clip(0.45 - gx * rough, 0, 1)
     depth = np.clip((yy - top) / (amp * 1.2 + 1), 0, 1)
@@ -136,8 +163,15 @@ def range_layer(seed, base_y, amp, octs, rough, haze, snow=0.0, ridged=True, xsc
     if snow > 0:
         sn = smooth(0.45, 0.6, hf + (1 - depth) * snow * 0.6) * (1 - depth) ** 1.5
         rock = rock * (1 - sn[..., None]) + (np.array([0.42, 0.44, 0.52]) * (0.35 + 0.95 * light)[..., None] + np.array([0.12, 0.04, 0.02]) * light[..., None]) * sn[..., None]
+    # the moon's light across the range: faces turned up-left take a red-gold wash, strongest under the moon
+    under = np.exp(-((xx - MOON[0]) / (W * 0.30)) ** 2) * 0.75 + 0.25
+    moonlit = np.clip(-gx * rough * 1.6, 0, 1) * (1 - depth) ** 0.8 * under
+    rock = rock + moonlit[..., None] * MOONLIGHT * 0.55
+    # strata and scree: finer detail in the rock and snow
+    st = fbm(H, W, 6, int(40 * xscale), seed=seed + 7)
+    rock = rock * (0.82 + 0.36 * st)[..., None]
     # rim light along the crest from the moon side
-    rim = np.exp(-((yy - top) / 3.0) ** 2) * smooth(0.0, 1.0, light)
+    rim = np.exp(-((yy - top) / 3.0) ** 2) * smooth(0.0, 1.0, light) * (0.6 + 0.8 * under)
     rock = rock + rim[..., None] * np.array([0.35, 0.16, 0.12])
     # haze: stronger lower down (fog pooling in the valleys)
     hz = np.clip(haze + depth * 0.35, 0, 0.95)
