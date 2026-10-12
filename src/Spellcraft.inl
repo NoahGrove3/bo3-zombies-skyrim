@@ -66,7 +66,22 @@ namespace Spellcraft
 			}
 		}
 		auto* clone = c->Clone();
-		return RE::NiPointer<RE::NiAVObject>(clone ? static_cast<RE::NiAVObject*>(clone) : nullptr);
+		auto* obj = clone ? static_cast<RE::NiAVObject*>(clone) : nullptr;
+		// never culled: hung in the scene by hand, outside any cell's culling bounds, the engine dropped them anywhere
+		// off the middle of the view
+		std::function<void(RE::NiAVObject*)> mark = [&](RE::NiAVObject* o) {
+			if (!o) {
+				return;
+			}
+			o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
+			if (auto* n = o->AsNode()) {
+				for (auto& ch : n->GetChildren()) {
+					mark(ch.get());
+				}
+			}
+		};
+		mark(obj);
+		return RE::NiPointer<RE::NiAVObject>(obj);
 	}
 
 	struct Fx
