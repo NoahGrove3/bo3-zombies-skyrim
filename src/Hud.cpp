@@ -886,9 +886,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const int  sel = std::clamp(s.perkSel, 0, n - 1);
 					const auto& p = gen::kPerks[sel];
 					const bool have = (s.perks >> sel) & 1;
-					keyCap({ L, y + 2 * k }, "3", !have);
-					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "DRINK A BREW");
-					Txt(dl, g_body, 16 * k, { Rr - Measure(g_body, 16 * k, std::to_string(owned) + " of " + std::to_string(gen::kMaxPerks)).x, y + 6 * k }, IM_COL32(170, 156, 132, 220), std::to_string(owned) + " of " + std::to_string(gen::kMaxPerks));
+					keyCap({ L, y + 2 * k }, "3", !have && owned == 0);
+					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "TAKE A BLESSING");
+					const std::string rule = owned ? "one at a time: death takes it" : "one at a time";
+					Txt(dl, g_body, 16 * k, { Rr - Measure(g_body, 16 * k, rule).x, y + 6 * k }, IM_COL32(170, 156, 132, 220), rule);
 					y += 36 * k;
 					const float d = std::min(44 * k, (Rr - L) / n - 4 * k), gap = ((Rr - L) - d * n) / std::max(1, n - 1);
 					for (int q = 0; q < n; ++q) {
@@ -926,7 +927,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				Divider(dl, cx, b.y - 58 * k, w * 0.38f, k, 0.7f);
 				TxtC(dl, g_body, 16 * k, cx, b.y - 48 * k, IM_COL32(200, 186, 160, 225), "Wheel or Left / Right: choose a brew   \xC2\xB7   E or Backspace leave");
-				TxtC(dl, g_body, 15 * k, cx, b.y - 27 * k, IM_COL32(160, 148, 128, 200), "Pad: X call  \xC2\xB7  Y reforge  \xC2\xB7  A drink  \xC2\xB7  D-pad choose / up Thu'um  \xC2\xB7  B leave");
+				TxtC(dl, g_body, 15 * k, cx, b.y - 27 * k, IM_COL32(160, 148, 128, 200), "Pad: X call  \xC2\xB7  Y reforge  \xC2\xB7  A bless  \xC2\xB7  D-pad choose / up Thu'um  \xC2\xB7  B leave");
 			} else if (s.rollPhase > 0) {
 				// the roll with the menu closed: a small strip under the crosshair
 				const float R = 30 * k;

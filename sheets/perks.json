@@ -1,6 +1,6 @@
 {
   "sheet": "perks",
-  "about": "Nordic brews. Bought with points at a brew shrine; you get the bottle as a Skyrim potion and its perk takes effect when you drink it. Max 9.",
+  "about": "Nordic brews. Bought with points at a brew shrine; the perk takes effect at once. One at a time: death takes it, then another can be chosen.",
   "columns": [
     "id",
     "label",

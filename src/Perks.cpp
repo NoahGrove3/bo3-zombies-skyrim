@@ -1,6 +1,6 @@
 #include "BO3Z.h"
 
-// Perk-a-Colas (sheet: perks). Drinking the potion grants the perk; effects live in code.
+// Blessings (sheet: perks). Bought at a stand, granted at once, one at a time, lost in death; effects live in code.
 namespace bo3z
 {
 	namespace
@@ -20,23 +20,27 @@ namespace bo3z
 		float DamageMult() { return Has(gen::kPerk_twinstrike) ? gen::kPerks[gen::kPerk_twinstrike].value : 1.0f; }
 		float HeadMult() { return Has(gen::kPerk_hawkeye) ? gen::kPerks[gen::kPerk_hawkeye].value : 1.0f; }
 
-		void OnEffect(RE::FormID a_mgef)
+		// Buying a blessing at its stand applies it at once (no potion to drink). One at a time: another can only be
+		// chosen once death has taken this one.
+		bool Grant(int a_perk)
 		{
-			const int perk = Forms::PerkIndexOfEffect(a_mgef);
-			if (perk < 0) {
-				return;
+			if (a_perk < 0 || a_perk >= static_cast<int>(gen::kPerks.size())) {
+				return false;
 			}
-			logger::info("perk: drank {} (owned {:09b}, count {})", gen::kPerks[perk].id, Save::PerkBits(), Save::PerkCount());
-			const auto& p = gen::kPerks[perk];
-			if (Has(perk)) {
+			const auto& p = gen::kPerks[a_perk];
+			if (Has(a_perk)) {
 				Hud::Banner("You already have " + std::string(p.label), 2.0f);
-				return;
+				return false;
 			}
-			if (Save::PerkCount() >= gen::kMaxPerks) {
-				Hud::Banner("Perk limit reached", 2.0f);
-				return;
+			if (Save::PerkCount() >= 1) {
+				for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
+					if (Has(i)) {
+						Hud::Banner("You carry " + std::string(gen::kPerks[i].label) + ". One blessing at a time: death takes it", 3.0f);
+					}
+				}
+				return false;
 			}
-			Save::SetPerk(perk, true);
+			Save::SetPerk(a_perk, true);
 			switch (p.effect) {
 			case 0: Mod(RE::ActorValue::kHealth, p.value); break;                                     // Juggernog
 			case 4: Mod(RE::ActorValue::kSpeedMult, p.value); Mod(RE::ActorValue::kStamina, 100); break;  // Stamin-Up
@@ -44,7 +48,37 @@ namespace bo3z
 			}
 			Forms::Play(gen::Sound::drink);
 			Hud::Banner(std::string(p.label), 3.0f);
-			logger::info("perk: {}", p.id);
+			logger::info("perk: {} granted", p.id);
+			return true;
+		}
+
+		// Death takes every blessing (and what they added to you).
+		void LoseAll()
+		{
+			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
+				if (!Has(i)) {
+					continue;
+				}
+				const auto& p = gen::kPerks[i];
+				switch (p.effect) {
+				case 0: Mod(RE::ActorValue::kHealth, -p.value); break;
+				case 4: Mod(RE::ActorValue::kSpeedMult, -p.value); Mod(RE::ActorValue::kStamina, -100); break;
+				default: break;
+				}
+				Save::SetPerk(i, false);
+				logger::info("perk: {} lost in death", p.id);
+			}
+		}
+
+		// an old potion still in a pack (bought before blessings applied at once): drinking it grants it the same way
+		void OnEffect(RE::FormID a_mgef)
+		{
+			const int perk = Forms::PerkIndexOfEffect(a_mgef);
+			if (perk < 0) {
+				return;
+			}
+			logger::info("perk: drank {} (owned {:09b}, count {})", gen::kPerks[perk].id, Save::PerkBits(), Save::PerkCount());
+			Grant(perk);
 		}
 
 		// BO3 hits: each zombie hit takes a fixed share of the player's health without Juggernog,

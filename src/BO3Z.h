@@ -290,6 +290,8 @@ namespace bo3z
 	namespace Perks
 	{
 		void OnEffect(RE::FormID a_mgef);
+		bool Grant(int a_perk);    // bought: applied at once (one at a time)
+		void LoseAll();            // death takes them all
 		void OnZombieHit(RE::Actor* a_zombie);  // a round zombie hit the player
 		void OnCast(int a_shots);  // Stormcrown
 		void Tick();

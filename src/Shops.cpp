@@ -1274,24 +1274,22 @@ namespace bo3z
 
 		void BuyPerk(int perk, RE::TESObjectREFR* a_ref)
 		{
-			auto*     potion = Forms::PerkPotion(perk);
-			if (!potion) {
+			if (perk < 0 || perk >= static_cast<int>(gen::kPerks.size())) {
 				return;
 			}
 			if (Save::HasPerk(perk)) {
 				Hud::Banner("You already have " + std::string(gen::kPerks[perk].label), 2.0f);
 				return;
 			}
-			if (Save::PerkCount() >= gen::kMaxPerks) {
-				Hud::Banner("Perk limit reached (" + std::to_string(gen::kMaxPerks) + ")", 2.0f);
+			if (Save::PerkCount() >= 1) {
+				Perks::Grant(perk);  // (refuses, and says which blessing you carry)
 				return;
 			}
 			if (!Points::Spend(gen::kPerks[perk].cost)) {
 				return;
 			}
-			RE::PlayerCharacter::GetSingleton()->AddObjectToContainer(potion, nullptr, 1, nullptr);
 			Forms::PlayAt(Forms::Brew(perk), a_ref);
-			Hud::Banner(std::string(gen::kPerks[perk].label) + " added to your potions. Drink it!", 3.0f);
+			Perks::Grant(perk);  // at once: no potion to drink
 		}
 
 		void BuyAmmo(const gen::ObjectDef& a_obj)
@@ -1427,9 +1425,9 @@ namespace bo3z
 		}
 
 		// The shrine's keys (the menu never pauses: the dead keep coming, so everything is one press away).
-		// Keyboard: 1 roll a spell, 2 reforge, 3 drink the chosen brew, 4 learn the city's Thu'um, mouse wheel or
+		// Keyboard: 1 roll a spell, 2 reforge, 3 take the chosen blessing, 4 learn the city's Thu'um, mouse wheel or
 		// Left/Right picks a brew, Activate (E) or Backspace leaves; walking away closes it too.
-		// Gamepad: X roll, Y reforge, A drink, D-pad left/right pick, D-pad up Thu'um, B leave.
+		// Gamepad: X roll, Y reforge, A bless, D-pad left/right pick, D-pad up Thu'um, B leave.
 		bool OnButton(const RE::ButtonEvent* a_event)
 		{
 			if (!g_menu || !a_event || !a_event->IsDown()) {

@@ -120,6 +120,7 @@ namespace bo3z
 					auto*       cell = player->GetParentCell();
 					logger::info("death: the player died (killer {:08X} {}, at {:.0f},{:.0f},{:.0f} in {}, level {}, hp max {:.0f})", k ? k->GetFormID() : 0, k ? k->GetName() : "none",
 						p.x, p.y, p.z, cell ? cell->GetFormEditorID() : "?", player->GetLevel(), player->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth));
+					Perks::LoseAll();  // death takes every blessing
 				}
 				if (!dying || !Director::IsRoundUndead(dying)) {
 					return RE::BSEventNotifyControl::kContinue;
