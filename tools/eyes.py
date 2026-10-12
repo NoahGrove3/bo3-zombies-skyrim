@@ -75,7 +75,7 @@ def glow_tex(color, name):
     n = 64
     yy, xx = np.mgrid[0:n, 0:n].astype(np.float32)
     r = np.sqrt((xx - n / 2 + 0.5) ** 2 + (yy - n / 2 + 0.5) ** 2) / (n / 2)
-    core = np.clip(1 - r * 3.2, 0, 1); halo = np.clip(1 - r, 0, 1) ** 2.2
+    core = np.clip(1 - r * 3.6, 0, 1) * 0.8; halo = np.clip(1 - r, 0, 1) ** 1.8 * 1.3
     rgb = np.clip(np.stack([core + halo * c for c in color], -1), 0, 1)
     p = OUT / 'Textures' / 'UndyingNights' / 'eyes' / f'{name}.dds'
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -91,8 +91,8 @@ def write(cid, nif, color, size):
     out.parent.mkdir(parents=True, exist_ok=True)
     rot = ' '.join(f'{x:.5f}' for x in hr.flatten())
     lines = [f'out {out}', 'bones 1', f'bone {HEAD}|{ht[0]:.5f} {ht[1]:.5f} {ht[2]:.5f} {rot}',
-             f'shape {cid}_eyes diffuse={tex} normal={tex} glow={tex} emit={color[0]},{color[1]},{color[2]} emitmult=4.0 alpha=add spec=0 gloss=1']
-    s = 0.9 * size; vi = 0; tris = []
+             f'shape {cid}_eyes diffuse={tex} normal={tex} glow={tex} emit={color[0]},{color[1]},{color[2]} emitmult=7.0 alpha=add spec=0 gloss=1']
+    s = 1.25 * size; vi = 0; tris = []
     for (x, y, z) in eyes:
         for ax in range(3):  # three crossed quads: a point of light from any side
             u, v = [(0, 2), (1, 2), (0, 1)][ax]

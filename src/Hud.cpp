@@ -601,7 +601,35 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					sweep = 0;
 					std::erase_if(wound, [&](const auto& e) { return std::none_of(s.enemyBars.begin(), s.enemyBars.end(), [&](const auto& b) { return b.id == e.first; }); });
 				}
-				for (const auto& b : s.enemyBars) {
+				// bars that would overlap (foes standing together) are stacked: the nearer (larger) keeps its place, the
+				// others step up above it, name and all
+				auto bars = s.enemyBars;
+				{
+					std::vector<std::size_t> order(bars.size());
+					for (std::size_t i = 0; i < order.size(); ++i) order[i] = i;
+					std::sort(order.begin(), order.end(), [&](auto x, auto y) { return bars[x].scale > bars[y].scale; });
+					std::vector<ImVec4> placed;  // x0, y0, x1, y1 in pixels
+					for (auto i : order) {
+						auto&       b = bars[i];
+						const float w = ((b.rank == 2 ? 150 : b.rank == 1 ? 124 : 100) * k * b.scale) + 24 * k * b.scale;
+						const float h = (b.rank >= 1 && b.rank <= 2 ? 9 : 7) * k * b.scale, top = h / 2 + 22 * k * b.scale, bot = h / 2 + 5 * k;
+						const float cx = b.x * size.x;
+						float       cy = b.y * size.y;
+						for (int guard = 0; guard < 8; ++guard) {
+							bool moved = false;
+							for (const auto& r : placed) {
+								if (cx + w / 2 > r.x && cx - w / 2 < r.z && cy + bot > r.y && cy - top < r.w) {
+									cy = r.y - bot - 2 * k;
+									moved = true;
+								}
+							}
+							if (!moved) break;
+						}
+						placed.push_back({ cx - w / 2, cy - top, cx + w / 2, cy + bot });
+						b.y = cy / size.y;
+					}
+				}
+				for (const auto& b : bars) {
 					auto& [pale, in] = wound.try_emplace(b.id, b.frac, 0.0f).first->second;
 					pale = b.frac > pale ? b.frac : std::max(b.frac, pale - dt * 0.35f);
 					in = std::min(1.0f, in + dt * 5.0f);
@@ -1066,6 +1094,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ID3D11ShaderResourceView* g_mTitle = nullptr;
 
 		float g_pressT = -10, g_pressY = 0;  // the main menu entry last pressed (its flare)
+		// Skyrim's own question box on the main menu (Continue? Start a new game?) is up
+		bool MenuQuestionUp()
+		{
+			auto* ui = RE::UI::GetSingleton();
+			auto  menu = ui ? ui->GetMenu(RE::MainMenu::MENU_NAME) : nullptr;
+			RE::GFxMovieView* mv = menu ? menu->uiMovie.get() : nullptr;
+			RE::GFxValue      conf;
+			if (!mv || !mv->GetVariable(&conf, "_root.MenuHolder.Menu_mc.ConfirmPanel_mc") || !conf.IsDisplayObject()) {
+				return false;
+			}
+			RE::GFxValue::DisplayInfo ci;
+			conf.GetDisplayInfo(&ci);
+			return ci.GetVisible() && ci.GetAlpha() > 20.0;
+		}
+
 		void DrawMenu(ImVec2 size, float now, bool click)
 		{
 			auto*       fg = ImGui::GetForegroundDrawList();
@@ -1193,6 +1236,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float ty = size.y * 0.06f + (1.0f - EaseOut(std::clamp(openT / 1.6f, 0.0f, 1.0f))) * 14 * k;
 				const ImVec2 a{ (size.x - tw) / 2 - lean.x * 6 * k, ty };
 				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_mTitle)), a, { a.x + tw, a.y + th }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * std::clamp(openT / 1.6f, 0.0f, 1.0f))));
+			}
+			// a question (Start a new game?) gets a dark iron plate behind its words, so they read over the rocks
+			{
+				static float qa = 0;
+				qa = std::clamp(qa + (MenuQuestionUp() ? 1.0f : -1.0f) * ImGui::GetIO().DeltaTime * 6.0f, 0.0f, 1.0f);
+				if (qa > 0) {
+					const ImVec2 a{ size.x * 0.615f, size.y * 0.635f }, z{ size.x * 0.895f, size.y * 0.955f };
+					fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(70 * qa)));
+					fg->AddRectFilled(a, z, IM_COL32(8, 8, 11, static_cast<int>(228 * qa)), 3 * k);
+					fg->AddRectFilledMultiColor(a, { z.x, a.y + (z.y - a.y) * 0.5f }, IM_COL32(40, 70, 64, static_cast<int>(40 * qa)), IM_COL32(40, 70, 64, static_cast<int>(40 * qa)), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
+					fg->AddRect(a, z, IM_COL32(118, 104, 86, static_cast<int>(200 * qa)), 3 * k, 0, 1.2f * k);
+					fg->AddRect({ a.x + 5 * k, a.y + 5 * k }, { z.x - 5 * k, z.y - 5 * k }, IM_COL32(118, 104, 86, static_cast<int>(70 * qa)), 2 * k, 0, 1.0f * k);
+					const float dy = size.y * 0.865f;  // a rule between the question and its answers
+					fg->AddLine({ a.x + 40 * k, dy }, { z.x - 40 * k, dy }, IM_COL32(110, 255, 190, static_cast<int>(70 * qa)), 1.0f * k);
+				}
 			}
 			// Skyrim's questions and hints (lower right) laid back over the picture: only the bright words
 			if (g_frameSrv && g_keyPs) {
