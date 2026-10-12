@@ -163,6 +163,10 @@ namespace bo3z
 						base && base->data.projectileBase ? base->data.projectileBase->GetFormID() : 0, g.bulletSpell - 2, projForm ? projForm->GetFormID() : 0,
 						projForm ? static_cast<int>(projForm->GetFormType()) : -1);
 				}
+			} else if (cmd == "cast") {
+				std::string mode;
+				in >> mode;
+				Gun::DevCast(mode);
 			} else if (cmd == "points") {
 				int n = 0;
 				in >> n;

@@ -1711,6 +1711,8 @@ namespace bo3z
 			}
 		}
 
+#include "Spellcraft.inl"
+
 		struct PoseHook
 		{
 			static void thunk(RE::PlayerCharacter* a_this, float a_delta)
@@ -1718,6 +1720,7 @@ namespace bo3z
 				func(a_this, a_delta);
 				try {
 					PoseArm(a_this);
+					Spellcraft::OnPose(a_this);
 				} catch (...) {
 				}
 			}
@@ -1967,6 +1970,31 @@ namespace bo3z
 			g_trigger = g_adsHeld = g_dualHeld = false;
 			g_reload = g_cooldown = 0;
 			g_burstLeft = 0;
+			Spellcraft::Reset();
+		}
+
+		// dev channel: 'cast tap|full|ult|orb' with the spell in hand (synthetic mouse input does not cast)
+		void DevCast(const std::string& a_mode)
+		{
+			const int gun = CurrentGun();
+			if (!Spellcraft::Is(gun)) {
+				logger::info("cast: no spellcraft spell in hand (gun {})", gun);
+				return;
+			}
+			if (a_mode == "tap" || a_mode == "full") {
+				Spellcraft::g_cd = 0;
+				Spellcraft::Tap(gun, a_mode == "full");
+			} else if (a_mode == "ult") {
+				Spellcraft::g_ultCd = 0;
+				Spellcraft::Ult(gun);
+			} else if (a_mode == "orb") {
+				Spellcraft::g_orbHeld = !Spellcraft::g_orbHeld;
+				Spellcraft::g_orbT = 0;
+			} else if (a_mode == "hand") {
+				Spellcraft::g_tapHeld = !Spellcraft::g_tapHeld;
+				Spellcraft::g_tapT = 0;
+			}
+			logger::info("cast: {} {} ({} shots in flight)", gen::kGuns[gun].id, a_mode, Spellcraft::g_shots2.size());
 		}
 
 		// Atronach Reforge: the weapon in your hands goes up a level (more damage, full ammo).
@@ -2038,6 +2066,17 @@ namespace bo3z
 			if (!GunOut()) {
 				g_trigger = g_adsHeld = g_dualHeld = false;
 				return false;
+			}
+			if (const int cg = CurrentGun(); Spellcraft::Is(cg)) {  // the ten spells (Spellcraft.inl)
+				if (IsFireButton(a_event)) {
+					Spellcraft::Left(cg, down, up);
+					return true;
+				}
+				if (IsAimButton(a_event)) {
+					Spellcraft::Right(cg, down, up);
+					g_adsHeld = false;
+					return true;
+				}
 			}
 			if (IsFireButton(a_event)) {
 				// One or the other, on release: a full charge unleashes the signature move, anything shorter is the
@@ -2310,6 +2349,7 @@ namespace bo3z
 			TickWells(a_delta);
 			TickTimeAndPrisms(a_delta);
 			TickMarks(a_delta);
+			Spellcraft::Tick(a_delta);
 			if (out) {
 				const auto& g = gen::kGuns[gun];
 				if (g_burstLeft > 0 && (g_burstTimer -= a_delta) <= 0) {

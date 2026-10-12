@@ -162,7 +162,7 @@ for w in S['weapons']['rows']:
                 i += 6 + ln
             recs['MGEF'][-1] = m[:24] + bytes(body)
         sp = bytearray(tsub('spel_firebolt', 'SPIT'))
-        struct.pack_into('<IIIfIIffI', sp, 0, 0, 0x1, 0, 0.0, 1, 0, 0.0, 0.0, 0)  # free, fire-and-forget (one push per click), self
+        struct.pack_into('<IIIfIIffI', sp, 0, int(round(w.get('mana', 0) or 0)), 0x1, 0, 0.0, 1, 0, 0.0, 0.0, 0)  # its real magicka cost shown in the Magic menu (the code spends it; the engine's own charge is handed back), fire-and-forget (one push per click), self
         recs['SPEL'].append(record('SPEL', fid('SPEL', 'hand_' + w['id']), [
             sub('EDID', z('UN_Hand_' + w['id'])), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(w['label'])),
             sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')), sub('DESC', z('')),

@@ -124,6 +124,9 @@ namespace bo3z
 				if (!hs || !src || hs->effects.empty() || src->effects.empty()) {
 					continue;
 				}
+				if (std::any_of(gen::kSpellcraft.begin(), gen::kSpellcraft.end(), [&](const auto& sc) { return sc.id == gen::kGuns[i].id; })) {
+					continue;  // the ten spells wear their own hand glow and light (plugin: fx_<id>_hand / fx_<id>_light)
+				}
 				auto* ours = hs->effects[0]->baseEffect;
 				for (auto* e : src->effects) {
 					if (auto* b = e ? e->baseEffect : nullptr; b && ours && (b->data.castingArt || b->data.light)) {

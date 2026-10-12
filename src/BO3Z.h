@@ -266,6 +266,7 @@ namespace bo3z
 		int                   SlotCount();
 		float                 AdsBlend();                     // 0..1, for movement and HUD
 		void                  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay = 0.0f);  // a no-damage Skyrim explosion (look only)
+		void                  DevCast(const std::string& a_mode);  // dev: 'cast tap|full|ult|orb|hand' with a spell in hand
 	}
 
 	namespace Shops
