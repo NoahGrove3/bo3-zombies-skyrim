@@ -336,6 +336,23 @@ namespace Spellcraft
 		b.fx.Attach(WorldRoot());
 		b.fx.Place(a_at, Spin(b.spin), 0.01f);
 		g_bursts.push_back(std::move(b));
+		if (a_dur > 0.0f && a_radius > 0.0f) {  // the after-wave: a wider, slower second ring, and sparks of the spell thrown round
+			Burst w{ { Load(Def(a_row).id, "burst") }, 0.0f, a_dur * 1.7f, a_radius * 1.6f / 40.0f, Rand(0, 6.28f), a_at };
+			if (w.fx.obj) {
+				w.fx.Attach(WorldRoot());
+				w.fx.Place(a_at, Spin(w.spin), 0.01f);
+				g_bursts.push_back(std::move(w));
+			}
+			for (int i = 0; i < 3; ++i) {
+				const RE::NiPoint3 off{ Rand(-1, 1), Rand(-1, 1), Rand(0, 1) };
+				Burst m{ { Load(Def(a_row).id, "aura") }, 0.0f, a_dur * 0.8f, a_radius * 0.35f / 13.0f, Rand(0, 6.28f), a_at + off * (a_radius * 0.6f) };
+				if (m.fx.obj) {
+					m.fx.Attach(WorldRoot());
+					m.fx.Place(m.at, Spin(m.spin), 0.01f);
+					g_bursts.push_back(std::move(m));
+				}
+			}
+		}
 	}
 
 	void StreakAt(int a_row, const RE::NiPoint3& a, const RE::NiPoint3& b, float w, float t, bool jitter)
@@ -545,7 +562,7 @@ namespace Spellcraft
 		s.fx.obj = Load(d.id, a_ult >= 0 && a_ult != gen::kUltSoulStorm ? "orb" : "bolt");
 		if (s.fx.obj) {
 			s.fx.Attach(WorldRoot());
-			s.fx.Place(s.pos, Facing(a_dir), a_ult >= 0 && a_ult != gen::kUltSoulStorm ? 2.6f * a_scale : a_scale);
+			s.fx.Place(s.pos, Facing(a_dir), a_ult >= 0 && a_ult != gen::kUltSoulStorm ? 2.6f * a_scale : 1.45f * a_scale);
 		}
 		if (const int tr = Snd(a_gun, &gen::GunSounds::travel); tr >= 0 && g_shots2.size() < 6) {
 			s.loop = 0x5C00000000ull + (++g_loopId);
@@ -801,7 +818,7 @@ namespace Spellcraft
 			}
 			if (s.life > 0) {
 				s.pos = end;
-				s.fx.Place(s.pos, Facing(s.vel), s.ult >= 0 && s.ult != gen::kUltSoulStorm ? 2.6f * s.scale * (1.0f + 0.08f * std::sin(g_time * 20.0f)) : s.scale);
+				s.fx.Place(s.pos, Facing(s.vel), s.ult >= 0 && s.ult != gen::kUltSoulStorm ? 2.6f * s.scale * (1.0f + 0.08f * std::sin(g_time * 20.0f)) : 1.45f * s.scale * (1.0f + 0.12f * std::sin(g_time * 31.0f + s.pos.x * 0.01f)));
 				if (static int dbg = 0; dbg < 12 && s.fx.obj) {
 					++dbg;
 					auto* cam = RE::PlayerCamera::GetSingleton();
@@ -984,6 +1001,7 @@ namespace Spellcraft
 		const float dmg = d.ultDamage * Mult();
 		Forms::Play(g.chargeSnd);  // the spell's own unleash
 		g_flashT[0] = g_flashT[1] = 0.0f;
+		BurstAt(row, from + dir * 28.0f, 55.0f, 0.38f);  // the power bursts out of the hands as it is let go
 		Audio::Ui(gen::Sound::release_power, 0.7f);
 		Hud::Banner(std::string(d.ultName), 1.2f);
 		g_pushT = 0.0f;
@@ -1307,11 +1325,11 @@ namespace Spellcraft
 				g_auraRow[side] = row;
 			}
 			if (au.obj) {
-				if (c > 0.02f) {
+				if (true) {  // always alive round the hands (a living aura), swelling and spinning up with any charge
 					au.Attach(node->AsNode());
-					g_auraSpin[side] += dtp * (3.0f + 9.0f * c) * (side ? -1.0f : 1.0f);
-					const float flick = 1.0f + 0.12f * std::sin(g_time * 23.0f + side * 2.0f) + 0.08f * std::sin(g_time * 37.0f);
-					const float as = (first ? 0.3f : 0.5f) * (0.35f + 0.85f * c) * flick * (ready ? 1.15f : 1.0f);
+					g_auraSpin[side] += dtp * (1.6f + 11.0f * c) * (side ? -1.0f : 1.0f);
+					const float flick = 1.0f + 0.14f * std::sin(g_time * 23.0f + side * 2.0f) + 0.09f * std::sin(g_time * 37.0f + side) + 0.05f * std::sin(g_time * 61.0f);
+					const float as = (first ? 0.3f : 0.5f) * (0.42f + 0.9f * c) * flick * (ready ? 1.2f : 1.0f);
 					au.Show(true);
 					au.Place(node->world.translate, AxisAngle({ 0, 0, 1 }, g_auraSpin[side]) * AxisAngle({ 1, 0, 0 }, g_auraSpin[side] * 0.37f), as);
 				} else {
@@ -1335,7 +1353,7 @@ namespace Spellcraft
 					} else {
 						fl.Attach(node->AsNode());
 						fl.Show(true);
-						fl.Place(node->world.translate, AxisAngle({ 0, 0, 1 }, g_time * 4.0f), (first ? 0.16f : 0.3f) * std::sin(u * RE::NI_PI) * (1.0f + 0.5f * u));
+						fl.Place(node->world.translate, AxisAngle({ 0, 0, 1 }, g_time * 4.0f), (first ? 0.24f : 0.4f) * std::sin(u * RE::NI_PI) * (1.0f + 0.8f * u));
 					}
 				} else {
 					fl.Show(false);
