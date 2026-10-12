@@ -246,6 +246,16 @@ int main(int argc, char** argv)
 		trunk.push_back({ sj.z, tj.z, V3{ tj.x - sj.x, tj.y - sj.y, 0 } });
 	}
 	std::sort(trunk.begin(), trunk.end(), [](const Knot& a, const Knot& b) { return a.sz < b.sz; });
+	// two trunk joints at the same source height (a Biped ribcage joint sits up at the neck) would tear the torso
+	// open between their two target heights: keep the upper one, so the chest stretches smoothly up to the neck
+	for (size_t i = 0; i + 1 < trunk.size();) {
+		if (trunk[i + 1].sz - trunk[i].sz < 1.0 || trunk[i + 1].tz <= trunk[i].tz) {
+			trunk.erase(trunk.begin() + i);
+		} else {
+			++i;
+		}
+	}
+	for (auto& k : trunk) printf("trunk knot: source z %.1f -> target z %.1f, offset (%.1f %.1f)\n", k.sz, k.tz, k.off.x, k.off.y);
 	auto trunkMap = [&](V3 v) {
 		if (trunk.empty()) return v;
 		if (v.z <= trunk.front().sz) return V3{ v.x + trunk.front().off.x, v.y + trunk.front().off.y, v.z + (trunk.front().tz - trunk.front().sz) };
@@ -282,6 +292,30 @@ int main(int argc, char** argv)
 		while (n && !s2t.count(n->mName.C_Str())) n = n->mParent;
 		return n ? s2t[n->mName.C_Str()] : "NPC Pelvis [Pelv]";
 	};
+	// Seams: characters made of separate pieces (torso, hips, sleeves) have vertices at the same spot in two pieces,
+	// often weighted differently, so the engine pulls them apart and the inside shows through. Every vertex takes the
+	// average weights of all vertices that share its position (welded skinning; geometry and UVs stay as they are).
+	auto posKey = [](const aiVector3D& v) { return std::make_tuple(std::lround(v.x * 200.0), std::lround(v.y * 200.0), std::lround(v.z * 200.0)); };
+	std::map<std::tuple<long, long, long>, std::pair<std::map<std::string, float>, int>> weld;
+	const bool noWeld = getenv("SKINCONV_NOWELD") != nullptr;
+	for (unsigned m = 0; m < sc->mNumMeshes && !noWeld; ++m) {
+		const aiMesh* me = sc->mMeshes[m];
+		if (skip.count(me->mName.C_Str())) continue;
+		std::vector<std::map<std::string, float>> w(me->mNumVertices);
+		for (unsigned b = 0; b < me->mNumBones; ++b) {
+			const std::string tb = mapBone(me->mBones[b]->mName.C_Str());
+			for (unsigned i = 0; i < me->mBones[b]->mNumWeights; ++i) w[me->mBones[b]->mWeights[i].mVertexId][tb] += me->mBones[b]->mWeights[i].mWeight;
+		}
+		for (unsigned v = 0; v < me->mNumVertices; ++v) {
+			auto& e = weld[posKey(meshGlobal[me] * me->mVertices[v])];
+			float tot = 0;
+			for (auto& [bn, x] : w[v]) tot += x;
+			if (tot <= 0) continue;
+			for (auto& [bn, x] : w[v]) e.first[bn] += x / tot;
+			++e.second;
+		}
+	}
+	int welded = 0;
 	for (unsigned m = 0; m < sc->mNumMeshes; ++m) {
 		const aiMesh* me = sc->mMeshes[m];
 		if (skip.count(me->mName.C_Str())) continue;
@@ -297,6 +331,12 @@ int main(int argc, char** argv)
 		for (unsigned v = 0; v < me->mNumVertices; ++v) {
 			auto pw = meshGlobal[me] * me->mVertices[v];
 			V3   p = norm({ pw.x, pw.y, pw.z });
+			if (!noWeld) {
+				if (auto it = weld.find(posKey(pw)); it != weld.end() && it->second.second > 1) {
+					w[v] = it->second.first;  // shared with another piece: the average of them all
+					++welded;
+				}
+			}
 			auto nw = nrm * (me->HasNormals() ? me->mNormals[v] : aiVector3D(0, 0, 1));
 			V3   nn = normDir({ nw.x, nw.y, nw.z });
 			if (w[v].empty()) w[v]["NPC Pelvis [Pelv]"] = 1;
@@ -323,6 +363,7 @@ int main(int argc, char** argv)
 			if (me->mFaces[f].mNumIndices == 3) g.tri.emplace_back(base + me->mFaces[f].mIndices[0], base + me->mFaces[f].mIndices[1], base + me->mFaces[f].mIndices[2]);
 	}
 	for (auto& [k, g] : groups) for (auto& v : g.v) v = v * float(extraScale);
+	printf("welded skin weights on %d seam vertices\n", welded);
 
 	// ---- write NIF
 	NifFile nif;
