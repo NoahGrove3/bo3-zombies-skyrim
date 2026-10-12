@@ -173,10 +173,54 @@ namespace Spellcraft
 		}
 		return m;
 	}
+	// flat glows (local XZ plane) turned square to the eye: no crossed planes, no edges, from any side
+	RE::NiMatrix3 FaceView(float a_roll = 0.0f)
+	{
+		auto* cam = RE::PlayerCamera::GetSingleton();
+		RE::NiMatrix3 m;
+		if (!cam || !cam->cameraRoot) {
+			return AxisAngle({ 0, 0, 1 }, 0);
+		}
+		const auto& w = cam->cameraRoot->world.rotate;
+		const RE::NiPoint3 r{ w.entry[0][0], w.entry[1][0], w.entry[2][0] }, f{ w.entry[0][1], w.entry[1][1], w.entry[2][1] }, u{ w.entry[0][2], w.entry[1][2], w.entry[2][2] };
+		const RE::NiPoint3 x = -r, y = -f, z = u;
+		const float xv[3] = { x.x, x.y, x.z }, yv[3] = { y.x, y.y, y.z }, zv[3] = { z.x, z.y, z.z };
+		for (int i = 0; i < 3; ++i) {
+			m.entry[i][0] = xv[i], m.entry[i][1] = yv[i], m.entry[i][2] = zv[i];
+		}
+		return a_roll != 0.0f ? m * AxisAngle({ 0, 1, 0 }, a_roll) : m;
+	}
+
 	RE::NiMatrix3 Spin(float a)  // a turn round world Z (bursts and novas)
 	{
 		return AxisAngle({ 0, 0, 1 }, a);
 	}
+	// A ball of the spell's power: its glow (faced to the eye) and its rings (turning in 3D round it).
+	struct Ball
+	{
+		Fx  glow, rings;
+		int row = -1;
+		void Need(int a_row)
+		{
+			if (row == a_row && glow.obj) {
+				return;
+			}
+			Detach();
+			glow = Fx{ Load(Def(a_row).id, "glow") };
+			rings = Fx{ Load(Def(a_row).id, "orb") };
+			row = a_row;
+		}
+		void Attach(RE::NiNode* a_parent) { glow.Attach(a_parent), rings.Attach(a_parent); }
+		void Detach() { glow.Detach(), rings.Detach(); }
+		void Show(bool a_on) { glow.Show(a_on), rings.Show(a_on); }
+		void Place(const RE::NiPoint3& a_at, const RE::NiMatrix3& a_spin, float a_scale, float a_glowMult = 1.0f)
+		{
+			glow.Place(a_at, FaceView(), a_scale * a_glowMult);
+			rings.Place(a_at, a_spin, a_scale);
+		}
+	};
+
+
 
 	// A beam (or a lightning streak): segments laid end to end from a to b, at width w (uniform scale, so a wider beam
 	// takes fewer, longer segments).
@@ -234,7 +278,9 @@ namespace Spellcraft
 		float        homing = 0, gravity = 0;
 		int          ult = -1;  // a charged attack's carrier (mortar, wind ball, singularity, soul wisp) or -1 for a tap
 		std::vector<RE::FormID> struck;
-		Fx           fx;
+		Fx           fx;   // the trail (along the flight)
+		Ball         ball; // the charged ball of energy itself
+		float        spin = 0;
 		std::uint64_t loop = 0;
 	};
 	struct Burst
@@ -261,7 +307,7 @@ namespace Spellcraft
 		int          row;
 		RE::NiPoint3 at;
 		float        t, tick = 0;
-		Fx           fx;
+		Ball         ball;
 	};
 
 	std::vector<Shot>   g_shots2;
@@ -280,7 +326,9 @@ namespace Spellcraft
 	Beam  g_beam;
 	Fx    g_orb, g_hand;
 	int   g_orbRow = -1, g_handRow = -1;
-	Fx    g_ball[2], g_aura[2], g_flash[2];
+	Ball  g_ball[2], g_orbBall;
+	float g_ballShown[2] = { 0, 0 }, g_orbLastT = 0;
+	Fx    g_aura[2], g_flash[2];
 	int   g_auraRow[2] = { -1, -1 }, g_flashRow[2] = { -1, -1 };
 	float g_flashT[2] = { -1, -1 }, g_auraSpin[2] = { 0, 0 };
 	int   g_ballRow[2] = { -1, -1 };
@@ -559,11 +607,17 @@ namespace Spellcraft
 		} else if (a_ult == gen::kUltSoulStorm) {
 			s.homing = 7.0f, s.life = 3.5f;
 		}
-		s.fx.obj = Load(d.id, a_ult >= 0 && a_ult != gen::kUltSoulStorm ? "orb" : "bolt");
-		if (s.fx.obj) {
-			s.fx.Attach(WorldRoot());
-			s.fx.Place(s.pos, Facing(a_dir), a_ult >= 0 && a_ult != gen::kUltSoulStorm ? 2.6f * a_scale : 1.45f * a_scale);
+		const bool carrier = a_ult >= 0 && a_ult != gen::kUltSoulStorm;
+		if (!carrier) {
+			s.fx.obj = Load(d.id, "bolt");  // its trail
+			if (s.fx.obj) {
+				s.fx.Attach(WorldRoot());
+				s.fx.Place(s.pos, Facing(a_dir), 1.2f * a_scale);
+			}
 		}
+		s.ball.Need(a_row);
+		s.ball.Attach(WorldRoot());
+		s.ball.Place(s.pos, AxisAngle(a_dir, 0.0f), (carrier ? 2.4f : 0.62f) * a_scale);
 		if (const int tr = Snd(a_gun, &gen::GunSounds::travel); tr >= 0 && g_shots2.size() < 6) {
 			s.loop = 0x5C00000000ull + (++g_loopId);
 			Audio::LoopAt(s.loop, static_cast<gen::Sound>(tr), s.pos, 0.7f);
@@ -716,11 +770,9 @@ namespace Spellcraft
 		case gen::kUltSingularity:
 		{
 			Well w{ s.row, at, 2.6f };
-			w.fx.obj = Load(d.id, "orb");
-			if (w.fx.obj) {
-				w.fx.Attach(WorldRoot());
-				w.fx.Place(at, Spin(0), 3.0f);
-			}
+			w.ball.Need(s.row);
+			w.ball.Attach(WorldRoot());
+			w.ball.Place(at, Spin(0), 3.0f);
 			g_wells.push_back(std::move(w));
 			PlayAt(Snd(s.gun, &gen::GunSounds::charge), at);
 			break;
@@ -818,16 +870,13 @@ namespace Spellcraft
 			}
 			if (s.life > 0) {
 				s.pos = end;
-				s.fx.Place(s.pos, Facing(s.vel), s.ult >= 0 && s.ult != gen::kUltSoulStorm ? 2.6f * s.scale * (1.0f + 0.08f * std::sin(g_time * 20.0f)) : 1.45f * s.scale * (1.0f + 0.12f * std::sin(g_time * 31.0f + s.pos.x * 0.01f)));
-				if (static int dbg = 0; dbg < 12 && s.fx.obj) {
-					++dbg;
-					auto* cam = RE::PlayerCamera::GetSingleton();
-					const auto e = cam && cam->cameraRoot ? cam->cameraRoot->world.translate : RE::NiPoint3{};
-					logger::info("bolt: pos ({:.0f},{:.0f},{:.0f}) eye ({:.0f},{:.0f},{:.0f}) dt {:.4f} world ({:.0f},{:.0f},{:.0f}) bound r {:.1f} c ({:.0f},{:.0f},{:.0f}) culled {} parent {}",
-						s.pos.x, s.pos.y, s.pos.z, e.x, e.y, e.z, a_dt, s.fx.obj->world.translate.x, s.fx.obj->world.translate.y, s.fx.obj->world.translate.z,
-						s.fx.obj->worldBound.radius, s.fx.obj->worldBound.center.x, s.fx.obj->worldBound.center.y, s.fx.obj->worldBound.center.z, s.fx.obj->GetAppCulled(),
-						s.fx.parent ? s.fx.parent->name.c_str() : "-");
+				const bool carrier = s.ult >= 0 && s.ult != gen::kUltSoulStorm;
+				s.spin += a_dt * 9.0f;
+				const float breathe = 1.0f + 0.07f * std::sin(g_time * 14.0f + s.pos.x * 0.01f);
+				if (s.fx.obj) {
+					s.fx.Place(s.pos, Facing(s.vel), 1.2f * s.scale);
 				}
+				s.ball.Place(s.pos, Facing(s.vel) * AxisAngle({ 0, 1, 0 }, s.spin) * AxisAngle({ 1, 0, 0 }, s.spin * 0.6f), (carrier ? 2.4f : 0.62f) * s.scale * breathe);
 				if (s.loop) {
 					Audio::LoopMove(s.loop, s.pos);
 				}
@@ -836,6 +885,7 @@ namespace Spellcraft
 		for (auto& s : g_shots2) {
 			if (s.life <= 0) {
 				s.fx.Detach();
+				s.ball.Detach();
 				if (s.loop) {
 					Audio::LoopStop(s.loop, 120);
 				}
@@ -921,13 +971,13 @@ namespace Spellcraft
 					Damage(f, d.ultDamage * Mult() * 0.06f, false, false, true);
 				}
 			}
-			w.fx.Place(w.at, Spin(g_time * 5.0f), 3.0f + 0.6f * std::sin(g_time * 9.0f));
+			w.ball.Place(w.at, Spin(g_time * 5.0f) * AxisAngle({ 1, 0, 0 }, g_time * 2.0f), 3.0f + 0.6f * std::sin(g_time * 9.0f));
 			if (w.t <= 0) {  // the collapse
 				Area(w.row, w.at, d.ultRadius * 0.5f, d.ultDamage * Mult(), gen::kFxNone);
 				BurstAt(w.row, w.at, d.ultRadius * 0.6f, 0.5f);
 				const int gun = [&] { for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) if (Row(i) == w.row) return i; return -1; }();
 				PlayAt(Snd(gun, &gen::GunSounds::boom), w.at);
-				w.fx.Detach();
+				w.ball.Detach();
 			}
 		}
 		std::erase_if(g_wells, [](const Well& w) { return w.t <= 0; });
@@ -1222,7 +1272,7 @@ namespace Spellcraft
 				continue;
 			}
 			const RE::NiPoint3 target = centre + r * ((right ? 1.0f : -1.0f) * (first ? 7.5f : 10.0f)) +
-			                            RE::NiPoint3{ Rand(-1, 1), Rand(-1, 1), Rand(-1, 1) } * (shake * 0.4f);
+			                            RE::NiPoint3{ std::sin(g_time * 13.0f + side), std::sin(g_time * 17.0f + 2.0f * side), std::sin(g_time * 11.0f + 1.0f) } * (shake * 0.25f);  // a smooth tremble, never a jitter
 			RE::NiPoint3 a = hand->world.translate - ua->world.translate, b = target - ua->world.translate;
 			if (a.Length() < 1e-3f || b.Length() < 1e-3f) {
 				continue;
@@ -1257,29 +1307,33 @@ namespace Spellcraft
 		g_orbAtValid = false;
 		// the orb
 		const bool orbOn = row >= 0 && root && rm && lm && (g_orbHeld || g_beamT > 0) && GunOut();
-		if (orbOn && g_orbRow != row) {
-			g_orb.Detach();
-			g_orb = Fx{ Load(Def(row).id, "orb") };
-			g_orbRow = row;
+		if (orbOn) {
+			g_orbBall.Need(row);
 		}
-		if (orbOn && g_orb.obj) {
-			g_orb.Attach(root);
+		if (orbOn && g_orbBall.glow.obj) {
+			g_orbBall.Attach(root);
 			const float full = gen::kGuns[gun].chargeSeconds * Perks::ChargeMult();
 			const float c = g_beamT > 0 ? 1.0f : std::clamp(g_orbT / std::max(0.1f, full), 0.0f, 1.0f);
 			float       sz = (first ? 0.06f : 0.2f) + (first ? 0.16f : 0.5f) * EaseOut(c);  // the orb mesh's glow is 30 across: a fist-sized ball at full
 			if (g_beamT > 0) {
 				sz *= 0.55f;  // the beam carries the power away: the ball between the hands shrinks so the beam reads
 			}
-			if (c >= 1.0f && g_beamT <= 0) {  // full: it pulses, and flashes bright on each beat
-				const float beat = std::fmod(g_time * 2.2f, 1.0f);
-				sz *= 1.0f + 0.16f * std::sin(g_time * 14.0f) + (beat < 0.12f ? 0.35f * (1.0f - beat / 0.12f) : 0.0f);
+			// smooth: the size eases toward where the charge says it should be (no jumps between frames)
+			static float shown = 0.0f;
+			shown += (sz - shown) * std::min(1.0f, 12.0f * std::clamp(g_time - g_orbLastT, 0.0f, 0.1f));
+			g_orbLastT = g_time;
+			float pulse = 1.0f;
+			if (c >= 1.0f && g_beamT <= 0) {  // full: a slow, even throb and a brighter glow
+				pulse = 1.0f + 0.08f * std::sin(g_time * 7.0f);
 			}
+			static float spin = 0;
+			spin += 0.016f * (2.0f + 10.0f * c);
 			const RE::NiPoint3 at = (rm->world.translate + lm->world.translate) * 0.5f;
-			g_orb.Show(true);
-			g_orb.Place(at, AxisAngle({ 0, 0, 1 }, g_time * 3.0f), sz);
+			g_orbBall.Show(true);
+			g_orbBall.Place(at, AxisAngle({ 0, 0, 1 }, spin) * AxisAngle({ 1, 0, 0 }, spin * 0.43f), shown * pulse, c >= 1.0f ? 1.25f : 1.0f);
 			g_orbAt = at, g_orbAtValid = true;
-		} else if (g_orb.obj) {
-			g_orb.Show(false);
+		} else if (g_orbBall.glow.obj) {
+			g_orbBall.Show(false);
 		}
 		// a ball of the spell's power turning in each hand, always while the spell is out; it spins faster as a cast
 		// gathers (the right hand for a left-click charge, both for the two-handed charge) and pulses when full
@@ -1290,13 +1344,12 @@ namespace Spellcraft
 		for (int side = 0; side < 2; ++side) {
 			auto& fx = g_ball[side];
 			auto* node = side == 1 ? rm : lm;
-			if (ballsOn && g_ballRow[side] != row) {
-				fx.Detach();
-				fx = Fx{ Load(Def(row).id, "orb") };
-				g_ballRow[side] = row;
+			if (ballsOn) {
+				fx.Need(row);
 			}
-			if (!ballsOn || !fx.obj || !node || !node->AsNode()) {
-				for (Fx* x : { &fx, &g_aura[side], &g_flash[side] }) {
+			if (!ballsOn || !fx.glow.obj || !node || !node->AsNode()) {
+				fx.Show(false);
+				for (Fx* x : { &g_aura[side], &g_flash[side] }) {
 					if (x->obj) {
 						x->Show(false);
 					}
@@ -1312,11 +1365,11 @@ namespace Spellcraft
 			float sz = (first ? 0.13f : 0.2f) * (1.0f + 0.6f * tapC) * (1.0f - 0.55f * orbC);  // (both pour into the orb between the hands)
 			const bool ready = (tapC >= 1.0f) || (orbC >= 1.0f);
 			if (ready) {
-				const float beat = std::fmod(g_time * 2.5f, 1.0f);
-				sz *= 1.0f + 0.12f * std::sin(g_time * 16.0f) + (beat < 0.12f ? 0.35f * (1.0f - beat / 0.12f) : 0.0f);
+				sz *= 1.0f + 0.08f * std::sin(g_time * 8.0f);  // full: an even throb
 			}
+			g_ballShown[side] += (sz - g_ballShown[side]) * std::min(1.0f, 12.0f * dtp);
 			fx.Show(true);
-			fx.Place(node->world.translate, AxisAngle({ 0.25f, 0.3f, 1.0f }, g_ballSpin[side]) * AxisAngle({ 1, 0, 0 }, 0.6f), sz);
+			fx.Place(node->world.translate, AxisAngle({ 0.25f, 0.3f, 1.0f }, g_ballSpin[side]) * AxisAngle({ 1, 0, 0 }, 0.6f + g_ballSpin[side] * 0.3f), g_ballShown[side], ready ? 1.25f : 1.0f);
 			// the aura: the hand burns with the spell while a cast gathers, growing and flaring with the charge
 			auto& au = g_aura[side];
 			if (g_auraRow[side] != row) {
@@ -1459,7 +1512,7 @@ namespace Spellcraft
 		}
 		g_held.clear();
 		for (auto& w : g_wells) {
-			w.fx.Detach();
+			w.ball.Detach();
 		}
 		g_wells.clear();
 		g_beam.Clear();
@@ -1468,6 +1521,8 @@ namespace Spellcraft
 		for (int i = 0; i < 2; ++i) {
 			g_ball[i].Detach(), g_aura[i].Detach(), g_flash[i].Detach();
 			g_ball[i] = {}, g_aura[i] = {}, g_flash[i] = {};
+			g_orbBall.Detach();
+			g_orbBall = {};
 			g_ballRow[i] = g_auraRow[i] = g_flashRow[i] = -1;
 		}
 		g_orb = {}, g_hand = {};

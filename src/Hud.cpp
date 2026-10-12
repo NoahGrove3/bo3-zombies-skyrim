@@ -395,11 +395,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					const float py = y - 34 * k;
 					const auto  c = gen::kPerkColor[i];
-					dl->AddCircleFilled({ x, py }, r + 6 * k, IM_COL32((c >> 24) & 0xFF, (c >> 16) & 0xFF, (c >> 8) & 0xFF, static_cast<int>(50 + 30 * std::sin(now * 2 + i))));
 					if (auto* icon = g_perkIcons[i]) {
 						dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { x - r, py - r }, { x + r, py + r });
 					} else {
 						dl->AddCircleFilled({ x, py }, r, Col(c));
+					}
+					// a glowing trim hugging the outside of the icon's gold rim, breathing softly in the brew's colour
+					{
+						const float br = 0.6f + 0.4f * std::sin(now * 2.2f + i);
+						const int   cr = (c >> 24) & 0xFF, cg = (c >> 16) & 0xFF, cb = (c >> 8) & 0xFF;
+						dl->AddCircle({ x, py }, r + 2.6f * k, IM_COL32(cr, cg, cb, static_cast<int>(60 * br)), 48, 5.0f * k);
+						dl->AddCircle({ x, py }, r + 1.2f * k, IM_COL32(std::min(255, cr + 60), std::min(255, cg + 60), std::min(255, cb + 60), static_cast<int>(200 * br)), 48, 1.6f * k);
 					}
 					x += gap;
 				}

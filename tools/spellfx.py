@@ -26,7 +26,7 @@ TPATH = 'UndyingNights\\fx\\'
 
 
 # ----------------------------------------------------------------------------------------------------- textures
-N = 512  # texture size: sharp up close (the orb sits a hand's width from the eye), with a full mip chain
+N = 1024  # texture size: sharp up close (the orb sits a hand's width from the eye), with a full mip chain
 
 
 def write_dds(path, img):
@@ -205,12 +205,17 @@ def build(spell, t):
     pale = mix(col, (1, 1, 1), 0.65)
     main_tex = {'arcane': t['soft'], 'fire': t['flame'], 'ice': t['crystal'], 'shock': t['soft'], 'thorn': t['soft'], 'blood': t['drop'],
                 'wind': t['swirl'], 'soul': t['wisp'], 'dawn': t['rays'], 'void': t['soft']}[style]
-    # ---- the bolt
+    # ---- the glow: a ball of the spell's power, flat quads in the XZ plane (the code turns them to face the eye):
+    # a wide soft bloom, the spell's own pattern, a white-hot core. Used for the projectile, the orbs and the hands.
     m = Mesh()
     if style == 'void':
-        d = m.shape('dark', t['dark'], (0, 0, 0, 1), 1.0, blend='alpha'); m.billboard(d, (0, 0, 0), 7)
-    core = m.shape('core', t['core'], (*pale, 1), 2.2); m.billboard(core, (0, 0, 0), 6 if style != 'thorn' else 4)
-    halo = m.shape('halo', main_tex, (*col, 1), 1.6); m.billboard(halo, (0, 0, 0), 17 if style not in ('wind', 'dawn') else 22)
+        d = m.shape('dark', t['dark'], (0, 0, 0, 1), 1.0, blend='alpha'); Mesh.quad(d, (0, 0.2, 0), (1, 0, 0), (0, 0, 1), 11, 11)
+    for nm, tex, c_, sc, half in (('bloom', t['soft'], col, 0.8, 30), ('body', main_tex, col, 1.9, 16), ('rim', t['ring'], acc, 1.2, 15), ('core', t['core'], pale, 2.8, 8)):
+        q = m.shape(nm, tex, (*c_, 1), sc)
+        Mesh.quad(q, (0, 0, 0), (1, 0, 0), (0, 0, 1), half, half)
+    m.write(MESH / f'{sid}_glow.nif')
+    # ---- the bolt: its trail (the ball itself is the glow plus small rings, placed by the code)
+    m = Mesh()
     tr = m.shape('trail', t['streak'] if style != 'shock' else t['bolt'], (*col, 1), 1.4); m.trail(tr, (0, 0, 0), 7, 120 if style != 'ice' else 160)
     if style == 'thorn':  # the thorn itself: a long spike along +Y
         sp = m.shape('spike', t['thorn'], (*acc, 1), 1.8)
@@ -236,11 +241,7 @@ def build(spell, t):
     m.write(MESH / f'{sid}_bolt.nif')
     # ---- the orb between the hands (unit radius ~12; the code scales it with the charge)
     m = Mesh()
-    if style == 'void':
-        d = m.shape('dark', t['dark'], (0, 0, 0, 1), 1.0, blend='alpha'); m.billboard(d, (0, 0, 0), 10)
-    core = m.shape('core', t['core'], (*pale, 1), 2.6); m.billboard(core, (0, 0, 0), 8)
-    inner = m.shape('inner', main_tex, (*col, 1), 1.8); m.billboard(inner, (0, 0, 0), 16)
-    outer = m.shape('outer', t['soft'], (*col, 1), 0.9); m.billboard(outer, (0, 0, 0), 30)
+    # (the glow is its own mesh, <id>_glow.nif, turned to face the eye every frame by the code: no crossed planes)
     # the rings: thin circular lines orbiting the glowing core (each a narrow band in its plane and one across it,
     # so it reads as a line from every side, never as a flat disc)
     ring = m.shape('ring', t['beam'], (*acc, 1), 1.9)
@@ -264,7 +265,7 @@ def build(spell, t):
     # ---- the aura round a casting hand: tongues of the spell's power flaring out from a glow (the code spins it,
     # flickers it and grows it with the charge)
     m = Mesh()
-    gl = m.shape('glow', t['soft'], (*col, 1), 1.4); m.billboard(gl, (0, 0, 0), 13)
+    # (its glow is the hand's ball glow, faced to the eye by the code)
     tongue_tex = {'fire': t['flame'], 'ice': t['crystal'], 'shock': t['bolt'], 'thorn': t['thorn'], 'blood': t['drop'],
                   'wind': t['swirl'], 'soul': t['wisp'], 'dawn': t['rays']}.get(style, t['streak'])
     tg = m.shape('tongues', tongue_tex, (*mix(col, acc, 0.35), 1), 1.8)

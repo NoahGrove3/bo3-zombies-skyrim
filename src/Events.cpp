@@ -97,8 +97,20 @@ namespace bo3z
 			}
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESDeathEvent* a_event, RE::BSTEventSource<RE::TESDeathEvent>*) override
 			{
-				if (!a_event || !a_event->dead || !a_event->actorDying) {
+				// the first word of a death (dying), not the last (dead): a body crumbles a second after it falls, often
+				// before Skyrim would call it fully dead, and the kill must still count. Once per body.
+				if (!a_event || !a_event->actorDying) {
 					return RE::BSEventNotifyControl::kContinue;
+				}
+				{
+					static std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> seen;
+					const auto now = std::chrono::steady_clock::now();
+					std::erase_if(seen, [&](const auto& e) { return now - e.second > std::chrono::seconds(30); });
+					const auto id = a_event->actorDying->GetFormID();
+					if (seen.contains(id)) {
+						return RE::BSEventNotifyControl::kContinue;
+					}
+					seen[id] = now;
 				}
 				auto* dying = a_event->actorDying->As<RE::Actor>();
 				auto* player = RE::PlayerCharacter::GetSingleton();
