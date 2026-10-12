@@ -511,6 +511,42 @@ namespace bo3z::Audio
 		}
 	}
 
+	// While the film plays the world is silent: the branches of Skyrim's sound tree that hold the world's effects,
+	// ambience and voices go to zero (their parents carry the UI category our film sounds use, and the music, so
+	// those stay); whatever Skyrim music was playing is finished so ours plays alone. Restored when the film ends.
+	void FilmQuiet(bool a_on)
+	{
+		struct Cat { RE::FormID id; float saved{ -1 }; };
+		static std::array<Cat, 2> cats{ { { 0x000E9E },     // AudioCategorySFXFadeDuringDialogue: footsteps, ambience, magic, the world's effects
+			{ 0x0DDDC5 } } };                              // AudioCategoryPausedDuringMenu: voices (VOC)
+		static bool on = false;
+		if (a_on == on) {
+			return;
+		}
+		for (auto& c : cats) {
+			auto* cat = RE::TESForm::LookupByID<RE::BGSSoundCategory>(c.id);
+			if (!cat) {
+				continue;
+			}
+			if (a_on) {
+				c.saved = cat->GetCategoryVolume();
+				cat->SetCategoryVolume(0.0f);
+			} else if (c.saved >= 0) {
+				cat->SetCategoryVolume(c.saved);
+				c.saved = -1;
+			}
+		}
+		if (a_on) {
+			auto* mm = RE::BSMusicManager::GetSingleton();
+			auto* ours = Music("intro");
+			if (mm && mm->current && mm->current != static_cast<RE::BSIMusicType*>(ours)) {
+				mm->current->DoFinish(true);  // Skyrim's own track fades out
+			}
+		}
+		on = a_on;
+		logger::info("audio: film quiet {}", a_on);
+	}
+
 	void FreedMusic()
 	{
 		if (auto* m = Music("freed")) {

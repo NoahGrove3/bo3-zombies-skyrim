@@ -114,6 +114,13 @@ namespace bo3z
 				}
 				auto* dying = a_event->actorDying->As<RE::Actor>();
 				auto* player = RE::PlayerCharacter::GetSingleton();
+				if (dying && dying == player) {  // who or what killed you (a new character's first minutes are watched closely)
+					auto*       k = a_event->actorKiller.get();
+					const auto  p = player->GetPosition();
+					auto*       cell = player->GetParentCell();
+					logger::info("death: the player died (killer {:08X} {}, at {:.0f},{:.0f},{:.0f} in {}, level {}, hp max {:.0f})", k ? k->GetFormID() : 0, k ? k->GetName() : "none",
+						p.x, p.y, p.z, cell ? cell->GetFormEditorID() : "?", player->GetLevel(), player->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth));
+				}
 				if (!dying || !Director::IsRoundUndead(dying)) {
 					return RE::BSEventNotifyControl::kContinue;
 				}

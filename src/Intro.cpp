@@ -42,6 +42,17 @@ namespace bo3z
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			auto* intro = Forms::IntroQuest();
 			auto* ui = RE::UI::GetSingleton();
+			if (player && g_moved) {  // a new character's first minute: health and place, once a second, so a death can be traced
+				static auto last = std::chrono::steady_clock::now();
+				static int  n = 0;
+				if (n < 90 && std::chrono::steady_clock::now() - last > std::chrono::seconds(1)) {
+					last = std::chrono::steady_clock::now(), ++n;
+					auto*      av = player->AsActorValueOwner();
+					const auto p = player->GetPosition();
+					logger::info("intro: watch hp {:.0f}/{:.0f} at {:.0f},{:.0f},{:.0f} paused={} dead={}", av->GetActorValue(RE::ActorValue::kHealth), av->GetPermanentActorValue(RE::ActorValue::kHealth),
+						p.x, p.y, p.z, ui && ui->GameIsPaused(), player->IsDead());
+				}
+			}
 			if (!player || !intro || !ui || ui->GameIsPaused()) {
 				return;
 			}
