@@ -6817,6 +6817,25 @@
       "use": "a ward-fire kindled"
     },
     {
+      "id": "relic_found",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_relic_found",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_crunch.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_crunch.wav",
+        "fx\\UndyingNights\\un\\sp_bones.wav"
+      ],
+      "shift": 20,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "a relic (bones) picked up: the bones rattle into your pack"
+    },
+    {
       "id": "curse_lifted",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",

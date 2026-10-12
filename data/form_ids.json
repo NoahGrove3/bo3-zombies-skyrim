@@ -964,6 +964,7 @@
   "ARTO:fx_iceshell": "0xbc0",
   "ARTO:fx_roots": "0xbc1",
   "ARTO:fx_burn": "0xbc2",
-  "ARTO:fx_poison": "0xbc3"
+  "ARTO:fx_poison": "0xbc3",
+  "SNDR:relic_found": "0xbc4"
  }
 }

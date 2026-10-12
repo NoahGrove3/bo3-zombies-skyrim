@@ -189,6 +189,7 @@ S('rite_hum', 'rite_hum', 0, '3d', loop=True, atten=2, use='the ward / hold circ
 S('rite_reset', 'rite_reset', 0, use='the dead broke the circle: the timer resets')
 S('rite_fail', 'rite_reset', -20, use='a rite failed')
 S('ward_lit', 'sp_ignite_small', -10, '3d', use='a ward-fire kindled')
+S('relic_found', ['sp_crunch', 'sp_bones'], 20, use='a relic (bones) picked up: the bones rattle into your pack')
 S('curse_lifted', 'shout_learned', -10, use='a city freed (with the music stinger)')
 S('shout_learned', 'shout_learned', 0, use="a Thu'um learned")
 # ---- the intro (plays once, after character creation; UI category: it plays while the game waits)

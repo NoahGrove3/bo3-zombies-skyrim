@@ -200,7 +200,17 @@ namespace bo3z
 				ref->SetScale(a_scale);
 			}
 			ref->SetPosition(a_at);
-			return ref->CreateRefHandle();
+			// moved (and scaled) after it was made: its collision stayed behind where it was made (on the player),
+			// an invisible pillar long after the fire was gone. A disable/enable a frame later builds it again where
+			// the brazier really stands.
+			const auto h = ref->CreateRefHandle();
+			SKSE::GetTaskInterface()->AddTask([h] {
+				if (auto r = h.get(); r && !r->IsDeleted()) {
+					r->Disable();
+					r->Enable(false);
+				}
+			});
+			return h;
 		}
 
 		void Kindle(RE::PlayerCharacter* a_player, Ward& w)
@@ -740,7 +750,7 @@ namespace bo3z
 					if (!((bits >> i) & 1) && g_wards[i].brazier.get() && pp.GetDistance(g_wards[i].pos) < 170.0f) {
 						const int nb = bits | (1 << i);
 						Remove(g_wards[i].brazier), Remove(g_wards[i].fire), Remove(g_wards[i].light);
-						Forms::Play(gen::Sound::ward_lit);
+						Forms::Play(gen::Sound::relic_found);  // the bones rattle into your pack
 						Points::Add(150);
 						if (std::popcount(static_cast<unsigned>(nb & 0xFF)) >= Rite(z, s).target) {
 							Advance(z);
