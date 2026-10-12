@@ -1353,10 +1353,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const auto tex = ImTextureID(reinterpret_cast<std::uintptr_t>(t));
 				const float u0 = std::fmod(now * speed, 1.0f), u1 = std::fmod(-now * speed * 0.63f + 0.37f, 1.0f);
 				const float bob = std::sin(now * 0.21f) * 0.012f * size.y;
-				fg->AddImage(tex, { 0, y0 + bob }, { size.x, y1 + bob }, { u0, 0 }, { u0 + rep, 1 }, (rgb & 0x00FFFFFF) | (static_cast<ImU32>(al * 0.6f * fade) << 24));
-				fg->AddImage(tex, { 0, y0 - bob * 0.6f + (y1 - y0) * 0.08f }, { size.x, y1 }, { u1, 0 }, { u1 + rep * 0.7f, 1 }, (rgb & 0x00FFFFFF) | (static_cast<ImU32>(al * 0.5f * fade) << 24));
+				fg->AddImage(tex, { 0, y0 + bob }, { size.x, y1 + bob }, { u0, 0 }, { u0 + rep, 1 }, (rgb & 0x00FFFFFF) | (static_cast<ImU32>(std::min(255.0f, al * 0.85f * fade)) << 24));
+				fg->AddImage(tex, { 0, y0 - bob * 0.6f + (y1 - y0) * 0.08f }, { size.x, y1 }, { u1, 0 }, { u1 + rep * 0.7f, 1 }, (rgb & 0x00FFFFFF) | (static_cast<ImU32>(std::min(255.0f, al * 0.7f * fade)) << 24));
 			};
-			groundFog(size.y * 0.30f, size.y * 0.56f, 0.006f, 1.6f, 120, IM_COL32(120, 135, 175, 0));
+			groundFog(size.y * 0.26f, size.y * 0.52f, 0.006f, 1.6f, 230, IM_COL32(150, 162, 200, 0));
 			// the barrow ridge and the horde coming down it; the champions' violet light in the barrow door breathing
 			layer(g_mMid, 0.8f, white);
 			{
@@ -1365,7 +1365,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				fg->AddCircleFilled(a, 90 * k, IM_COL32(150, 80, 255, static_cast<int>(10 * br * fade)), 40);
 			}
 			// ground mist rolling between the horde and the front
-			groundFog(size.y * 0.42f, size.y * 0.82f, 0.009f, 1.2f, 150, IM_COL32(110, 122, 160, 0));
+			groundFog(size.y * 0.40f, size.y * 0.80f, 0.009f, 1.2f, 255, IM_COL32(140, 150, 188, 0));
 			// the front: the rune-stone (its runes pulse, a soft violet light on the snow), the graves, the outcrop
 			layer(g_mNear, 1.25f, IM_COL32(215, 215, 222, static_cast<int>(255 * fade)));  // the front sits in shadow
 			{
@@ -1389,7 +1389,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 				}
 			}
-			groundFog(size.y * 0.66f, size.y * 1.02f, 0.013f, 0.9f, 170, IM_COL32(88, 98, 130, 0));  // the thick bank across the front, darker
+			groundFog(size.y * 0.62f, size.y * 1.02f, 0.013f, 0.9f, 255, IM_COL32(105, 114, 148, 0));  // the thick bank across the front, darker
 			// snow and grave-ash drifting down on the wind, a few soul-motes rising from the rune-stone
 			{
 				struct Mote { float x, y, sp, sway, ph, r; int kind; };
