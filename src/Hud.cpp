@@ -1065,6 +1065,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ID3D11ShaderResourceView* g_mAurora = nullptr;  // menu_aurora.png: its aurora alone, for the shimmer
 		ID3D11ShaderResourceView* g_mTitle = nullptr;
 
+		float g_pressT = -10, g_pressY = 0;  // the main menu entry last pressed (its flare)
 		void DrawMenu(ImVec2 size, float now, bool click)
 		{
 			auto*       fg = ImGui::GetForegroundDrawList();
@@ -1246,10 +1247,19 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					hoverIdx = hovered;
 					if (click && hovered >= 0) {
 						PressMainList(mv, entries[hovered].index, true);
+						g_pressT = now, g_pressY = selY;
 					}
 				} else {
 					selY = -1;
 				}
+			}
+			// a pressed entry answers: a cold flare runs along its line
+			if (const float pt = now - g_pressT; pt >= 0 && pt < 0.45f) {
+				const float u = pt / 0.45f, a = 1.0f - u;
+				const float right = size.x - 90 * k, left = right - 420 * k;
+				fg->AddRectFilledMultiColor({ left, g_pressY - 24 * k }, { right, g_pressY + 24 * k }, IM_COL32(90, 255, 170, 0), IM_COL32(170, 255, 220, static_cast<int>(90 * a)),
+					IM_COL32(170, 255, 220, static_cast<int>(90 * a)), IM_COL32(90, 255, 170, 0));
+				fg->AddLine({ left + (right - left) * u, g_pressY + 20 * k }, { right, g_pressY + 20 * k }, IM_COL32(220, 255, 240, static_cast<int>(220 * a)), 2.0f * k);
 			}
 			PartyPanel(fg, size, { 40 * k, size.y - 40 * k }, k, click);
 			// the curtain that lifts as the menu opens

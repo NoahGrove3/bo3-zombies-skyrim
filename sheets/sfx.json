@@ -1350,6 +1350,14 @@
       "t1": 5.2,
       "peak": -8,
       "fadeOut": 300
+    },
+    {
+      "id": "amb_ghosts",
+      "src": "ghosts",
+      "use": "airy ghost-roars drifting in the fog (loop)",
+      "take": 0,
+      "peak": -14,
+      "loop": true
     }
   ]
 }

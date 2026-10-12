@@ -969,6 +969,11 @@ namespace bo3z
 				logger::warn("event: weather {}|{:06X} not found", ev.weatherPlugin, ev.weatherId);
 			}
 			Forms::Play(ev.sound);
+			{  // the night's own bed of sound, under everything until dawn
+				const std::string_view id = ev.id;
+				const auto bed = id == "bloodmoon" ? gen::Sound::amb_bloodmoon : id == "fog" ? gen::Sound::amb_fog : id == "ashstorm" ? gen::Sound::amb_ash : gen::Sound::amb_iron;
+				Audio::LoopStart(Audio::kLoopNight, bed);
+			}
 			if (ev.boss && !Coop::Client() && g_boss.spawnIn < 0 && !g_boss.handle.get() && !g_boss.slainTonight) {
 				g_boss.spawnIn = gen::kCurseHeraldDelay;
 			}
@@ -976,6 +981,7 @@ namespace bo3z
 		}
 		void EndEvent()
 		{
+			Audio::LoopStop(Audio::kLoopNight, 2500);
 			if (g_weatherForced) {
 				if (auto* sky = RE::Sky::GetSingleton()) {
 					sky->ReleaseWeatherOverride();

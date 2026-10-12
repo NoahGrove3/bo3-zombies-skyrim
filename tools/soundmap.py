@@ -73,6 +73,12 @@ for w, (el, off) in ELEM.items():
     S('full_' + w, fu, off, atten=2, use=f'{w}: full charge reached ({el})')
     S('fizzle_' + w, fz, off - 15, atten=6, use=f'{w}: let go too early, the power gutters out ({el})')
     S('travel_' + w, tr, off, '3d', loop=True, atten=4, use=f'{w}: the bolt in flight ({el}, loops on the projectile)')
+# special nights keep a quiet bed under the whole night (Spec 12.8), stopped at dawn
+S('amb_bloodmoon', 'sp_drone_loop', -45, loop=True, atten=12, use='Blood Moon: a low drone all night')
+S('amb_fog', 'amb_ghosts', -20, loop=True, atten=10, use='Fog Night: ghost-roars drifting in the mist')
+S('amb_ash', 'tr_wind', -35, loop=True, atten=10, use='Ash Storm: the wind that carries the ash')
+S('amb_iron', 'sp_beam_loop2', -60, loop=True, atten=12, use='Night of Iron: a cold iron hum')
+S('amb_menu', 'tr_wind', -45, cat='ui', loop=True, atten=16, use='main menu: a cold wind under the music (loop while the menu is up)')
 S('release_power', 'champ_arrive', -25, atten=4, use='a full-charge release: the weight under every signature move')
 S('linger_hex', 'sp_hex', 10, '3d', atten=2, use='a doom mark takes hold (Hexfire, Void Orb)')
 S('linger_plague', BREATH, 25, '3d', atten=4, use='the plague takes a host')

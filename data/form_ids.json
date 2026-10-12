@@ -893,6 +893,23 @@
   "SNDR:linger_hex": "0xb79",
   "SNDR:linger_plague": "0xb7a",
   "SNDR:linger_doom": "0xb7b",
-  "SNDR:linger_jump": "0xb7c"
+  "SNDR:linger_jump": "0xb7c",
+  "SNDR:amb_bloodmoon": "0xb7d",
+  "SNDR:amb_fog": "0xb7e",
+  "SNDR:amb_ash": "0xb7f",
+  "SNDR:amb_iron": "0xb80",
+  "STAT:ls_shrine": "0xb81",
+  "STAT:ls_book": "0xb82",
+  "LSCR:ls_0": "0xb83",
+  "LSCR:ls_1": "0xb84",
+  "LSCR:ls_2": "0xb85",
+  "LSCR:ls_3": "0xb86",
+  "LSCR:ls_4": "0xb87",
+  "LSCR:ls_5": "0xb88",
+  "LSCR:ls_6": "0xb89",
+  "LSCR:ls_7": "0xb8a",
+  "LSCR:ls_8": "0xb8b",
+  "LSCR:ls_9": "0xb8c",
+  "SNDR:amb_menu": "0xb8d"
  }
 }

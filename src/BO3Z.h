@@ -152,7 +152,7 @@ namespace bo3z
 		void IntroMusic(bool a_on);  // the intro's music (our MUSC: the music slider applies, the hold's music waits)
 		void SetMenuMusic();
 		void MenuUiSounds(bool a_on);  // the main menu's own focus/accept/back sounds play ours while it is up
-		inline constexpr std::uint64_t kLoopCharge = 1, kLoopRite = 2;
+		inline constexpr std::uint64_t kLoopCharge = 1, kLoopRite = 2, kLoopNight = 3, kLoopMenu = 4;
 	}
 
 	namespace Undead

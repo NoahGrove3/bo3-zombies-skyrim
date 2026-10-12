@@ -3014,6 +3014,96 @@
       "use": "embermortar: the bolt in flight (wind, loops on the projectile)"
     },
     {
+      "id": "amb_bloodmoon",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_amb_bloodmoon",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_drone_loop.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_drone_loop.wav"
+      ],
+      "shift": -45,
+      "layer": "none",
+      "atten": 12,
+      "loop": true,
+      "use": "Blood Moon: a low drone all night"
+    },
+    {
+      "id": "amb_fog",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_amb_fog",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\amb_ghosts.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\amb_ghosts.wav"
+      ],
+      "shift": -20,
+      "layer": "none",
+      "atten": 10,
+      "loop": true,
+      "use": "Fog Night: ghost-roars drifting in the mist"
+    },
+    {
+      "id": "amb_ash",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_amb_ash",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\tr_wind.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_wind.wav"
+      ],
+      "shift": -35,
+      "layer": "none",
+      "atten": 10,
+      "loop": true,
+      "use": "Ash Storm: the wind that carries the ash"
+    },
+    {
+      "id": "amb_iron",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_amb_iron",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\sp_beam_loop2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\sp_beam_loop2.wav"
+      ],
+      "shift": -60,
+      "layer": "none",
+      "atten": 12,
+      "loop": true,
+      "use": "Night of Iron: a cold iron hum"
+    },
+    {
+      "id": "amb_menu",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_amb_menu",
+      "verify": [],
+      "space": "2d",
+      "cat": "ui",
+      "file": "fx\\UndyingNights\\un\\tr_wind.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\tr_wind.wav"
+      ],
+      "shift": -45,
+      "layer": "none",
+      "atten": 16,
+      "loop": true,
+      "use": "main menu: a cold wind under the music (loop while the menu is up)"
+    },
+    {
       "id": "release_power",
       "plugin": "BO3Zombies.esp",
       "localId": "auto",

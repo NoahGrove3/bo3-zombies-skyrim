@@ -526,5 +526,10 @@ namespace bo3z::Audio
 			}
 		}
 		on = a_on;
+		if (a_on) {
+			LoopStart(kLoopMenu, gen::Sound::amb_menu);  // the wind over the barrow, quietly, under the music
+		} else {
+			LoopStop(kLoopMenu, 1200);
+		}
 	}
 }
