@@ -39,10 +39,10 @@ TROUBLESHOOTING
  - Normal Skyrim menu / you start on the Helgen cart: Undying Nights isn't loaded. Close Skyrim, run the
    .bat again, start from the desktop shortcut. The installer prints your Skyrim version - it must be
    current (Steam: right-click Skyrim > Properties > Updates > keep it updated).
- - Antivirus removed dinput8.dll or BO3Zombies.asi from the Skyrim folder: allow them and run the .bat again.
+ - Antivirus removed dinput8.dll or UndyingNights.asi from the Skyrim folder: allow them and run the .bat again.
  - Accepted the invite and nothing happened: you were not in the Undying Nights main menu, or one of you
    has an older pack. Both re-run the .bat from this pack, start from the shortcut, try again.
- - Uninstall: delete BO3Zombies.asi, dinput8.dll and UndyingNights.ini from the Skyrim folder and
+ - Uninstall: delete UndyingNights.asi, dinput8.dll and UndyingNights.ini from the Skyrim folder and
    Data\BO3Zombies.esp, Data\SkyrimTogetherReborn.
 
 Built with Claude. Fan project, not affiliated with Bethesda. Skyrim Together Reborn by Tilted Phoques.

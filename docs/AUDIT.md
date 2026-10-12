@@ -4,10 +4,10 @@ This audit covers Spec Section 0. It is the baseline for Sections 12 (audio), 13
 enemy models and the move to a Nexus Mods release.
 
 ## 1. Architecture (as built)
-- **Game**: Skyrim SE/AE 1.7.104 (Steam). Plugin `BO3Zombies.asi` (CommonLibSSE-NG, C++23, MSVC in GitHub Actions). It
+- **Game**: Skyrim SE/AE 1.7.104 (Steam). Plugin `UndyingNights.asi` (CommonLibSSE-NG, C++23, MSVC in GitHub Actions). It
   loads two ways:
   - through Ultimate ASI Loader (`dinput8.dll`) on a normal launch;
-  - through SKSE as `Data/SKSE/Plugins/BO3Zombies.dll` when Skyrim Together Reborn starts the game. The second copy
+  - through SKSE as `Data/SKSE/Plugins/UndyingNights.dll` when Skyrim Together Reborn starts the game. The second copy
     switches itself off if the first is already running.
 - **Data plugin** `BO3Zombies.esp` (ESL-flagged) is generated from JSON sheets:
   `sheets/*.json` -> `tools/gen.py` (`src/Generated.h`) and `tools/gen_esp.py` (records). CI fails when either output is

@@ -21,12 +21,13 @@ file(GLOB BO3Z_SOURCES CONFIGURE_DEPENDS src/*.cpp src/*.h)
 
 add_commonlibsse_plugin(
 	BO3Zombies
-	NAME "BO3Zombies"
+	NAME "UndyingNights"
 	AUTHOR "Noah Grove"
 	USE_ADDRESS_LIBRARY
 	SOURCES ${BO3Z_SOURCES}
 )
 
+set_target_properties(BO3Zombies PROPERTIES OUTPUT_NAME UndyingNights)  # UndyingNights.dll / .asi
 target_include_directories(BO3Zombies PRIVATE src)
 target_precompile_headers(BO3Zombies PRIVATE src/PCH.h)
 set_source_files_properties(src/Relay.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)  # winsock before windows.h

@@ -7,9 +7,9 @@
 #include <fstream>
 #include <sstream>
 
-// Test channel (sheet: systems.devtools). Lines written to My Games/Skyrim Special Edition/SKSE/BO3Zombies-cmd.txt
+// Test channel (sheet: systems.devtools). Lines written to My Games/Skyrim Special Edition/SKSE/UndyingNights-cmd.txt
 // are run and the file removed:
-//   shot <name>   save the next frame (with the HUD) to SKSE/BO3Zombies-shots/<name>.png
+//   shot <name>   save the next frame (with the HUD) to SKSE/UndyingNights-shots/<name>.png
 //   hour <h>      set Skyrim's clock to hour h (0-24)
 //   state         write round, points, gun and player position to the log
 namespace bo3z
@@ -374,7 +374,7 @@ namespace bo3z
 			if (!dir) {
 				return;
 			}
-			const auto file = *dir / "BO3Zombies-cmd.txt";
+			const auto file = *dir / "UndyingNights-cmd.txt";
 			std::error_code ec;
 			if (!std::filesystem::exists(file, ec)) {
 				return;
@@ -419,7 +419,7 @@ namespace bo3z
 			if (FAILED(a_swap->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back)))) {
 				return;
 			}
-			const auto out = *dir / "BO3Zombies-shots";
+			const auto out = *dir / "UndyingNights-shots";
 			std::error_code ec;
 			std::filesystem::create_directories(out, ec);
 			const auto path = out / (name + ".png");

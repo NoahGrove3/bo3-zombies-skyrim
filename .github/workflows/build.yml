@@ -56,9 +56,9 @@ jobs:
           $v = "0.2.0"
           $stage = "dist\stage"
           New-Item -ItemType Directory -Force "$stage\Data\SKSE\Plugins" | Out-Null
-          Copy-Item build\BO3Zombies.dll "$stage\BO3Zombies.asi"
+          Copy-Item build\UndyingNights.dll "$stage\UndyingNights.asi"
           New-Item -ItemType Directory -Force -Path "$stage\Data\SKSE\Plugins" | Out-Null
-          Copy-Item build\BO3Zombies.dll "$stage\Data\SKSE\Plugins\BO3Zombies.dll"  # Skyrim Together runs the game from its own folder (no ASI loader there): SKSE loads this copy
+          Copy-Item build\UndyingNights.dll "$stage\Data\SKSE\Plugins\UndyingNights.dll"  # Skyrim Together runs the game from its own folder (no ASI loader there): SKSE loads this copy
           Copy-Item data\BO3Zombies.esp "$stage\Data\BO3Zombies.esp"
           Copy-Item third_party\address-library\versionlib-1-7-104-0.bin "$stage\Data\SKSE\Plugins\"
           python -m pip install --quiet numpy scipy pillow
@@ -74,14 +74,14 @@ jobs:
           New-Item -ItemType Directory -Force "$stage\Data\Meshes\Interface\Logo" | Out-Null
           Copy-Item assets\meshes\logo_empty.nif "$stage\Data\Meshes\Interface\Logo\logo.nif"
           Copy-Item assets\meshes\logo_empty.nif "$stage\Data\Meshes\Interface\Logo\logo01ae.nif"
-          Copy-Item README.md "$stage\BO3Zombies-README.md"
-          Copy-Item third_party\address-library\CREDITS.md "$stage\BO3Zombies-ADDRESS-LIBRARY-CREDITS.md"
-          python tools/zipdir.py "$stage" "dist\BO3Zombies-$v.zip"
-          python tools/zipdir.py build "dist\BO3Zombies-$v-pdb.zip" --only BO3Zombies.pdb
+          Copy-Item README.md "$stage\UndyingNights-README.md"
+          Copy-Item third_party\address-library\CREDITS.md "$stage\UndyingNights-ADDRESS-LIBRARY-CREDITS.md"
+          python tools/zipdir.py "$stage" "dist\UndyingNights-$v.zip"
+          python tools/zipdir.py build "dist\UndyingNights-$v-pdb.zip" --only UndyingNights.pdb
       - uses: actions/upload-artifact@v4
         continue-on-error: true   # (the release below is what we install; artifacts only add to the storage quota)
         with:
-          name: BO3Zombies
+          name: UndyingNights
           path: dist\*.zip
           retention-days: 1
       - name: Test release for this commit (private repo)

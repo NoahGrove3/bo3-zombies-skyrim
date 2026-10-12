@@ -38,6 +38,10 @@ if ($ver -notlike '1.7.104*') { Say "Undying Nights is built for Skyrim 1.7.104 
 
 # ---- copy the files
 $data = Join-Path $game 'Data'
+# older packs named the game files BO3Zombies.asi / .dll: two copies must never load together
+foreach ($old in (Join-Path $game 'BO3Zombies.asi'), (Join-Path $data 'SKSE\Plugins\BO3Zombies.dll')) {
+    if (Test-Path $old) { Remove-Item $old -Force; Say "Removed the old $(Split-Path -Leaf $old)" }
+}
 Say 'Copying Undying Nights...'
 Copy-Item (Join-Path $pack 'files\Game\*') $game -Recurse -Force
 Say 'Copying Skyrim Together Reborn...'

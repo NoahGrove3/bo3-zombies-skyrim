@@ -57,7 +57,7 @@
   },
   {
    "id": "crosshair",
-   "shows": "4-line BO3 crosshair",
+   "shows": "4-line crosshair",
    "source": "system:gun.out",
    "anchor": "center",
    "offset": [
@@ -113,7 +113,7 @@
   },
   {
    "id": "perk_row",
-   "shows": "perk icons in a line above Skyrim's health bar (real logos once converted from BO3 Mod Tools)",
+   "shows": "perk icons in a line above Skyrim's health bar",
    "source": "system:perks",
    "anchor": "bottom_center",
    "offset": [

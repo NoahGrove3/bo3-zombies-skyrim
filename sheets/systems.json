@@ -63,7 +63,7 @@
     },
     {
       "id": "points",
-      "does": "award BO3 points for hits and kills on round undead",
+      "does": "award points for hits and kills on round undead",
       "reads": [
         "economy:hit",
         "economy:kill",
@@ -77,7 +77,7 @@
     },
     {
       "id": "gun",
-      "does": "BO3 arsenal: each gun is a Skyrim weapon item; while one is drawn, hitscan fire (semi/auto/burst/pump, pellets, splash), ADS, reload, 2 slots (3 with Mule Kick), quick knife",
+      "does": "The arsenal: each gun is a Skyrim weapon item; while one is drawn, hitscan fire (semi/auto/burst/pump, pellets, splash), ADS, reload, 2 slots (3 with Mule Kick), quick knife",
       "reads": [
         "weapons:sidearm",
         "melee:knife",
@@ -99,7 +99,7 @@
     },
     {
       "id": "hud",
-      "does": "draw the BO3 HUD",
+      "does": "draw the Undying Nights HUD",
       "reads": [
         "hud:round_counter",
         "hud:points",
@@ -177,7 +177,7 @@
     },
     {
       "id": "movement",
-      "does": "BO3 sprint boost, slide, aim-down-sights zoom and speed",
+      "does": "Sprint boost, slide, aim-down-sights zoom and speed",
       "reads": [
         "movement:sprint_boost",
         "movement:slide",
@@ -190,7 +190,7 @@
     },
     {
       "id": "plugin",
-      "does": "BO3Zombies.esp holds the gun items, potions, perk effects and town objects; the .asi adds it to Plugins.txt",
+      "does": "BO3Zombies.esp holds the gun items, potions, perk effects and town objects; UndyingNights.asi adds it to Plugins.txt",
       "reads": [
         "objects:coffer",
         "weapons:sidearm",
