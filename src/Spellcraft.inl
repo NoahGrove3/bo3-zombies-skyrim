@@ -787,6 +787,15 @@ namespace Spellcraft
 			if (s.life > 0) {
 				s.pos = end;
 				s.fx.Place(s.pos, Facing(s.vel), s.ult >= 0 && s.ult != gen::kUltSoulStorm ? 2.6f * s.scale * (1.0f + 0.08f * std::sin(g_time * 20.0f)) : s.scale);
+				if (static int dbg = 0; dbg < 12 && s.fx.obj) {
+					++dbg;
+					auto* cam = RE::PlayerCamera::GetSingleton();
+					const auto e = cam && cam->cameraRoot ? cam->cameraRoot->world.translate : RE::NiPoint3{};
+					logger::info("bolt: pos ({:.0f},{:.0f},{:.0f}) eye ({:.0f},{:.0f},{:.0f}) dt {:.4f} world ({:.0f},{:.0f},{:.0f}) bound r {:.1f} c ({:.0f},{:.0f},{:.0f}) culled {} parent {}",
+						s.pos.x, s.pos.y, s.pos.z, e.x, e.y, e.z, a_dt, s.fx.obj->world.translate.x, s.fx.obj->world.translate.y, s.fx.obj->world.translate.z,
+						s.fx.obj->worldBound.radius, s.fx.obj->worldBound.center.x, s.fx.obj->worldBound.center.y, s.fx.obj->worldBound.center.z, s.fx.obj->GetAppCulled(),
+						s.fx.parent ? s.fx.parent->name.c_str() : "-");
+				}
 				if (s.loop) {
 					Audio::LoopMove(s.loop, s.pos);
 				}
