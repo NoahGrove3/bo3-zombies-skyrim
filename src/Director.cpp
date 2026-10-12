@@ -1923,7 +1923,7 @@ namespace bo3z
 			TickFx(a_delta);
 			TickMist(a_delta, g_phase == Phase::Fighting && g_event == gen::kEvent_fog);
 			if (!Coop::TogetherLoaded()) {
-				TickClock(a_delta);  // with Skyrim Together the server's uTimeScale runs the clock (the party pack sets 48)
+				TickClock(a_delta);  // with Skyrim Together the server's uTimeScale runs the clock (the party pack sets 58: 15 min of day, 10 of night)
 			}
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			Undead::Tick(player, a_delta);

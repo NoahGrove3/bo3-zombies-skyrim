@@ -86,7 +86,7 @@ $str = Join-Path $data 'SkyrimTogetherReborn'
 if ($Role -eq 'host') {
     $ini = Join-Path $str 'config\STServer.ini'
     $t = Get-Content $ini
-    $t = $t -replace '^uTimeScale=.*', 'uTimeScale=48'                              # Undying Nights' 30-minute day
+    $t = $t -replace '^uTimeScale=.*', 'uTimeScale=58'                              # Undying Nights' day: 15 minutes of day, 10 of night
     $t = $t -replace '^sPassword=.*', ('sPassword=' + $party['Password'])
     $t = $t -replace '^sServerName=.*', 'sServerName=Undying Nights'
     $t = $t -replace '^bAutoPartyJoin=.*', 'bAutoPartyJoin=true'

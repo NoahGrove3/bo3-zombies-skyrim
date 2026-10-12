@@ -131,7 +131,7 @@
       "zombieWeapons": "melee",
       "manaRegenPerSecond": 0.2,
       "manaRegenDelay": 5.0,
-      "cycleMinutes": 30
+      "cycleMinutes": 25
     }
   ]
 }

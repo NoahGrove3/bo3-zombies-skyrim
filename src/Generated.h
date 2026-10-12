@@ -8,7 +8,7 @@ namespace bo3z::gen
 {
 	struct FormRef { std::string_view plugin; std::uint32_t localId; std::string_view editorId; };
 	inline constexpr float kChaseRelocateDist = 4000.0f, kChaseRelocateSeconds = 3.0f, kChaseStallSeconds = 2.5f;
-	inline constexpr float kCycleMinutes = 30.0f;  // a full Skyrim day; night is nightStart..nightEnd (20:00-05:36 = 40%)
+	inline constexpr float kCycleMinutes = 25.0f;  // a full Skyrim day; night is nightStart..nightEnd (20:00-05:36 = 40%)
 	inline constexpr float kManaRegenPerSecond = 0.2f, kManaRegenDelay = 5.0f;
 	inline constexpr bool kZombieMeleeWeapons = true;  // keep swords/axes/maces; strip bows, staves, spells
 	struct Rounds {
