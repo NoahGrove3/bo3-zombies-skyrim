@@ -79,8 +79,24 @@ def make_loop(x, xf_ms=400):
     return np.concatenate([body, tail * (1 - r) + head * r])  # the end flows straight into the start
 
 
+LOUDER_DB = 3.0   # the whole effects mix a little louder (section 9 of the master list); peaks held under -1 dBFS
+
+
+def louder(x, db=LOUDER_DB):
+    """+db of gain, then a soft knee from -4 dBFS so the loud hits round off under -1 dBFS instead of clipping"""
+    x = x * 10 ** (db / 20)
+    knee, ceil = 10 ** (-4 / 20), 10 ** (-1 / 20)
+    a = np.abs(x)
+    over = a > knee
+    y = a.copy()
+    y[over] = knee + (ceil - knee) * np.tanh((a[over] - knee) / (ceil - knee))
+    return np.sign(x) * y
+
+
 def write_wav(path, x):
     path.parent.mkdir(parents=True, exist_ok=True)
+    if not path.name.startswith('vo_'):
+        x = louder(x)
     pcm = (np.clip(x, -1, 1) * 32767).astype('<i2')
     import wave
     with wave.open(str(path), 'wb') as w:
