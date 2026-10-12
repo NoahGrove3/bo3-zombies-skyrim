@@ -26,6 +26,28 @@ TPATH = 'UndyingNights\\fx\\'
 
 
 # ----------------------------------------------------------------------------------------------------- textures
+N = 512  # texture size: sharp up close (the orb sits a hand's width from the eye), with a full mip chain
+
+
+def write_dds(path, img):
+    """uncompressed A8R8G8B8 DDS with every mip level (no block artefacts on soft glows, no shimmer far off)"""
+    import struct
+    h, w = img.shape[:2]
+    levels = [img]
+    while levels[-1].shape[0] > 1 and levels[-1].shape[1] > 1:
+        a = levels[-1].astype(np.float32)
+        a = (a[0::2, 0::2] + a[1::2, 0::2] + a[0::2, 1::2] + a[1::2, 1::2]) / 4
+        levels.append(np.clip(a + 0.5, 0, 255).astype(np.uint8))
+    flags = 0x1 | 0x2 | 0x4 | 0x1000 | 0x8 | 0x20000                 # caps height width pixelformat pitch mipmapcount
+    hdr = struct.pack('<4sIIIIIII44x', b'DDS ', 124, flags, h, w, w * 4, 0, len(levels))
+    pf = struct.pack('<IIIIIIII', 32, 0x41, 0, 32, 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)
+    caps = struct.pack('<IIIII', 0x1000 | 0x8 | 0x400000, 0, 0, 0, 0)
+    with open(path, 'wb') as f:
+        f.write(hdr + pf + caps)
+        for lv in levels:
+            f.write(lv[..., [2, 1, 0, 3]].tobytes())                    # BGRA
+
+
 def save(name, a, rgb=None):
     """a: alpha 0..1 (HxW); rgb defaults to white"""
     h, w = a.shape
@@ -33,11 +55,11 @@ def save(name, a, rgb=None):
         rgb = np.ones((h, w, 3), np.float32)
     img = np.dstack([np.clip(rgb, 0, 1), np.clip(a, 0, 1)[..., None]])
     TEX.mkdir(parents=True, exist_ok=True)
-    Image.fromarray((img * 255).astype(np.uint8), 'RGBA').save(TEX / f'{name}.dds', pixel_format='DXT5')
+    write_dds(TEX / f'{name}.dds', (img * 255 + 0.5).astype(np.uint8))
     return TPATH + f'{name}.dds'
 
 
-def grid(n=128):
+def grid(n=N):
     yy, xx = np.mgrid[0:n, 0:n].astype(np.float32)
     return (xx + 0.5) / n * 2 - 1, (yy + 0.5) / n * 2 - 1
 
@@ -50,7 +72,7 @@ def noise(n, seed, scale=8):
 
 def textures():
     t = {}
-    x, y = grid(128); r = np.sqrt(x * x + y * y)
+    x, y = grid(N); r = np.sqrt(x * x + y * y)
     t['soft'] = save('soft', np.clip(1 - r, 0, 1) ** 2.2)                         # a soft round glow
     t['core'] = save('core', np.clip(1 - r * 1.6, 0, 1) ** 1.4)                   # a hot little core
     t['ring'] = save('ring', np.exp(-((r - 0.78) / 0.07) ** 2) * (r < 1))          # a thin ring (novas, orb halo)
@@ -59,11 +81,11 @@ def textures():
     a = np.clip(1 - r, 0, 1) ** 1.2 * (0.35 + 0.65 * np.abs(np.cos(ang * 4)) ** 12) + np.clip(1 - r * 2.2, 0, 1)
     t['rays'] = save('rays', a)
     # a streak along v (trails, beams): bright down the middle, soft edges, fading toward v=1
-    u, v = grid(128); uu = (u + 1) / 2; vv = (v + 1) / 2
+    u, v = grid(N); uu = (u + 1) / 2; vv = (v + 1) / 2
     t['streak'] = save('streak', np.exp(-(u / 0.35) ** 2) * (1 - vv) ** 1.3)
-    t['beam'] = save('beam', np.exp(-(u / 0.28) ** 2) * (0.75 + 0.25 * np.sin(vv * 40)) + np.exp(-(u / 0.08) ** 2) * 0.6)
+    t['beam'] = save('beam', np.exp(-(u / 0.30) ** 2) * (0.85 + 0.15 * np.sin(vv * 2 * math.pi * 3)) + np.exp(-(u / 0.07) ** 2) * 0.8)
     # flame tongues (fire): noisy, licking upward
-    n1 = noise(128, 3, 6); n2 = noise(128, 4, 14)
+    n1 = noise(N, 3, 6); n2 = noise(N, 4, 14)
     t['flame'] = save('flame', np.clip(1 - r * (0.9 + 0.6 * n1), 0, 1) ** 1.5 * (0.6 + 0.4 * n2))
     # frost: a six-pointed crystal
     a = np.zeros_like(r)
@@ -74,7 +96,7 @@ def textures():
     t['crystal'] = save('crystal', np.clip(a + np.clip(1 - r * 2.5, 0, 1), 0, 1))
     # lightning: a jagged bolt down v
     rng = np.random.default_rng(9); pts = np.cumsum(rng.normal(0, 0.18, 24)); pts -= pts.mean(); pts = np.clip(pts, -0.6, 0.6)
-    path = np.interp(np.linspace(0, 23, 128), np.arange(24), pts)
+    path = np.interp(np.linspace(0, 23, N), np.arange(24), pts)
     a = np.exp(-((u - path[:, None]) / 0.07) ** 2) + 0.4 * np.exp(-((u - path[:, None]) / 0.25) ** 2)
     t['bolt'] = save('lightning', a)
     # thorns: a long spike
@@ -89,15 +111,18 @@ def textures():
     # a crescent wave (the gust)
     t['crescent'] = save('crescent', np.exp(-((r - 0.75) / 0.12) ** 2) * np.clip(-y * 1.5, 0, 1) ** 0.8)
     # soul: a wisp with flame-like flicker
-    t['wisp'] = save('wisp', np.clip(1 - r * (1.0 + 0.5 * noise(128, 7, 5)), 0, 1) ** 1.8)
+    t['wisp'] = save('wisp', np.clip(1 - r * (1.0 + 0.5 * noise(N, 7, 5)), 0, 1) ** 1.8)
     # void: a dark disc (alpha blend) with a bright rim (the rim is drawn additive separately)
-    t['dark'] = save('dark', np.clip(1.15 - r * 1.2, 0, 1) ** 0.8, rgb=np.zeros((128, 128, 3), np.float32))
+    t['dark'] = save('dark', np.clip(1.15 - r * 1.2, 0, 1) ** 0.8, rgb=np.zeros((N, N, 3), np.float32))
     # sparks: little points scattered (bursts)
-    a = np.zeros((128, 128), np.float32)
+    a = np.zeros((N, N), np.float32)
     for _ in range(40):
-        cx, cy = rng.integers(8, 120, 2); a[cy - 1:cy + 2, cx - 1:cx + 2] = 1
+        cx, cy = rng.integers(N // 16, N - N // 16, 2); a[cy - 4:cy + 4, cx - 4:cx + 4] = 1
     from scipy.ndimage import gaussian_filter
-    t['sparks'] = save('sparks', np.clip(gaussian_filter(a, 1.2) * 4, 0, 1))
+    t['sparks'] = save('sparks', np.clip(gaussian_filter(a, 4.0) * 4, 0, 1))
+    # the flame aura round a spell's logo (one frame of assets/ui/flame_ring.png, white: tinted per spell)
+    fr = np.asarray(Image.open(ROOT / 'assets' / 'ui' / 'flame_ring.png').convert('RGBA')).astype(np.float32)[:256, :256] / 255
+    t['flamering'] = save('flamering', fr[..., 3], fr[..., :3])
     return t
 
 
@@ -222,6 +247,15 @@ def build(spell, t):
     Mesh.quad(rg, (0, 0, 0), (1, 0, 0), (0, 0, 1), 50, 50)
     sp = m.shape('sparks', t['sparks'] if style not in ('ice',) else t['crystal'], (*acc, 1), 1.6); m.billboard(sp, (0, 0, 0), 55)
     m.write(MESH / f'{sid}_burst.nif')
+    # ---- the spell's logo as a model: the Magic menu's display and the shrine's roll (the medallion in its flames)
+    ic = np.asarray(Image.open(ROOT / 'assets' / 'ui' / f'w_{sid}.png').convert('RGBA').resize((512, 512), Image.LANCZOS)).astype(np.float32) / 255
+    itex = save(f'icon_{sid}', ic[..., 3], ic[..., :3])
+    m = Mesh()
+    au = m.shape('aura', t['flamering'], (*col, 1), 1.6)
+    Mesh.quad(au, (0, 0.4, 0), (1, 0, 0), (0, 0, 1), 15.7, 15.7, uv=(0, 1, 1, 0))
+    lg = m.shape('logo', itex, (1, 1, 1, 1), 1.0, blend='alpha')
+    Mesh.quad(lg, (0, 0, 0), (1, 0, 0), (0, 0, 1), 12, 12, uv=(0, 1, 1, 0))
+    m.write(MESH / f'{sid}_icon.nif')
 
 
 def status(t):

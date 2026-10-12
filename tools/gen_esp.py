@@ -88,7 +88,7 @@ def arto(key, model, kind):
 for r in SCRAFT.values():
     arto('fx_' + r['id'] + '_hand', 'UndyingNights\\fx\\' + r['id'] + '_hand.nif', 0)          # magic casting art
     recs['STAT'].append(record('STAT', fid('STAT', 'fx_' + r['id'] + '_orb'), [sub('EDID', z('UN_Orb_' + r['id'])), sub('OBND', struct.pack('<6h', -30, -30, -30, 30, 30, 30)),
-        sub('MODL', z('UndyingNights\\fx\\' + r['id'] + '_orb.nif')), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
+        sub('MODL', z('UndyingNights\\fx\\' + r['id'] + '_icon.nif')), sub('DNAM', struct.pack('<fI', 90.0, 0))]))  # the Magic menu shows the spell's logo
     data = bytearray(tsub('ligh', 'DATA')); c = int(r['color'], 16)
     struct.pack_into('<I', data, 4, 160); struct.pack_into('<BBBB', data, 8, c >> 16, (c >> 8) & 255, c & 255, 0)
     recs['LIGH'].append(record('LIGH', fid('LIGH', 'fx_' + r['id'] + '_light'), [sub('EDID', z('UN_SpellLight_' + r['id'])), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.0))]))
@@ -158,14 +158,14 @@ for w in S['weapons']['rows']:
                     struct.pack_into('<I', body, i + 6 + 92, fid('ARTO', 'fx_' + w['id'] + '_hand'))    # casting art (the hand glow)
                     struct.pack_into('<I', body, i + 6 + 108, fid('ARTO', 'fx_' + w['id'] + '_hand'))   # dual-cast art
                 if name == b'MDOB':
-                    struct.pack_into('<I', body, i + 6, fid('STAT', 'fx_' + w['id'] + '_orb'))          # the spell menu shows its orb
+                    struct.pack_into('<I', body, i + 6, fid('STAT', 'fx_' + w['id'] + '_orb'))          # the spell menu shows its logo
                 i += 6 + ln
             recs['MGEF'][-1] = m[:24] + bytes(body)
         sp = bytearray(tsub('spel_firebolt', 'SPIT'))
         struct.pack_into('<IIIfIIffI', sp, 0, int(round(w.get('mana', 0) or 0)), 0x1, 0, 0.0, 1, 0, 0.0, 0.0, 0)  # its real magicka cost shown in the Magic menu (the code spends it; the engine's own charge is handed back), fire-and-forget (one push per click), self
         recs['SPEL'].append(record('SPEL', fid('SPEL', 'hand_' + w['id']), [
             sub('EDID', z('UN_Hand_' + w['id'])), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(w['label'])),
-            sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')), sub('DESC', z('')),
+            sub('MDOB', struct.pack('<I', fid('STAT', 'fx_' + w['id'] + '_orb')) if w['id'] in SCRAFT else tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')), sub('DESC', z('')),
             sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'hand_' + w['id']))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
         # a WEAP still exists (kept form id, box/wall display); never handed out
         subs = []

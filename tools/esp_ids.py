@@ -57,7 +57,8 @@ def dressing(S):
             pieces.append((oi, kind, key, r))
     for w in S['weapons']['rows']:
         records[('STAT', '1st_' + w['id'])] = {'model': w['standinModel'], 'color': '', 'radius': 0}
-        records[('STAT', 'show_' + w['id'])] = {'model': w['standinModel'], 'color': '', 'radius': 0}
+        sc_ids = {r['id'] for r in S['spellcraft']['rows']} if 'spellcraft' in S else set()
+        records[('STAT', 'show_' + w['id'])] = {'model': f"UndyingNights\\fx\\{w['id']}_icon.nif" if w['id'] in sc_ids else w['standinModel'], 'color': '', 'radius': 0}  # the roll shows the spell's logo
     records[('STAT', 'show_cheese')] = {'model': S['dressing']['show']['cheeseModel'], 'color': '', 'radius': 0}
     records[('STAT', 'rise_fx')] = {'model': S['dressing']['show']['riseFxModel'], 'color': '', 'radius': 0}
     for k, col in POWERUPS:   # BO3 power-up drops: a glowing token and its light

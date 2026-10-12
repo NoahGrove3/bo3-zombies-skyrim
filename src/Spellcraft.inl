@@ -136,6 +136,28 @@ namespace Spellcraft
 		}
 		return m;
 	}
+	// +Y along d, and the flat face (local XY) turned toward the camera: a beam never goes edge-on and vanishes
+	RE::NiMatrix3 FacingCam(RE::NiPoint3 d, const RE::NiPoint3& a_mid)
+	{
+		auto* cam = RE::PlayerCamera::GetSingleton();
+		if (!cam || !cam->cameraRoot || d.Length() < 1e-4f) {
+			return Facing(d);
+		}
+		d.Unitize();
+		RE::NiPoint3 z = cam->cameraRoot->world.translate - a_mid;
+		z = z - d * z.Dot(d);
+		if (z.Length() < 1e-3f) {
+			return Facing(d);
+		}
+		z.Unitize();
+		const RE::NiPoint3 x = d.Cross(z);
+		RE::NiMatrix3      m;
+		const float        xv[3] = { x.x, x.y, x.z }, yv[3] = { d.x, d.y, d.z }, zv[3] = { z.x, z.y, z.z };
+		for (int i = 0; i < 3; ++i) {
+			m.entry[i][0] = xv[i], m.entry[i][1] = yv[i], m.entry[i][2] = zv[i];
+		}
+		return m;
+	}
 	RE::NiMatrix3 Spin(float a)  // a turn round world Z (bursts and novas)
 	{
 		return AxisAngle({ 0, 0, 1 }, a);
@@ -174,7 +196,7 @@ namespace Spellcraft
 					next += RE::NiPoint3{ Rand(-1, 1), Rand(-1, 1), Rand(-1, 1) } * (14.0f * w);
 				}
 				segs[i].Show(true);
-				segs[i].Place(prev, Facing(next - prev) * AxisAngle({ 0, 1, 0 }, Rand(0, 6.28f)), std::max(sc, (next - prev).Length() / kSeg));
+				segs[i].Place(prev, FacingCam(next - prev, (prev + next) * 0.5f), std::max(sc, (next - prev).Length() / kSeg));
 				prev = next;
 			}
 		}
@@ -513,6 +535,96 @@ namespace Spellcraft
 		return (a + v * t - p).Length();
 	}
 
+	// The body a spell can touch: every bone of the skeleton as a capsule (limbs thin, trunk and head thicker), read
+	// once a frame per body, so a hit lands wherever the model is (arms, legs, head; the big ones too).
+	struct BoneCap { RE::NiPoint3 a, b; float r; bool head; };
+	struct BodyShape { float at = -1; std::vector<BoneCap> caps; };
+	std::unordered_map<RE::FormID, BodyShape> g_bodies;
+
+	bool Skip(std::string_view n)
+	{
+		for (const char* bad : { "eapon", "EAPON", "hield", "HIELD", "uiver", "UIVER", "Magic", "Camera", "AnimObject", "x_", "Look", "Scb", "SCB", "Tail" }) {
+			if (n.find(bad) != std::string_view::npos) {
+				return true;
+			}
+		}
+		return false;
+	}
+	void Walk(RE::NiNode* n, BodyShape& b, float s, int depth)
+	{
+		if (!n || depth > 40) {
+			return;
+		}
+		for (auto& c : n->GetChildren()) {
+			auto* cn = c ? c->AsNode() : nullptr;
+			if (!cn) {
+				continue;
+			}
+			const std::string_view nm = cn->name.c_str() ? cn->name.c_str() : "";
+			if (Skip(nm)) {
+				continue;
+			}
+			const float len = n->world.translate.GetDistance(cn->world.translate);
+			if (len > 0.5f && len < 90.0f * s) {
+				const std::string_view pn = n->name.c_str() ? n->name.c_str() : "";
+				const bool head = nm.find("Head") != std::string_view::npos || pn.find("Head") != std::string_view::npos;
+				const bool trunk = pn.find("Spine") != std::string_view::npos || pn.find("Pelvis") != std::string_view::npos || pn.find("Neck") != std::string_view::npos ||
+				                   pn.find("Root") != std::string_view::npos || nm.find("Spine") != std::string_view::npos;
+				b.caps.push_back({ n->world.translate, cn->world.translate, (head ? 12.0f : trunk ? 17.0f : 9.0f) * s, head });
+			}
+			Walk(cn, b, s, depth + 1);
+		}
+	}
+	const BodyShape& Body(RE::Actor* a)
+	{
+		auto& b = g_bodies[a->GetFormID()];
+		if (b.at == g_time) {
+			return b;
+		}
+		b.at = g_time;
+		b.caps.clear();
+		auto* root = a->Get3D(false);
+		if (auto* rn = root ? root->AsNode() : nullptr) {
+			auto* start = rn->GetObjectByName("NPC Root [Root]");
+			auto* sn = start && start->AsNode() ? start->AsNode() : rn;
+			Walk(sn, b, std::max(0.3f, rn->world.scale), 0);
+		}
+		if (b.caps.size() < 4) {  // no skeleton to read: a capsule from the feet to the head
+			b.caps.clear();
+			b.caps.push_back({ a->GetPosition() + RE::NiPoint3{ 0, 0, 15 }, HeadPos(a) - RE::NiPoint3{ 0, 0, 12 }, 26.0f, false });
+			b.caps.push_back({ HeadPos(a) - RE::NiPoint3{ 0, 0, 12 }, HeadPos(a) + RE::NiPoint3{ 0, 0, 8 }, 14.0f, true });
+		}
+		return b;
+	}
+	// does a ball of radius a_r at p touch this body? (head: the nearest bone it touched was the head's)
+	bool Touches(RE::Actor* a, const RE::NiPoint3& p, float a_r, bool* a_head = nullptr)
+	{
+		float best = 1e9f;
+		bool  hit = false, head = false;
+		for (const auto& c : Body(a).caps) {
+			const float d = PointSeg(p, c.a, c.b) - c.r;
+			if (d <= a_r && d < best) {
+				best = d, hit = true, head = c.head;
+			}
+		}
+		if (a_head) {
+			*a_head = head;
+		}
+		return hit;
+	}
+	// does a line (a beam) of half-width a_w pass through this body?
+	bool Crosses(RE::Actor* a, const RE::NiPoint3& from, const RE::NiPoint3& to, float a_w)
+	{
+		for (const auto& c : Body(a).caps) {
+			for (float t : { 0.0f, 0.5f, 1.0f }) {
+				if (PointSeg(c.a + (c.b - c.a) * t, from, to) <= a_w + c.r) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	void Detonate(Shot& s, const RE::NiPoint3& at)
 	{
 		const auto& d = Def(s.row);
@@ -603,8 +715,11 @@ namespace Spellcraft
 					if (f->IsDead() || std::find(s.struck.begin(), s.struck.end(), f->GetFormID()) != s.struck.end()) {
 						continue;
 					}
-					const RE::NiPoint3 head = HeadPos(f);
-					if (PointSeg(p, f->GetPosition() + RE::NiPoint3{ 0, 0, 15 }, head) > s.radius + 26.0f) {
+					if ((p - f->GetPosition()).Length() > 600.0f) {
+						continue;  // far off: not worth reading its bones
+					}
+					bool head2 = false;
+					if (!Touches(f, p, s.radius, &head2)) {
 						continue;
 					}
 					s.struck.push_back(f->GetFormID());
@@ -615,7 +730,6 @@ namespace Spellcraft
 						stop = true;
 						break;
 					}
-					const bool head2 = p.GetDistance(head) < 24.0f + s.radius * 0.5f;
 					const int  gi = s.gun;
 					const float hm = head2 ? gen::kGuns[gi].headMult * Perks::HeadMult() : 1.0f;
 					const float pierceFall = s.struck.size() > 1 ? 0.85f : 1.0f;
@@ -900,7 +1014,7 @@ namespace Spellcraft
 			const float  len = dir.Length();
 			dir.Unitize();
 			for (auto* f : Foes(from, len + 60.0f)) {
-				if (PointSeg(f->GetPosition() + RE::NiPoint3{ 0, 0, 60 }, from, aim.hit) <= d.ultRadius + 30.0f) {
+				if (Crosses(f, from, aim.hit, d.ultRadius * 0.5f)) {
 					Strike(g_beamRow, f, d.ultDamage * Mult() * 0.2f, false, gen::kFxNone, f->GetPosition());
 				}
 			}
@@ -1141,6 +1255,9 @@ namespace Spellcraft
 		if (g_pushT >= 0 && (g_pushT += a_dt) > 0.6f) {
 			g_pushT = -1;
 		}
+		if (g_bodies.size() > 256) {
+			g_bodies.clear();
+		}
 		TickBeam(a_dt);
 		TickShots(a_dt);
 		TickFx(a_dt);
@@ -1181,5 +1298,6 @@ namespace Spellcraft
 		g_orbRow = g_handRow = -1;
 		g_tapHeld = g_orbHeld = false;
 		g_handW = 0;
+		g_bodies.clear();
 	}
 }
