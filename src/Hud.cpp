@@ -291,6 +291,44 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->AddRectFilledMultiColor({ size.x - e, 0 }, size, z, r, r, z);
 			}
 
+			// Co-op: down (a bleed-out ring and the seconds left), dead (whom you watch), a friend to revive, friends down
+			if (Net::InLobby()) {
+				const auto pv = Party::Now();
+				if (pv.life == Party::Life::Down) {
+					dl->AddRectFilled({ 0, 0 }, size, IM_COL32(60, 0, 0, 90));
+					const ImVec2 c{ size.x / 2, size.y * 0.42f };
+					const float  f = std::clamp(pv.left / 30.0f, 0.0f, 1.0f);
+					dl->AddCircle(c, 46 * k, IM_COL32(40, 10, 10, 200), 64, 8 * k);
+					dl->PathArcTo(c, 46 * k, -1.5708f, -1.5708f + 6.2832f * f, 64);
+					dl->PathStroke(IM_COL32(230, 50, 40, 255), 0, 8 * k);
+					TxtC(dl, g_title, 30 * k, c.x, c.y - 17 * k, IM_COL32(240, 220, 200, 255), std::to_string(static_cast<int>(std::ceil(pv.left))));
+					TxtC(dl, g_title, 40 * k, c.x, c.y + 64 * k, IM_COL32(230, 60, 50, 255), "YOU ARE DOWN", 3 * k, IM_COL32(120, 0, 0, 255));
+					TxtC(dl, g_body, 22 * k, c.x, c.y + 114 * k, IM_COL32(220, 210, 196, 230), "A friend can revive you: they stand by you and hold E");
+				} else if (pv.life == Party::Life::Dead) {
+					TxtC(dl, g_title, 34 * k, size.x / 2, size.y * 0.10f, IM_COL32(230, 60, 50, 255), "YOU DIED", 3 * k, IM_COL32(120, 0, 0, 255));
+					TxtC(dl, g_body, 24 * k, size.x / 2, size.y * 0.10f + 46 * k, IM_COL32(230, 220, 205, 240),
+						pv.watching.empty() ? std::string("No one left standing...") : "Watching " + pv.watching + "   \xE2\x97\x80 \xE2\x96\xB6 to switch");
+					TxtC(dl, g_body, 20 * k, size.x / 2, size.y * 0.10f + 80 * k, IM_COL32(190, 180, 165, 220), "You rise again when a shrine's rite is complete, or at dawn");
+				}
+				if (pv.life == Party::Life::Alive) {
+					float y = size.y * 0.16f;
+					for (const auto& f : pv.fallen) {
+						TxtC(dl, g_title, 24 * k, size.x / 2, y, IM_COL32(240, 90, 70, 255),
+							f.name + " IS DOWN - " + std::to_string(static_cast<int>(std::ceil(f.left))) + "s  (" + std::to_string(static_cast<int>(f.dist / 70.0f)) + " m)", 2 * k, IM_COL32(100, 0, 0, 255));
+						y += 34 * k;
+					}
+					if (pv.reviveFrac >= 0 && !pv.reviveName.empty()) {
+						const ImVec2 c{ size.x / 2, size.y * 0.62f };
+						dl->AddCircle(c, 30 * k, IM_COL32(20, 30, 26, 200), 48, 6 * k);
+						if (pv.reviveFrac > 0) {
+							dl->PathArcTo(c, 30 * k, -1.5708f, -1.5708f + 6.2832f * pv.reviveFrac, 48);
+							dl->PathStroke(IM_COL32(110, 255, 190, 255), 0, 6 * k);
+						}
+						TxtC(dl, g_title, 24 * k, c.x, c.y + 42 * k, IM_COL32(230, 240, 230, 255), "Hold E to revive " + pv.reviveName);
+					}
+				}
+			}
+
 			// Event nights colour the screen: a red haze under the Blood Moon, grey murk on a Fog Night, ash, iron.
 			// (Fog Night has no screen tint: its fog is real ground mist in the world, Director::TickMist.)
 			if (s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size()) && s.nightEvent != gen::kEvent_fog) {
@@ -971,6 +1009,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				return;
 			}
 			const ImVec2 cur = Cursor(size);
+			click = click && !Net::OverlayBusy();  // a click that closed the Steam overlay is not ours
 			static std::vector<Net::FriendGame> friends;
 			static float refresh = 0;
 			if ((refresh -= ImGui::GetIO().DeltaTime) <= 0) {

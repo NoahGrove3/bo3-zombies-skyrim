@@ -19,6 +19,7 @@ namespace bo3z
 					Gun::Tick(a_delta);
 					Shops::Tick(a_delta);
 					Perks::Tick();
+					Party::Tick(a_delta);
 					Movement::Tick(a_delta);
 					Audio::Tick(a_delta);
 				} catch (const std::exception& e) {
@@ -154,7 +155,7 @@ namespace bo3z
 						if (b->GetDevice() == RE::INPUT_DEVICE::kMouse && b->GetIDCode() == 0 && b->IsDown()) {
 							Hud::OnClick();
 						}
-						if (!Intro::OnButton(b)) {
+						if (!Intro::OnButton(b) && !Party::OnButton(b)) {  // (down or dead: your hands are still)
 							if (Shops::OnButton(b)) {
 								continue;
 							}

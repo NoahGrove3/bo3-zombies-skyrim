@@ -33,7 +33,18 @@ namespace bo3z::Net
 		using u64 = std::uint64_t;
 		constexpr int kChannel = 7;
 		constexpr std::uint8_t kVersion = 1;
-		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4 };
+		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6 };
+#ifndef UN_BUILD
+#	define UN_BUILD "dev"
+#endif
+		constexpr char kBuild[8] = UN_BUILD;  // the commit this game was built from (CI): every player must run the same one
+#pragma pack(push, 1)
+		struct Hello { std::uint8_t type, version; char build[8]; };
+		struct PlayerMsg { std::uint8_t type, life; float x, y, z, left; };
+		struct ReviveMsg { std::uint8_t type; std::uint64_t target; };
+#pragma pack(pop)
+		void SendHello(std::uint64_t a_to);
+		std::string g_mismatch;  // a friend on another build (shown until the party ends)
 
 		// ---- the flat API ----
 		struct Identity  // SteamNetworkingIdentity (136 bytes)
@@ -177,6 +188,30 @@ namespace bo3z::Net
 			}
 		} g_joinCb;
 
+		// GameOverlayActivated_t (331): the Steam overlay (the invite dialog) is up. While it is, clicks belong to it:
+		// closing the dialog must not land on our "invite" button underneath and open it again.
+		std::atomic<bool>                     g_overlay{ false };
+		std::chrono::steady_clock::time_point g_overlayClosed{};
+		struct OverlayActivated final : CallbackBase
+		{
+			void Run(void* a_param) override
+			{
+				const bool on = *static_cast<const std::uint8_t*>(a_param) != 0;
+				g_overlay = on;
+				if (!on) {
+					g_overlayClosed = std::chrono::steady_clock::now();
+				}
+				logger::info("net: Steam overlay {}", on ? "open" : "closed");
+			}
+			void Run(void* a_param, bool, u64) override { Run(a_param); }
+			int  GetCallbackSizeBytes() override { return 12; }
+			void Register()
+			{
+				m_iCallback = 331;
+				A.RegisterCallback(this, 331);
+			}
+		} g_overlayCb;
+
 		Identity Id(u64 a_id)
 		{
 			Identity i;
@@ -196,6 +231,13 @@ namespace bo3z::Net
 			for (u64 m : g_members) {
 				Send(m, a_data, a_size, a_reliable);
 			}
+		}
+
+		void SendHello(u64 a_to)
+		{
+			Hello h{ kHello, kVersion, {} };
+			std::memcpy(h.build, kBuild, std::min(sizeof(h.build), sizeof(kBuild)));
+			Send(a_to, &h, sizeof(h), true);
 		}
 
 		void RefreshMembers()
@@ -365,8 +407,7 @@ namespace bo3z::Net
 			RefreshMembers();
 			g_status = a_host ? "Hosting - invite your friends" : std::string("In ") + A.GetFriendPersonaName(A.fr, g_owner) + "'s party";
 			if (!a_host) {
-				const std::uint8_t hello[2]{ kHello, kVersion };
-				Send(g_owner, hello, 2, true);
+				SendHello(g_owner);
 				StartRelay(false, g_owner);
 				const char* pw = A.GetLobbyData(A.mm, a_lobby, "str_pw");
 				TellTogether("connect", pw ? pw : "");
@@ -423,9 +464,42 @@ namespace bo3z::Net
 				const u64   from = msgs[i]->peer.steamId;
 				if (sz >= 1) {
 					switch (d[0]) {
-					case kHello:
-						logger::info("net: {} joined the night", A.GetFriendPersonaName(A.fr, from));
-						Hud::Banner(std::string(A.GetFriendPersonaName(A.fr, from)) + " joined the party", 3.0f);
+					case kHello: {
+						const std::string who = A.GetFriendPersonaName(A.fr, from);
+						std::string       theirs = "an old build";
+						if (sz >= static_cast<int>(sizeof(Hello))) {
+							Hello h{};
+							std::memcpy(&h, d, sizeof(Hello));
+							theirs.assign(h.build, strnlen(h.build, sizeof(h.build)));
+						}
+						logger::info("net: {} joined the night (build {}, ours {})", who, theirs, kBuild);
+						if (theirs != kBuild) {
+							g_mismatch = who + " runs Undying Nights " + theirs + ", you run " + kBuild + ": both need the same Party Pack";
+							Hud::Banner(g_mismatch, 8.0f);
+							logger::warn("net: version mismatch with {}: {} vs {}", who, theirs, kBuild);
+						} else {
+							Hud::Banner(who + " joined the party", 3.0f);
+						}
+						if (IsHost()) {
+							SendHello(from);  // so the friend checks us too
+						}
+						break;
+					}
+					case kPlayer:
+						if (sz >= static_cast<int>(sizeof(PlayerMsg))) {
+							PlayerMsg m{};
+							std::memcpy(&m, d, sizeof(PlayerMsg));
+							Party::Heard(from, A.GetFriendPersonaName(A.fr, from), m.life, { m.x, m.y, m.z }, m.left);
+						}
+						break;
+					case kRevive:
+						if (sz >= static_cast<int>(sizeof(ReviveMsg))) {
+							ReviveMsg m{};
+							std::memcpy(&m, d, sizeof(ReviveMsg));
+							if (m.target == g_me) {
+								Party::Revived(from);
+							}
+						}
 						break;
 					case kState:
 						if (sz >= static_cast<int>(sizeof(State)) && from == g_owner && g_owner != g_me) {
@@ -499,7 +573,8 @@ namespace bo3z::Net
 	bool IsClient() { return g_lobby && g_owner && g_owner != g_me; }
 	bool Fresh() { return IsClient() && g_haveState && std::chrono::steady_clock::now() - g_lastState < std::chrono::seconds(3); }
 	const State& Last() { return g_last; }
-	std::string Status() { return g_status; }
+	bool OverlayBusy() { return g_overlay || std::chrono::steady_clock::now() - g_overlayClosed < std::chrono::milliseconds(600); }
+	std::string Status() { return g_mismatch.empty() ? g_status : g_mismatch; }
 	int Members() { return static_cast<int>(g_members.size()); }
 	std::string HostName() { return g_owner && A.ok ? A.GetFriendPersonaName(A.fr, g_owner) : ""; }
 
@@ -509,7 +584,9 @@ namespace bo3z::Net
 			return;
 		}
 		if (g_lobby) {
-			A.InviteDialog(A.fr, g_lobby);
+			if (!OverlayBusy()) {
+				A.InviteDialog(A.fr, g_lobby);
+			}
 			return;
 		}
 		g_pendingCreate = A.CreateLobby(A.mm, 1, 8);  // friends only, up to 8
@@ -518,7 +595,7 @@ namespace bo3z::Net
 	}
 	void InviteFriends()
 	{
-		if (Init() && g_lobby) {
+		if (Init() && g_lobby && !OverlayBusy()) {
 			A.InviteDialog(A.fr, g_lobby);
 		}
 	}
@@ -548,6 +625,7 @@ namespace bo3z::Net
 		g_lobby = g_owner = 0;
 		g_members.clear();
 		g_haveState = false;
+		g_mismatch.clear();
 		g_status = "Not in a lobby";
 	}
 
@@ -599,6 +677,7 @@ namespace bo3z::Net
 			once = true;
 			g_me = A.GetSteamID(A.us);
 			g_joinCb.Register();
+			g_overlayCb.Register();
 			// launched from an invite while the game was closed: "+connect_lobby <id>" on the command line
 			std::wstring cmd = ::GetCommandLineW();
 			if (const auto p = cmd.find(L"+connect_lobby"); p != std::wstring::npos) {
@@ -630,6 +709,19 @@ namespace bo3z::Net
 			}
 		}
 		Receive();
+		{  // where we stand and whether we're up, down or dead (everyone tells everyone); a revive when we gave one
+			static float t = 0;
+			const auto   o = Party::Outgoing();
+			if (o.revive) {
+				const ReviveMsg m{ kRevive, o.revive };
+				ToAll(&m, sizeof(m), true);
+			}
+			if ((t -= a_delta) <= 0) {
+				t = 0.25f;
+				const PlayerMsg m{ kPlayer, o.life, o.at.x, o.at.y, o.at.z, o.left };
+				ToAll(&m, sizeof(m), false);
+			}
+		}
 		auto* player = RE::PlayerCharacter::GetSingleton();
 		const bool inGame = player && player->Is3DLoaded() && !RE::UI::GetSingleton()->IsMenuOpen(RE::MainMenu::MENU_NAME);
 		if (IsHost() && inGame && (g_sendTimer -= a_delta) <= 0) {

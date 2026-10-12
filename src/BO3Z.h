@@ -207,11 +207,37 @@ namespace bo3z
 		int         Members();       // others in the party
 		void        HostLobby();     // open a party and the Steam invite dialog
 		void        InviteFriends();
+		bool        OverlayBusy();   // the Steam overlay is up (or just closed): clicks are its own
 		void        JoinLobby(std::uint64_t a_lobby);
 		void        LeaveLobby();
 		std::vector<FriendGame> FriendsInParties();  // friends in Skyrim with a party open
 		void        PowerUpTaken(int a_kind);
 		std::vector<int> TakeRemotePowerUps();
+	}
+
+	// Co-op life and death: down, revive, spectate, and the party wipe (Party.cpp)
+	namespace Party
+	{
+		enum class Life : std::uint8_t { Alive = 0, Down = 1, Dead = 2 };
+		struct Fallen { std::string name; float left, dist; };
+		struct View
+		{
+			Life                life{ Life::Alive };
+			float               left{ 0 };        // down: seconds to bleed out
+			std::string         watching;         // dead: whom you watch
+			float               reviveFrac{ -1 };  // reviving a friend: 0..1 (-1 none near)
+			std::string         reviveName;
+			std::vector<Fallen> fallen;           // friends down right now
+		};
+		struct Out { std::uint8_t life; RE::NiPoint3 at; float left; std::uint64_t revive; };
+		void Tick(float a_delta);                      // game thread
+		bool OnButton(const RE::ButtonEvent* a_b);     // Activate held (revive); arrows switch whom you watch
+		Life State();
+		View Now();
+		Out  Outgoing();                               // Net: what to tell the party
+		void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left);
+		void Revived(std::uint64_t a_by);
+		void Forget(std::uint64_t a_who);
 	}
 
 	// Co-op with Skyrim Together (UndyingNights.ini: Role=host|client|solo)

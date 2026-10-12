@@ -1943,7 +1943,7 @@ namespace bo3z
 				const float  hp = av->GetActorValue(RE::ActorValue::kHealth);
 				const float  maxHp = av->GetPermanentActorValue(RE::ActorValue::kHealth);
 				quiet = (last >= 0 && hp < last - 0.01f) ? 0 : quiet + a_delta;
-				if (IsNight() && quiet >= gen::kRegenDelay && hp < maxHp && !player->IsDead()) {
+				if (IsNight() && quiet >= gen::kRegenDelay && hp < maxHp && !player->IsDead() && Party::State() == Party::Life::Alive) {
 					av->RestoreActorValue(RE::ActorValue::kHealth, std::min(maxHp - hp, maxHp * gen::kRegenPerSecond * a_delta));
 				}
 				last = av->GetActorValue(RE::ActorValue::kHealth);
