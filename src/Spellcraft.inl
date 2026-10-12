@@ -818,9 +818,12 @@ namespace Spellcraft
 	std::vector<Probe> g_probes;
 	void SpawnProbe(int a_row)
 	{
-		const char* parts[] = { "bolt", "burst", "orb" };
-		for (int i = 0; i < 3; ++i) {
-			Probe p{ { Load(Def(a_row).id, parts[i]) }, ViewPoint(180.0f, (i - 1) * 60.0f, -10.0f), 8.0f, i == 1 ? 0.6f : 1.0f };
+		// centre column, top to bottom: bolt, orb, burst; then a burst on each side
+		struct P { const char* part; float fwd, right, down, scale; };
+		const P ps[] = { { "bolt", 200, 0, -45, 1.0f }, { "orb", 200, 0, 0, 1.0f }, { "burst", 200, 0, 45, 0.5f },
+			{ "burst", 200, -70, 0, 0.5f }, { "burst", 200, 70, 0, 0.5f }, { "bolt", 200, 70, -45, 1.0f } };
+		for (const auto& q : ps) {
+			Probe p{ { Load(Def(a_row).id, q.part) }, ViewPoint(q.fwd, q.right, q.down), 10.0f, q.scale };
 			if (p.fx.obj) {
 				p.fx.Attach(WorldRoot());
 				g_probes.push_back(std::move(p));
