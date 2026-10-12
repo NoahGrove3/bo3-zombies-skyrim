@@ -135,6 +135,15 @@ def main():
     rgba = np.dstack([np.full_like(v, 0.55), np.full_like(v, 1.0), np.full_like(v, 0.85), aur * 0.9])
     Image.fromarray((rgba * 255).astype(np.uint8), 'RGBA').resize((1280, 720), Image.LANCZOS).save(OUT / 'menu_aurora.png')
     print('menu_aurora.png')
+    # the cover (mod pages, the Party Pack): the menu's night with the title over the aurora
+    cov = Image.open(OUT / 'menu_plate.jpg').convert('RGBA').resize((1920, 1080), Image.LANCZOS)
+    shade = np.zeros((1080, 1920, 4), np.uint8); shade[..., 3] = (np.clip(1 - np.arange(1080) / 380.0, 0, 1) ** 1.5 * 170).astype(np.uint8)[:, None]
+    cov.alpha_composite(Image.fromarray(shade, 'RGBA'))  # the title reads over the sky
+    title = Image.open(ROOT / 'assets' / 'ui' / 'menu_title.png').convert('RGBA')
+    tw = int(1920 * 0.62); th = int(title.height * tw / title.width)
+    cov.alpha_composite(title.resize((tw, th), Image.LANCZOS), ((1920 - tw) // 2, int(1080 * 0.06)))
+    cov.convert('RGB').save(ROOT / 'assets' / 'cover.jpg', quality=92)
+    print('cover.jpg')
 
 
 if __name__ == '__main__':
