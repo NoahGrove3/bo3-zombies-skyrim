@@ -1108,6 +1108,7 @@ namespace bo3z
 		// Despawning: out of combat and hidden now, deleted a moment later (deleting an actor others are still
 		// fighting mid-frame can crash the game).
 		std::vector<std::pair<RE::ActorHandle, float>> g_purge;
+		std::vector<std::pair<RE::ActorHandle, float>> g_fading;  // the fallen: seconds until the body crumbles
 		void Vanish(RE::Actor* a)
 		{
 			g_ours.erase(a->GetFormID());
@@ -1177,6 +1178,7 @@ namespace bo3z
 					it = g_alive.erase(it);
 				} else if (a->IsDead()) {
 					g_corpses.push_back(it->handle);
+					g_fading.push_back({ it->handle, 1.0f });  // the body crumbles a second after it falls
 					g_settle.push_back({ it->handle, 0.0f });
 					PowerUps::MaybeDrop(a->GetPosition());
 					Curse::OnUndeadDeath(a.get());
@@ -1194,6 +1196,25 @@ namespace bo3z
 		}
 
 		// Corpses that died without going limp (killed mid-animation, the body stays standing): knock them over.
+		void TickFading(float a_delta)
+		{
+			for (auto& [h, t] : g_fading) {
+				if ((t -= a_delta) <= 0) {
+					if (auto a = h.get(); a && !a->IsDisabled()) {
+						if (auto* fx = Forms::Ours(gen::kRiseFx)) {  // a puff of grave-dust where it lay
+							if (auto puff = a->PlaceObjectAtMe(fx, false)) {
+								puff->SetPosition(a->GetPosition());
+								g_fx.push_back({ puff->CreateRefHandle(), 2.0f });
+							}
+						}
+						Vanish(a.get());
+						std::erase_if(g_corpses, [&](const RE::ActorHandle& c) { return c == h; });
+					}
+				}
+			}
+			std::erase_if(g_fading, [](const auto& e) { return e.second <= 0; });
+		}
+
 		void SettleCorpses(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			auto* proc = a_player->GetActorRuntimeData().currentProcess;
@@ -1240,12 +1261,12 @@ namespace bo3z
 
 		void TickChampions(RE::PlayerCharacter* a_player, float a_delta)
 		{
-			static int  minionRow = KindIndex(3);
+			// a necromancer raises our own dead (never Skyrim's skeletons with their swords and maces)
+			static int  minionRow = [] { for (int i = 0; i < static_cast<int>(gen::kEnemies.size()); ++i) if (gen::kEnemies[i].id == "zombie") return i; return -1; }();
+			static std::vector<RE::ActorHandle> raised;
+			std::erase_if(raised, [](const RE::ActorHandle& h) { auto a = h.get(); return !a || a->IsDead() || a->IsDeleted(); });
 			std::vector<RE::NiPoint3> raise;
-			int minions = 0;
-			for (auto& s : g_alive) {
-				minions += gen::kEnemies[s.enemy].kind == 3;
-			}
+			int minions = static_cast<int>(raised.size());
 			for (auto& s : g_alive) {
 				const int kind = gen::kEnemies[s.enemy].kind;
 				if (kind != 1 && kind != 2) {
@@ -1326,7 +1347,9 @@ namespace bo3z
 				}
 			}
 			for (auto& at : raise) {
-				SpawnOne(a_player, minionRow, &at);
+				if (SpawnOne(a_player, minionRow, &at) && !g_alive.empty()) {
+					raised.push_back(g_alive.back().handle);
+				}
 			}
 		}
 
@@ -1389,6 +1412,7 @@ namespace bo3z
 		void KeepThemComing(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			SettleCorpses(a_player, a_delta);
+			TickFading(a_delta);
 			for (auto& s : g_alive) {
 				if (!gen::kEnemies[s.enemy].forceCombat || (s.combatRetry -= a_delta) > 0) {
 					continue;

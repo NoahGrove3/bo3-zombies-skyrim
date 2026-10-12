@@ -340,6 +340,9 @@ namespace bo3z
 				if (a_melee) {
 					g_hits.erase(a_target->GetFormID());  // knife kills pay the melee bonus
 				}
+				if (ours) {
+					Audio::Voice(a_target, Audio::VoiceEvent::kDeath);  // its death cry the instant the blow lands
+				}
 				if (!a_target->IsDead()) {
 					a_target->KillImpl(player, damage, true, false);
 				}

@@ -40,10 +40,37 @@ namespace bo3z
 			/* wyrm      */ { 0.50f, 0.07f, 0.20f, 0.2f, 0.70f, 0.40f, 0.45f, 0.0f, 0.12f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f, 0.0f },
 		};
 
-		enum Bone { kCOM, kPelvis, kSpine1, kSpine2, kNeck, kHead, kLClav, kRClav, kLArm, kRArm, kLFore, kRFore, kLHand, kRHand, kLThigh, kRThigh, kBones };
+		enum Bone { kCOM, kPelvis, kSpine1, kSpine2, kNeck, kHead, kLClav, kRClav, kLArm, kRArm, kLFore, kRFore, kLHand, kRHand, kLThigh, kRThigh, kLCalf, kRCalf, kLFoot, kRFoot, kBones };
 		constexpr const char* kBoneNames[kBones] = { "NPC COM [COM ]", "NPC Pelvis [Pelv]", "NPC Spine1 [Spn1]", "NPC Spine2 [Spn2]", "NPC Neck [Neck]", "NPC Head [Head]",
 			"NPC L Clavicle [LClv]", "NPC R Clavicle [RClv]", "NPC L UpperArm [LUar]", "NPC R UpperArm [RUar]", "NPC L Forearm [LLar]", "NPC R Forearm [RLar]",
-			"NPC L Hand [LHnd]", "NPC R Hand [RHnd]", "NPC L Thigh [LThg]", "NPC R Thigh [RThg]" };
+			"NPC L Hand [LHnd]", "NPC R Hand [RHnd]", "NPC L Thigh [LThg]", "NPC R Thigh [RThg]", "NPC L Calf [LClf]", "NPC R Calf [RClf]",
+			"NPC L Foot [Lft ]", "NPC R Foot [Rft ]" };
+
+		// The gait, from scratch: each foot is planted on the ground and stays there (no sliding, no floating) until the
+		// body has moved far enough past it; then it lifts, swings to where the body will be, and plants again, never
+		// both at once. Two-bone IK bends hip and knee to reach it; the arms are placed the same way. Skyrim's draugr
+		// animation is only the starting pose: what you see walking and reaching is this.
+		struct Gait
+		{
+			float step, lift, width, lead, swing;  // step: how far the body may pass a planted foot; lift: swing height;
+			                                        // width: half the stance; lead: how far ahead (in seconds of travel) a foot lands; swing: seconds per step
+		};
+		//                                 step   lift  width lead   swing
+		constexpr Gait kGaits[] = { /* shambler */ { 30.0f, 7.0f, 11.0f, 0.30f, 0.42f },
+		                            /* runner   */ { 58.0f, 17.0f, 8.0f, 0.24f, 0.21f },
+		                            /* crawler  */ { 24.0f, 4.0f, 14.0f, 0.30f, 0.40f },
+		                            /* wailer   */ { 34.0f, 9.0f, 9.0f, 0.30f, 0.34f },
+		                            /* bloater  */ { 26.0f, 6.0f, 16.0f, 0.34f, 0.50f },
+		                            /* stalker  */ { 46.0f, 13.0f, 10.0f, 0.26f, 0.26f },
+		                            /* reaper   */ { 40.0f, 10.0f, 12.0f, 0.30f, 0.36f },
+		                            /* necro    */ { 0.0f, 0.0f, 0.0f, 0.0f, 0.0f },    // floats: no steps
+		                            /* wyrm     */ { 44.0f, 12.0f, 18.0f, 0.32f, 0.40f } };
+		struct Foot
+		{
+			RE::NiPoint3 plant{}, from{}, to{};
+			float        t = -1.0f;  // >= 0: swinging (seconds into the swing)
+			bool         set = false;
+		};
 
 		struct BoneState
 		{
@@ -64,6 +91,10 @@ namespace bo3z
 			std::atomic<int>          cue{ 0 };
 			std::atomic<float>        cueLeft{ 0 };
 			float                     cueLen = 1;
+			std::array<Foot, 2>       feet{};
+			float                     atkT = -1.0f;   // its own strike: seconds into the swing (-1 none)
+			int                       atkSide = 1;
+			bool                      wasAttacking = false;
 		};
 		std::shared_mutex                                    g_lock;
 		std::unordered_map<RE::FormID, std::unique_ptr<Rig>> g_rigs;
@@ -107,6 +138,52 @@ namespace bo3z
 				ud.time = 0.0f;
 				b.node->UpdateDownwardPass(ud, 0);
 			}
+		}
+
+		// the rotation that turns direction a onto direction b (world space)
+		RE::NiMatrix3 Between(RE::NiPoint3 a, RE::NiPoint3 b, float k = 1.0f)
+		{
+			const float la = a.Length(), lb = b.Length();
+			if (la < 1e-4f || lb < 1e-4f) {
+				return AxisAngle({ 0, 0, 1 }, 0);
+			}
+			a = a / la, b = b / lb;
+			RE::NiPoint3 ax = a.Cross(b);
+			const float  ang = std::acos(std::clamp(a.Dot(b), -1.0f, 1.0f));
+			if (ax.Length() < 1e-6f || ang < 1e-5f) {
+				return AxisAngle({ 0, 0, 1 }, 0);
+			}
+			return AxisAngle(ax, ang * k);
+		}
+		// two-bone IK: bend root (hip / shoulder) and mid (knee / elbow) so the end (ankle / wrist) reaches the target,
+		// the middle joint pointing toward pole
+		void TwoBone(BoneState& root, BoneState& mid, BoneState& end, const RE::NiPoint3& target, const RE::NiPoint3& pole, float k = 1.0f)
+		{
+			if (!root.node || !mid.node || !end.node || k <= 0.001f) {
+				return;
+			}
+			const RE::NiPoint3 h = root.node->world.translate, m = mid.node->world.translate, e = end.node->world.translate;
+			const float L1 = (m - h).Length(), L2 = (e - m).Length();
+			if (L1 < 1e-3f || L2 < 1e-3f) {
+				return;
+			}
+			RE::NiPoint3 to = target - h;
+			float        d = std::clamp(to.Length(), std::abs(L1 - L2) + 0.5f, (L1 + L2) * 0.999f);
+			RE::NiPoint3 dir = to;
+			dir.Unitize();
+			const float a1 = (L1 * L1 + d * d - L2 * L2) / (2 * d);
+			const float hh = std::sqrt(std::max(0.0f, L1 * L1 - a1 * a1));
+			RE::NiPoint3 pl = pole - dir * pole.Dot(dir);
+			if (pl.Length() < 1e-3f) {
+				pl = (m - h) - dir * (m - h).Dot(dir);
+			}
+			pl.Unitize();
+			const RE::NiPoint3 knee = h + dir * a1 + pl * hh;
+			Turn(root, Between(m - h, knee - h, k));
+			Refresh(root);
+			const RE::NiPoint3 m2 = mid.node->world.translate, e2 = end.node->world.translate;
+			Turn(mid, Between(e2 - m2, (h + dir * d) - m2, k));
+			Refresh(mid);
 		}
 
 		void PoseRig(RE::Actor* a_actor, Rig& r, float a_delta)
@@ -153,7 +230,7 @@ namespace bo3z
 			}
 			// an attack swing of its own (Skyrim's): the arms are the attack's, the rest stays ours
 			const bool attacking = a_actor->AsActorState()->GetAttackState() != RE::ATTACK_STATE_ENUM::kNone;
-			r.weight += ((attacking ? 0.25f : 1.0f) - r.weight) * std::min(1.0f, dt * 8.0f);
+			r.weight = 1.0f;  // (attacks are ours too: see the strike below)
 			const float w = r.weight;
 			const int   cue = r.cue.load();
 			float       cueK = 0;
@@ -230,70 +307,141 @@ namespace bo3z
 				}
 				Refresh(B[kHead]), done(kHead);
 			}
-			// ---- the arms
-			for (int side = 0; side < 2; ++side) {
-				const float sg = side == 0 ? -1.0f : 1.0f;  // left, right
-				auto& clav = B[side == 0 ? kLClav : kRClav];
-				auto& arm = B[side == 0 ? kLArm : kRArm];
-				auto& fore = B[side == 0 ? kLFore : kRFore];
-				auto& hand = B[side == 0 ? kLHand : kRHand];
-				if (clav.node && d.chest != 1.0f) {
-					clav.node->local.scale = clav.baseScale / d.chest;
-					Refresh(clav);
+			// ---- legs: planted feet and steps, from scratch (see Gait)
+			const float scale = r.root ? std::max(0.3f, r.root->world.scale) : 1.0f;
+			const Gait& g = kGaits[static_cast<int>(r.type)];
+			const RE::NiPoint3 vdir = f;  // the body walks where it faces (Skyrim turns it toward its path)
+			if (g.step > 0 && B[kLThigh].node && B[kRThigh].node && B[kLCalf].node && B[kRCalf].node && B[kLFoot].node && B[kRFoot].node) {
+				const float ground = pos.z;
+				const float ankle = 9.0f * scale;
+				const float spd = r.speed;
+				for (int side = 0; side < 2; ++side) {  // side 0 left, 1 right
+					Foot&              ft = r.feet[side];
+					const float        sg = side == 0 ? -1.0f : 1.0f;
+					const RE::NiPoint3 home = RE::NiPoint3{ pos.x, pos.y, ground + ankle } + rt * (sg * g.width * scale) + vdir * (spd * g.lead * (spd > 20.0f ? 1.0f : 0.0f));
+					if (!ft.set || (ft.plant - home).Length() > 260.0f * scale) {  // first frame, or it was moved far (a teleport, a knock-back)
+						ft.plant = home, ft.set = true, ft.t = -1.0f;
+					}
+					Foot& other = r.feet[1 - side];
+					const float limp = (side == 0 && d.limp > 0) ? 0.45f : 1.0f;  // the dragging foot barely lifts
+					if (ft.t < 0) {
+						const float off = (ft.plant - home).Length();
+						if (off > g.step * scale && other.t < 0) {  // too far behind: step (never both feet at once)
+							ft.from = ft.plant, ft.to = home + vdir * (std::min(spd, 400.0f) * g.swing * 0.5f), ft.t = 0.0f;
+						}
+					}
+					RE::NiPoint3 at = ft.plant;
+					if (ft.t >= 0) {
+						const float dur = g.swing * (r.type == Type::Runner ? 1.0f : std::clamp(1.0f - spd / 900.0f, 0.55f, 1.0f));
+						ft.t += dt;
+						const float u = std::clamp(ft.t / std::max(0.05f, dur), 0.0f, 1.0f);
+						const float e = u * u * (3 - 2 * u);
+						at = ft.from + (ft.to - ft.from) * e;
+						at.z += std::sin(u * RE::NI_PI) * g.lift * scale * limp;
+						if (u >= 1.0f) {
+							ft.plant = ft.to, ft.t = -1.0f;
+							at = ft.plant;
+						}
+					}
+					at.z = std::max(at.z, ground + ankle);
+					ft.from.z = ft.to.z = ground + ankle;
+					if (ft.t < 0) {
+						ft.plant.z = ground + ankle;
+						at = ft.plant;
+					}
+					// the knee points forward (and a little out)
+					TwoBone(B[side == 0 ? kLThigh : kRThigh], B[side == 0 ? kLCalf : kRCalf], B[side == 0 ? kLFoot : kRFoot], at, vdir + rt * (0.15f * sg), 1.0f);
 				}
-				done(side == 0 ? kLClav : kRClav);
-				float reach = d.reach * w, spread = d.spread * w, elbow = d.elbow * w;
-				float swing = 0;
-				if (d.swingArms > 0) {  // a runner's arms pump behind it
-					reach = -0.55f * d.swingArms * moving * w;
-					swing = 0.7f * std::sin(r.phase + (side ? RE::NI_PI : 0)) * moving * w;
-				} else {
-					swing = 0.12f * std::sin(r.phase * 0.9f + side * 1.7f + r.seed) * w;  // grasping, never quite still
-				}
-				if (d.crawl > 0) {  // a crawler's arms haul it along: reach far ahead, plant, pull
-					const float c = std::sin(r.phase + (side ? RE::NI_PI : 0));
-					reach = (1.6f + 0.6f * c) * d.crawl;
-					spread = 0.35f;
-					elbow = 0.6f + 0.5f * std::max(0.0f, -c);
-				}
-				if (cue == Undead::kCueRoar || cue == Undead::kCueScream) {  // arms flung wide
-					reach = reach * (1 - cueK) + 0.6f * cueK;
-					spread = spread * (1 - cueK) + 1.25f * cueK;
-				}
-				if (cue == Undead::kCueGrab) {  // both arms up, lunging to seize
-					reach = reach * (1 - cueK) + 1.5f * cueK;
-					spread = spread * (1 - cueK) + 0.15f * cueK;
-				}
-				if ((cue == Undead::kCueSwipeL && side == 0) || (cue == Undead::kCueSwipeR && side == 1)) {  // a great raking sweep
-					reach = 1.2f * cueK + reach * (1 - cueK);
-					spread = (1.4f - 2.2f * Ease(1.0f - r.cueLeft.load() / std::max(0.05f, r.cueLen))) * cueK + spread * (1 - cueK);
-				}
-				if (cue == Undead::kCueChannel) {  // a necromancer's raised hands
-					reach = 1.9f * cueK + reach * (1 - cueK);
-				}
-				Turn(arm, AxisAngle(rt, reach + swing) * AxisAngle(f, -sg * spread));
-				Refresh(arm), done(side == 0 ? kLArm : kRArm);
-				Turn(fore, AxisAngle(rt, elbow));
-				Refresh(fore), done(side == 0 ? kLFore : kRFore);
-				if (hand.node && d.hands != 1.0f) {  // claws: hands too big for the arms that carry them
-					hand.node->local.scale = hand.baseScale * d.hands;
-					Refresh(hand);
-				}
-				done(side == 0 ? kLHand : kRHand);
-			}
-			// ---- legs: the shambler's dragging foot; a floating necromancer's hang loose
-			{
-				if (d.limp > 0) {
-					Turn(B[kLThigh], AxisAngle(rt, 0.22f * d.limp) * AxisAngle(f, 0.12f * d.limp));
-					Refresh(B[kLThigh]);
-				}
-				if (d.lift > 20.0f) {
-					for (int i : { kLThigh, kRThigh }) {
-						Turn(B[i], AxisAngle(rt, 0.25f + 0.05f * std::sin(r.phase * 0.6f + i)));
-						Refresh(B[i]);
+				// the hips settle: low enough that both planted feet are reached (nothing floats), with the step's bob
+				{
+					float need = 0;
+					for (int side = 0; side < 2; ++side) {
+						auto& th = B[side == 0 ? kLThigh : kRThigh];
+						auto& ca = B[side == 0 ? kLCalf : kRCalf];
+						auto& fo = B[side == 0 ? kLFoot : kRFoot];
+						(void)th, (void)ca;
+						const float miss = fo.node->world.translate.z - (r.feet[side].t >= 0 ? fo.node->world.translate.z : r.feet[side].plant.z);
+						need = std::max(need, miss);
+					}
+					if (need > 0.5f) {  // a foot could not reach its plant: drop the body by that much and solve again
+						Shift(B[kCOM], RE::NiPoint3{ 0, 0, -std::min(need, 30.0f * scale) });
+						Refresh(B[kCOM]);
+						for (int side = 0; side < 2; ++side) {
+							const RE::NiPoint3 at = r.feet[side].t >= 0 ? B[side == 0 ? kLFoot : kRFoot].node->world.translate : r.feet[side].plant;
+							TwoBone(B[side == 0 ? kLThigh : kRThigh], B[side == 0 ? kLCalf : kRCalf], B[side == 0 ? kLFoot : kRFoot], at, vdir + rt * (0.15f * (side == 0 ? -1.0f : 1.0f)), 1.0f);
+						}
 					}
 				}
-				done(kLThigh), done(kRThigh);
+			}
+			done(kLThigh), done(kRThigh), done(kLCalf), done(kRCalf), done(kLFoot), done(kRFoot);
+
+			// ---- its own strike (no draugr swing): when Skyrim starts an attack, an arm rears back and rakes down
+			if (attacking && !r.wasAttacking) {
+				r.atkT = 0.0f, r.atkSide = (r.atkSide + 1) % 2;
+			}
+			r.wasAttacking = attacking;
+			float atk = -1.0f;
+			if (r.atkT >= 0) {
+				r.atkT += dt;
+				atk = r.atkT / 0.55f;
+				if (atk >= 1.0f) {
+					r.atkT = -1.0f, atk = -1.0f;
+				}
+			}
+			// ---- the arms, placed by IK: reaching, pumping, flung wide, raking
+			{
+				const float s1a = std::sin(r.phase), s1b = std::sin(r.phase + RE::NI_PI);
+				RE::NiPoint3 chest = B[kSpine2].node ? B[kSpine2].node->world.translate : pos + up * (95.0f * scale);
+				for (int side = 0; side < 2; ++side) {
+					const float sg = side == 0 ? -1.0f : 1.0f;
+					auto& clav = B[side == 0 ? kLClav : kRClav];
+					auto& arm = B[side == 0 ? kLArm : kRArm];
+					auto& fore = B[side == 0 ? kLFore : kRFore];
+					auto& hand = B[side == 0 ? kLHand : kRHand];
+					if (clav.node && d.chest != 1.0f) {
+						clav.node->local.scale = clav.baseScale / d.chest;
+						Refresh(clav);
+					}
+					done(side == 0 ? kLClav : kRClav);
+					if (!arm.node || !fore.node || !hand.node) {
+						continue;
+					}
+					const float swing = side == 0 ? s1a : s1b;
+					const float sh = 1.0f * scale;
+					// where this kind holds its hand (relative to the chest: forward, out to the side, up)
+					float fw = 18.0f + 30.0f * d.reach, out = 9.0f + 22.0f * d.spread, upz = -18.0f + 22.0f * d.reach;
+					if (d.swingArms > 0) {  // a runner pumps its arms
+						fw = 6.0f + 26.0f * swing * moving, out = 10.0f, upz = -30.0f + 10.0f * std::abs(swing) * moving;
+					} else {
+						fw += 6.0f * std::sin(r.phase * 0.9f + side * 1.7f + r.seed);  // grasping, never quite still
+						upz += 4.0f * std::sin(r.phase * 1.3f + side);
+					}
+					if (cue == Undead::kCueRoar || cue == Undead::kCueScream) {  // arms flung wide
+						fw = fw * (1 - cueK) + 10.0f * cueK, out = out * (1 - cueK) + 48.0f * cueK, upz = upz * (1 - cueK) + 18.0f * cueK;
+					}
+					if (cue == Undead::kCueGrab) {
+						fw = fw * (1 - cueK) + 55.0f * cueK, out = out * (1 - cueK) + 6.0f * cueK, upz = upz * (1 - cueK) + 8.0f * cueK;
+					}
+					if (cue == Undead::kCueChannel) {
+						fw = fw * (1 - cueK) + 20.0f * cueK, upz = upz * (1 - cueK) + 40.0f * cueK;
+					}
+					if (atk >= 0 && side == r.atkSide) {  // rear back high, then rake down across in front
+						const float u = atk < 0.35f ? Ease(atk / 0.35f) : 1.0f;
+						const float v = atk < 0.35f ? 0.0f : Ease((atk - 0.35f) / 0.45f);
+						fw = (1 - u) * fw + u * (-4.0f + 62.0f * v);
+						out = (1 - u) * out + u * (26.0f - 34.0f * v);
+						upz = (1 - u) * upz + u * (34.0f - 64.0f * v);
+					}
+					const RE::NiPoint3 target = chest + f * (fw * sh) + rt * (sg * out * sh) + up * (upz * sh);
+					// the elbow bends out and down
+					TwoBone(arm, fore, hand, target, rt * sg * 0.7f - up * 0.6f - f * 0.3f, 1.0f);
+					done(side == 0 ? kLArm : kRArm), done(side == 0 ? kLFore : kRFore);
+					if (d.hands != 1.0f) {
+						hand.node->local.scale = hand.baseScale * d.hands;
+						Refresh(hand);
+					}
+					done(side == 0 ? kLHand : kRHand);
+				}
 			}
 			if (!g_logged.exchange(true)) {
 				logger::info("undead: rig live ({} bones found on the first)", std::count_if(B.begin(), B.end(), [](const BoneState& b) { return b.node != nullptr; }));
@@ -398,10 +546,12 @@ namespace bo3z
 		Type Roll(int a_round)
 		{
 			const float u = Rand(0.0f, 1.0f);
-			const float runners = a_round >= 3 ? std::min(0.32f, 0.10f + 0.02f * a_round) : 0.0f;
+			// every night is a mix of all the risen (Noah: no night of one model): the Risen Dead most, then the Hollow
+			// Bride, the Stitched Abomination and the Drowned Wailer; a little more of the dangerous ones as nights go on
+			const float runners = std::min(0.30f, 0.20f + 0.01f * a_round);
 			const float crawlers = 0.0f;  // (retired: the crawl rig slid along the ground)
-			const float wailers = a_round >= 6 ? 0.05f : 0.0f;
-			const float bloaters = a_round >= 4 ? 0.07f : 0.0f;
+			const float wailers = std::min(0.14f, 0.08f + 0.006f * a_round);
+			const float bloaters = std::min(0.20f, 0.14f + 0.006f * a_round);
 			if (u < runners) return Type::Runner;
 			if (u < runners + crawlers) return Type::Crawler;
 			if (u < runners + crawlers + wailers) return Type::Wailer;
