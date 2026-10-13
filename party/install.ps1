@@ -42,7 +42,7 @@ $data = Join-Path $game 'Data'
 foreach ($old in (Join-Path $game 'BO3Zombies.asi'), (Join-Path $data 'SKSE\Plugins\BO3Zombies.dll')) {
     if (Test-Path $old) { Remove-Item $old -Force; Say "Removed the old $(Split-Path -Leaf $old)" }
 }
-Say 'Copying Undying Nights...'
+Say 'Copying Undying Nights and SKSE (Skyrim Together starts SKSE, and SKSE loads Undying Nights and the mods)...'
 Copy-Item (Join-Path $pack 'files\Game\*') $game -Recurse -Force
 Say 'Copying Skyrim Together Reborn...'
 Copy-Item (Join-Path $pack 'files\SkyrimTogether\*') $data -Recurse -Force
@@ -95,7 +95,7 @@ $keep = $lines | Where-Object { $n = ($_ -replace '^\*', '').Trim(); -not ($ours
 $mid = @()
 if ($gfxOn -or (Test-Path (Join-Path $data 'Lux Via.esp'))) { $mid = $gfxPlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ } }
 $out = @($keep | Where-Object { $_ -match '^\s*#' }) + @('*SkyrimTogether.esp', '*SkyrimTogetherQuestPatches.esp') + @($keep | Where-Object { $_ -notmatch '^\s*#' -and $_.Trim() }) + $mid + @($modPlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ }) + @('*BO3Zombies.esp')
-Set-Content -Path $plist -Value $out -Encoding UTF8
+[IO.File]::WriteAllLines($plist, [string[]]$out)  # (no byte-order mark: Skyrim would not read the first plugin's name)
 Say 'Plugins turned on.' Green
 
 # ---- the party's address and password
@@ -127,6 +127,8 @@ if ($Role -eq 'host') {
     $lnk2.WorkingDirectory = $str
     $lnk2.Save()
 }
+if (-not (Test-Path (Join-Path $game 'skse64_1_7_104.dll'))) { Say "SKSE did not copy - Undying Nights will not load. Run this again (as administrator if Skyrim is under Program Files)." Red }
+if ($ver -notlike '1.7.104*') { Say "Your Skyrim is $ver - this pack's SKSE and Undying Nights need 1.7.104 (Steam, kept up to date). Update Skyrim in Steam, then start from the shortcut." Red }
 Say "`nDone! Shortcut 'Undying Nights Co-op' is on your desktop.`n" Yellow
 Say "Always start the game from that shortcut (not Steam's Play button)." Cyan
 if ($Role -eq 'host') {

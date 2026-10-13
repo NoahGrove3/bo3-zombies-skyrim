@@ -55,6 +55,9 @@ TROUBLESHOOTING
  - Antivirus removed dinput8.dll or UndyingNights.asi from the Skyrim folder: allow them and run the .bat again.
  - Accepted the invite and nothing happened: you were not in the Undying Nights main menu, or one of you
    has an older pack. Both re-run the .bat from this pack, start from the shortcut, try again.
+ - Nothing loads (plain Skyrim menu, no mods): your Skyrim must be the current Steam version (1.7.104) - the
+   installer says which you have. SKSE (skse64_1_7_104.dll, skse64_loader.exe) must be in the Skyrim folder;
+   run the .bat again (right-click > Run as administrator if Skyrim is under Program Files).
  - Uninstall: delete UndyingNights.asi, dinput8.dll and UndyingNights.ini from the Skyrim folder and
    Data\BO3Zombies.esp, Data\SkyrimTogetherReborn.
 
