@@ -1662,17 +1662,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			float       l2At;              // its second half is spoken
 		};
 		using GS = gen::Sound;
-		// timed to the narration (vo_01..vo_09; line 2 of each couplet at l2At)
+		// timed to the rhymed narration (vo_01..vo_09, measured: each couplet's second line starts at l2At)
 		const FilmScene kFilm[] = {
-			{ "helgen", 7.4f, 1.10f, 1.04f, -0.5f, 0.3f, 0.4f, -0.2f, -90, 110, 10, 4, GS::intro_helgen, 0.05f, GS::vo_01, 0.9f, 3.9f },
-			{ "sky", 10.2f, 1.04f, 1.12f, 0.0f, -0.4f, 0.0f, 0.2f, 0, 0, 2, 12, GS::intro_dirge, 0.05f, GS::vo_02, 0.6f, 2.3f },
-			{ "graves", 7.6f, 1.12f, 1.03f, 0.4f, 0.5f, -0.3f, 0.0f, 0, 0, 0, 3, GS::intro_graves, 0.05f, GS::vo_03, 0.6f, 3.5f },
-			{ "dusk", 9.8f, 1.03f, 1.10f, 0.0f, -0.6f, 0.0f, 0.4f, 0, 0, 0, 0, GS::intro_graves, 0.05f, GS::vo_04, 0.6f, 4.5f },
-			{ "horde", 12.8f, 1.12f, 1.04f, -0.3f, 0.2f, 0.3f, 0.0f, 0, 0, 6, 0, GS::intro_horde, 0.05f, GS::vo_05, 0.6f, 6.9f },
-			{ "champions", 9.4f, 1.02f, 1.10f, 0.0f, 0.3f, 0.0f, -0.3f, 0, 0, 0, 5, GS::intro_champions, 0.05f, GS::vo_06, 0.6f, 3.1f },
-			{ "wyrm", 8.6f, 1.10f, 1.03f, 0.3f, -0.2f, -0.3f, 0.2f, 0, 0, 0, 14, GS::intro_wyrm, 0.05f, GS::vo_07, 0.6f, 3.3f },
-			{ "shrine", 13.4f, 1.03f, 1.12f, 0.2f, 0.3f, -0.1f, -0.1f, 0, 0, 0, 10, GS::intro_shrine, 0.05f, GS::vo_08, 0.6f, 6.0f },
-			{ "dragonborn", 7.6f, 1.02f, 1.08f, 0.0f, 0.2f, 0.0f, -0.2f, 0, 0, 0, 4, GS::intro_title, 0.05f, GS::vo_09, 0.9f, 2.2f },
+			{ "helgen", 8.1f, 1.10f, 1.04f, -0.5f, 0.3f, 0.4f, -0.2f, -90, 110, 10, 4, GS::intro_helgen, 0.05f, GS::vo_01, 0.9f, 4.2f },
+			{ "sky", 10.2f, 1.04f, 1.12f, 0.0f, -0.4f, 0.0f, 0.2f, 0, 0, 2, 12, GS::intro_dirge, 0.05f, GS::vo_02, 0.6f, 5.4f },
+			{ "graves", 9.6f, 1.12f, 1.03f, 0.4f, 0.5f, -0.3f, 0.0f, 0, 0, 0, 3, GS::intro_graves, 0.05f, GS::vo_03, 0.6f, 5.0f },
+			{ "dusk", 9.9f, 1.03f, 1.10f, 0.0f, -0.6f, 0.0f, 0.4f, 0, 0, 0, 0, GS::intro_graves, 0.05f, GS::vo_04, 0.6f, 4.9f },
+			{ "horde", 11.9f, 1.12f, 1.04f, -0.3f, 0.2f, 0.3f, 0.0f, 0, 0, 6, 0, GS::intro_horde, 0.05f, GS::vo_05, 0.6f, 6.3f },
+			{ "champions", 11.0f, 1.02f, 1.10f, 0.0f, 0.3f, 0.0f, -0.3f, 0, 0, 0, 5, GS::intro_champions, 0.05f, GS::vo_06, 0.6f, 5.2f },
+			{ "wyrm", 10.9f, 1.10f, 1.03f, 0.3f, -0.2f, -0.3f, 0.2f, 0, 0, 0, 14, GS::intro_wyrm, 0.05f, GS::vo_07, 0.6f, 4.7f },
+			{ "shrine", 10.3f, 1.03f, 1.12f, 0.2f, 0.3f, -0.1f, -0.1f, 0, 0, 0, 10, GS::intro_shrine, 0.05f, GS::vo_08, 0.6f, 5.35f },
+			{ "dragonborn", 12.0f, 1.02f, 1.08f, 0.0f, 0.2f, 0.0f, -0.2f, 0, 0, 0, 4, GS::intro_title, 0.05f, GS::vo_09, 0.9f, 6.45f },
 		};
 		constexpr int kFilmScenes = static_cast<int>(std::size(kFilm));
 		constexpr float kFilmXfade = 1.0f;
