@@ -29,6 +29,7 @@ namespace bo3z
 		ID3D11ShaderResourceView* g_frame = nullptr;    // nine-slice panel: black field, iron and bronze border (tools/uiart.py)
 		ID3D11ShaderResourceView* g_divider = nullptr;  // bronze line with a winged diamond
 		std::atomic<int>          g_clicks{ 0 };        // left clicks since the last frame (menus)
+		std::atomic<bool>         g_padLast{ false };   // the last thing touched was a controller: show its buttons
 		std::atomic<int>          g_padMove{ 0 }, g_padAccept{ 0 }, g_padBack{ 0 };  // main menu: pad / arrow keys since the last frame
 		std::string               g_devPick;            // dev: a main-menu word to press as a click would (menupick)
 		std::mutex                g_devPickLock;
@@ -347,7 +348,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->PathStroke(IM_COL32(230, 50, 40, 255), 0, 8 * k);
 					TxtC(dl, g_title, 30 * k, c.x, c.y - 17 * k, IM_COL32(240, 220, 200, 255), std::to_string(static_cast<int>(std::ceil(pv.left))));
 					TxtC(dl, g_title, 40 * k, c.x, c.y + 64 * k, IM_COL32(230, 60, 50, 255), "YOU ARE DOWN", 3 * k, IM_COL32(120, 0, 0, 255));
-					TxtC(dl, g_body, 22 * k, c.x, c.y + 114 * k, IM_COL32(220, 210, 196, 230), "A friend can revive you: they stand by you and hold E");
+					TxtC(dl, g_body, 22 * k, c.x, c.y + 114 * k, IM_COL32(220, 210, 196, 230), "A friend can revive you: they stand by you and hold E (A on a controller)");
 				} else if (pv.life == Party::Life::Dead) {
 					TxtC(dl, g_title, 34 * k, size.x / 2, size.y * 0.10f, IM_COL32(230, 60, 50, 255), "YOU DIED", 3 * k, IM_COL32(120, 0, 0, 255));
 					TxtC(dl, g_body, 24 * k, size.x / 2, size.y * 0.10f + 46 * k, IM_COL32(230, 220, 205, 240),
@@ -368,7 +369,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							dl->PathArcTo(c, 30 * k, -1.5708f, -1.5708f + 6.2832f * pv.reviveFrac, 48);
 							dl->PathStroke(IM_COL32(110, 255, 190, 255), 0, 6 * k);
 						}
-						TxtC(dl, g_title, 24 * k, c.x, c.y + 42 * k, IM_COL32(230, 240, 230, 255), "Hold E to revive " + pv.reviveName);
+						TxtC(dl, g_title, 24 * k, c.x, c.y + 42 * k, IM_COL32(230, 240, 230, 255), std::string(g_padLast ? "Hold A to revive " : "Hold E to revive ") + pv.reviveName);
 					}
 				}
 			}
@@ -982,7 +983,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float R = 46 * k;
 					rollOrb({ L + R, y + R + 4 * k }, R);
 					const float tx = L + 2 * R + 16 * k;
-					keyCap({ tx, y + 4 * k }, "1", s.rollPhase == 0);
+					keyCap({ tx, y + 4 * k }, g_padLast ? "X" : "1", s.rollPhase == 0);
 					Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? "CALL A SPELL" : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? "THE SPELLS TURN..." : ArmsName(s.rollGun));
 					Txt(dl, g_body, 17 * k, { tx, y + 38 * k }, IM_COL32(196, 182, 160, 235),
 						s.rollPhase == 3 ? "Activate the shrine to take it" : "Every spell you lack has an equal chance");
@@ -1001,7 +1002,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const int  g = gw >= 0 ? gw : sp >= 0 ? Arcana::kIdBase + sp : -1;
 					const int  lvl = gw >= 0 ? std::clamp(s.slotLevel[act], 0, gen::kForgeMax) : sp >= 0 ? Arcana::Level(sp) : 0;
 					const bool can = g >= 0 && lvl < gen::kForgeMax;
-					keyCap({ L, y + 2 * k }, "2", can);
+					keyCap({ L, y + 2 * k }, g_padLast ? "Y" : "2", can);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "REFORGE");
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235),
 						g < 0 ? "Hold a spell to reforge it" : ArmsName(g) + (lvl >= gen::kForgeMax ? "  -  ascended" : "  -  more power, less magicka"));
@@ -1026,7 +1027,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const int  sel = std::clamp(s.perkSel, 0, n - 1);
 					const auto& p = gen::kPerks[sel];
 					const int  have = s.perkStacks[sel];
-					keyCap({ L, y + 2 * k }, "3", s.points >= p.cost);
+					keyCap({ L, y + 2 * k }, g_padLast ? "A" : "3", s.points >= p.cost);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "TAKE A BLESSING");
 					const std::string rule = owned ? "they stack - death takes them all" : "take each as often as you like";
 					Txt(dl, g_body, 16 * k, { Rr - Measure(g_body, 16 * k, rule).x, y + 6 * k }, IM_COL32(170, 156, 132, 220), rule);
@@ -1059,14 +1060,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImU32 scol = IM_COL32((sh.color >> 16) & 0xFF, (sh.color >> 8) & 0xFF, sh.color & 0xFF, 255);
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
 					y += 14 * k;
-					keyCap({ L, y + 2 * k }, "4", true);
+					keyCap({ L, y + 2 * k }, g_padLast ? "\xE2\x86\x91" : "4", true);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, scol, "LEARN THE THU'UM: " + std::string(sh.label), 1.5f * k, scol);
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(210, 196, 170, 235), std::string(sh.w1) + "  " + std::string(sh.w2) + "  " + std::string(sh.w3) + "  -  freely given");
 					y += 64 * k;
 				}
 				Divider(dl, cx, b.y - 58 * k, w * 0.38f, k, 0.7f);
-				TxtC(dl, g_body, 16 * k, cx, b.y - 48 * k, IM_COL32(200, 186, 160, 225), "Wheel or Left / Right: choose a brew   \xC2\xB7   E or Backspace leave");
-				TxtC(dl, g_body, 15 * k, cx, b.y - 27 * k, IM_COL32(160, 148, 128, 200), "Pad: X call  \xC2\xB7  Y reforge  \xC2\xB7  A bless  \xC2\xB7  D-pad choose / up Thu'um  \xC2\xB7  B leave");
+				if (g_padLast) {  // the controller's buttons when it is in hand, the keys otherwise
+					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), "D-pad Left / Right: choose a brew   \xC2\xB7   B leave");
+				} else {
+					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), "Wheel or Left / Right: choose a brew   \xC2\xB7   E or Backspace leave");
+				}
 			} else if (s.rollPhase > 0) {
 				// the roll with the menu closed: a small strip under the crosshair
 				const float R = 30 * k;
@@ -2718,10 +2722,19 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 
 		void OnClick() { ++g_clicks; }
-		void OnMouseMove(float a_dx, float a_dy) { g_mouseDX = g_mouseDX + a_dx, g_mouseDY = g_mouseDY + a_dy; }
+		void OnMouseMove(float a_dx, float a_dy)
+		{
+			g_mouseDX = g_mouseDX + a_dx, g_mouseDY = g_mouseDY + a_dy;
+			if (std::abs(a_dx) + std::abs(a_dy) > 3.0f) {
+				g_padLast = false;
+			}
+		}
 		// the main menu by pad or keys: up / down through every word (Skyrim's and ours), A / Enter presses ours
 		void OnMenuButton(const RE::ButtonEvent* a_b)
 		{
+			if (a_b && a_b->IsDown()) {
+				g_padLast = a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad;
+			}
 			auto* ui = RE::UI::GetSingleton();
 			if (!a_b || !a_b->IsDown() || !ui || !ui->IsMenuOpen(RE::MainMenu::MENU_NAME)) {
 				return;
@@ -2745,7 +2758,25 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			g_devPick = a_text;
 			std::transform(g_devPick.begin(), g_devPick.end(), g_devPick.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
 		}
-		void IntroStart() { g_filmReq = true; }
+		// The film is off for now (in a co-op party Skyrim Together's own screens kept pausing it, and it began again
+		// and again): a new character goes from black straight into the game, and is saved there.
+		constexpr bool kFilmOn = false;
+		void IntroStart()
+		{
+			if (kFilmOn) {
+				g_filmReq = true;
+				return;
+			}
+			g_outro = true, g_veil = 1.0f;
+			g_saveAfterFilm = true;
+			g_outroStart = g_outroBusy = std::chrono::steady_clock::now();
+			SKSE::GetTaskInterface()->AddTask([] {
+				if (auto* cam = RE::PlayerCamera::GetSingleton()) {
+					cam->ForceFirstPerson();
+				}
+			});
+			logger::info("intro: no film (off for now): straight into the game");
+		}
 		bool IntroActive() { return g_filmOn || g_filmReq; }
 		bool IntroBusy()
 		{

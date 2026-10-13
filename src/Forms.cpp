@@ -320,7 +320,8 @@ namespace bo3z
 			std::array<int, std::size(kSavedAVs)> g_val{};
 			bool                                  g_coSave = false;
 			std::array<int, 16>                   g_stacks{};  // blessings bought, each
-			bool                                  g_stacksLoaded = false;  // SKSE's serialization is ours (else: the old actor values)
+			bool                                  g_stacksLoaded = false;
+			int                                   g_stamBonus = 0;  // the extra stamina given to this character  // SKSE's serialization is ours (else: the old actor values)
 			constexpr std::uint32_t               kRecord = 'VALS', kRecordVersion = 1;
 
 			int Index(int a_av)
@@ -359,6 +360,9 @@ namespace bo3z
 				if (a_s->OpenRecord('PRKS', 1)) {
 					a_s->WriteRecordData(g_stacks.data(), static_cast<std::uint32_t>(sizeof(int) * g_stacks.size()));
 				}
+				if (a_s->OpenRecord('STAM', 1)) {
+					a_s->WriteRecordData(&g_stamBonus, sizeof(int));
+				}
 				const auto lv = Arcana::Levels();
 				if (a_s->OpenRecord('SPLV', 1)) {
 					a_s->WriteRecordData(lv.data(), static_cast<std::uint32_t>(lv.size()));
@@ -373,6 +377,8 @@ namespace bo3z
 						found = a_s->ReadRecordData(g_val.data(), length) == length;
 					} else if (type == 'PRKS' && length == sizeof(int) * g_stacks.size()) {
 						g_stacksLoaded = a_s->ReadRecordData(g_stacks.data(), length) == length;
+					} else if (type == 'STAM' && length == sizeof(int)) {
+						a_s->ReadRecordData(&g_stamBonus, length);
 					} else if (type == 'SPLV') {
 						std::vector<std::uint8_t> lv(length);
 						a_s->ReadRecordData(lv.data(), length);
@@ -390,7 +396,7 @@ namespace bo3z
 					Migrate();
 				}
 			}
-			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, Arcana::SetLevels({}); }
+			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, Arcana::SetLevels({}); }
 		}
 
 		void InstallCoSave()
@@ -404,6 +410,9 @@ namespace bo3z
 				logger::info("save: the mod's values live in the SKSE co-save");
 			}
 		}
+
+		int  StaminaBonus() { return g_stamBonus; }
+		void SetStaminaBonus(int a_n) { g_stamBonus = a_n; }
 
 		int PerkStacks(int a_perk)
 		{

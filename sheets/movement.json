@@ -76,7 +76,7 @@
     {
       "id": "sprint_stamina",
       "what": "multiplier on Skyrim's sprint stamina drain",
-      "value": 0.35,
+      "value": 0.2,
       "durationMs": 0,
       "verify": []
     },

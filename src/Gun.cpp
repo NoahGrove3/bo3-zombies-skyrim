@@ -2202,11 +2202,16 @@ namespace bo3z
 				}
 				last = av->GetActorValue(RE::ActorValue::kMagicka);
 			}
+			// more stamina for every character (+100, given once), and it comes back sooner and faster
+			if (constexpr int kBonus = 100; Save::StaminaBonus() < kBonus && !p->IsDead()) {
+				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kStamina, static_cast<float>(kBonus - Save::StaminaBonus()));
+				Save::SetStaminaBonus(kBonus);
+			}
 			static float lastSp = -1, spQuiet = 0;
 			const float  spMax = av->GetPermanentActorValue(RE::ActorValue::kStamina), sp = av->GetActorValue(RE::ActorValue::kStamina);
 			spQuiet = (lastSp >= 0 && sp < lastSp - 0.01f) || p->AsActorState()->IsSprinting() ? 0 : spQuiet + a_delta;
-			if (spQuiet >= gen::kManaRegenDelay && sp < spMax) {
-				av->RestoreActorValue(RE::ActorValue::kStamina, std::min(spMax - sp, spMax * gen::kManaRegenPerSecond * a_delta));
+			if (spQuiet >= 1.5f && sp < spMax) {
+				av->RestoreActorValue(RE::ActorValue::kStamina, std::min(spMax - sp, spMax * 0.6f * a_delta));
 			}
 			lastSp = av->GetActorValue(RE::ActorValue::kStamina);
 		}
