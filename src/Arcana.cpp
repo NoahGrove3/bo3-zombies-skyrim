@@ -16,6 +16,26 @@ namespace bo3z::Arcana
 		std::unordered_map<RE::FormID, int>                 g_index;
 		int                                                 g_found = 0;
 		std::mt19937                                        g_rng{ std::random_device{}() };
+		std::array<std::uint8_t, coffer::kSpells.size()>    g_level{};
+		std::array<std::vector<float>, coffer::kSpells.size()> g_baseMag;  // each effect's magnitude as the mod made it
+
+		// a reforged spell: each level adds gen::kForgeStep of its power and takes a tenth off its cost
+		void Apply(int a_index)
+		{
+			auto* sp = g_spell[a_index];
+			if (!sp) {
+				return;
+			}
+			const int   lv = g_level[a_index];
+			const float mult = 1.0f + gen::kForgeStep * lv;
+			auto&       base = g_baseMag[a_index];
+			for (std::size_t e = 0; e < sp->effects.size() && e < base.size(); ++e) {
+				if (sp->effects[e]) {
+					sp->effects[e]->effectItem.magnitude = base[e] * mult;
+				}
+			}
+			sp->data.costOverride = std::max(1, static_cast<int>(std::lround(coffer::kSpells[a_index].cost * (1.0f - 0.1f * lv))));
+		}
 	}
 
 	void Load()
