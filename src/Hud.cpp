@@ -675,7 +675,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (!s.questTitle.empty() || s.questNoteTime > 0) {
 				const float w = 400 * k;
 				const bool  note = s.questNoteTime > 0 && !s.questNote.empty();
-				const ImVec2 a{ size.x - w - 40 * k, 30 * k }, b{ size.x - 40 * k, 30 * k + (note ? 128 : 104) * k };
+				const ImVec2 a{ size.x - w - 40 * k, 88 * k }, b{ size.x - 40 * k, 88 * k + (note ? 128 : 104) * k };  // under Skyrim's place name (top right)
 				Panel(dl, a, b, k, 0.92f);
 				Txt(dl, g_body, 14 * k, { a.x + 14 * k, a.y + 8 * k }, Fade(kGold, 0.85f), s.questCity + "  -  THE UNDYING DIRGE  " + std::to_string(s.questStep + 1) + "/4");
 				Txt(dl, g_title, 22 * k, { a.x + 14 * k, a.y + 28 * k }, kParch, s.questTitle);
