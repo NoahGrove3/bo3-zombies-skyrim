@@ -29,6 +29,7 @@ namespace bo3z
 		ID3D11ShaderResourceView* g_frame = nullptr;    // nine-slice panel: black field, iron and bronze border (tools/uiart.py)
 		ID3D11ShaderResourceView* g_divider = nullptr;  // bronze line with a winged diamond
 		std::atomic<int>          g_clicks{ 0 };        // left clicks since the last frame (menus)
+		std::atomic<int>          g_padMove{ 0 }, g_padAccept{ 0 }, g_padBack{ 0 };  // main menu: pad / arrow keys since the last frame
 		std::string               g_devPick;            // dev: a main-menu word to press as a click would (menupick)
 		std::mutex                g_devPickLock;
 		// Skyrim's main-menu buttons are kept over our picture: the frame as Skyrim drew it is copied, and in the
@@ -1077,16 +1078,31 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 
 		// ---- main menu and party panel ----
-		ImVec2 Cursor(ImVec2 a_size)
+		// The menu cursor: Skyrim's own, and when Skyrim stops moving it (a controller was used, so it thinks the pad
+		// has the menu) the mouse's own movement carries it on, so the mouse is never stuck
+		std::atomic<float> g_mouseDX{ 0 }, g_mouseDY{ 0 };
+		ImVec2             g_cursor{ -1, -1 };
+		void UpdateCursor(ImVec2 a_size)
 		{
 			auto* mc = RE::MenuCursor::GetSingleton();
+			const float dx = g_mouseDX.exchange(0), dy = g_mouseDY.exchange(0);
 			if (!mc) {
-				return { -1, -1 };
+				g_cursor = { -1, -1 };
+				return;
 			}
 			const auto& r = mc->GetRuntimeData();
 			const float sx = r.screenWidthX > 1 ? a_size.x / r.screenWidthX : 1.0f, sy = r.screenWidthY > 1 ? a_size.y / r.screenWidthY : 1.0f;
-			return { r.cursorPosX * sx, r.cursorPosY * sy };
+			const ImVec2 sk{ r.cursorPosX * sx, r.cursorPosY * sy };
+			static ImVec2 lastSk{ -1, -1 };
+			if (std::abs(sk.x - lastSk.x) + std::abs(sk.y - lastSk.y) > 0.5f || g_cursor.x < 0) {
+				g_cursor = sk;  // Skyrim moved it: follow
+			} else if (dx != 0 || dy != 0) {
+				g_cursor.x = std::clamp(g_cursor.x + dx * a_size.y / 1080.0f, 0.0f, a_size.x);
+				g_cursor.y = std::clamp(g_cursor.y + dy * a_size.y / 1080.0f, 0.0f, a_size.y);
+			}
+			lastSk = sk;
 		}
+		ImVec2 Cursor(ImVec2) { return g_cursor; }
 
 		bool Button(ImDrawList* dl, ImVec2 a, ImVec2 b, const std::string& label, ImVec2 cur, bool click, float k, ImU32 accent = kGold)
 		{
@@ -1805,6 +1821,51 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					rows.push_back({ "Back", false, false, 6, 0, 0 });
 				}
+				// pad / keys: our own focus walks every word; Skyrim's list follows it (or lets go on our words, so its A
+				// does nothing there); the mouse takes over again as soon as it moves
+				static int  padFocus = -1;
+				static bool padOn = false;
+				static bool lastParty = false;
+				static ImVec2 lastCur{ -1, -1 };
+				const int   moves = g_padMove.exchange(0), accepts = g_padAccept.exchange(0), backs = g_padBack.exchange(0);
+				if (lastParty != partyMode) {
+					padFocus = -1, lastParty = partyMode;
+				}
+				if (std::abs(cur.x - lastCur.x) + std::abs(cur.y - lastCur.y) > 3.0f) {
+					padOn = false;
+				}
+				lastCur = cur;
+				if (moves || accepts || backs) {
+					if (!padOn) {
+						padFocus = -1;
+						for (std::size_t i = 0; i < rows.size(); ++i) {
+							if (rows[i].kind == 0 && rows[i].sel) padFocus = static_cast<int>(i);
+						}
+						if (padFocus < 0) padFocus = 0;
+					}
+					padOn = true;
+				}
+				if (padOn && !rows.empty()) {
+					padFocus = std::clamp(padFocus, 0, static_cast<int>(rows.size()) - 1);
+					for (int m = 0; m < std::abs(moves); ++m) {
+						int nf = padFocus;
+						do {
+							nf = (nf + (moves > 0 ? 1 : -1) + static_cast<int>(rows.size())) % static_cast<int>(rows.size());
+						} while (rows[nf].disabled && nf != padFocus);
+						padFocus = nf;
+					}
+					if (mv) {  // Skyrim's own selection follows ours (none while ours is on one of our words)
+						RE::GFxValue list;
+						if (mv->GetVariable(&list, "_root.MenuHolder.Menu_mc.MainList") && list.IsDisplayObject()) {
+							const double want = rows[padFocus].kind == 0 ? rows[padFocus].arg : -1.0;
+							RE::GFxValue cv;
+							list.GetMember("selectedIndex", &cv);
+							if (!cv.IsNumber() || cv.GetNumber() != want) {
+								list.SetMember("selectedIndex", RE::GFxValue(want));
+							}
+						}
+					}
+				}
 				static int hoverIdx = -1;
 				static std::vector<float> glow;
 				glow.resize(rows.size(), 0.0f);
@@ -1824,7 +1885,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const auto& e = rows[i];
 					const float cy = top + rowH * (i + 0.5f);
 					const float stagger = std::clamp((openT - 0.25f - 0.07f * i) / 0.4f, 0.0f, 1.0f);  // they fade in one after another
-					const bool  lit = e.kind == 0 ? e.sel : static_cast<int>(i) == partyHover;
+					const bool  lit = padOn ? static_cast<int>(i) == padFocus : (e.kind == 0 ? e.sel : static_cast<int>(i) == partyHover);
 					glow[i] += ((lit ? 1.0f : 0.0f) - glow[i]) * std::min(1.0f, dt * 10.0f);
 					std::string up = e.text;
 					std::transform(up.begin(), up.end(), up.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
@@ -1859,6 +1920,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 						logger::info("dev: menupick '{}' -> {}", g_devPick, hovered);
 						g_devPick.clear();
+					}
+				}
+				if (padOn && padFocus >= 0 && padFocus < static_cast<int>(rows.size())) {
+					if (accepts > 0 && rows[padFocus].kind != 0) {
+						hovered = padFocus, click = true;  // (Skyrim's own words take A / Enter themselves)
+					}
+					if (backs > 0 && partyMode) {
+						partyMode = false;
 					}
 				}
 				partyHover = hovered >= 0 && rows[hovered].kind != 0 ? hovered : -1;
@@ -2512,6 +2581,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			io.DisplaySize = { static_cast<float>(desc.BufferDesc.Width), static_cast<float>(desc.BufferDesc.Height) };
 			io.DeltaTime = dt;
 
+			UpdateCursor(io.DisplaySize);
 			ImGui_ImplDX11_NewFrame();
 			ImGui::NewFrame();
 			if (g_filmOn) {
@@ -2648,6 +2718,27 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 
 		void OnClick() { ++g_clicks; }
+		void OnMouseMove(float a_dx, float a_dy) { g_mouseDX = g_mouseDX + a_dx, g_mouseDY = g_mouseDY + a_dy; }
+		// the main menu by pad or keys: up / down through every word (Skyrim's and ours), A / Enter presses ours
+		void OnMenuButton(const RE::ButtonEvent* a_b)
+		{
+			auto* ui = RE::UI::GetSingleton();
+			if (!a_b || !a_b->IsDown() || !ui || !ui->IsMenuOpen(RE::MainMenu::MENU_NAME)) {
+				return;
+			}
+			const auto id = a_b->GetIDCode();
+			if (a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad) {
+				if (id == 0x0001) --g_padMove;        // d-pad up
+				else if (id == 0x0002) ++g_padMove;   // d-pad down
+				else if (id == 0x1000) ++g_padAccept; // A
+				else if (id == 0x2000) ++g_padBack;   // B
+			} else if (a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard) {
+				if (id == 0xC8 || id == 0x11) --g_padMove;       // up, W
+				else if (id == 0xD0 || id == 0x1F) ++g_padMove; // down, S
+				else if (id == 0x1C || id == 0x12) ++g_padAccept; // Enter, E
+				else if (id == 0x0E || id == 0x01) ++g_padBack;   // Backspace, Esc
+			}
+		}
 		void DevMenuPick(const std::string& a_text)
 		{
 			std::scoped_lock l(g_devPickLock);

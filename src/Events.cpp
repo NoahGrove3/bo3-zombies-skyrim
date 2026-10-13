@@ -161,10 +161,16 @@ namespace bo3z
 					return RE::BSEventNotifyControl::kContinue;
 				}
 				for (auto* e = *a_event; e; e = e->next) {
+					if (e->GetEventType() == RE::INPUT_EVENT_TYPE::kMouseMove) {
+						if (auto* mm = static_cast<RE::MouseMoveEvent*>(e)) {
+							Hud::OnMouseMove(static_cast<float>(mm->mouseInputX), static_cast<float>(mm->mouseInputY));
+						}
+					}
 					if (auto* b = e->AsButtonEvent()) {
 						if (b->GetDevice() == RE::INPUT_DEVICE::kMouse && b->GetIDCode() == 0 && b->IsDown()) {
 							Hud::OnClick();
 						}
+						Hud::OnMenuButton(b);
 						if (!Intro::OnButton(b) && !Party::OnButton(b)) {  // (down or dead: your hands are still)
 							if (Shops::OnButton(b)) {
 								continue;
