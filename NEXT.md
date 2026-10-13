@@ -1,6 +1,13 @@
 # Undying Nights — state and next steps (2026-10-09)
 
 
+## Built 2026-10-13 (1c9ef27, INSTALLED; Party Pack rebuilt in Downloads with files\Mods; seen in game)
+- Fixed: the death a few seconds after the film (Survival Mode's scripts zeroed Variable02-04/09 and took our flags off health). Save values now in the SKSE co-save ('VALS', 'PRKS', 'SPLV'); Survival Mode switched off.
+- Seen working: black straight into the film, film + save, alive after load, Coffer roll -> spell learned and in hand, Reforge on spells, blessings stacking (x3), FOV strip (Tab/Esc), quest panel under the place name, Host Party with the menu kept under the Steam overlay, CO-OP PARTY as a menu word, the animated shrine main menu.
+- 28 mods installed (tools: install_mods.py on the device; _un_builds/mods_stage/Data). TK_Dodge_RE.dll (SE-only) and po3_FEC AE1170 build don't load on 1.7.104: FEC uses its AE build; TK Dodge has no working DLL.
+- Missing frameworks (not supplied): powerofthree's Papyrus Extender (FEC scripts), Spell Perk Item Distributor (Strange Runes' distribution ini), Behavior Data Injector (SpellSword moveset json), Dynamic Animation Casting (Goetia's _DynamicAnimationCasting configs), Nemesis (TK Dodge Distance Adjustment).
+- Not yet seen: shout voices (needs a freed city), co-op with a second player, the film's sound sync by ear.
+
 ## Built 2026-10-09 (f04fc1c, INSTALLED in the game folder; Party Pack + Melty zip rebuilt in Downloads; not yet seen in game)
 - One-piece Shrine of the Dirge (tools/shrine.py -> Meshes/UndyingNights/shrine/shrine.nif, built locally, not in CI) is the
   coffer ACTI; brew machine, forge, relic altar retired; layout v3 takedown (global bits 16+town) clears old stations once.
