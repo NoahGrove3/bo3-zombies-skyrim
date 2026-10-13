@@ -167,9 +167,13 @@ namespace bo3z::Audio
 	void LoopStart(std::uint64_t a_key, gen::Sound a_s, RE::TESObjectREFR* a_owner)
 	{
 		if (auto it = g_loops.find(a_key); it != g_loops.end()) {
-			if (it->second.handle.IsPlaying()) {
-				return;  // already humming: a loop never stacks
+			// still ours (playing, or still loading: a sound isn't "playing" for its first frames): never start another.
+			// (Restarting whenever it wasn't playing yet left every earlier copy looping, unstopped: in the shrine's
+			// rite that stacked hundreds of hums into a roar, then static, and starved every other sound.)
+			if (it->second.handle.IsValid()) {
+				return;
 			}
+			it->second.handle.Stop();
 			g_loops.erase(it);
 		}
 		Loop l;
