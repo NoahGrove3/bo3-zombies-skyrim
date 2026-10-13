@@ -21,8 +21,8 @@ from scipy.spatial import ConvexHull
 OUT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else 'menushrine')
 OUT.mkdir(parents=True, exist_ok=True)
 W, H = 2560, 1440
-CX, CY = 1060.0, 1185.0          # the floor's centre on the painting
-S = 3.9                          # painting pixels per game unit
+CX, CY = 1160.0, 1190.0          # the floor's centre on the painting
+S = 3.4                          # painting pixels per game unit
 E = math.radians(17)             # how far we look down
 HORIZON = 800
 CRYSTAL_Z = 130.0
@@ -252,7 +252,7 @@ def crystal_sheet(frames=24, fw=448, fh=640):
         out = np.zeros((len(t), 4))
         out[:, :3] = np.clip(col[:, :3] + 60, 0, 255)
         out[:, 3] = 255
-        im = render(t, col, (fw, fh), 6.0, (fw / 2, fh * 0.56), outline=out)
+        im = render(t, col, (fw, fh), 5.3, (fw / 2, fh * 0.56), outline=out)
         # light inside it: a soft core
         a = np.asarray(im, np.float32)
         core = maskdraw(lambda d: d.ellipse([fw / 2 - 44, fh * 0.56 - 100, fw / 2 + 44, fh * 0.56 + 66], fill=255), fw, fh)
@@ -302,7 +302,7 @@ def shards():
         col[:, 2] = (40 + 100 * lam ** 1.3) * jit
         col[:, 3] = 255
         out_ = np.clip(col * 1.12, 0, 255)
-        SH = 2.6  # the rocks' scale on the painting
+        SH = 2.3  # the rocks' scale on the painting
         size = int(L * SH * 1.25) + 30
         im = render(t, col, (size, size), SH, (size / 2, size / 2), outline=out_)
         a = np.asarray(im, np.float32)

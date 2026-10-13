@@ -1554,7 +1554,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (g_sGround) {
 				// THE SHRINE (Noah's picture): a round rune floor on a dark plain, a blue crystal turning and pulsing over
 				// it, broken rocks floating round it. All of it at one depth of the parallax, in the painting's pixels.
-				constexpr float kD = 0.6f, kCX = 1060.0f, kCY = 1185.0f, kS = 3.9f, kCos = 0.9563f, kSin = 0.2924f, kCrystalZ = 130.0f;
+				constexpr float kD = 0.6f, kCX = 1160.0f, kCY = 1190.0f, kS = 3.4f, kCos = 0.9563f, kSin = 0.2924f, kCrystalZ = 130.0f;
 				const float u = (cw * (1.04f + 0.03f * kD) * push) / 2560.0f;  // painting pixels -> screen
 				auto at = [&](float X, float Y, float Z) { return toScreen(kD, kCX + X * kS, kCY - (Z * kCos - Y * kSin) * kS); };
 				auto tex = [](ID3D11ShaderResourceView* t) { return ImTextureID(reinterpret_cast<std::uintptr_t>(t)); };
@@ -1578,22 +1578,22 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					fg->AddCircleFilled(p, 7.0f * u, IM_COL32(110, 190, 255, static_cast<int>(40 * front * fade)), 12);
 					fg->AddCircleFilled(p, 2.4f * u, IM_COL32(210, 240, 255, static_cast<int>(200 * front * fade)), 8);
 				}
-				// the light rising from the pool to the crystal
-				{
+				// the light rising from the pool to the crystal: a soft shaft (the round light stretched tall)
+				if (g_sSoft) {
 					const ImVec2 pool = at(0, 0, 0), top = at(0, 0, kCrystalZ);
-					const float  bw = (34 + 8 * pulse) * u * kS;
-					fg->AddRectFilledMultiColor({ pool.x - bw, top.y }, { pool.x + bw, pool.y }, IM_COL32(120, 200, 255, 0), IM_COL32(120, 200, 255, 0),
-						IM_COL32(120, 200, 255, static_cast<int>((40 + 30 * pulse) * fade)), IM_COL32(120, 200, 255, static_cast<int>((40 + 30 * pulse) * fade)));
-					fg->AddRectFilledMultiColor({ pool.x - bw * 0.35f, top.y }, { pool.x + bw * 0.35f, pool.y }, IM_COL32(200, 235, 255, static_cast<int>(30 * fade)), IM_COL32(200, 235, 255, static_cast<int>(30 * fade)),
-						IM_COL32(200, 235, 255, static_cast<int>((70 + 50 * pulse) * fade)), IM_COL32(200, 235, 255, static_cast<int>((70 + 50 * pulse) * fade)));
+					const ImVec2 mid{ pool.x, (pool.y + top.y) * 0.5f };
+					const float  len = (pool.y - top.y) * 1.25f, bw = (70 + 16 * pulse) * u * kS;
+					sprite(g_sSoft, mid, bw * 2.0f, len, 0, IM_COL32(110, 190, 255, static_cast<int>((70 + 40 * pulse) * fade)));
+					sprite(g_sSoft, mid, bw * 0.7f, len, 0, IM_COL32(210, 240, 255, static_cast<int>((80 + 60 * pulse) * fade)));
+					sprite(g_sSoft, pool, bw * 3.2f, bw * 1.0f, 0, IM_COL32(120, 200, 255, static_cast<int>((90 + 60 * pulse) * fade)));  // the pool's glow on the floor
 				}
 				// the rocks: each on its own orbit round the crystal, bobbing and slowly tumbling; the far ones behind it
 				struct Rock { float r, a0, z, speed, bob, ph, rot0, spin; };
 				static constexpr Rock kRocks[9] = { { 112, 0.0f, 150, 0.16f, 9, 0.0f, 0.3f, 0.10f }, { 120, 0.7f, 110, 0.16f, 11, 1.3f, -0.4f, -0.08f },
-					{ 104, 1.4f, 175, 0.16f, 8, 2.1f, 0.9f, 0.12f }, { 124, 2.1f, 125, 0.16f, 12, 0.7f, -0.8f, 0.07f }, { 110, 2.8f, 95, 0.16f, 10, 2.9f, 0.2f, -0.11f },
-					{ 116, 3.5f, 160, 0.16f, 9, 1.8f, 1.1f, 0.09f }, { 106, 4.2f, 120, 0.16f, 11, 0.4f, -0.2f, -0.06f }, { 92, 4.9f, 185, 0.16f, 7, 2.5f, 0.6f, 0.14f },
+					{ 104, 1.4f, 160, 0.16f, 8, 2.1f, 0.9f, 0.12f }, { 124, 2.1f, 125, 0.16f, 12, 0.7f, -0.8f, 0.07f }, { 110, 2.8f, 95, 0.16f, 10, 2.9f, 0.2f, -0.11f },
+					{ 116, 3.5f, 150, 0.16f, 9, 1.8f, 1.1f, 0.09f }, { 106, 4.2f, 120, 0.16f, 11, 0.4f, -0.2f, -0.06f }, { 92, 4.9f, 165, 0.16f, 7, 2.5f, 0.6f, 0.14f },
 					{ 98, 5.6f, 90, 0.16f, 10, 1.1f, -1.0f, -0.13f } };
-				static constexpr float kRockPx[9] = { 420, 468, 387, 485, 436, 413, 394, 309, 342 };
+				static constexpr float kRockPx[9] = { 375, 418, 346, 432, 389, 369, 351, 277, 306 };
 				struct Placed { int i; ImVec2 p; float depth, scale; };
 				std::array<Placed, 9> placed{};
 				for (int i = 0; i < 9; ++i) {
