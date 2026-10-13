@@ -1045,8 +1045,11 @@ namespace bo3z::gen
 		ObjectDef{ "relic_altar", "Shrine of the Dirge", 6, 0, -1, 0x9DA, 0.8f, true },
 	} };
 	struct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; };
-	inline constexpr std::array<DressDef, 68> kDress{ {
+	inline constexpr std::array<DressDef, 71> kDress{ {
 		DressDef{ 0, 0x926, false, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f },
+		DressDef{ 0, 0xBCD, false, 0.0f, 0.0f, 150.0f, 1.0f, 40.0f },
+		DressDef{ 0, 0xBCE, false, 0.0f, 0.0f, 150.0f, 1.0f, 7.0f },
+		DressDef{ 0, 0xBCF, true, 0.0f, 0.0f, 150.0f, 1.0f, 0.0f },
 		DressDef{ 0, 0x84D, false, 0.0f, 0.0f, 250.0f, 0.18f, 0.0f },
 		DressDef{ 0, 0x84E, true, 0.0f, 0.0f, 270.0f, 1.0f, 0.0f },
 		DressDef{ 1, 0x8AB, true, 0.0f, 60.0f, 120.0f, 1.0f, 0.0f },

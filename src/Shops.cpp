@@ -31,7 +31,7 @@ namespace bo3z
 			float               t{ 0 }, step{ 0 };
 		} g_show;
 		constexpr float kChargeTime = 1.1f;
-		constexpr float kOrbZ = 236.0f;   // the shrine's crown (tools/shrine.py: the cradle of prongs at z 257)
+		constexpr float kOrbZ = 228.0f;   // just over the shrine's crystal (tools/shrine.py: its centre at z 150, its crown to ~220)
 		constexpr float kOrbScale = 1.6f;
 
 		RE::NiPoint3 Local(RE::TESObjectREFR* a_ref, float a_x, float a_y, float a_z)
@@ -1512,10 +1512,13 @@ namespace bo3z
 					}
 				}
 			}
+			auto rolling = g_show.phase == Show::Charging || g_show.phase == Show::Spinning ? g_show.chest.get() : RE::NiPointer<RE::TESObjectREFR>{};
 			for (auto& s : g_spinners) {
 				if (auto r = s.ref.get(); r && r->Is3DLoaded()) {
+					// the shrine's heart turns faster while it rolls (the crystal races, the shards whirl)
+					const float boost = rolling && r->GetPosition().GetDistance(rolling->GetPosition()) < 400.0f ? (g_show.phase == Show::Charging ? 3.0f : 7.0f) : 1.0f;
 					auto a = r->GetAngle();
-					r->SetAngle({ a.x, a.y, a.z + s.degPerSec * RE::NI_PI / 180.0f * a_delta });
+					r->SetAngle({ a.x, a.y, a.z + s.degPerSec * boost * RE::NI_PI / 180.0f * a_delta });
 				}
 			}
 			TickShow(a_delta);

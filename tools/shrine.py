@@ -1,131 +1,186 @@
-"""The Shrine of the Dirge: the whole station in one compact piece (the Coffer, the Brew Machine and the Atronach
-Reforge live in its menu). An eight-sided step of Whiterun stone with a knotwork edge and a cobbled skirt you can
-walk up from any side, a carved rune-stone at its heart with a glowing glyph on four faces, a ring of the curse's
-rune on the floor, and a cradle of four iron prongs on the stone's crown where the Coffer's spells take shape.
-Skyrim's own Whiterun textures, referenced by path. Origin = ground under the centre, +Z up.
+"""The Shrine of the Dirge (Noah's picture): a round platform of dark stone engraved with rings of the curse's runes
+glowing blue, and above it a crystal held in a slow ring of broken, floating rock shards with blue light in their
+cracks. Three models, so the middle can move:
+    shrine.nif    the platform (walkable, collision), its rune rings and the pool of light at its heart
+    crystal.nif   the crystal (turned by the game: the shrine's living heart; faster while the Coffer rolls)
+    shards.nif    the ring of floating shards (turned slowly round the crystal)
+Skyrim's own stone textures by path. Origin = ground under the centre, +Z up; the crystal and the shards are built
+round their own centre (the dressing sheet lifts them to CRYSTAL_Z).
     python tools/shrine.py <out Data dir>"""
-import math, pathlib, subprocess, sys
-from PIL import Image
+import math, pathlib, random, subprocess, sys
+import numpy as np
+from PIL import Image, ImageDraw, ImageFilter
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import stand as S
 
 OUT = pathlib.Path(sys.argv[1]); S.OUT = OUT
-R, TOP, BOTTOM, GROW = 150, 22, -60, 70
-STONE_R, STONE_H = 36, 190
-S.parts.clear()
+R, TOP, BOTTOM, GROW = 160, 16, -60, 70
+SEG = 32
+CRYSTAL_Z = 150          # the crystal's centre above the ground (sheets/dressing.json: shrine_crystal / shrine_shards z)
+BLUE = (0.35, 0.65, 1.0)
 
-def oct_(r, z): return S.octagon(r, z)
 
-def build():
-    top = oct_(R, TOP)
-    S.add('floor', [(0, 0, TOP)] + top, [(0, 0)] + [(x / 150, y / 150) for x, y, _ in top], [(0, 1 + k, 1 + (k + 1) % 8) for k in range(8)])
-    under, bot = oct_(R, TOP - 18), oct_(R + GROW, BOTTOM)
-    for k in range(8):
-        a, b = top[k], top[(k + 1) % 8]
-        out = ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2); L = math.hypot(*out); out = (out[0] / L, out[1] / L)
-        S.band('trim', a[:2], b[:2], TOP - 18, TOP, (out[0] * 0.8, out[1] * 0.8), S.KNOT_BROWN, tile=120)
-        c, d = under[k], under[(k + 1) % 8]; e, f = bot[(k + 1) % 8], bot[k]
+def circle(r, z, seg=SEG):
+    return [(r * math.cos(2 * math.pi * k / seg), r * math.sin(2 * math.pi * k / seg), z) for k in range(seg)]
+
+
+def platform():
+    S.parts.clear()
+    top = circle(R, TOP)
+    S.add('floor', [(0, 0, TOP)] + top, [(0, 0)] + [(x / 160, y / 160) for x, y, _ in top], [(0, 1 + k, 1 + (k + 1) % SEG) for k in range(SEG)])
+    under, bot = circle(R, TOP - 14), circle(R + GROW, BOTTOM)
+    for k in range(SEG):
+        a, b = top[k], top[(k + 1) % SEG]
+        c, d = under[k], under[(k + 1) % SEG]
+        e, f = bot[(k + 1) % SEG], bot[k]
+        L = math.hypot(b[0] - a[0], b[1] - a[1])
+        S.quad('trim', c, d, b, a, uv=((0, S.KNOT_BLUE[0]), (L / 120, S.KNOT_BLUE[0]), (L / 120, S.KNOT_BLUE[1]), (0, S.KNOT_BLUE[1])))
         Lr = math.hypot(d[0] - c[0], d[1] - c[1])
         S.add('cobble', [c, d, e, f], [(0, 0), (Lr / 140, 0), (Lr / 140, 1.2), (0, 1.2)], [(0, 2, 1), (0, 3, 2)])
-    # runes of the Dirge engraved round the base: a band of purple glyphs cut into each face of the skirt, and round
-    # the two stone steps at the heart
-    for k in range(8):
-        c, d = under[k], under[(k + 1) % 8]; e, f = bot[(k + 1) % 8], bot[k]
-        def lerp(p, q, t): return tuple(p[i] + (q[i] - p[i]) * t for i in range(3))
-        t0, t1 = 0.16, 0.52
-        a0, b0, b1, a1 = lerp(c, f, t0), lerp(d, e, t0), lerp(d, e, t1), lerp(c, f, t1)
-        mx, my = (c[0] + d[0]) / 2, (c[1] + d[1]) / 2; L = math.hypot(mx, my); nx, ny = mx / L * 0.7, my / L * 0.7
-        off = lambda p: (p[0] + nx, p[1] + ny, p[2] + 0.5)
-        S.quad('runes', off(a1), off(b1), off(b0), off(a0), uv=((0, 0), (2, 0), (2, 1), (0, 1)))
-    S.ring('trim', 0, 0, TOP + 0.6, 70, 92, vband=S.KNOT_BLUE)
-    S.ring('rune', 0, 0, TOP + 0.8, 94, 97)
-    S.ring('rune', 0, 0, TOP + 0.8, 128, 130)
-    base = TOP
-    for rr, z0, z1 in ((58, base, base + 12), (46, base + 12, base + 26)):
-        o0, o1 = oct_(rr, z0), oct_(rr, z1)
-        S.add('stone', o1 + [(0, 0, z1)], [(x / 128, y / 128) for x, y, _ in o1] + [(0, 0)], [(8, k, (k + 1) % 8) for k in range(8)])
-        for k in range(8):
-            S.quad('stone', o0[k], o0[(k + 1) % 8], o1[(k + 1) % 8], o1[k], uv=((0, 0), (0.5, 0), (0.5, 0.12), (0, 0.12)))
-            mx, my = (o0[k][0] + o0[(k + 1) % 8][0]) / 2, (o0[k][1] + o0[(k + 1) % 8][1]) / 2; L = math.hypot(mx, my); nx, ny = mx / L * 0.5, my / L * 0.5
-            off = lambda p: (p[0] + nx, p[1] + ny, p[2])
-            S.quad('runes', off(o0[k]), off(o0[(k + 1) % 8]), off(o1[(k + 1) % 8]), off(o1[k]), uv=((0, 1), (1, 1), (1, 0), (0, 0)))
-    z0 = base + 26
-    s0, s1 = oct_(STONE_R, z0), oct_(STONE_R * 0.8, z0 + STONE_H)
-    for k in range(8):
-        a, b, c, d = s0[k], s0[(k + 1) % 8], s1[(k + 1) % 8], s1[k]
-        S.quad('panel' if k % 2 == 0 else 'stone', a, b, c, d, uv=((0, 0), (0.25, 0), (0.25, 1.0), (0, 1.0)))
-        if k % 2 == 1:
-            mx, my = (a[0] + b[0]) / 2, (a[1] + b[1]) / 2; L = math.hypot(mx, my); nx, ny = mx / L, my / L
-            tx, ty = -ny, nx; gz = z0 + STONE_H * 0.55; r = 12
-            px, py = mx * 0.93 + nx * 1.5, my * 0.93 + ny * 1.5
-            S.quad('glyph%d' % (k // 2 % 3), (px - tx * r * 0.75, py - ty * r * 0.75, gz), (px, py, gz - r), (px + tx * r * 0.75, py + ty * r * 0.75, gz), (px, py, gz + r), both=True)
-    ztop = z0 + STONE_H
-    cap = oct_(STONE_R * 0.95, ztop + 10)
-    S.add('wood', cap + [(0, 0, ztop + 18)], [(x / 96, y / 96) for x, y, _ in cap] + [(0, 0)], [(8, k, (k + 1) % 8) for k in range(8)])
-    for k in range(8):
-        S.quad('wood', s1[k], s1[(k + 1) % 8], cap[(k + 1) % 8], cap[k], uv=((0, 0), (0.3, 0), (0.3, 0.1), (0, 0.1)))
-    # the cradle: four iron prongs curling up round the place where the spell takes shape
-    for k in range(4):
-        a = k * math.pi / 2 + math.pi / 4
-        p0 = (math.cos(a) * 22, math.sin(a) * 22, ztop + 14)
-        p1 = (math.cos(a) * 34, math.sin(a) * 34, ztop + 44)
-        p2 = (math.cos(a) * 26, math.sin(a) * 26, ztop + 70)
-        S.slanted('wood', p0, p1, 6, 6); S.slanted('wood', p1, p2, 5, 5)
-    S.ring('rune', 0, 0, ztop + 19, 12, 17, seg=24)
-    return ztop
+    # the engraved rings: thin glowing lines, and a band of runes between them
+    for r0, r1 in ((150, 153), (126, 129), (82, 85), (44, 47)):
+        S.ring('rune', 0, 0, TOP + 0.6, r0, r1, seg=96)
+    S.ring('runes', 0, 0, TOP + 0.7, 92, 120, seg=96)
+    S.ring('runes', 0, 0, TOP + 0.7, 52, 74, seg=64)
+    # the pool of light right under the crystal
+    S.disc('pool', 0, 0, TOP + 0.9, 30, seg=32, tile=60)
 
-def rune_strip(w=1024, h=256):
-    """a band of the Dirge's runes cut into stone: each glyph a groove (dark edge) with purple light inside, on a
-    transparent ground (alpha-tested), four to a tile"""
-    from PIL import ImageDraw, ImageFilter
-    import random
+
+def shard_mesh(mat, cx, cy, cz, yaw, tilt, length, width, depth, seed):
+    """a slab of broken rock: an irregular outline extruded, its edges chipped; laid along its local x"""
+    rng = random.Random(seed)
+    n = 9
+    outline = []
+    for i in range(n):
+        a = 2 * math.pi * i / n
+        rx = length * 0.5 * (0.75 + rng.uniform(0, 0.35))
+        ry = width * 0.5 * (0.65 + rng.uniform(0, 0.45))
+        outline.append((math.cos(a) * rx, math.sin(a) * ry))
+    def place(x, y, z):
+        # tilt about local y, then yaw about z, then move
+        xt, zt = x * math.cos(tilt) - z * math.sin(tilt), x * math.sin(tilt) + z * math.cos(tilt)
+        return (cx + xt * math.cos(yaw) - y * math.sin(yaw), cy + xt * math.sin(yaw) + y * math.cos(yaw), cz + zt)
+    front = [place(x, y * 0.25, z) for x, z in outline for y in [depth]]
+    back = [place(x, -depth * 0.25 - rng.uniform(0, 3), z * 0.92) for x, z in outline]
+    # faces: the slab lies in local xz (thin in y)
+    fv = [place(0, depth * 0.25, 0)] + front
+    S.add(mat, fv, [(0.5, 0.5)] + [(0.5 + x / length, 0.5 + z / width) for x, z in outline], [(0, 1 + i, 1 + (i + 1) % n) for i in range(n)])
+    bv = [place(0, -depth * 0.3, 0)] + back
+    S.add(mat, bv, [(0.5, 0.5)] + [(0.5 + x / length, 0.5 + z / width) for x, z in outline], [(0, 1 + (i + 1) % n, 1 + i) for i in range(n)])
+    for i in range(n):
+        a, b = front[i], front[(i + 1) % n]
+        c, d = back[(i + 1) % n], back[i]
+        S.quad(mat, a, d, c, b, uv=((0, 0), (0, 0.15), (0.3, 0.15), (0.3, 0)))
+    # a blue vein of the crystal's light across the face
+    p0 = place(-length * 0.28, depth * 0.25 + 0.6, -width * 0.05)
+    p1 = place(length * 0.05, depth * 0.25 + 0.6, width * 0.08)
+    p2 = place(length * 0.30, depth * 0.25 + 0.6, -width * 0.02)
+    for (u, v) in ((p0, p1), (p1, p2)):
+        w = 1.6
+        S.quad('vein', (u[0], u[1], u[2] - w), (v[0], v[1], v[2] - w), (v[0], v[1], v[2] + w), (u[0], u[1], u[2] + w), both=True)
+
+
+def shards():
+    S.parts.clear()
+    ring = [(0.0, 95, 70, 0.4, 120), (0.9, 105, 10, -0.3, 135), (1.8, 92, 105, 0.9, 110), (2.7, 110, -40, -0.7, 140), (3.6, 98, 40, 0.2, 125),
+            (4.5, 104, -90, 1.1, 120), (5.4, 90, -10, -0.2, 115), (6.0, 80, 140, 0.6, 85), (0.45, 76, -130, -1.0, 95)]
+    for i, (a, d, z, tilt, L) in enumerate(ring):
+        shard_mesh('shard', math.cos(a) * d, math.sin(a) * d, z, a + math.pi / 2, tilt, L, L * 0.5, 16, seed=i)
+    # little chips drifting with them
+    for i in range(10):
+        a = i * 0.63 + 0.2
+        shard_mesh('shard', math.cos(a) * (60 + i * 6), math.sin(a) * (60 + i * 6), -70 + i * 16, a, i * 0.4, 22, 12, 6, seed=50 + i)
+
+
+def crystal():
+    S.parts.clear()
+    # an eight-sided bipyramid, tall, with a crown of three spikes
+    h_top, h_bot, r = 40, 34, 20
+    mid = [(r * math.cos(2 * math.pi * k / 8 + 0.2), r * math.sin(2 * math.pi * k / 8 + 0.2), 0) for k in range(8)]
+    for k in range(8):
+        a, b = mid[k], mid[(k + 1) % 8]
+        S.add('crystal', [a, b, (0, 0, h_top)], [(0, 0), (1, 0), (0.5, 1)], [(0, 1, 2)])
+        S.add('crystal', [b, a, (0, 0, -h_bot)], [(0, 0), (1, 0), (0.5, 1)], [(0, 1, 2)])
+    for k, (ang, hgt) in enumerate(((0.0, 28), (2.1, 22), (4.2, 25))):
+        bx, by = math.cos(ang) * 9, math.sin(ang) * 9
+        base = [(bx + 5 * math.cos(2 * math.pi * j / 4), by + 5 * math.sin(2 * math.pi * j / 4), h_top * 0.55) for j in range(4)]
+        tip = (bx * 1.6, by * 1.6, h_top * 0.55 + hgt)
+        for j in range(4):
+            S.add('crystal', [base[j], base[(j + 1) % 4], tip], [(0, 0), (1, 0), (0.5, 1)], [(0, 1, 2)])
+
+
+def tex_runes(w=1024, h=256):
+    """the band of runes: glyph grooves with blue light in them, on a transparent ground"""
     rnd = random.Random(7)
-    mask = Image.new('L', (w, h), 0); dr = ImageDraw.Draw(mask)
-    strokes = [[(0, -1, 0, 1), (0, -0.3, 0.6, -0.9)], [(-0.5, 1, 0, -1), (0.5, 1, 0, -1), (-0.3, 0.3, 0.3, 0.3)],
-               [(0, -1, 0, 1), (-0.6, 0, 0.6, 0)], [(-0.6, -1, 0.6, 1), (0.6, -1, -0.6, 1)], [(0, -1, 0, 1), (0, 0.1, 0.6, 0.9)],
-               [(-0.6, -0.8, 0.6, -0.8), (0, -0.8, 0, 1)], [(-0.5, -1, -0.5, 1), (-0.5, 0, 0.5, -0.6), (-0.5, 0, 0.5, 0.6)],
-               [(0, -1, 0.6, 0), (0.6, 0, 0, 1), (0, 1, -0.6, 0), (-0.6, 0, 0, -1)]]
+    mask = Image.new('L', (w, h), 0)
+    dr = ImageDraw.Draw(mask)
+    strokes = [[(0, -1, 0, 1), (0, -0.3, 0.6, -0.9)], [(-0.5, 1, 0, -1), (0.5, 1, 0, -1), (-0.3, 0.3, 0.3, 0.3)], [(0, -1, 0, 1), (-0.6, 0, 0.6, 0)],
+               [(-0.6, -1, 0.6, 1), (0.6, -1, -0.6, 1)], [(0, -1, 0, 1), (0, 0.1, 0.6, 0.9)], [(-0.6, -0.8, 0.6, -0.8), (0, -0.8, 0, 1)],
+               [(-0.5, -1, -0.5, 1), (-0.5, 0, 0.5, -0.6), (-0.5, 0, 0.5, 0.6)], [(0, -1, 0.6, 0), (0.6, 0, 0, 1), (0, 1, -0.6, 0), (-0.6, 0, 0, -1)]]
     n = 6
     for i in range(n):
-        cx, cy = (i + 0.5) * w / n, h / 2; sx, sy = w / n * 0.32, h * 0.36
+        cx, cy = (i + 0.5) * w / n, h / 2
+        sx, sy = w / n * 0.3, h * 0.34
         for x0, y0, x1, y1 in strokes[(i * 3 + 1) % len(strokes)]:
-            dr.line([(cx + x0 * sx, cy + y0 * sy), (cx + x1 * sx, cy + y1 * sy)], fill=255, width=int(h * 0.075))
-    # border lines above and below the glyphs
-    dr.line([(0, h * 0.06), (w, h * 0.06)], fill=200, width=int(h * 0.03)); dr.line([(0, h * 0.94), (w, h * 0.94)], fill=200, width=int(h * 0.03))
+            dr.line([(cx + x0 * sx, cy + y0 * sy), (cx + x1 * sx, cy + y1 * sy)], fill=255, width=int(h * 0.07))
     soft = mask.filter(ImageFilter.GaussianBlur(3))
     core = mask.filter(ImageFilter.MinFilter(5)).filter(ImageFilter.GaussianBlur(2))
     a = soft.point(lambda v: 255 if v > 40 else 0)
-    import numpy as np
-    sm = np.asarray(soft, np.float32) / 255; cm = np.asarray(core, np.float32) / 255
-    rgb = np.dstack([0.10 + 0.55 * cm, 0.06 + 0.25 * cm, 0.14 + 0.80 * cm]) * (0.6 + 0.4 * sm[..., None])   # dark groove, purple light inside
-    d = Image.fromarray((np.clip(rgb, 0, 1) * 255).astype(np.uint8), 'RGB'); d.putalpha(a)
-    g = Image.fromarray((np.clip(np.dstack([0.75 * cm, 0.38 * cm, 1.0 * cm]), 0, 1) * 255).astype(np.uint8), 'RGB')
+    sm = np.asarray(soft, np.float32) / 255
+    cm = np.asarray(core, np.float32) / 255
+    rgb = np.dstack([0.04 + 0.35 * cm, 0.08 + 0.6 * cm, 0.14 + 0.9 * cm]) * (0.6 + 0.4 * sm[..., None])
+    d = Image.fromarray((np.clip(rgb, 0, 1) * 255).astype(np.uint8), 'RGB')
+    d.putalpha(a)
+    g = Image.fromarray((np.clip(np.dstack([0.35 * cm, 0.65 * cm, 1.0 * cm]), 0, 1) * 255).astype(np.uint8), 'RGB')
     return d, g
 
 
-def main():
-    ztop = build()
-    work = OUT.parent / 'shrine'; work.mkdir(parents=True, exist_ok=True)
-    obj = work / 'shrine.obj'; S.write_obj(obj)
-    flat = S.save(Image.new('RGBA', (64, 64), (128, 128, 255, 160)), 'flat_n.dds', True)
-    rune_d = S.save(Image.new('RGB', (64, 64), (170, 90, 255)), 'rune_d.dds')
-    rune_g = S.save(Image.new('RGB', (64, 64), (190, 110, 255)), 'rune_g.dds')
-    out = OUT / 'Meshes' / 'UndyingNights' / 'shrine' / 'shrine.nif'; out.parent.mkdir(parents=True, exist_ok=True)
-    job = [f'in {obj}', f'out {out}', f'collidefrustum {-R} {-R} {R} {R} {TOP} {BOTTOM} {GROW}', f'collidebox2 {-STONE_R} {-STONE_R} {TOP} {STONE_R} {STONE_R} {ztop + 20}']
-    for m, (d, n) in S.TEX.items():
-        if m not in S.parts: continue
-        spec = {'stone': 0.25, 'floor': 0.3, 'cobble': 0.25, 'wood': 0.2, 'trim': 0.25, 'panel': 0.2}.get(m, 0.2)
-        job.append(f'mat {m} diffuse={S.W}{d}.dds normal={S.W}{n}.dds spec={spec} gloss=30')
-    job.append(f'mat rune diffuse={rune_d} normal={flat} glow={rune_g} emit=0.75,0.43,1.0 emitmult=2.5 spec=0.5')
-    rd, rg = rune_strip()
-    job.append(f'mat runes diffuse={S.save(rd, "runes_d.dds", True)} normal={flat} glow={S.save(rg, "runes_g.dds")} emit=0.72,0.38,1.0 emitmult=2.2 alpha=1 spec=0.3')
-    for i, col in enumerate(((1.0, 0.45, 0.12), (0.70, 0.35, 1.0), (1.0, 0.75, 0.25))):
-        rgb = tuple(int(c * 255) for c in col)
-        gd = S.save(Image.new('RGB', (32, 32), rgb), f'glyph{i}_d.dds'); gg = S.save(Image.new('RGB', (32, 32), tuple(min(255, c + 40) for c in rgb)), f'glyph{i}_g.dds')
-        job.append(f'mat glyph{i} diffuse={gd} normal={flat} glow={gg} emit={col[0]:.2f},{col[1]:.2f},{col[2]:.2f} emitmult=3 spec=0.5')
-    jf = work / 'shrine.job'; jf.write_text('\n'.join(job) + '\n')
+def tex_crystal(n=256):
+    """faceted ice-blue light, whiter at the heart"""
+    yy, xx = np.mgrid[0:n, 0:n].astype(np.float32) / n
+    fac = (np.sin(xx * 23) * np.cos(yy * 17) * 0.5 + 0.5) * 0.25
+    base = np.dstack([0.55 + fac, 0.80 + fac * 0.6, np.ones_like(xx)])
+    return Image.fromarray((np.clip(base, 0, 1) * 255).astype(np.uint8), 'RGB')
+
+
+def convert(name, extra_job, mats):
+    work = OUT.parent / 'shrine'
+    work.mkdir(parents=True, exist_ok=True)
+    obj = work / f'{name}.obj'
+    S.write_obj(obj)
+    out = OUT / 'Meshes' / 'UndyingNights' / 'shrine' / f'{name}.nif'
+    out.parent.mkdir(parents=True, exist_ok=True)
+    job = [f'in {obj}', f'out {out}'] + extra_job + [m for m in mats if m.split()[1] in S.parts]
+    jf = work / f'{name}.job'
+    jf.write_text('\n'.join(job) + '\n')
     r = subprocess.run([S.CONV, str(jf)], capture_output=True, text=True)
-    print(r.stdout.strip() or r.stderr.strip(), '| crown at', ztop + 19)
-    if r.returncode: raise SystemExit('modelconv failed')
+    print(name, '|', r.stdout.strip() or r.stderr.strip())
+    if r.returncode:
+        raise SystemExit('modelconv failed')
+
+
+def main():
+    flat = S.save(Image.new('RGBA', (64, 64), (128, 128, 255, 160)), 'flat_n.dds', True)
+    rune_d = S.save(Image.new('RGB', (64, 64), (90, 160, 255)), 'srune_d.dds')
+    rune_g = S.save(Image.new('RGB', (64, 64), (110, 180, 255)), 'srune_g.dds')
+    rd, rg = tex_runes()
+    runes = f'mat runes diffuse={S.save(rd, "sruneband_d.dds", True)} normal={flat} glow={S.save(rg, "sruneband_g.dds")} emit={BLUE[0]},{BLUE[1]},{BLUE[2]} emitmult=2.4 alpha=1 spec=0.3'
+    rune = f'mat rune diffuse={rune_d} normal={flat} glow={rune_g} emit={BLUE[0]},{BLUE[1]},{BLUE[2]} emitmult=2.6 spec=0.5'
+    pool = f'mat pool diffuse={rune_d} normal={flat} glow={rune_g} emit=0.5,0.8,1.0 emitmult=3.5 spec=0.2'
+    W = S.W
+    stone = lambda m, spec: f'mat {m} diffuse={W}{S.TEX["stone"][0]}.dds normal={W}{S.TEX["stone"][1]}.dds spec={spec} gloss=30'
+    floor = f'mat floor diffuse={W}{S.TEX["floor"][0]}.dds normal={W}{S.TEX["floor"][1]}.dds spec=0.3 gloss=30'
+    cobble = f'mat cobble diffuse={W}{S.TEX["cobble"][0]}.dds normal={W}{S.TEX["cobble"][1]}.dds spec=0.25 gloss=30'
+    trim = f'mat trim diffuse={W}{S.TEX["trim"][0]}.dds normal={W}{S.TEX["trim"][1]}.dds spec=0.25 gloss=30'
+    platform()
+    convert('shrine', [f'collidefrustum {-R} {-R} {R} {R} {TOP} {BOTTOM} {GROW}'], [floor, cobble, trim, rune, runes, pool])
+    shards()
+    vg = S.save(Image.new('RGB', (32, 32), (130, 200, 255)), 'vein_g.dds')
+    convert('shards', [], [stone('shard', 0.35), f'mat vein diffuse={rune_d} normal={flat} glow={vg} emit=0.4,0.75,1.0 emitmult=3.0 spec=0.3 doublesided=1'])
+    crystal()
+    cd = S.save(tex_crystal(), 'crystal_d.dds')
+    convert('crystal', [], [f'mat crystal diffuse={cd} normal={flat} glow={cd} emit=0.6,0.85,1.0 emitmult=3.2 spec=1.0 gloss=80'])
+    print('crystal centre at z', CRYSTAL_Z)
+
 
 main()

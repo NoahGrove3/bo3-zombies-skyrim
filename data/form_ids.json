@@ -973,6 +973,9 @@
   "STAT:show_el_disease": "0xbc9",
   "STAT:show_el_sun": "0xbca",
   "STAT:show_el_blood": "0xbcb",
-  "STAT:show_el_arcane": "0xbcc"
+  "STAT:show_el_arcane": "0xbcc",
+  "STAT:shrine_crystal": "0xbcd",
+  "STAT:shrine_shards": "0xbce",
+  "LIGH:shrine_glow": "0xbcf"
  }
 }
