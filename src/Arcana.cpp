@@ -19,6 +19,9 @@ namespace bo3z::Arcana
 		std::array<std::uint8_t, coffer::kSpells.size()>    g_level{};
 		std::array<std::vector<float>, coffer::kSpells.size()> g_baseMag;  // each effect's magnitude as the mod made it
 
+		// Balance (Noah: most of them one-shot Skyrim's own enemies): every Coffer spell does 45% of the damage its mod
+		// gave it and costs 75% of the pool's price.
+		constexpr float kPower = 0.45f, kCost = 0.75f;
 		// a reforged spell: each level adds gen::kForgeStep of its power and takes a tenth off its cost
 		void Apply(int a_index)
 		{
@@ -27,14 +30,14 @@ namespace bo3z::Arcana
 				return;
 			}
 			const int   lv = g_level[a_index];
-			const float mult = 1.0f + gen::kForgeStep * lv;
+			const float mult = kPower * (1.0f + gen::kForgeStep * lv);
 			auto&       base = g_baseMag[a_index];
 			for (std::size_t e = 0; e < sp->effects.size() && e < base.size(); ++e) {
 				if (sp->effects[e]) {
 					sp->effects[e]->effectItem.magnitude = base[e] * mult;
 				}
 			}
-			sp->data.costOverride = std::max(1, static_cast<int>(std::lround(coffer::kSpells[a_index].cost * (1.0f - 0.1f * lv))));
+			sp->data.costOverride = std::max(1, static_cast<int>(std::lround(coffer::kSpells[a_index].cost * kCost * (1.0f - 0.1f * lv))));
 		}
 	}
 
@@ -60,7 +63,7 @@ namespace bo3z::Arcana
 			for (auto* e : sp->effects) {
 				g_baseMag[i].push_back(e ? e->effectItem.magnitude : 0.0f);
 			}
-			sp->data.costOverride = s.cost;
+			Apply(static_cast<int>(i));  // the balanced power and cost (and any reforge)
 			sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
 			if (!s.concentration && sp->data.castingType == RE::MagicSystem::CastingType::kFireAndForget) {
 				sp->data.chargeTime = 0.0f;  // released the moment you cast

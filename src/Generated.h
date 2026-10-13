@@ -19,16 +19,16 @@ namespace bo3z::gen
 	inline constexpr Rounds kRounds{ 20.0f, 5.6f, 15.0f, 15.0f, 64, 24, 6,
 		{ 0.25f, 0.3f, 0.5f, 0.7f, 0.9f }, 150, 100, 9, 1.1f, 8.0f,
 		1.0f, 0.95f, 0.15f, 6, 5,
-		{ 1500.f, 2500.f }, { 500.f, 1100.f }, 120.f, 30 };
+		{ 3400.f, 4600.f }, { 1400.f, 2100.f }, 120.f, 30 };
 	inline constexpr FormRef kIntroQuest{ "Skyrim.esm", 0x03372B, "MQ101" };
 	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; };
 	inline constexpr std::array<Enemy, 13> kEnemies{ {
-		Enemy{ "zombie", "Risen Dead", { "BO3Zombies.esp", 0x0008C3, "UN_zombie" }, false, 1, 14, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f },
+		Enemy{ "zombie", "Risen Dead", { "BO3Zombies.esp", 0x0008C3, "UN_zombie" }, false, 1, 30, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f },
 		Enemy{ "shadow", "Gloomstalker", { "BO3Zombies.esp", 0x0008CC, "UN_shadow" }, false, 5, 1, false, "NPC Head [Head]", true, 0, true, 0, 1.0f, 1.0f },
 		Enemy{ "death_hound", "Death Hound", { "Dawnguard.esm", 0x00C5EF, "DLC1encDeathHound" }, false, 1, 1, true, "Canine_Head", true, 0, false, 0, 1.0f, 1.0f },
 		Enemy{ "boss", "Grimmvar, the Undying Wyrm", { "BO3Zombies.esp", 0x0008C6, "UN_boss" }, false, 10, 0, false, "NPC Head [Head]", true, 10, false, 0, 1.0f, 1.0f },
-		Enemy{ "reaper", "Iron Reaper", { "BO3Zombies.esp", 0x000968, "UN_reaper" }, false, 2, 5, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.85f },
-		Enemy{ "necro", "Voidbound Necromancer", { "BO3Zombies.esp", 0x00096B, "UN_necro" }, false, 3, 5, false, "NPC Head [Head]", true, 0, false, 2, 1.6f, 1.0f },
+		Enemy{ "reaper", "Iron Reaper", { "BO3Zombies.esp", 0x000968, "UN_reaper" }, false, 3, 2, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.85f },
+		Enemy{ "necro", "Voidbound Necromancer", { "BO3Zombies.esp", 0x00096B, "UN_necro" }, false, 4, 2, false, "NPC Head [Head]", true, 0, false, 2, 1.6f, 1.0f },
 		Enemy{ "skeleton", "Raised Skeleton", { "Skyrim.esm", 0x0EB876, "EncSkeletonNecro01Melee1H" }, false, 99, 0, false, "NPC Head [Head]", true, 0, false, 3, 0.5f, 1.1f },
 		Enemy{ "runner", "Hollow Bride", { "BO3Zombies.esp", 0x000A78, "UN_runner" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f },
 		Enemy{ "wailer", "Drowned Wailer", { "BO3Zombies.esp", 0x000A7B, "UN_wailer" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f },
@@ -1107,9 +1107,9 @@ namespace bo3z::gen
 	struct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; };
 	inline constexpr std::array<DressDef, 71> kDress{ {
 		DressDef{ 0, 0x926, false, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f },
-		DressDef{ 0, 0xBCD, false, 0.0f, 0.0f, 150.0f, 1.0f, 40.0f },
-		DressDef{ 0, 0xBCE, false, 0.0f, 0.0f, 150.0f, 1.0f, 7.0f },
-		DressDef{ 0, 0xBCF, true, 0.0f, 0.0f, 150.0f, 1.0f, 0.0f },
+		DressDef{ 0, 0xBCD, false, 0.0f, 0.0f, 175.0f, 1.0f, 40.0f },
+		DressDef{ 0, 0xBCE, false, 0.0f, 0.0f, 175.0f, 1.0f, 7.0f },
+		DressDef{ 0, 0xBCF, true, 0.0f, 0.0f, 175.0f, 1.0f, 0.0f },
 		DressDef{ 0, 0x84D, false, 0.0f, 0.0f, 250.0f, 0.18f, 0.0f },
 		DressDef{ 0, 0x84E, true, 0.0f, 0.0f, 270.0f, 1.0f, 0.0f },
 		DressDef{ 1, 0x8AB, true, 0.0f, 60.0f, 120.0f, 1.0f, 0.0f },
@@ -1327,7 +1327,7 @@ namespace bo3z::gen
 		EventDef{ "bloodmoon", "BLOOD MOON", "BLOOD MOON - THE DEAD RISE FASTER", "Dawnguard.esm", 0x006AEC, 1.5f, 1.0f, 1, 1.0f, 1.0f, false, 0xB4101A1C, Sound::event_bloodmoon },
 		EventDef{ "fog", "FOG NIGHT", "FOG NIGHT - SOMETHING HUNTS IN THE MIST", "Skyrim.esm", 0x0C821E, 0.75f, 1.0f, 1, 1.0f, 1.0f, true, 0x2A2E3460, Sound::event_fog },
 		EventDef{ "ashstorm", "ASH STORM", "ASH STORM - THE DEAD RUN, DOUBLE POINTS", "Dragonborn.esm", 0x032336, 1.0f, 1.25f, 2, 1.0f, 1.0f, false, 0x5A341838, Sound::event_ash },
-		EventDef{ "champions", "NIGHT OF IRON", "NIGHT OF IRON - THE CHAMPIONS MARCH", "Skyrim.esm", 0x0C8220, 1.0f, 1.0f, 1, 4.0f, 2.0f, false, 0x40506030, Sound::event_champions },
+		EventDef{ "champions", "NIGHT OF IRON", "NIGHT OF IRON - THE CHAMPIONS MARCH", "Skyrim.esm", 0x0C8220, 1.0f, 1.0f, 1, 2.0f, 2.0f, false, 0x40506030, Sound::event_champions },
 	} };
 	enum EventId : int { kEvent_bloodmoon = 0, kEvent_fog = 1, kEvent_ashstorm = 2, kEvent_champions = 3 };
 	struct CurseCity { std::string_view landmark; std::uint32_t location; std::uint32_t global; };

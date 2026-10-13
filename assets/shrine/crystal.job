@@ -1,0 +1,3 @@
+in assets/shrine/crystal.obj
+out assets/fx/Meshes/UndyingNights/shrine/crystal.nif
+mat crystal diffuse=UndyingNights\stand\crystal_d.dds normal=UndyingNights\stand\flat_n.dds glow=UndyingNights\stand\crystal_d.dds emit=0.7,0.9,1.0 emitmult=4.0 spec=1.0 gloss=120 doublesided=1

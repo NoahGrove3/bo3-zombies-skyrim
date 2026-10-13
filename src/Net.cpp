@@ -761,6 +761,14 @@ namespace bo3z::Net
 				s.curse[t] = Curse::Raw(static_cast<int>(t));
 			}
 			s.boxAv = Save::Get(gen::kAV_box);
+			if (auto* sky = RE::Sky::GetSingleton(); sky && sky->currentWeather) {
+				s.weather = sky->currentWeather->GetFormID();
+				s.weatherLocal = sky->currentWeather->GetLocalFormID();
+				if (auto* f = sky->currentWeather->GetFile(0)) {
+					strncpy_s(s.weatherPlugin, f->GetFilename().data(), std::min<std::size_t>(f->GetFilename().size(), sizeof(s.weatherPlugin) - 1));
+				}
+				s.weatherClass = sky->currentWeather->data.flags.underlying();
+			}
 			ToAll(&s, sizeof(s), false);
 		}
 	}

@@ -35,7 +35,7 @@ namespace bo3z
 			float               t{ 0 }, step{ 0 };
 		} g_show;
 		constexpr float kChargeTime = 1.1f;
-		constexpr float kOrbZ = 228.0f;   // just over the shrine's crystal (tools/shrine.py: its centre at z 150, its crown to ~220)
+		constexpr float kOrbZ = 250.0f;   // just over the shrine's crystal (its centre at z 175, its crown to ~215)
 		constexpr float kOrbScale = 1.6f;
 
 		RE::NiPoint3 Local(RE::TESObjectREFR* a_ref, float a_x, float a_y, float a_z)
@@ -75,6 +75,9 @@ namespace bo3z
 				RE::TES::GetSingleton()->ForEachReferenceInRange(a_main, 400.0f, [&](RE::TESObjectREFR* r) {
 					if (r && r->GetBaseObject() == base && !r->IsDeleted() && !r->IsDisabled() && r->GetPosition().GetDistance(want) < 80.0f) {
 						found = r;
+						if (r->GetPosition().GetDistance(want) > 2.0f) {
+							r->SetPosition(want);  // (the crystal and the rocks were raised: an older stand's follow)
+						}
 						return RE::BSContainer::ForEachResult::kStop;
 					}
 					return RE::BSContainer::ForEachResult::kContinue;
@@ -1518,6 +1521,19 @@ namespace bo3z
 				h.rollT = g_show.phase == Show::Charging ? std::min(1.0f, g_show.t / kChargeTime) : g_show.phase == Show::Spinning ? std::min(1.0f, g_show.t / gen::kShowSpin) : g_show.phase == Show::Offering ? std::min(1.0f, g_show.t / gen::kShowOffer) : 0.0f;
 				h.rollGun = g_show.phase == Show::Idle || g_show.phase == Show::Charging || g_show.shown < 0 ? -1 : Arcana::kIdBase + g_show.shown;
 				h.rollCost = RollCost();
+				// where the shrine's crown is on the screen: the roll shows there too, over the crystal itself
+				h.rollOnScreen = false;
+				if (auto chest = g_show.chest.get(); chest && g_show.phase != Show::Idle) {
+					if (auto* cam = RE::Main::WorldRootCamera()) {
+						const auto at = Local(chest.get(), 0, 0, kOrbZ * chest->GetScale());
+						float x = 0, y = 0, z = 0;
+						cam->WorldPtToScreenPt3(at, x, y, z, 1e-5f);
+						if (z > 0 && x > 0 && x < 1 && y > 0 && y < 1) {
+							h.rollOnScreen = true, h.rollScreenX = x, h.rollScreenY = 1.0f - y;
+							h.rollDist = at.GetDistance(RE::PlayerCharacter::GetSingleton()->GetPosition());
+						}
+					}
+				}
 				h.shrineShout = -1;
 				if (g_menu) {
 					if (auto r = g_menuRef.get()) {

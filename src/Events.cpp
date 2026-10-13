@@ -138,7 +138,15 @@ namespace bo3z
 				}
 				Audio::Voice(dying, Audio::VoiceEvent::kDeath);
 				Audio::Flesh(dying, true);
+				if (Coop::Client()) {
+					PowerUps::MaybeDrop(dying->GetPosition());  // a friend's game rolls its own drops (the host's aren't seen here)
+				}
 				if (a_event->actorKiller.get() != player) {
+					// a party member's kill counts for everyone (each player gets the points: nobody goes without)
+					auto* killer = a_event->actorKiller.get() ? a_event->actorKiller->As<RE::Actor>() : nullptr;
+					if (Net::InLobby() && Party::IsFriend(killer)) {
+						Points::Add(gen::kPoints_kill);
+					}
 					return RE::BSEventNotifyControl::kContinue;  // dawn, followers, guards: no points
 				}
 				const auto [gun, head] = Gun::RecentHit(dying->GetFormID());
@@ -333,6 +341,7 @@ namespace bo3z
 			}
 			Audio::InstallSteps();
 			Arcana::Load();
+			Director::HeadlongCombat();
 			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
 			PlayerUpdate::func = vtbl.write_vfunc(0xAD, PlayerUpdate::thunk);
 			logger::info("hooked PlayerCharacter::Update");

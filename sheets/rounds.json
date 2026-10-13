@@ -78,12 +78,12 @@
       "unfinishedRound": "resume",
       "pauseUntilQuest": "quest:MQ101",
       "spawnRingExterior": [
-        1500,
-        2500
+        3400,
+        4600
       ],
       "spawnRingInterior": [
-        500,
-        1100
+        1400,
+        2100
       ],
       "spawnHeightOffset": 120,
       "verify": [

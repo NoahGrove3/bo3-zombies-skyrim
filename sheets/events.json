@@ -80,7 +80,7 @@
       "spawnMult": 1.0,
       "speedMult": 1.0,
       "pointsMult": 1,
-      "championWeight": 4.0,
+      "championWeight": 2.0,
       "dropMult": 2.0,
       "boss": false,
       "tint": "40506030",

@@ -217,10 +217,16 @@ namespace bo3z
 		{
 			const bool  interior = a_player->GetParentCell() && a_player->GetParentCell()->IsInteriorCell();
 			const auto& ring = interior ? R.spawnRingInterior : R.spawnRingExterior;
-			const float angle = a_player->GetAngleZ() + RE::NI_PI + Uniform(-2.1f, 2.1f);
-			const float dist = Uniform(ring[0], ring[1]);
 			const auto  base = a_player->GetPosition();
-			RE::NiPoint3 pos{ base.x + std::sin(angle) * dist, base.y + std::cos(angle) * dist, base.z + R.spawnHeightOffset };
+			RE::NiPoint3 pos{};
+			for (int tryN = 0; tryN < 8; ++tryN) {  // (in a party: never close to a friend either)
+				const float angle = a_player->GetAngleZ() + RE::NI_PI + Uniform(-2.1f, 2.1f);
+				const float dist = Uniform(ring[0], ring[1]);
+				pos = { base.x + std::sin(angle) * dist, base.y + std::cos(angle) * dist, base.z + R.spawnHeightOffset };
+				if (Party::FriendDistance(pos) > ring[0]) {
+					break;
+				}
+			}
 			float land = 0;
 			if (!interior && RE::TES::GetSingleton()->GetLandHeight(pos, land)) {
 				pos.z = land + R.spawnHeightOffset;
@@ -586,21 +592,21 @@ namespace bo3z
 			}
 		}
 
-		void SpawnBoss(RE::PlayerCharacter* a_player)
+		bool SpawnBoss(RE::PlayerCharacter* a_player)
 		{
 			const int row = BossRow();
 			if (row < 0) {
-				return;
+				return true;  // (none to raise)
 			}
 			const auto p = a_player->GetPosition();
 			const float a = a_player->GetAngleZ();
 			RE::NiPoint3 at{ p.x + std::sin(a) * 900.0f, p.y + std::cos(a) * 900.0f, p.z + 60.0f };  // in front: you should see it rise
 			if (!SpawnOne(a_player, row, &at)) {
-				return;
+				return false;
 			}
 			auto boss = g_alive.back().handle.get();
 			if (!boss) {
-				return;
+				return false;
 			}
 			auto* av = boss->AsActorValueOwner();
 			const float want = std::max(HealthFor(g_current) * gen::boss::healthMult, gen::boss::minHealth / R.hpScale);
@@ -616,6 +622,7 @@ namespace bo3z
 			Audio::BossMusic(true);
 			Hud::Banner(std::string(gen::kEnemies[row].label).append(" rises!"), 5.0f);
 			logger::info("boss: {} risen with {:.0f} health", gen::kEnemies[row].id, want);
+			return true;
 		}
 
 		// Health bars over the wounded dead near you: the nearest twelve, a named, coloured bar for the great ones.
@@ -693,7 +700,10 @@ namespace bo3z
 			Hazards(a_player, a_delta);
 			if (g_boss.spawnIn > 0 && (g_boss.spawnIn -= a_delta) <= 0) {
 				g_boss.spawnIn = -1;
-				SpawnBoss(a_player);
+				if (!SpawnBoss(a_player)) {
+					g_boss.spawnIn = 3.0f;  // (Noah: the quest's boss sometimes never came) it couldn't rise just now: again shortly
+					logger::info("boss: couldn't rise yet; trying again");
+				}
 			}
 			auto boss = g_boss.handle.get();
 			if (!boss || boss->IsDisabled()) {
@@ -1068,6 +1078,31 @@ namespace bo3z
 			}
 			if (s.boxAv != Save::Get(gen::kAV_box)) {
 				Save::Set(gen::kAV_box, s.boxAv);
+			}
+			// the host's sky: the same weather here (checked every few seconds; a change blends in)
+			if (static float wt = 0; (wt -= 0.25f) <= 0 && s.weather) {
+				wt = 3.0f;
+				auto* sky = RE::Sky::GetSingleton();
+				// the same weather by its plugin; if that plugin isn't here (the host's weather mod), one of Skyrim's of
+				// the same kind (rain for rain, snow for snow)
+				RE::TESWeather* w = nullptr;
+				if (s.weatherPlugin[0]) {
+					const std::string plugin(s.weatherPlugin, strnlen(s.weatherPlugin, sizeof(s.weatherPlugin)));
+					w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESWeather>(s.weatherLocal, plugin);
+				}
+				if (!w && s.weatherClass) {
+					for (auto* cand : RE::TESDataHandler::GetSingleton()->GetFormArray<RE::TESWeather>()) {
+						auto* f = cand ? cand->GetFile(0) : nullptr;
+						if (f && f->GetFilename() == "Skyrim.esm" && cand->data.flags.underlying() == s.weatherClass) {
+							w = cand;
+							break;
+						}
+					}
+				}
+				if (sky && w && sky->currentWeather != w && sky->mode.get() == RE::Sky::Mode::kFull) {
+					sky->ForceWeather(w, false);
+					logger::info("coop: weather follows the host ({:08X})", s.weather);
+				}
 			}
 			std::scoped_lock l(Hud::Lock());
 			auto& h = Hud::Edit();
@@ -1820,6 +1855,9 @@ namespace bo3z
 				return;
 			}
 			t = 2.0f;
+			if (Net::InLobby() || Coop::Client()) {
+				return;  // in a party the other players' undead (Skyrim Together's copies) are here too: never ours to crumble
+			}
 			int n = 0;
 			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 				if (auto a = h.get(); a && a.get() != a_player && !g_ours.contains(a->GetFormID()) && IsOurBase(a.get()) && !a->IsDisabled()) {
@@ -2201,6 +2239,61 @@ namespace bo3z
 			std::scoped_lock l(Hud::Lock());
 			auto& h = Hud::Edit();
 			h.puInsta = g_timers[0], h.puDouble = g_timers[1], h.puFireSale = g_timers[3];
+		}
+	}
+
+	namespace Director
+	{
+		// The undead charge straight in and strike (Noah: they circled and strafed like draugr first): every one of
+		// ours gets a combat style of its own with no circling, no falling back, no flanking, no stalking, no strafing.
+		void HeadlongCombat()
+		{
+			auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::TESCombatStyle>();
+			if (!factory) {
+				return;
+			}
+			std::unordered_map<RE::TESCombatStyle*, RE::TESCombatStyle*> made;
+			int n = 0;
+			auto give = [&](RE::TESNPC* a_npc) {
+				if (!a_npc) {
+					return;
+				}
+				auto* old = a_npc->GetCombatStyle();
+				auto& cs = made[old];
+				if (!cs) {
+					cs = factory->Create();
+					if (!cs) {
+						return;
+					}
+					if (old) {
+						cs->generalData = old->generalData, cs->meleeData = old->meleeData, cs->closeRangeData = old->closeRangeData;
+						cs->longRangeData = old->longRangeData, cs->flightData = old->flightData, cs->flags = old->flags;
+					}
+					cs->generalData.offensiveMult = 1.0f, cs->generalData.defensiveMult = 0.0f, cs->generalData.groupOffensiveMult = 1.0f;
+					cs->generalData.avoidThreatChance = 0.0f, cs->generalData.meleeScoreMult = std::max(1.0f, cs->generalData.meleeScoreMult);
+					cs->closeRangeData.circleMult = 0.0f, cs->closeRangeData.fallbackMult = 0.0f;
+					cs->closeRangeData.flankDistanceMult = 0.0f, cs->closeRangeData.stalkTimeMult = 0.0f;
+					cs->longRangeData.strafeMult = 0.0f;
+				}
+				a_npc->SetCombatStyle(cs);
+				++n;
+			};
+			for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
+				auto* f = Forms::Enemy(i);
+				if (!f) {
+					continue;
+				}
+				if (auto* npc = f->As<RE::TESNPC>()) {
+					give(npc);
+				} else if (auto* lv = f->As<RE::TESLevCharacter>()) {
+					for (auto& e : lv->entries) {
+						if (e.form) {
+							give(e.form->As<RE::TESNPC>());
+						}
+					}
+				}
+			}
+			logger::info("undead: {} of ours fight headlong (no circling or strafing)", n);
 		}
 	}
 }

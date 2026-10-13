@@ -42,6 +42,7 @@ namespace bo3z::Party
 		bool                                           g_wasFighting = false;
 		bool                                           g_essentialSet = false;
 		std::atomic<bool>                              g_wipeLoading{ false };
+		std::vector<View::Mark>                        g_marks;  // friends on screen (game thread, for the HUD)
 
 		bool Active() { return Net::InLobby() && Net::Members() > 0; }
 
@@ -148,6 +149,27 @@ namespace bo3z::Party
 		auto* p = P();
 		if (!p || !p->Is3DLoaded()) {
 			return;
+		}
+		{  // each friend's marker: over their figure (Skyrim Together's), else where they say they stand
+			std::vector<View::Mark> marks;
+			if (auto* cam = RE::Main::WorldRootCamera(); cam && Active()) {
+				std::scoped_lock l(g_lock);
+				for (auto& [id, r] : g_remote) {
+					if (Clock::now() - r.heard > std::chrono::seconds(5)) {
+						continue;
+					}
+					RE::NiPoint3 at = r.at;
+					if (auto* pu = Puppet(r)) {
+						at = pu->GetPosition();
+					}
+					at.z += 150.0f;
+					float x = 0, y = 0, z = 0;
+					cam->WorldPtToScreenPt3(at, x, y, z, 1e-5f);
+					marks.push_back({ r.name, x, 1.0f - y, at.GetDistance(p->GetPosition()), z > 0.0f, static_cast<Life>(r.state) });
+				}
+			}
+			std::scoped_lock l(g_lock);
+			g_marks = std::move(marks);
 		}
 		const bool active = Active();
 		SetEssential(active);
@@ -305,6 +327,7 @@ namespace bo3z::Party
 				v.fallen.push_back({ r.name, r.left, r.at.GetDistance(g_at) });
 			}
 		}
+		v.marks = g_marks;
 		return v;
 	}
 
@@ -341,5 +364,33 @@ namespace bo3z::Party
 	{
 		std::scoped_lock l(g_lock);
 		g_remote.erase(a_who);
+	}
+
+	// the nearest friend's distance from a point (a huge number alone)
+	float FriendDistance(const RE::NiPoint3& a_at)
+	{
+		std::scoped_lock l(g_lock);
+		float best = 1.0e9f;
+		for (auto& [id, r] : g_remote) {
+			if (Clock::now() - r.heard < std::chrono::seconds(5)) {
+				best = std::min(best, r.at.GetDistance(a_at));
+			}
+		}
+		return best;
+	}
+
+	// one of the other players (Skyrim Together's figure of them: near where they say they stand)
+	bool IsFriend(RE::Actor* a_actor)
+	{
+		if (!a_actor || a_actor == RE::PlayerCharacter::GetSingleton()) {
+			return false;
+		}
+		std::scoped_lock l(g_lock);
+		for (auto& [id, r] : g_remote) {
+			if (r.puppet.get().get() == a_actor || (Clock::now() - r.heard < std::chrono::seconds(5) && r.at.GetDistance(a_actor->GetPosition()) < 300.0f)) {
+				return true;
+			}
+		}
+		return false;
 	}
 }

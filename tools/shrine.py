@@ -80,33 +80,95 @@ def shard_mesh(mat, cx, cy, cz, yaw, tilt, length, width, depth, seed):
         S.quad('vein', (u[0], u[1], u[2] - w), (v[0], v[1], v[2] - w), (v[0], v[1], v[2] + w), (u[0], u[1], u[2] + w), both=True)
 
 
+def rock(mat, cx, cy, cz, yaw, tilt, L, seed):
+    """a broken shard of rock: a jagged closed hull (no gaps to see into), long and flat like the picture's,
+    chipped at the ends; its broad faces carry the blue veins"""
+    from scipy.spatial import ConvexHull
+    rng = np.random.default_rng(seed)
+    pts = []
+    for _ in range(48):
+        u = rng.uniform(-1, 1)
+        th = rng.uniform(0, 2 * math.pi)
+        taper = 1 - abs(u) ** 1.8 * 0.55
+        pts.append((u * L * 0.5, math.cos(th) * L * 0.2 * taper * rng.uniform(0.75, 1.1), math.sin(th) * L * 0.09 * taper * rng.uniform(0.7, 1.1)))
+    pts = np.array(pts)
+    hull = ConvexHull(pts)
+    tris = pts[hull.simplices]
+    ctr = pts.mean(0)
+    n = np.cross(tris[:, 1] - tris[:, 0], tris[:, 2] - tris[:, 0])
+    flip = ((tris.mean(1) - ctr) * n).sum(1) < 0
+    tris[flip] = tris[flip][:, ::-1]
+    def place(v):
+        x, y, z = v
+        xt, zt = x * math.cos(tilt) - z * math.sin(tilt), x * math.sin(tilt) + z * math.cos(tilt)
+        return (cx + xt * math.cos(yaw) - y * math.sin(yaw), cy + xt * math.sin(yaw) + y * math.cos(yaw), cz + zt)
+    for t in tris:
+        V = [place(v) for v in t]
+        UV = [(0.5 + v[0] / L, 0.5 + v[1] / (L * 0.4)) for v in t]
+        S.add(mat, V, UV, [(0, 1, 2)])
+    # veins: thin glowing strips over the broad faces (both sides), following the rock's length
+    for side in (1, -1):
+        zf = side * L * 0.072  # just under the broad face's height near the middle: the vein sits in the stone
+        x0 = -L * 0.2
+        y0 = rng.uniform(-L * 0.03, L * 0.03)
+        for k in range(3):
+            x1 = x0 + L * 0.13
+            y1 = y0 + rng.uniform(-L * 0.04, L * 0.04)
+            w = 1.3
+            a0, a1 = place((x0, y0 - w, zf)), place((x1, y1 - w, zf))
+            b1, b0 = place((x1, y1 + w, zf)), place((x0, y0 + w, zf))
+            S.quad('vein', a0, a1, b1, b0, both=True)
+            x0, y0 = x1, y1
+
+
 def shards():
     S.parts.clear()
-    ring = [(0.0, 95, 70, 0.4, 120), (0.9, 105, 10, -0.3, 135), (1.8, 92, 105, 0.9, 110), (2.7, 110, -40, -0.7, 140), (3.6, 98, 40, 0.2, 125),
-            (4.5, 104, -90, 1.1, 120), (5.4, 90, -10, -0.2, 115), (6.0, 80, 140, 0.6, 85), (0.45, 76, -130, -1.0, 95)]
+    # (angle, distance, height from the crystal's centre, tilt, length): standing on end round the crystal like the
+    # picture's, none low enough to reach the floor (the lowest tip stays ~60 above it, bobbing included)
+    ring = [(0.0, 70, 70, 1.25, 120), (0.9, 78, -20, 1.45, 105), (1.8, 66, 55, 1.05, 95), (2.7, 82, -35, 1.6, 115), (3.6, 72, 40, 1.35, 110),
+            (4.5, 76, -10, 1.15, 100), (5.4, 64, 85, 1.5, 85), (6.0, 58, -45, 1.3, 70)]
     for i, (a, d, z, tilt, L) in enumerate(ring):
-        shard_mesh('shard', math.cos(a) * d, math.sin(a) * d, z, a + math.pi / 2, tilt, L, L * 0.5, 16, seed=i)
-    # little chips drifting with them
-    for i in range(10):
-        a = i * 0.63 + 0.2
-        shard_mesh('shard', math.cos(a) * (60 + i * 6), math.sin(a) * (60 + i * 6), -70 + i * 16, a, i * 0.4, 22, 12, 6, seed=50 + i)
+        rock('shard', math.cos(a) * d, math.sin(a) * d, z, a + math.pi / 2, tilt, L, seed=i + 3)
+    for i in range(8):  # little chips drifting with them
+        a = i * 0.79 + 0.3
+        rock('shard', math.cos(a) * (40 + i * 5), math.sin(a) * (40 + i * 5), -20 + i * 12, a, i * 0.5, 16 + (i % 3) * 5, seed=60 + i)
 
 
 def crystal():
+    """a brilliant-cut gem (the picture's heart of light): a table, a crown of star and kite facets, a girdle,
+    and a pavilion of long facets to a point; 16-fold"""
     S.parts.clear()
-    # an eight-sided bipyramid, tall, with a crown of three spikes
-    h_top, h_bot, r = 40, 34, 20
-    mid = [(r * math.cos(2 * math.pi * k / 8 + 0.2), r * math.sin(2 * math.pi * k / 8 + 0.2), 0) for k in range(8)]
-    for k in range(8):
-        a, b = mid[k], mid[(k + 1) % 8]
-        S.add('crystal', [a, b, (0, 0, h_top)], [(0, 0), (1, 0), (0.5, 1)], [(0, 1, 2)])
-        S.add('crystal', [b, a, (0, 0, -h_bot)], [(0, 0), (1, 0), (0.5, 1)], [(0, 1, 2)])
-    for k, (ang, hgt) in enumerate(((0.0, 28), (2.1, 22), (4.2, 25))):
-        bx, by = math.cos(ang) * 9, math.sin(ang) * 9
-        base = [(bx + 5 * math.cos(2 * math.pi * j / 4), by + 5 * math.sin(2 * math.pi * j / 4), h_top * 0.55) for j in range(4)]
-        tip = (bx * 1.6, by * 1.6, h_top * 0.55 + hgt)
+    n = 16
+    rg, rt = 26.0, 14.0           # girdle and table radius
+    hc, hp, hg = 12.0, 30.0, 2.5  # crown height, pavilion depth, girdle half-thickness
+    def ring_(r, z, off=0.0, m=n):
+        return [(r * math.cos(2 * math.pi * (k + off) / m), r * math.sin(2 * math.pi * (k + off) / m), z) for k in range(m)]
+    table = ring_(rt, hc, 0.5)
+    star = ring_((rt + rg) / 2 * 1.02, hc * 0.55, 0.0)
+    gtop = ring_(rg, hg)
+    gbot = ring_(rg, -hg)
+    pmid = ring_(rg * 0.45, -hp * 0.62, 0.5)
+    tip = (0.0, 0.0, -hp)
+    top = (0.0, 0.0, hc)
+    for k in range(n):
+        k1 = (k + 1) % n
+        S.add('crystal', [top, table[k], table[k1]], [(0.5, 0.5), (0, 0), (1, 0)], [(0, 1, 2)])                  # table
+        S.add('crystal', [table[k], star[k1], table[k1]], [(0, 0), (0.5, 1), (1, 0)], [(0, 1, 2)])               # star facets
+        S.add('crystal', [table[k], star[k], star[k1]], [(0, 0), (0, 1), (1, 1)], [(0, 1, 2)])
+        S.add('crystal', [star[k], gtop[k], gtop[k1]], [(0, 0), (0, 1), (1, 1)], [(0, 1, 2)])                    # kite / upper girdle
+        S.add('crystal', [star[k], gtop[k1], star[k1]], [(0, 0), (1, 1), (1, 0)], [(0, 1, 2)])
+        S.add('crystal', [gtop[k], gbot[k], gbot[k1]], [(0, 0), (0, 1), (1, 1)], [(0, 1, 2)])                    # girdle
+        S.add('crystal', [gtop[k], gbot[k1], gtop[k1]], [(0, 0), (1, 1), (1, 0)], [(0, 1, 2)])
+        S.add('crystal', [gbot[k], pmid[k], gbot[k1]], [(0, 0), (0.5, 1), (1, 0)], [(0, 1, 2)])                  # lower girdle
+        S.add('crystal', [gbot[k], pmid[(k - 1) % n], pmid[k]], [(0, 0), (0, 1), (1, 1)], [(0, 1, 2)])
+        S.add('crystal', [pmid[k], tip, pmid[k1]], [(0, 0), (0.5, 1), (1, 0)], [(0, 1, 2)])                      # pavilion
+    # a crown of three bright spikes over it (the picture's star of light)
+    for ang, hgt in ((0.0, 26), (2.1, 20), (4.2, 23)):
+        bx, by = math.cos(ang) * 6, math.sin(ang) * 6
+        base = [(bx + 4 * math.cos(2 * math.pi * j / 4), by + 4 * math.sin(2 * math.pi * j / 4), hc - 1) for j in range(4)]
+        tipp = (bx * 1.5, by * 1.5, hc + hgt)
         for j in range(4):
-            S.add('crystal', [base[j], base[(j + 1) % 4], tip], [(0, 0), (1, 0), (0.5, 1)], [(0, 1, 2)])
+            S.add('crystal', [base[j], base[(j + 1) % 4], tipp], [(0, 0), (1, 0), (0.5, 1)], [(0, 1, 2)])
 
 
 def tex_runes(w=1024, h=256):
@@ -176,10 +238,10 @@ def main():
     convert('shrine', [f'collidefrustum {-R} {-R} {R} {R} {TOP} {BOTTOM} {GROW}'], [floor, cobble, trim, rune, runes, pool])
     shards()
     vg = S.save(Image.new('RGB', (32, 32), (130, 200, 255)), 'vein_g.dds')
-    convert('shards', [], [stone('shard', 0.35), f'mat vein diffuse={rune_d} normal={flat} glow={vg} emit=0.4,0.75,1.0 emitmult=3.0 spec=0.3 doublesided=1'])
+    convert('shards', [], [stone('shard', 0.35) + ' doublesided=1', f'mat vein diffuse={rune_d} normal={flat} glow={vg} emit=0.4,0.75,1.0 emitmult=3.0 spec=0.3 doublesided=1'])
     crystal()
     cd = S.save(tex_crystal(), 'crystal_d.dds')
-    convert('crystal', [], [f'mat crystal diffuse={cd} normal={flat} glow={cd} emit=0.6,0.85,1.0 emitmult=3.2 spec=1.0 gloss=80'])
+    convert('crystal', [], [f'mat crystal diffuse={cd} normal={flat} glow={cd} emit=0.7,0.9,1.0 emitmult=4.0 spec=1.0 gloss=120 doublesided=1'])
     print('crystal centre at z', CRYSTAL_Z)
 
 

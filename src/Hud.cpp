@@ -30,7 +30,7 @@ namespace bo3z
 		ID3D11ShaderResourceView* g_divider = nullptr;  // bronze line with a winged diamond
 		std::atomic<int>          g_clicks{ 0 };        // left clicks since the last frame (menus)
 		std::atomic<bool>         g_padLast{ false };   // the last thing touched was a controller: show its buttons
-		std::atomic<int>          g_padMove{ 0 }, g_padAccept{ 0 }, g_padBack{ 0 };  // main menu: pad / arrow keys since the last frame
+		std::atomic<int>          g_padMove{ 0 }, g_padAccept{ 0 }, g_padBack{ 0 }, g_padSide{ 0 };  // main menu: pad / arrow keys since the last frame
 		std::string               g_devPick;            // dev: a main-menu word to press as a click would (menupick)
 		std::mutex                g_devPickLock;
 		// Skyrim's main-menu buttons are kept over our picture: the frame as Skyrim drew it is copied, and in the
@@ -339,6 +339,33 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// Co-op: down (a bleed-out ring and the seconds left), dead (whom you watch), a friend to revive, friends down
 			if (Net::InLobby()) {
 				const auto pv = Party::Now();
+				// where each friend is: a marker over them (their name, the distance), or at the screen's edge
+				for (const auto& m : pv.marks) {
+					const ImU32 col = m.life == Party::Life::Down ? IM_COL32(240, 70, 60, 255) : m.life == Party::Life::Dead ? IM_COL32(150, 150, 150, 220) : IM_COL32(110, 220, 255, 255);
+					ImVec2      p{ m.x * size.x, m.y * size.y };
+					const bool  on = m.front && p.x > 40 * k && p.x < size.x - 40 * k && p.y > 60 * k && p.y < size.y - 60 * k;
+					if (!on) {  // off screen or behind: pinned to the edge, pointing the way
+						ImVec2 d{ p.x - size.x / 2, p.y - size.y / 2 };
+						if (!m.front) d = { -d.x, -d.y };
+						const float len = std::max(1.0f, std::sqrt(d.x * d.x + d.y * d.y));
+						d = { d.x / len, d.y / len };
+						const float sx = (size.x / 2 - 50 * k) / std::max(0.001f, std::abs(d.x)), sy = (size.y / 2 - 70 * k) / std::max(0.001f, std::abs(d.y));
+						const float t = std::min(sx, sy);
+						p = { size.x / 2 + d.x * t, size.y / 2 + d.y * t };
+					}
+					// a player icon: a round badge with a figure in it, a soft pulse round it, the name and distance under it
+					const float r = 17 * k, pulse = 0.5f + 0.5f * std::sin(static_cast<float>(ImGui::GetTime()) * 3.0f);
+					const ImU32 colA = (col & 0x00FFFFFF) | (static_cast<ImU32>(70 + 60 * pulse) << 24);
+					dl->AddCircleFilled(p, r + 7 * k * pulse, (col & 0x00FFFFFF) | (static_cast<ImU32>(40 * (1 - pulse)) << 24), 32);
+					dl->AddCircleFilled(p, r, IM_COL32(12, 12, 18, 225), 32);
+					dl->AddCircle(p, r, col, 32, 2.5f * k);
+					dl->AddCircle(p, r + 3 * k, colA, 32, 1.5f * k);
+					dl->AddCircleFilled({ p.x, p.y - r * 0.32f }, r * 0.26f, col, 16);  // head
+					dl->PathArcTo({ p.x, p.y + r * 0.62f }, r * 0.52f, 3.1416f, 6.2832f, 16);  // shoulders
+					dl->PathFillConvex(col);
+					const std::string label = m.name + "   " + std::to_string(static_cast<int>(m.dist / 70.0f)) + " m";
+					TxtC(dl, g_title, 18 * k, p.x, p.y + r + 6 * k, col, label);
+				}
 				if (pv.life == Party::Life::Down) {
 					dl->AddRectFilled({ 0, 0 }, size, IM_COL32(60, 0, 0, 90));
 					const ImVec2 c{ size.x / 2, size.y * 0.42f };
@@ -958,6 +985,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->AddRect(at, kb, live ? kGold : kGoldDim, 3 * k, 0, 1.2f * k);
 				TxtC(dl, g_num, 17 * k, at.x + 13 * k, at.y + 3 * k, live ? kParch : IM_COL32(150, 140, 125, 255), key);
 			};
+			// the roll on the shrine itself: the spells' emblems flicker over its crystal, then the one won hangs there
+			if (s.rollOnScreen && s.rollGun >= 0 && s.rollPhase >= 2) {
+				const ImVec2 c{ s.rollScreenX * size.x, s.rollScreenY * size.y };
+				const float  R = std::clamp(110.0f * 420.0f / std::max(200.0f, s.rollDist), 26.0f, 110.0f) * k;
+				const float  pulse = s.rollPhase == 3 ? 1.0f + 0.06f * std::sin(now * 5.0f) : 1.0f;
+				dl->AddCircleFilled(c, R * 1.5f * pulse, IM_COL32(90, 160, 255, 40), 40);
+				dl->AddCircleFilled(c, R * 1.15f * pulse, IM_COL32(150, 200, 255, 50), 40);
+				DrawEmblem(dl, s.rollGun, c, R * pulse, 1.0f, now);
+				const std::string nm = ArmsName(s.rollGun);
+				TxtC(dl, g_title, std::max(16.0f, R / k * 0.32f) * k, c.x, c.y + R * 1.25f, s.rollPhase == 3 ? IM_COL32(250, 236, 200, 255) : IM_COL32(200, 210, 230, 220), nm, 2 * k, IM_COL32(60, 120, 255, 255));
+			}
 			if (s.perkMenu) {
 				const float w = 470 * k;
 				const bool  shout = s.shrineShout >= 0 && s.shrineShout < static_cast<int>(gen::kShouts.size());
@@ -1799,17 +1837,24 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				struct Row { std::string text; bool sel, disabled; int kind, arg; ImU32 accent; };  // kind: 0 Skyrim's (arg = its index), 1 party, 2 host, 3 invite, 4 leave, 5 join (arg = friend), 6 back
 				std::vector<Row> rows;
 				static int partyHover = -1;
-				if (!partyMode) {
+				static bool settingsMode = false;  // Undying Nights' settings, as words here too (the pad can change them)
+				if (settingsMode) {
+					rows.push_back({ "First person view   <  " + std::to_string(static_cast<int>(Settings::FovFirst())) + "  >", false, false, 8, 0, 0 });
+					rows.push_back({ "Third person view   <  " + std::to_string(static_cast<int>(Settings::FovThird())) + "  >", false, false, 8, 1, 0 });
+					rows.push_back({ "Back", false, false, 6, 0, 0 });
+				} else if (!partyMode) {
 					for (const auto& e : entries) {
 						rows.push_back({ e.text, e.sel, e.disabled, 0, e.index, 0 });
 						std::string up = e.text;
 						std::transform(up.begin(), up.end(), up.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
-						if (coop && up == "LOAD") {
-							rows.push_back({ "Co-op Party", false, false, 1, 0, 0 });
+						if (up == "LOAD") {
+							if (coop) rows.push_back({ "Co-op Party", false, false, 1, 0, 0 });
+							rows.push_back({ "Settings", false, false, 7, 0, 0 });
 						}
 					}
-					if (coop && !entries.empty() && std::none_of(rows.begin(), rows.end(), [](const Row& r) { return r.kind == 1; })) {
-						rows.push_back({ "Co-op Party", false, false, 1, 0, 0 });
+					if (!entries.empty() && std::none_of(rows.begin(), rows.end(), [](const Row& r) { return r.kind == 7; })) {
+						if (coop) rows.push_back({ "Co-op Party", false, false, 1, 0, 0 });
+						rows.push_back({ "Settings", false, false, 7, 0, 0 });
 					}
 				} else {
 					if (!Net::InLobby()) {
@@ -1831,15 +1876,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				static bool padOn = false;
 				static bool lastParty = false;
 				static ImVec2 lastCur{ -1, -1 };
-				const int   moves = g_padMove.exchange(0), accepts = g_padAccept.exchange(0), backs = g_padBack.exchange(0);
-				if (lastParty != partyMode) {
-					padFocus = -1, lastParty = partyMode;
+				const int   moves = g_padMove.exchange(0), accepts = g_padAccept.exchange(0), backs = g_padBack.exchange(0), sides = g_padSide.exchange(0);
+				if (lastParty != (partyMode || settingsMode)) {
+					padFocus = -1, lastParty = partyMode || settingsMode;
 				}
 				if (std::abs(cur.x - lastCur.x) + std::abs(cur.y - lastCur.y) > 3.0f) {
 					padOn = false;
 				}
 				lastCur = cur;
-				if (moves || accepts || backs) {
+				if (moves || accepts || backs || sides) {
 					if (!padOn) {
 						padFocus = -1;
 						for (std::size_t i = 0; i < rows.size(); ++i) {
@@ -1877,6 +1922,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float right = size.x - 110 * k;
 				const float top = size.y * 0.60f - rowH * rows.size() * 0.5f;
 				int hovered = -1;
+				if (settingsMode) {
+					Txt(fg, g_title, 22 * k, { right - Measure(g_title, 22 * k, "SETTINGS").x, top - 78 * k }, kGold, "SETTINGS", 2 * k, IM_COL32(255, 160, 60, 255));
+					const std::string hint = g_padLast ? "D-pad Left / Right to change" : "Click, or Left / Right, to change";
+					Txt(fg, g_body, 18 * k, { right - Measure(g_body, 18 * k, hint).x, top - 44 * k }, IM_COL32(200, 194, 180, 230), hint);
+				}
 				if (partyMode) {  // the party's state over its words
 					const std::string st = Net::Status() + (Net::InLobby() ? "   (" + std::to_string(Net::Members() + 1) + " in party)" : "");
 					const float sfs = 18 * k;
@@ -1930,8 +1980,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (accepts > 0 && rows[padFocus].kind != 0) {
 						hovered = padFocus, click = true;  // (Skyrim's own words take A / Enter themselves)
 					}
-					if (backs > 0 && partyMode) {
-						partyMode = false;
+					if (backs > 0 && (partyMode || settingsMode)) {
+						partyMode = settingsMode = false;
+					}
+					if (sides != 0 && rows[padFocus].kind == 8) {
+						const bool first = rows[padFocus].arg == 0;
+						Settings::SetFov(first, (first ? Settings::FovFirst() : Settings::FovThird()) + 5.0f * sides);
 					}
 				}
 				partyHover = hovered >= 0 && rows[hovered].kind != 0 ? hovered : -1;
@@ -1950,7 +2004,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						case 3: Net::InviteFriends(); break;
 						case 4: Net::LeaveLobby(); break;
 						case 5: if (r.arg < static_cast<int>(friends.size())) Net::JoinLobby(friends[r.arg].lobby); break;
-						case 6: partyMode = false; break;
+						case 6: partyMode = settingsMode = false; break;
+						case 7: settingsMode = true; break;
+						case 8: {  // a click steps it up (round to the start past the top)
+							const bool  first = r.arg == 0;
+							const float v = (first ? Settings::FovFirst() : Settings::FovThird()) + 5.0f;
+							Settings::SetFov(first, v > Settings::kFovMax ? Settings::kFovMin : v);
+							break;
+						}
 						}
 						g_pressT = now, g_pressY = top + rowH * (hovered + 0.5f);
 					}
@@ -2745,11 +2806,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				else if (id == 0x0002) ++g_padMove;   // d-pad down
 				else if (id == 0x1000) ++g_padAccept; // A
 				else if (id == 0x2000) ++g_padBack;   // B
+				else if (id == 0x0004) --g_padSide;   // d-pad left
+				else if (id == 0x0008) ++g_padSide;   // d-pad right
 			} else if (a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard) {
 				if (id == 0xC8 || id == 0x11) --g_padMove;       // up, W
 				else if (id == 0xD0 || id == 0x1F) ++g_padMove; // down, S
 				else if (id == 0x1C || id == 0x12) ++g_padAccept; // Enter, E
 				else if (id == 0x0E || id == 0x01) ++g_padBack;   // Backspace, Esc
+				else if (id == 0xCB || id == 0x1E) --g_padSide;   // left, A
+				else if (id == 0xCD || id == 0x20) ++g_padSide;   // right, D
 			}
 		}
 		void DevMenuPick(const std::string& a_text)

@@ -920,8 +920,33 @@ namespace bo3z
 			if (a_town < 0 || a_town >= static_cast<int>(gen::kCurseCities.size())) {
 				return;
 			}
+			const int before = Step(a_town);
 			if (auto* g = Global(gen::kCurseCities[a_town].global)) {
 				g->value = static_cast<float>(a_value);
+			}
+			// a friend did the rite: it completes here too, with its reward (the party shares the quests)
+			for (int st = before; st < Step(a_town) && st < kFreed; ++st) {
+				Forms::Play(gen::Sound::quest_step);
+				Note(Fill(Rite(a_town, st).title, a_town) + " - complete (your party)", 6.0f);
+				Points::Add(400 * (st + 1));
+				logger::info("curse: {} rite {} done by the party", gen::kTowns[a_town], st);
+			}
+			if (before < kFreed && Step(a_town) >= kFreed) {
+				Forms::Play(gen::Sound::curse_lifted);
+				Audio::FreedMusic();
+				std::string text = Fill(gen::kCurseLiftedBanner, a_town);
+				if (const int sh = ShoutOf(a_town); sh >= 0) {
+					text += " - its Thu'um, " + std::string(gen::kShouts[sh].label) + ", waits at the city's shrine";
+				}
+				Note(text, 10.0f);
+				Points::Add(5000);
+				if (!Net::IsClient()) {  // the host's nights: the freed city's last rite ends this one
+					Director::EndNight();
+					if (auto* pl = RE::PlayerCharacter::GetSingleton()) {
+						Director::CrumbleNear(pl->GetPosition(), 1.0e9f);
+					}
+				}
+				logger::info("curse: {} freed by the party", gen::kTowns[a_town]);
 			}
 		}
 	}

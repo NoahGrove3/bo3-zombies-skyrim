@@ -632,10 +632,10 @@ namespace bo3z
 			const float u = Rand(0.0f, 1.0f);
 			// every night is a mix of all the risen (Noah: no night of one model): the Risen Dead most, then the Hollow
 			// Bride, the Stitched Abomination and the Drowned Wailer; a little more of the dangerous ones as nights go on
-			const float runners = std::min(0.30f, 0.20f + 0.01f * a_round);
+			const float runners = std::min(0.20f, 0.12f + 0.006f * a_round);  // (Noah: mostly plain risen dead)
 			const float crawlers = 0.0f;  // (retired: the crawl rig slid along the ground)
-			const float wailers = std::min(0.14f, 0.08f + 0.006f * a_round);
-			const float bloaters = std::min(0.20f, 0.14f + 0.006f * a_round);
+			const float wailers = std::min(0.08f, 0.05f + 0.003f * a_round);
+			const float bloaters = std::min(0.12f, 0.08f + 0.003f * a_round);
 			if (u < runners) return Type::Runner;
 			if (u < runners + crawlers) return Type::Crawler;
 			if (u < runners + crawlers + wailers) return Type::Wailer;
