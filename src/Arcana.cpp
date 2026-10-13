@@ -114,21 +114,42 @@ namespace bo3z::Arcana
 		logger::info("arcana: {} learned{}", coffer::kSpells[a_index].name, a_equip ? " and in hand" : "");
 	}
 
-	// the first spell of a new character
+	// A new character starts as a Spellsword: a one-handed sword in the right hand, a Coffer spell (Firebolt) in the
+	// left (the SpellSword Moveset animates the pair).
 	void GiveStarter()
 	{
-		for (int i = 0; i < static_cast<int>(coffer::kSpells.size()); ++i) {
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		int   pick = -1;
+		for (int i = 0; i < static_cast<int>(coffer::kSpells.size()) && pick < 0; ++i) {
 			if (std::string_view(coffer::kSpells[i].name) == "Firebolt" && g_spell[i]) {
-				Give(i, true);
-				return;
+				pick = i;
 			}
 		}
-		for (int i = 0; i < static_cast<int>(coffer::kSpells.size()); ++i) {
+		for (int i = 0; i < static_cast<int>(coffer::kSpells.size()) && pick < 0; ++i) {
 			if (g_spell[i] && coffer::kSpells[i].tier == 0) {
-				Give(i, true);
-				return;
+				pick = i;
 			}
 		}
+		if (!p) {
+			return;
+		}
+		auto* em = RE::ActorEquipManager::GetSingleton();
+		if (pick >= 0) {
+			Give(pick, false);
+			if (em) {
+				em->EquipSpell(p, g_spell[pick], RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x13F43));  // the left hand
+			}
+		}
+		if (auto* sword = RE::TESForm::LookupByID<RE::TESObjectWEAP>(0x13989)) {  // Steel Sword
+			if (p->GetItemCount(sword) <= 0) {
+				p->AddObjectToContainer(sword, nullptr, 1, nullptr);
+			}
+			if (em) {
+				em->EquipObject(p, sword, nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x13F42));
+			}
+		}
+		Hud::Banner("Spellsword: a blade in one hand, a spell in the other", 4.0f);
+		logger::info("arcana: a new Spellsword (sword and {})", pick >= 0 ? coffer::kSpells[pick].name : "no spell");
 	}
 
 	std::string_view Name(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].name : ""; }
