@@ -135,5 +135,6 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 	logger::info("Undying Nights {} loading as SKSE plugin", bo3z::kVersion);
 	bo3z::Save::InstallCoSave();
 	bo3z::Events::InstallMenuWatch();
+	bo3z::Net::PatchTogether();  // (Skyrim Together loads us through SKSE: its menu must learn to follow the party here too)
 	return true;
 }
