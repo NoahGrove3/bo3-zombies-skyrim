@@ -46,6 +46,17 @@ Say 'Copying Undying Nights...'
 Copy-Item (Join-Path $pack 'files\Game\*') $game -Recurse -Force
 Say 'Copying Skyrim Together Reborn...'
 Copy-Item (Join-Path $pack 'files\SkyrimTogether\*') $data -Recurse -Force
+# ---- the party's gameplay mods (required: both players need the same plugins): the spell mods the Coffer draws
+#      from, Ordinator, animations and movement (Open Animation Replacer, True Directional Movement, Goetia, ...),
+#      spell effects and sounds. Already installed and sorted in files\Mods\Data.
+$mods = Join-Path $pack 'files\Mods\Data'
+if (Test-Path $mods) {
+    Say 'Copying the party mods (spells, perks, animations, effects, sounds)...'
+    robocopy $mods $data /E /MT:16 /NFL /NDL /NJH /NJS /NP | Out-Null
+    if ($LASTEXITCODE -ge 8) { Say 'Some mod files could not be copied (is the disk full?).' Red } else { Say 'Party mods installed.' Green }
+}
+# TK Dodge's old DLLs do not run on this Skyrim and stop it starting
+foreach ($old in 'TKPlugin.dll', 'TK_Dodge_RE.dll') { $f = Join-Path $data "SKSE\Plugins\$old"; if (Test-Path $f) { Remove-Item $f -Force } }
 Say 'Copying Undying Nights data (last, so its menu art wins)...'
 Copy-Item (Join-Path $pack 'files\Data\*') $data -Recurse -Force
 
@@ -74,11 +85,16 @@ $lines = @(); if (Test-Path $plist) { $lines = Get-Content $plist }
 $gfxPlugins = @('RealisticWaterTwo - Resources.esm', 'Lux Orbis - Master plugin.esm', 'Lux - Resources.esp', 'Lux Via.esp', 'SMIM-SE-Merged-All.esp',
     'Lit Road Signs.esp', 'HappyLittleTrees.esp', 'Skoglendi - A Grass Mod.esp', 'RealisticWaterTwo.esp', 'Skyland Watercolor - Slow Green-RW2.esp',
     'Azurite Weathers III.esp', 'Lux Orbis.esp', 'Lux Via - plugin.esp', 'Lux Via - Blended Roads Bridges Texture sets.esp', 'PAN_NPCs.esp')
-$ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'BO3Zombies.esp', 'UndyingNights.esp') + $gfxPlugins
+# the party mods' plugins, in load order (masters first)
+$modPlugins = @('Ordinator - Perks of Skyrim.esp', 'Apocalypse - Magic of Skyrim.esp', 'MysticismMagic.esp', 'MysticOrdinator.esp', 'ForgottenMagic_Redone.esp',
+    'StormCalling.esl', 'Conduit.esp', 'StrangeRunes.esp', 'EnhancedAtronachs.esp', 'BURP_SpellTomes.esp', 'BURPST_Apocalypse.esp', 'BURPST_ForgottenMagic.esp',
+    'BURPST_MysticismMO.esp', 'DeadlySpellImpacts.esp', 'FEC.esp', 'Embers XD.esp', 'Embers XD - Fire Magick Add-On.esp', 'ENB Light.esp', 'TKDodge.esp',
+    'TKDodgeSE sound.esp', 'TrueDirectionalMovement.esp', 'Spell Sword.esp', '90fps.esp', 'sirwho_Wizard_Hats-Full.esp')
+$ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'BO3Zombies.esp', 'UndyingNights.esp') + $gfxPlugins + $modPlugins
 $keep = $lines | Where-Object { $n = ($_ -replace '^\*', '').Trim(); -not ($ours -contains $n) }
 $mid = @()
 if ($gfxOn -or (Test-Path (Join-Path $data 'Lux Via.esp'))) { $mid = $gfxPlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ } }
-$out = @($keep | Where-Object { $_ -match '^\s*#' }) + @('*SkyrimTogether.esp', '*SkyrimTogetherQuestPatches.esp') + @($keep | Where-Object { $_ -notmatch '^\s*#' -and $_.Trim() }) + $mid + @('*BO3Zombies.esp')
+$out = @($keep | Where-Object { $_ -match '^\s*#' }) + @('*SkyrimTogether.esp', '*SkyrimTogetherQuestPatches.esp') + @($keep | Where-Object { $_ -notmatch '^\s*#' -and $_.Trim() }) + $mid + @($modPlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ }) + @('*BO3Zombies.esp')
 Set-Content -Path $plist -Value $out -Encoding UTF8
 Say 'Plugins turned on.' Green
 

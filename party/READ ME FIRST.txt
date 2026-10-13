@@ -9,8 +9,8 @@ ONE-TIME SETUP (both players)
  2. Unzip this pack anywhere (Desktop is fine) and double-click  JOIN THE PARTY.bat
     (the host - Noah - runs  HOST THE PARTY (Noah only).bat  instead).
     If Windows says "Windows protected your PC": More info > Run anyway.
- 3. It finds Skyrim, installs Undying Nights + Skyrim Together Reborn, turns the plugins on and puts
-    "Undying Nights Co-op" on your desktop.
+ 3. It finds Skyrim, installs Undying Nights + Skyrim Together Reborn + the party mods (below), turns the
+    plugins on and puts "Undying Nights Co-op" on your desktop.
 
 EVERY TIME YOU PLAY
  1. Start the game with the "Undying Nights Co-op" desktop shortcut. NOT the Steam Play button, not the
@@ -26,8 +26,21 @@ EVERY TIME YOU PLAY
     password to type). Each of you starts where your own save is - meet up in game (Skyrim Together's
     party list shows the others).
 
+THE PARTY MODS (installed for both players - Skyrim Together needs the same plugins on both sides)
+ - Spells the shrine's Coffer hands out (150 of them): Apocalypse, Mysticism, Forgotten Magic Redone,
+   Stormcaller Magic II, Strange Runes (attack runes) - plus Conduit and Enhanced Atronachs.
+ - Perks: Ordinator. Spell tomes: BURP Spell Tomes.
+ - Animation and movement: Open Animation Replacer, True Directional Movement, Goetia spell casting,
+   Dynamic Random Spell Idle, SpellSword Moveset, Leviathan greatsword low stance, TK Dodge (+ sound).
+ - Effects and sound: Deadly Spell Impacts, Spell Rune Retexture, Frozen Electrocuted Combustion, Embers XD
+   (+ Fire Magick), ENB Light, Airgetlam Modern Magic Sounds + Shouts SFX. 120 FPS UI, 90 FPS animations.
+ - Wizard Hats.
+
 GOOD TO KNOW
- - The host's game runs the nights: the horde, events and bosses. You both see and fight them.
+ - A new character starts as a Spellsword: a steel sword in the right hand, Firebolt in the left. The
+   shrine's Coffer teaches more spells (they land in the Magic menu); Reforge makes the one in hand stronger.
+ - Field of view: Esc (or Tab) shows Undying Nights' settings strip at the bottom - first and third person.
+ - Survival Mode is switched off in Undying Nights games (hunger and cold fight the nights). - The host's game runs the nights: the horde, events and bosses. You both see and fight them.
  - Points, spells, brews, Reforge levels and your city quests are kept in YOUR OWN save.
  - Going down: Skyrim Together's death system picks you back up.
  - Noah's look comes from graphics mods, and they are all in this pack (files\Graphics, about 16 GB):
