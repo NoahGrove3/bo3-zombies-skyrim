@@ -1290,6 +1290,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ID3D11ShaderResourceView* g_mFar = nullptr;
 		ID3D11ShaderResourceView* g_mMid = nullptr;
 		ID3D11ShaderResourceView* g_mNear = nullptr;
+		// the shrine (tools/menushrine.py): the floor, its light, the crystal turning (24 frames), the floating rocks
+		ID3D11ShaderResourceView* g_sGround = nullptr;
+		ID3D11ShaderResourceView* g_sGlow = nullptr;
+		ID3D11ShaderResourceView* g_sCrystal = nullptr;
+		ID3D11ShaderResourceView* g_sSoft = nullptr;
+		std::array<ID3D11ShaderResourceView*, 9> g_sShard{};
 		ID3D11ShaderResourceView* g_mGroundFog = nullptr;
 		ID3D11ShaderResourceView* g_mClouds2 = nullptr;    // drifting night clouds that tile left-right (tools/menuscene.py drift_clouds)  // fog wisps that tile left-right (tools/menuscene.py ground_fog)
 		constexpr float kMenuRune[2] = { 1812.0f, 992.0f };  // the middle of the rune-stone's face in the painting
@@ -1534,10 +1540,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 				}
 			}
-			// the far range, then mist drifting in the valley in front of it
-			layer(g_mFar, 0.45f, white);
-			// fog rolling over the ground: two copies of the wisps sliding past each other at different speeds, so it
-			// churns as it drifts (valley fog here, ground fog over the slope, a thick bank across the front)
 			auto groundFog = [&](float y0, float y1, float speed, float rep, int al, ImU32 rgb) {
 				ID3D11ShaderResourceView* t = g_mGroundFog ? g_mGroundFog : g_menuFog;
 				if (!t) {
@@ -1549,6 +1551,114 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				fg->AddImage(tex, { 0, y0 + bob }, { size.x, y1 + bob }, { u0, 0 }, { u0 + rep, 1 }, (rgb & 0x00FFFFFF) | (static_cast<ImU32>(std::min(255.0f, al * 0.85f * fade)) << 24));
 				fg->AddImage(tex, { 0, y0 - bob * 0.6f + (y1 - y0) * 0.08f }, { size.x, y1 }, { u1, 0 }, { u1 + rep * 0.7f, 1 }, (rgb & 0x00FFFFFF) | (static_cast<ImU32>(std::min(255.0f, al * 0.7f * fade)) << 24));
 			};
+			if (g_sGround) {
+				// THE SHRINE (Noah's picture): a round rune floor on a dark plain, a blue crystal turning and pulsing over
+				// it, broken rocks floating round it. All of it at one depth of the parallax, in the painting's pixels.
+				constexpr float kD = 0.6f, kCX = 1060.0f, kCY = 1185.0f, kS = 3.9f, kCos = 0.9563f, kSin = 0.2924f, kCrystalZ = 130.0f;
+				const float u = (cw * (1.04f + 0.03f * kD) * push) / 2560.0f;  // painting pixels -> screen
+				auto at = [&](float X, float Y, float Z) { return toScreen(kD, kCX + X * kS, kCY - (Z * kCos - Y * kSin) * kS); };
+				auto tex = [](ID3D11ShaderResourceView* t) { return ImTextureID(reinterpret_cast<std::uintptr_t>(t)); };
+				auto sprite = [&](ID3D11ShaderResourceView* t, ImVec2 c, float w, float h, float rot, ImU32 col, ImVec2 uv0 = { 0, 0 }, ImVec2 uv1 = { 1, 1 }) {
+					const float cs = std::cos(rot), sn = std::sin(rot);
+					auto P = [&](float x, float y) { return ImVec2{ c.x + x * cs - y * sn, c.y + x * sn + y * cs }; };
+					fg->AddImageQuad(tex(t), P(-w / 2, -h / 2), P(w / 2, -h / 2), P(w / 2, h / 2), P(-w / 2, h / 2), uv0, { uv1.x, uv0.y }, uv1, { uv0.x, uv1.y }, col);
+				};
+				const float pulse = 0.5f + 0.5f * std::sin(now * 1.6f);            // the core's heartbeat
+				const float slow = 0.5f + 0.5f * std::sin(now * 0.55f + 1.0f);
+				groundFog(size.y * 0.30f, size.y * 0.56f, 0.006f, 1.6f, 170, IM_COL32(120, 135, 180, 0));  // mist on the far plain
+				layer(g_sGround, kD, white);
+				if (g_sGlow) {  // the runes and the pool breathe with the core
+					layer(g_sGlow, kD, IM_COL32(255, 255, 255, static_cast<int>((150 + 105 * pulse) * fade)));
+				}
+				// motes of light running round the rune ring (it turns), brighter where they pass the front
+				for (int i = 0; i < 28; ++i) {
+					const float a = now * 0.22f + i * (6.2832f / 28);
+					const ImVec2 p = at(std::cos(a) * 136.0f, std::sin(a) * 136.0f, 1.0f);
+					const float front = 0.55f - 0.45f * std::sin(a);
+					fg->AddCircleFilled(p, 7.0f * u, IM_COL32(110, 190, 255, static_cast<int>(40 * front * fade)), 12);
+					fg->AddCircleFilled(p, 2.4f * u, IM_COL32(210, 240, 255, static_cast<int>(200 * front * fade)), 8);
+				}
+				// the light rising from the pool to the crystal
+				{
+					const ImVec2 pool = at(0, 0, 0), top = at(0, 0, kCrystalZ);
+					const float  bw = (34 + 8 * pulse) * u * kS;
+					fg->AddRectFilledMultiColor({ pool.x - bw, top.y }, { pool.x + bw, pool.y }, IM_COL32(120, 200, 255, 0), IM_COL32(120, 200, 255, 0),
+						IM_COL32(120, 200, 255, static_cast<int>((40 + 30 * pulse) * fade)), IM_COL32(120, 200, 255, static_cast<int>((40 + 30 * pulse) * fade)));
+					fg->AddRectFilledMultiColor({ pool.x - bw * 0.35f, top.y }, { pool.x + bw * 0.35f, pool.y }, IM_COL32(200, 235, 255, static_cast<int>(30 * fade)), IM_COL32(200, 235, 255, static_cast<int>(30 * fade)),
+						IM_COL32(200, 235, 255, static_cast<int>((70 + 50 * pulse) * fade)), IM_COL32(200, 235, 255, static_cast<int>((70 + 50 * pulse) * fade)));
+				}
+				// the rocks: each on its own orbit round the crystal, bobbing and slowly tumbling; the far ones behind it
+				struct Rock { float r, a0, z, speed, bob, ph, rot0, spin; };
+				static constexpr Rock kRocks[9] = { { 112, 0.0f, 150, 0.16f, 9, 0.0f, 0.3f, 0.10f }, { 120, 0.7f, 110, 0.16f, 11, 1.3f, -0.4f, -0.08f },
+					{ 104, 1.4f, 175, 0.16f, 8, 2.1f, 0.9f, 0.12f }, { 124, 2.1f, 125, 0.16f, 12, 0.7f, -0.8f, 0.07f }, { 110, 2.8f, 95, 0.16f, 10, 2.9f, 0.2f, -0.11f },
+					{ 116, 3.5f, 160, 0.16f, 9, 1.8f, 1.1f, 0.09f }, { 106, 4.2f, 120, 0.16f, 11, 0.4f, -0.2f, -0.06f }, { 92, 4.9f, 185, 0.16f, 7, 2.5f, 0.6f, 0.14f },
+					{ 98, 5.6f, 90, 0.16f, 10, 1.1f, -1.0f, -0.13f } };
+				static constexpr float kRockPx[9] = { 420, 468, 387, 485, 436, 413, 394, 309, 342 };
+				struct Placed { int i; ImVec2 p; float depth, scale; };
+				std::array<Placed, 9> placed{};
+				for (int i = 0; i < 9; ++i) {
+					const auto& r = kRocks[i];
+					const float a = r.a0 + now * r.speed;
+					const float Y = std::sin(a) * r.r, X = std::cos(a) * r.r;
+					const float z = r.z + std::sin(now * 0.8f + r.ph) * r.bob + 6.0f * pulse;  // they lift a little with each beat
+					placed[i] = { i, at(X, Y, z), Y, 1.0f - Y * 0.0016f };
+				}
+				std::sort(placed.begin(), placed.end(), [](const Placed& x, const Placed& y) { return x.depth > y.depth; });  // far first
+				auto drawRock = [&](const Placed& pl) {
+					if (!g_sShard[pl.i]) {
+						return;
+					}
+					const auto& r = kRocks[pl.i];
+					const float sz = kRockPx[pl.i] * u * pl.scale;
+					const int   shade = static_cast<int>(std::clamp(235.0f - pl.depth * 0.6f, 150.0f, 255.0f));
+					sprite(g_sShard[pl.i], pl.p, sz, sz, r.rot0 + std::sin(now * r.spin * 3.0f + r.ph) * 0.35f, IM_COL32(shade, shade, std::min(255, shade + 10), static_cast<int>(255 * fade)));
+				};
+				for (const auto& pl : placed) {
+					if (pl.depth > 0) drawRock(pl);
+				}
+				// the crystal: turning (its frames), swelling with the heartbeat, its light round it
+				{
+					const ImVec2 c = at(0, 0, kCrystalZ);
+					if (g_sSoft) {
+						const float g1 = (420 + 90 * pulse) * u, g2 = (200 + 50 * pulse) * u;
+						sprite(g_sSoft, c, g1 * 2, g1 * 2, 0, IM_COL32(80, 150, 255, static_cast<int>((70 + 50 * pulse) * fade)));
+						sprite(g_sSoft, c, g2 * 2, g2 * 2, 0, IM_COL32(170, 220, 255, static_cast<int>((90 + 70 * pulse) * fade)));
+					}
+					if (g_sCrystal) {
+						const int   f = static_cast<int>(now * 9.0f) % 24;  // ~2.7 s a turn
+						const ImVec2 uv0{ (f % 6) / 6.0f, (f / 6) / 4.0f }, uv1{ uv0.x + 1.0f / 6.0f, uv0.y + 0.25f };
+						const float sc = 1.0f + 0.035f * pulse;
+						const float w = 448 * u * sc, h = 640 * u * sc;
+						const ImVec2 mid{ c.x, c.y + (0.5f - 0.56f) * h + std::sin(now * 0.9f) * 6 * u };  // (the frame's origin sits at 56% of its height)
+						sprite(g_sCrystal, mid, w, h, 0, IM_COL32(255, 255, 255, static_cast<int>(255 * fade)), uv0, uv1);
+					}
+					if (g_sSoft) {  // the white heart over it, flaring on the beat
+						const float g3 = (60 + 40 * pulse) * u;
+						sprite(g_sSoft, c, g3 * 2, g3 * 2, 0, IM_COL32(230, 245, 255, static_cast<int>((70 + 110 * pulse) * fade)));
+					}
+					// sparks drifting up out of the pool and off the crystal
+					static std::array<std::array<float, 4>, 36> sp{};
+					static std::mt19937 srng{ 5 };
+					std::uniform_real_distribution<float> U(0, 1);
+					for (auto& q : sp) {
+						if (q[3] <= 0) {
+							q = { (U(srng) - 0.5f) * 60.0f, (U(srng) - 0.5f) * 30.0f, U(srng) * 40.0f, 1.0f + U(srng) * 2.5f };
+						}
+						q[2] += dt * 45.0f, q[3] -= dt * 0.5f;
+						const ImVec2 p = at(q[0] + std::sin(now + q[1]) * 6, q[1], q[2]);
+						const int al = static_cast<int>(std::min(1.0f, q[3]) * 200 * fade);
+						fg->AddCircleFilled(p, 2.2f * u * kS * 0.5f, IM_COL32(190, 230, 255, al), 8);
+					}
+				}
+				for (const auto& pl : placed) {
+					if (pl.depth <= 0) drawRock(pl);
+				}
+				groundFog(size.y * 0.86f, size.y * 1.04f, 0.011f, 0.9f, 150, IM_COL32(80, 90, 125, 0));  // a little mist at our feet
+			} else {
+			// the far range, then mist drifting in the valley in front of it
+			layer(g_mFar, 0.45f, white);
+			// fog rolling over the ground: two copies of the wisps sliding past each other at different speeds, so it
+			// churns as it drifts (valley fog here, ground fog over the slope, a thick bank across the front)
 			groundFog(size.y * 0.26f, size.y * 0.52f, 0.006f, 1.6f, 230, IM_COL32(150, 162, 200, 0));
 			// the barrow ridge and the horde coming down it; the champions' violet light in the barrow door breathing
 			layer(g_mMid, 0.8f, white);
@@ -1583,6 +1693,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 			groundFog(size.y * 0.62f, size.y * 1.02f, 0.013f, 0.9f, 255, IM_COL32(105, 114, 148, 0));  // the thick bank across the front, darker
+			}
 			// snow and grave-ash drifting down on the wind, a few soul-motes rising from the rune-stone
 			{
 				struct Mote { float x, y, sp, sway, ph, r; int kind; };
@@ -1594,7 +1705,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						mo.push_back({ U(rng), U(rng), 0.02f + 0.05f * U(rng), 0.004f + 0.012f * U(rng), U(rng) * 6.28f, 0.6f + 1.6f * U(rng), i % 10 == 0 ? 1 : 0 });
 					}
 				}
-				const ImVec2 rs = toScreen(0.95f, kMenuRune[0], kMenuRune[1]);
+				const ImVec2 rs = g_sGround ? toScreen(0.6f, 1060.0f, 1185.0f) : toScreen(0.95f, kMenuRune[0], kMenuRune[1]);  // the soul-motes rise from the shrine's pool
 				for (auto& m : mo) {
 					m.y += (m.kind == 1 ? -0.5f : 1.0f) * m.sp * dt;
 					m.x += (m.kind == 1 ? 0.0f : 0.012f) * dt;  // the wind
@@ -2145,6 +2256,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\UndyingNights\\") + file).c_str(), nullptr, tex);
 			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_title.png", nullptr, &g_mTitle);
+			for (auto [file, tex] : { std::pair{ L"menu_shrine_ground.png", &g_sGround }, { L"menu_shrine_glow.png", &g_sGlow }, { L"menu_crystal.png", &g_sCrystal }, { L"menu_softglow.png", &g_sSoft } }) {
+				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\UndyingNights\\") + file).c_str(), nullptr, tex);
+			}
+			for (int i = 0; i < 9; ++i) {
+				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\UndyingNights\\menu_shard" + std::to_wstring(i) + L".png").c_str(), nullptr, &g_sShard[i]);
+			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\frame.png", nullptr, &g_frame);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\flame_ring.png", nullptr, &g_flame);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\divider.png", nullptr, &g_divider);
