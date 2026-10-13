@@ -1576,45 +1576,44 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 
 
-		// ---- The Undying Nights intro: once, when a new character first stands outside Riverwood. A storybook told in
-		// woodcut and ink on parchment (Data/Interface/UndyingNights/intro_*.jpg, cut from in-game captures by
-		// tools/woodcut.py): each picture sits in an inked frame on the page, drifts slowly, and its lines "boil" a few
-		// times a second like a hand-drawn legend; the narrator reads each page and the words appear below it as they
-		// are spoken. Its own music (our MUSC) and stingers; Skyrim's own sound is silent. The world waits (the game is
-		// paused) and it can be skipped (hold Space / Enter / E / pad A). Textures load when it starts and are released
-		// when it ends.
+		// ---- The Undying Nights intro: once, when a new character first stands outside Riverwood. A storybook legend
+		// cut in woodcut on parchment (tools/legend.py draws it: Data/Interface/UndyingNights/legend/*), one picture
+		// per couplet of the narration. Each picture is LAYERED and moves: the back pans slowly, the subject drifts on
+		// its own parallax, flames / glows / the running dead cycle through three cut frames, the front moves across.
+		// The couplet is carved under the picture and inks in, left to right, as it is spoken. Its own music and a
+		// stinger at each page; Skyrim's own sound is silent. The world waits (paused); hold Space / Enter / E / pad A
+		// to skip. Textures load when it starts and are released when it ends.
 		struct FilmScene
 		{
-			const char* tex;
+			const char* name;              // legend/<name>_back.jpg, _mid/_fx0..2/_front.png
 			float       dur;
 			float       z0, z1;            // zoom from, to
-			float       x0, y0, x1, y1;    // pan (fraction of the spare picture, -1..1)
-			const char* big;               // a title (red ink) above the line (or none)
-			const char* l1;
-			const char* l2;
+			float       x0, y0, x1, y1;    // pan of the picture (fraction of the spare picture, -1..1)
+			float       frontDx0, frontDx1, frontBob;  // the front layer's own move across the scene (picture px), and its bob
+			float       midBob;            // the subject's slow rise and fall (picture px)
 			gen::Sound  cue;
 			float       cueAt;
-			bool        embers;
-			gen::Sound  vo;                // the narrator's line for this scene
-			float       voAt;              // when it starts (seconds into the scene)
-			float       l2At;              // when the second line's words are spoken (seconds into the scene)
+			gen::Sound  vo;
+			float       voAt;              // the line starts (seconds into the scene)
+			float       l2At;              // its second half is spoken
 		};
 		using GS = gen::Sound;
-		// timed to the narration (vo_01..vo_09, measured: each line starts at voAt, its second sentence at l2At; a scene
-		// lasts its line plus a breath)
+		// timed to the narration (vo_01..vo_09; line 2 of each couplet at l2At)
 		const FilmScene kFilm[] = {
-			{ nullptr, 7.2f, 1, 1, 0, 0, 0, 0, nullptr, "In The Fourth Era two hundred and one,", "Helgen burned.", GS::intro_graves, 0.3f, false, GS::vo_01, 0.9f, 4.74f },
-			{ "intro_helgen", 10.2f, 1.04f, 1.14f, -0.6f, 0.2f, 0.4f, -0.2f, nullptr, "You lived.", "But as the World-Eater rose from the ash, he sang a word older than the Thu'um itself.", GS::intro_helgen, 0.4f, true, GS::vo_02, 0.6f, 2.27f },
-			{ "intro_sky", 7.7f, 1.12f, 1.02f, 0.0f, -0.6f, 0.0f, 0.3f, "THE UNDYING DIRGE", nullptr, "And every grave in Skyrim heard it.", GS::intro_dirge, 0.6f, false, GS::vo_03, 0.6f, 3.54f },
-			{ "intro_graves", 9.8f, 1.03f, 1.12f, 0.5f, 0.3f, -0.3f, 0.0f, nullptr, "By day, it sleeps beneath the holds.", "But when the sun goes down... the dead remember.", GS::intro_graves, 0.5f, false, GS::vo_04, 0.6f, 4.48f },
-			{ "intro_horde", 12.8f, 1.14f, 1.04f, -0.3f, 0.0f, 0.3f, 0.1f, nullptr, "They come with the Moon... More each night, and harder to kill.", "Undead who run you down, Wailers who call the horde to feed.", GS::intro_horde, 0.5f, false, GS::vo_05, 0.6f, 6.90f },
-			{ "intro_champions", 9.4f, 1.02f, 1.10f, 0.0f, 0.4f, 0.0f, -0.2f, nullptr, "Champions walk among them.", "The Bone Knight. The Barrow King. The Lich of the Dirge.", GS::intro_champions, 0.4f, true, GS::vo_06, 0.6f, 3.11f },
-			{ "intro_wyrm", 8.5f, 1.10f, 1.02f, 0.4f, -0.2f, -0.2f, 0.2f, nullptr, "And when the fog rolls in...", "Grimmvar, the Undying Wyrm, comes hunting.", GS::intro_wyrm, 0.8f, false, GS::vo_07, 0.6f, 3.29f },
-			{ "intro_shrine", 13.5f, 1.03f, 1.13f, 0.2f, 0.3f, -0.1f, -0.1f, nullptr, "Yet in every city, a Shrine of the Dirge still stands.", "Take up its spells. Hold its circle. Break the curse, city by city.", GS::intro_shrine, 0.5f, true, GS::vo_08, 0.6f, 5.97f },
-			{ "menu_title", 7.6f, 1, 1, 0, 0, 0, 0, nullptr, nullptr, "Only a Dragonborn can save this realm.", GS::intro_title, 0.2f, true, GS::vo_09, 1.0f, 1.0f },
+			{ "helgen", 7.4f, 1.10f, 1.04f, -0.5f, 0.3f, 0.4f, -0.2f, -90, 110, 10, 4, GS::intro_helgen, 0.05f, GS::vo_01, 0.9f, 3.9f },
+			{ "sky", 10.2f, 1.04f, 1.12f, 0.0f, -0.4f, 0.0f, 0.2f, 0, 0, 2, 12, GS::intro_dirge, 0.05f, GS::vo_02, 0.6f, 2.3f },
+			{ "graves", 7.6f, 1.12f, 1.03f, 0.4f, 0.5f, -0.3f, 0.0f, 0, 0, 0, 3, GS::intro_graves, 0.05f, GS::vo_03, 0.6f, 3.5f },
+			{ "dusk", 9.8f, 1.03f, 1.10f, 0.0f, -0.6f, 0.0f, 0.4f, 0, 0, 0, 0, GS::intro_graves, 0.05f, GS::vo_04, 0.6f, 4.5f },
+			{ "horde", 12.8f, 1.12f, 1.04f, -0.3f, 0.2f, 0.3f, 0.0f, 0, 0, 6, 0, GS::intro_horde, 0.05f, GS::vo_05, 0.6f, 6.9f },
+			{ "champions", 9.4f, 1.02f, 1.10f, 0.0f, 0.3f, 0.0f, -0.3f, 0, 0, 0, 5, GS::intro_champions, 0.05f, GS::vo_06, 0.6f, 3.1f },
+			{ "wyrm", 8.6f, 1.10f, 1.03f, 0.3f, -0.2f, -0.3f, 0.2f, 0, 0, 0, 14, GS::intro_wyrm, 0.05f, GS::vo_07, 0.6f, 3.3f },
+			{ "shrine", 13.4f, 1.03f, 1.12f, 0.2f, 0.3f, -0.1f, -0.1f, 0, 0, 0, 10, GS::intro_shrine, 0.05f, GS::vo_08, 0.6f, 6.0f },
+			{ "dragonborn", 7.6f, 1.02f, 1.08f, 0.0f, 0.2f, 0.0f, -0.2f, 0, 0, 0, 4, GS::intro_title, 0.05f, GS::vo_09, 0.9f, 2.2f },
 		};
 		constexpr int kFilmScenes = static_cast<int>(std::size(kFilm));
-		constexpr float kFilmXfade = 1.2f;
+		constexpr float kFilmXfade = 1.0f;
+		enum FilmLayer { kLBack, kLMid, kLFx0, kLFx1, kLFx2, kLFront, kLayers };
+		constexpr const char* kLayerName[kLayers] = { "back", "mid", "fx0", "fx1", "fx2", "front" };
 		std::atomic<bool>         g_filmReq{ false };
 		std::atomic<bool>         g_filmOn{ false };
 		// the veil: black over everything while a new game turns into the film and the film into the game, so the
@@ -1623,22 +1622,37 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		bool                                  g_outro = false;
 		std::chrono::steady_clock::time_point g_outroStart, g_outroBusy, g_reqSince, g_filmStart;
 		std::atomic<long long>                g_holdUntilMs{ 0 };  // a new character is on its way to Riverwood: black until the film takes over
+		std::atomic<bool>         g_veilNow{ false };              // black at once (no fade in)
 		std::atomic<bool>         g_filmSkipHeld{ false };
 		float                     g_filmT = 0, g_filmSkip = 0, g_filmEnd = -1;
 		int                       g_filmCue = -1;
 		int                       g_filmVo = -1;
 		bool                      g_filmPaused = false;
+		bool                      g_saveAfterFilm = false;          // the new character is saved once it stands in the world
 		std::uint32_t             g_filmPauses = 0;  // pauses already in force when the film began
-		ID3D11ShaderResourceView* g_filmTex[kFilmScenes]{};
-		ID3D11ShaderResourceView* g_filmPaper = nullptr;  // the bare parchment page
+		ID3D11ShaderResourceView* g_filmTex[kFilmScenes][kLayers]{};
+		struct FilmText { ID3D11ShaderResourceView* tex{}; float w{ 0 }, h{ 0 }; };
+		FilmText                  g_filmLine[kFilmScenes][2]{};
+		FilmText                  g_filmRunes, g_filmSkipText;
+		ID3D11ShaderResourceView* g_filmPaper = nullptr;  // the page
 
 		void FilmRelease()
 		{
-			for (auto*& t : g_filmTex) {
-				if (t && t != g_mTitle) {
-					t->Release();
+			for (auto& sc : g_filmTex) {
+				for (auto*& t : sc) {
+					if (t) t->Release();
+					t = nullptr;
 				}
-				t = nullptr;
+			}
+			for (auto& sc : g_filmLine) {
+				for (auto& l : sc) {
+					if (l.tex) l.tex->Release();
+					l = {};
+				}
+			}
+			for (auto* l : { &g_filmRunes, &g_filmSkipText }) {
+				if (l->tex) l->tex->Release();
+				*l = {};
 			}
 			if (g_filmPaper) {
 				g_filmPaper->Release();
@@ -1662,25 +1676,46 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			logger::info("intro: film ended at {:.1f}s", g_filmT);
 		}
 
+		bool LoadTex(const std::string& a_rel, ID3D11ShaderResourceView** a_out, float* a_w = nullptr, float* a_h = nullptr)
+		{
+			const std::string  n = "Data\\Interface\\UndyingNights\\" + a_rel;
+			const std::wstring w(n.begin(), n.end());
+			ID3D11Resource*    res = nullptr;
+			if (FAILED(DirectX::CreateWICTextureFromFile(g_device, w.c_str(), &res, a_out))) {
+				return false;
+			}
+			if (res) {
+				ID3D11Texture2D* t2 = nullptr;
+				if (SUCCEEDED(res->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&t2))) && t2) {
+					D3D11_TEXTURE2D_DESC d{};
+					t2->GetDesc(&d);
+					if (a_w) *a_w = static_cast<float>(d.Width);
+					if (a_h) *a_h = static_cast<float>(d.Height);
+					t2->Release();
+				}
+				res->Release();
+			}
+			return true;
+		}
+
 		void FilmStart()
 		{
-			int  loaded = 0;
-			auto load = [](const char* a_name, ID3D11ShaderResourceView** a_out) {
-				const std::string  n = std::string("Data\\Interface\\UndyingNights\\") + a_name + ".jpg";
-				const std::wstring w(n.begin(), n.end());
-				return SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, w.c_str(), nullptr, a_out));
-			};
+			int loaded = 0;
 			for (int i = 0; i < kFilmScenes; ++i) {
-				if (!kFilm[i].tex) {
-					continue;
+				for (int l = 0; l < kLayers; ++l) {
+					const std::string f = std::string("legend\\") + kFilm[i].name + "_" + kLayerName[l] + (l == kLBack ? ".jpg" : ".png");
+					loaded += LoadTex(f, &g_filmTex[i][l]) ? 1 : 0;
 				}
-				if (std::string_view(kFilm[i].tex) == "menu_title") {
-					g_filmTex[i] = g_mTitle;
-					continue;
+				for (int k = 0; k < 2; ++k) {
+					char key[16];
+					std::snprintf(key, sizeof(key), "l%02d%c", i + 1, k ? 'b' : 'a');
+					auto& t = g_filmLine[i][k];
+					LoadTex(std::string("legend\\text_") + key + ".png", &t.tex, &t.w, &t.h);
 				}
-				loaded += load(kFilm[i].tex, &g_filmTex[i]) ? 1 : 0;
 			}
-			load("intro_parchment", &g_filmPaper);
+			LoadTex("legend\\text_runes.png", &g_filmRunes.tex, &g_filmRunes.w, &g_filmRunes.h);
+			LoadTex("legend\\text_skip.png", &g_filmSkipText.tex, &g_filmSkipText.w, &g_filmSkipText.h);
+			LoadTex("legend\\page_paper.jpg", &g_filmPaper);
 			if (auto* ui = RE::UI::GetSingleton()) {
 				g_filmPauses = ui->numPausesGame;
 				++ui->numPausesGame;  // the world waits while the film plays
@@ -1691,38 +1726,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			g_filmT = 0, g_filmSkip = 0, g_filmEnd = -1, g_filmCue = -1, g_filmVo = -1;
 			g_filmStart = std::chrono::steady_clock::now();
 			g_filmOn = true;
-			logger::info("intro: film starts ({} stills, page {})", loaded, g_filmPaper != nullptr);
-		}
-
-		// a small, steady random number for the hand-drawn "boil" (the same for a whole drawing step)
-		float Boil(int a_step, int a_salt)
-		{
-			std::uint32_t h = static_cast<std::uint32_t>(a_step) * 2654435761u ^ static_cast<std::uint32_t>(a_salt) * 40503u;
-			h ^= h >> 13, h *= 0x5bd1e995u, h ^= h >> 15;
-			return (h & 0xFFFF) / 32767.5f - 1.0f;
-		}
-
-		// ink on paper: no shadow, a slight bleed round the letters
-		void Ink(ImDrawList* dl, ImFont* f, float px, float cx, float y, ImU32 col, const std::string& s)
-		{
-			const ImVec2 sz = Measure(f, px, s);
-			const ImVec2 p{ cx - sz.x * 0.5f, y };
-			const ImU32  bleed = Fade(col, 0.28f);
-			dl->AddText(f, px, { p.x + px * 0.02f, p.y + px * 0.015f }, bleed, s.c_str());
-			dl->AddText(f, px, { p.x - px * 0.012f, p.y }, bleed, s.c_str());
-			dl->AddText(f, px, p, col, s.c_str());
-		}
-
-		// a ruled line drawn by hand: a few joints that shift a little each drawing step
-		void InkLine(ImDrawList* dl, ImVec2 a, ImVec2 b, ImU32 col, float w, int step, int salt, float wob)
-		{
-			constexpr int kSeg = 6;
-			for (int i = 0; i <= kSeg; ++i) {
-				const float u = static_cast<float>(i) / kSeg;
-				const float j = (i == 0 || i == kSeg) ? 0.3f : 1.0f;
-				dl->PathLineTo({ a.x + (b.x - a.x) * u + Boil(step, salt + i * 7) * wob * j, a.y + (b.y - a.y) * u + Boil(step, salt + i * 7 + 3) * wob * j });
-			}
-			dl->PathStroke(col, 0, w);
+			logger::info("intro: film starts ({} layers, page {})", loaded, g_filmPaper != nullptr);
 		}
 
 		void DrawFilm(ImVec2 size, float dt)
@@ -1733,13 +1737,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			g_filmT = std::chrono::duration<float>(std::chrono::steady_clock::now() - g_filmStart).count();
 			float total = 0;
 			for (const auto& sc : kFilm) total += sc.dur;
-			// skip: hold for a moment (a stray key must not throw the film away)
 			g_filmSkip = g_filmSkipHeld ? g_filmSkip + dt : std::max(0.0f, g_filmSkip - dt * 2);
 			if (g_filmEnd < 0 && (g_filmT >= total || g_filmSkip >= 0.9f)) {
 				g_filmEnd = g_filmT;
 			}
 			const float outFade = g_filmEnd < 0 ? 0.0f : std::clamp((g_filmT - g_filmEnd) / 1.2f, 0.0f, 1.0f);
-			// which scene (and the next, while they cross)
 			float start = 0;
 			int   cur = kFilmScenes - 1;
 			for (int i = 0; i < kFilmScenes; ++i) {
@@ -1750,165 +1752,103 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				start += kFilm[i].dur;
 			}
 			const float local = g_filmT - start;
-			if (g_filmEnd < 0 && cur != g_filmCue && local >= kFilm[cur].cueAt) {  // each scene's sound, once
+			if (g_filmEnd < 0 && cur != g_filmCue && local >= kFilm[cur].cueAt) {  // the page turns: its stinger, under the narrator
 				g_filmCue = cur;
-				Audio::Ui(kFilm[cur].cue, 0.45f);  // under the narrator
+				Audio::Ui(kFilm[cur].cue, 0.40f);
 			}
-			if (g_filmEnd < 0 && cur != g_filmVo && local >= kFilm[cur].voAt) {  // the narrator's line, once
+			if (g_filmEnd < 0 && cur != g_filmVo && local >= kFilm[cur].voAt) {
 				g_filmVo = cur;
 				Audio::Voice(kFilm[cur].vo);
 			}
-			const int   step = static_cast<int>(g_filmT * 7.0f);  // the lines redraw seven times a second
-			const ImU32 inkC = IM_COL32(44, 28, 18, 255), redInk = IM_COL32(140, 28, 18, 255);
+			const auto tid = [](ID3D11ShaderResourceView* t) { return ImTextureID(reinterpret_cast<std::uintptr_t>(t)); };
 			// the page
-			fg->AddRectFilled({ 0, 0 }, size, IM_COL32(206, 188, 152, 255));
+			fg->AddRectFilled({ 0, 0 }, size, IM_COL32(219, 199, 160, 255));
 			if (g_filmPaper) {
-				const float aspect = size.x / size.y, src = 1920.0f / 1080.0f;
+				const float aspect = size.x / size.y, src = 1600.0f / 900.0f;
 				const float uw = aspect < src ? aspect / src : 1.0f, vh = aspect < src ? 1.0f : src / aspect;
-				const float jx = Boil(step / 2, 1) * 0.0012f, jy = Boil(step / 2, 2) * 0.0012f;
-				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_filmPaper)), { 0, 0 }, size, { 0.5f - uw / 2 + jx + 0.004f, 0.5f - vh / 2 + jy + 0.004f },
-					{ 0.5f + uw / 2 + jx - 0.004f, 0.5f + vh / 2 + jy - 0.004f });
+				fg->AddImage(tid(g_filmPaper), { 0, 0 }, size, { 0.5f - uw / 2, 0.5f - vh / 2 }, { 0.5f + uw / 2, 0.5f + vh / 2 });
 			}
-			// the picture's frame on the page
-			const float pw = std::min(size.x * 0.74f, size.y * 1.22f), ph = pw * 9.0f / 16.0f;
-			const ImVec2 p0{ (size.x - pw) / 2, size.y * 0.07f }, p1{ p0.x + pw, p0.y + ph };
-			auto picture = [&](int i, float t, float alpha) {
+			// the picture: 16:9, centred, the words under it
+			const float ph = std::min(size.y * 0.66f, size.x * 0.84f * 9.0f / 16.0f), pw = ph * 16.0f / 9.0f;
+			const ImVec2 p0{ (size.x - pw) / 2, size.y * 0.045f }, p1{ p0.x + pw, p0.y + ph };
+			const float  ps = pw / 1600.0f;  // picture px -> screen px
+			auto scene = [&](int i, float t, float alpha) {
 				const auto& sc = kFilm[i];
-				if (!sc.tex || !g_filmTex[i] || alpha <= 0) {
-					return;
-				}
-				const ImU32 col = IM_COL32(255, 255, 255, static_cast<int>(255 * alpha));
-				const auto  tex = ImTextureID(reinterpret_cast<std::uintptr_t>(g_filmTex[i]));
-				if (std::string_view(sc.tex) == "menu_title") {  // the title card: the name in a block of ink
-					fg->AddRectFilled(p0, p1, IM_COL32(26, 16, 10, static_cast<int>(245 * alpha)));
-					const float u = std::clamp(t / sc.dur, 0.0f, 1.0f);
-					const float tw = pw * 0.84f, th = tw * 396.0f / 2479.0f, s2 = 1.0f + 0.03f * u;
-					const ImVec2 a{ (size.x - tw * s2) / 2, p0.y + ph * 0.46f - th * s2 / 2 };
-					fg->AddImage(tex, a, { a.x + tw * s2, a.y + th * s2 }, { 0, 0 }, { 1, 1 }, col);
+				if (alpha <= 0 || !g_filmTex[i][kLBack]) {
 					return;
 				}
 				const float u = std::clamp(t / sc.dur, 0.0f, 1.0f);
-				const float e = u * u * (3 - 2 * u) * 0.35f + u * 0.65f;  // a slow, steady drift with soft ends
+				const float e = u * u * (3 - 2 * u) * 0.4f + u * 0.6f;
 				const float z = sc.z0 + (sc.z1 - sc.z0) * e;
+				const float span = 1.0f / z, spare = 1.0f - span;
 				const float px = sc.x0 + (sc.x1 - sc.x0) * e, py = sc.y0 + (sc.y1 - sc.y0) * e;
-				const float span = 1.0f / z;
-				const float cx = 0.5f + px * (1.0f - span) / 2, cy = 0.5f + py * (1.0f - span) / 2;
-				// the corners of the cut shift a hair each step (the picture is redrawn by hand, not projected)
-				const float w = 1.3f * k;
-				const ImVec2 q[4] = { { p0.x + Boil(step, 11 + i) * w, p0.y + Boil(step, 12 + i) * w }, { p1.x + Boil(step, 13 + i) * w, p0.y + Boil(step, 14 + i) * w },
-					{ p1.x + Boil(step, 15 + i) * w, p1.y + Boil(step, 16 + i) * w }, { p0.x + Boil(step, 17 + i) * w, p1.y + Boil(step, 18 + i) * w } };
-				fg->AddImageQuad(tex, q[0], q[1], q[2], q[3], { cx - span / 2, cy - span / 2 }, { cx + span / 2, cy - span / 2 }, { cx + span / 2, cy + span / 2 },
-					{ cx - span / 2, cy + span / 2 }, col);
+				const ImU32 col = IM_COL32(255, 255, 255, static_cast<int>(255 * alpha));
+				auto layer = [&](ID3D11ShaderResourceView* tex, float parallax, float ox, float oy) {
+					if (!tex) return;
+					// the same window into every layer, its centre pushed further for the nearer layers (kept on the sheet)
+					const float cx = std::clamp(0.5f + px * spare / 2 * parallax, span / 2, 1 - span / 2);
+					const float cy = std::clamp(0.5f + py * spare / 2 * parallax, span / 2, 1 - span / 2);
+					fg->AddImage(tid(tex), { p0.x + ox * ps, p0.y + oy * ps }, { p1.x + ox * ps, p1.y + oy * ps }, { cx - span / 2, cy - span / 2 }, { cx + span / 2, cy + span / 2 }, col);
+				};
+				layer(g_filmTex[i][kLBack], 1.0f, 0, 0);
+				layer(g_filmTex[i][kLMid], 1.25f, 0, std::sin(t * 0.9f) * sc.midBob);
+				const int fr = static_cast<int>(t * 6.0f) % 3;  // three cut frames, six a second
+				layer(g_filmTex[i][kLFx0 + fr], 1.25f, 0, 0);
+				const float fx = sc.frontDx0 + (sc.frontDx1 - sc.frontDx0) * e;
+				layer(g_filmTex[i][kLFront], 1.5f, fx, std::sin(t * 1.7f) * sc.frontBob);
 			};
+			fg->PushClipRect(p0, p1, true);
 			const float inA = std::clamp(local / kFilmXfade, 0.0f, 1.0f);
-			fg->PushClipRect({ p0.x - 4 * k, p0.y - 4 * k }, { p1.x + 4 * k, p1.y + 4 * k }, true);
 			if (cur > 0 && local < kFilmXfade) {
-				picture(cur - 1, kFilm[cur - 1].dur + local, 1.0f);
+				scene(cur - 1, kFilm[cur - 1].dur + local, 1.0f);
 			}
-			picture(cur, local, cur == 0 ? 1.0f : inA);
-			// sparks drifting up over the fire-lit pages: specks of red ink and ember
-			if (kFilm[cur].embers) {
-				struct Ember { float x, y, sp, ph, r; };
-				static std::vector<Ember> em;
-				static std::mt19937 rng{ 3 };
-				std::uniform_real_distribution<float> U(0, 1);
-				if (em.empty()) {
-					for (int i = 0; i < 70; ++i) em.push_back({ U(rng), U(rng), 0.03f + 0.06f * U(rng), U(rng) * 6.28f, 0.8f + 1.6f * U(rng) });
-				}
-				const float ea = std::clamp(local / 1.5f, 0.0f, 1.0f) * std::clamp((kFilm[cur].dur - local) / 1.0f, 0.0f, 1.0f);
-				for (auto& m : em) {
-					m.y -= m.sp * dt;
-					if (m.y < -0.02f) m.y = 1.02f, m.x = U(rng);
-					const ImVec2 p{ p0.x + (m.x + 0.01f * std::sin(g_filmT * 0.8f + m.ph)) * pw, p0.y + m.y * ph };
-					const float tw = 0.5f + 0.5f * std::sin(g_filmT * 6 + m.ph * 4);
-					fg->AddCircleFilled(p, m.r * k * 2.2f, IM_COL32(230, 110, 40, static_cast<int>(40 * tw * ea)));
-					fg->AddCircleFilled(p, m.r * k, IM_COL32(170, 40, 20, static_cast<int>(210 * tw * ea)));
-				}
-			}
-			// a pale flash in the fog as Grimmvar is named
-			if (kFilm[cur].tex && std::string_view(kFilm[cur].tex) == "intro_wyrm") {
-				const float at = kFilm[cur].l2At - 0.2f;
-				const float f = std::max(0.0f, 1.0f - std::abs(local - at) * 6.0f) + 0.5f * std::max(0.0f, 1.0f - std::abs(local - at - 0.35f) * 9.0f);
-				fg->AddRectFilled(p0, p1, IM_COL32(240, 228, 200, static_cast<int>(70 * f)));
-			}
+			scene(cur, local, cur == 0 ? 1.0f : inA * inA * (3 - 2 * inA));
 			fg->PopClipRect();
-			// the frame: a heavy rule and a fine one inside it, little diamonds at the corners; it is drawn once the
-			// first picture comes in (the opening words stand alone on the page)
-			{
-				const float fa = cur == 0 ? 0.0f : cur == 1 ? inA : 1.0f;
-				if (fa > 0) {
-					const ImU32 c = Fade(inkC, fa);
-					const float o = 7 * k;
-					InkLine(fg, p0, { p1.x, p0.y }, c, 3.2f * k, step, 100, 1.1f * k);
-					InkLine(fg, { p1.x, p0.y }, p1, c, 3.2f * k, step, 200, 1.1f * k);
-					InkLine(fg, p1, { p0.x, p1.y }, c, 3.2f * k, step, 300, 1.1f * k);
-					InkLine(fg, { p0.x, p1.y }, p0, c, 3.2f * k, step, 400, 1.1f * k);
-					InkLine(fg, { p0.x - o, p0.y - o }, { p1.x + o, p0.y - o }, c, 1.2f * k, step, 500, 0.9f * k);
-					InkLine(fg, { p1.x + o, p0.y - o }, { p1.x + o, p1.y + o }, c, 1.2f * k, step, 600, 0.9f * k);
-					InkLine(fg, { p1.x + o, p1.y + o }, { p0.x - o, p1.y + o }, c, 1.2f * k, step, 700, 0.9f * k);
-					InkLine(fg, { p0.x - o, p1.y + o }, { p0.x - o, p0.y - o }, c, 1.2f * k, step, 800, 0.9f * k);
-					const ImVec2 corners[4] = { { p0.x - o, p0.y - o }, { p1.x + o, p0.y - o }, { p1.x + o, p1.y + o }, { p0.x - o, p1.y + o } };
-					for (const auto& q : corners) {
-						const float r = 9 * k;
-						fg->AddQuadFilled({ q.x, q.y - r }, { q.x + r, q.y }, { q.x, q.y + r }, { q.x - r, q.y }, c);
-						fg->AddQuadFilled({ q.x, q.y - r * 0.45f }, { q.x + r * 0.45f, q.y }, { q.x, q.y + r * 0.45f }, { q.x - r * 0.45f, q.y }, Fade(IM_COL32(206, 188, 152, 255), fa));
-					}
-				}
+			// the words, carved: a band of the legend's own script, then the couplet inking in as it is spoken
+			const float ts = size.x / 1600.0f * 0.92f;
+			if (g_filmRunes.tex) {
+				const float w = std::min(pw, g_filmRunes.w * ts * 0.8f), h = g_filmRunes.h * w / g_filmRunes.w;
+				fg->AddImage(tid(g_filmRunes.tex), { (size.x - w) / 2, p1.y + 14 * k }, { (size.x + w) / 2, p1.y + 14 * k + h }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, 150));
 			}
-			// the page darkens toward its edges
-			{
-				const ImU32 e0 = IM_COL32(50, 30, 14, 150), e1 = IM_COL32(50, 30, 14, 0);
-				fg->AddRectFilledMultiColor({ 0, 0 }, { size.x * 0.16f, size.y }, e0, e1, e1, e0);
-				fg->AddRectFilledMultiColor({ size.x * 0.84f, 0 }, size, e1, e0, e0, e1);
-				fg->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.12f }, e0, e0, e1, e1);
-				fg->AddRectFilledMultiColor({ 0, size.y * 0.88f }, size, e1, e1, e0, e0);
-			}
-			// the words, in ink beneath the picture as they are spoken; they leave before the page turns
 			const auto& sc = kFilm[cur];
-			auto lineA = [&](float at) { return std::clamp((local - at) / 0.5f, 0.0f, 1.0f) * std::clamp((sc.dur - 0.4f - local) / 0.6f, 0.0f, 1.0f); };
-			const float ty = p1.y + 34 * k;
-			if (cur == 0) {  // the opening words stand alone on the page
-				const float a = lineA(sc.voAt - 0.1f), b = lineA(sc.l2At - 0.1f);
-				Ink(fg, g_title, 44 * k, size.x / 2, size.y * 0.40f, Fade(inkC, a), sc.l1);
-				Ink(fg, g_title, 84 * k, size.x / 2, size.y * 0.47f, Fade(redInk, b), sc.l2);
-			} else {
-				float y = ty;
-				if (sc.big) {
-					Ink(fg, g_title, std::round(54 * k), size.x / 2, y - 6 * k, Fade(redInk, lineA(sc.voAt - 0.1f)), sc.big);
-					y += 66 * k;
+			auto ink = [&](const FilmText& t, float y, float at) {
+				if (!t.tex) return;
+				const float reveal = std::clamp((local - at) / 0.9f, 0.0f, 1.0f);           // inked in left to right
+				const float leave = std::clamp((sc.dur - 0.35f - local) / 0.5f, 0.0f, 1.0f);  // gone before the page turns
+				if (reveal <= 0 || leave <= 0) return;
+				float w = t.w * ts, h = t.h * ts;
+				if (w > size.x - 80 * k) {
+					h *= (size.x - 80 * k) / w, w = size.x - 80 * k;
 				}
-				if (sc.l1) {
-					Ink(fg, g_title, 34 * k, size.x / 2, y, Fade(inkC, lineA(sc.voAt - 0.1f)), sc.l1);
-					y += 50 * k;
-				}
-				if (sc.l2) {
-					const bool last = cur == kFilmScenes - 1;
-					Ink(fg, g_title, (last ? 42.0f : 34.0f) * k, size.x / 2, sc.l1 || sc.big ? y : y + 12 * k, Fade(last ? redInk : inkC, lineA((sc.l1 || sc.big ? sc.l2At : sc.voAt) - 0.1f)), sc.l2);
-				}
-				if (cur == kFilmScenes - 1) {  // the last words
-					Ink(fg, g_num, 24 * k, size.x / 2, ty + 76 * k, Fade(inkC, lineA(sc.voAt + 3.8f)), "DUSK IS COMING");
-				}
-			}
-			// skip: a quiet hint, and a ring that fills while the key is held
+				const ImVec2 a{ (size.x - w) / 2, y };
+				fg->PushClipRect({ a.x - 4, a.y - 4 }, { a.x + w * reveal + 4, a.y + h + 4 }, true);
+				fg->AddImage(tid(t.tex), a, { a.x + w, a.y + h }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * leave)));
+				fg->PopClipRect();
+			};
+			const float ty = p1.y + 62 * k;
+			ink(g_filmLine[cur][0], ty, sc.voAt - 0.1f);
+			ink(g_filmLine[cur][1], ty + 64 * k, sc.l2At - 0.1f);
+			// skip: the carved hint, and a ring that fills while the key is held
 			{
 				const float ha = std::clamp((g_filmT - 2.0f) / 1.0f, 0.0f, 1.0f) * (1.0f - outFade);
-				const ImVec2 c{ size.x - 70 * k, size.y - 50 * k };
-				const std::string hint = "HOLD SPACE TO SKIP";
-				const ImVec2 ts = Measure(g_num, 18 * k, hint);
-				fg->AddText(g_num, 18 * k, { c.x - 26 * k - ts.x, c.y - ts.y / 2 }, Fade(inkC, 0.65f * ha), hint.c_str());
-				fg->AddCircle(c, 12 * k, Fade(inkC, 0.5f * ha), 32, 1.5f * k);
+				const ImVec2 c{ size.x - 60 * k, size.y - 44 * k };
+				if (g_filmSkipText.tex) {
+					const float w = g_filmSkipText.w * ts, h = g_filmSkipText.h * ts;
+					fg->AddImage(tid(g_filmSkipText.tex), { c.x - 28 * k - w, c.y - h / 2 }, { c.x - 28 * k, c.y + h / 2 }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(200 * ha)));
+				}
+				fg->AddCircle(c, 12 * k, IM_COL32(34, 24, 18, static_cast<int>(130 * ha)), 32, 2.0f * k);
 				if (g_filmSkip > 0) {
 					fg->PathArcTo(c, 12 * k, -1.5708f, -1.5708f + 6.2832f * std::min(1.0f, g_filmSkip / 0.9f), 32);
-					fg->PathStroke(Fade(redInk, ha), 0, 3 * k);
+					fg->PathStroke(IM_COL32(170, 40, 30, static_cast<int>(255 * ha)), 0, 3.5f * k);
 				}
 			}
-			// fade in from black at the start, out to the world at the end
-			const float inFade = 1.0f - std::clamp(g_filmT / 1.0f, 0.0f, 1.0f);
+			const float inFade = 1.0f - std::clamp(g_filmT / 1.2f, 0.0f, 1.0f);
 			if (inFade > 0) fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(255 * inFade)));
 			if (outFade > 0) fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(255 * outFade)));
 			if (outFade >= 1.0f) {
 				FilmStop();
 				g_outro = true, g_veil = 1.0f;
+				g_saveAfterFilm = true;
 				g_outroStart = g_outroBusy = std::chrono::steady_clock::now();
 				SKSE::GetTaskInterface()->AddTask([] {  // into the game in first person
 					if (auto* cam = RE::PlayerCamera::GetSingleton()) {
@@ -2165,6 +2105,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (since > 8.0f || (since > 2.6f && quiet > 0.9f)) {
 						g_outro = false;
 						logger::info("intro: into the game after {:.1f}s of black", since);
+						if (g_saveAfterFilm) {  // the new character's first save: a death now reloads this character, never an older one
+							g_saveAfterFilm = false;
+							SKSE::GetTaskInterface()->AddTask([] {
+								auto* pl = RE::PlayerCharacter::GetSingleton();
+								auto* sl = RE::BGSSaveLoadManager::GetSingleton();
+								if (pl && sl && !pl->IsDead()) {
+									const std::string name = std::string("UndyingNights - ") + pl->GetName() + " - Night Begins";
+									sl->Save(name.c_str());
+									logger::info("intro: saved the new character ('{}')", name);
+								}
+							});
+						}
 					}
 				}
 				if (!g_filmReq) {
@@ -2172,6 +2124,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				const long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(t.time_since_epoch()).count();
 			const bool want = !mainMenu && (g_filmOn || g_outro || ms < g_holdUntilMs || (g_filmReq && t - g_reqSince < std::chrono::seconds(20)));
+				if (g_veilNow.exchange(false) && !mainMenu) {
+					g_veil = 1.0f;  // a new character's arrival: black at once, never a glimpse of the road first
+				}
 				g_veil = mainMenu ? 0.0f : want ? std::min(1.0f, g_veil + dt * 4.0f) : std::max(0.0f, g_veil - dt / 1.8f);
 			}
 			if (((!InGame() && !mainMenu && !journal) || (DevTools::HudOff() && !mainMenu)) && !g_filmOn && g_veil <= 0) {
@@ -2343,8 +2298,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 			return g_filmOn || g_filmReq || g_outro || ms < g_holdUntilMs;
 		}
-		void IntroVeil(float a_seconds)
+		void IntroVeil(float a_seconds, bool a_instant)
 		{
+			if (a_instant) {
+				g_veilNow = true;
+			}
 			g_holdUntilMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count() + static_cast<long long>(a_seconds * 1000);
 		}
 		void IntroSkipHeld(bool a_held) { g_filmSkipHeld = a_held; }

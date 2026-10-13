@@ -56,6 +56,16 @@ namespace bo3z
 				if (dataLoaded) {
 					Intro::Install();  // keep MQQuickstart at 3 for the next new game
 				}
+				if (a_event->menuName == RE::RaceSexMenu::MENU_NAME && !a_event->opening) {
+					// a character just made in a new game: black from here until the film (no glimpse of the road first)
+					auto* pl = RE::PlayerCharacter::GetSingleton();
+					auto* cal = RE::Calendar::GetSingleton();
+					const float days = cal && cal->gameDaysPassed ? cal->gameDaysPassed->value : 99.0f;
+					if (pl && pl->GetLevel() <= 1 && days < 2.0f) {
+						Hud::IntroVeil(40.0f, true);
+						logger::info("intro: character made: black until the film");
+					}
+				}
 				if (a_event->menuName == RE::LoadingMenu::MENU_NAME && a_event->opening) {
 					Save::ForgetSnapshot();  // whatever comes next may be another game
 				}

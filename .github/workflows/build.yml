@@ -69,6 +69,8 @@ jobs:
           Copy-Item assets\music\*.wav "$stage\Data\Music\UndyingNights\"
           Copy-Item assets\ui\*.png, assets\ui\*.jpg "$stage\Data\Interface\UndyingNights\"
           Copy-Item assets\fx\* "$stage\Data\" -Recurse -Force   # the ten spells' looks (tools/spellfx.py)
+          New-Item -ItemType Directory -Force "$stage\Data\Interface\UndyingNights\legend" | Out-Null
+          Copy-Item assets\ui\legend\* "$stage\Data\Interface\UndyingNights\legend\"   # the intro film's woodcut pages (tools/legend.py)
           New-Item -ItemType Directory -Force "$stage\Data\Interface\UndyingNights\fonts" | Out-Null
           Copy-Item assets\fonts\* "$stage\Data\Interface\UndyingNights\fonts\"
           New-Item -ItemType Directory -Force "$stage\Data\Meshes\Interface\Logo" | Out-Null
