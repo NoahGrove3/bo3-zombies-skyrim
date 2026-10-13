@@ -82,7 +82,7 @@ namespace bo3z
 				if (Save::Crew() >= 0) {
 					Save::SetCrew(-1);  // older saves: drop the crew character
 				} else {
-					Gun::Give(gen::kGunIdx_sidearm);
+					Arcana::GiveStarter();  // the Coffer's spells replaced the old ones: a new character starts with one of them
 				}
 				Save::SetFlag(Save::kFlagStarted, true);
 				logger::info("intro: started (no crew screen)");

@@ -1,0 +1,159 @@
+#include "BO3Z.h"
+#include "CofferSpells.h"
+
+// The Coffer's spells (sheets/coffer_spells.json, src/CofferSpells.h, tools/spellpool.py): 150 attack spells from the
+// spell mods the party plays with (Apocalypse, Mysticism, Forgotten Magic Redone, Stormcaller, Strange Runes), each
+// exactly as its mod made it (its effects, art, sounds, casting). The shrine hands them out at random; a spell won is
+// learned (it stays in the Magic menu to view, favourite and equip) and goes straight into the right hand.
+// Two changes to every one of them, made when the game's data is loaded:
+//   - its magicka cost is the pool's (a new character can cast it; the strongest still take most of a bar)
+//   - a fire-and-forget spell has no charge time (no wind-up before a regular cast)
+namespace bo3z::Arcana
+{
+	namespace
+	{
+		std::array<RE::SpellItem*, coffer::kSpells.size()> g_spell{};
+		std::unordered_map<RE::FormID, int>                 g_index;
+		int                                                 g_found = 0;
+		std::mt19937                                        g_rng{ std::random_device{}() };
+	}
+
+	void Load()
+	{
+		auto* dh = RE::TESDataHandler::GetSingleton();
+		if (!dh) {
+			return;
+		}
+		g_found = 0;
+		std::map<std::string, int> missing;
+		for (std::size_t i = 0; i < coffer::kSpells.size(); ++i) {
+			const auto& s = coffer::kSpells[i];
+			auto*       sp = dh->LookupForm<RE::SpellItem>(s.id, s.plugin);
+			g_spell[i] = sp;
+			if (!sp) {
+				++missing[s.plugin];
+				continue;
+			}
+			++g_found;
+			g_index[sp->GetFormID()] = static_cast<int>(i);
+			sp->data.costOverride = s.cost;
+			sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
+			if (!s.concentration && sp->data.castingType == RE::MagicSystem::CastingType::kFireAndForget) {
+				sp->data.chargeTime = 0.0f;  // released the moment you cast
+			}
+		}
+		logger::info("arcana: {} of {} Coffer spells found", g_found, coffer::kSpells.size());
+		for (auto& [plugin, n] : missing) {
+			logger::warn("arcana: {} spells missing ({} not installed?)", n, plugin);
+		}
+	}
+
+	int Count() { return g_found; }
+
+	RE::SpellItem* Spell(int a_index) { return a_index >= 0 && a_index < static_cast<int>(g_spell.size()) ? g_spell[a_index] : nullptr; }
+
+	int IndexOf(const RE::TESForm* a_form)
+	{
+		if (!a_form) {
+			return -1;
+		}
+		auto it = g_index.find(a_form->GetFormID());
+		return it == g_index.end() ? -1 : it->second;
+	}
+
+	bool Known(int a_index)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* sp = Spell(a_index);
+		return p && sp && p->HasSpell(sp);
+	}
+
+	// a spell you don't know yet (every one has the same chance); -1 if you know them all
+	int Roll()
+	{
+		std::vector<int> pool;
+		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
+			if (g_spell[i] && !Known(i)) {
+				pool.push_back(i);
+			}
+		}
+		if (pool.empty()) {
+			return -1;
+		}
+		return pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
+	}
+
+	// every spell in the pool, in order (the shrine's roll flickers through them)
+	int Next(int a_after)
+	{
+		for (int k = 1; k <= static_cast<int>(g_spell.size()); ++k) {
+			const int i = (std::max(a_after, -1) + k) % static_cast<int>(g_spell.size());
+			if (g_spell[i]) {
+				return i;
+			}
+		}
+		return -1;
+	}
+
+	void Give(int a_index, bool a_equip)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* sp = Spell(a_index);
+		if (!p || !sp) {
+			return;
+		}
+		if (!p->HasSpell(sp)) {
+			p->AddSpell(sp);
+		}
+		if (a_equip) {
+			if (auto* em = RE::ActorEquipManager::GetSingleton()) {
+				auto* right = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x13F42);
+				em->EquipSpell(p, sp, right);
+			}
+		}
+		logger::info("arcana: {} learned{}", coffer::kSpells[a_index].name, a_equip ? " and in hand" : "");
+	}
+
+	// the first spell of a new character
+	void GiveStarter()
+	{
+		for (int i = 0; i < static_cast<int>(coffer::kSpells.size()); ++i) {
+			if (std::string_view(coffer::kSpells[i].name) == "Firebolt" && g_spell[i]) {
+				Give(i, true);
+				return;
+			}
+		}
+		for (int i = 0; i < static_cast<int>(coffer::kSpells.size()); ++i) {
+			if (g_spell[i] && coffer::kSpells[i].tier == 0) {
+				Give(i, true);
+				return;
+			}
+		}
+	}
+
+	std::string_view Name(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].name : ""; }
+	int              ElementOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].element : coffer::kArcane; }
+	int              CostOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].cost : 0; }
+	bool             Concentration(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) && coffer::kSpells[a_index].concentration; }
+
+	std::uint32_t ElementColor(int a_element)
+	{
+		static constexpr std::uint32_t kCol[coffer::kElements] = { 0xFF6A1E, 0x6FC8FF, 0x8C7CFF, 0x6FD24A, 0x9AA84A, 0xFFC83C, 0xD0202E, 0xB45CFF };
+		return a_element >= 0 && a_element < coffer::kElements ? kCol[a_element] : 0xB45CFF;
+	}
+	std::string_view ElementName(int a_element) { return a_element >= 0 && a_element < coffer::kElements ? coffer::kElementName[a_element] : "arcane"; }
+	int              Elements() { return coffer::kElements; }
+
+	// what the hands hold: the Coffer's spell in each (index, -1 none)
+	std::array<int, 2> Hands()
+	{
+		std::array<int, 2> out{ -1, -1 };
+		auto*              p = RE::PlayerCharacter::GetSingleton();
+		if (!p) {
+			return out;
+		}
+		out[0] = IndexOf(p->GetEquippedObject(true));
+		out[1] = IndexOf(p->GetEquippedObject(false));
+		return out;
+	}
+}

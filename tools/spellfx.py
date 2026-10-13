@@ -339,12 +339,34 @@ def status(t):
     m.write(MESH / 'status_poison.nif')
 
 
+ELEMENTS = {'fire': 'FF6A1E', 'frost': '6FC8FF', 'shock': '8C7CFF', 'poison': '6FD24A', 'disease': '9AA84A', 'sun': 'FFC83C', 'blood': 'D0202E', 'arcane': 'B45CFF'}
+
+
+def elements(t):
+    """the Coffer spells' element emblems as models (tools/elementicons.py draws them): the shrine's roll in the world"""
+    for el, c in ELEMENTS.items():
+        col = _hex(c)
+        ic = np.asarray(Image.open(ROOT / 'assets' / 'ui' / f'el_{el}.png').convert('RGBA').resize((512, 512), Image.LANCZOS)).astype(np.float32) / 255
+        itex = save(f'icon_el_{el}', ic[..., 3], ic[..., :3])
+        m = Mesh()
+        au = m.shape('aura', t['flamering'], (*col, 1), 1.6)
+        Mesh.quad(au, (0, 0.4, 0), (1, 0, 0), (0, 0, 1), 15.7, 15.7, uv=(0, 1, 1, 0))
+        lg = m.shape('logo', itex, (1, 1, 1, 1), 1.0, blend='alpha')
+        Mesh.quad(lg, (0, 0, 0), (1, 0, 0), (0, 0, 1), 12, 12, uv=(0, 1, 1, 0))
+        m.write(MESH / f'el_{el}_icon.nif')
+        print('element', el)
+
+
 def main():
     t = textures()
+    if 'elements' in sys.argv[2:]:
+        elements(t)
+        return
     status(t)
     for s in SPELLS:
         build(s, t)
         print('built', s[0], s[1])
+    elements(t)
 
 
 if __name__ == '__main__':

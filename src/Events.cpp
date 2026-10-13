@@ -323,6 +323,7 @@ namespace bo3z
 				logger::error("a form the mashup needs is missing; rounds stay off");
 			}
 			Audio::InstallSteps();
+			Arcana::Load();
 			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
 			PlayerUpdate::func = vtbl.write_vfunc(0xAD, PlayerUpdate::thunk);
 			logger::info("hooked PlayerCharacter::Update");

@@ -965,6 +965,14 @@
   "ARTO:fx_roots": "0xbc1",
   "ARTO:fx_burn": "0xbc2",
   "ARTO:fx_poison": "0xbc3",
-  "SNDR:relic_found": "0xbc4"
+  "SNDR:relic_found": "0xbc4",
+  "STAT:show_el_fire": "0xbc5",
+  "STAT:show_el_frost": "0xbc6",
+  "STAT:show_el_shock": "0xbc7",
+  "STAT:show_el_poison": "0xbc8",
+  "STAT:show_el_disease": "0xbc9",
+  "STAT:show_el_sun": "0xbca",
+  "STAT:show_el_blood": "0xbcb",
+  "STAT:show_el_arcane": "0xbcc"
  }
 }

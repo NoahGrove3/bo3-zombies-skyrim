@@ -1940,8 +1940,12 @@ namespace bo3z
 			for (int s = 0; s < 3; ++s) {
 				any |= Save::GetSlot(s).gun >= 0;
 			}
-			if (Save::Flag(Save::kFlagStarted) && !any) {
-				Gun::Give(gen::kGunIdx_sidearm);
+			bool knowsCoffer = false;
+			for (int i = 0; i < 400 && !knowsCoffer; ++i) {
+				knowsCoffer = Arcana::Known(i);
+			}
+			if (Save::Flag(Save::kFlagStarted) && !any && !knowsCoffer) {
+				Arcana::GiveStarter();  // (a character with nothing in hand gets a Coffer spell to start with)
 			}
 			if (removed) {
 				logger::info("gun: retired {} old guns from the inventory", removed);
@@ -2428,6 +2432,7 @@ namespace bo3z
 				h.slotLevel[i] = sl.level;
 			}
 			h.gunIndex = out ? gun : -1;
+			h.handSpell = Arcana::Hands();  // the Coffer spells in hand (the spell dock)
 			h.activeSlot = out && SlotOf(gun) >= 0 ? SlotOf(gun) : (h.slotCount > 0 ? Save::ActiveSlot() % h.slotCount : -1);
 			{
 				auto* pav = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner();

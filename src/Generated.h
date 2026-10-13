@@ -9,7 +9,7 @@ namespace bo3z::gen
 	struct FormRef { std::string_view plugin; std::uint32_t localId; std::string_view editorId; };
 	inline constexpr float kChaseRelocateDist = 4000.0f, kChaseRelocateSeconds = 3.0f, kChaseStallSeconds = 2.5f;
 	inline constexpr float kCycleMinutes = 25.0f;  // a full Skyrim day; night is nightStart..nightEnd (20:00-05:36 = 40%)
-	inline constexpr float kManaRegenPerSecond = 0.2f, kManaRegenDelay = 5.0f;
+	inline constexpr float kManaRegenPerSecond = 0.4f, kManaRegenDelay = 5.0f;
 	inline constexpr bool kZombieMeleeWeapons = true;  // keep swords/axes/maces; strip bows, staves, spells
 	struct Rounds {
 		float nightStartHour, nightEndHour, breakSeconds, firstBreakSeconds; int maxAlive, aiMaxBase, aiPerPlayer;
@@ -1116,6 +1116,7 @@ namespace bo3z::gen
 		DressDef{ 18, 0x863, true, 0.0f, 40.0f, 80.0f, 1.0f, 0.0f },
 	} };
 	inline constexpr std::array<std::uint32_t, 30> kShowStat{ { 0x864, 0x865, 0x866, 0x867, 0x868, 0x869, 0x86A, 0x86B, 0x86C, 0x86D, 0x86E, 0x86F, 0x89B, 0x89C, 0x89D, 0x89E, 0x89F, 0x8A0, 0x8A1, 0x8C0, 0x9B9, 0x9BB, 0x9BD, 0x9BF, 0x9C1, 0x9C3, 0x9C5, 0x9C7, 0x9C9, 0x9CB } };
+	inline constexpr std::array<std::uint32_t, 8> kShowElement{ { 0xBC5, 0xBC6, 0xBC7, 0xBC8, 0xBC9, 0xBCA, 0xBCB, 0xBCC } };  // Coffer spells: the roll shows the element
 	inline constexpr std::uint32_t kShowCheese = 0x870, kRiseFx = 0x8A2;
 	inline constexpr float kSkullScale = 0.3f;
 	inline constexpr float kShowRise = 45.0f, kShowSpin = 4.2f, kShowOffer = 12.0f;

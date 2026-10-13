@@ -215,6 +215,29 @@ namespace bo3z
 		std::vector<int> TakeRemotePowerUps();
 	}
 
+	// The Coffer's spells: 150 spells from the spell mods, handed out by the shrine (Arcana.cpp, src/CofferSpells.h)
+	namespace Arcana
+	{
+		inline constexpr int kIdBase = 1000;   // HUD ids: a Coffer spell shows as kIdBase + its index (weapons keep 0..)
+		void               Load();                       // data loaded: find them, set their costs and charge
+		int                Count();
+		RE::SpellItem*     Spell(int a_index);
+		int                IndexOf(const RE::TESForm* a_form);
+		bool               Known(int a_index);
+		int                Roll();                       // a spell you don't know yet (-1: you know them all)
+		int                Next(int a_after);            // the next in the pool (the roll flickers through them)
+		void               Give(int a_index, bool a_equip);
+		void               GiveStarter();
+		std::string_view   Name(int a_index);
+		int                ElementOf(int a_index);
+		int                CostOf(int a_index);
+		bool               Concentration(int a_index);
+		std::uint32_t      ElementColor(int a_element);
+		std::string_view   ElementName(int a_element);
+		int                Elements();
+		std::array<int, 2> Hands();                      // the Coffer spell in each hand (0 left, 1 right; -1 none)
+	}
+
 	// Co-op life and death: down, revive, spectate, and the party wipe (Party.cpp)
 	namespace Party
 	{
@@ -409,6 +432,7 @@ namespace bo3z
 			std::array<int, 3> slotLevel{ 0, 0, 0 };
 			int                activeSlot{ -1 };
 			int                gunIndex{ -1 };
+			std::array<int, 2> handSpell{ -1, -1 };   // the Coffer spell in each hand (Arcana index; 0 left, 1 right)
 		};
 		State&      Edit();
 		std::mutex& Lock();

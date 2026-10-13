@@ -21,6 +21,7 @@ namespace bo3z
 		ImFont*              g_font = nullptr;
 		std::array<ID3D11ShaderResourceView*, gen::kPerks.size()> g_perkIcons{};
 		std::array<ID3D11ShaderResourceView*, gen::kGuns.size()>  g_weaponIcons{};
+		std::array<ID3D11ShaderResourceView*, 8>                  g_elementIcons{};  // the Coffer spells' element emblems (el_<element>.png)
 		ID3D11ShaderResourceView* g_menuBg = nullptr;   // the main menu's backdrop (tools/cover.py, MENU=1)
 		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
 		ID3D11ShaderResourceView* g_flame = nullptr;    // the aura round a spell emblem: 4x4 atlas of a looping white flame ring (tools/flameaura.py)
@@ -187,16 +188,30 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// A spell's emblem (256x256 medallion, rim at 104/128 of its half-width) wrapped in its living aura: the flame
 		// ring (rim at 0.62 of the frame's half-width) tinted with the spell's colour, a hotter inner pass in its accent,
 		// 16 frames a second; then the medallion on top. R is the medallion's rim radius on screen.
+		// what a HUD id names: a weapon (0..), or one of the Coffer's spells (Arcana::kIdBase + its index)
+		std::string ArmsName(int id) { return id >= Arcana::kIdBase ? std::string(Arcana::Name(id - Arcana::kIdBase)) : id >= 0 && id < static_cast<int>(gen::kGuns.size()) ? std::string(gen::kGuns[id].label) : std::string(); }
+		std::uint32_t ArmsColor(int id) { return id >= Arcana::kIdBase ? Arcana::ElementColor(Arcana::ElementOf(id - Arcana::kIdBase)) : id >= 0 && id < static_cast<int>(gen::kGuns.size()) ? gen::kGuns[id].color : 0xC8A060; }
+
 		void DrawEmblem(ImDrawList* dl, int gun, ImVec2 c, float R, float alpha, float now, float flame = 1.0f)
 		{
-			if (gun < 0 || gun >= static_cast<int>(gen::kGuns.size())) {
-				return;
-			}
-			std::uint32_t col = gen::kGuns[gun].color, acc = 0xFFFFFF;
-			for (const auto& sc : gen::kSpellcraft) {
-				if (sc.id == gen::kGuns[gun].id) {
-					col = sc.color, acc = sc.accent;
+			ID3D11ShaderResourceView* iconTex = nullptr;
+			std::uint32_t             col = 0, acc = 0xFFFFFF;
+			if (gun >= Arcana::kIdBase) {  // a Coffer spell: its element's emblem
+				const int el = Arcana::ElementOf(gun - Arcana::kIdBase);
+				col = Arcana::ElementColor(el);
+				acc = ((std::min(255u, ((col >> 16) & 0xFF) + 90)) << 16) | ((std::min(255u, ((col >> 8) & 0xFF) + 90)) << 8) | std::min(255u, (col & 0xFF) + 90);
+				iconTex = el >= 0 && el < 8 ? g_elementIcons[el] : nullptr;
+			} else {
+				if (gun < 0 || gun >= static_cast<int>(gen::kGuns.size())) {
+					return;
 				}
+				col = gen::kGuns[gun].color;
+				for (const auto& sc : gen::kSpellcraft) {
+					if (sc.id == gen::kGuns[gun].id) {
+						col = sc.color, acc = sc.accent;
+					}
+				}
+				iconTex = g_weaponIcons[gun];
 			}
 			const auto rgb = [](std::uint32_t v, float a) { return IM_COL32((v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF, static_cast<int>(255 * std::clamp(a, 0.0f, 1.0f))); };
 			if (g_flame && flame > 0.0f) {
@@ -210,7 +225,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				frame(now, h * 1.04f, rgb(col, 0.95f * alpha * flame));         // the outer flame, the spell's colour
 				frame(now + 0.5f, h * 0.93f, rgb(acc, 0.55f * alpha * flame));  // a hotter tongue inside, half a loop out of step
 			}
-			if (auto* icon = g_weaponIcons[gun]) {
+			if (auto* icon = iconTex) {
 				const float h = R * 128.0f / 104.0f;
 				dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { c.x - h, c.y - h }, { c.x + h, c.y + h }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * std::clamp(alpha, 0.0f, 1.0f))));
 			}
@@ -449,9 +464,58 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 
+			// Spell dock, bottom-right, when the hands hold the Coffer's spells: the right hand's spell as a large card
+			// (its element's emblem aflame, its name, element and magicka cost), the left hand's small above it.
+			const bool spellHands = s.handSpell[0] >= 0 || s.handSpell[1] >= 0;
+			if (spellHands) {
+				static float shownS = 0;
+				shownS += ((s.gunOut ? 1.0f : 0.6f) - shownS) * std::min(1.0f, dt * 8);
+				const float al = shownS;
+				const auto card = [&](int idx, ImVec2 a, ImVec2 b, bool big, const char* hand) {
+					const int           el = Arcana::ElementOf(idx);
+					const std::uint32_t ec = Arcana::ElementColor(el);
+					const ImU32         ecol = IM_COL32((ec >> 16) & 0xFF, (ec >> 8) & 0xFF, ec & 0xFF, 255);
+					Panel(dl, a, b, k, big ? al : 0.75f * al);
+					dl->AddRectFilledMultiColor({ a.x + 1 * k, a.y + 1 * k }, { a.x + (big ? 190 : 120) * k, b.y - 1 * k }, Fade(ecol, 0.20f * al), Fade(ecol, 0.0f), Fade(ecol, 0.0f), Fade(ecol, 0.28f * al));
+					dl->AddRectFilled({ a.x, a.y }, { a.x + 4 * k, b.y }, Fade(ecol, al));
+					const float er = (big ? 33 : 19) * k;
+					DrawEmblem(dl, Arcana::kIdBase + idx, { b.x - er - (big ? 27 : 11) * k, (a.y + b.y) * 0.5f + (big ? 1.5f * k * std::sin(now * 1.6f) : 0) }, er, big ? al : 0.85f * al, now, big ? 1.0f : 0.7f);
+					const float textR = b.x - er * 2 - (big ? 44 : 22) * k;  // the words stop short of the emblem
+					dl->PushClipRect(a, { textR, b.y }, true);
+					Txt(dl, g_num, (big ? 14 : 12) * k, { a.x + 16 * k, a.y + (big ? 10 : 6) * k }, Fade(kGold, 0.85f * al), hand);
+					float nameSize = (big ? 26 : 17) * k;
+					const std::string nm(Arcana::Name(idx));
+					while (nameSize > 12 * k && a.x + 16 * k + Measure(g_title, nameSize, nm).x > textR) {
+						nameSize -= 1 * k;  // a long name shrinks to fit its card
+					}
+					Txt(dl, g_title, nameSize, { a.x + 16 * k, a.y + (big ? 34 : 22) * k }, Fade(kParch, al), nm);
+					if (big) {
+						std::string elName(Arcana::ElementName(el));
+						if (!elName.empty()) elName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(elName[0])));
+						Txt(dl, g_body, 16 * k, { a.x + 16 * k, a.y + 72 * k }, Fade(ecol, al), elName + (Arcana::Concentration(idx) ? "  -  hold to channel" : ""));
+					}
+					dl->PopClipRect();
+					if (big) {
+						const int         cost = Arcana::CostOf(idx);
+						const bool        can = s.mp >= cost;
+						const std::string cs = std::to_string(cost);
+						const auto        m = Measure(g_num, 30 * k, cs);
+						Txt(dl, g_num, 30 * k, { a.x + 16 * k, b.y - 44 * k }, can ? IM_COL32(150, 190, 255, 255) : IM_COL32(230, 60, 50, 255), cs);
+						Txt(dl, g_body, 15 * k, { a.x + 22 * k + m.x, b.y - 34 * k }, IM_COL32(150, 170, 210, 255), Arcana::Concentration(idx) ? "magicka / s" : "magicka");
+					}
+				};
+				const ImVec2 a{ size.x - 470 * k, size.y - 218 * k }, b{ size.x - 40 * k, size.y - 92 * k };
+				const int    main = s.handSpell[1] >= 0 ? s.handSpell[1] : s.handSpell[0];
+				card(main, a, b, true, s.handSpell[1] >= 0 ? "RIGHT HAND" : "LEFT HAND");
+				if (s.handSpell[1] >= 0 && s.handSpell[0] >= 0) {
+					card(s.handSpell[0], { b.x - 330 * k, a.y - 64 * k }, { b.x, a.y - 10 * k }, false, "LEFT HAND");
+				}
+				const std::string hint = "Spells: Magic menu  -  favourite them for quick swaps";
+				Txt(dl, g_body, 13 * k, { b.x - Measure(g_body, 13 * k, hint).x, b.y + 6 * k }, Fade(IM_COL32(180, 172, 156, 200), al), hint);
+			}
 			// Weapon dock, bottom-right: the weapon in hand as a large card (its picture, Reforge marks, ability and
 			// signature move), the other slots as small cards above it with their keys. Dimmed while sheathed.
-			{
+			if (!spellHands) {
 				const bool any = std::any_of(s.slotGun.begin(), s.slotGun.begin() + std::clamp(s.slotCount, 0, 3), [](int g) { return g >= 0; });
 				static float shown = 0, swap = 0;
 				static int   lastActive = -2;
@@ -820,7 +884,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// every choice one key away. Its roll is drawn here too, and a small strip under the crosshair while the
 			// menu is closed.
 			const auto spellCol = [](int g, float a) {
-				const std::uint32_t c = g >= 0 ? gen::kGuns[g].color : 0xC8A060;
+				const std::uint32_t c = ArmsColor(g);
 				return IM_COL32((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF, static_cast<int>(255 * std::clamp(a, 0.0f, 1.0f)));
 			};
 			const auto rollOrb = [&](ImVec2 c, float R) {  // the roll: a ring that fills, then the spells flicker past, then the one it chose
@@ -883,7 +947,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					rollOrb({ L + R, y + R + 4 * k }, R);
 					const float tx = L + 2 * R + 16 * k;
 					keyCap({ tx, y + 4 * k }, "1", s.rollPhase == 0);
-					Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? "CALL A SPELL" : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? "THE SPELLS TURN..." : std::string(gen::kGuns[std::max(0, s.rollGun)].label));
+					Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? "CALL A SPELL" : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? "THE SPELLS TURN..." : ArmsName(s.rollGun));
 					Txt(dl, g_body, 17 * k, { tx, y + 38 * k }, IM_COL32(196, 182, 160, 235),
 						s.rollPhase == 3 ? "Activate the shrine to take it" : "Every spell you lack has an equal chance");
 					if (s.rollPhase == 0) {
@@ -971,7 +1035,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float R = 30 * k;
 				const ImVec2 c{ size.x * 0.5f - 90 * k, size.y * 0.5f + 150 * k };
 				rollOrb(c, R);
-				const std::string t = s.rollPhase == 1 ? "The shrine gathers..." : s.rollPhase == 2 ? "The spells turn..." : std::string(gen::kGuns[std::max(0, s.rollGun)].label) + "  -  take it at the shrine";
+				const std::string t = s.rollPhase == 1 ? "The shrine gathers..." : s.rollPhase == 2 ? "The spells turn..." : ArmsName(s.rollGun) + "  -  take it at the shrine";
 				Txt(dl, g_title, 19 * k, { c.x + R + 12 * k, c.y - 12 * k }, s.rollPhase == 3 ? spellCol(s.rollGun, 1.0f) : kParch, t, 1.5f * k, IM_COL32(0, 0, 0, 255));
 			}
 		}
@@ -1994,6 +2058,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, path.c_str(), nullptr, &g_weaponIcons[i]))) {
 					++wicons;
 				}
+			}
+			for (int e = 0; e < 8; ++e) {
+				const std::string_view n = Arcana::ElementName(e);
+				const auto path = L"Data\\Interface\\UndyingNights\\el_" + std::wstring(n.begin(), n.end()) + L".png";
+				DirectX::CreateWICTextureFromFile(g_device, path.c_str(), nullptr, &g_elementIcons[e]);
 			}
 			const bool bg = SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_bg.png", nullptr, &g_menuBg));
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_fog.png", nullptr, &g_menuFog);

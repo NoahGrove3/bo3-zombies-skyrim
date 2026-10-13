@@ -149,13 +149,10 @@ namespace bo3z
 					const float k = std::min(1.0f, g_show.t / gen::kShowSpin);
 					if ((g_show.step -= a_delta) <= 0) {
 						g_show.step = 0.07f + 0.32f * k * k;  // flickers through the whole pool, slowing like a wheel of fortune
-						const auto pool = RollPool();
-						if (!pool.empty()) {
-							auto it = std::find(pool.begin(), pool.end(), g_show.shown);
-							g_show.shown = it == pool.end() || ++it == pool.end() ? pool.front() : *it;  // in order: every spell passes by
-						}
+						g_show.shown = Arcana::Next(g_show.shown);  // in order: every spell passes by, its element's emblem over the crystal
 						if (g_show.shown >= 0) {
-							ShowModel(Forms::Ours(gen::kShowStat[g_show.shown]), gen::kShowRise * k);
+							ShowModel(Forms::Ours(gen::kShowElement[Arcana::ElementOf(g_show.shown)]), gen::kShowRise * k);
+							Forms::PlayAt(gen::Sound::coffer_spin, chest.get());
 						}
 					} else if (auto d = g_show.display.get()) {
 						d->SetPosition(Local(chest.get(), 0, 0, kOrbZ * chest->GetScale() + gen::kShowRise * k));
@@ -163,9 +160,9 @@ namespace bo3z
 					if (g_show.t >= gen::kShowSpin) {
 						g_show.t = 0;
 						g_show.shown = g_show.gun;
-						ShowModel(Forms::Ours(gen::kShowStat[g_show.gun]), gen::kShowRise);
+						ShowModel(Forms::Ours(gen::kShowElement[Arcana::ElementOf(g_show.gun)]), gen::kShowRise);
 						Forms::PlayAt(gen::Sound::coffer_land, chest.get());
-						Hud::Banner(std::string(gen::kGuns[g_show.gun].label) + "  -  Activate the shrine to take it", 4.0f);
+						Hud::Banner(std::string(Arcana::Name(g_show.gun)) + "  -  Activate the shrine to take it", 4.0f);
 						g_show.phase = Show::Offering;
 					}
 					break;
@@ -1222,10 +1219,10 @@ namespace bo3z
 			if (g_show.phase != Show::Offering || g_show.chest.get().get() != a_ref) {
 				return false;
 			}
-			Gun::Give(g_show.gun);
+			Arcana::Give(g_show.gun, true);  // learned (in the Magic menu) and in your right hand
 			Forms::Play(gen::Sound::coffer_take);
-			Hud::Banner(std::string(gen::kGuns[g_show.gun].label), 2.5f);
-			logger::info("shrine: took {}", gen::kGuns[g_show.gun].id);
+			Hud::Banner(std::string(Arcana::Name(g_show.gun)) + "  -  learned", 2.5f);
+			logger::info("shrine: took {}", Arcana::Name(g_show.gun));
 			Remove(g_show.display);
 			g_show.phase = Show::Idle;
 			return true;
@@ -1246,14 +1243,9 @@ namespace bo3z
 				}
 				return;
 			}
-			std::vector<int> pool;
-			for (int i : RollPool()) {
-				if (!Gun::Owns(i)) {
-					pool.push_back(i);
-				}
-			}
-			if (pool.empty()) {
-				Hud::Banner("You already carry every spell", 2.0f);
+			const int pick = Arcana::Roll();  // one of the Coffer's spells you don't know yet
+			if (pick < 0) {
+				Hud::Banner(Arcana::Count() ? "You know every spell the shrine holds" : "The shrine is silent (the spell mods aren't installed)", 2.5f);
 				return;
 			}
 			const int cost = RollCost();
@@ -1263,9 +1255,9 @@ namespace bo3z
 			g_show = {};
 			g_show.chest = a_ref->CreateRefHandle();
 			g_show.phase = Show::Charging;
-			g_show.gun = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
+			g_show.gun = pick;
 			Forms::PlayAt(gen::Sound::coffer_charge, a_ref);
-			logger::info("shrine: rolling {} (1 in {})", gen::kGuns[g_show.gun].id, pool.size());
+			logger::info("shrine: rolling {} (of {})", Arcana::Name(pick), Arcana::Count());
 		}
 
 		bool                g_menu = false;
@@ -1511,7 +1503,7 @@ namespace bo3z
 				h.perkSel = g_sel;
 				h.rollPhase = static_cast<int>(g_show.phase);
 				h.rollT = g_show.phase == Show::Charging ? std::min(1.0f, g_show.t / kChargeTime) : g_show.phase == Show::Spinning ? std::min(1.0f, g_show.t / gen::kShowSpin) : g_show.phase == Show::Offering ? std::min(1.0f, g_show.t / gen::kShowOffer) : 0.0f;
-				h.rollGun = g_show.phase == Show::Idle || g_show.phase == Show::Charging ? -1 : g_show.shown;
+				h.rollGun = g_show.phase == Show::Idle || g_show.phase == Show::Charging || g_show.shown < 0 ? -1 : Arcana::kIdBase + g_show.shown;
 				h.rollCost = RollCost();
 				h.shrineShout = -1;
 				if (g_menu) {

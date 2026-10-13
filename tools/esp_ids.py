@@ -1,4 +1,5 @@
 """Form IDs for BO3Zombies.esp. Frozen in data/form_ids.json (saves refer to them); new rows get the next free id."""
+ELEMENTS = ['fire', 'frost', 'shock', 'poison', 'disease', 'sun', 'blood', 'arcane']
 import json, pathlib
 ROOT = pathlib.Path(__file__).parent.parent
 IDFILE = ROOT / 'data' / 'form_ids.json'
@@ -60,6 +61,8 @@ def dressing(S):
         sc_ids = {r['id'] for r in S['spellcraft']['rows']} if 'spellcraft' in S else set()
         records[('STAT', 'show_' + w['id'])] = {'model': f"UndyingNights\\fx\\{w['id']}_icon.nif" if w['id'] in sc_ids else w['standinModel'], 'color': '', 'radius': 0}  # the roll shows the spell's logo
     records[('STAT', 'show_cheese')] = {'model': S['dressing']['show']['cheeseModel'], 'color': '', 'radius': 0}
+    for el in ELEMENTS:   # the Coffer spells' element emblems (the shrine's roll in the world)
+        records[('STAT', 'show_el_' + el)] = {'model': f"UndyingNights\\fx\\el_{el}_icon.nif", 'color': '', 'radius': 0}
     records[('STAT', 'rise_fx')] = {'model': S['dressing']['show']['riseFxModel'], 'color': '', 'radius': 0}
     for k, col in POWERUPS:   # BO3 power-up drops: a glowing token and its light
         records[('STAT', 'pu_' + k)] = {'model': f'UndyingNights\\powerup\\{k}.nif', 'color': '', 'radius': 0}

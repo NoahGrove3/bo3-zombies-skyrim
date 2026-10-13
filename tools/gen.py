@@ -129,6 +129,7 @@ o.append(f'\tinline constexpr std::array<DressDef, {len(DPIECES)}> kDress{{ {{')
 for oi, kind, key, r in DPIECES: o.append(f'\t\tDressDef{{ {oi}, 0x{IDS[(kind, key)]:03X}, {str(kind == "LIGH").lower()}, {F(r["x"])}, {F(r["y"])}, {F(r["z"])}, {F(r["scale"])}, {F(r["spin"])} }},')
 o.append('\t} };')
 o.append(f'\tinline constexpr std::array<std::uint32_t, {len(W)}> kShowStat{{ {{ {", ".join("0x%03X" % IDS[("STAT", "show_" + w["id"])] for w in W)} }} }};')
+o.append(f'\tinline constexpr std::array<std::uint32_t, 8> kShowElement{{ {{ {", ".join("0x%03X" % IDS[("STAT", "show_el_" + e)] for e in ["fire", "frost", "shock", "poison", "disease", "sun", "blood", "arcane"])} }} }};  // Coffer spells: the roll shows the element')
 sh = S['dressing']['show']
 o.append(f'\tinline constexpr std::uint32_t kShowCheese = 0x{IDS[("STAT", "show_cheese")]:03X}, kRiseFx = 0x{IDS[("STAT", "rise_fx")]:03X};')
 o.append(f'\tinline constexpr float kSkullScale = {F(sh["cheeseScale"])};')
