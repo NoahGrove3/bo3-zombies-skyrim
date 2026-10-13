@@ -1128,21 +1128,25 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 		// The player's settings, in the System menu's corner: the field of view, first and third person. Click on a
 		// bar to set it there, or the - / + either side to step it.
+		// The settings strip: bottom-left, under the frames of the Tab menu and the Esc journal (System), two sliders
+		// side by side so it never covers their lists.
 		void SettingsPanel(ImDrawList* dl, ImVec2 size, float k, bool click)
 		{
 			const ImVec2 cur = Cursor(size);
-			const float  w = 420 * k, h = 190 * k;
-			const ImVec2 a{ 48 * k, size.y - 48 * k - h }, b{ a.x + w, a.y + h };
+			const float  w = 780 * k, h = 148 * k;
+			const ImVec2 a{ 48 * k, size.y - 14 * k - h }, b{ a.x + w, a.y + h };
 			Panel(dl, a, b, k, 0.95f);
-			Txt(dl, g_title, 24 * k, { a.x + 18 * k, a.y + 14 * k }, kGold, "UNDYING NIGHTS - SETTINGS", 2 * k, IM_COL32(255, 160, 60, 255));
-			float y = a.y + 62 * k;
+			Txt(dl, g_title, 21 * k, { a.x + 18 * k, a.y + 12 * k }, kGold, "UNDYING NIGHTS - SETTINGS", 2 * k, IM_COL32(255, 160, 60, 255));
+			const float colW = (w - 54 * k) / 2;
 			for (int i = 0; i < 2; ++i) {
 				const bool  first = i == 0;
+				const float x0 = a.x + 18 * k + i * (colW + 18 * k), x1 = x0 + colW;
+				const float y = a.y + 54 * k;
 				const float v = first ? Settings::FovFirst() : Settings::FovThird();
-				const std::string label = std::string(first ? "Field of view - first person" : "Field of view - third person") + "   " + std::to_string(static_cast<int>(v));
-				Txt(dl, g_body, 16 * k, { a.x + 18 * k, y }, IM_COL32(220, 210, 190, 240), label);
-				const float  bx0 = a.x + 50 * k, bx1 = b.x - 50 * k, by = y + 34 * k;
-				const ImVec2 m0{ a.x + 18 * k, by - 12 * k }, m1{ a.x + 40 * k, by + 12 * k }, p0{ b.x - 40 * k, by - 12 * k }, p1{ b.x - 18 * k, by + 12 * k };
+				const std::string label = std::string(first ? "Field of view - 1st person" : "Field of view - 3rd person") + "   " + std::to_string(static_cast<int>(v));
+				Txt(dl, g_body, 16 * k, { x0, y }, IM_COL32(220, 210, 190, 240), label);
+				const float  bx0 = x0 + 32 * k, bx1 = x1 - 32 * k, by = y + 46 * k;
+				const ImVec2 m0{ x0, by - 12 * k }, m1{ x0 + 22 * k, by + 12 * k }, p0{ x1 - 22 * k, by - 12 * k }, p1{ x1, by + 12 * k };
 				dl->AddRectFilled({ bx0, by - 4 * k }, { bx1, by + 4 * k }, IM_COL32(30, 26, 22, 230), 4 * k);
 				const float t = (v - Settings::kFovMin) / (Settings::kFovMax - Settings::kFovMin);
 				dl->AddRectFilled({ bx0, by - 4 * k }, { bx0 + (bx1 - bx0) * t, by + 4 * k }, kGold, 4 * k);
@@ -1158,7 +1162,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (click && cur.x >= bx0 - 6 * k && cur.x <= bx1 + 6 * k && std::abs(cur.y - by) < 14 * k) {
 					Settings::SetFov(first, Settings::kFovMin + (Settings::kFovMax - Settings::kFovMin) * std::clamp((cur.x - bx0) / (bx1 - bx0), 0.0f, 1.0f));
 				}
-				y += 60 * k;
 			}
 		}
 
@@ -2288,6 +2291,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float k = io.DisplaySize.y / 1080.0f;
 				PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { 48 * k, 48 * k }, k, clicks > 0, true);
 				SettingsPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, k, clicks > 0);
+			} else if (uiM && uiM->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MainMenu::MENU_NAME)) {
+				// Esc: Skyrim's journal (Quests / Stats / System) - the field-of-view sliders sit under its frame
+				SettingsPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, io.DisplaySize.y / 1080.0f, clicks > 0);
 			} else if (InGame() && !DevTools::HudOff()) {
 				Draw(s, io.DisplaySize);
 				// Skyrim's enemy bar under the compass gives way to ours over each foe
