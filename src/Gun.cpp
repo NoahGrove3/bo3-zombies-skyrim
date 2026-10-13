@@ -2389,7 +2389,9 @@ namespace bo3z
 			if (auto* cam = RE::PlayerCamera::GetSingleton()) {
 				// Wider base view (sheet: movement.world_fov / viewmodel_fov), narrowing while aiming.
 				auto& rd = cam->GetRuntimeData2();
-				rd.worldFOV = gen::kWorldFov + (gen::kAdsFov - gen::kWorldFov) * g_ads + g_fovKick;
+				// the field of view is the player's own (Settings: first person and third person each), narrowing while aiming
+				const float base = cam->IsInFirstPerson() ? Settings::FovFirst() : Settings::FovThird();
+				rd.worldFOV = base + (gen::kAdsFov - base) * g_ads + g_fovKick;
 				rd.firstPersonFOV = gen::kViewmodelFov + (gen::kAdsViewmodelFov - gen::kViewmodelFov) * g_ads;
 			}
 			AimViewmodel(RE::PlayerCharacter::GetSingleton(), 0.0f);  // staffs and bows stay in Skyrim's own pose; aiming is the zoom

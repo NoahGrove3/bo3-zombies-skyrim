@@ -238,6 +238,15 @@ namespace bo3z
 		std::array<int, 2> Hands();                      // the Coffer spell in each hand (0 left, 1 right; -1 none)
 	}
 
+	// The player's settings (UndyingNights.ini [Settings]; the panel in the System menu)
+	namespace Settings
+	{
+		inline constexpr float kFovMin = 60.0f, kFovMax = 130.0f;
+		float FovFirst();
+		float FovThird();
+		void  SetFov(bool a_first, float a_v);
+	}
+
 	// Co-op life and death: down, revive, spectate, and the party wipe (Party.cpp)
 	namespace Party
 	{
