@@ -265,6 +265,11 @@ namespace bo3z::Net
 		// ride Steam to the host's game and on to the host's server (no IP addresses, no port forwarding) ----
 		constexpr int           kTunnel = 8;
 		constexpr std::uint16_t kLocalPort = 10578;
+		std::uint16_t           g_appPort = kLocalPort;  // where this game's Skyrim Together connects (the tunnel's end, or the host's own server)
+		// Skyrim Together connects only once you stand in the world (connecting in the main menu and then starting a
+		// game crashed it), and lets go when you go back to the main menu; it connects again after the next load.
+		bool                    g_wantConnect = false, g_connected = false;
+		std::string             g_connectPw;
 		std::uint16_t           g_serverPort = 10578;
 		std::atomic_bool        g_relayOn{ false };
 		std::thread             g_relay;
@@ -310,7 +315,7 @@ namespace bo3z::Net
 				esc += c;
 			}
 			std::ofstream f(dir / "UI" / "undying_connect.json", std::ios::trunc);
-			f << "{\"action\":\"" << a_action << "\",\"host\":\"127.0.0.1\",\"port\":" << kLocalPort << ",\"password\":\"" << esc << "\",\"nonce\":\""
+			f << "{\"action\":\"" << a_action << "\",\"host\":\"127.0.0.1\",\"port\":" << g_appPort << ",\"password\":\"" << esc << "\",\"nonce\":\""
 			  << std::chrono::steady_clock::now().time_since_epoch().count() << "\"}";
 			logger::info("net: Skyrim Together told to {}", a_action);
 		}
@@ -391,9 +396,18 @@ namespace bo3z::Net
 			if (TogetherDir().empty()) {
 				return;  // no Skyrim Together here: the party still shares the nights
 			}
-			if (!a_host && !Relay::OpenClient(kLocalPort)) {
-				logger::warn("net: port {} is busy here; Skyrim Together can't use the tunnel", kLocalPort);
-				return;
+			if (!a_host) {  // the tunnel's end here: 10578, or the next free port (your own server may hold 10578)
+				bool open = false;
+				for (std::uint16_t p = kLocalPort; p < kLocalPort + 12 && !open; p = p == kLocalPort ? kLocalPort + 2 : p + 1) {
+					if (Relay::OpenClient(p)) {
+						open = true, g_appPort = p;
+					}
+				}
+				if (!open) {
+					logger::warn("net: no free local port for the tunnel; Skyrim Together can't join");
+					return;
+				}
+				logger::info("net: tunnel end on port {}", g_appPort);
 			}
 			g_relayOn = true;
 			g_relay = std::thread(RelayLoop, a_host, a_owner);
@@ -410,15 +424,14 @@ namespace bo3z::Net
 				SendHello(g_owner);
 				StartRelay(false, g_owner);
 				const char* pw = A.GetLobbyData(A.mm, a_lobby, "str_pw");
-				TellTogether("connect", pw ? pw : "");
+				g_connectPw = pw ? pw : "", g_wantConnect = true;  // (connects once you are in the world)
 			} else {
 				StartServerIfNeeded();
 				const auto [port, pw] = ServerConfig();
 				A.SetLobbyData(A.mm, a_lobby, "str_pw", pw.c_str());  // friends-only party: their Skyrim Together logs in with it
 				StartRelay(true, g_me);
-				if (port == kLocalPort) {
-					TellTogether("connect", pw);  // your own Skyrim Together joins your server too
-				}
+				g_appPort = port;
+				g_connectPw = pw, g_wantConnect = true;  // your own Skyrim Together joins your server too (once you are in the world)
 			}
 			Hud::Banner(a_host ? "Co-op party open: invite friends from the Steam overlay" : "Joined the party - the host runs the nights", 4.0f);
 			logger::info("net: {} lobby {:016X} ({} others)", a_host ? "hosting" : "joined", a_lobby, g_members.size());
@@ -617,11 +630,11 @@ namespace bo3z::Net
 			A.LeaveLobby(A.mm, g_lobby);
 			logger::info("net: left lobby {:016X}", g_lobby);
 		}
-		const bool wasClient = IsClient();
 		StopRelay();
-		if (wasClient) {
+		if (g_connected) {
 			TellTogether("disconnect");
 		}
+		g_wantConnect = g_connected = false;
 		g_lobby = g_owner = 0;
 		g_members.clear();
 		g_haveState = false;
@@ -691,6 +704,20 @@ namespace bo3z::Net
 			JoinLobby(l);
 		}
 		PollCalls();
+		{  // Skyrim Together: connect once in the world (3 s settled), let go at the main menu
+			auto*       ui = RE::UI::GetSingleton();
+			auto*       pl = RE::PlayerCharacter::GetSingleton();
+			const bool  inWorld = ui && pl && pl->Is3DLoaded() && !ui->IsMenuOpen(RE::MainMenu::MENU_NAME) && !ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME);
+			static float settled = 0;
+			settled = inWorld ? settled + a_delta : 0;
+			if (g_wantConnect && !g_connected && settled > 3.0f) {
+				TellTogether("connect", g_connectPw);
+				g_connected = true;
+			} else if (g_connected && ui && ui->IsMenuOpen(RE::MainMenu::MENU_NAME)) {
+				TellTogether("disconnect");
+				g_connected = false;  // (still wanted: it connects again after the next load)
+			}
+		}
 		if (!g_lobby) {
 			return;
 		}
