@@ -1133,17 +1133,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		void SettingsPanel(ImDrawList* dl, ImVec2 size, float k, bool click)
 		{
 			const ImVec2 cur = Cursor(size);
-			const float  w = 780 * k, h = 148 * k;
+			const float  w = 560 * k, h = 148 * k;  // narrow enough to stay left of Skyrim's level bar
 			const ImVec2 a{ 48 * k, size.y - 14 * k - h }, b{ a.x + w, a.y + h };
 			Panel(dl, a, b, k, 0.95f);
-			Txt(dl, g_title, 21 * k, { a.x + 18 * k, a.y + 12 * k }, kGold, "UNDYING NIGHTS - SETTINGS", 2 * k, IM_COL32(255, 160, 60, 255));
+			Txt(dl, g_title, 21 * k, { a.x + 18 * k, a.y + 12 * k }, kGold, "UNDYING NIGHTS - FIELD OF VIEW", 2 * k, IM_COL32(255, 160, 60, 255));
 			const float colW = (w - 54 * k) / 2;
 			for (int i = 0; i < 2; ++i) {
 				const bool  first = i == 0;
 				const float x0 = a.x + 18 * k + i * (colW + 18 * k), x1 = x0 + colW;
 				const float y = a.y + 54 * k;
 				const float v = first ? Settings::FovFirst() : Settings::FovThird();
-				const std::string label = std::string(first ? "Field of view - 1st person" : "Field of view - 3rd person") + "   " + std::to_string(static_cast<int>(v));
+				const std::string label = std::string(first ? "First person" : "Third person") + "   " + std::to_string(static_cast<int>(v));
 				Txt(dl, g_body, 16 * k, { x0, y }, IM_COL32(220, 210, 190, 240), label);
 				const float  bx0 = x0 + 32 * k, bx1 = x1 - 32 * k, by = y + 46 * k;
 				const ImVec2 m0{ x0, by - 12 * k }, m1{ x0 + 22 * k, by + 12 * k }, p0{ x1 - 22 * k, by - 12 * k }, p1{ x1, by + 12 * k };
@@ -2192,6 +2192,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const bool journal = uiM && uiM->IsMenuOpen(RE::TweenMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) &&
 			                     !uiM->IsMenuOpen(RE::InventoryMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MagicMenu::MENU_NAME) &&
 			                     !uiM->IsMenuOpen(RE::MapMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::StatsMenu::MENU_NAME);
+
+			const bool escJournal = uiM && uiM->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MainMenu::MENU_NAME);  // Esc: Quests / Stats / System
 			const int  clicks = g_clicks.exchange(0);
 			AnswerStartPrompts(uiM);
 			if (g_filmReq && !g_filmOn) {  // the film waits until the world has settled (the move to Riverwood loads a cell)
@@ -2251,7 +2253,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				g_veil = mainMenu ? 0.0f : want ? std::min(1.0f, g_veil + dt * 4.0f) : std::max(0.0f, g_veil - dt / 1.8f);
 			}
-			if (((!InGame() && !mainMenu && !journal) || (DevTools::HudOff() && !mainMenu)) && !g_filmOn && g_veil <= 0) {
+			if (((!InGame() && !mainMenu && !journal && !escJournal) || (DevTools::HudOff() && !mainMenu)) && !g_filmOn && g_veil <= 0) {
 				if (static int m = 0; m++ % 1200 == 0) {
 					auto* ui = RE::UI::GetSingleton();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
@@ -2291,7 +2293,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float k = io.DisplaySize.y / 1080.0f;
 				PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { 48 * k, 48 * k }, k, clicks > 0, true);
 				SettingsPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, k, clicks > 0);
-			} else if (uiM && uiM->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MainMenu::MENU_NAME)) {
+			} else if (escJournal) {
 				// Esc: Skyrim's journal (Quests / Stats / System) - the field-of-view sliders sit under its frame
 				SettingsPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, io.DisplaySize.y / 1080.0f, clicks > 0);
 			} else if (InGame() && !DevTools::HudOff()) {
