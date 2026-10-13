@@ -1,6 +1,6 @@
 {
   "sheet": "perks",
-  "about": "Nordic brews. Bought with points at a brew shrine; the perk takes effect at once. One at a time: death takes it, then another can be chosen.",
+  "about": "Nordic brews. Bought with points at the shrine; the blessing takes effect at once. They stack: take each as often as you can pay for. Death takes them all.",
   "columns": [
     "id",
     "label",
@@ -19,7 +19,7 @@
       "cost": 2500,
       "effect": "health",
       "value": 100,
-      "description": "Skin like a troll: +100 health, so it takes more hits to go down.",
+      "description": "Skin like a troll: +100 health each draught, so it takes more hits to go down.",
       "potionModel": "Clutter\\Potions\\PotionHealthGreat.nif",
       "verify": [],
       "color": "D02020"
@@ -30,7 +30,7 @@
       "cost": 3000,
       "effect": "charge_speed",
       "value": 0.6,
-      "description": "Power floods your weapon: signature moves charge 40% faster and come back sooner.",
+      "description": "Quicksilver in the veins: spells cost 15% less magicka each draught (up to 75%).",
       "potionModel": "Clutter\\Potions\\PotionFortifyStaminaGreat.nif",
       "verify": [],
       "color": "30C040"
@@ -41,7 +41,7 @@
       "cost": 2000,
       "effect": "fire_rate_and_damage",
       "value": 2.0,
-      "description": "Shoot faster and hit twice as hard.",
+      "description": "Twin strike: your spells hit 50% harder each draught.",
       "potionModel": "Clutter\\Potions\\MeadHonningBrew01.nif",
       "verify": [],
       "color": "E0A020"
@@ -52,7 +52,7 @@
       "cost": 500,
       "effect": "self_revive",
       "value": 1,
-      "description": "When you would fall, the hearth calls you back once.",
+      "description": "When you would fall, the hearth calls you back - once for each tonic.",
       "potionModel": "Clutter\\Potions\\PotionMagickaLesser.nif",
       "verify": [],
       "color": "3070F0"
@@ -63,7 +63,7 @@
       "cost": 2000,
       "effect": "speed_and_stamina",
       "value": 15,
-      "description": "Run faster and sprint longer.",
+      "description": "Run faster and sprint longer with each brew.",
       "potionModel": "Clutter\\Potions\\PotionStaminaGreat.nif",
       "verify": [],
       "color": "F0D840"
@@ -74,7 +74,7 @@
       "cost": 1500,
       "effect": "headshots",
       "value": 1.5,
-      "description": "Headshots hit harder and are easier to land.",
+      "description": "Clear sight, clear mind: magicka returns 50% faster each draught.",
       "potionModel": "Clutter\\Potions\\PotionInvisibiltyGreat.nif",
       "verify": [],
       "color": "B0B8C0"
@@ -85,7 +85,7 @@
       "cost": 4000,
       "effect": "third_gun",
       "value": 3,
-      "description": "Carry a third weapon.",
+      "description": "A mammoth's back: +50 magicka each draught.",
       "potionModel": "Clutter\\Potions\\PotionHealthExtreme.nif",
       "verify": [],
       "color": "7AA040"
@@ -97,7 +97,7 @@
       "effect": "web_grenade",
       "value": 4.0,
       "potionModel": "Clutter\\Potions\\PotionResistMagicka50.nif",
-      "description": "When the dead strike you, frost webs slow everything nearby.",
+      "description": "When the dead strike you, frost webs slow everything nearby - wider and colder each draught.",
       "verify": [],
       "color": "9040E0"
     },
@@ -108,7 +108,7 @@
       "effect": "cast_shock",
       "value": 500,
       "potionModel": "Clutter\\Potions\\PotionFortifyMagickaExtreme.nif",
-      "description": "Every 12th shot looses a lightning burst around you.",
+      "description": "Every 12th spell looses a lightning burst around you - sooner and stronger each cider.",
       "verify": [],
       "color": "40D0F0"
     }

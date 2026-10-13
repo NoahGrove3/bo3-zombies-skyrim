@@ -66,6 +66,8 @@ namespace bo3z
 		void ForgetSnapshot();  // a load or the main menu: the next values are a different game's
 		void OnWorldReady();
 		void InstallCoSave();  // SKSE serialization: the values live in the co-save
+		int  PerkStacks(int a_perk);  // blessings stack: how many of this one
+		void SetPerkStacks(int a_perk, int a_n);
 		inline constexpr int kFlagInit = 0, kFlagReserveV2 = 4, kFlagStarted = 5, kFlagMoved = 11, kPerkShift = 14, kFlagPerksV2 = 23;  // bits: init | crew 1-3 | (old perks 4-10) | moved 11 | slot 12-13 | perks 14-22 | v2 23
 	}
 
@@ -360,6 +362,7 @@ namespace bo3z
 		void OnCast(int a_shots);  // Stormcrown
 		void Tick();
 		float ManaMult();          // magicka cost (tomes)
+		float RegenMult();  // magicka returns faster (Hawkeye, stacked)
 		float ChargeMult();        // Quicksilver: charge time and cooldown of signature moves (x)
 		float FireDelayMult();
 		float DamageMult();
@@ -403,6 +406,7 @@ namespace bo3z
 			float       hitTime{ 0 };
 			bool        hitKill{ false };
 			int         perks{ 0 };      // bitmask
+			std::array<int, 16> perkStacks{};  // how many of each blessing (they stack)
 			int         crew{ -1 };
 			bool        crewScreen{ false };
 			int         crewHighlight{ 0 };

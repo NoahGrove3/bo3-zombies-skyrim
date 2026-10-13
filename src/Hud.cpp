@@ -1,4 +1,5 @@
 #include "BO3Z.h"
+#include <sstream>
 
 #include <imgui.h>
 #include <imgui_impl_dx11.h>
@@ -166,6 +167,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		float EaseOut(float t) { t = std::clamp(t, 0.0f, 1.0f); return 1.0f - (1.0f - t) * (1.0f - t) * (1.0f - t); }
 		ImVec2 Measure(ImFont* f, float px, const std::string& s) { return f ? f->CalcTextSizeA(px, FLT_MAX, 0, s.c_str()) : ImVec2{ px * s.size() * 0.5f, px }; }
 
+
 		// Text with a soft dark shadow; glow > 0 adds a coloured halo.
 		void Txt(ImDrawList* dl, ImFont* f, float px, ImVec2 p, ImU32 col, const std::string& s, float glow = 0, ImU32 glowCol = 0)
 		{
@@ -177,6 +179,30 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			dl->AddText(f, px, { p.x + px * 0.04f, p.y + px * 0.05f }, IM_COL32(0, 0, 0, static_cast<int>(((col >> 24) & 0xFF) * 0.7f)), s.c_str());
 			dl->AddText(f, px, p, col, s.c_str());
+		}
+
+		// words wrapped to a width (at most a_maxLines lines); returns the lines drawn
+		int TxtWrap(ImDrawList* dl, ImFont* f, float px, ImVec2 at, ImU32 col, const std::string& s, float width, int a_maxLines = 3)
+		{
+			std::vector<std::string> lines;
+			std::string              line, word;
+			std::istringstream       in(s);
+			while (in >> word) {
+				const std::string tryLine = line.empty() ? word : line + " " + word;
+				if (!line.empty() && Measure(f, px, tryLine).x > width) {
+					lines.push_back(line), line = word;
+				} else {
+					line = tryLine;
+				}
+			}
+			if (!line.empty()) {
+				lines.push_back(line);
+			}
+			const int n = std::min(static_cast<int>(lines.size()), a_maxLines);
+			for (int i = 0; i < n; ++i) {
+				Txt(dl, f, px, { at.x, at.y + i * px * 1.25f }, col, lines[i]);
+			}
+			return n;
 		}
 		void TxtC(ImDrawList* dl, ImFont* f, float px, float cx, float y, ImU32 col, const std::string& s, float glow = 0, ImU32 glowCol = 0)
 		{
@@ -459,6 +485,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const int   cr = (c >> 24) & 0xFF, cg = (c >> 16) & 0xFF, cb = (c >> 8) & 0xFF;
 						dl->AddCircle({ x, py }, r + 2.6f * k, IM_COL32(cr, cg, cb, static_cast<int>(60 * br)), 48, 5.0f * k);
 						dl->AddCircle({ x, py }, r + 1.2f * k, IM_COL32(std::min(255, cr + 60), std::min(255, cg + 60), std::min(255, cb + 60), static_cast<int>(200 * br)), 48, 1.6f * k);
+					}
+					if (s.perkStacks[i] > 1) {  // taken more than once: how many
+						const std::string cnt = "x" + std::to_string(s.perkStacks[i]);
+						const ImVec2 bc{ x + r * 0.78f, py + r * 0.62f };
+						dl->AddCircleFilled(bc, 9 * k, IM_COL32(20, 14, 10, 235), 20);
+						dl->AddCircle(bc, 9 * k, kGold, 20, 1.2f * k);
+						TxtC(dl, g_num, 12 * k, bc.x, bc.y - 7 * k, kParch, cnt);
 					}
 					x += gap;
 				}
@@ -924,7 +957,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (s.perkMenu) {
 				const float w = 470 * k;
 				const bool  shout = s.shrineShout >= 0 && s.shrineShout < static_cast<int>(gen::kShouts.size());
-				const float h = (shout ? 590 : 512) * k;
+				const float h = (shout ? 610 : 532) * k;
 				const ImVec2 a{ size.x - w - 36 * k, std::max(24 * k, size.y * 0.5f - h * 0.5f - 30 * k) }, b{ a.x + w, a.y + h };
 				Panel(dl, a, b, k, 0.92f);
 				const float cx = (a.x + b.x) * 0.5f;
@@ -989,10 +1022,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					const int  sel = std::clamp(s.perkSel, 0, n - 1);
 					const auto& p = gen::kPerks[sel];
-					const bool have = (s.perks >> sel) & 1;
-					keyCap({ L, y + 2 * k }, "3", !have && owned == 0);
+					const int  have = s.perkStacks[sel];
+					keyCap({ L, y + 2 * k }, "3", s.points >= p.cost);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "TAKE A BLESSING");
-					const std::string rule = owned ? "one at a time: death takes it" : "one at a time";
+					const std::string rule = owned ? "they stack - death takes them all" : "take each as often as you like";
 					Txt(dl, g_body, 16 * k, { Rr - Measure(g_body, 16 * k, rule).x, y + 6 * k }, IM_COL32(170, 156, 132, 220), rule);
 					y += 36 * k;
 					const float d = std::min(44 * k, (Rr - L) / n - 4 * k), gap = ((Rr - L) - d * n) / std::max(1, n - 1);
@@ -1005,18 +1038,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 						if (auto* icon = g_perkIcons[q]) {
 							const float r = d * 0.5f * (on ? 1.08f : 1.0f);
-							dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { c.x - r, c.y - r }, { c.x + r, c.y + r }, { 0, 0 }, { 1, 1 }, drunk ? IM_COL32(120, 120, 120, 150) : IM_COL32(255, 255, 255, on ? 255 : 200));
+							dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { c.x - r, c.y - r }, { c.x + r, c.y + r }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, on ? 255 : 200));
+							if (drunk) {  // already taken: a small count on its rim
+								TxtC(dl, g_num, 12 * k, c.x + r * 0.7f, c.y + r * 0.35f, kGold, "x" + std::to_string(s.perkStacks[q]));
+							}
 						}
 					}
 					y += d + 12 * k;
-					Txt(dl, g_title, 19 * k, { L, y }, have ? IM_COL32(130, 124, 112, 255) : IM_COL32(250, 236, 205, 255), std::string(p.label));
-					if (have) {
-						Txt(dl, g_title, 17 * k, { Rr - Measure(g_title, 17 * k, "DRUNK").x, y + 2 * k }, IM_COL32(120, 170, 110, 220), "DRUNK");
-					} else {
-						price(y, p.cost, s.points >= p.cost);
-					}
-					Txt(dl, g_body, 16 * k, { L, y + 28 * k }, IM_COL32(190, 178, 156, have ? 130 : 230), std::string(gen::kPerkDesc[sel]));
-					y += 58 * k;
+					Txt(dl, g_title, 19 * k, { L, y }, IM_COL32(250, 236, 205, 255), std::string(p.label) + (have > 0 ? "   x" + std::to_string(have) + " taken" : ""));
+					price(y, p.cost, s.points >= p.cost);
+					TxtWrap(dl, g_body, 16 * k, { L, y + 28 * k }, IM_COL32(190, 178, 156, 230), std::string(gen::kPerkDesc[sel]), Rr - L, 2);
+					y += 78 * k;
 				}
 				// [4] the freed city's Thu'um
 				if (shout) {

@@ -264,6 +264,9 @@ namespace bo3z
 					int level = 0;
 					if (const int sh = Gun::ShoutOfSpell(a_event->spell, level); sh >= 0) {
 						Gun::Shout(sh, level);
+					} else if (Arcana::IndexOf(RE::TESForm::LookupByID(a_event->spell)) >= 0) {
+						static int casts = 0;
+						Perks::OnCast(++casts);  // Stormcrown counts the Coffer's spells
 					}
 				}
 				return RE::BSEventNotifyControl::kContinue;

@@ -1,11 +1,19 @@
 #include "BO3Z.h"
 
-// Blessings (sheet: perks). Bought at a stand, granted at once, one at a time, lost in death; effects live in code.
+// Blessings (sheet: perks). Bought at the shrine, granted at once, as many of each as you can pay for (they stack),
+// all lost in death; effects live in code.
 namespace bo3z
 {
 	namespace
 	{
 		bool Has(int a_perk) { return Save::HasPerk(a_perk); }
+		constexpr RE::ActorValue kSchoolCost[] = { RE::ActorValue::kAlterationModifier, RE::ActorValue::kConjurationModifier, RE::ActorValue::kDestructionModifier,
+			RE::ActorValue::kIllusionModifier, RE::ActorValue::kRestorationModifier };
+		constexpr RE::ActorValue kSchoolPower[] = { RE::ActorValue::kAlterationPowerModifier, RE::ActorValue::kConjurationPowerModifier, RE::ActorValue::kDestructionPowerModifier,
+			RE::ActorValue::kIllusionPowerModifier, RE::ActorValue::kRestorationPowerModifier };
+		int  N(int a_perk) { return Save::PerkStacks(a_perk); }
+		// a multiplier blessing taken n times: each adds its step again (a 1.25x twice is 1.5x; a 0.8x twice is 0.6x)
+		float Stack(int a_perk, float a_min = 0.2f, float a_max = 6.0f) { return std::clamp(1.0f + (gen::kPerks[a_perk].value - 1.0f) * N(a_perk), a_min, a_max); }
 		void Mod(RE::ActorValue a_av, float a_by)
 		{
 			RE::PlayerCharacter::GetSingleton()->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, a_av, a_by);
@@ -15,40 +23,36 @@ namespace bo3z
 	namespace Perks
 	{
 		float ManaMult() { return 1.0f; }  // (staffs and bows run on nothing; tomes keep their plain cost)
-		float ChargeMult() { return Has(gen::kPerk_quicksilver) ? gen::kPerks[gen::kPerk_quicksilver].value : 1.0f; }
-		float FireDelayMult() { return Has(gen::kPerk_twinstrike) ? 0.75f : 1.0f; }
-		float DamageMult() { return Has(gen::kPerk_twinstrike) ? gen::kPerks[gen::kPerk_twinstrike].value : 1.0f; }
-		float HeadMult() { return Has(gen::kPerk_hawkeye) ? gen::kPerks[gen::kPerk_hawkeye].value : 1.0f; }
+		float RegenMult() { return 1.0f + 0.5f * N(gen::kPerk_hawkeye); }  // Hawkeye: clear sight, magicka back sooner
+		float ChargeMult() { return Stack(gen::kPerk_quicksilver); }
+		float FireDelayMult() { return std::max(0.3f, 1.0f - 0.25f * N(gen::kPerk_twinstrike)); }
+		float DamageMult() { return Stack(gen::kPerk_twinstrike); }
+		float HeadMult() { return Stack(gen::kPerk_hawkeye); }
 
-		// Buying a blessing at its stand applies it at once (no potion to drink). One at a time: another can only be
-		// chosen once death has taken this one.
+		// Buying a blessing applies it at once (no potion to drink). Each can be bought again and again: they stack.
 		bool Grant(int a_perk)
 		{
 			if (a_perk < 0 || a_perk >= static_cast<int>(gen::kPerks.size())) {
 				return false;
 			}
 			const auto& p = gen::kPerks[a_perk];
-			if (Has(a_perk)) {
-				Hud::Banner("You already have " + std::string(p.label), 2.0f);
-				return false;
-			}
-			if (Save::PerkCount() >= 1) {
-				for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
-					if (Has(i)) {
-						Hud::Banner("You carry " + std::string(gen::kPerks[i].label) + ". One blessing at a time: death takes it", 3.0f);
-					}
-				}
-				return false;
-			}
-			Save::SetPerk(a_perk, true);
+			const int   n = N(a_perk) + 1;
+			Save::SetPerkStacks(a_perk, n);
 			switch (p.effect) {
-			case 0: Mod(RE::ActorValue::kHealth, p.value); break;                                     // Juggernog
-			case 4: Mod(RE::ActorValue::kSpeedMult, p.value); Mod(RE::ActorValue::kStamina, 100); break;  // Stamin-Up
+			case 0: Mod(RE::ActorValue::kHealth, p.value); break;                                     // Troll's Hide: more health each time
+			case 4: Mod(RE::ActorValue::kSpeedMult, p.value); Mod(RE::ActorValue::kStamina, 100); break;  // Windrunner
+			case 1:                                                                                     // Quicksilver: spells cost 15% less each (to 75%)
+				if (n <= 5) {
+					for (auto av : kSchoolCost) Mod(av, 15.0f);
+				}
+				break;
+			case 2: for (auto av : kSchoolPower) Mod(av, 50.0f); break;                                 // Twin Strike: spells 50% stronger each
+			case 6: Mod(RE::ActorValue::kMagicka, 50.0f); break;                                         // Mammoth Back: +50 magicka each
 			default: break;
 			}
 			Forms::Play(gen::Sound::drink);
-			Hud::Banner(std::string(p.label), 3.0f);
-			logger::info("perk: {} granted", p.id);
+			Hud::Banner(std::string(p.label) + (n > 1 ? "  x" + std::to_string(n) : ""), 3.0f);
+			logger::info("perk: {} granted (now x{})", p.id, n);
 			return true;
 		}
 
@@ -56,17 +60,21 @@ namespace bo3z
 		void LoseAll()
 		{
 			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
-				if (!Has(i)) {
+				const int n = N(i);
+				if (n <= 0) {
 					continue;
 				}
 				const auto& p = gen::kPerks[i];
 				switch (p.effect) {
-				case 0: Mod(RE::ActorValue::kHealth, -p.value); break;
-				case 4: Mod(RE::ActorValue::kSpeedMult, -p.value); Mod(RE::ActorValue::kStamina, -100); break;
+				case 0: Mod(RE::ActorValue::kHealth, -p.value * n); break;
+				case 4: Mod(RE::ActorValue::kSpeedMult, -p.value * n); Mod(RE::ActorValue::kStamina, -100.0f * n); break;
+				case 1: for (auto av : kSchoolCost) Mod(av, -15.0f * std::min(n, 5)); break;
+				case 2: for (auto av : kSchoolPower) Mod(av, -50.0f * n); break;
+				case 6: Mod(RE::ActorValue::kMagicka, -50.0f * n); break;
 				default: break;
 				}
-				Save::SetPerk(i, false);
-				logger::info("perk: {} lost in death", p.id);
+				Save::SetPerkStacks(i, 0);
+				logger::info("perk: {} x{} lost in death", p.id, n);
 			}
 		}
 
@@ -97,7 +105,7 @@ namespace bo3z
 				return;  // (console god mode: the dead's hands pass through)
 			}
 			auto* av = player->AsActorValueOwner();
-			const float jug = Has(gen::kPerk_trollshide) ? gen::kPerks[gen::kPerk_trollshide].value : 0.0f;
+			const float jug = gen::kPerks[gen::kPerk_trollshide].value * N(gen::kPerk_trollshide);
 			const float baseHealth = std::max(50.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth) - jug);
 			const bool elite = Director::IsElite(a_zombie);
 			const bool boss = Director::IsBoss(a_zombie);  // his claws come in flurries: each rake takes less
@@ -113,15 +121,16 @@ namespace bo3z
 				Hud::Edit().hurtTime = 1.0f;
 			}
 			if (Has(gen::kPerk_frostbite)) {
-				Director::Web(player->GetPosition(), 350.0f, gen::kPerks[gen::kPerk_frostbite].value, 60.0f, true);  // ice spikes show it
+				Director::Web(player->GetPosition(), 350.0f + 60.0f * (N(gen::kPerk_frostbite) - 1), gen::kPerks[gen::kPerk_frostbite].value * N(gen::kPerk_frostbite), 60.0f, true);  // ice spikes show it
 			}
 		}
 
 		// Stormcrown: every 12th cast looses a lightning burst around you.
 		void OnCast(int a_shots)
 		{
-			if (Has(gen::kPerk_stormcrown) && a_shots % 12 == 0) {
-				Director::Shock(RE::PlayerCharacter::GetSingleton()->GetPosition(), 320.0f, gen::kPerks[gen::kPerk_stormcrown].value);
+			const int n = N(gen::kPerk_stormcrown);
+			if (n > 0 && a_shots % std::max(3, 12 / n) == 0) {  // more crowns: the burst comes sooner
+				Director::Shock(RE::PlayerCharacter::GetSingleton()->GetPosition(), 320.0f, gen::kPerks[gen::kPerk_stormcrown].value * (1.0f + 0.25f * (n - 1)));
 			}
 		}
 
@@ -136,7 +145,7 @@ namespace bo3z
 			const float max = av->GetPermanentActorValue(RE::ActorValue::kHealth);
 			if (max > 0 && av->GetActorValue(RE::ActorValue::kHealth) < max * 0.1f) {
 				av->RestoreActorValue(RE::ActorValue::kHealth, max);
-				Save::SetPerk(gen::kPerk_hearthfire, false);
+				Save::SetPerkStacks(gen::kPerk_hearthfire, N(gen::kPerk_hearthfire) - 1);  // one revive per draught
 				Hud::Banner("QUICK REVIVE", 3.0f);
 				logger::info("perk: quick revive used");
 			}

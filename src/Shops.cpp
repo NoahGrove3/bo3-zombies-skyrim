@@ -1269,14 +1269,6 @@ namespace bo3z
 			if (perk < 0 || perk >= static_cast<int>(gen::kPerks.size())) {
 				return;
 			}
-			if (Save::HasPerk(perk)) {
-				Hud::Banner("You already have " + std::string(gen::kPerks[perk].label), 2.0f);
-				return;
-			}
-			if (Save::PerkCount() >= 1) {
-				Perks::Grant(perk);  // (refuses, and says which blessing you carry)
-				return;
-			}
 			if (!Points::Spend(gen::kPerks[perk].cost)) {
 				return;
 			}

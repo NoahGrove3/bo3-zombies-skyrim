@@ -318,7 +318,9 @@ namespace bo3z
 			constexpr int kSavedAVs[] = { gen::kAV_slot0, gen::kAV_slot1, gen::kAV_slot2, gen::kAV_flags, gen::kAV_box, gen::kAV_round, gen::kAV_points,
 				gen::kAV_reserve0, gen::kAV_reserve1, gen::kAV_reserve2 };
 			std::array<int, std::size(kSavedAVs)> g_val{};
-			bool                                  g_coSave = false;  // SKSE's serialization is ours (else: the old actor values)
+			bool                                  g_coSave = false;
+			std::array<int, 16>                   g_stacks{};  // blessings bought, each
+			bool                                  g_stacksLoaded = false;  // SKSE's serialization is ours (else: the old actor values)
 			constexpr std::uint32_t               kRecord = 'VALS', kRecordVersion = 1;
 
 			int Index(int a_av)
@@ -354,6 +356,9 @@ namespace bo3z
 				if (a_s->OpenRecord(kRecord, kRecordVersion)) {
 					a_s->WriteRecordData(g_val.data(), static_cast<std::uint32_t>(sizeof(int) * g_val.size()));
 				}
+				if (a_s->OpenRecord('PRKS', 1)) {
+					a_s->WriteRecordData(g_stacks.data(), static_cast<std::uint32_t>(sizeof(int) * g_stacks.size()));
+				}
 				const auto lv = Arcana::Levels();
 				if (a_s->OpenRecord('SPLV', 1)) {
 					a_s->WriteRecordData(lv.data(), static_cast<std::uint32_t>(lv.size()));
@@ -366,10 +371,17 @@ namespace bo3z
 				while (a_s->GetNextRecordInfo(type, version, length)) {
 					if (type == kRecord && length == sizeof(int) * g_val.size()) {
 						found = a_s->ReadRecordData(g_val.data(), length) == length;
+					} else if (type == 'PRKS' && length == sizeof(int) * g_stacks.size()) {
+						g_stacksLoaded = a_s->ReadRecordData(g_stacks.data(), length) == length;
 					} else if (type == 'SPLV') {
 						std::vector<std::uint8_t> lv(length);
 						a_s->ReadRecordData(lv.data(), length);
 						Arcana::SetLevels(lv);
+					}
+				}
+				if (!g_stacksLoaded) {  // an older save: one of each blessing it carries
+					for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 16; ++i) {
+						g_stacks[i] = 0;
 					}
 				}
 				if (found) {
@@ -378,7 +390,7 @@ namespace bo3z
 					Migrate();
 				}
 			}
-			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), Arcana::SetLevels({}); }
+			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, Arcana::SetLevels({}); }
 		}
 
 		void InstallCoSave()
@@ -391,6 +403,29 @@ namespace bo3z
 				g_coSave = true;
 				logger::info("save: the mod's values live in the SKSE co-save");
 			}
+		}
+
+		int PerkStacks(int a_perk)
+		{
+			if (a_perk < 0 || a_perk >= 16) {
+				return 0;
+			}
+			if (!g_stacksLoaded) {  // an older save (or the old actor values): what its perk bits say
+				for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 16; ++i) {
+					g_stacks[i] = HasPerk(i) ? 1 : 0;
+				}
+				g_stacksLoaded = true;
+			}
+			return g_stacks[a_perk];
+		}
+		void SetPerkStacks(int a_perk, int a_n)
+		{
+			if (a_perk < 0 || a_perk >= 16) {
+				return;
+			}
+			PerkStacks(a_perk);
+			g_stacks[a_perk] = std::max(0, a_n);
+			SetPerk(a_perk, a_n > 0);
 		}
 
 		int Get(int a_av)

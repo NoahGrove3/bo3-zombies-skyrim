@@ -1063,7 +1063,7 @@ namespace bo3z::gen
 	inline constexpr int kPerk_mammoth = 6;
 	inline constexpr int kPerk_frostbite = 7;
 	inline constexpr int kPerk_stormcrown = 8;
-	inline constexpr std::array<std::string_view, 9> kPerkDesc{ { "Skin like a troll: +100 health, so it takes more hits to go down.", "Power floods your weapon: signature moves charge 40% faster and come back sooner.", "Shoot faster and hit twice as hard.", "When you would fall, the hearth calls you back once.", "Run faster and sprint longer.", "Headshots hit harder and are easier to land.", "Carry a third weapon.", "When the dead strike you, frost webs slow everything nearby.", "Every 12th shot looses a lightning burst around you." } };
+	inline constexpr std::array<std::string_view, 9> kPerkDesc{ { "Skin like a troll: +100 health each draught, so it takes more hits to go down.", "Quicksilver in the veins: spells cost 15% less magicka each draught (up to 75%).", "Twin strike: your spells hit 50% harder each draught.", "When you would fall, the hearth calls you back - once for each tonic.", "Run faster and sprint longer with each brew.", "Clear sight, clear mind: magicka returns 50% faster each draught.", "A mammoth's back: +50 magicka each draught.", "When the dead strike you, frost webs slow everything nearby - wider and colder each draught.", "Every 12th spell looses a lightning burst around you - sooner and stronger each cider." } };
 	inline constexpr int kMaxPerks = 9;
 	struct CrewDef { std::string_view id, label, quote; int passive; float value; std::string_view passiveText; };
 	inline constexpr std::array<CrewDef, 4> kCrew{ {

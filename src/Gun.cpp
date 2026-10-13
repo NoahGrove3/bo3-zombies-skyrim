@@ -2198,7 +2198,7 @@ namespace bo3z
 				}
 				const float now = av->GetActorValue(RE::ActorValue::kMagicka);
 				if (g_manaQuiet >= gen::kManaRegenDelay && now < max) {
-					av->RestoreActorValue(RE::ActorValue::kMagicka, std::min(max - now, max * gen::kManaRegenPerSecond / Perks::ManaMult() * a_delta));
+					av->RestoreActorValue(RE::ActorValue::kMagicka, std::min(max - now, max * gen::kManaRegenPerSecond * Perks::RegenMult() / Perks::ManaMult() * a_delta));
 				}
 				last = av->GetActorValue(RE::ActorValue::kMagicka);
 			}
@@ -2444,6 +2444,9 @@ namespace bo3z
 			}
 			h.points = Points::Get();
 			h.perks = Save::PerkBits();
+			for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 16; ++i) {
+				h.perkStacks[i] = Save::PerkStacks(i);
+			}
 			h.slotCount = SlotCount();
 			for (int i = 0; i < 3; ++i) {
 				const auto sl = i < h.slotCount ? Save::GetSlot(i) : Save::Slot{};
