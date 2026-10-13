@@ -133,6 +133,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 	bo3z::PluginList::Ensure();
 	SetupLog();
 	logger::info("Undying Nights {} loading as SKSE plugin", bo3z::kVersion);
+	bo3z::Save::InstallCoSave();
 	bo3z::Events::InstallMenuWatch();
 	return true;
 }

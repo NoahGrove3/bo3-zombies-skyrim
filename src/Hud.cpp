@@ -1931,10 +1931,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// skip: the carved hint, and a ring that fills while the key is held
 			{
 				const float ha = std::clamp((g_filmT - 2.0f) / 1.0f, 0.0f, 1.0f) * (1.0f - outFade);
-				const ImVec2 c{ size.x - 60 * k, size.y - 44 * k };
+				// bottom centre, clear of the page's swirled borders: the words, then the ring after them
+				const float sw = g_filmSkipText.tex ? g_filmSkipText.w * ts : 0, sh = g_filmSkipText.tex ? g_filmSkipText.h * ts : 0;
+				const ImVec2 c{ (size.x + sw) / 2 + 22 * k, size.y - 30 * k };
 				if (g_filmSkipText.tex) {
-					const float w = g_filmSkipText.w * ts, h = g_filmSkipText.h * ts;
-					fg->AddImage(tid(g_filmSkipText.tex), { c.x - 28 * k - w, c.y - h / 2 }, { c.x - 28 * k, c.y + h / 2 }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(200 * ha)));
+					fg->AddImage(tid(g_filmSkipText.tex), { c.x - 22 * k - sw, c.y - sh / 2 }, { c.x - 22 * k, c.y + sh / 2 }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(200 * ha)));
 				}
 				fg->AddCircle(c, 12 * k, IM_COL32(34, 24, 18, static_cast<int>(130 * ha)), 32, 2.0f * k);
 				if (g_filmSkip > 0) {

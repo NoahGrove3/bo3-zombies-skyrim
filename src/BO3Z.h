@@ -65,6 +65,7 @@ namespace bo3z
 		void Guard();           // every tick: puts the mod's values back if something wiped them (see Forms.cpp)
 		void ForgetSnapshot();  // a load or the main menu: the next values are a different game's
 		void OnWorldReady();
+		void InstallCoSave();  // SKSE serialization: the values live in the co-save
 		inline constexpr int kFlagInit = 0, kFlagReserveV2 = 4, kFlagStarted = 5, kFlagMoved = 11, kPerkShift = 14, kFlagPerksV2 = 23;  // bits: init | crew 1-3 | (old perks 4-10) | moved 11 | slot 12-13 | perks 14-22 | v2 23
 	}
 

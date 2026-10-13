@@ -309,16 +309,96 @@ namespace bo3z
 
 	namespace Save
 	{
+		// The mod's save lives in SKSE's co-save beside each save (record 'VALS': ten numbers). It used to live in ten of
+		// the player's spare actor values, but Survival Mode's own scripts use four of them (Variable02-04, 09): every
+		// load it zeroed them and took the old "Variable04" (our flags) off the player's health, killing a new character
+		// a few seconds into the game. Old saves are read from those actor values once, which are then cleared.
+		namespace
+		{
+			constexpr int kSavedAVs[] = { gen::kAV_slot0, gen::kAV_slot1, gen::kAV_slot2, gen::kAV_flags, gen::kAV_box, gen::kAV_round, gen::kAV_points,
+				gen::kAV_reserve0, gen::kAV_reserve1, gen::kAV_reserve2 };
+			std::array<int, std::size(kSavedAVs)> g_val{};
+			bool                                  g_coSave = false;  // SKSE's serialization is ours (else: the old actor values)
+			constexpr std::uint32_t               kRecord = 'VALS', kRecordVersion = 1;
+
+			int Index(int a_av)
+			{
+				for (std::size_t i = 0; i < std::size(kSavedAVs); ++i) {
+					if (kSavedAVs[i] == a_av) {
+						return static_cast<int>(i);
+					}
+				}
+				return -1;
+			}
+			float ReadAV(int a_av)
+			{
+				auto* p = RE::PlayerCharacter::GetSingleton();
+				return p ? p->AsActorValueOwner()->GetActorValue(static_cast<RE::ActorValue>(a_av)) : 0.0f;
+			}
+			void WriteAV(int a_av, float a_value)
+			{
+				if (auto* p = RE::PlayerCharacter::GetSingleton()) {
+					p->AsActorValueOwner()->SetActorValue(static_cast<RE::ActorValue>(a_av), a_value);
+				}
+			}
+			void Migrate()  // an older save: its values are in the actor values; take them, then clear them
+			{
+				for (std::size_t i = 0; i < std::size(kSavedAVs); ++i) {
+					g_val[i] = static_cast<int>(std::lround(ReadAV(kSavedAVs[i])));
+					WriteAV(kSavedAVs[i], 0.0f);
+				}
+				logger::info("save: moved the mod's values from actor values into the co-save (flags {:06X}, {} points)", g_val[3], g_val[6]);
+			}
+			void OnSave(SKSE::SerializationInterface* a_s)
+			{
+				if (a_s->OpenRecord(kRecord, kRecordVersion)) {
+					a_s->WriteRecordData(g_val.data(), static_cast<std::uint32_t>(sizeof(int) * g_val.size()));
+				}
+			}
+			void OnLoad(SKSE::SerializationInterface* a_s)
+			{
+				bool          found = false;
+				std::uint32_t type = 0, version = 0, length = 0;
+				while (a_s->GetNextRecordInfo(type, version, length)) {
+					if (type == kRecord && length == sizeof(int) * g_val.size()) {
+						found = a_s->ReadRecordData(g_val.data(), length) == length;
+					}
+				}
+				if (found) {
+					logger::info("save: values loaded from the co-save (flags {:06X}, {} points)", g_val[3], g_val[6]);
+				} else {
+					Migrate();
+				}
+			}
+			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0); }
+		}
+
+		void InstallCoSave()
+		{
+			if (auto* s = SKSE::GetSerializationInterface()) {
+				s->SetUniqueID('UNDN');
+				s->SetSaveCallback(OnSave);
+				s->SetLoadCallback(OnLoad);
+				s->SetRevertCallback(OnRevert);
+				g_coSave = true;
+				logger::info("save: the mod's values live in the SKSE co-save");
+			}
+		}
+
 		int Get(int a_av)
 		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			return p ? static_cast<int>(std::lround(p->AsActorValueOwner()->GetActorValue(static_cast<RE::ActorValue>(a_av)))) : 0;
+			if (const int i = Index(a_av); g_coSave && i >= 0) {
+				return g_val[i];
+			}
+			return static_cast<int>(std::lround(ReadAV(a_av)));
 		}
 		void Set(int a_av, int a_value)
 		{
-			if (auto* p = RE::PlayerCharacter::GetSingleton()) {
-				p->AsActorValueOwner()->SetActorValue(static_cast<RE::ActorValue>(a_av), static_cast<float>(a_value));
+			if (const int i = Index(a_av); g_coSave && i >= 0) {
+				g_val[i] = a_value;
+				return;
 			}
+			WriteAV(a_av, static_cast<float>(a_value));
 		}
 		static int SlotAV(int a_slot) { return a_slot == 0 ? gen::kAV_slot0 : a_slot == 1 ? gen::kAV_slot1 : gen::kAV_slot2; }
 		int ReserveAV(int a_slot) { return a_slot == 0 ? gen::kAV_reserve0 : a_slot == 1 ? gen::kAV_reserve1 : gen::kAV_reserve2; }
@@ -362,19 +442,18 @@ namespace bo3z
 		int  ActiveSlot() { return (Flags() >> 12) & 0x3; }
 		void SetActiveSlot(int a_slot) { SetFlags((Flags() & ~(0x3 << 12)) | ((a_slot & 0x3) << 12)); }
 
-		// The mod's save lives in ten of the player's spare actor values. A new game's start-up scripts (the race being
-		// set, survival mode) can wipe them a moment after we wrote them, which sent the new character back to Riverwood
-		// in a loop. A snapshot taken every tick puts them back when they all vanish at once without a load in between.
+		// (only without SKSE's co-save) the old actor values: a snapshot puts them back if they vanish at once
 		namespace
 		{
-			constexpr int kSavedAVs[] = { gen::kAV_slot0, gen::kAV_slot1, gen::kAV_slot2, gen::kAV_flags, gen::kAV_box, gen::kAV_round, gen::kAV_points,
-				gen::kAV_reserve0, gen::kAV_reserve1, gen::kAV_reserve2 };
 			int  g_snap[std::size(kSavedAVs)]{};
 			bool g_snapValid = false;
 		}
 		void ForgetSnapshot() { g_snapValid = false; }
 		void Guard()
 		{
+			if (g_coSave) {
+				return;
+			}
 			const int f = Get(gen::kAV_flags);
 			if (g_snapValid && f == 0 && (g_snap[3] & (1 << kFlagInit))) {
 				for (std::size_t i = 0; i < std::size(kSavedAVs); ++i) {
