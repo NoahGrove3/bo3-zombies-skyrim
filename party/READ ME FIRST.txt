@@ -15,12 +15,12 @@ ONE-TIME SETUP (both players)
 EVERY TIME YOU PLAY
  1. Start the game with the "Undying Nights Co-op" desktop shortcut. NOT the Steam Play button, not the
     Skyrim launcher - those start Skyrim without Skyrim Together, so you can't see each other.
- 2. Wait for the Undying Nights main menu (dark, with a CO-OP PARTY panel). If you see the normal Skyrim menu,
+ 2. Wait for the Undying Nights main menu (the floating shrine, with CO-OP PARTY in its list). If you see the normal Skyrim menu,
     the mod didn't load - run the .bat again and check the Troubleshooting list below.
- 3. HOST (Noah): in the main menu's CO-OP PARTY panel click  HOST A PARTY - INVITE FRIENDS.
+ 3. HOST (Noah): in the main menu choose  CO-OP PARTY  (in the list on the right), then  HOST A PARTY.
     The Steam overlay opens - invite your friend.
  4. FRIEND: stay in the Undying Nights main menu and accept the invite there - press Shift+Tab to open the
-    Steam overlay and click Accept - or click  JOIN <Noah's name>  in the CO-OP PARTY panel.
+    Steam overlay and click Accept - or choose  CO-OP PARTY  then  JOIN <Noah's name>.
     Do not accept the invite from Steam while the game is closed: Steam would start plain Skyrim.
  5. Both: load a save or start a new character. Skyrim Together connects you by itself (no address, no
     password to type). Each of you starts where your own save is - meet up in game (Skyrim Together's

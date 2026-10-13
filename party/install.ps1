@@ -130,8 +130,8 @@ if ($Role -eq 'host') {
 Say "`nDone! Shortcut 'Undying Nights Co-op' is on your desktop.`n" Yellow
 Say "Always start the game from that shortcut (not Steam's Play button)." Cyan
 if ($Role -eq 'host') {
-    Say "In the Undying Nights main menu: CO-OP PARTY > HOST A PARTY - INVITE FRIENDS, invite your friend in the Steam overlay." Cyan
+    Say "In the Undying Nights main menu: CO-OP PARTY > HOST A PARTY, then invite your friend in the Steam overlay." Cyan
 } else {
-    Say "Wait in the Undying Nights main menu, then accept the host's invite there (Shift+Tab) or click JOIN <host> in the CO-OP PARTY panel." Cyan
+    Say "Wait in the Undying Nights main menu, then accept the host's invite there (Shift+Tab) or choose CO-OP PARTY > JOIN <host>." Cyan
 }
 Read-Host "`nPress Enter to close"
