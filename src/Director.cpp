@@ -1191,7 +1191,7 @@ namespace bo3z
 					it = g_alive.erase(it);
 				} else if (a->IsDead()) {
 					g_corpses.push_back(it->handle);
-					g_fading.push_back({ it->handle, 1.0f });  // the body crumbles a second after it falls
+					g_fading.push_back({ it->handle, 5.0f });  // the body lies there 5 s, then crumbles
 					g_settle.push_back({ it->handle, 0.0f });
 					PowerUps::MaybeDrop(a->GetPosition());
 					Curse::OnUndeadDeath(a.get());

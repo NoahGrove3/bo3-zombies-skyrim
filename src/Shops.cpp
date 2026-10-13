@@ -55,9 +55,7 @@ namespace bo3z
 		void  Dress(std::size_t a_index, RE::TESObjectREFR* a_main)
 		{
 			const float c = CompactOf(gen::kLocations[a_index].town);
-			if (g_dressed[a_index]) {
-				return;
-			}
+			// (run on every scan: a piece that went missing - or was left disabled by an older stand - is put back)
 			g_dressed[a_index] = true;
 			const int obj = gen::kLocations[a_index].object;
 			for (const auto& d : gen::kDress) {
@@ -71,7 +69,7 @@ namespace bo3z
 				const auto want = Local(a_main, d.x * c, d.y * c, d.z);
 				RE::TESObjectREFR* found = nullptr;
 				RE::TES::GetSingleton()->ForEachReferenceInRange(a_main, 400.0f, [&](RE::TESObjectREFR* r) {
-					if (r && r->GetBaseObject() == base && !r->IsDeleted() && r->GetPosition().GetDistance(want) < 80.0f) {
+					if (r && r->GetBaseObject() == base && !r->IsDeleted() && !r->IsDisabled() && r->GetPosition().GetDistance(want) < 80.0f) {
 						found = r;
 						return RE::BSContainer::ForEachResult::kStop;
 					}
@@ -90,7 +88,10 @@ namespace bo3z
 					found = ref.get();
 				}
 				if (d.spin != 0) {
-					g_spinners.push_back({ found->CreateRefHandle(), d.spin });
+					const auto h = found->CreateRefHandle();
+					if (std::none_of(g_spinners.begin(), g_spinners.end(), [&](const Spinner& s) { return s.ref == h; })) {
+						g_spinners.push_back({ h, d.spin });
+					}
 				}
 			}
 		}
@@ -738,6 +739,10 @@ namespace bo3z
 		{
 			const auto& loc = gen::kLocations[a_index];
 			if (auto ref = g_placed[a_index].get(); ref && !ref->IsDeleted()) {
+				static int n = 0;
+				if (++n % 8 == 0 && ref->Is3DLoaded()) {
+					Dress(a_index, ref.get());  // now and then: the crystal and the rocks are still there (put back if not)
+				}
 				return;
 			}
 			const auto& plan = g_towns[loc.town];
