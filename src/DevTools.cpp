@@ -167,6 +167,10 @@ namespace bo3z
 				std::string mode;
 				in >> mode;
 				Gun::DevCast(mode);
+			} else if (cmd == "shrine") {  // shrine <0 call|1 reforge|2 bless|3 relic|4 leave>
+				int a = 0;
+				in >> a;
+				Shops::DevAct(a);
 			} else if (cmd == "points") {
 				int n = 0;
 				in >> n;

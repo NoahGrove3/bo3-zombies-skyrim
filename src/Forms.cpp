@@ -354,6 +354,10 @@ namespace bo3z
 				if (a_s->OpenRecord(kRecord, kRecordVersion)) {
 					a_s->WriteRecordData(g_val.data(), static_cast<std::uint32_t>(sizeof(int) * g_val.size()));
 				}
+				const auto lv = Arcana::Levels();
+				if (a_s->OpenRecord('SPLV', 1)) {
+					a_s->WriteRecordData(lv.data(), static_cast<std::uint32_t>(lv.size()));
+				}
 			}
 			void OnLoad(SKSE::SerializationInterface* a_s)
 			{
@@ -362,6 +366,10 @@ namespace bo3z
 				while (a_s->GetNextRecordInfo(type, version, length)) {
 					if (type == kRecord && length == sizeof(int) * g_val.size()) {
 						found = a_s->ReadRecordData(g_val.data(), length) == length;
+					} else if (type == 'SPLV') {
+						std::vector<std::uint8_t> lv(length);
+						a_s->ReadRecordData(lv.data(), length);
+						Arcana::SetLevels(lv);
 					}
 				}
 				if (found) {
@@ -370,7 +378,7 @@ namespace bo3z
 					Migrate();
 				}
 			}
-			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0); }
+			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), Arcana::SetLevels({}); }
 		}
 
 		void InstallCoSave()

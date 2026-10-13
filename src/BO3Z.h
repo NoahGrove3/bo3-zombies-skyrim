@@ -237,6 +237,10 @@ namespace bo3z
 		std::string_view   ElementName(int a_element);
 		int                Elements();
 		std::array<int, 2> Hands();                      // the Coffer spell in each hand (0 left, 1 right; -1 none)
+		int                Level(int a_index);           // reforged 0..gen::kForgeMax
+		void               SetLevel(int a_index, int a_level);
+		std::vector<std::uint8_t> Levels();               // for the co-save
+		void               SetLevels(const std::vector<std::uint8_t>& a_levels);
 	}
 
 	// The player's settings (UndyingNights.ini [Settings]; the panel in the System menu)
@@ -337,6 +341,7 @@ namespace bo3z
 		void Reset();
 		void OnActivate(RE::TESObjectREFR* a_ref);
 		bool OnButton(const RE::ButtonEvent* a_event);  // the shrine menu's keys (true = used)
+		void DevAct(int a_action);
 		bool MenuEats(RE::InputEvent* a_event);          // Skyrim's own handlers must not see this key (the shrine menu has it)
 		std::string BoxTown();
 		bool        StandFrame(int a_town, RE::NiPoint3& a_center, float& a_yaw, RE::TESWorldSpace*& a_world);  // true: the station is placed

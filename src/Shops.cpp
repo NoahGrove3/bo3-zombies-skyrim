@@ -1487,6 +1487,18 @@ namespace bo3z
 			return false;
 		}
 
+		// dev: press one of the shrine's actions (0 call, 1 reforge, 2 bless, 3 relic, 4 leave) as its key would
+		void DevAct(int a_action)
+		{
+			static constexpr std::uint32_t kCodes[] = { 0x02, 0x03, 0x04, 0x05, 0x0E };
+			if (a_action < 0 || a_action > 4) {
+				return;
+			}
+			auto* ev = RE::ButtonEvent::Create(RE::INPUT_DEVICE::kKeyboard, "", kCodes[a_action], 1.0f, 0.0f);
+			logger::info("dev: shrine action {} -> {}", a_action, OnButton(ev) ? "taken" : "shrine not open");
+			RE::free(ev);
+		}
+
 		void Tick(float a_delta)
 		{
 			if (g_menu) {

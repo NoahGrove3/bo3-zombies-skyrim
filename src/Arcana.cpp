@@ -36,6 +36,10 @@ namespace bo3z::Arcana
 			}
 			++g_found;
 			g_index[sp->GetFormID()] = static_cast<int>(i);
+			g_baseMag[i].clear();
+			for (auto* e : sp->effects) {
+				g_baseMag[i].push_back(e ? e->effectItem.magnitude : 0.0f);
+			}
 			sp->data.costOverride = s.cost;
 			sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
 			if (!s.concentration && sp->data.castingType == RE::MagicSystem::CastingType::kFireAndForget) {
@@ -176,5 +180,23 @@ namespace bo3z::Arcana
 		out[0] = IndexOf(p->GetEquippedObject(true));
 		out[1] = IndexOf(p->GetEquippedObject(false));
 		return out;
+	}
+
+	int Level(int a_index) { return a_index >= 0 && a_index < static_cast<int>(g_level.size()) ? g_level[a_index] : 0; }
+	void SetLevel(int a_index, int a_level)
+	{
+		if (a_index < 0 || a_index >= static_cast<int>(g_level.size())) {
+			return;
+		}
+		g_level[a_index] = static_cast<std::uint8_t>(std::clamp(a_level, 0, gen::kForgeMax));
+		Apply(a_index);
+	}
+	std::vector<std::uint8_t> Levels() { return { g_level.begin(), g_level.end() }; }
+	void SetLevels(const std::vector<std::uint8_t>& a_levels)
+	{
+		for (std::size_t i = 0; i < g_level.size(); ++i) {
+			g_level[i] = i < a_levels.size() ? static_cast<std::uint8_t>(std::min<int>(a_levels[i], gen::kForgeMax)) : 0;
+			Apply(static_cast<int>(i));
+		}
 	}
 }

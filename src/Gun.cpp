@@ -2020,8 +2020,25 @@ namespace bo3z
 		{
 			const int gun = CurrentGun(), slot = SlotOf(gun);
 			if (gun < 0 || slot < 0) {
-				Hud::Banner("Hold the tome you want reforged", 2.5f);
-				return false;
+				// a Coffer spell in hand (the right first): reforged, it strikes harder and costs less
+				const auto hands = Arcana::Hands();
+				const int  sp = hands[1] >= 0 ? hands[1] : hands[0];
+				if (sp < 0) {
+					Hud::Banner("Hold the spell you want reforged", 2.5f);
+					return false;
+				}
+				const int lv = Arcana::Level(sp);
+				if (lv >= gen::kForgeMax) {
+					Hud::Banner(std::string(Arcana::Name(sp)) + " cannot hold more power", 2.5f);
+					return false;
+				}
+				if (!Points::Spend(gen::kForgeCost[lv])) {
+					return false;
+				}
+				Arcana::SetLevel(sp, lv + 1);
+				logger::info("forge: {} -> level {}", Arcana::Name(sp), lv + 1);
+				Hud::Banner(std::string(Arcana::Name(sp)) + " reforged  " + std::string(lv + 1, '|') + "  (+" + std::to_string(static_cast<int>(gen::kForgeStep * 100 * (lv + 1))) + "% power, -" + std::to_string(10 * (lv + 1)) + "% magicka)", 4.0f);
+				return true;
 			}
 			auto s = Save::GetSlot(slot);
 			if (s.level >= gen::kForgeMax) {

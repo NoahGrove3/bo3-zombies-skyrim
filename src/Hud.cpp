@@ -960,13 +960,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// [2] reforge the spell in hand
 				{
 					const int  act = s.activeSlot >= 0 && s.activeSlot < s.slotCount ? s.activeSlot : -1;
-					const int  g = act >= 0 ? s.slotGun[act] : -1;
-					const int  lvl = act >= 0 ? std::clamp(s.slotLevel[act], 0, gen::kForgeMax) : 0;
+					const int  gw = act >= 0 ? s.slotGun[act] : -1;
+					const int  sp = gw >= 0 ? -1 : (s.handSpell[1] >= 0 ? s.handSpell[1] : s.handSpell[0]);  // else a Coffer spell in hand
+					const int  g = gw >= 0 ? gw : sp >= 0 ? Arcana::kIdBase + sp : -1;
+					const int  lvl = gw >= 0 ? std::clamp(s.slotLevel[act], 0, gen::kForgeMax) : sp >= 0 ? Arcana::Level(sp) : 0;
 					const bool can = g >= 0 && lvl < gen::kForgeMax;
 					keyCap({ L, y + 2 * k }, "2", can);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "REFORGE");
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235),
-						g < 0 ? "Hold a spell to reforge it" : std::string(gen::kGuns[g].label) + (lvl >= gen::kForgeMax ? "  -  ascended" : "  -  more power, and its signature grows"));
+						g < 0 ? "Hold a spell to reforge it" : ArmsName(g) + (lvl >= gen::kForgeMax ? "  -  ascended" : "  -  more power, less magicka"));
 					for (int q = 0; q < gen::kForgeMax; ++q) {  // the forge marks
 						const ImVec2 pc{ L + 150 * k + q * 18 * k, y + 14 * k };
 						dl->AddQuadFilled({ pc.x, pc.y - 6 * k }, { pc.x + 5 * k, pc.y }, { pc.x, pc.y + 6 * k }, { pc.x - 5 * k, pc.y }, q < lvl ? spellCol(g, 1.0f) : IM_COL32(60, 52, 46, 220));
