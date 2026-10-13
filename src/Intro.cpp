@@ -104,7 +104,7 @@ namespace bo3z
 						return;
 					}
 					g_moved = true;
-					Hud::IntroVeil(14.0f);
+					Hud::IntroVeil(8.0f);
 					if (auto* marker = Forms::RiverwoodMarker()) {
 						player->MoveTo(marker);
 						logger::info("intro: moved the new character to Riverwood");

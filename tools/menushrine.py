@@ -213,17 +213,32 @@ def normals(tris):
 
 
 def crystal_mesh():
-    tri = []
-    h_top, h_bot, r = 44, 38, 21
-    mid = [(r * math.cos(2 * math.pi * k / 8 + 0.2), r * math.sin(2 * math.pi * k / 8 + 0.2), 0) for k in range(8)]
-    for k in range(8):
-        a, b = mid[k], mid[(k + 1) % 8]
-        tri.append([a, b, (0, 0, h_top)])
-        tri.append([b, a, (0, 0, -h_bot)])
-    for ang, hgt in ((0.0, 30), (2.1, 24), (4.2, 27)):
-        bx, by = math.cos(ang) * 9, math.sin(ang) * 9
-        base = [(bx + 5 * math.cos(2 * math.pi * j / 4), by + 5 * math.sin(2 * math.pi * j / 4), h_top * 0.55) for j in range(4)]
-        tip = (bx * 1.6, by * 1.6, h_top * 0.55 + hgt)
+    """the shrine's heart: a faceted orb (icosphere, 320 facets) crowned with a small star of light"""
+    t = (1 + 5 ** 0.5) / 2
+    V = [(-1, t, 0), (1, t, 0), (-1, -t, 0), (1, -t, 0), (0, -1, t), (0, 1, t), (0, -1, -t), (0, 1, -t), (t, 0, -1), (t, 0, 1), (-t, 0, -1), (-t, 0, 1)]
+    V = [np.array(v, float) / np.linalg.norm(v) for v in V]
+    F = [(0, 11, 5), (0, 5, 1), (0, 1, 7), (0, 7, 10), (0, 10, 11), (1, 5, 9), (5, 11, 4), (11, 10, 2), (10, 7, 6), (7, 1, 8),
+         (3, 9, 4), (3, 4, 2), (3, 2, 6), (3, 6, 8), (3, 8, 9), (4, 9, 5), (2, 4, 11), (6, 2, 10), (8, 6, 7), (9, 8, 1)]
+    for _ in range(2):
+        cache = {}
+        def mid(i, j):
+            k = (min(i, j), max(i, j))
+            if k not in cache:
+                m = V[i] + V[j]
+                V.append(m / np.linalg.norm(m))
+                cache[k] = len(V) - 1
+            return cache[k]
+        F2 = []
+        for a_, b_, c_ in F:
+            ab, bc, ca = mid(a_, b_), mid(b_, c_), mid(c_, a_)
+            F2 += [(a_, ab, ca), (b_, bc, ab), (c_, ca, bc), (ab, bc, ca)]
+        F = F2
+    R = 24.0
+    tri = [[tuple(V[i] * R) for i in f] for f in F]
+    for ang, hgt in ((0.0, 22), (2.1, 16), (4.2, 18)):
+        bx, by = math.cos(ang) * 5, math.sin(ang) * 5
+        base = [(bx + 3.5 * math.cos(2 * math.pi * j / 4), by + 3.5 * math.sin(2 * math.pi * j / 4), R - 3) for j in range(4)]
+        tip = (bx * 1.4, by * 1.4, R - 3 + hgt)
         for j in range(4):
             tri.append([base[j], base[(j + 1) % 4], tip])
     return np.array(tri, np.float64)
@@ -244,37 +259,37 @@ def crystal_sheet(frames=24, fw=448, fh=640):
         nv = view(n)
         lam = np.clip(-(nv[:, 0] * LIGHT[0] + nv[:, 1] * LIGHT[1]) * 0.7 + 0.3 - nv[:, 2] * 0.4, 0, 1)
         facing = np.clip(-nv[:, 2], 0, 1)
+        cen = view(t.mean(1))
+        hue = np.arctan2(t.mean(1)[:, 1], t.mean(1)[:, 0]) + f / frames * 6.283  # a prismatic sheen that turns with it
         col = np.zeros((len(t), 4))
-        col[:, 0] = 70 + 150 * lam ** 1.5 + 40 * facing
-        col[:, 1] = 150 + 95 * lam + 10 * facing
-        col[:, 2] = 235 + 20 * lam
-        col[:, 3] = 228
+        col[:, 0] = 120 + 100 * facing ** 2 + 35 * np.sin(hue * 2) * (1 - facing)
+        col[:, 1] = 170 + 80 * facing ** 2 + 25 * np.sin(hue * 2 + 2.1) * (1 - facing)
+        col[:, 2] = 240 + 15 * lam
+        col[:, 3] = 238
         out = np.zeros((len(t), 4))
-        out[:, :3] = np.clip(col[:, :3] + 60, 0, 255)
-        out[:, 3] = 255
-        im = render(t, col, (fw, fh), 5.3, (fw / 2, fh * 0.56), outline=out)
+        im = render(t, col, (fw, fh), 5.3, (fw / 2, fh * 0.56))  # (no facet lines: a gem's cut, not a net)
         # light inside it: a soft core
         a = np.asarray(im, np.float32)
-        core = maskdraw(lambda d: d.ellipse([fw / 2 - 44, fh * 0.56 - 100, fw / 2 + 44, fh * 0.56 + 66], fill=255), fw, fh)
-        core = blur(core, 18) * (a[..., 3] / 255)
-        a[..., :3] = np.clip(a[..., :3] + core[..., None] * np.array([120, 120, 80]), 0, 255)
+        core = maskdraw(lambda d: d.ellipse([fw / 2 - 62, fh * 0.56 - 62, fw / 2 + 62, fh * 0.56 + 62], fill=255), fw, fh)
+        core = blur(core, 34) * (a[..., 3] / 255)
+        a[..., :3] = np.clip(a[..., :3] + core[..., None] * np.array([150, 140, 110]), 0, 255)
         im = Image.fromarray(a.astype(np.uint8), 'RGBA')
         sheet.paste(im, ((f % 6) * fw, (f // 6) * fh))
     sheet.save(OUT / 'menu_crystal.png', optimize=True)
 
 
 def shard_mesh(L, seed):
+    """the same rocks as the shrine in the game (tools/shrine.py rock): long flat broken shards, closed hulls"""
     rng = np.random.default_rng(seed)
     pts = []
-    for _ in range(26):
+    for _ in range(48):
         u = rng.uniform(-1, 1)
         th = rng.uniform(0, 2 * math.pi)
-        taper = 1 - abs(u) ** 1.6
-        pts.append((math.cos(th) * L * 0.2 * (0.4 + taper) * rng.uniform(0.7, 1.1), math.sin(th) * L * 0.12 * (0.4 + taper) * rng.uniform(0.7, 1.1), u * L * 0.5))
+        taper = 1 - abs(u) ** 1.8 * 0.55
+        pts.append((math.cos(th) * L * 0.2 * taper * rng.uniform(0.75, 1.1), math.sin(th) * L * 0.09 * taper * rng.uniform(0.7, 1.1), u * L * 0.5))
     pts = np.array(pts)
     hull = ConvexHull(pts)
     tris = pts[hull.simplices]
-    # outward winding
     c = pts.mean(0)
     n = normals(tris)
     flip = ((tris.mean(1) - c) * n).sum(1) < 0
@@ -302,24 +317,38 @@ def shards():
         col[:, 2] = (40 + 100 * lam ** 1.3) * jit
         col[:, 3] = 255
         out_ = np.clip(col * 1.12, 0, 255)
-        SH = 2.3  # the rocks' scale on the painting
+        SH = 2.9  # the rocks' scale on the painting
         size = int(L * SH * 1.25) + 30
         im = render(t, col, (size, size), SH, (size / 2, size / 2), outline=out_)
         a = np.asarray(im, np.float32)
         m = a[..., 3] / 255
-        # blue veins of the crystal's light running through the rock
+        # the Dirge's runes carved down the rock, glowing blue in their grooves, and a crack or two of the same light
         vm = Image.new('L', (size, size), 0)
         vd = ImageDraw.Draw(vm)
-        for v in range(3):
-            x, y = size / 2 + rng.uniform(-size * 0.15, size * 0.15), size / 2 + rng.uniform(-size * 0.3, size * 0.3)
-            ang = rng.uniform(0, 2 * math.pi)
-            pts = [(x, y)]
-            for _ in range(7):
-                ang += rng.uniform(-0.8, 0.8)
-                x += math.cos(ang) * size * 0.06
-                y += math.sin(ang) * size * 0.06
-                pts.append((x, y))
-            vd.line(pts, fill=255, width=2)
+        strokes = [[(0, -1, 0, 1), (0, -0.3, 0.6, -0.9)], [(-0.5, 1, 0, -1), (0.5, 1, 0, -1), (-0.3, 0.3, 0.3, 0.3)], [(0, -1, 0, 1), (-0.6, 0, 0.6, 0)],
+                   [(-0.6, -1, 0.6, 1), (0.6, -1, -0.6, 1)], [(0, -1, 0, 1), (0, 0.1, 0.6, 0.9)], [(-0.6, -0.8, 0.6, -0.8), (0, -0.8, 0, 1)],
+                   [(0, -1, 0.6, 0), (0.6, 0, 0, 1), (0, 1, -0.6, 0), (-0.6, 0, 0, -1)]]
+        ys = np.where(m.max(1) > 0.5)[0]
+        if len(ys):
+            y0, y1 = ys.min(), ys.max()
+            g = size * 0.035
+            for k in range(int((y1 - y0) / (g * 3.2)) - 1):
+                cy = y0 + g * 2.2 + k * g * 3.2
+                row = np.where(m[int(min(cy, size - 1))] > 0.5)[0]
+                if len(row) < g * 3:
+                    continue
+                cx = (row.min() + row.max()) / 2
+                for x0, yA, x1, yB in strokes[(k + i) % len(strokes)]:
+                    vd.line([(cx + x0 * g, cy + yA * g * 1.3), (cx + x1 * g, cy + yB * g * 1.3)], fill=255, width=max(2, int(g * 0.28)))
+        x, y = size / 2 + rng.uniform(-size * 0.1, size * 0.1), size / 2
+        ang = rng.uniform(0, 2 * math.pi)
+        pts = [(x, y)]
+        for _ in range(6):
+            ang += rng.uniform(-0.8, 0.8)
+            x += math.cos(ang) * size * 0.05
+            y += math.sin(ang) * size * 0.05
+            pts.append((x, y))
+        vd.line(pts, fill=160, width=1)
         vein = np.asarray(vm, np.float32) / 255 * (blur(m, 3) > 0.6)
         vglow = blur(vein, 4)
         a[..., :3] = np.clip(a[..., :3] * (1 - vein[..., None] * 0.8) + vein[..., None] * np.array([150, 220, 255]) + vglow[..., None] * np.array([40, 90, 160]), 0, 255)

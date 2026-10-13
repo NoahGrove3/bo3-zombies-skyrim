@@ -1653,7 +1653,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					{ 104, 1.4f, 160, 0.16f, 8, 2.1f, 0.9f, 0.12f }, { 124, 2.1f, 125, 0.16f, 12, 0.7f, -0.8f, 0.07f }, { 110, 2.8f, 95, 0.16f, 10, 2.9f, 0.2f, -0.11f },
 					{ 116, 3.5f, 150, 0.16f, 9, 1.8f, 1.1f, 0.09f }, { 106, 4.2f, 120, 0.16f, 11, 0.4f, -0.2f, -0.06f }, { 92, 4.9f, 165, 0.16f, 7, 2.5f, 0.6f, 0.14f },
 					{ 98, 5.6f, 90, 0.16f, 10, 1.1f, -1.0f, -0.13f } };
-				static constexpr float kRockPx[9] = { 375, 418, 346, 432, 389, 369, 351, 277, 306 };
+				static constexpr float kRockPx[9] = { 465, 519, 428, 537, 483, 457, 436, 341, 378 };
 				struct Placed { int i; ImVec2 p; float depth, scale; };
 				std::array<Placed, 9> placed{};
 				for (int i = 0; i < 9; ++i) {
@@ -2834,6 +2834,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			g_outro = true, g_veil = 1.0f;
 			g_saveAfterFilm = true;
+			g_holdUntilMs = 0;  // (the long hold was for the film: without it, black lasted 15-20 s)
 			g_outroStart = g_outroBusy = std::chrono::steady_clock::now();
 			SKSE::GetTaskInterface()->AddTask([] {
 				if (auto* cam = RE::PlayerCamera::GetSingleton()) {

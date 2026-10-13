@@ -62,7 +62,7 @@ namespace bo3z
 					auto* cal = RE::Calendar::GetSingleton();
 					const float days = cal && cal->gameDaysPassed ? cal->gameDaysPassed->value : 99.0f;
 					if (pl && pl->GetLevel() <= 1 && days < 2.0f) {
-						Hud::IntroVeil(40.0f, true);
+						Hud::IntroVeil(15.0f, true);  // (a cap: the move to Riverwood ends it sooner)
 						logger::info("intro: character made: black until the film");
 					}
 				}

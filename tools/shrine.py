@@ -104,7 +104,7 @@ def rock(mat, cx, cy, cz, yaw, tilt, L, seed):
         return (cx + xt * math.cos(yaw) - y * math.sin(yaw), cy + xt * math.sin(yaw) + y * math.cos(yaw), cz + zt)
     for t in tris:
         V = [place(v) for v in t]
-        UV = [(0.5 + v[0] / L, 0.5 + v[1] / (L * 0.4)) for v in t]
+        UV = [(0.5 + v[0] / L, 0.5 + (v[1] + v[2]) / (L * 0.45)) for v in t]
         S.add(mat, V, UV, [(0, 1, 2)])
     # veins: thin glowing strips over the broad faces (both sides), following the rock's length
     for side in (1, -1):
@@ -134,41 +134,116 @@ def shards():
         rock('shard', math.cos(a) * (40 + i * 5), math.sin(a) * (40 + i * 5), -20 + i * 12, a, i * 0.5, 16 + (i % 3) * 5, seed=60 + i)
 
 
+def icosphere(r, sub):
+    t = (1 + 5 ** 0.5) / 2
+    V = [(-1, t, 0), (1, t, 0), (-1, -t, 0), (1, -t, 0), (0, -1, t), (0, 1, t), (0, -1, -t), (0, 1, -t), (t, 0, -1), (t, 0, 1), (-t, 0, -1), (-t, 0, 1)]
+    V = [np.array(v, float) / np.linalg.norm(v) for v in V]
+    F = [(0, 11, 5), (0, 5, 1), (0, 1, 7), (0, 7, 10), (0, 10, 11), (1, 5, 9), (5, 11, 4), (11, 10, 2), (10, 7, 6), (7, 1, 8),
+         (3, 9, 4), (3, 4, 2), (3, 2, 6), (3, 6, 8), (3, 8, 9), (4, 9, 5), (2, 4, 11), (6, 2, 10), (8, 6, 7), (9, 8, 1)]
+    for _ in range(sub):
+        cache = {}
+        def mid(i, j):
+            k = (min(i, j), max(i, j))
+            if k not in cache:
+                m = V[i] + V[j]
+                V.append(m / np.linalg.norm(m))
+                cache[k] = len(V) - 1
+            return cache[k]
+        F2 = []
+        for a_, b_, c_ in F:
+            ab, bc, ca = mid(a_, b_), mid(b_, c_), mid(c_, a_)
+            F2 += [(a_, ab, ca), (b_, bc, ab), (c_, ca, bc), (ab, bc, ca)]
+        F = F2
+    return [tuple(v * r) for v in V], F
+
+
 def crystal():
-    """a brilliant-cut gem (the picture's heart of light): a table, a crown of star and kite facets, a girdle,
-    and a pavilion of long facets to a point; 16-fold"""
+    """the shrine's heart (Noah's picture): a faceted orb of light, a clear shell of blue round it, and a small star of
+    light crowning it"""
     S.parts.clear()
-    n = 16
-    rg, rt = 26.0, 14.0           # girdle and table radius
-    hc, hp, hg = 12.0, 30.0, 2.5  # crown height, pavilion depth, girdle half-thickness
-    def ring_(r, z, off=0.0, m=n):
-        return [(r * math.cos(2 * math.pi * (k + off) / m), r * math.sin(2 * math.pi * (k + off) / m), z) for k in range(m)]
-    table = ring_(rt, hc, 0.5)
-    star = ring_((rt + rg) / 2 * 1.02, hc * 0.55, 0.0)
-    gtop = ring_(rg, hg)
-    gbot = ring_(rg, -hg)
-    pmid = ring_(rg * 0.45, -hp * 0.62, 0.5)
-    tip = (0.0, 0.0, -hp)
-    top = (0.0, 0.0, hc)
-    for k in range(n):
-        k1 = (k + 1) % n
-        S.add('crystal', [top, table[k], table[k1]], [(0.5, 0.5), (0, 0), (1, 0)], [(0, 1, 2)])                  # table
-        S.add('crystal', [table[k], star[k1], table[k1]], [(0, 0), (0.5, 1), (1, 0)], [(0, 1, 2)])               # star facets
-        S.add('crystal', [table[k], star[k], star[k1]], [(0, 0), (0, 1), (1, 1)], [(0, 1, 2)])
-        S.add('crystal', [star[k], gtop[k], gtop[k1]], [(0, 0), (0, 1), (1, 1)], [(0, 1, 2)])                    # kite / upper girdle
-        S.add('crystal', [star[k], gtop[k1], star[k1]], [(0, 0), (1, 1), (1, 0)], [(0, 1, 2)])
-        S.add('crystal', [gtop[k], gbot[k], gbot[k1]], [(0, 0), (0, 1), (1, 1)], [(0, 1, 2)])                    # girdle
-        S.add('crystal', [gtop[k], gbot[k1], gtop[k1]], [(0, 0), (1, 1), (1, 0)], [(0, 1, 2)])
-        S.add('crystal', [gbot[k], pmid[k], gbot[k1]], [(0, 0), (0.5, 1), (1, 0)], [(0, 1, 2)])                  # lower girdle
-        S.add('crystal', [gbot[k], pmid[(k - 1) % n], pmid[k]], [(0, 0), (0, 1), (1, 1)], [(0, 1, 2)])
-        S.add('crystal', [pmid[k], tip, pmid[k1]], [(0, 0), (0.5, 1), (1, 0)], [(0, 1, 2)])                      # pavilion
-    # a crown of three bright spikes over it (the picture's star of light)
-    for ang, hgt in ((0.0, 26), (2.1, 20), (4.2, 23)):
-        bx, by = math.cos(ang) * 6, math.sin(ang) * 6
-        base = [(bx + 4 * math.cos(2 * math.pi * j / 4), by + 4 * math.sin(2 * math.pi * j / 4), hc - 1) for j in range(4)]
-        tipp = (bx * 1.5, by * 1.5, hc + hgt)
+    V, F = icosphere(22.0, 2)  # 320 facets: the gem's cut catches the light
+    for f in F:
+        tri = [V[i] for i in f]
+        uv = [(0.5 + v[0] / 44.0, 0.5 + v[2] / 44.0) for v in tri]
+        S.add('crystal', tri, uv, [(0, 2, 1)])
+    V2, F2 = icosphere(29.0, 2)  # the shell of light round it
+    for f in F2:
+        tri = [V2[i] for i in f]
+        uv = [(0.5 + v[0] / 58.0, 0.5 + v[2] / 58.0) for v in tri]
+        S.add('halo', tri, uv, [(0, 2, 1)])
+    for ang, hgt in ((0.0, 20), (2.1, 15), (4.2, 17)):  # the star of light on top
+        bx, by = math.cos(ang) * 5, math.sin(ang) * 5
+        base = [(bx + 3.5 * math.cos(2 * math.pi * j / 4), by + 3.5 * math.sin(2 * math.pi * j / 4), 19.0) for j in range(4)]
+        tipp = (bx * 1.4, by * 1.4, 19.0 + hgt)
         for j in range(4):
             S.add('crystal', [base[j], base[(j + 1) % 4], tipp], [(0, 0), (1, 0), (0.5, 1)], [(0, 1, 2)])
+
+
+def tex_orb(n=512):
+    """the orb: white-hot at the heart, ice-blue to the rim, a prismatic sheen across its facets"""
+    yy, xx = np.mgrid[0:n, 0:n].astype(np.float32) / n
+    r = np.hypot(xx - 0.5, yy - 0.5) * 2
+    ang = np.arctan2(yy - 0.5, xx - 0.5)
+    sheen = 0.5 + 0.5 * np.sin(ang * 3 + r * 9)
+    core = np.clip(1.2 - r, 0, 1)
+    rgb = np.dstack([0.55 + 0.45 * core + 0.18 * sheen * (1 - core), 0.78 + 0.22 * core + 0.10 * np.cos(ang * 5) * (1 - core), np.ones_like(r)])
+    return Image.fromarray((np.clip(rgb, 0, 1) * 255).astype(np.uint8), 'RGB')
+
+
+def tex_halo(n=256):
+    yy, xx = np.mgrid[0:n, 0:n].astype(np.float32) / n
+    sw = 0.5 + 0.5 * np.sin((xx * 9 + yy * 5) * 6.283 + np.sin(yy * 12) * 2)
+    a = 0.18 + 0.22 * sw
+    rgb = np.dstack([0.25 + 0.2 * sw, 0.55 + 0.25 * sw, np.ones_like(sw)])
+    return Image.fromarray(np.dstack([(np.clip(rgb, 0, 1) * 255), a * 255]).astype(np.uint8), 'RGBA')
+
+
+def tex_rock(n=1024, seed=5):
+    """the floating rocks: dark slate, cracked and worn, carved with the Dirge's runes that glow blue in their
+    grooves (diffuse, normal and glow maps)"""
+    rng = random.Random(seed)
+    nrng = np.random.default_rng(seed)
+    def fbm(oct, base):
+        out = np.zeros((n, n), np.float32); amp = 1; tot = 0
+        for o in range(oct):
+            g = nrng.random((base * 2 ** o + 1, base * 2 ** o + 1)).astype(np.float32)
+            out += np.asarray(Image.fromarray((g * 255).astype(np.uint8)).resize((n, n), Image.BICUBIC), np.float32) / 255 * amp
+            tot += amp; amp *= 0.55
+        return out / tot
+    h = fbm(7, 4) * 0.55 + fbm(5, 40) * 0.30 + fbm(3, 160) * 0.15  # broad wear, grain and grit
+    # cracks: thin dark lines
+    cr = Image.new('L', (n, n), 0); cd = ImageDraw.Draw(cr)
+    for _ in range(14):
+        x, y = rng.uniform(0, n), rng.uniform(0, n); a = rng.uniform(0, 6.28)
+        pts = [(x, y)]
+        for _ in range(10):
+            a += rng.uniform(-0.6, 0.6); x += math.cos(a) * n * 0.04; y += math.sin(a) * n * 0.04; pts.append((x, y))
+        cd.line(pts, fill=255, width=2)
+    crack = np.asarray(cr.filter(ImageFilter.GaussianBlur(1)), np.float32) / 255
+    # carved runes in bands across the stone
+    gl = Image.new('L', (n, n), 0); gd = ImageDraw.Draw(gl)
+    strokes = [[(0, -1, 0, 1), (0, -0.3, 0.6, -0.9)], [(-0.5, 1, 0, -1), (0.5, 1, 0, -1), (-0.3, 0.3, 0.3, 0.3)], [(0, -1, 0, 1), (-0.6, 0, 0.6, 0)],
+               [(-0.6, -1, 0.6, 1), (0.6, -1, -0.6, 1)], [(0, -1, 0, 1), (0, 0.1, 0.6, 0.9)], [(-0.6, -0.8, 0.6, -0.8), (0, -0.8, 0, 1)],
+               [(-0.5, -1, -0.5, 1), (-0.5, 0, 0.5, -0.6), (-0.5, 0, 0.5, 0.6)], [(0, -1, 0.6, 0), (0.6, 0, 0, 1), (0, 1, -0.6, 0), (-0.6, 0, 0, -1)]]
+    for row in range(3):
+        cy = n * (0.25 + row * 0.25)
+        for col in range(7):
+            cx = n * (0.09 + col * 0.137)
+            sz = n * 0.035
+            for x0, y0, x1, y1 in strokes[rng.randrange(len(strokes))]:
+                gd.line([(cx + x0 * sz, cy + y0 * sz * 1.4), (cx + x1 * sz, cy + y1 * sz * 1.4)], fill=255, width=max(3, n // 170))
+        gd.line([(n * 0.03, cy + n * 0.075), (n * 0.97, cy + n * 0.075)], fill=180, width=max(2, n // 340))  # a carved line under each band
+    glyph = np.asarray(gl.filter(ImageFilter.GaussianBlur(1.2)), np.float32) / 255
+    height = h * 0.8 - crack * 0.5 - glyph * 0.6
+    base = np.array([62, 60, 74], np.float32)
+    rgb = base[None, None] * (0.55 + 0.75 * h[..., None]) * (1 - 0.55 * crack[..., None]) * (1 - 0.5 * glyph[..., None])
+    rgb += np.array([30, 60, 110]) * glyph[..., None] * 0.5
+    gy, gx = np.gradient(height * 6.0)
+    nrm = np.dstack([-gx, -gy, np.ones_like(gx)]); nrm /= np.linalg.norm(nrm, axis=2, keepdims=True)
+    nimg = Image.fromarray(np.dstack([(nrm[..., 0] * 0.5 + 0.5) * 255, (nrm[..., 1] * 0.5 + 0.5) * 255, (nrm[..., 2] * 0.5 + 0.5) * 255, np.full_like(gx, 90)]).astype(np.uint8), 'RGBA')
+    glow = np.clip(glyph * 1.0 + crack * 0.35, 0, 1)
+    gimg = Image.fromarray((np.dstack([0.35 * glow, 0.7 * glow, 1.0 * glow]) * 255).astype(np.uint8), 'RGB')
+    return Image.fromarray(np.clip(rgb, 0, 255).astype(np.uint8), 'RGB'), nimg, gimg
 
 
 def tex_runes(w=1024, h=256):
@@ -238,10 +313,14 @@ def main():
     convert('shrine', [f'collidefrustum {-R} {-R} {R} {R} {TOP} {BOTTOM} {GROW}'], [floor, cobble, trim, rune, runes, pool])
     shards()
     vg = S.save(Image.new('RGB', (32, 32), (130, 200, 255)), 'vein_g.dds')
-    convert('shards', [], [stone('shard', 0.35) + ' doublesided=1', f'mat vein diffuse={rune_d} normal={flat} glow={vg} emit=0.4,0.75,1.0 emitmult=3.0 spec=0.3 doublesided=1'])
+    rkd, rkn, rkg = tex_rock()
+    rock_mat = f'mat shard diffuse={S.save(rkd, "shrock_d.dds")} normal={S.save(rkn, "shrock_n.dds", True)} glow={S.save(rkg, "shrock_g.dds")} emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1'
+    convert('shards', [], [rock_mat, f'mat vein diffuse={rune_d} normal={flat} glow={vg} emit=0.4,0.75,1.0 emitmult=3.0 spec=0.3 doublesided=1'])
     crystal()
-    cd = S.save(tex_crystal(), 'crystal_d.dds')
-    convert('crystal', [], [f'mat crystal diffuse={cd} normal={flat} glow={cd} emit=0.7,0.9,1.0 emitmult=4.0 spec=1.0 gloss=120 doublesided=1'])
+    cd = S.save(tex_orb(), 'orb_d.dds')
+    hd = S.save(tex_halo(), 'orbhalo_d.dds', True)
+    convert('crystal', [], [f'mat crystal diffuse={cd} normal={flat} glow={cd} emit=0.7,0.9,1.0 emitmult=4.0 spec=1.0 gloss=120 doublesided=1',
+                            f'mat halo diffuse={hd} normal={flat} glow={hd} emit=0.3,0.6,1.0 emitmult=2.5 alpha=1 doublesided=1'])
     print('crystal centre at z', CRYSTAL_Z)
 
 

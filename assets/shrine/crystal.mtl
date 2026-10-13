@@ -1,2 +1,4 @@
 newmtl crystal
 Kd 1 1 1
+newmtl halo
+Kd 1 1 1
