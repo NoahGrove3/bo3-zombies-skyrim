@@ -1761,18 +1761,69 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			{
 				RE::GFxMovieView* mv = nullptr;
 				const auto entries = ReadMainList(&mv);
+				// CO-OP PARTY is one more word in the list (under LOAD); pressed, the list turns into the party's own words
+				// (host / invite / join a friend / leave, and BACK), in the same style
+				static bool partyMode = false;
+				static std::vector<Net::FriendGame> friends;
+				static float refresh = 0;
+				const bool coop = Net::Available();
+				if (!coop) {
+					partyMode = false;
+				}
+				if (partyMode && (refresh -= dt) <= 0) {
+					refresh = 2.0f;
+					friends = Net::InLobby() ? std::vector<Net::FriendGame>{} : Net::FriendsInParties();
+				}
+				struct Row { std::string text; bool sel, disabled; int kind, arg; ImU32 accent; };  // kind: 0 Skyrim's (arg = its index), 1 party, 2 host, 3 invite, 4 leave, 5 join (arg = friend), 6 back
+				std::vector<Row> rows;
+				static int partyHover = -1;
+				if (!partyMode) {
+					for (const auto& e : entries) {
+						rows.push_back({ e.text, e.sel, e.disabled, 0, e.index, 0 });
+						std::string up = e.text;
+						std::transform(up.begin(), up.end(), up.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+						if (coop && up == "LOAD") {
+							rows.push_back({ "Co-op Party", false, false, 1, 0, 0 });
+						}
+					}
+					if (coop && !entries.empty() && std::none_of(rows.begin(), rows.end(), [](const Row& r) { return r.kind == 1; })) {
+						rows.push_back({ "Co-op Party", false, false, 1, 0, 0 });
+					}
+				} else {
+					if (!Net::InLobby()) {
+						rows.push_back({ "Host a Party", false, false, 2, 0, 0 });
+						for (std::size_t i = 0; i < friends.size() && i < 4; ++i) {
+							rows.push_back({ "Join " + friends[i].name, false, false, 5, static_cast<int>(i), IM_COL32(120, 200, 255, 255) });
+						}
+					} else if (Net::IsHost()) {
+						rows.push_back({ "Invite Friends", false, false, 3, 0, 0 });
+						rows.push_back({ "Close the Party", false, false, 4, 0, IM_COL32(230, 110, 90, 255) });
+					} else {
+						rows.push_back({ "Leave " + Net::HostName() + "'s Party", false, false, 4, 0, IM_COL32(230, 110, 90, 255) });
+					}
+					rows.push_back({ "Back", false, false, 6, 0, 0 });
+				}
 				static int hoverIdx = -1;
 				static std::vector<float> glow;
-				glow.resize(entries.size(), 0.0f);
+				glow.resize(rows.size(), 0.0f);
 				const float rowH = 54 * k;
 				const float right = size.x - 110 * k;
-				const float top = size.y * 0.60f - rowH * entries.size() * 0.5f;
+				const float top = size.y * 0.60f - rowH * rows.size() * 0.5f;
 				int hovered = -1;
-				for (std::size_t i = 0; i < entries.size(); ++i) {
-					const auto& e = entries[i];
+				if (partyMode) {  // the party's state over its words
+					const std::string st = Net::Status() + (Net::InLobby() ? "   (" + std::to_string(Net::Members() + 1) + " in party)" : "");
+					const float sfs = 18 * k;
+					Txt(fg, g_title, 22 * k, { right - Measure(g_title, 22 * k, "CO-OP PARTY").x, top - 78 * k }, kGold, "CO-OP PARTY", 2 * k, IM_COL32(255, 160, 60, 255));
+					Txt(fg, g_body, sfs, { right - Measure(g_body, sfs, st).x, top - 44 * k }, IM_COL32(200, 194, 180, 230), st);
+					const std::string hint = "Players meet in Skyrim Together; the party shares the nights.";
+					Txt(fg, g_body, 14 * k, { right - Measure(g_body, 14 * k, hint).x, top + rowH * rows.size() + 14 * k }, IM_COL32(160, 154, 140, 200), hint);
+				}
+				for (std::size_t i = 0; i < rows.size(); ++i) {
+					const auto& e = rows[i];
 					const float cy = top + rowH * (i + 0.5f);
 					const float stagger = std::clamp((openT - 0.25f - 0.07f * i) / 0.4f, 0.0f, 1.0f);  // they fade in one after another
-					glow[i] += ((e.sel ? 1.0f : 0.0f) - glow[i]) * std::min(1.0f, dt * 10.0f);
+					const bool  lit = e.kind == 0 ? e.sel : static_cast<int>(i) == partyHover;
+					glow[i] += ((lit ? 1.0f : 0.0f) - glow[i]) * std::min(1.0f, dt * 10.0f);
 					std::string up = e.text;
 					std::transform(up.begin(), up.end(), up.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
 					const float  fs = (27.0f + 4.0f * glow[i]) * k;
@@ -1782,8 +1833,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (over) {
 						hovered = static_cast<int>(i);
 					}
-					const ImU32 tc = e.disabled ? IM_COL32(95, 98, 106, static_cast<int>(190 * stagger)) :
-					                 IM_COL32(static_cast<int>(165 + 90 * glow[i]), static_cast<int>(170 + 80 * glow[i]), static_cast<int>(178 + 62 * glow[i]), static_cast<int>((205 + 50 * glow[i]) * stagger));
+					ImU32 tc = e.disabled ? IM_COL32(95, 98, 106, static_cast<int>(190 * stagger)) :
+					           IM_COL32(static_cast<int>(165 + 90 * glow[i]), static_cast<int>(170 + 80 * glow[i]), static_cast<int>(178 + 62 * glow[i]), static_cast<int>((205 + 50 * glow[i]) * stagger));
+					if (e.accent && !e.disabled) {
+						tc = (e.accent & 0x00FFFFFF) | (static_cast<ImU32>((190 + 65 * glow[i]) * stagger) << 24);
+					}
 					if (glow[i] > 0.02f) {  // the chosen word: a soft glow behind its letters, breathing
 						const float pulse = 0.8f + 0.2f * std::sin(now * 3.0f);
 						Txt(fg, g_title, fs, at, tc, up, 3.0f * k * glow[i], IM_COL32(120, 255, 200, static_cast<int>(255 * pulse * glow[i])));
@@ -1791,13 +1845,24 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						Txt(fg, g_title, fs, at, tc, up);
 					}
 				}
-				if (!entries.empty()) {
-					if (hovered >= 0 && hovered != hoverIdx && !entries[hovered].sel) {
-						PressMainList(mv, entries[hovered].index, false);
+				partyHover = hovered >= 0 && rows[hovered].kind != 0 ? hovered : -1;
+				if (!rows.empty()) {
+					if (hovered >= 0 && hovered != hoverIdx && rows[hovered].kind == 0 && !rows[hovered].sel) {
+						PressMainList(mv, rows[hovered].arg, false);
 					}
 					hoverIdx = hovered;
+					click = click && !Net::OverlayBusy();  // a click that closed the Steam overlay is not ours
 					if (click && hovered >= 0) {
-						PressMainList(mv, entries[hovered].index, true);
+						const auto& r = rows[hovered];
+						switch (r.kind) {
+						case 0: PressMainList(mv, r.arg, true); break;
+						case 1: partyMode = true, refresh = 0; break;
+						case 2: Net::HostLobby(); break;
+						case 3: Net::InviteFriends(); break;
+						case 4: Net::LeaveLobby(); break;
+						case 5: if (r.arg < static_cast<int>(friends.size())) Net::JoinLobby(friends[r.arg].lobby); break;
+						case 6: partyMode = false; break;
+						}
 						g_pressT = now, g_pressY = top + rowH * (hovered + 0.5f);
 					}
 				}
@@ -1807,7 +1872,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float a = 1.0f - pt / 0.35f;
 				fg->AddCircleFilled({ size.x - 110 * k - 80 * k, g_pressY }, 90 * k * (0.6f + 0.4f * (1 - a)), IM_COL32(150, 255, 215, static_cast<int>(40 * a)), 40);
 			}
-			PartyPanel(fg, size, { 40 * k, size.y - 40 * k }, k, click);
 			// the curtain that lifts as the menu opens
 			if (fade < 1.0f) {
 				fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(255 * (1.0f - fade))));
