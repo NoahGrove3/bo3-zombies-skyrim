@@ -2150,16 +2150,27 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// our picture only while the main menu itself is up: any of Skyrim's pop-ups over it (Load, settings, a
 			// question, Creations, credits) shows as Skyrim draws it
 			bool popup = false;
+			std::string popupName;
 			if (uiM) {
 				static const std::array<std::string_view, 6> kQuiet{ "Main Menu", "Cursor Menu", "Fader Menu", "Mist Menu", "HUD Menu", "Kinect Menu" };
 				for (auto& [name, entry] : uiM->menuMap) {
 					if (entry.menu && uiM->IsMenuOpen(name) && std::find(kQuiet.begin(), kQuiet.end(), std::string_view(name.c_str())) == kQuiet.end()) {
 						popup = true;
+						popupName = name.c_str();
 						break;
 					}
 				}
 			}
-			const bool mainMenu = uiM && uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) && !popup;
+			// the Steam overlay (Host a Party's invite window) is not one of Skyrim's pop-ups: our main menu stays drawn under it
+			const bool steamOver = Net::OverlayBusy();
+			{
+				static std::string lastPopup;
+				if (popupName != lastPopup) {
+					logger::info("hud: pop-up over the game '{}'{}", popupName, steamOver ? " (Steam overlay up)" : "");
+					lastPopup = popupName;
+				}
+			}
+			const bool mainMenu = uiM && uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) && (!popup || steamOver);
 			// Skyrim's cursor goes while our menu (with its own cursor) shows, and comes back for everything else
 			{
 				static bool hidden = false;
