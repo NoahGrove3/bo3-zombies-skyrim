@@ -7178,6 +7178,546 @@
       "atten": 0,
       "loop": false,
       "use": "intro narration, scene 9"
+    },
+    {
+      "id": "shoutvoc_ember_1",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_ember_1",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_ember_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_ember_1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "ember shout spoken with 1 word(s)"
+    },
+    {
+      "id": "shoutvoc_ember_2",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_ember_2",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_ember_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_ember_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "ember shout spoken with 2 word(s)"
+    },
+    {
+      "id": "shoutvoc_ember_3",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_ember_3",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_ember_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_ember_3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "ember shout spoken with 3 word(s)"
+    },
+    {
+      "id": "shoutvoc_gale_1",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_gale_1",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_gale_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_gale_1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "gale shout spoken with 1 word(s)"
+    },
+    {
+      "id": "shoutvoc_gale_2",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_gale_2",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_gale_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_gale_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "gale shout spoken with 2 word(s)"
+    },
+    {
+      "id": "shoutvoc_gale_3",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_gale_3",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_gale_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_gale_3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "gale shout spoken with 3 word(s)"
+    },
+    {
+      "id": "shoutvoc_wail_1",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_wail_1",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_wail_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_wail_1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "wail shout spoken with 1 word(s)"
+    },
+    {
+      "id": "shoutvoc_wail_2",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_wail_2",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_wail_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_wail_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "wail shout spoken with 2 word(s)"
+    },
+    {
+      "id": "shoutvoc_wail_3",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_wail_3",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_wail_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_wail_3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "wail shout spoken with 3 word(s)"
+    },
+    {
+      "id": "shoutvoc_rime_1",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_rime_1",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_rime_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_rime_1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "rime shout spoken with 1 word(s)"
+    },
+    {
+      "id": "shoutvoc_rime_2",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_rime_2",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_rime_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_rime_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "rime shout spoken with 2 word(s)"
+    },
+    {
+      "id": "shoutvoc_rime_3",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_rime_3",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_rime_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_rime_3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "rime shout spoken with 3 word(s)"
+    },
+    {
+      "id": "shoutvoc_quake_1",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_quake_1",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_quake_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_quake_1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "quake shout spoken with 1 word(s)"
+    },
+    {
+      "id": "shoutvoc_quake_2",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_quake_2",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_quake_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_quake_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "quake shout spoken with 2 word(s)"
+    },
+    {
+      "id": "shoutvoc_quake_3",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_quake_3",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_quake_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_quake_3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "quake shout spoken with 3 word(s)"
+    },
+    {
+      "id": "shoutvoc_shroud_1",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_shroud_1",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_shroud_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_shroud_1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "shroud shout spoken with 1 word(s)"
+    },
+    {
+      "id": "shoutvoc_shroud_2",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_shroud_2",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_shroud_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_shroud_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "shroud shout spoken with 2 word(s)"
+    },
+    {
+      "id": "shoutvoc_shroud_3",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_shroud_3",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_shroud_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_shroud_3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "shroud shout spoken with 3 word(s)"
+    },
+    {
+      "id": "shoutvoc_toll_1",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_toll_1",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_toll_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_toll_1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "toll shout spoken with 1 word(s)"
+    },
+    {
+      "id": "shoutvoc_toll_2",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_toll_2",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_toll_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_toll_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "toll shout spoken with 2 word(s)"
+    },
+    {
+      "id": "shoutvoc_toll_3",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_toll_3",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_toll_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_toll_3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "toll shout spoken with 3 word(s)"
+    },
+    {
+      "id": "shoutvoc_mire_1",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_mire_1",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_mire_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_mire_1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "mire shout spoken with 1 word(s)"
+    },
+    {
+      "id": "shoutvoc_mire_2",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_mire_2",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_mire_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_mire_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "mire shout spoken with 2 word(s)"
+    },
+    {
+      "id": "shoutvoc_mire_3",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_mire_3",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_mire_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_mire_3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "mire shout spoken with 3 word(s)"
+    },
+    {
+      "id": "shoutvoc_dread_1",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_dread_1",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_dread_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_dread_1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "dread shout spoken with 1 word(s)"
+    },
+    {
+      "id": "shoutvoc_dread_2",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_dread_2",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_dread_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_dread_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "dread shout spoken with 2 word(s)"
+    },
+    {
+      "id": "shoutvoc_dread_3",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_dread_3",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_dread_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_dread_3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "dread shout spoken with 3 word(s)"
+    },
+    {
+      "id": "shoutvoc_shatter_1",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_shatter_1",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_shatter_1.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_shatter_1.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "shatter shout spoken with 1 word(s)"
+    },
+    {
+      "id": "shoutvoc_shatter_2",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_shatter_2",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_shatter_2.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_shatter_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "shatter shout spoken with 2 word(s)"
+    },
+    {
+      "id": "shoutvoc_shatter_3",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shoutvoc_shatter_3",
+      "verify": [],
+      "space": "2d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shoutvoc_shatter_3.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shoutvoc_shatter_3.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "shatter shout spoken with 3 word(s)"
     }
   ]
 }

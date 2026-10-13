@@ -2612,6 +2612,15 @@ namespace bo3z
 				}
 			}
 			Forms::Play(static_cast<gen::Sound>(sh.sound));
+			{  // the Dragonborn's own voice: a roar for each word spoken (one, two or all three)
+				static constexpr std::string_view kVoiced[] = { "ember", "gale", "wail", "rime", "quake", "shroud", "toll", "mire", "dread", "shatter" };
+				for (int v = 0; v < static_cast<int>(std::size(kVoiced)); ++v) {
+					if (kVoiced[v] == sh.id) {
+						const int snd = static_cast<int>(gen::Sound::shoutvoc_ember_1) + v * 3 + std::clamp(L, 1, 3) - 1;
+						Audio::Ui(static_cast<gen::Sound>(snd), 1.0f);
+					}
+				}
+			}
 			Hud::Banner(std::string(L >= 1 ? sh.w1 : "") + (L >= 2 ? std::string(" ") + std::string(sh.w2) : "") + (L >= 3 ? std::string(" ") + std::string(sh.w3) + "!" : ""), 1.6f);
 			logger::info("shout: {} level {}", sh.id, L);
 		}

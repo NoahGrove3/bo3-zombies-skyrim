@@ -212,6 +212,11 @@ S('vo_08', 'vo_08', 0, cat='ui', use='intro narration, scene 8')
 S('vo_09', 'vo_09', 0, cat='ui', use='intro narration, scene 9')
 
 rows = []
+
+# the cities' shouts, voiced: the Dragonborn's own roar for each word count (Airgetlam's shout voices)
+for _sid in ['ember', 'gale', 'wail', 'rime', 'quake', 'shroud', 'toll', 'mire', 'dread', 'shatter']:
+    for _n in (1, 2, 3):
+        S(f'shoutvoc_{_sid}_{_n}', f'shoutvoc_{_sid}_{_n}', 0, use=f'{_sid} shout spoken with {_n} word(s)')
 for id, (clips, shift, space, cat, loop, atten, use) in M.items():
     r = dict(old.get(id, {}))
     r.update(id=id, plugin='BO3Zombies.esp', localId='auto', editorId='UN_' + id, verify=[], space=space, cat=cat,
