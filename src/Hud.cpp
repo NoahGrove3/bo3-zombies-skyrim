@@ -29,6 +29,8 @@ namespace bo3z
 		ID3D11ShaderResourceView* g_frame = nullptr;    // nine-slice panel: black field, iron and bronze border (tools/uiart.py)
 		ID3D11ShaderResourceView* g_divider = nullptr;  // bronze line with a winged diamond
 		std::atomic<int>          g_clicks{ 0 };        // left clicks since the last frame (menus)
+		std::string               g_devPick;            // dev: a main-menu word to press as a click would (menupick)
+		std::mutex                g_devPickLock;
 		// Skyrim's main-menu buttons are kept over our picture: the frame as Skyrim drew it is copied, and in the
 		// buttons' corner only its bright pixels (the words) are laid back on top (a luma key; the cursor is ours).
 		ID3D11Texture2D*          g_frameCopy = nullptr;
@@ -1845,6 +1847,20 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						Txt(fg, g_title, fs, at, tc, up);
 					}
 				}
+				{  // dev: press a word by its text
+					std::scoped_lock dl_(g_devPickLock);
+					if (!g_devPick.empty()) {
+						for (std::size_t i = 0; i < rows.size(); ++i) {
+							std::string up = rows[i].text;
+							std::transform(up.begin(), up.end(), up.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+							if (up.rfind(g_devPick, 0) == 0) {
+								hovered = static_cast<int>(i), click = true;
+							}
+						}
+						logger::info("dev: menupick '{}' -> {}", g_devPick, hovered);
+						g_devPick.clear();
+					}
+				}
 				partyHover = hovered >= 0 && rows[hovered].kind != 0 ? hovered : -1;
 				if (!rows.empty()) {
 					if (hovered >= 0 && hovered != hoverIdx && rows[hovered].kind == 0 && !rows[hovered].sel) {
@@ -2632,6 +2648,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 
 		void OnClick() { ++g_clicks; }
+		void DevMenuPick(const std::string& a_text)
+		{
+			std::scoped_lock l(g_devPickLock);
+			g_devPick = a_text;
+			std::transform(g_devPick.begin(), g_devPick.end(), g_devPick.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+		}
 		void IntroStart() { g_filmReq = true; }
 		bool IntroActive() { return g_filmOn || g_filmReq; }
 		bool IntroBusy()

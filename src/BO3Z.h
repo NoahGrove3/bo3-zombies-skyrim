@@ -459,6 +459,7 @@ namespace bo3z
 		void        Lore(std::string a_title, std::string a_text, float a_seconds = 14.0f);  // a scroll of the Dirge
 		void        Install();
 		void        OnClick();  // a left click (menus: the party panel's buttons)
+		void        DevMenuPick(const std::string& a_text);  // dev: press a main-menu word
 		void        IntroStart();             // the Undying Nights intro film (once, for a new character)
 		bool        IntroActive();
 		bool        IntroBusy();
