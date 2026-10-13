@@ -16,6 +16,10 @@ namespace bo3z
 		{
 			RE::ObjectRefHandle ref;
 			float               degPerSec;
+			float               ang{ 0 };       // turned so far (radians)
+			float               baseZ{ 0 };     // its node's height when first seen
+			bool                based{ false };
+			RE::NiNode*         node{ nullptr };  // (a fresh 3D after a reload is based again)
 		};
 		std::array<bool, gen::kLocations.size()> g_dressed{};
 		std::vector<Spinner>                     g_spinners;
@@ -1522,12 +1526,26 @@ namespace bo3z
 				}
 			}
 			auto rolling = g_show.phase == Show::Charging || g_show.phase == Show::Spinning ? g_show.chest.get() : RE::NiPointer<RE::TESObjectREFR>{};
+			static float clock = 0;
+			clock += a_delta;
 			for (auto& s : g_spinners) {
 				if (auto r = s.ref.get(); r && r->Is3DLoaded()) {
-					// the shrine's heart turns faster while it rolls (the crystal races, the shards whirl)
+					// the shrine's heart turns faster while it rolls (the crystal races, the shards whirl). Statics never move
+					// by their angle while loaded, so their 3D node is turned (and the rocks bob) directly.
 					const float boost = rolling && r->GetPosition().GetDistance(rolling->GetPosition()) < 400.0f ? (g_show.phase == Show::Charging ? 3.0f : 7.0f) : 1.0f;
-					auto a = r->GetAngle();
-					r->SetAngle({ a.x, a.y, a.z + s.degPerSec * boost * RE::NI_PI / 180.0f * a_delta });
+					auto* node = r->Get3D() ? r->Get3D()->AsNode() : nullptr;
+					if (!node) {
+						continue;
+					}
+					if (!s.based || s.node != node) {
+						s.baseZ = node->local.translate.z, s.based = true, s.node = node, s.ang = r->GetAngleZ();
+					}
+					s.ang += s.degPerSec * boost * RE::NI_PI / 180.0f * a_delta;
+					node->local.rotate.SetEulerAnglesXYZ(0.0f, 0.0f, -s.ang);
+					const float ph = static_cast<float>(reinterpret_cast<std::uintptr_t>(node) % 628) * 0.01f;
+					node->local.translate.z = s.baseZ + std::sin(clock * (s.degPerSec > 20.0f ? 1.3f : 0.7f) + ph) * (s.degPerSec > 20.0f ? 4.0f : 9.0f);  // floating
+					RE::NiUpdateData ud;
+					node->Update(ud);
 				}
 			}
 			TickShow(a_delta);
