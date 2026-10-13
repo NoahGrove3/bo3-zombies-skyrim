@@ -17,6 +17,40 @@ namespace bo3z
 			return a_player->GetLevel() <= 1 && days < 2.0f;
 		}
 
+		// Survival Mode stays off in Undying Nights: hunger/cold/fatigue fight the nights' own pacing, and its attribute
+		// penalties (it keeps them in Variable02-04) fought the mod's old save values. When the game has it on (the
+		// Gameplay setting, or a new game's prompt) we switch it off the way its own toggle does.
+		void KeepSurvivalOff()
+		{
+			static auto last = std::chrono::steady_clock::now() - std::chrono::seconds(60);
+			if (std::chrono::steady_clock::now() - last < std::chrono::seconds(5)) {
+				return;
+			}
+			last = std::chrono::steady_clock::now();
+			auto* enabled = RE::TESForm::LookupByEditorID<RE::TESGlobal>("Survival_ModeEnabled");
+			if (!enabled || enabled->value < 0.5f) {
+				return;
+			}
+			static auto lastStop = std::chrono::steady_clock::now() - std::chrono::seconds(60);
+			if (std::chrono::steady_clock::now() - lastStop < std::chrono::seconds(30)) {
+				return;  // the script is still shutting it down
+			}
+			lastStop = std::chrono::steady_clock::now();
+			if (auto* toggle = RE::TESForm::LookupByEditorID<RE::TESGlobal>("Survival_ModeToggle")) {
+				toggle->value = 0.0f;
+			}
+			auto* quest = RE::TESForm::LookupByEditorID<RE::TESQuest>("SurvivalModeMainQuest");
+			auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+			if (!quest || !vm) {
+				logger::warn("intro: survival mode is on but its quest or the script machine is missing");
+				return;
+			}
+			const auto handle = vm->GetObjectHandlePolicy()->GetHandleForObject(quest->GetFormType(), quest);
+			RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+			const bool ok = vm->DispatchMethodCall(handle, "Survival_MainScript", "StopSurvivalMode", RE::MakeFunctionArguments(), none);
+			logger::info("intro: survival mode was on: switched off ({})", ok ? "its StopSurvivalMode runs" : "call failed");
+		}
+
 	}
 
 	namespace Intro
@@ -63,6 +97,7 @@ namespace bo3z
 			if (!player || !intro || !ui || ui->GameIsPaused()) {
 				return;
 			}
+			KeepSurvivalOff();
 			if (!Save::Flag(Save::kFlagMoved) && Forms::IntroDone()) {
 				if (FreshQuickstartGame(player) && !g_moved) {  // (a new game's scripts can wipe our values: never move twice)
 					if (++g_settle < 60) {  // let the skip fragment finish (race menu, choose sides) before moving
