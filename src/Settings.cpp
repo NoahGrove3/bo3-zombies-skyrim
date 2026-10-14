@@ -25,8 +25,8 @@ namespace bo3z::Settings
 			::GetModuleFileNameW(nullptr, exe, MAX_PATH);
 			return std::filesystem::path(exe).parent_path() / "Data";
 		}
-		std::filesystem::path UserIni() { return Data() / "MCM" / "Settings" / "UndyingNights.ini"; }
-		std::filesystem::path DefaultIni() { return Data() / "MCM" / "Config" / "UndyingNights" / "settings.ini"; }
+		std::filesystem::path UserIni() { return Data() / "MCM" / "Settings" / "BO3Zombies.ini"; }
+		std::filesystem::path DefaultIni() { return Data() / "MCM" / "Config" / "BO3Zombies" / "settings.ini"; }
 
 		float Read(const wchar_t* a_section, const wchar_t* a_key, float a_def)
 		{

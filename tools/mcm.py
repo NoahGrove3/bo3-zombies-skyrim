@@ -3,8 +3,8 @@
     python tools/mcm.py <Data dir>
 
 writes
-    MCM/Config/UndyingNights/config.json     the pages (MCM Helper format)
-    MCM/Config/UndyingNights/settings.ini    the defaults (MCM Helper keeps the player's own in MCM/Settings/UndyingNights.ini)
+    MCM/Config/BO3Zombies/config.json     the pages (MCM Helper format)
+    MCM/Config/BO3Zombies/settings.ini    the defaults (MCM Helper keeps the player's own in MCM/Settings/BO3Zombies.ini)
     Scripts/UndyingNights_MCM.pex            the page's script: a bare MCM_ConfigBase (assets/mcm, made by tools/pexrename.py)
     SKSE/Plugins/Experience/Actors/UndyingNights.ini   the night's dead give a quarter of Experience's usual XP
 
@@ -90,10 +90,10 @@ XP = {'zombie': 1, 'hollow2': 1, 'hollow3': 1, 'ash1': 1, 'ash2': 1, 'runner': 1
 
 
 def main():
-    cfg = OUT / 'MCM' / 'Config' / 'UndyingNights'
+    cfg = OUT / 'MCM' / 'Config' / 'BO3Zombies'   # (MCM Helper names a mod's folder after its plugin)
     cfg.mkdir(parents=True, exist_ok=True)
     pages = [{k: v for k, v in p.items() if k != 'position'} for p in PAGES]
-    (cfg / 'config.json').write_text(json.dumps({'modName': 'UndyingNights', 'displayName': 'Undying Nights', 'minMcmVersion': 9,
+    (cfg / 'config.json').write_text(json.dumps({'modName': 'BO3Zombies', 'displayName': 'Undying Nights', 'minMcmVersion': 9,
                                                  'cursorFillMode': 'topToBottom', 'pages': pages}, indent=2))
     ini = []
     for sec, vals in DEFAULTS.items():
