@@ -2521,8 +2521,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			std::string popupName;
 			if (uiM) {
 				static const std::array<std::string_view, 6> kQuiet{ "Main Menu", "Cursor Menu", "Fader Menu", "Mist Menu", "HUD Menu", "Kinect Menu" };
+				// (other mods' overlays - SkyParkour's prompts, a loot window, widgets - are always open or don't take
+				// the game over: only a menu that pauses, is modal or brings the cursor counts as a pop-up)
+				auto takesOver = [](const RE::IMenu& m) {
+					using F = RE::UI_MENU_FLAGS;
+					return !m.menuFlags.any(F::kAlwaysOpen) && m.menuFlags.any(F::kPausesGame, F::kModal, F::kUsesCursor);
+				};
 				for (auto& [name, entry] : uiM->menuMap) {
-					if (entry.menu && uiM->IsMenuOpen(name) && std::find(kQuiet.begin(), kQuiet.end(), std::string_view(name.c_str())) == kQuiet.end()) {
+					if (entry.menu && uiM->IsMenuOpen(name) && std::find(kQuiet.begin(), kQuiet.end(), std::string_view(name.c_str())) == kQuiet.end() && takesOver(*entry.menu)) {
 						popup = true;
 						popupName = name.c_str();
 						break;
