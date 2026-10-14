@@ -1,4 +1,4 @@
-# Undying Nights - Party Pack installer. Installs Undying Nights and Skyrim Together Reborn into Skyrim Special Edition,
+﻿# Undying Nights - Party Pack installer. Installs Undying Nights and Skyrim Together Reborn into Skyrim Special Edition,
 # turns the plugins on, sets your co-op role, and puts a "Undying Nights Co-op" shortcut on the desktop.
 param([ValidateSet('client', 'host')][string]$Role = 'client')
 $ErrorActionPreference = 'Stop'
@@ -84,7 +84,7 @@ $lines = @(); if (Test-Path $plist) { $lines = Get-Content $plist }
 # the graphics plugins, in the host's load order (each needs the ones before it)
 $gfxPlugins = @('RealisticWaterTwo - Resources.esm', 'Lux Orbis - Master plugin.esm', 'Lux - Resources.esp', 'Lux Via.esp', 'SMIM-SE-Merged-All.esp',
     'Lit Road Signs.esp', 'HappyLittleTrees.esp', 'Skoglendi - A Grass Mod.esp', 'RealisticWaterTwo.esp', 'Skyland Watercolor - Slow Green-RW2.esp',
-    'Azurite Weathers III.esp', 'Lux Orbis.esp', 'Lux Via - plugin.esp', 'Lux Via - Blended Roads Bridges Texture sets.esp', 'PAN_NPCs.esp',
+    'Azurite Weathers III.esp', 'Lux Orbis.esp', 'Lux Via - plugin.esp', 'Lux Via - Blended Roads Bridges Texture sets.esp',
     'Lux - Master plugin.esm', 'Lux.esp', 'Lux - No grass in caves patch.esp')
 # the party mods' plugins, in load order (masters first)
 $modPlugins = @('Ordinator - Perks of Skyrim.esp', 'Apocalypse - Magic of Skyrim.esp', 'MysticismMagic.esp', 'MysticOrdinator.esp', 'ForgottenMagic_Redone.esp',
@@ -94,8 +94,13 @@ $modPlugins = @('Ordinator - Perks of Skyrim.esp', 'Apocalypse - Magic of Skyrim
     'Sentinel - Master Plugin.esp', 'SkyUI_SE.esp', 'MCMHelper.esp', 'The Restless Dead.esp', 'mihailesobonecolossus.esp', 'mihailoldgod.esp',
     'mihailgiantfamily.esp', 'mihailfogling.esp', 'mihailhighfantasypack.esp', 'DiverseDragonsCollectionSE.esp', 'GhostLight.esp',
     'Thunderchild - Epic Shout Package.esp', 'Thundering Shouts.esp', 'Sentinel.esp', 'Sentinel - Priests and Acolytes.esp', 'Sentinel - City Guards.esp',
-    'SkyParkour.esp', 'Character Menu SE.esp', 'Phantom Horse.esp')
-$ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'BO3Zombies.esp', 'UndyingNights.esp') + $gfxPlugins + $modPlugins
+    'SkyParkour.esp', 'Character Menu SE.esp', 'Phantom Horse.esp',
+    'ArteFake.esp', 'Beam Walk.esp', 'SpiderAnim.esl', 'Unique Jarl Throne Sitting Animation.esp', 'MikanEyes All in one SE.esp', "Freak's Floral Fields.esp",
+    'Faithful Faces.esp', 'Faithful Faces0.esp', 'FabulousFollowersAIO.esp', "The Wolven Widow - SerketHetyt's Elisif Overhaul.esp",
+    "Evigheden - SerketHetyt's Serana Overhaul.esp")
+# plugins no longer used (an older pack turned them on): kept off
+$retired = @('PAN_NPCs.esp')
+$ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'BO3Zombies.esp', 'UndyingNights.esp') + $gfxPlugins + $modPlugins + $retired
 $keep = $lines | Where-Object { $n = ($_ -replace '^\*', '').Trim(); -not ($ours -contains $n) }
 $mid = @()
 if ($gfxOn -or (Test-Path (Join-Path $data 'Lux Via.esp'))) { $mid = $gfxPlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ } }
