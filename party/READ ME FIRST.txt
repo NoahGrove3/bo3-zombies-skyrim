@@ -38,7 +38,7 @@ THE PARTY MODS (installed for both players - Skyrim Together needs the same plug
  - Menus and play: SkyUI + MCM Helper (every setting under Esc > System > Mod Configuration), Character
    Menu, Experience (XP from kills, a quarter from the night's dead), SkyParkour, Better Jumping, Phantom
    Horse (slightly fast), Sigma first-person magic, Leviathan two-handed high stance.
- - Frameworks: SPID, powerofthree's Papyrus Extender.
+ - Frameworks: SPID, powerofthree's Papyrus Extender, SSE Engine Fixes (both parts).
  - Perks: Ordinator. Spell tomes: BURP Spell Tomes.
  - Animation and movement: Open Animation Replacer, True Directional Movement, Goetia spell casting,
    Dynamic Random Spell Idle, SpellSword Moveset, Leviathan greatsword low stance, TK Dodge (+ sound).
@@ -59,7 +59,7 @@ GOOD TO KNOW
  - Going down: Skyrim Together's death system picks you back up.
  - Noah's look comes from graphics mods, and they are all in this pack (files\Graphics, about 25 GB):
    the installer asks if you want them. Say Y to see the game exactly as the host does, N to keep your own.
-   They are: Azurite Weathers III, Lux Orbis + Lux Via (lighting, roads), Realistic Water Two, Happy Little
+   They are: Community Shaders (+ Subsurface Scattering, Screen Space Shadows, Grass Collision), Azurite Weathers III, Lux Orbis + Lux Via (lighting, roads), Realistic Water Two, Happy Little
    Trees, Skoglendi grass, Skyland AIO, SMIM, Lit Road Signs, Cathedral Armory, Pandorable's NPCs, Lux,
    Riton's Medieval Solitude, Stony AF Markarth, Venerable Nordic Temples.
 
