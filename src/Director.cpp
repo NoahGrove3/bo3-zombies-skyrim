@@ -385,7 +385,7 @@ namespace bo3z
 			if (!kindRow.rig && kindRow.kind == 2) {
 				av->SetActorValue(RE::ActorValue::kDestruction, 10.0f);
 				av->SetActorValue(RE::ActorValue::kConjuration, 10.0f);
-				av->SetActorValue(RE::ActorValue::kMarksman, 15.0f);
+				av->SetActorValue(RE::ActorValue::kArchery, 15.0f);
 			}
 			if (gen::kEnemies[*pick].elite) {
 				const float want = HealthFor(g_current) * gen::elite::healthMult * Settings::UndeadHealthMult();
@@ -2372,7 +2372,7 @@ namespace bo3z
 					cs->closeRangeData.flankDistanceMult = 0.0f, cs->closeRangeData.stalkTimeMult = 0.0f;
 					cs->longRangeData.strafeMult = 0.0f;
 					// a dragon among them (the Hollow Wyrm, Diverse Dragons) lands to fight and stays down
-					cs->flightData.groundAttackChance = 1.0f, cs->flightData.groundAttackTime = 60.0f;
+					cs->flightData.groundAttackChance = 1.0f, cs->flightData.groundAttackTimeMult = 3.0f;
 					cs->flightData.perchAttackChance = 0.0f, cs->flightData.diveBombChance = 0.0f, cs->flightData.hoverChance = 0.1f;
 				}
 				a_npc->SetCombatStyle(cs);

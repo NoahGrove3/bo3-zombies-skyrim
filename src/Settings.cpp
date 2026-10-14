@@ -102,7 +102,7 @@ namespace bo3z::Settings
 		{
 			if (auto* ini = RE::INIPrefSettingCollection::GetSingleton()) {
 				if (auto* s = ini->GetSetting("iDifficulty:GamePlay")) {
-					return std::clamp(s->GetSInt(), 0, 5);
+					return std::clamp(static_cast<int>(s->GetInteger()), 0, 5);
 				}
 			}
 			return 2;
