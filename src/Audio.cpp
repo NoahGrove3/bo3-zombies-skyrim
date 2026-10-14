@@ -399,8 +399,10 @@ namespace bo3z::Audio
 	}
 
 	// ---- per frame: delayed impacts, loops whose owner is gone, idle chatter and attack swings of the horde
+	void TickFreed(float a_delta);
 	void Tick(float a_delta)
 	{
+		TickFreed(a_delta);
 		for (auto& p : g_pending) {
 			p.delay -= a_delta;
 		}
@@ -486,11 +488,15 @@ namespace bo3z::Audio
 			auto*       f = RE::TESDataHandler::GetSingleton()->LookupForm(id, gen::kPlugin);
 			return f ? f->As<RE::BGSMusicType>() : nullptr;
 		}
-		bool g_bossMusic = false;
+		bool  g_bossMusic = false;
+		float g_freedLeft = 0;  // the freed city's song plays alone: seconds left of it
 	}
 
 	void BossMusic(bool a_on)
 	{
+		if (a_on && g_freedLeft > 0) {
+			return;
+		}
 		if (a_on == g_bossMusic) {
 			return;
 		}
@@ -551,10 +557,33 @@ namespace bo3z::Audio
 		logger::info("audio: film quiet {}", a_on);
 	}
 
+	// A city freed: its song (faded in and out) plays alone - the boss's fight music and whatever Skyrim was
+	// playing fade away, and nothing else may start until it's over (TickFreed).
 	void FreedMusic()
 	{
-		if (auto* m = Music("freed")) {
-			m->DoPlay();
+		auto* m = Music("freed");
+		if (!m) {
+			return;
+		}
+		BossMusic(false);
+		if (auto* mm = RE::BSMusicManager::GetSingleton(); mm && mm->current && mm->current != static_cast<RE::BSIMusicType*>(m)) {
+			mm->current->DoFinish(true);
+		}
+		m->DoPlay();
+		g_freedLeft = 84.0f;
+		logger::info("audio: the freed city's song");
+	}
+
+	void TickFreed(float a_delta)
+	{
+		if (g_freedLeft <= 0) {
+			return;
+		}
+		g_freedLeft -= a_delta;
+		auto* ours = Music("freed");
+		auto* mm = RE::BSMusicManager::GetSingleton();
+		if (ours && mm && mm->current && mm->current != static_cast<RE::BSIMusicType*>(ours)) {
+			mm->current->DoFinish(true);  // (combat music, the hold's music: they wait for the song to end)
 		}
 	}
 

@@ -707,7 +707,8 @@ namespace bo3z
 					b.scale = std::clamp(900.0f / std::max(300.0f, n.d), 0.45f, 1.0f) * (great ? 1.25f : 1.0f);
 					b.name = other ? std::string(n.a->GetDisplayFullName()) : champ ? g_champ.name : great ? std::string(gen::kEnemies[n.row].label) : std::string();
 					b.rank = other ? 3 : champ ? 2 : great ? 1 : 0;
-					b.color = champ ? 0xE0B050 : great ? 0xB070FF : other ? 0xA83A2A : 0xC03028;
+					b.color = 0xC03028;  // every foe bleeds red; toughness shows as fire round the plate
+					b.fury = other ? 0 : champ ? 3 : (gen::kEnemies[n.row].elite || gen::kEnemies[n.row].kind == 1) ? 2 : (gen::kEnemies[n.row].kind == 2 || gen::kEnemies[n.row].specialRound) ? 1 : 0;
 					bars.push_back(std::move(b));
 				}
 			}
@@ -1825,6 +1826,71 @@ namespace bo3z
 			g_boss.spawnIn = gen::kCurseHeraldDelay;
 			Hud::Banner("THE FOG ROLLS IN - THE HERALD OF THE DIRGE IS COMING", 6.0f);
 		}
+		// The curse lifted: a wave of light runs out from the shrine and each of the night's dead it reaches is struck
+		// down (a flash of Turn Undead where it stands, the body falls), then crumbles to grave-dust a few seconds on -
+		// nearest first, the far ones last. The corpses already lying about crumble with it.
+		struct Lifted { RE::ActorHandle h; float strike, fade; bool struck; };
+		std::vector<Lifted> g_lifted;
+
+		void LiftWave(const RE::NiPoint3& a_from)
+		{
+			int  n = 0;
+			for (auto& sp : g_alive) {
+				auto a = sp.handle.get();
+				if (!a || a->IsDisabled()) {
+					continue;
+				}
+				const float d = a->GetPosition().GetDistance(a_from);
+				const float delay = 0.6f + std::min(4.0f, d / 1500.0f) + 0.08f * (n % 7);
+				g_lifted.push_back({ sp.handle, delay, 2.2f + 0.15f * (n % 9), a->IsDead() });
+				++n;
+			}
+			g_alive.clear();
+			for (auto& h : g_corpses) {
+				if (auto a = h.get(); a && !a->IsDisabled()) {
+					g_lifted.push_back({ h, 0.0f, 0.5f + 0.1f * (n++ % 12), true });
+				}
+			}
+			g_corpses.clear();
+			g_settle.clear();
+			logger::info("curse: the light runs out from the shrine ({} of the dead)", n);
+		}
+
+		void TickLifted(float a_delta)
+		{
+			for (auto& l : g_lifted) {
+				auto a = l.h.get();
+				if (!a || a->IsDisabled()) {
+					l.fade = -1;
+					continue;
+				}
+				if (!l.struck) {
+					if ((l.strike -= a_delta) > 0) {
+						continue;
+					}
+					l.struck = true;
+					auto at = a->GetPosition();
+					at.z += a->GetHeight() * 0.5f;
+					Gun::FxBlast("turnundead", at);
+					a->StopCombat();
+					if (!a->IsDead()) {
+						a->KillImmediate();
+					}
+					continue;
+				}
+				if ((l.fade -= a_delta) <= 0) {
+					if (auto* fx = Forms::Ours(gen::kRiseFx)) {  // to grave-dust
+						if (auto puff = a->PlaceObjectAtMe(fx, false)) {
+							puff->SetPosition(a->GetPosition());
+							g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
+						}
+					}
+					Vanish(a.get());
+				}
+			}
+			std::erase_if(g_lifted, [](const Lifted& l) { return l.fade <= 0 && l.struck; });
+		}
+
 		void CrumbleNear(const RE::NiPoint3& a_at, float a_radius)
 		{
 			int  n = 0;
@@ -2069,6 +2135,7 @@ namespace bo3z
 				return;
 			}
 			TickPurge(a_delta);
+			TickLifted(a_delta);
 			if (!Coop::Client()) {
 				SweepStrays(player, a_delta);  // (on a client every undead is the host's)
 			}

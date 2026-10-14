@@ -122,6 +122,7 @@ namespace bo3z
 		bool             BossAlive();
 		void             CallHerald();        // the Herald quest: fog rolls in and Grimmvar rises
 		void             CrumbleNear(const RE::NiPoint3& a_at, float a_radius);  // a freed city: its undead fall
+		void             LiftWave(const RE::NiPoint3& a_from);  // the curse lifted: a wave of light from the shrine strikes the dead down
 		void             NetFill(Net::State& a_state);  // host: the night as the party should see it
 		// for the new dead (Undead.cpp): a telegraphed blow on the ground, a hit on the player, one more risen
 		void             Hazard(const RE::NiPoint3& a_at, float a_delay, float a_radius, float a_share, std::string_view a_look, bool a_stagger);
@@ -464,7 +465,7 @@ namespace bo3z
 			std::string questNote;        // quest news in the tracker
 			// the quest's objective marker: where on screen (0..1), in front of you or not, how far (units), what
 			// floating health bars over the wounded undead near you (screen x, y 0..1, health 0..1, a name for the great ones)
-			struct EnemyBar { float x, y, frac, scale; std::string name; std::uint32_t color; std::uint32_t id{ 0 }; int rank{ 0 }; };  // rank 0 risen, 1 elite / great, 2 champion, 3 another foe
+			struct EnemyBar { float x, y, frac, scale; std::string name; std::uint32_t color; std::uint32_t id{ 0 }; int rank{ 0 }; int fury{ 0 }; };  // rank 0 risen, 1 elite / great, 2 champion, 3 another foe; fury: the fire round it (0 none, 1 special, 2 elite, 3 champion)
 			std::vector<EnemyBar> enemyBars;
 			// the ritual circle (Circle / Hold rites): ring points on screen (x, y 0..1, depth), progress, reset flash
 			bool        ringOn{ false }, ringHold{ false };

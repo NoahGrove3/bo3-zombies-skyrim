@@ -76,6 +76,13 @@ def ground():
     a = (yy >= ridge[None, :]).astype(np.float32)
     hills = (yy < HORIZON + 10) & (yy >= ridge[None, :])
     col[hills] = col[hills] * 0.55 + np.array([60, 66, 92]) * 0.45
+    # the plain is a still lake: dark water, faint ripple lines, see-through (the game draws the night sky's
+    # reflection under it, src/Hud.cpp DrawMenu)
+    lake = yy >= HORIZON
+    rip = 0.5 + 0.5 * np.sin(yy * 0.9 + 6 * fbm(W, H, 3, 6, seed=21))
+    wcol = np.array([10, 14, 28], np.float32)[None, None] * (0.85 + 0.3 * rip[..., None]) + np.array([20, 30, 55]) * (1 - t[..., None]) ** 3
+    col = np.where(lake[..., None], wcol, col)
+    a = np.where(lake, 0.42 + 0.33 * t, a)
     # standing stones on the plain, broken, in silhouette
     stones = maskdraw(lambda d: [d.polygon(p, fill=255) for p in [
         [(330, 830), (352, 690), (388, 676), (398, 832)], [(470, 826), (486, 742), (512, 730), (520, 828)],
@@ -360,6 +367,46 @@ def shards():
     return out
 
 
+def orb_sheet(frames=24, fw=448, fh=640, ro=108.0):
+    """the shrine's heart as an orb of living light: smooth glass, energy veins swirling inside it as it turns (each
+    frame turns it a little further), white at the core, a cold rim, a soft highlight - no facets, nothing on top"""
+    rng = np.random.default_rng(7)
+    dirs = rng.normal(size=(9, 3)); dirs /= np.linalg.norm(dirs, axis=1, keepdims=True)
+    freqs = rng.uniform(3.0, 9.0, 9); phases = rng.uniform(0, 6.283, 9)
+    cx, cy = fw / 2, fh * 0.56
+    yy, xx = np.mgrid[0:fh, 0:fw].astype(np.float32)
+    x = (xx - cx) / ro; y = (yy - cy) / ro
+    r2 = x * x + y * y; r = np.sqrt(r2)
+    inside = r < 1.0
+    z = np.sqrt(np.clip(1 - r2, 0, 1))
+    sheet = Image.new('RGBA', (fw * 6, fh * 4), (0, 0, 0, 0))
+    for f in range(frames):
+        th = f / frames * 2 * math.pi
+        # the point on the sphere (turned about the vertical) and the swirl inside it
+        px = x * math.cos(th) + z * math.sin(th); pz = -x * math.sin(th) + z * math.cos(th); py = -y
+        e = np.zeros_like(x)
+        for d, fr, ph in zip(dirs, freqs, phases):
+            e += np.sin((px * d[0] + py * d[1] + pz * d[2]) * fr + ph + np.sin(px * fr * 0.5 + ph) * 1.4)
+        e = e / 9.0 * 0.5 + 0.5
+        veins = np.clip(1 - np.abs(e - 0.5) * 7.0, 0, 1) ** 1.6          # thin bright lines where the swirl folds
+        core = np.clip(1 - r, 0, 1) ** 1.4
+        rim = np.clip((r - 0.72) / 0.28, 0, 1) ** 2.2 * inside
+        spec = np.exp(-(((x + 0.38) / 0.28) ** 2 + ((y + 0.42) / 0.22) ** 2))
+        R_ = 40 + 120 * core + 120 * veins + 120 * rim + 200 * spec
+        G_ = 95 + 130 * core + 120 * veins + 140 * rim + 200 * spec
+        B_ = 210 + 45 * core + 40 * veins + 45 * rim + 200 * spec
+        col = np.dstack([R_, G_, B_])
+        edge = np.clip((1.0 - r) * ro / 1.5, 0, 1)                            # a clean, smooth edge
+        a = edge * 0.97
+        # the light around it (a soft halo)
+        halo = np.clip(1 - (r - 1.0) / 1.1, 0, 1) ** 2.5 * (~inside)
+        col = np.where(inside[..., None], col, np.dstack([110 + 0 * x, 180 + 0 * x, 255 + 0 * x]))
+        a = np.where(inside, a, halo * 0.55)
+        im = rgba(np.clip(col, 0, 255), np.clip(a, 0, 1))
+        sheet.paste(im, ((f % 6) * fw, (f // 6) * fh))
+    sheet.save(OUT / 'menu_crystal.png', optimize=True)
+
+
 def softglow(n=256):
     yy, xx = np.mgrid[0:n, 0:n].astype(np.float32)
     r = np.hypot(xx - n / 2 + 0.5, yy - n / 2 + 0.5) / (n / 2)
@@ -369,7 +416,7 @@ def softglow(n=256):
 
 if __name__ == '__main__':
     ground()
-    crystal_sheet()
+    orb_sheet()
     sizes = shards()
     softglow()
     cx, cy = proj(0, 0, CRYSTAL_Z)

@@ -383,6 +383,66 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 
 		// Slim stat bar with a lagging "ghost" that shows recent loss.
+		// A red fire licking round a health bar's border: tier 1 (the specials) a low smoulder, 2 (elites) a steady
+		// blaze, 3 (champions) tall tongues and embers, 4 (bosses) a roaring crown. a..z is the plate's box.
+		void FlameBorder(ImDrawList* dl, ImVec2 a, ImVec2 z, int tier, float t, float alpha, float k)
+		{
+			if (tier <= 0 || alpha <= 0.01f) {
+				return;
+			}
+			const float T = static_cast<float>(tier);
+			const float w = z.x - a.x, hgt = z.y - a.y;
+			const float reach = (3.0f + 2.6f * T) * k;          // how tall the tongues stand
+			const float fps = 1.0f + 0.35f * T;
+			const auto  nz = [](float x) { return 0.5f + 0.5f * std::sin(x) * std::cos(x * 0.73f + 1.3f); };
+			const auto  col = [&](int r, int g, int b, float a0) { return IM_COL32(r, g, b, static_cast<int>(std::clamp(a0 * alpha, 0.0f, 1.0f) * 255)); };
+			// the heat haze behind the plate
+			for (int q = 3; q >= 1; --q) {
+				const float g = q * (1.4f + 0.9f * T) * k;
+				dl->AddRectFilled({ a.x - g, a.y - g * 1.3f }, { z.x + g, z.y + g * 0.6f }, col(200, 20, 10, (0.05f + 0.025f * T) * (1.0f + 0.25f * std::sin(t * 3.0f + q))), g + hgt * 0.5f);
+			}
+			// tongues along the top edge (outer dark red, inner orange, a hot yellow heart from the blaze up)
+			const float step = std::max(3.0f * k, (7.5f - 0.9f * T) * k);
+			const int   n = std::max(4, static_cast<int>(w / step));
+			for (int layer = 0; layer < (tier >= 2 ? 3 : 2); ++layer) {
+				const float lh = layer == 0 ? 1.0f : layer == 1 ? 0.62f : 0.34f;
+				const ImU32 c = layer == 0 ? col(150, 12, 8, 0.55f + 0.08f * T) : layer == 1 ? col(235, 60, 18, 0.6f + 0.08f * T) : col(255, 190, 90, 0.55f + 0.1f * T);
+				for (int i = 0; i <= n; ++i) {
+					const float x = a.x + w * i / n + (layer == 1 ? step * 0.5f : 0.0f);
+					if (x > z.x + 1) continue;
+					const float ph = i * 1.917f + layer * 2.3f;
+					const float fl = nz(ph + t * fps * 5.0f) * 0.75f + 0.25f * nz(ph * 1.7f - t * fps * 8.0f);
+					const float h = reach * lh * (0.35f + 0.9f * fl);
+					const float half = step * (0.55f + 0.1f * layer);
+					const float sway = std::sin(t * 4.0f + ph) * step * 0.45f;
+					dl->AddTriangleFilled({ x - half, a.y + 1.0f * k }, { x + sway, a.y - h }, { x + half, a.y + 1.0f * k }, c);
+				}
+			}
+			// licks up the two ends, and a faint fringe under the bar
+			for (int sd = 0; sd < 2; ++sd) {
+				const float ex = sd == 0 ? a.x : z.x, dir = sd == 0 ? -1.0f : 1.0f;
+				for (int j = 0; j < 2 + tier; ++j) {
+					const float yy = z.y - hgt * (j + 0.5f) / (2 + tier);
+					const float fl = nz(j * 2.1f + sd * 4.0f + t * fps * 6.0f);
+					const float L = reach * (0.45f + 0.6f * fl);
+					dl->AddTriangleFilled({ ex, yy + 2.0f * k }, { ex + dir * L * 0.55f, yy - L * 0.85f }, { ex, yy - 2.0f * k }, sd == 0 ? col(220, 40, 14, 0.55f) : col(220, 40, 14, 0.55f));
+				}
+			}
+			dl->AddLine({ a.x, z.y + 0.5f * k }, { z.x, z.y + 0.5f * k }, col(255, 70, 30, 0.25f + 0.08f * T), 1.2f * k);
+			// embers rising (champions and bosses)
+			if (tier >= 3) {
+				const int m = tier == 3 ? 7 : 14;
+				for (int i = 0; i < m; ++i) {
+					const float life = std::fmod(t * (0.7f + 0.13f * (i % 5)) + i * 0.618f, 1.0f);
+					const float x = a.x + w * std::fmod(i * 0.381f + 0.13f * std::sin(t + i), 1.0f);
+					const float y = a.y - reach * 0.4f - life * reach * 2.2f;
+					dl->AddCircleFilled({ x + std::sin(t * 3.0f + i) * 3.0f * k, y }, (1.0f + 0.5f * (1 - life)) * k, col(255, 150 - static_cast<int>(90 * life), 60, (1.0f - life) * 0.9f), 6);
+				}
+			}
+			// the border itself glows hot
+			dl->AddRect({ a.x - 1.0f * k, a.y - 1.0f * k }, { z.x + 1.0f * k, z.y + 1.0f * k }, col(255, 80 + 20 * tier, 30, 0.35f + 0.1f * T * (0.8f + 0.2f * std::sin(t * 6.0f))), 2.0f * k, 0, (0.8f + 0.3f * T) * k);
+		}
+
 		void Bar(ImDrawList* dl, ImVec2 a, float w, float h, float frac, float ghost, ImU32 col, float k)
 		{
 			const ImVec2 b{ a.x + w, a.y + h };
@@ -727,19 +787,40 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				bar(cx - hw / 2 - gap - sw, sw, y + (h - sh) / 2, sh, mpF, mpGhost, IM_COL32(80, 150, 255, 255), IM_COL32(24, 52, 140, 255), true, 5);
 				bar(cx + hw / 2 + gap, sw, y + (h - sh) / 2, sh, spF, spGhost, IM_COL32(110, 210, 90, 255), IM_COL32(30, 100, 30, 255), false, 5);
 				TxtC(dl, g_num, 13 * k, cx, y + 0.5f * k, IM_COL32(255, 238, 220, 235), std::to_string(static_cast<int>(std::ceil(s.hp))) + " / " + std::to_string(static_cast<int>(s.hpMax)));
-				// the sigils at the outer ends: a magicka drop, a stamina wing
+				// the sigils at the outer ends: an arcane seal for magicka, wind for stamina
 				{
 					const ImVec2 mc{ cx - hw / 2 - gap - sw - 14 * k, y + h * 0.5f }, sc{ cx + hw / 2 + gap + sw + 14 * k, y + h * 0.5f };
 					const float  r = 9 * k;
 					for (auto [c, col] : { std::pair{ mc, IM_COL32(90, 160, 255, 255) }, std::pair{ sc, IM_COL32(120, 220, 100, 255) } }) {
 						dl->AddCircleFilled(c, r, IM_COL32(14, 12, 14, 255), 20);
 						dl->AddCircle(c, r, kGold, 20, 1.3f * k);
-						if (c.x < cx) {  // a drop
-							dl->AddTriangleFilled({ c.x, c.y - r * 0.62f }, { c.x - r * 0.38f, c.y + r * 0.05f }, { c.x + r * 0.38f, c.y + r * 0.05f }, col);
-							dl->AddCircleFilled({ c.x, c.y + r * 0.12f }, r * 0.4f, col, 14);
-						} else {  // a wing: three feathers
-							for (int f = 0; f < 3; ++f) {
-								dl->AddLine({ c.x - r * 0.5f, c.y + r * 0.45f }, { c.x + r * (0.1f + 0.2f * f), c.y - r * (0.55f - 0.25f * f) }, col, 2.0f * k);
+						if (c.x < cx) {  // magicka: an arcane seal - a ring, a slowly turning star of two triangles, a bright eye
+							const float rr = r * 0.66f, rot = now * 0.35f;
+							dl->AddCircleFilled(c, r * 0.8f, IM_COL32(40, 80, 200, static_cast<int>(60 + 30 * std::sin(now * 2.0f))), 20);
+							dl->AddCircle(c, rr, col, 20, 1.1f * k);
+							for (int t = 0; t < 2; ++t) {
+								ImVec2 tri[3];
+								for (int v = 0; v < 3; ++v) {
+									const float an = rot + t * 3.14159f + v * 2.0944f - 1.5708f;
+									tri[v] = { c.x + std::cos(an) * rr, c.y + std::sin(an) * rr };
+								}
+								dl->AddPolyline(tri, 3, IM_COL32(170, 210, 255, 255), ImDrawFlags_Closed, 1.1f * k);
+							}
+							for (int q = 0; q < 4; ++q) {  // four rune ticks on the rim
+								const float an = -rot * 1.5f + q * 1.5708f;
+								dl->AddLine({ c.x + std::cos(an) * r * 0.74f, c.y + std::sin(an) * r * 0.74f }, { c.x + std::cos(an) * r * 0.9f, c.y + std::sin(an) * r * 0.9f }, col, 1.2f * k);
+							}
+							dl->AddCircleFilled(c, r * 0.17f, IM_COL32(230, 245, 255, 255), 10);
+						} else {  // stamina: wind - three gusts, each ending in a curl, drifting
+							struct Gust { float y, x0, x1, curl; };
+							const Gust gs[3] = { { -0.38f, -0.62f, 0.22f, 0.26f }, { 0.02f, -0.7f, 0.42f, 0.2f }, { 0.4f, -0.5f, 0.1f, 0.17f } };
+							for (int g = 0; g < 3; ++g) {
+								const float dx = std::sin(now * 1.6f + g * 1.3f) * r * 0.06f;
+								const float yy = c.y + gs[g].y * r, x0 = c.x + gs[g].x0 * r + dx, x1 = c.x + gs[g].x1 * r + dx, cr = gs[g].curl * r;
+								dl->PathLineTo({ x0, yy });
+								dl->PathLineTo({ x1, yy });
+								dl->PathArcTo({ x1, yy - cr }, cr, 1.5708f, g == 2 ? -2.5f : -3.1416f, 12);  // the gust curls up over itself
+								dl->PathStroke(col, 0, (g == 1 ? 1.8f : 1.5f) * k);
 							}
 						}
 					}
@@ -1007,7 +1088,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				TxtC(dl, g_title, 26 * k, size.x * 0.5f, y - 36 * k, s.bossEnraged ? IM_COL32(255, 120, 60, 255) : kParch, s.bossName, s.bossEnraged ? 3 * k : 0, IM_COL32(255, 60, 20, 255));
 				static float bossGhost = 1;
 				bossGhost = s.bossHp > bossGhost ? s.bossHp : std::max(s.bossHp, bossGhost - dt * 0.25f);
-				Bar(dl, { x, y }, w, h, s.bossHp, bossGhost, s.bossEnraged ? IM_COL32(230, 90, 20, 255) : IM_COL32(150, 20, 20, 255), k);
+				FlameBorder(dl, { x - 3 * k, y - 3 * k }, { x + w + 3 * k, y + h + 3 * k }, 4, now, 1.0f, k);
+				Bar(dl, { x, y }, w, h, s.bossHp, bossGhost, s.bossEnraged ? IM_COL32(205, 28, 20, 255) : IM_COL32(170, 22, 20, 255), k);
 				Divider(dl, size.x * 0.5f, y + h + 12 * k, w * 0.3f, k);
 			}
 
@@ -1053,9 +1135,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Divider(dl, size.x * 0.5f, y + ts.y + 10 * k, std::min(size.x * 0.4f, ts.x * 0.6f + 40 * k), k, a);
 			}
 
-			// health bars over the wounded: black iron plates with chamfered ends and bronze caps, the blood draining
-			// from the right with a pale wound that follows it down; champions in gold with their names, the great in
-			// violet, other foes with their names in iron (these replace Skyrim's bar under the compass)
+			// health bars over the wounded: black iron plates with chamfered ends and bronze caps, the blood (always red)
+			// draining from the right with a pale wound that follows it down; the tougher the foe, the hotter the red fire
+			// round its plate (FlameBorder: specials smoulder, elites blaze, champions roar); other foes' names in iron (these replace Skyrim's bar under the compass)
 			if (!s.perkMenu) {
 				static std::unordered_map<std::uint32_t, std::pair<float, float>> wound;  // id -> (pale wound, fade in)
 				static float sweep = 0;
@@ -1102,9 +1184,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float  al = in;
 					const ImU32  col = IM_COL32((b.color >> 16) & 0xFF, (b.color >> 8) & 0xFF, b.color & 0xFF, 255);
 					const ImU32  deep = IM_COL32(((b.color >> 16) & 0xFF) * 4 / 10, ((b.color >> 8) & 0xFF) * 4 / 10, (b.color & 0xFF) * 4 / 10, 255);
-					const ImU32  trim = b.rank == 2 ? kGold : b.rank == 1 ? IM_COL32(150, 110, 210, 255) : IM_COL32(118, 104, 86, 255);
+					const ImU32  trim = b.fury >= 2 ? IM_COL32(200, 64, 40, 255) : b.fury == 1 ? IM_COL32(150, 70, 52, 255) : IM_COL32(118, 104, 86, 255);
 					const float  p = 3.0f * k * sc, e = h * 0.5f + p + 4.0f * k * sc;  // plate margin, chamfer reach
 					const ImVec2 plate[6] = { { a.x - e, c.y }, { a.x - p, a.y - p }, { z.x + p, a.y - p }, { z.x + e, c.y }, { z.x + p, z.y + p }, { a.x - p, z.y + p } };
+					FlameBorder(dl, { a.x - p, a.y - p }, { z.x + p, z.y + p }, b.fury, now + (b.id % 97) * 0.37f, al, k * sc);
 					dl->AddConvexPolyFilled(plate, 6, Fade(IM_COL32(9, 8, 10, 225), al));
 					dl->AddPolyline(plate, 6, Fade(trim, 0.85f * al), ImDrawFlags_Closed, 1.2f * k);
 					dl->AddRectFilled(a, z, Fade(IM_COL32(28, 8, 8, 235), al));                                       // the empty trough
@@ -1125,7 +1208,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					if (!b.name.empty()) {
 						const float fs = std::max(9.0f * k, (b.rank == 2 ? 12.5f : b.rank == 1 ? 11.5f : 11.0f) * k * sc);
-						const ImU32 nc = b.rank == 2 ? IM_COL32(240, 206, 130, 255) : b.rank == 1 ? IM_COL32(214, 190, 255, 255) : IM_COL32(222, 212, 192, 255);
+						const ImU32 nc = b.rank == 2 ? IM_COL32(255, 196, 150, 255) : b.rank == 1 ? IM_COL32(255, 176, 150, 255) : IM_COL32(222, 212, 192, 255);
 						std::string up = b.name;
 						if (b.rank == 2 || b.rank == 1) {
 							std::transform(up.begin(), up.end(), up.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
@@ -1765,9 +1848,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				fg->AddCircleFilled(m, 62 * k, IM_COL32(255, 110, 80, static_cast<int>((3 + 3 * br) * fade)), 48);  // (a faint breath only)
 			}
 			// the brightest stars twinkle, and now and then a shooting star crosses the sky
+			struct Star { float x, y, ph, sp, sz; };
+			static std::vector<Star> stars;  // (the lake shows them again, upside down)
 			{
-				struct Star { float x, y, ph, sp, sz; };
-				static std::vector<Star> stars;
 				static std::mt19937 sr{ 23 };
 				std::uniform_real_distribution<float> U(0, 1);
 				if (stars.empty()) {
@@ -1906,7 +1989,36 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				};
 				const float pulse = 0.5f + 0.5f * std::sin(now * 1.6f);            // the core's heartbeat
 				const float slow = 0.5f + 0.5f * std::sin(now * 0.55f + 1.0f);
-				groundFog(size.y * 0.30f, size.y * 0.56f, 0.006f, 1.6f, 170, IM_COL32(120, 135, 180, 0));  // mist on the far plain
+				// the lake: the night sky upside down in still water (under the painting's see-through water), its stars
+				// trembling as faint ripples roll toward us
+				{
+					const ImVec2 h0 = toScreen(kD, 0, 800), h1 = toScreen(kD, 2560, 1440);
+					if (g_mSky) {
+						fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_mSky)), h0, h1, { 0, 800.0f / 1440 }, { 1, 160.0f / 1440 }, IM_COL32(150, 170, 220, static_cast<int>(150 * fade)));
+					}
+					const ImVec2 m = toScreen(kD, 0.255f * 2560, 1600 - 0.315f * 1440);  // the Blood Moon's light on the water
+					fg->AddCircleFilled(m, 46 * k, IM_COL32(255, 120, 90, static_cast<int>(18 * fade)), 40);
+					for (const auto& st : stars) {
+						const float py = 1600 - st.y * 1440;
+						if (py < 810 || py > 1430) {
+							continue;
+						}
+						const float wob = std::sin(now * 1.7f + py * 0.06f) * 3.0f + std::sin(now * 0.9f + st.ph) * 1.5f;
+						const ImVec2 p = toScreen(kD, st.x * 2560 + wob, py);
+						const float  tw = std::pow(0.5f + 0.5f * std::sin(now * st.sp + st.ph), 3.0f);
+						const int    al = static_cast<int>((40 + 110 * tw) * fade);
+						fg->AddLine({ p.x, p.y - 4 * k }, { p.x, p.y + (5 + 6 * st.sz) * k }, IM_COL32(200, 215, 255, al / 2), (1.0f + st.sz) * k);
+						fg->AddCircleFilled(p, (0.8f + 0.9f * st.sz * tw) * k, IM_COL32(225, 235, 255, al), 8);
+					}
+					for (int i = 0; i < 14; ++i) {  // ripples: thin bright lines drifting down the water
+						const float ph = std::fmod(now * 0.045f + i / 14.0f, 1.0f);
+						const float py = 815 + ph * ph * 620;
+						const ImVec2 a = toScreen(kD, 0, py), b = toScreen(kD, 2560, py);
+						const int al = static_cast<int>(22 * std::sin(ph * 3.1416f) * fade);
+						fg->AddLine(a, b, IM_COL32(170, 190, 240, al), (1.0f + ph * 1.5f) * k);
+					}
+				}
+				groundFog(size.y * 0.30f, size.y * 0.56f, 0.006f, 1.6f, 120, IM_COL32(120, 135, 180, 0));  // mist on the far water
 				layer(g_sGround, kD, white);
 				if (g_sGlow) {  // the runes and the pool breathe with the core
 					layer(g_sGlow, kD, IM_COL32(255, 255, 255, static_cast<int>((150 + 105 * pulse) * fade)));
@@ -1965,6 +2077,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						sprite(g_sSoft, c, g1 * 2, g1 * 2, 0, IM_COL32(80, 150, 255, static_cast<int>((70 + 50 * pulse) * fade)));
 						sprite(g_sSoft, c, g2 * 2, g2 * 2, 0, IM_COL32(170, 220, 255, static_cast<int>((90 + 70 * pulse) * fade)));
 					}
+					// a magic aura round it that licks upward like flame: the emblems' flame ring, cold blue, two passes out of step
+					const auto aura = [&](float scale, float t0, ImU32 tint) {
+						if (!g_flame) {
+							return;
+						}
+						const int   fr = static_cast<int>((now + t0) * 18.0f) % 16;
+						const float uu = (fr % 4) * 0.25f, vv = (fr / 4) * 0.25f;
+						const float hh = 108.0f * u * scale / 0.62f;
+						fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_flame)), { c.x - hh, c.y - hh * 1.08f }, { c.x + hh, c.y + hh * 0.92f }, { uu, vv }, { uu + 0.25f, vv + 0.25f }, tint);
+					};
+					aura(1.45f + 0.05f * pulse, 0.0f, IM_COL32(70, 140, 255, static_cast<int>((150 + 60 * pulse) * fade)));
+					aura(1.25f, 0.45f, IM_COL32(150, 210, 255, static_cast<int>((120 + 60 * pulse) * fade)));
 					if (g_sCrystal) {
 						const int   f = static_cast<int>(now * 9.0f) % 24;  // ~2.7 s a turn
 						const ImVec2 uv0{ (f % 6) / 6.0f, (f / 6) / 4.0f }, uv1{ uv0.x + 1.0f / 6.0f, uv0.y + 0.25f };
@@ -1973,6 +2097,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const ImVec2 mid{ c.x, c.y + (0.5f - 0.56f) * h + std::sin(now * 0.9f) * 6 * u };  // (the frame's origin sits at 56% of its height)
 						sprite(g_sCrystal, mid, w, h, 0, IM_COL32(255, 255, 255, static_cast<int>(255 * fade)), uv0, uv1);
 					}
+					aura(1.1f, 0.8f, IM_COL32(200, 235, 255, static_cast<int>((60 + 40 * pulse) * fade)));  // (a thin tongue over its face)
 					if (g_sSoft) {  // the white heart over it, flaring on the beat
 						const float g3 = (60 + 40 * pulse) * u;
 						sprite(g_sSoft, c, g3 * 2, g3 * 2, 0, IM_COL32(230, 245, 255, static_cast<int>((70 + 110 * pulse) * fade)));

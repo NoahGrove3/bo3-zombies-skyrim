@@ -411,7 +411,8 @@ namespace bo3z
 			}
 			Note(text, 10.0f);
 			Director::EndNight();  // the city's last rite ends the night: dawn breaks, the next night brings the next round
-			Director::CrumbleNear(a_player->GetPosition(), 1.0e9f);
+			auto* shrine = Shops::Placed(a_town, 0);
+			Director::LiftWave(shrine ? shrine->GetPosition() : a_player->GetPosition());
 			Points::Add(5000);
 			logger::info("curse: {} is freed", gen::kTowns[a_town]);
 			bool all = true;
@@ -1019,7 +1020,8 @@ namespace bo3z
 				if (!Net::IsClient()) {  // the host's nights: the freed city's last rite ends this one
 					Director::EndNight();
 					if (auto* pl = RE::PlayerCharacter::GetSingleton()) {
-						Director::CrumbleNear(pl->GetPosition(), 1.0e9f);
+						auto* shrine = Shops::Placed(a_town, 0);
+						Director::LiftWave(shrine ? shrine->GetPosition() : pl->GetPosition());
 					}
 				}
 				logger::info("curse: {} freed by the party", gen::kTowns[a_town]);

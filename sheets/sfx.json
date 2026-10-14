@@ -82,12 +82,14 @@
     },
     {
       "id": "mus_freed",
-      "src": "logo",
-      "use": "a city freed (curse lifted) stinger",
-      "take": 0,
+      "src": "comfort_chain",
+      "use": "a city freed (all its rites done, the shrine cleared): plays alone, faded in and out",
+      "t0": 0.0,
+      "t1": 82.7,
       "stereo": true,
-      "peak": -5,
-      "fadeOut": 2500
+      "peak": -2.0,
+      "fadeIn": 3500,
+      "fadeOut": 6500
     },
     {
       "id": "mus_intro",

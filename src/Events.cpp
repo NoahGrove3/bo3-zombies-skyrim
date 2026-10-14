@@ -6,6 +6,35 @@ namespace bo3z
 	{
 		void OnDataLoaded();
 
+		// SkyUI's "N new menu(s) registered" (and its other start-up notes) don't reach the top-left corner
+		struct NoticeFilter
+		{
+			static bool Drop(std::string_view t)
+			{
+				if (t.starts_with("$SKI")) {
+					return true;
+				}
+				std::string l(t);
+				std::ranges::transform(l, l.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				return l.find("menu(s) registered") != std::string::npos || l.find("new menu") != std::string::npos ||
+				       l.find("menus registered") != std::string::npos || l.find("mcm helper") != std::string::npos ||
+				       l.find("skyui") != std::string::npos;
+			}
+			static RE::UI_MESSAGE_RESULTS thunk(RE::IMenu* a_this, RE::UIMessage& a_msg)
+			{
+				static REL::Relocation<std::uintptr_t> hudData{ RE::VTABLE_HUDData[0] };
+				if (a_msg.type == RE::UI_MESSAGE_TYPE::kUpdate && a_msg.data && *reinterpret_cast<std::uintptr_t*>(a_msg.data) == hudData.address()) {
+					auto* d = static_cast<RE::HUDData*>(a_msg.data);
+					if (d->type == RE::HUD_MESSAGE_TYPE::kNotification && d->text.c_str() && Drop(d->text.c_str())) {
+						logger::info("hid notification: {}", d->text.c_str());
+						return RE::UI_MESSAGE_RESULTS::kHandled;
+					}
+				}
+				return func(a_this, a_msg);
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+
 		struct PlayerUpdate
 		{
 			static void thunk(RE::PlayerCharacter* a_this, float a_delta)
@@ -365,6 +394,8 @@ namespace bo3z
 			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
 			PlayerUpdate::func = vtbl.write_vfunc(0xAD, PlayerUpdate::thunk);
 			logger::info("hooked PlayerCharacter::Update");
+			REL::Relocation<std::uintptr_t> hud{ RE::VTABLE_HUDMenu[0] };
+			NoticeFilter::func = hud.write_vfunc(0x4, NoticeFilter::thunk);
 
 			auto* events = RE::ScriptEventSourceHolder::GetSingleton();
 			events->AddEventSink<RE::TESDeathEvent>(DeathWatch::Get());
