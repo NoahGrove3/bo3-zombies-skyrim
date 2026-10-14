@@ -62,6 +62,13 @@ namespace bo3z
 			};
 			scale("fSprintStaminaDrainMult", gen::kSprintStamina);
 			scale("fJumpHeightMin", gen::kJumpHeight);
+			// no fall damage: a fall never hurts (parkour, the shrine's heights, SkyParkour's climbs)
+			for (auto [name, v] : { std::pair{ "fJumpFallHeightMin", 1.0e6f }, std::pair{ "fJumpFallHeightMult", 0.0f } }) {
+				if (auto* s = gs->GetSetting(name)) {
+					s->data.f = v;
+					logger::info("movement: {} -> {} (no fall damage)", name, v);
+				}
+			}
 		}
 
 		// Skyrim runs slower sideways and backwards than forwards, and turns stiffly while running: strafing
