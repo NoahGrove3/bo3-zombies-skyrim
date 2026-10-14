@@ -46,6 +46,12 @@ THE PARTY MODS (installed for both players - Skyrim Together needs the same plug
  - Effects and sound: Deadly Spell Impacts, Spell Rune Retexture, Frozen Electrocuted Combustion, Embers XD
    (+ Fire Magick), ENB Light, Airgetlam Modern Magic Sounds + Shouts SFX. 120 FPS UI, 90 FPS animations.
  - Wizard Hats.
+ - Play: Skyrim Souls RE (menus don't pause the game - your friend keeps playing), no saving or loading in the middle of
+   a fight, Beam Walking Assist, Dynamic Bloodpool Framework (blood pools under the fallen), ArteFakes.
+ - More animations (Open Animation Replacer): Sigma first-person swords, daggers, greatswords, battleaxes, war axes,
+   maces and archery; new Falmer and frostbite spider attacks; jarls sit their thrones properly.
+ - Faces and followers: Fabulous Followers, The Wolven Widow (Elisif), Evigheden (Serana), MikanEyes (more eye
+   colours in character creation). Freak's Floral Fields (grass and flowers).
  - Not used (they don't run on Skyrim 1.7.104 yet): QuickLoot RE, Behavior Data Injector. COR needs Race
    Compatibility, which isn't in the pack, so it stays off.
 
@@ -60,8 +66,9 @@ GOOD TO KNOW
  - Noah's look comes from graphics mods, and they are all in this pack (files\Graphics, about 25 GB):
    the installer asks if you want them. Say Y to see the game exactly as the host does, N to keep your own.
    They are: Community Shaders (+ Subsurface Scattering, Screen Space Shadows, Grass Collision), Azurite Weathers III, Lux Orbis + Lux Via (lighting, roads), Realistic Water Two, Happy Little
-   Trees, Skoglendi grass, Skyland AIO, SMIM, Lit Road Signs, Cathedral Armory, Pandorable's NPCs, Lux,
-   Riton's Medieval Solitude, Stony AF Markarth, Venerable Nordic Temples.
+   Trees, Skoglendi grass, Skyland AIO, SMIM, Lit Road Signs, Cathedral Armory, Lux,
+   Riton's Medieval Solitude, Stony AF Markarth, Venerable Nordic Temples, SRP 2K (landscape, dungeons,
+   architecture, misc), Skysight Skins.
 
 TROUBLESHOOTING
  - Normal Skyrim menu / you start on the Helgen cart: Undying Nights isn't loaded. Close Skyrim, run the
