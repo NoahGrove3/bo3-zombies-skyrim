@@ -3550,7 +3550,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				return;
 			}
 			g_outro = true, g_veil = 1.0f;
-			g_saveAfterFilm = true;
+			g_saveAfterFilm = false;  // (the race menu is still to come: the first save waits for it, AfterCharacterMade)
 			g_holdUntilMs = 0;  // (the long hold was for the film: without it, black lasted 15-20 s)
 			g_outroStart = g_outroBusy = std::chrono::steady_clock::now();
 			SKSE::GetTaskInterface()->AddTask([] {
@@ -3559,6 +3559,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			});
 			logger::info("intro: no film (off for now): straight into the game");
+		}
+		void AfterCharacterMade()
+		{
+			g_outro = true, g_veil = 1.0f;
+			g_saveAfterFilm = true;
+			g_holdUntilMs = 0;
+			g_outroStart = g_outroBusy = std::chrono::steady_clock::now();
+			logger::info("intro: character made: a moment of black, then the game (and its first save)");
 		}
 		bool IntroActive() { return g_filmOn || g_filmReq; }
 		bool IntroBusy()

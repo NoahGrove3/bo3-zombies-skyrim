@@ -98,8 +98,12 @@ namespace bo3z
 					auto* cal = RE::Calendar::GetSingleton();
 					const float days = cal && cal->gameDaysPassed ? cal->gameDaysPassed->value : 99.0f;
 					if (pl && pl->GetLevel() <= 1 && days < 2.0f) {
-						Hud::IntroVeil(6.0f, true);  // (a cap: the move to Riverwood ends it sooner)
-						logger::info("intro: character made: black until the film");
+						if (Intro::NewGameThisSession()) {
+							Hud::AfterCharacterMade();  // (already in Riverwood: just a moment of black)
+						} else {
+							Hud::IntroVeil(6.0f, true);  // (a cap: the move to Riverwood ends it sooner)
+							logger::info("intro: character made: black until the move");
+						}
 					}
 				}
 				if (a_event->menuName == RE::LoadingMenu::MENU_NAME && a_event->opening) {

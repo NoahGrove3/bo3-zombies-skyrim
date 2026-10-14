@@ -516,6 +516,7 @@ namespace bo3z
 		void        DevMain(int a_index);              // DevTools: press a main-list entry
 		void        DevParty(const std::string& a_what);  // DevTools: host / invite / leave  // the film, or the black before or after it (a new character's arrival)
 		void IntroVeil(float a_seconds, bool a_instant = false);  // black over the game for a while (a new character's trip to Riverwood, before the film)
+		void AfterCharacterMade();  // the race menu closed on a new character: a moment of black, then the game, and the first save
 		void        IntroSkipHeld(bool a_held);
 	}
 
