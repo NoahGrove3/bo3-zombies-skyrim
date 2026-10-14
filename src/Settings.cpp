@@ -28,14 +28,85 @@ namespace bo3z::Settings
 		std::filesystem::path UserIni() { return Data() / "MCM" / "Settings" / "BO3Zombies.ini"; }
 		std::filesystem::path DefaultIni() { return Data() / "MCM" / "Config" / "BO3Zombies" / "settings.ini"; }
 
+		// The ini is read and written by hand: MCM Helper saves it as UTF-8 with a byte-order mark, which Windows'
+		// own profile functions don't understand (they then miss the first section and every value in it).
+		std::string Lower(std::string a_s)
+		{
+			std::ranges::transform(a_s, a_s.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+			return a_s;
+		}
+		std::string Trim(std::string_view a_s)
+		{
+			const auto b = a_s.find_first_not_of(" \t\r\n");
+			if (b == std::string_view::npos) {
+				return {};
+			}
+			return std::string(a_s.substr(b, a_s.find_last_not_of(" \t\r\n") - b + 1));
+		}
+		std::vector<std::string> Lines(const std::filesystem::path& a_file, bool* a_bom = nullptr)
+		{
+			std::ifstream in(a_file, std::ios::binary);
+			std::string all((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+			const bool bom = all.size() >= 3 && static_cast<unsigned char>(all[0]) == 0xEF && static_cast<unsigned char>(all[1]) == 0xBB && static_cast<unsigned char>(all[2]) == 0xBF;
+			if (a_bom) {
+				*a_bom = bom;
+			}
+			if (bom) {
+				all.erase(0, 3);
+			}
+			std::vector<std::string> out;
+			std::size_t at = 0;
+			while (at <= all.size() && !all.empty()) {
+				const auto nl = all.find('\n', at);
+				std::string line = all.substr(at, nl == std::string::npos ? std::string::npos : nl - at);
+				if (!line.empty() && line.back() == '\r') {
+					line.pop_back();
+				}
+				out.push_back(std::move(line));
+				if (nl == std::string::npos) {
+					break;
+				}
+				at = nl + 1;
+			}
+			return out;
+		}
+		std::string Narrow(const wchar_t* a_w)
+		{
+			std::string s;
+			for (; *a_w; ++a_w) {
+				s.push_back(static_cast<char>(*a_w));
+			}
+			return s;
+		}
+		bool Find(const std::filesystem::path& a_file, const std::string& a_section, const std::string& a_key, std::string& a_out)
+		{
+			std::string sec;
+			for (const auto& raw : Lines(a_file)) {
+				const auto line = Trim(raw);
+				if (line.empty() || line[0] == ';' || line[0] == '#') {
+					continue;
+				}
+				if (line.front() == '[' && line.back() == ']') {
+					sec = Lower(Trim(std::string_view(line).substr(1, line.size() - 2)));
+					continue;
+				}
+				const auto eq = line.find('=');
+				if (eq != std::string::npos && sec == a_section && Lower(Trim(std::string_view(line).substr(0, eq))) == a_key) {
+					a_out = Trim(std::string_view(line).substr(eq + 1));
+					return true;
+				}
+			}
+			return false;
+		}
+
 		float Read(const wchar_t* a_section, const wchar_t* a_key, float a_def)
 		{
+			const auto sec = Lower(Narrow(a_section)), key = Lower(Narrow(a_key));
 			for (const auto& f : { UserIni(), DefaultIni() }) {
-				wchar_t buf[32]{};
-				::GetPrivateProfileStringW(a_section, a_key, L"", buf, 32, f.wstring().c_str());
-				if (buf[0]) {
+				std::string v;
+				if (Find(f, sec, key, v) && !v.empty()) {
 					try {
-						return std::stof(std::wstring(buf));
+						return std::stof(v);
 					} catch (...) {
 					}
 				}
@@ -47,13 +118,55 @@ namespace bo3z::Settings
 		{
 			std::error_code ec;
 			std::filesystem::create_directories(UserIni().parent_path(), ec);
-			wchar_t v[32]{};
-			if (a_int) {
-				swprintf_s(v, L"%d", static_cast<int>(std::lround(a_v)));
-			} else {
-				swprintf_s(v, L"%.4f", a_v);
+			const auto sec = Narrow(a_section), key = Narrow(a_key);
+			const std::string val = a_int ? std::to_string(std::lround(a_v)) : fmt::format("{:.6f}", a_v);
+			bool bom = false;
+			auto lines = std::filesystem::exists(UserIni(), ec) ? Lines(UserIni(), &bom) : std::vector<std::string>{};
+			std::string cur;
+			int  secEnd = -1, found = -1;
+			bool inSec = false;
+			for (int i = 0; i < static_cast<int>(lines.size()); ++i) {
+				const auto line = Trim(lines[i]);
+				if (!line.empty() && line.front() == '[' && line.back() == ']') {
+					inSec = Lower(Trim(std::string_view(line).substr(1, line.size() - 2))) == Lower(sec);
+					if (inSec) {
+						secEnd = i + 1;
+					}
+					continue;
+				}
+				if (inSec) {
+					if (!line.empty()) {
+						secEnd = i + 1;
+					}
+					const auto eq = line.find('=');
+					if (eq != std::string::npos && Lower(Trim(std::string_view(line).substr(0, eq))) == Lower(key)) {
+						found = i;
+					}
+				}
 			}
-			::WritePrivateProfileStringW(a_section, a_key, v, UserIni().wstring().c_str());
+			const std::string entry = key + " = " + val;
+			if (found >= 0) {
+				lines[found] = entry;
+			} else if (secEnd >= 0) {
+				lines.insert(lines.begin() + secEnd, entry);
+			} else {
+				if (!lines.empty() && !Trim(lines.back()).empty()) {
+					lines.emplace_back();
+				}
+				lines.push_back("[" + sec + "]");
+				lines.push_back(entry);
+			}
+			std::ofstream out(UserIni(), std::ios::binary | std::ios::trunc);
+			if (bom) {
+				out << "\xEF\xBB\xBF";
+			}
+			for (std::size_t i = 0; i < lines.size(); ++i) {
+				out << lines[i];
+				if (i + 1 < lines.size() || !lines[i].empty()) {
+					out << "\r\n";
+				}
+			}
+			out.close();
 			g_stamp = std::filesystem::last_write_time(UserIni(), ec);
 		}
 
@@ -166,9 +279,8 @@ namespace bo3z::Settings
 			return;
 		}
 		auto has = [](const wchar_t* a_sec, const wchar_t* a_key) {
-			wchar_t buf[32]{};
-			::GetPrivateProfileStringW(a_sec, a_key, L"", buf, 32, UserIni().wstring().c_str());
-			return buf[0] != 0;
+			std::string v;
+			return Find(UserIni(), Lower(Narrow(a_sec)), Lower(Narrow(a_key)), v) && !v.empty();
 		};
 		// QuickLoot RE: SKSE/Plugins/QuickLootRE/config.toml, "key = value  # comment" lines
 		const auto toml = Data() / "SKSE" / "Plugins" / "QuickLootRE" / "config.toml";

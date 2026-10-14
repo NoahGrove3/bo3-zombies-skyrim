@@ -25,6 +25,7 @@ namespace bo3z
 		struct Pulse { RE::ObjectRefHandle shrine; float t; };
 		std::optional<Pulse>                     g_pulse;  // a freed shrine's wave (FreedPulse)
 		std::vector<Spinner>                     g_spinners;
+		RE::ObjectRefHandle                      g_orbAim;  // the shrine whose orb is in the crosshair (Activate opens it)
 
 		// The shrine's roll: it gathers power (Charging), every spell in the pool flickers over the crown, slowing
 		// (Spinning), then one is held there as a ball of light until you take it (Offering).
@@ -1435,6 +1436,16 @@ namespace bo3z
 		// Gamepad: X roll, Y reforge, A bless, D-pad left/right pick, D-pad up Thu'um, B leave.
 		bool OnButton(const RE::ButtonEvent* a_event)
 		{
+			// the shrine's orb in the crosshair: Activate opens the shrine (Skyrim's own pick only finds its floor)
+			if (!g_menu && a_event && a_event->IsDown() && a_event->QUserEvent() == RE::UserEvents::GetSingleton()->activate) {
+				if (auto shrine = g_orbAim.get()) {
+					auto* pick = RE::CrosshairPickData::GetSingleton();
+					if (!pick || pick->target.get().get() != shrine.get()) {
+						OnActivate(shrine.get());
+						return true;
+					}
+				}
+			}
 			if (!g_menu || !a_event || !a_event->IsDown()) {
 				return false;
 			}
@@ -1567,6 +1578,12 @@ namespace bo3z
 			auto rolling = g_show.phase == Show::Charging || g_show.phase == Show::Spinning ? g_show.chest.get() : RE::NiPointer<RE::TESObjectREFR>{};
 			static float clock = 0;
 			clock += a_delta;
+			RE::NiPoint3 camPos{}, orbAt{};
+			float        orbDist = 1e9f;
+			RE::NiPointer<RE::TESObjectREFR> orbRef;
+			if (auto* pc = RE::PlayerCamera::GetSingleton(); pc && pc->cameraRoot) {
+				camPos = pc->cameraRoot->world.translate;
+			}
 			for (auto& s : g_spinners) {
 				if (auto r = s.ref.get(); r && r->Is3DLoaded()) {
 					// the shrine's heart turns faster while it rolls (the crystal races, the shards whirl). Statics never move
@@ -1585,7 +1602,63 @@ namespace bo3z
 					node->local.translate.z = s.baseZ + std::sin(clock * (s.degPerSec > 20.0f ? 1.3f : 0.7f) + ph) * (s.degPerSec > 20.0f ? 4.0f : 9.0f);  // floating
 					RE::NiUpdateData ud;
 					node->Update(ud);
+					if (s.degPerSec >= 39.0f) {  // the shrine's orb: the nearest one gets its aura drawn over it
+						const float d = node->world.translate.GetDistance(camPos);
+						if (d < orbDist) {
+							orbDist = d, orbAt = node->world.translate, orbRef = r;
+						}
+					}
 				}
+			}
+			// the orb's aura of cold flame (the main menu's, drawn round the orb on screen): while it is near and in sight
+			{
+				static float losT = 0, seen = 0;
+				static bool  los = false;
+				auto*        cam = RE::PlayerCamera::GetSingleton();
+				auto*        pl = RE::PlayerCharacter::GetSingleton();
+				bool         on = false;
+				float        x = 0, y = 0, rr = 0;
+				if (orbRef && cam && pl && orbDist < 4500.0f) {
+					if ((losT -= a_delta) <= 0) {
+						losT = 0.2f;
+						bool unused = false;
+						los = orbDist < 700.0f || pl->HasLineOfSight(orbRef.get(), unused);
+					}
+					float zc = 0, x2 = 0, y2 = 0, z2 = 0;
+					cam->WorldPtToScreenPt3(orbAt, x, y, zc, 1e-5f);
+					RE::NiPoint3 top = orbAt;
+					top.z += 22.0f;  // the orb's radius
+					cam->WorldPtToScreenPt3(top, x2, y2, z2, 1e-5f);
+					rr = std::abs(y2 - y);
+					on = zc > 0 && los && x > -0.2f && x < 1.2f && y > -0.2f && y < 1.2f;
+					y = 1.0f - y;
+				}
+				// looking straight at the orb (close enough to touch the shrine) picks the shrine, as its floor does
+				g_orbAim = {};
+				if (orbRef && cam && cam->cameraRoot && orbDist < 650.0f && !g_menu) {
+					const auto& m = cam->cameraRoot->world.rotate;
+					const RE::NiPoint3 fwd{ m.entry[0][1], m.entry[1][1], m.entry[2][1] };
+					const RE::NiPoint3 to = orbAt - camPos;
+					const float along = to.Dot(fwd);
+					const RE::NiPoint3 closest = camPos + fwd * along;
+					if (along > 0 && closest.GetDistance(orbAt) < 55.0f) {
+						for (std::size_t t = 0; t < gen::kTowns.size(); ++t) {
+							if (auto* shrine = Placed(static_cast<int>(t), 0); shrine && shrine->GetPosition().GetDistance(orbAt) < 400.0f) {
+								g_orbAim = shrine->CreateRefHandle();
+								break;
+							}
+						}
+					}
+				}
+				seen = on ? std::min(1.0f, seen + a_delta * 3.0f) : std::max(0.0f, seen - a_delta * 3.0f);
+				std::scoped_lock l(Hud::Lock());
+				auto& h = Hud::Edit();
+				h.orbOn = seen > 0.01f && rr > 0;
+				if (on) {
+					h.orbX = x, h.orbY = y, h.orbR = rr;
+				}
+				h.orbFade = seen * std::clamp((4500.0f - orbDist) / 1500.0f, 0.0f, 1.0f);
+				h.orbAim = static_cast<bool>(g_orbAim);
 			}
 			TickShow(a_delta);
 			if (auto* pl = RE::PlayerCharacter::GetSingleton()) {

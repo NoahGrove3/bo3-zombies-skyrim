@@ -467,6 +467,32 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const float dt = ImGui::GetIO().DeltaTime;
 			roundFlash = std::max(0.0f, roundFlash - dt);
 
+			// The shrine's orb: the main menu's aura of cold flame round it, licking out on every side, and a soft light
+			// (drawn under the rest of the HUD; the orb itself is the 3D one in the world)
+			if (s.orbOn && s.orbFade > 0.01f && g_flame && !s.perkMenu) {
+				auto*        bg = ImGui::GetBackgroundDrawList();
+				const ImVec2 c{ s.orbX * size.x, s.orbY * size.y };
+				const float  R = s.orbR * size.y;
+				const float  pulse = 0.5f + 0.5f * std::sin(now * 1.6f);
+				const float  al = s.orbFade;
+				for (int i = 4; i >= 1; --i) {  // the light round it
+					bg->AddCircleFilled(c, R * (1.0f + 0.35f * i), IM_COL32(80, 150, 255, static_cast<int>((10 + 6 * pulse) * al)), 48);
+				}
+				const auto aura = [&](float scale, float t0, ImU32 tint) {
+					const int   fr = static_cast<int>((now + t0) * 18.0f) % 16;
+					const float uu = (fr % 4) * 0.25f, vv = (fr / 4) * 0.25f;
+					const float hh = R * scale / 0.62f;
+					bg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_flame)), { c.x - hh, c.y - hh }, { c.x + hh, c.y + hh }, { uu, vv }, { uu + 0.25f, vv + 0.25f }, tint);
+				};
+				aura(1.45f + 0.05f * pulse, 0.0f, IM_COL32(70, 140, 255, static_cast<int>((150 + 60 * pulse) * al)));
+				aura(1.25f, 0.45f, IM_COL32(150, 210, 255, static_cast<int>((120 + 60 * pulse) * al)));
+				aura(1.1f, 0.8f, IM_COL32(200, 235, 255, static_cast<int>((60 + 40 * pulse) * al)));
+				if (s.orbAim) {  // the orb in the crosshair: what Activate does
+					const std::string t = g_padLast ? "A   Shrine of the Dirge" : "E   Shrine of the Dirge";
+					TxtC(dl, g_title, 20 * k, size.x * 0.5f, size.y * 0.5f + 40 * k, kParch, t, 2 * k, IM_COL32(60, 120, 255, 255));
+				}
+			}
+
 			// Damage vignette: red edges when hurt, stronger when low.
 			const float hpFrac = s.hpMax > 0 ? s.hp / s.hpMax : 1.0f;
 			const float hurt = std::max(std::clamp(s.hurtTime, 0.0f, 1.0f) * 0.8f, std::clamp((0.4f - hpFrac) / 0.4f, 0.0f, 1.0f) * (0.6f + 0.25f * std::sin(now * 5)));
@@ -1093,8 +1119,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Divider(dl, size.x * 0.5f, y + h + 12 * k, w * 0.3f, k);
 			}
 
-			// The city's curse quest, top-right: city, quest title, goal and a thin progress bar.
-			if (!s.questTitle.empty() || s.questNoteTime > 0) {
+			// The city's curse quest, top-right (off: the rites are Skyrim quests now, in the journal with their own markers)
+			constexpr bool kOwnQuestUi = false;
+			if (kOwnQuestUi && (!s.questTitle.empty() || s.questNoteTime > 0)) {
 				const float w = 400 * k;
 				const bool  note = s.questNoteTime > 0 && !s.questNote.empty();
 				const ImVec2 a{ size.x - w - 40 * k, 88 * k }, b{ size.x - 40 * k, 88 * k + (note ? 128 : 104) * k };  // under Skyrim's place name (top right)
@@ -1261,7 +1288,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 
 			// The quest's way-mark: a burning diamond over the objective, or at the screen's edge pointing the way.
-			if (s.objOn && !s.perkMenu) {
+			if (kOwnQuestUi && s.objOn && !s.perkMenu) {
 				const ImU32 col = IM_COL32(236, 168, 72, 255), dark = IM_COL32(20, 12, 8, 230);
 				const float m = 70 * k;
 				ImVec2      p{ s.objX * size.x, s.objY * size.y };
@@ -2935,6 +2962,59 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			return true;
 		}
 
+		// Keyboard and mouse or a controller, whichever is in hand: if a controller turns up after the game started
+		// (or Skyrim's Gamepad option is off), Skyrim's gamepad input is switched on, so both work at once and the
+		// prompts follow the last one touched - no restart.
+		void WatchGamepad()
+		{
+			static auto next = std::chrono::steady_clock::now();
+			const auto  now = std::chrono::steady_clock::now();
+			if (now < next) {
+				return;
+			}
+			next = now + std::chrono::seconds(2);
+			using GetState = DWORD(WINAPI*)(DWORD, void*);
+			static GetState get = [] {
+				for (auto dll : { L"xinput1_4.dll", L"xinput1_3.dll", L"xinput9_1_0.dll" }) {
+					if (auto m = ::LoadLibraryW(dll)) {
+						if (auto f = ::GetProcAddress(m, "XInputGetState")) {
+							return reinterpret_cast<GetState>(f);
+						}
+					}
+				}
+				return static_cast<GetState>(nullptr);
+			}();
+			if (!get) {
+				return;
+			}
+			bool any = false;
+			for (DWORD i = 0; i < 4 && !any; ++i) {
+				std::uint8_t state[16]{};
+				any = get(i, state) == 0;
+			}
+			if (!any) {
+				return;
+			}
+			SKSE::GetTaskInterface()->AddTask([] {
+				auto* mgr = RE::BSInputDeviceManager::GetSingleton();
+				if (!mgr || mgr->IsGamepadEnabled()) {
+					return;
+				}
+				if (auto* ini = RE::INIPrefSettingCollection::GetSingleton()) {
+					if (auto* g = ini->GetSetting("bGamepadEnable:Controls")) {
+						g->data.b = true;
+					}
+				}
+				auto& rd = mgr->GetRuntimeData();
+				rd.queuedGamepadEnableValue = true;
+				rd.valueQueued = true;
+				mgr->ProcessGamepadEnabledChange();
+				if (static int told = 0; told++ < 3) {
+					logger::info("input: a controller is here - Skyrim's gamepad input switched on");
+				}
+			});
+		}
+
 		bool InGame()
 		{
 			auto* ui = RE::UI::GetSingleton();
@@ -3099,6 +3179,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (!rtv) {
 				return;
 			}
+			WatchGamepad();
 			auto& io = ImGui::GetIO();
 			io.DisplaySize = { static_cast<float>(desc.BufferDesc.Width), static_cast<float>(desc.BufferDesc.Height) };
 			io.DeltaTime = dt;
@@ -3110,13 +3191,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DrawFilm(io.DisplaySize, dt);
 			} else if (mainMenu) {
 				DrawMenu(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks > 0);
-			} else if (journal) {
-				const float k = io.DisplaySize.y / 1080.0f;
-				PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { 48 * k, 48 * k }, k, clicks > 0, true);
-				SettingsPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, k, clicks > 0);
-			} else if (escJournal) {
-				// Esc: Skyrim's journal (Quests / Stats / System) - the field-of-view sliders sit under its frame
-				SettingsPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, io.DisplaySize.y / 1080.0f, clicks > 0);
+			} else if (journal || escJournal) {
+				// (Skyrim's own menus stay clean: the field of view lives in Mod Configuration, the party in the main menu)
 			} else if (InGame() && !DevTools::HudOff()) {
 				Draw(s, io.DisplaySize);
 				// Skyrim's enemy bar under the compass gives way to ours over each foe

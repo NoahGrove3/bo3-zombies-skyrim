@@ -158,27 +158,14 @@ def icosphere(r, sub):
 
 
 def crystal():
-    """the shrine's heart: a smooth orb of light (no facets, nothing on top), a clear shell of blue round it, and an
-    aura of cold flame round both (the game turns the whole crystal, so the tongues of flame run round it)"""
+    """the shrine's heart: a smooth orb of light, nothing round it"""
     S.parts.clear()
     V, F = icosphere(22.0, 4)  # 5120 faces: smooth
     for f in F:
         tri = [V[i] for i in f]
         uv = [(0.5 + v[0] / 44.0, 0.5 + v[2] / 44.0) for v in tri]
         S.add('crystal', tri, uv, [(0, 2, 1)])
-    V2, F2 = icosphere(27.0, 3)  # the shell of light round it
-    for f in F2:
-        tri = [V2[i] for i in f]
-        uv = [(0.5 + v[0] / 54.0, 0.5 + v[2] / 54.0) for v in tri]
-        S.add('halo', tri, uv, [(0, 2, 1)])
-    V3, F3 = icosphere(36.0, 3)  # the aura: tongues of flame painted round a larger shell (u round it, v up it)
-    for f in F3:
-        tri = [V3[i] for i in f]
-        us = [(math.atan2(v[1], v[0]) / (2 * math.pi)) % 1.0 for v in tri]
-        if max(us) - min(us) > 0.5:  # (the seam: keep a face's u together)
-            us = [u_ + 1.0 if u_ < 0.5 else u_ for u_ in us]
-        uv = [(u_ * 3.0, 1.0 - (v[2] + 36.0) / 72.0) for u_, v in zip(us, tri)]
-        S.add('aura', tri, uv, [(0, 2, 1)])
+    # (its light and its aura of cold flame are drawn round it by the game's HUD, as on the main menu: src/Hud.cpp Draw)
 
 
 def tex_aura(w=512, h=256):
@@ -207,9 +194,9 @@ def tex_orb(n=512):
         d = rng.normal(size=2); fr = rng.uniform(6, 14)
         e += np.sin((xx * d[0] + yy * d[1]) * fr + rng.uniform(0, 6.28) + np.sin(xx * fr * 0.7) * 1.3)
     e = e / 7 * 0.5 + 0.5
-    veins = np.clip(1 - np.abs(e - 0.5) * 7, 0, 1) ** 1.6
-    core = np.clip(1.15 - r, 0, 1)
-    rgb = np.dstack([0.35 + 0.5 * core + 0.4 * veins, 0.65 + 0.3 * core + 0.3 * veins, np.ones_like(r)])
+    veins = np.asarray(Image.fromarray((np.clip(1 - np.abs(e - 0.5) * 6, 0, 1) ** 1.4 * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(n / 256)), np.float32) / 255
+    core = np.clip(1.15 - r, 0, 1) ** 1.2
+    rgb = np.dstack([0.30 + 0.45 * core + 0.35 * veins, 0.58 + 0.32 * core + 0.28 * veins, 0.95 + 0.05 * core])
     return Image.fromarray((np.clip(rgb, 0, 1) * 255).astype(np.uint8), 'RGB')
 
 
@@ -343,11 +330,7 @@ def main():
     convert('shards', [], [rock_mat, f'mat vein diffuse={rune_d} normal={flat} glow={vg} emit=0.4,0.75,1.0 emitmult=3.0 spec=0.3 doublesided=1'])
     crystal()
     cd = S.save(tex_orb(), 'orb_d.dds')
-    hd = S.save(tex_halo(), 'orbhalo_d.dds', True)
-    ad = S.save(tex_aura(), 'orbaura_d.dds', True)
-    convert('crystal', [], [f'mat crystal diffuse={cd} normal={flat} glow={cd} emit=0.7,0.9,1.0 emitmult=4.0 spec=1.0 gloss=120 doublesided=1',
-                            f'mat halo diffuse={hd} normal={flat} glow={hd} emit=0.3,0.6,1.0 emitmult=2.5 alpha=1 doublesided=1',
-                            f'mat aura diffuse={ad} normal={flat} glow={ad} emit=0.4,0.75,1.0 emitmult=3.2 alpha=1 doublesided=1'])
+    convert('crystal', [], [f'mat crystal diffuse={cd} normal={flat} glow={cd} emit=0.7,0.9,1.0 emitmult=3.2 spec=1.0 gloss=120 doublesided=1'])
     print('crystal centre at z', CRYSTAL_Z)
 
 

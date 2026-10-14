@@ -409,6 +409,10 @@ namespace bo3z
 		struct State
 		{
 			bool        inGame{ false };
+			// the nearest shrine's orb on screen (x, y 0..1; r its radius in screen heights): its flame aura is drawn there
+			bool        orbOn{ false };
+			float       orbX{ 0 }, orbY{ 0 }, orbR{ 0 }, orbFade{ 0 };
+			bool        orbAim{ false };  // the orb is in the crosshair: Activate opens the shrine
 			int         round{ 0 };
 			bool        nightActive{ false };
 			float       puInsta{ 0 }, puDouble{ 0 }, puFireSale{ 0 };  // power-up seconds left  // a night (round) is being fought; otherwise round = nights survived
