@@ -453,6 +453,150 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			dl->AddRect({ a.x - 2 * k, a.y - 2 * k }, { b.x + 2 * k, b.y + 2 * k }, kGoldDim, 3 * k, 0, 1.0f * k);
 		}
 
+		// The compass, in the mod's iron and bronze: a chamfered plate across the top, rune ticks every 15 degrees,
+		// the four winds (north in blood), and the marks of what lies around you - your rite (a burning diamond), the
+		// shrines (a blue orb), cities, towns and dungeons, friends, and at night the dead (red, nearer = bigger).
+		// The nearest mark at the middle shows its name and distance under the plate.
+		void DrawCompass(ImDrawList* dl, const Hud::State& s, ImVec2 size, float k, float now)
+		{
+			const float W = 640 * k, H = 30 * k, cx = size.x * 0.5f, top = 38 * k, cy = top + H * 0.5f;
+			const float span = 1.40f;  // radians each side of the middle
+			const ImVec2 a{ cx - W / 2, top }, b{ cx + W / 2, top + H };
+			const float e = H * 0.5f + 8 * k;
+			const ImVec2 plate[6] = { { a.x - e, cy }, { a.x, a.y }, { b.x, a.y }, { b.x + e, cy }, { b.x, b.y }, { a.x, b.y } };
+			dl->AddConvexPolyFilled(plate, 6, IM_COL32(10, 9, 12, 205));
+			dl->AddRectFilledMultiColor(a, { b.x, cy }, IM_COL32(40, 34, 30, 90), IM_COL32(40, 34, 30, 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
+			dl->AddPolyline(plate, 6, Fade(kGold, 0.9f), ImDrawFlags_Closed, 1.4f * k);
+			for (float ex : { a.x - e, b.x + e }) {  // bronze rivets on the points
+				const float r = 3.5f * k;
+				dl->AddQuadFilled({ ex, cy - r }, { ex + r, cy }, { ex, cy + r }, { ex - r, cy }, kGold);
+			}
+			auto rel = [&](float ang) {
+				float d = ang - s.heading;
+				while (d > RE::NI_PI) d -= 2 * RE::NI_PI;
+				while (d < -RE::NI_PI) d += 2 * RE::NI_PI;
+				return d;
+			};
+			auto xAt = [&](float d) { return cx + d / span * (W / 2 - 14 * k); };
+			auto edgeFade = [&](float d) { return std::clamp((span - std::abs(d)) / 0.25f, 0.0f, 1.0f); };
+			dl->PushClipRect({ a.x, a.y - 30 * k }, { b.x, b.y + 4 * k }, true);
+			// ticks and winds
+			for (int i = 0; i < 24; ++i) {
+				const float ang = i * RE::NI_PI / 12, d = rel(ang);
+				if (std::abs(d) > span) continue;
+				const float x = xAt(d), f = edgeFade(d);
+				if (i % 6 == 0) {
+					static const char* kW[4] = { "N", "E", "S", "W" };
+					const ImU32 c = i == 0 ? IM_COL32(220, 50, 40, 255) : kParch;
+					TxtC(dl, g_title, 20 * k, x, cy - 11 * k, Fade(c, f), kW[i / 6], i == 0 ? 2 * k : 0, IM_COL32(255, 40, 20, 255));
+				} else if (i % 3 == 0) {
+					static const char* kI[4] = { "NE", "SE", "SW", "NW" };
+					TxtC(dl, g_body, 12 * k, x, cy - 7 * k, Fade(kGold, 0.75f * f), kI[i / 6]);
+				} else {  // a rune tick
+					dl->AddLine({ x, b.y - 8 * k }, { x, b.y - 3 * k }, Fade(kGold, 0.6f * f), 1.2f * k);
+					dl->AddLine({ x - 2 * k, b.y - 6 * k }, { x + 2 * k, b.y - 6 * k }, Fade(kGold, 0.4f * f), 1.0f * k);
+				}
+			}
+			// the marks: places first (under), then the living things, the rite on top
+			std::vector<const Hud::State::CompassMark*> order;
+			for (const auto& m : s.compass) order.push_back(&m);
+			std::sort(order.begin(), order.end(), [](auto x, auto y) {
+				auto rank = [](int kd) { return kd >= 3 && kd <= 6 ? 0 : kd == 8 || kd == 9 ? 1 : kd == 7 ? 2 : kd == 2 ? 3 : 4; };
+				return rank(x->kind) != rank(y->kind) ? rank(x->kind) < rank(y->kind) : x->dist > y->dist;
+			});
+			const Hud::State::CompassMark* centre = nullptr;
+			float best = 0.09f;
+			for (const auto* m : order) {
+				const float d = rel(m->ang);
+				if (std::abs(d) > span) continue;
+				const float  x = xAt(d), f = edgeFade(d);
+				const ImVec2 c{ x, cy + 1 * k };
+				const float  nr = std::clamp(1.0f - m->dist / 6000.0f, 0.0f, 1.0f);
+				switch (m->kind) {
+				case 1: {  // the rite: a burning diamond
+					const float r = 9 * k, pu = 0.75f + 0.25f * std::sin(now * 3.0f);
+					for (int i = 3; i >= 1; --i) {
+						const float g = r * (1.0f + 0.4f * i);
+						dl->AddQuadFilled({ c.x, c.y - g }, { c.x + g * 0.7f, c.y }, { c.x, c.y + g }, { c.x - g * 0.7f, c.y }, Fade(IM_COL32(236, 168, 72, 255), 0.08f * pu * f));
+					}
+					dl->AddQuadFilled({ c.x, c.y - r }, { c.x + r * 0.7f, c.y }, { c.x, c.y + r }, { c.x - r * 0.7f, c.y }, Fade(IM_COL32(20, 12, 8, 240), f));
+					dl->AddQuad({ c.x, c.y - r }, { c.x + r * 0.7f, c.y }, { c.x, c.y + r }, { c.x - r * 0.7f, c.y }, Fade(IM_COL32(236, 168, 72, 255), f), 1.8f * k);
+					const float q = r * 0.42f;
+					dl->AddQuadFilled({ c.x, c.y - q }, { c.x + q * 0.7f, c.y }, { c.x, c.y + q }, { c.x - q * 0.7f, c.y }, Fade(IM_COL32(255, 214, 130, 255), pu * f));
+					break;
+				}
+				case 2: {  // a shrine: the blue orb in its ring
+					const float r = 6.5f * k, pu = 0.5f + 0.5f * std::sin(now * 1.6f);
+					dl->AddCircleFilled(c, r * 2.0f, IM_COL32(80, 150, 255, static_cast<int>((30 + 30 * pu) * f)), 20);
+					dl->AddCircle(c, r * 1.45f, Fade(IM_COL32(140, 200, 255, 255), 0.8f * f), 20, 1.2f * k);
+					dl->AddCircleFilled(c, r, Fade(IM_COL32(150, 210, 255, 255), f), 20);
+					dl->AddCircleFilled({ c.x - r * 0.3f, c.y - r * 0.3f }, r * 0.35f, Fade(IM_COL32(240, 250, 255, 255), f), 10);
+					break;
+				}
+				case 3: {  // a city: a bronze keep
+					const float w = 7 * k, h = 9 * k;
+					dl->AddRectFilled({ c.x - w, c.y - h * 0.4f }, { c.x + w, c.y + h }, Fade(IM_COL32(20, 16, 12, 230), f));
+					dl->AddRect({ c.x - w, c.y - h * 0.4f }, { c.x + w, c.y + h }, Fade(kGold, f), 0, 0, 1.2f * k);
+					for (int t = -1; t <= 1; ++t) {
+						dl->AddRectFilled({ c.x + t * w * 0.7f - w * 0.22f, c.y - h }, { c.x + t * w * 0.7f + w * 0.22f, c.y - h * 0.4f }, Fade(kGold, f));
+					}
+					break;
+				}
+				case 4: {  // a town: a roof
+					const float w = 6 * k;
+					dl->AddTriangleFilled({ c.x - w, c.y }, { c.x, c.y - w }, { c.x + w, c.y }, Fade(kGold, 0.9f * f));
+					dl->AddRectFilled({ c.x - w * 0.7f, c.y }, { c.x + w * 0.7f, c.y + w * 0.8f }, Fade(IM_COL32(150, 120, 80, 255), 0.9f * f));
+					break;
+				}
+				case 5: {  // a dungeon: a dark arch
+					const float w = 6 * k;
+					dl->PathArcTo({ c.x, c.y }, w, RE::NI_PI, 2 * RE::NI_PI, 10);
+					dl->PathLineTo({ c.x + w, c.y + w });
+					dl->PathLineTo({ c.x - w, c.y + w });
+					dl->PathFillConvex(Fade(IM_COL32(30, 24, 22, 230), f));
+					dl->PathArcTo({ c.x, c.y }, w, RE::NI_PI, 2 * RE::NI_PI, 10);
+					dl->PathStroke(Fade(IM_COL32(180, 150, 110, 255), f), 0, 1.3f * k);
+					break;
+				}
+				case 6:  // any other place: a small rune
+					dl->AddQuadFilled({ c.x, c.y - 4 * k }, { c.x + 3 * k, c.y }, { c.x, c.y + 4 * k }, { c.x - 3 * k, c.y }, Fade(kGoldDim, f));
+					break;
+				case 7: {  // a friend: a green shield
+					const float w = 6 * k;
+					const ImVec2 sh[5] = { { c.x - w, c.y - w }, { c.x + w, c.y - w }, { c.x + w, c.y + w * 0.2f }, { c.x, c.y + w * 1.2f }, { c.x - w, c.y + w * 0.2f } };
+					dl->AddConvexPolyFilled(sh, 5, Fade(IM_COL32(90, 200, 110, 255), f));
+					dl->AddPolyline(sh, 5, Fade(IM_COL32(220, 255, 220, 255), f), ImDrawFlags_Closed, 1.2f * k);
+					break;
+				}
+				case 8:  // the dead: red, nearer = bigger and brighter
+					dl->AddCircleFilled(c, (2.0f + 3.0f * nr) * k, Fade(IM_COL32(220, 40, 30, 255), (0.45f + 0.55f * nr) * f), 10);
+					break;
+				case 9: {  // a boss or champion: a red skull
+					const float r = 7 * k, pu = 0.6f + 0.4f * std::sin(now * 5.0f);
+					dl->AddCircleFilled(c, r * 1.8f, IM_COL32(255, 40, 20, static_cast<int>(50 * pu * f)), 16);
+					dl->AddCircleFilled({ c.x, c.y - r * 0.2f }, r, Fade(IM_COL32(230, 60, 40, 255), f), 16);
+					dl->AddRectFilled({ c.x - r * 0.55f, c.y + r * 0.4f }, { c.x + r * 0.55f, c.y + r }, Fade(IM_COL32(230, 60, 40, 255), f));
+					dl->AddCircleFilled({ c.x - r * 0.38f, c.y - r * 0.25f }, r * 0.25f, Fade(IM_COL32(10, 4, 4, 255), f), 8);
+					dl->AddCircleFilled({ c.x + r * 0.38f, c.y - r * 0.25f }, r * 0.25f, Fade(IM_COL32(10, 4, 4, 255), f), 8);
+					break;
+				}
+				}
+				if (std::abs(d) < best && m->kind != 8 && !m->label.empty()) {
+					best = std::abs(d), centre = m;
+				}
+			}
+			dl->PopClipRect();
+			// the middle: a small flame-gold notch above the plate
+			const float pu = 0.7f + 0.3f * std::sin(now * 2.2f);
+			dl->AddTriangleFilled({ cx - 7 * k, top - 9 * k }, { cx, top - 1 * k }, { cx + 7 * k, top - 9 * k }, kGold);
+			dl->AddCircleFilled({ cx, top - 12 * k }, 3 * k, Fade(IM_COL32(255, 170, 80, 255), pu), 10);
+			if (centre) {
+				const int m = static_cast<int>(centre->dist * 0.01428f);
+				const std::string t = centre->label + "   " + std::to_string(m) + " m";
+				TxtC(dl, g_body, 15 * k, cx, b.y + 6 * k, IM_COL32(236, 222, 190, 235), t, 1.5f * k, IM_COL32(0, 0, 0, 255));
+			}
+		}
+
 		void Draw(const Hud::State& s, ImVec2 size)
 		{
 			auto*       dl = ImGui::GetForegroundDrawList();
@@ -491,6 +635,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const std::string t = g_padLast ? "A   Shrine of the Dirge" : "E   Shrine of the Dirge";
 					TxtC(dl, g_title, 20 * k, size.x * 0.5f, size.y * 0.5f + 40 * k, kParch, t, 2 * k, IM_COL32(60, 120, 255, 255));
 				}
+			}
+
+			if (s.compassOn && !s.perkMenu) {
+				DrawCompass(dl, s, size, k, now);
 			}
 
 			// Damage vignette: red edges when hurt, stronger when low.
@@ -813,7 +961,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				bar(cx - hw / 2 - gap - sw, sw, y + (h - sh) / 2, sh, mpF, mpGhost, IM_COL32(80, 150, 255, 255), IM_COL32(24, 52, 140, 255), true, 5);
 				bar(cx + hw / 2 + gap, sw, y + (h - sh) / 2, sh, spF, spGhost, IM_COL32(110, 210, 90, 255), IM_COL32(30, 100, 30, 255), false, 5);
 				TxtC(dl, g_num, 13 * k, cx, y + 0.5f * k, IM_COL32(255, 238, 220, 235), std::to_string(static_cast<int>(std::ceil(s.hp))) + " / " + std::to_string(static_cast<int>(s.hpMax)));
-				// the sigils at the outer ends: an arcane seal for magicka, wind for stamina
+				// the sigils at the outer ends: an arcane seal for magicka, a whirlwind for stamina
 				{
 					const ImVec2 mc{ cx - hw / 2 - gap - sw - 14 * k, y + h * 0.5f }, sc{ cx + hw / 2 + gap + sw + 14 * k, y + h * 0.5f };
 					const float  r = 9 * k;
@@ -837,17 +985,23 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 								dl->AddLine({ c.x + std::cos(an) * r * 0.74f, c.y + std::sin(an) * r * 0.74f }, { c.x + std::cos(an) * r * 0.9f, c.y + std::sin(an) * r * 0.9f }, col, 1.2f * k);
 							}
 							dl->AddCircleFilled(c, r * 0.17f, IM_COL32(230, 245, 255, 255), 10);
-						} else {  // stamina: wind - three gusts, each ending in a curl, drifting
-							struct Gust { float y, x0, x1, curl; };
-							const Gust gs[3] = { { -0.38f, -0.62f, 0.22f, 0.26f }, { 0.02f, -0.7f, 0.42f, 0.2f }, { 0.4f, -0.5f, 0.1f, 0.17f } };
-							for (int g = 0; g < 3; ++g) {
-								const float dx = std::sin(now * 1.6f + g * 1.3f) * r * 0.06f;
-								const float yy = c.y + gs[g].y * r, x0 = c.x + gs[g].x0 * r + dx, x1 = c.x + gs[g].x1 * r + dx, cr = gs[g].curl * r;
-								dl->PathLineTo({ x0, yy });
-								dl->PathLineTo({ x1, yy });
-								dl->PathArcTo({ x1, yy - cr }, cr, 1.5708f, g == 2 ? -2.5f : -3.1416f, 12);  // the gust curls up over itself
-								dl->PathStroke(col, 0, (g == 1 ? 1.8f : 1.5f) * k);
+						} else {  // stamina: a whirlwind - two arms spiralling in to the eye, turning, with a wisp flung off each
+							const float spin = now * 1.4f;
+							for (int arm = 0; arm < 2; ++arm) {
+								const float a0 = spin + arm * 3.1416f;
+								constexpr int kN = 28;
+								for (int q = 0; q < kN; ++q) {
+									const float t0 = static_cast<float>(q) / kN, t1 = static_cast<float>(q + 1) / kN;
+									const float ra = r * (0.12f + 0.7f * t0), rb = r * (0.12f + 0.7f * t1);   // the radius opens out along the arm
+									const float aa = a0 + t0 * 4.4f, ab = a0 + t1 * 4.4f;                     // ~1.4 turns
+									const int   al = static_cast<int>(255 * (0.35f + 0.65f * t0));
+									dl->AddLine({ c.x + std::cos(aa) * ra, c.y + std::sin(aa) * ra * 0.92f }, { c.x + std::cos(ab) * rb, c.y + std::sin(ab) * rb * 0.92f },
+										(col & 0x00FFFFFF) | (static_cast<ImU32>(al) << 24), (0.9f + 1.1f * t0) * k);
+								}
+								const float wa = a0 + 4.4f + 0.35f;  // the wisp at the arm's end
+								dl->AddCircleFilled({ c.x + std::cos(wa) * r * 0.86f, c.y + std::sin(wa) * r * 0.8f }, 1.1f * k, col, 8);
 							}
+							dl->AddCircleFilled(c, r * 0.12f, IM_COL32(220, 255, 210, 255), 10);  // the eye
 						}
 					}
 				}
@@ -1096,21 +1250,86 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 
-			// Countdown between nights: numeral inside a draining gold ring.
+			// Countdown between nights: the Blood Moon rising. A ring of the Dirge's runes round it, one going dark for
+			// each second spent; the moon's face fills with blood as the night comes on; cold-blue fire licks round the
+			// ring, turning red and climbing higher in the last seconds, when the numeral beats like a heart.
 			if (s.countdown > 0.05f) {
-				const ImVec2 c{ size.x * 0.5f, size.y * 0.2f };
-				const float  R = 46 * k, frac = std::clamp(s.countdown / gen::kRounds.breakSeconds, 0.0f, 1.0f);
-				dl->AddCircleFilled(c, R, IM_COL32(8, 8, 10, 170), 64);
-				dl->PathArcTo(c, R, -RE::NI_PI / 2, -RE::NI_PI / 2 + 2 * RE::NI_PI * frac, 64);
-				dl->PathStroke(kGold, 0, 4 * k);
+				const ImVec2 c{ size.x * 0.5f, size.y * 0.21f };
+				const float  R = 52 * k, total = std::max(1.0f, gen::kRounds.breakSeconds);
+				const float  frac = std::clamp(s.countdown / total, 0.0f, 1.0f), dread = 1.0f - frac;
+				const bool   last = s.countdown <= 5.0f;
+				const float  beat = last ? std::pow(std::max(0.0f, std::sin((s.countdown - std::floor(s.countdown)) * RE::NI_PI)), 6.0f) : 0.0f;
+				// the fire round it (the emblems' flame ring): blue, warming to red as the night nears
+				if (g_flame) {
+					const auto  tx = ImTextureID(reinterpret_cast<std::uintptr_t>(g_flame));
+					const float fps = 14.0f + 14.0f * dread;
+					for (int pass = 0; pass < 2; ++pass) {
+						const int   f = static_cast<int>((now + pass * 0.5f) * fps) % 16;
+						const float u = (f % 4) * 0.25f, v = (f / 4) * 0.25f, hh = R * (1.55f + 0.25f * dread + 0.08f * beat) * (pass ? 0.9f : 1.0f);
+						const int   rr = static_cast<int>(70 + 185 * dread), gg = static_cast<int>(140 - 100 * dread), bb = static_cast<int>(255 - 225 * dread);
+						dl->AddImage(tx, { c.x - hh, c.y - hh }, { c.x + hh, c.y + hh }, { u, v }, { u + 0.25f, v + 0.25f }, IM_COL32(rr, gg, bb, static_cast<int>((pass ? 120 : 190) * (0.6f + 0.4f * dread))));
+					}
+				}
+				// the moon: dark stone, filling with blood from below as time runs out
+				dl->AddCircleFilled(c, R * 1.02f, IM_COL32(6, 5, 8, 235), 64);
+				dl->AddCircleFilled(c, R * 0.86f, IM_COL32(28, 24, 30, 255), 64);
+				{
+					const float lvl = c.y + R * 0.86f - 2 * R * 0.86f * dread;  // the blood's surface
+					// fill the blood in thin rows (the disc below the wavy surface)
+					for (float y = std::max(lvl, c.y - R * 0.86f); y < c.y + R * 0.86f; y += 1.5f * k) {
+						const float half = std::sqrt(std::max(0.0f, R * R * 0.7396f - (y - c.y) * (y - c.y)));
+						const float wave = std::sin(now * 2.0f + y * 0.05f) * 1.5f * k;
+						if (y < lvl + 3 * k + wave) {
+							continue;
+						}
+						const int depth = static_cast<int>(std::clamp((y - lvl) / (R * 1.72f), 0.0f, 1.0f) * 70);
+						dl->AddLine({ c.x - half, y }, { c.x + half, y }, IM_COL32(150 - depth, 14, 12, 235), 1.6f * k);
+					}
+					dl->AddCircle(c, R * 0.86f, IM_COL32(120, 30, 24, 200), 64, 1.5f * k);
+				}
+				// the runes round the rim: one goes dark for every second spent (the last ones burn brightest)
+				{
+					constexpr int kRunes = 24;
+					const int lit = static_cast<int>(std::ceil(frac * kRunes));
+					for (int i = 0; i < kRunes; ++i) {
+						const float ang = -RE::NI_PI / 2 + i * 2 * RE::NI_PI / kRunes;
+						const ImVec2 p{ c.x + std::cos(ang) * R * 1.18f, c.y + std::sin(ang) * R * 1.18f };
+						const bool  on = i < lit;
+						const ImU32 col = on ? (last ? IM_COL32(255, 90, 60, 255) : IM_COL32(150, 205, 255, 255)) : IM_COL32(60, 52, 48, 200);
+						const float rr = 4.2f * k;
+						if (on) {
+							dl->AddCircleFilled(p, rr * 2.0f, last ? IM_COL32(255, 60, 30, 60) : IM_COL32(90, 160, 255, 50), 12);
+						}
+						switch (i % 4) {  // four rune shapes, turned with the ring
+						case 0: dl->AddLine({ p.x, p.y - rr }, { p.x, p.y + rr }, col, 1.6f * k); dl->AddLine({ p.x, p.y - rr * 0.2f }, { p.x + rr * 0.7f, p.y - rr }, col, 1.4f * k); break;
+						case 1: dl->AddLine({ p.x - rr * 0.6f, p.y + rr }, { p.x, p.y - rr }, col, 1.5f * k); dl->AddLine({ p.x + rr * 0.6f, p.y + rr }, { p.x, p.y - rr }, col, 1.5f * k); break;
+						case 2: dl->AddLine({ p.x - rr * 0.6f, p.y - rr }, { p.x + rr * 0.6f, p.y + rr }, col, 1.5f * k); dl->AddLine({ p.x + rr * 0.6f, p.y - rr }, { p.x - rr * 0.6f, p.y + rr }, col, 1.5f * k); break;
+						default: dl->AddQuad({ p.x, p.y - rr }, { p.x + rr * 0.7f, p.y }, { p.x, p.y + rr }, { p.x - rr * 0.7f, p.y }, col, 1.4f * k); break;
+						}
+					}
+					dl->AddCircle(c, R * 1.02f, Fade(kGold, 0.9f), 64, 1.8f * k);
+					dl->AddCircle(c, R * 1.34f, Fade(kGold, 0.55f), 64, 1.2f * k);
+				}
+				// the numeral, beating in the last seconds
 				const std::string n = std::to_string(static_cast<int>(std::ceil(s.countdown)));
-				TxtC(dl, g_num, std::round(44 * k), std::round(c.x), std::round(c.y - 23.5f * k), kParch, n);  // the digits' own middle on the ring's
-				TxtC(dl, g_title, 22 * k, c.x, c.y + R + 10 * k, Fade(kGold, 0.9f), "NIGHT " + std::to_string(s.round + 1) + " APPROACHES");
+				const float  fs = std::round((46 + 10 * beat) * k);
+				const ImU32  nc = last ? IM_COL32(255, 220, 200, 255) : kParch;
+				TxtC(dl, g_num, fs, std::round(c.x), std::round(c.y - fs * 0.53f), nc, n, (2 + 6 * beat) * k, last ? IM_COL32(255, 40, 20, 255) : IM_COL32(60, 120, 255, 255));
+				// the title on a plate under it
+				const std::string t = "NIGHT " + std::to_string(s.round + 1) + (last ? "  -  THE DEAD RISE" : "  APPROACHES");
+				const ImVec2 ts = Measure(g_title, 22 * k, t);
+				const float  py = c.y + R * 1.5f + 6 * k;
+				const ImVec2 pa{ c.x - ts.x / 2 - 22 * k, py }, pb{ c.x + ts.x / 2 + 22 * k, py + ts.y + 12 * k };
+				const float  pe = (pb.y - pa.y) * 0.5f;
+				const ImVec2 plate[6] = { { pa.x - pe, (pa.y + pb.y) / 2 }, { pa.x, pa.y }, { pb.x, pa.y }, { pb.x + pe, (pa.y + pb.y) / 2 }, { pb.x, pb.y }, { pa.x, pb.y } };
+				dl->AddConvexPolyFilled(plate, 6, IM_COL32(10, 9, 12, 215));
+				dl->AddPolyline(plate, 6, last ? IM_COL32(220, 70, 50, 255) : Fade(kGold, 0.9f), ImDrawFlags_Closed, 1.4f * k);
+				TxtC(dl, g_title, 22 * k, c.x, py + 6 * k, last ? IM_COL32(255, 150, 120, 255) : Fade(kGold, 0.95f), t, last ? 2 * k : 0, IM_COL32(255, 40, 20, 255));
 			}
 
 			// Boss bar: name over a long ornate bar at the top.
 			if (!s.bossName.empty()) {
-				const float w = size.x * 0.42f, h = 14 * k, x = size.x * 0.5f - w / 2, y = 64 * k;
+				const float w = size.x * 0.42f, h = 14 * k, x = size.x * 0.5f - w / 2, y = 128 * k;  // (under the compass)
 				TxtC(dl, g_title, 26 * k, size.x * 0.5f, y - 36 * k, s.bossEnraged ? IM_COL32(255, 120, 60, 255) : kParch, s.bossName, s.bossEnraged ? 3 * k : 0, IM_COL32(255, 60, 20, 255));
 				static float bossGhost = 1;
 				bossGhost = s.bossHp > bossGhost ? s.bossHp : std::max(s.bossHp, bossGhost - dt * 0.25f);
@@ -2966,7 +3185,19 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			auto* ui = RE::UI::GetSingleton();
 			auto* player = RE::PlayerCharacter::GetSingleton();
-			return ui && player && player->Is3DLoaded() && !ui->GameIsPaused() && !ui->IsMenuOpen(RE::MainMenu::MENU_NAME) && !ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME);
+			if (!ui || !player || !player->Is3DLoaded() || ui->GameIsPaused() || ui->IsMenuOpen(RE::MainMenu::MENU_NAME) || ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) {
+				return false;
+			}
+			// (with Skyrim Souls the menus no longer pause the game: they still hide the HUD)
+			for (auto name : { RE::InventoryMenu::MENU_NAME, RE::MagicMenu::MENU_NAME, RE::MapMenu::MENU_NAME, RE::StatsMenu::MENU_NAME, RE::TweenMenu::MENU_NAME,
+					 RE::JournalMenu::MENU_NAME, RE::ContainerMenu::MENU_NAME, RE::BarterMenu::MENU_NAME, RE::GiftMenu::MENU_NAME, RE::BookMenu::MENU_NAME,
+					 RE::LockpickingMenu::MENU_NAME, RE::Console::MENU_NAME, RE::MessageBoxMenu::MENU_NAME, RE::FavoritesMenu::MENU_NAME, RE::SleepWaitMenu::MENU_NAME,
+					 RE::TrainingMenu::MENU_NAME, RE::CraftingMenu::MENU_NAME, RE::LevelUpMenu::MENU_NAME, RE::RaceSexMenu::MENU_NAME, RE::DialogueMenu::MENU_NAME }) {
+				if (ui->IsMenuOpen(name)) {
+					return false;
+				}
+			}
+			return true;
 		}
 
 		void Frame(IDXGISwapChain* a_swap)
@@ -3073,7 +3304,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						g_outroBusy = t;
 					}
 					const float since = std::chrono::duration<float>(t - g_outroStart).count(), quiet = std::chrono::duration<float>(t - g_outroBusy).count();
-					if (since > 8.0f || (since > 2.6f && quiet > 0.9f)) {
+					if (since > 5.0f || (since > 1.2f && quiet > 0.5f)) {
 						g_outro = false;
 						logger::info("intro: into the game after {:.1f}s of black", since);
 						if (g_saveAfterFilm) {  // the new character's first save: a death now reloads this character, never an older one
@@ -3098,7 +3329,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (g_veilNow.exchange(false) && !mainMenu) {
 					g_veil = 1.0f;  // a new character's arrival: black at once, never a glimpse of the road first
 				}
-				g_veil = mainMenu ? 0.0f : want ? std::min(1.0f, g_veil + dt * 4.0f) : std::max(0.0f, g_veil - dt / 1.8f);
+				g_veil = mainMenu ? 0.0f : want ? std::min(1.0f, g_veil + dt * 4.0f) : std::max(0.0f, g_veil - dt / 1.2f);
 			}
 			if (((!InGame() && !mainMenu && !journal && !escJournal) || (DevTools::HudOff() && !mainMenu)) && !g_filmOn && g_veil <= 0) {
 				if (static int m = 0; m++ % 1200 == 0) {
@@ -3145,6 +3376,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (static int vb = 0; vb++ % 15 == 0) {
 					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.EnemyHealth_mc._visible", RE::GFxValue(false));
+						// Skyrim's compass gives way to ours (the shout meter under it stays)
+						RE::GFxValue compass;
+						if (hud->uiMovie->GetVariable(&compass, "_root.HUDMovieBaseInstance.CompassShoutMeterHolder.Compass") && compass.IsObject()) {
+							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder.Compass._visible", RE::GFxValue(false));
+						} else {
+							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder._visible", RE::GFxValue(false));
+						}
 					}
 				}
 			}

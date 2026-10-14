@@ -122,7 +122,8 @@ namespace bo3z
 		bool             BossAlive();
 		void             CallHerald();        // the Herald quest: fog rolls in and Grimmvar rises
 		void             CrumbleNear(const RE::NiPoint3& a_at, float a_radius);  // a freed city: its undead fall
-		void             LiftWave(const RE::NiPoint3& a_from);  // the curse lifted: a wave of light from the shrine strikes the dead down
+		void             LiftWave(const RE::NiPoint3& a_from);
+		void             UndeadNear(const RE::NiPoint3& a_from, float a_range, std::vector<std::array<float, 4>>& a_out);  // (dx, dy, dist, 1 boss/champion)  // the curse lifted: a wave of light from the shrine strikes the dead down
 		void             NetFill(Net::State& a_state);  // host: the night as the party should see it
 		// for the new dead (Undead.cpp): a telegraphed blow on the ground, a hit on the player, one more risen
 		void             Hazard(const RE::NiPoint3& a_at, float a_delay, float a_radius, float a_share, std::string_view a_look, bool a_stagger);
@@ -275,6 +276,11 @@ namespace bo3z
 	}
 
 	// Co-op life and death: down, revive, spectate, and the party wipe (Party.cpp)
+	namespace Compass
+	{
+		void Tick(float a_delta);  // game thread: the heading and the marks round you, for the HUD's compass
+	}
+
 	namespace Party
 	{
 		float FriendDistance(const RE::NiPoint3& a_at);  // the nearest friend in the party (1e9 alone)
@@ -289,7 +295,7 @@ namespace bo3z
 			float               reviveFrac{ -1 };  // reviving a friend: 0..1 (-1 none near)
 			std::string         reviveName;
 			std::vector<Fallen> fallen;           // friends down right now
-			struct Mark { std::string name; float x, y, dist; bool front; Life life; float hp{ 1.0f }; };  // hp: 0..1 from their figure
+			struct Mark { std::string name; float x, y, dist; bool front; Life life; float hp{ 1.0f }; float ang{ 0 }; };  // hp: 0..1 from their figure
 			std::vector<Mark>   marks;            // where each friend is (screen 0..1)
 		};
 		struct Out { std::uint8_t life; RE::NiPoint3 at; float left; std::uint64_t revive; };
@@ -479,6 +485,12 @@ namespace bo3z
 			bool        objOn{ false }, objFront{ false };
 			float       objX{ 0 }, objY{ 0 }, objDist{ 0 };
 			std::string objLabel;
+			float       objAng{ 0 };  // the objective's bearing from you (radians, 0 north, clockwise)
+			// the compass (Undying Nights' own, over Skyrim's hidden one): which way you face, and what lies around you
+			struct CompassMark { float ang, dist; int kind; std::string label; };  // kind: 1 rite, 2 shrine, 3 city, 4 town, 5 dungeon, 6 place, 7 friend, 8 undead, 9 boss
+			bool        compassOn{ false };
+			float       heading{ 0 };
+			std::vector<CompassMark> compass;
 			std::uint32_t objColor{ 0xD6B260 };
 			float       questNoteTime{ 0 };
 			// weapon slots (2, or 3 with the brew): the weapon in each (gen::kGuns index, -1 empty), its Reforge level

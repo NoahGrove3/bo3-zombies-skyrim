@@ -100,11 +100,11 @@ namespace bo3z
 			KeepSurvivalOff();
 			if (!Save::Flag(Save::kFlagMoved) && Forms::IntroDone()) {
 				if (FreshQuickstartGame(player) && !g_moved) {  // (a new game's scripts can wipe our values: never move twice)
-					if (++g_settle < 60) {  // let the skip fragment finish (race menu, choose sides) before moving
+					if (++g_settle < 20) {  // let the skip fragment finish (race menu, choose sides) before moving
 						return;
 					}
 					g_moved = true;
-					Hud::IntroVeil(8.0f);
+					Hud::IntroVeil(3.0f);  // (Skyrim's loading screen covers the move; the outro lifts the black once the world is there)
 					if (auto* marker = Forms::RiverwoodMarker()) {
 						player->MoveTo(marker);
 						logger::info("intro: moved the new character to Riverwood");

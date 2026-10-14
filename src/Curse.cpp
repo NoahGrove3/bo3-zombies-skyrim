@@ -572,6 +572,7 @@ namespace bo3z
 			h.objFront = front;
 			h.objX = x, h.objY = y;
 			h.objDist = on ? at.GetDistance(a_player->GetPosition()) : 0.0f;
+			h.objAng = on ? std::atan2(at.x - a_player->GetPosition().x, at.y - a_player->GetPosition().y) : 0.0f;
 			h.objLabel = label;
 		}
 

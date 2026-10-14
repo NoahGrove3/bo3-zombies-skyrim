@@ -1891,6 +1891,23 @@ namespace bo3z
 			std::erase_if(g_lifted, [](const Lifted& l) { return l.fade <= 0 && l.struck; });
 		}
 
+		void UndeadNear(const RE::NiPoint3& a_from, float a_range, std::vector<std::array<float, 4>>& a_out)
+		{
+			auto boss = g_boss.handle.get();
+			auto champ = g_champ.handle.get();
+			for (auto& sp : g_alive) {
+				auto a = sp.handle.get();
+				if (!a || a->IsDead() || a->IsDisabled()) {
+					continue;
+				}
+				const auto  p = a->GetPosition();
+				const float d = p.GetDistance(a_from);
+				if (d < a_range) {
+					a_out.push_back({ p.x - a_from.x, p.y - a_from.y, d, (a == boss || a == champ) ? 1.0f : 0.0f });
+				}
+			}
+		}
+
 		void CrumbleNear(const RE::NiPoint3& a_at, float a_radius)
 		{
 			int  n = 0;

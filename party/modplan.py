@@ -42,11 +42,40 @@ RECIPES = [
     ('Sentinel', 'Sentinel - An Equipment Overhaul*.7z', 'mods', 'fomod', {'recommended': True}),
     ('Sentinel - Required Resources', 'Sentinel - Required Resources-100985-3-2-0-1740901115.7z', 'mods', 'map', {'': ''}),
     ('COR - Character Overhaul', 'COR MAIN*.7z', 'mods', 'map', {'': ''}),
+    # (Oct 14, second batch) play: unpaused menus, no saving mid-fight, animations, blood, faces and followers
+    ('Skyrim Souls RE', 'Skyrim Souls RE*.zip', 'mods', 'map', {'': ''}),
+    ('STB No Save In Combat', 'STB No save and load in combat*.7z', 'mods', 'map', {'': ''}),
+    ('ArteFakes', 'ArteFakes*.7z', 'mods', 'map', {'ArteFakes SE/': ''}),
+    ('Falmer Animation', 'Falmer Animation*.zip', 'mods', 'map', {'Falmer New Anim/': ''}),
+    ('SpiderAnim', 'SpiderAnim*.zip', 'mods', 'map', {'': ''}),
+    ('RaySense Cover Animation', 'RaySense - Cover Animation*.zip', 'mods', 'map', {'RaySense - Cover Animation/': ''}),
+    ('Beam Walking Assist', 'Beam Walking Assist*.zip', 'mods', 'map', {'': ''}),
+    ('Unique Jarl Throne Sitting', 'Unique Jarl Throne Sitting*.7z', 'mods', 'map', {'': ''}),
+    ('Sigma Daggers', 'Sigma   Daggers*.7z', 'mods', 'map', {'Sigma - Daggers - All in one/': ''}),
+    ('Sigma Archery', 'Sigma - Archery*.7z', 'mods', 'map', {'Sigma - Archery/': ''}),
+    ('Sigma Swords', 'All in one 161095*.7z', 'mods', 'map', {'SIGMA - Sword animations - 1st person/': ''}),
+    ('Sigma Battleaxe', 'All in one-162611*.7z', 'mods', 'map', {'Sigma-Battleaxe/': ''}),
+    ('Sigma Waraxe', 'All in one-163226*.7z', 'mods', 'map', {'SIGMA - Waraxe/': ''}),
+    ('Sigma Mace', 'All in one-163952*.7z', 'mods', 'map', {'Sigma - Mace/': ''}),
+    ('Sigma Greatsword', 'All in one-164551*.7z', 'mods', 'map', {'SIGMA - Greatsword/': ''}),
+    ('Dynamic Bloodpool Framework', 'Dynamic Bloodpool Framework*.zip', 'mods', 'map', {'': ''}),
+    ('MikanEyes', 'MikanEyes*.7z', 'mods', 'map', {'': ''}),
+    ('Faithful Faces', 'Faithful Faces*.7z', 'mods', 'map', {'': ''}),
+    ('Fabulous Followers', 'Fabulous Followers SE*.zip', 'mods', 'map', {'Fabulous Followers - Full Version/': '', 'Facegen - SE/': '', 'Facetints - 2K/': ''}),
+    ('The Wolven Widow', 'The Wolven Widow*.rar', 'mods', 'map', {'': ''}),
+    ('Evigheden', 'Evigheden*.rar', 'mods', 'fomod', {'pick': ['Ok!', 'Dimhollow', 'Volkihar', 'Vanilla']}),
+    ("Freak's Floral Fields", "Freak's Floral Fields*.zip", 'mods', 'map', {"Freak's Floral Fields/meshes/": 'meshes', "Freak's Floral Fields/meshes cliffs/": 'meshes',
+        "Freak's Floral Fields/textures 2k/textures/": 'textures', "Freak's Floral Fields/Freak's Floral Fields.esp": '', "Freak's Floral Fields/Freak's Floral Fields.ini": ''}),
     # looks only: the optional Graphics part
     ('Lux', 'Lux (main)*.rar', 'graphics', 'fomod', {'pick': ['Vanilla', 'Default vanilla models', 'No Grass In Caves', 'USSEP latest version']}),
     ("Riton's Medieval Solitude", "Riton*Medieval Solitude*.rar", 'graphics', 'map', {"Riton's Medieval Solitude 2k/": ''}),
     ('Stony AF Markarth', 'Stony AF Markarth*.zip', 'graphics', 'map', {'': ''}),
     ('Venerable Nordic Temples', 'Venerable Nordic Temples*.zip', 'graphics', 'map', {'': ''}),
+    ('SRP Landscapes', 'SRP Landscapes 2K*.zip', 'graphics', 'map', {'SRP - Landscape/': ''}),
+    ('SRP Dungeons', 'SRP Dungeons 2K*.zip', 'graphics', 'map', {'SRP - Dungeons/': ''}),
+    ('SRP Architecture', 'SRP Architecture 2K*.zip', 'graphics', 'map', {'SRP - Architecture/': ''}),
+    ('SRP Misc', 'SRP Misc 2K*.zip', 'graphics', 'map', {'SRP - Misc/': ''}),
+    ('Skysight Skins', '01 - Skysight Skins*.rar', 'graphics', 'fomod', {'pick': ['Vanilla', 'Clean and Hairy (default)', 'Vanilla (default)', 'Default Subsurface Maps', 'Use Patched Vanilla Textures']}),
     ('Skyland AIO', 'Skyland AIO-34179-4-32-1700281282 (1).7z', 'graphics', 'fomod', {'pick': ['Start', 'Yes', 'Snowy Stone Roads', 'Tan', 'Whiterun', 'Winterhold', 'Riften', 'Markarth', 'Solitude',
         'High Hrothgar', 'Windhelm', 'Sovngarde', 'Skyhaven Temple', 'Grey', 'RW2', 'Skyking Galaxy (Favorite)', 'Finish'], 'drop': ['Windhelm Donor Wall'], 'exactly': {'Dirt Roads': 'No'}}),
 ]
@@ -174,7 +203,8 @@ def main():
                 if src and not s:
                     print('   !! missing prefix', name, src)
                     continue
-                ops.append([s, dst.strip('/'), True])
+                isdir = not s or any(n.startswith(s.rstrip('/') + '/') for n in names)
+                ops.append([s, dst.strip('/') if isdir else (dst.strip('/') or pathlib.PurePosixPath(s).name), isdir])
             chosen = []
         else:
             ops, chosen = fomod_ops(arch, names, args)

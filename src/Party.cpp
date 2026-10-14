@@ -169,7 +169,7 @@ namespace bo3z::Party
 					at.z += 150.0f;
 					float x = 0, y = 0, z = 0;
 					cam->WorldPtToScreenPt3(at, x, y, z, 1e-5f);
-					marks.push_back({ r.name, x, 1.0f - y, at.GetDistance(p->GetPosition()), z > 0.0f, static_cast<Life>(r.state), hp });
+					marks.push_back({ r.name, x, 1.0f - y, at.GetDistance(p->GetPosition()), z > 0.0f, static_cast<Life>(r.state), hp, std::atan2(at.x - p->GetPosition().x, at.y - p->GetPosition().y) });
 				}
 			}
 			std::scoped_lock l(g_lock);
