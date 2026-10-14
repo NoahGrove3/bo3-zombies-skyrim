@@ -13,6 +13,7 @@
     "stinger": "ES_Designed, Stinger, Cinematic, Hit, Impact, Big, Dark, Creepy, Horror 02 - Epidemic Sound.mp3",
     "ghosts": "ES_Designed, Vocal, Horror, Ghosts, Airy Roars 06 - Epidemic Sound.mp3",
     "menu": "ES_Echoes of the Unmasked - DEX 1200.mp3",
+    "menu_hide": "hide (slowed + reverb).mp3",
     "rubble": "ES_Explosions, Real, Heavy Blasts, Stone Rubble Debris - Epidemic Sound.mp3",
     "ignite": "ES_Fire, Ignite, Large Ignition, Start Fire x2 - Epidemic Sound.mp3",
     "darkhit": "ES_Hit, Big, Powerful, Dark, Suspense, Cinematic 03 - Epidemic Sound.mp3",
@@ -61,10 +62,10 @@
   "rows": [
     {
       "id": "mus_menu",
-      "src": "menu",
+      "src": "menu_hide",
       "use": "main menu music",
       "t0": 0.0,
-      "t1": 154.4,
+      "t1": 136.7,
       "stereo": true,
       "peak": -4,
       "fadeIn": 1500,
