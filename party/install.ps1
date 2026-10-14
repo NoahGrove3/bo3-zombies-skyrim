@@ -84,12 +84,17 @@ $lines = @(); if (Test-Path $plist) { $lines = Get-Content $plist }
 # the graphics plugins, in the host's load order (each needs the ones before it)
 $gfxPlugins = @('RealisticWaterTwo - Resources.esm', 'Lux Orbis - Master plugin.esm', 'Lux - Resources.esp', 'Lux Via.esp', 'SMIM-SE-Merged-All.esp',
     'Lit Road Signs.esp', 'HappyLittleTrees.esp', 'Skoglendi - A Grass Mod.esp', 'RealisticWaterTwo.esp', 'Skyland Watercolor - Slow Green-RW2.esp',
-    'Azurite Weathers III.esp', 'Lux Orbis.esp', 'Lux Via - plugin.esp', 'Lux Via - Blended Roads Bridges Texture sets.esp', 'PAN_NPCs.esp')
+    'Azurite Weathers III.esp', 'Lux Orbis.esp', 'Lux Via - plugin.esp', 'Lux Via - Blended Roads Bridges Texture sets.esp', 'PAN_NPCs.esp',
+    'Lux - Master plugin.esm', 'Lux.esp', 'Lux - No grass in caves patch.esp')
 # the party mods' plugins, in load order (masters first)
 $modPlugins = @('Ordinator - Perks of Skyrim.esp', 'Apocalypse - Magic of Skyrim.esp', 'MysticismMagic.esp', 'MysticOrdinator.esp', 'ForgottenMagic_Redone.esp',
     'StormCalling.esl', 'Conduit.esp', 'StrangeRunes.esp', 'EnhancedAtronachs.esp', 'BURP_SpellTomes.esp', 'BURPST_Apocalypse.esp', 'BURPST_ForgottenMagic.esp',
     'BURPST_MysticismMO.esp', 'DeadlySpellImpacts.esp', 'FEC.esp', 'Embers XD.esp', 'Embers XD - Fire Magick Add-On.esp', 'ENB Light.esp', 'TKDodge.esp',
-    'TKDodgeSE sound.esp', 'TrueDirectionalMovement.esp', 'Spell Sword.esp', '90fps.esp', 'sirwho_Wizard_Hats-Full.esp')
+    'TKDodgeSE sound.esp', 'TrueDirectionalMovement.esp', 'Spell Sword.esp', '90fps.esp', 'sirwho_Wizard_Hats-Full.esp',
+    'Sentinel - Master Plugin.esp', 'SkyUI_SE.esp', 'MCMHelper.esp', 'The Restless Dead.esp', 'mihailesobonecolossus.esp', 'mihailoldgod.esp',
+    'mihailgiantfamily.esp', 'mihailfogling.esp', 'mihailhighfantasypack.esp', 'DiverseDragonsCollectionSE.esp', 'GhostLight.esp',
+    'Thunderchild - Epic Shout Package.esp', 'Thundering Shouts.esp', 'Sentinel.esp', 'Sentinel - Priests and Acolytes.esp', 'Sentinel - City Guards.esp',
+    'SkyParkour.esp', 'Character Menu SE.esp', 'Phantom Horse.esp')
 $ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'BO3Zombies.esp', 'UndyingNights.esp') + $gfxPlugins + $modPlugins
 $keep = $lines | Where-Object { $n = ($_ -replace '^\*', '').Trim(); -not ($ours -contains $n) }
 $mid = @()

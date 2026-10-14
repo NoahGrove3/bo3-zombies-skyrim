@@ -251,16 +251,54 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				iconTex = g_weaponIcons[gun];
 			}
 			const auto rgb = [](std::uint32_t v, float a) { return IM_COL32((v >> 16) & 0xFF, (v >> 8) & 0xFF, v & 0xFF, static_cast<int>(255 * std::clamp(a, 0.0f, 1.0f))); };
+			// A Coffer spell's emblem shows how far it is reforged: unforged, the bare medallion (no flame, no glow); once, its
+			// flame; twice, a brighter, faster flame in a glow; three times (the last), all of that with a ring of runes
+			// turning round it and sparks circling, the whole emblem breathing.
+			int forge = 1;
+			if (gun >= Arcana::kIdBase) {
+				forge = std::clamp(Arcana::Level(gun - Arcana::kIdBase), 0, 3);
+				if (forge == 0) {
+					flame = 0.0f;
+				}
+			}
+			if (forge == 3) {
+				R *= 1.0f + 0.035f * std::sin(now * 3.2f);
+			}
+			if (forge >= 2) {  // the glow behind it
+				dl->AddCircleFilled(c, R * (forge == 3 ? 1.75f : 1.5f), rgb(col, (forge == 3 ? 0.26f : 0.18f) * alpha * (0.85f + 0.15f * std::sin(now * 2.4f))), 40);
+				dl->AddCircleFilled(c, R * 1.18f, rgb(acc, 0.16f * alpha), 40);
+			}
 			if (g_flame && flame > 0.0f) {
 				const auto tex = ImTextureID(reinterpret_cast<std::uintptr_t>(g_flame));
+				const float fps = forge >= 3 ? 26.0f : forge == 2 ? 21.0f : 16.0f;
 				const auto frame = [&](float t, float h, ImU32 tint) {
-					const int   f = static_cast<int>(t * 16.0f) % 16;
+					const int   f = static_cast<int>(t * fps) % 16;
 					const float u = (f % 4) * 0.25f, v = (f / 4) * 0.25f;
 					dl->AddImage(tex, { c.x - h, c.y - h }, { c.x + h, c.y + h }, { u, v }, { u + 0.25f, v + 0.25f }, tint);
 				};
-				const float h = R / 0.62f;
-				frame(now, h * 1.04f, rgb(col, 0.95f * alpha * flame));         // the outer flame, the spell's colour
-				frame(now + 0.5f, h * 0.93f, rgb(acc, 0.55f * alpha * flame));  // a hotter tongue inside, half a loop out of step
+				const float h = R / 0.62f, hot = forge >= 2 ? 1.0f : 0.95f;
+				if (forge >= 3) {
+					frame(now + 0.25f, h * 1.2f, rgb(col, 0.6f * alpha * flame));   // a taller outer blaze
+				}
+				frame(now, h * (forge >= 2 ? 1.1f : 1.04f), rgb(col, hot * alpha * flame));         // the flame, the spell's colour
+				frame(now + 0.5f, h * 0.93f, rgb(acc, (forge >= 2 ? 0.8f : 0.55f) * alpha * flame));  // a hotter tongue inside
+				if (forge >= 2) {
+					frame(now + 0.75f, h * 0.82f, IM_COL32(255, 248, 230, static_cast<int>(110 * alpha * flame)));  // a white-hot heart
+				}
+			}
+			if (forge == 3) {  // the ring of runes and the circling sparks
+				const float rr = R * 1.32f;
+				for (int q = 0; q < 12; ++q) {
+					const float a0 = q * 0.5236f + now * 0.6f;
+					dl->PathArcTo(c, rr, a0, a0 + 0.3f, 6);
+					dl->PathStroke(rgb(acc, 0.85f * alpha), 0, 2.2f);
+				}
+				for (int q = 0; q < 6; ++q) {
+					const float a0 = q * 1.0472f - now * 1.8f, sr = R * (1.45f + 0.06f * std::sin(now * 4.0f + q));
+					const ImVec2 sp{ c.x + std::cos(a0) * sr, c.y + std::sin(a0) * sr };
+					dl->AddCircleFilled(sp, 3.2f, IM_COL32(255, 244, 210, static_cast<int>(230 * alpha)), 10);
+					dl->AddCircleFilled(sp, 7.0f, rgb(col, 0.35f * alpha), 12);
+				}
 			}
 			if (auto* icon = iconTex) {
 				const float h = R * 128.0f / 104.0f;
