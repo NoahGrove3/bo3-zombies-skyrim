@@ -27,17 +27,18 @@ def trollshide(d):   # shield with claw marks
     d.polygon(P((.5, .22), (.74, .3), (.72, .55), (.5, .8), (.28, .55), (.26, .3)), outline=W, width=22)
     for k in range(3):
         x = .40 + k * .08; d.line(P((x, .36), (x + .06, .62)), fill=W, width=18)
-def quicksilver(d):  # power rising up a staff: three chevrons and a spark at the tip
-    d.line(P((.5, .78), (.5, .34)), fill=W, width=18)
-    for k in range(3):
-        y = .62 - k * .12; d.line(P((.36, y + .08), (.5, y - .02), (.64, y + .08)), fill=W, width=16, joint='curve')
+def quicksilver(d):  # a drop of quicksilver with a falling mark under it: spells cost less
+    d.polygon(P((.5, .18), (.66, .46), (.68, .56), (.62, .67), (.5, .72), (.38, .67), (.32, .56), (.34, .46)), outline=W, width=20)
+    d.line(P((.42, .52), (.58, .52)), fill=W, width=16)
+    d.line(P((.5, .76), (.5, .86)), fill=W, width=14)
+    d.line(P((.44, .81), (.5, .87), (.56, .81)), fill=W, width=12, joint='curve')
+def twinstrike(d):   # two spell-bolts striking together, a burst where they meet
+    for s_ in (-1, 1):
+        d.line(P((.5 + s_ * .26, .74), (.5 + s_ * .04, .4)), fill=W, width=20)
+        d.polygon(P((.5 + s_ * .01, .3), (.5 + s_ * .12, .42), (.5 + s_ * .0, .44)), fill=W)
     for a in range(8):
-        t = a * math.pi / 4; r = .07 if a % 2 else .12
-        d.line(P((.5, .24), (.5 + r * math.cos(t), .24 + r * math.sin(t))), fill=W, width=10)
-def twinstrike(d):   # two arrows
-    for off in (-.09, .09):
-        d.line(P((.3 + off, .72), (.66 + off, .32)), fill=W, width=22)
-        d.polygon(P((.72 + off, .25), (.6 + off, .3), (.68 + off, .38)), fill=W)
+        t = a * math.pi / 4; r = .06 if a % 2 else .11
+        d.line(P((.5, .3), (.5 + r * math.cos(t), .3 + r * math.sin(t))), fill=W, width=9)
 def hearthfire(d):   # flame
     d.polygon(P((.5, .18), (.62, .38), (.6, .3), (.72, .52), (.68, .7), (.5, .8), (.32, .7), (.28, .52), (.4, .34), (.42, .44)), fill=W)
     d.polygon(P((.5, .48), (.58, .62), (.54, .74), (.46, .74), (.42, .62)), fill=(30, 30, 30, 255))
@@ -46,14 +47,16 @@ def windrunner(d):   # wing chevrons + speed lines
         y = .36 + k * .12; d.line(P((.24, y), (.44, y)), fill=W, width=16)
     d.line(P((.5, .3), (.72, .5), (.5, .7)), fill=W, width=26, joint='curve')
     d.line(P((.6, .3), (.8, .5), (.6, .7)), fill=W, width=18, joint='curve')
-def hawkeye(d):      # eye with crosshair
-    d.ellipse(P((.24, .38), (.76, .62)), outline=W, width=18)
-    d.ellipse(P((.43, .43), (.57, .57)), fill=W)
-    for a, b in (((.5, .2), (.5, .32)), ((.5, .68), (.5, .8)), ((.16, .5), (.24, .5)), ((.76, .5), (.84, .5))):
-        d.line(P(a, b), fill=W, width=16)
-def mammoth(d):      # curved tusk
-    d.arc(P((.26, .26), (.74, .74)), 160, 340, fill=W, width=42)
-    d.ellipse(P((.24, .48), (.34, .58)), fill=W)
+def hawkeye(d):      # an open eye over a falling drop: magicka returns sooner
+    d.ellipse(P((.22, .3), (.78, .54)), outline=W, width=18)
+    d.ellipse(P((.43, .35), (.57, .49)), fill=W)
+    d.polygon(P((.5, .58), (.58, .7), (.56, .77), (.5, .8), (.44, .77), (.42, .7)), fill=W)
+def mammoth(d):      # a great curled tusk, banded: a broad back for more magicka
+    d.arc(P((.22, .2), (.78, .76)), 150, 360, fill=W, width=48)
+    for a in (200, 250, 300):
+        t = math.radians(a); x, y = .5 + .25 * math.cos(t), .48 + .25 * math.sin(t)
+        d.line(P((x - .05 * math.cos(t), y - .05 * math.sin(t)), (x + .05 * math.cos(t), y + .05 * math.sin(t))), fill=(0, 0, 0, 255), width=10)
+    d.ellipse(P((.2, .44), (.32, .56)), fill=W)
 def frostbite(d):    # snowflake
     for k in range(6):
         a = k * math.pi / 3; x, y = .5 + .28 * math.cos(a), .5 + .28 * math.sin(a)
@@ -94,6 +97,11 @@ def medallion(color, glyph):
         a = k * math.pi / 4 + math.pi / 8; x, y = R + .885 * R * math.cos(a), R + .885 * R * math.sin(a)
         rr = 11
         d.ellipse((x - rr, y - rr, x + rr, y + rr), fill=(40, 30, 20, 255)); d.ellipse((x - rr + 3, y - rr + 2, x + rr - 5, y + rr - 5), fill=(160, 126, 80, 255))
+    # a thin ring of the brew's light just inside the lip
+    ring = Image.new('L', (S, S), 0); rd = ImageDraw.Draw(ring); rr = int(.72 * R)
+    rd.ellipse((R - rr, R - rr, R + rr, R + rr), outline=255, width=5)
+    rglow = Image.new('RGBA', (S, S), c + (0,)); rglow.putalpha(ring.filter(ImageFilter.GaussianBlur(5)).point(lambda v: int(min(255, v * 1.6))))
+    out = Image.alpha_composite(out, rglow)
     # the sigil: drawn white on a mask, then cut in (dark groove), lit edge, and a coloured fire inside
     m = Image.new('L', (S, S), 0); md = ImageDraw.Draw(m); glyph(_Mask(md))
     m = m.resize((S, S))
