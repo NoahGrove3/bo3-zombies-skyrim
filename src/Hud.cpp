@@ -1874,34 +1874,61 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					fg->AddLine({ p.x, p.y - r * 2.2f }, { p.x, p.y + r * 2.2f }, IM_COL32(205, 220, 255, al / 2), 1.0f * k);
 					fg->AddCircleFilled(p, std::max(0.8f * k, r * 0.45f), IM_COL32(235, 240, 255, al), 8);
 				}
-				static float nextShoot = 4.0f, shootT = -1.0f;
+				// now and then a shooting star: a long, slightly curving streak - a white-hot head in a blue bloom, a tail
+				// that tapers and cools behind it, a few sparks shed along the way
+				static float  nextShoot = 5.0f, shootT = -1.0f, life = 1.2f;
 				static ImVec2 s0{}, sd{};
+				static float  bend = 0;
 				if (shootT < 0 && now > nextShoot) {
 					shootT = 0;
 					const float dir = U(sr) < 0.5f ? 1.0f : -1.0f;
-					s0 = { size.x * (0.15f + 0.7f * U(sr)), size.y * (0.04f + 0.18f * U(sr)) };
-					sd = { dir * size.x * (0.22f + 0.12f * U(sr)), size.y * (0.10f + 0.08f * U(sr)) };
-					nextShoot = now + 7.0f + 10.0f * U(sr);
+					s0 = { size.x * (dir > 0 ? 0.08f + 0.35f * U(sr) : 0.55f + 0.35f * U(sr)), size.y * (0.03f + 0.14f * U(sr)) };
+					sd = { dir * size.x * (0.30f + 0.15f * U(sr)), size.y * (0.12f + 0.08f * U(sr)) };
+					bend = (U(sr) - 0.5f) * 0.12f;
+					life = 1.1f + 0.5f * U(sr);
+					nextShoot = now + 8.0f + 9.0f * U(sr);
 				}
 				if (shootT >= 0) {
 					shootT += dt;
-					const float life = 0.85f, t = shootT / life;
+					const float t = shootT / life;
 					if (t >= 1.0f) {
 						shootT = -1;
 					} else {
-						const float  head = EaseOut(std::min(1.0f, t * 1.15f));
-						const float  bright = std::sin(std::clamp(t, 0.0f, 1.0f) * 3.14159f) * fade;
-						const ImVec2 h{ s0.x + sd.x * head, s0.y + sd.y * head };
-						for (int i = 0; i < 14; ++i) {  // the tail: brightest at the head, fading back
-							const float a0 = head - 0.022f * i, a1 = head - 0.022f * (i + 1);
-							if (a1 < 0) {
+						auto path = [&](float f) {  // along the streak, 0..1, bowing a little
+							return ImVec2{ s0.x + sd.x * f - sd.y * bend * std::sin(f * 3.1416f), s0.y + sd.y * f + sd.x * bend * std::sin(f * 3.1416f) * 0.3f };
+						};
+						const float head = 1.0f - (1.0f - t) * (1.0f - t);                    // fast in, easing out
+						const float bright = std::min(1.0f, t * 6.0f) * std::min(1.0f, (1.0f - t) * 2.5f) * fade;
+						const float tail = 0.28f * std::min(1.0f, t * 3.0f);                 // the tail grows out behind
+						constexpr int kSeg = 48;
+						for (int i = 0; i < kSeg; ++i) {
+							const float f0 = head - tail * i / kSeg, f1 = head - tail * (i + 1) / kSeg;
+							if (f1 < 0) {
 								break;
 							}
-							const int al = static_cast<int>(230 * bright * (1.0f - i / 14.0f));
-							fg->AddLine({ s0.x + sd.x * a0, s0.y + sd.y * a0 }, { s0.x + sd.x * a1, s0.y + sd.y * a1 }, IM_COL32(220, 230, 255, al), (2.2f - 0.12f * i) * k);
+							const float w = 1.0f - static_cast<float>(i) / kSeg, w2 = w * w;
+							const ImVec2 p0 = path(f0), p1 = path(f1);
+							fg->AddLine(p0, p1, IM_COL32(90, 140, 255, static_cast<int>(45 * w2 * bright)), (9.0f * w + 2) * k);     // the blue glow
+							fg->AddLine(p0, p1, IM_COL32(170, 205, 255, static_cast<int>(120 * w2 * bright)), (3.4f * w + 0.8f) * k);
+							fg->AddLine(p0, p1, IM_COL32(255, 250, 240, static_cast<int>(255 * w2 * w * bright)), (1.6f * w + 0.4f) * k);  // the hot core
 						}
-						fg->AddCircleFilled(h, 4.5f * k, IM_COL32(200, 215, 255, static_cast<int>(60 * bright)), 12);
-						fg->AddCircleFilled(h, 1.8f * k, IM_COL32(255, 255, 255, static_cast<int>(255 * bright)), 8);
+						const ImVec2 h = path(head);
+						if (g_sSoft) {
+							const auto st = ImTextureID(reinterpret_cast<std::uintptr_t>(g_sSoft));
+							const float r1 = 26 * k, r2 = 9 * k;
+							fg->AddImage(st, { h.x - r1, h.y - r1 }, { h.x + r1, h.y + r1 }, { 0, 0 }, { 1, 1 }, IM_COL32(120, 170, 255, static_cast<int>(110 * bright)));
+							fg->AddImage(st, { h.x - r2, h.y - r2 }, { h.x + r2, h.y + r2 }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * bright)));
+						}
+						fg->AddCircleFilled(h, 2.0f * k, IM_COL32(255, 255, 255, static_cast<int>(255 * bright)), 10);
+						for (int j = 0; j < 6; ++j) {  // sparks falling away behind the head
+							const float f = head - tail * (0.15f + 0.13f * j);
+							if (f < 0) {
+								break;
+							}
+							const ImVec2 p = path(f);
+							const float  fl = 0.5f + 0.5f * std::sin(now * 40.0f + j * 2.3f);
+							fg->AddCircleFilled({ p.x + std::sin(j * 7.1f) * 6 * k, p.y + (j + 1) * 2.2f * k }, 1.1f * k, IM_COL32(220, 235, 255, static_cast<int>(160 * fl * bright * (1 - j / 6.0f))), 6);
+						}
 					}
 				}
 			}
@@ -1945,54 +1972,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float u0 = std::fmod(now * 0.0045f, 1.0f), u1 = std::fmod(now * 0.0075f + 0.4f, 1.0f);
 				fg->AddImage(tex, { 0, 0 }, { size.x, size.y * 0.40f }, { u0, 0 }, { u0 + 1.0f, 1 }, IM_COL32(255, 255, 255, static_cast<int>(150 * fade * cloudK)));
 				fg->AddImage(tex, { 0, size.y * 0.06f }, { size.x, size.y * 0.46f }, { u1, 0.15f }, { u1 + 0.7f, 1 }, IM_COL32(220, 220, 235, static_cast<int>(120 * fade * cloudK)));
-			}
-			// lightning: now and then a forked bolt strikes the far range (drawn behind it, so the peaks cut it off), the
-			// clouds flaring with it; it flickers a few times and is gone
-			{
-				static float next = 6.0f, life = 0;
-				static std::mt19937 lr{ 11 };
-				static std::vector<std::vector<ImVec2>> bolt;  // painting pixels: the main channel, then its forks
-				std::uniform_real_distribution<float> L(0, 1);
-				if (now > next && life <= 0) {
-					life = 0.55f;
-					next = now + 9.0f + 11.0f * L(lr);
-					bolt.clear();
-					const float x0 = 2560 * (0.40f + 0.52f * L(lr));
-					std::vector<ImVec2> main{ { x0, 1440 * 0.05f } };
-					float x = x0, y = 1440 * 0.05f;
-					while (y < 1440 * 0.47f) {
-						y += 1440 * (0.012f + 0.02f * L(lr));
-						x += (L(lr) - 0.5f) * 70.0f;
-						main.push_back({ x, y });
-						if (L(lr) < 0.16f && bolt.size() < 4) {  // a fork wanders off and dies out
-							std::vector<ImVec2> fork{ { x, y } };
-							float fx = x, fy = y;
-							const float side = L(lr) < 0.5f ? -1.0f : 1.0f;
-							for (int i = 0, n = 3 + static_cast<int>(L(lr) * 5); i < n; ++i) {
-								fy += 1440 * (0.01f + 0.015f * L(lr));
-								fx += side * (14.0f + 40.0f * L(lr));
-								fork.push_back({ fx, fy });
-							}
-							bolt.push_back(std::move(fork));
-						}
-					}
-					bolt.insert(bolt.begin(), std::move(main));
-				}
-				if (life > 0) {
-					life -= dt;
-					const float flick = (life > 0.43f || (life > 0.26f && life < 0.33f) || (life > 0.08f && life < 0.13f)) ? 1.0f : (life > 0 ? 0.18f : 0.0f);
-					fg->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.55f }, IM_COL32(170, 190, 240, static_cast<int>(26 * flick * fade)), IM_COL32(170, 190, 240, static_cast<int>(26 * flick * fade)),
-						IM_COL32(170, 190, 240, 0), IM_COL32(170, 190, 240, 0));
-					for (std::size_t b = 0; b < bolt.size(); ++b) {
-						const float w = b == 0 ? 1.0f : 0.55f;
-						for (std::size_t i = 1; i < bolt[b].size(); ++i) {
-							const ImVec2 p0 = toScreen(0.45f, bolt[b][i - 1].x, bolt[b][i - 1].y), p1 = toScreen(0.45f, bolt[b][i].x, bolt[b][i].y);
-							fg->AddLine(p0, p1, IM_COL32(120, 140, 255, static_cast<int>(40 * flick * fade)), 14.0f * w * k);
-							fg->AddLine(p0, p1, IM_COL32(170, 190, 255, static_cast<int>(110 * flick * fade)), 5.0f * w * k);
-							fg->AddLine(p0, p1, IM_COL32(240, 245, 255, static_cast<int>(255 * flick * fade)), 1.8f * w * k);
-						}
-					}
-				}
 			}
 			auto groundFog = [&](float y0, float y1, float speed, float rep, int al, ImU32 rgb) {
 				ID3D11ShaderResourceView* t = g_mGroundFog ? g_mGroundFog : g_menuFog;
@@ -2057,14 +2036,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 								IM_COL32(255, 255, 255, static_cast<int>(255 * fade)));
 						}
 					}
-					for (int i = 0; i < 22; ++i) {  // ripples running out toward the far shore, finer as they go
-						const float ph = std::fmod(now * 0.03f + i / 22.0f, 1.0f);
-						const float d = 1.0f - ph;  // 1 near us, 0 at the shore
-						const float py = 803 + d * d * 630;
-						const float x0 = 2560 * std::fmod(i * 0.618f, 1.0f) - 900, len = 600 + 1400 * d;
-						const ImVec2 a = toScreen(kL, x0, py), b = toScreen(kL, x0 + len, py);
-						const int al = static_cast<int>(26 * std::sin(ph * 3.1416f) * fade);
-						fg->AddLine(a, b, IM_COL32(150, 180, 235, al), (0.7f + d * 1.6f) * k);
+					// rings spreading out over the water from under the shrine, as if it breathed on the lake: each a bright
+					// crest with a dark trough inside it, flattened by the angle we look at the water from, fading as it widens
+					{
+						const ImVec2 q = at(0, 0, -26.0f);
+						const float  flat = 0.2924f;  // sin of the view angle: how round rings look squashed on the water
+						for (int i = 0; i < 7; ++i) {
+							const float ph = std::fmod(now * 0.085f + i / 7.0f, 1.0f);
+							const float R = (190.0f + ph * 1500.0f) * u;
+							const float life = std::sin(ph * 3.1416f) * (1.0f - ph);
+							const int   hi = static_cast<int>(70 * life * fade), lo = static_cast<int>(60 * life * fade);
+							const float th = (1.2f + 3.0f * ph) * k;
+							fg->AddEllipse(q, { R, R * flat }, IM_COL32(160, 195, 245, hi), 0.0f, 96, th);
+							fg->AddEllipse({ q.x, q.y - 1.5f * th }, { R * 0.985f, R * flat * 0.985f }, IM_COL32(2, 4, 12, lo), 0.0f, 96, th * 1.4f);
+							fg->AddEllipse({ q.x, q.y + 2.0f * th }, { R * 1.02f, R * flat * 1.02f }, IM_COL32(110, 150, 220, hi / 3), 0.0f, 96, th * 2.2f);
+						}
 					}
 					// the shrine's own light on the water under it: a wavering column of blue
 					if (g_sSoft) {
@@ -2144,7 +2130,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const int   fr = static_cast<int>((now + t0) * 18.0f) % 16;
 						const float uu = (fr % 4) * 0.25f, vv = (fr / 4) * 0.25f;
 						const float hh = 108.0f * u * scale / 0.62f;
-						fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_flame)), { c.x - hh, c.y - hh * 1.08f }, { c.x + hh, c.y + hh * 0.92f }, { uu, vv }, { uu + 0.25f, vv + 0.25f }, tint);
+						fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_flame)), { c.x - hh, c.y - hh }, { c.x + hh, c.y + hh }, { uu, vv }, { uu + 0.25f, vv + 0.25f }, tint);
 					};
 					aura(1.45f + 0.05f * pulse, 0.0f, IM_COL32(70, 140, 255, static_cast<int>((150 + 60 * pulse) * fade)));
 					aura(1.25f, 0.45f, IM_COL32(150, 210, 255, static_cast<int>((120 + 60 * pulse) * fade)));
