@@ -2489,8 +2489,20 @@ namespace bo3z
 				}
 			}
 		}
+		// the city's shout: Thunderchild's (sheet: shouts plugin/shoutId) when it's installed, else our own
+		RE::TESShout* ExtShout(int a_i)
+		{
+			if (a_i < 0 || a_i >= static_cast<int>(gen::kShouts.size()) || gen::kShouts[a_i].extPlugin.empty()) {
+				return nullptr;
+			}
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			return dh->LookupModByName(gen::kShouts[a_i].extPlugin) ? dh->LookupForm<RE::TESShout>(gen::kShouts[a_i].extShout, gen::kShouts[a_i].extPlugin) : nullptr;
+		}
 		RE::TESShout* ShoutForm(int a_i)
 		{
+			if (auto* ext = ExtShout(a_i)) {
+				return ext;
+			}
 			return a_i >= 0 && a_i < static_cast<int>(gen::kShouts.size()) ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESShout>(gen::kShouts[a_i].shout, gen::kPlugin) : nullptr;
 		}
 		bool KnowsShout(int a_i)
@@ -2507,6 +2519,25 @@ namespace bo3z
 				return;
 			}
 			// the three words learned and unlocked (no dragon souls asked), the shout in the Magic menu
+			if (ExtShout(a_i) == sh) {
+				for (auto& v : sh->variations) {
+					if (v.word) {
+						Console(fmt::format("player.teachword {:08X}", v.word->GetFormID()));
+						Console(fmt::format("player.unlockword {:08X}", v.word->GetFormID()));
+					}
+				}
+				p->AddShout(sh);
+				// its mod's questline begins with it (Thunderchild: Acolyte of the Voice), unless it already has
+				if (const auto q = gen::kShouts[a_i].quest; !q.empty()) {
+					auto* quest = RE::TESForm::LookupByEditorID<RE::TESQuest>(q);
+					if (!quest || (!quest->IsRunning() && !quest->IsCompleted())) {
+						Console(fmt::format("startquest {}", q));
+						logger::info("shout: started its questline {}", q);
+					}
+				}
+				logger::info("shout: learned {} from {} ({:08X})", gen::kShouts[a_i].id, gen::kShouts[a_i].extPlugin, sh->GetFormID());
+				return;
+			}
 			for (auto w : gen::kShouts[a_i].words) {
 				if (auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(w, gen::kPlugin)) {
 					Console(fmt::format("player.teachword {:08X}", f->GetFormID()));

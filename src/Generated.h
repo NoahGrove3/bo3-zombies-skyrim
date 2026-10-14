@@ -21,21 +21,32 @@ namespace bo3z::gen
 		1.0f, 0.95f, 0.15f, 6, 5,
 		{ 3400.f, 4600.f }, { 1400.f, 2100.f }, 120.f, 30 };
 	inline constexpr FormRef kIntroQuest{ "Skyrim.esm", 0x03372B, "MQ101" };
-	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; };
-	inline constexpr std::array<Enemy, 13> kEnemies{ {
-		Enemy{ "zombie", "Risen Dead", { "BO3Zombies.esp", 0x0008C3, "UN_zombie" }, false, 1, 30, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f },
-		Enemy{ "shadow", "Gloomstalker", { "BO3Zombies.esp", 0x0008CC, "UN_shadow" }, false, 5, 1, false, "NPC Head [Head]", true, 0, true, 0, 1.0f, 1.0f },
-		Enemy{ "death_hound", "Death Hound", { "Dawnguard.esm", 0x00C5EF, "DLC1encDeathHound" }, false, 1, 1, true, "Canine_Head", true, 0, false, 0, 1.0f, 1.0f },
-		Enemy{ "boss", "Grimmvar, the Undying Wyrm", { "BO3Zombies.esp", 0x0008C6, "UN_boss" }, false, 10, 0, false, "NPC Head [Head]", true, 10, false, 0, 1.0f, 1.0f },
-		Enemy{ "reaper", "Iron Reaper", { "BO3Zombies.esp", 0x000968, "UN_reaper" }, false, 3, 2, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.85f },
-		Enemy{ "necro", "Voidbound Necromancer", { "BO3Zombies.esp", 0x00096B, "UN_necro" }, false, 4, 2, false, "NPC Head [Head]", true, 0, false, 2, 1.6f, 1.0f },
-		Enemy{ "skeleton", "Raised Skeleton", { "Skyrim.esm", 0x0EB876, "EncSkeletonNecro01Melee1H" }, false, 99, 0, false, "NPC Head [Head]", true, 0, false, 3, 0.5f, 1.1f },
-		Enemy{ "runner", "Hollow Bride", { "BO3Zombies.esp", 0x000A78, "UN_runner" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f },
-		Enemy{ "wailer", "Drowned Wailer", { "BO3Zombies.esp", 0x000A7B, "UN_wailer" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f },
-		Enemy{ "bloater", "Stitched Abomination", { "BO3Zombies.esp", 0x000A7E, "UN_bloater" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f },
-		Enemy{ "knight", "Horned Bone Knight", { "BO3Zombies.esp", 0x000A81, "UN_knight" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.9f },
-		Enemy{ "king", "Barrow King", { "BO3Zombies.esp", 0x000A84, "UN_king" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 1, 3.5f, 0.85f },
-		Enemy{ "lich", "Lich of the Dirge", { "BO3Zombies.esp", 0x000A87, "UN_lich" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 2, 2.5f, 0.9f },
+	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; bool rig; };
+	inline constexpr std::array<Enemy, 24> kEnemies{ {
+		Enemy{ "zombie", "Hollowborn", { "The Restless Dead.esp", 0x194DD1, "zzEnc_RD_DraugrIronScaleArmorM01_Melee1H" }, false, 1, 10, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "hollow2", "Hollowborn", { "The Restless Dead.esp", 0x1F5212, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee2H" }, false, 1, 8, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "hollow3", "Hollowborn", { "The Restless Dead.esp", 0x1EAFCC, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee1H" }, false, 1, 8, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "ash1", "Ashbound", { "The Restless Dead.esp", 0x5793C4, "zzEnc_DC_Skeleton01Warrior1H" }, false, 2, 5, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "ash2", "Ashbound", { "The Restless Dead.esp", 0x5D9796, "zzEnc_DC_Skeleton01Warrior1HShield" }, false, 2, 4, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "runner", "Marrowkin", { "mihailesobonecolossus.esp", 0x0008A1, "mihailboneling" }, false, 3, 4, false, "NPC Head", true, 0, false, 0, 0.6f, 1.25f, false },
+		Enemy{ "marksman", "Hollow Marksman", { "The Restless Dead.esp", 0x5E39C7, "zzEnc_DC_Skeleton01Archer" }, false, 4, 1, false, "NPC Head [Head]", true, 0, false, 2, 0.8f, 1.0f, false },
+		Enemy{ "necro", "Pyre Hexer", { "The Restless Dead.esp", 0x06DEA8, "zzEnc_DC_DraugrMageFireM02" }, false, 5, 1, false, "NPC Head [Head]", true, 0, false, 2, 1.2f, 1.0f, false },
+		Enemy{ "hexer_rime", "Rime Hexer", { "The Restless Dead.esp", 0x0311F3, "zzEnc_DC_DraugrMageFrostM02" }, false, 5, 1, false, "NPC Head [Head]", true, 0, false, 2, 1.2f, 1.0f, false },
+		Enemy{ "hexer_storm", "Storm Hexer", { "The Restless Dead.esp", 0x1E9BF1, "zzEnc_DC_DraugrMageShockM02" }, false, 6, 1, false, "NPC Head [Head]", true, 0, false, 2, 1.2f, 1.0f, false },
+		Enemy{ "wailer", "Mire Wraith", { "mihailfogling.esp", 0x000806, "mihailfoglingCairn" }, false, 6, 1, false, "NPC Head", true, 0, false, 0, 1.2f, 1.0f, false },
+		Enemy{ "death_hound", "Rotfang", { "mihailoldgod.esp", 0x000861, "mihailleshenwolfSPIRIT" }, false, 1, 1, true, "Canine_Head", true, 0, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "shadow", "Marrow Lord", { "mihailesobonecolossus.esp", 0x0008C4, "mihailbonemasterFIRE" }, false, 5, 1, false, "NPC Head [Head]", true, 0, true, 0, 1.0f, 1.0f, false },
+		Enemy{ "reaper", "Dread Champion", { "The Restless Dead.esp", 0x5DE8BD, "zzEnc_DC_Skeleton06Warrior1H" }, false, 7, 1, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.9f, false },
+		Enemy{ "brute", "Gravebrute", { "mihailgiantfamily.esp", 0x000804, "mihailgiantyoungling" }, false, 9, 1, false, "NPC Head [Head]", true, 0, false, 1, 3.5f, 0.9f, false },
+		Enemy{ "boss", "The Ossuary Titan", { "mihailesobonecolossus.esp", 0x0008D2, "SUMMONmihailbonecolossusFIRE" }, false, 10, 0, false, "NPC Head [Head]", true, 10, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "boss2", "The Antlered Rot", { "mihailoldgod.esp", 0x000867, "mihailleshenNPC4" }, false, 20, 0, false, "NPC Head [Head]", true, 10, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "boss3", "Barrow Matron", { "mihailgiantfamily.esp", 0x000821, "mihailgiantesses_NPC3" }, false, 30, 0, false, "NPC Head [Head]", true, 10, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "boss4", "Vaelmorr, the Hollow Wyrm", { "DiverseDragonsCollectionSE.esp", 0x09D809, "ogdd_EncDragonNecro01" }, false, 40, 0, false, "NPC Head", true, 10, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "skeleton", "Bone Thrall", { "The Restless Dead.esp", 0x5793C9, "zzEnc_DC_Skeleton01Warrior2H" }, false, 99, 0, false, "NPC Head [Head]", true, 0, false, 3, 0.5f, 1.1f, false },
+		Enemy{ "king", "The Gatekeeper", { "The Restless Dead.esp", 0x013ED9, "zzTRD_CD_DraugrBoss_Gatekeeper_02" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.85f, false },
+		Enemy{ "knight", "Thorgar the Skulltaker", { "The Restless Dead.esp", 0xC0FED4, "zzTRD_DC_DraugrBoss_BleakFallsBarrow_02" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.9f, false },
+		Enemy{ "lich", "Svana the Shadow", { "The Restless Dead.esp", 0xEFD6C3, "zzTRD_RD_DraugrBoss_SilverdriftLair_02" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 2, 2.5f, 0.9f, false },
+		Enemy{ "bloater", "Barrow Champion", { "The Restless Dead.esp", 0x04050E, "zzEnc_DC_DraugrWarriorM06_Melee1H" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.9f, false },
 	} };
 	enum class Sound : int {
 		cast_sidearm = 0,
@@ -1205,18 +1216,18 @@ namespace bo3z::gen
 		StationDef{ true, 0x00003C, 30620.0f, 105740.0f, -14094.0f, 0.0f, 0.8f },
 		StationDef{ true, 0x00003C, 109020.0f, 103500.0f, -9013.0f, 180.0f, 0.8f },
 	} };
-	struct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; int sound; };
+	struct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; int sound; std::string_view extPlugin; std::uint32_t extShout; std::string_view quest; };
 	inline constexpr std::array<ShoutDef, 10> kShouts{ {
-		ShoutDef{ "ember", "Ember Roar", "A roar of fire that sets the ground ablaze before you", 0, 0xA43, { 0xA07, 0xA09, 0xA0B }, { 0xA08, 0xA0A, 0xA0C }, 0xFF6A20, "VUL", "KREIN", "YOLAAR", 218 },
-		ShoutDef{ "gale", "Kyne's Gale", "A storm wall that throws the horde flat where it stands", 1, 0xA44, { 0xA0D, 0xA0F, 0xA11 }, { 0xA0E, 0xA10, 0xA12 }, 0xBFE8FF, "KYN", "SUULE", "BROM", 219 },
-		ShoutDef{ "wail", "Wolf Queen's Wail", "The dead nearest you turn and fight for you", 2, 0xA45, { 0xA13, 0xA15, 0xA17 }, { 0xA14, 0xA16, 0xA18 }, 0xB07BFF, "POTAH", "ZAHRAAN", "DOVOR", 220 },
-		ShoutDef{ "rime", "Ysgramor's Frost", "A line of frost that freezes the dead solid, then breaks them", 3, 0xA46, { 0xA19, 0xA1B, 0xA1D }, { 0xA1A, 0xA1C, 0xA1E }, 0x9ED8FF, "YSGAR", "IIZ", "KRENDAL", 221 },
-		ShoutDef{ "quake", "Tonal Quake", "A Dwemer shockwave rolls out through the ground around you", 4, 0xA47, { 0xA1F, 0xA21, 0xA23 }, { 0xA20, 0xA22, 0xA24 }, 0xFFB050, "DWEM", "MUL", "RAHGOL", 222 },
-		ShoutDef{ "shroud", "Nocturnal's Shroud", "The dead lose you in the dark and stand dazed", 5, 0xA48, { 0xA25, 0xA27, 0xA29 }, { 0xA26, 0xA28, 0xA2A }, 0x7A4DFF, "NOK", "FAAZ", "GRIK", 223 },
-		ShoutDef{ "toll", "Arkay's Toll", "A grave-bell tolls: the weakened dead crumble to dust", 6, 0xA49, { 0xA2B, 0xA2D, 0xA2F }, { 0xA2C, 0xA2E, 0xA30 }, 0xE8E4FF, "ARK", "DUUN", "NAHKRIIN", 224 },
-		ShoutDef{ "mire", "Mire Breath", "A poison fog that eats the dead and spreads as they fall", 7, 0xA4A, { 0xA31, 0xA33, 0xA35 }, { 0xA32, 0xA34, 0xA36 }, 0x7CC23A, "HJAL", "SOVUN", "KRIIL", 225 },
-		ShoutDef{ "dread", "Nightmare Cry", "The dead are hurled back in terror and burn", 8, 0xA4B, { 0xA37, 0xA39, 0xA3B }, { 0xA38, 0xA3A, 0xA3C }, 0xFF4F8F, "VAER", "NUZ", "KAAN", 226 },
-		ShoutDef{ "shatter", "Magnus Shatter", "Crystal shards fall from the sky around you", 9, 0xA4C, { 0xA3D, 0xA3F, 0xA41 }, { 0xA3E, 0xA40, 0xA42 }, 0x7FD8FF, "MAG", "KRIST", "VAAHRUN", 227 },
+		ShoutDef{ "ember", "Armageddon", "Fire falls from the heavens on everything around you", 0, 0xA43, { 0xA07, 0xA09, 0xA0B }, { 0xA08, 0xA0A, 0xA0C }, 0xFF6A20, "WULD", "TOOR", "SHUL", 218, "Thunderchild - Epic Shout Package.esp", 0x05294B, "TC_Questline_Quest_AcolyteOfTheVoice" },
+		ShoutDef{ "gale", "Stormblast", "Lightning gathers in your weapon for one devastating blow", 1, 0xA44, { 0xA0D, 0xA0F, 0xA11 }, { 0xA0E, 0xA10, 0xA12 }, 0xBFE8FF, "LOK", "BAH", "QO", 219, "Thunderchild - Epic Shout Package.esp", 0x01D462, "TC_Questline_Quest_AcolyteOfTheVoice" },
+		ShoutDef{ "wail", "Dance of the Dead", "The fallen rise again to fight at your side", 2, 0xA45, { 0xA13, 0xA15, 0xA17 }, { 0xA14, 0xA16, 0xA18 }, 0xB07BFF, "RAAN", "VAAZ", "ZOL", 220, "Thunderchild - Epic Shout Package.esp", 0x0CA951, "TC_Questline_Quest_AcolyteOfTheVoice" },
+		ShoutDef{ "rime", "Iceborn", "The cruel winds of the North shatter the dead around you", 3, 0xA46, { 0xA19, 0xA1B, 0xA1D }, { 0xA1A, 0xA1C, 0xA1E }, 0x9ED8FF, "IIZ", "AH", "VIING", 221, "Thunderchild - Epic Shout Package.esp", 0x05EBB5, "TC_Questline_Quest_AcolyteOfTheVoice" },
+		ShoutDef{ "quake", "Earthquake", "The earth shakes the dead off their feet, or turns them to stone", 4, 0xA47, { 0xA1F, 0xA21, 0xA23 }, { 0xA20, 0xA22, 0xA24 }, 0xFFB050, "FUS", "KLO", "UL", 222, "Thunderchild - Epic Shout Package.esp", 0x013CB0, "TC_Questline_Quest_AcolyteOfTheVoice" },
+		ShoutDef{ "shroud", "Phantom Decoy", "A ghostly double draws the horde away, then bursts", 5, 0xA48, { 0xA25, 0xA27, 0xA29 }, { 0xA26, 0xA28, 0xA2A }, 0x7A4DFF, "FIIK", "LO", "SAH", 223, "Thunderchild - Epic Shout Package.esp", 0x02817C, "TC_Questline_Quest_AcolyteOfTheVoice" },
+		ShoutDef{ "toll", "Essence Rip", "Tear the life out of the dead to heal your wounds", 6, 0xA49, { 0xA2B, 0xA2D, 0xA2F }, { 0xA2C, 0xA2E, 0xA30 }, 0xE8E4FF, "LAAS", "RO", "DAH", 224, "Thunderchild - Epic Shout Package.esp", 0x00541C, "TC_Questline_Quest_AcolyteOfTheVoice" },
+		ShoutDef{ "mire", "Curse", "What the dead do to you, they suffer back", 7, 0xA4A, { 0xA31, 0xA33, 0xA35 }, { 0xA32, 0xA34, 0xA36 }, 0x7CC23A, "FIIK", "ZII", "GRON", 225, "Thunderchild - Epic Shout Package.esp", 0x0012D7, "TC_Questline_Quest_AcolyteOfTheVoice" },
+		ShoutDef{ "dread", "Wail of the Banshee", "A screech that slays the weak and drinks their life", 8, 0xA4B, { 0xA37, 0xA39, 0xA3B }, { 0xA38, 0xA3A, 0xA3C }, 0xFF4F8F, "FAAS", "ZAH", "FRUL", 226, "Thunderchild - Epic Shout Package.esp", 0x0043A8, "TC_Questline_Quest_AcolyteOfTheVoice" },
+		ShoutDef{ "shatter", "Shattersphere", "A sphere of elemental ice from the frozen peaks", 9, 0xA4C, { 0xA3D, 0xA3F, 0xA41 }, { 0xA3E, 0xA40, 0xA42 }, 0x7FD8FF, "FO", "MEY", "GUT", 227, "Thunderchild - Epic Shout Package.esp", 0x05EBB6, "TC_Questline_Quest_AcolyteOfTheVoice" },
 	} };
 	struct LocationDef { int town; std::uint32_t anchor; int object; int slot; };
 	inline constexpr std::array<LocationDef, 62> kLocations{ {

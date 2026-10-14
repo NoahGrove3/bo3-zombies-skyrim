@@ -34,8 +34,7 @@ namespace bo3z
 			bool ok = true;
 			for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
 				auto* f = Lookup(gen::kEnemies[i].form);
-				g_enemies[i] = f ? f->As<RE::TESBoundObject>() : nullptr;
-				ok = ok && g_enemies[i];
+				g_enemies[i] = f ? f->As<RE::TESBoundObject>() : nullptr;  // (a creature mod missing: its rows sit out, the rest still rise)
 			}
 			for (std::size_t i = 0; i < gen::kSounds.size(); ++i) {
 				auto* f = Lookup(gen::kSounds[i]);
@@ -364,8 +363,12 @@ namespace bo3z
 					a_s->WriteRecordData(&g_stamBonus, sizeof(int));
 				}
 				const auto lv = Arcana::Levels();
-				if (a_s->OpenRecord('SPLV', 1)) {
+				if (a_s->OpenRecord('SPLV', 2)) {  // (2: the 200-spell Coffer; the 150-spell levels are dropped)
 					a_s->WriteRecordData(lv.data(), static_cast<std::uint32_t>(lv.size()));
+				}
+				const auto sh = Director::Sheltered();
+				if (a_s->OpenRecord('SHLT', 1)) {
+					a_s->WriteRecordData(sh.data(), static_cast<std::uint32_t>(sizeof(RE::FormID) * sh.size()));
 				}
 			}
 			void OnLoad(SKSE::SerializationInterface* a_s)
@@ -379,7 +382,15 @@ namespace bo3z
 						g_stacksLoaded = a_s->ReadRecordData(g_stacks.data(), length) == length;
 					} else if (type == 'STAM' && length == sizeof(int)) {
 						a_s->ReadRecordData(&g_stamBonus, length);
-					} else if (type == 'SPLV') {
+					} else if (type == 'SHLT') {
+						std::vector<RE::FormID> ids(length / sizeof(RE::FormID));
+						a_s->ReadRecordData(ids.data(), static_cast<std::uint32_t>(ids.size() * sizeof(RE::FormID)));
+						for (auto& id : ids) {
+							RE::FormID n = 0;
+							id = a_s->ResolveFormID(id, n) ? n : 0;
+						}
+						Director::Unshelter(ids);
+					} else if (type == 'SPLV' && version == 2) {
 						std::vector<std::uint8_t> lv(length);
 						a_s->ReadRecordData(lv.data(), length);
 						Arcana::SetLevels(lv);

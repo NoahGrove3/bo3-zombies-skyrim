@@ -99,6 +99,8 @@ namespace bo3z
 		void             Reset();
 		bool             IsRoundUndead(RE::Actor* a_actor);
 		void             HeadlongCombat();  // data loaded: the undead charge straight in
+		std::vector<RE::FormID> Sheltered();                       // townsfolk sent indoors for the night (co-save 'SHLT')
+		void             Unshelter(const std::vector<RE::FormID>& a_ids);  // a save loaded: everyone back out
 		int              EnemyRow(RE::Actor* a_actor);  // sheet row of one of ours, -1 otherwise
 		bool             IsSpared(RE::Actor* a_actor);
 		void             Frenzy(RE::Actor* a_actor, float a_seconds);  // Mindbreaker: turns on its own kind  // night truce: townsfolk and followers can't be hurt

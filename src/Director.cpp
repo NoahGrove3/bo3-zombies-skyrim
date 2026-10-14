@@ -242,7 +242,7 @@ namespace bo3z
 			}
 			// which of the risen dead it is: the Runner, the Wailer and the Bloater have bodies of their own
 			std::optional<Undead::Type> rolled;
-			if (gen::kEnemies[*pick].id == "zombie") {
+			if (gen::kEnemies[*pick].rig && gen::kEnemies[*pick].id == "zombie") {
 				rolled = Undead::Roll(g_current);
 				const std::string_view alt = *rolled == Undead::Type::Runner ? "runner" : *rolled == Undead::Type::Wailer ? "wailer" : *rolled == Undead::Type::Bloater ? "bloater" : "";
 				for (std::size_t i = 0; !alt.empty() && i < gen::kEnemies.size(); ++i) {
@@ -281,7 +281,9 @@ namespace bo3z
 			// which of the new dead it is (Undead.cpp): its body, its gait and its own attacks
 			const std::string_view rowId = kindRow.id;
 			std::optional<Undead::Type> type;
-			if (rolled) {
+			if (!kindRow.rig) {
+				// a creature from the party's mods: its own body, animations and attacks (no rig, no Undying body type)
+			} else if (rolled) {
 				type = rolled;
 			} else if (rowId == "zombie") {
 				type = Undead::Roll(g_current);
@@ -333,12 +335,12 @@ namespace bo3z
 			// Armed: an ancient Nord sword, an iron sword or a dagger (bare-handed undead swing slowly); the Iron
 			// Reaper swings its scythe two-handed; necromancers fight with spells; raised skeletons keep their own.
 			const std::string_view eid = gen::kEnemies[*pick].id;
-			const std::uint32_t    own = kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : (eid == "zombie" || eid == "runner" || eid == "wailer" || eid == "bloater" || eid == "lich") ? gen::kZombieClaws : 0;
+			const std::uint32_t    own = !kindRow.rig ? 0 : kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : (eid == "zombie" || eid == "runner" || eid == "wailer" || eid == "bloater" || eid == "lich") ? gen::kZombieClaws : 0;
 			if (own) {  // their own fighting style: the Reaper's scythe, Grimmvar's raking claws, the Gloomstalker's quick slashes
 				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(own, gen::kPlugin)) {
 					RE::ActorEquipManager::GetSingleton()->EquipObject(actor, w);
 				}
-			} else if (kindRow.kind == 0 && !actor->GetEquippedObject(false)) {
+			} else if (kindRow.rig && kindRow.kind == 0 && !actor->GetEquippedObject(false)) {
 				static constexpr RE::FormID kBlades[] = { 0x02C66F, 0x012EB7, 0x01397E, 0x02C66F };
 				if (auto* w = RE::TESForm::LookupByID<RE::TESObjectWEAP>(kBlades[std::uniform_int_distribution<int>(0, 3)(g_rng)])) {
 					actor->AddObjectToContainer(w, nullptr, 1, nullptr);
@@ -380,6 +382,11 @@ namespace bo3z
 				actor->GetActorRuntimeData().selectedSpells[0] = nullptr;
 				actor->GetActorRuntimeData().selectedSpells[1] = nullptr;
 			}
+			if (!kindRow.rig && kindRow.kind == 2) {
+				av->SetActorValue(RE::ActorValue::kDestruction, 10.0f);
+				av->SetActorValue(RE::ActorValue::kConjuration, 10.0f);
+				av->SetActorValue(RE::ActorValue::kMarksman, 15.0f);
+			}
 			if (gen::kEnemies[*pick].elite) {
 				const float want = HealthFor(g_current) * gen::elite::healthMult;
 				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
@@ -390,7 +397,7 @@ namespace bo3z
 			if (type) {
 				Undead::Assign(actor, *type);
 			}
-			if (rowId != "death_hound" && rowId != "skeleton") {
+			if (kindRow.rig && rowId != "death_hound" && rowId != "skeleton") {
 				Undead::SetEyes(actor, rowId);
 			}
 			Forms::PlayAt(gen::Sound::rise, actor);
@@ -459,14 +466,21 @@ namespace bo3z
 			float           maxHp{ 1 };
 		} g_boss;
 
+		// The bosses take turns: the first on night 10, the next on night 20, and round again (each time on a later,
+		// harder night). Host and party agree, since the night number is shared.
 		int BossRow()
 		{
-			for (int i = 0; i < static_cast<int>(gen::kEnemies.size()); ++i) {
-				if (gen::kEnemies[i].bossEvery > 0) {
-					return i;
+			int rows[16], n = 0, every = 10;
+			for (int i = 0; i < static_cast<int>(gen::kEnemies.size()) && n < 16; ++i) {
+				if (gen::kEnemies[i].bossEvery > 0 && Forms::Enemy(i)) {
+					rows[n++] = i, every = gen::kEnemies[i].bossEvery;
 				}
 			}
-			return -1;
+			if (n == 0) {
+				return -1;
+			}
+			const int turn = std::max(0, g_current / std::max(1, every) - 1);
+			return rows[turn % n];
 		}
 
 		void CastAt(RE::Actor* a_caster, int a_spell, RE::Actor* a_target, float a_strength = 1.0f)
@@ -1226,7 +1240,7 @@ namespace bo3z
 					it = g_alive.erase(it);
 				} else if (a->IsDead()) {
 					g_corpses.push_back(it->handle);
-					g_fading.push_back({ it->handle, 5.0f });  // the body lies there 5 s, then crumbles
+					g_fading.push_back({ it->handle, 10.0f });  // the body lies there 10 s, then crumbles
 					g_settle.push_back({ it->handle, 0.0f });
 					PowerUps::MaybeDrop(a->GetPosition());
 					Curse::OnUndeadDeath(a.get());
@@ -1879,6 +1893,64 @@ namespace bo3z
 		std::vector<Protected> g_protected;
 		float                  g_protectTimer = 0;
 
+		// Night in a town: from the moment the countdown starts, everyone out in the streets goes indoors (they are taken
+		// out of the world, so nothing of the night can hurt them), and walks back out at dawn. Followers, other players
+		// and creatures stay. Every player's game does this for itself.
+		std::vector<RE::ObjectRefHandle> g_sheltered;
+		void TickShelter(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			static float scan = 0;
+			const bool   night = g_phase == Phase::Break || g_phase == Phase::Fighting;
+			if (!night) {
+				if (!g_sheltered.empty()) {
+					for (auto& h : g_sheltered) {
+						if (auto r = h.get(); r && r->IsDisabled()) {
+							r->Enable(false);
+						}
+					}
+					logger::info("shelter: dawn, {} townsfolk back out", g_sheltered.size());
+					g_sheltered.clear();
+				}
+				return;
+			}
+			if ((scan -= a_delta) > 0) {
+				return;
+			}
+			scan = 1.0f;
+			static auto* npcKw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x013794);  // ActorTypeNPC
+			auto inTown = [](RE::Actor* a) {
+				auto* cell = a->GetParentCell();
+				if (!cell || cell->IsInteriorCell()) {
+					return false;
+				}
+				auto* loc = a->GetCurrentLocation();
+				for (int up = 0; loc && up < 4; ++up, loc = loc->parentLoc) {
+					if (loc->HasKeywordString("LocTypeCity") || loc->HasKeywordString("LocTypeTown") || loc->HasKeywordString("LocTypeSettlement")) {
+						return true;
+					}
+				}
+				return false;
+			};
+			int n = 0;
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				auto a = h.get();
+				if (!a || a.get() == a_player || a->IsDead() || a->IsDisabled() || a->IsPlayerTeammate() || IsOurs(a.get()) || Party::IsFriend(a.get())) {
+					continue;
+				}
+				auto* race = a->GetRace();
+				if (!race || (npcKw && !race->HasKeyword(npcKw)) || a->IsHostileToActor(a_player) || !inTown(a.get())) {
+					continue;
+				}
+				a->StopCombat();
+				a->Disable();
+				g_sheltered.push_back(a->CreateRefHandle());
+				++n;
+			}
+			if (n) {
+				logger::info("shelter: {} townsfolk went indoors for the night", n);
+			}
+		}
+
 		void TickTruce(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			if ((g_protectTimer -= a_delta) > 0) {
@@ -1994,6 +2066,7 @@ namespace bo3z
 				SweepStrays(player, a_delta);  // (on a client every undead is the host's)
 			}
 			TickTruce(player, a_delta);
+			TickShelter(player, a_delta);
 			Prune();
 			{
 				std::scoped_lock l(Hud::Lock());
@@ -2244,6 +2317,29 @@ namespace bo3z
 
 	namespace Director
 	{
+		std::vector<RE::FormID> Sheltered()
+		{
+			std::vector<RE::FormID> out;
+			for (auto& h : g_sheltered) {
+				if (auto r = h.get()) {
+					out.push_back(r->GetFormID());
+				}
+			}
+			return out;
+		}
+		void Unshelter(const std::vector<RE::FormID>& a_ids)
+		{
+			// (runs while the save loads: the references are re-enabled once they exist; the night hides them again)
+			SKSE::GetTaskInterface()->AddTask([a_ids] {
+				for (auto id : a_ids) {
+					if (auto* r = id ? RE::TESForm::LookupByID<RE::TESObjectREFR>(id) : nullptr; r && r->IsDisabled()) {
+						r->Enable(false);
+					}
+				}
+			});
+			g_sheltered.clear();
+		}
+
 		// The undead charge straight in and strike (Noah: they circled and strafed like draugr first): every one of
 		// ours gets a combat style of its own with no circling, no falling back, no flanking, no stalking, no strafing.
 		void HeadlongCombat()
@@ -2274,6 +2370,9 @@ namespace bo3z
 					cs->closeRangeData.circleMult = 0.0f, cs->closeRangeData.fallbackMult = 0.0f;
 					cs->closeRangeData.flankDistanceMult = 0.0f, cs->closeRangeData.stalkTimeMult = 0.0f;
 					cs->longRangeData.strafeMult = 0.0f;
+					// a dragon among them (the Hollow Wyrm, Diverse Dragons) lands to fight and stays down
+					cs->flightData.groundAttackChance = 1.0f, cs->flightData.groundAttackTime = 60.0f;
+					cs->flightData.perchAttackChance = 0.0f, cs->flightData.diveBombChance = 0.0f, cs->flightData.hoverChance = 0.1f;
 				}
 				a_npc->SetCombatStyle(cs);
 				++n;

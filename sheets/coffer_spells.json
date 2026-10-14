@@ -1,6 +1,6 @@
 {
  "sheet": "coffer_spells",
- "about": "The Coffer's spells: 150 attack spells picked from the spell mods the party plays with, written to",
+ "about": "The Coffer's spells: 200 attack spells (Destruction first, then other schools' attack spells to fill) picked from the spell mods the party plays with, written to",
  "columns": [
   "id",
   "plugin",
@@ -14,9 +14,10 @@
   "baseCost",
   "charge",
   "tier",
+  "power",
   "cost"
  ],
- "count": 150,
+ "count": 200,
  "rows": [
   {
    "id": "creeping_cold",
@@ -31,21 +32,7 @@
    "baseCost": 19,
    "charge": 0.0,
    "tier": 0,
-   "cost": 5
-  },
-  {
-   "id": "illusory_flames",
-   "plugin": "Apocalypse - Magic of Skyrim.esp",
-   "formId": "03682F",
-   "name": "Illusory Flames",
-   "mod": "Apocalypse - Magic of Skyrim.esp",
-   "element": "arcane",
-   "school": "illusion",
-   "cast": "concentration",
-   "delivery": "aimed",
-   "baseCost": 19,
-   "charge": 0.5,
-   "tier": 0,
+   "power": 1.0,
    "cost": 5
   },
   {
@@ -61,6 +48,7 @@
    "baseCost": 31,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 13
   },
   {
@@ -76,6 +64,7 @@
    "baseCost": 31,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 13
   },
   {
@@ -91,6 +80,7 @@
    "baseCost": 31,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 13
   },
   {
@@ -106,6 +96,7 @@
    "baseCost": 36,
    "charge": 2.5,
    "tier": 0,
+   "power": 1.0,
    "cost": 8
   },
   {
@@ -121,6 +112,7 @@
    "baseCost": 43,
    "charge": 0.5,
    "tier": 0,
+   "power": 1.0,
    "cost": 15
   },
   {
@@ -136,6 +128,7 @@
    "baseCost": 50,
    "charge": 0.5,
    "tier": 0,
+   "power": 1.0,
    "cost": 17
   },
   {
@@ -151,6 +144,7 @@
    "baseCost": 54,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 18
   },
   {
@@ -166,21 +160,7 @@
    "baseCost": 56,
    "charge": 0.5,
    "tier": 0,
-   "cost": 18
-  },
-  {
-   "id": "leech_seed",
-   "plugin": "Apocalypse - Magic of Skyrim.esp",
-   "formId": "13E4FD",
-   "name": "Leech Seed",
-   "mod": "Apocalypse - Magic of Skyrim.esp",
-   "element": "poison",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 58,
-   "charge": 0.5,
-   "tier": 0,
+   "power": 1.0,
    "cost": 18
   },
   {
@@ -196,6 +176,7 @@
    "baseCost": 88,
    "charge": 0.0,
    "tier": 1,
+   "power": 1.0,
    "cost": 13
   },
   {
@@ -211,6 +192,7 @@
    "baseCost": 117,
    "charge": 0.0,
    "tier": 1,
+   "power": 1.0,
    "cost": 14
   },
   {
@@ -226,22 +208,8 @@
    "baseCost": 125,
    "charge": 1.5,
    "tier": 1,
+   "power": 1.0,
    "cost": 14
-  },
-  {
-   "id": "horrid_wilting",
-   "plugin": "Apocalypse - Magic of Skyrim.esp",
-   "formId": "012214",
-   "name": "Horrid Wilting",
-   "mod": "Apocalypse - Magic of Skyrim.esp",
-   "element": "disease",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 130,
-   "charge": 1.0,
-   "tier": 1,
-   "cost": 30
   },
   {
    "id": "electrosphere",
@@ -256,6 +224,7 @@
    "baseCost": 131,
    "charge": 0.5,
    "tier": 1,
+   "power": 1.0,
    "cost": 30
   },
   {
@@ -271,22 +240,8 @@
    "baseCost": 133,
    "charge": 1.5,
    "tier": 1,
+   "power": 1.0,
    "cost": 14
-  },
-  {
-   "id": "bolide",
-   "plugin": "Apocalypse - Magic of Skyrim.esp",
-   "formId": "0294CD",
-   "name": "Bolide",
-   "mod": "Apocalypse - Magic of Skyrim.esp",
-   "element": "fire",
-   "school": "destruction",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 134,
-   "charge": 0.5,
-   "tier": 1,
-   "cost": 30
   },
   {
    "id": "incendiary_flow",
@@ -301,6 +256,23 @@
    "baseCost": 134,
    "charge": 0.5,
    "tier": 1,
+   "power": 1.0,
+   "cost": 30
+  },
+  {
+   "id": "bolide",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0294CD",
+   "name": "Bolide",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 134,
+   "charge": 0.5,
+   "tier": 1,
+   "power": 1.0,
    "cost": 30
   },
   {
@@ -316,6 +288,7 @@
    "baseCost": 136,
    "charge": 0.5,
    "tier": 1,
+   "power": 1.0,
    "cost": 30
   },
   {
@@ -331,21 +304,7 @@
    "baseCost": 140,
    "charge": 0.5,
    "tier": 1,
-   "cost": 31
-  },
-  {
-   "id": "illusory_pyre",
-   "plugin": "Apocalypse - Magic of Skyrim.esp",
-   "formId": "032C8B",
-   "name": "Illusory Pyre",
-   "mod": "Apocalypse - Magic of Skyrim.esp",
-   "element": "arcane",
-   "school": "illusion",
-   "cast": "fire-and-forget",
-   "delivery": "target-actor",
-   "baseCost": 140,
-   "charge": 0.5,
-   "tier": 1,
+   "power": 1.0,
    "cost": 31
   },
   {
@@ -361,37 +320,8 @@
    "baseCost": 142,
    "charge": 1.5,
    "tier": 1,
+   "power": 1.0,
    "cost": 14
-  },
-  {
-   "id": "ruin",
-   "plugin": "Apocalypse - Magic of Skyrim.esp",
-   "formId": "0159D8",
-   "name": "Ruin",
-   "mod": "Apocalypse - Magic of Skyrim.esp",
-   "element": "arcane",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 151,
-   "charge": 0.5,
-   "tier": 1,
-   "cost": 32
-  },
-  {
-   "id": "dust_in_the_clockwork",
-   "plugin": "Apocalypse - Magic of Skyrim.esp",
-   "formId": "1A4A46",
-   "name": "Dust in the Clockwork",
-   "mod": "Apocalypse - Magic of Skyrim.esp",
-   "element": "arcane",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 176,
-   "charge": 0.0,
-   "tier": 2,
-   "cost": 36
   },
   {
    "id": "hot_potato",
@@ -406,6 +336,7 @@
    "baseCost": 293,
    "charge": 0.5,
    "tier": 2,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -421,6 +352,7 @@
    "baseCost": 361,
    "charge": 0.5,
    "tier": 2,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -436,6 +368,7 @@
    "baseCost": 375,
    "charge": 0.5,
    "tier": 2,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -451,6 +384,7 @@
    "baseCost": 610,
    "charge": 0.0,
    "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -466,6 +400,7 @@
    "baseCost": 633,
    "charge": 0.0,
    "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -481,6 +416,7 @@
    "baseCost": 636,
    "charge": 0.0,
    "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -496,6 +432,7 @@
    "baseCost": 665,
    "charge": 0.0,
    "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -511,21 +448,7 @@
    "baseCost": 689,
    "charge": 0.0,
    "tier": 3,
-   "cost": 45
-  },
-  {
-   "id": "magicka_void",
-   "plugin": "Apocalypse - Magic of Skyrim.esp",
-   "formId": "00B5B7",
-   "name": "Magicka Void",
-   "mod": "Apocalypse - Magic of Skyrim.esp",
-   "element": "arcane",
-   "school": "illusion",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 725,
-   "charge": 5.0,
-   "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -541,22 +464,360 @@
    "baseCost": 800,
    "charge": 0.0,
    "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
-   "id": "sunbeam",
-   "plugin": "MysticismMagic.esp",
-   "formId": "7388D3",
-   "name": "Sunbeam",
-   "mod": "MysticismMagic.esp",
-   "element": "sun",
-   "school": "restoration",
+   "id": "tears_of_blood",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "090363",
+   "name": "Tears of Blood",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "blood",
+   "school": "destruction",
    "cast": "concentration",
    "delivery": "aimed",
-   "baseCost": 16,
+   "baseCost": 15,
+   "charge": 0.2,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 5
+  },
+  {
+   "id": "avenging_blast",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "017A92",
+   "name": "Avenging Blast",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 25,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 11
+  },
+  {
+   "id": "ember_bolt",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "022DA6",
+   "name": "Ember Bolt",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 26,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 11
+  },
+  {
+   "id": "bonfire_of_the_damned",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "02BAB4",
+   "name": "Bonfire of the Damned",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "contact",
+   "baseCost": 35,
    "charge": 0.0,
    "tier": 0,
-   "cost": 5
+   "power": 1.0,
+   "cost": 14
+  },
+  {
+   "id": "doomfire",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "140B07",
+   "name": "Doomfire",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 50,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 17
+  },
+  {
+   "id": "shriveling_blast",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "01B64C",
+   "name": "Shriveling Blast",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 50,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 17
+  },
+  {
+   "id": "technobolt",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0B1C13",
+   "name": "Technobolt",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 50,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 17
+  },
+  {
+   "id": "ravaging_storm",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "15E725",
+   "name": "Ravaging Storm",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "shock",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "target-actor",
+   "baseCost": 53,
+   "charge": 0.0,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 17
+  },
+  {
+   "id": "battlemage_burning_hands",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0BC483",
+   "name": "Battlemage Burning Hands",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 75,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 12
+  },
+  {
+   "id": "battlemage_barrage",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0BC9E9",
+   "name": "Battlemage Barrage",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 75,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 12
+  },
+  {
+   "id": "battlemage_frozen_cores",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0BC47B",
+   "name": "Battlemage Frozen Cores",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "frost",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 75,
+   "charge": 0.5,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 12
+  },
+  {
+   "id": "battlemage_diamond_dust",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0BC47F",
+   "name": "Battlemage Diamond Dust",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "frost",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 75,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 12
+  },
+  {
+   "id": "battlemage_plasma_flux",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0BBEFD",
+   "name": "Battlemage Plasma Flux",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "shock",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 75,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 12
+  },
+  {
+   "id": "battlemage_forked_lightning",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0BBF08",
+   "name": "Battlemage Forked Lightning",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "shock",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 75,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 12
+  },
+  {
+   "id": "elemental_frostbite",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "120FAC",
+   "name": "Elemental Frostbite",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "frost",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 76,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 12
+  },
+  {
+   "id": "elemental_sparks",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "120FAE",
+   "name": "Elemental Sparks",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "shock",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 88,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 13
+  },
+  {
+   "id": "ecto_bolt",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "047352",
+   "name": "Ecto Bolt",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 100,
+   "charge": 0.5,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 25
+  },
+  {
+   "id": "elemental_flames",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "120FAA",
+   "name": "Elemental Flames",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 113,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 14
+  },
+  {
+   "id": "battlemage_molten_impact",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0BC473",
+   "name": "Battlemage Molten Impact",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 150,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 14
+  },
+  {
+   "id": "rend_asunder",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "014980",
+   "name": "Rend Asunder",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "sun",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 150,
+   "charge": 0.5,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 32
+  },
+  {
+   "id": "battlemage_winters_wrath",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0BC477",
+   "name": "Battlemage Winter's Wrath",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "frost",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 150,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 14
+  },
+  {
+   "id": "battlemage_vortex_storm",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0BBF0D",
+   "name": "Battlemage Vortex Storm",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "shock",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 150,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 14
   },
   {
    "id": "frostbite",
@@ -571,6 +832,7 @@
    "baseCost": 16,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 5
   },
   {
@@ -586,21 +848,7 @@
    "baseCost": 18,
    "charge": 0.0,
    "tier": 0,
-   "cost": 5
-  },
-  {
-   "id": "poison_spray",
-   "plugin": "MysticismMagic.esp",
-   "formId": "8C886D",
-   "name": "Poison Spray",
-   "mod": "MysticismMagic.esp",
-   "element": "poison",
-   "school": "restoration",
-   "cast": "concentration",
-   "delivery": "aimed",
-   "baseCost": 20,
-   "charge": 0.0,
-   "tier": 0,
+   "power": 1.0,
    "cost": 5
   },
   {
@@ -616,6 +864,7 @@
    "baseCost": 20,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 5
   },
   {
@@ -631,21 +880,7 @@
    "baseCost": 32,
    "charge": 0.5,
    "tier": 0,
-   "cost": 13
-  },
-  {
-   "id": "sunlight_touch",
-   "plugin": "MysticismMagic.esp",
-   "formId": "20496A",
-   "name": "Sunlight Touch",
-   "mod": "MysticismMagic.esp",
-   "element": "sun",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 32,
-   "charge": 0.5,
-   "tier": 0,
+   "power": 1.0,
    "cost": 13
   },
   {
@@ -661,21 +896,7 @@
    "baseCost": 35,
    "charge": 0.5,
    "tier": 0,
-   "cost": 14
-  },
-  {
-   "id": "poisonous_touch",
-   "plugin": "MysticismMagic.esp",
-   "formId": "209A74",
-   "name": "Poisonous Touch",
-   "mod": "MysticismMagic.esp",
-   "element": "poison",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 38,
-   "charge": 0.5,
-   "tier": 0,
+   "power": 1.0,
    "cost": 14
   },
   {
@@ -691,6 +912,7 @@
    "baseCost": 38,
    "charge": 0.5,
    "tier": 0,
+   "power": 1.0,
    "cost": 14
   },
   {
@@ -706,6 +928,7 @@
    "baseCost": 40,
    "charge": 0.5,
    "tier": 0,
+   "power": 1.0,
    "cost": 15
   },
   {
@@ -721,37 +944,8 @@
    "baseCost": 45,
    "charge": 0.5,
    "tier": 0,
+   "power": 1.0,
    "cost": 16
-  },
-  {
-   "id": "sun_fire",
-   "plugin": "Dawnguard.esm",
-   "formId": "003F52",
-   "name": "Sun Fire",
-   "mod": "MysticismMagic.esp",
-   "element": "sun",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 45,
-   "charge": 0.5,
-   "tier": 0,
-   "cost": 16
-  },
-  {
-   "id": "radiant_sunbeam",
-   "plugin": "MysticismMagic.esp",
-   "formId": "78E9F4",
-   "name": "Radiant Sunbeam",
-   "mod": "MysticismMagic.esp",
-   "element": "sun",
-   "school": "restoration",
-   "cast": "concentration",
-   "delivery": "aimed",
-   "baseCost": 48,
-   "charge": 0.0,
-   "tier": 0,
-   "cost": 9
   },
   {
    "id": "lightning_bolt",
@@ -766,21 +960,7 @@
    "baseCost": 50,
    "charge": 0.5,
    "tier": 0,
-   "cost": 17
-  },
-  {
-   "id": "poisonbolt",
-   "plugin": "MysticismMagic.esp",
-   "formId": "1E634D",
-   "name": "Poisonbolt",
-   "mod": "MysticismMagic.esp",
-   "element": "poison",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 50,
-   "charge": 0.5,
-   "tier": 0,
+   "power": 1.0,
    "cost": 17
   },
   {
@@ -796,6 +976,7 @@
    "baseCost": 52,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 10
   },
   {
@@ -811,6 +992,7 @@
    "baseCost": 56,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 10
   },
   {
@@ -826,22 +1008,8 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 1,
+   "power": 1.0,
    "cost": 10
-  },
-  {
-   "id": "deadly_poison_spray",
-   "plugin": "MysticismMagic.esp",
-   "formId": "9420A3",
-   "name": "Deadly Poison Spray",
-   "mod": "MysticismMagic.esp",
-   "element": "poison",
-   "school": "restoration",
-   "cast": "concentration",
-   "delivery": "aimed",
-   "baseCost": 61,
-   "charge": 0.0,
-   "tier": 1,
-   "cost": 11
   },
   {
    "id": "drain_life",
@@ -856,6 +1024,7 @@
    "baseCost": 68,
    "charge": 0.0,
    "tier": 1,
+   "power": 1.0,
    "cost": 11
   },
   {
@@ -871,6 +1040,7 @@
    "baseCost": 88,
    "charge": 0.0,
    "tier": 1,
+   "power": 1.0,
    "cost": 13
   },
   {
@@ -886,6 +1056,7 @@
    "baseCost": 96,
    "charge": 0.0,
    "tier": 1,
+   "power": 1.0,
    "cost": 14
   },
   {
@@ -901,37 +1072,8 @@
    "baseCost": 101,
    "charge": 0.0,
    "tier": 1,
+   "power": 1.0,
    "cost": 14
-  },
-  {
-   "id": "vampires_bane",
-   "plugin": "Dawnguard.esm",
-   "formId": "0038B6",
-   "name": "Vampire's Bane",
-   "mod": "MysticismMagic.esp",
-   "element": "sun",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 118,
-   "charge": 1.0,
-   "tier": 1,
-   "cost": 28
-  },
-  {
-   "id": "radiant_touch",
-   "plugin": "MysticismMagic.esp",
-   "formId": "D45F28",
-   "name": "Radiant Touch",
-   "mod": "MysticismMagic.esp",
-   "element": "sun",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 120,
-   "charge": 0.5,
-   "tier": 1,
-   "cost": 28
   },
   {
    "id": "frost_rune",
@@ -946,6 +1088,7 @@
    "baseCost": 120,
    "charge": 1.0,
    "tier": 1,
+   "power": 1.0,
    "cost": 28
   },
   {
@@ -961,6 +1104,7 @@
    "baseCost": 120,
    "charge": 0.5,
    "tier": 1,
+   "power": 1.0,
    "cost": 28
   },
   {
@@ -976,6 +1120,7 @@
    "baseCost": 124,
    "charge": 1.0,
    "tier": 1,
+   "power": 1.0,
    "cost": 29
   },
   {
@@ -991,6 +1136,7 @@
    "baseCost": 125,
    "charge": 0.5,
    "tier": 1,
+   "power": 1.0,
    "cost": 29
   },
   {
@@ -1006,6 +1152,7 @@
    "baseCost": 130,
    "charge": 1.0,
    "tier": 1,
+   "power": 1.0,
    "cost": 30
   },
   {
@@ -1021,6 +1168,7 @@
    "baseCost": 130,
    "charge": 0.5,
    "tier": 1,
+   "power": 1.0,
    "cost": 30
   },
   {
@@ -1036,6 +1184,7 @@
    "baseCost": 132,
    "charge": 1.0,
    "tier": 1,
+   "power": 1.0,
    "cost": 30
   },
   {
@@ -1051,6 +1200,7 @@
    "baseCost": 134,
    "charge": 0.5,
    "tier": 1,
+   "power": 1.0,
    "cost": 30
   },
   {
@@ -1066,6 +1216,7 @@
    "baseCost": 135,
    "charge": 0.3,
    "tier": 1,
+   "power": 1.0,
    "cost": 30
   },
   {
@@ -1081,6 +1232,7 @@
    "baseCost": 140,
    "charge": 1.0,
    "tier": 1,
+   "power": 1.0,
    "cost": 31
   },
   {
@@ -1096,67 +1248,8 @@
    "baseCost": 144,
    "charge": 1.0,
    "tier": 1,
+   "power": 1.0,
    "cost": 32
-  },
-  {
-   "id": "poison_cloud",
-   "plugin": "MysticismMagic.esp",
-   "formId": "1E6352",
-   "name": "Poison Cloud",
-   "mod": "MysticismMagic.esp",
-   "element": "poison",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 145,
-   "charge": 1.0,
-   "tier": 1,
-   "cost": 32
-  },
-  {
-   "id": "poison_rune",
-   "plugin": "Dragonborn.esm",
-   "formId": "01D74B",
-   "name": "Poison Rune",
-   "mod": "MysticismMagic.esp",
-   "element": "poison",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "target-location",
-   "baseCost": 146,
-   "charge": 1.0,
-   "tier": 1,
-   "cost": 32
-  },
-  {
-   "id": "venomous_touch",
-   "plugin": "MysticismMagic.esp",
-   "formId": "D278E3",
-   "name": "Venomous Touch",
-   "mod": "MysticismMagic.esp",
-   "element": "poison",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 150,
-   "charge": 0.3,
-   "tier": 1,
-   "cost": 32
-  },
-  {
-   "id": "daybreak",
-   "plugin": "MysticismMagic.esp",
-   "formId": "7BC311",
-   "name": "Daybreak",
-   "mod": "MysticismMagic.esp",
-   "element": "arcane",
-   "school": "restoration",
-   "cast": "concentration",
-   "delivery": "aimed",
-   "baseCost": 160,
-   "charge": 0.0,
-   "tier": 2,
-   "cost": 14
   },
   {
    "id": "hoarfrost",
@@ -1171,6 +1264,7 @@
    "baseCost": 168,
    "charge": 0.0,
    "tier": 2,
+   "power": 1.0,
    "cost": 14
   },
   {
@@ -1186,6 +1280,7 @@
    "baseCost": 176,
    "charge": 0.0,
    "tier": 2,
+   "power": 1.0,
    "cost": 14
   },
   {
@@ -1201,21 +1296,7 @@
    "baseCost": 184,
    "charge": 0.0,
    "tier": 2,
-   "cost": 14
-  },
-  {
-   "id": "miasma",
-   "plugin": "MysticismMagic.esp",
-   "formId": "9606AC",
-   "name": "Miasma",
-   "mod": "MysticismMagic.esp",
-   "element": "poison",
-   "school": "restoration",
-   "cast": "concentration",
-   "delivery": "aimed",
-   "baseCost": 185,
-   "charge": 0.0,
-   "tier": 2,
+   "power": 1.0,
    "cost": 14
   },
   {
@@ -1231,22 +1312,8 @@
    "baseCost": 209,
    "charge": 0.0,
    "tier": 2,
+   "power": 1.0,
    "cost": 14
-  },
-  {
-   "id": "reflective_light",
-   "plugin": "MysticismMagic.esp",
-   "formId": "2508C9",
-   "name": "Reflective Light",
-   "mod": "MysticismMagic.esp",
-   "element": "sun",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 218,
-   "charge": 0.5,
-   "tier": 2,
-   "cost": 40
   },
   {
    "id": "icy_spear",
@@ -1261,21 +1328,7 @@
    "baseCost": 228,
    "charge": 0.5,
    "tier": 2,
-   "cost": 42
-  },
-  {
-   "id": "destroy_construct",
-   "plugin": "MysticismMagic.esp",
-   "formId": "844E4A",
-   "name": "Destroy Construct",
-   "mod": "MysticismMagic.esp",
-   "element": "arcane",
-   "school": "alteration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 232,
-   "charge": 0.5,
-   "tier": 2,
+   "power": 1.0,
    "cost": 42
   },
   {
@@ -1291,6 +1344,7 @@
    "baseCost": 240,
    "charge": 0.5,
    "tier": 2,
+   "power": 1.0,
    "cost": 43
   },
   {
@@ -1306,52 +1360,8 @@
    "baseCost": 252,
    "charge": 0.5,
    "tier": 2,
+   "power": 1.0,
    "cost": 44
-  },
-  {
-   "id": "viperbolt",
-   "plugin": "MysticismMagic.esp",
-   "formId": "1E634F",
-   "name": "Viperbolt",
-   "mod": "MysticismMagic.esp",
-   "element": "poison",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 262,
-   "charge": 0.5,
-   "tier": 2,
-   "cost": 45
-  },
-  {
-   "id": "paralyze",
-   "plugin": "Skyrim.esm",
-   "formId": "05AD5F",
-   "name": "Paralyze",
-   "mod": "MysticismMagic.esp",
-   "element": "arcane",
-   "school": "illusion",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 269,
-   "charge": 0.5,
-   "tier": 2,
-   "cost": 45
-  },
-  {
-   "id": "searing_grasp",
-   "plugin": "MysticismMagic.esp",
-   "formId": "2280B0",
-   "name": "Searing Grasp",
-   "mod": "MysticismMagic.esp",
-   "element": "arcane",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 272,
-   "charge": 0.5,
-   "tier": 2,
-   "cost": 45
   },
   {
    "id": "vampiric_blast",
@@ -1366,6 +1376,7 @@
    "baseCost": 282,
    "charge": 0.5,
    "tier": 2,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1381,6 +1392,7 @@
    "baseCost": 286,
    "charge": 0.5,
    "tier": 2,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1396,6 +1408,7 @@
    "baseCost": 298,
    "charge": 0.5,
    "tier": 2,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1411,21 +1424,7 @@
    "baseCost": 310,
    "charge": 0.5,
    "tier": 2,
-   "cost": 45
-  },
-  {
-   "id": "vipers_grasp",
-   "plugin": "MysticismMagic.esp",
-   "formId": "209A76",
-   "name": "Viper's Grasp",
-   "mod": "MysticismMagic.esp",
-   "element": "poison",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 320,
-   "charge": 0.5,
-   "tier": 2,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1441,51 +1440,7 @@
    "baseCost": 350,
    "charge": 0.5,
    "tier": 2,
-   "cost": 45
-  },
-  {
-   "id": "radiant_sunlight_rune",
-   "plugin": "MysticismMagic.esp",
-   "formId": "9AC5CE",
-   "name": "Radiant Sunlight Rune",
-   "mod": "MysticismMagic.esp",
-   "element": "sun",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "target-location",
-   "baseCost": 364,
-   "charge": 1.0,
-   "tier": 2,
-   "cost": 45
-  },
-  {
-   "id": "solar_flare",
-   "plugin": "MysticismMagic.esp",
-   "formId": "2466C0",
-   "name": "Solar Flare",
-   "mod": "MysticismMagic.esp",
-   "element": "sun",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 372,
-   "charge": 1.0,
-   "tier": 2,
-   "cost": 45
-  },
-  {
-   "id": "eclipse",
-   "plugin": "MysticismMagic.esp",
-   "formId": "48CF09",
-   "name": "Eclipse",
-   "mod": "MysticismMagic.esp",
-   "element": "arcane",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 385,
-   "charge": 0.5,
-   "tier": 2,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1501,6 +1456,7 @@
    "baseCost": 388,
    "charge": 1.0,
    "tier": 2,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1516,6 +1472,7 @@
    "baseCost": 388,
    "charge": 1.0,
    "tier": 2,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1531,21 +1488,7 @@
    "baseCost": 389,
    "charge": 0.5,
    "tier": 2,
-   "cost": 45
-  },
-  {
-   "id": "scorch",
-   "plugin": "MysticismMagic.esp",
-   "formId": "7847E9",
-   "name": "Scorch",
-   "mod": "MysticismMagic.esp",
-   "element": "fire",
-   "school": "destruction",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 400,
-   "charge": 0.5,
-   "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1561,6 +1504,23 @@
    "baseCost": 400,
    "charge": 1.0,
    "tier": 3,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "scorch",
+   "plugin": "MysticismMagic.esp",
+   "formId": "7847E9",
+   "name": "Scorch",
+   "mod": "MysticismMagic.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 400,
+   "charge": 0.5,
+   "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1576,6 +1536,7 @@
    "baseCost": 402,
    "charge": 1.0,
    "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1591,6 +1552,7 @@
    "baseCost": 412,
    "charge": 1.0,
    "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1606,6 +1568,7 @@
    "baseCost": 416,
    "charge": 1.0,
    "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1621,66 +1584,7 @@
    "baseCost": 420,
    "charge": 0.5,
    "tier": 3,
-   "cost": 45
-  },
-  {
-   "id": "venomfang",
-   "plugin": "MysticismMagic.esp",
-   "formId": "48CF04",
-   "name": "Venomfang",
-   "mod": "MysticismMagic.esp",
-   "element": "poison",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 425,
-   "charge": 0.3,
-   "tier": 3,
-   "cost": 45
-  },
-  {
-   "id": "death_cloud",
-   "plugin": "MysticismMagic.esp",
-   "formId": "1FA75F",
-   "name": "Death Cloud",
-   "mod": "MysticismMagic.esp",
-   "element": "poison",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 426,
-   "charge": 1.0,
-   "tier": 3,
-   "cost": 45
-  },
-  {
-   "id": "deadly_poison_rune",
-   "plugin": "MysticismMagic.esp",
-   "formId": "209A7A",
-   "name": "Deadly Poison Rune",
-   "mod": "MysticismMagic.esp",
-   "element": "poison",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "target-location",
-   "baseCost": 426,
-   "charge": 1.0,
-   "tier": 3,
-   "cost": 45
-  },
-  {
-   "id": "ash_rune",
-   "plugin": "Dragonborn.esm",
-   "formId": "0177AF",
-   "name": "Ash Rune",
-   "mod": "MysticismMagic.esp",
-   "element": "arcane",
-   "school": "alteration",
-   "cast": "fire-and-forget",
-   "delivery": "target-location",
-   "baseCost": 429,
-   "charge": 1.0,
-   "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1696,6 +1600,7 @@
    "baseCost": 450,
    "charge": 0.3,
    "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1711,6 +1616,7 @@
    "baseCost": 474,
    "charge": 1.0,
    "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1726,51 +1632,7 @@
    "baseCost": 476,
    "charge": 1.0,
    "tier": 3,
-   "cost": 45
-  },
-  {
-   "id": "charged_nova",
-   "plugin": "MysticismMagic.esp",
-   "formId": "25FBFF",
-   "name": "Charged Nova",
-   "mod": "MysticismMagic.esp",
-   "element": "arcane",
-   "school": "restoration",
-   "cast": "fire-and-forget",
-   "delivery": "self",
-   "baseCost": 650,
-   "charge": 1.5,
-   "tier": 3,
-   "cost": 45
-  },
-  {
-   "id": "cinder_storm",
-   "plugin": "MysticismMagic.esp",
-   "formId": "4B065B",
-   "name": "Cinder Storm",
-   "mod": "MysticismMagic.esp",
-   "element": "arcane",
-   "school": "alteration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 658,
-   "charge": 1.0,
-   "tier": 3,
-   "cost": 45
-  },
-  {
-   "id": "dwemerbane",
-   "plugin": "MysticismMagic.esp",
-   "formId": "2A19B3",
-   "name": "Dwemerbane",
-   "mod": "MysticismMagic.esp",
-   "element": "arcane",
-   "school": "alteration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 665,
-   "charge": 1.0,
-   "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1786,6 +1648,7 @@
    "baseCost": 665,
    "charge": 1.5,
    "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1801,6 +1664,7 @@
    "baseCost": 680,
    "charge": 1.5,
    "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1816,6 +1680,7 @@
    "baseCost": 47,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 16
   },
   {
@@ -1831,6 +1696,7 @@
    "baseCost": 50,
    "charge": 0.5,
    "tier": 0,
+   "power": 1.0,
    "cost": 17
   },
   {
@@ -1846,6 +1712,7 @@
    "baseCost": 58,
    "charge": 0.5,
    "tier": 0,
+   "power": 1.0,
    "cost": 18
   },
   {
@@ -1861,6 +1728,7 @@
    "baseCost": 69,
    "charge": 0.0,
    "tier": 1,
+   "power": 1.0,
    "cost": 20
   },
   {
@@ -1876,6 +1744,7 @@
    "baseCost": 162,
    "charge": 0.5,
    "tier": 2,
+   "power": 1.0,
    "cost": 34
   },
   {
@@ -1891,6 +1760,7 @@
    "baseCost": 181,
    "charge": 0.5,
    "tier": 2,
+   "power": 1.0,
    "cost": 36
   },
   {
@@ -1906,22 +1776,8 @@
    "baseCost": 220,
    "charge": 0.0,
    "tier": 2,
+   "power": 1.0,
    "cost": 41
-  },
-  {
-   "id": "cursed_rune",
-   "plugin": "ForgottenMagic_Redone.esp",
-   "formId": "02BA2C",
-   "name": "Cursed Rune",
-   "mod": "ForgottenMagic_Redone.esp",
-   "element": "arcane",
-   "school": "illusion",
-   "cast": "fire-and-forget",
-   "delivery": "target-location",
-   "baseCost": 229,
-   "charge": 0.0,
-   "tier": 2,
-   "cost": 42
   },
   {
    "id": "seed_of_life",
@@ -1936,22 +1792,8 @@
    "baseCost": 230,
    "charge": 0.0,
    "tier": 2,
+   "power": 1.0,
    "cost": 42
-  },
-  {
-   "id": "wild_mushrooms",
-   "plugin": "ForgottenMagic_Redone.esp",
-   "formId": "02277D",
-   "name": "Wild Mushrooms",
-   "mod": "ForgottenMagic_Redone.esp",
-   "element": "poison",
-   "school": "conjuration",
-   "cast": "fire-and-forget",
-   "delivery": "aimed",
-   "baseCost": 346,
-   "charge": 0.5,
-   "tier": 2,
-   "cost": 45
   },
   {
    "id": "teslasphere",
@@ -1966,6 +1808,7 @@
    "baseCost": 245,
    "charge": 0.5,
    "tier": 2,
+   "power": 1.0,
    "cost": 43
   },
   {
@@ -1981,6 +1824,7 @@
    "baseCost": 369,
    "charge": 0.5,
    "tier": 2,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -1996,6 +1840,7 @@
    "baseCost": 372,
    "charge": 0.5,
    "tier": 2,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -2011,6 +1856,7 @@
    "baseCost": 421,
    "charge": 0.5,
    "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -2026,6 +1872,7 @@
    "baseCost": 1000,
    "charge": 0.5,
    "tier": 3,
+   "power": 1.0,
    "cost": 45
   },
   {
@@ -2041,6 +1888,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2056,6 +1904,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2071,6 +1920,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2086,6 +1936,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2101,6 +1952,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2116,6 +1968,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2131,6 +1984,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2146,6 +2000,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2161,6 +2016,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2176,6 +2032,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2191,6 +2048,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2206,6 +2064,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2221,6 +2080,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2236,6 +2096,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2251,6 +2112,7 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
   },
   {
@@ -2266,7 +2128,1096 @@
    "baseCost": 60,
    "charge": 0.0,
    "tier": 0,
+   "power": 1.0,
    "cost": 19
+  },
+  {
+   "id": "seeker_drain",
+   "plugin": "The Restless Dead.esp",
+   "formId": "FB8C52",
+   "name": "Seeker Drain",
+   "mod": "The Restless Dead.esp",
+   "element": "blood",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 15,
+   "charge": 0.0,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 8
+  },
+  {
+   "id": "arcane_bolt",
+   "plugin": "The Restless Dead.esp",
+   "formId": "2F6280",
+   "name": "Arcane Bolt",
+   "mod": "The Restless Dead.esp",
+   "element": "arcane",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 30,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 12
+  },
+  {
+   "id": "knowledge_drain",
+   "plugin": "The Restless Dead.esp",
+   "formId": "FB8C54",
+   "name": "Knowledge Drain",
+   "mod": "The Restless Dead.esp",
+   "element": "blood",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 31,
+   "charge": 0.0,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 13
+  },
+  {
+   "id": "blue_firebolt",
+   "plugin": "mihailesobonecolossus.esp",
+   "formId": "00085E",
+   "name": "Blue Firebolt",
+   "mod": "mihailesobonecolossus.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 5,
+   "charge": 0.0,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 4
+  },
+  {
+   "id": "blue_flames",
+   "plugin": "mihailesobonecolossus.esp",
+   "formId": "000834",
+   "name": "Blue Flames",
+   "mod": "mihailesobonecolossus.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 9,
+   "charge": 0.0,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 4
+  },
+  {
+   "id": "blue_fireball",
+   "plugin": "mihailesobonecolossus.esp",
+   "formId": "00085F",
+   "name": "Blue Fireball",
+   "mod": "mihailesobonecolossus.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 10,
+   "charge": 0.0,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 6
+  },
+  {
+   "id": "azure_flare",
+   "plugin": "mihailesobonecolossus.esp",
+   "formId": "000860",
+   "name": "Azure Flare",
+   "mod": "mihailesobonecolossus.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 15,
+   "charge": 0.0,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 8
+  },
+  {
+   "id": "sapphire_blaze_ii",
+   "plugin": "mihailesobonecolossus.esp",
+   "formId": "00082F",
+   "name": "Sapphire Blaze II",
+   "mod": "mihailesobonecolossus.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "contact",
+   "baseCost": 25,
+   "charge": 0.0,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 11
+  },
+  {
+   "id": "blue_purgatory",
+   "plugin": "mihailesobonecolossus.esp",
+   "formId": "000841",
+   "name": "Blue Purgatory",
+   "mod": "mihailesobonecolossus.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 57,
+   "charge": 1.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 10
+  },
+  {
+   "id": "sapphire_blaze",
+   "plugin": "mihailesobonecolossus.esp",
+   "formId": "000830",
+   "name": "Sapphire Blaze",
+   "mod": "mihailesobonecolossus.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 80,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 12
+  },
+  {
+   "id": "blue_fire_rune",
+   "plugin": "mihailesobonecolossus.esp",
+   "formId": "000858",
+   "name": "Blue Fire Rune",
+   "mod": "mihailesobonecolossus.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "target-location",
+   "baseCost": 234,
+   "charge": 0.0,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 42
+  },
+  {
+   "id": "sapphire_inferno",
+   "plugin": "mihailesobonecolossus.esp",
+   "formId": "000822",
+   "name": "Sapphire Inferno",
+   "mod": "mihailesobonecolossus.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 324,
+   "charge": 0.3,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "blue_fire_storm",
+   "plugin": "mihailesobonecolossus.esp",
+   "formId": "00084A",
+   "name": "Blue Fire Storm",
+   "mod": "mihailesobonecolossus.esp",
+   "element": "fire",
+   "school": "destruction",
+   "cast": "fire-and-forget",
+   "delivery": "self",
+   "baseCost": 846,
+   "charge": 3.0,
+   "tier": 3,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "illusory_flames",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "03682F",
+   "name": "Illusory Flames",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "illusion",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 19,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 5
+  },
+  {
+   "id": "leech_seed",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "13E4FD",
+   "name": "Leech Seed",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "poison",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 58,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 18
+  },
+  {
+   "id": "horrid_wilting",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "012214",
+   "name": "Horrid Wilting",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "disease",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 130,
+   "charge": 1.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 30
+  },
+  {
+   "id": "illusory_pyre",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "032C8B",
+   "name": "Illusory Pyre",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "illusion",
+   "cast": "fire-and-forget",
+   "delivery": "target-actor",
+   "baseCost": 140,
+   "charge": 0.5,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 31
+  },
+  {
+   "id": "ruin",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0159D8",
+   "name": "Ruin",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 151,
+   "charge": 0.5,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 32
+  },
+  {
+   "id": "dust_in_the_clockwork",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "1A4A46",
+   "name": "Dust in the Clockwork",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 176,
+   "charge": 0.0,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 36
+  },
+  {
+   "id": "magicka_void",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "00B5B7",
+   "name": "Magicka Void",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "illusion",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 725,
+   "charge": 5.0,
+   "tier": 3,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "spell_twine",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "08764E",
+   "name": "Spell Twine",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "alteration",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 13,
+   "charge": 3.0,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 4
+  },
+  {
+   "id": "circle_of_strength",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0369FD",
+   "name": "Circle of Strength",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "contact",
+   "baseCost": 14,
+   "charge": 0.0,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 8
+  },
+  {
+   "id": "circle_of_the_moons",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "1238E4",
+   "name": "Circle of the Moons",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "contact",
+   "baseCost": 39,
+   "charge": 0.0,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 14
+  },
+  {
+   "id": "atronach_mark",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "149F81",
+   "name": "Atronach Mark",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "conjuration",
+   "cast": "fire-and-forget",
+   "delivery": "target-actor",
+   "baseCost": 42,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 15
+  },
+  {
+   "id": "burn_undead",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "02EB9F",
+   "name": "Burn Undead",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "contact",
+   "baseCost": 46,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 16
+  },
+  {
+   "id": "disease_bolt",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0159DB",
+   "name": "Disease Bolt",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "disease",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 50,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 17
+  },
+  {
+   "id": "serpents_scale",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "15E717",
+   "name": "Serpent's Scale",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "disease",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "target-actor",
+   "baseCost": 58,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 18
+  },
+  {
+   "id": "starstorm",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0B8DCC",
+   "name": "Starstorm",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "restoration",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 95,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 14
+  },
+  {
+   "id": "blood_boil",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0BFAB2",
+   "name": "Blood Boil",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "blood",
+   "school": "restoration",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 103,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 14
+  },
+  {
+   "id": "necroplague",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "034D10",
+   "name": "Necroplague",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "disease",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "target-actor",
+   "baseCost": 103,
+   "charge": 0.5,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 26
+  },
+  {
+   "id": "atrophy",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "0159DD",
+   "name": "Atrophy",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "target-actor",
+   "baseCost": 150,
+   "charge": 0.5,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 32
+  },
+  {
+   "id": "sleeping_dogs",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "1A4A4E",
+   "name": "Sleeping Dogs",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "illusion",
+   "cast": "fire-and-forget",
+   "delivery": "target-actor",
+   "baseCost": 153,
+   "charge": 0.5,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 33
+  },
+  {
+   "id": "corpse_explosion",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "11E0A5",
+   "name": "Corpse Explosion",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "conjuration",
+   "cast": "fire-and-forget",
+   "delivery": "target-actor",
+   "baseCost": 175,
+   "charge": 0.5,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 35
+  },
+  {
+   "id": "monarch_mark",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "16161D",
+   "name": "Monarch Mark",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "conjuration",
+   "cast": "fire-and-forget",
+   "delivery": "target-actor",
+   "baseCost": 180,
+   "charge": 0.5,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 36
+  },
+  {
+   "id": "talons_of_nirn",
+   "plugin": "Apocalypse - Magic of Skyrim.esp",
+   "formId": "097A50",
+   "name": "Talons of Nirn",
+   "mod": "Apocalypse - Magic of Skyrim.esp",
+   "element": "arcane",
+   "school": "alteration",
+   "cast": "fire-and-forget",
+   "delivery": "contact",
+   "baseCost": 495,
+   "charge": 0.0,
+   "tier": 3,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "sunbeam",
+   "plugin": "MysticismMagic.esp",
+   "formId": "7388D3",
+   "name": "Sunbeam",
+   "mod": "MysticismMagic.esp",
+   "element": "sun",
+   "school": "restoration",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 16,
+   "charge": 0.0,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 5
+  },
+  {
+   "id": "poison_spray",
+   "plugin": "MysticismMagic.esp",
+   "formId": "8C886D",
+   "name": "Poison Spray",
+   "mod": "MysticismMagic.esp",
+   "element": "poison",
+   "school": "restoration",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 20,
+   "charge": 0.0,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 5
+  },
+  {
+   "id": "sunlight_touch",
+   "plugin": "MysticismMagic.esp",
+   "formId": "20496A",
+   "name": "Sunlight Touch",
+   "mod": "MysticismMagic.esp",
+   "element": "sun",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 32,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 13
+  },
+  {
+   "id": "poisonous_touch",
+   "plugin": "MysticismMagic.esp",
+   "formId": "209A74",
+   "name": "Poisonous Touch",
+   "mod": "MysticismMagic.esp",
+   "element": "poison",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 38,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 14
+  },
+  {
+   "id": "sun_fire",
+   "plugin": "Dawnguard.esm",
+   "formId": "003F52",
+   "name": "Sun Fire",
+   "mod": "MysticismMagic.esp",
+   "element": "sun",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 45,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 16
+  },
+  {
+   "id": "radiant_sunbeam",
+   "plugin": "MysticismMagic.esp",
+   "formId": "78E9F4",
+   "name": "Radiant Sunbeam",
+   "mod": "MysticismMagic.esp",
+   "element": "sun",
+   "school": "restoration",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 48,
+   "charge": 0.0,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 9
+  },
+  {
+   "id": "poisonbolt",
+   "plugin": "MysticismMagic.esp",
+   "formId": "1E634D",
+   "name": "Poisonbolt",
+   "mod": "MysticismMagic.esp",
+   "element": "poison",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 50,
+   "charge": 0.5,
+   "tier": 0,
+   "power": 1.0,
+   "cost": 17
+  },
+  {
+   "id": "deadly_poison_spray",
+   "plugin": "MysticismMagic.esp",
+   "formId": "9420A3",
+   "name": "Deadly Poison Spray",
+   "mod": "MysticismMagic.esp",
+   "element": "poison",
+   "school": "restoration",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 61,
+   "charge": 0.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 11
+  },
+  {
+   "id": "vampires_bane",
+   "plugin": "Dawnguard.esm",
+   "formId": "0038B6",
+   "name": "Vampire's Bane",
+   "mod": "MysticismMagic.esp",
+   "element": "sun",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 118,
+   "charge": 1.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 28
+  },
+  {
+   "id": "radiant_touch",
+   "plugin": "MysticismMagic.esp",
+   "formId": "D45F28",
+   "name": "Radiant Touch",
+   "mod": "MysticismMagic.esp",
+   "element": "sun",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 120,
+   "charge": 0.5,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 28
+  },
+  {
+   "id": "poison_cloud",
+   "plugin": "MysticismMagic.esp",
+   "formId": "1E6352",
+   "name": "Poison Cloud",
+   "mod": "MysticismMagic.esp",
+   "element": "poison",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 145,
+   "charge": 1.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 32
+  },
+  {
+   "id": "poison_rune",
+   "plugin": "Dragonborn.esm",
+   "formId": "01D74B",
+   "name": "Poison Rune",
+   "mod": "MysticismMagic.esp",
+   "element": "poison",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "target-location",
+   "baseCost": 146,
+   "charge": 1.0,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 32
+  },
+  {
+   "id": "venomous_touch",
+   "plugin": "MysticismMagic.esp",
+   "formId": "D278E3",
+   "name": "Venomous Touch",
+   "mod": "MysticismMagic.esp",
+   "element": "poison",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 150,
+   "charge": 0.3,
+   "tier": 1,
+   "power": 1.0,
+   "cost": 32
+  },
+  {
+   "id": "daybreak",
+   "plugin": "MysticismMagic.esp",
+   "formId": "7BC311",
+   "name": "Daybreak",
+   "mod": "MysticismMagic.esp",
+   "element": "arcane",
+   "school": "restoration",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 160,
+   "charge": 0.0,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 14
+  },
+  {
+   "id": "miasma",
+   "plugin": "MysticismMagic.esp",
+   "formId": "9606AC",
+   "name": "Miasma",
+   "mod": "MysticismMagic.esp",
+   "element": "poison",
+   "school": "restoration",
+   "cast": "concentration",
+   "delivery": "aimed",
+   "baseCost": 185,
+   "charge": 0.0,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 14
+  },
+  {
+   "id": "reflective_light",
+   "plugin": "MysticismMagic.esp",
+   "formId": "2508C9",
+   "name": "Reflective Light",
+   "mod": "MysticismMagic.esp",
+   "element": "sun",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 218,
+   "charge": 0.5,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 40
+  },
+  {
+   "id": "destroy_construct",
+   "plugin": "MysticismMagic.esp",
+   "formId": "844E4A",
+   "name": "Destroy Construct",
+   "mod": "MysticismMagic.esp",
+   "element": "arcane",
+   "school": "alteration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 232,
+   "charge": 0.5,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 42
+  },
+  {
+   "id": "viperbolt",
+   "plugin": "MysticismMagic.esp",
+   "formId": "1E634F",
+   "name": "Viperbolt",
+   "mod": "MysticismMagic.esp",
+   "element": "poison",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 262,
+   "charge": 0.5,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "paralyze",
+   "plugin": "Skyrim.esm",
+   "formId": "05AD5F",
+   "name": "Paralyze",
+   "mod": "MysticismMagic.esp",
+   "element": "arcane",
+   "school": "illusion",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 269,
+   "charge": 0.5,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "searing_grasp",
+   "plugin": "MysticismMagic.esp",
+   "formId": "2280B0",
+   "name": "Searing Grasp",
+   "mod": "MysticismMagic.esp",
+   "element": "arcane",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 272,
+   "charge": 0.5,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "vipers_grasp",
+   "plugin": "MysticismMagic.esp",
+   "formId": "209A76",
+   "name": "Viper's Grasp",
+   "mod": "MysticismMagic.esp",
+   "element": "poison",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 320,
+   "charge": 0.5,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "radiant_sunlight_rune",
+   "plugin": "MysticismMagic.esp",
+   "formId": "9AC5CE",
+   "name": "Radiant Sunlight Rune",
+   "mod": "MysticismMagic.esp",
+   "element": "sun",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "target-location",
+   "baseCost": 364,
+   "charge": 1.0,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "solar_flare",
+   "plugin": "MysticismMagic.esp",
+   "formId": "2466C0",
+   "name": "Solar Flare",
+   "mod": "MysticismMagic.esp",
+   "element": "sun",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 372,
+   "charge": 1.0,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "eclipse",
+   "plugin": "MysticismMagic.esp",
+   "formId": "48CF09",
+   "name": "Eclipse",
+   "mod": "MysticismMagic.esp",
+   "element": "arcane",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 385,
+   "charge": 0.5,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "venomfang",
+   "plugin": "MysticismMagic.esp",
+   "formId": "48CF04",
+   "name": "Venomfang",
+   "mod": "MysticismMagic.esp",
+   "element": "poison",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 425,
+   "charge": 0.3,
+   "tier": 3,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "deadly_poison_rune",
+   "plugin": "MysticismMagic.esp",
+   "formId": "209A7A",
+   "name": "Deadly Poison Rune",
+   "mod": "MysticismMagic.esp",
+   "element": "poison",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "target-location",
+   "baseCost": 426,
+   "charge": 1.0,
+   "tier": 3,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "death_cloud",
+   "plugin": "MysticismMagic.esp",
+   "formId": "1FA75F",
+   "name": "Death Cloud",
+   "mod": "MysticismMagic.esp",
+   "element": "poison",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 426,
+   "charge": 1.0,
+   "tier": 3,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "ash_rune",
+   "plugin": "Dragonborn.esm",
+   "formId": "0177AF",
+   "name": "Ash Rune",
+   "mod": "MysticismMagic.esp",
+   "element": "arcane",
+   "school": "alteration",
+   "cast": "fire-and-forget",
+   "delivery": "target-location",
+   "baseCost": 429,
+   "charge": 1.0,
+   "tier": 3,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "charged_nova",
+   "plugin": "MysticismMagic.esp",
+   "formId": "25FBFF",
+   "name": "Charged Nova",
+   "mod": "MysticismMagic.esp",
+   "element": "arcane",
+   "school": "restoration",
+   "cast": "fire-and-forget",
+   "delivery": "self",
+   "baseCost": 650,
+   "charge": 1.5,
+   "tier": 3,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "cinder_storm",
+   "plugin": "MysticismMagic.esp",
+   "formId": "4B065B",
+   "name": "Cinder Storm",
+   "mod": "MysticismMagic.esp",
+   "element": "arcane",
+   "school": "alteration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 658,
+   "charge": 1.0,
+   "tier": 3,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "dwemerbane",
+   "plugin": "MysticismMagic.esp",
+   "formId": "2A19B3",
+   "name": "Dwemerbane",
+   "mod": "MysticismMagic.esp",
+   "element": "arcane",
+   "school": "alteration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 665,
+   "charge": 1.0,
+   "tier": 3,
+   "power": 1.0,
+   "cost": 45
+  },
+  {
+   "id": "cursed_rune",
+   "plugin": "ForgottenMagic_Redone.esp",
+   "formId": "02BA2C",
+   "name": "Cursed Rune",
+   "mod": "ForgottenMagic_Redone.esp",
+   "element": "arcane",
+   "school": "illusion",
+   "cast": "fire-and-forget",
+   "delivery": "target-location",
+   "baseCost": 229,
+   "charge": 0.0,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 42
+  },
+  {
+   "id": "wild_mushrooms",
+   "plugin": "ForgottenMagic_Redone.esp",
+   "formId": "02277D",
+   "name": "Wild Mushrooms",
+   "mod": "ForgottenMagic_Redone.esp",
+   "element": "poison",
+   "school": "conjuration",
+   "cast": "fire-and-forget",
+   "delivery": "aimed",
+   "baseCost": 346,
+   "charge": 0.5,
+   "tier": 2,
+   "power": 1.0,
+   "cost": 45
   }
  ]
 }

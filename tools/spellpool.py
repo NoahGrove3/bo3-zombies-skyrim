@@ -1,4 +1,4 @@
-"""The Coffer's spells: 150 attack spells picked from the spell mods the party plays with, written to
+"""The Coffer's spells: 200 attack spells (Destruction first, then other schools' attack spells to fill) picked from the spell mods the party plays with, written to
 sheets/coffer_spells.json and src/CofferSpells.h (the game reads the header).
 
     python3 tools/spellpool.py <dir with the mod plugins> <dir with Skyrim.esm, Update.esm, Dawnguard.esm, Dragonborn.esm>
@@ -10,27 +10,39 @@ character can cast it) and drops its charge time (no wind-up before a regular ca
 Element: the damage's resistance (fire, frost, shock, poison, disease), else sun (holy/light spells), blood (drain /
 vampiric), arcane (everything else).
 """
-import json, pathlib, struct, sys
+import json, os, pathlib, re, struct, sys
 from collections import Counter, defaultdict
 
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import spellscan
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-TARGET = 150
+TARGET = 200
 MODS = [  # (plugin file, how many it may give at most)
-    ('Apocalypse - Magic of Skyrim.esp', 70),
-    ('MysticismMagic.esp', 120),
-    ('ForgottenMagic_Redone.esp', 25),
-    ('StormCalling.esl', 10),
-    ('Conduit.esp', 7),
-    ('StrangeRunes.esp', 20),
+    ('Apocalypse - Magic of Skyrim.esp', 999),
+    ('MysticismMagic.esp', 999),
+    ('ForgottenMagic_Redone.esp', 999),
+    ('StormCalling.esl', 999),
+    ('Conduit.esp', 999),
+    ('StrangeRunes.esp', 999),
+    ('The Restless Dead.esp', 999),   # the new night creatures' own spells (cast by their mages; player-type, untaught)
+    ('mihailesobonecolossus.esp', 999),
+    ('mihailoldgod.esp', 999),
+    ('mihailfogling.esp', 999),
+    ('Skyrim.esm', 999),        # Skyrim's own Destruction spells (and Dawnguard's / Dragonborn's) fill what the mods don't
+    ('Dawnguard.esm', 999),
+    ('Dragonborn.esm', 999),
 ]
 RUNES = {'Fire': 'fire', 'Frost': 'frost', 'Shock': 'shock', 'Sun': 'sun', 'Poison': 'poison', 'Paralyse': 'arcane', 'Frenzy': 'blood',
          'ConjureFire': 'fire', 'ConjureFrost': 'frost', 'ConjureShock': 'shock', 'WeaknessFire': 'fire', 'WeaknessFrost': 'frost',
          'WeaknessShock': 'shock', 'WeaknessPoison': 'poison', 'Weakness': 'arcane', 'Conjure': 'arcane'}   # the attack runes
 SUN = ('sun', 'solar', 'holy', 'light', 'stendarr', 'divine', 'purif', 'meridia', 'dawn', 'bane of the undead', 'vampire\'s bane', 'judgement', 'radian')
 BLOOD = ('blood', 'vampir', 'leech', 'drain', 'siphon', 'life\'s finale', 'bloodthirst')
+
+
+UNTAUGHT_FROM = {'Apocalypse - Magic of Skyrim.esp', 'mihailesobonecolossus.esp', 'The Restless Dead.esp'}
+JUNK = re.compile(r' - |test|torch|cloak|damage|teleport|riposte|bash|stagger|aggro|absorb|summon|conjure|heal|leshen|enter the dungeon|^(fire|frost|shock|acid)$', re.I)
+EMPOWER = 1.6   # an Empowered spell: the same spell, this much stronger, a third dearer, one tier rarer
 
 
 def element_of(name, elem):
@@ -44,6 +56,26 @@ def element_of(name, elem):
     return 'arcane'
 
 
+_STR = {}
+
+
+def strings(stem):
+    """a localized master's names: <strings dir>/<stem>_english.strings (env UN_STRINGS)"""
+    import os
+    if stem not in _STR:
+        _STR[stem] = {}
+        f = pathlib.Path(os.environ.get('UN_STRINGS', '.')) / f'{stem.lower()}_english.strings'
+        if f.exists():
+            d = f.read_bytes()
+            n, size = struct.unpack_from('<II', d, 0)
+            base = 8 + n * 8
+            for i in range(n):
+                sid, off = struct.unpack_from('<II', d, 8 + i * 8)
+                e = d.index(b'\0', base + off)
+                _STR[stem][sid] = d[base + off:e].decode('cp1252', 'replace')
+    return _STR[stem]
+
+
 def tier_of(cost):
     return 0 if cost < 60 else 1 if cost < 160 else 2 if cost < 400 else 3
 
@@ -51,12 +83,14 @@ def tier_of(cost):
 def main():
     moddir, vdir = pathlib.Path(sys.argv[1]), pathlib.Path(sys.argv[2])
     masters = [vdir / f for f in ('Skyrim.esm', 'Update.esm', 'Dawnguard.esm', 'Dragonborn.esm')]
-    files = {p.name: p for p in moddir.rglob('*') if p.suffix.lower() in ('.esp', '.esl', '.esm')}
+    files = {}
+    for md in str(sys.argv[1]).split(':'):
+        files.update({p.name: p for p in pathlib.Path(md).rglob('*') if p.suffix.lower() in ('.esp', '.esl', '.esm')})
     # every effect and spell, masters first
     mgef = {}
     spells = {}
     taught = defaultdict(set)
-    for p in masters + [files[m] for m, _ in MODS if m in files]:
+    for p in masters + [files[m] for m, _ in MODS if m in files and not m.endswith('.esm')]:
         recs, mast, loc = spellscan.records(p, {b'MGEF', b'SPEL', b'BOOK'})
         def key(fid):
             idx = fid >> 24
@@ -71,7 +105,12 @@ def main():
                 elif st not in s:
                     s[st] = sb
             edid = s.get(b'EDID', b'').rstrip(b'\0').decode('latin1')
-            name = s.get(b'FULL', b'').rstrip(b'\0').decode('latin1', 'replace') if (b'FULL' in s and not loc) else ''
+            if b'FULL' in s and not loc:
+                name = s[b'FULL'].rstrip(b'\0').decode('latin1', 'replace')
+            elif b'FULL' in s and len(s[b'FULL']) == 4:
+                name = strings(p.stem).get(struct.unpack('<I', s[b'FULL'])[0], '')
+            else:
+                name = ''
             if t == 'MGEF' and b'DATA' in s:
                 dt = s[b'DATA']
                 flags = struct.unpack_from('<I', dt, 0)[0]
@@ -121,13 +160,20 @@ def main():
                     sp = dict(sp, name='Rune of ' + nm, rune_el=el)
                     rows.append((sp, 'destruction', el))
         else:
-            for k in sorted(taught.get(mod, ()), key=lambda k: (spells.get(k, {}).get('cost', 0))):
+            tk = taught.get(mod, set())
+            # spells a mod gives out without a tome (Apocalypse's Battlemage and Elemental spells, the creature mods' own
+            # attack spells): only from the mods that have real ones, and never the helper pieces (cloaks, tests, parts)
+            untaught = {k for k, sp in spells.items() if sp['file'] == mod and k not in tk and sp['owner'] == mod
+                        and not JUNK.search(sp['name'] or '-')} if mod in UNTAUGHT_FROM else set()
+            for k in sorted(tk, key=lambda k: (spells.get(k, {}).get('cost', 0))) + sorted(untaught, key=lambda k: (spells.get(k, {}).get('cost', 0))):
                 sp = spells.get(k)
                 if not sp or sp['type'] != 0:
                     continue
                 ok, school, elem = hurts(sp)
                 if ok and sp['name']:
                     rows.append((sp, school, elem))
+        if os.environ.get('UN_DEBUG'):
+            print('  ', mod, 'taught', len(taught.get(mod, ())), 'rows', len(rows), 'in files', mod in files)
         n = 0
         for sp, school, elem in rows:
             nm = sp['name']
@@ -137,9 +183,17 @@ def main():
             pool.append(dict(id=''.join(ch for ch in nm.lower().replace(' ', '_') if ch.isalnum() or ch == '_'), plugin=sp['owner'], formId='%06X' % sp['id'], name=nm, mod=mod, element=sp.get('rune_el') or element_of(nm, elem), school=school, cast=sp['cast'],
                              delivery=sp['delivery'], baseCost=sp['cost'] or 60, charge=round(sp['charge'], 2), tier=tier_of(sp['cost'])))
             n += 1
+    print('candidates', len(pool), Counter(r['school'] for r in pool))
+    # Destruction first (in mod order), other schools' attack spells only to fill up to TARGET
+    pool = [r for r in pool if r['school'] == 'destruction'] + [r for r in pool if r['school'] != 'destruction']
     pool = pool[:TARGET]
+    # still short: Empowered tiers of the strongest Destruction spells fill the rest
+    strong = sorted([r for r in pool if r['school'] == 'destruction'], key=lambda r: -r['baseCost'])
+    for r in strong[:max(0, TARGET - len(pool))]:
+        pool.append(dict(r, id='empowered_' + r['id'], name='Empowered ' + r['name'], baseCost=round(r['baseCost'] * 1.33), tier=min(3, r['tier'] + 1), power=EMPOWER))
     # the game's cost: a new character (100 magicka) gets 5-8 casts of a cheap spell, 2-3 of the strongest
     for r in pool:
+        r.setdefault('power', 1.0)
         c = r['baseCost']
         per_sec = r['cast'] == 'concentration'
         r['cost'] = max(4, min(14 if per_sec else 45, round((c ** 0.6) * (0.9 if per_sec else 1.6))))
@@ -151,11 +205,11 @@ def main():
          '#include <cstdint>', '', 'namespace bo3z::coffer', '{',
          '\tenum Element : std::uint8_t { ' + ', '.join(f'k{e.capitalize()}' for e in els) + ', kElements };',
          '\tinline constexpr const char* kElementName[kElements] = { ' + ', '.join(f'"{e}"' for e in els) + ' };',
-         '\tstruct Spell { const char* plugin; std::uint32_t id; const char* name; Element element; std::uint8_t tier; std::uint16_t cost; bool concentration; };',
+         '\tstruct Spell { const char* plugin; std::uint32_t id; const char* name; Element element; std::uint8_t tier; std::uint16_t cost; bool concentration; float power; };   // power > 1: an Empowered copy (made in game)',
          f'\tinline constexpr std::array<Spell, {len(pool)}> kSpells{{ {{']
     for r in pool:
         nm = r['name'].replace('\\', '\\\\').replace('"', '\\"')
-        h.append(f'\t\t{{ "{r["plugin"]}", 0x{r["formId"]}, "{nm}", k{r["element"].capitalize()}, {r["tier"]}, {r["cost"]}, {"true" if r["cast"] == "concentration" else "false"} }},')
+        h.append(f'\t\t{{ "{r["plugin"]}", 0x{r["formId"]}, "{nm}", k{r["element"].capitalize()}, {r["tier"]}, {r["cost"]}, {"true" if r["cast"] == "concentration" else "false"}, {r["power"]}f }},')
     h += ['\t} };', '}', '']
     (ROOT / 'src' / 'CofferSpells.h').write_text('\n'.join(h))
     print(len(pool), 'spells')

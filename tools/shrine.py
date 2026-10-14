@@ -310,7 +310,9 @@ def main():
     cobble = f'mat cobble diffuse={W}{S.TEX["cobble"][0]}.dds normal={W}{S.TEX["cobble"][1]}.dds spec=0.25 gloss=30'
     trim = f'mat trim diffuse={W}{S.TEX["trim"][0]}.dds normal={W}{S.TEX["trim"][1]}.dds spec=0.25 gloss=30'
     platform()
-    convert('shrine', [f'collidefrustum {-R} {-R} {R} {R} {TOP} {BOTTOM} {GROW}'], [floor, cobble, trim, rune, runes, pool])
+    # (collidebox2: an unseen block round the orb, high over your head, so looking at the shrine's heart finds the shrine)
+    convert('shrine', [f'collidefrustum {-R} {-R} {R} {R} {TOP} {BOTTOM} {GROW}', 'collidebox2 -34 -34 140 34 34 212'],
+            [floor, cobble, trim, rune, runes, pool])
     shards()
     vg = S.save(Image.new('RGB', (32, 32), (130, 200, 255)), 'vein_g.dds')
     rkd, rkn, rkg = tex_rock()

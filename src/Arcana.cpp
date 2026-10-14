@@ -1,7 +1,7 @@
 #include "BO3Z.h"
 #include "CofferSpells.h"
 
-// The Coffer's spells (sheets/coffer_spells.json, src/CofferSpells.h, tools/spellpool.py): 150 attack spells from the
+// The Coffer's spells (sheets/coffer_spells.json, src/CofferSpells.h, tools/spellpool.py): 200 attack spells (Destruction first) from the
 // spell mods the party plays with (Apocalypse, Mysticism, Forgotten Magic Redone, Stormcaller, Strange Runes), each
 // exactly as its mod made it (its effects, art, sounds, casting). The shrine hands them out at random; a spell won is
 // learned (it stays in the Magic menu to view, favourite and equip) and goes straight into the right hand.

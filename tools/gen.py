@@ -19,12 +19,12 @@ assert r['dawn'] == 'crumble' and r['unfinishedRound'] == 'resume'
 q = row('quests', r['pauseUntilQuest'].split(':')[1])
 out.append(f'\tinline constexpr FormRef kIntroQuest{{ {cs(q["plugin"])}, 0x{hexid(q["localId"]):06X}, {cs(q["editorId"])} }};')
 # enemies
-out.append('\tstruct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; };')
+out.append('\tstruct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; bool rig; };')
 en = S['enemies']['rows']
 out.append(f'\tinline constexpr std::array<Enemy, {len(en)}> kEnemies{{ {{')
 sys.path.insert(0, str(root / 'tools')); import esp_ids as _eids; _EIDS, _ = _eids.assign(S)
 for e in en:
-    out.append(f'\t\tEnemy{{ {cs(e["id"])}, {cs(e["label"])}, {{ {cs(e["plugin"])}, 0x{(_EIDS[("NPC_", e["localId"][5:])] if e["localId"].startswith("auto:") else hexid(e["localId"])):06X}, {cs(e["editorId"])} }}, {str(e["recordType"]=="LVLN").lower()}, {e["minRound"]}, {e["weight"]}, {str(e["specialRound"]).lower()}, {cs(e["headNode"])}, {str(e["forceCombat"]).lower()}, {e.get("bossEvery", 0)}, {str(e.get("elite", False)).lower()}, {["zombie", "reaper", "necro", "minion"].index(e.get("kind", "zombie"))}, {float(e.get("healthMult", 1.0))}f, {float(e.get("speedMult", 1.0))}f }},')
+    out.append(f'\t\tEnemy{{ {cs(e["id"])}, {cs(e["label"])}, {{ {cs(e["plugin"])}, 0x{(_EIDS[("NPC_", e["localId"][5:])] if e["localId"].startswith("auto:") else hexid(e["localId"])):06X}, {cs(e["editorId"])} }}, {str(e["recordType"]=="LVLN").lower()}, {e["minRound"]}, {e["weight"]}, {str(e["specialRound"]).lower()}, {cs(e["headNode"])}, {str(e["forceCombat"]).lower()}, {e.get("bossEvery", 0)}, {str(e.get("elite", False)).lower()}, {["zombie", "reaper", "necro", "minion"].index(e.get("kind", "zombie"))}, {float(e.get("healthMult", 1.0))}f, {float(e.get("speedMult", 1.0))}f, {str(e.get("rig", True)).lower()} }},')
 out.append('\t} };')
 # sounds
 out.append('\tenum class Sound : int {')
@@ -157,10 +157,10 @@ for t in towns:
     o.append(f'\t\tStationDef{{ true, 0x{int(r["worldspace"],16):06X}, {F(r["x"])}, {F(r["y"])}, {F(r["z"])}, {F(r["yawDeg"])}, {F(r["compact"])} }},' if r else '\t\tStationDef{ false, 0, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f },')
 o.append('\t} };')
 SH = S['shouts']['rows']
-o.append('\tstruct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; int sound; };')
+o.append('\tstruct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; int sound; std::string_view extPlugin; std::uint32_t extShout; std::string_view quest; };')
 o.append(f'\tinline constexpr std::array<ShoutDef, {len(SH)}> kShouts{{ {{')
 for h in SH:
-    o.append(f'\t\tShoutDef{{ {cs(h["id"])}, {cs(h["label"])}, {cs(h["text"])}, {towns.index(h["town"])}, 0x{IDS[("SHOU", h["id"])]:03X}, {{ ' + ', '.join(f'0x{IDS[("WOOP", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + ' }, { ' + ', '.join(f'0x{IDS[("SPEL", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + f' }}, 0x{h["color"]}, {cs(h["words"][0])}, {cs(h["words"][1])}, {cs(h["words"][2])}, {[x["id"] for x in S["sounds"]["rows"]].index("shout_" + h["id"])} }},')
+    o.append(f'\t\tShoutDef{{ {cs(h["id"])}, {cs(h["label"])}, {cs(h["text"])}, {towns.index(h["town"])}, 0x{IDS[("SHOU", h["id"])]:03X}, {{ ' + ', '.join(f'0x{IDS[("WOOP", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + ' }, { ' + ', '.join(f'0x{IDS[("SPEL", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + f' }}, 0x{h["color"]}, {cs(h["words"][0])}, {cs(h["words"][1])}, {cs(h["words"][2])}, {[x["id"] for x in S["sounds"]["rows"]].index("shout_" + h["id"])}, {cs(h.get("plugin", ""))}, 0x{int(h.get("shoutId", "0"), 16):06X}, {cs(h.get("quest", ""))} }},')
 o.append('\t} };')
 o.append('\tstruct LocationDef { int town; std::uint32_t anchor; int object; int slot; };')
 o.append(f'\tinline constexpr std::array<LocationDef, {len(L)}> kLocations{{ {{')
