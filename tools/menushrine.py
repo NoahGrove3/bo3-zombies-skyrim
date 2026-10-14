@@ -6,7 +6,7 @@ DrawMenu): the crystal turns (a sheet of frames) and pulses, the rocks float rou
     python3 tools/menushrine.py assets/ui
 
 Writes (2560x1440 painting space; the C++ draws the moving parts with the numbers printed at the end):
-  menu_shrine_ground.png   the plain, the standing stones, the rune floor (static)
+  menu_shrine_ground.png   the lake's tint and the rune floor floating on it (static)
   menu_shrine_glow.png     the floor's light alone (runes, rings, pool) - drawn over it, breathing
   menu_crystal.png         the crystal turning, 24 frames (6 x 4 sheet of 320x480)
   menu_shard0..8.png       the floating rocks
@@ -71,28 +71,14 @@ def ground():
     far = np.array([52, 58, 82], np.float32)
     col = far[None, None] * (1 - t[..., None]) ** 2.2 + base[None, None] * (1 - (1 - t[..., None]) ** 2.2)
     col *= (0.75 + 0.45 * n[..., None]) * (0.9 + 0.2 * n2[..., None])
-    # a soft ridge line on the horizon (far hills), barely there
-    ridge = HORIZON - 40 - 60 * fbm(W, 1, 5, 3, seed=5)[0] * (1 + 0.6 * np.sin(np.linspace(0, 7, W)))
-    a = (yy >= ridge[None, :]).astype(np.float32)
-    hills = (yy < HORIZON + 10) & (yy >= ridge[None, :])
-    col[hills] = col[hills] * 0.55 + np.array([60, 66, 92]) * 0.45
-    # the plain is a still lake: dark water, faint ripple lines, see-through (the game draws the night sky's
-    # reflection under it, src/Hud.cpp DrawMenu)
+    # nothing above the far shore (the mountains are their own layer, tools/menulake.py); below it the lake: a dark
+    # see-through tint over the reflection the game draws (src/Hud.cpp DrawMenu), deeper toward us, with a faint sheen
+    a = np.zeros((H, W), np.float32)
     lake = yy >= HORIZON
-    rip = 0.5 + 0.5 * np.sin(yy * 0.9 + 6 * fbm(W, H, 3, 6, seed=21))
-    wcol = np.array([10, 14, 28], np.float32)[None, None] * (0.85 + 0.3 * rip[..., None]) + np.array([20, 30, 55]) * (1 - t[..., None]) ** 3
+    rip = 0.5 + 0.5 * np.sin(yy * (0.25 + 0.9 * t) + 5 * fbm(W, H, 3, 6, seed=21))
+    wcol = np.array([6, 10, 22], np.float32)[None, None] * (0.9 + 0.2 * rip[..., None])
     col = np.where(lake[..., None], wcol, col)
-    a = np.where(lake, 0.42 + 0.33 * t, a)
-    # standing stones on the plain, broken, in silhouette
-    stones = maskdraw(lambda d: [d.polygon(p, fill=255) for p in [
-        [(330, 830), (352, 690), (388, 676), (398, 832)], [(470, 826), (486, 742), (512, 730), (520, 828)],
-        [(1720, 818), (1738, 712), (1770, 700), (1782, 820)], [(1880, 822), (1890, 760), (1920, 752), (1928, 824)],
-        [(2240, 830), (2262, 650), (2300, 640), (2316, 834)], [(140, 838), (150, 780), (176, 774), (182, 840)]]])
-    col = col * (1 - stones[..., None]) + np.array([24, 26, 36]) * stones[..., None] * (0.8 + 0.4 * n[..., None])
-    a = np.maximum(a, stones)
-    # the floor's shadow on the plain
-    sh = maskdraw(lambda d: d.ellipse([CX - 820, CY - 170, CX + 820, CY + 300], fill=255))
-    col *= (1 - 0.45 * blur(sh, 60))[..., None]
+    a = np.where(lake, 0.10 + 0.40 * t ** 1.3, a)
     img = rgba(col, a)
 
     # ---- the rune floor: a stone drum, its top carved in rings
@@ -166,10 +152,9 @@ def ground():
     arr = np.asarray(img, np.float32)
     rgb, al = arr[..., :3], arr[..., 3] / 255
     rubcol = np.array([50, 52, 64], np.float32)[None, None] * (0.6 + 0.6 * stone[..., None])
-    rgb = rgb * (1 - rub[..., None]) + rubcol * rub[..., None]
     rgb = rgb * (1 - side[..., None]) + sidecol * side[..., None]
     rgb = rgb * (1 - topm[..., None]) + topcol * topm[..., None]
-    al = np.maximum(al, np.maximum(side, np.maximum(topm, rub)))
+    al = np.maximum(al, np.maximum(side, topm))
     # cold light from the crystal on the floor and the plain round it
     cx, cy = proj(0, 0, CRYSTAL_Z)
     lit = np.exp(-(((xx2 - CX) / 900) ** 2 + ((yy2 - CY) / 360) ** 2))

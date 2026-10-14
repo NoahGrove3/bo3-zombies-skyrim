@@ -1719,6 +1719,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ID3D11ShaderResourceView* g_sGlow = nullptr;
 		ID3D11ShaderResourceView* g_sCrystal = nullptr;
 		ID3D11ShaderResourceView* g_sSoft = nullptr;
+		ID3D11ShaderResourceView* g_sMtn = nullptr;      // the shrine scene's mountains across the lake (tools/menulake.py)
+		ID3D11ShaderResourceView* g_sRefl = nullptr;     // the mountains upside down in the lake
+		ID3D11ShaderResourceView* g_sAurora = nullptr;   // the northern lights
 		std::array<ID3D11ShaderResourceView*, 9> g_sShard{};
 		ID3D11ShaderResourceView* g_mGroundFog = nullptr;
 		ID3D11ShaderResourceView* g_mClouds2 = nullptr;    // drifting night clouds that tile left-right (tools/menuscene.py drift_clouds)  // fog wisps that tile left-right (tools/menuscene.py ground_fog)
@@ -1902,19 +1905,46 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 				}
 			}
-			if (g_mAurora) {
+			const bool lakeScene = g_sGround && g_sMtn && g_sRefl;
+			// the northern lights over the lake: the curtains drawn in narrow columns, each lifted and brightened on its
+			// own slow wave, so the folds ripple along them and the light breathes
+			auto auroraStrips = [&](bool mirrored, float alpha) {
+				if (!g_sAurora) {
+					return;
+				}
+				const auto  tx = ImTextureID(reinterpret_cast<std::uintptr_t>(g_sAurora));
+				constexpr int kN = 96;
+				for (int i = 0; i < kN; ++i) {
+					const float x0 = 2560.0f * i / kN, x1 = 2560.0f * (i + 1) / kN, xm = (x0 + x1) * 0.5f;
+					const float lift = 26.0f * std::sin(now * 0.31f + xm * 0.0042f) + 12.0f * std::sin(now * 0.73f - xm * 0.011f);
+					const float glow = 0.62f + 0.38f * std::sin(now * 0.45f + xm * 0.0027f) * std::sin(now * 0.19f - xm * 0.0013f + 1.0f);
+					const int   al = static_cast<int>(std::clamp(alpha * glow, 0.0f, 1.0f) * 255 * fade);
+					const float sway = std::sin(now * 0.12f) * 0.004f;
+					if (!mirrored) {
+						const ImVec2 a = toScreen(0.2f, x0, 0 - lift), b = toScreen(0.2f, x1, 1440 - lift);
+						fg->AddImage(tx, a, b, { x0 / 2560 + sway, 0 }, { x1 / 2560 + sway, 1 }, IM_COL32(255, 255, 255, al));
+					} else {  // the lake's copy: sky rows 160..800 mirrored into 800..1440
+						const ImVec2 a = toScreen(0.4f, x0, 800 + lift * 0.6f), b = toScreen(0.4f, x1, 1440 + lift * 0.6f);
+						fg->AddImage(tx, a, b, { x0 / 2560 + sway, 800.0f / 1440 }, { x1 / 2560 + sway, 160.0f / 1440 }, IM_COL32(200, 225, 255, al));
+					}
+				}
+			};
+			if (lakeScene) {
+				auroraStrips(false, 0.95f);
+			} else if (g_mAurora) {
 				for (int band = 0; band < 2; ++band) {
 					const float w8 = 0.5f + 0.5f * std::sin(now * (0.21f + 0.07f * band) + band * 2.1f);
 					layer(g_mAurora, 0.2f, IM_COL32(150, 255, 210, static_cast<int>((14 + 30 * w8) * fade)), { std::sin(now * (0.05f + 0.02f * band) + band) * 0.006f, 0 });
 				}
 			}
-			layer(g_mClouds, 0.25f, IM_COL32(255, 255, 255, static_cast<int>(200 * fade)), { std::fmod(now * 0.0035f, 1.0f), 0 });
+			const float cloudK = lakeScene ? 0.45f : 1.0f;  // (thin over the lake: the aurora shows through)
+			layer(g_mClouds, 0.25f, IM_COL32(255, 255, 255, static_cast<int>(200 * fade * cloudK)), { std::fmod(now * 0.0035f, 1.0f), 0 });
 			// clouds drifting across the night: two banks at their own speeds (the near one faster), passing over the moon
 			if (g_mClouds2) {
 				const auto tex = ImTextureID(reinterpret_cast<std::uintptr_t>(g_mClouds2));
 				const float u0 = std::fmod(now * 0.0045f, 1.0f), u1 = std::fmod(now * 0.0075f + 0.4f, 1.0f);
-				fg->AddImage(tex, { 0, 0 }, { size.x, size.y * 0.40f }, { u0, 0 }, { u0 + 1.0f, 1 }, IM_COL32(255, 255, 255, static_cast<int>(150 * fade)));
-				fg->AddImage(tex, { 0, size.y * 0.06f }, { size.x, size.y * 0.46f }, { u1, 0.15f }, { u1 + 0.7f, 1 }, IM_COL32(220, 220, 235, static_cast<int>(120 * fade)));
+				fg->AddImage(tex, { 0, 0 }, { size.x, size.y * 0.40f }, { u0, 0 }, { u0 + 1.0f, 1 }, IM_COL32(255, 255, 255, static_cast<int>(150 * fade * cloudK)));
+				fg->AddImage(tex, { 0, size.y * 0.06f }, { size.x, size.y * 0.46f }, { u1, 0.15f }, { u1 + 0.7f, 1 }, IM_COL32(220, 220, 235, static_cast<int>(120 * fade * cloudK)));
 			}
 			// lightning: now and then a forked bolt strikes the far range (drawn behind it, so the peaks cut it off), the
 			// clouds flaring with it; it flickers a few times and is gone
@@ -1989,36 +2019,64 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				};
 				const float pulse = 0.5f + 0.5f * std::sin(now * 1.6f);            // the core's heartbeat
 				const float slow = 0.5f + 0.5f * std::sin(now * 0.55f + 1.0f);
-				// the lake: the night sky upside down in still water (under the painting's see-through water), its stars
-				// trembling as faint ripples roll toward us
+				// the far range across the lake, then the lake: deep water darkening toward us; the stars and the aurora
+				// upside down in it, the mountains' reflection over them - all of it in thin rows, each row nudged
+				// sideways on its own wave (bigger and slower toward us), so the reflection wavers like real water; bright
+				// ripple lines run out toward the far shore
 				{
-					const ImVec2 h0 = toScreen(kD, 0, 800), h1 = toScreen(kD, 2560, 1440);
-					if (g_mSky) {
-						fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_mSky)), h0, h1, { 0, 800.0f / 1440 }, { 1, 160.0f / 1440 }, IM_COL32(150, 170, 220, static_cast<int>(150 * fade)));
+					constexpr float kL = 0.4f;  // (the mountains and their reflection share one depth, so they meet at the shore)
+					if (g_sMtn) {
+						layer(g_sMtn, kL, white);
 					}
-					const ImVec2 m = toScreen(kD, 0.255f * 2560, 1600 - 0.315f * 1440);  // the Blood Moon's light on the water
-					fg->AddCircleFilled(m, 46 * k, IM_COL32(255, 120, 90, static_cast<int>(18 * fade)), 40);
+					const ImVec2 h0 = toScreen(kL, -60, 800), h1 = toScreen(kL, 2620, 1460);
+					fg->AddRectFilledMultiColor(h0, h1, IM_COL32(20, 27, 52, static_cast<int>(255 * fade)), IM_COL32(20, 27, 52, static_cast<int>(255 * fade)),
+						IM_COL32(6, 9, 20, static_cast<int>(255 * fade)), IM_COL32(6, 9, 20, static_cast<int>(255 * fade)));
 					for (const auto& st : stars) {
 						const float py = 1600 - st.y * 1440;
-						if (py < 810 || py > 1430) {
+						if (py < 806 || py > 1430) {
 							continue;
 						}
-						const float wob = std::sin(now * 1.7f + py * 0.06f) * 3.0f + std::sin(now * 0.9f + st.ph) * 1.5f;
-						const ImVec2 p = toScreen(kD, st.x * 2560 + wob, py);
+						const float tt = (py - 800) / 640;
+						const float wob = std::sin(now * 1.3f + py * 0.08f) * (2 + 10 * tt);
+						const ImVec2 p = toScreen(kL, st.x * 2560 + wob, py);
 						const float  tw = std::pow(0.5f + 0.5f * std::sin(now * st.sp + st.ph), 3.0f);
-						const int    al = static_cast<int>((40 + 110 * tw) * fade);
-						fg->AddLine({ p.x, p.y - 4 * k }, { p.x, p.y + (5 + 6 * st.sz) * k }, IM_COL32(200, 215, 255, al / 2), (1.0f + st.sz) * k);
-						fg->AddCircleFilled(p, (0.8f + 0.9f * st.sz * tw) * k, IM_COL32(225, 235, 255, al), 8);
+						const int    al = static_cast<int>((30 + 90 * tw) * (1 - 0.6f * tt) * fade);
+						fg->AddLine({ p.x, p.y - 2 * k }, { p.x, p.y + (3 + 5 * st.sz) * k }, IM_COL32(200, 215, 255, al / 2), (1.0f + st.sz) * k);
+						fg->AddCircleFilled(p, (0.7f + 0.8f * st.sz * tw) * k, IM_COL32(225, 235, 255, al), 8);
 					}
-					for (int i = 0; i < 14; ++i) {  // ripples: thin bright lines drifting down the water
-						const float ph = std::fmod(now * 0.045f + i / 14.0f, 1.0f);
-						const float py = 815 + ph * ph * 620;
-						const ImVec2 a = toScreen(kD, 0, py), b = toScreen(kD, 2560, py);
-						const int al = static_cast<int>(22 * std::sin(ph * 3.1416f) * fade);
-						fg->AddLine(a, b, IM_COL32(170, 190, 240, al), (1.0f + ph * 1.5f) * k);
+					auroraStrips(true, 0.42f);
+					if (g_sRefl) {
+						const auto rt = ImTextureID(reinterpret_cast<std::uintptr_t>(g_sRefl));
+						constexpr int kRows = 128;
+						for (int r = 0; r < kRows; ++r) {
+							const float y0 = 800 + 640.0f * r / kRows, y1 = 800 + 640.0f * (r + 1) / kRows;
+							const float tt = (r + 0.5f) / kRows;
+							const float off = std::sin(now * (1.6f - 0.8f * tt) + y0 * (0.19f - 0.12f * tt)) * (1.5f + 16.0f * tt * tt) + std::sin(now * 0.7f + y0 * 0.031f) * 3.0f * tt;
+							const float du = off / 2560.0f;
+							fg->AddImage(rt, toScreen(kL, 0, y0), toScreen(kL, 2560, y1 + 0.6f), { du, r / static_cast<float>(kRows) }, { 1 + du, (r + 1) / static_cast<float>(kRows) },
+								IM_COL32(255, 255, 255, static_cast<int>(255 * fade)));
+						}
+					}
+					for (int i = 0; i < 22; ++i) {  // ripples running out toward the far shore, finer as they go
+						const float ph = std::fmod(now * 0.03f + i / 22.0f, 1.0f);
+						const float d = 1.0f - ph;  // 1 near us, 0 at the shore
+						const float py = 803 + d * d * 630;
+						const float x0 = 2560 * std::fmod(i * 0.618f, 1.0f) - 900, len = 600 + 1400 * d;
+						const ImVec2 a = toScreen(kL, x0, py), b = toScreen(kL, x0 + len, py);
+						const int al = static_cast<int>(26 * std::sin(ph * 3.1416f) * fade);
+						fg->AddLine(a, b, IM_COL32(150, 180, 235, al), (0.7f + d * 1.6f) * k);
+					}
+					// the shrine's own light on the water under it: a wavering column of blue
+					if (g_sSoft) {
+						const ImVec2 q = at(0, 0, -60.0f);
+						for (int j = 0; j < 10; ++j) {
+							const float yy = q.y + j * 22.0f * u * kS * 0.35f;
+							const float wv = std::sin(now * 2.1f + j * 0.9f) * 10.0f * u;
+							sprite(g_sSoft, { q.x + wv, yy }, (260 - 14 * j) * u, 26 * u, 0, IM_COL32(90, 170, 255, static_cast<int>((34 - 3 * j + 10 * pulse) * fade)));
+						}
 					}
 				}
-				groundFog(size.y * 0.30f, size.y * 0.56f, 0.006f, 1.6f, 120, IM_COL32(120, 135, 180, 0));  // mist on the far water
+				groundFog(size.y * 0.47f, size.y * 0.62f, 0.006f, 1.6f, 70, IM_COL32(120, 135, 180, 0));  // mist on the far water, at the mountains' feet
 				layer(g_sGround, kD, white);
 				if (g_sGlow) {  // the runes and the pool breathe with the core
 					layer(g_sGlow, kD, IM_COL32(255, 255, 255, static_cast<int>((150 + 105 * pulse) * fade)));
@@ -2071,7 +2129,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				// the crystal: turning (its frames), swelling with the heartbeat, its light round it
 				{
-					const ImVec2 c = at(0, 0, kCrystalZ);
+					const float  bob = std::sin(now * 0.9f) * 6 * u;  // the orb rises and falls; its light and aura go with it
+					const ImVec2 c = [&] { auto p = at(0, 0, kCrystalZ); p.y += bob; return p; }();
 					if (g_sSoft) {
 						const float g1 = (420 + 90 * pulse) * u, g2 = (200 + 50 * pulse) * u;
 						sprite(g_sSoft, c, g1 * 2, g1 * 2, 0, IM_COL32(80, 150, 255, static_cast<int>((70 + 50 * pulse) * fade)));
@@ -2094,7 +2153,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const ImVec2 uv0{ (f % 6) / 6.0f, (f / 6) / 4.0f }, uv1{ uv0.x + 1.0f / 6.0f, uv0.y + 0.25f };
 						const float sc = 1.0f + 0.035f * pulse;
 						const float w = 448 * u * sc, h = 640 * u * sc;
-						const ImVec2 mid{ c.x, c.y + (0.5f - 0.56f) * h + std::sin(now * 0.9f) * 6 * u };  // (the frame's origin sits at 56% of its height)
+						const ImVec2 mid{ c.x, c.y + (0.5f - 0.56f) * h };  // (the frame's origin sits at 56% of its height)
 						sprite(g_sCrystal, mid, w, h, 0, IM_COL32(255, 255, 255, static_cast<int>(255 * fade)), uv0, uv1);
 					}
 					aura(1.1f, 0.8f, IM_COL32(200, 235, 255, static_cast<int>((60 + 40 * pulse) * fade)));  // (a thin tongue over its face)
@@ -2876,7 +2935,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\UndyingNights\\") + file).c_str(), nullptr, tex);
 			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_title.png", nullptr, &g_mTitle);
-			for (auto [file, tex] : { std::pair{ L"menu_shrine_ground.png", &g_sGround }, { L"menu_shrine_glow.png", &g_sGlow }, { L"menu_crystal.png", &g_sCrystal }, { L"menu_softglow.png", &g_sSoft } }) {
+			for (auto [file, tex] : { std::pair{ L"menu_shrine_ground.png", &g_sGround }, { L"menu_shrine_glow.png", &g_sGlow }, { L"menu_crystal.png", &g_sCrystal }, { L"menu_softglow.png", &g_sSoft }, { L"menu_mountains.png", &g_sMtn }, { L"menu_lake_refl.png", &g_sRefl }, { L"menu_aurora2.png", &g_sAurora } }) {
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\UndyingNights\\") + file).c_str(), nullptr, tex);
 			}
 			for (int i = 0; i < 9; ++i) {
