@@ -342,6 +342,7 @@ namespace bo3z
 			Audio::InstallSteps();
 			Arcana::Load();
 			Director::HeadlongCombat();
+			Settings::ApplyMods();
 			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
 			PlayerUpdate::func = vtbl.write_vfunc(0xAD, PlayerUpdate::thunk);
 			logger::info("hooked PlayerCharacter::Update");

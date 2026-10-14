@@ -1021,7 +1021,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float R = 46 * k;
 					rollOrb({ L + R, y + R + 4 * k }, R);
 					const float tx = L + 2 * R + 16 * k;
-					keyCap({ tx, y + 4 * k }, g_padLast ? "X" : "1", s.rollPhase == 0);
+					keyCap({ tx, y + 4 * k }, g_padLast ? std::string("X") : Settings::KeyName(0), s.rollPhase == 0);
 					Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? "CALL A SPELL" : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? "THE SPELLS TURN..." : ArmsName(s.rollGun));
 					Txt(dl, g_body, 17 * k, { tx, y + 38 * k }, IM_COL32(196, 182, 160, 235),
 						s.rollPhase == 3 ? "Activate the shrine to take it" : "Every spell you lack has an equal chance");
@@ -1040,7 +1040,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const int  g = gw >= 0 ? gw : sp >= 0 ? Arcana::kIdBase + sp : -1;
 					const int  lvl = gw >= 0 ? std::clamp(s.slotLevel[act], 0, gen::kForgeMax) : sp >= 0 ? Arcana::Level(sp) : 0;
 					const bool can = g >= 0 && lvl < gen::kForgeMax;
-					keyCap({ L, y + 2 * k }, g_padLast ? "Y" : "2", can);
+					keyCap({ L, y + 2 * k }, g_padLast ? std::string("Y") : Settings::KeyName(1), can);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "REFORGE");
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235),
 						g < 0 ? "Hold a spell to reforge it" : ArmsName(g) + (lvl >= gen::kForgeMax ? "  -  ascended" : "  -  more power, less magicka"));
@@ -1065,7 +1065,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const int  sel = std::clamp(s.perkSel, 0, n - 1);
 					const auto& p = gen::kPerks[sel];
 					const int  have = s.perkStacks[sel];
-					keyCap({ L, y + 2 * k }, g_padLast ? "A" : "3", s.points >= p.cost);
+					keyCap({ L, y + 2 * k }, g_padLast ? std::string("A") : Settings::KeyName(2), s.points >= p.cost);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "TAKE A BLESSING");
 					const std::string rule = owned ? "they stack - death takes them all" : "take each as often as you like";
 					Txt(dl, g_body, 16 * k, { Rr - Measure(g_body, 16 * k, rule).x, y + 6 * k }, IM_COL32(170, 156, 132, 220), rule);
@@ -1098,7 +1098,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImU32 scol = IM_COL32((sh.color >> 16) & 0xFF, (sh.color >> 8) & 0xFF, sh.color & 0xFF, 255);
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
 					y += 14 * k;
-					keyCap({ L, y + 2 * k }, g_padLast ? "\xE2\x86\x91" : "4", true);
+					keyCap({ L, y + 2 * k }, g_padLast ? std::string("\xE2\x86\x91") : Settings::KeyName(3), true);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, scol, "LEARN THE THU'UM: " + std::string(sh.label), 1.5f * k, scol);
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(210, 196, 170, 235), std::string(sh.w1) + "  " + std::string(sh.w2) + "  " + std::string(sh.w3) + "  -  freely given");
 					y += 64 * k;
@@ -1107,7 +1107,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (g_padLast) {  // the controller's buttons when it is in hand, the keys otherwise
 					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), "D-pad Left / Right: choose a brew   \xC2\xB7   B leave");
 				} else {
-					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), "Wheel or Left / Right: choose a brew   \xC2\xB7   E or Backspace leave");
+					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), "Wheel or Left / Right: choose a brew   \xC2\xB7   E or " + Settings::KeyName(4) + " leave");
 				}
 			} else if (s.rollPhase > 0) {
 				// the roll with the menu closed: a small strip under the crosshair

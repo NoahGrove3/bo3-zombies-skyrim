@@ -1403,7 +1403,13 @@ namespace bo3z
 		{
 			const auto code = b->GetIDCode();
 			switch (b->GetDevice()) {
-			case RE::INPUT_DEVICE::kKeyboard: return (code >= 0x02 && code <= 0x05) || code == 0x12 || code == 0xCB || code == 0xCD || code == 0x0E;
+			case RE::INPUT_DEVICE::kKeyboard:
+				for (int k = 0; k < Settings::kKeys; ++k) {
+					if (static_cast<int>(code) == Settings::Key(k)) {
+						return true;
+					}
+				}
+				return code == 0x12 || code == 0xCB || code == 0xCD;
 			case RE::INPUT_DEVICE::kMouse: return code == 8 || code == 9;
 			case RE::INPUT_DEVICE::kGamepad: return code == 0x4000 || code == 0x8000 || code == 0x1000 || code == 0x2000 || code == 0x0001 || code == 0x0004 || code == 0x0008;
 			default: return false;
@@ -1455,14 +1461,15 @@ namespace bo3z
 				}
 			};
 			if (dev == RE::INPUT_DEVICE::kKeyboard) {
+				for (int k = 0; k < Settings::kKeys; ++k) {  // 1 2 3 4 Backspace unless rebound (Mod Configuration > Undying Nights)
+					if (static_cast<int>(code) == Settings::Key(k)) {
+						act(k);
+						return true;
+					}
+				}
 				switch (code) {
-				case 0x02: act(0); return true;                 // 1
-				case 0x03: act(1); return true;                 // 2
-				case 0x04: act(2); return true;                 // 3
-				case 0x05: act(3); return true;                 // 4
 				case 0xCB: g_sel = (g_sel + n - 1) % n; Forms::Play(gen::Sound::ui_move); return true;  // left arrow
 				case 0xCD: g_sel = (g_sel + 1) % n; Forms::Play(gen::Sound::ui_move); return true;      // right arrow
-				case 0x0E: act(4); return true;                 // backspace
 				case 0x12:                                      // E (Activate): takes a waiting spell, else leaves
 					if (!TakeOffer(ref)) {
 						act(4);

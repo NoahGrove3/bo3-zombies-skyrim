@@ -258,9 +258,18 @@ namespace bo3z
 	namespace Settings
 	{
 		inline constexpr float kFovMin = 60.0f, kFovMax = 130.0f;
-		float FovFirst();
-		float FovThird();
-		void  SetFov(bool a_first, float a_v);
+		inline constexpr int   kKeys = 5;          // the shrine's keys: roll, reforge, bless, shout, leave
+		float       FovFirst();
+		float       FovThird();
+		void        SetFov(bool a_first, float a_v);
+		bool        Shelter();                    // townsfolk go indoors at night
+		float       CorpseSeconds();
+		float       UndeadHealthMult();           // Skyrim's difficulty (if followed) x the MCM's own
+		float       UndeadDamageMult();
+		int         Key(int a_action);
+		std::string KeyName(int a_action);
+		void        Tick();                       // re-read the MCM's file when it changes
+		void        ApplyMods();                  // the Other mods page into those mods' own files (game start)
 	}
 
 	// Co-op life and death: down, revive, spectate, and the party wipe (Party.cpp)

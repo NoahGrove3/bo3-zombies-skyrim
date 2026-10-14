@@ -111,7 +111,7 @@ namespace bo3z
 			const bool boss = Director::IsBoss(a_zombie);  // his claws come in flurries: each rake takes less
 			// each kind hits as hard as it is (Undead::DamageMult, carried on its attack-damage value)
 			const float kindMult = boss || elite ? 1.0f : std::clamp(a_zombie->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAttackDamageMult) / std::max(0.001f, gen::kZombieWeaponDamageMult), 0.5f, 2.0f);
-			av->DamageActorValue(RE::ActorValue::kHealth, baseHealth * (boss ? gen::boss::meleeShare : elite ? gen::elite::hitShare : gen::kHitDamageFraction * kindMult));
+			av->DamageActorValue(RE::ActorValue::kHealth, baseHealth * (boss ? gen::boss::meleeShare : elite ? gen::elite::hitShare : gen::kHitDamageFraction * kindMult) * Settings::UndeadDamageMult());
 			if (elite) {  // Life Drain
 				auto* zav = a_zombie->AsActorValueOwner();
 				zav->RestoreActorValue(RE::ActorValue::kHealth, zav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::elite::drainShare);

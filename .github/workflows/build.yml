@@ -64,6 +64,7 @@ jobs:
           python -m pip install --quiet numpy scipy pillow
           python tools/icons.py "$stage\Data\Interface\UndyingNights"
           python tools/bookart.py "$stage\Data"
+          python tools/mcm.py "$stage\Data"   # the Mod Configuration page (SkyUI + MCM Helper) and the Experience file
           New-Item -ItemType Directory -Force "$stage\Data\Sound\fx\UndyingNights\un", "$stage\Data\Music\UndyingNights" | Out-Null
           Copy-Item assets\sound\un\*.wav "$stage\Data\Sound\fx\UndyingNights\un\"   # the Undying Nights SFX library, cut by tools/sfx.py
           Copy-Item assets\music\*.wav "$stage\Data\Music\UndyingNights\"

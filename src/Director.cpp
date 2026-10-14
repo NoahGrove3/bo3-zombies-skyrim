@@ -302,7 +302,7 @@ namespace bo3z
 			} else if (kindRow.kind == 2) {
 				type = Undead::Type::Necro;
 			}
-			const float want = HealthFor(g_current) * kindRow.healthMult * (type ? Undead::HealthMult(*type) : 1.0f);
+			const float want = HealthFor(g_current) * kindRow.healthMult * (type ? Undead::HealthMult(*type) : 1.0f) * Settings::UndeadHealthMult();
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
 
 			// BO3 tuning: speed tier by round, damage comes from our hit rule (weapon damage turned down),
@@ -388,7 +388,7 @@ namespace bo3z
 				av->SetActorValue(RE::ActorValue::kMarksman, 15.0f);
 			}
 			if (gen::kEnemies[*pick].elite) {
-				const float want = HealthFor(g_current) * gen::elite::healthMult;
+				const float want = HealthFor(g_current) * gen::elite::healthMult * Settings::UndeadHealthMult();
 				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
 				g_elites[actor->GetFormID()] = { actor->GetHandle(), 3.0f, 5.0f, false };
 			}
@@ -432,7 +432,7 @@ namespace bo3z
 				const float d = std::hypot(pp.x - h.at.x, pp.y - h.at.y);
 				if (d < h.radius && std::abs(pp.z - h.at.z) < 220.0f && !a_player->IsDead()) {
 					auto* pav = a_player->AsActorValueOwner();
-					pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * h.share);
+					pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * h.share * Settings::UndeadDamageMult());
 					if (h.stagger) {
 						a_player->SetGraphVariableFloat("staggerMagnitude", 0.6f);
 						a_player->NotifyAnimationGraph("staggerStart");
@@ -589,7 +589,7 @@ namespace bo3z
 				// Terror Shriek: slows and wounds the player nearby.
 				if ((e.shriek -= a_delta) <= 0 && dist < gen::elite::shriekRange) {
 					auto* pav = a_player->AsActorValueOwner();
-					pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::elite::shriekDamage);
+					pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::elite::shriekDamage * Settings::UndeadDamageMult());
 					if (g_slowLeft <= 0) {
 						pav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -gen::elite::shriekSlow);
 					}
@@ -623,7 +623,7 @@ namespace bo3z
 				return false;
 			}
 			auto* av = boss->AsActorValueOwner();
-			const float want = std::max(HealthFor(g_current) * gen::boss::healthMult, gen::boss::minHealth / R.hpScale);
+			const float want = std::max(HealthFor(g_current) * gen::boss::healthMult, gen::boss::minHealth / R.hpScale) * Settings::UndeadHealthMult();
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, 100.0f - av->GetActorValue(RE::ActorValue::kSpeedMult));
 			g_boss.handle = boss->GetHandle();
@@ -1240,7 +1240,7 @@ namespace bo3z
 					it = g_alive.erase(it);
 				} else if (a->IsDead()) {
 					g_corpses.push_back(it->handle);
-					g_fading.push_back({ it->handle, 10.0f });  // the body lies there 10 s, then crumbles
+					g_fading.push_back({ it->handle, Settings::CorpseSeconds() });  // the body lies there 10 s (MCM), then crumbles
 					g_settle.push_back({ it->handle, 0.0f });
 					PowerUps::MaybeDrop(a->GetPosition());
 					Curse::OnUndeadDeath(a.get());
@@ -1351,7 +1351,7 @@ namespace bo3z
 						if ((s.windup -= a_delta) < 0) {  // the sweep lands: everything in reach is cut and thrown
 							if (dist < 300.0f && !a_player->IsDead()) {
 								auto* pav = a_player->AsActorValueOwner();
-								pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * (s.enraged ? 0.32f : 0.24f));
+								pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * (s.enraged ? 0.32f : 0.24f) * Settings::UndeadDamageMult());
 								a_player->SetGraphVariableFloat("staggerMagnitude", 0.7f);
 								a_player->NotifyAnimationGraph("staggerStart");
 								Hud::Banner("REAPED", 0.8f);
@@ -1664,7 +1664,7 @@ namespace bo3z
 				return false;
 			}
 			auto*       av = c->AsActorValueOwner();
-			const float want = std::max(HealthFor(g_current) * a_healthMult, 6000.0f / R.hpScale);
+			const float want = std::max(HealthFor(g_current) * a_healthMult, 6000.0f / R.hpScale) * Settings::UndeadHealthMult();
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
 			c->SetScale(1.35f);
 			g_champ = { c->GetHandle(), a_town, std::string(a_name), want, false };
@@ -1708,7 +1708,7 @@ namespace bo3z
 				return;
 			}
 			auto* pav = p->AsActorValueOwner();
-			pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * a_share);
+			pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * a_share * Settings::UndeadDamageMult());
 			if (a_stagger) {
 				p->SetGraphVariableFloat("staggerMagnitude", 0.35f);
 				p->NotifyAnimationGraph("staggerStart");
@@ -1900,7 +1900,7 @@ namespace bo3z
 		void TickShelter(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			static float scan = 0;
-			const bool   night = g_phase == Phase::Break || g_phase == Phase::Fighting;
+			const bool   night = (g_phase == Phase::Break || g_phase == Phase::Fighting) && Settings::Shelter();
 			if (!night) {
 				if (!g_sheltered.empty()) {
 					for (auto& h : g_sheltered) {
@@ -2040,6 +2040,7 @@ namespace bo3z
 		void Tick(float a_delta)
 		{
 			PowerUps::Tick(a_delta);
+			Settings::Tick();
 			TickFx(a_delta);
 			TickMist(a_delta, g_phase == Phase::Fighting && g_event == gen::kEvent_fog);
 			TickClock(a_delta);  // (Skyrim Together's server sets the same uTimeScale, 58: 15 minutes of day, 10 of night)
