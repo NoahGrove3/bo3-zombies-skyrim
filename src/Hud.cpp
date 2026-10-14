@@ -603,6 +603,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							pts[q] = { c.x + nrm.x * ww, c.y + nrm.y * ww };
 							pts[2 * N + 1 - q] = { c.x - nrm.x * ww, c.y - nrm.y * ww };
 						}
+						float area = 0;
+						for (int q = 0; q < 2 * N + 2; ++q) {
+							const ImVec2& p0 = pts[q];
+							const ImVec2& p1 = pts[(q + 1) % (2 * N + 2)];
+							area += p0.x * p1.y - p1.x * p0.y;
+						}
+						if (area < 0) {
+							std::reverse(pts, pts + 2 * N + 2);  // (ImGui fills clockwise shapes: the other way round they draw hollow)
+						}
 						dl->AddConvexPolyFilled(pts, 2 * N + 2, col);
 					};
 					const float glow = 0.55f + 0.45f * std::sin(now * 1.7f + i * 0.9f);
