@@ -2530,7 +2530,7 @@ namespace bo3z
 				// its mod's questline begins with it (Thunderchild: Acolyte of the Voice), unless it already has
 				if (const auto q = gen::kShouts[a_i].quest; !q.empty()) {
 					auto* quest = RE::TESForm::LookupByEditorID<RE::TESQuest>(q);
-					if (!quest || (!quest->IsRunning() && !quest->IsCompleted())) {
+					if (!quest || (!quest->IsEnabled() && !quest->IsCompleted())) {
 						Console(fmt::format("startquest {}", q));
 						logger::info("shout: started its questline {}", q);
 					}

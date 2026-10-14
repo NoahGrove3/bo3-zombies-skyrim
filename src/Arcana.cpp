@@ -181,6 +181,7 @@ namespace bo3z::Arcana
 
 	std::string_view Name(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].name : ""; }
 	int              ElementOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].element : coffer::kArcane; }
+	int              TierOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].tier : 0; }
 	int              CostOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].cost : 0; }
 	bool             Concentration(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) && coffer::kSpells[a_index].concentration; }
 

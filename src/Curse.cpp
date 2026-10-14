@@ -402,11 +402,12 @@ namespace bo3z
 			Set(a_town, kFreed, 0);
 			g_holding = false;
 			Forms::Play(gen::Sound::curse_lifted);
+			Shops::FreedPulse(a_town);
 			Audio::FreedMusic();
 			std::string text = Fill(gen::kCurseLiftedBanner, a_town);
 			if (const int sh = ShoutOf(a_town); sh >= 0) {
 				// its shout waits on the Shrine of the Dirge at the station (nothing is forced into your hands)
-				text += " - its Thu'um, " + std::string(gen::kShouts[sh].label) + ", waits at the city's shrine (press 4 in its menu)";
+				text += " - its Thu'um, " + std::string(gen::kShouts[sh].label) + ", waits at the city's shrine (" + Settings::KeyName(3) + " in its menu)";
 			}
 			Note(text, 10.0f);
 			Director::EndNight();  // the city's last rite ends the night: dawn breaks, the next night brings the next round
@@ -728,7 +729,7 @@ namespace bo3z
 				}
 				const std::string edid = "UN_Rites_" + std::string(gen::kTowns[t]);
 				const int s = Step(t);
-				if (!q->IsRunning() && !q->IsCompleted()) {
+				if (!q->IsEnabled() && !q->IsCompleted()) {
 					if (t != g_zone && s == 0) {
 						continue;  // not been there yet
 					}
@@ -755,7 +756,7 @@ namespace bo3z
 			RE::NiPoint3 at;
 			std::string  label;
 			auto*        q = RiteQuest(g_zone);
-			if (q && q->IsRunning() && ObjectiveTarget(a_player, at, label)) {
+			if (q && q->IsEnabled() && !q->IsCompleted() && ObjectiveTarget(a_player, at, label)) {
 				auto m = g_marker.get();
 				if (!m) {
 					if (auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(0x00003B)) {  // XMarker
@@ -1024,6 +1025,8 @@ namespace bo3z
 				logger::info("curse: {} freed by the party", gen::kTowns[a_town]);
 			}
 		}
+
+		bool Freed(int a_town) { return a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size()) && Step(a_town) >= kFreed; }
 
 		void MigrateRites()
 		{

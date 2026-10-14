@@ -208,6 +208,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			return n;
 		}
+		std::string Upper(std::string a_s)
+		{
+			for (auto& c : a_s) {
+				c = static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
+			}
+			return a_s;
+		}
 		void TxtC(ImDrawList* dl, ImFont* f, float px, float cx, float y, ImU32 col, const std::string& s, float glow = 0, ImU32 glowCol = 0)
 		{
 			Txt(dl, f, px, { cx - Measure(f, px, s).x * 0.5f, y }, col, s, glow, glowCol);
@@ -259,6 +266,44 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float h = R * 128.0f / 104.0f;
 				dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { c.x - h, c.y - h }, { c.x + h, c.y + h }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * std::clamp(alpha, 0.0f, 1.0f))));
 			}
+		}
+
+		// A controller button as the pad shows it: the face buttons as coloured discs with their letter (A green, B red,
+		// X blue, Y yellow), the d-pad as a cross with the pressed arm lit, the bumpers and triggers as pills.
+		// a_name: A B X Y | DU DD DL DR | LB RB LT RT | START BACK. c is the centre, r the radius.
+		void PadGlyph(ImDrawList* dl, ImVec2 c, float r, std::string_view a_name, float alpha = 1.0f)
+		{
+			const auto F = [&](ImU32 col) { return Fade(col, alpha); };
+			if (a_name.size() == 1) {
+				const char  ch = a_name[0];
+				const ImU32 col = ch == 'A' ? IM_COL32(92, 186, 60, 255) : ch == 'B' ? IM_COL32(214, 58, 52, 255) : ch == 'X' ? IM_COL32(52, 120, 220, 255) : IM_COL32(236, 186, 40, 255);
+				dl->AddCircleFilled({ c.x, c.y + r * 0.08f }, r, F(IM_COL32(0, 0, 0, 150)), 28);              // its shadow
+				dl->AddCircleFilled(c, r, F(IM_COL32(24, 24, 28, 245)), 28);
+				dl->AddCircle(c, r * 0.86f, F(col), 28, r * 0.16f);
+				dl->AddCircle(c, r, F(IM_COL32(255, 255, 255, 40)), 28, 1.0f);
+				TxtC(dl, g_num, r * 1.25f, c.x, c.y - r * 0.66f, F(col), std::string(1, ch));
+				return;
+			}
+			if (a_name.size() == 2 && a_name[0] == 'D') {   // the d-pad
+				const float w = r * 0.42f, L = r;
+				dl->AddRectFilled({ c.x - w, c.y - L }, { c.x + w, c.y + L }, F(IM_COL32(30, 30, 34, 245)), r * 0.15f);
+				dl->AddRectFilled({ c.x - L, c.y - w }, { c.x + L, c.y + w }, F(IM_COL32(30, 30, 34, 245)), r * 0.15f);
+				const ImU32 lit = F(IM_COL32(240, 226, 196, 255));
+				const char  d = a_name[1];
+				if (d == 'U') dl->AddRectFilled({ c.x - w * 0.7f, c.y - L * 0.92f }, { c.x + w * 0.7f, c.y - w }, lit, r * 0.1f);
+				if (d == 'D') dl->AddRectFilled({ c.x - w * 0.7f, c.y + w }, { c.x + w * 0.7f, c.y + L * 0.92f }, lit, r * 0.1f);
+				if (d == 'L') dl->AddRectFilled({ c.x - L * 0.92f, c.y - w * 0.7f }, { c.x - w, c.y + w * 0.7f }, lit, r * 0.1f);
+				if (d == 'R') dl->AddRectFilled({ c.x + w, c.y - w * 0.7f }, { c.x + L * 0.92f, c.y + w * 0.7f }, lit, r * 0.1f);
+				dl->AddRect({ c.x - w, c.y - L }, { c.x + w, c.y + L }, F(IM_COL32(255, 255, 255, 50)), r * 0.15f, 0, 1.0f);
+				dl->AddRect({ c.x - L, c.y - w }, { c.x + L, c.y + w }, F(IM_COL32(255, 255, 255, 50)), r * 0.15f, 0, 1.0f);
+				return;
+			}
+			// pills: bumpers, triggers, start / back
+			const float  hw = r * (a_name.size() > 2 ? 1.6f : 1.25f), hh = r * 0.68f;
+			const bool   trig = a_name == "LT" || a_name == "RT";
+			dl->AddRectFilled({ c.x - hw, c.y - hh }, { c.x + hw, c.y + hh }, F(IM_COL32(24, 24, 28, 245)), trig ? r * 0.25f : hh);
+			dl->AddRect({ c.x - hw, c.y - hh }, { c.x + hw, c.y + hh }, F(IM_COL32(220, 210, 190, 200)), trig ? r * 0.25f : hh, 0, 1.4f);
+			TxtC(dl, g_num, r * 0.95f, c.x, c.y - r * 0.5f, F(IM_COL32(240, 230, 210, 255)), std::string(a_name));
 		}
 
 		void Panel(ImDrawList* dl, ImVec2 a, ImVec2 b, float k, float alpha = 1.0f)
@@ -382,12 +427,57 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						pv.watching.empty() ? std::string("No one left standing...") : "Watching " + pv.watching + "   \xE2\x97\x80 \xE2\x96\xB6 to switch");
 					TxtC(dl, g_body, 20 * k, size.x / 2, size.y * 0.10f + 80 * k, IM_COL32(190, 180, 165, 220), "You rise again when a shrine's rite is complete, or at dawn");
 				}
+				// the party, left side under the night: each friend's badge, name, health and state
+				{
+					float py = 150 * k;
+					for (const auto& m : pv.marks) {
+						const bool  down = m.life == Party::Life::Down, dead = m.life == Party::Life::Dead;
+						const ImU32 col = down ? IM_COL32(240, 70, 60, 255) : dead ? IM_COL32(140, 140, 140, 230) : IM_COL32(110, 220, 255, 255);
+						const ImVec2 a{ 34 * k, py }, b{ 300 * k, py + 44 * k };
+						Panel(dl, a, b, k * 0.6f, 0.85f);
+						const ImVec2 bc{ a.x + 22 * k, py + 22 * k };
+						const float  br = 14 * k;
+						dl->AddCircleFilled(bc, br, IM_COL32(12, 12, 18, 235), 28);
+						dl->AddCircle(bc, br, col, 28, 2.0f * k);
+						dl->AddCircleFilled({ bc.x, bc.y - br * 0.32f }, br * 0.27f, col, 14);
+						dl->PathArcTo({ bc.x, bc.y + br * 0.64f }, br * 0.52f, 3.1416f, 6.2832f, 14);
+						dl->PathFillConvex(col);
+						Txt(dl, g_title, 17 * k, { a.x + 44 * k, py + 4 * k }, kParch, m.name);
+						const std::string st = down ? "DOWN" : dead ? "FALLEN" : std::to_string(static_cast<int>(m.dist / 70.0f)) + " m";
+						Txt(dl, g_num, 13 * k, { b.x - 12 * k - Measure(g_num, 13 * k, st).x, py + 6 * k }, col, st);
+						const float bx0 = a.x + 44 * k, bx1 = b.x - 12 * k, by = py + 28 * k;
+						dl->AddRectFilled({ bx0, by }, { bx1, by + 6 * k }, IM_COL32(30, 10, 10, 230), 1 * k);
+						const float f = dead ? 0.0f : down ? 0.08f : std::clamp(m.hp, 0.0f, 1.0f);
+						dl->AddRectFilledMultiColor({ bx0, by }, { bx0 + (bx1 - bx0) * f, by + 6 * k }, IM_COL32(220, 42, 36, 255), IM_COL32(220, 42, 36, 255), IM_COL32(110, 8, 10, 255), IM_COL32(110, 8, 10, 255));
+						dl->AddRect({ bx0 - 1 * k, by - 1 * k }, { bx1 + 1 * k, by + 7 * k }, Fade(kGoldDim, 0.8f), 1 * k, 0, 1.0f * k);
+						py += 52 * k;
+					}
+				}
 				if (pv.life == Party::Life::Alive) {
-					float y = size.y * 0.16f;
+					// a friend down: a blood-red alert under the compass, the seconds they have left draining, where they are
+					float y = size.y * 0.14f;
 					for (const auto& f : pv.fallen) {
-						TxtC(dl, g_title, 24 * k, size.x / 2, y, IM_COL32(240, 90, 70, 255),
-							f.name + " IS DOWN - " + std::to_string(static_cast<int>(std::ceil(f.left))) + "s  (" + std::to_string(static_cast<int>(f.dist / 70.0f)) + " m)", 2 * k, IM_COL32(100, 0, 0, 255));
-						y += 34 * k;
+						const float pulse = 0.5f + 0.5f * std::sin(now * 6.0f);
+						const std::string head = Upper(f.name) + " IS DOWN";
+						const float w = std::max(360 * k, Measure(g_title, 30 * k, head).x + 120 * k);
+						const ImVec2 a{ size.x / 2 - w / 2, y }, b{ size.x / 2 + w / 2, y + 76 * k };
+						dl->AddRectFilled({ a.x - 6 * k, a.y - 6 * k }, { b.x + 6 * k, b.y + 6 * k }, IM_COL32(200, 20, 20, static_cast<int>(40 + 60 * pulse)), 10 * k);
+						Panel(dl, a, b, k);
+						dl->AddRectFilled(a, { a.x + 5 * k, b.y }, IM_COL32(230, 50, 40, 255));
+						// a skull
+						const ImVec2 sc{ a.x + 38 * k, y + 38 * k };
+						dl->AddCircleFilled({ sc.x, sc.y - 4 * k }, 15 * k, IM_COL32(236, 220, 200, 255), 24);
+						dl->AddRectFilled({ sc.x - 8 * k, sc.y + 6 * k }, { sc.x + 8 * k, sc.y + 15 * k }, IM_COL32(236, 220, 200, 255), 2 * k);
+						dl->AddCircleFilled({ sc.x - 5.5f * k, sc.y - 4 * k }, 4 * k, IM_COL32(120, 10, 10, 255), 12);
+						dl->AddCircleFilled({ sc.x + 5.5f * k, sc.y - 4 * k }, 4 * k, IM_COL32(120, 10, 10, 255), 12);
+						TxtC(dl, g_title, 30 * k, size.x / 2 + 20 * k, y + 8 * k, IM_COL32(245, 90, 70, 255), head, 2 * k, IM_COL32(100, 0, 0, 255));
+						const float fl = std::clamp(f.left / 30.0f, 0.0f, 1.0f);
+						const float bx0 = a.x + 70 * k, bx1 = b.x - 20 * k, by = y + 50 * k;
+						dl->AddRectFilled({ bx0, by }, { bx1, by + 6 * k }, IM_COL32(40, 10, 10, 230));
+						dl->AddRectFilled({ bx0, by }, { bx0 + (bx1 - bx0) * fl, by + 6 * k }, IM_COL32(230, 60, 40, 255));
+						const std::string sub = std::to_string(static_cast<int>(std::ceil(f.left))) + "s to save them   -   " + std::to_string(static_cast<int>(f.dist / 70.0f)) + " m";
+						TxtC(dl, g_body, 15 * k, size.x / 2 + 20 * k, by + 8 * k, IM_COL32(230, 214, 196, 230), sub);
+						y += 92 * k;
 					}
 					if (pv.reviveFrac >= 0 && !pv.reviveName.empty()) {
 						const ImVec2 c{ size.x / 2, size.y * 0.62f };
@@ -396,7 +486,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							dl->PathArcTo(c, 30 * k, -1.5708f, -1.5708f + 6.2832f * pv.reviveFrac, 48);
 							dl->PathStroke(IM_COL32(110, 255, 190, 255), 0, 6 * k);
 						}
-						TxtC(dl, g_title, 24 * k, c.x, c.y + 42 * k, IM_COL32(230, 240, 230, 255), std::string(g_padLast ? "Hold A to revive " : "Hold E to revive ") + pv.reviveName);
+						const std::string tail = "to revive " + pv.reviveName;
+						const float       tw = Measure(g_title, 24 * k, tail).x, gw = 34 * k;
+						const float       x0 = c.x - (tw + gw + 60 * k) / 2;
+						TxtC(dl, g_title, 24 * k, x0 + 22 * k, c.y + 42 * k, IM_COL32(230, 240, 230, 255), "Hold");
+						if (g_padLast) {
+							PadGlyph(dl, { x0 + 52 * k + gw / 2, c.y + 56 * k }, 14 * k, "A");
+						} else {
+							dl->AddRect({ x0 + 52 * k, c.y + 42 * k }, { x0 + 52 * k + gw - 6 * k, c.y + 70 * k }, kGold, 3 * k, 0, 1.4f * k);
+							TxtC(dl, g_num, 18 * k, x0 + 52 * k + (gw - 6 * k) / 2, c.y + 45 * k, kParch, "E");
+						}
+						Txt(dl, g_title, 24 * k, { x0 + 60 * k + gw, c.y + 42 * k }, IM_COL32(230, 240, 230, 255), tail);
 					}
 				}
 			}
@@ -420,44 +520,95 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(255, 250, 235, static_cast<int>(230 * std::min(1.0f, s.nukeFlash))));
 			}
 
-			// Night counter, top-left: chalk tally marks in blood red, one per night (groups of five, struck through).
-			// By day it reads NIGHTS SURVIVED; when the next night begins its tally is scratched in.
+			// A freed shrine's wave: golden rings rolling out from it across the screen, a soft gold wash as it passes.
+			if (s.pulseOn && s.pulseT > 0) {
+				const ImVec2 c{ s.pulseX * size.x, s.pulseY * size.y };
+				const float  life = 3.5f, el = life - s.pulseT;
+				for (int w = 0; w < 3; ++w) {
+					const float t = (el - w * 1.0f) / 2.2f;
+					if (t <= 0 || t >= 1) {
+						continue;
+					}
+					const float R = t * size.x * 1.1f, a = (1.0f - t);
+					dl->AddCircle(c, R, IM_COL32(255, 226, 160, static_cast<int>(200 * a)), 96, 10 * k * a + 2);
+					dl->AddCircle(c, R * 0.97f, IM_COL32(255, 250, 220, static_cast<int>(120 * a)), 96, 3 * k);
+				}
+				const float wash = std::clamp(1.0f - el / 1.2f, 0.0f, 1.0f);
+				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(255, 220, 150, static_cast<int>(70 * wash)));
+			}
+
+			// Night counter, top-left: the nights cut into a dark plaque in blood - each mark a brush stroke, thick in the
+			// middle and tapering at the ends, wet (a sheen runs along it, a drop gathers and falls from its foot), groups of
+			// five struck through. The newest is cut in with a flare when its night begins. From night 11, the numeral.
 			if (s.round > 0) {
-				const ImVec2 p{ 46 * k, 22 * k };
-				Txt(dl, g_title, 20 * k, p, Fade(kGold, 0.85f), s.nightActive ? "NIGHT" : "NIGHTS SURVIVED");
-				const float h = 70 * k, step = 17 * k, gap = 22 * k, top = p.y + 30 * k;
-				const float draw = std::clamp(1.0f - (roundFlash - 1.5f), 0.0f, 1.0f);  // newest mark scratches in
-				auto jit = [](int i, int j) { return static_cast<float>(((i * 73 + j * 151) % 17) - 8) / 8.0f; };
-				const int  shown = s.round <= 10 ? s.round : 0;  // tallies to night 10, then the number alone
-				float      x = p.x + 4 * k;
+				const ImVec2 p{ 40 * k, 20 * k };
+				const int    shown = s.round <= 10 ? s.round : 0;
+				const float  h = 64 * k, step = 17 * k, gap = 24 * k, top = p.y + 34 * k;
+				const int    groups = (shown + 4) / 5;
+				const float  plateW = shown > 0 ? std::max(150 * k, 16 * k + (shown - groups) * step + groups * gap + 18 * k) : 150 * k;
+				Panel(dl, { p.x - 10 * k, p.y - 6 * k }, { p.x + plateW, top + h + (s.nightActive && s.nightEvent >= 0 ? 44 : 16) * k }, k * 0.7f, 0.8f);
+				Txt(dl, g_title, 19 * k, { p.x + 4 * k, p.y + 2 * k }, Fade(kGold, 0.9f), s.nightActive ? "NIGHT" : "NIGHTS SURVIVED");
+				dl->AddLine({ p.x + 4 * k, p.y + 27 * k }, { p.x + plateW - 14 * k, p.y + 27 * k }, Fade(kGoldDim, 0.7f), 1.0f * k);
+				const float draw = std::clamp(1.0f - (roundFlash - 1.5f), 0.0f, 1.0f);  // the newest is cut in
+				auto        jit = [](int i, int j) { return static_cast<float>(((i * 73 + j * 151) % 17) - 8) / 8.0f; };
+				// one stroke from a to b (t: how much of it is cut so far)
+				const auto stroke = [&](ImVec2 a, ImVec2 b, float w, float t, int i, bool fresh) {
+					const ImVec2 e{ a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t };
+					const float  dx = e.x - a.x, dy = e.y - a.y, len = std::max(1.0f, std::sqrt(dx * dx + dy * dy));
+					const ImVec2 nrm{ -dy / len, dx / len };
+					constexpr int N = 10;
+					ImVec2        pts[2 * N + 2];
+					const auto shape = [&](float wmul, ImU32 col) {
+						for (int q = 0; q <= N; ++q) {
+							const float u = static_cast<float>(q) / N, ww = w * wmul * (0.18f + 0.82f * std::pow(std::sin(3.1416f * u), 0.55f));
+							const ImVec2 c{ a.x + dx * u, a.y + dy * u };
+							pts[q] = { c.x + nrm.x * ww, c.y + nrm.y * ww };
+							pts[2 * N + 1 - q] = { c.x - nrm.x * ww, c.y - nrm.y * ww };
+						}
+						dl->AddConvexPolyFilled(pts, 2 * N + 2, col);
+					};
+					const float glow = 0.55f + 0.45f * std::sin(now * 1.7f + i * 0.9f);
+					shape(1.9f, IM_COL32(150, 0, 0, static_cast<int>((fresh ? 110 : 40) * glow)));   // a dull glow round it
+					shape(1.0f, fresh ? IM_COL32(255, 70, 40, 255) : IM_COL32(150, 12, 14, 255));     // the blood
+					shape(0.45f, fresh ? IM_COL32(255, 170, 120, 255) : IM_COL32(200, 40, 34, 255));   // its wet core
+					// the sheen sliding along it
+					const float sp = std::fmod(now * 0.35f + i * 0.37f, 1.0f);
+					if (t >= 1.0f) {
+						const ImVec2 sc{ a.x + dx * sp, a.y + dy * sp };
+						dl->AddCircleFilled(sc, w * 0.35f, IM_COL32(255, 210, 190, static_cast<int>(90 * std::sin(3.1416f * sp))), 10);
+					}
+					// a drop gathering at its foot and falling
+					if (t >= 1.0f && dy > 0) {
+						const float cyc = std::fmod(now * 0.28f + i * 0.61f, 1.0f), fall = cyc < 0.7f ? 0.0f : (cyc - 0.7f) / 0.3f;
+						const float grow = std::min(1.0f, cyc / 0.7f);
+						const ImVec2 foot{ e.x, e.y };
+						dl->AddLine(foot, { foot.x, foot.y + 6 * k * grow }, IM_COL32(150, 12, 14, 255), w * 0.5f);
+						dl->AddCircleFilled({ foot.x, foot.y + 6 * k * grow + 30 * k * fall * fall }, w * 0.42f * (0.6f + 0.4f * grow), IM_COL32(170, 16, 16, static_cast<int>(255 * (1.0f - fall))), 10);
+					}
+				};
+				float x = p.x + 12 * k;
 				for (int i = 0; i < shown; ++i) {
 					const int   inGroup = i % 5;
 					const bool  newest = i == s.round - 1;
 					const float t = newest ? draw : 1.0f;
-					const ImU32 col = newest && roundFlash > 0 ? IM_COL32(255, 60, 40, 255) : kBlood;
+					const bool  fresh = newest && roundFlash > 0;
 					if (inGroup < 4) {
-						const ImVec2 a{ x + jit(i, 1) * 2 * k, top + jit(i, 2) * 3 * k }, b{ x + jit(i, 3) * 3 * k, top + h + jit(i, 4) * 3 * k };
-						const ImVec2 e{ a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t };
-						dl->AddLine(a, e, Fade(col, 0.35f), 11 * k);
-						dl->AddLine(a, e, col, 6 * k);
+						stroke({ x + jit(i, 1) * 2 * k, top + jit(i, 2) * 3 * k }, { x + jit(i, 3) * 3 * k, top + h + jit(i, 4) * 3 * k }, 4.2f * k, t, i, fresh);
 						x += step;
-					} else {
-						// the fifth strikes through the four
-						const ImVec2 a{ x - 4 * step - 8 * k, top + h * 0.78f }, b{ x + 4 * k, top + h * 0.18f };
-						const ImVec2 e{ a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t };
-						dl->AddLine(a, e, Fade(col, 0.35f), 11 * k);
-						dl->AddLine(a, e, col, 6 * k);
+					} else {  // the fifth strikes through the four
+						stroke({ x - 4 * step - 6 * k, top + h * 0.80f }, { x + 2 * k, top + h * 0.16f }, 4.6f * k, t, i, fresh);
 						x += gap;
 					}
 				}
-				if (s.round > 10) {  // from night 11: the count in blood-red numerals (the newest scratched in red)
-					const ImU32 col = roundFlash > 0 ? IM_COL32(255, 60, 40, 255) : kBlood;
-					Txt(dl, g_title, 72 * k, { p.x + 2 * k, top - 6 * k }, Fade(col, std::max(0.35f, draw)), std::to_string(s.round), 3 * k, IM_COL32(255, 40, 20, 255));
+				if (s.round > 10) {  // from night 11: the count in blood-red numerals, breathing
+					const float  br = 0.75f + 0.25f * std::sin(now * 1.6f);
+					const ImU32  col = roundFlash > 0 ? IM_COL32(255, 60, 40, 255) : IM_COL32(170, 18, 18, 255);
+					Txt(dl, g_title, 68 * k, { p.x + 6 * k, top - 8 * k }, Fade(col, std::max(0.35f, draw) * br), std::to_string(s.round), 4 * k * br, IM_COL32(255, 40, 20, 255));
 				}
 				if (s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size())) {
 					const auto  t = gen::kEvents[s.nightEvent].tint;
 					const ImU32 c = IM_COL32(std::min(255, static_cast<int>(((t >> 24) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 16) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 8) & 0xFF) * 1.6f) + 60), 255);
-					Txt(dl, g_title, 24 * k, { p.x, top + h + 14 * k }, c, std::string(gen::kEvents[s.nightEvent].label), 2 * k, c);
+					Txt(dl, g_title, 22 * k, { p.x + 4 * k, top + h + 12 * k }, c, std::string(gen::kEvents[s.nightEvent].label), 2 * k, c);
 				}
 			}
 
@@ -482,49 +633,129 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 
-			// Health / magicka / stamina: our own bars, bottom centre, perks above them.
+			// Health / magicka / stamina: one forged plate, bottom centre - health the long blood bar in the middle (tenths
+			// notched in, its number on it, a pale wound trailing each hit, a red pulse when it runs low), magicka on the
+			// left and stamina on the right draining toward the centre, each with its sigil; the perks sit above in sockets
+			// and a new draught bursts in (its name rising over the row).
 			if (s.hpMax > 0) {
 				auto ease = [&](float& g, float v) { g = v > g ? v : std::max(v, g - dt * 0.35f); };
 				ease(hpGhost, hpFrac);
-				const float mpF = s.mpMax > 0 ? s.mp / s.mpMax : 0, spF = s.spMax > 0 ? s.sp / s.spMax : 0;
+				const float mpF = s.mpMax > 0 ? std::clamp(s.mp / s.mpMax, 0.0f, 1.0f) : 0, spF = s.spMax > 0 ? std::clamp(s.sp / s.spMax, 0.0f, 1.0f) : 0;
 				ease(mpGhost, mpF), ease(spGhost, spF);
-				const float cx = size.x * 0.5f, y = size.y - 62 * k, hw = 300 * k, sw = 210 * k, h = 11 * k;
-				Bar(dl, { cx - hw / 2, y }, hw, h, hpFrac, hpGhost, IM_COL32(196, 28, 28, 255), k);
-				Bar(dl, { cx - hw / 2 - 24 * k - sw, y + 2 * k }, sw, 8 * k, mpF, mpGhost, IM_COL32(52, 110, 220, 255), k);
-				Bar(dl, { cx + hw / 2 + 24 * k, y + 2 * k }, sw, 8 * k, spF, spGhost, IM_COL32(70, 170, 70, 255), k);
-				// perk row
+				const float cx = size.x * 0.5f, y = size.y - 64 * k, hw = 360 * k, sw = 220 * k, h = 16 * k, sh = 10 * k, gap = 30 * k;
+				const float L = cx - hw / 2 - gap - sw - 26 * k, R = cx + hw / 2 + gap + sw + 26 * k;
+				const float low = hpFrac < 0.3f ? (0.5f + 0.5f * std::sin(now * 7.0f)) * (1.0f - hpFrac / 0.3f) : 0.0f;
+				// the plate: black iron with a bronze rim, points at both ends
+				{
+					const float t = y - 13 * k, b = y + h + 13 * k, m = (t + b) * 0.5f;
+					const ImVec2 plate[6] = { { L - 18 * k, m }, { L, t }, { R, t }, { R + 18 * k, m }, { R, b }, { L, b } };
+					if (low > 0) {
+						dl->AddRectFilled({ cx - hw / 2 - 30 * k, t - 18 * k }, { cx + hw / 2 + 30 * k, b + 10 * k }, IM_COL32(200, 20, 20, static_cast<int>(70 * low)), 12 * k);
+					}
+					dl->AddConvexPolyFilled(plate, 6, IM_COL32(10, 9, 11, 205));
+					dl->AddPolyline(plate, 6, Fade(kGoldDim, 0.9f), ImDrawFlags_Closed, 1.4f * k);
+					dl->AddLine({ L + 6 * k, t + 3 * k }, { R - 6 * k, t + 3 * k }, IM_COL32(255, 220, 160, 26), 1.0f * k);
+					for (float ex : { L - 18 * k, R + 18 * k }) {
+						dl->AddQuadFilled({ ex, m - 4 * k }, { ex + 4 * k, m }, { ex, m + 4 * k }, { ex - 4 * k, m }, kGold);
+					}
+				}
+				// one bar: its trough, the trailing wound, the fill (lit top, deep bottom), a sheen, notches
+				const auto bar = [&](float x0, float w, float top, float bh, float f, float ghost, ImU32 lit, ImU32 deep, bool fromRight, int notches) {
+					const float x1 = x0 + w;
+					dl->AddRectFilled({ x0 - 2 * k, top - 2 * k }, { x1 + 2 * k, top + bh + 2 * k }, IM_COL32(0, 0, 0, 200), 2 * k);
+					dl->AddRectFilled({ x0, top }, { x1, top + bh }, IM_COL32(28, 12, 12, 230), 1 * k);
+					const auto span = [&](float v) { return fromRight ? std::pair{ x1 - w * v, x1 } : std::pair{ x0, x0 + w * v }; };
+					auto [g0, g1] = span(std::clamp(ghost, 0.0f, 1.0f));
+					dl->AddRectFilled({ g0, top }, { g1, top + bh }, IM_COL32(236, 214, 178, 120));
+					auto [f0, f1] = span(std::clamp(f, 0.0f, 1.0f));
+					dl->AddRectFilledMultiColor({ f0, top }, { f1, top + bh }, lit, lit, deep, deep);
+					dl->AddRectFilled({ f0, top + 1 * k }, { f1, top + bh * 0.38f }, IM_COL32(255, 255, 255, 34));
+					for (int n = 1; n < notches; ++n) {
+						const float nx = x0 + w * n / notches;
+						dl->AddLine({ nx, top + 1 * k }, { nx, top + bh - 1 * k }, IM_COL32(0, 0, 0, 120), 1.0f * k);
+					}
+					dl->AddRect({ x0 - 2 * k, top - 2 * k }, { x1 + 2 * k, top + bh + 2 * k }, Fade(kGoldDim, 0.8f), 2 * k, 0, 1.0f * k);
+				};
+				bar(cx - hw / 2, hw, y, h, hpFrac, hpGhost, IM_COL32(220, 42, 36, 255), IM_COL32(110, 8, 10, 255), false, 10);
+				bar(cx - hw / 2 - gap - sw, sw, y + (h - sh) / 2, sh, mpF, mpGhost, IM_COL32(80, 150, 255, 255), IM_COL32(24, 52, 140, 255), true, 5);
+				bar(cx + hw / 2 + gap, sw, y + (h - sh) / 2, sh, spF, spGhost, IM_COL32(110, 210, 90, 255), IM_COL32(30, 100, 30, 255), false, 5);
+				TxtC(dl, g_num, 13 * k, cx, y + 0.5f * k, IM_COL32(255, 238, 220, 235), std::to_string(static_cast<int>(std::ceil(s.hp))) + " / " + std::to_string(static_cast<int>(s.hpMax)));
+				// the sigils at the outer ends: a magicka drop, a stamina wing
+				{
+					const ImVec2 mc{ cx - hw / 2 - gap - sw - 14 * k, y + h * 0.5f }, sc{ cx + hw / 2 + gap + sw + 14 * k, y + h * 0.5f };
+					const float  r = 9 * k;
+					for (auto [c, col] : { std::pair{ mc, IM_COL32(90, 160, 255, 255) }, std::pair{ sc, IM_COL32(120, 220, 100, 255) } }) {
+						dl->AddCircleFilled(c, r, IM_COL32(14, 12, 14, 255), 20);
+						dl->AddCircle(c, r, kGold, 20, 1.3f * k);
+						if (c.x < cx) {  // a drop
+							dl->AddTriangleFilled({ c.x, c.y - r * 0.62f }, { c.x - r * 0.38f, c.y + r * 0.05f }, { c.x + r * 0.38f, c.y + r * 0.05f }, col);
+							dl->AddCircleFilled({ c.x, c.y + r * 0.12f }, r * 0.4f, col, 14);
+						} else {  // a wing: three feathers
+							for (int f = 0; f < 3; ++f) {
+								dl->AddLine({ c.x - r * 0.5f, c.y + r * 0.45f }, { c.x + r * (0.1f + 0.2f * f), c.y - r * (0.55f - 0.25f * f) }, col, 2.0f * k);
+							}
+						}
+					}
+				}
+				// perk row: sockets, the draughts in them; a new draught bursts in
+				static std::array<int, 16>   lastStacks{};
+				static std::array<float, 16> burst{};
+				static bool                  seeded = false;
+				for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 16; ++i) {
+					if (seeded && s.perkStacks[i] > lastStacks[i]) {
+						burst[i] = 1.4f;
+					}
+					lastStacks[i] = s.perkStacks[i];
+					burst[i] = std::max(0.0f, burst[i] - dt);
+				}
+				seeded = true;
 				int n = 0;
 				for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
 					n += (s.perks >> i) & 1;
 				}
-				const float r = 19 * k, gap = 46 * k;
-				float       x = cx - (n - 1) * gap * 0.5f;
+				const float r = 19 * k, pg = 48 * k;
+				float       x = cx - (n - 1) * pg * 0.5f;
 				for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
 					if (!((s.perks >> i) & 1)) {
 						continue;
 					}
-					const float py = y - 34 * k;
+					const float py = y - 40 * k;
 					const auto  c = gen::kPerkColor[i];
-					if (auto* icon = g_perkIcons[i]) {
-						dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { x - r, py - r }, { x + r, py + r });
-					} else {
-						dl->AddCircleFilled({ x, py }, r, Col(c));
+					const int   cr = (c >> 24) & 0xFF, cg = (c >> 16) & 0xFF, cb = (c >> 8) & 0xFF;
+					const float bt = i < 16 ? burst[i] / 1.4f : 0.0f;                // 1 at the moment it's bought, down to 0
+					const float pop = 1.0f + 0.9f * bt * bt;
+					dl->AddCircleFilled({ x, py }, r + 5 * k, IM_COL32(8, 7, 9, 210), 40);       // the socket
+					dl->AddCircle({ x, py }, r + 5 * k, Fade(kGoldDim, 0.9f), 40, 1.2f * k);
+					if (bt > 0) {  // the burst: a ring flung outward, rays turning, a flash
+						const float e = 1.0f - bt;
+						dl->AddCircle({ x, py }, r * (1.2f + 3.2f * e), IM_COL32(cr, cg, cb, static_cast<int>(230 * bt)), 48, 3.0f * k * bt + 1.0f);
+						dl->AddCircleFilled({ x, py }, r * 1.6f * pop, IM_COL32(std::min(255, cr + 80), std::min(255, cg + 80), std::min(255, cb + 80), static_cast<int>(90 * bt)), 40);
+						for (int ray = 0; ray < 10; ++ray) {
+							const float a = ray * 0.6283f + now * 1.5f, r0 = r * (1.3f + 1.4f * e), r1 = r0 + r * 0.9f * bt;
+							dl->AddLine({ x + std::cos(a) * r0, py + std::sin(a) * r0 }, { x + std::cos(a) * r1, py + std::sin(a) * r1 }, IM_COL32(255, 236, 190, static_cast<int>(220 * bt)), 2.0f * k);
+						}
+						const std::string nm = Upper(std::string(gen::kPerks[i].label));
+						TxtC(dl, g_title, 22 * k, x, py - r * 2.6f - 26 * k * e, IM_COL32(255, 230, 190, static_cast<int>(255 * std::min(1.0f, bt * 2.0f))), nm, 2 * k, IM_COL32(cr / 2, cg / 2, cb / 2, static_cast<int>(200 * bt)));
 					}
-					// a glowing trim hugging the outside of the icon's gold rim, breathing softly in the brew's colour
-					{
+					const float rr = r * pop;
+					if (auto* icon = g_perkIcons[i]) {
+						dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { x - rr, py - rr }, { x + rr, py + rr });
+					} else {
+						dl->AddCircleFilled({ x, py }, rr, Col(c));
+					}
+					{  // the trim: breathing softly in the brew's colour
 						const float br = 0.6f + 0.4f * std::sin(now * 2.2f + i);
-						const int   cr = (c >> 24) & 0xFF, cg = (c >> 16) & 0xFF, cb = (c >> 8) & 0xFF;
-						dl->AddCircle({ x, py }, r + 2.6f * k, IM_COL32(cr, cg, cb, static_cast<int>(60 * br)), 48, 5.0f * k);
-						dl->AddCircle({ x, py }, r + 1.2f * k, IM_COL32(std::min(255, cr + 60), std::min(255, cg + 60), std::min(255, cb + 60), static_cast<int>(200 * br)), 48, 1.6f * k);
+						dl->AddCircle({ x, py }, rr + 2.6f * k, IM_COL32(cr, cg, cb, static_cast<int>(60 * br)), 48, 5.0f * k);
+						dl->AddCircle({ x, py }, rr + 1.2f * k, IM_COL32(std::min(255, cr + 60), std::min(255, cg + 60), std::min(255, cb + 60), static_cast<int>(200 * br)), 48, 1.6f * k);
 					}
 					if (s.perkStacks[i] > 1) {  // taken more than once: how many
 						const std::string cnt = "x" + std::to_string(s.perkStacks[i]);
-						const ImVec2 bc{ x + r * 0.78f, py + r * 0.62f };
+						const ImVec2 bc{ x + r * 0.82f, py + r * 0.66f };
 						dl->AddCircleFilled(bc, 9 * k, IM_COL32(20, 14, 10, 235), 20);
 						dl->AddCircle(bc, 9 * k, kGold, 20, 1.2f * k);
 						TxtC(dl, g_num, 12 * k, bc.x, bc.y - 7 * k, kParch, cnt);
 					}
-					x += gap;
+					x += pg;
 				}
 			}
 
@@ -574,8 +805,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (s.handSpell[1] >= 0 && s.handSpell[0] >= 0) {
 					card(s.handSpell[0], { b.x - 330 * k, a.y - 64 * k }, { b.x, a.y - 10 * k }, false, "LEFT HAND");
 				}
-				const std::string hint = "Spells: Magic menu  -  favourite them for quick swaps";
-				Txt(dl, g_body, 13 * k, { b.x - Measure(g_body, 13 * k, hint).x, b.y + 6 * k }, Fade(IM_COL32(180, 172, 156, 200), al), hint);
 			}
 			// Weapon dock, bottom-right: the weapon in hand as a large card (its picture, Reforge marks, ability and
 			// signature move), the other slots as small cards above it with their keys. Dimmed while sheathed.
@@ -980,6 +1209,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			};
 			const auto keyCap = [&](ImVec2 at, const std::string& key, bool live) {
+				if (g_padLast) {  // the controller's own button, not a letter
+					const std::string_view g = key == "\xE2\x86\x91" ? "DU" : key == "\xE2\x86\x93" ? "DD" : key == "\xE2\x86\x90" ? "DL" : key == "\xE2\x86\x92" ? "DR" : std::string_view(key);
+					PadGlyph(dl, { at.x + 13 * k, at.y + 13 * k }, 13 * k, g, live ? 1.0f : 0.45f);
+					return;
+				}
 				const ImVec2 kb{ at.x + 26 * k, at.y + 26 * k };
 				dl->AddRectFilled(at, kb, live ? IM_COL32(60, 30, 18, 230) : IM_COL32(26, 22, 20, 210), 3 * k);
 				dl->AddRect(at, kb, live ? kGold : kGoldDim, 3 * k, 0, 1.2f * k);

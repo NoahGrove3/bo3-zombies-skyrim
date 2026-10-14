@@ -243,6 +243,7 @@ namespace bo3z
 		std::string_view   Name(int a_index);
 		int                ElementOf(int a_index);
 		int                CostOf(int a_index);
+		int                TierOf(int a_index);          // 0 common .. 3 the strongest
 		bool               Concentration(int a_index);
 		std::uint32_t      ElementColor(int a_element);
 		std::string_view   ElementName(int a_element);
@@ -287,7 +288,7 @@ namespace bo3z
 			float               reviveFrac{ -1 };  // reviving a friend: 0..1 (-1 none near)
 			std::string         reviveName;
 			std::vector<Fallen> fallen;           // friends down right now
-			struct Mark { std::string name; float x, y, dist; bool front; Life life; };
+			struct Mark { std::string name; float x, y, dist; bool front; Life life; float hp{ 1.0f }; };  // hp: 0..1 from their figure
 			std::vector<Mark>   marks;            // where each friend is (screen 0..1)
 		};
 		struct Out { std::uint8_t life; RE::NiPoint3 at; float left; std::uint64_t revive; };
@@ -318,7 +319,8 @@ namespace bo3z
 		void  OnUndeadDeath(RE::Actor* a_actor);
 		void  OnBossSlain();
 		void  OnChampionSlain(int a_town);  // a city's champion fell (Director)
-		void  MigrateRites();               // a save from the four-rite cities: freed stays freed, a finale waiting stays the finale
+		void  MigrateRites();
+		bool  Freed(int a_town);            // its Dirge is lifted (all ten rites done)               // a save from the four-rite cities: freed stays freed, a finale waiting stays the finale
 		bool  SafeHere(RE::PlayerCharacter* a_player);  // in a freed city: no undead rise here
 		float SpawnBoost();                              // holding a shrine: the night pushes harder
 		int   ZoneTown();                                // city the player is in (-1)
@@ -371,7 +373,8 @@ namespace bo3z
 		bool MenuEats(RE::InputEvent* a_event);          // Skyrim's own handlers must not see this key (the shrine menu has it)
 		std::string BoxTown();
 		bool        StandFrame(int a_town, RE::NiPoint3& a_center, float& a_yaw, RE::TESWorldSpace*& a_world);  // true: the station is placed
-		RE::TESObjectREFR* Placed(int a_town, int a_kind);  // the town's machine of that object kind (6 = relic shrine), if placed
+		RE::TESObjectREFR* Placed(int a_town, int a_kind);
+		void               FreedPulse(int a_town);   // the city's last rite: the shrine sends out a wave of light and sound  // the town's machine of that object kind (6 = relic shrine), if placed
 		int         TownOfRef(RE::TESObjectREFR* a_ref);
 		bool        StationTarget(int a_town, RE::NiPoint3& a_at);  // where to head for the town's station, in your current world (a walled city from outside: its gate)
 		bool        Discovered(int a_town);
@@ -445,6 +448,8 @@ namespace bo3z
 			// the shrine: its roll (0 idle, 1 charging, 2 spinning, 3 offering), progress 0..1, the spell shown, the price; a Thu'um to learn there
 			int         rollPhase{ 0 }, rollGun{ -1 }, rollCost{ 0 }, shrineShout{ -1 };
 			float       rollT{ 0 };
+			float       pulseT{ 0 }, pulseX{ 0.5f }, pulseY{ 0.5f };  // a freed shrine's wave (seconds left, its screen spot)
+			bool        pulseOn{ false };
 			bool        rollOnScreen{ false };          // the shrine's crown is in view: the roll is drawn over it
 			float       rollScreenX{ 0 }, rollScreenY{ 0 }, rollDist{ 0 };
 			int         nightEvent{ -1 };   // gen::kEvents index while it runs

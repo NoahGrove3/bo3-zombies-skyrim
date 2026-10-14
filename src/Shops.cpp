@@ -22,6 +22,8 @@ namespace bo3z
 			RE::NiNode*         node{ nullptr };  // (a fresh 3D after a reload is based again)
 		};
 		std::array<bool, gen::kLocations.size()> g_dressed{};
+		struct Pulse { RE::ObjectRefHandle shrine; float t; };
+		std::optional<Pulse>                     g_pulse;  // a freed shrine's wave (FreedPulse)
 		std::vector<Spinner>                     g_spinners;
 
 		// The shrine's roll: it gathers power (Charging), every spell in the pool flickers over the crown, slowing
@@ -62,8 +64,9 @@ namespace bo3z
 			// (run on every scan: a piece that went missing - or was left disabled by an older stand - is put back)
 			g_dressed[a_index] = true;
 			const int obj = gen::kLocations[a_index].object;
+			const bool freed = Curse::Freed(gen::kLocations[a_index].town);
 			for (const auto& d : gen::kDress) {
-				if (d.object != obj) {
+				if (d.object != obj || (d.freed && !freed)) {
 					continue;
 				}
 				auto* base = Forms::Ours(d.formId);
@@ -1541,6 +1544,19 @@ namespace bo3z
 						}
 					}
 				}
+				h.pulseOn = false;
+				if (g_pulse && (g_pulse->t -= a_delta) > 0) {
+					h.pulseT = g_pulse->t;
+					if (auto r = g_pulse->shrine.get(); r) {
+						if (auto* cam = RE::Main::WorldRootCamera()) {
+							float x = 0, y = 0, z = 0;
+							cam->WorldPtToScreenPt3(r->GetPosition() + RE::NiPoint3{ 0, 0, 175.0f }, x, y, z, 1e-5f);
+							h.pulseOn = true, h.pulseX = z > 0 ? x : 0.5f, h.pulseY = z > 0 ? 1.0f - y : 0.5f;
+						}
+					}
+				} else {
+					g_pulse.reset();
+				}
 				h.shrineShout = -1;
 				if (g_menu) {
 					if (auto r = g_menuRef.get()) {
@@ -1581,6 +1597,30 @@ namespace bo3z
 			}
 			g_scan = 2.0f;
 			TickTowns();
+		}
+
+		// The city's Dirge is lifted: the shrine sends out a wave - a burst of light that rolls outward three times, a
+		// deep toll heard across the city - and from now on it burns gold with a beam of light over it (Dress: freed pieces).
+		void FreedPulse(int a_town)
+		{
+			auto* shrine = Placed(a_town, 0);
+			if (!shrine) {
+				return;
+			}
+			const auto at = shrine->GetPosition() + RE::NiPoint3{ 0, 0, 175.0f };
+			Gun::FxBlast("lightmassive", at);
+			Gun::FxBlast("shoutarea", at, 0.4f);
+			Gun::FxBlast("lightmassive", at, 1.4f);
+			Gun::FxBlast("turnundead", at, 2.4f);
+			Forms::Play(gen::Sound::nuke);
+			Forms::PlayAt(gen::Sound::shout_toll, shrine);
+			g_pulse = Pulse{ shrine->CreateRefHandle(), 3.5f };
+			for (std::size_t i = 0; i < gen::kLocations.size(); ++i) {
+				if (gen::kLocations[i].town == a_town) {
+					g_dressed[i] = false;  // dress it again now: the gold glow and the beam
+				}
+			}
+			logger::info("shops: {}'s shrine pulses - the Dirge is lifted", gen::kTowns[a_town]);
 		}
 
 		void OnActivate(RE::TESObjectREFR* a_ref)

@@ -159,13 +159,17 @@ namespace bo3z::Party
 						continue;
 					}
 					RE::NiPoint3 at = r.at;
+					float        hp = r.state == static_cast<std::uint8_t>(Life::Alive) ? 1.0f : 0.0f;
 					if (auto* pu = Puppet(r)) {
 						at = pu->GetPosition();
+						auto*       av = pu->AsActorValueOwner();
+						const float mx = std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth));
+						hp = std::clamp(av->GetActorValue(RE::ActorValue::kHealth) / mx, 0.0f, 1.0f);
 					}
 					at.z += 150.0f;
 					float x = 0, y = 0, z = 0;
 					cam->WorldPtToScreenPt3(at, x, y, z, 1e-5f);
-					marks.push_back({ r.name, x, 1.0f - y, at.GetDistance(p->GetPosition()), z > 0.0f, static_cast<Life>(r.state) });
+					marks.push_back({ r.name, x, 1.0f - y, at.GetDistance(p->GetPosition()), z > 0.0f, static_cast<Life>(r.state), hp });
 				}
 			}
 			std::scoped_lock l(g_lock);
@@ -351,6 +355,9 @@ namespace bo3z::Party
 	{
 		std::scoped_lock l(g_lock);
 		auto& r = g_remote[a_from];
+		if (a_life == static_cast<std::uint8_t>(Life::Down) && r.state != a_life) {
+			SKSE::GetTaskInterface()->AddTask([] { Forms::Play(gen::Sound::rite_fail); });  // a friend just went down: you hear it
+		}
 		r.state = a_life, r.at = a_at, r.left = a_left, r.heard = Clock::now(), r.name = a_name;
 	}
 

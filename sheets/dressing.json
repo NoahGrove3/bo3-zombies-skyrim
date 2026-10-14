@@ -1,819 +1,902 @@
 {
-  "sheet": "dressing",
-  "about": "Extra pieces placed around each town object. for = a kind (perk|box|wallbuy) or one object (objects:<id>). '$potion' = that perk's bottle model, '$perk' = that perk's colour. Offsets in the object's frame (y = forward), Skyrim units.",
-  "columns": [
-    "id",
-    "for",
-    "type",
-    "model",
-    "color",
-    "radius",
+ "sheet": "dressing",
+ "about": "Extra pieces placed around each town object. for = a kind (perk|box|wallbuy) or one object (objects:<id>). '$potion' = that perk's bottle model, '$perk' = that perk's colour. Offsets in the object's frame (y = forward), Skyrim units. freed: only once the city's Dirge is lifted (the shrine then burns gold, a beam over it).",
+ "columns": [
+  "id",
+  "for",
+  "type",
+  "model",
+  "color",
+  "radius",
+  "x",
+  "y",
+  "z",
+  "scale",
+  "spin",
+  "freed",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "stand",
+   "for": "objects:coffer",
+   "type": "stat",
+   "model": "Effects\\FXEmptyObject.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 0,
+   "scale": 1.0,
+   "spin": 0,
+   "verify": [],
+   "freed": false
+  },
+  {
+   "id": "shrine_crystal",
+   "for": "objects:coffer",
+   "type": "stat",
+   "model": "UndyingNights\\shrine\\crystal.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 175,
+   "scale": 1.0,
+   "spin": 40,
+   "verify": [
+    "z"
+   ],
+   "freed": false
+  },
+  {
+   "id": "shrine_shards",
+   "for": "objects:coffer",
+   "type": "stat",
+   "model": "UndyingNights\\shrine\\shards.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 175,
+   "scale": 1.0,
+   "spin": 7,
+   "verify": [
+    "z"
+   ],
+   "freed": false
+  },
+  {
+   "id": "shrine_glow",
+   "for": "objects:coffer",
+   "type": "light",
+   "model": "none",
+   "color": "5AA8FF",
+   "radius": 600,
+   "x": 0,
+   "y": 0,
+   "z": 175,
+   "scale": 1,
+   "spin": 0,
+   "verify": [
+    "radius"
+   ],
+   "freed": false
+  },
+  {
+   "id": "perk_beam",
+   "for": "perk",
+   "type": "stat",
+   "model": "DLC01\\Effects\\DLC1WayshrineLightBeam01.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 0,
+   "scale": 0.3,
+   "spin": 0,
+   "verify": [
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "perk_light",
+   "for": "perk",
+   "type": "light",
+   "model": "none",
+   "color": "$perk",
+   "radius": 420,
+   "x": 0,
+   "y": 20,
+   "z": 130,
+   "scale": 1,
+   "spin": 0,
+   "verify": [
+    "radius"
+   ],
+   "freed": false
+  },
+  {
+   "id": "coffer_beam",
+   "for": "box",
+   "type": "stat",
+   "model": "DLC01\\Effects\\DLC1WayshrineLightBeam01.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 250,
+   "scale": 0.18,
+   "spin": 0,
+   "verify": [
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "coffer_light",
+   "for": "box",
+   "type": "light",
+   "model": "none",
+   "color": "A040FF",
+   "radius": 320,
+   "x": 0,
+   "y": 0,
+   "z": 270,
+   "scale": 1,
+   "spin": 0,
+   "verify": [
+    "radius"
+   ],
+   "freed": false
+  },
+  {
+   "id": "wall_light",
+   "for": "wallbuy",
+   "type": "light",
+   "model": "none",
+   "color": "FFC070",
+   "radius": 260,
+   "x": 0,
+   "y": 40,
+   "z": 80,
+   "scale": 1,
+   "spin": 0,
+   "verify": [
+    "radius"
+   ],
+   "freed": false
+  },
+  {
+   "id": "bottle_trollshide",
+   "for": "objects:perk_trollshide",
+   "type": "stat",
+   "model": "$potion",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 120,
+   "scale": 3.0,
+   "spin": 40,
+   "verify": [
+    "z"
+   ],
+   "freed": false
+  },
+  {
+   "id": "trollshide_skull",
+   "for": "objects:perk_trollshide",
+   "type": "stat",
+   "model": "Clutter\\Bones\\TrollSkull.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 10,
+   "z": 95,
+   "scale": 1.3,
+   "spin": 0,
+   "verify": [
     "x",
     "y",
     "z",
-    "scale",
-    "spin",
-    "verify"
-  ],
-  "rows": [
-    {
-      "id": "stand",
-      "for": "objects:coffer",
-      "type": "stat",
-      "model": "Effects\\FXEmptyObject.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 0,
-      "scale": 1.0,
-      "spin": 0,
-      "verify": []
-    },
-    {
-      "id": "shrine_crystal",
-      "for": "objects:coffer",
-      "type": "stat",
-      "model": "UndyingNights\\shrine\\crystal.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 175,
-      "scale": 1.0,
-      "spin": 40,
-      "verify": [
-        "z"
-      ]
-    },
-    {
-      "id": "shrine_shards",
-      "for": "objects:coffer",
-      "type": "stat",
-      "model": "UndyingNights\\shrine\\shards.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 175,
-      "scale": 1.0,
-      "spin": 7,
-      "verify": [
-        "z"
-      ]
-    },
-    {
-      "id": "shrine_glow",
-      "for": "objects:coffer",
-      "type": "light",
-      "model": "none",
-      "color": "5AA8FF",
-      "radius": 600,
-      "x": 0,
-      "y": 0,
-      "z": 175,
-      "scale": 1,
-      "spin": 0,
-      "verify": [
-        "radius"
-      ]
-    },
-    {
-      "id": "perk_beam",
-      "for": "perk",
-      "type": "stat",
-      "model": "DLC01\\Effects\\DLC1WayshrineLightBeam01.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 0,
-      "scale": 0.3,
-      "spin": 0,
-      "verify": [
-        "scale"
-      ]
-    },
-    {
-      "id": "perk_light",
-      "for": "perk",
-      "type": "light",
-      "model": "none",
-      "color": "$perk",
-      "radius": 420,
-      "x": 0,
-      "y": 20,
-      "z": 130,
-      "scale": 1,
-      "spin": 0,
-      "verify": [
-        "radius"
-      ]
-    },
-    {
-      "id": "coffer_beam",
-      "for": "box",
-      "type": "stat",
-      "model": "DLC01\\Effects\\DLC1WayshrineLightBeam01.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 250,
-      "scale": 0.18,
-      "spin": 0,
-      "verify": [
-        "scale"
-      ]
-    },
-    {
-      "id": "coffer_light",
-      "for": "box",
-      "type": "light",
-      "model": "none",
-      "color": "A040FF",
-      "radius": 320,
-      "x": 0,
-      "y": 0,
-      "z": 270,
-      "scale": 1,
-      "spin": 0,
-      "verify": [
-        "radius"
-      ]
-    },
-    {
-      "id": "wall_light",
-      "for": "wallbuy",
-      "type": "light",
-      "model": "none",
-      "color": "FFC070",
-      "radius": 260,
-      "x": 0,
-      "y": 40,
-      "z": 80,
-      "scale": 1,
-      "spin": 0,
-      "verify": [
-        "radius"
-      ]
-    },
-    {
-      "id": "bottle_trollshide",
-      "for": "objects:perk_trollshide",
-      "type": "stat",
-      "model": "$potion",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 120,
-      "scale": 3.0,
-      "spin": 40,
-      "verify": [
-        "z"
-      ]
-    },
-    {
-      "id": "trollshide_skull",
-      "for": "objects:perk_trollshide",
-      "type": "stat",
-      "model": "Clutter\\Bones\\TrollSkull.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 10,
-      "z": 95,
-      "scale": 1.3,
-      "spin": 0,
-      "verify": [
-        "x",
-        "y",
-        "z",
-        "scale"
-      ]
-    },
-    {
-      "id": "bottle_quicksilver",
-      "for": "objects:perk_quicksilver",
-      "type": "stat",
-      "model": "$potion",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 110,
-      "scale": 3.0,
-      "spin": 40,
-      "verify": [
-        "z"
-      ]
-    },
-    {
-      "id": "quicksilver_ingot1",
-      "for": "objects:perk_quicksilver",
-      "type": "stat",
-      "model": "Dungeons\\Mines\\Ore\\IngotQuicksilver.nif",
-      "color": "none",
-      "radius": 0,
-      "x": -14,
-      "y": 8,
-      "z": 92,
-      "scale": 1.6,
-      "spin": 0,
-      "verify": [
-        "x",
-        "y",
-        "z",
-        "scale"
-      ]
-    },
-    {
-      "id": "quicksilver_ingot2",
-      "for": "objects:perk_quicksilver",
-      "type": "stat",
-      "model": "Dungeons\\Mines\\Ore\\IngotQuicksilver.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 14,
-      "y": 8,
-      "z": 92,
-      "scale": 1.6,
-      "spin": 0,
-      "verify": [
-        "x",
-        "y",
-        "z",
-        "scale"
-      ]
-    },
-    {
-      "id": "bottle_twinstrike",
-      "for": "objects:perk_twinstrike",
-      "type": "stat",
-      "model": "$potion",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 140,
-      "scale": 3.0,
-      "spin": 40,
-      "verify": [
-        "z"
-      ]
-    },
-    {
-      "id": "twinstrike_tusk1",
-      "for": "objects:perk_twinstrike",
-      "type": "stat",
-      "model": "Clutter\\HorkerTusk\\HorkerTusk.nif",
-      "color": "none",
-      "radius": 0,
-      "x": -18,
-      "y": 12,
-      "z": 110,
-      "scale": 1.8,
-      "spin": 0,
-      "verify": [
-        "x",
-        "y",
-        "z",
-        "scale"
-      ]
-    },
-    {
-      "id": "twinstrike_tusk2",
-      "for": "objects:perk_twinstrike",
-      "type": "stat",
-      "model": "Clutter\\HorkerTusk\\HorkerTusk.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 18,
-      "y": 12,
-      "z": 110,
-      "scale": 1.8,
-      "spin": 0,
-      "verify": [
-        "x",
-        "y",
-        "z",
-        "scale"
-      ]
-    },
-    {
-      "id": "bottle_hearthfire",
-      "for": "objects:perk_hearthfire",
-      "type": "stat",
-      "model": "$potion",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 120,
-      "scale": 3.0,
-      "spin": 40,
-      "verify": [
-        "z"
-      ]
-    },
-    {
-      "id": "hearthfire_wine",
-      "for": "objects:perk_hearthfire",
-      "type": "stat",
-      "model": "Clutter\\Wine\\WineSanspicedWine.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 30,
-      "y": 0,
-      "z": 70,
-      "scale": 1.6,
-      "spin": 0,
-      "verify": [
-        "x",
-        "y",
-        "z",
-        "scale"
-      ]
-    },
-    {
-      "id": "bottle_windrunner",
-      "for": "objects:perk_windrunner",
-      "type": "stat",
-      "model": "$potion",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 110,
-      "scale": 3.0,
-      "spin": 40,
-      "verify": [
-        "z"
-      ]
-    },
-    {
-      "id": "windrunner_feather1",
-      "for": "objects:perk_windrunner",
-      "type": "stat",
-      "model": "Clutter\\Ingredients\\HawkFeather01.nif",
-      "color": "none",
-      "radius": 0,
-      "x": -16,
-      "y": 6,
-      "z": 95,
-      "scale": 4.0,
-      "spin": 0,
-      "verify": [
-        "x",
-        "y",
-        "z",
-        "scale"
-      ]
-    },
-    {
-      "id": "windrunner_feather2",
-      "for": "objects:perk_windrunner",
-      "type": "stat",
-      "model": "Clutter\\Ingredients\\HawkFeather01.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 16,
-      "y": 6,
-      "z": 95,
-      "scale": 4.0,
-      "spin": 0,
-      "verify": [
-        "x",
-        "y",
-        "z",
-        "scale"
-      ]
-    },
-    {
-      "id": "bottle_hawkeye",
-      "for": "objects:perk_hawkeye",
-      "type": "stat",
-      "model": "$potion",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 130,
-      "scale": 3.0,
-      "spin": 40,
-      "verify": [
-        "z"
-      ]
-    },
-    {
-      "id": "hawkeye_crystal",
-      "for": "objects:perk_hawkeye",
-      "type": "stat",
-      "model": "Dungeons\\AzurasStar\\AzuraSmallCrystal01.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 10,
-      "z": 100,
-      "scale": 0.25,
-      "spin": 25,
-      "verify": [
-        "x",
-        "y",
-        "z",
-        "scale"
-      ]
-    },
-    {
-      "id": "bottle_mammoth",
-      "for": "objects:perk_mammoth",
-      "type": "stat",
-      "model": "$potion",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 150,
-      "scale": 3.0,
-      "spin": 40,
-      "verify": [
-        "z"
-      ]
-    },
-    {
-      "id": "mammoth_barrel",
-      "for": "objects:perk_mammoth",
-      "type": "stat",
-      "model": "Clutter\\Meadery\\MeadBarrel01.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 40,
-      "scale": 0.8,
-      "spin": 0,
-      "verify": [
-        "x",
-        "y",
-        "z",
-        "scale"
-      ]
-    },
-    {
-      "id": "bottle_frostbite",
-      "for": "objects:perk_frostbite",
-      "type": "stat",
-      "model": "$potion",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 110,
-      "scale": 3.0,
-      "spin": 40,
-      "verify": [
-        "z"
-      ]
-    },
-    {
-      "id": "frostbite_eggs",
-      "for": "objects:perk_frostbite",
-      "type": "stat",
-      "model": "Clutter\\Ingredients\\SpiderEgg01.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 20,
-      "y": 10,
-      "z": 60,
-      "scale": 4.0,
-      "spin": 0,
-      "verify": [
-        "x",
-        "y",
-        "z",
-        "scale"
-      ]
-    },
-    {
-      "id": "frostbite_venom",
-      "for": "objects:perk_frostbite",
-      "type": "stat",
-      "model": "Clutter\\Ingredients\\FrostbiteVenom01.nif",
-      "color": "none",
-      "radius": 0,
-      "x": -20,
-      "y": 10,
-      "z": 60,
-      "scale": 3.0,
-      "spin": 0,
-      "verify": [
-        "x",
-        "y",
-        "z",
-        "scale"
-      ]
-    },
-    {
-      "id": "bottle_stormcrown",
-      "for": "objects:perk_stormcrown",
-      "type": "stat",
-      "model": "$potion",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 140,
-      "scale": 3.0,
-      "spin": 40,
-      "verify": [
-        "z"
-      ]
-    },
-    {
-      "id": "stormcrown_shard",
-      "for": "objects:perk_stormcrown",
-      "type": "stat",
-      "model": "Dungeons\\AzurasStar\\AzuraSmallCrystal02.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 170,
-      "scale": 0.3,
-      "spin": -30,
-      "verify": [
-        "x",
-        "y",
-        "z",
-        "scale"
-      ]
-    },
-    {
-      "id": "glow_trollshide",
-      "for": "objects:perk_trollshide",
-      "type": "stat",
-      "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 135,
-      "scale": 0.6,
-      "spin": 0,
-      "verify": [
-        "scale"
-      ]
-    },
-    {
-      "id": "glow_quicksilver",
-      "for": "objects:perk_quicksilver",
-      "type": "stat",
-      "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 125,
-      "scale": 0.6,
-      "spin": 0,
-      "verify": [
-        "scale"
-      ]
-    },
-    {
-      "id": "glow_twinstrike",
-      "for": "objects:perk_twinstrike",
-      "type": "stat",
-      "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 155,
-      "scale": 0.6,
-      "spin": 0,
-      "verify": [
-        "scale"
-      ]
-    },
-    {
-      "id": "glow_hearthfire",
-      "for": "objects:perk_hearthfire",
-      "type": "stat",
-      "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 135,
-      "scale": 0.6,
-      "spin": 0,
-      "verify": [
-        "scale"
-      ]
-    },
-    {
-      "id": "glow_windrunner",
-      "for": "objects:perk_windrunner",
-      "type": "stat",
-      "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 125,
-      "scale": 0.6,
-      "spin": 0,
-      "verify": [
-        "scale"
-      ]
-    },
-    {
-      "id": "glow_hawkeye",
-      "for": "objects:perk_hawkeye",
-      "type": "stat",
-      "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 145,
-      "scale": 0.6,
-      "spin": 0,
-      "verify": [
-        "scale"
-      ]
-    },
-    {
-      "id": "glow_mammoth",
-      "for": "objects:perk_mammoth",
-      "type": "stat",
-      "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 165,
-      "scale": 0.6,
-      "spin": 0,
-      "verify": [
-        "scale"
-      ]
-    },
-    {
-      "id": "glow_frostbite",
-      "for": "objects:perk_frostbite",
-      "type": "stat",
-      "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 125,
-      "scale": 0.6,
-      "spin": 0,
-      "verify": [
-        "scale"
-      ]
-    },
-    {
-      "id": "glow_stormcrown",
-      "for": "objects:perk_stormcrown",
-      "type": "stat",
-      "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 155,
-      "scale": 0.6,
-      "spin": 0,
-      "verify": [
-        "scale"
-      ]
-    },
-    {
-      "id": "ammo_quiver",
-      "for": "ammo",
-      "type": "stat",
-      "model": "DLC02\\Weapons\\DwarvenBolts\\BoltsQuiver.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 62,
-      "scale": 2.0,
-      "spin": 30,
-      "verify": [
-        "z"
-      ]
-    },
-    {
-      "id": "ammo_glow",
-      "for": "ammo",
-      "type": "stat",
-      "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 75,
-      "scale": 0.5,
-      "spin": 0,
-      "verify": []
-    },
-    {
-      "id": "ammo_light",
-      "for": "ammo",
-      "type": "light",
-      "model": "none",
-      "color": "FFB040",
-      "radius": 380,
-      "x": 0,
-      "y": 30,
-      "z": 100,
-      "scale": 1,
-      "spin": 0,
-      "verify": []
-    },
-    {
-      "id": "brew_light",
-      "for": "perkmenu",
-      "type": "light",
-      "model": "none",
-      "color": "FFC27A",
-      "radius": 420,
-      "x": 0,
-      "y": 60,
-      "z": 120,
-      "scale": 1,
-      "spin": 0,
-      "verify": []
-    },
-    {
-      "id": "forge_light",
-      "for": "forge",
-      "type": "light",
-      "model": "none",
-      "color": "FF8A30",
-      "radius": 520,
-      "x": 0,
-      "y": 40,
-      "z": 110,
-      "scale": 1,
-      "spin": 0,
-      "verify": []
-    },
-    {
-      "id": "ward_brazier",
-      "for": "objects:ammo_cache",
-      "type": "stat",
-      "model": "Architecture\\Windhelm\\WHFireBrazier01.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 0,
-      "scale": 0.75,
-      "spin": 0,
-      "verify": []
-    },
-    {
-      "id": "ward_fire",
-      "for": "objects:ammo_cache",
-      "type": "stat",
-      "model": "Effects\\FXFireWithEmbers01_cheap.nif",
-      "color": "none",
-      "radius": 0,
-      "x": 0,
-      "y": 0,
-      "z": 0,
-      "scale": 0.42,
-      "spin": 0,
-      "verify": []
-    },
-    {
-      "id": "ward_light",
-      "for": "objects:ammo_cache",
-      "type": "light",
-      "model": "none",
-      "color": "FF9440",
-      "radius": 520,
-      "x": 0,
-      "y": 0,
-      "z": 0,
-      "scale": 1,
-      "spin": 0,
-      "verify": []
-    }
-  ],
-  "show": {
-    "cheeseModel": "DLC02\\Clutter\\DragonBones\\DLC2DragonBoneHead.nif",
-    "riseUnits": 45,
-    "spinSeconds": 4.2,
-    "offerSeconds": 12,
-    "riseFxModel": "DLC01\\Effects\\DraugrEmergeGround01.nif",
-    "cheeseScale": 0.3
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "bottle_quicksilver",
+   "for": "objects:perk_quicksilver",
+   "type": "stat",
+   "model": "$potion",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 110,
+   "scale": 3.0,
+   "spin": 40,
+   "verify": [
+    "z"
+   ],
+   "freed": false
+  },
+  {
+   "id": "quicksilver_ingot1",
+   "for": "objects:perk_quicksilver",
+   "type": "stat",
+   "model": "Dungeons\\Mines\\Ore\\IngotQuicksilver.nif",
+   "color": "none",
+   "radius": 0,
+   "x": -14,
+   "y": 8,
+   "z": 92,
+   "scale": 1.6,
+   "spin": 0,
+   "verify": [
+    "x",
+    "y",
+    "z",
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "quicksilver_ingot2",
+   "for": "objects:perk_quicksilver",
+   "type": "stat",
+   "model": "Dungeons\\Mines\\Ore\\IngotQuicksilver.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 14,
+   "y": 8,
+   "z": 92,
+   "scale": 1.6,
+   "spin": 0,
+   "verify": [
+    "x",
+    "y",
+    "z",
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "bottle_twinstrike",
+   "for": "objects:perk_twinstrike",
+   "type": "stat",
+   "model": "$potion",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 140,
+   "scale": 3.0,
+   "spin": 40,
+   "verify": [
+    "z"
+   ],
+   "freed": false
+  },
+  {
+   "id": "twinstrike_tusk1",
+   "for": "objects:perk_twinstrike",
+   "type": "stat",
+   "model": "Clutter\\HorkerTusk\\HorkerTusk.nif",
+   "color": "none",
+   "radius": 0,
+   "x": -18,
+   "y": 12,
+   "z": 110,
+   "scale": 1.8,
+   "spin": 0,
+   "verify": [
+    "x",
+    "y",
+    "z",
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "twinstrike_tusk2",
+   "for": "objects:perk_twinstrike",
+   "type": "stat",
+   "model": "Clutter\\HorkerTusk\\HorkerTusk.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 18,
+   "y": 12,
+   "z": 110,
+   "scale": 1.8,
+   "spin": 0,
+   "verify": [
+    "x",
+    "y",
+    "z",
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "bottle_hearthfire",
+   "for": "objects:perk_hearthfire",
+   "type": "stat",
+   "model": "$potion",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 120,
+   "scale": 3.0,
+   "spin": 40,
+   "verify": [
+    "z"
+   ],
+   "freed": false
+  },
+  {
+   "id": "hearthfire_wine",
+   "for": "objects:perk_hearthfire",
+   "type": "stat",
+   "model": "Clutter\\Wine\\WineSanspicedWine.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 30,
+   "y": 0,
+   "z": 70,
+   "scale": 1.6,
+   "spin": 0,
+   "verify": [
+    "x",
+    "y",
+    "z",
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "bottle_windrunner",
+   "for": "objects:perk_windrunner",
+   "type": "stat",
+   "model": "$potion",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 110,
+   "scale": 3.0,
+   "spin": 40,
+   "verify": [
+    "z"
+   ],
+   "freed": false
+  },
+  {
+   "id": "windrunner_feather1",
+   "for": "objects:perk_windrunner",
+   "type": "stat",
+   "model": "Clutter\\Ingredients\\HawkFeather01.nif",
+   "color": "none",
+   "radius": 0,
+   "x": -16,
+   "y": 6,
+   "z": 95,
+   "scale": 4.0,
+   "spin": 0,
+   "verify": [
+    "x",
+    "y",
+    "z",
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "windrunner_feather2",
+   "for": "objects:perk_windrunner",
+   "type": "stat",
+   "model": "Clutter\\Ingredients\\HawkFeather01.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 16,
+   "y": 6,
+   "z": 95,
+   "scale": 4.0,
+   "spin": 0,
+   "verify": [
+    "x",
+    "y",
+    "z",
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "bottle_hawkeye",
+   "for": "objects:perk_hawkeye",
+   "type": "stat",
+   "model": "$potion",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 130,
+   "scale": 3.0,
+   "spin": 40,
+   "verify": [
+    "z"
+   ],
+   "freed": false
+  },
+  {
+   "id": "hawkeye_crystal",
+   "for": "objects:perk_hawkeye",
+   "type": "stat",
+   "model": "Dungeons\\AzurasStar\\AzuraSmallCrystal01.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 10,
+   "z": 100,
+   "scale": 0.25,
+   "spin": 25,
+   "verify": [
+    "x",
+    "y",
+    "z",
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "bottle_mammoth",
+   "for": "objects:perk_mammoth",
+   "type": "stat",
+   "model": "$potion",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 150,
+   "scale": 3.0,
+   "spin": 40,
+   "verify": [
+    "z"
+   ],
+   "freed": false
+  },
+  {
+   "id": "mammoth_barrel",
+   "for": "objects:perk_mammoth",
+   "type": "stat",
+   "model": "Clutter\\Meadery\\MeadBarrel01.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 40,
+   "scale": 0.8,
+   "spin": 0,
+   "verify": [
+    "x",
+    "y",
+    "z",
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "bottle_frostbite",
+   "for": "objects:perk_frostbite",
+   "type": "stat",
+   "model": "$potion",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 110,
+   "scale": 3.0,
+   "spin": 40,
+   "verify": [
+    "z"
+   ],
+   "freed": false
+  },
+  {
+   "id": "frostbite_eggs",
+   "for": "objects:perk_frostbite",
+   "type": "stat",
+   "model": "Clutter\\Ingredients\\SpiderEgg01.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 20,
+   "y": 10,
+   "z": 60,
+   "scale": 4.0,
+   "spin": 0,
+   "verify": [
+    "x",
+    "y",
+    "z",
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "frostbite_venom",
+   "for": "objects:perk_frostbite",
+   "type": "stat",
+   "model": "Clutter\\Ingredients\\FrostbiteVenom01.nif",
+   "color": "none",
+   "radius": 0,
+   "x": -20,
+   "y": 10,
+   "z": 60,
+   "scale": 3.0,
+   "spin": 0,
+   "verify": [
+    "x",
+    "y",
+    "z",
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "bottle_stormcrown",
+   "for": "objects:perk_stormcrown",
+   "type": "stat",
+   "model": "$potion",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 140,
+   "scale": 3.0,
+   "spin": 40,
+   "verify": [
+    "z"
+   ],
+   "freed": false
+  },
+  {
+   "id": "stormcrown_shard",
+   "for": "objects:perk_stormcrown",
+   "type": "stat",
+   "model": "Dungeons\\AzurasStar\\AzuraSmallCrystal02.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 170,
+   "scale": 0.3,
+   "spin": -30,
+   "verify": [
+    "x",
+    "y",
+    "z",
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "glow_trollshide",
+   "for": "objects:perk_trollshide",
+   "type": "stat",
+   "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 135,
+   "scale": 0.6,
+   "spin": 0,
+   "verify": [
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "glow_quicksilver",
+   "for": "objects:perk_quicksilver",
+   "type": "stat",
+   "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 125,
+   "scale": 0.6,
+   "spin": 0,
+   "verify": [
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "glow_twinstrike",
+   "for": "objects:perk_twinstrike",
+   "type": "stat",
+   "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 155,
+   "scale": 0.6,
+   "spin": 0,
+   "verify": [
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "glow_hearthfire",
+   "for": "objects:perk_hearthfire",
+   "type": "stat",
+   "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 135,
+   "scale": 0.6,
+   "spin": 0,
+   "verify": [
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "glow_windrunner",
+   "for": "objects:perk_windrunner",
+   "type": "stat",
+   "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 125,
+   "scale": 0.6,
+   "spin": 0,
+   "verify": [
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "glow_hawkeye",
+   "for": "objects:perk_hawkeye",
+   "type": "stat",
+   "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 145,
+   "scale": 0.6,
+   "spin": 0,
+   "verify": [
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "glow_mammoth",
+   "for": "objects:perk_mammoth",
+   "type": "stat",
+   "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 165,
+   "scale": 0.6,
+   "spin": 0,
+   "verify": [
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "glow_frostbite",
+   "for": "objects:perk_frostbite",
+   "type": "stat",
+   "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 125,
+   "scale": 0.6,
+   "spin": 0,
+   "verify": [
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "glow_stormcrown",
+   "for": "objects:perk_stormcrown",
+   "type": "stat",
+   "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 155,
+   "scale": 0.6,
+   "spin": 0,
+   "verify": [
+    "scale"
+   ],
+   "freed": false
+  },
+  {
+   "id": "ammo_quiver",
+   "for": "ammo",
+   "type": "stat",
+   "model": "DLC02\\Weapons\\DwarvenBolts\\BoltsQuiver.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 62,
+   "scale": 2.0,
+   "spin": 30,
+   "verify": [
+    "z"
+   ],
+   "freed": false
+  },
+  {
+   "id": "ammo_glow",
+   "for": "ammo",
+   "type": "stat",
+   "model": "Effects\\Ambient\\FXGlowFillRoundBrt.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 75,
+   "scale": 0.5,
+   "spin": 0,
+   "verify": [],
+   "freed": false
+  },
+  {
+   "id": "ammo_light",
+   "for": "ammo",
+   "type": "light",
+   "model": "none",
+   "color": "FFB040",
+   "radius": 380,
+   "x": 0,
+   "y": 30,
+   "z": 100,
+   "scale": 1,
+   "spin": 0,
+   "verify": [],
+   "freed": false
+  },
+  {
+   "id": "brew_light",
+   "for": "perkmenu",
+   "type": "light",
+   "model": "none",
+   "color": "FFC27A",
+   "radius": 420,
+   "x": 0,
+   "y": 60,
+   "z": 120,
+   "scale": 1,
+   "spin": 0,
+   "verify": [],
+   "freed": false
+  },
+  {
+   "id": "forge_light",
+   "for": "forge",
+   "type": "light",
+   "model": "none",
+   "color": "FF8A30",
+   "radius": 520,
+   "x": 0,
+   "y": 40,
+   "z": 110,
+   "scale": 1,
+   "spin": 0,
+   "verify": [],
+   "freed": false
+  },
+  {
+   "id": "ward_brazier",
+   "for": "objects:ammo_cache",
+   "type": "stat",
+   "model": "Architecture\\Windhelm\\WHFireBrazier01.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 0,
+   "scale": 0.75,
+   "spin": 0,
+   "verify": [],
+   "freed": false
+  },
+  {
+   "id": "ward_fire",
+   "for": "objects:ammo_cache",
+   "type": "stat",
+   "model": "Effects\\FXFireWithEmbers01_cheap.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 0,
+   "scale": 0.42,
+   "spin": 0,
+   "verify": [],
+   "freed": false
+  },
+  {
+   "id": "ward_light",
+   "for": "objects:ammo_cache",
+   "type": "light",
+   "model": "none",
+   "color": "FF9440",
+   "radius": 520,
+   "x": 0,
+   "y": 0,
+   "z": 0,
+   "scale": 1,
+   "spin": 0,
+   "verify": [],
+   "freed": false
+  },
+  {
+   "id": "shrine_freed_glow",
+   "for": "objects:coffer",
+   "type": "light",
+   "model": "none",
+   "color": "FFE2A8",
+   "radius": 1500,
+   "x": 0,
+   "y": 0,
+   "z": 175,
+   "scale": 1,
+   "spin": 0,
+   "freed": true,
+   "verify": [
+    "radius"
+   ]
+  },
+  {
+   "id": "shrine_freed_beam",
+   "for": "objects:coffer",
+   "type": "stat",
+   "model": "DLC01\\Effects\\DLC1WayshrineLightBeam01.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 150,
+   "scale": 0.4,
+   "spin": 0,
+   "freed": true,
+   "verify": [
+    "scale"
+   ]
   }
+ ],
+ "show": {
+  "cheeseModel": "DLC02\\Clutter\\DragonBones\\DLC2DragonBoneHead.nif",
+  "riseUnits": 45,
+  "spinSeconds": 4.2,
+  "offerSeconds": 12,
+  "riseFxModel": "DLC01\\Effects\\DraugrEmergeGround01.nif",
+  "cheeseScale": 0.3
+ }
 }

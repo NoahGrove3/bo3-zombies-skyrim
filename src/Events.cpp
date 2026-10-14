@@ -43,6 +43,12 @@ namespace bo3z
 					return RE::BSEventNotifyControl::kContinue;
 				}
 				Audio::SetMenuMusic();  // the main menu plays our track (read by the game when the menu opens)
+				if (a_event->opening && a_event->menuName == RE::TutorialMenu::MENU_NAME) {
+					// Skyrim's tutorial pop-ups (low health, low stamina, low magicka...) close the moment they open
+					if (auto* q = RE::UIMessageQueue::GetSingleton()) {
+						q->AddMessage(RE::TutorialMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+					}
+				}
 				if (a_event->menuName == RE::MainMenu::MENU_NAME) {
 					Audio::MenuUiSounds(a_event->opening);
 					Save::ForgetSnapshot();
@@ -243,6 +249,14 @@ namespace bo3z
 								float share = gen::kShareSpell;
 								if (auto* w = src->As<RE::TESObjectWEAP>()) {
 									share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow : gen::kShareMelee;
+								} else if (src->Is(RE::FormType::Spell)) {
+									// a spell's hit grows with what it is: the Coffer's rarer spells hit harder, a reforge adds
+									// its step, and every Twin Strike Ale adds half again (their own magnitudes don't reach the dead)
+									static constexpr float kTier[4] = { 1.0f, 1.3f, 1.7f, 2.2f };
+									if (const int ci = Arcana::IndexOf(src); ci >= 0) {
+										share *= kTier[std::clamp(Arcana::TierOf(ci), 0, 3)] * (1.0f + gen::kForgeStep * Arcana::Level(ci));
+									}
+									share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
 								}
 								auto*       av = z->AsActorValueOwner();
 								const float dmg = Director::RoundHealth() * share;
@@ -343,6 +357,11 @@ namespace bo3z
 			Arcana::Load();
 			Director::HeadlongCombat();
 			Settings::ApplyMods();
+			if (auto* ini = RE::INIPrefSettingCollection::GetSingleton()) {  // (and no tutorials at all)
+				if (auto* t = ini->GetSetting("bShowTutorials:Interface")) {
+					t->data.b = false;
+				}
+			}
 			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
 			PlayerUpdate::func = vtbl.write_vfunc(0xAD, PlayerUpdate::thunk);
 			logger::info("hooked PlayerCharacter::Update");
