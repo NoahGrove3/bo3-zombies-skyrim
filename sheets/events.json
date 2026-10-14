@@ -1,6 +1,6 @@
 {
   "sheet": "events",
-  "about": "Event nights: at nightfall there is a `chance` that the night is one of these (picked evenly), never on a hound night. Weather is forced for the night (plugin|localId of a WTHR) and the HUD tints the screen (tint RRGGBBAA). spawnMult scales how many walk at once and how fast they climb out; speedMult their speed; pointsMult every kill's points; championWeight multiplies the Iron Reaper / Necromancer weights; dropMult the power-up drop chance; boss: Grimmvar rises 20 s in.",
+  "about": "Event nights: at nightfall there is a `chance` that the night is one of these (picked evenly), never on a hound night. Weather is forced for the night (plugin|localId of a WTHR) and the HUD tints the screen (tint RRGGBBAA). spawnMult scales how many walk at once and how fast they climb out; speedMult their speed; pointsMult every kill's points; championWeight multiplies the Iron Reaper / Necromancer weights; dropMult the power-up drop chance; boss: the night's boss rises 20 s in.",
   "chance": 0.25,
   "columns": [
     "id",

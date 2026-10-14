@@ -22,7 +22,7 @@ def assign(S=None, write=False):
              [(k, 'arrow_' + w['id']) for w in S['weapons']['rows'] if w.get('kind') == 'bow' for k in ('AMMO', 'PROJ')] + \
              [(k, 'shout_' + h['id'] + '_' + str(n)) for h in S['shouts']['rows'] for n in range(3) for k in ('WOOP', 'SPEL')] + [('SHOU', h['id']) for h in S['shouts']['rows']] + [('MGEF', 'shoutcast')] + [('GLOB', 'curse_' + c['town']) for c in S['curse']['cities']] + [('GLOB', 'curse_intro'), ('GLOB', 'stand_layout'), ('BOOK', 'dirge')] + \
              [('VTYP', 'silent'), ('MUST', 'boss'), ('MUSC', 'boss'), ('MUST', 'freed'), ('MUSC', 'freed'), ('MUST', 'intro'), ('MUSC', 'intro'), ('FSTS', 'silent'), ('STAT', 'ls_shrine'), ('STAT', 'ls_book')] + [('LSCR', f'ls_{i}') for i in range(10)] + \
-             [(k, f"fx_{r['id']}_{n}") for r in S['spellcraft']['rows'] for k, n in (('ARTO', 'hand'), ('STAT', 'orb'), ('LIGH', 'light'))] + [('ARTO', 'fx_' + n) for n in ('iceshell', 'roots', 'burn', 'poison')] + [('QUST', 'mcm')]
+             [(k, f"fx_{r['id']}_{n}") for r in S['spellcraft']['rows'] for k, n in (('ARTO', 'hand'), ('STAT', 'orb'), ('LIGH', 'light'))] + [('ARTO', 'fx_' + n) for n in ('iceshell', 'roots', 'burn', 'poison')] + [('QUST', 'mcm')] + [('QUST', 'rites_' + c['town']) for c in S['curse']['cities']]
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:

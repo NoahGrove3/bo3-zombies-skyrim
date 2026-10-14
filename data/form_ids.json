@@ -1007,6 +1007,17 @@
   "SNDR:shoutvoc_shatter_1": "0xbeb",
   "SNDR:shoutvoc_shatter_2": "0xbec",
   "SNDR:shoutvoc_shatter_3": "0xbed",
-  "QUST:mcm": "0xbee"
+  "QUST:mcm": "0xbee",
+  "QUST:rites_Riverwood": "0xbef",
+  "QUST:rites_Whiterun": "0xbf0",
+  "QUST:rites_Solitude": "0xbf1",
+  "QUST:rites_Windhelm": "0xbf2",
+  "QUST:rites_Markarth": "0xbf3",
+  "QUST:rites_Riften": "0xbf4",
+  "QUST:rites_Falkreath": "0xbf5",
+  "QUST:rites_Morthal": "0xbf6",
+  "QUST:rites_Dawnstar": "0xbf7",
+  "QUST:rites_Winterhold": "0xbf8",
+  "STAT:quest_marker": "0xbf9"
  }
 }

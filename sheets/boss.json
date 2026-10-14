@@ -1,6 +1,6 @@
 {
   "sheet": "boss",
-  "about": "Grimmvar, the Undying Wyrm: rises every bossEvery nights (enemies sheet), partway into the night. Times in seconds, ranges in Skyrim units, health as a multiple of a zombie's round health. Damage values (slamDamage, clawHit, clawLast, leapDamage, eruptionDamage) are shares of the player's health. roarEvery/roarRange: the Wyrm Leap (he springs up and crashes down where you stand). breathStrength scales his fire breath. meleeShare: share of your health each claw swing takes. minHealth: the least health he rises with (BO3 units), so an early Herald is still a wall.",
+  "about": "The night's boss (the enemies sheet's bossEvery rows, in turn): rises every bossEvery nights (enemies sheet), partway into the night. Times in seconds, ranges in Skyrim units, health as a multiple of a zombie's round health. Damage values (slamDamage, clawHit, clawLast, leapDamage, eruptionDamage) are shares of the player's health. roarEvery/roarRange: the Wyrm Leap (he springs up and crashes down where you stand). breathStrength scales his fire breath. meleeShare: share of your health each claw swing takes. minHealth: the least health he rises with (BO3 units), so an early Herald is still a wall.",
   "columns": [
     "id",
     "value",

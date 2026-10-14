@@ -366,6 +366,10 @@ namespace bo3z
 				if (a_s->OpenRecord('SPLV', 2)) {  // (2: the 200-spell Coffer; the 150-spell levels are dropped)
 					a_s->WriteRecordData(lv.data(), static_cast<std::uint32_t>(lv.size()));
 				}
+				if (a_s->OpenRecord('CRS2', 1)) {  // (ten rites a city: marks a save made with them)
+					const std::uint32_t one = 1;
+					a_s->WriteRecordData(&one, sizeof(one));
+				}
 				const auto sh = Director::Sheltered();
 				if (a_s->OpenRecord('SHLT', 1)) {
 					a_s->WriteRecordData(sh.data(), static_cast<std::uint32_t>(sizeof(RE::FormID) * sh.size()));
@@ -373,7 +377,7 @@ namespace bo3z
 			}
 			void OnLoad(SKSE::SerializationInterface* a_s)
 			{
-				bool          found = false;
+				bool          found = false, crs2 = false;
 				std::uint32_t type = 0, version = 0, length = 0;
 				while (a_s->GetNextRecordInfo(type, version, length)) {
 					if (type == kRecord && length == sizeof(int) * g_val.size()) {
@@ -382,6 +386,10 @@ namespace bo3z
 						g_stacksLoaded = a_s->ReadRecordData(g_stacks.data(), length) == length;
 					} else if (type == 'STAM' && length == sizeof(int)) {
 						a_s->ReadRecordData(&g_stamBonus, length);
+					} else if (type == 'CRS2') {
+						std::uint32_t one = 0;
+						a_s->ReadRecordData(&one, sizeof(one));
+						crs2 = true;
 					} else if (type == 'SHLT') {
 						std::vector<RE::FormID> ids(length / sizeof(RE::FormID));
 						a_s->ReadRecordData(ids.data(), static_cast<std::uint32_t>(ids.size() * sizeof(RE::FormID)));
@@ -395,6 +403,9 @@ namespace bo3z
 						a_s->ReadRecordData(lv.data(), length);
 						Arcana::SetLevels(lv);
 					}
+				}
+				if (!crs2) {
+					SKSE::GetTaskInterface()->AddTask([] { Curse::MigrateRites(); });
 				}
 				if (!g_stacksLoaded) {  // an older save: one of each blessing it carries
 					for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 16; ++i) {

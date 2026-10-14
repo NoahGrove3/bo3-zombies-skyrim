@@ -483,6 +483,12 @@ namespace bo3z
 			return rows[turn % n];
 		}
 
+		std::string BossName()
+		{
+			const int row = BossRow();
+			return row >= 0 ? std::string(gen::kEnemies[row].label) : std::string("The Herald");
+		}
+
 		void CastAt(RE::Actor* a_caster, int a_spell, RE::Actor* a_target, float a_strength = 1.0f)
 		{
 			auto* m = Forms::Spell(a_spell);
@@ -750,7 +756,7 @@ namespace bo3z
 				g_boss.summon = 0;  // and the dead answer his howl
 				Undead::CueFor(boss.get(), Undead::kCueRoar, 1.6f);
 				Forms::PlayAt(gen::Sound::boss_growl, boss.get());
-				Hud::Banner("Grimmvar is ENRAGED!", 3.0f);
+				Hud::Banner(BossName() + " is ENRAGED!", 3.0f);
 			}
 			const float cd = g_boss.enraged ? gen::boss::enrageCooldownMult : 1.0f;
 			const float dist = boss->GetPosition().GetDistance(a_player->GetPosition());
@@ -778,7 +784,7 @@ namespace bo3z
 				g_boss.breathWind = g_boss.enraged ? 0.75f : 1.05f;
 				Undead::CueFor(boss.get(), Undead::kCueRoar, g_boss.breathWind);
 				Forms::PlayAt(gen::Sound::boss_breath_wind, boss.get());
-				Hud::Banner("Grimmvar draws breath - get out of the way!", 1.2f);
+				Hud::Banner(BossName() + " draws breath - get out of the way!", 1.2f);
 				g_boss.breath = gen::boss::breathEvery * cd;
 			}
 			// Rending Flurry: three (enraged, five) raking claw swipes, each lunging him forward; the last one rips the ground
@@ -831,7 +837,7 @@ namespace bo3z
 					}
 				}
 				boss->SetPosition(boss->GetPosition() + RE::NiPoint3{ 0, 0, 2400.0f }, false);  // gone into the night sky
-				Hud::Banner("Grimmvar leaps - move!", 1.4f);
+				Hud::Banner(BossName() + " leaps - move!", 1.4f);
 				Audio::AtPoint(gen::Sound::boss_leap_wind, g_boss.leapAt);  // from where he will land: the shadow growls
 				g_boss.roar = gen::boss::roarEvery * cd;
 			}
@@ -892,7 +898,7 @@ namespace bo3z
 					RE::NiPoint3 at{ bp.x + std::sin(a) * 220.0f, bp.y + std::cos(a) * 220.0f, bp.z + 40.0f };
 					SpawnOne(a_player, 0, &at);
 				}
-				Hud::Banner("Grimmvar calls the dead!", 2.5f);
+				Hud::Banner(BossName() + " calls the dead!", 2.5f);
 				Forms::PlayAt(gen::Sound::boss_growl, boss.get());
 				Undead::CueFor(boss.get(), Undead::kCueRoar, 1.3f);
 				g_boss.summon = gen::boss::summonEvery * cd;

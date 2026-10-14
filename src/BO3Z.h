@@ -318,6 +318,7 @@ namespace bo3z
 		void  OnUndeadDeath(RE::Actor* a_actor);
 		void  OnBossSlain();
 		void  OnChampionSlain(int a_town);  // a city's champion fell (Director)
+		void  MigrateRites();               // a save from the four-rite cities: freed stays freed, a finale waiting stays the finale
 		bool  SafeHere(RE::PlayerCharacter* a_player);  // in a freed city: no undead rise here
 		float SpawnBoost();                              // holding a shrine: the night pushes harder
 		int   ZoneTown();                                // city the player is in (-1)
@@ -345,6 +346,7 @@ namespace bo3z
 		bool                  OnButton(const RE::ButtonEvent* a_event);
 		std::pair<bool, bool> RecentHit(RE::FormID a_actor);  // {gun kill, headshot}
 		bool                  Give(int a_gun);                // buy/box: put in a slot, equip it
+		void                  Console(const std::string& a_cmd);  // a console command, run as the player
 		bool                  KnowsShout(int a_shout);        // the cities' shouts (sheet: shouts)
 		void                  LearnShout(int a_shout);
 		int                   ShoutOfSpell(RE::FormID a_spell, int& a_level);

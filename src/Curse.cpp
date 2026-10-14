@@ -9,14 +9,14 @@
 //   circle    keep the dead out of the shrine's ritual circle for n seconds (they swarm it: it breaks, it starts again)
 //   hold      stand at the shrine n seconds while the night pushes harder
 //   champion  hunt a named champion through the night
-//   herald    the fog rolls in and Grimmvar rises; slay it
+//   herald    the fog rolls in and the night's boss rises; slay it
 // After the fourth the city is freed (and the night ends): a sanctuary where no undead rise, its shout waiting at the
 // shrine. Progress: one global per city (step*1000 + progress).
 namespace bo3z
 {
 	namespace
 	{
-		constexpr int kFreed = 4;
+		constexpr int kFreed = static_cast<int>(gen::kRites[0].size());  // ten rites a city
 		float         Rand01()
 		{
 			static std::mt19937 r{ std::random_device{}() };
@@ -108,7 +108,7 @@ namespace bo3z
 		float               g_circleHp = 100.0f, g_circleAcc = 0;
 		RE::ObjectRefHandle g_probe;
 
-		const gen::RiteDef& Rite(int a_town, int a_step) { return gen::kRites[a_town][std::clamp(a_step, 0, 3)]; }
+		const gen::RiteDef& Rite(int a_town, int a_step) { return gen::kRites[a_town][std::clamp(a_step, 0, kFreed - 1)]; }
 		int                 Kind(int a_town) { return Step(a_town) >= kFreed ? -1 : Rite(a_town, Step(a_town)).type; }
 
 		// The city the player is in: its own location (streets and interiors), or within reach of its station.
@@ -672,6 +672,7 @@ namespace bo3z
 		{
 			RemoveWards();
 			g_zone = -1, g_zoneTimer = 0, g_heraldTown = -1, g_holding = false, g_holdAcc = 0;
+			g_journalFresh = true, g_marker = {};
 			g_loreShown.clear();
 			g_relicShow.clear();
 		}
@@ -704,6 +705,75 @@ namespace bo3z
 			}
 		}
 
+		// ---- the journal: each city's rites as a quest in Skyrim's Quests tab (tools/gen_esp.py) ----
+		// A city's quest begins the first time you walk into it; its stage and objectives follow the rites, and its
+		// Target alias (the compass and map marker) sits on an unseen marker moved to wherever the rite wants you.
+		std::array<int, 16>      g_journalStep{};
+		bool                     g_journalFresh = true;
+		RE::ObjectRefHandle      g_marker;
+		RE::TESQuest* RiteQuest(int a_town)
+		{
+			return a_town >= 0 && a_town < static_cast<int>(gen::kRiteQuests.size()) ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESQuest>(gen::kRiteQuests[a_town], gen::kPlugin) : nullptr;
+		}
+		void Journal(RE::PlayerCharacter* a_player)
+		{
+			if (g_journalFresh) {
+				g_journalStep.fill(-1);
+				g_journalFresh = false;
+			}
+			for (int t = 0; t < static_cast<int>(gen::kRiteQuests.size()); ++t) {
+				auto* q = RiteQuest(t);
+				if (!q) {
+					continue;
+				}
+				const std::string edid = "UN_Rites_" + std::string(gen::kTowns[t]);
+				const int s = Step(t);
+				if (!q->IsRunning() && !q->IsCompleted()) {
+					if (t != g_zone && s == 0) {
+						continue;  // not been there yet
+					}
+					Gun::Console("startquest " + edid);
+					g_journalStep[t] = -1;
+					continue;  // (the stages follow once it runs)
+				}
+				if (g_journalStep[t] == s || q->IsCompleted()) {
+					continue;
+				}
+				for (int i = 0; i < std::min(s, kFreed); ++i) {
+					Gun::Console(fmt::format("setobjectivecompleted {} {} 1", edid, i));
+				}
+				if (s >= kFreed) {
+					Gun::Console(fmt::format("setstage {} 200", edid));
+				} else {
+					Gun::Console(fmt::format("setstage {} {}", edid, (s + 1) * 10));
+					Gun::Console(fmt::format("setobjectivedisplayed {} {} 1", edid, s));
+				}
+				g_journalStep[t] = s;
+				logger::info("journal: {} at rite {}", gen::kTowns[t], s + 1);
+			}
+			// the marker: where the quest wants you, for the city you're in
+			RE::NiPoint3 at;
+			std::string  label;
+			auto*        q = RiteQuest(g_zone);
+			if (q && q->IsRunning() && ObjectiveTarget(a_player, at, label)) {
+				auto m = g_marker.get();
+				if (!m) {
+					if (auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(0x00003B)) {  // XMarker
+						if (auto r = a_player->PlaceObjectAtMe(xm, false)) {
+							g_marker = r->CreateRefHandle();
+							m = r;
+						}
+					}
+				}
+				if (m) {
+					if (m->GetPosition().GetDistance(at) > 50.0f) {
+						m->SetPosition(at);
+					}
+					q->ForceRefIntoAlias(0, m.get());
+				}
+			}
+		}
+
 		void Tick(float a_delta)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -721,6 +791,11 @@ namespace bo3z
 			const bool fighting = Director::Fighting();
 			Publish(g_zone, fighting);
 			PublishObjective(player);
+			static float journal = 0;
+			if ((journal -= a_delta) <= 0) {
+				journal = 1.0f;
+				Journal(player);
+			}
 			TickRelicShow(player, a_delta);
 			// The prologue: as soon as the new character is made (out of Helgen, at Riverwood), the book is in the pack
 			if (Save::Flag(Save::kFlagStarted)) {
@@ -948,6 +1023,19 @@ namespace bo3z
 				}
 				logger::info("curse: {} freed by the party", gen::kTowns[a_town]);
 			}
+		}
+
+		void MigrateRites()
+		{
+			for (int t = 0; t < static_cast<int>(gen::kCurseCities.size()); ++t) {
+				const int v = Value(t), step = v / 1000;
+				if (step >= 4) {
+					Set(t, kFreed, 0);
+				} else if (step == 3) {
+					Set(t, kFreed - 1, v % 1000);
+				}
+			}
+			logger::info("curse: a four-rite save moved to ten rites a city");
 		}
 	}
 }

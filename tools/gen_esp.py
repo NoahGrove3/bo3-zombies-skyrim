@@ -378,6 +378,26 @@ recs['QUST'].append(record('QUST', fid('QUST', 'mcm'), [
     sub('ALST', struct.pack('<I', 0)), sub('ALID', z('PlayerAlias')), sub('FNAM', struct.pack('<I', 0)),
     sub('ALFR', struct.pack('<I', 0x14)), sub('VTCK', struct.pack('<I', 0)), sub('ALED', b'')]))
 
+# The cities' rites in Skyrim's Quests journal: one quest per city (Dawnguard's crest), a stage and an objective for
+# each of its ten rites (the log tells the rite's story), stage 200 when the city is freed. One alias, the Target, which
+# the game points at where the rite wants you (src/Curse.cpp Journal): its compass and map marker.
+CU = S['curse']
+def fill(t, c, n):
+    return t.replace('{city}', c['town']).replace('{landmark}', c.get('landmark', '')).replace('{n}', str(n))
+for c in CU['cities']:
+    rites = CU['rites'][c['town']]
+    subs = [sub('EDID', z('UN_Rites_' + c['town'])), sub('FULL', z('The Undying Dirge: ' + c['town'])),
+            sub('DNAM', struct.pack('<HBBII', 0x0000, 60, 0xFF, 0, 10)), sub('NEXT', b'')]
+    for i, r in enumerate(rites):
+        subs += [sub('INDX', struct.pack('<HBB', (i + 1) * 10, 0, 0)), sub('QSDT', b'\x00'), sub('CNAM', z(fill(r['title'], c, r['target']) + ': ' + fill(r['text'], c, r['target'])))]
+    subs += [sub('INDX', struct.pack('<HBB', 200, 0, 0)), sub('QSDT', b'\x01'), sub('CNAM', z(c['town'] + ' is free. ' + CU['liftedText'].replace('{city}', c['town'])))]
+    for i, r in enumerate(rites):
+        subs += [sub('QOBJ', struct.pack('<H', i)), sub('FNAM', struct.pack('<I', 0)), sub('NNAM', z(fill(r['goal'], c, r['target']))),
+                 sub('QSTA', struct.pack('<iI', 0, 1))]
+    subs += [sub('ANAM', struct.pack('<I', 1)), sub('ALST', struct.pack('<I', 0)), sub('ALID', z('Target')),
+             sub('FNAM', struct.pack('<I', 0x2 | 0x10)), sub('VTCK', struct.pack('<I', 0)), sub('ALED', b'')]
+    recs['QUST'].append(record('QUST', fid('QUST', 'rites_' + c['town']), subs))
+
 # the night's undead: one faction, allies to each other (no infighting), enemies of the player
 recs['FACT'].append(record('FACT', fid('FACT', 'undead'), [
     sub('EDID', z('UN_UndeadFaction')), sub('FULL', z('Undying')),
