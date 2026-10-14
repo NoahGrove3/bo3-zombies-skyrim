@@ -78,10 +78,19 @@ namespace bo3z::Compass
 
 	void Tick(float a_delta)
 	{
-		static float scan = 0;
+		static float scan = 0, settle = 0;
 		auto*        pl = RE::PlayerCharacter::GetSingleton();
 		auto*        cam = RE::PlayerCamera::GetSingleton();
-		if (!pl || !cam || !cam->cameraRoot) {
+		auto*        ui = RE::UI::GetSingleton();
+		if (!pl || !cam || !cam->cameraRoot || !ui || !pl->Is3DLoaded()) {
+			return;
+		}
+		// (never while a load is under way: the world's places are still being read in on another thread)
+		if (ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME) || ui->IsMenuOpen(RE::MainMenu::MENU_NAME)) {
+			settle = 0;
+			return;
+		}
+		if ((settle += a_delta) < 3.0f) {
 			return;
 		}
 		const auto&        m = cam->cameraRoot->world.rotate;
