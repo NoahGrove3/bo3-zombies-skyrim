@@ -1625,10 +1625,15 @@ namespace bo3z
 						los = orbDist < 700.0f || pl->HasLineOfSight(orbRef.get(), unused);
 					}
 					float zc = 0, x2 = 0, y2 = 0, z2 = 0;
-					cam->WorldPtToScreenPt3(orbAt, x, y, zc, 1e-5f);
+					auto* wc = RE::Main::WorldRootCamera();
+					if (wc) {
+						wc->WorldPtToScreenPt3(orbAt, x, y, zc, 1e-5f);
+					}
 					RE::NiPoint3 top = orbAt;
 					top.z += 22.0f;  // the orb's radius
-					cam->WorldPtToScreenPt3(top, x2, y2, z2, 1e-5f);
+					if (wc) {
+						wc->WorldPtToScreenPt3(top, x2, y2, z2, 1e-5f);
+					}
 					rr = std::abs(y2 - y);
 					on = zc > 0 && los && x > -0.2f && x < 1.2f && y > -0.2f && y < 1.2f;
 					y = 1.0f - y;
