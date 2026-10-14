@@ -88,6 +88,9 @@ namespace bo3z
 		}
 
 		int   g_zone = -1;
+		std::array<int, 16> g_journalStep{};  // the journal (Journal below): the rite each city's quest last showed
+		bool                g_journalFresh = true;
+		RE::ObjectRefHandle g_marker;         // the quest Target's marker
 		float g_zoneTimer = 0;
 		std::unordered_set<int> g_loreShown;  // town*10+step, this session
 		int   g_heraldTown = -1;
@@ -708,9 +711,6 @@ namespace bo3z
 		// ---- the journal: each city's rites as a quest in Skyrim's Quests tab (tools/gen_esp.py) ----
 		// A city's quest begins the first time you walk into it; its stage and objectives follow the rites, and its
 		// Target alias (the compass and map marker) sits on an unseen marker moved to wherever the rite wants you.
-		std::array<int, 16>      g_journalStep{};
-		bool                     g_journalFresh = true;
-		RE::ObjectRefHandle      g_marker;
 		RE::TESQuest* RiteQuest(int a_town)
 		{
 			return a_town >= 0 && a_town < static_cast<int>(gen::kRiteQuests.size()) ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESQuest>(gen::kRiteQuests[a_town], gen::kPlugin) : nullptr;
