@@ -374,7 +374,7 @@ namespace bo3z
 					auto* list = base->actorEffects;
 					for (std::uint32_t i = 0; list->spells && i < list->numSpells; ++i) {
 						auto* sp = list->spells[i];
-						if (sp && sp->GetCastingType() != RE::MagicSystem::CastingType::kConstantEffect && sp->GetDelivery() != RE::MagicSystem::Delivery::kSelf) {
+						if (sp && sp->GetCastingType() != RE::MagicSystem::CastingType::kConstantEffect && (sp->GetDelivery() != RE::MagicSystem::Delivery::kSelf || !kindRow.rig)) {  // (a mod's creature loses its cloaks too: its fire burns through the hit rule)
 							actor->RemoveSpell(sp);
 						}
 					}
