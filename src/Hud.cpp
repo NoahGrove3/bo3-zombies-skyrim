@@ -3377,12 +3377,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.EnemyHealth_mc._visible", RE::GFxValue(false));
 						// Skyrim's compass gives way to ours (the shout meter under it stays)
-						RE::GFxValue compass;
-						if (hud->uiMovie->GetVariable(&compass, "_root.HUDMovieBaseInstance.CompassShoutMeterHolder.Compass") && compass.IsObject()) {
-							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder.Compass._visible", RE::GFxValue(false));
-						} else {
-							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder._visible", RE::GFxValue(false));
-						}
+						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder.Compass._alpha", RE::GFxValue(0.0));
+						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder.Compass._visible", RE::GFxValue(false));
 					}
 				}
 			}
