@@ -2962,59 +2962,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			return true;
 		}
 
-		// Keyboard and mouse or a controller, whichever is in hand: if a controller turns up after the game started
-		// (or Skyrim's Gamepad option is off), Skyrim's gamepad input is switched on, so both work at once and the
-		// prompts follow the last one touched - no restart.
-		void WatchGamepad()
-		{
-			static auto next = std::chrono::steady_clock::now();
-			const auto  now = std::chrono::steady_clock::now();
-			if (now < next) {
-				return;
-			}
-			next = now + std::chrono::seconds(2);
-			using GetState = DWORD(WINAPI*)(DWORD, void*);
-			static GetState get = [] {
-				for (auto dll : { L"xinput1_4.dll", L"xinput1_3.dll", L"xinput9_1_0.dll" }) {
-					if (auto m = ::LoadLibraryW(dll)) {
-						if (auto f = ::GetProcAddress(m, "XInputGetState")) {
-							return reinterpret_cast<GetState>(f);
-						}
-					}
-				}
-				return static_cast<GetState>(nullptr);
-			}();
-			if (!get) {
-				return;
-			}
-			bool any = false;
-			for (DWORD i = 0; i < 4 && !any; ++i) {
-				std::uint8_t state[16]{};
-				any = get(i, state) == 0;
-			}
-			if (!any) {
-				return;
-			}
-			SKSE::GetTaskInterface()->AddTask([] {
-				auto* mgr = RE::BSInputDeviceManager::GetSingleton();
-				if (!mgr || mgr->IsGamepadEnabled()) {
-					return;
-				}
-				if (auto* ini = RE::INIPrefSettingCollection::GetSingleton()) {
-					if (auto* g = ini->GetSetting("bGamepadEnable:Controls")) {
-						g->data.b = true;
-					}
-				}
-				auto& rd = mgr->GetRuntimeData();
-				rd.queuedGamepadEnableValue = true;
-				rd.valueQueued = true;
-				mgr->ProcessGamepadEnabledChange();
-				if (static int told = 0; told++ < 3) {
-					logger::info("input: a controller is here - Skyrim's gamepad input switched on");
-				}
-			});
-		}
-
 		bool InGame()
 		{
 			auto* ui = RE::UI::GetSingleton();
@@ -3179,7 +3126,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (!rtv) {
 				return;
 			}
-			WatchGamepad();
 			auto& io = ImGui::GetIO();
 			io.DisplaySize = { static_cast<float>(desc.BufferDesc.Width), static_cast<float>(desc.BufferDesc.Height) };
 			io.DeltaTime = dt;
