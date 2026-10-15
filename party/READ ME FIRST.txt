@@ -51,9 +51,12 @@ THE PARTY MODS (installed for both players - Skyrim Together needs the same plug
  - More animations (Open Animation Replacer): Sigma first-person swords, daggers, greatswords, battleaxes, war axes,
    maces and archery; new Falmer and frostbite spider attacks; jarls sit their thrones properly.
  - Faces and followers: Fabulous Followers, The Wolven Widow (Elisif), Evigheden (Serana), MikanEyes (more eye
-   colours in character creation). Freak's Floral Fields (grass and flowers).
- - Not used (they don't run on Skyrim 1.7.104 yet): QuickLoot RE, Behavior Data Injector. COR needs Race
-   Compatibility, which isn't in the pack, so it stays off.
+   colours in character creation), Ysolda and Jordis (SerketHetyt) via SkyPatcher. Freak's Floral Fields (grass and flowers).
+ - Unofficial Skyrim Special Edition Patch (thousands of fixes; loads first), Immersive College of Winterhold.
+ - RaySense for Open Animation Replacer: Edge Lookdown (you look down over ledges) and Simple Wall Lean.
+ - Not used (they don't run on Skyrim 1.7.104 yet): QuickLoot RE, Behavior Data Injector, RaySense Cover and
+   Jumping Over Obstacles (they need Behavior Data Injector / a Cover DLL built for this version). COR needs Race
+   Compatibility, Faithful Faces crashes a new game, so both stay off.
 
 GOOD TO KNOW
  - A new character starts as a Spellsword: a steel sword in the right hand, Firebolt in the left. The
@@ -66,9 +69,12 @@ GOOD TO KNOW
  - Noah's look comes from graphics mods, and they are all in this pack (files\Graphics, about 25 GB):
    the installer asks if you want them. Say Y to see the game exactly as the host does, N to keep your own.
    They are: Community Shaders (+ Subsurface Scattering, Screen Space Shadows, Grass Collision), Azurite Weathers III, Lux Orbis + Lux Via (lighting, roads), Realistic Water Two, Happy Little
-   Trees, Skoglendi grass, Skyland AIO, SMIM, Lit Road Signs, Cathedral Armory, Lux,
+   Trees, Skyland AIO, SMIM, Lit Road Signs, Cathedral Armory, Lux,
    Riton's Medieval Solitude, Stony AF Markarth, Venerable Nordic Temples, SRP 2K (landscape, dungeons,
-   architecture, misc), Skysight Skins.
+   architecture, misc), Skysight Skins, the Icy pack (Icy Fixes, Mesh, Cave and Biome Remaster), and the grass:
+   Tamrielic Grass, Veydosebrom Regions, Folkvangr, Seasonal Landscapes, Short Grass Mixed, Cathedral 3D Pine Grass,
+   Origins of Forest (with their complex-grass textures, lit by Community Shaders). For frame rate: Community
+   Shaders' Frame Generation (turn it on in the Community Shaders menu, Home key) and Skyrim Priority.
 
 TROUBLESHOOTING
  - Normal Skyrim menu / you start on the Helgen cart: Undying Nights isn't loaded. Close Skyrim, run the
