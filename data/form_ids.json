@@ -1021,6 +1021,10 @@
   "STAT:quest_marker": "0xbf9",
   "LIGH:shrine_freed_glow": "0xbfa",
   "STAT:shrine_freed_beam": "0xbfb",
-  "SNDR:shrine_hum": "0xbfc"
+  "SNDR:shrine_hum": "0xbfc",
+  "LSCR:ls_10": "0xbfd",
+  "LSCR:ls_11": "0xbfe",
+  "LSCR:ls_12": "0xbff",
+  "LSCR:ls_13": "0xc00"
  }
 }
