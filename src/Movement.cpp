@@ -187,10 +187,14 @@ namespace bo3z
 			}
 			auto* cam = RE::PlayerCamera::GetSingleton();
 			auto* mt = a_player->AsMagicTarget();
-			if (!cam || !mt || (!fx[0] && !fx[1])) {
+			if (!cam || !mt) {
 				return;
 			}
 			const bool riding = a_player->IsOnMount();
+			if (riding && cam->IsInFirstPerson()) {  // (first person in the saddle looks out from inside the horse: never there)
+				cam->ForceThirdPerson();
+				turned = true, calm = 0;
+			}
 			if (!turned) {
 				const bool on = (fx[0] && mt->HasMagicEffect(fx[0])) || (fx[1] && mt->HasMagicEffect(fx[1]));
 				if (on && a_sprint && !riding && cam->IsInFirstPerson()) {
