@@ -410,6 +410,12 @@ namespace bo3z
 		void Reset();
 	}
 
+	namespace Watchdog
+	{
+		void Beat();   // a frame was drawn (from Present)
+		void Start();  // the thread that logs where the game is stuck when frames stop
+	}
+
 	namespace Hud
 	{
 		struct State

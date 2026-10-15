@@ -89,7 +89,7 @@ RECIPES = [
     ('Icy Mesh Remaster', 'Icy Mesh Remaster - Meshes*.zip', 'graphics', 'map', {'': ''}),
     ('Icy Cave Remaster', 'Icy Cave Remaster*.zip', 'graphics', 'map', {'': ''}),
     ('Icy Biome Remaster', 'Icy Biome Remaster*.zip', 'graphics', 'map', {'meshes/': 'meshes', 'textures/': 'textures', 'IcyBiomeRemaster.esp': ''}),
-    # grass: the Nolvus seasonal mashup and every grass mod it merges, their complex-grass textures (lit by Community Shaders)
+    # grass: the grass mods of the Nolvus seasonal mashup, their complex-grass textures (lit by Community Shaders)
     ('Tamrielic Grass', 'Tamrielic Grass*.7z', 'graphics', 'map', {'Main/': ''}),
     ('Veydosebrom Regions', 'Veydosebrom Regions - A Skyrim*.7z', 'graphics', 'map', {'00_packed-files/enb-compatible/2k-textures/data/': '', '00_packed-files/meshes/data/': '',
         '01_landscape-density/nograss_edited/data/': '', '02_ini-density/size-20/data/': ''}),
@@ -104,8 +104,8 @@ RECIPES = [
     ('CG Cathedral Pine', 'Cathedral 3D Pine Grass for Complex*.rar', 'graphics', 'map', {'Fomod/01data/Main Textures 2k/': ''}),
     ('CG Origins Of Forest', 'Origins of forest for ENB*.zip', 'graphics', 'map', {'data01/Main Files/': ''}),
     ('CG Universal Mesh Fix', 'Universal Grass Mod Mesh Fix*.zip', 'graphics', 'map', {'Universal CG Tree mesh fix/': ''}),
-    ('Nolvus Grass Mashup', 'Nolvus Grass Mashup*.7z', 'graphics', 'map', {'': ''}),
-    ('Seasons of Skyrim', 'Seasons of Skyrim*.7z', 'graphics', 'map', {'Seasons of Skyrim SKSE FOMOD Installer/Required/': '', 'Seasons of Skyrim SKSE FOMOD Installer/AE/': ''}),
+    # (not the Nolvus Grass Mashup: the game stops at the main menu with it; nor Seasons of Skyrim: it needs
+    # powerofthree's Tweaks)
     # frame rate: Community Shaders' frame generation (AMD FSR 3 / NVIDIA DLSS-G), and the game at high CPU priority
     ('Frame Generation', 'Frame Generation-*.7z', 'graphics', 'map', {'': ''}),
     ('Skyrim Priority', 'Skyrim Priority*.zip', 'graphics', 'map', {'Data/': ''}),

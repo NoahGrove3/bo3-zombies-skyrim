@@ -3413,6 +3413,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 		HRESULT WINAPI PresentHook(IDXGISwapChain* a_swap, UINT a_sync, UINT a_flags)
 		{
+			Watchdog::Beat();
 			try {
 				static auto netLast = std::chrono::steady_clock::now();
 				const auto  netNow = std::chrono::steady_clock::now();
