@@ -1,6 +1,6 @@
 {
  "sheet": "enemies",
- "about": "The night's dead, all from the party's creature mods (The Restless Dead, Bone Colossus, Old Gods of the Hunt, Foglings, Giants Overhaul, Diverse Dragons), renamed for Undying Nights. localId is the record's id inside its plugin (load-order byte stripped). rig: our own draugr-rig body (old creatures, unused now). Bosses (bossEvery) take turns, one every ten nights.",
+ "about": "The night's dead, all from the party's creature mods (The Restless Dead, Bone Colossus, Old Gods of the Hunt, Foglings, Giants Overhaul, Diverse Dragons), renamed for The Curse of Alduin. localId is the record's id inside its plugin (load-order byte stripped). rig: our own draugr-rig body (old creatures, unused now). Bosses (bossEvery) take turns, one every ten nights.",
  "columns": [
   "id",
   "label",

@@ -1,4 +1,4 @@
-"""Undying Nights main menu: a CG night composed from scratch and rendered offline (tools/scene3d.py), in parallax layers
+"""The Curse of Alduin main menu: a CG night composed from scratch and rendered offline (tools/scene3d.py), in parallax layers
 the menu animates. Our own undead (the risen, the Hollow Bride, the Drowned Wailer, the Abomination, the reaper, the
 necromancer) come down from a barrow under the Blood Moon, led by the champions (the Horned Bone Knight, the Barrow King,
 the Lich of the Dirge); a rune-stone of the Dirge glows in the snow in front; a dark outcrop on the right carries the menu.
@@ -21,8 +21,8 @@ SCALE = float(sys.argv[3]) if len(sys.argv) > 3 else 1.0
 W, H = 2560, 1440
 RW, RH = int(W * SCALE), int(H * SCALE)
 MODELS = {
-    'zombie': ('/home/claude/work/out4/Data/Meshes/UndyingNights/zombie/zombie.nif', '/home/claude/work/out4/Data'),
-    **{n: (f'/home/claude/work/out3/Data/Meshes/UndyingNights/{n}/{n}.nif', '/home/claude/work/out3/Data')
+    'zombie': ('/home/claude/work/out4/Data/Meshes/CurseOfAlduin/zombie/zombie.nif', '/home/claude/work/out4/Data'),
+    **{n: (f'/home/claude/work/out3/Data/Meshes/CurseOfAlduin/{n}/{n}.nif', '/home/claude/work/out3/Data')
        for n in ['hooded', 'hag', 'abom', 'reaper', 'necro', 'knight', 'king', 'lich']},
 }
 CAM = {'eye': (40.0, -160.0, 118.0), 'look': (-230.0, 1500.0, 250.0), 'fov': 40}

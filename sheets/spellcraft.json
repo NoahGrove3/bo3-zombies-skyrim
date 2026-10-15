@@ -1,6 +1,6 @@
 {
   "sheet": "spellcraft",
-  "about": "The ten spells (Noah's list): each its own colour, projectile, left-click attack (tap; hold to charge the one hand for an empowered shot) and right-click charged attack (both hands build one orb between them; release at full power). Damage numbers are in BO3 units like the weapons sheet. Sounds per stage come from the weapons row of the same id (kGunSounds, Spec 12.3). Visuals: tools/spellfx.py writes Meshes/UndyingNights/fx/<id>_{bolt,orb,beam,hand,burst}.nif in these colours. Code: src/Spellcraft.inl.",
+  "about": "The ten spells (Noah's list): each its own colour, projectile, left-click attack (tap; hold to charge the one hand for an empowered shot) and right-click charged attack (both hands build one orb between them; release at full power). Damage numbers are in BO3 units like the weapons sheet. Sounds per stage come from the weapons row of the same id (kGunSounds, Spec 12.3). Visuals: tools/spellfx.py writes Meshes/CurseOfAlduin/fx/<id>_{bolt,orb,beam,hand,burst}.nif in these colours. Code: src/Spellcraft.inl.",
   "columns": {
     "id": "weapons-sheet row this spell lives in (slots, mana, the box)",
     "name": "shown everywhere",

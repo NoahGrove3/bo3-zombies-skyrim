@@ -1,5 +1,5 @@
 in assets/shrine/shrine.obj
-out assets/fx/Meshes/UndyingNights/shrine/shrine.nif
+out assets/fx/Meshes/CurseOfAlduin/shrine/shrine.nif
 origin 1
 offset 0 0 21.5
 collidefrustum -160 -160 160 160 37.5 -38.5 70
@@ -7,6 +7,6 @@ collidebox2 -34 -34 140 34 34 212
 mat floor diffuse=textures\architecture\whiterun\wrstoneblocks01.dds normal=textures\architecture\whiterun\wrstoneblocks01_n.dds spec=0.3 gloss=30
 mat cobble diffuse=textures\architecture\whiterun\wrstonefloor01.dds normal=textures\architecture\whiterun\wrstonefloor01_n.dds spec=0.25 gloss=30
 mat trim diffuse=textures\architecture\whiterun\wrtrims01.dds normal=textures\architecture\whiterun\wrtrims01_n.dds spec=0.25 gloss=30
-mat rune diffuse=UndyingNights\stand\srune_d.dds normal=UndyingNights\stand\flat_n.dds glow=UndyingNights\stand\srune_g.dds emit=0.35,0.65,1.0 emitmult=2.6 spec=0.5
-mat runes diffuse=UndyingNights\stand\sruneband_d.dds normal=UndyingNights\stand\flat_n.dds glow=UndyingNights\stand\sruneband_g.dds emit=0.35,0.65,1.0 emitmult=2.4 alpha=1 spec=0.3
-mat pool diffuse=UndyingNights\stand\srune_d.dds normal=UndyingNights\stand\flat_n.dds glow=UndyingNights\stand\srune_g.dds emit=0.5,0.8,1.0 emitmult=3.5 spec=0.2
+mat rune diffuse=CurseOfAlduin\stand\srune_d.dds normal=CurseOfAlduin\stand\flat_n.dds glow=CurseOfAlduin\stand\srune_g.dds emit=0.35,0.65,1.0 emitmult=2.6 spec=0.5
+mat runes diffuse=CurseOfAlduin\stand\sruneband_d.dds normal=CurseOfAlduin\stand\flat_n.dds glow=CurseOfAlduin\stand\sruneband_g.dds emit=0.35,0.65,1.0 emitmult=2.4 alpha=1 spec=0.3
+mat pool diffuse=CurseOfAlduin\stand\srune_d.dds normal=CurseOfAlduin\stand\flat_n.dds glow=CurseOfAlduin\stand\srune_g.dds emit=0.5,0.8,1.0 emitmult=3.5 spec=0.2

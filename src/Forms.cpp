@@ -261,7 +261,7 @@ namespace bo3z
 
 	namespace PluginList
 	{
-		// %LOCALAPPDATA%\Skyrim Special Edition\Plugins.txt: append "*BO3Zombies.esp" if it isn't listed.
+		// %LOCALAPPDATA%\Skyrim Special Edition\Plugins.txt: append "*CurseOfAlduin.esp" if it isn't listed.
 		void Ensure()
 		{
 			wchar_t local[MAX_PATH]{};
@@ -292,7 +292,7 @@ namespace bo3z
 					return;
 				}
 				std::string line = (text.empty() || text.back() == '\n' ? "" : "\r\n") + std::string("*") + name + "\r\n";
-				// An unticked "BO3Zombies.esp" line (no *) is the player's choice: leave it.
+				// An unticked "CurseOfAlduin.esp" line (no *) is the player's choice: leave it.
 				if (lower.find(nameLower) != std::string::npos) {
 					return;
 				}

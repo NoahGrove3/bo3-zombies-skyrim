@@ -1,4 +1,4 @@
-"""Undying Nights elemental bows: the four 'Bow Basemeshes' put on Skyrim's bow rig (tools/bowconv: Bow_* bones and
+"""The Curse of Alduin elemental bows: the four 'Bow Basemeshes' put on Skyrim's bow rig (tools/bowconv: Bow_* bones and
 the iron bow's behavior graph), so the limbs bend and the string draws with Skyrim's own bow animation.
 Each bow gets an element finish: dark lacquered limbs tinted to the element, glowing trim on its blades and spurs,
 and an energy string.
@@ -72,9 +72,9 @@ def limb_weights(y):
     return [(b2, 1.0)]
 
 def save_dds(im, rel, alpha=False):
-    p = OUT / 'Textures' / 'UndyingNights' / 'bow' / rel; p.parent.mkdir(parents=True, exist_ok=True)
+    p = OUT / 'Textures' / 'CurseOfAlduin' / 'bow' / rel; p.parent.mkdir(parents=True, exist_ok=True)
     im.convert('RGBA' if alpha else 'RGB').save(p, pixel_format='DXT5' if alpha else 'DXT1')
-    return f'UndyingNights\\bow\\{rel}'
+    return f'CurseOfAlduin\\bow\\{rel}'
 
 def lacquer(col, size=512, seed=1):
     """layered lacquer/metal: soft grain, darker edges of each streak"""
@@ -137,7 +137,7 @@ def build(bid):
     tex['glow_d'] = save_dds(Image.new('RGB', (32, 32), gcol), f'{bid}_glow_d.dds')
     tex['glow_g'] = save_dds(Image.new('RGB', (32, 32), tuple(min(255, c + 60) for c in gcol)), f'{bid}_glow_g.dds')
     ec = ','.join(f'{c:.3f}' for c in glow)
-    lines = [f'template {TEMPLATE}', f'out {OUT / "Meshes/UndyingNights/bow" / (bid + ".nif")}']
+    lines = [f'template {TEMPLATE}', f'out {OUT / "Meshes/CurseOfAlduin/bow" / (bid + ".nif")}']
     for g, GF in groups.items():
         if not len(GF):
             continue
@@ -158,7 +158,7 @@ def build(bid):
             lines.append(f'v {x:.4f} {y:.4f} {z:.4f} {u:.5f} {w:.5f} {nx:.4f} {ny:.4f} {nz:.4f} ' + ' '.join(f'{b} {wt:.4f}' for b, wt in ws))
         lines += [f't {a} {b} {c}' for a, b, c in remap[GF]]
     work = OUT.parent / 'bows'; work.mkdir(parents=True, exist_ok=True)
-    (OUT / 'Meshes/UndyingNights/bow').mkdir(parents=True, exist_ok=True)
+    (OUT / 'Meshes/CurseOfAlduin/bow').mkdir(parents=True, exist_ok=True)
     jf = work / f'{bid}.job'; jf.write_text('\n'.join(lines) + '\n')
     r = subprocess.run([CONV, str(jf)], capture_output=True, text=True)
     print(r.stdout.strip().split('\n')[-1] if r.stdout else '', r.stderr.strip())

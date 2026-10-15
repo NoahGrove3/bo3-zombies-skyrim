@@ -1,4 +1,4 @@
-"""Form IDs for BO3Zombies.esp. Frozen in data/form_ids.json (saves refer to them); new rows get the next free id."""
+"""Form IDs for CurseOfAlduin.esp. Frozen in data/form_ids.json (saves refer to them); new rows get the next free id."""
 ELEMENTS = ['fire', 'frost', 'shock', 'poison', 'disease', 'sun', 'blood', 'arcane']
 import json, pathlib
 ROOT = pathlib.Path(__file__).parent.parent
@@ -32,7 +32,7 @@ def assign(S=None, write=False):
         store['ids'] = {k: hex(v) for k, v in frozen.items()}
         IDFILE.write_text(json.dumps(store, indent=1))
     return ids, nxt
-PLUGIN = 'BO3Zombies.esp'
+PLUGIN = 'CurseOfAlduin.esp'
 def blasts():
     """Spell blasts: no-damage copies of Skyrim's explosions (tools/templates/expl/<name>.json)."""
     return sorted(q.stem for q in (ROOT / 'tools' / 'templates' / 'expl').glob('*.json'))
@@ -59,12 +59,12 @@ def dressing(S):
     for w in S['weapons']['rows']:
         records[('STAT', '1st_' + w['id'])] = {'model': w['standinModel'], 'color': '', 'radius': 0}
         sc_ids = {r['id'] for r in S['spellcraft']['rows']} if 'spellcraft' in S else set()
-        records[('STAT', 'show_' + w['id'])] = {'model': f"UndyingNights\\fx\\{w['id']}_icon.nif" if w['id'] in sc_ids else w['standinModel'], 'color': '', 'radius': 0}  # the roll shows the spell's logo
+        records[('STAT', 'show_' + w['id'])] = {'model': f"CurseOfAlduin\\fx\\{w['id']}_icon.nif" if w['id'] in sc_ids else w['standinModel'], 'color': '', 'radius': 0}  # the roll shows the spell's logo
     records[('STAT', 'show_cheese')] = {'model': S['dressing']['show']['cheeseModel'], 'color': '', 'radius': 0}
     for el in ELEMENTS:   # the Coffer spells' element emblems (the shrine's roll in the world)
-        records[('STAT', 'show_el_' + el)] = {'model': f"UndyingNights\\fx\\el_{el}_icon.nif", 'color': '', 'radius': 0}
+        records[('STAT', 'show_el_' + el)] = {'model': f"CurseOfAlduin\\fx\\el_{el}_icon.nif", 'color': '', 'radius': 0}
     records[('STAT', 'rise_fx')] = {'model': S['dressing']['show']['riseFxModel'], 'color': '', 'radius': 0}
     for k, col in POWERUPS:   # BO3 power-up drops: a glowing token and its light
-        records[('STAT', 'pu_' + k)] = {'model': f'UndyingNights\\powerup\\{k}.nif', 'color': '', 'radius': 0}
+        records[('STAT', 'pu_' + k)] = {'model': f'CurseOfAlduin\\powerup\\{k}.nif', 'color': '', 'radius': 0}
         records[('LIGH', 'pu_' + k)] = {'model': '', 'color': col, 'radius': 260}
     return records, pieces

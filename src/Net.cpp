@@ -487,7 +487,7 @@ namespace bo3z::Net
 						}
 						logger::info("net: {} joined the night (build {}, ours {})", who, theirs, kBuild);
 						if (theirs != kBuild) {
-							g_mismatch = who + " runs Undying Nights " + theirs + ", you run " + kBuild + ": both need the same Party Pack";
+							g_mismatch = who + " runs The Curse of Alduin " + theirs + ", you run " + kBuild + ": both need the same Party Pack";
 							Hud::Banner(g_mismatch, 8.0f);
 							logger::warn("net: version mismatch with {}: {} vs {}", who, theirs, kBuild);
 						} else {

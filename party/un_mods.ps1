@@ -1,5 +1,5 @@
-# Undying Nights: install the party's new mods (plan.json from modplan.py) at full disk speed.
-#  - moves the Party Pack from Downloads to D:\Undying Nights - Party Pack (room for the bigger pack)
+# The Curse of Alduin: install the party's new mods (plan.json from modplan.py) at full disk speed.
+#  - moves the Party Pack from Downloads to D:\The Curse of Alduin - Party Pack (room for the bigger pack)
 #  - each archive is unpacked with Windows' own tar.exe, its planned files copied into the Party Pack
 #    (files\Mods\Data for what every player needs, files\Graphics\Data for looks) and into the game's Data
 # Progress: D:\un_tmp\un_mods.log
@@ -9,14 +9,14 @@ $game = Split-Path -Parent $here                       # ...\Skyrim Special Edit
 $gameData = Join-Path $game 'Data'
 $dl = Join-Path $env:USERPROFILE 'Downloads'
 $tmp = 'D:\un_tmp'
-$pack = 'D:\Undying Nights - Party Pack'
+$pack = 'D:\The Curse of Alduin - Party Pack'
 New-Item -ItemType Directory -Force $tmp | Out-Null
 $log = Join-Path $tmp 'un_mods.log'
 function Log($m) { $line = "$(Get-Date -Format HH:mm:ss) $m"; Add-Content -Path $log -Value $line; Write-Host $line }
 Log "=== start"
 
 # the Party Pack moves to D: (its zip is rebuilt there afterwards)
-$oldPack = Join-Path $dl 'Undying Nights - Party Pack'
+$oldPack = Join-Path $dl 'The Curse of Alduin - Party Pack'
 if ((Test-Path $oldPack) -and -not (Test-Path (Join-Path $pack 'files'))) {
     Log "moving the Party Pack to $pack"
     robocopy $oldPack $pack /E /MOVE /R:1 /W:1 /NFL /NDL /NJH /NJS /NP | Out-Null

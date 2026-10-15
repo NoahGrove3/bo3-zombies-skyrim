@@ -6,7 +6,7 @@ namespace bo3z
 {
 	inline constexpr auto kVersion = "0.2.0";
 
-	// Forms read from the player's own Skyrim and from BO3Zombies.esp.
+	// Forms read from the player's own Skyrim and from CurseOfAlduin.esp.
 	namespace Forms
 	{
 		bool                 Resolve();  // after data loaded
@@ -30,7 +30,7 @@ namespace bo3z
 		inline gen::Sound    Brew(int a_perk) { return static_cast<gen::Sound>(static_cast<int>(gen::Sound::brew_trollshide) + a_perk); }
 	}
 
-	// Plugins.txt: make sure BO3Zombies.esp is enabled (called from DllMain, before the game reads it).
+	// Plugins.txt: make sure CurseOfAlduin.esp is enabled (called from DllMain, before the game reads it).
 	namespace PluginList
 	{
 		void Ensure();
@@ -176,7 +176,7 @@ namespace bo3z
 		void  Assign(RE::Actor* a_actor, Type a_type);
 		void  Forget(RE::Actor* a_actor);
 		void  CueFor(RE::Actor* a_actor, int a_cue, float a_seconds);
-		void  SetEyes(RE::Actor* a_actor, std::string_view a_id);  // its glowing eyes (meshes/UndyingNights/eyes/<id>_glow.nif)
+		void  SetEyes(RE::Actor* a_actor, std::string_view a_id);  // its glowing eyes (meshes/CurseOfAlduin/eyes/<id>_glow.nif)
 		Type  Roll(int a_round);         // which of the risen dead this one is
 		float SpeedMult(Type a_type);
 		float HealthMult(Type a_type);
@@ -257,7 +257,7 @@ namespace bo3z
 		void               SetLevels(const std::vector<std::uint8_t>& a_levels);
 	}
 
-	// The player's settings (UndyingNights.ini [Settings]; the panel in the System menu)
+	// The player's settings (CurseOfAlduin.ini [Settings]; the panel in the System menu)
 	namespace Settings
 	{
 		inline constexpr float kFovMin = 60.0f, kFovMax = 130.0f;
@@ -309,7 +309,7 @@ namespace bo3z
 		void Forget(std::uint64_t a_who);
 	}
 
-	// Co-op with Skyrim Together (UndyingNights.ini: Role=host|client|solo)
+	// Co-op with Skyrim Together (CurseOfAlduin.ini: Role=host|client|solo)
 	namespace Coop
 	{
 		enum class Role { Solo, Host, Client };
@@ -506,7 +506,7 @@ namespace bo3z
 			float       objX{ 0 }, objY{ 0 }, objDist{ 0 };
 			std::string objLabel;
 			float       objAng{ 0 };  // the objective's bearing from you (radians, 0 north, clockwise)
-			// the compass (Undying Nights' own, over Skyrim's hidden one): which way you face, and what lies around you
+			// the compass (The Curse of Alduin's own, over Skyrim's hidden one): which way you face, and what lies around you
 			struct CompassMark { float ang, dist; int kind; std::string label; };  // kind: 1 rite, 2 shrine, 3 city, 4 town, 5 dungeon, 6 place, 7 friend, 8 undead, 9 boss
 			bool        compassOn{ false };
 			float       heading{ 0 };
@@ -537,7 +537,7 @@ namespace bo3z
 		void        OnMouseMove(float a_dx, float a_dy);  // raw mouse movement (the menu cursor never sticks)
 		void        OnMenuButton(const RE::ButtonEvent* a_b);  // main menu: pad / arrow keys over our words
 		void        DevMenuPick(const std::string& a_text);  // dev: press a main-menu word
-		void        IntroStart();             // the Undying Nights intro film (once, for a new character)
+		void        IntroStart();             // the Curse of Alduin intro film (once, for a new character)
 		bool        IntroActive();
 		bool        IntroBusy();
 		void        DevMain(int a_index);              // DevTools: press a main-list entry

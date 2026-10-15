@@ -1,12 +1,12 @@
-"""Undying Nights in Skyrim's Mod Configuration menu (SkyUI + MCM Helper), and its Experience file.
+"""The Curse of Alduin in Skyrim's Mod Configuration menu (SkyUI + MCM Helper), and its Experience file.
 
     python tools/mcm.py <Data dir>
 
 writes
-    MCM/Config/BO3Zombies/config.json     the pages (MCM Helper format)
-    MCM/Config/BO3Zombies/settings.ini    the defaults (MCM Helper keeps the player's own in MCM/Settings/BO3Zombies.ini)
-    Scripts/UndyingNights_MCM.pex            the page's script: a bare MCM_ConfigBase (assets/mcm, made by tools/pexrename.py)
-    SKSE/Plugins/Experience/Actors/UndyingNights.ini   the night's dead give a quarter of Experience's usual XP
+    MCM/Config/CurseOfAlduin/config.json     the pages (MCM Helper format)
+    MCM/Config/CurseOfAlduin/settings.ini    the defaults (MCM Helper keeps the player's own in MCM/Settings/CurseOfAlduin.ini)
+    Scripts/CurseOfAlduin_MCM.pex            the page's script: a bare MCM_ConfigBase (assets/mcm, made by tools/pexrename.py)
+    SKSE/Plugins/Experience/Actors/CurseOfAlduin.ini   the night's dead give a quarter of Experience's usual XP
 
 The game reads the same ini (src/Settings.cpp); the quest that registers the page is in the plugin (tools/gen_esp.py).
 Mods without a menu of their own (QuickLoot, Character Menu) get a page here; their files are written when the game
@@ -39,7 +39,7 @@ def text(t, help=''):
 
 
 PAGES = [
-    {'pageDisplayName': 'Undying Nights', 'cursorFillMode': 'topToBottom', 'content': [
+    {'pageDisplayName': 'The Curse of Alduin', 'cursorFillMode': 'topToBottom', 'content': [
         header('View'),
         slider('fFovFirst:General', 'First-person field of view', 'How wide you see in first person (degrees).', 60, 130, 1, '{0}'),
         slider('fFovThird:General', 'Third-person field of view', 'How wide you see in third person (degrees).', 60, 130, 1, '{0}'),
@@ -52,7 +52,7 @@ PAGES = [
         slider('fUndeadDamage:Difficulty', 'Undead damage', 'On top of Skyrim\'s difficulty: how hard the night\'s dead hit you.', 0.25, 3.0, 0.05, '{2}x'),
     ], 'position': 0},
     {'pageDisplayName': 'Keys', 'cursorFillMode': 'topToBottom', 'content': [
-        header('Shrine of the Dirge'),
+        header('Echo Altar'),
         key('iShrineRoll:Keys', 'Roll the Coffer', 'Spin the shrine for a spell (or take the one it offers).'),
         key('iShrineReforge:Keys', 'Reforge', 'Reforge the spell in your hand.'),
         key('iShrineBless:Keys', 'Take a blessing', 'Buy the chosen blessing.'),
@@ -90,10 +90,10 @@ XP = {'zombie': 1, 'hollow2': 1, 'hollow3': 1, 'ash1': 1, 'ash2': 1, 'runner': 1
 
 
 def main():
-    cfg = OUT / 'MCM' / 'Config' / 'BO3Zombies'   # (MCM Helper names a mod's folder after its plugin)
+    cfg = OUT / 'MCM' / 'Config' / 'CurseOfAlduin'   # (MCM Helper names a mod's folder after its plugin)
     cfg.mkdir(parents=True, exist_ok=True)
     pages = [{k: v for k, v in p.items() if k != 'position'} for p in PAGES]
-    (cfg / 'config.json').write_text(json.dumps({'modName': 'BO3Zombies', 'displayName': 'Undying Nights', 'minMcmVersion': 9,
+    (cfg / 'config.json').write_text(json.dumps({'modName': 'CurseOfAlduin', 'displayName': 'The Curse of Alduin', 'minMcmVersion': 9,
                                                  'cursorFillMode': 'topToBottom', 'pages': pages}, indent=2))
     ini = []
     for sec, vals in DEFAULTS.items():
@@ -102,17 +102,17 @@ def main():
         ini.append('')
     (cfg / 'settings.ini').write_text('\n'.join(ini))
     (OUT / 'Scripts').mkdir(parents=True, exist_ok=True)
-    shutil.copy(ROOT / 'assets' / 'mcm' / 'Scripts' / 'UndyingNights_MCM.pex', OUT / 'Scripts' / 'UndyingNights_MCM.pex')
+    shutil.copy(ROOT / 'assets' / 'mcm' / 'Scripts' / 'CurseOfAlduin_MCM.pex', OUT / 'Scripts' / 'CurseOfAlduin_MCM.pex')
     rows = json.load(open(ROOT / 'sheets' / 'enemies.json'))['rows']
     by = {}
     for r in rows:
-        if r['plugin'] != 'BO3Zombies.esp' and r['id'] in XP:
+        if r['plugin'] != 'CurseOfAlduin.esp' and r['id'] in XP:
             by.setdefault(r['plugin'], []).append(f"; {r['label']} ({r['id']})\n{int(r['localId'], 16):08X} = {XP[r['id']]}")
     exp = OUT / 'SKSE' / 'Plugins' / 'Experience' / 'Actors'
     exp.mkdir(parents=True, exist_ok=True)
-    (exp / 'UndyingNights.ini').write_text('; Undying Nights: the night\'s dead give a quarter of the usual XP (tools/mcm.py)\n' +
+    (exp / 'CurseOfAlduin.ini').write_text('; The Curse of Alduin: the night\'s dead give a quarter of the usual XP (tools/mcm.py)\n' +
                                            '\n'.join(f'[{p}]\n' + '\n'.join(v) + '\n' for p, v in by.items()))
-    print('mcm: wrote', cfg, 'and', exp / 'UndyingNights.ini')
+    print('mcm: wrote', cfg, 'and', exp / 'CurseOfAlduin.ini')
 
 
 main()

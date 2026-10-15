@@ -333,7 +333,7 @@ namespace bo3z
 			}
 		}
 
-		// The city's shout (sheet: shouts): what freeing it earns, claimed at the Shrine of the Dirge.
+		// The city's shout (sheet: shouts): what freeing it earns, claimed at the Echo Altar.
 		int ShoutOf(int a_town)
 		{
 			for (int i = 0; i < static_cast<int>(gen::kShouts.size()); ++i) {
@@ -354,7 +354,7 @@ namespace bo3z
 			return -1;
 		}
 
-		// The relic hangs turning over the Shrine of the Dirge once the city is freed.
+		// The relic hangs turning over the Echo Altar once the city is freed.
 		std::unordered_map<int, RE::ObjectRefHandle> g_relicShow;
 		float                                         g_relicTimer = 0;
 		void TickRelicShow(RE::PlayerCharacter* a_player, float a_delta)
@@ -406,7 +406,7 @@ namespace bo3z
 			Audio::FreedMusic();
 			std::string text = Fill(gen::kCurseLiftedBanner, a_town);
 			if (const int sh = ShoutOf(a_town); sh >= 0) {
-				// its shout waits on the Shrine of the Dirge at the station (nothing is forced into your hands)
+				// its shout waits on the Echo Altar at the station (nothing is forced into your hands)
 				text += " - its Thu'um, " + std::string(gen::kShouts[sh].label) + ", waits at the city's shrine (" + Settings::KeyName(3) + " in its menu)";
 			}
 			Note(text, 10.0f);

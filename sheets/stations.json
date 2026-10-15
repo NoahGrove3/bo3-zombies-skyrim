@@ -1,6 +1,6 @@
 {
   "sheet": "stations",
-  "about": "Where each town's Undying Nights station stands: inside the walled cities (their own worldspaces: the market or main square) and in the heart of each town. Picked offline from Skyrim.esm's navmesh (spots2.py: open ground where paths meet, at least 2-3 m clear of any building or prop all round, near level out to 3 m; the whole compacted stand and its approach on walkable, near-level ground, clear of doors), then checked in game. x, y, z in the worldspace; yawDeg turns the stand (its front, where you walk up, faces local -y); compact shrinks the stand's layout to fit city streets. The world-map icon of a walled city stays at its gate outside.",
+  "about": "Where each town's The Curse of Alduin station stands: inside the walled cities (their own worldspaces: the market or main square) and in the heart of each town. Picked offline from Skyrim.esm's navmesh (spots2.py: open ground where paths meet, at least 2-3 m clear of any building or prop all round, near level out to 3 m; the whole compacted stand and its approach on walkable, near-level ground, clear of doors), then checked in game. x, y, z in the worldspace; yawDeg turns the stand (its front, where you walk up, faces local -y); compact shrinks the stand's layout to fit city streets. The world-map icon of a walled city stays at its gate outside.",
   "columns": [
     "id",
     "town",

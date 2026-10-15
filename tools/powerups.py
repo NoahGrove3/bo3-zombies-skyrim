@@ -62,7 +62,7 @@ def write(kind, parts):
             ec = ','.join(f'{c / 255:.3f}' for c in col)
             mats.append(f'mat {name} diffuse={d} normal={flat_n} glow={g} emit={ec} emitmult={3.0 if role == "gem" else 2.0} spec=1.5 gloss=150 doublesided=1' + (' alpha=add' if role == 'glow_add' else ''))
     obj.write_text('\n'.join(lines) + '\n'); (work / f'{kind}.mtl').write_text(''.join(mtl))
-    nif = S.OUT / 'Meshes' / 'UndyingNights' / 'powerup' / f'{kind}.nif'; nif.parent.mkdir(parents=True, exist_ok=True)
+    nif = S.OUT / 'Meshes' / 'CurseOfAlduin' / 'powerup' / f'{kind}.nif'; nif.parent.mkdir(parents=True, exist_ok=True)
     jf = work / f'{kind}.job'; jf.write_text('\n'.join([f'in {obj}', f'out {nif}', 'origin 1', *mats]) + '\n')
     r = subprocess.run([S.CONV, str(jf)], capture_output=True, text=True)
     if r.returncode:

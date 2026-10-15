@@ -47,7 +47,7 @@ namespace Spellcraft
 	{
 		static std::unordered_map<std::string, RE::NiPointer<RE::NiNode>> cache;
 		static std::unordered_map<std::string, bool> missing;
-		const std::string path = "UndyingNights\\fx\\" + std::string(a_id) + "_" + a_part + ".nif";
+		const std::string path = "CurseOfAlduin\\fx\\" + std::string(a_id) + "_" + a_part + ".nif";
 		if (missing.contains(path)) {
 			return {};
 		}

@@ -1,4 +1,4 @@
-"""Undying Nights spell emblems for the ten spells (sheet: spellcraft): a forged iron medallion with the spell's sigil
+"""The Curse of Alduin spell emblems for the ten spells (sheet: spellcraft): a forged iron medallion with the spell's sigil
 burning in its colour (the HUD dock and the shrine's roll use these; the HUD lays a living flame aura round it from
 flame_ring.png, tools/flameaura.py).
 

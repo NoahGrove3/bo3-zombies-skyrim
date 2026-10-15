@@ -540,7 +540,7 @@ namespace bo3z
 			static std::unordered_map<std::string, RE::NiPointer<RE::NiNode>> cache;
 			auto& c = cache[e.id];
 			if (!c) {
-				const std::string path = "UndyingNights\\eyes\\" + e.id + "_glow.nif";
+				const std::string path = "CurseOfAlduin\\eyes\\" + e.id + "_glow.nif";
 				RE::BSModelDB::DBTraits::ArgsType args{};
 				if (RE::BSModelDB::Demand(path.c_str(), c, args) != RE::BSResource::ErrorCode::kNone || !c) {
 					c.reset();

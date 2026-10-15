@@ -1,20 +1,20 @@
-base assets/fx/Meshes/UndyingNights/shrine/crystal.nif
-out assets/fx/Meshes/UndyingNights/shrine/crystal.nif
-shape orbswirl tex=UndyingNights\stand\orb_swirl.dds color=1,1,1,1 scale=1.3 blend=add billboard=2 flip=16x8 fps=24 phase=0
+base assets/fx/Meshes/CurseOfAlduin/shrine/crystal.nif
+out assets/fx/Meshes/CurseOfAlduin/shrine/crystal.nif
+shape orbswirl tex=CurseOfAlduin\stand\orb_swirl.dds color=1,1,1,1 scale=1.3 blend=add billboard=2 flip=16x8 fps=24 phase=0
 v -22.440 22.440 23.500 0 0
 v 22.440 22.440 23.500 0.0625 0
 v 22.440 -22.440 23.500 0.0625 0.125
 v -22.440 -22.440 23.500 0 0.125
 t 0 1 2
 t 0 2 3
-shape aura0 tex=UndyingNights\stand\aura_fire.dds color=1.0,1.0,1.0,1.0 scale=1.5 blend=add billboard=2 flip=16x8 fps=24 phase=0.0
+shape aura0 tex=CurseOfAlduin\stand\aura_fire.dds color=1.0,1.0,1.0,1.0 scale=1.5 blend=add billboard=2 flip=16x8 fps=24 phase=0.0
 v -61.111 79.444 10.000 0 0
 v 61.111 79.444 10.000 0.0625 0
 v 61.111 -42.778 10.000 0.0625 0.125
 v -61.111 -42.778 10.000 0 0.125
 t 0 1 2
 t 0 2 3
-shape aura1 tex=UndyingNights\stand\aura_fire.dds color=0.85,0.75,1.0,0.5 scale=1.2 blend=add billboard=2 flip=16x8 fps=24 phase=2.6
+shape aura1 tex=CurseOfAlduin\stand\aura_fire.dds color=0.85,0.75,1.0,0.5 scale=1.2 blend=add billboard=2 flip=16x8 fps=24 phase=2.6
 v -68.444 88.978 7.000 0 0
 v 68.444 88.978 7.000 0.0625 0
 v 68.444 -47.911 7.000 0.0625 0.125

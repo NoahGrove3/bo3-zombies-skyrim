@@ -1,4 +1,4 @@
-"""Build Undying Nights' meshes and textures from the source models in assets/models (not in git: third-party
+"""Build The Curse of Alduin's meshes and textures from the source models in assets/models (not in git: third-party
 files the player supplied). Textures -> DDS (Pillow), recolours per weapon element, models -> NIF via modelconv.
     python tools/assets.py <out Data dir> [only...]"""
 import colorsys, json, pathlib, subprocess, sys
@@ -10,7 +10,7 @@ SRC = ROOT / 'assets' / 'models'
 CONV = pathlib.Path('/home/claude/tools/modelconv')
 OUT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ROOT / 'build' / 'assets' / 'Data')
 ONLY = set(sys.argv[2:])
-TEX = 'UndyingNights'  # Data\Textures\UndyingNights\..., Data\Meshes\UndyingNights\...
+TEX = 'CurseOfAlduin'  # Data\Textures\CurseOfAlduin\..., Data\Meshes\CurseOfAlduin\...
 
 def load(p, size=None, mode='RGB'):
     im = Image.open(p)

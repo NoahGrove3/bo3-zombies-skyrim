@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The main menu's shrine (Noah's picture, as the game's Shrine of the Dirge): a round rune floor on a dark misty
+"""The main menu's shrine (Noah's picture, as the game's Echo Altar): a round rune floor on a dark misty
 plain, a glowing blue crystal held over it in a ring of floating broken rock. The game animates it (src/Hud.cpp,
 DrawMenu): the crystal turns (a sheet of frames) and pulses, the rocks float round it, the runes breathe.
 

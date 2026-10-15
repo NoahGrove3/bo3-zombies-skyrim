@@ -1,18 +1,18 @@
 in assets/shrine/shards.obj
-out assets/fx/Meshes/UndyingNights/shrine/shards.nif
-mat shard00 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard01 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard02 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard03 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard04 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard05 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard06 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard07 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard08 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard09 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard10 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard11 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard12 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard13 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard14 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
-mat shard15 diffuse=UndyingNights\stand\shrock_d.dds normal=UndyingNights\stand\shrock_n.dds glow=UndyingNights\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+out assets/fx/Meshes/CurseOfAlduin/shrine/shards.nif
+mat shard00 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard01 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard02 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard03 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard04 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard05 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard06 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard07 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard08 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard09 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard10 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard11 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard12 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard13 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard14 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1
+mat shard15 diffuse=CurseOfAlduin\stand\shrock_d.dds normal=CurseOfAlduin\stand\shrock_n.dds glow=CurseOfAlduin\stand\shrock_g.dds emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1

@@ -1,4 +1,4 @@
-"""Undying Nights SFX: cuts the supplied sound library into game-ready clips (sheet: sfx).
+"""The Curse of Alduin SFX: cuts the supplied sound library into game-ready clips (sheet: sfx).
 
     python tools/sfx.py scan  <library dir>              list every file's takes (non-silent stretches)
     python tools/sfx.py build <library dir> <out dir>    write every clip in sheets/sfx.json as 16-bit PCM WAV

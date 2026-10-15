@@ -1,4 +1,4 @@
-"""Undying Nights: the ten spells' visuals, built from scratch (sheet: the SPELLS table below; used by src/Spellcraft.cpp).
+"""The Curse of Alduin: the ten spells' visuals, built from scratch (sheet: the SPELLS table below; used by src/Spellcraft.cpp).
 
     python tools/spellfx.py <out Data dir>
 
@@ -8,7 +8,7 @@ Per spell (all unlit additive effect meshes written with tools/modelconv/fxwrite
   fx/<id>_beam.nif    a beam segment 64 units long along +Y (the code lays them end to end): lances, lightning arcs
   fx/<id>_hand.nif    the glow round one hand (left-click charge, idle)
   fx/<id>_burst.nif   an impact: flash, ring and shards (scaled and faded by the code)
-Textures go to Textures/UndyingNights/fx/. The spell colours are the single source the code and the HUD use too.
+Textures go to Textures/CurseOfAlduin/fx/. The spell colours are the single source the code and the HUD use too.
 """
 import json, math, pathlib, subprocess, sys
 import numpy as np
@@ -20,9 +20,9 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 def _hex(h): return tuple(int(h[k:k + 2], 16) / 255.0 for k in (0, 2, 4))
 SPELLS = [(r['id'], r['name'], _hex(r['color']), _hex(r['accent']), r['style']) for r in json.load(open(ROOT / 'sheets' / 'spellcraft.json'))['rows']]
-TEX = OUT / 'Textures' / 'UndyingNights' / 'fx'
-MESH = OUT / 'Meshes' / 'UndyingNights' / 'fx'
-TPATH = 'UndyingNights\\fx\\'
+TEX = OUT / 'Textures' / 'CurseOfAlduin' / 'fx'
+MESH = OUT / 'Meshes' / 'CurseOfAlduin' / 'fx'
+TPATH = 'CurseOfAlduin\\fx\\'
 
 
 # ----------------------------------------------------------------------------------------------------- textures

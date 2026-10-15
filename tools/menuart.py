@@ -1,4 +1,4 @@
-"""Undying Nights main menu art (Spec 13): layered, original, procedural. Writes RGBA layers the HUD animates with
+"""The Curse of Alduin main menu art (Spec 13): layered, original, procedural. Writes RGBA layers the HUD animates with
 parallax, drifting fog, flickering fire, pulsing runes, embers and restrained lightning.
 
     python tools/menuart.py <out dir> [width]
@@ -6,7 +6,7 @@ parallax, drifting fog, flickering fire, pulsing runes, embers and restrained li
 Layers (all the same size, 6% larger than the screen so parallax never shows an edge):
   menu_sky.png    night sky: cold blue-black, stars, the blood moon, clouds lit at the rims      (opaque)
   menu_far.png    distant mountains in moonlit haze, a ruined watchtower                        (alpha)
-  menu_mid.png    the Shrine of the Dirge in ruins: dais, rune-stone and cradle, broken arches  (alpha)
+  menu_mid.png    the Echo Altar in ruins: dais, rune-stone and cradle, broken arches  (alpha)
   menu_near.png   foreground: a dead tree, barrow stones, an iron fence, the risen walking in    (alpha)
   menu_title.png  the title treatment (cut iron and bone, a cold rim, a blood under-glow)       (alpha)
 Feature positions the HUD animates (normalised to the layer): see FEATURES below (kept in step with Hud.cpp).
@@ -130,7 +130,7 @@ far.rgb = far.rgb + fog[..., None] * C('#1e2838') * 0.7
 far.a = np.clip(far.a + fog * 0.35, 0, 1)
 far.save('menu_far.png')
 
-# ================================================================ mid: the Shrine of the Dirge, in ruins
+# ================================================================ mid: the Echo Altar, in ruins
 mid = Layer()
 ox, oy = ORB
 cx, cy, rx, ry = RING
@@ -242,7 +242,10 @@ def spaced(d, text, font, cy, track, fill, w=TW):
     widths = [font.getlength(c) for c in text]; tot = sum(widths) + track * (len(text) - 1); x = (w - tot) / 2
     for c, cw in zip(text, widths):
         d.text((x, cy), c, font=font, fill=fill, anchor='lm'); x += cw + track
-m = Image.new('L', (TW, TH), 0); spaced(ImageDraw.Draw(m), 'UNDYING NIGHTS', fT, 190 * k, 30 * k, 255)
+TITLE = 'THE CURSE OF ALDUIN'
+while sum(fT.getlength(c) for c in TITLE) + 30 * k * (len(TITLE) - 1) > TW * 0.94:  # (a long name: the letters shrink to fit)
+    fT = ImageFont.truetype(str(FONTS / 'Cinzel-Bold.ttf'), int(fT.size * 0.96))
+m = Image.new('L', (TW, TH), 0); spaced(ImageDraw.Draw(m), TITLE, fT, 190 * k, 30 * k, 255)
 ma = np.asarray(m, np.float32) / 255
 ty_, tx_ = np.mgrid[0:TH, 0:TW].astype(np.float32)
 grad = np.clip((ty_ - 70 * k) / (240 * k), 0, 1)[..., None]

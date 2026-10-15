@@ -17,7 +17,7 @@ namespace bo3z
 			return a_player->GetLevel() <= 1 && days < 2.0f;
 		}
 
-		// Survival Mode stays off in Undying Nights: hunger/cold/fatigue fight the nights' own pacing, and its attribute
+		// Survival Mode stays off in The Curse of Alduin: hunger/cold/fatigue fight the nights' own pacing, and its attribute
 		// penalties (it keeps them in Variable02-04) fought the mod's old save values. When the game has it on (the
 		// Gameplay setting, or a new game's prompt) we switch it off the way its own toggle does.
 		void KeepSurvivalOff()

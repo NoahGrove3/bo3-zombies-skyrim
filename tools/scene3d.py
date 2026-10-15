@@ -1,4 +1,4 @@
-"""scene3d: a small offline renderer for Undying Nights art (the menu picture): our own skinned NIF characters posed on
+"""scene3d: a small offline renderer for The Curse of Alduin art (the menu picture): our own skinned NIF characters posed on
 the draugr skeleton by hand (world-axis turns at the joints, linear-blend skinning), procedural meshes (ground, rocks,
 stones), a perspective camera, a deferred numpy rasteriser (depth, normal, albedo, emission), normal maps, a moon key
 light with rim, a cold sky fill, shadow map, depth and height fog.

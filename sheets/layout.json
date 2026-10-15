@@ -1,6 +1,6 @@
 {
   "sheet": "layout",
-  "about": "Station stand (tools/stand.py): an open eight-sided dais you walk up to from every side, a rune-stone at its heart. The Coffer, the Atronach Reforge, the Brew Machine and the Shrine of the Dirge stand round the stone, backs to it, each facing out to its own side (faceDeg). The stand itself is dressing on the Coffer (dressing.stand). Positions relative to the dais centre; the old wall-buy slots are retired.",
+  "about": "Station stand (tools/stand.py): an open eight-sided dais you walk up to from every side, a rune-stone at its heart. The Coffer, the Atronach Reforge, the Brew Machine and the Echo Altar stand round the stone, backs to it, each facing out to its own side (faceDeg). The stand itself is dressing on the Coffer (dressing.stand). Positions relative to the dais centre; the old wall-buy slots are retired.",
   "columns": [
     "id",
     "x",

@@ -1,5 +1,5 @@
-"""Undying Nights: every sound in the mode is composed and synthesized here, from nothing.
-Writes 16-bit mono WAVs to <out>/fx/UndyingNights/<id>.wav (Skyrim loads them from Data/Sound/).
+"""The Curse of Alduin: every sound in the mode is composed and synthesized here, from nothing.
+Writes 16-bit mono WAVs to <out>/fx/CurseOfAlduin/<id>.wav (Skyrim loads them from Data/Sound/).
 Deterministic: same code, same files.   python tools/synth.py <out_dir>"""
 import sys, wave, pathlib
 import numpy as np
@@ -723,7 +723,7 @@ def write(path, x):
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes(pcm.tobytes())
 
 if __name__ == '__main__':
-    out = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else 'build/sound') / 'fx' / 'UndyingNights'
+    out = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else 'build/sound') / 'fx' / 'CurseOfAlduin'
     out.mkdir(parents=True, exist_ok=True)
     only = set(sys.argv[2:])
     for name, fn in SOUNDS.items():

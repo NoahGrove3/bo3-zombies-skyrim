@@ -118,7 +118,7 @@ def write(sid, parts, glow):
             d = S.save_dds(dif, f'{sid}_{name}_d.dds'); n = S.save_dds(nm, f'{sid}_{name}_n.dds', alpha=True)
             mats.append(f'mat {name} diffuse={d} normal={n} spec={1.4 if role == "metal" else 0.9} gloss={90 if role == "metal" else 60} doublesided=1')
     obj.write_text('\n'.join(lines) + '\n'); (work / f'{sid}.mtl').write_text(''.join(mtl))
-    nif = S.OUT / 'Meshes' / 'UndyingNights' / 'staff' / f'{sid}.nif'; nif.parent.mkdir(parents=True, exist_ok=True)
+    nif = S.OUT / 'Meshes' / 'CurseOfAlduin' / 'staff' / f'{sid}.nif'; nif.parent.mkdir(parents=True, exist_ok=True)
     job = [f'in {obj}', f'out {nif}', 'origin 1', 'prn WeaponStaff', *mats]
     jf = work / f'{sid}.job'; jf.write_text('\n'.join(job) + '\n')
     r = subprocess.run([S.CONV, str(jf)], capture_output=True, text=True)

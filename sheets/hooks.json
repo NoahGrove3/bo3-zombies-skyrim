@@ -14,7 +14,7 @@
   {
    "id": "asi_entry",
    "kind": "DllMain",
-   "target": "UndyingNights.asi",
+   "target": "CurseOfAlduin.asi",
    "calls": "system:boot",
    "thread": "loader",
    "source": "Melty game_info note (SkyCraft 0.1.2 on 1.7.104)",

@@ -1,4 +1,4 @@
-"""The Shrine of the Dirge (Noah's picture): a round platform of dark stone engraved with rings of the curse's runes
+"""The Echo Altar (Noah's picture): a round platform of dark stone engraved with rings of the curse's runes
 glowing blue, and above it a crystal held in a slow ring of broken, floating rock shards with blue light in their
 cracks. Three models, so the middle can move:
     shrine.nif    the platform (walkable, collision), its rune rings and the pool of light at its heart
@@ -347,7 +347,7 @@ def convert(name, extra_job, mats):
     work.mkdir(parents=True, exist_ok=True)
     obj = work / f'{name}.obj'
     S.write_obj(obj)
-    out = OUT / 'Meshes' / 'UndyingNights' / 'shrine' / f'{name}.nif'
+    out = OUT / 'Meshes' / 'CurseOfAlduin' / 'shrine' / f'{name}.nif'
     out.parent.mkdir(parents=True, exist_ok=True)
     job = [f'in {obj}', f'out {out}'] + extra_job + [m for m in mats if m.split()[1] in S.parts]
     jf = work / f'{name}.job'
@@ -381,7 +381,7 @@ def main():
     rock_tex = f'diffuse={S.save(rkd, "shrock_d.dds", mips=True)} normal={S.save(rkn, "shrock_n.dds", True, mips=True)} glow={S.save(rkg, "shrock_g.dds", mips=True)} emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1'
     convert('shards', [], [f'mat shard{i:02d} {rock_tex}' for i in range(16)])
     # each rock sways on its own as the ring turns, and the runes cut in them breathe blue light
-    shards_nif = OUT / 'Meshes' / 'UndyingNights' / 'shrine' / 'shards.nif'
+    shards_nif = OUT / 'Meshes' / 'CurseOfAlduin' / 'shrine' / 'shards.nif'
     jf = OUT.parent / 'shrine' / 'shards_anim.job'
     jf.write_text(f'in {shards_nif}\nout {shards_nif}\nsway shard 4.5 5.5 7\npulse shard 0.25 3.2 2.6\n')
     r = subprocess.run(['/home/claude/tools/nifanim', str(jf)], capture_output=True, text=True)
@@ -394,9 +394,9 @@ def main():
     fire = OUT.parent / 'shrine' / 'magicfire.png'
     subprocess.run([sys.executable, str(pathlib.Path(__file__).parent / 'magicfire.py'), str(fire)], check=True)
     subprocess.run([sys.executable, str(pathlib.Path(__file__).parent / 'orbfx.py'), str(fire.parent)], check=True)
-    aura(OUT / 'Meshes' / 'UndyingNights' / 'shrine' / 'crystal.nif', S.save(Image.open(fire).convert('RGBA'), 'aura_fire.dds', True, mips=True),
+    aura(OUT / 'Meshes' / 'CurseOfAlduin' / 'shrine' / 'crystal.nif', S.save(Image.open(fire).convert('RGBA'), 'aura_fire.dds', True, mips=True),
          S.save(Image.open(fire.parent / 'orb_swirl.png').convert('RGBA'), 'orb_swirl.dds', True, mips=True))
-    motes(OUT / 'Meshes' / 'UndyingNights' / 'shrine' / 'shrine.nif', S.save(Image.open(fire.parent / 'motes.png').convert('RGBA'), 'shrine_motes.dds', True, mips=True))
+    motes(OUT / 'Meshes' / 'CurseOfAlduin' / 'shrine' / 'shrine.nif', S.save(Image.open(fire.parent / 'motes.png').convert('RGBA'), 'shrine_motes.dds', True, mips=True))
     print('crystal centre at z', CRYSTAL_Z)
 
 

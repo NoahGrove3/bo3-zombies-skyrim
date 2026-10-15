@@ -1,25 +1,25 @@
-UNDYING NIGHTS - PARTY PACK
+THE CURSE OF ALDUIN - PARTY PACK
 ===========================
 
 You need: Skyrim Special Edition or Anniversary Edition on Steam, updated, started once. Both players need
-this SAME pack (an older pack loads an older Undying Nights, or none at all).
+this SAME pack (an older pack loads an older The Curse of Alduin, or none at all).
 
 ONE-TIME SETUP (both players)
  1. Close Skyrim.
  2. Unzip this pack anywhere (Desktop is fine) and double-click  JOIN THE PARTY.bat
     (the host - Noah - runs  HOST THE PARTY (Noah only).bat  instead).
     If Windows says "Windows protected your PC": More info > Run anyway.
- 3. It finds Skyrim, installs Undying Nights + Skyrim Together Reborn + the party mods (below), turns the
-    plugins on and puts "Undying Nights Co-op" on your desktop.
+ 3. It finds Skyrim, installs The Curse of Alduin + Skyrim Together Reborn + the party mods (below), turns the
+    plugins on and puts "The Curse of Alduin Co-op" on your desktop.
 
 EVERY TIME YOU PLAY
- 1. Start the game with the "Undying Nights Co-op" desktop shortcut. NOT the Steam Play button, not the
+ 1. Start the game with the "The Curse of Alduin Co-op" desktop shortcut. NOT the Steam Play button, not the
     Skyrim launcher - those start Skyrim without Skyrim Together, so you can't see each other.
- 2. Wait for the Undying Nights main menu (the floating shrine, with CO-OP PARTY in its list). If you see the normal Skyrim menu,
+ 2. Wait for the Curse of Alduin main menu (the floating shrine, with CO-OP PARTY in its list). If you see the normal Skyrim menu,
     the mod didn't load - run the .bat again and check the Troubleshooting list below.
  3. HOST (Noah): in the main menu choose  CO-OP PARTY  (in the list on the right), then  HOST A PARTY.
     The Steam overlay opens - invite your friend.
- 4. FRIEND: stay in the Undying Nights main menu and accept the invite there - press Shift+Tab to open the
+ 4. FRIEND: stay in the Curse of Alduin main menu and accept the invite there - press Shift+Tab to open the
     Steam overlay and click Accept - or choose  CO-OP PARTY  then  JOIN <Noah's name>.
     Do not accept the invite from Steam while the game is closed: Steam would start plain Skyrim.
  5. Both: load a save or start a new character. Skyrim Together connects you by itself (no address, no
@@ -30,7 +30,7 @@ THE PARTY MODS (installed for both players - Skyrim Together needs the same plug
  - Spells the shrine's Coffer hands out (200 attack spells, Destruction first): Apocalypse, Mysticism,
    Forgotten Magic Redone, Stormcaller Magic II, Strange Runes, Bone Colossus' blue fire - plus Conduit and
    Enhanced Atronachs.
- - The night's dead (renamed for Undying Nights): The Restless Dead, Bone Colossus, Old Gods of the Hunt,
+ - The night's dead (renamed for The Curse of Alduin): The Restless Dead, Bone Colossus, Old Gods of the Hunt,
    Giants Overhaul, Foglings, Diverse Dragons Collection, High Fantasy Pack (+ Particle Lights for the undead).
  - Shrine shouts: Thunderchild (each freed city's shrine teaches one and starts its questline), Thundering
    Shouts, Goetia conditional shout animations.
@@ -61,9 +61,9 @@ THE PARTY MODS (installed for both players - Skyrim Together needs the same plug
 GOOD TO KNOW
  - A new character starts as a Spellsword: a steel sword in the right hand, Firebolt in the left. The
    shrine's Coffer teaches more spells (they land in the Magic menu); Reforge makes the one in hand stronger.
- - Settings: Esc > System > Mod Configuration > Undying Nights (field of view, townsfolk indoors at night,
+ - Settings: Esc > System > Mod Configuration > The Curse of Alduin (field of view, townsfolk indoors at night,
    difficulty, the shrine's keys) and Other mods. Skyrim's own difficulty slider now sets the night's dead too.
- - Survival Mode is switched off in Undying Nights games (hunger and cold fight the nights). - The host's game runs the nights: the horde, events and bosses. You both see and fight them.
+ - Survival Mode is switched off in The Curse of Alduin games (hunger and cold fight the nights). - The host's game runs the nights: the horde, events and bosses. You both see and fight them.
  - Points, spells, brews, Reforge levels and your city quests are kept in YOUR OWN save.
  - Going down: Skyrim Together's death system picks you back up.
  - Noah's look comes from graphics mods, and they are all in this pack (files\Graphics, about 25 GB):
@@ -77,16 +77,16 @@ GOOD TO KNOW
    Shaders' Frame Generation (turn it on in the Community Shaders menu, Home key) and Skyrim Priority.
 
 TROUBLESHOOTING
- - Normal Skyrim menu / you start on the Helgen cart: Undying Nights isn't loaded. Close Skyrim, run the
+ - Normal Skyrim menu / you start on the Helgen cart: The Curse of Alduin isn't loaded. Close Skyrim, run the
    .bat again, start from the desktop shortcut. The installer prints your Skyrim version - it must be
    current (Steam: right-click Skyrim > Properties > Updates > keep it updated).
- - Antivirus removed dinput8.dll or UndyingNights.asi from the Skyrim folder: allow them and run the .bat again.
- - Accepted the invite and nothing happened: you were not in the Undying Nights main menu, or one of you
+ - Antivirus removed dinput8.dll or CurseOfAlduin.asi from the Skyrim folder: allow them and run the .bat again.
+ - Accepted the invite and nothing happened: you were not in the Curse of Alduin main menu, or one of you
    has an older pack. Both re-run the .bat from this pack, start from the shortcut, try again.
  - Nothing loads (plain Skyrim menu, no mods): your Skyrim must be the current Steam version (1.7.104) - the
    installer says which you have. SKSE (skse64_1_7_104.dll, skse64_loader.exe) must be in the Skyrim folder;
    run the .bat again (right-click > Run as administrator if Skyrim is under Program Files).
- - Uninstall: delete UndyingNights.asi, dinput8.dll and UndyingNights.ini from the Skyrim folder and
-   Data\BO3Zombies.esp, Data\SkyrimTogetherReborn.
+ - Uninstall: delete CurseOfAlduin.asi, dinput8.dll and CurseOfAlduin.ini from the Skyrim folder and
+   Data\CurseOfAlduin.esp, Data\SkyrimTogetherReborn.
 
 Built with Claude. Fan project, not affiliated with Bethesda. Skyrim Together Reborn by Tilted Phoques.

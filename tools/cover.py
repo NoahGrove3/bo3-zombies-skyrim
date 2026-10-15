@@ -1,4 +1,4 @@
-"""Undying Nights cover art (original, procedural): a blood moon over the Shrine of the Dirge, its three alcoves
+"""The Curse of Alduin cover art (original, procedural): a blood moon over the Echo Altar, its three alcoves
 lit (Atronach Reforge, Sheogorath's Coffer, Brew Machine), the Risen climbing out of a barrow-yard, an Iron Reaper,
 and a caster who hurls an arcane lance from bare hands.   python cover.py out.png [width]"""
 import math, sys
@@ -87,7 +87,7 @@ ridge(1330, 260, 1, C('#141821'), '#2c2f3c', 0.35)
 ridge(1450, 170, 2, C('#0d1017'), '#33262a', 0.35)
 ridge(1600, 110, 4, C('#080a0f'), '#26303a', 0.40)
 
-# ---------------------------------------------------------------- the Shrine of the Dirge
+# ---------------------------------------------------------------- the Echo Altar
 SX, SB = 1920, 1790           # centre, dais top
 Wd = 1300
 def rect(x0, y0, x1, y1): return poly([(x0, y0), (x1, y0), (x1, y1), (x0, y1)])
@@ -329,7 +329,7 @@ def draw_text(layer, text, font, cy, track, fill):
     for c, cw in zip(text, widths):
         d.text((x, cy), c, font=font, fill=fill, anchor='lm'); x += cw + track
 
-title = 'UNDYING NIGHTS'
+title = 'THE CURSE OF ALDUIN'
 fT = ImageFont.truetype(FB, int(250 * kk))
 fS = ImageFont.truetype(FR, int(64 * kk))
 ty = 300 * kk

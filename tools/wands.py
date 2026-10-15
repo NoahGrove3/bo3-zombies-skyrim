@@ -1,4 +1,4 @@
-"""Undying Nights wands: procedural meshes + textures, one per wand row in sheets/weapons.json (kind = wand).
+"""The Curse of Alduin wands: procedural meshes + textures, one per wand row in sheets/weapons.json (kind = wand).
 Each wand: leather-wrapped grip, metal guard, tapered wood shaft and an element tip (style column), glowing in the
 element colour. Written as OBJ (already in Skyrim axes: +Y = tip, +Z = up, grip at the origin) and converted to NIF
 by modelconv with Prn WeaponStaff so the engine hangs it in the hand.
@@ -11,7 +11,7 @@ ROOT = pathlib.Path(__file__).parent.parent
 OUT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ROOT / 'build' / 'assets' / 'Data')
 ONLY = set(sys.argv[2:])
 CONV = '/home/claude/tools/modelconv'
-TEX = 'UndyingNights\\wand'
+TEX = 'CurseOfAlduin\\wand'
 rng = np.random.default_rng(11)
 
 # ------------------------------------------------------------------ geometry
@@ -135,7 +135,7 @@ def write_obj(mesh, path, mtl):
 # ------------------------------------------------------------------ textures
 def hexrgb(h): return tuple(int(h[i:i + 2], 16) for i in (0, 2, 4))
 def save(im, rel, alpha=False):
-    p = OUT / 'Textures' / 'UndyingNights' / 'wand' / rel; p.parent.mkdir(parents=True, exist_ok=True)
+    p = OUT / 'Textures' / 'CurseOfAlduin' / 'wand' / rel; p.parent.mkdir(parents=True, exist_ok=True)
     im.convert('RGBA' if alpha else 'RGB').save(p, pixel_format='DXT5' if alpha else 'DXT1')
     return f'{TEX}\\{rel}'
 def flat_normal(spec, size=64): return Image.new('RGBA', (size, size), (128, 128, 255, spec))
@@ -186,7 +186,7 @@ def make(w):
     obj, mtl = work / f'{wid}.obj', work / f'{wid}.mtl'
     write_obj(mesh, obj, mtl)
     e = f'{col[0]/255:.2f},{col[1]/255:.2f},{col[2]/255:.2f}'
-    out = OUT / 'Meshes' / 'UndyingNights' / 'wand' / f'wand_{wid}.nif'; out.parent.mkdir(parents=True, exist_ok=True)
+    out = OUT / 'Meshes' / 'CurseOfAlduin' / 'wand' / f'wand_{wid}.nif'; out.parent.mkdir(parents=True, exist_ok=True)
     job = [f'in {obj}', f'out {out}', 'prn WeaponStaff', 'origin 1',
            f'mat wood diffuse={t["wood"]} normal={t["n_dull"]} spec=0.2 gloss=20',
            f'mat leather diffuse={t["leather"]} normal={t["n_dull"]} spec=0.1 gloss=10',

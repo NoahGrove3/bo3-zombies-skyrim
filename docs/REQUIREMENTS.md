@@ -1,4 +1,4 @@
-# Undying Nights: requirements checklist (spec + implied sections)
+# The Curse of Alduin: requirements checklist (spec + implied sections)
 
 The build guide PDF spells out Sections 0, 0.6, 12 and 13 in full. Sections 1-11 are only referenced by them, and Noah asked
 for those to be built from scratch, so every requirement those four sections imply is listed here too.

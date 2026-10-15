@@ -1,11 +1,11 @@
 """Woodcut-style ink illustrations for "The Undying Dirge" (the lore book), drawn from nothing: dark iron-gall ink on
-transparent, so they sit on Skyrim's parchment pages. Data/Textures/UndyingNights/Book/<name>.png
+transparent, so they sit on Skyrim's parchment pages. Data/Textures/CurseOfAlduin/Book/<name>.png
     python tools/bookart.py <out Data dir> [preview.png]"""
 import math, pathlib, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
-OUT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else 'build/assets/Data') / 'Textures' / 'UndyingNights' / 'Book'
+OUT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else 'build/assets/Data') / 'Textures' / 'CurseOfAlduin' / 'Book'
 INK = (46, 30, 20)
 SS = 2  # supersampling
 rng = np.random.default_rng(11)

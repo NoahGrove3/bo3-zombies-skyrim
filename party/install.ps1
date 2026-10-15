@@ -1,11 +1,11 @@
-# Undying Nights - Party Pack installer. Installs Undying Nights and Skyrim Together Reborn into Skyrim Special Edition,
-# turns the plugins on, sets your co-op role, and puts a "Undying Nights Co-op" shortcut on the desktop.
+# The Curse of Alduin - Party Pack installer. Installs The Curse of Alduin and Skyrim Together Reborn into Skyrim Special Edition,
+# turns the plugins on, sets your co-op role, and puts a "The Curse of Alduin Co-op" shortcut on the desktop.
 param([ValidateSet('client', 'host')][string]$Role = 'client')
 $ErrorActionPreference = 'Stop'
 $pack = Split-Path -Parent $PSScriptRoot
 function Say($t, $c = 'Gray') { Write-Host $t -ForegroundColor $c }
 
-Say "`n  UNDYING NIGHTS - PARTY PACK ($Role)`n" Yellow
+Say "`n  THE CURSE OF ALDUIN - PARTY PACK ($Role)`n" Yellow
 
 # ---- find Skyrim Special Edition
 $game = $null
@@ -34,15 +34,15 @@ Say "Skyrim: $game" Green
 if (Get-Process SkyrimSE -ErrorAction SilentlyContinue) { Say "Close Skyrim first, then run this again." Red; Read-Host 'Press Enter'; exit 1 }
 $ver = (Get-Item (Join-Path $game 'SkyrimSE.exe')).VersionInfo.FileVersion
 Say "Skyrim version: $ver"
-if ($ver -notlike '1.7.104*') { Say "Undying Nights is built for Skyrim 1.7.104 (the current Steam version). Update Skyrim in Steam if it doesn't start." Yellow }
+if ($ver -notlike '1.7.104*') { Say "The Curse of Alduin is built for Skyrim 1.7.104 (the current Steam version). Update Skyrim in Steam if it doesn't start." Yellow }
 
 # ---- copy the files
 $data = Join-Path $game 'Data'
-# older packs named the game files BO3Zombies.asi / .dll: two copies must never load together
-foreach ($old in (Join-Path $game 'BO3Zombies.asi'), (Join-Path $data 'SKSE\Plugins\BO3Zombies.dll')) {
+# older packs named the game files CurseOfAlduin.asi / .dll: two copies must never load together
+foreach ($old in (Join-Path $game 'CurseOfAlduin.asi'), (Join-Path $data 'SKSE\Plugins\CurseOfAlduin.dll')) {
     if (Test-Path $old) { Remove-Item $old -Force; Say "Removed the old $(Split-Path -Leaf $old)" }
 }
-Say 'Copying Undying Nights and SKSE (Skyrim Together starts SKSE, and SKSE loads Undying Nights and the mods)...'
+Say 'Copying The Curse of Alduin and SKSE (Skyrim Together starts SKSE, and SKSE loads The Curse of Alduin and the mods)...'
 Copy-Item (Join-Path $pack 'files\Game\*') $game -Recurse -Force
 Say 'Copying Skyrim Together Reborn...'
 Copy-Item (Join-Path $pack 'files\SkyrimTogether\*') $data -Recurse -Force
@@ -57,7 +57,7 @@ if (Test-Path $mods) {
 }
 # TK Dodge's old DLLs do not run on this Skyrim and stop it starting
 foreach ($old in 'TKPlugin.dll', 'TK_Dodge_RE.dll') { $f = Join-Path $data "SKSE\Plugins\$old"; if (Test-Path $f) { Remove-Item $f -Force } }
-Say 'Copying Undying Nights data (last, so its menu art wins)...'
+Say 'Copying The Curse of Alduin data (last, so its menu art wins)...'
 Copy-Item (Join-Path $pack 'files\Data\*') $data -Recurse -Force
 
 # ---- Noah's graphics (optional, the same look as the host: weathers, lighting, roads, water, trees, grass,
@@ -74,9 +74,9 @@ if (Test-Path $gfx) {
 }
 
 # ---- co-op role
-Set-Content -Path (Join-Path $game 'UndyingNights.ini') -Value "[Coop]`r`n; host = your game raises the nights; client = you join the host's nights`r`nRole=$Role" -Encoding ASCII
+Set-Content -Path (Join-Path $game 'CurseOfAlduin.ini') -Value "[Coop]`r`n; host = your game raises the nights; client = you join the host's nights`r`nRole=$Role" -Encoding ASCII
 
-# ---- plugins on (Skyrim Together first, Undying Nights last)
+# ---- plugins on (Skyrim Together first, The Curse of Alduin last)
 $pdir = Join-Path $env:LOCALAPPDATA 'Skyrim Special Edition'
 New-Item -ItemType Directory -Force -Path $pdir | Out-Null
 $plist = Join-Path $pdir 'Plugins.txt'
@@ -105,11 +105,11 @@ $modPlugins = @('Ordinator - Perks of Skyrim.esp', 'Apocalypse - Magic of Skyrim
     'CollegeOfWinterholdImmersive.esp', 'FabFollowers_ImmCoW_Patch.esp')
 # plugins no longer used (an older pack turned them on): kept off
 $retired = @('PAN_NPCs.esp', 'Skoglendi - A Grass Mod.esp', 'Nolvus Ascension Seasonal Grass Mashup.esp')
-$ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'BO3Zombies.esp', 'UndyingNights.esp') + $basePlugins + $gfxPlugins + $modPlugins + $retired
+$ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'CurseOfAlduin.esp', 'CurseOfAlduin.esp') + $basePlugins + $gfxPlugins + $modPlugins + $retired
 $keep = $lines | Where-Object { $n = ($_ -replace '^\*', '').Trim(); -not ($ours -contains $n) }
 $mid = @()
 if ($gfxOn -or (Test-Path (Join-Path $data 'Lux Via.esp'))) { $mid = $gfxPlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ } }
-$out = @($keep | Where-Object { $_ -match '^\s*#' }) + @('*SkyrimTogether.esp', '*SkyrimTogetherQuestPatches.esp') + @($basePlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ }) + @($keep | Where-Object { $_ -notmatch '^\s*#' -and $_.Trim() }) + $mid + @($modPlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ }) + @('*BO3Zombies.esp')
+$out = @($keep | Where-Object { $_ -match '^\s*#' }) + @('*SkyrimTogether.esp', '*SkyrimTogetherQuestPatches.esp') + @($basePlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ }) + @($keep | Where-Object { $_ -notmatch '^\s*#' -and $_.Trim() }) + $mid + @($modPlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ }) + @('*CurseOfAlduin.esp')
 [IO.File]::WriteAllLines($plist, [string[]]$out)  # (no byte-order mark: Skyrim would not read the first plugin's name)
 Say 'Plugins turned on.' Green
 
@@ -121,9 +121,9 @@ $str = Join-Path $data 'SkyrimTogetherReborn'
 if ($Role -eq 'host') {
     $ini = Join-Path $str 'config\STServer.ini'
     $t = Get-Content $ini
-    $t = $t -replace '^uTimeScale=.*', 'uTimeScale=58'                              # Undying Nights' day: 15 minutes of day, 10 of night
+    $t = $t -replace '^uTimeScale=.*', 'uTimeScale=58'                              # The Curse of Alduin's day: 15 minutes of day, 10 of night
     $t = $t -replace '^sPassword=.*', ('sPassword=' + $party['Password'])
-    $t = $t -replace '^sServerName=.*', 'sServerName=Undying Nights'
+    $t = $t -replace '^sServerName=.*', 'sServerName=The Curse of Alduin'
     $t = $t -replace '^bAutoPartyJoin=.*', 'bAutoPartyJoin=true'
     $t = $t -replace '^bEnableDeathSystem=.*', 'bEnableDeathSystem=true'
     Set-Content $ini $t
@@ -132,23 +132,23 @@ if ($Role -eq 'host') {
 
 # ---- desktop shortcut
 $ws = New-Object -ComObject WScript.Shell
-$lnk = $ws.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) 'Undying Nights Co-op.lnk'))
+$lnk = $ws.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) 'The Curse of Alduin Co-op.lnk'))
 $lnk.TargetPath = Join-Path $str 'SkyrimTogether.exe'
 $lnk.WorkingDirectory = $str
 $lnk.Save()
 if ($Role -eq 'host') {
-    $lnk2 = $ws.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) 'Undying Nights Server.lnk'))
+    $lnk2 = $ws.CreateShortcut((Join-Path ([Environment]::GetFolderPath('Desktop')) 'The Curse of Alduin Server.lnk'))
     $lnk2.TargetPath = Join-Path $str 'SkyrimTogetherServer.exe'
     $lnk2.WorkingDirectory = $str
     $lnk2.Save()
 }
-if (-not (Test-Path (Join-Path $game 'skse64_1_7_104.dll'))) { Say "SKSE did not copy - Undying Nights will not load. Run this again (as administrator if Skyrim is under Program Files)." Red }
-if ($ver -notlike '1.7.104*') { Say "Your Skyrim is $ver - this pack's SKSE and Undying Nights need 1.7.104 (Steam, kept up to date). Update Skyrim in Steam, then start from the shortcut." Red }
-Say "`nDone! Shortcut 'Undying Nights Co-op' is on your desktop.`n" Yellow
+if (-not (Test-Path (Join-Path $game 'skse64_1_7_104.dll'))) { Say "SKSE did not copy - The Curse of Alduin will not load. Run this again (as administrator if Skyrim is under Program Files)." Red }
+if ($ver -notlike '1.7.104*') { Say "Your Skyrim is $ver - this pack's SKSE and The Curse of Alduin need 1.7.104 (Steam, kept up to date). Update Skyrim in Steam, then start from the shortcut." Red }
+Say "`nDone! Shortcut 'The Curse of Alduin Co-op' is on your desktop.`n" Yellow
 Say "Always start the game from that shortcut (not Steam's Play button)." Cyan
 if ($Role -eq 'host') {
-    Say "In the Undying Nights main menu: CO-OP PARTY > HOST A PARTY, then invite your friend in the Steam overlay." Cyan
+    Say "In the Curse of Alduin main menu: CO-OP PARTY > HOST A PARTY, then invite your friend in the Steam overlay." Cyan
 } else {
-    Say "Wait in the Undying Nights main menu, then accept the host's invite there (Shift+Tab) or choose CO-OP PARTY > JOIN <host>." Cyan
+    Say "Wait in the Curse of Alduin main menu, then accept the host's invite there (Shift+Tab) or choose CO-OP PARTY > JOIN <host>." Cyan
 }
 Read-Host "`nPress Enter to close"

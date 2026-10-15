@@ -15,7 +15,7 @@
     {
       "id": "zombie",
       "label": "Risen Dead",
-      "model": "UndyingNights\\zombie\\zombie.nif",
+      "model": "CurseOfAlduin\\zombie\\zombie.nif",
       "heightScale": 1.0,
       "level": 10,
       "verify": [
@@ -27,7 +27,7 @@
     {
       "id": "boss",
       "label": "Grimmvar, the Undying Wyrm",
-      "model": "UndyingNights\\boss\\boss.nif",
+      "model": "CurseOfAlduin\\boss\\boss.nif",
       "heightScale": 2.4,
       "level": 50,
       "verify": [
@@ -39,7 +39,7 @@
     {
       "id": "shadow",
       "label": "Gloomstalker",
-      "model": "UndyingNights\\shadow\\shadow.nif",
+      "model": "CurseOfAlduin\\shadow\\shadow.nif",
       "heightScale": 1.15,
       "level": 30,
       "verify": [
@@ -51,7 +51,7 @@
     {
       "id": "reaper",
       "label": "Iron Reaper",
-      "model": "UndyingNights\\reaper\\reaper.nif",
+      "model": "CurseOfAlduin\\reaper\\reaper.nif",
       "heightScale": 1.05,
       "level": 30,
       "verify": [
@@ -63,7 +63,7 @@
     {
       "id": "necro",
       "label": "Voidbound Necromancer",
-      "model": "UndyingNights\\necro\\necro.nif",
+      "model": "CurseOfAlduin\\necro\\necro.nif",
       "heightScale": 1.0,
       "level": 30,
       "verify": [
@@ -75,7 +75,7 @@
     {
       "id": "runner",
       "label": "Hollow Bride",
-      "model": "UndyingNights\\hooded\\hooded.nif",
+      "model": "CurseOfAlduin\\hooded\\hooded.nif",
       "heightScale": 1.0,
       "level": 10,
       "verify": [],
@@ -85,7 +85,7 @@
     {
       "id": "wailer",
       "label": "Drowned Wailer",
-      "model": "UndyingNights\\hag\\hag.nif",
+      "model": "CurseOfAlduin\\hag\\hag.nif",
       "heightScale": 1.0,
       "level": 15,
       "verify": [],
@@ -95,7 +95,7 @@
     {
       "id": "bloater",
       "label": "Stitched Abomination",
-      "model": "UndyingNights\\abom\\abom.nif",
+      "model": "CurseOfAlduin\\abom\\abom.nif",
       "heightScale": 1.12,
       "level": 20,
       "verify": [],
@@ -105,7 +105,7 @@
     {
       "id": "knight",
       "label": "Horned Bone Knight",
-      "model": "UndyingNights\\knight\\knight.nif",
+      "model": "CurseOfAlduin\\knight\\knight.nif",
       "heightScale": 1.08,
       "level": 35,
       "verify": [],
@@ -115,7 +115,7 @@
     {
       "id": "king",
       "label": "Barrow King",
-      "model": "UndyingNights\\king\\king.nif",
+      "model": "CurseOfAlduin\\king\\king.nif",
       "heightScale": 1.1,
       "level": 40,
       "verify": [],
@@ -125,7 +125,7 @@
     {
       "id": "lich",
       "label": "Lich of the Dirge",
-      "model": "UndyingNights\\lich\\lich.nif",
+      "model": "CurseOfAlduin\\lich\\lich.nif",
       "heightScale": 1.12,
       "level": 40,
       "verify": [],

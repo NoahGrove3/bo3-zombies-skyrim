@@ -1,6 +1,6 @@
-base assets/fx/Meshes/UndyingNights/shrine/shrine.nif
-out assets/fx/Meshes/UndyingNights/shrine/shrine.nif
-shape motes tex=UndyingNights\stand\shrine_motes.dds color=1,1,1,1 scale=1.4 blend=add billboard=2 flip=16x8 fps=24 phase=0 at=0,0,95
+base assets/fx/Meshes/CurseOfAlduin/shrine/shrine.nif
+out assets/fx/Meshes/CurseOfAlduin/shrine/shrine.nif
+shape motes tex=CurseOfAlduin\stand\shrine_motes.dds color=1,1,1,1 scale=1.4 blend=add billboard=2 flip=16x8 fps=24 phase=0 at=0,0,95
 v -40.000 80.000 0.000 0 0
 v 40.000 80.000 0.000 0.0625 0
 v 40.000 -80.000 0.000 0.0625 0.125

@@ -1,4 +1,4 @@
-"""Write data/BO3Zombies.esp (ESL-flagged) from the sheets and the template records in tools/templates.
+"""Write data/CurseOfAlduin.esp (ESL-flagged) from the sheets and the template records in tools/templates.
 Records: Perk-a-Cola magic effects (MGEF) and potions (ALCH), gun items (WEAP, stand-in crossbow models),
 and activators (ACTI) for the Mystery Box, perk machines and wall-buys."""
 import json, struct, pathlib
@@ -86,14 +86,14 @@ def arto(key, model, kind):
     recs['ARTO'].append(record('ARTO', fid('ARTO', key), [sub('EDID', z('UN_Art_' + key)), sub('OBND', struct.pack('<6h', -20, -20, -20, 20, 20, 20)),
         sub('MODL', z(model)), sub('DNAM', struct.pack('<I', kind))]))
 for r in SCRAFT.values():
-    arto('fx_' + r['id'] + '_hand', 'UndyingNights\\fx\\' + r['id'] + '_hand.nif', 0)          # magic casting art
+    arto('fx_' + r['id'] + '_hand', 'CurseOfAlduin\\fx\\' + r['id'] + '_hand.nif', 0)          # magic casting art
     recs['STAT'].append(record('STAT', fid('STAT', 'fx_' + r['id'] + '_orb'), [sub('EDID', z('UN_Orb_' + r['id'])), sub('OBND', struct.pack('<6h', -30, -30, -30, 30, 30, 30)),
-        sub('MODL', z('UndyingNights\\fx\\' + r['id'] + '_icon.nif')), sub('DNAM', struct.pack('<fI', 90.0, 0))]))  # the Magic menu shows the spell's logo
+        sub('MODL', z('CurseOfAlduin\\fx\\' + r['id'] + '_icon.nif')), sub('DNAM', struct.pack('<fI', 90.0, 0))]))  # the Magic menu shows the spell's logo
     data = bytearray(tsub('ligh', 'DATA')); c = int(r['color'], 16)
     struct.pack_into('<I', data, 4, 160); struct.pack_into('<BBBB', data, 8, c >> 16, (c >> 8) & 255, c & 255, 0)
     recs['LIGH'].append(record('LIGH', fid('LIGH', 'fx_' + r['id'] + '_light'), [sub('EDID', z('UN_SpellLight_' + r['id'])), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.0))]))
 for n in ('iceshell', 'roots', 'burn', 'poison'):
-    arto('fx_' + n, 'UndyingNights\\fx\\status_' + n + '.nif', 1)                             # magic hit effect art
+    arto('fx_' + n, 'CurseOfAlduin\\fx\\status_' + n + '.nif', 1)                             # magic hit effect art
 for w in S['weapons']['rows']:
     kind = w.get('kind', 'wand')
     if kind == 'wand':
@@ -206,9 +206,9 @@ for s in S['sounds']['rows']:
 
 # music: Grimmvar's fight and a city freed play through Skyrim's own music system (music slider, ducking, no clash
 # with the combat music: higher priority), from tracks cut out of the supplied library
-for key, edid, track, flags, prio, fade in (('boss', 'UN_MUSBoss', 'Data\\Music\\UndyingNights\\mus_boss.wav', 0x24, 1, 3.0),
-                                           ('freed', 'UN_MUSFreed', 'Data\\Music\\UndyingNights\\mus_freed.wav', 0x01, 1, 1.5),
-                                           ('intro', 'UN_MUSIntro', 'Data\\Music\\UndyingNights\\mus_intro.wav', 0x21, 1, 2.0)):
+for key, edid, track, flags, prio, fade in (('boss', 'UN_MUSBoss', 'Data\\Music\\CurseOfAlduin\\mus_boss.wav', 0x24, 1, 3.0),
+                                           ('freed', 'UN_MUSFreed', 'Data\\Music\\CurseOfAlduin\\mus_freed.wav', 0x01, 1, 1.5),
+                                           ('intro', 'UN_MUSIntro', 'Data\\Music\\CurseOfAlduin\\mus_intro.wav', 0x21, 1, 2.0)):
     recs['MUST'].append(record('MUST', fid('MUST', key), [sub('EDID', z(edid + 'Track')), sub('CNAM', struct.pack('<I', 0x6ED7E048)), sub('ANAM', z(track))]))
     recs['MUSC'].append(record('MUSC', fid('MUSC', key), [sub('EDID', z(edid)), sub('FNAM', struct.pack('<I', flags)),
         sub('PNAM', struct.pack('<HH', prio, 10000)), sub('WNAM', struct.pack('<f', fade)), sub('TNAM', struct.pack('<I', fid('MUST', key)))]))
@@ -218,7 +218,7 @@ recs['FSTS'].append(record('FSTS', fid('FSTS', 'silent'), [sub('EDID', z('UN_Sil
 # loading screens of our own among Skyrim's: the shrine or the Dirge book turning, and a hint from the Dirge
 LOADING_TIPS = [
     "The Undying Dirge sleeps by day. When the sun goes down, every grave in the holds remembers it.",
-    "A Shrine of the Dirge stands in every city. Call a spell, reforge the one in your hands or drink a brew - the night does not wait while you bargain.",
+    "An Echo Altar stands in every city. Call a spell, reforge the one in your hands or drink a brew - the night does not wait while you bargain.",
     "Drowned Wailers call the horde to them with their scream. Kill them first.",
     "Stitched Abominations burst when they fall. Strike them from afar.",
     "Hold right mouse to gather a spell's full power in both hands. Let go too soon and the power gutters out.",
@@ -228,11 +228,11 @@ LOADING_TIPS = [
     "A spell reforged three times is Ascendant: its great strike falls twice.",
     "Watch the dead for tokens: a skull, a coin, a falling star, a chest.",
     "Vaerdis the Mourner swore her shrines would never be bought with gold - only with the septims of the dead.",
-    "Every spell the shrine gives was once a fallen mage's last. Carry it well.",
+    "Every spell the Echo Altar gives is the echo of a fallen mage's last. Carry it well.",
     "The violet fire in the shrine is the Dirge itself, caught and turned back. The blue runes hold it there.",
     "Stand close to a shrine and listen: it still sings the Mourner's answer.",
 ]
-for key, model in (('ls_shrine', 'UndyingNights\\shrine\\shrine.nif'), ('ls_book', 'Clutter\\Books\\Book02LowPoly02.nif')):
+for key, model in (('ls_shrine', 'CurseOfAlduin\\shrine\\shrine.nif'), ('ls_book', 'Clutter\\Books\\Book02LowPoly02.nif')):
     recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_LoadScreen_' + key)), sub('OBND', struct.pack('<6h', -60, -60, 0, 60, 60, 200)),
         sub('MODL', z(model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
 for i, tip in enumerate(LOADING_TIPS):
@@ -302,7 +302,7 @@ for name, hx in T['weap_draugr_gs']['subs']:
     b = bytes.fromhex(hx)
     if name == 'EDID': b = z('UN_ReaperScythe')
     elif name == 'FULL': b = z('Reaper Scythe')
-    elif name == 'MODL': b = z('UndyingNights\\reaper\\scythe_hidden.nif')
+    elif name == 'MODL': b = z('CurseOfAlduin\\reaper\\scythe_hidden.nif')
     elif name in ('MODT', 'DESC'): continue
     ws.append(sub(name, b))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'reaper_scythe'), ws))
@@ -316,7 +316,7 @@ for key, edid, label, anim, speed, reach, dmg in (('wyrm_claws', 'UN_WyrmClaws',
         b = bytearray(bytes.fromhex(hx))
         if name == 'EDID': b = z(edid)
         elif name == 'FULL': b = z(label)
-        elif name == 'MODL': b = z('UndyingNights\\reaper\\scythe_hidden.nif')
+        elif name == 'MODL': b = z('CurseOfAlduin\\reaper\\scythe_hidden.nif')
         elif name in ('MODT', 'DESC'): continue
         elif name == 'DNAM': b[0] = anim; struct.pack_into('<ff', b, 4, speed, reach)
         elif name == 'DATA': struct.pack_into('<H', b, 8, dmg)
@@ -340,7 +340,7 @@ for c in S['creatures']['rows']:
         sub('EDID', z('UN_' + c['id'] + 'AA')), sub('BODT', bytes(bodt)), sub('RNAM', struct.pack('<I', race)),
         sub('DNAM', tsub('arma_skin', 'DNAM')), sub('MOD2', model), sub('MOD3', model), sub('SNDD', struct.pack('<I', fid('FSTS', 'silent')))]))
     # glowing eyes (tools/eyes.py): a second addon in slot FX01, skinned to the head
-    eyes = z(f"UndyingNights\\eyes\\{c['id']}_eyes.nif")
+    eyes = z(f"CurseOfAlduin\\eyes\\{c['id']}_eyes.nif")
     ebodt = bytearray(tsub('arma_skin', 'BODT')); struct.pack_into('<I', ebodt, 0, 1 << 31)
     recs['ARMA'].append(record('ARMA', fid('ARMA', 'eyes_' + c['id']), [
         sub('EDID', z('UN_' + c['id'] + 'EyesAA')), sub('BODT', bytes(ebodt)), sub('RNAM', struct.pack('<I', race)),
@@ -371,13 +371,13 @@ for c in S['creatures']['rows']:
     recs['NPC_'].append(record('NPC_', fid('NPC_', c['id']), subs))
 
 # The Mod Configuration menu's page (SkyUI + MCM Helper): a quest running from the start with our MCM script
-# (UndyingNights_MCM, a bare MCM_ConfigBase: tools/mcm.py) and SkyUI's reload watcher on the player. The page itself
-# is Data/MCM/Config/UndyingNights/config.json.
+# (CurseOfAlduin_MCM, a bare MCM_ConfigBase: tools/mcm.py) and SkyUI's reload watcher on the player. The page itself
+# is Data/MCM/Config/CurseOfAlduin/config.json.
 def wstr(t): b = t.encode('cp1252'); return struct.pack('<H', len(b)) + b
-vmad = (struct.pack('<hhH', 5, 2, 1) + wstr('UndyingNights_MCM') + b'\x01' + struct.pack('<H', 1) + wstr('ModName') + b'\x02\x01' + wstr('Undying Nights') +
+vmad = (struct.pack('<hhH', 5, 2, 1) + wstr('CurseOfAlduin_MCM') + b'\x01' + struct.pack('<H', 1) + wstr('ModName') + b'\x02\x01' + wstr('The Curse of Alduin') +
         b'\x02\x00\x00\x00\x00\x01\x00\x00\x00\x00\x00\x00\x08\x00\x01\x05\x00\x02\x00\x01\x00' + wstr('SKI_PlayerLoadGameAlias') + b'\x00\x00\x00')
 recs['QUST'].append(record('QUST', fid('QUST', 'mcm'), [
-    sub('EDID', z('UndyingNights_MCM_Quest')), sub('VMAD', vmad), sub('FULL', z('Undying Nights MCM')),
+    sub('EDID', z('CurseOfAlduin_MCM_Quest')), sub('VMAD', vmad), sub('FULL', z('The Curse of Alduin MCM')),
     sub('DNAM', bytes.fromhex('110100ff0000000000000000')), sub('NEXT', b''), sub('ANAM', struct.pack('<I', 1)),
     sub('ALST', struct.pack('<I', 0)), sub('ALID', z('PlayerAlias')), sub('FNAM', struct.pack('<I', 0)),
     sub('ALFR', struct.pack('<I', 0x14)), sub('VTCK', struct.pack('<I', 0)), sub('ALED', b'')]))
@@ -413,9 +413,9 @@ recs['FACT'].append(record('FACT', fid('FACT', 'undead'), [
 for key, edid in [('curse_' + c['town'], 'UN_Curse_' + c['town']) for c in S['curse']['cities']] + [('curse_intro', 'UN_CurseIntro'), ('stand_layout', 'UN_StandLayout')]:
     recs['GLOB'].append(record('GLOB', fid('GLOB', key), [sub('EDID', z(edid)), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 
-# The Undying Dirge: the lore book (given at the first night; the Shrine of the Dirge gives it again)
+# The Undying Dirge: the lore book (given at the first night; the Echo Altar gives it again)
 def dirge_text():
-    img = lambda n, w, h: f"<p align='center'><img src='img://Textures/UndyingNights/Book/{n}.png' width='{w}' height='{h}'></p>"
+    img = lambda n, w, h: f"<p align='center'><img src='img://Textures/CurseOfAlduin/Book/{n}.png' width='{w}' height='{h}'></p>"
     cu = S['curse']
     towns = []
     for l in S['locations']['rows']:
@@ -462,12 +462,13 @@ def dirge_text():
            "Riverwood's mill split open and the shrine rose out of it, its star burning violet, its stones turning as if they had never stopped. "
            "Hod saw it and has not slept well since.</p>",
            "<p>Each shrine still sings Vaerdis's answer, too low to hear unless you stand close and listen. The fire you see is the Dirge itself, "
-           "caught and turned back. The blue light in the runes is the answer holding it. Some call them <i>Requiem Fonts</i>, some <i>Mourning Stones</i>, "
-           "some only <i>the Shrines of the Dirge</i>. Old Nords in the Rift still say <i>Vaerdis's Lanterns</i>, and leave a coin at the edge of the pool.</p>",
+           "caught and turned back. The blue light in the runes is the answer holding it. Every spell in its keeping is the echo of a mage who fell, "
+           "and so the holds have come to call them <b>Echo Altars</b>. Some still say <i>Requiem Fonts</i> or <i>Mourning Stones</i>. "
+           "Old Nords in the Rift say <i>Vaerdis's Lanterns</i>, and leave a coin at the edge of the pool.</p>",
            "<p>No one knows what became of Vaerdis. The priests of Arkay say she gave her own last spell to the first shrine and stands inside it still, "
            "holding the fire in place. If that is true, she has been waiting a long time for someone to take up the fight again.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>IV. The Shrine of the Dirge</font></p>", img('wards', 300, 176),
-           "<p>In the heart of every city stands a Shrine of the Dirge, open on every side. Its power is yours for the septims of the dead, "
+           "[pagebreak]", "<p align='center'><font size='24'>IV. The Echo Altar</font></p>", img('wards', 300, 176),
+           "<p>In the heart of every city stands an Echo Altar, open on every side. Its power is yours for the septims of the dead, "
            "the coin each kill leaves in your purse, and the night does not stop while you bargain.</p>",
            "<p><b>Call a spell.</b> The shrine gathers its power, the spells turn over its crown, and one stays there for you to take. "
            "Every spell you lack has the same chance.</p>",
@@ -492,7 +493,7 @@ def dirge_text():
             "Let them cross it and the count begins again. Stand at its edge and keep them out.</p>",
             "<p>When all four rites are done, the Dirge loses its hold on that city. Its dead sleep again, and none will rise within its bounds.</p>",
             "[pagebreak]", "<p align='center'><font size='24'>VII. The Voices of the Holds</font></p>",
-            "<p>Each freed city keeps a Thu'um of its own, sleeping in the Shrine of the Dirge at its station. Go to the shrine and it is yours. Speak one word, or hold your breath and speak all three.</p>"]
+            "<p>Each freed city keeps a Thu'um of its own, sleeping in the Echo Altar at its station. Go to the shrine and it is yours. Speak one word, or hold your breath and speak all three.</p>"]
     for h in S['shouts']['rows']:
         out.append(f"<p><b>{h['town']}</b>: <i>{h['label']}</i> ({' '.join(h['words'])}, '{' '.join(h['translations'])}'). {h['text']}.</p>")
     out += ["[pagebreak]", "<p align='center'><font size='24'>VIII. Nights of Omen</font></p>", img('omen', 300, 152),
@@ -511,7 +512,7 @@ recs.setdefault('BOOK', []).append(record('BOOK', fid('BOOK', 'dirge'), [
 
 # (spell blasts are cloned from Skyrim's explosions at runtime: EXPL records in an ESL crashed the game at load)
 count = sum(len(v) for v in recs.values())
-hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('Undying Nights: round-based undead survival for Skyrim'))]
+hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('The Curse of Alduin: round-based undead survival for Skyrim'))]
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
 for k in ['GLOB', 'FACT', 'VTYP', 'FSTS', 'LSCR', 'MUSC', 'MUST', 'ARTO', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR', 'QUST']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them

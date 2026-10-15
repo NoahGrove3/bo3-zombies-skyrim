@@ -1,15 +1,15 @@
-# Undying Nights: audit and plan for the big pass (2026-10-11)
+# The Curse of Alduin: audit and plan for the big pass (2026-10-11)
 
 This audit covers Spec Section 0. It is the baseline for Sections 12 (audio), 13 (main menu) and 0.6 (cleanup), plus the new
 enemy models and the move to a Nexus Mods release.
 
 ## 1. Architecture (as built)
-- **Game**: Skyrim SE/AE 1.7.104 (Steam). Plugin `UndyingNights.asi` (CommonLibSSE-NG, C++23, MSVC in GitHub Actions). It
+- **Game**: Skyrim SE/AE 1.7.104 (Steam). Plugin `CurseOfAlduin.asi` (CommonLibSSE-NG, C++23, MSVC in GitHub Actions). It
   loads two ways:
   - through Ultimate ASI Loader (`dinput8.dll`) on a normal launch;
-  - through SKSE as `Data/SKSE/Plugins/UndyingNights.dll` when Skyrim Together Reborn starts the game. The second copy
+  - through SKSE as `Data/SKSE/Plugins/CurseOfAlduin.dll` when Skyrim Together Reborn starts the game. The second copy
     switches itself off if the first is already running.
-- **Data plugin** `BO3Zombies.esp` (ESL-flagged) is generated from JSON sheets:
+- **Data plugin** `CurseOfAlduin.esp` (ESL-flagged) is generated from JSON sheets:
   `sheets/*.json` -> `tools/gen.py` (`src/Generated.h`) and `tools/gen_esp.py` (records). CI fails when either output is
   stale.
 - **Runtime systems (src/)**:
@@ -51,9 +51,9 @@ enemy models and the move to a Nexus Mods release.
   not look different enough.
 
 ## 2. Assets supplied in this pass
-- **Undying Nights SFX**: 31 Epidemic Sound MP3s (2 music loops, 1 full track, 28 effects; several hold 3-7 takes each),
+- **The Curse of Alduin SFX**: 31 Epidemic Sound MP3s (2 music loops, 1 full track, 28 effects; several hold 3-7 takes each),
   plus a copy of the spec PDF. The inventory and assignments are in `docs/AUDIO_MAP.md`.
-- **Undying Nights Models**: 7 Sketchfab/Tripo exports.
+- **The Curse of Alduin Models**: 7 Sketchfab/Tripo exports.
 
   | Model | Format | Rigged? |
   |---|---|---|

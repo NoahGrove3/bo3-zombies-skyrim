@@ -1,4 +1,4 @@
-"""Undying Nights perk icons: original round badges, drawn here from simple shapes.
+"""The Curse of Alduin perk icons: original round badges, drawn here from simple shapes.
 Writes <out>/<perk>.png (128x128 RGBA) for the HUD.   python tools/icons.py <out_dir>"""
 import json, math, sys, pathlib
 from PIL import Image, ImageDraw, ImageFilter

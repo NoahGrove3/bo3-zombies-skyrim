@@ -1,6 +1,6 @@
-# Undying Nights
+# The Curse of Alduin
 
-**Every night after Helgen, the dead rise.** Undying Nights turns Skyrim's nights into round-based undead survival in
+**Every night after Helgen, the dead rise.** The Curse of Alduin turns Skyrim's nights into round-based undead survival in
 the spirit of classic zombies modes, told as Skyrim lore: at Helgen the World-Eater sang the *Undying Dirge*, and now
 every grave in the holds answers it after dark. Survive the night, earn septims of the dead, and break the curse city
 by city.
@@ -29,7 +29,7 @@ by city.
 | Left mouse | fire (hold and release for the charged move) |
 | Right mouse | aim |
 | V | quick knife |
-| E on a station | use it (Coffer, Brew Machine: 1-9 to pick, Reforge, Shrine of the Dirge) |
+| E on a station | use it (Coffer, Brew Machine: 1-9 to pick, Reforge, Echo Altar) |
 
 ## Requirements
 - Skyrim Special Edition / Anniversary Edition **1.7.104** (the current Steam version), with Dawnguard and Dragonborn

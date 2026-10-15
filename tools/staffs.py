@@ -1,11 +1,11 @@
-"""Undying Nights staffs: eight elemental staffs built from the four staffs in the 'fantasy magic staffs collection'
+"""The Curse of Alduin staffs: eight elemental staffs built from the four staffs in the 'fantasy magic staffs collection'
 (Latido de Afrodita, Ojos del vacio, Semilla Ancestral, Sexto cielo). Each base model becomes two staffs with their own
 palette, glow and a small element add-on (halo, accretion disk, soul wisps...).
 
     python tools/staffs.py <staffs dir from objexp> <out Data dir>
 
 The staff dir holds <base>.obj (world space, metres, Y up), tex<N>.* and mats.txt as written by tools/objexp.
-Output: Meshes/UndyingNights/staff/<id>.nif (Prn WeaponStaff, grip at the origin, head toward +Y) and textures.
+Output: Meshes/CurseOfAlduin/staff/<id>.nif (Prn WeaponStaff, grip at the origin, head toward +Y) and textures.
 Writes tools/staff_tips.json: the head centre of each staff in model units (bolts leave from there)."""
 import json, math, pathlib, subprocess, sys
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
@@ -108,9 +108,9 @@ def decimate(V, T, F, budget):
 def save_dds(im, rel, alpha=False, size=None):
     if size:
         im = im.resize((size, size), Image.LANCZOS)
-    p = OUT / 'Textures' / 'UndyingNights' / 'staff' / rel; p.parent.mkdir(parents=True, exist_ok=True)
+    p = OUT / 'Textures' / 'CurseOfAlduin' / 'staff' / rel; p.parent.mkdir(parents=True, exist_ok=True)
     im.convert('RGBA' if alpha else 'RGB').save(p, pixel_format='DXT5' if alpha else 'DXT1')
-    return f'UndyingNights\\staff\\{rel}'
+    return f'CurseOfAlduin\\staff\\{rel}'
 
 def tinted(tex, col, keep=0.35):
     """recolour a texture toward col, keeping its light/dark detail"""
@@ -317,7 +317,7 @@ def build(sid):
             job_mats.append(f'mat {gname} diffuse={d} normal={n} spec={spec} gloss={gloss} doublesided=1')
     obj.write_text('\n'.join(lines) + '\n')
     (work / f'{sid}.mtl').write_text(''.join(mtl))
-    nif = OUT / 'Meshes' / 'UndyingNights' / 'staff' / f'{sid}.nif'; nif.parent.mkdir(parents=True, exist_ok=True)
+    nif = OUT / 'Meshes' / 'CurseOfAlduin' / 'staff' / f'{sid}.nif'; nif.parent.mkdir(parents=True, exist_ok=True)
     job = [f'in {obj}', f'out {nif}', 'origin 1', 'prn WeaponStaff', *job_mats]
     jf = work / f'{sid}.job'; jf.write_text('\n'.join(job) + '\n')
     r = subprocess.run([CONV, str(jf)], capture_output=True, text=True)

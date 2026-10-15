@@ -9,7 +9,7 @@
   "rows": [
     {
       "id": "mode",
-      "text": "Undying Nights",
+      "text": "The Curse of Alduin",
       "verify": []
     },
     {
@@ -19,7 +19,7 @@
     },
     {
       "id": "box",
-      "text": "The Shrine of the Dirge",
+      "text": "The Echo Altar",
       "verify": []
     },
     {
@@ -49,7 +49,7 @@
     },
     {
       "id": "station_marker",
-      "text": "Undying Nights Station",
+      "text": "The Curse of Alduin Station",
       "verify": []
     }
   ]

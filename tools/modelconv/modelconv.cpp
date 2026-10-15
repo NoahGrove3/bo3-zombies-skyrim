@@ -7,7 +7,7 @@
 //   skip <meshName>
 //   mat <materialName|*> diffuse=<tex> normal=<tex> glow=<tex> alpha=<0|1|blend> doublesided=<0|1>
 //                         emit=<r>,<g>,<b> emitmult=<f> spec=<f> gloss=<f>
-// Textures are written as given (paths relative to Data\Textures, e.g. UndyingNights\book\fire_d.dds).
+// Textures are written as given (paths relative to Data\Textures, e.g. CurseOfAlduin\book\fire_d.dds).
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>

@@ -12,20 +12,20 @@ from PIL import Image
 OUT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else '/home/claude/work/out5/Data')
 T = '/home/claude/tools/'
 W = pathlib.Path('/home/claude/work')
-UP = pathlib.Path('/mnt/user-data/uploads/common--Skyrim Special Edition/Data/Meshes/UndyingNights')
+UP = pathlib.Path('/mnt/user-data/uploads/common--Skyrim Special Edition/Data/Meshes/CurseOfAlduin')
 ICE, EMBER, VIOLET = (0.62, 0.85, 1.0), (1.0, 0.48, 0.16), (0.78, 0.5, 1.0)
 RED = (1.0, 0.10, 0.06)
 MODELS = {  # creature id: (nif, glow colour, size)
-    'zombie': (W / 'out4/Data/Meshes/UndyingNights/zombie/zombie.nif', ICE, 1.0),
-    'runner': (W / 'out3/Data/Meshes/UndyingNights/hooded/hooded.nif', ICE, 0.9),
-    'wailer': (W / 'out3/Data/Meshes/UndyingNights/hag/hag.nif', ICE, 0.9),
-    'bloater': (W / 'out3/Data/Meshes/UndyingNights/abom/abom.nif', ICE, 1.2),
+    'zombie': (W / 'out4/Data/Meshes/CurseOfAlduin/zombie/zombie.nif', ICE, 1.0),
+    'runner': (W / 'out3/Data/Meshes/CurseOfAlduin/hooded/hooded.nif', ICE, 0.9),
+    'wailer': (W / 'out3/Data/Meshes/CurseOfAlduin/hag/hag.nif', ICE, 0.9),
+    'bloater': (W / 'out3/Data/Meshes/CurseOfAlduin/abom/abom.nif', ICE, 1.2),
     'shadow': (UP / 'shadow/shadow.nif', ICE, 1.0),
-    'reaper': (W / 'out3/Data/Meshes/UndyingNights/reaper/reaper.nif', EMBER, 1.1),
-    'necro': (W / 'out3/Data/Meshes/UndyingNights/necro/necro.nif', VIOLET, 1.0),
-    'knight': (W / 'out3/Data/Meshes/UndyingNights/knight/knight.nif', EMBER, 1.1),
-    'king': (W / 'out3/Data/Meshes/UndyingNights/king/king.nif', EMBER, 1.1),
-    'lich': (W / 'out3/Data/Meshes/UndyingNights/lich/lich.nif', VIOLET, 1.0),
+    'reaper': (W / 'out3/Data/Meshes/CurseOfAlduin/reaper/reaper.nif', EMBER, 1.1),
+    'necro': (W / 'out3/Data/Meshes/CurseOfAlduin/necro/necro.nif', VIOLET, 1.0),
+    'knight': (W / 'out3/Data/Meshes/CurseOfAlduin/knight/knight.nif', EMBER, 1.1),
+    'king': (W / 'out3/Data/Meshes/CurseOfAlduin/king/king.nif', EMBER, 1.1),
+    'lich': (W / 'out3/Data/Meshes/CurseOfAlduin/lich/lich.nif', VIOLET, 1.0),
     'boss': (UP / 'boss/boss.nif', EMBER, 1.8),
 }
 HEAD = 'NPC Head [Head]'
@@ -78,17 +78,17 @@ def glow_tex(color, name):
     r = np.sqrt((xx - n / 2 + 0.5) ** 2 + (yy - n / 2 + 0.5) ** 2) / (n / 2)
     core = np.clip(1 - r * 3.6, 0, 1) * 0.8; halo = np.clip(1 - r, 0, 1) ** 1.8 * 1.3
     rgb = np.clip(np.stack([core + halo * c for c in color], -1), 0, 1)
-    p = OUT / 'Textures' / 'UndyingNights' / 'eyes' / f'{name}.dds'
+    p = OUT / 'Textures' / 'CurseOfAlduin' / 'eyes' / f'{name}.dds'
     p.parent.mkdir(parents=True, exist_ok=True)
     Image.fromarray((rgb * 255).astype(np.uint8), 'RGB').save(p, pixel_format='DXT1')
-    return f'UndyingNights\\eyes\\{name}.dds'
+    return f'CurseOfAlduin\\eyes\\{name}.dds'
 
 
 def write(cid, nif, color, size):
     ht, hr, eyes = find_eyes(nif)
     tname = {ICE: 'glow_ice', EMBER: 'glow_ember', VIOLET: 'glow_violet'}[color]
     tex = glow_tex(color, tname)
-    out = OUT / 'Meshes' / 'UndyingNights' / 'eyes' / f'{cid}_eyes.nif'
+    out = OUT / 'Meshes' / 'CurseOfAlduin' / 'eyes' / f'{cid}_eyes.nif'
     out.parent.mkdir(parents=True, exist_ok=True)
     rot = ' '.join(f'{x:.5f}' for x in hr.flatten())
     lines = [f'out {out}', 'bones 1', f'bone {HEAD}|{ht[0]:.5f} {ht[1]:.5f} {ht[2]:.5f} {rot}',
@@ -120,11 +120,11 @@ def write_glow(cid, nif, color, size, out_root):
     if picked:  # the sockets, picked on a front render of each model (x, surface y, z in model space)
         eyes = [(x, y - 0.7, z) for x, y, z in picked]
     color = RED   # Noah: red eyes, set in the sockets
-    out = pathlib.Path(out_root) / 'Meshes' / 'UndyingNights' / 'eyes' / f'{cid}_glow.nif'
+    out = pathlib.Path(out_root) / 'Meshes' / 'CurseOfAlduin' / 'eyes' / f'{cid}_glow.nif'
     out.parent.mkdir(parents=True, exist_ok=True)
     R = hr.reshape(3, 3)
     lines = [f'out {out}']
-    for name, tex, scale, half in (('halo', 'UndyingNights\\fx\\soft.dds', 1.8, 1.9 * size), ('core', 'UndyingNights\\fx\\core.dds', 3.2, 0.75 * size)):
+    for name, tex, scale, half in (('halo', 'CurseOfAlduin\\fx\\soft.dds', 1.8, 1.9 * size), ('core', 'CurseOfAlduin\\fx\\core.dds', 3.2, 0.75 * size)):
         lines.append(f"shape {name} tex={tex} color={color[0]:.3f},{color[1]:.3f},{color[2]:.3f},1 scale={scale} blend=add falloff=0")
         vi = 0
         for (x, y, z) in eyes:

@@ -1,6 +1,6 @@
 #include "BO3Z.h"
 
-// The compass of Undying Nights (drawn by the HUD, src/Hud.cpp DrawCompass, over Skyrim's own, which is hidden):
+// The compass of The Curse of Alduin (drawn by the HUD, src/Hud.cpp DrawCompass, over Skyrim's own, which is hidden):
 // which way you face, and what lies around you - the rite you are on, the cities' shrines, the places of the
 // map (discovered ones from afar, the rest once you are near), your friends, and at night the dead closing in.
 namespace bo3z::Compass
@@ -116,7 +116,7 @@ namespace bo3z::Compass
 				if (auto* s = Shops::Placed(static_cast<int>(t), 0); s && s->GetWorldspace() == world) {
 					const float d = s->GetPosition().GetDistance(me);
 					if (d < 40000.0f && d > 150.0f) {
-						marks.push_back({ bearing(s->GetPosition()), d, 2, "Shrine of the Dirge" });
+						marks.push_back({ bearing(s->GetPosition()), d, 2, "Echo Altar" });
 					}
 				}
 			}

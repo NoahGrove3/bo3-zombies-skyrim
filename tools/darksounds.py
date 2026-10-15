@@ -1,4 +1,4 @@
-"""Undying Nights' dark fantasy sound pass: every sound of ours built from Skyrim's own effects (dragon, draugr, Daedric,
+"""The Curse of Alduin's dark fantasy sound pass: every sound of ours built from Skyrim's own effects (dragon, draugr, Daedric,
 Dwemer, the destruction and illusion schools...), pitched down (SNDR frequency shift) and layered (a second sound played
 with it). Nothing is copied: our sound descriptors point at files in the player's own Skyrim - Sounds.bsa
 (tools/templates/vanilla_sounds.txt lists them, checked here).
@@ -107,15 +107,15 @@ for k, v in M.items():
     files, shift, layer = v
     r = rows.get(k)
     if not r:
-        r = {'id': k, 'plugin': 'BO3Zombies.esp', 'localId': 'auto', 'editorId': 'UN_' + k, 'file': '', 'space': '3d' if k in ('wailer_scream', 'bloater_burst', 'grab') else '2d', 'verify': []}
+        r = {'id': k, 'plugin': 'CurseOfAlduin.esp', 'localId': 'auto', 'editorId': 'UN_' + k, 'file': '', 'space': '3d' if k in ('wailer_scream', 'bloater_burst', 'grab') else '2d', 'verify': []}
         S['rows'].append(r); rows[k] = r
-    r.update(plugin='BO3Zombies.esp', localId='auto', editorId='UN_' + k, file=files[0], files=files, shift=shift, layer=layer or 'none')
+    r.update(plugin='CurseOfAlduin.esp', localId='auto', editorId='UN_' + k, file=files[0], files=files, shift=shift, layer=layer or 'none')
 for c in ('files', 'shift', 'layer'):
     if c not in S['columns']: S['columns'].append(c)
 for r in S['rows']:
     r.setdefault('files', []); r.setdefault('shift', 0); r.setdefault('layer', 'none')
 for r in S['rows']:
     assert r['layer'] == 'none' or r['layer'] in rows, r['layer']
-S['about'] = "Sound descriptors. Rows with plugin BO3Zombies.esp are ours: with 'files', Skyrim's own effects from the player's Skyrim - Sounds.bsa (tools/darksounds.py: pitched by 'shift' percent, 'layer' another of ours played with it); without, synthesized by tools/synth.py into Data/Sound/fx/UndyingNights. The rest are Skyrim's own descriptors."
+S['about'] = "Sound descriptors. Rows with plugin CurseOfAlduin.esp are ours: with 'files', Skyrim's own effects from the player's Skyrim - Sounds.bsa (tools/darksounds.py: pitched by 'shift' percent, 'layer' another of ours played with it); without, synthesized by tools/synth.py into Data/Sound/fx/CurseOfAlduin. The rest are Skyrim's own descriptors."
 open(ROOT / 'sheets/sounds.json', 'w').write(json.dumps(S, indent=2, ensure_ascii=False) + '\n')
 print(len(M), 'sounds remade from Skyrim files')

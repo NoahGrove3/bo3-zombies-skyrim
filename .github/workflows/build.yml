@@ -20,7 +20,7 @@ jobs:
           python tools/preflight.py
           python tools/gen.py
           python tools/gen_esp.py
-          git diff --exit-code src/Generated.h data/BO3Zombies.esp
+          git diff --exit-code src/Generated.h data/CurseOfAlduin.esp
       - uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: x64
@@ -56,35 +56,35 @@ jobs:
           $v = "0.2.0"
           $stage = "dist\stage"
           New-Item -ItemType Directory -Force "$stage\Data\SKSE\Plugins" | Out-Null
-          Copy-Item build\UndyingNights.dll "$stage\UndyingNights.asi"
+          Copy-Item build\CurseOfAlduin.dll "$stage\CurseOfAlduin.asi"
           New-Item -ItemType Directory -Force -Path "$stage\Data\SKSE\Plugins" | Out-Null
-          Copy-Item build\UndyingNights.dll "$stage\Data\SKSE\Plugins\UndyingNights.dll"  # Skyrim Together runs the game from its own folder (no ASI loader there): SKSE loads this copy
-          Copy-Item data\BO3Zombies.esp "$stage\Data\BO3Zombies.esp"
+          Copy-Item build\CurseOfAlduin.dll "$stage\Data\SKSE\Plugins\CurseOfAlduin.dll"  # Skyrim Together runs the game from its own folder (no ASI loader there): SKSE loads this copy
+          Copy-Item data\CurseOfAlduin.esp "$stage\Data\CurseOfAlduin.esp"
           Copy-Item third_party\address-library\versionlib-1-7-104-0.bin "$stage\Data\SKSE\Plugins\"
           python -m pip install --quiet numpy scipy pillow
-          python tools/icons.py "$stage\Data\Interface\UndyingNights"
+          python tools/icons.py "$stage\Data\Interface\CurseOfAlduin"
           python tools/bookart.py "$stage\Data"
           python tools/mcm.py "$stage\Data"   # the Mod Configuration page (SkyUI + MCM Helper) and the Experience file
-          New-Item -ItemType Directory -Force "$stage\Data\Sound\fx\UndyingNights\un", "$stage\Data\Music\UndyingNights" | Out-Null
-          Copy-Item assets\sound\un\*.wav "$stage\Data\Sound\fx\UndyingNights\un\"   # the Undying Nights SFX library, cut by tools/sfx.py
-          Copy-Item assets\music\*.wav "$stage\Data\Music\UndyingNights\"
-          Copy-Item assets\ui\*.png, assets\ui\*.jpg "$stage\Data\Interface\UndyingNights\"
+          New-Item -ItemType Directory -Force "$stage\Data\Sound\fx\CurseOfAlduin\un", "$stage\Data\Music\CurseOfAlduin" | Out-Null
+          Copy-Item assets\sound\un\*.wav "$stage\Data\Sound\fx\CurseOfAlduin\un\"   # the Curse of Alduin SFX library, cut by tools/sfx.py
+          Copy-Item assets\music\*.wav "$stage\Data\Music\CurseOfAlduin\"
+          Copy-Item assets\ui\*.png, assets\ui\*.jpg "$stage\Data\Interface\CurseOfAlduin\"
           Copy-Item assets\fx\* "$stage\Data\" -Recurse -Force   # the ten spells' looks (tools/spellfx.py)
-          New-Item -ItemType Directory -Force "$stage\Data\Interface\UndyingNights\legend" | Out-Null
-          Copy-Item assets\ui\legend\* "$stage\Data\Interface\UndyingNights\legend\"   # the intro film's woodcut pages (tools/legend.py)
-          New-Item -ItemType Directory -Force "$stage\Data\Interface\UndyingNights\fonts" | Out-Null
-          Copy-Item assets\fonts\* "$stage\Data\Interface\UndyingNights\fonts\"
+          New-Item -ItemType Directory -Force "$stage\Data\Interface\CurseOfAlduin\legend" | Out-Null
+          Copy-Item assets\ui\legend\* "$stage\Data\Interface\CurseOfAlduin\legend\"   # the intro film's woodcut pages (tools/legend.py)
+          New-Item -ItemType Directory -Force "$stage\Data\Interface\CurseOfAlduin\fonts" | Out-Null
+          Copy-Item assets\fonts\* "$stage\Data\Interface\CurseOfAlduin\fonts\"
           New-Item -ItemType Directory -Force "$stage\Data\Meshes\Interface\Logo" | Out-Null
           Copy-Item assets\meshes\logo_empty.nif "$stage\Data\Meshes\Interface\Logo\logo.nif"
           Copy-Item assets\meshes\logo_empty.nif "$stage\Data\Meshes\Interface\Logo\logo01ae.nif"
-          Copy-Item README.md "$stage\UndyingNights-README.md"
-          Copy-Item third_party\address-library\CREDITS.md "$stage\UndyingNights-ADDRESS-LIBRARY-CREDITS.md"
-          python tools/zipdir.py "$stage" "dist\UndyingNights-$v.zip"
-          python tools/zipdir.py build "dist\UndyingNights-$v-pdb.zip" --only UndyingNights.pdb
+          Copy-Item README.md "$stage\CurseOfAlduin-README.md"
+          Copy-Item third_party\address-library\CREDITS.md "$stage\CurseOfAlduin-ADDRESS-LIBRARY-CREDITS.md"
+          python tools/zipdir.py "$stage" "dist\CurseOfAlduin-$v.zip"
+          python tools/zipdir.py build "dist\CurseOfAlduin-$v-pdb.zip" --only CurseOfAlduin.pdb
       - uses: actions/upload-artifact@v4
         continue-on-error: true   # (the release below is what we install; artifacts only add to the storage quota)
         with:
-          name: UndyingNights
+          name: CurseOfAlduin
           path: dist\*.zip
           retention-days: 1
       - name: Test release for this commit (private repo)

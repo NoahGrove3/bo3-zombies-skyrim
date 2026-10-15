@@ -1,6 +1,6 @@
 #include "BO3Z.h"
 
-// Undying Nights audio (Spec 12): every sound the mod plays goes through here.
+// The Curse of Alduin audio (Spec 12): every sound the mod plays goes through here.
 //  - one-shots: 2D (UI, the player's own casts) or 3D (at a reference, following it, or at a point), optionally
 //    delayed (a bolt's impact when it lands);
 //  - keyed loops (charge hums, the ward circle) that stop on request, and are stopped when their owner dies,
@@ -591,7 +591,7 @@ namespace bo3z::Audio
 	// opens, so it is set as early as the settings exist (and again whenever we see the menu).
 	void SetMenuMusic()
 	{
-		static const char kPath[] = "\\Data\\Music\\UndyingNights\\mus_menu.wav";
+		static const char kPath[] = "\\Data\\Music\\CurseOfAlduin\\mus_menu.wav";
 		auto* ini = RE::INISettingCollection::GetSingleton();
 		auto* s = ini ? ini->GetSetting("sMainMenuMusic:General") : nullptr;
 		if (s && s->GetType() == RE::Setting::Type::kString && (!s->data.s || std::strcmp(s->data.s, kPath) != 0)) {
@@ -601,7 +601,7 @@ namespace bo3z::Audio
 	}
 
 	// While the main menu is up its own interface sounds (focus, accept, back, start) are ours: Skyrim's menu
-	// keeps calling its sound records, which play the Undying Nights clips until the menu closes.
+	// keeps calling its sound records, which play the Curse of Alduin clips until the menu closes.
 	void MenuUiSounds(bool a_on)
 	{
 		struct Swap { RE::FormID vanilla; gen::Sound ours; RE::BGSSoundDescriptor* saved{ nullptr }; };

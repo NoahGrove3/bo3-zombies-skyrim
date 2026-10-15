@@ -266,7 +266,7 @@ if __name__ == '__main__':
     J = JOBS[name]
     J['matline'] = textures(name, J, out)
     lines = build(name)
-    nif = out / 'Meshes' / 'UndyingNights' / J['out']; nif.parent.mkdir(parents=True, exist_ok=True)
+    nif = out / 'Meshes' / 'CurseOfAlduin' / J['out']; nif.parent.mkdir(parents=True, exist_ok=True)
     job = WORK / f'enemies/{name}.rig'; job.write_text('\n'.join([f'out {nif}'] + lines) + '\n')
     r = subprocess.run([WRITER, str(job)], capture_output=True, text=True)
     print(r.stdout.strip()[-300:], r.stderr.strip()[-500:])

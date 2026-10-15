@@ -1,5 +1,5 @@
-"""Rebuild sheets/sounds.json so every sound the mod plays comes from the supplied Undying Nights SFX library
-(clips cut by tools/sfx.py into Data/Sound/fx/UndyingNights/un/). No Skyrim sound effects are referenced.
+"""Rebuild sheets/sounds.json so every sound the mod plays comes from the supplied The Curse of Alduin SFX library
+(clips cut by tools/sfx.py into Data/Sound/fx/CurseOfAlduin/un/). No Skyrim sound effects are referenced.
 
     python tools/soundmap.py
 
@@ -199,8 +199,8 @@ S('intro_graves', GHOST, -30, cat='ui', use='intro: the graves wake')
 S('intro_horde', 'en_roar', -20, cat='ui', use='intro: the horde')
 S('intro_champions', 'champ_arrive', -10, cat='ui', use='intro: the champions')
 S('intro_wyrm', 'boss_breath', -10, cat='ui', use='intro: Grimmvar in the fog')
-S('intro_shrine', 'coffer_charge', -10, cat='ui', use='intro: the Shrine of the Dirge')
-S('intro_title', 'champ_arrive', -20, cat='ui', use='intro: UNDYING NIGHTS')
+S('intro_shrine', 'coffer_charge', -10, cat='ui', use='intro: the Echo Altar')
+S('intro_title', 'champ_arrive', -20, cat='ui', use='intro: THE CURSE OF ALDUIN')
 S('vo_01', 'vo_01', 0, cat='ui', use='intro narration, scene 1')
 S('vo_02', 'vo_02', 0, cat='ui', use='intro narration, scene 2')
 S('vo_03', 'vo_03', 0, cat='ui', use='intro narration, scene 3')
@@ -219,8 +219,8 @@ for _sid in ['ember', 'gale', 'wail', 'rime', 'quake', 'shroud', 'toll', 'mire',
         S(f'shoutvoc_{_sid}_{_n}', f'shoutvoc_{_sid}_{_n}', 0, use=f'{_sid} shout spoken with {_n} word(s)')
 for id, (clips, shift, space, cat, loop, atten, use) in M.items():
     r = dict(old.get(id, {}))
-    r.update(id=id, plugin='BO3Zombies.esp', localId='auto', editorId='UN_' + id, verify=[], space=space, cat=cat,
-             file='fx\\UndyingNights\\un\\' + clips[0] + '.wav', files=['fx\\UndyingNights\\un\\' + c + '.wav' for c in clips],
+    r.update(id=id, plugin='CurseOfAlduin.esp', localId='auto', editorId='UN_' + id, verify=[], space=space, cat=cat,
+             file='fx\\CurseOfAlduin\\un\\' + clips[0] + '.wav', files=['fx\\CurseOfAlduin\\un\\' + c + '.wav' for c in clips],
              shift=shift, layer='none', atten=atten, loop=loop, use=use)
     rows.append(r)
 missing = [k for k in old if k not in M]
@@ -228,6 +228,6 @@ if missing:
     raise SystemExit('unmapped: ' + ', '.join(missing))
 d['rows'] = rows
 d['columns'] = ['id', 'plugin', 'localId', 'editorId', 'file', 'space', 'cat', 'verify', 'files', 'shift', 'layer', 'atten', 'loop', 'use']
-d['about'] = 'Every sound of the mod (SNDR). Clips come only from the supplied Undying Nights SFX library (tools/sfx.py, sheets/sfx.json). Rebuilt by tools/soundmap.py.'
+d['about'] = 'Every sound of the mod (SNDR). Clips come only from the supplied The Curse of Alduin SFX library (tools/sfx.py, sheets/sfx.json). Rebuilt by tools/soundmap.py.'
 json.dump(d, open(P, 'w'), indent=2)
 print(len(rows), 'sounds')

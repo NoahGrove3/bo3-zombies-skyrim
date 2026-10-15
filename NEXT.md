@@ -1,4 +1,4 @@
-# Undying Nights — state and next steps (2026-10-09)
+# The Curse of Alduin — state and next steps (2026-10-09)
 
 
 ## Built 2026-10-13 (1c9ef27, INSTALLED; Party Pack rebuilt in Downloads with files\Mods; seen in game)
@@ -9,7 +9,7 @@
 - Not yet seen: shout voices (needs a freed city), co-op with a second player, the film's sound sync by ear.
 
 ## Built 2026-10-09 (f04fc1c, INSTALLED in the game folder; Party Pack + Melty zip rebuilt in Downloads; not yet seen in game)
-- One-piece Shrine of the Dirge (tools/shrine.py -> Meshes/UndyingNights/shrine/shrine.nif, built locally, not in CI) is the
+- One-piece Echo Altar (tools/shrine.py -> Meshes/CurseOfAlduin/shrine/shrine.nif, built locally, not in CI) is the
   coffer ACTI; brew machine, forge, relic altar retired; layout v3 takedown (global bits 16+town) clears old stations once.
 - Shrine menu (Shops.cpp OnButton + Hud.cpp): 1 roll / 2 reforge / 3 brew (wheel, arrows) / 4 shout / E, Backspace close;
   pad X/Y/A/D-pad/B. Shops::MenuEats blocks Activate, Jump, MenuOpen, hotkeys, camera wheel while open.

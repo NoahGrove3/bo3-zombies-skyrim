@@ -1,6 +1,6 @@
 {
   "sheet": "sfx",
-  "about": "Clips cut from the supplied Undying Nights SFX library (Epidemic Sound, licensed to Noah) by tools/sfx.py. See docs/AUDIO_MAP.md.",
+  "about": "Clips cut from the supplied The Curse of Alduin SFX library (Epidemic Sound, licensed to Noah) by tools/sfx.py. See docs/AUDIO_MAP.md.",
   "sources": {
     "firebreath": "ES_Creatures, Dragon, Dragon, Vocalizations, Fire Breathing 06 - Epidemic Sound.mp3",
     "dgrowl": "ES_Creatures, Dragon, Dragon, Vocalizations, Growls 01 - Epidemic Sound.mp3",
@@ -94,7 +94,7 @@
     {
       "id": "mus_intro",
       "src": "menu",
-      "use": "the Undying Nights intro (after character creation): the menu theme's rising second half, under the narration",
+      "use": "the Curse of Alduin intro (after character creation): the menu theme's rising second half, under the narration",
       "t0": 74.0,
       "t1": 157.6,
       "stereo": true,
@@ -1436,7 +1436,7 @@
     {
       "id": "vo_08",
       "src": "narration",
-      "use": "intro narration, scene 8: \"Yet in every city, a Shrine of the Dirge still stands...\"",
+      "use": "intro narration, scene 8: \"Yet in every city, an Echo Altar still stands...\"",
       "t0": 55.26,
       "t1": 62.56,
       "fadeIn": 15,

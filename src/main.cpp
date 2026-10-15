@@ -1,11 +1,11 @@
 #include "BO3Z.h"
 
 // Loaded two ways, same file:
-//  - as UndyingNights.asi by Ultimate ASI Loader (what Melty installs; no Script Extender on 1.7.104):
+//  - as CurseOfAlduin.asi by Ultimate ASI Loader (what Melty installs; no Script Extender on 1.7.104):
 //    DllMain starts a thread and nothing else; the thread waits for the game's UI, then watches menus.
-//  - as an SKSE plugin (UndyingNights.dll in Data/SKSE/Plugins) for players who run SKSE.
+//  - as an SKSE plugin (CurseOfAlduin.dll in Data/SKSE/Plugins) for players who run SKSE.
 // Only one copy may run in a game: a process-wide mutex says who came first. Older installs named the files
-// BO3Zombies.asi / .dll: if one of those is loaded, it runs this time and its files are renamed out of the way so
+// CurseOfAlduin.asi / .dll: if one of those is loaded, it runs this time and its files are renamed out of the way so
 // the next start is ours alone.
 namespace
 {
@@ -17,7 +17,7 @@ namespace
 		if (!dir) {
 			return;
 		}
-		auto path = *dir / "UndyingNights.log";
+		auto path = *dir / "CurseOfAlduin.log";
 		auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path.string(), true);
 		auto log = std::make_shared<spdlog::logger>("global", std::move(sink));
 		log->set_level(spdlog::level::info);
@@ -59,7 +59,7 @@ namespace
 	{
 		SetupLog();
 		FitResolution();
-		logger::info("Undying Nights {} loading as .asi", bo3z::kVersion);
+		logger::info("The Curse of Alduin {} loading as .asi", bo3z::kVersion);
 		for (int i = 0; i < 6000 && !RE::UI::GetSingleton(); ++i) {  // up to 10 minutes
 			if (i % 5 == 0) {
 				bo3z::Audio::SetMenuMusic();  // as soon as the game's settings exist, before the main menu plays
@@ -78,16 +78,16 @@ namespace
 		return 0;
 	}
 
-	// The first copy in this game takes the mutex; any later copy stays quiet. An old BO3Zombies copy already
+	// The first copy in this game takes the mutex; any later copy stays quiet. An old CurseOfAlduin copy already
 	// loaded wins this once, and its files are moved aside (*.old) for next time.
 	bool FirstCopy(HMODULE a_module)
 	{
-		const std::wstring name = L"Local\\UndyingNights.Plugin." + std::to_wstring(::GetCurrentProcessId());
+		const std::wstring name = L"Local\\CurseOfAlduin.Plugin." + std::to_wstring(::GetCurrentProcessId());
 		::CreateMutexW(nullptr, FALSE, name.c_str());  // (kept for the life of the game)
 		if (::GetLastError() == ERROR_ALREADY_EXISTS) {
 			return false;
 		}
-		for (const wchar_t* old : { L"BO3Zombies.asi", L"BO3Zombies.dll" }) {
+		for (const wchar_t* old : { L"CurseOfAlduin.asi", L"CurseOfAlduin.dll" }) {
 			if (HMODULE h = ::GetModuleHandleW(old); h && h != a_module) {
 				wchar_t path[MAX_PATH]{};
 				if (const auto n = ::GetModuleFileNameW(h, path, MAX_PATH); n > 0) {
@@ -128,12 +128,12 @@ BOOL APIENTRY DllMain(HMODULE a_module, DWORD a_reason, LPVOID)
 SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 {
 	if (g_booted.exchange(true) || !FirstCopy(nullptr)) {
-		return false;  // another copy (the .asi, or an old BO3Zombies build) is already running
+		return false;  // another copy (the .asi, or an old CurseOfAlduin build) is already running
 	}
 	SKSE::Init(a_skse, { .log = false });
 	bo3z::PluginList::Ensure();
 	SetupLog();
-	logger::info("Undying Nights {} loading as SKSE plugin", bo3z::kVersion);
+	logger::info("The Curse of Alduin {} loading as SKSE plugin", bo3z::kVersion);
 	bo3z::Save::InstallCoSave();
 	bo3z::Events::InstallMenuWatch();
 	bo3z::Net::PatchTogether();  // (Skyrim Together loads us through SKSE: its menu must learn to follow the party here too)

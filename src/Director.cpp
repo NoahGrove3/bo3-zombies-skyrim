@@ -1941,7 +1941,7 @@ namespace bo3z
 		}
 
 		// ---- night truce: townsfolk can't be hurt or killed while the undead are out ----
-		// One of our undead by its base record (BO3Zombies.esp), whether or not this session raised it.
+		// One of our undead by its base record (CurseOfAlduin.esp), whether or not this session raised it.
 		bool IsOurBase(RE::Actor* a)
 		{
 			auto* base = a ? a->GetActorBase() : nullptr;

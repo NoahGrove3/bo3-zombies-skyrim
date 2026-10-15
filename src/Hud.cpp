@@ -156,7 +156,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			dl->AddText(g_font, px, p, Col(rgba ? rgba : it.rgba, alpha), s.c_str());
 		}
 
-		// ---- Undying Nights HUD: dark glass panels, gold trim, serif titles, soft glows ----
+		// ---- The Curse of Alduin HUD: dark glass panels, gold trim, serif titles, soft glows ----
 		ImFont* g_title = nullptr;  // Georgia Bold
 		ImFont* g_num = nullptr;    // Segoe UI Semibold
 		ImFont* g_body = nullptr;   // Segoe UI
@@ -606,7 +606,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 			// The shrine's orb in the crosshair: what Activate does (its aura of cold flame is 3D now, in crystal.nif)
 			if (s.orbOn && s.orbAim && s.orbFade > 0.01f && !s.perkMenu) {
-				const std::string t = g_padLast ? "A   Shrine of the Dirge" : "E   Shrine of the Dirge";
+				const std::string t = g_padLast ? "A   Echo Altar" : "E   Echo Altar";
 				TxtC(dl, g_title, 20 * k, size.x * 0.5f, size.y * 0.5f + 40 * k, kParch, t, 2 * k, IM_COL32(60, 120, 255, 255));
 			}
 
@@ -1740,7 +1740,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const ImVec2 a{ size.x - w - 36 * k, std::max(24 * k, size.y * 0.5f - h * 0.5f - 30 * k) }, b{ a.x + w, a.y + h };
 				Panel(dl, a, b, k, 0.92f);
 				const float cx = (a.x + b.x) * 0.5f;
-				TxtC(dl, g_title, 27 * k, cx, a.y + 16 * k, IM_COL32(232, 214, 176, 255), "SHRINE OF THE DIRGE", 2.5f * k, IM_COL32(150, 70, 255, 255));
+				TxtC(dl, g_title, 27 * k, cx, a.y + 16 * k, IM_COL32(232, 214, 176, 255), "THE ECHO ALTAR", 2.5f * k, IM_COL32(150, 70, 255, 255));
 				Divider(dl, cx, a.y + 54 * k, w * 0.38f, k);
 				float y = a.y + 68 * k;
 				const float L = a.x + 20 * k, Rr = b.x - 20 * k;
@@ -1965,7 +1965,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const float  w = 560 * k, h = 148 * k;  // narrow enough to stay left of Skyrim's level bar
 			const ImVec2 a{ 48 * k, size.y - 14 * k - h }, b{ a.x + w, a.y + h };
 			Panel(dl, a, b, k, 0.95f);
-			Txt(dl, g_title, 21 * k, { a.x + 18 * k, a.y + 12 * k }, kGold, "UNDYING NIGHTS - FIELD OF VIEW", 2 * k, IM_COL32(255, 160, 60, 255));
+			Txt(dl, g_title, 21 * k, { a.x + 18 * k, a.y + 12 * k }, kGold, "THE CURSE OF ALDUIN - FIELD OF VIEW", 2 * k, IM_COL32(255, 160, 60, 255));
 			const float colW = (w - 54 * k) / 2;
 			for (int i = 0; i < 2; ++i) {
 				const bool  first = i == 0;
@@ -1994,7 +1994,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 		}
 
-		// ---- the main menu (Spec 13): the Undying Nights entrance
+		// ---- the main menu (Spec 13): the Curse of Alduin entrance
 		// Layered art (tools/menuart.py) with parallax that follows the cursor and drifts slowly, fog in two depths,
 		// the rune-stone's soul-fire and the ground ring pulsing, braziers flickering, embers and ash rising, now and
 		// then a cold lightning flash; the title; Skyrim's own menu entries redrawn as our buttons (Skyrim keeps
@@ -2679,7 +2679,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				struct Row { std::string text; bool sel, disabled; int kind, arg; ImU32 accent; };  // kind: 0 Skyrim's (arg = its index), 1 party, 2 host, 3 invite, 4 leave, 5 join (arg = friend), 6 back
 				std::vector<Row> rows;
 				static int partyHover = -1;
-				static bool settingsMode = false;  // Undying Nights' settings, as words here too (the pad can change them)
+				static bool settingsMode = false;  // The Curse of Alduin's settings, as words here too (the pad can change them)
 				if (settingsMode) {
 					rows.push_back({ "First person view   <  " + std::to_string(static_cast<int>(Settings::FovFirst())) + "  >", false, false, 8, 0, 0 });
 					rows.push_back({ "Third person view   <  " + std::to_string(static_cast<int>(Settings::FovThird())) + "  >", false, false, 8, 1, 0 });
@@ -2880,8 +2880,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 
 
-		// ---- The Undying Nights intro: once, when a new character first stands outside Riverwood. A storybook legend
-		// cut in woodcut on parchment (tools/legend.py draws it: Data/Interface/UndyingNights/legend/*), one picture
+		// ---- The Curse of Alduin intro: once, when a new character first stands outside Riverwood. A storybook legend
+		// cut in woodcut on parchment (tools/legend.py draws it: Data/Interface/CurseOfAlduin/legend/*), one picture
 		// per couplet of the narration. Each picture is LAYERED and moves: the back pans slowly, the subject drifts on
 		// its own parallax, flames / glows / the running dead cycle through three cut frames, the front moves across.
 		// The couplet is carved under the picture and inks in, left to right, as it is spoken. Its own music and a
@@ -2982,7 +2982,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 		bool LoadTex(const std::string& a_rel, ID3D11ShaderResourceView** a_out, float* a_w = nullptr, float* a_h = nullptr)
 		{
-			const std::string  n = "Data\\Interface\\UndyingNights\\" + a_rel;
+			const std::string  n = "Data\\Interface\\CurseOfAlduin\\" + a_rel;
 			const std::wstring w(n.begin(), n.end());
 			ID3D11Resource*    res = nullptr;
 			if (FAILED(DirectX::CreateWICTextureFromFile(g_device, w.c_str(), &res, a_out))) {
@@ -3262,10 +3262,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const std::string p = std::string("C:\\Windows\\Fonts\\") + a_file;
 				return ::GetFileAttributesA(p.c_str()) != INVALID_FILE_ATTRIBUTES ? io.Fonts->AddFontFromFileTTF(p.c_str(), 64.0f, nullptr, kRanges) : nullptr;
 			};
-			// our own type (SIL Open Font License, in Data/Interface/UndyingNights/fonts): Cinzel for titles and numbers,
+			// our own type (SIL Open Font License, in Data/Interface/CurseOfAlduin/fonts): Cinzel for titles and numbers,
 			// Cormorant Garamond for the words; Windows' Georgia / Segoe if they are missing
 			auto own = [&](const char* a_file) -> ImFont* {
-				const std::string p = std::string("Data\\Interface\\UndyingNights\\fonts\\") + a_file;
+				const std::string p = std::string("Data\\Interface\\CurseOfAlduin\\fonts\\") + a_file;
 				return ::GetFileAttributesA(p.c_str()) != INVALID_FILE_ATTRIBUTES ? io.Fonts->AddFontFromFileTTF(p.c_str(), 64.0f, nullptr, kRanges) : nullptr;
 			};
 			g_title = own("Cinzel-Bold.ttf");
@@ -3288,41 +3288,41 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			int icons = 0;
 			for (std::size_t i = 0; i < gen::kPerks.size(); ++i) {
-				const auto path = L"Data\\Interface\\UndyingNights\\" + std::wstring(gen::kPerks[i].id.begin(), gen::kPerks[i].id.end()) + L".png";
+				const auto path = L"Data\\Interface\\CurseOfAlduin\\" + std::wstring(gen::kPerks[i].id.begin(), gen::kPerks[i].id.end()) + L".png";
 				if (SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, path.c_str(), nullptr, &g_perkIcons[i]))) {
 					++icons;
 				}
 			}
 			int wicons = 0;
 			for (std::size_t i = 0; i < gen::kGuns.size(); ++i) {
-				const auto path = L"Data\\Interface\\UndyingNights\\w_" + std::wstring(gen::kGuns[i].id.begin(), gen::kGuns[i].id.end()) + L".png";
+				const auto path = L"Data\\Interface\\CurseOfAlduin\\w_" + std::wstring(gen::kGuns[i].id.begin(), gen::kGuns[i].id.end()) + L".png";
 				if (SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, path.c_str(), nullptr, &g_weaponIcons[i]))) {
 					++wicons;
 				}
 			}
 			for (int e = 0; e < 8; ++e) {
 				const std::string_view n = Arcana::ElementName(e);
-				const auto path = L"Data\\Interface\\UndyingNights\\el_" + std::wstring(n.begin(), n.end()) + L".png";
+				const auto path = L"Data\\Interface\\CurseOfAlduin\\el_" + std::wstring(n.begin(), n.end()) + L".png";
 				DirectX::CreateWICTextureFromFile(g_device, path.c_str(), nullptr, &g_elementIcons[e]);
 			}
-			const bool bg = SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_bg.png", nullptr, &g_menuBg));
-			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_fog.png", nullptr, &g_menuFog);
+			const bool bg = SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_bg.png", nullptr, &g_menuBg));
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_fog.png", nullptr, &g_menuFog);
 			for (auto [file, tex] : { std::pair{ L"menu_sky.jpg", &g_mSky }, { L"menu_clouds.png", &g_mClouds }, { L"menu_aurora.png", &g_mAurora },
 					 { L"menu_far.png", &g_mFar }, { L"menu_mid.png", &g_mMid }, { L"menu_near.png", &g_mNear }, { L"menu_groundfog.png", &g_mGroundFog }, { L"menu_clouds2.png", &g_mClouds2 } }) {
-				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\UndyingNights\\") + file).c_str(), nullptr, tex);
+				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\CurseOfAlduin\\") + file).c_str(), nullptr, tex);
 			}
-			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_title.png", nullptr, &g_mTitle);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_title.png", nullptr, &g_mTitle);
 			for (auto [file, tex] : { std::pair{ L"menu_shrine_ground.png", &g_sGround }, { L"menu_shrine_glow.png", &g_sGlow }, { L"menu_crystal.png", &g_sCrystal }, { L"menu_softglow.png", &g_sSoft }, { L"menu_mountains.png", &g_sMtn }, { L"menu_lake_refl.png", &g_sRefl }, { L"menu_aurora2.png", &g_sAurora }, { L"menu_lake_life.png", &g_sLife }, { L"menu_motes.png", &g_sMotes } }) {
-				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\UndyingNights\\") + file).c_str(), nullptr, tex);
+				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\CurseOfAlduin\\") + file).c_str(), nullptr, tex);
 			}
 			for (int i = 0; i < 9; ++i) {
-				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\UndyingNights\\menu_shard" + std::to_wstring(i) + L".png").c_str(), nullptr, &g_sShard[i]);
-				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\UndyingNights\\menu_shard" + std::to_wstring(i) + L"_r.png").c_str(), nullptr, &g_sShardR[i]);
+				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\CurseOfAlduin\\menu_shard" + std::to_wstring(i) + L".png").c_str(), nullptr, &g_sShard[i]);
+				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\CurseOfAlduin\\menu_shard" + std::to_wstring(i) + L"_r.png").c_str(), nullptr, &g_sShardR[i]);
 			}
-			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\frame.png", nullptr, &g_frame);
-			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\flame_ring.png", nullptr, &g_flame);
-			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_fire.png", nullptr, &g_fire);
-			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\divider.png", nullptr, &g_divider);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\frame.png", nullptr, &g_frame);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\flame_ring.png", nullptr, &g_flame);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_fire.png", nullptr, &g_fire);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\divider.png", nullptr, &g_divider);
 			g_init = true;
 			logger::info("hud: ready ({} perk icons, {} weapon icons, menu art {})", icons, wicons, bg);
 			return true;
@@ -3460,7 +3460,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 								auto* pl = RE::PlayerCharacter::GetSingleton();
 								auto* sl = RE::BGSSaveLoadManager::GetSingleton();
 								if (pl && sl && !pl->IsDead()) {
-									const std::string name = std::string("UndyingNights - ") + pl->GetName() + " - Night Begins";
+									const std::string name = std::string("CurseOfAlduin - ") + pl->GetName() + " - Night Begins";
 									sl->Save(name.c_str());
 									logger::info("intro: saved the new character ('{}')", name);
 								}

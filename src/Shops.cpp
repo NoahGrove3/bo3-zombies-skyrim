@@ -813,7 +813,7 @@ namespace bo3z
 			Dress(a_index, found);
 		}
 
-		// ---- world-map markers: one "Undying Nights Station" per town, at the plaza once it is built ----
+		// ---- world-map markers: one "The Curse of Alduin Station" per town, at the plaza once it is built ----
 		std::array<RE::ObjectRefHandle, gen::kTowns.size()> g_markers{};
 		float g_markerTimer = 0;
 
@@ -1494,7 +1494,7 @@ namespace bo3z
 				}
 			};
 			if (dev == RE::INPUT_DEVICE::kKeyboard) {
-				for (int k = 0; k < Settings::kKeys; ++k) {  // 1 2 3 4 Backspace unless rebound (Mod Configuration > Undying Nights)
+				for (int k = 0; k < Settings::kKeys; ++k) {  // 1 2 3 4 Backspace unless rebound (Mod Configuration > The Curse of Alduin)
 					if (static_cast<int>(code) == Settings::Key(k)) {
 						act(k);
 						return true;

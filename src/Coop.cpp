@@ -1,6 +1,6 @@
 #include "BO3Z.h"
 
-// Co-op with Skyrim Together Reborn (first stage, no network of our own yet). UndyingNights.ini next to SkyrimSE.exe:
+// Co-op with Skyrim Together Reborn (first stage, no network of our own yet). CurseOfAlduin.ini next to SkyrimSE.exe:
 //   [Coop]
 //   Role=host     your game runs the nights: raises the horde, events, the boss; Skyrim Together shows it to everyone
 //   Role=client   a friend's game: raises nothing itself; the host's undead count as the night's undead here
@@ -15,9 +15,9 @@ namespace bo3z::Coop
 			// next to SkyrimSE.exe (Skyrim Together's launcher may start the game from its own folder)
 			wchar_t exe[MAX_PATH]{};
 			::GetModuleFileNameW(nullptr, exe, MAX_PATH);
-			std::filesystem::path path = std::filesystem::path(exe).parent_path() / "UndyingNights.ini";
+			std::filesystem::path path = std::filesystem::path(exe).parent_path() / "CurseOfAlduin.ini";
 			if (!std::filesystem::exists(path)) {
-				path = std::filesystem::path(exe).parent_path() / "Data" / "UndyingNights.ini";
+				path = std::filesystem::path(exe).parent_path() / "Data" / "CurseOfAlduin.ini";
 			}
 			std::ifstream f(path);
 			std::string   line;

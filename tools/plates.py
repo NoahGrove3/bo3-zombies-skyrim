@@ -1,9 +1,9 @@
-"""Undying Nights: the intro film's stills and the main menu's picture, graded from scenes staged and captured in
+"""The Curse of Alduin: the intro film's stills and the main menu's picture, graded from scenes staged and captured in
 Skyrim itself (assets/plates/*.jpg, 2560x1440 game captures with the DevTools camera; nothing is painted).
 
     python tools/plates.py <out dir>      writes intro_*.jpg (1920x1080), menu_plate.jpg (2560x1440) and menu_aurora.png
 
-Each plate gets the Undying Nights grade: lifted but cold shadows, a little less saturation, split toning toward
+Each plate gets the Curse of Alduin grade: lifted but cold shadows, a little less saturation, split toning toward
 charcoal-blue in the dark and bone in the light, a vignette and fine grain. Some get a scene treatment of their own:
 Helgen's sky burns (the aurora is turned to fire and smoke), the shrine's crown is turned violet, the wyrm stands in fog.
 """

@@ -1,6 +1,6 @@
-"""The Undying Nights station: an open Nordic shrine you can walk up to from every side. An eight-sided stone dais
+"""The Curse of Alduin station: an open Nordic shrine you can walk up to from every side. An eight-sided stone dais
 (Whiterun's own stonework, a knotwork band round its edge, a cobbled skirt sloping down on every side) carries a
-carved rune-stone at its heart; the Coffer, the Brew Machine, the Atronach Reforge and the Shrine of the Dirge stand
+carved rune-stone at its heart; the Coffer, the Brew Machine, the Atronach Reforge and the Echo Altar stand
 round it with their backs to the stone, each facing out to its own side, with a brazier on each of the four
 corners between them. Every texture is Skyrim's own Whiterun set, referenced by path (nothing of the game is
 shipped), so texture overhauls restyle the station with the city.
@@ -173,7 +173,7 @@ def write_obj(path):
 def save(im, rel, alpha=False, mips=False):
     """a DDS texture (DXT1, or DXT5 with alpha); mips=True writes the full mipmap chain (ImageMagick) - big textures
     seen from afar need it, or they shimmer"""
-    p = OUT / 'Textures' / 'UndyingNights' / 'stand' / rel; p.parent.mkdir(parents=True, exist_ok=True)
+    p = OUT / 'Textures' / 'CurseOfAlduin' / 'stand' / rel; p.parent.mkdir(parents=True, exist_ok=True)
     if mips:
         import subprocess, tempfile
         with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tf:
@@ -182,7 +182,7 @@ def save(im, rel, alpha=False, mips=False):
         pathlib.Path(tf.name).unlink()
     else:
         im.convert('RGBA' if alpha else 'RGB').save(p, pixel_format='DXT5' if alpha else 'DXT1')
-    return f'UndyingNights\\stand\\{rel}'
+    return f'CurseOfAlduin\\stand\\{rel}'
 
 def main():
     build()
@@ -191,7 +191,7 @@ def main():
     flat = save(Image.new('RGBA', (64, 64), (128, 128, 255, 160)), 'flat_n.dds', True)
     rune_d = save(Image.new('RGB', (64, 64), (170, 90, 255)), 'rune_d.dds')
     rune_g = save(Image.new('RGB', (64, 64), (190, 110, 255)), 'rune_g.dds')
-    out = OUT / 'Meshes' / 'UndyingNights' / 'stand' / 'stand.nif'; out.parent.mkdir(parents=True, exist_ok=True)
+    out = OUT / 'Meshes' / 'CurseOfAlduin' / 'stand' / 'stand.nif'; out.parent.mkdir(parents=True, exist_ok=True)
     job = [f'in {obj}', f'out {out}', 'origin 1', f'collidefrustum {X0} {Y0} {X1} {Y1} {TOP} {BOTTOM} {GROW}']
     job += [f'collidebox2 {" ".join(str(v) for v in b)}' for b in collision_boxes()]
     for m, (d, n) in TEX.items():

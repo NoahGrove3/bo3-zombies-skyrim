@@ -1,4 +1,4 @@
-"""Undying Nights main menu, painted from scratch (no game captures): a matte painting in layers that the menu animates.
+"""The Curse of Alduin main menu, painted from scratch (no game captures): a matte painting in layers that the menu animates.
 
     python tools/menupaint.py <out dir> [preview.jpg]
 

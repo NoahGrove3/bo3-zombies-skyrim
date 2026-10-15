@@ -1,6 +1,6 @@
 #include "BO3Z.h"
 
-// Quick loot, Undying Nights' own (QuickLoot RE does not run on Skyrim 1.7.104): look at a container or a body and its
+// Quick loot, The Curse of Alduin's own (QuickLoot RE does not run on Skyrim 1.7.104): look at a container or a body and its
 // things are listed beside the crosshair in the game's style (src/Hud.cpp DrawLoot) - no menu, the dead keep coming.
 //   Keyboard: E takes the chosen thing, R takes everything, mouse wheel / Up / Down choose, G opens Skyrim's own
 //   container menu. Gamepad: A take, X take all, D-pad up / down choose.

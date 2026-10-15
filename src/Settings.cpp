@@ -1,8 +1,8 @@
 #include "BO3Z.h"
 
-// The player's own settings for Undying Nights. They live where Skyrim's Mod Configuration menu (SkyUI + MCM Helper)
-// keeps them: Data/MCM/Settings/UndyingNights.ini over the defaults in Data/MCM/Config/UndyingNights/settings.ini
-// (the MCM page itself: Data/MCM/Config/UndyingNights/config.json, built by tools/mcm.py). The main menu's own
+// The player's own settings for The Curse of Alduin. They live where Skyrim's Mod Configuration menu (SkyUI + MCM Helper)
+// keeps them: Data/MCM/Settings/CurseOfAlduin.ini over the defaults in Data/MCM/Config/CurseOfAlduin/settings.ini
+// (the MCM page itself: Data/MCM/Config/CurseOfAlduin/config.json, built by tools/mcm.py). The main menu's own
 // Settings rows (field of view) write the same file, so both always agree. The file is read again whenever it changes
 // (the MCM writes it as you close the menu).
 //   [General]    fFovFirst, fFovThird (degrees), bShelter (townsfolk go indoors at night), fCorpseSeconds
@@ -25,8 +25,8 @@ namespace bo3z::Settings
 			::GetModuleFileNameW(nullptr, exe, MAX_PATH);
 			return std::filesystem::path(exe).parent_path() / "Data";
 		}
-		std::filesystem::path UserIni() { return Data() / "MCM" / "Settings" / "BO3Zombies.ini"; }
-		std::filesystem::path DefaultIni() { return Data() / "MCM" / "Config" / "BO3Zombies" / "settings.ini"; }
+		std::filesystem::path UserIni() { return Data() / "MCM" / "Settings" / "CurseOfAlduin.ini"; }
+		std::filesystem::path DefaultIni() { return Data() / "MCM" / "Config" / "CurseOfAlduin" / "settings.ini"; }
 
 		// The ini is read and written by hand: MCM Helper saves it as UTF-8 with a byte-order mark, which Windows'
 		// own profile functions don't understand (they then miss the first section and every value in it).
@@ -176,7 +176,7 @@ namespace bo3z::Settings
 			// (an older install kept the field of view next to SkyrimSE.exe: carried over once)
 			wchar_t exe[MAX_PATH]{};
 			::GetModuleFileNameW(nullptr, exe, MAX_PATH);
-			const auto old = std::filesystem::path(exe).parent_path() / "UndyingNights.ini";
+			const auto old = std::filesystem::path(exe).parent_path() / "CurseOfAlduin.ini";
 			std::error_code ec;
 			if (std::filesystem::exists(old, ec) && !std::filesystem::exists(UserIni(), ec)) {
 				wchar_t buf[32]{};

@@ -99,7 +99,7 @@
     },
     {
       "id": "hud",
-      "does": "draw the Undying Nights HUD",
+      "does": "draw the Curse of Alduin HUD",
       "reads": [
         "hud:round_counter",
         "hud:points",
@@ -190,7 +190,7 @@
     },
     {
       "id": "plugin",
-      "does": "BO3Zombies.esp holds the gun items, potions, perk effects and town objects; UndyingNights.asi adds it to Plugins.txt",
+      "does": "CurseOfAlduin.esp holds the gun items, potions, perk effects and town objects; CurseOfAlduin.asi adds it to Plugins.txt",
       "reads": [
         "objects:coffer",
         "weapons:sidearm",
