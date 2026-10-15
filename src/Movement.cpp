@@ -146,43 +146,6 @@ namespace bo3z
 
 	namespace Movement
 	{
-		bool Riding()
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			PhantomForms();
-			return p && (p->IsOnMount() || Has(p, g_phFx[2]));
-		}
-
-		void OnButton(const RE::ButtonEvent* a_event)
-		{
-			if (!a_event || !a_event->IsDown()) {
-				return;
-			}
-			auto*       ue = RE::UserEvents::GetSingleton();
-			auto*       player = RE::PlayerCharacter::GetSingleton();
-			const auto& ev = a_event->QUserEvent();
-			if (!ue || !player) {
-				return;
-			}
-			// Phantom Horse: the summon starts from the sprint, which must begin in third person (see PhantomCamera)
-			if (ev == ue->sprint) {
-				PhantomForms();
-				if (PowerOn(player) && !Riding()) {
-					ThirdForHorse("sprint pressed with the power on");
-				}
-			}
-			// (the slide is gone: crouch is Skyrim's crouch again)
-			if (ev == ue->jump && g_slide > 0) {
-				g_wantJumpCarry = true;
-			}
-		}
-
-		void Reset()
-		{
-			g_applied = 0, g_slide = 0, g_carry = 0, g_air = 0, g_smooth = 0;
-			g_wasAir = false, g_wantSlide = false, g_wantJumpCarry = false, g_forcedSneak = false;
-		}
-
 		// Phantom Horse is no real mount: its horse is an effect worn by the third-person body while it plays riding
 		// animations (Open Animation Replacer), started from the sprint - none of which exists in first person, where
 		// the camera sits inside that horse. So: with one of its powers on (the Arvak or Shadow ability), pressing sprint
@@ -250,6 +213,43 @@ namespace bo3z
 				g_phTurned = false;
 				logger::info("phantom horse: off the horse - camera back to first person");
 			}
+		}
+
+		bool Riding()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			PhantomForms();
+			return p && (p->IsOnMount() || Has(p, g_phFx[2]));
+		}
+
+		void OnButton(const RE::ButtonEvent* a_event)
+		{
+			if (!a_event || !a_event->IsDown()) {
+				return;
+			}
+			auto*       ue = RE::UserEvents::GetSingleton();
+			auto*       player = RE::PlayerCharacter::GetSingleton();
+			const auto& ev = a_event->QUserEvent();
+			if (!ue || !player) {
+				return;
+			}
+			// Phantom Horse: the summon starts from the sprint, which must begin in third person (see PhantomCamera)
+			if (ev == ue->sprint) {
+				PhantomForms();
+				if (PowerOn(player) && !Riding()) {
+					ThirdForHorse("sprint pressed with the power on");
+				}
+			}
+			// (the slide is gone: crouch is Skyrim's crouch again)
+			if (ev == ue->jump && g_slide > 0) {
+				g_wantJumpCarry = true;
+			}
+		}
+
+		void Reset()
+		{
+			g_applied = 0, g_slide = 0, g_carry = 0, g_air = 0, g_smooth = 0;
+			g_wasAir = false, g_wantSlide = false, g_wantJumpCarry = false, g_forcedSneak = false;
 		}
 
 		void Tick(float a_delta)
