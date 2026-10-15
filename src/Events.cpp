@@ -39,19 +39,43 @@ namespace bo3z
 		{
 			static void thunk(RE::PlayerCharacter* a_this, float a_delta)
 			{
+				// (a trace of the first ticks after each load: if the game ever stops there, the log shows where)
+				static int trace = 0;
+				if (auto* ui = RE::UI::GetSingleton(); ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) {
+					trace = 0;
+				}
+				const bool tr = trace < 240;
+				auto       T = [&](const char* a_what) {
+                    if (tr) {
+                        logger::info("tick {} {}", trace, a_what);
+                    }
+				};
+				++trace;
+				T("game");
 				func(a_this, a_delta);
 				try {
+					T("save");
 					Save::Guard();
 					DevTools::RunQueuedInGame();
+					T("intro");
 					Intro::Tick();
+					T("director");
 					Director::Tick(a_delta);
+					T("gun");
 					Gun::Tick(a_delta);
+					T("shops");
 					Shops::Tick(a_delta);
+					T("perks");
 					Perks::Tick();
+					T("party");
 					Party::Tick(a_delta);
+					T("compass");
 					Compass::Tick(a_delta);
+					T("movement");
 					Movement::Tick(a_delta);
+					T("audio");
 					Audio::Tick(a_delta);
+					T("done");
 				} catch (const std::exception& e) {
 					logger::error("tick: {}", e.what());
 				}
