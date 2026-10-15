@@ -405,9 +405,20 @@ namespace bo3z
 				for (auto* c : { &d.x.max, &d.x.min, &d.y.max, &d.y.min, &d.z.max, &d.z.min }) {
 					scale(*c, 0.72f);
 				}
+				// and the day a little dimmer too (it was glaring with the graphics mods)
+				for (auto tm : { RE::TESWeather::ColorTimes::kDay, RE::TESWeather::ColorTimes::kSunrise, RE::TESWeather::ColorTimes::kSunset }) {
+					const float f = tm == RE::TESWeather::ColorTimes::kDay ? 0.82f : 0.9f;
+					for (auto t : { CT::kAmbient, CT::kSunlight, CT::kEffectLighting, CT::kCloudLODAmbient, CT::kCloudLODDiffuse }) {
+						scale(w->colorData[t][tm], f);
+					}
+					auto& dd = w->directionalAmbientLightingColors[tm].directional;
+					for (auto* c : { &dd.x.max, &dd.x.min, &dd.y.max, &dd.y.min, &dd.z.max, &dd.z.min }) {
+						scale(*c, f);
+					}
+				}
 				++n;
 			}
-			logger::info("world: nights darkened in {} weathers", n);
+			logger::info("world: nights darkened, days dimmed, in {} weathers", n);
 		}
 
 		void OnDataLoaded()
@@ -417,6 +428,13 @@ namespace bo3z
 				if (auto* st = prefs->GetSetting("bShowFloatingQuestMarkers:GamePlay")) {
 					st->data.b = false;
 					logger::info("quests: Skyrim's floating quest markers off (ours instead)");
+				}
+			}
+			// no blood splattered over the screen when you are hit (the red edges of the HUD say it)
+			if (auto* ini = RE::INISettingCollection::GetSingleton()) {
+				if (auto* st = ini->GetSetting("bBloodSplatterEnabled:ScreenSplatter")) {
+					st->data.b = false;
+					logger::info("hud: Skyrim's blood splatter on the screen off");
 				}
 			}
 			DarkenNights();

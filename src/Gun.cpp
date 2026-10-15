@@ -138,6 +138,17 @@ namespace bo3z
 		{
 			static void thunk(RE::PlayerInputHandler* a_this, RE::ButtonEvent* a_event, RE::PlayerControlsData* a_data)
 			{
+				// the mouse's hands the natural way round: the left button is the left hand, the right button the right
+				// (Skyrim has them crossed). Not with a gun out (its fire button is its own) nor on a controller.
+				if (!GunOut() && a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kMouse) {
+					if (auto* ue = RE::UserEvents::GetSingleton()) {
+						if (a_event->QUserEvent() == ue->rightAttack) {
+							a_event->SetUserEvent(ue->leftAttack);
+						} else if (a_event->QUserEvent() == ue->leftAttack) {
+							a_event->SetUserEvent(ue->rightAttack);
+						}
+					}
+				}
 				if (GunOut() && (IsStaff(CurrentGun()) || IsSpell(CurrentGun())) && IsFireButton(a_event)) {
 					g_abHandler = a_this, g_abData = a_data;
 					return;  // ours: the staff swing is played on release (TickSwing)

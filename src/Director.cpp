@@ -2136,14 +2136,14 @@ namespace bo3z
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			Undead::Tick(player, a_delta);
 			PublishEnemyBars(player);
-			// Night regen: after a few seconds without taking damage, health surges back (nights only).
+			// Regen: after a few seconds without taking damage, health surges back (day and night).
 			if (player) {
 				static float last = -1, quiet = 0;
 				auto*        av = player->AsActorValueOwner();
 				const float  hp = av->GetActorValue(RE::ActorValue::kHealth);
 				const float  maxHp = av->GetPermanentActorValue(RE::ActorValue::kHealth);
 				quiet = (last >= 0 && hp < last - 0.01f) ? 0 : quiet + a_delta;
-				if (IsNight() && quiet >= gen::kRegenDelay && hp < maxHp && !player->IsDead() && Party::State() == Party::Life::Alive) {
+				if (quiet >= gen::kRegenDelay && hp < maxHp && !player->IsDead() && Party::State() == Party::Life::Alive) {
 					av->RestoreActorValue(RE::ActorValue::kHealth, std::min(maxHp - hp, maxHp * gen::kRegenPerSecond * a_delta));
 				}
 				last = av->GetActorValue(RE::ActorValue::kHealth);
