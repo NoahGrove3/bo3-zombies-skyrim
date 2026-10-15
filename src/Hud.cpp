@@ -1880,8 +1880,36 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_cursor.y = std::clamp(g_cursor.y + dy * a_size.y / 1080.0f, 0.0f, a_size.y);
 			}
 			lastSk = sk;
+			g_skCursor = sk;
 		}
 		ImVec2 Cursor(ImVec2) { return g_cursor; }
+		ImVec2 g_skCursor{ -1, -1 };  // exactly where Skyrim's own menu cursor is (its menus take the clicks there)
+
+		// Our cursor, in the quest ping's style (the burning diamond over quest targets): a tall diamond tipped up and
+		// to the left so its point is the hotspot, a dark heart, an amber rim, a soft glow round it and a hot core near
+		// the tip that breathes - on the main menu and in every Skyrim menu with a cursor.
+		void DrawPingCursor(ImDrawList* a_dl, ImVec2 a_tip, float k, float a_now)
+		{
+			const ImU32 col = IM_COL32(236, 168, 72, 255), dark = IM_COL32(20, 12, 8, 235);
+			const float pulse = 0.75f + 0.25f * std::sin(a_now * 3.0f);
+			const float R = 12.0f * k, ca = std::cos(-0.55f), sa = std::sin(-0.55f);
+			const ImVec2 mid{ a_tip.x - sa * R, a_tip.y + ca * R };  // the diamond's centre, one half-height down its axis
+			auto at = [&](float x, float y) { return ImVec2{ mid.x + x * ca - y * sa, mid.y + x * sa + y * ca }; };
+			auto diamond = [&](float r, float w, ImU32 c, bool fill, float th) {
+				const ImVec2 a = at(0, -r), b = at(w * r, 0), cc = at(0, r), d = at(-w * r, 0);
+				if (fill) a_dl->AddQuadFilled(a, b, cc, d, c);
+				else a_dl->AddQuad(a, b, cc, d, c, th);
+			};
+			for (int i = 3; i >= 1; --i) {
+				diamond(R * (1.0f + 0.35f * i), 0.62f, Fade(col, 0.07f * pulse), true, 0);
+			}
+			diamond(R, 0.62f, dark, true, 0);
+			diamond(R, 0.62f, col, false, 2.0f * k);
+			const float c = R * 0.38f;
+			const ImVec2 hc = at(0, -R * 0.42f);  // the hot core, up toward the point
+			a_dl->AddQuadFilled({ hc.x - sa * -c, hc.y + ca * -c }, { hc.x + ca * c * 0.62f, hc.y + sa * c * 0.62f }, { hc.x - sa * c, hc.y + ca * c }, { hc.x - ca * c * 0.62f, hc.y - sa * c * 0.62f }, Fade(IM_COL32(255, 210, 120, 255), pulse));
+			a_dl->AddCircleFilled(a_tip, 1.6f * k, IM_COL32(255, 236, 190, 255), 8);  // the exact point
+		}
 
 		bool Button(ImDrawList* dl, ImVec2 a, ImVec2 b, const std::string& label, ImVec2 cur, bool click, float k, ImU32 accent = kGold)
 		{
@@ -2445,14 +2473,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (g_sGlow) {  // the runes and the pool breathe with the core
 					layer(g_sGlow, kD, IM_COL32(255, 255, 255, static_cast<int>((150 + 105 * pulse) * fade)));
 				}
-				// motes of light running round the rune ring (it turns), brighter where they pass the front
-				for (int i = 0; i < 28; ++i) {
-					const float a = now * 0.22f + i * (6.2832f / 28);
-					const ImVec2 p = at(std::cos(a) * 136.0f, std::sin(a) * 136.0f, 1.0f);
-					const float front = 0.55f - 0.45f * std::sin(a);
-					fg->AddCircleFilled(p, 7.0f * u, IM_COL32(110, 190, 255, static_cast<int>(40 * front * fade)), 12);
-					fg->AddCircleFilled(p, 2.4f * u, IM_COL32(210, 240, 255, static_cast<int>(200 * front * fade)), 8);
-				}
+				// (the old motes running round the rune ring are gone: the motes flipbook below carries the light now)
 				// motes of light rising from the pool to the crystal, spiralling in (tools/orbfx.py motes, the game's own)
 				if (g_sMotes) {
 					const ImVec2 pool = at(0, 0, 0), top = at(0, 0, kCrystalZ);
@@ -2538,19 +2559,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const float g3 = (60 + 40 * pulse) * u;
 						sprite(g_sSoft, c, g3 * 2, g3 * 2, 0, IM_COL32(230, 245, 255, static_cast<int>((70 + 110 * pulse) * fade)));
 					}
-					// sparks drifting up out of the pool and off the crystal
-					static std::array<std::array<float, 4>, 36> sp{};
-					static std::mt19937 srng{ 5 };
-					std::uniform_real_distribution<float> U(0, 1);
-					for (auto& q : sp) {
-						if (q[3] <= 0) {
-							q = { (U(srng) - 0.5f) * 60.0f, (U(srng) - 0.5f) * 30.0f, U(srng) * 40.0f, 1.0f + U(srng) * 2.5f };
-						}
-						q[2] += dt * 45.0f, q[3] -= dt * 0.5f;
-						const ImVec2 p = at(q[0] + std::sin(now + q[1]) * 6, q[1], q[2]);
-						const int al = static_cast<int>(std::min(1.0f, q[3]) * 200 * fade);
-						fg->AddCircleFilled(p, 2.2f * u * kS * 0.5f, IM_COL32(190, 230, 255, al), 8);
-					}
+					// (the old drawn sparks over the pool are gone too: the motes flipbook is the shrine's only particles)
 				}
 				for (const auto& pl : placed) {
 					if (pl.depth <= 0) drawRock(pl);
@@ -2868,14 +2877,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (fade < 1.0f) {
 				fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(255 * (1.0f - fade))));
 			}
-			// our cursor: a soul-fire arrowhead in iron
-			const ImVec2 c = cur;
-			if (c.x >= 0) {
-				const ImVec2 p1{ c.x + 5 * k, c.y + 26 * k }, p2{ c.x + 11 * k, c.y + 18 * k }, p3{ c.x + 20 * k, c.y + 17 * k };
-				fg->AddQuadFilled(c, p1, p2, p3, IM_COL32(18, 20, 24, 240));
-				fg->AddQuad(c, p1, p2, p3, IM_COL32(150, 170, 190, 255), 1.6f * k);
-				fg->AddCircleFilled(c, 3.0f * k, IM_COL32(140, 255, 200, 255));
-				fg->AddCircleFilled(c, 7.0f * k, IM_COL32(90, 255, 170, 50));
+			// our cursor, the quest ping's diamond
+			if (cur.x >= 0) {
+				DrawPingCursor(fg, cur, k, now);
 			}
 		}
 
@@ -3401,16 +3405,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 			const bool mainMenu = uiM && uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) && (!popup || steamOver);
-			// Skyrim's cursor goes while our menu (with its own cursor) shows, and comes back for everything else
-			{
-				static bool hidden = false;
-				if (mainMenu != hidden && uiM) {
-					if (auto cm = uiM->GetMenu(RE::CursorMenu::MENU_NAME); cm && cm->uiMovie) {
-						cm->uiMovie->SetVisible(!mainMenu);
-						hidden = mainMenu;
-					} else if (!mainMenu) {
-						hidden = false;
-					}
+			// Skyrim's cursor never shows: ours (DrawPingCursor) is drawn in its place, on the main menu and in game
+			const bool cursorUp = uiM && uiM->IsMenuOpen(RE::CursorMenu::MENU_NAME);
+			if (cursorUp) {
+				if (auto cm = uiM->GetMenu(RE::CursorMenu::MENU_NAME); cm && cm->uiMovie && cm->uiMovie->GetVisible()) {
+					cm->uiMovie->SetVisible(false);
 				}
 			}
 			// the Tab menu (Skills / Magic / Items / Map), on its own: the party panel sits in its empty top-left corner
@@ -3528,6 +3527,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder.Compass._visible", RE::GFxValue(false));
 					}
 				}
+			}
+			if (cursorUp && !mainMenu && !g_filmOn && g_skCursor.x >= 0) {  // in Skyrim's own menus: ours, right where its cursor is
+				DrawPingCursor(ImGui::GetForegroundDrawList(), g_skCursor, io.DisplaySize.y / 1080.0f, static_cast<float>(ImGui::GetTime()));
 			}
 			if (g_veil > 0 && !g_filmOn && !mainMenu) {
 				ImGui::GetForegroundDrawList()->AddRectFilled({ 0, 0 }, io.DisplaySize, IM_COL32(0, 0, 0, static_cast<int>(255 * g_veil * g_veil * (3 - 2 * g_veil))));
