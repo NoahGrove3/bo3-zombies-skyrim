@@ -372,6 +372,9 @@ namespace bo3z
 
 	namespace Shops
 	{
+		inline constexpr int kReelPass = 40;          // spells the roll's reel runs past before it stops on the one won
+		float ReelPos(float a_k);                      // where the reel stands at spin progress 0..1 (eased to a stop)
+		int   ReelSpell(int a_target, float a_pos, int a_slot);  // the spell in a slot of the reel (0 = the front)
 		void Tick(float a_delta);
 		void Reset();
 		void OnActivate(RE::TESObjectREFR* a_ref);
@@ -466,6 +469,7 @@ namespace bo3z
 			int         perkSel{ 0 };
 			// the shrine: its roll (0 idle, 1 charging, 2 spinning, 3 offering), progress 0..1, the spell shown, the price; a Thu'um to learn there
 			int         rollPhase{ 0 }, rollGun{ -1 }, rollCost{ 0 }, shrineShout{ -1 };
+			int         rollTarget{ -1 };              // the spell the roll will land on (Arcana index), for the reel
 			float       rollT{ 0 };
 			float       pulseT{ 0 }, pulseX{ 0.5f }, pulseY{ 0.5f };  // a freed shrine's wave (seconds left, its screen spot)
 			bool        pulseOn{ false };
@@ -499,6 +503,8 @@ namespace bo3z
 			bool        compassOn{ false };
 			float       heading{ 0 };
 			std::vector<CompassMark> compass;
+			struct QuestMark { float x, y, dist; bool front; std::string label; };  // a quest's target on the screen (0..1), drawn in our style
+			std::vector<QuestMark> qmarks;
 			std::uint32_t objColor{ 0xD6B260 };
 			float       questNoteTime{ 0 };
 			// weapon slots (2, or 3 with the brew): the weapon in each (gen::kGuns index, -1 empty), its Reforge level

@@ -97,6 +97,7 @@ namespace bo3z::Compass
 		const float        heading = std::atan2(m.entry[0][1], m.entry[1][1]);
 		const RE::NiPoint3 me = pl->GetPosition();
 		std::vector<Hud::State::CompassMark> marks;
+		std::vector<Hud::State::QuestMark>   qmarks;
 		auto bearing = [&](const RE::NiPoint3& a) { return std::atan2(a.x - me.x, a.y - me.y); };
 		auto* world = pl->GetWorldspace();
 		if (world != g_world || (scan -= a_delta) <= 0) {
@@ -150,6 +151,14 @@ namespace bo3z::Compass
 						const char* qn = quest->GetName();
 						marks.push_back({ bearing(ref->GetPosition()), d, 1, qn ? qn : "" });
 						++shown;
+						// and over the target itself, on the screen (Skyrim's floating marker, in our style)
+						if (auto* cam = RE::Main::WorldRootCamera(); cam && d < 12000.0f) {
+							auto at = ref->GetPosition();
+							at.z += ref->As<RE::Actor>() ? 150.0f : 70.0f;
+							float x = 0, y = 0, z = 0;
+							cam->WorldPtToScreenPt3(at, x, y, z, 1e-5f);
+							qmarks.push_back({ x, 1.0f - y, d, z > 0, qn ? qn : "" });
+						}
 					}
 				}
 			}
@@ -165,5 +174,6 @@ namespace bo3z::Compass
 		h.compassOn = true;
 		h.heading = heading;
 		h.compass = std::move(marks);
+		h.qmarks = std::move(qmarks);
 	}
 }

@@ -622,6 +622,32 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DrawCompass(dl, s, size, k, now);
 			}
 
+			// The quests' targets in the world (Skyrim's floating quest markers, which are turned off, in our style): a
+			// small burning diamond over each, its distance under it, the quest's name when you look right at it
+			if (!s.perkMenu) {
+				const ImU32 col = IM_COL32(236, 168, 72, 255), dark = IM_COL32(20, 12, 8, 230);
+				const float pulse = 0.75f + 0.25f * std::sin(now * 3.0f);
+				for (const auto& q : s.qmarks) {
+					const ImVec2 p{ q.x * size.x, q.y * size.y };
+					if (!q.front || p.x < 40 * k || p.x > size.x - 40 * k || p.y < 60 * k || p.y > size.y - 40 * k) {
+						continue;
+					}
+					const float r = std::clamp(15.0f * 2500.0f / std::max(800.0f, q.dist), 9.0f, 15.0f) * k;
+					for (int i = 3; i >= 1; --i) {
+						const float g = r * (1.0f + 0.45f * i);
+						dl->AddQuadFilled({ p.x, p.y - g }, { p.x + g * 0.7f, p.y }, { p.x, p.y + g }, { p.x - g * 0.7f, p.y }, Fade(col, 0.07f * pulse));
+					}
+					dl->AddQuadFilled({ p.x, p.y - r }, { p.x + r * 0.7f, p.y }, { p.x, p.y + r }, { p.x - r * 0.7f, p.y }, dark);
+					dl->AddQuad({ p.x, p.y - r }, { p.x + r * 0.7f, p.y }, { p.x, p.y + r }, { p.x - r * 0.7f, p.y }, col, 2.0f * k);
+					const float c = r * 0.42f;
+					dl->AddQuadFilled({ p.x, p.y - c }, { p.x + c * 0.7f, p.y }, { p.x, p.y + c }, { p.x - c * 0.7f, p.y }, Fade(IM_COL32(255, 210, 120, 255), pulse));
+					TxtC(dl, g_num, 14 * k, p.x, p.y + r + 6 * k, IM_COL32(220, 196, 150, 210), std::to_string(static_cast<int>(q.dist * 0.01428f)) + " m");
+					if (std::abs(q.x - 0.5f) < 0.10f && std::abs(q.y - 0.5f) < 0.12f && !q.label.empty()) {
+						TxtC(dl, g_title, 17 * k, p.x, p.y - r - 30 * k, IM_COL32(236, 222, 190, 235), q.label, 1.5f * k, col);
+					}
+				}
+			}
+
 			// Damage vignette: red edges when hurt, stronger when low.
 			const float hpFrac = s.hpMax > 0 ? s.hp / s.hpMax : 1.0f;
 			const float hurt = std::max(std::clamp(s.hurtTime, 0.0f, 1.0f) * 0.8f, std::clamp((0.4f - hpFrac) / 0.4f, 0.0f, 1.0f) * (0.6f + 0.25f * std::sin(now * 5)));
@@ -1576,16 +1602,74 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->AddRect(at, kb, live ? kGold : kGoldDim, 3 * k, 0, 1.2f * k);
 				TxtC(dl, g_num, 17 * k, at.x + 13 * k, at.y + 3 * k, live ? kParch : IM_COL32(150, 140, 125, 255), key);
 			};
-			// the roll on the shrine itself: the spells' emblems flicker over its crystal, then the one won hangs there
-			if (s.rollOnScreen && s.rollGun >= 0 && s.rollPhase >= 2) {
+			// the roll on the shrine itself, over its crown: the shrine gathers its light (a ring of runes drawn in), then a
+			// reel of the spells' emblems turns round the orb - fast, then slowing like a wheel of fortune, the name of the
+			// one in front under it - and stops on the one won (1 of every spell there is), which bursts into light and
+			// hangs there to be taken
+			if (s.rollOnScreen && s.rollPhase >= 1) {
 				const ImVec2 c{ s.rollScreenX * size.x, s.rollScreenY * size.y };
 				const float  R = std::clamp(110.0f * 420.0f / std::max(200.0f, s.rollDist), 26.0f, 110.0f) * k;
-				const float  pulse = s.rollPhase == 3 ? 1.0f + 0.06f * std::sin(now * 5.0f) : 1.0f;
-				dl->AddCircleFilled(c, R * 1.5f * pulse, IM_COL32(90, 160, 255, 40), 40);
-				dl->AddCircleFilled(c, R * 1.15f * pulse, IM_COL32(150, 200, 255, 50), 40);
-				DrawEmblem(dl, s.rollGun, c, R * pulse, 1.0f, now);
-				const std::string nm = ArmsName(s.rollGun);
-				TxtC(dl, g_title, std::max(16.0f, R / k * 0.32f) * k, c.x, c.y + R * 1.25f, s.rollPhase == 3 ? IM_COL32(250, 236, 200, 255) : IM_COL32(200, 210, 230, 220), nm, 2 * k, IM_COL32(60, 120, 255, 255));
+				const int    n = std::max(1, Arcana::Count());
+				if (s.rollPhase == 1) {  // gathering: runes spiral in, the light swells
+					const float g = s.rollT;
+					dl->AddCircleFilled(c, R * (0.4f + 0.9f * g), IM_COL32(150, 90, 255, static_cast<int>(40 + 60 * g)), 40);
+					for (int q = 0; q < 12; ++q) {
+						const float a = now * (2.0f + 6.0f * g) + q * 6.2832f / 12;
+						const float rr = R * (2.2f - 1.5f * g);
+						dl->AddCircleFilled({ c.x + std::cos(a) * rr, c.y + std::sin(a) * rr * 0.45f }, (2.0f + 2.5f * g) * k, IM_COL32(200, 160, 255, static_cast<int>(120 + 135 * g)), 8);
+					}
+				} else if (s.rollPhase == 2 && s.rollTarget >= 0) {  // the reel
+					const float pos = Shops::ReelPos(s.rollT);
+					const float frac = pos - std::floor(pos);
+					const float speed = Shops::kReelPass * 3.0f * (1.0f - s.rollT) * (1.0f - s.rollT) / gen::kShowSpin;  // spells a second
+					struct Slot { int spell; float a; };
+					std::array<Slot, 9> slots{};
+					for (int j = -4; j <= 4; ++j) {
+						slots[j + 4] = { Shops::ReelSpell(s.rollTarget, pos, j), (j - frac) * 0.52f };
+					}
+					std::sort(slots.begin(), slots.end(), [](const Slot& x, const Slot& y) { return std::cos(x.a) < std::cos(y.a); });  // far first
+					dl->AddCircleFilled(c, R * 1.25f, IM_COL32(120, 70, 220, 45), 40);
+					for (const auto& sl : slots) {
+						if (std::abs(sl.a) > 1.45f) {
+							continue;
+						}
+						const float depth = std::cos(sl.a);
+						const ImVec2 p{ c.x + std::sin(sl.a) * R * 1.9f, c.y - (1.0f - depth) * R * 0.55f };
+						const float  sc = 0.38f + 0.42f * depth * depth;
+						const float  al = std::pow(depth, 1.6f);
+						if (speed > 6.0f) {  // a blur of the ones racing past
+							for (int gq = 1; gq <= 2; ++gq) {
+								const float a2 = sl.a + gq * 0.06f;
+								DrawEmblem(dl, Arcana::kIdBase + sl.spell, { c.x + std::sin(a2) * R * 1.9f, p.y }, R * sc, al * 0.25f / gq, now, 0.0f);
+							}
+						}
+						DrawEmblem(dl, Arcana::kIdBase + sl.spell, p, R * sc, al, now, depth > 0.95f ? 1.0f : 0.0f);
+					}
+					const int front = Shops::ReelSpell(s.rollTarget, pos + 0.5f, 0);
+					const std::string nm = ArmsName(Arcana::kIdBase + front);
+					TxtC(dl, g_title, std::max(16.0f, R / k * 0.28f) * k, c.x, c.y + R * 0.95f, IM_COL32(210, 216, 235, 230), nm, 2 * k, IM_COL32(110, 70, 255, 255));
+				} else if (s.rollPhase == 3 && s.rollGun >= 0) {  // won: a burst of light, then it hangs there
+					const float since = s.rollT * gen::kShowOffer;
+					const ImU32 ec = spellCol(s.rollGun, 1.0f);
+					if (since < 1.2f) {
+						const float b = since / 1.2f;
+						dl->AddCircle(c, R * (1.0f + 2.6f * b), Fade(ec, 1.0f - b), 64, (6.0f - 4.0f * b) * k);
+						dl->AddCircle(c, R * (0.8f + 1.8f * b), Fade(IM_COL32(255, 245, 220, 255), (1.0f - b) * 0.8f), 64, 3.0f * k);
+						for (int q = 0; q < 16; ++q) {  // rays
+							const float a = q * 6.2832f / 16 + b * 0.6f;
+							const float r0 = R * (0.9f + 0.6f * b), r1 = R * (1.5f + 2.4f * b);
+							dl->AddLine({ c.x + std::cos(a) * r0, c.y + std::sin(a) * r0 }, { c.x + std::cos(a) * r1, c.y + std::sin(a) * r1 }, Fade(ec, (1.0f - b) * 0.8f), 2.5f * k);
+						}
+					}
+					const float pulse = 1.0f + 0.06f * std::sin(now * 5.0f);
+					const float pop = since < 0.35f ? 1.0f + 0.5f * (1.0f - since / 0.35f) : 1.0f;
+					dl->AddCircleFilled(c, R * 1.5f * pulse, Fade(ec, 0.16f), 40);
+					dl->AddCircleFilled(c, R * 1.15f * pulse, IM_COL32(150, 200, 255, 50), 40);
+					DrawEmblem(dl, s.rollGun, c, R * pulse * pop, 1.0f, now);
+					TxtC(dl, g_title, std::max(18.0f, R / k * 0.34f) * k, c.x, c.y + R * 1.3f, IM_COL32(250, 236, 200, 255), ArmsName(s.rollGun), 2 * k, IM_COL32(150, 70, 255, 255));
+					TxtC(dl, g_body, std::max(12.0f, R / k * 0.15f) * k, c.x, c.y + R * 1.3f + std::max(22.0f, R / k * 0.38f) * k, IM_COL32(220, 196, 150, 220),
+						"1 of " + std::to_string(n) + " spells");
+				}
 			}
 			if (s.perkMenu) {
 				const float w = 470 * k;
@@ -1950,6 +2034,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ID3D11ShaderResourceView* g_sRefl = nullptr;     // the mountains upside down in the lake
 		ID3D11ShaderResourceView* g_sAurora = nullptr;   // the northern lights
 		ID3D11ShaderResourceView* g_sLife = nullptr;     // lily pads on the lake, reeds and bushes in the near corners
+		ID3D11ShaderResourceView* g_sMotes = nullptr;    // motes rising from the shrine's pool: 8x8 flipbook (tools/orbfx.py)
 		std::array<ID3D11ShaderResourceView*, 9> g_sShard{}, g_sShardR{};  // the rocks, and their runes' light (pulsing)
 		ID3D11ShaderResourceView* g_mGroundFog = nullptr;
 		ID3D11ShaderResourceView* g_mClouds2 = nullptr;    // drifting night clouds that tile left-right (tools/menuscene.py drift_clouds)  // fog wisps that tile left-right (tools/menuscene.py ground_fog)
@@ -2306,6 +2391,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					fg->AddCircleFilled(p, 7.0f * u, IM_COL32(110, 190, 255, static_cast<int>(40 * front * fade)), 12);
 					fg->AddCircleFilled(p, 2.4f * u, IM_COL32(210, 240, 255, static_cast<int>(200 * front * fade)), 8);
 				}
+				// motes of light rising from the pool to the crystal, spiralling in (tools/orbfx.py motes, the game's own)
+				if (g_sMotes) {
+					const ImVec2 pool = at(0, 0, 0), top = at(0, 0, kCrystalZ);
+					const float  hgt = (pool.y - top.y) * 1.2f;
+					const int    fr = static_cast<int>(now * 12.0f) % 64;
+					const ImVec2 uv0{ (fr % 8) * 0.125f, (fr / 8) * 0.125f }, uv1{ uv0.x + 0.125f, uv0.y + 0.125f };
+					sprite(g_sMotes, { pool.x, (pool.y + top.y) * 0.5f }, hgt * 0.5f, hgt, 0, IM_COL32(255, 255, 255, static_cast<int>(235 * fade)), uv0, uv1);
+				}
 				// the light rising from the pool to the crystal: a soft shaft (the round light stretched tall)
 				if (g_sSoft) {
 					const ImVec2 pool = at(0, 0, 0), top = at(0, 0, kCrystalZ);
@@ -2370,7 +2463,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_fire)), { c.x - hh, c.y - hh - lift }, { c.x + hh, c.y + hh - lift }, { uu, vv }, { uu + 0.125f, vv + 0.125f }, tint);
 					};
 					aura(1.12f, 2.6f, IM_COL32(225, 200, 255, static_cast<int>((130 + 50 * pulse) * fade)));
-					aura(1.0f + 0.03f * pulse, 0.0f, IM_COL32(255, 255, 255, static_cast<int>(255 * fade)));
 					if (g_sCrystal) {
 						const int   f = static_cast<int>(now * 9.0f) % 24;  // ~2.7 s a turn
 						const ImVec2 uv0{ (f % 6) / 6.0f, (f / 6) / 4.0f }, uv1{ uv0.x + 1.0f / 6.0f, uv0.y + 0.25f };
@@ -2379,6 +2471,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const ImVec2 mid{ c.x, c.y + (0.5f - 0.56f) * h };  // (the frame's origin sits at 56% of its height)
 						sprite(g_sCrystal, mid, w, h, 0, IM_COL32(255, 255, 255, static_cast<int>(255 * fade)), uv0, uv1);
 					}
+					aura(1.0f, 0.0f, IM_COL32(255, 255, 255, static_cast<int>(255 * fade)));  // (over the orb: its flames cling round the edge, coming out of it)
 					if (g_sSoft) {  // the white heart over it, flaring on the beat
 						const float g3 = (60 + 40 * pulse) * u;
 						sprite(g_sSoft, c, g3 * 2, g3 * 2, 0, IM_COL32(230, 245, 255, static_cast<int>((70 + 110 * pulse) * fade)));
@@ -3157,7 +3250,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\UndyingNights\\") + file).c_str(), nullptr, tex);
 			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_title.png", nullptr, &g_mTitle);
-			for (auto [file, tex] : { std::pair{ L"menu_shrine_ground.png", &g_sGround }, { L"menu_shrine_glow.png", &g_sGlow }, { L"menu_crystal.png", &g_sCrystal }, { L"menu_softglow.png", &g_sSoft }, { L"menu_mountains.png", &g_sMtn }, { L"menu_lake_refl.png", &g_sRefl }, { L"menu_aurora2.png", &g_sAurora }, { L"menu_lake_life.png", &g_sLife } }) {
+			for (auto [file, tex] : { std::pair{ L"menu_shrine_ground.png", &g_sGround }, { L"menu_shrine_glow.png", &g_sGlow }, { L"menu_crystal.png", &g_sCrystal }, { L"menu_softglow.png", &g_sSoft }, { L"menu_mountains.png", &g_sMtn }, { L"menu_lake_refl.png", &g_sRefl }, { L"menu_aurora2.png", &g_sAurora }, { L"menu_lake_life.png", &g_sLife }, { L"menu_motes.png", &g_sMotes } }) {
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\UndyingNights\\") + file).c_str(), nullptr, tex);
 			}
 			for (int i = 0; i < 9; ++i) {

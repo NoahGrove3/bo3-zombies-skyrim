@@ -124,6 +124,21 @@ namespace bo3z
 			g_show.display = ref->CreateRefHandle();
 		}
 
+	}
+
+	// the reel: where it stands at spin progress k (0..1) - eased so it slows to a stop on the target
+	float Shops::ReelPos(float a_k) { const float r = 1.0f - std::clamp(a_k, 0.0f, 1.0f); return Shops::kReelPass * (1.0f - r * r * r); }
+	int   Shops::ReelSpell(int a_target, float a_pos, int a_slot)
+	{
+		const int n = std::max(1, Arcana::Count());
+		const int i = a_target - Shops::kReelPass + static_cast<int>(std::floor(a_pos)) + a_slot;
+		return ((i % n) + n) % n;
+	}
+
+	namespace
+	{
+		int ReelFront(int a_target, float a_k) { return Shops::ReelSpell(a_target, Shops::ReelPos(a_k), 0); }
+
 		std::vector<int> RollPool()
 		{
 			std::vector<int> pool;
@@ -158,14 +173,16 @@ namespace bo3z
 				break;
 			case Show::Spinning:
 				{
+					// the reel (drawn by the HUD over the crown, src/Hud.cpp): kReelPass spells go by, slowing like a wheel
+					// of fortune, and it stops on the one won; a tick for each spell that passes the front
 					const float k = std::min(1.0f, g_show.t / gen::kShowSpin);
-					if ((g_show.step -= a_delta) <= 0) {
-						g_show.step = 0.07f + 0.32f * k * k;  // flickers through the whole pool, slowing like a wheel of fortune
-						g_show.shown = Arcana::Next(g_show.shown);  // in order: every spell passes by, its element's emblem over the crystal
-						if (g_show.shown >= 0) {
-							ShowModel(Forms::Ours(gen::kShowElement[Arcana::ElementOf(g_show.shown)]), gen::kShowRise * k);
-							Forms::PlayAt(gen::Sound::coffer_spin, chest.get());
-						}
+					const int   front = ReelFront(g_show.gun, k);
+					g_show.step -= a_delta;
+					if (front != g_show.shown && g_show.step <= 0) {
+						g_show.shown = front;
+						g_show.step = 0.045f;
+						ShowModel(Forms::Ours(gen::kShowElement[Arcana::ElementOf(g_show.shown)]), gen::kShowRise * k);
+						Forms::PlayAt(gen::Sound::coffer_spin, chest.get());
 					} else if (auto d = g_show.display.get()) {
 						d->SetPosition(Local(chest.get(), 0, 0, kOrbZ * chest->GetScale() + gen::kShowRise * k));
 					}
@@ -1541,6 +1558,7 @@ namespace bo3z
 				h.rollPhase = static_cast<int>(g_show.phase);
 				h.rollT = g_show.phase == Show::Charging ? std::min(1.0f, g_show.t / kChargeTime) : g_show.phase == Show::Spinning ? std::min(1.0f, g_show.t / gen::kShowSpin) : g_show.phase == Show::Offering ? std::min(1.0f, g_show.t / gen::kShowOffer) : 0.0f;
 				h.rollGun = g_show.phase == Show::Idle || g_show.phase == Show::Charging || g_show.shown < 0 ? -1 : Arcana::kIdBase + g_show.shown;
+				h.rollTarget = g_show.phase == Show::Spinning || g_show.phase == Show::Offering ? g_show.gun : -1;
 				h.rollCost = RollCost();
 				// where the shrine's crown is on the screen: the roll shows there too, over the crystal itself
 				h.rollOnScreen = false;

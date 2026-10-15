@@ -59,10 +59,21 @@ def frame(t, A, B, C):
     heat = heat ** (0.7 + 0.5 * above)                            # thinning as it rises
     heat *= np.clip(0.75 + 0.45 * np.tanh(n + 0.4), 0, 1.2)         # broken into flames, not a smooth blob
     heat *= np.clip((1 - np.maximum(np.abs(x), np.abs(y))) / 0.08, 0, 1)   # nothing at the frame's edge
-    # over the orb's face only a thin veil (the orb shows through); its rim burns brightest
+    # the fire that clings to the orb: a skin of flame hugging its edge all round, licking up along the curve of it
+    # (from underneath, round the sides, into the plume) - so the fire comes out of the orb, not from behind it
+    phi = np.arctan2(x, dy)                                       # 0 straight up, +-pi straight down
+    along = (np.pi - np.abs(phi)) / np.pi                         # 0 at the bottom .. 1 at the top, up either side
+    side = np.sign(phi + 1e-6)
+    s_out = r - ORB_R                                             # outside the edge (<0: just inside it, over the limb)
+    cling_n = sample(B, side * s_out * 2.2 + 0.25 * side, along * 1.6 - t * 3) * 0.75 + sample(A, along * 3.1 + 0.4 * side, s_out * 1.3 - t * 2) * 0.45
+    thick = 0.05 + 0.20 * along ** 1.4                            # thin underneath, swelling as it climbs the sides
+    cling = np.clip(1.0 - np.maximum(s_out, 0) / (thick * (1.0 + 0.6 * np.tanh(cling_n))), 0, 1)
+    cling *= np.clip((s_out + 0.07) / 0.07, 0, 1)                 # it starts just inside the edge (over the limb)
+    cling = cling ** 1.2 * np.clip(0.75 + 0.5 * np.tanh(cling_n + 0.3), 0, 1.2)
+    # over the orb's face only a thin veil (the orb shows through); the edge itself burns brightest
     face = np.clip((r - ORB_R * 0.80) / (ORB_R * 0.22), 0, 1)
-    rim = np.exp(-np.abs(r - ORB_R) / 0.035) * 0.55
-    heat = heat * (0.25 + 0.75 * face) + rim * np.clip(0.7 + 0.5 * n, 0, 1)
+    rim = np.exp(-np.abs(r - ORB_R) / 0.03) * 0.6
+    heat = np.maximum(heat * (0.25 + 0.75 * face), cling * 1.05) + rim * np.clip(0.7 + 0.5 * n, 0, 1)
     a = np.clip(heat * 1.35, 0, 1) ** 1.1
     # colour by heat: deep violet wisps -> purple -> lilac -> white-hot at the roots
     stops = np.array([[0.00, 45, 0, 100], [0.25, 105, 25, 205], [0.55, 165, 70, 255], [0.85, 215, 150, 255], [1.20, 250, 235, 255]], np.float32)

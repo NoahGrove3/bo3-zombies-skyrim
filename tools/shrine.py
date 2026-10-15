@@ -12,6 +12,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import stand as S
+import rockart as RA
 
 OUT = pathlib.Path(sys.argv[1]); S.OUT = OUT
 R, TOP, BOTTOM, GROW = 160, 16, -60, 70
@@ -104,7 +105,7 @@ def rock(mat, cx, cy, cz, yaw, tilt, L, seed):
         return (cx + xt * math.cos(yaw) - y * math.sin(yaw), cy + xt * math.sin(yaw) + y * math.cos(yaw), cz + zt)
     for t in tris:
         V = [place(v) for v in t]
-        UV = [(0.5 + v[0] / L, 0.5 + (v[1] + v[2]) / (L * 0.45)) for v in t]
+        UV = RA.fix_seam([RA.rock_uv(v[0], v[1], v[2], L) for v in t])  # (a sleeve round the rock: its bracelets wrap each end)
         S.add(mat, V, UV, [(0, 1, 2)])
 
 
@@ -174,26 +175,50 @@ def tex_flame(w=256, h=512, seed=21):
     return Image.fromarray(np.dstack([rgb * 255, a * 255]).astype(np.uint8), 'RGBA')
 
 
-def aura(nif, tex):
-    """purple fire made of magic round the orb: tools/magicfire.py's looping flipbook (8x8 frames) on quads that always
-    face you - two, out of step and a little apart in size, so the flames never repeat the same way - added to
-    crystal.nif with fxwrite (unlit additive effect shapes): they bob with the orb, and the rocks pass in front."""
-    job = [f'base {nif}', f'out {nif}']
-    R = 22.0  # the orb's radius: ORB_R (0.36) of a frame's half-size in the flipbook, its centre ORB_Y (-0.30) below the middle
-    for i, (sc, ph, col, br) in enumerate([(1.0, 0.0, (1.0, 1.0, 1.0, 1.0), 1.5), (1.12, 2.6, (0.85, 0.75, 1.0, 0.5), 1.2)]):
-        hh = R / 0.36 * sc
-        lift = 0.30 * hh  # (the frame's middle sits above the orb: the flames climb over it)
-        job.append(f'shape aura{i} tex={tex} color={",".join(str(c) for c in col)} scale={br} blend=add billboard=2 flip=8x8 fps=12 phase={ph}')
-        for x, z, u, v in [(-hh, hh, 0, 0), (hh, hh, 0.125, 0), (hh, -hh, 0.125, 0.125), (-hh, -hh, 0, 0.125)]:
-            job.append(f'v {x:.3f} {z + lift:.3f} 0 {u} {v}')  # (in the XY plane: a billboard turns its Z axis to the camera)
-        job += ['t 0 1 2', 't 0 2 3']
+def fxjob(name, job):
     work = OUT.parent / 'shrine'
-    jf = work / 'aura.job'
+    jf = work / f'{name}.job'
     jf.write_text('\n'.join(job) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
-    print('aura |', r.stdout.strip() or r.stderr.strip())
+    print(name, '|', r.stdout.strip() or r.stderr.strip())
     if r.returncode:
         raise SystemExit('fxwrite failed')
+
+
+def quad(job, x0, x1, y0, y1, z, cell=0.125):
+    """a flipbook quad in a billboard's own plane (XY; its Z axis is turned to the camera: z > 0 sits nearer you)"""
+    for x, y, u, v in [(x0, y1, 0, 0), (x1, y1, cell, 0), (x1, y0, cell, cell), (x0, y0, 0, cell)]:
+        job.append(f'v {x:.3f} {y:.3f} {z:.3f} {u} {v}')
+    job += ['t 0 1 2', 't 0 2 3']
+
+
+def aura(nif, fire, swirl):
+    """the orb, alive: its own light swirling over it (tools/orbfx.py orb_swirl, on a quad just in front of it) and
+    purple fire made of magic coming out of it (tools/magicfire.py: a skin of flame clinging round its edge that
+    climbs into a plume over it) - looping flipbooks on quads that always face you, added to crystal.nif with fxwrite
+    (unlit additive effect shapes): they bob with the orb, and the rocks pass in front of them."""
+    job = [f'base {nif}', f'out {nif}']
+    R = 22.0  # the orb's radius
+    job.append(f'shape orbswirl tex={swirl} color=1,1,1,1 scale=1.3 blend=add billboard=2 flip=8x8 fps=12 phase=0')
+    quad(job, -R * 1.02, R * 1.02, -R * 1.02, R * 1.02, R + 1.5)  # (in front of the ball's face)
+    # the fire: ORB_R (0.36) of a frame's half-size, its centre ORB_Y (-0.30) below the frame's middle; set a little in
+    # front of the orb's centre so the flames that cling to its edge lie over the rim, as if they came out of it
+    for i, (sc, ph, col, br) in enumerate([(1.0, 0.0, (1.0, 1.0, 1.0, 1.0), 1.5), (1.12, 2.6, (0.85, 0.75, 1.0, 0.5), 1.2)]):
+        hh = R / 0.36 * sc
+        lift = 0.30 * hh
+        job.append(f'shape aura{i} tex={fire} color={",".join(str(c) for c in col)} scale={br} blend=add billboard=2 flip=8x8 fps=12 phase={ph}')
+        quad(job, -hh, hh, -hh + lift, hh + lift, 10.0 - 3.0 * i)
+    fxjob('aura', job)
+
+
+def motes(nif, tex):
+    """motes of light rising from the shrine's pool up to its orb, spiralling in (tools/orbfx.py motes), on a tall
+    quad that always faces you - added to shrine.nif (it stands still; the orb's quads bob with the orb)"""
+    job = [f'base {nif}', f'out {nif}']
+    job.append(f'shape motes tex={tex} color=1,1,1,1 scale=1.4 blend=add billboard=2 flip=8x8 fps=12 phase=0 at=0,0,95')
+    quad(job, -40.0, 40.0, -80.0, 80.0, 0.0)
+    # (the billboard's node stands between the pool and the orb, at=: it turns about it)
+    fxjob('motes', job)
 
 
 def tex_aura(w=512, h=256):
@@ -351,8 +376,8 @@ def main():
             [floor, cobble, trim, rune, runes, pool])
     shards()
     vg = S.save(Image.new('RGB', (32, 32), (130, 200, 255)), 'vein_g.dds')
-    rkd, rkn, rkg = tex_rock()
-    rock_tex = f'diffuse={S.save(rkd, "shrock_d.dds")} normal={S.save(rkn, "shrock_n.dds", True)} glow={S.save(rkg, "shrock_g.dds")} emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1'
+    rkd, rkn, rkg = RA.rock_maps(2048)  # (2K, shared with the menu's rocks: tools/rockart.py)
+    rock_tex = f'diffuse={S.save(rkd, "shrock_d.dds", mips=True)} normal={S.save(rkn, "shrock_n.dds", True, mips=True)} glow={S.save(rkg, "shrock_g.dds", mips=True)} emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1'
     convert('shards', [], [f'mat shard{i:02d} {rock_tex}' for i in range(16)])
     # each rock sways on its own as the ring turns, and the runes cut in them breathe blue light
     shards_nif = OUT / 'Meshes' / 'UndyingNights' / 'shrine' / 'shards.nif'
@@ -367,7 +392,10 @@ def main():
     convert('crystal', [], [f'mat crystal diffuse={cd} normal={flat} glow={cd} emit=0.7,0.9,1.0 emitmult=3.2 spec=1.0 gloss=120 doublesided=1'])
     fire = OUT.parent / 'shrine' / 'magicfire.png'
     subprocess.run([sys.executable, str(pathlib.Path(__file__).parent / 'magicfire.py'), str(fire)], check=True)
-    aura(OUT / 'Meshes' / 'UndyingNights' / 'shrine' / 'crystal.nif', S.save(Image.open(fire).convert('RGBA'), 'aura_fire.dds', True))
+    subprocess.run([sys.executable, str(pathlib.Path(__file__).parent / 'orbfx.py'), str(fire.parent)], check=True)
+    aura(OUT / 'Meshes' / 'UndyingNights' / 'shrine' / 'crystal.nif', S.save(Image.open(fire).convert('RGBA'), 'aura_fire.dds', True, mips=True),
+         S.save(Image.open(fire.parent / 'orb_swirl.png').convert('RGBA'), 'orb_swirl.dds', True, mips=True))
+    motes(OUT / 'Meshes' / 'UndyingNights' / 'shrine' / 'shrine.nif', S.save(Image.open(fire.parent / 'motes.png').convert('RGBA'), 'shrine_motes.dds', True, mips=True))
     print('crystal centre at z', CRYSTAL_Z)
 
 

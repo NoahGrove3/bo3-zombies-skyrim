@@ -410,6 +410,13 @@ namespace bo3z
 
 		void OnDataLoaded()
 		{
+			// Skyrim's own floating quest markers give way to ours (src/Hud.cpp: drawn in the game's style)
+			if (auto* prefs = RE::INIPrefSettingCollection::GetSingleton()) {
+				if (auto* st = prefs->GetSetting("bShowFloatingQuestMarkers:GamePlay")) {
+					st->data.b = false;
+					logger::info("quests: Skyrim's floating quest markers off (ours instead)");
+				}
+			}
 			DarkenNights();
 			logger::info("data loaded");
 			if (!Forms::Resolve()) {

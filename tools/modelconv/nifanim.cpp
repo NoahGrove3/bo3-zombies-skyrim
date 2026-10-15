@@ -124,7 +124,7 @@ int main(int argc, char** argv)
 			ctrl->stopTime = p.secs;
 			ctrl->targetRef.index = hdr.GetBlockID(sh);
 			ctrl->interpolatorRef.index = ipRef;
-			ctrl->typeOfControlledVariable = 0;  // emissive multiple
+			ctrl->typeOfControlledVariable = 11;  // emissive multiple (LightingShaderControlledFloat)
 			chain(sh, std::move(ctrl));
 			++pulsed;
 		}

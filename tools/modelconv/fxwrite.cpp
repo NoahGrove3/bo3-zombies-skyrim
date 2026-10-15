@@ -25,7 +25,8 @@ struct Shape
 	bool                 falloff = false, vcol = false, rim = false, single = false;
 	float                vscroll = 0.0f, uscroll = 0.0f;
 	bool                 billboard = false;
-	int                  bbMode = 0;  // billboard=1: always face the camera; billboard=<n>: that NiBillboardNode mode (2 rigid: stays upright on screen)
+	int                  bbMode = 0;
+	float                at[3]{ 0, 0, 0 };  // at=x,y,z: where the billboard's node stands (it turns about it)  // billboard=1: always face the camera; billboard=<n>: that NiBillboardNode mode (2 rigid: stays upright on screen)
 	int                  cols = 0, rows = 0;
 	float                fps = 18.0f, phase = 0.0f;
 	std::vector<Vector3> v;
@@ -66,6 +67,7 @@ int main(int argc, char** argv)
 				else if (key == "billboard") { s.billboard = val != "0"; s.bbMode = std::stoi(val) == 1 ? 0 : std::stoi(val); }
 				else if (key == "flip") sscanf(val.c_str(), "%dx%d", &s.cols, &s.rows);
 				else if (key == "fps") s.fps = std::stof(val);
+				else if (key == "at") sscanf(val.c_str(), "%f,%f,%f", &s.at[0], &s.at[1], &s.at[2]);
 				else if (key == "phase") s.phase = std::stof(val);
 				else if (key == "vscroll") s.vscroll = std::stof(val);
 				else if (key == "uscroll") s.uscroll = std::stof(val);
@@ -185,6 +187,11 @@ int main(int argc, char** argv)
 			auto bb = std::make_unique<NiBillboardNode>();
 			bb->name.get() = s.name + "_bb";
 			bb->billboardMode = static_cast<BillboardMode>(s.bbMode);
+			{
+				MatTransform xf;
+				xf.translation = Vector3(s.at[0], s.at[1], s.at[2]);
+				bb->SetTransformToParent(xf);
+			}
 			auto* bbp = bb.get();
 			const auto bbRef = nif.GetHeader().AddBlock(std::move(bb));
 			nif.GetRootNode()->childRefs.AddBlockRef(bbRef);

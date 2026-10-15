@@ -170,9 +170,18 @@ def write_obj(path):
     path.write_text('\n'.join(lines) + '\n')
     path.with_suffix('.mtl').write_text(''.join(f'newmtl {m}\nKd 1 1 1\n' for m in parts))
 
-def save(im, rel, alpha=False):
+def save(im, rel, alpha=False, mips=False):
+    """a DDS texture (DXT1, or DXT5 with alpha); mips=True writes the full mipmap chain (ImageMagick) - big textures
+    seen from afar need it, or they shimmer"""
     p = OUT / 'Textures' / 'UndyingNights' / 'stand' / rel; p.parent.mkdir(parents=True, exist_ok=True)
-    im.convert('RGBA' if alpha else 'RGB').save(p, pixel_format='DXT5' if alpha else 'DXT1')
+    if mips:
+        import subprocess, tempfile
+        with tempfile.NamedTemporaryFile(suffix='.png', delete=False) as tf:
+            im.convert('RGBA' if alpha else 'RGB').save(tf.name)
+        subprocess.run(['convert', tf.name, '-define', f'dds:compression={"dxt5" if alpha else "dxt1"}', '-define', 'dds:mipmaps=12', str(p)], check=True)
+        pathlib.Path(tf.name).unlink()
+    else:
+        im.convert('RGBA' if alpha else 'RGB').save(p, pixel_format='DXT5' if alpha else 'DXT1')
     return f'UndyingNights\\stand\\{rel}'
 
 def main():

@@ -289,57 +289,78 @@ def shard_mesh(L, seed):
     return tris
 
 
+def render_tex(tris, uvs, shade, size, scale, center, diff, glow, ss=3):
+    """a textured rock: tris (n,3,3) world, uvs (n,3,2), shade (n,) light per facet; a depth buffer, supersampled.
+    Returns the rock (RGBA) and its runes' light alone (RGBA, for the game to pulse)"""
+    w, h = size[0] * ss, size[1] * ss
+    zb = np.full((h, w), np.inf, np.float32)
+    out = np.zeros((h, w, 4), np.float32)
+    lit = np.zeros((h, w), np.float32)
+    v = view(tris)
+    dh, dw = diff.shape[:2]
+    for i in range(len(tris)):
+        P = np.stack([(v[i, :, 0] * scale + center[0]) * ss, (v[i, :, 1] * scale + center[1]) * ss], -1)
+        x0, x1 = int(max(0, np.floor(P[:, 0].min()))), int(min(w - 1, np.ceil(P[:, 0].max())))
+        y0, y1 = int(max(0, np.floor(P[:, 1].min()))), int(min(h - 1, np.ceil(P[:, 1].max())))
+        if x1 < x0 or y1 < y0:
+            continue
+        yy, xx = np.mgrid[y0:y1 + 1, x0:x1 + 1].astype(np.float32) + 0.5
+        (ax, ay), (bx, by), (cx, cy) = P
+        den = (by - cy) * (ax - cx) + (cx - bx) * (ay - cy)
+        if abs(den) < 1e-6:
+            continue
+        l0 = ((by - cy) * (xx - cx) + (cx - bx) * (yy - cy)) / den
+        l1 = ((cy - ay) * (xx - cx) + (ax - cx) * (yy - cy)) / den
+        l2 = 1 - l0 - l1
+        m = (l0 >= -1e-4) & (l1 >= -1e-4) & (l2 >= -1e-4)
+        z = l0 * v[i, 0, 2] + l1 * v[i, 1, 2] + l2 * v[i, 2, 2]
+        sub = zb[y0:y1 + 1, x0:x1 + 1]
+        m &= z < sub
+        if not m.any():
+            continue
+        u = l0 * uvs[i, 0, 0] + l1 * uvs[i, 1, 0] + l2 * uvs[i, 2, 0]
+        vv = l0 * uvs[i, 0, 1] + l1 * uvs[i, 1, 1] + l2 * uvs[i, 2, 1]
+        px = np.clip((u * dw).astype(int), 0, dw - 1)
+        py = ((vv % 1.0) * dh).astype(int) % dh
+        sub[m] = z[m]
+        o = out[y0:y1 + 1, x0:x1 + 1]
+        o[m, :3] = diff[py[m], px[m]] * shade[i]
+        o[m, 3] = 255
+        lit[y0:y1 + 1, x0:x1 + 1][m] = glow[py[m], px[m]]
+    rock = Image.fromarray(np.clip(out, 0, 255).astype(np.uint8), 'RGBA').resize(size, Image.LANCZOS)
+    g = Image.fromarray((np.clip(lit, 0, 1) * 255).astype(np.uint8)).resize(size, Image.LANCZOS)
+    g = np.asarray(g, np.float32) / 255
+    halo = blur(g, 3) * 0.7
+    a = np.clip(g + halo, 0, 1)
+    runes = Image.fromarray(np.dstack([np.full_like(a, 120), np.full_like(a, 200), np.full_like(a, 255), a * 255]).astype(np.uint8), 'RGBA')
+    return rock, runes
+
+
 def shards():
+    """the floating rocks: the same 2K slate as the game's (tools/rockart.py), mapped round each like a sleeve, with
+    a bracelet of runes round each end; their light is a layer of its own (menu_shard<i>_r.png) the game pulses"""
+    sys.path.insert(0, str(pathlib.Path(__file__).parent))
+    import rockart
+    d, _, g = rockart.rock_maps(2048)
+    diff = np.asarray(d, np.float32)
+    glow = np.asarray(g, np.float32)[..., 2] / 255
     specs = [(120, 0.5), (135, -0.4), (110, 0.9), (140, -0.8), (125, 0.25), (118, 1.1), (112, -0.2), (86, 0.6), (96, -1.0)]
     out = []
     for i, (L, tilt) in enumerate(specs):
         t = shard_mesh(L, 40 + i)
+        uvs = np.array([rockart.fix_seam([rockart.rock_uv(p[2], p[0], p[1], L) for p in tri]) for tri in t])
         # lean it (the picture's rocks hang at angles), turn it a little toward us
-        c, s = math.cos(tilt), math.sin(tilt)
-        t = t @ np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]]).T
+        c, s_ = math.cos(tilt), math.sin(tilt)
+        t = t @ np.array([[c, 0, s_], [0, 1, 0], [-s_, 0, c]]).T
         t = rotz(t, 0.6 * i)
-        n = normals(t)
-        nv = view(n)
+        nv = view(normals(t))
         lam = np.clip(-(nv[:, 0] * LIGHT[0] + nv[:, 1] * LIGHT[1]) * 0.75 + 0.25 - nv[:, 2] * 0.35, 0, 1)
-        rng = np.random.default_rng(70 + i)
-        jit = rng.uniform(0.85, 1.12, len(t))
-        col = np.zeros((len(t), 4))
-        col[:, 0] = (30 + 92 * lam ** 1.3) * jit
-        col[:, 1] = (28 + 84 * lam ** 1.3) * jit
-        col[:, 2] = (40 + 100 * lam ** 1.3) * jit
-        col[:, 3] = 255
-        out_ = np.clip(col * 1.12, 0, 255)
+        shade = 0.42 + 1.30 * lam ** 1.1
         SH = 2.9  # the rocks' scale on the painting
         size = int(L * SH * 1.25) + 30
-        im = render(t, col, (size, size), SH, (size / 2, size / 2), outline=out_)
-        a = np.asarray(im, np.float32)
-        m = a[..., 3] / 255
-        # the Dirge's runes carved down the rock
-        vm = Image.new('L', (size, size), 0)
-        vd = ImageDraw.Draw(vm)
-        strokes = [[(0, -1, 0, 1), (0, -0.3, 0.6, -0.9)], [(-0.5, 1, 0, -1), (0.5, 1, 0, -1), (-0.3, 0.3, 0.3, 0.3)], [(0, -1, 0, 1), (-0.6, 0, 0.6, 0)],
-                   [(-0.6, -1, 0.6, 1), (0.6, -1, -0.6, 1)], [(0, -1, 0, 1), (0, 0.1, 0.6, 0.9)], [(-0.6, -0.8, 0.6, -0.8), (0, -0.8, 0, 1)],
-                   [(0, -1, 0.6, 0), (0.6, 0, 0, 1), (0, 1, -0.6, 0), (-0.6, 0, 0, -1)]]
-        ys = np.where(m.max(1) > 0.5)[0]
-        if len(ys):
-            y0, y1 = ys.min(), ys.max()
-            g = size * 0.035
-            for k in range(int((y1 - y0) / (g * 3.2)) - 1):
-                cy = y0 + g * 2.2 + k * g * 3.2
-                row = np.where(m[int(min(cy, size - 1))] > 0.5)[0]
-                if len(row) < g * 3:
-                    continue
-                cx = (row.min() + row.max()) / 2
-                for x0, yA, x1, yB in strokes[(k + i) % len(strokes)]:
-                    vd.line([(cx + x0 * g, cy + yA * g * 1.3), (cx + x1 * g, cy + yB * g * 1.3)], fill=255, width=max(2, int(g * 0.28)))
-        # the runes are cut dark into the stone; their light is a layer of its own (menu_shard<i>_r.png) that the game
-        # pulses over the rock (src/Hud.cpp DrawMenu), as the runes on the shrine's rocks pulse in the world
-        vein = np.asarray(vm, np.float32) / 255 * (blur(m, 3) > 0.6)
-        vglow = blur(vein, 4)
-        a[..., :3] = np.clip(a[..., :3] * (1 - vein[..., None] * 0.55), 0, 255)
-        lit = np.clip(vein + vglow * 0.8, 0, 1)
-        Image.fromarray(np.dstack([np.full_like(lit, 120), np.full_like(lit, 200), np.full_like(lit, 255), lit * 255]).astype(np.uint8), 'RGBA').save(OUT / f'menu_shard{i}_r.png', optimize=True)
-        Image.fromarray(a.astype(np.uint8), 'RGBA').save(OUT / f'menu_shard{i}.png', optimize=True)
+        rock, runes = render_tex(t, uvs, shade, (size, size), SH, (size / 2, size / 2), diff, glow)
+        rock.save(OUT / f'menu_shard{i}.png', optimize=True)
+        runes.save(OUT / f'menu_shard{i}_r.png', optimize=True)
         out.append(size)
     return out
 
