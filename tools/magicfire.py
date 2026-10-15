@@ -6,7 +6,7 @@ the same atlas, src/Hud.cpp DrawMenu), rendered additive by the game.
 
     python3 tools/magicfire.py <out.png> [preview.gif]
 
-16x8 frames of 256 px (4096x2048 atlas), 128 frames: played at 24 a second, one loop is ~5.3 s - slow, as the rocks, and smooth.
+16x8 frames of 512 px (8192x4096 atlas), 128 frames: played at 24 a second, one loop is ~5.3 s - slow, as the rocks, and smooth.
 Each frame: x and y in -1..1 (y up); the orb's centre at (0, ORB_Y), radius ORB_R; the flames reach to the top.
 """
 import sys
@@ -14,7 +14,7 @@ import numpy as np
 from PIL import Image
 from scipy.ndimage import map_coordinates
 
-N, COLS, ROWS = 256, 16, 8   # 128 frames, played at 24 a second: a ~5.3 s loop
+N, COLS, ROWS = 512, 16, 8   # 128 frames of 512 px (an 8192x4096 atlas: sharp beside 2K textures), played at 24 a second: a ~5.3 s loop
 FRAMES = COLS * ROWS
 ORB_Y, ORB_R = -0.30, 0.36
 
@@ -84,7 +84,7 @@ def frame(t, A, B, C):
 
 def main():
     out = sys.argv[1]
-    A, B, C = tileable(256, 2.0, 1), tileable(256, 1.6, 2), tileable(256, 2.4, 3)
+    A, B, C = tileable(512, 2.0, 1), tileable(512, 1.6, 2), tileable(512, 2.4, 3)  # (512: fine detail for 512 px frames)
     atlas = np.zeros((N * ROWS, N * COLS, 4), np.uint8)
     frames = []
     for k in range(FRAMES):

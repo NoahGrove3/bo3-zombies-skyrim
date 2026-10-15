@@ -169,6 +169,47 @@ namespace bo3z
 			g_wasAir = false, g_wantSlide = false, g_wantJumpCarry = false, g_forcedSneak = false;
 		}
 
+		// Phantom Horse summons its horse from the third-person body's sprint animations (Open Animation Replacer),
+		// which never play in first person. With one of its powers on (Arvak or Shadow ability), sprinting in first
+		// person turns the camera out to third, so the horse can come; it stays there while you ride, and once you are
+		// off it and no longer sprinting the camera goes back to first person.
+		void PhantomCamera(RE::PlayerCharacter* a_player, bool a_sprint, float a_delta)
+		{
+			static RE::EffectSetting* fx[2]{};
+			static bool               looked = false, turned = false;
+			static float              calm = 0;
+			if (!looked) {
+				looked = true;
+				if (auto* dh = RE::TESDataHandler::GetSingleton()) {
+					fx[0] = dh->LookupForm<RE::EffectSetting>(0x808, "Phantom Horse.esp");  // ME_ArvakAbility
+					fx[1] = dh->LookupForm<RE::EffectSetting>(0x83C, "Phantom Horse.esp");  // ME_ShadowAbility
+				}
+			}
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			auto* mt = a_player->AsMagicTarget();
+			if (!cam || !mt || (!fx[0] && !fx[1])) {
+				return;
+			}
+			const bool riding = a_player->IsOnMount();
+			if (!turned) {
+				const bool on = (fx[0] && mt->HasMagicEffect(fx[0])) || (fx[1] && mt->HasMagicEffect(fx[1]));
+				if (on && a_sprint && !riding && cam->IsInFirstPerson()) {
+					cam->ForceThirdPerson();
+					turned = true, calm = 0;
+					logger::info("phantom horse: sprinting with the power on - camera to third person for the summon");
+				}
+				return;
+			}
+			calm = (riding || a_sprint) ? 0.0f : calm + a_delta;
+			if (calm > 0.8f) {  // off the horse (or the summon never came) and walking again
+				if (!cam->IsInFirstPerson()) {
+					cam->ForceFirstPerson();
+				}
+				turned = false;
+				logger::info("phantom horse: off the horse - camera back to first person");
+			}
+		}
+
 		void Tick(float a_delta)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -180,6 +221,7 @@ namespace bo3z
 			auto*      st = player->AsActorState();
 			auto*      cc = player->GetCharController();
 			const bool sprint = st->IsSprinting();
+			PhantomCamera(player, sprint, a_delta);
 			const bool air = cc && cc->context.currentState != RE::hkpCharacterStateType::kOnGround;
 			g_air = air ? g_air + a_delta : 0;
 			RE::NiPoint3 v{};

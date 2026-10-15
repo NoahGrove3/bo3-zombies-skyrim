@@ -14,7 +14,8 @@ import numpy as np
 from PIL import Image
 from scipy.ndimage import map_coordinates
 
-N, COLS, ROWS = 256, 16, 8   # 128 frames, played at 24 a second: a ~5.3 s loop
+N, COLS, ROWS = 256, 16, 8   # 128 frames, played at 24 a second: a ~5.3 s loop (the motes; the orb's swirl is drawn at NS)
+NS = 512                     # the orb's swirl: 512 px frames (8192x4096), sharp up close
 FRAMES = COLS * ROWS
 
 
@@ -36,18 +37,19 @@ def sample(tex, u, v):
 
 
 def atlas_of(frames):
-    a = np.zeros((N * ROWS, N * COLS, 4), np.uint8)
+    n = frames[0].shape[0]
+    a = np.zeros((n * ROWS, n * COLS, 4), np.uint8)
     for k, f in enumerate(frames):
         r, c = divmod(k, COLS)
-        a[r * N:(r + 1) * N, c * N:(c + 1) * N] = f
+        a[r * n:(r + 1) * n, c * n:(c + 1) * n] = f
     return Image.fromarray(a, 'RGBA')
 
 
 def orb_swirl():
-    A, B, C = tileable(256, 2.7, 11), tileable(256, 2.4, 12), tileable(256, 2.6, 13)
-    yy, xx = np.mgrid[0:N, 0:N].astype(np.float32)
-    x = (xx + 0.5) / N * 2 - 1
-    y = 1 - (yy + 0.5) / N * 2
+    A, B, C = tileable(512, 2.7, 11), tileable(512, 2.4, 12), tileable(512, 2.6, 13)
+    yy, xx = np.mgrid[0:NS, 0:NS].astype(np.float32)
+    x = (xx + 0.5) / NS * 2 - 1
+    y = 1 - (yy + 0.5) / NS * 2
     r = np.hypot(x, y)
     inside = r < 1.0
     z = np.sqrt(np.clip(1 - r * r, 0, 1))
@@ -114,7 +116,7 @@ def main():
         for i, k in enumerate((0, 20, 40)):
             for j, fr in enumerate((sw, mo)):
                 f = fr[k].astype(np.float32)
-                strip.paste(Image.fromarray(np.clip(np.array([10, 10, 20]) + f[..., :3] * f[..., 3:4] / 255, 0, 255).astype(np.uint8)), ((i * 2 + j) * N, 0))
+                strip.paste(Image.fromarray(np.clip(np.array([10, 10, 20]) + f[..., :3] * f[..., 3:4] / 255, 0, 255).astype(np.uint8)).resize((N, N)), ((i * 2 + j) * N, 0))
         strip.save(sys.argv[2])
     print('orbfx: wrote orb_swirl.png, motes.png')
 

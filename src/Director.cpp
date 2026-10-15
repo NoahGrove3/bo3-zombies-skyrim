@@ -24,6 +24,7 @@ namespace bo3z
 			float           lastDist{ -1 };
 			float           ability{ 4.0f };   // Iron Reaper: next reap / Necromancer: next summon
 			float           windup{ -1.0f };   // Iron Reaper: seconds until the telegraphed sweep lands
+			float           mounted{ 0 };      // the extra speed it has while the player rides (MountChase)
 			float           hook{ 6.0f };      // Iron Reaper: next chain hook (mid range)
 			float           hookWind{ -1.0f }; // Iron Reaper: the hook is thrown
 			bool            enraged{ false };
@@ -1239,6 +1240,32 @@ namespace bo3z
 			EndEvent();
 		}
 
+		// The player on a horse (Phantom Horse) would leave the dead far behind: while they ride, every risen thing runs
+		// faster to keep up (kMountChase SpeedMult); off the horse, they slow back to their own pace.
+		constexpr float kMountChase = 70.0f;
+		void MountChase(RE::PlayerCharacter* a_player)
+		{
+			const bool riding = a_player && a_player->IsOnMount();
+			for (auto& s : g_alive) {
+				const float want = riding ? kMountChase : 0.0f;
+				if (s.mounted == want) {
+					continue;
+				}
+				if (auto a = s.handle.get(); a && !a->IsDead()) {
+					auto* av = a->AsActorValueOwner();
+					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, want - s.mounted);
+					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.01f);  // (so the new speed takes at once)
+					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.01f);
+				}
+				s.mounted = want;
+			}
+			static bool was = false;
+			if (riding != was) {
+				was = riding;
+				logger::info("director: player {} - the dead {}", riding ? "mounted" : "on foot", riding ? "run faster" : "back to their pace");
+			}
+		}
+
 		void Prune()
 		{
 			for (auto it = g_alive.begin(); it != g_alive.end();) {
@@ -2159,6 +2186,7 @@ namespace bo3z
 			TickTruce(player, a_delta);
 			TickShelter(player, a_delta);
 			Prune();
+			MountChase(player);
 			{
 				std::scoped_lock l(Hud::Lock());
 				auto& h = Hud::Edit();

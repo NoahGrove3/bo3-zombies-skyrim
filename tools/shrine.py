@@ -238,7 +238,7 @@ def tex_aura(w=512, h=256):
     return Image.fromarray(np.dstack([np.clip(rgb, 0, 1) * 255, np.clip(a * 0.85, 0, 1) * 255]).astype(np.uint8), 'RGBA')
 
 
-def tex_orb(n=512):
+def tex_orb(n=2048):
     """the orb: white-hot at the heart, ice-blue to the rim, veins of light swirling through it"""
     yy, xx = np.mgrid[0:n, 0:n].astype(np.float32) / n
     r = np.hypot(xx - 0.5, yy - 0.5) * 2
@@ -249,6 +249,12 @@ def tex_orb(n=512):
         e += np.sin((xx * d[0] + yy * d[1]) * fr + rng.uniform(0, 6.28) + np.sin(xx * fr * 0.7) * 1.3)
     e = e / 7 * 0.5 + 0.5
     veins = np.asarray(Image.fromarray((np.clip(1 - np.abs(e - 0.5) * 6, 0, 1) ** 1.4 * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(n / 256)), np.float32) / 255
+    e2 = np.zeros_like(r)                                     # a finer web of filaments between the veins (the 2K's detail)
+    for _ in range(7):
+        d = rng.normal(size=2); fr = rng.uniform(16, 34)
+        e2 += np.sin((xx * d[0] + yy * d[1]) * fr + rng.uniform(0, 6.28) + np.sin(yy * fr * 0.6) * 1.2)
+    e2 = e2 / 7 * 0.5 + 0.5
+    veins = np.maximum(veins, np.clip(1 - np.abs(e2 - 0.5) * 14, 0, 1) ** 2.0 * 0.6)
     core = np.clip(1.15 - r, 0, 1) ** 1.2
     rgb = np.dstack([0.30 + 0.45 * core + 0.35 * veins, 0.58 + 0.32 * core + 0.28 * veins, 0.95 + 0.05 * core])
     return Image.fromarray((np.clip(rgb, 0, 1) * 255).astype(np.uint8), 'RGB')
@@ -389,7 +395,7 @@ def main():
     if r.returncode:
         raise SystemExit('nifanim failed')
     crystal()
-    cd = S.save(tex_orb(), 'orb_d.dds')
+    cd = S.save(tex_orb(), 'orb_d.dds', mips=True)  # (2K, mipmapped)
     convert('crystal', [], [f'mat crystal diffuse={cd} normal={flat} glow={cd} emit=0.7,0.9,1.0 emitmult=3.2 spec=1.0 gloss=120 doublesided=1'])
     fire = OUT.parent / 'shrine' / 'magicfire.png'
     subprocess.run([sys.executable, str(pathlib.Path(__file__).parent / 'magicfire.py'), str(fire)], check=True)

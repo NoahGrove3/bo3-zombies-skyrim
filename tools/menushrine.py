@@ -365,7 +365,7 @@ def shards():
     return out
 
 
-def orb_sheet(frames=24, fw=448, fh=640, ro=108.0):
+def orb_sheet(frames=24, fw=896, fh=1280, ro=216.0):  # (twice the size it is drawn at on a 1080p screen: sharp at 1440p and 4K)
     """the shrine's heart as an orb of living light: smooth glass, energy veins swirling inside it as it turns (each
     frame turns it a little further), white at the core, a cold rim, a soft highlight - no facets, nothing on top"""
     rng = np.random.default_rng(7)
@@ -387,6 +387,11 @@ def orb_sheet(frames=24, fw=448, fh=640, ro=108.0):
             e += np.sin((px * d[0] + py * d[1] + pz * d[2]) * fr + ph + np.sin(px * fr * 0.5 + ph) * 1.4)
         e = e / 9.0 * 0.5 + 0.5
         veins = np.clip(1 - np.abs(e - 0.5) * 7.0, 0, 1) ** 1.6          # thin bright lines where the swirl folds
+        e2 = np.zeros_like(x)                                             # and a finer web of filaments between them
+        for d, fr, ph in zip(dirs[::-1], freqs * 2.6, phases[::-1]):
+            e2 += np.sin((px * d[0] + py * d[1] + pz * d[2]) * fr + ph + np.sin(pz * fr * 0.5 + ph) * 1.2)
+        e2 = e2 / 9.0 * 0.5 + 0.5
+        veins = np.maximum(veins, np.clip(1 - np.abs(e2 - 0.5) * 16.0, 0, 1) ** 2.0 * (0.25 + 0.55 * z))
         core = np.clip(1 - r, 0, 1) ** 1.4
         rim = np.clip((r - 0.72) / 0.28, 0, 1) ** 2.2 * inside
         spec = np.exp(-(((x + 0.38) / 0.28) ** 2 + ((y + 0.42) / 0.22) ** 2))
@@ -423,7 +428,7 @@ if __name__ == '__main__':
     comp = Image.new('RGBA', (W, H), (14, 16, 30, 255))
     comp.alpha_composite(Image.open(OUT / 'menu_shrine_ground.png'))
     comp.alpha_composite(Image.open(OUT / 'menu_shrine_glow.png'))
-    sh = Image.open(OUT / 'menu_crystal.png').crop((0, 0, 448, 640))
+    sh = Image.open(OUT / 'menu_crystal.png').crop((0, 0, 896, 1280)).resize((448, 640))
     comp.alpha_composite(sh, (int(cx - 224), int(cy - 640 * 0.56)))
     for i in range(9):
         a = i / 9 * 2 * math.pi
