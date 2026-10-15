@@ -183,7 +183,7 @@ def aura(nif, tex):
     for i, (sc, ph, col, br) in enumerate([(1.0, 0.0, (1.0, 1.0, 1.0, 1.0), 1.5), (1.12, 2.6, (0.85, 0.75, 1.0, 0.5), 1.2)]):
         hh = R / 0.36 * sc
         lift = 0.30 * hh  # (the frame's middle sits above the orb: the flames climb over it)
-        job.append(f'shape aura{i} tex={tex} color={",".join(str(c) for c in col)} scale={br} blend=add billboard=1 flip=8x8 fps=12 phase={ph}')
+        job.append(f'shape aura{i} tex={tex} color={",".join(str(c) for c in col)} scale={br} blend=add billboard=2 flip=8x8 fps=12 phase={ph}')
         for x, z, u, v in [(-hh, hh, 0, 0), (hh, hh, 0.125, 0), (hh, -hh, 0.125, 0.125), (-hh, -hh, 0, 0.125)]:
             job.append(f'v {x:.3f} {z + lift:.3f} 0 {u} {v}')  # (in the XY plane: a billboard turns its Z axis to the camera)
         job += ['t 0 1 2', 't 0 2 3']

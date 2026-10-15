@@ -3,3 +3,4 @@ dist/
 .vcpkg-cache/
 __pycache__/
 assets/models/
+assets/shrine/magicfire.png

@@ -25,6 +25,7 @@ struct Shape
 	bool                 falloff = false, vcol = false, rim = false, single = false;
 	float                vscroll = 0.0f, uscroll = 0.0f;
 	bool                 billboard = false;
+	int                  bbMode = 0;  // billboard=1: always face the camera; billboard=<n>: that NiBillboardNode mode (2 rigid: stays upright on screen)
 	int                  cols = 0, rows = 0;
 	float                fps = 18.0f, phase = 0.0f;
 	std::vector<Vector3> v;
@@ -62,7 +63,7 @@ int main(int argc, char** argv)
 				else if (key == "falloff") s.falloff = val == "1";
 				else if (key == "rim") s.rim = val == "1";
 				else if (key == "single") s.single = val == "1";
-				else if (key == "billboard") s.billboard = val == "1";
+				else if (key == "billboard") { s.billboard = val != "0"; s.bbMode = std::stoi(val) == 1 ? 0 : std::stoi(val); }
 				else if (key == "flip") sscanf(val.c_str(), "%dx%d", &s.cols, &s.rows);
 				else if (key == "fps") s.fps = std::stof(val);
 				else if (key == "phase") s.phase = std::stof(val);
@@ -183,7 +184,7 @@ int main(int argc, char** argv)
 		if (s.billboard) {  // always facing the camera
 			auto bb = std::make_unique<NiBillboardNode>();
 			bb->name.get() = s.name + "_bb";
-			bb->billboardMode = ALWAYS_FACE_CAMERA;
+			bb->billboardMode = static_cast<BillboardMode>(s.bbMode);
 			auto* bbp = bb.get();
 			const auto bbRef = nif.GetHeader().AddBlock(std::move(bb));
 			nif.GetRootNode()->childRefs.AddBlockRef(bbRef);
