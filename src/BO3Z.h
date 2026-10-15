@@ -413,7 +413,7 @@ namespace bo3z
 	namespace Watchdog
 	{
 		void Beat();   // a frame was drawn (from Present)
-		void Start();  // the thread that logs where the game is stuck when frames stop
+		void Start(bool a_onMainThread);  // the thread that logs where the game is stuck when frames stop
 	}
 
 	namespace Hud

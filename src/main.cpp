@@ -74,7 +74,7 @@ namespace
 		logger::info("game UI is up; Skyrim runtime {}", REL::Module::get().version().string());
 		bo3z::Events::InstallMenuWatch();
 		bo3z::Net::PatchTogether();
-		bo3z::Watchdog::Start();
+		bo3z::Watchdog::Start(false);
 		return 0;
 	}
 
@@ -137,6 +137,6 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 	bo3z::Save::InstallCoSave();
 	bo3z::Events::InstallMenuWatch();
 	bo3z::Net::PatchTogether();  // (Skyrim Together loads us through SKSE: its menu must learn to follow the party here too)
-	bo3z::Watchdog::Start();
+	bo3z::Watchdog::Start(true);  // (SKSE loads plugins on the game's main thread)
 	return true;
 }

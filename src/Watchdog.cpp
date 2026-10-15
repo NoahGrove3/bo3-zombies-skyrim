@@ -118,11 +118,17 @@ namespace bo3z::Watchdog
 		g_beat = NowMs();
 	}
 
-	void Start()
+	void Start(bool a_onMainThread)
 	{
 		static bool started = false;
 		if (!started) {
 			started = true;
+			// (called on the game's main thread at load: watched from now on, so a hang before the first frame shows too)
+			if (a_onMainThread) {
+				g_main = ::GetCurrentThreadId();
+				g_beat = NowMs();
+			}
+			SnapModules();
 			::CreateThread(nullptr, 0, Watch, nullptr, 0, nullptr);
 		}
 	}
