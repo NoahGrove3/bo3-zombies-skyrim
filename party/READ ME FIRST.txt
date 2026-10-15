@@ -1,8 +1,9 @@
 THE CURSE OF ALDUIN - PARTY PACK
-===========================
+================================
 
 You need: Skyrim Special Edition or Anniversary Edition on Steam, updated, started once. Both players need
-this SAME pack (an older pack loads an older The Curse of Alduin, or none at all).
+this SAME pack (an older pack loads an older build of the mod, or none at all). This pack replaces the
+old "Undying Nights" pack - the mod was renamed; old Undying Nights saves will not load, start a new character.
 
 ONE-TIME SETUP (both players)
  1. Close Skyrim.
@@ -10,12 +11,12 @@ ONE-TIME SETUP (both players)
     (the host - Noah - runs  HOST THE PARTY (Noah only).bat  instead).
     If Windows says "Windows protected your PC": More info > Run anyway.
  3. It finds Skyrim, installs The Curse of Alduin + Skyrim Together Reborn + the party mods (below), turns the
-    plugins on and puts "The Curse of Alduin Co-op" on your desktop.
+    plugins on and puts a "The Curse of Alduin Co-op" shortcut on your desktop.
 
 EVERY TIME YOU PLAY
- 1. Start the game with the "The Curse of Alduin Co-op" desktop shortcut. NOT the Steam Play button, not the
+ 1. Start the game with the "The Curse of Alduin Co-op" shortcut on your desktop. NOT the Steam Play button, not the
     Skyrim launcher - those start Skyrim without Skyrim Together, so you can't see each other.
- 2. Wait for the Curse of Alduin main menu (the floating shrine, with CO-OP PARTY in its list). If you see the normal Skyrim menu,
+ 2. Wait for the Curse of Alduin main menu (the Echo Altar over a lake, with CO-OP PARTY in its list). If you see the normal Skyrim menu,
     the mod didn't load - run the .bat again and check the Troubleshooting list below.
  3. HOST (Noah): in the main menu choose  CO-OP PARTY  (in the list on the right), then  HOST A PARTY.
     The Steam overlay opens - invite your friend.
@@ -36,8 +37,12 @@ THE PARTY MODS (installed for both players - Skyrim Together needs the same plug
    Shouts, Goetia conditional shout animations.
  - Gear: Sentinel (+ its resources).
  - Menus and play: SkyUI + MCM Helper (every setting under Esc > System > Mod Configuration), Character
-   Menu, Experience (XP from kills, a quarter from the night's dead), SkyParkour, Better Jumping, Phantom
-   Horse (slightly fast), Sigma first-person magic, Leviathan two-handed high stance.
+   Menu, Experience (XP from kills, a quarter from the night's dead), SkyParkour, Better Jumping, Sigma
+   first-person magic, Leviathan two-handed high stance.
+ - Phantom Horse (with the Shadowmere Rework look): you already know both its powers (Shadowmere and Arvak).
+   Equip one in the Magic menu > Powers and use it (Z), then sprint and hold E: the horse appears under you.
+   The camera goes to third person for the ride and back to first when you stop. Its helpers are included:
+   Behavior Data Injector, Dynamic Animation Casting and Animation Motion Revolution (all built for 1.7.104).
  - Frameworks: SPID, powerofthree's Papyrus Extender, SSE Engine Fixes (both parts).
  - Perks: Ordinator. Spell tomes: BURP Spell Tomes.
  - Animation and movement: Open Animation Replacer, True Directional Movement, Goetia spell casting,
@@ -54,9 +59,9 @@ THE PARTY MODS (installed for both players - Skyrim Together needs the same plug
    colours in character creation), Ysolda and Jordis (SerketHetyt) via SkyPatcher. Freak's Floral Fields (grass and flowers).
  - Unofficial Skyrim Special Edition Patch (thousands of fixes; loads first), Immersive College of Winterhold.
  - RaySense for Open Animation Replacer: Edge Lookdown (you look down over ledges) and Simple Wall Lean.
- - Not used (they don't run on Skyrim 1.7.104 yet): QuickLoot RE, Behavior Data Injector, RaySense Cover and
-   Jumping Over Obstacles (they need Behavior Data Injector / a Cover DLL built for this version). COR needs Race
-   Compatibility, Faithful Faces crashes a new game, so both stay off.
+ - Faces: Faithful Faces (with FSMP and Vanilla Hair Remake SMP).
+ - Not used (they don't run on Skyrim 1.7.104 yet): QuickLoot RE (the mod has its own quick loot instead),
+   RaySense Cover and Jumping Over Obstacles. COR needs Race Compatibility, so it stays off.
 
 GOOD TO KNOW
  - A new character starts as a Spellsword: a steel sword in the right hand, Firebolt in the left. The
@@ -65,7 +70,12 @@ GOOD TO KNOW
    difficulty, the shrine's keys) and Other mods. Skyrim's own difficulty slider now sets the night's dead too.
  - Survival Mode is switched off in The Curse of Alduin games (hunger and cold fight the nights). - The host's game runs the nights: the horde, events and bosses. You both see and fight them.
  - Points, spells, brews, Reforge levels and your city quests are kept in YOUR OWN save.
- - Going down: Skyrim Together's death system picks you back up.
+ - Going down: at zero health you fall for 30 seconds. A friend who stands by you and holds E for 3 seconds
+   picks you up. If nobody does, you die and watch the others until a rite is finished or dawn comes - then
+   you rise. No fall damage: falls never hurt.
+ - SAVING: every game saves itself at each dawn ("GAME SAVED - Dawn after Night N"), all at the same moment,
+   and when a city is freed (the save is named for it). If the whole party dies at once, everyone's game
+   loads that same dawn save - so you all come back together. You can still save yourself any time.
  - Noah's look comes from graphics mods, and they are all in this pack (files\Graphics, about 25 GB):
    the installer asks if you want them. Say Y to see the game exactly as the host does, N to keep your own.
    They are: Community Shaders (+ Subsurface Scattering, Screen Space Shadows, Grass Collision), Azurite Weathers III, Lux Orbis + Lux Via (lighting, roads), Realistic Water Two, Happy Little
