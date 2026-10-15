@@ -144,6 +144,49 @@ namespace bo3z::Party
 		}
 	}
 
+	// ---- the party's save points (dawn, and a freed city's dawn) ----
+	namespace
+	{
+		std::string           g_lastSave;      // the newest of our dawn saves: a wiped party comes back to it
+		std::string           g_freedName;     // the city whose freeing brings this dawn
+		std::atomic<bool>     g_saving{ false };
+	}
+
+	void CityFreed(int a_town)
+	{
+		if (a_town >= 0 && a_town < static_cast<int>(gen::kTowns.size())) {
+			g_freedName = std::string(gen::kTowns[a_town]);
+		}
+	}
+
+	void DawnSave(int a_night)
+	{
+		if (g_saving.exchange(true)) {
+			return;
+		}
+		std::string what = g_freedName.empty() ? "Dawn after Night " + std::to_string(a_night) : g_freedName + " Freed (Night " + std::to_string(a_night) + ")";
+		g_freedName.clear();
+		// a few seconds on: the fallen have risen with the light (Tick), the dead have crumbled
+		std::thread([what] {
+			std::this_thread::sleep_for(std::chrono::seconds(4));
+			SKSE::GetTaskInterface()->AddTask([what] {
+				g_saving = false;
+				auto* pl = RE::PlayerCharacter::GetSingleton();
+				auto* sl = RE::BGSSaveLoadManager::GetSingleton();
+				auto* ui = RE::UI::GetSingleton();
+				if (!pl || !sl || pl->IsDead() || g_wipeLoading || (ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME))) {
+					logger::info("party save: skipped ({})", what);
+					return;
+				}
+				const std::string name = std::string("CurseOfAlduin - ") + pl->GetName() + " - " + what;
+				sl->Save(name.c_str());
+				g_lastSave = name;
+				Hud::Banner("GAME SAVED - " + what, 3.0f);
+				logger::info("party save: '{}'", name);
+			});
+		}).detach();
+	}
+
 	void Tick(float a_delta)
 	{
 		auto* p = P();
@@ -253,7 +296,12 @@ namespace bo3z::Party
 					SKSE::GetTaskInterface()->AddTask([] {
 						g_wipeLoading = false;
 						if (auto* sl = RE::BGSSaveLoadManager::GetSingleton()) {
-							sl->LoadMostRecentSaveGame();
+							if (!g_lastSave.empty()) {  // the party's last dawn: the same moment on every game
+								logger::info("party: loading the dawn save '{}'", g_lastSave);
+								sl->Load(g_lastSave.c_str());
+							} else {
+								sl->LoadMostRecentSaveGame();
+							}
 						}
 					});
 				}).detach();

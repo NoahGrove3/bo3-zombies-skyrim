@@ -307,6 +307,10 @@ namespace bo3z
 		void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left);
 		void Revived(std::uint64_t a_by);
 		void Forget(std::uint64_t a_who);
+		// The party's save points: every dawn (and the dawn a freed city brings) each game saves itself a few seconds
+		// later, all at the same moment (the host's night ends on every game at once); a wiped party loads exactly that
+		void DawnSave(int a_night);
+		void CityFreed(int a_town);  // the coming dawn's save is named for the freed city
 	}
 
 	// Co-op with Skyrim Together (CurseOfAlduin.ini: Role=host|client|solo)

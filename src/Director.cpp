@@ -1233,6 +1233,7 @@ namespace bo3z
 				Forms::Play(gen::Sound::night_end);
 				Hud::Banner("DAWN - NIGHT " + std::to_string(g_current) + " SURVIVED", 6.0f);
 				logger::info("dawn: night {} survived, {} undead crumbled", g_current, n);
+				Party::DawnSave(g_current);  // every game in the party saves at this same dawn
 			}
 			g_phase = Phase::Day;
 			g_toSpawn = 0;

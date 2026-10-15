@@ -410,6 +410,7 @@ namespace bo3z
 				text += " - its Thu'um, " + std::string(gen::kShouts[sh].label) + ", waits at the city's shrine (" + Settings::KeyName(3) + " in its menu)";
 			}
 			Note(text, 10.0f);
+			Party::CityFreed(a_town);  // (the dawn that follows saves under the city's name)
 			Director::EndNight();  // the city's last rite ends the night: dawn breaks, the next night brings the next round
 			auto* shrine = Shops::Placed(a_town, 0);
 			Director::LiftWave(shrine ? shrine->GetPosition() : a_player->GetPosition());
@@ -1018,6 +1019,7 @@ namespace bo3z
 				}
 				Note(text, 10.0f);
 				Points::Add(5000);
+				Party::CityFreed(a_town);
 				if (!Net::IsClient()) {  // the host's nights: the freed city's last rite ends this one
 					Director::EndNight();
 					if (auto* pl = RE::PlayerCharacter::GetSingleton()) {
