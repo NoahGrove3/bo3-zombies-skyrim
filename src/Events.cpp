@@ -139,8 +139,9 @@ namespace bo3z
 				if (a_event->menuName == RE::LoadingMenu::MENU_NAME && !a_event->opening && dataLoaded) {
 					// After a new game, a save from the main menu, or a save loaded in game.
 					Save::OnWorldReady();
-					if (auto* ui = RE::UI::GetSingleton(); ui && !ui->IsMenuOpen(RE::MainMenu::MENU_NAME)) {
-						Watchdog::WorldLoaded();  // (into the world, not the main menu at start)
+					static int loads = 0;
+					if (loads++ > 0) {
+						Watchdog::WorldLoaded();  // (into the world - not the first, which is the main menu's own at start)
 					}
 				}
 				return RE::BSEventNotifyControl::kContinue;

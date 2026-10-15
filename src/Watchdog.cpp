@@ -118,6 +118,42 @@ namespace bo3z::Watchdog
 		}
 	}
 
+	namespace
+	{
+		// a crash: where it happened and what is on that thread's stack (module + offset), written before the game dies
+		LONG CALLBACK OnCrash(EXCEPTION_POINTERS* a_info)
+		{
+			static std::atomic_int told{ 0 };
+			if (!a_info || !a_info->ExceptionRecord || a_info->ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION || told++ >= 3) {
+				return EXCEPTION_CONTINUE_SEARCH;
+			}
+			const auto* ctx = a_info->ContextRecord;
+			auto where = [](DWORD64 a) {
+				const Mod* m = ModOf(a);
+				return m ? fmt::format("{}+{:X}", m->name, a - m->base) : fmt::format("{:X}", a);
+			};
+			logger::critical("crash: access violation at {} ({} address {:X}) on thread {}{}", where(ctx->Rip),
+				a_info->ExceptionRecord->ExceptionInformation[0] ? "writing" : "reading", a_info->ExceptionRecord->ExceptionInformation[1], ::GetCurrentThreadId(),
+				::GetCurrentThreadId() == g_main.load() ? " (the game's main thread)" : "");
+			logger::critical("crash: rax {:X} rbx {:X} rcx {:X} rdx {:X} rsi {:X} rdi {:X} r8 {:X} r9 {:X}", ctx->Rax, ctx->Rbx, ctx->Rcx, ctx->Rdx, ctx->Rsi, ctx->Rdi, ctx->R8, ctx->R9);
+			const auto* sp = reinterpret_cast<const DWORD64*>(ctx->Rsp);
+			int         shown = 0;
+			for (int i = 0; i < 2048 && shown < 40; ++i) {
+				DWORD64 v = 0;
+				SIZE_T  got = 0;
+				if (!::ReadProcessMemory(::GetCurrentProcess(), sp + i, &v, sizeof(v), &got) || got != sizeof(v)) {
+					break;
+				}
+				if (const Mod* m = ModOf(v); m && v - m->base > 0x1000) {
+					logger::critical("crash:   [{:4X}] {}", i * 8, where(v));
+					++shown;
+				}
+			}
+			spdlog::default_logger()->flush();
+			return EXCEPTION_CONTINUE_SEARCH;
+		}
+	}
+
 	void WorldLoaded() { g_tickDue = NowMs() + 15000; }
 	void PlayerTicked() { g_tickDue = 0; }
 
@@ -141,6 +177,7 @@ namespace bo3z::Watchdog
 				g_beat = NowMs();
 			}
 			SnapModules();
+			::AddVectoredExceptionHandler(1, OnCrash);
 			::CreateThread(nullptr, 0, Watch, nullptr, 0, nullptr);
 		}
 	}
