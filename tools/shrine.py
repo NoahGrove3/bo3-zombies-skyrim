@@ -165,7 +165,61 @@ def crystal():
         tri = [V[i] for i in f]
         uv = [(0.5 + v[0] / 44.0, 0.5 + v[2] / 44.0) for v in tri]
         S.add('crystal', tri, uv, [(0, 2, 1)])
-    # (its light and its aura of cold flame are drawn round it by the game's HUD, as on the main menu: src/Hud.cpp Draw)
+    # (its aura of cold flame: shells of rising flame round it, added by aura() - they turn and bob with it, and the
+    # floating rocks pass in front of them)
+
+
+def tex_flame(w=256, h=512, seed=21):
+    """tongues of cold flame, seamless both ways (the shells scroll it upward): long thin licks with dark gaps"""
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    u, v = xx / w, yy / h
+    rng = np.random.default_rng(seed)
+    f = np.zeros((h, w), np.float32)
+    for _ in range(26):
+        kx, ky = int(rng.integers(3, 14)), int(rng.integers(1, 4))
+        a = 1.0 / (kx * 0.35 + ky)
+        f += a * np.sin(2 * np.pi * (kx * u + ky * v * rng.choice([-1, 1])) + rng.uniform(0, 6.28) + 0.8 * np.sin(2 * np.pi * (2 * v + u)))
+    f = (f - f.mean()) / f.std()
+    lick = np.clip((f - 0.1) / 1.4, 0, 1) ** 1.5
+    fine = 0.75 + 0.25 * np.sin(2 * np.pi * (11 * u + 3 * v) + 2 * np.sin(2 * np.pi * 5 * v))
+    a = np.clip(lick * fine, 0, 1)
+    rgb = np.dstack([0.55 + 0.45 * a, 0.80 + 0.20 * a, np.ones_like(a)])
+    return Image.fromarray(np.dstack([rgb * 255, a * 255]).astype(np.uint8), 'RGBA')
+
+
+def aura(nif, tex):
+    """shells of cold flame round the orb, scrolling upward (the main menu's aura, in 3D): each a slightly taller-than-wide
+    ball, bright at its rim and clear where it faces you, faded out underneath and thin at the top. Added to crystal.nif
+    with fxwrite (unlit additive effect shapes) so they turn and bob with the orb, and the rocks pass in front."""
+    job = [f'base {nif}', f'out {nif}']
+    # (radius, height stretch, lift, UV tiles round, seconds per rise, colour, brightness)
+    shells = [(25.5, 1.25, 3.0, 3, 2.6, (0.80, 0.92, 1.0, 1.0), 1.4), (29.5, 1.35, 5.0, 4, 3.4, (0.60, 0.82, 1.0, 1.0), 1.25),
+              (34.0, 1.45, 8.0, 5, 4.4, (0.30, 0.56, 1.0, 1.0), 1.1)]
+    for i, (r, st, lift, tiles, rise, col, br) in enumerate(shells):
+        job.append(f'shape aura{i} tex={tex} color={",".join(str(c) for c in col)} scale={br} blend=add rim=1 single=1 vscroll={rise}')
+        NU, NV = 48, 24
+        for j in range(NV + 1):
+            th = math.pi * j / NV                      # 0 top .. pi bottom
+            for k in range(NU + 1):
+                ph = 2 * math.pi * k / NU
+                nx, ny, nz = math.sin(th) * math.cos(ph), math.sin(th) * math.sin(ph), math.cos(th)
+                x, y, z = r * nx, r * ny, r * st * nz + lift
+                h = 1 - th / math.pi                   # 1 top .. 0 bottom
+                fade = min(1.0, h / 0.45) ** 1.5 * min(1.0, (1 - h) / 0.15)
+                job.append(f'v {x:.3f} {y:.3f} {z:.3f} {k / NU * tiles:.4f} {th / math.pi * 1.0:.4f} 1 1 1 {fade:.3f}')
+                ln = math.sqrt(nx * nx + ny * ny + (nz / st) ** 2) or 1
+                job.append(f'n {nx / ln:.4f} {ny / ln:.4f} {nz / st / ln:.4f}')
+        for j in range(NV):
+            for k in range(NU):
+                a = j * (NU + 1) + k; b = a + NU + 1
+                job += [f't {a} {b} {a + 1}', f't {a + 1} {b} {b + 1}']
+    work = OUT.parent / 'shrine'
+    jf = work / 'aura.job'
+    jf.write_text('\n'.join(job) + '\n')
+    r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
+    print('aura |', r.stdout.strip() or r.stderr.strip())
+    if r.returncode:
+        raise SystemExit('fxwrite failed')
 
 
 def tex_aura(w=512, h=256):
@@ -331,6 +385,7 @@ def main():
     crystal()
     cd = S.save(tex_orb(), 'orb_d.dds')
     convert('crystal', [], [f'mat crystal diffuse={cd} normal={flat} glow={cd} emit=0.7,0.9,1.0 emitmult=3.2 spec=1.0 gloss=120 doublesided=1'])
+    aura(OUT / 'Meshes' / 'UndyingNights' / 'shrine' / 'crystal.nif', S.save(tex_flame(), 'aura_flame.dds', True))
     print('crystal centre at z', CRYSTAL_Z)
 
 

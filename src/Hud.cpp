@@ -611,30 +611,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const float dt = ImGui::GetIO().DeltaTime;
 			roundFlash = std::max(0.0f, roundFlash - dt);
 
-			// The shrine's orb: the main menu's aura of cold flame round it, licking out on every side, and a soft light
-			// (drawn under the rest of the HUD; the orb itself is the 3D one in the world)
-			if (s.orbOn && s.orbFade > 0.01f && g_flame && !s.perkMenu) {
-				auto*        bg = ImGui::GetBackgroundDrawList();
-				const ImVec2 c{ s.orbX * size.x, s.orbY * size.y };
-				const float  R = s.orbR * size.y;
-				const float  pulse = 0.5f + 0.5f * std::sin(now * 1.6f);
-				const float  al = s.orbFade;
-				for (int i = 4; i >= 1; --i) {  // the light round it
-					bg->AddCircleFilled(c, R * (1.0f + 0.35f * i), IM_COL32(80, 150, 255, static_cast<int>((10 + 6 * pulse) * al)), 48);
-				}
-				const auto aura = [&](float scale, float t0, ImU32 tint) {
-					const int   fr = static_cast<int>((now + t0) * 18.0f) % 16;
-					const float uu = (fr % 4) * 0.25f, vv = (fr / 4) * 0.25f;
-					const float hh = R * scale / 0.62f;
-					bg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_flame)), { c.x - hh, c.y - hh }, { c.x + hh, c.y + hh }, { uu, vv }, { uu + 0.25f, vv + 0.25f }, tint);
-				};
-				aura(1.45f + 0.05f * pulse, 0.0f, IM_COL32(70, 140, 255, static_cast<int>((150 + 60 * pulse) * al)));
-				aura(1.25f, 0.45f, IM_COL32(150, 210, 255, static_cast<int>((120 + 60 * pulse) * al)));
-				aura(1.1f, 0.8f, IM_COL32(200, 235, 255, static_cast<int>((60 + 40 * pulse) * al)));
-				if (s.orbAim) {  // the orb in the crosshair: what Activate does
-					const std::string t = g_padLast ? "A   Shrine of the Dirge" : "E   Shrine of the Dirge";
-					TxtC(dl, g_title, 20 * k, size.x * 0.5f, size.y * 0.5f + 40 * k, kParch, t, 2 * k, IM_COL32(60, 120, 255, 255));
-				}
+			// The shrine's orb in the crosshair: what Activate does (its aura of cold flame is 3D now, in crystal.nif)
+			if (s.orbOn && s.orbAim && s.orbFade > 0.01f && !s.perkMenu) {
+				const std::string t = g_padLast ? "A   Shrine of the Dirge" : "E   Shrine of the Dirge";
+				TxtC(dl, g_title, 20 * k, size.x * 0.5f, size.y * 0.5f + 40 * k, kParch, t, 2 * k, IM_COL32(60, 120, 255, 255));
 			}
 
 			if (s.compassOn && !s.perkMenu) {

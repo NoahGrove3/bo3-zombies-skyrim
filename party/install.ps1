@@ -85,7 +85,9 @@ $lines = @(); if (Test-Path $plist) { $lines = Get-Content $plist }
 $gfxPlugins = @('RealisticWaterTwo - Resources.esm', 'Lux Orbis - Master plugin.esm', 'Lux - Resources.esp', 'Lux Via.esp', 'SMIM-SE-Merged-All.esp',
     'Lit Road Signs.esp', 'HappyLittleTrees.esp', 'Skoglendi - A Grass Mod.esp', 'RealisticWaterTwo.esp', 'Skyland Watercolor - Slow Green-RW2.esp',
     'Azurite Weathers III.esp', 'Lux Orbis.esp', 'Lux Via - plugin.esp', 'Lux Via - Blended Roads Bridges Texture sets.esp',
-    'Lux - Master plugin.esm', 'Lux.esp', 'Lux - No grass in caves patch.esp')
+    'Lux - Master plugin.esm', 'Lux.esp', 'Lux - No grass in caves patch.esp', 'Lux - USSEP patch.esp', 'IcyFixes.esp', 'IcyCaveRemaster.esp', 'IcyBiomeRemaster.esp')
+# the fixes every other plugin builds on (loaded first)
+$basePlugins = @('Unofficial Skyrim Special Edition Patch.esp')
 # the party mods' plugins, in load order (masters first)
 $modPlugins = @('Ordinator - Perks of Skyrim.esp', 'Apocalypse - Magic of Skyrim.esp', 'MysticismMagic.esp', 'MysticOrdinator.esp', 'ForgottenMagic_Redone.esp',
     'StormCalling.esl', 'Conduit.esp', 'StrangeRunes.esp', 'EnhancedAtronachs.esp', 'BURP_SpellTomes.esp', 'BURPST_Apocalypse.esp', 'BURPST_ForgottenMagic.esp',
@@ -96,15 +98,16 @@ $modPlugins = @('Ordinator - Perks of Skyrim.esp', 'Apocalypse - Magic of Skyrim
     'Thunderchild - Epic Shout Package.esp', 'Thundering Shouts.esp', 'Sentinel.esp', 'Sentinel - Priests and Acolytes.esp', 'Sentinel - City Guards.esp',
     'SkyParkour.esp', 'Character Menu SE.esp', 'Phantom Horse.esp',
     'ArteFake.esp', 'Beam Walk.esp', 'SpiderAnim.esl', 'Unique Jarl Throne Sitting Animation.esp', 'MikanEyes All in one SE.esp', "Freak's Floral Fields.esp",
-    'Faithful Faces.esp', 'Faithful Faces0.esp', 'FabulousFollowersAIO.esp', "The Wolven Widow - SerketHetyt's Elisif Overhaul.esp",
-    "Evigheden - SerketHetyt's Serana Overhaul.esp")
+    'FabulousFollowersAIO.esp', "The Wolven Widow - SerketHetyt's Elisif Overhaul.esp",
+    "Evigheden - SerketHetyt's Serana Overhaul.esp", 'RaySense.esp', 'YsoldaDF.esp', "Jordis of Solitude - SerketHetyt's Housecarls.esp",
+    'CollegeOfWinterholdImmersive.esp', 'FabFollowers_ImmCoW_Patch.esp')
 # plugins no longer used (an older pack turned them on): kept off
-$retired = @('PAN_NPCs.esp')
-$ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'BO3Zombies.esp', 'UndyingNights.esp') + $gfxPlugins + $modPlugins + $retired
+$retired = @('PAN_NPCs.esp', 'Faithful Faces.esp', 'Faithful Faces0.esp')  # (Faithful Faces: crashes a new game)
+$ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'BO3Zombies.esp', 'UndyingNights.esp') + $basePlugins + $gfxPlugins + $modPlugins + $retired
 $keep = $lines | Where-Object { $n = ($_ -replace '^\*', '').Trim(); -not ($ours -contains $n) }
 $mid = @()
 if ($gfxOn -or (Test-Path (Join-Path $data 'Lux Via.esp'))) { $mid = $gfxPlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ } }
-$out = @($keep | Where-Object { $_ -match '^\s*#' }) + @('*SkyrimTogether.esp', '*SkyrimTogetherQuestPatches.esp') + @($keep | Where-Object { $_ -notmatch '^\s*#' -and $_.Trim() }) + $mid + @($modPlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ }) + @('*BO3Zombies.esp')
+$out = @($keep | Where-Object { $_ -match '^\s*#' }) + @('*SkyrimTogether.esp', '*SkyrimTogetherQuestPatches.esp') + @($basePlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ }) + @($keep | Where-Object { $_ -notmatch '^\s*#' -and $_.Trim() }) + $mid + @($modPlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ }) + @('*BO3Zombies.esp')
 [IO.File]::WriteAllLines($plist, [string[]]$out)  # (no byte-order mark: Skyrim would not read the first plugin's name)
 Say 'Plugins turned on.' Green
 
