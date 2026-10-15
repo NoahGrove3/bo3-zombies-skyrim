@@ -625,8 +625,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// Quick loot (src/Loot.cpp): what a body or a chest holds, beside the crosshair, in the shrine menu's style
 			if (s.lootOn && !s.perkMenu) {
 				const float w = 400 * k, rowH = 34 * k;
-				const int   rows = static_cast<int>(s.loot.size()), shown = std::min(rows, 7);
-				const float h = 64 * k + std::max(1, shown) * rowH + 46 * k;
+				const bool  listed = s.lootNote.empty() || s.lootNote.rfind("Owned", 0) == 0;  // (owned: its things are shown, in red)
+				const bool  owned = !s.lootNote.empty() && listed;
+				const int   rows = listed ? static_cast<int>(s.loot.size()) : 0, shown = std::min(rows, 7);
+				const float h = 64 * k + std::max(1, shown) * rowH + (owned ? rowH : 0.0f) + 46 * k;
 				const ImVec2 a{ size.x * 0.5f + 90 * k, size.y * 0.5f - h * 0.45f }, b{ a.x + w, a.y + h };
 				Panel(dl, a, b, k, 0.90f);
 				const float cx = (a.x + b.x) * 0.5f;
@@ -635,6 +637,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				float y = a.y + 58 * k;
 				if (!s.lootNote.empty()) {
 					TxtC(dl, g_body, 17 * k, cx, y + 6 * k, s.lootNote == "Empty" ? IM_COL32(170, 160, 140, 230) : IM_COL32(230, 110, 90, 240), s.lootNote);
+					if (owned) {
+						y += rowH;
+					}
 				}
 				const int first = std::clamp(s.lootSel - 3, 0, std::max(0, rows - shown));
 				auto icon = [&](int kind, ImVec2 c, float r, ImU32 col) {  // a small sigil per kind of thing
@@ -651,7 +656,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					default: dl->AddCircle(c, r * 0.6f, col, 6, 1.4f * k); break;
 					}
 				};
-				for (int i = first; i < first + shown && s.lootNote.empty(); ++i) {
+				for (int i = first; i < first + shown; ++i) {
 					const auto& it = s.loot[i];
 					const bool  sel = i == s.lootSel;
 					const ImVec2 r0{ a.x + 12 * k, y }, r1{ b.x - 12 * k, y + rowH - 4 * k };
@@ -664,7 +669,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					std::string nm = it.name;
 					if (nm.size() > 30) nm = nm.substr(0, 28) + "..";
 					if (it.count > 1) nm += "  (" + std::to_string(it.count) + ")";
-					Txt(dl, g_body, 18 * k, { r0.x + 36 * k, y + 5 * k }, sel ? kParch : IM_COL32(214, 204, 182, 235), nm);
+					Txt(dl, g_body, 18 * k, { r0.x + 36 * k, y + 5 * k }, owned ? IM_COL32(230, 120, 100, 235) : sel ? kParch : IM_COL32(214, 204, 182, 235), nm);
 					if (it.kind != 1) {
 						const std::string val = std::to_string(it.value);
 						Txt(dl, g_num, 15 * k, { r1.x - 96 * k, y + 7 * k }, IM_COL32(220, 180, 90, 220), val);
@@ -674,7 +679,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					y += rowH;
 				}
-				if (rows > shown && s.lootNote.empty()) {  // more below / above
+				if (rows > shown) {  // more below / above
 					TxtC(dl, g_num, 13 * k, b.x - 26 * k, a.y + 52 * k, kGoldDim, std::to_string(s.lootSel + 1) + "/" + std::to_string(rows));
 				}
 				// the keys

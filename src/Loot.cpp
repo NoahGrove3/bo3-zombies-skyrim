@@ -85,7 +85,7 @@ namespace bo3z::Loot
 					if (items.empty()) {
 						note = "Empty";
 					} else if (owned) {
-						note = "Owned - taking is stealing";
+						note = "Owned - G or E to steal";
 					} else {
 						g_takeable = true;
 					}

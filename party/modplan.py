@@ -110,7 +110,7 @@ RECIPES = [
     # (Oct 15, 3rd batch) powerofthree's Tweaks (Seasons of Skyrim needs it), hair physics for Faithful Faces' hair
     ('powerofthree\'s Tweaks', "powerofthree's Tweaks*.7z", 'mods', 'map', {"powerofthree's Tweaks FOMOD Installer/Required/": '', "powerofthree's Tweaks FOMOD Installer/AE/": ''}),
     ('FSMP', 'FSMP*.zip', 'mods', 'map', {'SKSE/': 'SKSE', 'Scripts/': 'Scripts', 'raw-vs2022-windows-avx/SKSE/': 'SKSE', 'FSMPV/hdtSMP64.xsd': 'SKSE/Plugins/hdtSkinnedMeshConfigs/hdtSMP64.xsd'}),
-    ('SMP-NPC crash fix', 'SMP-NPC crash fix*.7z', 'mods', 'map', {'': ''}),
+    # (not SMP-NPC crash fix: built for an older address library, SKSE stops the game at start with it)
     ('Vanilla hair remake SMP', 'Vanilla hair remake SMP*.7z', 'mods', 'map', {'': ''}),
     # frame rate: Community Shaders' frame generation (AMD FSR 3 / NVIDIA DLSS-G), and the game at high CPU priority
     ('Frame Generation', 'Frame Generation-*.7z', 'graphics', 'map', {'': ''}),
