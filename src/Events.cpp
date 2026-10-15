@@ -139,6 +139,15 @@ namespace bo3z
 				if (a_event->menuName == RE::LoadingMenu::MENU_NAME && !a_event->opening && dataLoaded) {
 					// After a new game, a save from the main menu, or a save loaded in game.
 					Save::OnWorldReady();
+					// Phantom Horse: its summons come from spell tomes no one will find here - the player simply has both powers
+					if (auto* pl = RE::PlayerCharacter::GetSingleton()) {
+						for (RE::FormID id : { 0x840u, 0x841u }) {  // SP_ArvakPower, SP_ShadowPower
+							if (auto* sp = RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(id, "Phantom Horse.esp"); sp && !pl->HasSpell(sp)) {
+								pl->AddSpell(sp);
+								logger::info("phantom horse: gave {}", sp->GetName());
+							}
+						}
+					}
 					static int loads = 0;
 					if (loads++ > 0) {
 						Watchdog::WorldLoaded();  // (into the world - not the first, which is the main menu's own at start)

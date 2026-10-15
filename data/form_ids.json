@@ -1020,6 +1020,7 @@
   "QUST:rites_Winterhold": "0xbf8",
   "STAT:quest_marker": "0xbf9",
   "LIGH:shrine_freed_glow": "0xbfa",
-  "STAT:shrine_freed_beam": "0xbfb"
+  "STAT:shrine_freed_beam": "0xbfb",
+  "SNDR:shrine_hum": "0xbfc"
  }
 }

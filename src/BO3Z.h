@@ -166,7 +166,7 @@ namespace bo3z
 		void FilmQuiet(bool a_on);   // Skyrim's own sound (world, voices, its music) silent while the intro film plays
 		void SetMenuMusic();
 		void MenuUiSounds(bool a_on);  // the main menu's own focus/accept/back sounds play ours while it is up
-		inline constexpr std::uint64_t kLoopCharge = 1, kLoopRite = 2, kLoopNight = 3, kLoopMenu = 4;
+		inline constexpr std::uint64_t kLoopCharge = 1, kLoopRite = 2, kLoopNight = 3, kLoopMenu = 4, kLoopShrine = 5;
 	}
 
 	namespace Undead

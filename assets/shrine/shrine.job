@@ -1,6 +1,8 @@
 in assets/shrine/shrine.obj
 out assets/fx/Meshes/UndyingNights/shrine/shrine.nif
-collidefrustum -160 -160 160 160 16 -60 70
+origin 1
+offset 0 0 21.5
+collidefrustum -160 -160 160 160 37.5 -38.5 70
 collidebox2 -34 -34 140 34 34 212
 mat floor diffuse=textures\architecture\whiterun\wrstoneblocks01.dds normal=textures\architecture\whiterun\wrstoneblocks01_n.dds spec=0.3 gloss=30
 mat cobble diffuse=textures\architecture\whiterun\wrstonefloor01.dds normal=textures\architecture\whiterun\wrstonefloor01_n.dds spec=0.25 gloss=30

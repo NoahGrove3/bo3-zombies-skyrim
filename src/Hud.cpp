@@ -25,7 +25,7 @@ namespace bo3z
 		std::array<ID3D11ShaderResourceView*, 8>                  g_elementIcons{};  // the Coffer spells' element emblems (el_<element>.png)
 		ID3D11ShaderResourceView* g_menuBg = nullptr;   // the main menu's backdrop (tools/cover.py, MENU=1)
 		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
-		ID3D11ShaderResourceView* g_fire = nullptr;     // the shrine orb's purple magic fire: 8x8 flipbook (tools/magicfire.py)
+		ID3D11ShaderResourceView* g_fire = nullptr;     // the shrine orb's purple magic fire: 16x8 flipbook (tools/magicfire.py)
 		ID3D11ShaderResourceView* g_flame = nullptr;    // the aura round a spell emblem: 4x4 atlas of a looping white flame ring (tools/flameaura.py)
 		ID3D11ShaderResourceView* g_frame = nullptr;    // nine-slice panel: black field, iron and bronze border (tools/uiart.py)
 		ID3D11ShaderResourceView* g_divider = nullptr;  // bronze line with a winged diamond
@@ -468,10 +468,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			dl->AddConvexPolyFilled(plate, 6, IM_COL32(10, 9, 12, 205));
 			dl->AddRectFilledMultiColor(a, { b.x, cy }, IM_COL32(40, 34, 30, 90), IM_COL32(40, 34, 30, 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
 			dl->AddPolyline(plate, 6, Fade(kGold, 0.9f), ImDrawFlags_Closed, 1.4f * k);
-			for (float ex : { a.x - e, b.x + e }) {  // bronze rivets on the points
-				const float r = 3.5f * k;
-				dl->AddQuadFilled({ ex, cy - r }, { ex + r, cy }, { ex, cy + r }, { ex - r, cy }, kGold);
-			}
 			auto rel = [&](float ang) {
 				float d = ang - s.heading;
 				while (d > RE::NI_PI) d -= 2 * RE::NI_PI;
@@ -587,10 +583,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 			dl->PopClipRect();
-			// the middle: a small flame-gold notch above the plate
-			const float pu = 0.7f + 0.3f * std::sin(now * 2.2f);
-			dl->AddTriangleFilled({ cx - 7 * k, top - 9 * k }, { cx, top - 1 * k }, { cx + 7 * k, top - 9 * k }, kGold);
-			dl->AddCircleFilled({ cx, top - 12 * k }, 3 * k, Fade(IM_COL32(255, 170, 80, 255), pu), 10);
 			if (centre) {
 				const int m = static_cast<int>(centre->dist * 0.01428f);
 				const std::string t = centre->label + "   " + std::to_string(m) + " m";
@@ -1020,9 +1012,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->AddConvexPolyFilled(plate, 6, IM_COL32(10, 9, 11, 205));
 					dl->AddPolyline(plate, 6, Fade(kGoldDim, 0.9f), ImDrawFlags_Closed, 1.4f * k);
 					dl->AddLine({ L + 6 * k, t + 3 * k }, { R - 6 * k, t + 3 * k }, IM_COL32(255, 220, 160, 26), 1.0f * k);
-					for (float ex : { L - 18 * k, R + 18 * k }) {
-						dl->AddQuadFilled({ ex, m - 4 * k }, { ex + 4 * k, m }, { ex, m + 4 * k }, { ex - 4 * k, m }, kGold);
-					}
 				}
 				// one bar: its trough, the trailing wound, the fill (lit top, deep bottom), a sheen, notches
 				const auto bar = [&](float x0, float w, float top, float bh, float f, float ghost, ImU32 lit, ImU32 deep, bool fromRight, int notches) {
@@ -1531,10 +1520,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							const float x = a.x + w * q / 4.0f;
 							dl->AddLine({ x, a.y }, { x, z.y }, Fade(IM_COL32(0, 0, 0, 200), al), 1.2f * k);
 						}
-					}
-					for (float ex : { a.x - e, z.x + e }) {  // bronze rivets on the points
-						const float r = 2.6f * k * sc;
-						dl->AddQuadFilled({ ex, c.y - r }, { ex + r, c.y }, { ex, c.y + r }, { ex - r, c.y }, Fade(trim, al));
 					}
 					if (!b.name.empty()) {
 						const float fs = std::max(9.0f * k, (b.rank == 2 ? 12.5f : b.rank == 1 ? 11.5f : 11.0f) * k * sc);
@@ -2111,7 +2096,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ID3D11ShaderResourceView* g_sRefl = nullptr;     // the mountains upside down in the lake
 		ID3D11ShaderResourceView* g_sAurora = nullptr;   // the northern lights
 		ID3D11ShaderResourceView* g_sLife = nullptr;     // lily pads on the lake, reeds and bushes in the near corners
-		ID3D11ShaderResourceView* g_sMotes = nullptr;    // motes rising from the shrine's pool: 8x8 flipbook (tools/orbfx.py)
+		ID3D11ShaderResourceView* g_sMotes = nullptr;    // motes rising from the shrine's pool: 16x8 flipbook (tools/orbfx.py)
 		std::array<ID3D11ShaderResourceView*, 9> g_sShard{}, g_sShardR{};  // the rocks, and their runes' light (pulsing)
 		ID3D11ShaderResourceView* g_mGroundFog = nullptr;
 		ID3D11ShaderResourceView* g_mClouds2 = nullptr;    // drifting night clouds that tile left-right (tools/menuscene.py drift_clouds)  // fog wisps that tile left-right (tools/menuscene.py ground_fog)
@@ -2472,8 +2457,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (g_sMotes) {
 					const ImVec2 pool = at(0, 0, 0), top = at(0, 0, kCrystalZ);
 					const float  hgt = (pool.y - top.y) * 1.2f;
-					const int    fr = static_cast<int>(now * 12.0f) % 64;
-					const ImVec2 uv0{ (fr % 8) * 0.125f, (fr / 8) * 0.125f }, uv1{ uv0.x + 0.125f, uv0.y + 0.125f };
+					const int    fr = static_cast<int>(now * 24.0f) % 128;
+					const ImVec2 uv0{ (fr % 16) / 16.0f, (fr / 16) / 8.0f }, uv1{ uv0.x + 1.0f / 16.0f, uv0.y + 0.125f };
 					sprite(g_sMotes, { pool.x, (pool.y + top.y) * 0.5f }, hgt * 0.5f, hgt, 0, IM_COL32(255, 255, 255, static_cast<int>(235 * fade)), uv0, uv1);
 				}
 				// the light rising from the pool to the crystal: a soft shaft (the round light stretched tall)
@@ -2528,16 +2513,16 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						sprite(g_sSoft, c, g1 * 2, g1 * 2, 0, IM_COL32(130, 80, 255, static_cast<int>((60 + 45 * pulse) * fade)));
 						sprite(g_sSoft, c, g2 * 2, g2 * 2, 0, IM_COL32(190, 150, 255, static_cast<int>((80 + 60 * pulse) * fade)));
 					}
-					// purple fire made of magic round it (the in-game orb's own flipbook: tools/magicfire.py, 8x8 frames), two
+					// purple fire made of magic round it (the in-game orb's own flipbook: tools/magicfire.py, 16x8 frames), two
 					// passes out of step and a little apart in size
 					const auto aura = [&](float scale, float t0, ImU32 tint) {
 						if (!g_fire) {
 							return;
 						}
-						const int   fr = static_cast<int>((now + t0) * 12.0f) % 64;  // (slow, as the rocks drift)
-						const float uu = (fr % 8) * 0.125f, vv = (fr / 8) * 0.125f;
+						const int   fr = static_cast<int>((now + t0) * 24.0f) % 128;  // (slow, as the rocks drift; 24 frames a second)
+						const float uu = (fr % 16) / 16.0f, vv = (fr / 16) / 8.0f;
 						const float hh = 108.0f * u * scale / 0.36f, lift = 0.30f * hh;  // (the orb sits below the frame's middle)
-						fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_fire)), { c.x - hh, c.y - hh - lift }, { c.x + hh, c.y + hh - lift }, { uu, vv }, { uu + 0.125f, vv + 0.125f }, tint);
+						fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_fire)), { c.x - hh, c.y - hh - lift }, { c.x + hh, c.y + hh - lift }, { uu, vv }, { uu + 1.0f / 16.0f, vv + 0.125f }, tint);
 					};
 					aura(1.12f, 2.6f, IM_COL32(225, 200, 255, static_cast<int>((130 + 50 * pulse) * fade)));
 					if (g_sCrystal) {

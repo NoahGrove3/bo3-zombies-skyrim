@@ -26,6 +26,7 @@ namespace bo3z
 		std::optional<Pulse>                     g_pulse;  // a freed shrine's wave (FreedPulse)
 		std::vector<Spinner>                     g_spinners;
 		RE::ObjectRefHandle                      g_orbAim;  // the shrine whose orb is in the crosshair (Activate opens it)
+		bool                                     g_humming = false;  // the shrine's hum is playing (a load stops every loop)
 
 		// The shrine's roll: it gathers power (Charging), every spell in the pool flickers over the crown, slowing
 		// (Spinning), then one is held there as a ball of light until you take it (Offering).
@@ -1355,6 +1356,7 @@ namespace bo3z
 	{
 		void Reset()
 		{
+			g_humming = false;
 			g_placed.fill({});
 			g_dressed.fill(false);
 			g_towns.fill({});
@@ -1626,6 +1628,17 @@ namespace bo3z
 							orbDist = d, orbAt = node->world.translate, orbRef = r;
 						}
 					}
+				}
+			}
+			// standing close to a shrine you hear it: a deep, breathing hum with a crystal shimmer (3D, from the orb)
+			{
+				bool& humming = g_humming;
+				if (!humming && orbRef && orbDist < 420.0f) {
+					Audio::LoopStart(Audio::kLoopShrine, gen::Sound::shrine_hum, orbRef.get());
+					humming = true;
+				} else if (humming && (!orbRef || orbDist > 540.0f)) {
+					Audio::LoopStop(Audio::kLoopShrine, 900);
+					humming = false;
 				}
 			}
 			// the orb's aura of cold flame (the main menu's, drawn round the orb on screen): while it is near and in sight

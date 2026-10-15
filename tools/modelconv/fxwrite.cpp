@@ -155,12 +155,13 @@ int main(int argc, char** argv)
 				auto data = std::make_unique<NiFloatData>();
 				data->data.SetInterpolationType(LINEAR_KEY);
 				for (int f = 0; f <= n; ++f) {
-					const int   c = f % n;
-					const float v = axis == 0 ? (c % s.cols) / float(s.cols) : (c / s.cols) / float(s.rows);
+					// offsets only ever step forward (the texture wraps, so 1 is 0 again): a step never sweeps back
+					// across the whole sheet, which showed as a flash of other cells for a frame
+					const float v = axis == 0 ? f / float(s.cols) : (f / s.cols) / float(s.rows);
 					NiAnimationKey<float> a; a.type = LINEAR_KEY; a.time = f * dt; a.value = v;
 					data->data.AddKey(a);
 					if (f < n) {
-						NiAnimationKey<float> b; b.type = LINEAR_KEY; b.time = (f + 1) * dt - 0.0005f; b.value = v;
+						NiAnimationKey<float> b; b.type = LINEAR_KEY; b.time = (f + 1) * dt - 0.00002f; b.value = v;
 						data->data.AddKey(b);
 					}
 				}

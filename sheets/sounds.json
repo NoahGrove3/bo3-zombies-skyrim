@@ -7718,6 +7718,24 @@
       "atten": 0,
       "loop": false,
       "use": "shatter shout spoken with 3 word(s)"
+    },
+    {
+      "id": "shrine_hum",
+      "plugin": "BO3Zombies.esp",
+      "localId": "auto",
+      "editorId": "UN_shrine_hum",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\UndyingNights\\un\\shrine_hum.wav",
+      "files": [
+        "fx\\UndyingNights\\un\\shrine_hum.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 2,
+      "loop": true,
+      "use": "the Shrine of the Dirge hums when you stand close to it (loop while near)"
     }
   ]
 }

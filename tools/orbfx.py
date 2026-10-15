@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Two more looping flipbooks for the shrine (8x8 frames of 256 px, 64 frames, played at 12 a second = ~5.3 s):
+"""Two more looping flipbooks for the shrine (16x8 frames of 256 px, 128 frames, played at 24 a second = ~5.3 s):
 
   orb_swirl   the orb's living light: veins of energy drifting over a ball as it slowly turns, a soft core and a
               bright limb - additive, on an always-facing quad just in front of the in-game orb (tools/shrine.py),
@@ -14,8 +14,8 @@ import numpy as np
 from PIL import Image
 from scipy.ndimage import map_coordinates
 
-N, COLS = 256, 8
-FRAMES = COLS * COLS
+N, COLS, ROWS = 256, 16, 8   # 128 frames, played at 24 a second: a ~5.3 s loop
+FRAMES = COLS * ROWS
 
 
 def tileable(n, beta, seed):
@@ -36,7 +36,7 @@ def sample(tex, u, v):
 
 
 def atlas_of(frames):
-    a = np.zeros((N * COLS, N * COLS, 4), np.uint8)
+    a = np.zeros((N * ROWS, N * COLS, 4), np.uint8)
     for k, f in enumerate(frames):
         r, c = divmod(k, COLS)
         a[r * N:(r + 1) * N, c * N:(c + 1) * N] = f
