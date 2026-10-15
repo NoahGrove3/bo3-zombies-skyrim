@@ -9,6 +9,7 @@ namespace bo3z::Watchdog
 	{
 		std::atomic<long long> g_beat{ 0 };   // the last frame drawn (steady clock, ms)
 		std::atomic<DWORD>     g_main{ 0 };   // the thread that draws them
+		std::atomic_bool       g_drawn{ false };  // a frame has been drawn at all
 
 		long long NowMs()
 		{
@@ -95,7 +96,7 @@ namespace bo3z::Watchdog
 					continue;
 				}
 				const long long now = NowMs(), stuck = now - beat;
-				if (stuck < 2000 && now - snapAt > 15000) {  // healthy: refresh the module list now and then
+				if ((stuck < 2000 || !g_drawn) && now - snapAt > (g_drawn ? 15000 : 4000)) {  // refresh the module list now and then
 					SnapModules();
 					snapAt = now;
 				}
@@ -112,6 +113,7 @@ namespace bo3z::Watchdog
 
 	void Beat()
 	{
+		g_drawn = true;
 		if (!g_main.load()) {
 			g_main = ::GetCurrentThreadId();
 		}
