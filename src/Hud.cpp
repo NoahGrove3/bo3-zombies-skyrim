@@ -622,6 +622,78 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DrawCompass(dl, s, size, k, now);
 			}
 
+			// Quick loot (src/Loot.cpp): what a body or a chest holds, beside the crosshair, in the shrine menu's style
+			if (s.lootOn && !s.perkMenu) {
+				const float w = 400 * k, rowH = 34 * k;
+				const int   rows = static_cast<int>(s.loot.size()), shown = std::min(rows, 7);
+				const float h = 64 * k + std::max(1, shown) * rowH + 46 * k;
+				const ImVec2 a{ size.x * 0.5f + 90 * k, size.y * 0.5f - h * 0.45f }, b{ a.x + w, a.y + h };
+				Panel(dl, a, b, k, 0.90f);
+				const float cx = (a.x + b.x) * 0.5f;
+				TxtC(dl, g_title, 22 * k, cx, a.y + 12 * k, IM_COL32(232, 214, 176, 255), s.lootTitle.empty() ? std::string("Remains") : s.lootTitle, 2.0f * k, IM_COL32(150, 70, 255, 255));
+				Divider(dl, cx, a.y + 46 * k, w * 0.36f, k);
+				float y = a.y + 58 * k;
+				if (!s.lootNote.empty()) {
+					TxtC(dl, g_body, 17 * k, cx, y + 6 * k, s.lootNote == "Empty" ? IM_COL32(170, 160, 140, 230) : IM_COL32(230, 110, 90, 240), s.lootNote);
+				}
+				const int first = std::clamp(s.lootSel - 3, 0, std::max(0, rows - shown));
+				auto icon = [&](int kind, ImVec2 c, float r, ImU32 col) {  // a small sigil per kind of thing
+					switch (kind) {
+					case 1: dl->AddCircleFilled(c, r * 0.8f, IM_COL32(230, 180, 70, 255), 16); dl->AddCircle(c, r * 0.55f, IM_COL32(120, 80, 20, 255), 16, 1.2f * k); break;   // gold
+					case 2: dl->AddLine({ c.x - r, c.y + r }, { c.x + r, c.y - r }, col, 2.4f * k); dl->AddLine({ c.x - r * 0.5f, c.y + r * 0.1f }, { c.x - r * 0.1f, c.y + r * 0.5f }, col, 2.4f * k); break;  // a blade
+					case 3: dl->AddQuadFilled({ c.x - r, c.y - r * 0.8f }, { c.x + r, c.y - r * 0.8f }, { c.x + r * 0.7f, c.y + r * 0.4f }, { c.x - r * 0.7f, c.y + r * 0.4f }, Fade(col, 0.8f)); dl->AddTriangleFilled({ c.x - r * 0.7f, c.y + r * 0.4f }, { c.x + r * 0.7f, c.y + r * 0.4f }, { c.x, c.y + r }, Fade(col, 0.8f)); break;  // a shield
+					case 4: dl->AddCircleFilled({ c.x, c.y + r * 0.25f }, r * 0.65f, IM_COL32(200, 60, 80, 255), 12); dl->AddRectFilled({ c.x - r * 0.2f, c.y - r }, { c.x + r * 0.2f, c.y - r * 0.3f }, col); break;  // a flask
+					case 5: dl->AddCircleFilled(c, r * 0.6f, IM_COL32(110, 170, 80, 255), 8); break;  // a herb
+					case 6: case 7: dl->AddRect({ c.x - r * 0.8f, c.y - r }, { c.x + r * 0.8f, c.y + r }, col, 1.5f * k, 0, 1.6f * k); dl->AddLine({ c.x, c.y - r }, { c.x, c.y + r }, col, 1.2f * k); break;  // a book
+					case 8: dl->AddLine({ c.x - r, c.y + r }, { c.x + r, c.y - r }, col, 1.6f * k); dl->AddTriangleFilled({ c.x + r, c.y - r }, { c.x + r * 0.2f, c.y - r * 0.6f }, { c.x + r * 0.6f, c.y - r * 0.2f }, col); break;  // an arrow
+					case 9: dl->AddQuadFilled({ c.x, c.y - r }, { c.x + r * 0.7f, c.y }, { c.x, c.y + r }, { c.x - r * 0.7f, c.y }, IM_COL32(170, 110, 255, 255)); break;  // a soul gem
+					case 10: dl->AddCircle({ c.x - r * 0.4f, c.y }, r * 0.45f, col, 12, 1.6f * k); dl->AddLine({ c.x, c.y }, { c.x + r, c.y }, col, 1.6f * k); break;  // a key
+					default: dl->AddCircle(c, r * 0.6f, col, 6, 1.4f * k); break;
+					}
+				};
+				for (int i = first; i < first + shown && s.lootNote.empty(); ++i) {
+					const auto& it = s.loot[i];
+					const bool  sel = i == s.lootSel;
+					const ImVec2 r0{ a.x + 12 * k, y }, r1{ b.x - 12 * k, y + rowH - 4 * k };
+					if (sel) {
+						const float pl = 0.75f + 0.25f * std::sin(now * 4.0f);
+						dl->AddRectFilledMultiColor(r0, r1, IM_COL32(120, 60, 220, static_cast<int>(120 * pl)), IM_COL32(60, 30, 120, 30), IM_COL32(60, 30, 120, 30), IM_COL32(120, 60, 220, static_cast<int>(120 * pl)));
+						dl->AddRect(r0, r1, Fade(kGold, 0.7f), 2 * k, 0, 1.2f * k);
+					}
+					icon(it.kind, { r0.x + 16 * k, y + rowH * 0.45f }, 9 * k, sel ? kParch : IM_COL32(200, 186, 160, 230));
+					std::string nm = it.name;
+					if (nm.size() > 30) nm = nm.substr(0, 28) + "..";
+					if (it.count > 1) nm += "  (" + std::to_string(it.count) + ")";
+					Txt(dl, g_body, 18 * k, { r0.x + 36 * k, y + 5 * k }, sel ? kParch : IM_COL32(214, 204, 182, 235), nm);
+					if (it.kind != 1) {
+						const std::string val = std::to_string(it.value);
+						Txt(dl, g_num, 15 * k, { r1.x - 96 * k, y + 7 * k }, IM_COL32(220, 180, 90, 220), val);
+						char wt[16];
+						std::snprintf(wt, sizeof(wt), "%.1f", it.weight);
+						Txt(dl, g_num, 15 * k, { r1.x - 46 * k, y + 7 * k }, IM_COL32(170, 162, 145, 210), wt);
+					}
+					y += rowH;
+				}
+				if (rows > shown && s.lootNote.empty()) {  // more below / above
+					TxtC(dl, g_num, 13 * k, b.x - 26 * k, a.y + 52 * k, kGoldDim, std::to_string(s.lootSel + 1) + "/" + std::to_string(rows));
+				}
+				// the keys
+				const float fy = b.y - 34 * k;
+				auto cap = [&](float x, const std::string& key, const std::string& what) {
+					dl->AddRectFilled({ x, fy }, { x + 24 * k, fy + 24 * k }, IM_COL32(60, 30, 18, 230), 3 * k);
+					dl->AddRect({ x, fy }, { x + 24 * k, fy + 24 * k }, kGold, 3 * k, 0, 1.2f * k);
+					TxtC(dl, g_num, 15 * k, x + 12 * k, fy + 3 * k, kParch, key);
+					Txt(dl, g_body, 15 * k, { x + 30 * k, fy + 3 * k }, IM_COL32(214, 204, 182, 230), what);
+				};
+				if (s.lootNote.empty()) {
+					cap(a.x + 16 * k, g_padLast ? "A" : "E", "Take");
+					cap(a.x + 126 * k, g_padLast ? "X" : "R", "Take all");
+				}
+				if (!g_padLast) {
+					cap(a.x + (s.lootNote.empty() ? 266 : 16) * k, "G", "Open");
+				}
+			}
+
 			// The quests' targets in the world (Skyrim's floating quest markers, which are turned off, in our style): a
 			// small burning diamond over each, its distance under it, the quest's name when you look right at it
 			if (!s.perkMenu) {

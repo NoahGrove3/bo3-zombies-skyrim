@@ -1,4 +1,4 @@
-﻿# Undying Nights - Party Pack installer. Installs Undying Nights and Skyrim Together Reborn into Skyrim Special Edition,
+# Undying Nights - Party Pack installer. Installs Undying Nights and Skyrim Together Reborn into Skyrim Special Edition,
 # turns the plugins on, sets your co-op role, and puts a "Undying Nights Co-op" shortcut on the desktop.
 param([ValidateSet('client', 'host')][string]$Role = 'client')
 $ErrorActionPreference = 'Stop'
@@ -87,7 +87,7 @@ $gfxPlugins = @('RealisticWaterTwo - Resources.esm', 'Lux Orbis - Master plugin.
     'Azurite Weathers III.esp', 'Lux Orbis.esp', 'Lux Via - plugin.esp', 'Lux Via - Blended Roads Bridges Texture sets.esp',
     'Lux - Master plugin.esm', 'Lux.esp', 'Lux - No grass in caves patch.esp', 'Lux - USSEP patch.esp', 'IcyFixes.esp', 'IcyCaveRemaster.esp', 'IcyBiomeRemaster.esp',
     'TamrielicGrass.esp', 'Veydosebrom Regions.esp', 'Folkvangr - Grass and Landscape Overhaul.esp', 'Seasonal Landscapes.esp', 'Short Grass Mixed.esp',
-    'Cathedral - 3D Pine Grass.esp', 'Origins Of Forest - 3D Forest Grass.esp')
+    'Cathedral - 3D Pine Grass.esp', 'Origins Of Forest - 3D Forest Grass.esp', 'Landscape Fixes For Grass Mods.esp', 'SnowOverSkyrim.esp')
 # the fixes every other plugin builds on (loaded first)
 $basePlugins = @('Unofficial Skyrim Special Edition Patch.esp')
 # the party mods' plugins, in load order (masters first)
@@ -100,11 +100,11 @@ $modPlugins = @('Ordinator - Perks of Skyrim.esp', 'Apocalypse - Magic of Skyrim
     'Thunderchild - Epic Shout Package.esp', 'Thundering Shouts.esp', 'Sentinel.esp', 'Sentinel - Priests and Acolytes.esp', 'Sentinel - City Guards.esp',
     'SkyParkour.esp', 'Character Menu SE.esp', 'Phantom Horse.esp',
     'ArteFake.esp', 'Beam Walk.esp', 'SpiderAnim.esl', 'Unique Jarl Throne Sitting Animation.esp', 'MikanEyes All in one SE.esp', "Freak's Floral Fields.esp",
-    'FabulousFollowersAIO.esp', "The Wolven Widow - SerketHetyt's Elisif Overhaul.esp",
+    'Faithful Faces.esp', 'Faithful Faces0.esp', 'FabulousFollowersAIO.esp', "The Wolven Widow - SerketHetyt's Elisif Overhaul.esp",
     "Evigheden - SerketHetyt's Serana Overhaul.esp", 'RaySense.esp', 'YsoldaDF.esp', "Jordis of Solitude - SerketHetyt's Housecarls.esp",
     'CollegeOfWinterholdImmersive.esp', 'FabFollowers_ImmCoW_Patch.esp')
 # plugins no longer used (an older pack turned them on): kept off
-$retired = @('PAN_NPCs.esp', 'Skoglendi - A Grass Mod.esp', 'Nolvus Ascension Seasonal Grass Mashup.esp', 'SnowOverSkyrim.esp', 'Faithful Faces.esp', 'Faithful Faces0.esp')  # (Faithful Faces: crashes a new game)
+$retired = @('PAN_NPCs.esp', 'Skoglendi - A Grass Mod.esp', 'Nolvus Ascension Seasonal Grass Mashup.esp')
 $ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'BO3Zombies.esp', 'UndyingNights.esp') + $basePlugins + $gfxPlugins + $modPlugins + $retired
 $keep = $lines | Where-Object { $n = ($_ -replace '^\*', '').Trim(); -not ($ours -contains $n) }
 $mid = @()

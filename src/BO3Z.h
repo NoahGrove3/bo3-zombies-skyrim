@@ -413,6 +413,14 @@ namespace bo3z
 		void Reset();
 	}
 
+	// Quick loot in the game's style (src/Loot.cpp): a body's or a container's things beside the crosshair
+	namespace Loot
+	{
+		void Tick(float a_delta);
+		bool Eats(RE::InputEvent* a_event);           // Skyrim's own handlers must not see this key (the loot list has it)
+		bool OnButton(const RE::ButtonEvent* a_event);
+	}
+
 	namespace Watchdog
 	{
 		void Beat();   // a frame was drawn (from Present)
@@ -505,6 +513,11 @@ namespace bo3z
 			std::vector<CompassMark> compass;
 			struct QuestMark { float x, y, dist; bool front; std::string label; };  // a quest's target on the screen (0..1), drawn in our style
 			std::vector<QuestMark> qmarks;
+			struct LootItem { std::string name; int count, value; float weight; int kind; };  // kind: 0 misc, 1 gold, 2 weapon, 3 armor, 4 potion, 5 ingredient, 6 book, 7 scroll, 8 ammo, 9 soul gem, 10 key
+			bool        lootOn{ false };
+			std::string lootTitle, lootNote;
+			std::vector<LootItem> loot;
+			int         lootSel{ 0 };
 			std::uint32_t objColor{ 0xD6B260 };
 			float       questNoteTime{ 0 };
 			// weapon slots (2, or 3 with the brew): the weapon in each (gen::kGuns index, -1 empty), its Reforge level

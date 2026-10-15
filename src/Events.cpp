@@ -72,6 +72,8 @@ namespace bo3z
 					Party::Tick(a_delta);
 					T("compass");
 					Compass::Tick(a_delta);
+					T("loot");
+					Loot::Tick(a_delta);
 					T("movement");
 					Movement::Tick(a_delta);
 					T("audio");
@@ -248,7 +250,7 @@ namespace bo3z
 						}
 						Hud::OnMenuButton(b);
 						if (!Intro::OnButton(b) && !Party::OnButton(b)) {  // (down or dead: your hands are still)
-							if (Shops::OnButton(b)) {
+							if (Shops::OnButton(b) || Loot::OnButton(b)) {
 								continue;
 							}
 							Movement::OnButton(b);
