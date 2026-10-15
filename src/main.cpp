@@ -5,7 +5,7 @@
 //    DllMain starts a thread and nothing else; the thread waits for the game's UI, then watches menus.
 //  - as an SKSE plugin (CurseOfAlduin.dll in Data/SKSE/Plugins) for players who run SKSE.
 // Only one copy may run in a game: a process-wide mutex says who came first. Older installs named the files
-// CurseOfAlduin.asi / .dll: if one of those is loaded, it runs this time and its files are renamed out of the way so
+// UndyingNights / BO3Zombies .asi or .dll (older names): if one of those is loaded, it runs this time and its files are renamed out of the way so
 // the next start is ours alone.
 namespace
 {
@@ -87,7 +87,7 @@ namespace
 		if (::GetLastError() == ERROR_ALREADY_EXISTS) {
 			return false;
 		}
-		for (const wchar_t* old : { L"CurseOfAlduin.asi", L"CurseOfAlduin.dll" }) {
+		for (const wchar_t* old : { L"UndyingNights.asi", L"UndyingNights.dll", L"BO3Zombies.asi", L"BO3Zombies.dll" })  // (the names older builds had) {
 			if (HMODULE h = ::GetModuleHandleW(old); h && h != a_module) {
 				wchar_t path[MAX_PATH]{};
 				if (const auto n = ::GetModuleFileNameW(h, path, MAX_PATH); n > 0) {
@@ -128,7 +128,7 @@ BOOL APIENTRY DllMain(HMODULE a_module, DWORD a_reason, LPVOID)
 SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 {
 	if (g_booted.exchange(true) || !FirstCopy(nullptr)) {
-		return false;  // another copy (the .asi, or an old CurseOfAlduin build) is already running
+		return false;  // another copy (the .asi, or a build under an older name) is already running
 	}
 	SKSE::Init(a_skse, { .log = false });
 	bo3z::PluginList::Ensure();

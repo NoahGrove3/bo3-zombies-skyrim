@@ -176,7 +176,7 @@ namespace bo3z::Settings
 			// (an older install kept the field of view next to SkyrimSE.exe: carried over once)
 			wchar_t exe[MAX_PATH]{};
 			::GetModuleFileNameW(nullptr, exe, MAX_PATH);
-			const auto old = std::filesystem::path(exe).parent_path() / "CurseOfAlduin.ini";
+			const auto old = std::filesystem::path(exe).parent_path() / "UndyingNights.ini";  // (the name it had then)
 			std::error_code ec;
 			if (std::filesystem::exists(old, ec) && !std::filesystem::exists(UserIni(), ec)) {
 				wchar_t buf[32]{};

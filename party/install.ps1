@@ -38,8 +38,8 @@ if ($ver -notlike '1.7.104*') { Say "The Curse of Alduin is built for Skyrim 1.7
 
 # ---- copy the files
 $data = Join-Path $game 'Data'
-# older packs named the game files CurseOfAlduin.asi / .dll: two copies must never load together
-foreach ($old in (Join-Path $game 'CurseOfAlduin.asi'), (Join-Path $data 'SKSE\Plugins\CurseOfAlduin.dll')) {
+# older packs named the game files BO3Zombies / UndyingNights .asi and .dll: two copies must never load together
+foreach ($old in (Join-Path $game 'BO3Zombies.asi'), (Join-Path $data 'SKSE\Plugins\BO3Zombies.dll'), (Join-Path $game 'UndyingNights.asi'), (Join-Path $data 'SKSE\Plugins\UndyingNights.dll')) {
     if (Test-Path $old) { Remove-Item $old -Force; Say "Removed the old $(Split-Path -Leaf $old)" }
 }
 Say 'Copying The Curse of Alduin and SKSE (Skyrim Together starts SKSE, and SKSE loads The Curse of Alduin and the mods)...'
@@ -105,7 +105,7 @@ $modPlugins = @('Ordinator - Perks of Skyrim.esp', 'Apocalypse - Magic of Skyrim
     'CollegeOfWinterholdImmersive.esp', 'FabFollowers_ImmCoW_Patch.esp')
 # plugins no longer used (an older pack turned them on): kept off
 $retired = @('PAN_NPCs.esp', 'Skoglendi - A Grass Mod.esp', 'Nolvus Ascension Seasonal Grass Mashup.esp')
-$ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'CurseOfAlduin.esp', 'CurseOfAlduin.esp') + $basePlugins + $gfxPlugins + $modPlugins + $retired
+$ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'BO3Zombies.esp', 'UndyingNights.esp', 'CurseOfAlduin.esp') + $basePlugins + $gfxPlugins + $modPlugins + $retired
 $keep = $lines | Where-Object { $n = ($_ -replace '^\*', '').Trim(); -not ($ours -contains $n) }
 $mid = @()
 if ($gfxOn -or (Test-Path (Join-Path $data 'Lux Via.esp'))) { $mid = $gfxPlugins | Where-Object { Test-Path (Join-Path $data $_) } | ForEach-Object { '*' + $_ } }
