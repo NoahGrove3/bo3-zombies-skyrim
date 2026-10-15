@@ -82,7 +82,7 @@ def shard_mesh(mat, cx, cy, cz, yaw, tilt, length, width, depth, seed):
 
 def rock(mat, cx, cy, cz, yaw, tilt, L, seed):
     """a broken shard of rock: a jagged closed hull (no gaps to see into), long and flat like the picture's,
-    chipped at the ends; its broad faces carry the blue veins"""
+    chipped at the ends"""
     from scipy.spatial import ConvexHull
     rng = np.random.default_rng(seed)
     pts = []
@@ -106,19 +106,6 @@ def rock(mat, cx, cy, cz, yaw, tilt, L, seed):
         V = [place(v) for v in t]
         UV = [(0.5 + v[0] / L, 0.5 + (v[1] + v[2]) / (L * 0.45)) for v in t]
         S.add(mat, V, UV, [(0, 1, 2)])
-    # veins: thin glowing strips over the broad faces (both sides), following the rock's length
-    for side in (1, -1):
-        zf = side * L * 0.072  # just under the broad face's height near the middle: the vein sits in the stone
-        x0 = -L * 0.2
-        y0 = rng.uniform(-L * 0.03, L * 0.03)
-        for k in range(3):
-            x1 = x0 + L * 0.13
-            y1 = y0 + rng.uniform(-L * 0.04, L * 0.04)
-            w = 1.3
-            a0, a1 = place((x0, y0 - w, zf)), place((x1, y1 - w, zf))
-            b1, b0 = place((x1, y1 + w, zf)), place((x0, y0 + w, zf))
-            S.quad('vein', a0, a1, b1, b0, both=True)
-            x0, y0 = x1, y1
 
 
 def shards():
@@ -128,10 +115,10 @@ def shards():
     ring = [(0.0, 70, 70, 1.25, 120), (0.9, 78, -20, 1.45, 105), (1.8, 66, 55, 1.05, 95), (2.7, 82, -35, 1.6, 115), (3.6, 72, 40, 1.35, 110),
             (4.5, 76, -10, 1.15, 100), (5.4, 64, 85, 1.5, 85), (6.0, 58, -45, 1.3, 70)]
     for i, (a, d, z, tilt, L) in enumerate(ring):
-        rock('shard', math.cos(a) * d, math.sin(a) * d, z, a + math.pi / 2, tilt, L, seed=i + 3)
+        rock(f'shard{i:02d}', math.cos(a) * d, math.sin(a) * d, z, a + math.pi / 2, tilt, L, seed=i + 3)  # (each its own shape: each sways)
     for i in range(8):  # little chips drifting with them
         a = i * 0.79 + 0.3
-        rock('shard', math.cos(a) * (40 + i * 5), math.sin(a) * (40 + i * 5), -20 + i * 12, a, i * 0.5, 16 + (i % 3) * 5, seed=60 + i)
+        rock(f'shard{i + 8:02d}', math.cos(a) * (40 + i * 5), math.sin(a) * (40 + i * 5), -20 + i * 12, a, i * 0.5, 16 + (i % 3) * 5, seed=60 + i)
 
 
 def icosphere(r, sub):
@@ -188,31 +175,17 @@ def tex_flame(w=256, h=512, seed=21):
 
 
 def aura(nif, tex):
-    """shells of cold flame round the orb, scrolling upward (the main menu's aura, in 3D): each a slightly taller-than-wide
-    ball, bright at its rim and clear where it faces you, faded out underneath and thin at the top. Added to crystal.nif
-    with fxwrite (unlit additive effect shapes) so they turn and bob with the orb, and the rocks pass in front."""
+    """purple fire made of magic round the orb: tools/magicfire.py's looping flipbook (8x8 frames) on quads that always
+    face you - two, out of step and a little apart in size, so the flames never repeat the same way - added to
+    crystal.nif with fxwrite (unlit additive effect shapes): they bob with the orb, and the rocks pass in front."""
     job = [f'base {nif}', f'out {nif}']
-    # (radius, height stretch, lift, UV tiles round, seconds per rise, colour, brightness)
-    shells = [(25.5, 1.25, 3.0, 3, 2.6, (0.80, 0.92, 1.0, 1.0), 1.4), (29.5, 1.35, 5.0, 4, 3.4, (0.60, 0.82, 1.0, 1.0), 1.25),
-              (34.0, 1.45, 8.0, 5, 4.4, (0.30, 0.56, 1.0, 1.0), 1.1)]
-    for i, (r, st, lift, tiles, rise, col, br) in enumerate(shells):
-        job.append(f'shape aura{i} tex={tex} color={",".join(str(c) for c in col)} scale={br} blend=add rim=1 single=1 vscroll={rise}')
-        NU, NV = 48, 24
-        for j in range(NV + 1):
-            th = math.pi * j / NV                      # 0 top .. pi bottom
-            for k in range(NU + 1):
-                ph = 2 * math.pi * k / NU
-                nx, ny, nz = math.sin(th) * math.cos(ph), math.sin(th) * math.sin(ph), math.cos(th)
-                x, y, z = r * nx, r * ny, r * st * nz + lift
-                h = 1 - th / math.pi                   # 1 top .. 0 bottom
-                fade = min(1.0, h / 0.45) ** 1.5 * min(1.0, (1 - h) / 0.15)
-                job.append(f'v {x:.3f} {y:.3f} {z:.3f} {k / NU * tiles:.4f} {th / math.pi * 1.0:.4f} 1 1 1 {fade:.3f}')
-                ln = math.sqrt(nx * nx + ny * ny + (nz / st) ** 2) or 1
-                job.append(f'n {nx / ln:.4f} {ny / ln:.4f} {nz / st / ln:.4f}')
-        for j in range(NV):
-            for k in range(NU):
-                a = j * (NU + 1) + k; b = a + NU + 1
-                job += [f't {a} {b} {a + 1}', f't {a + 1} {b} {b + 1}']
+    R = 22.0  # the orb's radius: 0.42 of a frame's half-size in the flipbook
+    for i, (sc, ph, col, br) in enumerate([(1.0, 0.0, (1.0, 1.0, 1.0, 1.0), 1.5), (1.18, 1.37, (0.85, 0.75, 1.0, 0.55), 1.2)]):
+        hh = R / 0.42 * sc
+        job.append(f'shape aura{i} tex={tex} color={",".join(str(c) for c in col)} scale={br} blend=add billboard=1 flip=8x8 fps=24 phase={ph}')
+        for x, z, u, v in [(-hh, hh, 0, 0), (hh, hh, 0.125, 0), (hh, -hh, 0.125, 0.125), (-hh, -hh, 0, 0.125)]:
+            job.append(f'v {x:.3f} {z:.3f} 0 {u} {v}')  # (in the XY plane: a billboard turns its Z axis to the camera)
+        job += ['t 0 1 2', 't 0 2 3']
     work = OUT.parent / 'shrine'
     jf = work / 'aura.job'
     jf.write_text('\n'.join(job) + '\n')
@@ -301,11 +274,10 @@ def tex_rock(n=1024, seed=5):
     height = h * 0.8 - crack * 0.5 - glyph * 0.6
     base = np.array([62, 60, 74], np.float32)
     rgb = base[None, None] * (0.55 + 0.75 * h[..., None]) * (1 - 0.55 * crack[..., None]) * (1 - 0.5 * glyph[..., None])
-    rgb += np.array([30, 60, 110]) * glyph[..., None] * 0.5
     gy, gx = np.gradient(height * 6.0)
     nrm = np.dstack([-gx, -gy, np.ones_like(gx)]); nrm /= np.linalg.norm(nrm, axis=2, keepdims=True)
     nimg = Image.fromarray(np.dstack([(nrm[..., 0] * 0.5 + 0.5) * 255, (nrm[..., 1] * 0.5 + 0.5) * 255, (nrm[..., 2] * 0.5 + 0.5) * 255, np.full_like(gx, 90)]).astype(np.uint8), 'RGBA')
-    glow = np.clip(glyph * 1.0 + crack * 0.35, 0, 1)
+    glow = np.clip(glyph * 1.0, 0, 1)  # (only the runes glow: the cracks stay dark stone)
     gimg = Image.fromarray((np.dstack([0.35 * glow, 0.7 * glow, 1.0 * glow]) * 255).astype(np.uint8), 'RGB')
     return Image.fromarray(np.clip(rgb, 0, 255).astype(np.uint8), 'RGB'), nimg, gimg
 
@@ -380,12 +352,22 @@ def main():
     shards()
     vg = S.save(Image.new('RGB', (32, 32), (130, 200, 255)), 'vein_g.dds')
     rkd, rkn, rkg = tex_rock()
-    rock_mat = f'mat shard diffuse={S.save(rkd, "shrock_d.dds")} normal={S.save(rkn, "shrock_n.dds", True)} glow={S.save(rkg, "shrock_g.dds")} emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1'
-    convert('shards', [], [rock_mat, f'mat vein diffuse={rune_d} normal={flat} glow={vg} emit=0.4,0.75,1.0 emitmult=3.0 spec=0.3 doublesided=1'])
+    rock_tex = f'diffuse={S.save(rkd, "shrock_d.dds")} normal={S.save(rkn, "shrock_n.dds", True)} glow={S.save(rkg, "shrock_g.dds")} emit=0.35,0.7,1.0 emitmult=1.8 spec=0.35 gloss=40 doublesided=1'
+    convert('shards', [], [f'mat shard{i:02d} {rock_tex}' for i in range(16)])
+    # each rock sways on its own as the ring turns, and the runes cut in them breathe blue light
+    shards_nif = OUT / 'Meshes' / 'UndyingNights' / 'shrine' / 'shards.nif'
+    jf = OUT.parent / 'shrine' / 'shards_anim.job'
+    jf.write_text(f'in {shards_nif}\nout {shards_nif}\nsway shard 4.5 5.5 7\npulse shard 0.25 3.2 2.6\n')
+    r = subprocess.run(['/home/claude/tools/nifanim', str(jf)], capture_output=True, text=True)
+    print('shards anim |', r.stdout.strip() or r.stderr.strip())
+    if r.returncode:
+        raise SystemExit('nifanim failed')
     crystal()
     cd = S.save(tex_orb(), 'orb_d.dds')
     convert('crystal', [], [f'mat crystal diffuse={cd} normal={flat} glow={cd} emit=0.7,0.9,1.0 emitmult=3.2 spec=1.0 gloss=120 doublesided=1'])
-    aura(OUT / 'Meshes' / 'UndyingNights' / 'shrine' / 'crystal.nif', S.save(tex_flame(), 'aura_flame.dds', True))
+    fire = OUT.parent / 'shrine' / 'magicfire.png'
+    subprocess.run([sys.executable, str(pathlib.Path(__file__).parent / 'magicfire.py'), str(fire)], check=True)
+    aura(OUT / 'Meshes' / 'UndyingNights' / 'shrine' / 'crystal.nif', S.save(Image.open(fire).convert('RGBA'), 'aura_fire.dds', True))
     print('crystal centre at z', CRYSTAL_Z)
 
 

@@ -125,6 +125,35 @@ namespace bo3z::Compass
 		for (const auto& u : dead) {
 			marks.push_back({ std::atan2(u[0], u[1]), u[2], u[3] > 0.5f ? 9 : 8, std::string() });
 		}
+		// Skyrim's own quests: their targets (what its compass would have shown) among our marks, as the rite's are
+		{
+			RE::BSSpinLockGuard guard(pl->GetQuestTargetsLock());
+			int shown = 0;
+			for (auto& [quest, targets] : pl->GetQuestTargets()) {
+				if (!quest || !targets) {
+					continue;
+				}
+				for (auto* t : *targets) {
+					if (!t || shown >= 6) {
+						continue;
+					}
+					RE::ObjectRefHandle h;
+					t->GetTrackingRef(h, quest);
+					if (!h) {
+						t->GetTargetRef(h, true, quest);
+					}
+					auto ref = h.get();
+					if (!ref || ref.get() == pl || ref->GetWorldspace() != world) {
+						continue;
+					}
+					if (const float d = ref->GetPosition().GetDistance(me); d > 150.0f) {
+						const char* qn = quest->GetName();
+						marks.push_back({ bearing(ref->GetPosition()), d, 1, qn ? qn : "" });
+						++shown;
+					}
+				}
+			}
+		}
 		for (const auto& f : Party::Now().marks) {
 			marks.push_back({ f.ang, f.dist, 7, f.name });
 		}

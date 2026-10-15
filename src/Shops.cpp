@@ -380,7 +380,7 @@ namespace bo3z
 		};
 		std::array<std::vector<Obstacle>, gen::kTowns.size()> g_obstacles{};
 		constexpr float kStandRadius = 370.0f;  // half-diagonal of the platform
-		constexpr float kStandLift = 34.0f;     // the dais floor above the highest ground under it (its skirt reaches 100 down)
+		constexpr float kStandLift = 18.0f;     // the dais floor above the highest ground under it (its skirt reaches 100 down)
 
 		void GatherObstacles(int a_town, RE::TESObjectREFR* a_anchor)
 		{
@@ -586,8 +586,8 @@ namespace bo3z
 			plan.center.z = p.z;
 			float low = 0;
 			auto g = GroundTop(a_anchor, plan, &low);
-			if (g && *g - p.z > 8.0f && *g - p.z <= kStandLift + 12.0f) {
-				// a stand from before the raised dais: lift it and everything on it in place
+			if (g && std::abs(*g - p.z) > 8.0f && *g - p.z <= kStandLift + 12.0f && p.z - *g <= 40.0f) {
+				// a stand from before the dais's height changed: lift or lower it and everything on it in place
 				const float dz = *g - p.z;
 				int         moved = 0;
 				RE::TES::GetSingleton()->ForEachReferenceInRange(a_anchor, gen::kPlanSweep, [&](RE::TESObjectREFR* r) {

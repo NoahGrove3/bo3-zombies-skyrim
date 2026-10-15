@@ -314,7 +314,7 @@ def shards():
         im = render(t, col, (size, size), SH, (size / 2, size / 2), outline=out_)
         a = np.asarray(im, np.float32)
         m = a[..., 3] / 255
-        # the Dirge's runes carved down the rock, glowing blue in their grooves, and a crack or two of the same light
+        # the Dirge's runes carved down the rock
         vm = Image.new('L', (size, size), 0)
         vd = ImageDraw.Draw(vm)
         strokes = [[(0, -1, 0, 1), (0, -0.3, 0.6, -0.9)], [(-0.5, 1, 0, -1), (0.5, 1, 0, -1), (-0.3, 0.3, 0.3, 0.3)], [(0, -1, 0, 1), (-0.6, 0, 0.6, 0)],
@@ -332,21 +332,13 @@ def shards():
                 cx = (row.min() + row.max()) / 2
                 for x0, yA, x1, yB in strokes[(k + i) % len(strokes)]:
                     vd.line([(cx + x0 * g, cy + yA * g * 1.3), (cx + x1 * g, cy + yB * g * 1.3)], fill=255, width=max(2, int(g * 0.28)))
-        x, y = size / 2 + rng.uniform(-size * 0.1, size * 0.1), size / 2
-        ang = rng.uniform(0, 2 * math.pi)
-        pts = [(x, y)]
-        for _ in range(6):
-            ang += rng.uniform(-0.8, 0.8)
-            x += math.cos(ang) * size * 0.05
-            y += math.sin(ang) * size * 0.05
-            pts.append((x, y))
-        vd.line(pts, fill=160, width=1)
+        # the runes are cut dark into the stone; their light is a layer of its own (menu_shard<i>_r.png) that the game
+        # pulses over the rock (src/Hud.cpp DrawMenu), as the runes on the shrine's rocks pulse in the world
         vein = np.asarray(vm, np.float32) / 255 * (blur(m, 3) > 0.6)
         vglow = blur(vein, 4)
-        a[..., :3] = np.clip(a[..., :3] * (1 - vein[..., None] * 0.8) + vein[..., None] * np.array([150, 220, 255]) + vglow[..., None] * np.array([40, 90, 160]), 0, 255)
-        # the crystal side of each rock lit cold blue (rim light)
-        rim = np.clip(m - blur(m, 6) * 0.98, 0, 1)
-        a[..., :3] = np.clip(a[..., :3] + rim[..., None] * np.array([60, 110, 200]), 0, 255)
+        a[..., :3] = np.clip(a[..., :3] * (1 - vein[..., None] * 0.55), 0, 255)
+        lit = np.clip(vein + vglow * 0.8, 0, 1)
+        Image.fromarray(np.dstack([np.full_like(lit, 120), np.full_like(lit, 200), np.full_like(lit, 255), lit * 255]).astype(np.uint8), 'RGBA').save(OUT / f'menu_shard{i}_r.png', optimize=True)
         Image.fromarray(a.astype(np.uint8), 'RGBA').save(OUT / f'menu_shard{i}.png', optimize=True)
         out.append(size)
     return out

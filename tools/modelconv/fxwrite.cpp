@@ -4,6 +4,9 @@
 //   out <nif>
 //   base <nif>                   (optional: add the shapes to this NIF - e.g. a lit model - instead of a new one)
 //   shape <name> tex=<texture> color=r,g,b,a scale=<base colour scale> [blend=add|alpha] [falloff=1] [rim=1] [single=1] [vscroll=<s>] [uscroll=<s>]
+//         [billboard=1] [flip=<cols>x<rows> fps=<n> phase=<s>]
+//     billboard: the shape always faces the camera (under a NiBillboardNode)
+//     flip: the texture is a flipbook atlas played in a loop (the shape's UVs span one cell)
 //     rim: the falloff the other way round (clear where it faces you, bright at its edge: a glow round a shape)
 //     vscroll / uscroll: the texture slides one whole turn in that many seconds (a looping shader controller)
 //   v x y z u v [r g b a]        (vertex colours optional: per-vertex tint and fade)
@@ -21,6 +24,9 @@ struct Shape
 	float                col[4]{ 1, 1, 1, 1 }, scale = 1.0f;
 	bool                 falloff = false, vcol = false, rim = false, single = false;
 	float                vscroll = 0.0f, uscroll = 0.0f;
+	bool                 billboard = false;
+	int                  cols = 0, rows = 0;
+	float                fps = 18.0f, phase = 0.0f;
 	std::vector<Vector3> v;
 	std::vector<Vector2> uv;
 	std::vector<Color4>  c;
@@ -56,6 +62,10 @@ int main(int argc, char** argv)
 				else if (key == "falloff") s.falloff = val == "1";
 				else if (key == "rim") s.rim = val == "1";
 				else if (key == "single") s.single = val == "1";
+				else if (key == "billboard") s.billboard = val == "1";
+				else if (key == "flip") sscanf(val.c_str(), "%dx%d", &s.cols, &s.rows);
+				else if (key == "fps") s.fps = std::stof(val);
+				else if (key == "phase") s.phase = std::stof(val);
 				else if (key == "vscroll") s.vscroll = std::stof(val);
 				else if (key == "uscroll") s.uscroll = std::stof(val);
 			}
@@ -134,7 +144,51 @@ int main(int argc, char** argv)
 			if (prevCtrl != 0xFFFFFFFF) ctrl->nextControllerRef.index = prevCtrl;
 			prevCtrl = nif.GetHeader().AddBlock(std::move(ctrl));
 		}
+		// flipbook: U and V offsets stepping cell by cell (steps made of key pairs, held until the next cell)
+		if (s.cols > 0 && s.rows > 0) {
+			const int   n = s.cols * s.rows;
+			const float dt = 1.0f / s.fps, loop = n * dt;
+			for (int axis = 0; axis < 2; ++axis) {
+				auto data = std::make_unique<NiFloatData>();
+				data->data.SetInterpolationType(LINEAR_KEY);
+				for (int f = 0; f <= n; ++f) {
+					const int   c = f % n;
+					const float v = axis == 0 ? (c % s.cols) / float(s.cols) : (c / s.cols) / float(s.rows);
+					NiAnimationKey<float> a; a.type = LINEAR_KEY; a.time = f * dt; a.value = v;
+					data->data.AddKey(a);
+					if (f < n) {
+						NiAnimationKey<float> b; b.type = LINEAR_KEY; b.time = (f + 1) * dt - 0.0005f; b.value = v;
+						data->data.AddKey(b);
+					}
+				}
+				const auto dataRef = nif.GetHeader().AddBlock(std::move(data));
+				auto interp = std::make_unique<NiFloatInterpolator>();
+				interp->dataRef.index = dataRef;
+				const auto interpRef = nif.GetHeader().AddBlock(std::move(interp));
+				auto ctrl = std::make_unique<BSEffectShaderPropertyFloatController>();
+				ctrl->flags = 0x48;
+				ctrl->frequency = 1.0f;
+				ctrl->phase = s.phase;
+				ctrl->startTime = 0.0f;
+				ctrl->stopTime = loop;
+				ctrl->targetRef.index = ref;
+				ctrl->interpolatorRef.index = interpRef;
+				ctrl->typeOfControlledVariable = axis == 0 ? 6u : 8u;  // U offset / V offset
+				if (prevCtrl != 0xFFFFFFFF) ctrl->nextControllerRef.index = prevCtrl;
+				prevCtrl = nif.GetHeader().AddBlock(std::move(ctrl));
+			}
+			s.vscroll = std::max(s.vscroll, 0.001f);  // (counts as animated below)
+		}
 		if (prevCtrl != 0xFFFFFFFF) fxp->controllerRef.index = prevCtrl;
+		if (s.billboard) {  // always facing the camera
+			auto bb = std::make_unique<NiBillboardNode>();
+			bb->name.get() = s.name + "_bb";
+			bb->billboardMode = ALWAYS_FACE_CAMERA;
+			auto* bbp = bb.get();
+			const auto bbRef = nif.GetHeader().AddBlock(std::move(bb));
+			nif.GetRootNode()->childRefs.AddBlockRef(bbRef);
+			nif.SetParentNode(sh, bbp);
+		}
 		ts->ShaderPropertyRef()->index = ref;
 		auto alpha = std::make_unique<NiAlphaProperty>();
 		alpha->flags = s.blend == "add" ? 4109 : 4333;  // additive (src alpha, one) or alpha blend

@@ -25,6 +25,7 @@ namespace bo3z
 		std::array<ID3D11ShaderResourceView*, 8>                  g_elementIcons{};  // the Coffer spells' element emblems (el_<element>.png)
 		ID3D11ShaderResourceView* g_menuBg = nullptr;   // the main menu's backdrop (tools/cover.py, MENU=1)
 		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
+		ID3D11ShaderResourceView* g_fire = nullptr;     // the shrine orb's purple magic fire: 8x8 flipbook (tools/magicfire.py)
 		ID3D11ShaderResourceView* g_flame = nullptr;    // the aura round a spell emblem: 4x4 atlas of a looping white flame ring (tools/flameaura.py)
 		ID3D11ShaderResourceView* g_frame = nullptr;    // nine-slice panel: black field, iron and bronze border (tools/uiart.py)
 		ID3D11ShaderResourceView* g_divider = nullptr;  // bronze line with a winged diamond
@@ -1948,7 +1949,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ID3D11ShaderResourceView* g_sMtn = nullptr;      // the shrine scene's mountains across the lake (tools/menulake.py)
 		ID3D11ShaderResourceView* g_sRefl = nullptr;     // the mountains upside down in the lake
 		ID3D11ShaderResourceView* g_sAurora = nullptr;   // the northern lights
-		std::array<ID3D11ShaderResourceView*, 9> g_sShard{};
+		ID3D11ShaderResourceView* g_sLife = nullptr;     // lily pads on the lake, reeds and bushes in the near corners
+		std::array<ID3D11ShaderResourceView*, 9> g_sShard{}, g_sShardR{};  // the rocks, and their runes' light (pulsing)
 		ID3D11ShaderResourceView* g_mGroundFog = nullptr;
 		ID3D11ShaderResourceView* g_mClouds2 = nullptr;    // drifting night clouds that tile left-right (tools/menuscene.py drift_clouds)  // fog wisps that tile left-right (tools/menuscene.py ground_fog)
 		constexpr float kMenuRune[2] = { 1812.0f, 992.0f };  // the middle of the rune-stone's face in the painting
@@ -2288,6 +2290,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 					}
 				}
+				if (g_sLife) {  // lily pads riding the swell, reeds in the corners
+					layer(g_sLife, 0.4f, white, { std::sin(now * 0.35f) * 0.0006f, std::sin(now * 0.9f) * 0.0009f });
+				}
 				groundFog(size.y * 0.47f, size.y * 0.62f, 0.006f, 1.6f, 70, IM_COL32(120, 135, 180, 0));  // mist on the far water, at the mountains' feet
 				layer(g_sGround, kD, white);
 				if (g_sGlow) {  // the runes and the pool breathe with the core
@@ -2334,7 +2339,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const auto& r = kRocks[pl.i];
 					const float sz = kRockPx[pl.i] * u * pl.scale;
 					const int   shade = static_cast<int>(std::clamp(235.0f - pl.depth * 0.6f, 150.0f, 255.0f));
-					sprite(g_sShard[pl.i], pl.p, sz, sz, r.rot0 + std::sin(now * r.spin * 3.0f + r.ph) * 0.35f, IM_COL32(shade, shade, std::min(255, shade + 10), static_cast<int>(255 * fade)));
+					const float rot = r.rot0 + std::sin(now * r.spin * 3.0f + r.ph) * 0.35f;
+					sprite(g_sShard[pl.i], pl.p, sz, sz, rot, IM_COL32(shade, shade, std::min(255, shade + 10), static_cast<int>(255 * fade)));
+					if (g_sShardR[pl.i]) {  // the runes breathe blue light, each rock a little out of step
+						const float breath = 0.5f + 0.5f * std::sin(now * 2.4f + r.ph * 1.7f);
+						sprite(g_sShardR[pl.i], pl.p, sz, sz, rot, IM_COL32(255, 255, 255, static_cast<int>((40 + 215 * breath * breath) * fade)));
+					}
 				};
 				for (const auto& pl : placed) {
 					if (pl.depth > 0) drawRock(pl);
@@ -2345,21 +2355,22 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImVec2 c = [&] { auto p = at(0, 0, kCrystalZ); p.y += bob; return p; }();
 					if (g_sSoft) {
 						const float g1 = (420 + 90 * pulse) * u, g2 = (200 + 50 * pulse) * u;
-						sprite(g_sSoft, c, g1 * 2, g1 * 2, 0, IM_COL32(80, 150, 255, static_cast<int>((70 + 50 * pulse) * fade)));
-						sprite(g_sSoft, c, g2 * 2, g2 * 2, 0, IM_COL32(170, 220, 255, static_cast<int>((90 + 70 * pulse) * fade)));
+						sprite(g_sSoft, c, g1 * 2, g1 * 2, 0, IM_COL32(130, 80, 255, static_cast<int>((60 + 45 * pulse) * fade)));
+						sprite(g_sSoft, c, g2 * 2, g2 * 2, 0, IM_COL32(190, 150, 255, static_cast<int>((80 + 60 * pulse) * fade)));
 					}
-					// a magic aura round it that licks upward like flame: the emblems' flame ring, cold blue, two passes out of step
+					// purple fire made of magic round it (the in-game orb's own flipbook: tools/magicfire.py, 8x8 frames), two
+					// passes out of step and a little apart in size
 					const auto aura = [&](float scale, float t0, ImU32 tint) {
-						if (!g_flame) {
+						if (!g_fire) {
 							return;
 						}
-						const int   fr = static_cast<int>((now + t0) * 18.0f) % 16;
-						const float uu = (fr % 4) * 0.25f, vv = (fr / 4) * 0.25f;
-						const float hh = 108.0f * u * scale / 0.62f;
-						fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_flame)), { c.x - hh, c.y - hh }, { c.x + hh, c.y + hh }, { uu, vv }, { uu + 0.25f, vv + 0.25f }, tint);
+						const int   fr = static_cast<int>((now + t0) * 24.0f) % 64;
+						const float uu = (fr % 8) * 0.125f, vv = (fr / 8) * 0.125f;
+						const float hh = 108.0f * u * scale / 0.42f;
+						fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_fire)), { c.x - hh, c.y - hh }, { c.x + hh, c.y + hh }, { uu, vv }, { uu + 0.125f, vv + 0.125f }, tint);
 					};
-					aura(1.45f + 0.05f * pulse, 0.0f, IM_COL32(70, 140, 255, static_cast<int>((150 + 60 * pulse) * fade)));
-					aura(1.25f, 0.45f, IM_COL32(150, 210, 255, static_cast<int>((120 + 60 * pulse) * fade)));
+					aura(1.18f, 1.37f, IM_COL32(225, 200, 255, static_cast<int>((130 + 50 * pulse) * fade)));
+					aura(1.0f + 0.03f * pulse, 0.0f, IM_COL32(255, 255, 255, static_cast<int>(255 * fade)));
 					if (g_sCrystal) {
 						const int   f = static_cast<int>(now * 9.0f) % 24;  // ~2.7 s a turn
 						const ImVec2 uv0{ (f % 6) / 6.0f, (f / 6) / 4.0f }, uv1{ uv0.x + 1.0f / 6.0f, uv0.y + 0.25f };
@@ -2368,7 +2379,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const ImVec2 mid{ c.x, c.y + (0.5f - 0.56f) * h };  // (the frame's origin sits at 56% of its height)
 						sprite(g_sCrystal, mid, w, h, 0, IM_COL32(255, 255, 255, static_cast<int>(255 * fade)), uv0, uv1);
 					}
-					aura(1.1f, 0.8f, IM_COL32(200, 235, 255, static_cast<int>((60 + 40 * pulse) * fade)));  // (a thin tongue over its face)
 					if (g_sSoft) {  // the white heart over it, flaring on the beat
 						const float g3 = (60 + 40 * pulse) * u;
 						sprite(g_sSoft, c, g3 * 2, g3 * 2, 0, IM_COL32(230, 245, 255, static_cast<int>((70 + 110 * pulse) * fade)));
@@ -3147,14 +3157,16 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\UndyingNights\\") + file).c_str(), nullptr, tex);
 			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_title.png", nullptr, &g_mTitle);
-			for (auto [file, tex] : { std::pair{ L"menu_shrine_ground.png", &g_sGround }, { L"menu_shrine_glow.png", &g_sGlow }, { L"menu_crystal.png", &g_sCrystal }, { L"menu_softglow.png", &g_sSoft }, { L"menu_mountains.png", &g_sMtn }, { L"menu_lake_refl.png", &g_sRefl }, { L"menu_aurora2.png", &g_sAurora } }) {
+			for (auto [file, tex] : { std::pair{ L"menu_shrine_ground.png", &g_sGround }, { L"menu_shrine_glow.png", &g_sGlow }, { L"menu_crystal.png", &g_sCrystal }, { L"menu_softglow.png", &g_sSoft }, { L"menu_mountains.png", &g_sMtn }, { L"menu_lake_refl.png", &g_sRefl }, { L"menu_aurora2.png", &g_sAurora }, { L"menu_lake_life.png", &g_sLife } }) {
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\UndyingNights\\") + file).c_str(), nullptr, tex);
 			}
 			for (int i = 0; i < 9; ++i) {
 				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\UndyingNights\\menu_shard" + std::to_wstring(i) + L".png").c_str(), nullptr, &g_sShard[i]);
+				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\UndyingNights\\menu_shard" + std::to_wstring(i) + L"_r.png").c_str(), nullptr, &g_sShardR[i]);
 			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\frame.png", nullptr, &g_frame);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\flame_ring.png", nullptr, &g_flame);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\menu_fire.png", nullptr, &g_fire);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\UndyingNights\\divider.png", nullptr, &g_divider);
 			g_init = true;
 			logger::info("hud: ready ({} perk icons, {} weapon icons, menu art {})", icons, wicons, bg);
