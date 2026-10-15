@@ -13,7 +13,7 @@ namespace bo3z::Settings
 	namespace
 	{
 		float g_fovFirst = 100.0f, g_fovThird = 85.0f, g_corpse = 10.0f, g_hp = 1.0f, g_dmg = 1.0f;
-		bool  g_shelter = true, g_follow = true;
+		bool  g_shelter = true, g_follow = true, g_padPS = false;
 		int   g_keys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E };
 		constexpr const wchar_t* kKeyIds[kKeys] = { L"iShrineRoll", L"iShrineReforge", L"iShrineBless", L"iShrineShout", L"iShrineLeave" };
 		bool  g_loaded = false;
@@ -189,6 +189,7 @@ namespace bo3z::Settings
 			g_fovFirst = std::clamp(Read(L"General", L"fFovFirst", 100.0f), kFovMin, kFovMax);
 			g_fovThird = std::clamp(Read(L"General", L"fFovThird", 85.0f), kFovMin, kFovMax);
 			g_shelter = Read(L"General", L"bShelter", 1.0f) != 0.0f;
+			g_padPS = Read(L"Controls", L"bPlayStationIcons", 0.0f) != 0.0f;
 			g_corpse = std::clamp(Read(L"General", L"fCorpseSeconds", 10.0f), 3.0f, 60.0f);
 			g_follow = Read(L"Difficulty", L"bFollowSkyrim", 1.0f) != 0.0f;
 			g_hp = std::clamp(Read(L"Difficulty", L"fUndeadHealth", 1.0f), 0.25f, 4.0f);
@@ -227,6 +228,7 @@ namespace bo3z::Settings
 	float FovFirst() { Ensure(); return g_fovFirst; }
 	float FovThird() { Ensure(); return g_fovThird; }
 	bool  Shelter() { Ensure(); return g_shelter; }
+	bool  PlayStationIcons() { Ensure(); return g_padPS; }
 	float CorpseSeconds() { Ensure(); return g_corpse; }
 	int   Key(int a_action) { Ensure(); return a_action >= 0 && a_action < kKeys ? g_keys[a_action] : 0; }
 

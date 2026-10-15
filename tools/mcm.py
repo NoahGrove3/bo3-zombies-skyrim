@@ -43,6 +43,8 @@ PAGES = [
         header('View'),
         slider('fFovFirst:General', 'First-person field of view', 'How wide you see in first person (degrees).', 60, 130, 1, '{0}'),
         slider('fFovThird:General', 'Third-person field of view', 'How wide you see in third person (degrees).', 60, 130, 1, '{0}'),
+        header('Controller'),
+        toggle('bPlayStationIcons:Controls', 'PlayStation button icons', 'Show the PlayStation buttons (Cross, Circle, Square, Triangle, L1/R1, L2/R2) in the mod\'s prompts instead of the Xbox ones. Skyrim sees any controller as an Xbox pad, so this is your choice.'),
         header('The night'),
         toggle('bShelter:General', 'Townsfolk go indoors', 'From the moment the night\'s countdown starts, everyone out in a city\'s streets goes inside until dawn, so the dead can\'t hurt them.'),
         slider('fCorpseSeconds:General', 'Bodies fade after', 'Seconds a fallen undead lies there before it crumbles.', 3, 60, 1, '{0} s'),
@@ -78,6 +80,7 @@ PAGES = [
 ]
 DEFAULTS = {
     'General': {'fFovFirst': 100.0, 'fFovThird': 85.0, 'bShelter': 1, 'fCorpseSeconds': 10.0},
+    'Controls': {'bPlayStationIcons': 0},
     'Difficulty': {'bFollowSkyrim': 1, 'fUndeadHealth': 1.0, 'fUndeadDamage': 1.0},
     'Keys': {'iShrineRoll': 2, 'iShrineReforge': 3, 'iShrineBless': 4, 'iShrineShout': 5, 'iShrineLeave': 14},
     'QuickLoot': {'bCloseInCombat': 0, 'bCloseOnEmpty': 1, 'fScale': 100.0, 'fHorizontal': 20.0, 'fVertical': 0.0},

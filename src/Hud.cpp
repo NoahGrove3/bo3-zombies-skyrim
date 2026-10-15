@@ -313,6 +313,25 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		void PadGlyph(ImDrawList* dl, ImVec2 c, float r, std::string_view a_name, float alpha = 1.0f)
 		{
 			const auto F = [&](ImU32 col) { return Fade(col, alpha); };
+			if (a_name.size() == 1 && Settings::PlayStationIcons()) {  // Cross, Circle, Square, Triangle in their own colours
+				const char  ch = a_name[0];
+				const ImU32 col = ch == 'A' ? IM_COL32(124, 178, 232, 255) : ch == 'B' ? IM_COL32(255, 102, 102, 255) : ch == 'X' ? IM_COL32(232, 154, 216, 255) : IM_COL32(64, 224, 176, 255);
+				dl->AddCircleFilled({ c.x, c.y + r * 0.08f }, r, F(IM_COL32(0, 0, 0, 150)), 28);
+				dl->AddCircleFilled(c, r, F(IM_COL32(24, 24, 28, 245)), 28);
+				dl->AddCircle(c, r, F(IM_COL32(255, 255, 255, 40)), 28, 1.0f);
+				const float s = r * 0.46f, t = r * 0.15f;
+				if (ch == 'A') {
+					dl->AddLine({ c.x - s, c.y - s }, { c.x + s, c.y + s }, F(col), t);
+					dl->AddLine({ c.x - s, c.y + s }, { c.x + s, c.y - s }, F(col), t);
+				} else if (ch == 'B') {
+					dl->AddCircle(c, s * 1.05f, F(col), 24, t);
+				} else if (ch == 'X') {
+					dl->AddRect({ c.x - s * 0.9f, c.y - s * 0.9f }, { c.x + s * 0.9f, c.y + s * 0.9f }, F(col), 0, 0, t);
+				} else {
+					dl->AddTriangle({ c.x, c.y - s * 1.05f }, { c.x + s, c.y + s * 0.75f }, { c.x - s, c.y + s * 0.75f }, F(col), t);
+				}
+				return;
+			}
 			if (a_name.size() == 1) {
 				const char  ch = a_name[0];
 				const ImU32 col = ch == 'A' ? IM_COL32(92, 186, 60, 255) : ch == 'B' ? IM_COL32(214, 58, 52, 255) : ch == 'X' ? IM_COL32(52, 120, 220, 255) : IM_COL32(236, 186, 40, 255);
@@ -340,6 +359,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// pills: bumpers, triggers, start / back
 			const float  hw = r * (a_name.size() > 2 ? 1.6f : 1.25f), hh = r * 0.68f;
 			const bool   trig = a_name == "LT" || a_name == "RT";
+			if (Settings::PlayStationIcons()) {  // L1 / R1 / L2 / R2, Options / Create
+				a_name = a_name == "LB" ? "L1" : a_name == "RB" ? "R1" : a_name == "LT" ? "L2" : a_name == "RT" ? "R2" : a_name == "Start" ? "Options" : a_name == "Back" ? "Create" : a_name;
+			}
 			dl->AddRectFilled({ c.x - hw, c.y - hh }, { c.x + hw, c.y + hh }, F(IM_COL32(24, 24, 28, 245)), trig ? r * 0.25f : hh);
 			dl->AddRect({ c.x - hw, c.y - hh }, { c.x + hw, c.y + hh }, F(IM_COL32(220, 210, 190, 200)), trig ? r * 0.25f : hh, 0, 1.4f);
 			TxtC(dl, g_num, r * 0.95f, c.x, c.y - r * 0.5f, F(IM_COL32(240, 230, 210, 255)), std::string(a_name));
@@ -606,8 +628,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 			// The shrine's orb in the crosshair: what Activate does (its aura of cold flame is 3D now, in crystal.nif)
 			if (s.orbOn && s.orbAim && s.orbFade > 0.01f && !s.perkMenu) {
-				const std::string t = g_padLast ? "A   Echo Altar" : "E   Echo Altar";
-				TxtC(dl, g_title, 20 * k, size.x * 0.5f, size.y * 0.5f + 40 * k, kParch, t, 2 * k, IM_COL32(60, 120, 255, 255));
+				if (g_padLast) {  // the controller's button beside the name
+					const float w = Measure(g_title, 20 * k, "Echo Altar").x;
+					PadGlyph(dl, { size.x * 0.5f - w * 0.5f - 6 * k, size.y * 0.5f + 52 * k }, 12 * k, "A");
+					TxtC(dl, g_title, 20 * k, size.x * 0.5f + 12 * k, size.y * 0.5f + 40 * k, kParch, "Echo Altar", 2 * k, IM_COL32(60, 120, 255, 255));
+				} else {
+					TxtC(dl, g_title, 20 * k, size.x * 0.5f, size.y * 0.5f + 40 * k, kParch, "E   Echo Altar", 2 * k, IM_COL32(60, 120, 255, 255));
+				}
 			}
 
 			if (s.compassOn && !s.perkMenu) {
@@ -677,6 +704,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// the keys
 				const float fy = b.y - 34 * k;
 				auto cap = [&](float x, const std::string& key, const std::string& what) {
+					if (g_padLast && key.size() == 1) {  // a controller in hand: its button
+						PadGlyph(dl, { x + 12 * k, fy + 12 * k }, 12 * k, key);
+						Txt(dl, g_body, 15 * k, { x + 30 * k, fy + 3 * k }, IM_COL32(214, 204, 182, 230), what);
+						return;
+					}
 					dl->AddRectFilled({ x, fy }, { x + 24 * k, fy + 24 * k }, IM_COL32(60, 30, 18, 230), 3 * k);
 					dl->AddRect({ x, fy }, { x + 24 * k, fy + 24 * k }, kGold, 3 * k, 0, 1.2f * k);
 					TxtC(dl, g_num, 15 * k, x + 12 * k, fy + 3 * k, kParch, key);
@@ -686,9 +718,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					cap(a.x + 16 * k, g_padLast ? "A" : "E", "Take");
 					cap(a.x + 126 * k, g_padLast ? "X" : "R", "Take all");
 				}
-				if (!g_padLast) {
-					cap(a.x + (s.lootNote.empty() ? 266 : 16) * k, "G", "Open");
-				}
+				cap(a.x + (s.lootNote.empty() ? 266 : 16) * k, g_padLast ? "Y" : "G", "Open");
 			}
 
 			// The quests' targets in the world (Skyrim's floating quest markers, which are turned off, in our style): a
@@ -1842,7 +1872,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				Divider(dl, cx, b.y - 58 * k, w * 0.38f, k, 0.7f);
 				if (g_padLast) {  // the controller's buttons when it is in hand, the keys otherwise
-					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), "D-pad Left / Right: choose a brew   \xC2\xB7   B leave");
+					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), std::string("D-pad Left / Right: choose a brew   \xC2\xB7   ") + (Settings::PlayStationIcons() ? "Circle" : "B") + " leave");
 				} else {
 					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), "Wheel or Left / Right: choose a brew   \xC2\xB7   E or " + Settings::KeyName(4) + " leave");
 				}

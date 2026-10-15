@@ -113,6 +113,23 @@ $out = @($keep | Where-Object { $_ -match '^\s*#' }) + @('*SkyrimTogether.esp', 
 [IO.File]::WriteAllLines($plist, [string[]]$out)  # (no byte-order mark: Skyrim would not read the first plugin's name)
 Say 'Plugins turned on.' Green
 
+# ---- controllers (Xbox, and PS5 through Steam Input / DualSenseX / DS4Windows): Skyrim's gamepad support on
+$prefs = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\Skyrim Special Edition\SkyrimPrefs.ini'
+if (Test-Path $prefs) {
+    $t = [IO.File]::ReadAllLines($prefs)
+    if ($t -match '^\s*bGamepadEnable\s*=') {
+        $t = $t -replace '^\s*bGamepadEnable\s*=.*', 'bGamepadEnable=1'
+    } elseif ($t -match '^\[Controls\]') {
+        $i = [Array]::IndexOf($t, ($t | Where-Object { $_ -match '^\[Controls\]' } | Select-Object -First 1))
+        $rest = if ($i -lt $t.Length - 1) { @($t[($i + 1)..($t.Length - 1)]) } else { @() }
+        $t = @($t[0..$i]) + 'bGamepadEnable=1' + $rest
+    } else {
+        $t = @($t) + '[Controls]' + 'bGamepadEnable=1'
+    }
+    [IO.File]::WriteAllLines($prefs, [string[]]$t)
+    Say 'Controller support on (Xbox or PS5 pads work in game).' Green
+}
+
 # ---- the party's address and password
 $party = @{}
 Get-Content (Join-Path $pack 'Party.txt') | ForEach-Object { if ($_ -match '^\s*(\w+)\s*=\s*(.*)$') { $party[$Matches[1]] = $Matches[2].Trim() } }

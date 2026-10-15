@@ -266,6 +266,7 @@ namespace bo3z
 		float       FovThird();
 		void        SetFov(bool a_first, float a_v);
 		bool        Shelter();                    // townsfolk go indoors at night
+		bool        PlayStationIcons();           // controller prompts drawn as PlayStation buttons (a PS5 pad looks like an Xbox one to Skyrim)
 		float       CorpseSeconds();
 		float       UndeadHealthMult();           // Skyrim's difficulty (if followed) x the MCM's own
 		float       UndeadDamageMult();
@@ -559,6 +560,7 @@ namespace bo3z
 		void RunQueuedOnMain();
 		void RunQueuedInGame();
 		bool HudOff();  // DevTools 'hud 0': our overlay draws nothing (art captures)
+		void PressKey(RE::INPUT_DEVICE a_device, std::uint32_t a_id, float a_hold);  // through Skyrim's input queue, as if pressed
 	}
 
 	namespace Events

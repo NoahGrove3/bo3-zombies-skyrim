@@ -224,6 +224,23 @@ namespace bo3z
 
 		void OnButton(const RE::ButtonEvent* a_event)
 		{
+			// TK Dodge on a controller: it only knows its keyboard key (Left Alt), so a quick tap of the pad's sprint
+			// button (LB / L1) presses that key for it - a tap dodges, holding still sprints
+			if (a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kGamepad) {
+				static std::chrono::steady_clock::time_point down{};
+				static bool held = false;
+				auto* ue0 = RE::UserEvents::GetSingleton();
+				if (ue0 && a_event->QUserEvent() == ue0->sprint) {
+					if (a_event->IsDown()) {
+						down = std::chrono::steady_clock::now(), held = true;
+					} else if (a_event->IsUp() && held) {
+						held = false;
+						if (std::chrono::steady_clock::now() - down < std::chrono::milliseconds(220) && !Riding()) {
+							DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x38, 0.05f);  // (TK Dodge RE.ini DodgeHotkey = 56)
+						}
+					}
+				}
+			}
 			if (!a_event || !a_event->IsDown()) {
 				return;
 			}
@@ -232,6 +249,15 @@ namespace bo3z
 			const auto& ev = a_event->QUserEvent();
 			if (!ue || !player) {
 				return;
+			}
+			// Phantom Horse on a controller: its script only listens for a keyboard key (E, RegisterForKey), so A while
+			// sprinting with its power on presses that key too, held as long as the summon wants
+			if (a_event->GetDevice() == RE::INPUT_DEVICE::kGamepad && a_event->GetIDCode() == 0x1000 && player->AsActorState()->IsSprinting()) {
+				PhantomForms();
+				if (PowerOn(player) && !Riding()) {
+					DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 1.2f);
+					logger::info("phantom horse: pad A while sprinting - its key (E) pressed for it");
+				}
 			}
 			// Phantom Horse: the summon starts from the sprint, which must begin in third person (see PhantomCamera)
 			if (ev == ue->sprint) {

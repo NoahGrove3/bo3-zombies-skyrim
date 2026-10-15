@@ -155,7 +155,7 @@ namespace bo3z::Loot
 		const auto& q = b->QUserEvent();
 		const auto  dev = b->GetDevice();
 		const auto  code = b->GetIDCode();
-		if (dev == RE::INPUT_DEVICE::kKeyboard && code == 0x22) {  // G: Skyrim's own menu (ours opens it)
+		if ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x22) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x8000)) {  // G / pad Y: Skyrim's own menu (ours opens it)
 			return true;
 		}
 		if (!g_takeable) {
@@ -186,7 +186,7 @@ namespace bo3z::Loot
 		const auto  dev = a_event->GetDevice();
 		const auto  code = a_event->GetIDCode();
 		const int   n = static_cast<int>(g_objs.size());
-		if (dev == RE::INPUT_DEVICE::kKeyboard && code == 0x22) {
+		if ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x22) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x8000)) {
 			if (auto ref = g_ref.get()) {
 				ref->ActivateRef(RE::PlayerCharacter::GetSingleton(), 0, nullptr, 0, false);
 			}

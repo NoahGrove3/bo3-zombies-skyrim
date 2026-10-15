@@ -86,6 +86,24 @@ GOOD TO KNOW
    Origins of Forest (with their complex-grass textures, lit by Community Shaders). For frame rate: Community
    Shaders' Frame Generation (turn it on in the Community Shaders menu, Home key) and Skyrim Priority.
 
+CONTROLLER (Xbox One / Series, or PS5)  -  PlayStation names in brackets
+ - Xbox pads work as soon as they're plugged in or paired. PS5 (DualSense): Skyrim only reads Xbox-style pads,
+   and the desktop shortcut starts the game outside Steam. Either add SkyrimTogether.exe to Steam (Games > Add a
+   Non-Steam Game, then Properties > Controller > Steam Input ON) and start it from Steam, or run DualSenseX /
+   DS4Windows. Then Esc > System > Mod Configuration > The Curse of Alduin > "PlayStation button icons" ON.
+ - Move / look: sticks.  Sneak: click left stick (L3).  Lock onto an enemy: click right stick (R3).
+ - Jump (and parkour, climbing): Y (Triangle).   Activate, take, talk: A (Cross).   Draw / sheathe: X (Square).
+ - Sprint: hold LB (L1).   DODGE: tap LB (L1).   Shout / use a power: RB (R1).
+ - Cast: RT / LT (R2 / L2) - tap for a bolt, hold both to charge the spell's full power.
+ - Next spell: D-pad right (hold it to put your hands away).   Quick knife: D-pad down.   Favourites: D-pad up.
+ - Phantom Horse: power on (RB), then sprint (hold LB) and press A (Cross) - the horse comes under you.
+ - Echo Altar: A (Cross) to open it, then X (Square) roll a spell, Y (Triangle) reforge, D-pad left/right choose a
+   brew, A (Cross) buy it, D-pad up learn a freed city's Thu'um, B (Circle) leave.
+ - Quick loot (look at a body or chest): A (Cross) take, X (Square) take all, Y (Triangle) open it fully, D-pad
+   up / down choose.
+ - A friend is down: stand by them and hold A (Cross) 3 seconds.  You are dead: D-pad left / right switch whom you
+   watch.   Menus: Start (Options) - Skyrim's own controller menus work as usual.
+
 TROUBLESHOOTING
  - Normal Skyrim menu / you start on the Helgen cart: The Curse of Alduin isn't loaded. Close Skyrim, run the
    .bat again, start from the desktop shortcut. The installer prints your Skyrim version - it must be

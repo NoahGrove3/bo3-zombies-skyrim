@@ -381,6 +381,13 @@ namespace bo3z
 	namespace DevTools
 	{
 		bool HudOff() { return g_hudOff.load(); }
+
+		// a key pressed (and held a_hold seconds) through Skyrim's own input queue: scripts listening for it (SKSE's
+		// RegisterForKey) see it as if pressed - the controller's bridge to mods that only know keyboard keys
+		void PressKey(RE::INPUT_DEVICE a_device, std::uint32_t a_id, float a_hold)
+		{
+			g_pendingKeys.push_back({ a_device, a_id, RE::BSFixedString(""), 0, a_hold });
+		}
 		void PollFromRender()
 		{
 			if (++g_frame % 30 != 0) {
