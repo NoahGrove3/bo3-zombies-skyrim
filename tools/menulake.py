@@ -11,7 +11,7 @@ Writes (2560x1440 painting space, the horizon - the far shore - at y 800):
   menu_aurora2.png     the northern lights: two curtains (alpha), drawn twice out of step by the game
   menu_lake_life.png   life on the lake: lily pads (a few in flower) floating on the water, reeds and bushes in the
                        near corners (2560x1440, alpha) - the game rocks it gently on the water
-The mountains carry snowy pine forest on their lower slopes and a tree line along the far shore.
+The far shore carries a line of snowy pines in groves.
 """
 import math, pathlib, sys
 import numpy as np
@@ -127,21 +127,12 @@ def pine(d, x, y, h, rng, dark, snow):
 
 
 def forest(img):
-    """snowy pine forest: thick along the far shore, thinning up the near range's lower slopes (drawn at 2x, then
-    shrunk: soft edges)"""
+    """snowy pines along the lake's far shore only, in groves with gaps (drawn at 2x, then shrunk: soft edges)"""
     big = Image.new('RGBA', (W * 2, H * 2), (0, 0, 0, 0))
     d = ImageDraw.Draw(big)
     rng = np.random.default_rng(91)
     al = np.asarray(img)[..., 3]
     trees = []
-    # up the slopes: only where there is mountain under the tree, more of them lower down
-    for _ in range(900):
-        x = rng.uniform(0, W)
-        y = HORIZON - 8 - rng.exponential(38)
-        if y < 560 or al[int(y), int(min(x, W - 1))] < 250:
-            continue
-        hgt = 7 + 16 * (y - 560) / (HORIZON - 560) * rng.uniform(0.7, 1.2)
-        trees.append((y, x, hgt))
     # the shore's tree line
     x = 0.0
     while x < W:

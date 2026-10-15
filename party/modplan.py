@@ -106,6 +106,9 @@ RECIPES = [
     ('CG Universal Mesh Fix', 'Universal Grass Mod Mesh Fix*.zip', 'graphics', 'map', {'Universal CG Tree mesh fix/': ''}),
     ('Nolvus Grass Mashup', 'Nolvus Grass Mashup*.7z', 'graphics', 'map', {'': ''}),
     ('Seasons of Skyrim', 'Seasons of Skyrim*.7z', 'graphics', 'map', {'Seasons of Skyrim SKSE FOMOD Installer/Required/': '', 'Seasons of Skyrim SKSE FOMOD Installer/AE/': ''}),
+    # frame rate: Community Shaders' frame generation (AMD FSR 3 / NVIDIA DLSS-G), and the game at high CPU priority
+    ('Frame Generation', 'Frame Generation-*.7z', 'graphics', 'map', {'': ''}),
+    ('Skyrim Priority', 'Skyrim Priority*.zip', 'graphics', 'map', {'Data/': ''}),
     ('Skysight Skins', '01 - Skysight Skins*.rar', 'graphics', 'fomod', {'pick': ['Vanilla', 'Clean and Hairy (default)', 'Vanilla (default)', 'Default Subsurface Maps', 'Use Patched Vanilla Textures']}),
     ('Skyland AIO', 'Skyland AIO-34179-4-32-1700281282 (1).7z', 'graphics', 'fomod', {'pick': ['Start', 'Yes', 'Snowy Stone Roads', 'Tan', 'Whiterun', 'Winterhold', 'Riften', 'Markarth', 'Solitude',
         'High Hrothgar', 'Windhelm', 'Sovngarde', 'Skyhaven Temple', 'Grey', 'RW2', 'Skyking Galaxy (Favorite)', 'Finish'], 'drop': ['Windhelm Donor Wall'], 'exactly': {'Dirt Roads': 'No'}}),
