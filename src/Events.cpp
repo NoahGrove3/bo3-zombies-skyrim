@@ -51,6 +51,7 @@ namespace bo3z
                     }
 				};
 				++trace;
+				Watchdog::PlayerTicked();
 				T("game");
 				func(a_this, a_delta);
 				try {
@@ -136,6 +137,7 @@ namespace bo3z
 				if (a_event->menuName == RE::LoadingMenu::MENU_NAME && !a_event->opening && dataLoaded) {
 					// After a new game, a save from the main menu, or a save loaded in game.
 					Save::OnWorldReady();
+					Watchdog::WorldLoaded();
 				}
 				return RE::BSEventNotifyControl::kContinue;
 			}

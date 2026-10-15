@@ -413,6 +413,8 @@ namespace bo3z
 	namespace Watchdog
 	{
 		void Beat();   // a frame was drawn (from Present)
+		void WorldLoaded();   // a load finished: the player should update soon
+		void PlayerTicked();  // it did
 		void Start(bool a_onMainThread);  // the thread that logs where the game is stuck when frames stop
 	}
 

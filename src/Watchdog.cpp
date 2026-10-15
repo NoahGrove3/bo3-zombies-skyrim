@@ -10,6 +10,7 @@ namespace bo3z::Watchdog
 		std::atomic<long long> g_beat{ 0 };   // the last frame drawn (steady clock, ms)
 		std::atomic<DWORD>     g_main{ 0 };   // the thread that draws them
 		std::atomic_bool       g_drawn{ false };  // a frame has been drawn at all
+		std::atomic<long long> g_tickDue{ 0 };    // the world is loaded: the player must update by then (ms)
 
 		long long NowMs()
 		{
@@ -100,6 +101,12 @@ namespace bo3z::Watchdog
 					SnapModules();
 					snapAt = now;
 				}
+				// a load that finished but the world never starts (no player update since): where the main thread is
+				if (const long long due = g_tickDue.load(); due && now > due) {
+					logger::warn("watchdog: the world loaded {} s ago but has not started", (now - due) / 1000 + 15);
+					Dump(static_cast<int>(stuck / 1000));
+					g_tickDue = now + 30000;
+				}
 				// once at 12 s without a frame, again every 30 s while it stays stuck (to see whether it moves)
 				if (stuck > 12000) {
 					Dump(static_cast<int>(stuck / 1000));
@@ -110,6 +117,9 @@ namespace bo3z::Watchdog
 			}
 		}
 	}
+
+	void WorldLoaded() { g_tickDue = NowMs() + 15000; }
+	void PlayerTicked() { g_tickDue = 0; }
 
 	void Beat()
 	{
