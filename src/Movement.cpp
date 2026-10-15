@@ -146,6 +146,13 @@ namespace bo3z
 
 	namespace Movement
 	{
+		bool Riding()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			PhantomForms();
+			return p && (p->IsOnMount() || Has(p, g_phFx[2]));
+		}
+
 		void OnButton(const RE::ButtonEvent* a_event)
 		{
 			if (!a_event || !a_event->IsDown()) {
@@ -156,6 +163,13 @@ namespace bo3z
 			const auto& ev = a_event->QUserEvent();
 			if (!ue || !player) {
 				return;
+			}
+			// Phantom Horse: the summon starts from the sprint, which must begin in third person (see PhantomCamera)
+			if (ev == ue->sprint) {
+				PhantomForms();
+				if (PowerOn(player) && !Riding()) {
+					ThirdForHorse("sprint pressed with the power on");
+				}
 			}
 			// (the slide is gone: crouch is Skyrim's crouch again)
 			if (ev == ue->jump && g_slide > 0) {
@@ -169,47 +183,71 @@ namespace bo3z
 			g_wasAir = false, g_wantSlide = false, g_wantJumpCarry = false, g_forcedSneak = false;
 		}
 
-		// Phantom Horse summons its horse from the third-person body's sprint animations (Open Animation Replacer),
-		// which never play in first person. With one of its powers on (Arvak or Shadow ability), sprinting in first
-		// person turns the camera out to third, so the horse can come; it stays there while you ride, and once you are
-		// off it and no longer sprinting the camera goes back to first person.
+		// Phantom Horse is no real mount: its horse is an effect worn by the third-person body while it plays riding
+		// animations (Open Animation Replacer), started from the sprint - none of which exists in first person, where
+		// the camera sits inside that horse. So: with one of its powers on (the Arvak or Shadow ability), pressing sprint
+		// in first person turns the camera out to third before the sprint starts; while you ride (its riding effect,
+		// ME_PH_PerSprint, is on you) the camera is held in third, the scroll wheel cannot take it in; once you are off
+		// and no longer sprinting it goes back to first person.
+		RE::EffectSetting* g_phFx[3]{};  // ME_ArvakAbility, ME_ShadowAbility, ME_PH_PerSprint
+		bool               g_phLooked = false, g_phTurned = false;
+		float              g_phCalm = 0;
+
+		void PhantomForms()
+		{
+			if (g_phLooked) {
+				return;
+			}
+			g_phLooked = true;
+			if (auto* dh = RE::TESDataHandler::GetSingleton()) {
+				const RE::FormID ids[3]{ 0x808, 0x83C, 0x813 };
+				for (int i = 0; i < 3; ++i) {
+					g_phFx[i] = dh->LookupForm<RE::EffectSetting>(ids[i], "Phantom Horse.esp");
+				}
+			}
+		}
+
+		bool Has(RE::PlayerCharacter* a_player, RE::EffectSetting* a_fx)
+		{
+			auto* mt = a_player ? a_player->AsMagicTarget() : nullptr;
+			return a_fx && mt && mt->HasMagicEffect(a_fx);
+		}
+
+		bool PowerOn(RE::PlayerCharacter* a_player) { return Has(a_player, g_phFx[0]) || Has(a_player, g_phFx[1]); }
+
+		void ThirdForHorse(const char* a_why)
+		{
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (cam && cam->IsInFirstPerson()) {
+				cam->ForceThirdPerson();
+				logger::info("phantom horse: camera to third person ({})", a_why);
+			}
+			g_phTurned = true, g_phCalm = 0;
+		}
+
 		void PhantomCamera(RE::PlayerCharacter* a_player, bool a_sprint, float a_delta)
 		{
-			static RE::EffectSetting* fx[2]{};
-			static bool               looked = false, turned = false;
-			static float              calm = 0;
-			if (!looked) {
-				looked = true;
-				if (auto* dh = RE::TESDataHandler::GetSingleton()) {
-					fx[0] = dh->LookupForm<RE::EffectSetting>(0x808, "Phantom Horse.esp");  // ME_ArvakAbility
-					fx[1] = dh->LookupForm<RE::EffectSetting>(0x83C, "Phantom Horse.esp");  // ME_ShadowAbility
-				}
-			}
+			PhantomForms();
 			auto* cam = RE::PlayerCamera::GetSingleton();
-			auto* mt = a_player->AsMagicTarget();
-			if (!cam || !mt) {
+			if (!cam) {
 				return;
 			}
-			const bool riding = a_player->IsOnMount();
-			if (riding && cam->IsInFirstPerson()) {  // (first person in the saddle looks out from inside the horse: never there)
-				cam->ForceThirdPerson();
-				turned = true, calm = 0;
+			const bool riding = Movement::Riding();
+			if (riding && cam->IsInFirstPerson()) {  // (held in third while you ride: the wheel cannot take it inside the horse)
+				ThirdForHorse("riding");
 			}
-			if (!turned) {
-				const bool on = (fx[0] && mt->HasMagicEffect(fx[0])) || (fx[1] && mt->HasMagicEffect(fx[1]));
-				if (on && a_sprint && !riding && cam->IsInFirstPerson()) {
-					cam->ForceThirdPerson();
-					turned = true, calm = 0;
-					logger::info("phantom horse: sprinting with the power on - camera to third person for the summon");
+			if (!g_phTurned) {
+				if (a_sprint && !riding && PowerOn(a_player) && cam->IsInFirstPerson()) {
+					ThirdForHorse("sprinting with the power on");
 				}
 				return;
 			}
-			calm = (riding || a_sprint) ? 0.0f : calm + a_delta;
-			if (calm > 0.8f) {  // off the horse (or the summon never came) and walking again
+			g_phCalm = (riding || a_sprint) ? 0.0f : g_phCalm + a_delta;
+			if (g_phCalm > 0.8f) {  // off the horse (or the summon never came) and walking again
 				if (!cam->IsInFirstPerson()) {
 					cam->ForceFirstPerson();
 				}
-				turned = false;
+				g_phTurned = false;
 				logger::info("phantom horse: off the horse - camera back to first person");
 			}
 		}
@@ -226,6 +264,10 @@ namespace bo3z
 			auto*      cc = player->GetCharController();
 			const bool sprint = st->IsSprinting();
 			PhantomCamera(player, sprint, a_delta);
+			if (cc) {  // no fall damage at all: the fall is always measured from where you are now, so every landing is from nowhere
+				cc->fallStartHeight = player->GetPositionZ();
+				cc->fallTime = 0.0f;
+			}
 			const bool air = cc && cc->context.currentState != RE::hkpCharacterStateType::kOnGround;
 			g_air = air ? g_air + a_delta : 0;
 			RE::NiPoint3 v{};

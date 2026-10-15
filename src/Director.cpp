@@ -1245,7 +1245,7 @@ namespace bo3z
 		constexpr float kMountChase = 70.0f;
 		void MountChase(RE::PlayerCharacter* a_player)
 		{
-			const bool riding = a_player && a_player->IsOnMount();
+			const bool riding = a_player && Movement::Riding();
 			for (auto& s : g_alive) {
 				const float want = riding ? kMountChase : 0.0f;
 				if (s.mounted == want) {

@@ -1861,6 +1861,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// has the menu) the mouse's own movement carries it on, so the mouse is never stuck
 		std::atomic<float> g_mouseDX{ 0 }, g_mouseDY{ 0 };
 		ImVec2             g_cursor{ -1, -1 };
+		ImVec2             g_skCursor{ -1, -1 };  // exactly where Skyrim's own menu cursor is (its menus take the clicks there)
 		void UpdateCursor(ImVec2 a_size)
 		{
 			auto* mc = RE::MenuCursor::GetSingleton();
@@ -1883,7 +1884,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			g_skCursor = sk;
 		}
 		ImVec2 Cursor(ImVec2) { return g_cursor; }
-		ImVec2 g_skCursor{ -1, -1 };  // exactly where Skyrim's own menu cursor is (its menus take the clicks there)
 
 		// Our cursor, in the quest ping's style (the burning diamond over quest targets): a tall diamond tipped up and
 		// to the left so its point is the hotspot, a dark heart, an amber rim, a soft glow round it and a hot core near
