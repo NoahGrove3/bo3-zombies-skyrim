@@ -87,7 +87,7 @@ namespace
 		if (::GetLastError() == ERROR_ALREADY_EXISTS) {
 			return false;
 		}
-		for (const wchar_t* old : { L"UndyingNights.asi", L"UndyingNights.dll", L"BO3Zombies.asi", L"BO3Zombies.dll" })  // (the names older builds had) {
+		for (const wchar_t* old : { L"UndyingNights.asi", L"UndyingNights.dll", L"BO3Zombies.asi", L"BO3Zombies.dll" }) {  // (the names older builds had)
 			if (HMODULE h = ::GetModuleHandleW(old); h && h != a_module) {
 				wchar_t path[MAX_PATH]{};
 				if (const auto n = ::GetModuleFileNameW(h, path, MAX_PATH); n > 0) {
