@@ -2364,12 +2364,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						if (!g_fire) {
 							return;
 						}
-						const int   fr = static_cast<int>((now + t0) * 24.0f) % 64;
+						const int   fr = static_cast<int>((now + t0) * 12.0f) % 64;  // (slow, as the rocks drift)
 						const float uu = (fr % 8) * 0.125f, vv = (fr / 8) * 0.125f;
-						const float hh = 108.0f * u * scale / 0.42f;
-						fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_fire)), { c.x - hh, c.y - hh }, { c.x + hh, c.y + hh }, { uu, vv }, { uu + 0.125f, vv + 0.125f }, tint);
+						const float hh = 108.0f * u * scale / 0.36f, lift = 0.30f * hh;  // (the orb sits below the frame's middle)
+						fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_fire)), { c.x - hh, c.y - hh - lift }, { c.x + hh, c.y + hh - lift }, { uu, vv }, { uu + 0.125f, vv + 0.125f }, tint);
 					};
-					aura(1.18f, 1.37f, IM_COL32(225, 200, 255, static_cast<int>((130 + 50 * pulse) * fade)));
+					aura(1.12f, 2.6f, IM_COL32(225, 200, 255, static_cast<int>((130 + 50 * pulse) * fade)));
 					aura(1.0f + 0.03f * pulse, 0.0f, IM_COL32(255, 255, 255, static_cast<int>(255 * fade)));
 					if (g_sCrystal) {
 						const int   f = static_cast<int>(now * 9.0f) % 24;  // ~2.7 s a turn

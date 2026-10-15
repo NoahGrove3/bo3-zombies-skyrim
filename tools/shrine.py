@@ -179,12 +179,13 @@ def aura(nif, tex):
     face you - two, out of step and a little apart in size, so the flames never repeat the same way - added to
     crystal.nif with fxwrite (unlit additive effect shapes): they bob with the orb, and the rocks pass in front."""
     job = [f'base {nif}', f'out {nif}']
-    R = 22.0  # the orb's radius: 0.42 of a frame's half-size in the flipbook
-    for i, (sc, ph, col, br) in enumerate([(1.0, 0.0, (1.0, 1.0, 1.0, 1.0), 1.5), (1.18, 1.37, (0.85, 0.75, 1.0, 0.55), 1.2)]):
-        hh = R / 0.42 * sc
-        job.append(f'shape aura{i} tex={tex} color={",".join(str(c) for c in col)} scale={br} blend=add billboard=1 flip=8x8 fps=24 phase={ph}')
+    R = 22.0  # the orb's radius: ORB_R (0.36) of a frame's half-size in the flipbook, its centre ORB_Y (-0.30) below the middle
+    for i, (sc, ph, col, br) in enumerate([(1.0, 0.0, (1.0, 1.0, 1.0, 1.0), 1.5), (1.12, 2.6, (0.85, 0.75, 1.0, 0.5), 1.2)]):
+        hh = R / 0.36 * sc
+        lift = 0.30 * hh  # (the frame's middle sits above the orb: the flames climb over it)
+        job.append(f'shape aura{i} tex={tex} color={",".join(str(c) for c in col)} scale={br} blend=add billboard=1 flip=8x8 fps=12 phase={ph}')
         for x, z, u, v in [(-hh, hh, 0, 0), (hh, hh, 0.125, 0), (hh, -hh, 0.125, 0.125), (-hh, -hh, 0, 0.125)]:
-            job.append(f'v {x:.3f} {z:.3f} 0 {u} {v}')  # (in the XY plane: a billboard turns its Z axis to the camera)
+            job.append(f'v {x:.3f} {z + lift:.3f} 0 {u} {v}')  # (in the XY plane: a billboard turns its Z axis to the camera)
         job += ['t 0 1 2', 't 0 2 3']
     work = OUT.parent / 'shrine'
     jf = work / 'aura.job'
@@ -269,7 +270,6 @@ def tex_rock(n=1024, seed=5):
             sz = n * 0.035
             for x0, y0, x1, y1 in strokes[rng.randrange(len(strokes))]:
                 gd.line([(cx + x0 * sz, cy + y0 * sz * 1.4), (cx + x1 * sz, cy + y1 * sz * 1.4)], fill=255, width=max(3, n // 170))
-        gd.line([(n * 0.03, cy + n * 0.075), (n * 0.97, cy + n * 0.075)], fill=180, width=max(2, n // 340))  # a carved line under each band
     glyph = np.asarray(gl.filter(ImageFilter.GaussianBlur(1.2)), np.float32) / 255
     height = h * 0.8 - crack * 0.5 - glyph * 0.6
     base = np.array([62, 60, 74], np.float32)

@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""The shrine orb's aura: purple fire made of magic, licking up and out round the orb - a looping flipbook for an
-always-facing quad (tools/shrine.py aura -> crystal.nif), rendered additive by the game.
+"""The shrine orb's aura: a fireball of purple magic flame - the orb wrapped in fire that climbs up its sides and
+rises in tall, wispy tongues over it (Noah's reference: a ball engulfed in flame, the fire streaming upward) - a
+slow, seamlessly looping flipbook for an always-facing quad (tools/shrine.py aura -> crystal.nif; the main menu draws
+the same atlas, src/Hud.cpp DrawMenu), rendered additive by the game.
 
     python3 tools/magicfire.py <out.png> [preview.gif]
 
-8x8 frames of 256 px (2048 px atlas), 64 frames looping seamlessly. The orb sits in the middle of each frame with
-radius R0 (of the half-size); the flames rise from its rim, tallest over the top.
+8x8 frames of 256 px (2048 px atlas), 64 frames: played at 12 a second, one loop is ~5.3 s - slow, as the rocks.
+Each frame: x and y in -1..1 (y up); the orb's centre at (0, ORB_Y), radius ORB_R; the flames reach to the top.
 """
 import sys
 import numpy as np
@@ -14,7 +16,7 @@ from scipy.ndimage import map_coordinates
 
 N, COLS = 256, 8
 FRAMES = COLS * COLS
-R0 = 0.42  # the orb's radius, in half-sizes of the frame
+ORB_Y, ORB_R = -0.30, 0.36
 
 
 def tileable(n, beta, seed):
@@ -38,36 +40,40 @@ def sample(tex, u, v):
 def frame(t, A, B, C):
     yy, xx = np.mgrid[0:N, 0:N].astype(np.float32)
     x = (xx + 0.5) / N * 2 - 1
-    y = 1 - (yy + 0.5) / N * 2          # +1 at the top
-    r = np.hypot(x, y)
-    th = np.arctan2(x, y)               # 0 straight up
-    up = np.clip(y / np.maximum(r, 1e-4), -1, 1)   # 1 over the top, -1 under
-    u = th / (2 * np.pi)
-    reach = 0.30 + 0.42 * np.clip(up, 0, 1) ** 1.2 + 0.06 * (up + 1)   # how far the flames reach: far over the top
-    sd = (r - R0) / reach               # 0 at the orb's rim, 1 at the flames' usual reach
-    # the fire flows outward (and up): noise stretched along the flow (long tongues), sliding by whole periods per loop
-    v = sd * 0.55 - y * 0.25
-    w = sample(C, u * 2 + 0.31, v * 0.5 - t * 1) * 0.05
-    T = sample(A, u * 7 + w, v * 0.9 - t * 3)                  # the tongues: smooth, long
-    D = sample(B, u * 16 - w * 3, v * 2.2 - t * 6)              # ragged licks at their edges
-    tongue = 0.55 + 0.45 * np.tanh(T * 0.9) + 0.10 * D          # how far this tongue reaches (1 = usual)
-    heat = np.clip(1.0 - sd / np.maximum(tongue * 1.25, 0.05), 0, 1)
-    heat = heat ** 1.15 * (0.85 + 0.25 * np.tanh(T))
-    heat *= np.clip((r - R0 * 0.9) / (R0 * 0.15), 0, 1)       # the orb itself shows through
-    heat *= np.clip((1.0 - r) / 0.10, 0, 1)                    # nothing at the frame's edge
-    glow = np.exp(-np.clip(r - R0, 0, None) / 0.07) * np.clip((r - R0 * 0.9) / (R0 * 0.1), 0, 1) * 0.6
-    a = np.clip(np.maximum(np.clip(heat * 1.6, 0, 1) ** 1.2, glow), 0, 1)
-    heat = heat * 1.15
-    # colour by heat: deep violet embers -> purple -> magenta-lilac -> white-hot cores
-    stops = np.array([[0.00, 50, 0, 110], [0.25, 110, 20, 200], [0.55, 170, 60, 255], [0.85, 220, 140, 255], [1.20, 255, 235, 255]], np.float32)
-    h = np.clip(heat, 0, 1.2)
+    y = 1 - (yy + 0.5) / N * 2
+    dy = y - ORB_Y
+    r = np.hypot(x, dy)
+    # the fire's body: round about the orb, drawn up over it into a tall teardrop whose tip licks at the top
+    top = 1.0 - ORB_Y                                        # how far up the flames can climb above the orb's centre
+    above = np.clip(dy / top, 0, 1)
+    halfw = np.maximum((ORB_R + 0.30) * (1 - above ** 1.15) * (1 + 0.25 * np.sin(above * 3.1416)), 0.02)       # the fire's half-width at this height
+    below = np.clip(-dy / (ORB_R + 0.2), 0, 1)
+    body = np.where(dy > 0, np.abs(x) / halfw, r / (ORB_R + 0.30 - 0.10 * below))
+    # rising, swaying flame: noise stretched upward that climbs (whole periods per loop, so it loops), bent sideways
+    sway = sample(C, x * 0.35 + 0.5, y * 0.25 - t * 1) * 0.10
+    lick = sample(A, (x + sway) * 1.9, y * 0.40 - t * 2)          # the big tongues
+    wisp = sample(B, (x + sway * 1.5) * 2.6, y * 0.9 - t * 4)     # thin wisps and their frayed edges
+    n = 0.70 * lick + 0.40 * wisp
+    reach = 1.0 + 0.35 * np.tanh(n)                               # tongues reach further, gaps fall short
+    heat = np.clip(1.0 - body / reach, 0, 1)
+    heat = heat ** (0.7 + 0.5 * above)                            # thinning as it rises
+    heat *= np.clip(0.75 + 0.45 * np.tanh(n + 0.4), 0, 1.2)         # broken into flames, not a smooth blob
+    heat *= np.clip((1 - np.maximum(np.abs(x), np.abs(y))) / 0.08, 0, 1)   # nothing at the frame's edge
+    # over the orb's face only a thin veil (the orb shows through); its rim burns brightest
+    face = np.clip((r - ORB_R * 0.80) / (ORB_R * 0.22), 0, 1)
+    rim = np.exp(-np.abs(r - ORB_R) / 0.035) * 0.55
+    heat = heat * (0.25 + 0.75 * face) + rim * np.clip(0.7 + 0.5 * n, 0, 1)
+    a = np.clip(heat * 1.35, 0, 1) ** 1.1
+    # colour by heat: deep violet wisps -> purple -> lilac -> white-hot at the roots
+    stops = np.array([[0.00, 45, 0, 100], [0.25, 105, 25, 205], [0.55, 165, 70, 255], [0.85, 215, 150, 255], [1.20, 250, 235, 255]], np.float32)
+    h = np.clip(heat * 1.1, 0, 1.2)
     rgb = np.stack([np.interp(h, stops[:, 0], stops[:, k]) for k in (1, 2, 3)], -1)
     return np.dstack([rgb, a * 255]).astype(np.uint8)
 
 
 def main():
     out = sys.argv[1]
-    A, B, C = tileable(256, 2.0, 1), tileable(256, 1.6, 2), tileable(256, 2.2, 3)
+    A, B, C = tileable(256, 2.0, 1), tileable(256, 1.6, 2), tileable(256, 2.4, 3)
     atlas = np.zeros((N * COLS, N * COLS, 4), np.uint8)
     frames = []
     for k in range(FRAMES):
@@ -77,15 +83,15 @@ def main():
         frames.append(f)
     Image.fromarray(atlas, 'RGBA').save(out)
     if len(sys.argv) > 2:  # a preview over a dark ground, with a stand-in orb
+        yy, xx = np.mgrid[0:N, 0:N]
+        orb = np.hypot((xx + 0.5) / N * 2 - 1, (1 - (yy + 0.5) / N * 2) - ORB_Y) < ORB_R
         bg = []
         for f in frames:
             base = np.zeros((N, N, 3), np.float32) + [12, 10, 24]
-            yy, xx = np.mgrid[0:N, 0:N]
-            orb = np.hypot(xx - N / 2, yy - N / 2) < R0 * N / 2
-            base[orb] = [140, 190, 255]
+            base[orb] = [120, 170, 240]
             al = f[..., 3:4] / 255.0
             bg.append(Image.fromarray(np.clip(base + f[..., :3] * al, 0, 255).astype(np.uint8)))
-        bg[0].save(sys.argv[2], save_all=True, append_images=bg[1:], duration=42, loop=0)
+        bg[0].save(sys.argv[2], save_all=True, append_images=bg[1:], duration=83, loop=0)
     print('magicfire: wrote', out)
 
 

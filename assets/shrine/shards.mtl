@@ -1,4 +1,32 @@
-newmtl shard
+newmtl shard00
 Kd 1 1 1
-newmtl vein
+newmtl shard01
+Kd 1 1 1
+newmtl shard02
+Kd 1 1 1
+newmtl shard03
+Kd 1 1 1
+newmtl shard04
+Kd 1 1 1
+newmtl shard05
+Kd 1 1 1
+newmtl shard06
+Kd 1 1 1
+newmtl shard07
+Kd 1 1 1
+newmtl shard08
+Kd 1 1 1
+newmtl shard09
+Kd 1 1 1
+newmtl shard10
+Kd 1 1 1
+newmtl shard11
+Kd 1 1 1
+newmtl shard12
+Kd 1 1 1
+newmtl shard13
+Kd 1 1 1
+newmtl shard14
+Kd 1 1 1
+newmtl shard15
 Kd 1 1 1
