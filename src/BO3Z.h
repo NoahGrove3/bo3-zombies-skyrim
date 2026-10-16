@@ -529,7 +529,7 @@ namespace bo3z
 			std::string objLabel;
 			float       objAng{ 0 };  // the objective's bearing from you (radians, 0 north, clockwise)
 			// the compass (The Curse of Alduin's own, over Skyrim's hidden one): which way you face, and what lies around you
-			struct CompassMark { float ang, dist; int kind; std::string label; };  // kind: 1 rite, 2 shrine, 3 city, 4 town, 5 dungeon, 6 place, 7 friend, 8 undead, 9 boss
+			struct CompassMark { float ang, dist; int kind; std::string label; int icon = -1; bool known = true; };  // icon: the map marker type (its map icon)  // kind: 1 rite, 2 shrine, 3 city, 4 town, 5 dungeon, 6 place, 7 friend, 8 undead, 9 boss
 			bool        compassOn{ false };
 			float       heading{ 0 };
 			std::vector<CompassMark> compass;
@@ -559,6 +559,7 @@ namespace bo3z
 			int                activeSlot{ -1 };
 			int                gunIndex{ -1 };
 			std::array<int, 2> handSpell{ -1, -1 };   // the Coffer spell in each hand (Arcana index; 0 left, 1 right)
+			std::array<int, 2> handCost{ 0, 0 };      // what each costs you now (magicka; a second, for a channelled one)
 		};
 		State&      Edit();
 		std::mutex& Lock();

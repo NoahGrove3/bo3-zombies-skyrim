@@ -2474,6 +2474,10 @@ namespace bo3z
 			}
 			h.gunIndex = out ? gun : -1;
 			h.handSpell = Arcana::Hands();  // the Coffer spells in hand (the spell dock)
+			for (int i = 0; i < 2; ++i) {  // their real cost: the halved price, the reforge and your own skill and perks
+				auto* sp = Arcana::Spell(h.handSpell[i]);
+				h.handCost[i] = sp ? static_cast<int>(std::lround(sp->CalculateMagickaCost(RE::PlayerCharacter::GetSingleton()))) : 0;
+			}
 			h.activeSlot = out && SlotOf(gun) >= 0 ? SlotOf(gun) : (h.slotCount > 0 ? Save::ActiveSlot() % h.slotCount : -1);
 			{
 				auto* pav = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner();

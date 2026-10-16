@@ -7,7 +7,7 @@ namespace bo3z::Compass
 {
 	namespace
 	{
-		struct Place { RE::NiPoint3 at; int kind; std::string name; bool known; };
+		struct Place { RE::NiPoint3 at; int kind; std::string name; bool known; int type; };
 		std::vector<Place> g_places;
 		RE::TESWorldSpace* g_world = nullptr;
 
@@ -128,7 +128,7 @@ namespace bo3z::Compass
 					continue;
 				}
 				const char* name = mm->mapData->locationName.GetFullName();
-				g_places.push_back({ ref->GetPosition(), kind, name ? name : "", mm->mapData->flags.all(RE::MapMarkerData::Flag::kVisible) });
+				g_places.push_back({ ref->GetPosition(), kind, name ? name : "", mm->mapData->flags.all(RE::MapMarkerData::Flag::kVisible), static_cast<int>(mm->mapData->type.get()) });
 			}
 			logger::info("compass: {} places in {}", g_places.size(), a_world->GetFormEditorID());
 		}
@@ -166,7 +166,7 @@ namespace bo3z::Compass
 			const float d = p.at.GetDistance(me);
 			const float reach = p.kind == 3 ? 60000.0f : p.known ? 20000.0f : 6000.0f;
 			if (d < reach && d > 300.0f) {
-				marks.push_back({ bearing(p.at), d, p.kind, p.name });
+				marks.push_back({ bearing(p.at), d, p.kind, p.name, p.type, p.known });
 			}
 		}
 		if (world) {  // the shrines of the cities

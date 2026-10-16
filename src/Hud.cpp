@@ -25,6 +25,7 @@ namespace bo3z
 		std::array<ID3D11ShaderResourceView*, 8>                  g_elementIcons{};  // the Coffer spells' element emblems (el_<element>.png)
 		ID3D11ShaderResourceView* g_menuBg = nullptr;   // the main menu's backdrop (tools/cover.py, MENU=1)
 		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
+		ID3D11ShaderResourceView* g_mapIcons = nullptr;  // the world map's marker icons, an 8x8 atlas (tools/mapicons.py)
 		ID3D11ShaderResourceView* g_fire = nullptr;     // the shrine orb's purple magic fire: 16x8 flipbook (tools/magicfire.py)
 		ID3D11ShaderResourceView* g_flame = nullptr;    // the aura round a spell emblem: 4x4 atlas of a looping white flame ring (tools/flameaura.py)
 		ID3D11ShaderResourceView* g_frame = nullptr;
@@ -532,7 +533,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float  x = xAt(d), f = edgeFade(d);
 				const ImVec2 c{ x, cy + 1 * k };
 				const float  nr = std::clamp(1.0f - m->dist / 6000.0f, 0.0f, 1.0f);
-				switch (m->kind) {
+				// the map's places: the world map's own icon for each (Noah: the compass should match the map)
+				if (m->kind >= 3 && m->kind <= 6 && g_mapIcons && m->icon > 0 && m->icon < 64) {
+					const float  r = (m->kind == 3 ? 12.0f : m->kind == 4 ? 10.0f : 8.5f) * k;
+					const ImVec2 uv0{ (m->icon % 8) / 8.0f, (m->icon / 8) / 8.0f }, uv1{ uv0.x + 0.125f, uv0.y + 0.125f };
+					const int    a8 = static_cast<int>(255 * f * (m->known ? 1.0f : 0.55f));
+					dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_mapIcons)), { c.x - r + 1 * k, c.y - r + 1 * k }, { c.x + r + 1 * k, c.y + r + 1 * k }, uv0, uv1, IM_COL32(0, 0, 0, a8 * 3 / 4));
+					dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_mapIcons)), { c.x - r, c.y - r }, { c.x + r, c.y + r }, uv0, uv1, m->kind == 3 ? IM_COL32(255, 236, 196, a8) : IM_COL32(236, 232, 224, a8));
+				} else switch (m->kind) {
 				case 1: {  // the rite: a burning diamond
 					const float r = 9 * k, pu = 0.75f + 0.25f * std::sin(now * 3.0f);
 					for (int i = 3; i >= 1; --i) {
@@ -1247,44 +1255,46 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				static float shownS = 0;
 				shownS += ((s.gunOut ? 1.0f : 0.6f) - shownS) * std::min(1.0f, dt * 8);
 				const float al = shownS;
-				const auto card = [&](int idx, ImVec2 a, ImVec2 b, bool big, const char* hand) {
+				// (Noah: cleaner and simpler) one slim card per hand: the element's emblem at the left, the spell's name,
+				// and its real magicka cost as a pip - nothing else
+				const auto card = [&](int idx, int cost, ImVec2 a, ImVec2 b, bool big, const char* hand) {
 					const int           el = Arcana::ElementOf(idx);
 					const std::uint32_t ec = Arcana::ElementColor(el);
 					const ImU32         ecol = IM_COL32((ec >> 16) & 0xFF, (ec >> 8) & 0xFF, ec & 0xFF, 255);
-					Panel(dl, a, b, k, big ? al : 0.75f * al);
-					dl->AddRectFilledMultiColor({ a.x + 1 * k, a.y + 1 * k }, { a.x + (big ? 190 : 120) * k, b.y - 1 * k }, Fade(ecol, 0.20f * al), Fade(ecol, 0.0f), Fade(ecol, 0.0f), Fade(ecol, 0.28f * al));
-					dl->AddRectFilled({ a.x, a.y }, { a.x + 4 * k, b.y }, Fade(ecol, al));
-					const float er = (big ? 33 : 19) * k;
-					DrawEmblem(dl, Arcana::kIdBase + idx, { b.x - er - (big ? 27 : 11) * k, (a.y + b.y) * 0.5f + (big ? 1.5f * k * std::sin(now * 1.6f) : 0) }, er, big ? al : 0.85f * al, now, big ? 1.0f : 0.7f);
-					const float textR = b.x - er * 2 - (big ? 44 : 22) * k;  // the words stop short of the emblem
+					const float         h = b.y - a.y, rr = h * 0.5f;
+					dl->AddRectFilled(a, b, IM_COL32(8, 8, 10, static_cast<int>((big ? 175 : 140) * al)), rr);
+					dl->AddRect(a, b, Fade(ecol, (big ? 0.55f : 0.35f) * al), rr, 0, 1.2f * k);
+					const float er = rr - 6 * k;
+					DrawEmblem(dl, Arcana::kIdBase + idx, { a.x + rr, (a.y + b.y) * 0.5f }, er, al, now, big ? 0.9f : 0.6f);
+					// the cost, right: a small rounded pip, red when you cannot pay it
+					const bool        can = s.mp >= cost;
+					const std::string cs = std::to_string(cost) + (Arcana::Concentration(idx) ? "/s" : "");
+					const float       cz = (big ? 20 : 15) * k;
+					const auto        cm = Measure(g_num, cz, cs);
+					const ImVec2      p1{ b.x - 10 * k, (a.y + b.y) * 0.5f + cm.y * 0.5f + 3 * k }, p0{ p1.x - cm.x - 16 * k, p1.y - cm.y - 6 * k };
+					dl->AddRectFilled(p0, p1, can ? IM_COL32(40, 70, 130, static_cast<int>(200 * al)) : IM_COL32(120, 30, 26, static_cast<int>(210 * al)), (p1.y - p0.y) * 0.5f);
+					Txt(dl, g_num, cz, { p0.x + 8 * k, p0.y + 3 * k }, Fade(IM_COL32(236, 242, 255, 255), al), cs);
+					// the name between, shrinking to fit; the hand above it, small
+					const float x0 = a.x + rr * 2 + 6 * k, textR = p0.x - 10 * k;
 					dl->PushClipRect(a, { textR, b.y }, true);
-					Txt(dl, g_num, (big ? 14 : 12) * k, { a.x + 16 * k, a.y + (big ? 10 : 6) * k }, Fade(kGold, 0.85f * al), hand);
-					float nameSize = (big ? 26 : 17) * k;
+					float             nameSize = (big ? 22 : 16) * k;
 					const std::string nm(Arcana::Name(idx));
-					while (nameSize > 12 * k && a.x + 16 * k + Measure(g_title, nameSize, nm).x > textR) {
-						nameSize -= 1 * k;  // a long name shrinks to fit its card
+					while (nameSize > 11 * k && x0 + Measure(g_title, nameSize, nm).x > textR) {
+						nameSize -= 1 * k;
 					}
-					Txt(dl, g_title, nameSize, { a.x + 16 * k, a.y + (big ? 34 : 22) * k }, Fade(kParch, al), nm);
 					if (big) {
-						std::string elName(Arcana::ElementName(el));
-						if (!elName.empty()) elName[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(elName[0])));
-						Txt(dl, g_body, 16 * k, { a.x + 16 * k, a.y + 72 * k }, Fade(ecol, al), elName + (Arcana::Concentration(idx) ? "  -  hold to channel" : ""));
+						Txt(dl, g_body, 12 * k, { x0, a.y + 7 * k }, Fade(ecol, 0.9f * al), hand);
+						Txt(dl, g_title, nameSize, { x0, a.y + 22 * k }, Fade(kParch, al), nm);
+					} else {
+						Txt(dl, g_title, nameSize, { x0, (a.y + b.y) * 0.5f - nameSize * 0.55f }, Fade(kParch, 0.9f * al), nm);
 					}
 					dl->PopClipRect();
-					if (big) {
-						const int         cost = Arcana::CostOf(idx);
-						const bool        can = s.mp >= cost;
-						const std::string cs = std::to_string(cost);
-						const auto        m = Measure(g_num, 30 * k, cs);
-						Txt(dl, g_num, 30 * k, { a.x + 16 * k, b.y - 44 * k }, can ? IM_COL32(150, 190, 255, 255) : IM_COL32(230, 60, 50, 255), cs);
-						Txt(dl, g_body, 15 * k, { a.x + 22 * k + m.x, b.y - 34 * k }, IM_COL32(150, 170, 210, 255), Arcana::Concentration(idx) ? "magicka / s" : "magicka");
-					}
 				};
-				const ImVec2 a{ size.x - 470 * k, size.y - 218 * k }, b{ size.x - 40 * k, size.y - 92 * k };
-				const int    main = s.handSpell[1] >= 0 ? s.handSpell[1] : s.handSpell[0];
-				card(main, a, b, true, s.handSpell[1] >= 0 ? "RIGHT HAND" : "LEFT HAND");
+				const ImVec2 a{ size.x - 400 * k, size.y - 160 * k }, b{ size.x - 40 * k, size.y - 100 * k };
+				const int    mainHand = s.handSpell[1] >= 0 ? 1 : 0;
+				card(s.handSpell[mainHand], s.handCost[mainHand], a, b, true, mainHand == 1 ? "RIGHT HAND" : "LEFT HAND");
 				if (s.handSpell[1] >= 0 && s.handSpell[0] >= 0) {
-					card(s.handSpell[0], { b.x - 330 * k, a.y - 64 * k }, { b.x, a.y - 10 * k }, false, "LEFT HAND");
+					card(s.handSpell[0], s.handCost[0], { b.x - 300 * k, a.y - 52 * k }, { b.x, a.y - 10 * k }, false, "LEFT HAND");
 				}
 			}
 			// Weapon dock, bottom-right: the weapon in hand as a large card (its picture, Reforge marks, ability and
@@ -3639,6 +3649,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			const bool bg = SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_bg.png", nullptr, &g_menuBg));
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_fog.png", nullptr, &g_menuFog);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\mapicons.png", nullptr, &g_mapIcons);  // the map's marker icons (tools/mapicons.py)
 			for (auto [file, tex] : { std::pair{ L"menu_sky.jpg", &g_mSky }, { L"menu_clouds.png", &g_mClouds }, { L"menu_aurora.png", &g_mAurora },
 					 { L"menu_far.png", &g_mFar }, { L"menu_mid.png", &g_mMid }, { L"menu_near.png", &g_mNear }, { L"menu_groundfog.png", &g_mGroundFog }, { L"menu_clouds2.png", &g_mClouds2 } }) {
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\CurseOfAlduin\\") + file).c_str(), nullptr, tex);

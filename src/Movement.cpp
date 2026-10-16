@@ -610,6 +610,71 @@ namespace bo3z
 			}
 		}
 
+		// The talons on your hands (Noah: closing on them, not hanging open): while it holds you each hind leg is bent
+		// to reach your hand (two joints turned until the foot is at it, a little each frame) and the dragon itself
+		// drawn the last of the way, so the closed claws sit round your grip
+		float        g_ik[2][2]{};   // the legs' bend toward your hands (hip, knee), radians on top of their own motion
+		RE::NiPoint3 g_grabOff{};    // the dragon moved (DG_Space's own units) so its feet reach your hands
+		float        g_grip = 0;     // how firmly it holds you (0 in the swoop .. 1)
+
+		float SignedAngle(RE::NiPoint3 a_from, RE::NiPoint3 a_to, const RE::NiPoint3& a_axis)
+		{
+			a_from = a_from - a_axis * a_from.Dot(a_axis);
+			a_to = a_to - a_axis * a_to.Dot(a_axis);
+			return std::atan2(a_axis.Dot(a_from.Cross(a_to)), a_from.Dot(a_to));
+		}
+
+		void Grip(RE::PlayerCharacter* a_player, RE::NiAVObject* a_space, RE::NiAVObject* const (&a_leg)[2][3], bool a_first, float a_dt)
+		{
+			auto* root = a_player->Get3D(a_first);
+			if (!root || !a_space || !a_space->parent || g_grip <= 0.01f) {
+				return;
+			}
+			RE::NiUpdateData ud;
+			ud.time = 0.0f;
+			a_space->UpdateDownwardPass(ud, 0);  // (this frame's pose, before reaching)
+			RE::NiPoint3 resid{};
+			int          n = 0;
+			for (int sd = 0; sd < 2; ++sd) {
+				auto* hand = root->GetObjectByName(sd == 0 ? "NPC L Hand [LHnd]" : "NPC R Hand [RHnd]");
+				auto* fing = root->GetObjectByName(sd == 0 ? "NPC L Finger20 [LF20]" : "NPC R Finger20 [RF20]");
+				if (!hand || !a_leg[sd][0] || !a_leg[sd][1] || !a_leg[sd][2]) {
+					continue;
+				}
+				const RE::NiPoint3 target = fing ? (hand->world.translate + fing->world.translate) * 0.5f : hand->world.translate;  // the palm
+				for (int it = 0; it < 2; ++it) {
+					for (int j = 1; j >= 0; --j) {
+						auto*              J = a_leg[sd][j];
+						const auto&        P = J->parent->world.rotate;
+						RE::NiPoint3       axis{ P.entry[0][0], P.entry[1][0], P.entry[2][0] };
+						const RE::NiPoint3 end = a_leg[sd][2]->world.translate;
+						const float        d = std::clamp(SignedAngle(end - J->world.translate, target - J->world.translate, axis), -0.25f, 0.25f) * g_grip;
+						g_ik[sd][j] = std::clamp(g_ik[sd][j] + d, -1.3f, 1.3f);
+						J->local.rotate = Rot(d, 0, 0) * J->local.rotate;
+						J->UpdateDownwardPass(ud, 0);
+					}
+				}
+				resid += target - a_leg[sd][2]->world.translate;
+				++n;
+			}
+			if (n) {  // what the legs could not reach: the dragon comes down to you
+				const auto&  R = a_space->parent->world.rotate;
+				const float  sc = std::max(0.001f, a_space->parent->world.scale);
+				RE::NiPoint3 r = resid * (1.0f / n);
+				RE::NiPoint3 local{ R.entry[0][0] * r.x + R.entry[1][0] * r.y + R.entry[2][0] * r.z, R.entry[0][1] * r.x + R.entry[1][1] * r.y + R.entry[2][1] * r.z,
+					R.entry[0][2] * r.x + R.entry[1][2] * r.y + R.entry[2][2] * r.z };
+				g_grabOff = g_grabOff + local * (1.0f / sc) * std::min(1.0f, a_dt * 5.0f) * g_grip;
+				const float len = g_grabOff.Length();
+				if (len > 70.0f) g_grabOff = g_grabOff * (70.0f / len);
+				static float logT = 0;
+				if ((logT -= a_dt) <= 0) {
+					logT = 2.0f;
+					logger::info("glider: grip - feet {:.1f} from the hands, dragon moved ({:.0f},{:.0f},{:.0f}), legs {:.2f}/{:.2f} {:.2f}/{:.2f}", r.Length(),
+						g_grabOff.x, g_grabOff.y, g_grabOff.z, g_ik[0][0], g_ik[0][1], g_ik[1][0], g_ik[1][1]);
+				}
+			}
+		}
+
 		void Dragon(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			static float lastYaw = 0, turn = 0, wanderT = 0, breathIn = 6.0f, breath = 0, jaw = 0, shotT = 0, lookYaw = 0, lookPitch = 0, roll = 0, pitch = 0;
@@ -654,7 +719,9 @@ namespace bo3z
 					LetGo(a_player, vel, roll, baseScale);
 				}
 				lastYaw = yaw, lastZ = z, turn = 0, breath = 0, jaw = 0, breathIn = 4.0f, deployT = -1, roll = 0;
-				g_armHoldOn = false, g_armHold = 0, g_flapT = -1, g_liftT = -1;
+				g_armHoldOn = false, g_armHold = 0, g_flapT = -1, g_liftT = -1, g_grip = 0;
+				g_grabOff = {};
+				std::memset(g_ik, 0, sizeof(g_ik));
 				if (g_liftOff == 2) {
 					g_liftOff = 0;
 				}
@@ -688,7 +755,7 @@ namespace bo3z
 			const float  swRoll = 0.55f * std::sin(3.14159f * std::min(1.0f, u * 1.15f)) * inSwoop;
 			for (int i = 0; i < 2; ++i) {
 				if (space[i]) {
-					space[i]->local.translate = baseTrans + at;
+					space[i]->local.translate = baseTrans + at + g_grabOff * g_grip;
 					if (baseScale > 0) space[i]->local.scale = baseScale;
 				}
 				// Bond I's wing-beat: both wings thrown up, then a great stroke down
@@ -712,12 +779,13 @@ namespace bo3z
 				regrip += a_delta;
 				const float reach = std::clamp((u - 0.35f) / 0.4f, 0.0f, 1.0f) * (1 - std::clamp((u - 0.88f) / 0.12f, 0.0f, 1.0f));
 				const float clutch = std::clamp((u - 0.85f) / 0.15f, 0.0f, 1.0f);
-				const float tuck = breathing_ ? std::min(1.0f, breathT_ * 3.0f) : 0.0f;
-				const float open = regrip < 0.5f ? std::sin(3.14159f * regrip / 0.5f) : 0.0f;  // a re-grip: open and close
+				const float tuck = (breathing_ ? std::min(1.0f, breathT_ * 3.0f) : 0.0f) * (1 - clutch);  // (never while it holds you)
+				const float open = regrip < 0.5f ? 0.2f * std::sin(3.14159f * regrip / 0.5f) : 0.0f;  // a re-grip: a flex of the talons
+				g_grip = clutch;
 				for (int sd = 0; sd < 2; ++sd) {
 					const float ph = sd * 1.3f;
 					const float idleHip = 0.12f + 0.07f * std::sin(legT * 2.1f + ph), idleKnee = -0.10f + 0.08f * std::sin(legT * 2.1f + 0.7f + ph);
-					const float idleFoot = 0.40f + 0.06f * std::sin(legT * 2.1f + 1.4f + ph) - 0.7f * open;
+					const float idleFoot = 1.05f + 0.05f * std::sin(legT * 2.1f + 1.4f + ph) - 0.7f * open;  // talons closed round your hand
 					float hip = idleHip * clutch + 0.75f * reach - 0.45f * tuck;
 					float knee = idleKnee * clutch - 0.15f * reach + 0.6f * tuck;
 					float foot = idleFoot * clutch - 0.6f * reach + 0.3f * tuck;
@@ -726,8 +794,8 @@ namespace bo3z
 						hip -= 0.5f * trail, knee += 0.3f * trail;
 					}
 					for (int i = 0; i < 2; ++i) {
-						if (legN[i][sd][0]) legN[i][sd][0]->local.rotate = Rot(hip, 0, 0);
-						if (legN[i][sd][1]) legN[i][sd][1]->local.rotate = Rot(knee, 0, 0);
+						if (legN[i][sd][0]) legN[i][sd][0]->local.rotate = Rot(hip + g_ik[sd][0] * clutch * (1 - tuck), 0, 0);
+						if (legN[i][sd][1]) legN[i][sd][1]->local.rotate = Rot(knee + g_ik[sd][1] * clutch * (1 - tuck), 0, 0);
 						if (legN[i][sd][2]) legN[i][sd][2]->local.rotate = Rot(foot, 0, 0);
 					}
 				}
@@ -823,6 +891,11 @@ namespace bo3z
 					v.z = std::max(v.z, 720.0f * (1 - Smooth((g_flapT - 0.22f) / 0.68f)));
 				}
 				SetVel(cc, v);
+			}
+			{  // the talons on your hands (the skeleton you see)
+				const bool first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
+				const int  k = first && space[1] ? 1 : 0;
+				Grip(a_player, space[k], legN[k], k == 1, dt);
 			}
 			{  // where it is now: if the glider goes away this frame, the dragon in the world starts from here
 				const bool first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
