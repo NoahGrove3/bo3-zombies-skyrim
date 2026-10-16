@@ -134,7 +134,9 @@ namespace bo3z
 			}
 		}
 
-		// Quick Revive (solo): when health drops near zero, get back up once.
+		// Quick Revive: while you carry it, a killing blow drops you to your knees instead (Skyrim's bleedout - the
+		// player is held essential: src/Party.cpp), and you get straight back up at full health, once per draught.
+		bool SelfRevive() { return Has(gen::kPerk_hearthfire); }
 		void Tick()
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -143,11 +145,17 @@ namespace bo3z
 			}
 			auto* av = player->AsActorValueOwner();
 			const float max = av->GetPermanentActorValue(RE::ActorValue::kHealth);
-			if (max > 0 && av->GetActorValue(RE::ActorValue::kHealth) < max * 0.1f) {
+			const bool  falling = player->AsActorState()->IsBleedingOut();
+			if (max > 0 && (falling || av->GetActorValue(RE::ActorValue::kHealth) < max * 0.1f)) {
+				player->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery);
 				av->RestoreActorValue(RE::ActorValue::kHealth, max);
+				if (falling) {
+					player->NotifyAnimationGraph("BleedOutStop");
+					player->NotifyAnimationGraph("bleedOutStop");
+				}
 				Save::SetPerkStacks(gen::kPerk_hearthfire, N(gen::kPerk_hearthfire) - 1);  // one revive per draught
-				Hud::Banner("QUICK REVIVE", 3.0f);
-				logger::info("perk: quick revive used");
+				Hud::Banner("THE HEARTH CALLS YOU BACK", 3.0f);
+				logger::info("perk: quick revive used{}", falling ? " (from the ground)" : "");
 			}
 		}
 	}

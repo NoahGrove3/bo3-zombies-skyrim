@@ -653,7 +653,7 @@ namespace bo3z
 			if (Step(a_town) < kFreed) {
 				Hud::Banner(name + " waits until the Dirge over " + std::string(gen::kTowns[a_town]) + " is broken", 3.5f);
 				if (GiveBook(RE::PlayerCharacter::GetSingleton())) {
-					Note("The Undying Dirge is back in your pack", 5.0f);
+					Note("The Curse of Alduin is back in your pack", 5.0f);
 				}
 				return;
 			}
@@ -811,7 +811,7 @@ namespace bo3z
 					}
 					GiveBook(player);
 					Forms::Play(gen::Sound::quest_start);
-					Note("A book is in your pack: The Undying Dirge", 8.0f);
+					Note("A book is in your pack: The Curse of Alduin", 8.0f);
 					g_loreShown.insert(-1);
 					return;
 				}

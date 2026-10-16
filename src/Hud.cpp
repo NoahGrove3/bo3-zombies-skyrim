@@ -642,65 +642,34 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DrawCompass(dl, s, size, k, now);
 			}
 
-			// Sneaking: our own detection meter in place of Skyrim's eye - an eye over the crosshair that opens as the most
-			// watchful one grows suspicious (iron and gold, amber when they wonder, a burning red when they see you), and a
-			// mark round the crosshair toward each one looking for you
-			if (s.sneaking && !s.perkMenu) {
-				static float open = 0.1f, heat = 0;
-				open += (std::max(0.1f, s.aware) - open) * std::min(1.0f, dt * 8);
-				heat += ((s.seen ? 1.0f : 0.0f) - heat) * std::min(1.0f, dt * 6);
-				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f - 52 * k };
-				const float  w = 30 * k, hgt = 15 * k;
-				const ImU32  iron = IM_COL32(12, 11, 14, 215);
-				const ImU32  rim = s.seen ? IM_COL32(235, 70, 45, 255) : Fade(kGold, 0.55f + 0.45f * s.aware);
-				ImVec2 up[25], lo[25], all[48];
-				for (int i = 0; i <= 24; ++i) {
-					const float t = i / 12.0f - 1.0f, cv = std::pow(1 - t * t, 0.85f);
-					up[i] = { c.x + t * w, c.y - hgt * cv };
-					lo[i] = { c.x + t * w, c.y + hgt * cv };
-				}
-				// the lids' outline (always the whole almond) and the dark of the eye
-				int n = 0;
-				for (int i = 0; i <= 24; ++i) all[n++] = up[i];
-				for (int i = 23; i >= 1; --i) all[n++] = lo[i];
-				dl->AddConcavePolyFilled(all, n, iron);
-				// the opening: a slit that widens with their suspicion
-				n = 0;
-				for (int i = 0; i <= 24; ++i) {
-					const float t = i / 12.0f - 1.0f, cv = std::pow(1 - t * t, 0.85f);
-					all[n++] = { c.x + t * w * 0.92f, c.y - hgt * 0.92f * cv * open };
-				}
-				for (int i = 23; i >= 1; --i) {
-					const float t = i / 12.0f - 1.0f, cv = std::pow(1 - t * t, 0.85f);
-					all[n++] = { c.x + t * w * 0.92f, c.y + hgt * 0.92f * cv * open };
-				}
-				const ImU32 glowCol = s.seen ? IM_COL32(255, 60, 30, 255) : s.aware > 0.15f ? IM_COL32(255, 170, 60, 255) : IM_COL32(110, 150, 220, 255);
-				dl->AddConcavePolyFilled(all, n, Fade(glowCol, 0.18f + 0.25f * open));
-				const float ir = hgt * 0.8f * std::min(1.0f, open * 1.1f);
-				if (ir > 1.0f) {
-					dl->AddCircleFilled(c, ir * 1.6f, Fade(glowCol, 0.12f + 0.2f * heat), 24);
-					dl->AddCircleFilled(c, ir, Fade(glowCol, 0.9f), 24);
-					dl->AddEllipseFilled(c, { ir * 0.28f, ir * 0.8f }, IM_COL32(8, 6, 8, 255), 0, 16);  // a dragon's slit pupil
-				}
-				dl->AddPolyline(up, 25, rim, 0, 1.6f * k);
-				dl->AddPolyline(lo, 25, rim, 0, 1.6f * k);
-				if (heat > 0.05f) {  // seen: the lids smoulder
-					FlameBorder(dl, { c.x - w * 0.7f, c.y - hgt * 0.7f }, { c.x + w * 0.7f, c.y + hgt * 0.7f }, 2, now, heat, k);
-				}
-				const char* word = s.seen ? "SEEN" : s.aware > 0.15f ? "WATCHED" : "HIDDEN";
-				TxtC(dl, g_body, 13 * k, c.x, c.y + hgt + 4 * k, s.seen ? IM_COL32(255, 120, 90, 240) : IM_COL32(205, 195, 170, 200), word, 1.2f * k, IM_COL32(0, 0, 0, 220));
-				// toward each watcher: a short burning arc round the crosshair
+			// The crosshair: a small white dot (Skyrim's own is hidden), and while you sneak a small clean eye just over
+			// it - a thin almond that opens as the most watchful one grows suspicious, white while hidden, amber when
+			// they wonder, red when you are seen
+			if (!s.perkMenu && !s.lootOn) {
 				const ImVec2 cc{ size.x * 0.5f, size.y * 0.5f };
-				for (const auto& wv : s.watchers) {
-					const float R = 64 * k, half = 0.22f;
-					const ImU32 col = wv.seen ? IM_COL32(240, 60, 35, 255) : IM_COL32(240, 170, 60, 255);
-					dl->PathClear();
-					for (int i = 0; i <= 12; ++i) {
-						const float a = wv.ang - half + 2 * half * i / 12.0f;
-						dl->PathLineTo({ cc.x + std::sin(a) * R, cc.y - std::cos(a) * R });
-					}
-					dl->PathStroke(Fade(col, 0.35f + 0.65f * wv.aware), 0, (2.0f + 2.5f * wv.aware) * k);
+				dl->AddCircleFilled(cc, 3.2f * k, IM_COL32(0, 0, 0, 90), 16);
+				dl->AddCircleFilled(cc, 2.2f * k, IM_COL32(255, 255, 255, 235), 16);
+			}
+			if (s.sneaking && !s.perkMenu) {
+				static float open = 0.15f;
+				open += (std::max(0.15f, s.aware) - open) * std::min(1.0f, dt * 8);
+				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f - 26 * k };
+				const float  w = 15 * k, h = 7 * k;
+				const ImU32  col = s.seen ? IM_COL32(240, 70, 55, 255) : s.aware > 0.15f ? IM_COL32(240, 180, 80, 255) : IM_COL32(240, 240, 240, 255);
+				ImVec2 up[17], lo[17];
+				for (int q = 0; q <= 16; ++q) {
+					const float t = q / 8.0f - 1.0f, cv = 1 - t * t;
+					up[q] = { c.x + t * w, c.y - h * cv };
+					lo[q] = { c.x + t * w, c.y + h * cv };
 				}
+				ImVec2 lens[32];
+				int    m = 0;
+				for (int q = 0; q <= 16; ++q) { const float t = q / 8.0f - 1.0f; lens[m++] = { c.x + t * w, c.y - h * (1 - t * t) * open }; }
+				for (int q = 15; q >= 1; --q) { const float t = q / 8.0f - 1.0f; lens[m++] = { c.x + t * w, c.y + h * (1 - t * t) * open }; }
+				dl->AddConcavePolyFilled(lens, m, Fade(col, 0.30f));
+				dl->AddPolyline(up, 17, Fade(col, 0.9f), 0, 1.4f * k);
+				dl->AddPolyline(lo, 17, Fade(col, 0.9f), 0, 1.4f * k);
+				dl->AddCircleFilled(c, std::max(1.2f * k, h * 0.55f * open), Fade(col, 0.95f), 16);
 			}
 
 			// The quests chosen in the journal, top left (under Skyrim's notices): name in gold, open goals beneath
@@ -3088,7 +3057,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					if (glow[i] > 0.02f) {  // the chosen word: a soft glow behind its letters, breathing
 						const float pulse = 0.8f + 0.2f * std::sin(now * 3.0f);
-						Txt(fg, g_title, fs, at, tc, up, 3.0f * k * glow[i], IM_COL32(120, 255, 200, static_cast<int>(255 * pulse * glow[i])));
+						Txt(fg, g_title, fs, at, tc, up, 3.0f * k * glow[i], IM_COL32(255, 186, 80, static_cast<int>(255 * pulse * glow[i])));
 					} else {
 						Txt(fg, g_title, fs, at, tc, up);
 					}
@@ -3151,7 +3120,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// a pressed word answers: a brief cold flash on it
 			if (const float pt = now - g_pressT; pt >= 0 && pt < 0.35f) {
 				const float a = 1.0f - pt / 0.35f;
-				fg->AddCircleFilled({ size.x - 110 * k - 80 * k, g_pressY }, 90 * k * (0.6f + 0.4f * (1 - a)), IM_COL32(150, 255, 215, static_cast<int>(40 * a)), 40);
+				fg->AddCircleFilled({ size.x - 110 * k - 80 * k, g_pressY }, 90 * k * (0.6f + 0.4f * (1 - a)), IM_COL32(255, 200, 110, static_cast<int>(40 * a)), 40);
 			}
 			// the curtain that lifts as the menu opens
 			if (fade < 1.0f) {
@@ -3694,6 +3663,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					cm->uiMovie->SetVisible(false);
 				}
 			}
+			if (cursorUp || mainMenu) {  // (and Windows' own pointer stays hidden over the game: ours is the only one)
+				::SetCursor(nullptr);
+			}
 			// the Tab menu (Skills / Magic / Items / Map), on its own: the party panel sits in its empty top-left corner
 			const bool journal = uiM && uiM->IsMenuOpen(RE::TweenMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) &&
 			                     !uiM->IsMenuOpen(RE::InventoryMenu::MENU_NAME) && !uiM->IsMenuOpen(RE::MagicMenu::MENU_NAME) &&
@@ -3821,6 +3793,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder.Compass._visible", RE::GFxValue(false));
 						// and its sneak eye to ours
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.StealthMeterInstance._alpha", RE::GFxValue(0.0));
+						// and its crosshair to our dot
+						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CrosshairInstance._alpha", RE::GFxValue(0.0));
+						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CrosshairAlert._alpha", RE::GFxValue(0.0));
 					}
 				}
 			}

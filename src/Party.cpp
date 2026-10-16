@@ -219,7 +219,7 @@ namespace bo3z::Party
 			g_marks = std::move(marks);
 		}
 		const bool active = Active();
-		SetEssential(active);
+		SetEssential(active || Perks::SelfRevive());
 		std::scoped_lock l(g_lock);
 		g_at = p->GetPosition();
 		if (!active) {

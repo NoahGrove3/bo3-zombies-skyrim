@@ -405,6 +405,7 @@ namespace bo3z
 		void OnZombieHit(RE::Actor* a_zombie);  // a round zombie hit the player
 		void OnCast(int a_shots);  // Stormcrown
 		void Tick();
+		bool SelfRevive();         // Quick Revive held: a killing blow is a fall instead
 		float ManaMult();          // magicka cost (tomes)
 		float RegenMult();  // magicka returns faster (Hawkeye, stacked)
 		float ChargeMult();        // Quicksilver: charge time and cooldown of signature moves (x)

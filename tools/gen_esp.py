@@ -424,8 +424,8 @@ def dirge_text():
     relic = {w['relicTown']: w for w in S['weapons']['rows'] if w.get('relicTown', 'none') != 'none'}
     gen_city = lambda t: t.replace('{city}', 'the city').replace("{city}'s", "the city's").replace('{landmark}', 'its oldest holy place').replace('{n}', '')
     out = [f"<font face='$HandwrittenFont'>", img('sigil', 200, 200),
-           "<p align='center'><font size='30'>THE UNDYING DIRGE</font></p>",
-           "<p align='center'>Being a true account of the curse that walks by night, set down by one who lived through Helgen</p>",
+           "<p align='center'><font size='30'>THE CURSE OF ALDUIN</font></p>",
+           "<p align='center'>Being a true account of the Undying Dirge, the curse that walks by night, set down by one who lived through Helgen</p>",
            "[pagebreak]", "<p align='center'><font size='24'>I. Helgen</font></p>", img('helgen', 300, 176),
            f"<p>{cu['prologue']}</p>",
            "<p>The priests say the Dirge is no ordinary shout. It was sung, not spoken: a slow word that sank into the earth and stayed there. "
@@ -448,7 +448,7 @@ def dirge_text():
            "masters had fallen, and taught them to sing it back.</p>",
            "<p>Where they sang, a star of violet fire came down out of the night. Vaerdis caught it in a ring of carved stone and bound it with the counter-song: "
            "blue runes cut into the stones like bracelets, so that the fire could neither burn out nor fly free. The stones rose and turned about the star, "
-           "and have turned ever since. This was the first shrine. The Nords called it <i>the Mourner's Font</i>.</p>",
+           "and have turned ever since. Beneath it she laid a floor of black stone and cut the counter-song into it in gold: rings within rings, a dial to count the nights, runes for every grave that would ever be dug, and at its heart a sun, so that the dead would know whose ground it was. This was the first shrine. The Nords called it <i>the Mourner's Font</i>.</p>",
            "[pagebreak]",
            "<p>She raised one in each place the dead marched, ten in all, where the cities of the holds would later stand. Into each she poured something that cost her dearly. "
            "Every mage who died fighting the Dirge gave their last spell to the star, and the star kept it. That is why the shrine has so many to give: "
@@ -462,7 +462,7 @@ def dirge_text():
            "Riverwood's mill split open and the shrine rose out of it, its star burning violet, its stones turning as if they had never stopped. "
            "Hod saw it and has not slept well since.</p>",
            "<p>Each shrine still sings Vaerdis's answer, too low to hear unless you stand close and listen. The fire you see is the Dirge itself, "
-           "caught and turned back. The blue light in the runes is the answer holding it. Every spell in its keeping is the echo of a mage who fell, "
+           "caught and turned back. The blue light in the floating stones and the gold in the floor are the answer holding it. Every spell in its keeping is the echo of a mage who fell, "
            "and so the holds have come to call them <b>Echo Altars</b>. Some still say <i>Requiem Fonts</i> or <i>Mourning Stones</i>. "
            "Old Nords in the Rift say <i>Vaerdis's Lanterns</i>, and leave a coin at the edge of the pool.</p>",
            "<p>No one knows what became of Vaerdis. The priests of Arkay say she gave her own last spell to the first shrine and stands inside it still, "
@@ -476,10 +476,12 @@ def dirge_text():
            "<p><b>Brews.</b> Nine draughts, each one a gift that lasts until you fall: "
            + ", ".join(f"<i>{x['label']}</i>" for x in S['perks']['rows'][:-1]) + f" and <i>{S['perks']['rows'][-1]['label']}</i>.</p>",
            "<p><b>The Thu'um.</b> When a city is freed, its shrine keeps that city's voice for you (see VII).</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>V. The Eighteen Spells</font></p>",
+           "<p>Look into the star or at the gold of its floor and press Activate to open it. Its menu stands at your side and does not stop the night.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>V. The Spells of the Fallen</font></p>",
+           "<p>The shrine keeps the last spells of more than a hundred fallen mages: fire, frost and storm, poison and blood, bone and void, "
+           "the old magic of the Mysticism schools and the runes of forgotten orders. Call one and the altar's carousel turns until the star chooses for you.</p>",
            "<p>Tap to throw a bolt from one hand. Hold, and both hands gather the spell's full power: the longer you hold, the harder it strikes. "
            "Let go too soon and the power gutters out. Magicka comes back fast.</p>",
-           "<p>" + ", ".join(w['label'] for w in S['weapons']['rows'] if w.get('kind') == 'tome' and not w.get('retired')) + ".</p>",
            "[pagebreak]", "<p align='center'><font size='24'>VI. Breaking the Dirge</font></p>",
            "<p>The Dirge has taken root beneath each city, and each city must be freed its own way: four rites, one after another. Most must be done by night.</p>"]
     for t in towns:
@@ -489,23 +491,29 @@ def dirge_text():
             out.append(f"<p>{k + 1}. <i>{r['title'].replace('{city}', t)}.</i> {txt}</p>")
         if t == 'Riverwood':
             out.append(img('herald', 300, 176))
-    out += ["<p>Of the ritual circle: when that rite begins, a ring of light rises over the shrine and floats there. While no dead thing stands inside it, its count runs down. "
-            "Let them cross it and the count begins again. Stand at its edge and keep them out.</p>",
+    out += ["<p>Of the ritual circle: when that rite begins, a ring of pale runes wakes on the ground round the shrine. While no dead thing stands inside it, its count runs down "
+            "and the runes burn white one by one. Let them cross it and the runes flare red and the count begins again. Stand at its edge and keep them out.</p>",
+            "<p>Of holding the shrine: the same ring of runes, but you must stand inside it. The night pushes harder while you do.</p>",
             "<p>When all four rites are done, the Dirge loses its hold on that city. Its dead sleep again, and none will rise within its bounds.</p>",
             "[pagebreak]", "<p align='center'><font size='24'>VII. The Voices of the Holds</font></p>",
             "<p>Each freed city keeps a Thu'um of its own, sleeping in the Echo Altar at its station. Go to the shrine and it is yours. Speak one word, or hold your breath and speak all three.</p>"]
     for h in S['shouts']['rows']:
         out.append(f"<p><b>{h['town']}</b>: <i>{h['label']}</i> ({' '.join(h['words'])}, '{' '.join(h['translations'])}'). {h['text']}.</p>")
     out += ["[pagebreak]", "<p align='center'><font size='24'>VIII. Nights of Omen</font></p>", img('omen', 300, 152),
-            "<p>Some nights are worse than others. Under the <b>Blood Moon</b> the dead rise faster. On a <b>Fog Night</b> the mist hides a great wyrm of bone, Grimmvar, Herald of the Dirge: "
+            "<p>From the tenth night on, some nights are worse than others. Under the <b>Blood Moon</b> the dead rise faster. On a <b>Fog Night</b> the mist hides a great wyrm of bone, Grimmvar, Herald of the Dirge: "
             "when he draws breath, run from the fire that follows. "
             "In an <b>Ash Storm</b> the dead run, and every kill is worth twice as much. On the <b>Night of Iron</b> the Reapers and the Voidbound march in force.</p>",
             "<p>Watch the dead for tokens. A skull gives Insta-Kill. A coin gives Double Points. A falling star is the Nuke: it destroys every risen corpse and buys a little quiet. "
             "A chest is a Fire Sale, when the shrine asks almost nothing for a spell.</p>",
+            "[pagebreak]", "<p align='center'><font size='24'>IX. Of Rest and Falling</font></p>",
+            "<p>No one sleeps while the dead walk, and no one waits out the dusk. By day you may rest, an hour at a time; in a party it is the host who keeps the hours, and the whole party's clock turns with theirs.</p>",
+            "<p>At every dawn, and whenever a city is freed, the day is written down for you. If the whole party falls, you wake again at that dawn.</p>",
+            "<p>In a party, a friend who falls is not lost at once: stand over them and hold Activate, and they rise. Alone, only a Hearthfire Tonic will lift you: "
+            "drink it, and the blow that should have killed you only puts you on your knees, and you stand again whole.</p>",
             f"<p>{cu['freedAll']}</p>", "</font>"]
     return '\n'.join(out)
 recs.setdefault('BOOK', []).append(record('BOOK', fid('BOOK', 'dirge'), [
-    sub('EDID', z('UN_UndyingDirgeBook')), sub('OBND', bytes.fromhex('f5fff1fffdff0b000f000300')), sub('FULL', z('The Undying Dirge')),
+    sub('EDID', z('UN_UndyingDirgeBook')), sub('OBND', bytes.fromhex('f5fff1fffdff0b000f000300')), sub('FULL', z('The Curse of Alduin')),
     sub('MODL', z('Clutter\\Books\\Book02LowPoly02.nif')), sub('DESC', z(dirge_text())),
     sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x000937A2)),
     sub('DATA', struct.pack('<BBHIIf', 0, 0, 0, 0, 25, 1.0)), sub('INAM', struct.pack('<I', 0x0008ADAE)), sub('CNAM', struct.pack('<I', 0))]))
