@@ -200,6 +200,33 @@ namespace bo3z
 			return m;
 		}
 
+		// Skyrim's own dragon sounds (Skyrim.esm), played at a reference (or kept, for a loop that must be stopped)
+		namespace DragonSound
+		{
+			constexpr RE::FormID kRoar = 0x0003F35F, kFlap = 0x0003CE00, kFlapBig = 0x0003D122, kFire = 0x0003EF56, kLand = 0x0003F1F4;
+		}
+		bool PlayGameSound(RE::FormID a_id, RE::TESObjectREFR* a_at, RE::BSSoundHandle* a_keep = nullptr, float a_vol = 1.0f)
+		{
+			auto* d = RE::TESForm::LookupByID<RE::BGSSoundDescriptorForm>(a_id);
+			auto* am = RE::BSAudioManager::GetSingleton();
+			RE::BSSoundHandle h;
+			RE::BSSoundHandle& hh = a_keep ? *a_keep : h;
+			if (!d || !am || !am->GetSoundHandle(hh, static_cast<RE::BSISoundDescriptor*>(d))) {
+				return false;
+			}
+			if (a_at) {
+				hh.SetPosition(a_at->GetPosition());
+				if (auto* node = a_at->Get3D()) {
+					hh.SetObjectToFollow(node);
+				}
+			}
+			if (a_vol < 0.999f) {
+				hh.SetVolume(a_vol);
+			}
+			return hh.Play();
+		}
+		constexpr float kDragonScale = 0.23f;  // DG_Space's size in the dragon's nif (its copy on you starts at 0: hidden until placed)
+
 		// rotations blended through quaternions
 		struct Quat
 		{
@@ -310,6 +337,9 @@ namespace bo3z
 				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}1", L).c_str())) n->local.rotate = Rot(0.12f * (1 - tuck) - 0.55f * tuck, 0, 0);
 				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}2", L).c_str())) n->local.rotate = Rot(-0.1f * (1 - tuck) + 0.7f * tuck, 0, 0);
 				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}3", L).c_str())) n->local.rotate = Rot(0.4f * (1 - tuck) - 0.8f * open + 0.35f * tuck, 0, 0);
+				const float toes = -1.1f * (1 - Smooth(t / 0.35f)) + 0.4f * Smooth(t / 0.35f) * (1 - tuck) - 0.6f * tuck;  // closed -> open -> folded
+				if (auto* n = root->GetObjectByName(fmt::format("DG_Toe{}F", L).c_str())) n->local.rotate = Rot(toes, 0, 0);
+				if (auto* n = root->GetObjectByName(fmt::format("DG_Toe{}B", L).c_str())) n->local.rotate = Rot(-toes, 0, 0);
 			}
 			RE::NiUpdateData ud;
 			root->Update(ud);
@@ -357,6 +387,8 @@ namespace bo3z
 			}
 			g_away.scale = a_baseScale > 0 ? g_lastSpace.scale / a_baseScale : 1.0f;
 			g_away.side = std::abs(a_roll) > 0.05f ? (a_roll > 0 ? 1.0f : -1.0f) : (rng() % 2 ? 1.0f : -1.0f);
+			PlayGameSound(DragonSound::kFlapBig, ref.get());
+			PlayGameSound(DragonSound::kRoar, ref.get(), nullptr, 0.8f);
 		}
 
 		// ---- the Echo Altar's dragon bonds (Noah): three, bought in order at any Echo Altar, kept for the whole game
@@ -438,6 +470,7 @@ namespace bo3z
 			const auto at = a_player->GetPosition();
 			RE::ShakeCamera(1.2f, at, 0.7f);
 			Forms::PlayAt(gen::Sound::shout_quake, a_player);
+			PlayGameSound(DragonSound::kLand, a_player);
 			if (auto* fx = Forms::Ours(gen::kRiseFx)) {
 				if (auto r = a_player->PlaceObjectAtMe(fx, false)) {
 					r->SetPosition(at);
@@ -654,6 +687,10 @@ namespace bo3z
 		// The talons on your hands (Noah: closing on them, not hanging open): while it holds you each hind leg is bent
 		// to reach your hand (two joints turned until the foot is at it, a little each frame) and the dragon itself
 		// drawn the last of the way, so the closed claws sit round your grip
+		RE::BSSoundHandle g_breathSound;
+		float             g_dodgeT = -1;     // a dodge's push: its time, and which way
+		RE::NiPoint3      g_dodgeDir{};
+		float             g_divePitch = 0;   // Bond III: the dragon's nose down in a dive
 		float        g_ik[2][2]{};   // the legs' bend toward your hands (hip, knee), radians on top of their own motion
 		RE::NiPoint3 g_grabOff{};    // the dragon moved (DG_Space's own units) so its feet reach your hands
 		float        g_grip = 0;     // how firmly it holds you (0 in the swoop .. 1)
@@ -748,6 +785,8 @@ namespace bo3z
 			RE::NiAVObject* space[2]{};
 			RE::NiAVObject* fold[2][2]{};
 			RE::NiAVObject* legN[2][2][3]{};
+			RE::NiAVObject* toeN[2][2][2]{};  // [skeleton][side][front, back]
+			static bool     letGone = false, sawGliding = false;  // (the glide ended - the dragon already flew off - while its copy still hangs on you)
 			for (int i = 0; i < 2; ++i) {
 				if (auto* root = a_player->Get3D(i == 1)) {
 					bank[i] = root->GetObjectByName("DG_Bank");
@@ -760,6 +799,8 @@ namespace bo3z
 						for (int j = 0; j < 3; ++j) {
 							legN[i][sd][j] = root->GetObjectByName(fmt::format("DG_Leg{}{}", sd == 0 ? "L" : "R", j + 1).c_str());
 						}
+						toeN[i][sd][0] = root->GetObjectByName(sd == 0 ? "DG_ToeLF" : "DG_ToeRF");
+						toeN[i][sd][1] = root->GetObjectByName(sd == 0 ? "DG_ToeLB" : "DG_ToeRB");
 					}
 					if (bank[i] && !mouth) {
 						mouth = root->GetObjectByName("DG_Mouth");
@@ -772,10 +813,11 @@ namespace bo3z
 			const RE::NiPoint3  pos = a_player->GetPosition();
 			AwayTick(a_player, a_delta);
 			if (!bank[0] && !bank[1]) {  // not gliding
-				if (g_hadDragon) {  // the glider was just put away: the dragon lets go and flies off
-					g_hadDragon = false;
-					LetGo(a_player, vel, roll, baseScale);
+				if (g_hadDragon && !letGone) {  // the glider was just put away: the dragon lets go and flies off
+					LetGo(a_player, vel, roll, kDragonScale);
 				}
+				g_hadDragon = false, letGone = false, sawGliding = false;
+				if (g_breathSound.IsValid()) g_breathSound.Stop();
 				lastYaw = yaw, lastZ = z, turn = 0, breath = 0, jaw = 0, breathIn = 4.0f, deployT = -1, roll = 0;
 				g_armHoldOn = false, g_armHold = 0, g_flapT = -1, g_liftT = -1, g_grip = 0;
 				g_grabOff = {};
@@ -795,10 +837,35 @@ namespace bo3z
 			// close on your arms and it carries you on into the glide (every frame, eased; 1.4 seconds)
 			if (deployT < 0) {
 				deployT = 0;
-				for (auto* sp : space) if (sp) baseScale = sp->local.scale, baseTrans = sp->local.translate;
+				for (auto* sp : space) if (sp) baseTrans = sp->local.translate;
+				baseScale = kDragonScale;
+				PlayGameSound(DragonSound::kRoar, a_player, nullptr, 0.7f);
+				PlayGameSound(DragonSound::kFlapBig, a_player);
+			}
+			// the paraglider's own state: the glide ended (landing, Activate) though its copy of the dragon still hangs on
+			// you for the put-away - the dragon lets go now, and the copy is hidden
+			{
+				bool pg = false;
+				const bool known = a_player->GetGraphVariableBool("bParaGliding", pg);
+				if (known && pg) {
+					sawGliding = true;
+				}
+				if (known && sawGliding && !pg && !letGone) {
+					letGone = true;
+					if (g_hadDragon) {
+						LetGo(a_player, vel, roll, kDragonScale);
+					}
+					if (g_breathSound.IsValid()) g_breathSound.Stop();
+				}
+			}
+			if (letGone) {
+				for (auto* sp : space) if (sp) sp->local.scale = 0.0f;
+				g_armHoldOn = false, g_armHold = 0;
+				lastPos = pos;
+				return;
 			}
 			deployT += a_delta;
-			constexpr float kSwoop = 1.4f;
+			constexpr float kSwoop = 1.15f;
 			// your arms stay down until it reaches you, then go up to its talons as it takes you
 			g_armHoldOn = true;
 			g_armHold = 1 - Smooth((deployT - (kSwoop - 0.38f)) / 0.38f);
@@ -819,9 +886,9 @@ namespace bo3z
 				// Bond I's wing-beat: both wings thrown up, then a great stroke down
 				float beat = 0;
 				if (g_flapT >= 0) {
-					beat = g_flapT < 0.22f ? 0.85f * std::sin(1.5708f * g_flapT / 0.22f)
-					     : g_flapT < 0.55f ? 0.85f - 2.0f * Smooth((g_flapT - 0.22f) / 0.33f)
-					                       : -1.15f * (1 - Smooth((g_flapT - 0.55f) / 0.35f));
+					beat = g_flapT < 0.3f ? 1.15f * std::sin(1.5708f * g_flapT / 0.3f)
+					     : g_flapT < 0.75f ? 1.15f - 2.6f * Smooth((g_flapT - 0.3f) / 0.45f)
+					                       : -1.45f * (1 - Smooth((g_flapT - 0.75f) / 0.4f));
 				}
 				if (fold[i][0]) fold[i][0]->local.rotate = Rot(0, beat, 0);
 				if (fold[i][1]) fold[i][1]->local.rotate = Rot(0, -beat, 0);
@@ -855,6 +922,11 @@ namespace bo3z
 						if (legN[i][sd][0]) legN[i][sd][0]->local.rotate = Rot(hip + g_ik[sd][0] * clutch * (1 - tuck), 0, 0);
 						if (legN[i][sd][1]) legN[i][sd][1]->local.rotate = Rot(knee + g_ik[sd][1] * clutch * (1 - tuck), 0, 0);
 						if (legN[i][sd][2]) legN[i][sd][2]->local.rotate = Rot(foot, 0, 0);
+						// the talons: spread as it reaches for you, then closed round your hand (front ones back, the back
+						// one forward); a re-grip loosens them a little
+						const float toes = 0.5f * reach - 1.15f * clutch + 0.45f * open * clutch;
+						if (toeN[i][sd][0]) toeN[i][sd][0]->local.rotate = Rot(toes, 0, 0);
+						if (toeN[i][sd][1]) toeN[i][sd][1]->local.rotate = Rot(-toes * 0.9f, 0, 0);
 					}
 				}
 			}
@@ -867,8 +939,10 @@ namespace bo3z
 			const float fall = (z - lastZ) / dt;
 			lastZ = z;
 			// lean into the turn, nose down a little as you sink
-			roll += (std::clamp(turn * 0.35f, -0.45f, 0.45f) - roll) * std::min(1.0f, dt * 3.0f);
-			pitch += (std::clamp(fall * 0.0006f, -0.18f, 0.08f) - pitch) * std::min(1.0f, dt * 2.0f);
+			roll += (std::clamp(turn * 0.55f, -0.75f, 0.75f) - roll) * std::min(1.0f, dt * 3.0f);
+			static float swing = 0;  // the body swung round into the turn (head first)
+			swing += (std::clamp(-turn * 0.3f, -0.4f, 0.4f) - swing) * std::min(1.0f, dt * 2.5f);
+			pitch += (std::clamp(fall * 0.0006f, -0.18f, 0.08f) - g_divePitch - pitch) * std::min(1.0f, dt * 2.0f);  // (Bond III: nose down in a dive)
 			// the head: toward where you look (the camera), into the turn, and wandering on its own
 			wanderT += dt;
 			float camYaw = yaw;
@@ -896,18 +970,25 @@ namespace bo3z
 			if (breath <= 0 && thrall && target.get() && sinceBreath > 3.2f && deployT > kSwoop) {
 				breathIn = 0;
 			}
-			if (breath <= 0 && (breathIn -= dt) <= 0) {
+			// (Noah: the fire is Bond III's alone - seen and felt; before it the dragon never breathes)
+			if (breath <= 0 && thrall && deployT > kSwoop && (breathIn -= dt) <= 0) {
 				breath = 1.6f;
 				sinceBreath = 0;
 				breathIn = std::uniform_real_distribution<float>(6.0f, 11.0f)(rng);
+				PlayGameSound(DragonSound::kFire, a_player, &g_breathSound);
+			}
+			if (!thrall) {
+				breath = 0;
 			}
 			const bool breathing = breath > 0;
-			if (breathing) breath -= dt;
+			if (breathing && (breath -= dt) <= 0 && g_breathSound.IsValid()) {
+				g_breathSound.Stop();
+			}
 			breathing_ = breathing, breathT_ = breathing ? breathT_ + dt : 0.0f;
-			jaw += ((breathing || breathIn < 0.35f ? 0.38f : 0.03f * (0.5f + 0.5f * std::sin(wanderT * 0.9f))) - jaw) * std::min(1.0f, dt * 8.0f);
+			jaw += ((breathing || (thrall && breathIn < 0.35f) ? 0.38f : 0.03f * (0.5f + 0.5f * std::sin(wanderT * 0.9f))) - jaw) * std::min(1.0f, dt * 8.0f);
 			for (int i = 0; i < 2; ++i) {
 				if (bank[i]) {
-					bank[i]->local.rotate = Rot(pitch * (1 - inSwoop) + swPitch, roll * (1 - inSwoop) + swRoll, swYaw);
+					bank[i]->local.rotate = Rot(pitch * (1 - inSwoop) + swPitch, roll * (1 - inSwoop) + swRoll, swYaw + swing * (1 - inSwoop));
 				}
 				if (look[i]) {
 					look[i]->local.rotate = Rot(lookPitch, 0, lookYaw);
@@ -918,37 +999,96 @@ namespace bo3z
 			}
 			// the bonds' flight: Bond I glides quicker and sinks slower, beats its wings to climb; Bond II's take-off hangs you
 			// there while it comes, then carries you up
-			if (g_flapT >= 0 && (g_flapT += dt) > 0.9f) {
+			if (g_flapT >= 0 && (g_flapT += dt) > 1.15f) {
 				g_flapT = -1;
 			}
-			if (auto* cc = a_player->GetCharController(); cc && Bond() >= 1 && !g_dive) {
+			if (auto* cc = a_player->GetCharController(); cc && !g_dive) {
 				static RE::NiPoint3 glide{};
+				static float        fallV = 0, speed = 950;
 				RE::NiPoint3        v{};
 				GetVel(cc, v);
+				const int  bond = Bond();
+				const bool hanging = g_liftOff == 2 && deployT < kSwoop * 0.88f;
 				if (deployT <= a_delta * 1.5f) {
 					glide = { v.x, v.y, 0 };
+					fallV = std::max(v.z, -250.0f);
+					speed = std::max(950.0f, std::sqrt(v.x * v.x + v.y * v.y));
 				}
-				const RE::NiPoint3 heading{ std::sin(yaw), std::cos(yaw), 0 };
-				const bool  hanging = g_liftOff == 2 && deployT < kSwoop * 0.88f;
-				const float want = hanging ? 0.0f : 950.0f;
-				glide = glide + (heading * want - glide) * std::min(1.0f, dt * (hanging ? 4.0f : 0.9f));
-				v.x = glide.x, v.y = glide.y;
-				v.z = std::max(v.z, -105.0f);  // (the glide alone sinks about half again faster)
-				if (hanging) {
-					v.z = 12.0f;
-				} else if (g_liftOff == 2) {  // its talons close: up you go
-					g_liftOff = 0, g_liftT = 0;
-					Forms::PlayAt(gen::Sound::shout_dragon, a_player);
+				bool set = false;
+				// (Noah: you don't glide before it has you) until its talons close you fall as you were falling
+				const bool beforeGrab = deployT < kSwoop * 0.9f && !hanging && g_liftOff != 2;
+				if (beforeGrab) {
+					fallV = std::max(fallV - 900.0f * dt, -1100.0f);
+					v.z = fallV;
+					set = true;
 				}
-				if (g_liftT >= 0) {
-					g_liftT += dt;
-					v.z = std::max(v.z, 1150.0f * (1 - Smooth(g_liftT / 1.3f)));
-					if (g_liftT > 1.3f) g_liftT = -1;
+				if (bond >= 1) {
+					const RE::NiPoint3 heading{ std::sin(yaw), std::cos(yaw), 0 };
+					// Bond III: where you look steers the dive - look down and it folds its wings and dives, gathering
+					// speed; look up and that speed carries you on and up into the glide
+					float lookDown = 0;
+					if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
+						lookDown = std::asin(std::clamp(-cam->cameraRoot->world.rotate.entry[2][1], -1.0f, 1.0f));
+					}
+					float want = 950.0f;
+					g_divePitch += ((bond >= 3 && !beforeGrab ? std::clamp(lookDown, -0.35f, 0.9f) * 0.6f : 0.0f) - g_divePitch) * std::min(1.0f, dt * 3.0f);
+					if (bond >= 3 && !beforeGrab && !hanging) {
+						if (lookDown > 0.15f) {
+							speed = std::min(2800.0f, speed + 1300.0f * std::sin(lookDown) * dt);
+						} else if (lookDown < -0.05f) {
+							speed = std::max(950.0f, speed - 700.0f * std::sin(-lookDown) * dt);
+						} else {
+							speed = std::max(950.0f, speed - 120.0f * dt);
+						}
+						want = speed;
+					}
+					want = hanging ? 0.0f : want;
+					glide = glide + (heading * want - glide) * std::min(1.0f, dt * (hanging ? 4.0f : bond >= 3 ? 2.0f : 0.9f));
+					v.x = glide.x, v.y = glide.y;
+					if (!beforeGrab) {
+						v.z = std::max(v.z, -105.0f);  // (the glide alone sinks about half again faster)
+						if (bond >= 3 && !hanging) {
+							if (lookDown > 0.15f) {
+								v.z = -speed * std::sin(lookDown) * 0.9f;  // the dive
+							} else if (lookDown < -0.05f && speed > 1000.0f) {
+								v.z = std::max(v.z, (speed - 950.0f) * std::sin(-lookDown) * 1.4f);  // the speed into height
+							}
+						}
+					}
+					if (hanging) {
+						v.z = 12.0f;
+					} else if (g_liftOff == 2) {  // its talons close: up you go
+						g_liftOff = 0, g_liftT = 0;
+						PlayGameSound(DragonSound::kFlapBig, a_player);
+					}
+					if (g_liftT >= 0) {
+						g_liftT += dt;
+						v.z = std::max(v.z, 1150.0f * (1 - Smooth(g_liftT / 1.3f)));
+						if (g_liftT > 1.3f) g_liftT = -1;
+					}
+					if (g_flapT >= 0 && g_flapT > 0.3f) {  // the downstroke lifts you
+						v.z = std::max(v.z, 820.0f * (1 - Smooth((g_flapT - 0.3f) / 0.85f)));
+					}
+					set = true;
 				}
-				if (g_flapT >= 0 && g_flapT > 0.22f) {  // the downstroke lifts you
-					v.z = std::max(v.z, 720.0f * (1 - Smooth((g_flapT - 0.22f) / 0.68f)));
+				if (set) {
+					SetVel(cc, v);
 				}
-				SetVel(cc, v);
+			}
+			// its wingbeats heard: the nif's loop beats three times (1.6 s each) and glides the rest of its 6 seconds
+			{
+				static float beatT = 0;
+				if (deployT <= a_delta * 1.5f) {
+					beatT = 0;
+				}
+				const float before = std::fmod(beatT, 6.0f);
+				beatT += dt;
+				const float now = std::fmod(beatT, 6.0f);
+				for (const float at : { 0.55f, 2.15f, 3.75f }) {  // (each downstroke)
+					if ((before < at && now >= at) || (now < before && at <= now)) {
+						PlayGameSound(DragonSound::kFlap, a_player, nullptr, 0.55f);
+					}
+				}
 			}
 			{  // the talons on your hands (the skeleton you see)
 				const bool first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
@@ -1109,10 +1249,14 @@ namespace bo3z
 				camYaw = std::atan2(m.entry[0][1], m.entry[1][1]);
 			}
 			const char* ev = "TKDodgeBack";  // (standing still: a step back, as TK Dodge does)
+			RE::NiPoint3 dir{ -std::sin(camYaw), -std::cos(camYaw), 0 };
 			if (auto* pc = RE::PlayerControls::GetSingleton()) {
 				const auto in = pc->data.moveInputVec;  // x right, y forward - against the camera
 				if (in.x * in.x + in.y * in.y > 0.04f) {
 					ev = std::abs(in.y) >= std::abs(in.x) ? (in.y > 0 ? "TKDodgeForward" : "TKDodgeBack") : (in.x > 0 ? "TKDodgeRight" : "TKDodgeLeft");
+					// (snapped to the roll's own direction)
+					const RE::NiPoint3 f{ std::sin(camYaw), std::cos(camYaw), 0 }, r{ std::cos(camYaw), -std::sin(camYaw), 0 };
+					dir = std::abs(in.y) >= std::abs(in.x) ? (in.y > 0 ? f : f * -1.0f) : (in.x > 0 ? r : r * -1.0f);
 				}
 			}
 			p->SetHeading(camYaw);  // face where you look: the roll goes the way you meant
@@ -1123,6 +1267,7 @@ namespace bo3z
 			last = now;
 			av->DamageActorValue(RE::ActorValue::kStamina, 10.0f);
 			Perks::Dodged(0.35f);
+			g_dodgeT = 0, g_dodgeDir = dir;  // (Noah: farther - first person barely moved) carried along, below
 		}
 
 		void OnButton(const RE::ButtonEvent* a_event)
@@ -1161,7 +1306,7 @@ namespace bo3z
 				const bool free = !ui || !ui->GameIsPaused();
 				if (free && ev == ue->jump && g_hadDragon && g_flapT < 0 && g_flapWait <= 0) {  // I: a wing-beat
 					g_flapT = 0, g_flapWait = 3.5f;
-					Forms::PlayAt(gen::Sound::shout_gale, player);
+					PlayGameSound(DragonSound::kFlapBig, player);
 				}
 				if (free && bond >= 2 && ev == ue->activate && !g_hadDragon && g_liftOff == 0 && OnGround(player) &&
 					player->AsActorState()->IsSprinting()) {  // II: take-off, when Activate has nothing to take
@@ -1207,21 +1352,24 @@ namespace bo3z
 		// go up to its talons
 		void PoseGlideArms(RE::PlayerCharacter* a_player)
 		{
-			static constexpr const char* kBones[6] = { "NPC L Clavicle [LClv]", "NPC R Clavicle [RClv]", "NPC L UpperArm [LUar]",
-				"NPC R UpperArm [RUar]", "NPC L Forearm [LLar]", "NPC R Forearm [RLar]" };
+			// (Noah: no gliding before it has you - the whole body, not just the arms, keeps its fall until the talons close)
+			constexpr int                kN = 15;
+			static constexpr const char* kBones[kN] = { "NPC Pelvis [Pelv]", "NPC L Clavicle [LClv]", "NPC R Clavicle [RClv]", "NPC L UpperArm [LUar]",
+				"NPC R UpperArm [RUar]", "NPC L Forearm [LLar]", "NPC R Forearm [RLar]", "NPC Spine [Spn0]", "NPC Spine1 [Spn1]", "NPC Spine2 [Spn2]",
+				"NPC Neck [Neck]", "NPC L Thigh [LThg]", "NPC R Thigh [RThg]", "NPC L Calf [LClf]", "NPC R Calf [RClf]" };
 			constexpr int                kHist = 10;  // (a few frames back: the glide's raise can start a frame before we see the dragon)
-			static RE::NiMatrix3         hist[2][6][kHist]{};
+			static RE::NiMatrix3         hist[2][kN][kHist]{};
 			static int                   n[2]{}, head[2]{};
-			static RE::NiMatrix3         held[2][6]{};
+			static RE::NiMatrix3         held[2][kN]{};
 			static bool                  holding[2]{};
 			for (int f = 0; f < 2; ++f) {
 				auto* root = a_player->Get3D(f == 1);
 				if (!root) {
 					continue;
 				}
-				RE::NiAVObject* b[6]{};
+				RE::NiAVObject* b[kN]{};
 				bool            all = true;
-				for (int i = 0; i < 6; ++i) {
+				for (int i = 0; i < kN; ++i) {
 					b[i] = root->GetObjectByName(kBones[i]);
 					all = all && b[i];
 				}
@@ -1230,7 +1378,7 @@ namespace bo3z
 				}
 				if (!g_armHoldOn) {
 					holding[f] = false;
-					for (int i = 0; i < 6; ++i) hist[f][i][head[f]] = b[i]->local.rotate;
+					for (int i = 0; i < kN; ++i) hist[f][i][head[f]] = b[i]->local.rotate;
 					head[f] = (head[f] + 1) % kHist;
 					n[f] = std::min(n[f] + 1, kHist);
 					continue;
@@ -1238,17 +1386,16 @@ namespace bo3z
 				if (!holding[f]) {
 					holding[f] = true;
 					const int oldest = n[f] < kHist ? 0 : head[f];
-					for (int i = 0; i < 6; ++i) held[f][i] = n[f] > 0 ? hist[f][i][oldest] : b[i]->local.rotate;
+					for (int i = 0; i < kN; ++i) held[f][i] = n[f] > 0 ? hist[f][i][oldest] : b[i]->local.rotate;
 				}
 				n[f] = 0, head[f] = 0;
 				if (g_armHold <= 0) {
 					continue;
 				}
-				for (int i = 0; i < 6; ++i) b[i]->local.rotate = Slerp(b[i]->local.rotate, held[f][i], g_armHold);
+				for (int i = 0; i < kN; ++i) b[i]->local.rotate = Slerp(b[i]->local.rotate, held[f][i], g_armHold);
 				RE::NiUpdateData ud;
 				ud.time = 0.0f;
-				b[0]->UpdateDownwardPass(ud, 0);
-				b[1]->UpdateDownwardPass(ud, 0);
+				b[0]->UpdateDownwardPass(ud, 0);  // (the pelvis: everything under it)
 			}
 		}
 
@@ -1266,6 +1413,19 @@ namespace bo3z
 			Glider(player, a_delta);
 			BondTick(player, a_delta);
 			Dragon(player, a_delta);
+			if (g_dodgeT >= 0) {  // the dodge's push: a quick shove along the roll, easing off over its length
+				g_dodgeT += a_delta;
+				if (auto* dcc = player->GetCharController(); dcc && g_dodgeT < 0.45f) {
+					RE::NiPoint3 dv{};
+					GetVel(dcc, dv);
+					const float k = 1.0f - Smooth(g_dodgeT / 0.45f);
+					const float sp = 820.0f * k;
+					dv.x = g_dodgeDir.x * sp + dv.x * (1 - k), dv.y = g_dodgeDir.y * sp + dv.y * (1 - k);
+					SetVel(dcc, dv);
+				} else {
+					g_dodgeT = -1;
+				}
+			}
 			if (cc) {  // no fall damage at all: the fall is always measured from where you are now, so every landing is from nowhere
 				// (the fall's time is left alone: Better Jumping allows a jump while it is short - zeroing it gave endless jumps)
 				cc->fallStartHeight = player->GetPositionZ();

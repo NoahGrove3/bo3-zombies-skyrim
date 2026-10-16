@@ -74,6 +74,11 @@ int main(int argc, char** argv)
 		{ "DG_LegR1", "DG_Body", { 88, -1565, 70 } },
 		{ "DG_LegR2", "DG_LegR1", { 96, -1585, 12 } },
 		{ "DG_LegR3", "DG_LegR2", { 100, -1590, -42 } },
+		// the talons (turned by the game: the front ones and the back one close on each other round your hand)
+		{ "DG_ToeLF", "DG_LegL3", { -100, -1592, -58 } },
+		{ "DG_ToeLB", "DG_LegL3", { -100, -1592, -58 } },
+		{ "DG_ToeRF", "DG_LegR3", { 100, -1592, -58 } },
+		{ "DG_ToeRB", "DG_LegR3", { 100, -1592, -58 } },
 		{ "DG_Tail1", "DG_Body", { 0, -1680, 140 } },
 		{ "DG_Tail2", "DG_Tail1", { 0, -1860, 180 } },
 		{ "DG_Tail3", "DG_Tail2", { 0, -2040, 235 } },
@@ -140,7 +145,10 @@ int main(int argc, char** argv)
 			const float k12 = S(30, 0, p.z), k23 = S(-22, -40, p.z);
 			w["DG_Leg" + sd + "1"] += rest * legs * (1 - k12);
 			w["DG_Leg" + sd + "2"] += rest * legs * k12 * (1 - k23);
-			w["DG_Leg" + sd + "3"] += rest * legs * k12 * k23;
+			const float toe = S(-50, -66, p.z), front = S(-1600, -1584, p.y);
+			w["DG_Leg" + sd + "3"] += rest * legs * k12 * k23 * (1 - toe);
+			w["DG_Toe" + sd + "F"] += rest * legs * k12 * k23 * toe * front;
+			w["DG_Toe" + sd + "B"] += rest * legs * k12 * k23 * toe * (1 - front);
 		}
 		const float body = rest * (1 - legs);
 		// the jaw: under the mouth line, forward of the hinge
@@ -205,10 +213,12 @@ int main(int argc, char** argv)
 	// ---- the loop: 6 seconds, sampled 60 times a second
 	constexpr float T = 6.0f;
 	constexpr int   N = 360;  // (60 keys a second)
-	auto flapEnv = [](float t) { return S(0.15f, 0.45f, t) * (1 - S(2.75f, 3.15f, t)); };  // two beats, then the glide
-	// one wingbeat (period 1.3 s): -1 bottom .. +1 top; the downstroke takes 40% of it
+	// (Noah: longer flaps, the wings going farther up and down) three slow, deep beats, then a short glide
+	constexpr float P = 1.6f;  // a wingbeat's period
+	auto flapEnv = [](float t) { return S(0.15f, 0.45f, t) * (1 - S(5.0f, 5.5f, t)); };
+	// one wingbeat: -1 bottom .. +1 top; the downstroke takes 40% of it
 	auto beat = [](float t) {
-		float u = std::fmod(t + 10.0f * 1.3f, 1.3f) / 1.3f;
+		float u = std::fmod(t + 10.0f * P, P) / P;
 		if (u < 0.4f) { float k = u / 0.4f; return std::cos(3.14159f * k); }          // top -> bottom, fast
 		float k = (u - 0.4f) / 0.6f; return -std::cos(3.14159f * k);                    // bottom -> top, slower
 	};
@@ -218,12 +228,12 @@ int main(int argc, char** argv)
 	for (int side = 0; side < 2; ++side) {
 		const float sg = side == 0 ? 1.0f : -1.0f;  // left wing: +roll raises it; right: -roll
 		const std::string L = side == 0 ? "L" : "R";
-		const float lags[3] = { 0.0f, 0.10f, 0.20f }, amps[3] = { 34.0f, 22.0f, 16.0f }, rest[3] = { 9.0f, -3.0f, -4.0f };
+		const float lags[3] = { 0.0f, 0.12f, 0.24f }, amps[3] = { 52.0f, 32.0f, 22.0f }, rest[3] = { 9.0f, -3.0f, -4.0f };
 		for (int j = 0; j < 3; ++j) {
 			tracks.push_back({ "DG_Wing" + L + std::to_string(j + 1), [=](float t, Vector3&, Quaternion& q) {
 				const float e = flapEnv(t - lags[j]);
 				const float b = beat(t - 0.3f - lags[j]);
-				const float up = std::max(0.0f, std::sin(3.14159f * std::fmod(t + 13.0f - 0.3f - lags[j], 1.3f) / 1.3f * 2.0f - 0.8f));
+				const float up = std::max(0.0f, std::sin(3.14159f * std::fmod(t + 10.0f * P - 0.3f - lags[j], P) / P * 2.0f - 0.8f));
 				const float roll = rest[j] + e * amps[j] * b + (1 - e) * (j == 0 ? 2.5f : 1.5f) * glide(t - lags[j], j * 0.6f);
 				const float sweep = e * (j == 0 ? 6.0f : 10.0f) * up;               // folding back on the upstroke
 				const float twist = e * (j == 2 ? 7.0f : 3.0f) * (b < 0 ? 1.0f : 0.4f) + (1 - e) * 1.5f * glide(t, 1.0f + j);
@@ -233,7 +243,7 @@ int main(int argc, char** argv)
 	}
 	tracks.push_back({ "DG_Body", [=](float t, Vector3& p, Quaternion& q) {
 		const float e = flapEnv(t), b = beat(t - 0.42f);
-		p.z += -e * 14.0f * b + (1 - e) * 4.0f * glide(t, 0.3f);    // lifts as the wings come down
+		p.z += -e * 22.0f * b + (1 - e) * 4.0f * glide(t, 0.3f);    // lifts as the wings come down
 		q = Euler(e * 2.5f * b + (1 - e) * 1.2f * glide(t, 1.4f), 0, 0);
 	} });
 	tracks.push_back({ "DG_Neck1", [=](float t, Vector3&, Quaternion& q) {
@@ -255,6 +265,12 @@ int main(int argc, char** argv)
 			const float pitch = e * (2.0f + 1.5f * j) * b + (1.5f + j) * std::sin(6.28318f * t / 6.0f - ph);
 			q = Euler(pitch, 0, yaw);
 		} });
+	}
+	if (getenv("DG_TESTFOOT")) {  // (preview only: the feet curled one way, then the other)
+		for (const char* sd : { "L", "R" }) {
+			tracks.push_back({ std::string("DG_Toe") + sd + "F", [](float t, Vector3&, Quaternion& q) { q = Euler(t < 3.0f ? -55.0f : 30.0f, 0, 0); } });
+			tracks.push_back({ std::string("DG_Toe") + sd + "B", [](float t, Vector3&, Quaternion& q) { q = Euler(t < 3.0f ? 55.0f : -30.0f, 0, 0); } });
+		}
 	}
 	if (getenv("DG_TESTLEGS")) {  // (preview only: the legs in a reaching, clutching swing, to see their weights bend well)
 		for (const char* sd : { "L", "R" }) {
@@ -333,6 +349,14 @@ int main(int argc, char** argv)
 	}
 	// --world: the dragon on its own, for a reference placed in the world (it flies off when the glider is put away):
 	// DG_Space at the origin, keeping its scale (the game sets the root to where DG_Space was on you)
+	// --hidden: the glider's own copy starts unseen (DG_Space at no size) - the game shows it once it has put it where
+	// the swoop begins, so it never flashes in its resting place on your hands for a frame
+	if (argc > 3 && std::string(argv[3]) == "--hidden") {
+		MatTransform x = space->GetTransformToParent();
+		printf("DG_Space scale %.4f -> 0 (hidden until placed)\n", x.scale);
+		x.scale = 0.0f;
+		space->SetTransformToParent(x);
+	}
 	if (argc > 3 && std::string(argv[3]) == "--world") {
 		MatTransform x = space->GetTransformToParent();
 		x.translation = Vector3();
