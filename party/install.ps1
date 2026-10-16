@@ -46,6 +46,23 @@ Say 'Copying The Curse of Alduin and SKSE (Skyrim Together starts SKSE, and SKSE
 Copy-Item (Join-Path $pack 'files\Game\*') $game -Recurse -Force
 Say 'Copying Skyrim Together Reborn...'
 Copy-Item (Join-Path $pack 'files\SkyrimTogether\*') $data -Recurse -Force
+# files stored once in the pack (identical copies under other names): copied to their other places once installed
+$copies = Join-Path $pack 'files\copies.txt'
+function Restore-Copies([string]$kind) {
+    if (-not (Test-Path $copies)) { return }
+    $n = 0
+    foreach ($line in [IO.File]::ReadAllLines($copies)) {
+        if ($line.StartsWith('#')) { continue }
+        $f = $line.Split('|')
+        if ($f.Count -ne 3 -or $f[0] -ne $kind) { continue }
+        $src = Join-Path $data $f[1]; $dst = Join-Path $data $f[2]
+        if (-not (Test-Path -LiteralPath $src)) { continue }
+        $dir = Split-Path -Parent $dst
+        if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
+        Copy-Item -LiteralPath $src -Destination $dst -Force; $n++
+    }
+    if ($n) { Say "  ($n shared files placed)" }
+}
 # ---- the party's gameplay mods (required: both players need the same plugins): the spell mods the Coffer draws
 #      from, Ordinator, animations and movement (Open Animation Replacer, True Directional Movement, Goetia, ...),
 #      spell effects and sounds. Already installed and sorted in files\Mods\Data.
@@ -54,6 +71,7 @@ if (Test-Path $mods) {
     Say 'Copying the party mods (spells, perks, animations, effects, sounds)...'
     robocopy $mods $data /E /MT:16 /NFL /NDL /NJH /NJS /NP | Out-Null
     if ($LASTEXITCODE -ge 8) { Say 'Some mod files could not be copied (is the disk full?).' Red } else { Say 'Party mods installed.' Green }
+    Restore-Copies 'M'
 }
 # TK Dodge's old DLLs do not run on this Skyrim and stop it starting
 foreach ($old in 'TKPlugin.dll', 'TK_Dodge_RE.dll') { $f = Join-Path $data "SKSE\Plugins\$old"; if (Test-Path $f) { Remove-Item $f -Force } }
@@ -65,11 +83,11 @@ Copy-Item (Join-Path $pack 'files\Data\*') $data -Recurse -Force
 $gfx = Join-Path $pack 'files\Graphics\Data'
 $gfxOn = $false
 if (Test-Path $gfx) {
-    $ans = Read-Host "`nAlso install Noah's graphics mods (about 16 GB: the same look as the host)? [Y/n]"
+    $ans = Read-Host "`nAlso install Noah's graphics mods (about 26 GB: the same look as the host)? [Y/n]"
     if ($ans -notmatch '^\s*[nN]') {
         Say 'Copying the graphics mods (this takes a few minutes)...'
         robocopy $gfx $data /E /MT:16 /NFL /NDL /NJH /NJS /NP | Out-Null
-        if ($LASTEXITCODE -ge 8) { Say 'Some graphics files could not be copied (is the disk full?).' Red } else { $gfxOn = $true; Say 'Graphics mods installed.' Green }
+        if ($LASTEXITCODE -ge 8) { Say 'Some graphics files could not be copied (is the disk full?).' Red } else { $gfxOn = $true; Say 'Graphics mods installed.' Green; Restore-Copies 'G' }
     }
 }
 
