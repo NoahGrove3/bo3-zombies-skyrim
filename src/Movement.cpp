@@ -541,7 +541,7 @@ namespace bo3z
 					continue;
 				}
 				const bool undead = Director::IsRoundUndead(a.get());
-				float      dmg = undead ? Director::RoundHealth() * 0.10f : a->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.025f;
+				float      dmg = undead ? Director::RoundHealth() * 0.25f : a->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.05f;  // (a breath burns most of the dead it catches)
 				if (a_element == 0) {
 					dmg *= 1.25f;  // fire: hotter
 				}
