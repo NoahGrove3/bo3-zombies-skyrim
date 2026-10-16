@@ -63,6 +63,7 @@ def dressing(S):
     records[('STAT', 'show_cheese')] = {'model': S['dressing']['show']['cheeseModel'], 'color': '', 'radius': 0}
     for el in ELEMENTS:   # the Coffer spells' element emblems (the shrine's roll in the world)
         records[('STAT', 'show_el_' + el)] = {'model': f"CurseOfAlduin\\fx\\el_{el}_icon.nif", 'color': '', 'radius': 0}
+    records[('STAT', 'dragon_away')] = {'model': 'CurseOfAlduin\\fx\\dragon_away.nif', 'color': '', 'radius': 0}  # the glider's dragon, flying off
     records[('STAT', 'rise_fx')] = {'model': S['dressing']['show']['riseFxModel'], 'color': '', 'radius': 0}
     for k, col in POWERUPS:   # BO3 power-up drops: a glowing token and its light
         records[('STAT', 'pu_' + k)] = {'model': f'CurseOfAlduin\\powerup\\{k}.nif', 'color': '', 'radius': 0}

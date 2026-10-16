@@ -14,6 +14,8 @@ namespace bo3z::Arcana
 	{
 		std::array<RE::SpellItem*, coffer::kSpells.size()> g_spell{};
 		std::unordered_map<RE::FormID, int>                 g_index;
+		std::unordered_map<RE::FormID, int>                 g_byEffect;  // a magic effect -> the (strongest) Coffer spell that has it
+		std::array<bool, coffer::kSpells.size()>            g_damages{};  // has an effect that takes health
 		int                                                 g_found = 0;
 		std::mt19937                                        g_rng{ std::random_device{}() };
 		std::array<std::uint8_t, coffer::kSpells.size()>    g_level{};
@@ -64,8 +66,23 @@ namespace bo3z::Arcana
 			++g_found;
 			g_index[sp->GetFormID()] = static_cast<int>(i);
 			g_baseMag[i].clear();
+			g_damages[i] = false;
 			for (auto* e : sp->effects) {
 				g_baseMag[i].push_back(e ? e->effectItem.magnitude : 0.0f);
+				auto* mg = e ? e->baseEffect : nullptr;
+				if (!mg) {
+					continue;
+				}
+				using A = RE::EffectArchetypes::ArchetypeID;
+				const auto arch = mg->GetArchetype();
+				if (mg->data.primaryAV == RE::ActorValue::kHealth && mg->IsDetrimental() && e->effectItem.magnitude > 0 &&
+					(arch == A::kValueModifier || arch == A::kDualValueModifier || arch == A::kAbsorb || arch == A::kPeakValueModifier)) {
+					g_damages[i] = true;
+				}
+				auto [it, fresh] = g_byEffect.try_emplace(mg->GetFormID(), static_cast<int>(i));
+				if (!fresh && s.tier > coffer::kSpells[it->second].tier) {
+					it->second = static_cast<int>(i);
+				}
 			}
 			Apply(static_cast<int>(i));  // the balanced power and cost (and any reforge)
 			sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
@@ -80,6 +97,14 @@ namespace bo3z::Arcana
 	}
 
 	int Count() { return g_found; }
+
+	int IndexOfEffect(RE::FormID a_effect)
+	{
+		auto it = g_byEffect.find(a_effect);
+		return it == g_byEffect.end() ? -1 : it->second;
+	}
+
+	bool Damages(int a_index) { return a_index >= 0 && a_index < static_cast<int>(g_damages.size()) && g_damages[a_index]; }
 
 	RE::SpellItem* Spell(int a_index) { return a_index >= 0 && a_index < static_cast<int>(g_spell.size()) ? g_spell[a_index] : nullptr; }
 

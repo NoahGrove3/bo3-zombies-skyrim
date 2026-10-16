@@ -239,6 +239,8 @@ namespace bo3z
 		int                Count();
 		RE::SpellItem*     Spell(int a_index);
 		int                IndexOf(const RE::TESForm* a_form);
+		int                IndexOfEffect(RE::FormID a_effect);  // the Coffer spell a magic effect belongs to (-1: none)
+		bool               Damages(int a_index);         // one of its own effects takes health
 		bool               Known(int a_index);
 		int                Roll();                       // a spell you don't know yet (-1: you know them all)
 		int                Next(int a_after);            // the next in the pool (the roll flickers through them)
@@ -422,6 +424,7 @@ namespace bo3z
 		void Tick(float a_delta);
 		void Reset();
 		bool Riding();  // on a horse
+		void PoseGlideArms(RE::PlayerCharacter* a_player);  // after the animation: arms down until the glider's dragon reaches you
 	}
 
 	// Quick loot in the game's style (src/Loot.cpp): a body's or a container's things beside the crosshair

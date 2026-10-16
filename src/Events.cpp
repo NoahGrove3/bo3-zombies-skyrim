@@ -291,6 +291,57 @@ namespace bo3z
 			}
 		};
 
+		// one hit a quarter second on each body (a spell's several effects and its hit all land at once)
+		bool Limit(RE::Actor* a_actor)
+		{
+			static std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> last;
+			const auto now = std::chrono::steady_clock::now();
+			auto&      t = last[a_actor->GetFormID()];
+			if (now - t <= 250ms) {
+				return false;
+			}
+			t = now;
+			return true;
+		}
+
+		void HurtUndead(RE::Actor* a_actor, float a_damage)
+		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			auto* av = a_actor->AsActorValueOwner();
+			av->DamageActorValue(RE::ActorValue::kHealth, a_damage);
+			if (av->GetActorValue(RE::ActorValue::kHealth) <= 0) {
+				a_actor->KillImpl(player, a_damage, true, false);
+			}
+		}
+
+		// A Coffer spell reached an actor (its hit, or one of its effects taking hold - some, like Paralyze or Magicka
+		// Void, never hit). Noah: every spell from the shrine hurts every enemy. The night's undead lose a share of
+		// their round health (rarer spells more, a reforge adds its step, each Twin Strike Ale half again - their own
+		// magnitudes don't reach the dead); any other enemy is hurt by the spell's own effects, and a spell with none
+		// that take health (paralysis, a drain of magicka...) takes a part of its health instead.
+		void CofferHit(RE::Actor* a_actor, int a_index)
+		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (!a_actor || !player || a_actor == player || a_actor->IsDead()) {
+				return;
+			}
+			static constexpr float kTier[4] = { 1.0f, 1.3f, 1.7f, 2.2f };
+			const int   tier = std::clamp(Arcana::TierOf(a_index), 0, 3);
+			const float grow = (1.0f + gen::kForgeStep * Arcana::Level(a_index)) * (1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike));
+			if (Director::IsRoundUndead(a_actor)) {
+				if (Limit(a_actor)) {
+					HurtUndead(a_actor, Director::RoundHealth() * gen::kShareSpell * kTier[tier] * grow);
+				}
+				return;
+			}
+			if (Arcana::Damages(a_index) || a_actor->IsPlayerTeammate() || !a_actor->IsHostileToActor(player) || !Limit(a_actor)) {
+				return;
+			}
+			static constexpr float kPart[4] = { 0.07f, 0.09f, 0.12f, 0.16f };
+			const float max = a_actor->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth);
+			HurtUndead(a_actor, std::max(8.0f, max * kPart[tier] * grow));
+		}
+
 		class HitWatch : public RE::BSTEventSink<RE::TESHitEvent>
 		{
 		public:
@@ -308,39 +359,24 @@ namespace bo3z
 				// Skyrim weapons and spells keep up with the rounds: each hit takes a share of a zombie's round health.
 				if (a_event && a_event->cause.get() == player && a_event->target) {
 					auto* z = a_event->target->As<RE::Actor>();
-					if (z && !z->IsDead() && Director::IsRoundUndead(z)) {
-						auto* src = RE::TESForm::LookupByID(a_event->source);
-						bool  ourSpell = false;
+					auto* src = RE::TESForm::LookupByID(a_event->source);
+					if (const int ci = Arcana::IndexOf(src); z && ci >= 0) {
+						CofferHit(z, ci);  // the Coffer's spells: every one of them hurts every enemy
+					} else if (z && !z->IsDead() && Director::IsRoundUndead(z)) {
+						bool ourSpell = false;
 						for (int i = 0; i < static_cast<int>(gen::kSpells.size()); ++i) {
 							if (auto* m = Forms::Spell(i); m && src == m) {
 								ourSpell = true;
 							}
 						}
-						if (src && !ourSpell && Forms::GunIndexOf(src) < 0) {
-							static std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> last;
-							const auto now = std::chrono::steady_clock::now();
-							auto&      t = last[z->GetFormID()];
-							if (now - t > 250ms) {
-								t = now;
-								float share = gen::kShareSpell;
-								if (auto* w = src->As<RE::TESObjectWEAP>()) {
-									share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow : gen::kShareMelee;
-								} else if (src->Is(RE::FormType::Spell)) {
-									// a spell's hit grows with what it is: the Coffer's rarer spells hit harder, a reforge adds
-									// its step, and every Twin Strike Ale adds half again (their own magnitudes don't reach the dead)
-									static constexpr float kTier[4] = { 1.0f, 1.3f, 1.7f, 2.2f };
-									if (const int ci = Arcana::IndexOf(src); ci >= 0) {
-										share *= kTier[std::clamp(Arcana::TierOf(ci), 0, 3)] * (1.0f + gen::kForgeStep * Arcana::Level(ci));
-									}
-									share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
-								}
-								auto*       av = z->AsActorValueOwner();
-								const float dmg = Director::RoundHealth() * share;
-								av->DamageActorValue(RE::ActorValue::kHealth, dmg);
-								if (av->GetActorValue(RE::ActorValue::kHealth) <= 0) {
-									z->KillImpl(player, dmg, true, false);
-								}
+						if (src && !ourSpell && Forms::GunIndexOf(src) < 0 && Limit(z)) {
+							float share = gen::kShareSpell;
+							if (auto* w = src->As<RE::TESObjectWEAP>()) {
+								share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow : gen::kShareMelee;
+							} else if (src->Is(RE::FormType::Spell)) {
+								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
 							}
+							HurtUndead(z, Director::RoundHealth() * share);
 						}
 					}
 				}
@@ -389,6 +425,10 @@ namespace bo3z
 			{
 				if (a_event && a_event->target.get() == RE::PlayerCharacter::GetSingleton()) {
 					Perks::OnEffect(a_event->magicEffect);
+				} else if (a_event && a_event->caster.get() == RE::PlayerCharacter::GetSingleton() && a_event->target) {
+					if (const int ci = Arcana::IndexOfEffect(a_event->magicEffect); ci >= 0) {
+						CofferHit(a_event->target->As<RE::Actor>(), ci);
+					}
 				}
 				return RE::BSEventNotifyControl::kContinue;
 			}

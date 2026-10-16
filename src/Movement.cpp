@@ -162,6 +162,164 @@ namespace bo3z
 			z.entry[0][0] = cz, z.entry[0][1] = -sz, z.entry[0][2] = 0, z.entry[1][0] = sz, z.entry[1][1] = cz, z.entry[1][2] = 0, z.entry[2][0] = 0, z.entry[2][1] = 0, z.entry[2][2] = 1;
 			return z * y * x;
 		}
+		// ---- the dragon's goodbye: when the glider is put away the dragon lets go of you and flies on - a separate
+		// reference in the world (its own nif: CurseOfAlduin\fx\dragon_away.nif, the glider's dragon on its own) placed
+		// where it was holding you, carrying on forward, climbing and banking away, its talons opening then drawn up
+		struct Away
+		{
+			RE::ObjectRefHandle ref;
+			float               t = -1;
+			RE::NiTransform     start;
+			RE::NiMatrix3       bank;
+			RE::NiPoint3        vel;
+			float               scale = 1, side = 1;
+		};
+		Away            g_away;
+		RE::NiTransform g_lastSpace;       // where the dragon was last frame (DG_Space's world transform)
+		RE::NiMatrix3   g_lastBank;
+		bool            g_hadDragon = false;
+		float           g_armHold = 0;     // 1: your arms stay down (the dragon hasn't reached you yet), 0: the glide's own pose
+		bool            g_armHoldOn = false;
+
+		float Smooth(float a_x)
+		{
+			a_x = std::clamp(a_x, 0.0f, 1.0f);
+			return a_x * a_x * (3 - 2 * a_x);
+		}
+
+		// rotations blended through quaternions
+		struct Quat
+		{
+			float w, x, y, z;
+		};
+		Quat ToQuat(const RE::NiMatrix3& m)
+		{
+			const auto& e = m.entry;
+			Quat        q;
+			const float tr = e[0][0] + e[1][1] + e[2][2];
+			if (tr > 0) {
+				const float s = std::sqrt(tr + 1.0f) * 2;
+				q = { 0.25f * s, (e[2][1] - e[1][2]) / s, (e[0][2] - e[2][0]) / s, (e[1][0] - e[0][1]) / s };
+			} else if (e[0][0] > e[1][1] && e[0][0] > e[2][2]) {
+				const float s = std::sqrt(1.0f + e[0][0] - e[1][1] - e[2][2]) * 2;
+				q = { (e[2][1] - e[1][2]) / s, 0.25f * s, (e[0][1] + e[1][0]) / s, (e[0][2] + e[2][0]) / s };
+			} else if (e[1][1] > e[2][2]) {
+				const float s = std::sqrt(1.0f + e[1][1] - e[0][0] - e[2][2]) * 2;
+				q = { (e[0][2] - e[2][0]) / s, (e[0][1] + e[1][0]) / s, 0.25f * s, (e[1][2] + e[2][1]) / s };
+			} else {
+				const float s = std::sqrt(1.0f + e[2][2] - e[0][0] - e[1][1]) * 2;
+				q = { (e[1][0] - e[0][1]) / s, (e[0][2] + e[2][0]) / s, (e[1][2] + e[2][1]) / s, 0.25f * s };
+			}
+			return q;
+		}
+		RE::NiMatrix3 FromQuat(Quat q)
+		{
+			const float n = std::sqrt(q.w * q.w + q.x * q.x + q.y * q.y + q.z * q.z);
+			if (n < 1e-6f) return Rot(0, 0, 0);
+			q.w /= n, q.x /= n, q.y /= n, q.z /= n;
+			RE::NiMatrix3 m;
+			m.entry[0][0] = 1 - 2 * (q.y * q.y + q.z * q.z), m.entry[0][1] = 2 * (q.x * q.y - q.z * q.w), m.entry[0][2] = 2 * (q.x * q.z + q.y * q.w);
+			m.entry[1][0] = 2 * (q.x * q.y + q.z * q.w), m.entry[1][1] = 1 - 2 * (q.x * q.x + q.z * q.z), m.entry[1][2] = 2 * (q.y * q.z - q.x * q.w);
+			m.entry[2][0] = 2 * (q.x * q.z - q.y * q.w), m.entry[2][1] = 2 * (q.y * q.z + q.x * q.w), m.entry[2][2] = 1 - 2 * (q.x * q.x + q.y * q.y);
+			return m;
+		}
+		RE::NiMatrix3 Slerp(const RE::NiMatrix3& a_from, const RE::NiMatrix3& a_to, float a_t)
+		{
+			if (a_t <= 0) return a_from;
+			if (a_t >= 1) return a_to;
+			Quat  a = ToQuat(a_from), b = ToQuat(a_to);
+			float d = a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z;
+			if (d < 0) b = { -b.w, -b.x, -b.y, -b.z }, d = -d;
+			float ka = 1 - a_t, kb = a_t;
+			if (d < 0.9995f) {
+				const float th = std::acos(std::min(1.0f, d)), sn = std::sin(th);
+				ka = std::sin((1 - a_t) * th) / sn, kb = std::sin(a_t * th) / sn;
+			}
+			return FromQuat({ a.w * ka + b.w * kb, a.x * ka + b.x * kb, a.y * ka + b.y * kb, a.z * ka + b.z * kb });
+		}
+
+		void AwayTick(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			if (g_away.t < 0) {
+				return;
+			}
+			g_away.t += a_delta;
+			const float t = g_away.t;
+			auto        ref = g_away.ref.get();
+			if (!ref) {
+				g_away.t = -1;
+				return;
+			}
+			if (t > 3.6f) {
+				ref->Disable();
+				ref->SetDelete(true);
+				g_away = {};
+				return;
+			}
+			auto* root = ref->Get3D();
+			if (!root) {
+				return;  // (still loading: it catches up with its path when it appears)
+			}
+			const auto&        R0 = g_away.start.rotate;
+			RE::NiPoint3       right{ R0.entry[0][0], R0.entry[1][0], R0.entry[2][0] };
+			RE::NiPoint3       fwd{ R0.entry[0][1], R0.entry[1][1], R0.entry[2][1] };
+			RE::NiPoint3       up{ R0.entry[0][2], R0.entry[1][2], R0.entry[2][2] };
+			const float        sd = g_away.side;
+			// your momentum, then its own: a lurch up as your weight leaves it, a climb, and a curve off to one side
+			const RE::NiPoint3 pos = g_away.start.translate + g_away.vel * (t * 0.85f) + fwd * (260 * t + 170 * t * t) +
+			                         up * (90 * std::sin(std::min(t, 0.6f) * 2.6f) + 150 * t * t) + right * (sd * 95 * t * t);
+			const float climb = Smooth(t / 1.3f);
+			const float roll = sd * 0.75f * std::sin(3.14159f * std::min(1.0f, t / 2.8f));
+			root->local.translate = pos;
+			root->local.rotate = R0 * Rot(0.42f * climb, roll, -sd * 0.55f * climb);
+			root->local.scale = g_away.scale;
+			if (auto* bank = root->GetObjectByName("DG_Bank")) {  // (from the lean it had as it let go, straightening out)
+				bank->local.rotate = Slerp(g_away.bank, Rot(0, 0, 0), Smooth(t / 0.6f));
+			}
+			if (auto* look = root->GetObjectByName("DG_Look")) {  // looking where it turns
+				look->local.rotate = Rot(0.1f * climb, 0, -sd * 0.35f * Smooth(t / 0.9f));
+			}
+			// talons: open as it lets you go, then the legs drawn up under it for the flight
+			const float open = std::sin(3.14159f * std::clamp(t / 0.45f, 0.0f, 1.0f));
+			const float tuck = Smooth((t - 0.3f) / 0.7f);
+			for (int s2 = 0; s2 < 2; ++s2) {
+				const char* L = s2 == 0 ? "L" : "R";
+				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}1", L).c_str())) n->local.rotate = Rot(0.12f * (1 - tuck) - 0.55f * tuck, 0, 0);
+				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}2", L).c_str())) n->local.rotate = Rot(-0.1f * (1 - tuck) + 0.7f * tuck, 0, 0);
+				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}3", L).c_str())) n->local.rotate = Rot(0.4f * (1 - tuck) - 0.8f * open + 0.35f * tuck, 0, 0);
+			}
+			RE::NiUpdateData ud;
+			root->Update(ud);
+		}
+
+		void LetGo(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_vel, float a_roll, float a_baseScale)
+		{
+			if (g_away.t >= 0) {  // (the last one is still in the air: it goes now)
+				if (auto old = g_away.ref.get()) {
+					old->Disable();
+					old->SetDelete(true);
+				}
+				g_away = {};
+			}
+			auto* st = Forms::Ours(gen::kDragonAway);
+			if (!st) {
+				return;
+			}
+			auto ref = a_player->PlaceObjectAtMe(st, false);
+			if (!ref) {
+				return;
+			}
+			ref->SetPosition(g_lastSpace.translate);
+			static std::mt19937 rng{ std::random_device{}() };
+			g_away.ref = ref->CreateRefHandle();
+			g_away.t = 0;
+			g_away.start = g_lastSpace;
+			g_away.bank = g_lastBank;
+			g_away.vel = a_vel;
+			g_away.scale = a_baseScale > 0 ? g_lastSpace.scale / a_baseScale : 1.0f;
+			g_away.side = std::abs(a_roll) > 0.05f ? (a_roll > 0 ? 1.0f : -1.0f) : (rng() % 2 ? 1.0f : -1.0f);
+		}
+
 		void Dragon(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			static float lastYaw = 0, turn = 0, wanderT = 0, breathIn = 6.0f, breath = 0, jaw = 0, shotT = 0, lookYaw = 0, lookPitch = 0, roll = 0, pitch = 0;
@@ -197,10 +355,23 @@ namespace bo3z
 				}
 			}
 			const float yaw = a_player->GetAngleZ(), z = a_player->GetPositionZ();
+			static RE::NiPoint3 lastPos{}, vel{};
+			const RE::NiPoint3  pos = a_player->GetPosition();
+			AwayTick(a_player, a_delta);
 			if (!bank[0] && !bank[1]) {  // not gliding
-				lastYaw = yaw, lastZ = z, turn = 0, breath = 0, jaw = 0, breathIn = 4.0f, deployT = -1;
+				if (g_hadDragon) {  // the glider was just put away: the dragon lets go and flies off
+					g_hadDragon = false;
+					LetGo(a_player, vel, roll, baseScale);
+				}
+				lastYaw = yaw, lastZ = z, turn = 0, breath = 0, jaw = 0, breathIn = 4.0f, deployT = -1, roll = 0;
+				g_armHoldOn = false, g_armHold = 0;
+				lastPos = pos;
 				return;
 			}
+			if (a_delta > 1e-3f) {
+				vel = vel + ((pos - lastPos) * (1.0f / a_delta) - vel) * std::min(1.0f, a_delta * 6.0f);
+			}
+			lastPos = pos;
 			// the glider opens: the dragon comes for you - it swoops in from high behind you on one side, banking round in
 			// a curve with its wings beating, its hind legs reaching out ahead of it, and at the last moment its talons
 			// close on your arms and it carries you on into the glide (every frame, eased; 1.4 seconds)
@@ -210,6 +381,9 @@ namespace bo3z
 			}
 			deployT += a_delta;
 			constexpr float kSwoop = 1.4f;
+			// your arms stay down until it reaches you, then go up to its talons as it takes you
+			g_armHoldOn = true;
+			g_armHold = 1 - Smooth((deployT - (kSwoop - 0.38f)) / 0.38f);
 			const float u = std::clamp(deployT / kSwoop, 0.0f, 1.0f);
 			const float e = u * u * u * (u * (u * 6 - 15) + 10);  // smootherstep
 			const RE::NiPoint3 P0{ 260, -720, 300 }, P1{ 330, -140, -30 }, P2{ 0, 0, 0 };
@@ -301,6 +475,15 @@ namespace bo3z
 				}
 				if (jawN[i]) {
 					jawN[i]->local.rotate = Rot(-jaw, 0, 0);
+				}
+			}
+			{  // where it is now: if the glider goes away this frame, the dragon in the world starts from here
+				const bool first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
+				const int  k = (first && space[1]) || !space[0] ? 1 : 0;
+				if (space[k]) {
+					g_lastSpace = space[k]->world;
+					g_hadDragon = true;
+					if (bank[k]) g_lastBank = bank[k]->local.rotate;
 				}
 			}
 			if (breathing && breath < 1.45f && mouth && head && (shotT -= dt) <= 0) {
@@ -409,6 +592,56 @@ namespace bo3z
 		{
 			g_applied = 0, g_slide = 0, g_carry = 0, g_air = 0, g_smooth = 0;
 			g_wasAir = false, g_wantSlide = false, g_wantJumpCarry = false, g_forcedSneak = false;
+		}
+
+		// After the animation each frame (Gun's pose hook): while the dragon is still on its way your arms keep the pose
+		// they had before the glider opened (the glide's own animation raises them at once); as it reaches you they
+		// go up to its talons
+		void PoseGlideArms(RE::PlayerCharacter* a_player)
+		{
+			static constexpr const char* kBones[6] = { "NPC L Clavicle [LClv]", "NPC R Clavicle [RClv]", "NPC L UpperArm [LUar]",
+				"NPC R UpperArm [RUar]", "NPC L Forearm [LLar]", "NPC R Forearm [RLar]" };
+			constexpr int                kHist = 10;  // (a few frames back: the glide's raise can start a frame before we see the dragon)
+			static RE::NiMatrix3         hist[2][6][kHist]{};
+			static int                   n[2]{}, head[2]{};
+			static RE::NiMatrix3         held[2][6]{};
+			static bool                  holding[2]{};
+			for (int f = 0; f < 2; ++f) {
+				auto* root = a_player->Get3D(f == 1);
+				if (!root) {
+					continue;
+				}
+				RE::NiAVObject* b[6]{};
+				bool            all = true;
+				for (int i = 0; i < 6; ++i) {
+					b[i] = root->GetObjectByName(kBones[i]);
+					all = all && b[i];
+				}
+				if (!all) {
+					continue;
+				}
+				if (!g_armHoldOn) {
+					holding[f] = false;
+					for (int i = 0; i < 6; ++i) hist[f][i][head[f]] = b[i]->local.rotate;
+					head[f] = (head[f] + 1) % kHist;
+					n[f] = std::min(n[f] + 1, kHist);
+					continue;
+				}
+				if (!holding[f]) {
+					holding[f] = true;
+					const int oldest = n[f] < kHist ? 0 : head[f];
+					for (int i = 0; i < 6; ++i) held[f][i] = n[f] > 0 ? hist[f][i][oldest] : b[i]->local.rotate;
+				}
+				n[f] = 0, head[f] = 0;
+				if (g_armHold <= 0) {
+					continue;
+				}
+				for (int i = 0; i < 6; ++i) b[i]->local.rotate = Slerp(b[i]->local.rotate, held[f][i], g_armHold);
+				RE::NiUpdateData ud;
+				ud.time = 0.0f;
+				b[0]->UpdateDownwardPass(ud, 0);
+				b[1]->UpdateDownwardPass(ud, 0);
+			}
 		}
 
 		void Tick(float a_delta)

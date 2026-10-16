@@ -331,6 +331,13 @@ int main(int argc, char** argv)
 		ctrl->nextControllerRef.index = n->controllerRef.index;
 		n->controllerRef.index = hdr.AddBlock(std::move(ctrl));
 	}
+	// --world: the dragon on its own, for a reference placed in the world (it flies off when the glider is put away):
+	// DG_Space at the origin, keeping its scale (the game sets the root to where DG_Space was on you)
+	if (argc > 3 && std::string(argv[3]) == "--world") {
+		MatTransform x = space->GetTransformToParent();
+		x.translation = Vector3();
+		space->SetTransformToParent(x);
+	}
 	auto* root = nif.GetRootNode();
 	for (auto& r : root->extraDataRefs)
 		if (auto* b = hdr.GetBlock<BSXFlags>(r)) b->integerData |= 1u;
