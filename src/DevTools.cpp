@@ -171,10 +171,15 @@ namespace bo3z
 				std::string rest;
 				std::getline(in, rest);
 				Hud::DevMenuPick(rest.size() > 1 ? rest.substr(1) : rest);
-			} else if (cmd == "shrine") {  // shrine <0 call|1 reforge|2 bless|3 relic|4 leave>
+			} else if (cmd == "shrine") {  // shrine <0 call|1 reforge|2 bless|3 relic|4 leave|5 bond>
 				int a = 0;
 				in >> a;
 				Shops::DevAct(a);
+			} else if (cmd == "bond") {  // bond <0-3>: the glider's dragon's bond, for testing
+				int b = 0;
+				in >> b;
+				Save::SetDragonBond(b);
+				logger::info("dev: dragon bond {}", Save::DragonBond());
 			} else if (cmd == "points") {
 				int n = 0;
 				in >> n;
