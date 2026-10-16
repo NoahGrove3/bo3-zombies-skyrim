@@ -533,7 +533,7 @@ namespace bo3z
 			std::vector<std::array<float, 3>> pts;
 			auto* cam = RE::Main::WorldRootCamera();
 			if (g_ring.on && cam) {
-				constexpr int N = 72;
+				constexpr int N = 180;  // (fine enough for the runes riding it to sit smoothly)
 				for (int i = 0; i <= N; ++i) {
 					const float a = i * 2.0f * RE::NI_PI / N;
 					RE::NiPoint3 w = g_ring.center + RE::NiPoint3{ std::cos(a) * g_ring.radius, std::sin(a) * g_ring.radius, 18.0f };

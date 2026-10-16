@@ -13,6 +13,7 @@ from PIL import Image, ImageDraw, ImageFilter
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import stand as S
 import rockart as RA
+import altarart as AA
 
 OUT = pathlib.Path(sys.argv[1]); S.OUT = OUT
 R, TOP, BOTTOM, GROW = 160, 16, -60, 70
@@ -29,23 +30,21 @@ def circle(r, z, seg=SEG):
 def platform():
     S.parts.clear()
     top = circle(R, TOP)
-    S.add('floor', [(0, 0, TOP)] + top, [(0, 0)] + [(x / 160, y / 160) for x, y, _ in top], [(0, 1 + k, 1 + (k + 1) % SEG) for k in range(SEG)])
+    # the floor: one disc carrying the whole engraved design (tools/altarart.py), its texture spread edge to edge;
+    # finely divided so the rim is round
+    top = circle(R, TOP, 128)
+    S.add('floor', [(0, 0, TOP)] + top, [(0.5, 0.5)] + [(0.5 + x / (2 * R), 0.5 + y / (2 * R)) for x, y, _ in top], [(0, 1 + k, 1 + (k + 1) % 128) for k in range(128)])
+    top = circle(R, TOP)
     under, bot = circle(R, TOP - 14), circle(R + GROW, BOTTOM)
     for k in range(SEG):
         a, b = top[k], top[(k + 1) % SEG]
         c, d = under[k], under[(k + 1) % SEG]
         e, f = bot[(k + 1) % SEG], bot[k]
         L = math.hypot(b[0] - a[0], b[1] - a[1])
-        S.quad('trim', c, d, b, a, uv=((0, S.KNOT_BLUE[0]), (L / 120, S.KNOT_BLUE[0]), (L / 120, S.KNOT_BLUE[1]), (0, S.KNOT_BLUE[1])))
+        S.quad('trim', c, d, b, a, uv=((0, S.KNOT_BROWN[0]), (L / 120, S.KNOT_BROWN[0]), (L / 120, S.KNOT_BROWN[1]), (0, S.KNOT_BROWN[1])))
         Lr = math.hypot(d[0] - c[0], d[1] - c[1])
         S.add('cobble', [c, d, e, f], [(0, 0), (Lr / 140, 0), (Lr / 140, 1.2), (0, 1.2)], [(0, 2, 1), (0, 3, 2)])
-    # the engraved rings: thin glowing lines, and a band of runes between them
-    for r0, r1 in ((150, 153), (126, 129), (82, 85), (44, 47)):
-        S.ring('rune', 0, 0, TOP + 0.6, r0, r1, seg=96)
-    S.ring('runes', 0, 0, TOP + 0.7, 92, 120, seg=96)
-    S.ring('runes', 0, 0, TOP + 0.7, 52, 74, seg=64)
-    # the pool of light right under the crystal
-    S.disc('pool', 0, 0, TOP + 0.9, 30, seg=32, tile=60)
+    # (the engraved rings, runes and the sunburst at the heart are all in the floor's texture now: gold inlay that glows)
 
 
 def shard_mesh(mat, cx, cy, cz, yaw, tilt, length, width, depth, seed):
@@ -374,13 +373,19 @@ def main():
     pool = f'mat pool diffuse={rune_d} normal={flat} glow={rune_g} emit=0.5,0.8,1.0 emitmult=3.5 spec=0.2'
     W = S.W
     stone = lambda m, spec: f'mat {m} diffuse={W}{S.TEX["stone"][0]}.dds normal={W}{S.TEX["stone"][1]}.dds spec={spec} gloss=30'
-    floor = f'mat floor diffuse={W}{S.TEX["floor"][0]}.dds normal={W}{S.TEX["floor"][1]}.dds spec=0.3 gloss=30'
+    fd, fn, fg, _ = AA.floor_maps(2048)
+    floor = (f'mat floor diffuse={S.save(fd, "altarfloor_d.dds", mips=True)} normal={S.save(fn.convert("RGBA"), "altarfloor_n.dds", True, mips=True)} '
+             f'glow={S.save(fg, "altarfloor_g.dds", mips=True)} emit=1.0,0.78,0.42 emitmult=1.6 spec=0.45 gloss=45')
     cobble = f'mat cobble diffuse={W}{S.TEX["cobble"][0]}.dds normal={W}{S.TEX["cobble"][1]}.dds spec=0.25 gloss=30'
     trim = f'mat trim diffuse={W}{S.TEX["trim"][0]}.dds normal={W}{S.TEX["trim"][1]}.dds spec=0.25 gloss=30'
     platform()
+    PLATFORM_ONLY = len(sys.argv) > 2 and sys.argv[2] == 'platform'
     # (collidebox2: an unseen block round the orb, high over your head, so looking at the shrine's heart finds the shrine)
     convert('shrine', ['origin 1', f'offset 0 0 {LIFT}', f'collidefrustum {-R} {-R} {R} {R} {TOP + LIFT} {BOTTOM + LIFT} {GROW}', 'collidebox2 -34 -34 140 34 34 212'],
             [floor, cobble, trim, rune, runes, pool])
+    if PLATFORM_ONLY:  # (the floor alone: the motes go back on it, the rest stays as built)
+        motes(OUT / 'Meshes' / 'CurseOfAlduin' / 'shrine' / 'shrine.nif', 'CurseOfAlduin\\stand\\shrine_motes.dds')
+        return
     shards()
     vg = S.save(Image.new('RGB', (32, 32), (130, 200, 255)), 'vein_g.dds')
     rkd, rkn, rkg = RA.rock_maps(2048)  # (2K, shared with the menu's rocks: tools/rockart.py)

@@ -17,6 +17,9 @@ import math, pathlib, random, sys
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 from scipy.spatial import ConvexHull
+from scipy.ndimage import map_coordinates
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import altarart as AA
 
 OUT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else 'menushrine')
 OUT.mkdir(parents=True, exist_ok=True)
@@ -191,9 +194,25 @@ def ground():
     topcol += np.array([40, 42, 50], np.float32) * (rim * (0.5 + 0.5 * fine))[..., None]
     topcol = topcol * (1 - (pool > 0)[..., None] * 0.7) + np.array([30, 70, 120]) * (pool > 0)[..., None] * 0.7
     del shade, dirt, rim, slab, mott
+    # the floor itself is the Echo Altar's engraved disc (tools/altarart.py, the same maps as the shrine in the game):
+    # dark granite with gold inlay - rings, a dial, runes and a sunburst at its heart - laid flat on the drum
+    AN_ = 2048
+    ad, an, ag, _ = AA.floor_maps(AN_)
+    half = AN_ / 2
+    tx = half + (xx - CXk) / Sk / R * half * 0.985
+    ty = half + (yy - CYk) / (Sk * math.sin(E)) / R * half * 0.985
+    def samp(img):
+        a = np.asarray(img, np.float32)
+        return np.dstack([map_coordinates(a[..., ch], [ty, tx], order=1, mode='nearest') for ch in range(a.shape[2])])
+    sd, sn, sg = samp(ad), samp(an), samp(ag)
+    nrm = sn / 127.5 - 1.0
+    lit_ = np.clip(1.0 + (nrm[..., 0] * -0.45 + nrm[..., 1] * -0.6) * 1.4, 0.45, 1.6)  # (its relief, lit from the far left)
+    topcol = sd * lit_[..., None] + sg * 0.25
+    altar_glow = np.clip(sg.max(axis=2) / 255.0, 0, 1)
+    del sd, sn, nrm, lit_
 
     # the drum's side: mortared blocks in courses, each its own shade, chipped
-    sidecol = np.array([58, 60, 74], np.float32)[None, None] * (0.55 + 0.5 * stone[..., None] + 0.18 * (fine[..., None] - 0.5))
+    sidecol = np.array([34, 35, 40], np.float32)[None, None] * (0.55 + 0.5 * stone[..., None] + 0.18 * (fine[..., None] - 0.5))
     vert = (yy - CYk) / Sk  # (the side's height runs straight down the screen)
     xr = np.clip((xx - CXk) / (R * Sk), -1, 1)
     th = np.arccos(-xr)  # angle round the drum, seen from the front
@@ -226,16 +245,16 @@ def ground():
     del sidecol, topcol
     # cold light from the crystal on the floor and the plain round it
     lit = np.exp(-(((xx - CXk) / (900 * K)) ** 2 + ((yy - CYk) / (360 * K)) ** 2))
-    rgb += np.array([30, 60, 110]) * (lit * 0.55)[..., None] * (al > 0)[..., None]
+    rgb += np.array([30, 50, 90]) * (lit * 0.3)[..., None] * (al > 0)[..., None]
     del lit, xx, yy
     rgba(rgb, al).resize((W, H), Image.LANCZOS).save(OUT / 'menu_shrine_ground.png', optimize=True)
     del rgb, al
 
     # ---- the floor's own light: runes, rings, pool (drawn breathing over the ground)
-    glow = np.clip(glyph * 1.0 + groove * 0.35 * (rr > 110) + pool * 1.2, 0, 1) * topm
+    glow = altar_glow * topm
     halo = blur(glow, 10 * K) * 0.9 + blur(glow, 30 * K) * 0.6
     g = np.clip(glow + halo, 0, 1)
-    lcol = np.dstack([90 + 120 * glow, 170 + 70 * glow, 255 * np.ones_like(glow)])
+    lcol = np.dstack([255 * np.ones_like(glow), 176 + 60 * glow, 70 + 120 * glow])  # gold, whiter where it burns
     rgba(lcol, g).resize((W, H), Image.LANCZOS).save(OUT / 'menu_shrine_glow.png', optimize=True)
 
 
