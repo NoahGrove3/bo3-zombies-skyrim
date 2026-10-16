@@ -165,18 +165,23 @@ namespace bo3z
 		void Dragon(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			static float lastYaw = 0, turn = 0, wanderT = 0, breathIn = 6.0f, breath = 0, jaw = 0, shotT = 0, lookYaw = 0, lookPitch = 0, roll = 0, pitch = 0;
-			static float lastZ = 0;
+			static float lastZ = 0, deployT = -1, baseScale = 0;
 			static std::mt19937 rng{ std::random_device{}() };
 			RE::NiAVObject* bank[2]{};
 			RE::NiAVObject* look[2]{};
 			RE::NiAVObject* jawN[2]{};
 			RE::NiAVObject* mouth = nullptr;
 			RE::NiAVObject* head = nullptr;
+			RE::NiAVObject* space[2]{};
+			RE::NiAVObject* fold[2][2]{};
 			for (int i = 0; i < 2; ++i) {
 				if (auto* root = a_player->Get3D(i == 1)) {
 					bank[i] = root->GetObjectByName("DG_Bank");
 					look[i] = root->GetObjectByName("DG_Look");
 					jawN[i] = root->GetObjectByName("DG_Jaw");
+					space[i] = root->GetObjectByName("DG_Space");
+					fold[i][0] = root->GetObjectByName("DG_WingL0");
+					fold[i][1] = root->GetObjectByName("DG_WingR0");
 					if (bank[i] && !mouth) {
 						mouth = root->GetObjectByName("DG_Mouth");
 						head = root->GetObjectByName("DG_Head");
@@ -185,8 +190,24 @@ namespace bo3z
 			}
 			const float yaw = a_player->GetAngleZ(), z = a_player->GetPositionZ();
 			if (!bank[0] && !bank[1]) {  // not gliding
-				lastYaw = yaw, lastZ = z, turn = 0, breath = 0, jaw = 0, breathIn = 4.0f;
+				lastYaw = yaw, lastZ = z, turn = 0, breath = 0, jaw = 0, breathIn = 4.0f, deployT = -1;
 				return;
+			}
+			// the glider opens: the dragon swells out of nothing (easing out past its size and settling) and spreads its
+			// wings from folded against its back to full span over two-thirds of a second, every frame
+			if (deployT < 0) {
+				deployT = 0;
+				for (auto* sp : space) if (sp) baseScale = sp->local.scale;
+			}
+			deployT += a_delta;
+			const float dk = std::clamp(deployT / 0.7f, 0.0f, 1.0f);
+			const float grow = 1 + 2.70158f * std::pow(dk - 1, 3.0f) + 1.70158f * std::pow(dk - 1, 2.0f);  // ease out, a little past and back
+			const float spread = 1 - std::pow(1 - std::clamp(deployT / 0.85f, 0.0f, 1.0f), 3.0f);
+			const float folded = 1 - spread;
+			for (int i = 0; i < 2; ++i) {
+				if (space[i] && baseScale > 0) space[i]->local.scale = baseScale * std::max(0.02f, grow);
+				if (fold[i][0]) fold[i][0]->local.rotate = Rot(0, 1.25f * folded, 0.8f * folded);
+				if (fold[i][1]) fold[i][1]->local.rotate = Rot(0, -1.25f * folded, -0.8f * folded);
 			}
 			const float dt = std::max(1e-3f, a_delta);
 			float dy = yaw - lastYaw;

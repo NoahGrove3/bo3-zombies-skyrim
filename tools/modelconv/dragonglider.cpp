@@ -59,10 +59,12 @@ int main(int argc, char** argv)
 		{ "DG_Head", "DG_Look", { 0, -1150, 205 } },
 		{ "DG_Jaw", "DG_Head", { 0, -1128, 152 } },
 		{ "DG_Mouth", "DG_Head", { 0, -1012, 150 } },
-		{ "DG_WingL1", "DG_Chest", { -SX, -1380, 170 } },
+		{ "DG_WingL0", "DG_Chest", { -SX, -1380, 170 } },  // (turned by the game: the wing unfolding as the glider opens)
+		{ "DG_WingL1", "DG_WingL0", { -SX, -1380, 170 } },
 		{ "DG_WingL2", "DG_WingL1", { -EX, -1300, 180 } },
 		{ "DG_WingL3", "DG_WingL2", { -WX, -1245, 180 } },
-		{ "DG_WingR1", "DG_Chest", { SX, -1380, 170 } },
+		{ "DG_WingR0", "DG_Chest", { SX, -1380, 170 } },
+		{ "DG_WingR1", "DG_WingR0", { SX, -1380, 170 } },
 		{ "DG_WingR2", "DG_WingR1", { EX, -1300, 180 } },
 		{ "DG_WingR3", "DG_WingR2", { WX, -1245, 180 } },
 		{ "DG_Legs", "DG_Body", { 0, -1545, 70 } },
@@ -139,7 +141,7 @@ int main(int argc, char** argv)
 	nif.CreateSkinning(ts);
 	std::vector<int> ids;
 	std::vector<std::string> used;
-	for (auto& b : bones) if (b.name != "DG_Bank" && b.name != "DG_Look" && b.name != "DG_Mouth") used.push_back(b.name);
+	for (auto& b : bones) if (b.name != "DG_Bank" && b.name != "DG_Look" && b.name != "DG_Mouth" && b.name != "DG_WingL0" && b.name != "DG_WingR0") used.push_back(b.name);
 	for (auto& n : used) ids.push_back(nif.GetBlockID(node[n]));
 	nif.SetShapeBoneIDList(ts, ids);
 	if (auto* si = hdr.GetBlock<NiSkinInstance>(ts->SkinInstanceRef())) si->targetRef.index = nif.GetBlockID(space);
@@ -188,9 +190,9 @@ int main(int argc, char** argv)
 	nif.UpdateSkinPartitions(ts);
 	if (auto* ls = dynamic_cast<BSLightingShaderProperty*>(nif.GetShader(ts))) ls->shaderFlags1 |= SLSF1_SKINNED;
 
-	// ---- the loop: 6 seconds, sampled 30 times a second
+	// ---- the loop: 6 seconds, sampled 60 times a second
 	constexpr float T = 6.0f;
-	constexpr int   N = 180;
+	constexpr int   N = 360;  // (60 keys a second)
 	auto flapEnv = [](float t) { return S(0.15f, 0.45f, t) * (1 - S(2.75f, 3.15f, t)); };  // two beats, then the glide
 	// one wingbeat (period 1.3 s): -1 bottom .. +1 top; the downstroke takes 40% of it
 	auto beat = [](float t) {

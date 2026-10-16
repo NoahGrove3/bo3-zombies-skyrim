@@ -211,7 +211,7 @@ namespace bo3z
 						auto* m = SpellShow(g_show.gun, &own);
 						ShowModel(m, gen::kShowRise, own ? -1.0f : 1.8f);
 						Forms::PlayAt(gen::Sound::coffer_land, chest.get());
-						Hud::Banner((Arcana::TierOf(g_show.gun) >= 3 ? std::string("LEGENDARY: ") : std::string()) + Arcana::Name(g_show.gun) + "  -  Activate the shrine to take it", 4.0f);
+						Hud::Banner((Arcana::TierOf(g_show.gun) >= 3 ? std::string("LEGENDARY: ") : std::string()) + std::string(Arcana::Name(g_show.gun)) + "  -  Activate the shrine to take it", 4.0f);
 						if (Arcana::TierOf(g_show.gun) >= 3) {
 							Forms::PlayAt(gen::Sound::champ_arrive, chest.get());  // (a legendary spell announces itself)
 						}
