@@ -252,6 +252,5 @@ namespace bo3z
 				Revive(player, falling);
 			}
 		}
-		}
 	}
 }
