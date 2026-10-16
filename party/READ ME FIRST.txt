@@ -53,8 +53,9 @@ THE PARTY MODS (installed for both players - Skyrim Together needs the same plug
  - Frameworks: SPID, powerofthree's Papyrus Extender, SSE Engine Fixes (both parts).
  - Perks: Ordinator. Spell tomes: BURP Spell Tomes.
  - Animation and movement: Open Animation Replacer, True Directional Movement, Goetia spell casting,
-   Dynamic Random Spell Idle, SpellSword Moveset, Leviathan greatsword low stance, TK Dodge (+ sound).
-   Their behavior files come already built with Nemesis (SkyParkour 1st/3rd person, TK Dodge, Paraglider) - nothing to run.
+   Dynamic Random Spell Idle, SpellSword Moveset, Leviathan greatsword low stance, TK Dodge (+ sound),
+   Momo Acrobatic Jump (flips when you jump while running).
+   Their behavior files come already built with Nemesis (SkyParkour 1st/3rd person, TK Dodge, Paraglider, Momo Acrobatic Jump) - nothing to run.
  - Effects and sound: Deadly Spell Impacts, Spell Rune Retexture, Frozen Electrocuted Combustion, Embers XD
    (+ Fire Magick), ENB Light, Airgetlam Modern Magic Sounds + Shouts SFX. 120 FPS UI, 90 FPS animations.
  - Wizard Hats.
