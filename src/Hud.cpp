@@ -27,7 +27,8 @@ namespace bo3z
 		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
 		ID3D11ShaderResourceView* g_fire = nullptr;     // the shrine orb's purple magic fire: 16x8 flipbook (tools/magicfire.py)
 		ID3D11ShaderResourceView* g_flame = nullptr;    // the aura round a spell emblem: 4x4 atlas of a looping white flame ring (tools/flameaura.py)
-		ID3D11ShaderResourceView* g_frame = nullptr;    // nine-slice panel: black field, iron and bronze border (tools/uiart.py)
+		ID3D11ShaderResourceView* g_frame = nullptr;
+		ID3D11ShaderResourceView* g_cursorTex = nullptr;  // Noah's cursor: Moonlit Spirit, 8 frames of 128 px side by side (cursor_moonlit.png)    // nine-slice panel: black field, iron and bronze border (tools/uiart.py)
 		ID3D11ShaderResourceView* g_divider = nullptr;  // bronze line with a winged diamond
 		std::atomic<int>          g_clicks{ 0 };        // left clicks since the last frame (menus)
 		std::atomic<bool>         g_padLast{ false };   // the last thing touched was a controller: show its buttons
@@ -1920,6 +1921,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// the tip that breathes - on the main menu and in every Skyrim menu with a cursor.
 		void DrawPingCursor(ImDrawList* a_dl, ImVec2 a_tip, float k, float a_now)
 		{
+			if (g_cursorTex) {  // the Moonlit Spirit cursor (an animated Windows cursor: 8 frames played 0..7..0, 9/60 s each)
+				static constexpr int kSeq[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0 };
+				const int   f = kSeq[static_cast<int>(a_now * 60.0f / 9.0f) % 16];
+				const float S = 56.0f * k;                              // drawn size (the art is 128 px)
+				const ImVec2 at{ a_tip.x - 44.0f / 128.0f * S, a_tip.y - 30.0f / 128.0f * S };  // its hotspot on the point
+				a_dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_cursorTex)), at, { at.x + S, at.y + S }, { f / 8.0f, 0.0f }, { (f + 1) / 8.0f, 1.0f });
+				return;
+			}
 			const ImU32 col = IM_COL32(236, 168, 72, 255), dark = IM_COL32(20, 12, 8, 235);
 			const float pulse = 0.75f + 0.25f * std::sin(a_now * 3.0f);
 			const float R = 12.0f * k, ca = std::cos(-0.55f), sa = std::sin(-0.55f);
@@ -2504,23 +2513,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					layer(g_sGlow, kD, IM_COL32(255, 255, 255, static_cast<int>((150 + 105 * pulse) * fade)));
 				}
 				// (the old motes running round the rune ring are gone: the motes flipbook below carries the light now)
-				// motes of light rising from the pool to the crystal, spiralling in (tools/orbfx.py motes, the game's own)
-				if (g_sMotes) {
-					const ImVec2 pool = at(0, 0, 0), top = at(0, 0, kCrystalZ);
-					const float  hgt = (pool.y - top.y) * 1.2f;
-					const int    fr = static_cast<int>(now * 24.0f) % 128;
-					const ImVec2 uv0{ (fr % 16) / 16.0f, (fr / 16) / 8.0f }, uv1{ uv0.x + 1.0f / 16.0f, uv0.y + 0.125f };
-					sprite(g_sMotes, { pool.x, (pool.y + top.y) * 0.5f }, hgt * 0.5f, hgt, 0, IM_COL32(255, 255, 255, static_cast<int>(235 * fade)), uv0, uv1);
-				}
-				// the light rising from the pool to the crystal: a soft shaft (the round light stretched tall)
-				if (g_sSoft) {
-					const ImVec2 pool = at(0, 0, 0), top = at(0, 0, kCrystalZ);
-					const ImVec2 mid{ pool.x, (pool.y + top.y) * 0.5f };
-					const float  len = (pool.y - top.y) * 1.25f, bw = (70 + 16 * pulse) * u * kS;
-					sprite(g_sSoft, mid, bw * 2.0f, len, 0, IM_COL32(110, 190, 255, static_cast<int>((70 + 40 * pulse) * fade)));
-					sprite(g_sSoft, mid, bw * 0.7f, len, 0, IM_COL32(210, 240, 255, static_cast<int>((80 + 60 * pulse) * fade)));
-					sprite(g_sSoft, pool, bw * 3.2f, bw * 1.0f, 0, IM_COL32(120, 200, 255, static_cast<int>((90 + 60 * pulse) * fade)));  // the pool's glow on the floor
-				}
 				// the rocks: each on its own orbit round the crystal, bobbing and slowly tumbling; the far ones behind it
 				struct Rock { float r, a0, z, speed, bob, ph, rot0, spin; };
 				static constexpr Rock kRocks[9] = { { 112, 0.0f, 150, 0.16f, 9, 0.0f, 0.3f, 0.10f }, { 120, 0.7f, 110, 0.16f, 11, 1.3f, -0.4f, -0.08f },
@@ -2554,6 +2546,24 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				};
 				for (const auto& pl : placed) {
 					if (pl.depth > 0) drawRock(pl);
+				}
+				// (the pool's motes and light shaft after the far rocks: a rock swinging round the back of the orb passes behind them)
+				// motes of light rising from the pool to the crystal, spiralling in (tools/orbfx.py motes, the game's own)
+				if (g_sMotes) {
+					const ImVec2 pool = at(0, 0, 0), top = at(0, 0, kCrystalZ);
+					const float  hgt = (pool.y - top.y) * 1.2f;
+					const int    fr = static_cast<int>(now * 24.0f) % 128;
+					const ImVec2 uv0{ (fr % 16) / 16.0f, (fr / 16) / 8.0f }, uv1{ uv0.x + 1.0f / 16.0f, uv0.y + 0.125f };
+					sprite(g_sMotes, { pool.x, (pool.y + top.y) * 0.5f }, hgt * 0.5f, hgt, 0, IM_COL32(255, 255, 255, static_cast<int>(235 * fade)), uv0, uv1);
+				}
+				// the light rising from the pool to the crystal: a soft shaft (the round light stretched tall)
+				if (g_sSoft) {
+					const ImVec2 pool = at(0, 0, 0), top = at(0, 0, kCrystalZ);
+					const ImVec2 mid{ pool.x, (pool.y + top.y) * 0.5f };
+					const float  len = (pool.y - top.y) * 1.25f, bw = (70 + 16 * pulse) * u * kS;
+					sprite(g_sSoft, mid, bw * 2.0f, len, 0, IM_COL32(110, 190, 255, static_cast<int>((70 + 40 * pulse) * fade)));
+					sprite(g_sSoft, mid, bw * 0.7f, len, 0, IM_COL32(210, 240, 255, static_cast<int>((80 + 60 * pulse) * fade)));
+					sprite(g_sSoft, pool, bw * 3.2f, bw * 1.0f, 0, IM_COL32(120, 200, 255, static_cast<int>((90 + 60 * pulse) * fade)));  // the pool's glow on the floor
 				}
 				// the crystal: turning (its frames), swelling with the heartbeat, its light round it
 				{
@@ -3354,6 +3364,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\CurseOfAlduin\\menu_shard" + std::to_wstring(i) + L"_r.png").c_str(), nullptr, &g_sShardR[i]);
 			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\frame.png", nullptr, &g_frame);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\cursor_moonlit.png", nullptr, &g_cursorTex);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\flame_ring.png", nullptr, &g_flame);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_fire.png", nullptr, &g_fire);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\divider.png", nullptr, &g_divider);

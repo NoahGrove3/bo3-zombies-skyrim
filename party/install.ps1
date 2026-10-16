@@ -98,13 +98,13 @@ $modPlugins = @('Ordinator - Perks of Skyrim.esp', 'Apocalypse - Magic of Skyrim
     'Sentinel - Master Plugin.esp', 'SkyUI_SE.esp', 'MCMHelper.esp', 'The Restless Dead.esp', 'mihailesobonecolossus.esp', 'mihailoldgod.esp',
     'mihailgiantfamily.esp', 'mihailfogling.esp', 'mihailhighfantasypack.esp', 'DiverseDragonsCollectionSE.esp', 'GhostLight.esp',
     'Thunderchild - Epic Shout Package.esp', 'Thundering Shouts.esp', 'Sentinel.esp', 'Sentinel - Priests and Acolytes.esp', 'Sentinel - City Guards.esp',
-    'SkyParkour.esp', 'Character Menu SE.esp', 'Phantom Horse.esp',
+    'SkyParkour.esp', 'Character Menu SE.esp', 'Paragliding.esp',
     'ArteFake.esp', 'Beam Walk.esp', 'SpiderAnim.esl', 'Unique Jarl Throne Sitting Animation.esp', 'MikanEyes All in one SE.esp', "Freak's Floral Fields.esp",
     'Faithful Faces.esp', 'Faithful Faces0.esp', 'FabulousFollowersAIO.esp', "The Wolven Widow - SerketHetyt's Elisif Overhaul.esp",
     "Evigheden - SerketHetyt's Serana Overhaul.esp", 'RaySense.esp', 'YsoldaDF.esp', "Jordis of Solitude - SerketHetyt's Housecarls.esp",
     'CollegeOfWinterholdImmersive.esp', 'FabFollowers_ImmCoW_Patch.esp')
 # plugins no longer used (an older pack turned them on): kept off
-$retired = @('PAN_NPCs.esp', 'Skoglendi - A Grass Mod.esp', 'Nolvus Ascension Seasonal Grass Mashup.esp')
+$retired = @('PAN_NPCs.esp', 'Phantom Horse.esp', 'Skoglendi - A Grass Mod.esp', 'Nolvus Ascension Seasonal Grass Mashup.esp')
 $ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'BO3Zombies.esp', 'UndyingNights.esp', 'CurseOfAlduin.esp') + $basePlugins + $gfxPlugins + $modPlugins + $retired
 $keep = $lines | Where-Object { $n = ($_ -replace '^\*', '').Trim(); -not ($ours -contains $n) }
 $mid = @()

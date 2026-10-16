@@ -146,80 +146,43 @@ namespace bo3z
 
 	namespace Movement
 	{
-		// Phantom Horse is no real mount: its horse is an effect worn by the third-person body while it plays riding
-		// animations (Open Animation Replacer), started from the sprint - none of which exists in first person, where
-		// the camera sits inside that horse. So: with one of its powers on (the Arvak or Shadow ability), pressing sprint
-		// in first person turns the camera out to third before the sprint starts; while you ride (its riding effect,
-		// ME_PH_PerSprint, is on you) the camera is held in third, the scroll wheel cannot take it in; once you are off
-		// and no longer sprinting it goes back to first person.
-		RE::EffectSetting* g_phFx[3]{};  // ME_ArvakAbility, ME_ShadowAbility, ME_PH_PerSprint
-		bool               g_phLooked = false, g_phTurned = false;
-		float              g_phCalm = 0;
-
-		void PhantomForms()
+		// Skyrim's Paraglider: everyone carries the glider (Paragliding.esp's "Paraglider", local 0x802) - its own way
+		// of getting one is a little quest; here it is in your pack. Its script sets the behavior flag the glide needs
+		// when it enters your inventory; the flag is also kept set here (a load or a new body can drop it).
+		void Glider(RE::PlayerCharacter* a_player, float a_delta)
 		{
-			if (g_phLooked) {
+			static float      every = 0;
+			static RE::TESBoundObject* item = nullptr;
+			static bool       looked = false;
+			if ((every -= a_delta) > 0) {
 				return;
 			}
-			g_phLooked = true;
-			if (auto* dh = RE::TESDataHandler::GetSingleton()) {
-				const RE::FormID ids[3]{ 0x808, 0x83C, 0x813 };
-				for (int i = 0; i < 3; ++i) {
-					g_phFx[i] = dh->LookupForm<RE::EffectSetting>(ids[i], "Phantom Horse.esp");
+			every = 3.0f;
+			if (!looked) {
+				looked = true;
+				if (auto* dh = RE::TESDataHandler::GetSingleton()) {
+					item = dh->LookupForm<RE::TESBoundObject>(0x802, "Paragliding.esp");
 				}
+				logger::info("glider: Paragliding.esp {}", item ? "found" : "not installed");
 			}
-		}
-
-		bool Has(RE::PlayerCharacter* a_player, RE::EffectSetting* a_fx)
-		{
-			auto* mt = a_player ? a_player->AsMagicTarget() : nullptr;
-			return a_fx && mt && mt->HasMagicEffect(a_fx);
-		}
-
-		bool PowerOn(RE::PlayerCharacter* a_player) { return Has(a_player, g_phFx[0]) || Has(a_player, g_phFx[1]); }
-
-		void ThirdForHorse(const char* a_why)
-		{
-			auto* cam = RE::PlayerCamera::GetSingleton();
-			if (cam && cam->IsInFirstPerson()) {
-				cam->ForceThirdPerson();
-				logger::info("phantom horse: camera to third person ({})", a_why);
-			}
-			g_phTurned = true, g_phCalm = 0;
-		}
-
-		void PhantomCamera(RE::PlayerCharacter* a_player, bool a_sprint, float a_delta)
-		{
-			PhantomForms();
-			auto* cam = RE::PlayerCamera::GetSingleton();
-			if (!cam) {
+			if (!item || !a_player->Is3DLoaded()) {
 				return;
 			}
-			const bool riding = Movement::Riding();
-			if (riding && cam->IsInFirstPerson()) {  // (held in third while you ride: the wheel cannot take it inside the horse)
-				ThirdForHorse("riding");
+			const auto have = a_player->GetInventoryCounts([](RE::TESBoundObject& o) { return &o == item; });
+			if (have.empty()) {
+				a_player->AddObjectToContainer(item, nullptr, 1, nullptr);
+				logger::info("glider: the paraglider put in your pack");
 			}
-			if (!g_phTurned) {
-				if (a_sprint && !riding && PowerOn(a_player) && cam->IsInFirstPerson()) {
-					ThirdForHorse("sprinting with the power on");
-				}
-				return;
-			}
-			g_phCalm = (riding || a_sprint) ? 0.0f : g_phCalm + a_delta;
-			if (g_phCalm > 0.8f) {  // off the horse (or the summon never came) and walking again
-				if (!cam->IsInFirstPerson()) {
-					cam->ForceFirstPerson();
-				}
-				g_phTurned = false;
-				logger::info("phantom horse: off the horse - camera back to first person");
+			std::int32_t on = 0;
+			if (!a_player->GetGraphVariableInt("hasparaglider", on) || on != 1) {
+				a_player->SetGraphVariableInt("hasparaglider", 1);
 			}
 		}
 
 		bool Riding()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			PhantomForms();
-			return p && (p->IsOnMount() || Has(p, g_phFx[2]));
+			return p && p->IsOnMount();
 		}
 
 		void OnButton(const RE::ButtonEvent* a_event)
@@ -250,22 +213,6 @@ namespace bo3z
 			if (!ue || !player) {
 				return;
 			}
-			// Phantom Horse on a controller: its script only listens for a keyboard key (E, RegisterForKey), so A while
-			// sprinting with its power on presses that key too, held as long as the summon wants
-			if (a_event->GetDevice() == RE::INPUT_DEVICE::kGamepad && a_event->GetIDCode() == 0x1000 && player->AsActorState()->IsSprinting()) {
-				PhantomForms();
-				if (PowerOn(player) && !Riding()) {
-					DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 1.2f);
-					logger::info("phantom horse: pad A while sprinting - its key (E) pressed for it");
-				}
-			}
-			// Phantom Horse: the summon starts from the sprint, which must begin in third person (see PhantomCamera)
-			if (ev == ue->sprint) {
-				PhantomForms();
-				if (PowerOn(player) && !Riding()) {
-					ThirdForHorse("sprint pressed with the power on");
-				}
-			}
 			// (the slide is gone: crouch is Skyrim's crouch again)
 			if (ev == ue->jump && g_slide > 0) {
 				g_wantJumpCarry = true;
@@ -289,7 +236,7 @@ namespace bo3z
 			auto*      st = player->AsActorState();
 			auto*      cc = player->GetCharController();
 			const bool sprint = st->IsSprinting();
-			PhantomCamera(player, sprint, a_delta);
+			Glider(player, a_delta);
 			if (cc) {  // no fall damage at all: the fall is always measured from where you are now, so every landing is from nowhere
 				cc->fallStartHeight = player->GetPositionZ();
 				cc->fallTime = 0.0f;

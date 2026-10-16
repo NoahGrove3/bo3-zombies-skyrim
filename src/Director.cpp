@@ -1241,7 +1241,7 @@ namespace bo3z
 			EndEvent();
 		}
 
-		// The player on a horse (Phantom Horse) would leave the dead far behind: while they ride, every risen thing runs
+		// The player on a horse would leave the dead far behind: while they ride, every risen thing runs
 		// faster to keep up (kMountChase SpeedMult); off the horse, they slow back to their own pace.
 		constexpr float kMountChase = 70.0f;
 		void MountChase(RE::PlayerCharacter* a_player)

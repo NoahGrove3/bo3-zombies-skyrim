@@ -416,7 +416,7 @@ namespace bo3z
 		void OnButton(const RE::ButtonEvent* a_event);  // crouch/jump keys (Skyrim ignores crouch while sprinting)
 		void Tick(float a_delta);
 		void Reset();
-		bool Riding();  // on a horse: a real mount, or Phantom Horse's (its riding effect on you)
+		bool Riding();  // on a horse
 	}
 
 	// Quick loot in the game's style (src/Loot.cpp): a body's or a container's things beside the crosshair
