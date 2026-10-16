@@ -10,6 +10,8 @@
 // Test channel (sheet: systems.devtools). Lines written to My Games/Skyrim Special Edition/SKSE/CurseOfAlduin-cmd.txt
 // are run and the file removed:
 //   shot <name>   save the next frame (with the HUD) to SKSE/CurseOfAlduin-shots/<name>.png
+//   rec <name> <seconds> [fps]   record the screen (half size, raw frames) to SKSE/CurseOfAlduin-rec/<name>/ - the
+//                 frames are made into a video outside the game (Noah: recordings of the tests to review)
 //   hour <h>      set Skyrim's clock to hour h (0-24)
 //   state         write round, points, gun and player position to the log
 namespace bo3z
@@ -20,6 +22,40 @@ namespace bo3z
 		std::vector<std::string> g_mainQueue;   // render-safe: key, mouse, close
 		std::vector<std::string> g_gameQueue;   // run from PlayerCharacter::Update: console, hour, give, tp, ...
 		std::string              g_shotName;
+		// the recorder: a ring of staging copies of the back buffer, read two frames late (no stall), halved and handed
+		// to a writer thread
+		struct Rec
+		{
+			std::string                    name;
+			float                          seconds = 0, fps = 20;
+			bool                           on = false;
+			std::chrono::steady_clock::time_point start{}, next{};
+			ID3D11Texture2D*               ring[3]{};
+			bool                           filled[3]{};
+			int                            slot = 0, frames = 0;
+			UINT                           w = 0, h = 0;
+			DXGI_FORMAT                    fmt{};
+			std::filesystem::path          dir;
+		};
+		Rec                                        g_rec;
+		std::string                                g_recRequest;
+		std::mutex                                 g_recLock;
+		std::condition_variable                    g_recCv;
+		std::deque<std::pair<std::filesystem::path, std::vector<std::uint8_t>>> g_recQueue;
+		void RecWriter()
+		{
+			for (;;) {
+				std::pair<std::filesystem::path, std::vector<std::uint8_t>> job;
+				{
+					std::unique_lock l(g_recLock);
+					g_recCv.wait(l, [] { return !g_recQueue.empty(); });
+					job = std::move(g_recQueue.front());
+					g_recQueue.pop_front();
+				}
+				std::ofstream f(job.first, std::ios::binary);
+				f.write(reinterpret_cast<const char*>(job.second.data()), static_cast<std::streamsize>(job.second.size()));
+			}
+		}
 		std::atomic<bool>        g_hudOff{ false };
 		std::chrono::steady_clock::time_point g_lastGameTick{};
 		struct PendingKey
@@ -424,6 +460,8 @@ namespace bo3z
 			for (auto& s : lines) {
 				if (s.rfind("shot ", 0) == 0) {
 					g_shotName = s.substr(5);
+				} else if (s.rfind("rec ", 0) == 0) {
+					g_recRequest = s.substr(4);
 				} else if (s.rfind("key ", 0) == 0 || s.rfind("type ", 0) == 0 || s.rfind("gfx ", 0) == 0 || s.rfind("menus", 0) == 0 || s.rfind("mouse ", 0) == 0 || s.rfind("hold ", 0) == 0 || s.rfind("close ", 0) == 0) {
 					g_mainQueue.push_back(s);
 				} else {
@@ -432,8 +470,129 @@ namespace bo3z
 			}
 		}
 
+		void Record(ID3D11DeviceContext* a_context, IDXGISwapChain* a_swap)
+		{
+			std::string req;
+			{
+				std::scoped_lock l(g_lock);
+				req.swap(g_recRequest);
+			}
+			auto& r = g_rec;
+			if (!req.empty() && !r.on) {
+				std::istringstream in(req);
+				r = Rec{};
+				in >> r.name >> r.seconds >> r.fps;
+				r.fps = std::clamp(r.fps <= 0 ? 20.0f : r.fps, 1.0f, 60.0f);
+				auto dir = Dir();
+				if (!dir || r.name.empty() || r.seconds <= 0) {
+					return;
+				}
+				r.dir = *dir / "CurseOfAlduin-rec" / r.name;
+				std::error_code ec;
+				std::filesystem::create_directories(r.dir, ec);
+				ID3D11Texture2D* back = nullptr;
+				if (FAILED(a_swap->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back)))) {
+					return;
+				}
+				D3D11_TEXTURE2D_DESC d{};
+				back->GetDesc(&d);
+				ID3D11Device* dev = nullptr;
+				back->GetDevice(&dev);
+				back->Release();
+				d.Usage = D3D11_USAGE_STAGING, d.BindFlags = 0, d.CPUAccessFlags = D3D11_CPU_ACCESS_READ, d.MiscFlags = 0, d.SampleDesc.Count = 1, d.SampleDesc.Quality = 0, d.MipLevels = 1, d.ArraySize = 1;
+				bool ok = dev != nullptr;
+				for (auto& t : r.ring) {
+					ok = ok && SUCCEEDED(dev->CreateTexture2D(&d, nullptr, &t));
+				}
+				if (dev) dev->Release();
+				if (!ok) {
+					logger::warn("dev: rec - no staging textures");
+					for (auto& t : r.ring) if (t) t->Release(), t = nullptr;
+					return;
+				}
+				r.w = d.Width, r.h = d.Height, r.fmt = d.Format;
+				r.on = true;
+				r.start = r.next = std::chrono::steady_clock::now();
+				static std::once_flag once;
+				std::call_once(once, [] { std::thread(RecWriter).detach(); });
+				std::ofstream(r.dir / "meta.txt") << (r.w / 2) << " " << (r.h / 2) << " " << r.fps << " " << static_cast<int>(r.fmt) << "\n";
+				logger::info("dev: rec {} {:.1f} s at {:.0f} fps ({}x{} format {})", r.name, r.seconds, r.fps, r.w, r.h, static_cast<int>(r.fmt));
+			}
+			if (!r.on) {
+				return;
+			}
+			const auto now = std::chrono::steady_clock::now();
+			const bool done = now - r.start > std::chrono::duration<float>(r.seconds);
+			// read back the copy made two frames ago
+			const int  old = (r.slot + 1) % 3;
+			if (r.filled[old]) {
+				D3D11_MAPPED_SUBRESOURCE m{};
+				if (SUCCEEDED(a_context->Map(r.ring[old], 0, D3D11_MAP_READ, 0, &m))) {
+					const UINT                w = r.w / 2, h = r.h / 2;
+					std::vector<std::uint8_t> px(static_cast<std::size_t>(w) * h * 4);
+					const bool bgra = r.fmt == DXGI_FORMAT_B8G8R8A8_UNORM || r.fmt == DXGI_FORMAT_B8G8R8A8_UNORM_SRGB || r.fmt == DXGI_FORMAT_B8G8R8X8_UNORM;
+					const bool r10 = r.fmt == DXGI_FORMAT_R10G10B10A2_UNORM;
+					for (UINT y = 0; y < h; ++y) {
+						const auto* row0 = static_cast<const std::uint8_t*>(m.pData) + static_cast<std::size_t>(y * 2) * m.RowPitch;
+						const auto* row1 = row0 + m.RowPitch;
+						auto*       o = px.data() + static_cast<std::size_t>(y) * w * 4;
+						for (UINT x = 0; x < w; ++x) {
+							int c[3] = { 0, 0, 0 };
+							for (const auto* rr : { row0, row1 }) {
+								for (int k = 0; k < 2; ++k) {
+									const auto* q = rr + (x * 2 + k) * 4;
+									if (r10) {
+										const std::uint32_t v = *reinterpret_cast<const std::uint32_t*>(q);
+										c[0] += (v & 0x3FF) >> 2, c[1] += ((v >> 10) & 0x3FF) >> 2, c[2] += ((v >> 20) & 0x3FF) >> 2;
+									} else if (bgra) {
+										c[0] += q[2], c[1] += q[1], c[2] += q[0];
+									} else {
+										c[0] += q[0], c[1] += q[1], c[2] += q[2];
+									}
+								}
+							}
+							o[x * 4 + 0] = static_cast<std::uint8_t>(c[0] / 4), o[x * 4 + 1] = static_cast<std::uint8_t>(c[1] / 4), o[x * 4 + 2] = static_cast<std::uint8_t>(c[2] / 4), o[x * 4 + 3] = 255;
+						}
+					}
+					a_context->Unmap(r.ring[old], 0);
+					{
+						std::scoped_lock l(g_recLock);
+						g_recQueue.push_back({ r.dir / fmt::format("f{:05d}.raw", r.frames++), std::move(px) });
+					}
+					g_recCv.notify_one();
+				}
+				r.filled[old] = false;
+			}
+			if (done) {
+				bool pending = false;
+				for (bool f : r.filled) pending = pending || f;
+				if (!pending) {
+					for (auto& t : r.ring) if (t) t->Release(), t = nullptr;
+					r.on = false;
+					std::ofstream(r.dir / "done.txt") << r.frames << "\n";
+					logger::info("dev: rec {} done, {} frames", r.name, r.frames);
+				}
+				r.slot = (r.slot + 1) % 3;
+				return;
+			}
+			if (now >= r.next) {  // this frame: copied to the ring
+				r.next += std::chrono::microseconds(static_cast<long long>(1e6f / r.fps));
+				if (r.next < now) r.next = now;
+				ID3D11Texture2D* back = nullptr;
+				if (SUCCEEDED(a_swap->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back)))) {
+					a_context->CopyResource(r.ring[r.slot], back);
+					back->Release();
+					r.filled[r.slot] = true;
+				}
+			}
+			r.slot = (r.slot + 1) % 3;
+		}
+
 		void CaptureIfRequested(ID3D11DeviceContext* a_context, IDXGISwapChain* a_swap)
 		{
+			if (a_context && a_swap) {
+				Record(a_context, a_swap);
+			}
 			std::string name;
 			{
 				std::scoped_lock l(g_lock);

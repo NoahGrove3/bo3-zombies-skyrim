@@ -34,6 +34,7 @@
 #include <dxgi1_3.h>
 #include <timeapi.h>
 #include <thread>
+#include <condition_variable>
 
 namespace logger = SKSE::log;
 using namespace std::literals;
