@@ -1834,7 +1834,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						dl->AddCircleFilled(at, r * t, Fade(col, a * 0.11f * (1.0f - t * 0.5f)), 64);
 					}
 				};
-				// an orbit seen at a slant (an ellipse), brighter on the near side, spun by a_spin
+				// an orbit seen at a slant (an ellipse), brighter on the nearF side, spun by a_spin
 				const auto orbit = [&](float rx, float ry, float tilt, float spin, ImU32 col, float a, float w) {
 					constexpr int N = 96;
 					ImVec2 prev{};
@@ -1843,8 +1843,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const float x = std::sin(t) * rx, y = std::cos(t) * ry;
 						const ImVec2 pt{ c.x + x * std::cos(tilt) - y * std::sin(tilt), c.y + x * std::sin(tilt) + y * std::cos(tilt) };
 						if (q > 0) {
-							const float near = 0.5f + 0.5f * std::cos(t);
-							dl->AddLine(prev, pt, Fade(col, a * (0.25f + 0.75f * near)), w * (0.6f + 0.6f * near));
+							const float nearF = 0.5f + 0.5f * std::cos(t);
+							dl->AddLine(prev, pt, Fade(col, a * (0.25f + 0.75f * nearF)), w * (0.6f + 0.6f * nearF));
 						}
 						prev = pt;
 					}
@@ -1879,7 +1879,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						glow(c, R * (1.2f + 1.5f * f), IM_COL32(255, 250, 240, 255), f);
 					}
 				} else if (s.rollPhase == 2 && s.rollTarget >= 0) {
-					// the reel: a carousel of the spells' emblems turning round the orb on a slanted ring - near ones large
+					// the reel: a carousel of the spells' emblems turning round the orb on a slanted ring - nearF ones large
 					// and bright, far ones small and dim behind it, a streak behind each while it races, slowing like a wheel
 					const float pos = Shops::ReelPos(s.rollT), frac = pos - std::floor(pos);
 					const float speed = Shops::kReelPass * 3.0f * (1.0f - s.rollT) * (1.0f - s.rollT) / gen::kShowSpin;  // spells a second
@@ -1897,8 +1897,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					orbit(rx, ry, 0.0f, 0.0f, kGold, 0.55f, 1.4f * k);  // the track (its far half first)
 					const auto place = [&](float a) { return ImVec2{ c.x + std::sin(a) * rx, c.y + std::cos(a) * ry }; };
 					for (const auto& sl : slots) {
-						const float depth = std::cos(sl.a), near = 0.5f + 0.5f * depth;
-						const float sc = R * (0.30f + 0.42f * near * near), al = 0.25f + 0.75f * std::pow(near, 1.4f);
+						const float depth = std::cos(sl.a), nearF = 0.5f + 0.5f * depth;
+						const float sc = R * (0.30f + 0.42f * nearF * nearF), al = 0.25f + 0.75f * std::pow(nearF, 1.4f);
 						const float blur = std::clamp(speed / 14.0f, 0.0f, 1.0f);
 						for (int gq = 4; gq >= 1 && blur > 0.05f; --gq) {  // the streak it leaves
 							DrawEmblem(dl, Arcana::kIdBase + sl.spell, place(sl.a + gq * 0.045f * blur), sc, al * 0.22f * blur * (1.0f - gq / 5.0f), now, 0.0f);
