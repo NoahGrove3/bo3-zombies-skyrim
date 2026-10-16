@@ -613,8 +613,8 @@ namespace bo3z
 				if (cc) {
 					GetVel(cc, v);
 				}
-				if (cc && g_takeT < 0.25f && !OnGround(a_player)) {  // the hop, higher
-					v.z = std::max(v.z, 560.0f);
+				if (cc && g_takeT < 0.3f) {  // the hop
+					v.z = std::max(v.z, 620.0f);
 					SetVel(cc, v);
 				}
 				// the glider opens with Activate, as you would - once you are falling (it will not open on the way up)
@@ -1167,7 +1167,7 @@ namespace bo3z
 					auto* pick = RE::CrosshairPickData::GetSingleton();
 					if (!pick || !pick->target.get()) {
 						if (player->GetCharController()) {
-							DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x39, 0.05f);  // a jump (Space), carried higher below
+							player->SetPosition(player->GetPosition() + RE::NiPoint3{ 0, 0, 45.0f });  // off the ground (then carried up, below)
 							g_liftOff = 1, g_takeT = 0;
 							Forms::PlayAt(gen::Sound::shout_gale, player);
 							logger::info("glider: take-off");
