@@ -172,6 +172,7 @@ namespace bo3z
 			RE::NiTransform     start;
 			RE::NiMatrix3       bank;
 			RE::NiPoint3        vel;
+			RE::NiPoint3        fwd{ 0, 1, 0 };  // which way it flies on (level, in the world)
 			float               scale = 1, side = 1;
 		};
 		Away            g_away;
@@ -185,6 +186,18 @@ namespace bo3z
 		{
 			a_x = std::clamp(a_x, 0.0f, 1.0f);
 			return a_x * a_x * (3 - 2 * a_x);
+		}
+
+		// a turn of a_angle about a world axis (right-handed)
+		RE::NiMatrix3 AxisAngle(RE::NiPoint3 a_axis, float a_angle)
+		{
+			a_axis.Unitize();
+			const float   c = std::cos(a_angle), s = std::sin(a_angle), t = 1 - c, x = a_axis.x, y = a_axis.y, z = a_axis.z;
+			RE::NiMatrix3 m;
+			m.entry[0][0] = t * x * x + c, m.entry[0][1] = t * x * y - s * z, m.entry[0][2] = t * x * z + s * y;
+			m.entry[1][0] = t * x * y + s * z, m.entry[1][1] = t * y * y + c, m.entry[1][2] = t * y * z - s * x;
+			m.entry[2][0] = t * x * z - s * y, m.entry[2][1] = t * y * z + s * x, m.entry[2][2] = t * z * z + c;
+			return m;
 		}
 
 		// rotations blended through quaternions
@@ -267,10 +280,10 @@ namespace bo3z
 			if (!root) {
 				return;  // (still loading: it catches up with its path when it appears)
 			}
+			// (in the world's own axes: the dragon's frame on you is not upright - its own "up" can point anywhere)
 			const auto&        R0 = g_away.start.rotate;
-			RE::NiPoint3       right{ R0.entry[0][0], R0.entry[1][0], R0.entry[2][0] };
-			RE::NiPoint3       fwd{ R0.entry[0][1], R0.entry[1][1], R0.entry[2][1] };
-			RE::NiPoint3       up{ R0.entry[0][2], R0.entry[1][2], R0.entry[2][2] };
+			const RE::NiPoint3 fwd = g_away.fwd, up{ 0, 0, 1 };
+			const RE::NiPoint3 right = fwd.Cross(up);
 			const float        sd = g_away.side;
 			// your momentum, then its own: a lurch up as your weight leaves it, a climb, and a curve off to one side
 			const RE::NiPoint3 pos = g_away.start.translate + g_away.vel * (t * 0.85f) + fwd * (260 * t + 170 * t * t) +
@@ -278,7 +291,7 @@ namespace bo3z
 			const float climb = Smooth(t / 1.3f);
 			const float roll = sd * 0.75f * std::sin(3.14159f * std::min(1.0f, t / 2.8f));
 			root->local.translate = pos;
-			root->local.rotate = R0 * Rot(0.42f * climb, roll, -sd * 0.55f * climb);
+			root->local.rotate = AxisAngle(up, -sd * 0.55f * climb) * AxisAngle(fwd, roll) * AxisAngle(right, 0.42f * climb) * R0;
 			root->local.scale = g_away.scale;
 			if (auto* bank = root->GetObjectByName("DG_Bank")) {  // (from the lean it had as it let go, straightening out)
 				bank->local.rotate = Slerp(g_away.bank, Rot(0, 0, 0), Smooth(t / 0.6f));
@@ -325,6 +338,15 @@ namespace bo3z
 			g_away.start = g_lastSpace;
 			g_away.bank = g_lastBank;
 			g_away.vel = a_vel;
+			{
+				RE::NiPoint3 f{ a_vel.x, a_vel.y, 0 };
+				if (f.Length() < 100.0f) {
+					const float yaw = a_player->GetAngleZ();
+					f = { std::sin(yaw), std::cos(yaw), 0 };
+				}
+				f.Unitize();
+				g_away.fwd = f;
+			}
 			g_away.scale = a_baseScale > 0 ? g_lastSpace.scale / a_baseScale : 1.0f;
 			g_away.side = std::abs(a_roll) > 0.05f ? (a_roll > 0 ? 1.0f : -1.0f) : (rng() % 2 ? 1.0f : -1.0f);
 		}
@@ -1024,10 +1046,55 @@ namespace bo3z
 			return p && p->IsOnMount();
 		}
 
+		// The dodge (Noah: rolls backwards too, and every way in first person): TK Dodge's rolls, but which way is ours -
+		// the stick or WASD against the camera (not against where the body happens to face: True Directional Movement
+		// turns you to run, so its own choice always came out "forward"). In third person the body is turned to the
+		// camera first, so back is back. TK Dodge RE's own key is off (its ini: DodgeHotkey = 0).
+		void Dodge()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* ui = RE::UI::GetSingleton();
+			static std::chrono::steady_clock::time_point last{};
+			const auto now = std::chrono::steady_clock::now();
+			if (!p || (ui && ui->GameIsPaused()) || now - last < std::chrono::milliseconds(650) || Riding() || g_hadDragon || !OnGround(p)) {
+				return;
+			}
+			auto* st = p->AsActorState();
+			if (st->IsSneaking() || st->IsSwimming() || p->IsDead()) {
+				return;
+			}
+			auto* av = p->AsActorValueOwner();
+			if (av->GetActorValue(RE::ActorValue::kStamina) < 10.0f) {
+				return;
+			}
+			float camYaw = p->GetAngleZ();
+			if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
+				const auto& m = cam->cameraRoot->world.rotate;
+				camYaw = std::atan2(m.entry[0][1], m.entry[1][1]);
+			}
+			const char* ev = "TKDodgeBack";  // (standing still: a step back, as TK Dodge does)
+			if (auto* pc = RE::PlayerControls::GetSingleton()) {
+				const auto in = pc->data.moveInputVec;  // x right, y forward - against the camera
+				if (in.x * in.x + in.y * in.y > 0.04f) {
+					ev = std::abs(in.y) >= std::abs(in.x) ? (in.y > 0 ? "TKDodgeForward" : "TKDodgeBack") : (in.x > 0 ? "TKDodgeRight" : "TKDodgeLeft");
+				}
+			}
+			p->SetHeading(camYaw);  // face where you look: the roll goes the way you meant
+			if (!p->NotifyAnimationGraph(ev)) {
+				logger::info("dodge: {} not taken", ev);
+				return;
+			}
+			last = now;
+			av->DamageActorValue(RE::ActorValue::kStamina, 10.0f);
+			Perks::Dodged(0.35f);
+		}
+
 		void OnButton(const RE::ButtonEvent* a_event)
 		{
-			// TK Dodge on a controller: it only knows its keyboard key (Left Alt), so a quick tap of the pad's sprint
-			// button (LB / L1) presses that key for it - a tap dodges, holding still sprints
+			// the dodge (Left Alt; on a controller a quick tap of sprint, LB / L1 - holding it still sprints)
+			if (a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_event->GetIDCode() == 0x38 && a_event->IsDown()) {
+				Dodge();
+			}
 			if (a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kGamepad) {
 				static std::chrono::steady_clock::time_point down{};
 				static bool held = false;
@@ -1038,7 +1105,7 @@ namespace bo3z
 					} else if (a_event->IsUp() && held) {
 						held = false;
 						if (std::chrono::steady_clock::now() - down < std::chrono::milliseconds(220) && !Riding()) {
-							DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x38, 0.05f);  // (TK Dodge RE.ini DodgeHotkey = 56)
+							Dodge();
 						}
 					}
 				}

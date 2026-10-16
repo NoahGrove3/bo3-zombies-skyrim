@@ -138,6 +138,7 @@ namespace bo3z
 		// player is held essential: src/Party.cpp), and you get straight back up at full health, once per draught.
 		// (after a revive: a few seconds when you cannot fall again, so you are surely back on your feet)
 		float g_grace = 0;
+		std::chrono::steady_clock::time_point g_dodgeUntil{};  // a dodge's i-frames
 		std::chrono::steady_clock::time_point g_last{};
 		bool SelfRevive() { return Has(gen::kPerk_hearthfire) || g_grace > 0; }
 		void Stand(RE::PlayerCharacter* a_player)
@@ -194,11 +195,13 @@ namespace bo3z
 		}
 		// every wound the night deals the player goes through here: a blow that would kill you is caught - by the
 		// Hearthfire Tonic (you rise whole), in the moments after rising, or (in a party) by falling to your knees
+		void Dodged(float a_seconds) { g_dodgeUntil = std::chrono::steady_clock::now() + std::chrono::milliseconds(static_cast<int>(a_seconds * 1000)); }
+
 		void DamagePlayer(float a_amount)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p || p->IsDead() || a_amount <= 0) {
-				return;
+			if (!p || p->IsDead() || a_amount <= 0 || std::chrono::steady_clock::now() < g_dodgeUntil) {
+				return;  // (mid-roll: the blow misses)
 			}
 			auto*       av = p->AsActorValueOwner();
 			const float hp = av->GetActorValue(RE::ActorValue::kHealth);

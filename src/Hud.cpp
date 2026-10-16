@@ -1445,12 +1445,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// the fire round it (the emblems' flame ring): blue, warming to red as the night nears
 				if (g_flame) {
 					const auto  tx = ImTextureID(reinterpret_cast<std::uintptr_t>(g_flame));
-					const float fps = 14.0f + 14.0f * dread;
+					// (Noah: slower - it raced) a slow burn, each frame melting into the next
+					const float fps = 6.0f + 4.0f * dread;
 					for (int pass = 0; pass < 2; ++pass) {
-						const int   f = static_cast<int>((now + pass * 0.5f) * fps) % 16;
-						const float u = (f % 4) * 0.25f, v = (f / 4) * 0.25f, hh = R * (1.55f + 0.25f * dread + 0.08f * beat) * (pass ? 0.9f : 1.0f);
+						const float ft = (now + pass * 1.3f) * fps, blend = ft - std::floor(ft);
+						const float hh = R * (1.55f + 0.25f * dread + 0.08f * beat) * (pass ? 0.9f : 1.0f);
 						const int   rr = static_cast<int>(70 + 185 * dread), gg = static_cast<int>(140 - 100 * dread), bb = static_cast<int>(255 - 225 * dread);
-						dl->AddImage(tx, { c.x - hh, c.y - hh }, { c.x + hh, c.y + hh }, { u, v }, { u + 0.25f, v + 0.25f }, IM_COL32(rr, gg, bb, static_cast<int>((pass ? 120 : 190) * (0.6f + 0.4f * dread))));
+						const float al = (pass ? 120.0f : 190.0f) * (0.6f + 0.4f * dread);
+						for (int q = 0; q < 2; ++q) {
+							const int   f = (static_cast<int>(ft) + q) % 16;
+							const float u = (f % 4) * 0.25f, v = (f / 4) * 0.25f, w = q ? blend : 1.0f - blend;
+							dl->AddImage(tx, { c.x - hh, c.y - hh }, { c.x + hh, c.y + hh }, { u, v }, { u + 0.25f, v + 0.25f }, IM_COL32(rr, gg, bb, static_cast<int>(al * w)));
+						}
 					}
 				}
 				// the moon: dark stone, filling with blood from below as time runs out
