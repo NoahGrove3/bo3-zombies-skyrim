@@ -73,7 +73,7 @@ def main():
         img = Image.fromarray((np.concatenate([t, alpha], -1) * 255 + 0.5).astype(np.uint8), 'RGBA')
         dds(img, out / f'{name}.dds', 'DXT5')
     # glow maps (half size): the eyes; from bond II the markings faintly
-    for name, k in (('bond1_g', 0.0), ('bond2_g', 0.22), ('bond3_g', 0.32)):
+    for name, k in (('bond1_g', 0.0), ('bond2_g', 0.10), ('bond3_g', 0.12)):
         g = np.clip(np.maximum(eye, mark * k), 0, 1)
         img = Image.fromarray((g * 255 + 0.5).astype(np.uint8), 'L').convert('RGB').resize((512, 1024), Image.LANCZOS)
         dds(img, out / f'{name}.dds', 'DXT1')

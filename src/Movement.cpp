@@ -603,23 +603,28 @@ namespace bo3z
 			}
 			// Bond II take-off: hopped up, the glider is opened (Activate, as you would) - twice if the first was early
 			if (g_liftOff == 1) {
-				const float before = g_takeT;
 				g_takeT += a_delta;
-				if (auto* cc = a_player->GetCharController(); cc && g_takeT < 0.35f && !OnGround(a_player)) {  // the hop, higher
-					RE::NiPoint3 v{};
+				static bool pressed = false;
+				if (g_takeT <= a_delta * 1.5f) {
+					pressed = false;
+				}
+				auto*        cc = a_player->GetCharController();
+				RE::NiPoint3 v{};
+				if (cc) {
 					GetVel(cc, v);
-					v.z = std::max(v.z, 520.0f);
+				}
+				if (cc && g_takeT < 0.25f && !OnGround(a_player)) {  // the hop, higher
+					v.z = std::max(v.z, 560.0f);
 					SetVel(cc, v);
 				}
-				// (Activate opens it - and a second press would close it again, so a second only if the first did nothing)
-				for (const float at : { 0.2f, 0.95f }) {
-					if (before < at && g_takeT >= at && !g_hadDragon) {
-						DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
-					}
+				// the glider opens with Activate, as you would - once you are falling (it will not open on the way up)
+				if (!pressed && !g_hadDragon && g_takeT > 0.25f && !OnGround(a_player) && v.z < 0) {
+					pressed = true;
+					DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
 				}
 				if (g_hadDragon) {
 					g_liftOff = 2;
-				} else if (g_takeT > 1.6f) {
+				} else if (g_takeT > 2.0f) {
 					g_liftOff = 0;  // (the glider never opened: just a hop)
 					logger::info("glider: take-off - the glider did not open");
 				}

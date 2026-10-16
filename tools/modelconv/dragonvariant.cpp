@@ -27,6 +27,7 @@ int main(int argc, char** argv)
 		sh->shaderFlags1 &= ~(1u << 7);  // SLSF1_Environment_Mapping off
 		sh->shaderFlags1 |= (1u << 22);  // SLSF1_Own_Emit
 		sh->shaderFlags2 |= (1u << 6);   // SLSF2_Glow_Map
+		if (getenv("DV_NOBACKLIGHT")) sh->shaderFlags2 &= ~(1u << 27);  // (SLSF2_Back_Lighting: the glow map is ignored beside it)
 		sh->emissiveColor = Vector3(atof(argv[5]), atof(argv[6]), atof(argv[7]));
 		sh->emissiveMultiple = atof(argv[8]);
 		++n;
