@@ -273,9 +273,11 @@ namespace bo3z
 			static float logT = 0;
 			if ((logT -= a_delta) <= 0 || t == a_delta) {
 				logT = 0.5f;
-				logger::info("glider: fly-off t {:.2f} 3D {} at ({:.0f},{:.0f},{:.0f}) ref ({:.0f},{:.0f},{:.0f}) disabled {}", t, root != nullptr,
+				logger::info("glider: fly-off t {:.2f} 3D {} at ({:.0f},{:.0f},{:.0f}) ref ({:.0f},{:.0f},{:.0f}) disabled {} bound ({:.0f},{:.0f},{:.0f}) r {:.0f} scale {:.2f} parent {} culled {}", t, root != nullptr,
 					root ? root->world.translate.x : 0.0f, root ? root->world.translate.y : 0.0f, root ? root->world.translate.z : 0.0f,
-					ref->GetPositionX(), ref->GetPositionY(), ref->GetPositionZ(), ref->IsDisabled());
+					ref->GetPositionX(), ref->GetPositionY(), ref->GetPositionZ(), ref->IsDisabled(),
+					root ? root->worldBound.center.x : 0.0f, root ? root->worldBound.center.y : 0.0f, root ? root->worldBound.center.z : 0.0f, root ? root->worldBound.radius : 0.0f,
+					root ? root->world.scale : 0.0f, root && root->parent ? root->parent->name.c_str() : "-", root ? root->GetAppCulled() : false);
 			}
 			if (!root) {
 				return;  // (still loading: it catches up with its path when it appears)
@@ -702,6 +704,23 @@ namespace bo3z
 						g_grabOff.x, g_grabOff.y, g_grabOff.z, g_ik[0][0], g_ik[0][1], g_ik[1][0], g_ik[1][1]);
 				}
 			}
+		}
+
+		void DevFlyOff()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (!p || !cam || !cam->cameraRoot) {
+				return;
+			}
+			const auto&  m = cam->cameraRoot->world.rotate;
+			const float  yaw = std::atan2(m.entry[0][1], m.entry[1][1]);
+			RE::NiPoint3 f{ std::sin(yaw), std::cos(yaw), 0 };
+			g_lastSpace.translate = p->GetPosition() + f * 700.0f + RE::NiPoint3{ 0, 0, 250 };
+			g_lastSpace.rotate = AxisAngle({ 0, 0, 1 }, -yaw);
+			g_lastSpace.scale = 0.23f;
+			g_lastBank = Rot(0, 0, 0);
+			LetGo(p, {}, 0.0f, 0.23f);
 		}
 
 		void Dragon(RE::PlayerCharacter* a_player, float a_delta)
