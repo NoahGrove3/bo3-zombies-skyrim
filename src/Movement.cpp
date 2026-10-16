@@ -1414,8 +1414,16 @@ namespace bo3z
 					g_flapT = 0, g_flapWait = 3.5f;
 					PlayGameSound(DragonSound::kFlapBig, player);
 				}
-				if (free && bond >= 2 && ev == ue->jump && !g_hadDragon && g_liftOff == 0 && OnGround(player) &&
-					player->AsActorState()->IsSprinting()) {  // II: take-off - a sprint-jump
+				bool sprinting = player->AsActorState()->IsSprinting();
+				if (!sprinting) {  // (or running flat out)
+					RE::NiPoint3 v{};
+					if (auto* cc0 = player->GetCharController()) GetVel(cc0, v);
+					sprinting = std::sqrt(v.x * v.x + v.y * v.y) > 420.0f;
+				}
+				if (bond >= 2 && ev == ue->jump && !g_hadDragon) {
+					logger::info("glider: jump (bond {}, sprinting {}, on the ground {}, take-off {})", bond, sprinting, OnGround(player), g_liftOff);
+				}
+				if (free && bond >= 2 && ev == ue->jump && !g_hadDragon && g_liftOff == 0 && OnGround(player) && sprinting) {  // II: take-off - a sprint-jump
 					{
 						if (player->GetCharController()) {
 							player->SetPosition(player->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, true);  // off the ground (then the leap, above)
