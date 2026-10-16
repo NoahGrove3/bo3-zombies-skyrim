@@ -81,15 +81,15 @@ def main():
         w, tip = np.array(WRIST[sd]), np.array(TIP[sd])
         p0 = tip - w
         p1 = p0 + np.array([0, -900, 10])
-        strip(L, f'DG_Trail{sd}', f'DG_Wing{sd}3', p0, p1, 14, 46, 0.9, 0.0, '0.85,0.93,1.0,1.0', 0.7, segs=10, fade_in=0.04)
+        strip(L, f'DG_Trail{sd}', f'DG_Wing{sd}3', p0, p1, 18, 64, 1.0, 0.0, '0.85,0.93,1.0,1.0', 0.7, segs=10, fade_in=0.04)
     # the dive: streaks rushing past round it (and round you, under it), from ahead of its head to well behind you
     b = np.array(BANK)
     spots = [(-330, 140), (330, 140), (-560, -40), (560, -40), (-240, -260), (240, -260), (-120, 330), (130, -520)]
     for i, (x, z) in enumerate(spots):
         y0 = -650 - 140 * (i % 3)
-        y1 = y0 - 2200 - 200 * (i % 2)
+        y1 = y0 - 1150 - 150 * (i % 2)
         strip(L, f'DG_Wind{i + 1}', 'DG_Bank', np.array([x, y0, z + 180]) - b, np.array([x * 1.15, y1, z * 1.1 + 180]) - b,
-              10, 22, 0.0, 0.0, '0.9,0.95,1.0,1.0', 0.32 + 0.04 * i, segs=8)
+              22, 44, 0.0, 0.0, '0.9,0.95,1.0,1.0', 0.32 + 0.04 * i, segs=8)
     # (a strip faded at both ends: alpha rises then falls along it)
     txt = '\n'.join(L)
     fixed = []
@@ -104,7 +104,7 @@ def main():
         if line.startswith('v ') and cur and cur.startswith('DG_Wind'):
             p = line.split()
             t = float(p[5]) / 2.0
-            p[-1] = '%.3f' % (0.8 * math.sin(math.pi * t) ** 1.5)
+            p[-1] = '%.3f' % (0.45 * math.sin(math.pi * t) ** 1.5)
             line = ' '.join(p)
         out_lines.append(line)
     job.write_text('\n'.join(out_lines) + '\n')

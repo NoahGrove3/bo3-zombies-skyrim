@@ -1189,10 +1189,10 @@ namespace bo3z
 			{
 				const float spd = vel.Length();
 				const float held = Smooth((deployT - kSwoop * 0.6f) / 0.5f);
-				const float trail = held * (0.3f + 0.7f * Smooth((spd - 800.0f) / 1400.0f));
+				const float trail = held * (0.55f + 0.65f * Smooth((spd - 800.0f) / 1400.0f));
 				const float dive = Smooth((g_divePitch - 0.08f) / 0.3f) * Smooth((spd - 1100.0f) / 1100.0f);
 				for (int i = 0; i < 2; ++i) {
-					DragonWind(a_player->Get3D(i == 1), trail, dive * 1.2f);
+					DragonWind(a_player->Get3D(i == 1), trail, dive * 0.85f);
 				}
 				DiveRush(a_player, dive);
 			}
