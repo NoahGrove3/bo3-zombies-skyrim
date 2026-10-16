@@ -61,64 +61,93 @@ def maskdraw(fn, w=W, h=H):
 
 
 # ---------------------------------------------------------------- the ground
+# Painted at twice the size and brought down (crisp, smooth edges at 1440p), with a stone's fine detail: grain and
+# speckle down to the pixel, hairline cracks, chiselled grooves and runes lit by their bevels, dirt in the cuts,
+# worn edges, mortared blocks in the drum's side.
+K = 2
+
+
+def grain(w, h, seed):
+    """fine stone grain: noise down to single pixels"""
+    rng = np.random.default_rng(seed)
+    g = rng.random((h, w)).astype(np.float32)
+    g = 0.55 * g + 0.45 * blur(g, 1.2 * K)
+    return (g - g.min()) / (g.max() - g.min() + 1e-6)
+
+
+def ridged(w, h, seed, base):
+    n = fbm(w, h, 6, base, seed=seed, pers=0.6)
+    return 1 - np.abs(n - 0.5) * 2  # sharp ridges where the noise crosses its middle: crack lines
+
+
 def ground():
-    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
-    n = fbm(W, H, 7, 3, seed=3)
-    n2 = fbm(W, H, 5, 12, seed=9)
+    Wk, Hk, CXk, CYk, Sk, HZk = W * K, H * K, CX * K, CY * K, S * K, HORIZON * K
+
+    def P(X, Y, Z):
+        return CXk + X * Sk, CYk - (Z * math.cos(E) - Y * math.sin(E)) * Sk
+
+    def md(fn):
+        return maskdraw(fn, Wk, Hk)
+
+    yy, xx = np.mgrid[0:Hk, 0:Wk].astype(np.float32)
+    n = fbm(Wk, Hk, 7, 3, seed=3)
+    n2 = fbm(Wk, Hk, 5, 12, seed=9)
     # the plain: dark slate going into mist at the horizon
-    t = np.clip((yy - HORIZON) / (H - HORIZON), 0, 1)
+    t = np.clip((yy - HZk) / (Hk - HZk), 0, 1)
     base = np.array([20, 22, 32], np.float32)
     far = np.array([52, 58, 82], np.float32)
     col = far[None, None] * (1 - t[..., None]) ** 2.2 + base[None, None] * (1 - (1 - t[..., None]) ** 2.2)
     col *= (0.75 + 0.45 * n[..., None]) * (0.9 + 0.2 * n2[..., None])
-    # nothing above the far shore (the mountains are their own layer, tools/menulake.py); below it the lake: a dark
-    # see-through tint over the reflection the game draws (src/Hud.cpp DrawMenu), deeper toward us, with a faint sheen
-    a = np.zeros((H, W), np.float32)
-    lake = yy >= HORIZON
-    rip = 0.5 + 0.5 * np.sin(yy * (0.25 + 0.9 * t) + 5 * fbm(W, H, 3, 6, seed=21))
+    del n, n2
+    # below the far shore the lake: a dark see-through tint over the reflection the game draws, deeper toward us
+    lake = yy >= HZk
+    rip = 0.5 + 0.5 * np.sin(yy / K * (0.25 + 0.9 * t) + 5 * fbm(Wk, Hk, 3, 6, seed=21))
     wcol = np.array([6, 10, 22], np.float32)[None, None] * (0.9 + 0.2 * rip[..., None])
     col = np.where(lake[..., None], wcol, col)
-    a = np.where(lake, 0.10 + 0.40 * t ** 1.3, a)
-    img = rgba(col, a)
+    al = np.where(lake, 0.10 + 0.40 * t ** 1.3, 0.0).astype(np.float32)
+    rgb = col.astype(np.float32)
+    del rip, wcol, col, lake, t
 
     # ---- the rune floor: a stone drum, its top carved in rings
     R, HGT = 162.0, 26.0
-    top = [proj(R * math.cos(t), R * math.sin(t), 0) for t in np.linspace(0, 2 * math.pi, 240)]
-    bot = [proj(R * math.cos(t), R * math.sin(t), -HGT) for t in np.linspace(0, 2 * math.pi, 240)]
-    side = maskdraw(lambda d: d.polygon([proj(R * math.cos(t), R * math.sin(t), -HGT) for t in np.linspace(0, math.pi, 120)] +
-                                        [proj(R * math.cos(t), R * math.sin(t), 0) for t in np.linspace(math.pi, 0, 120)], fill=255))
-    topm = maskdraw(lambda d: d.polygon(top, fill=255))
-    stone = fbm(W, H, 7, 20, seed=11)
-    cracks = fbm(W, H, 4, 60, seed=12)
-    sidecol = np.array([58, 60, 74], np.float32)[None, None] * (0.6 + 0.6 * stone[..., None])
-    # blocks in the drum's side
-    blocks = np.zeros((H, W), np.float32)
-    for k in range(24):
-        t = k / 24 * 2 * math.pi
-        x0, y0 = proj(R * math.cos(t), R * math.sin(t), 0)
-        x1, y1 = proj(R * math.cos(t), R * math.sin(t), -HGT)
-        if math.sin(t) <= 0.02:
-            blocks += maskdraw(lambda d: d.line([(x0, y0), (x1, y1)], fill=255, width=4))
-    sidecol *= (1 - 0.55 * np.clip(blocks, 0, 1))[..., None]
-    # the top: pale worn stone, darker toward the rim
-    yy2, xx2 = np.mgrid[0:H, 0:W].astype(np.float32)
-    ux = (xx2 - CX) / S
-    uy = (yy2 - CY) / (S * math.sin(E))
+    top = [P(R * math.cos(q), R * math.sin(q), 0) for q in np.linspace(0, 2 * math.pi, 720)]
+    side = md(lambda d: d.polygon([P(R * math.cos(q), R * math.sin(q), -HGT) for q in np.linspace(0, math.pi, 360)] +
+                                  [P(R * math.cos(q), R * math.sin(q), 0) for q in np.linspace(math.pi, 0, 360)], fill=255))
+    topm = md(lambda d: d.polygon(top, fill=255))
+    stone = fbm(Wk, Hk, 8, 20, seed=11)
+    fine = grain(Wk, Hk, 31)
+    speck = (np.random.default_rng(32).random((Hk, Wk)) > 0.985).astype(np.float32)
+    speck = blur(speck, 0.7 * K)
+    crack = np.clip((ridged(Wk, Hk, 33, 10) - 0.965) / 0.035, 0, 1) ** 1.5 * np.clip(fbm(Wk, Hk, 3, 4, seed=34) * 2 - 0.6, 0, 1)
+    mott = fbm(Wk, Hk, 5, 40, seed=35)
+
+    # the top in floor coordinates
+    ux = (xx - CXk) / Sk
+    uy = (yy - CYk) / (Sk * math.sin(E))
     rr = np.sqrt(ux ** 2 + uy ** 2)
     ang = np.arctan2(uy, ux)
-    topcol = np.array([96, 100, 118], np.float32)[None, None] * (0.62 + 0.5 * stone[..., None]) * (1.05 - 0.25 * np.clip(rr / R, 0, 1)[..., None])
+    del ux, uy
     groove = np.zeros_like(rr)
     for r0, wdt in ((150, 3.2), (122, 2.6), (84, 2.4), (52, 2.0)):
         groove += np.exp(-((rr - r0) / wdt) ** 2)
-    # spokes between the rings
-    for k in range(12):
+    for k in range(12):  # spokes between the rings
         a0 = k / 12 * 2 * math.pi
         d = np.abs(np.angle(np.exp(1j * (ang - a0))))
         groove += np.exp(-(d * rr / 1.8) ** 2) * ((rr > 52) & (rr < 122))
     groove = np.clip(groove, 0, 1)
-    # the rune band (between 122 and 150): glyphs cut into the stone
+    # paving joints: the rings cut into slabs (faint)
+    slab = np.zeros_like(rr)
+    for r0, n_ in ((101, 18), (68, 12), (136, 28)):
+        for k in range(n_):
+            a0 = (k + 0.5) / n_ * 2 * math.pi
+            d = np.abs(np.angle(np.exp(1j * (ang - a0))))
+            band = (np.abs(rr - r0) < (17 if r0 != 136 else 13))
+            slab += np.exp(-(d * rr / 0.6) ** 2) * band
+    slab = np.clip(slab, 0, 1) * (1 - groove)
+    del ang
+    # the rune band: glyphs cut into the stone
     rng = random.Random(4)
-    gl = Image.new('L', (W, H), 0)
+    gl = Image.new('L', (Wk, Hk), 0)
     gd = ImageDraw.Draw(gl)
     strokes = [[(0, -1, 0, 1), (0, -0.3, 0.6, -0.9)], [(-0.5, 1, 0, -1), (0.5, 1, 0, -1), (-0.3, 0.3, 0.3, 0.3)], [(0, -1, 0, 1), (-0.6, 0, 0.6, 0)],
                [(-0.6, -1, 0.6, 1), (0.6, -1, -0.6, 1)], [(0, -1, 0, 1), (0, 0.1, 0.6, 0.9)], [(-0.6, -0.8, 0.6, -0.8), (0, -0.8, 0, 1)],
@@ -132,41 +161,82 @@ def ground():
         for x0, y0, x1, y1 in strokes[rng.randrange(len(strokes))]:
             p0 = (cr * rad[0] + x0 * 6 * tang[0] - y0 * 9 * rad[0], cr * rad[1] + x0 * 6 * tang[1] - y0 * 9 * rad[1])
             p1 = (cr * rad[0] + x1 * 6 * tang[0] - y1 * 9 * rad[0], cr * rad[1] + x1 * 6 * tang[1] - y1 * 9 * rad[1])
-            gd.line([proj(p0[0], p0[1], 0), proj(p1[0], p1[1], 0)], fill=255, width=7)
+            gd.line([P(p0[0], p0[1], 0), P(p1[0], p1[1], 0)], fill=255, width=7 * K)
+            for p in (p0, p1):  # round chisel ends
+                c = P(p[0], p[1], 0)
+                gd.ellipse([c[0] - 3.5 * K, c[1] - 3.5 * K, c[0] + 3.5 * K, c[1] + 3.5 * K], fill=255)
     glyph = np.asarray(gl, np.float32) / 255
-    # the pool at the heart
+    del gl
     pool = np.clip(1 - rr / 46, 0, 1)
+
+    # height of the top: cuts are sunk, the stone itself uneven; its slope lights the bevels
+    cut = np.clip(groove * 0.9 + glyph, 0, 1)
+    h = (0.35 * stone + 0.12 * fine + 0.06 * mott) - 1.2 * blur(cut, 1.4 * K) - 0.5 * blur(slab, 0.8 * K) - 0.25 * crack
+    gy_, gx_ = np.gradient(blur(h, 0.6 * K) * 6.0 * K)
+    del h
+    lx, ly = -0.5, -0.8  # light from the far left (and the crystal over the floor)
+    shade = np.clip(1 + (gx_ * lx + gy_ * ly) * 1.6, 0.35, 1.7)
+    del gx_, gy_
+    topcol = np.array([96, 100, 118], np.float32)[None, None] * (0.58 + 0.45 * stone[..., None] + 0.16 * (fine[..., None] - 0.5))
+    topcol *= (1.05 - 0.25 * np.clip(rr / R, 0, 1))[..., None]
+    topcol *= (0.92 + 0.16 * mott[..., None])
+    topcol += np.array([40, 40, 46], np.float32) * speck[..., None]            # mica glints
     topcol *= (1 - 0.6 * groove)[..., None]
     topcol *= (1 - 0.75 * glyph)[..., None]
+    topcol *= (1 - 0.35 * slab - 0.55 * crack)[..., None]
+    dirt = np.clip(blur(cut, 3 * K) * 1.4 - cut * 0.4, 0, 1) * (0.6 + 0.4 * mott)  # grime collects round the cuts
+    topcol = topcol * (1 - 0.25 * dirt[..., None]) + np.array([30, 34, 30], np.float32) * 0.25 * dirt[..., None]
+    topcol *= shade[..., None]
+    rim = np.exp(-((rr - R + 1.5) / 2.0) ** 2)  # the worn, lighter lip
+    topcol += np.array([40, 42, 50], np.float32) * (rim * (0.5 + 0.5 * fine))[..., None]
     topcol = topcol * (1 - (pool > 0)[..., None] * 0.7) + np.array([30, 70, 120]) * (pool > 0)[..., None] * 0.7
+    del shade, dirt, rim, slab, mott
+
+    # the drum's side: mortared blocks in courses, each its own shade, chipped
+    sidecol = np.array([58, 60, 74], np.float32)[None, None] * (0.55 + 0.5 * stone[..., None] + 0.18 * (fine[..., None] - 0.5))
+    vert = (yy - CYk) / Sk  # (the side's height runs straight down the screen)
+    xr = np.clip((xx - CXk) / (R * Sk), -1, 1)
+    th = np.arccos(-xr)  # angle round the drum, seen from the front
+    mortar = np.zeros_like(rr)
+    zz = -(vert - (np.sqrt(np.clip(1 - xr ** 2, 0, 1)) * R * math.sin(E))) / math.cos(E)  # height on the drum's face
+    course = np.floor(zz / (HGT / 3) + 6)
+    mortar += np.exp(-((np.mod(zz, HGT / 3) - 0) / 0.6) ** 2)
+    blk = np.floor(th / (math.pi / 12) + 0.5 * np.mod(course, 2))
+    mortar += np.exp(-((np.mod(th / (math.pi / 12) + 0.5 * np.mod(course, 2), 1) - 0) * R * math.pi / 12 / 0.7) ** 2)
+    mortar = np.clip(mortar, 0, 1)
+    tone = (np.sin(blk * 12.9898 + course * 78.233) * 43758.5453) % 1
+    sidecol *= (0.85 + 0.25 * tone)[..., None] * (1 - 0.55 * mortar)[..., None] * (1 - 0.4 * crack)[..., None]
+    sidecol *= (0.7 + 0.3 * np.clip(np.sin(th), 0, 1) ** 0.5)[..., None]  # rounder: darker toward its edges
+    del vert, xr, th, mortar, zz, course, blk, tone
+
     # rubble round the foot of the drum
-    rub = np.zeros((H, W), np.float32)
     rr2 = random.Random(8)
+    rub = np.zeros((Hk, Wk), np.float32)
     for k in range(40):
-        t = rr2.random() * 2 * math.pi
+        q = rr2.random() * 2 * math.pi
         d = R + 8 + rr2.random() * 60
-        x, y = proj(d * math.cos(t), d * math.sin(t), -HGT)
-        s_ = 6 + rr2.random() * 16
-        pts = [(x + s_ * math.cos(q) * (0.7 + 0.5 * rr2.random()), y + s_ * 0.6 * math.sin(q) * (0.7 + 0.5 * rr2.random()) - s_ * 0.3) for q in np.linspace(0, 2 * math.pi, 7)[:-1]]
-        rub = np.maximum(rub, maskdraw(lambda dd: dd.polygon(pts, fill=255)))
-    arr = np.asarray(img, np.float32)
-    rgb, al = arr[..., :3], arr[..., 3] / 255
-    rubcol = np.array([50, 52, 64], np.float32)[None, None] * (0.6 + 0.6 * stone[..., None])
+        x, y = P(d * math.cos(q), d * math.sin(q), -HGT)
+        s_ = (6 + rr2.random() * 16) * K
+        pts = [(x + s_ * math.cos(a) * (0.7 + 0.5 * rr2.random()), y + s_ * 0.6 * math.sin(a) * (0.7 + 0.5 * rr2.random()) - s_ * 0.3) for a in np.linspace(0, 2 * math.pi, 7)[:-1]]
+        rub = np.maximum(rub, md(lambda dd: dd.polygon(pts, fill=255)))
+
     rgb = rgb * (1 - side[..., None]) + sidecol * side[..., None]
     rgb = rgb * (1 - topm[..., None]) + topcol * topm[..., None]
     al = np.maximum(al, np.maximum(side, topm))
+    del sidecol, topcol
     # cold light from the crystal on the floor and the plain round it
-    cx, cy = proj(0, 0, CRYSTAL_Z)
-    lit = np.exp(-(((xx2 - CX) / 900) ** 2 + ((yy2 - CY) / 360) ** 2))
+    lit = np.exp(-(((xx - CXk) / (900 * K)) ** 2 + ((yy - CYk) / (360 * K)) ** 2))
     rgb += np.array([30, 60, 110]) * (lit * 0.55)[..., None] * (al > 0)[..., None]
-    rgba(rgb, al).save(OUT / 'menu_shrine_ground.png', optimize=True)
+    del lit, xx, yy
+    rgba(rgb, al).resize((W, H), Image.LANCZOS).save(OUT / 'menu_shrine_ground.png', optimize=True)
+    del rgb, al
 
     # ---- the floor's own light: runes, rings, pool (drawn breathing over the ground)
     glow = np.clip(glyph * 1.0 + groove * 0.35 * (rr > 110) + pool * 1.2, 0, 1) * topm
-    halo = blur(glow, 10) * 0.9 + blur(glow, 30) * 0.6
+    halo = blur(glow, 10 * K) * 0.9 + blur(glow, 30 * K) * 0.6
     g = np.clip(glow + halo, 0, 1)
     lcol = np.dstack([90 + 120 * glow, 170 + 70 * glow, 255 * np.ones_like(glow)])
-    rgba(lcol, g).save(OUT / 'menu_shrine_glow.png', optimize=True)
+    rgba(lcol, g).resize((W, H), Image.LANCZOS).save(OUT / 'menu_shrine_glow.png', optimize=True)
 
 
 # ---------------------------------------------------------------- a tiny flat-shaded renderer
@@ -419,6 +489,8 @@ def softglow(n=256):
 
 if __name__ == '__main__':
     ground()
+    if len(sys.argv) > 2 and sys.argv[2] == 'ground':
+        sys.exit(0)
     orb_sheet()
     sizes = shards()
     softglow()
