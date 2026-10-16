@@ -620,7 +620,11 @@ namespace bo3z
 				// the glider opens with Activate, as you would - once you are falling (it will not open on the way up)
 				if (!pressed && !g_hadDragon && g_takeT > 0.25f && !OnGround(a_player) && v.z < 0) {
 					pressed = true;
-					DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
+					// (the paraglider's own behavior event; Activate as a fallback)
+					if (!a_player->NotifyAnimationGraph("StartPara")) {
+						DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
+					}
+					logger::info("glider: take-off - opening the glider");
 				}
 				if (g_hadDragon) {
 					g_liftOff = 2;
@@ -1177,7 +1181,9 @@ namespace bo3z
 					}
 					if (down > 0.42f) {
 						g_dive = true, g_diveT = 0;
-						DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);  // (the glider closed: it lets you go)
+						if (!player->NotifyAnimationGraph("EndPara")) {  // (the glider closed: it lets you go)
+							DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
+						}
 						Forms::PlayAt(gen::Sound::shout_gale, player);
 						logger::info("glider: dive");
 					}
