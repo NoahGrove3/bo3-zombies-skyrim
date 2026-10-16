@@ -332,7 +332,7 @@ namespace bo3z
 		// Its look: Paragliding.esp's animated object (ANIO 0x800) is given the bond's nif before you glide, the dragon
 		// that flies off afterwards the same (tools/modelconv/dragonvariant.cpp, tools/dragontex.py).
 		float g_flapT = -1, g_flapWait = 0;  // Bond I: a wing-beat's time, and the wait before the next
-		int   g_takeoff = 0;                 // Bond II: 1 hopped up (the glider is being opened), 2 hanging there as it comes
+		int   g_liftOff = 0;                 // Bond II: 1 hopped up (the glider is being opened), 2 hanging there as it comes
 		float g_takeT = 0, g_liftT = -1;
 		bool  g_dive = false;                // Bond II: hurled at the ground
 		float g_diveT = 0;
@@ -563,18 +563,24 @@ namespace bo3z
 				}
 			}
 			// Bond II take-off: hopped up, the glider is opened (Activate, as you would) - twice if the first was early
-			if (g_takeoff == 1) {
+			if (g_liftOff == 1) {
 				const float before = g_takeT;
 				g_takeT += a_delta;
+				if (auto* cc = a_player->GetCharController(); cc && g_takeT < 0.35f && !OnGround(a_player)) {  // the hop, higher
+					RE::NiPoint3 v{};
+					GetVel(cc, v);
+					v.z = std::max(v.z, 520.0f);
+					SetVel(cc, v);
+				}
 				for (const float at : { 0.12f, 0.42f }) {
 					if (before < at && g_takeT >= at && !g_hadDragon) {
 						DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
 					}
 				}
 				if (g_hadDragon) {
-					g_takeoff = 2;
+					g_liftOff = 2;
 				} else if (g_takeT > 1.0f) {
-					g_takeoff = 0;  // (the glider never opened: just a hop)
+					g_liftOff = 0;  // (the glider never opened: just a hop)
 					logger::info("glider: take-off - the glider did not open");
 				}
 			}
@@ -640,8 +646,8 @@ namespace bo3z
 				}
 				lastYaw = yaw, lastZ = z, turn = 0, breath = 0, jaw = 0, breathIn = 4.0f, deployT = -1, roll = 0;
 				g_armHoldOn = false, g_armHold = 0, g_flapT = -1, g_liftT = -1;
-				if (g_takeoff == 2) {
-					g_takeoff = 0;
+				if (g_liftOff == 2) {
+					g_liftOff = 0;
 				}
 				lastPos = pos;
 				return;
@@ -788,15 +794,15 @@ namespace bo3z
 					glide = { v.x, v.y, 0 };
 				}
 				const RE::NiPoint3 heading{ std::sin(yaw), std::cos(yaw), 0 };
-				const bool  hanging = g_takeoff == 2 && deployT < kSwoop * 0.88f;
+				const bool  hanging = g_liftOff == 2 && deployT < kSwoop * 0.88f;
 				const float want = hanging ? 0.0f : 950.0f;
 				glide = glide + (heading * want - glide) * std::min(1.0f, dt * (hanging ? 4.0f : 0.9f));
 				v.x = glide.x, v.y = glide.y;
 				v.z = std::max(v.z, -105.0f);  // (the glide alone sinks about half again faster)
 				if (hanging) {
 					v.z = 12.0f;
-				} else if (g_takeoff == 2) {  // its talons close: up you go
-					g_takeoff = 0, g_liftT = 0;
+				} else if (g_liftOff == 2) {  // its talons close: up you go
+					g_liftOff = 0, g_liftT = 0;
 					Forms::PlayAt(gen::Sound::shout_dragon, a_player);
 				}
 				if (g_liftT >= 0) {
@@ -972,16 +978,13 @@ namespace bo3z
 					g_flapT = 0, g_flapWait = 3.5f;
 					Forms::PlayAt(gen::Sound::shout_gale, player);
 				}
-				if (free && bond >= 2 && ev == ue->activate && !g_hadDragon && g_takeoff == 0 && OnGround(player) &&
+				if (free && bond >= 2 && ev == ue->activate && !g_hadDragon && g_liftOff == 0 && OnGround(player) &&
 					player->AsActorState()->IsSprinting()) {  // II: take-off, when Activate has nothing to take
 					auto* pick = RE::CrosshairPickData::GetSingleton();
 					if (!pick || !pick->target.get()) {
-						if (auto* cc = player->GetCharController()) {
-							RE::NiPoint3 v{};
-							GetVel(cc, v);
-							v.z = 520.0f;
-							SetVel(cc, v);
-							g_takeoff = 1, g_takeT = 0;
+						if (player->GetCharController()) {
+							DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x39, 0.05f);  // a jump (Space), carried higher below
+							g_liftOff = 1, g_takeT = 0;
 							Forms::PlayAt(gen::Sound::shout_gale, player);
 							logger::info("glider: take-off");
 						}
@@ -1132,7 +1135,7 @@ namespace bo3z
 					g_slide = 0.0001f;
 				}
 			}
-			if (cc && air) {
+			if (cc && air && !(g_hadDragon && Bond() >= 1) && !g_dive && g_liftOff == 0) {  // (the dragon's bonds fly you themselves)
 				const float ts = std::sqrt(g_takeoff.x * g_takeoff.x + g_takeoff.y * g_takeoff.y);
 				RE::NiPoint3 h = hv;
 				// Skyrim's jump drops your run speed on takeoff: the first moments of the jump keep what you had
