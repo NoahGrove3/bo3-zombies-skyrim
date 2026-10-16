@@ -250,6 +250,14 @@ namespace bo3z
 				const RE::BSFixedString ev(RE::ControlMap::GetSingleton()->GetUserEventName(id, RE::INPUT_DEVICE::kMouse, RE::UserEvents::INPUT_CONTEXT_ID::kGameplay));
 				g_pendingKeys.push_back({ RE::INPUT_DEVICE::kMouse, id, ev, 0, secs });
 				logger::info("dev: hold mouse {} for {:.1f}s ({})", id, secs, ev.c_str());
+			} else if (cmd == "keyhold") {
+				// keyhold <dik> <seconds>: hold a key down (sprinting, running)
+				std::uint32_t id = 0;
+				float         secs = 1.0f;
+				in >> id >> secs;
+				const RE::BSFixedString ev(RE::ControlMap::GetSingleton()->GetUserEventName(id, RE::INPUT_DEVICE::kKeyboard, RE::UserEvents::INPUT_CONTEXT_ID::kGameplay));
+				g_pendingKeys.push_back({ RE::INPUT_DEVICE::kKeyboard, id, ev, 0, secs });
+				logger::info("dev: keyhold {} ({}) {:.1f} s", id, ev.c_str(), secs);
 			} else if (cmd == "key" || cmd == "mouse") {
 				// key <dik> [menu]: press and release a key inside Skyrim's own input queue (no window focus needed)
 				std::uint32_t id = 0;
@@ -462,7 +470,7 @@ namespace bo3z
 					g_shotName = s.substr(5);
 				} else if (s.rfind("rec ", 0) == 0) {
 					g_recRequest = s.substr(4);
-				} else if (s.rfind("key ", 0) == 0 || s.rfind("type ", 0) == 0 || s.rfind("gfx ", 0) == 0 || s.rfind("menus", 0) == 0 || s.rfind("mouse ", 0) == 0 || s.rfind("hold ", 0) == 0 || s.rfind("close ", 0) == 0) {
+				} else if (s.rfind("key ", 0) == 0 || s.rfind("type ", 0) == 0 || s.rfind("gfx ", 0) == 0 || s.rfind("menus", 0) == 0 || s.rfind("mouse ", 0) == 0 || s.rfind("hold ", 0) == 0 || s.rfind("keyhold ", 0) == 0 || s.rfind("close ", 0) == 0) {
 					g_mainQueue.push_back(s);
 				} else {
 					g_gameQueue.push_back(s);

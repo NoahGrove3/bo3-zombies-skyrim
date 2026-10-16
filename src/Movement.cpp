@@ -257,6 +257,13 @@ namespace bo3z
 				return;
 			}
 			auto* root = ref->Get3D();
+			static float logT = 0;
+			if ((logT -= a_delta) <= 0 || t == a_delta) {
+				logT = 0.5f;
+				logger::info("glider: fly-off t {:.2f} 3D {} at ({:.0f},{:.0f},{:.0f}) ref ({:.0f},{:.0f},{:.0f}) disabled {}", t, root != nullptr,
+					root ? root->world.translate.x : 0.0f, root ? root->world.translate.y : 0.0f, root ? root->world.translate.z : 0.0f,
+					ref->GetPositionX(), ref->GetPositionY(), ref->GetPositionZ(), ref->IsDisabled());
+			}
 			if (!root) {
 				return;  // (still loading: it catches up with its path when it appears)
 			}
@@ -303,6 +310,7 @@ namespace bo3z
 			}
 			auto* st = Forms::Ours(gen::kDragonAway);
 			if (!st) {
+				logger::warn("glider: the fly-off dragon's record is missing");
 				return;
 			}
 			auto ref = a_player->PlaceObjectAtMe(st, false);
@@ -310,6 +318,7 @@ namespace bo3z
 				return;
 			}
 			ref->SetPosition(g_lastSpace.translate);
+			logger::info("glider: the dragon lets go at ({:.0f},{:.0f},{:.0f}), scale {:.3f}/{:.3f}", g_lastSpace.translate.x, g_lastSpace.translate.y, g_lastSpace.translate.z, g_lastSpace.scale, a_baseScale);
 			static std::mt19937 rng{ std::random_device{}() };
 			g_away.ref = ref->CreateRefHandle();
 			g_away.t = 0;
