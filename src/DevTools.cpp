@@ -437,7 +437,10 @@ namespace bo3z
 		// RegisterForKey) see it as if pressed - the controller's bridge to mods that only know keyboard keys
 		void PressKey(RE::INPUT_DEVICE a_device, std::uint32_t a_id, float a_hold)
 		{
-			g_pendingKeys.push_back({ a_device, a_id, RE::BSFixedString(""), 0, a_hold });
+			// (with its user event - Activate, Jump...: a bare key code reaches no one who listens for the event)
+			auto* cm = RE::ControlMap::GetSingleton();
+			const RE::BSFixedString ev(cm ? cm->GetUserEventName(a_id, a_device, RE::UserEvents::INPUT_CONTEXT_ID::kGameplay) : std::string_view{});
+			g_pendingKeys.push_back({ a_device, a_id, ev, 0, a_hold });
 		}
 		void PollFromRender()
 		{
