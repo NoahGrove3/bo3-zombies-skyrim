@@ -1987,7 +1987,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (s.perkMenu) {
 				const float w = 470 * k;
 				const bool  shout = s.shrineShout >= 0 && s.shrineShout < static_cast<int>(gen::kShouts.size());
-				const float h = (shout ? 610 : 532) * k;
+				const float h = (shout ? 610 : 532) * k + 86 * k;  // (+ the dragon's bond)
 				const ImVec2 a{ size.x - w - 36 * k, std::max(24 * k, size.y * 0.5f - h * 0.5f - 30 * k) }, b{ a.x + w, a.y + h };
 				Panel(dl, a, b, k, 0.92f);
 				const float cx = (a.x + b.x) * 0.5f;
@@ -2096,6 +2096,34 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, scol, "LEARN THE THU'UM: " + std::string(sh.label), 1.5f * k, scol);
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(210, 196, 170, 235), std::string(sh.w1) + "  " + std::string(sh.w2) + "  " + std::string(sh.w3) + "  -  freely given");
 					y += 64 * k;
+				}
+				// [5] the glider's dragon: its next bond
+				{
+					static constexpr const char* kBond[4] = { "", "WIND-RIDER", "TALON STRIKE", "ALDUIN'S THRALL" };
+					static constexpr const char* kWhat[4] = { "",
+						"Faster glide, slower sink - jump mid-glide and it beats its wings to climb",
+						"Sprint + Activate on the ground and it lifts you - attack looking down to dive-bomb",
+						"Turned black, eyes like embers - its fire breath burns the dead below in your spell's element" };
+					static constexpr ImU32 kCol[4] = { IM_COL32(220, 214, 200, 255), IM_COL32(170, 225, 255, 255), IM_COL32(120, 190, 255, 255), IM_COL32(255, 92, 48, 255) };
+					const int  have = std::clamp(s.dragonBond, 0, 3), next = have + 1;
+					const bool maxed = have >= 3;
+					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
+					y += 14 * k;
+					const bool can = !maxed && !s.bondLocked && s.points >= Movement::kBondCost[std::min(have, 2)];
+					keyCap({ L, y + 2 * k }, g_padLast ? std::string("\xE2\x86\x93") : Settings::KeyName(5), can);
+					const ImU32 tc = kCol[maxed ? 3 : next];
+					static constexpr const char* kNum[4] = { "", "I", "II", "III" };
+					Txt(dl, g_title, 19 * k, { L + 36 * k, y + 4 * k }, tc, "DRAGON BOND " + std::string(kNum[maxed ? 3 : next]) + ": " + kBond[maxed ? 3 : next], 1.5f * k, tc);
+					for (int q = 0; q < 3; ++q) {  // the bonds: three scales, lit by those made
+						const ImVec2 pc{ L + 12 * k + q * 16 * k, y + 50 * k };
+						dl->AddTriangleFilled({ pc.x - 6 * k, pc.y - 5 * k }, { pc.x + 6 * k, pc.y - 5 * k }, { pc.x, pc.y + 7 * k }, q < have ? kCol[q + 1] : IM_COL32(60, 52, 46, 220));
+					}
+					const std::string what = maxed ? std::string("Every bond made - it is yours to the end") : s.bondLocked ? std::string("Free a city from the Dirge first") : std::string(kWhat[next]);
+					TxtWrap(dl, g_body, 16 * k, { L + 60 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235), what, Rr - L - 60 * k, 2);
+					if (!maxed && !s.bondLocked) {
+						price(y + 2 * k, Movement::kBondCost[have], s.points >= Movement::kBondCost[have]);
+					}
+					y += 72 * k;
 				}
 				Divider(dl, cx, b.y - 58 * k, w * 0.38f, k, 0.7f);
 				if (g_padLast) {  // the controller's buttons when it is in hand, the keys otherwise

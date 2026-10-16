@@ -60,7 +60,8 @@ PAGES = [
         key('iShrineBless:Keys', 'Take a blessing', 'Buy the chosen blessing.'),
         key('iShrineShout:Keys', 'Learn the Thu\'um', 'Learn a freed city\'s shout.'),
         key('iShrineLeave:Keys', 'Leave the shrine', 'Close the shrine\'s menu.'),
-        text('Controller: X roll, Y reforge, A bless, D-pad up shout, B leave.'),
+        key('iShrineBond:Keys', 'Bond the dragon', 'Bind your glider\'s dragon closer: its next bond.'),
+        text('Controller: X roll, Y reforge, A bless, D-pad up shout, D-pad down bond, B leave.'),
     ]},
     {'pageDisplayName': 'Other mods', 'cursorFillMode': 'topToBottom', 'content': [
         text('These mods have no menu of their own.', 'Changes here are written to their files when the game starts: they count from the next launch.'),
@@ -82,7 +83,7 @@ DEFAULTS = {
     'General': {'fFovFirst': 100.0, 'fFovThird': 85.0, 'bShelter': 1, 'fCorpseSeconds': 10.0},
     'Controls': {'bPlayStationIcons': 0},
     'Difficulty': {'bFollowSkyrim': 1, 'fUndeadHealth': 1.0, 'fUndeadDamage': 1.0},
-    'Keys': {'iShrineRoll': 2, 'iShrineReforge': 3, 'iShrineBless': 4, 'iShrineShout': 5, 'iShrineLeave': 14},
+    'Keys': {'iShrineRoll': 2, 'iShrineReforge': 3, 'iShrineBless': 4, 'iShrineShout': 5, 'iShrineLeave': 14, 'iShrineBond': 6},
     'QuickLoot': {'bCloseInCombat': 0, 'bCloseOnEmpty': 1, 'fScale': 100.0, 'fHorizontal': 20.0, 'fVertical': 0.0},
     'CharacterMenu': {'iOpenMenu': 49, 'bBlur': 1},
 }

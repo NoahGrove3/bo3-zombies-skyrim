@@ -320,6 +320,281 @@ namespace bo3z
 			g_away.side = std::abs(a_roll) > 0.05f ? (a_roll > 0 ? 1.0f : -1.0f) : (rng() % 2 ? 1.0f : -1.0f);
 		}
 
+		// ---- the Echo Altar's dragon bonds (Noah): three, bought in order at any Echo Altar, kept for the whole game
+		//   I   Wind-Rider     a quicker glide that sinks slower; jump mid-glide and it beats its wings to climb (a few
+		//                      seconds between beats). Its eyes glow ice-pale.
+		//   II  Talon Strike   sprint and press Activate on open ground: it swoops in and lifts you off your feet; attack
+		//                      while looking down mid-glide and it hurls you at the ground - you land in a shockwave that
+		//                      throws the dead about. Its markings turn glacier blue.
+		//   III Alduin's Thrall (needs a city freed from the Dirge) black scales, ember eyes - its fire breath is real now:
+		//                      it turns on the dead below you, in the element of the spell in your hand (fire burns
+		//                      hotter, frost slows them, lightning leaps to the next).
+		// Its look: Paragliding.esp's animated object (ANIO 0x800) is given the bond's nif before you glide, the dragon
+		// that flies off afterwards the same (tools/modelconv/dragonvariant.cpp, tools/dragontex.py).
+		float g_flapT = -1, g_flapWait = 0;  // Bond I: a wing-beat's time, and the wait before the next
+		int   g_takeoff = 0;                 // Bond II: 1 hopped up (the glider is being opened), 2 hanging there as it comes
+		float g_takeT = 0, g_liftT = -1;
+		bool  g_dive = false;                // Bond II: hurled at the ground
+		float g_diveT = 0;
+		struct Fx
+		{
+			RE::ObjectRefHandle ref;
+			float               t;
+		};
+		std::vector<Fx> g_fx;
+		struct Slowed
+		{
+			RE::ActorHandle a;
+			float           t;
+		};
+		std::vector<Slowed> g_slowed;  // Bond III frost breath: the dead it slowed, until it wears off
+
+		int Bond() { return std::clamp(Save::DragonBond(), 0, 3); }
+
+		void ApplyBondLook()
+		{
+			static int applied = -1;
+			const int  b = Bond();
+			if (b == applied) {
+				return;
+			}
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			auto* anio = dh ? dh->LookupForm<RE::TESObjectANIO>(0x800, "Paragliding.esp") : nullptr;
+			if (!anio) {
+				return;
+			}
+			static constexpr const char* kGlider[4] = { "NickNak\\ParaGlider.nif", "NickNak\\ParaGlider_b1.nif", "NickNak\\ParaGlider_b2.nif", "NickNak\\ParaGlider_b3.nif" };
+			static constexpr const char* kAway[4] = { "CurseOfAlduin\\fx\\dragon_away.nif", "CurseOfAlduin\\fx\\dragon_away_b1.nif", "CurseOfAlduin\\fx\\dragon_away_b2.nif", "CurseOfAlduin\\fx\\dragon_away_b3.nif" };
+			anio->SetModel(kGlider[b]);
+			if (auto* st = Forms::Ours(gen::kDragonAway); st && st->As<RE::TESObjectSTAT>()) {
+				st->As<RE::TESObjectSTAT>()->SetModel(kAway[b]);
+			}
+			applied = b;
+			logger::info("glider: the dragon's bond {} ({})", b, kGlider[b]);
+		}
+
+		void Hurt(RE::Actor* a_actor, float a_damage)
+		{
+			auto* av = a_actor->AsActorValueOwner();
+			av->DamageActorValue(RE::ActorValue::kHealth, a_damage);
+			if (av->GetActorValue(RE::ActorValue::kHealth) <= 0) {
+				a_actor->KillImpl(RE::PlayerCharacter::GetSingleton(), a_damage, true, false);
+			}
+		}
+		bool Foe(RE::Actor* a_actor, RE::PlayerCharacter* a_player)
+		{
+			return a_actor && a_actor != a_player && !a_actor->IsDead() &&
+			       (Director::IsRoundUndead(a_actor) || (a_actor->IsHostileToActor(a_player) && !a_actor->IsPlayerTeammate()));
+		}
+
+		bool OnGround(RE::PlayerCharacter* a_player)
+		{
+			auto* cc = a_player->GetCharController();
+			return cc && cc->context.currentState == RE::hkpCharacterStateType::kOnGround;
+		}
+
+		// Bond II: the dive's landing - a shockwave
+		void Slam(RE::PlayerCharacter* a_player)
+		{
+			const auto at = a_player->GetPosition();
+			RE::ShakeCamera(1.2f, at, 0.7f);
+			Forms::PlayAt(gen::Sound::shout_quake, a_player);
+			if (auto* fx = Forms::Ours(gen::kRiseFx)) {
+				if (auto r = a_player->PlaceObjectAtMe(fx, false)) {
+					r->SetPosition(at);
+					g_fx.push_back({ r->CreateRefHandle(), 3.0f });
+				}
+			}
+			constexpr float kR = 460.0f;
+			int             n = 0;
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				auto a = h.get();
+				if (!Foe(a.get(), a_player)) {
+					continue;
+				}
+				const float d = a->GetPosition().GetDistance(at);
+				if (d > kR) {
+					continue;
+				}
+				const float k = 1.0f - 0.6f * d / kR;
+				Hurt(a.get(), Director::IsRoundUndead(a.get()) ? Director::RoundHealth() * 0.55f * k
+				                                               : a->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.12f * k);
+				if (!a->IsDead()) {
+					a->SetGraphVariableFloat("staggerMagnitude", 1.0f);
+					a->NotifyAnimationGraph("staggerStart");
+				}
+				++n;
+			}
+			logger::info("glider: dive landed, {} caught in the shockwave", n);
+		}
+
+		// Bond III: the breath's look in each element - a stream spell of that element from the Coffer (fire: the
+		// dragons' own breath)
+		RE::BGSProjectile* BreathProjectile(int a_element)
+		{
+			static std::array<RE::BGSProjectile*, 8> cache{};
+			static std::array<bool, 8>               looked{};
+			static RE::BGSProjectile*                fire = RE::TESForm::LookupByID<RE::BGSProjectile>(0x000EBB75);
+			if (a_element <= 0 || a_element >= 8) {
+				return fire;
+			}
+			if (!looked[a_element] && Arcana::Count() > 0) {
+				looked[a_element] = true;
+				for (int i = 0; i < 256 && !cache[a_element]; ++i) {
+					auto* sp = Arcana::Spell(i);
+					if (!sp || !Arcana::Concentration(i) || Arcana::ElementOf(i) != a_element) {
+						continue;
+					}
+					for (auto* e : sp->effects) {
+						auto* pr = e && e->baseEffect ? e->baseEffect->data.projectileBase : nullptr;
+						if (pr && pr->IsFlamethrower()) {
+							cache[a_element] = pr;
+							break;
+						}
+					}
+				}
+			}
+			return cache[a_element] ? cache[a_element] : fire;
+		}
+		int HandElement()
+		{
+			const auto h = Arcana::Hands();
+			const int  sp = h[1] >= 0 ? h[1] : h[0];
+			return sp >= 0 ? Arcana::ElementOf(sp) : 0;
+		}
+
+		// Bond III: what the breath turns on - the nearest of the dead below and ahead of you
+		RE::Actor* BreathTarget(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_from)
+		{
+			const float  yaw = a_player->GetAngleZ();
+			RE::NiPoint3 fwd{ std::sin(yaw), std::cos(yaw), 0 };
+			RE::Actor*   best = nullptr;
+			float        bestD = 1700.0f;
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				auto a = h.get();
+				if (!Foe(a.get(), a_player)) {
+					continue;
+				}
+				RE::NiPoint3 to = a->GetPosition() + RE::NiPoint3{ 0, 0, 60 } - a_from;
+				const float  d = to.Length();
+				if (d > bestD || to.z > -80.0f) {
+					continue;
+				}
+				RE::NiPoint3 flat{ to.x, to.y, 0 };
+				const float  fl = flat.Length();
+				if (fl > 1 && (flat.x * fwd.x + flat.y * fwd.y) / fl < 0.25f && fl > 250.0f) {
+					continue;  // (behind you, and not right under you)
+				}
+				best = a.get(), bestD = d;
+			}
+			return best;
+		}
+		void BreathHits(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_from, const RE::NiPoint3& a_dir, int a_element)
+		{
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				auto a = h.get();
+				if (!Foe(a.get(), a_player)) {
+					continue;
+				}
+				RE::NiPoint3 to = a->GetPosition() + RE::NiPoint3{ 0, 0, 60 } - a_from;
+				const float  d = to.Length();
+				if (d > 1800.0f || d < 1 || (to.x * a_dir.x + to.y * a_dir.y + to.z * a_dir.z) / d < 0.90f) {
+					continue;
+				}
+				const bool undead = Director::IsRoundUndead(a.get());
+				float      dmg = undead ? Director::RoundHealth() * 0.10f : a->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.025f;
+				if (a_element == 0) {
+					dmg *= 1.25f;  // fire: hotter
+				}
+				Hurt(a.get(), dmg);
+				if (a->IsDead()) {
+					continue;
+				}
+				if (a_element == 1) {  // frost: slowed for three seconds
+					bool already = false;
+					for (auto& sl : g_slowed) already = already || sl.a.get().get() == a.get();
+					if (!already) {
+						auto* av = a->AsActorValueOwner();
+						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -45.0f);
+						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.01f);
+						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.01f);
+						g_slowed.push_back({ a->GetHandle(), 3.0f });
+					}
+				} else if (a_element == 2) {  // lightning: it leaps to the nearest other
+					RE::Actor* next = nullptr;
+					float      nd = 380.0f;
+					for (auto& h2 : RE::ProcessLists::GetSingleton()->highActorHandles) {
+						auto b = h2.get();
+						if (b.get() == a.get() || !Foe(b.get(), a_player)) continue;
+						const float dd = b->GetPosition().GetDistance(a->GetPosition());
+						if (dd < nd) next = b.get(), nd = dd;
+					}
+					if (next) Hurt(next, dmg * 0.5f);
+				}
+			}
+		}
+
+		void BondTick(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			ApplyBondLook();
+			g_flapWait = std::max(0.0f, g_flapWait - a_delta);
+			for (auto it = g_fx.begin(); it != g_fx.end();) {
+				if ((it->t -= a_delta) <= 0) {
+					if (auto r = it->ref.get()) {
+						r->Disable();
+						r->SetDelete(true);
+					}
+					it = g_fx.erase(it);
+				} else {
+					++it;
+				}
+			}
+			for (auto it = g_slowed.begin(); it != g_slowed.end();) {
+				if ((it->t -= a_delta) <= 0) {
+					if (auto a = it->a.get()) {
+						auto* av = a->AsActorValueOwner();
+						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 45.0f);
+						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.01f);
+						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.01f);
+					}
+					it = g_slowed.erase(it);
+				} else {
+					++it;
+				}
+			}
+			// Bond II take-off: hopped up, the glider is opened (Activate, as you would) - twice if the first was early
+			if (g_takeoff == 1) {
+				const float before = g_takeT;
+				g_takeT += a_delta;
+				for (const float at : { 0.12f, 0.42f }) {
+					if (before < at && g_takeT >= at && !g_hadDragon) {
+						DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
+					}
+				}
+				if (g_hadDragon) {
+					g_takeoff = 2;
+				} else if (g_takeT > 1.0f) {
+					g_takeoff = 0;  // (the glider never opened: just a hop)
+					logger::info("glider: take-off - the glider did not open");
+				}
+			}
+			// Bond II dive: hurled at the ground until you hit it
+			if (g_dive) {
+				g_diveT += a_delta;
+				auto* cc = a_player->GetCharController();
+				if ((g_diveT > 0.15f && OnGround(a_player)) || g_diveT > 6.0f) {
+					g_dive = false;
+					if (g_diveT <= 6.0f) {
+						Slam(a_player);
+					}
+				} else if (cc) {
+					const float  yaw = a_player->GetAngleZ();
+					RE::NiPoint3 v{ std::sin(yaw) * 520.0f, std::cos(yaw) * 520.0f, -2600.0f };
+					SetVel(cc, v);
+				}
+			}
+		}
+
 		void Dragon(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			static float lastYaw = 0, turn = 0, wanderT = 0, breathIn = 6.0f, breath = 0, jaw = 0, shotT = 0, lookYaw = 0, lookPitch = 0, roll = 0, pitch = 0;
@@ -364,7 +639,10 @@ namespace bo3z
 					LetGo(a_player, vel, roll, baseScale);
 				}
 				lastYaw = yaw, lastZ = z, turn = 0, breath = 0, jaw = 0, breathIn = 4.0f, deployT = -1, roll = 0;
-				g_armHoldOn = false, g_armHold = 0;
+				g_armHoldOn = false, g_armHold = 0, g_flapT = -1, g_liftT = -1;
+				if (g_takeoff == 2) {
+					g_takeoff = 0;
+				}
 				lastPos = pos;
 				return;
 			}
@@ -398,8 +676,15 @@ namespace bo3z
 					space[i]->local.translate = baseTrans + at;
 					if (baseScale > 0) space[i]->local.scale = baseScale;
 				}
-				if (fold[i][0]) fold[i][0]->local.rotate = Rot(0, 0, 0);
-				if (fold[i][1]) fold[i][1]->local.rotate = Rot(0, 0, 0);
+				// Bond I's wing-beat: both wings thrown up, then a great stroke down
+				float beat = 0;
+				if (g_flapT >= 0) {
+					beat = g_flapT < 0.22f ? 0.85f * std::sin(1.5708f * g_flapT / 0.22f)
+					     : g_flapT < 0.55f ? 0.85f - 2.0f * Smooth((g_flapT - 0.22f) / 0.33f)
+					                       : -1.15f * (1 - Smooth((g_flapT - 0.55f) / 0.35f));
+				}
+				if (fold[i][0]) fold[i][0]->local.rotate = Rot(0, beat, 0);
+				if (fold[i][1]) fold[i][1]->local.rotate = Rot(0, -beat, 0);
 			}
 			// the legs: reaching out in the swoop, clutching as it takes you; then holding on, flexing their grip, now
 			// and then shifting it (talons opening and closing); drawn up while it breathes fire
@@ -457,9 +742,22 @@ namespace bo3z
 			const float wanderPitch = 0.10f * std::sin(wanderT * 0.71f + 0.4f) - (breath > 0 ? 0.18f : 0.0f);
 			lookYaw += (std::clamp(-rel * 0.6f + turn * 0.25f + wanderYaw, -0.7f, 0.7f) - lookYaw) * std::min(1.0f, dt * 2.5f);
 			lookPitch += (wanderPitch - lookPitch) * std::min(1.0f, dt * 2.5f);
-			// fire: now and then, a breath of a second and a half
+			// fire: now and then, a breath of a second and a half (Bond III: whenever the dead are below, a few seconds apart)
+			static float       sinceBreath = 0, seekT = 0;
+			static RE::ActorHandle target;
+			const bool         thrall = Bond() >= 3 && mouth != nullptr;
+			sinceBreath += dt;
+			if (thrall && (seekT -= dt) <= 0) {
+				seekT = 0.25f;
+				auto* t = BreathTarget(a_player, mouth->world.translate);
+				target = t ? t->GetHandle() : RE::ActorHandle{};
+			}
+			if (breath <= 0 && thrall && target.get() && sinceBreath > 3.2f && deployT > kSwoop) {
+				breathIn = 0;
+			}
 			if (breath <= 0 && (breathIn -= dt) <= 0) {
 				breath = 1.6f;
+				sinceBreath = 0;
 				breathIn = std::uniform_real_distribution<float>(6.0f, 11.0f)(rng);
 			}
 			const bool breathing = breath > 0;
@@ -477,6 +775,40 @@ namespace bo3z
 					jawN[i]->local.rotate = Rot(-jaw, 0, 0);
 				}
 			}
+			// the bonds' flight: Bond I glides quicker and sinks slower, beats its wings to climb; Bond II's take-off hangs you
+			// there while it comes, then carries you up
+			if (g_flapT >= 0 && (g_flapT += dt) > 0.9f) {
+				g_flapT = -1;
+			}
+			if (auto* cc = a_player->GetCharController(); cc && Bond() >= 1 && !g_dive) {
+				static RE::NiPoint3 glide{};
+				RE::NiPoint3        v{};
+				GetVel(cc, v);
+				if (deployT <= a_delta * 1.5f) {
+					glide = { v.x, v.y, 0 };
+				}
+				const RE::NiPoint3 heading{ std::sin(yaw), std::cos(yaw), 0 };
+				const bool  hanging = g_takeoff == 2 && deployT < kSwoop * 0.88f;
+				const float want = hanging ? 0.0f : 950.0f;
+				glide = glide + (heading * want - glide) * std::min(1.0f, dt * (hanging ? 4.0f : 0.9f));
+				v.x = glide.x, v.y = glide.y;
+				v.z = std::max(v.z, -105.0f);  // (the glide alone sinks about half again faster)
+				if (hanging) {
+					v.z = 12.0f;
+				} else if (g_takeoff == 2) {  // its talons close: up you go
+					g_takeoff = 0, g_liftT = 0;
+					Forms::PlayAt(gen::Sound::shout_dragon, a_player);
+				}
+				if (g_liftT >= 0) {
+					g_liftT += dt;
+					v.z = std::max(v.z, 1150.0f * (1 - Smooth(g_liftT / 1.3f)));
+					if (g_liftT > 1.3f) g_liftT = -1;
+				}
+				if (g_flapT >= 0 && g_flapT > 0.22f) {  // the downstroke lifts you
+					v.z = std::max(v.z, 720.0f * (1 - Smooth((g_flapT - 0.22f) / 0.68f)));
+				}
+				SetVel(cc, v);
+			}
 			{  // where it is now: if the glider goes away this frame, the dragon in the world starts from here
 				const bool first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
 				const int  k = (first && space[1]) || !space[0] ? 1 : 0;
@@ -486,12 +818,22 @@ namespace bo3z
 					if (bank[k]) g_lastBank = bank[k]->local.rotate;
 				}
 			}
+			static float hitT = 0;
 			if (breathing && breath < 1.45f && mouth && head && (shotT -= dt) <= 0) {
 				shotT = 0.05f;
-				static RE::BGSProjectile* fire = RE::TESForm::LookupByID<RE::BGSProjectile>(0x000EBB75);  // the dragons' own breath
+				const int          el = thrall ? HandElement() : 0;
+				RE::BGSProjectile* fire = BreathProjectile(el);  // the dragons' own breath (Bond III: your spell's element)
 				if (fire) {
 					const auto&        hm = head->world.rotate;
 					RE::NiPoint3       d{ hm.entry[0][1], hm.entry[1][1], hm.entry[2][1] - 0.25f };  // its head's forward, a little down
+					if (auto t = target.get(); thrall && t && !t->IsDead()) {  // Bond III: at the dead it found
+						d = t->GetPosition() + RE::NiPoint3{ 0, 0, 50 } - mouth->world.translate;
+					}
+					d.Unitize();
+					if (thrall && (hitT -= 0.05f) <= 0) {
+						hitT = 0.2f;
+						BreathHits(a_player, mouth->world.translate, d, el);
+					}
 					const RE::NiPoint3 from = mouth->world.translate + d * 10.0f;
 					const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
 					RE::Projectile::ProjectileRot r{ -std::atan2(d.z, std::max(1e-3f, flat)), std::atan2(d.x, d.y) };
@@ -548,6 +890,46 @@ namespace bo3z
 			}
 		}
 
+		bool BondLocked()
+		{
+			if (Bond() != 2) {
+				return false;
+			}
+			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
+				if (Curse::Freed(t)) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		void BuyBond(RE::TESObjectREFR* a_shrine)
+		{
+			static constexpr const char* kName[3] = { "WIND-RIDER", "TALON STRIKE", "ALDUIN'S THRALL" };
+			static constexpr const char* kHow[3] = { "Jump while gliding: it beats its wings and climbs",
+				"Sprint + Activate on open ground: it lifts you  -  attack looking down mid-glide: the dive",
+				"Its breath burns the dead below, in the element of the spell in your hand" };
+			const int b = Bond();
+			if (b >= 3) {
+				Hud::Banner("Your dragon has made every bond", 2.5f);
+				return;
+			}
+			if (BondLocked()) {
+				Hud::Banner("The third bond waits until a city is freed from the Dirge", 3.0f);
+				return;
+			}
+			if (!Points::Spend(kBondCost[b])) {
+				return;
+			}
+			Save::SetDragonBond(b + 1);
+			ApplyBondLook();
+			if (a_shrine) {
+				Forms::PlayAt(gen::Sound::shout_dragon, a_shrine);
+			}
+			logger::info("glider: dragon bond {} made", b + 1);
+			Hud::Banner(std::string("DRAGON BOND: ") + kName[b] + "  -  " + kHow[b], 5.0f);
+		}
+
 		bool Riding()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -581,6 +963,42 @@ namespace bo3z
 			const auto& ev = a_event->QUserEvent();
 			if (!ue || !player) {
 				return;
+			}
+			// the dragon's bonds
+			if (const int bond = Bond(); bond >= 1) {
+				auto* ui = RE::UI::GetSingleton();
+				const bool free = !ui || !ui->GameIsPaused();
+				if (free && ev == ue->jump && g_hadDragon && g_flapT < 0 && g_flapWait <= 0) {  // I: a wing-beat
+					g_flapT = 0, g_flapWait = 3.5f;
+					Forms::PlayAt(gen::Sound::shout_gale, player);
+				}
+				if (free && bond >= 2 && ev == ue->activate && !g_hadDragon && g_takeoff == 0 && OnGround(player) &&
+					player->AsActorState()->IsSprinting()) {  // II: take-off, when Activate has nothing to take
+					auto* pick = RE::CrosshairPickData::GetSingleton();
+					if (!pick || !pick->target.get()) {
+						if (auto* cc = player->GetCharController()) {
+							RE::NiPoint3 v{};
+							GetVel(cc, v);
+							v.z = 520.0f;
+							SetVel(cc, v);
+							g_takeoff = 1, g_takeT = 0;
+							Forms::PlayAt(gen::Sound::shout_gale, player);
+							logger::info("glider: take-off");
+						}
+					}
+				}
+				if (free && bond >= 2 && (ev == ue->rightAttack || ev == ue->leftAttack) && g_hadDragon && !g_dive) {  // II: the dive
+					float down = 0;
+					if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
+						down = -cam->cameraRoot->world.rotate.entry[2][1];
+					}
+					if (down > 0.42f) {
+						g_dive = true, g_diveT = 0;
+						DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);  // (the glider closed: it lets you go)
+						Forms::PlayAt(gen::Sound::shout_gale, player);
+						logger::info("glider: dive");
+					}
+				}
 			}
 			// (the slide is gone: crouch is Skyrim's crouch again)
 			if (ev == ue->jump && g_slide > 0) {
@@ -656,6 +1074,7 @@ namespace bo3z
 			auto*      cc = player->GetCharController();
 			const bool sprint = st->IsSprinting();
 			Glider(player, a_delta);
+			BondTick(player, a_delta);
 			Dragon(player, a_delta);
 			if (cc) {  // no fall damage at all: the fall is always measured from where you are now, so every landing is from nowhere
 				// (the fall's time is left alone: Better Jumping allows a jump while it is short - zeroing it gave endless jumps)

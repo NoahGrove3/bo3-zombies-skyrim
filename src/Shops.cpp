@@ -1460,7 +1460,7 @@ namespace bo3z
 				}
 				return code == 0x12 || code == 0xCB || code == 0xCD;
 			case RE::INPUT_DEVICE::kMouse: return code == 8 || code == 9;
-			case RE::INPUT_DEVICE::kGamepad: return code == 0x4000 || code == 0x8000 || code == 0x1000 || code == 0x2000 || code == 0x0001 || code == 0x0004 || code == 0x0008;
+			case RE::INPUT_DEVICE::kGamepad: return code == 0x4000 || code == 0x8000 || code == 0x1000 || code == 0x2000 || code == 0x0001 || code == 0x0002 || code == 0x0004 || code == 0x0008;
 			default: return false;
 			}
 		}
@@ -1517,6 +1517,7 @@ namespace bo3z
 					g_menu = false;
 					g_closedAt = std::chrono::steady_clock::now();
 					break;
+				case 5: Movement::BuyBond(ref); break;
 				}
 			};
 			if (dev == RE::INPUT_DEVICE::kKeyboard) {
@@ -1548,6 +1549,7 @@ namespace bo3z
 				case 0x8000: act(1); return true;  // Y (triangle)
 				case 0x1000: act(2); return true;  // A (cross)
 				case 0x0001: act(3); return true;  // dpad up
+				case 0x0002: act(5); return true;  // dpad down: bond the dragon
 				case 0x0004: g_sel = (g_sel + n - 1) % n; Forms::Play(gen::Sound::ui_move); return true;  // dpad left
 				case 0x0008: g_sel = (g_sel + 1) % n; Forms::Play(gen::Sound::ui_move); return true;      // dpad right
 				case 0x2000: act(4); return true;  // B (circle)
@@ -1557,11 +1559,11 @@ namespace bo3z
 			return false;
 		}
 
-		// dev: press one of the shrine's actions (0 call, 1 reforge, 2 bless, 3 relic, 4 leave) as its key would
+		// dev: press one of the shrine's actions (0 call, 1 reforge, 2 bless, 3 relic, 4 leave, 5 bond) as its key would
 		void DevAct(int a_action)
 		{
-			static constexpr std::uint32_t kCodes[] = { 0x02, 0x03, 0x04, 0x05, 0x0E };
-			if (a_action < 0 || a_action > 4) {
+			static constexpr std::uint32_t kCodes[] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06 };
+			if (a_action < 0 || a_action > 5) {
 				return;
 			}
 			auto* ev = RE::ButtonEvent::Create(RE::INPUT_DEVICE::kKeyboard, "", kCodes[a_action], 1.0f, 0.0f);
@@ -1615,6 +1617,8 @@ namespace bo3z
 					g_pulse.reset();
 				}
 				h.shrineShout = -1;
+				h.dragonBond = Save::DragonBond();
+				h.bondLocked = Movement::BondLocked();
 				if (g_menu) {
 					if (auto r = g_menuRef.get()) {
 						h.shrineShout = Curse::ClaimableShout(TownOf(r.get()));

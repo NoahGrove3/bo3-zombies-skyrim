@@ -70,6 +70,8 @@ namespace bo3z
 		int  StaminaBonus();  // extra stamina already given to this character
 		void SetStaminaBonus(int a_n);  // blessings stack: how many of this one
 		void SetPerkStacks(int a_perk, int a_n);
+		int  DragonBond();               // the glider's dragon: 0 none, 1-3 the Echo Altar's bonds (kept for the whole game)
+		void SetDragonBond(int a_bond);
 		inline constexpr int kFlagInit = 0, kFlagReserveV2 = 4, kFlagStarted = 5, kFlagMoved = 11, kPerkShift = 14, kFlagPerksV2 = 23;  // bits: init | crew 1-3 | (old perks 4-10) | moved 11 | slot 12-13 | perks 14-22 | v2 23
 	}
 
@@ -265,7 +267,7 @@ namespace bo3z
 	namespace Settings
 	{
 		inline constexpr float kFovMin = 60.0f, kFovMax = 130.0f;
-		inline constexpr int   kKeys = 5;          // the shrine's keys: roll, reforge, bless, shout, leave
+		inline constexpr int   kKeys = 6;          // the shrine's keys: roll, reforge, bless, shout, leave, bond the dragon
 		float       FovFirst();
 		float       FovThird();
 		void        SetFov(bool a_first, float a_v);
@@ -424,7 +426,11 @@ namespace bo3z
 		void Tick(float a_delta);
 		void Reset();
 		bool Riding();  // on a horse
-		void PoseGlideArms(RE::PlayerCharacter* a_player);  // after the animation: arms down until the glider's dragon reaches you
+		void PoseGlideArms(RE::PlayerCharacter* a_player);
+		// the Echo Altar's dragon bonds: I Wind-Rider, II Talon Strike, III Alduin's Thrall (kept for the whole game)
+		inline constexpr int kBondCost[3] = { 2500, 4500, 7000 };
+		void BuyBond(RE::TESObjectREFR* a_shrine);
+		bool BondLocked();  // the next bond waits for something (III: a freed city)  // after the animation: arms down until the glider's dragon reaches you
 	}
 
 	// Quick loot in the game's style (src/Loot.cpp): a body's or a container's things beside the crosshair
@@ -491,6 +497,8 @@ namespace bo3z
 			int         perkSel{ 0 };
 			// the shrine: its roll (0 idle, 1 charging, 2 spinning, 3 offering), progress 0..1, the spell shown, the price; a Thu'um to learn there
 			int         rollPhase{ 0 }, rollGun{ -1 }, rollCost{ 0 }, shrineShout{ -1 };
+			int         dragonBond{ 0 };   // the glider's dragon: its bond (0-3)
+			bool        bondLocked{ false };
 			int         rollTarget{ -1 };              // the spell the roll will land on (Arcana index), for the reel
 			float       rollT{ 0 };
 			float       pulseT{ 0 }, pulseX{ 0.5f }, pulseY{ 0.5f };  // a freed shrine's wave (seconds left, its screen spot)
