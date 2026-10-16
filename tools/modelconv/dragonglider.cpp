@@ -213,34 +213,15 @@ int main(int argc, char** argv)
 	// ---- the loop: 6 seconds, sampled 60 times a second
 	constexpr float T = 6.0f;
 	constexpr int   N = 360;  // (60 keys a second)
-	// (Noah: longer flaps, the wings going farther up and down) three slow, deep beats, then a short glide
-	constexpr float P = 1.6f;  // a wingbeat's period
-	auto flapEnv = [](float t) { return S(0.15f, 0.45f, t) * (1 - S(5.0f, 5.5f, t)); };
-	// one wingbeat: -1 bottom .. +1 top; the downstroke takes 40% of it
-	auto beat = [](float t) {
-		float u = std::fmod(t + 10.0f * P, P) / P;
-		if (u < 0.4f) { float k = u / 0.4f; return std::cos(3.14159f * k); }          // top -> bottom, fast
-		float k = (u - 0.4f) / 0.6f; return -std::cos(3.14159f * k);                    // bottom -> top, slower
-	};
+	// (Noah: the wings beat only for the climbs - Bond I's wing-beat, the take-off, the fly-off; the game drives
+	// DG_Wing*1-3 itself, src/Movement.cpp WingPose - and held straight in the glide, swaying a little.) The loop is the
+	// glide alone now: the body, neck and tail breathing with it.
+	constexpr float P = 1.6f;
+	auto flapEnv = [](float) { return 0.0f; };
+	auto beat = [](float t) { return std::sin(6.28318f * t / P); };
 	auto glide = [](float t, float ph) { return std::sin(6.28318f * t / 3.0f + ph); };  // period 3 s: two in the loop
 	struct Track { std::string bone; std::function<void(float, Vector3&, Quaternion&)> f; };
 	std::vector<Track> tracks;
-	for (int side = 0; side < 2; ++side) {
-		const float sg = side == 0 ? 1.0f : -1.0f;  // left wing: +roll raises it; right: -roll
-		const std::string L = side == 0 ? "L" : "R";
-		const float lags[3] = { 0.0f, 0.12f, 0.24f }, amps[3] = { 52.0f, 32.0f, 22.0f }, rest[3] = { 9.0f, -3.0f, -4.0f };
-		for (int j = 0; j < 3; ++j) {
-			tracks.push_back({ "DG_Wing" + L + std::to_string(j + 1), [=](float t, Vector3&, Quaternion& q) {
-				const float e = flapEnv(t - lags[j]);
-				const float b = beat(t - 0.3f - lags[j]);
-				const float up = std::max(0.0f, std::sin(3.14159f * std::fmod(t + 10.0f * P - 0.3f - lags[j], P) / P * 2.0f - 0.8f));
-				const float roll = rest[j] + e * amps[j] * b + (1 - e) * (j == 0 ? 2.5f : 1.5f) * glide(t - lags[j], j * 0.6f);
-				const float sweep = e * (j == 0 ? 6.0f : 10.0f) * up;               // folding back on the upstroke
-				const float twist = e * (j == 2 ? 7.0f : 3.0f) * (b < 0 ? 1.0f : 0.4f) + (1 - e) * 1.5f * glide(t, 1.0f + j);
-				q = Euler(twist, sg * roll, -sg * sweep);
-			} });
-		}
-	}
 	tracks.push_back({ "DG_Body", [=](float t, Vector3& p, Quaternion& q) {
 		const float e = flapEnv(t), b = beat(t - 0.42f);
 		p.z += -e * 22.0f * b + (1 - e) * 4.0f * glide(t, 0.3f);    // lifts as the wings come down

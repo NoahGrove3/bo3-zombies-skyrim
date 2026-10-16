@@ -82,4 +82,5 @@ def main():
         Image.fromarray((np.clip(t, 0, 1) * 255).astype(np.uint8)).resize((512, 1024)).save(pathlib.Path(sys.argv[2]) / f'preview_{name}.png')
 
 
-main()
+if __name__ == '__main__':
+    main()

@@ -2118,7 +2118,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					static constexpr const char* kBond[4] = { "", "WIND-RIDER", "TALON STRIKE", "ALDUIN'S THRALL" };
 					static constexpr const char* kWhat[4] = { "",
 						"Faster glide, slower sink - jump mid-glide and it beats its wings to climb",
-						"Sprint + Activate on the ground and it lifts you - attack looking down to dive-bomb",
+						"Sprint-jump: a higher leap and it takes you up - attack looking down to dive-bomb",
 						"Turned black, eyes like embers - its fire breath burns the dead below in your spell's element" };
 					static constexpr ImU32 kCol[4] = { IM_COL32(220, 214, 200, 255), IM_COL32(170, 225, 255, 255), IM_COL32(120, 190, 255, 255), IM_COL32(255, 92, 48, 255) };
 					const int  have = std::clamp(s.dragonBond, 0, 3), next = have + 1;

@@ -278,6 +278,74 @@ namespace bo3z
 			return FromQuat({ a.w * ka + b.w * kb, a.x * ka + b.x * kb, a.y * ka + b.y * kb, a.z * ka + b.z * kb });
 		}
 
+		// ---- the wings (Noah: they beat only for a climb - Bond I's wing-beat, the take-off, the fly-off - and are held
+		// out straight in the glide, swaying a little; folded back in a Bond III dive). The nif no longer keys them.
+		// One wing-beat over a_len seconds: from rest up to the top (+1), a hard stroke down (-1.3), back to rest (0)
+		float WingBeat(float a_t, float a_len)
+		{
+			if (a_t <= 0 || a_t >= a_len) {
+				return 0.0f;
+			}
+			const float u = a_t / a_len;
+			if (u < 0.26f) return 1.1f * std::sin(1.5708f * u / 0.26f);
+			if (u < 0.62f) return 1.1f - 2.4f * Smooth((u - 0.26f) / 0.36f);
+			return -1.3f * (1 - Smooth((u - 0.62f) / 0.38f));
+		}
+		// a_beat(lag): the beat's value a_lag seconds behind now (the elbow and wrist follow the shoulder like a whip)
+		template <class F>
+		void WingPose(RE::NiAVObject* a_root, float a_clock, F&& a_beat, float a_fold)
+		{
+			if (!a_root) {
+				return;
+			}
+			static const char* names[2][3] = { { "DG_WingL1", "DG_WingL2", "DG_WingL3" }, { "DG_WingR1", "DG_WingR2", "DG_WingR3" } };
+			constexpr float rest[3] = { 2.0f, 0.0f, 14.0f };     // (its bind droops at the tip: the wrist lifts it level)
+			constexpr float amps[3] = { 56.0f, 34.0f, 24.0f };
+			constexpr float lag[3] = { 0.0f, 0.07f, 0.14f };
+			constexpr float foldBack[3] = { 22.0f, 30.0f, 36.0f }, foldRoll[3] = { 6.0f, -12.0f, -10.0f };
+			constexpr float d = 3.14159265f / 180.0f;
+			for (int sd = 0; sd < 2; ++sd) {
+				const float sg = sd == 0 ? 1.0f : -1.0f;  // the left wing: +roll lifts it, +turn sweeps it back
+				for (int j = 0; j < 3; ++j) {
+					auto* n = a_root->GetObjectByName(names[sd][j]);
+					if (!n) continue;
+					const float b = a_beat(lag[j]), rising = a_beat(lag[j] - 0.02f) - b;
+					const float sway = (j == 0 ? 2.5f : 1.5f) * std::sin(6.28318f * a_clock / 3.0f + j * 0.6f + sd * 0.5f);
+					const float roll = rest[j] * (1 - a_fold) + sway * (1 - 0.6f * a_fold) + amps[j] * b + foldRoll[j] * a_fold;
+					const float back = (rising > 0 ? (j == 0 ? 6.0f : 12.0f) * std::min(1.0f, std::abs(b) + 0.3f) : 0.0f) + foldBack[j] * a_fold;
+					const float twist = (rising < 0 ? (j == 2 ? 7.0f : 3.0f) * std::abs(b) : 0.0f) + 1.2f * std::sin(6.28318f * a_clock / 3.0f + 1.0f + j);
+					n->local.rotate = Rot(twist * d, sg * roll * d, sg * back * d);
+				}
+			}
+		}
+		// the wind's strips in the dragon's nif (tools/dragonfx.py): how bright (0: unseen)
+		void FxLevel(RE::NiAVObject* a_root, const char* a_name, float a_level)
+		{
+			auto* o = a_root ? a_root->GetObjectByName(a_name) : nullptr;
+			auto* g = o ? o->AsGeometry() : nullptr;
+			if (!g) {
+				return;
+			}
+			auto* p = g->GetGeometryRuntimeData().shaderProperty.get();
+			auto* rtti = p ? p->GetRTTI() : nullptr;
+			if (!rtti || std::string_view(rtti->GetName()) != "BSEffectShaderProperty") {
+				return;
+			}
+			auto* m = static_cast<RE::BSShaderProperty*>(p)->material;
+			if (m) {
+				static_cast<RE::BSEffectShaderMaterial*>(m)->baseColorScale = a_level;
+			}
+			o->SetAppCulled(a_level < 0.01f);
+		}
+		void DragonWind(RE::NiAVObject* a_root, float a_trail, float a_dive)
+		{
+			FxLevel(a_root, "DG_TrailL", a_trail);
+			FxLevel(a_root, "DG_TrailR", a_trail);
+			for (int i = 1; i <= 8; ++i) {
+				FxLevel(a_root, fmt::format("DG_Wind{}", i).c_str(), a_dive);
+			}
+		}
+
 		void AwayTick(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			if (g_away.t < 0) {
@@ -341,6 +409,17 @@ namespace bo3z
 				if (auto* n = root->GetObjectByName(fmt::format("DG_Toe{}F", L).c_str())) n->local.rotate = Rot(toes, 0, 0);
 				if (auto* n = root->GetObjectByName(fmt::format("DG_Toe{}B", L).c_str())) n->local.rotate = Rot(-toes, 0, 0);
 			}
+			// the climb away: strong wing-beats (1.1 s each), then out into a glide
+			WingPose(root, t, [t](float a_lag) { const float k = t - 0.15f - a_lag; return k < 3.3f ? WingBeat(std::fmod(std::max(k, 0.0f), 1.1f), 1.1f) : 0.0f; }, 0.0f);
+			DragonWind(root, 0.9f * (1 - Smooth((t - 3.2f) / 1.0f)), 0.0f);
+			{
+				static float lastBeat = 0;
+				const float  k = std::fmod(std::max(t - 0.15f, 0.0f), 1.1f);
+				if (t > 1.0f && t < 3.4f && lastBeat < 0.4f && k >= 0.4f) {
+					PlayGameSound(DragonSound::kFlap, ref.get(), nullptr, 0.7f);
+				}
+				lastBeat = k;
+			}
 			RE::NiUpdateData ud;
 			root->Update(ud);
 		}
@@ -394,7 +473,7 @@ namespace bo3z
 		// ---- the Echo Altar's dragon bonds (Noah): three, bought in order at any Echo Altar, kept for the whole game
 		//   I   Wind-Rider     a quicker glide that sinks slower; jump mid-glide and it beats its wings to climb (a few
 		//                      seconds between beats). Its eyes glow ice-pale.
-		//   II  Talon Strike   sprint and press Activate on open ground: it swoops in and lifts you off your feet; attack
+		//   II  Talon Strike   sprint-jump: a higher leap, and it swoops in and takes you at the top of it; attack
 		//                      while looking down mid-glide and it hurls you at the ground - you land in a shockwave that
 		//                      throws the dead about. Its markings turn glacier blue.
 		//   III Alduin's Thrall (needs a city freed from the Dirge) black scales, ember eyes - its fire breath is real now:
@@ -646,13 +725,15 @@ namespace bo3z
 				if (cc) {
 					GetVel(cc, v);
 				}
-				if (cc && g_takeT < 0.3f) {  // the hop: out of the ground state and up
+				// (Noah: a sprint-jump with the glider on is a higher jump, and the dragon takes you at its top - no
+				// floating there waiting.) A quick, strong leap that slows to its peak in 0.42 s, carrying your run on
+				if (cc && g_takeT < 0.42f) {
 					cc->context.currentState = RE::hkpCharacterStateType::kInAir;
-					v.z = std::max(v.z, 620.0f);
+					v.z = 1150.0f * (1 - g_takeT / 0.42f);
 					SetVel(cc, v);
 				}
-				// the glider opens with Activate, as you would - once you are falling (it will not open on the way up)
-				if (!pressed && !g_hadDragon && g_takeT > 0.25f && !OnGround(a_player) && v.z < 0) {
+				// the glider opens with Activate, as you would - at the leap's peak (it will not open on the way up)
+				if (!pressed && !g_hadDragon && g_takeT > 0.38f && !OnGround(a_player)) {
 					pressed = true;
 					// (the paraglider's own behavior event; Activate as a fallback)
 					if (!a_player->NotifyAnimationGraph("StartPara")) {
@@ -770,6 +851,29 @@ namespace bo3z
 			LetGo(p, {}, 0.0f, 0.23f);
 		}
 
+		// the dive's rush of air: a wind roar that swells with it, and the view a little wider (eased back out after)
+		RE::BSSoundHandle g_windSound;
+		void DiveRush(RE::PlayerCharacter* a_player, float a_k)
+		{
+			static float fovAdd = 0, level = 0;
+			level += (a_k - level) * 0.12f;
+			if (level > 0.03f) {
+				if (!g_windSound.IsValid()) {
+					PlayGameSound(0x00108279, a_player, &g_windSound, 0.01f);  // AMBKagrenzelWindShaftLPM (a loop)
+				}
+				if (g_windSound.IsValid()) {
+					g_windSound.SetVolume(std::min(1.0f, level * 1.1f));
+				}
+			} else if (g_windSound.IsValid()) {
+				g_windSound.Stop();
+			}
+			if (auto* cam = RE::PlayerCamera::GetSingleton()) {
+				const float want = 9.0f * level;
+				cam->GetRuntimeData2().worldFOV += want - fovAdd;
+				fovAdd = want;
+			}
+		}
+
 		void Dragon(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			static float lastYaw = 0, turn = 0, wanderT = 0, breathIn = 6.0f, breath = 0, jaw = 0, shotT = 0, lookYaw = 0, lookPitch = 0, roll = 0, pitch = 0;
@@ -818,6 +922,7 @@ namespace bo3z
 				}
 				g_hadDragon = false, letGone = false, sawGliding = false;
 				if (g_breathSound.IsValid()) g_breathSound.Stop();
+				DiveRush(a_player, 0.0f);  // (eases the view back)
 				lastYaw = yaw, lastZ = z, turn = 0, breath = 0, jaw = 0, breathIn = 4.0f, deployT = -1, roll = 0;
 				g_armHoldOn = false, g_armHold = 0, g_flapT = -1, g_liftT = -1, g_grip = 0;
 				g_grabOff = {};
@@ -865,7 +970,12 @@ namespace bo3z
 				return;
 			}
 			deployT += a_delta;
-			constexpr float kSwoop = 1.15f;
+			// the swoop: 1.15 s, or 0.6 s when it catches you at the top of a take-off leap (so you never hang there)
+			static bool quickSwoop = false;
+			if (deployT <= a_delta * 1.5f) {
+				quickSwoop = g_liftOff != 0;
+			}
+			const float kSwoop = quickSwoop ? 0.6f : 1.15f;
 			// your arms stay down until it reaches you, then go up to its talons as it takes you
 			g_armHoldOn = true;
 			g_armHold = 1 - Smooth((deployT - (kSwoop - 0.38f)) / 0.38f);
@@ -883,15 +993,14 @@ namespace bo3z
 					space[i]->local.translate = baseTrans + at + g_grabOff * g_grip;
 					if (baseScale > 0) space[i]->local.scale = baseScale;
 				}
-				// Bond I's wing-beat: both wings thrown up, then a great stroke down
-				float beat = 0;
-				if (g_flapT >= 0) {
-					beat = g_flapT < 0.3f ? 1.15f * std::sin(1.5708f * g_flapT / 0.3f)
-					     : g_flapT < 0.75f ? 1.15f - 2.6f * Smooth((g_flapT - 0.3f) / 0.45f)
-					                       : -1.45f * (1 - Smooth((g_flapT - 0.75f) / 0.4f));
-				}
-				if (fold[i][0]) fold[i][0]->local.rotate = Rot(0, beat, 0);
-				if (fold[i][1]) fold[i][1]->local.rotate = Rot(0, -beat, 0);
+				if (fold[i][0]) fold[i][0]->local.rotate = Rot(0, 0, 0);
+				if (fold[i][1]) fold[i][1]->local.rotate = Rot(0, 0, 0);
+				// the wings: straight out in the glide, swaying; beating only for a climb (Bond I's wing-beat, the
+				// take-off's lift); swept back in a Bond III dive
+				const float flapT = g_flapT, liftT = g_liftT;
+				WingPose(a_player->Get3D(i == 1), deployT, [flapT, liftT](float a_lag) {
+					return WingBeat(flapT - a_lag, 1.15f) + WingBeat(liftT - a_lag, 1.3f);
+				}, std::clamp(g_divePitch / 0.42f, 0.0f, 1.0f));
 			}
 			// the legs: reaching out in the swoop, clutching as it takes you; then holding on, flexing their grip, now
 			// and then shifting it (talons opening and closing); drawn up while it breathes fire
@@ -1042,8 +1151,8 @@ namespace bo3z
 						}
 						want = speed;
 					}
-					want = hanging ? 0.0f : want;
-					glide = glide + (heading * want - glide) * std::min(1.0f, dt * (hanging ? 4.0f : bond >= 3 ? 2.0f : 0.9f));
+					want = hanging ? 600.0f : want;  // (the leap's run carries on while it comes)
+					glide = glide + (heading * want - glide) * std::min(1.0f, dt * (hanging ? 2.0f : bond >= 3 ? 2.0f : 0.9f));
 					v.x = glide.x, v.y = glide.y;
 					if (!beforeGrab) {
 						v.z = std::max(v.z, -105.0f);  // (the glide alone sinks about half again faster)
@@ -1056,7 +1165,7 @@ namespace bo3z
 						}
 					}
 					if (hanging) {
-						v.z = 12.0f;
+						v.z = -160.0f * Smooth(deployT / (kSwoop * 0.88f));  // the leap's peak, just tipping over
 					} else if (g_liftOff == 2) {  // its talons close: up you go
 						g_liftOff = 0, g_liftT = 0;
 						PlayGameSound(DragonSound::kFlapBig, a_player);
@@ -1075,20 +1184,17 @@ namespace bo3z
 					SetVel(cc, v);
 				}
 			}
-			// its wingbeats heard: the nif's loop beats three times (1.6 s each) and glides the rest of its 6 seconds
+			// the wind: a streak off each wingtip (brighter the faster you go), and in a Bond III dive the air rushing
+			// past - streaks all round, its roar, the view widening a little as you gather speed
 			{
-				static float beatT = 0;
-				if (deployT <= a_delta * 1.5f) {
-					beatT = 0;
+				const float spd = vel.Length();
+				const float held = Smooth((deployT - kSwoop * 0.6f) / 0.5f);
+				const float trail = held * (0.3f + 0.7f * Smooth((spd - 800.0f) / 1400.0f));
+				const float dive = Smooth((g_divePitch - 0.08f) / 0.3f) * Smooth((spd - 1100.0f) / 1100.0f);
+				for (int i = 0; i < 2; ++i) {
+					DragonWind(a_player->Get3D(i == 1), trail, dive * 1.2f);
 				}
-				const float before = std::fmod(beatT, 6.0f);
-				beatT += dt;
-				const float now = std::fmod(beatT, 6.0f);
-				for (const float at : { 0.55f, 2.15f, 3.75f }) {  // (each downstroke)
-					if ((before < at && now >= at) || (now < before && at <= now)) {
-						PlayGameSound(DragonSound::kFlap, a_player, nullptr, 0.55f);
-					}
-				}
+				DiveRush(a_player, dive);
 			}
 			{  // the talons on your hands (the skeleton you see)
 				const bool first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
@@ -1193,7 +1299,7 @@ namespace bo3z
 		{
 			static constexpr const char* kName[3] = { "WIND-RIDER", "TALON STRIKE", "ALDUIN'S THRALL" };
 			static constexpr const char* kHow[3] = { "Jump while gliding: it beats its wings and climbs",
-				"Sprint + Activate on open ground: it lifts you  -  attack looking down mid-glide: the dive",
+				"Sprint-jump: a higher leap and it takes you up  -  attack looking down mid-glide: the dive",
 				"Its breath burns the dead below, in the element of the spell in your hand" };
 			const int b = Bond();
 			if (b >= 3) {
@@ -1308,12 +1414,11 @@ namespace bo3z
 					g_flapT = 0, g_flapWait = 3.5f;
 					PlayGameSound(DragonSound::kFlapBig, player);
 				}
-				if (free && bond >= 2 && ev == ue->activate && !g_hadDragon && g_liftOff == 0 && OnGround(player) &&
-					player->AsActorState()->IsSprinting()) {  // II: take-off, when Activate has nothing to take
-					auto* pick = RE::CrosshairPickData::GetSingleton();
-					if (!pick || !pick->target.get()) {
+				if (free && bond >= 2 && ev == ue->jump && !g_hadDragon && g_liftOff == 0 && OnGround(player) &&
+					player->AsActorState()->IsSprinting()) {  // II: take-off - a sprint-jump
+					{
 						if (player->GetCharController()) {
-							player->SetPosition(player->GetPosition() + RE::NiPoint3{ 0, 0, 45.0f }, true);  // off the ground (then carried up, below)
+							player->SetPosition(player->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, true);  // off the ground (then the leap, above)
 							g_liftOff = 1, g_takeT = 0;
 							Forms::PlayAt(gen::Sound::shout_gale, player);
 							logger::info("glider: take-off");

@@ -8,6 +8,7 @@
 //     billboard: the shape always faces the camera (under a NiBillboardNode)
 //     flip: the texture is a flipbook atlas played in a loop (the shape's UVs span one cell)
 //     rim: the falloff the other way round (clear where it faces you, bright at its edge: a glow round a shape)
+//     parent=<node>: under that node of the base NIF (e.g. a bone: the shape moves with it)
 //     vscroll / uscroll: the texture slides one whole turn in that many seconds (a looping shader controller)
 //   v x y z u v [r g b a]        (vertex colours optional: per-vertex tint and fade)
 //   n x y z                      (optional, after its v: that vertex's normal - needed by falloff / rim)
@@ -28,6 +29,7 @@ struct Shape
 	int                  bbMode = 0;
 	float                at[3]{ 0, 0, 0 };  // at=x,y,z: where the billboard's node stands (it turns about it)  // billboard=1: always face the camera; billboard=<n>: that NiBillboardNode mode (2 rigid: stays upright on screen)
 	int                  cols = 0, rows = 0;
+	std::string          parent;  // parent=<node>: the shape hangs under that node (its coordinates in the node's space)
 	float                fps = 18.0f, phase = 0.0f;
 	std::vector<Vector3> v;
 	std::vector<Vector2> uv;
@@ -71,6 +73,7 @@ int main(int argc, char** argv)
 				else if (key == "phase") s.phase = std::stof(val);
 				else if (key == "vscroll") s.vscroll = std::stof(val);
 				else if (key == "uscroll") s.uscroll = std::stof(val);
+				else if (key == "parent") s.parent = val;
 			}
 			shapes.push_back(s);
 		} else if (k == "v" && !shapes.empty()) {
@@ -184,6 +187,10 @@ int main(int argc, char** argv)
 			s.vscroll = std::max(s.vscroll, 0.001f);  // (counts as animated below)
 		}
 		if (prevCtrl != 0xFFFFFFFF) fxp->controllerRef.index = prevCtrl;
+		if (!s.parent.empty()) {
+			if (auto* pn = nif.FindBlockByName<NiNode>(s.parent)) nif.SetParentNode(sh, pn);
+			else fprintf(stderr, "no node %s\n", s.parent.c_str());
+		}
 		if (s.billboard) {  // always facing the camera
 			auto bb = std::make_unique<NiBillboardNode>();
 			bb->name.get() = s.name + "_bb";
