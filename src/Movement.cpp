@@ -613,7 +613,8 @@ namespace bo3z
 				if (cc) {
 					GetVel(cc, v);
 				}
-				if (cc && g_takeT < 0.3f) {  // the hop
+				if (cc && g_takeT < 0.3f) {  // the hop: out of the ground state and up
+					cc->context.currentState = RE::hkpCharacterStateType::kInAir;
 					v.z = std::max(v.z, 620.0f);
 					SetVel(cc, v);
 				}
