@@ -162,12 +162,23 @@ namespace bo3z::Compass
 			scan = 30.0f;  // (and again now and then: places get discovered)
 			ReadPlaces(world);
 		}
+		int shownPlaces = 0;
+		const Place* nearest = nullptr;
+		float        nearD = 1e9f;
 		for (const auto& p : g_places) {
 			const float d = p.at.GetDistance(me);
+			if (d < nearD) nearD = d, nearest = &p;
 			const float reach = p.kind == 3 ? 60000.0f : p.known ? 20000.0f : 6000.0f;
 			if (d < reach && d > 300.0f) {
 				marks.push_back({ bearing(p.at), d, p.kind, p.name, p.type, p.known });
+				++shownPlaces;
 			}
+		}
+		static float logT = 0;
+		if ((logT -= a_delta) <= 0) {
+			logT = 20.0f;
+			logger::info("compass: {} places on it (of {}); nearest {} ({:.0f}, type {}, known {}) at ({:.0f},{:.0f}) - you at ({:.0f},{:.0f})", shownPlaces, g_places.size(),
+				nearest ? nearest->name : "-", nearD, nearest ? nearest->type : -1, nearest ? nearest->known : false, nearest ? nearest->at.x : 0.0f, nearest ? nearest->at.y : 0.0f, me.x, me.y);
 		}
 		if (world) {  // the shrines of the cities
 			for (std::size_t t = 0; t < gen::kTowns.size(); ++t) {
