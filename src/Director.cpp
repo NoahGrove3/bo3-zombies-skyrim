@@ -1053,6 +1053,30 @@ namespace bo3z
 			s.nuke = g_pause;
 		}
 
+		// the clock moved by some hours (forward or back), the day of the month with it
+		void ShiftClock(float a_hours)
+		{
+			auto* cal = RE::Calendar::GetSingleton();
+			if (!cal || !cal->gameHour || !cal->gameDaysPassed) {
+				return;
+			}
+			float nh = cal->gameHour->value + a_hours;
+			while (nh >= 24.0f) {
+				nh -= 24.0f;
+				if (cal->gameDay) {
+					cal->gameDay->value += 1.0f;
+				}
+			}
+			while (nh < 0.0f) {
+				nh += 24.0f;
+				if (cal->gameDay && cal->gameDay->value > 1.0f) {
+					cal->gameDay->value -= 1.0f;
+				}
+			}
+			cal->gameHour->value = nh;
+			cal->gameDaysPassed->value += a_hours / 24.0f;
+		}
+
 		void StartRound(int a_round);
 		void Dawn();
 		// A friend's game: the night, the event, the boss bar and the city quests follow the host's.
@@ -1100,6 +1124,16 @@ namespace bo3z
 			}
 			if (s.boxAv != Save::Get(gen::kAV_box)) {
 				Save::Set(gen::kAV_box, s.boxAv);
+			}
+			// the host's clock: when it moves (the host waits or sleeps, an hour at a time), everyone's moves with it
+			if (auto* cal = RE::Calendar::GetSingleton(); s.daysPassed > 0 && cal && cal->gameDaysPassed) {
+				const float diff = (s.daysPassed - cal->gameDaysPassed->value) * 24.0f;
+				if (std::abs(diff) > 0.2f) {
+					ShiftClock(diff);
+					if (std::abs(diff) > 0.9f) {
+						logger::info("coop: the clock follows the host ({:+.1f} hours)", diff);
+					}
+				}
 			}
 			// the host's sky: the same weather here (checked every few seconds; a change blends in)
 			if (static float wt = 0; (wt -= 0.25f) <= 0 && s.weather) {
@@ -1831,6 +1865,18 @@ namespace bo3z
 			return -1;
 		}
 		bool NightNow() { return IsNight(); }
+		bool MayRest(std::string& a_why)
+		{
+			if (g_phase != Phase::Day || IsNight()) {
+				a_why = "The dead walk. There is no rest until dawn.";
+				return false;
+			}
+			if (Coop::Client()) {
+				a_why = "Only the host can rest. Their clock moves the whole party.";
+				return false;
+			}
+			return true;
+		}
 		int   EventNow() { return g_phase == Phase::Fighting ? g_event : -1; }
 		int   EventPointsMult() { return g_phase == Phase::Fighting && g_event >= 0 ? gen::kEvents[g_event].pointsMult : 1; }
 		float EventDropMult() { return g_phase == Phase::Fighting && g_event >= 0 ? gen::kEvents[g_event].dropMult : 1.0f; }
@@ -2156,6 +2202,12 @@ namespace bo3z
 
 		void Tick(float a_delta)
 		{
+			// a rest that runs into dusk ends there (the countdown has begun)
+			if (auto* ui = RE::UI::GetSingleton(); ui && g_phase != Phase::Day && ui->IsMenuOpen(RE::SleepWaitMenu::MENU_NAME)) {
+				if (auto* q = RE::UIMessageQueue::GetSingleton()) {
+					q->AddMessage(RE::SleepWaitMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+				}
+			}
 			PowerUps::Tick(a_delta);
 			Settings::Tick();
 			TickFx(a_delta);

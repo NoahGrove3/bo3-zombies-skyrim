@@ -769,6 +769,9 @@ namespace bo3z::Net
 				}
 				s.weatherClass = sky->currentWeather->data.flags.underlying();
 			}
+			if (auto* cal = RE::Calendar::GetSingleton(); cal && cal->gameDaysPassed) {
+				s.daysPassed = cal->gameDaysPassed->value;
+			}
 			ToAll(&s, sizeof(s), false);
 		}
 	}

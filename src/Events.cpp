@@ -106,6 +106,14 @@ namespace bo3z
 						q->AddMessage(RE::TutorialMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
 					}
 				}
+				if (a_event->opening && a_event->menuName == RE::SleepWaitMenu::MENU_NAME && dataLoaded) {
+					if (std::string why; !Director::MayRest(why)) {
+						if (auto* q = RE::UIMessageQueue::GetSingleton()) {
+							q->AddMessage(RE::SleepWaitMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+						}
+						Hud::Banner(why, 3.5f);
+					}
+				}
 				if (a_event->menuName == RE::MainMenu::MENU_NAME) {
 					Audio::MenuUiSounds(a_event->opening);
 					Save::ForgetSnapshot();

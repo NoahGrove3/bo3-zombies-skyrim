@@ -133,6 +133,7 @@ namespace bo3z
 		void             DevSpawnAt(std::string_view a_row, const RE::NiPoint3& a_at, float a_yawDeg);  // DevTools: ...at a point, facing yaw
 		void             DevShowUndead(bool a_show);  // DevTools: hide/show every undead we raised (clean plates for art captures)
 		void             EndNight();
+		bool             MayRest(std::string& a_why);  // waiting / sleeping: not at night, and only the host's clock moves
 		bool             BossPos(RE::NiPoint3& a_at);  // Grimmvar, if he walks
 		bool             RaiseChampion(int a_town, std::string_view a_row, std::string_view a_name, float a_healthMult, const RE::NiPoint3& a_at);  // a city's named champion
 		bool             ChampionActive(int a_town);  // walking, or slain this night
@@ -205,6 +206,7 @@ namespace bo3z
 			std::uint32_t weatherLocal;          // the same, by its plugin (load orders differ) ...
 			char          weatherPlugin[48];
 			std::uint8_t  weatherClass;          // ... and its kind (pleasant / cloudy / rain / snow) if that plugin isn't here
+			float         daysPassed;            // the host's clock (GameDaysPassed): it moves everyone's
 		};
 #pragma pack(pop)
 		struct FriendGame { std::uint64_t id, lobby; std::string name; };
@@ -519,6 +521,9 @@ namespace bo3z
 			std::vector<CompassMark> compass;
 			struct QuestMark { float x, y, dist; bool front; std::string label; };  // a quest's target on the screen (0..1), drawn in our style
 			std::vector<QuestMark> qmarks;
+			// the quests chosen in the journal (Skyrim's and the Echo Altar's rites alike), top left: name and open goals
+			struct Tracked { std::string title; std::vector<std::string> goals; };
+			std::vector<Tracked> tracked;
 			struct LootItem { std::string name; int count, value; float weight; int kind; };  // kind: 0 misc, 1 gold, 2 weapon, 3 armor, 4 potion, 5 ingredient, 6 book, 7 scroll, 8 ammo, 9 soul gem, 10 key
 			bool        lootOn{ false };
 			std::string lootTitle, lootNote;

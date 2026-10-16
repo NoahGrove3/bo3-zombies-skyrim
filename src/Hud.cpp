@@ -638,8 +638,34 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 
-			if (s.compassOn && !s.perkMenu) {
+			if (s.compassOn && !s.perkMenu && s.bossName.empty()) {  // (a boss's bar takes the top of the screen while it lives)
 				DrawCompass(dl, s, size, k, now);
+			}
+
+			// The quests chosen in the journal, top left (under Skyrim's notices): name in gold, open goals beneath
+			if (!s.tracked.empty() && !s.perkMenu) {
+				float y = size.y * 0.24f;
+				const float x = 34 * k;
+				for (const auto& t : s.tracked) {
+					float w = Measure(g_title, 20 * k, t.title.c_str()).x;
+					for (const auto& g : t.goals) {
+						w = std::max(w, Measure(g_body, 16 * k, g.c_str()).x + 18 * k);
+					}
+					w = std::min(w, size.x * 0.28f);
+					const float h = 30 * k + t.goals.size() * 22 * k;
+					dl->AddRectFilledMultiColor({ x - 14 * k, y - 6 * k }, { x + w + 40 * k, y + h }, IM_COL32(8, 7, 10, 150), IM_COL32(8, 7, 10, 0), IM_COL32(8, 7, 10, 0), IM_COL32(8, 7, 10, 150));
+					dl->AddLine({ x - 14 * k, y - 6 * k }, { x - 14 * k, y + h }, Fade(kGold, 0.8f), 2 * k);
+					Txt(dl, g_title, 20 * k, { x, y }, Fade(kGold, 0.95f), t.title, 1.5f * k, IM_COL32(0, 0, 0, 200));
+					float gy = y + 28 * k;
+					for (const auto& g : t.goals) {
+						const ImVec2 c{ x + 5 * k, gy + 9 * k };
+						const ImVec2 d[4] = { { c.x, c.y - 4 * k }, { c.x + 4 * k, c.y }, { c.x, c.y + 4 * k }, { c.x - 4 * k, c.y } };
+						dl->AddConvexPolyFilled(d, 4, Fade(kGold, 0.8f));
+						Txt(dl, g_body, 16 * k, { x + 18 * k, gy }, IM_COL32(222, 214, 196, 240), g, 1.2f * k, IM_COL32(0, 0, 0, 200));
+						gy += 22 * k;
+					}
+					y += h + 14 * k;
+				}
 			}
 
 			// Quick loot (src/Loot.cpp): what a body or a chest holds, beside the crosshair, in the shrine menu's style
@@ -1433,7 +1459,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 			// Boss bar: name over a long ornate bar at the top.
 			if (!s.bossName.empty()) {
-				const float w = size.x * 0.42f, h = 14 * k, x = size.x * 0.5f - w / 2, y = 128 * k;  // (under the compass)
+				const float w = size.x * 0.42f, h = 14 * k, x = size.x * 0.5f - w / 2, y = 74 * k;  // (where the compass was: it steps aside for the fight)
 				TxtC(dl, g_title, 26 * k, size.x * 0.5f, y - 36 * k, s.bossEnraged ? IM_COL32(255, 120, 60, 255) : kParch, s.bossName, s.bossEnraged ? 3 * k : 0, IM_COL32(255, 60, 20, 255));
 				static float bossGhost = 1;
 				bossGhost = s.bossHp > bossGhost ? s.bossHp : std::max(s.bossHp, bossGhost - dt * 0.25f);

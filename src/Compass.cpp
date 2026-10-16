@@ -48,6 +48,64 @@ namespace bo3z::Compass
 			}
 		}
 
+		// a goal's text with its <Alias=...> names filled in (as Skyrim's journal does)
+		std::string Fill(RE::TESQuest* a_q, std::string a_t)
+		{
+			for (std::size_t at; (at = a_t.find('<')) != std::string::npos;) {
+				const auto end = a_t.find('>', at);
+				if (end == std::string::npos) {
+					break;
+				}
+				std::string tag = a_t.substr(at + 1, end - at - 1), put;
+				if (const auto eq = tag.find('='); eq != std::string::npos && tag.rfind("Alias", 0) == 0) {
+					const std::string name = tag.substr(eq + 1);
+					RE::BSReadLockGuard lk(a_q->aliasAccessLock);
+					for (auto* al : a_q->aliases) {
+						if (al && _stricmp(al->aliasName.c_str(), name.c_str()) == 0) {
+							if (auto it = a_q->refAliasMap.find(al->aliasID); it != a_q->refAliasMap.end()) {
+								if (auto r = it->second.get()) {
+									const char* n = r->GetDisplayFullName();
+									put = n ? n : "";
+								}
+							}
+							break;
+						}
+					}
+				}
+				a_t.replace(at, end - at + 1, put);
+			}
+			return a_t;
+		}
+
+		std::vector<Hud::State::Tracked> Tracked()
+		{
+			std::vector<Hud::State::Tracked> out;
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			if (!dh) {
+				return out;
+			}
+			for (auto* q : dh->GetFormArray<RE::TESQuest>()) {
+				if (!q || !q->IsActive() || !q->IsRunning() || q->IsCompleted()) {
+					continue;
+				}
+				Hud::State::Tracked t;
+				const char* n = q->GetName();
+				t.title = n ? n : "";
+				for (auto* o : q->objectives) {
+					if (o && o->state.get() == RE::QUEST_OBJECTIVE_STATE::kDisplayed && !o->displayText.empty() && t.goals.size() < 3) {
+						t.goals.push_back(Fill(q, o->displayText.c_str()));
+					}
+				}
+				if (!t.title.empty() && !t.goals.empty()) {
+					out.push_back(std::move(t));
+					if (out.size() >= 3) {
+						break;
+					}
+				}
+			}
+			return out;
+		}
+
 		// the map's places in this worldspace (read once each time you enter one)
 		void ReadPlaces(RE::TESWorldSpace* a_world)
 		{
@@ -163,6 +221,12 @@ namespace bo3z::Compass
 				}
 			}
 		}
+		static float trackT = 0;
+		static std::vector<Hud::State::Tracked> tracked;
+		if ((trackT -= a_delta) <= 0) {
+			trackT = 0.5f;
+			tracked = Tracked();
+		}
 		for (const auto& f : Party::Now().marks) {
 			marks.push_back({ f.ang, f.dist, 7, f.name });
 		}
@@ -175,5 +239,6 @@ namespace bo3z::Compass
 		h.heading = heading;
 		h.compass = std::move(marks);
 		h.qmarks = std::move(qmarks);
+		h.tracked = tracked;
 	}
 }
