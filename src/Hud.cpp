@@ -642,6 +642,67 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DrawCompass(dl, s, size, k, now);
 			}
 
+			// Sneaking: our own detection meter in place of Skyrim's eye - an eye over the crosshair that opens as the most
+			// watchful one grows suspicious (iron and gold, amber when they wonder, a burning red when they see you), and a
+			// mark round the crosshair toward each one looking for you
+			if (s.sneaking && !s.perkMenu) {
+				static float open = 0.1f, heat = 0;
+				open += (std::max(0.1f, s.aware) - open) * std::min(1.0f, dt * 8);
+				heat += ((s.seen ? 1.0f : 0.0f) - heat) * std::min(1.0f, dt * 6);
+				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f - 52 * k };
+				const float  w = 30 * k, hgt = 15 * k;
+				const ImU32  iron = IM_COL32(12, 11, 14, 215);
+				const ImU32  rim = s.seen ? IM_COL32(235, 70, 45, 255) : Fade(kGold, 0.55f + 0.45f * s.aware);
+				ImVec2 up[25], lo[25], all[48];
+				for (int i = 0; i <= 24; ++i) {
+					const float t = i / 12.0f - 1.0f, cv = std::pow(1 - t * t, 0.85f);
+					up[i] = { c.x + t * w, c.y - hgt * cv };
+					lo[i] = { c.x + t * w, c.y + hgt * cv };
+				}
+				// the lids' outline (always the whole almond) and the dark of the eye
+				int n = 0;
+				for (int i = 0; i <= 24; ++i) all[n++] = up[i];
+				for (int i = 23; i >= 1; --i) all[n++] = lo[i];
+				dl->AddConcavePolyFilled(all, n, iron);
+				// the opening: a slit that widens with their suspicion
+				n = 0;
+				for (int i = 0; i <= 24; ++i) {
+					const float t = i / 12.0f - 1.0f, cv = std::pow(1 - t * t, 0.85f);
+					all[n++] = { c.x + t * w * 0.92f, c.y - hgt * 0.92f * cv * open };
+				}
+				for (int i = 23; i >= 1; --i) {
+					const float t = i / 12.0f - 1.0f, cv = std::pow(1 - t * t, 0.85f);
+					all[n++] = { c.x + t * w * 0.92f, c.y + hgt * 0.92f * cv * open };
+				}
+				const ImU32 glowCol = s.seen ? IM_COL32(255, 60, 30, 255) : s.aware > 0.15f ? IM_COL32(255, 170, 60, 255) : IM_COL32(110, 150, 220, 255);
+				dl->AddConcavePolyFilled(all, n, Fade(glowCol, 0.18f + 0.25f * open));
+				const float ir = hgt * 0.8f * std::min(1.0f, open * 1.1f);
+				if (ir > 1.0f) {
+					dl->AddCircleFilled(c, ir * 1.6f, Fade(glowCol, 0.12f + 0.2f * heat), 24);
+					dl->AddCircleFilled(c, ir, Fade(glowCol, 0.9f), 24);
+					dl->AddEllipseFilled(c, { ir * 0.28f, ir * 0.8f }, IM_COL32(8, 6, 8, 255), 0, 16);  // a dragon's slit pupil
+				}
+				dl->AddPolyline(up, 25, rim, 0, 1.6f * k);
+				dl->AddPolyline(lo, 25, rim, 0, 1.6f * k);
+				if (heat > 0.05f) {  // seen: the lids smoulder
+					FlameBorder(dl, { c.x - w * 0.7f, c.y - hgt * 0.7f }, { c.x + w * 0.7f, c.y + hgt * 0.7f }, 2, now, heat, k);
+				}
+				const char* word = s.seen ? "SEEN" : s.aware > 0.15f ? "WATCHED" : "HIDDEN";
+				TxtC(dl, g_body, 13 * k, c.x, c.y + hgt + 4 * k, s.seen ? IM_COL32(255, 120, 90, 240) : IM_COL32(205, 195, 170, 200), word, 1.2f * k, IM_COL32(0, 0, 0, 220));
+				// toward each watcher: a short burning arc round the crosshair
+				const ImVec2 cc{ size.x * 0.5f, size.y * 0.5f };
+				for (const auto& wv : s.watchers) {
+					const float R = 64 * k, half = 0.22f;
+					const ImU32 col = wv.seen ? IM_COL32(240, 60, 35, 255) : IM_COL32(240, 170, 60, 255);
+					dl->PathClear();
+					for (int i = 0; i <= 12; ++i) {
+						const float a = wv.ang - half + 2 * half * i / 12.0f;
+						dl->PathLineTo({ cc.x + std::sin(a) * R, cc.y - std::cos(a) * R });
+					}
+					dl->PathStroke(Fade(col, 0.35f + 0.65f * wv.aware), 0, (2.0f + 2.5f * wv.aware) * k);
+				}
+			}
+
 			// The quests chosen in the journal, top left (under Skyrim's notices): name in gold, open goals beneath
 			if (!s.tracked.empty() && !s.perkMenu) {
 				float y = size.y * 0.24f;
@@ -3473,7 +3534,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			const bool mainMenu = uiM && uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) && (!popup || steamOver);
 			// Skyrim's cursor never shows: ours (DrawPingCursor) is drawn in its place, on the main menu and in game
-			const bool cursorUp = uiM && uiM->IsMenuOpen(RE::CursorMenu::MENU_NAME);
+			// (the world map moves Skyrim's cursor without its cursor menu: ours is drawn there too)
+			const bool cursorUp = uiM && (uiM->IsMenuOpen(RE::CursorMenu::MENU_NAME) || uiM->IsMenuOpen(RE::MapMenu::MENU_NAME));
 			if (cursorUp) {
 				if (auto cm = uiM->GetMenu(RE::CursorMenu::MENU_NAME); cm && cm->uiMovie && cm->uiMovie->GetVisible()) {
 					cm->uiMovie->SetVisible(false);
@@ -3592,6 +3654,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						// Skyrim's compass gives way to ours (the shout meter under it stays)
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder.Compass._alpha", RE::GFxValue(0.0));
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder.Compass._visible", RE::GFxValue(false));
+						// and its sneak eye to ours
+						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.StealthMeterInstance._alpha", RE::GFxValue(0.0));
 					}
 				}
 			}

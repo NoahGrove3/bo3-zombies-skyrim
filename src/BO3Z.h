@@ -524,6 +524,12 @@ namespace bo3z
 			// the quests chosen in the journal (Skyrim's and the Echo Altar's rites alike), top left: name and open goals
 			struct Tracked { std::string title; std::vector<std::string> goals; };
 			std::vector<Tracked> tracked;
+			// sneaking (our own detection meter, in place of Skyrim's eye): how aware the most watchful one is, and who
+			struct Watcher { float ang, aware; bool seen; };  // ang: bearing from where you look (radians); aware 0..1
+			bool        sneaking{ false };
+			float       aware{ 0 };       // 0 hidden .. 1 seen
+			bool        seen{ false };
+			std::vector<Watcher> watchers;
 			struct LootItem { std::string name; int count, value; float weight; int kind; };  // kind: 0 misc, 1 gold, 2 weapon, 3 armor, 4 potion, 5 ingredient, 6 book, 7 scroll, 8 ammo, 9 soul gem, 10 key
 			bool        lootOn{ false };
 			std::string lootTitle, lootNote;

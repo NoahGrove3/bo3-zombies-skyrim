@@ -221,6 +221,41 @@ namespace bo3z::Compass
 				}
 			}
 		}
+		// who is looking for you (while you sneak): Skyrim's own detection level for each one near
+		static float detT = 0;
+		static std::vector<Hud::State::Watcher> watchers;
+		static float aware = 0;
+		static bool  seen = false;
+		const bool   sneaking = pl->IsSneaking() && !pl->IsDead();
+		if (!sneaking) {
+			watchers.clear(), aware = 0, seen = false;
+		} else if ((detT -= a_delta) <= 0) {
+			detT = 0.2f;
+			watchers.clear(), aware = 0, seen = false;
+			if (auto* lists = RE::ProcessLists::GetSingleton()) {
+				for (auto& hnd : lists->highActorHandles) {
+					auto a = hnd.get();
+					if (!a || a.get() == pl || a->IsDead() || a->IsPlayerTeammate() || Party::IsFriend(a.get()) || Director::EnemyRow(a.get()) >= 0) {
+						continue;
+					}
+					const float d = a->GetPosition().GetDistance(me);
+					if (d > 4000.0f) {
+						continue;
+					}
+					const std::int32_t lv = a->RequestDetectionLevel(pl, RE::DETECTION_PRIORITY::kNormal);
+					// (below -100 they have no idea; from -100 they grow suspicious; at 0 and above they see you)
+					const float f = std::clamp((static_cast<float>(lv) + 100.0f) / 100.0f, 0.0f, 1.0f);
+					if (f <= 0.02f) {
+						continue;
+					}
+					float rel = std::atan2(a->GetPosition().x - me.x, a->GetPosition().y - me.y) - heading;
+					rel = std::remainder(rel, 6.2831853f);
+					watchers.push_back({ rel, f, lv >= 0 });
+					aware = std::max(aware, f);
+					seen = seen || lv >= 0;
+				}
+			}
+		}
 		static float trackT = 0;
 		static std::vector<Hud::State::Tracked> tracked;
 		if ((trackT -= a_delta) <= 0) {
@@ -240,5 +275,9 @@ namespace bo3z::Compass
 		h.compass = std::move(marks);
 		h.qmarks = std::move(qmarks);
 		h.tracked = tracked;
+		h.sneaking = sneaking;
+		h.aware = aware;
+		h.seen = seen;
+		h.watchers = watchers;
 	}
 }

@@ -42,9 +42,11 @@ THE PARTY MODS (installed for both players - Skyrim Together needs the same plug
  - Skyrim's Paraglider (Dragon Snow glider): it is already in your pack. Jump or fall from anywhere high and
    press E (A / Cross on a pad) in the air to open it; press again to let go. No fall damage in this mod pack.
  - The new UI: Paper Map with Flat World Map Framework and Legendary Map's icon picker, HD Local
-   Map, TrueHUD (its bars are off - The Curse of Alduin's own health, spell and enemy bars stay),
-   moreHUD, Floating Subtitles, Smart Talk, Tween Menu Overhaul, Modern Wait Menu, Crafting Categories,
+   Map, Local Map Upgrade, TrueHUD (its bars are off - The Curse of Alduin's own health, spell and enemy bars stay),
+   moreHUD, Smart Talk, Tween Menu Overhaul, Modern Wait Menu, Crafting Categories,
    Follower Stats, and the icon packs (I4, Rotols, B.O.O.B.I.E.S. with A.S.S., P.E.N.I.S. and Potions, KID).
+ - Sneaking: The Curse of Alduin's own eye over the crosshair - it opens as they grow suspicious, burns red when
+   you are seen, and marks round the crosshair point to whoever is looking.
  - Quests: the ones you choose in the journal (Skyrim's and the Echo Altar's rites) show at the top left.
  - Waiting and sleeping: not at night or at dusk (the dead are coming). Only the host can wait - the host's
    clock moves the whole party, an hour at a time. A boss's health bar takes the compass's place while it lives.
