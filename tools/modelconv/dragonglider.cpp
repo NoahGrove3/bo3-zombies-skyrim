@@ -6,7 +6,8 @@
 //                                                > DG_Head (nods) > DG_Jaw (opened by the game when it breathes fire)
 //                                                                  > DG_Mouth (where the fire comes from)
 //                    > DG_WingL1 > DG_WingL2 > DG_WingL3   (shoulder, elbow, wrist; same on the right)
-//         > DG_Legs (hind legs, dangling)
+//         > DG_LegL1 > DG_LegL2 > DG_LegL3 (hip, knee, foot; same on the right) - moved by the game: they dangle and
+//           kick in flight, reach out and clutch when the dragon swoops in to take you, tuck up when it breathes fire
 //         > DG_Tail1 > DG_Tail2 > DG_Tail3 > DG_Tail4
 // Weights are smooth (each vertex shared between neighbouring bones), so the body bends without seams. The keyframed
 // bones loop over 6 seconds: two strong wingbeats (a quick downstroke, a slower upstroke with the wing folding, the
@@ -67,7 +68,12 @@ int main(int argc, char** argv)
 		{ "DG_WingR1", "DG_WingR0", { SX, -1380, 170 } },
 		{ "DG_WingR2", "DG_WingR1", { EX, -1300, 180 } },
 		{ "DG_WingR3", "DG_WingR2", { WX, -1245, 180 } },
-		{ "DG_Legs", "DG_Body", { 0, -1545, 70 } },
+		{ "DG_LegL1", "DG_Body", { -88, -1565, 70 } },
+		{ "DG_LegL2", "DG_LegL1", { -96, -1585, 12 } },
+		{ "DG_LegL3", "DG_LegL2", { -100, -1590, -42 } },
+		{ "DG_LegR1", "DG_Body", { 88, -1565, 70 } },
+		{ "DG_LegR2", "DG_LegR1", { 96, -1585, 12 } },
+		{ "DG_LegR3", "DG_LegR2", { 100, -1590, -42 } },
 		{ "DG_Tail1", "DG_Body", { 0, -1680, 140 } },
 		{ "DG_Tail2", "DG_Tail1", { 0, -1860, 180 } },
 		{ "DG_Tail3", "DG_Tail2", { 0, -2040, 235 } },
@@ -128,8 +134,14 @@ int main(int argc, char** argv)
 		const float rest = 1.0f - wing;
 		if (rest <= 0) continue;
 		// the hind legs: low under the hips
-		const float legs = S(40, -5, p.z) * S(-1450, -1490, p.y) * S(-1680, -1640, p.y);
-		if (legs > 0) w["DG_Legs"] += rest * legs;
+		const float legs = S(85, 45, p.z) * S(-1450, -1490, p.y) * S(-1720, -1690, p.y) * S(25, 50, ax) * S(200, 175, ax);
+		if (legs > 0) {  // hip -> knee -> foot down the leg
+			const std::string sd = left ? "L" : "R";
+			const float k12 = S(30, 0, p.z), k23 = S(-22, -40, p.z);
+			w["DG_Leg" + sd + "1"] += rest * legs * (1 - k12);
+			w["DG_Leg" + sd + "2"] += rest * legs * k12 * (1 - k23);
+			w["DG_Leg" + sd + "3"] += rest * legs * k12 * k23;
+		}
 		const float body = rest * (1 - legs);
 		// the jaw: under the mouth line, forward of the hinge
 		const float mouthZ = 152.0f - (p.y + 1130.0f) * 0.218f;
@@ -235,10 +247,6 @@ int main(int argc, char** argv)
 	tracks.push_back({ "DG_Head", [=](float t, Vector3&, Quaternion& q) {
 		q = Euler(-2.0f * glide(t, 3.1f), 1.0f * std::sin(6.28318f * t / 3.0f), 0);
 	} });
-	tracks.push_back({ "DG_Legs", [=](float t, Vector3&, Quaternion& q) {
-		const float e = flapEnv(t), b = beat(t - 0.5f);
-		q = Euler(6.0f + e * 5.0f * b + 2.0f * glide(t, 0.9f), 0, 0);
-	} });
 	for (int j = 0; j < 4; ++j) {
 		tracks.push_back({ "DG_Tail" + std::to_string(j + 1), [=](float t, Vector3&, Quaternion& q) {
 			const float ph = j * 0.55f;
@@ -247,6 +255,13 @@ int main(int argc, char** argv)
 			const float pitch = e * (2.0f + 1.5f * j) * b + (1.5f + j) * std::sin(6.28318f * t / 6.0f - ph);
 			q = Euler(pitch, 0, yaw);
 		} });
+	}
+	if (getenv("DG_TESTLEGS")) {  // (preview only: the legs in a reaching, clutching swing, to see their weights bend well)
+		for (const char* sd : { "L", "R" }) {
+			tracks.push_back({ std::string("DG_Leg") + sd + "1", [](float t, Vector3&, Quaternion& q) { q = Euler(40.0f * std::sin(6.28318f * t / 3.0f), 0, 0); } });
+			tracks.push_back({ std::string("DG_Leg") + sd + "2", [](float t, Vector3&, Quaternion& q) { q = Euler(-35.0f * std::sin(6.28318f * t / 3.0f + 0.8f), 0, 0); } });
+			tracks.push_back({ std::string("DG_Leg") + sd + "3", [](float t, Vector3&, Quaternion& q) { q = Euler(45.0f * std::sin(6.28318f * t / 3.0f + 1.6f), 0, 0); } });
+		}
 	}
 	// --preview <dir>: the posed mesh at 24 moments of the loop (verts + tris as text, for tools/dragonpreview.py)
 	if (argc > 4 && std::string(argv[3]) == "--preview") {

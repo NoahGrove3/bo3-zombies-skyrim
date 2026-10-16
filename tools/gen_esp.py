@@ -390,7 +390,7 @@ def fill(t, c, n):
     return t.replace('{city}', c['town']).replace('{landmark}', c.get('landmark', '')).replace('{n}', str(n))
 for c in CU['cities']:
     rites = CU['rites'][c['town']]
-    subs = [sub('EDID', z('UN_Rites_' + c['town'])), sub('FULL', z('The Undying Dirge: ' + c['town'])),
+    subs = [sub('EDID', z('UN_Rites_' + c['town'])), sub('FULL', z('The Echo Altar: ' + c['town'])),
             sub('DNAM', struct.pack('<HBBII', 0x0000, 60, 0xFF, 0, 10)), sub('NEXT', b'')]
     for i, r in enumerate(rites):
         subs += [sub('INDX', struct.pack('<HBB', (i + 1) * 10, 0, 0)), sub('QSDT', b'\x00'), sub('CNAM', z(fill(r['title'], c, r['target']) + ': ' + fill(r['text'], c, r['target'])))]

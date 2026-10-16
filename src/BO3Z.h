@@ -407,6 +407,7 @@ namespace bo3z
 		void Tick();
 		bool SelfRevive();         // Quick Revive held: a killing blow is a fall instead
 		void SelfHit();            // your own spell hit you: what it took is given back
+		void DamagePlayer(float a_amount);  // the night's blows on the player (a killing one caught by the tonic / the party's fall)
 		float ManaMult();          // magicka cost (tomes)
 		float RegenMult();  // magicka returns faster (Hawkeye, stacked)
 		float ChargeMult();        // Quicksilver: charge time and cooldown of signature moves (x)

@@ -433,7 +433,7 @@ namespace bo3z
 				const float d = std::hypot(pp.x - h.at.x, pp.y - h.at.y);
 				if (d < h.radius && std::abs(pp.z - h.at.z) < 220.0f && !a_player->IsDead()) {
 					auto* pav = a_player->AsActorValueOwner();
-					pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * h.share * Settings::UndeadDamageMult());
+					Perks::DamagePlayer(pav->GetPermanentActorValue(RE::ActorValue::kHealth) * h.share * Settings::UndeadDamageMult());
 					if (h.stagger) {
 						a_player->SetGraphVariableFloat("staggerMagnitude", 0.6f);
 						a_player->NotifyAnimationGraph("staggerStart");
@@ -596,7 +596,7 @@ namespace bo3z
 				// Terror Shriek: slows and wounds the player nearby.
 				if ((e.shriek -= a_delta) <= 0 && dist < gen::elite::shriekRange) {
 					auto* pav = a_player->AsActorValueOwner();
-					pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::elite::shriekDamage * Settings::UndeadDamageMult());
+					Perks::DamagePlayer(pav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::elite::shriekDamage * Settings::UndeadDamageMult());
 					if (g_slowLeft <= 0) {
 						pav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -gen::elite::shriekSlow);
 					}
@@ -1420,7 +1420,7 @@ namespace bo3z
 						if ((s.windup -= a_delta) < 0) {  // the sweep lands: everything in reach is cut and thrown
 							if (dist < 300.0f && !a_player->IsDead()) {
 								auto* pav = a_player->AsActorValueOwner();
-								pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * (s.enraged ? 0.32f : 0.24f) * Settings::UndeadDamageMult());
+								Perks::DamagePlayer(pav->GetPermanentActorValue(RE::ActorValue::kHealth) * (s.enraged ? 0.32f : 0.24f) * Settings::UndeadDamageMult());
 								a_player->SetGraphVariableFloat("staggerMagnitude", 0.7f);
 								a_player->NotifyAnimationGraph("staggerStart");
 								Hud::Banner("REAPED", 0.8f);
@@ -1777,7 +1777,7 @@ namespace bo3z
 				return;
 			}
 			auto* pav = p->AsActorValueOwner();
-			pav->DamageActorValue(RE::ActorValue::kHealth, pav->GetPermanentActorValue(RE::ActorValue::kHealth) * a_share * Settings::UndeadDamageMult());
+			Perks::DamagePlayer(pav->GetPermanentActorValue(RE::ActorValue::kHealth) * a_share * Settings::UndeadDamageMult());
 			if (a_stagger) {
 				p->SetGraphVariableFloat("staggerMagnitude", 0.35f);
 				p->NotifyAnimationGraph("staggerStart");

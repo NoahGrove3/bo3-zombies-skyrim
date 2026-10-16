@@ -165,7 +165,9 @@ namespace bo3z
 		void Dragon(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			static float lastYaw = 0, turn = 0, wanderT = 0, breathIn = 6.0f, breath = 0, jaw = 0, shotT = 0, lookYaw = 0, lookPitch = 0, roll = 0, pitch = 0;
-			static float lastZ = 0, deployT = -1, baseScale = 0;
+			static float lastZ = 0, deployT = -1, baseScale = 0, legT = 0, regrip = 9, regripIn = 4.0f, breathT_ = 0;
+			static bool  breathing_ = false;
+			static RE::NiPoint3 baseTrans{};
 			static std::mt19937 rng{ std::random_device{}() };
 			RE::NiAVObject* bank[2]{};
 			RE::NiAVObject* look[2]{};
@@ -174,6 +176,7 @@ namespace bo3z
 			RE::NiAVObject* head = nullptr;
 			RE::NiAVObject* space[2]{};
 			RE::NiAVObject* fold[2][2]{};
+			RE::NiAVObject* legN[2][2][3]{};
 			for (int i = 0; i < 2; ++i) {
 				if (auto* root = a_player->Get3D(i == 1)) {
 					bank[i] = root->GetObjectByName("DG_Bank");
@@ -182,6 +185,11 @@ namespace bo3z
 					space[i] = root->GetObjectByName("DG_Space");
 					fold[i][0] = root->GetObjectByName("DG_WingL0");
 					fold[i][1] = root->GetObjectByName("DG_WingR0");
+					for (int sd = 0; sd < 2; ++sd) {
+						for (int j = 0; j < 3; ++j) {
+							legN[i][sd][j] = root->GetObjectByName(fmt::format("DG_Leg{}{}", sd == 0 ? "L" : "R", j + 1).c_str());
+						}
+					}
 					if (bank[i] && !mouth) {
 						mouth = root->GetObjectByName("DG_Mouth");
 						head = root->GetObjectByName("DG_Head");
@@ -193,21 +201,62 @@ namespace bo3z
 				lastYaw = yaw, lastZ = z, turn = 0, breath = 0, jaw = 0, breathIn = 4.0f, deployT = -1;
 				return;
 			}
-			// the glider opens: the dragon swells out of nothing (easing out past its size and settling) and spreads its
-			// wings from folded against its back to full span over two-thirds of a second, every frame
+			// the glider opens: the dragon comes for you - it swoops in from high behind you on one side, banking round in
+			// a curve with its wings beating, its hind legs reaching out ahead of it, and at the last moment its talons
+			// close on your arms and it carries you on into the glide (every frame, eased; 1.4 seconds)
 			if (deployT < 0) {
 				deployT = 0;
-				for (auto* sp : space) if (sp) baseScale = sp->local.scale;
+				for (auto* sp : space) if (sp) baseScale = sp->local.scale, baseTrans = sp->local.translate;
 			}
 			deployT += a_delta;
-			const float dk = std::clamp(deployT / 0.7f, 0.0f, 1.0f);
-			const float grow = 1 + 2.70158f * std::pow(dk - 1, 3.0f) + 1.70158f * std::pow(dk - 1, 2.0f);  // ease out, a little past and back
-			const float spread = 1 - std::pow(1 - std::clamp(deployT / 0.85f, 0.0f, 1.0f), 3.0f);
-			const float folded = 1 - spread;
+			constexpr float kSwoop = 1.4f;
+			const float u = std::clamp(deployT / kSwoop, 0.0f, 1.0f);
+			const float e = u * u * u * (u * (u * 6 - 15) + 10);  // smootherstep
+			const RE::NiPoint3 P0{ 260, -720, 300 }, P1{ 330, -140, -30 }, P2{ 0, 0, 0 };
+			const RE::NiPoint3 at = P0 * ((1 - e) * (1 - e)) + P1 * (2 * (1 - e) * e) + P2 * (e * e);
+			RE::NiPoint3 tan = (P1 - P0) * (2 * (1 - e)) + (P2 - P1) * (2 * e);
+			const float  inSwoop = 1 - std::clamp((u - 0.8f) / 0.2f, 0.0f, 1.0f);
+			const float  swYaw = std::atan2(-tan.x, std::max(1.0f, tan.y)) * inSwoop;
+			const float  swPitch = std::atan2(tan.z, std::sqrt(tan.x * tan.x + tan.y * tan.y)) * inSwoop;
+			const float  swRoll = 0.55f * std::sin(3.14159f * std::min(1.0f, u * 1.15f)) * inSwoop;
 			for (int i = 0; i < 2; ++i) {
-				if (space[i] && baseScale > 0) space[i]->local.scale = baseScale * std::max(0.02f, grow);
-				if (fold[i][0]) fold[i][0]->local.rotate = Rot(0, 1.25f * folded, 0.8f * folded);
-				if (fold[i][1]) fold[i][1]->local.rotate = Rot(0, -1.25f * folded, -0.8f * folded);
+				if (space[i]) {
+					space[i]->local.translate = baseTrans + at;
+					if (baseScale > 0) space[i]->local.scale = baseScale;
+				}
+				if (fold[i][0]) fold[i][0]->local.rotate = Rot(0, 0, 0);
+				if (fold[i][1]) fold[i][1]->local.rotate = Rot(0, 0, 0);
+			}
+			// the legs: reaching out in the swoop, clutching as it takes you; then holding on, flexing their grip, now
+			// and then shifting it (talons opening and closing); drawn up while it breathes fire
+			{
+				legT += a_delta;
+				if ((regripIn -= a_delta) <= 0) {
+					regrip = 0.0f;
+					regripIn = std::uniform_real_distribution<float>(3.5f, 7.0f)(rng);
+				}
+				regrip += a_delta;
+				const float reach = std::clamp((u - 0.35f) / 0.4f, 0.0f, 1.0f) * (1 - std::clamp((u - 0.88f) / 0.12f, 0.0f, 1.0f));
+				const float clutch = std::clamp((u - 0.85f) / 0.15f, 0.0f, 1.0f);
+				const float tuck = breathing_ ? std::min(1.0f, breathT_ * 3.0f) : 0.0f;
+				const float open = regrip < 0.5f ? std::sin(3.14159f * regrip / 0.5f) : 0.0f;  // a re-grip: open and close
+				for (int sd = 0; sd < 2; ++sd) {
+					const float ph = sd * 1.3f;
+					const float idleHip = 0.12f + 0.07f * std::sin(legT * 2.1f + ph), idleKnee = -0.10f + 0.08f * std::sin(legT * 2.1f + 0.7f + ph);
+					const float idleFoot = 0.40f + 0.06f * std::sin(legT * 2.1f + 1.4f + ph) - 0.7f * open;
+					float hip = idleHip * clutch + 0.75f * reach - 0.45f * tuck;
+					float knee = idleKnee * clutch - 0.15f * reach + 0.6f * tuck;
+					float foot = idleFoot * clutch - 0.6f * reach + 0.3f * tuck;
+					if (u < 0.35f) {  // early in the swoop: trailing behind it as it dives
+						const float trail = 1 - u / 0.35f;
+						hip -= 0.5f * trail, knee += 0.3f * trail;
+					}
+					for (int i = 0; i < 2; ++i) {
+						if (legN[i][sd][0]) legN[i][sd][0]->local.rotate = Rot(hip, 0, 0);
+						if (legN[i][sd][1]) legN[i][sd][1]->local.rotate = Rot(knee, 0, 0);
+						if (legN[i][sd][2]) legN[i][sd][2]->local.rotate = Rot(foot, 0, 0);
+					}
+				}
 			}
 			const float dt = std::max(1e-3f, a_delta);
 			float dy = yaw - lastYaw;
@@ -241,10 +290,11 @@ namespace bo3z
 			}
 			const bool breathing = breath > 0;
 			if (breathing) breath -= dt;
+			breathing_ = breathing, breathT_ = breathing ? breathT_ + dt : 0.0f;
 			jaw += ((breathing || breathIn < 0.35f ? 0.38f : 0.03f * (0.5f + 0.5f * std::sin(wanderT * 0.9f))) - jaw) * std::min(1.0f, dt * 8.0f);
 			for (int i = 0; i < 2; ++i) {
 				if (bank[i]) {
-					bank[i]->local.rotate = Rot(pitch, roll, 0);
+					bank[i]->local.rotate = Rot(pitch * (1 - inSwoop) + swPitch, roll * (1 - inSwoop) + swRoll, swYaw);
 				}
 				if (look[i]) {
 					look[i]->local.rotate = Rot(lookPitch, 0, lookYaw);

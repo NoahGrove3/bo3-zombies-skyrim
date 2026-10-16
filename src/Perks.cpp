@@ -111,7 +111,7 @@ namespace bo3z
 			const bool boss = Director::IsBoss(a_zombie);  // his claws come in flurries: each rake takes less
 			// each kind hits as hard as it is (Undead::DamageMult, carried on its attack-damage value)
 			const float kindMult = boss || elite ? 1.0f : std::clamp(a_zombie->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAttackDamageMult) / std::max(0.001f, gen::kZombieWeaponDamageMult), 0.5f, 2.0f);
-			av->DamageActorValue(RE::ActorValue::kHealth, baseHealth * (boss ? gen::boss::meleeShare : elite ? gen::elite::hitShare : gen::kHitDamageFraction * kindMult) * Settings::UndeadDamageMult());
+			DamagePlayer(baseHealth * (boss ? gen::boss::meleeShare : elite ? gen::elite::hitShare : gen::kHitDamageFraction * kindMult) * Settings::UndeadDamageMult());
 			if (elite) {  // Life Drain
 				auto* zav = a_zombie->AsActorValueOwner();
 				zav->RestoreActorValue(RE::ActorValue::kHealth, zav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::elite::drainShare);
@@ -180,6 +180,45 @@ namespace bo3z
 				av->RestoreActorValue(RE::ActorValue::kHealth, g_lastHp - hp);
 			}
 		}
+		void Revive(RE::PlayerCharacter* a_player, bool a_falling)
+		{
+			auto* av = a_player->AsActorValueOwner();
+			const float max = av->GetPermanentActorValue(RE::ActorValue::kHealth);
+			av->RestoreActorValue(RE::ActorValue::kHealth, max);
+			Stand(a_player);
+			g_grace = 3.0f;
+			Director::Pause(2.0f);  // (the dead around you reel back a moment)
+			Save::SetPerkStacks(gen::kPerk_hearthfire, N(gen::kPerk_hearthfire) - 1);  // one revive per draught
+			Hud::Banner("THE HEARTH CALLS YOU BACK", 3.0f);
+			logger::info("perk: hearthfire revive used{}", a_falling ? " (from the ground)" : " (before the blow could land)");
+		}
+		// every wound the night deals the player goes through here: a blow that would kill you is caught - by the
+		// Hearthfire Tonic (you rise whole), in the moments after rising, or (in a party) by falling to your knees
+		void DamagePlayer(float a_amount)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || p->IsDead() || a_amount <= 0) {
+				return;
+			}
+			auto*       av = p->AsActorValueOwner();
+			const float hp = av->GetActorValue(RE::ActorValue::kHealth);
+			if (hp - a_amount > 1.0f) {
+				av->DamageActorValue(RE::ActorValue::kHealth, a_amount);
+				return;
+			}
+			if (g_grace > 0) {
+				return;
+			}
+			if (Has(gen::kPerk_hearthfire)) {
+				Revive(p, false);
+				return;
+			}
+			if (p->GetActorRuntimeData().boolFlags.any(RE::Actor::BOOL_FLAGS::kEssential)) {
+				av->DamageActorValue(RE::ActorValue::kHealth, std::max(0.0f, hp - 1.0f));  // (to the edge: the party's fall takes it from there)
+				return;
+			}
+			av->DamageActorValue(RE::ActorValue::kHealth, a_amount);
+		}
 		void Tick()
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -210,14 +249,9 @@ namespace bo3z
 			}
 			const bool falling = player->AsActorState()->IsBleedingOut();
 			if (max > 0 && (falling || av->GetActorValue(RE::ActorValue::kHealth) < max * 0.1f)) {
-				av->RestoreActorValue(RE::ActorValue::kHealth, max);
-				Stand(player);
-				g_grace = 3.0f;
-				Director::Pause(2.0f);  // (the dead around you reel back a moment)
-				Save::SetPerkStacks(gen::kPerk_hearthfire, N(gen::kPerk_hearthfire) - 1);  // one revive per draught
-				Hud::Banner("THE HEARTH CALLS YOU BACK", 3.0f);
-				logger::info("perk: hearthfire revive used{}", falling ? " (from the ground)" : "");
+				Revive(player, falling);
 			}
+		}
 		}
 	}
 }
