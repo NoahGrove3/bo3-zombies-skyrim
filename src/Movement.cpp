@@ -238,8 +238,8 @@ namespace bo3z
 			const bool sprint = st->IsSprinting();
 			Glider(player, a_delta);
 			if (cc) {  // no fall damage at all: the fall is always measured from where you are now, so every landing is from nowhere
+				// (the fall's time is left alone: Better Jumping allows a jump while it is short - zeroing it gave endless jumps)
 				cc->fallStartHeight = player->GetPositionZ();
-				cc->fallTime = 0.0f;
 			}
 			const bool air = cc && cc->context.currentState != RE::hkpCharacterStateType::kOnGround;
 			g_air = air ? g_air + a_delta : 0;

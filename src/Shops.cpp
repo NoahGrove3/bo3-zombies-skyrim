@@ -813,7 +813,7 @@ namespace bo3z
 			Dress(a_index, found);
 		}
 
-		// ---- world-map markers: one "The Curse of Alduin Station" per town, at the plaza once it is built ----
+		// ---- world-map markers: one "Echo Altar" per town, at the plaza once it is built ----
 		std::array<RE::ObjectRefHandle, gen::kTowns.size()> g_markers{};
 		float g_markerTimer = 0;
 
