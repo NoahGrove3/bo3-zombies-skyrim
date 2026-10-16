@@ -1087,24 +1087,37 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 
-			// Points, bottom-left panel.
+			// Points: small and clean in the very bottom-left corner - a gold septim and the count, on a shadow that
+			// fades out to the right (no frame)
 			{
-				const ImVec2 a{ 40 * k, size.y - 196 * k }, b{ 300 * k, size.y - 132 * k };
-				Panel(dl, a, b, k);
-				Txt(dl, g_body, 15 * k, { a.x + 14 * k, a.y + 7 * k }, Fade(kGold, 0.9f), "SEPTIMS OF THE DEAD");
 				static float shownPts = 0;
 				shownPts += (s.points - shownPts) * std::min(1.0f, dt * 9.0f);
 				if (std::abs(s.points - shownPts) < 1.0f) shownPts = static_cast<float>(s.points);
-				const bool rising = shownPts < s.points - 0.5f;
-				Txt(dl, g_num, 34 * k, { a.x + 14 * k, a.y + 22 * k }, rising ? IM_COL32(255, 228, 150, 255) : kParch, std::to_string(static_cast<int>(std::lround(shownPts))), rising ? 2 * k : 0, IM_COL32(255, 200, 80, 255));
+				const bool        rising = shownPts < s.points - 0.5f;
+				const std::string num = std::to_string(static_cast<int>(std::lround(shownPts)));
+				const float       numW = Measure(g_num, 26 * k, num).x;
+				const ImVec2      coin{ 30 * k, size.y - 30 * k };
+				const float       w = 62 * k + numW;
+				dl->AddRectFilledMultiColor({ 0, size.y - 58 * k }, { w + 70 * k, size.y }, IM_COL32(0, 0, 0, 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 140));
+				// the coin: a rim, a face, a stamped dragon-diamond, a glint
+				const float cr = 11 * k;
+				if (rising) dl->AddCircleFilled(coin, cr * 1.9f, IM_COL32(255, 200, 80, 40), 32);
+				dl->AddCircleFilled(coin, cr, IM_COL32(150, 108, 40, 255), 40);
+				dl->AddCircleFilled({ coin.x - 0.8f * k, coin.y - 0.8f * k }, cr * 0.84f, IM_COL32(222, 178, 86, 255), 40);
+				dl->AddCircle(coin, cr * 0.66f, IM_COL32(150, 108, 40, 200), 40, 1.2f * k);
+				const ImVec2 dm[4] = { { coin.x, coin.y - cr * 0.42f }, { coin.x + cr * 0.32f, coin.y }, { coin.x, coin.y + cr * 0.42f }, { coin.x - cr * 0.32f, coin.y } };
+				dl->AddConvexPolyFilled(dm, 4, IM_COL32(150, 108, 40, 230));
+				dl->AddCircleFilled({ coin.x - cr * 0.45f, coin.y - cr * 0.45f }, 1.6f * k, IM_COL32(255, 248, 220, 220), 8);
+				Txt(dl, g_num, 26 * k, { coin.x + cr + 9 * k, coin.y - 15 * k }, rising ? IM_COL32(255, 228, 150, 255) : kParch, num, rising ? 2 * k : 1.2f * k, rising ? IM_COL32(255, 200, 80, 255) : IM_COL32(0, 0, 0, 220));
+				Txt(dl, g_body, 11 * k, { coin.x + cr + 10 * k, coin.y - 27 * k }, Fade(kGold, 0.7f), "SEPTIMS", 1 * k, IM_COL32(0, 0, 0, 200));
 				if (s.crew >= 0 && s.crew < static_cast<int>(gen::kCrew.size())) {
 					const std::string c(gen::kCrew[s.crew].label);
-					Txt(dl, g_body, 16 * k, { b.x - Measure(g_body, 16 * k, c).x - 14 * k, a.y + 34 * k }, IM_COL32(190, 190, 190, 220), c);
+					Txt(dl, g_body, 13 * k, { coin.x + cr + 22 * k + numW, coin.y - 8 * k }, IM_COL32(190, 190, 190, 200), c);
 				}
 				if (s.gainTime > 0) {
 					const std::string g = (s.lastGain > 0 ? "+" : "") + std::to_string(s.lastGain);
-					const float       rise = (1.0f - s.gainTime) * 26 * k;
-					Txt(dl, g_num, 26 * k, { b.x + 12 * k, a.y + 18 * k - rise }, Fade(s.lastGain < 0 ? IM_COL32(230, 60, 50, 255) : IM_COL32(240, 205, 90, 255), s.gainTime), g);
+					const float       rise = (1.0f - s.gainTime) * 22 * k;
+					Txt(dl, g_num, 20 * k, { coin.x + cr + 9 * k, coin.y - 52 * k - rise }, Fade(s.lastGain < 0 ? IM_COL32(230, 60, 50, 255) : IM_COL32(240, 205, 90, 255), s.gainTime), g, 1.2f * k, IM_COL32(0, 0, 0, 200));
 				}
 			}
 
@@ -1550,14 +1563,37 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				TxtC(dl, g_title, 24 * k, size.x * 0.5f, 104 * k, Fade(kGold, 0.9f), "SANCTUARY OF " + s.sanctuary, 2 * k, IM_COL32(255, 220, 120, 255));
 				TxtC(dl, g_body, 16 * k, size.x * 0.5f, 134 * k, IM_COL32(220, 215, 200, 220), "The Dirge is broken here. The dead cannot rise.");
 			}
-			// Kindling a ward-fire: an ember ring round the crosshair.
-			if (s.wardFrac > 0.001f) {
-				const ImVec2 cc{ size.x * 0.5f, size.y * 0.5f };
-				const float  R = 46 * k;
-				dl->AddCircle(cc, R, IM_COL32(40, 30, 20, 160), 64, 5 * k);
-				dl->PathArcTo(cc, R, -RE::NI_PI / 2, -RE::NI_PI / 2 + 2 * RE::NI_PI * s.wardFrac, 64);
-				dl->PathStroke(IM_COL32(255, 150, 50, 255), 0, 5 * k);
-				TxtC(dl, g_title, 20 * k, cc.x, cc.y + R + 12 * k, IM_COL32(255, 190, 110, 255), "KINDLING THE WARD-FIRE", 2 * k, IM_COL32(255, 100, 20, 255));
+			// Kindling a ward-fire: a glowing gold ring round the crosshair that fills smoothly (the game sends the
+			// progress a few times a second; the ring runs on between, at the kindling's own pace)
+			{
+				static float shown = 0;
+				if (s.wardFrac > 0.001f) {
+					const float pace = dt / std::max(0.5f, gen::kCurseWardSeconds);
+					shown = s.wardFrac > shown ? std::min(s.wardFrac + pace * 3, shown + std::max(pace, (s.wardFrac - shown) * std::min(1.0f, dt * 10))) : s.wardFrac;
+					shown = std::clamp(shown, 0.0f, 1.0f);
+				} else {
+					shown = 0;
+				}
+				if (shown > 0.001f) {
+					const ImVec2 cc{ size.x * 0.5f, size.y * 0.5f };
+					const float  R = 46 * k, a0 = -RE::NI_PI / 2, a1 = a0 + 2 * RE::NI_PI * shown;
+					const int    segs = std::max(8, static_cast<int>(256 * shown));
+					dl->AddCircle(cc, R, IM_COL32(20, 16, 12, 170), 256, 7 * k);       // the dark track
+					dl->AddCircle(cc, R, Fade(kGold, 0.18f), 256, 1.2f * k);           // its faint gold edge
+					for (const auto [w, al] : { std::pair{ 16.0f, 0.06f }, { 11.0f, 0.10f }, { 7.0f, 0.22f } }) {  // the glow
+						dl->PathArcTo(cc, R, a0, a1, segs);
+						dl->PathStroke(Fade(IM_COL32(255, 190, 80, 255), al * (0.85f + 0.15f * std::sin(now * 5))), 0, w * k);
+					}
+					dl->PathArcTo(cc, R, a0, a1, segs);
+					dl->PathStroke(IM_COL32(255, 214, 120, 255), 0, 3.6f * k);             // the gold itself
+					dl->PathArcTo(cc, R, a0, a1, segs);
+					dl->PathStroke(IM_COL32(255, 248, 220, 210), 0, 1.2f * k);             // its bright core
+					const ImVec2 head{ cc.x + std::cos(a1) * R, cc.y + std::sin(a1) * R };  // the spark at its tip
+					dl->AddCircleFilled(head, 9 * k, IM_COL32(255, 200, 90, 50), 24);
+					dl->AddCircleFilled(head, 4.5f * k, IM_COL32(255, 230, 160, 160), 24);
+					dl->AddCircleFilled(head, 2.2f * k, IM_COL32(255, 255, 240, 255), 16);
+					TxtC(dl, g_title, 20 * k, cc.x, cc.y + R + 14 * k, IM_COL32(255, 214, 140, 255), "KINDLING THE WARD-FIRE", 2 * k, IM_COL32(255, 140, 30, 255));
+				}
 			}
 			// Nuke: the dead regroup.
 			if (s.nukeLeft > 0.05f && (s.nukeLeft > 5 || std::fmod(now, 0.5f) >= 0.2f)) {
@@ -1790,65 +1826,143 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const ImVec2 c{ s.rollScreenX * size.x, s.rollScreenY * size.y };
 				const float  R = std::clamp(110.0f * 420.0f / std::max(200.0f, s.rollDist), 26.0f, 110.0f) * k;
 				const int    n = std::max(1, Arcana::Count());
-				if (s.rollPhase == 1) {  // gathering: runes spiral in, the light swells
-					const float g = s.rollT;
-					dl->AddCircleFilled(c, R * (0.4f + 0.9f * g), IM_COL32(150, 90, 255, static_cast<int>(40 + 60 * g)), 40);
-					for (int q = 0; q < 12; ++q) {
-						const float a = now * (2.0f + 6.0f * g) + q * 6.2832f / 12;
-						const float rr = R * (2.2f - 1.5f * g);
-						dl->AddCircleFilled({ c.x + std::cos(a) * rr, c.y + std::sin(a) * rr * 0.45f }, (2.0f + 2.5f * g) * k, IM_COL32(200, 160, 255, static_cast<int>(120 + 135 * g)), 8);
+				const ImU32  violet = IM_COL32(168, 112, 255, 255), pale = IM_COL32(236, 226, 255, 255);
+				// a soft light: many faint discs, so the edge fades smoothly (no rings in the gradient)
+				const auto glow = [&](ImVec2 at, float r, ImU32 col, float a) {
+					for (int q = 0; q < 14; ++q) {
+						const float t = 1.0f - q / 14.0f;
+						dl->AddCircleFilled(at, r * t, Fade(col, a * 0.11f * (1.0f - t * 0.5f)), 64);
 					}
-				} else if (s.rollPhase == 2 && s.rollTarget >= 0) {  // the reel
-					const float pos = Shops::ReelPos(s.rollT);
-					const float frac = pos - std::floor(pos);
+				};
+				// an orbit seen at a slant (an ellipse), brighter on the near side, spun by a_spin
+				const auto orbit = [&](float rx, float ry, float tilt, float spin, ImU32 col, float a, float w) {
+					constexpr int N = 96;
+					ImVec2 prev{};
+					for (int q = 0; q <= N; ++q) {
+						const float t = q * 6.2832f / N + spin;
+						const float x = std::sin(t) * rx, y = std::cos(t) * ry;
+						const ImVec2 pt{ c.x + x * std::cos(tilt) - y * std::sin(tilt), c.y + x * std::sin(tilt) + y * std::cos(tilt) };
+						if (q > 0) {
+							const float near = 0.5f + 0.5f * std::cos(t);
+							dl->AddLine(prev, pt, Fade(col, a * (0.25f + 0.75f * near)), w * (0.6f + 0.6f * near));
+						}
+						prev = pt;
+					}
+				};
+				const auto easeOutBack = [](float x) { const float c1 = 1.70158f, c3 = c1 + 1; return 1 + c3 * std::pow(x - 1, 3.0f) + c1 * std::pow(x - 1, 2.0f); };
+				if (s.rollPhase == 1) {
+					// gathering: the altar draws its light in - three slanted orbits tighten round the orb, motes spiral in
+					// on curving trails, and the glow swells to a flash
+					const float g = s.rollT, ge = g * g * (3 - 2 * g);
+					glow(c, R * (0.8f + 1.4f * ge), violet, 0.35f + 0.65f * ge);
+					for (int o = 0; o < 3; ++o) {
+						const float rr = R * (2.4f - 1.3f * ge) * (1.0f - 0.12f * o);
+						orbit(rr, rr * (0.28f + 0.1f * o), -0.5f + o * 0.5f, now * (1.4f + 3.0f * ge) * (o % 2 ? -1.0f : 1.0f), o == 1 ? kGold : violet, 0.35f + 0.5f * ge, 1.6f * k);
+					}
+					for (int q = 0; q < 28; ++q) {
+						const float seed = q * 0.618f, life = std::fmod(now * (0.7f + 0.9f * ge) + seed, 1.0f);
+						const float a0 = seed * 6.2832f + life * (3.0f + 2.0f * ge);
+						const float rr = R * (2.8f - 2.2f * life);
+						ImVec2 pts[6];
+						for (int t = 0; t < 6; ++t) {  // its trail: where it was a moment ago
+							const float lt = std::max(0.0f, life - t * 0.025f), at = seed * 6.2832f + lt * (3.0f + 2.0f * ge), rt = R * (2.8f - 2.2f * lt);
+							pts[t] = { c.x + std::cos(at) * rt, c.y + std::sin(at) * rt * 0.5f };
+						}
+						const float fa = std::sin(life * 3.1416f) * (0.4f + 0.6f * ge);
+						for (int t = 0; t < 5; ++t) {
+							dl->AddLine(pts[t], pts[t + 1], Fade(pale, fa * (1.0f - t / 5.0f)), (2.4f - t * 0.4f) * k);
+						}
+						dl->AddCircleFilled({ c.x + std::cos(a0) * rr, c.y + std::sin(a0) * rr * 0.5f }, 2.2f * k, Fade(pale, fa), 12);
+					}
+					if (g > 0.85f) {  // the flash that opens the reel
+						const float f = (g - 0.85f) / 0.15f;
+						glow(c, R * (1.2f + 1.5f * f), IM_COL32(255, 250, 240, 255), f);
+					}
+				} else if (s.rollPhase == 2 && s.rollTarget >= 0) {
+					// the reel: a carousel of the spells' emblems turning round the orb on a slanted ring - near ones large
+					// and bright, far ones small and dim behind it, a streak behind each while it races, slowing like a wheel
+					const float pos = Shops::ReelPos(s.rollT), frac = pos - std::floor(pos);
 					const float speed = Shops::kReelPass * 3.0f * (1.0f - s.rollT) * (1.0f - s.rollT) / gen::kShowSpin;  // spells a second
+					constexpr int   kSlots = 12;
+					constexpr float kStep = 6.2832f / kSlots;
+					const float     rx = R * 2.1f, ry = R * 0.62f;
+					glow(c, R * 2.0f, violet, 0.55f);
 					struct Slot { int spell; float a; };
-					std::array<Slot, 9> slots{};
-					for (int j = -4; j <= 4; ++j) {
-						slots[j + 4] = { Shops::ReelSpell(s.rollTarget, pos, j), (j - frac) * 0.52f };
+					std::array<Slot, kSlots> slots{};
+					for (int q = 0; q < kSlots; ++q) {
+						const int jj = q - kSlots / 2;
+						slots[q] = { Shops::ReelSpell(s.rollTarget, pos, jj), (jj - frac) * kStep };
 					}
 					std::sort(slots.begin(), slots.end(), [](const Slot& x, const Slot& y) { return std::cos(x.a) < std::cos(y.a); });  // far first
-					dl->AddCircleFilled(c, R * 1.25f, IM_COL32(120, 70, 220, 45), 40);
+					orbit(rx, ry, 0.0f, 0.0f, kGold, 0.55f, 1.4f * k);  // the track (its far half first)
+					const auto place = [&](float a) { return ImVec2{ c.x + std::sin(a) * rx, c.y + std::cos(a) * ry }; };
 					for (const auto& sl : slots) {
-						if (std::abs(sl.a) > 1.45f) {
-							continue;
+						const float depth = std::cos(sl.a), near = 0.5f + 0.5f * depth;
+						const float sc = R * (0.30f + 0.42f * near * near), al = 0.25f + 0.75f * std::pow(near, 1.4f);
+						const float blur = std::clamp(speed / 14.0f, 0.0f, 1.0f);
+						for (int gq = 4; gq >= 1 && blur > 0.05f; --gq) {  // the streak it leaves
+							DrawEmblem(dl, Arcana::kIdBase + sl.spell, place(sl.a + gq * 0.045f * blur), sc, al * 0.22f * blur * (1.0f - gq / 5.0f), now, 0.0f);
 						}
-						const float depth = std::cos(sl.a);
-						const ImVec2 p{ c.x + std::sin(sl.a) * R * 1.9f, c.y - (1.0f - depth) * R * 0.55f };
-						const float  sc = 0.38f + 0.42f * depth * depth;
-						const float  al = std::pow(depth, 1.6f);
-						if (speed > 6.0f) {  // a blur of the ones racing past
-							for (int gq = 1; gq <= 2; ++gq) {
-								const float a2 = sl.a + gq * 0.06f;
-								DrawEmblem(dl, Arcana::kIdBase + sl.spell, { c.x + std::sin(a2) * R * 1.9f, p.y }, R * sc, al * 0.25f / gq, now, 0.0f);
-							}
+						if (depth > 0.97f) {  // the one at the front: a gold halo under it
+							glow(place(sl.a), sc * 1.5f, kGold, 0.45f);
 						}
-						DrawEmblem(dl, Arcana::kIdBase + sl.spell, p, R * sc, al, now, depth > 0.95f ? 1.0f : 0.0f);
+						DrawEmblem(dl, Arcana::kIdBase + sl.spell, place(sl.a), sc, al, now, depth > 0.97f ? 1.0f : 0.0f);
 					}
+					// the orb's own light over the far half, and the pointer at the front
+					const ImVec2 tip{ c.x, c.y + ry + R * 0.62f };
+					dl->AddTriangleFilled({ tip.x, tip.y + 14 * k }, { tip.x - 9 * k, tip.y + 28 * k }, { tip.x + 9 * k, tip.y + 28 * k }, Fade(kGold, 0.95f));
 					const int front = Shops::ReelSpell(s.rollTarget, pos + 0.5f, 0);
-					const std::string nm = ArmsName(Arcana::kIdBase + front);
-					TxtC(dl, g_title, std::max(16.0f, R / k * 0.28f) * k, c.x, c.y + R * 0.95f, IM_COL32(210, 216, 235, 230), nm, 2 * k, IM_COL32(110, 70, 255, 255));
-				} else if (s.rollPhase == 3 && s.rollGun >= 0) {  // won: a burst of light, then it hangs there
+					static int   lastFront = -1;
+					static float tick = 0;
+					if (front != lastFront) {
+						lastFront = front, tick = 1.0f;
+					}
+					tick = std::max(0.0f, tick - dt * 6.0f);
+					const float ny = tip.y + 34 * k;
+					TxtC(dl, g_title, std::max(17.0f, R / k * 0.27f) * k, c.x, ny, Fade(IM_COL32(236, 228, 255, 255), 0.75f + 0.25f * (1.0f - tick)), ArmsName(Arcana::kIdBase + front), 2 * k, violet);
+				} else if (s.rollPhase == 3 && s.rollGun >= 0) {
+					// won: the emblem leaps up out of the reel, a shockwave and a crown of light rays break from it, sparks
+					// fall away; then it hangs there, breathing, inside a slow ring of runes
 					const float since = s.rollT * gen::kShowOffer;
 					const ImU32 ec = spellCol(s.rollGun, 1.0f);
-					if (since < 1.2f) {
-						const float b = since / 1.2f;
-						dl->AddCircle(c, R * (1.0f + 2.6f * b), Fade(ec, 1.0f - b), 64, (6.0f - 4.0f * b) * k);
-						dl->AddCircle(c, R * (0.8f + 1.8f * b), Fade(IM_COL32(255, 245, 220, 255), (1.0f - b) * 0.8f), 64, 3.0f * k);
-						for (int q = 0; q < 16; ++q) {  // rays
-							const float a = q * 6.2832f / 16 + b * 0.6f;
-							const float r0 = R * (0.9f + 0.6f * b), r1 = R * (1.5f + 2.4f * b);
-							dl->AddLine({ c.x + std::cos(a) * r0, c.y + std::sin(a) * r0 }, { c.x + std::cos(a) * r1, c.y + std::sin(a) * r1 }, Fade(ec, (1.0f - b) * 0.8f), 2.5f * k);
+					const float rise = std::min(1.0f, since / 0.45f), pop = easeOutBack(rise);
+					const ImVec2 at{ c.x, c.y - R * 0.25f * pop };
+					if (since < 1.6f) {
+						const float b = since / 1.6f, eb = 1.0f - std::pow(1.0f - b, 3.0f);
+						for (int w = 0; w < 3; ++w) {  // shockwaves, one after another
+							const float bw = std::clamp(eb * 1.3f - w * 0.15f, 0.0f, 1.0f);
+							if (bw <= 0) continue;
+							dl->AddCircle(at, R * (0.9f + 3.0f * bw), Fade(w == 1 ? IM_COL32(255, 245, 220, 255) : ec, (1.0f - bw) * 0.9f), 128, (5.0f - 3.5f * bw) * k);
+						}
+						for (int q = 0; q < 20; ++q) {  // rays: tapered spokes of light
+							const float a = q * 6.2832f / 20 + 0.15f * std::sin(q * 7.1f), len = R * (1.4f + 2.6f * eb) * (0.7f + 0.3f * std::sin(q * 3.7f));
+							const ImVec2 d{ std::cos(a), std::sin(a) }, nn{ -d.y, d.x };
+							const float w0 = 6.0f * k * (1.0f - eb * 0.6f);
+							const ImVec2 p0{ at.x + d.x * R * 0.7f + nn.x * w0, at.y + d.y * R * 0.7f + nn.y * w0 }, p1{ at.x + d.x * R * 0.7f - nn.x * w0, at.y + d.y * R * 0.7f - nn.y * w0 };
+							dl->AddTriangleFilled(p0, p1, { at.x + d.x * len, at.y + d.y * len }, Fade(ec, (1.0f - eb) * 0.55f));
+						}
+						for (int q = 0; q < 36; ++q) {  // sparks thrown out, falling
+							const float a = q * 2.399f, v = R * (1.5f + 1.5f * std::fmod(q * 0.37f, 1.0f));
+							const ImVec2 sp{ at.x + std::cos(a) * v * eb, at.y + std::sin(a) * v * eb * 0.8f + R * 1.2f * b * b };
+							dl->AddCircleFilled(sp, (2.6f - 1.8f * b) * k, Fade(q % 3 ? ec : IM_COL32(255, 240, 200, 255), 1.0f - b), 10);
 						}
 					}
-					const float pulse = 1.0f + 0.06f * std::sin(now * 5.0f);
-					const float pop = since < 0.35f ? 1.0f + 0.5f * (1.0f - since / 0.35f) : 1.0f;
-					dl->AddCircleFilled(c, R * 1.5f * pulse, Fade(ec, 0.16f), 40);
-					dl->AddCircleFilled(c, R * 1.15f * pulse, IM_COL32(150, 200, 255, 50), 40);
-					DrawEmblem(dl, s.rollGun, c, R * pulse * pop, 1.0f, now);
-					TxtC(dl, g_title, std::max(18.0f, R / k * 0.34f) * k, c.x, c.y + R * 1.3f, IM_COL32(250, 236, 200, 255), ArmsName(s.rollGun), 2 * k, IM_COL32(150, 70, 255, 255));
-					TxtC(dl, g_body, std::max(12.0f, R / k * 0.15f) * k, c.x, c.y + R * 1.3f + std::max(22.0f, R / k * 0.38f) * k, IM_COL32(220, 196, 150, 220),
-						"1 of " + std::to_string(n) + " spells");
+					const float breathe = 1.0f + 0.05f * std::sin(now * 3.0f);
+					glow(at, R * 1.9f * breathe, ec, 0.8f);
+					glow(at, R * 1.1f, IM_COL32(255, 248, 235, 255), 0.35f);
+					orbit(R * 1.35f, R * 0.42f, -0.25f, now * 0.6f, kGold, 0.7f, 1.6f * k);
+					orbit(R * 1.2f, R * 0.36f, 0.3f, -now * 0.45f, ec, 0.55f, 1.3f * k);
+					for (int q = 0; q < 8; ++q) {  // runes riding the outer orbit
+						const float t = now * 0.6f + q * 6.2832f / 8, x = std::sin(t) * R * 1.35f, y = std::cos(t) * R * 0.42f;
+						const ImVec2 rp{ at.x + x * std::cos(-0.25f) - y * std::sin(-0.25f), at.y + x * std::sin(-0.25f) + y * std::cos(-0.25f) };
+						dl->AddCircleFilled(rp, (1.6f + 1.4f * (0.5f + 0.5f * std::cos(t))) * k, Fade(kGold, 0.5f + 0.5f * std::cos(t)), 10);
+					}
+					DrawEmblem(dl, s.rollGun, at, R * breathe * (0.6f + 0.4f * pop), 1.0f, now);
+					const float ty = at.y + R * 1.45f;
+					TxtC(dl, g_title, std::max(19.0f, R / k * 0.34f) * k, c.x, ty, IM_COL32(250, 238, 205, 255), ArmsName(s.rollGun), 2.5f * k, ec);
+					const float th = std::max(22.0f, R / k * 0.38f) * k;
+					Divider(dl, c.x, ty + th + 6 * k, std::max(60.0f * k, R * 0.9f), k);
+					TxtC(dl, g_body, std::max(12.0f, R / k * 0.15f) * k, c.x, ty + th + 14 * k, IM_COL32(220, 196, 150, 220), "1 of " + std::to_string(n) + " spells");
 				}
 			}
 			if (s.perkMenu) {
@@ -3647,6 +3761,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// (Skyrim's own menus stay clean: the field of view lives in Mod Configuration, the party in the main menu)
 			} else if (InGame() && !DevTools::HudOff()) {
 				Draw(s, io.DisplaySize);
+				// looking at the Echo Altar: Skyrim's own "Commune" prompt gives way to ours (s.orbAim), back for everything else
+				if (static int lastAim = -1; lastAim != (s.orbAim ? 1 : 0)) {
+					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
+						lastAim = s.orbAim ? 1 : 0;
+						const RE::GFxValue a(s.orbAim ? 0.0 : 100.0);
+						for (const char* v : { "_root.HUDMovieBaseInstance.RolloverText._alpha", "_root.HUDMovieBaseInstance.RolloverInfoText._alpha",
+							     "_root.HUDMovieBaseInstance.RolloverButton_tf._alpha", "_root.HUDMovieBaseInstance.RolloverInfoInstance._alpha",
+							     "_root.HUDMovieBaseInstance.RolloverGrayBar_mc._alpha", "_root.HUDMovieBaseInstance.RolloverNameInstance._alpha" }) {
+							hud->uiMovie->SetVariable(v, a);
+						}
+					}
+				}
 				// Skyrim's enemy bar under the compass gives way to ours over each foe
 				if (static int vb = 0; vb++ % 15 == 0) {
 					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {

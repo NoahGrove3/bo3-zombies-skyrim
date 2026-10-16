@@ -73,7 +73,7 @@
       "spawnDelayDecay": 0.95,
       "spawnDelayMin": 0.15,
       "specialEveryRounds": 6,
-      "specialFirstRound": 5,
+      "specialFirstRound": 10,
       "dawn": "crumble",
       "unfinishedRound": "resume",
       "pauseUntilQuest": "quest:MQ101",

@@ -18,7 +18,7 @@ namespace bo3z::gen
 		std::array<float, 2> spawnRingExterior, spawnRingInterior; float spawnHeightOffset; int maxCorpses; };
 	inline constexpr Rounds kRounds{ 20.0f, 5.6f, 15.0f, 15.0f, 64, 24, 6,
 		{ 0.25f, 0.3f, 0.5f, 0.7f, 0.9f }, 150, 100, 9, 1.1f, 8.0f,
-		1.0f, 0.95f, 0.15f, 6, 5,
+		1.0f, 0.95f, 0.15f, 6, 10,
 		{ 3400.f, 4600.f }, { 1400.f, 2100.f }, 120.f, 30 };
 	inline constexpr FormRef kIntroQuest{ "Skyrim.esm", 0x03372B, "MQ101" };
 	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; bool rig; };

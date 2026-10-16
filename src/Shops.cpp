@@ -1695,6 +1695,19 @@ namespace bo3z
 				}
 				h.orbFade = seen * std::clamp((4500.0f - orbDist) / 1500.0f, 0.0f, 1.0f);
 				h.orbAim = static_cast<bool>(g_orbAim);
+				// (the shrine's floor under the crosshair counts too: ours is the only prompt there)
+				if (!h.orbAim && !g_menu) {
+					if (auto* pick = RE::CrosshairPickData::GetSingleton()) {
+						if (auto ref = pick->GetActiveTarget().get()) {
+							for (std::size_t t = 0; t < gen::kTowns.size(); ++t) {
+								if (Placed(static_cast<int>(t), 0) == ref.get()) {
+									h.orbAim = true;
+									break;
+								}
+							}
+						}
+					}
+				}
 			}
 			TickShow(a_delta);
 			if (auto* pl = RE::PlayerCharacter::GetSingleton()) {

@@ -1189,9 +1189,9 @@ namespace bo3z
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().countdown = 0;
 			}
-			// Event nights: a one-in-four chance (never on a hound night).
+			// Event nights: a one-in-four chance from night 10 on (never on a hound night).
 			g_event = -1;
-			if (!g_special && std::uniform_real_distribution<float>(0, 1)(g_rng) < gen::kEventChance) {
+			if (!g_special && a_round >= 10 && std::uniform_real_distribution<float>(0, 1)(g_rng) < gen::kEventChance) {
 				g_event = std::uniform_int_distribution<int>(0, static_cast<int>(gen::kEvents.size()) - 1)(g_rng);
 			}
 			if (Coop::Client()) {

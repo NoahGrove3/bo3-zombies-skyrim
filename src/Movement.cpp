@@ -153,17 +153,29 @@ namespace bo3z
 		{
 			static float      every = 0;
 			static RE::TESBoundObject* item = nullptr;
-			static bool       looked = false;
+			static int        tries = 0;
 			if ((every -= a_delta) > 0) {
 				return;
 			}
 			every = 3.0f;
-			if (!looked) {
-				looked = true;
+			if (!item && tries < 40) {  // (looked for again until found: the first look can come before the plugins are in)
+				++tries;
 				if (auto* dh = RE::TESDataHandler::GetSingleton()) {
+					const auto* mod = dh->LookupModByName("Paragliding.esp");
 					item = dh->LookupForm<RE::TESBoundObject>(0x802, "Paragliding.esp");
+					if (!item && mod) {  // by its name among the misc items of that plugin
+						for (auto* m : dh->GetFormArray<RE::TESObjectMISC>()) {
+							if (m && m->GetFile(0) == mod && m->GetName() && std::string_view(m->GetName()).find("aragl") != std::string_view::npos) {
+								item = m;
+								break;
+							}
+						}
+					}
+					if (item || tries == 1 || tries == 40) {
+						logger::info("glider: Paragliding.esp {} (loaded {}, index {:X}), the glider {:08X}", item ? "found" : "not found", mod != nullptr,
+							mod ? (mod->IsLight() ? 0xFE : mod->GetCompileIndex()) : 0xFF, item ? item->GetFormID() : 0);
+					}
 				}
-				logger::info("glider: Paragliding.esp {}", item ? "found" : "not installed");
 			}
 			if (!item || !a_player->Is3DLoaded()) {
 				return;

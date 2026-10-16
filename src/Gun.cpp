@@ -2425,7 +2425,9 @@ namespace bo3z
 				// the field of view is the player's own (Settings: first person and third person each), narrowing while aiming
 				const float base = cam->IsInFirstPerson() ? Settings::FovFirst() : Settings::FovThird();
 				rd.worldFOV = base + (gen::kAdsFov - base) * g_ads + g_fovKick;
-				rd.firstPersonFOV = gen::kViewmodelFov + (gen::kAdsViewmodelFov - gen::kViewmodelFov) * g_ads;
+				// the hands follow the same slider: a wider view draws them smaller and further off, a narrower one closer
+				const float vm = std::clamp(gen::kViewmodelFov + (Settings::FovFirst() - 100.0f) * 0.6f, 55.0f, 110.0f);
+				rd.firstPersonFOV = vm + (gen::kAdsViewmodelFov - vm) * g_ads;
 			}
 			AimViewmodel(RE::PlayerCharacter::GetSingleton(), 0.0f);  // staffs and bows stay in Skyrim's own pose; aiming is the zoom
 			// (staffs never spin: the twirl was a wand thing)
