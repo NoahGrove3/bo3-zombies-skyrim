@@ -1167,7 +1167,7 @@ namespace bo3z
 					auto* pick = RE::CrosshairPickData::GetSingleton();
 					if (!pick || !pick->target.get()) {
 						if (player->GetCharController()) {
-							player->SetPosition(player->GetPosition() + RE::NiPoint3{ 0, 0, 45.0f });  // off the ground (then carried up, below)
+							player->SetPosition(player->GetPosition() + RE::NiPoint3{ 0, 0, 45.0f }, true);  // off the ground (then carried up, below)
 							g_liftOff = 1, g_takeT = 0;
 							Forms::PlayAt(gen::Sound::shout_gale, player);
 							logger::info("glider: take-off");
