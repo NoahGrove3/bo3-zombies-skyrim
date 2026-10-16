@@ -1904,17 +1904,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					std::sort(slots.begin(), slots.end(), [](const Slot& x, const Slot& y) { return std::cos(x.a) < std::cos(y.a); });  // far first
 					orbit(rx, ry, 0.0f, 0.0f, kGold, 0.55f, 1.4f * k);  // the track (its far half first)
 					const auto place = [&](float a) { return ImVec2{ c.x + std::sin(a) * rx, c.y + std::cos(a) * ry }; };
+					// (the spells themselves turn in the shrine's crown, as 3D - src/Shops.cpp SpellShow; here only the light
+					// round them, and lit motes riding the ring where each one stands)
 					for (const auto& sl : slots) {
 						const float depth = std::cos(sl.a), nearF = 0.5f + 0.5f * depth;
-						const float sc = R * (0.30f + 0.42f * nearF * nearF), al = 0.25f + 0.75f * std::pow(nearF, 1.4f);
-						const float blur = std::clamp(speed / 14.0f, 0.0f, 1.0f);
-						for (int gq = 4; gq >= 1 && blur > 0.05f; --gq) {  // the streak it leaves
-							DrawEmblem(dl, Arcana::kIdBase + sl.spell, place(sl.a + gq * 0.045f * blur), sc, al * 0.22f * blur * (1.0f - gq / 5.0f), now, 0.0f);
-						}
-						if (depth > 0.97f) {  // the one at the front: a gold halo under it
-							glow(place(sl.a), sc * 1.5f, kGold, 0.45f);
-						}
-						DrawEmblem(dl, Arcana::kIdBase + sl.spell, place(sl.a), sc, al, now, depth > 0.97f ? 1.0f : 0.0f);
+						dl->AddCircleFilled(place(sl.a), (1.5f + 2.5f * nearF) * k, Fade(depth > 0.97f ? kGold : IM_COL32(220, 210, 255, 255), 0.3f + 0.6f * nearF), 12);
 					}
 					// the orb's own light over the far half, and the pointer at the front
 					const ImVec2 tip{ c.x, c.y + ry + R * 0.62f };
@@ -1965,7 +1959,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const ImVec2 rp{ at.x + x * std::cos(-0.25f) - y * std::sin(-0.25f), at.y + x * std::sin(-0.25f) + y * std::cos(-0.25f) };
 						dl->AddCircleFilled(rp, (1.6f + 1.4f * (0.5f + 0.5f * std::cos(t))) * k, Fade(kGold, 0.5f + 0.5f * std::cos(t)), 10);
 					}
-					DrawEmblem(dl, s.rollGun, at, R * breathe * (0.6f + 0.4f * pop), 1.0f, now);
+					(void)pop;  // (the spell itself hangs in the crown, in 3D)
 					const float ty = at.y + R * 1.45f;
 					TxtC(dl, g_title, std::max(19.0f, R / k * 0.34f) * k, c.x, ty, IM_COL32(250, 238, 205, 255), ArmsName(s.rollGun), 2.5f * k, ec);
 					const float th = std::max(22.0f, R / k * 0.38f) * k;

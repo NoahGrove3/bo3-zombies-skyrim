@@ -9,7 +9,7 @@ namespace bo3z::gen
 	struct FormRef { std::string_view plugin; std::uint32_t localId; std::string_view editorId; };
 	inline constexpr float kChaseRelocateDist = 4000.0f, kChaseRelocateSeconds = 3.0f, kChaseStallSeconds = 2.5f;
 	inline constexpr float kCycleMinutes = 25.0f;  // a full Skyrim day; night is nightStart..nightEnd (20:00-05:36 = 40%)
-	inline constexpr float kManaRegenPerSecond = 0.4f, kManaRegenDelay = 5.0f;
+	inline constexpr float kManaRegenPerSecond = 0.4f, kManaRegenDelay = 3.0f;
 	inline constexpr bool kZombieMeleeWeapons = true;  // keep swords/axes/maces; strip bows, staves, spells
 	struct Rounds {
 		float nightStartHour, nightEndHour, breakSeconds, firstBreakSeconds; int maxAlive, aiMaxBase, aiPerPlayer;
@@ -1096,7 +1096,7 @@ namespace bo3z::gen
 	inline constexpr std::string_view kText_station_marker = "Echo Altar";
 	struct ObjectDef { std::string_view id, label; int kind, cost, ref; std::uint32_t actiId; float scale; bool retired; };
 	inline constexpr std::array<ObjectDef, 20> kObjects{ {
-		ObjectDef{ "coffer", "Echo Altar", 0, 950, -1, 0x807, 1.0f, false },
+		ObjectDef{ "coffer", "Echo Altar", 0, 475, -1, 0x807, 1.0f, false },
 		ObjectDef{ "brew_machine", "Brew Machine", 4, 0, -1, 0x8A8, 1.0f, true },
 		ObjectDef{ "ammo_cache", "Ammo Cache", 3, 750, -1, 0x8A9, 1.0f, true },
 		ObjectDef{ "forge", "Atronach Reforge", 5, 4000, -1, 0x8C7, 1.0f, true },

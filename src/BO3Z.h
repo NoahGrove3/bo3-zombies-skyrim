@@ -406,6 +406,7 @@ namespace bo3z
 		void OnCast(int a_shots);  // Stormcrown
 		void Tick();
 		bool SelfRevive();         // Quick Revive held: a killing blow is a fall instead
+		void SelfHit();            // your own spell hit you: what it took is given back
 		float ManaMult();          // magicka cost (tomes)
 		float RegenMult();  // magicka returns faster (Hawkeye, stacked)
 		float ChargeMult();        // Quicksilver: charge time and cooldown of signature moves (x)

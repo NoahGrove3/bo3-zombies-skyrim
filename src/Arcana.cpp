@@ -52,6 +52,10 @@ namespace bo3z::Arcana
 		for (std::size_t i = 0; i < coffer::kSpells.size(); ++i) {
 			const auto& s = coffer::kSpells[i];
 			auto*       sp = dh->LookupForm<RE::SpellItem>(s.id, s.plugin);
+			if (sp && sp->GetSpellType() != RE::MagicSystem::SpellType::kSpell) {
+				logger::info("arcana: {} is not a spell you cast (an ability or power) - left out", s.name);
+				sp = nullptr;  // (an ability can't be cast: it would sit in the Magic menu doing nothing)
+			}
 			g_spell[i] = sp;
 			if (!sp) {
 				++missing[s.plugin];

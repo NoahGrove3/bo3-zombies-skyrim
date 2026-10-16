@@ -302,6 +302,9 @@ namespace bo3z
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESHitEvent* a_event, RE::BSTEventSource<RE::TESHitEvent>*) override
 			{
 				auto* player = RE::PlayerCharacter::GetSingleton();
+				if (a_event && player && a_event->cause.get() == player && a_event->target.get() == player) {
+					Perks::SelfHit();  // (your own spells never hurt you)
+				}
 				// Skyrim weapons and spells keep up with the rounds: each hit takes a share of a zombie's round health.
 				if (a_event && a_event->cause.get() == player && a_event->target) {
 					auto* z = a_event->target->As<RE::Actor>();

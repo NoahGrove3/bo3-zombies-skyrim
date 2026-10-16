@@ -151,9 +151,41 @@ namespace bo3z
 			a_player->NotifyAnimationGraph("bleedOutStop");
 			a_player->NotifyAnimationGraph("IdleForceDefaultState");
 		}
+		// your own spells never hurt you: a harmful effect you cast that lands on yourself is lifted at once, and a hit
+		// from your own blast gives back what it took (src/Events.cpp HitWatch calls SelfHit)
+		float g_lastHp = -1;
+		void GuardSelf(RE::PlayerCharacter* a_player)
+		{
+			if (auto* list = a_player->AsMagicTarget()->GetActiveEffectList()) {
+				for (auto* ae : *list) {
+					if (!ae || ae->flags.any(RE::ActiveEffect::Flag::kDispelled)) {
+						continue;
+					}
+					const auto* base = ae->GetBaseObject();
+					if (base && base->IsHostile() && ae->caster.get().get() == a_player) {
+						ae->Dispel(true);
+					}
+				}
+			}
+			g_lastHp = a_player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth);
+		}
+		void SelfHit()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || p->IsDead() || g_lastHp < 0) {
+				return;
+			}
+			auto* av = p->AsActorValueOwner();
+			if (const float hp = av->GetActorValue(RE::ActorValue::kHealth); hp < g_lastHp) {
+				av->RestoreActorValue(RE::ActorValue::kHealth, g_lastHp - hp);
+			}
+		}
 		void Tick()
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (player && !player->IsDead()) {
+				GuardSelf(player);
+			}
 			const auto now = std::chrono::steady_clock::now();
 			const float dt = g_last.time_since_epoch().count() ? std::min(0.25f, std::chrono::duration<float>(now - g_last).count()) : 0.0f;
 			g_last = now;

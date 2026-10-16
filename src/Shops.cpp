@@ -108,7 +108,22 @@ namespace bo3z
 			}
 		}
 
-		void ShowModel(RE::TESBoundObject* a_base, float a_rise)
+		// what the shrine shows of a spell: the spell itself, as Skyrim's Magic menu shows it (its first effect's
+		// display object - a fireball, a storm, a rune), else its element's emblem
+		RE::TESBoundObject* SpellShow(int a_index, bool* a_own = nullptr)
+		{
+			if (auto* sp = Arcana::Spell(a_index)) {
+				for (auto* e : sp->effects) {
+					if (e && e->baseEffect && e->baseEffect->menuDispObject) {
+						if (a_own) *a_own = false;
+						return e->baseEffect->menuDispObject;
+					}
+				}
+			}
+			if (a_own) *a_own = true;
+			return Forms::Ours(gen::kShowElement[Arcana::ElementOf(a_index)]);
+		}
+		void ShowModel(RE::TESBoundObject* a_base, float a_rise, float a_scale = -1.0f)
 		{
 			auto chest = g_show.chest.get();
 			Remove(g_show.display);
@@ -121,7 +136,7 @@ namespace bo3z
 			}
 			ref->SetPosition(Local(chest.get(), 0, 0, kOrbZ * chest->GetScale() + a_rise));
 			ref->SetAngle({ 0, 0, chest->GetAngleZ() + RE::NI_PI / 2 });
-			ref->SetScale(kOrbScale);
+			ref->SetScale(a_scale > 0 ? a_scale : kOrbScale);
 			g_show.display = ref->CreateRefHandle();
 		}
 
@@ -182,7 +197,9 @@ namespace bo3z
 					if (front != g_show.shown && g_show.step <= 0) {
 						g_show.shown = front;
 						g_show.step = 0.045f;
-						ShowModel(Forms::Ours(gen::kShowElement[Arcana::ElementOf(g_show.shown)]), gen::kShowRise * k);
+						bool own = true;
+						auto* m = SpellShow(g_show.shown, &own);
+						ShowModel(m, gen::kShowRise * k, own ? -1.0f : 1.6f);
 						Forms::PlayAt(gen::Sound::coffer_spin, chest.get());
 					} else if (auto d = g_show.display.get()) {
 						d->SetPosition(Local(chest.get(), 0, 0, kOrbZ * chest->GetScale() + gen::kShowRise * k));
@@ -190,7 +207,9 @@ namespace bo3z
 					if (g_show.t >= gen::kShowSpin) {
 						g_show.t = 0;
 						g_show.shown = g_show.gun;
-						ShowModel(Forms::Ours(gen::kShowElement[Arcana::ElementOf(g_show.gun)]), gen::kShowRise);
+						bool own = true;
+						auto* m = SpellShow(g_show.gun, &own);
+						ShowModel(m, gen::kShowRise, own ? -1.0f : 1.8f);
 						Forms::PlayAt(gen::Sound::coffer_land, chest.get());
 						Hud::Banner(std::string(Arcana::Name(g_show.gun)) + "  -  Activate the shrine to take it", 4.0f);
 						g_show.phase = Show::Offering;
