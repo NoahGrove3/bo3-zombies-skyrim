@@ -3731,7 +3731,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				g_veil = mainMenu ? 0.0f : want ? std::min(1.0f, g_veil + dt * 4.0f) : std::max(0.0f, g_veil - dt / 1.2f);
 			}
-			if (((!InGame() && !mainMenu && !journal && !escJournal) || (DevTools::HudOff() && !mainMenu)) && !g_filmOn && g_veil <= 0) {
+			// (a menu with a pointer - the world map, the inventory - still draws: our cursor is the only one there)
+			if (((!InGame() && !mainMenu && !journal && !escJournal && !cursorUp) || (DevTools::HudOff() && !mainMenu)) && !g_filmOn && g_veil <= 0) {
 				if (static int m = 0; m++ % 1200 == 0) {
 					auto* ui = RE::UI::GetSingleton();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
