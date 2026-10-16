@@ -20,7 +20,7 @@
       "label": "Echo Altar",
       "activateText": "Commune",
       "model": "CurseOfAlduin\\shrine\\shrine.nif",
-      "cost": 475,
+      "cost": 950,
       "refs": "none",
       "verify": [
         "model"

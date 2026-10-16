@@ -1960,11 +1960,28 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						dl->AddCircleFilled(rp, (1.6f + 1.4f * (0.5f + 0.5f * std::cos(t))) * k, Fade(kGold, 0.5f + 0.5f * std::cos(t)), 10);
 					}
 					(void)pop;  // (the spell itself hangs in the crown, in 3D)
+					// a legendary spell (the strongest tier): a crown of gold fire over it and its rank in burning gold
+					const bool legend = s.rollGun >= Arcana::kIdBase && Arcana::TierOf(s.rollGun - Arcana::kIdBase) >= 3;
+					if (legend) {
+						const float lp = 0.75f + 0.25f * std::sin(now * 4.0f);
+						glow(at, R * 2.6f * lp, IM_COL32(255, 196, 70, 255), 0.55f);
+						for (int q = 0; q < 24; ++q) {  // gold rays turning slowly
+							const float a = q * 6.2832f / 24 + now * 0.3f, len = R * (2.0f + 0.5f * std::sin(q * 2.3f + now * 3.0f));
+							const ImVec2 d{ std::cos(a), std::sin(a) }, nn{ -d.y, d.x };
+							const float w0 = 3.5f * k;
+							dl->AddTriangleFilled({ at.x + d.x * R * 0.9f + nn.x * w0, at.y + d.y * R * 0.9f + nn.y * w0 }, { at.x + d.x * R * 0.9f - nn.x * w0, at.y + d.y * R * 0.9f - nn.y * w0 },
+								{ at.x + d.x * len, at.y + d.y * len }, Fade(IM_COL32(255, 210, 110, 255), 0.35f * lp));
+						}
+						const float ly = at.y - R * 1.55f;
+						const auto  lw = Measure(g_title, 26 * k, "LEGENDARY");
+						FlameBorder(dl, { c.x - lw.x * 0.5f - 18 * k, ly - 4 * k }, { c.x + lw.x * 0.5f + 18 * k, ly + lw.y + 4 * k }, 4, now, 1.0f, k);
+						TxtC(dl, g_title, 26 * k, c.x, ly, IM_COL32(255, 222, 130, 255), "LEGENDARY", 3 * k * lp, IM_COL32(255, 150, 30, 255));
+					}
 					const float ty = at.y + R * 1.45f;
 					TxtC(dl, g_title, std::max(19.0f, R / k * 0.34f) * k, c.x, ty, IM_COL32(250, 238, 205, 255), ArmsName(s.rollGun), 2.5f * k, ec);
 					const float th = std::max(22.0f, R / k * 0.38f) * k;
 					Divider(dl, c.x, ty + th + 6 * k, std::max(60.0f * k, R * 0.9f), k);
-					TxtC(dl, g_body, std::max(12.0f, R / k * 0.15f) * k, c.x, ty + th + 14 * k, IM_COL32(220, 196, 150, 220), "1 of " + std::to_string(n) + " spells");
+					TxtC(dl, g_body, std::max(12.0f, R / k * 0.15f) * k, c.x, ty + th + 14 * k, IM_COL32(220, 196, 150, 220), legend ? "a legendary spell  -  the strongest the altar keeps" : "1 of " + std::to_string(n) + " spells");
 				}
 			}
 			if (s.perkMenu) {

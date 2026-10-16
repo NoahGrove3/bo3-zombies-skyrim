@@ -149,6 +149,109 @@ namespace bo3z
 		// Skyrim's Paraglider: everyone carries the glider (Paragliding.esp's "Paraglider", local 0x802) - its own way
 		// of getting one is a little quest; here it is in your pack. Its script sets the behavior flag the glide needs
 		// when it enters your inventory; the flag is also kept set here (a load or a new body can drop it).
+		// The dragon glider, alive (its model: tools/modelconv/dragonglider.cpp - wingbeats, breathing, the tail's wave are
+		// its own loop): while you glide, the game leans it into your turns, turns its head toward where you look (and
+		// lets it look about on its own), and every so often it opens its jaws and breathes a stream of dragonfire ahead
+		// - only for show: the fire carries no spell and harms nothing.
+		RE::NiMatrix3 Rot(float a_pitch, float a_roll, float a_yaw)  // radians: about X (nose up), Y (roll), Z (turn)
+		{
+			const float cx = std::cos(a_pitch), sx = std::sin(a_pitch), cy = std::cos(a_roll), sy = std::sin(a_roll), cz = std::cos(a_yaw), sz = std::sin(a_yaw);
+			RE::NiMatrix3 x, y, z;
+			x.entry[0][0] = 1, x.entry[0][1] = 0, x.entry[0][2] = 0, x.entry[1][0] = 0, x.entry[1][1] = cx, x.entry[1][2] = -sx, x.entry[2][0] = 0, x.entry[2][1] = sx, x.entry[2][2] = cx;
+			y.entry[0][0] = cy, y.entry[0][1] = 0, y.entry[0][2] = sy, y.entry[1][0] = 0, y.entry[1][1] = 1, y.entry[1][2] = 0, y.entry[2][0] = -sy, y.entry[2][1] = 0, y.entry[2][2] = cy;
+			z.entry[0][0] = cz, z.entry[0][1] = -sz, z.entry[0][2] = 0, z.entry[1][0] = sz, z.entry[1][1] = cz, z.entry[1][2] = 0, z.entry[2][0] = 0, z.entry[2][1] = 0, z.entry[2][2] = 1;
+			return z * y * x;
+		}
+		void Dragon(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			static float lastYaw = 0, turn = 0, wanderT = 0, breathIn = 6.0f, breath = 0, jaw = 0, shotT = 0, lookYaw = 0, lookPitch = 0, roll = 0, pitch = 0;
+			static float lastZ = 0;
+			static std::mt19937 rng{ std::random_device{}() };
+			RE::NiAVObject* bank[2]{};
+			RE::NiAVObject* look[2]{};
+			RE::NiAVObject* jawN[2]{};
+			RE::NiAVObject* mouth = nullptr;
+			RE::NiAVObject* head = nullptr;
+			for (int i = 0; i < 2; ++i) {
+				if (auto* root = a_player->Get3D(i == 1)) {
+					bank[i] = root->GetObjectByName("DG_Bank");
+					look[i] = root->GetObjectByName("DG_Look");
+					jawN[i] = root->GetObjectByName("DG_Jaw");
+					if (bank[i] && !mouth) {
+						mouth = root->GetObjectByName("DG_Mouth");
+						head = root->GetObjectByName("DG_Head");
+					}
+				}
+			}
+			const float yaw = a_player->GetAngleZ(), z = a_player->GetPositionZ();
+			if (!bank[0] && !bank[1]) {  // not gliding
+				lastYaw = yaw, lastZ = z, turn = 0, breath = 0, jaw = 0, breathIn = 4.0f;
+				return;
+			}
+			const float dt = std::max(1e-3f, a_delta);
+			float dy = yaw - lastYaw;
+			while (dy > 3.14159f) dy -= 6.28318f;
+			while (dy < -3.14159f) dy += 6.28318f;
+			lastYaw = yaw;
+			turn += (std::clamp(dy / dt, -2.5f, 2.5f) - turn) * std::min(1.0f, dt * 4.0f);   // rad/s, smoothed
+			const float fall = (z - lastZ) / dt;
+			lastZ = z;
+			// lean into the turn, nose down a little as you sink
+			roll += (std::clamp(turn * 0.35f, -0.45f, 0.45f) - roll) * std::min(1.0f, dt * 3.0f);
+			pitch += (std::clamp(fall * 0.0006f, -0.18f, 0.08f) - pitch) * std::min(1.0f, dt * 2.0f);
+			// the head: toward where you look (the camera), into the turn, and wandering on its own
+			wanderT += dt;
+			float camYaw = yaw;
+			if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
+				const auto& m = cam->cameraRoot->world.rotate;
+				camYaw = std::atan2(m.entry[0][1], m.entry[1][1]);
+			}
+			float rel = camYaw - yaw;
+			while (rel > 3.14159f) rel -= 6.28318f;
+			while (rel < -3.14159f) rel += 6.28318f;
+			const float wanderYaw = 0.22f * std::sin(wanderT * 0.53f) + 0.12f * std::sin(wanderT * 1.31f + 1.7f);
+			const float wanderPitch = 0.10f * std::sin(wanderT * 0.71f + 0.4f) - (breath > 0 ? 0.18f : 0.0f);
+			lookYaw += (std::clamp(-rel * 0.6f + turn * 0.25f + wanderYaw, -0.7f, 0.7f) - lookYaw) * std::min(1.0f, dt * 2.5f);
+			lookPitch += (wanderPitch - lookPitch) * std::min(1.0f, dt * 2.5f);
+			// fire: now and then, a breath of a second and a half
+			if (breath <= 0 && (breathIn -= dt) <= 0) {
+				breath = 1.6f;
+				breathIn = std::uniform_real_distribution<float>(6.0f, 11.0f)(rng);
+			}
+			const bool breathing = breath > 0;
+			if (breathing) breath -= dt;
+			jaw += ((breathing || breathIn < 0.35f ? 0.38f : 0.03f * (0.5f + 0.5f * std::sin(wanderT * 0.9f))) - jaw) * std::min(1.0f, dt * 8.0f);
+			for (int i = 0; i < 2; ++i) {
+				if (bank[i]) {
+					bank[i]->local.rotate = Rot(pitch, roll, 0);
+				}
+				if (look[i]) {
+					look[i]->local.rotate = Rot(lookPitch, 0, lookYaw);
+				}
+				if (jawN[i]) {
+					jawN[i]->local.rotate = Rot(-jaw, 0, 0);
+				}
+			}
+			if (breathing && breath < 1.45f && mouth && head && (shotT -= dt) <= 0) {
+				shotT = 0.05f;
+				static RE::BGSProjectile* fire = RE::TESForm::LookupByID<RE::BGSProjectile>(0x000EBB75);  // the dragons' own breath
+				if (fire) {
+					const auto&        hm = head->world.rotate;
+					RE::NiPoint3       d{ hm.entry[0][1], hm.entry[1][1], hm.entry[2][1] - 0.25f };  // its head's forward, a little down
+					const RE::NiPoint3 from = mouth->world.translate + d * 10.0f;
+					const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
+					RE::Projectile::ProjectileRot r{ -std::atan2(d.z, std::max(1e-3f, flat)), std::atan2(d.x, d.y) };
+					RE::Projectile::LaunchData    ld(fire, a_player, from, r);
+					ld.useOrigin = true;
+					ld.autoAim = false;
+					ld.noDamageOutsideCombat = true;
+					ld.power = 0.0f;
+					RE::ProjectileHandle h;
+					RE::Projectile::Launch(&h, ld);
+				}
+			}
+		}
+
 		void Glider(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			static float      every = 0;
@@ -249,6 +352,7 @@ namespace bo3z
 			auto*      cc = player->GetCharController();
 			const bool sprint = st->IsSprinting();
 			Glider(player, a_delta);
+			Dragon(player, a_delta);
 			if (cc) {  // no fall damage at all: the fall is always measured from where you are now, so every landing is from nowhere
 				// (the fall's time is left alone: Better Jumping allows a jump while it is short - zeroing it gave endless jumps)
 				cc->fallStartHeight = player->GetPositionZ();

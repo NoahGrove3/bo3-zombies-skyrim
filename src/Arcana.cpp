@@ -21,7 +21,7 @@ namespace bo3z::Arcana
 
 		// Balance (Noah: most of them one-shot Skyrim's own enemies): every Coffer spell does 45% of the damage its mod
 		// gave it and costs 75% of the pool's price.
-		constexpr float kPower = 0.45f, kCost = 0.75f;
+		constexpr float kPower = 0.45f, kCost = 0.375f;  // (Noah: half the magicka they took before)
 		// a reforged spell: each level adds gen::kForgeStep of its power and takes a tenth off its cost
 		void Apply(int a_index)
 		{
