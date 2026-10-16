@@ -102,9 +102,12 @@ $modPlugins = @('Ordinator - Perks of Skyrim.esp', 'Apocalypse - Magic of Skyrim
     'ArteFake.esp', 'Beam Walk.esp', 'SpiderAnim.esl', 'Unique Jarl Throne Sitting Animation.esp', 'MikanEyes All in one SE.esp', "Freak's Floral Fields.esp",
     'Faithful Faces.esp', 'Faithful Faces0.esp', 'FabulousFollowersAIO.esp', "The Wolven Widow - SerketHetyt's Elisif Overhaul.esp",
     "Evigheden - SerketHetyt's Serana Overhaul.esp", 'RaySense.esp', 'YsoldaDF.esp', "Jordis of Solitude - SerketHetyt's Housecarls.esp",
-    'CollegeOfWinterholdImmersive.esp', 'FabFollowers_ImmCoW_Patch.esp')
+    'CollegeOfWinterholdImmersive.esp', 'FabFollowers_ImmCoW_Patch.esp',
+    'ModernWaitMenu.esl', 'TrueHUD.esl', 'AHZmoreHUD.esp', 'I4IconAddon.esp', 'RotolsMoreIcons.esp', 'BOOBIES_ImmersiveIcons.esp', 'BOOBIES_potions.esp',
+    'ASS_IconsAddon.esp', 'PENIS_IconsAddon.esp', 'Follower Stats.esp', 'FWMF for Fantasy Paper Maps.esp', 'FWMF Community Shaders fix.esp',
+    'Lux patch for FWMF.esp', 'RW2 - Patch - FWMF for Fantasy Paper Maps.esp', 'MCM for FWMF.esp', 'Legendary Map.esp', 'FloatingSubtitles.esp')
 # plugins no longer used (an older pack turned them on): kept off
-$retired = @('PAN_NPCs.esp', 'Phantom Horse.esp', 'Skoglendi - A Grass Mod.esp', 'Nolvus Ascension Seasonal Grass Mashup.esp')
+$retired = @('PAN_NPCs.esp', 'Phantom Horse.esp', 'Dragonborns Bestiary.esp', 'Skoglendi - A Grass Mod.esp', 'Nolvus Ascension Seasonal Grass Mashup.esp')
 $ours = @('SkyrimTogether.esp', 'SkyrimTogetherQuestPatches.esp', 'BO3Zombies.esp', 'UndyingNights.esp', 'CurseOfAlduin.esp') + $basePlugins + $gfxPlugins + $modPlugins + $retired
 $keep = $lines | Where-Object { $n = ($_ -replace '^\*', '').Trim(); -not ($ours -contains $n) }
 $mid = @()

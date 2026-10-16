@@ -39,15 +39,20 @@ THE PARTY MODS (installed for both players - Skyrim Together needs the same plug
  - Menus and play: SkyUI + MCM Helper (every setting under Esc > System > Mod Configuration), Character
    Menu, Experience (XP from kills, a quarter from the night's dead), SkyParkour, Better Jumping, Sigma
    first-person magic, Leviathan two-handed high stance.
- - Phantom Horse (with the Shadowmere Rework look): you already know both its powers (Shadowmere and Arvak).
-   Equip one in the Magic menu > Powers and use it (Z), then sprint and hold E: the horse appears under you.
-   The camera goes to third person for the ride and back to first when you stop. Its helpers are included:
-   Behavior Data Injector, Dynamic Animation Casting and Animation Motion Revolution (all built for 1.7.104).
+ - Skyrim's Paraglider (Dragon Snow glider): it is already in your pack. Jump or fall from anywhere high and
+   press E (A / Cross on a pad) in the air to open it; press again to let go. No fall damage in this mod pack.
+ - The new UI: Paper Map with Flat World Map Framework and Legendary Map's icon picker, HD Local
+   Map, TrueHUD (its bars are off - The Curse of Alduin's own health, spell and enemy bars stay),
+   moreHUD, Floating Subtitles, Smart Talk, Tween Menu Overhaul, Modern Wait Menu, Crafting Categories,
+   Follower Stats, and the icon packs (I4, Rotols, B.O.O.B.I.E.S. with A.S.S., P.E.N.I.S. and Potions, KID).
+ - Quests: the ones you choose in the journal (Skyrim's and the Echo Altar's rites) show at the top left.
+ - Waiting and sleeping: not at night or at dusk (the dead are coming). Only the host can wait - the host's
+   clock moves the whole party, an hour at a time. A boss's health bar takes the compass's place while it lives.
  - Frameworks: SPID, powerofthree's Papyrus Extender, SSE Engine Fixes (both parts).
  - Perks: Ordinator. Spell tomes: BURP Spell Tomes.
  - Animation and movement: Open Animation Replacer, True Directional Movement, Goetia spell casting,
    Dynamic Random Spell Idle, SpellSword Moveset, Leviathan greatsword low stance, TK Dodge (+ sound).
-   Their behavior files come already built with Nemesis (SkyParkour 1st/3rd person, TK Dodge) - nothing to run.
+   Their behavior files come already built with Nemesis (SkyParkour 1st/3rd person, TK Dodge, Paraglider) - nothing to run.
  - Effects and sound: Deadly Spell Impacts, Spell Rune Retexture, Frozen Electrocuted Combustion, Embers XD
    (+ Fire Magick), ENB Light, Airgetlam Modern Magic Sounds + Shouts SFX. 120 FPS UI, 90 FPS animations.
  - Wizard Hats.
@@ -96,7 +101,7 @@ CONTROLLER (Xbox One / Series, or PS5)  -  PlayStation names in brackets
  - Sprint: hold LB (L1).   DODGE: tap LB (L1).   Shout / use a power: RB (R1).
  - Cast: RT / LT (R2 / L2) - tap for a bolt, hold both to charge the spell's full power.
  - Next spell: D-pad right (hold it to put your hands away).   Quick knife: D-pad down.   Favourites: D-pad up.
- - Phantom Horse: power on (RB), then sprint (hold LB) and press A (Cross) - the horse comes under you.
+ - Paraglider: A (Cross) in mid-air opens it; A again closes it.
  - Echo Altar: A (Cross) to open it, then X (Square) roll a spell, Y (Triangle) reforge, D-pad left/right choose a
    brew, A (Cross) buy it, D-pad up learn a freed city's Thu'um, B (Circle) leave.
  - Quick loot (look at a body or chest): A (Cross) take, X (Square) take all, Y (Triangle) open it fully, D-pad
