@@ -2042,9 +2042,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const int  sel = std::clamp(s.perkSel, 0, n - 1);
 					const auto& p = gen::kPerks[sel];
 					const int  have = s.perkStacks[sel];
-					keyCap({ L, y + 2 * k }, g_padLast ? std::string("A") : Settings::KeyName(2), s.points >= p.cost);
+					keyCap({ L, y + 2 * k }, g_padLast ? std::string("A") : Settings::KeyName(2), s.points >= p.cost && have == 0);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "TAKE A BLESSING");
-					const std::string rule = owned ? "they stack - death takes them all" : "take each as often as you like";
+					const std::string rule = owned >= n ? "every blessing taken - death takes them all" : "one of each a life - death takes them all";
 					Txt(dl, g_body, 16 * k, { Rr - Measure(g_body, 16 * k, rule).x, y + 6 * k }, IM_COL32(170, 156, 132, 220), rule);
 					y += 36 * k;
 					const float d = std::min(44 * k, (Rr - L) / n - 4 * k), gap = ((Rr - L) - d * n) / std::max(1, n - 1);
@@ -2058,14 +2058,20 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						if (auto* icon = g_perkIcons[q]) {
 							const float r = d * 0.5f * (on ? 1.08f : 1.0f);
 							dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { c.x - r, c.y - r }, { c.x + r, c.y + r }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, on ? 255 : 200));
-							if (drunk) {  // already taken: a small count on its rim
-								TxtC(dl, g_num, 12 * k, c.x + r * 0.7f, c.y + r * 0.35f, kGold, "x" + std::to_string(s.perkStacks[q]));
+							if (drunk) {  // already taken this life: a gold tick on its rim
+								const ImVec2 t{ c.x + r * 0.72f, c.y + r * 0.62f };
+								dl->AddCircleFilled(t, 6.5f * k, IM_COL32(20, 14, 8, 230), 16);
+								dl->AddCircle(t, 6.5f * k, kGold, 16, 1.2f * k);
+								dl->AddLine({ t.x - 3 * k, t.y }, { t.x - 0.8f * k, t.y + 2.6f * k }, kGold, 1.6f * k);
+								dl->AddLine({ t.x - 0.8f * k, t.y + 2.6f * k }, { t.x + 3.4f * k, t.y - 2.6f * k }, kGold, 1.6f * k);
 							}
 						}
 					}
 					y += d + 12 * k;
-					Txt(dl, g_title, 19 * k, { L, y }, IM_COL32(250, 236, 205, 255), std::string(p.label) + (have > 0 ? "   x" + std::to_string(have) + " taken" : ""));
-					price(y, p.cost, s.points >= p.cost);
+					Txt(dl, g_title, 19 * k, { L, y }, IM_COL32(250, 236, 205, 255), std::string(p.label) + (have > 0 ? "   - taken" : ""));
+					if (have == 0) {
+						price(y, p.cost, s.points >= p.cost);
+					}
 					TxtWrap(dl, g_body, 16 * k, { L, y + 28 * k }, IM_COL32(190, 178, 156, 230), std::string(gen::kPerkDesc[sel]), Rr - L, 2);
 					y += 78 * k;
 				}
@@ -2278,6 +2284,34 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		struct MenuEntry { std::string text; int index; bool sel, disabled; };
 		// Skyrim's main list as it stands (its entries and which is selected); empty if it isn't up. Its own list is
 		// moved off the screen while ours shows (the keys still drive it; our buttons drive it by mouse).
+		// once each: the members of a menu's clip in the log (names, shown or not, where) - and on the main menu, any
+		// stray badge of Skyrim's (a logo, an icon, a spinner) is hidden: ours is the whole menu
+		void DumpMembers(RE::GFxMovieView* a_mv, const char* a_path, bool a_hideBadges)
+		{
+			RE::GFxValue obj;
+			if (!a_mv || !a_mv->GetVariable(&obj, a_path) || !obj.IsObject()) {
+				return;
+			}
+			obj.VisitMembers([&](const char* a_name, const RE::GFxValue& a_v) {
+				if (!a_v.IsDisplayObject()) {
+					return;
+				}
+				RE::GFxValue::DisplayInfo di;
+				const_cast<RE::GFxValue&>(a_v).GetDisplayInfo(&di);
+				std::string n = a_name ? a_name : "";
+				std::string low = n;
+				std::transform(low.begin(), low.end(), low.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				const bool badge = a_hideBadges && (low.find("logo") != std::string::npos || low.find("icon") != std::string::npos || low.find("spinner") != std::string::npos ||
+				                                    low.find("busy") != std::string::npos || low.find("bethesda") != std::string::npos || low.find("marketplace") != std::string::npos);
+				logger::info("ui: {}.{} visible {} alpha {:.0f} at {:.0f},{:.0f}{}", a_path, n, di.GetVisible(), di.GetAlpha(), di.GetX(), di.GetY(), badge ? " (hidden)" : "");
+				if (badge) {
+					RE::GFxValue::DisplayInfo off;
+					off.SetVisible(false);
+					const_cast<RE::GFxValue&>(a_v).SetDisplayInfo(off);
+				}
+			});
+		}
+
 		std::vector<MenuEntry> ReadMainList(RE::GFxMovieView** a_movie = nullptr)
 		{
 			std::vector<MenuEntry> out;
@@ -2290,6 +2324,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			RE::GFxValue holder;
 			if (!mv->GetVariable(&holder, "_root.MenuHolder.Menu_mc.MainListHolder") || !holder.IsDisplayObject()) {
 				return out;
+			}
+			if (static bool dumped = false; !dumped) {
+				dumped = true;
+				DumpMembers(mv, "_root.MenuHolder.Menu_mc", true);
+				DumpMembers(mv, "_root.MenuHolder", true);
+				DumpMembers(mv, "_root", true);
 			}
 			RE::GFxValue::DisplayInfo hi;
 			holder.GetDisplayInfo(&hi);
@@ -3774,13 +3814,22 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			} else if (InGame() && !DevTools::HudOff()) {
 				Draw(s, io.DisplaySize);
 				// looking at the Echo Altar: Skyrim's own "Commune" prompt gives way to ours (s.orbAim), back for everything else
-				if (static int lastAim = -1; lastAim != (s.orbAim ? 1 : 0)) {
+				if (static bool dumped = false; !dumped) {
 					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
-						lastAim = s.orbAim ? 1 : 0;
-						const RE::GFxValue a(s.orbAim ? 0.0 : 100.0);
+						dumped = true;
+						DumpMembers(hud->uiMovie.get(), "_root.HUDMovieBaseInstance", false);
+					}
+				}
+				if (static int lastAim = -1; lastAim != (s.orbAim || s.ownAim ? 1 : 0)) {
+					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
+						lastAim = s.orbAim || s.ownAim ? 1 : 0;
+						const RE::GFxValue a(lastAim ? 0.0 : 100.0);
 						for (const char* v : { "_root.HUDMovieBaseInstance.RolloverText._alpha", "_root.HUDMovieBaseInstance.RolloverInfoText._alpha",
 							     "_root.HUDMovieBaseInstance.RolloverButton_tf._alpha", "_root.HUDMovieBaseInstance.RolloverInfoInstance._alpha",
-							     "_root.HUDMovieBaseInstance.RolloverGrayBar_mc._alpha", "_root.HUDMovieBaseInstance.RolloverNameInstance._alpha" }) {
+							     "_root.HUDMovieBaseInstance.RolloverGrayBar_mc._alpha", "_root.HUDMovieBaseInstance.RolloverNameInstance._alpha",
+							     "_root.HUDMovieBaseInstance.RolloverButton._alpha", "_root.HUDMovieBaseInstance.RolloverButtonInstance._alpha",
+							     "_root.HUDMovieBaseInstance.RolloverGrayBar._alpha", "_root.HUDMovieBaseInstance.GrayBarInstance._alpha",
+							     "_root.HUDMovieBaseInstance.ActivateButton_tf._alpha", "_root.HUDMovieBaseInstance.ActivateButton._alpha" }) {
 							hud->uiMovie->SetVariable(v, a);
 						}
 					}

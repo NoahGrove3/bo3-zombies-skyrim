@@ -136,26 +136,55 @@ namespace bo3z
 
 		// Quick Revive: while you carry it, a killing blow drops you to your knees instead (Skyrim's bleedout - the
 		// player is held essential: src/Party.cpp), and you get straight back up at full health, once per draught.
-		bool SelfRevive() { return Has(gen::kPerk_hearthfire); }
+		// (after a revive: a few seconds when you cannot fall again, so you are surely back on your feet)
+		float g_grace = 0;
+		std::chrono::steady_clock::time_point g_last{};
+		bool SelfRevive() { return Has(gen::kPerk_hearthfire) || g_grace > 0; }
+		void Stand(RE::PlayerCharacter* a_player)
+		{
+			auto* st = a_player->AsActorState();
+			a_player->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery);
+			if (st->GetLifeState() == RE::ACTOR_LIFE_STATE::kEssentialDown || st->GetLifeState() == RE::ACTOR_LIFE_STATE::kBleedout) {
+				st->actorState1.lifeState = RE::ACTOR_LIFE_STATE::kAlive;
+			}
+			a_player->NotifyAnimationGraph("BleedOutStop");
+			a_player->NotifyAnimationGraph("bleedOutStop");
+			a_player->NotifyAnimationGraph("IdleForceDefaultState");
+		}
 		void Tick()
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
-			if (!player || player->IsDead() || !Has(gen::kPerk_hearthfire)) {
+			const auto now = std::chrono::steady_clock::now();
+			const float dt = g_last.time_since_epoch().count() ? std::min(0.25f, std::chrono::duration<float>(now - g_last).count()) : 0.0f;
+			g_last = now;
+			if (!player || player->IsDead()) {
+				g_grace = 0;
 				return;
 			}
 			auto* av = player->AsActorValueOwner();
 			const float max = av->GetPermanentActorValue(RE::ActorValue::kHealth);
-			const bool  falling = player->AsActorState()->IsBleedingOut();
-			if (max > 0 && (falling || av->GetActorValue(RE::ActorValue::kHealth) < max * 0.1f)) {
-				player->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery);
-				av->RestoreActorValue(RE::ActorValue::kHealth, max);
-				if (falling) {
-					player->NotifyAnimationGraph("BleedOutStop");
-					player->NotifyAnimationGraph("bleedOutStop");
+			if (g_grace > 0) {  // the moments after rising: kept on your feet and whole
+				g_grace -= dt;
+				if (player->AsActorState()->IsBleedingOut()) {
+					Stand(player);
 				}
+				if (av->GetActorValue(RE::ActorValue::kHealth) < max * 0.5f) {
+					av->RestoreActorValue(RE::ActorValue::kHealth, max * 0.5f - av->GetActorValue(RE::ActorValue::kHealth));
+				}
+				return;
+			}
+			if (!Has(gen::kPerk_hearthfire)) {
+				return;
+			}
+			const bool falling = player->AsActorState()->IsBleedingOut();
+			if (max > 0 && (falling || av->GetActorValue(RE::ActorValue::kHealth) < max * 0.1f)) {
+				av->RestoreActorValue(RE::ActorValue::kHealth, max);
+				Stand(player);
+				g_grace = 3.0f;
+				Director::Pause(2.0f);  // (the dead around you reel back a moment)
 				Save::SetPerkStacks(gen::kPerk_hearthfire, N(gen::kPerk_hearthfire) - 1);  // one revive per draught
 				Hud::Banner("THE HEARTH CALLS YOU BACK", 3.0f);
-				logger::info("perk: quick revive used{}", falling ? " (from the ground)" : "");
+				logger::info("perk: hearthfire revive used{}", falling ? " (from the ground)" : "");
 			}
 		}
 	}

@@ -533,6 +533,7 @@ namespace bo3z
 			std::vector<Watcher> watchers;
 			struct LootItem { std::string name; int count, value; float weight; int kind; };  // kind: 0 misc, 1 gold, 2 weapon, 3 armor, 4 potion, 5 ingredient, 6 book, 7 scroll, 8 ammo, 9 soul gem, 10 key
 			bool        lootOn{ false };
+			bool        ownAim{ false };   // something of ours under the crosshair: Skyrim's own prompt hidden
 			std::string lootTitle, lootNote;
 			std::vector<LootItem> loot;
 			int         lootSel{ 0 };

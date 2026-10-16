@@ -1303,6 +1303,10 @@ namespace bo3z
 			if (perk < 0 || perk >= static_cast<int>(gen::kPerks.size())) {
 				return;
 			}
+			if (Save::PerkStacks(perk) > 0) {  // one of each draught a life
+				Hud::Banner(std::string("You already carry ") + std::string(gen::kPerks[perk].label), 2.5f);
+				return;
+			}
 			if (!Points::Spend(gen::kPerks[perk].cost)) {
 				return;
 			}
@@ -1695,15 +1699,17 @@ namespace bo3z
 				}
 				h.orbFade = seen * std::clamp((4500.0f - orbDist) / 1500.0f, 0.0f, 1.0f);
 				h.orbAim = static_cast<bool>(g_orbAim);
-				// (the shrine's floor under the crosshair counts too: ours is the only prompt there)
-				if (!h.orbAim && !g_menu) {
-					if (auto* pick = RE::CrosshairPickData::GetSingleton()) {
-						if (auto ref = pick->GetActiveTarget().get()) {
-							for (std::size_t t = 0; t < gen::kTowns.size(); ++t) {
-								if (Placed(static_cast<int>(t), 0) == ref.get()) {
-									h.orbAim = true;
-									break;
-								}
+				// (the shrine's floor under the crosshair counts too: ours is the only prompt there) - and anything else of
+				// ours under it (the shrine's dressing, its bottles): Skyrim's own prompt stays away from all of them
+				h.ownAim = false;
+				if (auto* pick = RE::CrosshairPickData::GetSingleton()) {
+					if (auto ref = pick->GetActiveTarget().get()) {
+						if (auto* base = ref->GetBaseObject(); base && base->GetFile(0) && base->GetFile(0)->GetFilename() == "CurseOfAlduin.esp") {
+							h.ownAim = true;
+						}
+						for (std::size_t t = 0; !h.orbAim && !g_menu && t < gen::kTowns.size(); ++t) {
+							if (Placed(static_cast<int>(t), 0) == ref.get()) {
+								h.orbAim = true;
 							}
 						}
 					}
