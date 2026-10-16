@@ -290,6 +290,7 @@ namespace bo3z
 			                         up * (90 * std::sin(std::min(t, 0.6f) * 2.6f) + 150 * t * t) + right * (sd * 95 * t * t);
 			const float climb = Smooth(t / 1.3f);
 			const float roll = sd * 0.75f * std::sin(3.14159f * std::min(1.0f, t / 2.8f));
+			ref->SetPosition(pos);  // (the reference itself moves: only moving its 3D left it culled where it was placed)
 			root->local.translate = pos;
 			root->local.rotate = AxisAngle(up, -sd * 0.55f * climb) * AxisAngle(fwd, roll) * AxisAngle(right, 0.42f * climb) * R0;
 			root->local.scale = g_away.scale;
@@ -608,14 +609,15 @@ namespace bo3z
 					v.z = std::max(v.z, 520.0f);
 					SetVel(cc, v);
 				}
-				for (const float at : { 0.12f, 0.42f }) {
+				// (Activate opens it - and a second press would close it again, so a second only if the first did nothing)
+				for (const float at : { 0.2f, 0.95f }) {
 					if (before < at && g_takeT >= at && !g_hadDragon) {
 						DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
 					}
 				}
 				if (g_hadDragon) {
 					g_liftOff = 2;
-				} else if (g_takeT > 1.0f) {
+				} else if (g_takeT > 1.6f) {
 					g_liftOff = 0;  // (the glider never opened: just a hop)
 					logger::info("glider: take-off - the glider did not open");
 				}
