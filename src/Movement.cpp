@@ -263,7 +263,7 @@ namespace bo3z
 				g_away.t = -1;
 				return;
 			}
-			if (t > 3.6f) {
+			if (t > 4.5f) {
 				ref->Disable();
 				ref->SetDelete(true);
 				g_away = {};
@@ -340,12 +340,17 @@ namespace bo3z
 			g_away.vel = a_vel;
 			{
 				RE::NiPoint3 f{ a_vel.x, a_vel.y, 0 };
-				if (f.Length() < 100.0f) {
-					const float yaw = a_player->GetAngleZ();
+				if (f.Length() < 100.0f) {  // (landed: it flies off ahead of your view, where you can see it go)
+					float yaw = a_player->GetAngleZ();
+					if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
+						const auto& m = cam->cameraRoot->world.rotate;
+						yaw = std::atan2(m.entry[0][1], m.entry[1][1]);
+					}
 					f = { std::sin(yaw), std::cos(yaw), 0 };
 				}
 				f.Unitize();
 				g_away.fwd = f;
+				logger::info("glider: it flies off toward ({:.2f},{:.2f})", f.x, f.y);
 			}
 			g_away.scale = a_baseScale > 0 ? g_lastSpace.scale / a_baseScale : 1.0f;
 			g_away.side = std::abs(a_roll) > 0.05f ? (a_roll > 0 ? 1.0f : -1.0f) : (rng() % 2 ? 1.0f : -1.0f);
