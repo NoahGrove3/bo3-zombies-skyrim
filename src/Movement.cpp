@@ -958,9 +958,9 @@ namespace bo3z
 			if (g_dive) {
 				g_diveT += a_delta;
 				auto* cc = a_player->GetCharController();
-				if ((g_diveT > 0.15f && OnGround(a_player)) || g_diveT > 6.0f) {
+				if ((g_diveT > 0.15f && OnGround(a_player)) || g_diveT > 30.0f) {  // (from high up it can be a long way down)
 					g_dive = false;
-					if (g_diveT <= 6.0f) {
+					if (g_diveT <= 30.0f) {
 						Slam(a_player);
 					}
 				} else if (cc) {
