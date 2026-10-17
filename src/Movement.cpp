@@ -636,6 +636,15 @@ namespace bo3z
 			if (a_element <= 0 || a_element >= 8) {
 				return fire;
 			}
+			// frost and lightning: Skyrim's own streams (Frostbite's spray, Sparks' arcing bolt) - always there
+			if (a_element == 1) {
+				static RE::BGSProjectile* frost = RE::TESForm::LookupByID<RE::BGSProjectile>(0x00018123);
+				if (frost) return frost;
+			}
+			if (a_element == 2) {
+				static RE::BGSProjectile* shock = RE::TESForm::LookupByID<RE::BGSProjectile>(0x00034190);
+				if (shock) return shock;
+			}
 			if (!looked[a_element] && Arcana::Count() > 0) {
 				looked[a_element] = true;
 				for (int i = 0; i < 256 && !cache[a_element]; ++i) {
@@ -1425,7 +1434,7 @@ namespace bo3z
 					ld.autoAim = false;
 					ld.noDamageOutsideCombat = true;
 					ld.power = 0.0f;
-					ld.scale = 0.45f;  // (Noah: a smaller breath - its reach is the same)
+					ld.scale = el == 0 || el >= 3 ? 0.45f : 1.0f;  // (Noah: a smaller breath - its reach is the same; frost and lightning are a spell's size already)
 					RE::ProjectileHandle h;
 					RE::Projectile::Launch(&h, ld);
 				}
