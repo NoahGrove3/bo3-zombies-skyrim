@@ -636,14 +636,13 @@ namespace bo3z
 			if (a_element <= 0 || a_element >= 8) {
 				return fire;
 			}
-			// frost and lightning: Skyrim's own streams (Frostbite's spray, Sparks' arcing bolt) - always there
-			if (a_element == 1) {
-				static RE::BGSProjectile* frost = RE::TESForm::LookupByID<RE::BGSProjectile>(0x00018123);
-				if (frost) return frost;
-			}
-			if (a_element == 2) {
-				static RE::BGSProjectile* shock = RE::TESForm::LookupByID<RE::BGSProjectile>(0x00034190);
-				if (shock) return shock;
+			// frost and lightning: a stream of our own spell bolts - ice shards, lightning streaks (bullet_frost /
+			// bullet_shock, ids frozen in data/form_ids.json); Skyrim's sprays and beams didn't show from a dragon
+			if (a_element == 1 || a_element == 2) {
+				static RE::BGSProjectile* bolt[3]{};
+				auto*&                    b = bolt[a_element];
+				if (!b) b = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSProjectile>(a_element == 1 ? 0x9E3 : 0x9E6, gen::kPlugin);
+				if (b) return b;
 			}
 			if (!looked[a_element] && Arcana::Count() > 0) {
 				looked[a_element] = true;
@@ -1450,12 +1449,16 @@ namespace bo3z
 					const RE::NiPoint3 from = mouth->world.translate + d * 10.0f;
 					const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
 					RE::Projectile::ProjectileRot r{ -std::atan2(d.z, std::max(1e-3f, flat)), std::atan2(d.x, d.y) };
+					if (!fire->IsFlamethrower()) {  // (a stream of bolts: fanned a little, like breath)
+						std::uniform_real_distribution<float> j(-1.0f, 1.0f);
+						r.x += 0.05f * j(rng), r.z += 0.08f * j(rng);
+					}
 					RE::Projectile::LaunchData    ld(fire, a_player, from, r);
 					ld.useOrigin = true;
 					ld.autoAim = false;
 					ld.noDamageOutsideCombat = true;
 					ld.power = 0.0f;
-					ld.scale = el == 0 || el >= 3 ? 0.45f : el == 1 ? 1.8f : 1.0f;  // (Noah: a smaller breath - its reach is the same; frost's spray is a spell's, made bigger to be seen)
+					ld.scale = el == 0 || el >= 3 ? 0.45f : 0.7f;  // (Noah: a smaller breath - its reach is the same)
 					// (a beam - the lightning - is aimed by its shooter's own facing, not the launch angles: you face the breath
 					// for the moment it leaves)
 					auto&       ang = a_player->data.angle;  // (x pitch, z yaw)
