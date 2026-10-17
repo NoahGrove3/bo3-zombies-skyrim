@@ -991,6 +991,19 @@ namespace bo3z
 				FxColor(a_root, pt.name, c[0], c[1], c[2]);
 				FxLevel(a_root, pt.name, a_b.level * pt.level * flick, -std::fmod(a_b.clock * pt.rate, 1.0f));
 				o->UpdateDownwardPass(ud, 0);
+				static float logT = 0;
+				static auto  lastLog = std::chrono::steady_clock::now();
+				if (a_b.level > 0.01f && pt.core && std::chrono::steady_clock::now() - lastLog > std::chrono::milliseconds(400)) {
+					lastLog = std::chrono::steady_clock::now();
+					auto* g = o->AsGeometry();
+					auto* sp = g ? g->GetGeometryRuntimeData().shaderProperty.get() : nullptr;
+					auto* m = sp ? static_cast<RE::BSEffectShaderMaterial*>(static_cast<RE::BSShaderProperty*>(sp)->material) : nullptr;
+					logger::info("glider: beam level {:.2f} grow {:.2f} culled {} at ({:.0f},{:.0f},{:.0f}) scale {:.3f} bound ({:.0f},{:.0f},{:.0f}) r {:.0f} dir ({:.2f},{:.2f},{:.2f}) colorScale {:.2f} parent {} mouth scale {:.3f}",
+						a_b.level, a_b.grow, o->GetAppCulled(), o->world.translate.x, o->world.translate.y, o->world.translate.z, o->world.scale, o->worldBound.center.x,
+						o->worldBound.center.y, o->worldBound.center.z, o->worldBound.radius, a_b.dir.x, a_b.dir.y, a_b.dir.z, m ? m->baseColorScale : -1.0f,
+						o->parent ? o->parent->name.c_str() : "-", mouth->world.scale);
+					(void)logT;
+				}
 			}
 		}
 
