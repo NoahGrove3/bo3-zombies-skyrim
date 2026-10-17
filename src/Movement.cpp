@@ -1149,10 +1149,27 @@ namespace bo3z
 				}
 			}
 			if (letGone) {
-				for (auto* sp : space) if (sp) sp->local.scale = 0.0f;
-				g_armHoldOn = false, g_armHold = 0;
-				lastPos = pos;
-				return;
+				// a new glide while the paraglider still has its copy on you (it had landed, then you took off again
+				// before it put it away): the dragon comes for you afresh - otherwise you fell with no dragon at all
+				static bool  touched = false;
+				static float airT = 0;
+				bool         pg2 = false;
+				a_player->GetGraphVariableBool("bParaGliding", pg2);
+				if (OnGround(a_player)) {
+					touched = true, airT = 0;
+				} else {
+					airT = pg2 ? airT + a_delta : 0.0f;
+				}
+				if (touched && airT > 0.25f) {
+					touched = false, airT = 0;
+					letGone = false, sawGliding = pg2, deployT = -1, g_hadDragon = false, g_grip = 0;
+					logger::info("glider: a new glide before the last was put away - the dragon comes again");
+				} else {
+					for (auto* sp : space) if (sp) sp->local.scale = 0.0f;
+					g_armHoldOn = false, g_armHold = 0;
+					lastPos = pos;
+					return;
+				}
 			}
 			deployT += a_delta;
 			// the swoop: 1.15 s, or 0.6 s when it catches you at the top of a take-off leap (so you never hang there)
