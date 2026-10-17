@@ -1534,7 +1534,8 @@ namespace bo3z
 					RE::Projectile::Launch(&h, ld);
 					if (fire->IsBeam() && g_beamPitchSign != 1.0f) {
 						ang.x = keepX, ang.z = keepZ;
-					} else if (auto p = h.get()) {
+					}
+					if (auto p = fire->IsBeam() ? RE::NiPointer<RE::Projectile>{} : h.get()) {
 						// (Noah: the breath flies off ahead - faster, and carried on your own speed - not swept back onto you
 						// and the dragon as you glide into it)
 						auto& rd = p->GetProjectileRuntimeData();
