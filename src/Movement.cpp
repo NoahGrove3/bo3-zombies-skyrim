@@ -777,7 +777,7 @@ namespace bo3z
 			g_whirl.t += a_delta;
 			const float t = g_whirl.t;
 			auto        ref = g_whirl.ref.get();
-			if (!ref || t > 1.9f) {
+			if (!ref || t > 2.2f) {
 				if (ref) {
 					ref->Disable();
 					ref->SetDelete(true);
@@ -788,10 +788,15 @@ namespace bo3z
 			const RE::NiPoint3 at = a_player->GetPosition() - RE::NiPoint3{ 0, 0, 60.0f * Smooth(t / 1.0f) };
 			ref->SetPosition(at);
 			if (auto* root = ref->Get3D()) {
+				static bool told = false;
+				if (!told) {
+					told = true;
+					logger::info("glider: the whirlwind's 3D is in ({} shapes)", root->GetObjectByName("WW1") ? "its" : "none of its");
+				}
 				root->local.translate = at;
 				root->local.rotate = Rot(0, 0, -t * 9.0f);
 				root->local.scale = 0.7f + 0.5f * Smooth(t / 0.8f);
-				const float level = Smooth(t / 0.18f) * (1 - Smooth((t - 1.1f) / 0.7f));
+				const float level = 1.8f * Smooth(t / 0.18f) * (1 - Smooth((t - 1.4f) / 0.7f));
 				for (int i = 1; i <= 6; ++i) {
 					FxLevel(root, fmt::format("WW{}", i).c_str(), level);
 				}
@@ -1120,7 +1125,10 @@ namespace bo3z
 				if (known && pg) {
 					sawGliding = true;
 				}
-				if (known && sawGliding && !pg && !letGone) {
+				// (Noah: never the glider's own put-away - its copy of the dragon lying at your feet): landed, or the glide
+				// over without the paraglider ever saying it began, the copy goes too
+				const bool landed = deployT > 0.25f && OnGround(a_player);
+				if (((known && sawGliding && !pg) || landed) && !letGone) {
 					letGone = true;
 					if (g_hadDragon) {
 						LetGo(a_player, vel, roll, kDragonScale);
