@@ -34,6 +34,36 @@ namespace bo3z::Loot
 			}
 		}
 
+		// an ash pile (what the burned and the turned-to-ash leave): the body it stands for - the dead actor whose ash pile
+		// it is (Noah: our loot on everything, the ash piles too)
+		RE::TESObjectREFR* AshOwner(RE::TESObjectREFR* a_ref)
+		{
+			auto* base = a_ref ? a_ref->GetBaseObject() : nullptr;
+			if (!base || base->GetFormType() != RE::FormType::Activator) {
+				return nullptr;
+			}
+			auto* lists = RE::ProcessLists::GetSingleton();
+			if (!lists) {
+				return nullptr;
+			}
+			const auto      me = a_ref->CreateRefHandle();
+			RE::TESObjectREFR* found = nullptr;
+			auto look = [&](RE::BSTArray<RE::ActorHandle>& a_list) {
+				for (auto& h : a_list) {
+					auto a = h.get();
+					if (!a || found || !a->IsDead()) continue;
+					if (auto* x = a->extraList.GetByType<RE::ExtraAshPileRef>(); x && x->ashPileRef == me) {
+						found = a.get();
+					}
+				}
+			};
+			look(lists->highActorHandles);
+			look(lists->middleHighActorHandles);
+			look(lists->middleLowActorHandles);
+			look(lists->lowActorHandles);
+			return found;
+		}
+
 		bool Lootable(RE::TESObjectREFR* a_ref)
 		{
 			if (!a_ref || a_ref->IsDisabled() || a_ref->IsDeleted()) {
@@ -127,8 +157,12 @@ namespace bo3z::Loot
 		if (pl && ui && !ui->GameIsPaused() && !ui->IsMenuOpen(RE::ContainerMenu::MENU_NAME)) {
 			if (auto* pick = RE::CrosshairPickData::GetSingleton()) {
 				auto t = pick->target.get();
-				if (t && Lootable(t.get()) && t->GetPosition().GetDistance(pl->GetPosition()) < 260.0f) {
-					target = t.get();
+				if (t && t->GetPosition().GetDistance(pl->GetPosition()) < 260.0f) {
+					if (Lootable(t.get())) {
+						target = t.get();
+					} else if (auto* owner = AshOwner(t.get())) {
+						target = owner;
+					}
 				}
 			}
 		}

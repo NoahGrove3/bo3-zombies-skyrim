@@ -273,6 +273,8 @@ namespace bo3z
 		void        SetFov(bool a_first, float a_v);
 		bool        Shelter();                    // townsfolk go indoors at night
 		bool        PlayStationIcons();           // controller prompts drawn as PlayStation buttons (a PS5 pad looks like an Xbox one to Skyrim)
+		bool        DragonBankReverse();          // the dragon leans out of its turns instead of into them (Noah's choice)
+		bool        DragonInvertDive();           // forward pulls up, back dives
 		float       CorpseSeconds();
 		float       UndeadHealthMult();           // Skyrim's difficulty (if followed) x the MCM's own
 		float       UndeadDamageMult();
@@ -424,6 +426,7 @@ namespace bo3z
 	namespace Movement
 	{
 		void OnButton(const RE::ButtonEvent* a_event);  // crouch/jump keys (Skyrim ignores crouch while sprinting)
+		void OnStick(const RE::ThumbstickEvent* a_event);  // the left stick (the dragon glide's steering)
 		void Tick(float a_delta);
 		void Reset();
 		bool Riding();  // on a horse
@@ -541,6 +544,8 @@ namespace bo3z
 			struct CompassMark { float ang, dist; int kind; std::string label; int icon = -1; bool known = true; };  // icon: the map marker type (its map icon)  // kind: 1 rite, 2 shrine, 3 city, 4 town, 5 dungeon, 6 place, 7 friend, 8 undead, 9 boss
 			bool        compassOn{ false };
 			float       heading{ 0 };
+			float       shoutCd{ 0 };     // your shout's cooldown still to run (1 just shouted .. 0 ready), drawn round the compass
+			float       shoutReady{ 0 };  // a flash round it the moment it is ready again (1 .. 0)
 			std::vector<CompassMark> compass;
 			struct QuestMark { float x, y, dist; bool front; std::string label; };  // a quest's target on the screen (0..1), drawn in our style
 			std::vector<QuestMark> qmarks;

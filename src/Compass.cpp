@@ -283,6 +283,16 @@ namespace bo3z::Compass
 		}
 		h.compassOn = true;
 		h.heading = heading;
+		{  // the shout's cooldown (Noah: on the border of our compass, not Skyrim's shout meter)
+			static float most = 0, ready = 0, last = 0;
+			const float rec = pl ? std::max(0.0f, pl->GetVoiceRecoveryTime()) : 0.0f;
+			if (rec > last + 0.25f || rec > most) most = rec;  // (a new shout: its full cooldown)
+			if (last > 0.05f && rec <= 0.0f) ready = 1.0f;
+			last = rec;
+			ready = std::max(0.0f, ready - a_delta * 1.6f);
+			h.shoutCd = most > 0.05f ? std::clamp(rec / most, 0.0f, 1.0f) : 0.0f;
+			h.shoutReady = ready;
+		}
 		h.compass = std::move(marks);
 		h.qmarks = std::move(qmarks);
 		h.tracked = tracked;

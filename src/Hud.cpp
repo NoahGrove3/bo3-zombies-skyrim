@@ -492,6 +492,49 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			dl->AddConvexPolyFilled(plate, 6, IM_COL32(10, 9, 12, 205));
 			dl->AddRectFilledMultiColor(a, { b.x, cy }, IM_COL32(40, 34, 30, 90), IM_COL32(40, 34, 30, 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
 			dl->AddPolyline(plate, 6, Fade(kGold, 0.9f), ImDrawFlags_Closed, 1.4f * k);
+			// the shout's cooldown (Noah: on our compass's border): a cold blue glow along the plate's edge from the middle
+			// of its top out both ways and round underneath - it drains back toward the top as the shout recovers, and the
+			// whole border flashes the moment it is ready
+			if (s.shoutCd > 0.001f || s.shoutReady > 0.001f) {
+				const ImVec2 topC{ cx, a.y }, botC{ cx, b.y };
+				const ImVec2 halfR[5] = { topC, { b.x, a.y }, { b.x + e, cy }, { b.x, b.y }, botC };
+				const ImVec2 halfL[5] = { topC, { a.x, a.y }, { a.x - e, cy }, { a.x, b.y }, botC };
+				auto lenOf = [](const ImVec2* p) {
+					float L = 0;
+					for (int i = 0; i < 4; ++i) L += std::hypot(p[i + 1].x - p[i].x, p[i + 1].y - p[i].y);
+					return L;
+				};
+				auto drawPart = [&](const ImVec2* p, float frac, ImU32 col, float th) {
+					float want = lenOf(p) * frac;
+					ImVec2 pts[5];
+					int    n = 0;
+					pts[n++] = p[0];
+					for (int i = 0; i < 4 && want > 0; ++i) {
+						const float seg = std::hypot(p[i + 1].x - p[i].x, p[i + 1].y - p[i].y);
+						if (want >= seg) {
+							pts[n++] = p[i + 1];
+							want -= seg;
+						} else {
+							const float t = want / seg;
+							pts[n++] = { p[i].x + (p[i + 1].x - p[i].x) * t, p[i].y + (p[i + 1].y - p[i].y) * t };
+							want = 0;
+						}
+					}
+					if (n >= 2) dl->AddPolyline(pts, n, col, ImDrawFlags_None, th);
+				};
+				const float f = s.shoutCd;
+				for (const ImVec2* half : { halfR, halfL }) {
+					if (f > 0.001f) {
+						drawPart(half, f, IM_COL32(90, 160, 255, 60), 7.0f * k);    // its glow
+						drawPart(half, f, IM_COL32(150, 205, 255, 230), 2.2f * k);  // its edge
+					}
+					if (s.shoutReady > 0.001f) {
+						const int al = static_cast<int>(200 * s.shoutReady);
+						drawPart(half, 1.0f, IM_COL32(170, 220, 255, al / 3), 9.0f * k);
+						drawPart(half, 1.0f, IM_COL32(220, 240, 255, al), 2.0f * k);
+					}
+				}
+			}
 			auto rel = [&](float ang) {
 				float d = ang - s.heading;
 				while (d > RE::NI_PI) d -= 2 * RE::NI_PI;
@@ -3876,9 +3919,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						DumpMembers(hud->uiMovie.get(), "_root.HUDMovieBaseInstance", false);
 					}
 				}
-				if (static int lastAim = -1; lastAim != (s.orbAim || s.ownAim ? 1 : 0)) {
+				// (Noah: only our quick loot on everything - Skyrim's "Search" prompt never shows over a body, chest or ash pile)
+				if (static int lastAim = -1; lastAim != (s.orbAim || s.ownAim || s.lootOn ? 1 : 0)) {
 					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
-						lastAim = s.orbAim || s.ownAim ? 1 : 0;
+						lastAim = s.orbAim || s.ownAim || s.lootOn ? 1 : 0;
 						const RE::GFxValue a(lastAim ? 0.0 : 100.0);
 						for (const char* v : { "_root.HUDMovieBaseInstance.RolloverText._alpha", "_root.HUDMovieBaseInstance.RolloverInfoText._alpha",
 							     "_root.HUDMovieBaseInstance.RolloverButton_tf._alpha", "_root.HUDMovieBaseInstance.RolloverInfoInstance._alpha",
@@ -3894,9 +3938,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (static int vb = 0; vb++ % 15 == 0) {
 					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.EnemyHealth_mc._visible", RE::GFxValue(false));
-						// Skyrim's compass gives way to ours (the shout meter under it stays)
-						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder.Compass._alpha", RE::GFxValue(0.0));
-						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder.Compass._visible", RE::GFxValue(false));
+						// Skyrim's compass gives way to ours - its shout meter too (Noah: the cooldown is drawn round our compass's
+						// border instead: src/Hud.cpp DrawCompass)
+						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder._alpha", RE::GFxValue(0.0));
+						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder._visible", RE::GFxValue(false));
 						// and its sneak eye to ours
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.StealthMeterInstance._alpha", RE::GFxValue(0.0));
 						// and its crosshair to our dot

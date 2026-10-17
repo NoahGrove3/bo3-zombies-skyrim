@@ -253,6 +253,9 @@ namespace bo3z
 							Hud::OnMouseMove(static_cast<float>(mm->mouseInputX), static_cast<float>(mm->mouseInputY));
 						}
 					}
+					if (e->GetEventType() == RE::INPUT_EVENT_TYPE::kThumbstick) {
+						Movement::OnStick(static_cast<RE::ThumbstickEvent*>(e));
+					}
 					if (auto* b = e->AsButtonEvent()) {
 						if (b->GetDevice() == RE::INPUT_DEVICE::kMouse && b->GetIDCode() == 0 && b->IsDown()) {
 							Hud::OnClick();

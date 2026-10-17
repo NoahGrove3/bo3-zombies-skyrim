@@ -3,7 +3,12 @@ it in a Bond III dive - unlit additive strips (tools/modelconv/fxwrite) hung und
 with it; the game sets how bright they are each frame (0 in the nif: unseen until it does).
     python tools/dragonfx.py <in.nif> <out.nif> <Textures dir>
 Writes Textures/CurseOfAlduin/Dragon/wind.dds (a soft, streaky band, tiling along its length) and <out.nif>: <in.nif>
-with DG_TrailL / DG_TrailR (under DG_WingL3 / R3, from the wingtip back) and DG_Wind1..8 (under DG_Bank)."""
+with DG_TrailL / DG_TrailR (under DG_WingL3 / R3, from the wingtip back) and DG_Wind1..8 (under DG_Bank).
+(Noah: see-through trails that flow with the wings, never a solid line) with our own dragon the trails are ribbons skinned to
+twelve bones each (DG_TrlL0..11 / DG_TrlR0..11, under DG_Space) that the game puts where the wingtip was a moment ago
+(src/Movement.cpp TrailPlace) - DG_TipL / DG_TipR mark the tips it follows; their texture is broken wisps of air.
+(Noah: one beam of fire) DG_Beam1..3 under DG_Mouth: the breath's white-hot core, the flame round it and a flare at its jaws,
+along +Y (the game turns them to where it breathes and tints them its bond's colour: src/Movement.cpp BeamPose)."""
 import subprocess, sys, pathlib, math, json
 import numpy as np
 from PIL import Image
@@ -13,6 +18,9 @@ from dragontex import dds
 FXWRITE = '/home/claude/tools/fxwrite'
 TEX = r'textures\CurseOfAlduin\Dragon\wind.dds'
 DASH = r'textures\CurseOfAlduin\Dragon\wind_dash.dds'
+TRAIL = r'textures\CurseOfAlduin\Dragon\trail.dds'
+BEAM = r'textures\CurseOfAlduin\Dragon\beam.dds'
+TRAIL_BONES, TRAIL_SPACING = 12, 80.0
 # bones (tools/modelconv/dragonglider.cpp): a shape under a bone is in the dragon's space less the bone's place
 WRIST = {'L': (-530, -1245, 180), 'R': (530, -1245, 180)}
 TIP = {'L': (-886, -1258, 46), 'R': (886, -1258, 46)}   # the wing's outermost point (its bind pose)
@@ -59,6 +67,113 @@ def dash_texture(out):
     dds(Image.fromarray(img, 'RGBA'), out, 'DXT5')
 
 
+def trail_texture(out):
+    """broken wisps of air streaming along the ribbon (v): several thin threads, each coming and going, with gaps between -
+    soft across, so the ribbon reads as moving air, not a band (it tiles along v)"""
+    W, H = 64, 256
+    u = (np.arange(W) + 0.5) / W
+    v = (np.arange(H) + 0.5) / H
+    rng = np.random.default_rng(11)
+    a = np.zeros((H, W))
+    for k in range(9):
+        c = 0.5 + rng.uniform(-0.28, 0.28)
+        f = int(rng.integers(1, 4))
+        ph = rng.uniform()
+        cc = c + 0.05 * np.sin(2 * math.pi * (f * v[:, None] + ph))
+        wd = rng.uniform(0.03, 0.09)
+        across = np.exp(-((u[None, :] - cc) / wd) ** 2)
+        on = np.clip(np.sin(2 * math.pi * (int(rng.integers(2, 6)) * v[:, None] + rng.uniform())), 0, 1) ** rng.uniform(1.0, 2.5)
+        a += across * on * rng.uniform(0.35, 0.9)
+    edge = np.exp(-((u - 0.5) / 0.3) ** 4)   # (soft to nothing at the ribbon's edges)
+    a = np.clip(a / np.percentile(a, 99.5), 0, 1) * edge[None, :]
+    img = np.zeros((H, W, 4), np.uint8)
+    img[..., :3] = 255
+    img[..., 3] = (a * 255).astype(np.uint8)
+    dds(Image.fromarray(img, 'RGBA'), out, 'DXT5')
+
+
+def beam_texture(out):
+    """flame for the breath's beam: turbulent tongues streaming along v (it tiles along v, and across u as it wraps round),
+    white - the game tints it - its alpha the flame's brightness, hottest down the middle"""
+    W, H = 128, 512
+    u = (np.arange(W) + 0.5) / W
+    v = (np.arange(H) + 0.5) / H
+    U, V = np.meshgrid(u, v)
+    rng = np.random.default_rng(3)
+    n = np.zeros((H, W))
+    for f, amp in ((2, 1.0), (3, 0.8), (5, 0.6), (8, 0.45), (13, 0.3), (21, 0.2)):
+        for _ in range(2):
+            fu = int(rng.integers(1, 4))
+            n += amp * np.sin(2 * math.pi * (f * V + fu * U + rng.uniform())) * np.sin(2 * math.pi * (int(rng.integers(1, 5)) * U + 0.3 * f * V + rng.uniform()))
+    n = (n - n.min()) / (n.max() - n.min())
+    core = np.exp(-((U - 0.5) / 0.22) ** 2)
+    tongues = np.clip((n - 0.35) / 0.5, 0, 1) ** 1.3
+    a = np.clip(core * (0.45 + 0.75 * tongues), 0, 1)
+    img = np.zeros((H, W, 4), np.uint8)
+    img[..., 0] = 255
+    img[..., 1] = (200 + 55 * core).astype(np.uint8)
+    img[..., 2] = (150 + 105 * core).astype(np.uint8)
+    img[..., 3] = (a * 255).astype(np.uint8)
+    dds(Image.fromarray(img, 'RGBA'), out, 'DXT5')
+
+
+def beam(lines, name, length, w0, w1, a0, a1, tiles, planes=3, segs=26, fade_out=0.2):
+    """the breath along +Y from the mouth: crossed planes about its axis, widening, faded in at the jaws and out at its end"""
+    lines.append(f'shape {name} tex={BEAM} color=1,1,1,1 scale=0 blend=add falloff=1 parent=DG_Mouth')
+    n = 0
+    tris = []
+    for pi in range(planes):
+        ang = math.pi * pi / planes
+        ax = np.array([math.cos(ang), 0.0, math.sin(ang)])
+        nrm = np.cross(ax, [0.0, 1.0, 0.0])
+        base = n
+        for i in range(segs + 1):
+            t = i / segs
+            y = 10 + (length - 10) * t
+            w = w0 + (w1 - w0) * t ** 0.8
+            al = (a0 + (a1 - a0) * t) * min(1.0, t / 0.02 if t > 0 else 0.0) * min(1.0, (1 - t) / fade_out)
+            for sd in (-1, 1):
+                q = ax * (w / 2 * sd) + np.array([0.0, y, 0.0])
+                lines.append(f'v {q[0]:.2f} {q[1]:.2f} {q[2]:.2f} {0.5 + 0.5 * sd:.3f} {t * tiles:.3f} 1 1 1 {al:.3f}')
+                lines.append(f'n {nrm[0]:.4f} {nrm[1]:.4f} {nrm[2]:.4f}')
+                n += 1
+        for i in range(segs):
+            a, b, c, e = base + 2 * i, base + 2 * i + 1, base + 2 * i + 2, base + 2 * i + 3
+            tris += [(a, b, c), (b, e, c)]
+    for t in tris:
+        lines.append('t %d %d %d' % t)
+
+
+def skinned_trail(lines, sd, tip):
+    """a ribbon off the wingtip back along twelve bones (each cross-section on its own bone - the game moves them), two
+    planes crossed (flat across the wing, and edge-up) so it reads from any side; faint, faded in at the tip, out at its end"""
+    bones = [f'DG_Trl{sd}{k}' for k in range(TRAIL_BONES)]
+    for k, b in enumerate(bones):
+        p = tip + np.array([0.0, -TRAIL_SPACING * k, 0.0])
+        lines.append(f'node {b} DG_Space {p[0]:.2f} {p[1]:.2f} {p[2]:.2f}')
+    lines.append(f'shape DG_Trail{sd} tex={TRAIL} color=0.88,0.94,1.0,1.0 scale=0 blend=add falloff=1 parent=DG_Space skin={",".join(bones)}')
+    n = 0
+    tris = []
+    for ax, nrm in ((np.array([1.0, 0, 0]), np.array([0, 0, 1.0])), (np.array([0, 0, 1.0]), np.array([1.0, 0, 0]))):
+        base = n
+        for k in range(TRAIL_BONES):
+            t = k / (TRAIL_BONES - 1)
+            p = tip + np.array([0.0, -TRAIL_SPACING * k, 0.0])
+            w = 16 + 20 * t
+            al = 0.5 * min(1.0, (k + 0.35) / 1.6) * (1 - t) ** 1.4
+            for s2 in (-1, 1):
+                q = p + ax * (w / 2 * s2)
+                lines.append(f'v {q[0]:.2f} {q[1]:.2f} {q[2]:.2f} {0.5 + 0.5 * s2:.3f} {t * 2.0:.3f} 1 1 1 {al:.3f}')
+                lines.append(f'n {nrm[0]:.4f} {nrm[1]:.4f} {nrm[2]:.4f}')
+                lines.append(f'w {k} 1.0')
+                n += 1
+        for k in range(TRAIL_BONES - 1):
+            a, b, c, e = base + 2 * k, base + 2 * k + 1, base + 2 * k + 2, base + 2 * k + 3
+            tris += [(a, b, c), (b, e, c)]
+    for t in tris:
+        lines.append('t %d %d %d' % t)
+
+
 def strip(lines, name, parent, p0, p1, w0, w1, a0, a1, color, scroll, segs=8, fade_in=0.0, tex=TEX):
     """a ribbon from p0 to p1 (two quads crossed, so it reads from any side), w0 -> w1 wide, alpha a0 -> a1 (and in from
     0 over the first fade_in of it)"""
@@ -97,10 +212,16 @@ def main():
     texture(texdir / 'CurseOfAlduin' / 'Dragon' / 'wind.dds')
     dash_texture(texdir / 'CurseOfAlduin' / 'Dragon' / 'wind_dash.dds')
     L = [f'out {out}', f'base {src}']
+    if pts:
+        trail_texture(texdir / 'CurseOfAlduin' / 'Dragon' / 'trail.dds')
+        beam_texture(texdir / 'CurseOfAlduin' / 'Dragon' / 'beam.dds')
     for sd in ('L', 'R'):
         if pts:   # from the tip of the wing's long finger (it moves with the finger as the wing folds)
             parent = f'DG_Wing{sd}F22'
             w, tip = np.array(pts[parent]), np.array(pts['tip' + sd])
+            L.append(f'node DG_Tip{sd} {parent} {tip[0] - w[0]:.2f} {tip[1] - w[1]:.2f} {tip[2] - w[2]:.2f}')
+            skinned_trail(L, sd, tip)
+            continue
         else:
             parent = f'DG_Wing{sd}3'
             w, tip = np.array(WRIST[sd]), np.array(TIP[sd])
@@ -119,6 +240,10 @@ def main():
         p0 = nose + np.array([r0 * math.cos(a), ahead, r0 * math.sin(a) * 0.8])
         p1 = nose + np.array([r1 * math.cos(a), -rng.uniform(150, 350), r1 * math.sin(a) * 0.8])
         strip(L, f'DG_Wind{i + 1}', 'DG_Bank', p0 - b, p1 - b, 8, 18, 0.0, 0.0, '0.9,0.95,1.0,1.0', 0, segs=10, tex=DASH)
+    if pts:   # the breath: core, flame, flare
+        beam(L, 'DG_Beam1', 7000, 40, 300, 1.0, 0.8, 5.8)
+        beam(L, 'DG_Beam2', 7000, 110, 820, 0.5, 0.3, 4.2)
+        beam(L, 'DG_Beam3', 900, 120, 460, 0.9, 0.0, 1.0, segs=8, fade_out=0.6)
     job = pathlib.Path(out).with_suffix('.job.txt')
     # alpha along the dive streaks: 0 at both ends, full in the middle
     out_lines, cur = [], None

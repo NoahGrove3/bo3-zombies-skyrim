@@ -13,10 +13,15 @@
 //   v x y z u v [r g b a]        (vertex colours optional: per-vertex tint and fade)
 //   n x y z                      (optional, after its v: that vertex's normal - needed by falloff / rim)
 //   t a b c
+//   node <name> <parent> x y z   (a plain node added under <parent> of the base NIF, at x y z in its space - e.g. bones to skin to)
+//   shape ... skin=<bone>,<bone>,...   the shape is skinned to those nodes (each must hang under the shape's own parent, unturned);
+//   w <i> <weight> [<i> <weight> ...]   after its v: that vertex's bones (indices into skin=) and weights
 #include "NifFile.hpp"
 #include <cstdio>
 #include <fstream>
 #include <sstream>
+#include <unordered_map>
+#include <algorithm>
 using namespace nifly;
 
 struct Shape
@@ -36,6 +41,13 @@ struct Shape
 	std::vector<Color4>  c;
 	std::vector<Vector3> n;
 	std::vector<Triangle> t;
+	std::vector<std::string> skin;
+	std::vector<std::vector<std::pair<int, float>>> w;
+};
+struct NodeAdd
+{
+	std::string name, parent;
+	float       x = 0, y = 0, z = 0;
 };
 
 int main(int argc, char** argv)
@@ -44,12 +56,19 @@ int main(int argc, char** argv)
 	std::ifstream in(argv[1]);
 	std::string   line, out, base;
 	std::vector<Shape> shapes;
+	std::vector<NodeAdd> nodes;
 	while (std::getline(in, line)) {
 		std::istringstream ss(line);
 		std::string k;
 		ss >> k;
 		if (k == "out") { std::getline(ss >> std::ws, out); }
 		else if (k == "base") { std::getline(ss >> std::ws, base); }
+		else if (k == "node") { NodeAdd a; ss >> a.name >> a.parent >> a.x >> a.y >> a.z; nodes.push_back(a); }
+		else if (k == "w" && !shapes.empty()) {
+			auto& s = shapes.back(); s.w.resize(s.v.size());
+			int i; float x;
+			while (ss >> i >> x) s.w.back().push_back({ i, x });
+		}
 		else if (k == "n" && !shapes.empty()) {
 			auto& s = shapes.back(); float x, y, z; ss >> x >> y >> z;
 			s.n.resize(s.v.size()); s.n.back() = Vector3(x, y, z);
@@ -74,6 +93,10 @@ int main(int argc, char** argv)
 				else if (key == "vscroll") s.vscroll = std::stof(val);
 				else if (key == "uscroll") s.uscroll = std::stof(val);
 				else if (key == "parent") s.parent = val;
+				else if (key == "skin") {
+					std::stringstream bs(val); std::string b;
+					while (std::getline(bs, b, ',')) if (!b.empty()) s.skin.push_back(b);
+				}
 			}
 			shapes.push_back(s);
 		} else if (k == "v" && !shapes.empty()) {
@@ -92,6 +115,13 @@ int main(int argc, char** argv)
 		nif.Create(NiVersion::getSSE());
 		nif.GetRootNode()->name.get() = "FX";
 	}
+	for (auto& a : nodes) {
+		auto* pn = nif.FindBlockByName<NiNode>(a.parent);
+		if (!pn) { fprintf(stderr, "no node %s (for %s)\n", a.parent.c_str(), a.name.c_str()); return 1; }
+		MatTransform x;
+		x.translation = Vector3(a.x, a.y, a.z);
+		nif.AddNode(a.name, x, pn);
+	}
 	for (auto& s : shapes) {
 		const bool withNormals = !s.n.empty();
 		if (withNormals) s.n.resize(s.v.size(), Vector3(0, 0, 1));
@@ -109,12 +139,49 @@ int main(int argc, char** argv)
 		}
 		ts->SetNormals(withNormals);  // (the falloff / rim needs them)
 		ts->SetTangents(false);
+		if (!s.skin.empty()) {  // skinned to nodes of the base: each bone's bind is its own place in the shape's parent's space
+			auto* sp = s.parent.empty() ? nif.GetRootNode() : nif.FindBlockByName<NiNode>(s.parent);
+			if (!sp) { fprintf(stderr, "no parent %s for the skin\n", s.parent.c_str()); return 1; }
+			nif.CreateSkinning(sh);
+			std::vector<int> ids;
+			std::vector<Vector3> at;
+			for (auto& b : s.skin) {
+				auto* bn = nif.FindBlockByName<NiNode>(b);
+				if (!bn) { fprintf(stderr, "no bone %s\n", b.c_str()); return 1; }
+				ids.push_back(nif.GetBlockID(bn));
+				at.push_back(bn->GetTransformToParent().translation);
+			}
+			nif.SetShapeBoneIDList(sh, ids);
+			if (auto* si = nif.GetHeader().GetBlock<NiSkinInstance>(sh->SkinInstanceRef())) si->targetRef.index = nif.GetBlockID(sp);
+			s.w.resize(s.v.size());
+			std::vector<std::unordered_map<uint16_t, float>> wm(s.skin.size());
+			std::vector<std::vector<Vector3>> pts(s.skin.size());
+			for (size_t v = 0; v < s.v.size(); ++v)
+				for (auto& [i, x] : s.w[v]) if (i >= 0 && i < (int)s.skin.size() && x > 0) wm[i][uint16_t(v)] = x, pts[i].push_back(s.v[v] - at[i]);
+			for (uint32_t b = 0; b < s.skin.size(); ++b) {
+				MatTransform bind;
+				bind.translation = at[b];
+				nif.SetShapeTransformSkinToBone(sh, b, bind.InverseTransform());
+				float r = 1;
+				for (auto& q : pts[b]) r = std::max(r, q.length());
+				BoundingSphere bs(Vector3(), r + 2.0f);
+				nif.SetShapeBoneBounds(s.name, b, bs);
+				nif.SetShapeBoneWeights(s.name, b, wm[b]);
+			}
+			for (size_t v = 0; v < s.v.size(); ++v) {
+				std::vector<uint8_t> bid;
+				std::vector<float>   wt;
+				for (auto& [i, x] : s.w[v]) bid.push_back(uint8_t(i)), wt.push_back(x);
+				nif.SetShapeVertWeights(s.name, uint16_t(v), bid, wt);
+			}
+			nif.UpdateSkinPartitions(sh);
+		}
 		// swap the default lighting shader for an effect shader: unlit, its own colour, additive
 		auto fx = std::make_unique<BSEffectShaderProperty>();
 		fx->sourceTexture.get() = s.tex;
 		fx->baseColor = Color4(s.col[0], s.col[1], s.col[2], s.col[3]);
 		fx->baseColorScale = s.scale;
-		fx->shaderFlags1 = 0x80000000u | (s.falloff || s.rim ? 0x40u : 0u);    // ZBuffer test (+ falloff)
+		fx->shaderFlags1 = 0x80000000u | (s.falloff || s.rim ? 0x40u : 0u) | (s.skin.empty() ? 0u : 0x2u);    // ZBuffer test (+ falloff, + skinned)
 		fx->shaderFlags2 = (s.single ? 0u : 0x10u) | 0x20u * (s.vcol ? 1u : 0u);  // double-sided (+ vertex colours)
 		fx->falloffStartAngle = 1.0f, fx->falloffStopAngle = 0.0f, fx->falloffStartOpacity = 1.0f, fx->falloffStopOpacity = 0.0f;
 		if (s.rim) {

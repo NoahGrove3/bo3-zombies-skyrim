@@ -163,18 +163,21 @@ namespace bo3z
 			z.entry[0][0] = cz, z.entry[0][1] = -sz, z.entry[0][2] = 0, z.entry[1][0] = sz, z.entry[1][1] = cz, z.entry[1][2] = 0, z.entry[2][0] = 0, z.entry[2][1] = 0, z.entry[2][2] = 1;
 			return z * y * x;
 		}
-		// ---- the dragon's goodbye: when the glider is put away the dragon lets go of you and flies on - a separate
-		// reference in the world (its own nif: CurseOfAlduin\fx\dragon_away.nif, the glider's dragon on its own) placed
-		// where it was holding you, carrying on forward, climbing and banking away, its talons opening then drawn up
+		// ---- the dragon's goodbye: when the glider is put away the dragon lets go of you and flies on - its own nif
+		// (CurseOfAlduin\fx\dragon_away[_bN].nif, the glider's dragon on its own) cloned and hung on your own 3D (both
+		// skeletons, like the whirlwind), placed in the world each frame where it should be: carrying on forward, climbing and
+		// banking away, its talons opening then drawn up. (It used to be a reference placed in the world and moved about -
+		// opening the map while one was in flight crashed the game, so it is no reference at all now.)
 		struct Away
 		{
-			RE::ObjectRefHandle ref;
-			float               t = -1;
-			RE::NiTransform     start;
-			RE::NiMatrix3       bank;
-			RE::NiPoint3        vel;
-			RE::NiPoint3        fwd{ 0, 1, 0 };  // which way it flies on (level, in the world)
-			float               scale = 1, side = 1;
+			RE::NiPointer<RE::NiAVObject> node[2];   // its copy on your third- and first-person 3D
+			RE::NiPointer<RE::NiNode>     host[2];   // ... and what each hangs from
+			float                         t = -1;
+			RE::NiTransform               start;
+			RE::NiMatrix3                 bank;
+			RE::NiPoint3                  vel;
+			RE::NiPoint3                  fwd{ 0, 1, 0 };  // which way it flies on (level, in the world)
+			float                         scale = 1, side = 1;
 		};
 		Away            g_away;
 		RE::NiTransform g_lastSpace;       // where the dragon was last frame (DG_Space's world transform)
@@ -304,7 +307,7 @@ namespace bo3z
 			return it == m.end() ? nullptr : &it->second;
 		}
 		template <class F>
-		void WingPose(RE::NiAVObject* a_root, float a_clock, F&& a_beat, float a_fold)
+		void WingPose(RE::NiAVObject* a_root, float a_clock, F&& a_beat, float a_fold, float a_lean = 0.0f)
 		{
 			if (!a_root) {
 				return;
@@ -324,7 +327,9 @@ namespace bo3z
 					const float b = a_beat(lag[j]), rising = a_beat(lag[j] - 0.02f) - b;
 					if (j == 1 && rising > 0) upFold = 0.35f * std::min(1.0f, std::abs(b) + 0.3f);
 					const float sway = (j == 0 ? 2.5f : 1.5f) * std::sin(6.28318f * a_clock / 3.0f + j * 0.6f + sd * 0.5f);
-					const float roll = sway * (1 - a_fold) + (b > 0 ? ampsUp[j] : ampsDown[j]) * b;
+					// (in a turn the outer wing is lifted a little more, the inner one let down: a_lean +1 leaning hard right)
+					const float lean = (sd == 0 ? 1.0f : -1.0f) * a_lean * (j == 0 ? 9.0f : 5.0f) * (1 - a_fold);
+					const float roll = sway * (1 - a_fold) + (b > 0 ? ampsUp[j] : ampsDown[j]) * b + lean;
 					const float back = rising > 0 ? (j == 0 ? 6.0f : 10.0f) * std::min(1.0f, std::abs(b) + 0.3f) : 0.0f;
 					const float twist = (rising < 0 ? (j == 2 ? 7.0f : 3.0f) * std::abs(b) : 0.0f) + 1.2f * std::sin(6.28318f * a_clock / 3.0f + 1.0f + j);
 					RE::NiMatrix3 r = Rot(twist * d, sg * roll * d, sg * back * d);
@@ -375,7 +380,8 @@ namespace bo3z
 			const float  dt = std::min(0.1f, std::chrono::duration<float>(now - last).count());
 			last = now;
 			clock += dt;
-			const float trailV = -std::fmod(clock * 1.6f, 1.0f), diveV = -std::fmod(clock * 3.2f, 1.0f);
+			// (the trail's ribbon follows the tip's path: its wisps drift back along it a little slower than the air stands still)
+			const float trailV = -std::fmod(clock * 4.7f, 1.0f), diveV = -std::fmod(clock * 3.2f, 1.0f);
 			FxLevel(a_root, "DG_TrailL", a_trail, trailV);
 			FxLevel(a_root, "DG_TrailR", a_trail, trailV + 0.37f);
 			for (int i = 1; i <= 14; ++i) {  // (each at its own pace and phase: no two streaks move together)
@@ -385,7 +391,112 @@ namespace bo3z
 			(void)diveV;
 		}
 
+		// ---- the wingtip trails (Noah: see-through, flowing with the wings - never a solid line): each is a ribbon skinned
+		// to twelve bones (tools/dragonfx.py: DG_TrlL0..11 / DG_TrlR0..11) that are put, every frame, where the wingtip was
+		// 0, 0.03, 0.06 ... seconds ago and turned as the wing was then - so the ribbon is the very path the tip drew through
+		// the air, curving with every beat, turn and dive, widening and fading as it ages
+		constexpr int   kTrailBones = 12;
+		constexpr float kTrailStep = 0.03f;
+		struct TrailHist
+		{
+			struct S
+			{
+				float        t;
+				RE::NiPoint3 p, x;  // where the tip was, and its span axis then
+			};
+			static constexpr int kN = 128;
+			S     buf[2][kN]{};
+			int   n[2]{}, head[2]{};
+			float clock = 0;
+			void  Reset() { n[0] = n[1] = head[0] = head[1] = 0; }
+			const S& Newest(int a_sd) const { return buf[a_sd][(head[a_sd] - 1 + kN) % kN]; }
+			void  Push(int a_sd, const RE::NiPoint3& a_p, const RE::NiPoint3& a_x)
+			{
+				buf[a_sd][head[a_sd]] = { clock, a_p, a_x };
+				head[a_sd] = (head[a_sd] + 1) % kN;
+				n[a_sd] = std::min(n[a_sd] + 1, kN);
+			}
+			bool At(int a_sd, float a_age, RE::NiPoint3& a_p, RE::NiPoint3& a_x) const
+			{
+				if (n[a_sd] == 0) return false;
+				const float want = clock - a_age;
+				const S*    newer = &Newest(a_sd);
+				if (want >= newer->t) {
+					a_p = newer->p, a_x = newer->x;
+					return true;
+				}
+				for (int i = 1; i < n[a_sd]; ++i) {
+					const S* older = &buf[a_sd][(head[a_sd] - 1 - i + 2 * kN) % kN];
+					if (older->t <= want) {
+						const float k = (want - older->t) / std::max(1e-5f, newer->t - older->t);
+						a_p = older->p + (newer->p - older->p) * k;
+						a_x = older->x + (newer->x - older->x) * k;
+						return true;
+					}
+					newer = older;
+				}
+				a_p = newer->p, a_x = newer->x;  // (no older: the trail is still growing out of the tip)
+				return true;
+			}
+		};
+		TrailHist g_trail;      // the dragon that holds you
+		TrailHist g_awayTrail;  // the one flying off
+		void TrailSample(RE::NiAVObject* a_root, TrailHist& a_h, float a_dt)
+		{
+			if (!a_root) return;
+			a_h.clock += std::clamp(a_dt, 0.0f, 0.1f);
+			for (int sd = 0; sd < 2; ++sd) {
+				auto* tip = a_root->GetObjectByName(sd == 0 ? "DG_TipL" : "DG_TipR");
+				if (!tip || tip->world.scale < 1e-4f) continue;
+				const auto&        m = tip->world.rotate;
+				const RE::NiPoint3 x{ m.entry[0][0], m.entry[1][0], m.entry[2][0] };
+				if (a_h.n[sd] == 0 || a_h.clock - a_h.Newest(sd).t >= 0.006f) a_h.Push(sd, tip->world.translate, x);
+			}
+		}
+		void TrailPlace(RE::NiAVObject* a_root, const TrailHist& a_h, float a_scale)
+		{
+			if (!a_root || a_scale < 1e-4f) return;
+			RE::NiUpdateData ud;
+			ud.time = 0.0f;
+			for (int sd = 0; sd < 2; ++sd) {
+				for (int k = 0; k < kTrailBones; ++k) {
+					auto* bone = a_root->GetObjectByName(fmt::format("DG_Trl{}{}", sd == 0 ? "L" : "R", k).c_str());
+					if (!bone || !bone->parent || bone->parent->world.scale < 1e-4f) continue;
+					RE::NiPoint3 p, x, pa, pb, xa, xb;
+					if (!a_h.At(sd, k * kTrailStep, p, x)) continue;
+					a_h.At(sd, std::max(0.0f, (k - 0.5f) * kTrailStep), pa, xa);
+					a_h.At(sd, (k + 0.5f) * kTrailStep, pb, xb);
+					RE::NiPoint3 Y = pa - pb;  // (toward the tip: the way the air came from)
+					const auto&  P = bone->parent->world;
+					if (Y.Length() < 0.5f) Y = { P.rotate.entry[0][1], P.rotate.entry[1][1], P.rotate.entry[2][1] };
+					Y.Unitize();
+					RE::NiPoint3 X = x - Y * x.Dot(Y);
+					if (X.Length() < 1e-3f) X = Y.Cross({ 0, 0, 1 });
+					X.Unitize();
+					const RE::NiPoint3 Z = X.Cross(Y);
+					RE::NiMatrix3      R;
+					R.entry[0][0] = X.x, R.entry[1][0] = X.y, R.entry[2][0] = X.z;
+					R.entry[0][1] = Y.x, R.entry[1][1] = Y.y, R.entry[2][1] = Y.z;
+					R.entry[0][2] = Z.x, R.entry[1][2] = Z.y, R.entry[2][2] = Z.z;
+					const float sc = a_scale * (1.0f + 0.9f * k / float(kTrailBones - 1));  // (the air spreads as it ages)
+					bone->local.rotate = P.rotate.Transpose() * R;
+					bone->local.translate = P.rotate.Transpose() * (p - P.translate) * (1.0f / P.scale);
+					bone->local.scale = sc / P.scale;
+					bone->UpdateDownwardPass(ud, 0);
+				}
+			}
+		}
+
 		void Talons(RE::NiAVObject* a_root, float a_curl);
+		void AwayGone()
+		{
+			for (int i = 0; i < 2; ++i) {
+				if (auto& n = g_away.node[i]; n && n->parent) n->parent->DetachChild(n.get());
+				g_away.node[i].reset();
+				g_away.host[i].reset();
+			}
+			g_away.t = -1;
+		}
 		void AwayTick(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			if (g_away.t < 0) {
@@ -393,29 +504,9 @@ namespace bo3z
 			}
 			g_away.t += a_delta;
 			const float t = g_away.t;
-			auto        ref = g_away.ref.get();
-			if (!ref) {
-				g_away.t = -1;
+			if (t > 4.5f || (!g_away.node[0] && !g_away.node[1])) {
+				AwayGone();
 				return;
-			}
-			if (t > 4.5f) {
-				ref->Disable();
-				ref->SetDelete(true);
-				g_away = {};
-				return;
-			}
-			auto* root = ref->Get3D();
-			static float logT = 0;
-			if ((logT -= a_delta) <= 0 || t == a_delta) {
-				logT = 0.5f;
-				logger::info("glider: fly-off t {:.2f} 3D {} at ({:.0f},{:.0f},{:.0f}) ref ({:.0f},{:.0f},{:.0f}) disabled {} bound ({:.0f},{:.0f},{:.0f}) r {:.0f} scale {:.2f} parent {} culled {}", t, root != nullptr,
-					root ? root->world.translate.x : 0.0f, root ? root->world.translate.y : 0.0f, root ? root->world.translate.z : 0.0f,
-					ref->GetPositionX(), ref->GetPositionY(), ref->GetPositionZ(), ref->IsDisabled(),
-					root ? root->worldBound.center.x : 0.0f, root ? root->worldBound.center.y : 0.0f, root ? root->worldBound.center.z : 0.0f, root ? root->worldBound.radius : 0.0f,
-					root ? root->world.scale : 0.0f, root && root->parent ? root->parent->name.c_str() : "-", root ? root->GetAppCulled() : false);
-			}
-			if (!root) {
-				return;  // (still loading: it catches up with its path when it appears)
 			}
 			// (in the world's own axes: the dragon's frame on you is not upright - its own "up" can point anywhere)
 			const auto&        R0 = g_away.start.rotate;
@@ -427,73 +518,113 @@ namespace bo3z
 			                         up * (90 * std::sin(std::min(t, 0.6f) * 2.6f) + 150 * t * t) + right * (sd * 95 * t * t);
 			const float climb = Smooth(t / 1.3f);
 			const float roll = sd * 0.75f * std::sin(3.14159f * std::min(1.0f, t / 2.8f));
-			ref->SetPosition(pos);  // (the reference itself moves: only moving its 3D left it culled where it was placed)
-			root->local.translate = pos;
-			root->local.rotate = AxisAngle(up, -sd * 0.55f * climb) * AxisAngle(fwd, roll) * AxisAngle(right, 0.42f * climb) * R0;
-			root->local.scale = g_away.scale;
-			if (auto* bank = root->GetObjectByName("DG_Bank")) {  // (from the lean it had as it let go, straightening out)
-				bank->local.rotate = Slerp(g_away.bank, Rot(0, 0, 0), Smooth(t / 0.6f));
+			RE::NiTransform W;
+			W.translate = pos;
+			W.rotate = AxisAngle(up, -sd * 0.55f * climb) * AxisAngle(fwd, roll) * AxisAngle(right, 0.42f * climb) * R0;
+			W.scale = g_away.scale;
+			const bool first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
+			for (int i = 0; i < 2; ++i) {
+				auto& node = g_away.node[i];
+				if (!node) continue;
+				auto* hostNow = a_player->Get3D(i == 1) ? a_player->Get3D(i == 1)->AsNode() : nullptr;
+				if (!hostNow) continue;
+				if (node->parent != hostNow) {  // (your 3D was rebuilt: it moves to the new one)
+					if (node->parent) node->parent->DetachChild(node.get());
+					hostNow->AttachChild(node.get(), true);
+					g_away.host[i].reset(hostNow);
+				}
+				const auto& H = hostNow->world;
+				const float hs = std::max(1e-4f, H.scale);
+				node->local.rotate = H.rotate.Transpose() * W.rotate;
+				node->local.translate = H.rotate.Transpose() * (W.translate - H.translate) * (1.0f / hs);
+				node->local.scale = W.scale / hs;
+				auto* root = node.get();
+				if (auto* bank = root->GetObjectByName("DG_Bank")) {  // (from the lean it had as it let go, straightening out)
+					bank->local.rotate = Slerp(g_away.bank, Rot(0, 0, 0), Smooth(t / 0.6f));
+				}
+				if (auto* look = root->GetObjectByName("DG_Look")) {  // looking where it turns
+					look->local.rotate = Rot(0.1f * climb, 0, -sd * 0.35f * Smooth(t / 0.9f));
+				}
+				// talons: open as it lets you go, then the legs drawn up under it for the flight
+				const float open = std::sin(3.14159f * std::clamp(t / 0.45f, 0.0f, 1.0f));
+				const float tuck = Smooth((t - 0.3f) / 0.7f);
+				for (int s2 = 0; s2 < 2; ++s2) {
+					const char* L = s2 == 0 ? "L" : "R";
+					const auto& k = DragonPoses::kLegGlide;
+					const auto& dv = DragonPoses::kLegDive;  // (streamlined for the climb away)
+					if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}1", L).c_str())) n->local.rotate = Rot(k[0] + (dv[0] - k[0]) * tuck, 0, 0);
+					if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}2", L).c_str())) n->local.rotate = Rot(k[1] + (dv[1] - k[1]) * tuck, 0, 0);
+					if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}3", L).c_str())) n->local.rotate = Rot(k[2] + (dv[2] - k[2]) * tuck + 0.1f * open, 0, 0);
+				}
+				Talons(root, DragonPoses::kToesGlide + (DragonPoses::kToesDive - DragonPoses::kToesGlide) * tuck);
+				// the climb away: strong wing-beats (1.1 s each), then out into a glide
+				WingPose(root, t, [t](float a_lag) { const float k = t - 0.15f - a_lag; return k < 3.3f ? WingBeat(std::fmod(std::max(k, 0.0f), 1.1f), 1.1f) : 0.0f; }, 0.0f);
+				DragonWind(root, 0.75f * (1 - Smooth((t - 3.2f) / 1.0f)), 0.0f);
+				RE::NiUpdateData ud;
+				root->Update(ud);
 			}
-			if (auto* look = root->GetObjectByName("DG_Look")) {  // looking where it turns
-				look->local.rotate = Rot(0.1f * climb, 0, -sd * 0.35f * Smooth(t / 0.9f));
+			{  // its trails, from where the tips were while it held you on
+				auto* seen = g_away.node[first && g_away.node[1] ? 1 : 0].get();
+				if (!seen) seen = g_away.node[0] ? g_away.node[0].get() : g_away.node[1].get();
+				TrailSample(seen, g_awayTrail, a_delta);
+				for (auto& n : g_away.node) {
+					if (n) TrailPlace(n.get(), g_awayTrail, W.scale);
+				}
 			}
-			// talons: open as it lets you go, then the legs drawn up under it for the flight
-			const float open = std::sin(3.14159f * std::clamp(t / 0.45f, 0.0f, 1.0f));
-			const float tuck = Smooth((t - 0.3f) / 0.7f);
-			for (int s2 = 0; s2 < 2; ++s2) {
-				const char* L = s2 == 0 ? "L" : "R";
-				// (the new dragon: its legs already drawn up under it - tucked tighter for the flight)
-				const auto& k = DragonPoses::kLegGlide;
-				const auto& dv = DragonPoses::kLegDive;  // (streamlined for the climb away)
-				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}1", L).c_str())) n->local.rotate = Rot(k[0] + (dv[0] - k[0]) * tuck, 0, 0);
-				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}2", L).c_str())) n->local.rotate = Rot(k[1] + (dv[1] - k[1]) * tuck, 0, 0);
-				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}3", L).c_str())) n->local.rotate = Rot(k[2] + (dv[2] - k[2]) * tuck + 0.1f * open, 0, 0);
-			}
-			Talons(root, DragonPoses::kToesGlide + (DragonPoses::kToesDive - DragonPoses::kToesGlide) * tuck);
-			if (auto* tr = root->GetObjectByName("DG_Trapeze")) {  // (the empty bar swinging back as it climbs away)
-				tr->local.rotate = Rot(-0.5f * std::sin(std::min(1.0f, t / 1.2f) * 3.14159f) * std::exp(-t * 0.6f) - 0.25f * Smooth(t / 1.5f), 0, 0);
-			}
-			// the climb away: strong wing-beats (1.1 s each), then out into a glide
-			WingPose(root, t, [t](float a_lag) { const float k = t - 0.15f - a_lag; return k < 3.3f ? WingBeat(std::fmod(std::max(k, 0.0f), 1.1f), 1.1f) : 0.0f; }, 0.0f);
-			DragonWind(root, 0.9f * (1 - Smooth((t - 3.2f) / 1.0f)), 0.0f);
 			{
 				static float lastBeat = 0;
 				const float  k = std::fmod(std::max(t - 0.15f, 0.0f), 1.1f);
 				if (t > 1.0f && t < 3.4f && lastBeat < 0.4f && k >= 0.4f) {
-					PlayGameSound(DragonSound::kFlap, ref.get(), nullptr, 0.7f);
+					PlayGameSound(DragonSound::kFlap, a_player, nullptr, 0.7f);
 				}
 				lastBeat = k;
 			}
-			RE::NiUpdateData ud;
-			root->Update(ud);
 		}
 
+		const char* AwayModel(int a_bond)
+		{
+			static constexpr const char* kAway[4] = { "CurseOfAlduin\\fx\\dragon_away.nif", "CurseOfAlduin\\fx\\dragon_away_b1.nif", "CurseOfAlduin\\fx\\dragon_away_b2.nif",
+				"CurseOfAlduin\\fx\\dragon_away_b3.nif" };
+			return kAway[std::clamp(a_bond, 0, 3)];
+		}
+		int Bond();
 		void LetGo(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_vel, float a_roll, float a_baseScale)
 		{
-			if (g_away.t >= 0) {  // (the last one is still in the air: it goes now)
-				if (auto old = g_away.ref.get()) {
-					old->Disable();
-					old->SetDelete(true);
+			AwayGone();  // (the last one, if still in the air, goes now)
+			static RE::NiPointer<RE::NiNode> model[4];
+			const int b = Bond();
+			if (!model[b]) {
+				RE::BSModelDB::DBTraits::ArgsType args{};
+				if (RE::BSModelDB::Demand(AwayModel(b), model[b], args) != RE::BSResource::ErrorCode::kNone || !model[b]) {
+					model[b].reset();
+					logger::warn("glider: no fly-off dragon model ({})", AwayModel(b));
+					return;
 				}
-				g_away = {};
 			}
-			auto* st = Forms::Ours(gen::kDragonAway);
-			if (!st) {
-				logger::warn("glider: the fly-off dragon's record is missing");
+			int made = 0;
+			for (int i = 0; i < 2; ++i) {
+				auto* host = a_player->Get3D(i == 1) ? a_player->Get3D(i == 1)->AsNode() : nullptr;
+				if (!host) continue;
+				if (auto* clone = model[b]->Clone()) {
+					auto* obj = static_cast<RE::NiAVObject*>(clone);
+					obj->local = RE::NiTransform{};
+					obj->local.scale = 0.0f;  // (unseen until AwayTick places it, this same frame)
+					host->AttachChild(obj, true);
+					g_away.node[i].reset(obj);
+					g_away.host[i].reset(host);
+					++made;
+				}
+			}
+			if (!made) {
 				return;
 			}
-			auto ref = a_player->PlaceObjectAtMe(st, false);
-			if (!ref) {
-				return;
-			}
-			ref->SetPosition(g_lastSpace.translate);
 			logger::info("glider: the dragon lets go at ({:.0f},{:.0f},{:.0f}), scale {:.3f}/{:.3f}", g_lastSpace.translate.x, g_lastSpace.translate.y, g_lastSpace.translate.z, g_lastSpace.scale, a_baseScale);
 			static std::mt19937 rng{ std::random_device{}() };
-			g_away.ref = ref->CreateRefHandle();
 			g_away.t = 0;
 			g_away.start = g_lastSpace;
 			g_away.bank = g_lastBank;
 			g_away.vel = a_vel;
+			g_awayTrail = g_trail;  // (its trails carry straight on from the ones it had)
 			{
 				RE::NiPoint3 f{ a_vel.x, a_vel.y, 0 };
 				if (f.Length() < 100.0f) {  // (landed: it flies off ahead of your view, where you can see it go)
@@ -506,12 +637,12 @@ namespace bo3z
 				}
 				f.Unitize();
 				g_away.fwd = f;
-				logger::info("glider: it flies off toward ({:.2f},{:.2f})", f.x, f.y);
 			}
 			g_away.scale = a_baseScale > 0 ? g_lastSpace.scale / a_baseScale : 1.0f;
 			g_away.side = std::abs(a_roll) > 0.05f ? (a_roll > 0 ? 1.0f : -1.0f) : (rng() % 2 ? 1.0f : -1.0f);
-			PlayGameSound(DragonSound::kFlapBig, ref.get());
-			PlayGameSound(DragonSound::kRoar, ref.get(), nullptr, 0.8f);
+			AwayTick(a_player, 0.0f);
+			PlayGameSound(DragonSound::kFlapBig, a_player);
+			PlayGameSound(DragonSound::kRoar, a_player, nullptr, 0.8f);
 		}
 
 		// ---- the Echo Altar's dragon bonds (Noah): three, bought in order at any Echo Altar, kept for the whole game
@@ -557,6 +688,7 @@ namespace bo3z
 			return 0.12f + 0.2f * std::sin(3.14159f * std::min(1.0f, k * 1.2f)) - 0.12f * Smooth((k - 0.6f) / 0.4f);
 		}
 		int   g_liftOff = 0;                 // Bond II: 1 the Updraft's whirlwind is carrying you up
+		constexpr float kUpdraftRise = 1.4f, kUpdraftEnd = 2.1f;  // its climb, then its hold at the top
 		float g_updraftAge = 99;
 		bool  g_glideQueued = false;         // Activate pressed on the Updraft's way up: the glider opens at its top             // seconds since the Updraft (a glider opened soon after: the dragon comes quicker)
 		struct Whirl  // (hung on your own 3D - both skeletons - so it is drawn wherever you are)
@@ -596,11 +728,7 @@ namespace bo3z
 				return;
 			}
 			static constexpr const char* kGlider[4] = { "NickNak\\ParaGlider.nif", "NickNak\\ParaGlider_b1.nif", "NickNak\\ParaGlider_b2.nif", "NickNak\\ParaGlider_b3.nif" };
-			static constexpr const char* kAway[4] = { "CurseOfAlduin\\fx\\dragon_away.nif", "CurseOfAlduin\\fx\\dragon_away_b1.nif", "CurseOfAlduin\\fx\\dragon_away_b2.nif", "CurseOfAlduin\\fx\\dragon_away_b3.nif" };
-			anio->SetModel(kGlider[b]);
-			if (auto* st = Forms::Ours(gen::kDragonAway); st && st->As<RE::TESObjectSTAT>()) {
-				st->As<RE::TESObjectSTAT>()->SetModel(kAway[b]);
-			}
+			anio->SetModel(kGlider[b]);  // (the fly-off is the same bond's dragon_away nif, cloned: LetGo)
 			applied = b;
 			logger::info("glider: the dragon's bond {} ({})", b, kGlider[b]);
 		}
@@ -765,23 +893,104 @@ namespace bo3z
 			}
 			return best;
 		}
+		// (Noah: base damage balanced, then 25% more for each bond - x1, x1.25, x1.5, x1.75): everything of the dead inside the
+		// beam (a cone widening from its jaws, 16 m long) is burned every 0.2 s - about 60% of a round's undead health a
+		// second before any bond, so a full breath kills most of what it is held on; others lose 15% of their health a second
+		float BreathMult() { return 1.0f + 0.25f * static_cast<float>(std::clamp(Save::DragonBond(), 0, 3)); }
+		constexpr float kBeamReach = 1650.0f;
 		void BreathHits(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_from, const RE::NiPoint3& a_dir)
 		{
-			static constexpr float kBondHeat[4] = { 0.5f, 0.5f, 0.8f, 1.25f };  // (each bond's fire burns hotter)
-			const float            heat = kBondHeat[std::clamp(Bond(), 0, 3)];
+			const float mult = BreathMult();
+			int         n = 0;
 			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 				auto a = h.get();
 				if (!Foe(a.get(), a_player)) {
 					continue;
 				}
-				RE::NiPoint3 to = a->GetPosition() + RE::NiPoint3{ 0, 0, 60 } - a_from;
-				const float  d = to.Length();
-				if (d > 1800.0f || d < 1 || (to.x * a_dir.x + to.y * a_dir.y + to.z * a_dir.z) / d < 0.90f) {
+				const RE::NiPoint3 to = a->GetPosition() + RE::NiPoint3{ 0, 0, 60 } - a_from;
+				const float        along = to.Dot(a_dir);
+				if (along < 0.0f || along > kBeamReach) {
 					continue;
 				}
-				const bool undead = Director::IsRoundUndead(a.get());
-				const float dmg = undead ? Director::RoundHealth() * 0.25f : a->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.05f;  // (a breath burns most of the dead it catches)
-				Hurt(a.get(), dmg * heat);
+				const float side = (to - a_dir * along).Length();
+				if (side > 75.0f + 0.13f * along) {  // (the beam widens as it goes)
+					continue;
+				}
+				const bool  undead = Director::IsRoundUndead(a.get());
+				const float dmg = undead ? Director::RoundHealth() * 0.12f : a->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.03f;
+				Hurt(a.get(), dmg * mult);
+				++n;
+			}
+			static float logT = 0;
+			if (n && (logT -= 0.2f) <= 0) {
+				logT = 1.0f;
+				logger::info("glider: the breath burns {} (x{:.2f})", n, mult);
+			}
+		}
+
+		// the breath's look (Noah: one beam of fire, not a stream of fireballs): DG_Beam1..3 under its mouth
+		// (tools/dragonfx.py) - a white-hot core, a wider flame round it, a flare at its jaws - turned each frame to where it
+		// breathes, grown out of its jaws and faded away, in its bond's colours (Skyrim's fire, then blue, yellow, green)
+		struct BeamState
+		{
+			float        level = 0, grow = 0, clock = 0;
+			RE::NiPoint3 dir{ 0, 1, 0 };
+		};
+		BeamState g_beam;
+		void FxColor(RE::NiAVObject* a_root, const char* a_name, float a_r, float a_g, float a_b)
+		{
+			auto* o = a_root ? a_root->GetObjectByName(a_name) : nullptr;
+			auto* g = o ? o->AsGeometry() : nullptr;
+			auto* p = g ? g->GetGeometryRuntimeData().shaderProperty.get() : nullptr;
+			auto* rtti = p ? p->GetRTTI() : nullptr;
+			if (!rtti || std::string_view(rtti->GetName()) != "BSEffectShaderProperty") {
+				return;
+			}
+			if (auto* m = static_cast<RE::BSEffectShaderMaterial*>(static_cast<RE::BSShaderProperty*>(p)->material)) {
+				m->baseColor = { a_r, a_g, a_b, 1.0f };
+			}
+		}
+		RE::NiMatrix3 AimAlong(RE::NiPoint3 a_dir)  // a turn taking +Y to a_dir, kept level across
+		{
+			a_dir.Unitize();
+			RE::NiPoint3 X = a_dir.Cross({ 0, 0, 1 });
+			if (X.Length() < 1e-3f) X = { 1, 0, 0 };
+			X.Unitize();
+			const RE::NiPoint3 Z = X.Cross(a_dir);
+			RE::NiMatrix3      R;
+			R.entry[0][0] = X.x, R.entry[1][0] = X.y, R.entry[2][0] = X.z;
+			R.entry[0][1] = a_dir.x, R.entry[1][1] = a_dir.y, R.entry[2][1] = a_dir.z;
+			R.entry[0][2] = Z.x, R.entry[1][2] = Z.y, R.entry[2][2] = Z.z;
+			return R;
+		}
+		void BeamPose(RE::NiAVObject* a_root, const BeamState& a_b, int a_bond)
+		{
+			auto* mouth = a_root ? a_root->GetObjectByName("DG_Mouth") : nullptr;
+			if (!mouth) return;
+			static constexpr float kOuter[4][3] = { { 1.0f, 0.40f, 0.07f }, { 0.12f, 0.38f, 1.0f }, { 1.0f, 0.72f, 0.04f }, { 0.12f, 0.85f, 0.14f } };
+			static constexpr float kCore[4][3] = { { 1.0f, 0.80f, 0.40f }, { 0.60f, 0.82f, 1.0f }, { 1.0f, 0.94f, 0.55f }, { 0.65f, 1.0f, 0.55f } };
+			const int   b = std::clamp(a_bond, 0, 3);
+			const float flick = 0.9f + 0.1f * std::sin(a_b.clock * 31.0f) * std::sin(a_b.clock * 17.0f + 1.0f);
+			const RE::NiMatrix3 R = mouth->world.rotate.Transpose() * AimAlong(a_b.dir);
+			struct Part
+			{
+				const char* name;
+				float       level, rate;
+				bool        core;
+			};
+			static constexpr Part parts[3] = { { "DG_Beam1", 1.0f, 4.0f, true }, { "DG_Beam2", 0.6f, 3.0f, false }, { "DG_Beam3", 0.85f, 5.0f, false } };
+			RE::NiUpdateData ud;
+			ud.time = 0.0f;
+			for (const auto& pt : parts) {
+				auto* o = a_root->GetObjectByName(pt.name);
+				if (!o) continue;
+				o->local.rotate = R;
+				o->local.translate = {};
+				o->local.scale = std::max(0.02f, a_b.grow);  // (it grows out of its jaws)
+				const float* c = pt.core ? kCore[b] : kOuter[b];
+				FxColor(a_root, pt.name, c[0], c[1], c[2]);
+				FxLevel(a_root, pt.name, a_b.level * pt.level * flick, -std::fmod(a_b.clock * pt.rate, 1.0f));
+				o->UpdateDownwardPass(ud, 0);
 			}
 		}
 
@@ -830,11 +1039,11 @@ namespace bo3z
 			}
 			g_whirl.t += a_delta;
 			const float t = g_whirl.t;
-			if (t > 2.2f) {
+			if (t > 2.6f) {
 				WhirlGone();
 				return;
 			}
-			const float level = 1.0f * Smooth(t / 0.18f) * (1 - Smooth((t - 1.4f) / 0.7f));  // (Noah: transparent - faint layers of air)
+			const float level = 1.0f * Smooth(t / 0.18f) * (1 - Smooth((t - 1.7f) / 0.8f));  // (Noah: transparent - faint layers of air)
 			for (auto& n : g_whirl.node) {
 				if (!n) continue;
 				n->local.translate = { 0, 0, -60.0f * Smooth(t / 1.0f) };
@@ -932,21 +1141,21 @@ namespace bo3z
 				if (cc) {
 					GetVel(cc, v);
 				}
-				// up about 14 m in 1.15 s, slowing to the top; then it holds you there a moment, barely sinking, so there is
-				// time to open the glider (pressed on the way up, it opens at the top by itself)
-				if (cc && g_takeT < 1.75f && !g_hadDragon) {
+				// (Noah: higher) up about 27 m in 1.4 s, slowing to the top; then it holds you there a moment, barely sinking, so
+				// there is time to open the glider (pressed on the way up, it opens at the top by itself)
+				if (cc && g_takeT < kUpdraftEnd && !g_hadDragon) {
 					cc->context.currentState = RE::hkpCharacterStateType::kInAir;
-					v.z = g_takeT < 1.15f ? 60.0f + 1600.0f * (1 - Smooth(g_takeT / 1.15f)) : 60.0f - 140.0f * Smooth((g_takeT - 1.15f) / 0.6f);
+					v.z = g_takeT < kUpdraftRise ? 60.0f + 2600.0f * (1 - Smooth(g_takeT / kUpdraftRise)) : 60.0f - 140.0f * Smooth((g_takeT - kUpdraftRise) / 0.7f);
 					SetVel(cc, v);
 				}
-				if (g_glideQueued && g_takeT > 1.15f && !g_hadDragon) {
+				if (g_glideQueued && g_takeT > kUpdraftRise && !g_hadDragon) {
 					g_glideQueued = false;
 					if (!a_player->NotifyAnimationGraph("StartPara")) {
 						DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
 					}
 					logger::info("glider: opened at the Updraft's top");
 				}
-				if (g_takeT > 1.75f || g_hadDragon) {
+				if (g_takeT > kUpdraftEnd || g_hadDragon) {
 					g_liftOff = 0, g_glideQueued = false;
 				}
 			}
@@ -1000,61 +1209,6 @@ namespace bo3z
 			return std::atan2(a_axis.Dot(a_from.Cross(a_to)), a_from.Dot(a_to));
 		}
 
-		// (Noah: you hang from its harness) the bar swings about its rings to your hands, and what it cannot reach the
-		// dragon itself comes the rest of the way
-		void Grip(RE::PlayerCharacter* a_player, RE::NiAVObject* a_space, bool a_first, float a_dt)
-		{
-			auto* root = a_player->Get3D(a_first);
-			if (!root || !a_space || !a_space->parent || g_grip <= 0.01f) {
-				return;
-			}
-			auto* trap = a_space->GetObjectByName("DG_Trapeze");
-			auto* hl = a_space->GetObjectByName("DG_HandleL");
-			auto* hr = a_space->GetObjectByName("DG_HandleR");
-			auto* lh = root->GetObjectByName("NPC L Hand [LHnd]");
-			auto* rh = root->GetObjectByName("NPC R Hand [RHnd]");
-			auto* lf = root->GetObjectByName("NPC L Finger20 [LF20]");
-			auto* rf = root->GetObjectByName("NPC R Finger20 [RF20]");
-			if (!trap || !trap->parent || !hl || !hr || !lh || !rh) {
-				return;
-			}
-			RE::NiUpdateData ud;
-			ud.time = 0.0f;
-			a_space->UpdateDownwardPass(ud, 0);  // (this frame's pose, before reaching)
-			const RE::NiPoint3 palmL = lf ? (lh->world.translate + lf->world.translate) * 0.5f : lh->world.translate;
-			const RE::NiPoint3 palmR = rf ? (rh->world.translate + rf->world.translate) * 0.5f : rh->world.translate;
-			const RE::NiPoint3 hands = (palmL + palmR) * 0.5f;
-			for (int it = 0; it < 2; ++it) {
-				const auto&        P = trap->parent->world.rotate;
-				const RE::NiPoint3 axis{ P.entry[0][0], P.entry[1][0], P.entry[2][0] };
-				const RE::NiPoint3 bar = (hl->world.translate + hr->world.translate) * 0.5f;
-				const float        d = std::clamp(SignedAngle(bar - trap->world.translate, hands - trap->world.translate, axis), -0.2f, 0.2f) * g_grip;
-				g_trap = std::clamp(g_trap + d, -0.9f, 0.9f);
-				trap->local.rotate = Rot(g_trap, 0, 0);
-				trap->UpdateDownwardPass(ud, 0);
-			}
-			const RE::NiPoint3 r = hands - (hl->world.translate + hr->world.translate) * 0.5f;
-			const auto&        R = a_space->parent->world.rotate;
-			const float        sc = std::max(0.001f, a_space->parent->world.scale);
-			RE::NiPoint3 local{ R.entry[0][0] * r.x + R.entry[1][0] * r.y + R.entry[2][0] * r.z, R.entry[0][1] * r.x + R.entry[1][1] * r.y + R.entry[2][1] * r.z,
-				R.entry[0][2] * r.x + R.entry[1][2] * r.y + R.entry[2][2] * r.z };
-			// (the dragon's own swing on you - g_sway - is left alone: only where it rests is brought to your hands)
-			const RE::NiPoint3 swayHere = a_space->local.rotate * (g_sway * (a_space->local.scale * g_grip));
-			g_grabOff = g_grabOff + (local * (1.0f / sc) + swayHere) * std::min(1.0f, a_dt * 6.0f) * g_grip;
-			const float len = g_grabOff.Length();
-			constexpr float most = 120.0f;
-			if (len > most) g_grabOff = g_grabOff * (most / len);
-			static float logT = 0;
-			if ((logT -= a_dt) <= 0) {
-				logT = 2.0f;
-				// (your hands in the dragon's own space, unswung and unmoved: where the bar should hang)
-				const auto&        Sw = a_space->world;
-				const RE::NiPoint3 hl0 = Sw.rotate.Transpose() * (hands - Sw.translate) * (1.0f / std::max(1e-4f, Sw.scale));
-				logger::info("glider: holding the harness - bar {:.1f} from your hands, swung {:.2f}, dragon moved ({:.0f},{:.0f},{:.0f}); hands at ({:.0f},{:.0f},{:.0f}) in its space", r.Length(), g_trap,
-					g_grabOff.x, g_grabOff.y, g_grabOff.z, hl0.x, hl0.y, hl0.z);
-			}
-		}
-
 		void DevBreath(int a_element)  // dev: Bond III's breath now, in that element (0 fire, 1 frost, 2 lightning)
 		{
 			g_breathElDev = a_element;
@@ -1067,7 +1221,7 @@ namespace bo3z
 		}
 		void DevFlap()  // dev: Bond I's climbing wing-beats, as if jump were pressed mid-glide
 		{
-			if (g_hadDragon && g_flapT < 0) {
+			if (g_holding && g_flapT < 0) {
 				g_flapT = 0, g_flapWait = kFlapAll + 1.5f;
 			}
 		}
@@ -1128,13 +1282,62 @@ namespace bo3z
 			}
 		}
 
+		// ---- the glide (Noah): the dragon is called, swoops in from high behind you and catches you by its harness; then
+		// you fly it with the left stick / WASD - forward dives (gathering speed), back pulls up (spending it on height),
+		// nothing held glides; left / right turn it, sharply, its whole body leaning into the turn
+		bool         g_holding = false;   // its harness in your hands (from the catch until it lets go)
+		bool         g_place = false;     // a glide is on: SwingBody (the pose hook) places the dragon in the world this frame
+		float        g_deployT = -1, g_swoopLen = 1.45f;
+		RE::NiPoint3 g_swoopOff{};        // the swoop: where it is from where it will hold you (your heading's frame: x right, y ahead, z up)
+		float        g_glideYaw = 0;      // your heading through the glide (ours: set on you every frame)
+		bool         g_yawOwned = false;
+		float        g_gamma = 0, g_speed = 950.0f;  // the flight path's angle (rad, + climbing) and its speed
+		float        g_inX = 0, g_inY = 0;           // the stick (eased)
+		float        g_roll = 0;                     // the dragon's lean (+: its right wing down)
+		float        g_catchK = 0;                   // 0 at the catch .. 1 once the controls are fully yours
+		float        g_stickX = 0, g_stickY = 0;     // the left stick, as its own events last said
+		bool         g_keyF = false, g_keyB = false, g_keyL = false, g_keyR = false;
+		bool         g_chaseOn = false;              // (dev: the filming camera is turning the view itself)
+		float BankSign() { return Settings::DragonBankReverse() ? -1.0f : 1.0f; }
+		float DiveFold() { return Smooth((g_divePitch - 0.15f) / 0.55f); }  // the wings drawn in, 0 .. 1
+		// the stick or WASD, x right and y forward: the game's own reading, or ours from the events if it has none
+		RE::NiPoint2 MoveInput()
+		{
+			RE::NiPoint2 in{};
+			if (auto* pc = RE::PlayerControls::GetSingleton()) in = pc->data.moveInputVec;
+			RE::NiPoint2 own{ (g_keyR ? 1.0f : 0.0f) - (g_keyL ? 1.0f : 0.0f), (g_keyF ? 1.0f : 0.0f) - (g_keyB ? 1.0f : 0.0f) };
+			if (std::abs(g_stickX) > std::abs(own.x)) own.x = g_stickX;
+			if (std::abs(g_stickY) > std::abs(own.y)) own.y = g_stickY;
+			if (own.x * own.x + own.y * own.y > in.x * in.x + in.y * in.y) in = own;
+			auto dz = [](float a) { return std::abs(a) < 0.18f ? 0.0f : (a - std::copysign(0.18f, a)) / 0.82f; };
+			return { std::clamp(dz(in.x), -1.0f, 1.0f), std::clamp(dz(in.y), -1.0f, 1.0f) };
+		}
+		// how far you are above the ground (or water) here - the land's height only (buildings aside): 1e9 unknown
+		float HeightAboveGround(RE::PlayerCharacter* a_player)
+		{
+			const auto p = a_player->GetPosition();
+			float      g = -1e9f;
+			if (auto* tes = RE::TES::GetSingleton()) {
+				float h = 0;
+				if (tes->GetLandHeight(p, h)) g = h;
+				if (auto* cell = a_player->GetParentCell()) {
+					float w = 0;
+					if (cell->GetWaterHeight(p, w) && w < 1e8f) g = std::max(g, w);
+				}
+			}
+			return g > -1e8f ? p.z - g : 1e9f;
+		}
+		void EndHold()
+		{
+			g_holding = false, g_place = false, g_yawOwned = false, g_grip = 0;
+			g_beam.level = 0, g_beam.grow = 0;
+		}
+
 		void Dragon(RE::PlayerCharacter* a_player, float a_delta)
 		{
-			static float lastYaw = 0, turn = 0, wanderT = 0, breathIn = 6.0f, breath = 0, jaw = 0, shotT = 0, lookYaw = 0, lookPitch = 0, roll = 0, pitch = 0;
-			static float lastZ = 0, deployT = -1, baseScale = 0, legT = 0, regrip = 9, regripIn = 4.0f, breathT_ = 0;
-			static bool  breathing_ = false;
+			static float lastYaw = 0, turn = 0, wanderT = 0, breath = 0, jaw = 0, lookYaw = 0, lookPitch = 0, roll = 0, pitch = 0;
+			static float deployT = -1, baseScale = 0, legT = 0, breathT_ = 0;
 			static RE::NiPoint3 baseTrans{};
-			static std::mt19937 rng{ std::random_device{}() };
 			RE::NiAVObject* bank[2]{};
 			RE::NiAVObject* look[2]{};
 			RE::NiAVObject* jawN[2]{};
@@ -1163,7 +1366,7 @@ namespace bo3z
 					}
 				}
 			}
-			const float yaw = a_player->GetAngleZ(), z = a_player->GetPositionZ();
+			const float yaw = a_player->GetAngleZ();
 			static RE::NiPoint3 lastPos{}, vel{};
 			const RE::NiPoint3  pos = a_player->GetPosition();
 			AwayTick(a_player, a_delta);
@@ -1172,14 +1375,15 @@ namespace bo3z
 					LetGo(a_player, vel, roll, kDragonScale);
 				}
 				g_hadDragon = false, letGone = false, sawGliding = false;
+				EndHold();
 				if (g_breathSound.IsValid()) g_breathSound.Stop();
 				DiveRush(a_player, 0.0f);  // (eases the view back)
-				lastYaw = yaw, lastZ = z, turn = 0, breath = 0, jaw = 0, breathIn = 4.0f, deployT = -1, roll = 0;
-				g_armHoldOn = false, g_armHold = 0, g_flapT = -1, g_liftT = -1, g_grip = 0;
+				lastYaw = yaw, turn = 0, breath = 0, jaw = 0, deployT = -1, roll = 0, g_roll = 0, pitch = 0;
+				g_armHoldOn = false, g_armHold = 0, g_flapT = -1, g_liftT = -1;
+				g_deployT = -1, g_divePitch = 0, g_inX = g_inY = 0;
 				g_grabOff = {};
 				std::memset(g_ik, 0, sizeof(g_ik));
 				g_trap = 0;
-
 				lastPos = pos;
 				return;
 			}
@@ -1202,22 +1406,38 @@ namespace bo3z
 				lastYawS = yawNow;
 				const float turnS = std::clamp(dyS / std::max(a_delta, 1e-3f), -2.5f, 2.5f);
 				const float beat = g_flapT >= 0 ? FlapWing(g_flapT) : 0.0f;
-				const float fold = std::clamp(g_divePitch / 0.42f, 0.0f, 1.0f);
-				const RE::NiPoint3 want{ std::clamp(turnS * 6.0f, -15.0f, 15.0f), std::clamp(aF * 0.04f, -40.0f, 40.0f) + 30.0f * fold, -14.0f * beat - 10.0f * fold };
+				const float fold = DiveFold();
+				const RE::NiPoint3 want{ std::clamp(turnS * 4.0f, -10.0f, 10.0f), std::clamp(aF * 0.03f, -30.0f, 30.0f) + 22.0f * fold, -12.0f * beat - 8.0f * fold };
 				const float dt2 = std::min(a_delta, 0.05f);
-				g_swayV = g_swayV + ((want - g_sway) * 30.0f - g_swayV * 7.0f) * dt2;  // (a little under-damped: it overshoots, swings back)
+				g_swayV = g_swayV + ((want - g_sway) * 30.0f - g_swayV * 8.0f) * dt2;  // (a little under-damped: it overshoots, swings back)
 				g_sway = g_sway + g_swayV * dt2;
 			}
 			lastPos = pos;
-			// the glider opens: the dragon comes for you - it swoops in from high behind you on one side, banking round in
-			// a curve with its wings beating, its hind legs reaching out ahead of it, and at the last moment its talons
-			// close on your arms and it carries you on into the glide (every frame, eased; 1.4 seconds)
+			// the glider opens: the dragon comes for you (every frame, eased)
+			static bool quickSwoop = false;
 			if (deployT < 0) {
 				deployT = 0;
 				for (auto* sp : space) if (sp) baseTrans = sp->local.translate;
 				baseScale = kDragonScale;
+				g_glideYaw = yaw, g_yawOwned = true, g_holding = false, g_grip = 0;
+				g_trail.Reset();
+				g_inX = g_inY = 0, g_roll = 0, roll = 0, pitch = 0, g_divePitch = 0;
+				// the swoop's length: 1.45 s - quicker after the Updraft, and never longer than your fall to the ground
+				// takes (so it always has you before you land)
+				quickSwoop = g_updraftAge < 4.0f;
+				float len = quickSwoop ? 0.85f : 1.45f;
+				const float h = HeightAboveGround(a_player);
+				if (h < 1e8f) {
+					RE::NiPoint3 v0{};
+					if (auto* cc0 = a_player->GetCharController()) GetVel(cc0, v0);
+					const float down = std::max(0.0f, -v0.z);
+					const float tGround = (-down + std::sqrt(down * down + 2.0f * 980.0f * std::max(0.0f, h - 60.0f))) / 980.0f;
+					len = std::clamp(std::min(len, tGround * 0.8f), 0.5f, len);
+				}
+				g_swoopLen = len;
 				PlayGameSound(DragonSound::kRoar, a_player, nullptr, 0.7f);
 				PlayGameSound(DragonSound::kFlapBig, a_player);
+				logger::info("glider: the dragon is called - it reaches you in {:.2f} s", len);
 			}
 			// the paraglider's own state: the glide ended (landing, Activate) though its copy of the dragon still hangs on
 			// you for the put-away - the dragon lets go now, and the copy is hidden
@@ -1235,7 +1455,14 @@ namespace bo3z
 					if (g_hadDragon) {
 						LetGo(a_player, vel, roll, kDragonScale);
 					}
+					// (Noah: you and the dragon vanished after landing; the Updraft never worked again) it has let you go:
+					// nothing of the glide holds on to you any more
+					g_hadDragon = false;
+					EndHold();
+					g_armHoldOn = false, g_armHold = 0, g_flapT = -1, g_liftT = -1, g_divePitch = 0;
 					if (g_breathSound.IsValid()) g_breathSound.Stop();
+					DiveRush(a_player, 0.0f);
+					logger::info("glider: {} - the dragon lets go", landed ? "landed" : "the glide is over");
 				}
 			}
 			if (letGone) {
@@ -1252,69 +1479,82 @@ namespace bo3z
 				}
 				if (touched && airT > 0.25f) {
 					touched = false, airT = 0;
-					letGone = false, sawGliding = pg2, deployT = -1, g_hadDragon = false, g_grip = 0;
+					letGone = false, sawGliding = pg2, deployT = -1, g_hadDragon = false;
+					EndHold();
 					logger::info("glider: a new glide before the last was put away - the dragon comes again");
 				} else {
 					for (auto* sp : space) if (sp) sp->local.scale = 0.0f;
 					g_armHoldOn = false, g_armHold = 0;
+					DiveRush(a_player, 0.0f);
 					lastPos = pos;
 					return;
 				}
 			}
 			deployT += a_delta;
-			// the swoop: 1.15 s, or 0.6 s when it catches you at the top of a take-off leap (so you never hang there)
-			static bool quickSwoop = false;
-			if (deployT <= a_delta * 1.5f) {
-				quickSwoop = g_updraftAge < 4.0f;  // (lifted by the Updraft: it comes for you quicker)
+			g_deployT = deployT;
+			const float kSwoop = g_swoopLen;
+			g_place = true;
+			if (g_yawOwned) {
+				a_player->SetHeading(g_glideYaw);  // (yours to steer, with the stick: nothing else turns you mid-glide)
 			}
-			const float kSwoop = quickSwoop ? 0.6f : 1.15f;
-			// your arms stay down until it reaches you, then go up to its talons as it takes you
+			// your body keeps its fall until it has you (the paraglider's own opening animation flips you over: held at
+			// least until that has played out, about a second), then eases into the hang
 			g_armHoldOn = true;
-			// (Noah: no front flip - the paraglider's own opening animation flips you over; your body keeps its pose until
-			// that has played out (about a second), then eases into the hang)
 			constexpr float kEquipAnim = 1.0f;
-			g_armHold = 1 - Smooth((deployT - std::max(kSwoop - 0.38f, kEquipAnim)) / 0.3f);
+			g_armHold = 1 - Smooth((deployT - std::max(kSwoop - 0.12f, kEquipAnim)) / 0.3f);
 			const float u = std::clamp(deployT / kSwoop, 0.0f, 1.0f);
-			const float e = u * u * u * (u * (u * 6 - 15) + 10);  // smootherstep
-			// (Noah: no sharp turn at the end - it comes in from behind on a gentle curve, and eases round to face ahead)
-			const RE::NiPoint3 P0{ 260, -720, 300 }, P1{ 190, -400, 30 }, P2{ 0, 0, 0 };
-			const RE::NiPoint3 at = P0 * ((1 - e) * (1 - e)) + P1 * (2 * (1 - e) * e) + P2 * (e * e);
-			RE::NiPoint3 tan = (P1 - P0) * (2 * (1 - e)) + (P2 - P1) * (2 * e);
-			const float  inSwoop = 1 - Smooth((u - 0.45f) / 0.55f);
+			// the swoop (Noah: smooth, no jumping about): from high behind you and off to one side it comes down on a long
+			// curve - fast at first, slowing to your own speed as it reaches you (no jolt at the catch) - dipping a little
+			// below and rising into you, so the harness comes up into your hands
+			const float  e = 1 - (1 - u) * (1 - u) * (1 - u);
+			const RE::NiPoint3 P0{ 420, -1700, 700 }, C1{ 460, -1100, 470 }, C2{ 170, -340, -60 }, P3{ 0, 0, 0 };
+			const float  ie = 1 - e;
+			g_swoopOff = P0 * (ie * ie * ie) + C1 * (3 * ie * ie * e) + C2 * (3 * ie * e * e) + P3 * (e * e * e);
+			const RE::NiPoint3 tan = (C1 - P0) * (3 * ie * ie) + (C2 - C1) * (6 * ie * e) + (P3 - C2) * (3 * e * e);
+			const float  inSwoop = 1 - Smooth((u - 0.55f) / 0.45f);
 			const float  swYaw = std::atan2(-tan.x, std::max(1.0f, tan.y)) * inSwoop;
 			const float  swPitch = std::atan2(tan.z, std::sqrt(tan.x * tan.x + tan.y * tan.y)) * inSwoop;
-			const float  swRoll = 0.55f * std::sin(3.14159f * std::min(1.0f, u * 1.15f)) * inSwoop;
+			const float  swRoll = -0.5f * BankSign() * std::sin(3.14159f * std::min(1.0f, u * 1.1f)) * inSwoop;  // (leaning into its curve)
+			// its wings beat as it comes (whole strokes, ending as it flares them to brake into you), then glide
+			const float flareAt = std::max(0.2f, kSwoop - 0.5f);
+			const int   nBeats = std::max(1, static_cast<int>(std::lround(flareAt / 0.62f)));
+			const float beatLen = flareAt / nBeats;
+			auto swoopBeat = [flareAt, beatLen](float a_t) {
+				if (a_t <= 0) return 0.0f;
+				if (a_t < flareAt) return 0.85f * WingBeat(std::fmod(a_t, beatLen), beatLen);
+				return 0.7f * std::sin(3.14159f * std::clamp((a_t - flareAt) / 0.85f, 0.0f, 1.0f));
+			};
+			{
+				static float lastK = 0;
+				const float  k = deployT < flareAt ? std::fmod(deployT, beatLen) / beatLen : 0.0f;
+				if (deployT < flareAt && lastK < 0.45f && k >= 0.45f) PlayGameSound(DragonSound::kFlap, a_player, nullptr, 0.6f);
+				lastK = k;
+			}
 			for (int i = 0; i < 2; ++i) {
-				if (space[i]) {
-					space[i]->local.translate = baseTrans + at + g_grabOff * g_grip + space[i]->local.rotate * (g_sway * (space[i]->local.scale * g_grip));
+				if (space[i]) {  // (where it hangs if the pose hook never placed it: SwingBody puts it in the world)
+					space[i]->local.translate = baseTrans;
 					if (baseScale > 0) space[i]->local.scale = baseScale;
 				}
 				if (fold[i][0]) fold[i][0]->local.rotate = Rot(0, 0, 0);
 				if (fold[i][1]) fold[i][1]->local.rotate = Rot(0, 0, 0);
-				// the wings: straight out in the glide, swaying; beating only for a climb (Bond I's wing-beat, the
-				// take-off's lift); swept back in a Bond III dive
-				const float flapT = g_flapT, liftT = g_liftT;
-				WingPose(a_player->Get3D(i == 1), deployT, [flapT, liftT](float a_lag) {
-					return (flapT >= 0 ? FlapWing(flapT - a_lag) : 0.0f) + WingBeat(liftT - a_lag, 1.3f);
-				}, std::clamp(g_divePitch / 0.42f, 0.0f, 1.0f));
+				// the wings: straight out in the glide, swaying; beating only to come for you and for a climb (Bond I's
+				// wing-beat, the take-off's lift); drawn in for a dive; the outer wing lifted a little more in a turn
+				const float flapT = g_flapT, liftT = g_liftT, dT = deployT;
+				WingPose(a_player->Get3D(i == 1), deployT, [flapT, liftT, dT, swoopBeat](float a_lag) {
+					return (flapT >= 0 ? FlapWing(flapT - a_lag) : 0.0f) + WingBeat(liftT - a_lag, 1.3f) + swoopBeat(dT - a_lag);
+				}, DiveFold(), g_roll / 0.85f);
 			}
-			// the legs: reaching out in the swoop, clutching as it takes you; then holding on, flexing their grip, now
-			// and then shifting it (talons opening and closing); drawn up while it breathes fire
+			// the legs: trailing loose as it swoops in, then stretched back under it toes to its tail; swept further back in
+			// a dive, swung forward with each downstroke of a climb and back as the wings rise
 			{
 				legT += a_delta;
-				if ((regripIn -= a_delta) <= 0) {
-					regrip = 0.0f;
-					regripIn = std::uniform_real_distribution<float>(3.5f, 7.0f)(rng);
+				g_grip = Smooth((u - 0.88f) / 0.12f);
+				if (!g_holding && u >= 0.95f) {
+					g_holding = true;
+					logger::info("glider: caught - the harness is in your hands");
 				}
-				regrip += a_delta;
-				const float clutch = std::clamp((u - 0.85f) / 0.15f, 0.0f, 1.0f);
-				g_grip = clutch;
-				// (Noah: you hang from its harness - its legs are free: drawn up and back under it, swaying as it flies;
-				// trailing loose as it swoops in; swept further back in a dive)
-				const float diveFold = std::clamp(g_divePitch / 0.42f, 0.0f, 1.0f);
+				const float diveFold = DiveFold();
 				const float tuck = Smooth(u);
-				// (Noah: stretched out behind it, toes to its tail - trailing in the glide, pressed along the tail in the
-				// dive, swung forward with each downstroke of a climb and back as the wings rise)
 				static float pump = 0;
 				const float  beat = g_flapT >= 0 ? FlapWing(g_flapT - 0.08f) : 0.0f;
 				const float  pumpTo = g_flapT >= 0 ? std::clamp(0.5f - 0.5f * beat / 1.1f, 0.0f, 1.0f) : 0.0f;
@@ -1330,7 +1570,7 @@ namespace bo3z
 						const float held = G[j] * (1 - diveFold) + Dv[j] * diveFold;
 						k[j] = held * (1 - pump) + Fl[j] * pump;
 					}
-					const float dangle[3] = { 0.15f, 0.2f, 0.3f };  // (as it swoops in, before it has you: hanging loose)
+					const float dangle[3] = { 0.15f, 0.2f, 0.3f };
 					const float hip = dangle[0] * (1 - tuck) + k[0] * tuck + 0.06f * std::sin(legT * 1.5f + ph) * calm + lagS * pump;
 					const float knee = dangle[1] * (1 - tuck) + k[1] * tuck + 0.08f * std::sin(legT * 1.5f + 0.7f + ph) * calm;
 					const float foot = dangle[2] * (1 - tuck) + k[2] * tuck + 0.08f * std::sin(legT * 2.1f + 1.4f + ph) * calm;
@@ -1346,20 +1586,111 @@ namespace bo3z
 				}
 			}
 			const float dt = std::max(1e-3f, a_delta);
+			// the flight (Noah: the left stick / WASD - forward dives, back pulls up, nothing held glides; left / right turn,
+			// much more sharply than before) - after the catch, eased in over 0.7 s
+			const int   bond = Bond();
+			const float cruise = bond >= 1 ? 950.0f : 820.0f;   // (Bond I glides quicker and sinks slower)
+			const float sinkG = bond >= 1 ? -0.11f : -0.15f;
+			const float top = 2600.0f + 400.0f * bond;
+			if (auto* cc = a_player->GetCharController(); cc && !g_dive) {
+				static RE::NiPoint3 fallH{}, glideV{};
+				static float        fallV = 0;
+				RE::NiPoint3        v{};
+				GetVel(cc, v);
+				if (deployT <= a_delta * 1.5f) {
+					fallH = { v.x, v.y, 0 };
+					fallV = std::max(v.z, -300.0f);
+					glideV = v;
+				}
+				if (deployT < kSwoop) {
+					// (Noah: no gliding before it has you) until the harness is in your hands you fall as you were falling
+					fallV = std::max(fallV - 980.0f * dt, -1400.0f);
+					fallH = fallH * (1 - std::min(1.0f, 0.3f * dt));
+					v = { fallH.x, fallH.y, fallV };
+					const float h = std::sqrt(fallH.x * fallH.x + fallH.y * fallH.y);
+					g_gamma = std::atan2(fallV, std::max(h, 1.0f));
+					g_speed = std::clamp(std::sqrt(h * h + fallV * fallV), 600.0f, top);
+					g_catchK = 0;
+					glideV = v;
+				} else {
+					g_catchK = Smooth((deployT - kSwoop) / 0.7f);
+					const auto in = MoveInput();
+					const float iy = Settings::DragonInvertDive() ? -in.y : in.y;
+					g_inY += (iy - g_inY) * std::min(1.0f, dt * 5.0f);
+					g_inX += (in.x - g_inX) * std::min(1.0f, dt * 8.0f);
+					// the path's angle: gliding gently down; diving up to 60 degrees down; pulling up to 32 up while the
+					// speed lasts (it can't climb on nothing: as the speed runs out the nose comes down to a glide)
+					float gT = sinkG - 0.05f * std::abs(g_inX);  // (a turn costs a little height)
+					if (g_inY > 0) {
+						gT += (-1.05f - gT) * g_inY;
+					} else if (g_inY < 0) {
+						const float climbMax = 0.55f * std::clamp((g_speed - 720.0f) / 900.0f, 0.0f, 1.0f);
+						gT += (std::max(climbMax, gT) - gT) * -g_inY;
+					}
+					gT = sinkG + (gT - sinkG) * g_catchK;
+					g_gamma += (gT - g_gamma) * std::min(1.0f, dt * (gT < g_gamma ? 2.2f : 1.7f));
+					// speed: gained going down, spent climbing, and back to its cruising speed level (height bought with speed)
+					g_speed += (-1500.0f * (std::sin(g_gamma) - std::sin(sinkG)) - 0.45f * (g_speed - cruise)) * dt;
+					g_speed = std::clamp(g_speed, 600.0f, top);
+					// turning: up to 100 degrees a second
+					const float rate = 1.75f * g_inX * g_catchK;
+					g_glideYaw += rate * dt;
+					while (g_glideYaw > 3.14159f) g_glideYaw -= 6.28318f;
+					while (g_glideYaw < -3.14159f) g_glideYaw += 6.28318f;
+					a_player->SetHeading(g_glideYaw);
+					const RE::NiPoint3 hd{ std::sin(g_glideYaw), std::cos(g_glideYaw), 0 };
+					RE::NiPoint3       want = hd * (g_speed * std::cos(g_gamma));
+					want.z = g_speed * std::sin(g_gamma);
+					glideV = glideV + (want - glideV) * std::min(1.0f, dt * (2.0f + 6.0f * g_catchK));  // (eased out of the fall)
+					v = glideV;
+					if (g_liftT >= 0) {
+						g_liftT += dt;
+						v.z = std::max(v.z, 1150.0f * (1 - Smooth(g_liftT / 1.3f)));
+						if (g_liftT > 1.3f) g_liftT = -1;
+					}
+					if (g_flapT >= 0) {  // (Bond I) each downstroke lifts you
+						v.z = std::max(v.z, FlapLift(g_flapT));
+					}
+					if (v.z > glideV.z + 1.0f) {  // (a climb by the wings: carried on from there, not dropped back)
+						glideV.z = v.z;
+						g_gamma = std::atan2(v.z, std::max(1.0f, std::sqrt(v.x * v.x + v.y * v.y)));
+					}
+				}
+				SetVel(cc, v);
+			}
+			// the dragon's nose down in a dive (its wings drawn in), up as it climbs
+			g_divePitch += (std::clamp(sinkG - g_gamma, 0.0f, 1.2f) * g_grip * g_catchK - g_divePitch) * std::min(1.0f, dt * 4.0f);
+			// the camera comes round behind you as you turn, unless you are looking about yourself
+			{
+				static float idle = 0;
+				auto*        pcs = RE::PlayerControls::GetSingleton();
+				const bool   looking = pcs && (std::abs(pcs->data.lookInputVec.x) + std::abs(pcs->data.lookInputVec.y) > 0.02f);
+				idle = looking ? 0.0f : idle + dt;
+				auto* pcam = RE::PlayerCamera::GetSingleton();
+				if (!g_chaseOn && g_catchK > 0.5f && idle > 0.8f && pcam && pcam->currentState && pcam->currentState->id == RE::CameraState::kThirdPerson) {
+					auto* tp = static_cast<RE::ThirdPersonState*>(pcam->currentState.get());
+					if (tp->freeRotationEnabled) {
+						float& fx = tp->freeRotation.x;
+						while (fx > 3.14159f) fx -= 6.28318f;
+						while (fx < -3.14159f) fx += 6.28318f;
+						fx -= fx * std::min(1.0f, dt * 1.6f * Smooth((idle - 0.8f) / 0.6f));
+					}
+				}
+			}
 			float dy = yaw - lastYaw;
 			while (dy > 3.14159f) dy -= 6.28318f;
 			while (dy < -3.14159f) dy += 6.28318f;
 			lastYaw = yaw;
-			turn += (std::clamp(dy / dt, -2.5f, 2.5f) - turn) * std::min(1.0f, dt * 4.0f);   // rad/s, smoothed
-			const float fall = (z - lastZ) / dt;
-			lastZ = z;
-			// lean into the turn, nose down a little as you sink
-			roll += (std::clamp(turn * 0.55f, -0.75f, 0.75f) - roll) * std::min(1.0f, dt * 3.0f);
-			static float swing = 0;  // the body swung round into the turn (head first)
-			swing += (std::clamp(-turn * 0.3f, -0.4f, 0.4f) - swing) * std::min(1.0f, dt * 2.5f);
-			// (Bond III: nose down in a dive; Noah: nose up as it beats its wings to climb)
+			turn += (std::clamp(dy / dt, -2.5f, 2.5f) - turn) * std::min(1.0f, dt * 6.0f);   // rad/s, smoothed
+			// (Noah: it turns its whole body - not just facing the new way) it leans hard into the turn (a real flyer's
+			// bank: turning left, its left wing dips; the MCM can turn the lean the other way) and swings round head first
+			roll += (BankSign() * std::clamp(turn * 0.5f, -0.9f, 0.9f) - roll) * std::min(1.0f, dt * 3.5f);
+			g_roll = roll;
+			static float swing = 0;
+			swing += (std::clamp(-turn * 0.35f, -0.45f, 0.45f) - swing) * std::min(1.0f, dt * 3.0f);
+			// its nose follows the flight path (down in a dive, up in a climb), lifted as it beats its wings
 			const float tilt = g_flapT >= 0 ? FlapTilt(g_flapT) : 0.0f;
-			pitch += (std::clamp(fall * 0.0006f, -0.18f, 0.08f) - g_divePitch - tilt - pitch) * std::min(1.0f, dt * (tilt > 0 ? 4.0f : 2.0f));
+			pitch += (std::clamp(g_gamma * 0.85f, -1.0f, 0.5f) + tilt - pitch) * std::min(1.0f, dt * (tilt > 0 ? 4.0f : 2.5f));
 			// the head: toward where you look (the camera), into the turn, and wandering on its own
 			wanderT += dt;
 			float camYaw = yaw;
@@ -1377,34 +1708,30 @@ namespace bo3z
 			g_breathSway = breathSway;
 			lookYaw += (std::clamp(-rel * 0.6f + turn * 0.25f + wanderYaw + breathSway, -0.9f, 0.9f) - lookYaw) * std::min(1.0f, dt * (breath > 0 ? 9.0f : 2.5f));
 			lookPitch += (wanderPitch - lookPitch) * std::min(1.0f, dt * 2.5f);
-			// fire: now and then, a breath of a second and a half (Bond III: whenever the dead are below, a few seconds apart)
-			static float       sinceBreath = 0, seekT = 0;
+			// the breath: yours to call - right attack / right trigger mid-glide, 5 s apart
 			static RE::ActorHandle target;
-			const bool         thrall = mouth != nullptr;  // (Noah: it breathes fire from the start - its colour changes with each bond)
-			sinceBreath += dt;
-			if (thrall && (seekT -= dt) <= 0) {
+			static float           seekT = 0;
+			const bool             canBreathe = mouth != nullptr;
+			if (canBreathe && (seekT -= dt) <= 0) {
 				seekT = 0.25f;
 				auto* t = BreathTarget(a_player, mouth->world.translate);
 				target = t ? t->GetHandle() : RE::ActorHandle{};
 			}
-			// (Noah: the breath is Bond III's alone, and yours to call - right attack / right trigger mid-glide, 5 s apart)
-			breathIn = 9.0f;
-			if (g_breathReq && breath <= 0 && thrall && deployT > kSwoop) {
+			if (g_breathReq && breath <= 0 && canBreathe && g_holding) {
 				breath = 1.6f;
-				sinceBreath = 0;
 				PlayGameSound(DragonSound::kFire, a_player, &g_breathSound);
 				logger::info("glider: the dragon breathes (Bond {})", Bond());
 			}
 			g_breathReq = false;
-			if (!thrall) {
+			if (!canBreathe) {
 				breath = 0;
 			}
 			const bool breathing = breath > 0;
 			if (breathing && (breath -= dt) <= 0 && g_breathSound.IsValid()) {
 				g_breathSound.Stop();
 			}
-			breathing_ = breathing, breathT_ = breathing ? breathT_ + dt : 0.0f;
-			jaw += ((breathing || (thrall && breathIn < 0.35f) ? 0.38f : 0.03f * (0.5f + 0.5f * std::sin(wanderT * 0.9f))) - jaw) * std::min(1.0f, dt * 8.0f);
+			breathT_ = breathing ? breathT_ + dt : 0.0f;
+			jaw += ((breathing ? 0.38f : 0.03f * (0.5f + 0.5f * std::sin(wanderT * 0.9f))) - jaw) * std::min(1.0f, dt * 8.0f);
 			for (int i = 0; i < 2; ++i) {
 				if (bank[i]) {
 					bank[i]->local.rotate = Rot(pitch * (1 - inSwoop) + swPitch, roll * (1 - inSwoop) + swRoll, swYaw + swing * (1 - inSwoop));
@@ -1416,8 +1743,7 @@ namespace bo3z
 					jawN[i]->local.rotate = Rot(-jaw, 0, 0);
 				}
 			}
-			// the bonds' flight: Bond I glides quicker and sinks slower, beats its wings to climb; Bond II's take-off hangs you
-			// there while it comes, then carries you up
+			// Bond I's climbing wing-beats
 			if (g_flapT >= 0) {
 				const float before = g_flapT;
 				g_flapT += dt;
@@ -1431,100 +1757,17 @@ namespace bo3z
 					g_flapT = -1;
 				}
 			}
-			if (auto* cc = a_player->GetCharController(); cc && !g_dive) {
-				static RE::NiPoint3 glide{};
-				static float        fallV = 0, speed = 950;
-				RE::NiPoint3        v{};
-				GetVel(cc, v);
-				const int  bond = Bond();
-				const bool hanging = false;
-				if (deployT <= a_delta * 1.5f) {
-					glide = { v.x, v.y, 0 };
-					fallV = std::max(v.z, -250.0f);
-					speed = std::max(950.0f, std::sqrt(v.x * v.x + v.y * v.y));
-				}
-				bool set = false;
-				// (Noah: you don't glide before it has you) until its talons close you fall as you were falling
-				const bool beforeGrab = deployT < kSwoop * 0.9f;
-				if (beforeGrab) {
-					fallV = std::max(fallV - 900.0f * dt, -1100.0f);
-					v.z = fallV;
-					set = true;
-				}
-				if (bond >= 1) {
-					const RE::NiPoint3 heading{ std::sin(yaw), std::cos(yaw), 0 };
-					// Bond III: where you look steers the dive - look down and it folds its wings and dives, gathering
-					// speed; look up and that speed carries you on and up into the glide
-					float lookDown = 0;
-					if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
-						lookDown = std::asin(std::clamp(-cam->cameraRoot->world.rotate.entry[2][1], -1.0f, 1.0f));
-					}
-					float want = 950.0f;
-					g_divePitch += ((bond >= 3 && !beforeGrab ? std::clamp(lookDown, -0.35f, 1.45f) * 0.75f : 0.0f) - g_divePitch) * std::min(1.0f, dt * 3.0f);
-					if (bond >= 3 && !beforeGrab && !hanging) {
-						// (Noah: after a dive, look back up and it carries on gliding on that speed - with speed enough, up)
-						// height is bought with speed: climbing bleeds it in proportion, gliding level keeps most of it
-						// (Noah: the dive's speed goes with how far down you look - straight down is the fastest; it heads
-						// where you look)
-						if (lookDown > 0.15f) {
-							const float diveTo = 950.0f + 2850.0f * std::clamp((lookDown - 0.15f) / 1.25f, 0.0f, 1.0f);
-							speed += (diveTo - speed) * std::min(1.0f, dt * (diveTo > speed ? 1.4f : 0.4f));
-						} else if (lookDown < -0.05f && speed > 1000.0f) {
-							speed = std::max(950.0f, speed - (90.0f + 0.5f * (speed - 950.0f) * std::sin(-lookDown) * 1.6f) * dt);
-						} else {
-							speed = std::max(950.0f, speed - 90.0f * dt);
-						}
-						want = lookDown > 0.15f ? speed * std::cos(lookDown) : speed;
-					}
-					want = hanging ? 600.0f : want;  // (the leap's run carries on while it comes)
-					glide = glide + (heading * want - glide) * std::min(1.0f, dt * (hanging ? 2.0f : bond >= 3 ? 2.0f : 0.9f));
-					v.x = glide.x, v.y = glide.y;
-					if (!beforeGrab) {
-						v.z = std::max(v.z, -105.0f);  // (the glide alone sinks about half again faster)
-						if (bond >= 3 && !hanging) {
-							static float vz = 0;  // (eased: out of a dive it levels off and glides on, no sudden stop)
-							float        wantZ = -105.0f;
-							if (lookDown > 0.15f) {
-								wantZ = -speed * std::sin(lookDown);  // the dive, along your look
-							} else if (lookDown < -0.05f && speed > 1000.0f) {
-								wantZ = (speed - 950.0f) * std::sin(-lookDown) * 1.6f;  // the speed into height
-							}
-							if (deployT <= kSwoop) {
-								vz = v.z;
-							}
-							vz += (wantZ - vz) * std::min(1.0f, dt * (wantZ < vz ? 3.0f : 2.0f));
-							v.z = vz;
-						}
-					}
-					if (hanging) {
-						v.z = -160.0f * Smooth(deployT / (kSwoop * 0.88f));  // the leap's peak, just tipping over
-					}
-					if (g_liftT >= 0) {
-						g_liftT += dt;
-						v.z = std::max(v.z, 1150.0f * (1 - Smooth(g_liftT / 1.3f)));
-						if (g_liftT > 1.3f) g_liftT = -1;
-					}
-					if (g_flapT >= 0) {  // each downstroke lifts you
-						v.z = std::max(v.z, FlapLift(g_flapT));
-					}
-					set = true;
-				}
-				if (set) {
-					SetVel(cc, v);
-				}
-			}
-			// the wind: a streak off each wingtip (brighter the faster you go), and in a Bond III dive the air rushing
-			// past - streaks all round, its roar, the view widening a little as you gather speed
+			// the wind: a trail off each wingtip (Noah: see-through - fainter, brighter the faster you go), and in a dive the
+			// air rushing past - streaks round its nose, its roar, the view widening a little as you gather speed
 			{
 				const float spd = vel.Length();
 				const float held = Smooth((deployT - kSwoop * 0.6f) / 0.5f);
-				// (Noah: the wingtip trails fade out while the wings beat, and smoothly back in as it glides again)
 				const bool  flapping = g_flapT >= 0 || g_liftT >= 0;
 				static float trailK = 0, diveK = 0;
-				const float folded = std::clamp(g_divePitch / 0.3f, 0.0f, 1.0f);  // (Noah: no wingtip line while the wings are folded in a dive)
-				const float trailWant = flapping ? 0.0f : held * (1 - folded) * (0.55f + 0.65f * Smooth((spd - 800.0f) / 1400.0f));
-				trailK += (trailWant - trailK) * std::min(1.0f, dt * (flapping || folded > 0.2f ? 7.0f : 2.2f));
-				const float diveWant = Smooth((g_divePitch - 0.08f) / 0.3f) * Smooth((spd - 1100.0f) / 1100.0f);
+				const float folded = Smooth((DiveFold() - 0.3f) / 0.5f);  // (no wingtip trail once the wings are drawn right in)
+				const float trailWant = flapping ? 0.15f : held * (1 - folded) * (0.45f + 0.45f * Smooth((spd - 800.0f) / 1400.0f));
+				trailK += (trailWant - trailK) * std::min(1.0f, dt * (flapping || folded > 0.2f ? 6.0f : 2.2f));
+				const float diveWant = Smooth((g_divePitch - 0.12f) / 0.35f) * Smooth((spd - 1100.0f) / 1100.0f);
 				diveK += (diveWant - diveK) * std::min(1.0f, dt * 3.0f);
 				if (deployT <= a_delta * 1.5f) {
 					trailK = 0, diveK = 0;
@@ -1532,80 +1775,53 @@ namespace bo3z
 				for (int i = 0; i < 2; ++i) {
 					DragonWind(a_player->Get3D(i == 1), trailK, diveK * 1.4f);
 				}
-				const float dive = diveK;
-				DiveRush(a_player, dive);
+				DiveRush(a_player, diveK);
 			}
-			{  // the talons on your hands (the skeleton you see)
-				const bool first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
-				const int  k = first && space[1] ? 1 : 0;
-				Grip(a_player, space[k], k == 1, dt);
-				for (int i = 0; i < 2; ++i) {  // (both skeletons' bars swung alike)
-					if (auto* tr = space[i] ? space[i]->GetObjectByName("DG_Trapeze") : nullptr) tr->local.rotate = Rot(g_trap * g_grip, 0, 0);
-				}
+			for (int i = 0; i < 2; ++i) {  // (the harness's bar, swung by SwingBody)
+				if (auto* tr = space[i] ? space[i]->GetObjectByName("DG_Trapeze") : nullptr) tr->local.rotate = Rot(g_trap, 0, 0);
 			}
 			{  // where it is now: if the glider goes away this frame, the dragon in the world starts from here
 				const bool first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
 				const int  k = (first && space[1]) || !space[0] ? 1 : 0;
-				if (space[k]) {
+				if (space[k] && space[k]->world.scale > 1e-4f) {
 					g_lastSpace = space[k]->world;
 					g_hadDragon = true;
 					if (bank[k]) g_lastBank = bank[k]->local.rotate;
 				}
 			}
-			static float        hitT = 0;
-			static RE::NiPoint3 breathDir{ 0, 1, 0 };
-			if (breathing && breath < 1.45f && mouth && head && (shotT -= dt) <= 0) {
-				shotT = 0.05f;
-				RE::BGSProjectile* fire = BreathProjectile();
-				if (fire) {
-					const auto&        hm = head->world.rotate;
-					RE::NiPoint3       d{ hm.entry[0][1], hm.entry[1][1], hm.entry[2][1] - 0.25f };  // its head's forward, a little down
+			// the breath: one beam of fire from its jaws to where you aim (onto the dead near your aim), sweeping with its
+			// head - grown out in a fifth of a second, burning everything in it, fading at the end (drawn by SwingBody)
+			{
+				static float hitT = 0;
+				g_beam.clock += dt;
+				if (breathing && mouth && head) {
+					RE::NiPoint3 d{ std::sin(yaw), std::cos(yaw), -0.35f };
 					if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {  // where you aim
 						const auto& cm = cam->cameraRoot->world.rotate;
 						d = { cm.entry[0][1], cm.entry[1][1], cm.entry[2][1] };
 					}
-					if (auto t = target.get(); thrall && t && !t->IsDead()) {  // (onto the dead near your aim)
+					d.Unitize();
+					if (auto t = target.get(); t && !t->IsDead()) {
 						RE::NiPoint3 to = t->GetPosition() + RE::NiPoint3{ 0, 0, 50 } - mouth->world.translate;
 						to.Unitize();
-						RE::NiPoint3 dn = d;
-						dn.Unitize();
-						if (to.x * dn.x + to.y * dn.y + to.z * dn.z > 0.94f) d = to;
+						if (to.Dot(d) > 0.94f) d = to;
 					}
-					d.Unitize();
 					{  // (the sweep of its head)
 						const float c = std::cos(-g_breathSway), s = std::sin(-g_breathSway);
 						d = { d.x * c - d.y * s, d.x * s + d.y * c, d.z };
 					}
-					breathDir = d;
-					if (thrall && (hitT -= 0.05f) <= 0) {
+					const float age = 1.6f - breath;
+					if (age < 0.12f) g_beam.dir = d;
+					g_beam.dir = g_beam.dir + (d - g_beam.dir) * std::min(1.0f, dt * 10.0f);
+					g_beam.dir.Unitize();
+					g_beam.grow = Smooth((age - 0.1f) / 0.22f);
+					g_beam.level = Smooth((age - 0.1f) / 0.12f) * (1 - Smooth((0.3f - breath) / 0.3f));
+					if (g_beam.grow > 0.5f && (hitT -= dt) <= 0) {
 						hitT = 0.2f;
-						BreathHits(a_player, mouth->world.translate, d);
+						BreathHits(a_player, mouth->world.translate, g_beam.dir);
 					}
-				}
-				if (fire) {
-					const RE::NiPoint3 d = breathDir;
-					// (Noah: fired forward, not left behind: it leaves ahead of the mouth by where you'll be a moment on)
-					const RE::NiPoint3 from = mouth->world.translate + d * 40.0f + vel * 0.3f;
-					const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
-					RE::Projectile::ProjectileRot r{ -std::atan2(d.z, std::max(1e-3f, flat)), std::atan2(d.x, d.y) };
-					RE::Projectile::LaunchData    ld(fire, a_player, from, r);
-					ld.useOrigin = true;
-					ld.autoAim = false;
-					ld.noDamageOutsideCombat = true;
-					ld.power = 0.0f;
-					ld.scale = g_breathScaleDev > 0 ? g_breathScaleDev : 0.45f;  // (Noah: a smaller breath - its reach is the same)
-					RE::ProjectileHandle h;
-					RE::Projectile::Launch(&h, ld);
-					if (Bond() >= 1) {
-						g_tinted.push_back({ h, Bond(), 0.0f });
-					}
-					if (auto p = h.get()) {
-						// (Noah: the breath flies off ahead - faster, and carried on your own speed - not swept back onto you
-						// and the dragon as you glide into it)
-						auto& rd = p->GetProjectileRuntimeData();
-						rd.linearVelocity = rd.linearVelocity * 1.6f + vel;
-						rd.velocity = rd.velocity * 1.6f + vel;
-					}
+				} else {
+					g_beam.level = 0, g_beam.grow = 0, hitT = 0;
 				}
 			}
 		}
@@ -1746,8 +1962,23 @@ namespace bo3z
 			g_dodgeT = 0, g_dodgeDir = dir;  // (Noah: farther - first person barely moved) carried along, below
 		}
 
+		// the left stick's own events (the glide reads it when the game's movement reading has nothing)
+		void OnStick(const RE::ThumbstickEvent* a_event)
+		{
+			if (a_event && a_event->IsLeft()) {
+				g_stickX = a_event->xValue, g_stickY = a_event->yValue;
+			}
+		}
 		void OnButton(const RE::ButtonEvent* a_event)
 		{
+			if (auto* ue0 = RE::UserEvents::GetSingleton(); a_event && ue0) {  // WASD held, for the glide (MoveInput)
+				const auto& q = a_event->QUserEvent();
+				const bool  held = a_event->IsPressed();
+				if (q == ue0->forward) g_keyF = held;
+				else if (q == ue0->back) g_keyB = held;
+				else if (q == ue0->strafeLeft) g_keyL = held;
+				else if (q == ue0->strafeRight) g_keyR = held;
+			}
 			// the dodge (Left Alt; on a controller a quick tap of sprint, LB / L1 - holding it still sprints)
 			if (a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_event->GetIDCode() == 0x38 && a_event->IsDown()) {
 				Dodge();
@@ -1780,10 +2011,10 @@ namespace bo3z
 			if (const int bond = Bond(); bond >= 0) {  // (the breath is the dragon's from the start; the rest come with the bonds)
 				auto* ui = RE::UI::GetSingleton();
 				const bool free = !ui || !ui->GameIsPaused();
-				if (free && bond >= 1 && ev == ue->jump && g_hadDragon && g_flapT < 0 && g_flapWait <= 0) {  // I: the climbing wing-beats
+				if (free && bond >= 1 && ev == ue->jump && g_holding && g_flapT < 0 && g_flapWait <= 0) {  // I: the climbing wing-beats
 					g_flapT = 0, g_flapWait = kFlapAll + 1.5f;
 				}
-				if (free && bond >= 2 && ev == ue->activate && g_liftOff == 1 && !g_hadDragon && g_takeT < 1.15f) {
+				if (free && bond >= 2 && ev == ue->activate && g_liftOff == 1 && !g_hadDragon && g_takeT < kUpdraftRise) {
 					g_glideQueued = true;
 				}
 				// III: right attack (right trigger) breathes (5 s apart); II: attack looking down dives - the left hand
@@ -1794,13 +2025,13 @@ namespace bo3z
 					lookDown = -cam->cameraRoot->world.rotate.entry[2][1];
 				}
 				const bool breathKey = ev == ue->rightAttack && !(bond >= 2 && lookDown > 0.42f);
-				if (free && breathKey && g_hadDragon && !g_dive) {
+				if (free && breathKey && g_holding && !g_dive) {
 					if (g_breathCd <= 0) {
 						g_breathReq = true;
 						g_breathCd = 5.0f;
 					}
 				}
-				if (free && bond >= 2 && !breathKey && (ev == ue->rightAttack || ev == ue->leftAttack) && g_hadDragon && !g_dive) {  // II: the dive
+				if (free && bond >= 2 && !breathKey && (ev == ue->rightAttack || ev == ue->leftAttack) && g_holding && !g_dive) {  // II: the dive
 					float down = 0;
 					if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
 						down = -cam->cameraRoot->world.rotate.entry[2][1];
@@ -1827,22 +2058,138 @@ namespace bo3z
 			g_wasAir = false, g_wantSlide = false, g_wantJumpCarry = false, g_forcedSneak = false;
 		}
 
-		// After the animation each frame (Gun's pose hook): while the dragon is still on its way your arms keep the pose
-		// they had before the glider opened (the glide's own animation raises them at once); as it reaches you they
-		// go up to its talons
-		// (Noah: you hang from its talons and swing - not held stiff): your body pivots about your hands like a pendulum,
-		// swinging back as the glide speeds up, out to the side in a turn, gently on its own; in a dive it trails right
-		// back behind the dragon's swept legs
-		// (Noah: hanging from its harness you move with it - not held stiff): after the animation each frame your whole body
-		// swings about your hands like a pendulum - back as it speeds up and in a dive, out of a turn, a jolt and a kick of
-		// the legs with each wing-beat, and a slow sway of its own; the legs trail a little behind the body
+		// ---- hanging from the harness (after the animation each frame: Gun's pose hook). In order:
+		//   1. your body as the glide's animation left it (last frame's swing undone)
+		//   2. the dragon placed in the world (Noah: it jumped about before it reached you - it was hung on the paraglider's
+		//      animated node, which its opening animation throws around): turned to your heading, its harness bar where
+		//      your raised hands reach, plus the swoop's way still to come and its own sway
+		//   3. your body swung about the bar like a pendulum (subtle: back as it speeds up, out with its lean in a turn,
+		//      a jolt with each wing-beat, a slow sway of its own); the bar swings with you about its rings
+		//   4. your arms reached up (Noah: higher, at the harness's width, as you fall) and then onto its two handles - a
+		//      two-bone reach for each arm, the hands turned so the palms wrap the grips, fingers open until they close on them
+		//   5. its breath's beam and its wingtip trails, now that it is where it is drawn
 		bool g_swingFresh = true, g_legFresh = true;  // (a new glide: your body's root and legs to be taken afresh)
-		void SwingCom(RE::NiAVObject* com, RE::NiAVObject* lh, RE::NiAVObject* rh, const RE::NiPoint3& F, const RE::NiPoint3& Rt, float a_th, float a_ph, RE::NiUpdateData& u0)
+		// the character skeleton's own rest pose (fingers and legs straight): what a hand opens to and a fall's legs lean to
+		const RE::NiMatrix3* BindRot(const char* a_name)
 		{
-			// the whole body turned about your hands (they stay on the bar)
-			const RE::NiPoint3  pivot = (lh->world.translate + rh->world.translate) * 0.5f;
+			static std::unordered_map<std::string, RE::NiMatrix3> m;
+			static bool                                           tried = false;
+			if (!tried) {
+				tried = true;
+				RE::NiPointer<RE::NiNode>        sk;
+				RE::BSModelDB::DBTraits::ArgsType args{};
+				if (RE::BSModelDB::Demand("actors\\character\\character assets\\skeleton.nif", sk, args) == RE::BSResource::ErrorCode::kNone && sk) {
+					RE::BSVisit::TraverseScenegraphObjects(sk.get(), [&](RE::NiAVObject* o) {
+						if (o && !o->name.empty()) m[o->name.c_str()] = o->local.rotate;
+						return RE::BSVisit::BSVisitControl::kContinue;
+					});
+				}
+				logger::info("glider: the skeleton's rest pose ({} bones)", m.size());
+			}
+			auto it = m.find(a_name);
+			return it == m.end() ? nullptr : &it->second;
+		}
+		// a bone turned (in the world) by the least turn taking a_from onto a_to, a_w of the way
+		void TurnBone(RE::NiAVObject* a_bone, RE::NiPoint3 a_from, RE::NiPoint3 a_to, float a_w, RE::NiUpdateData& a_ud)
+		{
+			if (!a_bone || !a_bone->parent || a_w <= 0.001f || a_from.Length() < 1e-4f || a_to.Length() < 1e-4f) return;
+			a_from.Unitize(), a_to.Unitize();
+			const RE::NiPoint3 ax = a_from.Cross(a_to);
+			const float        s = ax.Length(), c = a_from.Dot(a_to);
+			if (s < 1e-6f) return;
+			const RE::NiMatrix3 W = AxisAngle(ax, std::atan2(s, c) * std::min(a_w, 1.0f));
+			a_bone->local.rotate = a_bone->parent->world.rotate.Transpose() * (W * a_bone->world.rotate);
+			a_bone->UpdateDownwardPass(a_ud, 0);
+		}
+		// an arm's two-bone reach: the elbow put where both bones meet the target (bent out toward a_pole), then each bone
+		// turned onto it
+		void ArmReach(RE::NiAVObject* a_ua, RE::NiAVObject* a_fa, RE::NiAVObject* a_hand, const RE::NiPoint3& a_target, RE::NiPoint3 a_pole, float a_w, RE::NiUpdateData& a_ud)
+		{
+			if (!a_ua || !a_fa || !a_hand || a_w <= 0.001f) return;
+			const RE::NiPoint3 S = a_ua->world.translate, E = a_fa->world.translate, H = a_hand->world.translate;
+			const float        a = (E - S).Length(), b = (H - E).Length();
+			RE::NiPoint3       to = a_target - S;
+			const float        len = to.Length();
+			if (a < 1e-3f || b < 1e-3f || len < 1e-3f) return;
+			const RE::NiPoint3 dir = to * (1.0f / len);
+			const float        d = std::clamp(len, std::abs(a - b) + 0.5f, (a + b) * 0.995f);
+			const float        x = (a * a - b * b + d * d) / (2 * d), h = std::sqrt(std::max(0.0f, a * a - x * x));
+			a_pole = a_pole - dir * a_pole.Dot(dir);
+			if (a_pole.Length() < 1e-3f) {
+				a_pole = (E - S) - dir * (E - S).Dot(dir);
+				if (a_pole.Length() < 1e-3f) return;
+			}
+			a_pole.Unitize();
+			const RE::NiPoint3 E2 = S + dir * x + a_pole * h;
+			TurnBone(a_ua, E - S, E2 - S, a_w, a_ud);
+			const RE::NiPoint3 E3 = a_fa->world.translate, H3 = a_hand->world.translate;
+			TurnBone(a_fa, H3 - E3, (S + dir * d) - E3, a_w, a_ud);
+		}
+		// a frame from a pointing direction and a second one across it (columns: a_f, a_k made square to it, their cross)
+		RE::NiMatrix3 Frame(RE::NiPoint3 a_f, RE::NiPoint3 a_k)
+		{
+			a_f.Unitize();
+			a_k = a_k - a_f * a_k.Dot(a_f);
+			if (a_k.Length() < 1e-4f) a_k = a_f.Cross({ 0, 0, 1 });
+			a_k.Unitize();
+			const RE::NiPoint3 z = a_f.Cross(a_k);
+			RE::NiMatrix3      m;
+			m.entry[0][0] = a_f.x, m.entry[1][0] = a_f.y, m.entry[2][0] = a_f.z;
+			m.entry[0][1] = a_k.x, m.entry[1][1] = a_k.y, m.entry[2][1] = a_k.z;
+			m.entry[0][2] = z.x, m.entry[1][2] = z.y, m.entry[2][2] = z.z;
+			return m;
+		}
+		struct Arm
+		{
+			RE::NiAVObject *clav, *ua, *fa, *hand, *f10, *f20, *f40;
+			bool            ok() const { return ua && fa && hand && f10 && f20 && f40; }
+		};
+		Arm GetArm(RE::NiAVObject* a_root, bool a_left)
+		{
+			const char* s = a_left ? "L" : "R";
+			auto        n = [&](const char* a_fmt) { return a_root->GetObjectByName(fmt::format(fmt::runtime(a_fmt), s, s).c_str()); };
+			return { n("NPC {} Clavicle [{}Clv]"), n("NPC {} UpperArm [{}Uar]"), n("NPC {} Forearm [{}Lar]"), n("NPC {} Hand [{}Hnd]"), n("NPC {} Finger10 [{}F10]"),
+				n("NPC {} Finger20 [{}F20]"), n("NPC {} Finger40 [{}F40]") };
+		}
+		// where the hand holds: in its fingers' crease, just off the palm
+		RE::NiPoint3 GripPoint(const Arm& a_arm, bool a_left)
+		{
+			const RE::NiPoint3 h = a_arm.hand->world.translate, f = a_arm.f20->world.translate - h, k = a_arm.f10->world.translate - a_arm.f40->world.translate;
+			RE::NiPoint3       palm = a_left ? f.Cross(k) : k.Cross(f);  // (the palm's side: overhand, it faces ahead)
+			if (palm.Length() > 1e-4f) palm.Unitize();
+			return h + f * 0.8f + palm * (1.8f * a_arm.hand->world.scale);
+		}
+		// the hand turned: its fingers along a_fingers, its knuckles (index to little finger) along a_knuckles
+		void TurnHand(const Arm& a_arm, const RE::NiPoint3& a_fingers, const RE::NiPoint3& a_knuckles, float a_w, RE::NiUpdateData& a_ud)
+		{
+			if (a_w <= 0.001f || !a_arm.hand->parent) return;
+			const RE::NiMatrix3 A = Frame(a_arm.f20->world.translate - a_arm.hand->world.translate, a_arm.f10->world.translate - a_arm.f40->world.translate);
+			const RE::NiMatrix3 B = Frame(a_fingers, a_knuckles);
+			const RE::NiMatrix3 R = Slerp(Rot(0, 0, 0), B * A.Transpose(), std::min(a_w, 1.0f));
+			a_arm.hand->local.rotate = a_arm.hand->parent->world.rotate.Transpose() * (R * a_arm.hand->world.rotate);
+			a_arm.hand->UpdateDownwardPass(a_ud, 0);
+		}
+		// the fingers opened toward the skeleton's rest (straight), a_open of the way
+		void OpenFingers(RE::NiAVObject* a_root, bool a_left, float a_open, RE::NiUpdateData& a_ud)
+		{
+			if (a_open <= 0.001f) return;
+			const char* s = a_left ? "L" : "R";
+			for (int f = 0; f < 5; ++f) {
+				for (int j = 0; j < 3; ++j) {
+					const std::string name = fmt::format("NPC {} Finger{}{} [{}F{}{}]", s, f, j, s, f, j);
+					auto*             b = a_root->GetObjectByName(name.c_str());
+					const auto*       rest = BindRot(name.c_str());
+					if (b && rest) b->local.rotate = Slerp(b->local.rotate, *rest, a_open * (f == 0 ? 0.5f : 0.85f));
+				}
+			}
+			if (auto* hand = a_root->GetObjectByName(fmt::format("NPC {} Hand [{}Hnd]", s, s).c_str())) hand->UpdateDownwardPass(a_ud, 0);
+		}
+
+		void SwingCom(RE::NiAVObject* com, const RE::NiPoint3& a_pivot, const RE::NiPoint3& F, const RE::NiPoint3& Rt, float a_th, float a_ph, RE::NiUpdateData& u0)
+		{
+			// the whole body turned about the bar (your hands stay on it)
 			const RE::NiMatrix3 W = AxisAngle(F, a_ph) * AxisAngle(Rt, a_th);
-			const RE::NiPoint3  wpos = pivot + W * (com->world.translate - pivot);
+			const RE::NiPoint3  wpos = a_pivot + W * (com->world.translate - a_pivot);
 			const RE::NiMatrix3 wrot = W * com->world.rotate;
 			const auto&         P = com->parent->world;
 			const float         ps = std::max(1e-4f, P.scale);
@@ -1850,99 +2197,195 @@ namespace bo3z
 			com->local.translate = P.rotate.Transpose() * (wpos - P.translate) * (1.0f / ps);
 			com->UpdateDownwardPass(u0, 0);
 		}
+
 		void SwingBody(RE::PlayerCharacter* a_player)
 		{
 			static auto  last = std::chrono::steady_clock::now();
 			const auto   now = std::chrono::steady_clock::now();
 			const float  dt = std::clamp(std::chrono::duration<float>(now - last).count(), 0.0f, 0.05f);
 			last = now;
-			static float th = 0, thV = 0, ph = 0, phV = 0, clock = 0, kick = 0, lastBeat = 0;
+			static float th = 0, thV = 0, ph = 0, phV = 0, clock = 0, kick = 0, lastBeat = 0, on = 0;
 			static RE::NiPoint3 lastVel{};
-			static float        lastYaw = 0;
-			static float        on = 0;
-			RE::NiPoint3        v{};
+			static RE::NiTransform com0{};
+			static RE::NiAVObject* comWas = nullptr;
+			static bool            haveCom0 = false;
+			static RE::NiPoint3    hs[2]{};  // your shoulders from your feet (your heading's frame), eased
+			static bool            hsFresh[2] = { true, true };
+			RE::NiUpdateData       u0;
+			u0.time = 0.0f;
+			RE::NiPoint3 v{};
 			if (auto* cc = a_player->GetCharController()) GetVel(cc, v);
-			const float yaw = a_player->GetAngleZ();
-			float       dy = yaw - lastYaw;
-			while (dy > 3.14159f) dy -= 6.28318f;
-			while (dy < -3.14159f) dy += 6.28318f;
-			lastYaw = yaw;
-			on += ((g_hadDragon && g_grip > 0.5f && g_armHold <= 0.001f ? 1.0f : 0.0f) - on) * std::min(1.0f, dt * 3.0f);  // (eased in and out)
-			if (on < 0.01f || dt <= 0) {
-				g_swingFresh = true, g_legFresh = true;
-				th = thV = ph = phV = kick = 0, lastVel = v;
+			on += ((g_holding && g_grip > 0.5f && g_armHold <= 0.001f ? 1.0f : 0.0f) - on) * std::min(1.0f, dt * 3.0f);  // (eased in and out)
+			if (!g_place) {
+				if (haveCom0 && on > 0.001f) {  // (the glide ended mid-swing: the body given back as the animation had it)
+					if (auto* r = a_player->Get3D(false)) {
+						if (auto* com = r->GetObjectByName("NPC COM [COM ]"); com && com == comWas) {
+							com->local = com0;
+							com->UpdateDownwardPass(u0, 0);
+						}
+					}
+				}
+				on = 0, haveCom0 = false, g_swingFresh = true, g_legFresh = true;
+				th = thV = ph = phV = kick = 0, lastVel = v, g_trap = 0;
+				hsFresh[0] = hsFresh[1] = true;
 				return;
 			}
 			clock += dt;
-			const RE::NiPoint3 F{ std::sin(yaw), std::cos(yaw), 0 }, Rt{ std::cos(yaw), -std::sin(yaw), 0 };
+			const float        yaw = g_yawOwned ? g_glideYaw : a_player->GetAngleZ();
+			const RE::NiMatrix3 Ry = AxisAngle({ 0, 0, 1 }, -yaw);
+			const RE::NiPoint3 F{ std::sin(yaw), std::cos(yaw), 0 }, Rt{ std::cos(yaw), -std::sin(yaw), 0 }, Up{ 0, 0, 1 };
+			// the pendulum
 			const RE::NiPoint3 acc = (v - lastVel) * (1.0f / std::max(dt, 1e-3f));
 			lastVel = v;
-			const float fold = std::clamp(g_divePitch / 0.42f, 0.0f, 1.0f);
-			const float aF = acc.x * F.x + acc.y * F.y, turn = std::clamp(dy / std::max(dt, 1e-3f), -2.5f, 2.5f);
-			// each downstroke of a climb: a jolt up - the legs kick forward and swing back
+			const float fold = DiveFold();
+			const float aF = acc.x * F.x + acc.y * F.y;
 			const float beat = g_flapT >= 0 ? FlapWing(g_flapT) : 0.0f;
-			if (beat < -0.3f && lastBeat >= -0.3f) {
+			if (beat < -0.3f && lastBeat >= -0.3f) {  // each downstroke of a climb: a jolt up - the legs kick forward and swing back
 				thV += g_flapT > 2 * kFlapSmall ? 0.5f : 0.25f;
 				kick = 1.0f;
 			}
 			lastBeat = beat;
 			kick = std::max(0.0f, kick - dt * 1.6f);
 			const float thT = std::clamp(-aF * 0.00015f, -0.12f, 0.12f) - 0.2f * fold + 0.025f * std::sin(clock * 1.25f) - 0.03f;  // (Noah: subtle)
-			const float phT = std::clamp(turn * 0.06f, -0.12f, 0.12f) + 0.018f * std::sin(clock * 0.85f + 1.0f);
+			// (in a turn you hang square to its leaning harness: swung out with its lean)
+			const float phT = std::clamp(g_roll * 0.8f, -0.7f, 0.7f) + 0.018f * std::sin(clock * 0.85f + 1.0f);
 			thV += (14.0f * (thT - th) - 5.0f * thV) * dt, th += thV * dt;  // (a pendulum, well damped)
-			phV += (14.0f * (phT - ph) - 5.0f * phV) * dt, ph += phV * dt;
-			th = std::clamp(th, -0.3f, 0.2f), ph = std::clamp(ph, -0.15f, 0.15f);
-			auto* root = a_player->Get3D(false);
-			if (!root) return;
-			auto* com = root->GetObjectByName("NPC COM [COM ]");
-			auto* lh = root->GetObjectByName("NPC L Hand [LHnd]");
-			auto* rh = root->GetObjectByName("NPC R Hand [RHnd]");
-			if (!com || !com->parent || !lh || !rh) return;
-			{
-				static bool told = false;
-				if (!told) {
-					told = true;
-					std::string chain;
-					if (auto* sp = root->GetObjectByName("DG_Space")) for (auto* p = sp->parent; p; p = p->parent) chain += std::string(p->name.c_str()) + " < ";
-					logger::info("glider: the dragon hangs from {}", chain);
+			phV += (14.0f * (phT - ph) - 5.5f * phV) * dt, ph += phV * dt;
+			th = std::clamp(th, -0.3f, 0.2f), ph = std::clamp(ph, -0.75f, 0.75f);
+			g_trap = th * on;  // (the bar swings with you about its rings)
+			const float reachW = Smooth((g_deployT - 0.1f) / 0.4f);  // (your arms go up as the glider opens)
+			const bool  first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
+			RE::NiAVObject* seen = nullptr;
+			float           seenScale = 0;
+			for (int f = 0; f < 2; ++f) {
+				auto* root = a_player->Get3D(f == 1);
+				auto* space = root ? root->GetObjectByName("DG_Space") : nullptr;
+				if (!space || !space->parent || space->parent->world.scale < 1e-4f) continue;
+				const Arm L = GetArm(root, true), R = GetArm(root, false);
+				if (!L.ok() || !R.ok()) continue;
+				auto* com = f == 0 ? root->GetObjectByName("NPC COM [COM ]") : nullptr;
+				// 1. last frame's swing undone (from the body's root as the glide's animation first set it - starting from
+				// whatever the frame before left piled the turns up, and you spun round the bar)
+				if (com && com->parent) {
+					if (comWas != com || g_swingFresh || !haveCom0) com0 = com->local, haveCom0 = true;
+					comWas = com;
+					g_swingFresh = false;
+					com->local = com0;
+					com->UpdateDownwardPass(u0, 0);
+				}
+				// 2. the dragon in the world: its bar where your hands reach up to
+				const RE::NiPoint3 rootT = root->world.translate;
+				const float        rs = std::max(0.1f, root->world.scale);
+				const RE::NiPoint3 mid = (L.ua->world.translate + R.ua->world.translate) * 0.5f;
+				const RE::NiPoint3 off = Ry.Transpose() * (mid - rootT);
+				if (hsFresh[f]) hs[f] = off, hsFresh[f] = false;
+				hs[f] = hs[f] + (off - hs[f]) * std::min(1.0f, dt * 3.0f);
+				hs[f].z = std::clamp(hs[f].z, 70.0f * rs, 170.0f * rs);
+				hs[f].x = std::clamp(hs[f].x, -25.0f * rs, 25.0f * rs);
+				hs[f].y = std::clamp(hs[f].y, -25.0f * rs, 25.0f * rs);
+				const float armLen = (L.fa->world.translate - L.ua->world.translate).Length() + (L.hand->world.translate - L.fa->world.translate).Length() +
+				                     0.8f * (L.f20->world.translate - L.hand->world.translate).Length();
+				const RE::NiPoint3 barAt = rootT + Ry * (hs[f] + RE::NiPoint3{ 0, 5.0f * rs, armLen * 0.93f });
+				RE::NiTransform    W;
+				W.rotate = Ry;
+				W.scale = kDragonScale * rs;
+				W.translate = barAt;
+				auto place = [&]() {
+					const auto& P = space->parent->world;
+					space->local.rotate = P.rotate.Transpose() * W.rotate;
+					space->local.translate = P.rotate.Transpose() * (W.translate - P.translate) * (1.0f / P.scale);
+					space->local.scale = W.scale / P.scale;
+					space->UpdateDownwardPass(u0, 0);
+				};
+				if (auto* tr = space->GetObjectByName("DG_Trapeze")) tr->local.rotate = Rot(g_trap, 0, 0);
+				place();
+				auto* hl = space->GetObjectByName("DG_HandleL");
+				auto* hr = space->GetObjectByName("DG_HandleR");
+				if (hl && hr) {
+					W.translate = W.translate + (barAt - (hl->world.translate + hr->world.translate) * 0.5f);
+				}
+				W.translate = W.translate + Ry * (g_swoopOff * rs) + Ry * (g_sway * (W.scale * g_grip));
+				place();
+				if (f == (first ? 1 : 0) || !seen) seen = space, seenScale = W.scale;
+				const RE::NiPoint3 bar = hl && hr ? (hl->world.translate + hr->world.translate) * 0.5f : barAt;
+				// 3. your body swung about the bar
+				if (com && com->parent && on > 0.001f) {
+					SwingCom(com, bar, F, Rt, th * on, ph * on, u0);
+					static const char*   legs[4] = { "NPC L Thigh [LThg]", "NPC R Thigh [RThg]", "NPC L Calf [LClf]", "NPC R Calf [RClf]" };
+					static RE::NiMatrix3 leg0[4]{};
+					for (int i = 0; i < 4; ++i) {  // the legs a little behind the body (and bent at the knee by a beat's kick), not quite together
+						auto* n = root->GetObjectByName(legs[i]);
+						if (!n || !n->parent) continue;
+						if (g_legFresh) leg0[i] = n->local.rotate;  // (as at the glide's start - each frame from there, never piling up)
+						n->local.rotate = leg0[i];
+						n->UpdateDownwardPass(u0, 0);
+						const bool  calf = i >= 2;
+						const float side = (i % 2 == 0 ? 1.0f : -1.0f) * 0.035f * std::sin(clock * 1.7f + (calf ? 0.6f : 0.0f));
+						const float lagA = calf ? (-0.035f * thV - 0.25f * kick * std::sin(kick * 3.14159f)) : (-0.025f * thV + 0.15f * kick * std::sin(kick * 3.14159f));
+						const RE::NiMatrix3 Wl = AxisAngle(Rt, (side + lagA + (calf ? -0.15f * fold : 0.0f)) * on);
+						n->local.rotate = n->parent->world.rotate.Transpose() * (Wl * n->world.rotate);
+						n->UpdateDownwardPass(u0, 0);
+					}
+					g_legFresh = false;
+				}
+				// 4. your arms: up at the harness's width as you fall (reaching for it), then onto its handles as it takes you
+				{
+					const float  w = std::max(reachW, g_grip);
+					const RE::NiPoint3 sMid = (L.ua->world.translate + R.ua->world.translate) * 0.5f;
+					const float  halfW = hl && hr ? 0.5f * (hl->world.translate - hr->world.translate).Length() : 84.0f * W.scale;
+					for (int sd = 0; sd < 2; ++sd) {
+						const bool  left = sd == 0;
+						const Arm&  A = left ? L : R;
+						const float out = left ? -1.0f : 1.0f;  // (your left is -right)
+						// which handle is this hand's: the nearer to its shoulder
+						RE::NiAVObject* mine = nullptr;
+						RE::NiAVObject* other = nullptr;
+						if (hl && hr) {
+							const bool lNear = (hl->world.translate - L.ua->world.translate).Length() <= (hr->world.translate - L.ua->world.translate).Length();
+							mine = (left == lNear) ? hl : hr;
+							other = mine == hl ? hr : hl;
+						}
+						const RE::NiPoint3 flail = Up * (1.2f * std::sin(clock * 5.3f + sd * 1.9f)) + F * (1.5f * std::sin(clock * 3.7f + sd * 0.8f));
+						const RE::NiPoint3 reach = sMid + Rt * (out * halfW * 1.05f) + Up * (armLen * 0.9f) + F * 6.0f + flail * (1 - g_grip);
+						const RE::NiPoint3 grip = mine ? mine->world.translate : reach;
+						const RE::NiPoint3 target = reach + (grip - reach) * g_grip;
+						// the hand's turn: fingers up (a little ahead), knuckles in along the bar toward the other hand
+						RE::NiPoint3 hUp = Up, hFwd = F, inward = Rt * -out;
+						if (mine && other && g_grip > 0.01f) {
+							const auto& M = mine->world.rotate;
+							const RE::NiPoint3 mUp{ M.entry[0][2], M.entry[1][2], M.entry[2][2] }, mFwd{ M.entry[0][1], M.entry[1][1], M.entry[2][1] };
+							RE::NiPoint3 in2 = other->world.translate - mine->world.translate;
+							in2.Unitize();
+							hUp = Up + (mUp - Up) * g_grip, hFwd = F + (mFwd - F) * g_grip, inward = inward + (in2 - inward) * g_grip;
+						}
+						const RE::NiPoint3 fingers = hUp * 0.95f + hFwd * 0.22f;
+						const RE::NiPoint3 pole = Rt * out * 0.8f - F * 0.35f - Up * 0.2f;  // (elbows out to the side and a little back)
+						if (A.clav && g_grip < 0.999f) {  // (the shoulder lifted as the arm reaches up)
+							const RE::NiPoint3 c = A.ua->world.translate - A.clav->world.translate;
+							TurnBone(A.clav, c, c + Up * (c.Length() * 0.3f), reachW * (1 - g_grip) * 0.8f, u0);
+						}
+						ArmReach(A.ua, A.fa, A.hand, target - (GripPoint(A, left) - A.hand->world.translate), pole, w, u0);
+						TurnHand(A, fingers, inward, w, u0);
+						ArmReach(A.ua, A.fa, A.hand, target - (GripPoint(A, left) - A.hand->world.translate), pole, w, u0);
+						TurnHand(A, fingers, inward, w, u0);
+						OpenFingers(root, left, reachW * (1 - g_grip), u0);
+					}
+				}
+				// 5. its breath's beam
+				BeamPose(space, g_beam, Bond());
+			}
+			// its wingtip trails: sampled from the copy you see, drawn on both
+			if (seen) {
+				TrailSample(seen, g_trail, dt);
+				for (int f = 0; f < 2; ++f) {
+					auto* root = a_player->Get3D(f == 1);
+					if (auto* sp = root ? root->GetObjectByName("DG_Space") : nullptr) TrailPlace(sp, g_trail, seenScale);
 				}
 			}
-			RE::NiUpdateData u0;
-			u0.time = 0.0f;
-			// (your body's root as the glide's animation first set it, kept: each frame the swing starts again from there -
-			// starting from whatever the frame before left let the turns pile up, and you spun round the bar)
-			{
-				static RE::NiTransform com0{};
-				static RE::NiAVObject* comWas = nullptr;
-				if (comWas != com || g_swingFresh) com0 = com->local;  // (taken while the swing is still nothing)
-				comWas = com;
-				g_swingFresh = false;
-				com->local = com0;
-				com->UpdateDownwardPass(u0, 0);
-				SwingCom(com, lh, rh, F, Rt, th * on, ph * on, u0);
-			}
-			// the legs a little behind the body (and bent at the knee by a beat's kick), not quite together
-			static const char* legs[4] = { "NPC L Thigh [LThg]", "NPC R Thigh [RThg]", "NPC L Calf [LClf]", "NPC R Calf [RClf]" };
-			static RE::NiMatrix3 leg0[4]{};
-			static bool          legFresh = true;
-			for (int i = 0; i < 4; ++i) {
-				auto* n = root->GetObjectByName(legs[i]);
-				if (!n || !n->parent) continue;
-				if (legFresh || g_legFresh) leg0[i] = n->local.rotate;  // (as at the glide's start - each frame from there, never piling up)
-				n->local.rotate = leg0[i];
-				n->UpdateDownwardPass(u0, 0);
-				const bool  calf = i >= 2;
-				const float side = (i % 2 == 0 ? 1.0f : -1.0f) * 0.035f * std::sin(clock * 1.7f + (calf ? 0.6f : 0.0f));
-				const float lagA = calf ? (-0.035f * thV - 0.25f * kick * std::sin(kick * 3.14159f)) : (-0.025f * thV + 0.15f * kick * std::sin(kick * 3.14159f));
-				const RE::NiMatrix3 Wl = AxisAngle(Rt, (side + lagA - (calf ? 0.0f : 0.0f) + (calf ? -0.15f * fold : 0.0f)) * on);
-				n->local.rotate = n->parent->world.rotate.Transpose() * (Wl * n->world.rotate);
-				n->UpdateDownwardPass(u0, 0);
-			}
-			legFresh = false, g_legFresh = false;
 			static float logT = 0;
 			if ((logT -= dt) <= 0) {
 				logT = 2.0f;
-				logger::info("glider: you swing - pitch {:.2f} roll {:.2f} kick {:.2f}", th, ph, kick);
+				logger::info("glider: hanging - swing pitch {:.2f} roll {:.2f}, grip {:.2f}, reach {:.2f}, lean {:.2f}, speed {:.0f}, path {:.2f}", th, ph, g_grip, reachW, g_roll, g_speed, g_gamma);
 			}
 		}
 
@@ -1983,6 +2426,12 @@ namespace bo3z
 					holding[f] = true;
 					const int oldest = n[f] < kHist ? 0 : head[f];
 					for (int i = 0; i < kN; ++i) held[f][i] = n[f] > 0 ? hist[f][i][oldest] : b[i]->local.rotate;
+					// (Noah: a sprint-jump left you in an odd pose for the fall) the fall's body: part of the way back toward
+					// standing straight, the legs mostly straight below you (the arms reach up for the harness: SwingBody)
+					for (int i = 0; i < kN; ++i) {
+						const float k = i >= 11 ? 0.6f : (i == 0 || i >= 7) ? 0.35f : 0.0f;
+						if (const auto* rest = k > 0 ? BindRot(kBones[i]) : nullptr) held[f][i] = Slerp(held[f][i], *rest, k);
+					}
 				}
 				n[f] = 0, head[f] = 0;
 				if (g_armHold <= 0) {
@@ -2002,6 +2451,7 @@ namespace bo3z
 		void DevChase(bool a_on, float a_dist, float a_yaw, float a_pitch, float a_height, float a_spin)
 		{
 			g_chase = { a_on, a_dist, a_yaw, a_pitch, a_height, a_spin };
+			g_chaseOn = a_on;
 			if (!a_on) {
 				auto* pc = RE::PlayerCamera::GetSingleton();
 				if (pc && pc->currentState && pc->currentState->id == RE::CameraState::kThirdPerson) {
@@ -2032,6 +2482,10 @@ namespace bo3z
 				return;
 			}
 			ChaseTick(player, a_delta);
+			if (auto* ui = RE::UI::GetSingleton(); ui && (ui->GameIsPaused() || ui->IsMenuOpen(RE::InventoryMenu::MENU_NAME) || ui->IsMenuOpen(RE::MapMenu::MENU_NAME))) {
+				g_keyF = g_keyB = g_keyL = g_keyR = false;  // (a key let go of while a menu had it is never heard: start again)
+				g_stickX = g_stickY = 0;
+			}
 			TuneGameSettings();
 			TuneMovementTypes();
 			auto*      st = player->AsActorState();
@@ -2109,7 +2563,7 @@ namespace bo3z
 					g_slide = 0.0001f;
 				}
 			}
-			if (cc && air && !(g_hadDragon && Bond() >= 1) && !g_dive && g_liftOff == 0) {  // (the dragon's bonds fly you themselves)
+			if (cc && air && !g_place && !g_dive && g_liftOff == 0) {  // (the dragon flies you itself)
 				const float ts = std::sqrt(g_takeoff.x * g_takeoff.x + g_takeoff.y * g_takeoff.y);
 				RE::NiPoint3 h = hv;
 				// Skyrim's jump drops your run speed on takeoff: the first moments of the jump keep what you had
