@@ -1489,7 +1489,7 @@ namespace bo3z
 					ld.autoAim = false;
 					ld.noDamageOutsideCombat = true;
 					ld.power = 0.0f;
-					ld.scale = g_breathScaleDev > 0 ? g_breathScaleDev : el == 0 || el >= 3 ? 0.45f : el == 1 ? 0.6f : 0.7f;  // (Noah: a smaller breath - its reach is the same)
+					ld.scale = g_breathScaleDev > 0 ? g_breathScaleDev : el == 0 || el >= 3 ? 0.45f : el == 1 ? 1.0f : 2.5f;  // (Noah: a smaller breath - its reach is the same)
 					// (a beam - the lightning - is aimed by its shooter's own facing, not the launch angles: you face the breath
 					// for the moment it leaves)
 					auto&       ang = a_player->data.angle;  // (x pitch, z yaw)
