@@ -1238,7 +1238,9 @@ namespace bo3z
 			RE::NiPoint2 own{ (g_keyR ? 1.0f : 0.0f) - (g_keyL ? 1.0f : 0.0f), (g_keyF ? 1.0f : 0.0f) - (g_keyB ? 1.0f : 0.0f) };
 			if (std::abs(g_stickX) > std::abs(own.x)) own.x = g_stickX;
 			if (std::abs(g_stickY) > std::abs(own.y)) own.y = g_stickY;
-			if (own.x * own.x + own.y * own.y > in.x * in.x + in.y * in.y) in = own;
+			// (the keys' and stick's own events come first: True Directional Movement rewrites the game's reading to "forward"
+			// whichever way you push - back and the sides all dived)
+			if (own.x != 0.0f || own.y != 0.0f) in = own;
 			auto dz = [](float a) { return std::abs(a) < 0.18f ? 0.0f : (a - std::copysign(0.18f, a)) / 0.82f; };
 			return { std::clamp(dz(in.x), -1.0f, 1.0f), std::clamp(dz(in.y), -1.0f, 1.0f) };
 		}
@@ -2494,6 +2496,9 @@ namespace bo3z
 				return;
 			}
 			ChaseTick(player, a_delta);
+			if (auto* ss = RE::ScreenSplatter::GetSingleton(); ss && ss->uiCount > 0) {
+				ss->Clear();  // (Skyrim's blood on the screen: the HUD's red edges say you were hit)
+			}
 			if (auto* ui = RE::UI::GetSingleton(); ui && (ui->GameIsPaused() || ui->IsMenuOpen(RE::InventoryMenu::MENU_NAME) || ui->IsMenuOpen(RE::MapMenu::MENU_NAME))) {
 				g_keyF = g_keyB = g_keyL = g_keyR = false;  // (a key let go of while a menu had it is never heard: start again)
 				g_stickX = g_stickY = 0;
