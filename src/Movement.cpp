@@ -673,8 +673,8 @@ namespace bo3z
 		}
 
 		// its fire in its bond's colour: each breath launched is watched until its model is in, then its effect shaders
-		// are given the bond's greyscale-to-palette ramp (tools/firepalette.py) - Bond I's pale ice-blue fire, Bond II's
-		// glacier blue; Bond III, the black dragon with ember eyes, breathes Skyrim's own red fire
+		// are given the bond's greyscale-to-palette ramp (tools/firepalette.py) - (Noah) before any bond Skyrim's own fire,
+		// Bond I blue, Bond II yellow, Bond III green
 		struct Tinted
 		{
 			RE::ProjectileHandle h;
@@ -684,8 +684,9 @@ namespace bo3z
 		std::vector<Tinted> g_tinted;
 		void TintBreath(float a_dt)
 		{
-			static RE::NiPointer<RE::NiTexture> pal[2];
-			static const char*                   kPal[2] = { "textures\\CurseOfAlduin\\Dragon\\fire_b1.dds", "textures\\CurseOfAlduin\\Dragon\\fire_b2.dds" };
+			static RE::NiPointer<RE::NiTexture> pal[3];
+			static const char*                   kPal[3] = { "textures\\CurseOfAlduin\\Dragon\\fire_b1.dds", "textures\\CurseOfAlduin\\Dragon\\fire_b2.dds",
+				"textures\\CurseOfAlduin\\Dragon\\fire_b3.dds" };
 			for (auto it = g_tinted.begin(); it != g_tinted.end();) {
 				auto p = it->h.get();
 				it->age += a_dt;
@@ -698,7 +699,7 @@ namespace bo3z
 					++it;
 					continue;
 				}
-				const int k = std::clamp(it->bond, 1, 2) - 1;
+				const int k = std::clamp(it->bond, 1, 3) - 1;
 				if (!pal[k]) {
 					RE::BSShaderManager::GetTexture(kPal[k], true, pal[k], false);
 				}
@@ -1376,7 +1377,7 @@ namespace bo3z
 			// fire: now and then, a breath of a second and a half (Bond III: whenever the dead are below, a few seconds apart)
 			static float       sinceBreath = 0, seekT = 0;
 			static RE::ActorHandle target;
-			const bool         thrall = Bond() >= 1 && mouth != nullptr;  // (Noah: every bond breathes fire, in its colour)
+			const bool         thrall = mouth != nullptr;  // (Noah: it breathes fire from the start - its colour changes with each bond)
 			sinceBreath += dt;
 			if (thrall && (seekT -= dt) <= 0) {
 				seekT = 0.25f;
@@ -1592,7 +1593,7 @@ namespace bo3z
 					ld.scale = g_breathScaleDev > 0 ? g_breathScaleDev : 0.45f;  // (Noah: a smaller breath - its reach is the same)
 					RE::ProjectileHandle h;
 					RE::Projectile::Launch(&h, ld);
-					if (Bond() < 3) {
+					if (Bond() >= 1) {
 						g_tinted.push_back({ h, Bond(), 0.0f });
 					}
 					if (auto p = h.get()) {
@@ -1664,9 +1665,9 @@ namespace bo3z
 		void BuyBond(RE::TESObjectREFR* a_shrine)
 		{
 			static constexpr const char* kName[3] = { "WIND-RIDER", "TALON STRIKE", "ALDUIN'S THRALL" };
-			static constexpr const char* kHow[3] = { "Jump while gliding: it beats its wings and climbs  -  right attack mid-glide: ice-blue fire (every 5 s)",
-				"Shout Dragon's Updraft: a whirlwind lifts you, then open the glider  -  attack looking down mid-glide: the dive",
-				"Its fire burns hotter, ember-red like its eyes (right attack mid-glide, every 5 s)" };
+			static constexpr const char* kHow[3] = { "Jump while gliding: it beats its wings and climbs  -  its fire turns blue",
+				"Shout Dragon's Updraft: a whirlwind lifts you, then open the glider  -  attack looking down mid-glide: the dive  -  its fire turns yellow",
+				"Its fire burns hotter, and turns green" };
 			const int b = Bond();
 			if (b >= 3) {
 				Hud::Banner("Your dragon has made every bond", 2.5f);
@@ -1789,7 +1790,7 @@ namespace bo3z
 				if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
 					lookDown = -cam->cameraRoot->world.rotate.entry[2][1];
 				}
-				const bool breathKey = bond >= 1 && ev == ue->rightAttack && !(bond >= 2 && lookDown > 0.42f);
+				const bool breathKey = ev == ue->rightAttack && !(bond >= 2 && lookDown > 0.42f);
 				if (free && breathKey && g_hadDragon && !g_dive) {
 					if (g_breathCd <= 0) {
 						g_breathReq = true;

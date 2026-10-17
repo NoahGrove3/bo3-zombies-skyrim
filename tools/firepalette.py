@@ -1,16 +1,16 @@
 """The dragon's breath in its bond's colour (src/Movement.cpp: TintBreath): greyscale-to-palette ramps the game swaps into
 the fire breath's effect shaders - the flame's brightness picks a colour along the ramp, dark (left) to white-hot (right).
     python tools/firepalette.py <Textures dir>
-Writes Textures/CurseOfAlduin/Dragon/fire_b1.dds (Bond I, the snow dragon: pale ice-blue fire) and fire_b2.dds (Bond II,
-the glacier dragon: deep glacier-blue fire). Bond III, the black dragon with ember eyes, keeps Skyrim's own red fire."""
+(Noah) before any bond: Skyrim's own fire; Bond I blue (fire_b1.dds), Bond II yellow (fire_b2.dds), Bond III green (fire_b3.dds)."""
 import sys, pathlib
 import numpy as np
 from PIL import Image
 
 RAMPS = {
     # (position along the ramp, colour) - the dim smoke-edge of the flame, its body, its white-hot heart
-    'fire_b1': [(0.0, (0, 0, 0)), (0.18, (20, 45, 90)), (0.45, (70, 150, 235)), (0.72, (150, 215, 255)), (1.0, (245, 252, 255))],
-    'fire_b2': [(0.0, (0, 0, 0)), (0.18, (5, 25, 85)), (0.45, (25, 95, 230)), (0.72, (80, 170, 255)), (1.0, (215, 240, 255))],
+    'fire_b1': [(0.0, (0, 0, 0)), (0.18, (10, 30, 95)), (0.45, (35, 105, 240)), (0.72, (110, 185, 255)), (1.0, (230, 245, 255))],
+    'fire_b2': [(0.0, (0, 0, 0)), (0.18, (90, 55, 0)), (0.45, (230, 175, 10)), (0.72, (255, 225, 70)), (1.0, (255, 252, 215))],
+    'fire_b3': [(0.0, (0, 0, 0)), (0.18, (5, 60, 10)), (0.45, (40, 200, 40)), (0.72, (130, 255, 110)), (1.0, (230, 255, 220))],
 }
 
 

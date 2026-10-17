@@ -2117,9 +2117,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				{
 					static constexpr const char* kBond[4] = { "", "WIND-RIDER", "TALON STRIKE", "ALDUIN'S THRALL" };
 					static constexpr const char* kWhat[4] = { "",
-						"Jump mid-glide: two quick wing-beats and a great one to climb - right attack: ice-blue fire",
+						"Jump mid-glide: two quick wing-beats and a great one to climb - its fire turns blue",
 						"Shout Dragon's Updraft: a whirlwind lifts you, then glide - attack looking down to dive-bomb",
-						"Turned black, eyes like embers - its fire burns hotter, ember-red" };
+						"Turned black, eyes like embers - its fire burns hotter, and green" };
 					static constexpr ImU32 kCol[4] = { IM_COL32(220, 214, 200, 255), IM_COL32(170, 225, 255, 255), IM_COL32(120, 190, 255, 255), IM_COL32(255, 92, 48, 255) };
 					const int  have = std::clamp(s.dragonBond, 0, 3), next = have + 1;
 					const bool maxed = have >= 3;
