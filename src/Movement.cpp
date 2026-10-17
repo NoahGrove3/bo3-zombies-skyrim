@@ -1880,16 +1880,16 @@ namespace bo3z
 			// each downstroke of a climb: a jolt up - the legs kick forward and swing back
 			const float beat = g_flapT >= 0 ? FlapWing(g_flapT) : 0.0f;
 			if (beat < -0.3f && lastBeat >= -0.3f) {
-				thV += g_flapT > 2 * kFlapSmall ? 1.6f : 0.8f;
+				thV += g_flapT > 2 * kFlapSmall ? 0.5f : 0.25f;
 				kick = 1.0f;
 			}
 			lastBeat = beat;
 			kick = std::max(0.0f, kick - dt * 1.6f);
-			const float thT = std::clamp(-aF * 0.0004f, -0.3f, 0.3f) - 0.55f * fold + 0.05f * std::sin(clock * 1.25f) - 0.04f;
-			const float phT = std::clamp(turn * 0.14f, -0.3f, 0.3f) + 0.035f * std::sin(clock * 0.85f + 1.0f);
-			thV += (14.0f * (thT - th) - 2.6f * thV) * dt, th += thV * dt;  // (a pendulum, lightly damped)
-			phV += (14.0f * (phT - ph) - 2.6f * phV) * dt, ph += phV * dt;
-			th = std::clamp(th, -0.9f, 0.5f), ph = std::clamp(ph, -0.4f, 0.4f);
+			const float thT = std::clamp(-aF * 0.00015f, -0.12f, 0.12f) - 0.2f * fold + 0.025f * std::sin(clock * 1.25f) - 0.03f;  // (Noah: subtle)
+			const float phT = std::clamp(turn * 0.06f, -0.12f, 0.12f) + 0.018f * std::sin(clock * 0.85f + 1.0f);
+			thV += (14.0f * (thT - th) - 5.0f * thV) * dt, th += thV * dt;  // (a pendulum, well damped)
+			phV += (14.0f * (phT - ph) - 5.0f * phV) * dt, ph += phV * dt;
+			th = std::clamp(th, -0.3f, 0.2f), ph = std::clamp(ph, -0.15f, 0.15f);
 			auto* root = a_player->Get3D(false);
 			if (!root) return;
 			auto* com = root->GetObjectByName("NPC COM [COM ]");
@@ -1932,8 +1932,8 @@ namespace bo3z
 				auto* n = root->GetObjectByName(legs[i]);
 				if (!n || !n->parent) continue;
 				const bool  calf = i >= 2;
-				const float side = (i % 2 == 0 ? 1.0f : -1.0f) * 0.07f * std::sin(clock * 1.7f + (calf ? 0.6f : 0.0f));
-				const float lagA = calf ? (-0.35f * thV * 0.1f - 0.6f * kick * std::sin(kick * 3.14159f)) : (-0.25f * thV * 0.1f + 0.35f * kick * std::sin(kick * 3.14159f));
+				const float side = (i % 2 == 0 ? 1.0f : -1.0f) * 0.035f * std::sin(clock * 1.7f + (calf ? 0.6f : 0.0f));
+				const float lagA = calf ? (-0.035f * thV - 0.25f * kick * std::sin(kick * 3.14159f)) : (-0.025f * thV + 0.15f * kick * std::sin(kick * 3.14159f));
 				const RE::NiMatrix3 Wl = AxisAngle(Rt, (side + lagA - (calf ? 0.0f : 0.0f) + (calf ? -0.15f * fold : 0.0f)) * on);
 				n->local.rotate = n->parent->world.rotate.Transpose() * (Wl * n->world.rotate);
 				n->UpdateDownwardPass(u0, 0);
