@@ -1546,6 +1546,12 @@ namespace bo3z
 						w.entry[0][1] = y.x, w.entry[1][1] = y.y, w.entry[2][1] = y.z;
 						w.entry[0][2] = zr.x, w.entry[1][2] = zr.y, w.entry[2][2] = zr.z;
 						b->local.rotate = b->parent->world.rotate.Transpose() * w;
+						static float logT = 0;
+						if (k == 0 && i == 0 && (logT -= dt) <= 0) {
+							logT = 0.4f;
+							logger::info("glider: bolt at ({:.0f},{:.0f},{:.0f}) scale {:.2f} culled {} bound ({:.0f},{:.0f},{:.0f}) r {:.0f} dir ({:.2f},{:.2f},{:.2f})", b->world.translate.x, b->world.translate.y, b->world.translate.z,
+								b->world.scale, b->GetAppCulled(), b->worldBound.center.x, b->worldBound.center.y, b->worldBound.center.z, b->worldBound.radius, y.x, y.y, y.z);
+						}
 					}
 				}
 			}
