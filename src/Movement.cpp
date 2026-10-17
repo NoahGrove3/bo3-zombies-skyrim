@@ -482,6 +482,7 @@ namespace bo3z
 		// Its look: Paragliding.esp's animated object (ANIO 0x800) is given the bond's nif before you glide, the dragon
 		// that flies off afterwards the same (tools/modelconv/dragonvariant.cpp, tools/dragontex.py).
 		float g_flapT = -1, g_flapWait = 0;  // Bond I: a wing-beat's time, and the wait before the next
+		bool  g_takeRun = false;               // (the take-off's leap carries you forward)
 		int   g_liftOff = 0;                 // Bond II: 1 hopped up (the glider is being opened), 2 hanging there as it comes
 		float g_takeT = 0, g_liftT = -1;
 		bool  g_dive = false;                // Bond II: hurled at the ground
@@ -729,6 +730,10 @@ namespace bo3z
 				// floating there waiting.) A quick, strong leap that slows to its peak in 0.42 s, carrying your run on
 				if (cc && g_takeT < 0.42f) {
 					cc->context.currentState = RE::hkpCharacterStateType::kInAir;
+					if (g_takeRun) {  // (the leap carries you forward at a sprint)
+						const float yaw = a_player->GetAngleZ();
+						v.x = std::sin(yaw) * 600.0f, v.y = std::cos(yaw) * 600.0f;
+					}
 					v.z = 1150.0f * (1 - g_takeT / 0.42f);
 					SetVel(cc, v);
 				}
@@ -832,6 +837,18 @@ namespace bo3z
 						g_grabOff.x, g_grabOff.y, g_grabOff.z, g_ik[0][0], g_ik[0][1], g_ik[1][0], g_ik[1][1]);
 				}
 			}
+		}
+
+		void DevTakeOff()  // dev: Bond II's sprint-jump take-off, as if sprinting (the test harness can't hold a sprint)
+		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (!player || !player->GetCharController() || g_hadDragon || g_liftOff != 0) {
+				return;
+			}
+			player->SetPosition(player->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, true);
+			g_liftOff = 1, g_takeT = 0, g_takeRun = true;
+			Forms::PlayAt(gen::Sound::shout_gale, player);
+			logger::info("glider: take-off (dev)");
 		}
 
 		void DevFlyOff()
@@ -1427,6 +1444,7 @@ namespace bo3z
 					{
 						if (player->GetCharController()) {
 							player->SetPosition(player->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, true);  // off the ground (then the leap, above)
+							g_takeRun = true;
 							g_liftOff = 1, g_takeT = 0;
 							Forms::PlayAt(gen::Sound::shout_gale, player);
 							logger::info("glider: take-off");

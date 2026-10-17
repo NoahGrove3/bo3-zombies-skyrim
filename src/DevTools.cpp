@@ -211,6 +211,8 @@ namespace bo3z
 				int a = 0;
 				in >> a;
 				Shops::DevAct(a);
+			} else if (cmd == "takeoff") {
+				Movement::DevTakeOff();
 			} else if (cmd == "flyoff") {
 				Movement::DevFlyOff();
 			} else if (cmd == "bond") {  // bond <0-3>: the glider's dragon's bond, for testing
