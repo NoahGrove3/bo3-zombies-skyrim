@@ -963,54 +963,69 @@ namespace bo3z
 			R.entry[0][2] = Z.x, R.entry[1][2] = Z.y, R.entry[2][2] = Z.z;
 			return R;
 		}
-		void BeamPose(RE::NiAVObject* a_root, const BeamState& a_b, int a_bond)
+		// (its own nif, CurseOfAlduin\fx\breath_beam.nif - tools/breathbeam.py - hung on your 3D while it breathes, as the
+		// whirlwind is, and placed each frame at the dragon's jaws: shapes moved under the dragon's animated nodes were never drawn)
+		RE::NiPointer<RE::NiAVObject> g_beamNode[2];
+		void BeamGone()
 		{
-			auto* mouth = a_root ? a_root->GetObjectByName("DG_Mouth") : nullptr;
-			if (!mouth) return;
+			for (auto& n : g_beamNode) {
+				if (n && n->parent) n->parent->DetachChild(n.get());
+				n.reset();
+			}
+		}
+		void BeamPose(int a_f, RE::NiAVObject* a_root, RE::NiAVObject* a_space, const BeamState& a_b, int a_bond)
+		{
+			auto* host = a_root ? a_root->AsNode() : nullptr;
+			auto* mouth = a_space ? a_space->GetObjectByName("DG_Mouth") : nullptr;
+			auto& node = g_beamNode[a_f];
+			if (!host || !mouth || a_b.level < 0.01f) {
+				if (node && node->parent) node->parent->DetachChild(node.get());
+				node.reset();
+				return;
+			}
+			if (!node) {
+				static RE::NiPointer<RE::NiNode> model;
+				if (!model) {
+					RE::BSModelDB::DBTraits::ArgsType args{};
+					if (RE::BSModelDB::Demand("CurseOfAlduin\\fx\\breath_beam.nif", model, args) != RE::BSResource::ErrorCode::kNone || !model) {
+						model.reset();
+						static bool told = false;
+						if (!told) told = true, logger::warn("glider: no breath beam model");
+						return;
+					}
+				}
+				auto* clone = model->Clone();
+				if (!clone) return;
+				node.reset(static_cast<RE::NiAVObject*>(clone));
+				node->local = RE::NiTransform{};
+				host->AttachChild(node.get(), true);
+			} else if (node->parent != host) {
+				if (node->parent) node->parent->DetachChild(node.get());
+				host->AttachChild(node.get(), true);
+			}
 			static constexpr float kOuter[4][3] = { { 1.0f, 0.40f, 0.07f }, { 0.12f, 0.38f, 1.0f }, { 1.0f, 0.72f, 0.04f }, { 0.12f, 0.85f, 0.14f } };
 			static constexpr float kCore[4][3] = { { 1.0f, 0.80f, 0.40f }, { 0.60f, 0.82f, 1.0f }, { 1.0f, 0.94f, 0.55f }, { 0.65f, 1.0f, 0.55f } };
 			const int   b = std::clamp(a_bond, 0, 3);
 			const float flick = 0.9f + 0.1f * std::sin(a_b.clock * 31.0f) * std::sin(a_b.clock * 17.0f + 1.0f);
-			const RE::NiMatrix3 R = mouth->world.rotate.Transpose() * AimAlong(a_b.dir);
-			RE::NiUpdateData    ud0;
-			ud0.time = 0.0f;
-			if (auto* bone = mouth->GetObjectByName("DG_BeamBone")) {  // (the beam's shapes are skinned to it: it turns and grows them)
-				bone->local.rotate = R;
-				bone->local.translate = {};
-				bone->local.scale = std::max(0.02f, a_b.grow);
-				bone->UpdateDownwardPass(ud0, 0);
-			}
+			const auto& H = host->world;
+			const float hs = std::max(1e-4f, H.scale);
+			node->local.rotate = H.rotate.Transpose() * AimAlong(a_b.dir);
+			node->local.translate = H.rotate.Transpose() * (mouth->world.translate - H.translate) * (1.0f / hs);
+			node->local.scale = mouth->world.scale * std::max(0.02f, a_b.grow) / hs;  // (it grows out of its jaws)
 			struct Part
 			{
 				const char* name;
 				float       level, rate;
 				bool        core;
 			};
-			static constexpr Part parts[3] = { { "DG_Beam1", 1.0f, 4.0f, true }, { "DG_Beam2", 0.6f, 3.0f, false }, { "DG_Beam3", 0.85f, 5.0f, false } };
-			RE::NiUpdateData ud;
-			ud.time = 0.0f;
+			static constexpr Part parts[3] = { { "BB1", 1.0f, 4.0f, true }, { "BB2", 0.6f, 3.0f, false }, { "BB3", 0.85f, 5.0f, false } };
 			for (const auto& pt : parts) {
-				auto* o = a_root->GetObjectByName(pt.name);
-				if (!o) continue;
-				o->local = RE::NiTransform{};  // (skinned: DG_BeamBone carries it)
 				const float* c = pt.core ? kCore[b] : kOuter[b];
-				FxColor(a_root, pt.name, c[0], c[1], c[2]);
-				FxLevel(a_root, pt.name, a_b.level * pt.level * flick, -std::fmod(a_b.clock * pt.rate, 1.0f));
-				o->Update(ud);  // (the whole update: its bound is carried up to the nodes above, or the beam is culled as off-screen)
-				static float logT = 0;
-				static auto  lastLog = std::chrono::steady_clock::now();
-				if (a_b.level > 0.01f && pt.core && std::chrono::steady_clock::now() - lastLog > std::chrono::milliseconds(400)) {
-					lastLog = std::chrono::steady_clock::now();
-					auto* g = o->AsGeometry();
-					auto* sp = g ? g->GetGeometryRuntimeData().shaderProperty.get() : nullptr;
-					auto* m = sp ? static_cast<RE::BSEffectShaderMaterial*>(static_cast<RE::BSShaderProperty*>(sp)->material) : nullptr;
-					logger::info("glider: beam level {:.2f} grow {:.2f} culled {} at ({:.0f},{:.0f},{:.0f}) scale {:.3f} bound ({:.0f},{:.0f},{:.0f}) r {:.0f} dir ({:.2f},{:.2f},{:.2f}) colorScale {:.2f} parent {} mouth scale {:.3f}",
-						a_b.level, a_b.grow, o->GetAppCulled(), o->world.translate.x, o->world.translate.y, o->world.translate.z, o->world.scale, o->worldBound.center.x,
-						o->worldBound.center.y, o->worldBound.center.z, o->worldBound.radius, a_b.dir.x, a_b.dir.y, a_b.dir.z, m ? m->baseColorScale : -1.0f,
-						o->parent ? o->parent->name.c_str() : "-", mouth->world.scale);
-					(void)logT;
-				}
+				FxColor(node.get(), pt.name, c[0], c[1], c[2]);
+				FxLevel(node.get(), pt.name, a_b.level * pt.level * flick, -std::fmod(a_b.clock * pt.rate, 1.0f));
 			}
+			RE::NiUpdateData ud;
+			node->Update(ud);
 		}
 
 		// ---- Dragon's Updraft (Bond II's shout): taught whole once the bond is bought, and put in the shout slot if it's empty
@@ -2257,6 +2272,7 @@ namespace bo3z
 						}
 					}
 				}
+				BeamGone();
 				on = 0, haveCom0 = false, g_swingFresh = true, g_legFresh = true;
 				th = thV = ph = phV = kick = 0, lastVel = v, g_trap = 0;
 				hsFresh[0] = hsFresh[1] = true;
@@ -2405,7 +2421,7 @@ namespace bo3z
 					}
 				}
 				// 5. its breath's beam
-				BeamPose(space, g_beam, Bond());
+				BeamPose(f, root, space, g_beam, Bond());
 			}
 			// its wingtip trails: sampled from the copy you see, drawn on both
 			if (seen) {
