@@ -1854,42 +1854,39 @@ namespace bo3z
 			thV += (16.0f * (thT - th) - 4.0f * thV) * dt, th += thV * dt;
 			phV += (16.0f * (phT - ph) - 4.0f * phV) * dt, ph += phV * dt;
 			th = std::clamp(th, -1.0f, 0.4f), ph = std::clamp(ph, -0.35f, 0.35f);
-			const RE::NiMatrix3 W = AxisAngle(F, ph) * AxisAngle(Rt, th);
-			{  // (the body you see from outside; your first-person arms stay as they are)
-				auto* root = a_player->Get3D(false);
-				if (!root) return;
-				auto* pel = root->GetObjectByName("NPC Pelvis [Pelv]");
-				auto* lh = root->GetObjectByName("NPC L Hand [LHnd]");
-				auto* rh = root->GetObjectByName("NPC R Hand [RHnd]");
-				if (!pel || !pel->parent || !lh || !rh) return;
-				// (the animation doesn't always rewrite the pelvis each frame: last frame's swing is taken off first, so it
-				// never piles up)
-				static RE::NiMatrix3 wroteR, baseR;
-				static RE::NiPoint3  wroteT, baseT;
-				static bool          wrote = false;
-				auto same = [](const RE::NiMatrix3& a, const RE::NiMatrix3& b) {
-					float d = 0;
-					for (int r = 0; r < 3; ++r) for (int c = 0; c < 3; ++c) d += std::abs(a.entry[r][c] - b.entry[r][c]);
-					return d < 1e-4f;
-				};
-				if (wrote && same(pel->local.rotate, wroteR) && (pel->local.translate - wroteT).Length() < 0.01f) {
-					pel->local.rotate = baseR, pel->local.translate = baseT;
-					RE::NiUpdateData u0;
-					u0.time = 0.0f;
-					pel->UpdateDownwardPass(u0, 0);
+			static float logT = 0;
+			if ((logT -= dt) <= 0) {
+				logT = 2.0f;
+				logger::info("glider: swing pitch {:.2f} roll {:.2f} (fold {:.2f})", th, ph, fold);
+			}
+			// (your legs swing from the hips - the body itself stays under its hands: turning the whole body about the hands
+			// threw it out sideways)
+			auto* root = a_player->Get3D(false);
+			if (!root) return;
+			static const char* legs[4] = { "NPC L Thigh [LThg]", "NPC R Thigh [RThg]", "NPC L Calf [LClf]", "NPC R Calf [RClf]" };
+			static RE::NiMatrix3 wrote[4], base[4];
+			static bool          have[4]{};
+			auto same = [](const RE::NiMatrix3& a, const RE::NiMatrix3& b) {
+				float d = 0;
+				for (int r = 0; r < 3; ++r) for (int c = 0; c < 3; ++c) d += std::abs(a.entry[r][c] - b.entry[r][c]);
+				return d < 1e-4f;
+			};
+			for (int i = 0; i < 4; ++i) {
+				auto* n = root->GetObjectByName(legs[i]);
+				if (!n || !n->parent) continue;
+				if (have[i] && same(n->local.rotate, wrote[i])) {  // (not rewritten by the animation: take last frame's off)
+					n->local.rotate = base[i];
 				}
-				baseR = pel->local.rotate, baseT = pel->local.translate;
-				const RE::NiPoint3 H = (lh->world.translate + rh->world.translate) * 0.5f;
-				const auto&        P = pel->parent->world;
-				const RE::NiMatrix3 Rn = W * pel->world.rotate;
-				const RE::NiPoint3 Tn = W * (pel->world.translate - H) + H;
-				const RE::NiMatrix3 Pt = P.rotate.Transpose();
-				pel->local.rotate = Pt * Rn;
-				pel->local.translate = (Pt * (Tn - P.translate)) * (1.0f / std::max(0.001f, P.scale));
-				wroteR = pel->local.rotate, wroteT = pel->local.translate, wrote = true;
-				RE::NiUpdateData ud;
-				ud.time = 0.0f;
-				pel->UpdateDownwardPass(ud, 0);
+				base[i] = n->local.rotate;
+				RE::NiUpdateData u0;
+				u0.time = 0.0f;
+				n->UpdateDownwardPass(u0, 0);
+				const float k = i < 2 ? 1.0f : 0.45f;  // (the calves follow, a little behind)
+				const float side = (i % 2 == 0 ? 1.0f : -1.0f) * 0.06f * std::sin(clock * 1.7f);  // (the legs not quite together)
+				const RE::NiMatrix3 Wl = AxisAngle(F, ph * k) * AxisAngle(Rt, (th + side) * k);
+				n->local.rotate = n->parent->world.rotate.Transpose() * (Wl * n->world.rotate);
+				wrote[i] = n->local.rotate, have[i] = true;
+				n->UpdateDownwardPass(u0, 0);
 			}
 		}
 
