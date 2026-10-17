@@ -497,6 +497,8 @@ namespace bo3z
 		bool  g_breathReq = false;           // Bond III: the breath asked for (right attack mid-glide)
 		float g_breathCd = 0;                // ... and the 5 s before it can be again
 		int   g_breathElDev = -1;            // (dev: the element to breathe, whatever is in your hand)
+		RE::FormID g_breathProjDev[3]{};     // (dev: a projectile to try for fire / frost / lightning)
+		float g_breathScaleDev = -1, g_beamPitchSign = 1;
 		// (Noah) Bond I's climb: two small beats that lift it a little, then one great beat that carries it higher
 		constexpr float kFlapSmall = 0.5f, kFlapBig = 1.15f, kFlapAll = 2 * kFlapSmall + kFlapBig;
 		float FlapWing(float a_t)  // the wings' beat (WingBeat units) a_t seconds into the climb
@@ -633,12 +635,19 @@ namespace bo3z
 			static std::array<RE::BGSProjectile*, 8> cache{};
 			static std::array<bool, 8>               looked{};
 			static RE::BGSProjectile*                fire = RE::TESForm::LookupByID<RE::BGSProjectile>(0x000EBB75);
+			if (a_element >= 0 && a_element < 3 && g_breathProjDev[a_element]) {  // (dev: trying another look)
+				if (auto* p = RE::TESForm::LookupByID<RE::BGSProjectile>(g_breathProjDev[a_element])) return p;
+			}
 			if (a_element <= 0 || a_element >= 8) {
 				return fire;
 			}
-			// frost and lightning: a stream of our own spell bolts - ice shards, lightning streaks (bullet_frost /
-			// bullet_shock, ids frozen in data/form_ids.json); Skyrim's sprays and beams didn't show from a dragon
-			if (a_element == 1 || a_element == 2) {
+			// frost: the Frost Breath shout's own cone (as fire is the dragons' fire breath)
+			if (a_element == 1) {
+				static RE::BGSProjectile* frost = RE::TESForm::LookupByID<RE::BGSProjectile>(0x00068BD1);
+				if (frost) return frost;
+			}
+			// lightning: a stream of our own lightning bolts (bullet_shock, id frozen in data/form_ids.json)
+			if (a_element == 2) {
 				static RE::BGSProjectile* bolt[3]{};
 				auto*&                    b = bolt[a_element];
 				if (!b) b = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSProjectile>(a_element == 1 ? 0x9E3 : 0x9E6, gen::kPlugin);
@@ -994,6 +1003,11 @@ namespace bo3z
 		{
 			g_breathElDev = a_element;
 			g_breathReq = true;
+		}
+		void DevBreathProj(int a_element, RE::FormID a_proj, float a_scale, float a_beamSign)  // dev: try a breath look
+		{
+			if (a_element >= 0 && a_element < 3) g_breathProjDev[a_element] = a_proj;
+			g_breathScaleDev = a_scale, g_beamPitchSign = a_beamSign;
 		}
 		void DevFlap()  // dev: Bond I's climbing wing-beats, as if jump were pressed mid-glide
 		{
@@ -1475,13 +1489,14 @@ namespace bo3z
 					ld.autoAim = false;
 					ld.noDamageOutsideCombat = true;
 					ld.power = 0.0f;
-					ld.scale = el == 0 || el >= 3 ? 0.45f : 0.7f;  // (Noah: a smaller breath - its reach is the same)
+					ld.scale = g_breathScaleDev > 0 ? g_breathScaleDev : el == 0 || el >= 3 ? 0.45f : el == 1 ? 0.6f : 0.7f;  // (Noah: a smaller breath - its reach is the same)
 					// (a beam - the lightning - is aimed by its shooter's own facing, not the launch angles: you face the breath
 					// for the moment it leaves)
 					auto&       ang = a_player->data.angle;  // (x pitch, z yaw)
 					const float keepX = ang.x, keepZ = ang.z;
 					if (fire->IsBeam()) {
-						ang.x = r.x, ang.z = r.z;
+						ang.x = r.x * g_beamPitchSign, ang.z = r.z;
+						ld.angleX = r.x * g_beamPitchSign;
 					}
 					RE::ProjectileHandle h;
 					RE::Projectile::Launch(&h, ld);

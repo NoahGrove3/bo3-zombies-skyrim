@@ -434,6 +434,7 @@ namespace bo3z
 		bool BondLocked();  // the next bond waits for something (III: a freed city)
 		void DevBreath(int a_element);  // dev: Bond III breath (0 fire, 1 frost, 2 lightning)
 		void DevFlap();
+		void DevBreathProj(int a_element, RE::FormID a_proj, float a_scale, float a_beamSign);
 		void DevTakeOff();  // dev: Bond II's Updraft shout
 		bool OnSpellCast(RE::FormID a_spell);  // the Updraft shout spoken: true if it was
 		void DevFlyOff();   // dev: the fly-off dragon, in front of you  // after the animation: arms down until the glider's dragon reaches you
