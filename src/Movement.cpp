@@ -1777,10 +1777,10 @@ namespace bo3z
 				return;
 			}
 			// the dragon's bonds
-			if (const int bond = Bond(); bond >= 1) {
+			if (const int bond = Bond(); bond >= 0) {  // (the breath is the dragon's from the start; the rest come with the bonds)
 				auto* ui = RE::UI::GetSingleton();
 				const bool free = !ui || !ui->GameIsPaused();
-				if (free && ev == ue->jump && g_hadDragon && g_flapT < 0 && g_flapWait <= 0) {  // I: the climbing wing-beats
+				if (free && bond >= 1 && ev == ue->jump && g_hadDragon && g_flapT < 0 && g_flapWait <= 0) {  // I: the climbing wing-beats
 					g_flapT = 0, g_flapWait = kFlapAll + 1.5f;
 				}
 				if (free && bond >= 2 && ev == ue->activate && g_liftOff == 1 && !g_hadDragon && g_takeT < 1.15f) {
