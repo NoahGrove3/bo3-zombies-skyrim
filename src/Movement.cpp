@@ -1836,6 +1836,7 @@ namespace bo3z
 		// (Noah: hanging from its harness you move with it - not held stiff): after the animation each frame your whole body
 		// swings about your hands like a pendulum - back as it speeds up and in a dive, out of a turn, a jolt and a kick of
 		// the legs with each wing-beat, and a slow sway of its own; the legs trail a little behind the body
+		bool g_swingFresh = true;  // (a new glide: your body's root to be taken afresh)
 		void SwingCom(RE::NiAVObject* com, RE::NiAVObject* lh, RE::NiAVObject* rh, const RE::NiPoint3& F, const RE::NiPoint3& Rt, float a_th, float a_ph, RE::NiUpdateData& u0)
 		{
 			// the whole body turned about your hands (they stay on the bar)
@@ -1868,6 +1869,7 @@ namespace bo3z
 			lastYaw = yaw;
 			on += ((g_hadDragon && g_grip > 0.5f ? 1.0f : 0.0f) - on) * std::min(1.0f, dt * 3.0f);  // (eased in and out)
 			if (on < 0.01f || dt <= 0) {
+				g_swingFresh = true;
 				th = thV = ph = phV = kick = 0, lastVel = v;
 				return;
 			}
@@ -1907,23 +1909,16 @@ namespace bo3z
 			}
 			RE::NiUpdateData u0;
 			u0.time = 0.0f;
-			// (the animation does not always set your body's root again each frame: what we turned it to last frame is
-			// taken off first, or the turns pile up and you spin round the bar)
+			// (your body's root as the glide's animation first set it, kept: each frame the swing starts again from there -
+			// starting from whatever the frame before left let the turns pile up, and you spun round the bar)
 			{
-				static RE::NiTransform wroteC{}, baseC{};
-				static bool            haveC = false;
-				auto sameT = [](const RE::NiTransform& a, const RE::NiTransform& b) {
-					float d = (a.translate - b.translate).Length();
-					for (int r = 0; r < 3; ++r) for (int c = 0; c < 3; ++c) d += std::abs(a.rotate.entry[r][c] - b.rotate.entry[r][c]);
-					return d < 1e-3f;
-				};
-				if (haveC && sameT(com->local, wroteC)) {
-					com->local = baseC;
-					com->UpdateDownwardPass(u0, 0);
-				}
-				baseC = com->local;
-				haveC = true;
-				struct Writer { RE::NiAVObject* n; RE::NiTransform* w; ~Writer() { *w = n->local; } } writer{ com, &wroteC };
+				static RE::NiTransform com0{};
+				static RE::NiAVObject* comWas = nullptr;
+				if (comWas != com || g_swingFresh) com0 = com->local;  // (taken while the swing is still nothing)
+				comWas = com;
+				g_swingFresh = false;
+				com->local = com0;
+				com->UpdateDownwardPass(u0, 0);
 				SwingCom(com, lh, rh, F, Rt, th * on, ph * on, u0);
 			}
 			// the legs a little behind the body (and bent at the knee by a beat's kick), not quite together
