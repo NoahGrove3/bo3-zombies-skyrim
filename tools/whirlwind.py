@@ -80,9 +80,9 @@ def main():
     texture(texdir)
     L = [f'out {out}']
     # the funnels: inner (tight, quick), middle, outer (wide, slow, faintest)
-    funnel(L, 'WW1', 45, 120, -10, 330, 1.0, 0.55, 0.55, 3, '0.85,0.93,1.0,1.0')
-    funnel(L, 'WW2', 70, 190, -10, 400, 1.4, 0.42, 0.8, 4, '0.88,0.95,1.0,1.0')
-    funnel(L, 'WW3', 105, 270, -5, 460, 1.9, 0.30, 1.15, 5, '0.92,0.96,1.0,1.0')
+    funnel(L, 'WW1', 24, 62, -10, 300, 1.0, 0.42, 0.55, 3, '0.85,0.93,1.0,1.0')
+    funnel(L, 'WW2', 36, 92, -10, 350, 1.4, 0.32, 0.8, 4, '0.88,0.95,1.0,1.0')
+    funnel(L, 'WW3', 52, 125, -5, 400, 1.9, 0.22, 1.15, 5, '0.92,0.96,1.0,1.0')
     # the threads: thin ribbons spiralling up, each its own radius and pitch
     L.append(f'shape WW4 tex={TEX_THREAD} color=0.92,0.96,1.0,1.0 scale=0 blend=add vscroll=0.5')
     rng = np.random.default_rng(4)
@@ -93,12 +93,12 @@ def main():
         a0 = rng.uniform(0, 2 * math.pi)
         turns = rng.uniform(1.0, 2.0)
         rr = rng.uniform(0.7, 1.3)
-        top = rng.uniform(300, 470)
-        wdt = rng.uniform(5, 12)
+        top = rng.uniform(260, 410)
+        wdt = rng.uniform(3, 8)
         for i in range(n + 1):
             t = i / n
             h = -5 + top * t
-            r = (50 + 0.42 * h) * rr
+            r = (26 + 0.2 * h) * rr
             a = a0 + turns * 2 * math.pi * t
             al = min(1.0, t / 0.12) * min(1.0, (1 - t) / 0.3) * 0.55
             p = np.array([r * math.cos(a), r * math.sin(a), h])
@@ -115,18 +115,18 @@ def main():
     # dust and air rushing out over the ground: a disc, its wisps streaming outward (v runs outward)
     L.append(f'shape WW5 tex={TEX} color=0.9,0.92,0.95,1.0 scale=0 blend=add uscroll=0 vscroll=0.7')
     na = 48
-    rings = [(30, 0.0), (90, 0.45), (180, 0.35), (300, 0.0)]
+    rings = [(18, 0.0), (50, 0.35), (100, 0.25), (165, 0.0)]
     for j, (r, al) in enumerate(rings):
         for i in range(na + 1):
             a = 2 * math.pi * i / na
-            L.append(f'v {r * math.cos(a):.2f} {r * math.sin(a):.2f} {3 + j * 2:.2f} {6 * i / na:.4f} {-r / 160:.4f} 1 1 1 {al:.3f}')
+            L.append(f'v {r * math.cos(a):.2f} {r * math.sin(a):.2f} {3 + j * 2:.2f} {6 * i / na:.4f} {-r / 90:.4f} 1 1 1 {al:.3f}')
     for j in range(len(rings) - 1):
         for i in range(na):
             a = j * (na + 1) + i
             b, c, d = a + 1, a + na + 1, a + na + 2
             L += [f't {a} {c} {b}', f't {b} {c} {d}']
     # air spilling off the top
-    funnel(L, 'WW6', 230, 360, 400, 520, 2.2, 0.22, 1.4, 5, '0.92,0.96,1.0,1.0')
+    funnel(L, 'WW6', 110, 175, 350, 440, 2.2, 0.16, 1.4, 5, '0.92,0.96,1.0,1.0')
     job = pathlib.Path(out).with_suffix('.job.txt')
     job.write_text('\n'.join(L) + '\n')
     r = subprocess.run([FXWRITE, str(job)], capture_output=True, text=True)

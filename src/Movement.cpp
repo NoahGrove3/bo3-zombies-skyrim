@@ -1996,7 +1996,7 @@ namespace bo3z
 			auto* tp = static_cast<RE::ThirdPersonState*>(pc->currentState.get());
 			tp->freeRotationEnabled = true;
 			tp->freeRotation.x = g_chase.yaw * 0.0174533f;
-			tp->freeRotation.y = g_chase.pitch * 0.0174533f;
+			tp->freeRotation.y = 0.0f;  // (its pitch is your own view's)
 			const float zoom = std::clamp(g_chase.dist, 0.0f, 1.0f);  // (0 close .. 1 far)
 			tp->targetZoomOffset = zoom;
 			tp->currentZoomOffset += (zoom - tp->currentZoomOffset) * std::min(1.0f, a_delta * 4.0f);
