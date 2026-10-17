@@ -834,7 +834,7 @@ namespace bo3z
 				WhirlGone();
 				return;
 			}
-			const float level = 1.8f * Smooth(t / 0.18f) * (1 - Smooth((t - 1.4f) / 0.7f));
+			const float level = 1.0f * Smooth(t / 0.18f) * (1 - Smooth((t - 1.4f) / 0.7f));  // (Noah: transparent - faint layers of air)
 			for (auto& n : g_whirl.node) {
 				if (!n) continue;
 				n->local.translate = { 0, 0, -60.0f * Smooth(t / 1.0f) };
@@ -1836,6 +1836,19 @@ namespace bo3z
 		// (Noah: hanging from its harness you move with it - not held stiff): after the animation each frame your whole body
 		// swings about your hands like a pendulum - back as it speeds up and in a dive, out of a turn, a jolt and a kick of
 		// the legs with each wing-beat, and a slow sway of its own; the legs trail a little behind the body
+		void SwingCom(RE::NiAVObject* com, RE::NiAVObject* lh, RE::NiAVObject* rh, const RE::NiPoint3& F, const RE::NiPoint3& Rt, float a_th, float a_ph, RE::NiUpdateData& u0)
+		{
+			// the whole body turned about your hands (they stay on the bar)
+			const RE::NiPoint3  pivot = (lh->world.translate + rh->world.translate) * 0.5f;
+			const RE::NiMatrix3 W = AxisAngle(F, a_ph) * AxisAngle(Rt, a_th);
+			const RE::NiPoint3  wpos = pivot + W * (com->world.translate - pivot);
+			const RE::NiMatrix3 wrot = W * com->world.rotate;
+			const auto&         P = com->parent->world;
+			const float         ps = std::max(1e-4f, P.scale);
+			com->local.rotate = P.rotate.Transpose() * wrot;
+			com->local.translate = P.rotate.Transpose() * (wpos - P.translate) * (1.0f / ps);
+			com->UpdateDownwardPass(u0, 0);
+		}
 		void SwingBody(RE::PlayerCharacter* a_player)
 		{
 			static auto  last = std::chrono::steady_clock::now();
@@ -1894,16 +1907,25 @@ namespace bo3z
 			}
 			RE::NiUpdateData u0;
 			u0.time = 0.0f;
-			// the whole body turned about your hands (they stay on the bar)
-			const RE::NiPoint3  pivot = (lh->world.translate + rh->world.translate) * 0.5f;
-			const RE::NiMatrix3 W = AxisAngle(F, ph * on) * AxisAngle(Rt, th * on);
-			const RE::NiPoint3  wpos = pivot + W * (com->world.translate - pivot);
-			const RE::NiMatrix3 wrot = W * com->world.rotate;
-			const auto&         P = com->parent->world;
-			const float         ps = std::max(1e-4f, P.scale);
-			com->local.rotate = P.rotate.Transpose() * wrot;
-			com->local.translate = P.rotate.Transpose() * (wpos - P.translate) * (1.0f / ps);
-			com->UpdateDownwardPass(u0, 0);
+			// (the animation does not always set your body's root again each frame: what we turned it to last frame is
+			// taken off first, or the turns pile up and you spin round the bar)
+			{
+				static RE::NiTransform wroteC{}, baseC{};
+				static bool            haveC = false;
+				auto sameT = [](const RE::NiTransform& a, const RE::NiTransform& b) {
+					float d = (a.translate - b.translate).Length();
+					for (int r = 0; r < 3; ++r) for (int c = 0; c < 3; ++c) d += std::abs(a.rotate.entry[r][c] - b.rotate.entry[r][c]);
+					return d < 1e-3f;
+				};
+				if (haveC && sameT(com->local, wroteC)) {
+					com->local = baseC;
+					com->UpdateDownwardPass(u0, 0);
+				}
+				baseC = com->local;
+				haveC = true;
+				struct Writer { RE::NiAVObject* n; RE::NiTransform* w; ~Writer() { *w = n->local; } } writer{ com, &wroteC };
+				SwingCom(com, lh, rh, F, Rt, th * on, ph * on, u0);
+			}
 			// the legs a little behind the body (and bent at the knee by a beat's kick), not quite together
 			static const char* legs[4] = { "NPC L Thigh [LThg]", "NPC R Thigh [RThg]", "NPC L Calf [LClf]", "NPC R Calf [RClf]" };
 			for (int i = 0; i < 4; ++i) {
