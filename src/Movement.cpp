@@ -1836,7 +1836,7 @@ namespace bo3z
 		// (Noah: hanging from its harness you move with it - not held stiff): after the animation each frame your whole body
 		// swings about your hands like a pendulum - back as it speeds up and in a dive, out of a turn, a jolt and a kick of
 		// the legs with each wing-beat, and a slow sway of its own; the legs trail a little behind the body
-		bool g_swingFresh = true;  // (a new glide: your body's root to be taken afresh)
+		bool g_swingFresh = true, g_legFresh = true;  // (a new glide: your body's root and legs to be taken afresh)
 		void SwingCom(RE::NiAVObject* com, RE::NiAVObject* lh, RE::NiAVObject* rh, const RE::NiPoint3& F, const RE::NiPoint3& Rt, float a_th, float a_ph, RE::NiUpdateData& u0)
 		{
 			// the whole body turned about your hands (they stay on the bar)
@@ -1869,7 +1869,7 @@ namespace bo3z
 			lastYaw = yaw;
 			on += ((g_hadDragon && g_grip > 0.5f ? 1.0f : 0.0f) - on) * std::min(1.0f, dt * 3.0f);  // (eased in and out)
 			if (on < 0.01f || dt <= 0) {
-				g_swingFresh = true;
+				g_swingFresh = true, g_legFresh = true;
 				th = thV = ph = phV = kick = 0, lastVel = v;
 				return;
 			}
@@ -1923,9 +1923,14 @@ namespace bo3z
 			}
 			// the legs a little behind the body (and bent at the knee by a beat's kick), not quite together
 			static const char* legs[4] = { "NPC L Thigh [LThg]", "NPC R Thigh [RThg]", "NPC L Calf [LClf]", "NPC R Calf [RClf]" };
+			static RE::NiMatrix3 leg0[4]{};
+			static bool          legFresh = true;
 			for (int i = 0; i < 4; ++i) {
 				auto* n = root->GetObjectByName(legs[i]);
 				if (!n || !n->parent) continue;
+				if (legFresh || g_legFresh) leg0[i] = n->local.rotate;  // (as at the glide's start - each frame from there, never piling up)
+				n->local.rotate = leg0[i];
+				n->UpdateDownwardPass(u0, 0);
 				const bool  calf = i >= 2;
 				const float side = (i % 2 == 0 ? 1.0f : -1.0f) * 0.035f * std::sin(clock * 1.7f + (calf ? 0.6f : 0.0f));
 				const float lagA = calf ? (-0.035f * thV - 0.25f * kick * std::sin(kick * 3.14159f)) : (-0.025f * thV + 0.15f * kick * std::sin(kick * 3.14159f));
@@ -1933,6 +1938,7 @@ namespace bo3z
 				n->local.rotate = n->parent->world.rotate.Transpose() * (Wl * n->world.rotate);
 				n->UpdateDownwardPass(u0, 0);
 			}
+			legFresh = false, g_legFresh = false;
 			static float logT = 0;
 			if ((logT -= dt) <= 0) {
 				logT = 2.0f;
