@@ -1822,7 +1822,7 @@ namespace bo3z
 		// (Noah: you hang from its talons and swing - not held stiff): your body pivots about your hands like a pendulum,
 		// swinging back as the glide speeds up, out to the side in a turn, gently on its own; in a dive it trails right
 		// back behind the dragon's swept legs
-		void SwingBody(RE::PlayerCharacter* a_player)
+		[[maybe_unused]] void SwingBody(RE::PlayerCharacter* a_player)
 		{
 			static auto  last = std::chrono::steady_clock::now();
 			const auto   now = std::chrono::steady_clock::now();
