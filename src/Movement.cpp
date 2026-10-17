@@ -1867,7 +1867,7 @@ namespace bo3z
 			while (dy > 3.14159f) dy -= 6.28318f;
 			while (dy < -3.14159f) dy += 6.28318f;
 			lastYaw = yaw;
-			on += ((g_hadDragon && g_grip > 0.5f ? 1.0f : 0.0f) - on) * std::min(1.0f, dt * 3.0f);  // (eased in and out)
+			on += ((g_hadDragon && g_grip > 0.5f && g_armHold <= 0.001f ? 1.0f : 0.0f) - on) * std::min(1.0f, dt * 3.0f);  // (eased in and out)
 			if (on < 0.01f || dt <= 0) {
 				g_swingFresh = true, g_legFresh = true;
 				th = thV = ph = phV = kick = 0, lastVel = v;
