@@ -443,12 +443,13 @@ namespace bo3z
 			for (int s2 = 0; s2 < 2; ++s2) {
 				const char* L = s2 == 0 ? "L" : "R";
 				// (the new dragon: its legs already drawn up under it - tucked tighter for the flight)
-				const auto& k = DragonPoses::kLegTuck;
-				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}1", L).c_str())) n->local.rotate = Rot(k[0] - 0.15f * tuck, 0, 0);
-				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}2", L).c_str())) n->local.rotate = Rot(k[1] + 0.2f * tuck, 0, 0);
-				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}3", L).c_str())) n->local.rotate = Rot(k[2] + 0.2f * open, 0, 0);
+				const auto& k = DragonPoses::kLegGlide;
+				const auto& dv = DragonPoses::kLegDive;  // (streamlined for the climb away)
+				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}1", L).c_str())) n->local.rotate = Rot(k[0] + (dv[0] - k[0]) * tuck, 0, 0);
+				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}2", L).c_str())) n->local.rotate = Rot(k[1] + (dv[1] - k[1]) * tuck, 0, 0);
+				if (auto* n = root->GetObjectByName(fmt::format("DG_Leg{}3", L).c_str())) n->local.rotate = Rot(k[2] + (dv[2] - k[2]) * tuck + 0.1f * open, 0, 0);
 			}
-			Talons(root, 0.35f + 0.3f * tuck);
+			Talons(root, DragonPoses::kToesGlide + (DragonPoses::kToesDive - DragonPoses::kToesGlide) * tuck);
 			if (auto* tr = root->GetObjectByName("DG_Trapeze")) {  // (the empty bar swinging back as it climbs away)
 				tr->local.rotate = Rot(-0.5f * std::sin(std::min(1.0f, t / 1.2f) * 3.14159f) * std::exp(-t * 0.6f) - 0.25f * Smooth(t / 1.5f), 0, 0);
 			}
@@ -1305,20 +1306,36 @@ namespace bo3z
 				// trailing loose as it swoops in; swept further back in a dive)
 				const float diveFold = std::clamp(g_divePitch / 0.42f, 0.0f, 1.0f);
 				const float tuck = Smooth(u);
-				const float flapKick = g_flapT >= 0 ? 0.25f * std::sin(std::min(1.0f, g_flapT / kFlapAll) * 6.28318f * 3.0f) : 0.0f;  // (the legs jolt with the beats)
+				// (Noah: stretched out behind it, toes to its tail - trailing in the glide, pressed along the tail in the
+				// dive, swung forward with each downstroke of a climb and back as the wings rise)
+				static float pump = 0;
+				const float  beat = g_flapT >= 0 ? FlapWing(g_flapT - 0.08f) : 0.0f;
+				const float  pumpTo = g_flapT >= 0 ? std::clamp(0.5f - 0.5f * beat / 1.1f, 0.0f, 1.0f) : 0.0f;
+				pump += (pumpTo - pump) * std::min(1.0f, a_delta * 7.0f);
+				const auto& G = DragonPoses::kLegGlide;
+				const auto& Dv = DragonPoses::kLegDive;
+				const auto& Fl = DragonPoses::kLegFlap;
 				for (int sd = 0; sd < 2; ++sd) {
-					const float ph = sd * 1.3f;
-					const float hip = (0.15f * (1 - tuck) + DragonPoses::kLegTuck[0] * tuck) + 0.08f * std::sin(legT * 1.5f + ph) - 0.35f * diveFold + flapKick;
-					const float knee = (0.2f * (1 - tuck) + DragonPoses::kLegTuck[1] * tuck) + 0.10f * std::sin(legT * 1.5f + 0.7f + ph) + 0.2f * diveFold - 0.6f * flapKick;
-					const float foot = (0.3f * (1 - tuck) + DragonPoses::kLegTuck[2] * tuck) + 0.08f * std::sin(legT * 2.1f + 1.4f + ph);
+					const float ph = sd * 1.3f, lagS = sd * 0.06f;  // (the two legs not quite together)
+					const float calm = (1 - diveFold) * (1 - pump);
+					float k[3];
+					for (int j = 0; j < 3; ++j) {
+						const float held = G[j] * (1 - diveFold) + Dv[j] * diveFold;
+						k[j] = held * (1 - pump) + Fl[j] * pump;
+					}
+					const float dangle[3] = { 0.15f, 0.2f, 0.3f };  // (as it swoops in, before it has you: hanging loose)
+					const float hip = dangle[0] * (1 - tuck) + k[0] * tuck + 0.06f * std::sin(legT * 1.5f + ph) * calm + lagS * pump;
+					const float knee = dangle[1] * (1 - tuck) + k[1] * tuck + 0.08f * std::sin(legT * 1.5f + 0.7f + ph) * calm;
+					const float foot = dangle[2] * (1 - tuck) + k[2] * tuck + 0.08f * std::sin(legT * 2.1f + 1.4f + ph) * calm;
 					for (int i = 0; i < 2; ++i) {
 						if (legN[i][sd][0]) legN[i][sd][0]->local.rotate = Rot(hip, 0, 0);
 						if (legN[i][sd][1]) legN[i][sd][1]->local.rotate = Rot(knee, 0, 0);
 						if (legN[i][sd][2]) legN[i][sd][2]->local.rotate = Rot(foot, 0, 0);
 					}
 				}
+				const float toes = (DragonPoses::kToesGlide * (1 - diveFold) + DragonPoses::kToesDive * diveFold) * (1 - pump) + DragonPoses::kToesFlap * pump;
 				for (int i = 0; i < 2; ++i) {
-					Talons(a_player->Get3D(i == 1), 0.35f + 0.06f * std::sin(legT * 1.1f) + 0.25f * diveFold);
+					Talons(a_player->Get3D(i == 1), toes + 0.05f * std::sin(legT * 1.1f) * (1 - diveFold));
 				}
 			}
 			const float dt = std::max(1e-3f, a_delta);

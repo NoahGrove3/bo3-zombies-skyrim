@@ -34,5 +34,8 @@ namespace DragonPoses
 		{ "DG_ToeR5", 0.99381f, 0.11107f, -0.00000f, 0.95f },
 		{ "DG_ToeR6", 0.99381f, 0.11107f, -0.00000f, 1.25f },
 	};
-	inline constexpr float kLegTuck[3] = { -1.15f, 0.7f, 1.3f };  // hip, knee, foot (rad, about X)
+	inline constexpr float kLegGlide[3] = { -1.25f, 0.5f, -1.9f };  // hip, knee, foot (rad, about X)
+	inline constexpr float kLegDive[3] = { -1.45f, 0.25f, -1.6f };  // hip, knee, foot (rad, about X)
+	inline constexpr float kLegFlap[3] = { -0.75f, 0.7f, -1.3f };  // hip, knee, foot (rad, about X)
+	inline constexpr float kToesGlide = 0.05f, kToesDive = 0.3f, kToesFlap = -0.2f;  // talon curl
 }
