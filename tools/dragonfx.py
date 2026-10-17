@@ -121,7 +121,9 @@ def beam(lines, name, length, r0, r1, a0, a1, tiles, sides=12, segs=26, fade_out
     """the breath along +Y from the mouth: a cone of flame (a tube widening from the jaws), seen whole from any side - from
     behind the dragon you look into it along its length - faded in at the jaws and out at its end; its texture wraps twice
     round it and streams along it"""
-    lines.append(f'shape {name} tex={BEAM} color=1,1,1,1 scale=0 blend={blend} parent=DG_Mouth')
+    # (skinned to one bone, DG_BeamBone, that the game turns to where it breathes: shapes moved on their own under the
+    # dragon's animated nodes were never drawn, while its skinned trails always are)
+    lines.append(f'shape {name} tex={BEAM} color=1,1,1,1 scale=0 blend={blend} parent=DG_Mouth skin=DG_BeamBone')
     for i in range(segs + 1):
         t = i / segs
         y = 10 + (length - 10) * t
@@ -131,6 +133,7 @@ def beam(lines, name, length, r0, r1, a0, a1, tiles, sides=12, segs=26, fade_out
             ang = 2 * math.pi * k / sides
             x, z = r * math.cos(ang), r * math.sin(ang)
             lines.append(f'v {x:.2f} {y:.2f} {z:.2f} {2.0 * k / sides:.4f} {t * tiles:.3f} 1 1 1 {al:.3f}')
+            lines.append('w 0 1.0')
     for i in range(segs):
         for k in range(sides):
             a = i * (sides + 1) + k
@@ -236,6 +239,7 @@ def main():
         p1 = nose + np.array([r1 * math.cos(a), -rng.uniform(150, 350), r1 * math.sin(a) * 0.8])
         strip(L, f'DG_Wind{i + 1}', 'DG_Bank', p0 - b, p1 - b, 8, 18, 0.0, 0.0, '0.9,0.95,1.0,1.0', 0, segs=10, tex=DASH)
     if pts:   # the breath: core, flame, flare
+        L.append('node DG_BeamBone DG_Mouth 0 0 0')
         beam(L, 'DG_Beam1', 7000, 18, 150, 0.9, 0.55, 5.8)                       # the white-hot core
         beam(L, 'DG_Beam2', 7000, 55, 430, 0.6, 0.18, 4.2, blend='alpha')        # the flame round it (seen against the sky too)
         beam(L, 'DG_Beam3', 900, 50, 230, 0.9, 0.0, 1.0, segs=8, fade_out=0.6)  # the flare at its jaws

@@ -972,6 +972,14 @@ namespace bo3z
 			const int   b = std::clamp(a_bond, 0, 3);
 			const float flick = 0.9f + 0.1f * std::sin(a_b.clock * 31.0f) * std::sin(a_b.clock * 17.0f + 1.0f);
 			const RE::NiMatrix3 R = mouth->world.rotate.Transpose() * AimAlong(a_b.dir);
+			RE::NiUpdateData    ud0;
+			ud0.time = 0.0f;
+			if (auto* bone = mouth->GetObjectByName("DG_BeamBone")) {  // (the beam's shapes are skinned to it: it turns and grows them)
+				bone->local.rotate = R;
+				bone->local.translate = {};
+				bone->local.scale = std::max(0.02f, a_b.grow);
+				bone->UpdateDownwardPass(ud0, 0);
+			}
 			struct Part
 			{
 				const char* name;
@@ -984,9 +992,7 @@ namespace bo3z
 			for (const auto& pt : parts) {
 				auto* o = a_root->GetObjectByName(pt.name);
 				if (!o) continue;
-				o->local.rotate = R;
-				o->local.translate = {};
-				o->local.scale = std::max(0.02f, a_b.grow);  // (it grows out of its jaws)
+				o->local = RE::NiTransform{};  // (skinned: DG_BeamBone carries it)
 				const float* c = pt.core ? kCore[b] : kOuter[b];
 				FxColor(a_root, pt.name, c[0], c[1], c[2]);
 				FxLevel(a_root, pt.name, a_b.level * pt.level * flick, -std::fmod(a_b.clock * pt.rate, 1.0f));
