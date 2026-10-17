@@ -302,7 +302,8 @@ namespace bo3z
 			constexpr float rest[3] = { 2.0f, 0.0f, 14.0f };     // (its bind droops at the tip: the wrist lifts it level)
 			constexpr float amps[3] = { 56.0f, 34.0f, 24.0f };
 			constexpr float lag[3] = { 0.0f, 0.07f, 0.14f };
-			constexpr float foldBack[3] = { 22.0f, 30.0f, 36.0f }, foldRoll[3] = { 6.0f, -12.0f, -10.0f };
+			// (Noah: in the dive the wings fold in close along its body, like a stooping bird's)
+			constexpr float foldBack[3] = { 55.0f, 62.0f, 48.0f }, foldRoll[3] = { 10.0f, -30.0f, -12.0f };
 			constexpr float d = 3.14159265f / 180.0f;
 			for (int sd = 0; sd < 2; ++sd) {
 				const float sg = sd == 0 ? 1.0f : -1.0f;  // the left wing: +roll lifts it, +turn sweeps it back
@@ -846,6 +847,10 @@ namespace bo3z
 				a_player->SetPosition(a_player->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, true);  // off the ground
 			}
 			g_liftOff = 1, g_takeT = 0, g_updraftAge = 0;
+			// (Noah: your character jumps as the whirlwind takes you)
+			const bool jumped = a_player->NotifyAnimationGraph("JumpStandingStart") || a_player->NotifyAnimationGraph("JumpUp") ||
+			                    a_player->NotifyAnimationGraph("JumpDirectionalStart");
+			logger::info("glider: Updraft jump animation {}", jumped ? "played" : "not taken");
 			Forms::PlayAt(gen::Sound::shout_gale, a_player);
 			WhirlStart(a_player);
 			logger::info("glider: Dragon's Updraft");
@@ -1368,18 +1373,21 @@ namespace bo3z
 						lookDown = std::asin(std::clamp(-cam->cameraRoot->world.rotate.entry[2][1], -1.0f, 1.0f));
 					}
 					float want = 950.0f;
-					g_divePitch += ((bond >= 3 && !beforeGrab ? std::clamp(lookDown, -0.35f, 0.9f) * 0.6f : 0.0f) - g_divePitch) * std::min(1.0f, dt * 3.0f);
+					g_divePitch += ((bond >= 3 && !beforeGrab ? std::clamp(lookDown, -0.35f, 1.45f) * 0.75f : 0.0f) - g_divePitch) * std::min(1.0f, dt * 3.0f);
 					if (bond >= 3 && !beforeGrab && !hanging) {
 						// (Noah: after a dive, look back up and it carries on gliding on that speed - with speed enough, up)
 						// height is bought with speed: climbing bleeds it in proportion, gliding level keeps most of it
+						// (Noah: the dive's speed goes with how far down you look - straight down is the fastest; it heads
+						// where you look)
 						if (lookDown > 0.15f) {
-							speed = std::min(2800.0f, speed + 1300.0f * std::sin(lookDown) * dt);
+							const float diveTo = 950.0f + 2850.0f * std::clamp((lookDown - 0.15f) / 1.25f, 0.0f, 1.0f);
+							speed += (diveTo - speed) * std::min(1.0f, dt * (diveTo > speed ? 1.4f : 0.4f));
 						} else if (lookDown < -0.05f && speed > 1000.0f) {
 							speed = std::max(950.0f, speed - (90.0f + 0.5f * (speed - 950.0f) * std::sin(-lookDown) * 1.6f) * dt);
 						} else {
 							speed = std::max(950.0f, speed - 90.0f * dt);
 						}
-						want = speed;
+						want = lookDown > 0.15f ? speed * std::cos(lookDown) : speed;
 					}
 					want = hanging ? 600.0f : want;  // (the leap's run carries on while it comes)
 					glide = glide + (heading * want - glide) * std::min(1.0f, dt * (hanging ? 2.0f : bond >= 3 ? 2.0f : 0.9f));
@@ -1390,7 +1398,7 @@ namespace bo3z
 							static float vz = 0;  // (eased: out of a dive it levels off and glides on, no sudden stop)
 							float        wantZ = -105.0f;
 							if (lookDown > 0.15f) {
-								wantZ = -speed * std::sin(lookDown) * 0.9f;  // the dive
+								wantZ = -speed * std::sin(lookDown);  // the dive, along your look
 							} else if (lookDown < -0.05f && speed > 1000.0f) {
 								wantZ = (speed - 950.0f) * std::sin(-lookDown) * 1.6f;  // the speed into height
 							}
@@ -1426,8 +1434,9 @@ namespace bo3z
 				// (Noah: the wingtip trails fade out while the wings beat, and smoothly back in as it glides again)
 				const bool  flapping = g_flapT >= 0 || g_liftT >= 0;
 				static float trailK = 0, diveK = 0;
-				const float trailWant = flapping ? 0.0f : held * (0.55f + 0.65f * Smooth((spd - 800.0f) / 1400.0f));
-				trailK += (trailWant - trailK) * std::min(1.0f, dt * (flapping ? 7.0f : 2.2f));
+				const float folded = std::clamp(g_divePitch / 0.3f, 0.0f, 1.0f);  // (Noah: no wingtip line while the wings are folded in a dive)
+				const float trailWant = flapping ? 0.0f : held * (1 - folded) * (0.55f + 0.65f * Smooth((spd - 800.0f) / 1400.0f));
+				trailK += (trailWant - trailK) * std::min(1.0f, dt * (flapping || folded > 0.2f ? 7.0f : 2.2f));
 				const float diveWant = Smooth((g_divePitch - 0.08f) / 0.3f) * Smooth((spd - 1100.0f) / 1100.0f);
 				diveK += (diveWant - diveK) * std::min(1.0f, dt * 3.0f);
 				if (deployT <= a_delta * 1.5f) {
@@ -1537,7 +1546,7 @@ namespace bo3z
 						const auto name = fmt::format("DG_Bolt{}", k + 1);
 						auto*      b = root->GetObjectByName(name.c_str());
 						if (!b) continue;
-						FxLevel(root, name.c_str(), bolts && on[k] ? (k == 0 ? 3.0f : 2.0f) : 0.0f);
+						FxLevel(root, name.c_str(), bolts && on[k] ? (k == 0 ? 1.6f : 1.2f) : 0.0f);
 						if (!bolts || !b->parent) continue;
 						const float  c = std::cos(spin[k]), s = std::sin(spin[k]);
 						const RE::NiPoint3 xr = x * c + z0 * s, zr = z0 * c - x * s;

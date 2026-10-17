@@ -114,7 +114,8 @@ def main():
     import random
     random.seed(11)
     for k in range(3):
-        L.append(f'shape DG_Bolt{k + 1} tex={TEX} color=0.65,0.82,1.0,1.0 scale=0 blend=add parent=DG_Mouth')
+        # (alpha-blended, a strong electric blue: additive white vanished against snow and sky)
+        L.append(f'shape DG_Bolt{k + 1} tex={TEX} color=0.45,0.62,1.0,1.0 scale=0 blend=alpha parent=DG_Mouth')
         n, y1 = 26, 7800.0
         pts = [(0.0, 20.0, 0.0)]
         for i in range(1, n + 1):
@@ -126,7 +127,7 @@ def main():
             base = vi
             for i, (x, y, z) in enumerate(pts):
                 t = i / n
-                w = (60 - 30 * t) * (1.0 if k == 0 else 0.6)
+                w = (170 - 80 * t) * (1.0 if k == 0 else 0.6)
                 a = min(1.0, t / 0.03) * (1 - t) ** 0.5
                 for s in (-1, 1):
                     L.append(f'v {x + ax[0] * w * s:.1f} {y:.1f} {z + ax[2] * w * s:.1f} {0.5 + 0.5 * s:.3f} {t * 4:.3f} 1 1 1 {a:.3f}')
