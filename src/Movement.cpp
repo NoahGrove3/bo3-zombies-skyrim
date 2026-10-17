@@ -1032,6 +1032,15 @@ namespace bo3z
 			}
 			RE::NiUpdateData ud;
 			node->Update(ud);
+			static auto lastLog = std::chrono::steady_clock::now();
+			if (std::chrono::steady_clock::now() - lastLog > std::chrono::milliseconds(500)) {
+				lastLog = std::chrono::steady_clock::now();
+				auto* bb = node->GetObjectByName("BB1");
+				logger::info("glider: beam[{}] world ({:.0f},{:.0f},{:.0f}) scale {:.3f} | mouth ({:.0f},{:.0f},{:.0f}) scale {:.3f} | host ({:.0f},{:.0f},{:.0f}) scale {:.3f} | BB1 bound ({:.0f},{:.0f},{:.0f}) r {:.0f} culled {} level {:.2f} grow {:.2f}",
+					a_f, node->world.translate.x, node->world.translate.y, node->world.translate.z, node->world.scale, mouth->world.translate.x, mouth->world.translate.y,
+					mouth->world.translate.z, mouth->world.scale, H.translate.x, H.translate.y, H.translate.z, H.scale, bb ? bb->worldBound.center.x : 0.0f,
+					bb ? bb->worldBound.center.y : 0.0f, bb ? bb->worldBound.center.z : 0.0f, bb ? bb->worldBound.radius : 0.0f, bb ? bb->GetAppCulled() : true, a_b.level, a_b.grow);
+			}
 		}
 
 		// ---- Dragon's Updraft (Bond II's shout): taught whole once the bond is bought, and put in the shout slot if it's empty
