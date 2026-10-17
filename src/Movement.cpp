@@ -1046,8 +1046,11 @@ namespace bo3z
 			static float logT = 0;
 			if ((logT -= a_dt) <= 0) {
 				logT = 2.0f;
-				logger::info("glider: holding the harness - bar {:.1f} from your hands, swung {:.2f}, dragon moved ({:.0f},{:.0f},{:.0f})", r.Length(), g_trap,
-					g_grabOff.x, g_grabOff.y, g_grabOff.z);
+				// (your hands in the dragon's own space, unswung and unmoved: where the bar should hang)
+				const auto&        Sw = a_space->world;
+				const RE::NiPoint3 hl0 = Sw.rotate.Transpose() * (hands - Sw.translate) * (1.0f / std::max(1e-4f, Sw.scale));
+				logger::info("glider: holding the harness - bar {:.1f} from your hands, swung {:.2f}, dragon moved ({:.0f},{:.0f},{:.0f}); hands at ({:.0f},{:.0f},{:.0f}) in its space", r.Length(), g_trap,
+					g_grabOff.x, g_grabOff.y, g_grabOff.z, hl0.x, hl0.y, hl0.z);
 			}
 		}
 
@@ -1966,12 +1969,40 @@ namespace bo3z
 			// (Noah: the swung legs were meant to be the dragon's - its legs sweep back in the dive; yours are left alone)
 		}
 
+		// dev: a camera that follows you (the free camera, placed each frame) - for filming the dragon
+		struct Chase { bool on = false; float dist = 600, yaw = 0, pitch = 15, height = 0, spin = 0; } g_chase;
+		void DevChase(bool a_on, float a_dist, float a_yaw, float a_pitch, float a_height, float a_spin)
+		{
+			g_chase = { a_on, a_dist, a_yaw, a_pitch, a_height, a_spin };
+			auto* pc = RE::PlayerCamera::GetSingleton();
+			if (pc && pc->IsInFreeCameraMode() != a_on) pc->ToggleFreeCameraMode(false);
+		}
+		void ChaseTick(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			if (!g_chase.on) return;
+			auto* pc = RE::PlayerCamera::GetSingleton();
+			if (!pc || !pc->currentState || !pc->IsInFreeCameraMode()) return;
+			g_chase.yaw += g_chase.spin * a_delta;
+			auto*              fc = static_cast<RE::FreeCameraState*>(pc->currentState.get());
+			static RE::NiPoint3 sm{};
+			RE::NiPoint3       target = a_player->GetPosition() + RE::NiPoint3{ 0, 0, 110 + g_chase.height };
+			if ((sm - target).Length() > 3000) sm = target;
+			sm = sm + (target - sm) * std::min(1.0f, a_delta * 8.0f);
+			const float  y = a_player->GetAngleZ() + 3.14159f + g_chase.yaw * 0.0174533f, p = g_chase.pitch * 0.0174533f;
+			const RE::NiPoint3 off{ std::sin(y) * std::cos(p) * g_chase.dist, std::cos(y) * std::cos(p) * g_chase.dist, std::sin(p) * g_chase.dist };
+			fc->translation = sm + off;
+			const RE::NiPoint3 d = sm - fc->translation;
+			fc->rotation.y = std::atan2(d.x, d.y);
+			fc->rotation.x = -std::atan2(d.z, std::sqrt(d.x * d.x + d.y * d.y));
+		}
+
 		void Tick(float a_delta)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			if (!player || a_delta <= 0) {
 				return;
 			}
+			ChaseTick(player, a_delta);
 			TuneGameSettings();
 			TuneMovementTypes();
 			auto*      st = player->AsActorState();

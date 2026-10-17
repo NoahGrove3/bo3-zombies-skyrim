@@ -136,9 +136,9 @@ def belly_z(P, mask, x, y):
 
 
 # where the bar hangs (the dragon's space): your hands are about here once it holds you
-BAR_Y, BAR_Z, BAR_HALF = -1560.0, -48.0, 112.0
+BAR_Y, BAR_Z, BAR_HALF = -1612.0, -40.0, 112.0
 HANDS_X = 84.0
-RING_Y = -1518.0
+RING_Y = -1545.0
 
 
 def build(rig):

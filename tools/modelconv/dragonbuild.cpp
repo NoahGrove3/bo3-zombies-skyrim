@@ -125,6 +125,12 @@ int main(int argc, char** argv)
 			BoundingSphere bs(c, r + 2.0f);
 			nif.SetShapeBoneBounds(name, b, bs);
 		}
+		{  // (the skin data's own per-bone weights: the partitions are built from these)
+			std::vector<std::unordered_map<uint16_t, float>> wm(skin.size());
+			for (size_t v = 0; v < m.V.size(); ++v)
+				for (auto& [i, x] : m.VW[v]) wm[i][uint16_t(v)] = x;
+			for (uint32_t b = 0; b < skin.size(); ++b) nif.SetShapeBoneWeights(name, b, wm[b]);
+		}
 		for (size_t v = 0; v < m.V.size(); ++v) {
 			std::vector<uint8_t> bid;
 			std::vector<float> wt;

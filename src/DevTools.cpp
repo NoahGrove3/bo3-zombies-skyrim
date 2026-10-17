@@ -224,6 +224,16 @@ namespace bo3z
 				logger::info("dev: breath {} -> {} scale {} beam sign {}", e, id, sc, sg);
 			} else if (cmd == "flap") {
 				Movement::DevFlap();
+			} else if (cmd == "chase") {  // chase off | chase <dist> <yaw deg (0 behind)> <pitch deg> [height] [spin deg/s]
+				std::string a;
+				in >> a;
+				if (a == "off") {
+					Movement::DevChase(false, 0, 0, 0, 0, 0);
+				} else {
+					float yaw = 0, pitch = 15, h = 0, spin = 0;
+					in >> yaw >> pitch >> h >> spin;
+					Movement::DevChase(true, std::stof(a), yaw, pitch, h, spin);
+				}
 			} else if (cmd == "takeoff") {
 				Movement::DevTakeOff();
 			} else if (cmd == "flyoff") {

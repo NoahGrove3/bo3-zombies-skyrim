@@ -428,7 +428,8 @@ namespace bo3z
 		void Reset();
 		bool Riding();  // on a horse
 		void PoseGlideArms(RE::PlayerCharacter* a_player);
-		void SwingBody(RE::PlayerCharacter* a_player);  // hanging from the dragon's harness, your body swings
+		void SwingBody(RE::PlayerCharacter* a_player);
+		void DevChase(bool a_on, float a_dist, float a_yaw, float a_pitch, float a_height, float a_spin);  // dev: a camera following you  // hanging from the dragon's harness, your body swings
 		// the Echo Altar's dragon bonds: I Wind-Rider, II Talon Strike, III Alduin's Thrall (kept for the whole game)
 		inline constexpr int kBondCost[3] = { 2500, 4500, 7000 };
 		void BuyBond(RE::TESObjectREFR* a_shrine);
