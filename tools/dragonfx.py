@@ -108,7 +108,7 @@ def main():
         y0 = -150 - 130 * (i % 3)
         y1 = y0 - 1700 - 150 * (i % 2)
         strip(L, f'DG_Wind{i + 1}', 'DG_Bank', np.array([x * 0.6, y0, z * 0.6 + 180]) - b, np.array([x * 1.2, y1, z * 1.15 + 180]) - b,
-              12, 30, 0.0, 0.0, '0.9,0.95,1.0,1.0', 0, segs=10, tex=DASH)
+              45, 100, 0.0, 0.0, '0.9,0.95,1.0,1.0', 0, segs=10, tex=DASH)
     # (a strip faded at both ends: alpha rises then falls along it)
     txt = '\n'.join(L)
     fixed = []

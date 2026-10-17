@@ -1399,7 +1399,7 @@ namespace bo3z
 					trailK = 0, diveK = 0;
 				}
 				for (int i = 0; i < 2; ++i) {
-					DragonWind(a_player->Get3D(i == 1), trailK, diveK * 0.85f);
+					DragonWind(a_player->Get3D(i == 1), trailK, diveK * 1.4f);
 				}
 				const float dive = diveK;
 				DiveRush(a_player, dive);
