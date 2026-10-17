@@ -4,7 +4,7 @@ with it; the game sets how bright they are each frame (0 in the nif: unseen unti
     python tools/dragonfx.py <in.nif> <out.nif> <Textures dir>
 Writes Textures/CurseOfAlduin/Dragon/wind.dds (a soft, streaky band, tiling along its length) and <out.nif>: <in.nif>
 with DG_TrailL / DG_TrailR (under DG_WingL3 / R3, from the wingtip back) and DG_Wind1..8 (under DG_Bank)."""
-import subprocess, sys, pathlib, math
+import subprocess, sys, pathlib, math, json
 import numpy as np
 from PIL import Image
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
@@ -92,20 +92,25 @@ def strip(lines, name, parent, p0, p1, w0, w1, a0, a1, color, scroll, segs=8, fa
 
 def main():
     src, out, texdir = sys.argv[1], sys.argv[2], pathlib.Path(sys.argv[3])
+    # (our own dragon: tools/dragonbuild.py writes where its bones are beside its job)
+    pts = json.loads(pathlib.Path(sys.argv[4]).read_text()) if len(sys.argv) > 4 else None
     texture(texdir / 'CurseOfAlduin' / 'Dragon' / 'wind.dds')
     dash_texture(texdir / 'CurseOfAlduin' / 'Dragon' / 'wind_dash.dds')
     L = [f'out {out}', f'base {src}']
     for sd in ('L', 'R'):
-        w, tip = np.array(WRIST[sd]), np.array(TIP[sd])
+        if pts:   # from the tip of the wing's long finger (it moves with the finger as the wing folds)
+            parent = f'DG_Wing{sd}F22'
+            w, tip = np.array(pts[parent]), np.array(pts['tip' + sd])
+        else:
+            parent = f'DG_Wing{sd}3'
+            w, tip = np.array(WRIST[sd]), np.array(TIP[sd])
         p0 = tip - w
         p1 = p0 + np.array([0, -900, 10])
-        strip(L, f'DG_Trail{sd}', f'DG_Wing{sd}3', p0, p1, 18, 64, 1.0, 0.0, '0.85,0.93,1.0,1.0', 0.7, segs=10, fade_in=0.04)
-    # the dive (Noah: the lines come from ahead of the dragon): streaks starting well ahead of its head, spreading a little
-    # as they rush back past it and you, dashes of air streaming along them
-    # (Noah, again: very subtle, in front of its nose) fourteen fine streaks in a loose cone ahead of the head, each
+        strip(L, f'DG_Trail{sd}', parent, p0, p1, 18, 64, 1.0, 0.0, '0.85,0.93,1.0,1.0', 0.7, segs=10, fade_in=0.04)
+    # the dive (Noah: very subtle, in front of its nose): fourteen fine streaks in a loose cone ahead of the head, each
     # running back past the nose and fading before the neck - the game streams dashes of air along each at its own pace
-    b = np.array(BANK)
-    nose = np.array([0.0, -1012.0, 150.0])
+    b = np.array(pts['DG_Bank'] if pts else BANK)
+    nose = np.array(pts['DG_Mouth']) if pts else np.array([0.0, -1012.0, 150.0])
     rng = np.random.default_rng(5)
     for i in range(14):
         a = 2 * math.pi * i / 14 + rng.uniform(-0.2, 0.2)
@@ -114,43 +119,10 @@ def main():
         p0 = nose + np.array([r0 * math.cos(a), ahead, r0 * math.sin(a) * 0.8])
         p1 = nose + np.array([r1 * math.cos(a), -rng.uniform(150, 350), r1 * math.sin(a) * 0.8])
         strip(L, f'DG_Wind{i + 1}', 'DG_Bank', p0 - b, p1 - b, 8, 18, 0.0, 0.0, '0.9,0.95,1.0,1.0', 0, segs=10, tex=DASH)
-    # Bond III's lightning breath: three jagged bolts from its mouth, as far as its breath reaches (1800 game units:
-    # the dragon's space is 0.23 of that) - the game flickers them, turns them about their length and aims them
-    import random
-    random.seed(11)
-    for k in range(3):
-        # (alpha-blended, a strong electric blue: additive white vanished against snow and sky)
-        L.append(f'shape DG_Bolt{k + 1} tex={TEX} color=0.45,0.62,1.0,1.0 scale=0 blend=alpha parent=DG_Mouth')
-        n, y1 = 26, 7800.0
-        pts = [(0.0, 20.0, 0.0)]
-        for i in range(1, n + 1):
-            t = i / n
-            amp = 40 + 260 * t
-            pts.append((random.uniform(-amp, amp), 20 + (y1 - 20) * t, random.uniform(-amp, amp)))
-        vi, tris = 0, []
-        for ax in ((1, 0, 0), (0, 0, 1)):
-            base = vi
-            for i, (x, y, z) in enumerate(pts):
-                t = i / n
-                w = (170 - 80 * t) * (1.0 if k == 0 else 0.6)
-                a = min(1.0, t / 0.03) * (1 - t) ** 0.5
-                for s in (-1, 1):
-                    L.append(f'v {x + ax[0] * w * s:.1f} {y:.1f} {z + ax[2] * w * s:.1f} {0.5 + 0.5 * s:.3f} {t * 4:.3f} 1 1 1 {a:.3f}')
-                    vi += 1
-            for i in range(n):
-                q = base + 2 * i
-                tris += [(q, q + 1, q + 2), (q + 1, q + 3, q + 2)]
-        for t3 in tris:
-            L.append('t %d %d %d' % t3)
-    # (a strip faded at both ends: alpha rises then falls along it)
-    txt = '\n'.join(L)
-    fixed = []
-    for line in txt.split('\n'):
-        fixed.append(line)
     job = pathlib.Path(out).with_suffix('.job.txt')
     # alpha along the dive streaks: 0 at both ends, full in the middle
     out_lines, cur = [], None
-    for line in fixed:
+    for line in L:
         if line.startswith('shape '):
             cur = line.split()[1]
         if line.startswith('v ') and cur and cur.startswith('DG_Wind'):

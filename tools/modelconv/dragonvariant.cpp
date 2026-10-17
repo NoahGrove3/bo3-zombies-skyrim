@@ -14,7 +14,7 @@ int main(int argc, char** argv)
 	int n = 0;
 	for (auto* s : nif.GetShapes()) {
 		auto* sh = dynamic_cast<BSLightingShaderProperty*>(nif.GetShader(s));
-		if (!sh) continue;
+		if (!sh || s->name.get() == "DG_Harness") continue;  // (the harness keeps its leather)
 		printf("before: type %u flags1 %08X flags2 %08X emissive %.2f %.2f %.2f x%.2f\n", sh->GetShaderType(), sh->shaderFlags1, sh->shaderFlags2,
 			sh->emissiveColor.x, sh->emissiveColor.y, sh->emissiveColor.z, sh->emissiveMultiple);
 		std::string d = argv[3], g = argv[4];

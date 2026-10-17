@@ -1736,6 +1736,7 @@ namespace bo3z
 					PoseArm(a_this);
 					Spellcraft::OnPose(a_this);
 					Movement::PoseGlideArms(a_this);
+					Movement::SwingBody(a_this);
 				} catch (...) {
 				}
 			}
