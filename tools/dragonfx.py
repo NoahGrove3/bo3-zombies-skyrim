@@ -109,6 +109,33 @@ def main():
         y1 = y0 - 1700 - 150 * (i % 2)
         strip(L, f'DG_Wind{i + 1}', 'DG_Bank', np.array([x * 0.6, y0, z * 0.6 + 180]) - b, np.array([x * 1.2, y1, z * 1.15 + 180]) - b,
               45, 100, 0.0, 0.0, '0.9,0.95,1.0,1.0', 0, segs=10, tex=DASH)
+    # Bond III's lightning breath: three jagged bolts from its mouth, as far as its breath reaches (1800 game units:
+    # the dragon's space is 0.23 of that) - the game flickers them, turns them about their length and aims them
+    import random
+    random.seed(11)
+    for k in range(3):
+        L.append(f'shape DG_Bolt{k + 1} tex={TEX} color=0.65,0.82,1.0,1.0 scale=0 blend=add parent=DG_Mouth')
+        n, y1 = 26, 7800.0
+        pts = [(0.0, 20.0, 0.0)]
+        for i in range(1, n + 1):
+            t = i / n
+            amp = 40 + 260 * t
+            pts.append((random.uniform(-amp, amp), 20 + (y1 - 20) * t, random.uniform(-amp, amp)))
+        vi, tris = 0, []
+        for ax in ((1, 0, 0), (0, 0, 1)):
+            base = vi
+            for i, (x, y, z) in enumerate(pts):
+                t = i / n
+                w = (60 - 30 * t) * (1.0 if k == 0 else 0.6)
+                a = min(1.0, t / 0.03) * (1 - t) ** 0.5
+                for s in (-1, 1):
+                    L.append(f'v {x + ax[0] * w * s:.1f} {y:.1f} {z + ax[2] * w * s:.1f} {0.5 + 0.5 * s:.3f} {t * 4:.3f} 1 1 1 {a:.3f}')
+                    vi += 1
+            for i in range(n):
+                q = base + 2 * i
+                tris += [(q, q + 1, q + 2), (q + 1, q + 3, q + 2)]
+        for t3 in tris:
+            L.append('t %d %d %d' % t3)
     # (a strip faded at both ends: alpha rises then falls along it)
     txt = '\n'.join(L)
     fixed = []

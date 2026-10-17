@@ -1453,12 +1453,14 @@ namespace bo3z
 					if (bank[k]) g_lastBank = bank[k]->local.rotate;
 				}
 			}
-			static float hitT = 0;
+			static float        hitT = 0;
+			static RE::NiPoint3 breathDir{ 0, 1, 0 };
+			const int           elNow = g_breathElDev >= 0 ? g_breathElDev : thrall ? HandElement() : 0;
 			if (breathing && breath < 1.45f && mouth && head && (shotT -= dt) <= 0) {
 				shotT = 0.05f;
 				const int          el = g_breathElDev >= 0 ? g_breathElDev : thrall ? HandElement() : 0;
 				RE::BGSProjectile* fire = BreathProjectile(el);  // the dragons' own breath (Bond III: your spell's element)
-				if (fire) {
+				if (fire || el == 2) {
 					const auto&        hm = head->world.rotate;
 					RE::NiPoint3       d{ hm.entry[0][1], hm.entry[1][1], hm.entry[2][1] - 0.25f };  // its head's forward, a little down
 					if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {  // where you aim
@@ -1473,10 +1475,14 @@ namespace bo3z
 						if (to.x * dn.x + to.y * dn.y + to.z * dn.z > 0.94f) d = to;
 					}
 					d.Unitize();
+					breathDir = d;
 					if (thrall && (hitT -= 0.05f) <= 0) {
 						hitT = 0.2f;
 						BreathHits(a_player, mouth->world.translate, d, el);
 					}
+				}
+				if (fire && el != 2) {  // (lightning is drawn below: bolts in the dragon's own nif)
+					const RE::NiPoint3 d = breathDir;
 					const RE::NiPoint3 from = mouth->world.translate + d * 10.0f;
 					const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
 					RE::Projectile::ProjectileRot r{ -std::atan2(d.z, std::max(1e-3f, flat)), std::atan2(d.x, d.y) };
@@ -1502,6 +1508,44 @@ namespace bo3z
 					RE::Projectile::Launch(&h, ld);
 					if (fire->IsBeam()) {
 						ang.x = keepX, ang.z = keepZ;
+					}
+				}
+			}
+			// Bond III's lightning: jagged bolts from its mouth (tools/dragonfx.py DG_Bolt1-3), flickering, turning about
+			// their length, aimed where the breath goes
+			{
+				const bool                   bolts = breathing && breath < 1.45f && elNow == 2 && mouth;
+				static float                 flick = 0;
+				static std::array<bool, 3>   on{};
+				static std::array<float, 3>  spin{};
+				if (bolts && (flick -= dt) <= 0) {
+					flick = 0.05f;
+					for (int k = 0; k < 3; ++k) {
+						on[k] = k == 0 || rng() % 3 != 0;
+						spin[k] = std::uniform_real_distribution<float>(0.0f, 6.283f)(rng);
+					}
+				}
+				RE::NiPoint3 y = breathDir;
+				RE::NiPoint3 x = y.Cross(RE::NiPoint3{ 0, 0, 1 });
+				if (x.Length() < 1e-3f) x = { 1, 0, 0 };
+				x.Unitize();
+				const RE::NiPoint3 z0 = x.Cross(y);
+				for (int i = 0; i < 2; ++i) {
+					auto* root = a_player->Get3D(i == 1);
+					if (!root) continue;
+					for (int k = 0; k < 3; ++k) {
+						const auto name = fmt::format("DG_Bolt{}", k + 1);
+						auto*      b = root->GetObjectByName(name.c_str());
+						if (!b) continue;
+						FxLevel(root, name.c_str(), bolts && on[k] ? (k == 0 ? 3.0f : 2.0f) : 0.0f);
+						if (!bolts || !b->parent) continue;
+						const float  c = std::cos(spin[k]), s = std::sin(spin[k]);
+						const RE::NiPoint3 xr = x * c + z0 * s, zr = z0 * c - x * s;
+						RE::NiMatrix3 w;  // (columns: where its x, y (its length) and z go)
+						w.entry[0][0] = xr.x, w.entry[1][0] = xr.y, w.entry[2][0] = xr.z;
+						w.entry[0][1] = y.x, w.entry[1][1] = y.y, w.entry[2][1] = y.z;
+						w.entry[0][2] = zr.x, w.entry[1][2] = zr.y, w.entry[2][2] = zr.z;
+						b->local.rotate = b->parent->world.rotate.Transpose() * w;
 					}
 				}
 			}
