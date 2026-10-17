@@ -1450,9 +1450,19 @@ namespace bo3z
 					ld.autoAim = false;
 					ld.noDamageOutsideCombat = true;
 					ld.power = 0.0f;
-					ld.scale = el == 0 || el >= 3 ? 0.45f : 1.0f;  // (Noah: a smaller breath - its reach is the same; frost and lightning are a spell's size already)
+					ld.scale = el == 0 || el >= 3 ? 0.45f : el == 1 ? 1.8f : 1.0f;  // (Noah: a smaller breath - its reach is the same; frost's spray is a spell's, made bigger to be seen)
+					// (a beam - the lightning - is aimed by its shooter's own facing, not the launch angles: you face the breath
+					// for the moment it leaves)
+					auto&       ang = a_player->data.angle;  // (x pitch, z yaw)
+					const float keepX = ang.x, keepZ = ang.z;
+					if (fire->IsBeam()) {
+						ang.x = r.x, ang.z = r.z;
+					}
 					RE::ProjectileHandle h;
 					RE::Projectile::Launch(&h, ld);
+					if (fire->IsBeam()) {
+						ang.x = keepX, ang.z = keepZ;
+					}
 				}
 			}
 		}
