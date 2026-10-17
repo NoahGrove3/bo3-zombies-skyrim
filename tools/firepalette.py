@@ -7,10 +7,11 @@ import numpy as np
 from PIL import Image
 
 RAMPS = {
-    # (position along the ramp, colour) - the dim smoke-edge of the flame, its body, its white-hot heart
-    'fire_b1': [(0.0, (0, 0, 0)), (0.18, (10, 30, 95)), (0.45, (35, 105, 240)), (0.72, (110, 185, 255)), (1.0, (230, 245, 255))],
-    'fire_b2': [(0.0, (0, 0, 0)), (0.18, (90, 55, 0)), (0.45, (230, 175, 10)), (0.72, (255, 225, 70)), (1.0, (255, 252, 215))],
-    'fire_b3': [(0.0, (0, 0, 0)), (0.18, (5, 60, 10)), (0.45, (40, 200, 40)), (0.72, (130, 255, 110)), (1.0, (230, 255, 220))],
+    # (position along the ramp, colour) - the dim smoke-edge of the flame, its body, its hottest heart; kept saturated
+    # to the top (the breath is drawn additively: a white heart washed every colour out)
+    'fire_b1': [(0.0, (0, 0, 0)), (0.2, (4, 18, 80)), (0.5, (15, 70, 210)), (0.8, (45, 135, 255)), (1.0, (110, 185, 255))],
+    'fire_b2': [(0.0, (0, 0, 0)), (0.2, (70, 40, 0)), (0.5, (200, 140, 0)), (0.8, (250, 200, 20)), (1.0, (255, 235, 110))],
+    'fire_b3': [(0.0, (0, 0, 0)), (0.2, (0, 50, 6)), (0.5, (20, 170, 25)), (0.8, (70, 235, 60)), (1.0, (150, 255, 130))],
 }
 
 
