@@ -632,52 +632,81 @@ namespace bo3z
 			logger::info("glider: dive landed, {} caught in the shockwave", n);
 		}
 
-		// Bond III: the breath's look in each element - a stream spell of that element from the Coffer (fire: the
-		// dragons' own breath)
-		RE::BGSProjectile* BreathProjectile(int a_element)
+		// the breath: the dragons' own fire breath (Noah: fire only - no more frost or lightning), in its bond's colour
+		// (TintBreath)
+		RE::BGSProjectile* BreathProjectile()
 		{
-			static std::array<RE::BGSProjectile*, 8> cache{};
-			static std::array<bool, 8>               looked{};
-			static RE::BGSProjectile*                fire = RE::TESForm::LookupByID<RE::BGSProjectile>(0x000EBB75);
-			if (a_element >= 0 && a_element < 3 && g_breathProjDev[a_element]) {  // (dev: trying another look)
-				if (auto* p = RE::TESForm::LookupByID<RE::BGSProjectile>(g_breathProjDev[a_element])) return p;
+			static RE::BGSProjectile* fire = RE::TESForm::LookupByID<RE::BGSProjectile>(0x000EBB75);
+			if (g_breathProjDev[0]) {  // (dev: trying another look)
+				if (auto* p = RE::TESForm::LookupByID<RE::BGSProjectile>(g_breathProjDev[0])) return p;
 			}
-			if (a_element <= 0 || a_element >= 8) {
-				return fire;
-			}
-			// frost: the Frost Breath shout's own cone (as fire is the dragons' fire breath)
-			if (a_element == 1) {
-				static RE::BGSProjectile* frost = RE::TESForm::LookupByID<RE::BGSProjectile>(0x00068BD1);
-				if (frost) return frost;
-			}
-			// lightning: Skyrim's Lightning Bolt beam, aimed at a marker set where the breath reaches (below)
-			if (a_element == 2) {
-				static RE::BGSProjectile* bolt = RE::TESForm::LookupByID<RE::BGSProjectile>(0x00058E9C);
-				if (bolt) return bolt;
-			}
-			if (!looked[a_element] && Arcana::Count() > 0) {
-				looked[a_element] = true;
-				for (int i = 0; i < 256 && !cache[a_element]; ++i) {
-					auto* sp = Arcana::Spell(i);
-					if (!sp || !Arcana::Concentration(i) || Arcana::ElementOf(i) != a_element) {
-						continue;
-					}
-					for (auto* e : sp->effects) {
-						auto* pr = e && e->baseEffect ? e->baseEffect->data.projectileBase : nullptr;
-						if (pr && pr->IsFlamethrower()) {
-							cache[a_element] = pr;
-							break;
-						}
-					}
-				}
-			}
-			return cache[a_element] ? cache[a_element] : fire;
+			return fire;
 		}
-		int HandElement()
+
+		// its fire in its bond's colour: each breath launched is watched until its model is in, then its effect shaders
+		// are given the bond's greyscale-to-palette ramp (tools/firepalette.py) - Bond I's pale ice-blue fire, Bond II's
+		// glacier blue; Bond III, the black dragon with ember eyes, breathes Skyrim's own red fire
+		struct Tinted
 		{
-			const auto h = Arcana::Hands();
-			const int  sp = h[1] >= 0 ? h[1] : h[0];
-			return sp >= 0 ? Arcana::ElementOf(sp) : 0;
+			RE::ProjectileHandle h;
+			int                  bond;
+			float                age;
+		};
+		std::vector<Tinted> g_tinted;
+		void TintBreath(float a_dt)
+		{
+			static RE::NiPointer<RE::NiTexture> pal[2];
+			static const char*                   kPal[2] = { "textures\\CurseOfAlduin\\Dragon\\fire_b1.dds", "textures\\CurseOfAlduin\\Dragon\\fire_b2.dds" };
+			for (auto it = g_tinted.begin(); it != g_tinted.end();) {
+				auto p = it->h.get();
+				it->age += a_dt;
+				auto* root = p ? p->Get3D() : nullptr;
+				if (!p || it->age > 3.0f) {
+					it = g_tinted.erase(it);
+					continue;
+				}
+				if (!root) {
+					++it;
+					continue;
+				}
+				const int k = std::clamp(it->bond, 1, 2) - 1;
+				if (!pal[k]) {
+					RE::BSShaderManager::GetTexture(kPal[k], true, pal[k], false);
+				}
+				int n = 0;
+				if (pal[k]) {
+					RE::BSVisit::TraverseScenegraphGeometries(root, [&](RE::BSGeometry* g) {
+						auto* prop = g->GetGeometryRuntimeData().shaderProperty.get();
+						auto* rtti = prop ? prop->GetRTTI() : nullptr;
+						if (!rtti || std::string_view(rtti->GetName()) != "BSEffectShaderProperty") {
+							return RE::BSVisit::BSVisitControl::kContinue;
+						}
+						auto* sp = static_cast<RE::BSShaderProperty*>(prop);
+						auto* m = static_cast<RE::BSEffectShaderMaterial*>(sp->material);
+						if (!m) {
+							return RE::BSVisit::BSVisitControl::kContinue;
+						}
+						// (a material of its own: the one it came with is shared by every fire breath, the real dragons' too)
+						if (auto* nm = static_cast<RE::BSEffectShaderMaterial*>(m->Create())) {
+							nm->CopyMembers(m);
+							nm->greyscaleTexture = RE::NiPointer<RE::NiSourceTexture>(static_cast<RE::NiSourceTexture*>(pal[k].get()));
+							nm->greyscaleTexturePath = kPal[k];
+							sp->SetMaterial(nm, true);
+							nm->~BSEffectShaderMaterial();
+							RE::free(nm);
+						}
+						sp->flags.set(RE::BSShaderProperty::EShaderPropertyFlag::kGrayscaleToPaletteColor);
+						++n;
+						return RE::BSVisit::BSVisitControl::kContinue;
+					});
+				}
+				static int logged = 0;
+				if (logged < 6) {
+					++logged;
+					logger::info("glider: breath tinted for Bond {} ({} effect shaders)", it->bond, n);
+				}
+				it = g_tinted.erase(it);
+			}
 		}
 
 		// Bond III: what the breath turns on - the nearest of the dead below and ahead of you
@@ -706,8 +735,10 @@ namespace bo3z
 			}
 			return best;
 		}
-		void BreathHits(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_from, const RE::NiPoint3& a_dir, int a_element)
+		void BreathHits(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_from, const RE::NiPoint3& a_dir)
 		{
+			static constexpr float kBondHeat[4] = { 0.5f, 0.5f, 0.8f, 1.25f };  // (each bond's fire burns hotter)
+			const float            heat = kBondHeat[std::clamp(Bond(), 0, 3)];
 			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 				auto a = h.get();
 				if (!Foe(a.get(), a_player)) {
@@ -719,35 +750,8 @@ namespace bo3z
 					continue;
 				}
 				const bool undead = Director::IsRoundUndead(a.get());
-				float      dmg = undead ? Director::RoundHealth() * 0.25f : a->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.05f;  // (a breath burns most of the dead it catches)
-				if (a_element == 0) {
-					dmg *= 1.25f;  // fire: hotter
-				}
-				Hurt(a.get(), dmg);
-				if (a->IsDead()) {
-					continue;
-				}
-				if (a_element == 1) {  // frost: slowed for three seconds
-					bool already = false;
-					for (auto& sl : g_slowed) already = already || sl.a.get().get() == a.get();
-					if (!already) {
-						auto* av = a->AsActorValueOwner();
-						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -45.0f);
-						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.01f);
-						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.01f);
-						g_slowed.push_back({ a->GetHandle(), 3.0f });
-					}
-				} else if (a_element == 2) {  // lightning: it leaps to the nearest other
-					RE::Actor* next = nullptr;
-					float      nd = 380.0f;
-					for (auto& h2 : RE::ProcessLists::GetSingleton()->highActorHandles) {
-						auto b = h2.get();
-						if (b.get() == a.get() || !Foe(b.get(), a_player)) continue;
-						const float dd = b->GetPosition().GetDistance(a->GetPosition());
-						if (dd < nd) next = b.get(), nd = dd;
-					}
-					if (next) Hurt(next, dmg * 0.5f);
-				}
+				const float dmg = undead ? Director::RoundHealth() * 0.25f : a->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.05f;  // (a breath burns most of the dead it catches)
+				Hurt(a.get(), dmg * heat);
 			}
 		}
 
@@ -862,6 +866,7 @@ namespace bo3z
 			ApplyBondLook();
 			g_flapWait = std::max(0.0f, g_flapWait - a_delta);
 			g_breathCd = std::max(0.0f, g_breathCd - a_delta);
+			TintBreath(a_delta);
 			for (auto it = g_fx.begin(); it != g_fx.end();) {
 				if ((it->t -= a_delta) <= 0) {
 					if (auto r = it->ref.get()) {
@@ -1300,7 +1305,7 @@ namespace bo3z
 			// fire: now and then, a breath of a second and a half (Bond III: whenever the dead are below, a few seconds apart)
 			static float       sinceBreath = 0, seekT = 0;
 			static RE::ActorHandle target;
-			const bool         thrall = Bond() >= 3 && mouth != nullptr;
+			const bool         thrall = Bond() >= 1 && mouth != nullptr;  // (Noah: every bond breathes fire, in its colour)
 			sinceBreath += dt;
 			if (thrall && (seekT -= dt) <= 0) {
 				seekT = 0.25f;
@@ -1313,7 +1318,7 @@ namespace bo3z
 				breath = 1.6f;
 				sinceBreath = 0;
 				PlayGameSound(DragonSound::kFire, a_player, &g_breathSound);
-				logger::info("glider: the dragon breathes ({})", g_breathElDev >= 0 ? g_breathElDev : HandElement());
+				logger::info("glider: the dragon breathes (Bond {})", Bond());
 			}
 			g_breathReq = false;
 			if (!thrall) {
@@ -1471,12 +1476,10 @@ namespace bo3z
 			}
 			static float        hitT = 0;
 			static RE::NiPoint3 breathDir{ 0, 1, 0 };
-			const int           elNow = g_breathElDev >= 0 ? g_breathElDev : thrall ? HandElement() : 0;
 			if (breathing && breath < 1.45f && mouth && head && (shotT -= dt) <= 0) {
 				shotT = 0.05f;
-				const int          el = g_breathElDev >= 0 ? g_breathElDev : thrall ? HandElement() : 0;
-				RE::BGSProjectile* fire = BreathProjectile(el);  // the dragons' own breath (Bond III: your spell's element)
-				if (fire || el == 2) {
+				RE::BGSProjectile* fire = BreathProjectile();
+				if (fire) {
 					const auto&        hm = head->world.rotate;
 					RE::NiPoint3       d{ hm.entry[0][1], hm.entry[1][1], hm.entry[2][1] - 0.25f };  // its head's forward, a little down
 					if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {  // where you aim
@@ -1498,7 +1501,7 @@ namespace bo3z
 					breathDir = d;
 					if (thrall && (hitT -= 0.05f) <= 0) {
 						hitT = 0.2f;
-						BreathHits(a_player, mouth->world.translate, d, el);
+						BreathHits(a_player, mouth->world.translate, d);
 					}
 				}
 				if (fire) {
@@ -1507,98 +1510,23 @@ namespace bo3z
 					const RE::NiPoint3 from = mouth->world.translate + d * 40.0f + vel * 0.3f;
 					const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
 					RE::Projectile::ProjectileRot r{ -std::atan2(d.z, std::max(1e-3f, flat)), std::atan2(d.x, d.y) };
-					if (!fire->IsFlamethrower()) {  // (a stream of bolts: fanned a little, like breath)
-						std::uniform_real_distribution<float> j(-1.0f, 1.0f);
-						r.x += 0.05f * j(rng), r.z += 0.08f * j(rng);
-					}
 					RE::Projectile::LaunchData    ld(fire, a_player, from, r);
 					ld.useOrigin = true;
 					ld.autoAim = false;
 					ld.noDamageOutsideCombat = true;
 					ld.power = 0.0f;
-					ld.scale = g_breathScaleDev > 0 ? g_breathScaleDev : el == 0 || el >= 3 ? 0.45f : 1.0f;  // (Noah: a smaller breath - its reach is the same)
-					// a beam goes to its target: a marker moved to where the breath reaches (1800 ahead, or the dead it found)
-					if (fire->IsBeam()) {
-						static RE::ObjectRefHandle mark;
-						auto                       m = mark.get();
-						if (!m) {
-							if (auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(0x0000003B)) {  // XMarker
-								if (auto r2 = a_player->PlaceObjectAtMe(xm, false)) {
-									mark = r2->CreateRefHandle();
-									m = r2;
-								}
-							}
-						}
-						if (m) {
-							RE::NiPoint3 to = mouth->world.translate + d * 1800.0f;
-							if (auto t = target.get(); thrall && t && !t->IsDead()) to = t->GetPosition() + RE::NiPoint3{ 0, 0, 60 };
-							m->SetPosition(to);
-							ld.desiredTarget = m.get();
-							ld.autoAim = true;
-						}
-					}
-					// (a beam - the lightning - is aimed by its shooter's own facing, not the launch angles: you face the breath
-					// for the moment it leaves)
-					auto&       ang = a_player->data.angle;  // (x pitch, z yaw)
-					const float keepX = ang.x, keepZ = ang.z;
-					if (fire->IsBeam() && g_beamPitchSign != 1.0f) {  // (dev only: the beam goes to its marker target)
-						ang.x = r.x * g_beamPitchSign, ang.z = r.z;
-					}
+					ld.scale = g_breathScaleDev > 0 ? g_breathScaleDev : 0.45f;  // (Noah: a smaller breath - its reach is the same)
 					RE::ProjectileHandle h;
 					RE::Projectile::Launch(&h, ld);
-					if (fire->IsBeam() && g_beamPitchSign != 1.0f) {
-						ang.x = keepX, ang.z = keepZ;
+					if (Bond() < 3) {
+						g_tinted.push_back({ h, Bond(), 0.0f });
 					}
-					if (auto p = fire->IsBeam() ? RE::NiPointer<RE::Projectile>{} : h.get()) {
+					if (auto p = h.get()) {
 						// (Noah: the breath flies off ahead - faster, and carried on your own speed - not swept back onto you
 						// and the dragon as you glide into it)
 						auto& rd = p->GetProjectileRuntimeData();
 						rd.linearVelocity = rd.linearVelocity * 1.6f + vel;
 						rd.velocity = rd.velocity * 1.6f + vel;
-					}
-				}
-			}
-			// Bond III's lightning: jagged bolts from its mouth (tools/dragonfx.py DG_Bolt1-3), flickering, turning about
-			// their length, aimed where the breath goes
-			{
-				const bool                   bolts = breathing && breath < 1.45f && elNow == 2 && mouth;
-				static float                 flick = 0;
-				static std::array<bool, 3>   on{};
-				static std::array<float, 3>  spin{};
-				if (bolts && (flick -= dt) <= 0) {
-					flick = 0.05f;
-					for (int k = 0; k < 3; ++k) {
-						on[k] = k == 0 || rng() % 3 != 0;
-						spin[k] = std::uniform_real_distribution<float>(0.0f, 6.283f)(rng);
-					}
-				}
-				RE::NiPoint3 y = breathDir;
-				RE::NiPoint3 x = y.Cross(RE::NiPoint3{ 0, 0, 1 });
-				if (x.Length() < 1e-3f) x = { 1, 0, 0 };
-				x.Unitize();
-				const RE::NiPoint3 z0 = x.Cross(y);
-				for (int i = 0; i < 2; ++i) {
-					auto* root = a_player->Get3D(i == 1);
-					if (!root) continue;
-					for (int k = 0; k < 3; ++k) {
-						const auto name = fmt::format("DG_Bolt{}", k + 1);
-						auto*      b = root->GetObjectByName(name.c_str());
-						if (!b) continue;
-						FxLevel(root, name.c_str(), bolts && on[k] ? (k == 0 ? 1.6f : 1.2f) : 0.0f);
-						if (!bolts || !b->parent) continue;
-						const float  c = std::cos(spin[k]), s = std::sin(spin[k]);
-						const RE::NiPoint3 xr = x * c + z0 * s, zr = z0 * c - x * s;
-						RE::NiMatrix3 w;  // (columns: where its x, y (its length) and z go)
-						w.entry[0][0] = xr.x, w.entry[1][0] = xr.y, w.entry[2][0] = xr.z;
-						w.entry[0][1] = y.x, w.entry[1][1] = y.y, w.entry[2][1] = y.z;
-						w.entry[0][2] = zr.x, w.entry[1][2] = zr.y, w.entry[2][2] = zr.z;
-						b->local.rotate = b->parent->world.rotate.Transpose() * w;
-						static float logT = 0;
-						if (k == 0 && i == 0 && (logT -= dt) <= 0) {
-							logT = 0.4f;
-							logger::info("glider: bolt at ({:.0f},{:.0f},{:.0f}) scale {:.2f} culled {} bound ({:.0f},{:.0f},{:.0f}) r {:.0f} dir ({:.2f},{:.2f},{:.2f})", b->world.translate.x, b->world.translate.y, b->world.translate.z,
-								b->world.scale, b->GetAppCulled(), b->worldBound.center.x, b->worldBound.center.y, b->worldBound.center.z, b->worldBound.radius, y.x, y.y, y.z);
-						}
 					}
 				}
 			}
@@ -1662,9 +1590,9 @@ namespace bo3z
 		void BuyBond(RE::TESObjectREFR* a_shrine)
 		{
 			static constexpr const char* kName[3] = { "WIND-RIDER", "TALON STRIKE", "ALDUIN'S THRALL" };
-			static constexpr const char* kHow[3] = { "Jump while gliding: it beats its wings and climbs",
+			static constexpr const char* kHow[3] = { "Jump while gliding: it beats its wings and climbs  -  right attack mid-glide: ice-blue fire (every 5 s)",
 				"Shout Dragon's Updraft: a whirlwind lifts you, then open the glider  -  attack looking down mid-glide: the dive",
-				"Right attack mid-glide: its breath, in your spell's element (every 5 s)" };
+				"Its fire burns hotter, ember-red like its eyes (right attack mid-glide, every 5 s)" };
 			const int b = Bond();
 			if (b >= 3) {
 				Hud::Banner("Your dragon has made every bond", 2.5f);
@@ -1782,7 +1710,12 @@ namespace bo3z
 				}
 				// III: right attack (right trigger) breathes (5 s apart); II: attack looking down dives - the left hand
 				// (left trigger) for Bond III, whose right is the breath
-				const bool breathKey = bond >= 3 && ev == ue->rightAttack;
+				// (Noah: every bond breathes now - right attack; attack looking down is still Bond II's dive)
+				float lookDown = 0;
+				if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
+					lookDown = -cam->cameraRoot->world.rotate.entry[2][1];
+				}
+				const bool breathKey = bond >= 1 && ev == ue->rightAttack && !(bond >= 2 && lookDown > 0.42f);
 				if (free && breathKey && g_hadDragon && !g_dive) {
 					if (g_breathCd <= 0) {
 						g_breathReq = true;
