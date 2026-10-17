@@ -1971,29 +1971,31 @@ namespace bo3z
 
 		// dev: a camera that follows you (the free camera, placed each frame) - for filming the dragon
 		struct Chase { bool on = false; float dist = 600, yaw = 0, pitch = 15, height = 0, spin = 0; } g_chase;
+		// (the free camera stops you flying: this turns the ordinary over-the-shoulder camera round you instead)
 		void DevChase(bool a_on, float a_dist, float a_yaw, float a_pitch, float a_height, float a_spin)
 		{
 			g_chase = { a_on, a_dist, a_yaw, a_pitch, a_height, a_spin };
-			auto* pc = RE::PlayerCamera::GetSingleton();
-			if (pc && pc->IsInFreeCameraMode() != a_on) pc->ToggleFreeCameraMode(false);
+			if (!a_on) {
+				auto* pc = RE::PlayerCamera::GetSingleton();
+				if (pc && pc->currentState && pc->currentState->id == RE::CameraState::kThirdPerson) {
+					auto* tp = static_cast<RE::ThirdPersonState*>(pc->currentState.get());
+					tp->freeRotation = { 0, 0 };
+				}
+			}
 		}
-		void ChaseTick(RE::PlayerCharacter* a_player, float a_delta)
+		void ChaseTick(RE::PlayerCharacter*, float a_delta)
 		{
 			if (!g_chase.on) return;
 			auto* pc = RE::PlayerCamera::GetSingleton();
-			if (!pc || !pc->currentState || !pc->IsInFreeCameraMode()) return;
+			if (!pc || !pc->currentState || pc->currentState->id != RE::CameraState::kThirdPerson) return;
 			g_chase.yaw += g_chase.spin * a_delta;
-			auto*              fc = static_cast<RE::FreeCameraState*>(pc->currentState.get());
-			static RE::NiPoint3 sm{};
-			RE::NiPoint3       target = a_player->GetPosition() + RE::NiPoint3{ 0, 0, 110 + g_chase.height };
-			if ((sm - target).Length() > 3000) sm = target;
-			sm = sm + (target - sm) * std::min(1.0f, a_delta * 8.0f);
-			const float  y = a_player->GetAngleZ() + 3.14159f + g_chase.yaw * 0.0174533f, p = g_chase.pitch * 0.0174533f;
-			const RE::NiPoint3 off{ std::sin(y) * std::cos(p) * g_chase.dist, std::cos(y) * std::cos(p) * g_chase.dist, std::sin(p) * g_chase.dist };
-			fc->translation = sm + off;
-			const RE::NiPoint3 d = sm - fc->translation;
-			fc->rotation.y = std::atan2(d.x, d.y);
-			fc->rotation.x = -std::atan2(d.z, std::sqrt(d.x * d.x + d.y * d.y));
+			auto* tp = static_cast<RE::ThirdPersonState*>(pc->currentState.get());
+			tp->freeRotationEnabled = true;
+			tp->freeRotation.x = g_chase.yaw * 0.0174533f;
+			tp->freeRotation.y = g_chase.pitch * 0.0174533f;
+			const float zoom = std::clamp(g_chase.dist, 0.0f, 1.0f);  // (0 close .. 1 far)
+			tp->targetZoomOffset = zoom;
+			tp->currentZoomOffset += (zoom - tp->currentZoomOffset) * std::min(1.0f, a_delta * 4.0f);
 		}
 
 		void Tick(float a_delta)
