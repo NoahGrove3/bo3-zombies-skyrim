@@ -3,14 +3,14 @@ placed each frame at the dragon's jaws, turned to where it breathes (as the whir
 own animated nodes were never drawn). Three cones of flame along +Y from the origin, in the dragon's units (the game scales
 them with the dragon): BB1 the white-hot core, BB2 the flame round it (alpha-blended, so it shows against the sky), BB3 the
 flare at the jaws. Texture: Textures/CurseOfAlduin/Dragon/beam.dds (tools/dragonfx.py).
-    python tools/breathbeam.py <out.nif>"""
+    python tools/breathbeam.py <out dir>   (breath_beam.nif, _b1, _b2, _b3: each bond's colours baked in)"""
 import math, pathlib, subprocess, sys
 FXWRITE = '/home/claude/tools/fxwrite'
 BEAM = r'textures\CurseOfAlduin\Dragon\beam.dds'
 
 
-def cone(L, name, length, r0, r1, a0, a1, tiles, sides=14, segs=26, fade_out=0.2, blend='add'):
-    L.append(f'shape {name} tex={BEAM} color=1,1,1,1 scale=0 blend={blend}')
+def cone(L, name, length, r0, r1, a0, a1, tiles, color, vscroll, sides=14, segs=26, fade_out=0.2, blend='add'):
+    L.append(f'shape {name} tex={BEAM} color={color},1 scale=0 blend={blend} vscroll={vscroll}')
     for i in range(segs + 1):
         t = i / segs
         y = 10 + (length - 10) * t
@@ -27,12 +27,22 @@ def cone(L, name, length, r0, r1, a0, a1, tiles, sides=14, segs=26, fade_out=0.2
             L += [f't {a} {c} {b}', f't {b} {c} {d}']
 
 
+# each bond's colours baked in (core, flame): Skyrim's fire, then (Noah) Bond I blue, Bond II yellow, Bond III green
+COLORS = {'': ('1.0,0.80,0.40', '1.0,0.40,0.07'), '_b1': ('0.60,0.82,1.0', '0.12,0.38,1.0'), '_b2': ('1.0,0.94,0.55', '1.0,0.72,0.04'),
+          '_b3': ('0.65,1.0,0.55', '0.12,0.85,0.14')}
+
+
 def main():
-    out = sys.argv[1]
+    d = pathlib.Path(sys.argv[1])
+    for suf, (core, flame) in COLORS.items():
+        build(str(d / f'breath_beam{suf}.nif'), core, flame)
+
+
+def build(out, core, flame):
     L = [f'out {out}']
-    cone(L, 'BB1', 7000, 18, 150, 0.9, 0.55, 5.8)
-    cone(L, 'BB2', 7000, 55, 430, 0.6, 0.18, 4.2, blend='alpha')
-    cone(L, 'BB3', 900, 50, 230, 0.9, 0.0, 1.0, segs=8, fade_out=0.6)
+    cone(L, 'BB1', 7000, 18, 150, 0.9, 0.55, 5.8, core, 0.25)
+    cone(L, 'BB2', 7000, 55, 430, 0.6, 0.18, 4.2, flame, 0.33, blend='alpha')
+    cone(L, 'BB3', 900, 50, 230, 0.9, 0.0, 1.0, flame, 0.2, segs=8, fade_out=0.6)
     job = pathlib.Path(out).with_suffix('.job.txt')
     job.write_text('\n'.join(L) + '\n')
     r = subprocess.run([FXWRITE, str(job)], capture_output=True, text=True)

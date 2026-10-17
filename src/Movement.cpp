@@ -983,17 +983,27 @@ namespace bo3z
 				node.reset();
 				return;
 			}
+			const int bond = std::clamp(a_bond, 0, 3);
+			static int nodeBond[2] = { -1, -1 };
+			if (node && nodeBond[a_f] != bond) {  // (a new bond: its own colours)
+				if (node->parent) node->parent->DetachChild(node.get());
+				node.reset();
+			}
 			if (!node) {
-				static RE::NiPointer<RE::NiNode> model;
+				static RE::NiPointer<RE::NiNode> models[4];
+				static constexpr const char* kModel[4] = { "CurseOfAlduin\\fx\\breath_beam.nif", "CurseOfAlduin\\fx\\breath_beam_b1.nif", "CurseOfAlduin\\fx\\breath_beam_b2.nif",
+					"CurseOfAlduin\\fx\\breath_beam_b3.nif" };
+				auto& model = models[bond];
 				if (!model) {
 					RE::BSModelDB::DBTraits::ArgsType args{};
-					if (RE::BSModelDB::Demand("CurseOfAlduin\\fx\\breath_beam.nif", model, args) != RE::BSResource::ErrorCode::kNone || !model) {
+					if (RE::BSModelDB::Demand(kModel[bond], model, args) != RE::BSResource::ErrorCode::kNone || !model) {
 						model.reset();
 						static bool told = false;
-						if (!told) told = true, logger::warn("glider: no breath beam model");
+						if (!told) told = true, logger::warn("glider: no breath beam model ({})", kModel[bond]);
 						return;
 					}
 				}
+				nodeBond[a_f] = bond;
 				auto* clone = model->Clone();
 				if (!clone) return;
 				node.reset(static_cast<RE::NiAVObject*>(clone));
@@ -1004,9 +1014,6 @@ namespace bo3z
 				if (node->parent) node->parent->DetachChild(node.get());
 				host->AttachChild(node.get(), true);
 			}
-			static constexpr float kOuter[4][3] = { { 1.0f, 0.40f, 0.07f }, { 0.12f, 0.38f, 1.0f }, { 1.0f, 0.72f, 0.04f }, { 0.12f, 0.85f, 0.14f } };
-			static constexpr float kCore[4][3] = { { 1.0f, 0.80f, 0.40f }, { 0.60f, 0.82f, 1.0f }, { 1.0f, 0.94f, 0.55f }, { 0.65f, 1.0f, 0.55f } };
-			const int   b = std::clamp(a_bond, 0, 3);
 			const float flick = 0.9f + 0.1f * std::sin(a_b.clock * 31.0f) * std::sin(a_b.clock * 17.0f + 1.0f);
 			const auto& H = host->world;
 			const float hs = std::max(1e-4f, H.scale);
@@ -1020,10 +1027,8 @@ namespace bo3z
 				bool        core;
 			};
 			static constexpr Part parts[3] = { { "BB1", 1.0f, 4.0f, true }, { "BB2", 0.6f, 3.0f, false }, { "BB3", 0.85f, 5.0f, false } };
-			for (const auto& pt : parts) {
-				const float* c = pt.core ? kCore[b] : kOuter[b];
-				FxColor(node.get(), pt.name, c[0], c[1], c[2]);
-				FxLevel(node.get(), pt.name, a_b.level * pt.level * flick, -std::fmod(a_b.clock * pt.rate, 1.0f));
+			for (const auto& pt : parts) {  // (its colours are baked into each bond's nif; its flame scrolls by itself)
+				FxLevel(node.get(), pt.name, a_b.level * pt.level * flick);
 			}
 			RE::NiUpdateData ud;
 			node->Update(ud);
