@@ -354,9 +354,11 @@ namespace bo3z
 			const float trailV = -std::fmod(clock * 1.6f, 1.0f), diveV = -std::fmod(clock * 3.2f, 1.0f);
 			FxLevel(a_root, "DG_TrailL", a_trail, trailV);
 			FxLevel(a_root, "DG_TrailR", a_trail, trailV + 0.37f);
-			for (int i = 1; i <= 8; ++i) {
-				FxLevel(a_root, fmt::format("DG_Wind{}", i).c_str(), a_dive, diveV + 0.13f * i);
+			for (int i = 1; i <= 14; ++i) {  // (each at its own pace and phase: no two streaks move together)
+				const float rate = 2.4f + 0.23f * ((i * 7) % 9), shimmer = 0.75f + 0.25f * std::sin(clock * (5.0f + i) + i * 1.7f);
+				FxLevel(a_root, fmt::format("DG_Wind{}", i).c_str(), a_dive * shimmer, -std::fmod(clock * rate + 0.37f * i, 1.0f));
 			}
+			(void)diveV;
 		}
 
 		void AwayTick(RE::PlayerCharacter* a_player, float a_delta)
@@ -498,6 +500,7 @@ namespace bo3z
 		bool  g_breathReq = false;           // Bond III: the breath asked for (right attack mid-glide)
 		float g_breathCd = 0;                // ... and the 5 s before it can be again
 		int   g_breathElDev = -1;            // (dev: the element to breathe, whatever is in your hand)
+		float g_breathSway = 0;              // its head's sweep during the breath (rad)
 		RE::FormID g_breathProjDev[3]{};     // (dev: a projectile to try for fire / frost / lightning)
 		float g_breathScaleDev = -1, g_beamPitchSign = 1;
 		// (Noah) Bond I's climb: two small beats that lift it a little, then one great beat that carries it higher
@@ -992,7 +995,8 @@ namespace bo3z
 					R.entry[0][2] * r.x + R.entry[1][2] * r.y + R.entry[2][2] * r.z };
 				g_grabOff = g_grabOff + local * (1.0f / sc) * std::min(1.0f, a_dt * 5.0f) * g_grip;
 				const float len = g_grabOff.Length();
-				if (len > 70.0f) g_grabOff = g_grabOff * (70.0f / len);
+				const float most = 70.0f + 260.0f * std::clamp(g_divePitch / 0.42f, 0.0f, 1.0f);  // (the dive: legs swept back, it can lean further from you)
+				if (len > most) g_grabOff = g_grabOff * (most / len);
 				static float logT = 0;
 				if ((logT -= a_dt) <= 0) {
 					logT = 2.0f;
@@ -1238,7 +1242,9 @@ namespace bo3z
 				g_grip = clutch;
 				for (int sd = 0; sd < 2; ++sd) {
 					const float ph = sd * 1.3f;
-					const float idleHip = 0.12f + 0.07f * std::sin(legT * 2.1f + ph), idleKnee = -0.10f + 0.08f * std::sin(legT * 2.1f + 0.7f + ph);
+					// (Noah: the legs sway gently back and forth in the glide; in the dive they sweep back, the body tight)
+					const float diveFold = std::clamp(g_divePitch / 0.42f, 0.0f, 1.0f);
+					const float idleHip = 0.12f + 0.15f * std::sin(legT * 1.5f + ph) - 0.85f * diveFold, idleKnee = -0.10f + 0.12f * std::sin(legT * 1.5f + 0.7f + ph) + 0.25f * diveFold;
 					const float idleFoot = 1.05f + 0.05f * std::sin(legT * 2.1f + 1.4f + ph) - 0.7f * open;  // talons closed round your hand
 					float hip = idleHip * clutch + 0.75f * reach - 0.45f * tuck;
 					float knee = idleKnee * clutch - 0.15f * reach + 0.6f * tuck;
@@ -1286,7 +1292,10 @@ namespace bo3z
 			while (rel < -3.14159f) rel += 6.28318f;
 			const float wanderYaw = 0.22f * std::sin(wanderT * 0.53f) + 0.12f * std::sin(wanderT * 1.31f + 1.7f);
 			const float wanderPitch = 0.10f * std::sin(wanderT * 0.71f + 0.4f) - (breath > 0 ? 0.18f : 0.0f);
-			lookYaw += (std::clamp(-rel * 0.6f + turn * 0.25f + wanderYaw, -0.7f, 0.7f) - lookYaw) * std::min(1.0f, dt * 2.5f);
+			// (Noah: during the breath its head sweeps left and right, the fire with it - more of the dead caught)
+			const float breathSway = breath > 0 ? 0.42f * std::sin(breathT_ * 4.2f) : 0.0f;
+			g_breathSway = breathSway;
+			lookYaw += (std::clamp(-rel * 0.6f + turn * 0.25f + wanderYaw + breathSway, -0.9f, 0.9f) - lookYaw) * std::min(1.0f, dt * (breath > 0 ? 9.0f : 2.5f));
 			lookPitch += (wanderPitch - lookPitch) * std::min(1.0f, dt * 2.5f);
 			// fire: now and then, a breath of a second and a half (Bond III: whenever the dead are below, a few seconds apart)
 			static float       sinceBreath = 0, seekT = 0;
@@ -1482,6 +1491,10 @@ namespace bo3z
 						if (to.x * dn.x + to.y * dn.y + to.z * dn.z > 0.94f) d = to;
 					}
 					d.Unitize();
+					{  // (the sweep of its head)
+						const float c = std::cos(-g_breathSway), s = std::sin(-g_breathSway);
+						d = { d.x * c - d.y * s, d.x * s + d.y * c, d.z };
+					}
 					breathDir = d;
 					if (thrall && (hitT -= 0.05f) <= 0) {
 						hitT = 0.2f;
@@ -1490,7 +1503,8 @@ namespace bo3z
 				}
 				if (fire) {
 					const RE::NiPoint3 d = breathDir;
-					const RE::NiPoint3 from = mouth->world.translate + d * 40.0f;
+					// (Noah: fired forward, not left behind: it leaves ahead of the mouth by where you'll be a moment on)
+					const RE::NiPoint3 from = mouth->world.translate + d * 40.0f + vel * 0.3f;
 					const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
 					RE::Projectile::ProjectileRot r{ -std::atan2(d.z, std::max(1e-3f, flat)), std::atan2(d.x, d.y) };
 					if (!fire->IsFlamethrower()) {  // (a stream of bolts: fanned a little, like breath)
@@ -1805,6 +1819,61 @@ namespace bo3z
 		// After the animation each frame (Gun's pose hook): while the dragon is still on its way your arms keep the pose
 		// they had before the glider opened (the glide's own animation raises them at once); as it reaches you they
 		// go up to its talons
+		// (Noah: you hang from its talons and swing - not held stiff): your body pivots about your hands like a pendulum,
+		// swinging back as the glide speeds up, out to the side in a turn, gently on its own; in a dive it trails right
+		// back behind the dragon's swept legs
+		void SwingBody(RE::PlayerCharacter* a_player)
+		{
+			static auto  last = std::chrono::steady_clock::now();
+			const auto   now = std::chrono::steady_clock::now();
+			const float  dt = std::clamp(std::chrono::duration<float>(now - last).count(), 0.0f, 0.05f);
+			last = now;
+			static float th = 0, thV = 0, ph = 0, phV = 0, clock = 0;
+			static RE::NiPoint3 lastVel{};
+			static float        lastYaw = 0;
+			const bool          on = g_hadDragon && g_grip > 0.5f;
+			RE::NiPoint3        v{};
+			if (auto* cc = a_player->GetCharController()) GetVel(cc, v);
+			const float yaw = a_player->GetAngleZ();
+			float       dy = yaw - lastYaw;
+			while (dy > 3.14159f) dy -= 6.28318f;
+			while (dy < -3.14159f) dy += 6.28318f;
+			lastYaw = yaw;
+			if (!on || dt <= 0) {
+				th = thV = ph = phV = 0, lastVel = v;
+				return;
+			}
+			clock += dt;
+			const RE::NiPoint3 F{ std::sin(yaw), std::cos(yaw), 0 }, Rt{ std::cos(yaw), -std::sin(yaw), 0 };
+			const RE::NiPoint3 acc = (v - lastVel) * (1.0f / std::max(dt, 1e-3f));
+			lastVel = v;
+			const float fold = std::clamp(g_divePitch / 0.42f, 0.0f, 1.0f);
+			const float aF = acc.x * F.x + acc.y * F.y, turn = dy / std::max(dt, 1e-3f);
+			const float thT = std::clamp(-aF * 0.00035f, -0.35f, 0.35f) - 1.05f * fold + 0.06f * std::sin(clock * 1.3f) - 0.08f;
+			const float phT = std::clamp(-turn * 0.22f, -0.45f, 0.45f) + 0.05f * std::sin(clock * 0.9f + 1.0f);
+			thV += (16.0f * (thT - th) - 3.2f * thV) * dt, th += thV * dt;
+			phV += (16.0f * (phT - ph) - 3.2f * phV) * dt, ph += phV * dt;
+			const RE::NiMatrix3 W = AxisAngle(F, ph) * AxisAngle(Rt, th);
+			{  // (the body you see from outside; your first-person arms stay as they are)
+				auto* root = a_player->Get3D(false);
+				if (!root) return;
+				auto* pel = root->GetObjectByName("NPC Pelvis [Pelv]");
+				auto* lh = root->GetObjectByName("NPC L Hand [LHnd]");
+				auto* rh = root->GetObjectByName("NPC R Hand [RHnd]");
+				if (!pel || !pel->parent || !lh || !rh) return;
+				const RE::NiPoint3 H = (lh->world.translate + rh->world.translate) * 0.5f;
+				const auto&        P = pel->parent->world;
+				const RE::NiMatrix3 Rn = W * pel->world.rotate;
+				const RE::NiPoint3 Tn = W * (pel->world.translate - H) + H;
+				const RE::NiMatrix3 Pt = P.rotate.Transpose();
+				pel->local.rotate = Pt * Rn;
+				pel->local.translate = (Pt * (Tn - P.translate)) * (1.0f / std::max(0.001f, P.scale));
+				RE::NiUpdateData ud;
+				ud.time = 0.0f;
+				pel->UpdateDownwardPass(ud, 0);
+			}
+		}
+
 		void PoseGlideArms(RE::PlayerCharacter* a_player)
 		{
 			// (Noah: no gliding before it has you - the whole body, not just the arms, keeps its fall until the talons close)
@@ -1852,6 +1921,7 @@ namespace bo3z
 				ud.time = 0.0f;
 				b[0]->UpdateDownwardPass(ud, 0);  // (the pelvis: everything under it)
 			}
+			SwingBody(a_player);
 		}
 
 		void Tick(float a_delta)

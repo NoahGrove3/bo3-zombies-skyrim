@@ -102,13 +102,18 @@ def main():
         strip(L, f'DG_Trail{sd}', f'DG_Wing{sd}3', p0, p1, 18, 64, 1.0, 0.0, '0.85,0.93,1.0,1.0', 0.7, segs=10, fade_in=0.04)
     # the dive (Noah: the lines come from ahead of the dragon): streaks starting well ahead of its head, spreading a little
     # as they rush back past it and you, dashes of air streaming along them
+    # (Noah, again: very subtle, in front of its nose) fourteen fine streaks in a loose cone ahead of the head, each
+    # running back past the nose and fading before the neck - the game streams dashes of air along each at its own pace
     b = np.array(BANK)
-    spots = [(-330, 140), (330, 140), (-560, -40), (560, -40), (-240, -260), (240, -260), (-120, 330), (130, -520)]
-    for i, (x, z) in enumerate(spots):
-        y0 = -150 - 130 * (i % 3)
-        y1 = y0 - 1700 - 150 * (i % 2)
-        strip(L, f'DG_Wind{i + 1}', 'DG_Bank', np.array([x * 0.6, y0, z * 0.6 + 180]) - b, np.array([x * 1.2, y1, z * 1.15 + 180]) - b,
-              45, 100, 0.0, 0.0, '0.9,0.95,1.0,1.0', 0, segs=10, tex=DASH)
+    nose = np.array([0.0, -1012.0, 150.0])
+    rng = np.random.default_rng(5)
+    for i in range(14):
+        a = 2 * math.pi * i / 14 + rng.uniform(-0.2, 0.2)
+        r0, r1 = rng.uniform(70, 150), rng.uniform(150, 300)
+        ahead = rng.uniform(700, 1500)
+        p0 = nose + np.array([r0 * math.cos(a), ahead, r0 * math.sin(a) * 0.8])
+        p1 = nose + np.array([r1 * math.cos(a), -rng.uniform(150, 350), r1 * math.sin(a) * 0.8])
+        strip(L, f'DG_Wind{i + 1}', 'DG_Bank', p0 - b, p1 - b, 8, 18, 0.0, 0.0, '0.9,0.95,1.0,1.0', 0, segs=10, tex=DASH)
     # Bond III's lightning breath: three jagged bolts from its mouth, as far as its breath reaches (1800 game units:
     # the dragon's space is 0.23 of that) - the game flickers them, turns them about their length and aims them
     import random
@@ -151,7 +156,7 @@ def main():
         if line.startswith('v ') and cur and cur.startswith('DG_Wind'):
             p = line.split()
             t = float(p[5]) / 2.0
-            p[-1] = '%.3f' % (0.85 * math.sin(math.pi * t) ** 0.8)
+            p[-1] = '%.3f' % (0.4 * math.sin(math.pi * t) ** 0.8)
             line = ' '.join(p)
         out_lines.append(line)
     job.write_text('\n'.join(out_lines) + '\n')
