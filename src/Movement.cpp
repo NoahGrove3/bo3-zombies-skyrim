@@ -1270,7 +1270,10 @@ namespace bo3z
 			const float kSwoop = quickSwoop ? 0.6f : 1.15f;
 			// your arms stay down until it reaches you, then go up to its talons as it takes you
 			g_armHoldOn = true;
-			g_armHold = 1 - Smooth((deployT - (kSwoop - 0.38f)) / 0.38f);
+			// (Noah: no front flip - the paraglider's own opening animation flips you over; your body keeps its pose until
+			// that has played out (about a second), then eases into the hang)
+			constexpr float kEquipAnim = 1.0f;
+			g_armHold = 1 - Smooth((deployT - std::max(kSwoop - 0.38f, kEquipAnim)) / 0.3f);
 			const float u = std::clamp(deployT / kSwoop, 0.0f, 1.0f);
 			const float e = u * u * u * (u * (u * 6 - 15) + 10);  // smootherstep
 			// (Noah: no sharp turn at the end - it comes in from behind on a gentle curve, and eases round to face ahead)
