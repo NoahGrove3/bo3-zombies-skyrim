@@ -647,12 +647,10 @@ namespace bo3z
 				static RE::BGSProjectile* frost = RE::TESForm::LookupByID<RE::BGSProjectile>(0x00068BD1);
 				if (frost) return frost;
 			}
-			// lightning: a stream of our own lightning bolts (bullet_shock, id frozen in data/form_ids.json)
+			// lightning: Skyrim's Lightning Bolt beam, aimed at a marker set where the breath reaches (below)
 			if (a_element == 2) {
-				static RE::BGSProjectile* bolt[3]{};
-				auto*&                    b = bolt[a_element];
-				if (!b) b = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSProjectile>(a_element == 1 ? 0x9E3 : 0x9E6, gen::kPlugin);
-				if (b) return b;
+				static RE::BGSProjectile* bolt = RE::TESForm::LookupByID<RE::BGSProjectile>(0x00058E9C);
+				if (bolt) return bolt;
 			}
 			if (!looked[a_element] && Arcana::Count() > 0) {
 				looked[a_element] = true;
@@ -1490,9 +1488,9 @@ namespace bo3z
 						BreathHits(a_player, mouth->world.translate, d, el);
 					}
 				}
-				if (fire && el != 2) {  // (lightning is drawn below: bolts in the dragon's own nif)
+				if (fire) {
 					const RE::NiPoint3 d = breathDir;
-					const RE::NiPoint3 from = mouth->world.translate + d * 10.0f;
+					const RE::NiPoint3 from = mouth->world.translate + d * 40.0f;
 					const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
 					RE::Projectile::ProjectileRot r{ -std::atan2(d.z, std::max(1e-3f, flat)), std::atan2(d.x, d.y) };
 					if (!fire->IsFlamethrower()) {  // (a stream of bolts: fanned a little, like breath)
@@ -1504,7 +1502,26 @@ namespace bo3z
 					ld.autoAim = false;
 					ld.noDamageOutsideCombat = true;
 					ld.power = 0.0f;
-					ld.scale = g_breathScaleDev > 0 ? g_breathScaleDev : el == 0 || el >= 3 ? 0.45f : el == 1 ? 1.0f : 2.5f;  // (Noah: a smaller breath - its reach is the same)
+					ld.scale = g_breathScaleDev > 0 ? g_breathScaleDev : el == 0 || el >= 3 ? 0.45f : 1.0f;  // (Noah: a smaller breath - its reach is the same)
+					// a beam goes to its target: a marker moved to where the breath reaches (1800 ahead, or the dead it found)
+					if (fire->IsBeam()) {
+						static RE::ObjectRefHandle mark;
+						auto                       m = mark.get();
+						if (!m) {
+							if (auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(0x0000003B)) {  // XMarker
+								if (auto r2 = a_player->PlaceObjectAtMe(xm, false)) {
+									mark = r2->CreateRefHandle();
+									m = r2;
+								}
+							}
+						}
+						if (m) {
+							RE::NiPoint3 to = mouth->world.translate + d * 1800.0f;
+							if (auto t = target.get(); thrall && t && !t->IsDead()) to = t->GetPosition() + RE::NiPoint3{ 0, 0, 60 };
+							m->SetPosition(to);
+							ld.desiredTarget = m.get();
+						}
+					}
 					// (a beam - the lightning - is aimed by its shooter's own facing, not the launch angles: you face the breath
 					// for the moment it leaves)
 					auto&       ang = a_player->data.angle;  // (x pitch, z yaw)
@@ -1517,6 +1534,12 @@ namespace bo3z
 					RE::Projectile::Launch(&h, ld);
 					if (fire->IsBeam()) {
 						ang.x = keepX, ang.z = keepZ;
+					} else if (auto p = h.get()) {
+						// (Noah: the breath flies off ahead - faster, and carried on your own speed - not swept back onto you
+						// and the dragon as you glide into it)
+						auto& rd = p->GetProjectileRuntimeData();
+						rd.linearVelocity = rd.linearVelocity * 1.6f + vel;
+						rd.velocity = rd.velocity * 1.6f + vel;
 					}
 				}
 			}
