@@ -1227,6 +1227,7 @@ namespace bo3z
 		float        g_stickX = 0, g_stickY = 0;     // the left stick, as its own events last said
 		bool         g_keyF = false, g_keyB = false, g_keyL = false, g_keyR = false;
 		bool         g_chaseOn = false;              // (dev: the filming camera is turning the view itself)
+		const RE::NiMatrix3* BindRot(const char* a_name);
 		float BankSign() { return Settings::DragonBankReverse() ? -1.0f : 1.0f; }
 		float DiveFold() { return Smooth((g_divePitch - 0.15f) / 0.55f); }  // the wings drawn in, 0 .. 1
 		// the stick or WASD, x right and y forward: the game's own reading, or ours from the events if it has none
@@ -1423,6 +1424,7 @@ namespace bo3z
 				baseScale = kDragonScale;
 				g_glideYaw = yaw, g_yawOwned = true, g_holding = false, g_grip = 0;
 				g_trail.Reset();
+				BindRot("NPC Pelvis [Pelv]");  // (the skeleton's rest pose read here, on the game's thread, not in the pose hook)
 				g_inX = g_inY = 0, g_roll = 0, roll = 0, pitch = 0, g_divePitch = 0;
 				// the swoop's length: 1.45 s - quicker after the Updraft, and never longer than your fall to the ground
 				// takes (so it always has you before you land)
@@ -1619,7 +1621,12 @@ namespace bo3z
 				} else {
 					g_catchK = Smooth((deployT - kSwoop) / 0.7f);
 					const auto in = MoveInput();
-					const float iy = Settings::DragonInvertDive() ? -in.y : in.y;
+					float      iy = Settings::DragonInvertDive() ? -in.y : in.y;
+					// (forward still held from the sprint you jumped from is not a dive: it counts once let go of)
+					static bool latched = false;
+					if (deployT - a_delta < kSwoop) latched = std::abs(in.y) > 0.3f;
+					if (latched && std::abs(in.y) <= 0.3f) latched = false;
+					if (latched) iy = 0.0f;
 					g_inY += (iy - g_inY) * std::min(1.0f, dt * 5.0f);
 					g_inX += (in.x - g_inX) * std::min(1.0f, dt * 8.0f);
 					// the path's angle: gliding gently down; diving up to 60 degrees down; pulling up to 32 up while the
