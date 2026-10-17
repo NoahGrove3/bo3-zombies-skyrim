@@ -117,31 +117,26 @@ def beam_texture(out):
     dds(Image.fromarray(img, 'RGBA'), out, 'DXT5')
 
 
-def beam(lines, name, length, w0, w1, a0, a1, tiles, planes=3, segs=26, fade_out=0.2):
-    """the breath along +Y from the mouth: crossed planes about its axis, widening, faded in at the jaws and out at its end"""
-    lines.append(f'shape {name} tex={BEAM} color=1,1,1,1 scale=0 blend=add falloff=1 parent=DG_Mouth')
-    n = 0
-    tris = []
-    for pi in range(planes):
-        ang = math.pi * pi / planes
-        ax = np.array([math.cos(ang), 0.0, math.sin(ang)])
-        nrm = np.cross(ax, [0.0, 1.0, 0.0])
-        base = n
-        for i in range(segs + 1):
-            t = i / segs
-            y = 10 + (length - 10) * t
-            w = w0 + (w1 - w0) * t ** 0.8
-            al = (a0 + (a1 - a0) * t) * min(1.0, t / 0.02 if t > 0 else 0.0) * min(1.0, (1 - t) / fade_out)
-            for sd in (-1, 1):
-                q = ax * (w / 2 * sd) + np.array([0.0, y, 0.0])
-                lines.append(f'v {q[0]:.2f} {q[1]:.2f} {q[2]:.2f} {0.5 + 0.5 * sd:.3f} {t * tiles:.3f} 1 1 1 {al:.3f}')
-                lines.append(f'n {nrm[0]:.4f} {nrm[1]:.4f} {nrm[2]:.4f}')
-                n += 1
-        for i in range(segs):
-            a, b, c, e = base + 2 * i, base + 2 * i + 1, base + 2 * i + 2, base + 2 * i + 3
-            tris += [(a, b, c), (b, e, c)]
-    for t in tris:
-        lines.append('t %d %d %d' % t)
+def beam(lines, name, length, r0, r1, a0, a1, tiles, sides=12, segs=26, fade_out=0.2, blend='add'):
+    """the breath along +Y from the mouth: a cone of flame (a tube widening from the jaws), seen whole from any side - from
+    behind the dragon you look into it along its length - faded in at the jaws and out at its end; its texture wraps twice
+    round it and streams along it"""
+    lines.append(f'shape {name} tex={BEAM} color=1,1,1,1 scale=0 blend={blend} parent=DG_Mouth')
+    for i in range(segs + 1):
+        t = i / segs
+        y = 10 + (length - 10) * t
+        r = r0 + (r1 - r0) * t ** 0.8
+        al = (a0 + (a1 - a0) * t) * (min(1.0, t / 0.03) if t > 0 else 0.0) * min(1.0, (1 - t) / fade_out)
+        for k in range(sides + 1):
+            ang = 2 * math.pi * k / sides
+            x, z = r * math.cos(ang), r * math.sin(ang)
+            lines.append(f'v {x:.2f} {y:.2f} {z:.2f} {2.0 * k / sides:.4f} {t * tiles:.3f} 1 1 1 {al:.3f}')
+    for i in range(segs):
+        for k in range(sides):
+            a = i * (sides + 1) + k
+            b, c, d = a + 1, a + sides + 1, a + sides + 2
+            lines.append(f't {a} {c} {b}')
+            lines.append(f't {b} {c} {d}')
 
 
 def skinned_trail(lines, sd, tip):
@@ -241,9 +236,9 @@ def main():
         p1 = nose + np.array([r1 * math.cos(a), -rng.uniform(150, 350), r1 * math.sin(a) * 0.8])
         strip(L, f'DG_Wind{i + 1}', 'DG_Bank', p0 - b, p1 - b, 8, 18, 0.0, 0.0, '0.9,0.95,1.0,1.0', 0, segs=10, tex=DASH)
     if pts:   # the breath: core, flame, flare
-        beam(L, 'DG_Beam1', 7000, 40, 300, 1.0, 0.8, 5.8)
-        beam(L, 'DG_Beam2', 7000, 110, 820, 0.5, 0.3, 4.2)
-        beam(L, 'DG_Beam3', 900, 120, 460, 0.9, 0.0, 1.0, segs=8, fade_out=0.6)
+        beam(L, 'DG_Beam1', 7000, 18, 150, 0.9, 0.55, 5.8)                       # the white-hot core
+        beam(L, 'DG_Beam2', 7000, 55, 430, 0.6, 0.18, 4.2, blend='alpha')        # the flame round it (seen against the sky too)
+        beam(L, 'DG_Beam3', 900, 50, 230, 0.9, 0.0, 1.0, segs=8, fade_out=0.6)  # the flare at its jaws
     job = pathlib.Path(out).with_suffix('.job.txt')
     # alpha along the dive streaks: 0 at both ends, full in the middle
     out_lines, cur = [], None
