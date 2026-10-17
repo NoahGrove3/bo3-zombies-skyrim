@@ -402,7 +402,9 @@ namespace bo3z
 			{
 				if (a_event && a_event->object && a_event->object.get() == RE::PlayerCharacter::GetSingleton()) {
 					int level = 0;
-					if (const int sh = Gun::ShoutOfSpell(a_event->spell, level); sh >= 0) {
+					if (Movement::OnSpellCast(a_event->spell)) {
+						// (Bond II's Updraft)
+					} else if (const int sh = Gun::ShoutOfSpell(a_event->spell, level); sh >= 0) {
 						Gun::Shout(sh, level);
 					} else if (Arcana::IndexOf(RE::TESForm::LookupByID(a_event->spell)) >= 0) {
 						static int casts = 0;

@@ -22,7 +22,8 @@ def assign(S=None, write=False):
              [(k, 'arrow_' + w['id']) for w in S['weapons']['rows'] if w.get('kind') == 'bow' for k in ('AMMO', 'PROJ')] + \
              [(k, 'shout_' + h['id'] + '_' + str(n)) for h in S['shouts']['rows'] for n in range(3) for k in ('WOOP', 'SPEL')] + [('SHOU', h['id']) for h in S['shouts']['rows']] + [('MGEF', 'shoutcast')] + [('GLOB', 'curse_' + c['town']) for c in S['curse']['cities']] + [('GLOB', 'curse_intro'), ('GLOB', 'stand_layout'), ('BOOK', 'dirge')] + \
              [('VTYP', 'silent'), ('MUST', 'boss'), ('MUSC', 'boss'), ('MUST', 'freed'), ('MUSC', 'freed'), ('MUST', 'intro'), ('MUSC', 'intro'), ('FSTS', 'silent'), ('STAT', 'ls_shrine'), ('STAT', 'ls_book')] + [('LSCR', f'ls_{i}') for i in range(14)] + \
-             [(k, f"fx_{r['id']}_{n}") for r in S['spellcraft']['rows'] for k, n in (('ARTO', 'hand'), ('STAT', 'orb'), ('LIGH', 'light'))] + [('ARTO', 'fx_' + n) for n in ('iceshell', 'roots', 'burn', 'poison')] + [('QUST', 'mcm')] + [('QUST', 'rites_' + c['town']) for c in S['curse']['cities']]
+             [(k, f"fx_{r['id']}_{n}") for r in S['spellcraft']['rows'] for k, n in (('ARTO', 'hand'), ('STAT', 'orb'), ('LIGH', 'light'))] + [('ARTO', 'fx_' + n) for n in ('iceshell', 'roots', 'burn', 'poison')] + [('QUST', 'mcm')] + [('QUST', 'rites_' + c['town']) for c in S['curse']['cities']] + \
+             [(k, f'updraft_{n}') for n in range(3) for k in ('WOOP', 'SPEL')] + [('SHOU', 'updraft')]
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:
@@ -64,6 +65,7 @@ def dressing(S):
     for el in ELEMENTS:   # the Coffer spells' element emblems (the shrine's roll in the world)
         records[('STAT', 'show_el_' + el)] = {'model': f"CurseOfAlduin\\fx\\el_{el}_icon.nif", 'color': '', 'radius': 0}
     records[('STAT', 'dragon_away')] = {'model': 'CurseOfAlduin\\fx\\dragon_away.nif', 'color': '', 'radius': 0}  # the glider's dragon, flying off
+    records[('STAT', 'whirlwind')] = {'model': 'CurseOfAlduin\\fx\\whirlwind.nif', 'color': '', 'radius': 0}  # Bond II's Updraft shout: the whirlwind round you
     records[('STAT', 'rise_fx')] = {'model': S['dressing']['show']['riseFxModel'], 'color': '', 'radius': 0}
     for k, col in POWERUPS:   # BO3 power-up drops: a glowing token and its light
         records[('STAT', 'pu_' + k)] = {'model': f'CurseOfAlduin\\powerup\\{k}.nif', 'color': '', 'radius': 0}

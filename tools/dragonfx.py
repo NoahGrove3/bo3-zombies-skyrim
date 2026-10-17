@@ -12,6 +12,7 @@ from dragontex import dds
 
 FXWRITE = '/home/claude/tools/fxwrite'
 TEX = r'textures\CurseOfAlduin\Dragon\wind.dds'
+DASH = r'textures\CurseOfAlduin\Dragon\wind_dash.dds'
 # bones (tools/modelconv/dragonglider.cpp): a shape under a bone is in the dragon's space less the bone's place
 WRIST = {'L': (-530, -1245, 180), 'R': (530, -1245, 180)}
 TIP = {'L': (-886, -1258, 46), 'R': (886, -1258, 46)}   # the wing's outermost point (its bind pose)
@@ -43,10 +44,26 @@ def texture(out):
     dds(Image.fromarray(img, 'RGBA'), out, 'DXT5')
 
 
-def strip(lines, name, parent, p0, p1, w0, w1, a0, a1, color, scroll, segs=8, fade_in=0.0):
+def dash_texture(out):
+    """the dive's air: thin dashes along the band, each a bright head with a fading tail (it tiles as it scrolls)"""
+    W, H = 32, 256
+    u = (np.arange(W) + 0.5) / W
+    v = (np.arange(H) + 0.5) / H
+    across = np.exp(-((u - 0.5) / 0.16) ** 2)
+    ph = (v * 3) % 1.0                      # three dashes a tile
+    along = np.clip(1 - ph / 0.55, 0, 1) ** 1.6 * (ph < 0.55)
+    a = np.clip(across[None, :] * along[:, None], 0, 1)
+    img = np.zeros((H, W, 4), np.uint8)
+    img[..., :3] = 255
+    img[..., 3] = (a * 255).astype(np.uint8)
+    dds(Image.fromarray(img, 'RGBA'), out, 'DXT5')
+
+
+def strip(lines, name, parent, p0, p1, w0, w1, a0, a1, color, scroll, segs=8, fade_in=0.0, tex=TEX):
     """a ribbon from p0 to p1 (two quads crossed, so it reads from any side), w0 -> w1 wide, alpha a0 -> a1 (and in from
     0 over the first fade_in of it)"""
-    lines.append(f'shape {name} tex={TEX} color={color} scale=0 blend=add vscroll={scroll} parent={parent}')
+    # (the game scrolls it each frame - src/Movement.cpp DragonWind - so no controller here)
+    lines.append(f'shape {name} tex={tex} color={color} scale=0 blend=add parent={parent}')
     P0, P1 = np.array(p0, float), np.array(p1, float)
     d = (P1 - P0) / np.linalg.norm(P1 - P0)
     side = np.cross(d, [0, 0, 1.0]); side /= np.linalg.norm(side)
@@ -76,20 +93,22 @@ def strip(lines, name, parent, p0, p1, w0, w1, a0, a1, color, scroll, segs=8, fa
 def main():
     src, out, texdir = sys.argv[1], sys.argv[2], pathlib.Path(sys.argv[3])
     texture(texdir / 'CurseOfAlduin' / 'Dragon' / 'wind.dds')
+    dash_texture(texdir / 'CurseOfAlduin' / 'Dragon' / 'wind_dash.dds')
     L = [f'out {out}', f'base {src}']
     for sd in ('L', 'R'):
         w, tip = np.array(WRIST[sd]), np.array(TIP[sd])
         p0 = tip - w
         p1 = p0 + np.array([0, -900, 10])
         strip(L, f'DG_Trail{sd}', f'DG_Wing{sd}3', p0, p1, 18, 64, 1.0, 0.0, '0.85,0.93,1.0,1.0', 0.7, segs=10, fade_in=0.04)
-    # the dive: streaks rushing past round it (and round you, under it), from ahead of its head to well behind you
+    # the dive (Noah: the lines come from ahead of the dragon): streaks starting well ahead of its head, spreading a little
+    # as they rush back past it and you, dashes of air streaming along them
     b = np.array(BANK)
     spots = [(-330, 140), (330, 140), (-560, -40), (560, -40), (-240, -260), (240, -260), (-120, 330), (130, -520)]
     for i, (x, z) in enumerate(spots):
-        y0 = -650 - 140 * (i % 3)
-        y1 = y0 - 1150 - 150 * (i % 2)
-        strip(L, f'DG_Wind{i + 1}', 'DG_Bank', np.array([x, y0, z + 180]) - b, np.array([x * 1.15, y1, z * 1.1 + 180]) - b,
-              22, 44, 0.0, 0.0, '0.9,0.95,1.0,1.0', 0.32 + 0.04 * i, segs=8)
+        y0 = -150 - 130 * (i % 3)
+        y1 = y0 - 1700 - 150 * (i % 2)
+        strip(L, f'DG_Wind{i + 1}', 'DG_Bank', np.array([x * 0.6, y0, z * 0.6 + 180]) - b, np.array([x * 1.2, y1, z * 1.15 + 180]) - b,
+              12, 30, 0.0, 0.0, '0.9,0.95,1.0,1.0', 0, segs=10, tex=DASH)
     # (a strip faded at both ends: alpha rises then falls along it)
     txt = '\n'.join(L)
     fixed = []
@@ -104,7 +123,7 @@ def main():
         if line.startswith('v ') and cur and cur.startswith('DG_Wind'):
             p = line.split()
             t = float(p[5]) / 2.0
-            p[-1] = '%.3f' % (0.45 * math.sin(math.pi * t) ** 1.5)
+            p[-1] = '%.3f' % (0.85 * math.sin(math.pi * t) ** 0.8)
             line = ' '.join(p)
         out_lines.append(line)
     job.write_text('\n'.join(out_lines) + '\n')

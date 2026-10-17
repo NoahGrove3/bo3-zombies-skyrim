@@ -80,6 +80,19 @@ for h in S['shouts']['rows']:
     snam = [sub('SNAM', struct.pack('<IIf', fid('WOOP', f"shout_{h['id']}_{n}"), fid('SPEL', f"shout_{h['id']}_{n}"), float(h['recovery'][n]))) for n in range(3)]
     recs['SHOU'].append(record('SHOU', fid('SHOU', h['id']), [sub('EDID', z('UN_Shout_' + h['id'])), sub('FULL', z(h['label'])), sub('DESC', z(h['text'] + '.'))] + snam))
 
+# ---- Bond II's shout (src/Movement.cpp Updraft): a whirlwind lifts you high, then you open the glider. Every word
+# count does the same; taught whole when the bond is bought
+UPDRAFT_WORDS = [('VEN', 'Wind'), ('GAAR', 'Unleash'), ('NOS', 'Strike')]
+for n, (w, tr) in enumerate(UPDRAFT_WORDS):
+    recs['WOOP'].append(record('WOOP', fid('WOOP', f'updraft_{n}'), [sub('EDID', z(f'UN_Word_updraft_{n}')), sub('FULL', z(w)), sub('TNAM', z(tr))]))
+    sp = struct.pack('<IIIfIIffI', 0, 0x1, 11, 0.0, 1, 0, 0.0, 0.0, 0)
+    recs['SPEL'].append(record('SPEL', fid('SPEL', f'updraft_{n}'), [
+        sub('EDID', z(f'UN_ShoutSpell_updraft_{n}')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z("Dragon's Updraft")),
+        sub('ETYP', struct.pack('<I', 0x025BEE)), sub('DESC', z('')), sub('SPIT', sp),
+        sub('EFID', struct.pack('<I', fid('MGEF', 'shoutcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+recs['SHOU'].append(record('SHOU', fid('SHOU', 'updraft'), [sub('EDID', z('UN_Shout_updraft')), sub('FULL', z("Dragon's Updraft")),
+    sub('DESC', z('A whirlwind lifts you high into the air - open your glider and your dragon takes you.'))] +
+    [sub('SNAM', struct.pack('<IIf', fid('WOOP', f'updraft_{n}'), fid('SPEL', f'updraft_{n}'), 8.0)) for n in range(3)]))
 
 SCRAFT = {r['id']: r for r in S['spellcraft']['rows']}
 def arto(key, model, kind):

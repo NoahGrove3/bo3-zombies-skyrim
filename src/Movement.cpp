@@ -319,7 +319,7 @@ namespace bo3z
 			}
 		}
 		// the wind's strips in the dragon's nif (tools/dragonfx.py): how bright (0: unseen)
-		void FxLevel(RE::NiAVObject* a_root, const char* a_name, float a_level)
+		void FxLevel(RE::NiAVObject* a_root, const char* a_name, float a_level, float a_scrollV = -99.0f)
 		{
 			auto* o = a_root ? a_root->GetObjectByName(a_name) : nullptr;
 			auto* g = o ? o->AsGeometry() : nullptr;
@@ -334,15 +334,27 @@ namespace bo3z
 			auto* m = static_cast<RE::BSShaderProperty*>(p)->material;
 			if (m) {
 				static_cast<RE::BSEffectShaderMaterial*>(m)->baseColorScale = a_level;
+				if (a_scrollV > -98.0f) {  // the air streaming along it (set here each frame: always moving)
+					m->texCoordOffset[0].y = a_scrollV;
+				}
 			}
 			o->SetAppCulled(a_level < 0.01f);
 		}
+		// (Noah: both animated - the air streams back along the wingtip trails, and the dive's lines rush in from ahead of
+		// the dragon and past it)
 		void DragonWind(RE::NiAVObject* a_root, float a_trail, float a_dive)
 		{
-			FxLevel(a_root, "DG_TrailL", a_trail);
-			FxLevel(a_root, "DG_TrailR", a_trail);
+			static float clock = 0;
+			static auto  last = std::chrono::steady_clock::now();
+			const auto   now = std::chrono::steady_clock::now();
+			const float  dt = std::min(0.1f, std::chrono::duration<float>(now - last).count());
+			last = now;
+			clock += dt;
+			const float trailV = -std::fmod(clock * 1.6f, 1.0f), diveV = -std::fmod(clock * 3.2f, 1.0f);
+			FxLevel(a_root, "DG_TrailL", a_trail, trailV);
+			FxLevel(a_root, "DG_TrailR", a_trail, trailV + 0.37f);
 			for (int i = 1; i <= 8; ++i) {
-				FxLevel(a_root, fmt::format("DG_Wind{}", i).c_str(), a_dive);
+				FxLevel(a_root, fmt::format("DG_Wind{}", i).c_str(), a_dive, diveV + 0.13f * i);
 			}
 		}
 
@@ -473,7 +485,7 @@ namespace bo3z
 		// ---- the Echo Altar's dragon bonds (Noah): three, bought in order at any Echo Altar, kept for the whole game
 		//   I   Wind-Rider     a quicker glide that sinks slower; jump mid-glide and it beats its wings to climb (a few
 		//                      seconds between beats). Its eyes glow ice-pale.
-		//   II  Talon Strike   sprint-jump: a higher leap, and it swoops in and takes you at the top of it; attack
+		//   II  Talon Strike   the shout Dragon's Updraft (learned with the bond): a whirlwind lifts you high, open the glider; attack
 		//                      while looking down mid-glide and it hurls you at the ground - you land in a shockwave that
 		//                      throws the dead about. Its markings turn glacier blue.
 		//   III Alduin's Thrall (needs a city freed from the Dirge) black scales, ember eyes - its fire breath is real now:
@@ -482,8 +494,14 @@ namespace bo3z
 		// Its look: Paragliding.esp's animated object (ANIO 0x800) is given the bond's nif before you glide, the dragon
 		// that flies off afterwards the same (tools/modelconv/dragonvariant.cpp, tools/dragontex.py).
 		float g_flapT = -1, g_flapWait = 0;  // Bond I: a wing-beat's time, and the wait before the next
-		bool  g_takeRun = false;               // (the take-off's leap carries you forward)
-		int   g_liftOff = 0;                 // Bond II: 1 hopped up (the glider is being opened), 2 hanging there as it comes
+		int   g_liftOff = 0;                 // Bond II: 1 the Updraft's whirlwind is carrying you up
+		float g_updraftAge = 99;             // seconds since the Updraft (a glider opened soon after: the dragon comes quicker)
+		struct Whirl
+		{
+			RE::ObjectRefHandle ref;
+			float               t = -1;
+		};
+		Whirl g_whirl;
 		float g_takeT = 0, g_liftT = -1;
 		bool  g_dive = false;                // Bond II: hurled at the ground
 		float g_diveT = 0;
@@ -686,6 +704,90 @@ namespace bo3z
 			}
 		}
 
+		// ---- Dragon's Updraft (Bond II's shout): taught whole once the bond is bought, and put in the shout slot if it's empty
+		float g_shoutCheck = 0;
+		RE::TESShout* UpdraftShout()
+		{
+			return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESShout>(gen::kUpdraftShout, gen::kPlugin);
+		}
+		void EnsureUpdraft(RE::PlayerCharacter* a_player)
+		{
+			auto* sh = UpdraftShout();
+			if (!sh || Bond() < 2 || a_player->HasShout(sh)) {
+				return;
+			}
+			for (auto w : gen::kUpdraftWords) {
+				if (auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(w, gen::kPlugin)) {
+					Gun::Console(fmt::format("player.teachword {:08X}", f->GetFormID()));
+					Gun::Console(fmt::format("player.unlockword {:08X}", f->GetFormID()));
+				}
+			}
+			a_player->AddShout(sh);
+			if (!a_player->GetActorRuntimeData().selectedPower) {
+				if (auto* em = RE::ActorEquipManager::GetSingleton()) {
+					em->EquipShout(a_player, sh);
+				}
+			}
+			Hud::Banner("Dragon's Updraft learned: shout it, then open your glider", 4.0f);
+			logger::info("glider: Dragon's Updraft learned ({:08X})", sh->GetFormID());
+		}
+		// the whirlwind round you (CurseOfAlduin\fx\whirlwind.nif, tools/whirlwind.py): spinning, swelling, fading
+		void WhirlTick(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			if (g_whirl.t < 0) {
+				return;
+			}
+			g_whirl.t += a_delta;
+			const float t = g_whirl.t;
+			auto        ref = g_whirl.ref.get();
+			if (!ref || t > 1.9f) {
+				if (ref) {
+					ref->Disable();
+					ref->SetDelete(true);
+				}
+				g_whirl = {};
+				return;
+			}
+			const RE::NiPoint3 at = a_player->GetPosition() - RE::NiPoint3{ 0, 0, 60.0f * Smooth(t / 1.0f) };
+			ref->SetPosition(at);
+			if (auto* root = ref->Get3D()) {
+				root->local.translate = at;
+				root->local.rotate = Rot(0, 0, -t * 9.0f);
+				root->local.scale = 0.7f + 0.5f * Smooth(t / 0.8f);
+				const float level = Smooth(t / 0.18f) * (1 - Smooth((t - 1.1f) / 0.7f));
+				for (int i = 1; i <= 6; ++i) {
+					FxLevel(root, fmt::format("WW{}", i).c_str(), level);
+				}
+				RE::NiUpdateData ud;
+				root->Update(ud);
+			}
+		}
+		void Updraft(RE::PlayerCharacter* a_player)
+		{
+			if (!a_player || g_hadDragon || g_liftOff != 0 || !a_player->GetCharController()) {
+				return;
+			}
+			if (OnGround(a_player)) {
+				a_player->SetPosition(a_player->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, true);  // off the ground
+			}
+			g_liftOff = 1, g_takeT = 0, g_updraftAge = 0;
+			Forms::PlayAt(gen::Sound::shout_gale, a_player);
+			if (g_whirl.t >= 0) {
+				if (auto old = g_whirl.ref.get()) {
+					old->Disable();
+					old->SetDelete(true);
+				}
+				g_whirl = {};
+			}
+			if (auto* st = Forms::Ours(gen::kWhirlwind)) {
+				if (auto ref = a_player->PlaceObjectAtMe(st, false)) {
+					g_whirl.ref = ref->CreateRefHandle();
+					g_whirl.t = 0;
+				}
+			}
+			logger::info("glider: Dragon's Updraft");
+		}
+
 		void BondTick(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			ApplyBondLook();
@@ -714,44 +816,29 @@ namespace bo3z
 					++it;
 				}
 			}
-			// Bond II take-off: hopped up, the glider is opened (Activate, as you would) - twice if the first was early
+			// Bond II's shout, Dragon's Updraft (Noah): a whirlwind round you carries you high into the air; open the
+			// glider whenever you like (Activate) and the dragon comes for you
+			g_updraftAge += a_delta;
+			WhirlTick(a_player, a_delta);
 			if (g_liftOff == 1) {
 				g_takeT += a_delta;
-				static bool pressed = false;
-				if (g_takeT <= a_delta * 1.5f) {
-					pressed = false;
-				}
 				auto*        cc = a_player->GetCharController();
 				RE::NiPoint3 v{};
 				if (cc) {
 					GetVel(cc, v);
 				}
-				// (Noah: a sprint-jump with the glider on is a higher jump, and the dragon takes you at its top - no
-				// floating there waiting.) A quick, strong leap that slows to its peak in 0.42 s, carrying your run on
-				if (cc && g_takeT < 0.42f) {
+				if (cc && g_takeT < 1.1f && !g_hadDragon) {
 					cc->context.currentState = RE::hkpCharacterStateType::kInAir;
-					if (g_takeRun) {  // (the leap carries you forward at a sprint)
-						const float yaw = a_player->GetAngleZ();
-						v.x = std::sin(yaw) * 600.0f, v.y = std::cos(yaw) * 600.0f;
-					}
-					v.z = 1150.0f * (1 - g_takeT / 0.42f);
+					v.z = 60.0f + 1250.0f * (1 - Smooth(g_takeT / 1.1f));  // (about 7 m up, slowing to the top)
 					SetVel(cc, v);
 				}
-				// the glider opens with Activate, as you would - at the leap's peak (it will not open on the way up)
-				if (!pressed && !g_hadDragon && g_takeT > 0.38f && !OnGround(a_player)) {
-					pressed = true;
-					// (the paraglider's own behavior event; Activate as a fallback)
-					if (!a_player->NotifyAnimationGraph("StartPara")) {
-						DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
-					}
-					logger::info("glider: take-off - opening the glider");
+				if (g_takeT > 1.1f || g_hadDragon) {
+					g_liftOff = 0;
 				}
-				if (g_hadDragon) {
-					g_liftOff = 2;
-				} else if (g_takeT > 2.0f) {
-					g_liftOff = 0;  // (the glider never opened: just a hop)
-					logger::info("glider: take-off - the glider did not open");
-				}
+			}
+			if ((g_shoutCheck -= a_delta) <= 0) {
+				g_shoutCheck = 2.0f;
+				EnsureUpdraft(a_player);
 			}
 			// Bond II dive: hurled at the ground until you hit it
 			if (g_dive) {
@@ -839,16 +926,21 @@ namespace bo3z
 			}
 		}
 
-		void DevTakeOff()  // dev: Bond II's sprint-jump take-off, as if sprinting (the test harness can't hold a sprint)
+		void DevTakeOff()  // dev: Bond II's Updraft, as if shouted
 		{
-			auto* player = RE::PlayerCharacter::GetSingleton();
-			if (!player || !player->GetCharController() || g_hadDragon || g_liftOff != 0) {
-				return;
+			Updraft(RE::PlayerCharacter::GetSingleton());
+		}
+		bool OnSpellCast(RE::FormID a_spell)  // the Updraft shout spoken (any word count)
+		{
+			for (auto s : gen::kUpdraftSpells) {
+				if (auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(s, gen::kPlugin); f && f->GetFormID() == a_spell) {
+					if (Bond() >= 2) {
+						Updraft(RE::PlayerCharacter::GetSingleton());
+					}
+					return true;
+				}
 			}
-			player->SetPosition(player->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, true);
-			g_liftOff = 1, g_takeT = 0, g_takeRun = true;
-			Forms::PlayAt(gen::Sound::shout_gale, player);
-			logger::info("glider: take-off (dev)");
+			return false;
 		}
 
 		void DevFlyOff()
@@ -944,9 +1036,7 @@ namespace bo3z
 				g_armHoldOn = false, g_armHold = 0, g_flapT = -1, g_liftT = -1, g_grip = 0;
 				g_grabOff = {};
 				std::memset(g_ik, 0, sizeof(g_ik));
-				if (g_liftOff == 2) {
-					g_liftOff = 0;
-				}
+
 				lastPos = pos;
 				return;
 			}
@@ -990,7 +1080,7 @@ namespace bo3z
 			// the swoop: 1.15 s, or 0.6 s when it catches you at the top of a take-off leap (so you never hang there)
 			static bool quickSwoop = false;
 			if (deployT <= a_delta * 1.5f) {
-				quickSwoop = g_liftOff != 0;
+				quickSwoop = g_updraftAge < 4.0f;  // (lifted by the Updraft: it comes for you quicker)
 			}
 			const float kSwoop = quickSwoop ? 0.6f : 1.15f;
 			// your arms stay down until it reaches you, then go up to its talons as it takes you
@@ -1134,7 +1224,7 @@ namespace bo3z
 				RE::NiPoint3        v{};
 				GetVel(cc, v);
 				const int  bond = Bond();
-				const bool hanging = g_liftOff == 2 && deployT < kSwoop * 0.88f;
+				const bool hanging = false;
 				if (deployT <= a_delta * 1.5f) {
 					glide = { v.x, v.y, 0 };
 					fallV = std::max(v.z, -250.0f);
@@ -1142,7 +1232,7 @@ namespace bo3z
 				}
 				bool set = false;
 				// (Noah: you don't glide before it has you) until its talons close you fall as you were falling
-				const bool beforeGrab = deployT < kSwoop * 0.9f && !hanging && g_liftOff != 2;
+				const bool beforeGrab = deployT < kSwoop * 0.9f;
 				if (beforeGrab) {
 					fallV = std::max(fallV - 900.0f * dt, -1100.0f);
 					v.z = fallV;
@@ -1159,12 +1249,14 @@ namespace bo3z
 					float want = 950.0f;
 					g_divePitch += ((bond >= 3 && !beforeGrab ? std::clamp(lookDown, -0.35f, 0.9f) * 0.6f : 0.0f) - g_divePitch) * std::min(1.0f, dt * 3.0f);
 					if (bond >= 3 && !beforeGrab && !hanging) {
+						// (Noah: after a dive, look back up and it carries on gliding on that speed - with speed enough, up)
+						// height is bought with speed: climbing bleeds it in proportion, gliding level keeps most of it
 						if (lookDown > 0.15f) {
 							speed = std::min(2800.0f, speed + 1300.0f * std::sin(lookDown) * dt);
-						} else if (lookDown < -0.05f) {
-							speed = std::max(950.0f, speed - 700.0f * std::sin(-lookDown) * dt);
+						} else if (lookDown < -0.05f && speed > 1000.0f) {
+							speed = std::max(950.0f, speed - (90.0f + 0.5f * (speed - 950.0f) * std::sin(-lookDown) * 1.6f) * dt);
 						} else {
-							speed = std::max(950.0f, speed - 120.0f * dt);
+							speed = std::max(950.0f, speed - 90.0f * dt);
 						}
 						want = speed;
 					}
@@ -1174,18 +1266,22 @@ namespace bo3z
 					if (!beforeGrab) {
 						v.z = std::max(v.z, -105.0f);  // (the glide alone sinks about half again faster)
 						if (bond >= 3 && !hanging) {
+							static float vz = 0;  // (eased: out of a dive it levels off and glides on, no sudden stop)
+							float        wantZ = -105.0f;
 							if (lookDown > 0.15f) {
-								v.z = -speed * std::sin(lookDown) * 0.9f;  // the dive
+								wantZ = -speed * std::sin(lookDown) * 0.9f;  // the dive
 							} else if (lookDown < -0.05f && speed > 1000.0f) {
-								v.z = std::max(v.z, (speed - 950.0f) * std::sin(-lookDown) * 1.4f);  // the speed into height
+								wantZ = (speed - 950.0f) * std::sin(-lookDown) * 1.6f;  // the speed into height
 							}
+							if (deployT <= kSwoop) {
+								vz = v.z;
+							}
+							vz += (wantZ - vz) * std::min(1.0f, dt * (wantZ < vz ? 3.0f : 2.0f));
+							v.z = vz;
 						}
 					}
 					if (hanging) {
 						v.z = -160.0f * Smooth(deployT / (kSwoop * 0.88f));  // the leap's peak, just tipping over
-					} else if (g_liftOff == 2) {  // its talons close: up you go
-						g_liftOff = 0, g_liftT = 0;
-						PlayGameSound(DragonSound::kFlapBig, a_player);
 					}
 					if (g_liftT >= 0) {
 						g_liftT += dt;
@@ -1206,11 +1302,20 @@ namespace bo3z
 			{
 				const float spd = vel.Length();
 				const float held = Smooth((deployT - kSwoop * 0.6f) / 0.5f);
-				const float trail = held * (0.55f + 0.65f * Smooth((spd - 800.0f) / 1400.0f));
-				const float dive = Smooth((g_divePitch - 0.08f) / 0.3f) * Smooth((spd - 1100.0f) / 1100.0f);
-				for (int i = 0; i < 2; ++i) {
-					DragonWind(a_player->Get3D(i == 1), trail, dive * 0.85f);
+				// (Noah: the wingtip trails fade out while the wings beat, and smoothly back in as it glides again)
+				const bool  flapping = g_flapT >= 0 || g_liftT >= 0;
+				static float trailK = 0, diveK = 0;
+				const float trailWant = flapping ? 0.0f : held * (0.55f + 0.65f * Smooth((spd - 800.0f) / 1400.0f));
+				trailK += (trailWant - trailK) * std::min(1.0f, dt * (flapping ? 7.0f : 2.2f));
+				const float diveWant = Smooth((g_divePitch - 0.08f) / 0.3f) * Smooth((spd - 1100.0f) / 1100.0f);
+				diveK += (diveWant - diveK) * std::min(1.0f, dt * 3.0f);
+				if (deployT <= a_delta * 1.5f) {
+					trailK = 0, diveK = 0;
 				}
+				for (int i = 0; i < 2; ++i) {
+					DragonWind(a_player->Get3D(i == 1), trailK, diveK * 0.85f);
+				}
+				const float dive = diveK;
 				DiveRush(a_player, dive);
 			}
 			{  // the talons on your hands (the skeleton you see)
@@ -1316,7 +1421,7 @@ namespace bo3z
 		{
 			static constexpr const char* kName[3] = { "WIND-RIDER", "TALON STRIKE", "ALDUIN'S THRALL" };
 			static constexpr const char* kHow[3] = { "Jump while gliding: it beats its wings and climbs",
-				"Sprint-jump: a higher leap and it takes you up  -  attack looking down mid-glide: the dive",
+				"Shout Dragon's Updraft: a whirlwind lifts you, then open the glider  -  attack looking down mid-glide: the dive",
 				"Its breath burns the dead below, in the element of the spell in your hand" };
 			const int b = Bond();
 			if (b >= 3) {
@@ -1430,26 +1535,6 @@ namespace bo3z
 				if (free && ev == ue->jump && g_hadDragon && g_flapT < 0 && g_flapWait <= 0) {  // I: a wing-beat
 					g_flapT = 0, g_flapWait = 3.5f;
 					PlayGameSound(DragonSound::kFlapBig, player);
-				}
-				bool sprinting = player->AsActorState()->IsSprinting();
-				if (!sprinting) {  // (or running flat out)
-					RE::NiPoint3 v{};
-					if (auto* cc0 = player->GetCharController()) GetVel(cc0, v);
-					sprinting = std::sqrt(v.x * v.x + v.y * v.y) > 420.0f;
-				}
-				if (bond >= 2 && ev == ue->jump && !g_hadDragon) {
-					logger::info("glider: jump (bond {}, sprinting {}, on the ground {}, take-off {})", bond, sprinting, OnGround(player), g_liftOff);
-				}
-				if (free && bond >= 2 && ev == ue->jump && !g_hadDragon && g_liftOff == 0 && OnGround(player) && sprinting) {  // II: take-off - a sprint-jump
-					{
-						if (player->GetCharController()) {
-							player->SetPosition(player->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, true);  // off the ground (then the leap, above)
-							g_takeRun = true;
-							g_liftOff = 1, g_takeT = 0;
-							Forms::PlayAt(gen::Sound::shout_gale, player);
-							logger::info("glider: take-off");
-						}
-					}
 				}
 				if (free && bond >= 2 && (ev == ue->rightAttack || ev == ue->leftAttack) && g_hadDragon && !g_dive) {  // II: the dive
 					float down = 0;

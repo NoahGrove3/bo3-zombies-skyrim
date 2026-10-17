@@ -1026,6 +1026,14 @@
   "LSCR:ls_11": "0xbfe",
   "LSCR:ls_12": "0xbff",
   "LSCR:ls_13": "0xc00",
-  "STAT:dragon_away": "0xc01"
+  "STAT:dragon_away": "0xc01",
+  "STAT:whirlwind": "0xc02",
+  "WOOP:updraft_0": "0xc03",
+  "SPEL:updraft_0": "0xc04",
+  "WOOP:updraft_1": "0xc05",
+  "SPEL:updraft_1": "0xc06",
+  "WOOP:updraft_2": "0xc07",
+  "SPEL:updraft_2": "0xc08",
+  "SHOU:updraft": "0xc09"
  }
 }
