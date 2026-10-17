@@ -524,10 +524,10 @@ namespace bo3z
 		int   g_liftOff = 0;                 // Bond II: 1 the Updraft's whirlwind is carrying you up
 		float g_updraftAge = 99;
 		bool  g_glideQueued = false;         // Activate pressed on the Updraft's way up: the glider opens at its top             // seconds since the Updraft (a glider opened soon after: the dragon comes quicker)
-		struct Whirl
+		struct Whirl  // (hung on your own 3D - both skeletons - so it is drawn wherever you are)
 		{
-			RE::ObjectRefHandle ref;
-			float               t = -1;
+			RE::NiPointer<RE::NiAVObject> node[2];
+			float                         t = -1;
 		};
 		Whirl g_whirl;
 		float g_takeT = 0, g_liftT = -1;
@@ -769,6 +769,16 @@ namespace bo3z
 			logger::info("glider: Dragon's Updraft learned ({:08X})", sh->GetFormID());
 		}
 		// the whirlwind round you (CurseOfAlduin\fx\whirlwind.nif, tools/whirlwind.py): spinning, swelling, fading
+		void WhirlGone()
+		{
+			for (auto& n : g_whirl.node) {
+				if (n && n->parent) {
+					n->parent->DetachChild(n.get());
+				}
+				n.reset();
+			}
+			g_whirl.t = -1;
+		}
 		void WhirlTick(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			if (g_whirl.t < 0) {
@@ -776,41 +786,48 @@ namespace bo3z
 			}
 			g_whirl.t += a_delta;
 			const float t = g_whirl.t;
-			auto        ref = g_whirl.ref.get();
-			if (!ref || t > 2.2f) {
-				if (ref) {
-					ref->Disable();
-					ref->SetDelete(true);
-				}
-				g_whirl = {};
+			if (t > 2.2f) {
+				WhirlGone();
 				return;
 			}
-			const RE::NiPoint3 at = a_player->GetPosition() - RE::NiPoint3{ 0, 0, 60.0f * Smooth(t / 1.0f) };
-			ref->SetPosition(at);
-			if (auto* root = ref->Get3D()) {
-				static bool told = false;
-				if (!told) {
-					told = true;
-					logger::info("glider: the whirlwind's 3D is in ({} shapes)", root->GetObjectByName("WW1") ? "its" : "none of its");
-				}
-				root->local.translate = at;
-				root->local.rotate = Rot(0, 0, -t * 9.0f);
-				root->local.scale = 0.7f + 0.5f * Smooth(t / 0.8f);
-				const float level = 1.8f * Smooth(t / 0.18f) * (1 - Smooth((t - 1.4f) / 0.7f));
+			const float level = 1.8f * Smooth(t / 0.18f) * (1 - Smooth((t - 1.4f) / 0.7f));
+			for (auto& n : g_whirl.node) {
+				if (!n) continue;
+				n->local.translate = { 0, 0, -60.0f * Smooth(t / 1.0f) };
+				n->local.rotate = Rot(0, 0, -t * 9.0f);
+				n->local.scale = 0.7f + 0.5f * Smooth(t / 0.8f);
 				for (int i = 1; i <= 6; ++i) {
-					FxLevel(root, fmt::format("WW{}", i).c_str(), level);
-				}
-				static float logT = 0;
-				if ((logT -= a_delta) <= 0) {
-					logT = 0.3f;
-					auto* w1 = root->GetObjectByName("WW1");
-					logger::info("glider: whirlwind t {:.2f} at ({:.0f},{:.0f},{:.0f}) root culled {} parent {} | WW1 culled {} world ({:.0f},{:.0f},{:.0f}) bound r {:.0f} level {:.2f}", t,
-						root->world.translate.x, root->world.translate.y, root->world.translate.z, root->GetAppCulled(), root->parent ? root->parent->name.c_str() : "-",
-						w1 ? w1->GetAppCulled() : true, w1 ? w1->world.translate.x : 0.0f, w1 ? w1->world.translate.y : 0.0f, w1 ? w1->world.translate.z : 0.0f, w1 ? w1->worldBound.radius : 0.0f, level);
+					FxLevel(n.get(), fmt::format("WW{}", i).c_str(), level);
 				}
 				RE::NiUpdateData ud;
-				root->Update(ud);
+				n->Update(ud);
 			}
+		}
+		void WhirlStart(RE::PlayerCharacter* a_player)
+		{
+			WhirlGone();
+			static RE::NiPointer<RE::NiNode> model;
+			if (!model) {
+				RE::BSModelDB::DBTraits::ArgsType args{};
+				if (RE::BSModelDB::Demand("CurseOfAlduin\\fx\\whirlwind.nif", model, args) != RE::BSResource::ErrorCode::kNone || !model) {
+					model.reset();
+					logger::warn("glider: no whirlwind model");
+					return;
+				}
+			}
+			for (int i = 0; i < 2; ++i) {
+				auto* root = a_player->Get3D(i == 1);
+				auto* rn = root ? root->AsNode() : nullptr;
+				if (!rn) continue;
+				if (auto* clone = model->Clone()) {
+					auto* obj = static_cast<RE::NiAVObject*>(clone);
+					obj->local = RE::NiTransform{};
+					rn->AttachChild(obj, true);
+					g_whirl.node[i].reset(obj);
+				}
+			}
+			g_whirl.t = 0;
+			logger::info("glider: the whirlwind round you ({} / {})", g_whirl.node[0] ? "3rd" : "-", g_whirl.node[1] ? "1st" : "-");
 		}
 		void Updraft(RE::PlayerCharacter* a_player)
 		{
@@ -822,19 +839,7 @@ namespace bo3z
 			}
 			g_liftOff = 1, g_takeT = 0, g_updraftAge = 0;
 			Forms::PlayAt(gen::Sound::shout_gale, a_player);
-			if (g_whirl.t >= 0) {
-				if (auto old = g_whirl.ref.get()) {
-					old->Disable();
-					old->SetDelete(true);
-				}
-				g_whirl = {};
-			}
-			if (auto* st = Forms::Ours(gen::kWhirlwind)) {
-				if (auto ref = a_player->PlaceObjectAtMe(st, false)) {
-					g_whirl.ref = ref->CreateRefHandle();
-					g_whirl.t = 0;
-				}
-			}
+			WhirlStart(a_player);
 			logger::info("glider: Dragon's Updraft");
 		}
 
