@@ -1085,6 +1085,7 @@ namespace bo3z
 		void Updraft(RE::PlayerCharacter* a_player)
 		{
 			if (!a_player || g_hadDragon || g_liftOff != 0 || !a_player->GetCharController()) {
+				logger::info("glider: Updraft not taken (dragon {}, lifting {})", g_hadDragon, g_liftOff);
 				return;
 			}
 			if (OnGround(a_player)) {
@@ -1209,6 +1210,58 @@ namespace bo3z
 			return std::atan2(a_axis.Dot(a_from.Cross(a_to)), a_from.Dot(a_to));
 		}
 
+		// ---- the glide (Noah): the dragon is called, swoops in from high behind you and catches you by its harness; then
+		// you fly it with the left stick / WASD - forward dives (gathering speed), back pulls up (spending it on height),
+		// nothing held glides; left / right turn it, sharply, its whole body leaning into the turn
+		bool         g_holding = false;   // its harness in your hands (from the catch until it lets go)
+		bool         g_place = false;     // a glide is on: SwingBody (the pose hook) places the dragon in the world this frame
+		bool         g_placed = false;    // ... and it has (from then on nothing else moves its DG_Space)
+		float        g_deployT = -1, g_swoopLen = 1.45f;
+		RE::NiPoint3 g_swoopOff{};        // the swoop: where it is from where it will hold you (your heading's frame: x right, y ahead, z up)
+		float        g_glideYaw = 0;      // your heading through the glide (ours: set on you every frame)
+		bool         g_yawOwned = false;
+		float        g_gamma = 0, g_speed = 950.0f;  // the flight path's angle (rad, + climbing) and its speed
+		float        g_inX = 0, g_inY = 0;           // the stick (eased)
+		float        g_roll = 0;                     // the dragon's lean (+: its right wing down)
+		float        g_catchK = 0;                   // 0 at the catch .. 1 once the controls are fully yours
+		float        g_stickX = 0, g_stickY = 0;     // the left stick, as its own events last said
+		bool         g_keyF = false, g_keyB = false, g_keyL = false, g_keyR = false;
+		bool         g_chaseOn = false;              // (dev: the filming camera is turning the view itself)
+		float BankSign() { return Settings::DragonBankReverse() ? -1.0f : 1.0f; }
+		float DiveFold() { return Smooth((g_divePitch - 0.15f) / 0.55f); }  // the wings drawn in, 0 .. 1
+		// the stick or WASD, x right and y forward: the game's own reading, or ours from the events if it has none
+		RE::NiPoint2 MoveInput()
+		{
+			RE::NiPoint2 in{};
+			if (auto* pc = RE::PlayerControls::GetSingleton()) in = pc->data.moveInputVec;
+			RE::NiPoint2 own{ (g_keyR ? 1.0f : 0.0f) - (g_keyL ? 1.0f : 0.0f), (g_keyF ? 1.0f : 0.0f) - (g_keyB ? 1.0f : 0.0f) };
+			if (std::abs(g_stickX) > std::abs(own.x)) own.x = g_stickX;
+			if (std::abs(g_stickY) > std::abs(own.y)) own.y = g_stickY;
+			if (own.x * own.x + own.y * own.y > in.x * in.x + in.y * in.y) in = own;
+			auto dz = [](float a) { return std::abs(a) < 0.18f ? 0.0f : (a - std::copysign(0.18f, a)) / 0.82f; };
+			return { std::clamp(dz(in.x), -1.0f, 1.0f), std::clamp(dz(in.y), -1.0f, 1.0f) };
+		}
+		// how far you are above the ground (or water) here - the land's height only (buildings aside): 1e9 unknown
+		float HeightAboveGround(RE::PlayerCharacter* a_player)
+		{
+			const auto p = a_player->GetPosition();
+			float      g = -1e9f;
+			if (auto* tes = RE::TES::GetSingleton()) {
+				float h = 0;
+				if (tes->GetLandHeight(p, h)) g = h;
+				if (auto* cell = a_player->GetParentCell()) {
+					float w = 0;
+					if (cell->GetWaterHeight(p, w) && w < 1e8f) g = std::max(g, w);
+				}
+			}
+			return g > -1e8f ? p.z - g : 1e9f;
+		}
+		void EndHold()
+		{
+			g_holding = false, g_place = false, g_placed = false, g_yawOwned = false, g_grip = 0;
+			g_beam.level = 0, g_beam.grow = 0;
+		}
+
 		void DevBreath(int a_element)  // dev: Bond III's breath now, in that element (0 fire, 1 frost, 2 lightning)
 		{
 			g_breathElDev = a_element;
@@ -1280,57 +1333,6 @@ namespace bo3z
 				cam->GetRuntimeData2().worldFOV += want - fovAdd;
 				fovAdd = want;
 			}
-		}
-
-		// ---- the glide (Noah): the dragon is called, swoops in from high behind you and catches you by its harness; then
-		// you fly it with the left stick / WASD - forward dives (gathering speed), back pulls up (spending it on height),
-		// nothing held glides; left / right turn it, sharply, its whole body leaning into the turn
-		bool         g_holding = false;   // its harness in your hands (from the catch until it lets go)
-		bool         g_place = false;     // a glide is on: SwingBody (the pose hook) places the dragon in the world this frame
-		float        g_deployT = -1, g_swoopLen = 1.45f;
-		RE::NiPoint3 g_swoopOff{};        // the swoop: where it is from where it will hold you (your heading's frame: x right, y ahead, z up)
-		float        g_glideYaw = 0;      // your heading through the glide (ours: set on you every frame)
-		bool         g_yawOwned = false;
-		float        g_gamma = 0, g_speed = 950.0f;  // the flight path's angle (rad, + climbing) and its speed
-		float        g_inX = 0, g_inY = 0;           // the stick (eased)
-		float        g_roll = 0;                     // the dragon's lean (+: its right wing down)
-		float        g_catchK = 0;                   // 0 at the catch .. 1 once the controls are fully yours
-		float        g_stickX = 0, g_stickY = 0;     // the left stick, as its own events last said
-		bool         g_keyF = false, g_keyB = false, g_keyL = false, g_keyR = false;
-		bool         g_chaseOn = false;              // (dev: the filming camera is turning the view itself)
-		float BankSign() { return Settings::DragonBankReverse() ? -1.0f : 1.0f; }
-		float DiveFold() { return Smooth((g_divePitch - 0.15f) / 0.55f); }  // the wings drawn in, 0 .. 1
-		// the stick or WASD, x right and y forward: the game's own reading, or ours from the events if it has none
-		RE::NiPoint2 MoveInput()
-		{
-			RE::NiPoint2 in{};
-			if (auto* pc = RE::PlayerControls::GetSingleton()) in = pc->data.moveInputVec;
-			RE::NiPoint2 own{ (g_keyR ? 1.0f : 0.0f) - (g_keyL ? 1.0f : 0.0f), (g_keyF ? 1.0f : 0.0f) - (g_keyB ? 1.0f : 0.0f) };
-			if (std::abs(g_stickX) > std::abs(own.x)) own.x = g_stickX;
-			if (std::abs(g_stickY) > std::abs(own.y)) own.y = g_stickY;
-			if (own.x * own.x + own.y * own.y > in.x * in.x + in.y * in.y) in = own;
-			auto dz = [](float a) { return std::abs(a) < 0.18f ? 0.0f : (a - std::copysign(0.18f, a)) / 0.82f; };
-			return { std::clamp(dz(in.x), -1.0f, 1.0f), std::clamp(dz(in.y), -1.0f, 1.0f) };
-		}
-		// how far you are above the ground (or water) here - the land's height only (buildings aside): 1e9 unknown
-		float HeightAboveGround(RE::PlayerCharacter* a_player)
-		{
-			const auto p = a_player->GetPosition();
-			float      g = -1e9f;
-			if (auto* tes = RE::TES::GetSingleton()) {
-				float h = 0;
-				if (tes->GetLandHeight(p, h)) g = h;
-				if (auto* cell = a_player->GetParentCell()) {
-					float w = 0;
-					if (cell->GetWaterHeight(p, w) && w < 1e8f) g = std::max(g, w);
-				}
-			}
-			return g > -1e8f ? p.z - g : 1e9f;
-		}
-		void EndHold()
-		{
-			g_holding = false, g_place = false, g_yawOwned = false, g_grip = 0;
-			g_beam.level = 0, g_beam.grow = 0;
 		}
 
 		void Dragon(RE::PlayerCharacter* a_player, float a_delta)
@@ -1531,7 +1533,7 @@ namespace bo3z
 				lastK = k;
 			}
 			for (int i = 0; i < 2; ++i) {
-				if (space[i]) {  // (where it hangs if the pose hook never placed it: SwingBody puts it in the world)
+				if (space[i] && !g_placed) {  // (where it hangs until the pose hook places it: SwingBody puts it in the world)
 					space[i]->local.translate = baseTrans;
 					if (baseScale > 0) space[i]->local.scale = baseScale;
 				}
@@ -1608,8 +1610,10 @@ namespace bo3z
 					fallH = fallH * (1 - std::min(1.0f, 0.3f * dt));
 					v = { fallH.x, fallH.y, fallV };
 					const float h = std::sqrt(fallH.x * fallH.x + fallH.y * fallH.y);
-					g_gamma = std::atan2(fallV, std::max(h, 1.0f));
-					g_speed = std::clamp(std::sqrt(h * h + fallV * fallV), 600.0f, top);
+					// (what the glide starts from at the catch: the dragon takes your fall into its own flight - never more than a
+					// steep dive, so it pulls out quickly)
+					g_gamma = std::max(std::atan2(fallV, std::max(h, 1.0f)), -0.6f);
+					g_speed = std::clamp(std::sqrt(h * h + fallV * fallV), cruise, top);
 					g_catchK = 0;
 					glideV = v;
 				} else {
@@ -2306,6 +2310,7 @@ namespace bo3z
 				}
 				W.translate = W.translate + Ry * (g_swoopOff * rs) + Ry * (g_sway * (W.scale * g_grip));
 				place();
+				g_placed = true;
 				if (f == (first ? 1 : 0) || !seen) seen = space, seenScale = W.scale;
 				const RE::NiPoint3 bar = hl && hr ? (hl->world.translate + hr->world.translate) * 0.5f : barAt;
 				// 3. your body swung about the bar
