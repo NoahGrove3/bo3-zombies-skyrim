@@ -990,7 +990,7 @@ namespace bo3z
 				const float* c = pt.core ? kCore[b] : kOuter[b];
 				FxColor(a_root, pt.name, c[0], c[1], c[2]);
 				FxLevel(a_root, pt.name, a_b.level * pt.level * flick, -std::fmod(a_b.clock * pt.rate, 1.0f));
-				o->UpdateDownwardPass(ud, 0);
+				o->Update(ud);  // (the whole update: its bound is carried up to the nodes above, or the beam is culled as off-screen)
 				static float logT = 0;
 				static auto  lastLog = std::chrono::steady_clock::now();
 				if (a_b.level > 0.01f && pt.core && std::chrono::steady_clock::now() - lastLog > std::chrono::milliseconds(400)) {
