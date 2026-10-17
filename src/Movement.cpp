@@ -1520,19 +1520,19 @@ namespace bo3z
 							if (auto t = target.get(); thrall && t && !t->IsDead()) to = t->GetPosition() + RE::NiPoint3{ 0, 0, 60 };
 							m->SetPosition(to);
 							ld.desiredTarget = m.get();
+							ld.autoAim = true;
 						}
 					}
 					// (a beam - the lightning - is aimed by its shooter's own facing, not the launch angles: you face the breath
 					// for the moment it leaves)
 					auto&       ang = a_player->data.angle;  // (x pitch, z yaw)
 					const float keepX = ang.x, keepZ = ang.z;
-					if (fire->IsBeam()) {
+					if (fire->IsBeam() && g_beamPitchSign != 1.0f) {  // (dev only: the beam goes to its marker target)
 						ang.x = r.x * g_beamPitchSign, ang.z = r.z;
-						ld.angleX = r.x * g_beamPitchSign;
 					}
 					RE::ProjectileHandle h;
 					RE::Projectile::Launch(&h, ld);
-					if (fire->IsBeam()) {
+					if (fire->IsBeam() && g_beamPitchSign != 1.0f) {
 						ang.x = keepX, ang.z = keepZ;
 					} else if (auto p = h.get()) {
 						// (Noah: the breath flies off ahead - faster, and carried on your own speed - not swept back onto you
