@@ -1849,10 +1849,11 @@ namespace bo3z
 			lastVel = v;
 			const float fold = std::clamp(g_divePitch / 0.42f, 0.0f, 1.0f);
 			const float aF = acc.x * F.x + acc.y * F.y, turn = dy / std::max(dt, 1e-3f);
-			const float thT = std::clamp(-aF * 0.00035f, -0.35f, 0.35f) - 1.05f * fold + 0.06f * std::sin(clock * 1.3f) - 0.08f;
-			const float phT = std::clamp(-turn * 0.22f, -0.45f, 0.45f) + 0.05f * std::sin(clock * 0.9f + 1.0f);
-			thV += (16.0f * (thT - th) - 3.2f * thV) * dt, th += thV * dt;
-			phV += (16.0f * (phT - ph) - 3.2f * phV) * dt, ph += phV * dt;
+			const float thT = std::clamp(-aF * 0.00025f, -0.25f, 0.25f) - 0.8f * fold + 0.05f * std::sin(clock * 1.3f) - 0.06f;
+			const float phT = std::clamp(-std::clamp(turn, -2.0f, 2.0f) * 0.12f, -0.25f, 0.25f) + 0.04f * std::sin(clock * 0.9f + 1.0f);
+			thV += (16.0f * (thT - th) - 4.0f * thV) * dt, th += thV * dt;
+			phV += (16.0f * (phT - ph) - 4.0f * phV) * dt, ph += phV * dt;
+			th = std::clamp(th, -1.0f, 0.4f), ph = std::clamp(ph, -0.35f, 0.35f);
 			const RE::NiMatrix3 W = AxisAngle(F, ph) * AxisAngle(Rt, th);
 			{  // (the body you see from outside; your first-person arms stay as they are)
 				auto* root = a_player->Get3D(false);
@@ -1861,6 +1862,23 @@ namespace bo3z
 				auto* lh = root->GetObjectByName("NPC L Hand [LHnd]");
 				auto* rh = root->GetObjectByName("NPC R Hand [RHnd]");
 				if (!pel || !pel->parent || !lh || !rh) return;
+				// (the animation doesn't always rewrite the pelvis each frame: last frame's swing is taken off first, so it
+				// never piles up)
+				static RE::NiMatrix3 wroteR, baseR;
+				static RE::NiPoint3  wroteT, baseT;
+				static bool          wrote = false;
+				auto same = [](const RE::NiMatrix3& a, const RE::NiMatrix3& b) {
+					float d = 0;
+					for (int r = 0; r < 3; ++r) for (int c = 0; c < 3; ++c) d += std::abs(a.entry[r][c] - b.entry[r][c]);
+					return d < 1e-4f;
+				};
+				if (wrote && same(pel->local.rotate, wroteR) && (pel->local.translate - wroteT).Length() < 0.01f) {
+					pel->local.rotate = baseR, pel->local.translate = baseT;
+					RE::NiUpdateData u0;
+					u0.time = 0.0f;
+					pel->UpdateDownwardPass(u0, 0);
+				}
+				baseR = pel->local.rotate, baseT = pel->local.translate;
 				const RE::NiPoint3 H = (lh->world.translate + rh->world.translate) * 0.5f;
 				const auto&        P = pel->parent->world;
 				const RE::NiMatrix3 Rn = W * pel->world.rotate;
@@ -1868,6 +1886,7 @@ namespace bo3z
 				const RE::NiMatrix3 Pt = P.rotate.Transpose();
 				pel->local.rotate = Pt * Rn;
 				pel->local.translate = (Pt * (Tn - P.translate)) * (1.0f / std::max(0.001f, P.scale));
+				wroteR = pel->local.rotate, wroteT = pel->local.translate, wrote = true;
 				RE::NiUpdateData ud;
 				ud.time = 0.0f;
 				pel->UpdateDownwardPass(ud, 0);
