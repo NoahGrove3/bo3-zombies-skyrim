@@ -800,6 +800,14 @@ namespace bo3z
 				for (int i = 1; i <= 6; ++i) {
 					FxLevel(root, fmt::format("WW{}", i).c_str(), level);
 				}
+				static float logT = 0;
+				if ((logT -= a_delta) <= 0) {
+					logT = 0.3f;
+					auto* w1 = root->GetObjectByName("WW1");
+					logger::info("glider: whirlwind t {:.2f} at ({:.0f},{:.0f},{:.0f}) root culled {} parent {} | WW1 culled {} world ({:.0f},{:.0f},{:.0f}) bound r {:.0f} level {:.2f}", t,
+						root->world.translate.x, root->world.translate.y, root->world.translate.z, root->GetAppCulled(), root->parent ? root->parent->name.c_str() : "-",
+						w1 ? w1->GetAppCulled() : true, w1 ? w1->world.translate.x : 0.0f, w1 ? w1->world.translate.y : 0.0f, w1 ? w1->world.translate.z : 0.0f, w1 ? w1->worldBound.radius : 0.0f, level);
+				}
 				RE::NiUpdateData ud;
 				root->Update(ud);
 			}
