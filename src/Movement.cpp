@@ -999,6 +999,7 @@ namespace bo3z
 				node.reset(static_cast<RE::NiAVObject*>(clone));
 				node->local = RE::NiTransform{};
 				host->AttachChild(node.get(), true);
+				logger::info("glider: the breath's beam on your {} 3D", a_f == 0 ? "third-person" : "first-person");
 			} else if (node->parent != host) {
 				if (node->parent) node->parent->DetachChild(node.get());
 				host->AttachChild(node.get(), true);
@@ -1842,11 +1843,16 @@ namespace bo3z
 				static float hitT = 0;
 				g_beam.clock += dt;
 				if (breathing && mouth && head) {
-					RE::NiPoint3 d{ std::sin(yaw), std::cos(yaw), -0.35f };
-					if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {  // where you aim
+					// where you look, but down toward the ground ahead (Noah: the dead below; and seen from behind it is a jet of
+					// fire sweeping down ahead of you - aimed exactly along your view it was only a dot behind its head)
+					float aimYaw = yaw, aimDown = 0.0f;
+					if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
 						const auto& cm = cam->cameraRoot->world.rotate;
-						d = { cm.entry[0][1], cm.entry[1][1], cm.entry[2][1] };
+						aimYaw = std::atan2(cm.entry[0][1], cm.entry[1][1]);
+						aimDown = std::asin(std::clamp(-cm.entry[2][1], -1.0f, 1.0f));
 					}
+					const float pitchDown = std::clamp(aimDown + 0.45f, 0.3f, 1.35f);
+					RE::NiPoint3 d{ std::sin(aimYaw) * std::cos(pitchDown), std::cos(aimYaw) * std::cos(pitchDown), -std::sin(pitchDown) };
 					d.Unitize();
 					if (auto t = target.get(); t && !t->IsDead()) {
 						RE::NiPoint3 to = t->GetPosition() + RE::NiPoint3{ 0, 0, 50 } - mouth->world.translate;
