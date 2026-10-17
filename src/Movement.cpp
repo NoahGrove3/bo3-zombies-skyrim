@@ -1127,10 +1127,11 @@ namespace bo3z
 			g_armHold = 1 - Smooth((deployT - (kSwoop - 0.38f)) / 0.38f);
 			const float u = std::clamp(deployT / kSwoop, 0.0f, 1.0f);
 			const float e = u * u * u * (u * (u * 6 - 15) + 10);  // smootherstep
-			const RE::NiPoint3 P0{ 260, -720, 300 }, P1{ 330, -140, -30 }, P2{ 0, 0, 0 };
+			// (Noah: no sharp turn at the end - it comes in from behind on a gentle curve, and eases round to face ahead)
+			const RE::NiPoint3 P0{ 260, -720, 300 }, P1{ 190, -400, 30 }, P2{ 0, 0, 0 };
 			const RE::NiPoint3 at = P0 * ((1 - e) * (1 - e)) + P1 * (2 * (1 - e) * e) + P2 * (e * e);
 			RE::NiPoint3 tan = (P1 - P0) * (2 * (1 - e)) + (P2 - P1) * (2 * e);
-			const float  inSwoop = 1 - std::clamp((u - 0.8f) / 0.2f, 0.0f, 1.0f);
+			const float  inSwoop = 1 - Smooth((u - 0.45f) / 0.55f);
 			const float  swYaw = std::atan2(-tan.x, std::max(1.0f, tan.y)) * inSwoop;
 			const float  swPitch = std::atan2(tan.z, std::sqrt(tan.x * tan.x + tan.y * tan.y)) * inSwoop;
 			const float  swRoll = 0.55f * std::sin(3.14159f * std::min(1.0f, u * 1.15f)) * inSwoop;
