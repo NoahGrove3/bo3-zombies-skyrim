@@ -1937,7 +1937,7 @@ namespace bo3z
 				ud.time = 0.0f;
 				b[0]->UpdateDownwardPass(ud, 0);  // (the pelvis: everything under it)
 			}
-			SwingBody(a_player);
+			// (Noah: the swung legs were meant to be the dragon's - its legs sweep back in the dive; yours are left alone)
 		}
 
 		void Tick(float a_delta)
