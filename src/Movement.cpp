@@ -493,7 +493,34 @@ namespace bo3z
 		//                      hotter, frost slows them, lightning leaps to the next).
 		// Its look: Paragliding.esp's animated object (ANIO 0x800) is given the bond's nif before you glide, the dragon
 		// that flies off afterwards the same (tools/modelconv/dragonvariant.cpp, tools/dragontex.py).
-		float g_flapT = -1, g_flapWait = 0;  // Bond I: a wing-beat's time, and the wait before the next
+		float g_flapT = -1, g_flapWait = 0;  // Bond I: the wing-beats' time, and the wait before the next
+		bool  g_breathReq = false;           // Bond III: the breath asked for (right attack mid-glide)
+		float g_breathCd = 0;                // ... and the 5 s before it can be again
+		int   g_breathElDev = -1;            // (dev: the element to breathe, whatever is in your hand)
+		// (Noah) Bond I's climb: two small beats that lift it a little, then one great beat that carries it higher
+		constexpr float kFlapSmall = 0.5f, kFlapBig = 1.15f, kFlapAll = 2 * kFlapSmall + kFlapBig;
+		float FlapWing(float a_t)  // the wings' beat (WingBeat units) a_t seconds into the climb
+		{
+			if (a_t < 2 * kFlapSmall) return a_t < 0 ? 0.0f : 0.55f * WingBeat(std::fmod(a_t, kFlapSmall), kFlapSmall);
+			return WingBeat(a_t - 2 * kFlapSmall, kFlapBig);
+		}
+		float FlapLift(float a_t)  // the least you rise at, each downstroke lifting you
+		{
+			if (a_t < 0 || a_t > kFlapAll) return -1e9f;
+			if (a_t < 2 * kFlapSmall) {
+				const float k = std::fmod(a_t, kFlapSmall);
+				return k < 0.13f ? -1e9f : 420.0f * (1 - Smooth((k - 0.13f) / 0.37f));
+			}
+			const float k = a_t - 2 * kFlapSmall;
+			return k < 0.3f ? -1e9f : 980.0f * (1 - Smooth((k - 0.3f) / 0.85f));
+		}
+		float FlapTilt(float a_t)  // its nose lifted as it beats (rad)
+		{
+			if (a_t < 0 || a_t > kFlapAll) return 0.0f;
+			if (a_t < 2 * kFlapSmall) return 0.12f * Smooth(a_t / 0.2f);
+			const float k = (a_t - 2 * kFlapSmall) / kFlapBig;
+			return 0.12f + 0.2f * std::sin(3.14159f * std::min(1.0f, k * 1.2f)) - 0.12f * Smooth((k - 0.6f) / 0.4f);
+		}
 		int   g_liftOff = 0;                 // Bond II: 1 the Updraft's whirlwind is carrying you up
 		float g_updraftAge = 99;             // seconds since the Updraft (a glider opened soon after: the dragon comes quicker)
 		struct Whirl
@@ -792,6 +819,7 @@ namespace bo3z
 		{
 			ApplyBondLook();
 			g_flapWait = std::max(0.0f, g_flapWait - a_delta);
+			g_breathCd = std::max(0.0f, g_breathCd - a_delta);
 			for (auto it = g_fx.begin(); it != g_fx.end();) {
 				if ((it->t -= a_delta) <= 0) {
 					if (auto r = it->ref.get()) {
@@ -926,6 +954,17 @@ namespace bo3z
 			}
 		}
 
+		void DevBreath(int a_element)  // dev: Bond III's breath now, in that element (0 fire, 1 frost, 2 lightning)
+		{
+			g_breathElDev = a_element;
+			g_breathReq = true;
+		}
+		void DevFlap()  // dev: Bond I's climbing wing-beats, as if jump were pressed mid-glide
+		{
+			if (g_hadDragon && g_flapT < 0) {
+				g_flapT = 0, g_flapWait = kFlapAll + 1.5f;
+			}
+		}
 		void DevTakeOff()  // dev: Bond II's Updraft, as if shouted
 		{
 			Updraft(RE::PlayerCharacter::GetSingleton());
@@ -1106,7 +1145,7 @@ namespace bo3z
 				// take-off's lift); swept back in a Bond III dive
 				const float flapT = g_flapT, liftT = g_liftT;
 				WingPose(a_player->Get3D(i == 1), deployT, [flapT, liftT](float a_lag) {
-					return WingBeat(flapT - a_lag, 1.15f) + WingBeat(liftT - a_lag, 1.3f);
+					return (flapT >= 0 ? FlapWing(flapT - a_lag) : 0.0f) + WingBeat(liftT - a_lag, 1.3f);
 				}, std::clamp(g_divePitch / 0.42f, 0.0f, 1.0f));
 			}
 			// the legs: reaching out in the swoop, clutching as it takes you; then holding on, flexing their grip, now
@@ -1158,7 +1197,9 @@ namespace bo3z
 			roll += (std::clamp(turn * 0.55f, -0.75f, 0.75f) - roll) * std::min(1.0f, dt * 3.0f);
 			static float swing = 0;  // the body swung round into the turn (head first)
 			swing += (std::clamp(-turn * 0.3f, -0.4f, 0.4f) - swing) * std::min(1.0f, dt * 2.5f);
-			pitch += (std::clamp(fall * 0.0006f, -0.18f, 0.08f) - g_divePitch - pitch) * std::min(1.0f, dt * 2.0f);  // (Bond III: nose down in a dive)
+			// (Bond III: nose down in a dive; Noah: nose up as it beats its wings to climb)
+			const float tilt = g_flapT >= 0 ? FlapTilt(g_flapT) : 0.0f;
+			pitch += (std::clamp(fall * 0.0006f, -0.18f, 0.08f) - g_divePitch - tilt - pitch) * std::min(1.0f, dt * (tilt > 0 ? 4.0f : 2.0f));
 			// the head: toward where you look (the camera), into the turn, and wandering on its own
 			wanderT += dt;
 			float camYaw = yaw;
@@ -1183,16 +1224,15 @@ namespace bo3z
 				auto* t = BreathTarget(a_player, mouth->world.translate);
 				target = t ? t->GetHandle() : RE::ActorHandle{};
 			}
-			if (breath <= 0 && thrall && target.get() && sinceBreath > 3.2f && deployT > kSwoop) {
-				breathIn = 0;
-			}
-			// (Noah: the fire is Bond III's alone - seen and felt; before it the dragon never breathes)
-			if (breath <= 0 && thrall && deployT > kSwoop && (breathIn -= dt) <= 0) {
+			// (Noah: the breath is Bond III's alone, and yours to call - right attack / right trigger mid-glide, 5 s apart)
+			breathIn = 9.0f;
+			if (g_breathReq && breath <= 0 && thrall && deployT > kSwoop) {
 				breath = 1.6f;
 				sinceBreath = 0;
-				breathIn = std::uniform_real_distribution<float>(6.0f, 11.0f)(rng);
 				PlayGameSound(DragonSound::kFire, a_player, &g_breathSound);
+				logger::info("glider: the dragon breathes ({})", g_breathElDev >= 0 ? g_breathElDev : HandElement());
 			}
+			g_breathReq = false;
 			if (!thrall) {
 				breath = 0;
 			}
@@ -1215,8 +1255,18 @@ namespace bo3z
 			}
 			// the bonds' flight: Bond I glides quicker and sinks slower, beats its wings to climb; Bond II's take-off hangs you
 			// there while it comes, then carries you up
-			if (g_flapT >= 0 && (g_flapT += dt) > 1.15f) {
-				g_flapT = -1;
+			if (g_flapT >= 0) {
+				const float before = g_flapT;
+				g_flapT += dt;
+				for (const float at : { 0.13f, kFlapSmall + 0.13f }) {  // each small downstroke heard, then the great one
+					if (before < at && g_flapT >= at) PlayGameSound(DragonSound::kFlap, a_player, nullptr, 0.7f);
+				}
+				if (before < 2 * kFlapSmall + 0.3f && g_flapT >= 2 * kFlapSmall + 0.3f) {
+					PlayGameSound(DragonSound::kFlapBig, a_player);
+				}
+				if (g_flapT > kFlapAll) {
+					g_flapT = -1;
+				}
 			}
 			if (auto* cc = a_player->GetCharController(); cc && !g_dive) {
 				static RE::NiPoint3 glide{};
@@ -1288,8 +1338,8 @@ namespace bo3z
 						v.z = std::max(v.z, 1150.0f * (1 - Smooth(g_liftT / 1.3f)));
 						if (g_liftT > 1.3f) g_liftT = -1;
 					}
-					if (g_flapT >= 0 && g_flapT > 0.3f) {  // the downstroke lifts you
-						v.z = std::max(v.z, 820.0f * (1 - Smooth((g_flapT - 0.3f) / 0.85f)));
+					if (g_flapT >= 0) {  // each downstroke lifts you
+						v.z = std::max(v.z, FlapLift(g_flapT));
 					}
 					set = true;
 				}
@@ -1335,13 +1385,21 @@ namespace bo3z
 			static float hitT = 0;
 			if (breathing && breath < 1.45f && mouth && head && (shotT -= dt) <= 0) {
 				shotT = 0.05f;
-				const int          el = thrall ? HandElement() : 0;
+				const int          el = g_breathElDev >= 0 ? g_breathElDev : thrall ? HandElement() : 0;
 				RE::BGSProjectile* fire = BreathProjectile(el);  // the dragons' own breath (Bond III: your spell's element)
 				if (fire) {
 					const auto&        hm = head->world.rotate;
 					RE::NiPoint3       d{ hm.entry[0][1], hm.entry[1][1], hm.entry[2][1] - 0.25f };  // its head's forward, a little down
-					if (auto t = target.get(); thrall && t && !t->IsDead()) {  // Bond III: at the dead it found
-						d = t->GetPosition() + RE::NiPoint3{ 0, 0, 50 } - mouth->world.translate;
+					if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {  // where you aim
+						const auto& cm = cam->cameraRoot->world.rotate;
+						d = { cm.entry[0][1], cm.entry[1][1], cm.entry[2][1] };
+					}
+					if (auto t = target.get(); thrall && t && !t->IsDead()) {  // (onto the dead near your aim)
+						RE::NiPoint3 to = t->GetPosition() + RE::NiPoint3{ 0, 0, 50 } - mouth->world.translate;
+						to.Unitize();
+						RE::NiPoint3 dn = d;
+						dn.Unitize();
+						if (to.x * dn.x + to.y * dn.y + to.z * dn.z > 0.94f) d = to;
 					}
 					d.Unitize();
 					if (thrall && (hitT -= 0.05f) <= 0) {
@@ -1356,6 +1414,7 @@ namespace bo3z
 					ld.autoAim = false;
 					ld.noDamageOutsideCombat = true;
 					ld.power = 0.0f;
+					ld.scale = 0.45f;  // (Noah: a smaller breath - its reach is the same)
 					RE::ProjectileHandle h;
 					RE::Projectile::Launch(&h, ld);
 				}
@@ -1422,7 +1481,7 @@ namespace bo3z
 			static constexpr const char* kName[3] = { "WIND-RIDER", "TALON STRIKE", "ALDUIN'S THRALL" };
 			static constexpr const char* kHow[3] = { "Jump while gliding: it beats its wings and climbs",
 				"Shout Dragon's Updraft: a whirlwind lifts you, then open the glider  -  attack looking down mid-glide: the dive",
-				"Its breath burns the dead below, in the element of the spell in your hand" };
+				"Right attack mid-glide: its breath, in your spell's element (every 5 s)" };
 			const int b = Bond();
 			if (b >= 3) {
 				Hud::Banner("Your dragon has made every bond", 2.5f);
@@ -1532,11 +1591,19 @@ namespace bo3z
 			if (const int bond = Bond(); bond >= 1) {
 				auto* ui = RE::UI::GetSingleton();
 				const bool free = !ui || !ui->GameIsPaused();
-				if (free && ev == ue->jump && g_hadDragon && g_flapT < 0 && g_flapWait <= 0) {  // I: a wing-beat
-					g_flapT = 0, g_flapWait = 3.5f;
-					PlayGameSound(DragonSound::kFlapBig, player);
+				if (free && ev == ue->jump && g_hadDragon && g_flapT < 0 && g_flapWait <= 0) {  // I: the climbing wing-beats
+					g_flapT = 0, g_flapWait = kFlapAll + 1.5f;
 				}
-				if (free && bond >= 2 && (ev == ue->rightAttack || ev == ue->leftAttack) && g_hadDragon && !g_dive) {  // II: the dive
+				// III: right attack (right trigger) breathes (5 s apart); II: attack looking down dives - the left hand
+				// (left trigger) for Bond III, whose right is the breath
+				const bool breathKey = bond >= 3 && ev == ue->rightAttack;
+				if (free && breathKey && g_hadDragon && !g_dive) {
+					if (g_breathCd <= 0) {
+						g_breathReq = true;
+						g_breathCd = 5.0f;
+					}
+				}
+				if (free && bond >= 2 && !breathKey && (ev == ue->rightAttack || ev == ue->leftAttack) && g_hadDragon && !g_dive) {  // II: the dive
 					float down = 0;
 					if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
 						down = -cam->cameraRoot->world.rotate.entry[2][1];

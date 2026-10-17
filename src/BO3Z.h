@@ -432,6 +432,8 @@ namespace bo3z
 		inline constexpr int kBondCost[3] = { 2500, 4500, 7000 };
 		void BuyBond(RE::TESObjectREFR* a_shrine);
 		bool BondLocked();  // the next bond waits for something (III: a freed city)
+		void DevBreath(int a_element);  // dev: Bond III breath (0 fire, 1 frost, 2 lightning)
+		void DevFlap();
 		void DevTakeOff();  // dev: Bond II's Updraft shout
 		bool OnSpellCast(RE::FormID a_spell);  // the Updraft shout spoken: true if it was
 		void DevFlyOff();   // dev: the fly-off dragon, in front of you  // after the animation: arms down until the glider's dragon reaches you
