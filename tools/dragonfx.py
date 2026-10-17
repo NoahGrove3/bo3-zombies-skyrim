@@ -133,6 +133,7 @@ def beam(lines, name, length, r0, r1, a0, a1, tiles, sides=12, segs=26, fade_out
             ang = 2 * math.pi * k / sides
             x, z = r * math.cos(ang), r * math.sin(ang)
             lines.append(f'v {x:.2f} {y:.2f} {z:.2f} {2.0 * k / sides:.4f} {t * tiles:.3f} 1 1 1 {al:.3f}')
+            lines.append(f'n {math.cos(ang):.4f} 0 {math.sin(ang):.4f}')  # (an effect shape without normals is never drawn)
             lines.append('w 0 1.0')
     for i in range(segs):
         for k in range(sides):
