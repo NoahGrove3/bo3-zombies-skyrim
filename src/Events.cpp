@@ -487,12 +487,16 @@ namespace bo3z
 					logger::info("quests: Skyrim's floating quest markers off (ours instead)");
 				}
 			}
-			// no blood splattered over the screen when you are hit (the red edges of the HUD say it)
+			// no blood splattered over the screen when you are hit (the red edges of the HUD say it) - drawn invisible, not
+			// switched off: with bBloodSplatterEnabled off the game never builds its splatter node, and opening the map
+			// (which hides that node) crashed the game
 			if (auto* ini = RE::INISettingCollection::GetSingleton()) {
-				if (auto* st = ini->GetSetting("bBloodSplatterEnabled:ScreenSplatter")) {
-					st->data.b = false;
-					logger::info("hud: Skyrim's blood splatter on the screen off");
+				int n = 0;
+				for (const char* name : { "fBloodSplatterMaxOpacity:ScreenSplatter", "fBloodSplatterMaxOpacity2:ScreenSplatter", "fBloodSplatterMinOpacity:ScreenSplatter",
+						 "fBloodSplatterMinOpacity2:ScreenSplatter", "fBloodSplatterCountBase:ScreenSplatter", "fBloodSplatterCountRandomMargin:ScreenSplatter" }) {
+					if (auto* st = ini->GetSetting(name)) st->data.f = 0.0f, ++n;
 				}
+				logger::info("hud: Skyrim's blood splatter on the screen made invisible ({} settings)", n);
 			}
 			DarkenNights();
 			logger::info("data loaded");
