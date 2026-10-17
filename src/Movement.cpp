@@ -522,7 +522,8 @@ namespace bo3z
 			return 0.12f + 0.2f * std::sin(3.14159f * std::min(1.0f, k * 1.2f)) - 0.12f * Smooth((k - 0.6f) / 0.4f);
 		}
 		int   g_liftOff = 0;                 // Bond II: 1 the Updraft's whirlwind is carrying you up
-		float g_updraftAge = 99;             // seconds since the Updraft (a glider opened soon after: the dragon comes quicker)
+		float g_updraftAge = 99;
+		bool  g_glideQueued = false;         // Activate pressed on the Updraft's way up: the glider opens at its top             // seconds since the Updraft (a glider opened soon after: the dragon comes quicker)
 		struct Whirl
 		{
 			RE::ObjectRefHandle ref;
@@ -855,13 +856,22 @@ namespace bo3z
 				if (cc) {
 					GetVel(cc, v);
 				}
-				if (cc && g_takeT < 1.1f && !g_hadDragon) {
+				// up about 14 m in 1.15 s, slowing to the top; then it holds you there a moment, barely sinking, so there is
+				// time to open the glider (pressed on the way up, it opens at the top by itself)
+				if (cc && g_takeT < 1.75f && !g_hadDragon) {
 					cc->context.currentState = RE::hkpCharacterStateType::kInAir;
-					v.z = 60.0f + 1250.0f * (1 - Smooth(g_takeT / 1.1f));  // (about 7 m up, slowing to the top)
+					v.z = g_takeT < 1.15f ? 60.0f + 1600.0f * (1 - Smooth(g_takeT / 1.15f)) : 60.0f - 140.0f * Smooth((g_takeT - 1.15f) / 0.6f);
 					SetVel(cc, v);
 				}
-				if (g_takeT > 1.1f || g_hadDragon) {
-					g_liftOff = 0;
+				if (g_glideQueued && g_takeT > 1.15f && !g_hadDragon) {
+					g_glideQueued = false;
+					if (!a_player->NotifyAnimationGraph("StartPara")) {
+						DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
+					}
+					logger::info("glider: opened at the Updraft's top");
+				}
+				if (g_takeT > 1.75f || g_hadDragon) {
+					g_liftOff = 0, g_glideQueued = false;
 				}
 			}
 			if ((g_shoutCheck -= a_delta) <= 0) {
@@ -1594,6 +1604,9 @@ namespace bo3z
 				const bool free = !ui || !ui->GameIsPaused();
 				if (free && ev == ue->jump && g_hadDragon && g_flapT < 0 && g_flapWait <= 0) {  // I: the climbing wing-beats
 					g_flapT = 0, g_flapWait = kFlapAll + 1.5f;
+				}
+				if (free && bond >= 2 && ev == ue->activate && g_liftOff == 1 && !g_hadDragon && g_takeT < 1.15f) {
+					g_glideQueued = true;
 				}
 				// III: right attack (right trigger) breathes (5 s apart); II: attack looking down dives - the left hand
 				// (left trigger) for Bond III, whose right is the breath
