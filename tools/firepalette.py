@@ -10,7 +10,7 @@ RAMPS = {
     # (position along the ramp, colour) - the dim smoke-edge of the flame, its body, its hottest heart; kept saturated
     # to the top (the breath is drawn additively: a white heart washed every colour out)
     'fire_b1': [(0.0, (0, 0, 0)), (0.2, (4, 18, 80)), (0.5, (15, 70, 210)), (0.8, (45, 135, 255)), (1.0, (110, 185, 255))],
-    'fire_b2': [(0.0, (0, 0, 0)), (0.2, (70, 40, 0)), (0.5, (200, 140, 0)), (0.8, (250, 200, 20)), (1.0, (255, 235, 110))],
+    'fire_b2': [(0.0, (0, 0, 0)), (0.2, (60, 40, 0)), (0.5, (190, 140, 0)), (0.8, (235, 190, 0)), (1.0, (255, 215, 30))],
     'fire_b3': [(0.0, (0, 0, 0)), (0.2, (0, 50, 6)), (0.5, (20, 170, 25)), (0.8, (70, 235, 60)), (1.0, (150, 255, 130))],
 }
 
