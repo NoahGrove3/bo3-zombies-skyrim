@@ -1026,7 +1026,7 @@ namespace bo3z
 				float       level, rate;
 				bool        core;
 			};
-			static constexpr Part parts[3] = { { "BB1", 1.0f, 4.0f, true }, { "BB2", 0.6f, 3.0f, false }, { "BB3", 0.85f, 5.0f, false } };
+			static constexpr Part parts[3] = { { "BB1", 3.0f, 4.0f, true }, { "BB2", 2.2f, 3.0f, false }, { "BB3", 2.6f, 5.0f, false } };  // (an effect glows above 1)
 			for (const auto& pt : parts) {  // (its colours are baked into each bond's nif; its flame scrolls by itself)
 				FxLevel(node.get(), pt.name, a_b.level * pt.level * flick);
 			}

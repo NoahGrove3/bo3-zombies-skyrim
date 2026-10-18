@@ -10,7 +10,7 @@ BEAM = r'textures\CurseOfAlduin\Dragon\beam2.dds'
 
 
 def cone(L, name, length, r0, r1, a0, a1, tiles, color, vscroll, sides=14, segs=26, fade_out=0.2, blend='add'):
-    L.append(f'shape {name} tex={BEAM} color={color},1 scale=0 blend={blend} vscroll={vscroll}')
+    L.append(f'shape {name} tex={BEAM} color=1,1,1,1 scale=0 blend={blend} vscroll={vscroll}')  # (the colour is in the vertices: once, not twice)
     for i in range(segs + 1):
         t = i / segs
         y = 10 + (length - 10) * t
