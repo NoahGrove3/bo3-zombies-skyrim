@@ -127,6 +127,31 @@ namespace bo3z
 				if (dataLoaded) {
 					Intro::Install();  // keep MQQuickstart at 3 for the next new game
 				}
+				// (Noah) making your character: your armour comes off while the menu is up (you see the body and face you are
+				// shaping), and goes back on as it closes
+				if (a_event->menuName == RE::RaceSexMenu::MENU_NAME) {
+					static std::vector<RE::TESBoundObject*> worn;
+					auto* pl = RE::PlayerCharacter::GetSingleton();
+					auto* em = RE::ActorEquipManager::GetSingleton();
+					if (pl && em && a_event->opening) {
+						worn.clear();
+						for (auto& [obj, e] : pl->GetInventory([](RE::TESBoundObject& o) { return o.IsArmor(); })) {
+							if (obj && e.second && e.second->IsWorn()) {
+								worn.push_back(obj);
+							}
+						}
+						for (auto* o : worn) {
+							em->UnequipObject(pl, o, nullptr, 1, nullptr, false, false, false, true);
+						}
+						logger::info("character menu: {} pieces of armour taken off", worn.size());
+					} else if (pl && em && !a_event->opening && !worn.empty()) {
+						for (auto* o : worn) {
+							em->EquipObject(pl, o, nullptr, 1, nullptr, false, false, false, true);
+						}
+						logger::info("character menu: {} pieces of armour put back on", worn.size());
+						worn.clear();
+					}
+				}
 				if (a_event->menuName == RE::RaceSexMenu::MENU_NAME && !a_event->opening) {
 					// a character just made in a new game: black from here until the film (no glimpse of the road first)
 					auto* pl = RE::PlayerCharacter::GetSingleton();
