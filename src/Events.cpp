@@ -152,6 +152,44 @@ namespace bo3z
 						worn.clear();
 					}
 				}
+				// (Noah: too dark to see her) the menu lights you like a portrait: a warm key light in front of your face, a soft
+				// fill from the side (Skyrim's own load-screen lights), and midday for as long as the menu is up
+				if (a_event->menuName == RE::RaceSexMenu::MENU_NAME) {
+					static std::vector<RE::ObjectRefHandle> lamps;
+					static float                            hourWas = -1;
+					auto*                                   pl = RE::PlayerCharacter::GetSingleton();
+					auto*                                   cal = RE::Calendar::GetSingleton();
+					for (auto& h : lamps) {
+						if (auto r = h.get()) {
+							r->Disable();
+							r->SetDelete(true);
+						}
+					}
+					lamps.clear();
+					if (a_event->opening && pl && pl->Is3DLoaded()) {
+						if (cal && cal->gameHour) {
+							hourWas = cal->gameHour->value;
+							cal->gameHour->value = 12.5f;
+						}
+						const float        yaw = pl->GetAngleZ();
+						const RE::NiPoint3 F{ std::sin(yaw), std::cos(yaw), 0 }, R{ std::cos(yaw), -std::sin(yaw), 0 };
+						const RE::NiPoint3 at = pl->GetPosition();
+						struct L { RE::FormID id; RE::NiPoint3 off; };
+						const L kLamps[2] = { { 0x105300, F * 140.0f + R * 40.0f + RE::NiPoint3{ 0, 0, 150 } }, { 0x105305, F * 60.0f - R * 160.0f + RE::NiPoint3{ 0, 0, 110 } } };
+						for (const auto& l : kLamps) {
+							auto* base = RE::TESForm::LookupByID<RE::TESBoundObject>(l.id);
+							if (!base) continue;
+							if (auto ref = pl->PlaceObjectAtMe(base, false)) {
+								ref->SetPosition(at + l.off);
+								lamps.push_back(ref->CreateRefHandle());
+							}
+						}
+						logger::info("character menu: lit ({} lights)", lamps.size());
+					} else if (!a_event->opening && cal && cal->gameHour && hourWas >= 0) {
+						cal->gameHour->value = hourWas;
+						hourWas = -1;
+					}
+				}
 				if (a_event->menuName == RE::RaceSexMenu::MENU_NAME && !a_event->opening) {
 					// a character just made in a new game: black from here until the film (no glimpse of the road first)
 					auto* pl = RE::PlayerCharacter::GetSingleton();
