@@ -181,8 +181,45 @@ namespace bo3z
 				av->RestoreActorValue(RE::ActorValue::kHealth, g_lastHp - hp);
 			}
 		}
+		// (Noah: after a revive the first-person hands were gone and spells wouldn't cast until re-equipped) a moment after
+		// standing, the camera is flicked back to first person and what was in each hand is taken off and put back
+		float          g_rearm = -1;
+		RE::TESForm*   g_handR = nullptr;
+		RE::TESForm*   g_handL = nullptr;
+		bool           g_wasFirst = false;
+		void Rearm(RE::PlayerCharacter* a_player)
+		{
+			auto* em = RE::ActorEquipManager::GetSingleton();
+			auto* right = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42);
+			auto* left = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43);
+			if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && g_wasFirst) {
+				cam->ForceThirdPerson();
+				cam->ForceFirstPerson();
+			}
+			a_player->NotifyAnimationGraph("IdleForceDefaultState");
+			for (auto [form, slot] : { std::pair{ g_handR, right }, std::pair{ g_handL, left } }) {
+				if (!form || !em) {
+					continue;
+				}
+				if (auto* sp = form->As<RE::SpellItem>()) {
+					em->EquipSpell(a_player, sp, slot);
+				} else if (auto* obj = form->As<RE::TESBoundObject>()) {
+					em->UnequipObject(a_player, obj, nullptr, 1, slot, false, true, false, true);
+					em->EquipObject(a_player, obj, nullptr, 1, slot, false, true, false, true);
+				}
+			}
+			a_player->DrawWeaponMagicHands(true);
+			logger::info("perk: revive - hands re-armed ({} / {})", g_handR ? g_handR->GetName() : "none", g_handL ? g_handL->GetName() : "none");
+		}
+
 		void Revive(RE::PlayerCharacter* a_player, bool a_falling)
 		{
+			g_handR = a_player->GetEquippedObject(false);
+			g_handL = a_player->GetEquippedObject(true);
+			if (auto* cam = RE::PlayerCamera::GetSingleton()) {
+				g_wasFirst = cam->IsInFirstPerson() || g_wasFirst;
+			}
+			g_rearm = 0.6f;
 			auto* av = a_player->AsActorValueOwner();
 			const float max = av->GetPermanentActorValue(RE::ActorValue::kHealth);
 			av->RestoreActorValue(RE::ActorValue::kHealth, max);
@@ -237,6 +274,13 @@ namespace bo3z
 			}
 			auto* av = player->AsActorValueOwner();
 			const float max = av->GetPermanentActorValue(RE::ActorValue::kHealth);
+			if (g_rearm > 0 && (g_rearm -= dt) <= 0 && !player->AsActorState()->IsBleedingOut()) {
+				Rearm(player);
+				g_wasFirst = false;
+				g_rearm = -10.0f;
+			} else if (g_rearm <= 0 && g_rearm > -5.0f && player->AsActorState()->IsBleedingOut()) {
+				g_rearm = 0.3f;  // (still on its knees: once it's up)
+			}
 			if (g_grace > 0) {  // the moments after rising: kept on your feet and whole
 				g_grace -= dt;
 				if (player->AsActorState()->IsBleedingOut()) {
