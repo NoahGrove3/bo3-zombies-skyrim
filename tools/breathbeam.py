@@ -18,7 +18,9 @@ def cone(L, name, length, r0, r1, a0, a1, tiles, color, vscroll, sides=14, segs=
         al = (a0 + (a1 - a0) * t) * (min(1.0, t / 0.03) if t > 0 else 0.0) * min(1.0, (1 - t) / fade_out)
         for k in range(sides + 1):
             ang = 2 * math.pi * k / sides
-            L.append(f'v {r * math.cos(ang):.2f} {y:.2f} {r * math.sin(ang):.2f} {2.0 * k / sides:.4f} {t * tiles:.3f} 1 1 1 {al:.3f}')
+            # (its colour in the vertices too: the shader's own colour alone left it grey)
+            cr, cg, cb = (float(x) for x in color.split(','))
+            L.append(f'v {r * math.cos(ang):.2f} {y:.2f} {r * math.sin(ang):.2f} {2.0 * k / sides:.4f} {t * tiles:.3f} {cr:.3f} {cg:.3f} {cb:.3f} {al:.3f}')
             L.append(f'n {math.cos(ang):.4f} 0 {math.sin(ang):.4f}')
     for i in range(segs):
         for k in range(sides):
