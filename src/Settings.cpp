@@ -244,6 +244,8 @@ namespace bo3z::Settings
 	float CorpseSeconds() { Ensure(); return g_corpse; }
 	int   Key(int a_action) { Ensure(); return a_action >= 0 && a_action < kKeys ? g_keys[a_action] : 0; }
 
+	int Difficulty() { return GameDifficulty(); }
+
 	// the night's dead: their health against your hits, and their hits against you
 	float UndeadHealthMult()
 	{

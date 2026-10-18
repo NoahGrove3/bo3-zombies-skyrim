@@ -466,6 +466,11 @@ namespace bo3z
 				if (a_event && a_event->cause.get() == player && a_event->target) {
 					auto* z = a_event->target->As<RE::Actor>();
 					auto* src = RE::TESForm::LookupByID(a_event->source);
+					if (z && Director::IsRoundUndead(z)) {  // Trial of Steel: was it a blade, an axe, a mace or a fist?
+						auto*      w = src ? src->As<RE::TESObjectWEAP>() : nullptr;
+						const bool melee = !a_event->projectile && (src ? (w && !w->IsBow() && !w->IsCrossbow() && !w->IsStaff() && Forms::GunIndexOf(src) < 0) : true);
+						Curse::NoteHit(z->GetFormID(), melee);
+					}
 					if (const int ci = Arcana::IndexOf(src); z && ci >= 0) {
 						CofferHit(z, ci);  // the Coffer's spells: every one of them hurts every enemy
 					} else if (z && !z->IsDead() && Director::IsRoundUndead(z)) {

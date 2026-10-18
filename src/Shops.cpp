@@ -1335,6 +1335,7 @@ namespace bo3z
 
 		bool                g_menu = false;
 		int                 g_sel = 0;
+		int                 g_trialSel = 0;  // the controller's pick among the altar's trials
 		RE::ObjectRefHandle g_menuRef;
 
 		void BuyPerk(int perk, RE::TESObjectREFR* a_ref)
@@ -1501,9 +1502,11 @@ namespace bo3z
 		}
 
 		// The shrine's keys (the menu never pauses: the dead keep coming, so everything is one press away).
-		// Keyboard: 1 roll a spell, 2 reforge, 3 take the chosen blessing, 4 learn the city's Thu'um, mouse wheel or
-		// Left/Right picks a brew, Activate (E) or Backspace leaves; walking away closes it too.
-		// Gamepad: X roll, Y reforge, A bless, D-pad left/right pick, D-pad up Thu'um, B leave.
+		// Keyboard: 1 roll a spell, 2 reforge, 3 take the chosen perk, 4 learn the city's Thu'um, 5 bond the dragon,
+		// 6 7 8 9 0 take up one of the five trials, mouse wheel or Left/Right picks a perk, Activate (E) or Backspace
+		// leaves; walking away closes it too.
+		// Gamepad: X roll, Y reforge, A perk, D-pad left/right pick, LB/RB pick a trial, D-pad up take it up (once the
+		// city is freed: its Thu'um), D-pad down bond, B leave.
 		bool OnButton(const RE::ButtonEvent* a_event)
 		{
 			// the shrine's orb in the crosshair: Activate opens the shrine (Skyrim's own pick only finds its floor)
@@ -1537,6 +1540,7 @@ namespace bo3z
 					break;
 				case 2: BuyPerk(g_sel, ref); break;
 				case 3: Curse::ClaimRelic(ref ? TownOf(ref) : -1); break;
+				case 6: Curse::StartTrial(ref ? TownOf(ref) : -1, g_trialSel); break;
 				case 4:
 					Forms::Play(gen::Sound::ui_close);
 					g_menu = false;
@@ -1551,6 +1555,11 @@ namespace bo3z
 						act(k);
 						return true;
 					}
+				}
+				if (code >= 0x07 && code <= 0x0B) {  // 6 7 8 9 0: the trials
+					g_trialSel = static_cast<int>(code) - 0x07;
+					Curse::StartTrial(ref ? TownOf(ref) : -1, g_trialSel);
+					return true;
 				}
 				switch (code) {
 				case 0xCB: g_sel = (g_sel + n - 1) % n; Forms::Play(gen::Sound::ui_move); return true;  // left arrow
@@ -1573,7 +1582,15 @@ namespace bo3z
 				case 0x4000: act(0); return true;  // X (square)
 				case 0x8000: act(1); return true;  // Y (triangle)
 				case 0x1000: act(2); return true;  // A (cross)
-				case 0x0001: act(3); return true;  // dpad up
+				case 0x0001:  // dpad up: a held city's picked trial, a freed city's Thu'um
+					if (const int t = ref ? TownOf(ref) : -1; t >= 0 && !Curse::Freed(t)) {
+						act(6);
+					} else {
+						act(3);
+					}
+					return true;
+				case 0x0100: g_trialSel = (g_trialSel + 4) % 5; Forms::Play(gen::Sound::ui_move); return true;  // LB: the trial before
+				case 0x0200: g_trialSel = (g_trialSel + 1) % 5; Forms::Play(gen::Sound::ui_move); return true;  // RB: the next
 				case 0x0002: act(5); return true;  // dpad down: bond the dragon
 				case 0x0004: g_sel = (g_sel + n - 1) % n; Forms::Play(gen::Sound::ui_move); return true;  // dpad left
 				case 0x0008: g_sel = (g_sel + 1) % n; Forms::Play(gen::Sound::ui_move); return true;      // dpad right
@@ -1644,9 +1661,18 @@ namespace bo3z
 				h.shrineShout = -1;
 				h.dragonBond = Save::DragonBond();
 				h.bondLocked = Movement::BondLocked();
+				h.trialsOn = false;
 				if (g_menu) {
 					if (auto r = g_menuRef.get()) {
-						h.shrineShout = Curse::ClaimableShout(TownOf(r.get()));
+						const int t = TownOf(r.get());
+						h.shrineShout = Curse::ClaimableShout(t);
+						if (const auto v = Curse::Altar(t); v.on) {  // the city still held: its trials
+							h.trialsOn = true;
+							h.trialDone = v.done, h.trialActive = v.active, h.trialSel = g_trialSel;
+							h.trialDesc = v.desc;
+							h.trialCity = std::string(gen::kTowns[t]);
+							h.trialBoss = v.boss, h.trialBossLine = v.bossLine;
+						}
 					}
 				}
 			}

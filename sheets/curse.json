@@ -1,1231 +1,242 @@
 {
- "sheet": "curse",
- "about": "The Curse of Alduin: lore and the ten night rites every city must finish to be freed, different in every city (rites, by town). Rite types: slay (n risen in the city), wards (light n braziers round the shrine), order (light the braziers at the compass points in the order given, letters N E S W), relics (find n tokens hidden round the city), circle (keep the dead out of the shrine's ritual circle for n seconds; it resets if they swarm it), hold (stand at the shrine n seconds), champion (hunt a named champion: the champion row is its kind, championHealth its health in zombies' night health), herald (the night's boss in the fog). Progress lives in one global per city (step*1000 + progress), saved with the game. {city} is filled per city, {n} with the target. A freed city is a sanctuary: no undead rise within zoneRadius of its station or in its own location; its shout waits at the shrine.",
- "prologueTitle": "THE CURSE OF ALDUIN",
- "prologue": "Helgen burned, and you lived. But Alduin did not flee: as he rose from the ash he shouted three words into the earth - GRAH DIR LEIN, Battle, Death, World - and every barrow in Skyrim answered. Now when the sun goes down the dead claw their way up to finish what he began. Only the Echo Altars the ancient Tongues raised in every hold can still his voice, and they have gone dark. Wake them, city by city, and their dead will sleep again.",
- "liftedBanner": "THE ECHO ALTAR OF {CITY} AWAKENS",
- "liftedText": "The altar of {city} rings with the old Tongues' answer, and Alduin's voice falls silent here. Its dead sleep again: none will rise within its bounds.",
- "freedAll": "Every Echo Altar in Skyrim is awake. Alduin's voice lingers only in the wild places, and it will not fall silent until the World-Eater does.",
- "zoneRadius": 6500,
- "holdRadius": 900,
- "wardRadius": 150,
- "wardSeconds": 5,
- "wardDistance": 650,
- "heraldDelay": 20,
- "cities": [
-  {
-   "town": "Riverwood",
-   "landmark": "the Sleeping Giant Inn",
-   "location": "0x013163"
-  },
-  {
-   "town": "Whiterun",
-   "landmark": "the Gildergreen",
-   "location": "0x018A56"
-  },
-  {
-   "town": "Solitude",
-   "landmark": "the Blue Palace",
-   "location": "0x018A5A"
-  },
-  {
-   "town": "Windhelm",
-   "landmark": "the Palace of the Kings",
-   "location": "0x018A57"
-  },
-  {
-   "town": "Markarth",
-   "landmark": "the Hall of the Dead",
-   "location": "0x018A59"
-  },
-  {
-   "town": "Riften",
-   "landmark": "the Temple of Mara",
-   "location": "0x018A58"
-  },
-  {
-   "town": "Falkreath",
-   "landmark": "the old graveyard",
-   "location": "0x018A49"
-  },
-  {
-   "town": "Morthal",
-   "landmark": "the edge of the marsh",
-   "location": "0x018A53"
-  },
-  {
-   "town": "Dawnstar",
-   "landmark": "the frozen harbour",
-   "location": "0x018A50"
-  },
-  {
-   "town": "Winterhold",
-   "landmark": "the bridge to the College",
-   "location": "0x018A51"
+  "sheet": "curse",
+  "about": "The Curse of Alduin: lore, and the trials every city's Echo Altar sets before it wakes. At the altar the player picks any three of the five trials (trials), in any order; when three are done the city's Barrow-Jarl (bosses, by town) rises near the altar at night, and slaying it frees the city. Each trial's n and seconds are given per Skyrim difficulty, Novice to Legendary (iDifficulty 0-5). Progress lives in one global per city (1000000 + doneBits*100000 + active*10000 + progress, 9000000 = freed), saved with the game. {city} is filled per city, {n} and {s} with the trial's count and seconds. A freed city is a sanctuary: no undead rise within zoneRadius of its station or in its own location; its shout waits at the altar.",
+  "prologueTitle": "THE CURSE OF ALDUIN",
+  "prologue": "Helgen burned, and you lived. But Alduin did not flee: as he rose from the ash he shouted three words into the earth - GRAH DIR LEIN, Battle, Death, World - and every barrow in Skyrim answered. Now when the sun goes down the dead claw their way up to finish what he began. Only the Echo Altars the ancient Tongues raised in every hold can still his voice, and they have gone dark. Wake them, city by city, and their dead will sleep again.",
+  "liftedBanner": "THE ECHO ALTAR OF {CITY} AWAKENS",
+  "liftedText": "The altar of {city} rings with the old Tongues' answer, and Alduin's voice falls silent here. Its dead sleep again: none will rise within its bounds.",
+  "freedAll": "Every Echo Altar in Skyrim is awake. Alduin's voice lingers only in the wild places, and it will not fall silent until the World-Eater does.",
+  "zoneRadius": 6500,
+  "holdRadius": 900,
+  "cities": [
+    {
+      "town": "Riverwood",
+      "landmark": "the Sleeping Giant Inn",
+      "location": "0x013163"
+    },
+    {
+      "town": "Whiterun",
+      "landmark": "the Gildergreen",
+      "location": "0x018A56"
+    },
+    {
+      "town": "Solitude",
+      "landmark": "the Blue Palace",
+      "location": "0x018A5A"
+    },
+    {
+      "town": "Windhelm",
+      "landmark": "the Palace of the Kings",
+      "location": "0x018A57"
+    },
+    {
+      "town": "Markarth",
+      "landmark": "the Hall of the Dead",
+      "location": "0x018A59"
+    },
+    {
+      "town": "Riften",
+      "landmark": "the Temple of Mara",
+      "location": "0x018A58"
+    },
+    {
+      "town": "Falkreath",
+      "landmark": "the old graveyard",
+      "location": "0x018A49"
+    },
+    {
+      "town": "Morthal",
+      "landmark": "the edge of the marsh",
+      "location": "0x018A53"
+    },
+    {
+      "town": "Dawnstar",
+      "landmark": "the frozen harbour",
+      "location": "0x018A50"
+    },
+    {
+      "town": "Winterhold",
+      "landmark": "the bridge to the College",
+      "location": "0x018A51"
+    }
+  ],
+  "trials": [
+    {
+      "id": "ward",
+      "title": "Ward of the Tongues",
+      "short": "Hold the runic circle at the altar",
+      "goal": "Stand in the runic circle at the Echo Altar of {city}",
+      "text": "The Tongues who raised the Echo Altar of {city} sealed it with a circle of runes that only a living voice can hold open. Stand inside it while Alduin's echo drives the dead against you, thicker than any night before; step out and the runes fall quiet until you return. Hold the circle for {s} seconds.",
+      "n": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "seconds": [
+        40,
+        50,
+        60,
+        75,
+        90,
+        105
+      ]
+    },
+    {
+      "id": "culling",
+      "title": "The Culling",
+      "short": "Slay the risen before the echo swells",
+      "goal": "Slay the risen within {city} before time runs out",
+      "text": "GRAH - Battle. The first of Alduin's three words calls the dead to war, and the altar answers war with war. Put {n} of the risen down within {city} before {s} seconds pass, or the echo swells again and the count starts over.",
+      "n": [
+        20,
+        25,
+        30,
+        40,
+        50,
+        60
+      ],
+      "seconds": [
+        240,
+        225,
+        210,
+        195,
+        180,
+        165
+      ]
+    },
+    {
+      "id": "unbroken",
+      "title": "The Unbroken",
+      "short": "Slay the risen without falling below half health",
+      "goal": "Slay the risen within {city} without falling below half health",
+      "text": "DIR - Death. Alduin's second word feeds on the wounded. Slay {n} of the risen in {city} without letting your health fall below half; bleed past it and the count begins again.",
+      "n": [
+        12,
+        15,
+        20,
+        25,
+        30,
+        40
+      ],
+      "seconds": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "steel",
+      "title": "Trial of Steel",
+      "short": "Slay the risen in melee alone",
+      "goal": "Slay the risen within {city} with blade, axe, mace or fist",
+      "text": "The Barrow-Jarls ruled by the sword, and the old dead respect nothing else. Put {n} of the risen in {city} down in melee - no spell, no bow, no Thu'um counts.",
+      "n": [
+        10,
+        12,
+        15,
+        20,
+        25,
+        30
+      ],
+      "seconds": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "id": "breath",
+      "title": "The Long Night's Breath",
+      "short": "Survive the waves that rise round the altar",
+      "goal": "Survive the waves that rise round the Echo Altar of {city}",
+      "text": "LEIN - World. The last word is Alduin breathing the world back into his dead. {n} waves will claw up round the altar of {city}, each stronger than the last. Clear each one before {s} seconds pass, or the barrow breathes out again and the wave doubles.",
+      "n": [
+        3,
+        3,
+        4,
+        5,
+        6,
+        7
+      ],
+      "seconds": [
+        80,
+        70,
+        60,
+        55,
+        50,
+        45
+      ]
+    }
+  ],
+  "bosses": {
+    "Riverwood": {
+      "name": "Skjold Barrowborn",
+      "row": "knight",
+      "health": 20,
+      "text": "Skjold was laid in Bleak Falls Barrow before Riverwood had a name, a jarl of the first Nords who swore he would hold the valley forever. Alduin took him at his word. He rises from the river mist to keep the altar silent."
+    },
+    "Whiterun": {
+      "name": "Jarl Ulfgar the Bone-Crowned",
+      "row": "king",
+      "health": 26,
+      "text": "Before Dragonsreach there was Ulfgar, who ruled the plains from a hall of turf and wore the skulls of his rivals as a crown. Grah Dir Lein woke him under the Gildergreen's roots, and he means to rule Whiterun again."
+    },
+    "Solitude": {
+      "name": "The Wolf Queen's Shade",
+      "row": "lich",
+      "health": 26,
+      "text": "Potema Septim raised the dead of Solitude once in life and was sealed beneath the city for it. Alduin's word slipped through the seal. What rises is not the queen but her hunger, still calling the dead to her court."
+    },
+    "Windhelm": {
+      "name": "Vrolund Ice-Hand",
+      "row": "hexer_rime",
+      "health": 28,
+      "text": "Vrolund held Windhelm's gate in the Dragon War and froze the sea to keep the Atmorans' foes out. His barrow lies under the snow by the docks. His hand is still cold enough to stop a heart."
+    },
+    "Markarth": {
+      "name": "The Briar-Heart King",
+      "row": "reaper",
+      "health": 24,
+      "text": "The Reach's oldest king cut out his own heart and grew a briar in its place, so that no blade could find it. The Forsworn forgot him; the dead did not. He climbs from the stone beneath Markarth to guard the altar."
+    },
+    "Riften": {
+      "name": "Lady Hjaldis of the Black Mire",
+      "row": "wailer",
+      "health": 22,
+      "text": "Hjaldis drowned herself in the Black Mire rather than yield Riften to the dragons, and the swamp kept her. When Alduin shouted, the mire gave her back - wailing, and with the fen's dead at her heels."
+    },
+    "Falkreath": {
+      "name": "Hagla the Gravemother",
+      "row": "brute",
+      "health": 26,
+      "text": "Falkreath's graveyard is older than the town, and Hagla tended it when it was young. She buried every child of the hold, and now she wants them back. She rises from the oldest grave to keep them."
+    },
+    "Morthal": {
+      "name": "The Drowned Jarl of Hjaalmarch",
+      "row": "bloater",
+      "health": 24,
+      "text": "Hjaalmarch's first jarl sank with his longship in the marsh and never rose - until Grah Dir Lein. He walks out of the fog bloated with black water, and the marsh's dead follow him."
+    },
+    "Dawnstar": {
+      "name": "The Nightcaller Wight",
+      "row": "shadow",
+      "health": 22,
+      "text": "Once a priest of the Nightcaller Temple, the wight dreamed Alduin's return a thousand years before it came. It woke smiling. Kill it, and Dawnstar's nightmares end."
+    },
+    "Winterhold": {
+      "name": "Archmage Valdrek the Collapsed",
+      "row": "hexer_storm",
+      "health": 24,
+      "text": "Valdrek fell into the sea with half of Winterhold in the Great Collapse, still casting. The storm he was raising never finished. Now it walks the cliff-tops in his bones, and it is not finished yet."
+    }
   }
- ],
- "columns": [
-  "id",
-  "title",
-  "goal",
-  "text",
-  "target",
-  "verify"
- ],
- "rows": [
-  {
-   "id": "tithe",
-   "title": "The Ashen Tithe",
-   "goal": "Slay the risen within {city}",
-   "text": "The dead of {city} rise thickest near {landmark}, drawn to Alduin's curse like moths to a flame. Every one you put back in the ground loosens the curse's grip on the city. Slay {n} of the risen within {city}'s bounds.",
-   "target": 30,
-   "verify": []
-  },
-  {
-   "id": "wards",
-   "title": "The Ward-Fires of {city}",
-   "goal": "Light the ward-fires around the shrine",
-   "text": "Long ago the priests of {city} kept three ward-fires burning against the restless dead, until Alduin's curse snuffed them out. Three cold braziers now stand around your shrine. Stand by each one until it catches, and keep the dead off you while it does.",
-   "target": 3,
-   "verify": []
-  },
-  {
-   "id": "dawn",
-   "title": "The Vigil of {city}",
-   "goal": "Hold the shrine of {city}",
-   "text": "The curse's root lies beneath {city}'s shrine. Stand your ground there while the night throws everything it has at you. Hold the shrine for {n} seconds and the root will crack.",
-   "target": 180,
-   "verify": []
-  },
-  {
-   "id": "herald",
-   "title": "The Herald in the Fog",
-   "goal": "Slay the Herald of Alduin's curse",
-   "text": "Its root cracked, Alduin's curse calls its Herald: Grimmvar, the Undying Wyrm, who walks only in fog. The next night you face in {city}, the fog will roll in and the Herald will come for you. Slay it before dawn and the city is free.",
-   "target": 1,
-   "verify": []
-  }
- ],
- "rites": {
-  "Riverwood": [
-   {
-    "type": "relics",
-    "target": 4,
-    "title": "The Scattered Bones",
-    "goal": "Gather the grave-tokens round {city}",
-    "text": "When Alduin's curse first sang, Riverwood's old dead were torn from Bleak Falls Barrow and scattered. Four grave-tokens still smoulder where they fell. Grab them before the dead do.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 15,
-    "title": "Blood on the River",
-    "goal": "Slay the risen within {city}",
-    "text": "The dead come looking for what you took. Put {n} of them back in the ground before they reach the mill.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "wards",
-    "target": 3,
-    "title": "Lanterns of the Mill",
-    "goal": "Light the three mill lanterns",
-    "text": "Hod swears the dead won't cross a lit lantern. Three cold ones hang round your shrine. Stand by each until it catches - and keep your back covered.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "hold",
-    "target": 45,
-    "title": "Alvor's Anvil",
-    "goal": "Hold the shrine of {city}",
-    "text": "Alvor is forging silver for the village with the forge-door barred. Hold the shrine for {n} seconds so the hammer never stops.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "relics",
-    "target": 3,
-    "title": "Lucan's Golden Claw",
-    "goal": "Recover the claw fragments",
-    "text": "Alduin's curse cracked the Golden Claw's shadow in three and hid the pieces round the village. Lucan will pay - if you live. Find all three.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 20,
-    "title": "The Guardian Stones Watch",
-    "goal": "Slay the risen within {city}",
-    "text": "The Warrior, the Mage and the Thief are watching. Show them what you are: {n} more dead, no running.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "circle",
-    "target": 60,
-    "title": "The Barrow Rite",
-    "goal": "Keep the dead out of the ritual circle",
-    "text": "The shrine's circle can bind the barrow shut, but only if no dead thing crosses it while it burns. Keep them out for {n} seconds. If they swarm it, it starts again.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "order",
-    "target": 4,
-    "title": "Faendal's Arrows",
-    "goal": "Kindle the braziers where the arrows fell",
-    "text": "Faendal loosed four fire-arrows into the night - NORTH, then WEST, then SOUTH, then EAST. Light the braziers where they landed, in that order, or the dead hear you.",
-    "order": "NWSE",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 25,
-    "title": "The Last Wave",
-    "goal": "Slay the risen within {city}",
-    "text": "The barrow is emptying itself into the river. Break the last wave: {n} dead.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "champion",
-    "target": 1,
-    "title": "The Barrow-Lord",
-    "goal": "Slay Hrothgar the Barrow-Lord",
-    "text": "Bound out of his barrow, the Barrow-Lord walks Riverwood himself. Find Hrothgar in the night and end him.",
-    "order": "",
-    "champion": "king",
-    "championName": "Hrothgar the Barrow-Lord",
-    "championHealth": 25
-   }
-  ],
-  "Whiterun": [
-   {
-    "type": "wards",
-    "target": 4,
-    "title": "Kyne's Watchfires",
-    "goal": "Light the four watchfires",
-    "text": "Four watchfires once burned for Kyne round the Plains District. Stand by each until it catches, and keep the dead off you while it does.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 15,
-    "title": "Trouble at the Drunken Huntsman",
-    "goal": "Slay the risen within {city}",
-    "text": "Elrindir has locked the door and is shooting through the window. Help him thin them out: {n} dead.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "order",
-    "target": 4,
-    "title": "The Sun's Road",
-    "goal": "Kindle the braziers as the sun travels",
-    "text": "Kyne's priests lit their fires the way the sun walks: first EAST, then SOUTH at noon, then WEST, and NORTH last in the dark. Light them out of order and the dead will answer.",
-    "order": "ESWN",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "relics",
-    "target": 4,
-    "title": "The Gildergreen's Sap",
-    "goal": "Gather the glowing sap",
-    "text": "Danica says the Gildergreen bled when Alduin's curse began. Four drops of its sap glow somewhere in the city. Bring them home.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "hold",
-    "target": 50,
-    "title": "Skyforge Ringing",
-    "goal": "Hold the shrine of {city}",
-    "text": "Eorlund is quenching a blade on the Skyforge and won't stop for the dead. Hold the shrine {n} seconds while the forge rings.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 20,
-    "title": "Companions' Hunt",
-    "goal": "Slay the risen within {city}",
-    "text": "Aela has called a hunt, and you're the bait. {n} dead before the horn sounds.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "circle",
-    "target": 60,
-    "title": "Dragonsreach's Shadow",
-    "goal": "Keep the dead out of the warding circle",
-    "text": "The court wizard's circle needs one clean minute. Keep every dead thing out of it for {n} seconds.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "champion",
-    "target": 1,
-    "title": "The Ash-Skald",
-    "goal": "Hunt down the Ash-Skald",
-    "text": "A dead bard of Jorrvaskr sings Alduin's curse in the streets, and the dead dance to it. Shut him up for good.",
-    "order": "",
-    "champion": "knight",
-    "championName": "The Ash-Skald",
-    "championHealth": 18
-   },
-   {
-    "type": "slay",
-    "target": 25,
-    "title": "The Plains Burn",
-    "goal": "Slay the risen within {city}",
-    "text": "The tundra's dead march on the gates. {n} more and the Plains District holds.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "herald",
-    "target": 1,
-    "title": "The Herald in the Fog",
-    "goal": "Slay the Herald of Alduin's curse",
-    "text": "Whiterun has seen dragons fall. Tonight it watches you. Alduin's curse sends its Herald out of the fog: whatever great horror walks this night. Slay it before dawn and {city} is free.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   }
-  ],
-  "Solitude": [
-   {
-    "type": "slay",
-    "target": 15,
-    "title": "The Hangman's Dead",
-    "goal": "Slay the risen within {city}",
-    "text": "Everyone who swung from Solitude's gallows has climbed back down. Put {n} of them in the ground for good.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "wards",
-    "target": 3,
-    "title": "Lamps of the Bards College",
-    "goal": "Light the three college lamps",
-    "text": "Viarmo wants the college lamps lit before Alduin's song drowns out the students. Three lamps, three verses, no dead.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "relics",
-    "target": 5,
-    "title": "Bones of the Wolf Queen",
-    "goal": "Recover the Wolf Queen's bones",
-    "text": "Potema's bones were scattered so she could never rise again. Alduin's curse is gathering them. Find five pieces before it does.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "hold",
-    "target": 45,
-    "title": "The Blue Palace Gate",
-    "goal": "Hold the shrine of {city}",
-    "text": "Jarl Elisif has sealed the palace. Prove the gate never needed to close: hold the shrine {n} seconds.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "order",
-    "target": 4,
-    "title": "The Arch at Dusk",
-    "goal": "Kindle the braziers as the Arch lights",
-    "text": "The lamps along the great Arch are lit from the sea up: WEST, NORTH, EAST, SOUTH. Follow the old lamplighter's path.",
-    "order": "WNES",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 20,
-    "title": "East Empire Docks",
-    "goal": "Slay the risen within {city}",
-    "text": "Drowned sailors are crawling out of the harbour. {n} of them, and the cargo is safe.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "champion",
-    "target": 1,
-    "title": "Potema's Last Thrall",
-    "goal": "Destroy Potema's Last Thrall",
-    "text": "Her last thrall still serves her and raises the dead in her name. Destroy it.",
-    "order": "",
-    "champion": "lich",
-    "championName": "Potema's Last Thrall",
-    "championHealth": 22
-   },
-   {
-    "type": "relics",
-    "target": 3,
-    "title": "The Emperor's Seals",
-    "goal": "Recover the imperial seals",
-    "text": "Three imperial seals were lost when Castle Dour's dead broke loose. Find them before the Legion notices.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "circle",
-    "target": 75,
-    "title": "The Queen's Requiem",
-    "goal": "Keep the dead out of the requiem circle",
-    "text": "Sing her down. The priests' circle must burn for {n} seconds with no dead inside it. If they break it, it starts again.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "herald",
-    "target": 1,
-    "title": "The Herald in the Fog",
-    "goal": "Slay the Herald of Alduin's curse",
-    "text": "Potema's shadow is broken. Only her master is left. Alduin's curse sends its Herald out of the fog: whatever great horror walks this night. Slay it before dawn and {city} is free.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   }
-  ],
-  "Windhelm": [
-   {
-    "type": "order",
-    "target": 4,
-    "title": "The Five Hundred's Fires",
-    "goal": "Kindle the braziers in Ysgramor's order",
-    "text": "Ysgramor's companions lit their fires from the sea: NORTH where the ships came in, then EAST, then SOUTH, then WEST. Keep their order or the dead come.",
-    "order": "NESW",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 15,
-    "title": "The Grey Quarter's Dead",
-    "goal": "Slay the risen within {city}",
-    "text": "The dead are thick in the narrow streets. Slay {n} of them before they reach the Cornerclub.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "relics",
-    "target": 4,
-    "title": "The Butcher's Trophies",
-    "goal": "Recover the stolen remains",
-    "text": "Somebody - something - is collecting pieces of Windhelm's dead again. Four grisly trophies are hidden round the city. Find them.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "wards",
-    "target": 3,
-    "title": "Candlehearth Flames",
-    "goal": "Light the three hearth flames",
-    "text": "Elda swears the Candlehearth's flame has burned since the city was built. Carry it to three cold braziers round your shrine.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 20,
-    "title": "The Frozen Docks",
-    "goal": "Slay the risen within {city}",
-    "text": "The dead are walking across the frozen river. Break {n} of them on the ice.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "hold",
-    "target": 60,
-    "title": "Stand at Ysgramor's Shrine",
-    "goal": "Hold the shrine of {city}",
-    "text": "Stand your ground at the shrine while the night throws everything at you. Hold it for {n} seconds.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "circle",
-    "target": 60,
-    "title": "The Palace of the Kings",
-    "goal": "Keep the dead out of the royal circle",
-    "text": "Ulfric's housecarls have drawn a circle in salt. Keep it clean of dead for {n} seconds.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "relics",
-    "target": 3,
-    "title": "Ysgramor's Teeth",
-    "goal": "Find the war-horn fragments",
-    "text": "Three fragments of an old war-horn lie scattered round the city. Together they could still make the dead flinch.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 25,
-    "title": "The White River Rises",
-    "goal": "Slay the risen within {city}",
-    "text": "The river gives up its dead all at once. {n} more and Windhelm stands.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "champion",
-    "target": 1,
-    "title": "The Frost-Jarl",
-    "goal": "Slay the Frost-Jarl Hrolvar",
-    "text": "A jarl of the old Kings walks again, frozen and furious. Find Hrolvar in the night and break him.",
-    "order": "",
-    "champion": "king",
-    "championName": "Frost-Jarl Hrolvar",
-    "championHealth": 30
-   }
-  ],
-  "Markarth": [
-   {
-    "type": "relics",
-    "target": 5,
-    "title": "The Tonal Keys",
-    "goal": "Find the Dwemer tonal keys",
-    "text": "Five Dwemer tonal keys lie about the city. Together they can tune the old resonator against Alduin's curse. Find them.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 15,
-    "title": "The Warrens' Dead",
-    "goal": "Slay the risen within {city}",
-    "text": "The Warrens' poor were buried in the rock, and now they're climbing out. Lay {n} of them to rest.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "wards",
-    "target": 3,
-    "title": "Steam Vents of the Dwemer",
-    "goal": "Open the three steam vents",
-    "text": "Old Dwemer vents can scald the dead off the stairways. Wake three of them - stand close, it takes a moment.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "circle",
-    "target": 60,
-    "title": "The Tonal Resonator",
-    "goal": "Keep the dead out of the resonator's circle",
-    "text": "The resonator hums at your shrine. Keep the dead out of its circle for {n} seconds while it tunes the stone against Alduin's curse.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 20,
-    "title": "Cidhna Breakout",
-    "goal": "Slay the risen within {city}",
-    "text": "The dead of Cidhna Mine have broken their chains. Put {n} of them back underground.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "order",
-    "target": 4,
-    "title": "The Forsworn Totems",
-    "goal": "Kindle the totems in the Reach order",
-    "text": "The Forsworn burn their totems SOUTH to NORTH, then EAST to WEST. Get it wrong and the Reach itself answers.",
-    "order": "SNEW",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "hold",
-    "target": 50,
-    "title": "The Hall of the Dead",
-    "goal": "Hold the shrine of {city}",
-    "text": "Brother Verulus is sealing the catacombs. Hold the shrine {n} seconds and not one more corpse leaves the Hall.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "champion",
-    "target": 1,
-    "title": "The Witch-Bones",
-    "goal": "Destroy the Forsworn Witch-Bones",
-    "text": "A briarheart witch, long dead, raises the Reach's dead against the city. Destroy her.",
-    "order": "",
-    "champion": "wailer",
-    "championName": "The Forsworn Witch-Bones",
-    "championHealth": 22
-   },
-   {
-    "type": "slay",
-    "target": 25,
-    "title": "Silver-Blood Debt",
-    "goal": "Slay the risen within {city}",
-    "text": "Thonar Silver-Blood is paying in silver for every corpse. Collect: {n} dead.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "herald",
-    "target": 1,
-    "title": "The Herald in the Fog",
-    "goal": "Slay the Herald of Alduin's curse",
-    "text": "The stone city has gone quiet. Something enormous is listening. Alduin's curse sends its Herald out of the fog: whatever great horror walks this night. Slay it before dawn and {city} is free.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   }
-  ],
-  "Riften": [
-   {
-    "type": "slay",
-    "target": 15,
-    "title": "Rats in the Ratway",
-    "goal": "Slay the risen within {city}",
-    "text": "The Ratway is crawling with the dead. Clear {n} of them before they reach the market.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "relics",
-    "target": 4,
-    "title": "Brynjolf's Mark",
-    "goal": "Lift the four purses",
-    "text": "Brynjolf bets you can't lift four purses off the dead mid-fight. Prove him wrong - they're scattered round the city.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "wards",
-    "target": 3,
-    "title": "Mara's Candles",
-    "goal": "Light Mara's three candles",
-    "text": "Maramal says the dead hate love more than fire. Light three of Mara's candles round your shrine.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "champion",
-    "target": 1,
-    "title": "The Nightingale's Shade",
-    "goal": "Hunt the Nightingale's Shade",
-    "text": "A Nightingale who failed her oath stalks the canals, fast as a knife. Catch her if you can.",
-    "order": "",
-    "champion": "runner",
-    "championName": "The Nightingale's Shade",
-    "championHealth": 20
-   },
-   {
-    "type": "hold",
-    "target": 45,
-    "title": "The Bee and Barb",
-    "goal": "Hold the shrine of {city}",
-    "text": "Keerava has bet the tavern you'll hold the shrine {n} seconds. Don't make her pay.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 20,
-    "title": "Honningbrew Dead",
-    "goal": "Slay the risen within {city}",
-    "text": "The canal is choked with drowned dead. Fish out {n} of them.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "relics",
-    "target": 5,
-    "title": "Nocturnal's Keys",
-    "goal": "Find Nocturnal's keys",
-    "text": "Five keys of the Twilight Sepulcher are scattered round Riften. Nocturnal wants them back - and she'll return the favour.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "circle",
-    "target": 60,
-    "title": "The Black-Briar Ward",
-    "goal": "Keep the dead out of the ward circle",
-    "text": "Maven paid for this circle and expects results. Keep the dead out of it for {n} seconds.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "order",
-    "target": 4,
-    "title": "The Canal Locks",
-    "goal": "Open the locks in the right order",
-    "text": "The canal locks open EAST, NORTH, WEST, SOUTH. Open them out of order and the dead flood in.",
-    "order": "ENWS",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "hold",
-    "target": 75,
-    "title": "The Long Night",
-    "goal": "Hold the shrine of {city}",
-    "text": "The darkest night Riften has known. Hold the shrine for {n} seconds and Alduin's grip breaks.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   }
-  ],
-  "Falkreath": [
-   {
-    "type": "wards",
-    "target": 4,
-    "title": "Arkay's Grave-Candles",
-    "goal": "Light the four grave-candles",
-    "text": "Runil keeps grave-candles for every soul in Falkreath's yard. Four have gone out. Light them.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 15,
-    "title": "The Graveyard Shift",
-    "goal": "Slay the risen within {city}",
-    "text": "The graveyard is emptying faster than Runil can bury. Help him: {n} dead.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "relics",
-    "target": 5,
-    "title": "The Restless Graves",
-    "goal": "Lay the restless grave-markers",
-    "text": "The dead of {city} pulled up their own grave-markers. Find five and set them back.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "hold",
-    "target": 45,
-    "title": "Dead Man's Drink",
-    "goal": "Hold the shrine of {city}",
-    "text": "Valga has promised a free round to whoever holds the shrine {n} seconds. Earn your mead.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "order",
-    "target": 4,
-    "title": "The Tolling Order",
-    "goal": "Kindle the braziers in the tolling order",
-    "text": "Falkreath's funeral bell tolls SOUTH, WEST, NORTH, EAST. Kindle the braziers in that order and the dead must listen.",
-    "order": "SWNE",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 20,
-    "title": "Hunters' Moon",
-    "goal": "Slay the risen within {city}",
-    "text": "The forest's dead are coming out of the pines. {n} more for the hunters' tally.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "circle",
-    "target": 60,
-    "title": "The Lone Coffin",
-    "goal": "Keep the dead out of the vigil circle",
-    "text": "A coffin nobody remembers burying sits in your circle. Keep the dead away from it for {n} seconds.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "relics",
-    "target": 3,
-    "title": "Dengeir's Secrets",
-    "goal": "Find the old jarl's letters",
-    "text": "The old jarl hid three letters about what really lies under the graveyard. Find them - quickly.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 25,
-    "title": "The Yard Overflows",
-    "goal": "Slay the risen within {city}",
-    "text": "Every grave is open at once. {n} dead and it's finally quiet.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "champion",
-    "target": 1,
-    "title": "The Gravewarden",
-    "goal": "Slay the Gravewarden",
-    "text": "The graveyard's first keeper has come back to keep it his way. Put the Gravewarden down.",
-    "order": "",
-    "champion": "knight",
-    "championName": "The Gravewarden",
-    "championHealth": 28
-   }
-  ],
-  "Morthal": [
-   {
-    "type": "circle",
-    "target": 60,
-    "title": "The Marsh Vigil",
-    "goal": "Keep the dead out of the vigil circle",
-    "text": "Keep the dead out of the vigil circle for {n} seconds while the marsh lights burn.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 15,
-    "title": "Drowned Dead",
-    "goal": "Slay the risen within {city}",
-    "text": "The marsh is giving up its drowned. Slay {n} of them before they reach the longhouses.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "relics",
-    "target": 4,
-    "title": "Falion's Charms",
-    "goal": "Gather the warding charms",
-    "text": "Falion hung four warding charms on the boardwalks, and the dead tore them down. Find them.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "wards",
-    "target": 3,
-    "title": "Swamp-Lights",
-    "goal": "Light the three swamp-lights",
-    "text": "Will-o'-the-wisps lead the dead astray. Light three swamp-lights round your shrine and let them wander.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 20,
-    "title": "The Moorside Brawl",
-    "goal": "Slay the risen within {city}",
-    "text": "Jonna has barricaded the Moorside and handed out cleavers. Help her break {n} dead.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "order",
-    "target": 4,
-    "title": "The Fog Bells",
-    "goal": "Ring the fog bells in order",
-    "text": "Morthal's fog bells ring NORTH, SOUTH, EAST, WEST. Ring them wrong and the marsh answers.",
-    "order": "NSEW",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "champion",
-    "target": 1,
-    "title": "Movarth's Blood-Thrall",
-    "goal": "Destroy Movarth's Blood-Thrall",
-    "text": "Movarth's last thrall hunts the boardwalks. Destroy it.",
-    "order": "",
-    "champion": "bloater",
-    "championName": "Movarth's Blood-Thrall",
-    "championHealth": 22
-   },
-   {
-    "type": "hold",
-    "target": 50,
-    "title": "Highmoon Hall",
-    "goal": "Hold the shrine of {city}",
-    "text": "Jarl Idgrod has seen this night in a vision: you, holding the shrine {n} seconds. Make it true.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 25,
-    "title": "The Marsh Rises",
-    "goal": "Slay the risen within {city}",
-    "text": "The whole marsh stands up at once. {n} more.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "herald",
-    "target": 1,
-    "title": "The Herald in the Fog",
-    "goal": "Slay the Herald of Alduin's curse",
-    "text": "The fog thickens over the marsh. Something walks in it. Alduin's curse sends its Herald out of the fog: whatever great horror walks this night. Slay it before dawn and {city} is free.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   }
-  ],
-  "Dawnstar": [
-   {
-    "type": "relics",
-    "target": 5,
-    "title": "Shards of the Nightmare",
-    "goal": "Gather the nightmare shards",
-    "text": "Five shards of Vaermina's nightmare lie frozen round the harbour. Gather them before the town sleeps again.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 15,
-    "title": "Sleepless Dead",
-    "goal": "Slay the risen within {city}",
-    "text": "The dead of {city} never got to sleep. Give {n} of them the rest they want.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "wards",
-    "target": 3,
-    "title": "Harbour Beacons",
-    "goal": "Light the three harbour beacons",
-    "text": "The ships are blind in the fog. Light three beacons round your shrine and bring them home.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "order",
-    "target": 4,
-    "title": "The Dreamer's Path",
-    "goal": "Kindle the braziers along the dreamer's path",
-    "text": "Erandur walks the dreamer's path: WEST, NORTH, EAST, SOUTH. Follow it exactly.",
-    "order": "WNES",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 20,
-    "title": "The Iron-Breaker Mine",
-    "goal": "Slay the risen within {city}",
-    "text": "Miners are climbing out of the Iron-Breaker who should never have gone in. {n} of them, now.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "hold",
-    "target": 45,
-    "title": "Windpeak Inn",
-    "goal": "Hold the shrine of {city}",
-    "text": "Thoring has barred the inn and is pouring for anyone who holds the shrine {n} seconds.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "champion",
-    "target": 1,
-    "title": "Vaermina's Hound",
-    "goal": "Hunt Vaermina's Hound",
-    "text": "Something with too many teeth prowls the frozen harbour. Hunt Vaermina's Hound.",
-    "order": "",
-    "champion": "bloater",
-    "championName": "Vaermina's Hound",
-    "championHealth": 22
-   },
-   {
-    "type": "relics",
-    "target": 3,
-    "title": "Skooma Dreams",
-    "goal": "Find the stolen dream-salts",
-    "text": "Three pouches of dream-salt went missing from the Nightcaller Temple. Whoever finds the dead holding them, finds them.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 25,
-    "title": "The Long Dark",
-    "goal": "Slay the risen within {city}",
-    "text": "The sun won't rise until {n} more are down.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "circle",
-    "target": 75,
-    "title": "Wake the Town",
-    "goal": "Keep the dead out of the waking circle",
-    "text": "Keep the dead out of the waking circle for {n} seconds and Dawnstar wakes for good.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   }
-  ],
-  "Winterhold": [
-   {
-    "type": "wards",
-    "target": 4,
-    "title": "The Magnus Lights",
-    "goal": "Light the four Magnus lights",
-    "text": "Four lamps once burned with Magnus' light along the cliff. Light them again.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 15,
-    "title": "The Cliff Dead",
-    "goal": "Slay the risen within {city}",
-    "text": "The dead of drowned Winterhold climb the cliffs. Push {n} of them back into the sea.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "relics",
-    "target": 5,
-    "title": "Lost Pages of the College",
-    "goal": "Recover the College's lost pages",
-    "text": "Urag gro-Shub wants his pages back. Five of them blew across the town when Alduin's curse struck.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "hold",
-    "target": 45,
-    "title": "The Frozen Hearth",
-    "goal": "Hold the shrine of {city}",
-    "text": "Dagur has kept the Frozen Hearth's fire going for days. Hold the shrine {n} seconds so he can sleep.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 20,
-    "title": "Apprentice Trouble",
-    "goal": "Slay the risen within {city}",
-    "text": "A college apprentice raised far more than he meant to. Clean up: {n} dead.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "order",
-    "target": 4,
-    "title": "The Eye of Magnus",
-    "goal": "Kindle the braziers as the Eye turned",
-    "text": "The Eye of Magnus turned EAST, SOUTH, WEST, NORTH. Light the braziers the way it looked.",
-    "order": "ESWN",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "champion",
-    "target": 1,
-    "title": "The Drowned Archmage",
-    "goal": "Destroy the Drowned Archmage",
-    "text": "An Archmage lost with old Winterhold has walked out of the sea. Destroy him.",
-    "order": "",
-    "champion": "lich",
-    "championName": "The Drowned Archmage",
-    "championHealth": 24
-   },
-   {
-    "type": "circle",
-    "target": 60,
-    "title": "Arcanaeum Seal",
-    "goal": "Keep the dead out of the sealing circle",
-    "text": "Tolfdir's seal needs {n} seconds without a dead thing inside it.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "slay",
-    "target": 25,
-    "title": "The Great Collapse",
-    "goal": "Slay the risen within {city}",
-    "text": "Every soul lost in the Great Collapse is walking tonight. {n} more.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   },
-   {
-    "type": "hold",
-    "target": 75,
-    "title": "The Last Stand of Winterhold",
-    "goal": "Hold the shrine of {city}",
-    "text": "Hold the shrine for {n} seconds. Winterhold has fallen before. Not tonight.",
-    "order": "",
-    "champion": "",
-    "championName": "",
-    "championHealth": 0
-   }
-  ]
- }
 }

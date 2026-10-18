@@ -138,7 +138,7 @@ namespace bo3z::Party
 		{
 			int s = 0;
 			for (int t = 0; t < static_cast<int>(gen::kCurseCities.size()); ++t) {
-				s += Curse::Raw(t) / 1000;
+				s += Curse::Steps(t);
 			}
 			return s;
 		}
@@ -265,7 +265,7 @@ namespace bo3z::Party
 			const int  sum = RiteSum();
 			const bool fighting = Director::Fighting();
 			if ((g_riteSum >= 0 && sum > g_riteSum) || (g_wasFighting && !fighting)) {
-				Rise(1.0f, sum > g_riteSum ? "The rite is done: you rise again" : "Dawn: you rise again");
+				Rise(1.0f, sum > g_riteSum ? "A trial is done: you rise again" : "Dawn: you rise again");
 			} else {
 				g_watch += g_watchStep;
 				g_watchStep = 0;

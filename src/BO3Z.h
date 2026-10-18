@@ -131,6 +131,7 @@ namespace bo3z
 		void             Hazard(const RE::NiPoint3& a_at, float a_delay, float a_radius, float a_share, std::string_view a_look, bool a_stagger);
 		void             HurtPlayer(float a_share, bool a_stagger);
 		void             RaiseAt(const RE::NiPoint3& a_at);
+		RE::ActorHandle  RaiseTrial(const RE::NiPoint3& a_at, bool a_elite);  // a trial's wave: one more of tonight's dead (or an elite)
 		void             DevSpawn(std::string_view a_row, int a_count);  // DevTools: raise that undead in front of you
 		void             DevSpawnAt(std::string_view a_row, const RE::NiPoint3& a_at, float a_yawDeg);  // DevTools: ...at a point, facing yaw
 		void             DevShowUndead(bool a_show);  // DevTools: hide/show every undead we raised (clean plates for art captures)
@@ -280,6 +281,7 @@ namespace bo3z
 		bool        DragonBankReverse();          // the dragon leans out of its turns instead of into them (Noah's choice)
 		bool        DragonInvertDive();           // forward pulls up, back dives
 		float       CorpseSeconds();
+		int         Difficulty();                 // Skyrim's difficulty, 0 Novice .. 5 Legendary (the trials follow it)
 		float       UndeadHealthMult();           // Skyrim's difficulty (if followed) x the MCM's own
 		float       UndeadDamageMult();
 		int         Key(int a_action);
@@ -344,16 +346,27 @@ namespace bo3z
 		void  OnUndeadDeath(RE::Actor* a_actor);
 		void  OnBossSlain();
 		void  OnChampionSlain(int a_town);  // a city's champion fell (Director)
-		void  MigrateRites();
-		bool  Freed(int a_town);            // its Dirge is lifted (all ten rites done)               // a save from the four-rite cities: freed stays freed, a finale waiting stays the finale
+		void  MigrateRites();               // a save from the four-rite cities: freed stays freed, the rest begin the trials
+		bool  Freed(int a_town);            // its Echo Altar is awake (three trials and its Barrow-Jarl)
 		bool  SafeHere(RE::PlayerCharacter* a_player);  // in a freed city: no undead rise here
 		float SpawnBoost();                              // holding a shrine: the night pushes harder
 		int   ZoneTown();                                // city the player is in (-1)
 		int   RelicOf(int a_town);                       // the city's relic weapon (gun index, -1)
 		void  ClaimRelic(int a_town);                    // learn a freed city's Thu'um (the shrine's menu)
 		int   ClaimableShout(int a_town);                // the freed city's Thu'um not yet learned (-1)
-		int   Raw(int a_town);                           // the city's progress value (step*1000 + progress)
+		int   Raw(int a_town);                           // the city's progress value (1000000 + done*100000 + active*10000 + progress; 9000000 freed)
 		void  SetRaw(int a_town, int a_value);
+		int   Steps(int a_town);                         // trials done (0-3), 4 when freed
+		void  StartTrial(int a_town, int a_trial);       // the altar's menu: take up one of the five trials (gen::kTrials)
+		void  NoteHit(RE::FormID a_target, bool a_melee);  // the player's last blow on one of the dead (Trial of Steel)
+		struct AltarView
+		{
+			bool                       on{ false };  // the city is still held (its trials are offered)
+			int                        done{ 0 }, active{ 0 };  // bits of trials done; 0 none, 1-5 a trial, 6 the Barrow-Jarl
+			std::array<std::string, 5> desc;         // each trial with tonight's numbers
+			std::string                boss, bossLine;
+		};
+		AltarView Altar(int a_town);
 	}
 
 	namespace Intro
@@ -516,6 +529,13 @@ namespace bo3z
 			int         rollPhase{ 0 }, rollGun{ -1 }, rollCost{ 0 }, shrineShout{ -1 };
 			int         dragonBond{ 0 };   // the glider's dragon: its bond (0-3)
 			bool        bondLocked{ false };
+			// the altar's trials (the city still held): which are done, the one under way, the controller's pick, each with tonight's numbers
+			bool        trialsOn{ false };
+			int         trialDone{ 0 }, trialActive{ 0 }, trialSel{ 0 };
+			std::array<std::string, 5> trialDesc;
+			std::string trialCity, trialBoss, trialBossLine;
+			float       questTimer{ -1 };  // the trial under way: seconds left on its clock (-1 none)
+			bool        questWarn{ false };  // ...and it is in danger (time short, health low)
 			int         rollTarget{ -1 };              // the spell the roll will land on (Arcana index), for the reel
 			float       rollT{ 0 };
 			float       pulseT{ 0 }, pulseX{ 0.5f }, pulseY{ 0.5f };  // a freed shrine's wave (seconds left, its screen spot)

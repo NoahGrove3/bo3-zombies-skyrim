@@ -210,7 +210,7 @@ for e in EV['rows']:
     o.append(f'\t\tEventDef{{ {cs(e["id"])}, {cs(e["label"])}, {cs(e["banner"])}, {cs(wp)}, 0x{int(wid, 16):06X}, {F(e["spawnMult"])}, {F(e["speedMult"])}, {e["pointsMult"]}, {F(e["championWeight"])}, {F(e["dropMult"])}, {str(e["boss"]).lower()}, 0x{e["tint"]}, Sound::{e["sound"].split(":")[1]} }},')
 o.append('\t} };')
 o.append('\tenum EventId : int { ' + ', '.join(f'kEvent_{e["id"]} = {i}' for i, e in enumerate(EV['rows'])) + ' };')
-# the Undying Dirge (sheet: curse): per town in kTowns order
+# the Curse of Alduin (sheet: curse): per town in kTowns order
 CU = S['curse']
 cityOf = {c['town']: c for c in CU['cities']}
 assert all(t in cityOf for t in towns), 'curse.cities must list every town'
@@ -221,22 +221,23 @@ for t in towns:
     o.append(f'\t\tCurseCity{{ {cs(c["landmark"])}, 0x{int(c["location"], 16):06X}, 0x{IDS[("GLOB", "curse_" + t)]:03X} }},')
 o.append('\t} };')
 o.append('\tinline constexpr std::array<std::uint32_t, ' + str(len(towns)) + '> kRiteQuests{ ' + ', '.join(f'0x{IDS[("QUST", "rites_" + t)]:03X}' for t in towns) + ' };   // the cities\' quests in the journal')
-o.append('\tstruct CurseStep { std::string_view id, title, goal, text; int target; };')
-o.append(f'\tinline constexpr std::array<CurseStep, {len(CU["rows"])}> kCurseSteps{{ {{')
-for r in CU['rows']:
-    o.append(f'\t\tCurseStep{{ {cs(r["id"])}, {cs(r["title"])}, {cs(r["goal"])}, {cs(r["text"])}, {r["target"]} }},')
+o.append('\tstruct TrialDef { std::string_view id, title, shortText, goal, text; std::array<int, 6> n, seconds; };  // per Skyrim difficulty, Novice..Legendary')
+o.append(f'\tinline constexpr std::array<TrialDef, {len(CU["trials"])}> kTrials{{ {{')
+for r in CU['trials']:
+    assert len(r['n']) == 6 and len(r['seconds']) == 6, r['id']
+    o.append(f'\t\tTrialDef{{ {cs(r["id"])}, {cs(r["title"])}, {cs(r["short"])}, {cs(r["goal"])}, {cs(r["text"])}, {{ ' + ', '.join(map(str, r['n'])) + ' }, { ' + ', '.join(map(str, r['seconds'])) + ' } },')
 o.append('\t} };')
-RT = {'slay': 0, 'wards': 1, 'hold': 2, 'herald': 3, 'champion': 4, 'relics': 5, 'circle': 6, 'order': 7}
-o.append('\tenum RiteType : int { kRiteSlay = 0, kRiteWards, kRiteHold, kRiteHerald, kRiteChampion, kRiteRelics, kRiteCircle, kRiteOrder };')
-o.append('\tstruct RiteDef { int type, target; std::string_view title, goal, text, order, champion, championName; float championHealth; };')
-o.append(f'\tinline constexpr std::array<std::array<RiteDef, 10>, {len(towns)}> kRites{{ {{')
+o.append('\tenum TrialId : int { ' + ', '.join(f'kTrial_{r["id"]} = {i}' for i, r in enumerate(CU['trials'])) + ' };')
+enemyIds = {r['id'] for r in S['enemies']['rows']}
+o.append('\tstruct CityBoss { std::string_view name, row, text; float health; };  // each city\'s Barrow-Jarl, the fourth step (health: in a zombie\'s night health)')
+o.append(f'\tinline constexpr std::array<CityBoss, {len(towns)}> kCityBosses{{ {{')
 for t in towns:
-    rs = CU['rites'][t]; assert len(rs) == 10, t
-    o.append('\t\t{ { ' + ', '.join(f'RiteDef{{ {RT[r["type"]]}, {r["target"]}, {cs(r["title"])}, {cs(r["goal"])}, {cs(r["text"])}, {cs(r["order"])}, {cs(r["champion"])}, {cs(r["championName"])}, {F(r["championHealth"])} }}' for r in rs) + ' } },')
+    bo = CU['bosses'][t]; assert bo['row'] in enemyIds, (t, bo['row'])
+    o.append(f'\t\tCityBoss{{ {cs(bo["name"])}, {cs(bo["row"])}, {cs(bo["text"])}, {F(bo["health"])} }},')
 o.append('\t} };')
 o.append(f'\tinline constexpr std::uint32_t kCurseIntroGlobal = 0x{IDS[("GLOB", "curse_intro")]:03X}, kStandLayoutGlobal = 0x{IDS[("GLOB", "stand_layout")]:03X}, kDirgeBook = 0x{IDS[("BOOK", "dirge")]:03X}, kGuideBook = 0x{IDS[("BOOK", "guide")]:03X};')
 o.append(f'\tinline constexpr std::string_view kCursePrologueTitle = {cs(CU["prologueTitle"])}, kCursePrologue = {cs(CU["prologue"])}, kCurseLiftedBanner = {cs(CU["liftedBanner"])}, kCurseLiftedText = {cs(CU["liftedText"])}, kCurseFreedAll = {cs(CU["freedAll"])};')
-o.append(f'\tinline constexpr float kCurseZone = {F(CU["zoneRadius"])}, kCurseHoldRadius = {F(CU["holdRadius"])}, kCurseWardRadius = {F(CU["wardRadius"])}, kCurseWardSeconds = {F(CU["wardSeconds"])}, kCurseWardDistance = {F(CU["wardDistance"])}, kCurseHeraldDelay = {F(CU["heraldDelay"])};')
+o.append(f'\tinline constexpr float kCurseZone = {F(CU["zoneRadius"])}, kCurseHoldRadius = {F(CU["holdRadius"])};')
 o.append(f'\tinline constexpr std::uint32_t kWardBrazier = 0x{IDS[("STAT", "ward_brazier")]:03X}, kWardFire = 0x{IDS[("STAT", "ward_fire")]:03X}, kWardLight = 0x{IDS[("LIGH", "ward_light")]:03X};')
 # the ten spells (sheet: spellcraft): their numbers, colours and attacks for src/Spellcraft.inl
 SC = S['spellcraft']['rows']

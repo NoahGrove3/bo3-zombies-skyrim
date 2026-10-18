@@ -869,7 +869,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					TxtC(dl, g_title, 34 * k, size.x / 2, size.y * 0.10f, IM_COL32(230, 60, 50, 255), "YOU DIED", 3 * k, IM_COL32(120, 0, 0, 255));
 					TxtC(dl, g_body, 24 * k, size.x / 2, size.y * 0.10f + 46 * k, IM_COL32(230, 220, 205, 240),
 						pv.watching.empty() ? std::string("No one left standing...") : "Watching " + pv.watching + "   \xE2\x97\x80 \xE2\x96\xB6 to switch");
-					TxtC(dl, g_body, 20 * k, size.x / 2, size.y * 0.10f + 80 * k, IM_COL32(190, 180, 165, 220), "You rise again when a shrine's rite is complete, or at dawn");
+					TxtC(dl, g_body, 20 * k, size.x / 2, size.y * 0.10f + 80 * k, IM_COL32(190, 180, 165, 220), "You rise again when a trial is complete, or at dawn");
 				}
 				// the party, left side under the night: each friend's badge, name, health and state
 				{
@@ -1628,7 +1628,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const bool  note = s.questNoteTime > 0 && !s.questNote.empty();
 				const ImVec2 a{ size.x - w - 40 * k, 88 * k }, b{ size.x - 40 * k, 88 * k + (note ? 128 : 104) * k };  // under Skyrim's place name (top right)
 				Panel(dl, a, b, k, 0.92f);
-				Txt(dl, g_body, 14 * k, { a.x + 14 * k, a.y + 8 * k }, Fade(kGold, 0.85f), s.questCity + "  -  THE UNDYING DIRGE  " + std::to_string(s.questStep + 1) + "/" + std::to_string(gen::kRites[0].size()));
+				Txt(dl, g_body, 14 * k, { a.x + 14 * k, a.y + 8 * k }, Fade(kGold, 0.85f), s.questCity + "  -  TRIALS  " + std::to_string(s.questStep) + "/3");
 				Txt(dl, g_title, 22 * k, { a.x + 14 * k, a.y + 28 * k }, kParch, s.questTitle);
 				Txt(dl, g_body, 16 * k, { a.x + 14 * k, a.y + 58 * k }, IM_COL32(205, 200, 185, 240), s.questGoal);
 				static float qGhost = 0;
@@ -1637,6 +1637,23 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (note) {
 					Txt(dl, g_body, 15 * k, { a.x + 14 * k, a.y + 100 * k }, Fade(IM_COL32(255, 200, 110, 255), std::min(1.0f, s.questNoteTime)), s.questNote);
 				}
+			}
+			// the trial under way at night: a slim line under the compass - its name, its count, its clock
+			if (!s.questTitle.empty() && !s.perkMenu) {
+				const float y0 = 100 * k, cxs = size.x * 0.5f;
+				const ImU32 warn = IM_COL32(255, 96, 70, 255);
+				const bool  blink = s.questWarn && std::fmod(now, 0.8f) < 0.4f;
+				TxtC(dl, g_title, 20 * k, cxs, y0, Fade(kGold, 0.95f), s.questTitle, 2 * k, IM_COL32(150, 70, 255, 200));
+				std::string line = s.questGoal;
+				if (s.questTimer >= 0) {
+					const int t = std::max(0, static_cast<int>(std::ceil(s.questTimer)));
+					line += "     " + std::to_string(t / 60) + ":" + (t % 60 < 10 ? "0" : "") + std::to_string(t % 60);
+				}
+				TxtC(dl, g_body, 17 * k, cxs, y0 + 27 * k, blink ? warn : IM_COL32(225, 216, 196, 235), line, 1.2f * k, IM_COL32(0, 0, 0, 220));
+				const float bw = 220 * k;
+				const float fr = std::clamp(s.questFrac, 0.0f, 1.0f);
+				dl->AddRectFilled({ cxs - bw * 0.5f, y0 + 52 * k }, { cxs + bw * 0.5f, y0 + 55 * k }, IM_COL32(20, 16, 12, 170));
+				dl->AddRectFilled({ cxs - bw * 0.5f, y0 + 52 * k }, { cxs - bw * 0.5f + bw * fr, y0 + 55 * k }, IM_COL32(214, 178, 96, 255));
 			}
 			if (!s.sanctuary.empty()) {
 				TxtC(dl, g_title, 24 * k, size.x * 0.5f, 104 * k, Fade(kGold, 0.9f), "SANCTUARY OF " + s.sanctuary, 2 * k, IM_COL32(255, 220, 120, 255));
@@ -1647,7 +1664,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			{
 				static float shown = 0;
 				if (s.wardFrac > 0.001f) {
-					const float pace = dt / std::max(0.5f, gen::kCurseWardSeconds);
+					const float pace = dt / 5.0f;
 					shown = s.wardFrac > shown ? std::min(s.wardFrac + pace * 3, shown + std::max(pace, (s.wardFrac - shown) * std::min(1.0f, dt * 10))) : s.wardFrac;
 					shown = std::clamp(shown, 0.0f, 1.0f);
 				} else {
@@ -1841,7 +1858,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				if (front > 0) {
 					const ImVec2 c{ sum.x / front, sum.y / front - 70 * k };
-					const std::string head = s.ringHold ? (s.ringInside ? "STAND IN THE CIRCLE" : "HOLD THE SHRINE") : (s.ringInside ? "THE DEAD ARE IN THE CIRCLE" : "KEEP THE DEAD OUT");
+					const std::string head = s.ringHold ? (s.ringInside ? "STAND IN THE CIRCLE" : "HOLD THE CIRCLE") : (s.ringInside ? "THE DEAD ARE IN THE CIRCLE" : "KEEP THE DEAD OUT");
 					TxtC(dl, g_title, 20 * k, c.x, c.y, fl > 0.01f || s.ringInside ? IM_COL32(255, 120, 100, 255) : kParch, head, 2 * k, cold);
 					TxtC(dl, g_num, 26 * k, c.x, c.y + 26 * k, IM_COL32(230, 238, 255, 240), std::to_string(std::max(0, s.ringSeconds)) + "s", 1.5f * k, cold);
 				}
@@ -2164,8 +2181,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const auto& p = gen::kPerks[sel];
 					const int  have = s.perkStacks[sel];
 					keyCap({ L, y + 2 * k }, g_padLast ? std::string("A") : Settings::KeyName(2), s.points >= p.cost && have == 0);
-					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "TAKE A BLESSING");
-					const std::string rule = owned >= n ? "every blessing taken - death takes them all" : "one of each a life - death takes them all";
+					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "TAKE A PERK");
+					const std::string rule = owned >= n ? "every perk taken - death takes them all" : "one of each a life - death takes them all";
 					Txt(dl, g_body, 16 * k, { Rr - Measure(g_body, 16 * k, rule).x, y + 6 * k }, IM_COL32(170, 156, 132, 220), rule);
 					y += 36 * k;
 					const float d = std::min(44 * k, (Rr - L) / n - 4 * k), gap = ((Rr - L) - d * n) / std::max(1, n - 1);
@@ -2237,9 +2254,69 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				Divider(dl, cx, b.y - 58 * k, w * 0.38f, k, 0.7f);
 				if (g_padLast) {  // the controller's buttons when it is in hand, the keys otherwise
-					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), std::string("D-pad Left / Right: choose a brew   \xC2\xB7   ") + (Settings::PlayStationIcons() ? "Circle" : "B") + " leave");
+					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), std::string("D-pad Left / Right: choose a perk   \xC2\xB7   ") + (Settings::PlayStationIcons() ? "Circle" : "B") + " leave");
 				} else {
-					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), "Wheel or Left / Right: choose a brew   \xC2\xB7   E or " + Settings::KeyName(4) + " leave");
+					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), "Wheel or Left / Right: choose a perk   \xC2\xB7   E or " + Settings::KeyName(4) + " leave");
+				}
+				// the city's trials, in a panel of their own beside the altar's: any three of the five, then its Barrow-Jarl
+				if (s.trialsOn) {
+					const float tw = 440 * k, th = 600 * k;
+					const ImVec2 ta{ a.x - tw - 18 * k, a.y }, tb{ ta.x + tw, ta.y + th };
+					Panel(dl, ta, tb, k, 0.92f);
+					const float tcx = (ta.x + tb.x) * 0.5f, TL = ta.x + 20 * k, TR = tb.x - 20 * k;
+					TxtC(dl, g_title, 25 * k, tcx, ta.y + 16 * k, IM_COL32(232, 214, 176, 255), "TRIALS OF " + Upper(s.trialCity), 2.5f * k, IM_COL32(150, 70, 255, 255));
+					Divider(dl, tcx, ta.y + 52 * k, tw * 0.38f, k);
+					int doneCount = 0;
+					for (int q = 0; q < 5; ++q) {
+						doneCount += (s.trialDone >> q) & 1;
+					}
+					const bool full = doneCount >= 3 || s.trialActive == 6;
+					TxtC(dl, g_body, 16 * k, tcx, ta.y + 62 * k, IM_COL32(196, 182, 160, 235), "Take up any three, in any order  -  " + std::to_string(doneCount) + " of 3 done");
+					float ty = ta.y + 92 * k;
+					static constexpr const char* kRoman[5] = { "I", "II", "III", "IV", "V" };
+					static constexpr const char* kKeys[5] = { "6", "7", "8", "9", "0" };
+					for (int q = 0; q < 5; ++q) {
+						const bool   done = (s.trialDone >> q) & 1, active = s.trialActive == q + 1, open = !done && !active && !full;
+						const bool   sel = g_padLast && q == std::clamp(s.trialSel, 0, 4);
+						const ImVec2 ra{ TL - 8 * k, ty - 4 * k }, rb{ TR + 8 * k, ty + 62 * k };
+						if (active) {
+							dl->AddRectFilled(ra, rb, IM_COL32(120, 60, 20, static_cast<int>(70 + 40 * std::sin(now * 3.0f))), 3 * k);
+						}
+						if (sel) {
+							dl->AddRect(ra, rb, kGold, 3 * k, 0, 1.6f * k);
+						}
+						if (g_padLast) {
+							if (sel && open) {
+								PadGlyph(dl, { TL + 13 * k, ty + 15 * k }, 13 * k, "DU");
+							} else {
+								TxtC(dl, g_title, 18 * k, TL + 13 * k, ty + 4 * k, done ? kGold : IM_COL32(170, 156, 132, 220), kRoman[q]);
+							}
+						} else {
+							keyCap({ TL, ty + 2 * k }, kKeys[q], open);
+						}
+						const ImU32 tc = done ? kGold : active ? IM_COL32(255, 196, 120, 255) : open ? kParch : IM_COL32(140, 130, 116, 220);
+						Txt(dl, g_title, 20 * k, { TL + 38 * k, ty + 2 * k }, tc, std::string(gen::kTrials[q].title));
+						Txt(dl, g_body, 16 * k, { TL + 38 * k, ty + 30 * k }, done || open || active ? IM_COL32(196, 182, 160, 235) : IM_COL32(130, 120, 108, 210), s.trialDesc[q]);
+						const char* state = done ? "DONE" : active ? "UNDER WAY" : "";
+						if (*state) {
+							Txt(dl, g_body, 15 * k, { TR - Measure(g_body, 15 * k, state).x, ty + 6 * k }, done ? kGold : IM_COL32(255, 176, 90, 255), state);
+						}
+						if (done) {  // a gold tick
+							const ImVec2 t{ TR - Measure(g_body, 15 * k, "DONE").x - 14 * k, ty + 15 * k };
+							dl->AddLine({ t.x - 4 * k, t.y }, { t.x - 1 * k, t.y + 4 * k }, kGold, 2.0f * k);
+							dl->AddLine({ t.x - 1 * k, t.y + 4 * k }, { t.x + 5 * k, t.y - 4 * k }, kGold, 2.0f * k);
+						}
+						ty += 70 * k;
+					}
+					Divider(dl, tcx, ty + 2 * k, tw * 0.30f, k, 0.6f);
+					ty += 16 * k;
+					const bool bossUp = s.trialActive == 6;
+					const ImU32 bc = bossUp ? IM_COL32(255, 92, 60, 255) : IM_COL32(170, 120, 104, 230);
+					Txt(dl, g_title, 20 * k, { TL, ty }, bc, "THE BARROW-JARL: " + s.trialBoss, bossUp ? 1.5f * k : 0.0f, bc);
+					TxtWrap(dl, g_body, 16 * k, { TL, ty + 30 * k }, IM_COL32(196, 182, 160, 235), s.trialBossLine, TR - TL, 2);
+					Divider(dl, tcx, tb.y - 58 * k, tw * 0.38f, k, 0.7f);
+					TxtC(dl, g_body, 16 * k, tcx, tb.y - 44 * k, IM_COL32(200, 186, 160, 225),
+						g_padLast ? std::string("LB / RB: choose a trial   \xC2\xB7   D-pad Up: take it up") : std::string("6 - 0: take up a trial  (a new one sets the last aside)"));
 				}
 			} else if (s.rollPhase > 0) {
 				// the roll with the menu closed: a small strip under the crosshair

@@ -395,21 +395,32 @@ recs['QUST'].append(record('QUST', fid('QUST', 'mcm'), [
     sub('ALST', struct.pack('<I', 0)), sub('ALID', z('PlayerAlias')), sub('FNAM', struct.pack('<I', 0)),
     sub('ALFR', struct.pack('<I', 0x14)), sub('VTCK', struct.pack('<I', 0)), sub('ALED', b'')]))
 
-# The cities' rites in Skyrim's Quests journal: one quest per city (Dawnguard's crest), a stage and an objective for
-# each of its ten rites (the log tells the rite's story), stage 200 when the city is freed. One alias, the Target, which
-# the game points at where the rite wants you (src/Curse.cpp Journal): its compass and map marker.
+# Each city's Echo Altar in Skyrim's Quests journal: one quest per city (Dawnguard's crest). Stage 10 tells the altar's
+# call; stage 20+i the story of trial i when it is taken up (any three, in any order); stage 100 the city's Barrow-Jarl; stage
+# 200 when the city is freed. Objectives: 0 choose a trial at the altar, 1-5 the trials, 6 slay the Barrow-Jarl (src/Curse.cpp
+# Journal shows and ticks them). One alias, the Target, which the game points at where the trial wants you: its compass and
+# map marker. (Counts and seconds follow Skyrim's difficulty, so the log gives them in the trial's own HUD line instead.)
 CU = S['curse']
-def fill(t, c, n):
-    return t.replace('{city}', c['town']).replace('{landmark}', c.get('landmark', '')).replace('{n}', str(n))
+def fill(t, c):
+    return t.replace('{city}', c['town']).replace('{landmark}', c.get('landmark', ''))
+def unnumbered(t):  # the journal can't know the difficulty: "{n} of the risen" -> "the risen", "{s} seconds" -> "the time the altar asks"
+    return t.replace('Put {n} of the risen', 'Put the risen').replace('Slay {n} of the risen', 'Slay the risen').replace('{n} waves', 'Wave upon wave') \
+            .replace('before {s} seconds pass', 'before the altar\'s time runs out').replace('Hold the circle for {s} seconds.', 'Hold the circle until the runes blaze.')
 for c in CU['cities']:
-    rites = CU['rites'][c['town']]
+    boss = CU['bosses'][c['town']]
     subs = [sub('EDID', z('UN_Rites_' + c['town'])), sub('FULL', z('The Echo Altar: ' + c['town'])),
             sub('DNAM', struct.pack('<HBBII', 0x0000, 60, 0xFF, 0, 10)), sub('NEXT', b'')]
-    for i, r in enumerate(rites):
-        subs += [sub('INDX', struct.pack('<HBB', (i + 1) * 10, 0, 0)), sub('QSDT', b'\x00'), sub('CNAM', z(fill(r['title'], c, r['target']) + ': ' + fill(r['text'], c, r['target'])))]
+    stages = [(10, f"The Echo Altar of {c['town']} has woken, but only half: Alduin's echo still holds the city. The altar offers five trials. "
+                   f"Any three will do, in any order - and when three are done, the Barrow-Jarl who silenced the altar, {boss['name']}, will rise to stop me.")]
+    stages += [(20 + i, f"{tr['title']}: " + fill(unnumbered(tr['text']), c)) for i, tr in enumerate(CU['trials'])]
+    stages += [(100, f"{boss['name']}: {boss['text']} It walks the night near the Echo Altar. Strike it down and the altar wakes.")]
+    for st, text in stages:
+        assert '{' not in text, text
+        subs += [sub('INDX', struct.pack('<HBB', st, 0, 0)), sub('QSDT', b'\x00'), sub('CNAM', z(text))]
     subs += [sub('INDX', struct.pack('<HBB', 200, 0, 0)), sub('QSDT', b'\x01'), sub('CNAM', z(c['town'] + ' is free. ' + CU['liftedText'].replace('{city}', c['town'])))]
-    for i, r in enumerate(rites):
-        subs += [sub('QOBJ', struct.pack('<H', i)), sub('FNAM', struct.pack('<I', 0)), sub('NNAM', z(fill(r['goal'], c, r['target']))),
+    objectives = [f"Choose a trial at the Echo Altar of {c['town']}"] + [fill(tr['goal'], c) for tr in CU['trials']] + [f"Slay {boss['name']}"]
+    for i, text in enumerate(objectives):
+        subs += [sub('QOBJ', struct.pack('<H', i)), sub('FNAM', struct.pack('<I', 0)), sub('NNAM', z(text)),
                  sub('QSTA', struct.pack('<iI', 0, 1))]
     subs += [sub('ANAM', struct.pack('<I', 1)), sub('ALST', struct.pack('<I', 0)), sub('ALID', z('Target')),
              sub('FNAM', struct.pack('<I', 0x2 | 0x10)), sub('VTCK', struct.pack('<I', 0)), sub('ALED', b'')]
@@ -488,7 +499,14 @@ def guide_text():
            p("<b>Call a spell</b> - the altar turns and gives you one of the spells of the fallen. Each call costs more than the last until dawn."),
            p("<b>Reforge</b> - make the spell in your hands stronger, three times over."),
            p("<b>Perks</b> - lasting gifts. You carry five at most."),
-           p("<b>Trials</b> - the quest that wakes the altar. Finish them and slay the city's Barrow-Jarl to make the city safe for good."),
+           p("<b>Trials</b> - the quest that wakes the altar. It offers five; take up any three, in any order (keys 6 to 0, or the shoulder buttons and D-pad up). "
+             "When three are done the city's Barrow-Jarl rises at night near the altar. Slay it and the city is safe for good. Skyrim's difficulty sets how hard the trials are."),
+           "[pagebreak]", h("The Five Trials"),
+           p("<b>Ward of the Tongues</b> - stand in the runic circle round the altar while the dead come faster. Step out and the count waits for you."),
+           p("<b>The Culling</b> - kill a number of the risen in the city before the timer runs out, or the count starts again."),
+           p("<b>The Unbroken</b> - kill a number of the risen without falling below half health. Fall below and the count starts again."),
+           p("<b>Trial of Steel</b> - only kills with a melee weapon or your fists count."),
+           p("<b>The Long Night's Breath</b> - waves rise round the altar, each stronger than the last. Clear each before its timer, or it doubles."),
            "[pagebreak]", h("Spells"),
            p("Tap the attack to throw a bolt. Hold it, and both hands gather the spell's full power: the longer you hold, the harder it strikes. "
              "Let go too soon and the power gutters out. Magicka comes back fast."),

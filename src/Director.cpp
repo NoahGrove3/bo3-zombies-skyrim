@@ -1023,7 +1023,7 @@ namespace bo3z
 				Audio::LoopStart(Audio::kLoopNight, bed);
 			}
 			if (ev.boss && !Coop::Client() && g_boss.spawnIn < 0 && !g_boss.handle.get() && !g_boss.slainTonight) {
-				g_boss.spawnIn = gen::kCurseHeraldDelay;
+				g_boss.spawnIn = 20.0f;
 			}
 			logger::info("event: {} night", ev.id);
 		}
@@ -1845,6 +1845,31 @@ namespace bo3z
 				SpawnOne(p, 0, &a_at);
 			}
 		}
+		// a trial's wave (src/Curse.cpp): one of tonight's dead at a point (or a Thane of the Mound / Bone Jotunn when elite),
+		// beyond the night's usual crowd
+		RE::ActorHandle RaiseTrial(const RE::NiPoint3& a_at, bool a_elite)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || g_phase != Phase::Fighting || Coop::Client() || static_cast<int>(g_alive.size()) >= R.maxAlive + 24) {
+				return {};
+			}
+			std::optional<std::size_t> row;
+			if (a_elite) {
+				const std::string_view pick = std::uniform_int_distribution<int>(0, 1)(g_rng) ? "reaper" : "brute";
+				for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
+					if (gen::kEnemies[i].id == pick) {
+						row = i;
+					}
+				}
+			} else {
+				row = PickEnemy();
+			}
+			if (!row || !SpawnOne(p, static_cast<int>(*row), &a_at)) {
+				return {};
+			}
+			auto a = g_alive.back().handle.get();
+			return a ? a->GetHandle() : RE::ActorHandle{};
+		}
 		bool  IsBoss(RE::Actor* a_actor) { auto b = g_boss.handle.get(); return a_actor && b && b.get() == a_actor; }
 		bool IsRoundUndead(RE::Actor* a_actor)
 		{
@@ -1901,8 +1926,8 @@ namespace bo3z
 				g_event = fog;
 				StartEvent(fog);
 			}
-			g_boss.spawnIn = gen::kCurseHeraldDelay;
-			Hud::Banner("THE FOG ROLLS IN - THE HERALD OF THE DIRGE IS COMING", 6.0f);
+			g_boss.spawnIn = 20.0f;
+			Hud::Banner("THE FOG ROLLS IN - ALDUIN'S HERALD IS COMING", 6.0f);
 		}
 		// The curse lifted: a wave of light runs out from the shrine and each of the night's dead it reaches is struck
 		// down (a flash of Turn Undead where it stands, the body falls), then crumbles to grave-dust a few seconds on -

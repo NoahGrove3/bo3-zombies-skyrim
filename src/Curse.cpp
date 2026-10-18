@@ -1,23 +1,29 @@
 #include "BO3Z.h"
 
-// The Undying Dirge (sheet: curse). At Helgen, Alduin's word raised every grave in Skyrim; the curse is rooted in the
-// cities of the holds. Each city has its own four rites (curse.rites), in order, of these kinds:
-//   slay      put n of the risen down within the city
-//   wards     light n braziers round the shrine (stand by each until it catches)
-//   order     light the braziers at the compass points in the order the rite's lore gives (wrong: they go out, the dead come)
-//   relics    find n tokens hidden round the city (day or night: walk up to each)
-//   circle    keep the dead out of the shrine's ritual circle for n seconds (they swarm it: it breaks, it starts again)
-//   hold      stand at the shrine n seconds while the night pushes harder
-//   champion  hunt a named champion through the night
-//   herald    the fog rolls in and the night's boss rises; slay it
-// After the fourth the city is freed (and the night ends): a sanctuary where no undead rise, its shout waiting at the
-// shrine. Progress: one global per city (step*1000 + progress).
+// The Curse of Alduin (sheet: curse). At Helgen, Alduin shouted GRAH DIR LEIN into the earth and every barrow in
+// Skyrim answered; the Echo Altars the Tongues raised in every city have woken only half. Each altar sets five trials
+// (curse.trials); the player takes up any three, in any order, at the altar's menu:
+//   ward      Ward of the Tongues: stand in the runic circle round the altar while the dead come faster (leaving pauses it)
+//   culling   The Culling: n kills in the city before the clock runs out (or the count starts again)
+//   unbroken  The Unbroken: n kills without falling below half health (or the count starts again)
+//   steel     Trial of Steel: n melee kills
+//   breath    The Long Night's Breath: n waves round the altar, each stronger; clear each before its clock or it doubles
+// When three are done the city's Barrow-Jarl (curse.bosses) rises near the altar at night; slay it and the city is freed
+// (and the night ends): a sanctuary where no undead rise, its shout waiting at the altar. Counts, clocks, the ward's
+// swarm, the waves' elites and the Barrow-Jarl's health follow Skyrim's difficulty (Novice..Legendary). Trials run at night.
+// Progress: one global per city, 1000000 + doneBits*100000 + active*10000 + progress (active 0 none, 1-5 a trial, 6 the
+// Barrow-Jarl), 9000000 freed. Every step only grows the value, so the party's sync (the biggest wins) carries it.
 namespace bo3z
 {
 	namespace
 	{
-		constexpr int kFreed = static_cast<int>(gen::kRites[0].size());  // ten rites a city
-		float         Rand01()
+		constexpr int kTrialCount = static_cast<int>(gen::kTrials.size());
+		constexpr int kNeeded = 3;            // trials to take before the Barrow-Jarl
+		constexpr int kFreed = kNeeded + 1;   // steps: three trials and the Barrow-Jarl
+		constexpr int kBase = 1'000'000, kFreedValue = 9'000'000, kBossActive = 6;
+		static_assert(kTrialCount == 5);
+
+		float Rand01()
 		{
 			static std::mt19937 r{ std::random_device{}() };
 			return std::uniform_real_distribution<float>(0.0f, 1.0f)(r);
@@ -32,13 +38,55 @@ namespace bo3z
 			auto* g = Global(gen::kCurseCities[a_town].global);
 			return g ? static_cast<int>(std::lround(g->value)) : 0;
 		}
-		int  Step(int a_town) { return std::clamp(Value(a_town) / 1000, 0, kFreed); }
-		int  Prog(int a_town) { return Value(a_town) % 1000; }
-		void Set(int a_town, int a_step, int a_prog)
+		void SetValue(int a_town, int a_v)
 		{
 			if (auto* g = Global(gen::kCurseCities[a_town].global)) {
-				g->value = static_cast<float>(a_step * 1000 + std::clamp(a_prog, 0, 999));
+				g->value = static_cast<float>(a_v);
 			}
+		}
+
+		struct St
+		{
+			bool freed{ false };
+			int  done{ 0 }, active{ 0 }, prog{ 0 };
+			int  Count() const { return std::popcount(static_cast<unsigned>(done & 31)); }
+			int  Trial() const { return active >= 1 && active <= kTrialCount ? active - 1 : -1; }
+			bool Boss() const { return !freed && active == kBossActive; }
+		};
+		St Decode(int a_v)
+		{
+			St s;
+			if (a_v >= kFreedValue) {
+				s.freed = true;
+			} else if (a_v >= kBase) {
+				const int r = a_v - kBase;
+				s.done = (r / 100000) & 31, s.active = (r / 10000) % 10, s.prog = r % 10000;
+			}
+			return s;
+		}
+		int Encode(const St& s) { return s.freed ? kFreedValue : kBase + (s.done & 31) * 100000 + std::clamp(s.active, 0, 9) * 10000 + std::clamp(s.prog, 0, 9999); }
+		St   Get(int a_town) { return Decode(Value(a_town)); }
+		void Put(int a_town, const St& s) { SetValue(a_town, Encode(s)); }
+		int  Step(int a_town)
+		{
+			const St s = Get(a_town);
+			return s.freed ? kFreed : s.Count();
+		}
+
+		// Skyrim's difficulty picks each trial's numbers
+		int Diff() { return std::clamp(Settings::Difficulty(), 0, 5); }
+		int N(int a_trial) { return gen::kTrials[a_trial].n[Diff()]; }
+		int Secs(int a_trial) { return gen::kTrials[a_trial].seconds[Diff()]; }
+		constexpr float kWardSwarm[6] = { 1.5f, 1.75f, 2.0f, 2.25f, 2.5f, 3.0f };      // the dead come this much faster in the circle
+		constexpr int   kWaveBase[6] = { 4, 5, 6, 7, 8, 10 };                          // the first wave (each after: +2)
+		constexpr float kBossHealth[6] = { 0.6f, 0.8f, 1.0f, 1.3f, 1.6f, 2.0f };       // the Barrow-Jarl's health
+		int Elites(int a_wave, int a_waves)  // Thanes of the Mound and Bone Jotnar in a wave
+		{
+			const int d = Diff();
+			if (d >= 3) {
+				return a_wave >= 1 ? 1 + (d - 3) + (a_wave + 1 == a_waves ? 1 : 0) : 0;
+			}
+			return d == 2 && a_wave + 1 == a_waves ? 1 : 0;
 		}
 
 		std::string Upper(std::string s)
@@ -54,7 +102,7 @@ namespace bo3z
 				s.replace(p, what.size(), with);
 			}
 		}
-		std::string Fill(std::string_view a_text, int a_town, int a_n = 0)
+		std::string Fill(std::string_view a_text, int a_town, int a_n = 0, int a_s = 0)
 		{
 			std::string s(a_text);
 			const std::string city(gen::kTowns[a_town]);
@@ -62,8 +110,16 @@ namespace bo3z
 			Replace(s, "{CITY}", Upper(city));
 			Replace(s, "{landmark}", std::string(gen::kCurseCities[a_town].landmark));
 			Replace(s, "{n}", std::to_string(a_n));
+			Replace(s, "{s}", std::to_string(a_s));
 			return s;
 		}
+		std::string Clock(float a_seconds)
+		{
+			const int t = std::max(0, static_cast<int>(std::ceil(a_seconds)));
+			return fmt::format("{}:{:02}", t / 60, t % 60);
+		}
+		std::string_view Title(int a_trial) { return gen::kTrials[a_trial].title; }
+		std::string_view BossName(int a_town) { return gen::kCityBosses[a_town].name; }
 
 		// Quest news lives in the tracker (top right): a line under the goal for a few seconds. No pop-ups.
 		void Note(std::string a_text, float a_seconds = 5.0f)
@@ -93,31 +149,30 @@ namespace bo3z
 		}
 
 		int   g_zone = -1;
-		std::array<int, 16> g_journalStep{};  // the journal (Journal below): the rite each city's quest last showed
+		std::array<int, 16> g_journalKey{};  // the journal (Journal below): the progress value each city's quest last showed
 		bool                g_journalFresh = true;
-		RE::ObjectRefHandle g_marker;         // the quest Target's marker
+		RE::ObjectRefHandle g_marker;        // the quest Target's marker
 		float g_zoneTimer = 0;
-		std::unordered_set<int> g_loreShown;  // town*10+step, this session
-		int   g_heraldTown = -1;
+		float g_normDelay = 3.0f;            // a moment after a load before old saves' values are read (MigrateRites goes first)
 		bool  g_holding = false;
 		float g_holdAcc = 0;
-
-		// The rite's pieces in the world round the shrine: braziers (wards, order), the circle's fires, relic tokens.
-		struct Ward
-		{
-			RE::ObjectRefHandle brazier, fire, light;
-			RE::NiPoint3        pos;
-			char                dir{ 0 };  // order rites: the compass letter this brazier stands at
-		};
-		std::array<Ward, 8> g_wards{};
-		int                 g_wardCount = 0;
-		int                 g_wardTown = -1, g_wardKey = -1;  // which town and rite (town*10+step) they belong to
-		float               g_channel = 0;
-		float               g_circleHp = 100.0f, g_circleAcc = 0;
+		// the trial under way (not saved: a load starts its clock or wave again)
+		int   g_clockKey = -1;               // town*10+active the clock belongs to
+		float g_clock = 0;                   // the Culling's seconds left, or this wave's
+		bool  g_belowHalf = false;           // the Unbroken: under half health now
+		std::vector<RE::ActorHandle> g_wave; // the Long Night's Breath: this wave's dead
+		int   g_waveKey = -1;                // town*100+wave they belong to
+		int   g_waveSize = 0, g_waveDoubled = 0, g_waveLeft = 0;
+		float g_waveRest = 0, g_waveRetry = 0;
+		std::unordered_map<RE::FormID, std::pair<std::chrono::steady_clock::time_point, bool>> g_lastBlow;  // Trial of Steel
 		RE::ObjectRefHandle g_probe;
 
-		const gen::RiteDef& Rite(int a_town, int a_step) { return gen::kRites[a_town][std::clamp(a_step, 0, kFreed - 1)]; }
-		int                 Kind(int a_town) { return Step(a_town) >= kFreed ? -1 : Rite(a_town, Step(a_town)).type; }
+		void ClearRun()
+		{
+			g_clockKey = -1, g_clock = 0, g_belowHalf = false;
+			g_wave.clear(), g_waveKey = -1, g_waveSize = 0, g_waveDoubled = 0, g_waveLeft = 0, g_waveRest = 0, g_waveRetry = 0;
+			g_holding = false, g_holdAcc = 0;
+		}
 
 		// The city the player is in: its own location (streets and interiors), or within reach of its station.
 		int ComputeZone(RE::PlayerCharacter* a_player)
@@ -152,24 +207,6 @@ namespace bo3z
 			return best;
 		}
 
-		void Remove(RE::ObjectRefHandle& h)
-		{
-			if (auto r = h.get()) {
-				r->Disable();
-				r->SetDelete(true);
-			}
-			h = {};
-		}
-		void RemoveWards()
-		{
-			for (auto& w : g_wards) {
-				Remove(w.brazier), Remove(w.fire), Remove(w.light);
-				w.dir = 0;
-			}
-			g_wardTown = -1, g_wardKey = -1, g_wardCount = 0;
-			g_channel = 0;
-		}
-
 		// Nearest walkable ground (navmesh) to a point: city streets have paving the land height knows nothing of.
 		std::optional<RE::NiPoint3> Walkable(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_at, float a_maxShift = 400.0f)
 		{
@@ -197,145 +234,11 @@ namespace bo3z
 			return got;
 		}
 
-		RE::ObjectRefHandle PlaceAt(RE::PlayerCharacter* a_player, std::uint32_t a_id, const RE::NiPoint3& a_at, float a_scale)
+		float HealthFrac(RE::PlayerCharacter* a_player)
 		{
-			auto* base = Forms::Ours(a_id);
-			auto  ref = base ? a_player->PlaceObjectAtMe(base, false) : nullptr;
-			if (!ref) {
-				return {};
-			}
-			if (a_scale != 1.0f) {
-				ref->SetScale(a_scale);
-			}
-			ref->SetPosition(a_at);
-			// moved (and scaled) after it was made: its collision stayed behind where it was made (on the player),
-			// an invisible pillar long after the fire was gone. A disable/enable a frame later builds it again where
-			// the brazier really stands.
-			const auto h = ref->CreateRefHandle();
-			SKSE::GetTaskInterface()->AddTask([h] {
-				if (auto r = h.get(); r && !r->IsDeleted()) {
-					r->Disable();
-					r->Enable(false);
-				}
-			});
-			return h;
-		}
-
-		void Kindle(RE::PlayerCharacter* a_player, Ward& w)
-		{
-			if (!w.fire.get()) {
-				w.fire = PlaceAt(a_player, gen::kWardFire, w.pos + RE::NiPoint3{ 0, 0, 81.0f }, 0.42f);
-			}
-			if (!w.light.get()) {
-				w.light = PlaceAt(a_player, gen::kWardLight, w.pos + RE::NiPoint3{ 0, 0, 125.0f }, 1.0f);
-			}
-		}
-
-		// The pieces of the rite at hand, placed round the shrine (once per town and rite; lit ones burning):
-		//   wards: n braziers in an arc in front of the shrine; order: one at each compass point the rite names;
-		//   circle: four fires round the shrine, burning; relics: n tokens scattered over the city (each town's own places)
-		void EnsureWards(RE::PlayerCharacter* a_player, int a_town)
-		{
-			const int step = Step(a_town), key = a_town * 10 + step;
-			if (g_wardKey == key && g_wardCount > 0) {
-				// placed already: stay as long as any piece still stands (found relics leave gaps, so not just the first)
-				const int bitsNow = Prog(a_town);
-				bool      standing = false, allFound = Rite(a_town, step).type == gen::kRiteRelics;
-				for (int i = 0; i < g_wardCount; ++i) {
-					standing |= static_cast<bool>(g_wards[i].brazier.get());
-					allFound &= ((bitsNow >> i) & 1) != 0;
-				}
-				if (standing || allFound) {
-					return;
-				}
-			}
-			RemoveWards();
-			RE::NiPoint3       c;
-			float              yaw = 0;
-			RE::TESWorldSpace* ws = nullptr;
-			if (!Shops::StandFrame(a_town, c, yaw, ws) || ws != a_player->GetWorldspace()) {
-				return;
-			}
-			// leftovers from a save: braziers, fires and tokens near the station that this session didn't place
-			RE::TES::GetSingleton()->ForEachReferenceInRange(a_player, 9000.0f, [&](RE::TESObjectREFR* r) {
-				auto* b = r ? r->GetBaseObject() : nullptr;
-				if (b && (b == Forms::Ours(gen::kWardBrazier) || b == Forms::Ours(gen::kWardFire) || b == Forms::Ours(gen::kWardLight)) && !r->IsDeleted()) {
-					r->Disable();
-					r->SetDelete(true);
-				}
-				return RE::BSContainer::ForEachResult::kContinue;
-			});
-			const auto& rite = Rite(a_town, step);
-			const int   bits = Prog(a_town);
-			std::vector<std::pair<RE::NiPoint3, char>> spots;
-			auto plan = [&](float x, float y) { return RE::NiPoint3{ c.x + x * std::cos(yaw) + y * std::sin(yaw), c.y - x * std::sin(yaw) + y * std::cos(yaw), c.z }; };
-			switch (rite.type) {
-			case gen::kRiteWards:
-				for (int i = 0; i < std::min(rite.target, 8); ++i) {  // an arc round the front of the shrine
-					const float a = -1.9f + 3.8f * (rite.target > 1 ? static_cast<float>(i) / (rite.target - 1) : 0.5f);
-					spots.push_back({ plan(std::sin(a) * gen::kCurseWardDistance, -std::cos(a) * gen::kCurseWardDistance), 0 });
-				}
-				break;
-			case gen::kRiteOrder:
-				for (char d : std::string_view(rite.order)) {  // north is +y in the world, east +x
-					const float r = gen::kCurseWardDistance + 80.0f;
-					const RE::NiPoint3 off = d == 'N' ? RE::NiPoint3{ 0, r, 0 } : d == 'S' ? RE::NiPoint3{ 0, -r, 0 } : d == 'E' ? RE::NiPoint3{ r, 0, 0 } : RE::NiPoint3{ -r, 0, 0 };
-					spots.push_back({ c + off, d });
-				}
-				break;
-			case gen::kRiteCircle:
-				for (int i = 0; i < 4; ++i) {
-					const float a = i * 1.5708f + 0.785f;
-					spots.push_back({ plan(std::sin(a) * 330.0f, -std::cos(a) * 330.0f - 120.0f), 0 });
-				}
-				break;
-			case gen::kRiteRelics: {
-				std::mt19937 rng(static_cast<unsigned>(a_town * 7919 + step * 31 + 5));  // the same places every time
-				for (int i = 0; i < std::min(rite.target, 8); ++i) {
-					const float a = std::uniform_real_distribution<float>(0, 6.2832f)(rng), r = std::uniform_real_distribution<float>(700.0f, 2300.0f)(rng);
-					spots.push_back({ c + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 }, 0 });
-				}
-				break;
-			}
-			default:
-				return;
-			}
-			for (std::size_t i = 0; i < spots.size(); ++i) {
-				auto at = Walkable(a_player, spots[i].first).value_or(spots[i].first);
-				at.z += 25.0f;  // the pedestal sits on the ground
-				auto& w = g_wards[i];
-				w.pos = at, w.dir = spots[i].second;
-				const bool relic = rite.type == gen::kRiteRelics;
-				if (relic && ((bits >> i) & 1)) {
-					continue;  // found already
-				}
-				w.brazier = PlaceAt(a_player, gen::kWardBrazier, at, relic ? 0.4f : 0.75f);
-				const bool lit = rite.type == gen::kRiteCircle || relic || (rite.type == gen::kRiteWards && ((bits >> i) & 1)) || (rite.type == gen::kRiteOrder && static_cast<int>(i) < bits);
-				if (lit) {
-					Kindle(a_player, w);
-				}
-			}
-			g_wardCount = static_cast<int>(spots.size());
-			g_wardTown = a_town, g_wardKey = key;
-			g_circleHp = 100.0f;
-			logger::info("curse: {} rite {} ({}): {} pieces placed", gen::kTowns[a_town], step, rite.title, g_wardCount);
-		}
-
-		void Lift(RE::PlayerCharacter* a_player, int a_town);
-		void Advance(int a_town)
-		{
-			const int s = Step(a_town);
-			const auto& rite = Rite(a_town, s);
-			Set(a_town, s + 1, 0);
-			Forms::Play(gen::Sound::quest_step);
-			Note(Fill(rite.title, a_town) + " - complete", 6.0f);
-			Points::Add(400 * (s + 1));
-			logger::info("curse: {} rite {} ({}) done", gen::kTowns[a_town], s, rite.title);
-			if (s + 1 >= kFreed) {
-				if (auto* player = RE::PlayerCharacter::GetSingleton()) {
-					Lift(player, a_town);
-				}
-			}
+			auto*       av = a_player->AsActorValueOwner();
+			const float mx = std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth));
+			return av->GetActorValue(RE::ActorValue::kHealth) / mx;
 		}
 
 		// The city's shout (sheet: shouts): what freeing it earns, claimed at the Echo Altar.
@@ -362,85 +265,105 @@ namespace bo3z
 			return -1;
 		}
 
-		// The relic hangs turning over the Echo Altar once the city is freed.
-		std::unordered_map<int, RE::ObjectRefHandle> g_relicShow;
-		float                                         g_relicTimer = 0;
-		void TickRelicShow(RE::PlayerCharacter* a_player, float a_delta)
+		// what each trial asks tonight, in a line (the altar's menu and the trial's HUD line)
+		std::string Ask(int a_trial)
 		{
-			for (auto& [t, h] : g_relicShow) {
-				if (auto r = h.get(); r && r->Is3DLoaded()) {
-					auto a = r->GetAngle();
-					r->SetAngle({ a.x, a.y, a.z + 0.9f * a_delta });
-				}
-			}
-			if ((g_relicTimer -= a_delta) > 0) {
-				return;
-			}
-			g_relicTimer = 2.0f;
-			const int z = g_zone;
-			const int relic = z >= 0 ? Relic(z) : -1;
-			if (relic < 0 || Step(z) < kFreed) {
-				return;
-			}
-			auto* altar = Shops::Placed(z, 6);  // (retired: the shout is claimed in the shrine's menu now, nothing hangs over it)
-			if (!altar || (g_relicShow.contains(z) && g_relicShow[z].get())) {
-				return;
-			}
-			auto* base = Forms::Ours(gen::kShowStat[relic]);
-			if (!base) {
-				return;
-			}
-			const auto at = altar->GetPosition() + RE::NiPoint3{ 0, 0, 105.0f };
-			RE::TES::GetSingleton()->ForEachReferenceInRange(altar, 400.0f, [&](RE::TESObjectREFR* r) {  // one from an earlier session
-				if (r && r->GetBaseObject() == base && !r->IsDeleted()) {
-					r->Disable();
-					r->SetDelete(true);
-				}
-				return RE::BSContainer::ForEachResult::kContinue;
-			});
-			if (auto ref = a_player->PlaceObjectAtMe(base, false)) {
-				ref->SetPosition(at);
-				ref->SetAngle({ 0, 0, altar->GetAngleZ() });
-				g_relicShow[z] = ref->CreateRefHandle();
+			const int n = N(a_trial), s = Secs(a_trial);
+			switch (a_trial) {
+			case gen::kTrial_ward: return fmt::format("Hold the runic circle {} seconds", s);
+			case gen::kTrial_culling: return fmt::format("{} kills in the city within {}", n, Clock(static_cast<float>(s)));
+			case gen::kTrial_unbroken: return fmt::format("{} kills, never below half health", n);
+			case gen::kTrial_steel: return fmt::format("{} melee kills", n);
+			case gen::kTrial_breath: return fmt::format("{} waves at the altar, {} s each", n, s);
+			default: return {};
 			}
 		}
 
 		void Lift(RE::PlayerCharacter* a_player, int a_town)
 		{
-			Set(a_town, kFreed, 0);
-			g_holding = false;
+			Put(a_town, St{ true });
+			ClearRun();
 			Forms::Play(gen::Sound::curse_lifted);
 			Shops::FreedPulse(a_town);
 			Audio::FreedMusic();
 			std::string text = Fill(gen::kCurseLiftedBanner, a_town);
 			if (const int sh = ShoutOf(a_town); sh >= 0) {
 				// its shout waits on the Echo Altar at the station (nothing is forced into your hands)
-				text += " - its Thu'um, " + std::string(gen::kShouts[sh].label) + ", waits at the city's shrine (" + Settings::KeyName(3) + " in its menu)";
+				text += " - its Thu'um, " + std::string(gen::kShouts[sh].label) + ", waits at the city's altar (" + Settings::KeyName(3) + " in its menu)";
 			}
 			Note(text, 10.0f);
 			Party::CityFreed(a_town);  // (the dawn that follows saves under the city's name)
-			Director::EndNight();  // the city's last rite ends the night: dawn breaks, the next night brings the next round
+			Director::EndNight();  // the Barrow-Jarl's fall ends the night: dawn breaks, the next night brings the next round
 			auto* shrine = Shops::Placed(a_town, 0);
 			Director::LiftWave(shrine ? shrine->GetPosition() : a_player->GetPosition());
 			Points::Add(5000);
 			logger::info("curse: {} is freed", gen::kTowns[a_town]);
 			bool all = true;
 			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
-				all &= Step(t) >= kFreed;
+				all &= Get(t).freed;
 			}
 			if (all) {
 				Note("Every altar is awake. Alduin's voice echoes only in the wilds now.", 12.0f);
 			}
 		}
 
-		// Where the quest wants you now (in your current world): the next ward-fire, the shrine to hold, the Herald,
-		// a freed city's waiting shout, or from the wilds the nearest city still under the Dirge.
+		// a trial done: three of them call the Barrow-Jarl
+		void CompleteTrial(int a_town)
+		{
+			St s = Get(a_town);
+			const int tr = s.Trial();
+			if (tr < 0) {
+				return;
+			}
+			s.done |= 1 << tr;
+			s.prog = 0;
+			s.active = s.Count() >= kNeeded ? kBossActive : 0;
+			Put(a_town, s);
+			ClearRun();
+			Forms::Play(gen::Sound::quest_step);
+			Points::Add(500 * s.Count());
+			const std::string head = Upper(std::string(Title(tr))) + " - COMPLETE";
+			if (s.Boss()) {
+				Hud::Banner(head + "   " + std::string(BossName(a_town)) + " rises at the altar when night falls", 7.0f);
+			} else {
+				Hud::Banner(head + "   (" + std::to_string(s.Count()) + " of " + std::to_string(kNeeded) + ")", 5.0f);
+			}
+			logger::info("curse: {} trial {} done ({} of {})", gen::kTowns[a_town], gen::kTrials[tr].id, s.Count(), kNeeded);
+		}
+		// the count starts again
+		void Broken(int a_town, std::string_view a_why)
+		{
+			St s = Get(a_town);
+			if (s.prog > 0) {
+				s.prog = 0;
+				Put(a_town, s);
+				Forms::Play(gen::Sound::rite_reset);
+				Hud::Banner(std::string(a_why), 3.5f);
+			}
+		}
+
+		bool NearestUndead(RE::PlayerCharacter* a_player, RE::NiPoint3& a_at)
+		{
+			float best = 6000.0f;
+			bool  got = false;
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				if (auto a = h.get(); a && !a->IsDead() && !a->IsDisabled() && Director::IsRoundUndead(a.get())) {
+					if (const float d = a->GetPosition().GetDistance(a_player->GetPosition()); d < best) {
+						best = d, a_at = a->GetPosition() + RE::NiPoint3{ 0, 0, 150.0f }, got = true;
+					}
+				}
+			}
+			return got;
+		}
+
+		// Where the quest wants you now (in your current world): the altar to choose a trial or hold its circle, the
+		// nearest of the dead to kill, the Barrow-Jarl, a freed city's waiting shout, or from the wilds the nearest held city.
 		bool ObjectiveTarget(RE::PlayerCharacter* a_player, RE::NiPoint3& a_at, std::string& a_label)
 		{
 			const int z = g_zone;
 			if (z >= 0) {
-				const int s = Step(z);
-				if (s >= kFreed) {
+				const St s = Get(z);
+				if (s.freed) {
 					const int sh = ShoutOf(z);
 					if (sh >= 0 && !Gun::KnowsShout(sh)) {
 						if (auto* altar = Shops::Placed(z, 0)) {
@@ -451,82 +374,41 @@ namespace bo3z
 					}
 					return false;
 				}
-				const auto& rite = Rite(z, s);
-				const int   bits = Prog(z);
-				auto nearestPiece = [&](auto&& a_open) {
-					float best = FLT_MAX;
-					for (int i = 0; i < g_wardCount && g_wardKey == z * 10 + s; ++i) {
-						if (a_open(i)) {
-							const float d = g_wards[i].pos.GetDistance(a_player->GetPosition());
-							if (d < best) {
-								best = d, a_at = g_wards[i].pos + RE::NiPoint3{ 0, 0, 120.0f };
-							}
-						}
-					}
-					return best < FLT_MAX;
-				};
-				switch (rite.type) {
-				case gen::kRiteWards:
-					if (nearestPiece([&](int i) { return !((bits >> i) & 1); })) {
-						a_label = "Light the brazier";
-						return true;
-					}
-					break;
-				case gen::kRiteOrder:
-					if (bits < g_wardCount && g_wardKey == z * 10 + s) {  // the next one in the order
-						a_at = g_wards[bits].pos + RE::NiPoint3{ 0, 0, 120.0f };
-						const char d = g_wards[bits].dir;
-						a_label = std::string(d == 'N' ? "North" : d == 'S' ? "South" : d == 'E' ? "East" : "West") + " brazier";
-						return true;
-					}
-					break;
-				case gen::kRiteRelics:
-					if (nearestPiece([&](int i) { return !((bits >> i) & 1); })) {
-						a_label = Fill(rite.title, z);
-						return true;
-					}
-					break;
-				case gen::kRiteChampion:
-					if (Director::ChampionPos(a_at)) {
-						a_label = std::string(rite.championName);
-						return true;
-					}
-					break;
-				case gen::kRiteHerald:
-					if (Director::BossPos(a_at)) {
-						a_label = "The Herald";
-						return true;
-					}
-					break;
-				default:
-					break;
+				const int tr = s.Trial();
+				if (s.Boss() && Director::ChampionPos(a_at)) {
+					a_label = std::string(BossName(z));
+					return true;
+				}
+				if ((tr == gen::kTrial_culling || tr == gen::kTrial_unbroken || tr == gen::kTrial_steel) && Director::Fighting() && NearestUndead(a_player, a_at)) {
+					a_label = std::string(Title(tr));
+					return true;
 				}
 				if (Shops::StationTarget(z, a_at)) {
-					a_label = rite.type == gen::kRiteHold ? "Hold the shrine" : rite.type == gen::kRiteCircle ? "Guard the circle" : rite.type == gen::kRiteSlay ? "The altar" : "The shrine";
+					a_label = s.Boss() ? std::string(BossName(z)) + " (at night)" : tr == gen::kTrial_ward ? "Stand in the runic circle" : tr == gen::kTrial_breath ? "Survive the waves" : tr >= 0 ? std::string(Title(tr)) : "Choose a trial";
 					return true;
 				}
 				return false;
 			}
-			// out in the wilds: the nearest discovered city whose rites are unfinished, or whose shout waits
+			// out in the wilds: the nearest discovered city still held, or whose shout waits
 			float best = FLT_MAX;
 			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
+				const St   s = Get(t);
 				const int  sh = ShoutOf(t);
-				const bool wants = Step(t) < kFreed || (sh >= 0 && !Gun::KnowsShout(sh));
+				const bool wants = !s.freed || (sh >= 0 && !Gun::KnowsShout(sh));
 				RE::NiPoint3 at;
 				if (!wants || !Shops::Discovered(t) || !Shops::StationTarget(t, at)) {
 					continue;
 				}
 				if (const float d = at.GetDistance(a_player->GetPosition()); d < best) {
 					best = d, a_at = at;
-					a_label = std::string(gen::kTowns[t]) + (Step(t) < kFreed ? ": " + Fill(Rite(t, Step(t)).title, t) : ": its shout waits");
+					a_label = std::string(gen::kTowns[t]) + ": " + (s.freed ? std::string("its shout waits") : s.Boss() ? std::string(BossName(t)) : s.Trial() >= 0 ? std::string(Title(s.Trial())) : std::string("choose a trial"));
 				}
 			}
 			return best < FLT_MAX;
 		}
 
-		// The floating ritual circle of the Circle and Hold rites: a ring of runes drawn on the ground round the
-		// shrine (projected to the screen here, drawn by the HUD), how far the rite has come, and a flash when the
-		// dead break it.
+		// The floating runic circle of the Ward of the Tongues: a ring of runes drawn on the ground round the altar
+		// (projected to the screen here, drawn by the HUD) and how far the trial has come.
 		struct RingState
 		{
 			bool         on{ false };
@@ -585,48 +467,86 @@ namespace bo3z
 			h.objLabel = label;
 		}
 
+		// The trial under way, as a slim line under the compass at night (its count and its clock)
 		void Publish(int a_zone, bool a_night)
 		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
 			std::scoped_lock l(Hud::Lock());
 			auto& h = Hud::Edit();
 			h.questCity.clear(), h.questTitle.clear(), h.questGoal.clear(), h.sanctuary.clear();
-			h.questFrac = 0;
+			h.questFrac = 0, h.questTimer = -1, h.questWarn = false;
 			if (a_zone < 0) {
 				return;
 			}
-			const int s = Step(a_zone);
-			if (s >= kFreed) {
+			const St s = Get(a_zone);
+			if (s.freed) {
 				if (a_night) {
 					h.sanctuary = Upper(std::string(gen::kTowns[a_zone]));
 				}
 				return;
 			}
-			const auto& st = Rite(a_zone, s);
-			const int   p = Prog(a_zone);
+			if (!a_night || (s.Trial() < 0 && !s.Boss())) {
+				return;
+			}
 			h.questCity = Upper(std::string(gen::kTowns[a_zone]));
-			h.questStep = s;
-			h.questTitle = Fill(st.title, a_zone, st.target);
-			std::string goal = Fill(st.goal, a_zone, st.target);
-			const std::string night = a_night ? "" : "  (at night)";
-			switch (st.type) {
-			case gen::kRiteSlay: goal += "  " + std::to_string(p) + "/" + std::to_string(st.target) + night; h.questFrac = static_cast<float>(p) / st.target; break;
-			case gen::kRiteWards:
-			case gen::kRiteRelics: { const int got = std::popcount(static_cast<unsigned>(p & 0xFF)); goal += "  " + std::to_string(got) + "/" + std::to_string(st.target) + (st.type == gen::kRiteWards ? night : ""); h.questFrac = static_cast<float>(got) / st.target; break; }
-			case gen::kRiteOrder: {
-				std::string seq;
-				for (char d : std::string_view(st.order)) {
-					seq += seq.empty() ? "" : " > ";
-					seq += d == 'N' ? "North" : d == 'S' ? "South" : d == 'E' ? "East" : "West";
-				}
-				goal += "  " + std::to_string(p) + "/" + std::to_string(st.target) + "   (" + seq + ")" + night;
-				h.questFrac = static_cast<float>(p) / st.target;
+			h.questStep = s.Count();
+			if (s.Boss()) {
+				h.questTitle = "THE BARROW-JARL";
+				h.questGoal = "Slay " + std::string(BossName(a_zone));
+				return;
+			}
+			const int tr = s.Trial(), n = N(tr), sec = Secs(tr);
+			const bool live = g_clockKey == a_zone * 10 + s.active;
+			h.questTitle = Upper(std::string(Title(tr)));
+			switch (tr) {
+			case gen::kTrial_ward:
+				h.questGoal = fmt::format("{}  {} / {} s", g_holding ? "Hold the circle" : "Stand in the runic circle", s.prog, sec);
+				h.questFrac = static_cast<float>(s.prog) / std::max(1, sec);
+				h.questWarn = !g_holding;
 				break;
+			case gen::kTrial_culling:
+				h.questGoal = fmt::format("Kills in {}  {} / {}", gen::kTowns[a_zone], s.prog, n);
+				h.questFrac = static_cast<float>(s.prog) / std::max(1, n);
+				h.questTimer = live ? g_clock : static_cast<float>(sec);
+				h.questWarn = live && g_clock < 20.0f;
+				break;
+			case gen::kTrial_unbroken:
+				h.questGoal = fmt::format("Kills above half health  {} / {}", s.prog, n);
+				h.questFrac = static_cast<float>(s.prog) / std::max(1, n);
+				h.questWarn = player && HealthFrac(player) < 0.6f;
+				break;
+			case gen::kTrial_steel:
+				h.questGoal = fmt::format("Melee kills  {} / {}", s.prog, n);
+				h.questFrac = static_cast<float>(s.prog) / std::max(1, n);
+				break;
+			case gen::kTrial_breath:
+				h.questGoal = g_waveKey == a_zone * 100 + s.prog && g_waveLeft > 0 ? fmt::format("Wave {} / {}  -  {} left", s.prog + 1, n, g_waveLeft) : fmt::format("Wave {} / {}  -  go to the altar", s.prog + 1, n);
+				h.questFrac = static_cast<float>(s.prog) / std::max(1, n);
+				if (g_waveKey == a_zone * 100 + s.prog && g_waveLeft > 0) {
+					h.questTimer = g_clock;
+					h.questWarn = g_clock < 12.0f;
+				}
+				break;
+			default: break;
 			}
-			case gen::kRiteCircle: goal += "  " + std::to_string(p) + "/" + std::to_string(st.target) + "s   keep the dead out of the circle" + night; h.questFrac = static_cast<float>(p) / st.target; break;
-			case gen::kRiteHold: goal += "  " + std::to_string(p) + "/" + std::to_string(st.target) + "s" + night; h.questFrac = static_cast<float>(p) / st.target; break;
-			default: goal += night; h.questFrac = 0; break;
+		}
+
+		// The Long Night's Breath: a wave of the dead claws up in a ring round the altar
+		int RaiseWave(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_c, int a_count, int a_elites)
+		{
+			int raised = 0;
+			for (int i = 0; i < a_count; ++i) {
+				const float a = (i + Rand01() * 0.6f) * 6.2832f / std::max(1, a_count), r = 900.0f + 500.0f * Rand01();
+				const auto  at = Walkable(a_player, a_c + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 }, 700.0f);
+				if (!at) {
+					continue;
+				}
+				if (auto h = Director::RaiseTrial(*at + RE::NiPoint3{ 0, 0, 40.0f }, i < a_elites); h) {
+					g_wave.push_back(h);
+					++raised;
+				}
 			}
-			h.questGoal = goal;
+			return raised;
 		}
 	}
 
@@ -639,7 +559,7 @@ namespace bo3z
 		{
 			if (const int sh = a_town >= 0 ? ShoutOf(a_town) : -1; sh >= 0) {
 				const std::string name(gen::kShouts[sh].label);
-				if (Step(a_town) < kFreed) {
+				if (!Get(a_town).freed) {
 					Hud::Banner(name + " sleeps here until the Echo Altar of " + std::string(gen::kTowns[a_town]) + " wakes", 3.5f);
 					return;
 				}
@@ -658,7 +578,7 @@ namespace bo3z
 				return;
 			}
 			const std::string name(gen::kGuns[relic].label);
-			if (Step(a_town) < kFreed) {
+			if (!Get(a_town).freed) {
 				Hud::Banner(name + " waits until the Echo Altar of " + std::string(gen::kTowns[a_town]) + " wakes", 3.5f);
 				if (GiveBook(RE::PlayerCharacter::GetSingleton())) {
 					Note("The Curse of Alduin is back in your pack", 5.0f);
@@ -678,51 +598,181 @@ namespace bo3z
 		int ClaimableShout(int a_town)
 		{
 			const int sh = a_town >= 0 ? ShoutOf(a_town) : -1;
-			return sh >= 0 && Step(a_town) >= kFreed && !Gun::KnowsShout(sh) ? sh : -1;
+			return sh >= 0 && Get(a_town).freed && !Gun::KnowsShout(sh) ? sh : -1;
 		}
-		bool SafeHere(RE::PlayerCharacter*) { return g_zone >= 0 && Step(g_zone) >= kFreed; }
-		float SpawnBoost() { return g_holding ? 2.0f : 1.0f; }
+		bool  SafeHere(RE::PlayerCharacter*) { return g_zone >= 0 && Get(g_zone).freed; }
+		float SpawnBoost() { return g_holding ? kWardSwarm[Diff()] : 1.0f; }
+		int   Steps(int a_town) { return a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size()) ? Step(a_town) : 0; }
+
+		void StartTrial(int a_town, int a_trial)
+		{
+			if (a_town < 0 || a_town >= static_cast<int>(gen::kCurseCities.size()) || a_trial < 0 || a_trial >= kTrialCount) {
+				return;
+			}
+			St s = Get(a_town);
+			const std::string title(Title(a_trial));
+			if (s.freed) {
+				Hud::Banner("The Echo Altar of " + std::string(gen::kTowns[a_town]) + " is awake", 2.5f);
+				return;
+			}
+			if ((s.done >> a_trial) & 1) {
+				Hud::Banner(title + " is done", 2.5f);
+				return;
+			}
+			if (s.Boss() || s.Count() >= kNeeded) {
+				Hud::Banner("Three trials are done - " + std::string(BossName(a_town)) + " must fall", 3.0f);
+				return;
+			}
+			if (s.Trial() == a_trial) {
+				Hud::Banner(title + " is under way", 2.5f);
+				return;
+			}
+			const int was = s.Trial();
+			s.active = a_trial + 1, s.prog = 0;
+			Put(a_town, s);
+			ClearRun();
+			Forms::Play(gen::Sound::quest_start);
+			Hud::Banner((was >= 0 ? std::string(Title(was)) + " set aside.   " : std::string()) + Upper(title) + ": " + Ask(a_trial) + (Director::Fighting() ? "" : " (at night)"), 6.0f);
+			logger::info("curse: {} trial {} taken up (difficulty {})", gen::kTowns[a_town], gen::kTrials[a_trial].id, Diff());
+		}
+
+		AltarView Altar(int a_town)
+		{
+			AltarView v;
+			if (a_town < 0 || a_town >= static_cast<int>(gen::kCurseCities.size())) {
+				return v;
+			}
+			const St s = Get(a_town);
+			v.on = !s.freed;
+			v.done = s.done, v.active = s.active;
+			for (int i = 0; i < kTrialCount; ++i) {
+				v.desc[i] = Ask(i);
+			}
+			v.boss = std::string(BossName(a_town));
+			v.bossLine = s.Boss() ? "Rises near the altar at night - slay it to wake the altar" : fmt::format("Rises when three trials are done ({} of {})", s.Count(), kNeeded);
+			return v;
+		}
+
+		void NoteHit(RE::FormID a_target, bool a_melee)
+		{
+			const auto now = std::chrono::steady_clock::now();
+			if (g_lastBlow.size() > 256) {
+				std::erase_if(g_lastBlow, [&](const auto& e) { return now - e.second.first > std::chrono::seconds(30); });
+			}
+			g_lastBlow[a_target] = { now, a_melee };
+		}
 
 		void Reset()
 		{
-			RemoveWards();
-			g_zone = -1, g_zoneTimer = 0, g_heraldTown = -1, g_holding = false, g_holdAcc = 0;
+			ClearRun();
+			g_zone = -1, g_zoneTimer = 0, g_normDelay = 3.0f;
 			g_journalFresh = true, g_marker = {};
-			g_loreShown.clear();
-			g_relicShow.clear();
+			g_lastBlow.clear();
 		}
 
-		void OnUndeadDeath(RE::Actor*)
+		void OnUndeadDeath(RE::Actor* a_actor)
 		{
-			if (!Director::Fighting() || g_zone < 0 || Kind(g_zone) != gen::kRiteSlay) {
+			if (!Director::Fighting() || g_zone < 0) {
 				return;
 			}
-			const int p = Prog(g_zone) + 1;
-			if (p >= Rite(g_zone, Step(g_zone)).target) {
-				Advance(g_zone);
+			const int z = g_zone;
+			St s = Get(z);
+			const int tr = s.freed ? -1 : s.Trial();
+			if (tr != gen::kTrial_culling && tr != gen::kTrial_unbroken && tr != gen::kTrial_steel) {
+				return;
+			}
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (tr == gen::kTrial_unbroken && (!player || HealthFrac(player) < 0.5f)) {
+				return;
+			}
+			if (tr == gen::kTrial_steel) {
+				const auto it = a_actor ? g_lastBlow.find(a_actor->GetFormID()) : g_lastBlow.end();
+				if (it == g_lastBlow.end() || !it->second.second || std::chrono::steady_clock::now() - it->second.first > std::chrono::seconds(6)) {
+					return;  // the killing blow wasn't steel (or wasn't yours)
+				}
+			}
+			if (++s.prog >= N(tr)) {
+				CompleteTrial(z);
 			} else {
-				Set(g_zone, Step(g_zone), p);
+				Put(z, s);
 			}
 		}
 
-		void OnBossSlain()
-		{
-			if (g_heraldTown >= 0 && Kind(g_heraldTown) == gen::kRiteHerald) {
-				Advance(g_heraldTown);
-			}
-			g_heraldTown = -1;
-		}
+		void OnBossSlain() {}  // (the old Herald: the Barrow-Jarls are the cities' champions now)
 
 		void OnChampionSlain(int a_town)
 		{
-			if (a_town >= 0 && Kind(a_town) == gen::kRiteChampion) {
-				Advance(a_town);
+			if (a_town >= 0 && Get(a_town).Boss()) {
+				if (auto* player = RE::PlayerCharacter::GetSingleton()) {
+					Forms::Play(gen::Sound::quest_step);
+					Lift(player, a_town);
+				}
 			}
 		}
 
-		// ---- the journal: each city's rites as a quest in Skyrim's Quests tab (tools/gen_esp.py) ----
-		// A city's quest begins the first time you walk into it; its stage and objectives follow the rites, and its
-		// Target alias (the compass and map marker) sits on an unseen marker moved to wherever the rite wants you.
+		int  Raw(int a_town) { return a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size()) ? Value(a_town) : 0; }
+		void SetRaw(int a_town, int a_value)
+		{
+			if (a_town < 0 || a_town >= static_cast<int>(gen::kCurseCities.size()) || a_value < kBase) {
+				return;  // (an older party member's numbers mean nothing here)
+			}
+			const St before = Get(a_town);
+			SetValue(a_town, a_value);
+			const St after = Get(a_town);
+			// a friend did a trial: it completes here too, with its reward (the party shares the quests)
+			for (int i = 0; i < kTrialCount && !after.freed; ++i) {
+				if (((after.done >> i) & 1) && !((before.done >> i) & 1)) {
+					Forms::Play(gen::Sound::quest_step);
+					Hud::Banner(Upper(std::string(Title(i))) + " - COMPLETE (your party)", 5.0f);
+					Points::Add(500 * after.Count());
+					logger::info("curse: {} trial {} done by the party", gen::kTowns[a_town], gen::kTrials[i].id);
+				}
+			}
+			if (after.active != before.active || after.done != before.done) {
+				ClearRun();
+			}
+			if (!before.freed && after.freed) {
+				Forms::Play(gen::Sound::curse_lifted);
+				Audio::FreedMusic();
+				std::string text = Fill(gen::kCurseLiftedBanner, a_town);
+				if (const int sh = ShoutOf(a_town); sh >= 0) {
+					text += " - its Thu'um, " + std::string(gen::kShouts[sh].label) + ", waits at the city's altar";
+				}
+				Note(text, 10.0f);
+				Points::Add(5000);
+				Party::CityFreed(a_town);
+				if (!Net::IsClient()) {  // the host's nights: the freed city ends this one
+					Director::EndNight();
+					if (auto* pl = RE::PlayerCharacter::GetSingleton()) {
+						auto* shrine = Shops::Placed(a_town, 0);
+						Director::LiftWave(shrine ? shrine->GetPosition() : pl->GetPosition());
+					}
+				}
+				logger::info("curse: {} freed by the party", gen::kTowns[a_town]);
+			}
+		}
+
+		bool Freed(int a_town) { return a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size()) && Get(a_town).freed; }
+
+		void MigrateRites()
+		{
+			for (int t = 0; t < static_cast<int>(gen::kCurseCities.size()); ++t) {
+				const int v = Value(t);
+				if (v > 0 && v < kBase) {
+					SetValue(t, v / 1000 >= 4 ? kFreedValue : kBase);
+					if (v / 1000 < 4) {
+						Gun::Console("resetquest UN_Rites_" + std::string(gen::kTowns[t]));
+					}
+				}
+			}
+			logger::info("curse: a four-rite save moved to the trials");
+		}
+
+		// ---- the journal: each city's altar as a quest in Skyrim's Quests tab (tools/gen_esp.py) ----
+		// A city's quest begins the first time you walk into it. Stage 10 is the altar's call, 20+i a trial taken up,
+		// 100 the Barrow-Jarl, 200 freed. Objectives: 0 choose a trial, 1-5 the trials, 6 the Barrow-Jarl - shown, hidden and
+		// ticked to follow the city's progress. Its Target alias (the compass and map marker) sits on an unseen marker
+		// moved to wherever the trial wants you.
 		RE::TESQuest* RiteQuest(int a_town)
 		{
 			return a_town >= 0 && a_town < static_cast<int>(gen::kRiteQuests.size()) ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESQuest>(gen::kRiteQuests[a_town], gen::kPlugin) : nullptr;
@@ -730,7 +780,7 @@ namespace bo3z
 		void Journal(RE::PlayerCharacter* a_player)
 		{
 			if (g_journalFresh) {
-				g_journalStep.fill(-1);
+				g_journalKey.fill(-1);
 				g_journalFresh = false;
 			}
 			for (int t = 0; t < static_cast<int>(gen::kRiteQuests.size()); ++t) {
@@ -739,29 +789,45 @@ namespace bo3z
 					continue;
 				}
 				const std::string edid = "UN_Rites_" + std::string(gen::kTowns[t]);
-				const int s = Step(t);
+				const int v = Value(t);
+				const St  s = Decode(v);
 				if (!q->IsEnabled() && !q->IsCompleted()) {
-					if (t != g_zone && s == 0) {
+					if (t != g_zone && !s.freed && s.done == 0 && s.active == 0) {
 						continue;  // not been there yet
 					}
 					Gun::Console("startquest " + edid);
-					g_journalStep[t] = -1;
+					g_journalKey[t] = -1;
 					continue;  // (the stages follow once it runs)
 				}
-				if (g_journalStep[t] == s || q->IsCompleted()) {
+				if (g_journalKey[t] == v || q->IsCompleted()) {
 					continue;
 				}
-				for (int i = 0; i < std::min(s, kFreed); ++i) {
-					Gun::Console(fmt::format("setobjectivecompleted {} {} 1", edid, i));
-				}
-				if (s >= kFreed) {
+				auto shown = [&](int i, bool on, bool done) {
+					Gun::Console(fmt::format("setobjectivedisplayed {} {} {}", edid, i, on ? 1 : 0));
+					if (on) {
+						Gun::Console(fmt::format("setobjectivecompleted {} {} {}", edid, i, done ? 1 : 0));
+					}
+				};
+				Gun::Console(fmt::format("setstage {} 10", edid));
+				if (s.freed) {
+					shown(0, false, false);
+					shown(6, true, true);
 					Gun::Console(fmt::format("setstage {} 200", edid));
 				} else {
-					Gun::Console(fmt::format("setstage {} {}", edid, (s + 1) * 10));
-					Gun::Console(fmt::format("setobjectivedisplayed {} {} 1", edid, s));
+					if (s.Trial() >= 0) {
+						Gun::Console(fmt::format("setstage {} {}", edid, 20 + s.Trial()));
+					} else if (s.Boss()) {
+						Gun::Console(fmt::format("setstage {} 100", edid));
+					}
+					shown(0, s.active == 0 && s.Count() < kNeeded, false);
+					for (int i = 0; i < kTrialCount; ++i) {
+						const bool done = (s.done >> i) & 1;
+						shown(1 + i, done || s.Trial() == i, done);
+					}
+					shown(6, s.Boss(), false);
 				}
-				g_journalStep[t] = s;
-				logger::info("journal: {} at rite {}", gen::kTowns[t], s + 1);
+				g_journalKey[t] = v;
+				logger::info("journal: {} - {} trials done, active {}", gen::kTowns[t], s.Count(), s.active);
 			}
 			// the marker: where the quest wants you, for the city you're in
 			RE::NiPoint3 at;
@@ -799,6 +865,20 @@ namespace bo3z
 					logger::info("curse: entered {}", z >= 0 ? std::string(gen::kTowns[z]) : std::string("the wilds"));
 				}
 				g_zone = z;
+				// saves from the ten-rite cities: a freed city stays freed, the rest begin the trials
+				if (g_normDelay > 0) {
+					g_normDelay -= 0.5f;
+				} else {
+					for (int t = 0; t < static_cast<int>(gen::kCurseCities.size()); ++t) {
+						if (const int v = Value(t); v < kBase) {
+							SetValue(t, v / 1000 >= 10 ? kFreedValue : kBase);
+							if (v > 0 && v / 1000 < 10) {
+								Gun::Console("resetquest UN_Rites_" + std::string(gen::kTowns[t]));
+								logger::info("curse: {} moved from the rites to the trials", gen::kTowns[t]);
+							}
+						}
+					}
+				}
 			}
 			const bool fighting = Director::Fighting();
 			Publish(g_zone, fighting);
@@ -808,10 +888,9 @@ namespace bo3z
 				journal = 1.0f;
 				Journal(player);
 			}
-			TickRelicShow(player, a_delta);
-			// The prologue: as soon as the new character is made (out of Helgen, at Riverwood), the book is in the pack
+			// The prologue: as soon as the new character is made (out of Helgen, at Riverwood), the books are in the pack
 			if (Save::Flag(Save::kFlagStarted)) {
-				if (auto* intro = Global(gen::kCurseIntroGlobal); intro && intro->value < 1.5f) {  // (1 = an older save saw the pop-up: it gets the book too)
+				if (auto* intro = Global(gen::kCurseIntroGlobal); intro && intro->value < 1.5f) {  // (1 = an older save saw the pop-up: it gets the books too)
 					const bool fresh = intro->value < 0.5f && player->GetLevel() <= 1 && Intro::NewGameThisSession();  // a character made just now (never on Continue or Load)
 					intro->value = 2.0f;
 					if (fresh) {
@@ -820,238 +899,140 @@ namespace bo3z
 					GiveBook(player);
 					Forms::Play(gen::Sound::quest_start);
 					Note("Two books are in your pack: The Curse of Alduin, and A Survivor's Guide to the Long Night", 8.0f);
-					g_loreShown.insert(-1);
 					return;
 				}
 			}
 			const int z = g_zone;
-			const int s = z >= 0 ? Step(z) : kFreed;
-			const int kind = z >= 0 ? Kind(z) : -1;
-			float     wardFrac = 0;
-			// relics are found day or night: walk up to each token
-			if (kind == gen::kRiteRelics) {
-				EnsureWards(player, z);
-				const int  bits = Prog(z);
-				const auto pp = player->GetPosition();
-				for (int i = 0; i < g_wardCount; ++i) {
-					if (!((bits >> i) & 1) && g_wards[i].brazier.get() && pp.GetDistance(g_wards[i].pos) < 170.0f) {
-						const int nb = bits | (1 << i);
-						Remove(g_wards[i].brazier), Remove(g_wards[i].fire), Remove(g_wards[i].light);
-						Forms::Play(gen::Sound::relic_found);  // the bones rattle into your pack
-						Points::Add(150);
-						if (std::popcount(static_cast<unsigned>(nb & 0xFF)) >= Rite(z, s).target) {
-							Advance(z);
-						} else {
-							Set(z, s, nb);
-							Note("Found one (" + std::to_string(std::popcount(static_cast<unsigned>(nb & 0xFF))) + "/" + std::to_string(Rite(z, s).target) + ")", 4.0f);
-						}
-						break;
-					}
-				}
-			} else if (!fighting || z < 0 || s >= kFreed || (g_wardKey >= 0 && g_wardKey != z * 10 + s)) {
-				if (g_wardTown >= 0) {
-					RemoveWards();
-				}
+			const St  s = z >= 0 ? Get(z) : St{ true };
+			{
+				std::scoped_lock l(Hud::Lock());
+				Hud::Edit().wardFrac = 0;
 			}
-			if (!fighting || z < 0 || s >= kFreed) {
+			if (!fighting || z < 0 || s.freed || s.active == 0) {
 				g_holding = false;
 				g_holdAcc = 0;
 				g_ring.on = false;
 				PublishRing(a_delta);
 				Audio::LoopStop(Audio::kLoopRite, 800);
-				std::scoped_lock l(Hud::Lock());
-				Hud::Edit().wardFrac = 0;
 				return;
 			}
-			// each rite's toll, once per session, the first time you're in the city at night with it open
-			if (const int key = z * 10 + s; !g_loreShown.contains(key)) {
-				g_loreShown.insert(key);
-				Forms::Play(gen::Sound::quest_start);
-			}
-			const auto& rite = Rite(z, s);
 			RE::NiPoint3       c;
 			float              yaw = 0;
 			RE::TESWorldSpace* ws = nullptr;
 			const bool         here = Shops::StandFrame(z, c, yaw, ws) && ws == player->GetWorldspace();
+			const int          tr = s.Trial();
+			const int          key = z * 10 + s.active;
 			g_ring.on = false;
-			if ((rite.type == gen::kRiteCircle || rite.type == gen::kRiteHold) && here) {
+			g_holding = false;
+			if (tr == gen::kTrial_ward && here) {
 				Audio::LoopStart(Audio::kLoopRite, gen::Sound::rite_hum, Shops::Placed(z, 0));
 			} else {
 				Audio::LoopStop(Audio::kLoopRite, 800);
 			}
-			switch (rite.type) {
-			case gen::kRiteWards:
-			case gen::kRiteOrder:
+			switch (tr) {
+			case gen::kTrial_ward:  // stand in the circle: each second inside counts, outside it waits; the dead come faster
 				{
-					EnsureWards(player, z);
-					const int  bits = Prog(z);
-					const auto pp = player->GetPosition();
-					int        nearIdx = -1;
-					for (int i = 0; i < g_wardCount; ++i) {
-						const bool lit = rite.type == gen::kRiteWards ? ((bits >> i) & 1) : i < bits;
-						if (!lit && g_wards[i].brazier.get() && std::hypot(g_wards[i].pos.x - pp.x, g_wards[i].pos.y - pp.y) < gen::kCurseWardRadius) {
-							nearIdx = i;
-						}
+					const int sec = Secs(tr);
+					g_holding = here && std::hypot(player->GetPosition().x - c.x, player->GetPosition().y - c.y) < gen::kCurseHoldRadius;
+					if (here) {
+						g_ring = { true, c, gen::kCurseHoldRadius, static_cast<float>(s.prog) / std::max(1, sec), g_ring.flash, sec - s.prog, g_holding ? 0 : 1, true };
 					}
-					if (nearIdx < 0) {
-						g_channel = 0;
-						break;
-					}
-					g_channel += a_delta;
-					wardFrac = std::clamp(g_channel / gen::kCurseWardSeconds, 0.0f, 1.0f);
-					if (g_channel < gen::kCurseWardSeconds) {
-						break;
-					}
-					g_channel = 0;
-					if (rite.type == gen::kRiteOrder && nearIdx != bits) {  // out of order: every fire dies, and the dead answer
-						for (int i = 0; i < g_wardCount; ++i) {
-							Remove(g_wards[i].fire), Remove(g_wards[i].light);
-						}
-						Set(z, s, 0);
-						for (int k = 0; k < 4; ++k) {
-							const float a = k * 1.5708f;
-							Director::RaiseAt(pp + RE::NiPoint3{ std::cos(a) * 350.0f, std::sin(a) * 350.0f, 40.0f });
-						}
-						Forms::Play(gen::Sound::rite_fail);
-						Note("Wrong order - the fires die and the dead answer", 5.0f);
-						break;
-					}
-					Kindle(player, g_wards[nearIdx]);
-					Forms::Play(gen::Sound::ward_lit);
-					Points::Add(200);
-					const int nb = rite.type == gen::kRiteWards ? bits | (1 << nearIdx) : bits + 1;
-					const int done = rite.type == gen::kRiteWards ? std::popcount(static_cast<unsigned>(nb & 0xFF)) : nb;
-					if (done >= rite.target) {
-						Advance(z);
-					} else {
-						Set(z, s, nb);
-						Note("Kindled (" + std::to_string(done) + "/" + std::to_string(rite.target) + ")", 4.0f);
-					}
-				}
-				break;
-			case gen::kRiteCircle:  // keep them out: while no dead thing stands in the circle it burns on; one inside and it starts again
-				EnsureWards(player, z);
-				if (here) {
-					constexpr float kRing = 430.0f;
-					int inside = 0;
-					for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
-						if (auto a = h.get(); a && !a->IsDead() && !a->IsDisabled() && Director::IsRoundUndead(a.get()) && std::hypot(a->GetPosition().x - c.x, a->GetPosition().y - c.y) < kRing) {
-							++inside;
-						}
-					}
-					g_ring = { true, c, kRing, static_cast<float>(Prog(z)) / std::max(1, rite.target), g_ring.flash, rite.target - Prog(z), inside, false };
-					if (inside > 0) {
-						g_circleAcc = 0;
-						if (Prog(z) > 0) {  // the dead crossed it: the timer starts over
-							Set(z, s, 0);
-							g_ring.flash = 1.0f;
-							Forms::Play(gen::Sound::rite_reset);
-							Note("The dead broke the circle - the rite begins again", 3.5f);
-						}
-					} else if ((g_circleAcc += a_delta) >= 1.0f) {
-						g_circleAcc -= 1.0f;
-						if (const int p = Prog(z) + 1; p >= rite.target) {
+					if (g_holding && (g_holdAcc += a_delta) >= 1.0f) {
+						g_holdAcc -= 1.0f;
+						St n = s;
+						if (++n.prog >= sec) {
+							g_holding = false;
 							g_ring.on = false;
-							Advance(z);
+							CompleteTrial(z);
 						} else {
-							Set(z, s, p);
+							Put(z, n);
 						}
 					}
 				}
 				break;
-			case gen::kRiteHold:
-				g_holding = here && player->GetPosition().GetDistance(c) < gen::kCurseHoldRadius;
-				if (here) {
-					g_ring = { true, c, gen::kCurseHoldRadius, static_cast<float>(Prog(z)) / std::max(1, rite.target), g_ring.flash, rite.target - Prog(z), g_holding ? 0 : 1, true };
+			case gen::kTrial_culling:  // the clock runs while you're in the city at night; out of time, the count starts again
+				if (g_clockKey != key) {
+					g_clockKey = key, g_clock = static_cast<float>(Secs(tr));
 				}
-				if (g_holding && (g_holdAcc += a_delta) >= 1.0f) {
-					g_holdAcc -= 1.0f;
-					if (const int p = Prog(z) + 1; p >= rite.target) {
-						g_holding = false;
-						Advance(z);
-					} else {
-						Set(z, s, p);
+				if ((g_clock -= a_delta) <= 0) {
+					g_clock = static_cast<float>(Secs(tr));
+					Broken(z, "THE CULLING - time ran out, the count begins again");
+				}
+				break;
+			case gen::kTrial_unbroken:  // below half health: the count starts again (and no kill counts until you're back above)
+				{
+					const bool below = HealthFrac(player) < 0.5f;
+					if (below && !g_belowHalf) {
+						Broken(z, "THE UNBROKEN - you fell below half health, the count begins again");
+					}
+					g_belowHalf = below;
+				}
+				break;
+			case gen::kTrial_steel:
+				break;
+			case gen::kTrial_breath:  // a wave at a time round the altar, while you're near it
+				{
+					const int waves = N(tr), wk = z * 100 + s.prog;
+					const bool near = here && std::hypot(player->GetPosition().x - c.x, player->GetPosition().y - c.y) < 3000.0f;
+					std::erase_if(g_wave, [](const RE::ActorHandle& h) { auto a = h.get(); return !a || a->IsDead() || a->IsDeleted() || a->IsDisabled(); });
+					g_waveLeft = static_cast<int>(g_wave.size());
+					if (g_waveKey != wk) {
+						if (!near || (g_waveRest -= a_delta) > 0 || (g_waveRetry -= a_delta) > 0) {
+							break;
+						}
+						g_waveSize = kWaveBase[Diff()] + 2 * s.prog;
+						g_wave.clear();
+						if (RaiseWave(player, c, g_waveSize, Elites(s.prog, waves)) == 0) {
+							g_waveRetry = 2.0f;  // (the night is full: try again in a moment)
+							break;
+						}
+						g_waveKey = wk, g_waveDoubled = 0, g_clock = static_cast<float>(Secs(tr)), g_clockKey = key;
+						g_waveLeft = static_cast<int>(g_wave.size());
+						Forms::Play(gen::Sound::quest_start);
+						Hud::Banner(fmt::format("THE LONG NIGHT'S BREATH - WAVE {} OF {}", s.prog + 1, waves), 3.5f);
+						break;
+					}
+					if (g_wave.empty()) {  // cleared
+						St n = s;
+						Points::Add(250 * (s.prog + 1));
+						if (++n.prog >= waves) {
+							CompleteTrial(z);
+						} else {
+							Put(z, n);
+							Forms::Play(gen::Sound::quest_step);
+							Hud::Banner(fmt::format("WAVE {} CLEARED - the barrow draws breath", s.prog + 1), 3.0f);
+							g_waveRest = 5.0f;
+						}
+						break;
+					}
+					if (near && (g_clock -= a_delta) <= 0) {  // too slow: the barrow breathes out again
+						g_clock = static_cast<float>(Secs(tr));
+						if (g_waveDoubled < 3) {
+							++g_waveDoubled;
+							RaiseWave(player, c, g_waveSize, 0);
+							g_waveLeft = static_cast<int>(g_wave.size());
+							Forms::Play(gen::Sound::rite_reset);
+							Hud::Banner("TOO SLOW - THE WAVE DOUBLES", 3.0f);
+						}
 					}
 				}
 				break;
-			case gen::kRiteChampion:  // it rises somewhere out in the city, once a night until it falls
-				if (here && !Director::ChampionActive(z)) {
+			default:
+				if (s.Boss() && here && !Director::ChampionActive(z)) {  // the Barrow-Jarl rises out in the city, once a night until it falls
 					static float retry = 0;
 					if ((retry -= a_delta) <= 0) {
 						retry = 4.0f;
 						const float a = Rand01() * 6.2832f, r = 1500.0f + 700.0f * Rand01();
 						const auto  at = Walkable(player, c + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 }, 800.0f);
+						const auto& b = gen::kCityBosses[z];
 						if (at) {
-							Director::RaiseChampion(z, rite.champion, rite.championName, rite.championHealth, *at + RE::NiPoint3{ 0, 0, 40.0f });
+							Director::RaiseChampion(z, b.row, b.name, b.health * kBossHealth[Diff()], *at + RE::NiPoint3{ 0, 0, 40.0f });
 						}
 					}
 				}
 				break;
-			case gen::kRiteHerald:
-				g_heraldTown = z;
-				if (!Director::BossAlive()) {
-					Director::CallHerald();
-				}
-				break;
-			default:
-				break;
 			}
 			PublishRing(a_delta);
-			std::scoped_lock l(Hud::Lock());
-			Hud::Edit().wardFrac = wardFrac;
-		}
-
-		int  Raw(int a_town) { return a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size()) ? Value(a_town) : 0; }
-		void SetRaw(int a_town, int a_value)
-		{
-			if (a_town < 0 || a_town >= static_cast<int>(gen::kCurseCities.size())) {
-				return;
-			}
-			const int before = Step(a_town);
-			if (auto* g = Global(gen::kCurseCities[a_town].global)) {
-				g->value = static_cast<float>(a_value);
-			}
-			// a friend did the rite: it completes here too, with its reward (the party shares the quests)
-			for (int st = before; st < Step(a_town) && st < kFreed; ++st) {
-				Forms::Play(gen::Sound::quest_step);
-				Note(Fill(Rite(a_town, st).title, a_town) + " - complete (your party)", 6.0f);
-				Points::Add(400 * (st + 1));
-				logger::info("curse: {} rite {} done by the party", gen::kTowns[a_town], st);
-			}
-			if (before < kFreed && Step(a_town) >= kFreed) {
-				Forms::Play(gen::Sound::curse_lifted);
-				Audio::FreedMusic();
-				std::string text = Fill(gen::kCurseLiftedBanner, a_town);
-				if (const int sh = ShoutOf(a_town); sh >= 0) {
-					text += " - its Thu'um, " + std::string(gen::kShouts[sh].label) + ", waits at the city's shrine";
-				}
-				Note(text, 10.0f);
-				Points::Add(5000);
-				Party::CityFreed(a_town);
-				if (!Net::IsClient()) {  // the host's nights: the freed city's last rite ends this one
-					Director::EndNight();
-					if (auto* pl = RE::PlayerCharacter::GetSingleton()) {
-						auto* shrine = Shops::Placed(a_town, 0);
-						Director::LiftWave(shrine ? shrine->GetPosition() : pl->GetPosition());
-					}
-				}
-				logger::info("curse: {} freed by the party", gen::kTowns[a_town]);
-			}
-		}
-
-		bool Freed(int a_town) { return a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size()) && Step(a_town) >= kFreed; }
-
-		void MigrateRites()
-		{
-			for (int t = 0; t < static_cast<int>(gen::kCurseCities.size()); ++t) {
-				const int v = Value(t), step = v / 1000;
-				if (step >= 4) {
-					Set(t, kFreed, 0);
-				} else if (step == 3) {
-					Set(t, kFreed - 1, v % 1000);
-				}
-			}
-			logger::info("curse: a four-rite save moved to ten rites a city");
 		}
 	}
 }

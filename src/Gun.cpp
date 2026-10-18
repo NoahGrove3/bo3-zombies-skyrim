@@ -346,6 +346,9 @@ namespace bo3z
 			av->DamageActorValue(RE::ActorValue::kHealth, damage);
 			const bool ours = Director::IsRoundUndead(a_target);
 			g_hits[a_target->GetFormID()] = { Clock::now(), a_head && !a_melee };
+			if (ours) {
+				Curse::NoteHit(tid, a_melee);  // (the knife counts for the Trial of Steel; spells and wands don't)
+			}
 			const bool kill = av->GetActorValue(RE::ActorValue::kHealth) <= 0;
 			if (kill) {
 				if (a_melee) {
