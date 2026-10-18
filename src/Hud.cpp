@@ -1640,7 +1640,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			if (!s.sanctuary.empty()) {
 				TxtC(dl, g_title, 24 * k, size.x * 0.5f, 104 * k, Fade(kGold, 0.9f), "SANCTUARY OF " + s.sanctuary, 2 * k, IM_COL32(255, 220, 120, 255));
-				TxtC(dl, g_body, 16 * k, size.x * 0.5f, 134 * k, IM_COL32(220, 215, 200, 220), "The Dirge is broken here. The dead cannot rise.");
+				TxtC(dl, g_body, 16 * k, size.x * 0.5f, 134 * k, IM_COL32(220, 215, 200, 220), "The Echo Altar is awake here. The dead cannot rise.");
 			}
 			// Kindling a ward-fire: a glowing gold ring round the crosshair that fills smoothly (the game sends the
 			// progress a few times a second; the ring runs on between, at the kindling's own pace)

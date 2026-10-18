@@ -72,19 +72,24 @@ namespace bo3z
 			Hud::Edit().questNote = std::move(a_text);
 			Hud::Edit().questNoteTime = a_seconds;
 		}
-		// The lore lives in a book, "The Undying Dirge", in the player's pack.
+		// The lore lives in a book, "The Curse of Alduin", and how to play in "A Survivor's Guide to the Long Night" -
+		// both in the player's pack from the moment the character is made
 		bool GiveBook(RE::PlayerCharacter* a_player)
 		{
-			auto* book = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(gen::kDirgeBook, gen::kPlugin);
-			if (!book || !a_player) {
-				return false;
+			bool gave = false;
+			for (auto id : { gen::kDirgeBook, gen::kGuideBook }) {
+				auto* book = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(id, gen::kPlugin);
+				if (!book || !a_player) {
+					continue;
+				}
+				auto inv = a_player->GetInventory([&](RE::TESBoundObject& o) { return &o == book; });
+				if (!inv.empty() && inv.begin()->second.first > 0) {
+					continue;
+				}
+				a_player->AddObjectToContainer(book, nullptr, 1, nullptr);
+				gave = true;
 			}
-			auto inv = a_player->GetInventory([&](RE::TESBoundObject& o) { return &o == book; });
-			if (!inv.empty() && inv.begin()->second.first > 0) {
-				return false;
-			}
-			a_player->AddObjectToContainer(book, nullptr, 1, nullptr);
-			return true;
+			return gave;
 		}
 
 		int   g_zone = -1;
@@ -424,7 +429,7 @@ namespace bo3z
 				all &= Step(t) >= kFreed;
 			}
 			if (all) {
-				Note("Every city is free. The Dirge echoes only in the wilds.", 12.0f);
+				Note("Every altar is awake. Alduin's voice echoes only in the wilds now.", 12.0f);
 			}
 		}
 
@@ -497,7 +502,7 @@ namespace bo3z
 					break;
 				}
 				if (Shops::StationTarget(z, a_at)) {
-					a_label = rite.type == gen::kRiteHold ? "Hold the shrine" : rite.type == gen::kRiteCircle ? "Guard the circle" : rite.type == gen::kRiteSlay ? "The Dirge's heart" : "The shrine";
+					a_label = rite.type == gen::kRiteHold ? "Hold the shrine" : rite.type == gen::kRiteCircle ? "Guard the circle" : rite.type == gen::kRiteSlay ? "The altar" : "The shrine";
 					return true;
 				}
 				return false;
@@ -635,7 +640,7 @@ namespace bo3z
 			if (const int sh = a_town >= 0 ? ShoutOf(a_town) : -1; sh >= 0) {
 				const std::string name(gen::kShouts[sh].label);
 				if (Step(a_town) < kFreed) {
-					Hud::Banner(name + " sleeps here until the Dirge over " + std::string(gen::kTowns[a_town]) + " is broken", 3.5f);
+					Hud::Banner(name + " sleeps here until the Echo Altar of " + std::string(gen::kTowns[a_town]) + " wakes", 3.5f);
 					return;
 				}
 				if (Gun::KnowsShout(sh)) {
@@ -654,7 +659,7 @@ namespace bo3z
 			}
 			const std::string name(gen::kGuns[relic].label);
 			if (Step(a_town) < kFreed) {
-				Hud::Banner(name + " waits until the Dirge over " + std::string(gen::kTowns[a_town]) + " is broken", 3.5f);
+				Hud::Banner(name + " waits until the Echo Altar of " + std::string(gen::kTowns[a_town]) + " wakes", 3.5f);
 				if (GiveBook(RE::PlayerCharacter::GetSingleton())) {
 					Note("The Curse of Alduin is back in your pack", 5.0f);
 				}
@@ -814,7 +819,7 @@ namespace bo3z
 					}
 					GiveBook(player);
 					Forms::Play(gen::Sound::quest_start);
-					Note("A book is in your pack: The Curse of Alduin", 8.0f);
+					Note("Two books are in your pack: The Curse of Alduin, and A Survivor's Guide to the Long Night", 8.0f);
 					g_loreShown.insert(-1);
 					return;
 				}

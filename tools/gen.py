@@ -234,7 +234,7 @@ for t in towns:
     rs = CU['rites'][t]; assert len(rs) == 10, t
     o.append('\t\t{ { ' + ', '.join(f'RiteDef{{ {RT[r["type"]]}, {r["target"]}, {cs(r["title"])}, {cs(r["goal"])}, {cs(r["text"])}, {cs(r["order"])}, {cs(r["champion"])}, {cs(r["championName"])}, {F(r["championHealth"])} }}' for r in rs) + ' } },')
 o.append('\t} };')
-o.append(f'\tinline constexpr std::uint32_t kCurseIntroGlobal = 0x{IDS[("GLOB", "curse_intro")]:03X}, kStandLayoutGlobal = 0x{IDS[("GLOB", "stand_layout")]:03X}, kDirgeBook = 0x{IDS[("BOOK", "dirge")]:03X};')
+o.append(f'\tinline constexpr std::uint32_t kCurseIntroGlobal = 0x{IDS[("GLOB", "curse_intro")]:03X}, kStandLayoutGlobal = 0x{IDS[("GLOB", "stand_layout")]:03X}, kDirgeBook = 0x{IDS[("BOOK", "dirge")]:03X}, kGuideBook = 0x{IDS[("BOOK", "guide")]:03X};')
 o.append(f'\tinline constexpr std::string_view kCursePrologueTitle = {cs(CU["prologueTitle"])}, kCursePrologue = {cs(CU["prologue"])}, kCurseLiftedBanner = {cs(CU["liftedBanner"])}, kCurseLiftedText = {cs(CU["liftedText"])}, kCurseFreedAll = {cs(CU["freedAll"])};')
 o.append(f'\tinline constexpr float kCurseZone = {F(CU["zoneRadius"])}, kCurseHoldRadius = {F(CU["holdRadius"])}, kCurseWardRadius = {F(CU["wardRadius"])}, kCurseWardSeconds = {F(CU["wardSeconds"])}, kCurseWardDistance = {F(CU["wardDistance"])}, kCurseHeraldDelay = {F(CU["heraldDelay"])};')
 o.append(f'\tinline constexpr std::uint32_t kWardBrazier = 0x{IDS[("STAT", "ward_brazier")]:03X}, kWardFire = 0x{IDS[("STAT", "ward_fire")]:03X}, kWardLight = 0x{IDS[("LIGH", "ward_light")]:03X};')

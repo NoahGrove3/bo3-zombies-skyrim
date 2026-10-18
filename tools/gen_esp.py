@@ -228,22 +228,22 @@ for key, edid, track, flags, prio, fade in (('boss', 'UN_MUSBoss', 'Data\\Music\
 # the undead step only with the mod's own footsteps (Audio.cpp plays them on each footfall): their skins carry an empty
 # footstep set, so the race's own (vanilla) steps stay quiet
 recs['FSTS'].append(record('FSTS', fid('FSTS', 'silent'), [sub('EDID', z('UN_SilentFootsteps')), sub('XCNT', struct.pack('<5I', 0, 0, 0, 0, 0)), sub('DATA', b'')]))
-# loading screens of our own among Skyrim's: the shrine or the Dirge book turning, and a hint from the Dirge
+# loading screens of our own among Skyrim's: the shrine or the lore book turning, and a hint
 LOADING_TIPS = [
-    "The Undying Dirge sleeps by day. When the sun goes down, every grave in the holds remembers it.",
-    "An Echo Altar stands in every city. Call a spell, reforge the one in your hands or drink a brew - the night does not wait while you bargain.",
-    "Drowned Wailers call the horde to them with their scream. Kill them first.",
-    "Stitched Abominations burst when they fall. Strike them from afar.",
+    "Alduin shouted three words into the earth at Helgen - GRAH DIR LEIN, Battle, Death, World - and every barrow answered.",
+    "An Echo Altar stands in every city. Call a spell, reforge the one in your hands or take a perk - the night does not wait while you bargain.",
+    "Fen-Wailers call the horde to them with their scream. Kill them first.",
+    "Sewn Thralls burst when they fall. Strike them from afar.",
     "Hold right mouse to gather a spell's full power in both hands. Let go too soon and the power gutters out.",
-    "When the ritual circle rises over the shrine, keep the dead out of it. If one crosses it, the rite begins again.",
-    "On a Fog Night, listen for the in-breath. Grimmvar's fire follows it.",
-    "Free a city and its dead sleep again. Its Thu'um waits for you at the shrine.",
+    "When the runic circle wakes round the altar, stand inside it until its count runs out. The dead come harder while you do.",
+    "You carry five perks at most. Choose them well.",
+    "Wake a city's Echo Altar and its dead sleep again. Its Thu'um waits for you there.",
     "A spell reforged three times is Ascendant: its great strike falls twice.",
     "Watch the dead for tokens: a skull, a coin, a falling star, a chest.",
-    "Vaerdis the Mourner swore her shrines would never be bought with gold - only with the septims of the dead.",
+    "The altars take no gold - only the septims the dead leave behind.",
     "Every spell the Echo Altar gives is the echo of a fallen mage's last. Carry it well.",
-    "The violet fire in the shrine is the Dirge itself, caught and turned back. The blue runes hold it there.",
-    "Stand close to a shrine and listen: it still sings the Mourner's answer.",
+    "The violet fire in the altar is Alduin's own Thu'um, caught and turned back. The blue runes hold it there.",
+    "Win Whiterun's altar and a dragon will answer your call: jump, then Activate in mid-air.",
 ]
 for key, model in (('ls_shrine', 'CurseOfAlduin\\shrine\\shrine.nif'), ('ls_book', 'Clutter\\Books\\Book02LowPoly02.nif')):
     recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_LoadScreen_' + key)), sub('OBND', struct.pack('<6h', -60, -60, 0, 60, 60, 200)),
@@ -422,114 +422,94 @@ recs['FACT'].append(record('FACT', fid('FACT', 'undead'), [
     sub('XNAM', struct.pack('<IiI', 0x00000DB1, -100, 1)),             # PlayerFaction: enemy
     sub('DATA', struct.pack('<I', 0))]))
 
-# the Undying Dirge: each city's progress (step*1000 + progress) and whether the prologue was read; saved with the game
+# the Curse of Alduin: each city's progress (step*1000 + progress) and whether the prologue was read; saved with the game
 for key, edid in [('curse_' + c['town'], 'UN_Curse_' + c['town']) for c in S['curse']['cities']] + [('curse_intro', 'UN_CurseIntro'), ('stand_layout', 'UN_StandLayout')]:
     recs['GLOB'].append(record('GLOB', fid('GLOB', key), [sub('EDID', z(edid)), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 
-# The Undying Dirge: the lore book (given at the first night; the Echo Altar gives it again)
-def dirge_text():
+# The Curse of Alduin: the lore book, and A Survivor's Guide (both in the pack when a character is made)
+def lore_text():
     img = lambda n, w, h: f"<p align='center'><img src='img://Textures/CurseOfAlduin/Book/{n}.png' width='{w}' height='{h}'></p>"
     cu = S['curse']
-    towns = []
-    for l in S['locations']['rows']:
-        if l['town'] not in towns: towns.append(l['town'])
-    land = {c['town']: c['landmark'] for c in cu['cities']}
-    relic = {w['relicTown']: w for w in S['weapons']['rows'] if w.get('relicTown', 'none') != 'none'}
-    gen_city = lambda t: t.replace('{city}', 'the city').replace("{city}'s", "the city's").replace('{landmark}', 'its oldest holy place').replace('{n}', '')
     out = [f"<font face='$HandwrittenFont'>", img('sigil', 200, 200),
            "<p align='center'><font size='30'>THE CURSE OF ALDUIN</font></p>",
-           "<p align='center'>Being a true account of the Undying Dirge, the curse that walks by night, set down by one who lived through Helgen</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>I. Helgen</font></p>", img('helgen', 300, 176),
+           "<p align='center'>Set down at High Hrothgar by a Greybeard who has broken his silence, for whoever lived through Helgen</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>I. Three Words</font></p>", img('helgen', 300, 176),
            f"<p>{cu['prologue']}</p>",
-           "<p>The priests say the Dirge is no ordinary shout. It was sung, not spoken: a slow word that sank into the earth and stayed there. "
-           "By day it sleeps. When the sun goes down it wakes, and every grave in the holds remembers it.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>II. The Nights</font></p>", img('graves', 300, 176),
-           "<p>From dusk until first light the dead climb out of the earth, more each night and harder to kill. At dawn they crumble to ash. "
-           "I have learned to know them apart:</p>",
-           "<p><b>The Risen Dead</b>, slow, many, and never tired.</p>",
-           "<p><b>Hollow Brides</b>, veiled and fast. They run you down before you hear them.</p>",
-           "<p><b>Drowned Wailers</b>, river-hags whose scream calls the rest of the horde to them. Kill them first.</p>",
-           "<p><b>Stitched Abominations</b>, sewn from many bodies. Strike them from afar: they burst.</p>",
-           "<p><b>Gloomstalkers</b> in the dark, <b>Iron Reapers</b> with their great blades and chains, and the <b>Voidbound</b> who raise skeletons to fight for them.</p>",
-           "<p>Champions walk among them: the <b>Horned Bone Knight</b>, the <b>Barrow King</b> and the <b>Lich of the Dirge</b>. "
-           "Look at a wounded thing and you will see how much life it has left, a pale bar above it; the champions' bars burn gold and bear their names.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>III. How the Shrines Came</font></p>",
-           "<p>This is not the first time the Dirge has been sung. The old Tongues knew it. In the Dragon War, before Alduin was cast out of time, "
-           "he sang it once over the barrows of the Atmorans, and the dead of that age rose and marched for him.</p>",
-           "<p>A priestess of Kyne named <b>Vaerdis the Mourner</b> heard it from the slopes of the Throat of the World and understood what it was: "
-           "not a word but a song, and a song can be answered. She gathered the grieving of every hold, the widows, the shield-brothers and the mages whose "
-           "masters had fallen, and taught them to sing it back.</p>",
-           "<p>Where they sang, a star of violet fire came down out of the night. Vaerdis caught it in a ring of carved stone and bound it with the counter-song: "
-           "blue runes cut into the stones like bracelets, so that the fire could neither burn out nor fly free. The stones rose and turned about the star, "
-           "and have turned ever since. Beneath it she laid a floor of black stone and cut the counter-song into it in gold: rings within rings, a dial to count the nights, runes for every grave that would ever be dug, and at its heart a sun, so that the dead would know whose ground it was. This was the first shrine. The Nords called it <i>the Mourner's Font</i>.</p>",
-           "[pagebreak]",
-           "<p>She raised one in each place the dead marched, ten in all, where the cities of the holds would later stand. Into each she poured something that cost her dearly. "
-           "Every mage who died fighting the Dirge gave their last spell to the star, and the star kept it. That is why the shrine has so many to give: "
-           "each one was once someone's, and each is waiting for a hand to carry it again.</p>",
-           "<p>The price was her own. Vaerdis swore that the shrines would never be bought with gold, only with the death of the dead. "
-           "So it is still: every risen thing you put back in the ground leaves its coin, the septims of the dead, and only the shrine will take them.</p>",
-           "<p>When Alduin fell through time at the Throat of the World, the Dirge fell silent. The shrines sank into the earth beneath the holds, "
-           "and over the long ages towns grew up over them, never knowing what slept under the well, the mill or the temple stair.</p>",
-           "[pagebreak]",
-           "<p>Then came Helgen. The World-Eater sang again, and beneath ten cities the stones woke to the old song. On that first night the earth by "
-           "Riverwood's mill split open and the shrine rose out of it, its star burning violet, its stones turning as if they had never stopped. "
-           "Hod saw it and has not slept well since.</p>",
-           "<p>Each shrine still sings Vaerdis's answer, too low to hear unless you stand close and listen. The fire you see is the Dirge itself, "
-           "caught and turned back. The blue light in the floating stones and the gold in the floor are the answer holding it. Every spell in its keeping is the echo of a mage who fell, "
-           "and so the holds have come to call them <b>Echo Altars</b>. Some still say <i>Requiem Fonts</i> or <i>Mourning Stones</i>. "
-           "Old Nords in the Rift say <i>Vaerdis's Lanterns</i>, and leave a coin at the edge of the pool.</p>",
-           "<p>No one knows what became of Vaerdis. The priests of Arkay say she gave her own last spell to the first shrine and stands inside it still, "
-           "holding the fire in place. If that is true, she has been waiting a long time for someone to take up the fight again.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>IV. The Echo Altar</font></p>", img('wards', 300, 176),
-           "<p>In the heart of every city stands an Echo Altar, open on every side. Its power is yours for the septims of the dead, "
-           "the coin each kill leaves in your purse, and the night does not stop while you bargain.</p>",
-           "<p><b>Call a spell.</b> The shrine gathers its power, the spells turn over its crown, and one stays there for you to take. "
-           "Every spell you lack has the same chance.</p>",
-           "<p><b>Reforge.</b> The spell in your hands grows fiercer, three times over. A spell reforged three times is Ascendant: its great strike falls twice.</p>",
-           "<p><b>Brews.</b> Nine draughts, each one a gift that lasts until you fall: "
-           + ", ".join(f"<i>{x['label']}</i>" for x in S['perks']['rows'][:-1]) + f" and <i>{S['perks']['rows'][-1]['label']}</i>.</p>",
-           "<p><b>The Thu'um.</b> When a city is freed, its shrine keeps that city's voice for you (see VII).</p>",
-           "<p>Look into the star or at the gold of its floor and press Activate to open it. Its menu stands at your side and does not stop the night.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>V. The Spells of the Fallen</font></p>",
-           "<p>The shrine keeps the last spells of more than a hundred fallen mages: fire, frost and storm, poison and blood, bone and void, "
-           "the old magic of the Mysticism schools and the runes of forgotten orders. Call one and the altar's carousel turns until the star chooses for you.</p>",
-           "<p>Tap to throw a bolt from one hand. Hold, and both hands gather the spell's full power: the longer you hold, the harder it strikes. "
-           "Let go too soon and the power gutters out. Magicka comes back fast.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>VI. Breaking the Dirge</font></p>",
-           "<p>The Dirge has taken root beneath each city, and each city must be freed its own way: four rites, one after another. Most must be done by night.</p>"]
-    for t in towns:
-        out.append(f"<p><b>{t}</b></p>")
-        for k, r in enumerate(cu['rites'][t]):
-            txt = r['text'].replace('{city}', t).replace('{n}', str(r['target']))
-            out.append(f"<p>{k + 1}. <i>{r['title'].replace('{city}', t)}.</i> {txt}</p>")
-        if t == 'Riverwood':
-            out.append(img('herald', 300, 176))
-    out += ["<p>Of the ritual circle: when that rite begins, a ring of pale runes wakes on the ground round the shrine. While no dead thing stands inside it, its count runs down "
-            "and the runes burn white one by one. Let them cross it and the runes flare red and the count begins again. Stand at its edge and keep them out.</p>",
-            "<p>Of holding the shrine: the same ring of runes, but you must stand inside it. The night pushes harder while you do.</p>",
-            "<p>When all four rites are done, the Dirge loses its hold on that city. Its dead sleep again, and none will rise within its bounds.</p>",
-            "[pagebreak]", "<p align='center'><font size='24'>VII. The Voices of the Holds</font></p>",
-            "<p>Each freed city keeps a Thu'um of its own, sleeping in the Echo Altar at its station. Go to the shrine and it is yours. Speak one word, or hold your breath and speak all three.</p>"]
+           "<p>We heard it on the mountain. Not a shout to break stone, but a Word sung slow, that sank into the earth and stayed there: "
+           "<b>Grah</b>, battle. <b>Dir</b>, death. <b>Lein</b>, the world. By day it sleeps in the ground. When the sun goes down it wakes, "
+           "and every barrow, every crypt and every churchyard in the holds remembers that it is owed a war.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>II. The Dead Who Answer</font></p>", img('graves', 300, 176),
+           "<p>From dusk until first light the dead climb out of the earth, more each night and harder to kill. At dawn they fall back to dust. "
+           "The Nords of old had names for them, and the names are true again:</p>",
+           "<p><b>Haugbui</b>, the mound-dwellers - slow, many, never tired. <b>Pyre-Thralls</b>, the burned dead, still smouldering. "
+           "<b>Gravegnawers</b>, quick and starved. <b>Barrow Archers</b> on the walls.</p>",
+           "<p>The <b>Tongues</b> - Ash, Rime and Storm - were shouters once; their dead mouths still hold a word or two. "
+           "<b>Fen-Wailers</b> scream, and the horde comes to the scream: kill them first. <b>Sewn Thralls</b> burst when they fall. "
+           "<b>Grave-Hounds</b> run in packs, and the <b>Bone Jotunn</b> is the skeleton of a giant, walking.</p>",
+           "<p>Over them all ride the great ones: the <b>Thanes of the Mound</b>, the <b>Mother of Mounds</b>, <b>Haugrisi the Mound-Giant</b>, "
+           "<b>the Elk-Crowned</b>, and <b>Grahzah</b>, Alduin's Grave-Wing, a dragon of bone. Look at a wounded thing and a pale bar shows how much life it has left; "
+           "the great ones' bars burn gold and bear their names.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>III. The Echo Altars</font></p>",
+           "<p>This is not the first time Alduin has shouted the dead awake. In the Dragon War he did it once over the barrows of the Atmorans, and the Tongues - "
+           "the first men to learn the Voice - answered him. They raised an altar in every hold where the dead marched: a star of violet fire caught in a ring of "
+           "floating stones, bound with runes of blue, standing on a floor of black stone inlaid with gold.</p>",
+           "<p>The fire is Alduin's own Thu'um, caught and turned back on itself. The runes are the Tongues' answer, holding it there. Every mage who fell in that war "
+           "gave their last spell to the star, and the star kept it: that is why the altars have so many to give, and why the holds call them <b>Echo Altars</b>.</p>",
+           "<p>When Alduin was cast out of time the altars went dark and sank into the earth, and towns grew over them. At Helgen he returned, and the altars woke - "
+           "but only half. Each one has been silenced by a dead jarl of old, raised to guard it against the living: a <b>Barrow-Jarl</b>.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>IV. Waking an Altar</font></p>", img('wards', 300, 176),
+           "<p>The altars answer to you. Perhaps it is because you heard the three Words at Helgen and lived; perhaps it is something older. "
+           "Stand before one and it will set you <b>trials</b> - hold its runic circle while the dead come for you, cull the risen in its streets - "
+           "and when they are done its Barrow-Jarl rises to stop you. Strike him down and the altar rings with the Tongues' answer. Its city becomes a sanctuary: "
+           "no dead rise within its walls, and the altar gives you the city's own <b>Thu'um</b>.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>V. The Voices of the Holds</font></p>"]
     for h in S['shouts']['rows']:
-        out.append(f"<p><b>{h['town']}</b>: <i>{h['label']}</i> ({' '.join(h['words'])}, '{' '.join(h['translations'])}'). {h['text']}.</p>")
-    out += ["[pagebreak]", "<p align='center'><font size='24'>VIII. Nights of Omen</font></p>", img('omen', 300, 152),
-            "<p>From the tenth night on, some nights are worse than others. Under the <b>Blood Moon</b> the dead rise faster. On a <b>Fog Night</b> the mist hides a great wyrm of bone, Grimmvar, Herald of the Dirge: "
-            "when he draws breath, run from the fire that follows. "
-            "In an <b>Ash Storm</b> the dead run, and every kill is worth twice as much. On the <b>Night of Iron</b> the Reapers and the Voidbound march in force.</p>",
-            "<p>Watch the dead for tokens. A skull gives Insta-Kill. A coin gives Double Points. A falling star is the Nuke: it destroys every risen corpse and buys a little quiet. "
-            "A chest is a Fire Sale, when the shrine asks almost nothing for a spell.</p>",
-            "[pagebreak]", "<p align='center'><font size='24'>IX. Of Rest and Falling</font></p>",
-            "<p>No one sleeps while the dead walk, and no one waits out the dusk. By day you may rest, an hour at a time; in a party it is the host who keeps the hours, and the whole party's clock turns with theirs.</p>",
-            "<p>At every dawn, and whenever a city is freed, the day is written down for you. If the whole party falls, you wake again at that dawn.</p>",
-            "<p>In a party, a friend who falls is not lost at once: stand over them and hold Activate, and they rise. Alone, only a Hearthfire Tonic will lift you: "
-            "drink it, and the blow that should have killed you only puts you on your knees, and you stand again whole.</p>",
-            f"<p>{cu['freedAll']}</p>", "</font>"]
+        if h.get('town'):
+            out.append(f"<p><b>{h['town']}</b>: <i>{h['label']}</i> ({' '.join(h['words'])}, '{' '.join(h['translations'])}'). {h['text']}.</p>")
+    out += ["<p><b>Whiterun</b>: <i>Dragon's Updraft</i>. A whirlwind lifts you high - and with it, a dragon that will carry you.</p>",
+            "[pagebreak]", f"<p>{cu['freedAll']}</p>", "<p align='right'><i>- written in the silence of High Hrothgar</i></p>", "</font>"]
     return '\n'.join(out)
-recs.setdefault('BOOK', []).append(record('BOOK', fid('BOOK', 'dirge'), [
-    sub('EDID', z('UN_UndyingDirgeBook')), sub('OBND', bytes.fromhex('f5fff1fffdff0b000f000300')), sub('FULL', z('The Curse of Alduin')),
-    sub('MODL', z('Clutter\\Books\\Book02LowPoly02.nif')), sub('DESC', z(dirge_text())),
-    sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x000937A2)),
-    sub('DATA', struct.pack('<BBHIIf', 0, 0, 0, 0, 25, 1.0)), sub('INAM', struct.pack('<I', 0x0008ADAE)), sub('CNAM', struct.pack('<I', 0))]))
+
+def guide_text():
+    p = lambda t: f"<p>{t}</p>"
+    h = lambda t: f"<p align='center'><font size='24'>{t}</font></p>"
+    out = ["<font face='$HandwrittenFont'>", "<p align='center'><font size='28'>A SURVIVOR'S GUIDE TO THE LONG NIGHT</font></p>",
+           "<p align='center'>Notes left at the Sleeping Giant Inn by one who made it this far. Read them before dusk.</p>",
+           "[pagebreak]", h("Day and Night"),
+           p("A day lasts about fifteen minutes, and so does the night. By day the dead sleep: rest, explore, spend what you earned. "
+             "At dusk they rise, and every night there are more of them, and they are harder to kill. Survive until dawn."),
+           p("You cannot sleep or wait while the dead walk."),
+           "[pagebreak]", h("Septims"),
+           p("Every risen thing you kill leaves septims. A headshot leaves more, and a kill with a blade or a spell more still. "
+             "Septims are the only coin the Echo Altars take."),
+           p("Watch the dead for tokens: a skull (Insta-Kill), a coin (Double Points), a falling star (it destroys every corpse risen tonight) and a chest (a Fire Sale at the altar)."),
+           "[pagebreak]", h("The Echo Altar"),
+           p("Every city has one. Look into its star and press Activate. Its menu does not stop the night."),
+           p("<b>Call a spell</b> - the altar turns and gives you one of the spells of the fallen. Each call costs more than the last until dawn."),
+           p("<b>Reforge</b> - make the spell in your hands stronger, three times over."),
+           p("<b>Perks</b> - lasting gifts. You carry five at most."),
+           p("<b>Trials</b> - the quest that wakes the altar. Finish them and slay the city's Barrow-Jarl to make the city safe for good."),
+           "[pagebreak]", h("Spells"),
+           p("Tap the attack to throw a bolt. Hold it, and both hands gather the spell's full power: the longer you hold, the harder it strikes. "
+             "Let go too soon and the power gutters out. Magicka comes back fast."),
+           "[pagebreak]", h("Shouts"),
+           p("A woken altar teaches you its city's Thu'um. Equip it like any shout. Its cooldown shows under your spells, bottom right."),
+           "[pagebreak]", h("The Dragon"),
+           p("Wake Whiterun's altar and a dragon will answer you. Jump and press Activate in mid-air: it swoops down and you take hold of its harness."),
+           p("Steer with the stick or WASD. Forward dives, back climbs. Attack to make it breathe fire on the dead below - only the dead, never your friends. "
+             "At the altar you can make deeper bonds with it."),
+           "[pagebreak]", h("Falling"),
+           p("At every dawn, and whenever an altar wakes, the day is saved. If you fall, you wake at that dawn. In a party, stand over a fallen friend and hold Activate to lift them."),
+           p("Good luck. Stay out of the barrows after dark."), "</font>"]
+    return '\n'.join(out)
+
+for key, edid, name, text, model in (('dirge', 'UN_UndyingDirgeBook', 'The Curse of Alduin', lore_text(), 'Clutter\\Books\\Book02LowPoly02.nif'),
+                                     ('guide', 'UN_SurvivorsGuide', "A Survivor's Guide to the Long Night", guide_text(), 'Clutter\\Books\\Book02LowPoly02.nif')):
+    recs.setdefault('BOOK', []).append(record('BOOK', fid('BOOK', key), [
+        sub('EDID', z(edid)), sub('OBND', bytes.fromhex('f5fff1fffdff0b000f000300')), sub('FULL', z(name)),
+        sub('MODL', z(model)), sub('DESC', z(text)),
+        sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x000937A2)),
+        sub('DATA', struct.pack('<BBHIIf', 0, 0, 0, 0, 25, 1.0)), sub('INAM', struct.pack('<I', 0x0008ADAE)), sub('CNAM', struct.pack('<I', 0))]))
 
 # (spell blasts are cloned from Skyrim's explosions at runtime: EXPL records in an ESL crashed the game at load)
 count = sum(len(v) for v in recs.values())

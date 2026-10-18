@@ -2029,6 +2029,19 @@ namespace bo3z
 			const int lvl = Save::GetSlot(slot).level;
 			return lvl >= gen::kForgeMax ? 0 : gen::kForgeCost[lvl];
 		}
+		// (Noah: harder to grow too strong) each weapon or spell takes one reforge a night
+		std::unordered_set<int> g_forgedTonight;
+		int                     g_forgedNight = -1;
+		bool ForgedTonight(int a_key, const std::string& a_name)
+		{
+			const int night = Save::Get(gen::kAV_round);
+			if (night != g_forgedNight) g_forgedNight = night, g_forgedTonight.clear();
+			if (g_forgedTonight.contains(a_key)) {
+				Hud::Banner(a_name + " has been reforged tonight - the altar needs a night to forge it again", 3.0f);
+				return true;
+			}
+			return false;
+		}
 		bool Reforge()
 		{
 			const int gun = CurrentGun(), slot = SlotOf(gun);
@@ -2045,9 +2058,13 @@ namespace bo3z
 					Hud::Banner(std::string(Arcana::Name(sp)) + " cannot hold more power", 2.5f);
 					return false;
 				}
+				if (ForgedTonight(Arcana::kIdBase + sp, std::string(Arcana::Name(sp)))) {
+					return false;
+				}
 				if (!Points::Spend(gen::kForgeCost[lv])) {
 					return false;
 				}
+				g_forgedTonight.insert(Arcana::kIdBase + sp);
 				Arcana::SetLevel(sp, lv + 1);
 				logger::info("forge: {} -> level {}", Arcana::Name(sp), lv + 1);
 				Hud::Banner(std::string(Arcana::Name(sp)) + " reforged  " + std::string(lv + 1, '|') + "  (+" + std::to_string(static_cast<int>(gen::kForgeStep * 100 * (lv + 1))) + "% power, -" + std::to_string(10 * (lv + 1)) + "% magicka)", 4.0f);
@@ -2058,9 +2075,13 @@ namespace bo3z
 				Hud::Banner(std::string(gen::kGuns[gun].label) + " cannot hold more power", 2.5f);
 				return false;
 			}
+			if (ForgedTonight(gun, std::string(gen::kGuns[gun].label))) {
+				return false;
+			}
 			if (!Points::Spend(gen::kForgeCost[s.level])) {
 				return false;
 			}
+			g_forgedTonight.insert(gun);
 			s.level += 1;
 			s.clip = gen::kGuns[gun].clip;
 			s.reserve = gen::kGuns[gun].reserve;

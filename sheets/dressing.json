@@ -1,6 +1,6 @@
 {
  "sheet": "dressing",
- "about": "Extra pieces placed around each town object. for = a kind (perk|box|wallbuy) or one object (objects:<id>). '$potion' = that perk's bottle model, '$perk' = that perk's colour. Offsets in the object's frame (y = forward), Skyrim units. freed: only once the city's Dirge is lifted (the shrine then burns gold, a beam over it).",
+ "about": "Extra pieces placed around each town object. for = a kind (perk|box|wallbuy) or one object (objects:<id>). '$potion' = that perk's bottle model, '$perk' = that perk's colour. Offsets in the object's frame (y = forward), Skyrim units. freed: only once the city's curse is lifted (the shrine then burns gold, a beam over it).",
  "columns": [
   "id",
   "for",

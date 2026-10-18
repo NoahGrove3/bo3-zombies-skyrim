@@ -1034,6 +1034,7 @@
   "SPEL:updraft_1": "0xc06",
   "WOOP:updraft_2": "0xc07",
   "SPEL:updraft_2": "0xc08",
-  "SHOU:updraft": "0xc09"
+  "SHOU:updraft": "0xc09",
+  "BOOK:guide": "0xc0a"
  }
 }

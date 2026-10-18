@@ -24,7 +24,7 @@
  "rows": [
   {
    "id": "zombie",
-   "label": "Hollowborn",
+   "label": "Haugbui",
    "plugin": "The Restless Dead.esp",
    "localId": "0x194DD1",
    "editorId": "zzEnc_RD_DraugrIronScaleArmorM01_Melee1H",
@@ -44,7 +44,7 @@
   },
   {
    "id": "hollow2",
-   "label": "Hollowborn",
+   "label": "Haugbui",
    "plugin": "The Restless Dead.esp",
    "localId": "0x1F5212",
    "editorId": "zzEnc_RD_DraugrIronLamellarArmorM01_Melee2H",
@@ -64,7 +64,7 @@
   },
   {
    "id": "hollow3",
-   "label": "Hollowborn",
+   "label": "Haugbui",
    "plugin": "The Restless Dead.esp",
    "localId": "0x1EAFCC",
    "editorId": "zzEnc_RD_DraugrIronLamellarArmorM01_Melee1H",
@@ -84,7 +84,7 @@
   },
   {
    "id": "ash1",
-   "label": "Ashbound",
+   "label": "Pyre-Thrall",
    "plugin": "The Restless Dead.esp",
    "localId": "0x5793C4",
    "editorId": "zzEnc_DC_Skeleton01Warrior1H",
@@ -104,7 +104,7 @@
   },
   {
    "id": "ash2",
-   "label": "Ashbound",
+   "label": "Pyre-Thrall",
    "plugin": "The Restless Dead.esp",
    "localId": "0x5D9796",
    "editorId": "zzEnc_DC_Skeleton01Warrior1HShield",
@@ -124,7 +124,7 @@
   },
   {
    "id": "runner",
-   "label": "Marrowkin",
+   "label": "Gravegnawer",
    "plugin": "mihailesobonecolossus.esp",
    "localId": "0x0008A1",
    "editorId": "mihailboneling",
@@ -144,7 +144,7 @@
   },
   {
    "id": "marksman",
-   "label": "Hollow Marksman",
+   "label": "Barrow Archer",
    "plugin": "The Restless Dead.esp",
    "localId": "0x5E39C7",
    "editorId": "zzEnc_DC_Skeleton01Archer",
@@ -164,7 +164,7 @@
   },
   {
    "id": "necro",
-   "label": "Pyre Hexer",
+   "label": "Ash Tongue",
    "plugin": "The Restless Dead.esp",
    "localId": "0x06DEA8",
    "editorId": "zzEnc_DC_DraugrMageFireM02",
@@ -184,7 +184,7 @@
   },
   {
    "id": "hexer_rime",
-   "label": "Rime Hexer",
+   "label": "Rime Tongue",
    "plugin": "The Restless Dead.esp",
    "localId": "0x0311F3",
    "editorId": "zzEnc_DC_DraugrMageFrostM02",
@@ -204,7 +204,7 @@
   },
   {
    "id": "hexer_storm",
-   "label": "Storm Hexer",
+   "label": "Storm Tongue",
    "plugin": "The Restless Dead.esp",
    "localId": "0x1E9BF1",
    "editorId": "zzEnc_DC_DraugrMageShockM02",
@@ -224,7 +224,7 @@
   },
   {
    "id": "wailer",
-   "label": "Mire Wraith",
+   "label": "Fen-Wailer",
    "plugin": "mihailfogling.esp",
    "localId": "0x000806",
    "editorId": "mihailfoglingCairn",
@@ -244,7 +244,7 @@
   },
   {
    "id": "death_hound",
-   "label": "Rotfang",
+   "label": "Grave-Hound",
    "plugin": "mihailoldgod.esp",
    "localId": "0x000861",
    "editorId": "mihailleshenwolfSPIRIT",
@@ -264,7 +264,7 @@
   },
   {
    "id": "shadow",
-   "label": "Marrow Lord",
+   "label": "Draugr Warlord",
    "plugin": "mihailesobonecolossus.esp",
    "localId": "0x0008C4",
    "editorId": "mihailbonemasterFIRE",
@@ -284,7 +284,7 @@
   },
   {
    "id": "reaper",
-   "label": "Dread Champion",
+   "label": "Thane of the Mound",
    "plugin": "The Restless Dead.esp",
    "localId": "0x5DE8BD",
    "editorId": "zzEnc_DC_Skeleton06Warrior1H",
@@ -304,7 +304,7 @@
   },
   {
    "id": "brute",
-   "label": "Gravebrute",
+   "label": "Bone Jotunn",
    "plugin": "mihailgiantfamily.esp",
    "localId": "0x000804",
    "editorId": "mihailgiantyoungling",
@@ -324,7 +324,7 @@
   },
   {
    "id": "boss",
-   "label": "The Ossuary Titan",
+   "label": "Haugrisi, the Mound-Giant",
    "plugin": "mihailesobonecolossus.esp",
    "localId": "0x0008D2",
    "editorId": "SUMMONmihailbonecolossusFIRE",
@@ -344,7 +344,7 @@
   },
   {
    "id": "boss2",
-   "label": "The Antlered Rot",
+   "label": "The Elk-Crowned",
    "plugin": "mihailoldgod.esp",
    "localId": "0x000867",
    "editorId": "mihailleshenNPC4",
@@ -364,7 +364,7 @@
   },
   {
    "id": "boss3",
-   "label": "Barrow Matron",
+   "label": "Mother of Mounds",
    "plugin": "mihailgiantfamily.esp",
    "localId": "0x000821",
    "editorId": "mihailgiantesses_NPC3",
@@ -384,7 +384,7 @@
   },
   {
    "id": "boss4",
-   "label": "Vaelmorr, the Hollow Wyrm",
+   "label": "Grahzah, Alduin's Grave-Wing",
    "plugin": "DiverseDragonsCollectionSE.esp",
    "localId": "0x09D809",
    "editorId": "ogdd_EncDragonNecro01",

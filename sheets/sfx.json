@@ -1,1457 +1,1457 @@
 {
-  "sheet": "sfx",
-  "about": "Clips cut from the supplied The Curse of Alduin SFX library (Epidemic Sound, licensed to Noah) by tools/sfx.py. See docs/AUDIO_MAP.md.",
-  "sources": {
-    "firebreath": "ES_Creatures, Dragon, Dragon, Vocalizations, Fire Breathing 06 - Epidemic Sound.mp3",
-    "dgrowl": "ES_Creatures, Dragon, Dragon, Vocalizations, Growls 01 - Epidemic Sound.mp3",
-    "screech": "ES_Creatures, Ethereal, Poltergeist, Screech, Aggressive, Attack, Horror 02 - Epidemic Sound.mp3",
-    "zf04": "ES_Creatures, Humanoid, Zombie, Female, Snarl, Groan 04 - Epidemic Sound.mp3",
-    "zf08": "ES_Creatures, Humanoid, Zombie, Female, Snarl, Groan 08 - Epidemic Sound.mp3",
-    "roar": "ES_Creatures, Monster, Monster, Roar - Epidemic Sound.mp3",
-    "demon": "ES_Demon, Evil Demonic Growl 04 - Epidemic Sound.mp3",
-    "bighit": "ES_Designed, Impact, Cinematic, Scary, Horror, Creepy, Unpleasant, Fast, Big Hit - Epidemic Sound.mp3",
-    "stinger": "ES_Designed, Stinger, Cinematic, Hit, Impact, Big, Dark, Creepy, Horror 02 - Epidemic Sound.mp3",
-    "ghosts": "ES_Designed, Vocal, Horror, Ghosts, Airy Roars 06 - Epidemic Sound.mp3",
-    "menu": "ES_Echoes of the Unmasked - DEX 1200.mp3",
-    "menu_hide": "hide (slowed + reverb).mp3",
-    "rubble": "ES_Explosions, Real, Heavy Blasts, Stone Rubble Debris - Epidemic Sound.mp3",
-    "ignite": "ES_Fire, Ignite, Large Ignition, Start Fire x2 - Epidemic Sound.mp3",
-    "darkhit": "ES_Hit, Big, Powerful, Dark, Suspense, Cinematic 03 - Epidemic Sound.mp3",
-    "portal": "ES_Magic, Angelic, Portal, Open, Spell, Cast, Holy - Epidemic Sound.mp3",
-    "beam": "ES_Magic, Elemental, Electric Magic Spell, Continuous, Lightning, Electrical Beam Emission - Epidemic Sound.mp3",
-    "elcast": "ES_Magic, Elemental, Electricity Magic, Spell, Cast, Long 01 - Epidemic Sound.mp3",
-    "icefast": "ES_Magic, Elemental, Ice Magic Spell, Fast, Ice Blast, Cryomagic - Epidemic Sound.mp3",
-    "strike": "ES_Magic, Elemental, Natural Magic, Lightning Strike, Electrical - Epidemic Sound.mp3",
-    "thunder": "ES_Magic, Elemental, Thunderclap - Epidemic Sound.mp3",
-    "firewhoosh": "ES_Magic, Elemental, Whoosh, Fire - Epidemic Sound.mp3",
-    "drone": "ES_Magic, Evil, Dark, Magic, Death, Spell, Arcane, Drone, Tone - Epidemic Sound.mp3",
-    "wind": "ES_Magic, Spell, Arial Summoning, Wind Magic, Cast 01 - Epidemic Sound.mp3",
-    "coldwhoosh": "ES_Magic, Spell, Cold, Whoosh 06 - Epidemic Sound.mp3",
-    "crunch": "ES_Magic, Spell, Crunchy Spell - Epidemic Sound.mp3",
-    "bright": "ES_Magic, Spell, Magic, Spell, Bright, Mixed, Delayed - Epidemic Sound.mp3",
-    "ethereal": "ES_Magic, Spell, Nostalgic Ethereal Stinger - Epidemic Sound.mp3",
-    "epicloop": "ES_Musical, Loop, Epic, Exciting, Thriller, Brass, Strings 02 - Epidemic Sound.mp3",
-    "logo": "ES_Musical, Loop, Logo, Orchestra, Epic, Dreamy, Suspense - Epidemic Sound.mp3",
-    "spooky": "ES_Swooshes, Whoosh, Spooky Tone - Epidemic Sound.mp3",
-    "ui": "ES_User Interface, Beep, Button, Short, Chord, Soft, Low - Epidemic Sound.mp3",
-    "steps_jog": "../../sfx2/ES_Footsteps_Human_Barefoot_Dirt_Jog_Run_Close_-_Epidemic_Sound.mp3",
-    "steps_walk": "../../sfx2/ES_Footsteps_Human_Barefoot_Dirt_Walk_Distant_-_Epidemic_Sound.mp3",
-    "steps_sprint": "../../sfx2/ES_Footsteps_Human_Slippers_Dirt_Sprint_Distant_-_Epidemic_Sound.mp3",
-    "zbreath": "../../sfx2/ES_Creatures_Humanoid_Zombie_Breath_Regular_-_Epidemic_Sound.mp3",
-    "gore13": "../../sfx2/ES_Gore_Flesh_Drop_Impact_Hit_Short_Bloody_Wet_13_-_Epidemic_Sound.mp3",
-    "gore16": "../../sfx2/ES_Gore_Flesh_Drop_Impact_Hit_Short_Bloody_Wet_16_-_Epidemic_Sound.mp3",
-    "guts35": "../../sfx2/ES_Impact_Hit_Hard_Drop_Wet_Flesh_Guts_35_-_Epidemic_Sound.mp3",
-    "narration": "../../vo/vo_full_v1.mp3"
+ "sheet": "sfx",
+ "about": "Clips cut from the supplied The Curse of Alduin SFX library (Epidemic Sound, licensed to Noah) by tools/sfx.py. See docs/AUDIO_MAP.md.",
+ "sources": {
+  "firebreath": "ES_Creatures, Dragon, Dragon, Vocalizations, Fire Breathing 06 - Epidemic Sound.mp3",
+  "dgrowl": "ES_Creatures, Dragon, Dragon, Vocalizations, Growls 01 - Epidemic Sound.mp3",
+  "screech": "ES_Creatures, Ethereal, Poltergeist, Screech, Aggressive, Attack, Horror 02 - Epidemic Sound.mp3",
+  "zf04": "ES_Creatures, Humanoid, Zombie, Female, Snarl, Groan 04 - Epidemic Sound.mp3",
+  "zf08": "ES_Creatures, Humanoid, Zombie, Female, Snarl, Groan 08 - Epidemic Sound.mp3",
+  "roar": "ES_Creatures, Monster, Monster, Roar - Epidemic Sound.mp3",
+  "demon": "ES_Demon, Evil Demonic Growl 04 - Epidemic Sound.mp3",
+  "bighit": "ES_Designed, Impact, Cinematic, Scary, Horror, Creepy, Unpleasant, Fast, Big Hit - Epidemic Sound.mp3",
+  "stinger": "ES_Designed, Stinger, Cinematic, Hit, Impact, Big, Dark, Creepy, Horror 02 - Epidemic Sound.mp3",
+  "ghosts": "ES_Designed, Vocal, Horror, Ghosts, Airy Roars 06 - Epidemic Sound.mp3",
+  "menu": "ES_Echoes of the Unmasked - DEX 1200.mp3",
+  "menu_hide": "hide (slowed + reverb).mp3",
+  "rubble": "ES_Explosions, Real, Heavy Blasts, Stone Rubble Debris - Epidemic Sound.mp3",
+  "ignite": "ES_Fire, Ignite, Large Ignition, Start Fire x2 - Epidemic Sound.mp3",
+  "darkhit": "ES_Hit, Big, Powerful, Dark, Suspense, Cinematic 03 - Epidemic Sound.mp3",
+  "portal": "ES_Magic, Angelic, Portal, Open, Spell, Cast, Holy - Epidemic Sound.mp3",
+  "beam": "ES_Magic, Elemental, Electric Magic Spell, Continuous, Lightning, Electrical Beam Emission - Epidemic Sound.mp3",
+  "elcast": "ES_Magic, Elemental, Electricity Magic, Spell, Cast, Long 01 - Epidemic Sound.mp3",
+  "icefast": "ES_Magic, Elemental, Ice Magic Spell, Fast, Ice Blast, Cryomagic - Epidemic Sound.mp3",
+  "strike": "ES_Magic, Elemental, Natural Magic, Lightning Strike, Electrical - Epidemic Sound.mp3",
+  "thunder": "ES_Magic, Elemental, Thunderclap - Epidemic Sound.mp3",
+  "firewhoosh": "ES_Magic, Elemental, Whoosh, Fire - Epidemic Sound.mp3",
+  "drone": "ES_Magic, Evil, Dark, Magic, Death, Spell, Arcane, Drone, Tone - Epidemic Sound.mp3",
+  "wind": "ES_Magic, Spell, Arial Summoning, Wind Magic, Cast 01 - Epidemic Sound.mp3",
+  "coldwhoosh": "ES_Magic, Spell, Cold, Whoosh 06 - Epidemic Sound.mp3",
+  "crunch": "ES_Magic, Spell, Crunchy Spell - Epidemic Sound.mp3",
+  "bright": "ES_Magic, Spell, Magic, Spell, Bright, Mixed, Delayed - Epidemic Sound.mp3",
+  "ethereal": "ES_Magic, Spell, Nostalgic Ethereal Stinger - Epidemic Sound.mp3",
+  "epicloop": "ES_Musical, Loop, Epic, Exciting, Thriller, Brass, Strings 02 - Epidemic Sound.mp3",
+  "logo": "ES_Musical, Loop, Logo, Orchestra, Epic, Dreamy, Suspense - Epidemic Sound.mp3",
+  "spooky": "ES_Swooshes, Whoosh, Spooky Tone - Epidemic Sound.mp3",
+  "ui": "ES_User Interface, Beep, Button, Short, Chord, Soft, Low - Epidemic Sound.mp3",
+  "steps_jog": "../../sfx2/ES_Footsteps_Human_Barefoot_Dirt_Jog_Run_Close_-_Epidemic_Sound.mp3",
+  "steps_walk": "../../sfx2/ES_Footsteps_Human_Barefoot_Dirt_Walk_Distant_-_Epidemic_Sound.mp3",
+  "steps_sprint": "../../sfx2/ES_Footsteps_Human_Slippers_Dirt_Sprint_Distant_-_Epidemic_Sound.mp3",
+  "zbreath": "../../sfx2/ES_Creatures_Humanoid_Zombie_Breath_Regular_-_Epidemic_Sound.mp3",
+  "gore13": "../../sfx2/ES_Gore_Flesh_Drop_Impact_Hit_Short_Bloody_Wet_13_-_Epidemic_Sound.mp3",
+  "gore16": "../../sfx2/ES_Gore_Flesh_Drop_Impact_Hit_Short_Bloody_Wet_16_-_Epidemic_Sound.mp3",
+  "guts35": "../../sfx2/ES_Impact_Hit_Hard_Drop_Wet_Flesh_Guts_35_-_Epidemic_Sound.mp3",
+  "narration": "../../vo/vo_full_v1.mp3"
+ },
+ "columns": [
+  "id",
+  "src",
+  "take",
+  "t0",
+  "t1",
+  "split",
+  "pitch",
+  "peak",
+  "fadeIn",
+  "fadeOut",
+  "loop",
+  "stereo",
+  "maxLen",
+  "use"
+ ],
+ "rows": [
+  {
+   "id": "mus_menu",
+   "src": "menu_hide",
+   "use": "main menu music",
+   "t0": 0.0,
+   "t1": 136.7,
+   "stereo": true,
+   "peak": -2.4,
+   "fadeIn": 1500,
+   "fadeOut": 3000
   },
-  "columns": [
-    "id",
-    "src",
-    "take",
-    "t0",
-    "t1",
-    "split",
-    "pitch",
-    "peak",
-    "fadeIn",
-    "fadeOut",
-    "loop",
-    "stereo",
-    "maxLen",
-    "use"
-  ],
-  "rows": [
-    {
-      "id": "mus_menu",
-      "src": "menu_hide",
-      "use": "main menu music",
-      "t0": 0.0,
-      "t1": 136.7,
-      "stereo": true,
-      "peak": -2.4,
-      "fadeIn": 1500,
-      "fadeOut": 3000
-    },
-    {
-      "id": "mus_boss",
-      "src": "epicloop",
-      "use": "Grimmvar fight music (looped while he lives)",
-      "take": 0,
-      "stereo": true,
-      "peak": -5,
-      "loop": true
-    },
-    {
-      "id": "mus_freed",
-      "src": "comfort_chain",
-      "use": "a city freed (all its rites done, the shrine cleared): plays alone, faded in and out",
-      "t0": 0.0,
-      "t1": 82.7,
-      "stereo": true,
-      "peak": -2.0,
-      "fadeIn": 3500,
-      "fadeOut": 6500
-    },
-    {
-      "id": "mus_intro",
-      "src": "menu",
-      "use": "the Curse of Alduin intro (after character creation): the menu theme's rising second half, under the narration",
-      "t0": 74.0,
-      "t1": 157.6,
-      "stereo": true,
-      "peak": -11,
-      "fadeIn": 2500,
-      "fadeOut": 4000
-    },
-    {
-      "id": "sp_beam_loop",
-      "src": "beam",
-      "use": "shock charge hum (Storm Lash, Sky Sunder)",
-      "take": 1,
-      "peak": -12,
-      "loop": true
-    },
-    {
-      "id": "sp_beam_loop2",
-      "src": "beam",
-      "use": "shock charge hum variation",
-      "take": 3,
-      "peak": -12,
-      "loop": true
-    },
-    {
-      "id": "sp_drone_loop",
-      "src": "drone",
-      "use": "dark charge hum (Hexfire, Void Orb); the ward/hold circle hum (pitched down)",
-      "take": 0,
-      "peak": -12,
-      "loop": true
-    },
-    {
-      "id": "sp_holy_loop",
-      "src": "portal",
-      "use": "holy charge hum (Sunfire, Starfall)",
-      "t0": 1.0,
-      "t1": 6.6,
-      "peak": -12,
-      "loop": true
-    },
-    {
-      "id": "sp_shock_cast",
-      "src": "elcast",
-      "use": "Storm Lash quick cast",
-      "take": 0,
-      "peak": -8,
-      "maxLen": 1.2,
-      "fadeOut": 200
-    },
-    {
-      "id": "sp_strike_0",
-      "src": "strike",
-      "use": "lightning impact 1 (Storm Lash, Sky Sunder, Starfall)",
-      "take": 0,
-      "peak": -6
-    },
-    {
-      "id": "sp_strike_1",
-      "src": "strike",
-      "use": "lightning impact 2 (Storm Lash, Sky Sunder, Starfall)",
-      "take": 1,
-      "peak": -6
-    },
-    {
-      "id": "sp_strike_2",
-      "src": "strike",
-      "use": "lightning impact 3 (Storm Lash, Sky Sunder, Starfall)",
-      "take": 2,
-      "peak": -6
-    },
-    {
-      "id": "sp_thunder",
-      "src": "thunder",
-      "use": "Sky Sunder / Storm Lash unleash; Toll shout",
-      "take": 0,
-      "peak": -4
-    },
-    {
-      "id": "sp_ice_0",
-      "src": "icefast",
-      "use": "ice blast 1 (Rimefang casts and impacts, Moonshard impact)",
-      "take": 0,
-      "peak": -7
-    },
-    {
-      "id": "sp_ice_1",
-      "src": "icefast",
-      "use": "ice blast 2 (Rimefang casts and impacts, Moonshard impact)",
-      "take": 1,
-      "peak": -7
-    },
-    {
-      "id": "sp_ice_2",
-      "src": "icefast",
-      "use": "ice blast 3 (Rimefang casts and impacts, Moonshard impact)",
-      "take": 2,
-      "peak": -7
-    },
-    {
-      "id": "sp_ice_3",
-      "src": "icefast",
-      "use": "ice blast 4 (Rimefang casts and impacts, Moonshard impact)",
-      "take": 3,
-      "peak": -7
-    },
-    {
-      "id": "sp_ice_4",
-      "src": "icefast",
-      "use": "ice blast 5 (Rimefang casts and impacts, Moonshard impact)",
-      "take": 4,
-      "peak": -7
-    },
-    {
-      "id": "sp_cold_whoosh",
-      "src": "coldwhoosh",
-      "use": "Moonshard / Rimefang cast whoosh",
-      "take": 0,
-      "peak": -8
-    },
-    {
-      "id": "sp_fire_0",
-      "src": "firewhoosh",
-      "use": "fire whoosh 1 (Cinderstorm casts)",
-      "take": 0,
-      "peak": -8
-    },
-    {
-      "id": "sp_fire_1",
-      "src": "firewhoosh",
-      "use": "fire whoosh 2 (Cinderstorm casts)",
-      "take": 1,
-      "peak": -8
-    },
-    {
-      "id": "sp_fire_2",
-      "src": "firewhoosh",
-      "use": "fire whoosh 3 (Cinderstorm casts)",
-      "take": 2,
-      "peak": -8
-    },
-    {
-      "id": "sp_fire_3",
-      "src": "firewhoosh",
-      "use": "fire whoosh 4 (Cinderstorm casts)",
-      "take": 3,
-      "peak": -8
-    },
-    {
-      "id": "sp_fire_4",
-      "src": "firewhoosh",
-      "use": "fire whoosh 5 (Cinderstorm casts)",
-      "take": 4,
-      "peak": -8
-    },
-    {
-      "id": "sp_fire_5",
-      "src": "firewhoosh",
-      "use": "fire whoosh 6 (Cinderstorm casts)",
-      "take": 5,
-      "peak": -8
-    },
-    {
-      "id": "sp_fire_6",
-      "src": "firewhoosh",
-      "use": "fire whoosh 7 (Cinderstorm casts)",
-      "take": 6,
-      "peak": -8
-    },
-    {
-      "id": "sp_fire_7",
-      "src": "firewhoosh",
-      "use": "fire whoosh 8 (Cinderstorm casts)",
-      "take": 7,
-      "peak": -8
-    },
-    {
-      "id": "sp_ignite",
-      "src": "ignite",
-      "use": "Cinderstorm unleash; Ember shout",
-      "take": 1,
-      "peak": -4
-    },
-    {
-      "id": "sp_ignite_small",
-      "src": "ignite",
-      "use": "fire impact (Cinderstorm bolt lands)",
-      "take": 0,
-      "peak": -9,
-      "maxLen": 1.0,
-      "fadeOut": 250
-    },
-    {
-      "id": "sp_wind_cast",
-      "src": "wind",
-      "use": "Gale Burst quick cast",
-      "take": 1,
-      "peak": -7
-    },
-    {
-      "id": "sp_wind_unleash",
-      "src": "wind",
-      "use": "Gale Burst unleash; Gale shout",
-      "take": 0,
-      "peak": -4
-    },
-    {
-      "id": "sp_crunch",
-      "src": "crunch",
-      "use": "Bone Spear / Bramble Spike cast",
-      "take": 0,
-      "peak": -8
-    },
-    {
-      "id": "sp_crunch_low",
-      "src": "crunch",
-      "use": "Bone Spear / Bramble Spike impact",
-      "take": 0,
-      "pitch": -5,
-      "peak": -8
-    },
-    {
-      "id": "sp_holy_burst",
-      "src": "portal",
-      "use": "Sunfire unleash (the light breaks open)",
-      "t0": 3.9,
-      "t1": 7.6,
-      "peak": -4,
-      "fadeOut": 600
-    },
-    {
-      "id": "sp_starfall",
-      "src": "ethereal",
-      "use": "Starfall unleash (a star falls)",
-      "t0": 0.9,
-      "t1": 6.0,
-      "peak": -5,
-      "fadeOut": 900
-    },
-    {
-      "id": "sp_void_hit",
-      "src": "darkhit",
-      "use": "Void Orb unleash; Dread shout",
-      "take": 0,
-      "peak": -4
-    },
-    {
-      "id": "sp_hex",
-      "src": "drone",
-      "use": "Hexfire unleash (the doom mark)",
-      "take": 0,
-      "pitch": -3,
-      "peak": -5,
-      "maxLen": 2.6,
-      "fadeOut": 700
-    },
-    {
-      "id": "sp_bones",
-      "src": "rubble",
-      "use": "Bone Spear unleash (the ground breaks into bone)",
-      "take": 2,
-      "peak": -5,
-      "maxLen": 2.2,
-      "fadeOut": 500
-    },
-    {
-      "id": "sp_bright_0",
-      "src": "bright",
-      "use": "arcane impact 1 (Grave Spark, Wabbajack, Mind Spike)",
-      "take": 0,
-      "peak": -11
-    },
-    {
-      "id": "sp_bright_1",
-      "src": "bright",
-      "use": "arcane impact 2 (Grave Spark, Wabbajack, Mind Spike)",
-      "take": 1,
-      "peak": -11
-    },
-    {
-      "id": "sp_bright_2",
-      "src": "bright",
-      "use": "arcane impact 3 (Grave Spark, Wabbajack, Mind Spike)",
-      "take": 2,
-      "peak": -11
-    },
-    {
-      "id": "sp_bright_3",
-      "src": "bright",
-      "use": "arcane impact 4 (Grave Spark, Wabbajack, Mind Spike)",
-      "take": 3,
-      "peak": -11
-    },
-    {
-      "id": "en_runner_idle_0",
-      "src": "zf04",
-      "use": "Runner (hooded woman) snarl 1",
-      "take": 1,
-      "split": [
-        0,
-        2
-      ],
-      "peak": -9
-    },
-    {
-      "id": "en_runner_idle_1",
-      "src": "zf04",
-      "use": "Runner (hooded woman) snarl 2",
-      "take": 1,
-      "split": [
-        1,
-        2
-      ],
-      "peak": -9
-    },
-    {
-      "id": "en_runner_idle_2",
-      "src": "zf08",
-      "use": "Runner (hooded woman) snarl 3",
-      "take": 0,
-      "split": [
-        0,
-        2
-      ],
-      "peak": -9
-    },
-    {
-      "id": "en_runner_idle_3",
-      "src": "zf08",
-      "use": "Runner (hooded woman) snarl 4",
-      "take": 0,
-      "split": [
-        1,
-        2
-      ],
-      "peak": -9
-    },
-    {
-      "id": "en_runner_attack",
-      "src": "zf08",
-      "use": "Runner lunge snarl",
-      "take": 0,
-      "split": [
-        2,
-        4
-      ],
-      "peak": -7
-    },
-    {
-      "id": "en_runner_death",
-      "src": "zf08",
-      "use": "Runner death groan",
-      "take": 0,
-      "split": [
-        3,
-        4
-      ],
-      "pitch": -2,
-      "peak": -7,
-      "fadeOut": 400
-    },
-    {
-      "id": "en_wail_0",
-      "src": "screech",
-      "use": "Wailer scream 1 (calls the horde)",
-      "take": 0,
-      "peak": -4
-    },
-    {
-      "id": "en_wail_1",
-      "src": "screech",
-      "use": "Wailer scream 2 (calls the horde)",
-      "take": 1,
-      "peak": -4
-    },
-    {
-      "id": "en_ghost_0",
-      "src": "ghosts",
-      "use": "ghostly breath 1 (Wailer and Gloomstalker idle, Fog Night)",
-      "take": 0,
-      "split": [
-        0,
-        3
-      ],
-      "peak": -11
-    },
-    {
-      "id": "en_ghost_1",
-      "src": "ghosts",
-      "use": "ghostly breath 2 (Wailer and Gloomstalker idle, Fog Night)",
-      "take": 0,
-      "split": [
-        1,
-        3
-      ],
-      "peak": -11
-    },
-    {
-      "id": "en_ghost_2",
-      "src": "ghosts",
-      "use": "ghostly breath 3 (Wailer and Gloomstalker idle, Fog Night)",
-      "take": 0,
-      "split": [
-        2,
-        3
-      ],
-      "peak": -11
-    },
-    {
-      "id": "en_hag_death",
-      "src": "screech",
-      "use": "Wailer death (a screech that dies away)",
-      "take": 1,
-      "pitch": -4,
-      "peak": -7,
-      "fadeOut": 500
-    },
-    {
-      "id": "en_roar",
-      "src": "roar",
-      "use": "Bloater / bone knight roar (aggro)",
-      "take": 0,
-      "pitch": -3,
-      "peak": -6
-    },
-    {
-      "id": "en_roar_hi",
-      "src": "roar",
-      "use": "abomination attack bellow",
-      "take": 0,
-      "peak": -7
-    },
-    {
-      "id": "en_demon",
-      "src": "demon",
-      "use": "Lich King / Corrupted King growl; necromancer death",
-      "take": 0,
-      "peak": -6
-    },
-    {
-      "id": "en_demon_low",
-      "src": "demon",
-      "use": "champion death",
-      "take": 0,
-      "pitch": -4,
-      "peak": -5,
-      "fadeOut": 400
-    },
-    {
-      "id": "en_burst",
-      "src": "rubble",
-      "use": "Bloater bursts (with the grave-rot)",
-      "take": 0,
-      "peak": -5,
-      "maxLen": 1.8,
-      "fadeOut": 400
-    },
-    {
-      "id": "boss_growl",
-      "src": "dgrowl",
-      "use": "Grimmvar growl (idle / arrival / enraged)",
-      "take": 0,
-      "peak": -3
-    },
-    {
-      "id": "boss_breath_wind",
-      "src": "firebreath",
-      "use": "Grimmvar breath telegraph (the in-breath and first roar)",
-      "take": 1,
-      "maxLen": 1.4,
-      "peak": -4,
-      "fadeOut": 200
-    },
-    {
-      "id": "boss_breath",
-      "src": "firebreath",
-      "use": "Grimmvar fire breath",
-      "take": 1,
-      "peak": -3,
-      "fadeOut": 600
-    },
-    {
-      "id": "boss_land",
-      "src": "bighit",
-      "use": "Grimmvar leap landing / heavy slam impact",
-      "take": 0,
-      "peak": -3,
-      "maxLen": 2.6,
-      "fadeOut": 600
-    },
-    {
-      "id": "boss_quake_0",
-      "src": "rubble",
-      "use": "eruption / ground burst 1",
-      "take": 0,
-      "peak": -4
-    },
-    {
-      "id": "boss_quake_1",
-      "src": "rubble",
-      "use": "eruption / ground burst 2",
-      "take": 3,
-      "peak": -4
-    },
-    {
-      "id": "boss_quake_2",
-      "src": "rubble",
-      "use": "eruption / ground burst 3",
-      "take": 4,
-      "peak": -4
-    },
-    {
-      "id": "boss_arrive",
-      "src": "stinger",
-      "use": "Grimmvar arrives; Blood Moon begins",
-      "take": 0,
-      "peak": -3
-    },
-    {
-      "id": "champ_arrive",
-      "src": "darkhit",
-      "use": "a champion takes the field; Night of Iron begins",
-      "take": 0,
-      "pitch": -2,
-      "peak": -3
-    },
-    {
-      "id": "champ_telegraph",
-      "src": "spooky",
-      "use": "champion ability wind-up (chain hook, scream, summon)",
-      "take": 0,
-      "peak": -6
-    },
-    {
-      "id": "ui_open",
-      "src": "ui",
-      "use": "shrine menu open",
-      "take": 0,
-      "peak": -12
-    },
-    {
-      "id": "ui_move",
-      "src": "ui",
-      "use": "choose a brew",
-      "take": 1,
-      "pitch": 3,
-      "peak": -16,
-      "maxLen": 0.35,
-      "fadeOut": 120
-    },
-    {
-      "id": "ui_close",
-      "src": "ui",
-      "use": "shrine menu close; main menu back",
-      "take": 2,
-      "pitch": -2,
-      "peak": -13
-    },
-    {
-      "id": "ui_select",
-      "src": "ui",
-      "use": "main menu select",
-      "take": 1,
-      "peak": -12
-    },
-    {
-      "id": "coffer_charge",
-      "src": "portal",
-      "use": "the shrine gathers power (roll begins)",
-      "t0": 0.8,
-      "t1": 4.2,
-      "peak": -7,
-      "fadeOut": 300
-    },
-    {
-      "id": "coffer_tick",
-      "src": "bright",
-      "use": "a spell passes over the crown (cycling tick)",
-      "take": 0,
-      "pitch": 4,
-      "peak": -15,
-      "maxLen": 0.25,
-      "fadeOut": 80
-    },
-    {
-      "id": "coffer_land",
-      "src": "ethereal",
-      "use": "the shrine lands on a spell",
-      "t0": 0.9,
-      "t1": 4.5,
-      "peak": -6,
-      "fadeOut": 900
-    },
-    {
-      "id": "coffer_take",
-      "src": "bright",
-      "use": "take the spell from the crown",
-      "take": 3,
-      "peak": -8
-    },
-    {
-      "id": "rite_hum",
-      "src": "drone",
-      "use": "ward / hold circle hum (loop)",
-      "take": 0,
-      "pitch": -5,
-      "peak": -15,
-      "loop": true
-    },
-    {
-      "id": "rite_reset",
-      "src": "spooky",
-      "use": "the dead broke the circle (timer reset)",
-      "take": 0,
-      "pitch": -3,
-      "peak": -6,
-      "maxLen": 2.0,
-      "fadeOut": 400
-    },
-    {
-      "id": "rite_step",
-      "src": "bright",
-      "use": "rite step done",
-      "take": 2,
-      "pitch": -2,
-      "peak": -7
-    },
-    {
-      "id": "rite_start",
-      "src": "stinger",
-      "use": "rite begins",
-      "take": 0,
-      "pitch": -3,
-      "peak": -7,
-      "maxLen": 2.5,
-      "fadeOut": 600
-    },
-    {
-      "id": "night_fog",
-      "src": "ghosts",
-      "use": "Fog Night begins",
-      "take": 0,
-      "peak": -6,
-      "fadeOut": 1500
-    },
-    {
-      "id": "night_ash",
-      "src": "rubble",
-      "use": "Ash Storm begins (distant blasts)",
-      "take": 3,
-      "pitch": -4,
-      "peak": -7,
-      "fadeOut": 800
-    },
-    {
-      "id": "shout_learned",
-      "src": "ethereal",
-      "use": "a Thu'um learned",
-      "t0": 0.9,
-      "t1": 9.0,
-      "peak": -5,
-      "fadeOut": 1500
-    },
-    {
-      "id": "step_jog_0",
-      "src": "steps_jog",
-      "use": "a close, quick barefoot step (runners, champions, heavy walkers pitched down)",
-      "onset": 2,
-      "len": 0.2,
-      "peak": -6,
-      "fadeOut": 60
-    },
-    {
-      "id": "step_jog_1",
-      "src": "steps_jog",
-      "use": "a close, quick barefoot step (runners, champions, heavy walkers pitched down)",
-      "onset": 3,
-      "len": 0.2,
-      "peak": -6,
-      "fadeOut": 60
-    },
-    {
-      "id": "step_jog_2",
-      "src": "steps_jog",
-      "use": "a close, quick barefoot step (runners, champions, heavy walkers pitched down)",
-      "onset": 6,
-      "len": 0.2,
-      "peak": -6,
-      "fadeOut": 60
-    },
-    {
-      "id": "step_jog_3",
-      "src": "steps_jog",
-      "use": "a close, quick barefoot step (runners, champions, heavy walkers pitched down)",
-      "onset": 11,
-      "len": 0.2,
-      "peak": -6,
-      "fadeOut": 60
-    },
-    {
-      "id": "step_jog_4",
-      "src": "steps_jog",
-      "use": "a close, quick barefoot step (runners, champions, heavy walkers pitched down)",
-      "onset": 17,
-      "len": 0.2,
-      "peak": -6,
-      "fadeOut": 60
-    },
-    {
-      "id": "step_jog_5",
-      "src": "steps_jog",
-      "use": "a close, quick barefoot step (runners, champions, heavy walkers pitched down)",
-      "onset": 18,
-      "len": 0.2,
-      "peak": -6,
-      "fadeOut": 60
-    },
-    {
-      "id": "step_walk_0",
-      "src": "steps_walk",
-      "use": "a slow barefoot step on dirt (shamblers, wailers, the lich)",
-      "onset": 2,
-      "len": 0.24,
-      "peak": -6,
-      "fadeOut": 70
-    },
-    {
-      "id": "step_walk_1",
-      "src": "steps_walk",
-      "use": "a slow barefoot step on dirt (shamblers, wailers, the lich)",
-      "onset": 6,
-      "len": 0.24,
-      "peak": -6,
-      "fadeOut": 70
-    },
-    {
-      "id": "step_walk_2",
-      "src": "steps_walk",
-      "use": "a slow barefoot step on dirt (shamblers, wailers, the lich)",
-      "onset": 10,
-      "len": 0.24,
-      "peak": -6,
-      "fadeOut": 70
-    },
-    {
-      "id": "step_walk_3",
-      "src": "steps_walk",
-      "use": "a slow barefoot step on dirt (shamblers, wailers, the lich)",
-      "onset": 15,
-      "len": 0.24,
-      "peak": -6,
-      "fadeOut": 70
-    },
-    {
-      "id": "step_walk_4",
-      "src": "steps_walk",
-      "use": "a slow barefoot step on dirt (shamblers, wailers, the lich)",
-      "onset": 17,
-      "len": 0.24,
-      "peak": -6,
-      "fadeOut": 70
-    },
-    {
-      "id": "step_walk_5",
-      "src": "steps_walk",
-      "use": "a slow barefoot step on dirt (shamblers, wailers, the lich)",
-      "onset": 21,
-      "len": 0.24,
-      "peak": -6,
-      "fadeOut": 70
-    },
-    {
-      "id": "step_sprint_0",
-      "src": "steps_sprint",
-      "use": "a sprinting step (Hollow Brides and Gloomstalkers running)",
-      "onset": 0,
-      "len": 0.18,
-      "peak": -6,
-      "fadeOut": 50
-    },
-    {
-      "id": "step_sprint_1",
-      "src": "steps_sprint",
-      "use": "a sprinting step (Hollow Brides and Gloomstalkers running)",
-      "onset": 3,
-      "len": 0.18,
-      "peak": -6,
-      "fadeOut": 50
-    },
-    {
-      "id": "step_sprint_2",
-      "src": "steps_sprint",
-      "use": "a sprinting step (Hollow Brides and Gloomstalkers running)",
-      "onset": 6,
-      "len": 0.18,
-      "peak": -6,
-      "fadeOut": 50
-    },
-    {
-      "id": "step_sprint_3",
-      "src": "steps_sprint",
-      "use": "a sprinting step (Hollow Brides and Gloomstalkers running)",
-      "onset": 10,
-      "len": 0.18,
-      "peak": -6,
-      "fadeOut": 50
-    },
-    {
-      "id": "step_sprint_4",
-      "src": "steps_sprint",
-      "use": "a sprinting step (Hollow Brides and Gloomstalkers running)",
-      "onset": 12,
-      "len": 0.18,
-      "peak": -6,
-      "fadeOut": 50
-    },
-    {
-      "id": "en_breath_0",
-      "src": "zbreath",
-      "use": "zombie breath (shambler / abomination idle)",
-      "take": 0,
-      "split": [
-        1,
-        12
-      ],
-      "peak": -10,
-      "fadeOut": 200
-    },
-    {
-      "id": "en_breath_1",
-      "src": "zbreath",
-      "use": "zombie breath (shambler / abomination idle)",
-      "take": 0,
-      "split": [
-        3,
-        12
-      ],
-      "peak": -10,
-      "fadeOut": 200
-    },
-    {
-      "id": "en_breath_2",
-      "src": "zbreath",
-      "use": "zombie breath (shambler / abomination idle)",
-      "take": 0,
-      "split": [
-        5,
-        12
-      ],
-      "peak": -10,
-      "fadeOut": 200
-    },
-    {
-      "id": "en_breath_3",
-      "src": "zbreath",
-      "use": "zombie breath (shambler / abomination idle)",
-      "take": 0,
-      "split": [
-        7,
-        12
-      ],
-      "peak": -10,
-      "fadeOut": 200
-    },
-    {
-      "id": "en_breath_4",
-      "src": "zbreath",
-      "use": "zombie breath (shambler / abomination idle)",
-      "take": 0,
-      "split": [
-        9,
-        12
-      ],
-      "peak": -10,
-      "fadeOut": 200
-    },
-    {
-      "id": "en_breath_5",
-      "src": "zbreath",
-      "use": "zombie breath (shambler / abomination idle)",
-      "take": 0,
-      "split": [
-        11,
-        12
-      ],
-      "peak": -10,
-      "fadeOut": 200
-    },
-    {
-      "id": "flesh_hit_0",
-      "src": "gore13",
-      "use": "an undead takes a hit (wet flesh)",
-      "peak": -7,
-      "maxLen": 0.6,
-      "fadeOut": 120,
-      "t0": 0.05,
-      "t1": 0.9
-    },
-    {
-      "id": "flesh_hit_1",
-      "src": "gore16",
-      "use": "an undead takes a hit (wet flesh 2)",
-      "peak": -7,
-      "maxLen": 0.6,
-      "fadeOut": 120,
-      "t0": 0.05,
-      "t1": 0.9
-    },
-    {
-      "id": "flesh_hit_2",
-      "src": "gore13",
-      "use": "an undead takes a hit (wet flesh 3, lower)",
-      "pitch": -3,
-      "peak": -7,
-      "maxLen": 0.6,
-      "fadeOut": 120,
-      "t0": 0.05,
-      "t1": 0.9
-    },
-    {
-      "id": "flesh_death",
-      "src": "guts35",
-      "use": "an undead is killed (the body gives way)",
-      "t0": 0.0,
-      "t1": 1.2,
-      "peak": -4,
-      "fadeOut": 250
-    },
-    {
-      "id": "hit_sidearm",
-      "use": "Grave Spark: a bright arcane snap (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "bright",
-      "take": 0,
-      "pitch": 3,
-      "maxLen": 0.5
-    },
-    {
-      "id": "hit_centurion",
-      "use": "Plague Bolt: a sick, wet crunch (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "crunch",
-      "take": 0,
-      "pitch": 4,
-      "maxLen": 0.6,
-      "layer": {
-        "src": "gore16",
-        "take": 0,
-        "pitch": -3,
-        "gain": -4
-      }
-    },
-    {
-      "id": "hit_triad",
-      "use": "Soul Shards: glass shards with a ghostly shimmer (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "icefast",
-      "take": 3,
-      "pitch": 5,
-      "maxLen": 0.6,
-      "layer": {
-        "src": "ethereal",
-        "t0": 0.9,
-        "t1": 1.7,
-        "gain": -8
-      }
-    },
-    {
-      "id": "hit_spider",
-      "use": "Bramble Spike: a woody thorn crack (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "crunch",
-      "take": 0,
-      "pitch": 8,
-      "maxLen": 0.45,
-      "layer": {
-        "src": "rubble",
-        "take": 1,
-        "pitch": 5,
-        "gain": -3
-      }
-    },
-    {
-      "id": "hit_drill",
-      "use": "Blood Siphon: a wet draw with a dark drone (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "gore13",
-      "take": 0,
-      "pitch": -2,
-      "maxLen": 0.7,
-      "layer": {
-        "src": "drone",
-        "take": 0,
-        "maxLen": 0.6,
-        "gain": -10
-      }
-    },
-    {
-      "id": "hit_steampump",
-      "use": "Bone Spear: bone splintering (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "rubble",
-      "take": 2,
-      "pitch": 3,
-      "maxLen": 0.6,
-      "layer": {
-        "src": "crunch",
-        "take": 0,
-        "gain": -6
-      }
-    },
-    {
-      "id": "hit_marksman",
-      "use": "Moonshard: a cold ringing ice hit (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "icefast",
-      "take": 2,
-      "pitch": 2,
-      "maxLen": 0.7,
-      "layer": {
-        "src": "bright",
-        "take": 2,
-        "gain": -6
-      }
-    },
-    {
-      "id": "hit_animunculi",
-      "use": "Hexfire: dark fire with a demon breath (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "firewhoosh",
-      "take": 3,
-      "pitch": -4,
-      "maxLen": 0.6,
-      "layer": {
-        "src": "demon",
-        "take": 0,
-        "maxLen": 0.6,
-        "gain": -10
-      }
-    },
-    {
-      "id": "hit_kagrenac",
-      "use": "Mind Spike: a piercing psychic sting (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "ethereal",
-      "t0": 0.9,
-      "t1": 1.5,
-      "pitch": 5,
-      "layer": {
-        "src": "screech",
-        "take": 0,
-        "pitch": 6,
-        "maxLen": 0.5,
-        "gain": -14
-      }
-    },
-    {
-      "id": "hit_mammothlmg",
-      "use": "Void Orb: a hollow void thud (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "darkhit",
-      "take": 0,
-      "pitch": 4,
-      "maxLen": 0.7
-    },
-    {
-      "id": "hit_longshot",
-      "use": "Starfall: a starry strike (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "strike",
-      "take": 1,
-      "pitch": 2,
-      "maxLen": 0.7,
-      "layer": {
-        "src": "bright",
-        "take": 3,
-        "gain": -6
-      }
-    },
-    {
-      "id": "hit_aetherium",
-      "use": "Sunfire: holy flare over a flame (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "portal",
-      "t0": 3.9,
-      "t1": 4.6,
-      "pitch": 3,
-      "layer": {
-        "src": "ignite",
-        "take": 0,
-        "maxLen": 0.7,
-        "gain": -6
-      }
-    },
-    {
-      "id": "hit_flamerepeater",
-      "use": "Cinderstorm: a fire burst (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "ignite",
-      "take": 0,
-      "maxLen": 0.7,
-      "layer": {
-        "src": "firewhoosh",
-        "take": 5,
-        "gain": -6
-      }
-    },
-    {
-      "id": "hit_frostlancer",
-      "use": "Rimefang: a heavy ice crack (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "icefast",
-      "take": 0,
-      "pitch": -3,
-      "maxLen": 0.7
-    },
-    {
-      "id": "hit_stormcaller",
-      "use": "Storm Lash: a lightning crack (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "strike",
-      "take": 0,
-      "maxLen": 0.6
-    },
-    {
-      "id": "hit_embermortar",
-      "use": "Gale Burst: a gust slam (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "wind",
-      "take": 1,
-      "pitch": -2,
-      "maxLen": 0.6,
-      "layer": {
-        "src": "coldwhoosh",
-        "take": 0,
-        "gain": -6
-      }
-    },
-    {
-      "id": "hit_wabbajack",
-      "use": "Wabbajack: a warped, silly-scary twang (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "spooky",
-      "take": 0,
-      "pitch": 7,
-      "maxLen": 0.6,
-      "layer": {
-        "src": "bright",
-        "take": 1,
-        "pitch": -5,
-        "gain": -4
-      }
-    },
-    {
-      "id": "hit_skyforgearc",
-      "use": "Sky Sunder: a thunderclap strike (bolt impact)",
-      "peak": -6,
-      "fadeOut": 150,
-      "src": "thunder",
-      "take": 0,
-      "pitch": 2,
-      "maxLen": 0.8,
-      "layer": {
-        "src": "strike",
-        "take": 2,
-        "gain": -4
-      }
-    },
-    {
-      "id": "tr_fire",
-      "src": "ignite",
-      "use": "a fire bolt in flight (loop)",
-      "t0": 2.9,
-      "t1": 5.1,
-      "peak": -10,
-      "loop": true
-    },
-    {
-      "id": "tr_ice",
-      "src": "coldwhoosh",
-      "use": "a frost bolt in flight (loop)",
-      "t0": 0.6,
-      "t1": 2.0,
-      "peak": -10,
-      "loop": true
-    },
-    {
-      "id": "tr_wind",
-      "src": "wind",
-      "use": "a gust in flight (loop)",
-      "t0": 0.6,
-      "t1": 3.6,
-      "peak": -10,
-      "loop": true
-    },
-    {
-      "id": "tr_shock",
-      "src": "beam",
-      "use": "a lightning bolt in flight (loop)",
-      "take": 2,
-      "pitch": 3,
-      "maxLen": 3.0,
-      "peak": -12,
-      "loop": true
-    },
-    {
-      "id": "tr_holy",
-      "src": "portal",
-      "use": "a holy bolt in flight (loop)",
-      "t0": 4.2,
-      "t1": 5.9,
-      "pitch": 4,
-      "peak": -11,
-      "loop": true
-    },
-    {
-      "id": "tr_dark",
-      "src": "drone",
-      "use": "a dark bolt in flight (loop)",
-      "t0": 0.5,
-      "t1": 3.5,
-      "pitch": 4,
-      "peak": -11,
-      "loop": true
-    },
-    {
-      "id": "tr_arcane",
-      "src": "ethereal",
-      "use": "an arcane bolt in flight (loop)",
-      "t0": 2.0,
-      "t1": 5.0,
-      "pitch": 3,
-      "peak": -12,
-      "loop": true
-    },
-    {
-      "id": "sp_holy_swell",
-      "src": "portal",
-      "use": "holy power gathering (charge begins)",
-      "t0": 3.98,
-      "t1": 5.2,
-      "peak": -8,
-      "fadeOut": 300
-    },
-    {
-      "id": "amb_ghosts",
-      "src": "ghosts",
-      "use": "airy ghost-roars drifting in the fog (loop)",
-      "take": 0,
-      "peak": -14,
-      "loop": true
-    },
-    {
-      "id": "vo_01",
-      "src": "narration",
-      "use": "intro narration, scene 1: \"The Fourth Era, 201. Helgen burned.\"",
-      "t0": 0.08,
-      "t1": 3.5,
-      "fadeIn": 15,
-      "fadeOut": 150,
-      "gain": 2.0
-    },
-    {
-      "id": "vo_02",
-      "src": "narration",
-      "use": "intro narration, scene 2: \"You lived. But as the World-Eater rose from the ash...\"",
-      "t0": 3.86,
-      "t1": 14.1,
-      "fadeIn": 15,
-      "fadeOut": 150,
-      "gain": 2.0
-    },
-    {
-      "id": "vo_03",
-      "src": "narration",
-      "use": "intro narration, scene 3: \"The Undying Dirge. And every grave in Skyrim heard it.\"",
-      "t0": 15.34,
-      "t1": 21.15,
-      "fadeIn": 15,
-      "fadeOut": 150,
-      "gain": 2.0
-    },
-    {
-      "id": "vo_04",
-      "src": "narration",
-      "use": "intro narration, scene 4: \"By day, it sleeps... the dead remember.\"",
-      "t0": 21.42,
-      "t1": 29.0,
-      "fadeIn": 15,
-      "fadeOut": 150,
-      "gain": 2.0
-    },
-    {
-      "id": "vo_05",
-      "src": "narration",
-      "use": "intro narration, scene 5: \"They come with the dusk... Wailers who call the horde to feed.\"",
-      "t0": 29.18,
-      "t1": 38.72,
-      "fadeIn": 15,
-      "fadeOut": 150,
-      "gain": 2.0
-    },
-    {
-      "id": "vo_06",
-      "src": "narration",
-      "use": "intro narration, scene 6: \"Champions walk among them...\"",
-      "t0": 38.84,
-      "t1": 46.8,
-      "fadeIn": 15,
-      "fadeOut": 150,
-      "gain": 2.0
-    },
-    {
-      "id": "vo_07",
-      "src": "narration",
-      "use": "intro narration, scene 7: \"And when the fog rolls in... Grimmvar comes hunting.\"",
-      "t0": 46.92,
-      "t1": 55.22,
-      "fadeIn": 15,
-      "fadeOut": 150,
-      "gain": 2.0
-    },
-    {
-      "id": "vo_08",
-      "src": "narration",
-      "use": "intro narration, scene 8: \"Yet in every city, an Echo Altar still stands...\"",
-      "t0": 55.26,
-      "t1": 62.56,
-      "fadeIn": 15,
-      "fadeOut": 150,
-      "gain": 2.0
-    },
-    {
-      "id": "vo_09",
-      "src": "narration",
-      "use": "intro narration, scene 9: \"Survive the night.\"",
-      "t0": 62.7,
-      "t1": 64.52,
-      "fadeIn": 15,
-      "fadeOut": 150,
-      "gain": 2.0
-    }
-  ]
+  {
+   "id": "mus_boss",
+   "src": "epicloop",
+   "use": "Grimmvar fight music (looped while he lives)",
+   "take": 0,
+   "stereo": true,
+   "peak": -5,
+   "loop": true
+  },
+  {
+   "id": "mus_freed",
+   "src": "comfort_chain",
+   "use": "a city freed (all its rites done, the shrine cleared): plays alone, faded in and out",
+   "t0": 0.0,
+   "t1": 82.7,
+   "stereo": true,
+   "peak": -2.0,
+   "fadeIn": 3500,
+   "fadeOut": 6500
+  },
+  {
+   "id": "mus_intro",
+   "src": "menu",
+   "use": "the Curse of Alduin intro (after character creation): the menu theme's rising second half, under the narration",
+   "t0": 74.0,
+   "t1": 157.6,
+   "stereo": true,
+   "peak": -11,
+   "fadeIn": 2500,
+   "fadeOut": 4000
+  },
+  {
+   "id": "sp_beam_loop",
+   "src": "beam",
+   "use": "shock charge hum (Storm Lash, Sky Sunder)",
+   "take": 1,
+   "peak": -12,
+   "loop": true
+  },
+  {
+   "id": "sp_beam_loop2",
+   "src": "beam",
+   "use": "shock charge hum variation",
+   "take": 3,
+   "peak": -12,
+   "loop": true
+  },
+  {
+   "id": "sp_drone_loop",
+   "src": "drone",
+   "use": "dark charge hum (Hexfire, Void Orb); the ward/hold circle hum (pitched down)",
+   "take": 0,
+   "peak": -12,
+   "loop": true
+  },
+  {
+   "id": "sp_holy_loop",
+   "src": "portal",
+   "use": "holy charge hum (Sunfire, Starfall)",
+   "t0": 1.0,
+   "t1": 6.6,
+   "peak": -12,
+   "loop": true
+  },
+  {
+   "id": "sp_shock_cast",
+   "src": "elcast",
+   "use": "Storm Lash quick cast",
+   "take": 0,
+   "peak": -8,
+   "maxLen": 1.2,
+   "fadeOut": 200
+  },
+  {
+   "id": "sp_strike_0",
+   "src": "strike",
+   "use": "lightning impact 1 (Storm Lash, Sky Sunder, Starfall)",
+   "take": 0,
+   "peak": -6
+  },
+  {
+   "id": "sp_strike_1",
+   "src": "strike",
+   "use": "lightning impact 2 (Storm Lash, Sky Sunder, Starfall)",
+   "take": 1,
+   "peak": -6
+  },
+  {
+   "id": "sp_strike_2",
+   "src": "strike",
+   "use": "lightning impact 3 (Storm Lash, Sky Sunder, Starfall)",
+   "take": 2,
+   "peak": -6
+  },
+  {
+   "id": "sp_thunder",
+   "src": "thunder",
+   "use": "Sky Sunder / Storm Lash unleash; Toll shout",
+   "take": 0,
+   "peak": -4
+  },
+  {
+   "id": "sp_ice_0",
+   "src": "icefast",
+   "use": "ice blast 1 (Rimefang casts and impacts, Moonshard impact)",
+   "take": 0,
+   "peak": -7
+  },
+  {
+   "id": "sp_ice_1",
+   "src": "icefast",
+   "use": "ice blast 2 (Rimefang casts and impacts, Moonshard impact)",
+   "take": 1,
+   "peak": -7
+  },
+  {
+   "id": "sp_ice_2",
+   "src": "icefast",
+   "use": "ice blast 3 (Rimefang casts and impacts, Moonshard impact)",
+   "take": 2,
+   "peak": -7
+  },
+  {
+   "id": "sp_ice_3",
+   "src": "icefast",
+   "use": "ice blast 4 (Rimefang casts and impacts, Moonshard impact)",
+   "take": 3,
+   "peak": -7
+  },
+  {
+   "id": "sp_ice_4",
+   "src": "icefast",
+   "use": "ice blast 5 (Rimefang casts and impacts, Moonshard impact)",
+   "take": 4,
+   "peak": -7
+  },
+  {
+   "id": "sp_cold_whoosh",
+   "src": "coldwhoosh",
+   "use": "Moonshard / Rimefang cast whoosh",
+   "take": 0,
+   "peak": -8
+  },
+  {
+   "id": "sp_fire_0",
+   "src": "firewhoosh",
+   "use": "fire whoosh 1 (Cinderstorm casts)",
+   "take": 0,
+   "peak": -8
+  },
+  {
+   "id": "sp_fire_1",
+   "src": "firewhoosh",
+   "use": "fire whoosh 2 (Cinderstorm casts)",
+   "take": 1,
+   "peak": -8
+  },
+  {
+   "id": "sp_fire_2",
+   "src": "firewhoosh",
+   "use": "fire whoosh 3 (Cinderstorm casts)",
+   "take": 2,
+   "peak": -8
+  },
+  {
+   "id": "sp_fire_3",
+   "src": "firewhoosh",
+   "use": "fire whoosh 4 (Cinderstorm casts)",
+   "take": 3,
+   "peak": -8
+  },
+  {
+   "id": "sp_fire_4",
+   "src": "firewhoosh",
+   "use": "fire whoosh 5 (Cinderstorm casts)",
+   "take": 4,
+   "peak": -8
+  },
+  {
+   "id": "sp_fire_5",
+   "src": "firewhoosh",
+   "use": "fire whoosh 6 (Cinderstorm casts)",
+   "take": 5,
+   "peak": -8
+  },
+  {
+   "id": "sp_fire_6",
+   "src": "firewhoosh",
+   "use": "fire whoosh 7 (Cinderstorm casts)",
+   "take": 6,
+   "peak": -8
+  },
+  {
+   "id": "sp_fire_7",
+   "src": "firewhoosh",
+   "use": "fire whoosh 8 (Cinderstorm casts)",
+   "take": 7,
+   "peak": -8
+  },
+  {
+   "id": "sp_ignite",
+   "src": "ignite",
+   "use": "Cinderstorm unleash; Ember shout",
+   "take": 1,
+   "peak": -4
+  },
+  {
+   "id": "sp_ignite_small",
+   "src": "ignite",
+   "use": "fire impact (Cinderstorm bolt lands)",
+   "take": 0,
+   "peak": -9,
+   "maxLen": 1.0,
+   "fadeOut": 250
+  },
+  {
+   "id": "sp_wind_cast",
+   "src": "wind",
+   "use": "Gale Burst quick cast",
+   "take": 1,
+   "peak": -7
+  },
+  {
+   "id": "sp_wind_unleash",
+   "src": "wind",
+   "use": "Gale Burst unleash; Gale shout",
+   "take": 0,
+   "peak": -4
+  },
+  {
+   "id": "sp_crunch",
+   "src": "crunch",
+   "use": "Bone Spear / Bramble Spike cast",
+   "take": 0,
+   "peak": -8
+  },
+  {
+   "id": "sp_crunch_low",
+   "src": "crunch",
+   "use": "Bone Spear / Bramble Spike impact",
+   "take": 0,
+   "pitch": -5,
+   "peak": -8
+  },
+  {
+   "id": "sp_holy_burst",
+   "src": "portal",
+   "use": "Sunfire unleash (the light breaks open)",
+   "t0": 3.9,
+   "t1": 7.6,
+   "peak": -4,
+   "fadeOut": 600
+  },
+  {
+   "id": "sp_starfall",
+   "src": "ethereal",
+   "use": "Starfall unleash (a star falls)",
+   "t0": 0.9,
+   "t1": 6.0,
+   "peak": -5,
+   "fadeOut": 900
+  },
+  {
+   "id": "sp_void_hit",
+   "src": "darkhit",
+   "use": "Void Orb unleash; Dread shout",
+   "take": 0,
+   "peak": -4
+  },
+  {
+   "id": "sp_hex",
+   "src": "drone",
+   "use": "Hexfire unleash (the doom mark)",
+   "take": 0,
+   "pitch": -3,
+   "peak": -5,
+   "maxLen": 2.6,
+   "fadeOut": 700
+  },
+  {
+   "id": "sp_bones",
+   "src": "rubble",
+   "use": "Bone Spear unleash (the ground breaks into bone)",
+   "take": 2,
+   "peak": -5,
+   "maxLen": 2.2,
+   "fadeOut": 500
+  },
+  {
+   "id": "sp_bright_0",
+   "src": "bright",
+   "use": "arcane impact 1 (Grave Spark, Wabbajack, Mind Spike)",
+   "take": 0,
+   "peak": -11
+  },
+  {
+   "id": "sp_bright_1",
+   "src": "bright",
+   "use": "arcane impact 2 (Grave Spark, Wabbajack, Mind Spike)",
+   "take": 1,
+   "peak": -11
+  },
+  {
+   "id": "sp_bright_2",
+   "src": "bright",
+   "use": "arcane impact 3 (Grave Spark, Wabbajack, Mind Spike)",
+   "take": 2,
+   "peak": -11
+  },
+  {
+   "id": "sp_bright_3",
+   "src": "bright",
+   "use": "arcane impact 4 (Grave Spark, Wabbajack, Mind Spike)",
+   "take": 3,
+   "peak": -11
+  },
+  {
+   "id": "en_runner_idle_0",
+   "src": "zf04",
+   "use": "Runner (hooded woman) snarl 1",
+   "take": 1,
+   "split": [
+    0,
+    2
+   ],
+   "peak": -9
+  },
+  {
+   "id": "en_runner_idle_1",
+   "src": "zf04",
+   "use": "Runner (hooded woman) snarl 2",
+   "take": 1,
+   "split": [
+    1,
+    2
+   ],
+   "peak": -9
+  },
+  {
+   "id": "en_runner_idle_2",
+   "src": "zf08",
+   "use": "Runner (hooded woman) snarl 3",
+   "take": 0,
+   "split": [
+    0,
+    2
+   ],
+   "peak": -9
+  },
+  {
+   "id": "en_runner_idle_3",
+   "src": "zf08",
+   "use": "Runner (hooded woman) snarl 4",
+   "take": 0,
+   "split": [
+    1,
+    2
+   ],
+   "peak": -9
+  },
+  {
+   "id": "en_runner_attack",
+   "src": "zf08",
+   "use": "Runner lunge snarl",
+   "take": 0,
+   "split": [
+    2,
+    4
+   ],
+   "peak": -7
+  },
+  {
+   "id": "en_runner_death",
+   "src": "zf08",
+   "use": "Runner death groan",
+   "take": 0,
+   "split": [
+    3,
+    4
+   ],
+   "pitch": -2,
+   "peak": -7,
+   "fadeOut": 400
+  },
+  {
+   "id": "en_wail_0",
+   "src": "screech",
+   "use": "Wailer scream 1 (calls the horde)",
+   "take": 0,
+   "peak": -4
+  },
+  {
+   "id": "en_wail_1",
+   "src": "screech",
+   "use": "Wailer scream 2 (calls the horde)",
+   "take": 1,
+   "peak": -4
+  },
+  {
+   "id": "en_ghost_0",
+   "src": "ghosts",
+   "use": "ghostly breath 1 (Wailer and Gloomstalker idle, Fog Night)",
+   "take": 0,
+   "split": [
+    0,
+    3
+   ],
+   "peak": -11
+  },
+  {
+   "id": "en_ghost_1",
+   "src": "ghosts",
+   "use": "ghostly breath 2 (Wailer and Gloomstalker idle, Fog Night)",
+   "take": 0,
+   "split": [
+    1,
+    3
+   ],
+   "peak": -11
+  },
+  {
+   "id": "en_ghost_2",
+   "src": "ghosts",
+   "use": "ghostly breath 3 (Wailer and Gloomstalker idle, Fog Night)",
+   "take": 0,
+   "split": [
+    2,
+    3
+   ],
+   "peak": -11
+  },
+  {
+   "id": "en_hag_death",
+   "src": "screech",
+   "use": "Wailer death (a screech that dies away)",
+   "take": 1,
+   "pitch": -4,
+   "peak": -7,
+   "fadeOut": 500
+  },
+  {
+   "id": "en_roar",
+   "src": "roar",
+   "use": "Bloater / bone knight roar (aggro)",
+   "take": 0,
+   "pitch": -3,
+   "peak": -6
+  },
+  {
+   "id": "en_roar_hi",
+   "src": "roar",
+   "use": "abomination attack bellow",
+   "take": 0,
+   "peak": -7
+  },
+  {
+   "id": "en_demon",
+   "src": "demon",
+   "use": "Lich King / Corrupted King growl; necromancer death",
+   "take": 0,
+   "peak": -6
+  },
+  {
+   "id": "en_demon_low",
+   "src": "demon",
+   "use": "champion death",
+   "take": 0,
+   "pitch": -4,
+   "peak": -5,
+   "fadeOut": 400
+  },
+  {
+   "id": "en_burst",
+   "src": "rubble",
+   "use": "Bloater bursts (with the grave-rot)",
+   "take": 0,
+   "peak": -5,
+   "maxLen": 1.8,
+   "fadeOut": 400
+  },
+  {
+   "id": "boss_growl",
+   "src": "dgrowl",
+   "use": "Grimmvar growl (idle / arrival / enraged)",
+   "take": 0,
+   "peak": -3
+  },
+  {
+   "id": "boss_breath_wind",
+   "src": "firebreath",
+   "use": "Grimmvar breath telegraph (the in-breath and first roar)",
+   "take": 1,
+   "maxLen": 1.4,
+   "peak": -4,
+   "fadeOut": 200
+  },
+  {
+   "id": "boss_breath",
+   "src": "firebreath",
+   "use": "Grimmvar fire breath",
+   "take": 1,
+   "peak": -3,
+   "fadeOut": 600
+  },
+  {
+   "id": "boss_land",
+   "src": "bighit",
+   "use": "Grimmvar leap landing / heavy slam impact",
+   "take": 0,
+   "peak": -3,
+   "maxLen": 2.6,
+   "fadeOut": 600
+  },
+  {
+   "id": "boss_quake_0",
+   "src": "rubble",
+   "use": "eruption / ground burst 1",
+   "take": 0,
+   "peak": -4
+  },
+  {
+   "id": "boss_quake_1",
+   "src": "rubble",
+   "use": "eruption / ground burst 2",
+   "take": 3,
+   "peak": -4
+  },
+  {
+   "id": "boss_quake_2",
+   "src": "rubble",
+   "use": "eruption / ground burst 3",
+   "take": 4,
+   "peak": -4
+  },
+  {
+   "id": "boss_arrive",
+   "src": "stinger",
+   "use": "Grimmvar arrives; Blood Moon begins",
+   "take": 0,
+   "peak": -3
+  },
+  {
+   "id": "champ_arrive",
+   "src": "darkhit",
+   "use": "a champion takes the field; Night of Iron begins",
+   "take": 0,
+   "pitch": -2,
+   "peak": -3
+  },
+  {
+   "id": "champ_telegraph",
+   "src": "spooky",
+   "use": "champion ability wind-up (chain hook, scream, summon)",
+   "take": 0,
+   "peak": -6
+  },
+  {
+   "id": "ui_open",
+   "src": "ui",
+   "use": "shrine menu open",
+   "take": 0,
+   "peak": -12
+  },
+  {
+   "id": "ui_move",
+   "src": "ui",
+   "use": "choose a brew",
+   "take": 1,
+   "pitch": 3,
+   "peak": -16,
+   "maxLen": 0.35,
+   "fadeOut": 120
+  },
+  {
+   "id": "ui_close",
+   "src": "ui",
+   "use": "shrine menu close; main menu back",
+   "take": 2,
+   "pitch": -2,
+   "peak": -13
+  },
+  {
+   "id": "ui_select",
+   "src": "ui",
+   "use": "main menu select",
+   "take": 1,
+   "peak": -12
+  },
+  {
+   "id": "coffer_charge",
+   "src": "portal",
+   "use": "the shrine gathers power (roll begins)",
+   "t0": 0.8,
+   "t1": 4.2,
+   "peak": -7,
+   "fadeOut": 300
+  },
+  {
+   "id": "coffer_tick",
+   "src": "bright",
+   "use": "a spell passes over the crown (cycling tick)",
+   "take": 0,
+   "pitch": 4,
+   "peak": -15,
+   "maxLen": 0.25,
+   "fadeOut": 80
+  },
+  {
+   "id": "coffer_land",
+   "src": "ethereal",
+   "use": "the shrine lands on a spell",
+   "t0": 0.9,
+   "t1": 4.5,
+   "peak": -6,
+   "fadeOut": 900
+  },
+  {
+   "id": "coffer_take",
+   "src": "bright",
+   "use": "take the spell from the crown",
+   "take": 3,
+   "peak": -8
+  },
+  {
+   "id": "rite_hum",
+   "src": "drone",
+   "use": "ward / hold circle hum (loop)",
+   "take": 0,
+   "pitch": -5,
+   "peak": -15,
+   "loop": true
+  },
+  {
+   "id": "rite_reset",
+   "src": "spooky",
+   "use": "the dead broke the circle (timer reset)",
+   "take": 0,
+   "pitch": -3,
+   "peak": -6,
+   "maxLen": 2.0,
+   "fadeOut": 400
+  },
+  {
+   "id": "rite_step",
+   "src": "bright",
+   "use": "rite step done",
+   "take": 2,
+   "pitch": -2,
+   "peak": -7
+  },
+  {
+   "id": "rite_start",
+   "src": "stinger",
+   "use": "rite begins",
+   "take": 0,
+   "pitch": -3,
+   "peak": -7,
+   "maxLen": 2.5,
+   "fadeOut": 600
+  },
+  {
+   "id": "night_fog",
+   "src": "ghosts",
+   "use": "Fog Night begins",
+   "take": 0,
+   "peak": -6,
+   "fadeOut": 1500
+  },
+  {
+   "id": "night_ash",
+   "src": "rubble",
+   "use": "Ash Storm begins (distant blasts)",
+   "take": 3,
+   "pitch": -4,
+   "peak": -7,
+   "fadeOut": 800
+  },
+  {
+   "id": "shout_learned",
+   "src": "ethereal",
+   "use": "a Thu'um learned",
+   "t0": 0.9,
+   "t1": 9.0,
+   "peak": -5,
+   "fadeOut": 1500
+  },
+  {
+   "id": "step_jog_0",
+   "src": "steps_jog",
+   "use": "a close, quick barefoot step (runners, champions, heavy walkers pitched down)",
+   "onset": 2,
+   "len": 0.2,
+   "peak": -6,
+   "fadeOut": 60
+  },
+  {
+   "id": "step_jog_1",
+   "src": "steps_jog",
+   "use": "a close, quick barefoot step (runners, champions, heavy walkers pitched down)",
+   "onset": 3,
+   "len": 0.2,
+   "peak": -6,
+   "fadeOut": 60
+  },
+  {
+   "id": "step_jog_2",
+   "src": "steps_jog",
+   "use": "a close, quick barefoot step (runners, champions, heavy walkers pitched down)",
+   "onset": 6,
+   "len": 0.2,
+   "peak": -6,
+   "fadeOut": 60
+  },
+  {
+   "id": "step_jog_3",
+   "src": "steps_jog",
+   "use": "a close, quick barefoot step (runners, champions, heavy walkers pitched down)",
+   "onset": 11,
+   "len": 0.2,
+   "peak": -6,
+   "fadeOut": 60
+  },
+  {
+   "id": "step_jog_4",
+   "src": "steps_jog",
+   "use": "a close, quick barefoot step (runners, champions, heavy walkers pitched down)",
+   "onset": 17,
+   "len": 0.2,
+   "peak": -6,
+   "fadeOut": 60
+  },
+  {
+   "id": "step_jog_5",
+   "src": "steps_jog",
+   "use": "a close, quick barefoot step (runners, champions, heavy walkers pitched down)",
+   "onset": 18,
+   "len": 0.2,
+   "peak": -6,
+   "fadeOut": 60
+  },
+  {
+   "id": "step_walk_0",
+   "src": "steps_walk",
+   "use": "a slow barefoot step on dirt (shamblers, wailers, the lich)",
+   "onset": 2,
+   "len": 0.24,
+   "peak": -6,
+   "fadeOut": 70
+  },
+  {
+   "id": "step_walk_1",
+   "src": "steps_walk",
+   "use": "a slow barefoot step on dirt (shamblers, wailers, the lich)",
+   "onset": 6,
+   "len": 0.24,
+   "peak": -6,
+   "fadeOut": 70
+  },
+  {
+   "id": "step_walk_2",
+   "src": "steps_walk",
+   "use": "a slow barefoot step on dirt (shamblers, wailers, the lich)",
+   "onset": 10,
+   "len": 0.24,
+   "peak": -6,
+   "fadeOut": 70
+  },
+  {
+   "id": "step_walk_3",
+   "src": "steps_walk",
+   "use": "a slow barefoot step on dirt (shamblers, wailers, the lich)",
+   "onset": 15,
+   "len": 0.24,
+   "peak": -6,
+   "fadeOut": 70
+  },
+  {
+   "id": "step_walk_4",
+   "src": "steps_walk",
+   "use": "a slow barefoot step on dirt (shamblers, wailers, the lich)",
+   "onset": 17,
+   "len": 0.24,
+   "peak": -6,
+   "fadeOut": 70
+  },
+  {
+   "id": "step_walk_5",
+   "src": "steps_walk",
+   "use": "a slow barefoot step on dirt (shamblers, wailers, the lich)",
+   "onset": 21,
+   "len": 0.24,
+   "peak": -6,
+   "fadeOut": 70
+  },
+  {
+   "id": "step_sprint_0",
+   "src": "steps_sprint",
+   "use": "a sprinting step (Hollow Brides and Gloomstalkers running)",
+   "onset": 0,
+   "len": 0.18,
+   "peak": -6,
+   "fadeOut": 50
+  },
+  {
+   "id": "step_sprint_1",
+   "src": "steps_sprint",
+   "use": "a sprinting step (Hollow Brides and Gloomstalkers running)",
+   "onset": 3,
+   "len": 0.18,
+   "peak": -6,
+   "fadeOut": 50
+  },
+  {
+   "id": "step_sprint_2",
+   "src": "steps_sprint",
+   "use": "a sprinting step (Hollow Brides and Gloomstalkers running)",
+   "onset": 6,
+   "len": 0.18,
+   "peak": -6,
+   "fadeOut": 50
+  },
+  {
+   "id": "step_sprint_3",
+   "src": "steps_sprint",
+   "use": "a sprinting step (Hollow Brides and Gloomstalkers running)",
+   "onset": 10,
+   "len": 0.18,
+   "peak": -6,
+   "fadeOut": 50
+  },
+  {
+   "id": "step_sprint_4",
+   "src": "steps_sprint",
+   "use": "a sprinting step (Hollow Brides and Gloomstalkers running)",
+   "onset": 12,
+   "len": 0.18,
+   "peak": -6,
+   "fadeOut": 50
+  },
+  {
+   "id": "en_breath_0",
+   "src": "zbreath",
+   "use": "zombie breath (shambler / abomination idle)",
+   "take": 0,
+   "split": [
+    1,
+    12
+   ],
+   "peak": -10,
+   "fadeOut": 200
+  },
+  {
+   "id": "en_breath_1",
+   "src": "zbreath",
+   "use": "zombie breath (shambler / abomination idle)",
+   "take": 0,
+   "split": [
+    3,
+    12
+   ],
+   "peak": -10,
+   "fadeOut": 200
+  },
+  {
+   "id": "en_breath_2",
+   "src": "zbreath",
+   "use": "zombie breath (shambler / abomination idle)",
+   "take": 0,
+   "split": [
+    5,
+    12
+   ],
+   "peak": -10,
+   "fadeOut": 200
+  },
+  {
+   "id": "en_breath_3",
+   "src": "zbreath",
+   "use": "zombie breath (shambler / abomination idle)",
+   "take": 0,
+   "split": [
+    7,
+    12
+   ],
+   "peak": -10,
+   "fadeOut": 200
+  },
+  {
+   "id": "en_breath_4",
+   "src": "zbreath",
+   "use": "zombie breath (shambler / abomination idle)",
+   "take": 0,
+   "split": [
+    9,
+    12
+   ],
+   "peak": -10,
+   "fadeOut": 200
+  },
+  {
+   "id": "en_breath_5",
+   "src": "zbreath",
+   "use": "zombie breath (shambler / abomination idle)",
+   "take": 0,
+   "split": [
+    11,
+    12
+   ],
+   "peak": -10,
+   "fadeOut": 200
+  },
+  {
+   "id": "flesh_hit_0",
+   "src": "gore13",
+   "use": "an undead takes a hit (wet flesh)",
+   "peak": -7,
+   "maxLen": 0.6,
+   "fadeOut": 120,
+   "t0": 0.05,
+   "t1": 0.9
+  },
+  {
+   "id": "flesh_hit_1",
+   "src": "gore16",
+   "use": "an undead takes a hit (wet flesh 2)",
+   "peak": -7,
+   "maxLen": 0.6,
+   "fadeOut": 120,
+   "t0": 0.05,
+   "t1": 0.9
+  },
+  {
+   "id": "flesh_hit_2",
+   "src": "gore13",
+   "use": "an undead takes a hit (wet flesh 3, lower)",
+   "pitch": -3,
+   "peak": -7,
+   "maxLen": 0.6,
+   "fadeOut": 120,
+   "t0": 0.05,
+   "t1": 0.9
+  },
+  {
+   "id": "flesh_death",
+   "src": "guts35",
+   "use": "an undead is killed (the body gives way)",
+   "t0": 0.0,
+   "t1": 1.2,
+   "peak": -4,
+   "fadeOut": 250
+  },
+  {
+   "id": "hit_sidearm",
+   "use": "Grave Spark: a bright arcane snap (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "bright",
+   "take": 0,
+   "pitch": 3,
+   "maxLen": 0.5
+  },
+  {
+   "id": "hit_centurion",
+   "use": "Plague Bolt: a sick, wet crunch (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "crunch",
+   "take": 0,
+   "pitch": 4,
+   "maxLen": 0.6,
+   "layer": {
+    "src": "gore16",
+    "take": 0,
+    "pitch": -3,
+    "gain": -4
+   }
+  },
+  {
+   "id": "hit_triad",
+   "use": "Soul Shards: glass shards with a ghostly shimmer (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "icefast",
+   "take": 3,
+   "pitch": 5,
+   "maxLen": 0.6,
+   "layer": {
+    "src": "ethereal",
+    "t0": 0.9,
+    "t1": 1.7,
+    "gain": -8
+   }
+  },
+  {
+   "id": "hit_spider",
+   "use": "Bramble Spike: a woody thorn crack (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "crunch",
+   "take": 0,
+   "pitch": 8,
+   "maxLen": 0.45,
+   "layer": {
+    "src": "rubble",
+    "take": 1,
+    "pitch": 5,
+    "gain": -3
+   }
+  },
+  {
+   "id": "hit_drill",
+   "use": "Blood Siphon: a wet draw with a dark drone (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "gore13",
+   "take": 0,
+   "pitch": -2,
+   "maxLen": 0.7,
+   "layer": {
+    "src": "drone",
+    "take": 0,
+    "maxLen": 0.6,
+    "gain": -10
+   }
+  },
+  {
+   "id": "hit_steampump",
+   "use": "Bone Spear: bone splintering (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "rubble",
+   "take": 2,
+   "pitch": 3,
+   "maxLen": 0.6,
+   "layer": {
+    "src": "crunch",
+    "take": 0,
+    "gain": -6
+   }
+  },
+  {
+   "id": "hit_marksman",
+   "use": "Moonshard: a cold ringing ice hit (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "icefast",
+   "take": 2,
+   "pitch": 2,
+   "maxLen": 0.7,
+   "layer": {
+    "src": "bright",
+    "take": 2,
+    "gain": -6
+   }
+  },
+  {
+   "id": "hit_animunculi",
+   "use": "Hexfire: dark fire with a demon breath (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "firewhoosh",
+   "take": 3,
+   "pitch": -4,
+   "maxLen": 0.6,
+   "layer": {
+    "src": "demon",
+    "take": 0,
+    "maxLen": 0.6,
+    "gain": -10
+   }
+  },
+  {
+   "id": "hit_kagrenac",
+   "use": "Mind Spike: a piercing psychic sting (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "ethereal",
+   "t0": 0.9,
+   "t1": 1.5,
+   "pitch": 5,
+   "layer": {
+    "src": "screech",
+    "take": 0,
+    "pitch": 6,
+    "maxLen": 0.5,
+    "gain": -14
+   }
+  },
+  {
+   "id": "hit_mammothlmg",
+   "use": "Void Orb: a hollow void thud (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "darkhit",
+   "take": 0,
+   "pitch": 4,
+   "maxLen": 0.7
+  },
+  {
+   "id": "hit_longshot",
+   "use": "Starfall: a starry strike (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "strike",
+   "take": 1,
+   "pitch": 2,
+   "maxLen": 0.7,
+   "layer": {
+    "src": "bright",
+    "take": 3,
+    "gain": -6
+   }
+  },
+  {
+   "id": "hit_aetherium",
+   "use": "Sunfire: holy flare over a flame (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "portal",
+   "t0": 3.9,
+   "t1": 4.6,
+   "pitch": 3,
+   "layer": {
+    "src": "ignite",
+    "take": 0,
+    "maxLen": 0.7,
+    "gain": -6
+   }
+  },
+  {
+   "id": "hit_flamerepeater",
+   "use": "Cinderstorm: a fire burst (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "ignite",
+   "take": 0,
+   "maxLen": 0.7,
+   "layer": {
+    "src": "firewhoosh",
+    "take": 5,
+    "gain": -6
+   }
+  },
+  {
+   "id": "hit_frostlancer",
+   "use": "Rimefang: a heavy ice crack (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "icefast",
+   "take": 0,
+   "pitch": -3,
+   "maxLen": 0.7
+  },
+  {
+   "id": "hit_stormcaller",
+   "use": "Storm Lash: a lightning crack (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "strike",
+   "take": 0,
+   "maxLen": 0.6
+  },
+  {
+   "id": "hit_embermortar",
+   "use": "Gale Burst: a gust slam (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "wind",
+   "take": 1,
+   "pitch": -2,
+   "maxLen": 0.6,
+   "layer": {
+    "src": "coldwhoosh",
+    "take": 0,
+    "gain": -6
+   }
+  },
+  {
+   "id": "hit_wabbajack",
+   "use": "Wabbajack: a warped, silly-scary twang (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "spooky",
+   "take": 0,
+   "pitch": 7,
+   "maxLen": 0.6,
+   "layer": {
+    "src": "bright",
+    "take": 1,
+    "pitch": -5,
+    "gain": -4
+   }
+  },
+  {
+   "id": "hit_skyforgearc",
+   "use": "Sky Sunder: a thunderclap strike (bolt impact)",
+   "peak": -6,
+   "fadeOut": 150,
+   "src": "thunder",
+   "take": 0,
+   "pitch": 2,
+   "maxLen": 0.8,
+   "layer": {
+    "src": "strike",
+    "take": 2,
+    "gain": -4
+   }
+  },
+  {
+   "id": "tr_fire",
+   "src": "ignite",
+   "use": "a fire bolt in flight (loop)",
+   "t0": 2.9,
+   "t1": 5.1,
+   "peak": -10,
+   "loop": true
+  },
+  {
+   "id": "tr_ice",
+   "src": "coldwhoosh",
+   "use": "a frost bolt in flight (loop)",
+   "t0": 0.6,
+   "t1": 2.0,
+   "peak": -10,
+   "loop": true
+  },
+  {
+   "id": "tr_wind",
+   "src": "wind",
+   "use": "a gust in flight (loop)",
+   "t0": 0.6,
+   "t1": 3.6,
+   "peak": -10,
+   "loop": true
+  },
+  {
+   "id": "tr_shock",
+   "src": "beam",
+   "use": "a lightning bolt in flight (loop)",
+   "take": 2,
+   "pitch": 3,
+   "maxLen": 3.0,
+   "peak": -12,
+   "loop": true
+  },
+  {
+   "id": "tr_holy",
+   "src": "portal",
+   "use": "a holy bolt in flight (loop)",
+   "t0": 4.2,
+   "t1": 5.9,
+   "pitch": 4,
+   "peak": -11,
+   "loop": true
+  },
+  {
+   "id": "tr_dark",
+   "src": "drone",
+   "use": "a dark bolt in flight (loop)",
+   "t0": 0.5,
+   "t1": 3.5,
+   "pitch": 4,
+   "peak": -11,
+   "loop": true
+  },
+  {
+   "id": "tr_arcane",
+   "src": "ethereal",
+   "use": "an arcane bolt in flight (loop)",
+   "t0": 2.0,
+   "t1": 5.0,
+   "pitch": 3,
+   "peak": -12,
+   "loop": true
+  },
+  {
+   "id": "sp_holy_swell",
+   "src": "portal",
+   "use": "holy power gathering (charge begins)",
+   "t0": 3.98,
+   "t1": 5.2,
+   "peak": -8,
+   "fadeOut": 300
+  },
+  {
+   "id": "amb_ghosts",
+   "src": "ghosts",
+   "use": "airy ghost-roars drifting in the fog (loop)",
+   "take": 0,
+   "peak": -14,
+   "loop": true
+  },
+  {
+   "id": "vo_01",
+   "src": "narration",
+   "use": "intro narration, scene 1: \"The Fourth Era, 201. Helgen burned.\"",
+   "t0": 0.08,
+   "t1": 3.5,
+   "fadeIn": 15,
+   "fadeOut": 150,
+   "gain": 2.0
+  },
+  {
+   "id": "vo_02",
+   "src": "narration",
+   "use": "intro narration, scene 2: \"You lived. But as the World-Eater rose from the ash...\"",
+   "t0": 3.86,
+   "t1": 14.1,
+   "fadeIn": 15,
+   "fadeOut": 150,
+   "gain": 2.0
+  },
+  {
+   "id": "vo_03",
+   "src": "narration",
+   "use": "intro narration, scene 3: \"The Curse of Alduin. And every grave in Skyrim heard it.\"",
+   "t0": 15.34,
+   "t1": 21.15,
+   "fadeIn": 15,
+   "fadeOut": 150,
+   "gain": 2.0
+  },
+  {
+   "id": "vo_04",
+   "src": "narration",
+   "use": "intro narration, scene 4: \"By day, it sleeps... the dead remember.\"",
+   "t0": 21.42,
+   "t1": 29.0,
+   "fadeIn": 15,
+   "fadeOut": 150,
+   "gain": 2.0
+  },
+  {
+   "id": "vo_05",
+   "src": "narration",
+   "use": "intro narration, scene 5: \"They come with the dusk... Wailers who call the horde to feed.\"",
+   "t0": 29.18,
+   "t1": 38.72,
+   "fadeIn": 15,
+   "fadeOut": 150,
+   "gain": 2.0
+  },
+  {
+   "id": "vo_06",
+   "src": "narration",
+   "use": "intro narration, scene 6: \"Champions walk among them...\"",
+   "t0": 38.84,
+   "t1": 46.8,
+   "fadeIn": 15,
+   "fadeOut": 150,
+   "gain": 2.0
+  },
+  {
+   "id": "vo_07",
+   "src": "narration",
+   "use": "intro narration, scene 7: \"And when the fog rolls in... Grimmvar comes hunting.\"",
+   "t0": 46.92,
+   "t1": 55.22,
+   "fadeIn": 15,
+   "fadeOut": 150,
+   "gain": 2.0
+  },
+  {
+   "id": "vo_08",
+   "src": "narration",
+   "use": "intro narration, scene 8: \"Yet in every city, an Echo Altar still stands...\"",
+   "t0": 55.26,
+   "t1": 62.56,
+   "fadeIn": 15,
+   "fadeOut": 150,
+   "gain": 2.0
+  },
+  {
+   "id": "vo_09",
+   "src": "narration",
+   "use": "intro narration, scene 9: \"Survive the night.\"",
+   "t0": 62.7,
+   "t1": 64.52,
+   "fadeIn": 15,
+   "fadeOut": 150,
+   "gain": 2.0
+  }
+ ]
 }

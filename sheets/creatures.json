@@ -1,136 +1,136 @@
 {
-  "sheet": "creatures",
-  "about": "Our own creatures: re-rigged models on Skyrim's draugr skeleton (so draugr animations drive them), as NPC records in the plugin. No weapons, no outfit.",
-  "columns": [
-    "id",
-    "label",
-    "model",
-    "heightScale",
-    "level",
-    "verify",
-    "race",
-    "weapon"
-  ],
-  "rows": [
-    {
-      "id": "zombie",
-      "label": "Risen Dead",
-      "model": "CurseOfAlduin\\zombie\\zombie.nif",
-      "heightScale": 1.0,
-      "level": 10,
-      "verify": [
-        "heightScale"
-      ],
-      "race": "draugr",
-      "weapon": "none"
-    },
-    {
-      "id": "boss",
-      "label": "Grimmvar, the Undying Wyrm",
-      "model": "CurseOfAlduin\\boss\\boss.nif",
-      "heightScale": 2.4,
-      "level": 50,
-      "verify": [
-        "heightScale"
-      ],
-      "race": "draugr",
-      "weapon": "wyrmclaws"
-    },
-    {
-      "id": "shadow",
-      "label": "Gloomstalker",
-      "model": "CurseOfAlduin\\shadow\\shadow.nif",
-      "heightScale": 1.15,
-      "level": 30,
-      "verify": [
-        "heightScale"
-      ],
-      "race": "draugr",
-      "weapon": "shadowclaws"
-    },
-    {
-      "id": "reaper",
-      "label": "Iron Reaper",
-      "model": "CurseOfAlduin\\reaper\\reaper.nif",
-      "heightScale": 1.05,
-      "level": 30,
-      "verify": [
-        "heightScale"
-      ],
-      "race": "draugr",
-      "weapon": "scythe"
-    },
-    {
-      "id": "necro",
-      "label": "Voidbound Necromancer",
-      "model": "CurseOfAlduin\\necro\\necro.nif",
-      "heightScale": 1.0,
-      "level": 30,
-      "verify": [
-        "heightScale"
-      ],
-      "race": "breton",
-      "weapon": "none"
-    },
-    {
-      "id": "runner",
-      "label": "Hollow Bride",
-      "model": "CurseOfAlduin\\hooded\\hooded.nif",
-      "heightScale": 1.0,
-      "level": 10,
-      "verify": [],
-      "race": "breton",
-      "weapon": "none"
-    },
-    {
-      "id": "wailer",
-      "label": "Drowned Wailer",
-      "model": "CurseOfAlduin\\hag\\hag.nif",
-      "heightScale": 1.0,
-      "level": 15,
-      "verify": [],
-      "race": "draugr",
-      "weapon": "none"
-    },
-    {
-      "id": "bloater",
-      "label": "Stitched Abomination",
-      "model": "CurseOfAlduin\\abom\\abom.nif",
-      "heightScale": 1.12,
-      "level": 20,
-      "verify": [],
-      "race": "draugr",
-      "weapon": "none"
-    },
-    {
-      "id": "knight",
-      "label": "Horned Bone Knight",
-      "model": "CurseOfAlduin\\knight\\knight.nif",
-      "heightScale": 1.08,
-      "level": 35,
-      "verify": [],
-      "race": "draugr",
-      "weapon": "scythe"
-    },
-    {
-      "id": "king",
-      "label": "Barrow King",
-      "model": "CurseOfAlduin\\king\\king.nif",
-      "heightScale": 1.1,
-      "level": 40,
-      "verify": [],
-      "race": "draugr",
-      "weapon": "scythe"
-    },
-    {
-      "id": "lich",
-      "label": "Lich of the Dirge",
-      "model": "CurseOfAlduin\\lich\\lich.nif",
-      "heightScale": 1.12,
-      "level": 40,
-      "verify": [],
-      "race": "draugr",
-      "weapon": "none"
-    }
-  ]
+ "sheet": "creatures",
+ "about": "Our own creatures: re-rigged models on Skyrim's draugr skeleton (so draugr animations drive them), as NPC records in the plugin. No weapons, no outfit.",
+ "columns": [
+  "id",
+  "label",
+  "model",
+  "heightScale",
+  "level",
+  "verify",
+  "race",
+  "weapon"
+ ],
+ "rows": [
+  {
+   "id": "zombie",
+   "label": "Risen Dead",
+   "model": "CurseOfAlduin\\zombie\\zombie.nif",
+   "heightScale": 1.0,
+   "level": 10,
+   "verify": [
+    "heightScale"
+   ],
+   "race": "draugr",
+   "weapon": "none"
+  },
+  {
+   "id": "boss",
+   "label": "Grimmvar, Alduin's Herald",
+   "model": "CurseOfAlduin\\boss\\boss.nif",
+   "heightScale": 2.4,
+   "level": 50,
+   "verify": [
+    "heightScale"
+   ],
+   "race": "draugr",
+   "weapon": "wyrmclaws"
+  },
+  {
+   "id": "shadow",
+   "label": "Gloomstalker",
+   "model": "CurseOfAlduin\\shadow\\shadow.nif",
+   "heightScale": 1.15,
+   "level": 30,
+   "verify": [
+    "heightScale"
+   ],
+   "race": "draugr",
+   "weapon": "shadowclaws"
+  },
+  {
+   "id": "reaper",
+   "label": "Iron Reaper",
+   "model": "CurseOfAlduin\\reaper\\reaper.nif",
+   "heightScale": 1.05,
+   "level": 30,
+   "verify": [
+    "heightScale"
+   ],
+   "race": "draugr",
+   "weapon": "scythe"
+  },
+  {
+   "id": "necro",
+   "label": "Hollow Tongue",
+   "model": "CurseOfAlduin\\necro\\necro.nif",
+   "heightScale": 1.0,
+   "level": 30,
+   "verify": [
+    "heightScale"
+   ],
+   "race": "breton",
+   "weapon": "none"
+  },
+  {
+   "id": "runner",
+   "label": "Draugr Bride",
+   "model": "CurseOfAlduin\\hooded\\hooded.nif",
+   "heightScale": 1.0,
+   "level": 10,
+   "verify": [],
+   "race": "breton",
+   "weapon": "none"
+  },
+  {
+   "id": "wailer",
+   "label": "Drowned Skald",
+   "model": "CurseOfAlduin\\hag\\hag.nif",
+   "heightScale": 1.0,
+   "level": 15,
+   "verify": [],
+   "race": "draugr",
+   "weapon": "none"
+  },
+  {
+   "id": "bloater",
+   "label": "Sewn Thrall",
+   "model": "CurseOfAlduin\\abom\\abom.nif",
+   "heightScale": 1.12,
+   "level": 20,
+   "verify": [],
+   "race": "draugr",
+   "weapon": "none"
+  },
+  {
+   "id": "knight",
+   "label": "Horned Bone Knight",
+   "model": "CurseOfAlduin\\knight\\knight.nif",
+   "heightScale": 1.08,
+   "level": 35,
+   "verify": [],
+   "race": "draugr",
+   "weapon": "scythe"
+  },
+  {
+   "id": "king",
+   "label": "Barrow King",
+   "model": "CurseOfAlduin\\king\\king.nif",
+   "heightScale": 1.1,
+   "level": 40,
+   "verify": [],
+   "race": "draugr",
+   "weapon": "scythe"
+  },
+  {
+   "id": "lich",
+   "label": "Priest of the World-Eater",
+   "model": "CurseOfAlduin\\lich\\lich.nif",
+   "heightScale": 1.12,
+   "level": 40,
+   "verify": [],
+   "race": "draugr",
+   "weapon": "none"
+  }
+ ]
 }

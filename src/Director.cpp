@@ -97,6 +97,9 @@ namespace bo3z
 			if (a_round > cap) {
 				hp *= std::pow(gen::kHpGrowthAfterCap, static_cast<float>(a_round - cap));
 			}
+			if (a_round > 10) {  // (Noah: harder to grow too strong) the dead grow 8% tougher every night after the tenth
+				hp *= std::pow(1.08f, static_cast<float>(a_round - 10));
+			}
 			return hp / R.hpScale;  // design units -> Skyrim health
 		}
 

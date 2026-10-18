@@ -1290,10 +1290,19 @@ namespace bo3z
 			return true;
 		}
 
+		// (Noah: harder to grow too strong) each spell called costs a quarter more than the last, until the next night
+		int g_rollsNight = -1, g_rolls = 0;
+		int RollsTonight()
+		{
+			const int night = Save::Get(gen::kAV_round);
+			if (night != g_rollsNight) g_rollsNight = night, g_rolls = 0;
+			return g_rolls;
+		}
 		int RollCost()
 		{
 			const int crew = Save::Crew();
-			return PowerUps::FireSale() ? 10 : crew >= 0 && gen::kCrew[crew].passive == 3 ? static_cast<int>(gen::kCrew[crew].value) : gen::kObjects[0].cost;
+			const int base = crew >= 0 && gen::kCrew[crew].passive == 3 ? static_cast<int>(gen::kCrew[crew].value) : gen::kObjects[0].cost;
+			return PowerUps::FireSale() ? 10 : static_cast<int>(std::lround(base * std::pow(1.25, RollsTonight()) / 10.0) * 10);
 		}
 
 		// Roll a spell: every spell you do not carry has the same chance.
@@ -1314,6 +1323,8 @@ namespace bo3z
 			if (!Points::Spend(cost)) {
 				return;
 			}
+			RollsTonight();
+			++g_rolls;
 			g_show = {};
 			g_show.chest = a_ref->CreateRefHandle();
 			g_show.phase = Show::Charging;

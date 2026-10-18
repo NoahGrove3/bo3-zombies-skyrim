@@ -160,9 +160,16 @@ namespace bo3z::Arcana
 	// a spell you don't know yet (every one has the same chance); -1 if you know them all
 	int Roll()
 	{
+		// (Noah: harder to grow too strong) the stronger spells wait: tier 2 once an Echo Altar is awake, the legendaries
+		// (tier 3) once two are
+		int freed = 0;
+		for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
+			freed += Curse::Freed(t) ? 1 : 0;
+		}
+		const int maxTier = freed >= 2 ? 3 : freed >= 1 ? 2 : 1;
 		std::vector<int> pool;
 		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
-			if (g_spell[i] && !Known(i)) {
+			if (g_spell[i] && !Known(i) && coffer::kSpells[i].tier <= maxTier) {
 				pool.push_back(i);
 			}
 		}
