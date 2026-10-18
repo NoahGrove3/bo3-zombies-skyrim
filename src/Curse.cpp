@@ -410,8 +410,17 @@ namespace bo3z
 					pts.push_back({ x, 1.0f - y, zc });
 				}
 			}
+			bool  labelOn = false;
+			float lx = 0, ly = 0;
+			if (g_ring.on && cam) {  // (Noah: the words stay put over the altar)
+				float zc = 0;
+				cam->WorldPtToScreenPt3(g_ring.center + RE::NiPoint3{ 0, 0, 330.0f }, lx, ly, zc, 1e-5f);
+				ly = 1.0f - ly;
+				labelOn = zc > 0.0f;
+			}
 			std::scoped_lock l(Hud::Lock());
 			auto& h = Hud::Edit();
+			h.ringLabelOn = labelOn, h.ringLabelX = lx, h.ringLabelY = ly;
 			h.ringOn = g_ring.on && !pts.empty();
 			h.ringPts = std::move(pts);
 			h.ringFrac = g_ring.frac;
@@ -843,6 +852,7 @@ namespace bo3z
 					logger::info("curse: entered {}", z >= 0 ? std::string(gen::kTowns[z]) : std::string("the wilds"));
 				}
 				g_zone = z;
+				Arcana::RefreshPower();  // (the spells grow with the altars woken)
 				// saves from the ten-rite cities: a freed city stays freed, the rest begin the trials
 				if (g_normDelay > 0) {
 					g_normDelay -= 0.5f;

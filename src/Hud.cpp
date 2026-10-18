@@ -23,6 +23,7 @@ namespace bo3z
 		std::array<ID3D11ShaderResourceView*, gen::kPerks.size()> g_perkIcons{};
 		std::array<ID3D11ShaderResourceView*, gen::kGuns.size()>  g_weaponIcons{};
 		std::array<ID3D11ShaderResourceView*, 8>                  g_elementIcons{};  // the Coffer spells' element emblems (el_<element>.png)
+		std::array<std::array<ID3D11ShaderResourceView*, 8>, 5>   g_schoolIcons{};   // ...their school's sigil in the element's colour (sc_<school>_<element>.png)
 		ID3D11ShaderResourceView* g_menuBg = nullptr;   // the main menu's backdrop (tools/cover.py, MENU=1)
 		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
 		ID3D11ShaderResourceView* g_mapIcons = nullptr;  // the world map's marker icons, an 8x8 atlas (tools/mapicons.py)
@@ -240,7 +241,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const int el = Arcana::ElementOf(gun - Arcana::kIdBase);
 				col = Arcana::ElementColor(el);
 				acc = ((std::min(255u, ((col >> 16) & 0xFF) + 90)) << 16) | ((std::min(255u, ((col >> 8) & 0xFF) + 90)) << 8) | std::min(255u, (col & 0xFF) + 90);
-				iconTex = el >= 0 && el < 8 ? g_elementIcons[el] : nullptr;
+				const int sc = std::clamp(Arcana::SchoolOf(gun - Arcana::kIdBase), 0, 4);
+				iconTex = el >= 0 && el < 8 ? (g_schoolIcons[sc][el] ? g_schoolIcons[sc][el] : g_elementIcons[el]) : nullptr;  // (Noah: the school, not the element)
 			} else {
 				if (gun < 0 || gun >= static_cast<int>(gen::kGuns.size())) {
 					return;
@@ -1856,8 +1858,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						dl->AddCircleFilled(c, spacing * 0.5f, Fade(white, 0.10f + 0.08f * pulse), 24);
 					}
 				}
-				if (front > 0) {
-					const ImVec2 c{ sum.x / front, sum.y / front - 70 * k };
+				if (s.ringLabelOn) {
+					const ImVec2 c{ s.ringLabelX * size.x, s.ringLabelY * size.y };
 					const std::string head = s.ringHold ? (s.ringInside ? "STAND IN THE CIRCLE" : "HOLD THE CIRCLE") : (s.ringInside ? "THE DEAD ARE IN THE CIRCLE" : "KEEP THE DEAD OUT");
 					TxtC(dl, g_title, 20 * k, c.x, c.y, fl > 0.01f || s.ringInside ? IM_COL32(255, 120, 100, 255) : kParch, head, 2 * k, cold);
 					TxtC(dl, g_num, 26 * k, c.x, c.y + 26 * k, IM_COL32(230, 238, 255, 240), std::to_string(std::max(0, s.ringSeconds)) + "s", 1.5f * k, cold);
@@ -4031,6 +4033,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const std::string_view n = Arcana::ElementName(e);
 				const auto path = L"Data\\Interface\\CurseOfAlduin\\el_" + std::wstring(n.begin(), n.end()) + L".png";
 				DirectX::CreateWICTextureFromFile(g_device, path.c_str(), nullptr, &g_elementIcons[e]);
+				static constexpr const wchar_t* kSchools[5] = { L"destruction", L"conjuration", L"restoration", L"alteration", L"illusion" };
+				for (int sc = 0; sc < 5; ++sc) {
+					const auto sp = std::wstring(L"Data\\Interface\\CurseOfAlduin\\sc_") + kSchools[sc] + L"_" + std::wstring(n.begin(), n.end()) + L".png";
+					DirectX::CreateWICTextureFromFile(g_device, sp.c_str(), nullptr, &g_schoolIcons[sc][e]);
+				}
 			}
 			const bool bg = SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_bg.png", nullptr, &g_menuBg));
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_fog.png", nullptr, &g_menuFog);

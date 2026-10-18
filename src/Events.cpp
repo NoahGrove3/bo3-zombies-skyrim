@@ -36,15 +36,40 @@ namespace bo3z
 		};
 
 		// (Noah) no spell ever hurts the one who cast it - you or anyone else: a harmful effect whose caster is its own target
-		// (a fireball bursting at your feet, a mage caught in its own blast) is never applied
+		// (a fireball bursting at your feet, a mage caught in its own blast) is never applied. And (Noah: "walking over an
+		// electrocuted body hurts me") nothing hurts you but a living foe: a harmful effect on you from yourself, from no one,
+		// from a corpse or a hazard, or from someone not fighting you is dropped (the night's dead always count as foes, even
+		// as they burst). Your own spells only hurt those who are fighting you (and the night's dead): townsfolk, followers
+		// and anyone not hostile are spared.
 		bool SelfHarm(RE::MagicTarget* a_this, const RE::MagicTarget::AddTargetData& a_data)
 		{
 			auto* me = a_this ? a_this->GetTargetStatsObject() : nullptr;
-			if (!me || !a_data.caster || a_data.caster != me || !a_data.effect || !a_data.effect->baseEffect) {
+			if (!me || !a_data.effect || !a_data.effect->baseEffect) {
 				return false;
 			}
 			auto* mg = a_data.effect->baseEffect;
-			return mg->IsHostile() || mg->IsDetrimental();
+			if (!(mg->IsHostile() || mg->IsDetrimental())) {
+				return false;
+			}
+			if (a_data.caster && a_data.caster == me) {
+				return true;
+			}
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			auto* caster = a_data.caster ? a_data.caster->As<RE::Actor>() : nullptr;
+			if (player && me == player) {
+				if (!caster) {
+					return true;  // a hazard, a trap, a lingering field with no one behind it
+				}
+				if (Director::IsRoundUndead(caster)) {
+					return false;
+				}
+				return caster->IsDead() || !caster->IsHostileToActor(player);
+			}
+			if (player && caster == player) {
+				auto* target = me->As<RE::Actor>();
+				return target && !Director::IsRoundUndead(target) && (target->IsPlayerTeammate() || !target->IsHostileToActor(player));
+			}
+			return false;
 		}
 		template <int N>
 		struct NoSelfHarm
@@ -53,7 +78,7 @@ namespace bo3z
 			{
 				if (SelfHarm(a_this, a_data)) {
 					static int said = 0;
-					if (said++ < 5) {
+					if (said++ < 40) {
 						logger::info("magic: {} spared its own {}", a_this->GetTargetStatsObject()->GetName(), a_data.effect->baseEffect->GetName());
 					}
 					return false;
@@ -433,7 +458,7 @@ namespace bo3z
 			}
 			static constexpr float kTier[4] = { 1.0f, 1.3f, 1.7f, 2.2f };
 			const int   tier = std::clamp(Arcana::TierOf(a_index), 0, 3);
-			const float grow = (1.0f + gen::kForgeStep * Arcana::Level(a_index)) * (1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike));
+			const float grow = (1.0f + gen::kForgeStep * Arcana::Level(a_index)) * (1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike)) * (0.7f + 0.3f * Arcana::Power());
 			if (Director::IsRoundUndead(a_actor)) {
 				if (Limit(a_actor)) {
 					HurtUndead(a_actor, Director::RoundHealth() * gen::kShareSpell * kTier[tier] * grow);

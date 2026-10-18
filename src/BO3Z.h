@@ -241,6 +241,9 @@ namespace bo3z
 		inline constexpr int kIdBase = 1000;   // HUD ids: a Coffer spell shows as kIdBase + its index (weapons keep 0..)
 		void               Load();                       // data loaded: find them, set their costs and charge
 		int                Count();
+		int                SchoolOf(int a_index);        // 0 destruction, 1 conjuration, 2 restoration, 3 alteration, 4 illusion
+		float              Power();                      // the spells' power for the altars woken (0.55 .. 1.24)
+		void               RefreshPower();               // an altar woken (or a save loaded): the spells' power follows
 		RE::SpellItem*     Spell(int a_index);
 		int                IndexOf(const RE::TESForm* a_form);
 		int                IndexOfEffect(RE::FormID a_effect);  // the Coffer spell a magic effect belongs to (-1: none)
@@ -558,6 +561,8 @@ namespace bo3z
 			std::vector<EnemyBar> enemyBars;
 			// the ritual circle (Circle / Hold rites): ring points on screen (x, y 0..1, depth), progress, reset flash
 			bool        ringOn{ false }, ringHold{ false };
+			bool        ringLabelOn{ false };  // where its words stand on the screen: over the altar, fixed (not chasing the ring)
+			float       ringLabelX{ 0 }, ringLabelY{ 0 };
 			std::vector<std::array<float, 3>> ringPts;
 			float       ringFrac{ 0 }, ringFlash{ 0 };
 			int         ringSeconds{ 0 }, ringInside{ 0 };

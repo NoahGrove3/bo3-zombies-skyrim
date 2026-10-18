@@ -2630,16 +2630,27 @@ namespace bo3z
 				for (int s = 1; s <= 3 + L; ++s) {
 					blastAt(L == 3 && s == 3 + L ? "firestorm" : "fireball", aim.eye + aim.dir * (range * s / (3.0f + L)), 0.05f * s, 0.55f);
 				}
-			} else if (id == "gale") {  // a storm wall: everything ahead thrown flat where it stands
-				const float range = 800.0f + 500.0f * L;
-				for (auto* f : InCone(aim, range, 50.0f)) {
-					Damage(f, base * 0.35f, false, false);
-					if (proc && !f->IsDead()) {
-						proc->KnockExplosion(f, f->GetPosition() + RE::NiPoint3{ 0, 0, 140.0f }, 1.2f + 0.4f * L);
+			} else if (id == "gale") {  // Stormblast (Noah: Thunderchild's needed a weapon in hand - ours calls the sky down): lightning
+				// strikes the dead ahead one after another, the last word throwing them flat
+				const float range = 1000.0f + 500.0f * L;
+				int         n = 0;
+				for (auto* f : InCone(aim, range, 45.0f)) {
+					if (n >= 4 + 3 * L) {
+						break;
 					}
+					Damage(f, base * 0.9f, false, false);
+					if (L == 3 && proc && !f->IsDead()) {
+						proc->KnockExplosion(f, f->GetPosition() + RE::NiPoint3{ 0, 0, 140.0f }, 1.6f);
+					} else {
+						Stagger(f, 0.6f);
+					}
+					blastAt("skybolt", f->GetPosition(), 0.06f * n, 0.55f);
+					++n;
 				}
-				for (int s = 1; s <= 4; ++s) {
-					blastAt("priestsmall", aim.eye + aim.dir * (range * s / 4.0f), 0.05f * s, 0.5f);
+				if (n == 0) {  // nothing ahead: the bolts fall where you look
+					for (int s = 1; s <= 3; ++s) {
+						blastAt("skybolt", aim.eye + aim.dir * (range * s / 3.0f), 0.08f * s, 0.5f);
+					}
 				}
 			} else if (id == "wail") {  // the dead nearest turn on their own
 				int n = 0;

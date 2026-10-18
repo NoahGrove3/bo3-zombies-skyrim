@@ -20,6 +20,10 @@ namespace bo3z::Arcana
 		std::mt19937                                        g_rng{ std::random_device{}() };
 		std::array<std::uint8_t, coffer::kSpells.size()>    g_level{};
 		std::array<std::vector<float>, coffer::kSpells.size()> g_baseMag;  // each effect's magnitude as the mod made it
+		std::array<std::uint8_t, coffer::kSpells.size()>    g_school{};  // 0 destruction, 1 conjuration, 2 restoration, 3 alteration, 4 illusion
+		int                                                 g_altars = 0;  // Echo Altars woken (the spells grow with them)
+		// (Noah: a 67-damage spell from the first altar is too much) the spells' power grows with the altars woken
+		float AltarPower() { static constexpr float k[] = { 0.55f, 0.7f, 0.82f, 0.92f, 1.0f }; return g_altars < 5 ? k[g_altars] : std::min(1.24f, 1.0f + 0.04f * (g_altars - 4)); }
 
 		// Balance (Noah: most of them one-shot Skyrim's own enemies): every Coffer spell does 45% of the damage its mod
 		// gave it and costs 75% of the pool's price.
@@ -32,7 +36,7 @@ namespace bo3z::Arcana
 				return;
 			}
 			const int   lv = g_level[a_index];
-			const float mult = kPower * (1.0f + gen::kForgeStep * lv);
+			const float mult = kPower * AltarPower() * (1.0f + gen::kForgeStep * lv);
 			auto&       base = g_baseMag[a_index];
 			for (std::size_t e = 0; e < sp->effects.size() && e < base.size(); ++e) {
 				if (sp->effects[e]) {
@@ -117,6 +121,13 @@ namespace bo3z::Arcana
 				--g_found;
 				continue;
 			}
+			switch (sp->GetAssociatedSkill()) {
+			case RE::ActorValue::kConjuration: g_school[i] = 1; break;
+			case RE::ActorValue::kRestoration: g_school[i] = 2; break;
+			case RE::ActorValue::kAlteration: g_school[i] = 3; break;
+			case RE::ActorValue::kIllusion: g_school[i] = 4; break;
+			default: g_school[i] = 0; break;
+			}
 			Apply(static_cast<int>(i));  // the balanced power and cost (and any reforge)
 			sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
 			if (!s.concentration && sp->data.castingType == RE::MagicSystem::CastingType::kFireAndForget) {
@@ -130,6 +141,24 @@ namespace bo3z::Arcana
 	}
 
 	int Count() { return g_found; }
+
+	int   SchoolOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(g_school.size()) ? g_school[a_index] : 0; }
+	float Power() { return AltarPower(); }
+	void  RefreshPower()
+	{
+		int freed = 0;
+		for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
+			freed += Curse::Freed(t) ? 1 : 0;
+		}
+		if (freed == g_altars) {
+			return;
+		}
+		g_altars = freed;
+		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
+			Apply(i);
+		}
+		logger::info("arcana: {} altars awake - the spells at {:.0f}% power", freed, AltarPower() * 100.0f);
+	}
 
 	int IndexOfEffect(RE::FormID a_effect)
 	{

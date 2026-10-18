@@ -196,7 +196,6 @@ namespace bo3z
 				cam->ForceThirdPerson();
 				cam->ForceFirstPerson();
 			}
-			a_player->NotifyAnimationGraph("IdleForceDefaultState");
 			for (auto [form, slot] : { std::pair{ g_handR, right }, std::pair{ g_handL, left } }) {
 				if (!form || !em) {
 					continue;
@@ -214,16 +213,24 @@ namespace bo3z
 
 		void Revive(RE::PlayerCharacter* a_player, bool a_falling)
 		{
-			g_handR = a_player->GetEquippedObject(false);
-			g_handL = a_player->GetEquippedObject(true);
-			if (auto* cam = RE::PlayerCamera::GetSingleton()) {
-				g_wasFirst = cam->IsInFirstPerson() || g_wasFirst;
+			// (Noah: after a revive the spells stopped doing damage) caught before the blow lands, you never fell: nothing
+			// is forced on the body (no bleedout ended, no animation reset, no re-equip) - only health given back. Risen
+			// from your knees: stood up, and the hands put back a moment later.
+			const bool down = a_falling || a_player->AsActorState()->IsBleedingOut();
+			if (down) {
+				g_handR = a_player->GetEquippedObject(false);
+				g_handL = a_player->GetEquippedObject(true);
+				if (auto* cam = RE::PlayerCamera::GetSingleton()) {
+					g_wasFirst = cam->IsInFirstPerson() || g_wasFirst;
+				}
+				g_rearm = 0.6f;
 			}
-			g_rearm = 0.6f;
 			auto* av = a_player->AsActorValueOwner();
 			const float max = av->GetPermanentActorValue(RE::ActorValue::kHealth);
 			av->RestoreActorValue(RE::ActorValue::kHealth, max);
-			Stand(a_player);
+			if (down) {
+				Stand(a_player);
+			}
 			g_grace = 3.0f;
 			Director::Pause(2.0f);  // (the dead around you reel back a moment)
 			Save::SetPerkStacks(gen::kPerk_hearthfire, N(gen::kPerk_hearthfire) - 1);  // one revive per draught
