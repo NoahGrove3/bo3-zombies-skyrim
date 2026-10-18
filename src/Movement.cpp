@@ -478,7 +478,12 @@ namespace bo3z
 					R.entry[0][0] = X.x, R.entry[1][0] = X.y, R.entry[2][0] = X.z;
 					R.entry[0][1] = Y.x, R.entry[1][1] = Y.y, R.entry[2][1] = Y.z;
 					R.entry[0][2] = Z.x, R.entry[1][2] = Z.y, R.entry[2][2] = Z.z;
-					const float sc = a_scale * (1.0f + 0.5f * k / float(kTrailBones - 1));  // (the air spreads as it ages)
+					float sc = a_scale * (1.0f + 0.5f * k / float(kTrailBones - 1));  // (the air spreads as it ages)
+				// (it thins to nothing as it nears the camera - passing right by the lens it filled the view as a grey band)
+				if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
+					const float dc = (p - cam->cameraRoot->world.translate).Length();
+					sc *= std::clamp((dc - 120.0f) / 380.0f, 0.0f, 1.0f);
+				}
 					bone->local.rotate = P.rotate.Transpose() * R;
 					bone->local.translate = P.rotate.Transpose() * (p - P.translate) * (1.0f / P.scale);
 					bone->local.scale = sc / P.scale;
@@ -987,14 +992,16 @@ namespace bo3z
 			RE::Projectile::LaunchData    ld(use, a_player, a_from + a_dir * 60.0f + v * 0.05f, rot);
 			ld.useOrigin = true;
 			ld.autoAim = false;
-			// (dev: breathproj 0 0 <gap> 2 = with the shout's own spell on it, for its full look; 3 = that, untinted)
+			// (the shout's own spell on it: without it only a stub of its flame is drawn - its full gout of fire needs it.
+			// dev: breathproj 0 0 <gap> -1 = without)
 			static auto* spell = RE::TESForm::LookupByID<RE::SpellItem>(0x0003F9ED);  // VoiceFireBreath3
-			ld.spell = g_beamPitchSign >= 2.0f ? spell : nullptr;
+			ld.spell = g_beamPitchSign >= 0.0f ? spell : nullptr;
 			ld.castingSource = RE::MagicSystem::CastingSource::kOther;
 			RE::ProjectileHandle h;
 			RE::Projectile::Launch(&h, ld);
 			const int b = Bond();
-			if (h.get() && b >= 1 && g_beamPitchSign < 3.0f) g_tinted.push_back({ h, b, 0.0f });
+			// (its fire is not tinted for the bond: the palette turned this flame's sheets to black squares)
+			if (h.get() && b >= 1 && g_beamPitchSign >= 5.0f) g_tinted.push_back({ h, b, 0.0f });
 			static int logged = 0;
 			if (logged++ < 4) {
 				auto pr = h.get();

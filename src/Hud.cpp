@@ -1297,60 +1297,101 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					card(s.handSpell[0], s.handCost[0], { b.x - 300 * k, a.y - 52 * k }, { b.x, a.y - 10 * k }, false, "LEFT HAND");
 				}
 			}
-			// Shout card, bottom-right under the spell / weapon dock (Noah): the shout you have equipped - our own emblem (a
-			// dragon's cry: its breath and three rings of sound), its name, and its cooldown draining round the emblem with
-			// the seconds left; a flash when it is ready again
+			// Shout card, bottom-right under the spell / weapon dock (Noah: Nordic) - a carved iron plate cut at the corners
+			// like a Nord shield-band, bronze-rimmed with knotwork studs; at its left a round iron shield bearing the three
+			// claw-strokes of a Word Wall (the Thu'um), its bronze rim draining as the shout recovers; the shout's name in
+			// the title face and the seconds left on a bronze rune-stone (READY when it can be spoken again)
 			if (!s.shoutName.empty()) {
 				static float shownSh = 0;
 				shownSh += (1.0f - shownSh) * std::min(1.0f, dt * 6);
 				const float  al = shownSh;
-				const ImVec2 a{ size.x - 330 * k, size.y - 84 * k }, b{ size.x - 40 * k, size.y - 46 * k };
-				const float  h = b.y - a.y, rr = h * 0.5f;
 				const bool   cooling = s.shoutCd > 0.001f;
-				const ImU32  ice = IM_COL32(150, 205, 255, 255), iceDim = IM_COL32(90, 120, 150, 255);
-				dl->AddRectFilled(a, b, IM_COL32(8, 8, 10, static_cast<int>(165 * al)), rr);
-				dl->AddRect(a, b, Fade(ice, (cooling ? 0.25f : 0.5f) * al), rr, 0, 1.2f * k);
-				if (s.shoutReady > 0.001f) {
-					dl->AddRect({ a.x - 2 * k, a.y - 2 * k }, { b.x + 2 * k, b.y + 2 * k }, Fade(IM_COL32(220, 240, 255, 255), s.shoutReady * al), rr + 2 * k, 0, 2.4f * k);
-				}
-				// the emblem
-				const ImVec2 c{ a.x + rr, (a.y + b.y) * 0.5f };
-				const float  er = rr - 4 * k;
-				dl->AddCircleFilled(c, er, IM_COL32(16, 22, 32, static_cast<int>(235 * al)), 40);
-				const ImU32 gl = Fade(cooling ? iceDim : ice, al);
+				const ImVec2 a{ size.x - 340 * k, size.y - 86 * k }, b{ size.x - 40 * k, size.y - 46 * k };
+				const float  h = b.y - a.y, cy = (a.y + b.y) * 0.5f, cut = 9 * k;
+				const ImU32  bronze = Fade(kGold, al), bronzeDim = Fade(kGoldDim, al);
+				const ImU32  frost = IM_COL32(170, 215, 255, 255);
+				// the plate: cut corners, dark iron, a band of lighter iron along its top, a bronze rim with an inner line
+				const ImVec2 plate[8] = { { a.x + cut, a.y }, { b.x - cut, a.y }, { b.x, a.y + cut }, { b.x, b.y - cut }, { b.x - cut, b.y }, { a.x + cut, b.y }, { a.x, b.y - cut }, { a.x, a.y + cut } };
+				dl->AddConvexPolyFilled(plate, 8, IM_COL32(14, 13, 12, static_cast<int>(215 * al)));
+				dl->AddRectFilledMultiColor({ a.x + cut, a.y + 1 * k }, { b.x - cut, cy }, IM_COL32(60, 54, 46, static_cast<int>(70 * al)), IM_COL32(60, 54, 46, static_cast<int>(70 * al)), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
+				dl->AddPolyline(plate, 8, bronze, ImDrawFlags_Closed, 1.6f * k);
 				{
-					const ImVec2 m{ c.x - er * 0.45f, c.y };
-					dl->AddTriangleFilled({ m.x - er * 0.22f, m.y - er * 0.26f }, { m.x + er * 0.16f, m.y }, { m.x - er * 0.22f, m.y + er * 0.26f }, gl);
-					for (int i = 0; i < 3; ++i) {  // the rings of its cry
-						const float ra = er * (0.38f + 0.22f * i);
-						dl->PathArcTo(m, ra, -0.62f, 0.62f, 12);
-						dl->PathStroke(Fade(cooling ? iceDim : ice, al * (1.0f - 0.18f * i)), ImDrawFlags_None, (2.0f - 0.3f * i) * k);
+					const float  in = 3.5f * k;
+					const ImVec2 inner[8] = { { a.x + cut + in * 0.4f, a.y + in }, { b.x - cut - in * 0.4f, a.y + in }, { b.x - in, a.y + cut + in * 0.4f }, { b.x - in, b.y - cut - in * 0.4f },
+						{ b.x - cut - in * 0.4f, b.y - in }, { a.x + cut + in * 0.4f, b.y - in }, { a.x + in, b.y - cut - in * 0.4f }, { a.x + in, a.y + cut + in * 0.4f } };
+					dl->AddPolyline(inner, 8, bronzeDim, ImDrawFlags_Closed, 0.8f * k);
+				}
+				// knot-studs: a small bronze diamond at each cut corner and at the middle of the top and bottom edges
+				auto stud = [&](ImVec2 c, float r) {
+					const ImVec2 d[4] = { { c.x, c.y - r }, { c.x + r, c.y }, { c.x, c.y + r }, { c.x - r, c.y } };
+					dl->AddConvexPolyFilled(d, 4, bronze);
+					dl->AddPolyline(d, 4, IM_COL32(40, 30, 18, static_cast<int>(200 * al)), ImDrawFlags_Closed, 0.8f * k);
+				};
+				stud({ b.x - cut * 0.5f, a.y + cut * 0.5f }, 2.6f * k);
+				stud({ b.x - cut * 0.5f, b.y - cut * 0.5f }, 2.6f * k);
+				// the shield
+				const float  er = h * 0.5f + 3 * k;
+				const ImVec2 c{ a.x + er - 6 * k, cy };
+				dl->AddCircleFilled(c, er + 2 * k, IM_COL32(10, 9, 8, static_cast<int>(235 * al)), 40);
+				dl->AddCircleFilled(c, er - 3 * k, IM_COL32(42, 38, 34, static_cast<int>(245 * al)), 40);
+				for (int i = 0; i < 4; ++i) {  // its planks
+					const float x = c.x - er * 0.6f + er * 0.4f * i;
+					const float hh = std::sqrt(std::max(0.0f, (er - 3 * k) * (er - 3 * k) - (x - c.x) * (x - c.x)));
+					dl->AddLine({ x, c.y - hh }, { x, c.y + hh }, IM_COL32(20, 18, 16, static_cast<int>(200 * al)), 1.0f * k);
+				}
+				dl->AddCircle(c, er - 3 * k, bronzeDim, 40, 2.4f * k);  // the rim, worn
+				for (int i = 0; i < 8; ++i) {  // its rivets
+					const float t = i * RE::NI_PI / 4 + RE::NI_PI / 8;
+					dl->AddCircleFilled({ c.x + std::cos(t) * (er - 3 * k), c.y + std::sin(t) * (er - 3 * k) }, 1.5f * k, bronze, 8);
+				}
+				// the Word Wall's three claw-strokes: slanting, tapered, cut into the shield - frost-pale when it can be spoken
+				{
+					const ImU32 gl = cooling ? IM_COL32(120, 112, 100, static_cast<int>(230 * al)) : Fade(frost, al);
+					for (int i = 0; i < 3; ++i) {
+						const float  ox = (i - 1) * er * 0.36f;
+						const ImVec2 top{ c.x + ox + er * 0.2f, c.y - er * 0.55f }, bot{ c.x + ox - er * 0.2f, c.y + er * 0.55f };
+						const float  w = er * 0.11f;
+						const ImVec2 q[4] = { top, { (top.x + bot.x) * 0.5f + w, (top.y + bot.y) * 0.5f }, bot, { (top.x + bot.x) * 0.5f - w, (top.y + bot.y) * 0.5f } };
+						dl->AddConvexPolyFilled(q, 4, gl);
+					}
+					if (!cooling) {
+						dl->AddCircle(c, er * 0.62f, Fade(frost, 0.18f * al * (0.6f + 0.4f * std::sin(now * 2.4f))), 32, 5.0f * k);
 					}
 				}
-				dl->AddCircle(c, er, Fade(ice, 0.35f * al), 40, 1.0f * k);
-				if (cooling) {  // what is left of the cooldown, round the emblem from the top
-					const float a0 = -RE::NI_PI * 0.5f;
-					dl->PathArcTo(c, er + 1.5f * k, a0, a0 + 2 * RE::NI_PI * s.shoutCd, 48);
-					dl->PathStroke(Fade(IM_COL32(90, 160, 255, 255), 0.35f * al), ImDrawFlags_None, 5.0f * k);
-					dl->PathArcTo(c, er + 1.5f * k, a0, a0 + 2 * RE::NI_PI * s.shoutCd, 48);
-					dl->PathStroke(Fade(ice, al), ImDrawFlags_None, 2.0f * k);
+				if (cooling) {  // what is left of the cooldown: the rim's bronze, bright, from the top round
+					const float a0 = -RE::NI_PI * 0.5f, a1 = a0 + 2 * RE::NI_PI * s.shoutCd;
+					dl->PathArcTo(c, er - 3 * k, a0, a1, 48);
+					dl->PathStroke(Fade(IM_COL32(255, 200, 120, 255), 0.35f * al), ImDrawFlags_None, 6.0f * k);
+					dl->PathArcTo(c, er - 3 * k, a0, a1, 48);
+					dl->PathStroke(Fade(IM_COL32(240, 200, 130, 255), al), ImDrawFlags_None, 2.4f * k);
 				}
-				// right: the seconds left, or READY
+				if (s.shoutReady > 0.001f) {  // ready again: the shield flares frost
+					dl->AddCircle(c, er + 2 * k + 6 * k * (1 - s.shoutReady), Fade(frost, s.shoutReady * al), 40, 2.5f * k);
+					dl->AddPolyline(plate, 8, Fade(frost, 0.8f * s.shoutReady * al), ImDrawFlags_Closed, 2.2f * k);
+				}
+				// right: a bronze rune-stone with the seconds left, or READY
 				const std::string rs = cooling ? std::to_string(static_cast<int>(std::ceil(s.shoutLeft))) + "s" : std::string("READY");
-				const float       cz = 15 * k;
+				const float       cz = 14 * k;
 				const auto        cm = Measure(g_num, cz, rs);
-				const ImVec2      p1{ b.x - 9 * k, (a.y + b.y) * 0.5f + cm.y * 0.5f + 3 * k }, p0{ p1.x - cm.x - 14 * k, p1.y - cm.y - 6 * k };
-				dl->AddRectFilled(p0, p1, cooling ? IM_COL32(30, 40, 60, static_cast<int>(200 * al)) : IM_COL32(40, 90, 150, static_cast<int>(210 * al)), (p1.y - p0.y) * 0.5f);
-				Txt(dl, g_num, cz, { p0.x + 7 * k, p0.y + 3 * k }, Fade(IM_COL32(236, 242, 255, 255), al), rs);
-				// the name, with SHOUT above it
-				const float x0 = a.x + rr * 2 + 4 * k, textR = p0.x - 8 * k;
+				const ImVec2      p1{ b.x - 12 * k, cy + cm.y * 0.5f + 3 * k }, p0{ p1.x - cm.x - 14 * k, p1.y - cm.y - 6 * k };
+				{
+					const float  cc = 4 * k;
+					const ImVec2 st[6] = { { p0.x + cc, p0.y }, { p1.x - cc, p0.y }, { p1.x, cy }, { p1.x - cc, p1.y }, { p0.x + cc, p1.y }, { p0.x, cy } };
+					dl->AddConvexPolyFilled(st, 6, cooling ? IM_COL32(30, 27, 24, static_cast<int>(230 * al)) : IM_COL32(70, 52, 28, static_cast<int>(235 * al)));
+					dl->AddPolyline(st, 6, cooling ? bronzeDim : bronze, ImDrawFlags_Closed, 1.0f * k);
+				}
+				Txt(dl, g_num, cz, { p0.x + 7 * k, p0.y + 3 * k }, cooling ? Fade(IM_COL32(220, 205, 180, 255), al) : Fade(IM_COL32(255, 236, 196, 255), al), rs);
+				// the name, with THU'UM above it in small spaced capitals
+				const float x0 = c.x + er + 8 * k, textR = p0.x - 8 * k;
 				dl->PushClipRect(a, { textR, b.y }, true);
-				float nameSize = 17 * k;
-				while (nameSize > 10 * k && x0 + Measure(g_title, nameSize, s.shoutName).x > textR) {
+				float nameSize = 18 * k;
+				std::string nm = s.shoutName;
+				for (auto& ch : nm) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
+				while (nameSize > 10 * k && x0 + Measure(g_title, nameSize, nm).x > textR) {
 					nameSize -= 1 * k;
 				}
-				Txt(dl, g_body, 10 * k, { x0, a.y + 4 * k }, Fade(ice, 0.85f * al), "SHOUT");
-				Txt(dl, g_title, nameSize, { x0, a.y + 15 * k }, Fade(kParch, (cooling ? 0.7f : 1.0f) * al), s.shoutName);
+				Txt(dl, g_body, 10 * k, { x0, a.y + 4 * k }, Fade(kGold, 0.8f * al), "T H U ' U M");
+				Txt(dl, g_title, nameSize, { x0, a.y + 16 * k }, Fade(kParch, (cooling ? 0.65f : 1.0f) * al), nm, 1.5f * k, IM_COL32(0, 0, 0, static_cast<int>(160 * al)));
 				dl->PopClipRect();
 			}
 			// Weapon dock, bottom-right: the weapon in hand as a large card (its picture, Reforge marks, ability and
