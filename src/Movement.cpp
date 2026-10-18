@@ -384,10 +384,7 @@ namespace bo3z
 			const float trailV = -std::fmod(clock * 4.7f, 1.0f), diveV = -std::fmod(clock * 3.2f, 1.0f);
 			FxLevel(a_root, "DG_TrailL", a_trail, trailV);
 			FxLevel(a_root, "DG_TrailR", a_trail, trailV + 0.37f);
-			for (int i = 1; i <= 14; ++i) {  // (each at its own pace and phase: no two streaks move together)
-				const float rate = 2.4f + 0.23f * ((i * 7) % 9), shimmer = 0.75f + 0.25f * std::sin(clock * (5.0f + i) + i * 1.7f);
-				FxLevel(a_root, fmt::format("DG_Wind{}", i).c_str(), a_dive * shimmer, -std::fmod(clock * rate + 0.37f * i, 1.0f));
-			}
+			(void)a_dive;  // (Noah: no streaks off its body any more - only the wingtips')
 			(void)diveV;
 		}
 
@@ -670,7 +667,7 @@ namespace bo3z
 		int   g_breathElDev = -1;            // (dev: the element to breathe, whatever is in your hand)
 		float g_breathSway = 0;              // its head's sweep during the breath (rad)
 		RE::FormID g_breathProjDev[3]{};     // (dev: a projectile to try for fire / frost / lightning)
-		float g_breathScaleDev = -1, g_beamPitchSign = 1;
+		float g_breathScaleDev = -1, g_breathSpellDev = 1;
 		// (Noah) Bond I's climb: two small beats that lift it a little, then one great beat that carries it higher
 		constexpr float kFlapSmall = 0.5f, kFlapBig = 1.15f, kFlapAll = 2 * kFlapSmall + kFlapBig;
 		float FlapWing(float a_t)  // the wings' beat (WingBeat units) a_t seconds into the climb
@@ -902,10 +899,10 @@ namespace bo3z
 			return best;
 		}
 		// (Noah: base damage balanced, then 25% more for each bond - x1, x1.25, x1.5, x1.75): everything of the dead inside the
-		// beam (a cone widening from its jaws, 16 m long) is burned every 0.2 s - about 60% of a round's undead health a
+		// fire (a cone widening from its jaws, 16 m long) is burned every 0.2 s - about 60% of a round's undead health a
 		// second before any bond, so a full breath kills most of what it is held on; others lose 15% of their health a second
 		float BreathMult() { return 1.0f + 0.25f * static_cast<float>(std::clamp(Save::DragonBond(), 0, 3)); }
-		constexpr float kBeamReach = 1650.0f;
+		constexpr float kBreathReach = 1650.0f;
 		void BreathHits(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_from, const RE::NiPoint3& a_dir)
 		{
 			const float mult = BreathMult();
@@ -917,11 +914,11 @@ namespace bo3z
 				}
 				const RE::NiPoint3 to = a->GetPosition() + RE::NiPoint3{ 0, 0, 60 } - a_from;
 				const float        along = to.Dot(a_dir);
-				if (along < 0.0f || along > kBeamReach) {
+				if (along < 0.0f || along > kBreathReach) {
 					continue;
 				}
 				const float side = (to - a_dir * along).Length();
-				if (side > 75.0f + 0.13f * along) {  // (the beam widens as it goes)
+				if (side > 75.0f + 0.13f * along) {  // (the fire widens as it goes)
 					continue;
 				}
 				const bool  undead = Director::IsRoundUndead(a.get());
@@ -936,44 +933,13 @@ namespace bo3z
 			}
 		}
 
-		// the breath's look (Noah: one beam of fire, not a stream of fireballs): DG_Beam1..3 under its mouth
-		// (tools/dragonfx.py) - a white-hot core, a wider flame round it, a flare at its jaws - turned each frame to where it
-		// breathes, grown out of its jaws and faded away, in its bond's colours (Skyrim's fire, then blue, yellow, green)
-		struct BeamState
+		// the breath (Noah: the Fire Breath shout's own fire): where it aims, and how far into it it is
+		struct BreathAim
 		{
-			float        level = 0, grow = 0, clock = 0;
+			float        grow = 0;
 			RE::NiPoint3 dir{ 0, 1, 0 };
 		};
-		BeamState g_beam;
-		void FxColor(RE::NiAVObject* a_root, const char* a_name, float a_r, float a_g, float a_b)
-		{
-			auto* o = a_root ? a_root->GetObjectByName(a_name) : nullptr;
-			auto* g = o ? o->AsGeometry() : nullptr;
-			auto* p = g ? g->GetGeometryRuntimeData().shaderProperty.get() : nullptr;
-			auto* rtti = p ? p->GetRTTI() : nullptr;
-			if (!rtti || std::string_view(rtti->GetName()) != "BSEffectShaderProperty") {
-				return;
-			}
-			if (auto* m = static_cast<RE::BSEffectShaderMaterial*>(static_cast<RE::BSShaderProperty*>(p)->material)) {
-				m->baseColor = { a_r, a_g, a_b, 1.0f };
-			}
-		}
-		RE::NiMatrix3 AimAlong(RE::NiPoint3 a_dir)  // a turn taking +Y to a_dir, kept level across
-		{
-			a_dir.Unitize();
-			RE::NiPoint3 X = a_dir.Cross({ 0, 0, 1 });
-			if (X.Length() < 1e-3f) X = { 1, 0, 0 };
-			X.Unitize();
-			const RE::NiPoint3 Z = X.Cross(a_dir);
-			RE::NiMatrix3      R;
-			R.entry[0][0] = X.x, R.entry[1][0] = X.y, R.entry[2][0] = X.z;
-			R.entry[0][1] = a_dir.x, R.entry[1][1] = a_dir.y, R.entry[2][1] = a_dir.z;
-			R.entry[0][2] = Z.x, R.entry[1][2] = Z.y, R.entry[2][2] = Z.z;
-			return R;
-		}
-		// (its own nif, CurseOfAlduin\fx\breath_beam.nif - tools/breathbeam.py - hung on your 3D while it breathes, as the
-		// whirlwind is, and placed each frame at the dragon's jaws: shapes moved under the dragon's animated nodes were never drawn)
-		RE::NiPointer<RE::NiAVObject> g_beamNode[2];
+		BreathAim g_breath;
 		// one gout of the Fire Breath shout (its strongest, three words) from the dragon's jaws along a_dir - no spell on it (the
 		// burning is BreathHits', on the dead alone - never your friends), tinted for its bond
 		void BreathPuff(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_from, const RE::NiPoint3& a_dir)
@@ -995,94 +961,17 @@ namespace bo3z
 			// (the shout's own spell on it: without it only a stub of its flame is drawn - its full gout of fire needs it.
 			// dev: breathproj 0 0 <gap> -1 = without)
 			static auto* spell = RE::TESForm::LookupByID<RE::SpellItem>(0x0003F9ED);  // VoiceFireBreath3
-			ld.spell = g_beamPitchSign >= 0.0f ? spell : nullptr;
+			ld.spell = g_breathSpellDev >= 0.0f ? spell : nullptr;
 			ld.castingSource = RE::MagicSystem::CastingSource::kOther;
 			RE::ProjectileHandle h;
 			RE::Projectile::Launch(&h, ld);
 			const int b = Bond();
 			// (its fire is not tinted for the bond: the palette turned this flame's sheets to black squares)
-			if (h.get() && b >= 1 && g_beamPitchSign >= 5.0f) g_tinted.push_back({ h, b, 0.0f });
+			if (h.get() && b >= 1 && g_breathSpellDev >= 5.0f) g_tinted.push_back({ h, b, 0.0f });
 			static int logged = 0;
 			if (logged++ < 4) {
 				auto pr = h.get();
 				logger::info("glider: fire breath gout {:08X} -> {}", use->GetFormID(), pr ? fmt::format("launched, 3D {}", pr->Get3D() != nullptr) : std::string("none"));
-			}
-		}
-
-		void BeamGone()
-		{
-			for (auto& n : g_beamNode) {
-				if (n && n->parent) n->parent->DetachChild(n.get());
-				n.reset();
-			}
-		}
-		void BeamPose(int a_f, RE::NiAVObject* a_root, RE::NiAVObject* a_space, const BeamState& a_b, int a_bond)
-		{
-			auto* host = a_root ? a_root->AsNode() : nullptr;
-			auto* mouth = a_space ? a_space->GetObjectByName("DG_Mouth") : nullptr;
-			auto& node = g_beamNode[a_f];
-			if (!host || !mouth || a_b.level < 0.01f) {
-				if (node && node->parent) node->parent->DetachChild(node.get());
-				node.reset();
-				return;
-			}
-			const int bond = std::clamp(a_bond, 0, 3);
-			static int nodeBond[2] = { -1, -1 };
-			if (node && nodeBond[a_f] != bond) {  // (a new bond: its own colours)
-				if (node->parent) node->parent->DetachChild(node.get());
-				node.reset();
-			}
-			if (!node) {
-				static RE::NiPointer<RE::NiNode> models[4];
-				static constexpr const char* kModel[4] = { "CurseOfAlduin\\fx\\breath_beam.nif", "CurseOfAlduin\\fx\\breath_beam_b1.nif", "CurseOfAlduin\\fx\\breath_beam_b2.nif",
-					"CurseOfAlduin\\fx\\breath_beam_b3.nif" };
-				auto& model = models[bond];
-				if (!model) {
-					RE::BSModelDB::DBTraits::ArgsType args{};
-					if (RE::BSModelDB::Demand(kModel[bond], model, args) != RE::BSResource::ErrorCode::kNone || !model) {
-						model.reset();
-						static bool told = false;
-						if (!told) told = true, logger::warn("glider: no breath beam model ({})", kModel[bond]);
-						return;
-					}
-				}
-				nodeBond[a_f] = bond;
-				auto* clone = model->Clone();
-				if (!clone) return;
-				node.reset(static_cast<RE::NiAVObject*>(clone));
-				node->local = RE::NiTransform{};
-				host->AttachChild(node.get(), true);
-				logger::info("glider: the breath's beam on your {} 3D", a_f == 0 ? "third-person" : "first-person");
-			} else if (node->parent != host) {
-				if (node->parent) node->parent->DetachChild(node.get());
-				host->AttachChild(node.get(), true);
-			}
-			const float flick = 0.9f + 0.1f * std::sin(a_b.clock * 31.0f) * std::sin(a_b.clock * 17.0f + 1.0f);
-			const auto& H = host->world;
-			const float hs = std::max(1e-4f, H.scale);
-			node->local.rotate = H.rotate.Transpose() * AimAlong(a_b.dir);
-			node->local.translate = H.rotate.Transpose() * (mouth->world.translate - H.translate) * (1.0f / hs);
-			node->local.scale = mouth->world.scale * std::max(0.02f, a_b.grow) / hs;  // (it grows out of its jaws)
-			struct Part
-			{
-				const char* name;
-				float       level, rate;
-				bool        core;
-			};
-			static constexpr Part parts[3] = { { "BB1", 3.0f, 4.0f, true }, { "BB2", 2.2f, 3.0f, false }, { "BB3", 2.6f, 5.0f, false } };  // (an effect glows above 1)
-			for (const auto& pt : parts) {  // (its colours are baked into each bond's nif; its flame scrolls by itself)
-				FxLevel(node.get(), pt.name, a_b.level * pt.level * flick);
-			}
-			RE::NiUpdateData ud;
-			node->Update(ud);
-			static auto lastLog = std::chrono::steady_clock::now();
-			if (std::chrono::steady_clock::now() - lastLog > std::chrono::milliseconds(500)) {
-				lastLog = std::chrono::steady_clock::now();
-				auto* bb = node->GetObjectByName("BB1");
-				logger::info("glider: beam[{}] world ({:.0f},{:.0f},{:.0f}) scale {:.3f} | mouth ({:.0f},{:.0f},{:.0f}) scale {:.3f} | host ({:.0f},{:.0f},{:.0f}) scale {:.3f} | BB1 bound ({:.0f},{:.0f},{:.0f}) r {:.0f} culled {} level {:.2f} grow {:.2f}",
-					a_f, node->world.translate.x, node->world.translate.y, node->world.translate.z, node->world.scale, mouth->world.translate.x, mouth->world.translate.y,
-					mouth->world.translate.z, mouth->world.scale, H.translate.x, H.translate.y, H.translate.z, H.scale, bb ? bb->worldBound.center.x : 0.0f,
-					bb ? bb->worldBound.center.y : 0.0f, bb ? bb->worldBound.center.z : 0.0f, bb ? bb->worldBound.radius : 0.0f, bb ? bb->GetAppCulled() : true, a_b.level, a_b.grow);
 			}
 		}
 
@@ -1354,7 +1243,7 @@ namespace bo3z
 		void EndHold()
 		{
 			g_holding = false, g_place = false, g_placed = false, g_yawOwned = false, g_grip = 0;
-			g_beam.level = 0, g_beam.grow = 0;
+			g_breath.grow = 0;
 		}
 
 		void DevBreath(int a_element)  // dev: Bond III's breath now, in that element (0 fire, 1 frost, 2 lightning)
@@ -1362,10 +1251,10 @@ namespace bo3z
 			g_breathElDev = a_element;
 			g_breathReq = true;
 		}
-		void DevBreathProj(int a_element, RE::FormID a_proj, float a_scale, float a_beamSign)  // dev: try a breath look
+		void DevBreathProj(int a_element, RE::FormID a_proj, float a_scale, float a_spell)  // dev: try a breath look
 		{
 			if (a_element >= 0 && a_element < 3) g_breathProjDev[a_element] = a_proj;
-			g_breathScaleDev = a_scale, g_beamPitchSign = a_beamSign;
+			g_breathScaleDev = a_scale, g_breathSpellDev = a_spell;
 		}
 		void DevFlap()  // dev: Bond I's climbing wing-beats, as if jump were pressed mid-glide
 		{
@@ -1898,11 +1787,10 @@ namespace bo3z
 					if (bank[k]) g_lastBank = bank[k]->local.rotate;
 				}
 			}
-			// the breath: one beam of fire from its jaws to where you aim (onto the dead near your aim), sweeping with its
+			// the breath: the Fire Breath shout from its jaws toward where you aim (onto the dead near your aim), sweeping with its
 			// head - grown out in a fifth of a second, burning everything in it, fading at the end (drawn by SwingBody)
 			{
 				static float hitT = 0, puffT = 0;
-				g_beam.clock += dt;
 				if (breathing && mouth && head) {
 					// where you look, but down toward the ground ahead (Noah: the dead below; and seen from behind it is a jet of
 					// fire sweeping down ahead of you - aimed exactly along your view it was only a dot behind its head)
@@ -1925,23 +1813,22 @@ namespace bo3z
 						d = { d.x * c - d.y * s, d.x * s + d.y * c, d.z };
 					}
 					const float age = 1.6f - breath;
-					if (age < 0.12f) g_beam.dir = d;
-					g_beam.dir = g_beam.dir + (d - g_beam.dir) * std::min(1.0f, dt * 10.0f);
-					g_beam.dir.Unitize();
-					g_beam.grow = Smooth((age - 0.1f) / 0.22f);
-					g_beam.level = 0;  // (the beam retired: its fire is the Fire Breath shout's now)
+					if (age < 0.12f) g_breath.dir = d;
+					g_breath.dir = g_breath.dir + (d - g_breath.dir) * std::min(1.0f, dt * 10.0f);
+					g_breath.dir.Unitize();
+					g_breath.grow = Smooth((age - 0.1f) / 0.22f);
 					// (Noah: a fire shout's breath, not a beam) the Fire Breath shout's own cone of flame from its jaws - a fresh
 					// gout every 0.28 s while it breathes (you fly on through the last one), in its bond's colour
 					if (age > 0.08f && breath > 0.1f && (puffT -= dt) <= 0) {
 						puffT = g_breathScaleDev > 0.0f ? g_breathScaleDev : 0.14f;
-						BreathPuff(a_player, mouth->world.translate, g_beam.dir);
+						BreathPuff(a_player, mouth->world.translate, g_breath.dir);
 					}
-					if (g_beam.grow > 0.5f && (hitT -= dt) <= 0) {
+					if (g_breath.grow > 0.5f && (hitT -= dt) <= 0) {
 						hitT = 0.2f;
-						BreathHits(a_player, mouth->world.translate, g_beam.dir);
+						BreathHits(a_player, mouth->world.translate, g_breath.dir);
 					}
 				} else {
-					g_beam.level = 0, g_beam.grow = 0, hitT = 0, puffT = 0;
+					g_breath.grow = 0, hitT = 0, puffT = 0;
 				}
 			}
 		}
@@ -2187,7 +2074,7 @@ namespace bo3z
 		//      a jolt with each wing-beat, a slow sway of its own); the bar swings with you about its rings
 		//   4. your arms reached up (Noah: higher, at the harness's width, as you fall) and then onto its two handles - a
 		//      two-bone reach for each arm, the hands turned so the palms wrap the grips, fingers open until they close on them
-		//   5. its breath's beam and its wingtip trails, now that it is where it is drawn
+		//   5. its wingtip trails, now that it is where it is drawn
 		bool g_swingFresh = true, g_legFresh = true;  // (a new glide: your body's root and legs to be taken afresh)
 		// the character skeleton's own rest pose (fingers and legs straight): what a hand opens to and a fall's legs lean to
 		const RE::NiMatrix3* BindRot(const char* a_name)
@@ -2345,7 +2232,6 @@ namespace bo3z
 						}
 					}
 				}
-				BeamGone();
 				on = 0, haveCom0 = false, g_swingFresh = true, g_legFresh = true;
 				th = thV = ph = phV = kick = trap = trapV = 0, lastVel = v, g_trap = 0;
 				hsFresh[0] = hsFresh[1] = true;

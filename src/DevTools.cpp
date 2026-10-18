@@ -215,13 +215,13 @@ namespace bo3z
 				int e = 0;
 				in >> e;
 				Movement::DevBreath(e);
-			} else if (cmd == "breathproj") {  // breathproj <element> <projectile form id hex, 0 default> [scale] [beam pitch sign]
+			} else if (cmd == "breathproj") {  // breathproj <element> <projectile form id hex, 0 default> [gap between gouts, s] [-1 = without the shout's spell]
 				int         e = 0;
 				std::string id;
 				float       sc = -1, sg = 1;
 				in >> e >> id >> sc >> sg;
 				Movement::DevBreathProj(e, static_cast<RE::FormID>(std::stoul(id, nullptr, 16)), sc, sg);
-				logger::info("dev: breath {} -> {} scale {} beam sign {}", e, id, sc, sg);
+				logger::info("dev: breath {} -> {} gap {} spell {}", e, id, sc, sg);
 			} else if (cmd == "flap") {
 				Movement::DevFlap();
 			} else if (cmd == "chase") {  // chase off | chase <dist> <yaw deg (0 behind)> <pitch deg> [height] [spin deg/s]
