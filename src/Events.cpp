@@ -75,7 +75,7 @@ namespace bo3z
 			return 0;
 		}
 
-		struct PlayerUpdate		struct PlayerUpdate
+		struct PlayerUpdate
 		{
 			static void thunk(RE::PlayerCharacter* a_this, float a_delta)
 			{
