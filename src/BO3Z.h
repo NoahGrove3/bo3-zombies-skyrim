@@ -288,6 +288,7 @@ namespace bo3z
 	namespace Compass
 	{
 		void Tick(float a_delta);  // game thread: the heading and the marks round you, for the HUD's compass
+		void OnCast(RE::FormID a_spell);  // a spell you cast: one of your equipped shout's words starts its cooldown
 	}
 
 	namespace Party
@@ -544,8 +545,10 @@ namespace bo3z
 			struct CompassMark { float ang, dist; int kind; std::string label; int icon = -1; bool known = true; };  // icon: the map marker type (its map icon)  // kind: 1 rite, 2 shrine, 3 city, 4 town, 5 dungeon, 6 place, 7 friend, 8 undead, 9 boss
 			bool        compassOn{ false };
 			float       heading{ 0 };
-			float       shoutCd{ 0 };     // your shout's cooldown still to run (1 just shouted .. 0 ready), drawn round the compass
-			float       shoutReady{ 0 };  // a flash round it the moment it is ready again (1 .. 0)
+			float       shoutCd{ 0 };     // your shout's cooldown still to run (1 just shouted .. 0 ready), on the shout card
+			float       shoutReady{ 0 };  // a flash on it the moment it is ready again (1 .. 0)
+			float       shoutLeft{ 0 };   // ... in seconds
+			std::string shoutName;        // the shout (or power) you have equipped - the shout card under the spell dock
 			std::vector<CompassMark> compass;
 			struct QuestMark { float x, y, dist; bool front; std::string label; };  // a quest's target on the screen (0..1), drawn in our style
 			std::vector<QuestMark> qmarks;

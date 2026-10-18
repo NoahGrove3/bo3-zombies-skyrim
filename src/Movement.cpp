@@ -526,12 +526,12 @@ namespace bo3z
 			for (int i = 0; i < 2; ++i) {
 				auto& node = g_away.node[i];
 				if (!node) continue;
-				auto* hostNow = a_player->Get3D(i == 1) ? a_player->Get3D(i == 1)->AsNode() : nullptr;
-				if (!hostNow) continue;
-				if (node->parent != hostNow) {  // (your 3D was rebuilt: it moves to the new one)
-					if (node->parent) node->parent->DetachChild(node.get());
-					hostNow->AttachChild(node.get(), true);
-					g_away.host[i].reset(hostNow);
+				// (Noah: you went invisible with it as you landed) it hangs in the world now, not on you - a fade node of its own
+				// under yours hid you both until it was gone
+				auto* hostNow = g_away.host[i].get();
+				if (!hostNow || node->parent != hostNow) {  // (the cell's 3D was rebuilt under it: it is gone)
+					AwayGone();
+					return;
 				}
 				const auto& H = hostNow->world;
 				const float hs = std::max(1e-4f, H.scale);
@@ -602,17 +602,20 @@ namespace bo3z
 				}
 			}
 			int made = 0;
-			for (int i = 0; i < 2; ++i) {
-				auto* host = a_player->Get3D(i == 1) ? a_player->Get3D(i == 1)->AsNode() : nullptr;
-				if (!host) continue;
-				if (auto* clone = model[b]->Clone()) {
-					auto* obj = static_cast<RE::NiAVObject*>(clone);
-					obj->local = RE::NiTransform{};
-					obj->local.scale = 0.0f;  // (unseen until AwayTick places it, this same frame)
-					host->AttachChild(obj, true);
-					g_away.node[i].reset(obj);
-					g_away.host[i].reset(host);
-					++made;
+			{
+				// in the world - under the node your body hangs from in the cell, never under you
+				auto* me = a_player->Get3D(false);
+				auto* host = me && me->parent ? me->parent : nullptr;
+				if (host) {
+					if (auto* clone = model[b]->Clone()) {
+						auto* obj = static_cast<RE::NiAVObject*>(clone);
+						obj->local = RE::NiTransform{};
+						obj->local.scale = 0.0f;  // (unseen until AwayTick places it, this same frame)
+						host->AttachChild(obj, true);
+						g_away.node[0].reset(obj);
+						g_away.host[0].reset(host);
+						++made;
+					}
 				}
 			}
 			if (!made) {
@@ -966,6 +969,35 @@ namespace bo3z
 		// (its own nif, CurseOfAlduin\fx\breath_beam.nif - tools/breathbeam.py - hung on your 3D while it breathes, as the
 		// whirlwind is, and placed each frame at the dragon's jaws: shapes moved under the dragon's animated nodes were never drawn)
 		RE::NiPointer<RE::NiAVObject> g_beamNode[2];
+		// one gout of the Fire Breath shout (its strongest, three words) from the dragon's jaws along a_dir - no spell on it (the
+		// burning is BreathHits', on the dead alone - never your friends), tinted for its bond
+		void BreathPuff(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_from, const RE::NiPoint3& a_dir)
+		{
+			static auto* proj = RE::TESForm::LookupByID<RE::BGSProjectile>(0x000562EC);  // VoiceFireBreathProjectile03
+			auto* use = g_breathProjDev[0] ? RE::TESForm::LookupByID<RE::BGSProjectile>(g_breathProjDev[0]) : proj;
+			if (!use) {
+				static bool warned = false;
+				if (!warned) warned = true, logger::warn("glider: no Fire Breath projectile");
+				return;
+			}
+			const float flat = std::sqrt(a_dir.x * a_dir.x + a_dir.y * a_dir.y);
+			RE::Projectile::ProjectileRot rot{ -std::atan2(a_dir.z, std::max(1e-3f, flat)), std::atan2(a_dir.x, a_dir.y) };
+			RE::Projectile::LaunchData    ld(use, a_player, a_from + a_dir * 40.0f, rot);
+			ld.useOrigin = true;
+			ld.autoAim = false;
+			ld.spell = nullptr;
+			ld.castingSource = RE::MagicSystem::CastingSource::kOther;
+			RE::ProjectileHandle h;
+			RE::Projectile::Launch(&h, ld);
+			const int b = Bond();
+			if (h.get() && b >= 1) g_tinted.push_back({ h, b, 0.0f });
+			static int logged = 0;
+			if (logged++ < 4) {
+				auto pr = h.get();
+				logger::info("glider: fire breath gout {:08X} -> {}", use->GetFormID(), pr ? fmt::format("launched, 3D {}", pr->Get3D() != nullptr) : std::string("none"));
+			}
+		}
+
 		void BeamGone()
 		{
 			for (auto& n : g_beamNode) {
@@ -1424,6 +1456,7 @@ namespace bo3z
 			static RE::NiPoint3 lastPos{}, vel{};
 			const RE::NiPoint3  pos = a_player->GetPosition();
 			AwayTick(a_player, a_delta);
+			static float preFallV = 0;  // (how fast you were falling as you called it: the glider's opening slows you before we see it)
 			if (!bank[0] && !bank[1]) {  // not gliding
 				if (g_hadDragon && !letGone) {  // the glider was just put away: the dragon lets go and flies off
 					LetGo(a_player, vel, roll, kDragonScale);
@@ -1438,6 +1471,7 @@ namespace bo3z
 				g_grabOff = {};
 				std::memset(g_ik, 0, sizeof(g_ik));
 				g_trap = 0;
+				if (a_delta > 1e-3f) preFallV += ((pos.z - lastPos.z) / a_delta - preFallV) * std::min(1.0f, a_delta * 12.0f);
 				lastPos = pos;
 				return;
 			}
@@ -1480,14 +1514,14 @@ namespace bo3z
 				// the swoop's length: 1.45 s - quicker after the Updraft, and never longer than your fall to the ground
 				// takes (so it always has you before you land)
 				quickSwoop = g_updraftAge < 4.0f;
-				float len = quickSwoop ? 0.85f : 1.45f;
+				float len = quickSwoop ? 0.65f : 1.0f;  // (Noah: no hanging in the air waiting for it)
 				const float h = HeightAboveGround(a_player);
 				if (h < 1e8f) {
 					RE::NiPoint3 v0{};
 					if (auto* cc0 = a_player->GetCharController()) GetVel(cc0, v0);
-					const float down = std::max(0.0f, -v0.z);
+					const float down = std::max(0.0f, -std::min(v0.z, preFallV));
 					const float tGround = (-down + std::sqrt(down * down + 2.0f * 980.0f * std::max(0.0f, h - 60.0f))) / 980.0f;
-					len = std::clamp(std::min(len, tGround * 0.8f), 0.5f, len);
+					len = std::clamp(std::min(len, tGround * 0.8f), 0.45f, len);
 				}
 				g_swoopLen = len;
 				PlayGameSound(DragonSound::kRoar, a_player, nullptr, 0.7f);
@@ -1654,7 +1688,9 @@ namespace bo3z
 				GetVel(cc, v);
 				if (deployT <= a_delta * 1.5f) {
 					fallH = { v.x, v.y, 0 };
-					fallV = std::max(v.z, -300.0f);
+					// (Noah: you floated a moment before it took you) your fall carries straight on - as fast as you were
+					// falling before the glider opened, not the slow drift it starts you on
+					fallV = std::max(std::min(v.z, preFallV), -1400.0f);
 					glideV = v;
 				}
 				if (deployT < kSwoop) {
@@ -1854,7 +1890,7 @@ namespace bo3z
 			// the breath: one beam of fire from its jaws to where you aim (onto the dead near your aim), sweeping with its
 			// head - grown out in a fifth of a second, burning everything in it, fading at the end (drawn by SwingBody)
 			{
-				static float hitT = 0;
+				static float hitT = 0, puffT = 0;
 				g_beam.clock += dt;
 				if (breathing && mouth && head) {
 					// where you look, but down toward the ground ahead (Noah: the dead below; and seen from behind it is a jet of
@@ -1882,13 +1918,19 @@ namespace bo3z
 					g_beam.dir = g_beam.dir + (d - g_beam.dir) * std::min(1.0f, dt * 10.0f);
 					g_beam.dir.Unitize();
 					g_beam.grow = Smooth((age - 0.1f) / 0.22f);
-					g_beam.level = Smooth((age - 0.1f) / 0.12f) * (1 - Smooth((0.3f - breath) / 0.3f));
+					g_beam.level = 0;  // (the beam retired: its fire is the Fire Breath shout's now)
+					// (Noah: a fire shout's breath, not a beam) the Fire Breath shout's own cone of flame from its jaws - a fresh
+					// gout every 0.28 s while it breathes (you fly on through the last one), in its bond's colour
+					if (age > 0.08f && breath > 0.15f && (puffT -= dt) <= 0) {
+						puffT = 0.28f;
+						BreathPuff(a_player, mouth->world.translate, g_beam.dir);
+					}
 					if (g_beam.grow > 0.5f && (hitT -= dt) <= 0) {
 						hitT = 0.2f;
 						BreathHits(a_player, mouth->world.translate, g_beam.dir);
 					}
 				} else {
-					g_beam.level = 0, g_beam.grow = 0, hitT = 0;
+					g_beam.level = 0, g_beam.grow = 0, hitT = 0, puffT = 0;
 				}
 			}
 		}
@@ -2271,7 +2313,7 @@ namespace bo3z
 			const auto   now = std::chrono::steady_clock::now();
 			const float  dt = std::clamp(std::chrono::duration<float>(now - last).count(), 0.0f, 0.05f);
 			last = now;
-			static float th = 0, thV = 0, ph = 0, phV = 0, clock = 0, kick = 0, lastBeat = 0, on = 0;
+			static float th = 0, thV = 0, ph = 0, phV = 0, clock = 0, kick = 0, lastBeat = 0, on = 0, trap = 0, trapV = 0;
 			static RE::NiPoint3 lastVel{};
 			static RE::NiTransform com0{};
 			static RE::NiAVObject* comWas = nullptr;
@@ -2294,7 +2336,7 @@ namespace bo3z
 				}
 				BeamGone();
 				on = 0, haveCom0 = false, g_swingFresh = true, g_legFresh = true;
-				th = thV = ph = phV = kick = 0, lastVel = v, g_trap = 0;
+				th = thV = ph = phV = kick = trap = trapV = 0, lastVel = v, g_trap = 0;
 				hsFresh[0] = hsFresh[1] = true;
 				return;
 			}
@@ -2314,13 +2356,21 @@ namespace bo3z
 			}
 			lastBeat = beat;
 			kick = std::max(0.0f, kick - dt * 1.6f);
-			const float thT = std::clamp(-aF * 0.00015f, -0.12f, 0.12f) - 0.2f * fold + 0.025f * std::sin(clock * 1.25f) - 0.03f;  // (Noah: subtle)
+			// (Noah: in a dive you lean back toward its tail - the straps bending back with the rush of air)
+			const float thT = std::clamp(-aF * 0.00015f, -0.12f, 0.12f) - 0.42f * fold + 0.025f * std::sin(clock * 1.25f) - 0.03f;
 			// (in a turn you hang square to its leaning harness: swung out with its lean)
 			const float phT = std::clamp(g_roll * 0.8f, -0.7f, 0.7f) + 0.018f * std::sin(clock * 0.85f + 1.0f);
 			thV += (14.0f * (thT - th) - 5.0f * thV) * dt, th += thV * dt;  // (a pendulum, well damped)
 			phV += (14.0f * (phT - ph) - 5.5f * phV) * dt, ph += phV * dt;
-			th = std::clamp(th, -0.3f, 0.2f), ph = std::clamp(ph, -0.75f, 0.75f);
-			g_trap = th * on;  // (the bar swings with you about its rings)
+			th = std::clamp(th, -0.55f, 0.2f), ph = std::clamp(ph, -0.75f, 0.75f);
+			// the harness's two straps (Noah: like stiff rope, not rigid poles): the bar follows your swing on a springy, lightly
+			// damped tether - lagging a jolt and overshooting a little - and is blown back further toward the tail in a dive
+			{
+				const float trapT = th - 0.3f * fold - std::clamp(aF * 0.00008f, -0.08f, 0.08f);
+				trapV += (38.0f * (trapT - trap) - 3.2f * trapV) * dt, trap += trapV * dt;
+				trap = std::clamp(trap, -0.95f, 0.35f);
+			}
+			g_trap = trap * on;  // (the bar swings with you about its rings)
 			const float reachW = Smooth((g_deployT - 0.1f) / 0.4f);  // (your arms go up as the glider opens)
 			const bool  first = RE::PlayerCamera::GetSingleton() && RE::PlayerCamera::GetSingleton()->IsInFirstPerson();
 			RE::NiAVObject* seen = nullptr;
@@ -2419,13 +2469,18 @@ namespace bo3z
 						const RE::NiPoint3 grip = mine ? mine->world.translate : reach;
 						const RE::NiPoint3 target = reach + (grip - reach) * g_grip;
 						// the hand's turn: fingers up (a little ahead), knuckles in along the bar toward the other hand
-						RE::NiPoint3 hUp = Up, hFwd = F, inward = Rt * -out;
+						// (Noah: the hands twisted in a turn) the hand keeps to your body's own swing - its lean and pitch about the bar -
+						// so the wrist stays straight with the forearm; only the knuckles' line follows the bar a little
+						const RE::NiMatrix3 Wb = AxisAngle(F, ph * on) * AxisAngle(Rt, th * on);
+						RE::NiPoint3 hUp = Wb * Up, hFwd = Wb * F, inward = Wb * (Rt * -out);
 						if (mine && other && g_grip > 0.01f) {
-							const auto& M = mine->world.rotate;
-							const RE::NiPoint3 mUp{ M.entry[0][2], M.entry[1][2], M.entry[2][2] }, mFwd{ M.entry[0][1], M.entry[1][1], M.entry[2][1] };
 							RE::NiPoint3 in2 = other->world.translate - mine->world.translate;
-							in2.Unitize();
-							hUp = Up + (mUp - Up) * g_grip, hFwd = F + (mFwd - F) * g_grip, inward = inward + (in2 - inward) * g_grip;
+							in2 = in2 - hUp * in2.Dot(hUp);
+							if (in2.Length() > 1e-3f) {
+								in2.Unitize();
+								inward = inward + (in2 - inward) * (0.35f * g_grip);
+								inward.Unitize();
+							}
 						}
 						const RE::NiPoint3 fingers = hUp * 0.95f + hFwd * 0.22f;
 						const RE::NiPoint3 pole = Rt * out * 0.8f - F * 0.35f - Up * 0.2f;  // (elbows out to the side and a little back)
@@ -2440,8 +2495,6 @@ namespace bo3z
 						OpenFingers(root, left, reachW * (1 - g_grip), u0);
 					}
 				}
-				// 5. its breath's beam
-				BeamPose(f, root, space, g_beam, Bond());
 			}
 			// its wingtip trails: sampled from the copy you see, drawn on both
 			if (seen) {

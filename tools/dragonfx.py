@@ -158,8 +158,8 @@ def skinned_trail(lines, sd, tip):
         for k in range(TRAIL_BONES):
             t = k / (TRAIL_BONES - 1)
             p = tip + np.array([0.0, -TRAIL_SPACING * k, 0.0])
-            w = 16 + 20 * t
-            al = 0.5 * min(1.0, (k + 0.35) / 1.6) * (1 - t) ** 1.4
+            w = 10 + 26 * t
+            al = 0.6 * (0.7 if k == 0 else 1.0) * (1 - t) ** 1.2   # (Noah: joined to the wingtip - strong right at the tip, fading back)
             for s2 in (-1, 1):
                 q = p + ax * (w / 2 * s2)
                 lines.append(f'v {q[0]:.2f} {q[1]:.2f} {q[2]:.2f} {0.5 + 0.5 * s2:.3f} {t * 2.0:.3f} 1 1 1 {al:.3f}')

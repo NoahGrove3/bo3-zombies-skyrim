@@ -492,49 +492,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			dl->AddConvexPolyFilled(plate, 6, IM_COL32(10, 9, 12, 205));
 			dl->AddRectFilledMultiColor(a, { b.x, cy }, IM_COL32(40, 34, 30, 90), IM_COL32(40, 34, 30, 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
 			dl->AddPolyline(plate, 6, Fade(kGold, 0.9f), ImDrawFlags_Closed, 1.4f * k);
-			// the shout's cooldown (Noah: on our compass's border): a cold blue glow along the plate's edge from the middle
-			// of its top out both ways and round underneath - it drains back toward the top as the shout recovers, and the
-			// whole border flashes the moment it is ready
-			if (s.shoutCd > 0.001f || s.shoutReady > 0.001f) {
-				const ImVec2 topC{ cx, a.y }, botC{ cx, b.y };
-				const ImVec2 halfR[5] = { topC, { b.x, a.y }, { b.x + e, cy }, { b.x, b.y }, botC };
-				const ImVec2 halfL[5] = { topC, { a.x, a.y }, { a.x - e, cy }, { a.x, b.y }, botC };
-				auto lenOf = [](const ImVec2* p) {
-					float L = 0;
-					for (int i = 0; i < 4; ++i) L += std::hypot(p[i + 1].x - p[i].x, p[i + 1].y - p[i].y);
-					return L;
-				};
-				auto drawPart = [&](const ImVec2* p, float frac, ImU32 col, float th) {
-					float want = lenOf(p) * frac;
-					ImVec2 pts[5];
-					int    n = 0;
-					pts[n++] = p[0];
-					for (int i = 0; i < 4 && want > 0; ++i) {
-						const float seg = std::hypot(p[i + 1].x - p[i].x, p[i + 1].y - p[i].y);
-						if (want >= seg) {
-							pts[n++] = p[i + 1];
-							want -= seg;
-						} else {
-							const float t = want / seg;
-							pts[n++] = { p[i].x + (p[i + 1].x - p[i].x) * t, p[i].y + (p[i + 1].y - p[i].y) * t };
-							want = 0;
-						}
-					}
-					if (n >= 2) dl->AddPolyline(pts, n, col, ImDrawFlags_None, th);
-				};
-				const float f = s.shoutCd;
-				for (const ImVec2* half : { halfR, halfL }) {
-					if (f > 0.001f) {
-						drawPart(half, f, IM_COL32(90, 160, 255, 60), 7.0f * k);    // its glow
-						drawPart(half, f, IM_COL32(150, 205, 255, 230), 2.2f * k);  // its edge
-					}
-					if (s.shoutReady > 0.001f) {
-						const int al = static_cast<int>(200 * s.shoutReady);
-						drawPart(half, 1.0f, IM_COL32(170, 220, 255, al / 3), 9.0f * k);
-						drawPart(half, 1.0f, IM_COL32(220, 240, 255, al), 2.0f * k);
-					}
-				}
-			}
 			auto rel = [&](float ang) {
 				float d = ang - s.heading;
 				while (d > RE::NI_PI) d -= 2 * RE::NI_PI;
@@ -1339,6 +1296,62 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (s.handSpell[1] >= 0 && s.handSpell[0] >= 0) {
 					card(s.handSpell[0], s.handCost[0], { b.x - 300 * k, a.y - 52 * k }, { b.x, a.y - 10 * k }, false, "LEFT HAND");
 				}
+			}
+			// Shout card, bottom-right under the spell / weapon dock (Noah): the shout you have equipped - our own emblem (a
+			// dragon's cry: its breath and three rings of sound), its name, and its cooldown draining round the emblem with
+			// the seconds left; a flash when it is ready again
+			if (!s.shoutName.empty()) {
+				static float shownSh = 0;
+				shownSh += (1.0f - shownSh) * std::min(1.0f, dt * 6);
+				const float  al = shownSh;
+				const ImVec2 a{ size.x - 330 * k, size.y - 84 * k }, b{ size.x - 40 * k, size.y - 46 * k };
+				const float  h = b.y - a.y, rr = h * 0.5f;
+				const bool   cooling = s.shoutCd > 0.001f;
+				const ImU32  ice = IM_COL32(150, 205, 255, 255), iceDim = IM_COL32(90, 120, 150, 255);
+				dl->AddRectFilled(a, b, IM_COL32(8, 8, 10, static_cast<int>(165 * al)), rr);
+				dl->AddRect(a, b, Fade(ice, (cooling ? 0.25f : 0.5f) * al), rr, 0, 1.2f * k);
+				if (s.shoutReady > 0.001f) {
+					dl->AddRect({ a.x - 2 * k, a.y - 2 * k }, { b.x + 2 * k, b.y + 2 * k }, Fade(IM_COL32(220, 240, 255, 255), s.shoutReady * al), rr + 2 * k, 0, 2.4f * k);
+				}
+				// the emblem
+				const ImVec2 c{ a.x + rr, (a.y + b.y) * 0.5f };
+				const float  er = rr - 4 * k;
+				dl->AddCircleFilled(c, er, IM_COL32(16, 22, 32, static_cast<int>(235 * al)), 40);
+				const ImU32 gl = Fade(cooling ? iceDim : ice, al);
+				{
+					const ImVec2 m{ c.x - er * 0.45f, c.y };
+					dl->AddTriangleFilled({ m.x - er * 0.22f, m.y - er * 0.26f }, { m.x + er * 0.16f, m.y }, { m.x - er * 0.22f, m.y + er * 0.26f }, gl);
+					for (int i = 0; i < 3; ++i) {  // the rings of its cry
+						const float ra = er * (0.38f + 0.22f * i);
+						dl->PathArcTo(m, ra, -0.62f, 0.62f, 12);
+						dl->PathStroke(Fade(cooling ? iceDim : ice, al * (1.0f - 0.18f * i)), ImDrawFlags_None, (2.0f - 0.3f * i) * k);
+					}
+				}
+				dl->AddCircle(c, er, Fade(ice, 0.35f * al), 40, 1.0f * k);
+				if (cooling) {  // what is left of the cooldown, round the emblem from the top
+					const float a0 = -RE::NI_PI * 0.5f;
+					dl->PathArcTo(c, er + 1.5f * k, a0, a0 + 2 * RE::NI_PI * s.shoutCd, 48);
+					dl->PathStroke(Fade(IM_COL32(90, 160, 255, 255), 0.35f * al), ImDrawFlags_None, 5.0f * k);
+					dl->PathArcTo(c, er + 1.5f * k, a0, a0 + 2 * RE::NI_PI * s.shoutCd, 48);
+					dl->PathStroke(Fade(ice, al), ImDrawFlags_None, 2.0f * k);
+				}
+				// right: the seconds left, or READY
+				const std::string rs = cooling ? std::to_string(static_cast<int>(std::ceil(s.shoutLeft))) + "s" : std::string("READY");
+				const float       cz = 15 * k;
+				const auto        cm = Measure(g_num, cz, rs);
+				const ImVec2      p1{ b.x - 9 * k, (a.y + b.y) * 0.5f + cm.y * 0.5f + 3 * k }, p0{ p1.x - cm.x - 14 * k, p1.y - cm.y - 6 * k };
+				dl->AddRectFilled(p0, p1, cooling ? IM_COL32(30, 40, 60, static_cast<int>(200 * al)) : IM_COL32(40, 90, 150, static_cast<int>(210 * al)), (p1.y - p0.y) * 0.5f);
+				Txt(dl, g_num, cz, { p0.x + 7 * k, p0.y + 3 * k }, Fade(IM_COL32(236, 242, 255, 255), al), rs);
+				// the name, with SHOUT above it
+				const float x0 = a.x + rr * 2 + 4 * k, textR = p0.x - 8 * k;
+				dl->PushClipRect(a, { textR, b.y }, true);
+				float nameSize = 17 * k;
+				while (nameSize > 10 * k && x0 + Measure(g_title, nameSize, s.shoutName).x > textR) {
+					nameSize -= 1 * k;
+				}
+				Txt(dl, g_body, 10 * k, { x0, a.y + 4 * k }, Fade(ice, 0.85f * al), "SHOUT");
+				Txt(dl, g_title, nameSize, { x0, a.y + 15 * k }, Fade(kParch, (cooling ? 0.7f : 1.0f) * al), s.shoutName);
+				dl->PopClipRect();
 			}
 			// Weapon dock, bottom-right: the weapon in hand as a large card (its picture, Reforge marks, ability and
 			// signature move), the other slots as small cards above it with their keys. Dimmed while sheathed.

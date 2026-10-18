@@ -405,6 +405,7 @@ namespace bo3z
 			{
 				if (a_event && a_event->object && a_event->object.get() == RE::PlayerCharacter::GetSingleton()) {
 					int level = 0;
+					Compass::OnCast(a_event->spell);
 					if (Movement::OnSpellCast(a_event->spell)) {
 						// (Bond II's Updraft)
 					} else if (const int sh = Gun::ShoutOfSpell(a_event->spell, level); sh >= 0) {

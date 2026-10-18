@@ -10,6 +10,8 @@ namespace bo3z::Compass
 		struct Place { RE::NiPoint3 at; int kind; std::string name; bool known; int type; };
 		std::vector<Place> g_places;
 		RE::TESWorldSpace* g_world = nullptr;
+		float              g_cdLeft = 0;      // your shout's cooldown, counted by us from when you spoke it (seconds)
+		bool               g_cdFresh = false;  // ... just spoken
 
 		int KindOf(RE::MARKER_TYPE a_t)
 		{
@@ -131,6 +133,26 @@ namespace bo3z::Compass
 				g_places.push_back({ ref->GetPosition(), kind, name ? name : "", mm->mapData->flags.all(RE::MapMarkerData::Flag::kVisible), static_cast<int>(mm->mapData->type.get()) });
 			}
 			logger::info("compass: {} places in {}", g_places.size(), a_world->GetFormEditorID());
+		}
+	}
+
+	void OnCast(RE::FormID a_spell)
+	{
+		auto* pl = RE::PlayerCharacter::GetSingleton();
+		auto* pw = pl ? pl->GetActorRuntimeData().selectedPower : nullptr;
+		auto* sh = pw ? pw->As<RE::TESShout>() : nullptr;
+		if (!sh || !a_spell) {
+			return;
+		}
+		for (const auto& v : sh->variations) {
+			if (v.spell && v.spell->GetFormID() == a_spell) {
+				float mult = pl->AsActorValueOwner()->GetActorValue(RE::ActorValue::kShoutRecoveryMult);
+				if (mult <= 0.0f) mult = 1.0f;
+				g_cdLeft = v.recoveryTime * mult;
+				g_cdFresh = true;
+				logger::info("shout: {} spoken - {:.1f} s to recover", sh->GetName(), g_cdLeft);
+				return;
+			}
 		}
 	}
 
@@ -283,15 +305,21 @@ namespace bo3z::Compass
 		}
 		h.compassOn = true;
 		h.heading = heading;
-		{  // the shout's cooldown (Noah: on the border of our compass, not Skyrim's shout meter)
+		{  // the shout you have equipped and its cooldown (Noah: a shout card under the spell icons, bottom right) - the
+			// game's own recovery time, or our own count from when you spoke it, whichever is longer
 			static float most = 0, ready = 0, last = 0;
-			const float rec = pl ? std::max(0.0f, pl->GetVoiceRecoveryTime()) : 0.0f;
+			g_cdLeft = std::max(0.0f, g_cdLeft - a_delta);
+			const float rec = std::max(pl ? std::max(0.0f, pl->GetVoiceRecoveryTime()) : 0.0f, g_cdLeft);
+			if (g_cdFresh) most = std::max(rec, 0.1f), g_cdFresh = false;
 			if (rec > last + 0.25f || rec > most) most = rec;  // (a new shout: its full cooldown)
 			if (last > 0.05f && rec <= 0.0f) ready = 1.0f;
 			last = rec;
 			ready = std::max(0.0f, ready - a_delta * 1.6f);
 			h.shoutCd = most > 0.05f ? std::clamp(rec / most, 0.0f, 1.0f) : 0.0f;
 			h.shoutReady = ready;
+			h.shoutLeft = rec;
+			auto* pw = pl ? pl->GetActorRuntimeData().selectedPower : nullptr;
+			h.shoutName = pw && pw->GetName() ? pw->GetName() : "";
 		}
 		h.compass = std::move(marks);
 		h.qmarks = std::move(qmarks);
