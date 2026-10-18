@@ -4213,6 +4213,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder._visible", RE::GFxValue(false));
 						// and its sneak eye to ours
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.StealthMeterInstance._alpha", RE::GFxValue(0.0));
+						// (Noah: the experience notices sat behind our night plaque) Skyrim's notices top-left move down under it
+						static double msgY0 = 1e9;
+						if (msgY0 > 1e8) {
+							RE::GFxValue y0;
+							if (hud->uiMovie->GetVariable(&y0, "_root.HUDMovieBaseInstance.MessagesBlock._y") && y0.IsNumber()) msgY0 = y0.GetNumber();
+						}
+						if (msgY0 < 1e8) {
+							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.MessagesBlock._y", RE::GFxValue(msgY0 + 150.0));
+						}
 						// and its crosshair to our dot
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CrosshairInstance._alpha", RE::GFxValue(0.0));
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CrosshairAlert._alpha", RE::GFxValue(0.0));
