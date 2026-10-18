@@ -478,7 +478,7 @@ namespace bo3z
 					R.entry[0][0] = X.x, R.entry[1][0] = X.y, R.entry[2][0] = X.z;
 					R.entry[0][1] = Y.x, R.entry[1][1] = Y.y, R.entry[2][1] = Y.z;
 					R.entry[0][2] = Z.x, R.entry[1][2] = Z.y, R.entry[2][2] = Z.z;
-					const float sc = a_scale * (1.0f + 0.9f * k / float(kTrailBones - 1));  // (the air spreads as it ages)
+					const float sc = a_scale * (1.0f + 0.5f * k / float(kTrailBones - 1));  // (the air spreads as it ages)
 					bone->local.rotate = P.rotate.Transpose() * R;
 					bone->local.translate = P.rotate.Transpose() * (p - P.translate) * (1.0f / P.scale);
 					bone->local.scale = sc / P.scale;
@@ -982,15 +982,19 @@ namespace bo3z
 			}
 			const float flat = std::sqrt(a_dir.x * a_dir.x + a_dir.y * a_dir.y);
 			RE::Projectile::ProjectileRot rot{ -std::atan2(a_dir.z, std::max(1e-3f, flat)), std::atan2(a_dir.x, a_dir.y) };
-			RE::Projectile::LaunchData    ld(use, a_player, a_from + a_dir * 40.0f, rot);
+			RE::NiPoint3 v{};
+			if (auto* cc = a_player->GetCharController()) GetVel(cc, v);
+			RE::Projectile::LaunchData    ld(use, a_player, a_from + a_dir * 60.0f + v * 0.05f, rot);
 			ld.useOrigin = true;
 			ld.autoAim = false;
-			ld.spell = nullptr;
+			// (dev: breathproj 0 0 <gap> 2 = with the shout's own spell on it, for its full look; 3 = that, untinted)
+			static auto* spell = RE::TESForm::LookupByID<RE::SpellItem>(0x0003F9ED);  // VoiceFireBreath3
+			ld.spell = g_beamPitchSign >= 2.0f ? spell : nullptr;
 			ld.castingSource = RE::MagicSystem::CastingSource::kOther;
 			RE::ProjectileHandle h;
 			RE::Projectile::Launch(&h, ld);
 			const int b = Bond();
-			if (h.get() && b >= 1) g_tinted.push_back({ h, b, 0.0f });
+			if (h.get() && b >= 1 && g_beamPitchSign < 3.0f) g_tinted.push_back({ h, b, 0.0f });
 			static int logged = 0;
 			if (logged++ < 4) {
 				auto pr = h.get();
@@ -1871,7 +1875,7 @@ namespace bo3z
 					trailK = 0, diveK = 0;
 				}
 				for (int i = 0; i < 2; ++i) {
-					DragonWind(a_player->Get3D(i == 1), trailK, diveK * 1.4f);
+					DragonWind(a_player->Get3D(i == 1), trailK, 0.0f);  // (Noah: no streaks off its body - only the wingtips')
 				}
 				DiveRush(a_player, diveK);
 			}
@@ -1921,8 +1925,8 @@ namespace bo3z
 					g_beam.level = 0;  // (the beam retired: its fire is the Fire Breath shout's now)
 					// (Noah: a fire shout's breath, not a beam) the Fire Breath shout's own cone of flame from its jaws - a fresh
 					// gout every 0.28 s while it breathes (you fly on through the last one), in its bond's colour
-					if (age > 0.08f && breath > 0.15f && (puffT -= dt) <= 0) {
-						puffT = 0.28f;
+					if (age > 0.08f && breath > 0.1f && (puffT -= dt) <= 0) {
+						puffT = g_breathScaleDev > 0.0f ? g_breathScaleDev : 0.14f;
 						BreathPuff(a_player, mouth->world.translate, g_beam.dir);
 					}
 					if (g_beam.grow > 0.5f && (hitT -= dt) <= 0) {
@@ -2357,7 +2361,7 @@ namespace bo3z
 			lastBeat = beat;
 			kick = std::max(0.0f, kick - dt * 1.6f);
 			// (Noah: in a dive you lean back toward its tail - the straps bending back with the rush of air)
-			const float thT = std::clamp(-aF * 0.00015f, -0.12f, 0.12f) - 0.42f * fold + 0.025f * std::sin(clock * 1.25f) - 0.03f;
+			const float thT = std::clamp(-aF * 0.00015f, -0.12f, 0.12f) - 0.36f * fold + 0.025f * std::sin(clock * 1.25f) - 0.03f;
 			// (in a turn you hang square to its leaning harness: swung out with its lean)
 			const float phT = std::clamp(g_roll * 0.8f, -0.7f, 0.7f) + 0.018f * std::sin(clock * 0.85f + 1.0f);
 			thV += (14.0f * (thT - th) - 5.0f * thV) * dt, th += thV * dt;  // (a pendulum, well damped)
@@ -2366,7 +2370,7 @@ namespace bo3z
 			// the harness's two straps (Noah: like stiff rope, not rigid poles): the bar follows your swing on a springy, lightly
 			// damped tether - lagging a jolt and overshooting a little - and is blown back further toward the tail in a dive
 			{
-				const float trapT = th - 0.3f * fold - std::clamp(aF * 0.00008f, -0.08f, 0.08f);
+				const float trapT = th - 0.25f * fold - std::clamp(aF * 0.00008f, -0.08f, 0.08f);
 				trapV += (38.0f * (trapT - trap) - 3.2f * trapV) * dt, trap += trapV * dt;
 				trap = std::clamp(trap, -0.95f, 0.35f);
 			}

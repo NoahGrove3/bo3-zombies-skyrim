@@ -158,8 +158,8 @@ def skinned_trail(lines, sd, tip):
         for k in range(TRAIL_BONES):
             t = k / (TRAIL_BONES - 1)
             p = tip + np.array([0.0, -TRAIL_SPACING * k, 0.0])
-            w = 10 + 26 * t
-            al = 0.6 * (0.7 if k == 0 else 1.0) * (1 - t) ** 1.2   # (Noah: joined to the wingtip - strong right at the tip, fading back)
+            w = 8 + 18 * t
+            al = 0.38 * (0.75 if k == 0 else 1.0) * (1 - t) ** 1.3   # (Noah: joined to the wingtip, see-through, fading back)
             for s2 in (-1, 1):
                 q = p + ax * (w / 2 * s2)
                 lines.append(f'v {q[0]:.2f} {q[1]:.2f} {q[2]:.2f} {0.5 + 0.5 * s2:.3f} {t * 2.0:.3f} 1 1 1 {al:.3f}')
@@ -232,7 +232,7 @@ def main():
     b = np.array(pts['DG_Bank'] if pts else BANK)
     nose = np.array(pts['DG_Mouth']) if pts else np.array([0.0, -1012.0, 150.0])
     rng = np.random.default_rng(5)
-    for i in range(14):
+    for i in range(0):   # (Noah: no streaks off its body - only the wingtips')
         a = 2 * math.pi * i / 14 + rng.uniform(-0.2, 0.2)
         r0, r1 = rng.uniform(70, 150), rng.uniform(150, 300)
         ahead = rng.uniform(700, 1500)
