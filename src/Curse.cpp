@@ -342,20 +342,6 @@ namespace bo3z
 			}
 		}
 
-		bool NearestUndead(RE::PlayerCharacter* a_player, RE::NiPoint3& a_at)
-		{
-			float best = 6000.0f;
-			bool  got = false;
-			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
-				if (auto a = h.get(); a && !a->IsDead() && !a->IsDisabled() && Director::IsRoundUndead(a.get())) {
-					if (const float d = a->GetPosition().GetDistance(a_player->GetPosition()); d < best) {
-						best = d, a_at = a->GetPosition() + RE::NiPoint3{ 0, 0, 150.0f }, got = true;
-					}
-				}
-			}
-			return got;
-		}
-
 		// Where the quest wants you now (in your current world): the altar to choose a trial or hold its circle, the
 		// nearest of the dead to kill, the Barrow-Jarl, a freed city's waiting shout, or from the wilds the nearest held city.
 		bool ObjectiveTarget(RE::PlayerCharacter* a_player, RE::NiPoint3& a_at, std::string& a_label)
@@ -374,17 +360,9 @@ namespace bo3z
 					}
 					return false;
 				}
-				const int tr = s.Trial();
-				if (s.Boss() && Director::ChampionPos(a_at)) {
-					a_label = std::string(BossName(z));
-					return true;
-				}
-				if ((tr == gen::kTrial_culling || tr == gen::kTrial_unbroken || tr == gen::kTrial_steel) && Director::Fighting() && NearestUndead(a_player, a_at)) {
-					a_label = std::string(Title(tr));
-					return true;
-				}
+				const int tr = s.Trial();  // (Noah: the ping stays over the altar for every step - it doesn't chase the dead)
 				if (Shops::StationTarget(z, a_at)) {
-					a_label = s.Boss() ? std::string(BossName(z)) + " (at night)" : tr == gen::kTrial_ward ? "Stand in the runic circle" : tr == gen::kTrial_breath ? "Survive the waves" : tr >= 0 ? std::string(Title(tr)) : "Choose a trial";
+					a_label = s.Boss() ? std::string(BossName(z)) : tr == gen::kTrial_ward ? "Stand in the runic circle" : tr == gen::kTrial_breath ? "Survive the waves" : tr >= 0 ? std::string(Title(tr)) : "Choose a trial";
 					return true;
 				}
 				return false;
@@ -789,8 +767,8 @@ namespace bo3z
 					continue;
 				}
 				const std::string edid = "UN_Rites_" + std::string(gen::kTowns[t]);
-				const int v = Value(t);
-				const St  s = Decode(v);
+				const St  s = Decode(Value(t));
+				const int v = s.freed ? kFreedValue : Encode(St{ false, s.done, s.active, 0 });  // (its state, not each kill or second: no churn)
 				if (!q->IsEnabled() && !q->IsCompleted()) {
 					if (t != g_zone && !s.freed && s.done == 0 && s.active == 0) {
 						continue;  // not been there yet

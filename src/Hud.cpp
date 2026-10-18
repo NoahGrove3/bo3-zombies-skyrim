@@ -4299,6 +4299,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						if (msgY0 < 1e8) {
 							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.MessagesBlock._y", RE::GFxValue(msgY0 + 150.0));
 						}
+						// (Noah: no pop-ups) Skyrim's quest and objective notices ("Stand in the runic circle...") never show
+						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.QuestUpdateBaseInstance._alpha", RE::GFxValue(0.0));
+						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.QuestUpdateBaseInstance._visible", RE::GFxValue(false));
 						// and its crosshair to our dot
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CrosshairInstance._alpha", RE::GFxValue(0.0));
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CrosshairAlert._alpha", RE::GFxValue(0.0));
