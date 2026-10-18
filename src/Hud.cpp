@@ -968,15 +968,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (s.pulseOn && s.pulseT > 0) {
 				const ImVec2 c{ s.pulseX * size.x, s.pulseY * size.y };
 				const float  life = 3.5f, el = life - s.pulseT;
-				for (int w = 0; w < 3; ++w) {
-					const float t = (el - w * 1.0f) / 2.2f;
-					if (t <= 0 || t >= 1) {
-						continue;
-					}
-					const float R = t * size.x * 1.1f, a = (1.0f - t);
-					dl->AddCircle(c, R, IM_COL32(255, 226, 160, static_cast<int>(200 * a)), 96, 10 * k * a + 2);
-					dl->AddCircle(c, R * 0.97f, IM_COL32(255, 250, 220, static_cast<int>(120 * a)), 96, 3 * k);
-				}
+				(void)c;  // (Noah: no gold rings any more - the wash, the sound and the music stay)
 				const float wash = std::clamp(1.0f - el / 1.2f, 0.0f, 1.0f);
 				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(255, 220, 150, static_cast<int>(70 * wash)));
 			}
@@ -1137,7 +1129,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->AddRect({ x0 - 2 * k, top - 2 * k }, { x1 + 2 * k, top + bh + 2 * k }, Fade(kGoldDim, 0.8f), 2 * k, 0, 1.0f * k);
 				};
 				// (Noah: all three drain from the left - full on the right end)
-				bar(cx - hw / 2, hw, y, h, hpFrac, hpGhost, IM_COL32(220, 42, 36, 255), IM_COL32(110, 8, 10, 255), true, 10);
+				bar(cx - hw / 2, hw, y, h, hpFrac, hpGhost, IM_COL32(220, 42, 36, 255), IM_COL32(110, 8, 10, 255), false, 10);  // (Noah: health drains right to left)
 				bar(cx - hw / 2 - gap - sw, sw, y + (h - sh) / 2, sh, mpF, mpGhost, IM_COL32(80, 150, 255, 255), IM_COL32(24, 52, 140, 255), true, 5);
 				bar(cx + hw / 2 + gap, sw, y + (h - sh) / 2, sh, spF, spGhost, IM_COL32(110, 210, 90, 255), IM_COL32(30, 100, 30, 255), true, 5);
 				if (low > 0) {  // running low: the health bar itself pulses red (Noah: just the bar - not a box round the plate)
@@ -2401,10 +2393,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		void SettingsPanel(ImDrawList* dl, ImVec2 size, float k, bool click)
 		{
 			const ImVec2 cur = Cursor(size);
-			const float  w = 560 * k, h = 148 * k;  // narrow enough to stay left of Skyrim's level bar
+			const float  w = 560 * k, h = 232 * k;  // narrow enough to stay left of Skyrim's level bar
 			const ImVec2 a{ 48 * k, size.y - 14 * k - h }, b{ a.x + w, a.y + h };
 			Panel(dl, a, b, k, 0.95f);
-			Txt(dl, g_title, 21 * k, { a.x + 18 * k, a.y + 12 * k }, kGold, "THE CURSE OF ALDUIN - FIELD OF VIEW", 2 * k, IM_COL32(255, 160, 60, 255));
+			Txt(dl, g_title, 21 * k, { a.x + 18 * k, a.y + 12 * k }, kGold, "THE CURSE OF ALDUIN - VIEW", 2 * k, IM_COL32(255, 160, 60, 255));
 			const float colW = (w - 54 * k) / 2;
 			for (int i = 0; i < 2; ++i) {
 				const bool  first = i == 0;
@@ -2429,6 +2421,30 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				if (click && cur.x >= bx0 - 6 * k && cur.x <= bx1 + 6 * k && std::abs(cur.y - by) < 14 * k) {
 					Settings::SetFov(first, Settings::kFovMin + (Settings::kFovMax - Settings::kFovMin) * std::clamp((cur.x - bx0) / (bx1 - bx0), 0.0f, 1.0f));
+				}
+			}
+			{  // (Noah) brightness, right under the field of view
+				const float x0 = a.x + 18 * k, x1 = b.x - 18 * k, y = a.y + 140 * k;
+				const float v = Settings::Brightness();
+				char lab[48];
+				std::snprintf(lab, sizeof(lab), "Brightness   %.2f", v);
+				Txt(dl, g_body, 16 * k, { x0, y }, IM_COL32(220, 210, 190, 240), lab);
+				const float  bx0 = x0 + 32 * k, bx1 = x1 - 32 * k, by = y + 46 * k;
+				const ImVec2 m0{ x0, by - 12 * k }, m1{ x0 + 22 * k, by + 12 * k }, p0{ x1 - 22 * k, by - 12 * k }, p1{ x1, by + 12 * k };
+				dl->AddRectFilled({ bx0, by - 4 * k }, { bx1, by + 4 * k }, IM_COL32(30, 26, 22, 230), 4 * k);
+				const float t = (v - Settings::kBrightMin) / (Settings::kBrightMax - Settings::kBrightMin);
+				dl->AddRectFilled({ bx0, by - 4 * k }, { bx0 + (bx1 - bx0) * t, by + 4 * k }, kGold, 4 * k);
+				dl->AddCircleFilled({ bx0 + (bx1 - bx0) * t, by }, 9 * k, IM_COL32(250, 236, 200, 255));
+				for (auto [q0, q1, sign] : { std::tuple{ m0, m1, -1.0f }, std::tuple{ p0, p1, 1.0f } }) {
+					const bool hov = cur.x >= q0.x && cur.x <= q1.x && cur.y >= q0.y && cur.y <= q1.y;
+					dl->AddRect(q0, q1, hov ? kGold : kGoldDim, 3 * k, 0, 1.5f * k);
+					TxtC(dl, g_title, 18 * k, (q0.x + q1.x) / 2, q0.y + 1 * k, kParch, sign < 0 ? "-" : "+");
+					if (hov && click) {
+						Settings::SetBrightness(v + sign * 0.05f);
+					}
+				}
+				if (click && cur.x >= bx0 - 6 * k && cur.x <= bx1 + 6 * k && std::abs(cur.y - by) < 14 * k) {
+					Settings::SetBrightness(Settings::kBrightMin + (Settings::kBrightMax - Settings::kBrightMin) * std::clamp((cur.x - bx0) / (bx1 - bx0), 0.0f, 1.0f));
 				}
 			}
 		}
@@ -3293,6 +3309,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				} else if (settingsMode) {
 					rows.push_back({ "First person view   <  " + std::to_string(static_cast<int>(Settings::FovFirst())) + "  >", false, false, 8, 0, 0 });
 					rows.push_back({ "Third person view   <  " + std::to_string(static_cast<int>(Settings::FovThird())) + "  >", false, false, 8, 1, 0 });
+					{
+						char b[48];
+						std::snprintf(b, sizeof(b), "Brightness   <  %.2f  >", Settings::Brightness());
+						rows.push_back({ b, false, false, 8, 2, 0 });
+					}
 					rows.push_back({ "Back", false, false, 6, 0, 0 });
 				} else if (!partyMode) {
 					for (const auto& e : entries) {
@@ -3443,8 +3464,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						partyMode = settingsMode = false;
 					}
 					if (sides != 0 && rows[padFocus].kind == 8) {
-						const bool first = rows[padFocus].arg == 0;
-						Settings::SetFov(first, (first ? Settings::FovFirst() : Settings::FovThird()) + 5.0f * sides);
+						if (rows[padFocus].arg == 2) {
+							Settings::SetBrightness(Settings::Brightness() + 0.05f * sides);
+						} else {
+							const bool first = rows[padFocus].arg == 0;
+							Settings::SetFov(first, (first ? Settings::FovFirst() : Settings::FovThird()) + 5.0f * sides);
+						}
 					}
 				}
 				partyHover = hovered >= 0 && rows[hovered].kind != 0 ? hovered : -1;
@@ -3474,6 +3499,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							break;
 						}
 						case 8: {  // a click steps it up (round to the start past the top)
+							if (r.arg == 2) {
+								const float bv = Settings::Brightness() + 0.05f;
+								Settings::SetBrightness(bv > Settings::kBrightMax + 1e-3f ? Settings::kBrightMin : bv);
+								break;
+							}
 							const bool  first = r.arg == 0;
 							const float v = (first ? Settings::FovFirst() : Settings::FovThird()) + 5.0f;
 							Settings::SetFov(first, v > Settings::kFovMax ? Settings::kFovMin : v);

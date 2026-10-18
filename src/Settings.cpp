@@ -12,7 +12,7 @@ namespace bo3z::Settings
 {
 	namespace
 	{
-		float g_fovFirst = 100.0f, g_fovThird = 85.0f, g_corpse = 10.0f, g_hp = 1.0f, g_dmg = 1.0f;
+		float g_fovFirst = 100.0f, g_fovThird = 85.0f, g_corpse = 10.0f, g_hp = 1.0f, g_dmg = 1.0f, g_bright = 1.0f;
 		bool  g_shelter = true, g_follow = true, g_padPS = false, g_bankRev = false, g_diveInv = false;
 		int   g_keys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06 };
 		constexpr const wchar_t* kKeyIds[kKeys] = { L"iShrineRoll", L"iShrineReforge", L"iShrineBless", L"iShrineShout", L"iShrineLeave", L"iShrineBond" };
@@ -188,6 +188,7 @@ namespace bo3z::Settings
 			}
 			g_fovFirst = std::clamp(Read(L"General", L"fFovFirst", 100.0f), kFovMin, kFovMax);
 			g_fovThird = std::clamp(Read(L"General", L"fFovThird", 85.0f), kFovMin, kFovMax);
+			g_bright = std::clamp(Read(L"General", L"fBrightness", 1.0f), kBrightMin, kBrightMax);
 			g_shelter = Read(L"General", L"bShelter", 1.0f) != 0.0f;
 			g_padPS = Read(L"Controls", L"bPlayStationIcons", 0.0f) != 0.0f;
 			g_bankRev = Read(L"Dragon", L"bBankReverse", 0.0f) != 0.0f;
@@ -227,6 +228,13 @@ namespace bo3z::Settings
 		constexpr float kTaken[6] = { 0.5f, 0.75f, 1.0f, 1.5f, 2.0f, 3.0f };
 	}
 
+	float Brightness() { Ensure(); return g_bright; }
+	void  SetBrightness(float a_v)
+	{
+		Ensure();
+		g_bright = std::clamp(std::round(a_v * 20.0f) / 20.0f, kBrightMin, kBrightMax);
+		Write(L"General", L"fBrightness", g_bright, false);
+	}
 	float FovFirst() { Ensure(); return g_fovFirst; }
 	float FovThird() { Ensure(); return g_fovThird; }
 	bool  Shelter() { Ensure(); return g_shelter; }
@@ -334,6 +342,16 @@ namespace bo3z::Settings
 
 	void Tick()
 	{
+		// (Noah: a brightness slider under the field of view) the scene's own brightness (the image space the weather or
+		// the room lays over it), scaled by ours - each image space remembered as it was, so ours never piles up
+		if (auto* ism = RE::ImageSpaceManager::GetSingleton()) {
+			static std::unordered_map<RE::ImageSpaceBaseData*, float> orig;
+			if (auto* bd = ism->GetCurrentBaseData()) {
+				auto [it, fresh] = orig.try_emplace(bd, bd->cinematic.brightness);
+				const float want = it->second * Brightness();
+				if (std::abs(bd->cinematic.brightness - want) > 1e-4f) bd->cinematic.brightness = want;
+			}
+		}
 		static auto next = std::chrono::steady_clock::now();
 		const auto  now = std::chrono::steady_clock::now();
 		if (now < next) {

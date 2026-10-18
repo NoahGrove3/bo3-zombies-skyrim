@@ -272,6 +272,9 @@ namespace bo3z
 		float       FovFirst();
 		float       FovThird();
 		void        SetFov(bool a_first, float a_v);
+		inline constexpr float kBrightMin = 0.5f, kBrightMax = 2.0f;
+		float       Brightness();                 // the scene's brightness (1 = as Skyrim made it)
+		void        SetBrightness(float a_v);
 		bool        Shelter();                    // townsfolk go indoors at night
 		bool        PlayStationIcons();           // controller prompts drawn as PlayStation buttons (a PS5 pad looks like an Xbox one to Skyrim)
 		bool        DragonBankReverse();          // the dragon leans out of its turns instead of into them (Noah's choice)
