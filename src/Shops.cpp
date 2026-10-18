@@ -1660,15 +1660,32 @@ namespace bo3z
 					}
 				}
 			}
-			// standing close to a shrine you hear it: a deep, breathing hum with a crystal shimmer (3D, from the orb)
+			// near a shrine you hear it: a deep, breathing hum with a crystal shimmer (Noah: over a wide area, swelling slowly
+			// as you walk toward it and dying away as you walk off) - heard from about 30 m, full within 4 m of the orb, its
+			// loudness following your distance on an eased curve and never jumping (it moves at most 0.35 a second)
 			{
-				bool& humming = g_humming;
-				if (!humming && orbRef && orbDist < 420.0f) {
-					Audio::LoopStart(Audio::kLoopShrine, gen::Sound::shrine_hum, orbRef.get());
+				bool&        humming = g_humming;
+				static float vol = 0;
+				constexpr float kFar = 2200.0f, kNear = 260.0f;
+				float want = 0;
+				if (orbRef && orbDist < kFar) {
+					const float t = std::clamp((kFar - orbDist) / (kFar - kNear), 0.0f, 1.0f);
+					want = t * t * (3 - 2 * t);
+					want *= want;  // (faint for a long way, rising as you come close)
+				}
+				if (!humming) vol = 0;
+				const float step = 0.35f * a_delta;
+				vol += std::clamp(want - vol, -step, step);
+				if (!humming && want > 0.001f && orbRef) {
+					Audio::LoopStart(Audio::kLoopShrine, gen::Sound::shrine_hum, nullptr);  // (all round you: its loudness is the distance)
 					humming = true;
-				} else if (humming && (!orbRef || orbDist > 540.0f)) {
-					Audio::LoopStop(Audio::kLoopShrine, 900);
-					humming = false;
+				}
+				if (humming) {
+					Audio::LoopVolume(Audio::kLoopShrine, vol);
+					if (vol <= 0.001f && want <= 0.001f) {
+						Audio::LoopStop(Audio::kLoopShrine, 0);
+						humming = false;
+					}
 				}
 			}
 			// the orb's aura of cold flame (the main menu's, drawn round the orb on screen): while it is near and in sight

@@ -200,6 +200,13 @@ namespace bo3z::Audio
 
 	bool Looping(std::uint64_t a_key) { return g_loops.contains(a_key); }
 
+	void LoopVolume(std::uint64_t a_key, float a_vol)
+	{
+		if (auto it = g_loops.find(a_key); it != g_loops.end()) {
+			it->second.handle.SetVolume(std::clamp(a_vol, 0.0f, 1.0f));
+		}
+	}
+
 	// a loop that plays at a point and is moved along by its owner (a spell bolt in flight)
 	void LoopAt(std::uint64_t a_key, gen::Sound a_s, const RE::NiPoint3& a_at, float a_vol)
 	{

@@ -1923,10 +1923,30 @@ namespace bo3z
 				}
 			}
 			const auto have = a_player->GetInventoryCounts([](RE::TESBoundObject& o) { return &o == item; });
+			// (Noah) the dragon is yours once Whiterun's shrine is won - its Dirge lifted - not before
+			constexpr int kWhiterun = 1;
+			const bool    unlocked = Curse::Freed(kWhiterun);
+			static int    wasUnlocked = -1;
+			if (!unlocked) {
+				if (!have.empty()) {
+					a_player->RemoveItem(item, have.begin()->second, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+					logger::info("glider: the harness is not yours yet (Whiterun's shrine not won)");
+				}
+				std::int32_t on = 0;
+				if (a_player->GetGraphVariableInt("hasparaglider", on) && on != 0) {
+					a_player->SetGraphVariableInt("hasparaglider", 0);
+				}
+				wasUnlocked = 0;
+				return;
+			}
 			if (have.empty()) {
 				a_player->AddObjectToContainer(item, nullptr, 1, nullptr);
-				logger::info("glider: the paraglider put in your pack");
+				logger::info("glider: the dragon harness put in your pack");
+				if (wasUnlocked == 0) {
+					RE::DebugNotification("Whiterun's shrine is won - a dragon answers your call. (Dragon Harness: jump, then Activate mid-air)");
+				}
 			}
+			wasUnlocked = 1;
 			std::int32_t on = 0;
 			if (!a_player->GetGraphVariableInt("hasparaglider", on) || on != 1) {
 				a_player->SetGraphVariableInt("hasparaglider", 1);

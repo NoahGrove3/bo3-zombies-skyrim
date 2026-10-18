@@ -153,6 +153,7 @@ namespace bo3z
 		void AtPoint(gen::Sound a_s, const RE::NiPoint3& a_at, float a_delay = 0.0f, float a_vol = 1.0f);
 		void LoopStart(std::uint64_t a_key, gen::Sound a_s, RE::TESObjectREFR* a_owner = nullptr);
 		void LoopStop(std::uint64_t a_key, int a_fadeMs = 200);
+		void LoopVolume(std::uint64_t a_key, float a_vol);  // a playing loop's loudness (0..1)
 		bool Looping(std::uint64_t a_key);
 		void LoopAt(std::uint64_t a_key, gen::Sound a_s, const RE::NiPoint3& a_at, float a_vol = 1.0f);  // a moving loop (a bolt's flight)
 		void LoopMove(std::uint64_t a_key, const RE::NiPoint3& a_at);
