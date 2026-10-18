@@ -162,7 +162,7 @@ SH = S['shouts']['rows']
 o.append('\tstruct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; int sound; std::string_view extPlugin; std::uint32_t extShout; std::string_view quest; };')
 o.append(f'\tinline constexpr std::array<ShoutDef, {len(SH)}> kShouts{{ {{')
 for h in SH:
-    o.append(f'\t\tShoutDef{{ {cs(h["id"])}, {cs(h["label"])}, {cs(h["text"])}, {towns.index(h["town"])}, 0x{IDS[("SHOU", h["id"])]:03X}, {{ ' + ', '.join(f'0x{IDS[("WOOP", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + ' }, { ' + ', '.join(f'0x{IDS[("SPEL", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + f' }}, 0x{h["color"]}, {cs(h["words"][0])}, {cs(h["words"][1])}, {cs(h["words"][2])}, {[x["id"] for x in S["sounds"]["rows"]].index("shout_" + h["id"])}, {cs(h.get("plugin", ""))}, 0x{int(h.get("shoutId", "0"), 16):06X}, {cs(h.get("quest", ""))} }},')
+    o.append(f'\t\tShoutDef{{ {cs(h["id"])}, {cs(h["label"])}, {cs(h["text"])}, {towns.index(h["town"]) if h["town"] else -1}, 0x{IDS[("SHOU", h["id"])]:03X}, {{ ' + ', '.join(f'0x{IDS[("WOOP", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + ' }, { ' + ', '.join(f'0x{IDS[("SPEL", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + f' }}, 0x{h["color"]}, {cs(h["words"][0])}, {cs(h["words"][1])}, {cs(h["words"][2])}, {[x["id"] for x in S["sounds"]["rows"]].index("shout_" + h["id"])}, {cs(h.get("plugin", ""))}, 0x{int(h.get("shoutId", "0"), 16):06X}, {cs(h.get("quest", ""))} }},')
 o.append('\t} };')
 o.append('\tstruct LocationDef { int town; std::uint32_t anchor; int object; int slot; };')
 o.append(f'\tinline constexpr std::array<LocationDef, {len(L)}> kLocations{{ {{')

@@ -18,7 +18,7 @@
  "rows": [
   {
    "id": "ember",
-   "town": "Riverwood",
+   "town": "",
    "label": "Armageddon",
    "words": [
     "WULD",
@@ -44,7 +44,7 @@
   },
   {
    "id": "gale",
-   "town": "Whiterun",
+   "town": "Riverwood",
    "label": "Stormblast",
    "words": [
     "LOK",

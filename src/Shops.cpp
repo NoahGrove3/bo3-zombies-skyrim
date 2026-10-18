@@ -1335,6 +1335,14 @@ namespace bo3z
 				Hud::Banner(std::string("You already carry ") + std::string(gen::kPerks[perk].label), 2.5f);
 				return;
 			}
+			int held = 0;  // (Noah: five perk slots)
+			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
+				held += Save::PerkStacks(i) > 0 ? 1 : 0;
+			}
+			if (held >= gen::kMaxPerks) {
+				Hud::Banner("Your perk slots are full (" + std::to_string(gen::kMaxPerks) + " of " + std::to_string(gen::kMaxPerks) + ")", 2.5f);
+				return;
+			}
 			if (!Points::Spend(gen::kPerks[perk].cost)) {
 				return;
 			}

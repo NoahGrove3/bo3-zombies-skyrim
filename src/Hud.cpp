@@ -1128,10 +1128,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					dl->AddRect({ x0 - 2 * k, top - 2 * k }, { x1 + 2 * k, top + bh + 2 * k }, Fade(kGoldDim, 0.8f), 2 * k, 0, 1.0f * k);
 				};
-				// (Noah: all three drain from the left - full on the right end)
-				bar(cx - hw / 2, hw, y, h, hpFrac, hpGhost, IM_COL32(220, 42, 36, 255), IM_COL32(110, 8, 10, 255), false, 10);  // (Noah: health drains right to left)
-				bar(cx - hw / 2 - gap - sw, sw, y + (h - sh) / 2, sh, mpF, mpGhost, IM_COL32(80, 150, 255, 255), IM_COL32(24, 52, 140, 255), true, 5);
-				bar(cx + hw / 2 + gap, sw, y + (h - sh) / 2, sh, spF, spGhost, IM_COL32(110, 210, 90, 255), IM_COL32(30, 100, 30, 255), true, 5);
+				// (Noah: all three drain from the right - full from the left end)
+				bar(cx - hw / 2, hw, y, h, hpFrac, hpGhost, IM_COL32(220, 42, 36, 255), IM_COL32(110, 8, 10, 255), false, 10);  // 
+				bar(cx - hw / 2 - gap - sw, sw, y + (h - sh) / 2, sh, mpF, mpGhost, IM_COL32(80, 150, 255, 255), IM_COL32(24, 52, 140, 255), false, 5);
+				bar(cx + hw / 2 + gap, sw, y + (h - sh) / 2, sh, spF, spGhost, IM_COL32(110, 210, 90, 255), IM_COL32(30, 100, 30, 255), false, 5);
 				if (low > 0) {  // running low: the health bar itself pulses red (Noah: just the bar - not a box round the plate)
 					dl->AddRectFilled({ cx - hw / 2 - 2 * k, y - 2 * k }, { cx + hw / 2 + 2 * k, y + h + 2 * k }, IM_COL32(255, 40, 30, static_cast<int>(70 * low)), 2 * k);
 					dl->AddRect({ cx - hw / 2 - 2 * k, y - 2 * k }, { cx + hw / 2 + 2 * k, y + h + 2 * k }, IM_COL32(255, 70, 50, static_cast<int>(220 * low)), 2 * k, 0, 1.6f * k);

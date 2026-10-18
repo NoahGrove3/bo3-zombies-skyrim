@@ -1077,7 +1077,7 @@ namespace bo3z::gen
 	inline constexpr int kPerk_frostbite = 7;
 	inline constexpr int kPerk_stormcrown = 8;
 	inline constexpr std::array<std::string_view, 9> kPerkDesc{ { "Skin like a troll: +100 health each draught, so it takes more hits to go down.", "Quicksilver in the veins: spells cost 15% less magicka each draught (up to 75%).", "Twin strike: your spells hit 50% harder each draught.", "When you would fall, the hearth calls you back - once for each tonic.", "Run faster and sprint longer with each brew.", "Clear sight, clear mind: magicka returns 50% faster each draught.", "A mammoth's back: +50 magicka each draught.", "When the dead strike you, frost webs slow everything nearby - wider and colder each draught.", "Every 12th spell looses a lightning burst around you - sooner and stronger each cider." } };
-	inline constexpr int kMaxPerks = 9;
+	inline constexpr int kMaxPerks = 5;
 	struct CrewDef { std::string_view id, label, quote; int passive; float value; std::string_view passiveText; };
 	inline constexpr std::array<CrewDef, 4> kCrew{ {
 		CrewDef{ "halvard", "Halvard Stone-Fist", "Legion taught me to march. The dead taught me to run.", 0, 1.1f, "+10% weapon damage" },
@@ -1224,8 +1224,8 @@ namespace bo3z::gen
 	} };
 	struct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; int sound; std::string_view extPlugin; std::uint32_t extShout; std::string_view quest; };
 	inline constexpr std::array<ShoutDef, 10> kShouts{ {
-		ShoutDef{ "ember", "Armageddon", "Fire falls from the heavens on everything around you", 0, 0xA43, { 0xA07, 0xA09, 0xA0B }, { 0xA08, 0xA0A, 0xA0C }, 0xFF6A20, "WULD", "TOOR", "SHUL", 218, "Thunderchild - Epic Shout Package.esp", 0x05294B, "TC_Questline_Quest_AcolyteOfTheVoice" },
-		ShoutDef{ "gale", "Stormblast", "Lightning gathers in your weapon for one devastating blow", 1, 0xA44, { 0xA0D, 0xA0F, 0xA11 }, { 0xA0E, 0xA10, 0xA12 }, 0xBFE8FF, "LOK", "BAH", "QO", 219, "Thunderchild - Epic Shout Package.esp", 0x01D462, "TC_Questline_Quest_AcolyteOfTheVoice" },
+		ShoutDef{ "ember", "Armageddon", "Fire falls from the heavens on everything around you", -1, 0xA43, { 0xA07, 0xA09, 0xA0B }, { 0xA08, 0xA0A, 0xA0C }, 0xFF6A20, "WULD", "TOOR", "SHUL", 218, "Thunderchild - Epic Shout Package.esp", 0x05294B, "TC_Questline_Quest_AcolyteOfTheVoice" },
+		ShoutDef{ "gale", "Stormblast", "Lightning gathers in your weapon for one devastating blow", 0, 0xA44, { 0xA0D, 0xA0F, 0xA11 }, { 0xA0E, 0xA10, 0xA12 }, 0xBFE8FF, "LOK", "BAH", "QO", 219, "Thunderchild - Epic Shout Package.esp", 0x01D462, "TC_Questline_Quest_AcolyteOfTheVoice" },
 		ShoutDef{ "wail", "Dance of the Dead", "The fallen rise again to fight at your side", 2, 0xA45, { 0xA13, 0xA15, 0xA17 }, { 0xA14, 0xA16, 0xA18 }, 0xB07BFF, "RAAN", "VAAZ", "ZOL", 220, "Thunderchild - Epic Shout Package.esp", 0x0CA951, "TC_Questline_Quest_AcolyteOfTheVoice" },
 		ShoutDef{ "rime", "Iceborn", "The cruel winds of the North shatter the dead around you", 3, 0xA46, { 0xA19, 0xA1B, 0xA1D }, { 0xA1A, 0xA1C, 0xA1E }, 0x9ED8FF, "IIZ", "AH", "VIING", 221, "Thunderchild - Epic Shout Package.esp", 0x05EBB5, "TC_Questline_Quest_AcolyteOfTheVoice" },
 		ShoutDef{ "quake", "Earthquake", "The earth shakes the dead off their feet, or turns them to stone", 4, 0xA47, { 0xA1F, 0xA21, 0xA23 }, { 0xA20, 0xA22, 0xA24 }, 0xFFB050, "FUS", "KLO", "UL", 222, "Thunderchild - Epic Shout Package.esp", 0x013CB0, "TC_Questline_Quest_AcolyteOfTheVoice" },
