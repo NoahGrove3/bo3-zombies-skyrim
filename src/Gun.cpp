@@ -2630,7 +2630,7 @@ namespace bo3z
 				for (int s = 1; s <= 3 + L; ++s) {
 					blastAt(L == 3 && s == 3 + L ? "firestorm" : "fireball", aim.eye + aim.dir * (range * s / (3.0f + L)), 0.05f * s, 0.55f);
 				}
-			} else if (id == "gale") {  // Stormblast (Noah: Thunderchild's needed a weapon in hand - ours calls the sky down): lightning
+			} else if (id == "gale") {  // Stormblast (our stand-in, used only without Thunderchild, whose own charges your weapon): lightning
 				// strikes the dead ahead one after another, the last word throwing them flat
 				const float range = 1000.0f + 500.0f * L;
 				int         n = 0;

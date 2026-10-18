@@ -61,12 +61,12 @@
         32,
         55
       ],
-      "text": "Lightning tears down from the sky on the dead before you",
+      "text": "Lightning gathers in your weapon for one devastating blow",
       "color": "BFE8FF",
       "verify": [],
-      "plugin": "",
-      "shoutId": "0x0",
-      "quest": ""
+      "plugin": "Thunderchild - Epic Shout Package.esp",
+      "shoutId": "0x01D462",
+      "quest": "TC_Questline_Quest_AcolyteOfTheVoice"
     },
     {
       "id": "wail",
