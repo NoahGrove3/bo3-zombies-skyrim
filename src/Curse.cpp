@@ -973,11 +973,11 @@ namespace bo3z
 			case gen::kTrial_breath:  // a wave at a time round the altar, while you're near it
 				{
 					const int waves = N(tr), wk = z * 100 + s.prog;
-					const bool near = here && std::hypot(player->GetPosition().x - c.x, player->GetPosition().y - c.y) < 3000.0f;
+					const bool atAltar = here && std::hypot(player->GetPosition().x - c.x, player->GetPosition().y - c.y) < 3000.0f;
 					std::erase_if(g_wave, [](const RE::ActorHandle& h) { auto a = h.get(); return !a || a->IsDead() || a->IsDeleted() || a->IsDisabled(); });
 					g_waveLeft = static_cast<int>(g_wave.size());
 					if (g_waveKey != wk) {
-						if (!near || (g_waveRest -= a_delta) > 0 || (g_waveRetry -= a_delta) > 0) {
+						if (!atAltar || (g_waveRest -= a_delta) > 0 || (g_waveRetry -= a_delta) > 0) {
 							break;
 						}
 						g_waveSize = kWaveBase[Diff()] + 2 * s.prog;
@@ -1005,7 +1005,7 @@ namespace bo3z
 						}
 						break;
 					}
-					if (near && (g_clock -= a_delta) <= 0) {  // too slow: the barrow breathes out again
+					if (atAltar && (g_clock -= a_delta) <= 0) {  // too slow: the barrow breathes out again
 						g_clock = static_cast<float>(Secs(tr));
 						if (g_waveDoubled < 3) {
 							++g_waveDoubled;
