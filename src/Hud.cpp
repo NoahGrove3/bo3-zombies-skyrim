@@ -779,11 +779,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					TxtC(dl, g_num, 15 * k, x + 12 * k, fy + 3 * k, kParch, key);
 					Txt(dl, g_body, 15 * k, { x + 30 * k, fy + 3 * k }, IM_COL32(214, 204, 182, 230), what);
 				};
-				if (s.lootNote.empty()) {
-					cap(a.x + 16 * k, g_padLast ? "A" : "E", "Take");
-					cap(a.x + 126 * k, g_padLast ? "X" : "R", "Take all");
+				if (s.lootNote.empty() || owned) {
+					cap(a.x + 16 * k, g_padLast ? "A" : "E", owned ? "Steal" : "Take");
+					cap(a.x + 126 * k, g_padLast ? "X" : "R", owned ? "Steal all" : "Take all");
+				} else if (s.lootNote == "Locked") {
+					cap(a.x + 16 * k, g_padLast ? "A" : "E", "Pick the lock");
 				}
-				cap(a.x + (s.lootNote.empty() ? 266 : 16) * k, g_padLast ? "Y" : "G", "Open");
 			}
 
 			// The quests' targets in the world (Skyrim's floating quest markers, which are turned off, in our style): a
@@ -1290,11 +1291,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					dl->PopClipRect();
 				};
-				const ImVec2 a{ size.x - 400 * k, size.y - 160 * k }, b{ size.x - 40 * k, size.y - 100 * k };
+				// (Noah: both hands' cards the same size, and the shout's under them too - one column of equal cards)
+				const ImVec2 a{ size.x - 400 * k, size.y - 158 * k }, b{ size.x - 40 * k, size.y - 106 * k };
 				const int    mainHand = s.handSpell[1] >= 0 ? 1 : 0;
 				card(s.handSpell[mainHand], s.handCost[mainHand], a, b, true, mainHand == 1 ? "RIGHT HAND" : "LEFT HAND");
 				if (s.handSpell[1] >= 0 && s.handSpell[0] >= 0) {
-					card(s.handSpell[0], s.handCost[0], { b.x - 300 * k, a.y - 52 * k }, { b.x, a.y - 10 * k }, false, "LEFT HAND");
+					card(s.handSpell[0], s.handCost[0], { a.x, a.y - 60 * k }, { b.x, b.y - 60 * k }, true, "LEFT HAND");
 				}
 			}
 			// Shout card, bottom-right under the spell / weapon dock (Noah: Nordic) - a carved iron plate cut at the corners
@@ -1306,7 +1308,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				shownSh += (1.0f - shownSh) * std::min(1.0f, dt * 6);
 				const float  al = shownSh;
 				const bool   cooling = s.shoutCd > 0.001f;
-				const ImVec2 a{ size.x - 340 * k, size.y - 86 * k }, b{ size.x - 40 * k, size.y - 46 * k };
+				const ImVec2 a{ size.x - 400 * k, size.y - 98 * k }, b{ size.x - 40 * k, size.y - 46 * k };  // (the spell cards' size)
 				const float  h = b.y - a.y, cy = (a.y + b.y) * 0.5f, cut = 9 * k;
 				const ImU32  bronze = Fade(kGold, al), bronzeDim = Fade(kGoldDim, al);
 				const ImU32  frost = IM_COL32(170, 215, 255, 255);
@@ -1384,14 +1386,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// the name, with THU'UM above it in small spaced capitals
 				const float x0 = c.x + er + 8 * k, textR = p0.x - 8 * k;
 				dl->PushClipRect(a, { textR, b.y }, true);
-				float nameSize = 18 * k;
+				float nameSize = 21 * k;
 				std::string nm = s.shoutName;
 				for (auto& ch : nm) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
 				while (nameSize > 10 * k && x0 + Measure(g_title, nameSize, nm).x > textR) {
 					nameSize -= 1 * k;
 				}
-				Txt(dl, g_body, 10 * k, { x0, a.y + 4 * k }, Fade(kGold, 0.8f * al), "T H U ' U M");
-				Txt(dl, g_title, nameSize, { x0, a.y + 16 * k }, Fade(kParch, (cooling ? 0.65f : 1.0f) * al), nm, 1.5f * k, IM_COL32(0, 0, 0, static_cast<int>(160 * al)));
+				Txt(dl, g_body, 11 * k, { x0, a.y + 7 * k }, Fade(kGold, 0.8f * al), "T H U ' U M");
+				Txt(dl, g_title, nameSize, { x0, a.y + 22 * k }, Fade(kParch, (cooling ? 0.65f : 1.0f) * al), nm, 1.5f * k, IM_COL32(0, 0, 0, static_cast<int>(160 * al)));
 				dl->PopClipRect();
 			}
 			// Weapon dock, bottom-right: the weapon in hand as a large card (its picture, Reforge marks, ability and
@@ -1409,7 +1411,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const int ag = act >= 0 ? s.slotGun[act] : -1;
 				if (any) {
 					const float al = shown;
-					const ImVec2 a{ size.x - 470 * k, size.y - 218 * k + swap * 18 * k }, b{ size.x - 40 * k, size.y - 92 * k + swap * 18 * k };
+					const float  up = s.shoutName.empty() ? 0.0f : 14 * k;  // (above the shout card)
+				const ImVec2 a{ size.x - 470 * k, size.y - 218 * k - up + swap * 18 * k }, b{ size.x - 40 * k, size.y - 92 * k - up + swap * 18 * k };
 					const std::uint32_t ec = ag >= 0 ? gen::kGuns[ag].color : 0xB0A890;
 					const ImU32 el = IM_COL32((ec >> 16) & 0xFF, (ec >> 8) & 0xFF, ec & 0xFF, 255);
 					Panel(dl, a, b, k, al);
@@ -3974,7 +3977,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 				}
 				// (Noah: only our quick loot on everything - Skyrim's "Search" prompt never shows over a body, chest or ash pile)
-				if (static int lastAim = -1; lastAim != (s.orbAim || s.ownAim || s.lootOn ? 1 : 0)) {
+				// (set every frame while ours shows: Skyrim fades its prompt back in each time the crosshair finds something)
+				if (static int lastAim = -1; lastAim != (s.orbAim || s.ownAim || s.lootOn ? 1 : 0) || s.orbAim || s.ownAim || s.lootOn) {
 					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
 						lastAim = s.orbAim || s.ownAim || s.lootOn ? 1 : 0;
 						const RE::GFxValue a(lastAim ? 0.0 : 100.0);

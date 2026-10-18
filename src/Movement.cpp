@@ -1270,9 +1270,10 @@ namespace bo3z
 		{
 			for (auto s : gen::kUpdraftSpells) {
 				if (auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(s, gen::kPlugin); f && f->GetFormID() == a_spell) {
-					if (Bond() >= 2) {
-						Updraft(RE::PlayerCharacter::GetSingleton());
-					}
+					// (Noah: the whirlwind never came) once you know the shout it works - the bond teaches it, it no longer
+					// also checks the bond each time you speak it
+					logger::info("glider: Dragon's Updraft spoken (Bond {})", Bond());
+					Updraft(RE::PlayerCharacter::GetSingleton());
 					return true;
 				}
 			}
@@ -1372,6 +1373,36 @@ namespace bo3z
 				std::memset(g_ik, 0, sizeof(g_ik));
 				g_trap = 0;
 				if (a_delta > 1e-3f) preFallV += ((pos.z - lastPos.z) / a_delta - preFallV) * std::min(1.0f, a_delta * 12.0f);
+				{
+					// (Noah: running in the air, slowly sinking) the paraglider's slow fall left on with no glider out - in the air,
+					// no dragon, sinking slowly and steadily for half a second: it is ended
+					static float stuckT = 0;
+					bool         pgNow = false;
+					a_player->GetGraphVariableBool("bParaGliding", pgNow);
+					const bool slowSink = !OnGround(a_player) && !pgNow && g_liftOff == 0 && preFallV < -40.0f && preFallV > -420.0f;
+					stuckT = slowSink ? stuckT + a_delta : 0.0f;
+					static bool  forceFall = false;
+					static float fallVz = 0;
+					if (stuckT > 0.6f && !forceFall) {
+						stuckT = 0;
+						a_player->NotifyAnimationGraph("EndPara");
+						forceFall = true, fallVz = preFallV;
+						logger::info("glider: the paraglider's slow fall was left on with no glider out ({:.0f}/s) - ended", preFallV);
+					}
+					if (forceFall) {  // (and you fall as anyone falls until you land, whatever still slows you)
+						if (OnGround(a_player) || pgNow || g_liftOff != 0) {
+							forceFall = false;
+						} else if (auto* cc = a_player->GetCharController()) {
+							RE::NiPoint3 fv{};
+							GetVel(cc, fv);
+							fallVz = std::max(fallVz - 1300.0f * a_delta, -2400.0f);
+							if (fv.z > fallVz) {
+								fv.z = fallVz;
+								SetVel(cc, fv);
+							}
+						}
+					}
+				}
 				lastPos = pos;
 				return;
 			}
@@ -1438,7 +1469,11 @@ namespace bo3z
 				}
 				// (Noah: never the glider's own put-away - its copy of the dragon lying at your feet): landed, or the glide
 				// over without the paraglider ever saying it began, the copy goes too
-				const bool landed = deployT > 0.25f && OnGround(a_player);
+				// (Noah: running in the air, slowly sinking) only a real landing - on the ground a moment, not brushing the
+				// ledge you jumped from as the glider opened
+				static float groundT = 0;
+				groundT = OnGround(a_player) ? groundT + a_delta : 0.0f;
+				const bool landed = deployT > 0.6f && groundT > 0.12f;
 				if (((known && sawGliding && !pg) || landed) && !letGone) {
 					letGone = true;
 					if (g_hadDragon) {
@@ -1448,6 +1483,8 @@ namespace bo3z
 					// nothing of the glide holds on to you any more
 					g_hadDragon = false;
 					EndHold();
+					// ... and the paraglider's own slow fall ends with it (left on, you ran in the air with no glider at all)
+					a_player->NotifyAnimationGraph("EndPara");
 					g_armHoldOn = false, g_armHold = 0, g_flapT = -1, g_liftT = -1, g_divePitch = 0;
 					if (g_breathSound.IsValid()) g_breathSound.Stop();
 					DiveRush(a_player, 0.0f);
@@ -1863,6 +1900,27 @@ namespace bo3z
 			}
 			if (!item || !a_player->Is3DLoaded()) {
 				return;
+			}
+			{
+				// (Noah) the glider in your pack is the dragon's harness: its name says your bond, its picture is your dragon
+				// (by its bond's look) - and the paraglider's own contrails (drawn under the glider's wingtips, so under the
+				// dragon's wings) are swapped for nothing: the dragon draws its own wingtip trails
+				static int named = -1;
+				const int  b = Bond();
+				if (b != named) {
+					named = b;
+					static constexpr const char* kBond[4] = { "Unbonded", "Bond I", "Bond II", "Bond III" };
+					if (auto* fn = item->As<RE::TESFullName>()) fn->fullName = fmt::format("Dragon Harness ({})", kBond[std::clamp(b, 0, 3)]);
+					if (auto* md = item->As<RE::TESModel>()) md->SetModel(fmt::format("CurseOfAlduin\\fx\\dragon_away{}.nif", b > 0 ? fmt::format("_b{}", std::clamp(b, 1, 3)) : std::string()).c_str());
+					logger::info("glider: the harness in your pack - {}", kBond[std::clamp(b, 0, 3)]);
+				}
+				static bool trailsOff = false;
+				if (!trailsOff) {
+					trailsOff = true;
+					auto* art = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSArtObject>(0x49D5, "Paragliding.esp");
+					if (art) art->SetModel("Interface\\Logo\\logo.nif");  // (an empty model)
+					logger::info("glider: the paraglider's contrails {}", art ? "removed" : "not found");
+				}
 			}
 			const auto have = a_player->GetInventoryCounts([](RE::TESBoundObject& o) { return &o == item; });
 			if (have.empty()) {
@@ -2312,8 +2370,14 @@ namespace bo3z
 					space->local.scale = W.scale / P.scale;
 					space->UpdateDownwardPass(u0, 0);
 				};
-				if (auto* tr = space->GetObjectByName("DG_Trapeze")) tr->local.rotate = Rot(g_trap, 0, 0);
 				place();
+				// the bar keeps square to you (Noah: your arms crossed in a turn): it leans with your own swing about it, not
+				// with the dragon's bank and its swing round into the turn - the straps take up the difference from its rings
+				if (auto* tr = space->GetObjectByName("DG_Trapeze"); tr && tr->parent) {
+					const RE::NiMatrix3 want = AxisAngle(F, ph * on) * space->world.rotate * Rot(g_trap, 0, 0);
+					tr->local.rotate = tr->parent->world.rotate.Transpose() * want;
+					tr->UpdateDownwardPass(u0, 0);
+				}
 				auto* hl = space->GetObjectByName("DG_HandleL");
 				auto* hr = space->GetObjectByName("DG_HandleR");
 				if (hl && hr) {

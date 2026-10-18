@@ -1,0 +1,21 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Exit-9B/InventoryInjector/main/docs/InventoryInjector.schema.json",
+  "rules": [
+    {
+      "match": {
+        "formType": "MiscItem",
+        "formId": {
+          "anyOf": [
+            "Paragliding.esp|802"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Dragon",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "misc_dragonclaw",
+        "iconColor": "#e0b060"
+      }
+    }
+  ]
+}

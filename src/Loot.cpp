@@ -4,7 +4,8 @@
 // things are listed beside the crosshair in the game's style (src/Hud.cpp DrawLoot) - no menu, the dead keep coming.
 //   Keyboard: E takes the chosen thing, R takes everything, mouse wheel / Up / Down choose, G opens Skyrim's own
 //   container menu. Gamepad: A take, X take all, D-pad up / down choose.
-// Owned things (stealing) and locked chests are not taken here: they say so, and G (or Activate) opens them as usual.
+// Owned things are taken here too (as stealing); locked chests say so and Activate picks the lock. Skyrim's own loot menu
+// never opens (Noah: only our quick loot).
 namespace bo3z::Loot
 {
 	namespace
@@ -115,7 +116,8 @@ namespace bo3z::Loot
 					if (items.empty()) {
 						note = "Empty";
 					} else if (owned) {
-						note = "Owned - G or E to steal";
+						note = "Owned - taking is stealing";  // (Noah: only our loot - its things are stolen from here too)
+						g_takeable = true;
 					} else {
 						g_takeable = true;
 					}
@@ -144,8 +146,13 @@ namespace bo3z::Loot
 			if (it == inv.end() || it->second.first <= 0) {
 				return;
 			}
-			ref->RemoveItem(obj, it->second.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, pl);
+			const int count = it->second.first;
+			const bool owned = ref->IsOffLimits();
+			ref->RemoveItem(obj, count, owned ? RE::ITEM_REMOVE_REASON::kSteal : RE::ITEM_REMOVE_REASON::kRemove, nullptr, pl);
 			pl->PlayPickUpSound(obj, true, false);
+			if (owned) {
+				pl->StealAlarm(ref.get(), obj, count, obj->GetGoldValue() * count, ref->GetOwner(), true);
+			}
 		}
 	}
 
@@ -189,11 +196,10 @@ namespace bo3z::Loot
 		const auto& q = b->QUserEvent();
 		const auto  dev = b->GetDevice();
 		const auto  code = b->GetIDCode();
-		if ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x22) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x8000)) {  // G / pad Y: Skyrim's own menu (ours opens it)
-			return true;
-		}
+		auto lockedRef = [] { auto r = g_ref.get(); return r && r->IsLocked(); };
 		if (!g_takeable) {
-			return false;  // owned, locked or empty: Skyrim's own Activate as usual
+			// (Noah: Skyrim's own loot menu never - only ours) empty: Activate does nothing; locked: Activate picks the lock
+			return q == ue->activate && !lockedRef();
 		}
 		if (q == ue->activate || q == ue->readyWeapon) {
 			return true;
@@ -220,13 +226,13 @@ namespace bo3z::Loot
 		const auto  dev = a_event->GetDevice();
 		const auto  code = a_event->GetIDCode();
 		const int   n = static_cast<int>(g_objs.size());
-		if ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x22) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x8000)) {
-			if (auto ref = g_ref.get()) {
-				ref->ActivateRef(RE::PlayerCharacter::GetSingleton(), 0, nullptr, 0, false);
-			}
-			return true;
-		}
 		if (!g_takeable) {
+			if (q == ue->activate) {
+				if (auto ref = g_ref.get(); ref && ref->IsLocked()) {
+					return false;  // (the lock: Skyrim's lockpicking as usual)
+				}
+				return true;  // (empty: nothing to open)
+			}
 			return false;
 		}
 		bool acted = false;
