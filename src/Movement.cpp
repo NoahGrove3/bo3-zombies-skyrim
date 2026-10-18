@@ -1031,7 +1031,7 @@ namespace bo3z
 					return;
 				}
 			}
-			if (fx) a_actor->InstantiateHitShader(fx, 3.0f);
+			if (fx) a_actor->ApplyEffectShader(fx, 3.0f);
 			g_burning.push_back({ h, 3.0f, 0.5f, false });
 		}
 		void BurnTick(float a_dt)
