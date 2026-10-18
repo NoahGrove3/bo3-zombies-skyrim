@@ -903,6 +903,7 @@ namespace bo3z
 		// second before any bond, so a full breath kills most of what it is held on; others lose 15% of their health a second
 		float BreathMult() { return 1.0f + 0.25f * static_cast<float>(std::clamp(Save::DragonBond(), 0, 3)); }
 		constexpr float kBreathReach = 1650.0f;
+		void Ignite(RE::Actor* a_actor);
 		void BreathHits(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_from, const RE::NiPoint3& a_dir)
 		{
 			const float mult = BreathMult();
@@ -924,6 +925,7 @@ namespace bo3z
 				const bool  undead = Director::IsRoundUndead(a.get());
 				const float dmg = undead ? Director::RoundHealth() * 0.12f : a->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.03f;
 				Hurt(a.get(), dmg * mult);
+				Ignite(a.get());
 				++n;
 			}
 			static float logT = 0;
@@ -936,42 +938,143 @@ namespace bo3z
 		// the breath (Noah: the Fire Breath shout's own fire): where it aims, and how far into it it is
 		struct BreathAim
 		{
-			float        grow = 0;
+			float        grow = 0, level = 0;  // (level: how much of its fire shows - in as it starts, out as it ends)
 			RE::NiPoint3 dir{ 0, 1, 0 };
 		};
 		BreathAim g_breath;
-		// one gout of the Fire Breath shout (its strongest, three words) from the dragon's jaws along a_dir - no spell on it (the
-		// burning is BreathHits', on the dead alone - never your friends), tinted for its bond
-		void BreathPuff(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_from, const RE::NiPoint3& a_dir)
+		// its fire (Noah: from the dragon, burning the dead only): Skyrim's own Fire Breath flame (magic\magfirebreathshout.nif)
+		// hung at the dragon's jaws - a copy on your third- and first-person 3D, placed every frame by SwingBody, so it comes
+		// out of the jaws, sweeps with the head and flies on with you. Only a look: the burning is BreathHits' alone.
+		RE::NiPointer<RE::NiAVObject> g_flame[2];
+		void FlameGone()
 		{
-			static auto* proj = RE::TESForm::LookupByID<RE::BGSProjectile>(0x000562EC);  // VoiceFireBreathProjectile03
-			auto* use = g_breathProjDev[0] ? RE::TESForm::LookupByID<RE::BGSProjectile>(g_breathProjDev[0]) : proj;
-			if (!use) {
-				static bool warned = false;
-				if (!warned) warned = true, logger::warn("glider: no Fire Breath projectile");
+			for (auto& n : g_flame) {
+				if (n && n->parent) n->parent->DetachChild(n.get());
+				n.reset();
+			}
+		}
+		RE::NiMatrix3 AimAlong(RE::NiPoint3 a_dir)  // a turn taking +Y to a_dir, kept level across
+		{
+			a_dir.Unitize();
+			RE::NiPoint3 X = a_dir.Cross({ 0, 0, 1 });
+			if (X.Length() < 1e-3f) X = { 1, 0, 0 };
+			X.Unitize();
+			const RE::NiPoint3 Z = X.Cross(a_dir);
+			RE::NiMatrix3      R;
+			R.entry[0][0] = X.x, R.entry[1][0] = X.y, R.entry[2][0] = X.z;
+			R.entry[0][1] = a_dir.x, R.entry[1][1] = a_dir.y, R.entry[2][1] = a_dir.z;
+			R.entry[0][2] = Z.x, R.entry[1][2] = Z.y, R.entry[2][2] = Z.z;
+			return R;
+		}
+		void FlamePose(int a_f, RE::NiAVObject* a_root, RE::NiAVObject* a_space)
+		{
+			auto& node = g_flame[a_f];
+			auto* host = a_root ? a_root->AsNode() : nullptr;
+			auto* mouth = a_space ? a_space->GetObjectByName("DG_Mouth") : nullptr;
+			if (g_breath.level <= 0.001f || !host || !mouth) {
+				if (node && node->parent) node->parent->DetachChild(node.get());
+				node.reset();
 				return;
 			}
-			const float flat = std::sqrt(a_dir.x * a_dir.x + a_dir.y * a_dir.y);
-			RE::Projectile::ProjectileRot rot{ -std::atan2(a_dir.z, std::max(1e-3f, flat)), std::atan2(a_dir.x, a_dir.y) };
-			RE::NiPoint3 v{};
-			if (auto* cc = a_player->GetCharController()) GetVel(cc, v);
-			RE::Projectile::LaunchData    ld(use, a_player, a_from + a_dir * 60.0f + v * 0.05f, rot);
-			ld.useOrigin = true;
-			ld.autoAim = false;
-			// (the shout's own spell on it: without it only a stub of its flame is drawn - its full gout of fire needs it.
-			// dev: breathproj 0 0 <gap> -1 = without)
-			static auto* spell = RE::TESForm::LookupByID<RE::SpellItem>(0x0003F9ED);  // VoiceFireBreath3
-			ld.spell = g_breathSpellDev >= 0.0f ? spell : nullptr;
-			ld.castingSource = RE::MagicSystem::CastingSource::kOther;
-			RE::ProjectileHandle h;
-			RE::Projectile::Launch(&h, ld);
-			const int b = Bond();
-			// (its fire is not tinted for the bond: the palette turned this flame's sheets to black squares)
-			if (h.get() && b >= 1 && g_breathSpellDev >= 5.0f) g_tinted.push_back({ h, b, 0.0f });
-			static int logged = 0;
-			if (logged++ < 4) {
-				auto pr = h.get();
-				logger::info("glider: fire breath gout {:08X} -> {}", use->GetFormID(), pr ? fmt::format("launched, 3D {}", pr->Get3D() != nullptr) : std::string("none"));
+			if (!node || node->parent != host) {
+				static RE::NiPointer<RE::NiNode> model;
+				if (!model) {
+					RE::BSModelDB::DBTraits::ArgsType args{};
+					if (RE::BSModelDB::Demand("Magic\\magfirebreathshout.nif", model, args) != RE::BSResource::ErrorCode::kNone || !model) {
+						model.reset();
+						static bool told = false;
+						if (!told) told = true, logger::warn("glider: no fire breath model");
+						return;
+					}
+				}
+				if (node && node->parent) node->parent->DetachChild(node.get());
+				auto* clone = static_cast<RE::NiAVObject*>(model->Clone());
+				if (!clone) return;
+				clone->local = RE::NiTransform{};
+				clone->local.scale = 0.0f;
+				host->AttachChild(clone, true);
+				node.reset(clone);
+				RE::NiTimeController::StartAnimations(clone);  // (its flames' own animation, from now)
+				logger::info("glider: the fire breath on your {} 3D", a_f == 0 ? "third-person" : "first-person");
+			}
+			// the flame's length: about 14 m at full (dev: breathproj 0 0 <scale>)
+			const float base = g_breathScaleDev > 0.0f ? g_breathScaleDev : 9.0f;
+			RE::NiTransform W;
+			W.rotate = AimAlong(g_breath.dir);
+			W.translate = mouth->world.translate + g_breath.dir * (20.0f * mouth->world.scale);
+			W.scale = base * (0.35f + 0.65f * g_breath.grow) * std::max(0.05f, g_breath.level);
+			const auto& H = host->world;
+			const float hs = std::max(1e-4f, H.scale);
+			node->local.rotate = H.rotate.Transpose() * W.rotate;
+			node->local.translate = H.rotate.Transpose() * (W.translate - H.translate) * (1.0f / hs);
+			node->local.scale = W.scale / hs;
+			// (no update of our own: your body's update this frame places it - and runs its flames' animation on the game's
+			// own clock, which a second update of ours would fight)
+		}
+
+		// the burned: alight for 3 s after the fire leaves them (a little more burning, Skyrim's fire on them), and the dead
+		// among them crumble to ash (an ash pile you can loot, as Skyrim's own fire leaves)
+		struct Burning
+		{
+			RE::ActorHandle h;
+			float           left, tick;
+			bool            ashed;
+		};
+		std::vector<Burning> g_burning;
+		void Ignite(RE::Actor* a_actor)
+		{
+			static auto* fx = RE::TESForm::LookupByID<RE::TESEffectShader>(0x0001B212);  // FireFXShader
+			const auto   h = a_actor->GetHandle();
+			for (auto& b : g_burning) {
+				if (b.h == h) {
+					b.left = 3.0f;
+					return;
+				}
+			}
+			if (fx) a_actor->InstantiateHitShader(fx, 3.0f);
+			g_burning.push_back({ h, 3.0f, 0.5f, false });
+		}
+		void BurnTick(float a_dt)
+		{
+			static auto* ashBase = RE::TESForm::LookupByID<RE::TESBoundObject>(0x0000001B);  // DefaultAshPile1
+			const float mult = BreathMult();
+			for (auto it = g_burning.begin(); it != g_burning.end();) {
+				auto a = it->h.get();
+				if (!a) {
+					it = g_burning.erase(it);
+					continue;
+				}
+				it->left -= a_dt;
+				if (a->IsDead()) {
+					// to ash, a moment after it falls
+					if (!it->ashed && it->left < 2.0f && ashBase && a->Is3DLoaded()) {
+						it->ashed = true;
+						if (!a->extraList.GetByType<RE::ExtraAshPileRef>()) {
+							if (auto ash = a->PlaceObjectAtMe(ashBase, false)) {
+								a->extraList.Add(new RE::ExtraAshPileRef(ash->CreateRefHandle()));
+								if (auto* r3 = a->Get3D()) r3->SetAppCulled(true);
+								logger::info("glider: burned to ash");
+							}
+						}
+					}
+					if (it->left <= 0) {
+						it = g_burning.erase(it);
+					} else {
+						++it;
+					}
+					continue;
+				}
+				if ((it->tick -= a_dt) <= 0) {
+					it->tick = 0.5f;
+					const bool undead = Director::IsRoundUndead(a.get());
+					Hurt(a.get(), (undead ? Director::RoundHealth() * 0.03f : a->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.01f) * mult);
+					if (a->IsDead()) it->left = std::max(it->left, 2.2f);
+				}
+				if (it->left <= 0) {
+					it = g_burning.erase(it);
+				} else {
+					++it;
+				}
 			}
 		}
 
@@ -1088,6 +1191,7 @@ namespace bo3z
 			g_flapWait = std::max(0.0f, g_flapWait - a_delta);
 			g_breathCd = std::max(0.0f, g_breathCd - a_delta);
 			TintBreath(a_delta);
+			BurnTick(a_delta);
 			for (auto it = g_fx.begin(); it != g_fx.end();) {
 				if ((it->t -= a_delta) <= 0) {
 					if (auto r = it->ref.get()) {
@@ -1243,7 +1347,7 @@ namespace bo3z
 		void EndHold()
 		{
 			g_holding = false, g_place = false, g_placed = false, g_yawOwned = false, g_grip = 0;
-			g_breath.grow = 0;
+			g_breath.grow = 0, g_breath.level = 0;
 		}
 
 		void DevBreath(int a_element)  // dev: Bond III's breath now, in that element (0 fire, 1 frost, 2 lightning)
@@ -1848,7 +1952,7 @@ namespace bo3z
 			// the breath: the Fire Breath shout from its jaws toward where you aim (onto the dead near your aim), sweeping with its
 			// head - grown out in a fifth of a second, burning everything in it, fading at the end (drawn by SwingBody)
 			{
-				static float hitT = 0, puffT = 0;
+				static float hitT = 0;
 				if (breathing && mouth && head) {
 					// where you look, but down toward the ground ahead (Noah: the dead below; and seen from behind it is a jet of
 					// fire sweeping down ahead of you - aimed exactly along your view it was only a dot behind its head)
@@ -1875,18 +1979,14 @@ namespace bo3z
 					g_breath.dir = g_breath.dir + (d - g_breath.dir) * std::min(1.0f, dt * 10.0f);
 					g_breath.dir.Unitize();
 					g_breath.grow = Smooth((age - 0.1f) / 0.22f);
-					// (Noah: a fire shout's breath, not a beam) the Fire Breath shout's own cone of flame from its jaws - a fresh
-					// gout every 0.28 s while it breathes (you fly on through the last one), in its bond's colour
-					if (age > 0.08f && breath > 0.1f && (puffT -= dt) <= 0) {
-						puffT = g_breathScaleDev > 0.0f ? g_breathScaleDev : 0.14f;
-						BreathPuff(a_player, mouth->world.translate, g_breath.dir);
-					}
+					// (Noah: from the dragon, burning the dead only) its flame is drawn at its jaws by SwingBody (FlamePose)
+					g_breath.level = Smooth((age - 0.04f) / 0.15f) * (1 - Smooth((0.2f - breath) / 0.2f));
 					if (g_breath.grow > 0.5f && (hitT -= dt) <= 0) {
 						hitT = 0.2f;
 						BreathHits(a_player, mouth->world.translate, g_breath.dir);
 					}
 				} else {
-					g_breath.grow = 0, hitT = 0, puffT = 0;
+					g_breath.grow = 0, g_breath.level = 0, hitT = 0;
 				}
 			}
 		}
@@ -2331,6 +2431,7 @@ namespace bo3z
 						}
 					}
 				}
+				FlameGone();
 				on = 0, haveCom0 = false, g_swingFresh = true, g_legFresh = true;
 				th = thV = ph = phV = kick = trap = trapV = 0, lastVel = v, g_trap = 0;
 				hsFresh[0] = hsFresh[1] = true;
@@ -2497,6 +2598,8 @@ namespace bo3z
 						OpenFingers(root, left, reachW * (1 - g_grip), u0);
 					}
 				}
+				// 5. its fire, at its jaws
+				FlamePose(f, root, space);
 			}
 			// its wingtip trails: sampled from the copy you see, drawn on both
 			if (seen) {

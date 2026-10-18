@@ -33,7 +33,7 @@ namespace bo3z
 		ID3D11ShaderResourceView* g_divider = nullptr;  // bronze line with a winged diamond
 		std::atomic<int>          g_clicks{ 0 };        // left clicks since the last frame (menus)
 		std::atomic<bool>         g_padLast{ false };   // the last thing touched was a controller: show its buttons
-		std::atomic<int>          g_padMove{ 0 }, g_padAccept{ 0 }, g_padBack{ 0 }, g_padSide{ 0 };  // main menu: pad / arrow keys since the last frame
+		std::atomic<int>          g_padMove{ 0 }, g_padAccept{ 0 }, g_padBack{ 0 }, g_padSide{ 0 }, g_wheel{ 0 };  // main menu: pad / arrow keys since the last frame
 		std::string               g_devPick;            // dev: a main-menu word to press as a click would (menupick)
 		std::mutex                g_devPickLock;
 		// Skyrim's main-menu buttons are kept over our picture: the frame as Skyrim drew it is copied, and in the
@@ -2643,6 +2643,158 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			return ci.GetVisible() && ci.GetAlpha() > 20.0;
 		}
 
+		// ---- the main menu's Load (Noah: Skyrim's own list was cut off - ours shows every save, in our style)
+		struct SaveRow
+		{
+			std::string   file, name, place, played, date;
+			int           level = 0;
+			bool          autosave = false;
+			std::uint64_t when = 0;
+		};
+		std::mutex           g_saveLock;
+		std::vector<SaveRow> g_saves;
+		std::atomic<bool>    g_savesReady{ false };
+		void RequestSaves()
+		{
+			g_savesReady = false;
+			SKSE::GetTaskInterface()->AddTask([] {
+				std::vector<SaveRow> out;
+				if (auto* sl = RE::BGSSaveLoadManager::GetSingleton()) {
+					sl->PopulateSaveList();
+					for (auto* e : sl->saveGameList) {
+						if (!e) continue;
+						if (!e->loaded) e->PopulateFileEntryData();
+						SaveRow r;
+						r.file = e->fileName.c_str() ? e->fileName.c_str() : "";
+						if (r.file.empty()) continue;
+						r.name = e->characterName.c_str() ? e->characterName.c_str() : "";
+						r.place = e->currentLocation.c_str() ? e->currentLocation.c_str() : "";
+						r.played = e->playTime.c_str() ? e->playTime.c_str() : "";
+						r.level = static_cast<int>(e->characterLevel);
+						r.autosave = e->saveType.any(RE::BGSSaveLoadFileEntry::SaveType::kAutosave, RE::BGSSaveLoadFileEntry::SaveType::kQuicksave) ||
+						             r.file.rfind("Autosave", 0) == 0 || r.file.rfind("Quicksave", 0) == 0;
+						const auto& ft = e->fileTime;
+						r.when = (static_cast<std::uint64_t>(ft.hi) << 32) | ft.lo;
+						if (r.when > 116444736000000000ull) {
+							const std::time_t t = static_cast<std::time_t>((r.when - 116444736000000000ull) / 10000000ull);
+							std::tm lt{};
+							localtime_s(&lt, &t);
+							char buf[64];
+							std::strftime(buf, sizeof(buf), "%b %d, %Y  %I:%M %p", &lt);
+							r.date = buf;
+						}
+						out.push_back(std::move(r));
+					}
+				}
+				std::sort(out.begin(), out.end(), [](const SaveRow& a, const SaveRow& b) { return a.when > b.when; });
+				logger::info("menu: {} saves listed for our Load", out.size());
+				std::scoped_lock l(g_saveLock);
+				g_saves = std::move(out);
+				g_savesReady = true;
+			});
+		}
+		void LoadSave(const std::string& a_file)
+		{
+			logger::info("menu: loading '{}'", a_file);
+			SKSE::GetTaskInterface()->AddTask([a_file] {
+				if (auto* sl = RE::BGSSaveLoadManager::GetSingleton()) sl->Load(a_file.c_str());
+			});
+		}
+		// the panel: every save, newest first - its character, level, where, when and how long played; scrolls with the
+		// wheel, the d-pad / arrows; click or A / Enter loads it, B / Esc (or Back) returns. Returns false to go back.
+		bool LoadPanel(ImDrawList* fg, ImVec2 size, float k, float now, ImVec2 cur, bool click, int moves, int accepts, int backs, int wheel, float dt)
+		{
+			static int   sel = 0;
+			static float scroll = 0;
+			static bool  loading = false;
+			static ImVec2 lastCur{ -1, -1 };
+			static bool  mouseOn = true;
+			const float right = size.x - 90 * k, left = right - 760 * k;
+			const float top = size.y * 0.17f, bottom = size.y * 0.86f;
+			Txt(fg, g_title, 26 * k, { right - Measure(g_title, 26 * k, "LOAD").x, top - 56 * k }, kGold, "LOAD", 2 * k, IM_COL32(255, 160, 60, 255));
+			// the panel
+			Panel(fg, { left, top }, { right, bottom }, k, 0.92f);
+			if (!g_savesReady) {
+				TxtC(fg, g_body, 20 * k, (left + right) * 0.5f, (top + bottom) * 0.5f - 10 * k, IM_COL32(200, 194, 180, 220), "Reading your saves...");
+			}
+			std::vector<SaveRow> saves;
+			{
+				std::scoped_lock l(g_saveLock);
+				saves = g_saves;
+			}
+			const int   n = g_savesReady ? static_cast<int>(saves.size()) : 0;
+			const float rowH = 74 * k, listTop = top + 18 * k, listBot = bottom - 70 * k;
+			const int   fits = std::max(1, static_cast<int>((listBot - listTop) / rowH));
+			if (std::abs(cur.x - lastCur.x) + std::abs(cur.y - lastCur.y) > 3.0f) mouseOn = true;
+			lastCur = cur;
+			if (moves || accepts) mouseOn = moves ? false : mouseOn;
+			if (n > 0) {
+				sel = std::clamp(sel + moves + wheel, 0, n - 1);
+			}
+			if (g_savesReady && n == 0) {
+				TxtC(fg, g_body, 20 * k, (left + right) * 0.5f, (top + bottom) * 0.5f - 10 * k, IM_COL32(200, 194, 180, 220), "No saves yet - start a New game");
+			}
+			// keep the chosen one in view (eased)
+			const float maxScroll = std::max(0.0f, static_cast<float>(n - fits));
+			float want = std::clamp(scroll, static_cast<float>(sel - fits + 1), static_cast<float>(sel));
+			want = std::clamp(want, 0.0f, maxScroll);
+			scroll += (want - scroll) * std::min(1.0f, dt * 14.0f);
+			int hovered = -1;
+			fg->PushClipRect({ left, listTop - 2 * k }, { right, listBot + 2 * k }, true);
+			for (int i = std::max(0, static_cast<int>(scroll) - 1); i < std::min(n, static_cast<int>(scroll) + fits + 2); ++i) {
+				const auto&  r = saves[i];
+				const float  y = listTop + (i - scroll) * rowH;
+				const ImVec2 a{ left + 14 * k, y + 3 * k }, b{ right - 22 * k, y + rowH - 3 * k };
+				const bool   over = cur.x >= a.x && cur.x <= b.x && cur.y >= a.y && cur.y <= b.y && cur.y >= listTop && cur.y <= listBot;
+				if (over && mouseOn) hovered = i;
+				const bool lit = i == sel;
+				if (lit) {
+					const float pl = 0.75f + 0.25f * std::sin(now * 3.0f);
+					fg->AddRectFilledMultiColor(a, b, IM_COL32(255, 160, 60, static_cast<int>(70 * pl)), IM_COL32(120, 60, 20, 10), IM_COL32(120, 60, 20, 10), IM_COL32(255, 160, 60, static_cast<int>(70 * pl)));
+					fg->AddRect(a, b, Fade(kGold, 0.8f), 2 * k, 0, 1.3f * k);
+				} else {
+					fg->AddLine({ a.x + 10 * k, b.y + 2 * k }, { b.x - 10 * k, b.y + 2 * k }, IM_COL32(200, 160, 92, 40), 1.0f * k);
+				}
+				const std::string nm = r.name.empty() ? std::string("Unknown") : r.name;
+				Txt(fg, g_title, 22 * k, { a.x + 14 * k, a.y + 8 * k }, lit ? kParch : IM_COL32(220, 210, 190, 235), nm);
+				std::string line = "Level " + std::to_string(r.level) + (r.place.empty() ? "" : "   -   " + r.place);
+				Txt(fg, g_body, 16 * k, { a.x + 14 * k, a.y + 38 * k }, IM_COL32(190, 180, 160, 220), line);
+				// right: when, how long played, and the kind of save
+				const std::string tag = r.autosave ? "AUTOSAVE" : "SAVE";
+				Txt(fg, g_body, 11 * k, { b.x - 12 * k - Measure(g_body, 11 * k, tag).x, a.y + 8 * k }, r.autosave ? IM_COL32(150, 170, 200, 200) : Fade(kGold, 0.8f), tag);
+				Txt(fg, g_num, 15 * k, { b.x - 12 * k - Measure(g_num, 15 * k, r.date).x, a.y + 24 * k }, IM_COL32(220, 200, 160, 230), r.date);
+				if (!r.played.empty()) {
+					const std::string pt = "Played " + r.played;
+					Txt(fg, g_body, 14 * k, { b.x - 12 * k - Measure(g_body, 14 * k, pt).x, a.y + 44 * k }, IM_COL32(170, 162, 145, 210), pt);
+				}
+			}
+			fg->PopClipRect();
+			if (hovered >= 0) sel = hovered;
+			// the scroll bar
+			if (n > fits) {
+				const float th = (listBot - listTop) * fits / n, ty = listTop + (listBot - listTop - th) * (scroll / std::max(1.0f, maxScroll));
+				fg->AddRectFilled({ right - 14 * k, listTop }, { right - 9 * k, listBot }, IM_COL32(40, 34, 28, 160), 3 * k);
+				fg->AddRectFilled({ right - 14 * k, ty }, { right - 9 * k, ty + th }, Fade(kGold, 0.8f), 3 * k);
+				const std::string cnt = std::to_string(sel + 1) + " / " + std::to_string(n);
+				Txt(fg, g_num, 14 * k, { left + 18 * k, bottom - 54 * k }, kGoldDim, cnt);
+			}
+			// the keys, and Back
+			const std::string hint = g_padLast ? "A  Load      B  Back      D-pad  Choose" : "Click or Enter to load      Esc to go back      Wheel / arrows to choose";
+			Txt(fg, g_body, 15 * k, { left + 18 * k + (n > fits ? 90 * k : 0.0f), bottom - 50 * k }, IM_COL32(190, 182, 166, 220), hint);
+			const bool back = Button(fg, { right - 170 * k, bottom - 60 * k }, { right - 22 * k, bottom - 18 * k }, "Back", cur, click, k);
+			if (back || backs > 0) {
+				return false;
+			}
+			if (!loading && n > 0 && ((click && hovered >= 0) || accepts > 0)) {
+				loading = true;
+				LoadSave(saves[sel].file);
+			}
+			if (loading) {
+				TxtC(fg, g_title, 22 * k, (left + right) * 0.5f, bottom + 14 * k, kGold, "Loading...");
+			}
+			return true;
+		}
+
 		void DrawMenu(ImVec2 size, float now, bool click)
 		{
 			auto*       fg = ImGui::GetForegroundDrawList();
@@ -3133,15 +3285,19 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				std::vector<Row> rows;
 				static int partyHover = -1;
 				static bool settingsMode = false;  // The Curse of Alduin's settings, as words here too (the pad can change them)
-				if (settingsMode) {
+				static bool loadMode = false;      // our own Load (every save, in our style)
+				if (loadMode) {
+					// (the rows give way to the panel: drawn below)
+				} else if (settingsMode) {
 					rows.push_back({ "First person view   <  " + std::to_string(static_cast<int>(Settings::FovFirst())) + "  >", false, false, 8, 0, 0 });
 					rows.push_back({ "Third person view   <  " + std::to_string(static_cast<int>(Settings::FovThird())) + "  >", false, false, 8, 1, 0 });
 					rows.push_back({ "Back", false, false, 6, 0, 0 });
 				} else if (!partyMode) {
 					for (const auto& e : entries) {
-						rows.push_back({ e.text, e.sel, e.disabled, 0, e.index, 0 });
 						std::string up = e.text;
 						std::transform(up.begin(), up.end(), up.begin(), [](unsigned char ch) { return static_cast<char>(std::toupper(ch)); });
+						rows.push_back({ e.text, false, e.disabled, up == "LOAD" ? 9 : 0, e.index, 0 });
+						if (rows.back().kind == 0) rows.back().sel = e.sel;
 						if (up == "LOAD") {
 							if (coop) rows.push_back({ "Co-op Party", false, false, 1, 0, 0 });
 							rows.push_back({ "Settings", false, false, 7, 0, 0 });
@@ -3171,7 +3327,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				static bool padOn = false;
 				static bool lastParty = false;
 				static ImVec2 lastCur{ -1, -1 };
-				const int   moves = g_padMove.exchange(0), accepts = g_padAccept.exchange(0), backs = g_padBack.exchange(0), sides = g_padSide.exchange(0);
+				const int   moves = g_padMove.exchange(0), accepts = g_padAccept.exchange(0), backs = g_padBack.exchange(0), sides = g_padSide.exchange(0), wheel = g_wheel.exchange(0);
 				if (lastParty != (partyMode || settingsMode)) {
 					padFocus = -1, lastParty = partyMode || settingsMode;
 				}
@@ -3209,6 +3365,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							}
 						}
 					}
+				}
+				if (loadMode) {
+					if (!LoadPanel(fg, size, k, now, cur, click, moves, accepts, backs, wheel, dt)) {
+						loadMode = false;
+					}
+					click = false;
 				}
 				static int hoverIdx = -1;
 				static std::vector<float> glow;
@@ -3301,6 +3463,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						case 5: if (r.arg < static_cast<int>(friends.size())) Net::JoinLobby(friends[r.arg].lobby); break;
 						case 6: partyMode = settingsMode = false; break;
 						case 7: settingsMode = true; break;
+						case 9: {  // our Load: Skyrim's list lets go of its choice (its Enter / A would press it under ours)
+							loadMode = true, RequestSaves();
+							RE::GFxValue list;
+							if (mv && mv->GetVariable(&list, "_root.MenuHolder.Menu_mc.MainList") && list.IsDisplayObject()) {
+								list.SetMember("selectedIndex", RE::GFxValue(-1.0));
+							}
+							break;
+						}
 						case 8: {  // a click steps it up (round to the start past the top)
 							const bool  first = r.arg == 0;
 							const float v = (first ? Settings::FovFirst() : Settings::FovThird()) + 5.0f;
@@ -4158,6 +4328,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				else if (id == 0x0E || id == 0x01) ++g_padBack;   // Backspace, Esc
 				else if (id == 0xCB || id == 0x1E) --g_padSide;   // left, A
 				else if (id == 0xCD || id == 0x20) ++g_padSide;   // right, D
+			} else if (a_b->GetDevice() == RE::INPUT_DEVICE::kMouse) {
+				if (id == 8) --g_wheel;        // the wheel, up
+				else if (id == 9) ++g_wheel;   // ... and down
 			}
 		}
 		void DevMenuPick(const std::string& a_text)
