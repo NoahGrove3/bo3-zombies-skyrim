@@ -1702,7 +1702,10 @@ namespace bo3z
 				const bool   looking = pcs && (std::abs(pcs->data.lookInputVec.x) + std::abs(pcs->data.lookInputVec.y) > 0.02f);
 				idle = looking ? 0.0f : idle + dt;
 				auto* pcam = RE::PlayerCamera::GetSingleton();
-				if (!g_chaseOn && g_catchK > 0.5f && idle > 0.8f && pcam && pcam->currentState && pcam->currentState->id == RE::CameraState::kThirdPerson) {
+				// (Noah: on a controller the camera fought him as he looked about) it no longer swings back behind you on its
+				// own - the view is yours alone while you glide
+				constexpr bool kRecentre = false;
+				if (kRecentre && !g_chaseOn && g_catchK > 0.5f && idle > 0.8f && pcam && pcam->currentState && pcam->currentState->id == RE::CameraState::kThirdPerson) {
 					auto* tp = static_cast<RE::ThirdPersonState*>(pcam->currentState.get());
 					if (tp->freeRotationEnabled) {
 						float& fx = tp->freeRotation.x;
@@ -1710,6 +1713,24 @@ namespace bo3z
 						while (fx < -3.14159f) fx += 6.28318f;
 						fx -= fx * std::min(1.0f, dt * 1.6f * Smooth((idle - 0.8f) / 0.6f));
 					}
+				}
+				// ... and your steering never drags the view round: as the dragon turns you, the camera is turned back by as
+				// much, so it stays where your right stick / mouse put it
+				static float camYawWas = 0;
+				static bool  camHeld = false;
+				if (!g_chaseOn && g_yawOwned && pcam && pcam->currentState && pcam->currentState->id == RE::CameraState::kThirdPerson) {
+					auto* tp = static_cast<RE::ThirdPersonState*>(pcam->currentState.get());
+					if (!camHeld) {
+						camHeld = true, camYawWas = g_glideYaw;
+						if (!tp->freeRotationEnabled) tp->freeRotationEnabled = true, tp->freeRotation.x = 0.0f;
+					}
+					float d = g_glideYaw - camYawWas;
+					while (d > 3.14159f) d -= 6.28318f;
+					while (d < -3.14159f) d += 6.28318f;
+					camYawWas = g_glideYaw;
+					if (tp->freeRotationEnabled) tp->freeRotation.x -= d;
+				} else {
+					camHeld = false;
 				}
 			}
 			float dy = yaw - lastYaw;
@@ -1943,7 +1964,7 @@ namespace bo3z
 				a_player->AddObjectToContainer(item, nullptr, 1, nullptr);
 				logger::info("glider: the dragon harness put in your pack");
 				if (wasUnlocked == 0) {
-					RE::DebugNotification("Whiterun's shrine is won - a dragon answers your call. (Dragon Harness: jump, then Activate mid-air)");
+					Hud::Banner("Whiterun's shrine is won - a dragon answers your call (jump, then Activate mid-air)", 6.0f);
 				}
 			}
 			wasUnlocked = 1;
