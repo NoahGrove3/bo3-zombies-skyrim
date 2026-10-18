@@ -336,6 +336,9 @@ namespace bo3z
 		// The city's shout (sheet: shouts): what freeing it earns, claimed at the Echo Altar.
 		int ShoutOf(int a_town)
 		{
+			if (a_town == 1) {
+				return -1;  // (Noah) Whiterun's Thu'um is Dragon's Updraft, given with the dragon (src/Movement.cpp EnsureUpdraft)
+			}
 			for (int i = 0; i < static_cast<int>(gen::kShouts.size()); ++i) {
 				if (gen::kShouts[i].town == a_town) {
 					return i;

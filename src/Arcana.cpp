@@ -105,6 +105,11 @@ namespace bo3z::Arcana
 					debuff = true;  // (a weakness, a resistance or skill lowered)
 				}
 			}
+			// (Noah: "Spell Twine does nothing") the utility spells the mods count as hostile: a tether, a mark, a lure
+			static constexpr std::string_view kNotAttacks[] = { "Spell Twine", "Mark of", "Lure", "Tether", "Detect", "Telekinesis" };
+			for (auto n : kNotAttacks) {
+				if (std::string_view(s.name).find(n) != std::string_view::npos) debuff = true;
+			}
 			if (!g_damages[i] || debuff) {
 				logger::info("arcana: {} left out (not a straight attack)", s.name);
 				g_spell[i] = nullptr;

@@ -1086,8 +1086,15 @@ namespace bo3z
 		}
 		void EnsureUpdraft(RE::PlayerCharacter* a_player)
 		{
+			// (Noah) Whiterun's Thu'um: Dragon's Updraft is the shout Whiterun's Echo Altar gives - not a dragon bond's
 			auto* sh = UpdraftShout();
-			if (!sh || Bond() < 2 || a_player->HasShout(sh)) {
+			if (!sh) {
+				return;
+			}
+			if (!Curse::Freed(1)) {
+				return;
+			}
+			if (a_player->HasShout(sh)) {
 				return;
 			}
 			for (auto w : gen::kUpdraftWords) {
@@ -1102,7 +1109,7 @@ namespace bo3z
 					em->EquipShout(a_player, sh);
 				}
 			}
-			Hud::Banner("Dragon's Updraft learned: shout it, then open your glider", 4.0f);
+			Hud::Banner("WHITERUN'S THU'UM: Dragon's Updraft - shout it and a whirlwind lifts you; open your glider at the top", 5.0f);
 			logger::info("glider: Dragon's Updraft learned ({:08X})", sh->GetFormID());
 		}
 		// the whirlwind round you (CurseOfAlduin\fx\whirlwind.nif, tools/whirlwind.py): spinning, swelling, fading
@@ -2074,24 +2081,15 @@ namespace bo3z
 			}
 		}
 
-		bool BondLocked()
-		{
-			if (Bond() != 2) {
-				return false;
-			}
-			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
-				if (Curse::Freed(t)) {
-					return false;
-				}
-			}
-			return true;
-		}
+		// (Noah) no dragon bond, no Updraft, no glider, before Whiterun's Echo Altar is won
+		constexpr int kWhiterunTown = 1;
+		bool BondLocked() { return !Curse::Freed(kWhiterunTown); }
 
 		void BuyBond(RE::TESObjectREFR* a_shrine)
 		{
 			static constexpr const char* kName[3] = { "WIND-RIDER", "TALON STRIKE", "ALDUIN'S THRALL" };
 			static constexpr const char* kHow[3] = { "Jump while gliding: it beats its wings and climbs  -  its fire turns blue",
-				"Shout Dragon's Updraft: a whirlwind lifts you, then open the glider  -  attack looking down mid-glide: the dive  -  its fire turns yellow",
+				"Attack looking down mid-glide: the dive, landing in a shockwave  -  its fire turns yellow",
 				"Its fire burns hotter, and turns green" };
 			const int b = Bond();
 			if (b >= 3) {
@@ -2099,7 +2097,7 @@ namespace bo3z
 				return;
 			}
 			if (BondLocked()) {
-				Hud::Banner("The third bond waits until a city is freed from the Dirge", 3.0f);
+				Hud::Banner("The dragon's bonds wait until Whiterun's Echo Altar is won", 3.0f);
 				return;
 			}
 			if (!Points::Spend(kBondCost[b])) {

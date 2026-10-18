@@ -1101,7 +1101,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 			// Health / magicka / stamina: one forged plate, bottom centre - health the long blood bar in the middle (tenths
 			// notched in, its number on it, a pale wound trailing each hit, a red pulse when it runs low), magicka on the
-			// left and stamina on the right draining toward the centre, each with its sigil; the perks sit above in sockets
+			// left and stamina on the right, all three draining from the left, each with its sigil; the perks sit above in sockets
 			// and a new draught bursts in (its name rising over the row).
 			if (s.hpMax > 0) {
 				auto ease = [&](float& g, float v) { g = v > g ? v : std::max(v, g - dt * 0.35f); };
@@ -1115,9 +1115,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				{
 					const float t = y - 13 * k, b = y + h + 13 * k, m = (t + b) * 0.5f;
 					const ImVec2 plate[6] = { { L - 18 * k, m }, { L, t }, { R, t }, { R + 18 * k, m }, { R, b }, { L, b } };
-					if (low > 0) {
-						dl->AddRectFilled({ cx - hw / 2 - 30 * k, t - 18 * k }, { cx + hw / 2 + 30 * k, b + 10 * k }, IM_COL32(200, 20, 20, static_cast<int>(70 * low)), 12 * k);
-					}
 					dl->AddConvexPolyFilled(plate, 6, IM_COL32(10, 9, 11, 205));
 					dl->AddPolyline(plate, 6, Fade(kGoldDim, 0.9f), ImDrawFlags_Closed, 1.4f * k);
 					dl->AddLine({ L + 6 * k, t + 3 * k }, { R - 6 * k, t + 3 * k }, IM_COL32(255, 220, 160, 26), 1.0f * k);
@@ -1139,10 +1136,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					dl->AddRect({ x0 - 2 * k, top - 2 * k }, { x1 + 2 * k, top + bh + 2 * k }, Fade(kGoldDim, 0.8f), 2 * k, 0, 1.0f * k);
 				};
-				bar(cx - hw / 2, hw, y, h, hpFrac, hpGhost, IM_COL32(220, 42, 36, 255), IM_COL32(110, 8, 10, 255), false, 10);
+				// (Noah: all three drain from the left - full on the right end)
+				bar(cx - hw / 2, hw, y, h, hpFrac, hpGhost, IM_COL32(220, 42, 36, 255), IM_COL32(110, 8, 10, 255), true, 10);
 				bar(cx - hw / 2 - gap - sw, sw, y + (h - sh) / 2, sh, mpF, mpGhost, IM_COL32(80, 150, 255, 255), IM_COL32(24, 52, 140, 255), true, 5);
-				bar(cx + hw / 2 + gap, sw, y + (h - sh) / 2, sh, spF, spGhost, IM_COL32(110, 210, 90, 255), IM_COL32(30, 100, 30, 255), false, 5);
-				TxtC(dl, g_num, 13 * k, cx, y + 0.5f * k, IM_COL32(255, 238, 220, 235), std::to_string(static_cast<int>(std::ceil(s.hp))) + " / " + std::to_string(static_cast<int>(s.hpMax)));
+				bar(cx + hw / 2 + gap, sw, y + (h - sh) / 2, sh, spF, spGhost, IM_COL32(110, 210, 90, 255), IM_COL32(30, 100, 30, 255), true, 5);
+				if (low > 0) {  // running low: the health bar itself pulses red (Noah: just the bar - not a box round the plate)
+					dl->AddRectFilled({ cx - hw / 2 - 2 * k, y - 2 * k }, { cx + hw / 2 + 2 * k, y + h + 2 * k }, IM_COL32(255, 40, 30, static_cast<int>(70 * low)), 2 * k);
+					dl->AddRect({ cx - hw / 2 - 2 * k, y - 2 * k }, { cx + hw / 2 + 2 * k, y + h + 2 * k }, IM_COL32(255, 70, 50, static_cast<int>(220 * low)), 2 * k, 0, 1.6f * k);
+				}
+				TxtC(dl, g_num, 13 * k, cx, y + 0.5f * k, IM_COL32(255, 238, 220, 235), std::to_string(std::max(0, static_cast<int>(std::ceil(s.hp)))) + " / " + std::to_string(static_cast<int>(s.hpMax)));
 				// the sigils at the outer ends: an arcane seal for magicka, a whirlwind for stamina
 				{
 					const ImVec2 mc{ cx - hw / 2 - gap - sw - 14 * k, y + h * 0.5f }, sc{ cx + hw / 2 + gap + sw + 14 * k, y + h * 0.5f };
@@ -2234,7 +2236,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const ImVec2 pc{ L + 12 * k + q * 16 * k, y + 50 * k };
 						dl->AddTriangleFilled({ pc.x - 6 * k, pc.y - 5 * k }, { pc.x + 6 * k, pc.y - 5 * k }, { pc.x, pc.y + 7 * k }, q < have ? kCol[q + 1] : IM_COL32(60, 52, 46, 220));
 					}
-					const std::string what = maxed ? std::string("Every bond made - it is yours to the end") : s.bondLocked ? std::string("Free a city from the Dirge first") : std::string(kWhat[next]);
+					const std::string what = maxed ? std::string("Every bond made - it is yours to the end") : s.bondLocked ? std::string("Win Whiterun's Echo Altar first") : std::string(kWhat[next]);
 					TxtWrap(dl, g_body, 16 * k, { L + 60 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235), what, Rr - L - 60 * k, 2);
 					if (!maxed && !s.bondLocked) {
 						price(y + 2 * k, Movement::kBondCost[have], s.points >= Movement::kBondCost[have]);
