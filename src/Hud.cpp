@@ -4153,17 +4153,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				bool onNothing = true;
 				if (auto* pick = RE::CrosshairPickData::GetSingleton(); pick && pick->target.get()) onNothing = false;
 				const bool hideRoll = s.orbAim || s.ownAim || s.lootOn || onNothing;
-				if (static int lastAim = -1; lastAim != (hideRoll ? 1 : 0) || hideRoll) {
+				if (static int lastAim = -1; true) {  // (every frame: Skyrim keeps fading its own back in)
 					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
 						lastAim = hideRoll ? 1 : 0;
-						const RE::GFxValue a(lastAim ? 0.0 : 100.0);
+						// its words come back when it is Skyrim's turn; its button glyph and the grey line under it never do
+						// (Noah: left behind on the screen after looking away from a foe, they were all that showed)
+						const RE::GFxValue a(lastAim ? 0.0 : 100.0), off(0.0);
 						for (const char* v : { "_root.HUDMovieBaseInstance.RolloverText._alpha", "_root.HUDMovieBaseInstance.RolloverInfoText._alpha",
-							     "_root.HUDMovieBaseInstance.RolloverButton_tf._alpha", "_root.HUDMovieBaseInstance.RolloverInfoInstance._alpha",
-							     "_root.HUDMovieBaseInstance.RolloverGrayBar_mc._alpha", "_root.HUDMovieBaseInstance.RolloverNameInstance._alpha",
+							     "_root.HUDMovieBaseInstance.RolloverInfoInstance._alpha", "_root.HUDMovieBaseInstance.RolloverNameInstance._alpha" }) {
+							hud->uiMovie->SetVariable(v, a);
+						}
+						for (const char* v : { "_root.HUDMovieBaseInstance.RolloverButton_tf._alpha", "_root.HUDMovieBaseInstance.RolloverGrayBar_mc._alpha",
 							     "_root.HUDMovieBaseInstance.RolloverButton._alpha", "_root.HUDMovieBaseInstance.RolloverButtonInstance._alpha",
 							     "_root.HUDMovieBaseInstance.RolloverGrayBar._alpha", "_root.HUDMovieBaseInstance.GrayBarInstance._alpha",
 							     "_root.HUDMovieBaseInstance.ActivateButton_tf._alpha", "_root.HUDMovieBaseInstance.ActivateButton._alpha" }) {
-							hud->uiMovie->SetVariable(v, a);
+							hud->uiMovie->SetVariable(v, off);
 						}
 					}
 				}

@@ -2193,7 +2193,12 @@ namespace bo3z
 			}
 			t = 5.0f;
 			static auto* ts = RE::TESForm::LookupByID<RE::TESGlobal>(0x3A);  // TimeScale
-			const float  want = std::round(24.0f * 60.0f / gen::kCycleMinutes);  // (whole numbers: Skyrim Together's server runs the same 58)
+			float        want = std::round(24.0f * 60.0f / gen::kCycleMinutes);  // (whole numbers: Skyrim Together's server runs the same 58)
+			// (Noah: the night ran out before the rites were done) the night passes at half speed - about 20 minutes of it
+			// instead of 10 - in your own game; in a friend's party the shared clock keeps its pace
+			if (IsNight() && !Coop::Client()) {
+				want = std::round(want * 0.5f);
+			}
 			if (ts && std::abs(ts->value - want) > 0.01f) {
 				logger::info("clock: timescale {:.1f} -> {:.1f} (a full day in {:.0f} minutes)", ts->value, want, gen::kCycleMinutes);
 				ts->value = want;

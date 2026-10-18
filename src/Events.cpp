@@ -35,7 +35,47 @@ namespace bo3z
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
 
-		struct PlayerUpdate
+		// (Noah) no spell ever hurts the one who cast it - you or anyone else: a harmful effect whose caster is its own target
+		// (a fireball bursting at your feet, a mage caught in its own blast) is never applied
+		bool SelfHarm(RE::MagicTarget* a_this, const RE::MagicTarget::AddTargetData& a_data)
+		{
+			auto* me = a_this ? a_this->GetTargetStatsObject() : nullptr;
+			if (!me || !a_data.caster || a_data.caster != me || !a_data.effect || !a_data.effect->baseEffect) {
+				return false;
+			}
+			auto* mg = a_data.effect->baseEffect;
+			return mg->IsHostile() || mg->IsDetrimental();
+		}
+		template <int N>
+		struct NoSelfHarm
+		{
+			static bool thunk(RE::MagicTarget* a_this, RE::MagicTarget::AddTargetData& a_data)
+			{
+				if (SelfHarm(a_this, a_data)) {
+					static int said = 0;
+					if (said++ < 5) {
+						logger::info("magic: {} spared its own {}", a_this->GetTargetStatsObject()->GetName(), a_data.effect->baseEffect->GetName());
+					}
+					return false;
+				}
+				return func(a_this, a_data);
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+		// the vtable of a class's MagicTarget part: the one whose object locator says it sits 0x98 into the actor
+		template <std::size_t M>
+		std::uintptr_t MagicTargetVtbl(const std::array<REL::VariantID, M>& a_vtbls)
+		{
+			for (const auto& id : a_vtbls) {
+				const std::uintptr_t v = id.address();
+				if (!v) continue;
+				const auto* col = *reinterpret_cast<const std::uint32_t* const*>(v - sizeof(void*));
+				if (col && col[1] == 0x98) return v;
+			}
+			return 0;
+		}
+
+		struct PlayerUpdate		struct PlayerUpdate
 		{
 			static void thunk(RE::PlayerCharacter* a_this, float a_delta)
 			{
@@ -573,6 +613,20 @@ namespace bo3z
 			logger::info("hooked PlayerCharacter::Update");
 			REL::Relocation<std::uintptr_t> hud{ RE::VTABLE_HUDMenu[0] };
 			NoticeFilter::func = hud.write_vfunc(0x4, NoticeFilter::thunk);
+			if (const auto v = MagicTargetVtbl(RE::VTABLE_Character)) {
+				REL::Relocation<std::uintptr_t> mt{ v };
+				NoSelfHarm<0>::func = mt.write_vfunc(0x1, NoSelfHarm<0>::thunk);
+				logger::info("hooked the actors' magic: no self-harm");
+			} else {
+				logger::warn("no Character MagicTarget vtable found: spells may still hurt their casters");
+			}
+			if (const auto v = MagicTargetVtbl(RE::VTABLE_PlayerCharacter)) {
+				REL::Relocation<std::uintptr_t> mt{ v };
+				NoSelfHarm<1>::func = mt.write_vfunc(0x1, NoSelfHarm<1>::thunk);
+				logger::info("hooked your magic: no self-harm");
+			} else {
+				logger::warn("no PlayerCharacter MagicTarget vtable found: your spells may still hurt you");
+			}
 
 			auto* events = RE::ScriptEventSourceHolder::GetSingleton();
 			events->AddEventSink<RE::TESDeathEvent>(DeathWatch::Get());

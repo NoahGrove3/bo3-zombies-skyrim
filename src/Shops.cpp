@@ -127,6 +127,12 @@ namespace bo3z
 		{
 			auto chest = g_show.chest.get();
 			Remove(g_show.display);
+			// (Noah: a plain glowing ball over the altar) no model in the world any more: the spells' own animated emblems,
+			// drawn over the altar's crown by the HUD (the reel, then the one won), are the roll
+			constexpr bool kWorldModel = false;
+			if (!kWorldModel) {
+				return;
+			}
 			if (!chest || !a_base) {
 				return;
 			}

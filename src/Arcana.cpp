@@ -84,6 +84,34 @@ namespace bo3z::Arcana
 					it->second = static_cast<int>(i);
 				}
 			}
+			// (Noah: every spell the altar gives is an attack - no debuffs): one that takes no health, or that also
+			// paralyses, frightens, frenzies, calms, turns, disarms or weakens, is left out of the pool
+			bool debuff = false;
+			for (auto* e : sp->effects) {
+				auto* mg = e ? e->baseEffect : nullptr;
+				if (!mg || !(mg->IsDetrimental() || mg->IsHostile())) {
+					continue;
+				}
+				using A = RE::EffectArchetypes::ArchetypeID;
+				const auto arch = mg->GetArchetype();
+				const auto av = mg->data.primaryAV;
+				if (arch == A::kParalysis || arch == A::kDemoralize || arch == A::kFrenzy || arch == A::kCalm || arch == A::kTurnUndead ||
+					arch == A::kDisarm || arch == A::kEtherealize || arch == A::kSoulTrap || arch == A::kBanish) {
+					debuff = true;
+				}
+				const bool riderOk = av == RE::ActorValue::kHealth || av == RE::ActorValue::kStamina || av == RE::ActorValue::kMagicka ||
+				                     av == RE::ActorValue::kSpeedMult || av == RE::ActorValue::kNone;
+				if ((arch == A::kValueModifier || arch == A::kPeakValueModifier || arch == A::kDualValueModifier) && !riderOk) {
+					debuff = true;  // (a weakness, a resistance or skill lowered)
+				}
+			}
+			if (!g_damages[i] || debuff) {
+				logger::info("arcana: {} left out (not a straight attack)", s.name);
+				g_spell[i] = nullptr;
+				g_index.erase(sp->GetFormID());
+				--g_found;
+				continue;
+			}
 			Apply(static_cast<int>(i));  // the balanced power and cost (and any reforge)
 			sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
 			if (!s.concentration && sp->data.castingType == RE::MagicSystem::CastingType::kFireAndForget) {
