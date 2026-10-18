@@ -1677,7 +1677,8 @@ namespace bo3z
 				const float step = 0.35f * a_delta;
 				vol += std::clamp(want - vol, -step, step);
 				if (!humming && want > 0.001f && orbRef) {
-					Audio::LoopStart(Audio::kLoopShrine, gen::Sound::shrine_hum, nullptr);  // (all round you: its loudness is the distance)
+					// (on you - its loudness is the distance: a sound placed nowhere played at the world's origin, unheard)
+					Audio::LoopStart(Audio::kLoopShrine, gen::Sound::shrine_hum, RE::PlayerCharacter::GetSingleton());
 					humming = true;
 				}
 				if (humming) {

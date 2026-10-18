@@ -4148,9 +4148,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				// (Noah: only our quick loot on everything - Skyrim's "Search" prompt never shows over a body, chest or ash pile)
 				// (set every frame while ours shows: Skyrim fades its prompt back in each time the crosshair finds something)
-				if (static int lastAim = -1; lastAim != (s.orbAim || s.ownAim || s.lootOn ? 1 : 0) || s.orbAim || s.ownAim || s.lootOn) {
+				// (Noah: looking away from the Echo Altar left Skyrim's A button and its line behind) hidden too while the
+				// crosshair is on nothing - it only comes back for something of Skyrim's own to use
+				bool onNothing = true;
+				if (auto* pick = RE::CrosshairPickData::GetSingleton(); pick && pick->target.get()) onNothing = false;
+				const bool hideRoll = s.orbAim || s.ownAim || s.lootOn || onNothing;
+				if (static int lastAim = -1; lastAim != (hideRoll ? 1 : 0) || hideRoll) {
 					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
-						lastAim = s.orbAim || s.ownAim || s.lootOn ? 1 : 0;
+						lastAim = hideRoll ? 1 : 0;
 						const RE::GFxValue a(lastAim ? 0.0 : 100.0);
 						for (const char* v : { "_root.HUDMovieBaseInstance.RolloverText._alpha", "_root.HUDMovieBaseInstance.RolloverInfoText._alpha",
 							     "_root.HUDMovieBaseInstance.RolloverButton_tf._alpha", "_root.HUDMovieBaseInstance.RolloverInfoInstance._alpha",
