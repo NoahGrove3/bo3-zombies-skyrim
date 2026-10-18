@@ -23,19 +23,19 @@
     {
       "id": "kill",
       "event": "kill_round_undead",
-      "points": 30,
+      "points": 15,
       "verify": []
     },
     {
       "id": "headshot_kill",
       "event": "headshot_kill_round_undead",
-      "points": 60,
+      "points": 30,
       "verify": []
     },
     {
       "id": "melee_kill",
       "event": "skyrim_weapon_or_spell_kill_round_undead",
-      "points": 70,
+      "points": 35,
       "verify": []
     },
     {
