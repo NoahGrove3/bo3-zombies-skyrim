@@ -652,6 +652,9 @@ for key, model in (('summon', 'emptysummonfx_instant.nif'), ('crystal', 'diamond
                    ('storm', 'elementalmasterystormhazard.nif'), ('tornado', 'unused\\tornado.nif')):
     recs['ACTI'].append(record('ACTI', fid('ACTI', 'emm_' + key), [sub('EDID', z('UN_emm_' + key)), sub('OBND', struct.pack('<6h', -120, -120, 0, 120, 120, 300)),
         sub('MODL', z('kittyspellpack02\\' + model)), sub('FNAM', b'\0\0')]))
+for key in ('frost', 'shock', 'wind', 'sun', 'blood'):   # the bows' tornadoes: Elemental Mastery Magic's, recoloured (tools/modelconv/fxrepal)
+    recs['ACTI'].append(record('ACTI', fid('ACTI', 'tornado_' + key), [sub('EDID', z('UN_tornado_' + key)), sub('OBND', struct.pack('<6h', -120, -120, 0, 120, 120, 300)),
+        sub('MODL', z('CurseOfAlduin\\fx\\tornado_' + key + '.nif')), sub('FNAM', b'\0\0')]))
 ws = []
 for name, hx in T['weap_draugr_gs']['subs']:
     b = bytearray(bytes.fromhex(hx))

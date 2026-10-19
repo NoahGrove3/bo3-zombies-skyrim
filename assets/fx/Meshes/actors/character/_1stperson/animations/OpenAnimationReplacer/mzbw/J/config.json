@@ -1,6 +1,6 @@
 {
     "name": "Archery Jump",
-    "priority": 700000006,
+    "priority": 950000006,
     "conditions": [
         {
             "condition": "IsEquippedType",

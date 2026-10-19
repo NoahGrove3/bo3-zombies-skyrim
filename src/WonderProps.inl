@@ -267,14 +267,40 @@ namespace Props
 		auto* f = FangForm();
 		return p && f && (p->GetEquippedObject(false) == f || p->GetEquippedObject(true) == f);
 	}
+	// a tornado (Elemental Mastery Magic's, recoloured per element: fire, frost, shock, wind, sun, blood) that walks the
+	// ground for a while, hurting what it passes through - slow, and (a_chase) turning after the nearest of the dead
 	struct Twister
 	{
 		RE::ObjectRefHandle ref;
 		RE::NiPoint3        at, dir;
-		float               left, tick;
+		float               left, tick, dmg, speed;
+		bool                chase;
+		int                 row, kind;
 	};
 	std::vector<Twister> g_twisters;
 	float FangBase() { return Director::RoundHealth() * gen::kRounds.hpScale; }  // a zombie's whole night health, in BO3 units
+	void Tornado(int a_kind, const RE::NiPoint3& a_at, RE::NiPoint3 a_dir, float a_seconds, float a_damage, bool a_chase, int a_row)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* base = p ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kTornado[std::clamp(a_kind, 0, 5)], gen::kPlugin) : nullptr;
+		auto  ref = base ? p->PlaceObjectAtMe(base, false) : nullptr;
+		if (!ref) {
+			return;
+		}
+		RE::NiPoint3 at = a_at;
+		if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && std::abs(land - at.z) < 400.0f) {
+			at.z = land;
+		}
+		ref->SetPosition(at);
+		a_dir.z = 0;
+		if (a_dir.Length() < 0.01f) {
+			a_dir = { 0, 1, 0 };
+		}
+		a_dir.Unitize();
+		g_twisters.push_back({ ref->CreateRefHandle(), at, a_dir, a_seconds, 0.0f, a_damage, a_chase ? 230.0f : 480.0f, a_chase, a_row, a_kind });
+		Audio::AtPoint(gen::Sound::unleash_hearth, at);
+		logger::info("tornado: kind {} for {:.0f} s{}", a_kind, a_seconds, a_chase ? ", hunting the dead" : "");
+	}
 	void FangHit(RE::Actor* a_z, bool a_power)
 	{
 		if (!a_z || a_z->IsDead()) {
@@ -296,21 +322,8 @@ namespace Props
 	}
 	void FangTornado(RE::PlayerCharacter* p)
 	{
-		RE::NiPoint3 dir = AimAt(100.0f).dir;
-		dir.z = 0;
-		if (dir.Length() < 0.01f) {
-			return;
-		}
-		dir.Unitize();
-		const RE::NiPoint3 at = p->GetPosition() + dir * 140.0f;
-		auto* r = PlaceFx(4, at, 1.0f);
-		if (!r) {
-			return;
-		}
-		Twister t{ r->CreateRefHandle(), at, dir, 5.0f, 0.0f };
-		Audio::AtPoint(gen::Sound::unleash_hearth, t.at);
-		g_twisters.push_back(std::move(t));
-		logger::info("fang: a tornado of fire");
+		const RE::NiPoint3 dir = AimAt(100.0f).dir;
+		Tornado(0, p->GetPosition() + RE::NiPoint3{ dir.x, dir.y, 0 } * 140.0f, dir, 5.0f, FangBase() * 0.4f, false, -1);
 	}
 	void TickFang(float a_delta)
 	{
@@ -322,9 +335,27 @@ namespace Props
 				FangTornado(p);
 			}
 		}
-		const float base = FangBase();
 		for (auto& t : g_twisters) {
-			t.at += t.dir * (480.0f * a_delta);
+			if (t.chase) {  // turn, slowly, toward the nearest of the dead
+				RE::Actor* best = nullptr;
+				float      bd = 1600.0f;
+				for (auto* f : Foes(t.at, 1600.0f)) {
+					if (const float d = f->GetPosition().GetDistance(t.at); d < bd) {
+						bd = d, best = f;
+					}
+				}
+				if (best && bd > 60.0f) {
+					RE::NiPoint3 want = best->GetPosition() - t.at;
+					want.z = 0;
+					want.Unitize();
+					t.dir = t.dir + (want - t.dir) * std::min(1.0f, a_delta * 2.5f);
+					t.dir.z = 0;
+					if (t.dir.Length() > 0.01f) {
+						t.dir.Unitize();
+					}
+				}
+			}
+			t.at += t.dir * (t.speed * a_delta);
 			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(t.at, land) && std::abs(land - t.at.z) < 300.0f) {
 				t.at.z = land;
 			}
@@ -333,10 +364,17 @@ namespace Props
 			}
 			if ((t.tick -= a_delta) <= 0) {
 				t.tick = 0.25f;
-				for (auto* f : Foes(t.at, 240.0f)) {
-					Damage(f, base * 0.4f, false, false, true);
-					g_dots.push_back({ f->GetHandle(), base * 0.2f, 3.0f });
-					Stagger(f, 0.4f);
+				for (auto* f : Foes(t.at, 230.0f)) {
+					Damage(f, t.dmg, false, false, true);
+					if (t.kind == 0) {
+						g_dots.push_back({ f->GetHandle(), t.dmg * 0.5f, 3.0f });  // (fire: it burns on)
+					}
+					if (!f->IsDead()) {
+						Stagger(f, 0.4f);
+					}
+				}
+				if (t.row >= 0) {
+					Spellcraft::BurstAt(t.row, t.at + RE::NiPoint3{ 0, 0, 90.0f }, 60.0f, 0.3f);
 				}
 			}
 			if ((t.left -= a_delta) <= 0) {

@@ -162,12 +162,13 @@ namespace BowsImpl
 	//   Thirstbow    0 heals you a little   I bleeds   II a blood tether that feeds you   III kills burst into orbs of blood: health and power
 	enum class Kind { Fire, Frost, Shock, Wind, Sun, Blood };
 	constexpr const char* kTierNames[6][4] = {
-		{ "Ember Arrow", "Flare Shot", "Cinder Trail", "Meteor Volley" },
-		{ "Frost Arrow", "Deep Freeze", "Shatter", "Glacial Lance" },
-		{ "Spark Arrow", "Chain Lightning", "Storm Mark", "Thunderstrike" },
-		{ "Gust Arrow", "The Gale", "Cyclone Arrow", "Tempest" },
-		{ "Sunlit Arrow", "Radiant Burst", "Sunbeam", "Dawnbreak" },
-		{ "Leech Arrow", "Hemorrhage", "Blood Tether", "Crimson Harvest" } };
+		{ "Ember Arrow", "Flare Shot", "Cinder Trail", "Fire Tornado" },
+		{ "Frost Arrow", "Deep Freeze", "Shatter", "Ice Tornado" },
+		{ "Spark Arrow", "Chain Lightning", "Storm Mark", "Lightning Tornado" },
+		{ "Gust Arrow", "The Gale", "Cyclone Arrow", "Tornado" },
+		{ "Sunlit Arrow", "Radiant Burst", "Sunbeam", "Sunfire Tornado" },
+		{ "Leech Arrow", "Hemorrhage", "Blood Tether", "Blood Tornado" } };
+	// (Noah: each bow's last upgrade - a tornado of its element where the arrow lands, slow, hunting the dead for 5 s)
 	Kind KindOf(int i)
 	{
 		const std::string_view e = gen::kBows[i].element;
@@ -261,9 +262,16 @@ namespace BowsImpl
 		Spellcraft::BurstAt(s.row, p, s.full ? 150.0f : 80.0f, s.full ? 0.55f : 0.35f);
 	}
 
+	void TornadoOf(const Spellcraft::Shot& s, const RE::NiPoint3& p)
+	{
+		if (s.tier >= 3 && s.full) {
+			Props::Tornado(static_cast<int>(KindOf(s.bow)), p, s.vel, 5.0f, s.damage * 0.2f, true, s.row);
+		}
+	}
 	void OnHit(const Spellcraft::Shot& s, RE::Actor* a, const RE::NiPoint3& p, bool killed)
 	{
 		Impact(s, p);
+		TornadoOf(s, a->GetPosition());
 		const int  i = s.bow, t = s.tier, row = s.row;
 		const float dmg = s.damage;
 		switch (KindOf(i)) {
@@ -296,7 +304,7 @@ namespace BowsImpl
 			if (t >= 2 && !killed) {  // Storm Mark
 				g_marks.push_back({ a->GetHandle(), row, 4.0f, 0.0f, dmg * 0.25f });
 			}
-			if (t >= 3 && s.full) {  // Thunderstrike
+			if (false && t >= 3 && s.full) {  // Thunderstrike
 				Spellcraft::StreakAt(row, p + RE::NiPoint3{ Rand(-60, 60), Rand(-60, 60), 1400.0f }, p, 1.4f, 0.35f, true);
 				for (auto* f : Foes(p, 330.0f)) {
 					Spellcraft::Strike(row, f, dmg * 1.5f, false, gen::kFxNone, p);
@@ -320,7 +328,7 @@ namespace BowsImpl
 				}
 				Spellcraft::BurstAt(row, p, 120.0f, 0.4f);
 			}
-			if (t >= 3 && s.full) {
+			if (false && t >= 3 && s.full) {
 				Dawnbreak(row, p, dmg);
 			}
 			break;
@@ -347,6 +355,7 @@ namespace BowsImpl
 	void OnGround(const Spellcraft::Shot& s, const RE::NiPoint3& p)
 	{
 		Impact(s, p);
+		TornadoOf(s, p);
 		const int t = s.tier, row = s.row;
 		switch (KindOf(s.bow)) {
 		case Kind::Fire:
@@ -364,12 +373,12 @@ namespace BowsImpl
 			}
 			break;
 		case Kind::Sun:
-			if (t >= 3 && s.full) {
+			if (false && t >= 3 && s.full) {
 				Dawnbreak(row, p, s.damage);
 			}
 			break;
 		case Kind::Shock:
-			if (t >= 3 && s.full) {
+			if (false && t >= 3 && s.full) {
 				Spellcraft::StreakAt(row, p + RE::NiPoint3{ 0, 0, 1400.0f }, p, 1.4f, 0.35f, true);
 				for (auto* f : Foes(p, 330.0f)) {
 					Spellcraft::Strike(row, f, s.damage * 1.5f, false, gen::kFxNone, p);
@@ -443,7 +452,7 @@ namespace BowsImpl
 		// the spell's own voice as the arrow leaves: its cast, or at full draw its unleash
 		Forms::Play(full ? gen::kGuns[gun].chargeSnd : gen::kGuns[gun].fireSnd);
 		// the full-draw attacks that are not a single arrow
-		if (full && kind == Kind::Wind && t >= 1) {  // The Gale (I) / The Tempest (III)
+		if (full && kind == Kind::Wind && t >= 1 && t < 3) {  // The Gale (I-II; at III the arrow flies, for its tornado)
 			const bool tempest = t >= 3;
 			const auto cone = InCone(aim, (tempest ? 1600.0f : 1200.0f), tempest ? 48.0f : 34.0f);
 			for (auto* f : cone) {
@@ -463,7 +472,7 @@ namespace BowsImpl
 			Spellcraft::PlayAt(Spellcraft::Snd(gun, &gen::GunSounds::boom), from);
 			return;
 		}
-		if (full && kind == Kind::Fire && t >= 3) {  // Meteor Volley: one arrow up, five come down
+		if (false && full && kind == Kind::Fire && t >= 3) {  // (Meteor Volley: given way to the Fire Tornado): one arrow up, five come down
 			Spellcraft::Launch(row, gun, from, aim.dir + RE::NiPoint3{ 0, 0, 1.2f }, 5000.0f, 0.0f, 9.0f, 1, 1.0f, -1, true);
 			Spellcraft::g_shots2.back().life = 0.35f;
 			for (int k = 0; k < 5; ++k) {
@@ -472,7 +481,7 @@ namespace BowsImpl
 			}
 			return;
 		}
-		if (full && kind == Kind::Frost && t >= 3) {  // Glacial Lance: a line frozen
+		if (false && full && kind == Kind::Frost && t >= 3) {  // (Glacial Lance: given way to the Ice Tornado): a line frozen
 			const auto line = InLine(aim, 2400.0f, 70.0f);
 			for (auto* f : line) {
 				Spellcraft::Strike(row, f, dmg * 1.2f, false, gen::kFxFreeze, HeadPos(f));

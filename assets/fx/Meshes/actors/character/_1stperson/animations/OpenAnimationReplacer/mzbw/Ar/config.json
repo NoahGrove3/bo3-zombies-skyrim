@@ -1,6 +1,6 @@
 {
     "name": "Archery Main",
-    "priority": 700000002,
+    "priority": 950000002,
     "interruptible": true,
     "conditions": [
         {

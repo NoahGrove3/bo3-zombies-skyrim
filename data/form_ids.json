@@ -1151,6 +1151,11 @@
   "ACTI:emm_crystal": "0xc7b",
   "ACTI:emm_orb": "0xc7c",
   "ACTI:emm_storm": "0xc7d",
-  "ACTI:emm_tornado": "0xc7e"
+  "ACTI:emm_tornado": "0xc7e",
+  "ACTI:tornado_frost": "0xc7f",
+  "ACTI:tornado_shock": "0xc80",
+  "ACTI:tornado_wind": "0xc81",
+  "ACTI:tornado_sun": "0xc82",
+  "ACTI:tornado_blood": "0xc83"
  }
 }

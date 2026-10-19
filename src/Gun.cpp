@@ -1803,6 +1803,10 @@ namespace bo3z
 		}
 
 #include "Spellcraft.inl"
+		namespace Props
+		{
+			void Tornado(int a_kind, const RE::NiPoint3& a_at, RE::NiPoint3 a_dir, float a_seconds, float a_damage, bool a_chase, int a_row);
+		}
 #include "Bows.inl"
 #include "WonderProps.inl"
 

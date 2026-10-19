@@ -1,6 +1,6 @@
 {
     "name": "Archery Main - Beast",
-    "priority": 700000003,
+    "priority": 950000003,
     "conditions": [
         {
             "condition": "IsEquippedType",
