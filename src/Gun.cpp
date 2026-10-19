@@ -1082,6 +1082,21 @@ namespace bo3z
 		}
 
 
+		void Bolts(RE::PlayerCharacter* p, const gen::GunDef& g, const std::vector<RE::Actor*>& a_to, int a_max)
+		{
+			int n = 0;
+			for (auto* f : a_to) {
+				if (n++ >= a_max) {
+					break;
+				}
+				if (g.bulletSpell) {
+					LaunchBolt(p, g, HeadPos(f) - RE::NiPoint3{ 0, 0, 20 });
+				} else if (g.spell >= 0) {
+					Cast(g.spell, f);
+				}
+			}
+		}
+
 		// The signature move of each weapon (sheet: weapons.chargeName/chargeText).
 		void Unleash(int a_gun, bool a_echo = false)
 		{
@@ -2460,20 +2475,6 @@ namespace bo3z
 		}
 
 
-		void Bolts(RE::PlayerCharacter* p, const gen::GunDef& g, const std::vector<RE::Actor*>& a_to, int a_max)
-		{
-			int n = 0;
-			for (auto* f : a_to) {
-				if (n++ >= a_max) {
-					break;
-				}
-				if (g.bulletSpell) {
-					LaunchBolt(p, g, HeadPos(f) - RE::NiPoint3{ 0, 0, 20 });
-				} else if (g.spell >= 0) {
-					Cast(g.spell, f);
-				}
-			}
-		}
 		void Tick(float a_delta)
 		{
 			TickStorm(a_delta);
