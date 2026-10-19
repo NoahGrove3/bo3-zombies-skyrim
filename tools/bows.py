@@ -214,7 +214,7 @@ def build(bid):
         P[idx, 2] = cz_ + (P[idx, 2] - cz_) * 0.28
     N = normals(P, F)
     kind = BODY_KIND[bid]
-    d, n, gl = bowart.body_maps(kind, body_col, glow, seed=len(bid))   # (Noah: 2K, hand-worked: runes, knotwork, scrollwork, leather)
+    d, n, gl = bowart.body_maps(kind, body_col, glow, seed=len(bid), element=ELEMENT[bid])   # (Noah: 2K, hand-worked: runes, knotwork, scrollwork, leather)
     td, tn, tg = bowart.trim_maps(ELEMENT[bid], glow, seed=len(bid) + 40)
     tex = {'d': save_mips(d, f'{bid}_d.dds'), 'n': save_mips(n, f'{bid}_n.dds', True), 'g': save_mips(gl, f'{bid}_g.dds'),
            'td': save_mips(td, f'{bid}_trim_d.dds'), 'tn': save_mips(tn, f'{bid}_trim_n.dds', True), 'tg': save_mips(tg, f'{bid}_trim_g.dds'),
@@ -234,7 +234,7 @@ def build(bid):
         elif g == 'trim':
             lines.append(f'shape {bid}_trim diffuse={tex["td"]} normal={tex["tn"]} glow={tex["tg"]} emit={ec} emitmult=2.2 spec=1.4 gloss=120')
         else:
-            lines.append(f'shape {bid}_body diffuse={tex["d"]} normal={tex["n"]} glow={tex["g"]} emit={ec} emitmult=2.2 spec={ {"wood": 0.4, "wood_dark": 0.5, "iron": 1.3, "bone": 0.6, "steel": 1.6, "bronze": 1.4}[kind] } gloss=60')
+            lines.append(f'shape {bid}_body diffuse={tex["d"]} normal={tex["n"]} glow={tex["g"]} emit={ec} emitmult=3.0 spec={ {"wood": 0.4, "wood_dark": 0.5, "iron": 1.3, "bone": 0.6, "steel": 1.6, "bronze": 1.4}[kind] } gloss=60')
         if g in ('body', 'trim'):
             # its own UVs (limb_uv), the triangles that cross the seam on its back given their own copies of those corners
             uu, vv = limb_uv(P, centre, np.arange(len(P)))

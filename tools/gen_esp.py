@@ -210,7 +210,7 @@ for bw in S['bows']['rows']:
     ad = struct.pack('<IIfIf', fid('PROJ', 'bowarrow_' + bw['id']), 0x4, 0.0, 0, 0.0)   # projectile, flags (an arrow, not a bolt), damage 0
     recs['AMMO'].append(record('AMMO', fid('AMMO', 'bowarrow_' + bw['id']), [
         sub('EDID', z('UN_BowArrow_' + bw['id'])), sub('OBND', tsub('ammo_iron', 'OBND')), sub('FULL', z(bw['label'] + ' Arrow')),
-        sub('MODL', z('CurseOfAlduin\\bow\\' + bw['id'] + '_arrow.nif')), sub('YNAM', tsub('ammo_iron', 'YNAM')), sub('ZNAM', tsub('ammo_iron', 'ZNAM')),
+        sub('MODL', z(NOCK[bw['element']])), sub('YNAM', tsub('ammo_iron', 'YNAM')), sub('ZNAM', tsub('ammo_iron', 'ZNAM')),
         sub('KSIZ', tsub('ammo_iron', 'KSIZ')), sub('KWDA', tsub('ammo_iron', 'KWDA')), sub('DATA', ad)]))
     subs = []
     for name, hx in T['weap_longbow']['subs']:

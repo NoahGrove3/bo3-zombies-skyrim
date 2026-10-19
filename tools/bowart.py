@@ -100,7 +100,59 @@ def pack(col, height, strength, spec, glow):
             Image.fromarray(np.clip(glow, 0, 255).astype(np.uint8), 'RGB'))
 
 
-def body_maps(kind, body_col, glow, seed, W=2048, H=1024):
+def element_pattern(element, W, H, seed):
+    """the element living in the limb (Noah's reference: Der Eisendrache's bows): lava cracks through charred horn, frost
+    facets, swirling storm runes, wind streams, sun filigree, blood veins - a glow mask 0..1"""
+    rng = np.random.default_rng(seed)
+    u = np.linspace(0, 1, W, dtype=np.float32)[None, :].repeat(H, 0); v = np.linspace(0, 1, H, dtype=np.float32)[:, None].repeat(W, 1)
+    if element in ('fire', 'frost'):
+        from scipy.spatial import cKDTree
+        n = 420 if element == 'fire' else 260
+        pts = np.c_[rng.uniform(0, W, n), rng.uniform(0, H, n) * 1.0]
+        pts[:, 0] *= 0.5   # (cells drawn out along the limb)
+        tree = cKDTree(pts)
+        yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+        d, _ = tree.query(np.c_[xx.ravel() * 0.5, yy.ravel()], k=2)
+        edge = (d[:, 1] - d[:, 0]).reshape(H, W)
+        w = 3.5 if element == 'fire' else 2.0
+        m = np.clip(1 - edge / w, 0, 1) ** (1.2 if element == 'fire' else 2.0)
+        if element == 'fire':
+            m = m * (0.55 + 0.45 * fbm(W, H, 20, seed + 1, 3))
+        return m
+    im = Image.new('L', (W, H), 0); d = ImageDraw.Draw(im)
+    if element == 'shock':   # tribal storm swirls: S-curves curling into spirals, like the storm bow's runes
+        for k in range(110):
+            cx, cy = rng.uniform(-50, W), rng.uniform(0.0, 1.0) * H; s = rng.uniform(22, 55); dirn = rng.choice([-1, 1])
+            pts = []
+            for a in np.linspace(0, 3.4 * np.pi, 70):
+                r = s * (1 - a / (3.6 * np.pi))
+                pts.append((cx + dirn * (a * s * 0.22) + math.cos(a) * r, cy + math.sin(a) * r * 0.8))
+            d.line(pts, fill=255, width=5)
+        m = np.asarray(im.filter(ImageFilter.GaussianBlur(1.6)), np.float32) / 255
+        return np.clip(m * 1.2, 0, 1)
+    if element == 'wind':
+        for k in range(34):
+            y0 = rng.uniform(0, H); ph = rng.uniform(0, 6.28); amp = rng.uniform(15, 45); fr = rng.uniform(1.5, 3.5)
+            pts = [(x, y0 + math.sin(x / W * 2 * math.pi * fr + ph) * amp) for x in np.linspace(0, W, 200)]
+            d.line(pts, fill=255, width=3)
+        return np.asarray(im.filter(ImageFilter.GaussianBlur(2.0)), np.float32) / 255
+    if element == 'sun':
+        for k in range(130):
+            cx, cy = rng.uniform(0, W), rng.uniform(0, H); r = rng.uniform(16, 36)
+            for j in range(8):
+                a = j * math.pi / 4
+                d.line([(cx, cy), (cx + math.cos(a) * r, cy + math.sin(a) * r * 0.8)], fill=200, width=2)
+            d.ellipse([cx - 5, cy - 5, cx + 5, cy + 5], fill=255)
+        return np.asarray(im.filter(ImageFilter.GaussianBlur(1.4)), np.float32) / 255
+    for _ in range(40):   # blood veins
+        x, y = rng.uniform(0, W), rng.uniform(0, H); a = rng.uniform(0, 6.28); pts = [(x, y)]; wdt = 4
+        for _ in range(24):
+            a += rng.uniform(-0.5, 0.5); x += math.cos(a) * 30; y += math.sin(a) * 12; pts.append((x, y))
+        d.line(pts, fill=255, width=wdt)
+    return np.asarray(im.filter(ImageFilter.GaussianBlur(1.5)), np.float32) / 255
+
+
+def body_maps(kind, body_col, glow, seed, W=2048, H=1024, element='fire'):
     u = np.linspace(0, 1, W, dtype=np.float32)[None, :].repeat(H, 0)
     v = np.linspace(0, 1, H, dtype=np.float32)[:, None].repeat(W, 1)
     gc = np.array(glow, np.float32) * 255
@@ -181,8 +233,13 @@ def body_maps(kind, body_col, glow, seed, W=2048, H=1024):
     height += grip * (0.5 + 0.35 * (1 - overlap) - 0.2 * stitch_u)
     height += metal * (0.7 - 0.25 * scr + 0.3 * rim + 0.4 * rivet)
     spec = 0.15 + 0.12 * belly + 0.25 * wear + 0.5 * knot + 0.6 * inlay + 0.55 * metal + 0.3 * gly - 0.08 * grip
+    # the element alive in the limbs, glowing through the material (not over the runes, the grip or the metal)
+    pat = element_pattern(element, W, H, seed + 21) * limbs * (1 - ch)
+    col = col * (1 - 0.6 * pat[..., None]) + gc * 0.7 * pat[..., None]
+    height -= 0.15 * pat
     halo = blur(gly, 6)
-    g = np.clip(gly * 1.0 + 0.4 * halo + 0.12 * inlay, 0, 1)
+    phalo = blur(pat, 4)
+    g = np.clip(gly * 1.0 + 0.4 * halo + 0.12 * inlay + 0.85 * pat + 0.3 * phalo, 0, 1)
     return pack(col, height, 9.0, spec, g[..., None] * gc[None, None])
 
 

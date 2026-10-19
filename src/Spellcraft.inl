@@ -873,6 +873,10 @@ namespace Spellcraft
 				wf = 2.0f;  // (still leaving the bow)
 			}
 			s.flown += (to - from).Length();
+			if (s.arrow) {  // (Noah: nothing to see after the release) a streak of the element left along the arrow's flight
+				const RE::NiPoint3 tail = wf <= 1.0f ? from + (to - from) * wf : to;
+				StreakAt(s.row, from, tail, (s.full ? 0.75f : 0.5f) * s.scale, 0.28f, Def(s.row).style == 3);
+			}
 			const RE::NiPoint3 end = wf <= 1.0f ? from + (to - from) * wf : to;
 			// what it touches on the way: substeps no longer than its radius
 			const float len = (end - from).Length();

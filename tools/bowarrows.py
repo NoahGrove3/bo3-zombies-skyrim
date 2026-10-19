@@ -199,33 +199,32 @@ def save_dds(img, name):
     return 'CurseOfAlduin\\bow\\' + name
 
 
-def build(bid, element, glow):
+def build(bid, spell, element, glow):
+    """fx/<spell>_tip.nif: the arrowhead of light and its element, the point at the origin, the shaft back along -Y.
+    Bows.inl hangs it on the nocked arrow itself and grows it as the string comes back"""
     fxtex = save_dds(atlas(FX[element]), f'{bid}_arrowfx.dds')
     head = head_texture(len(bid))
     htex = save_dds(Image.fromarray((np.dstack([np.ones_like(head), np.ones_like(head), np.ones_like(head), head]) * 255).astype(np.uint8), 'RGBA'), 'arrowhead.dds')
-    out = OUT / 'Meshes' / 'CurseOfAlduin' / 'bow' / f'{bid}_arrow.nif'
+    out = OUT / 'Meshes' / 'CurseOfAlduin' / 'fx' / f'{spell}_tip.nif'
     out.parent.mkdir(parents=True, exist_ok=True)
     g = ','.join(f'{c:.3f}' for c in glow)
     pale = ','.join(f'{min(1.0, c * 0.5 + 0.5):.3f}' for c in glow)
-    job = [f'base {BASE}', f'out {out}']
-    # the arrowhead of light: two crossed planes over the steel tip, its point a little past it
-    for k, (col, sc, w) in enumerate(((g, 1.6, 4.2), (pale, 2.0, 3.0))):
+    job = [f'out {out}']
+    for k, (col, sc, w) in enumerate(((g, 1.7, 4.4), (pale, 2.1, 3.1))):
         job.append(f'shape head{k} tex={htex} color={col},1 scale={sc} blend=add')
         for ax in ((1, 0, 0), (0, 0, 1)):
             for (du, dv, u, v) in ((-1, -1, 0, 1), (1, -1, 1, 1), (1, 1, 1, 0), (-1, 1, 0, 0)):
-                x = ax[0] * du * w; z = ax[2] * du * w; y = TIP - 6.0 + dv * 9.0
-                job.append(f'v {x:.3f} {y:.3f} {z:.3f} {u} {v}')
+                job.append(f'v {ax[0] * du * w:.3f} {-6.0 + dv * 9.5:.3f} {ax[2] * du * w:.3f} {u} {v} 1 1 1 1')
         job += ['t 0 1 2', 't 0 2 3', 't 4 5 6', 't 4 6 7']
-    # the element round it: a flipbook that turns to face you (fire streams back down the shaft: a taller quad)
     tall = element == 'fire'
-    for k, (col, sc, s, ph) in enumerate(((('1,1,1'), 1.7, 1.0, 0.0), (g, 1.2, 1.35, 1.7))):
-        hh = (13.0 if tall else 8.0) * s; ww = (6.5 if tall else 8.0) * s
-        cy = TIP - (8.0 if tall else 2.0)
+    for k, (col, sc, sz, ph) in enumerate((('1,1,1', 1.8, 1.0, 0.0), (g, 1.3, 1.4, 1.7))):
+        hh = (14.0 if tall else 8.5) * sz; ww = (7.0 if tall else 8.5) * sz
+        cy = -9.0 if tall else -2.0
         job.append(f'shape fx{k} tex={fxtex} color={col},1 scale={sc} blend=add billboard=2 flip={COLS}x{ROWS} fps=24 phase={ph} at=0,{cy:.2f},0')
         for X_, Y_, u, v in ((-ww, hh, 0, 0), (ww, hh, 1 / COLS, 0), (ww, -hh, 1 / COLS, 1 / ROWS), (-ww, -hh, 0, 1 / ROWS)):
-            job.append(f'v {X_:.2f} {Y_:.2f} {0.5 - k:.2f} {u} {v}')
+            job.append(f'v {X_:.2f} {Y_:.2f} {0.5 - k:.2f} {u} {v} 1 1 1 1')
         job += ['t 0 1 2', 't 0 2 3']
-    jf = WORK / f'{bid}_arrow.job'; jf.write_text('\n'.join(job) + '\n')
+    jf = WORK / f'{bid}_tip.job'; jf.write_text('\n'.join(job) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
     print(bid, '|', r.stdout.strip() or r.stderr.strip())
     if r.returncode:
@@ -235,7 +234,7 @@ def build(bid, element, glow):
 def main():
     WORK.mkdir(parents=True, exist_ok=True)
     for r in json.load(open(ROOT / 'sheets' / 'bows.json'))['rows']:
-        build(r['id'], r['element'], tuple(r['glow']))
+        build(r['id'], r['spell'], r['element'], tuple(r['glow']))
 
 
 if __name__ == '__main__':

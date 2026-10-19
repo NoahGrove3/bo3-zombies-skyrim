@@ -249,8 +249,19 @@ namespace BowsImpl
 	}
 
 	// an arrow of ours strikes a body
+	// every arrow lands with its element: Skyrim's own explosion of that element and a burst of the spell's light
+	void Impact(const Spellcraft::Shot& s, const RE::NiPoint3& p)
+	{
+		static constexpr const char* kSmall[6] = { "fireball", "frost", "runeshock", "shoutarea", "light", "bloodplague" };
+		static constexpr const char* kBig[6] = { "firestorm", "icevolley", "shockmass", "giantslam", "lightmassive", "darkmassive" };
+		const int k = static_cast<int>(KindOf(s.bow));
+		Gun::FxBlast(s.full ? kBig[k] : kSmall[k], p);
+		Spellcraft::BurstAt(s.row, p, s.full ? 150.0f : 80.0f, s.full ? 0.55f : 0.35f);
+	}
+
 	void OnHit(const Spellcraft::Shot& s, RE::Actor* a, const RE::NiPoint3& p, bool killed)
 	{
+		Impact(s, p);
 		const int  i = s.bow, t = s.tier, row = s.row;
 		const float dmg = s.damage;
 		switch (KindOf(i)) {
@@ -333,6 +344,7 @@ namespace BowsImpl
 	// an arrow of ours lands in the world
 	void OnGround(const Spellcraft::Shot& s, const RE::NiPoint3& p)
 	{
+		Impact(s, p);
 		const int t = s.tier, row = s.row;
 		switch (KindOf(s.bow)) {
 		case Kind::Fire:
@@ -800,6 +812,74 @@ namespace BowsImpl
 		}
 	};
 	AnimWatch     g_animWatch;
+
+	// (Noah: the element should charge on the arrowhead as you draw, and stay on it) the arrow's head of light, hung on
+	// the nocked arrow itself (the ammunition's model, found in the body the player sees) and grown with the draw
+	Spellcraft::Fx  g_tip;
+	int             g_tipRow = -1;
+	float           g_tipT = 0;
+	RE::NiAVObject* FindArrow(RE::NiAVObject* a_o, const RE::NiPoint3& a_near, int a_depth = 0)
+	{
+		if (!a_o || a_depth > 40) {
+			return nullptr;
+		}
+		const char* n = a_o->name.c_str();
+		if (n && (std::string_view(n) == "Arrow:0" || std::string_view(n) == "Arrow") && a_o->world.translate.GetDistance(a_near) < 160.0f && !a_o->GetFlags().any(RE::NiAVObject::Flag::kHidden)) {
+			return a_o;
+		}
+		if (auto* node = a_o->AsNode()) {
+			for (auto& c : node->GetChildren()) {
+				if (auto* f = FindArrow(c.get(), a_near, a_depth + 1)) {
+					return f;
+				}
+			}
+		}
+		return nullptr;
+	}
+	void TickTip(RE::PlayerCharacter* p, int i, bool a_drawing, float a_delta)
+	{
+		if (!a_drawing || i < 0) {
+			g_tip.Show(false);
+			return;
+		}
+		const int row = gen::kBows[i].spellRow;
+		if (g_tipRow != row) {
+			g_tip.Detach();
+			g_tip = Spellcraft::Fx{ Spellcraft::Load(gen::kSpellcraft[row].id, "tip") };
+			g_tipRow = row;
+		}
+		if (!g_tip.obj) {
+			return;
+		}
+		auto* root = p->Get3D(Spellcraft::FirstPerson());
+		const auto hand = HeadAt(p);
+		auto* arrow = FindArrow(root, hand);
+		static int said = 0;
+		if (said < 3) {
+			++said;
+			logger::info("bows: nocked arrow {} ({})", arrow ? arrow->name.c_str() : "not found", arrow && arrow->parent ? arrow->parent->name.c_str() : "-");
+		}
+		RE::NiNode* host = arrow ? (arrow->AsNode() ? arrow->AsNode() : arrow->parent) : nullptr;
+		g_tipT += a_delta;
+		const float grow = 0.25f + 0.75f * g_draw;
+		const float flick = g_draw >= 0.98f ? 1.0f + 0.08f * std::sin(g_tipT * 18.0f) : 1.0f;
+		if (host) {
+			if (g_tip.parent != host) {
+				if (auto* o = g_tip.obj.get(); o->parent) {
+					o->parent->DetachChild2(o);
+				}
+				host->AttachChild(g_tip.obj.get(), true);
+				g_tip.parent = host;
+			}
+			// the head of the arrow: the shape's own tip on +Y (Skyrim's arrows run 0..60 along +Y)
+			const RE::NiPoint3 at = arrow->AsNode() ? RE::NiPoint3{ 0.0f, 60.0f, 0.0f } : arrow->local * RE::NiPoint3{ 0.0f, 60.0f, 0.0f };
+			SetLocal(g_tip, at, RE::NiMatrix3{}, grow * flick);
+		} else {  // (not found: in front of the bow hand, along the aim)
+			g_tip.Attach(Spellcraft::WorldRoot());
+			g_tip.Place(hand + AimAt(80.0f).dir * 20.0f, Spellcraft::Facing(AimAt(80.0f).dir), grow * flick);
+		}
+		g_tip.Show(true);
+	}
 	RE::NiAVObject* g_watched = nullptr;
 	float         g_sinceFire = 10.0f;
 
@@ -877,6 +957,7 @@ namespace BowsImpl
 		}
 		g_wasDrawing = drawing;
 		TickMotes(p, i, a_delta);
+		TickTip(p, i, drawing, a_delta);
 		TickTiers(a_delta);
 		std::scoped_lock l(Hud::Lock());
 		Hud::Edit().bowHeld = i;
@@ -891,6 +972,8 @@ namespace BowsImpl
 		}
 		g_orbs.clear(), g_patches.clear(), g_marks.clear(), g_cyclones.clear(), g_tethers.clear(), g_meteors.clear(), g_harvest = 0;
 		g_ball.Detach();
+		g_tip.Detach();
+		g_tipRow = -1;
 		g_ballRow = -1, g_draw = 0, g_wasDrawing = false, g_fullSaid = false;
 	}
 }
