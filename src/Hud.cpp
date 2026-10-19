@@ -3271,7 +3271,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (g_sGround) {
 				// THE SHRINE (Noah's picture): a round rune floor on a dark plain, a blue crystal turning and pulsing over
 				// it, broken rocks floating round it. All of it at one depth of the parallax, in the painting's pixels.
-				constexpr float kD = 0.6f, kCX = 1160.0f, kCY = 1190.0f, kS = 3.4f, kCos = 0.9563f, kSin = 0.2924f, kCrystalZ = 130.0f;
+				constexpr float kD = 0.6f, kCX = 1160.0f, kCY = 1190.0f, kS = 3.4f, kCos = 0.9563f, kSin = 0.2924f, kCrystalZ = 76.9f;  // (tools/menualtar.py: the new altar's heart stone)
 				const float u = (cw * (1.04f + 0.03f * kD) * push) / 2560.0f;  // painting pixels -> screen
 				auto at = [&](float X, float Y, float Z) { return toScreen(kD, kCX + X * kS, kCY - (Z * kCos - Y * kSin) * kS); };
 				auto tex = [](ID3D11ShaderResourceView* t) { return ImTextureID(reinterpret_cast<std::uintptr_t>(t)); };
@@ -3355,21 +3355,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					layer(g_sGlow, kD, IM_COL32(255, 255, 255, static_cast<int>((150 + 105 * pulse) * fade)));
 				}
 				// (the old motes running round the rune ring are gone: the motes flipbook below carries the light now)
-				// the rocks: each on its own orbit round the crystal, bobbing and slowly tumbling; the far ones behind it
-				struct Rock { float r, a0, z, speed, bob, ph, rot0, spin; };
-				static constexpr Rock kRocks[9] = { { 112, 0.0f, 150, 0.16f, 9, 0.0f, 0.3f, 0.10f }, { 120, 0.7f, 110, 0.16f, 11, 1.3f, -0.4f, -0.08f },
-					{ 104, 1.4f, 160, 0.16f, 8, 2.1f, 0.9f, 0.12f }, { 124, 2.1f, 125, 0.16f, 12, 0.7f, -0.8f, 0.07f }, { 110, 2.8f, 95, 0.16f, 10, 2.9f, 0.2f, -0.11f },
-					{ 116, 3.5f, 150, 0.16f, 9, 1.8f, 1.1f, 0.09f }, { 106, 4.2f, 120, 0.16f, 11, 0.4f, -0.2f, -0.06f }, { 92, 4.9f, 165, 0.16f, 7, 2.5f, 0.6f, 0.14f },
-					{ 98, 5.6f, 90, 0.16f, 10, 1.1f, -1.0f, -0.13f } };
-				static constexpr float kRockPx[9] = { 465, 519, 428, 537, 483, 457, 436, 341, 378 };
+				// the rune stones floating over the columns (tools/menualtar.py), bobbing and slowly turning; the ones at the back
+				// (-Y: higher on the painting) behind the heart stone
+				struct Rock { float x, y, z, bob, ph, rot0, spin; };
+				static constexpr Rock kRocks[6] = { { 147.4f, 0.0f, 99.4f, 7, 0.0f, 0.1f, 0.10f }, { 73.3f, -127.7f, 119.9f, 8, 1.3f, -0.2f, -0.08f },
+					{ -73.4f, -127.3f, 158.2f, 7, 2.1f, 0.15f, 0.12f }, { -147.0f, 0.0f, 119.9f, 8, 0.7f, -0.1f, 0.07f }, { -73.4f, 127.3f, 158.2f, 7, 2.9f, 0.2f, -0.11f },
+					{ 74.2f, 127.7f, 158.2f, 8, 1.8f, -0.15f, 0.09f } };
 				struct Placed { int i; ImVec2 p; float depth, scale; };
-				std::array<Placed, 9> placed{};
-				for (int i = 0; i < 9; ++i) {
+				std::array<Placed, 6> placed{};
+				for (int i = 0; i < 6; ++i) {
 					const auto& r = kRocks[i];
-					const float a = r.a0 + now * r.speed;
-					const float Y = std::sin(a) * r.r, X = std::cos(a) * r.r;
-					const float z = r.z + std::sin(now * 0.8f + r.ph) * r.bob + 6.0f * pulse;  // they lift a little with each beat
-					placed[i] = { i, at(X, Y, z), Y, 1.0f - Y * 0.0016f };
+					const float z = r.z + std::sin(now * 0.8f + r.ph) * r.bob + 4.0f * pulse;  // they lift a little with each beat
+					placed[i] = { i, at(r.x, r.y, z), -r.y, 1.0f };
 				}
 				std::sort(placed.begin(), placed.end(), [](const Placed& x, const Placed& y) { return x.depth > y.depth; });  // far first
 				auto drawRock = [&](const Placed& pl) {
@@ -3377,13 +3374,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						return;
 					}
 					const auto& r = kRocks[pl.i];
-					const float sz = kRockPx[pl.i] * u * pl.scale;
-					const int   shade = static_cast<int>(std::clamp(235.0f - pl.depth * 0.6f, 150.0f, 255.0f));
-					const float rot = r.rot0 + std::sin(now * r.spin * 3.0f + r.ph) * 0.35f;
+					const float sz = 200.0f * u;
+					const int   shade = static_cast<int>(std::clamp(235.0f + pl.depth * 0.25f, 170.0f, 255.0f));
+					const float rot = r.rot0 + std::sin(now * r.spin * 3.0f + r.ph) * 0.25f;
 					sprite(g_sShard[pl.i], pl.p, sz, sz, rot, IM_COL32(shade, shade, std::min(255, shade + 10), static_cast<int>(255 * fade)));
 					if (g_sShardR[pl.i]) {  // the runes breathe blue light, each rock a little out of step
 						const float breath = 0.5f + 0.5f * std::sin(now * 2.4f + r.ph * 1.7f);
-						sprite(g_sShardR[pl.i], pl.p, sz, sz, rot, IM_COL32(255, 255, 255, static_cast<int>((40 + 215 * breath * breath) * fade)));
+						sprite(g_sShardR[pl.i], pl.p, sz, sz, rot, IM_COL32(255, 255, 255, static_cast<int>((60 + 195 * breath * breath) * fade)));
 					}
 				};
 				for (const auto& pl : placed) {
@@ -3413,8 +3410,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImVec2 c = [&] { auto p = at(0, 0, kCrystalZ); p.y += bob; return p; }();
 					if (g_sSoft) {
 						const float g1 = (420 + 90 * pulse) * u, g2 = (200 + 50 * pulse) * u;
-						sprite(g_sSoft, c, g1 * 2, g1 * 2, 0, IM_COL32(130, 80, 255, static_cast<int>((60 + 45 * pulse) * fade)));
-						sprite(g_sSoft, c, g2 * 2, g2 * 2, 0, IM_COL32(190, 150, 255, static_cast<int>((80 + 60 * pulse) * fade)));
+						sprite(g_sSoft, c, g1 * 2, g1 * 2, 0, IM_COL32(70, 140, 255, static_cast<int>((50 + 40 * pulse) * fade)));
+						sprite(g_sSoft, c, g2 * 2, g2 * 2, 0, IM_COL32(140, 200, 255, static_cast<int>((60 + 50 * pulse) * fade)));
 					}
 					// purple fire made of magic round it (the in-game orb's own flipbook: tools/magicfire.py, 16x8 frames), two
 					// passes out of step and a little apart in size
@@ -3427,16 +3424,16 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const float hh = 108.0f * u * scale / 0.36f, lift = 0.30f * hh;  // (the orb sits below the frame's middle)
 						fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_fire)), { c.x - hh, c.y - hh - lift }, { c.x + hh, c.y + hh - lift }, { uu, vv }, { uu + 1.0f / 16.0f, vv + 0.125f }, tint);
 					};
-					aura(1.12f, 2.6f, IM_COL32(225, 200, 255, static_cast<int>((130 + 50 * pulse) * fade)));
+					(void)aura;  // (the old orb's purple fire: the heart stone has its runes' own light)
 					if (g_sCrystal) {
 						const int   f = static_cast<int>(now * 9.0f) % 24;  // ~2.7 s a turn
 						const ImVec2 uv0{ (f % 6) / 6.0f, (f / 6) / 4.0f }, uv1{ uv0.x + 1.0f / 6.0f, uv0.y + 0.25f };
 						const float sc = 1.0f + 0.035f * pulse;
-						const float w = 448 * u * sc, h = 640 * u * sc;
+						const float w = 427 * u * sc, h = 640 * u * sc;  // (320 x 480 frames, square pixels)
 						const ImVec2 mid{ c.x, c.y + (0.5f - 0.56f) * h };  // (the frame's origin sits at 56% of its height)
 						sprite(g_sCrystal, mid, w, h, 0, IM_COL32(255, 255, 255, static_cast<int>(255 * fade)), uv0, uv1);
 					}
-					aura(1.0f, 0.0f, IM_COL32(255, 255, 255, static_cast<int>(255 * fade)));  // (over the orb: its flames cling round the edge, coming out of it)
+
 					if (g_sSoft) {  // the white heart over it, flaring on the beat
 						const float g3 = (60 + 40 * pulse) * u;
 						sprite(g_sSoft, c, g3 * 2, g3 * 2, 0, IM_COL32(230, 245, 255, static_cast<int>((70 + 110 * pulse) * fade)));

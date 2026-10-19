@@ -1,6 +1,6 @@
 {
  "sheet": "dressing",
- "about": "Extra pieces placed around each town object. for = a kind (perk|box|wallbuy) or one object (objects:<id>). '$potion' = that perk's bottle model, '$perk' = that perk's colour. Offsets in the object's frame (y = forward), Skyrim units. freed: only once the city's curse is lifted (the shrine then burns gold, a beam over it). The freed altar also raises its Echo Stone (behind it) and a circle of the Tongues' runes turning in the air over it.",
+ "about": "Extra pieces placed around each town object. for = a kind (perk|box|wallbuy) or one object (objects:<id>). '$potion' = that perk's bottle model, '$perk' = that perk's colour. Offsets in the object's frame (y = forward), Skyrim units. freed: only once the city's curse is lifted (the shrine then burns gold, a beam over it). The freed altar (its night's waves all slain) raises its Echo Stone (behind it), a circle of the Tongues' runes turning in the air over it, and its heart stone turns to blue light. held: only while the city is still cursed.",
  "columns": [
   "id",
   "for",
@@ -14,7 +14,8 @@
   "scale",
   "spin",
   "freed",
-  "verify"
+  "verify",
+  "held"
  ],
  "rows": [
   {
@@ -30,41 +31,188 @@
    "scale": 1.0,
    "spin": 0,
    "verify": [],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
-   "id": "shrine_crystal",
+   "id": "heart_stone",
    "for": "objects:coffer",
    "type": "stat",
-   "model": "CurseOfAlduin\\shrine\\crystal.nif",
+   "model": "CurseOfAlduin\\shrine\\heartstone.nif",
    "color": "none",
    "radius": 0,
    "x": 0,
    "y": 0,
    "z": 175,
    "scale": 1.0,
-   "spin": 40,
+   "spin": 39.5,
    "verify": [
     "z"
    ],
-   "freed": false
+   "freed": false,
+   "held": true
   },
   {
-   "id": "shrine_shards",
+   "id": "heart_stone_lit",
    "for": "objects:coffer",
    "type": "stat",
-   "model": "CurseOfAlduin\\shrine\\shards.nif",
+   "model": "CurseOfAlduin\\shrine\\heartstone_lit.nif",
    "color": "none",
    "radius": 0,
    "x": 0,
    "y": 0,
    "z": 175,
    "scale": 1.0,
-   "spin": 7,
+   "spin": 39.5,
    "verify": [
     "z"
    ],
-   "freed": false
+   "freed": true,
+   "held": false
+  },
+  {
+   "id": "heart_motes",
+   "for": "objects:coffer",
+   "type": "stat",
+   "model": "CurseOfAlduin\\shrine\\risemotes.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 0,
+   "scale": 1.0,
+   "spin": 0,
+   "verify": [
+    "z"
+   ],
+   "freed": false,
+   "held": true
+  },
+  {
+   "id": "heart_motes_lit",
+   "for": "objects:coffer",
+   "type": "stat",
+   "model": "CurseOfAlduin\\shrine\\risemotes_lit.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 0,
+   "y": 0,
+   "z": 0,
+   "scale": 1.0,
+   "spin": 0,
+   "verify": [
+    "z"
+   ],
+   "freed": true,
+   "held": false
+  },
+  {
+   "id": "pillar_rock0",
+   "for": "objects:coffer",
+   "type": "stat",
+   "model": "CurseOfAlduin\\shrine\\pillarrock.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 194,
+   "y": 0,
+   "z": 204.6,
+   "scale": 1.0,
+   "spin": 12,
+   "verify": [
+    "z"
+   ],
+   "freed": false,
+   "held": false
+  },
+  {
+   "id": "pillar_rock1",
+   "for": "objects:coffer",
+   "type": "stat",
+   "model": "CurseOfAlduin\\shrine\\pillarrock.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 96.5,
+   "y": -168,
+   "z": 231.6,
+   "scale": 1.0,
+   "spin": 14,
+   "verify": [
+    "z"
+   ],
+   "freed": false,
+   "held": false
+  },
+  {
+   "id": "pillar_rock2",
+   "for": "objects:coffer",
+   "type": "stat",
+   "model": "CurseOfAlduin\\shrine\\pillarrock.nif",
+   "color": "none",
+   "radius": 0,
+   "x": -96.6,
+   "y": -167.5,
+   "z": 282.0,
+   "scale": 1.0,
+   "spin": 16,
+   "verify": [
+    "z"
+   ],
+   "freed": false,
+   "held": false
+  },
+  {
+   "id": "pillar_rock3",
+   "for": "objects:coffer",
+   "type": "stat",
+   "model": "CurseOfAlduin\\shrine\\pillarrock.nif",
+   "color": "none",
+   "radius": 0,
+   "x": -193.4,
+   "y": 0,
+   "z": 231.6,
+   "scale": 1.0,
+   "spin": 18,
+   "verify": [
+    "z"
+   ],
+   "freed": false,
+   "held": false
+  },
+  {
+   "id": "pillar_rock4",
+   "for": "objects:coffer",
+   "type": "stat",
+   "model": "CurseOfAlduin\\shrine\\pillarrock.nif",
+   "color": "none",
+   "radius": 0,
+   "x": -96.6,
+   "y": 167.5,
+   "z": 282.0,
+   "scale": 1.0,
+   "spin": 20,
+   "verify": [
+    "z"
+   ],
+   "freed": false,
+   "held": false
+  },
+  {
+   "id": "pillar_rock5",
+   "for": "objects:coffer",
+   "type": "stat",
+   "model": "CurseOfAlduin\\shrine\\pillarrock.nif",
+   "color": "none",
+   "radius": 0,
+   "x": 97.6,
+   "y": 168,
+   "z": 282.0,
+   "scale": 1.0,
+   "spin": 22,
+   "verify": [
+    "z"
+   ],
+   "freed": false,
+   "held": false
   },
   {
    "id": "shrine_glow",
@@ -81,7 +229,8 @@
    "verify": [
     "radius"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "perk_beam",
@@ -98,7 +247,8 @@
    "verify": [
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "perk_light",
@@ -115,7 +265,8 @@
    "verify": [
     "radius"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "coffer_beam",
@@ -132,7 +283,8 @@
    "verify": [
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "coffer_light",
@@ -149,7 +301,8 @@
    "verify": [
     "radius"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "wall_light",
@@ -166,7 +319,8 @@
    "verify": [
     "radius"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "bottle_trollshide",
@@ -183,7 +337,8 @@
    "verify": [
     "z"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "trollshide_skull",
@@ -203,7 +358,8 @@
     "z",
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "bottle_quicksilver",
@@ -220,7 +376,8 @@
    "verify": [
     "z"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "quicksilver_ingot1",
@@ -240,7 +397,8 @@
     "z",
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "quicksilver_ingot2",
@@ -260,7 +418,8 @@
     "z",
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "bottle_twinstrike",
@@ -277,7 +436,8 @@
    "verify": [
     "z"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "twinstrike_tusk1",
@@ -297,7 +457,8 @@
     "z",
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "twinstrike_tusk2",
@@ -317,7 +478,8 @@
     "z",
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "bottle_hearthfire",
@@ -334,7 +496,8 @@
    "verify": [
     "z"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "hearthfire_wine",
@@ -354,7 +517,8 @@
     "z",
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "bottle_windrunner",
@@ -371,7 +535,8 @@
    "verify": [
     "z"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "windrunner_feather1",
@@ -391,7 +556,8 @@
     "z",
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "windrunner_feather2",
@@ -411,7 +577,8 @@
     "z",
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "bottle_hawkeye",
@@ -428,7 +595,8 @@
    "verify": [
     "z"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "hawkeye_crystal",
@@ -448,7 +616,8 @@
     "z",
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "bottle_mammoth",
@@ -465,7 +634,8 @@
    "verify": [
     "z"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "mammoth_barrel",
@@ -485,7 +655,8 @@
     "z",
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "bottle_frostbite",
@@ -502,7 +673,8 @@
    "verify": [
     "z"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "frostbite_eggs",
@@ -522,7 +694,8 @@
     "z",
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "frostbite_venom",
@@ -542,7 +715,8 @@
     "z",
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "bottle_stormcrown",
@@ -559,7 +733,8 @@
    "verify": [
     "z"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "stormcrown_shard",
@@ -579,7 +754,8 @@
     "z",
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "glow_trollshide",
@@ -596,7 +772,8 @@
    "verify": [
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "glow_quicksilver",
@@ -613,7 +790,8 @@
    "verify": [
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "glow_twinstrike",
@@ -630,7 +808,8 @@
    "verify": [
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "glow_hearthfire",
@@ -647,7 +826,8 @@
    "verify": [
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "glow_windrunner",
@@ -664,7 +844,8 @@
    "verify": [
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "glow_hawkeye",
@@ -681,7 +862,8 @@
    "verify": [
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "glow_mammoth",
@@ -698,7 +880,8 @@
    "verify": [
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "glow_frostbite",
@@ -715,7 +898,8 @@
    "verify": [
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "glow_stormcrown",
@@ -732,7 +916,8 @@
    "verify": [
     "scale"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "ammo_quiver",
@@ -749,7 +934,8 @@
    "verify": [
     "z"
    ],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "ammo_glow",
@@ -764,7 +950,8 @@
    "scale": 0.5,
    "spin": 0,
    "verify": [],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "ammo_light",
@@ -779,7 +966,8 @@
    "scale": 1,
    "spin": 0,
    "verify": [],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "brew_light",
@@ -794,7 +982,8 @@
    "scale": 1,
    "spin": 0,
    "verify": [],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "forge_light",
@@ -809,7 +998,8 @@
    "scale": 1,
    "spin": 0,
    "verify": [],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "ward_brazier",
@@ -824,7 +1014,8 @@
    "scale": 0.75,
    "spin": 0,
    "verify": [],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "ward_fire",
@@ -839,7 +1030,8 @@
    "scale": 0.42,
    "spin": 0,
    "verify": [],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "ward_light",
@@ -854,7 +1046,8 @@
    "scale": 1,
    "spin": 0,
    "verify": [],
-   "freed": false
+   "freed": false,
+   "held": false
   },
   {
    "id": "shrine_freed_glow",
@@ -871,7 +1064,8 @@
    "freed": true,
    "verify": [
     "radius"
-   ]
+   ],
+   "held": false
   },
   {
    "id": "shrine_freed_beam",
@@ -888,7 +1082,8 @@
    "freed": true,
    "verify": [
     "scale"
-   ]
+   ],
+   "held": false
   },
   {
    "id": "echo_stone",
@@ -903,7 +1098,8 @@
    "scale": 1.0,
    "spin": 0,
    "freed": true,
-   "verify": []
+   "verify": [],
+   "held": false
   },
   {
    "id": "echo_stone_light",
@@ -918,7 +1114,8 @@
    "scale": 1,
    "spin": 0,
    "freed": true,
-   "verify": []
+   "verify": [],
+   "held": false
   },
   {
    "id": "freed_runes",
@@ -929,11 +1126,12 @@
    "radius": 0,
    "x": 0,
    "y": 0,
-   "z": 330,
+   "z": 345,
    "scale": 1.0,
    "spin": 18,
    "verify": [],
-   "freed": true
+   "freed": true,
+   "held": false
   }
  ],
  "show": {

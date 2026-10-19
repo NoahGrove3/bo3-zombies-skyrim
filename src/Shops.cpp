@@ -41,7 +41,7 @@ namespace bo3z
 		} g_show;
 		bool g_choosing = false;  // a third spell won: which of your two it replaces (Choose)
 		constexpr float kChargeTime = 1.1f;
-		constexpr float kOrbZ = 250.0f;   // just over the shrine's crystal (its centre at z 175, its crown to ~215)
+		constexpr float kOrbZ = 300.0f;   // just over the altar's heart stone (its centre at z 175, its top ~266)
 		constexpr float kOrbScale = 1.6f;
 
 		RE::NiPoint3 Local(RE::TESObjectREFR* a_ref, float a_x, float a_y, float a_z)
@@ -68,9 +68,11 @@ namespace bo3z
 			// (run on every scan: a piece that went missing - or was left disabled by an older stand - is put back)
 			g_dressed[a_index] = true;
 			const int obj = gen::kLocations[a_index].object;
-			const bool freed = Curse::Freed(gen::kLocations[a_index].town);
+			// (Noah: the freed look once its trials are done and every wave of that night is slain) the city's curse lifted
+			// and no night being fought
+			const bool freed = Curse::Freed(gen::kLocations[a_index].town) && !Director::Fighting();
 			for (const auto& d : gen::kDress) {
-				if (d.object != obj || (d.freed && !freed)) {
+				if (d.object != obj) {
 					continue;
 				}
 				auto* base = Forms::Ours(d.formId);
@@ -78,6 +80,19 @@ namespace bo3z
 					continue;
 				}
 				auto want = Local(a_main, d.x * c, d.y * c, d.z);
+				if (d.held && freed) {  // the cursed look goes (the heart stone turns to light: its lit twin takes its place)
+					RE::TES::GetSingleton()->ForEachReferenceInRange(a_main, 400.0f, [&](RE::TESObjectREFR* r) {
+						if (r && r->GetBaseObject() == base && !r->IsDeleted() && !r->IsDisabled()) {
+							r->Disable();
+							r->SetDelete(true);
+						}
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
+					continue;
+				}
+				if (d.freed && !freed) {
+					continue;
+				}
 				if (d.freed && !d.light && d.z == 0.0f && (d.x != 0.0f || d.y != 0.0f)) {
 					// (Noah: the freed altar's banners and braziers floated) stood on the ground where they are, not at the altar's height
 					if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(want, land) && std::abs(land - want.z) < 160.0f) {
@@ -867,6 +882,38 @@ namespace bo3z
 				found->SetScale(gen::kObjects[loc.object].scale);  // (the Coffer grew)
 			}
 			g_placed[a_index] = found->CreateRefHandle();
+			if (gen::kObjects[loc.object].kind == 0) {
+				// (Noah: a second altar stood buried in the Echo Stone) one altar a town: any other copy of it - left behind
+				// by an older layout - goes, with everything dressed on it
+				std::vector<RE::TESObjectREFR*> extra;
+				RE::TES::GetSingleton()->ForEachReferenceInRange(anchor, gen::kPlanSweep, [&](RE::TESObjectREFR* r) {
+					if (r && r != found && r->GetBaseObject() == base && !r->IsDeleted() && !r->IsDisabled()) {
+						extra.push_back(r);
+					}
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				for (auto* x : extra) {
+					int gone = 0;
+					RE::TES::GetSingleton()->ForEachReferenceInRange(x, 340.0f, [&](RE::TESObjectREFR* r) {
+						if (!r || r->IsDeleted() || r->IsDisabled() || r->GetPosition().GetDistance(found->GetPosition()) < 200.0f) {
+							return RE::BSContainer::ForEachResult::kContinue;
+						}
+						for (const auto& d : gen::kDress) {
+							if (d.object == loc.object && !d.light && r->GetBaseObject() == Forms::Ours(d.formId)) {
+								r->Disable();
+								r->SetDelete(true);
+								++gone;
+								break;
+							}
+						}
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
+					const auto xp = x->GetPosition();
+					x->Disable();
+					x->SetDelete(true);
+					logger::info("shops: a second altar in {} at ({:.0f},{:.0f},{:.0f}) taken away with {} of its pieces", gen::kTowns[loc.town], xp.x, xp.y, xp.z, gone);
+				}
+			}
 			Dress(a_index, found);
 		}
 

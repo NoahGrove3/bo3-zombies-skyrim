@@ -1159,6 +1159,16 @@
   "ACTI:tornado_blood": "0xc83",
   "STAT:freed_runes": "0xc84",
   "STAT:rel_brazier": "0xc85",
-  "STAT:rel_banner": "0xc86"
+  "STAT:rel_banner": "0xc86",
+  "STAT:heart_stone": "0xc87",
+  "STAT:heart_stone_lit": "0xc88",
+  "STAT:heart_motes": "0xc89",
+  "STAT:heart_motes_lit": "0xc8a",
+  "STAT:pillar_rock0": "0xc8b",
+  "STAT:pillar_rock1": "0xc8c",
+  "STAT:pillar_rock2": "0xc8d",
+  "STAT:pillar_rock3": "0xc8e",
+  "STAT:pillar_rock4": "0xc8f",
+  "STAT:pillar_rock5": "0xc90"
  }
 }

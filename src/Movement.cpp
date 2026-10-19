@@ -1352,6 +1352,35 @@ namespace bo3z
 			}
 			return g > -1e8f ? p.z - g : 1e9f;
 		}
+		// (Noah: the camera kept turning on its own while gliding, and a dodge snapped it round) turn yourself without
+		// turning the view: in third person the camera looks along your heading plus its free rotation, so whatever turns
+		// you (the glide's steering, a dodge - and True Directional Movement turning you toward the stick) the free
+		// rotation is set so the camera stays exactly where you left it
+		float ViewYaw(RE::PlayerCharacter* a_p)
+		{
+			auto* pcam = RE::PlayerCamera::GetSingleton();
+			if (pcam && pcam->currentState && pcam->currentState->id == RE::CameraState::kThirdPerson) {
+				auto* tp = static_cast<RE::ThirdPersonState*>(pcam->currentState.get());
+				return a_p->GetAngleZ() + (tp->freeRotationEnabled ? tp->freeRotation.x : 0.0f);
+			}
+			return a_p->GetAngleZ();
+		}
+		void TurnKeepView(RE::PlayerCharacter* a_p, float a_yaw)
+		{
+			auto* pcam = RE::PlayerCamera::GetSingleton();
+			if (pcam && pcam->currentState && pcam->currentState->id == RE::CameraState::kThirdPerson) {
+				auto*       tp = static_cast<RE::ThirdPersonState*>(pcam->currentState.get());
+				const float view = ViewYaw(a_p);
+				a_p->SetHeading(a_yaw);
+				float fx = view - a_yaw;
+				while (fx > 3.14159f) fx -= 6.28318f;
+				while (fx < -3.14159f) fx += 6.28318f;
+				tp->freeRotationEnabled = true;
+				tp->freeRotation.x = fx;
+				return;
+			}
+			a_p->SetHeading(a_yaw);
+		}
 		// (Noah: weapons away just before you take the harness) what is in your hands is hidden while you hang from it
 		// (the bow, a blade, a shield, the spells' hand glow nodes), and shown again when the dragon lets go
 		void HideHands(bool a_hide)
@@ -1654,7 +1683,7 @@ namespace bo3z
 			const float kSwoop = g_swoopLen;
 			g_place = true;
 			if (g_yawOwned) {
-				a_player->SetHeading(g_glideYaw);  // (yours to steer, with the stick: nothing else turns you mid-glide)
+				TurnKeepView(a_player, g_glideYaw);  // (yours to steer, with the stick: nothing else turns you mid-glide)
 			}
 			// your body keeps its fall until it has you (the paraglider's own opening animation flips you over: held at
 			// least until that has played out, about a second), then eases into the hang
@@ -1812,7 +1841,7 @@ namespace bo3z
 					g_glideYaw += rate * dt;
 					while (g_glideYaw > 3.14159f) g_glideYaw -= 6.28318f;
 					while (g_glideYaw < -3.14159f) g_glideYaw += 6.28318f;
-					a_player->SetHeading(g_glideYaw);
+					TurnKeepView(a_player, g_glideYaw);
 					const RE::NiPoint3 hd{ std::sin(g_glideYaw), std::cos(g_glideYaw), 0 };
 					RE::NiPoint3       want = hd * (g_speed * std::cos(g_gamma));
 					want.z = g_speed * std::sin(g_gamma);
@@ -1858,7 +1887,7 @@ namespace bo3z
 				// much, so it stays where your right stick / mouse put it
 				static float camYawWas = 0;
 				static bool  camHeld = false;
-				if (!g_chaseOn && g_yawOwned && pcam && pcam->currentState && pcam->currentState->id == RE::CameraState::kThirdPerson) {
+				if (false && !g_chaseOn && g_yawOwned && pcam && pcam->currentState && pcam->currentState->id == RE::CameraState::kThirdPerson) {  // (TurnKeepView does it now)
 					auto* tp = static_cast<RE::ThirdPersonState*>(pcam->currentState.get());
 					if (!camHeld) {
 						camHeld = true, camYawWas = g_glideYaw;
@@ -2169,11 +2198,7 @@ namespace bo3z
 			if (av->GetActorValue(RE::ActorValue::kStamina) < 10.0f) {
 				return;
 			}
-			float camYaw = p->GetAngleZ();
-			if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraRoot) {
-				const auto& m = cam->cameraRoot->world.rotate;
-				camYaw = std::atan2(m.entry[0][1], m.entry[1][1]);
-			}
+			const float camYaw = ViewYaw(p);  // (where the camera looks: your heading plus its free rotation)
 			const char* ev = "TKDodgeBack";  // (standing still: a step back, as TK Dodge does)
 			RE::NiPoint3 dir{ -std::sin(camYaw), -std::cos(camYaw), 0 };
 			if (auto* pc = RE::PlayerControls::GetSingleton()) {
@@ -2185,7 +2210,7 @@ namespace bo3z
 					dir = std::abs(in.y) >= std::abs(in.x) ? (in.y > 0 ? f : f * -1.0f) : (in.x > 0 ? r : r * -1.0f);
 				}
 			}
-			p->SetHeading(camYaw);  // face where you look: the roll goes the way you meant
+			TurnKeepView(p, camYaw);  // face where you look (the camera stays put): the roll goes the way you meant
 			if (!p->NotifyAnimationGraph(ev)) {
 				logger::info("dodge: {} not taken", ev);
 				return;
