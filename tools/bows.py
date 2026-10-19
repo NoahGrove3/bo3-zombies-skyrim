@@ -121,7 +121,7 @@ def build(bid):
     groups = {'string': F[fs], 'trim': F[trim], 'body': F[(~fs) & (~trim)]}
     N = normals(P, F)
     kind = BODY_KIND[bid]
-    d, n = skymat.make(kind, body_col, seed=len(bid))
+    d, n = skymat.make(kind, body_col, seed=len(bid), size=2048)   # (Noah: 2K, like the spells)
     tex = {'d': save_dds(d, f'{bid}_d.dds'), 'n': save_dds(n, f'{bid}_n.dds', True),
            'flat': save_dds(Image.new('RGBA', (32, 32), (128, 128, 255, 200)), 'flat_n.dds', True)}
     gcol = tuple(int(c * 255) for c in glow)
