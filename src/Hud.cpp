@@ -4829,9 +4829,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (a_b && a_b->IsDown() && a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x3B && InGame()) {
 				SKSE::GetTaskInterface()->AddUITask([] {
 					auto* book = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(gen::kGuideBook, gen::kPlugin);
-					if (book && !RE::UI::GetSingleton()->IsMenuOpen(RE::BookMenu::MENU_NAME)) {
-						RE::BSString desc("");
-						RE::BookMenu::OpenBookMenu(desc, nullptr, nullptr, book, RE::NiPoint3{}, RE::NiMatrix3{}, 1.0f, true);
+					auto* pl = RE::PlayerCharacter::GetSingleton();
+					auto* em = RE::ActorEquipManager::GetSingleton();
+					if (book && pl && em && !RE::UI::GetSingleton()->IsMenuOpen(RE::BookMenu::MENU_NAME)) {
+						if (pl->GetInventoryCounts([&](RE::TESBoundObject& o) { return &o == book; }).empty()) {
+							pl->AddObjectToContainer(book, nullptr, 1, nullptr);  // (the guide was dropped: a fresh copy)
+						}
+						em->EquipObject(pl, book);  // (reading it from the pack: Skyrim opens its book, the Codex shows over it)
 					}
 				});
 				return;
