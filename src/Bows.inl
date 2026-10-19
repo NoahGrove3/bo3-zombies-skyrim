@@ -255,6 +255,8 @@ namespace BowsImpl
 		static constexpr const char* kSmall[6] = { "fireball", "frost", "runeshock", "shoutarea", "light", "bloodplague" };
 		static constexpr const char* kBig[6] = { "firestorm", "icevolley", "shockmass", "giantslam", "lightmassive", "darkmassive" };
 		const int k = static_cast<int>(KindOf(s.bow));
+		// (Noah: from the first tier the arrow lands as a small burst) everything close round the impact is hurt too
+		Spellcraft::Area(s.row, p, 140.0f + 30.0f * s.tier, s.damage * 0.55f, gen::kFxNone);
 		Gun::FxBlast(s.full ? kBig[k] : kSmall[k], p);
 		Spellcraft::BurstAt(s.row, p, s.full ? 150.0f : 80.0f, s.full ? 0.55f : 0.35f);
 	}
@@ -381,8 +383,51 @@ namespace BowsImpl
 		}
 	}
 
+	// (Noah: no shot unless the bow is fully drawn) let go early and nothing flies: our shot isn't loosed, and Skyrim's own
+	// arrow (already on its way) is hidden and harmless; a soft fizzle of the element at the string says why
+	float g_hideArrow = 0;
+	void Fizzle(int i)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		Spellcraft::BurstAt(gen::kBows[i].spellRow, HeadAt(p), 10.0f, 0.2f);
+		g_hideArrow = 0.6f;
+		static int told = 0;
+		if (told++ < 2) {
+			Hud::Banner("Draw the bow all the way to loose an arrow", 2.5f);
+		}
+	}
+	void TickHideArrow(float a_delta)
+	{
+		if (g_hideArrow <= 0) {
+			return;
+		}
+		g_hideArrow -= a_delta;
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* mgr = RE::Projectile::Manager::GetSingleton();
+		if (!p || !mgr) {
+			return;
+		}
+		RE::BSSpinLockGuard lock(mgr->projectileLock);
+		for (auto* list : { &mgr->limited, &mgr->unlimited, &mgr->pending }) {
+			for (auto& h : *list) {
+				auto pr = h.get();
+				if (!pr || pr->GetFormType() != RE::FormType::ProjectileArrow || pr->GetProjectileRuntimeData().shooter.get().get() != p) {
+					continue;
+				}
+				if (auto* o = pr->Get3D()) {
+					o->SetAppCulled(true);
+				}
+				pr->GetProjectileRuntimeData().weaponDamage = 0.0f;
+			}
+		}
+	}
+
 	void Fire(int i, float a_draw)
 	{
+		if (a_draw < 0.98f) {
+			Fizzle(i);
+			return;
+		}
 		auto*       p = RE::PlayerCharacter::GetSingleton();
 		const int   row = gen::kBows[i].spellRow, gun = GunOf(i), t = g_level[i];
 		const Aim   aim = AimAt(8000.0f);
@@ -460,7 +505,7 @@ namespace BowsImpl
 		case Kind::Blood: effect = gen::kFxDrain; break;
 		}
 		Spellcraft::BurstAt(row, from + dir * 30.0f, full ? 26.0f : 16.0f, 0.18f);  // (the string's snap: a flash off the arrow's head)
-		Spellcraft::Launch(row, gun, from, dir, 4800.0f, dmg, 9.0f, 1, full ? 1.25f : 1.0f, -1, true);
+		Spellcraft::Launch(row, gun, from, dir, 4800.0f, dmg, 30.0f, 1, full ? 1.25f : 1.0f, -1, true);  // (Noah: only some hits counted - a wider body to strike with)
 		static int said = 0;
 		if (said++ < 8) {
 			logger::info("bows: arrow away from ({:.0f},{:.0f},{:.0f}) toward ({:.0f},{:.0f},{:.0f}), {} shots in flight", from.x, from.y, from.z, aim.hit.x, aim.hit.y, aim.hit.z, Spellcraft::g_shots2.size());
@@ -892,11 +937,25 @@ namespace BowsImpl
 		if (!p || !p->Is3DLoaded()) {
 			return;
 		}
+		static float reequip = -1;
 		if (auto* root = p->Get3D(); root != g_watched) {  // (a new body after a load or a race change: listen to its graph)
 			p->RemoveAnimationGraphEventSink(&g_animWatch);
 			p->AddAnimationGraphEventSink(&g_animWatch);
 			g_watched = root;
+			reequip = 1.5f;  // (Noah: after a load the bow was invisible until put away and drawn again) - so we do that for you
 		}
+		if (reequip > 0 && (reequip -= a_delta) <= 0) {
+			if (const int hb = Held(); hb >= 0) {
+				if (auto* w = Weap(hb); w && p->GetEquippedObject(false) == w) {
+					if (auto* em = RE::ActorEquipManager::GetSingleton()) {
+						em->UnequipObject(p, w, nullptr, 1, nullptr, false, false, false, true);
+						em->EquipObject(p, w, nullptr, 1, nullptr, false, false, false, true);
+						logger::info("bows: {} put on again after the load (its model shows)", gen::kBows[hb].label);
+					}
+				}
+			}
+		}
+		TickHideArrow(a_delta);
 		g_sinceFire += a_delta;
 		const int i = Held();
 		static float quiver = 0;

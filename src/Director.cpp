@@ -2362,30 +2362,45 @@ namespace bo3z
 		}
 		void TickPeace(RE::PlayerCharacter* a_player, float a_delta)
 		{
-			static float t = 0;
-			if ((t -= a_delta) > 0) {
+			// (Noah: the game crashed the moment Whiterun was freed) never while the night turns over - the dead crumbling,
+			// the townsfolk walking back out - nor on anything half gone; each fighter looked at once in a while, and only
+			// told to stop (it finds the player again by itself)
+			static Phase   lastPhase = g_phase;
+			static float   settle = 0, t = 0;
+			static std::unordered_map<RE::FormID, float> recent;
+			if (g_phase != lastPhase) {
+				lastPhase = g_phase, settle = 6.0f;
+			}
+			if (!g_lifted.empty()) {
+				settle = std::max(settle, 4.0f);
+			}
+			if ((settle -= a_delta) > 0 || (t -= a_delta) > 0) {
 				return;
 			}
-			t = 0.25f;
+			t = 0.5f;
+			for (auto it = recent.begin(); it != recent.end();) {
+				it = (it->second -= 0.5f) <= 0 ? recent.erase(it) : std::next(it);
+			}
+			auto alive = [](RE::Actor* x) { return x && !x->IsDead() && !x->IsDisabled() && !x->IsDeleted() && x->Is3DLoaded() && x->GetParentCell(); };
 			int n = 0;
 			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 				auto a = h.get();
-				if (!a || a.get() == a_player || a->IsDead() || !a->IsInCombat() || PlayerSide(a.get(), a_player)) {
+				if (!alive(a.get()) || a.get() == a_player || !a->IsInCombat() || PlayerSide(a.get(), a_player) || recent.contains(a->GetFormID())) {
 					continue;
 				}
 				auto tgt = a->GetActorRuntimeData().currentCombatTarget.get();
-				if (!tgt || PlayerSide(tgt.get(), a_player)) {
+				if (!alive(tgt.get()) || PlayerSide(tgt.get(), a_player)) {
 					continue;
 				}
 				const bool monsters = !IsPerson(a.get()) || !IsPerson(tgt.get()) || IsOurs(a.get()) || IsOurs(tgt.get()) || IsOurBase(a.get()) || IsOurBase(tgt.get());
 				if (!monsters) {
 					continue;  // people against people (guards and bandits) are Skyrim's own business
 				}
+				recent[a->GetFormID()] = 3.0f;
 				a->StopCombat();
-				if (IsOurs(a.get())) {
-					a->StartCombat(a_player);
+				if (++n >= 6) {
+					break;  // (a few a pass)
 				}
-				++n;
 			}
 			if (static int said = 0; n && said++ < 20) {
 				logger::info("peace: {} creature fights dropped (only players are fair game)", n);

@@ -364,12 +364,13 @@ def build(bid):
     r = subprocess.run([CONV, str(jf)], capture_output=True, text=True)
     print('  ', (r.stdout.strip().split('\n')[-1] if r.stdout else ''), r.stderr.strip()[-300:])
     if r.returncode: raise SystemExit(f'bowconv failed for {bid}')
-    # the Spectral Bow's flame wings, recoloured to the element (its palette: our own gradient)
+    # (Noah: the wings were too much and didn't fit the bow) the element coursing through the bow itself: the Spectral
+    # Bow's flowing flame shader on a skin a hair outside every part, recoloured to the element, flowing along its length
     pal = palette(bid, glow)
     nif = OUT / 'Meshes/CurseOfAlduin/bow' / (bid + '.nif')
-    r = subprocess.run([GRAFT, str(nif), SPECTRAL, '6', str(nif), f'{bid}_flame', pal, '0.92', '0', '0', '0'], capture_output=True, text=True)
+    r = subprocess.run(['/home/claude/tools/fxshell', str(nif), SPECTRAL, '6', str(nif), pal, '1', '1', '1', '0.9', '0.12', '0.025', '0.08'], capture_output=True, text=True)
     print('  ', r.stdout.strip(), r.stderr.strip())
-    if r.returncode: raise SystemExit(f'fxgraft failed for {bid}')
+    if r.returncode: raise SystemExit(f'fxshell failed for {bid}')
     print(f'   {total} triangles')
 
 

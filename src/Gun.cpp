@@ -340,6 +340,12 @@ namespace bo3z
 		bool        g_propKickBig = false;
 		std::atomic<bool> g_weaponSwing{ false };  // (any swing of the weapon in hand, heard by Bows' animation sink: Alduin's Fang's charged swing)
 		bool        g_stormBusy = false;   // (while the lightning or a shout itself is dealing damage: no charge spent)
+		struct Arc
+		{
+			RE::NiPoint3 from, to;
+			float        delay;
+		};
+		std::vector<Arc> g_arcs;           // (Stormblast's lightning, drawn by TickStorm once Spellcraft is in reach)
 		void        StormStrike(RE::Actor* a_target);
 
 		bool Damage(RE::Actor* a_target, float a_bo3Damage, bool a_head, bool a_melee, bool a_quiet = false)
@@ -1062,21 +1068,35 @@ namespace bo3z
 			const float k = L == 1 ? 1.0f : L == 2 ? 1.8f : 3.2f;
 			const float base = Director::RoundHealth() * gen::kRounds.hpScale * 0.9f * k;
 			const auto  at = a_target->GetPosition();
+			// (Noah: the bodies hung in the air, and the strike was only a flash) the push only on the living, and the
+			// lightning seen: a bolt down from the sky, arcs crawling all round the one struck, arcs leaping to the rest
+			const RE::NiPoint3 chest = at + RE::NiPoint3{ 0, 0, 80.0f };
+			g_arcs.push_back({ chest + RE::NiPoint3{ 0, 0, 1300.0f }, at, 0.0f });
+			for (int k = 0; k < 7; ++k) {
+				const float a = 0.9f * k;
+				g_arcs.push_back({ chest + RE::NiPoint3{ std::cos(a) * 30.0f, std::sin(a) * 30.0f, 20.0f * (k % 3) - 20.0f },
+					chest + RE::NiPoint3{ std::cos(a + 1.9f) * 110.0f, std::sin(a + 1.9f) * 110.0f, 40.0f * ((k + 1) % 3) - 60.0f }, 0.05f * k });
+			}
 			Damage(a_target, base * 1.4f, false, false, true);
 			Blast(BlastIndex("skybolt"), at, 0.0f, 0.7f);
-			if (auto* proc = p->GetActorRuntimeData().currentProcess; proc && L == 3 && !a_target->IsDead()) {
-				proc->KnockExplosion(a_target, at + RE::NiPoint3{ 0, 0, 140.0f }, 1.6f);
-			} else {
-				Stagger(a_target, 0.7f);
+			if (!a_target->IsDead()) {
+				if (auto* proc = p->GetActorRuntimeData().currentProcess; proc && L == 3) {
+					proc->KnockExplosion(a_target, at + RE::NiPoint3{ 0, 0, 140.0f }, 1.6f);
+				} else {
+					Stagger(a_target, 0.7f);
+				}
 			}
 			int n = 0;
 			for (auto* f : Foes(at, 450.0f + 150.0f * L)) {
 				if (f == a_target || n >= 2 + 2 * L) {
 					continue;
 				}
+				++n;
+				g_arcs.push_back({ chest, f->GetPosition() + RE::NiPoint3{ 0, 0, 80.0f }, 0.06f * n });
 				Damage(f, base * 0.7f, false, false, true);
-				Stagger(f, 0.5f);
-				Blast(BlastIndex("skybolt"), f->GetPosition(), 0.07f * ++n, 0.45f);
+				if (!f->IsDead()) {
+					Stagger(f, 0.5f);
+				}
 			}
 			g_stormBusy = false;
 			logger::info("shout: Stormblast let go on {:08X} (+{} around it), {} charges left", a_target->GetFormID(), n, g_storm.charges);
@@ -2454,6 +2474,13 @@ namespace bo3z
 		}
 		void TickStorm(float a_delta)
 		{
+			for (auto& a : g_arcs) {
+				if ((a.delay -= a_delta) <= 0) {
+					Spellcraft::StreakAt(StormRow(), a.from, a.to, 0.9f, 0.3f, true);
+					Spellcraft::BurstAt(StormRow(), a.to, 26.0f, 0.3f);
+				}
+			}
+			std::erase_if(g_arcs, [](const Arc& a) { return a.delay <= 0; });
 			if (g_storm.charges <= 0) {
 				return;
 			}
