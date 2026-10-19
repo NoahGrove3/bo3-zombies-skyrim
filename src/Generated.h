@@ -1118,7 +1118,7 @@ namespace bo3z::gen
 		ObjectDef{ "relic_altar", "Echo Altar", 6, 0, -1, 0x9DA, 0.8f, true },
 	} };
 	struct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; bool freed; };
-	inline constexpr std::array<DressDef, 73> kDress{ {
+	inline constexpr std::array<DressDef, 83> kDress{ {
 		DressDef{ 0, 0x926, false, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, false },
 		DressDef{ 0, 0xBCD, false, 0.0f, 0.0f, 175.0f, 1.0f, 40.0f, false },
 		DressDef{ 0, 0xBCE, false, 0.0f, 0.0f, 175.0f, 1.0f, 7.0f, false },
@@ -1127,6 +1127,16 @@ namespace bo3z::gen
 		DressDef{ 0, 0x84E, true, 0.0f, 0.0f, 270.0f, 1.0f, 0.0f, false },
 		DressDef{ 0, 0xBFA, true, 0.0f, 0.0f, 175.0f, 1.0f, 0.0f, true },
 		DressDef{ 0, 0xBFB, false, 0.0f, 0.0f, 150.0f, 0.4f, 0.0f, true },
+		DressDef{ 0, 0xC27, false, 0.0f, -380.0f, 0.0f, 1.0f, 0.0f, true },
+		DressDef{ 0, 0xC28, true, 0.0f, -300.0f, 200.0f, 1.0f, 0.0f, true },
+		DressDef{ 0, 0xC29, false, -250.0f, 250.0f, 0.0f, 1.0f, 0.0f, true },
+		DressDef{ 0, 0xC2A, false, 250.0f, 250.0f, 0.0f, 1.0f, 0.0f, true },
+		DressDef{ 0, 0xC2B, false, -250.0f, -250.0f, 0.0f, 1.0f, 0.0f, true },
+		DressDef{ 0, 0xC2C, false, 250.0f, -250.0f, 0.0f, 1.0f, 0.0f, true },
+		DressDef{ 0, 0xC2D, true, -340.0f, 0.0f, 150.0f, 1.0f, 0.0f, true },
+		DressDef{ 0, 0xC2E, false, -390.99999999999994f, -60.0f, 0.0f, 1.0f, 0.0f, true },
+		DressDef{ 0, 0xC2F, true, 340.0f, 0.0f, 150.0f, 1.0f, 0.0f, true },
+		DressDef{ 0, 0xC30, false, 390.99999999999994f, -60.0f, 0.0f, 1.0f, 0.0f, true },
 		DressDef{ 1, 0x8AB, true, 0.0f, 60.0f, 120.0f, 1.0f, 0.0f, false },
 		DressDef{ 2, 0x8A4, false, 0.0f, 0.0f, 62.0f, 2.0f, 30.0f, false },
 		DressDef{ 2, 0x8A5, false, 0.0f, 0.0f, 75.0f, 0.5f, 0.0f, false },
@@ -1413,4 +1423,38 @@ namespace bo3z::gen
 		BowDef{ "dawnspire", "Dawnspire", "Sun-gilded bronze of the old Tongues. Its arrows sear the dead and stagger them.", "sun", 8, 2, 0.42f, 0xFFCC4C, 0xC1D, 0xC1E },
 		BowDef{ "thirstbow", "Thirstbow", "Blood-dark yew that drinks what it strikes. Every hit gives you back a little life.", "blood", 5, 2, 0.4f, 0xE51E28, 0xC20, 0xC21 },
 	} };
+	struct EchoWonder { std::string_view id, label, text; std::uint32_t color, pedestal, gem; };
+	inline constexpr std::array<EchoWonder, 4> kEchoWonders{ {
+		EchoWonder{ "gravecaller", "Gravecaller", "A staff of black barrow-iron that calls the dead out of the earth to fight for you.", 0x7CFFB0, 0xC44, 0xC4A },
+		EchoWonder{ "frostbinder", "Frostbinder Gauntlets", "Vrolund Ice-Hand's gauntlets: they freeze what they strike, and shatter what is frozen.", 0x9FE4FF, 0xC45, 0xC4B },
+		EchoWonder{ "wolfcrown", "Wolf Queen's Crown", "Potema's crown, still hungry: a ring of spectral wolves runs at your call.", 0xC08CFF, 0xC46, 0xC4C },
+		EchoWonder{ "barrowhorn", "Horn of the Barrow-Jarls", "Sound it and the old war-host of the barrows charges at your side.", 0xFFC060, 0xC47, 0xC4D },
+	} };
+	enum EchoHow : int { kEchoBoss = 0, kEchoRelic, kEchoKill };
+	struct EchoPart { std::string_view id, label, site; int wonder, page, how, town; float x, y, z, yaw; std::uint32_t killGlobal; };  // page/town: kTowns index
+	inline constexpr std::array<EchoPart, 12> kEchoParts{ {
+		EchoPart{ "gc_stone", "Skjold's Tongue-Stone", "Riverwood", 0, 0, 0, 0, 0.0f, 0.0f, 0.0f, 0.0f, 0 },
+		EchoPart{ "gc_lamp", "The Barrow-Lamp", "Bleak Falls Barrow", 0, 0, 1, -1, -3043.0f, -43338.0f, 6080.0f, 105.0f, 0 },
+		EchoPart{ "gc_ash", "Ash of the First Dead", "Dustman's Cairn", 0, 1, 2, -1, -17091.0f, 18297.0f, -6628.0f, 0.0f, 0xC3F },
+		EchoPart{ "fb_left", "Vrolund's Left Gauntlet", "Yngol Barrow", 1, 3, 1, -1, 158926.0f, 47034.0f, -13634.0f, 107.0f, 0 },
+		EchoPart{ "fb_right", "Vrolund's Right Gauntlet", "Snow Veil Sanctum", 1, 9, 1, -1, 145499.0f, 72032.0f, -9361.0f, 270.0f, 0 },
+		EchoPart{ "fb_heart", "The Rime-Heart", "Nightcaller Temple", 1, 8, 2, -1, 40521.0f, 100547.0f, -7199.0f, 0.0f, 0xC40 },
+		EchoPart{ "wq_band", "The Wolf Queen's Circlet", "Solitude", 2, 2, 0, 2, 0.0f, 0.0f, 0.0f, 0.0f, 0 },
+		EchoPart{ "wq_fang", "The Wolf's Fang", "Wolfskull Cave", 2, 2, 1, -1, -96522.0f, 107471.0f, -6142.0f, 254.0f, 0 },
+		EchoPart{ "wq_eye", "The Mire-Eye", "Ustengrav", 2, 7, 2, -1, -22755.0f, 87923.0f, -13778.0f, 35.0f, 0xC41 },
+		EchoPart{ "hb_mouth", "The Horn's Mouth", "Markarth", 3, 4, 0, 4, 0.0f, 0.0f, 0.0f, 0.0f, 0 },
+		EchoPart{ "hb_bell", "The Horn's Bell", "Shroud Hearth Barrow", 3, 5, 1, -1, 79791.0f, -62059.0f, 11184.0f, 139.0f, 0 },
+		EchoPart{ "hb_cord", "The Horn's Cord", "Falkreath", 3, 6, 0, 6, 0.0f, 0.0f, 0.0f, 0.0f, 0 },
+	} };
+	inline constexpr std::array<std::uint32_t, 10> kEchoPages{ { 0xC31, 0xC32, 0xC33, 0xC34, 0xC35, 0xC36, 0xC37, 0xC38, 0xC39, 0xC3A } };  // The Broken Words, by town
+	inline constexpr std::uint32_t kEchoGlobPages = 0xC3B, kEchoGlobParts = 0xC3C, kEchoGlobForged = 0xC3D, kEchoGlobHeld = 0xC3E;
+	inline constexpr std::array<int, 6> kEchoGuards{ 3, 4, 4, 5, 6, 6 }, kEchoElites{ 0, 1, 1, 1, 2, 2 }, kEchoKillN{ 20, 25, 30, 35, 40, 50 };  // per Skyrim difficulty
+	inline constexpr float kEchoWake = 2600.0f, kEchoTake = 260.0f, kEchoKillRadius = 3000.0f, kEchoStoneTake = 230.0f;
+	inline constexpr float kEchoStoneX = 0.0f, kEchoStoneY = -380.0f;  // the Echo Stone on a freed altar (dressing: echo_stone)
+	struct RelSpot { float x, y, z, yaw; };
+	inline constexpr std::string_view kRelCell = "HighHrothgar";
+	inline constexpr RelSpot kRelDoor{ -690.0f, -2363.0f, -992.0f, 90.0f }, kRelRoomAt{ -160.0f, -1200.0f, -6000.0f, 0.0f }, kRelArrive{ 0.0f, -380.0f, 0.0f, 0.0f }, kRelExit{ 0.0f, -600.0f, 0.0f, 0.0f }, kRelLeave{ -560.0f, -2363.0f, -992.0f, 90.0f };  // door/leave: in the cell; arrive/exit: in the room's frame
+	inline constexpr std::array<RelSpot, 4> kRelPedestals{ { { -390.0f, 330.0f, 0.0f, 135.0f }, { 390.0f, 330.0f, 0.0f, 225.0f }, { -390.0f, -230.0f, 0.0f, 45.0f }, { 390.0f, -230.0f, 0.0f, 315.0f } } };
+	inline constexpr float kRelUse = 190.0f;
+	inline constexpr std::uint32_t kRelDoorIn = 0xC42, kRelDoorOut = 0xC43, kRelRoom = 0xC48, kRelRelic = 0xC49, kRelBlue = 0xC4E, kRelWarm = 0xC4F, kRelRelicLight = 0xC50, kRelBeam = 0xBFB, kRelBrazier = 0xC29, kRelStone = 0xC27, kRelBanner = 0xC2E;
 }

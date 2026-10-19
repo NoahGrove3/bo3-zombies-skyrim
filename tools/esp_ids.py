@@ -24,7 +24,8 @@ def assign(S=None, write=False):
              [('VTYP', 'silent'), ('MUST', 'boss'), ('MUSC', 'boss'), ('MUST', 'freed'), ('MUSC', 'freed'), ('MUST', 'intro'), ('MUSC', 'intro'), ('FSTS', 'silent'), ('STAT', 'ls_shrine'), ('STAT', 'ls_book')] + [('LSCR', f'ls_{i}') for i in range(14)] + \
              [(k, f"fx_{r['id']}_{n}") for r in S['spellcraft']['rows'] for k, n in (('ARTO', 'hand'), ('STAT', 'orb'), ('LIGH', 'light'))] + [('ARTO', 'fx_' + n) for n in ('iceshell', 'roots', 'burn', 'poison')] + [('QUST', 'mcm')] + [('QUST', 'rites_' + c['town']) for c in S['curse']['cities']] + \
              [(k, f'updraft_{n}') for n in range(3) for k in ('WOOP', 'SPEL')] + [('SHOU', 'updraft')] + \
-             [(k, f"{n}_{b['id']}") for b in S.get('bows', {}).get('rows', []) for k, n in (('WEAP', 'bow'), ('AMMO', 'bowarrow'), ('PROJ', 'bowarrow'))]
+             [(k, f"{n}_{b['id']}") for b in S.get('bows', {}).get('rows', []) for k, n in (('WEAP', 'bow'), ('AMMO', 'bowarrow'), ('PROJ', 'bowarrow'))] + \
+             echo_ids(S)
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:
@@ -35,6 +36,17 @@ def assign(S=None, write=False):
         IDFILE.write_text(json.dumps(store, indent=1))
     return ids, nxt
 PLUGIN = 'CurseOfAlduin.esp'
+def echo_ids(S):
+    """Stage 2 (sheet: echo): the cities' pages, the hunt's globals, the Reliquary's doors, pedestals, room and lights"""
+    E = S.get('echo')
+    if not E:
+        return []
+    ids = [('BOOK', 'page_' + c['town']) for c in S['curse']['cities']] + [('GLOB', 'echo_' + k) for k in ('pages', 'parts', 'forged', 'held')]
+    ids += [('GLOB', 'echo_kill_' + p['id']) for p in E['parts'] if p['how'] == 'kill']
+    ids += [('ACTI', 'rel_door_in'), ('ACTI', 'rel_door_out')] + [('ACTI', 'rel_ped_' + w['id']) for w in E['wonders']]
+    ids += [('STAT', 'rel_room'), ('STAT', 'rel_relic')] + [('STAT', 'rel_gem_' + w['id']) for w in E['wonders']]
+    ids += [('LIGH', 'rel_blue'), ('LIGH', 'rel_warm'), ('LIGH', 'rel_relic')]
+    return ids
 def blasts():
     """Spell blasts: no-damage copies of Skyrim's explosions (tools/templates/expl/<name>.json)."""
     return sorted(q.stem for q in (ROOT / 'tools' / 'templates' / 'expl').glob('*.json'))

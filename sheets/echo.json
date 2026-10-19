@@ -1,0 +1,49 @@
+{
+ "sheet": "echo",
+ "about": "Stage 2 of the story (src/Echo.cpp): the Echo Stones and the Reliquary. A freed city's altar raises an Echo Stone; walk up to it and it gives you that city's page, The Broken Words: <City> (a BOOK each), which says plainly which wonder-weapon part waits where and how to take it - and from then on your compass marks it. Parts: boss = dropped by that city's Barrow-Jarl; relic = a glowing reliquary at a landmark that only wakes at night, guarded (kill the guardians, then take it); kill = strike down the dead near a landmark at night until the barrow is fed. Each wonder needs its three parts, forged on its pedestal in the Reliquary behind the sealed door at High Hrothgar. Positions in Skyrim units (Tamriel or the HighHrothgar cell); yaw in degrees, clockwise from north.",
+ "wonders": [
+  {"id": "gravecaller", "label": "Gravecaller", "color": "7CFFB0", "text": "A staff of black barrow-iron that calls the dead out of the earth to fight for you."},
+  {"id": "frostbinder", "label": "Frostbinder Gauntlets", "color": "9FE4FF", "text": "Vrolund Ice-Hand's gauntlets: they freeze what they strike, and shatter what is frozen."},
+  {"id": "wolfcrown", "label": "Wolf Queen's Crown", "color": "C08CFF", "text": "Potema's crown, still hungry: a ring of spectral wolves runs at your call."},
+  {"id": "barrowhorn", "label": "Horn of the Barrow-Jarls", "color": "FFC060", "text": "Sound it and the old war-host of the barrows charges at your side."}
+ ],
+ "parts": [
+  {"id": "gc_stone", "label": "Skjold's Tongue-Stone", "wonder": "gravecaller", "page": "Riverwood", "how": "boss", "town": "Riverwood"},
+  {"id": "gc_lamp", "label": "The Barrow-Lamp", "wonder": "gravecaller", "page": "Riverwood", "how": "relic", "site": "Bleak Falls Barrow", "at": [-3043, -43338, 6080], "yaw": 105},
+  {"id": "gc_ash", "label": "Ash of the First Dead", "wonder": "gravecaller", "page": "Whiterun", "how": "kill", "site": "Dustman's Cairn", "at": [-17091, 18297, -6628], "yaw": 0},
+  {"id": "fb_left", "label": "Vrolund's Left Gauntlet", "wonder": "frostbinder", "page": "Windhelm", "how": "relic", "site": "Yngol Barrow", "at": [158926, 47034, -13634], "yaw": 107},
+  {"id": "fb_right", "label": "Vrolund's Right Gauntlet", "wonder": "frostbinder", "page": "Winterhold", "how": "relic", "site": "Snow Veil Sanctum", "at": [145499, 72032, -9361], "yaw": 270},
+  {"id": "fb_heart", "label": "The Rime-Heart", "wonder": "frostbinder", "page": "Dawnstar", "how": "kill", "site": "Nightcaller Temple", "at": [40521, 100547, -7199], "yaw": 0},
+  {"id": "wq_band", "label": "The Wolf Queen's Circlet", "wonder": "wolfcrown", "page": "Solitude", "how": "boss", "town": "Solitude"},
+  {"id": "wq_fang", "label": "The Wolf's Fang", "wonder": "wolfcrown", "page": "Solitude", "how": "relic", "site": "Wolfskull Cave", "at": [-96522, 107471, -6142], "yaw": 254},
+  {"id": "wq_eye", "label": "The Mire-Eye", "wonder": "wolfcrown", "page": "Morthal", "how": "kill", "site": "Ustengrav", "at": [-22755, 87923, -13778], "yaw": 35},
+  {"id": "hb_mouth", "label": "The Horn's Mouth", "wonder": "barrowhorn", "page": "Markarth", "how": "boss", "town": "Markarth"},
+  {"id": "hb_bell", "label": "The Horn's Bell", "wonder": "barrowhorn", "page": "Riften", "how": "relic", "site": "Shroud Hearth Barrow", "at": [79791, -62059, 11184], "yaw": 139},
+  {"id": "hb_cord", "label": "The Horn's Cord", "wonder": "barrowhorn", "page": "Falkreath", "how": "boss", "town": "Falkreath"}
+ ],
+ "pages": {
+  "Riverwood": {"echo": "Skjold held the valley because the Tongues told him to. When he fell, they took his voice-stone and hid his lamp in the barrow on the mountain.", "where": "Skjold's Tongue-Stone falls from Skjold Barrowborn himself - you took it when you freed Riverwood. The Barrow-Lamp waits at the doors of Bleak Falls Barrow, up the mountain path west of Riverwood."},
+  "Whiterun": {"echo": "The first dead of the plains were burned at the cairn, and their ash never cooled. It wants more of them.", "where": "Go to Dustman's Cairn, north-west of Whiterun across the plains. At night, cut down the dead around its door until the cairn has drunk enough; the Ash of the First Dead rises for you."},
+  "Solitude": {"echo": "The Wolf Queen's circlet broke when her shade fell. Her fang she left with the wolves, in the cave where she was worshipped.", "where": "The Wolf Queen's Circlet falls from her shade - you took it when you freed Solitude. The Wolf's Fang waits at the mouth of Wolfskull Cave, west of Solitude along the coast."},
+  "Windhelm": {"echo": "Vrolund's left hand was buried with his men in the barrow by the sea, still clenched on the gate's chain.", "where": "Vrolund's Left Gauntlet waits at the doors of Yngol Barrow, north-east of Windhelm on the coast."},
+  "Markarth": {"echo": "The Briar-Heart King carved the horn's mouth from his own crown, and carried it into the stone.", "where": "The Horn's Mouth falls from the Briar-Heart King - you took it when you freed Markarth."},
+  "Riften": {"echo": "The horn's bell was hung in the barrow above Ivarstead, where the Rift's old jarls still keep watch.", "where": "The Horn's Bell waits at the doors of Shroud Hearth Barrow, above Ivarstead - far west of Riften, at the foot of the Throat of the World."},
+  "Falkreath": {"echo": "The horn's cord was braided from the hair of every jarl buried in Falkreath's graves. Its keeper never put it down.", "where": "The Horn's Cord falls from Falkreath's Barrow-Jarl - you took it when you freed Falkreath."},
+  "Morthal": {"echo": "In the marsh, the Mire-Eye watches over the Horn's tomb. It opens only when it has seen enough of the dead fall.", "where": "Go to Ustengrav, north-east of Morthal in the marsh. At night, cut down the dead around its door until the Mire-Eye opens; then it is yours."},
+  "Dawnstar": {"echo": "The Rime-Heart froze in the temple on the hill, where the priests of dreams went mad. Only death thaws it.", "where": "Go to Nightcaller Temple, on the hill east of Dawnstar. At night, cut down the dead around its door until the Rime-Heart thaws; then it is yours."},
+  "Winterhold": {"echo": "Vrolund's right hand was taken north by his enemies and sealed under the snow, where the sanctum keeps it.", "where": "Vrolund's Right Gauntlet waits at the doors of Snow Veil Sanctum, south-east of Winterhold on the road toward Windhelm."}
+ },
+ "relic": {"wakeRange": 2600, "takeRange": 260, "guards": [3, 4, 4, 5, 6, 6], "elites": [0, 1, 1, 1, 2, 2]},
+ "kill": {"radius": 3000, "n": [20, 25, 30, 35, 40, 50]},
+ "stone": {"takeRange": 230},
+ "reliquary": {
+  "cell": "HighHrothgar",
+  "door": [-690, -2363, -992], "doorYaw": 90,
+  "room": [-160, -1200, -6000],
+  "arrive": [0, -380, 0], "arriveYaw": 0,
+  "exitDoor": [0, -600, 0], "exitYaw": 0,
+  "leave": [-560, -2363, -992], "leaveYaw": 90,
+  "pedestals": [[-390, 330, 0, 135], [390, 330, 0, 225], [-390, -230, 0, 45], [390, -230, 0, 315]],
+  "useRange": 190
+ }
+}

@@ -549,6 +549,11 @@ def guide_text():
            p("Wake Whiterun's altar and a dragon will answer you. Jump and press Activate in mid-air: it swoops down and you take hold of its harness."),
            p("Steer with the stick or WASD. Forward dives, back climbs. Attack to make it breathe fire on the dead below - only the dead, never your friends. "
              "At the altar you can make deeper bonds with it."),
+           "[pagebreak]", h("Echo Stones and the Reliquary"),
+           p("When a city's altar is freed, an <b>Echo Stone</b> rises behind it. Walk up to it and it gives you a page: <i>The Broken Words</i>, one for each city. "
+             "Each page says plainly where a part of a <b>wonder weapon</b> waits and how to take it, and your compass marks the place."),
+           p("Some parts fall from the Barrow-Jarls. Some wait in reliquaries at old barrows, guarded, and only wake at night. Some must be earned by killing the dead near a barrow's door."),
+           p("Take them to <b>High Hrothgar</b>: a sealed door in the great hall leads down to the Reliquary, where each wonder is forged on its pedestal once its three parts are found."),
            "[pagebreak]", h("Falling"),
            p("At every dawn, and whenever an altar wakes, the day is saved. If you fall, you wake at that dawn. In a party, stand over a fallen friend and hold Activate to lift them."),
            p("Good luck. Stay out of the barrows after dark."), "</font>"]
@@ -561,6 +566,61 @@ for key, edid, name, text, model in (('dirge', 'UN_UndyingDirgeBook', 'The Curse
         sub('MODL', z(model)), sub('DESC', z(text)),
         sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x000937A2)),
         sub('DATA', struct.pack('<BBHIIf', 0, 0, 0, 0, 25, 1.0)), sub('INAM', struct.pack('<I', 0x0008ADAE)), sub('CNAM', struct.pack('<I', 0))]))
+
+# ---- Stage 2 (sheet: echo, src/Echo.cpp): the Echo Stones' pages, the hunt's globals, the Reliquary under High Hrothgar
+E = S['echo']
+WON = {w['id']: w for w in E['wonders']}
+for key in ['echo_pages', 'echo_parts', 'echo_forged', 'echo_held'] + ['echo_kill_' + q['id'] for q in E['parts'] if q['how'] == 'kill']:
+    recs['GLOB'].append(record('GLOB', fid('GLOB', key), [sub('EDID', z('UN_' + ''.join(w.capitalize() for w in key.split('_')))), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
+
+def how_text(q):
+    w = WON[q['wonder']]['label']
+    if q['how'] == 'boss':
+        return f"<b>{q['label']}</b> (for {w}): it falls from {q['town']}'s Barrow-Jarl when the altar there is freed."
+    if q['how'] == 'relic':
+        return (f"<b>{q['label']}</b> (for {w}): a reliquary burning with blue Tongue-fire waits at <b>{q['site']}</b>. It wakes only at night: "
+                f"come near after dusk and its guardians rise. Kill them all, then walk up to the reliquary and the part is yours.")
+    return (f"<b>{q['label']}</b> (for {w}): at <b>{q['site']}</b>, at night, kill the dead that come for you near its door. "
+            f"A counter shows how many more it needs; when it is full, the part is yours.")
+
+def page_text(town):
+    pg = E['pages'][town]
+    parts = [q for q in E['parts'] if q['page'] == town]
+    out = ["<font face='$HandwrittenFont'>", f"<p align='center'><font size='26'>THE BROKEN WORDS</font></p><p align='center'><font size='22'>{town}</font></p>",
+           f"<p><i>{pg['echo']}</i></p>", "<p align='center'>~</p>", f"<p><b>Where:</b> {pg['where']}</p>"]
+    out += [f"<p>{how_text(q)}</p>" for q in parts]
+    out += ["[pagebreak]", "<p align='center'><font size='22'>The Reliquary</font></p>",
+            "<p>Your compass now marks every part this page speaks of - follow the blue mark with the part's name over it.</p>",
+            "<p>Take the parts to <b>High Hrothgar</b>. In the great hall, by the entrance, a <b>sealed door</b> carved with the Tongues' sigil "
+            "now opens for you. Behind it is the Reliquary: four pedestals, one for each wonder weapon. Each part you find lights a crystal on its pedestal; "
+            "when all three burn, stand at the pedestal and press Activate to forge the weapon.</p>",
+            "<p>Four wonders, three parts each: " + '; '.join(f"<b>{w['label']}</b> - " + ', '.join(q['label'] for q in E['parts'] if q['wonder'] == w['id']) for w in E['wonders']) + ".</p>",
+            "<p align='right'><i>- an echo of the Tongues</i></p>", "</font>"]
+    return '\n'.join(out)
+
+for c in S['curse']['cities']:
+    t = c['town']
+    recs.setdefault('BOOK', []).append(record('BOOK', fid('BOOK', 'page_' + t), [
+        sub('EDID', z('UN_EchoPage_' + t)), sub('OBND', struct.pack('<6h', -8, -11, 0, 8, 11, 1)), sub('FULL', z('The Broken Words: ' + t)),
+        sub('MODL', z('Clutter\\Books\\Note01.nif')), sub('DESC', z(page_text(t))),
+        sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x000937A2)),
+        sub('DATA', struct.pack('<BBHIIf', 0, 0xFF, 0, 0, 0, 0.1)), sub('CNAM', struct.pack('<I', 0))]))
+
+RQ = 'CurseOfAlduin\\reliquary\\'
+def rel_acti(key, name, verb, model, r):
+    recs['ACTI'].append(record('ACTI', fid('ACTI', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r // 3, 0, r, r // 3, int(r * 1.4))),
+        sub('FULL', z(name)), sub('MODL', z(RQ + model)), sub('RNAM', z(verb)), sub('FNAM', b'\0\0')]))
+rel_acti('rel_door_in', 'Sealed Door of the Tongues', 'Enter', 'door.nif', 190)
+rel_acti('rel_door_out', 'Sealed Door of the Tongues', 'Leave', 'door.nif', 190)
+for w in E['wonders']:
+    rel_acti('rel_ped_' + w['id'], w['label'] + "'s Pedestal", 'Forge', 'pedestal.nif', 60)
+for key, model, r in [('rel_room', 'room.nif', 640), ('rel_relic', 'relic.nif', 80)] + [('rel_gem_' + w['id'], f"gem_{w['id']}.nif", 8) for w in E['wonders']]:
+    recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
+        sub('MODL', z(RQ + model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
+for key, col, radius in (('rel_blue', '5AA8FF', 620), ('rel_warm', 'FFD9A0', 1100), ('rel_relic', '6AB8FF', 700)):
+    data = bytearray(tsub('ligh', 'DATA')); c = int(col, 16)
+    struct.pack_into('<I', data, 4, radius); struct.pack_into('<BBBB', data, 8, c >> 16, (c >> 8) & 255, c & 255, 0)
+    recs['LIGH'].append(record('LIGH', fid('LIGH', key), [sub('EDID', z('UN_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.0))]))
 
 # (spell blasts are cloned from Skyrim's explosions at runtime: EXPL records in an ESL crashed the game at load)
 count = sum(len(v) for v in recs.values())

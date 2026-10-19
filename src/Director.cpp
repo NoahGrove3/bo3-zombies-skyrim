@@ -1679,6 +1679,7 @@ namespace bo3z
 			EndEvent();
 			Undead::Reset();
 			Curse::Reset();
+			Echo::Reset();
 			std::scoped_lock l(Hud::Lock());
 			Hud::Edit().bossName.clear();
 		}
@@ -2284,6 +2285,7 @@ namespace bo3z
 			}
 			g_pause = std::max(0.0f, g_pause - a_delta);
 			Curse::Tick(a_delta);
+			Echo::Tick(a_delta);
 			if (!Allowed(player)) {
 				return;
 			}

@@ -416,7 +416,9 @@ namespace bo3z
 					if (auto* base = a_event->objectActivated->GetBaseObject()) {
 						logger::info("activate: {} ({:08X})", base->GetName(), base->GetFormID());
 					}
-					Shops::OnActivate(a_event->objectActivated.get());
+					if (!Echo::OnActivate(a_event->objectActivated.get())) {
+						Shops::OnActivate(a_event->objectActivated.get());
+					}
 				}
 				return RE::BSEventNotifyControl::kContinue;
 			}

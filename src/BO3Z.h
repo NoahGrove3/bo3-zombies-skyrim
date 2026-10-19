@@ -395,6 +395,18 @@ namespace bo3z
 		AltarView Altar(int a_town);
 	}
 
+	// Stage 2 (src/Echo.cpp): the Echo Stones, the wonder weapons' parts, the Reliquary under High Hrothgar
+	namespace Echo
+	{
+		void Tick(float a_delta);
+		void Reset();
+		void OnUndeadDeath(RE::Actor* a_actor);                // a kill near a barrow that wants the dead
+		bool OnActivate(RE::TESObjectREFR* a_ref);             // the Reliquary's doors and pedestals (true: handled)
+		bool StoneWaits(int a_town);                           // a freed city whose Echo Stone still holds its page
+		bool Target(RE::PlayerCharacter* a_player, RE::NiPoint3& a_at, std::string& a_label);  // where the story wants you
+		bool Strip(std::string& a_title, std::string& a_goal, float& a_frac);                  // a hunt under way (under the compass)
+	}
+
 	namespace Intro
 	{
 		void OnMainMenu();  // the next new game moves its character again

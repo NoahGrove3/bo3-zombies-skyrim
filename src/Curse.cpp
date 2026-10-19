@@ -358,7 +358,7 @@ namespace bo3z
 							return true;
 						}
 					}
-					return false;
+					return Echo::Target(a_player, a_at, a_label);  // its Echo Stone, then the hunt
 				}
 				const int tr = s.Trial();  // (Noah: the ping stays over the altar for every step - it doesn't chase the dead)
 				if (Shops::StationTarget(z, a_at)) {
@@ -381,6 +381,13 @@ namespace bo3z
 					best = d, a_at = at;
 					a_label = std::string(gen::kTowns[t]) + ": " + (s.freed ? std::string("its shout waits") : s.Boss() ? std::string(BossName(t)) : s.Trial() >= 0 ? std::string(Title(s.Trial())) : std::string("choose a trial"));
 				}
+			}
+			// stage 2: a wonder's part, the Reliquary - whichever is nearer
+			RE::NiPoint3 eat;
+			std::string  elabel;
+			if (Echo::Target(a_player, eat, elabel) && eat.GetDistance(a_player->GetPosition()) < best) {
+				a_at = eat, a_label = std::move(elabel);
+				return true;
 			}
 			return best < FLT_MAX;
 		}
@@ -463,6 +470,7 @@ namespace bo3z
 			h.questCity.clear(), h.questTitle.clear(), h.questGoal.clear(), h.sanctuary.clear();
 			h.questFrac = 0, h.questTimer = -1, h.questWarn = false;
 			if (a_zone < 0) {
+				Echo::Strip(h.questTitle, h.questGoal, h.questFrac);  // out in the wilds: a hunt for a wonder's part
 				return;
 			}
 			const St s = Get(a_zone);
@@ -659,6 +667,7 @@ namespace bo3z
 
 		void OnUndeadDeath(RE::Actor* a_actor)
 		{
+			Echo::OnUndeadDeath(a_actor);  // (a barrow that wants the dead: stage 2's hunt)
 			if (!Director::Fighting() || g_zone < 0) {
 				return;
 			}

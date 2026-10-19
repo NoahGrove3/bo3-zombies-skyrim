@@ -264,6 +264,39 @@ for b in BW:
     col = ''.join(f'{int(c * 255):02X}' for c in b['glow'])
     o.append(f'\t\tBowDef{{ {cs(b["id"])}, {cs(b["label"])}, {cs(b["text"])}, {cs(b["element"])}, {SCID.index(b["spell"])}, {b["tier"]}, {F(b["share"])}, 0x{col}, 0x{IDS[("WEAP", "bow_" + b["id"])]:03X}, 0x{IDS[("AMMO", "bowarrow_" + b["id"])]:03X} }},')
 o.append('\t} };')
+# Stage 2 (sheet: echo): src/Echo.cpp
+EC = S['echo']
+WIDS = [w['id'] for w in EC['wonders']]
+o.append('\tstruct EchoWonder { std::string_view id, label, text; std::uint32_t color, pedestal, gem; };')
+o.append(f'\tinline constexpr std::array<EchoWonder, {len(WIDS)}> kEchoWonders{{ {{')
+for w in EC['wonders']:
+    o.append(f'\t\tEchoWonder{{ {cs(w["id"])}, {cs(w["label"])}, {cs(w["text"])}, 0x{w["color"]}, 0x{IDS[("ACTI", "rel_ped_" + w["id"])]:03X}, 0x{IDS[("STAT", "rel_gem_" + w["id"])]:03X} }},')
+o.append('\t} };')
+o.append('\tenum EchoHow : int { kEchoBoss = 0, kEchoRelic, kEchoKill };')
+o.append('\tstruct EchoPart { std::string_view id, label, site; int wonder, page, how, town; float x, y, z, yaw; std::uint32_t killGlobal; };  // page/town: kTowns index')
+o.append(f'\tinline constexpr std::array<EchoPart, {len(EC["parts"])}> kEchoParts{{ {{')
+for q in EC['parts']:
+    at = q.get('at', [0, 0, 0])
+    kg = f'0x{IDS[("GLOB", "echo_kill_" + q["id"])]:03X}' if q['how'] == 'kill' else '0'
+    o.append(f'\t\tEchoPart{{ {cs(q["id"])}, {cs(q["label"])}, {cs(q.get("site", q.get("town", "")))}, {WIDS.index(q["wonder"])}, {towns.index(q["page"])}, {["boss", "relic", "kill"].index(q["how"])}, {towns.index(q["town"]) if q["how"] == "boss" else -1}, {F(at[0])}, {F(at[1])}, {F(at[2])}, {F(q.get("yaw", 0))}, {kg} }},')
+o.append('\t} };')
+o.append(f'\tinline constexpr std::array<std::uint32_t, {len(towns)}> kEchoPages{{ {{ ' + ', '.join(f'0x{IDS[("BOOK", "page_" + t)]:03X}' for t in towns) + ' } };  // The Broken Words, by town')
+o.append(f'\tinline constexpr std::uint32_t kEchoGlobPages = 0x{IDS[("GLOB", "echo_pages")]:03X}, kEchoGlobParts = 0x{IDS[("GLOB", "echo_parts")]:03X}, kEchoGlobForged = 0x{IDS[("GLOB", "echo_forged")]:03X}, kEchoGlobHeld = 0x{IDS[("GLOB", "echo_held")]:03X};')
+rl, kl = EC['relic'], EC['kill']
+o.append('\tinline constexpr std::array<int, 6> kEchoGuards{ ' + ', '.join(map(str, rl['guards'])) + ' }, kEchoElites{ ' + ', '.join(map(str, rl['elites'])) + ' }, kEchoKillN{ ' + ', '.join(map(str, kl['n'])) + ' };  // per Skyrim difficulty')
+o.append(f'\tinline constexpr float kEchoWake = {F(rl["wakeRange"])}, kEchoTake = {F(rl["takeRange"])}, kEchoKillRadius = {F(kl["radius"])}, kEchoStoneTake = {F(EC["stone"]["takeRange"])};')
+stone = next(r for r in S['dressing']['rows'] if r['id'] == 'echo_stone')
+o.append(f'\tinline constexpr float kEchoStoneX = {F(stone["x"])}, kEchoStoneY = {F(stone["y"])};  // the Echo Stone on a freed altar (dressing: echo_stone)')
+RL = EC['reliquary']
+P4 = lambda v, yaw=0: f'{{ {F(v[0])}, {F(v[1])}, {F(v[2])}, {F(yaw)} }}'
+o.append('\tstruct RelSpot { float x, y, z, yaw; };')
+o.append(f'\tinline constexpr std::string_view kRelCell = {cs(RL["cell"])};')
+o.append(f'\tinline constexpr RelSpot kRelDoor{P4(RL["door"], RL["doorYaw"])}, kRelRoomAt{P4(RL["room"])}, kRelArrive{P4(RL["arrive"], RL["arriveYaw"])}, kRelExit{P4(RL["exitDoor"], RL["exitYaw"])}, kRelLeave{P4(RL["leave"], RL["leaveYaw"])};  // door/leave: in the cell; arrive/exit: in the room\'s frame')
+o.append(f'\tinline constexpr std::array<RelSpot, 4> kRelPedestals{{ {{ ' + ', '.join(P4(q[:3], q[3]) for q in RL['pedestals']) + ' } };')
+o.append(f'\tinline constexpr float kRelUse = {F(RL["useRange"])};')
+o.append(f'\tinline constexpr std::uint32_t kRelDoorIn = 0x{IDS[("ACTI", "rel_door_in")]:03X}, kRelDoorOut = 0x{IDS[("ACTI", "rel_door_out")]:03X}, kRelRoom = 0x{IDS[("STAT", "rel_room")]:03X}, kRelRelic = 0x{IDS[("STAT", "rel_relic")]:03X}, '
+         f'kRelBlue = 0x{IDS[("LIGH", "rel_blue")]:03X}, kRelWarm = 0x{IDS[("LIGH", "rel_warm")]:03X}, kRelRelicLight = 0x{IDS[("LIGH", "rel_relic")]:03X}, kRelBeam = 0x{IDS[("STAT", "shrine_freed_beam")]:03X}, '
+         f'kRelBrazier = 0x{IDS[("STAT", "freed_fire_0")]:03X}, kRelStone = 0x{IDS[("STAT", "echo_stone")]:03X}, kRelBanner = 0x{IDS[("STAT", "freed_banner_0")]:03X};')
 o.append('}')
 with open(root / 'src/Generated.h', 'a') as f: f.write('\n'.join(o) + '\n')
 print('appended v0.2 tables')
