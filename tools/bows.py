@@ -204,6 +204,14 @@ def build(bid):
     off = np.array([abs(c[0] - centre.get(int(round(c[1] / 4)), c[0])) for c in cen])
     trim = (~fs) & ((off > 3.2) | (np.abs(cen[:, 2]) > 2.6))
     groups = {'string': F[fs], 'trim': F[trim], 'body': F[(~fs) & (~trim)]}
+    # (Noah: the string read as a floating glowing bar) a thin cord: the string pieces drawn in to a fraction of their girth
+    si = np.where(string_verts)[0]
+    yb_s = np.round(P[si, 1] / 3).astype(int)
+    for b in np.unique(yb_s):
+        idx = si[yb_s == b]
+        cx_, cz_ = P[idx, 0].mean(), P[idx, 2].mean()
+        P[idx, 0] = cx_ + (P[idx, 0] - cx_) * 0.28
+        P[idx, 2] = cz_ + (P[idx, 2] - cz_) * 0.28
     N = normals(P, F)
     kind = BODY_KIND[bid]
     d, n, gl = bowart.body_maps(kind, body_col, glow, seed=len(bid))   # (Noah: 2K, hand-worked: runes, knotwork, scrollwork, leather)
@@ -212,6 +220,7 @@ def build(bid):
            'td': save_mips(td, f'{bid}_trim_d.dds'), 'tn': save_mips(tn, f'{bid}_trim_n.dds', True), 'tg': save_mips(tg, f'{bid}_trim_g.dds'),
            'flat': save_dds(Image.new('RGBA', (32, 32), (128, 128, 255, 200)), 'flat_n.dds', True)}
     gcol = tuple(int(c * 255) for c in glow)
+    tex['cord'] = save_dds(Image.new('RGB', (32, 32), (46, 40, 36)), 'cord_d.dds')   # waxed sinew
     tex['glow_d'] = save_dds(Image.new('RGB', (32, 32), gcol), f'{bid}_glow_d.dds')
     tex['glow_g'] = save_dds(Image.new('RGB', (32, 32), tuple(min(255, c + 60) for c in gcol)), f'{bid}_glow_g.dds')
     ec = ','.join(f'{c:.3f}' for c in glow)
@@ -221,7 +230,7 @@ def build(bid):
             continue
         vid = np.unique(GF); remap = -np.ones(len(P), int); remap[vid] = np.arange(len(vid))
         if g == 'string':
-            lines.append(f'shape {bid}_string diffuse={tex["glow_d"]} normal={tex["flat"]} glow={tex["glow_g"]} emit={ec} emitmult=4 alpha=add spec=1 gloss=200')
+            lines.append(f'shape {bid}_string diffuse={tex["cord"]} normal={tex["flat"]} glow={tex["glow_g"]} emit={ec} emitmult=0.35 spec=0.3 gloss=30')
         elif g == 'trim':
             lines.append(f'shape {bid}_trim diffuse={tex["td"]} normal={tex["tn"]} glow={tex["tg"]} emit={ec} emitmult=2.2 spec=1.4 gloss=120')
         else:

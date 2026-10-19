@@ -846,13 +846,14 @@ namespace BowsImpl
 				g_ballRow = row;
 			}
 			g_spin += a_delta * (1.5f + 4.0f * g_draw);
-			g_ball.Show(true);
+			// (Noah: the glow drifted off the arrow when you moved) the arrowhead's element now lives in the arrow's own
+			// model (tools/bowarrows.py), riding the nocked arrow exactly: no separate ball
+			g_ball.Show(false);
 			const float breathe = g_draw >= 0.98f ? 1.0f + 0.12f * std::sin(g_spin * 4.0f) : 1.0f;
 			g_ball.Place(HeadAt(p), Spellcraft::Spin(g_spin), (0.1f + 0.32f * g_draw) * breathe, 1.0f + 0.6f * g_draw);
 			if (g_draw >= 0.98f && !g_fullSaid) {
 				g_fullSaid = true;
 				Spellcraft::Play2D(Spellcraft::Snd(GunOf(i), &gen::GunSounds::full), 0.8f);
-				Spellcraft::BurstAt(row, HeadAt(p), 18.0f, 0.2f);
 			}
 		} else {
 			const bool released = st == S::kBowReleasing || st == S::kBowReleased || st == S::kBowNextAttack || st == S::kBowFollowThrough;
