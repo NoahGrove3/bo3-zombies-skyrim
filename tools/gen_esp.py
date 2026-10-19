@@ -198,6 +198,13 @@ for w in S['weapons']['rows']:
 # the bow's own arrow (no damage) flies beside it so there is an arrow to see
 # (Noah's download: Elemental Arrows, by its author) each bow's arrow: the quiver model on the string and at the hip, the
 # flight model the one you see fly - it flies with our energy shot (same speed, no drop), harmless, so the arrow is seen
+BOW_TIERS = {  # what each reforge adds (src/Bows.inl OnHit/Impact; every tier's impact is the last one, grown)
+    'fire': 'Base: burns. I Flare Shot: bursts into a fireball. II Cinder Trail: the ground behind it burns. III Fire Tornado: a tornado of flame hunts the dead.',
+    'frost': 'Base: slows. I Deep Freeze: freezes solid. II Shatter: the frozen burst into shards. III Ice Tornado: a tornado of ice hunts the dead.',
+    'shock': 'Base: leaps to one more. I Chain Lightning: leaps to three. II Storm Mark: the struck shock those round them. III Lightning Tornado: a storm funnel hunts the dead.',
+    'wind': 'Base: knocks back. I The Gale: a blast of wind. II Cyclone Arrow: a whirlwind where it lands. III Tornado: a tornado hunts the dead.',
+    'sun': 'Base: sears and staggers. I Radiant Burst: light bursts round it. II Sunbeam: a beam through everything. III Sunfire Tornado: a tornado of sunfire hunts the dead.',
+    'blood': 'Base: heals you a little. I Hemorrhage: they bleed. II Blood Tether: a tether feeds you. III Blood Tornado: a tornado of blood hunts the dead.'}
 NOCK = {'fire': 'flaming', 'frost': 'frost', 'shock': 'thunder', 'wind': 'swarm', 'sun': 'gust', 'blood': 'crimson'}
 for bw in S['bows']['rows']:
     pd = bytearray(tsub('proj_arrow', 'DATA'))
@@ -221,7 +228,7 @@ for bw in S['bows']['rows']:
         elif name == 'MODL': b = z('CurseOfAlduin\\bow\\' + bw['id'] + '.nif')
         elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_bow_' + bw['id']))
         elif name == 'MODT': continue
-        elif name == 'DESC': b = z(bw['text'])
+        elif name == 'DESC': b = z(bw['text'] + ' ' + BOW_TIERS[bw['element']])  # (Noah: what the bow does at each tier)
         elif name == 'DATA': b = struct.pack('<IfH', 0, 1.0, 0)
         subs.append(sub(name, b))
     recs['WEAP'].append(record('WEAP', fid('WEAP', 'bow_' + bw['id']), subs))

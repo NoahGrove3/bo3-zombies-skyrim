@@ -2189,11 +2189,12 @@ namespace bo3z
 				return;
 			}
 			t = 2.0f;
-			if (Net::InLobby() || Coop::Client()) {
-				return;  // in a party the other players' undead (Skyrim Together's copies) are here too: never ours to crumble
-			}
-			int n = 0;
+			const bool party = Net::InLobby() || Coop::Client();  // in a party the other players' undead (Skyrim Together's copies) are here too: never ours to crumble
+			int        n = 0;
 			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				if (party) {
+					break;
+				}
 				if (auto a = h.get(); a && a.get() != a_player && !g_ours.contains(a->GetFormID()) && IsOurBase(a.get()) && !a->IsDisabled()) {
 					Vanish(a.get());
 					++n;
@@ -2201,6 +2202,28 @@ namespace bo3z
 			}
 			if (n) {
 				logger::info("night: {} undead from an earlier session crumbled", n);
+			}
+			// (Noah: a dead one hung in the air in daylight) every body of ours near you is on the books to crumble -
+			// the ones that died held, flung or frozen, out of the usual count - and none of ours outlives the night
+			int late = 0, day = 0;
+			const bool dark = IsNight();
+			RE::TES::GetSingleton()->ForEachReferenceInRange(a_player, 8000.0f, [&](RE::TESObjectREFR* r) {
+				auto* a = r ? r->As<RE::Actor>() : nullptr;
+				if (!a || a == a_player || a->IsDisabled() || !g_ours.contains(a->GetFormID())) {
+					return RE::BSContainer::ForEachResult::kContinue;
+				}
+				const auto h = a->GetHandle();
+				if (!dark && g_phase != Phase::Break && g_phase != Phase::Fighting) {
+					Vanish(a);
+					++day;
+				} else if (a->IsDead() && std::none_of(g_fading.begin(), g_fading.end(), [&](const auto& f) { return f.first == h; })) {
+					g_fading.push_back({ h, Settings::CorpseSeconds() });
+					++late;
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			if (late || day) {
+				logger::info("night: {} stray bodies put on the books, {} undead left by day crumbled", late, day);
 			}
 		}
 

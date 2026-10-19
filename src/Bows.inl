@@ -258,8 +258,24 @@ namespace BowsImpl
 		const int k = static_cast<int>(KindOf(s.bow));
 		// (Noah: from the first tier the arrow lands as a small burst) everything close round the impact is hurt too
 		Spellcraft::Area(s.row, p, 140.0f + 30.0f * s.tier, s.damage * 0.55f, gen::kFxNone);
-		Gun::FxBlast(s.full ? kBig[k] : kSmall[k], p);
-		Spellcraft::BurstAt(s.row, p, s.full ? 150.0f : 80.0f, s.full ? 0.55f : 0.35f);
+		// (Noah: each tier's impact is the base one, upgraded) the same burst of the element, bigger and fuller each
+		// tier: I a ring of sparks of it round the burst, II Skyrim's great blast of the element and a second, wider wave;
+		// III all of that and the tornado (TornadoOf)
+		const int t = std::clamp(s.tier, 0, 3);
+		Gun::FxBlast(t >= 2 ? kBig[k] : kSmall[k], p);
+		Spellcraft::BurstAt(s.row, p, 80.0f + 35.0f * t, 0.35f + 0.08f * t);
+		if (t >= 1) {
+			const int   n = t >= 2 ? 6 : 4;
+			const float rr = 70.0f + 30.0f * t;
+			for (int j = 0; j < n; ++j) {
+				const float a = 6.2832f * j / n + Rand(0, 0.5f);
+				Spellcraft::BurstAt(s.row, p + RE::NiPoint3{ std::cos(a) * rr, std::sin(a) * rr, 10.0f }, 30.0f + 8.0f * t, 0.3f);
+			}
+		}
+		if (t >= 2) {
+			Spellcraft::BurstAt(s.row, p, 230.0f + 40.0f * (t - 2), 0.7f);  // the second, wider wave
+			Gun::FxBlast(kSmall[k], p + RE::NiPoint3{ 0, 0, 30.0f });
+		}
 	}
 
 	void TornadoOf(const Spellcraft::Shot& s, const RE::NiPoint3& p)
@@ -721,6 +737,23 @@ namespace BowsImpl
 		// (Noah: more of the bow wakes with every reforge) tier I: a band of runes lights along every limb; II: a runic
 		// crest of light off each tip and a ring of runes turning round the inner limbs; III: rings round the tips too
 		const int t = g_level[i];
+		if (t < 1) {  // (the base bow: one touch of its element per limb; the rest wake with the first reforge)
+			std::vector<Mote> keep;
+			for (int b = 0; b < 4; ++b) {
+				for (auto& m : g_motes) {
+					if (m.bone == b) {
+						keep.push_back(std::move(m));
+						break;
+					}
+				}
+			}
+			for (auto& m : g_motes) {
+				if (auto* o = m.fx.obj.get(); o && o->parent) {
+					o->parent->DetachChild2(o);
+				}
+			}
+			g_motes = std::move(keep);
+		}
 		for (int b = 0; b < 4 && t >= 1; ++b) {
 			AddMote(id, "runes", b, 1.5f, kBoneLen[b] - 1.5f, 4);
 		}
@@ -753,6 +786,80 @@ namespace BowsImpl
 		ud.time = 0.0f;
 		o->Update(ud);
 	}
+	// (Noah: the bow in hand changes with every tier, nearer its final form) the element coursing through the bow (its
+	// "_course" shell, tools/bowmodels.py) burns brighter with each reforge: faint at the base, full at III
+	void TickShell(RE::PlayerCharacter* p, int i, float a_delta)
+	{
+		static float scan = 0;
+		if ((scan -= a_delta) > 0) {
+			return;
+		}
+		scan = 0.5f;
+		static std::unordered_map<RE::BSShaderMaterial*, float> base;
+		static constexpr float kTier[4] = { 0.4f, 0.6f, 0.8f, 1.0f };
+		const float k = kTier[std::clamp(g_level[i], 0, 3)];
+		for (const bool fp : { false, true }) {
+			auto* root = p->Get3D(fp);
+			if (!root) {
+				continue;
+			}
+			RE::BSVisit::TraverseScenegraphGeometries(root, [&](RE::BSGeometry* g) {
+				const std::string_view n = g->name.c_str() ? g->name.c_str() : "";
+				if (n.size() < 7 || n.substr(n.size() - 7) != "_course") {
+					return RE::BSVisit::BSVisitControl::kContinue;
+				}
+				auto* prop = g->GetGeometryRuntimeData().shaderProperty.get();
+				auto* rtti = prop ? prop->GetRTTI() : nullptr;
+				if (!rtti || std::string_view(rtti->GetName()) != "BSEffectShaderProperty") {
+					return RE::BSVisit::BSVisitControl::kContinue;
+				}
+				auto* m = static_cast<RE::BSShaderProperty*>(prop)->material;
+				if (!m) {
+					return RE::BSVisit::BSVisitControl::kContinue;
+				}
+				auto* em = static_cast<RE::BSEffectShaderMaterial*>(m);
+				auto [it, fresh] = base.try_emplace(m, em->baseColorScale);
+				em->baseColorScale = it->second * k;
+				return RE::BSVisit::BSVisitControl::kContinue;
+			});
+		}
+	}
+
+	// (Noah: the bows read 0 damage in the inventory) while a menu that shows items is open, each bow carries its
+	// real damage (a full-draw arrow at tonight's strength and its tier) - and outside menus none (the arrow itself
+	// never hurts: our shot does); its name says its tier
+	void TickCards(float a_delta)
+	{
+		auto* ui = RE::UI::GetSingleton();
+		if (!ui) {
+			return;
+		}
+		const bool menu = ui->IsMenuOpen(RE::InventoryMenu::MENU_NAME) || ui->IsMenuOpen(RE::ContainerMenu::MENU_NAME) ||
+		                  ui->IsMenuOpen(RE::BarterMenu::MENU_NAME) || ui->IsMenuOpen(RE::FavoritesMenu::MENU_NAME) ||
+		                  ui->IsMenuOpen(RE::GiftMenu::MENU_NAME);
+		static bool  was = false;
+		static float names = 0;
+		if (menu == was && (names -= a_delta) > 0) {
+			return;
+		}
+		names = 1.0f;
+		was = menu;
+		for (int i = 0; i < kN; ++i) {
+			auto* w = Weap(i);
+			if (!w) {
+				continue;
+			}
+			const int t = std::clamp(g_level[i], 0, 3);
+			const float dmg = ShotDamage(i, 1.0f) / std::max(0.01f, gen::kRounds.hpScale);
+			w->attackDamage = menu ? static_cast<std::uint16_t>(std::clamp(dmg, 1.0f, 65000.0f)) : 0;
+			static constexpr const char* kTier[4] = { "", "Tier I", "Tier II", "Tier III" };
+			const std::string want = t == 0 ? std::string(gen::kBows[i].label) : fmt::format("{} - {}: {}", gen::kBows[i].label, kTier[t], kTierNames[static_cast<int>(KindOf(i))][t]);
+			if (w->fullName != want.c_str()) {
+				w->fullName = want;
+			}
+		}
+	}
+
 	void TickMotes(RE::PlayerCharacter* p, int i, float a_delta)
 	{
 		const bool out = i >= 0 && p->AsActorState()->IsWeaponDrawn();
@@ -765,6 +872,7 @@ namespace BowsImpl
 		if (g_moteBow != i || g_moteTier != g_level[i]) {
 			BuildMotes(i);
 		}
+		TickShell(p, i, a_delta);
 		// the bow's limb bones, in the view the player sees (first person: the arms' own skeleton)
 		auto* root = p->Get3D(Spellcraft::FirstPerson());
 		for (int b = 0; b < 4; ++b) {
@@ -984,7 +1092,37 @@ namespace BowsImpl
 
 	// (Noah: the effect should fly with the arrow) once loosed, the element rides the arrow itself: a copy of the
 	// tip's glow hung on the head of the player's newest arrow in flight
-	std::set<RE::FormID> g_ridden;  // (by id: a projectile's memory is reused for the next one)
+	std::set<RE::FormID> g_ridden;
+	struct Ride
+	{
+		RE::ObjectRefHandle arrow;
+		Spellcraft::Fx      fx;
+		float               life;
+	};
+	std::vector<Ride> g_rides;
+	void TickRides(float a_delta)
+	{
+		for (auto& r : g_rides) {
+			auto  ref = r.arrow.get();
+			auto* pr = ref ? ref->As<RE::Projectile>() : nullptr;
+			r.life -= a_delta;
+			if (!pr || pr->IsDeleted() || pr->IsDisabled() || r.life <= 0) {
+				r.life = 0;
+				r.fx.Detach();
+				continue;
+			}
+			RE::NiPoint3 v = pr->GetProjectileRuntimeData().linearVelocity;
+			const float  sp = v.Length();
+			if (sp < 50.0f) {  // (stuck in something: the glow stays a moment on its head, then goes)
+				r.life = std::min(r.life, 0.4f);
+			}
+			const RE::NiPoint3 dir = sp > 1.0f ? v / sp : RE::NiPoint3{ 0, 1, 0 };
+			const RE::NiPoint3 at = (pr->Get3D() ? pr->Get3D()->world.translate : pr->GetPosition()) + dir * 34.0f + v * a_delta;
+			r.fx.Place(at, Spellcraft::Facing(dir), 1.0f);
+			r.fx.Show(true);
+		}
+		std::erase_if(g_rides, [](const Ride& r) { return r.life <= 0; });
+	}  // (by id: a projectile's memory is reused for the next one)
 	void TickRide(float a_delta)
 	{
 		if (g_rideWait <= 0 || g_rideRow < 0) {
@@ -1012,12 +1150,12 @@ namespace BowsImpl
 				if (!node) {
 					continue;  // (not drawn yet: the next frame)
 				}
-				if (auto fx = Spellcraft::Load(gen::kSpellcraft[g_rideRow].id, "tip")) {
-					fx->local.translate = { 0.0f, 34.0f, 0.0f };  // the flight model's head (+Y)
-					fx->local.scale = 1.0f;
-					node->AttachChild(fx.get(), true);
-					RE::NiUpdateData ud;
-					fx->Update(ud);
+				{  // (hung on the arrow's own node it was never seen: the arrow is drawn anew in flight) it follows in the world instead
+					Ride rd{ pr->CreateRefHandle(), Spellcraft::Fx{ Spellcraft::Load(gen::kSpellcraft[g_rideRow].id, "tip") }, 6.0f };
+					if (rd.fx.obj) {
+						rd.fx.Attach(Spellcraft::WorldRoot());
+						g_rides.push_back(std::move(rd));
+					}
 				}
 				g_ridden.insert(pr->GetFormID());
 				if (g_ridden.size() > 64) {
@@ -1064,6 +1202,8 @@ namespace BowsImpl
 		}
 		TickHideArrow(a_delta);
 		TickRide(a_delta);
+		TickRides(a_delta);
+		TickCards(a_delta);
 		g_sinceFire += a_delta;
 		const int i = Held();
 		static float quiver = 0;
@@ -1074,12 +1214,31 @@ namespace BowsImpl
 		using S = RE::ATTACK_STATE_ENUM;
 		const auto st = p->AsActorState()->GetAttackState();
 		const bool drawing = i >= 0 && (st == S::kBowDraw || st == S::kBowAttached || st == S::kBowDrawn);
+		// (Noah: full draw at 80% of the pull) the pull is timed from the string starting back; its length learnt from
+		// the last draw that ran all the way (Skyrim's drawn state), and 80% of it counts as full
+		static float pullT = 0, pullLen = 0.9f;
+		static bool  pulling = false, measured = false;
 		if (drawing && !g_wasDrawing) {
 			g_bowFull = false;
 			g_releaseHeard = false;  // (the last shot's own release event, arriving late: not this draw's)
+			pullT = 0, pulling = false, measured = false;
 		}
-		if (drawing && st == S::kBowDrawn) {
-			g_bowFull = true;
+		if (drawing) {
+			if (!pulling && st == S::kBowDraw) {
+				pulling = true, pullT = 0;
+			}
+			if (pulling) {
+				pullT += a_delta;
+			}
+			if (st == S::kBowDrawn) {
+				if (pulling && !measured && pullT > 0.25f && pullT < 3.0f) {
+					pullLen = pullT;
+				}
+				measured = true;
+				g_bowFull = true;
+			} else if (pulling && pullT >= 0.8f * pullLen) {
+				g_bowFull = true;
+			}
 		}
 		g_bowDrawing = drawing;
 		if (!drawing) {
@@ -1100,7 +1259,7 @@ namespace BowsImpl
 		}
 		if (drawing) {
 			// the draw's own clock never counts as full: only Skyrim's drawn state does (no shot short of the peak)
-			g_draw = g_bowFull ? 1.0f : std::min(0.95f, g_draw + a_delta * DrawSpeed(i) / 0.9f);
+			g_draw = g_bowFull ? 1.0f : std::min(0.95f, pulling ? pullT / (0.8f * pullLen) : g_draw);
 			const int row = gen::kBows[i].spellRow;
 			if (g_ballRow != row) {
 				g_ball.Detach();
