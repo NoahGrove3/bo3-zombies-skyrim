@@ -7,7 +7,7 @@
 //   energy arrow (Spellcraft::Launch, arrow mesh), flying, struck and bursting like the spell it belongs to, with that
 //   spell's effect (burn, freeze, chain, gust, sear, drain).
 //   drawing: the element gathers at the arrow's head, growing with the pull, a flash when it is full. A full draw hits
-//   hardest (a quick shot about a third); reforged: +power, then arrows that pierce, then three arrows at once.
+//   hardest (a quick shot about a third); each reforge tier adds power and a new attack (below: Noah's list).
 //   Skyhowl (the wind bow), drawn full, looses a blast of wind instead: everything before you hurled away (a Thundergun).
 //   Damage: a share of a zombie's night health (sheet: share), the night's power curve, reforging, perks; headshots double.
 namespace BowsImpl
@@ -134,43 +134,415 @@ namespace BowsImpl
 		return AimAt(80.0f).eye;
 	}
 
+	// ---- each reforge tier is a new attack (Noah's list): power grows with every tier too
+	//   Emberstring  0 burns   I fireball burst   II cinder trail on the ground   III full draw: a volley of five meteors
+	//   Rimehorn     0 slows   I full draw freezes solid   II frozen ones shatter into shards   III full draw: a lance freezing a line
+	//   Stormreach   0 jumps to one more   I chain lightning (three)   II storm mark: the struck one shocks those round it   III full draw: a thunderbolt from the sky
+	//   Skyhowl      0 knockback   I full draw: the gale   II a cyclone where it lands   III full draw: the tempest, flung skyward, a cyclone behind
+	//   Dawnspire    0 sears and staggers   I a radiant burst round it   II full draw: a sunbeam through everything   III full draw: dawnbreak - the weak turn to ash
+	//   Thirstbow    0 heals you a little   I bleeds   II a blood tether that feeds you   III kills burst into orbs of blood: health and power
+	enum class Kind { Fire, Frost, Shock, Wind, Sun, Blood };
+	constexpr const char* kTierNames[6][4] = {
+		{ "Ember Arrow", "Flare Shot", "Cinder Trail", "Meteor Volley" },
+		{ "Frost Arrow", "Deep Freeze", "Shatter", "Glacial Lance" },
+		{ "Spark Arrow", "Chain Lightning", "Storm Mark", "Thunderstrike" },
+		{ "Gust Arrow", "The Gale", "Cyclone Arrow", "Tempest" },
+		{ "Sunlit Arrow", "Radiant Burst", "Sunbeam", "Dawnbreak" },
+		{ "Leech Arrow", "Hemorrhage", "Blood Tether", "Crimson Harvest" } };
+	Kind KindOf(int i)
+	{
+		const std::string_view e = gen::kBows[i].element;
+		return e == "fire" ? Kind::Fire : e == "frost" ? Kind::Frost : e == "shock" ? Kind::Shock : e == "wind" ? Kind::Wind : e == "sun" ? Kind::Sun : Kind::Blood;
+	}
+
+	struct Patch { int row; RE::NiPoint3 at; float r, t, tick, dps; };            // cinders on the ground
+	struct Mark { RE::ActorHandle a; int row; float t, tick, dmg; };               // a storm mark
+	struct Cyclone { int row; RE::NiPoint3 at; float r, t, tick, spin; };          // a whirlwind that drags the dead in
+	struct Tether { RE::ActorHandle a; int row; float t, tick, dmg; int jumps; };  // a blood tether
+	struct Orb { RE::NiPoint3 at; float t; Spellcraft::Ball ball; };               // an orb of blood flying home
+	struct Meteor { int row, gun; RE::NiPoint3 to; float delay, dmg; };            // a falling arrow of the volley
+	std::vector<Patch>   g_patches;
+	std::vector<Mark>    g_marks;
+	std::vector<Cyclone> g_cyclones;
+	std::vector<Tether>  g_tethers;
+	std::vector<Orb>     g_orbs;
+	std::vector<Meteor>  g_meteors;
+	float                g_harvest = 0;   // Crimson Harvest: seconds of +damage left
+
+	bool Frozen(RE::Actor* a)
+	{
+		for (auto& h : Spellcraft::g_held) {
+			if (h.a.get().get() == a && h.t > 0) {
+				return true;
+			}
+		}
+		return false;
+	}
+	void Heal(float a_frac)
+	{
+		auto* av = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner();
+		av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * a_frac);
+	}
+	void ZapChain(int row, RE::Actor* a_from, float a_dmg, int a_jumps)
+	{
+		std::vector<RE::Actor*> done{ a_from };
+		RE::Actor*              cur = a_from;
+		float                   d = a_dmg;
+		for (int k = 0; k < a_jumps; ++k) {
+			RE::Actor* next = nullptr;
+			float      best = 450.0f;
+			for (auto* f : Foes(cur->GetPosition(), 450.0f)) {
+				if (std::ranges::find(done, f) == done.end()) {
+					if (const float dd = f->GetPosition().GetDistance(cur->GetPosition()); dd < best) {
+						best = dd, next = f;
+					}
+				}
+			}
+			if (!next) {
+				break;
+			}
+			d *= 0.7f;
+			Spellcraft::StreakAt(row, HeadPos(cur) - RE::NiPoint3{ 0, 0, 30 }, HeadPos(next) - RE::NiPoint3{ 0, 0, 30 }, 0.5f, 0.18f, true);
+			Damage(next, d, false, false);
+			done.push_back(next);
+			cur = next;
+		}
+	}
+	void AddCyclone(int row, const RE::NiPoint3& at, float r, float secs)
+	{
+		g_cyclones.push_back({ row, at, r, secs, 0.0f, 0.0f });
+		Spellcraft::BurstAt(row, at, r * 0.6f, 0.5f);
+	}
+	void Dawnbreak(int row, const RE::NiPoint3& at, float dmg)
+	{
+		for (auto* f : Foes(at, 450.0f)) {
+			auto*       av = f->AsActorValueOwner();
+			const float frac = av->GetActorValue(RE::ActorValue::kHealth) / std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth));
+			if (Director::IsRoundUndead(f) && !Director::IsBoss(f) && frac < 0.35f) {
+				Damage(f, 1.0e7f, false, false);  // turned to ash
+			} else {
+				Spellcraft::Strike(row, f, dmg * 1.2f, false, gen::kFxHoly, at);
+			}
+		}
+		Spellcraft::BurstAt(row, at, 260.0f, 0.8f);
+		Spellcraft::BurstAt(row, at + RE::NiPoint3{ 0, 0, 60 }, 160.0f, 0.5f);
+		Blast(BlastIndex("turnundead"), at, 0.0f, 0.8f);
+	}
+
+	// an arrow of ours strikes a body
+	void OnHit(const Spellcraft::Shot& s, RE::Actor* a, const RE::NiPoint3& p, bool killed)
+	{
+		const int  i = s.bow, t = s.tier, row = s.row;
+		const float dmg = s.damage;
+		switch (KindOf(i)) {
+		case Kind::Fire:
+			if (t >= 1) {  // Flare Shot: it bursts into a fireball
+				Spellcraft::Area(row, p, 190.0f, dmg * 0.5f, gen::kFxIgnite);
+				Spellcraft::BurstAt(row, p, 110.0f, 0.4f);
+			}
+			if (t >= 2) {  // Cinder Trail: the ground behind it burns
+				const RE::NiPoint3 back = s.vel.Length() > 1 ? s.vel * (1.0f / s.vel.Length()) : RE::NiPoint3{ 0, 1, 0 };
+				for (int k = 0; k < 5; ++k) {
+					g_patches.push_back({ row, a->GetPosition() - back * (110.0f * k), 95.0f, 5.0f, 0.0f, dmg * 0.18f });
+				}
+			}
+			break;
+		case Kind::Frost:
+			if (t < 1 || !s.full) {
+				Director::Web(a->GetPosition(), 70.0f, 3.0f, 60.0f, true);  // slowed
+			}
+			if (t >= 2 && Frozen(a) && !killed) {  // Shatter: the frozen one bursts into shards
+				Damage(a, dmg * 1.5f, false, false);
+				Spellcraft::Area(row, p, 220.0f, dmg * 0.6f, gen::kFxNone);
+				Spellcraft::BurstAt(row, p, 140.0f, 0.5f);
+			}
+			break;
+		case Kind::Shock:
+			if (t == 0) {
+				ZapChain(row, a, dmg, 1);
+			}
+			if (t >= 2 && !killed) {  // Storm Mark
+				g_marks.push_back({ a->GetHandle(), row, 4.0f, 0.0f, dmg * 0.25f });
+			}
+			if (t >= 3 && s.full) {  // Thunderstrike
+				Spellcraft::StreakAt(row, p + RE::NiPoint3{ Rand(-60, 60), Rand(-60, 60), 1400.0f }, p, 1.4f, 0.35f, true);
+				for (auto* f : Foes(p, 330.0f)) {
+					Spellcraft::Strike(row, f, dmg * 1.5f, false, gen::kFxNone, p);
+					Stagger(f, 1.0f);
+				}
+				Spellcraft::BurstAt(row, p, 220.0f, 0.6f);
+				Blast(BlastIndex("skybolt"), p, 0.0f, 0.7f);
+			}
+			break;
+		case Kind::Wind:
+			if (t >= 2) {  // Cyclone Arrow
+				AddCyclone(row, p, 360.0f, 3.0f);
+			}
+			break;
+		case Kind::Sun:
+			if (t >= 1) {  // Radiant Burst
+				for (auto* f : Foes(p, 210.0f)) {
+					if (f != a && Director::IsRoundUndead(f)) {
+						Spellcraft::Strike(row, f, dmg * 0.4f, false, gen::kFxHoly, p);
+					}
+				}
+				Spellcraft::BurstAt(row, p, 120.0f, 0.4f);
+			}
+			if (t >= 3 && s.full) {
+				Dawnbreak(row, p, dmg);
+			}
+			break;
+		case Kind::Blood:
+			if (t >= 1 && !killed) {  // Hemorrhage
+				g_dots.push_back({ a->GetHandle(), dmg * 0.35f / 4.0f, 4.0f });
+			}
+			if (t >= 2 && !killed) {  // Blood Tether
+				g_tethers.clear();
+				g_tethers.push_back({ a->GetHandle(), row, 6.0f, 0.0f, dmg * 0.15f, 3 });
+			}
+			if (t >= 3 && killed) {  // Crimson Harvest
+				for (int k = 0; k < 3; ++k) {
+					Orb o{ p + RE::NiPoint3{ Rand(-40, 40), Rand(-40, 40), Rand(0, 50) }, 0.0f, {} };
+					o.ball.Need(row);
+					o.ball.Attach(Spellcraft::WorldRoot());
+					g_orbs.push_back(std::move(o));
+				}
+			}
+			break;
+		}
+	}
+	// an arrow of ours lands in the world
+	void OnGround(const Spellcraft::Shot& s, const RE::NiPoint3& p)
+	{
+		const int t = s.tier, row = s.row;
+		switch (KindOf(s.bow)) {
+		case Kind::Fire:
+			if (t >= 1) {
+				Spellcraft::Area(row, p, 190.0f, s.damage * 0.5f, gen::kFxIgnite);
+				Spellcraft::BurstAt(row, p, 110.0f, 0.4f);
+			}
+			if (t >= 2) {
+				g_patches.push_back({ row, p, 120.0f, 5.0f, 0.0f, s.damage * 0.18f });
+			}
+			break;
+		case Kind::Wind:
+			if (t >= 2) {
+				AddCyclone(row, p, 360.0f, 3.0f);
+			}
+			break;
+		case Kind::Sun:
+			if (t >= 3 && s.full) {
+				Dawnbreak(row, p, s.damage);
+			}
+			break;
+		case Kind::Shock:
+			if (t >= 3 && s.full) {
+				Spellcraft::StreakAt(row, p + RE::NiPoint3{ 0, 0, 1400.0f }, p, 1.4f, 0.35f, true);
+				for (auto* f : Foes(p, 330.0f)) {
+					Spellcraft::Strike(row, f, s.damage * 1.5f, false, gen::kFxNone, p);
+					Stagger(f, 1.0f);
+				}
+				Spellcraft::BurstAt(row, p, 220.0f, 0.6f);
+			}
+			break;
+		default:
+			break;
+		}
+	}
+
 	void Fire(int i, float a_draw)
 	{
 		auto*       p = RE::PlayerCharacter::GetSingleton();
-		const int   row = gen::kBows[i].spellRow, gun = GunOf(i), lv = g_level[i];
+		const int   row = gen::kBows[i].spellRow, gun = GunOf(i), t = g_level[i];
 		const Aim   aim = AimAt(8000.0f);
 		const auto  from = HeadAt(p);
-		const float dmg = ShotDamage(i, a_draw);
+		const float dmg = ShotDamage(i, a_draw) * (g_harvest > 0 ? 1.25f : 1.0f);
 		const bool  full = a_draw >= 0.98f;
-		if (Wind(i) && full) {  // Skyhowl drawn full: the gale itself - everything before you hurled away
-			const auto cone = InCone(aim, 1200.0f + 150.0f * lv, 34.0f);
+		const Kind  kind = KindOf(i);
+		Spellcraft::g_bowHit = &OnHit;
+		Spellcraft::g_bowGround = &OnGround;
+		if (full) {
+			Spellcraft::BurstAt(row, from, 22.0f, 0.18f);  // (a flash off the string)
+		}
+		// the full-draw attacks that are not a single arrow
+		if (full && kind == Kind::Wind && t >= 1) {  // The Gale (I) / The Tempest (III)
+			const bool tempest = t >= 3;
+			const auto cone = InCone(aim, (tempest ? 1600.0f : 1200.0f), tempest ? 48.0f : 34.0f);
 			for (auto* f : cone) {
 				Spellcraft::Strike(row, f, dmg * 0.75f, false, gen::kFxNone, aim.eye);
-				Spellcraft::Fling(f, aim.eye - aim.dir * 120.0f, 3.2f + 0.6f * lv);
+				if (tempest) {
+					Spellcraft::Fling(f, f->GetPosition() - aim.dir * 60.0f - RE::NiPoint3{ 0, 0, 200.0f }, 5.0f);  // flung skyward
+				} else {
+					Spellcraft::Fling(f, aim.eye - aim.dir * 120.0f, 3.4f);
+				}
 			}
-			for (int k = 1; k <= 4; ++k) {
-				Spellcraft::BurstAt(row, aim.eye + aim.dir * (260.0f * k), 70.0f + 30.0f * k, 0.5f);
+			for (int k = 1; k <= (tempest ? 6 : 4); ++k) {
+				Spellcraft::BurstAt(row, aim.eye + aim.dir * (260.0f * k), 70.0f + 34.0f * k, 0.5f);
+			}
+			if (tempest) {
+				AddCyclone(row, aim.eye + aim.dir * std::min(900.0f, aim.hit.GetDistance(aim.eye)), 420.0f, 4.0f);
 			}
 			Spellcraft::PlayAt(Spellcraft::Snd(gun, &gen::GunSounds::boom), from);
-			logger::info("bows: Skyhowl's gale ({} hurled)", cone.size());
 			return;
 		}
+		if (full && kind == Kind::Fire && t >= 3) {  // Meteor Volley: one arrow up, five come down
+			Spellcraft::Launch(row, gun, from, aim.dir + RE::NiPoint3{ 0, 0, 1.2f }, 5000.0f, 0.0f, 9.0f, 1, 1.0f, -1, true);
+			Spellcraft::g_shots2.back().life = 0.35f;
+			for (int k = 0; k < 5; ++k) {
+				const RE::NiPoint3 to = aim.hit + RE::NiPoint3{ Rand(-220, 220), Rand(-220, 220), 0 };
+				g_meteors.push_back({ row, gun, to, 0.45f + 0.16f * k, dmg });
+			}
+			return;
+		}
+		if (full && kind == Kind::Frost && t >= 3) {  // Glacial Lance: a line frozen
+			const auto line = InLine(aim, 2400.0f, 70.0f);
+			for (auto* f : line) {
+				Spellcraft::Strike(row, f, dmg * 1.2f, false, gen::kFxFreeze, HeadPos(f));
+			}
+			Spellcraft::StreakAt(row, from, aim.eye + aim.dir * std::min(2400.0f, aim.hit.GetDistance(aim.eye)), 1.2f, 0.5f, false);
+			Spellcraft::BurstAt(row, aim.hit, 120.0f, 0.5f);
+			Spellcraft::PlayAt(Spellcraft::Snd(gun, &gen::GunSounds::boom), from);
+			return;
+		}
+		if (full && kind == Kind::Sun && t >= 2 && t < 3) {  // Sunbeam: through everything
+			for (auto* f : InLine(aim, 2600.0f, 55.0f)) {
+				Spellcraft::Strike(row, f, dmg, false, gen::kFxHoly, HeadPos(f));
+			}
+			Spellcraft::StreakAt(row, from, aim.eye + aim.dir * std::min(2600.0f, aim.hit.GetDistance(aim.eye)), 1.0f, 0.4f, false);
+			return;
+		}
+		// an arrow, its effect by bow and tier
 		RE::NiPoint3 dir = aim.hit - from;
 		if (dir.Length() < 1.0f) {
 			dir = aim.dir;
 		}
 		dir.Unitize();
-		const int   pierce = 1 + (lv >= 2 ? 1 : 0);
-		const int   arrows = lv >= 3 ? 3 : 1;
-		const float scale = full ? 1.25f : 1.0f;
-		for (int k = 0; k < arrows; ++k) {
-			const float yaw = (k - (arrows - 1) * 0.5f) * 0.07f;  // a fan of three, a few degrees apart
-			const RE::NiPoint3 d{ dir.x * std::cos(yaw) - dir.y * std::sin(yaw), dir.x * std::sin(yaw) + dir.y * std::cos(yaw), dir.z };
-			Spellcraft::Launch(row, gun, from, d, 6500.0f, dmg * (k == 0 ? 1.0f : 0.6f), 9.0f, pierce, scale, -1, true);
+		int effect = -2;
+		switch (kind) {
+		case Kind::Fire: effect = gen::kFxIgnite; break;
+		case Kind::Frost: effect = full && t >= 1 ? gen::kFxFreeze : gen::kFxNone; break;
+		case Kind::Shock: effect = t >= 1 ? gen::kFxChain : gen::kFxNone; break;
+		case Kind::Wind: effect = gen::kFxPush; break;
+		case Kind::Sun: effect = gen::kFxHoly; break;
+		case Kind::Blood: effect = gen::kFxDrain; break;
 		}
-		if (full) {
-			Spellcraft::BurstAt(row, from, 22.0f, 0.18f);  // (a flash off the string)
+		Spellcraft::Launch(row, gun, from, dir, 6500.0f, dmg, 9.0f, 1, full ? 1.25f : 1.0f, -1, true);
+		auto& sh = Spellcraft::g_shots2.back();
+		sh.bow = i, sh.tier = t, sh.full = full, sh.effect = effect;
+	}
+
+	void TickTiers(float a_delta)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		g_harvest = std::max(0.0f, g_harvest - a_delta);
+		for (auto& m : g_meteors) {  // the volley comes down
+			if ((m.delay -= a_delta) <= 0 && m.delay > -100.0f) {
+				const RE::NiPoint3 top = m.to + RE::NiPoint3{ Rand(-80, 80), Rand(-80, 80), 1100.0f };
+				Spellcraft::Launch(m.row, m.gun, top, m.to - top, 3800.0f, m.dmg, 14.0f, 1, 1.6f, -1, true);
+				auto& sh = Spellcraft::g_shots2.back();
+				sh.bow = 0, sh.tier = 1, sh.full = false, sh.effect = gen::kFxIgnite;  // (each bursts like a Flare Shot)
+				for (int b = 0; b < kN; ++b) {
+					if (KindOf(b) == Kind::Fire) sh.bow = b;
+				}
+				m.delay = -1000.0f;
+			}
 		}
+		std::erase_if(g_meteors, [](const Meteor& m) { return m.delay <= -100.0f; });
+		for (auto& c : g_patches) {  // cinders
+			c.t -= a_delta;
+			if ((c.tick -= a_delta) <= 0) {
+				c.tick = 0.5f;
+				for (auto* f : Foes(c.at, c.r)) {
+					Damage(f, c.dps * 0.5f, false, false, true);
+				}
+				Spellcraft::BurstAt(c.row, c.at + RE::NiPoint3{ Rand(-30, 30), Rand(-30, 30), 10 }, c.r * 0.5f, 0.45f);
+			}
+		}
+		std::erase_if(g_patches, [](const Patch& c) { return c.t <= 0; });
+		for (auto& m : g_marks) {  // storm marks
+			m.t -= a_delta;
+			auto a = m.a.get();
+			if (!a || a->IsDead()) {
+				m.t = 0;
+				continue;
+			}
+			if ((m.tick -= a_delta) <= 0) {
+				m.tick = 0.5f;
+				int n = 0;
+				for (auto* f : Foes(a->GetPosition(), 350.0f)) {
+					if (f != a.get() && n++ < 2) {
+						Spellcraft::StreakAt(m.row, HeadPos(a.get()) - RE::NiPoint3{ 0, 0, 25 }, HeadPos(f) - RE::NiPoint3{ 0, 0, 25 }, 0.45f, 0.15f, true);
+						Damage(f, m.dmg, false, false, true);
+					}
+				}
+			}
+		}
+		std::erase_if(g_marks, [](const Mark& m) { return m.t <= 0; });
+		for (auto& c : g_cyclones) {  // cyclones drag the dead in and hold them
+			c.t -= a_delta;
+			c.spin += a_delta;
+			if ((c.tick -= a_delta) <= 0) {
+				c.tick = 0.25f;
+				for (auto* f : Foes(c.at, c.r)) {
+					if (f->GetPosition().GetDistance(c.at) > 70.0f) {
+						Spellcraft::Fling(f, c.at, -0.6f);
+					}
+					Director::Web(f->GetPosition(), 50.0f, 0.4f, 95.0f);
+				}
+				Spellcraft::BurstAt(c.row, c.at + RE::NiPoint3{ 0, 0, 40.0f + 60.0f * std::fmod(c.spin, 1.0f) }, 90.0f, 0.3f);
+			}
+		}
+		std::erase_if(g_cyclones, [](const Cyclone& c) { return c.t <= 0; });
+		for (auto& b : g_tethers) {  // the blood tether feeds you
+			b.t -= a_delta;
+			auto a = b.a.get();
+			if (!a || a->IsDead() || a->GetPosition().GetDistance(p->GetPosition()) > 1600.0f) {
+				RE::Actor* next = nullptr;
+				if (b.jumps > 0 && a) {
+					float best = 600.0f;
+					for (auto* f : Foes(a->GetPosition(), 600.0f)) {
+						if (f != a.get() && f->GetPosition().GetDistance(a->GetPosition()) < best) {
+							best = f->GetPosition().GetDistance(a->GetPosition()), next = f;
+						}
+					}
+				}
+				if (next) {
+					b.a = next->GetHandle(), --b.jumps, b.t = std::max(b.t, 3.0f);
+				} else {
+					b.t = 0;
+				}
+				continue;
+			}
+			if ((b.tick -= a_delta) <= 0) {
+				b.tick = 0.5f;
+				Damage(a.get(), b.dmg, false, false, true);
+				Heal(0.02f);
+				Spellcraft::StreakAt(b.row, HeadAt(p), HeadPos(a.get()) - RE::NiPoint3{ 0, 0, 30 }, 0.35f, 0.45f, false);
+			}
+		}
+		std::erase_if(g_tethers, [](const Tether& b) { return b.t <= 0; });
+		for (auto& o : g_orbs) {  // orbs of blood fly home
+			o.t += a_delta;
+			const RE::NiPoint3 home = p->GetPosition() + RE::NiPoint3{ 0, 0, 90 };
+			RE::NiPoint3       d = home - o.at;
+			const float        len = d.Length();
+			if (len < 40.0f || o.t > 3.0f) {
+				Heal(0.04f);
+				g_harvest = 5.0f;
+				o.t = 99.0f;
+				continue;
+			}
+			d.Unitize();
+			o.at += d * std::min(len, (300.0f + 900.0f * o.t) * a_delta);
+			o.ball.Show(true);
+			o.ball.Place(o.at, Spellcraft::Spin(o.t * 5), 0.22f, 1.4f);
+		}
+		for (auto& o : g_orbs) {
+			if (o.t >= 99.0f) {
+				o.ball.Detach();
+			}
+		}
+		std::erase_if(g_orbs, [](const Orb& o) { return o.t >= 99.0f; });
 	}
 
 	// ---- the bow alive in your hands (Noah: lightning coursing through the lightning bow): the element's own effect
@@ -391,6 +763,7 @@ namespace BowsImpl
 		}
 		g_wasDrawing = drawing;
 		TickMotes(p, i, a_delta);
+		TickTiers(a_delta);
 		std::scoped_lock l(Hud::Lock());
 		Hud::Edit().bowHeld = i;
 		Hud::Edit().bowDraw = drawing ? g_draw : 0.0f;
@@ -399,6 +772,10 @@ namespace BowsImpl
 	void Reset()
 	{
 		ClearMotes();
+		for (auto& o : g_orbs) {
+			o.ball.Detach();
+		}
+		g_orbs.clear(), g_patches.clear(), g_marks.clear(), g_cyclones.clear(), g_tethers.clear(), g_meteors.clear(), g_harvest = 0;
 		g_ball.Detach();
 		g_ballRow = -1, g_draw = 0, g_wasDrawing = false, g_fullSaid = false;
 	}

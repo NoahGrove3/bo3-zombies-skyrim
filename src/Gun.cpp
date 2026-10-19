@@ -2068,8 +2068,7 @@ namespace bo3z
 				}
 				g_forgedTonight.insert(Bows::kIdBase + b);
 				BowsImpl::g_level[b] = static_cast<std::uint8_t>(lv + 1);
-				static constexpr const char* kWhat[] = { "", "more power", "its arrows pierce", "three arrows at once" };
-				Hud::Banner(name + " reforged  " + std::string(lv + 1, '|') + "  - " + kWhat[std::min(lv + 1, 3)], 4.0f);
+				Hud::Banner(name + " reforged  " + std::string(lv + 1, '|') + "  - " + std::string(Bows::TierName(b, lv + 1)), 4.0f);
 				logger::info("forge: {} -> level {}", name, lv + 1);
 				return true;
 			}
@@ -2771,6 +2770,7 @@ namespace bo3z
 		std::uint32_t    Color(int a_i) { return a_i >= 0 && a_i < BowsImpl::kN ? gen::kBows[a_i].color : 0xFFFFFF; }
 		std::string_view Element(int a_i) { return a_i >= 0 && a_i < BowsImpl::kN ? gen::kBows[a_i].element : ""; }
 		int              Level(int a_i) { return a_i >= 0 && a_i < BowsImpl::kN ? BowsImpl::g_level[a_i] : 0; }
+		std::string_view TierName(int a_i, int a_tier) { return a_i >= 0 && a_i < BowsImpl::kN ? BowsImpl::kTierNames[static_cast<int>(BowsImpl::KindOf(a_i))][std::clamp(a_tier, 0, 3)] : ""; }
 		int              Held() { return BowsImpl::Held(); }
 		int              Carried() { return BowsImpl::Carried(); }
 		int              IndexOf(const RE::TESForm* a_form) { return BowsImpl::Of(a_form); }

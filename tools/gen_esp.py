@@ -530,7 +530,7 @@ def guide_text():
            p("Every city has one. Look into its star and press Activate. Its menu does not stop the night."),
            p("<b>Call a spell</b> - the altar turns and gives you one of the spells of the fallen. Each call costs more than the last until dawn. You carry two of its spells; a third asks which one it replaces."),
            p("<b>Call a bow</b> - the altar's second wheel (B, or the right trigger). Six elemental bows: fire, frost, storm, wind, sun and blood. You carry one; a new one takes its place."),
-           p("<b>Reforge</b> - make the spell or bow in your hands stronger, three times over. A reforged bow's arrows pierce, then fly three at once."),
+           p("<b>Reforge</b> - make the spell or bow in your hands stronger, three times over. Every tier gives a bow a new attack: the fire bow's arrows burst, then leave burning ground, then a full draw calls down a volley of meteors."),
            p("<b>Perks</b> - lasting gifts. You carry five at most."),
            p("<b>Trials</b> - the quest that wakes the altar. It offers five; take up any three, in any order (keys 6 to 0, or the shoulder buttons and D-pad up). "
              "When three are done the city's Barrow-Jarl rises at night near the altar. Slay it and the city is safe for good. Skyrim's difficulty sets how hard the trials are."),

@@ -1319,6 +1319,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DrawEmblem(dl, id, { a.x + rr, (a.y + b.y) * 0.5f }, rr - 6 * k, 1.0f, now, 0.9f);
 				Txt(dl, g_body, 12 * k, { a.x + rr * 2 + 6 * k, a.y + 7 * k }, Fade(ecol, 0.9f), "BOW");
 				Txt(dl, g_title, 22 * k, { a.x + rr * 2 + 6 * k, a.y + 22 * k }, kParch, ArmsName(id));
+				const std::string tier(Bows::TierName(s.bowHeld, Bows::Level(s.bowHeld)));
+				Txt(dl, g_body, 12 * k, { b.x - 18 * k - Measure(g_body, 12 * k, tier).x, a.y + 7 * k }, Fade(ecol, 0.9f), tier);
 				if (s.bowDraw > 0.02f) {
 					const ImVec2 cc{ size.x * 0.5f, size.y * 0.5f };
 					const float  R = 30 * k, a0 = -RE::NI_PI / 2, a1 = a0 + 2 * RE::NI_PI * std::clamp(s.bowDraw, 0.0f, 1.0f);
@@ -2229,7 +2231,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					keyCap({ L, y + 2 * k }, g_padLast ? std::string("Y") : Settings::KeyName(1), can);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "REFORGE");
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235),
-						g < 0 ? "Hold a spell or bow to reforge it" : ArmsName(g) + (lvl >= gen::kForgeMax ? "  -  ascended" : s.bowHeld >= 0 ? (lvl == 0 ? "  -  more power" : lvl == 1 ? "  -  arrows that pierce" : "  -  three arrows at once") : "  -  more power, less magicka"));
+						g < 0 ? "Hold a spell or bow to reforge it" : ArmsName(g) + (lvl >= gen::kForgeMax ? "  -  ascended" : s.bowHeld >= 0 ? "  -  next: " + std::string(Bows::TierName(s.bowHeld, lvl + 1)) : std::string("  -  more power, less magicka")));
 					for (int q = 0; q < gen::kForgeMax; ++q) {  // the forge marks
 						const ImVec2 pc{ L + 150 * k + q * 18 * k, y + 14 * k };
 						dl->AddQuadFilled({ pc.x, pc.y - 6 * k }, { pc.x + 5 * k, pc.y }, { pc.x, pc.y + 6 * k }, { pc.x - 5 * k, pc.y }, q < lvl ? spellCol(g, 1.0f) : IM_COL32(60, 52, 46, 220));

@@ -277,6 +277,9 @@ namespace Spellcraft
 		int          pierce;
 		float        homing = 0, gravity = 0;
 		bool         arrow = false;  // one of the altar's bows' arrows (its own mesh; a small glow at its head)
+		int          bow = -1, tier = 0;  // ...which bow, at which reforge tier (Bows.inl: its hit and its landing)
+		bool         full = false;        // ...loosed at full draw
+		int          effect = -2;         // the effect it lays on what it strikes (-2: the spell's own)
 		int          ult = -1;  // a charged attack's carrier (mortar, wind ball, singularity, soul wisp) or -1 for a tap
 		std::vector<RE::FormID> struck;
 		Fx           fx;   // the trail (along the flight)
@@ -312,6 +315,9 @@ namespace Spellcraft
 	};
 
 	std::vector<Shot>   g_shots2;
+	// the altar's bows (Bows.inl): what their arrows do when they strike a body, or the world
+	void (*g_bowHit)(const Shot&, RE::Actor*, const RE::NiPoint3&, bool) = nullptr;
+	void (*g_bowGround)(const Shot&, const RE::NiPoint3&) = nullptr;
 	std::vector<Burst>  g_bursts;
 	std::vector<Streak> g_streaks;
 	std::vector<Hold>   g_held;
@@ -854,7 +860,10 @@ namespace Spellcraft
 					const int  gi = s.gun;
 					const float hm = head2 ? gen::kGuns[gi].headMult * Perks::HeadMult() : 1.0f;
 					const float pierceFall = s.struck.size() > 1 ? 0.85f : 1.0f;
-					Strike(s.row, f, s.damage * hm * pierceFall, head2, s.ult == gen::kUltSoulStorm ? gen::kFxNone : Def(s.row).effect, p);
+					const bool killedNow = Strike(s.row, f, s.damage * hm * pierceFall, head2, s.ult == gen::kUltSoulStorm ? gen::kFxNone : s.effect != -2 ? s.effect : Def(s.row).effect, p);
+					if (s.bow >= 0 && g_bowHit) {
+						g_bowHit(s, f, p, killedNow);
+					}
 					PlayAt(Snd(s.gun, &gen::GunSounds::hit), p, 0.85f);
 					if (static_cast<int>(s.struck.size()) >= s.pierce) {
 						BurstAt(s.row, p, std::max(36.0f, s.radius * 2.0f), 0.25f);
@@ -867,6 +876,9 @@ namespace Spellcraft
 			}
 			if (!stop && wf <= 1.0f) {  // the world stopped it
 				s.pos = end;
+				if (s.bow >= 0 && g_bowGround) {
+					g_bowGround(s, end);
+				}
 				Detonate(s, end - s.vel * (2.0f / std::max(1.0f, s.vel.Length())));
 				s.life = 0;
 			}

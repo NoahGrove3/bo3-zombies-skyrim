@@ -281,6 +281,7 @@ namespace bo3z
 		std::uint32_t             Color(int a_i);
 		std::string_view          Element(int a_i);   // its emblem (bw_<element>.png)
 		int                       Level(int a_i);     // reforged 0..gen::kForgeMax
+		std::string_view          TierName(int a_i, int a_tier);  // its attack at a reforge tier (0 as rolled .. 3)
 		int                       Held();             // the bow in your hands (-1)
 		int                       Carried();          // the bow you carry (-1)
 		int                       IndexOf(const RE::TESForm* a_form);
