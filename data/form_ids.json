@@ -1138,6 +1138,14 @@
   "ARTO:fx_barrowhorn_hand": "0xc6e",
   "STAT:fx_barrowhorn_orb": "0xc6f",
   "LIGH:fx_barrowhorn_light": "0xc70",
-  "GLOB:echo_words": "0xc71"
+  "GLOB:echo_words": "0xc71",
+  "ACTI:hall_fang": "0xc72",
+  "ACTI:hall_robes": "0xc73",
+  "ACTI:hall_skull": "0xc74",
+  "ACTI:hall_endless": "0xc75",
+  "ACTI:hall_throne": "0xc76",
+  "STAT:hall_fang_show": "0xc77",
+  "STAT:1st_fang": "0xc78",
+  "WEAP:fang": "0xc79"
  }
 }

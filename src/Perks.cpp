@@ -22,8 +22,8 @@ namespace bo3z
 
 	namespace Perks
 	{
-		float ManaMult() { return 1.0f; }  // (staffs and bows run on nothing; tomes keep their plain cost)
-		float RegenMult() { return (1.0f + 0.5f * N(gen::kPerk_hawkeye)) * (Echo::WordSilenced(2) ? 1.5f : 1.0f); }  // (LEIN silenced: the world answers)  // Hawkeye: clear sight, magicka back sooner
+		float ManaMult() { return Echo::WearsRobes() ? 0.75f : 1.0f; }  // (Stage 5: the Robes of the First Dragonborn)  // (staffs and bows run on nothing; tomes keep their plain cost)
+		float RegenMult() { return (1.0f + 0.5f * N(gen::kPerk_hawkeye)) * (Echo::WordSilenced(2) ? 1.5f : 1.0f) * (Echo::WearsRobes() ? 1.25f : 1.0f); }  // (LEIN silenced: the world answers)  // Hawkeye: clear sight, magicka back sooner
 		float ChargeMult() { return Stack(gen::kPerk_quicksilver); }
 		float FireDelayMult() { return std::max(0.3f, 1.0f - 0.25f * N(gen::kPerk_twinstrike)); }
 		float DamageMult() { return Stack(gen::kPerk_twinstrike) * (Echo::WordSilenced(0) ? 1.15f : 1.0f); }  // (GRAH silenced: battle-fury)

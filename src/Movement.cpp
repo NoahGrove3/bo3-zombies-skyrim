@@ -585,16 +585,17 @@ namespace bo3z
 
 		const char* AwayModel(int a_bond)
 		{
-			static constexpr const char* kAway[4] = { "CurseOfAlduin\\fx\\dragon_away.nif", "CurseOfAlduin\\fx\\dragon_away_b1.nif", "CurseOfAlduin\\fx\\dragon_away_b2.nif",
-				"CurseOfAlduin\\fx\\dragon_away_b3.nif" };
-			return kAway[std::clamp(a_bond, 0, 3)];
+			static constexpr const char* kAway[5] = { "CurseOfAlduin\\fx\\dragon_away.nif", "CurseOfAlduin\\fx\\dragon_away_b1.nif", "CurseOfAlduin\\fx\\dragon_away_b2.nif",
+				"CurseOfAlduin\\fx\\dragon_away_b3.nif", "CurseOfAlduin\\fx\\dragon_away_b4.nif" };
+			return kAway[std::clamp(a_bond, 0, 4)];
 		}
 		int Bond();
+		int Look() { return Echo::BoneDragon() ? 4 : std::clamp(Save::DragonBond(), 0, 3); }  // (Stage 5: the Bone-Wyrm's skin)
 		void LetGo(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_vel, float a_roll, float a_baseScale)
 		{
 			AwayGone();  // (the last one, if still in the air, goes now)
-			static RE::NiPointer<RE::NiNode> model[4];
-			const int b = Bond();
+			static RE::NiPointer<RE::NiNode> model[5];
+			const int b = Look();
 			if (!model[b]) {
 				RE::BSModelDB::DBTraits::ArgsType args{};
 				if (RE::BSModelDB::Demand(AwayModel(b), model[b], args) != RE::BSResource::ErrorCode::kNone || !model[b]) {
@@ -723,7 +724,7 @@ namespace bo3z
 		void ApplyBondLook()
 		{
 			static int applied = -1;
-			const int  b = Bond();
+			const int  b = Look();
 			if (b == applied) {
 				return;
 			}
@@ -732,7 +733,7 @@ namespace bo3z
 			if (!anio) {
 				return;
 			}
-			static constexpr const char* kGlider[4] = { "NickNak\\ParaGlider.nif", "NickNak\\ParaGlider_b1.nif", "NickNak\\ParaGlider_b2.nif", "NickNak\\ParaGlider_b3.nif" };
+			static constexpr const char* kGlider[5] = { "NickNak\\ParaGlider.nif", "NickNak\\ParaGlider_b1.nif", "NickNak\\ParaGlider_b2.nif", "NickNak\\ParaGlider_b3.nif", "NickNak\\ParaGlider_b4.nif" };
 			anio->SetModel(kGlider[b]);  // (the fly-off is the same bond's dragon_away nif, cloned: LetGo)
 			applied = b;
 			logger::info("glider: the dragon's bond {} ({})", b, kGlider[b]);

@@ -522,6 +522,13 @@ namespace bo3z
 							} else if (src->Is(RE::FormType::Spell)) {
 								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
 							}
+							// (Stage 5) Alduin's Fang: it burns what it strikes, and the fire leaps to the dead beside it
+							const bool fang = src->GetFormID() == RE::TESDataHandler::GetSingleton()->LookupFormID(gen::kFangWeap, gen::kPlugin);
+							if (fang) {
+								share *= 2.5f;
+								Gun::FxBlast("fireball", z->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f });
+								Director::Shock(z->GetPosition(), 300.0f, Director::RoundHealth() * gen::kRounds.hpScale * 0.6f);
+							}
 							HurtUndead(z, Director::RoundHealth() * share * (0.7f + 0.3f * Arcana::Power()));  // (the night's power curve)
 						}
 					}

@@ -107,6 +107,7 @@ namespace bo3z
 			if (a_round > 10) {  // (Noah: harder to grow too strong) the dead grow 8% tougher every night after the tenth
 				hp *= std::pow(1.08f, static_cast<float>(a_round - 10));
 			}
+			hp *= 1.0f + 0.5f * static_cast<float>(Echo::NewGamePlus());  // (Stage 5: each cycle begun again, the dead half again as tough)
 			return hp / R.hpScale;  // design units -> Skyrim health
 		}
 
@@ -1331,6 +1332,9 @@ namespace bo3z
 			}
 			Curse::OnWave(true);
 			logger::info("night {}: wave {} of {} cleared", g_current, g_wave, g_waves);
+			if (g_wave >= g_waves && Echo::EndlessNight() && !Coop::Client()) {
+				++g_waves;  // (Stage 5: the Endless Night - one more wave, always)
+			}
 			if (g_wave >= g_waves) {
 				g_nightCleared = true;
 				Forms::Play(gen::Sound::round_end);

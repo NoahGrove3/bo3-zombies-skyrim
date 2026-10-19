@@ -1467,6 +1467,7 @@ namespace bo3z::gen
 		WordDef{ "lein", "LEIN", "World", "the summit of the Throat of the World", "LEIN. The last word was shouted from the top of the world. Climb the Throat of the World at night: Alduin's echo still circles the summit, breathing his dead back into the world.", "The Echo of Alduin breaks apart over the summit and its shout dies on the wind. GRAH, DIR, LEIN - all three words are silenced. The World-Eater's curse is broken.", "The World Answers: your magicka returns half again as fast.", "boss4", "The Echo of Alduin", 56044.0f, -47760.0f, 36055.0f, 0.0f, 16.0f, 1.0f, { 10, 12, 14, 0 }, { 2, 2, 3, 0 }, 3 },
 	} };
 	inline constexpr float kWordWake = 3200.0f, kWordLeash = 6500.0f;
+	inline constexpr std::uint32_t kHallFang = 0xC72, kHallRobes = 0xC73, kHallSkull = 0xC74, kHallEndless = 0xC75, kHallThrone = 0xC76, kHallFangShow = 0xC77, kFangWeap = 0xC79;
 	inline constexpr std::array<int, 6> kEchoGuards{ 3, 4, 4, 5, 6, 6 }, kEchoElites{ 0, 1, 1, 1, 2, 2 }, kEchoKillN{ 20, 25, 30, 35, 40, 50 };  // per Skyrim difficulty
 	inline constexpr float kEchoWake = 2600.0f, kEchoTake = 260.0f, kEchoKillRadius = 3000.0f, kEchoStoneTake = 230.0f;
 	inline constexpr float kEchoStoneX = 0.0f, kEchoStoneY = -380.0f;  // the Echo Stone on a freed altar (dressing: echo_stone)

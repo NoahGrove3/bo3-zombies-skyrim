@@ -348,6 +348,29 @@ namespace bo3z
 					}
 				}
 			}
+			if (Broken()) {   // the Hall of the Awakened
+				for (const auto& h : HallSpots()) {
+					Ensure(a_p, cell, h.id, Room(h.x, h.y, 0), h.yaw);
+					Ensure(a_p, cell, gen::kRelBeam, Room(h.x, h.y, 100.0f), 0, 0.18f);
+				}
+				// Alduin's Fang stands on its pedestal, blade up, while it isn't in your pack
+				auto* fang = Fang();
+				const auto fangAt = Room(0.0f, 430.0f, 175.0f);
+				auto* show = Forms::Ours(gen::kHallFangShow);
+				if (fang && a_p->GetItemCount(fang) <= 0) {
+					if (auto* r = Ensure(a_p, cell, gen::kHallFangShow, fangAt, 180.0f)) {
+						r->SetAngle({ -1.5708f, 0, Rad(180.0f) });
+					}
+				} else if (show) {
+					cell->ForEachReference([&](RE::TESObjectREFR* r) {
+						if (r && r->GetBaseObject() == show && !r->IsDeleted() && r->GetPosition().GetDistance(fangAt) < 60.0f) {
+							r->Disable();
+							r->SetDelete(true);
+						}
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
+				}
+			}
 			auto marker = [&](RE::ObjectRefHandle& a_h, const RE::NiPoint3& a_at, float a_yaw) {
 				auto m = a_h.get();
 				if (!m || m->IsDeleted() || m->GetParentCell() != cell) {
@@ -742,10 +765,43 @@ namespace bo3z
 				std::string(W.silenced) + "  " + std::string(W.power) + (next >= 0 ? "  The next word stirs: " + std::string(gen::kWords[next].site) + "." : ""), 16.0f);
 			logger::info("words: {} silenced", W.word);
 			EndSiege("silenced");
+			if (next < 0) {
+				SetFlag(kFlagHallTold, true);
+				Hud::Lore("THE CURSE OF ALDUIN IS BROKEN",
+					"The dead of Skyrim sleep. Beneath High Hrothgar the Reliquary of the Tongues wakes as the Hall of the Awakened, and what you won waits there: "
+					"Alduin's Fang, the Robes of the First Dragonborn, the Bone-Wyrm's Skull for your dragon, the Brazier of the Endless Night - "
+					"and the Seat of the Awakened, for when you would face it all again.",
+					20.0f);
+			}
 			if (next >= 0) {
 				g_siege.word = next, g_siege.told = false;
 			}
 		}
+
+		// ---- Stage 5: the curse broken - the Hall of the Awakened and its rewards ---------------------------------------
+		// The Reliquary becomes the Hall of the Awakened: Alduin's Fang on its stand, the Robes of the First Dragonborn,
+		// the Bone-Wyrm's Skull (your glider's dragon turns to Alduin's bones), the Brazier of the Endless Night (the
+		// night never ends while it burns: wave after wave, till you put it out) and the Seat of the Awakened (begin
+		// again: every city falls back under the curse and the nights start over, the dead stronger each time - your
+		// wonders, bows, powers and the words' gifts stay yours). Flags in UN_EchoWords.
+		constexpr int kFlagBone = 1 << 9, kFlagEndless = 1 << 10, kFlagRobes = 1 << 11, kFlagHallTold = 1 << 17;
+		constexpr int kNgShift = 12, kNgMask = 0xF << kNgShift;
+		bool Flag(int a_f) { return (Read(gen::kEchoGlobWords) & a_f) != 0; }
+		void SetFlag(int a_f, bool a_on) { Write(gen::kEchoGlobWords, a_on ? (Read(gen::kEchoGlobWords) | a_f) : (Read(gen::kEchoGlobWords) & ~a_f)); }
+		bool Broken() { return (Read(gen::kEchoGlobWords) & ((1 << kWordCount) - 1)) == (1 << kWordCount) - 1; }
+		RE::TESObjectWEAP* Fang() { return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); }
+		struct HallSpot
+		{
+			std::uint32_t id;
+			float         x, y, yaw;
+		};
+		const std::array<HallSpot, 5>& HallSpots()
+		{
+			static const std::array<HallSpot, 5> s{ { { gen::kHallFang, 0.0f, 430.0f, 180.0f }, { gen::kHallRobes, -540.0f, -380.0f, 90.0f },
+				{ gen::kHallSkull, 540.0f, -380.0f, 270.0f }, { gen::kHallEndless, -230.0f, -440.0f, 0.0f }, { gen::kHallThrone, 230.0f, -440.0f, 0.0f } } };
+			return s;
+		}
+		float g_throneAsk = 0;  // (the Seat asks twice: a first touch warns, a second within a few seconds begins again)
 
 		float g_slow = 0;
 		bool  g_loaded = false;  // the first pass after a load: the Barrow-Jarls' parts already won are given quietly
@@ -773,6 +829,16 @@ namespace bo3z
 		int  WonderHeld() { return Glob(gen::kEchoGlobHeld) ? HeldWonder() : -1; }
 		bool WordSilenced(int a_w) { return Glob(gen::kEchoGlobWords) && a_w >= 0 && a_w < kWordCount && Silenced(a_w); }
 		bool CurseBroken() { return Glob(gen::kEchoGlobWords) && (Read(gen::kEchoGlobWords) & ((1 << kWordCount) - 1)) == (1 << kWordCount) - 1; }
+		bool BoneDragon() { return Glob(gen::kEchoGlobWords) && Broken() && Flag(kFlagBone); }
+		bool EndlessNight() { return Glob(gen::kEchoGlobWords) && Broken() && Flag(kFlagEndless); }
+		int  NewGamePlus() { return Glob(gen::kEchoGlobWords) ? (Read(gen::kEchoGlobWords) & kNgMask) >> kNgShift : 0; }
+		bool WearsRobes()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* robes = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(0x02B0F7, "Dragonborn.esm");
+			auto* worn = p ? p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kBody) : nullptr;
+			return robes && worn == robes;
+		}
 		void OnBearerSlain()
 		{
 			if (g_siege.stage == 2) {
@@ -835,6 +901,7 @@ namespace bo3z
 				return;
 			}
 			g_slow = 0.5f;
+			g_throneAsk = std::max(0.0f, g_throneAsk - 0.5f);
 			TickAllies(0.5f);
 			// the wonder in your hands: lost (dropped from a slot, a new character) - it rests on its pedestal again
 			if (const int w = HeldWonder(); w >= 0) {
@@ -925,6 +992,68 @@ namespace bo3z
 				Go(p, g_leave);
 				return true;
 			}
+			if (base == Forms::Ours(gen::kHallFang)) {
+				if (auto* fang = Fang()) {
+					if (p->GetItemCount(fang) > 0) {
+						p->RemoveItem(fang, p->GetItemCount(fang), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+						Hud::Banner("ALDUIN'S FANG RESTS ON ITS STAND", 3.5f);
+					} else {
+						p->AddObjectToContainer(fang, nullptr, 1, nullptr);
+						Forms::Play(gen::Sound::shout_learned);
+						Hud::Lore("ALDUIN'S FANG", "Cut from the World-Eater's own jaw. It burns the dead it strikes, and the fire leaps to those beside them. Return it to its stand whenever you like.", 9.0f);
+					}
+					BuildReliquary(p);
+				}
+				return true;
+			}
+			if (base == Forms::Ours(gen::kHallRobes)) {
+				auto* dh = RE::TESDataHandler::GetSingleton();
+				if (!dh->LookupModByName("Dragonborn.esm")) {
+					Hud::Banner("The robes need Dragonborn (the Solstheim add-on).", 4.0f);
+					return true;
+				}
+				if (!Flag(kFlagRobes)) {
+					for (const RE::FormID id : { 0x02B0F7u, 0x02B0F9u, 0x03D2AFu, 0x029A62u }) {  // Miraak's robes, gloves, boots and mask
+						if (auto* a = dh->LookupForm<RE::TESObjectARMO>(id, "Dragonborn.esm")) {
+							p->AddObjectToContainer(a, nullptr, 1, nullptr);
+						}
+					}
+					SetFlag(kFlagRobes, true);
+					Forms::Play(gen::Sound::shout_learned);
+					Hud::Lore("ROBES OF THE FIRST DRAGONBORN", "Worn by the first who devoured a dragon's soul. While you wear the robes, every spell and wonder costs a quarter less magicka and your magicka returns faster.", 9.0f);
+				} else {
+					Hud::Banner("The robes are already yours.", 3.0f);
+				}
+				return true;
+			}
+			if (base == Forms::Ours(gen::kHallSkull)) {
+				SetFlag(kFlagBone, !Flag(kFlagBone));
+				Forms::Play(gen::Sound::ward_lit);
+				Hud::Banner(Flag(kFlagBone) ? "YOUR DRAGON WEARS ALDUIN'S BONES" : "YOUR DRAGON WEARS ITS OWN SCALES AGAIN", 4.0f);
+				return true;
+			}
+			if (base == Forms::Ours(gen::kHallEndless)) {
+				SetFlag(kFlagEndless, !Flag(kFlagEndless));
+				Forms::Play(Flag(kFlagEndless) ? gen::Sound::curse_lifted : gen::Sound::ward_lit);
+				Hud::Banner(Flag(kFlagEndless) ? "THE ENDLESS NIGHT BURNS - the nights will not end while the brazier is lit" : "THE BRAZIER IS COLD - dawn comes when the waves are cleared", 6.0f);
+				return true;
+			}
+			if (base == Forms::Ours(gen::kHallThrone)) {
+				if (g_throneAsk <= 0) {
+					g_throneAsk = 8.0f;
+					Hud::Banner("BEGIN AGAIN? Every city falls back under the curse and the nights start over, the dead stronger. Your wonders, bows and powers stay. Touch the Seat again to begin.", 8.0f);
+					return true;
+				}
+				g_throneAsk = 0;
+				const int ng = std::min(15, NewGamePlus() + 1);
+				Write(gen::kEchoGlobWords, (Read(gen::kEchoGlobWords) & ~kNgMask) | (ng << kNgShift));
+				Curse::NewGamePlus();
+				Forms::Play(gen::Sound::quest_start);
+				Hud::Lore("THE AWAKENED - CYCLE " + std::to_string(ng + 1),
+					"The altars go dark again, every one. The dead rise stronger than before - and you rise with all you won. Wake the Echo Altars anew.", 12.0f);
+				logger::info("echo: new game plus, cycle {}", ng + 1);
+				return true;
+			}
 			for (int w = 0; w < kWonders; ++w) {
 				if (base == Forms::Ours(gen::kEchoWonders[w].pedestal)) {
 					Forge(p, w);
@@ -981,6 +1110,9 @@ namespace bo3z
 				if (Hunting(i)) {
 					consider(SiteAt(i) + RE::NiPoint3{ 0, 0, 260.0f }, std::string(gen::kEchoParts[i].label) + " - " + std::string(gen::kEchoParts[i].site));
 				}
+			}
+			if (Broken() && Fang() && a_p->GetItemCount(Fang()) <= 0 && !Flag(kFlagRobes)) {
+				consider(kHHFront + RE::NiPoint3{ 0, 0, 250.0f }, "High Hrothgar - the Hall of the Awakened");
 			}
 			if (const int wd = NextWord(); wd >= 0) {
 				const auto& W = gen::kWords[wd];

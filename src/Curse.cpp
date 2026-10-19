@@ -790,6 +790,16 @@ namespace bo3z
 
 		bool Freed(int a_town) { return a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size()) && Get(a_town).freed; }
 
+		void NewGamePlus()
+		{
+			for (int t = 0; t < static_cast<int>(gen::kCurseCities.size()); ++t) {
+				SetValue(t, kBase);
+				Gun::Console("resetquest UN_Rites_" + std::string(gen::kTowns[t]));
+			}
+			Save::Set(gen::kAV_round, 0);
+			logger::info("curse: begun again - every city under the curse, night 1 next");
+		}
+
 		void MigrateRites()
 		{
 			for (int t = 0; t < static_cast<int>(gen::kCurseCities.size()); ++t) {

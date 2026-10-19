@@ -632,6 +632,26 @@ for w in E['wonders']:
 for key, model, r in [('rel_room', 'room.nif', 640), ('rel_relic', 'relic.nif', 80)] + [('rel_gem_' + w['id'], f"gem_{w['id']}.nif", 8) for w in E['wonders']]:
     recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
         sub('MODL', z(RQ + model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
+# Stage 5 (src/Echo.cpp Hall): the Hall of the Awakened's stations, and Alduin's Fang
+for key, name, verb in (('hall_fang', "Alduin's Fang", 'Take'), ('hall_robes', 'Robes of the First Dragonborn', 'Take'),
+                        ('hall_skull', "The Bone-Wyrm's Skull", 'Bind'), ('hall_endless', 'Brazier of the Endless Night', 'Kindle'),
+                        ('hall_throne', 'Seat of the Awakened', 'Begin again')):
+    rel_acti(key, name, verb, 'pedestal.nif', 60)
+for key, model, r in (('hall_fang_show', 'CurseOfAlduin\\wonder\\fang.nif', 70), ('1st_fang', 'CurseOfAlduin\\wonder\\fang.nif', 70)):
+    recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
+        sub('MODL', z(model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
+ws = []
+for name, hx in T['weap_draugr_gs']['subs']:
+    b = bytearray(bytes.fromhex(hx))
+    if name == 'EDID': b = z('UN_AlduinsFang')
+    elif name == 'FULL': b = z("Alduin's Fang")
+    elif name == 'MODL': b = z('CurseOfAlduin\\wonder\\fang.nif')
+    elif name == 'MODT': continue
+    elif name == 'DESC': b = z("Cut from the World-Eater's own jaw when his echo broke over the Throat of the World. It burns the dead it strikes, and the fire leaps to those beside them.")
+    elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_fang'))
+    elif name == 'DATA': b = bytearray(struct.pack('<IfH', 5000, 16.0, 38))
+    ws.append(sub(name, bytes(b)))
+recs['WEAP'].append(record('WEAP', fid('WEAP', 'fang'), ws))
 for key, col, radius in (('rel_blue', '5AA8FF', 620), ('rel_warm', 'FFD9A0', 1100), ('rel_relic', '6AB8FF', 700)):
     data = bytearray(tsub('ligh', 'DATA')); c = int(col, 16)
     struct.pack_into('<I', data, 4, radius); struct.pack_into('<BBBB', data, 8, c >> 16, (c >> 8) & 255, c & 255, 0)

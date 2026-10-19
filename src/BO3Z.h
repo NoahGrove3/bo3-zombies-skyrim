@@ -378,6 +378,7 @@ namespace bo3z
 		void  OnWave(bool a_cleared);       // the night's waves: one begins (false) or is cleared (true)
 		void  OnChampionSlain(int a_town);  // a city's champion fell (Director)
 		void  MigrateRites();               // a save from the four-rite cities: freed stays freed, the rest begin the trials
+		void  NewGamePlus();                // Stage 5, the Seat of the Awakened: every city back under the curse, the nights start over
 		bool  Freed(int a_town);            // its Echo Altar is awake (three trials and its Barrow-Jarl)
 		bool  SafeHere(RE::PlayerCharacter* a_player);  // in a freed city: no undead rise here
 		float SpawnBoost();                              // holding a shrine: the night pushes harder
@@ -416,6 +417,10 @@ namespace bo3z
 		bool WordSilenced(int a_w);                            // Stage 4: 0 GRAH (battle-fury), 1 DIR (death's refusal), 2 LEIN (the world answers)
 		bool CurseBroken();                                    // all three words silenced (Stage 5's rewards open)
 		void OnBearerSlain();                                  // a word's bearer fell (Director's champion with no city)
+		bool BoneDragon();                                     // Stage 5: the glider's dragon wears Alduin's bones
+		bool EndlessNight();                                   // Stage 5: the nights don't end while the brazier burns
+		int  NewGamePlus();                                    // Stage 5: cycles begun again at the Seat of the Awakened (0 = the first)
+		bool WearsRobes();                                     // Stage 5: the Robes of the First Dragonborn are on
 	}
 
 	namespace Intro

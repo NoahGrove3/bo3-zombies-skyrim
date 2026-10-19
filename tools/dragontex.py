@@ -82,5 +82,39 @@ def main():
         Image.fromarray((np.clip(t, 0, 1) * 255).astype(np.uint8)).resize((512, 1024)).save(pathlib.Path(sys.argv[2]) / f'preview_{name}.png')
 
 
+def bone():
+    """Stage 5's reward (the curse broken): the glider's dragon as Alduin's bones - weathered bone-white scales, its
+    markings sunk to dark cracks with a grave-green light in them, the eyes green.
+        python tools/dragontex.py bone <dragon_snow.dds> <out Textures dir>"""
+    src, out = sys.argv[2], pathlib.Path(sys.argv[3]) / 'CurseOfAlduin' / 'Dragon'
+    from PIL import ImageFilter
+    im = Image.open(src).convert('RGBA').resize((1024, 2048), Image.LANCZOS)
+    a = np.asarray(im).astype(np.float32) / 255
+    rgb, alpha = a[..., :3], a[..., 3:]
+    L = rgb @ np.array([0.299, 0.587, 0.114], np.float32)
+    Li = Image.fromarray((L * 255).astype(np.uint8), 'L')
+    local = np.asarray(Li.filter(ImageFilter.GaussianBlur(10))).astype(np.float32) / 255
+    blue = np.clip((rgb[..., 2] - rgb[..., 0]) * 8 + 0.2, 0, 1)
+    valid = (L > 0.03) * (local > 0.12)
+    hp = np.clip((local - L - 0.02) * 10, 0, 1) * np.clip((0.45 - L) * 5, 0, 1)
+    dark = np.clip((0.34 - L) * 5, 0, 1) * blue
+    mark = np.clip(np.maximum(hp * 1.6, dark * 0.9), 0, 1) * valid
+    h, w = L.shape
+    yy, xx = np.mgrid[0:h, 0:w]
+    eye = np.clip(1.3 - np.hypot(xx / w - EYE[0], (yy / h - EYE[1]) * h / w) / EYE_R, 0, 1)
+    rng = np.random.default_rng(4)
+    grime = np.asarray(Image.fromarray((rng.random((h // 8, w // 8)) * 255).astype(np.uint8)).resize((w, h), Image.BICUBIC), np.float32) / 255
+    boneC = np.array([0.86, 0.80, 0.68], np.float32)
+    t = boneC * (0.45 + 0.75 * np.clip(L * 1.6, 0, 1))[..., None] * (0.8 + 0.25 * grime[..., None])
+    crack = np.array([0.10, 0.09, 0.07], np.float32)
+    t = t * (1 - mark[..., None]) + crack * mark[..., None]
+    t = np.clip(t, 0, 1)
+    img = Image.fromarray((np.concatenate([t, alpha], -1) * 255 + 0.5).astype(np.uint8), 'RGBA')
+    dds(img, out / 'bond4_d.dds', 'DXT5')
+    g = np.clip(np.maximum(eye, mark * 0.55), 0, 1)
+    dds(Image.fromarray((g * 255 + 0.5).astype(np.uint8), 'L').convert('RGB').resize((512, 1024), Image.LANCZOS), out / 'bond4_g.dds', 'DXT1')
+    Image.fromarray((t * 255).astype(np.uint8)).resize((512, 1024)).save(pathlib.Path(sys.argv[3]) / 'preview_bond4.png')
+
+
 if __name__ == '__main__':
-    main()
+    bone() if sys.argv[1] == 'bone' else main()
