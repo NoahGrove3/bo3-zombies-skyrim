@@ -43,11 +43,16 @@ namespace Spellcraft
 		return st.shadowSceneNode[0];
 	}
 
+	RE::NiPointer<RE::NiAVObject> LoadPath(const std::string& path);
 	RE::NiPointer<RE::NiAVObject> Load(std::string_view a_id, const char* a_part)
+	{
+		return LoadPath("CurseOfAlduin\\fx\\" + std::string(a_id) + "_" + a_part + ".nif");
+	}
+	// any of our models, by its path under Meshes (a fresh copy each time, never culled)
+	RE::NiPointer<RE::NiAVObject> LoadPath(const std::string& path)
 	{
 		static std::unordered_map<std::string, RE::NiPointer<RE::NiNode>> cache;
 		static std::unordered_map<std::string, bool> missing;
-		const std::string path = "CurseOfAlduin\\fx\\" + std::string(a_id) + "_" + a_part + ".nif";
 		if (missing.contains(path)) {
 			return {};
 		}
@@ -640,6 +645,9 @@ namespace Spellcraft
 	void Launch(int a_row, int a_gun, const RE::NiPoint3& a_from, RE::NiPoint3 a_dir, float a_speed, float a_dmg, float a_radius, int a_pierce, float a_scale, int a_ult = -1, bool a_arrow = false)
 	{
 		a_dir.Unitize();
+		if (a_gun >= 0 && a_gun < static_cast<int>(gen::kGuns.size()) && gen::kGuns[a_gun].cls == "wonder") {
+			g_propKickT = 0.0f, g_propKickBig = a_ult >= 0;   // (the wonder's model kicks with the shot)
+		}
 		const auto& d = Def(a_row);
 		Shot s{ a_row, a_gun, a_from, a_dir * a_speed, 2.4f, a_radius, a_dmg, a_scale, a_pierce };
 		s.homing = a_arrow ? 0.0f : d.homing;

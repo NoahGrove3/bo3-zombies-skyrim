@@ -336,6 +336,8 @@ namespace bo3z
 			float spark = 0;
 		};
 		StormCharge g_storm;
+		float       g_propKickT = -1.0f;  // a wonder weapon just fired (src/WonderProps.inl: its model's attack motion)
+		bool        g_propKickBig = false;
 		bool        g_stormBusy = false;   // (while the lightning or a shout itself is dealing damage: no charge spent)
 		void        StormStrike(RE::Actor* a_target);
 
@@ -1766,6 +1768,7 @@ namespace bo3z
 
 #include "Spellcraft.inl"
 #include "Bows.inl"
+#include "WonderProps.inl"
 
 		struct PoseHook
 		{
@@ -2474,6 +2477,7 @@ namespace bo3z
 		void Tick(float a_delta)
 		{
 			TickStorm(a_delta);
+			Props::Tick(a_delta, GunOut() ? CurrentGun() : -1);
 			static bool hooked = false;
 			if (!hooked) {
 				REL::Relocation<std::uintptr_t> ab{ RE::VTABLE_AttackBlockHandler[0] };

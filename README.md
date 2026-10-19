@@ -50,5 +50,7 @@ Happy Little Trees, Skoglendi, SMIM.
 - The elemental bows are built from models Noah downloaded (Sketchfab models for Dawnspire, Rimehorn, Skyhowl,
   Stormreach and Thirstbow, and an elf bow .blend for Emberstring). Their flame wings come from Spectral Bow - Fire
   (Nexus 5119), their arrows from Elemental Arrows (Nexus 2243), and the horizontal first-person archery from Minemiz
-  Archery (Nexus 174406). Check each author's licence and add proper credit before publishing.
+  Archery (Nexus 174406). The wonder weapons (Gravecaller, Frostbinder Gauntlets, Wolf Queen's Crown, Horn of the
+  Barrow-Jarls) and Alduin's Fang are also models Noah downloaded. Check each author's licence and add proper credit
+  before publishing.
 - Fan project, not affiliated with Bethesda. You need to own Skyrim.
