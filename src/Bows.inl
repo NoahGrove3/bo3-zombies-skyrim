@@ -797,7 +797,7 @@ namespace BowsImpl
 		scan = 0.5f;
 		static std::unordered_map<RE::BSShaderMaterial*, float> base;
 		static constexpr float kTier[4] = { 0.4f, 0.6f, 0.8f, 1.0f };
-		const float k = kTier[std::clamp(g_level[i], 0, 3)];
+		const float k = kTier[std::clamp<int>(g_level[i], 0, 3)];
 		for (const bool fp : { false, true }) {
 			auto* root = p->Get3D(fp);
 			if (!root) {
@@ -849,7 +849,7 @@ namespace BowsImpl
 			if (!w) {
 				continue;
 			}
-			const int t = std::clamp(g_level[i], 0, 3);
+			const int t = std::clamp<int>(g_level[i], 0, 3);
 			const float dmg = ShotDamage(i, 1.0f) / std::max(0.01f, gen::kRounds.hpScale);
 			w->attackDamage = menu ? static_cast<std::uint16_t>(std::clamp(dmg, 1.0f, 65000.0f)) : 0;
 			static constexpr const char* kTier[4] = { "", "Tier I", "Tier II", "Tier III" };
