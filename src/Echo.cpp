@@ -651,7 +651,7 @@ namespace bo3z
 				if (!actor) {
 					continue;
 				}
-				actor->SetPosition(spot ? *spot : a_at);
+				actor->SetPosition(spot ? *spot : a_at, true);
 				if (playerFaction) {
 					actor->AddToFaction(playerFaction, 0);
 				}
