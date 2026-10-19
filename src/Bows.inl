@@ -437,6 +437,7 @@ namespace BowsImpl
 			Fizzle(i);
 			return;
 		}
+		g_rideRow = gen::kBows[i].spellRow, g_rideWait = 0.6f;  // (the glow goes with the arrow: TickRide)
 		auto*       p = RE::PlayerCharacter::GetSingleton();
 		const int   row = gen::kBows[i].spellRow, gun = GunOf(i), t = g_level[i];
 		const Aim   aim = AimAt(8000.0f);
@@ -896,6 +897,29 @@ namespace BowsImpl
 		}
 		return nullptr;
 	}
+	// (Noah: the element sat on the hand, not the arrow's tip) the tip is worked out from the hands themselves: the
+	// nock rides the string hand, the arrow points through the bow hand, and its head is an arrow's length from the
+	// nock (never short of just past the bow hand). The glow hangs on the bow hand's bone at that point, so it moves
+	// with the arms in the same frame (no drift)
+	constexpr float kArrowLen = 66.0f;  // the quiver model's arrow: nock at -65, head at 0
+	bool ArrowTip(RE::PlayerCharacter* p, RE::NiAVObject*& a_hand, RE::NiPoint3& a_tip)
+	{
+		auto* root = p->Get3D(Spellcraft::FirstPerson());
+		auto* l = root ? root->GetObjectByName("NPC L Hand [LHnd]") : nullptr;
+		auto* r = root ? root->GetObjectByName("NPC R Hand [RHnd]") : nullptr;
+		if (!l || !r) {
+			return false;
+		}
+		RE::NiPoint3 d = l->world.translate - r->world.translate;
+		const float  span = d.Length();
+		if (span < 5.0f) {
+			return false;
+		}
+		d = d / span;
+		a_tip = r->world.translate + d * std::max(kArrowLen, span + 8.0f);
+		a_hand = l;
+		return true;
+	}
 	void TickTip(RE::PlayerCharacter* p, int i, bool a_drawing, float a_delta)
 	{
 		if (!a_drawing || i < 0) {
@@ -911,19 +935,13 @@ namespace BowsImpl
 		if (!g_tip.obj) {
 			return;
 		}
-		auto* root = p->Get3D(Spellcraft::FirstPerson());
-		const auto hand = HeadAt(p);
-		auto* arrow = FindArrow(root, hand);
-		static int said = 0;
-		if (said < 3) {
-			++said;
-			logger::info("bows: nocked arrow {} ({})", arrow ? arrow->name.c_str() : "not found", arrow && arrow->parent ? arrow->parent->name.c_str() : "-");
-		}
-		RE::NiNode* host = arrow ? (arrow->AsNode() ? arrow->AsNode() : arrow->parent) : nullptr;
 		g_tipT += a_delta;
-		const float grow = 0.25f + 0.75f * g_draw;
-		const float flick = g_draw >= 0.98f ? 1.0f + 0.08f * std::sin(g_tipT * 18.0f) : 1.0f;
-		if (host) {
+		const float     grow = 0.25f + 0.75f * g_draw;
+		const float     flick = g_draw >= 0.98f ? 1.0f + 0.08f * std::sin(g_tipT * 18.0f) : 1.0f;
+		RE::NiAVObject* hand = nullptr;
+		RE::NiPoint3    tip;
+		if (ArrowTip(p, hand, tip) && hand->AsNode()) {
+			auto* host = hand->AsNode();
 			if (g_tip.parent != host) {
 				if (auto* o = g_tip.obj.get(); o->parent) {
 					o->parent->DetachChild2(o);
@@ -931,14 +949,60 @@ namespace BowsImpl
 				host->AttachChild(g_tip.obj.get(), true);
 				g_tip.parent = host;
 			}
-			// the head of the arrow: the shape's own tip on +Y (Skyrim's arrows run 0..60 along +Y)
-			const RE::NiPoint3 at = arrow->AsNode() ? RE::NiPoint3{ 0.0f, 60.0f, 0.0f } : arrow->local * RE::NiPoint3{ 0.0f, 60.0f, 0.0f };
-			SetLocal(g_tip, at, RE::NiMatrix3{}, grow * flick);
-		} else {  // (not found: in front of the bow hand, along the aim)
+			const auto& w = hand->world;
+			const RE::NiPoint3 at = (w.rotate.Transpose() * (tip - w.translate)) / std::max(0.01f, w.scale);
+			SetLocal(g_tip, at, RE::NiMatrix3{}, grow * flick / std::max(0.01f, w.scale));
+		} else {  // (no hands found: in front of the bow hand, along the aim)
+			const auto hp = HeadAt(p);
 			g_tip.Attach(Spellcraft::WorldRoot());
-			g_tip.Place(hand + AimAt(80.0f).dir * 20.0f, Spellcraft::Facing(AimAt(80.0f).dir), grow * flick);
+			g_tip.Place(hp + AimAt(80.0f).dir * 20.0f, Spellcraft::Facing(AimAt(80.0f).dir), grow * flick);
 		}
 		g_tip.Show(true);
+	}
+
+	// (Noah: the effect should fly with the arrow) once loosed, the element rides the arrow itself: a copy of the
+	// tip's glow hung on the head of the player's newest arrow in flight
+	int   g_rideRow = -1;
+	float g_rideWait = 0;
+	std::set<RE::Projectile*> g_ridden;
+	void TickRide(float a_delta)
+	{
+		if (g_rideWait <= 0 || g_rideRow < 0) {
+			return;
+		}
+		g_rideWait -= a_delta;
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* mgr = RE::Projectile::Manager::GetSingleton();
+		if (!p || !mgr) {
+			return;
+		}
+		RE::BSSpinLockGuard lock(mgr->projectileLock);
+		for (auto* list : { &mgr->limited, &mgr->unlimited, &mgr->pending }) {
+			for (auto& h : *list) {
+				auto pr = h.get();
+				if (!pr || pr->GetFormType() != RE::FormType::ProjectileArrow || pr->GetProjectileRuntimeData().shooter.get().get() != p || g_ridden.contains(pr.get())) {
+					continue;
+				}
+				auto* node = pr->Get3D() ? pr->Get3D()->AsNode() : nullptr;
+				if (!node) {
+					continue;  // (not drawn yet: the next frame)
+				}
+				if (auto fx = Spellcraft::Load(gen::kSpellcraft[g_rideRow].id, "tip")) {
+					fx->local.translate = { 0.0f, 34.0f, 0.0f };  // the flight model's head (+Y)
+					fx->local.scale = 1.0f;
+					node->AttachChild(fx.get(), true);
+					RE::NiUpdateData ud;
+					fx->Update(ud);
+				}
+				g_ridden.insert(pr.get());
+				if (g_ridden.size() > 64) {
+					g_ridden.clear();
+					g_ridden.insert(pr.get());
+				}
+				g_rideWait = 0;
+				return;
+			}
+		}
 	}
 	RE::NiAVObject* g_watched = nullptr;
 	float         g_sinceFire = 10.0f;
@@ -970,6 +1034,7 @@ namespace BowsImpl
 			}
 		}
 		TickHideArrow(a_delta);
+		TickRide(a_delta);
 		g_sinceFire += a_delta;
 		const int i = Held();
 		static float quiver = 0;
