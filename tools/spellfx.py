@@ -381,6 +381,94 @@ def arrow(spell, t):
     m.write(MESH / f'{sid}_arrow.nif')
 
 
+# ---- the altar's bows: the runes that wake on them with every reforge tier (Bows.inl BuildMotes): white glyph art the
+# shapes tint in the bow's colours. Laid along a limb bone's +X.
+GLYPH_STROKES = [[(0, -1, 0, 1), (0, -0.3, 0.6, -0.9)], [(-0.5, 1, 0, -1), (0.5, 1, 0, -1), (-0.3, 0.3, 0.3, 0.3)], [(0, -1, 0, 1), (-0.6, 0, 0.6, 0)],
+                 [(-0.6, -1, 0.6, 1), (0.6, -1, -0.6, 1)], [(0, -1, 0, 1), (0, 0.1, 0.6, 0.9)], [(-0.6, -0.8, 0.6, -0.8), (0, -0.8, 0, 1)],
+                 [(-0.5, -1, -0.5, 1), (-0.5, 0, 0.5, -0.6), (-0.5, 0, 0.5, 0.6)], [(0, -1, 0.6, 0), (0.6, 0, 0, 1), (0, 1, -0.6, 0), (-0.6, 0, 0, -1)],
+                 [(-0.5, -1, 0.5, -1), (0, -1, 0, 1), (-0.5, 1, 0.5, 1)], [(0, -1, 0, 1), (0, -1, 0.55, -0.45), (0, -0.2, 0.55, 0.35)]]
+
+
+def _glyph_tex(cache={}):
+    if cache:
+        return cache
+    from PIL import ImageDraw, ImageFilter
+    rnd = np.random.default_rng(17)
+    # a row of runes between two fine rules (1024 x 128)
+    W, H = 1024, 128
+    im = Image.new('L', (W, H), 0); d = ImageDraw.Draw(im)
+    for y in (10, H - 10):
+        d.line([(0, y), (W, y)], fill=170, width=3)
+    n = 12
+    for k in range(n):
+        cx, cy, hs = (k + 0.5) * W / n, H / 2, H * 0.3
+        for x0, y0, x1, y1 in GLYPH_STROKES[int(rnd.integers(len(GLYPH_STROKES)))]:
+            d.line([(cx + x0 * hs * 0.6, cy + y0 * hs), (cx + x1 * hs * 0.6, cy + y1 * hs)], fill=255, width=7)
+    a = np.asarray(im.filter(ImageFilter.GaussianBlur(1.5)), np.float32) / 255
+    halo = np.asarray(im.filter(ImageFilter.GaussianBlur(9)), np.float32) / 255
+    cache['row'] = save('bowrune_row', np.clip(a + 0.6 * halo, 0, 1))
+    # a ring of runes round a circle (512)
+    S = 512
+    im = Image.new('L', (S, S), 0); d = ImageDraw.Draw(im)
+    for r, w in ((0.92, 5), (0.72, 3)):
+        d.ellipse([S / 2 - r * S / 2, S / 2 - r * S / 2, S / 2 + r * S / 2, S / 2 + r * S / 2], outline=200, width=w)
+    for k in range(10):
+        ang = 2 * math.pi * k / 10
+        cx, cy = S / 2 + math.cos(ang) * S * 0.41, S / 2 + math.sin(ang) * S * 0.41
+        tx, ty = -math.sin(ang), math.cos(ang)
+        hs = S * 0.06
+        for x0, y0, x1, y1 in GLYPH_STROKES[k % len(GLYPH_STROKES)]:
+            # the rune stands across the ring (its up toward the centre)
+            ax, ay = cx + (x0 * 0.6 * tx - y0 * math.cos(ang)) * hs, cy + (x0 * 0.6 * ty - y0 * math.sin(ang)) * hs
+            bx, by = cx + (x1 * 0.6 * tx - y1 * math.cos(ang)) * hs, cy + (x1 * 0.6 * ty - y1 * math.sin(ang)) * hs
+            d.line([(ax, ay), (bx, by)], fill=255, width=6)
+    a = np.asarray(im.filter(ImageFilter.GaussianBlur(1.5)), np.float32) / 255
+    halo = np.asarray(im.filter(ImageFilter.GaussianBlur(10)), np.float32) / 255
+    cache['ring'] = save('bowrune_ring', np.clip(a + 0.5 * halo, 0, 1))
+    # a crest: a runic blade of light, leaf-shaped, a rune-cut spine down it (256 x 512, pointing up)
+    W, H = 256, 512
+    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
+    v = 1 - yy / H; u = (xx / W - 0.5) * 2
+    width = np.sin(np.clip(v, 0, 1) * math.pi) ** 0.7 * (1 - v * 0.55)
+    body = np.clip((width - np.abs(u)) * 6, 0, 1)
+    edge = np.clip(1 - np.abs(np.abs(u) - width) * 18, 0, 1) * (v > 0.02)
+    im = Image.new('L', (W, H), 0); d = ImageDraw.Draw(im)
+    for k in range(4):
+        cy, hs = H * (0.25 + 0.17 * k), W * 0.13
+        for x0, y0, x1, y1 in GLYPH_STROKES[(k * 3 + 2) % len(GLYPH_STROKES)]:
+            d.line([(W / 2 + x0 * hs * 0.6, cy + y0 * hs), (W / 2 + x1 * hs * 0.6, cy + y1 * hs)], fill=255, width=6)
+    gl = np.asarray(im.filter(ImageFilter.GaussianBlur(1.2)), np.float32) / 255
+    halo = np.asarray(Image.fromarray((body * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(14)), np.float32) / 255
+    cache['crest'] = save('bowrune_crest', np.clip(body * 0.35 + edge * 0.9 + gl + 0.35 * halo, 0, 1))
+    return cache
+
+
+def bow_runes(spell, t):
+    """the reforged bow's runes: <id>_runes.nif (a band of runes along a limb, 20 units on +X), <id>_crest.nif (a runic
+    blade of light off a limb's tip, 10 units on +X) and <id>_ring.nif (a ring of runes round the limb, radius 4)"""
+    sid, name, col, acc, style = spell
+    g = _glyph_tex()
+    pale = mix(col, (1, 1, 1), 0.55)
+    m = Mesh()
+    for nm, c_, sc, w in (('glow', col, 1.3, 1.6), ('runes', pale, 2.2, 1.0)):
+        s_ = m.shape(nm, g['row'], (*c_, 1), sc)
+        for au, av in (((1, 0, 0), (0, 1, 0)), ((1, 0, 0), (0, 0, 1))):
+            Mesh.quad(s_, (10, 0, 0), au, av, 10, w, uv=(0, 0, 1, 1))
+    m.write(MESH / f'{sid}_runes.nif')
+    m = Mesh()
+    for nm, c_, sc in (('blade', col, 1.6), ('core', pale, 1.9)):
+        s_ = m.shape(nm, g['crest'], (*c_, 1), sc)
+        for au, av in (((0, 1, 0), (1, 0, 0)), ((0, 0, 1), (1, 0, 0))):
+            Mesh.quad(s_, (5, 0, 0), au, av, 2.5 if nm == 'blade' else 1.8, 5, uv=(0, 1, 1, 0))
+    m.write(MESH / f'{sid}_crest.nif')
+    m = Mesh()
+    rg = m.shape('ring', g['ring'], (*pale, 1), 2.0)
+    Mesh.quad(rg, (0, 0, 0), (0, 1, 0), (0, 0, 1), 4.2, 4.2, uv=(0, 0, 1, 1))
+    Mesh.quad(rg, (0, 0, 0), (0, 0, 1), (0, 1, 0), 4.2, 4.2, uv=(0, 0, 1, 1))
+    gl = m.shape('glow', t['soft'], (*col, 1), 1.1); m.billboard(gl, (0, 0, 0), 5, axes=2)
+    m.write(MESH / f'{sid}_ring.nif')
+
+
 def main():
     t = textures()
     if 'arrows' in sys.argv[2:]:
@@ -388,7 +476,8 @@ def main():
         for sp in SPELLS:
             if sp[0] in bow_spells:
                 arrow(sp, t)
-                print('arrow', sp[0])
+                bow_runes(sp, t)
+                print('arrow + runes', sp[0])
         return
     if 'elements' in sys.argv[2:]:
         elements(t)

@@ -383,6 +383,8 @@ namespace BowsImpl
 		if (full) {
 			Spellcraft::BurstAt(row, from, 22.0f, 0.18f);  // (a flash off the string)
 		}
+		// the spell's own voice as the arrow leaves: its cast, or at full draw its unleash
+		Forms::Play(full ? gen::kGuns[gun].chargeSnd : gen::kGuns[gun].fireSnd);
 		// the full-draw attacks that are not a single arrow
 		if (full && kind == Kind::Wind && t >= 1) {  // The Gale (I) / The Tempest (III)
 			const bool tempest = t >= 3;
@@ -583,10 +585,11 @@ namespace BowsImpl
 		int            bone = 0;       // 0..3: up 1, up 2, low 1, low 2
 		float          x0 = 0, x1 = 0; // along the bone (its local +X)
 		float          phase = 0;
-		int            kind = 0;       // 0 billboard glow, 1 spinning 3D piece, 2 arc segment, 3 a drop running along
+		int            kind = 0;       // 0 billboard glow, 1 spinning 3D piece, 2 arc segment, 3 a drop running along,
+		                               // 4 the runes along a limb, 5 a runic crest off a tip, 6 a ring of runes turning round the limb
 	};
 	std::vector<Mote> g_motes;
-	int               g_moteBow = -1;
+	int               g_moteBow = -1, g_moteTier = -1;
 	float             g_moteT = 0, g_arcJitter = 0;
 	std::array<RE::NiNode*, 4> g_bones{};
 	constexpr const char* kBones[4] = { "Bow_UpBone1", "Bow_UpBone2", "Bow_LoBone1", "Bow_LoBone2" };
@@ -601,7 +604,7 @@ namespace BowsImpl
 			m.fx.parent = nullptr;
 		}
 		g_motes.clear();
-		g_moteBow = -1;
+		g_moteBow = -1, g_moteTier = -1;
 		g_bones.fill(nullptr);
 	}
 	void AddMote(std::string_view a_id, const char* a_part, int a_bone, float a_x0, float a_x1, int a_kind)
@@ -646,7 +649,27 @@ namespace BowsImpl
 				g_motes.back().phase = 3.14f;
 			}
 		}
-		g_moteBow = i;
+		// (Noah: more of the bow wakes with every reforge) tier I: a band of runes lights along every limb; II: a runic
+		// crest of light off each tip and a ring of runes turning round the inner limbs; III: rings round the tips too
+		const int t = g_level[i];
+		for (int b = 0; b < 4 && t >= 1; ++b) {
+			AddMote(id, "runes", b, 1.5f, kBoneLen[b] - 1.5f, 4);
+		}
+		if (t >= 2) {
+			for (const int b : { 1, 3 }) {
+				AddMote(id, "crest", b, kBoneLen[b] - 0.5f, kBoneLen[b] - 0.5f, 5);
+			}
+			for (const int b : { 0, 2 }) {
+				AddMote(id, "ring", b, kBoneLen[b] * 0.55f, kBoneLen[b] * 0.55f, 6);
+			}
+		}
+		if (t >= 3) {
+			for (const int b : { 1, 3 }) {
+				AddMote(id, "ring", b, kBoneLen[b] * 0.7f, kBoneLen[b] * 0.7f, 6);
+				AddMote(id, "hand", b, kBoneLen[b] - 0.5f, kBoneLen[b] - 0.5f, 0);
+			}
+		}
+		g_moteBow = i, g_moteTier = t;
 	}
 	void SetLocal(Spellcraft::Fx& a_fx, const RE::NiPoint3& a_at, const RE::NiMatrix3& a_rot, float a_scale)
 	{
@@ -670,7 +693,7 @@ namespace BowsImpl
 			}
 			return;
 		}
-		if (g_moteBow != i) {
+		if (g_moteBow != i || g_moteTier != g_level[i]) {
 			BuildMotes(i);
 		}
 		// the bow's limb bones, in the view the player sees (first person: the arms' own skeleton)
@@ -684,7 +707,7 @@ namespace BowsImpl
 		if (rejit) {
 			g_arcJitter = 0.055f;  // (lightning: a new path every few frames)
 		}
-		const float pull = 1.0f + 0.8f * g_draw;  // everything flares as the bow is drawn
+		const float pull = (1.0f + 0.8f * g_draw) * (1.0f + 0.12f * g_level[i]);  // everything flares as the bow is drawn (and burns brighter each tier)
 		for (auto& m : g_motes) {
 			auto* bone = g_bones[m.bone];
 			if (!bone) {
@@ -723,6 +746,18 @@ namespace BowsImpl
 						SetLocal(m.fx, a, Spellcraft::Facing(d), d.Length() / Spellcraft::kSeg * pull);
 					}
 				}
+				break;
+			case 4:  // the runes along the limb, breathing
+				m.fx.Show(true);
+				SetLocal(m.fx, { m.x0, 0.0f, 0.0f }, RE::NiMatrix3{}, (m.x1 - m.x0) / 20.0f * (0.96f + 0.04f * std::sin(t * 2.2f)));
+				break;
+			case 5:  // a crest of light off the tip, flickering like a flame held still
+				m.fx.Show(true);
+				SetLocal(m.fx, { m.x0, 0.0f, 0.0f }, RE::NiMatrix3{}, (0.9f + 0.1f * std::sin(t * 6.0f) + 0.05f * std::sin(t * 17.0f)) * pull);
+				break;
+			case 6:  // a ring of runes turning round the limb
+				m.fx.Show(true);
+				SetLocal(m.fx, { m.x0, 0.0f, 0.0f }, AxisAngle({ 1, 0, 0 }, t * 1.4f), 0.9f * pull);
 				break;
 			default:  // a drop running down the limb, swelling then fading as it reaches the tip
 				{
@@ -789,6 +824,15 @@ namespace BowsImpl
 		using S = RE::ATTACK_STATE_ENUM;
 		const auto st = p->AsActorState()->GetAttackState();
 		const bool drawing = i >= 0 && (st == S::kBowDraw || st == S::kBowAttached || st == S::kBowDrawn);
+		if (drawing && !g_wasDrawing) {  // (Noah: the bows sound like their spells) the spell's charge rises as the string comes back
+			Spellcraft::Play2D(Spellcraft::Snd(GunOf(i), &gen::GunSounds::start), 0.7f);
+			if (const int hum = Spellcraft::Snd(GunOf(i), &gen::GunSounds::charge); hum >= 0) {
+				Audio::LoopStart(Audio::kLoopCharge, static_cast<gen::Sound>(hum));
+			}
+		}
+		if (!drawing && g_wasDrawing) {
+			Audio::LoopStop(Audio::kLoopCharge, 150);
+		}
 		if (drawing) {
 			g_draw = std::min(1.0f, g_draw + a_delta * DrawSpeed(i) / 0.9f);
 			if (st == S::kBowDrawn) {

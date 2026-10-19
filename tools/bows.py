@@ -21,11 +21,13 @@ MID, LO1, LO2, SB1, UP1, UP2, SB2 = range(7)
 # id -> (source object, body colour, trim/string glow colour)
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
 import skymat
+import bowart
 # the Echo Altar's bows (sheets/bows.json): source basemesh, limb finish (skymat kind), body colour, glow colour
 import json
 _ROWS = json.load(open(ROOT / 'sheets' / 'bows.json'))['rows']
 BODY_KIND = {r['id']: r['body'] for r in _ROWS}
 BOWS = {r['id']: (r['mesh'], tuple(r['bodyColor']), tuple(r['glow'])) for r in _ROWS}
+ELEMENT = {r['id']: r['element'] for r in _ROWS}
 
 def load_obj(path):
     V, T, F = [], [], []
@@ -204,8 +206,10 @@ def build(bid):
     groups = {'string': F[fs], 'trim': F[trim], 'body': F[(~fs) & (~trim)]}
     N = normals(P, F)
     kind = BODY_KIND[bid]
-    d, n, gl = bow_maps(kind, body_col, glow, seed=len(bid))   # (Noah: 2K, like the spells - with its own runes)
+    d, n, gl = bowart.body_maps(kind, body_col, glow, seed=len(bid))   # (Noah: 2K, hand-worked: runes, knotwork, scrollwork, leather)
+    td, tn, tg = bowart.trim_maps(ELEMENT[bid], glow, seed=len(bid) + 40)
     tex = {'d': save_mips(d, f'{bid}_d.dds'), 'n': save_mips(n, f'{bid}_n.dds', True), 'g': save_mips(gl, f'{bid}_g.dds'),
+           'td': save_mips(td, f'{bid}_trim_d.dds'), 'tn': save_mips(tn, f'{bid}_trim_n.dds', True), 'tg': save_mips(tg, f'{bid}_trim_g.dds'),
            'flat': save_dds(Image.new('RGBA', (32, 32), (128, 128, 255, 200)), 'flat_n.dds', True)}
     gcol = tuple(int(c * 255) for c in glow)
     tex['glow_d'] = save_dds(Image.new('RGB', (32, 32), gcol), f'{bid}_glow_d.dds')
@@ -219,9 +223,10 @@ def build(bid):
         if g == 'string':
             lines.append(f'shape {bid}_string diffuse={tex["glow_d"]} normal={tex["flat"]} glow={tex["glow_g"]} emit={ec} emitmult=4 alpha=add spec=1 gloss=200')
         elif g == 'trim':
-            lines.append(f'shape {bid}_trim diffuse={tex["glow_d"]} normal={tex["flat"]} glow={tex["glow_g"]} emit={ec} emitmult=2.4 spec=1.2 gloss=150')
+            lines.append(f'shape {bid}_trim diffuse={tex["td"]} normal={tex["tn"]} glow={tex["tg"]} emit={ec} emitmult=2.2 spec=1.4 gloss=120')
         else:
             lines.append(f'shape {bid}_body diffuse={tex["d"]} normal={tex["n"]} glow={tex["g"]} emit={ec} emitmult=2.2 spec={ {"wood": 0.4, "wood_dark": 0.5, "iron": 1.3, "bone": 0.6, "steel": 1.6, "bronze": 1.4}[kind] } gloss=60')
+        if g in ('body', 'trim'):
             # its own UVs (limb_uv), the triangles that cross the seam on its back given their own copies of those corners
             uu, vv = limb_uv(P, centre, np.arange(len(P)))
             corners, newF = {}, []
