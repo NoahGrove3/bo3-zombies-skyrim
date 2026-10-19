@@ -436,6 +436,7 @@ namespace bo3z
 		bool                  KnowsShout(int a_shout);        // the cities' shouts (sheet: shouts)
 		void                  LearnShout(int a_shout);
 		int                   ShoutOfSpell(RE::FormID a_spell, int& a_level);
+		void                  StormHit(RE::Actor* a_target);   // a blow you landed: Stormblast's charge goes off on it
 		void                  Shout(int a_shout, int a_level);
 		bool                  Owns(int a_gun);
 		void                  RefillAmmo(int a_gun);

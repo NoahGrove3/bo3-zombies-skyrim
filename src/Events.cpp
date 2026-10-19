@@ -486,6 +486,11 @@ namespace bo3z
 			RE::BSEventNotifyControl ProcessEvent(const RE::TESHitEvent* a_event, RE::BSTEventSource<RE::TESHitEvent>*) override
 			{
 				auto* player = RE::PlayerCharacter::GetSingleton();
+				if (a_event && player && a_event->cause.get() == player && a_event->target && a_event->target.get() != player) {
+					if (auto* t = a_event->target->As<RE::Actor>(); t && Director::IsFoe(t)) {
+						Gun::StormHit(t);  // (a blade, a fist or Skyrim's own bow: the Stormblast charge goes off too)
+					}
+				}
 				if (a_event && player && a_event->cause.get() == player && a_event->target.get() == player) {
 					Perks::SelfHit();  // (your own spells never hurt you)
 				}

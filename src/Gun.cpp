@@ -325,8 +325,25 @@ namespace bo3z
 		};
 		std::vector<Detonation> g_detonations;
 
+		// Stormblast (Noah: the shout that charges your weapon did nothing): its words gather lightning in whatever you
+		// hold - gun, bow, spell, blade or fists - and the next blows you land let it go on the one you struck and leap to
+		// the dead around it. Thunderchild's Stormblast charges the same way (its own enchanting needs a plain weapon).
+		struct StormCharge
+		{
+			int   charges = 0;
+			int   level = 1;
+			float left = 0;
+			float spark = 0;
+		};
+		StormCharge g_storm;
+		bool        g_stormBusy = false;   // (while the lightning or a shout itself is dealing damage: no charge spent)
+		void        StormStrike(RE::Actor* a_target);
+
 		bool Damage(RE::Actor* a_target, float a_bo3Damage, bool a_head, bool a_melee, bool a_quiet = false)
 		{
+			if (!a_quiet && !g_stormBusy && g_storm.charges > 0 && a_target && !a_target->IsDead()) {
+				StormStrike(a_target);
+			}
 			auto*       player = RE::PlayerCharacter::GetSingleton();
 			auto*       av = a_target->AsActorValueOwner();
 			const auto  tid = a_target->GetFormID();
@@ -1028,21 +1045,40 @@ namespace bo3z
 			}
 			return out;
 		}
-
-		void Bolts(RE::PlayerCharacter* p, const gen::GunDef& g, const std::vector<RE::Actor*>& a_to, int a_max)
+		void StormStrike(RE::Actor* a_target)
 		{
-			int n = 0;
-			for (auto* f : a_to) {
-				if (n++ >= a_max) {
-					break;
-				}
-				if (g.bulletSpell) {
-					LaunchBolt(p, g, HeadPos(f) - RE::NiPoint3{ 0, 0, 20 });
-				} else if (g.spell >= 0) {
-					Cast(g.spell, f);
-				}
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			static auto last = Clock::now() - std::chrono::seconds(5);
+			if (!p || g_storm.charges <= 0 || Clock::now() - last < std::chrono::milliseconds(250)) {
+				return;  // (one blow is one charge, however many ways the game reports it)
 			}
+			last = Clock::now();
+			--g_storm.charges;
+			g_stormBusy = true;
+			const int   L = g_storm.level;
+			const float k = L == 1 ? 1.0f : L == 2 ? 1.8f : 3.2f;
+			const float base = Director::RoundHealth() * gen::kRounds.hpScale * 0.9f * k;
+			const auto  at = a_target->GetPosition();
+			Damage(a_target, base * 1.4f, false, false, true);
+			Blast(BlastIndex("skybolt"), at, 0.0f, 0.7f);
+			if (auto* proc = p->GetActorRuntimeData().currentProcess; proc && L == 3 && !a_target->IsDead()) {
+				proc->KnockExplosion(a_target, at + RE::NiPoint3{ 0, 0, 140.0f }, 1.6f);
+			} else {
+				Stagger(a_target, 0.7f);
+			}
+			int n = 0;
+			for (auto* f : Foes(at, 450.0f + 150.0f * L)) {
+				if (f == a_target || n >= 2 + 2 * L) {
+					continue;
+				}
+				Damage(f, base * 0.7f, false, false, true);
+				Stagger(f, 0.5f);
+				Blast(BlastIndex("skybolt"), f->GetPosition(), 0.07f * ++n, 0.45f);
+			}
+			g_stormBusy = false;
+			logger::info("shout: Stormblast let go on {:08X} (+{} around it), {} charges left", a_target->GetFormID(), n, g_storm.charges);
 		}
+
 
 		// The signature move of each weapon (sheet: weapons.chargeName/chargeText).
 		void Unleash(int a_gun, bool a_echo = false)
@@ -2382,8 +2418,62 @@ namespace bo3z
 			model->local.scale = g_adsRest.scale;
 		}
 
+		void StormHit(RE::Actor* a_target)
+		{
+			if (a_target && !g_stormBusy && g_storm.charges > 0 && !a_target->IsDead() && a_target != RE::PlayerCharacter::GetSingleton()) {
+				StormStrike(a_target);
+			}
+		}
+		int StormRow()
+		{
+			static int row = -1;
+			for (int r = 0; row < 0 && r < static_cast<int>(gen::kSpellcraft.size()); ++r) {
+				if (gen::kSpellcraft[r].id == "stormcaller") row = r;
+			}
+			return std::max(row, 0);
+		}
+		void TickStorm(float a_delta)
+		{
+			if (g_storm.charges <= 0) {
+				return;
+			}
+			if ((g_storm.left -= a_delta) <= 0) {
+				g_storm.charges = 0;
+				logger::info("shout: Stormblast charge faded");
+				return;
+			}
+			// the charge crackles round your hands while it lasts
+			if ((g_storm.spark -= a_delta) <= 0) {
+				g_storm.spark = 0.35f;
+				auto* p = RE::PlayerCharacter::GetSingleton();
+				for (const char* hand : { "NPC R Hand [RHnd]", "NPC L Hand [LHnd]" }) {
+					if (auto* root = p ? p->Get3D(Spellcraft::FirstPerson()) : nullptr) {
+						if (auto* h = root->GetObjectByName(hand)) {
+							Spellcraft::BurstAt(StormRow(), h->world.translate, 8.0f, 0.15f);
+						}
+					}
+				}
+			}
+		}
+
+
+		void Bolts(RE::PlayerCharacter* p, const gen::GunDef& g, const std::vector<RE::Actor*>& a_to, int a_max)
+		{
+			int n = 0;
+			for (auto* f : a_to) {
+				if (n++ >= a_max) {
+					break;
+				}
+				if (g.bulletSpell) {
+					LaunchBolt(p, g, HeadPos(f) - RE::NiPoint3{ 0, 0, 20 });
+				} else if (g.spell >= 0) {
+					Cast(g.spell, f);
+				}
+			}
+		}
 		void Tick(float a_delta)
 		{
+			TickStorm(a_delta);
 			static bool hooked = false;
 			if (!hooked) {
 				REL::Relocation<std::uintptr_t> ab{ RE::VTABLE_AttackBlockHandler[0] };
@@ -2625,6 +2715,18 @@ namespace bo3z
 						return i;
 					}
 				}
+				// Thunderchild's Stormblast: its spells are its own, but the charge is ours (its enchanting only takes on a
+				// plain weapon, never a gun, bow or spell in hand)
+				if (gen::kShouts[i].id == "gale") {
+					if (auto* ext = ExtShout(i)) {
+						for (int n = 0; n < 3; ++n) {
+							if (auto* sp = ext->variations[n].spell; sp && sp->GetFormID() == a_spell) {
+								a_level = n + 1;
+								return i;
+							}
+						}
+					}
+				}
 			}
 			return -1;
 		}
@@ -2647,6 +2749,7 @@ namespace bo3z
 			auto        blastAt = [&](std::string_view a_look, const RE::NiPoint3& a_at, float a_delay, float a_scale) { Blast(BlastIndex(a_look), a_at, a_delay, a_scale); };
 			auto        burn = [&](RE::Actor* a, float a_perSec, float a_secs) { g_dots.push_back({ a->GetHandle(), a_perSec, a_secs }); };
 			const std::string_view id = sh.id;
+			struct Busy { Busy() { g_stormBusy = true; } ~Busy() { g_stormBusy = false; } } busy;   // (a shout's own blows spend no charge)
 			if (id == "ember") {        // a cone of fire, the ground left burning
 				const float range = 900.0f + 450.0f * L;
 				for (auto* f : InCone(aim, range, 40.0f)) {
@@ -2656,28 +2759,10 @@ namespace bo3z
 				for (int s = 1; s <= 3 + L; ++s) {
 					blastAt(L == 3 && s == 3 + L ? "firestorm" : "fireball", aim.eye + aim.dir * (range * s / (3.0f + L)), 0.05f * s, 0.55f);
 				}
-			} else if (id == "gale") {  // Stormblast (our stand-in, used only without Thunderchild, whose own charges your weapon): lightning
-				// strikes the dead ahead one after another, the last word throwing them flat
-				const float range = 1000.0f + 500.0f * L;
-				int         n = 0;
-				for (auto* f : InCone(aim, range, 45.0f)) {
-					if (n >= 4 + 3 * L) {
-						break;
-					}
-					Damage(f, base * 0.9f, false, false);
-					if (L == 3 && proc && !f->IsDead()) {
-						proc->KnockExplosion(f, f->GetPosition() + RE::NiPoint3{ 0, 0, 140.0f }, 1.6f);
-					} else {
-						Stagger(f, 0.6f);
-					}
-					blastAt("skybolt", f->GetPosition(), 0.06f * n, 0.55f);
-					++n;
-				}
-				if (n == 0) {  // nothing ahead: the bolts fall where you look
-					for (int s = 1; s <= 3; ++s) {
-						blastAt("skybolt", aim.eye + aim.dir * (range * s / 3.0f), 0.08f * s, 0.5f);
-					}
-				}
+			} else if (id == "gale") {  // Stormblast: lightning gathers in your weapon - one charged blow a word, for half a minute
+				g_storm = { L, L, 30.0f, 0.0f };
+				blastAt("skybolt", me, 0.0f, 0.5f);
+				logger::info("shout: Stormblast - {} charged blow(s) in hand", L);
 			} else if (id == "wail") {  // the dead nearest turn on their own
 				int n = 0;
 				for (auto* f : Foes(me, 600.0f + 400.0f * L)) {
