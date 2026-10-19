@@ -297,6 +297,30 @@ namespace bo3z
 			return pos;
 		}
 
+		// (Noah: the dead kept getting stuck in the floor) the top of whatever is walkable under a point - paving, a boardwalk,
+		// a stair - by a ray from above, not the landscape's height under it
+		std::optional<float> WalkTop(RE::TESObjectCELL* a_cell, const RE::NiPoint3& a_at, float a_above = 350.0f)
+		{
+			auto* world = a_cell ? a_cell->GetbhkWorld() : nullptr;
+			if (!world) {
+				return std::nullopt;
+			}
+			const float s = RE::bhkWorld::GetWorldScale();
+			const RE::NiPoint3 from{ a_at.x, a_at.y, a_at.z + a_above }, to{ a_at.x, a_at.y, a_at.z - 1500.0f };
+			RE::bhkPickData pick;
+			pick.rayInput.from = RE::hkVector4(from * s);
+			pick.rayInput.to = RE::hkVector4(to * s);
+			pick.rayInput.filterInfo.SetCollisionLayer(RE::COL_LAYER::kLOS);
+			{
+				RE::BSReadLockGuard lock(world->worldLock);
+				world->PickObject(pick);
+			}
+			if (!pick.rayOutput.HasHit()) {
+				return std::nullopt;
+			}
+			return from.z + (to.z - from.z) * pick.rayOutput.hitFraction;
+		}
+
 		bool SpawnOne(RE::PlayerCharacter* a_player, int a_force = -1, const RE::NiPoint3* a_at = nullptr)
 		{
 			auto pick = a_force >= 0 ? std::optional<std::size_t>(static_cast<std::size_t>(a_force)) : PickEnemy();
@@ -337,6 +361,14 @@ namespace bo3z
 			}
 			actor->SetPosition(pos, true);
 			actor->MoveToNearestNavmesh();
+			// on the floor itself: standing at floor level, never under it (a little over it, they settle)
+			{
+				auto at = actor->GetPosition();
+				if (auto top = WalkTop(cell, at, 150.0f); top && *top > at.z - 300.0f) {  // (from just over their head: never onto a roof)
+					at.z = *top + 6.0f;
+					actor->SetPosition(at, true);
+				}
+			}
 
 			// Round health (BO3 curve). Permanent modifier so leveled base health doesn't matter.
 			auto*       av = actor->AsActorValueOwner();

@@ -79,7 +79,20 @@ namespace bo3z
 				if (!base) {
 					continue;
 				}
-				auto want = Local(a_main, d.x * c, d.y * c, d.z);
+				// (Noah: the stones weren't over the columns) the altar's own pieces stay where its model has them; only what
+				// stands out round it closes in on a cramped stand
+				const float cc = std::hypot(d.x, d.y) > 250.0f ? c : 1.0f;
+				auto want = Local(a_main, d.x * cc, d.y * cc, d.z);
+				if (d.formId == gen::kRelStone) {  // (the old Echo Stone pillar is gone: its page waits on the altar)
+					RE::TES::GetSingleton()->ForEachReferenceInRange(a_main, 700.0f, [&](RE::TESObjectREFR* r) {
+						if (r && r->GetBaseObject() == base && !r->IsDeleted() && !r->IsDisabled()) {
+							r->Disable();
+							r->SetDelete(true);
+						}
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
+					continue;
+				}
 				if (d.held && freed) {  // the cursed look goes (the heart stone turns to light: its lit twin takes its place)
 					RE::TES::GetSingleton()->ForEachReferenceInRange(a_main, 400.0f, [&](RE::TESObjectREFR* r) {
 						if (r && r->GetBaseObject() == base && !r->IsDeleted() && !r->IsDisabled()) {
@@ -118,7 +131,7 @@ namespace bo3z
 					ref->SetPosition(want);
 					ref->SetAngle({ 0, 0, a_main->GetAngleZ() });
 					if (!d.light) {
-						ref->SetScale(d.scale * c);
+						ref->SetScale(d.scale * cc);
 					}
 					found = ref.get();
 				}
@@ -127,6 +140,17 @@ namespace bo3z
 					if (std::none_of(g_spinners.begin(), g_spinners.end(), [&](const Spinner& s) { return s.ref == h; })) {
 						g_spinners.push_back({ h, d.spin });
 					}
+				}
+				if (obj >= 0 && gen::kObjects[obj].kind == 0 && !d.light) {
+					// (Noah: a second one inside it) one of each of the altar's pieces: copies left where an older layout put
+					// them go
+					RE::TES::GetSingleton()->ForEachReferenceInRange(a_main, 450.0f, [&](RE::TESObjectREFR* r) {
+						if (r && r != found && r->GetBaseObject() == base && !r->IsDeleted() && !r->IsDisabled()) {
+							r->Disable();
+							r->SetDelete(true);
+						}
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
 				}
 			}
 		}
@@ -160,6 +184,17 @@ namespace bo3z
 					return RE::BSVisit::BSVisitControl::kContinue;
 				});
 			}
+		}
+		// (Noah: the prompt only on the altar itself) standing on its platform: within its round floor, at its height
+		bool OnAltarBase(RE::TESObjectREFR* a_altar)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!a_altar || !p) {
+				return false;
+			}
+			const auto a = a_altar->GetPosition(), q = p->GetPosition();
+			const float floor = a.z + 74.0f * a_altar->GetScale();  // (the platform's top over the altar's origin: tools/echoaltar.py)
+			return std::hypot(q.x - a.x, q.y - a.y) < 215.0f * a_altar->GetScale() && q.z > floor - 70.0f && q.z < floor + 60.0f;
 		}
 		// (Noah: the real bows and spells roll by, with their names - not runes) what the roll shows over the heart stone:
 		// the spell's own display model (Skyrim's Magic menu one) or its element's emblem; a bow, the bow itself, upright
@@ -435,6 +470,7 @@ namespace bo3z
 		}
 
 		// Highest solid surface (statics, terrain) under (x,y), casting down from well above a_top.
+		bool IsOurBase(RE::TESForm* a_base);
 		std::optional<float> FloorZ(RE::TESObjectREFR* a_anchor, const RE::NiPoint3& a_xy, float a_top)
 		{
 			auto* cell = a_anchor ? a_anchor->GetParentCell() : nullptr;
@@ -443,19 +479,31 @@ namespace bo3z
 				return std::nullopt;
 			}
 			const float s = RE::bhkWorld::GetWorldScale();
-			const RE::NiPoint3 from{ a_xy.x, a_xy.y, a_top + 300.0f }, to{ a_xy.x, a_xy.y, a_top - 2000.0f };
-			RE::bhkPickData pick;
-			pick.rayInput.from = RE::hkVector4(from * s);
-			pick.rayInput.to = RE::hkVector4(to * s);
-			pick.rayInput.filterInfo.SetCollisionLayer(RE::COL_LAYER::kLOS);
-			{
-				RE::BSReadLockGuard lock(world->worldLock);
-				world->PickObject(pick);
+			// (Noah: the altar floated higher each visit) the ground under our own pieces: a ray that lands on the altar
+			// (its platform, its columns) or anything else of ours goes on down through it
+			float top = a_top + 300.0f;
+			for (int pass = 0; pass < 6; ++pass) {
+				const RE::NiPoint3 from{ a_xy.x, a_xy.y, top }, to{ a_xy.x, a_xy.y, a_top - 2000.0f };
+				RE::bhkPickData pick;
+				pick.rayInput.from = RE::hkVector4(from * s);
+				pick.rayInput.to = RE::hkVector4(to * s);
+				pick.rayInput.filterInfo.SetCollisionLayer(RE::COL_LAYER::kLOS);
+				{
+					RE::BSReadLockGuard lock(world->worldLock);
+					world->PickObject(pick);
+				}
+				if (!pick.rayOutput.HasHit()) {
+					return std::nullopt;
+				}
+				const float z = from.z + (to.z - from.z) * pick.rayOutput.hitFraction;
+				auto* hitRef = pick.rayOutput.rootCollidable ? RE::TESHavokUtilities::FindCollidableRef(*pick.rayOutput.rootCollidable) : nullptr;
+				if (hitRef && IsOurBase(hitRef->GetBaseObject())) {
+					top = z - 2.0f;
+					continue;
+				}
+				return z;
 			}
-			if (!pick.rayOutput.HasHit()) {
-				return std::nullopt;
-			}
-			return from.z + (to.z - from.z) * pick.rayOutput.hitFraction;
+			return std::nullopt;
 		}
 
 		// Nearest walkable point (navmesh) to a_at, via an invisible marker; nullopt if there is none close.
@@ -851,10 +899,19 @@ namespace bo3z
 			if (a_low) {
 				*a_low = lo;
 			}
-			// The dais sits ON the ground: its floor at the highest point under it (its skirt reaches 100 down, so the low
-			// side is covered). Only on a real slope does it cut into the hill rather than float over the low side.
-			// Raised a step above the ground (kStandLift) so the grass round it never hides the machines.
-			return (hi - lo <= 60.0f ? hi : std::min(hi, lo + 60.0f)) + kStandLift;
+			// (Noah: the altar should sit flush, easy to step on) its floor on the middle of the ground under it: the
+			// stepped platform cuts into the high side and its lowest step meets the low side
+			std::vector<float> zs;
+			for (int gx = 0; gx < 5; ++gx) {
+				for (int gy = 0; gy < 4; ++gy) {
+					const float x = -hx + gx * (2 * hx / 4), y = fy + gy * ((by - fy) / 3), a = a_plan.yaw;
+					const RE::NiPoint3 at{ a_plan.center.x + x * std::cos(a) + y * std::sin(a), a_plan.center.y - x * std::sin(a) + y * std::cos(a), ref };
+					if (auto z = FloorZ(a_anchor, at, ref - 220.0f); z && *z > ref - 300.0f && *z < ref + 80.0f) zs.push_back(*z);
+				}
+			}
+			std::sort(zs.begin(), zs.end());
+			const float mid = zs.empty() ? hi : zs[zs.size() / 2];
+			return mid + kStandLift;
 		}
 
 		void SettleStand(int a_town, RE::TESObjectREFR* a_anchor)
@@ -1930,8 +1987,11 @@ namespace bo3z
 			if (g_menu) {
 				auto r = g_menuRef.get();
 				auto* player = RE::PlayerCharacter::GetSingleton();
-				if (!r || !player || r->GetPosition().GetDistance(player->GetPosition()) > 420.0f) {
+				static float off = 0;
+				off = r && OnAltarBase(r.get()) ? 0.0f : off + a_delta;
+				if (!r || !player || off > 0.6f) {  // (stepped off the altar: its menu closes)
 					g_menu = false;
+					off = 0;
 				}
 			}
 			if (!g_menu) {
@@ -2091,7 +2151,7 @@ namespace bo3z
 					node->local.translate.z = s.baseZ + std::sin(clock * (s.degPerSec > 20.0f ? 1.3f : 0.7f) + ph) * (s.degPerSec > 20.0f ? 4.0f : 9.0f);  // floating
 					RE::NiUpdateData ud;
 					node->Update(ud);
-					if (s.degPerSec >= 39.0f) {  // the shrine's orb: the nearest one gets its aura drawn over it
+					if (auto* hb = r->GetBaseObject(); hb && (hb == Forms::Ours(gen::kHeartStone) || hb == Forms::Ours(gen::kHeartStoneLit))) {  // the altar's heart stone: the nearest one is the one you look into
 						const float d = node->world.translate.GetDistance(camPos);
 						if (d < orbDist) {
 							orbDist = d, orbAt = node->world.translate, orbRef = r;
@@ -2166,7 +2226,7 @@ namespace bo3z
 					const RE::NiPoint3 closest = camPos + fwd * along;
 					if (along > 0 && closest.GetDistance(orbAt) < 55.0f) {
 						for (std::size_t t = 0; t < gen::kTowns.size(); ++t) {
-							if (auto* shrine = Placed(static_cast<int>(t), 0); shrine && shrine->GetPosition().GetDistance(orbAt) < 400.0f) {
+							if (auto* shrine = Placed(static_cast<int>(t), 0); shrine && shrine->GetPosition().GetDistance(orbAt) < 400.0f && OnAltarBase(shrine)) {
 								g_orbAim = shrine->CreateRefHandle();
 								break;
 							}
@@ -2191,7 +2251,7 @@ namespace bo3z
 							h.ownAim = true;
 						}
 						for (std::size_t t = 0; !h.orbAim && !g_menu && t < gen::kTowns.size(); ++t) {
-							if (Placed(static_cast<int>(t), 0) == ref.get()) {
+							if (Placed(static_cast<int>(t), 0) == ref.get() && OnAltarBase(ref.get())) {
 								h.orbAim = true;
 							}
 						}
@@ -2243,7 +2303,11 @@ namespace bo3z
 			const auto& o = gen::kObjects[obj];
 			logger::info("shops: activated {} ({} points)", o.id, Points::Get());
 			switch (o.kind) {
-			case 0:  // the shrine: take a waiting spell, else open (or close) its menu
+			case 0:  // the shrine: take a waiting spell, else open (or close) its menu - only standing on it
+				if (!OnAltarBase(a_ref) && !(g_menu && g_menuRef.get().get() == a_ref)) {
+					Hud::Banner("Step up onto the altar", 1.5f);
+					break;
+				}
 				if (TakeOffer(a_ref)) {
 					break;
 				}

@@ -259,13 +259,13 @@ namespace BowsImpl
 		static constexpr const char* kBig[6] = { "firestorm", "icevolley", "shockmass", "giantslam", "lightmassive", "darkmassive" };
 		const int k = static_cast<int>(KindOf(s.bow));
 		// (Noah: from the first tier the arrow lands as a small burst) everything close round the impact is hurt too
-		Spellcraft::Area(s.row, p, 140.0f + 30.0f * s.tier, s.damage * 0.55f, gen::kFxNone);
+		Spellcraft::Area(s.row, p, 230.0f + 45.0f * s.tier, s.damage * 0.55f, gen::kFxNone);  // (Noah: a wider burst)
 		// (Noah: each tier's impact is the base one, upgraded) the same burst of the element, bigger and fuller each
 		// tier: I a ring of sparks of it round the burst, II Skyrim's great blast of the element and a second, wider wave;
 		// III all of that and the tornado (TornadoOf)
 		const int t = std::clamp(s.tier, 0, 3);
 		Gun::FxBlast(t >= 2 ? kBig[k] : kSmall[k], p);
-		Spellcraft::BurstAt(s.row, p, 80.0f + 35.0f * t, 0.35f + 0.08f * t);
+		Spellcraft::BurstAt(s.row, p, 130.0f + 45.0f * t, 0.4f + 0.08f * t);
 		if (t >= 1) {
 			const int   n = t >= 2 ? 6 : 4;
 			const float rr = 70.0f + 30.0f * t;

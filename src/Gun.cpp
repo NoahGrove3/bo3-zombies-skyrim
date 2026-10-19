@@ -161,7 +161,7 @@ namespace bo3z
 				if (GunOut() && gen::kGuns[CurrentGun()].kind == gen::kKindBow && IsFireButton(a_event)) {
 					if (a_event->IsDown()) {
 						g_bowHeldRelease = false;
-					} else if (a_event->IsUp() && g_bowDrawing && !g_bowFull) {
+					} else if (a_event->IsUp() && g_bowDrawing && !g_bowFull && !RE::PlayerCharacter::GetSingleton()->IsInMidair() && !Movement::Dodging()) {  // (Noah: falling, jumping or dodging mid-draw broke the bow: then Skyrim has the release)
 						g_abHandler = a_this, g_abData = a_data;
 						g_bowHeldRelease = true;  // not yet at 80%: the draw is called off (Bows.inl Tick)
 						return;

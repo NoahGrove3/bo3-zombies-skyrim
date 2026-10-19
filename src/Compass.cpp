@@ -190,7 +190,7 @@ namespace bo3z::Compass
 		for (const auto& p : g_places) {
 			const float d = p.at.GetDistance(me);
 			if (d < nearD) nearD = d, nearest = &p;
-			const float reach = p.kind == 3 ? 60000.0f : p.known ? 20000.0f : 6000.0f;
+			const float reach = p.kind == 3 ? 60000.0f : p.known ? 30000.0f : 9000.0f;  // (Noah: the map's markers on the compass)
 			if (d < reach && d > 300.0f) {
 				marks.push_back({ bearing(p.at), d, p.kind, p.name, p.type, p.known });
 				++shownPlaces;
@@ -209,6 +209,20 @@ namespace bo3z::Compass
 					if (d < 40000.0f && d > 150.0f) {
 						marks.push_back({ bearing(s->GetPosition()), d, 2, "Echo Altar" });
 					}
+				}
+			}
+		}
+		// (Noah: my map markers on the compass) the marker you placed on the map yourself: a quest-style mark there, and over
+		// the spot on the screen when it is in view
+		if (auto mm = pl->GetPlayerRuntimeData().playerMapMarker.get(); mm && mm->GetWorldspace() == world) {
+			const auto  at = mm->GetPosition();
+			const float d = std::hypot(at.x - me.x, at.y - me.y);
+			if (d > 150.0f) {
+				marks.push_back({ bearing(at), d, 1, "Your marker" });
+				if (auto* wc = RE::Main::WorldRootCamera(); wc && d < 12000.0f) {
+					float x = 0, y = 0, z = 0;
+					wc->WorldPtToScreenPt3(at + RE::NiPoint3{ 0, 0, 120.0f }, x, y, z, 1e-5f);
+					qmarks.push_back({ x, 1.0f - y, d, z > 0, "Your marker" });
 				}
 			}
 		}

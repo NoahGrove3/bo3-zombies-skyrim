@@ -60,7 +60,7 @@ namespace bo3z
 				if (!caster) {
 					return true;  // a hazard, a trap, a lingering field with no one behind it
 				}
-				if (Director::IsRoundUndead(caster)) {
+				if (Director::IsRoundUndead(caster) && !caster->IsDead()) {
 					return false;
 				}
 				return caster->IsDead() || !Director::IsFoe(caster);
@@ -99,11 +99,48 @@ namespace bo3z
 			}
 			return 0;
 		}
+		// The Address Library's vtable ids can miss on this game version: the vtables are then read off live objects
+		// (the player's own MagicTarget part, and the first plain Character met in the world).
+		bool g_harmHooked[2] = { false, false };
+		void HookHarm(int a_which, std::uintptr_t a_vtbl)
+		{
+			if (g_harmHooked[a_which] || !a_vtbl) {
+				return;
+			}
+			g_harmHooked[a_which] = true;
+			REL::Relocation<std::uintptr_t> mt{ a_vtbl };
+			if (a_which == 0) {
+				NoSelfHarm<0>::func = mt.write_vfunc(0x1, NoSelfHarm<0>::thunk);
+			} else {
+				NoSelfHarm<1>::func = mt.write_vfunc(0x1, NoSelfHarm<1>::thunk);
+			}
+			logger::info("hooked {} magic (live vtable): no self-harm", a_which == 0 ? "the actors'" : "your");
+		}
+		void HookHarmLive(RE::PlayerCharacter* a_player)
+		{
+			if (!g_harmHooked[1] && a_player) {
+				HookHarm(1, *reinterpret_cast<std::uintptr_t*>(static_cast<RE::MagicTarget*>(a_player)));
+			}
+			if (!g_harmHooked[0]) {
+				static const std::uintptr_t playerTop = a_player ? *reinterpret_cast<std::uintptr_t*>(a_player) : 0;
+				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+					auto a = h.get();
+					if (a && a.get() != a_player && a->GetFormType() == RE::FormType::ActorCharacter &&
+						*reinterpret_cast<std::uintptr_t*>(a.get()) != playerTop) {
+						HookHarm(0, *reinterpret_cast<std::uintptr_t*>(static_cast<RE::MagicTarget*>(a.get())));
+						break;
+					}
+				}
+			}
+		}
 
 		struct PlayerUpdate
 		{
 			static void thunk(RE::PlayerCharacter* a_this, float a_delta)
 			{
+				if (!g_harmHooked[0] || !g_harmHooked[1]) {
+					HookHarmLive(a_this);
+				}
 				// (a trace of the first ticks after each load: if the game ever stops there, the log shows where)
 				static int trace = 0;
 				if (auto* ui = RE::UI::GetSingleton(); ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) {
@@ -717,18 +754,14 @@ namespace bo3z
 			REL::Relocation<std::uintptr_t> hud{ RE::VTABLE_HUDMenu[0] };
 			NoticeFilter::func = hud.write_vfunc(0x4, NoticeFilter::thunk);
 			if (const auto v = MagicTargetVtbl(RE::VTABLE_Character)) {
-				REL::Relocation<std::uintptr_t> mt{ v };
-				NoSelfHarm<0>::func = mt.write_vfunc(0x1, NoSelfHarm<0>::thunk);
-				logger::info("hooked the actors' magic: no self-harm");
+				HookHarm(0, v);
 			} else {
-				logger::warn("no Character MagicTarget vtable found: spells may still hurt their casters");
+				logger::warn("no Character MagicTarget vtable found: reading it off a live actor instead");
 			}
 			if (const auto v = MagicTargetVtbl(RE::VTABLE_PlayerCharacter)) {
-				REL::Relocation<std::uintptr_t> mt{ v };
-				NoSelfHarm<1>::func = mt.write_vfunc(0x1, NoSelfHarm<1>::thunk);
-				logger::info("hooked your magic: no self-harm");
+				HookHarm(1, v);
 			} else {
-				logger::warn("no PlayerCharacter MagicTarget vtable found: your spells may still hurt you");
+				logger::warn("no PlayerCharacter MagicTarget vtable found: reading it off you instead");
 			}
 
 			auto* events = RE::ScriptEventSourceHolder::GetSingleton();

@@ -2261,17 +2261,27 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (s.perkMenu) {
 				const float w = 470 * k;
 				const bool  shout = s.shrineShout >= 0 && s.shrineShout < static_cast<int>(gen::kShouts.size());
-				const float h = (shout ? 610 : 532) * k + 86 * k + 78 * k + 56 * k + (s.chooseOn ? 52 * k : 0.0f);  // (+ Leave)  // (+ the bow wheel)  // (+ the dragon's bond, + a spell to choose)
-				const ImVec2 a{ size.x - w - 36 * k, std::max(24 * k, size.y * 0.5f - h * 0.5f - 30 * k) }, b{ a.x + w, a.y + h };
+				// (Noah: scroll down to the altar's trials) one panel, its trials below the rest; as tall as the screen allows,
+				// the rows sliding to keep the one in focus in view
+				const float trialsH = s.trialsOn ? 112 * k + 5 * 70 * k + 104 * k : 0.0f;
+				const float contentH = (shout ? 610 : 532) * k + 86 * k + 78 * k + 56 * k + (s.chooseOn ? 52 * k : 0.0f) + trialsH;  // (+ Leave)  // (+ the bow wheel)  // (+ the dragon's bond, + a spell to choose)
+				const float h = std::min(contentH, size.y - 60 * k);
+				const ImVec2 a{ size.x - w - 36 * k, std::max(24 * k, size.y * 0.5f - h * 0.5f - 10 * k) }, b{ a.x + w, a.y + h };
 				Panel(dl, a, b, k, 0.92f);
+				static float scroll = 0, scrollGoal = 0;
+				static float focusY0 = 0, focusY1 = 0;
+				scrollGoal = std::clamp(scrollGoal, 0.0f, std::max(0.0f, contentH - h));
+				scroll += (scrollGoal - scroll) * std::min(1.0f, dt * 10.0f);
 				const float cx = (a.x + b.x) * 0.5f;
-				TxtC(dl, g_title, 27 * k, cx, a.y + 16 * k, IM_COL32(232, 214, 176, 255), "THE ECHO ALTAR", 2.5f * k, IM_COL32(150, 70, 255, 255));
-				Divider(dl, cx, a.y + 54 * k, w * 0.38f, k);
-				float y = a.y + 68 * k;
+				dl->PushClipRect({ a.x, a.y + 6 * k }, { b.x, b.y - 66 * k }, true);
+				TxtC(dl, g_title, 27 * k, cx, a.y + 16 * k - scroll, IM_COL32(232, 214, 176, 255), "THE ECHO ALTAR", 2.5f * k, IM_COL32(150, 70, 255, 255));
+				Divider(dl, cx, a.y + 54 * k - scroll, w * 0.38f, k);
+				float y = a.y + 68 * k - scroll;
 				const float L = a.x + 20 * k, Rr = b.x - 20 * k;
 				// (Noah: one way through the altar) the row in focus - D-pad / W S to move, A / Enter to take it
 				const auto focusRow = [&](int row, float y0, float y1) {
 					if (s.altarFocus != row || s.chooseOn) return;
+					focusY0 = y0 + scroll, focusY1 = y1 + scroll;  // (in the content's own space)
 					const ImVec2 ra{ a.x + 10 * k, y0 }, rb{ b.x - 10 * k, y1 };
 					dl->AddRectFilled(ra, rb, IM_COL32(200, 160, 92, 26 + static_cast<int>(14 * std::sin(now * 4.0f))), 4 * k);
 					dl->AddRect(ra, rb, kGold, 4 * k, 0, 1.5f * k);
@@ -2463,54 +2473,31 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					y += 72 * k;
 				}
-				// [6] leave
-				{
+				// [5b] the city's trials: any three of the five, then its Barrow-Jarl
+				if (s.trialsOn) {
+					const float TL = L, TR = Rr, tcx = cx;
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
 					y += 14 * k;
-					focusRow(20, y - 6 * k, y + 34 * k);
-					bullet({ L, y + 2 * k }, 20, true);
-					Txt(dl, g_title, 20 * k, { L + 36 * k, y + 4 * k }, IM_COL32(210, 196, 170, 255), "LEAVE THE ALTAR");
-					y += 44 * k;
-				}
-				Divider(dl, cx, b.y - 58 * k, w * 0.38f, k, 0.7f);
-				{
-					const bool        ps = Settings::PlayStationIcons();
-					const std::string hint = g_padLast ? std::string("D-pad: move   \xC2\xB7   ") + (ps ? "Cross" : "A") + ": select   \xC2\xB7   " + (ps ? "Circle" : "B") + ": leave"
-					                                   : std::string("W S: move   \xC2\xB7   A D: choose a perk   \xC2\xB7   Enter: select");
-					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), hint);
-				}
-				// the city's trials, in a panel of their own beside the altar's: any three of the five, then its Barrow-Jarl
-				if (s.trialsOn) {
-					const float tw = 440 * k, th = 600 * k;
-					const ImVec2 ta{ a.x - tw - 18 * k, a.y }, tb{ ta.x + tw, ta.y + th };
-					Panel(dl, ta, tb, k, 0.92f);
-					const float tcx = (ta.x + tb.x) * 0.5f, TL = ta.x + 20 * k, TR = tb.x - 20 * k;
-					TxtC(dl, g_title, 25 * k, tcx, ta.y + 16 * k, IM_COL32(232, 214, 176, 255), "TRIALS OF " + Upper(s.trialCity), 2.5f * k, IM_COL32(150, 70, 255, 255));
-					Divider(dl, tcx, ta.y + 52 * k, tw * 0.38f, k);
+					TxtC(dl, g_title, 23 * k, tcx, y, IM_COL32(232, 214, 176, 255), "TRIALS OF " + Upper(s.trialCity), 2.0f * k, IM_COL32(90, 165, 255, 255));
 					int doneCount = 0;
 					for (int q = 0; q < 5; ++q) {
 						doneCount += (s.trialDone >> q) & 1;
 					}
 					const bool full = doneCount >= 3 || s.trialActive == 6;
-					TxtC(dl, g_body, 16 * k, tcx, ta.y + 62 * k, IM_COL32(196, 182, 160, 235), "Take up any three, in any order  -  " + std::to_string(doneCount) + " of 3 done");
-					float ty = ta.y + 92 * k;
+					TxtC(dl, g_body, 16 * k, tcx, y + 34 * k, IM_COL32(196, 182, 160, 235), "Take up any three, in any order  -  " + std::to_string(doneCount) + " of 3 done");
+					float ty = y + 66 * k;
 					static constexpr const char* kRoman[5] = { "I", "II", "III", "IV", "V" };
-					static constexpr const char* kKeys[5] = { "6", "7", "8", "9", "0" };
 					for (int q = 0; q < 5; ++q) {
-						const bool   done = (s.trialDone >> q) & 1, active = s.trialActive == q + 1, open = !done && !active && !full;
-						const bool   sel = s.altarFocus == 10 + q;
-						const ImVec2 ra{ TL - 8 * k, ty - 4 * k }, rb{ TR + 8 * k, ty + 62 * k };
+						const bool done = (s.trialDone >> q) & 1, active = s.trialActive == q + 1, open = !done && !active && !full;
 						if (active) {
-							dl->AddRectFilled(ra, rb, IM_COL32(120, 60, 20, static_cast<int>(70 + 40 * std::sin(now * 3.0f))), 3 * k);
+							dl->AddRectFilled({ a.x + 10 * k, ty - 6 * k }, { b.x - 10 * k, ty + 62 * k }, IM_COL32(120, 60, 20, static_cast<int>(70 + 40 * std::sin(now * 3.0f))), 3 * k);
 						}
-						if (sel) {
-							dl->AddRect(ra, rb, kGold, 3 * k, 0, 1.6f * k);
-						}
-						(void)kKeys;
+						focusRow(10 + q, ty - 6 * k, ty + 62 * k);
+						const bool sel = s.altarFocus == 10 + q;
 						TxtC(dl, g_title, 18 * k, TL + 13 * k, ty + 4 * k, sel || done ? kGold : IM_COL32(170, 156, 132, 220), kRoman[q]);
 						const ImU32 tc = done ? kGold : active ? IM_COL32(255, 196, 120, 255) : open ? kParch : IM_COL32(140, 130, 116, 220);
 						Txt(dl, g_title, 20 * k, { TL + 38 * k, ty + 2 * k }, tc, std::string(gen::kTrials[q].title));
-						Txt(dl, g_body, 16 * k, { TL + 38 * k, ty + 30 * k }, done || open || active ? IM_COL32(196, 182, 160, 235) : IM_COL32(130, 120, 108, 210), s.trialDesc[q]);
+						TxtWrap(dl, g_body, 16 * k, { TL + 38 * k, ty + 30 * k }, done || open || active ? IM_COL32(196, 182, 160, 235) : IM_COL32(130, 120, 108, 210), s.trialDesc[q], TR - TL - 40 * k, 1);
 						const char* state = done ? "DONE" : active ? "UNDER WAY" : "";
 						if (*state) {
 							Txt(dl, g_body, 15 * k, { TR - Measure(g_body, 15 * k, state).x, ty + 6 * k }, done ? kGold : IM_COL32(255, 176, 90, 255), state);
@@ -2522,15 +2509,39 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 						ty += 70 * k;
 					}
-					Divider(dl, tcx, ty + 2 * k, tw * 0.30f, k, 0.6f);
+					Divider(dl, tcx, ty + 2 * k, w * 0.30f, k, 0.6f);
 					ty += 16 * k;
-					const bool bossUp = s.trialActive == 6;
+					const bool  bossUp = s.trialActive == 6;
 					const ImU32 bc = bossUp ? IM_COL32(255, 92, 60, 255) : IM_COL32(170, 120, 104, 230);
 					Txt(dl, g_title, 20 * k, { TL, ty }, bc, "THE BARROW-JARL: " + s.trialBoss, bossUp ? 1.5f * k : 0.0f, bc);
 					TxtWrap(dl, g_body, 16 * k, { TL, ty + 30 * k }, IM_COL32(196, 182, 160, 235), s.trialBossLine, TR - TL, 2);
-					Divider(dl, tcx, tb.y - 58 * k, tw * 0.38f, k, 0.7f);
-					TxtC(dl, g_body, 16 * k, tcx, tb.y - 44 * k, IM_COL32(200, 186, 160, 225),
-						std::string(g_padLast ? "D-pad Left / Right: here and back   \xC2\xB7   " : "A / D: here and back   \xC2\xB7   ") + (g_padLast ? (Settings::PlayStationIcons() ? "Cross" : "A") : "Enter") + ": take one up");
+					y = ty + 88 * k;
+				}
+				// [6] leave
+				{
+					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
+					y += 14 * k;
+					focusRow(20, y - 6 * k, y + 34 * k);
+					bullet({ L, y + 2 * k }, 20, true);
+					Txt(dl, g_title, 20 * k, { L + 36 * k, y + 4 * k }, IM_COL32(210, 196, 170, 255), "LEAVE THE ALTAR");
+					y += 44 * k;
+				}
+				dl->PopClipRect();
+				// keep the row in focus in view (next frame)
+				// (focusY0/1: the focused row in the content's own space; on screen it stands at focusY - scroll)
+				if (focusY1 - scrollGoal > b.y - 80 * k) scrollGoal = focusY1 - (b.y - 80 * k);
+				if (focusY0 - scrollGoal < a.y + 20 * k) scrollGoal = focusY0 - (a.y + 20 * k);
+				if (contentH - h > 1.0f) {  // a thin bar: how far down you are
+					const float track = h - 90 * k, frac = std::clamp(scroll / (contentH - h), 0.0f, 1.0f);
+					const float bh = std::max(30 * k, track * h / contentH);
+					dl->AddRectFilled({ b.x - 9 * k, a.y + 20 * k + (track - bh) * frac }, { b.x - 5 * k, a.y + 20 * k + (track - bh) * frac + bh }, Fade(kGold, 0.6f), 2 * k);
+				}
+				Divider(dl, cx, b.y - 58 * k, w * 0.38f, k, 0.7f);
+				{
+					const bool        ps = Settings::PlayStationIcons();
+					const std::string hint = g_padLast ? std::string("D-pad: move   \xC2\xB7   ") + (ps ? "Cross" : "A") + ": select   \xC2\xB7   " + (ps ? "Circle" : "B") + ": leave"
+					                                   : std::string("W S: move   \xC2\xB7   A D: choose a perk   \xC2\xB7   Enter: select");
+					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), hint);
 				}
 			} else if (s.rollPhase > 0) {
 				// the roll with the menu closed: a small strip under the crosshair

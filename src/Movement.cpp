@@ -1136,13 +1136,16 @@ namespace bo3z
 				return;
 			}
 			const float level = 1.0f * Smooth(t / 0.18f) * (1 - Smooth((t - 1.7f) / 0.8f));  // (Noah: transparent - faint layers of air)
-			for (auto& n : g_whirl.node) {
+			for (int w = 0; w < 2; ++w) {
+				auto& n = g_whirl.node[w];
 				if (!n) continue;
 				n->local.translate = { 0, 0, -60.0f * Smooth(t / 1.0f) };
 				n->local.rotate = Rot(0, 0, -t * 9.0f);
 				n->local.scale = 0.7f + 0.5f * Smooth(t / 0.8f);
+				// (Noah: blinding in first person) thin as air: faint seen from behind you, fainter still from inside it
+				const float see = w == 1 ? 0.12f : 0.35f;
 				for (int i = 1; i <= 6; ++i) {
-					FxLevel(n.get(), fmt::format("WW{}", i).c_str(), level);
+					FxLevel(n.get(), fmt::format("WW{}", i).c_str(), level * see);
 				}
 				RE::NiUpdateData ud;
 				n->Update(ud);
@@ -2222,6 +2225,7 @@ namespace bo3z
 		}
 
 		// the left stick's own events (the glide reads it when the game's movement reading has nothing)
+		bool Dodging() { return g_dodgeT >= 0.0f && g_dodgeT < 0.6f; }
 		void OnStick(const RE::ThumbstickEvent* a_event)
 		{
 			if (a_event && a_event->IsLeft()) {
@@ -2639,7 +2643,9 @@ namespace bo3z
 							}
 						}
 						const RE::NiPoint3 fingers = hUp * 0.95f + hFwd * 0.22f;
-						const RE::NiPoint3 pole = Rt * out * 0.8f - F * 0.35f - Up * 0.2f;  // (elbows out to the side and a little back)
+						// (Noah: the arms bent the wrong way) a hang's elbows: a little out to the side and forward, as on a
+						// pull-up bar - never folded back behind you
+						const RE::NiPoint3 pole = Rt * out * 0.55f + F * 0.45f - Up * 0.1f;
 						if (A.clav && g_grip < 0.999f) {  // (the shoulder lifted as the arm reaches up)
 							const RE::NiPoint3 c = A.ua->world.translate - A.clav->world.translate;
 							TurnBone(A.clav, c, c + Up * (c.Length() * 0.3f), reachW * (1 - g_grip) * 0.8f, u0);

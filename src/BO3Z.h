@@ -499,6 +499,8 @@ namespace bo3z
 
 	namespace Movement
 	{
+		bool Dodging();  // a dodge roll under way
+
 		void OnButton(const RE::ButtonEvent* a_event);  // crouch/jump keys (Skyrim ignores crouch while sprinting)
 		void OnStick(const RE::ThumbstickEvent* a_event);  // the left stick (the dragon glide's steering)
 		void Tick(float a_delta);

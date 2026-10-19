@@ -559,7 +559,7 @@ def guide_text():
            p("Steer with the stick or WASD. Forward dives, back climbs. Attack to make it breathe fire on the dead below - only the dead, never your friends. "
              "At the altar you can make deeper bonds with it."),
            "[pagebreak]", h("Echo Stones and the Reliquary"),
-           p("When a city's altar is freed, an <b>Echo Stone</b> rises behind it. Walk up to it and it gives you a page: <i>The Broken Words</i>, one for each city. "
+           p("When a city's altar is freed and its night won, its heart stone turns to blue light. Step onto the altar and it gives you a page: <i>The Broken Words</i>, one for each city. "
              "Each page says plainly where a part of a <b>wonder weapon</b> waits and how to take it, and your compass marks the place."),
            p("Some parts fall from the Barrow-Jarls. Some wait in reliquaries at old barrows, guarded, and only wake at night. Some must be earned by killing the dead near a barrow's door."),
            p("Take them to <b>High Hrothgar</b>: a sealed door in the great hall leads down to the Reliquary, where each wonder is forged on its pedestal once its three parts are found."),

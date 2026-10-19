@@ -527,22 +527,10 @@ namespace bo3z
 			logger::info("echo: page of {} taken", gen::kTowns[a_town]);
 		}
 
+		// (Noah: the old pillar shouldn't be there) a freed altar's page now waits on the altar itself: step onto it
 		RE::TESObjectREFR* StoneOf(int a_town)
 		{
-			auto* altar = Shops::Placed(a_town, 0);
-			auto* base = Forms::Ours(gen::kRelStone);
-			if (!altar || !base) {
-				return nullptr;
-			}
-			RE::TESObjectREFR* found = nullptr;
-			RE::TES::GetSingleton()->ForEachReferenceInRange(altar, 700.0f, [&](RE::TESObjectREFR* r) {
-				if (r && r->GetBaseObject() == base && !r->IsDeleted() && !r->IsDisabled()) {
-					found = r;
-					return RE::BSContainer::ForEachResult::kStop;
-				}
-				return RE::BSContainer::ForEachResult::kContinue;
-			});
-			return found;
+			return Shops::Placed(a_town, 0);
 		}
 
 		// ---- the hunt: relics and kill sites ---------------------------------------------------------------------
@@ -1093,7 +1081,7 @@ namespace bo3z
 			if (StoneWaits(z)) {
 				if (auto* st = StoneOf(z)) {
 					a_at = st->GetPosition() + RE::NiPoint3{ 0, 0, 330.0f };
-					a_label = "Echo Stone - take the page";
+					a_label = "Echo Altar - step onto it for the page";
 					return true;
 				}
 			}

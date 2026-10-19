@@ -280,7 +280,7 @@ def motes_texture():
     a = np.zeros((h, w), np.float32)
     rng = np.random.default_rng(9)
     yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    for _ in range(140):
+    for _ in range(260):
         x, y, r = rng.uniform(10, w - 10), rng.uniform(0, h), rng.uniform(1.5, 5.5)
         for dy in (-h, 0, h):
             dd = ((xx - x) ** 2 + (yy - y - dy) ** 2) / (r * r)
@@ -307,7 +307,7 @@ def rising(name, tex, halo, n_sheets, alpha, top, extra_halo):
     """sheets standing round the stone's foot, leaning in, their motes sliding up into the stone; faded at both ends"""
     job = [f'out {mesh(name)}']
     bot = LIFT + 63 * S - 2      # the platform's top
-    r0, r1 = 62.0, 18.0
+    r0, r1 = 70.0, 46.0
     for k in range(n_sheets):
         a = 2 * math.pi * k / n_sheets
         t = np.array([-math.sin(a), math.cos(a)])          # along the sheet
@@ -328,8 +328,8 @@ def rising(name, tex, halo, n_sheets, alpha, top, extra_halo):
             job += [f't {i} {i + 1} {i + 3}', f't {i} {i + 3} {i + 2}']
     if extra_halo:
         cz = LIFT + 232 * S
-        job.append(f'shape halo tex={halo} color=0.5,0.8,1.0,0.9 scale=2.2 blend=add billboard=2 at=0,0,{cz:.1f}')
-        hw, hh = 120.0, 150.0
+        job.append(f'shape halo tex={halo} color=0.45,0.75,1.0,0.5 scale=0.9 blend=add billboard=2 at=0,0,{cz:.1f}')
+        hw, hh = 75.0, 120.0
         for x, y, u, v in [(-hw, hh, 0, 0), (hw, hh, 1, 0), (hw, -hh, 1, 1), (-hw, -hh, 0, 1)]:
             job.append(f'v {x} {y} 0 {u} {v}')
         job += ['t 0 1 2', 't 0 2 3']
@@ -364,7 +364,7 @@ def main():
     sdif, snrm, sglo, ldif, lglo = stone_textures()
     base = [f'in {WORK / "heartstone.obj"}', f'scale {S}', 'ground 0']
     run('modelconv', base + [f'out {mesh("heartstone.nif")}', f'mat heartstone diffuse={sdif} normal={snrm} glow={sglo} emit=0.3,0.7,1.0 emitmult=2.2 spec=0.35 gloss=40'], 'heartstone')
-    run('modelconv', base + [f'out {mesh("heartstone_lit.nif")}', f'mat heartstone diffuse={ldif} normal={snrm} glow={lglo} emit=0.45,0.8,1.0 emitmult=3.6 spec=0.6 gloss=60'], 'heartstone_lit')
+    run('modelconv', base + [f'out {mesh("heartstone_lit.nif")}', f'mat heartstone diffuse={ldif} normal={snrm} glow={lglo} emit=0.45,0.8,1.0 emitmult=2.0 spec=0.6 gloss=60'], 'heartstone_lit')
 
     # a rune stone floating over each column
     run('modelconv', [f'in {SRC / "runestone/source/rune_stone_low.fbx"}', f'out {mesh("pillarrock.nif")}', 'fit 52', 'rotate 90 0 0', 'ground 0',
@@ -373,8 +373,9 @@ def main():
     # the motes rising into the stone
     mt, ht = motes_texture(), halo_texture()
     top = LIFT + 150 * S
-    rising('risemotes.nif', mt, ht, 6, 0.75, top, False)
-    rising('risemotes_lit.nif', mt, ht, 10, 1.0, LIFT + 300 * S, True)
+    # (Noah: more of them, from the base to a little over the stone)
+    rising('risemotes.nif', mt, ht, 12, 0.8, LIFT + 420 * S, False)
+    rising('risemotes_lit.nif', mt, ht, 16, 0.9, LIFT + 440 * S, True)
     print('column tops (x, y, z):', [(x, y, round(LIFT + h * S, 1)) for x, y, h in col])
 
 

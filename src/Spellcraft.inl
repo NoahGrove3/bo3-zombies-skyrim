@@ -290,6 +290,7 @@ namespace Spellcraft
 		Fx           fx;   // the trail (along the flight)
 		Ball         ball; // the charged ball of energy itself
 		float        spin = 0;
+		float        spark = 0;  // (an arrow: seconds to its next shed mote)
 		float        flown = 0;  // how far it has come (an arrow ignores the world for its first stretch: the bow, your own arms)
 		std::uint64_t loop = 0;
 	};
@@ -881,9 +882,14 @@ namespace Spellcraft
 				wf = 2.0f;  // (still leaving the bow)
 			}
 			s.flown += (to - from).Length();
-			if (s.arrow) {  // (Noah: nothing to see after the release) a streak of the element left along the arrow's flight
+			if (s.arrow) {  // (Noah: an elemental trail behind the arrow in flight) a streak of the element along its path, lingering
 				const RE::NiPoint3 tail = wf <= 1.0f ? from + (to - from) * wf : to;
-				StreakAt(s.row, from, tail, (s.full ? 0.75f : 0.5f) * s.scale, 0.28f, Def(s.row).style == 3);
+				StreakAt(s.row, from, tail, (s.full ? 1.15f : 0.8f) * s.scale, 0.55f, Def(s.row).style == 3);
+				s.spark -= a_dt;
+				if (s.spark <= 0) {  // and motes of it shed as it goes
+					s.spark = 0.035f;
+					BurstAt(s.row, tail, 12.0f, 0.35f);
+				}
 			}
 			const RE::NiPoint3 end = wf <= 1.0f ? from + (to - from) * wf : to;
 			// what it touches on the way: substeps no longer than its radius

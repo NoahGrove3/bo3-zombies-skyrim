@@ -45,7 +45,7 @@
    "y": 0,
    "z": 175,
    "scale": 1.0,
-   "spin": 39.5,
+   "spin": 8,
    "verify": [
     "z"
    ],
@@ -63,7 +63,7 @@
    "y": 0,
    "z": 175,
    "scale": 1.0,
-   "spin": 39.5,
+   "spin": 8,
    "verify": [
     "z"
    ],
@@ -117,7 +117,7 @@
    "y": 0,
    "z": 204.6,
    "scale": 1.0,
-   "spin": 12,
+   "spin": 6,
    "verify": [
     "z"
    ],
@@ -135,7 +135,7 @@
    "y": -168,
    "z": 231.6,
    "scale": 1.0,
-   "spin": 14,
+   "spin": 7,
    "verify": [
     "z"
    ],
@@ -153,7 +153,7 @@
    "y": -167.5,
    "z": 282.0,
    "scale": 1.0,
-   "spin": 16,
+   "spin": 8,
    "verify": [
     "z"
    ],
@@ -171,7 +171,7 @@
    "y": 0,
    "z": 231.6,
    "scale": 1.0,
-   "spin": 18,
+   "spin": 9,
    "verify": [
     "z"
    ],
@@ -189,7 +189,7 @@
    "y": 167.5,
    "z": 282.0,
    "scale": 1.0,
-   "spin": 20,
+   "spin": 10,
    "verify": [
     "z"
    ],
@@ -207,7 +207,7 @@
    "y": 168,
    "z": 282.0,
    "scale": 1.0,
-   "spin": 22,
+   "spin": 11,
    "verify": [
     "z"
    ],
@@ -219,11 +219,11 @@
    "for": "objects:coffer",
    "type": "light",
    "model": "none",
-   "color": "5AA8FF",
-   "radius": 600,
+   "color": "2A5A99",
+   "radius": 420,
    "x": 0,
    "y": 0,
-   "z": 175,
+   "z": 260,
    "scale": 1,
    "spin": 0,
    "verify": [
@@ -1054,11 +1054,11 @@
    "for": "objects:coffer",
    "type": "light",
    "model": "none",
-   "color": "FFE2A8",
-   "radius": 1500,
+   "color": "3A70B0",
+   "radius": 520,
    "x": 0,
    "y": 0,
-   "z": 175,
+   "z": 260,
    "scale": 1,
    "spin": 0,
    "freed": true,
@@ -1106,11 +1106,11 @@
    "for": "objects:coffer",
    "type": "light",
    "model": "none",
-   "color": "6AB8FF",
-   "radius": 520,
+   "color": "203E66",
+   "radius": 300,
    "x": 0,
-   "y": -300,
-   "z": 200,
+   "y": 0,
+   "z": 260,
    "scale": 1,
    "spin": 0,
    "freed": true,
@@ -1126,11 +1126,11 @@
    "radius": 0,
    "x": 0,
    "y": 0,
-   "z": 345,
+   "z": 330,
    "scale": 1.0,
-   "spin": 18,
+   "spin": 8,
    "verify": [],
-   "freed": true,
+   "freed": false,
    "held": false
   }
  ],
