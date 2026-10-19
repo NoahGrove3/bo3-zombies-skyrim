@@ -536,12 +536,12 @@ def guide_text():
              "Septims are the only coin the Echo Altars take."),
            p("Watch the dead for tokens: a skull (Insta-Kill), a coin (Double Points), a falling star (it destroys every corpse risen tonight) and a chest (a Fire Sale at the altar)."),
            "[pagebreak]", h("The Echo Altar"),
-           p("Every city has one. Look into its star and press Activate. Its menu does not stop the night."),
+           p("Every city has one. Look into its star and press Activate. Its menu does not stop the night. Move through it with the D-pad (or W and S) and take a row with A (or Enter); B leaves."),
            p("<b>Call a spell</b> - the altar turns and gives you one of the spells of the fallen. Each call costs more than the last until dawn. You carry two of its spells; a third asks which one it replaces."),
-           p("<b>Call a bow</b> - the altar's second wheel (B, or the right trigger). Six elemental bows: fire, frost, storm, wind, sun and blood. You carry one; a new one takes its place."),
+           p("<b>Call a bow</b> - the altar's second wheel. Six elemental bows: fire, frost, storm, wind, sun and blood. You carry one; a new one takes its place."),
            p("<b>Reforge</b> - make the spell or bow in your hands stronger, three times over. Every tier gives a bow a new attack: the fire bow's arrows burst, then leave burning ground, then a full draw calls down a volley of meteors."),
            p("<b>Perks</b> - lasting gifts. You carry five at most."),
-           p("<b>Trials</b> - the quest that wakes the altar. It offers five; take up any three, in any order (keys 6 to 0, or the shoulder buttons and D-pad up). "
+           p("<b>Trials</b> - the quest that wakes the altar. It offers five; take up any three, in any order (step over to them with D-pad left or right, or A and D). "
              "When three are done the city's Barrow-Jarl rises at night near the altar. Slay it and the city is safe for good. Skyrim's difficulty sets how hard the trials are."),
            "[pagebreak]", h("The Five Trials"),
            p("<b>Ward of the Tongues</b> - stand in the runic circle round the altar while the dead come faster. Step out and the count waits for you."),
