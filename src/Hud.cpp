@@ -1329,7 +1329,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Txt(dl, g_title, 22 * k, { a.x + rr * 2 + 6 * k, a.y + 22 * k }, kParch, ArmsName(id));
 				const std::string tier(Bows::TierName(s.bowHeld, Bows::Level(s.bowHeld)));
 				Txt(dl, g_body, 12 * k, { b.x - 18 * k - Measure(g_body, 12 * k, tier).x, a.y + 7 * k }, Fade(ecol, 0.9f), tier);
-				if (s.bowDraw > 0.02f) {
+				constexpr bool kDrawRing = false;  // (Noah: only the white dot at the crosshair)
+				if (kDrawRing && s.bowDraw > 0.02f) {
 					const ImVec2 cc{ size.x * 0.5f, size.y * 0.5f };
 					const float  R = 30 * k, a0 = -RE::NI_PI / 2, a1 = a0 + 2 * RE::NI_PI * std::clamp(s.bowDraw, 0.0f, 1.0f);
 					const bool   full = s.bowDraw >= 0.98f;

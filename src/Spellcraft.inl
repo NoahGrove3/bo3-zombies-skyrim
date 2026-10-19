@@ -285,6 +285,7 @@ namespace Spellcraft
 		Fx           fx;   // the trail (along the flight)
 		Ball         ball; // the charged ball of energy itself
 		float        spin = 0;
+		float        flown = 0;  // how far it has come (an arrow ignores the world for its first stretch: the bow, your own arms)
 		std::uint64_t loop = 0;
 	};
 	struct Burst
@@ -663,7 +664,7 @@ namespace Spellcraft
 		}
 		s.ball.Need(a_row);
 		s.ball.Attach(WorldRoot());
-		s.ball.Place(s.pos, AxisAngle(a_dir, 0.0f), (carrier ? 2.4f : a_arrow ? 0.3f : 0.62f) * a_scale);
+		s.ball.Place(s.pos, AxisAngle(a_dir, 0.0f), (carrier ? 2.4f : a_arrow ? 0.5f : 0.62f) * a_scale);
 		if (const int tr = Snd(a_gun, &gen::GunSounds::travel); tr >= 0 && g_shots2.size() < 6) {
 			s.loop = 0x5C00000000ull + (++g_loopId);
 			Audio::LoopAt(s.loop, static_cast<gen::Sound>(tr), s.pos, 0.7f);
@@ -867,7 +868,11 @@ namespace Spellcraft
 			}
 			s.vel.z -= s.gravity * a_dt;
 			const RE::NiPoint3 from = s.pos, to = s.pos + s.vel * a_dt;
-			const float        wf = WorldHit(from, to);
+			float              wf = WorldHit(from, to);
+			if (s.arrow && s.flown < 90.0f && wf <= 1.0f && (to - from).Length() * wf + s.flown < 90.0f) {
+				wf = 2.0f;  // (still leaving the bow)
+			}
+			s.flown += (to - from).Length();
 			const RE::NiPoint3 end = wf <= 1.0f ? from + (to - from) * wf : to;
 			// what it touches on the way: substeps no longer than its radius
 			const float len = (end - from).Length();
@@ -913,6 +918,12 @@ namespace Spellcraft
 				s.pos = p;
 			}
 			if (!stop && wf <= 1.0f) {  // the world stopped it
+				if (s.bow >= 0) {
+					static int said = 0;
+					if (said++ < 8) {
+						logger::info("bows: arrow struck the world after {:.0f} units", s.flown);
+					}
+				}
 				s.pos = end;
 				if (s.bow >= 0 && g_bowGround) {
 					g_bowGround(s, end);
@@ -928,7 +939,7 @@ namespace Spellcraft
 				if (s.fx.obj) {
 					s.fx.Place(s.pos, Facing(s.vel), 1.2f * s.scale);
 				}
-				s.ball.Place(s.pos, Facing(s.vel) * AxisAngle({ 0, 1, 0 }, s.spin) * AxisAngle({ 1, 0, 0 }, s.spin * 0.6f), (carrier ? 2.4f : s.arrow ? 0.3f : 0.62f) * s.scale * breathe);
+				s.ball.Place(s.pos, Facing(s.vel) * AxisAngle({ 0, 1, 0 }, s.spin) * AxisAngle({ 1, 0, 0 }, s.spin * 0.6f), (carrier ? 2.4f : s.arrow ? 0.5f : 0.62f) * s.scale * breathe);
 				if (s.loop) {
 					Audio::LoopMove(s.loop, s.pos);
 				}

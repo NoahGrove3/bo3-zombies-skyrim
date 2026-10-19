@@ -141,7 +141,10 @@ namespace BowsImpl
 	// in third person the bow hand
 	RE::NiPoint3 HeadAt(RE::PlayerCharacter* p)
 	{
-		if (Spellcraft::FirstPerson()) {
+		if (Spellcraft::FirstPerson()) {  // (Noah: the glow sat over the crosshair) at the arrow's head, resting on the bow hand
+			if (auto* h = Spellcraft::Bone(p, "NPC L Hand [LHnd]")) {
+				return h->world.translate + AimAt(80.0f).dir * 10.0f + RE::NiPoint3{ 0, 0, 4.0f };
+			}
 			return Spellcraft::ViewPoint(62.0f, -2.5f, 5.0f);
 		}
 		if (auto* m = Spellcraft::Bone(p, "NPC L MagicNode [LMag]")) {
@@ -442,7 +445,12 @@ namespace BowsImpl
 		case Kind::Sun: effect = gen::kFxHoly; break;
 		case Kind::Blood: effect = gen::kFxDrain; break;
 		}
-		Spellcraft::Launch(row, gun, from, dir, 6500.0f, dmg, 9.0f, 1, full ? 1.25f : 1.0f, -1, true);
+		Spellcraft::BurstAt(row, from + dir * 30.0f, full ? 26.0f : 16.0f, 0.18f);  // (the string's snap: a flash off the arrow's head)
+		Spellcraft::Launch(row, gun, from, dir, 4800.0f, dmg, 9.0f, 1, full ? 1.25f : 1.0f, -1, true);
+		static int said = 0;
+		if (said++ < 8) {
+			logger::info("bows: arrow away from ({:.0f},{:.0f},{:.0f}) toward ({:.0f},{:.0f},{:.0f}), {} shots in flight", from.x, from.y, from.z, aim.hit.x, aim.hit.y, aim.hit.z, Spellcraft::g_shots2.size());
+		}
 		auto& sh = Spellcraft::g_shots2.back();
 		sh.bow = i, sh.tier = t, sh.full = full, sh.effect = effect;
 	}
@@ -806,7 +814,7 @@ namespace BowsImpl
 			const bool released = st == S::kBowReleasing || st == S::kBowReleased || st == S::kBowNextAttack || st == S::kBowFollowThrough;
 			const bool heard = g_releaseHeard.exchange(false);
 			// let go: the release state, the release event, or simply the draw ending with the bow still out and some pull on it
-			if (g_wasDrawing && i >= 0 && g_sinceFire > 0.2f && (released || heard || (g_draw >= 0.2f && p->AsActorState()->IsWeaponDrawn()))) {
+			if (g_wasDrawing && i >= 0 && g_sinceFire > 0.2f && (released || heard)) {  // (state 0 after a draw is a cancel: bowReset)
 				Fire(i, g_draw);
 				g_sinceFire = 0;
 				static int said = 0;
