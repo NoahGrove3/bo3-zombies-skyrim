@@ -2209,7 +2209,16 @@ namespace bo3z
 			const bool dark = IsNight();
 			RE::TES::GetSingleton()->ForEachReferenceInRange(a_player, 8000.0f, [&](RE::TESObjectREFR* r) {
 				auto* a = r ? r->As<RE::Actor>() : nullptr;
-				if (!a || a == a_player || a->IsDisabled() || !g_ours.contains(a->GetFormID())) {
+				if (!a || a == a_player || a->IsDisabled()) {
+					return RE::BSContainer::ForEachResult::kContinue;
+				}
+				if (!g_ours.contains(a->GetFormID())) {
+					// (Noah: after a load the bodies the freeing's light had felled stayed) a body of ours from before the
+					// load is on no one's books: it crumbles
+					if (a->IsDead() && IsOurBase(a)) {
+						Vanish(a);
+						++day;
+					}
 					return RE::BSContainer::ForEachResult::kContinue;
 				}
 				const auto h = a->GetHandle();

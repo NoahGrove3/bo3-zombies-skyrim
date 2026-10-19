@@ -163,7 +163,7 @@ namespace bo3z
 						g_bowHeldRelease = false;
 					} else if (a_event->IsUp() && g_bowDrawing && !g_bowFull) {
 						g_abHandler = a_this, g_abData = a_data;
-						g_bowHeldRelease = true;  // not yet: the string keeps coming back, and looses at its peak
+						g_bowHeldRelease = true;  // not yet at 80%: the draw is called off (Bows.inl Tick)
 						return;
 					}
 				}
@@ -2683,6 +2683,39 @@ namespace bo3z
 				h.handCost[i] = sp ? static_cast<int>(std::lround(sp->CalculateMagickaCost(RE::PlayerCharacter::GetSingleton()))) : 0;
 			}
 			h.activeSlot = out && SlotOf(gun) >= 0 ? SlotOf(gun) : (h.slotCount > 0 ? Save::ActiveSlot() % h.slotCount : -1);
+			{  // Skyrim's own (and other mods') equipment in hand, for the dock
+				auto* pl = RE::PlayerCharacter::GetSingleton();
+				for (int i = 0; i < 2; ++i) {
+					auto* o = pl->GetEquippedObject(i == 0);
+					h.skyKind[i] = 0, h.skyName[i].clear(), h.skyValue[i] = 0, h.skyColor[i] = 0xC8A060;
+					if (!o || (o->GetFile(0) && o->GetFile(0)->GetFilename() == gen::kPlugin)) {
+						continue;  // (ours: the altar's spells, bows and the night's weapons have docks of their own)
+					}
+					if (i == 0 && o == pl->GetEquippedObject(false)) {
+						continue;  // (a two-handed thing: shown once, in the right hand)
+					}
+					h.skyName[i] = o->GetName();
+					if (auto* w = o->As<RE::TESObjectWEAP>()) {
+						const bool ranged = w->IsBow() || w->IsCrossbow();
+						h.skyKind[i] = ranged ? 2 : w->IsStaff() ? 5 : 1;
+						h.skyValue[i] = w->IsStaff() ? 0 : static_cast<int>(w->GetAttackDamage());
+					} else if (auto* sp = o->As<RE::SpellItem>()) {
+						h.skyKind[i] = 3;
+						h.skyValue[i] = static_cast<int>(std::lround(sp->CalculateMagickaCost(pl)));
+						if (auto* fx = sp->GetCostliestEffectItem(); fx && fx->baseEffect) {
+							const auto rv = fx->baseEffect->data.resistVariable;
+							h.skyColor[i] = rv == RE::ActorValue::kResistFire ? 0xFF7A2E : rv == RE::ActorValue::kResistFrost ? 0x8FD8FF : rv == RE::ActorValue::kResistShock ? 0x8FA8FF
+							              : fx->baseEffect->data.associatedSkill == RE::ActorValue::kRestoration ? 0xFFE08A : fx->baseEffect->data.associatedSkill == RE::ActorValue::kConjuration ? 0xB98CFF
+							              : fx->baseEffect->data.associatedSkill == RE::ActorValue::kIllusion ? 0xD08CFF : fx->baseEffect->data.associatedSkill == RE::ActorValue::kAlteration ? 0x9CE0C0 : 0xA0B8FF;
+						}
+					} else if (o->Is(RE::FormType::Armor)) {
+						h.skyKind[i] = 4;
+						if (auto* ar = o->As<RE::TESObjectARMO>()) h.skyValue[i] = static_cast<int>(ar->GetArmorRating());
+					} else {
+						h.skyKind[i] = 6;
+					}
+				}
+			}
 			{
 				auto* pav = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner();
 				h.hp = pav->GetActorValue(RE::ActorValue::kHealth), h.hpMax = pav->GetPermanentActorValue(RE::ActorValue::kHealth);

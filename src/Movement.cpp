@@ -1352,8 +1352,29 @@ namespace bo3z
 			}
 			return g > -1e8f ? p.z - g : 1e9f;
 		}
+		// (Noah: weapons away just before you take the harness) what is in your hands is hidden while you hang from it
+		// (the bow, a blade, a shield, the spells' hand glow nodes), and shown again when the dragon lets go
+		void HideHands(bool a_hide)
+		{
+			static bool hidden = false;
+			if (hidden == a_hide) {
+				return;
+			}
+			hidden = a_hide;
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			for (const bool fp : { false, true }) {
+				auto* root = p ? p->Get3D(fp) : nullptr;
+				for (const char* n : { "WEAPON", "SHIELD", "AnimObjectR", "AnimObjectL" }) {
+					if (auto* o = root ? root->GetObjectByName(n) : nullptr) {
+						o->SetAppCulled(a_hide);
+					}
+				}
+			}
+			logger::info("glider: weapons {}", a_hide ? "put out of sight for the harness" : "back in hand");
+		}
 		void EndHold()
 		{
+			HideHands(false);
 			g_holding = false, g_place = false, g_placed = false, g_yawOwned = false, g_grip = 0;
 			g_breath.grow = 0, g_breath.level = 0;
 		}
@@ -1687,6 +1708,9 @@ namespace bo3z
 			{
 				legT += a_delta;
 				g_grip = Smooth((u - 0.88f) / 0.12f);
+				if (u >= 0.8f) {
+					HideHands(true);  // a moment before the bar reaches your hands
+				}
 				if (!g_holding && u >= 0.95f) {
 					g_holding = true;
 					logger::info("glider: caught - the harness is in your hands");
@@ -1729,7 +1753,7 @@ namespace bo3z
 			const int   bond = Bond();
 			const float cruise = bond >= 1 ? 950.0f : 820.0f;   // (Bond I glides quicker and sinks slower)
 			const float sinkG = bond >= 1 ? -0.11f : -0.15f;
-			const float top = 2600.0f + 400.0f * bond;
+			const float top = 4800.0f + 500.0f * bond;  // (Noah: a dive builds a LOT more speed, and it carries on through the glide)
 			if (auto* cc = a_player->GetCharController(); cc && !g_dive) {
 				static RE::NiPoint3 fallH{}, glideV{};
 				static float        fallV = 0;
@@ -1777,7 +1801,11 @@ namespace bo3z
 					gT = sinkG + (gT - sinkG) * g_catchK;
 					g_gamma += (gT - g_gamma) * std::min(1.0f, dt * (gT < g_gamma ? 2.2f : 1.7f));
 					// speed: gained going down, spent climbing, and back to its cruising speed level (height bought with speed)
-					g_speed += (-1500.0f * (std::sin(g_gamma) - std::sin(sinkG)) - 0.45f * (g_speed - cruise)) * dt;
+					// (a dive pours speed in - gravity's whole pull and more; a climb spends it at half that; and once level it
+					// bleeds away slowly, so a dive's speed carries far through the glide)
+					const float slope = std::sin(g_gamma) - std::sin(sinkG);
+					const float drag = g_speed > cruise ? 0.09f : 0.45f;
+					g_speed += ((slope < 0 ? -2900.0f : -1300.0f) * slope - drag * (g_speed - cruise)) * dt;
 					g_speed = std::clamp(g_speed, 600.0f, top);
 					// turning: up to 100 degrees a second
 					const float rate = 1.75f * g_inX * g_catchK;

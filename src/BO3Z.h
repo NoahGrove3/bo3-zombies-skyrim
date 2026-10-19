@@ -666,6 +666,13 @@ namespace bo3z
 			std::array<int, 3> slotLevel{ 0, 0, 0 };
 			int                activeSlot{ -1 };
 			int                gunIndex{ -1 };
+			// (Noah: Skyrim's own and other mods' weapons and spells shown too) what is in each hand when it is not ours:
+			// kind 0 none, 1 weapon, 2 bow / crossbow, 3 spell, 4 shield, 5 staff, 6 torch or other; its name, and its damage
+			// (weapons) or magicka cost (spells); both hands the same two-handed thing: shown once
+			std::array<int, 2>         skyKind{ 0, 0 };
+			std::array<std::string, 2> skyName;
+			std::array<int, 2>         skyValue{ 0, 0 };
+			std::array<std::uint32_t, 2> skyColor{ 0, 0 };
 			std::array<int, 2> handSpell{ -1, -1 };   // the Coffer spell in each hand (Arcana index; 0 left, 1 right)
 			std::array<int, 2> handCost{ 0, 0 };      // what each costs you now (magicka; a second, for a channelled one)
 		};

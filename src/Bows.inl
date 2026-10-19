@@ -130,11 +130,13 @@ namespace BowsImpl
 		logger::info("bows: {} in hand", gen::kBows[i].label);
 	}
 
+	// (Noah: base 30, a quarter more each tier) a full-draw arrow's damage to a body: 30, 37.5, 46.9, 58.6 - in BO3 units
+	// (x hpScale) as every shot is counted; the perks still add theirs
 	float ShotDamage(int i, float a_draw)
 	{
-		const float share = gen::kBows[i].share * (1.0f + gen::kForgeStep * g_level[i]);
+		const float tier = std::pow(1.25f, static_cast<float>(std::clamp<int>(g_level[i], 0, 3)));
 		const float pull = 0.35f + 0.65f * std::clamp(a_draw, 0.0f, 1.0f);
-		return Director::RoundHealth() * gen::kRounds.hpScale * share * pull * (0.7f + 0.3f * Arcana::Power()) * Perks::DamageMult();
+		return 30.0f * tier * pull * gen::kRounds.hpScale * Perks::DamageMult();
 	}
 
 	// where the arrow's head sits while drawn: in first person a point in the view (the arms have their own camera),
@@ -165,8 +167,8 @@ namespace BowsImpl
 		{ "Ember Arrow", "Flare Shot", "Cinder Trail", "Fire Tornado" },
 		{ "Frost Arrow", "Deep Freeze", "Shatter", "Ice Tornado" },
 		{ "Spark Arrow", "Chain Lightning", "Storm Mark", "Lightning Tornado" },
-		{ "Gust Arrow", "The Gale", "Cyclone Arrow", "Tornado" },
-		{ "Sunlit Arrow", "Radiant Burst", "Sunbeam", "Sunfire Tornado" },
+		{ "Gust Arrow", "Gale Burst", "Cyclone Arrow", "Tornado" },
+		{ "Sunlit Arrow", "Radiant Burst", "Solar Flare", "Sunfire Tornado" },
 		{ "Leech Arrow", "Hemorrhage", "Blood Tether", "Blood Tornado" } };
 	// (Noah: each bow's last upgrade - a tornado of its element where the arrow lands, slow, hunting the dead for 5 s)
 	Kind KindOf(int i)
@@ -331,18 +333,26 @@ namespace BowsImpl
 			}
 			break;
 		case Kind::Wind:
+			if (t >= 1) {  // Gale Burst: the dead round the impact are hurled back from it
+				for (auto* f : Foes(p, 240.0f)) {
+					if (f != a && !f->IsDead()) {
+						Spellcraft::Fling(f, p - RE::NiPoint3{ 0, 0, 40.0f }, 3.0f);
+					}
+				}
+			}
 			if (t >= 2) {  // Cyclone Arrow
 				AddCyclone(row, p, 360.0f, 3.0f);
 			}
 			break;
 		case Kind::Sun:
 			if (t >= 1) {  // Radiant Burst
-				for (auto* f : Foes(p, 210.0f)) {
+				const float rr = t >= 2 ? 320.0f : 210.0f;  // (II Solar Flare: wider)
+				for (auto* f : Foes(p, rr)) {
 					if (f != a && Director::IsRoundUndead(f)) {
-						Spellcraft::Strike(row, f, dmg * 0.4f, false, gen::kFxHoly, p);
+						Spellcraft::Strike(row, f, dmg * (t >= 2 ? 0.55f : 0.4f), false, gen::kFxHoly, p);
 					}
 				}
-				Spellcraft::BurstAt(row, p, 120.0f, 0.4f);
+				Spellcraft::BurstAt(row, p, rr * 0.6f, 0.4f);
 			}
 			if (false && t >= 3 && s.full) {
 				Dawnbreak(row, p, dmg);
@@ -471,7 +481,7 @@ namespace BowsImpl
 		// the spell's own voice as the arrow leaves: its cast, or at full draw its unleash
 		Forms::Play(full ? gen::kGuns[gun].chargeSnd : gen::kGuns[gun].fireSnd);
 		// the full-draw attacks that are not a single arrow
-		if (full && kind == Kind::Wind && t >= 1 && t < 3) {  // The Gale (I-II; at III the arrow flies, for its tornado)
+		if (false && full && kind == Kind::Wind && t >= 1 && t < 3) {  // (Noah: the tier-I wind arrow showed no impact - every tier flies its arrow now, its impact grown) The Gale (I-II; at III the arrow flies, for its tornado)
 			const bool tempest = t >= 3;
 			const auto cone = InCone(aim, (tempest ? 1600.0f : 1200.0f), tempest ? 48.0f : 34.0f);
 			for (auto* f : cone) {
@@ -510,7 +520,7 @@ namespace BowsImpl
 			Spellcraft::PlayAt(Spellcraft::Snd(gun, &gen::GunSounds::boom), from);
 			return;
 		}
-		if (full && kind == Kind::Sun && t >= 2 && t < 3) {  // Sunbeam: through everything
+		if (false && full && kind == Kind::Sun && t >= 2 && t < 3) {  // (every tier flies its arrow) Sunbeam: through everything
 			for (auto* f : InLine(aim, 2600.0f, 55.0f)) {
 				Spellcraft::Strike(row, f, dmg, false, gen::kFxHoly, HeadPos(f));
 			}
@@ -1241,12 +1251,27 @@ namespace BowsImpl
 			}
 		}
 		g_bowDrawing = drawing;
+		// (Noah: let go before 80% and the draw is simply called off, to draw again) the string eases back, no arrow
+		static float cancelWait = -1;
 		if (!drawing) {
 			g_bowHeldRelease = false;
-		} else if (g_bowHeldRelease && g_bowFull) {
+			cancelWait = -1;
+		} else if (g_bowHeldRelease) {
 			g_bowHeldRelease = false;
-			SendFire(0.0f, 1.0f);  // the early release, now: the arrow leaves at the peak
-			logger::info("bows: an early release loosed at the peak of the draw");
+			p->NotifyAnimationGraph("attackStop");
+			p->NotifyAnimationGraph("bowReset");
+			cancelWait = 0.3f;
+			Spellcraft::Play2D(Spellcraft::Snd(GunOf(i), &gen::GunSounds::fizzle), 0.5f);
+			static int told = 0;
+			if (told++ < 2) {
+				Hud::Banner("Let go before the draw is full: the shot is called off - draw again", 2.5f);
+			}
+			logger::info("bows: an early release called the draw off");
+		} else if (cancelWait > 0 && (cancelWait -= a_delta) <= 0) {
+			// (the graph would not let go: Skyrim's own release, its arrow hidden and harmless - Fizzle)
+			g_hideArrow = 0.8f;
+			SendFire(0.0f, 1.0f);
+			logger::info("bows: the called-off draw was let go (no arrow)");
 		}
 		if (drawing && !g_wasDrawing) {  // (Noah: the bows sound like their spells) the spell's charge rises as the string comes back
 			Spellcraft::Play2D(Spellcraft::Snd(GunOf(i), &gen::GunSounds::start), 0.7f);

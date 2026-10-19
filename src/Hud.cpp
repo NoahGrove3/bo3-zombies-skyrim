@@ -1440,9 +1440,82 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Txt(dl, g_title, nameSize, { x0, a.y + 22 * k }, Fade(kParch, (cooling ? 0.65f : 1.0f) * al), nm, 1.5f * k, IM_COL32(0, 0, 0, static_cast<int>(160 * al)));
 				dl->PopClipRect();
 			}
+			// (Noah: Skyrim's own and other mods' weapons and spells too) what is in your hands when it is not the altar's: a
+			// slim card per hand in the same style - a drawn glyph of its kind, the hand, its name, and its damage (gold),
+			// armour (grey) or magicka cost (blue)
+			const bool skyHands = !spellHands && s.bowHeld < 0 && (s.skyKind[0] > 0 || s.skyKind[1] > 0);
+			if (skyHands) {
+				const auto card = [&](int i, ImVec2 a, ImVec2 b) {
+					const std::uint32_t c = s.skyColor[i];
+					const ImU32 ecol = IM_COL32((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF, 255);
+					const float h = b.y - a.y, rr = h * 0.5f;
+					dl->AddRectFilled(a, b, IM_COL32(8, 8, 10, 175), rr);
+					dl->AddRect(a, b, Fade(ecol, 0.5f), rr, 0, 1.2f * k);
+					const ImVec2 gc{ a.x + rr, (a.y + b.y) * 0.5f };
+					const float  gr = rr - 8 * k;
+					dl->AddCircleFilled(gc, gr + 3 * k, IM_COL32(20, 16, 12, 230), 32);
+					dl->AddCircle(gc, gr + 3 * k, Fade(ecol, 0.8f), 32, 1.4f * k);
+					switch (s.skyKind[i]) {
+					case 1:  // a blade
+						dl->AddLine({ gc.x - gr * 0.6f, gc.y + gr * 0.6f }, { gc.x + gr * 0.6f, gc.y - gr * 0.6f }, ecol, 3.0f * k);
+						dl->AddLine({ gc.x - gr * 0.55f, gc.y + gr * 0.05f }, { gc.x - gr * 0.05f, gc.y + gr * 0.55f }, ecol, 2.4f * k);
+						break;
+					case 2:  // a bow
+						dl->PathArcTo({ gc.x + gr * 0.5f, gc.y }, gr * 0.85f, 2.2f, 4.08f, 16);
+						dl->PathStroke(ecol, 0, 2.6f * k);
+						dl->AddLine({ gc.x - gr * 0.05f, gc.y - gr * 0.7f }, { gc.x - gr * 0.05f, gc.y + gr * 0.7f }, Fade(ecol, 0.7f), 1.2f * k);
+						break;
+					case 3:  // a spell: a four-pointed star
+						for (int q = 0; q < 4; ++q) {
+							const float an = q * 1.5708f;
+							const ImVec2 d{ std::cos(an), std::sin(an) }, n{ -d.y, d.x };
+							dl->AddTriangleFilled({ gc.x + n.x * gr * 0.18f, gc.y + n.y * gr * 0.18f }, { gc.x - n.x * gr * 0.18f, gc.y - n.y * gr * 0.18f }, { gc.x + d.x * gr * 0.8f, gc.y + d.y * gr * 0.8f }, ecol);
+						}
+						break;
+					case 4:  // a shield
+						dl->AddQuadFilled({ gc.x - gr * 0.55f, gc.y - gr * 0.6f }, { gc.x + gr * 0.55f, gc.y - gr * 0.6f }, { gc.x + gr * 0.45f, gc.y + gr * 0.1f }, { gc.x, gc.y + gr * 0.7f }, Fade(ecol, 0.85f));
+						dl->AddTriangleFilled({ gc.x - gr * 0.55f, gc.y - gr * 0.6f }, { gc.x + gr * 0.45f, gc.y + gr * 0.1f }, { gc.x, gc.y + gr * 0.7f }, Fade(ecol, 0.85f));
+						break;
+					case 5:  // a staff
+						dl->AddLine({ gc.x - gr * 0.5f, gc.y + gr * 0.7f }, { gc.x + gr * 0.35f, gc.y - gr * 0.45f }, ecol, 2.6f * k);
+						dl->AddCircleFilled({ gc.x + gr * 0.42f, gc.y - gr * 0.52f }, gr * 0.22f, ecol, 12);
+						break;
+					default:  // a torch, or anything else held
+						dl->AddCircleFilled(gc, gr * 0.35f, ecol, 16);
+					}
+					const bool  spell = s.skyKind[i] == 3;
+					std::string vs = s.skyValue[i] > 0 ? std::to_string(s.skyValue[i]) : std::string();
+					float       textR = b.x - 14 * k;
+					if (!vs.empty()) {
+						const float  cz = 18 * k;
+						const auto   cm = Measure(g_num, cz, vs);
+						const ImVec2 p1{ b.x - 10 * k, (a.y + b.y) * 0.5f + cm.y * 0.5f + 3 * k }, p0{ p1.x - cm.x - 16 * k, p1.y - cm.y - 6 * k };
+						const ImU32  pc = spell ? (s.mp >= s.skyValue[i] ? IM_COL32(40, 70, 130, 200) : IM_COL32(120, 30, 26, 210)) : s.skyKind[i] == 4 ? IM_COL32(70, 70, 76, 210) : IM_COL32(120, 88, 36, 210);
+						dl->AddRectFilled(p0, p1, pc, (p1.y - p0.y) * 0.5f);
+						Txt(dl, g_num, cz, { p0.x + 8 * k, p0.y + 3 * k }, IM_COL32(240, 236, 226, 255), vs);
+						textR = p0.x - 10 * k;
+					}
+					const float x0 = a.x + rr * 2 + 6 * k;
+					dl->PushClipRect(a, { textR, b.y }, true);
+					float nameSize = 22 * k;
+					while (nameSize > 11 * k && x0 + Measure(g_title, nameSize, s.skyName[i]).x > textR) {
+						nameSize -= 1 * k;
+					}
+					const bool both = i == 1 && s.skyKind[0] == 0 && (s.skyKind[1] == 2 || s.skyKind[1] == 5);
+					Txt(dl, g_body, 12 * k, { x0, a.y + 7 * k }, Fade(ecol, 0.9f), both ? "BOTH HANDS" : i == 1 ? "RIGHT HAND" : "LEFT HAND");
+					Txt(dl, g_title, nameSize, { x0, a.y + 22 * k }, kParch, s.skyName[i]);
+					dl->PopClipRect();
+				};
+				const ImVec2 a{ size.x - 400 * k, size.y - 158 * k }, b{ size.x - 40 * k, size.y - 106 * k };
+				const int    main = s.skyKind[1] > 0 ? 1 : 0;
+				card(main, a, b);
+				if (main == 1 && s.skyKind[0] > 0) {
+					card(0, { a.x, a.y - 60 * k }, { b.x, b.y - 60 * k });
+				}
+			}
 			// Weapon dock, bottom-right: the weapon in hand as a large card (its picture, Reforge marks, ability and
 			// signature move), the other slots as small cards above it with their keys. Dimmed while sheathed.
-			if (!spellHands) {
+			if (!spellHands && !skyHands) {
 				const bool any = std::any_of(s.slotGun.begin(), s.slotGun.begin() + std::clamp(s.slotCount, 0, 3), [](int g) { return g >= 0; });
 				static float shown = 0, swap = 0;
 				static int   lastActive = -2;

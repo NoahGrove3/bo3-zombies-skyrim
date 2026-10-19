@@ -891,6 +891,31 @@ namespace Spellcraft
 			const int   n = std::clamp(static_cast<int>(len / std::max(8.0f, s.radius)) + 1, 1, 40);
 			bool        stop = false;
 			const auto  foes = Foes(from, len + 400.0f);
+			// a body struck: true when the shot ends there
+			auto strike = [&](RE::Actor* f, const RE::NiPoint3& p, bool head2) {
+				s.struck.push_back(f->GetFormID());
+				if (s.ult >= 0 && s.ult != gen::kUltSoulStorm) {  // a carrier bursts on the first body
+					s.pos = p;
+					Detonate(s, p);
+					s.life = 0;
+					return true;
+				}
+				const int   gi = s.gun;
+				const float hm = head2 ? gen::kGuns[gi].headMult * Perks::HeadMult() : 1.0f;
+				const float pierceFall = s.struck.size() > 1 ? 0.85f : 1.0f;
+				const bool  killedNow = Strike(s.row, f, s.damage * hm * pierceFall, head2, s.ult == gen::kUltSoulStorm ? gen::kFxNone : s.effect != -2 ? s.effect : Def(s.row).effect, p);
+				if (s.bow >= 0 && g_bowHit) {
+					g_bowHit(s, f, p, killedNow);
+				}
+				PlayAt(Snd(s.gun, &gen::GunSounds::hit), p, 0.85f);
+				if (static_cast<int>(s.struck.size()) >= s.pierce) {
+					BurstAt(s.row, p, std::max(36.0f, s.radius * 2.0f), 0.25f);
+					s.life = 0;
+					s.pos = p;
+					return true;
+				}
+				return false;
+			};
 			for (int i = 1; i <= n && !stop; ++i) {
 				const RE::NiPoint3 p = from + (end - from) * (static_cast<float>(i) / n);
 				for (auto* f : foes) {
@@ -904,30 +929,30 @@ namespace Spellcraft
 					if (!Touches(f, p, s.radius, &head2)) {
 						continue;
 					}
-					s.struck.push_back(f->GetFormID());
-					if (s.ult >= 0 && s.ult != gen::kUltSoulStorm) {  // a carrier bursts on the first body
-						s.pos = p;
-						Detonate(s, p);
-						s.life = 0;
-						stop = true;
-						break;
-					}
-					const int  gi = s.gun;
-					const float hm = head2 ? gen::kGuns[gi].headMult * Perks::HeadMult() : 1.0f;
-					const float pierceFall = s.struck.size() > 1 ? 0.85f : 1.0f;
-					const bool killedNow = Strike(s.row, f, s.damage * hm * pierceFall, head2, s.ult == gen::kUltSoulStorm ? gen::kFxNone : s.effect != -2 ? s.effect : Def(s.row).effect, p);
-					if (s.bow >= 0 && g_bowHit) {
-						g_bowHit(s, f, p, killedNow);
-					}
-					PlayAt(Snd(s.gun, &gen::GunSounds::hit), p, 0.85f);
-					if (static_cast<int>(s.struck.size()) >= s.pierce) {
-						BurstAt(s.row, p, std::max(36.0f, s.radius * 2.0f), 0.25f);
-						s.life = 0;
+					if (strike(f, p, head2)) {
 						stop = true;
 						break;
 					}
 				}
 				s.pos = p;
+			}
+			if (!stop && wf <= 1.0f) {
+				// (Noah: spells and arrows that seemed to hit did nothing) the ray stops on the body's own collision (its
+				// capsule), a hand's width outside the bones it is tested against: a stop right at someone counts as them
+				for (auto* f : foes) {
+					if (f->IsDead() || std::find(s.struck.begin(), s.struck.end(), f->GetFormID()) != s.struck.end()) {
+						continue;
+					}
+					const auto  fp = f->GetPosition();
+					const float hz = HeadPos(f).z;
+					const float dh = std::hypot(end.x - fp.x, end.y - fp.y);
+					if (dh < 62.0f + s.radius && end.z > fp.z - 10.0f && end.z < hz + 30.0f) {
+						if (strike(f, end, end.z > hz - 22.0f)) {
+							stop = true;
+						}
+						break;
+					}
+				}
 			}
 			if (!stop && wf <= 1.0f) {  // the world stopped it
 				if (s.bow >= 0) {
