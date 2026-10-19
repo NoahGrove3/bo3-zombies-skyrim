@@ -194,23 +194,24 @@ for w in S['weapons']['rows']:
         recs['WEAP'].append(record('WEAP', fid('WEAP', w['id']), subs))
 
 # the Echo Altar's bows (sheets/bows.json): Skyrim's bow (its draw animation - and any bow animation mod), our model, an
-# arrow on the string; the shot that leaves is ours (src/Gun.cpp Bows: the element's energy arrow, its trail and burst), so
-# the bow's own arrow is harmless and gone at once (no damage, a range of a few units, an empty model)
-NOCK = {'fire': 'Weapons\\Daedric\\DaedricArrow.nif', 'frost': 'Weapons\\Glass\\GlassArrow.nif', 'shock': 'DLC02\\Weapons\\Stahlrim\\StahlrimArrow.nif',
-        'wind': 'Weapons\\BoundWeapons\\BoundArrow.nif', 'sun': 'DLC01\\Weapons\\Auriel\\AurielsArrow.nif', 'blood': 'DLC01\\Weapons\\Auriel\\AurielsArrowBlood.nif'}
+# arrow on the string; the shot that does the work is ours (src/Bows.inl: the element's energy arrow, its trail and burst),
+# the bow's own arrow (no damage) flies beside it so there is an arrow to see
+# (Noah's download: Elemental Arrows, by its author) each bow's arrow: the quiver model on the string and at the hip, the
+# flight model the one you see fly - it flies with our energy shot (same speed, no drop), harmless, so the arrow is seen
+NOCK = {'fire': 'flaming', 'frost': 'frost', 'shock': 'thunder', 'wind': 'swarm', 'sun': 'gust', 'blood': 'crimson'}
 for bw in S['bows']['rows']:
     pd = bytearray(tsub('proj_arrow', 'DATA'))
     struct.pack_into('<f', pd, 4, 0.0)                 # no drop
-    struct.pack_into('<f', pd, 8, 5200.0)              # speed
-    struct.pack_into('<f', pd, 12, 10.0)               # range: gone at once (ours flies instead)
+    struct.pack_into('<f', pd, 8, 4800.0)              # speed: alongside our energy shot (src/Bows.inl Fire)
+    struct.pack_into('<f', pd, 12, 9000.0)             # range
     struct.pack_into('<I', pd, 16, 0)                  # no light
     recs['PROJ'].append(record('PROJ', fid('PROJ', 'bowarrow_' + bw['id']), [
         sub('EDID', z('UN_BowArrowProj_' + bw['id'])), sub('OBND', tsub('proj_arrow', 'OBND')), sub('FULL', z(bw['label'] + ' Arrow')),
-        sub('MODL', z('Interface\\Logo\\logo.nif')), sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', tsub('proj_arrow', 'VNAM'))]))
+        sub('MODL', z('CurseOfAlduin\\arrows\\arrow' + NOCK[bw['element']] + 'flight.nif')), sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', tsub('proj_arrow', 'VNAM'))]))
     ad = struct.pack('<IIfIf', fid('PROJ', 'bowarrow_' + bw['id']), 0x4, 0.0, 0, 0.0)   # projectile, flags (an arrow, not a bolt), damage 0
     recs['AMMO'].append(record('AMMO', fid('AMMO', 'bowarrow_' + bw['id']), [
         sub('EDID', z('UN_BowArrow_' + bw['id'])), sub('OBND', tsub('ammo_iron', 'OBND')), sub('FULL', z(bw['label'] + ' Arrow')),
-        sub('MODL', z(NOCK[bw['element']])), sub('YNAM', tsub('ammo_iron', 'YNAM')), sub('ZNAM', tsub('ammo_iron', 'ZNAM')),
+        sub('MODL', z('CurseOfAlduin\\arrows\\arrow' + NOCK[bw['element']] + 'quiver.nif')), sub('YNAM', tsub('ammo_iron', 'YNAM')), sub('ZNAM', tsub('ammo_iron', 'ZNAM')),
         sub('KSIZ', tsub('ammo_iron', 'KSIZ')), sub('KWDA', tsub('ammo_iron', 'KWDA')), sub('DATA', ad)]))
     subs = []
     for name, hx in T['weap_longbow']['subs']:

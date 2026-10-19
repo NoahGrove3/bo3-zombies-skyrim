@@ -4397,6 +4397,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						// and its crosshair to our dot
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CrosshairInstance._alpha", RE::GFxValue(0.0));
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CrosshairAlert._alpha", RE::GFxValue(0.0));
+						// (Noah: the arrow count sat behind our bow card) the altar's bows never run dry, so Skyrim's arrow line
+						// bottom-right goes while one is in hand; any other bow keeps it
+						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.ArrowInfoInstance._alpha", RE::GFxValue(s.bowHeld >= 0 ? 0.0 : 100.0));
 					}
 				}
 			}

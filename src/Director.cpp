@@ -2344,6 +2344,46 @@ namespace bo3z
 			}
 		}
 
+		// (Noah: Skyrim's creatures and ours never fight each other - they only go for players) Any fight between two
+		// actors where neither side is a player, a follower, a party member or a wonder's summon, and either side is a
+		// creature (not a person) or one of our undead, is dropped; our own undead are sent back after the player by the
+		// chase loop. Followers and summons still fight anything that comes for the players.
+		bool PlayerSide(RE::Actor* a, RE::PlayerCharacter* a_player)
+		{
+			return a && (a == a_player || a->IsPlayerTeammate() || Party::IsFriend(a) || Echo::IsAlly(a));
+		}
+		void TickPeace(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			static float t = 0;
+			if ((t -= a_delta) > 0) {
+				return;
+			}
+			t = 0.25f;
+			int n = 0;
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				auto a = h.get();
+				if (!a || a.get() == a_player || a->IsDead() || !a->IsInCombat() || PlayerSide(a.get(), a_player)) {
+					continue;
+				}
+				auto tgt = a->GetActorRuntimeData().currentCombatTarget.get();
+				if (!tgt || PlayerSide(tgt.get(), a_player)) {
+					continue;
+				}
+				const bool monsters = !IsPerson(a.get()) || !IsPerson(tgt.get()) || IsOurs(a.get()) || IsOurs(tgt.get()) || IsOurBase(a.get()) || IsOurBase(tgt.get());
+				if (!monsters) {
+					continue;  // people against people (guards and bandits) are Skyrim's own business
+				}
+				a->StopCombat();
+				if (IsOurs(a.get())) {
+					a->StartCombat(a_player);
+				}
+				++n;
+			}
+			if (static int said = 0; n && said++ < 20) {
+				logger::info("peace: {} creature fights dropped (only players are fair game)", n);
+			}
+		}
+
 		void Frenzy(RE::Actor* a_actor, float a_seconds)
 		{
 			for (auto& s : g_alive) {
@@ -2445,6 +2485,7 @@ namespace bo3z
 				SweepStrays(player, a_delta);  // (on a client every undead is the host's)
 			}
 			TickTruce(player, a_delta);
+			TickPeace(player, a_delta);
 			TickShelter(player, a_delta);
 			Prune();
 			MountChase(player);

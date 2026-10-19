@@ -47,4 +47,8 @@ Happy Little Trees, Skoglendi, SMIM.
 - CommonLibSSE-NG (GPL-3.0 with modding exceptions), Dear ImGui (MIT), spdlog (MIT); Present hook after SkyCraft by
   chasmlol (MIT).
 - Station architecture uses Skyrim's own Whiterun textures by reference (nothing of the game is included).
+- The elemental bows are built from models Noah downloaded (Sketchfab models for Dawnspire, Rimehorn, Skyhowl,
+  Stormreach and Thirstbow, and an elf bow .blend for Emberstring). Their flame wings come from Spectral Bow - Fire
+  (Nexus 5119), their arrows from Elemental Arrows (Nexus 2243), and the horizontal first-person archery from Minemiz
+  Archery (Nexus 174406). Check each author's licence and add proper credit before publishing.
 - Fan project, not affiliated with Bethesda. You need to own Skyrim.

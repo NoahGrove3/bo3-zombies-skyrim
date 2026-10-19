@@ -1,0 +1,15 @@
+{
+    "name": "Archery Main",
+    "priority": 700000002,
+    "interruptible": true,
+    "conditions": [
+        {
+            "condition": "IsEquippedType",
+            "requiredVersion": "1.0.0.0",
+            "Type": {
+                "value": 7.0
+            },
+            "Left hand": false
+        }
+    ]
+}
