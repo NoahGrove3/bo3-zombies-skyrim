@@ -183,6 +183,9 @@ namespace bo3z
 		RE::NiTransform g_lastSpace;       // where the dragon was last frame (DG_Space's world transform)
 		RE::NiMatrix3   g_lastBank;
 		bool            g_hadDragon = false;
+		int   g_fpGlide = 0;  // 1: turning to third person, 2: gliding from first person
+		float g_fpGlideT = 0, g_fpZoomWas = -1;
+		bool  g_fpWant = false;
 		float           g_armHold = 0;     // 1: your arms stay down (the dragon hasn't reached you yet), 0: the glide's own pose
 		bool            g_armHoldOn = false;
 
@@ -1886,6 +1889,27 @@ namespace bo3z
 						fx -= fx * std::min(1.0f, dt * 1.6f * Smooth((idle - 0.8f) / 0.6f));
 					}
 				}
+				// (Noah: after a cliff jump the camera sometimes ended up high over the dragon, looking down) while you glide
+				// the view's own tilt (free rotation's pitch) is eased back to none and your look is kept from tipping
+				// past a steep dive's angle; if the camera still climbs far above you it is logged (for the next fix)
+				if (!g_chaseOn && pcam && pcam->currentState && pcam->currentState->id == RE::CameraState::kThirdPerson) {
+					auto* tp = static_cast<RE::ThirdPersonState*>(pcam->currentState.get());
+					tp->freeRotation.y -= tp->freeRotation.y * std::min(1.0f, dt * 6.0f);
+					if (auto* pl = RE::PlayerCharacter::GetSingleton()) {
+						auto& ax = pl->data.angle.x;
+						ax = std::clamp(ax, -1.2f, 1.05f);
+						if (pcam->cameraRoot) {
+							const float above = pcam->cameraRoot->world.translate.z - (pl->GetPosition().z + 120.0f);
+							static float told = 0;
+							told -= dt;
+							if (above > 260.0f && told <= 0) {
+								told = 5.0f;
+								logger::warn("glider: camera {:.0f} above you (pitch {:.2f}, free {:.2f}/{:.2f}, zoom {:.2f})", above, ax, tp->freeRotation.x, tp->freeRotation.y, tp->currentZoomOffset);
+								tp->freeRotation.y = 0.0f;
+							}
+						}
+					}
+				}
 				// ... and your steering never drags the view round: as the dragon turns you, the camera is turned back by as
 				// much, so it stays where your right stick / mouse put it
 				static float camYawWas = 0;
@@ -2269,6 +2293,11 @@ namespace bo3z
 			const auto& ev = a_event->QUserEvent();
 			if (!ue || !player) {
 				return;
+			}
+			if (ev == ue->activate) {
+				if (auto* ui = RE::UI::GetSingleton(); !ui || !ui->GameIsPaused()) {
+					g_fpWant = true;  // (FirstPersonGlide: only in first person, in the air)
+				}
 			}
 			// the dragon's bonds
 			if (const int bond = Bond(); bond >= 0) {  // (the breath is the dragon's from the start; the rest come with the bonds)
@@ -2761,6 +2790,51 @@ namespace bo3z
 			tp->currentZoomOffset += (zoom - tp->currentZoomOffset) * std::min(1.0f, a_delta * 4.0f);
 		}
 
+		// (Noah: in first person the glider never opened) the paraglider's animations live only in Skyrim's third-person
+		// body: Activate in the air in first person turns the camera round to just behind your head (close in), opens the
+		// glider, and gives you back first person as you land
+		void FirstPersonGlide(RE::PlayerCharacter* a_p, float a_delta)
+		{
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (!cam) {
+				return;
+			}
+			auto third = [&]() -> RE::ThirdPersonState* {
+				return cam->currentState && cam->currentState->id == RE::CameraState::kThirdPerson ? static_cast<RE::ThirdPersonState*>(cam->currentState.get()) : nullptr;
+			};
+			if (g_fpWant) {
+				g_fpWant = false;
+				bool pg = false;
+				a_p->GetGraphVariableBool("bParaGliding", pg);
+				if (g_fpGlide == 0 && cam->IsInFirstPerson() && !OnGround(a_p) && !pg && !Riding()) {
+					cam->ForceThirdPerson();
+					g_fpGlide = 1, g_fpGlideT = 0, g_fpZoomWas = -1;
+					logger::info("glider: opened from first person - the camera turns round for the glide");
+				}
+			}
+			if (g_fpGlide == 0) {
+				return;
+			}
+			g_fpGlideT += a_delta;
+			if (auto* tp = third()) {
+				if (g_fpZoomWas < 0) g_fpZoomWas = tp->targetZoomOffset;
+				tp->targetZoomOffset = 0.05f;  // close behind your head
+			}
+			if (g_fpGlide == 1 && g_fpGlideT > 0.1f) {
+				if (!a_p->NotifyAnimationGraph("StartPara")) {
+					DevTools::PressKey(RE::INPUT_DEVICE::kKeyboard, 0x12, 0.05f);
+				}
+				g_fpGlide = 2, g_fpGlideT = 0;
+			} else if (g_fpGlide == 2 && g_fpGlideT > 0.4f && OnGround(a_p)) {
+				if (auto* tp = third(); tp && g_fpZoomWas >= 0) {
+					tp->targetZoomOffset = tp->currentZoomOffset = g_fpZoomWas;
+				}
+				cam->ForceFirstPerson();
+				g_fpGlide = 0;
+				logger::info("glider: landed - back to first person");
+			}
+		}
+
 		void Tick(float a_delta)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -2768,6 +2842,7 @@ namespace bo3z
 				return;
 			}
 			ChaseTick(player, a_delta);
+			FirstPersonGlide(player, a_delta);
 			if (auto* ss = RE::ScreenSplatter::GetSingleton(); ss && ss->uiCount > 0) {
 				ss->Clear();  // (Skyrim's blood on the screen: the HUD's red edges say you were hit)
 			}

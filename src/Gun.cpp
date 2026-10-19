@@ -318,10 +318,42 @@ namespace bo3z
 			return a && a != player && !a->IsDead() && a->Is3DLoaded() && Director::IsFoe(a);  // nights: the undead and real enemies, never townsfolk
 		}
 
+		// A body's head node by name; for a creature whose skeleton names it otherwise ("auto" rows: the High Fantasy
+		// Pack's), the first node with "head" in its name, remembered per race.
+		RE::NiAVObject* FindHead(RE::NiAVObject* a_obj, int a_depth = 0)
+		{
+			if (!a_obj || a_depth > 40) return nullptr;
+			std::string n = a_obj->name.c_str();
+			std::transform(n.begin(), n.end(), n.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+			if (n.find("head") != std::string::npos && n.find("track") == std::string::npos && n.find("target") == std::string::npos && n.find("look") == std::string::npos) {
+				return a_obj;
+			}
+			if (auto* node = a_obj->AsNode()) {
+				for (auto& c : node->GetChildren()) {
+					if (auto* f = FindHead(c.get(), a_depth + 1)) return f;
+				}
+			}
+			return nullptr;
+		}
 		RE::NiPoint3 HeadPos(RE::Actor* a)
 		{
 			if (auto* node = a->GetNodeByName(std::string(Director::HeadNodeFor(a)))) {
 				return node->world.translate;
+			}
+			if (auto* root = a->Get3D()) {
+				static std::unordered_map<RE::FormID, std::string> byRace;
+				const RE::FormID race = a->GetRace() ? a->GetRace()->GetFormID() : 0;
+				auto it = byRace.find(race);
+				if (it == byRace.end()) {
+					auto* h = FindHead(root);
+					it = byRace.emplace(race, h ? std::string(h->name.c_str()) : std::string()).first;
+					logger::info("head of {}: {}", a->GetDisplayFullName(), it->second.empty() ? "none found" : it->second);
+				}
+				if (!it->second.empty()) {
+					if (auto* node = root->GetObjectByName(it->second)) {
+						return node->world.translate;
+					}
+				}
 			}
 			return a->GetPosition() + RE::NiPoint3{ 0, 0, 110 };
 		}

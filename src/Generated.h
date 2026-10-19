@@ -22,7 +22,7 @@ namespace bo3z::gen
 		{ 3400.f, 4600.f }, { 1400.f, 2100.f }, 120.f, 30 };
 	inline constexpr FormRef kIntroQuest{ "Skyrim.esm", 0x03372B, "MQ101" };
 	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; bool rig; };
-	inline constexpr std::array<Enemy, 24> kEnemies{ {
+	inline constexpr std::array<Enemy, 37> kEnemies{ {
 		Enemy{ "zombie", "Haugbui", { "The Restless Dead.esp", 0x194DD1, "zzEnc_RD_DraugrIronScaleArmorM01_Melee1H" }, false, 1, 10, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "hollow2", "Haugbui", { "The Restless Dead.esp", 0x1F5212, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee2H" }, false, 1, 8, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "hollow3", "Haugbui", { "The Restless Dead.esp", 0x1EAFCC, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee1H" }, false, 1, 8, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
@@ -47,6 +47,19 @@ namespace bo3z::gen
 		Enemy{ "knight", "Thorgar the Skulltaker", { "The Restless Dead.esp", 0xC0FED4, "zzTRD_DC_DraugrBoss_BleakFallsBarrow_02" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.9f, false },
 		Enemy{ "lich", "Svana the Shadow", { "The Restless Dead.esp", 0xEFD6C3, "zzTRD_RD_DraugrBoss_SilverdriftLair_02" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 2, 2.5f, 0.9f, false },
 		Enemy{ "bloater", "Barrow Champion", { "The Restless Dead.esp", 0x04050E, "zzEnc_DC_DraugrWarriorM06_Melee1H" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.9f, false },
+		Enemy{ "hf_goblin", "Barrow Goblin", { "mihailhighfantasypack.esp", 0x00087D, "mihailgoblin1" }, false, 3, 2, false, "auto", true, 0, false, 0, 0.7f, 1.15f, false },
+		Enemy{ "hf_goblin_archer", "Barrow Goblin Archer", { "mihailhighfantasypack.esp", 0x00087F, "mihailgoblin2" }, false, 4, 1, false, "auto", true, 0, false, 2, 0.6f, 1.0f, false },
+		Enemy{ "hf_centipede", "Grave Centipede", { "mihailhighfantasypack.esp", 0x0009A9, "mihailgiantcentipede_NPC3_DOESNOTCALLFORMORE" }, false, 4, 1, false, "auto", true, 0, false, 0, 0.9f, 1.0f, false },
+		Enemy{ "hf_arachling", "Tomb Arachling", { "mihailhighfantasypack.esp", 0x03839B, "mihailarachas1YOUNGmale" }, false, 5, 1, false, "auto", true, 0, false, 0, 0.8f, 1.1f, false },
+		Enemy{ "hf_goblin_shaman", "Goblin Grave-Shaman", { "mihailhighfantasypack.esp", 0x00590D, "mihailgoblin5" }, false, 6, 1, false, "auto", true, 0, false, 2, 0.8f, 1.0f, false },
+		Enemy{ "hf_harpy", "Carrion Harpy", { "mihailhighfantasypack.esp", 0x0008D8, "mihailharpy_NPC1" }, false, 6, 1, false, "auto", true, 0, false, 0, 0.8f, 1.0f, false },
+		Enemy{ "hf_imp_fire", "Cinder Imp", { "mihailhighfantasypack.esp", 0x000C4D, "mihailimpfire" }, false, 6, 1, false, "auto", true, 0, false, 2, 0.7f, 1.0f, false },
+		Enemy{ "hf_imp_shock", "Storm Imp", { "mihailhighfantasypack.esp", 0x000C50, "mihailimpshock" }, false, 7, 1, false, "auto", true, 0, false, 2, 0.7f, 1.0f, false },
+		Enemy{ "hf_ooze", "Grave Ooze", { "mihailhighfantasypack.esp", 0x000B8F, "mihailgelatinouscube" }, false, 8, 1, false, "auto", true, 0, false, 0, 1.5f, 0.8f, false },
+		Enemy{ "hf_troll", "Mound Troll", { "mihailhighfantasypack.esp", 0x000BAC, "mihailcyrotrollRED" }, false, 9, 1, false, "auto", true, 0, false, 0, 2.0f, 1.0f, false },
+		Enemy{ "hf_ogre", "Cursed Ogre", { "mihailhighfantasypack.esp", 0x000D56, "mihailogre_NPC_savage" }, false, 11, 1, false, "auto", true, 0, false, 0, 2.5f, 0.95f, false },
+		Enemy{ "hf_minotaur", "Bone-Horn Minotaur", { "mihailhighfantasypack.esp", 0x07F285, "mihailminotaurcommonenemy" }, false, 13, 1, false, "auto", true, 0, false, 1, 2.5f, 0.95f, false },
+		Enemy{ "hf_ettin", "Two-Skull Ettin", { "mihailhighfantasypack.esp", 0x000D3B, "mihailettin_NPC" }, false, 16, 1, false, "auto", true, 0, false, 1, 3.0f, 0.9f, false },
 	} };
 	enum class Sound : int {
 		cast_sidearm = 0,
@@ -1145,7 +1158,7 @@ namespace bo3z::gen
 		DressDef{ 0, 0xBFB, false, 0.0f, 0.0f, 150.0f, 0.4f, 0.0f, true, false },
 		DressDef{ 0, 0xC27, false, 0.0f, -380.0f, 0.0f, 1.0f, 0.0f, true, false },
 		DressDef{ 0, 0xC28, true, 0.0f, 0.0f, 260.0f, 1.0f, 0.0f, true, false },
-		DressDef{ 0, 0xC84, false, 0.0f, 0.0f, 330.0f, 1.0f, 8.0f, false, false },
+		DressDef{ 0, 0xC84, false, 0.0f, 0.0f, 330.0f, 1.0f, 8.0f, true, false },
 		DressDef{ 1, 0x8AB, true, 0.0f, 60.0f, 120.0f, 1.0f, 0.0f, false, false },
 		DressDef{ 2, 0x8A4, false, 0.0f, 0.0f, 62.0f, 2.0f, 30.0f, false, false },
 		DressDef{ 2, 0x8A5, false, 0.0f, 0.0f, 75.0f, 0.5f, 0.0f, false, false },

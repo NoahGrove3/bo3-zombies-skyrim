@@ -740,6 +740,7 @@ namespace bo3z
 				logger::error("a form the mashup needs is missing; rounds stay off");
 			}
 			Audio::InstallSteps();
+			Fantasy::Inject();
 			Arcana::Load();
 			Director::HeadlongCombat();
 			Settings::ApplyMods();

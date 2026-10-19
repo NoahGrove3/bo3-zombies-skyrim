@@ -1130,7 +1130,7 @@
    "scale": 1.0,
    "spin": 8,
    "verify": [],
-   "freed": false,
+   "freed": true,
    "held": false
   }
  ],

@@ -497,6 +497,11 @@ namespace bo3z
 		float HeadMult();
 	}
 
+	namespace Fantasy
+	{
+		void Inject();  // the High Fantasy Pack's creatures into Skyrim's wilderness and bandit encounters (data loaded)
+	}
+
 	namespace Movement
 	{
 		bool Dodging();  // a dodge roll under way

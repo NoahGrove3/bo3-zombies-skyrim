@@ -173,7 +173,7 @@ namespace bo3z
 		{
 			int total = 0;
 			for (const auto& e : gen::kEnemies) {
-				if (e.specialRound == g_special && (g_special || e.minRound <= g_current)) {
+				if (e.specialRound == g_special && (g_special || e.minRound <= g_current) && Forms::Enemy(static_cast<std::size_t>(&e - gen::kEnemies.data()))) {  // (a creature mod missing: its rows sit out)
 					total += Weight(e);
 				}
 			}
@@ -183,7 +183,7 @@ namespace bo3z
 			int roll = std::uniform_int_distribution<int>(1, total)(g_rng);
 			for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
 				const auto& e = gen::kEnemies[i];
-				if (e.specialRound == g_special && (g_special || e.minRound <= g_current) && Weight(e) > 0 && (roll -= Weight(e)) <= 0) {
+				if (e.specialRound == g_special && (g_special || e.minRound <= g_current) && Forms::Enemy(i) && Weight(e) > 0 && (roll -= Weight(e)) <= 0) {
 					return Forms::Enemy(i) ? std::optional{ i } : std::nullopt;
 				}
 			}
