@@ -299,6 +299,26 @@ namespace bo3z
 			const float a = 1.5708f + 6.2832f * a_k / 3.0f;
 			return Turn(Room(s.x, s.y, s.z), s.yaw, 28.0f * std::cos(a), 28.0f * std::sin(a), 106.0f);
 		}
+		constexpr int kWordCount = static_cast<int>(gen::kWords.size());
+		constexpr int kFlagBone = 1 << 9, kFlagEndless = 1 << 10, kFlagRobes = 1 << 11, kFlagHallTold = 1 << 17;
+		constexpr int kNgShift = 12, kNgMask = 0xF << kNgShift;
+		bool Flag(int a_f) { return (Read(gen::kEchoGlobWords) & a_f) != 0; }
+		void SetFlag(int a_f, bool a_on) { Write(gen::kEchoGlobWords, a_on ? (Read(gen::kEchoGlobWords) | a_f) : (Read(gen::kEchoGlobWords) & ~a_f)); }
+		bool Broken() { return (Read(gen::kEchoGlobWords) & ((1 << kWordCount) - 1)) == (1 << kWordCount) - 1; }
+		RE::TESObjectWEAP* Fang() { return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); }
+		struct HallSpot
+		{
+			std::uint32_t id;
+			float         x, y, yaw;
+		};
+		const std::array<HallSpot, 5>& HallSpots()
+		{
+			static const std::array<HallSpot, 5> s{ { { gen::kHallFang, 0.0f, 430.0f, 180.0f }, { gen::kHallRobes, -540.0f, -380.0f, 90.0f },
+				{ gen::kHallSkull, 540.0f, -380.0f, 270.0f }, { gen::kHallEndless, -230.0f, -440.0f, 0.0f }, { gen::kHallThrone, 230.0f, -440.0f, 0.0f } } };
+			return s;
+		}
+		float g_throneAsk = 0;  // (the Seat asks twice: a first touch warns, a second within a few seconds begins again)
+
 		void BuildReliquary(RE::PlayerCharacter* a_p)
 		{
 			auto* cell = HH();
@@ -623,7 +643,6 @@ namespace bo3z
 		// Once all four wonders are forged, Alduin's words wake one after another. Each is fought at night at its place:
 		// come near and its siege begins (its waves of dead round the place), then its bearer rises; kill the bearer and
 		// the word is silenced for good, its power yours (Echo::WordSilenced), and the next word wakes.
-		constexpr int kWordCount = static_cast<int>(gen::kWords.size());
 		constexpr int kWordsTold = 1 << 8;
 		bool AllForged() { return (Read(gen::kEchoGlobForged) & ((1 << kWonders) - 1)) == (1 << kWonders) - 1; }
 		bool Silenced(int a_w) { return (Read(gen::kEchoGlobWords) >> a_w) & 1; }
@@ -784,24 +803,6 @@ namespace bo3z
 		// night never ends while it burns: wave after wave, till you put it out) and the Seat of the Awakened (begin
 		// again: every city falls back under the curse and the nights start over, the dead stronger each time - your
 		// wonders, bows, powers and the words' gifts stay yours). Flags in UN_EchoWords.
-		constexpr int kFlagBone = 1 << 9, kFlagEndless = 1 << 10, kFlagRobes = 1 << 11, kFlagHallTold = 1 << 17;
-		constexpr int kNgShift = 12, kNgMask = 0xF << kNgShift;
-		bool Flag(int a_f) { return (Read(gen::kEchoGlobWords) & a_f) != 0; }
-		void SetFlag(int a_f, bool a_on) { Write(gen::kEchoGlobWords, a_on ? (Read(gen::kEchoGlobWords) | a_f) : (Read(gen::kEchoGlobWords) & ~a_f)); }
-		bool Broken() { return (Read(gen::kEchoGlobWords) & ((1 << kWordCount) - 1)) == (1 << kWordCount) - 1; }
-		RE::TESObjectWEAP* Fang() { return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); }
-		struct HallSpot
-		{
-			std::uint32_t id;
-			float         x, y, yaw;
-		};
-		const std::array<HallSpot, 5>& HallSpots()
-		{
-			static const std::array<HallSpot, 5> s{ { { gen::kHallFang, 0.0f, 430.0f, 180.0f }, { gen::kHallRobes, -540.0f, -380.0f, 90.0f },
-				{ gen::kHallSkull, 540.0f, -380.0f, 270.0f }, { gen::kHallEndless, -230.0f, -440.0f, 0.0f }, { gen::kHallThrone, 230.0f, -440.0f, 0.0f } } };
-			return s;
-		}
-		float g_throneAsk = 0;  // (the Seat asks twice: a first touch warns, a second within a few seconds begins again)
 
 		float g_slow = 0;
 		bool  g_loaded = false;  // the first pass after a load: the Barrow-Jarls' parts already won are given quietly

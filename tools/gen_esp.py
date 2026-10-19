@@ -568,6 +568,14 @@ def guide_text():
            p("Go there at night. Its dead rise round you in waves; when the last wave falls, the word's bearer rises. Kill it and the word is silenced for good, and its power stays with you: "
              "<b>GRAH</b> - everything you wield hits 15% harder; <b>DIR</b> - the night's blows hurt you 20% less; <b>LEIN</b> - your magicka returns half again as fast."),
            p("Leave the place, or let dawn come, and the word falls quiet until you return. Silence all three and the curse of Alduin is broken."),
+           "[pagebreak]", h("The Hall of the Awakened"),
+           p("With the curse broken, the Reliquary under High Hrothgar becomes the <b>Hall of the Awakened</b>. Its stations:"),
+           p("<b>Alduin's Fang</b> - a greatsword cut from the World-Eater's jaw: it burns the dead it strikes and the fire leaps to those beside them. "
+             "<b>Robes of the First Dragonborn</b> - wear them and spells and wonders cost a quarter less magicka, and it returns faster. "
+             "<b>The Bone-Wyrm's Skull</b> - your glider's dragon wears Alduin's bones (touch it again to change back)."),
+           p("<b>Brazier of the Endless Night</b> - while it burns, the night never ends: wave after wave, until you put it out. "
+             "<b>Seat of the Awakened</b> - begin again: every city falls back under the curse and the nights start over, the dead half again as tough each cycle. "
+             "Your wonders, bows, powers and the words' gifts stay yours."),
            "[pagebreak]", h("Falling"),
            p("At every dawn, and whenever an altar wakes, the day is saved. If you fall, you wake at that dawn. In a party, stand over a fallen friend and hold Activate to lift them."),
            p("Good luck. Stay out of the barrows after dark."), "</font>"]
