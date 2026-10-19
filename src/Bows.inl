@@ -53,6 +53,21 @@ namespace BowsImpl
 		}
 		return -1;
 	}
+	// (Noah: each tier draws faster) the bow's speed (Skyrim scales the draw animation by it): x1, x1.2, x1.4, x1.65
+	constexpr float kDrawSpeed[4] = { 1.0f, 1.2f, 1.4f, 1.65f };
+	float DrawSpeed(int i) { return i >= 0 && i < kN ? kDrawSpeed[std::clamp<int>(g_level[i], 0, 3)] : 1.0f; }
+	void  ApplySpeed(int i)
+	{
+		if (auto* w = Weap(i)) {
+			w->weaponData.speed = DrawSpeed(i);
+		}
+	}
+	void ApplyAllSpeeds()
+	{
+		for (int k = 0; k < kN; ++k) {
+			ApplySpeed(k);
+		}
+	}
 	int GunOf(int i)  // the spell's row in the weapons sheet (its sounds, its headshot multiplier)
 	{
 		const auto id = gen::kSpellcraft[gen::kBows[i].spellRow].id;
@@ -97,6 +112,7 @@ namespace BowsImpl
 			if (auto* ow = Weap(k); ow && p->GetItemCount(ow) > 0) {
 				p->RemoveItem(ow, p->GetItemCount(ow), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 				g_level[k] = 0;
+				ApplySpeed(k);
 				logger::info("bows: {} given back", gen::kBows[k].label);
 			}
 			if (auto* oa = Ammo(k); oa && p->GetItemCount(oa) > 0) {
@@ -734,7 +750,7 @@ namespace BowsImpl
 		const auto st = p->AsActorState()->GetAttackState();
 		const bool drawing = i >= 0 && (st == S::kBowDraw || st == S::kBowAttached || st == S::kBowDrawn);
 		if (drawing) {
-			g_draw = std::min(1.0f, g_draw + a_delta / 0.9f);
+			g_draw = std::min(1.0f, g_draw + a_delta * DrawSpeed(i) / 0.9f);
 			if (st == S::kBowDrawn) {
 				g_draw = std::max(g_draw, 0.85f + 0.15f * g_draw);
 			}

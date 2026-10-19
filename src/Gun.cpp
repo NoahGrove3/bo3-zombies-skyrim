@@ -2068,7 +2068,8 @@ namespace bo3z
 				}
 				g_forgedTonight.insert(Bows::kIdBase + b);
 				BowsImpl::g_level[b] = static_cast<std::uint8_t>(lv + 1);
-				Hud::Banner(name + " reforged  " + std::string(lv + 1, '|') + "  - " + std::string(Bows::TierName(b, lv + 1)), 4.0f);
+				BowsImpl::ApplySpeed(b);
+				Hud::Banner(name + " reforged  " + std::string(lv + 1, '|') + "  - " + std::string(Bows::TierName(b, lv + 1)) + ", a faster draw", 4.0f);
 				logger::info("forge: {} -> level {}", name, lv + 1);
 				return true;
 			}
@@ -2798,6 +2799,7 @@ namespace bo3z
 			for (int i = 0; i < BowsImpl::kN; ++i) {
 				BowsImpl::g_level[i] = i < static_cast<int>(a_levels.size()) ? static_cast<std::uint8_t>(std::min<int>(a_levels[i], gen::kForgeMax)) : 0;
 			}
+			BowsImpl::ApplyAllSpeeds();
 		}
 	}
 }
