@@ -292,6 +292,7 @@ for w in WD['rows']:
 o.append('\t} };')
 o.append(f'\tinline constexpr float kWordWake = {F(WD["wakeRange"])}, kWordLeash = {F(WD["leashRange"])};')
 o.append(f'\tinline constexpr std::uint32_t kHallFang = 0x{IDS[("ACTI", "hall_fang")]:03X}, kHallRobes = 0x{IDS[("ACTI", "hall_robes")]:03X}, kHallSkull = 0x{IDS[("ACTI", "hall_skull")]:03X}, kHallEndless = 0x{IDS[("ACTI", "hall_endless")]:03X}, kHallThrone = 0x{IDS[("ACTI", "hall_throne")]:03X}, kHallFangShow = 0x{IDS[("STAT", "hall_fang_show")]:03X}, kFangWeap = 0x{IDS[("WEAP", "fang")]:03X};')
+o.append('\tinline constexpr std::array<std::uint32_t, 5> kEmmFx{ ' + ', '.join(f'0x{IDS[("ACTI", "emm_" + k)]:03X}' for k in ('summon', 'crystal', 'orb', 'storm', 'tornado')) + ' };  // summon, crystal, orb, storm, tornado')
 rl, kl = EC['relic'], EC['kill']
 o.append('\tinline constexpr std::array<int, 6> kEchoGuards{ ' + ', '.join(map(str, rl['guards'])) + ' }, kEchoElites{ ' + ', '.join(map(str, rl['elites'])) + ' }, kEchoKillN{ ' + ', '.join(map(str, kl['n'])) + ' };  // per Skyrim difficulty')
 o.append(f'\tinline constexpr float kEchoWake = {F(rl["wakeRange"])}, kEchoTake = {F(rl["takeRange"])}, kEchoKillRadius = {F(kl["radius"])}, kEchoStoneTake = {F(EC["stone"]["takeRange"])};')

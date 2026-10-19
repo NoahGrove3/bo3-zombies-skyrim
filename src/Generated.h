@@ -1468,6 +1468,7 @@ namespace bo3z::gen
 	} };
 	inline constexpr float kWordWake = 3200.0f, kWordLeash = 6500.0f;
 	inline constexpr std::uint32_t kHallFang = 0xC72, kHallRobes = 0xC73, kHallSkull = 0xC74, kHallEndless = 0xC75, kHallThrone = 0xC76, kHallFangShow = 0xC77, kFangWeap = 0xC79;
+	inline constexpr std::array<std::uint32_t, 5> kEmmFx{ 0xC7A, 0xC7B, 0xC7C, 0xC7D, 0xC7E };  // summon, crystal, orb, storm, tornado
 	inline constexpr std::array<int, 6> kEchoGuards{ 3, 4, 4, 5, 6, 6 }, kEchoElites{ 0, 1, 1, 1, 2, 2 }, kEchoKillN{ 20, 25, 30, 35, 40, 50 };  // per Skyrim difficulty
 	inline constexpr float kEchoWake = 2600.0f, kEchoTake = 260.0f, kEchoKillRadius = 3000.0f, kEchoStoneTake = 230.0f;
 	inline constexpr float kEchoStoneX = 0.0f, kEchoStoneY = -380.0f;  // the Echo Stone on a freed altar (dressing: echo_stone)

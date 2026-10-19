@@ -128,6 +128,9 @@ namespace Props
 		g_t += a_delta;
 		// the attack motion: in fast, out slow
 		float kick = 0.0f;
+		if (g_propKickT == 0.0f && g_propKickBig) {
+			ChargedLook(w);
+		}
 		if (g_propKickT >= 0) {
 			const float dur = g_propKickBig ? 0.7f : 0.3f;
 			const float u = g_propKickT / dur;
@@ -188,5 +191,157 @@ namespace Props
 				Spellcraft::BurstAt(row, o.translate + o.rotate * tipLocal * o.scale, kick > 0 ? 14.0f : 6.0f, 0.25f);
 			}
 		}
+	}
+
+	// ---- the wonders' charged attacks, in the look of Elemental Mastery Magic (Noah's download, by its author) ---------
+	// its models placed in the world for a few seconds where the attack lands (activators, so the engine plays them)
+	struct WorldFx
+	{
+		RE::ObjectRefHandle ref;
+		float               left;
+	};
+	std::vector<WorldFx> g_world;
+	RE::TESObjectREFR* PlaceFx(int a_kind, const RE::NiPoint3& a_at, float a_scale)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* base = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kEmmFx[a_kind], gen::kPlugin);
+		auto  ref = p && base ? p->PlaceObjectAtMe(base, false) : nullptr;
+		if (!ref) {
+			return nullptr;
+		}
+		ref->SetPosition(a_at);
+		if (a_scale != 1.0f) {
+			ref->SetScale(a_scale);
+		}
+		return ref.get();
+	}
+	void Spawn(int a_kind, const RE::NiPoint3& a_at, float a_seconds, float a_scale = 1.0f)
+	{
+		if (auto* r = PlaceFx(a_kind, a_at, a_scale)) {
+			g_world.push_back({ r->CreateRefHandle(), a_seconds });
+		}
+	}
+	void Gone(RE::ObjectRefHandle& a_h)
+	{
+		if (auto r = a_h.get()) {
+			r->Disable();
+			r->SetDelete(true);
+		}
+		a_h = {};
+	}
+	void TickWorld(float a_delta)
+	{
+		for (auto& w : g_world) {
+			if ((w.left -= a_delta) <= 0) {
+				Gone(w.ref);
+			}
+		}
+		std::erase_if(g_world, [](const WorldFx& w) { return w.left <= 0; });
+	}
+	void ChargedLook(int a_w)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) {
+			return;
+		}
+		const auto aim = AimAt(3000.0f);
+		RE::NiPoint3 ground = aim.hit;
+		if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(ground, land) && land > ground.z - 400.0f) {
+			ground.z = land;
+		}
+		switch (a_w) {
+		case 0: Spawn(0, ground, 3.0f, 1.2f); break;                                             // Gravecaller: the barrow opens
+		case 1: Spawn(1, ground, 3.0f, 1.3f); break;                                             // Frostbinder: crystals of ice burst
+		case 2: Spawn(2, p->GetPosition() + RE::NiPoint3{ 0, 0, 110.0f }, 2.5f, 0.9f); break;  // the Crown: the Queen's storm-orb
+		case 3: Spawn(3, ground, 5.0f, 1.0f); break;                                             // the Horn: the war-host's storm
+		}
+	}
+
+	// ---- Alduin's Fang (Stage 5): the strongest weapon in the game -----------------------------------------------------
+	// every blow burns the dead it strikes and the fire leaps to those beside them; a charged (power) swing looses a
+	// tornado of fire that walks forward through the dead (Elemental Mastery Magic's tornado)
+	RE::TESObjectWEAP* FangForm() { return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); }
+	bool FangInHand(RE::PlayerCharacter* p)
+	{
+		auto* f = FangForm();
+		return p && f && (p->GetEquippedObject(false) == f || p->GetEquippedObject(true) == f);
+	}
+	struct Twister
+	{
+		RE::ObjectRefHandle ref;
+		RE::NiPoint3        at, dir;
+		float               left, tick;
+	};
+	std::vector<Twister> g_twisters;
+	float FangBase() { return Director::RoundHealth() * gen::kRounds.hpScale; }  // a zombie's whole night health, in BO3 units
+	void FangHit(RE::Actor* a_z, bool a_power)
+	{
+		if (!a_z || a_z->IsDead()) {
+			return;
+		}
+		const float base = FangBase();
+		Damage(a_z, base * (a_power ? 2.2f : 1.15f), false, true);
+		g_dots.push_back({ a_z->GetHandle(), base * 0.3f, 4.0f });  // it burns
+		Blast(BlastIndex("fireball"), a_z->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, 0.5f);
+		int n = 0;
+		for (auto* f : Foes(a_z->GetPosition(), 340.0f)) {  // and the fire leaps
+			if (f == a_z || n >= (a_power ? 6 : 3)) {
+				continue;
+			}
+			Damage(f, base * 0.45f, false, false, true);
+			g_dots.push_back({ f->GetHandle(), base * 0.15f, 3.0f });
+			Blast(BlastIndex("fireball"), f->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f }, 0.08f * ++n, 0.35f);
+		}
+	}
+	void FangTornado(RE::PlayerCharacter* p)
+	{
+		RE::NiPoint3 dir = AimAt(100.0f).dir;
+		dir.z = 0;
+		if (dir.Length() < 0.01f) {
+			return;
+		}
+		dir.Unitize();
+		const RE::NiPoint3 at = p->GetPosition() + dir * 140.0f;
+		auto* r = PlaceFx(4, at, 1.0f);
+		if (!r) {
+			return;
+		}
+		Twister t{ r->CreateRefHandle(), at, dir, 5.0f, 0.0f };
+		Audio::AtPoint(gen::Sound::unleash_hearth, t.at);
+		g_twisters.push_back(std::move(t));
+		logger::info("fang: a tornado of fire");
+	}
+	void TickFang(float a_delta)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (Bows::g_weaponSwing.exchange(false) && FangInHand(p)) {
+			auto* proc = p->GetActorRuntimeData().currentProcess;
+			auto* high = proc ? proc->high : nullptr;
+			if (high && high->attackData && high->attackData->data.flags.any(RE::AttackData::AttackFlag::kPowerAttack)) {
+				FangTornado(p);
+			}
+		}
+		const float base = FangBase();
+		for (auto& t : g_twisters) {
+			t.at += t.dir * (480.0f * a_delta);
+			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(t.at, land) && std::abs(land - t.at.z) < 300.0f) {
+				t.at.z = land;
+			}
+			if (auto r = t.ref.get()) {
+				r->SetPosition(t.at);
+			}
+			if ((t.tick -= a_delta) <= 0) {
+				t.tick = 0.25f;
+				for (auto* f : Foes(t.at, 240.0f)) {
+					Damage(f, base * 0.4f, false, false, true);
+					g_dots.push_back({ f->GetHandle(), base * 0.2f, 3.0f });
+					Stagger(f, 0.4f);
+				}
+			}
+			if ((t.left -= a_delta) <= 0) {
+				Gone(t.ref);
+			}
+		}
+		std::erase_if(g_twisters, [](const Twister& t) { return t.left <= 0; });
 	}
 }

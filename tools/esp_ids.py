@@ -49,6 +49,8 @@ def echo_ids(S):
     # Stage 5: the Hall of the Awakened (the Reliquary once the curse is broken) and Alduin's Fang
     ids += [('ACTI', 'hall_' + k) for k in ('fang', 'robes', 'skull', 'endless', 'throne')]
     ids += [('STAT', 'hall_fang_show'), ('STAT', '1st_fang'), ('WEAP', 'fang')]
+    # the wonders' charged looks and Alduin's Fang's tornado (Elemental Mastery Magic's models, placed and moved by code)
+    ids += [('ACTI', 'emm_' + k) for k in ('summon', 'crystal', 'orb', 'storm', 'tornado')]
     return ids
 def blasts():
     """Spell blasts: no-damage copies of Skyrim's explosions (tools/templates/expl/<name>.json)."""

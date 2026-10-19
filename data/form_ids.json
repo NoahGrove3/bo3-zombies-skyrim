@@ -1146,6 +1146,11 @@
   "ACTI:hall_throne": "0xc76",
   "STAT:hall_fang_show": "0xc77",
   "STAT:1st_fang": "0xc78",
-  "WEAP:fang": "0xc79"
+  "WEAP:fang": "0xc79",
+  "ACTI:emm_summon": "0xc7a",
+  "ACTI:emm_crystal": "0xc7b",
+  "ACTI:emm_orb": "0xc7c",
+  "ACTI:emm_storm": "0xc7d",
+  "ACTI:emm_tornado": "0xc7e"
  }
 }

@@ -1001,7 +1001,7 @@ namespace bo3z
 					} else {
 						p->AddObjectToContainer(fang, nullptr, 1, nullptr);
 						Forms::Play(gen::Sound::shout_learned);
-						Hud::Lore("ALDUIN'S FANG", "Cut from the World-Eater's own jaw. It burns the dead it strikes, and the fire leaps to those beside them. Return it to its stand whenever you like.", 9.0f);
+						Hud::Lore("ALDUIN'S FANG", "Cut from the World-Eater's own jaw. It burns the dead it strikes, and the fire leaps to those beside them; a power attack looses a tornado of fire. Return it to its stand whenever you like.", 9.0f);
 					}
 					BuildReliquary(p);
 				}

@@ -570,7 +570,7 @@ def guide_text():
            p("Leave the place, or let dawn come, and the word falls quiet until you return. Silence all three and the curse of Alduin is broken."),
            "[pagebreak]", h("The Hall of the Awakened"),
            p("With the curse broken, the Reliquary under High Hrothgar becomes the <b>Hall of the Awakened</b>. Its stations:"),
-           p("<b>Alduin's Fang</b> - a greatsword cut from the World-Eater's jaw: it burns the dead it strikes and the fire leaps to those beside them. "
+           p("<b>Alduin's Fang</b> - a greatsword cut from the World-Eater's jaw, wreathed in fire - the strongest weapon there is: it burns the dead it strikes and the fire leaps to those beside them, and a power attack looses a tornado of fire. "
              "<b>Robes of the First Dragonborn</b> - wear them and spells and wonders cost a quarter less magicka, and it returns faster. "
              "<b>The Bone-Wyrm's Skull</b> - your glider's dragon wears Alduin's bones (touch it again to change back)."),
            p("<b>Brazier of the Endless Night</b> - while it burns, the night never ends: wave after wave, until you put it out. "
@@ -648,6 +648,10 @@ for key, name, verb in (('hall_fang', "Alduin's Fang", 'Take'), ('hall_robes', '
 for key, model, r in (('hall_fang_show', 'CurseOfAlduin\\wonder\\fang.nif', 70), ('1st_fang', 'CurseOfAlduin\\wonder\\fang.nif', 70)):
     recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
         sub('MODL', z(model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
+for key, model in (('summon', 'emptysummonfx_instant.nif'), ('crystal', 'diamondwallspawnexp.nif'), ('orb', 'lightningrail_orb.nif'),
+                   ('storm', 'elementalmasterystormhazard.nif'), ('tornado', 'unused\\tornado.nif')):
+    recs['ACTI'].append(record('ACTI', fid('ACTI', 'emm_' + key), [sub('EDID', z('UN_emm_' + key)), sub('OBND', struct.pack('<6h', -120, -120, 0, 120, 120, 300)),
+        sub('MODL', z('kittyspellpack02\\' + model)), sub('FNAM', b'\0\0')]))
 ws = []
 for name, hx in T['weap_draugr_gs']['subs']:
     b = bytearray(bytes.fromhex(hx))
@@ -655,7 +659,7 @@ for name, hx in T['weap_draugr_gs']['subs']:
     elif name == 'FULL': b = z("Alduin's Fang")
     elif name == 'MODL': b = z('CurseOfAlduin\\wonder\\fang.nif')
     elif name == 'MODT': continue
-    elif name == 'DESC': b = z("Cut from the World-Eater's own jaw when his echo broke over the Throat of the World. It burns the dead it strikes, and the fire leaps to those beside them.")
+    elif name == 'DESC': b = z("Cut from the World-Eater's own jaw when his echo broke over the Throat of the World. It burns the dead it strikes, and the fire leaps to those beside them. A power attack looses a tornado of fire.")
     elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_fang'))
     elif name == 'DATA': b = bytearray(struct.pack('<IfH', 5000, 16.0, 38))
     ws.append(sub(name, bytes(b)))

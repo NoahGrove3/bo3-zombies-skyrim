@@ -2436,6 +2436,7 @@ namespace bo3z
 			model->local.scale = g_adsRest.scale;
 		}
 
+		void FangHit(RE::Actor* a_target, bool a_power) { Props::FangHit(a_target, a_power); }
 		void StormHit(RE::Actor* a_target)
 		{
 			if (a_target && !g_stormBusy && g_storm.charges > 0 && !a_target->IsDead() && a_target != RE::PlayerCharacter::GetSingleton()) {
@@ -2479,6 +2480,8 @@ namespace bo3z
 		{
 			TickStorm(a_delta);
 			Props::Tick(a_delta, GunOut() ? CurrentGun() : -1);
+			Props::TickWorld(a_delta);
+			Props::TickFang(a_delta);
 			static bool hooked = false;
 			if (!hooked) {
 				REL::Relocation<std::uintptr_t> ab{ RE::VTABLE_AttackBlockHandler[0] };

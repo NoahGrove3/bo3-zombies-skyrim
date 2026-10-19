@@ -792,6 +792,7 @@ namespace BowsImpl
 	// (Noah: letting go did nothing) the release, heard from the animation itself: a draw animation mod can skip the
 	// releasing states between two frames, but it still sends the bow's release event
 	std::atomic<bool> g_releaseHeard{ false };
+	std::atomic<bool> g_weaponSwing{ false };   // (any swing of the weapon in hand: Alduin's Fang's charged swing, src/WonderProps.inl)
 	class AnimWatch : public RE::BSTEventSink<RE::BSAnimationGraphEvent>
 	{
 	public:
@@ -802,6 +803,9 @@ namespace BowsImpl
 				std::transform(t.begin(), t.end(), t.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 				if (t.find("arrowrelease") != std::string::npos || t == "bowrelease" || t == "bowreleased") {
 					g_releaseHeard = true;
+				}
+				if (t == "weaponswing") {
+					g_weaponSwing = true;
 				}
 				static std::set<std::string> seen;
 				if ((t.find("bow") != std::string::npos || t.find("arrow") != std::string::npos) && seen.size() < 40 && seen.insert(t).second) {

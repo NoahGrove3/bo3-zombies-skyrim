@@ -195,6 +195,23 @@ def build(pid):
             Q = (V0 - c) * s
             P.append((np.stack([Q[:, 0], -Q[:, 1], -Q[:, 2]], 1), T, F, M))
         write(pid, P, {'m0': matopts(D, N, G, (1.0, 0.45, 0.15), 1.5, 1.4, 90, alpha=1)}, 'CurseOfAlduin/wonder/fang.nif')
+        # (Noah: the sword should be on fire) tongues of flame up the whole blade: the fire flipbook (tools/bowarrows.py,
+        # Emberstring's) on upright billboards from the guard to the point, each its own phase, a white-hot core inside
+        nif = OUT / 'Meshes/CurseOfAlduin/wonder/fang.nif'
+        fx = 'CurseOfAlduin\\bow\\emberstring_arrowfx.dds'
+        job = [f'base {nif}', f'out {nif}']
+        V = np.vstack([p[0] for p in P]); top = V[:, 1].max()
+        k = 0
+        for y in np.linspace(14.0, top - 4.0, 9):
+            for col, sc, w, h, z in (('1,0.5,0.16', 1.6, 6.5, 13.0, 0.0), ('1,0.9,0.7', 1.2, 3.6, 8.0, 0.4)):
+                job.append(f'shape fangfire{k} tex={fx} color={col},1 scale={sc} blend=add billboard=2 flip=8x8 fps=24 phase={(k * 0.37) % 2.6:.2f} at=0,{y:.1f},0')
+                for X_, Y_, u, v in ((-w, h, 0, 0), (w, h, 1 / 8, 0), (w, -h * 0.4, 1 / 8, 1 / 8), (-w, -h * 0.4, 0, 1 / 8)):
+                    job.append(f'v {X_:.2f} {Y_:.2f} {z:.2f} {u} {v} 1 1 1 1')
+                job += ['t 0 1 2', 't 0 2 3']
+                k += 1
+        jf = WORK / 'fang_fire.job'; jf.write_text('\n'.join(job) + '\n')
+        r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
+        print('fang fire |', r.stdout.strip() or r.stderr.strip())
 
 
 if __name__ == '__main__':
