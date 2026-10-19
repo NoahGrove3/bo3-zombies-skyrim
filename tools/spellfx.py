@@ -357,14 +357,48 @@ def elements(t):
         print('element', el)
 
 
+def arrow(spell, t):
+    """an energy arrow for the altar's bows (sheets/bows.json): a glowing shaft, a bright head and a trail, flying along +Y"""
+    sid, name, col, acc, style = spell
+    pale = mix(col, (1, 1, 1), 0.6)
+    head_tex = {'fire': t['flame'], 'ice': t['crystal'], 'shock': t['bolt'], 'thorn': t['thorn'], 'blood': t['drop'], 'dawn': t['rays']}.get(style, t['core'])
+    m = Mesh()
+    tr = m.shape('trail', t['streak'] if style != 'shock' else t['bolt'], (*col, 1), 1.5); m.trail(tr, (0, -26, 0), 4.5, 130)
+    sh = m.shape('shaft', t['beam'], (*pale, 1), 2.2)
+    for k in range(2):
+        ang = k * math.pi / 2
+        Mesh.quad(sh, (0, -5, 0), (math.cos(ang), 0, math.sin(ang)), (0, 1, 0), 1.3, 24, uv=(0, 0, 1, 1))
+    hd = m.shape('head', head_tex, (*acc, 1), 2.4)
+    for k in range(2):
+        ang = k * math.pi / 2
+        Mesh.quad(hd, (0, 24, 0), (math.cos(ang), 0, math.sin(ang)), (0, 1, 0), 4.5, 8, uv=(0, 1, 1, 0))
+    gl = m.shape('glow', t['soft'], (*col, 1), 1.4); m.billboard(gl, (0, 20, 0), 11)
+    co = m.shape('core', t['core'], (*pale, 1), 2.6); m.billboard(co, (0, 21, 0), 4)
+    fl = m.shape('fletch', t['soft'], (*col, 1), 1.2)
+    for k in range(3):
+        ang = k * math.pi / 3
+        Mesh.quad(fl, (0, -26, 0), (math.cos(ang), 0, math.sin(ang)), (0, 1, 0), 3.2, 4, uv=(0, 0, 1, 1))
+    m.write(MESH / f'{sid}_arrow.nif')
+
+
 def main():
     t = textures()
+    if 'arrows' in sys.argv[2:]:
+        bow_spells = {r['spell'] for r in json.load(open(ROOT / 'sheets' / 'bows.json'))['rows']}
+        for sp in SPELLS:
+            if sp[0] in bow_spells:
+                arrow(sp, t)
+                print('arrow', sp[0])
+        return
     if 'elements' in sys.argv[2:]:
         elements(t)
         return
     status(t)
+    bow_spells = {r['spell'] for r in json.load(open(ROOT / 'sheets' / 'bows.json'))['rows']}
     for s in SPELLS:
         build(s, t)
+        if s[0] in bow_spells:
+            arrow(s, t)
         print('built', s[0], s[1])
     elements(t)
 

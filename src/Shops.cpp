@@ -37,7 +37,9 @@ namespace bo3z
 			RE::ObjectRefHandle chest, display;
 			int                 gun{ -1 }, shown{ -1 };
 			float               t{ 0 }, step{ 0 };
+			bool                bow{ false };  // the bow wheel (gun/shown: Bows indices)
 		} g_show;
+		bool g_choosing = false;  // a third spell won: which of your two it replaces (Choose)
 		constexpr float kChargeTime = 1.1f;
 		constexpr float kOrbZ = 250.0f;   // just over the shrine's crystal (its centre at z 175, its crown to ~215)
 		constexpr float kOrbScale = 1.6f;
@@ -152,7 +154,7 @@ namespace bo3z
 	float Shops::ReelPos(float a_k) { const float r = 1.0f - std::clamp(a_k, 0.0f, 1.0f); return Shops::kReelPass * (1.0f - r * r * r); }
 	int   Shops::ReelSpell(int a_target, float a_pos, int a_slot)
 	{
-		const int n = std::max(1, Arcana::Count());
+		const int n = std::max(1, g_show.bow ? Bows::Count() : Arcana::Count());
 		const int i = a_target - Shops::kReelPass + static_cast<int>(std::floor(a_pos)) + a_slot;
 		return ((i % n) + n) % n;
 	}
@@ -204,7 +206,7 @@ namespace bo3z
 						g_show.shown = front;
 						g_show.step = 0.045f;
 						bool own = true;
-						auto* m = SpellShow(g_show.shown, &own);
+						auto* m = g_show.bow ? nullptr : SpellShow(g_show.shown, &own);
 						ShowModel(m, gen::kShowRise * k, own ? -1.0f : 1.6f);
 						Forms::PlayAt(gen::Sound::coffer_spin, chest.get());
 					} else if (auto d = g_show.display.get()) {
@@ -214,9 +216,14 @@ namespace bo3z
 						g_show.t = 0;
 						g_show.shown = g_show.gun;
 						bool own = true;
-						auto* m = SpellShow(g_show.gun, &own);
+						auto* m = g_show.bow ? nullptr : SpellShow(g_show.gun, &own);
 						ShowModel(m, gen::kShowRise, own ? -1.0f : 1.8f);
 						Forms::PlayAt(gen::Sound::coffer_land, chest.get());
+						if (g_show.bow) {
+							Hud::Banner(std::string(Bows::Name(g_show.gun)) + "  -  Activate the altar to take it" + (Bows::Carried() >= 0 ? " (your " + std::string(Bows::Name(Bows::Carried())) + " goes back)" : std::string()), 4.0f);
+							g_show.phase = Show::Offering;
+							break;
+						}
 						Hud::Banner((Arcana::TierOf(g_show.gun) >= 3 ? std::string("LEGENDARY: ") : std::string()) + std::string(Arcana::Name(g_show.gun)) + "  -  Activate the shrine to take it", 4.0f);
 						if (Arcana::TierOf(g_show.gun) >= 3) {
 							Forms::PlayAt(gen::Sound::champ_arrive, chest.get());  // (a legendary spell announces itself)
@@ -230,6 +237,9 @@ namespace bo3z
 					auto a = d->GetAngle();
 					d->SetAngle({ 0, 0, a.z + a_delta * 1.2f });
 					d->SetPosition(Local(chest.get(), 0, 0, kOrbZ * chest->GetScale() + gen::kShowRise + 4.0f * std::sin(g_show.t * 3.0f)));
+				}
+				if (g_choosing) {
+					g_show.t = std::min(g_show.t, gen::kShowOffer * 0.5f);  // (it waits while you choose)
 				}
 				if (g_show.t >= gen::kShowOffer) {
 					Remove(g_show.display);
@@ -1276,17 +1286,71 @@ namespace bo3z
 		}
 
 		// Take the offered spell (Activate on the shrine while it is held over the crown).
+		// (Noah: two of the altar's spells at a time - Skyrim's own spells don't count) a third won asks which of your two it
+		// replaces (that one is gone for good), or you leave it on the altar for half the roll back
+		int  g_lastRollCost = 0;
+		bool g_menu = false;
+		RE::ObjectRefHandle g_menuRef;
+		void EndOffer()
+		{
+			Remove(g_show.display);
+			g_show.phase = Show::Idle;
+			g_choosing = false;
+		}
+		void Choose(int a_slot)  // 0/1: replace that spell, -1: keep yours
+		{
+			if (!g_choosing || g_show.phase != Show::Offering) {
+				g_choosing = false;
+				return;
+			}
+			const auto have = Arcana::Carried();
+			if (a_slot < 0) {
+				const int back = g_lastRollCost / 2;
+				Points::Refund(back);
+				Forms::Play(gen::Sound::ui_close);
+				Hud::Banner(std::string(Arcana::Name(g_show.gun)) + " left on the altar  (+" + std::to_string(back) + ")", 2.5f);
+				logger::info("shrine: left {} (refund {})", Arcana::Name(g_show.gun), back);
+				EndOffer();
+				return;
+			}
+			if (a_slot >= static_cast<int>(have.size())) {
+				return;
+			}
+			const int old = have[a_slot];
+			Arcana::Replace(old, g_show.gun);
+			Forms::Play(gen::Sound::coffer_take);
+			Hud::Banner(std::string(Arcana::Name(g_show.gun)) + " learned  -  " + std::string(Arcana::Name(old)) + " given back", 3.0f);
+			logger::info("shrine: took {} in place of {}", Arcana::Name(g_show.gun), Arcana::Name(old));
+			EndOffer();
+		}
 		bool TakeOffer(RE::TESObjectREFR* a_ref)
 		{
 			if (g_show.phase != Show::Offering || g_show.chest.get().get() != a_ref) {
 				return false;
 			}
+			if (g_show.bow) {  // the bow wheel: one bow at a time, the new one takes the old one's place
+				const int old = Bows::Carried();
+				Bows::Give(g_show.gun);
+				Forms::Play(gen::Sound::coffer_take);
+				Hud::Banner(std::string(Bows::Name(g_show.gun)) + "  -  in your hands" + (old >= 0 && old != g_show.gun ? "  (" + std::string(Bows::Name(old)) + " given back)" : std::string()), 3.0f);
+				logger::info("shrine: took the bow {}", Bows::Name(g_show.gun));
+				EndOffer();
+				return true;
+			}
+			if (Arcana::Carried().size() >= 2) {  // the choice, in the altar's menu
+				if (!g_choosing) {
+					g_choosing = true;
+					g_menu = true;
+					g_menuRef = a_ref->CreateRefHandle();
+					Forms::Play(gen::Sound::ui_move);
+				}
+				return true;
+			}
 			Arcana::Give(g_show.gun, true);  // learned (in the Magic menu) and in your right hand
 			Forms::Play(gen::Sound::coffer_take);
 			Hud::Banner(std::string(Arcana::Name(g_show.gun)) + "  -  learned", 2.5f);
 			logger::info("shrine: took {}", Arcana::Name(g_show.gun));
-			Remove(g_show.display);
-			g_show.phase = Show::Idle;
+			EndOffer();
 			return true;
 		}
 
@@ -1303,6 +1367,44 @@ namespace bo3z
 			const int crew = Save::Crew();
 			const int base = crew >= 0 && gen::kCrew[crew].passive == 3 ? static_cast<int>(gen::kCrew[crew].value) : gen::kObjects[0].cost;
 			return PowerUps::FireSale() ? 10 : static_cast<int>(std::lround(base * std::pow(1.25, RollsTonight()) / 10.0) * 10);
+		}
+
+		// (the bow wheel: its own price, a quarter more each call tonight)
+		int g_bowNight = -1, g_bowRolls = 0;
+		int BowRollCost()
+		{
+			const int night = Save::Get(gen::kAV_round);
+			if (night != g_bowNight) g_bowNight = night, g_bowRolls = 0;
+			const int crew = Save::Crew();
+			const int base = crew >= 0 && gen::kCrew[crew].passive == 3 ? static_cast<int>(gen::kCrew[crew].value) : gen::kObjects[0].cost;
+			return PowerUps::FireSale() ? 10 : static_cast<int>(std::lround(base * std::pow(1.25, g_bowRolls) / 10.0) * 10);
+		}
+		void SpinBow(RE::TESObjectREFR* a_ref)
+		{
+			if (!a_ref || g_show.phase != Show::Idle) {
+				if (g_show.phase != Show::Idle) {
+					Hud::Banner("The altar is still turning", 1.5f);
+				}
+				return;
+			}
+			const int pick = Bows::Roll();
+			if (pick < 0) {
+				Hud::Banner("The altar has no other bow for you yet", 2.5f);
+				return;
+			}
+			const int cost = BowRollCost();
+			if (!Points::Spend(cost)) {
+				return;
+			}
+			g_lastRollCost = cost;
+			++g_bowRolls;
+			g_show = {};
+			g_show.bow = true;
+			g_show.chest = a_ref->CreateRefHandle();
+			g_show.phase = Show::Charging;
+			g_show.gun = pick;
+			Forms::PlayAt(gen::Sound::coffer_charge, a_ref);
+			logger::info("shrine: rolling the bow {}", Bows::Name(pick));
 		}
 
 		// Roll a spell: every spell you do not carry has the same chance.
@@ -1323,6 +1425,7 @@ namespace bo3z
 			if (!Points::Spend(cost)) {
 				return;
 			}
+			g_lastRollCost = cost;
 			RollsTonight();
 			++g_rolls;
 			g_show = {};
@@ -1333,10 +1436,8 @@ namespace bo3z
 			logger::info("shrine: rolling {} (of {})", Arcana::Name(pick), Arcana::Count());
 		}
 
-		bool                g_menu = false;
 		int                 g_sel = 0;
 		int                 g_trialSel = 0;  // the controller's pick among the altar's trials
-		RE::ObjectRefHandle g_menuRef;
 
 		void BuyPerk(int perk, RE::TESObjectREFR* a_ref)
 		{
@@ -1525,6 +1626,21 @@ namespace bo3z
 			const auto code = a_event->GetIDCode();
 			const auto dev = a_event->GetDevice();
 			const int  n = static_cast<int>(gen::kPerks.size());
+			if (g_choosing) {  // the choice: 1 / X replaces the first, 2 / Y the second, Backspace / B keeps yours
+				if (g_show.phase != Show::Offering) {
+					g_choosing = false;
+				} else if (dev == RE::INPUT_DEVICE::kKeyboard) {
+					if (static_cast<int>(code) == Settings::Key(0)) Choose(0);
+					else if (static_cast<int>(code) == Settings::Key(1)) Choose(1);
+					else if (static_cast<int>(code) == Settings::Key(4) || code == 0x12) Choose(-1);
+					return true;
+				} else if (dev == RE::INPUT_DEVICE::kGamepad) {
+					if (code == 0x4000) Choose(0);
+					else if (code == 0x8000) Choose(1);
+					else if (code == 0x2000) Choose(-1);
+					return true;
+				}
+			}
 			auto*      ref = g_menuRef.get().get();
 			auto act = [&](int a) {
 				switch (a) {
@@ -1540,7 +1656,12 @@ namespace bo3z
 					break;
 				case 2: BuyPerk(g_sel, ref); break;
 				case 3: Curse::ClaimRelic(ref ? TownOf(ref) : -1); break;
-				case 6: Curse::StartTrial(ref ? TownOf(ref) : -1, g_trialSel); break;
+				case 6:
+					if (!TakeOffer(ref)) {
+						SpinBow(ref);
+					}
+					break;
+				case 7: Curse::StartTrial(ref ? TownOf(ref) : -1, g_trialSel); break;
 				case 4:
 					Forms::Play(gen::Sound::ui_close);
 					g_menu = false;
@@ -1584,11 +1705,12 @@ namespace bo3z
 				case 0x1000: act(2); return true;  // A (cross)
 				case 0x0001:  // dpad up: a held city's picked trial, a freed city's Thu'um
 					if (const int t = ref ? TownOf(ref) : -1; t >= 0 && !Curse::Freed(t)) {
-						act(6);
+						act(7);
 					} else {
 						act(3);
 					}
 					return true;
+				case 0x000A: act(6); return true;  // RT: the bow wheel
 				case 0x0100: g_trialSel = (g_trialSel + 4) % 5; Forms::Play(gen::Sound::ui_move); return true;  // LB: the trial before
 				case 0x0200: g_trialSel = (g_trialSel + 1) % 5; Forms::Play(gen::Sound::ui_move); return true;  // RB: the next
 				case 0x0002: act(5); return true;  // dpad down: bond the dragon
@@ -1604,8 +1726,8 @@ namespace bo3z
 		// dev: press one of the shrine's actions (0 call, 1 reforge, 2 bless, 3 relic, 4 leave, 5 bond) as its key would
 		void DevAct(int a_action)
 		{
-			static constexpr std::uint32_t kCodes[] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06 };
-			if (a_action < 0 || a_action > 5) {
+			static constexpr std::uint32_t kCodes[] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30 };
+			if (a_action < 0 || a_action > 6) {
 				return;
 			}
 			auto* ev = RE::ButtonEvent::Create(RE::INPUT_DEVICE::kKeyboard, "", kCodes[a_action], 1.0f, 0.0f);
@@ -1622,6 +1744,19 @@ namespace bo3z
 					g_menu = false;
 				}
 			}
+			if (!g_menu) {
+				g_choosing = false;  // (walked away: the spell waits on the altar a while yet)
+			}
+			static float trim = 0;
+			if ((trim -= a_delta) <= 0) {  // a character from before the two-spell rule keeps the two in hand
+				trim = 3.0f;
+				if (auto have = Arcana::Carried(); have.size() > 2) {
+					for (std::size_t i = 2; i < have.size(); ++i) {
+						Arcana::Forget(have[i]);
+					}
+					Hud::Banner("The altars let you carry two of their spells - the rest went back", 4.0f);
+				}
+			}
 			{
 				std::scoped_lock l(Hud::Lock());
 				auto& h = Hud::Edit();
@@ -1629,7 +1764,10 @@ namespace bo3z
 				h.perkSel = g_sel;
 				h.rollPhase = static_cast<int>(g_show.phase);
 				h.rollT = g_show.phase == Show::Charging ? std::min(1.0f, g_show.t / kChargeTime) : g_show.phase == Show::Spinning ? std::min(1.0f, g_show.t / gen::kShowSpin) : g_show.phase == Show::Offering ? std::min(1.0f, g_show.t / gen::kShowOffer) : 0.0f;
-				h.rollGun = g_show.phase == Show::Idle || g_show.phase == Show::Charging || g_show.shown < 0 ? -1 : Arcana::kIdBase + g_show.shown;
+				h.rollGun = g_show.phase == Show::Idle || g_show.phase == Show::Charging || g_show.shown < 0 ? -1 : (g_show.bow ? Bows::kIdBase : Arcana::kIdBase) + g_show.shown;
+				h.rollBow = g_show.bow && g_show.phase != Show::Idle;
+				h.bowRollCost = BowRollCost();
+				h.bowCarried = Bows::Carried();
 				h.rollTarget = g_show.phase == Show::Spinning || g_show.phase == Show::Offering ? g_show.gun : -1;
 				h.rollCost = RollCost();
 				// where the shrine's crown is on the screen: the roll shows there too, over the crystal itself
@@ -1662,6 +1800,14 @@ namespace bo3z
 				h.dragonBond = Save::DragonBond();
 				h.bondLocked = Movement::BondLocked();
 				h.trialsOn = false;
+				h.chooseOn = g_choosing && g_show.phase == Show::Offering;
+				if (h.chooseOn) {
+					const auto have = Arcana::Carried();
+					h.chooseNew = g_show.gun;
+					h.chooseA = have.size() > 0 ? have[0] : -1;
+					h.chooseB = have.size() > 1 ? have[1] : -1;
+					h.chooseRefund = g_lastRollCost / 2;
+				}
 				if (g_menu) {
 					if (auto r = g_menuRef.get()) {
 						const int t = TownOf(r.get());

@@ -21,9 +21,15 @@ namespace bo3z::Arcana
 		std::array<std::uint8_t, coffer::kSpells.size()>    g_level{};
 		std::array<std::vector<float>, coffer::kSpells.size()> g_baseMag;  // each effect's magnitude as the mod made it
 		std::array<std::uint8_t, coffer::kSpells.size()>    g_school{};  // 0 destruction, 1 conjuration, 2 restoration, 3 alteration, 4 illusion
-		int                                                 g_altars = 0;  // Echo Altars woken (the spells grow with them)
-		// (Noah: a 67-damage spell from the first altar is too much) the spells' power grows with the altars woken
-		float AltarPower() { static constexpr float k[] = { 0.55f, 0.7f, 0.82f, 0.92f, 1.0f }; return g_altars < 5 ? k[g_altars] : std::min(1.24f, 1.0f + 0.04f * (g_altars - 4)); }
+		int                                                 g_night = -1;  // the night the spells' power was set for
+		// (Noah: balanced the whole way through - no early spell that one-shots) the spells', bows' and shouts' power
+		// follows the nights survived: half on the first night, full by the tenth, then a little more each night
+		float NightPower(int a_night)
+		{
+			const int n = std::max(1, a_night);
+			return n <= 10 ? 0.5f + 0.5f * (n - 1) / 9.0f : std::min(1.5f, 1.0f + 0.025f * (n - 10));
+		}
+		float AltarPower() { return NightPower(g_night); }
 
 		// Balance (Noah: most of them one-shot Skyrim's own enemies): every Coffer spell does 45% of the damage its mod
 		// gave it and costs 75% of the pool's price.
@@ -146,18 +152,71 @@ namespace bo3z::Arcana
 	float Power() { return AltarPower(); }
 	void  RefreshPower()
 	{
-		int freed = 0;
-		for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
-			freed += Curse::Freed(t) ? 1 : 0;
-		}
-		if (freed == g_altars) {
+		const int night = Save::Get(gen::kAV_round) + 1;  // (the night being fought, or the next)
+		if (night == g_night) {
 			return;
 		}
-		g_altars = freed;
+		g_night = night;
 		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
 			Apply(i);
 		}
-		logger::info("arcana: {} altars awake - the spells at {:.0f}% power", freed, AltarPower() * 100.0f);
+		logger::info("arcana: night {} - spells, bows and shouts at {:.0f}% power", night, AltarPower() * 100.0f);
+	}
+
+	// (Noah: two of the altar's spells at a time) the altar's spells you carry, the ones in your hands first
+	std::vector<int> Carried()
+	{
+		std::vector<int> out;
+		for (int h : Hands()) {
+			if (h >= 0 && Known(h) && std::ranges::find(out, h) == out.end()) {
+				out.push_back(h);
+			}
+		}
+		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
+			if (g_spell[i] && Known(i) && std::ranges::find(out, i) == out.end()) {
+				out.push_back(i);
+			}
+		}
+		return out;
+	}
+	// one of them gone for good: out of your hands, out of the Magic menu, its reforging lost
+	void Forget(int a_index)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* sp = Spell(a_index);
+		if (!p || !sp) {
+			return;
+		}
+		auto* em = RE::ActorEquipManager::GetSingleton();
+		for (bool left : { false, true }) {
+			if (p->GetEquippedObject(left) == sp && em) {
+				em->UnequipObject(p, sp, nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(left ? 0x13F43 : 0x13F42), false, true, false, true);
+			}
+		}
+		p->RemoveSpell(sp);
+		SetLevel(a_index, 0);
+		logger::info("arcana: {} given back to the altar", coffer::kSpells[a_index].name);
+	}
+	// the new spell takes the old one's place - and its hands
+	void Replace(int a_old, int a_new)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* oldSp = Spell(a_old);
+		auto* newSp = Spell(a_new);
+		if (!p || !newSp) {
+			return;
+		}
+		const bool inL = oldSp && p->GetEquippedObject(true) == oldSp, inR = oldSp && p->GetEquippedObject(false) == oldSp;
+		Forget(a_old);
+		Give(a_new, false);
+		if (auto* em = RE::ActorEquipManager::GetSingleton()) {
+			if (inR || !inL) {
+				em->EquipSpell(p, newSp, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x13F42));
+			}
+			if (inL) {
+				em->EquipSpell(p, newSp, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x13F43));
+			}
+		}
 	}
 
 	int IndexOfEffect(RE::FormID a_effect)

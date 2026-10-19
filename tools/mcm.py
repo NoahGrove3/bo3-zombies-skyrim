@@ -61,10 +61,11 @@ PAGES = [
         header('Echo Altar'),
         key('iShrineRoll:Keys', 'Roll the Coffer', 'Spin the shrine for a spell (or take the one it offers).'),
         key('iShrineReforge:Keys', 'Reforge', 'Reforge the spell in your hand.'),
-        key('iShrineBless:Keys', 'Take a blessing', 'Buy the chosen blessing.'),
+        key('iShrineBless:Keys', 'Take a perk', 'Buy the chosen perk.'),
         key('iShrineShout:Keys', 'Learn the Thu\'um', 'Learn a freed city\'s shout.'),
         key('iShrineLeave:Keys', 'Leave the shrine', 'Close the shrine\'s menu.'),
         key('iShrineBond:Keys', 'Bond the dragon', 'Bind your glider\'s dragon closer: its next bond.'),
+        key('iShrineBow:Keys', 'Call a bow', 'Spin the altar\'s bow wheel for an elemental bow (or take the one it offers).'),
         text('Controller: X roll, Y reforge, A bless, D-pad up shout, D-pad down bond, B leave.'),
     ]},
     {'pageDisplayName': 'Other mods', 'cursorFillMode': 'topToBottom', 'content': [
@@ -88,7 +89,7 @@ DEFAULTS = {
     'Controls': {'bPlayStationIcons': 0},
     'Dragon': {'bBankReverse': 0, 'bInvertDive': 0},
     'Difficulty': {'bFollowSkyrim': 1, 'fUndeadHealth': 1.0, 'fUndeadDamage': 1.0},
-    'Keys': {'iShrineRoll': 2, 'iShrineReforge': 3, 'iShrineBless': 4, 'iShrineShout': 5, 'iShrineLeave': 14, 'iShrineBond': 6},
+    'Keys': {'iShrineRoll': 2, 'iShrineReforge': 3, 'iShrineBless': 4, 'iShrineShout': 5, 'iShrineLeave': 14, 'iShrineBond': 6, 'iShrineBow': 48},
     'QuickLoot': {'bCloseInCombat': 0, 'bCloseOnEmpty': 1, 'fScale': 100.0, 'fHorizontal': 20.0, 'fVertical': 0.0},
     'CharacterMenu': {'iOpenMenu': 49, 'bBlur': 1},
 }

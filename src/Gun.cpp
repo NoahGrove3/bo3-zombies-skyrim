@@ -1729,6 +1729,7 @@ namespace bo3z
 		}
 
 #include "Spellcraft.inl"
+#include "Bows.inl"
 
 		struct PoseHook
 		{
@@ -1994,6 +1995,7 @@ namespace bo3z
 			g_reload = g_cooldown = 0;
 			g_burstLeft = 0;
 			Spellcraft::Reset();
+			BowsImpl::Reset();
 		}
 
 		// dev channel: 'cast tap|full|ult|orb' with the spell in hand (synthetic mouse input does not cast)
@@ -2026,6 +2028,9 @@ namespace bo3z
 		int ReforgeCost()
 		{
 			const int gun = CurrentGun(), slot = SlotOf(gun);
+			if (const int b = BowsImpl::Held(); b >= 0) {  // the altar's bow
+				return BowsImpl::g_level[b] >= gen::kForgeMax ? 0 : gen::kForgeCost[BowsImpl::g_level[b]];
+			}
 			if (gun < 0 || slot < 0) {
 				return -1;
 			}
@@ -2048,6 +2053,26 @@ namespace bo3z
 		bool Reforge()
 		{
 			const int gun = CurrentGun(), slot = SlotOf(gun);
+			if (const int b = BowsImpl::Held(); b >= 0) {  // the altar's bow in hand: more power, then piercing, then three arrows
+				const int lv = BowsImpl::g_level[b];
+				const std::string name(gen::kBows[b].label);
+				if (lv >= gen::kForgeMax) {
+					Hud::Banner(name + " cannot hold more power", 2.5f);
+					return false;
+				}
+				if (ForgedTonight(Bows::kIdBase + b, name)) {
+					return false;
+				}
+				if (!Points::Spend(gen::kForgeCost[lv])) {
+					return false;
+				}
+				g_forgedTonight.insert(Bows::kIdBase + b);
+				BowsImpl::g_level[b] = static_cast<std::uint8_t>(lv + 1);
+				static constexpr const char* kWhat[] = { "", "more power", "its arrows pierce", "three arrows at once" };
+				Hud::Banner(name + " reforged  " + std::string(lv + 1, '|') + "  - " + kWhat[std::min(lv + 1, 3)], 4.0f);
+				logger::info("forge: {} -> level {}", name, lv + 1);
+				return true;
+			}
 			if (gun < 0 || slot < 0) {
 				// a Coffer spell in hand (the right first): reforged, it strikes harder and costs less
 				const auto hands = Arcana::Hands();
@@ -2430,6 +2455,7 @@ namespace bo3z
 			TickTimeAndPrisms(a_delta);
 			TickMarks(a_delta);
 			Spellcraft::Tick(a_delta);
+			BowsImpl::Tick(a_delta);
 			if (out) {
 				const auto& g = gen::kGuns[gun];
 				if (g_burstLeft > 0 && (g_burstTimer -= a_delta) <= 0) {
@@ -2735,6 +2761,43 @@ namespace bo3z
 			}
 			Hud::Banner(std::string(L >= 1 ? sh.w1 : "") + (L >= 2 ? std::string(" ") + std::string(sh.w2) : "") + (L >= 3 ? std::string(" ") + std::string(sh.w3) + "!" : ""), 1.6f);
 			logger::info("shout: {} level {}", sh.id, L);
+		}
+	}
+
+	namespace Bows
+	{
+		int              Count() { return BowsImpl::kN; }
+		std::string_view Name(int a_i) { return a_i >= 0 && a_i < BowsImpl::kN ? gen::kBows[a_i].label : ""; }
+		std::uint32_t    Color(int a_i) { return a_i >= 0 && a_i < BowsImpl::kN ? gen::kBows[a_i].color : 0xFFFFFF; }
+		std::string_view Element(int a_i) { return a_i >= 0 && a_i < BowsImpl::kN ? gen::kBows[a_i].element : ""; }
+		int              Level(int a_i) { return a_i >= 0 && a_i < BowsImpl::kN ? BowsImpl::g_level[a_i] : 0; }
+		int              Held() { return BowsImpl::Held(); }
+		int              Carried() { return BowsImpl::Carried(); }
+		int              IndexOf(const RE::TESForm* a_form) { return BowsImpl::Of(a_form); }
+		void             Give(int a_i) { BowsImpl::Give(a_i); }
+		// a bow you don't carry, of the tiers the altars allow (the second tier once an altar is awake)
+		int Roll()
+		{
+			int freed = 0;
+			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
+				freed += Curse::Freed(t) ? 1 : 0;
+			}
+			const int        maxTier = freed >= 1 ? 2 : 1;
+			const int        have = BowsImpl::Carried();
+			std::vector<int> pool;
+			for (int i = 0; i < BowsImpl::kN; ++i) {
+				if (i != have && gen::kBows[i].tier <= maxTier && BowsImpl::Weap(i)) {
+					pool.push_back(i);
+				}
+			}
+			return pool.empty() ? -1 : pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
+		}
+		std::vector<std::uint8_t> Levels() { return { BowsImpl::g_level.begin(), BowsImpl::g_level.end() }; }
+		void SetLevels(const std::vector<std::uint8_t>& a_levels)
+		{
+			for (int i = 0; i < BowsImpl::kN; ++i) {
+				BowsImpl::g_level[i] = i < static_cast<int>(a_levels.size()) ? static_cast<std::uint8_t>(std::min<int>(a_levels[i], gen::kForgeMax)) : 0;
+			}
 		}
 	}
 }

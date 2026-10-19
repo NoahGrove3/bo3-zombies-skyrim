@@ -1,0 +1,145 @@
+{
+  "sheet": "bows",
+  "about": "The Echo Altar's elemental bows (its second wheel, 'Call a Bow'): one carried at a time, reforged like the spells. Each is a Skyrim bow (draw animation: whatever bow animation mod is installed) with its own model (tools/bows.py from the four bow basemeshes: mesh, body kind and colours), an energy arrow on the string, and shots that fly as the element's spell (spell: the spellcraft row whose bolt, burst, glow and effect it uses). tier 1 rolls from the start, tier 2 once an Echo Altar is woken. share: of a zombie's night health a fully drawn arrow takes (headshots double), grown by the night's power curve and reforging.",
+  "columns": [
+    "id",
+    "label",
+    "element",
+    "spell",
+    "tier",
+    "share",
+    "mesh",
+    "body",
+    "bodyColor",
+    "glow",
+    "text"
+  ],
+  "rows": [
+    {
+      "id": "emberstring",
+      "label": "Emberstring",
+      "element": "fire",
+      "spell": "flamerepeater",
+      "tier": 1,
+      "share": 0.38,
+      "mesh": "Mesh.002",
+      "body": "wood_dark",
+      "bodyColor": [
+        64,
+        30,
+        22
+      ],
+      "glow": [
+        1.0,
+        0.42,
+        0.08
+      ],
+      "text": "Charred horn strung with a thread of living flame. Its arrows set the dead burning."
+    },
+    {
+      "id": "rimehorn",
+      "label": "Rimehorn",
+      "element": "frost",
+      "spell": "frostlancer",
+      "tier": 1,
+      "share": 0.36,
+      "mesh": "Bow-20",
+      "body": "bone",
+      "bodyColor": [
+        186,
+        204,
+        218
+      ],
+      "glow": [
+        0.55,
+        0.85,
+        1.0
+      ],
+      "text": "Glacier-blue bone from the Throat of the World. Its arrows freeze the dead where they stand."
+    },
+    {
+      "id": "stormreach",
+      "label": "Stormreach",
+      "element": "shock",
+      "spell": "stormcaller",
+      "tier": 1,
+      "share": 0.34,
+      "mesh": "Bow-18",
+      "body": "iron",
+      "bodyColor": [
+        74,
+        78,
+        96
+      ],
+      "glow": [
+        0.55,
+        0.5,
+        1.0
+      ],
+      "text": "Storm-blue steel that hums before the rain. Its arrows leap from one of the dead to the next."
+    },
+    {
+      "id": "skyhowl",
+      "label": "Skyhowl",
+      "element": "wind",
+      "spell": "embermortar",
+      "tier": 2,
+      "share": 0.36,
+      "mesh": "Bow-03",
+      "body": "wood",
+      "bodyColor": [
+        150,
+        140,
+        118
+      ],
+      "glow": [
+        0.55,
+        1.0,
+        0.85
+      ],
+      "text": "Pale ash strung with a captured gale, like the Tongues' storm-horns. Its arrows burst into a howling wind that hurls the dead away - drawn full, the bow itself looses a blast of wind that flings everything before you."
+    },
+    {
+      "id": "dawnspire",
+      "label": "Dawnspire",
+      "element": "sun",
+      "spell": "aetherium",
+      "tier": 2,
+      "share": 0.42,
+      "mesh": "Bow-18",
+      "body": "bronze",
+      "bodyColor": [
+        176,
+        140,
+        76
+      ],
+      "glow": [
+        1.0,
+        0.8,
+        0.3
+      ],
+      "text": "Sun-gilded bronze of the old Tongues. Its arrows sear the dead and stagger them."
+    },
+    {
+      "id": "thirstbow",
+      "label": "Thirstbow",
+      "element": "blood",
+      "spell": "drill",
+      "tier": 2,
+      "share": 0.4,
+      "mesh": "Bow-20",
+      "body": "wood_dark",
+      "bodyColor": [
+        70,
+        18,
+        22
+      ],
+      "glow": [
+        0.9,
+        0.12,
+        0.16
+      ],
+      "text": "Blood-dark yew that drinks what it strikes. Every hit gives you back a little life."
+    }
+  ]
+}

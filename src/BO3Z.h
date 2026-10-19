@@ -89,6 +89,7 @@ namespace bo3z
 	namespace Points
 	{
 		void Add(int a_points);
+		void Refund(int a_points);
 		bool Spend(int a_points);
 		int  Get();
 	}
@@ -242,8 +243,11 @@ namespace bo3z
 		void               Load();                       // data loaded: find them, set their costs and charge
 		int                Count();
 		int                SchoolOf(int a_index);        // 0 destruction, 1 conjuration, 2 restoration, 3 alteration, 4 illusion
-		float              Power();                      // the spells' power for the altars woken (0.55 .. 1.24)
-		void               RefreshPower();               // an altar woken (or a save loaded): the spells' power follows
+		float              Power();                      // the spells', bows' and shouts' power for the night (0.5 .. 1.5)
+		void               RefreshPower();               // a new night (or a save loaded): the power follows
+		std::vector<int>   Carried();                    // the altar's spells you carry (in hand first) - two at most
+		void               Forget(int a_index);          // gone for good: unequipped, out of the Magic menu, reforging lost
+		void               Replace(int a_old, int a_new);  // the new spell in the old one's place (and hands)
 		RE::SpellItem*     Spell(int a_index);
 		int                IndexOf(const RE::TESForm* a_form);
 		int                IndexOfEffect(RE::FormID a_effect);  // the Coffer spell a magic effect belongs to (-1: none)
@@ -268,11 +272,29 @@ namespace bo3z
 		void               SetLevels(const std::vector<std::uint8_t>& a_levels);
 	}
 
+	// The Echo Altar's bows (sheet: bows; src/Bows.inl): one carried at a time, its shots the element's spell
+	namespace Bows
+	{
+		inline constexpr int kIdBase = 2000;   // HUD ids: a bow shows as kIdBase + its index
+		int                       Count();
+		std::string_view          Name(int a_i);
+		std::uint32_t             Color(int a_i);
+		std::string_view          Element(int a_i);   // its emblem (bw_<element>.png)
+		int                       Level(int a_i);     // reforged 0..gen::kForgeMax
+		int                       Held();             // the bow in your hands (-1)
+		int                       Carried();          // the bow you carry (-1)
+		int                       IndexOf(const RE::TESForm* a_form);
+		void                      Give(int a_i);      // in hand, the old one given back
+		int                       Roll();             // one you don't carry, of the tiers the altars allow (-1)
+		std::vector<std::uint8_t> Levels();           // for the co-save
+		void                      SetLevels(const std::vector<std::uint8_t>& a_levels);
+	}
+
 	// The player's settings (CurseOfAlduin.ini [Settings]; the panel in the System menu)
 	namespace Settings
 	{
 		inline constexpr float kFovMin = 60.0f, kFovMax = 130.0f;
-		inline constexpr int   kKeys = 6;          // the shrine's keys: roll, reforge, bless, shout, leave, bond the dragon
+		inline constexpr int   kKeys = 7;          // the shrine's keys: roll, reforge, perk, shout, leave, bond the dragon, call a bow
 		float       FovFirst();
 		float       FovThird();
 		void        SetFov(bool a_first, float a_v);
@@ -533,10 +555,16 @@ namespace bo3z
 			int         dragonBond{ 0 };   // the glider's dragon: its bond (0-3)
 			bool        bondLocked{ false };
 			// the altar's trials (the city still held): which are done, the one under way, the controller's pick, each with tonight's numbers
+			bool        chooseOn{ false };   // the altar: a third spell won - which of your two does it replace?
+			int         chooseNew{ -1 }, chooseA{ -1 }, chooseB{ -1 }, chooseRefund{ 0 };  // (Arcana indices)
 			bool        trialsOn{ false };
 			int         trialDone{ 0 }, trialActive{ 0 }, trialSel{ 0 };
 			std::array<std::string, 5> trialDesc;
 			std::string trialCity, trialBoss, trialBossLine;
+			int         bowHeld{ -1 };    // the altar's bow in hand (Bows index), and how far it is drawn
+			float       bowDraw{ 0 };
+			bool        rollBow{ false };  // the altar's roll is the bow wheel
+			int         bowRollCost{ 0 }, bowCarried{ -1 };
 			float       questTimer{ -1 };  // the trial under way: seconds left on its clock (-1 none)
 			bool        questWarn{ false };  // ...and it is in danger (time short, health low)
 			int         rollTarget{ -1 };              // the spell the roll will land on (Arcana index), for the reel

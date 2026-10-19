@@ -11,6 +11,7 @@ ROOT = pathlib.Path(__file__).parent.parent
 OUT = pathlib.Path(sys.argv[1])
 JOBS = [pathlib.Path(p) for p in sys.argv[2:]]
 EL = {r['id']: r['element'] for r in json.load(open(ROOT / 'sheets/weapons.json'))['rows']}
+EL.update({r['id']: ''.join(f'{int(c * 255):02X}' for c in r['glow']) for r in json.load(open(ROOT / 'sheets/bows.json'))['rows']})  # the altar's bows
 W, H, SS = 512, 192, 3   # icon size, supersampling
 
 def load_job(job):

@@ -276,6 +276,7 @@ namespace Spellcraft
 		float        life, radius, damage, scale;
 		int          pierce;
 		float        homing = 0, gravity = 0;
+		bool         arrow = false;  // one of the altar's bows' arrows (its own mesh; a small glow at its head)
 		int          ult = -1;  // a charged attack's carrier (mortar, wind ball, singularity, soul wisp) or -1 for a tap
 		std::vector<RE::FormID> struck;
 		Fx           fx;   // the trail (along the flight)
@@ -591,13 +592,14 @@ namespace Spellcraft
 	}
 
 	// ---------------------------------------------------------------- projectiles
-	void Launch(int a_row, int a_gun, const RE::NiPoint3& a_from, RE::NiPoint3 a_dir, float a_speed, float a_dmg, float a_radius, int a_pierce, float a_scale, int a_ult = -1)
+	void Launch(int a_row, int a_gun, const RE::NiPoint3& a_from, RE::NiPoint3 a_dir, float a_speed, float a_dmg, float a_radius, int a_pierce, float a_scale, int a_ult = -1, bool a_arrow = false)
 	{
 		a_dir.Unitize();
 		const auto& d = Def(a_row);
 		Shot s{ a_row, a_gun, a_from, a_dir * a_speed, 2.4f, a_radius, a_dmg, a_scale, a_pierce };
-		s.homing = d.homing;
+		s.homing = a_arrow ? 0.0f : d.homing;
 		s.ult = a_ult;
+		s.arrow = a_arrow;
 		if (a_ult == gen::kUltMortar) {
 			s.gravity = 1300.0f, s.life = 4.0f;
 		} else if (a_ult == gen::kUltSingularity) {
@@ -609,7 +611,7 @@ namespace Spellcraft
 		}
 		const bool carrier = a_ult >= 0 && a_ult != gen::kUltSoulStorm;
 		if (!carrier) {
-			s.fx.obj = Load(d.id, "bolt");  // its trail
+			s.fx.obj = Load(d.id, a_arrow ? "arrow" : "bolt");  // its trail (the altar's bows: an energy arrow and its trail)
 			if (s.fx.obj) {
 				s.fx.Attach(WorldRoot());
 				s.fx.Place(s.pos, Facing(a_dir), 1.2f * a_scale);
@@ -617,7 +619,7 @@ namespace Spellcraft
 		}
 		s.ball.Need(a_row);
 		s.ball.Attach(WorldRoot());
-		s.ball.Place(s.pos, AxisAngle(a_dir, 0.0f), (carrier ? 2.4f : 0.62f) * a_scale);
+		s.ball.Place(s.pos, AxisAngle(a_dir, 0.0f), (carrier ? 2.4f : a_arrow ? 0.3f : 0.62f) * a_scale);
 		if (const int tr = Snd(a_gun, &gen::GunSounds::travel); tr >= 0 && g_shots2.size() < 6) {
 			s.loop = 0x5C00000000ull + (++g_loopId);
 			Audio::LoopAt(s.loop, static_cast<gen::Sound>(tr), s.pos, 0.7f);
@@ -876,7 +878,7 @@ namespace Spellcraft
 				if (s.fx.obj) {
 					s.fx.Place(s.pos, Facing(s.vel), 1.2f * s.scale);
 				}
-				s.ball.Place(s.pos, Facing(s.vel) * AxisAngle({ 0, 1, 0 }, s.spin) * AxisAngle({ 1, 0, 0 }, s.spin * 0.6f), (carrier ? 2.4f : 0.62f) * s.scale * breathe);
+				s.ball.Place(s.pos, Facing(s.vel) * AxisAngle({ 0, 1, 0 }, s.spin) * AxisAngle({ 1, 0, 0 }, s.spin * 0.6f), (carrier ? 2.4f : s.arrow ? 0.3f : 0.62f) * s.scale * breathe);
 				if (s.loop) {
 					Audio::LoopMove(s.loop, s.pos);
 				}

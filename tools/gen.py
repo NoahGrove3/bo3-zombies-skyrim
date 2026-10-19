@@ -254,6 +254,16 @@ for r in SC:
     o.append(f'\t\tSpellcraftDef{{ {cs(r["id"])}, {cs(r["name"])}, 0x{r["color"]}, 0x{r["accent"]}, {STYLES.index(r["style"])}, {TAPS.index(r["tap"])}, {F(r["speed"])}, {F(r["radius"])}, {F(r["damage"])}, {r["count"]}, {F(r["spread"])}, {r["pierce"]}, {F(r["homing"])}, {EFFECTS.index(r["effect"])}, {ULTS.index(r["ult"])}, {cs(r["ultName"])}, {F(r["ultDamage"])}, {F(r["ultRadius"])}, {cs(r["text"])}, 0x{IDS[("ARTO", "fx_" + r["id"] + "_hand")]:03X}, 0x{IDS[("STAT", "fx_" + r["id"] + "_orb")]:03X} }},')
 o.append('\t} };')
 o.append(f'\tinline constexpr std::uint32_t kArtIceShell = 0x{IDS[("ARTO", "fx_iceshell")]:03X}, kArtRoots = 0x{IDS[("ARTO", "fx_roots")]:03X}, kArtBurn = 0x{IDS[("ARTO", "fx_burn")]:03X}, kArtPoison = 0x{IDS[("ARTO", "fx_poison")]:03X};  // status looks on the struck')
+# the Echo Altar's bows (sheet: bows): src/Gun.cpp Bows
+BW = S['bows']['rows']
+EL8 = ['fire', 'frost', 'shock', 'poison', 'disease', 'sun', 'blood', 'arcane']
+SCID = [r['id'] for r in S['spellcraft']['rows']]
+o.append('\tstruct BowDef { std::string_view id, label, text, element; int spellRow, tier; float share; std::uint32_t color, weap, ammo; };  // element: its emblem (bw_<element>.png)')
+o.append(f'\tinline constexpr std::array<BowDef, {len(BW)}> kBows{{ {{')
+for b in BW:
+    col = ''.join(f'{int(c * 255):02X}' for c in b['glow'])
+    o.append(f'\t\tBowDef{{ {cs(b["id"])}, {cs(b["label"])}, {cs(b["text"])}, {cs(b["element"])}, {SCID.index(b["spell"])}, {b["tier"]}, {F(b["share"])}, 0x{col}, 0x{IDS[("WEAP", "bow_" + b["id"])]:03X}, 0x{IDS[("AMMO", "bowarrow_" + b["id"])]:03X} }},')
+o.append('\t} };')
 o.append('}')
 with open(root / 'src/Generated.h', 'a') as f: f.write('\n'.join(o) + '\n')
 print('appended v0.2 tables')

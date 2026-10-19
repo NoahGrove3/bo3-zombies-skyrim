@@ -101,6 +101,28 @@ def sig_illusion(d, f, s):      # the veiled eye: an almond eye with a slit pupi
         d.line(P([(0.62 * math.cos(a) * 1.25, 0.62 * math.sin(a) * 0.95 - 0.05), (0.8 * math.cos(a) * 1.25, 0.8 * math.sin(a) * 0.95 - 0.05)]), fill=f, width=int(4 * s))
 
 
+def sig_archery(d, f, s):        # the altar's bows: a drawn recurve with an arrow nocked through it, point up and right
+    import math as m
+    a = -m.pi / 4                                                    # the arrow's line (up-right)
+    ux, uy = m.cos(a), m.sin(a)
+    px, py = -uy, ux
+    bow = []
+    for t in np.linspace(-1, 1, 40):                                 # the bow: an arc across the arrow, its tips recurved
+        bend = 0.42 * (1 - t * t) - 0.08 * abs(t) ** 6
+        bow.append((-ux * 0.05 + px * t * 0.86 + ux * bend, -uy * 0.05 + py * t * 0.86 + uy * bend))
+    d.line(P(bow), fill=f, width=int(7 * s))
+    tipA, tipB = bow[0], bow[-1]
+    nock = (-ux * 0.38, -uy * 0.38)
+    d.line(P([tipA, nock, tipB]), fill=f, width=int(3 * s))          # the string, drawn back
+    d.line(P([nock, (ux * 0.78, uy * 0.78)]), fill=f, width=int(5 * s))  # the shaft
+    hx, hy = ux * 0.98, uy * 0.98
+    d.polygon(P([(hx, hy), (ux * 0.7 + px * 0.13, uy * 0.7 + py * 0.13), (ux * 0.76, uy * 0.76), (ux * 0.7 - px * 0.13, uy * 0.7 - py * 0.13)]), fill=f)
+    for k in (0.0, 0.1):                                             # fletching
+        bx, by = -ux * (0.42 + k), -uy * (0.42 + k)
+        d.polygon(P([(bx, by), (bx - ux * 0.14 + px * 0.12, by - uy * 0.14 + py * 0.12), (bx + ux * 0.05, by + uy * 0.05)]), fill=f)
+        d.polygon(P([(bx, by), (bx - ux * 0.14 - px * 0.12, by - uy * 0.14 - py * 0.12), (bx + ux * 0.05, by + uy * 0.05)]), fill=f)
+
+
 SCHOOLS = {'destruction': sig_destruction, 'conjuration': sig_conjuration, 'restoration': sig_restoration,
            'alteration': sig_alteration, 'illusion': sig_illusion}
 
@@ -112,6 +134,12 @@ def main():
         for school in SCHOOLS:
             spellicons.medallion(c, a, school).save(OUT / f'sc_{school}_{el}.png')
     print(len(SCHOOLS) * len(elementicons.ELEMENTS), 'school emblems')
+    spellicons.SIGILS['archery'] = sig_archery
+    bow_cols = dict((el, (c, a)) for el, (c, a, _) in elementicons.ELEMENTS.items())
+    bow_cols['wind'] = ('8CFFD8', 'E0FFF4')                            # (the gale bow: sea-green, like Gale)
+    for el, (c, a) in bow_cols.items():                               # the altar's bows: one archery emblem per element
+        spellicons.medallion(c, a, 'archery').save(OUT / f'bw_{el}.png')
+    print(len(elementicons.ELEMENTS), 'bow emblems')
 
 
 if __name__ == '__main__':

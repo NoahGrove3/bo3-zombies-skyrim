@@ -23,7 +23,8 @@ def assign(S=None, write=False):
              [(k, 'shout_' + h['id'] + '_' + str(n)) for h in S['shouts']['rows'] for n in range(3) for k in ('WOOP', 'SPEL')] + [('SHOU', h['id']) for h in S['shouts']['rows']] + [('MGEF', 'shoutcast')] + [('GLOB', 'curse_' + c['town']) for c in S['curse']['cities']] + [('GLOB', 'curse_intro'), ('GLOB', 'stand_layout'), ('BOOK', 'dirge'), ('BOOK', 'guide')] + \
              [('VTYP', 'silent'), ('MUST', 'boss'), ('MUSC', 'boss'), ('MUST', 'freed'), ('MUSC', 'freed'), ('MUST', 'intro'), ('MUSC', 'intro'), ('FSTS', 'silent'), ('STAT', 'ls_shrine'), ('STAT', 'ls_book')] + [('LSCR', f'ls_{i}') for i in range(14)] + \
              [(k, f"fx_{r['id']}_{n}") for r in S['spellcraft']['rows'] for k, n in (('ARTO', 'hand'), ('STAT', 'orb'), ('LIGH', 'light'))] + [('ARTO', 'fx_' + n) for n in ('iceshell', 'roots', 'burn', 'poison')] + [('QUST', 'mcm')] + [('QUST', 'rites_' + c['town']) for c in S['curse']['cities']] + \
-             [(k, f'updraft_{n}') for n in range(3) for k in ('WOOP', 'SPEL')] + [('SHOU', 'updraft')]
+             [(k, f'updraft_{n}') for n in range(3) for k in ('WOOP', 'SPEL')] + [('SHOU', 'updraft')] + \
+             [(k, f"{n}_{b['id']}") for b in S.get('bows', {}).get('rows', []) for k, n in (('WEAP', 'bow'), ('AMMO', 'bowarrow'), ('PROJ', 'bowarrow'))]
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:
@@ -61,6 +62,8 @@ def dressing(S):
         records[('STAT', '1st_' + w['id'])] = {'model': w['standinModel'], 'color': '', 'radius': 0}
         sc_ids = {r['id'] for r in S['spellcraft']['rows']} if 'spellcraft' in S else set()
         records[('STAT', 'show_' + w['id'])] = {'model': f"CurseOfAlduin\\fx\\{w['id']}_icon.nif" if w['id'] in sc_ids else w['standinModel'], 'color': '', 'radius': 0}  # the roll shows the spell's logo
+    for b in S.get('bows', {}).get('rows', []):   # the altar's bows: their first-person model
+        records[('STAT', '1st_bow_' + b['id'])] = {'model': f"CurseOfAlduin\\bow\\{b['id']}.nif", 'color': '', 'radius': 0}
     records[('STAT', 'show_cheese')] = {'model': S['dressing']['show']['cheeseModel'], 'color': '', 'radius': 0}
     for el in ELEMENTS:   # the Coffer spells' element emblems (the shrine's roll in the world)
         records[('STAT', 'show_el_' + el)] = {'model': f"CurseOfAlduin\\fx\\el_{el}_icon.nif", 'color': '', 'radius': 0}

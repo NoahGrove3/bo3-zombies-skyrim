@@ -491,6 +491,9 @@ namespace bo3z
 				if (a_event && a_event->cause.get() == player && a_event->target) {
 					auto* z = a_event->target->As<RE::Actor>();
 					auto* src = RE::TESForm::LookupByID(a_event->source);
+					if (Bows::IndexOf(src) >= 0) {
+						return RE::BSEventNotifyControl::kContinue;  // the altar's bows: their own arrow is only the look (Bows.inl does the hit)
+					}
 					if (z && Director::IsRoundUndead(z)) {  // Trial of Steel: was it a blade, an axe, a mace or a fist?
 						auto*      w = src ? src->As<RE::TESObjectWEAP>() : nullptr;
 						const bool melee = !a_event->projectile && (src ? (w && !w->IsBow() && !w->IsCrossbow() && !w->IsStaff() && Forms::GunIndexOf(src) < 0) : true);
@@ -512,7 +515,7 @@ namespace bo3z
 							} else if (src->Is(RE::FormType::Spell)) {
 								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
 							}
-							HurtUndead(z, Director::RoundHealth() * share);
+							HurtUndead(z, Director::RoundHealth() * share * (0.7f + 0.3f * Arcana::Power()));  // (the night's power curve)
 						}
 					}
 				}
@@ -612,8 +615,44 @@ namespace bo3z
 			logger::info("world: nights darkened, days dimmed, in {} weathers", n);
 		}
 
+		// (Noah: full movement while drawing any bow) the bow's movement types (Skyrim slows you while it is drawn) move at
+		// the default type's speeds - every bow, the player's and everyone's
+		void FreeBowMovement()
+		{
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			if (!dh) {
+				return;
+			}
+			const RE::BGSMovementType* def = nullptr;
+			for (auto* mt : dh->GetFormArray<RE::BGSMovementType>()) {
+				if (mt && std::string_view(mt->movementTypeData.typeName.c_str()) == "NPC_Default_MT") {
+					def = mt;
+				}
+			}
+			for (auto* mt : dh->GetFormArray<RE::BGSMovementType>()) {
+				if (!mt || !mt->movementTypeData.typeName.c_str()) {
+					continue;
+				}
+				const std::string_view n(mt->movementTypeData.typeName.c_str());
+				if (def && n.find("Bow") != std::string_view::npos && n.find("Horse") == std::string_view::npos) {
+					auto& sp = mt->movementTypeData.defaultData.speeds;
+					const float was = sp[RE::Movement::SPEED_DIRECTIONS::kForward][RE::Movement::MaxSpeeds::kRun];
+					for (int d = 0; d < RE::Movement::SPEED_DIRECTIONS::kRotations; ++d) {
+						for (int m = 0; m < RE::Movement::MaxSpeeds::kTotal; ++m) {
+							sp[d][m] = std::max(sp[d][m], def->movementTypeData.defaultData.speeds[d][m]);
+						}
+					}
+					logger::info("bows: {} no longer slows you (run {:.0f} -> {:.0f})", n, was, sp[RE::Movement::SPEED_DIRECTIONS::kForward][RE::Movement::MaxSpeeds::kRun]);
+				}
+			}
+			if (!def) {
+				logger::warn("bows: no NPC_Default_MT movement type found - drawing a bow still slows you");
+			}
+		}
+
 		void OnDataLoaded()
 		{
+			FreeBowMovement();
 			// Skyrim's own floating quest markers give way to ours (src/Hud.cpp: drawn in the game's style)
 			if (auto* prefs = RE::INIPrefSettingCollection::GetSingleton()) {
 				if (auto* st = prefs->GetSetting("bShowFloatingQuestMarkers:GamePlay")) {

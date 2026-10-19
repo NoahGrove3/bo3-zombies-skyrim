@@ -14,8 +14,8 @@ namespace bo3z::Settings
 	{
 		float g_fovFirst = 100.0f, g_fovThird = 85.0f, g_corpse = 10.0f, g_hp = 1.0f, g_dmg = 1.0f, g_bright = 1.0f;
 		bool  g_shelter = true, g_follow = true, g_padPS = false, g_bankRev = false, g_diveInv = false;
-		int   g_keys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06 };
-		constexpr const wchar_t* kKeyIds[kKeys] = { L"iShrineRoll", L"iShrineReforge", L"iShrineBless", L"iShrineShout", L"iShrineLeave", L"iShrineBond" };
+		int   g_keys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30 };
+		constexpr const wchar_t* kKeyIds[kKeys] = { L"iShrineRoll", L"iShrineReforge", L"iShrineBless", L"iShrineShout", L"iShrineLeave", L"iShrineBond", L"iShrineBow" };
 		bool  g_loaded = false;
 		std::filesystem::file_time_type g_stamp{};
 
@@ -197,7 +197,7 @@ namespace bo3z::Settings
 			g_follow = Read(L"Difficulty", L"bFollowSkyrim", 1.0f) != 0.0f;
 			g_hp = std::clamp(Read(L"Difficulty", L"fUndeadHealth", 1.0f), 0.25f, 4.0f);
 			g_dmg = std::clamp(Read(L"Difficulty", L"fUndeadDamage", 1.0f), 0.25f, 4.0f);
-			static constexpr int kDefault[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06 };
+			static constexpr int kDefault[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30 };
 			for (int i = 0; i < kKeys; ++i) {
 				const int k = static_cast<int>(Read(L"Keys", kKeyIds[i], static_cast<float>(kDefault[i])));
 				g_keys[i] = k > 0 && k < 0x100 ? k : kDefault[i];

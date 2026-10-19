@@ -1404,4 +1404,13 @@ namespace bo3z::gen
 		SpellcraftDef{ "mammothlmg", "Voidcall", 0x1AF2CC, 0xB3FFF2, 9, 0, 1100.0f, 30.0f, 300.0f, 1, 0.0f, 2, 0.0f, 8, 9, "Singularity", 1200.0f, 600.0f, "A slow void orb that drags the dead in. Charged: a black hole that pulls them together and collapses.", 0xBBD, 0xBBE },
 	} };
 	inline constexpr std::uint32_t kArtIceShell = 0xBC0, kArtRoots = 0xBC1, kArtBurn = 0xBC2, kArtPoison = 0xBC3;  // status looks on the struck
+	struct BowDef { std::string_view id, label, text, element; int spellRow, tier; float share; std::uint32_t color, weap, ammo; };  // element: its emblem (bw_<element>.png)
+	inline constexpr std::array<BowDef, 6> kBows{ {
+		BowDef{ "emberstring", "Emberstring", "Charred horn strung with a thread of living flame. Its arrows set the dead burning.", "fire", 1, 1, 0.38f, 0xFF6B14, 0xC11, 0xC12 },
+		BowDef{ "rimehorn", "Rimehorn", "Glacier-blue bone from the Throat of the World. Its arrows freeze the dead where they stand.", "frost", 2, 1, 0.36f, 0x8CD8FF, 0xC14, 0xC15 },
+		BowDef{ "stormreach", "Stormreach", "Storm-blue steel that hums before the rain. Its arrows leap from one of the dead to the next.", "shock", 3, 1, 0.34f, 0x8C7FFF, 0xC17, 0xC18 },
+		BowDef{ "skyhowl", "Skyhowl", "Pale ash strung with a captured gale, like the Tongues' storm-horns. Its arrows burst into a howling wind that hurls the dead away - drawn full, the bow itself looses a blast of wind that flings everything before you.", "wind", 6, 2, 0.36f, 0x8CFFD8, 0xC24, 0xC25 },
+		BowDef{ "dawnspire", "Dawnspire", "Sun-gilded bronze of the old Tongues. Its arrows sear the dead and stagger them.", "sun", 8, 2, 0.42f, 0xFFCC4C, 0xC1D, 0xC1E },
+		BowDef{ "thirstbow", "Thirstbow", "Blood-dark yew that drinks what it strikes. Every hit gives you back a little life.", "blood", 5, 2, 0.4f, 0xE51E28, 0xC20, 0xC21 },
+	} };
 }

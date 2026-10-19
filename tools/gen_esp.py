@@ -193,6 +193,38 @@ for w in S['weapons']['rows']:
             subs.append(sub(name, b))
         recs['WEAP'].append(record('WEAP', fid('WEAP', w['id']), subs))
 
+# the Echo Altar's bows (sheets/bows.json): Skyrim's bow (its draw animation - and any bow animation mod), our model, an
+# arrow on the string; the shot that leaves is ours (src/Gun.cpp Bows: the element's energy arrow, its trail and burst), so
+# the bow's own arrow is harmless and gone at once (no damage, a range of a few units, an empty model)
+NOCK = {'fire': 'Weapons\\Daedric\\DaedricArrow.nif', 'frost': 'Weapons\\Glass\\GlassArrow.nif', 'shock': 'DLC02\\Weapons\\Stahlrim\\StahlrimArrow.nif',
+        'wind': 'Weapons\\BoundWeapons\\BoundArrow.nif', 'sun': 'DLC01\\Weapons\\Auriel\\AurielsArrow.nif', 'blood': 'DLC01\\Weapons\\Auriel\\AurielsArrowBlood.nif'}
+for bw in S['bows']['rows']:
+    pd = bytearray(tsub('proj_arrow', 'DATA'))
+    struct.pack_into('<f', pd, 4, 0.0)                 # no drop
+    struct.pack_into('<f', pd, 8, 5200.0)              # speed
+    struct.pack_into('<f', pd, 12, 10.0)               # range: gone at once (ours flies instead)
+    struct.pack_into('<I', pd, 16, 0)                  # no light
+    recs['PROJ'].append(record('PROJ', fid('PROJ', 'bowarrow_' + bw['id']), [
+        sub('EDID', z('UN_BowArrowProj_' + bw['id'])), sub('OBND', tsub('proj_arrow', 'OBND')), sub('FULL', z(bw['label'] + ' Arrow')),
+        sub('MODL', z('Interface\\Logo\\logo.nif')), sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', tsub('proj_arrow', 'VNAM'))]))
+    ad = struct.pack('<IIfIf', fid('PROJ', 'bowarrow_' + bw['id']), 0x4, 0.0, 0, 0.0)   # projectile, flags (an arrow, not a bolt), damage 0
+    recs['AMMO'].append(record('AMMO', fid('AMMO', 'bowarrow_' + bw['id']), [
+        sub('EDID', z('UN_BowArrow_' + bw['id'])), sub('OBND', tsub('ammo_iron', 'OBND')), sub('FULL', z(bw['label'] + ' Arrow')),
+        sub('MODL', z(NOCK[bw['element']])), sub('YNAM', tsub('ammo_iron', 'YNAM')), sub('ZNAM', tsub('ammo_iron', 'ZNAM')),
+        sub('KSIZ', tsub('ammo_iron', 'KSIZ')), sub('KWDA', tsub('ammo_iron', 'KWDA')), sub('DATA', ad)]))
+    subs = []
+    for name, hx in T['weap_longbow']['subs']:
+        b = bytes.fromhex(hx)
+        if name == 'EDID': b = z('UN_Bow_' + bw['id'])
+        elif name == 'FULL': b = z(bw['label'])
+        elif name == 'MODL': b = z('CurseOfAlduin\\bow\\' + bw['id'] + '.nif')
+        elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_bow_' + bw['id']))
+        elif name == 'MODT': continue
+        elif name == 'DESC': b = z(bw['text'])
+        elif name == 'DATA': b = struct.pack('<IfH', 0, 1.0, 0)
+        subs.append(sub(name, b))
+    recs['WEAP'].append(record('WEAP', fid('WEAP', 'bow_' + bw['id']), subs))
+
 for p in S['perks']['rows']:
     enit = bytearray(tsub('alch', 'ENIT'))
     struct.pack_into('<iIIf', enit, 0, 0, 0x1, 0, 0.0)       # value 0, no auto-calc, no addiction
@@ -496,8 +528,9 @@ def guide_text():
            p("Watch the dead for tokens: a skull (Insta-Kill), a coin (Double Points), a falling star (it destroys every corpse risen tonight) and a chest (a Fire Sale at the altar)."),
            "[pagebreak]", h("The Echo Altar"),
            p("Every city has one. Look into its star and press Activate. Its menu does not stop the night."),
-           p("<b>Call a spell</b> - the altar turns and gives you one of the spells of the fallen. Each call costs more than the last until dawn."),
-           p("<b>Reforge</b> - make the spell in your hands stronger, three times over."),
+           p("<b>Call a spell</b> - the altar turns and gives you one of the spells of the fallen. Each call costs more than the last until dawn. You carry two of its spells; a third asks which one it replaces."),
+           p("<b>Call a bow</b> - the altar's second wheel (B, or the right trigger). Six elemental bows: fire, frost, storm, wind, sun and blood. You carry one; a new one takes its place."),
+           p("<b>Reforge</b> - make the spell or bow in your hands stronger, three times over. A reforged bow's arrows pierce, then fly three at once."),
            p("<b>Perks</b> - lasting gifts. You carry five at most."),
            p("<b>Trials</b> - the quest that wakes the altar. It offers five; take up any three, in any order (keys 6 to 0, or the shoulder buttons and D-pad up). "
              "When three are done the city's Barrow-Jarl rises at night near the altar. Slay it and the city is safe for good. Skyrim's difficulty sets how hard the trials are."),

@@ -370,6 +370,9 @@ namespace bo3z
 				if (a_s->OpenRecord('SPLV', 2)) {  // (2: the 200-spell Coffer; the 150-spell levels are dropped)
 					a_s->WriteRecordData(lv.data(), static_cast<std::uint32_t>(lv.size()));
 				}
+				if (const auto bl = Bows::Levels(); a_s->OpenRecord('BWLV', 1)) {  // the altar's bows: how far each is reforged
+					a_s->WriteRecordData(bl.data(), static_cast<std::uint32_t>(bl.size()));
+				}
 				if (a_s->OpenRecord('CRS2', 1)) {  // (ten rites a city: marks a save made with them)
 					const std::uint32_t one = 1;
 					a_s->WriteRecordData(&one, sizeof(one));
@@ -405,6 +408,10 @@ namespace bo3z
 							id = a_s->ResolveFormID(id, n) ? n : 0;
 						}
 						Director::Unshelter(ids);
+					} else if (type == 'BWLV' && version == 1) {
+						std::vector<std::uint8_t> bl(length);
+						a_s->ReadRecordData(bl.data(), length);
+						Bows::SetLevels(bl);
 					} else if (type == 'SPLV' && version == 2) {
 						std::vector<std::uint8_t> lv(length);
 						a_s->ReadRecordData(lv.data(), length);
@@ -425,7 +432,7 @@ namespace bo3z
 					Migrate();
 				}
 			}
-			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}); }
+			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}), Bows::SetLevels({}); }
 		}
 
 		void InstallCoSave()
@@ -591,11 +598,29 @@ namespace bo3z
 				return;
 			}
 			a_points *= PowerUps::PointsMult();
+			// (Noah: too many septims) every earning - kills, trials, rounds, the altars - pays 80%; the fractions carry over
+			static float carry = 0;
+			const float  paid = a_points * 0.8f + carry;
+			a_points = static_cast<int>(paid);
+			carry = paid - static_cast<float>(a_points);
+			if (a_points <= 0) {
+				return;
+			}
 			Save::Set(gen::kAV_points, Get() + a_points);
 			std::scoped_lock l(Hud::Lock());
 			auto& h = Hud::Edit();
 			h.lastGain = a_points;
 			h.gainTime = 1.0f;
+		}
+		void Refund(int a_points)  // money back, exactly (not an earning: no 80%, no Double Points)
+		{
+			if (a_points <= 0) {
+				return;
+			}
+			Save::Set(gen::kAV_points, Get() + a_points);
+			std::scoped_lock l(Hud::Lock());
+			Hud::Edit().lastGain = a_points;
+			Hud::Edit().gainTime = 1.0f;
 		}
 		bool Spend(int a_points)
 		{

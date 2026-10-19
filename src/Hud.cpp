@@ -23,7 +23,8 @@ namespace bo3z
 		std::array<ID3D11ShaderResourceView*, gen::kPerks.size()> g_perkIcons{};
 		std::array<ID3D11ShaderResourceView*, gen::kGuns.size()>  g_weaponIcons{};
 		std::array<ID3D11ShaderResourceView*, 8>                  g_elementIcons{};  // the Coffer spells' element emblems (el_<element>.png)
-		std::array<std::array<ID3D11ShaderResourceView*, 8>, 5>   g_schoolIcons{};   // ...their school's sigil in the element's colour (sc_<school>_<element>.png)
+		std::array<std::array<ID3D11ShaderResourceView*, 8>, 5>   g_schoolIcons{};
+		std::array<ID3D11ShaderResourceView*, 16>                 g_bowIcons{};      // the altar's bows: their archery emblem in the element's colour (bw_<element>.png)   // ...their school's sigil in the element's colour (sc_<school>_<element>.png)
 		ID3D11ShaderResourceView* g_menuBg = nullptr;   // the main menu's backdrop (tools/cover.py, MENU=1)
 		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
 		ID3D11ShaderResourceView* g_mapIcons = nullptr;  // the world map's marker icons, an 8x8 atlas (tools/mapicons.py)
@@ -230,14 +231,19 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// ring (rim at 0.62 of the frame's half-width) tinted with the spell's colour, a hotter inner pass in its accent,
 		// 16 frames a second; then the medallion on top. R is the medallion's rim radius on screen.
 		// what a HUD id names: a weapon (0..), or one of the Coffer's spells (Arcana::kIdBase + its index)
-		std::string ArmsName(int id) { return id >= Arcana::kIdBase ? std::string(Arcana::Name(id - Arcana::kIdBase)) : id >= 0 && id < static_cast<int>(gen::kGuns.size()) ? std::string(gen::kGuns[id].label) : std::string(); }
-		std::uint32_t ArmsColor(int id) { return id >= Arcana::kIdBase ? Arcana::ElementColor(Arcana::ElementOf(id - Arcana::kIdBase)) : id >= 0 && id < static_cast<int>(gen::kGuns.size()) ? gen::kGuns[id].color : 0xC8A060; }
+		std::string ArmsName(int id) { return id >= Bows::kIdBase ? std::string(Bows::Name(id - Bows::kIdBase)) : id >= Arcana::kIdBase ? std::string(Arcana::Name(id - Arcana::kIdBase)) : id >= 0 && id < static_cast<int>(gen::kGuns.size()) ? std::string(gen::kGuns[id].label) : std::string(); }
+		std::uint32_t ArmsColor(int id) { return id >= Bows::kIdBase ? Bows::Color(id - Bows::kIdBase) : id >= Arcana::kIdBase ? Arcana::ElementColor(Arcana::ElementOf(id - Arcana::kIdBase)) : id >= 0 && id < static_cast<int>(gen::kGuns.size()) ? gen::kGuns[id].color : 0xC8A060; }
 
 		void DrawEmblem(ImDrawList* dl, int gun, ImVec2 c, float R, float alpha, float now, float flame = 1.0f)
 		{
 			ID3D11ShaderResourceView* iconTex = nullptr;
 			std::uint32_t             col = 0, acc = 0xFFFFFF;
-			if (gun >= Arcana::kIdBase) {  // a Coffer spell: its element's emblem
+			if (gun >= Bows::kIdBase) {  // one of the altar's bows: the archery emblem in its element's colour
+				const int b = gun - Bows::kIdBase;
+				col = Bows::Color(b);
+				acc = ((std::min(255u, ((col >> 16) & 0xFF) + 90)) << 16) | ((std::min(255u, ((col >> 8) & 0xFF) + 90)) << 8) | std::min(255u, (col & 0xFF) + 90);
+				iconTex = b >= 0 && b < static_cast<int>(g_bowIcons.size()) ? g_bowIcons[b] : nullptr;
+			} else if (gun >= Arcana::kIdBase) {  // a Coffer spell: its element's emblem
 				const int el = Arcana::ElementOf(gun - Arcana::kIdBase);
 				col = Arcana::ElementColor(el);
 				acc = ((std::min(255u, ((col >> 16) & 0xFF) + 90)) << 16) | ((std::min(255u, ((col >> 8) & 0xFF) + 90)) << 8) | std::min(255u, (col & 0xFF) + 90);
@@ -260,7 +266,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// flame; twice, a brighter, faster flame in a glow; three times (the last), all of that with a ring of runes
 			// turning round it and sparks circling, the whole emblem breathing.
 			int forge = 1;
-			if (gun >= Arcana::kIdBase) {
+			if (gun >= Bows::kIdBase) {
+				forge = std::clamp(Bows::Level(gun - Bows::kIdBase), 0, 3);
+				if (forge == 0) {
+					flame = 0.0f;
+				}
+			} else if (gun >= Arcana::kIdBase) {
 				forge = std::clamp(Arcana::Level(gun - Arcana::kIdBase), 0, 3);
 				if (forge == 0) {
 					flame = 0.0f;
@@ -1295,6 +1306,30 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					card(s.handSpell[0], s.handCost[0], { a.x, a.y - 60 * k }, { b.x, b.y - 60 * k }, true, "LEFT HAND");
 				}
 			}
+			// The altar's bow in hand: its card in the dock (its emblem aflame with its reforging, its name), and while it
+			// is drawn a thin ring round the crosshair filling in the element's colour, bright when the draw is full
+			if (s.bowHeld >= 0 && !spellHands) {
+				const int    id = Bows::kIdBase + s.bowHeld;
+				const auto   bc = ArmsColor(id);
+				const ImU32  ecol = IM_COL32((bc >> 16) & 0xFF, (bc >> 8) & 0xFF, bc & 0xFF, 255);
+				const ImVec2 a{ size.x - 400 * k, size.y - 158 * k }, b{ size.x - 40 * k, size.y - 106 * k };
+				const float  rr = (b.y - a.y) * 0.5f;
+				dl->AddRectFilled(a, b, IM_COL32(8, 8, 10, 175), rr);
+				dl->AddRect(a, b, Fade(ecol, 0.55f), rr, 0, 1.2f * k);
+				DrawEmblem(dl, id, { a.x + rr, (a.y + b.y) * 0.5f }, rr - 6 * k, 1.0f, now, 0.9f);
+				Txt(dl, g_body, 12 * k, { a.x + rr * 2 + 6 * k, a.y + 7 * k }, Fade(ecol, 0.9f), "BOW");
+				Txt(dl, g_title, 22 * k, { a.x + rr * 2 + 6 * k, a.y + 22 * k }, kParch, ArmsName(id));
+				if (s.bowDraw > 0.02f) {
+					const ImVec2 cc{ size.x * 0.5f, size.y * 0.5f };
+					const float  R = 30 * k, a0 = -RE::NI_PI / 2, a1 = a0 + 2 * RE::NI_PI * std::clamp(s.bowDraw, 0.0f, 1.0f);
+					const bool   full = s.bowDraw >= 0.98f;
+					dl->AddCircle(cc, R, IM_COL32(20, 16, 12, 120), 96, 3 * k);
+					dl->PathArcTo(cc, R, a0, a1, 96);
+					dl->PathStroke(Fade(ecol, full ? 0.25f : 0.12f), 0, 9 * k);
+					dl->PathArcTo(cc, R, a0, a1, 96);
+					dl->PathStroke(full ? IM_COL32(255, 250, 235, 255) : Fade(ecol, 0.9f), 0, 2.2f * k);
+				}
+			}
 			// Shout card, bottom-right under the spell / weapon dock (Noah: Nordic) - a carved iron plate cut at the corners
 			// like a Nord shield-band, bronze-rimmed with knotwork studs; at its left a round iron shield bearing the three
 			// claw-strokes of a Word Wall (the Thu'um), its bronze rim draining as the shout recovers; the shout's name in
@@ -2050,7 +2085,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					tick = std::max(0.0f, tick - dt * 6.0f);
 					const float ny = tip.y + 34 * k;
-					TxtC(dl, g_title, std::max(17.0f, R / k * 0.27f) * k, c.x, ny, Fade(IM_COL32(236, 228, 255, 255), 0.75f + 0.25f * (1.0f - tick)), ArmsName(Arcana::kIdBase + front), 2 * k, violet);
+					TxtC(dl, g_title, std::max(17.0f, R / k * 0.27f) * k, c.x, ny, Fade(IM_COL32(236, 228, 255, 255), 0.75f + 0.25f * (1.0f - tick)), ArmsName((s.rollBow ? Bows::kIdBase : Arcana::kIdBase) + front), 2 * k, violet);
 				} else if (s.rollPhase == 3 && s.rollGun >= 0) {
 					// won: the emblem leaps up out of the reel, a shockwave and a crown of light rays break from it, sparks
 					// fall away; then it hangs there, breathing, inside a slow ring of runes
@@ -2090,7 +2125,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					(void)pop;  // (the spell itself hangs in the crown, in 3D)
 					// a legendary spell (the strongest tier): a crown of gold fire over it and its rank in burning gold
-					const bool legend = s.rollGun >= Arcana::kIdBase && Arcana::TierOf(s.rollGun - Arcana::kIdBase) >= 3;
+					const bool legend = s.rollGun >= Arcana::kIdBase && s.rollGun < Bows::kIdBase && Arcana::TierOf(s.rollGun - Arcana::kIdBase) >= 3;
 					if (legend) {
 						const float lp = 0.75f + 0.25f * std::sin(now * 4.0f);
 						glow(at, R * 2.6f * lp, IM_COL32(255, 196, 70, 255), 0.55f);
@@ -2116,7 +2151,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (s.perkMenu) {
 				const float w = 470 * k;
 				const bool  shout = s.shrineShout >= 0 && s.shrineShout < static_cast<int>(gen::kShouts.size());
-				const float h = (shout ? 610 : 532) * k + 86 * k;  // (+ the dragon's bond)
+				const float h = (shout ? 610 : 532) * k + 86 * k + 78 * k + (s.chooseOn ? 52 * k : 0.0f);  // (+ the bow wheel)  // (+ the dragon's bond, + a spell to choose)
 				const ImVec2 a{ size.x - w - 36 * k, std::max(24 * k, size.y * 0.5f - h * 0.5f - 30 * k) }, b{ a.x + w, a.y + h };
 				Panel(dl, a, b, k, 0.92f);
 				const float cx = (a.x + b.x) * 0.5f;
@@ -2133,19 +2168,53 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->AddCircleFilled(coin, 7 * k, Fade(pc, 0.9f));
 					dl->AddCircle(coin, 4.5f * k, IM_COL32(60, 40, 20, 200), 0, 1.3f * k);
 				};
-				// [1] roll a spell
+				// [1] roll a spell - or, a third one won, the choice of which of your two it replaces
+				if (s.chooseOn) {
+					Txt(dl, g_title, 21 * k, { L, y + 2 * k }, kParch, "A THIRD SPELL: " + ArmsName(Arcana::kIdBase + s.chooseNew));
+					Txt(dl, g_body, 16 * k, { L, y + 32 * k }, IM_COL32(196, 182, 160, 235), "You carry two of the altar's spells. Give one back:");
+					float cy = y + 60 * k;
+					const std::string keys[3] = { g_padLast ? std::string("X") : Settings::KeyName(0), g_padLast ? std::string("Y") : Settings::KeyName(1), g_padLast ? std::string("B") : Settings::KeyName(4) };
+					for (int q = 0; q < 2; ++q) {
+						const int idx = q == 0 ? s.chooseA : s.chooseB;
+						if (idx < 0) continue;
+						keyCap({ L, cy }, keys[q], true);
+						DrawEmblem(dl, Arcana::kIdBase + idx, { L + 52 * k, cy + 13 * k }, 13 * k, 1.0f, now, 0.5f);
+						Txt(dl, g_body, 18 * k, { L + 74 * k, cy + 2 * k }, IM_COL32(236, 222, 196, 255), "Replace " + ArmsName(Arcana::kIdBase + idx) + (Arcana::Level(idx) > 0 ? "  (its reforging is lost)" : ""));
+						cy += 34 * k;
+					}
+					keyCap({ L, cy }, keys[2], true);
+					Txt(dl, g_body, 18 * k, { L + 36 * k, cy + 2 * k }, IM_COL32(200, 186, 160, 235), "Keep yours  -  half the roll back (" + std::to_string(s.chooseRefund) + ")");
+					y += 166 * k;
+				} else
 				{
 					const float R = 46 * k;
 					rollOrb({ L + R, y + R + 4 * k }, R);
 					const float tx = L + 2 * R + 16 * k;
 					keyCap({ tx, y + 4 * k }, g_padLast ? std::string("X") : Settings::KeyName(0), s.rollPhase == 0);
-					Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? "CALL A SPELL" : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? "THE SPELLS TURN..." : ArmsName(s.rollGun));
+					Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? "CALL A SPELL" : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? (s.rollBow ? "THE BOWS TURN..." : "THE SPELLS TURN...") : ArmsName(s.rollGun));
 					Txt(dl, g_body, 17 * k, { tx, y + 38 * k }, IM_COL32(196, 182, 160, 235),
-						s.rollPhase == 3 ? "Activate the shrine to take it" : "Every spell you lack has an equal chance");
+						s.rollPhase == 3 ? (s.rollBow ? "Activate the altar to take it - your bow goes back" : "Activate the shrine to take it") : "Two of the altar's spells at a time");
 					if (s.rollPhase == 0) {
 						price(y + 66 * k, s.rollCost, s.points >= s.rollCost);
 					}
 					y += 2 * R + 22 * k;
+				}
+				Divider(dl, cx, y, w * 0.30f, k, 0.6f);
+				y += 14 * k;
+				// [1b] the bow wheel: one elemental bow at a time
+				{
+					const bool idle = s.rollPhase == 0;
+					keyCap({ L, y + 2 * k }, g_padLast ? std::string("RT") : Settings::KeyName(6), idle);
+					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "CALL A BOW");
+					if (s.bowCarried >= 0) {
+						DrawEmblem(dl, Bows::kIdBase + s.bowCarried, { L + 200 * k, y + 15 * k }, 12 * k, 1.0f, now, 0.5f);
+						Txt(dl, g_body, 16 * k, { L + 218 * k, y + 6 * k }, spellCol(Bows::kIdBase + s.bowCarried, 1.0f), ArmsName(Bows::kIdBase + s.bowCarried));
+					}
+					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235), s.bowCarried >= 0 ? "A new one takes your bow's place" : "Fire, frost, storm and more - one at a time");
+					if (idle) {
+						price(y + 30 * k, s.bowRollCost, s.points >= s.bowRollCost);
+					}
+					y += 64 * k;
 				}
 				Divider(dl, cx, y, w * 0.30f, k, 0.6f);
 				y += 14 * k;
@@ -2154,13 +2223,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const int  act = s.activeSlot >= 0 && s.activeSlot < s.slotCount ? s.activeSlot : -1;
 					const int  gw = act >= 0 ? s.slotGun[act] : -1;
 					const int  sp = gw >= 0 ? -1 : (s.handSpell[1] >= 0 ? s.handSpell[1] : s.handSpell[0]);  // else a Coffer spell in hand
-					const int  g = gw >= 0 ? gw : sp >= 0 ? Arcana::kIdBase + sp : -1;
-					const int  lvl = gw >= 0 ? std::clamp(s.slotLevel[act], 0, gen::kForgeMax) : sp >= 0 ? Arcana::Level(sp) : 0;
+					const int  g = s.bowHeld >= 0 ? Bows::kIdBase + s.bowHeld : gw >= 0 ? gw : sp >= 0 ? Arcana::kIdBase + sp : -1;
+					const int  lvl = s.bowHeld >= 0 ? Bows::Level(s.bowHeld) : gw >= 0 ? std::clamp(s.slotLevel[act], 0, gen::kForgeMax) : sp >= 0 ? Arcana::Level(sp) : 0;
 					const bool can = g >= 0 && lvl < gen::kForgeMax;
 					keyCap({ L, y + 2 * k }, g_padLast ? std::string("Y") : Settings::KeyName(1), can);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "REFORGE");
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235),
-						g < 0 ? "Hold a spell to reforge it" : ArmsName(g) + (lvl >= gen::kForgeMax ? "  -  ascended" : "  -  more power, less magicka"));
+						g < 0 ? "Hold a spell or bow to reforge it" : ArmsName(g) + (lvl >= gen::kForgeMax ? "  -  ascended" : s.bowHeld >= 0 ? (lvl == 0 ? "  -  more power" : lvl == 1 ? "  -  arrows that pierce" : "  -  three arrows at once") : "  -  more power, less magicka"));
 					for (int q = 0; q < gen::kForgeMax; ++q) {  // the forge marks
 						const ImVec2 pc{ L + 150 * k + q * 18 * k, y + 14 * k };
 						dl->AddQuadFilled({ pc.x, pc.y - 6 * k }, { pc.x + 5 * k, pc.y }, { pc.x, pc.y + 6 * k }, { pc.x - 5 * k, pc.y }, q < lvl ? spellCol(g, 1.0f) : IM_COL32(60, 52, 46, 220));
@@ -4028,6 +4097,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (SUCCEEDED(DirectX::CreateWICTextureFromFile(g_device, path.c_str(), nullptr, &g_weaponIcons[i]))) {
 					++wicons;
 				}
+			}
+			for (int b = 0; b < Bows::Count() && b < static_cast<int>(g_bowIcons.size()); ++b) {  // the altar's bows' emblems
+				const std::string_view el = Bows::Element(b);
+				const auto path = L"Data\\Interface\\CurseOfAlduin\\bw_" + std::wstring(el.begin(), el.end()) + L".png";
+				DirectX::CreateWICTextureFromFile(g_device, path.c_str(), nullptr, &g_bowIcons[b]);
 			}
 			for (int e = 0; e < 8; ++e) {
 				const std::string_view n = Arcana::ElementName(e);
