@@ -1,4 +1,5 @@
 #include "BO3Z.h"
+#include "Codex.h"
 #include <sstream>
 
 #include <imgui.h>
@@ -34,6 +35,7 @@ namespace bo3z
 		ID3D11ShaderResourceView* g_cursorTex = nullptr;  // Noah's cursor: Moonlit Spirit, 8 frames of 128 px side by side (cursor_moonlit.png)    // nine-slice panel: black field, iron and bronze border (tools/uiart.py)
 		ID3D11ShaderResourceView* g_divider = nullptr;  // bronze line with a winged diamond
 		std::atomic<int>          g_clicks{ 0 };        // left clicks since the last frame (menus)
+		std::atomic<int>          g_cxScroll{ 0 }, g_cxChapter{ 0 }, g_cxBook{ 0 };  // the Codex: wheel / keys since the last frame
 		std::atomic<bool>         g_padLast{ false };   // the last thing touched was a controller: show its buttons
 		std::atomic<int>          g_padMove{ 0 }, g_padAccept{ 0 }, g_padBack{ 0 }, g_padSide{ 0 }, g_wheel{ 0 };  // main menu: pad / arrow keys since the last frame
 		std::string               g_devPick;            // dev: a main-menu word to press as a click would (menupick)
@@ -4149,6 +4151,268 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			return true;
 		}
 
+
+		// ---- The Codex (Noah: the lore and the guide easier to read than a book): reading either book opens this over
+		// Skyrim's book, which is hidden: a tab per book, its chapters down the left, the chapter on a parchment page with
+		// its woodcut. Wheel or W/S scroll, A/D or the list change chapter, Q/E or the tabs change book, Esc closes.
+		int                       g_cxOpenBook = -1;  // the book being read (-1: none)
+		int                       g_cxCh = 0;         // its chapter (index into codex::kChapters)
+		float                     g_cxY = 0, g_cxYGoal = 0, g_cxH = 0;
+		ID3D11ShaderResourceView* g_cxPaper = nullptr;
+		std::unordered_map<std::string, std::pair<ID3D11ShaderResourceView*, ImVec2>> g_cxArt;
+		int CodexBookOf(const RE::TESObjectBOOK* a_book)
+		{
+			if (!a_book || !a_book->GetFile(0) || a_book->GetFile(0)->GetFilename() != gen::kPlugin) {
+				return -1;
+			}
+			const auto local = a_book->GetLocalFormID();
+			return local == gen::kDirgeBook ? 0 : local == gen::kGuideBook ? 1 : -1;
+		}
+		std::vector<int> CodexChapters(int a_book)
+		{
+			std::vector<int> out;
+			for (int i = 0; i < static_cast<int>(codex::kChapters.size()); ++i) {
+				if (codex::kChapters[i].book == a_book) {
+					out.push_back(i);
+				}
+			}
+			return out;
+		}
+
+		// a paragraph with <b> and <i>, wrapped word by word; returns its height
+		float RichText(ImDrawList* dl, std::string_view a_text, ImVec2 a_at, float a_width, float px, bool a_draw)
+		{
+			constexpr ImU32 kInk = IM_COL32(44, 30, 20, 255), kBold = IM_COL32(122, 26, 18, 255), kItal = IM_COL32(86, 62, 38, 255);
+			bool  bold = false, ital = false;
+			float x = 0, y = 0;
+			const float lineH = px * 1.42f;
+			std::string word;
+			auto flush = [&](bool a_space) {
+				if (word.empty()) {
+					if (a_space) x += Measure(g_body, px, " ").x;
+					return;
+				}
+				ImFont*     f = bold ? g_title : g_body;
+				const float w = Measure(f, px, word).x;
+				if (x > 0 && x + w > a_width) {
+					x = 0, y += lineH;
+				}
+				if (a_draw) {
+					dl->AddText(f, px, { a_at.x + x, a_at.y + y }, bold ? kBold : ital ? kItal : kInk, word.c_str());
+				}
+				x += w;
+				if (a_space) x += Measure(g_body, px, " ").x;
+				word.clear();
+			};
+			for (std::size_t i = 0; i < a_text.size(); ++i) {
+				const char c = a_text[i];
+				if (c == '<') {
+					const auto end = a_text.find('>', i);
+					if (end != std::string_view::npos) {
+						const auto tag = a_text.substr(i, end - i + 1);
+						flush(false);
+						if (tag == "<b>") bold = true;
+						else if (tag == "</b>") bold = false;
+						else if (tag == "<i>") ital = true;
+						else if (tag == "</i>") ital = false;
+						i = end;
+						continue;
+					}
+				}
+				if (c == ' ') {
+					flush(true);
+				} else {
+					word += c;
+				}
+			}
+			flush(false);
+			return y + lineH;
+		}
+
+		void DrawCodex(ImVec2 size, float now, int clicks)
+		{
+			auto*       dl = ImGui::GetForegroundDrawList();
+			const float k = size.y / 1080.0f;
+			const ImVec2 cur = g_cursor;
+			auto hover = [&](ImVec2 a, ImVec2 b) { return cur.x >= a.x && cur.x <= b.x && cur.y >= a.y && cur.y <= b.y; };
+			bool click = clicks > 0;
+			// input since the last frame
+			if (const int b = g_cxBook.exchange(0); b != 0) {
+				g_cxOpenBook = (g_cxOpenBook + (b > 0 ? 1 : 1)) % 2, g_cxCh = CodexChapters(g_cxOpenBook).front(), g_cxY = g_cxYGoal = 0;
+			}
+			auto chs = CodexChapters(g_cxOpenBook);
+			if (chs.empty()) {
+				return;
+			}
+			int at = static_cast<int>(std::find(chs.begin(), chs.end(), g_cxCh) - chs.begin());
+			if (at >= static_cast<int>(chs.size())) {
+				at = 0, g_cxCh = chs[0];
+			}
+			if (const int d = g_cxChapter.exchange(0); d != 0) {
+				at = std::clamp(at + d, 0, static_cast<int>(chs.size()) - 1);
+				g_cxCh = chs[at], g_cxY = g_cxYGoal = 0;
+			}
+			g_cxYGoal += g_cxScroll.exchange(0) * 70.0f * k;
+
+			// the room: near black, a cold vignette
+			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(7, 6, 9, 255));
+			dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.5f }, IM_COL32(28, 20, 40, 120), IM_COL32(28, 20, 40, 120), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
+			const float W = std::min(size.x - 60 * k, 1680 * k), H = 960 * k;
+			const ImVec2 o{ (size.x - W) * 0.5f, (size.y - H) * 0.5f };
+
+			// the two books, as tabs
+			const float tabY = o.y + 8 * k;
+			float       tx = o.x + 20 * k;
+			for (int b = 0; b < 2; ++b) {
+				const std::string t = Upper(std::string(codex::kBooks[b]));
+				const ImVec2      m = Measure(g_title, 26 * k, t);
+				const ImVec2      a{ tx, tabY }, z{ tx + m.x, tabY + m.y + 10 * k };
+				const bool        on = b == g_cxOpenBook, hv = hover(a, z);
+				Txt(dl, g_title, 26 * k, a, on ? kGold : hv ? IM_COL32(230, 215, 185, 255) : IM_COL32(150, 140, 125, 255), t, on ? 2.0f * k : 0, kGold);
+				if (on) {
+					dl->AddLine({ a.x, z.y }, { z.x, z.y }, kGold, 2 * k);
+				}
+				if (hv && click && !on) {
+					g_cxOpenBook = b, chs = CodexChapters(b), at = 0, g_cxCh = chs[0], g_cxY = g_cxYGoal = 0, click = false;
+				}
+				tx += m.x + 60 * k;
+			}
+			// close
+			{
+				const ImVec2 c{ o.x + W - 26 * k, tabY + 18 * k };
+				const bool   hv = hover({ c.x - 22 * k, c.y - 22 * k }, { c.x + 22 * k, c.y + 22 * k });
+				const ImU32  col = hv ? kGold : IM_COL32(170, 160, 140, 255);
+				dl->AddLine({ c.x - 11 * k, c.y - 11 * k }, { c.x + 11 * k, c.y + 11 * k }, col, 2.4f * k);
+				dl->AddLine({ c.x + 11 * k, c.y - 11 * k }, { c.x - 11 * k, c.y + 11 * k }, col, 2.4f * k);
+				if (hv && click) {
+					if (auto* q = RE::UIMessageQueue::GetSingleton()) {
+						q->AddMessage(RE::BookMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+					}
+					click = false;
+				}
+			}
+
+			const float top = o.y + 70 * k, bottom = o.y + H - 40 * k;
+			// the chapters
+			const float lw = 400 * k;
+			Panel(dl, { o.x, top }, { o.x + lw, bottom }, k);
+			float ly = top + 34 * k;
+			for (int j = 0; j < static_cast<int>(chs.size()); ++j) {
+				const auto&  ch = codex::kChapters[chs[j]];
+				const ImVec2 a{ o.x + 18 * k, ly - 6 * k }, z{ o.x + lw - 18 * k, ly + 34 * k };
+				const bool   on = j == at, hv = hover(a, z);
+				if (on || hv) {
+					dl->AddRectFilled(a, z, on ? IM_COL32(200, 160, 92, 46) : IM_COL32(255, 255, 255, 14), 4 * k);
+				}
+				if (on) {
+					dl->AddRectFilled(a, { a.x + 4 * k, z.y }, kGold);
+				}
+				TxtWrap(dl, g_title, 20 * k, { a.x + 16 * k, ly }, on ? kParch : hv ? IM_COL32(225, 212, 188, 255) : IM_COL32(165, 155, 138, 255), std::string(ch.title), lw - 70 * k, 1);
+				if (hv && click) {
+					at = j, g_cxCh = chs[j], g_cxY = g_cxYGoal = 0, click = false;
+				}
+				ly += 46 * k;
+			}
+
+			// the page
+			const ImVec2 pa{ o.x + lw + 24 * k, top }, pz{ o.x + W, bottom };
+			if (!g_cxPaper) {
+				static bool tried = false;
+				if (!tried) {
+					tried = true;
+					LoadTex("legend\\page_paper.jpg", &g_cxPaper, nullptr, nullptr);
+				}
+			}
+			if (g_cxPaper) {
+				dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_cxPaper)), pa, pz);
+			} else {
+				dl->AddRectFilledMultiColor(pa, pz, IM_COL32(236, 224, 194, 255), IM_COL32(230, 216, 184, 255), IM_COL32(214, 196, 158, 255), IM_COL32(222, 206, 170, 255));
+			}
+			dl->AddRect(pa, pz, IM_COL32(90, 64, 36, 255), 0, 0, 2 * k);
+			const auto& ch = codex::kChapters[g_cxCh];
+			const float mx = 70 * k, colW = std::min(pz.x - pa.x - 2 * mx, 900 * k);
+			const float cx = (pa.x + pz.x) * 0.5f, x0 = cx - colW * 0.5f;
+			const float viewTop = pa.y + 26 * k, viewBot = pz.y - 26 * k;
+			const float maxY = std::max(0.0f, g_cxH - (viewBot - viewTop));
+			g_cxYGoal = std::clamp(g_cxYGoal, 0.0f, maxY);
+			g_cxY += (g_cxYGoal - g_cxY) * std::min(1.0f, ImGui::GetIO().DeltaTime * 14.0f);
+			dl->PushClipRect({ pa.x, viewTop }, { pz.x, viewBot }, true);
+			float y = viewTop + 30 * k - g_cxY;
+			{
+				const std::string t(ch.title);
+				const float       tw = Measure(g_title, 38 * k, t).x;
+				dl->AddText(g_title, 38 * k, { cx - tw * 0.5f, y }, IM_COL32(70, 34, 20, 255), t.c_str());
+				y += 54 * k;
+				dl->AddLine({ cx - 160 * k, y }, { cx - 10 * k, y }, IM_COL32(110, 74, 40, 200), 1.5f * k);
+				dl->AddLine({ cx + 10 * k, y }, { cx + 160 * k, y }, IM_COL32(110, 74, 40, 200), 1.5f * k);
+				dl->AddQuadFilled({ cx, y - 6 * k }, { cx + 6 * k, y }, { cx, y + 6 * k }, { cx - 6 * k, y }, IM_COL32(122, 26, 18, 255));
+				y += 30 * k;
+			}
+			if (!ch.image.empty()) {
+				auto it = g_cxArt.find(std::string(ch.image));
+				if (it == g_cxArt.end()) {
+					ID3D11ShaderResourceView* t = nullptr;
+					float w = 0, h = 0;
+					LoadTex("..\\..\\Textures\\CurseOfAlduin\\Book\\" + std::string(ch.image) + ".png", &t, &w, &h);
+					it = g_cxArt.emplace(std::string(ch.image), std::make_pair(t, ImVec2{ w, h })).first;
+				}
+				if (auto* t = it->second.first; t && it->second.second.x > 0) {
+					const float w = std::min(colW * 0.7f, it->second.second.x * 1.4f * k), h = w * it->second.second.y / it->second.second.x;
+					dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(t)), { cx - w * 0.5f, y }, { cx + w * 0.5f, y + h });
+					y += h + 26 * k;
+				}
+			}
+			for (const auto& para : ch.paras) {
+				y += RichText(dl, para, { x0, y }, colW, 23 * k, true) + 16 * k;
+			}
+			g_cxH = y + g_cxY - viewTop + 30 * k;
+			dl->PopClipRect();
+			// more below / above
+			if (g_cxY < maxY - 2) {
+				dl->AddRectFilledMultiColor({ pa.x + 2, viewBot - 50 * k }, { pz.x - 2, viewBot }, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(60, 40, 20, 70), IM_COL32(60, 40, 20, 70));
+			}
+			// prev / next chapter along the bottom of the page
+			auto arrowBtn = [&](bool a_next) {
+				const bool ok = a_next ? at + 1 < static_cast<int>(chs.size()) : at > 0;
+				if (!ok) return;
+				const std::string t = a_next ? std::string(codex::kChapters[chs[at + 1]].title) + "  >" : "<  " + std::string(codex::kChapters[chs[at - 1]].title);
+				const ImVec2      m = Measure(g_title, 18 * k, t);
+				const ImVec2      a{ a_next ? pz.x - m.x - 24 * k : pa.x + 24 * k, bottom + 8 * k }, z{ a.x + m.x, a.y + m.y };
+				const bool        hv = hover(a, z);
+				Txt(dl, g_title, 18 * k, a, hv ? kGold : IM_COL32(170, 158, 138, 255), t);
+				if (hv && click) {
+					at += a_next ? 1 : -1, g_cxCh = chs[at], g_cxY = g_cxYGoal = 0, click = false;
+				}
+			};
+			arrowBtn(false);
+			arrowBtn(true);
+			TxtC(dl, g_body, 15 * k, o.x + lw * 0.5f, bottom + 10 * k, IM_COL32(140, 130, 115, 255), "Wheel / W S  scroll    A D  chapter    Q E  book    Esc  close");
+			if (cur.x >= 0) {
+				DrawPingCursor(dl, cur, k, now);
+			}
+		}
+
+		bool CodexOpen() { return g_cxOpenBook >= 0; }
+		// each frame: is one of our two books open in Skyrim's book menu? then the Codex shows in its place
+		bool CodexWanted(RE::UI* a_ui)
+		{
+			const bool book = a_ui && a_ui->IsMenuOpen(RE::BookMenu::MENU_NAME);
+			const int  which = book ? CodexBookOf(RE::BookMenu::GetTargetForm()) : -1;
+			if (which < 0) {
+				g_cxOpenBook = -1;
+				return false;
+			}
+			if (g_cxOpenBook < 0) {  // just opened: at the book picked, its first chapter (the scroll and keys from before forgotten)
+				g_cxOpenBook = which, g_cxCh = CodexChapters(which).front(), g_cxY = g_cxYGoal = 0;
+				g_cxScroll = 0, g_cxChapter = 0, g_cxBook = 0;
+				logger::info("hud: the Codex opens at {}", codex::kBooks[which]);
+			}
+			if (auto m = a_ui->GetMenu(RE::BookMenu::MENU_NAME); m && m->uiMovie && m->uiMovie->GetVisible()) {
+				m->uiMovie->SetVisible(false);  // Skyrim's book under ours never shows
+			}
+			return true;
+		}
+
 		bool InGame()
 		{
 			auto* ui = RE::UI::GetSingleton();
@@ -4222,6 +4486,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 			const bool mainMenu = uiM && uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) && (!popup || steamOver);
+			const bool codex = !mainMenu && CodexWanted(uiM);
 			// Skyrim's cursor never shows: ours (DrawPingCursor) is drawn in its place, on the main menu and in game
 			// (the world map moves Skyrim's cursor without its cursor menu: ours is drawn there too)
 			const bool cursorUp = uiM && (uiM->IsMenuOpen(RE::CursorMenu::MENU_NAME) || uiM->IsMenuOpen(RE::MapMenu::MENU_NAME));
@@ -4230,7 +4495,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					cm->uiMovie->SetVisible(false);
 				}
 			}
-			if (cursorUp || mainMenu) {  // (and Windows' own pointer stays hidden over the game: ours is the only one)
+			if (cursorUp || mainMenu || codex) {  // (and Windows' own pointer stays hidden over the game: ours is the only one)
 				::SetCursor(nullptr);
 			}
 			// the Tab menu (Skills / Magic / Items / Map), on its own: the party panel sits in its empty top-left corner
@@ -4299,7 +4564,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_veil = mainMenu ? 0.0f : want ? std::min(1.0f, g_veil + dt * 4.0f) : std::max(0.0f, g_veil - dt / 1.2f);
 			}
 			// (a menu with a pointer - the world map, the inventory - still draws: our cursor is the only one there)
-			if (((!InGame() && !mainMenu && !journal && !escJournal && !cursorUp) || (DevTools::HudOff() && !mainMenu)) && !g_filmOn && g_veil <= 0) {
+			if (((!InGame() && !mainMenu && !journal && !escJournal && !cursorUp && !codex) || (DevTools::HudOff() && !mainMenu && !codex)) && !g_filmOn && g_veil <= 0) {
 				if (static int m = 0; m++ % 1200 == 0) {
 					auto* ui = RE::UI::GetSingleton();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
@@ -4334,6 +4599,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			ImGui::NewFrame();
 			if (g_filmOn) {
 				DrawFilm(io.DisplaySize, dt);
+			} else if (codex) {
+				DrawCodex(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks);
 			} else if (mainMenu) {
 				DrawMenu(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks > 0);
 			} else if (journal || escJournal) {
@@ -4403,7 +4670,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 				}
 			}
-			if (cursorUp && !mainMenu && !g_filmOn && g_skCursor.x >= 0) {  // in Skyrim's own menus: ours, right where its cursor is
+			if (cursorUp && !mainMenu && !codex && !g_filmOn && g_skCursor.x >= 0) {  // in Skyrim's own menus: ours, right where its cursor is
 				DrawPingCursor(ImGui::GetForegroundDrawList(), g_skCursor, io.DisplaySize.y / 1080.0f, static_cast<float>(ImGui::GetTime()));
 			}
 			if (g_veil > 0 && !g_filmOn && !mainMenu) {
@@ -4535,6 +4802,40 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_padLast = a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad;
 			}
 			auto* ui = RE::UI::GetSingleton();
+			if (a_b && a_b->IsDown() && ui && g_cxOpenBook >= 0 && ui->IsMenuOpen(RE::BookMenu::MENU_NAME)) {  // the Codex
+				const auto id = a_b->GetIDCode();
+				const auto dev = a_b->GetDevice();
+				if (dev == RE::INPUT_DEVICE::kKeyboard) {
+					if (id == 0xC8 || id == 0x11) --g_cxScroll;        // up, W
+					else if (id == 0xD0 || id == 0x1F) ++g_cxScroll;   // down, S
+					else if (id == 0xC9) g_cxScroll -= 6;              // page up
+					else if (id == 0xD1) g_cxScroll += 6;              // page down
+					else if (id == 0xCB || id == 0x1E) --g_cxChapter;  // left, A
+					else if (id == 0xCD || id == 0x20) ++g_cxChapter;  // right, D
+					else if (id == 0x10 || id == 0x12) ++g_cxBook;     // Q, E
+				} else if (dev == RE::INPUT_DEVICE::kMouse) {
+					if (id == 8) g_cxScroll -= 1;
+					else if (id == 9) g_cxScroll += 1;
+				} else if (dev == RE::INPUT_DEVICE::kGamepad) {
+					if (id == 0x0001) --g_cxScroll;
+					else if (id == 0x0002) ++g_cxScroll;
+					else if (id == 0x0004) --g_cxChapter;
+					else if (id == 0x0008) ++g_cxChapter;
+					else if (id == 0x0100 || id == 0x0200) ++g_cxBook;  // the shoulders
+				}
+				return;
+			}
+			// F1, in the world: the Codex, at the Survivor's Guide
+			if (a_b && a_b->IsDown() && a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x3B && InGame()) {
+				SKSE::GetTaskInterface()->AddUITask([] {
+					auto* book = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(gen::kGuideBook, gen::kPlugin);
+					if (book && !RE::UI::GetSingleton()->IsMenuOpen(RE::BookMenu::MENU_NAME)) {
+						RE::BSString desc("");
+						RE::BookMenu::OpenBookMenu(desc, nullptr, nullptr, book, RE::NiPoint3{}, RE::NiMatrix3{}, 1.0f, true);
+					}
+				});
+				return;
+			}
 			if (!a_b || !a_b->IsDown() || !ui || !ui->IsMenuOpen(RE::MainMenu::MENU_NAME)) {
 				return;
 			}
