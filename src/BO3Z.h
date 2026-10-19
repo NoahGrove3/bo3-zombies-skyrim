@@ -413,6 +413,9 @@ namespace bo3z
 		void Allies(int a_kind, int a_count, float a_seconds, const RE::NiPoint3& a_at);       // the wonders' summons: 0 the barrow's bone warriors, 1 the Queen's spirit-wolves
 		bool IsAlly(RE::Actor* a_actor);
 		int  WonderHeld();                                     // the wonder weapon in your hands (-1)
+		bool WordSilenced(int a_w);                            // Stage 4: 0 GRAH (battle-fury), 1 DIR (death's refusal), 2 LEIN (the world answers)
+		bool CurseBroken();                                    // all three words silenced (Stage 5's rewards open)
+		void OnBearerSlain();                                  // a word's bearer fell (Director's champion with no city)
 	}
 
 	namespace Intro

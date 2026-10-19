@@ -1137,6 +1137,7 @@
   "LIGH:fx_wolfcrown_light": "0xc6d",
   "ARTO:fx_barrowhorn_hand": "0xc6e",
   "STAT:fx_barrowhorn_orb": "0xc6f",
-  "LIGH:fx_barrowhorn_light": "0xc70"
+  "LIGH:fx_barrowhorn_light": "0xc70",
+  "GLOB:echo_words": "0xc71"
  }
 }

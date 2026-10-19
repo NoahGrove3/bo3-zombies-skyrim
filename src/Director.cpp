@@ -603,7 +603,11 @@ namespace bo3z
 						Hud::Edit().bossName.clear();
 					}
 				}
-				Curse::OnChampionSlain(town);
+				if (town >= 0) {
+					Curse::OnChampionSlain(town);
+				} else {
+					Echo::OnBearerSlain();  // (a word's bearer: Stage 4)
+				}
 				return;
 			}
 			if (!g_boss.handle.get()) {  // its own bar while Grimmvar is away
@@ -1872,7 +1876,7 @@ namespace bo3z
 			Forms::Play(gen::Sound::champ_arrive);
 			Forms::PlayAt(gen::Sound::champ_enrage, c.get());
 			Hud::Banner(std::string(a_name) + " walks the night!", 5.0f);
-			logger::info("champion: {} risen in {} ({:.0f} health)", a_name, gen::kTowns[a_town], want);
+			logger::info("champion: {} risen in {} ({:.0f} health)", a_name, a_town >= 0 ? gen::kTowns[a_town] : std::string_view("the wilds"), want);
 			return true;
 		}
 		void EndNight() { SkipToDawn("THE CITY IS FREE - DAWN BREAKS"); }

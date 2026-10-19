@@ -41,7 +41,7 @@ def echo_ids(S):
     E = S.get('echo')
     if not E:
         return []
-    ids = [('BOOK', 'page_' + c['town']) for c in S['curse']['cities']] + [('GLOB', 'echo_' + k) for k in ('pages', 'parts', 'forged', 'held')]
+    ids = [('BOOK', 'page_' + c['town']) for c in S['curse']['cities']] + [('GLOB', 'echo_' + k) for k in ('pages', 'parts', 'forged', 'held', 'words')]
     ids += [('GLOB', 'echo_kill_' + p['id']) for p in E['parts'] if p['how'] == 'kill']
     ids += [('ACTI', 'rel_door_in'), ('ACTI', 'rel_door_out')] + [('ACTI', 'rel_ped_' + w['id']) for w in E['wonders']]
     ids += [('STAT', 'rel_room'), ('STAT', 'rel_relic')] + [('STAT', 'rel_gem_' + w['id']) for w in E['wonders']]

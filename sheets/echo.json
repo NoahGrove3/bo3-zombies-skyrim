@@ -33,6 +33,30 @@
   "Dawnstar": {"echo": "The Rime-Heart froze in the temple on the hill, where the priests of dreams went mad. Only death thaws it.", "where": "Go to Nightcaller Temple, on the hill east of Dawnstar. At night, cut down the dead around its door until the Rime-Heart thaws; then it is yours."},
   "Winterhold": {"echo": "Vrolund's right hand was taken north by his enemies and sealed under the snow, where the sanctum keeps it.", "where": "Vrolund's Right Gauntlet waits at the doors of Snow Veil Sanctum, south-east of Winterhold on the road toward Windhelm."}
  },
+ "words": {
+  "about": "Stage 4 (src/Words.cpp): the Three Words. Once all four wonders are forged, Alduin's three words must be silenced one after another, each at its own place in the wilds and only at night: come near and the word's siege begins (waves of its dead round the place), and when the last wave falls the word's bearer rises. Kill it and the word is silenced for good - a power that stays with you, and the next word wakes. Saved in UN_EchoWords (bit per word; bit 8: the arc told). waves/elites per wave, health: x a zombie's night health (like the Barrow-Jarls).",
+  "wakeRange": 3200, "leashRange": 6500,
+  "rows": [
+   {"id": "grah", "word": "GRAH", "meaning": "Battle", "site": "the Word Wall of Grah, in the Reach", "at": [-140739, 47973, -4353], "yaw": 148,
+    "bearer": {"row": "lich", "name": "Vokun-Grah, the War-Priest", "health": 9.0, "scale": 1.45},
+    "waves": [8, 10, 12], "elites": [1, 1, 2],
+    "wake": "GRAH. The first word shakes the ground under the Reach. A dragon priest who served Alduin in the Merethic Era answers it, and calls his barrow-dead to war around the wall that holds his word.",
+    "silenced": "The War-Priest falls and the word wall goes dark. GRAH is silenced: the battle-fury Alduin poured into the dead now runs in you.",
+    "power": "Battle-Fury: every weapon, bow, spell and wonder hits 15% harder."},
+   {"id": "dir", "word": "DIR", "meaning": "Death", "site": "the courtyard of Labyrinthian", "at": [-23574, 40679, -6478], "yaw": 186,
+    "bearer": {"row": "knight", "name": "Dir-Vaaldar, the Death-Thane", "health": 11.0, "scale": 1.5},
+    "waves": [10, 12, 14, 16], "elites": [1, 2, 2, 3],
+    "wake": "DIR. The second word lies under Labyrinthian, the great tomb of Bromjunaar, where the dragon cult laid its dead by the thousand. Every one of them hears it.",
+    "silenced": "The Death-Thane crumbles in the courtyard of Bromjunaar. DIR is silenced: death has a weaker grip on you now.",
+    "power": "Death's Refusal: the night's blows hurt you 20% less."},
+   {"id": "lein", "word": "LEIN", "meaning": "World", "site": "the summit of the Throat of the World", "at": [56044, -47760, 36055], "yaw": 0,
+    "bearer": {"row": "boss4", "name": "The Echo of Alduin", "health": 16.0, "scale": 1.0},
+    "waves": [10, 12, 14], "elites": [2, 2, 3],
+    "wake": "LEIN. The last word was shouted from the top of the world. Climb the Throat of the World at night: Alduin's echo still circles the summit, breathing his dead back into the world.",
+    "silenced": "The Echo of Alduin breaks apart over the summit and its shout dies on the wind. GRAH, DIR, LEIN - all three words are silenced. The World-Eater's curse is broken.",
+    "power": "The World Answers: your magicka returns half again as fast."}
+  ]
+ },
  "relic": {"wakeRange": 2600, "takeRange": 260, "guards": [3, 4, 4, 5, 6, 6], "elites": [0, 1, 1, 1, 2, 2]},
  "kill": {"radius": 3000, "n": [20, 25, 30, 35, 40, 50]},
  "stone": {"takeRange": 230},

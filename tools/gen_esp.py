@@ -562,6 +562,12 @@ def guide_text():
            p("<b>Frostbinder Gauntlets</b> - ice binds what it strikes; strike a bound foe and it shatters, cutting those round it. Unleashed: everything near you freezes, then bursts."),
            p("<b>Wolf Queen's Crown</b> - spirit-wolves run down the dead in pairs. Unleashed: the Queen howls and her spectral pack runs at your side."),
            p("<b>Horn of the Barrow-Jarls</b> - a war-cry hurls the dead back. Unleashed: the old war-host charges down the line in front of you."),
+           "[pagebreak]", h("The Three Words"),
+           p("When all four wonders are forged, Alduin's three words wake one after another: <b>GRAH</b> at the Word Wall of Grah in the Reach, <b>DIR</b> in the courtyard of Labyrinthian, "
+             "<b>LEIN</b> on the summit of the Throat of the World. Your compass marks the word that is awake."),
+           p("Go there at night. Its dead rise round you in waves; when the last wave falls, the word's bearer rises. Kill it and the word is silenced for good, and its power stays with you: "
+             "<b>GRAH</b> - everything you wield hits 15% harder; <b>DIR</b> - the night's blows hurt you 20% less; <b>LEIN</b> - your magicka returns half again as fast."),
+           p("Leave the place, or let dawn come, and the word falls quiet until you return. Silence all three and the curse of Alduin is broken."),
            "[pagebreak]", h("Falling"),
            p("At every dawn, and whenever an altar wakes, the day is saved. If you fall, you wake at that dawn. In a party, stand over a fallen friend and hold Activate to lift them."),
            p("Good luck. Stay out of the barrows after dark."), "</font>"]
@@ -578,7 +584,7 @@ for key, edid, name, text, model in (('dirge', 'UN_UndyingDirgeBook', 'The Curse
 # ---- Stage 2 (sheet: echo, src/Echo.cpp): the Echo Stones' pages, the hunt's globals, the Reliquary under High Hrothgar
 E = S['echo']
 WON = {w['id']: w for w in E['wonders']}
-for key in ['echo_pages', 'echo_parts', 'echo_forged', 'echo_held'] + ['echo_kill_' + q['id'] for q in E['parts'] if q['how'] == 'kill']:
+for key in ['echo_pages', 'echo_parts', 'echo_forged', 'echo_held', 'echo_words'] + ['echo_kill_' + q['id'] for q in E['parts'] if q['how'] == 'kill']:
     recs['GLOB'].append(record('GLOB', fid('GLOB', key), [sub('EDID', z('UN_' + ''.join(w.capitalize() for w in key.split('_')))), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 
 def how_text(q):

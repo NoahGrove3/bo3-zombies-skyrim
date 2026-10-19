@@ -1459,7 +1459,14 @@ namespace bo3z::gen
 		EchoPart{ "hb_cord", "The Horn's Cord", "Falkreath", 3, 6, 0, 6, 0.0f, 0.0f, 0.0f, 0.0f, 0 },
 	} };
 	inline constexpr std::array<std::uint32_t, 10> kEchoPages{ { 0xC31, 0xC32, 0xC33, 0xC34, 0xC35, 0xC36, 0xC37, 0xC38, 0xC39, 0xC3A } };  // The Broken Words, by town
-	inline constexpr std::uint32_t kEchoGlobPages = 0xC3B, kEchoGlobParts = 0xC3C, kEchoGlobForged = 0xC3D, kEchoGlobHeld = 0xC3E;
+	inline constexpr std::uint32_t kEchoGlobPages = 0xC3B, kEchoGlobParts = 0xC3C, kEchoGlobForged = 0xC3D, kEchoGlobHeld = 0xC3E, kEchoGlobWords = 0xC71;
+	struct WordDef { std::string_view id, word, meaning, site, wake, silenced, power, bearerRow, bearerName; float x, y, z, yaw, health, scale; std::array<int, 4> waves, elites; int nWaves; };
+	inline constexpr std::array<WordDef, 3> kWords{ {
+		WordDef{ "grah", "GRAH", "Battle", "the Word Wall of Grah, in the Reach", "GRAH. The first word shakes the ground under the Reach. A dragon priest who served Alduin in the Merethic Era answers it, and calls his barrow-dead to war around the wall that holds his word.", "The War-Priest falls and the word wall goes dark. GRAH is silenced: the battle-fury Alduin poured into the dead now runs in you.", "Battle-Fury: every weapon, bow, spell and wonder hits 15% harder.", "lich", "Vokun-Grah, the War-Priest", -140739.0f, 47973.0f, -4353.0f, 148.0f, 9.0f, 1.45f, { 8, 10, 12, 0 }, { 1, 1, 2, 0 }, 3 },
+		WordDef{ "dir", "DIR", "Death", "the courtyard of Labyrinthian", "DIR. The second word lies under Labyrinthian, the great tomb of Bromjunaar, where the dragon cult laid its dead by the thousand. Every one of them hears it.", "The Death-Thane crumbles in the courtyard of Bromjunaar. DIR is silenced: death has a weaker grip on you now.", "Death's Refusal: the night's blows hurt you 20% less.", "knight", "Dir-Vaaldar, the Death-Thane", -23574.0f, 40679.0f, -6478.0f, 186.0f, 11.0f, 1.5f, { 10, 12, 14, 16 }, { 1, 2, 2, 3 }, 4 },
+		WordDef{ "lein", "LEIN", "World", "the summit of the Throat of the World", "LEIN. The last word was shouted from the top of the world. Climb the Throat of the World at night: Alduin's echo still circles the summit, breathing his dead back into the world.", "The Echo of Alduin breaks apart over the summit and its shout dies on the wind. GRAH, DIR, LEIN - all three words are silenced. The World-Eater's curse is broken.", "The World Answers: your magicka returns half again as fast.", "boss4", "The Echo of Alduin", 56044.0f, -47760.0f, 36055.0f, 0.0f, 16.0f, 1.0f, { 10, 12, 14, 0 }, { 2, 2, 3, 0 }, 3 },
+	} };
+	inline constexpr float kWordWake = 3200.0f, kWordLeash = 6500.0f;
 	inline constexpr std::array<int, 6> kEchoGuards{ 3, 4, 4, 5, 6, 6 }, kEchoElites{ 0, 1, 1, 1, 2, 2 }, kEchoKillN{ 20, 25, 30, 35, 40, 50 };  // per Skyrim difficulty
 	inline constexpr float kEchoWake = 2600.0f, kEchoTake = 260.0f, kEchoKillRadius = 3000.0f, kEchoStoneTake = 230.0f;
 	inline constexpr float kEchoStoneX = 0.0f, kEchoStoneY = -380.0f;  // the Echo Stone on a freed altar (dressing: echo_stone)

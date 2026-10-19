@@ -596,6 +596,157 @@ namespace bo3z
 			}
 		}
 
+		// ---- Stage 4: the Three Words (sheet: echo.words) --------------------------------------------------------------
+		// Once all four wonders are forged, Alduin's words wake one after another. Each is fought at night at its place:
+		// come near and its siege begins (its waves of dead round the place), then its bearer rises; kill the bearer and
+		// the word is silenced for good, its power yours (Echo::WordSilenced), and the next word wakes.
+		constexpr int kWordCount = static_cast<int>(gen::kWords.size());
+		constexpr int kWordsTold = 1 << 8;
+		bool AllForged() { return (Read(gen::kEchoGlobForged) & ((1 << kWonders) - 1)) == (1 << kWonders) - 1; }
+		bool Silenced(int a_w) { return (Read(gen::kEchoGlobWords) >> a_w) & 1; }
+		int  NextWord()
+		{
+			if (!AllForged()) {
+				return -1;
+			}
+			for (int i = 0; i < kWordCount; ++i) {
+				if (!Silenced(i)) {
+					return i;
+				}
+			}
+			return -1;
+		}
+		RE::NiPoint3 WordAt(int a_w) { return { gen::kWords[a_w].x, gen::kWords[a_w].y, gen::kWords[a_w].z }; }
+		struct Siege
+		{
+			int                          word{ -1 };
+			int                          stage{ 0 };   // 0 asleep, 1 its waves, 2 its bearer walks
+			int                          wave{ 0 };
+			std::vector<RE::ActorHandle> dead;
+			float                        retry{ 0 };
+			int                          night{ -1 };
+			bool                         told{ false };
+		} g_siege;
+		void EndSiege(const char* a_why)
+		{
+			if (g_siege.stage != 0) {
+				logger::info("words: the siege of {} ends ({})", g_siege.word >= 0 ? gen::kWords[g_siege.word].word : "?", a_why);
+			}
+			g_siege.stage = 0, g_siege.wave = 0, g_siege.dead.clear();
+		}
+		void RaiseWave(RE::PlayerCharacter* a_p, int a_w)
+		{
+			const auto& W = gen::kWords[a_w];
+			const auto  at = WordAt(a_w);
+			const int   n = W.waves[g_siege.wave], el = W.elites[g_siege.wave];
+			for (int i = 0; i < n + el; ++i) {
+				const float a = 6.2832f * i / std::max(1, n + el) + 0.3f * g_siege.wave, r = 600.0f + 300.0f * (i % 3);
+				const auto  spot = Walkable(a_p, at + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 }, 600.0f);
+				if (auto h = Director::RaiseTrial(spot ? *spot : at, i >= n); h) {
+					g_siege.dead.push_back(h);
+				}
+			}
+			Forms::Play(gen::Sound::champ_arrive);
+			Hud::Banner(std::string(W.word) + " - WAVE " + std::to_string(g_siege.wave + 1) + " OF " + std::to_string(W.nWaves), 3.5f);
+			logger::info("words: {} wave {} risen ({} dead)", W.word, g_siege.wave + 1, g_siege.dead.size());
+		}
+		void TickWords(RE::PlayerCharacter* a_p, float a_dt)
+		{
+			const int w = NextWord();
+			if (w < 0) {
+				if (g_siege.stage != 0) {
+					EndSiege("no word left");
+				}
+				return;
+			}
+			// the arc told once: the moment the fourth wonder is forged (or the first load after it)
+			if (!(Read(gen::kEchoGlobWords) & kWordsTold)) {
+				Write(gen::kEchoGlobWords, Read(gen::kEchoGlobWords) | kWordsTold);
+				Forms::Play(gen::Sound::quest_start);
+				Hud::Lore("THE THREE WORDS",
+					"With the four wonders forged, the Tongues' altars hear Alduin's three words still ringing through Skyrim: GRAH, DIR, LEIN - Battle, Death, World. "
+					"Each lives on in a place of the old dragon cult, and each has a bearer. Silence them one by one, at night, wonders in hand. " + std::string(gen::kWords[w].wake),
+					18.0f);
+				logger::info("words: the arc begins with {}", gen::kWords[w].word);
+			}
+			if (g_siege.word != w) {
+				EndSiege("a new word");
+				g_siege.word = w, g_siege.told = false;
+			}
+			if (!InTamriel(a_p)) {
+				return;
+			}
+			const auto& W = gen::kWords[w];
+			const auto  at = WordAt(w);
+			const float d = std::hypot(a_p->GetPosition().x - at.x, a_p->GetPosition().y - at.y);
+			const bool  night = Director::Fighting();
+			if (!night) {
+				if (g_siege.stage != 0) {
+					EndSiege("dawn");
+				}
+				if (d < gen::kWordWake && !g_siege.told) {
+					g_siege.told = true;
+					Hud::Banner(std::string(W.word) + " sleeps by day. Its bearer answers only at night.", 5.0f);
+				}
+				return;
+			}
+			if (g_siege.stage != 0 && d > gen::kWordLeash) {
+				EndSiege("you left");
+				Hud::Banner(std::string(W.word) + " falls quiet - you left its place", 4.0f);
+				return;
+			}
+			std::erase_if(g_siege.dead, [](const RE::ActorHandle& h) { auto a = h.get(); return !a || a->IsDead() || a->IsDeleted() || a->IsDisabled(); });
+			if (Coop::Client()) {
+				return;  // (the host's game raises the siege; Skyrim Together shows it here)
+			}
+			if (g_siege.stage == 0 && d < gen::kWordWake) {
+				if ((g_siege.retry -= a_dt) > 0) {
+					return;
+				}
+				g_siege.retry = 3.0f;
+				g_siege.stage = 1, g_siege.wave = 0, g_siege.night = Night();
+				Forms::Play(gen::Sound::curse_lifted);
+				Hud::Lore(std::string(W.word) + " - " + Upper(std::string(W.meaning)), std::string(W.wake), 10.0f);
+				RaiseWave(a_p, w);
+				return;
+			}
+			if (g_siege.stage == 1 && g_siege.dead.empty()) {
+				if (++g_siege.wave < W.nWaves) {
+					RaiseWave(a_p, w);
+					return;
+				}
+				// the waves are down: the bearer rises at the heart of the place
+				const auto spot = Walkable(a_p, at, 700.0f);
+				if (Director::RaiseChampion(-1, W.bearerRow, W.bearerName, W.health, (spot ? *spot : at) + RE::NiPoint3{ 0, 0, 40.0f })) {
+					g_siege.stage = 2;
+					Gun::FxBlast("dark", spot ? *spot : at);
+					logger::info("words: {} - its bearer {} rises", W.word, W.bearerName);
+				} else {
+					g_siege.retry = 2.0f;
+				}
+				return;
+			}
+		}
+		void SilenceWord(int a_w)
+		{
+			if (a_w < 0 || Silenced(a_w)) {
+				return;
+			}
+			Write(gen::kEchoGlobWords, Read(gen::kEchoGlobWords) | (1 << a_w));
+			const auto& W = gen::kWords[a_w];
+			Forms::Play(gen::Sound::shout_learned);
+			Forms::Play(gen::Sound::curse_lifted);
+			Points::Add(5000);
+			const int next = NextWord();
+			Hud::Lore(std::string(W.word) + " IS SILENCED",
+				std::string(W.silenced) + "  " + std::string(W.power) + (next >= 0 ? "  The next word stirs: " + std::string(gen::kWords[next].site) + "." : ""), 16.0f);
+			logger::info("words: {} silenced", W.word);
+			EndSiege("silenced");
+			if (next >= 0) {
+				g_siege.word = next, g_siege.told = false;
+			}
+		}
+
 		float g_slow = 0;
 		bool  g_loaded = false;  // the first pass after a load: the Barrow-Jarls' parts already won are given quietly
 	}
@@ -616,9 +767,18 @@ namespace bo3z
 			}
 			g_allies.clear();
 			g_loaded = false, g_clear = false, g_slow = 0;
+			g_siege = Siege{};
 		}
 
 		int  WonderHeld() { return Glob(gen::kEchoGlobHeld) ? HeldWonder() : -1; }
+		bool WordSilenced(int a_w) { return Glob(gen::kEchoGlobWords) && a_w >= 0 && a_w < kWordCount && Silenced(a_w); }
+		bool CurseBroken() { return Glob(gen::kEchoGlobWords) && (Read(gen::kEchoGlobWords) & ((1 << kWordCount) - 1)) == (1 << kWordCount) - 1; }
+		void OnBearerSlain()
+		{
+			if (g_siege.stage == 2) {
+				SilenceWord(g_siege.word);
+			}
+		}
 		bool IsAlly(RE::Actor* a_actor)
 		{
 			return a_actor && std::any_of(g_allies.begin(), g_allies.end(), [&](const Ally& al) { return al.h.get().get() == a_actor; });
@@ -715,6 +875,7 @@ namespace bo3z
 				}
 			}
 			TickSky();
+			TickWords(p, 0.5f);
 		}
 
 		void OnUndeadDeath(RE::Actor* a_actor)
@@ -821,6 +982,12 @@ namespace bo3z
 					consider(SiteAt(i) + RE::NiPoint3{ 0, 0, 260.0f }, std::string(gen::kEchoParts[i].label) + " - " + std::string(gen::kEchoParts[i].site));
 				}
 			}
+			if (const int wd = NextWord(); wd >= 0) {
+				const auto& W = gen::kWords[wd];
+				RE::NiPoint3 bat;
+				consider(g_siege.stage == 2 && Director::ChampionPos(bat) ? bat : WordAt(wd) + RE::NiPoint3{ 0, 0, 300.0f },
+					std::string(W.word) + " - " + (g_siege.stage == 2 ? std::string(W.bearerName) : std::string(W.site)));
+			}
 			for (int w = 0; w < kWonders; ++w) {
 				if (Ready(w)) {
 					consider(kHHFront + RE::NiPoint3{ 0, 0, 250.0f }, "High Hrothgar - forge " + std::string(gen::kEchoWonders[w].label));
@@ -835,6 +1002,19 @@ namespace bo3z
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p || !Glob(gen::kEchoGlobParts) || !InTamriel(p)) {
 				return false;
+			}
+			if (const int wd = NextWord(); wd >= 0) {
+				const auto& W = gen::kWords[wd];
+				const float d = std::hypot(p->GetPosition().x - W.x, p->GetPosition().y - W.y);
+				if (d < gen::kWordLeash) {
+					a_title = std::string(W.word) + " - " + Upper(std::string(W.meaning));
+					a_goal = g_siege.stage == 2   ? "Kill " + std::string(W.bearerName)
+					         : g_siege.stage == 1 ? fmt::format("Wave {} of {}  -  {} left", g_siege.wave + 1, W.nWaves, g_siege.dead.size())
+					         : Director::Fighting() ? "Go to " + std::string(W.site) + " - its dead will rise"
+					                                : std::string(W.site) + " wakes only at night";
+					a_frac = g_siege.stage == 2 ? 1.0f : static_cast<float>(g_siege.wave) / std::max(1, W.nWaves);
+					return true;
+				}
 			}
 			for (int i = 0; i < kParts; ++i) {
 				if (!Hunting(i)) {

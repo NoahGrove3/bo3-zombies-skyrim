@@ -23,10 +23,10 @@ namespace bo3z
 	namespace Perks
 	{
 		float ManaMult() { return 1.0f; }  // (staffs and bows run on nothing; tomes keep their plain cost)
-		float RegenMult() { return 1.0f + 0.5f * N(gen::kPerk_hawkeye); }  // Hawkeye: clear sight, magicka back sooner
+		float RegenMult() { return (1.0f + 0.5f * N(gen::kPerk_hawkeye)) * (Echo::WordSilenced(2) ? 1.5f : 1.0f); }  // (LEIN silenced: the world answers)  // Hawkeye: clear sight, magicka back sooner
 		float ChargeMult() { return Stack(gen::kPerk_quicksilver); }
 		float FireDelayMult() { return std::max(0.3f, 1.0f - 0.25f * N(gen::kPerk_twinstrike)); }
-		float DamageMult() { return Stack(gen::kPerk_twinstrike); }
+		float DamageMult() { return Stack(gen::kPerk_twinstrike) * (Echo::WordSilenced(0) ? 1.15f : 1.0f); }  // (GRAH silenced: battle-fury)
 		float HeadMult() { return Stack(gen::kPerk_hawkeye); }
 
 		// Buying a blessing applies it at once (no potion to drink). Each can be bought again and again: they stack.
@@ -246,6 +246,9 @@ namespace bo3z
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p || p->IsDead() || a_amount <= 0 || std::chrono::steady_clock::now() < g_dodgeUntil) {
 				return;  // (mid-roll: the blow misses)
+			}
+			if (Echo::WordSilenced(1)) {
+				a_amount *= 0.8f;  // (DIR silenced: death's refusal)
 			}
 			auto*       av = p->AsActorValueOwner();
 			const float hp = av->GetActorValue(RE::ActorValue::kHealth);

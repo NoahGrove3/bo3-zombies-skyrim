@@ -281,7 +281,16 @@ for q in EC['parts']:
     o.append(f'\t\tEchoPart{{ {cs(q["id"])}, {cs(q["label"])}, {cs(q.get("site", q.get("town", "")))}, {WIDS.index(q["wonder"])}, {towns.index(q["page"])}, {["boss", "relic", "kill"].index(q["how"])}, {towns.index(q["town"]) if q["how"] == "boss" else -1}, {F(at[0])}, {F(at[1])}, {F(at[2])}, {F(q.get("yaw", 0))}, {kg} }},')
 o.append('\t} };')
 o.append(f'\tinline constexpr std::array<std::uint32_t, {len(towns)}> kEchoPages{{ {{ ' + ', '.join(f'0x{IDS[("BOOK", "page_" + t)]:03X}' for t in towns) + ' } };  // The Broken Words, by town')
-o.append(f'\tinline constexpr std::uint32_t kEchoGlobPages = 0x{IDS[("GLOB", "echo_pages")]:03X}, kEchoGlobParts = 0x{IDS[("GLOB", "echo_parts")]:03X}, kEchoGlobForged = 0x{IDS[("GLOB", "echo_forged")]:03X}, kEchoGlobHeld = 0x{IDS[("GLOB", "echo_held")]:03X};')
+o.append(f'\tinline constexpr std::uint32_t kEchoGlobPages = 0x{IDS[("GLOB", "echo_pages")]:03X}, kEchoGlobParts = 0x{IDS[("GLOB", "echo_parts")]:03X}, kEchoGlobForged = 0x{IDS[("GLOB", "echo_forged")]:03X}, kEchoGlobHeld = 0x{IDS[("GLOB", "echo_held")]:03X}, kEchoGlobWords = 0x{IDS[("GLOB", "echo_words")]:03X};')
+# Stage 4: the Three Words (sheet: echo.words, src/Words.cpp)
+WD = EC['words']
+o.append('\tstruct WordDef { std::string_view id, word, meaning, site, wake, silenced, power, bearerRow, bearerName; float x, y, z, yaw, health, scale; std::array<int, 4> waves, elites; int nWaves; };')
+o.append(f'\tinline constexpr std::array<WordDef, {len(WD["rows"])}> kWords{{ {{')
+for w in WD['rows']:
+    b = w['bearer']; wv = (w['waves'] + [0, 0, 0, 0])[:4]; el = (w['elites'] + [0, 0, 0, 0])[:4]
+    o.append(f'\t\tWordDef{{ {cs(w["id"])}, {cs(w["word"])}, {cs(w["meaning"])}, {cs(w["site"])}, {cs(w["wake"])}, {cs(w["silenced"])}, {cs(w["power"])}, {cs(b["row"])}, {cs(b["name"])}, {F(w["at"][0])}, {F(w["at"][1])}, {F(w["at"][2])}, {F(w["yaw"])}, {F(b["health"])}, {F(b["scale"])}, {{ {", ".join(map(str, wv))} }}, {{ {", ".join(map(str, el))} }}, {len(w["waves"])} }},')
+o.append('\t} };')
+o.append(f'\tinline constexpr float kWordWake = {F(WD["wakeRange"])}, kWordLeash = {F(WD["leashRange"])};')
 rl, kl = EC['relic'], EC['kill']
 o.append('\tinline constexpr std::array<int, 6> kEchoGuards{ ' + ', '.join(map(str, rl['guards'])) + ' }, kEchoElites{ ' + ', '.join(map(str, rl['elites'])) + ' }, kEchoKillN{ ' + ', '.join(map(str, kl['n'])) + ' };  // per Skyrim difficulty')
 o.append(f'\tinline constexpr float kEchoWake = {F(rl["wakeRange"])}, kEchoTake = {F(rl["takeRange"])}, kEchoKillRadius = {F(kl["radius"])}, kEchoStoneTake = {F(EC["stone"]["takeRange"])};')
