@@ -494,7 +494,9 @@ namespace bo3z
 					}
 				}
 				if (a_event && player && a_event->cause.get() == player && a_event->target && a_event->target.get() != player) {
-					if (auto* t = a_event->target->As<RE::Actor>(); t && Director::IsFoe(t)) {
+					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
+					const bool spellHit = src && src->As<RE::MagicItem>();  // (the charge's own lightning never sets off another charge)
+					if (auto* t = a_event->target->As<RE::Actor>(); t && !spellHit && Director::IsFoe(t)) {
 						Gun::StormHit(t);  // (a blade, a fist or Skyrim's own bow: the Stormblast charge goes off too)
 					}
 				}

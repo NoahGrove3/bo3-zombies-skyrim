@@ -295,7 +295,7 @@ namespace bo3z
 			}
 			Note(text, 10.0f);
 			Party::CityFreed(a_town);  // (the dawn that follows saves under the city's name)
-			Director::EndNight();  // the Barrow-Jarl's fall ends the night: dawn breaks, the next night brings the next round
+			// (Noah: a night is won by slaying all of its waves, not by the Barrow-Jarl's fall) the night goes on
 			auto* shrine = Shops::Placed(a_town, 0);
 			Director::LiftWave(shrine ? shrine->GetPosition() : a_player->GetPosition());
 			Points::Add(5000);
@@ -777,8 +777,7 @@ namespace bo3z
 				Note(text, 10.0f);
 				Points::Add(5000);
 				Party::CityFreed(a_town);
-				if (!Net::IsClient()) {  // the host's nights: the freed city ends this one
-					Director::EndNight();
+				if (!Net::IsClient()) {  // the host's nights: the light runs out over the fallen (the night goes on to its last wave)
 					if (auto* pl = RE::PlayerCharacter::GetSingleton()) {
 						auto* shrine = Shops::Placed(a_town, 0);
 						Director::LiftWave(shrine ? shrine->GetPosition() : pl->GetPosition());

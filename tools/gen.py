@@ -308,7 +308,7 @@ o.append(f'\tinline constexpr std::array<RelSpot, 4> kRelPedestals{{ {{ ' + ', '
 o.append(f'\tinline constexpr float kRelUse = {F(RL["useRange"])};')
 o.append(f'\tinline constexpr std::uint32_t kRelDoorIn = 0x{IDS[("ACTI", "rel_door_in")]:03X}, kRelDoorOut = 0x{IDS[("ACTI", "rel_door_out")]:03X}, kRelRoom = 0x{IDS[("STAT", "rel_room")]:03X}, kRelRelic = 0x{IDS[("STAT", "rel_relic")]:03X}, '
          f'kRelBlue = 0x{IDS[("LIGH", "rel_blue")]:03X}, kRelWarm = 0x{IDS[("LIGH", "rel_warm")]:03X}, kRelRelicLight = 0x{IDS[("LIGH", "rel_relic")]:03X}, kRelBeam = 0x{IDS[("STAT", "shrine_freed_beam")]:03X}, '
-         f'kRelBrazier = 0x{IDS[("STAT", "freed_fire_0")]:03X}, kRelStone = 0x{IDS[("STAT", "echo_stone")]:03X}, kRelBanner = 0x{IDS[("STAT", "freed_banner_0")]:03X};')
+         f'kRelBrazier = 0x{IDS[("STAT", "rel_brazier")]:03X}, kRelStone = 0x{IDS[("STAT", "echo_stone")]:03X}, kRelBanner = 0x{IDS[("STAT", "rel_banner")]:03X};')
 o.append('}')
 with open(root / 'src/Generated.h', 'a') as f: f.write('\n'.join(o) + '\n')
 print('appended v0.2 tables')

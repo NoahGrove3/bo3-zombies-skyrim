@@ -2075,17 +2075,8 @@ namespace bo3z
 		void LiftWave(const RE::NiPoint3& a_from)
 		{
 			int  n = 0;
-			for (auto& sp : g_alive) {
-				auto a = sp.handle.get();
-				if (!a || a->IsDisabled()) {
-					continue;
-				}
-				const float d = a->GetPosition().GetDistance(a_from);
-				const float delay = 0.6f + std::min(4.0f, d / 1500.0f) + 0.08f * (n % 7);
-				g_lifted.push_back({ sp.handle, delay, 2.2f + 0.15f * (n % 9), a->IsDead() });
-				++n;
-			}
-			g_alive.clear();
+			// (Noah: every wave must still be slain to end the night) the light takes only the fallen; the living fight on
+			(void)a_from;
 			for (auto& h : g_corpses) {
 				if (auto a = h.get(); a && !a->IsDisabled()) {
 					g_lifted.push_back({ h, 0.0f, 0.5f + 0.1f * (n++ % 12), true });

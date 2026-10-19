@@ -2035,13 +2035,14 @@ namespace bo3z
 				// (by its bond's look) - and the paraglider's own contrails (drawn under the glider's wingtips, so under the
 				// dragon's wings) are swapped for nothing: the dragon draws its own wingtip trails
 				static int named = -1;
-				const int  b = Bond();
+				const int  b = Look();
 				if (b != named) {
 					named = b;
-					static constexpr const char* kBond[4] = { "Unbonded", "Bond I", "Bond II", "Bond III" };
-					if (auto* fn = item->As<RE::TESFullName>()) fn->fullName = fmt::format("Dragon Harness ({})", kBond[std::clamp(b, 0, 3)]);
-					if (auto* md = item->As<RE::TESModel>()) md->SetModel(fmt::format("CurseOfAlduin\\fx\\dragon_away{}.nif", b > 0 ? fmt::format("_b{}", std::clamp(b, 1, 3)) : std::string()).c_str());
-					logger::info("glider: the harness in your pack - {}", kBond[std::clamp(b, 0, 3)]);
+					static constexpr const char* kBond[5] = { "Unbonded", "Bond I", "Bond II", "Bond III", "Bone-Wyrm" };
+					// (Noah: "cannot equip this item") it is never equipped - it is called in the air: the name says how
+					if (auto* fn = item->As<RE::TESFullName>()) fn->fullName = fmt::format("Dragon Harness ({}) - jump, then Activate", kBond[std::clamp(b, 0, 4)]);
+					if (auto* md = item->As<RE::TESModel>()) md->SetModel(fmt::format("CurseOfAlduin\\fx\\dragon_away{}.nif", b > 0 ? fmt::format("_b{}", std::clamp(b, 1, 4)) : std::string()).c_str());
+					logger::info("glider: the harness in your pack - {}", kBond[std::clamp(b, 0, 4)]);
 				}
 				static bool trailsOff = false;
 				if (!trailsOff) {

@@ -442,7 +442,8 @@ namespace bo3z
 		};
 		std::array<std::vector<Obstacle>, gen::kTowns.size()> g_obstacles{};
 		constexpr float kStandRadius = 370.0f;  // half-diagonal of the platform
-		constexpr float kStandLift = 18.0f;     // the dais floor above the highest ground under it (its skirt reaches 100 down)
+		constexpr float kStandLift = 18.0f;  // the dais floor above the highest ground under it (its skirt reaches 100 down)
+		constexpr float kAltarSink = kStandLift + 6.0f + 40.0f;  // the altar's own origin under the stand's floor line (its dais flush with the ground)
 
 		void GatherObstacles(int a_town, RE::TESObjectREFR* a_anchor)
 		{
@@ -643,14 +644,24 @@ namespace bo3z
 			const auto& s = gen::kSlots[slot];
 			const auto  p = found->GetPosition();
 			plan.center = { p.x - (s.x * std::cos(plan.yaw) + s.y * std::sin(plan.yaw)), p.y - (-s.x * std::sin(plan.yaw) + s.y * std::cos(plan.yaw)), p.z };
-			plan.top = p.z, plan.topSet = true;
+			// the floor line is kAltarSink over the altar (measuring it from the altar itself lifted the whole stand
+			// 24 every load - Noah's rising altar)
+			plan.top = p.z + kAltarSink, plan.topSet = true;
 			plan.state = TownPlan::State::Ready;
-			plan.center.z = p.z;
+			plan.center.z = plan.top;
 			float low = 0;
 			auto g = GroundTop(a_anchor, plan, &low);
-			if (g && std::abs(*g - p.z) > 8.0f && *g - p.z <= kStandLift + 12.0f && p.z - *g <= 40.0f) {
+			if (g && std::abs(*g - (p.z + kStandLift + 6.0f)) <= 8.0f) {
+				// an altar from before the sink: the stand is right, only the altar (and what it carries) goes down
+				plan.top = plan.center.z = p.z + kStandLift + 6.0f;
+				auto q = p;
+				q.z = plan.top - kAltarSink;
+				found->SetPosition(q);
+				logger::info("shops: {} altar sunk flush with the ground", gen::kTowns[a_town]);
+			}
+			if (g && std::abs(*g - plan.top) > 8.0f && *g - plan.top <= kStandLift + 12.0f && plan.top - *g <= 60.0f) {
 				// a stand from before the dais's height changed: lift or lower it and everything on it in place
-				const float dz = *g - p.z;
+				const float dz = *g - plan.top;
 				int         moved = 0;
 				RE::TES::GetSingleton()->ForEachReferenceInRange(a_anchor, gen::kPlanSweep, [&](RE::TESObjectREFR* r) {
 					if (r && !r->IsDeleted() && IsOurBase(r->GetBaseObject()) && std::hypot(r->GetPosition().x - plan.center.x, r->GetPosition().y - plan.center.y) < 600.0f) {
@@ -661,12 +672,12 @@ namespace bo3z
 					}
 					return RE::BSContainer::ForEachResult::kContinue;
 				});
-				plan.top = plan.center.z = p.z + dz;
+				plan.top = plan.center.z = plan.top + dz;
 				logger::info("shops: {} stand raised {:.0f} above the grass ({} pieces)", gen::kTowns[a_town], dz, moved);
 				g = plan.top;
 			}
 			if (!g || std::abs(*g - plan.top) > 30.0f || (*g - kStandLift) - low > gen::kStandMaxSlope) {
-				logger::info("shops: {} stand floats {:.0f} off the ground, rebuilding", gen::kTowns[a_town], g ? p.z - *g : 999.0f);
+				logger::info("shops: {} stand floats {:.0f} off the ground, rebuilding", gen::kTowns[a_town], g ? plan.top - *g : 999.0f);
 				return false;
 			}
 			if (auto* v2 = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(gen::kStandLayoutGlobal, gen::kPlugin); v2 && !((static_cast<int>(v2->value) >> a_town) & 1)) {
@@ -834,7 +845,9 @@ namespace bo3z
 				}
 				return RE::BSContainer::ForEachResult::kContinue;
 			});
-			const float floorZ = gen::kObjects[loc.object].kind == 0 ? plan.top - kStandLift - 6.0f : plan.top;  // the shrine brings its own dais
+			// the shrine brings its own dais - (Noah: the cone under it showed, the altar rose off the floor) sunk so its
+			// cobbled skirt is all below the ground and the dais floor lies flush with it
+			const float floorZ = gen::kObjects[loc.object].kind == 0 ? plan.top - kAltarSink : plan.top;
 			want.z = floorZ;
 			if (!found) {
 				auto ref = anchor->PlaceObjectAtMe(base, false);

@@ -1156,6 +1156,9 @@
   "ACTI:tornado_shock": "0xc80",
   "ACTI:tornado_wind": "0xc81",
   "ACTI:tornado_sun": "0xc82",
-  "ACTI:tornado_blood": "0xc83"
+  "ACTI:tornado_blood": "0xc83",
+  "STAT:freed_runes": "0xc84",
+  "STAT:rel_brazier": "0xc85",
+  "STAT:rel_banner": "0xc86"
  }
 }

@@ -110,6 +110,11 @@ namespace bo3z
 		// the hold never reach Skyrim (the hold is our charge-up, the staff held steady); on release, when a shot or
 		// a signature move actually goes, Skyrim gets a short synthetic tap and plays its staff cast animation.
 		RE::PlayerInputHandler* g_abHandler = nullptr;
+		// (Noah: the bow loosed at any point of the draw) a bow only lets go at the peak of its draw: a release that
+		// comes early is kept back and given to Skyrim the moment the string is all the way back (Bows.inl Tick)
+		bool              g_bowDrawing = false;      // the string is coming back
+		std::atomic<bool> g_bowFull{ false };        // the draw reached its peak (Skyrim's bowDrawn state/event)
+		bool              g_bowHeldRelease = false;  // an early release, waiting for the peak
 		RE::PlayerControlsData* g_abData = nullptr;
 		float                   g_swingUp = -1.0f;  // >= 0: a synthetic tap is down; let go when it runs out
 		bool                    g_swingWanted = false;
@@ -152,6 +157,15 @@ namespace bo3z
 				if (GunOut() && (IsStaff(CurrentGun()) || IsSpell(CurrentGun())) && IsFireButton(a_event)) {
 					g_abHandler = a_this, g_abData = a_data;
 					return;  // ours: the staff swing is played on release (TickSwing)
+				}
+				if (GunOut() && gen::kGuns[CurrentGun()].kind == gen::kKindBow && IsFireButton(a_event)) {
+					if (a_event->IsDown()) {
+						g_bowHeldRelease = false;
+					} else if (a_event->IsUp() && g_bowDrawing && !g_bowFull) {
+						g_abHandler = a_this, g_abData = a_data;
+						g_bowHeldRelease = true;  // not yet: the string keeps coming back, and looses at its peak
+						return;
+					}
 				}
 				if (GunOut() && gen::kGuns[CurrentGun()].kind != gen::kKindBow && IsFireButton(a_event)) {
 					auto& rd = a_event->GetRuntimeData();
@@ -1077,8 +1091,12 @@ namespace bo3z
 				g_arcs.push_back({ chest + RE::NiPoint3{ std::cos(a) * 30.0f, std::sin(a) * 30.0f, 20.0f * (k % 3) - 20.0f },
 					chest + RE::NiPoint3{ std::cos(a + 1.9f) * 110.0f, std::sin(a + 1.9f) * 110.0f, 40.0f * ((k + 1) % 3) - 60.0f }, 0.05f * k });
 			}
+			// (Noah: the bolts and chains were invisible) Skyrim's own lightning on top of ours: a bolt of it to each one
+			// struck, the storm's crack on the ground under the first
+			Cast(gen::kSpell_thunderbolt, a_target);
 			Damage(a_target, base * 1.4f, false, false, true);
 			Blast(BlastIndex("skybolt"), at, 0.0f, 0.7f);
+			Blast(BlastIndex("shockmass"), at, 0.05f, 0.6f);
 			if (!a_target->IsDead()) {
 				if (auto* proc = p->GetActorRuntimeData().currentProcess; proc && L == 3) {
 					proc->KnockExplosion(a_target, at + RE::NiPoint3{ 0, 0, 140.0f }, 1.6f);
@@ -1093,6 +1111,8 @@ namespace bo3z
 				}
 				++n;
 				g_arcs.push_back({ chest, f->GetPosition() + RE::NiPoint3{ 0, 0, 80.0f }, 0.06f * n });
+				Cast(gen::kSpell_lightningbolt, f);
+				Blast(BlastIndex("runeshock"), f->GetPosition(), 0.06f * n, 0.5f);
 				Damage(f, base * 0.7f, false, false, true);
 				if (!f->IsDead()) {
 					Stagger(f, 0.5f);
@@ -2480,7 +2500,7 @@ namespace bo3z
 		{
 			for (auto& a : g_arcs) {
 				if ((a.delay -= a_delta) <= 0) {
-					Spellcraft::StreakAt(StormRow(), a.from, a.to, 0.9f, 0.3f, true);
+					Spellcraft::StreakAt(StormRow(), a.from, a.to, 1.3f, 0.45f, true);
 					Spellcraft::BurstAt(StormRow(), a.to, 26.0f, 0.3f);
 				}
 			}

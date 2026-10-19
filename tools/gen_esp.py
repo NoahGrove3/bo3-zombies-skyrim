@@ -624,10 +624,12 @@ def page_text(town):
 for c in S['curse']['cities']:
     t = c['town']
     recs.setdefault('BOOK', []).append(record('BOOK', fid('BOOK', 'page_' + t), [
-        sub('EDID', z('UN_EchoPage_' + t)), sub('OBND', struct.pack('<6h', -8, -11, 0, 8, 11, 1)), sub('FULL', z('The Broken Words: ' + t)),
-        sub('MODL', z('Clutter\\Books\\Note01.nif')), sub('DESC', z(page_text(t))),
+        # (Noah: the game crashed opening a page) a two-page note crashes the note menu: the pages are small books now,
+        # read like the guide (book type, its inventory art)
+        sub('EDID', z('UN_EchoPage_' + t)), sub('OBND', bytes.fromhex('f5fff1fffdff0b000f000300')), sub('FULL', z('The Broken Words: ' + t)),
+        sub('MODL', z('Clutter\\Books\\Book02LowPoly02.nif')), sub('DESC', z(page_text(t))),
         sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x000937A2)),
-        sub('DATA', struct.pack('<BBHIIf', 0, 0xFF, 0, 0, 0, 0.1)), sub('CNAM', struct.pack('<I', 0))]))
+        sub('DATA', struct.pack('<BBHIIf', 0, 0, 0, 0, 0, 0.5)), sub('INAM', struct.pack('<I', 0x0008ADAE)), sub('CNAM', struct.pack('<I', 0))]))
 
 RQ = 'CurseOfAlduin\\reliquary\\'
 def rel_acti(key, name, verb, model, r):
@@ -637,7 +639,7 @@ rel_acti('rel_door_in', 'Sealed Door of the Tongues', 'Enter', 'door.nif', 190)
 rel_acti('rel_door_out', 'Sealed Door of the Tongues', 'Leave', 'door.nif', 190)
 for w in E['wonders']:
     rel_acti('rel_ped_' + w['id'], w['label'] + "'s Pedestal", 'Forge', 'pedestal.nif', 60)
-for key, model, r in [('rel_room', 'room.nif', 640), ('rel_relic', 'relic.nif', 80)] + [('rel_gem_' + w['id'], f"gem_{w['id']}.nif", 8) for w in E['wonders']]:
+for key, model, r in [('rel_room', 'room.nif', 640), ('rel_relic', 'relic.nif', 80), ('rel_brazier', 'tonguefire.nif', 60), ('rel_banner', 'banner.nif', 120)] + [('rel_gem_' + w['id'], f"gem_{w['id']}.nif", 8) for w in E['wonders']]:
     recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
         sub('MODL', z(RQ + model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
 # Stage 5 (src/Echo.cpp Hall): the Hall of the Awakened's stations, and Alduin's Fang

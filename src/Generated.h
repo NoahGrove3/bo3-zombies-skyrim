@@ -1126,7 +1126,7 @@ namespace bo3z::gen
 		ObjectDef{ "relic_altar", "Echo Altar", 6, 0, -1, 0x9DA, 0.8f, true },
 	} };
 	struct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; bool freed; };
-	inline constexpr std::array<DressDef, 83> kDress{ {
+	inline constexpr std::array<DressDef, 76> kDress{ {
 		DressDef{ 0, 0x926, false, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, false },
 		DressDef{ 0, 0xBCD, false, 0.0f, 0.0f, 175.0f, 1.0f, 40.0f, false },
 		DressDef{ 0, 0xBCE, false, 0.0f, 0.0f, 175.0f, 1.0f, 7.0f, false },
@@ -1137,14 +1137,7 @@ namespace bo3z::gen
 		DressDef{ 0, 0xBFB, false, 0.0f, 0.0f, 150.0f, 0.4f, 0.0f, true },
 		DressDef{ 0, 0xC27, false, 0.0f, -380.0f, 0.0f, 1.0f, 0.0f, true },
 		DressDef{ 0, 0xC28, true, 0.0f, -300.0f, 200.0f, 1.0f, 0.0f, true },
-		DressDef{ 0, 0xC29, false, -250.0f, 250.0f, 0.0f, 1.0f, 0.0f, true },
-		DressDef{ 0, 0xC2A, false, 250.0f, 250.0f, 0.0f, 1.0f, 0.0f, true },
-		DressDef{ 0, 0xC2B, false, -250.0f, -250.0f, 0.0f, 1.0f, 0.0f, true },
-		DressDef{ 0, 0xC2C, false, 250.0f, -250.0f, 0.0f, 1.0f, 0.0f, true },
-		DressDef{ 0, 0xC2D, true, -340.0f, 0.0f, 150.0f, 1.0f, 0.0f, true },
-		DressDef{ 0, 0xC2E, false, -390.99999999999994f, -60.0f, 0.0f, 1.0f, 0.0f, true },
-		DressDef{ 0, 0xC2F, true, 340.0f, 0.0f, 150.0f, 1.0f, 0.0f, true },
-		DressDef{ 0, 0xC30, false, 390.99999999999994f, -60.0f, 0.0f, 1.0f, 0.0f, true },
+		DressDef{ 0, 0xC84, false, 0.0f, 0.0f, 330.0f, 1.0f, 18.0f, true },
 		DressDef{ 1, 0x8AB, true, 0.0f, 60.0f, 120.0f, 1.0f, 0.0f, false },
 		DressDef{ 2, 0x8A4, false, 0.0f, 0.0f, 62.0f, 2.0f, 30.0f, false },
 		DressDef{ 2, 0x8A5, false, 0.0f, 0.0f, 75.0f, 0.5f, 0.0f, false },
@@ -1478,5 +1471,5 @@ namespace bo3z::gen
 	inline constexpr RelSpot kRelDoor{ -690.0f, -2363.0f, -992.0f, 90.0f }, kRelRoomAt{ -160.0f, -1200.0f, -6000.0f, 0.0f }, kRelArrive{ 0.0f, -380.0f, 0.0f, 0.0f }, kRelExit{ 0.0f, -600.0f, 0.0f, 0.0f }, kRelLeave{ -560.0f, -2363.0f, -992.0f, 90.0f };  // door/leave: in the cell; arrive/exit: in the room's frame
 	inline constexpr std::array<RelSpot, 4> kRelPedestals{ { { -390.0f, 330.0f, 0.0f, 135.0f }, { 390.0f, 330.0f, 0.0f, 225.0f }, { -390.0f, -230.0f, 0.0f, 45.0f }, { 390.0f, -230.0f, 0.0f, 315.0f } } };
 	inline constexpr float kRelUse = 190.0f;
-	inline constexpr std::uint32_t kRelDoorIn = 0xC42, kRelDoorOut = 0xC43, kRelRoom = 0xC48, kRelRelic = 0xC49, kRelBlue = 0xC4E, kRelWarm = 0xC4F, kRelRelicLight = 0xC50, kRelBeam = 0xBFB, kRelBrazier = 0xC29, kRelStone = 0xC27, kRelBanner = 0xC2E;
+	inline constexpr std::uint32_t kRelDoorIn = 0xC42, kRelDoorOut = 0xC43, kRelRoom = 0xC48, kRelRelic = 0xC49, kRelBlue = 0xC4E, kRelWarm = 0xC4F, kRelRelicLight = 0xC50, kRelBeam = 0xBFB, kRelBrazier = 0xC85, kRelStone = 0xC27, kRelBanner = 0xC86;
 }

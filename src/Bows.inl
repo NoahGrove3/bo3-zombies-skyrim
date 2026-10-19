@@ -857,6 +857,9 @@ namespace BowsImpl
 				if (t.find("arrowrelease") != std::string::npos || t == "bowrelease" || t == "bowreleased") {
 					g_releaseHeard = true;
 				}
+				if (t == "bowdrawn") {
+					g_bowFull = true;
+				}
 				if (t == "weaponswing") {
 					g_weaponSwing = true;
 				}
@@ -947,11 +950,13 @@ namespace BowsImpl
 			return;
 		}
 		static float reequip = -1;
-		if (auto* root = p->Get3D(); root != g_watched) {  // (a new body after a load or a race change: listen to its graph)
+		// (the third-person body only: Get3D() flips with the camera, and every flip re-equipped the bow - Noah's fast
+		// unequip/re-equip)
+		if (auto* root = p->Get3D(false); root != g_watched) {  // (a new body after a load or a race change: listen to its graph)
 			p->RemoveAnimationGraphEventSink(&g_animWatch);
 			p->AddAnimationGraphEventSink(&g_animWatch);
 			g_watched = root;
-			reequip = 1.5f;  // (Noah: after a load the bow was invisible until put away and drawn again) - so we do that for you
+			reequip = 1.5f;  // (once per new body: after a load)  // (Noah: after a load the bow was invisible until put away and drawn again) - so we do that for you
 		}
 		if (reequip > 0 && (reequip -= a_delta) <= 0) {
 			if (const int hb = Held(); hb >= 0) {
@@ -975,6 +980,20 @@ namespace BowsImpl
 		using S = RE::ATTACK_STATE_ENUM;
 		const auto st = p->AsActorState()->GetAttackState();
 		const bool drawing = i >= 0 && (st == S::kBowDraw || st == S::kBowAttached || st == S::kBowDrawn);
+		if (drawing && !g_wasDrawing) {
+			g_bowFull = false;
+		}
+		if (drawing && st == S::kBowDrawn) {
+			g_bowFull = true;
+		}
+		g_bowDrawing = drawing;
+		if (!drawing) {
+			g_bowHeldRelease = false;
+		} else if (g_bowHeldRelease && g_bowFull) {
+			g_bowHeldRelease = false;
+			SendFire(0.0f, 1.0f);  // the early release, now: the arrow leaves at the peak
+			logger::info("bows: an early release loosed at the peak of the draw");
+		}
 		if (drawing && !g_wasDrawing) {  // (Noah: the bows sound like their spells) the spell's charge rises as the string comes back
 			Spellcraft::Play2D(Spellcraft::Snd(GunOf(i), &gen::GunSounds::start), 0.7f);
 			if (const int hum = Spellcraft::Snd(GunOf(i), &gen::GunSounds::charge); hum >= 0) {
@@ -985,10 +1004,8 @@ namespace BowsImpl
 			Audio::LoopStop(Audio::kLoopCharge, 150);
 		}
 		if (drawing) {
-			g_draw = std::min(1.0f, g_draw + a_delta * DrawSpeed(i) / 0.9f);
-			if (st == S::kBowDrawn) {
-				g_draw = std::max(g_draw, 0.85f + 0.15f * g_draw);
-			}
+			// the draw's own clock never counts as full: only Skyrim's drawn state does (no shot short of the peak)
+			g_draw = g_bowFull ? 1.0f : std::min(0.95f, g_draw + a_delta * DrawSpeed(i) / 0.9f);
 			const int row = gen::kBows[i].spellRow;
 			if (g_ballRow != row) {
 				g_ball.Detach();
