@@ -35,6 +35,13 @@ namespace bo3z
 		Phase                   g_phase = Phase::Day;
 		int                     g_current = 0;   // round being fought
 		int                     g_toSpawn = 0;
+		// (Noah: like BO3) a night is waves: 4 + the night's number of them, 20 more dead in each wave every night; the night
+		// holds (the clock stops short of dawn) until the last wave is cleared
+		constexpr int   kWavesBase = 4, kWaveDeadPerNight = 20;
+		constexpr float kWaveRest = 8.0f;
+		int   g_waves = 0, g_wave = 0, g_waveSize = 0, g_waveSpawned = 0;
+		float g_waveRest = 0;
+		bool  g_nightCleared = false;
 		float                   g_spawnTimer = 0;
 		float                   g_breakTimer = 0;
 		bool                    g_special = false;
@@ -217,10 +224,61 @@ namespace bo3z
 		}
 
 		// Mostly behind the player, like BO3 windows you can't see.
+		// (Noah: like BO3) the dead climb out of the ground at set places: a ring of spawn points round the city's altar (in
+		// a city) or round where you stood when they were laid out (in the wilds, laid out again if you go far)
+		struct SpawnPoints
+		{
+			RE::TESWorldSpace*        ws{ nullptr };
+			int                       town{ -2 };
+			RE::NiPoint3              anchor{};
+			std::vector<RE::NiPoint3> pts;
+		} g_points;
+		void LayPoints(RE::PlayerCharacter* a_player, int a_town, const RE::NiPoint3& a_anchor)
+		{
+			g_points.ws = a_player->GetWorldspace(), g_points.town = a_town, g_points.anchor = a_anchor;
+			g_points.pts.clear();
+			const float turn = std::fmod(std::abs(a_anchor.x * 0.0013f + a_anchor.y * 0.0007f), 6.2832f);  // (the same layout every night in a place)
+			constexpr int kN = 12;
+			for (int k = 0; k < kN; ++k) {
+				const float ang = turn + 6.2832f * k / kN;
+				const float r = (k % 3 == 0 ? 1400.0f : k % 3 == 1 ? 2000.0f : 2600.0f);
+				RE::NiPoint3 p{ a_anchor.x + std::cos(ang) * r, a_anchor.y + std::sin(ang) * r, a_anchor.z };
+				if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(p, land)) {
+					p.z = land;
+				}
+				g_points.pts.push_back(p);
+			}
+			logger::info("spawn: {} points laid round {}", kN, a_town >= 0 ? std::string(gen::kTowns[a_town]) : std::string("the wilds"));
+		}
+
 		RE::NiPoint3 SpawnSpot(RE::PlayerCharacter* a_player)
 		{
 			const bool  interior = a_player->GetParentCell() && a_player->GetParentCell()->IsInteriorCell();
 			const auto& ring = interior ? R.spawnRingInterior : R.spawnRingExterior;
+			if (!interior) {
+				const int    z = Curse::ZoneTown();
+				RE::NiPoint3 c = a_player->GetPosition();
+				float        yaw = 0;
+				RE::TESWorldSpace* ws = nullptr;
+				const bool   town = z >= 0 && Shops::StandFrame(z, c, yaw, ws) && ws == a_player->GetWorldspace();
+				const int    key = town ? z : -1;
+				if (g_points.ws != a_player->GetWorldspace() || g_points.town != key || (!town && g_points.anchor.GetDistance(a_player->GetPosition()) > 3200.0f)) {
+					LayPoints(a_player, key, town ? c : a_player->GetPosition());
+				}
+				std::vector<const RE::NiPoint3*> ok;
+				for (const auto& p : g_points.pts) {
+					const float d = p.GetDistance(a_player->GetPosition());
+					if (d > 650.0f && d < 3600.0f && Party::FriendDistance(p) > 500.0f) {
+						ok.push_back(&p);
+					}
+				}
+				if (!ok.empty()) {
+					RE::NiPoint3 p = *ok[std::uniform_int_distribution<std::size_t>(0, ok.size() - 1)(g_rng)];
+					p.x += Uniform(-90.0f, 90.0f), p.y += Uniform(-90.0f, 90.0f);  // (a few steps apart, not stacked)
+					p.z += R.spawnHeightOffset;
+					return p;
+				}
+			}
 			const auto  base = a_player->GetPosition();
 			RE::NiPoint3 pos{};
 			for (int tryN = 0; tryN < 8; ++tryN) {  // (in a party: never close to a friend either)
@@ -1181,6 +1239,8 @@ namespace bo3z
 			g_special = a_round >= R.specialFirstRound && (a_round - R.specialFirstRound) % R.specialEveryRounds == 0;
 			// One round per night: the dead keep coming until dawn. How many walk at once grows night by night.
 			g_toSpawn = std::clamp(static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier / 3.0f)), 12, R.maxAlive);
+			g_waves = kWavesBase + a_round, g_wave = 1, g_waveSize = kWaveDeadPerNight * a_round, g_waveSpawned = 0, g_waveRest = 0, g_nightCleared = false;
+			Curse::OnWave(false);
 			g_spawnTimer = 0;
 			g_phase = Phase::Fighting;
 			g_boss.slainTonight = false;
@@ -1208,9 +1268,9 @@ namespace bo3z
 				Hud::Banner("NIGHT " + std::to_string(a_round) + " - " + std::string(ev.banner), 6.0f);
 			} else {
 				Forms::Play(g_special ? gen::Sound::event_bloodmoon : gen::Sound::night_start);
-				Hud::Banner(g_special ? "NIGHT " + std::to_string(a_round) + " - THE HOUNDS ARE LOOSE" : "NIGHT " + std::to_string(a_round) + " - SURVIVE UNTIL DAWN");
+				Hud::Banner(fmt::format("NIGHT {} - WAVE 1 OF {}{}", a_round, g_waves, g_special ? " - THE HOUNDS ARE LOOSE" : ""));
 			}
-			logger::info("round {} starts (lasts the night): up to {} undead at once, {:.0f} Skyrim health each{}", a_round, g_toSpawn, HealthFor(a_round), g_special ? " (hound night)" : "");
+			logger::info("round {} starts: {} waves of {}, up to {} undead at once, {:.0f} Skyrim health each{}", a_round, g_waves, g_waveSize, g_toSpawn, HealthFor(a_round), g_special ? " (hound night)" : "");
 		}
 
 		// Despawning: out of combat and hidden now, deleted a moment later (deleting an actor others are still
@@ -1234,6 +1294,71 @@ namespace bo3z
 				}
 			}
 			std::erase_if(g_purge, [](const auto& e) { return e.second <= 0; });
+		}
+
+		// the night's waves: each one's dead rise from the spawn points until its count is out; when every one of them is
+		// down the next wave comes after a breath, and after the last the night breaks into dawn
+		void TickWaves(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			if (g_nightCleared) {
+				return;
+			}
+			if (g_waveRest > 0) {
+				if ((g_waveRest -= a_delta) <= 0) {
+					Forms::Play(gen::Sound::round_start);
+					Hud::Banner(fmt::format("WAVE {} OF {}", g_wave, g_waves), 3.0f);
+					Curse::OnWave(false);
+				}
+				return;
+			}
+			if (g_waveSpawned < g_waveSize) {
+				const float boost = Curse::SpawnBoost() * (g_event >= 0 ? gen::kEvents[g_event].spawnMult : 1.0f);
+				const int   want = std::min(static_cast<int>(g_toSpawn * Curse::SpawnBoost()), R.maxAlive * 3 / 2);
+				if (g_pause <= 0 && (g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < want) {
+					if (SpawnOne(a_player)) {
+						++g_waveSpawned;
+					}
+					g_spawnTimer = SpawnDelay(g_current) / std::max(0.25f, boost);
+				}
+				return;
+			}
+			if (!g_alive.empty()) {
+				return;
+			}
+			Curse::OnWave(true);
+			logger::info("night {}: wave {} of {} cleared", g_current, g_wave, g_waves);
+			if (g_wave >= g_waves) {
+				g_nightCleared = true;
+				Forms::Play(gen::Sound::round_end);
+				Director::SkipToDawn(fmt::format("NIGHT {} CLEARED - DAWN BREAKS", g_current).c_str());
+				return;
+			}
+			++g_wave;
+			g_waveSpawned = 0;
+			g_waveRest = kWaveRest;
+			Forms::Play(gen::Sound::round_end);
+			Hud::Banner(fmt::format("WAVE {} CLEARED - {} MORE", g_wave - 1, g_waves - g_wave + 1), 3.5f);
+		}
+
+		// the night holds while waves remain: the clock never reaches dawn (it slows near the end and stops just short)
+		void HoldNight(RE::PlayerCharacter* a_player)
+		{
+			auto* cal = RE::Calendar::GetSingleton();
+			if (!cal || !cal->gameHour || g_phase != Phase::Fighting || g_nightCleared || Coop::Client() || Curse::SafeHere(a_player)) {
+				return;
+			}
+			const float h = cal->GetHour();
+			const float left = std::fmod(R.nightEndHour - h + 24.0f, 24.0f);
+			if (left > 12.0f) {
+				return;  // (not a night hour)
+			}
+			if (left < 0.25f) {
+				const float back = 0.25f - left;
+				cal->gameHour->value = std::fmod(cal->gameHour->value - back + 24.0f, 24.0f);
+				if (cal->gameDaysPassed) {
+					cal->gameDaysPassed->value -= back / 24.0f;
+				}
+			}
 		}
 
 		void Dawn()
@@ -1275,6 +1400,7 @@ namespace bo3z
 			}
 			g_phase = Phase::Day;
 			g_toSpawn = 0;
+			g_waves = 0, g_wave = 0, g_waveSpawned = 0, g_waveRest = 0;
 			g_pause = 0;
 			EndEvent();
 		}
@@ -1748,7 +1874,8 @@ namespace bo3z
 			logger::info("champion: {} risen in {} ({:.0f} health)", a_name, gen::kTowns[a_town], want);
 			return true;
 		}
-		void EndNight()
+		void EndNight() { SkipToDawn("THE CITY IS FREE - DAWN BREAKS"); }
+		void SkipToDawn(const char* a_banner)
 		{
 			auto* cal = RE::Calendar::GetSingleton();
 			if (!cal || !IsNight() || Coop::Client()) {
@@ -1767,8 +1894,8 @@ namespace bo3z
 				}
 				cal->gameHour->value = nh;
 				cal->gameDaysPassed->value += hours / 24.0f;
-				Hud::Banner("THE CITY IS FREE - DAWN BREAKS", 5.0f);
-				logger::info("night: ended early by a freed city ({:.1f} hours skipped)", hours);
+				Hud::Banner(a_banner, 5.0f);
+				logger::info("night: ended early ({:.1f} hours skipped): {}", hours, a_banner);
 			}
 		}
 		void  Hazard(const RE::NiPoint3& a_at, float a_delay, float a_radius, float a_share, std::string_view a_look, bool a_stagger)
@@ -2327,6 +2454,10 @@ namespace bo3z
 				h.nightActive = g_phase == Phase::Fighting;
 				h.nightEvent = g_phase == Phase::Fighting ? g_event : -1;
 				h.nukeLeft = g_pause;
+				const bool waving = g_phase == Phase::Fighting && g_waves > 0;
+				h.wave = waving ? g_wave : 0, h.waves = waving ? g_waves : 0, h.waveSize = g_waveSize;
+				h.waveLeft = waving ? std::max(0, g_waveSize - g_waveSpawned) + static_cast<int>(g_alive.size()) : 0;
+				h.waveRest = g_waveRest;
 			}
 			g_pause = std::max(0.0f, g_pause - a_delta);
 			Curse::Tick(a_delta);
@@ -2362,6 +2493,7 @@ namespace bo3z
 				}
 				break;
 			case Phase::Fighting:
+				HoldNight(player);
 				for (auto& s : g_alive) {
 					if (s.webbed > 0 && (s.webbed -= a_delta) <= 0) {
 						if (auto a = s.handle.get()) {
@@ -2386,14 +2518,7 @@ namespace bo3z
 					}
 					break;
 				}
-				{
-					const float boost = Curse::SpawnBoost() * (g_event >= 0 ? gen::kEvents[g_event].spawnMult : 1.0f);
-					const int   want = std::min(static_cast<int>(g_toSpawn * Curse::SpawnBoost()), R.maxAlive * 3 / 2);
-					if (g_pause <= 0 && (g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < want) {
-						SpawnOne(player);
-						g_spawnTimer = SpawnDelay(g_current) / std::max(0.25f, boost);
-					}
-				}
+				TickWaves(player, a_delta);
 				break;
 			}
 		}

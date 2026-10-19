@@ -138,6 +138,7 @@ namespace bo3z
 		void             DevSpawnAt(std::string_view a_row, const RE::NiPoint3& a_at, float a_yawDeg);  // DevTools: ...at a point, facing yaw
 		void             DevShowUndead(bool a_show);  // DevTools: hide/show every undead we raised (clean plates for art captures)
 		void             EndNight();
+		void             SkipToDawn(const char* a_banner);  // the clock jumps to first light (the night counts as survived)
 		bool             MayRest(std::string& a_why);  // waiting / sleeping: not at night, and only the host's clock moves
 		bool             BossPos(RE::NiPoint3& a_at);  // Grimmvar, if he walks
 		bool             RaiseChampion(int a_town, std::string_view a_row, std::string_view a_name, float a_healthMult, const RE::NiPoint3& a_at);  // a city's named champion
@@ -374,6 +375,7 @@ namespace bo3z
 		void  Reset();
 		void  OnUndeadDeath(RE::Actor* a_actor);
 		void  OnBossSlain();
+		void  OnWave(bool a_cleared);       // the night's waves: one begins (false) or is cleared (true)
 		void  OnChampionSlain(int a_town);  // a city's champion fell (Director)
 		void  MigrateRites();               // a save from the four-rite cities: freed stays freed, the rest begin the trials
 		bool  Freed(int a_town);            // its Echo Altar is awake (three trials and its Barrow-Jarl)
@@ -534,6 +536,8 @@ namespace bo3z
 			bool        orbAim{ false };  // the orb is in the crosshair: Activate opens the shrine
 			int         round{ 0 };
 			bool        nightActive{ false };
+			int         wave{ 0 }, waves{ 0 }, waveLeft{ 0 }, waveSize{ 0 };  // (Noah: BO3 waves) this night's wave, how many, the dead still to kill in it
+			float       waveRest{ 0 };    // seconds until the next wave rises
 			float       puInsta{ 0 }, puDouble{ 0 }, puFireSale{ 0 };  // power-up seconds left  // a night (round) is being fought; otherwise round = nights survived
 			int         points{ 0 };
 			bool        gunOut{ false };

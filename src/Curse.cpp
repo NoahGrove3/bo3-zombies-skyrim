@@ -21,6 +21,7 @@ namespace bo3z
 		constexpr int kNeeded = 3;            // trials to take before the Barrow-Jarl
 		constexpr int kFreed = kNeeded + 1;   // steps: three trials and the Barrow-Jarl
 		constexpr int kBase = 1'000'000, kFreedValue = 9'000'000, kBossActive = 6;
+		constexpr float kBreathRange = 3000.0f;  // the Long Night's Breath: how near the altar you hold it
 		static_assert(kTrialCount == 5);
 
 		float Rand01()
@@ -80,7 +81,7 @@ namespace bo3z
 		constexpr float kWardSwarm[6] = { 1.5f, 1.75f, 2.0f, 2.25f, 2.5f, 3.0f };      // the dead come this much faster in the circle
 		constexpr int   kWaveBase[6] = { 4, 5, 6, 7, 8, 10 };                          // the first wave (each after: +2)
 		constexpr float kBossHealth[6] = { 0.6f, 0.8f, 1.0f, 1.3f, 1.6f, 2.0f };       // the Barrow-Jarl's health
-		int Elites(int a_wave, int a_waves)  // Thanes of the Mound and Bone Jotnar in a wave
+		[[maybe_unused]] int Elites(int a_wave, int a_waves)  // Thanes of the Mound and Bone Jotnar in a wave
 		{
 			const int d = Diff();
 			if (d >= 3) {
@@ -113,7 +114,7 @@ namespace bo3z
 			Replace(s, "{s}", std::to_string(a_s));
 			return s;
 		}
-		std::string Clock(float a_seconds)
+		[[maybe_unused]] std::string Clock(float a_seconds)
 		{
 			const int t = std::max(0, static_cast<int>(std::ceil(a_seconds)));
 			return fmt::format("{}:{:02}", t / 60, t % 60);
@@ -160,6 +161,7 @@ namespace bo3z
 		int   g_clockKey = -1;               // town*10+active the clock belongs to
 		float g_clock = 0;                   // the Culling's seconds left, or this wave's
 		bool  g_belowHalf = false;           // the Unbroken: under half health now
+		bool  g_waveBroken = false;          // the Unbroken: this wave fell below half (it won't count)
 		std::vector<RE::ActorHandle> g_wave; // the Long Night's Breath: this wave's dead
 		int   g_waveKey = -1;                // town*100+wave they belong to
 		int   g_waveSize = 0, g_waveDoubled = 0, g_waveLeft = 0;
@@ -271,10 +273,10 @@ namespace bo3z
 			const int n = N(a_trial), s = Secs(a_trial);
 			switch (a_trial) {
 			case gen::kTrial_ward: return fmt::format("Hold the runic circle {} seconds", s);
-			case gen::kTrial_culling: return fmt::format("{} kills in the city within {}", n, Clock(static_cast<float>(s)));
-			case gen::kTrial_unbroken: return fmt::format("{} kills, never below half health", n);
+			case gen::kTrial_culling: return fmt::format("{} kills in the city", n);
+			case gen::kTrial_unbroken: return fmt::format("{} {} cleared, never below half health", n, n == 1 ? "wave" : "waves");
 			case gen::kTrial_steel: return fmt::format("{} melee kills", n);
-			case gen::kTrial_breath: return fmt::format("{} waves at the altar, {} s each", n, s);
+			case gen::kTrial_breath: return fmt::format("{} {} held at the altar", n, n == 1 ? "wave" : "waves");
 			default: return {};
 			}
 		}
@@ -502,24 +504,25 @@ namespace bo3z
 			case gen::kTrial_culling:
 				h.questGoal = fmt::format("Kills in {}  {} / {}", gen::kTowns[a_zone], s.prog, n);
 				h.questFrac = static_cast<float>(s.prog) / std::max(1, n);
-				h.questTimer = live ? g_clock : static_cast<float>(sec);
-				h.questWarn = live && g_clock < 20.0f;
 				break;
 			case gen::kTrial_unbroken:
-				h.questGoal = fmt::format("Kills above half health  {} / {}", s.prog, n);
+				h.questGoal = g_waveBroken ? fmt::format("This wave fell below half - the next one counts  {} / {}", s.prog, n) : fmt::format("Clear the wave above half health  {} / {}", s.prog, n);
 				h.questFrac = static_cast<float>(s.prog) / std::max(1, n);
-				h.questWarn = player && HealthFrac(player) < 0.6f;
+				h.questWarn = g_waveBroken || (player && HealthFrac(player) < 0.6f);
 				break;
 			case gen::kTrial_steel:
 				h.questGoal = fmt::format("Melee kills  {} / {}", s.prog, n);
 				h.questFrac = static_cast<float>(s.prog) / std::max(1, n);
 				break;
 			case gen::kTrial_breath:
-				h.questGoal = g_waveKey == a_zone * 100 + s.prog && g_waveLeft > 0 ? fmt::format("Wave {} / {}  -  {} left", s.prog + 1, n, g_waveLeft) : fmt::format("Wave {} / {}  -  go to the altar", s.prog + 1, n);
-				h.questFrac = static_cast<float>(s.prog) / std::max(1, n);
-				if (g_waveKey == a_zone * 100 + s.prog && g_waveLeft > 0) {
-					h.questTimer = g_clock;
-					h.questWarn = g_clock < 12.0f;
+				{
+					RE::NiPoint3       c;
+					float              yaw = 0;
+					RE::TESWorldSpace* ws = nullptr;
+					const bool atAltar = player && Shops::StandFrame(a_zone, c, yaw, ws) && ws == player->GetWorldspace() && std::hypot(player->GetPosition().x - c.x, player->GetPosition().y - c.y) < kBreathRange;
+					h.questGoal = fmt::format("{}  {} / {}", atAltar ? "Hold the altar until the wave is cleared" : "Go back to the altar", s.prog, n);
+					h.questFrac = static_cast<float>(s.prog) / std::max(1, n);
+					h.questWarn = !atAltar;
 				}
 				break;
 			default: break;
@@ -527,7 +530,7 @@ namespace bo3z
 		}
 
 		// The Long Night's Breath: a wave of the dead claws up in a ring round the altar
-		int RaiseWave(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_c, int a_count, int a_elites)
+		[[maybe_unused]] int RaiseWave(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_c, int a_count, int a_elites)
 		{
 			int raised = 0;
 			for (int i = 0; i < a_count; ++i) {
@@ -674,13 +677,10 @@ namespace bo3z
 			const int z = g_zone;
 			St s = Get(z);
 			const int tr = s.freed ? -1 : s.Trial();
-			if (tr != gen::kTrial_culling && tr != gen::kTrial_unbroken && tr != gen::kTrial_steel) {
+			if (tr != gen::kTrial_culling && tr != gen::kTrial_steel) {
 				return;
 			}
 			auto* player = RE::PlayerCharacter::GetSingleton();
-			if (tr == gen::kTrial_unbroken && (!player || HealthFrac(player) < 0.5f)) {
-				return;
-			}
 			if (tr == gen::kTrial_steel) {
 				const auto it = a_actor ? g_lastBlow.find(a_actor->GetFormID()) : g_lastBlow.end();
 				if (it == g_lastBlow.end() || !it->second.second || std::chrono::steady_clock::now() - it->second.first > std::chrono::seconds(6)) {
@@ -691,6 +691,46 @@ namespace bo3z
 				CompleteTrial(z);
 			} else {
 				Put(z, s);
+			}
+		}
+
+		// the night's waves (Director): the Unbroken and the Long Night's Breath count whole waves
+		void OnWave(bool a_cleared)
+		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (!a_cleared) {
+				g_waveBroken = player && HealthFrac(player) < 0.5f;
+				return;
+			}
+			const int z = g_zone;
+			if (z < 0 || !player) {
+				g_waveBroken = false;
+				return;
+			}
+			St s = Get(z);
+			const int tr = s.freed ? -1 : s.Trial();
+			bool count = false;
+			if (tr == gen::kTrial_unbroken) {
+				count = !g_waveBroken;
+			} else if (tr == gen::kTrial_breath) {
+				RE::NiPoint3       c;
+				float              yaw = 0;
+				RE::TESWorldSpace* ws = nullptr;
+				count = Shops::StandFrame(z, c, yaw, ws) && ws == player->GetWorldspace() && std::hypot(player->GetPosition().x - c.x, player->GetPosition().y - c.y) < kBreathRange;
+				if (!count) {
+					Hud::Banner("THE LONG NIGHT'S BREATH - you were too far from the altar: that wave doesn't count", 4.0f);
+				}
+			}
+			g_waveBroken = false;
+			if (!count) {
+				return;
+			}
+			if (++s.prog >= N(tr)) {
+				CompleteTrial(z);
+			} else {
+				Put(z, s);
+				Forms::Play(gen::Sound::quest_step);
+				Hud::Banner(fmt::format("{} - {} of {} waves", Upper(std::string(Title(tr))), s.prog, N(tr)), 3.5f);
 			}
 		}
 
@@ -947,72 +987,21 @@ namespace bo3z
 					}
 				}
 				break;
-			case gen::kTrial_culling:  // the clock runs while you're in the city at night; out of time, the count starts again
-				if (g_clockKey != key) {
-					g_clockKey = key, g_clock = static_cast<float>(Secs(tr));
-				}
-				if ((g_clock -= a_delta) <= 0) {
-					g_clock = static_cast<float>(Secs(tr));
-					Broken(z, "THE CULLING - time ran out, the count begins again");
-				}
+			case gen::kTrial_culling:  // (Noah: the nights are waves now) every kill in the city counts, no clock
 				break;
-			case gen::kTrial_unbroken:  // below half health: the count starts again (and no kill counts until you're back above)
+			case gen::kTrial_unbroken:  // below half health: this wave no longer counts (Curse::OnWave)
 				{
 					const bool below = HealthFrac(player) < 0.5f;
-					if (below && !g_belowHalf) {
-						Broken(z, "THE UNBROKEN - you fell below half health, the count begins again");
+					if (below && !g_belowHalf && !g_waveBroken) {
+						g_waveBroken = true;
+						Forms::Play(gen::Sound::rite_reset);
+						Hud::Banner("THE UNBROKEN - you fell below half health: this wave won't count", 4.0f);
 					}
 					g_belowHalf = below;
 				}
 				break;
 			case gen::kTrial_steel:
-				break;
-			case gen::kTrial_breath:  // a wave at a time round the altar, while you're near it
-				{
-					const int waves = N(tr), wk = z * 100 + s.prog;
-					const bool atAltar = here && std::hypot(player->GetPosition().x - c.x, player->GetPosition().y - c.y) < 3000.0f;
-					std::erase_if(g_wave, [](const RE::ActorHandle& h) { auto a = h.get(); return !a || a->IsDead() || a->IsDeleted() || a->IsDisabled(); });
-					g_waveLeft = static_cast<int>(g_wave.size());
-					if (g_waveKey != wk) {
-						if (!atAltar || (g_waveRest -= a_delta) > 0 || (g_waveRetry -= a_delta) > 0) {
-							break;
-						}
-						g_waveSize = kWaveBase[Diff()] + 2 * s.prog;
-						g_wave.clear();
-						if (RaiseWave(player, c, g_waveSize, Elites(s.prog, waves)) == 0) {
-							g_waveRetry = 2.0f;  // (the night is full: try again in a moment)
-							break;
-						}
-						g_waveKey = wk, g_waveDoubled = 0, g_clock = static_cast<float>(Secs(tr)), g_clockKey = key;
-						g_waveLeft = static_cast<int>(g_wave.size());
-						Forms::Play(gen::Sound::quest_start);
-						Hud::Banner(fmt::format("THE LONG NIGHT'S BREATH - WAVE {} OF {}", s.prog + 1, waves), 3.5f);
-						break;
-					}
-					if (g_wave.empty()) {  // cleared
-						St n = s;
-						Points::Add(250 * (s.prog + 1));
-						if (++n.prog >= waves) {
-							CompleteTrial(z);
-						} else {
-							Put(z, n);
-							Forms::Play(gen::Sound::quest_step);
-							Hud::Banner(fmt::format("WAVE {} CLEARED - the barrow draws breath", s.prog + 1), 3.0f);
-							g_waveRest = 5.0f;
-						}
-						break;
-					}
-					if (atAltar && (g_clock -= a_delta) <= 0) {  // too slow: the barrow breathes out again
-						g_clock = static_cast<float>(Secs(tr));
-						if (g_waveDoubled < 3) {
-							++g_waveDoubled;
-							RaiseWave(player, c, g_waveSize, 0);
-							g_waveLeft = static_cast<int>(g_wave.size());
-							Forms::Play(gen::Sound::rite_reset);
-							Hud::Banner("TOO SLOW - THE WAVE DOUBLES", 3.0f);
-						}
-					}
-				}
+			case gen::kTrial_breath:  // counted as each wave is cleared (Curse::OnWave)
 				break;
 			default:
 				if (s.Boss() && here && !Director::ChampionActive(z)) {  // the Barrow-Jarl rises out in the city, once a night until it falls

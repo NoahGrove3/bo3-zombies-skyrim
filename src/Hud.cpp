@@ -995,7 +995,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float  h = 64 * k, step = 17 * k, gap = 24 * k, top = p.y + 34 * k;
 				const int    groups = (shown + 4) / 5;
 				const float  plateW = shown > 0 ? std::max(150 * k, 16 * k + (shown - groups) * step + groups * gap + 18 * k) : 150 * k;
-				Panel(dl, { p.x - 10 * k, p.y - 6 * k }, { p.x + plateW, top + h + (s.nightActive && s.nightEvent >= 0 ? 44 : 16) * k }, k * 0.7f, 0.8f);
+				const bool waves = s.nightActive && s.waves > 0;
+				Panel(dl, { p.x - 10 * k, p.y - 6 * k }, { p.x + plateW, top + h + (s.nightActive && s.nightEvent >= 0 ? 44 : 16) * k + (waves ? 46 * k : 0) }, k * 0.7f, 0.8f);
+				if (waves) {  // (Noah: BO3 waves) the wave, and the dead still to fall in it
+					const float wy = top + h + 10 * k;
+					const std::string line = s.waveRest > 0 ? fmt::format("WAVE {} OF {}  -  {:.0f}", s.wave, s.waves, std::ceil(s.waveRest)) : fmt::format("WAVE {} OF {}", s.wave, s.waves);
+					Txt(dl, g_title, 17 * k, { p.x + 4 * k, wy }, Fade(kGold, 0.95f), line);
+					const float frac = s.waveSize > 0 ? 1.0f - std::clamp(static_cast<float>(s.waveLeft) / s.waveSize, 0.0f, 1.0f) : 0.0f;
+					Bar(dl, { p.x + 4 * k, wy + 24 * k }, plateW - 22 * k, 5 * k, frac, frac, IM_COL32(190, 40, 30, 255), k);
+				}
 				Txt(dl, g_title, 19 * k, { p.x + 4 * k, p.y + 2 * k }, Fade(kGold, 0.9f), s.nightActive ? "NIGHT" : "NIGHTS SURVIVED");
 				dl->AddLine({ p.x + 4 * k, p.y + 27 * k }, { p.x + plateW - 14 * k, p.y + 27 * k }, Fade(kGoldDim, 0.7f), 1.0f * k);
 				const float draw = std::clamp(1.0f - (roundFlash - 1.5f), 0.0f, 1.0f);  // the newest is cut in

@@ -87,39 +87,39 @@
     {
       "id": "culling",
       "title": "The Culling",
-      "short": "Slay the risen before the echo swells",
-      "goal": "Slay the risen within {city} before time runs out",
-      "text": "GRAH - Battle. The first of Alduin's three words calls the dead to war, and the altar answers war with war. Put {n} of the risen down within {city} before {s} seconds pass, or the echo swells again and the count starts over.",
+      "short": "Slay the risen within the city",
+      "goal": "Slay the risen within {city}",
+      "text": "GRAH - Battle. The first of Alduin's three words calls the dead to war, and the altar answers war with war. Put {n} of the risen down within {city} - every wave that claws up out of the ground counts.",
       "n": [
-        20,
-        25,
-        30,
         40,
         50,
-        60
+        60,
+        75,
+        90,
+        110
       ],
       "seconds": [
-        240,
-        225,
-        210,
-        195,
-        180,
-        165
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ]
     },
     {
       "id": "unbroken",
       "title": "The Unbroken",
-      "short": "Slay the risen without falling below half health",
-      "goal": "Slay the risen within {city} without falling below half health",
-      "text": "DIR - Death. Alduin's second word feeds on the wounded. Slay {n} of the risen in {city} without letting your health fall below half; bleed past it and the count begins again.",
+      "short": "Clear whole waves without falling below half health",
+      "goal": "Clear waves of the risen in {city} without falling below half health",
+      "text": "DIR - Death. Alduin's second word feeds on the wounded. Clear {n} whole waves of the risen in {city} without letting your health fall below half; bleed past it and that wave does not count.",
       "n": [
-        12,
-        15,
-        20,
-        25,
-        30,
-        40
+        1,
+        1,
+        2,
+        2,
+        2,
+        3
       ],
       "seconds": [
         0,
@@ -156,24 +156,24 @@
     {
       "id": "breath",
       "title": "The Long Night's Breath",
-      "short": "Survive the waves that rise round the altar",
-      "goal": "Survive the waves that rise round the Echo Altar of {city}",
-      "text": "LEIN - World. The last word is Alduin breathing the world back into his dead. {n} waves will claw up round the altar of {city}, each stronger than the last. Clear each one before {s} seconds pass, or the barrow breathes out again and the wave doubles.",
+      "short": "Hold the altar while the waves are cleared",
+      "goal": "Hold the Echo Altar of {city} through the night's waves",
+      "text": "LEIN - World. The last word is Alduin breathing the world back into his dead. Stand by the altar of {city} while the night's waves rise against it: clear {n} waves without straying from it, and its breath is broken.",
       "n": [
+        1,
+        2,
+        2,
         3,
         3,
-        4,
-        5,
-        6,
-        7
+        4
       ],
       "seconds": [
-        80,
-        70,
-        60,
-        55,
-        50,
-        45
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
       ]
     }
   ],

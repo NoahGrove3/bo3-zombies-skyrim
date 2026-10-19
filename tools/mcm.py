@@ -85,7 +85,7 @@ PAGES = [
     ]},
 ]
 DEFAULTS = {
-    'General': {'fFovFirst': 130.0, 'fFovThird': 130.0, 'fBrightness': 2.0, 'bShelter': 1, 'fCorpseSeconds': 10.0},
+    'General': {'fFovFirst': 130.0, 'fFovThird': 120.0, 'fBrightness': 1.5, 'bShelter': 1, 'fCorpseSeconds': 10.0},
     'Controls': {'bPlayStationIcons': 0},
     'Dragon': {'bBankReverse': 0, 'bInvertDive': 0},
     'Difficulty': {'bFollowSkyrim': 1, 'fUndeadHealth': 1.0, 'fUndeadDamage': 1.0},

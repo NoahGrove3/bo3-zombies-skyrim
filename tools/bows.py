@@ -80,6 +80,89 @@ def lacquer(col, size=512, seed=1):
     nrm[..., 0] = np.clip(128 - gx * 500, 0, 255); nrm[..., 1] = np.clip(128 + gy * 500, 0, 255)
     return Image.fromarray(rgb, 'RGB'), Image.fromarray(nrm, 'RGBA')
 
+def save_mips(im, rel, alpha=False):
+    """DDS with its full mip chain (ImageMagick): without one a 2K texture on a bow in your hands crawls and shimmers"""
+    p = OUT / 'Textures' / 'CurseOfAlduin' / 'bow' / rel; p.parent.mkdir(parents=True, exist_ok=True)
+    work = ROOT / 'build' / 'bows'; work.mkdir(parents=True, exist_ok=True)
+    tmp = work / (rel + '.png'); im.convert('RGBA' if alpha else 'RGB').save(tmp)
+    subprocess.run(['convert', str(tmp), '-define', f'dds:compression={"dxt5" if alpha else "dxt1"}', '-define', 'dds:mipmaps=12', str(p)], check=True)
+    return f'CurseOfAlduin\\bow\\{rel}'
+
+GLYPHS = [[(0, -1, 0, 1), (0, -0.3, 0.6, -0.9)], [(-0.5, 1, 0, -1), (0.5, 1, 0, -1), (-0.3, 0.3, 0.3, 0.3)], [(0, -1, 0, 1), (-0.6, 0, 0.6, 0)],
+          [(-0.6, -1, 0.6, 1), (0.6, -1, -0.6, 1)], [(0, -1, 0, 1), (0, 0.1, 0.6, 0.9)], [(-0.6, -0.8, 0.6, -0.8), (0, -0.8, 0, 1)],
+          [(-0.5, -1, -0.5, 1), (-0.5, 0, 0.5, -0.6), (-0.5, 0, 0.5, 0.6)], [(0, -1, 0.6, 0), (0.6, 0, 0, 1), (0, 1, -0.6, 0), (-0.6, 0, 0, -1)],
+          [(-0.5, -1, 0.5, -1), (0, -1, 0, 1), (-0.5, 1, 0.5, 1)], [(0, -1, 0, 1), (0, -1, 0.55, -0.45), (0, -0.2, 0.55, 0.35)]]
+
+def bow_maps(kind, body_col, glow, seed, W=2048, H=1024):
+    """the bow's own finish, laid out on its limb (u: bottom tip to top tip, v: round the limb, the seam on its back):
+    the limb's material with its grain running the length, a wrapped leather grip between two collars, metal-capped tips,
+    and a channel carved down each flank of both limbs with the Dirge's runes cut into it, glowing in the bow's element"""
+    from PIL import ImageDraw
+    d0, n0 = skymat.make(kind, body_col, seed=seed, size=W)
+    mat = np.asarray(d0.rotate(90, expand=True).resize((W, W)), np.float32)[:H]          # grain along the limb (u)
+    mh = np.asarray(n0.rotate(90, expand=True).resize((W, W)).convert('L'), np.float32)[:H] / 255
+    lth_d, lth_n = skymat.make('leather', (58, 38, 26), seed=seed + 3, size=W)
+    lth = np.asarray(lth_d.resize((W, W)), np.float32)[:H]
+    metal_kind = {'wood': 'bronze', 'wood_dark': 'iron', 'iron': 'steel', 'bone': 'bronze', 'steel': 'silver', 'bronze': 'gold'}.get(kind, 'steel')
+    mt_d, _ = skymat.make(metal_kind, None, seed=seed + 5, size=W)
+    met = np.asarray(mt_d.rotate(90, expand=True).resize((W, W)), np.float32)[:H]
+    u = np.linspace(0, 1, W)[None, :].repeat(H, 0); v = np.linspace(0, 1, H)[:, None].repeat(W, 1)
+    grip = (np.abs(u - 0.5) < 0.065).astype(np.float32)
+    collar = ((np.abs(np.abs(u - 0.5) - 0.072) < 0.008) | (u < 0.035) | (u > 0.965)).astype(np.float32)
+    # the rune channels: down both flanks (v 0.25, 0.75) of both limbs
+    ch = np.zeros((H, W), np.float32)
+    for vc in (0.25, 0.75):
+        ch = np.maximum(ch, np.clip(1 - np.abs(v - vc) / 0.06, 0, 1) ** 0.35 * (((u > 0.09) & (u < 0.41)) | ((u > 0.59) & (u < 0.91))))
+    gm = Image.new('L', (W, H), 0); gd = ImageDraw.Draw(gm)
+    rnd = np.random.default_rng(seed)
+    for vc in (0.25, 0.75):
+        for u0, u1 in ((0.1, 0.4), (0.6, 0.9)):
+            n = 11
+            for k in range(n):
+                cx = (u0 + (k + 0.5) / n * (u1 - u0)) * W; cy = vc * H; hs = H * 0.038
+                for x0, y0, x1, y1 in GLYPHS[int(rnd.integers(len(GLYPHS)))]:
+                    gd.line([(cx + y0 * hs * 0.8, cy + x0 * hs), (cx + y1 * hs * 0.8, cy + x1 * hs)], fill=255, width=max(3, int(hs * 0.24)))
+    gly = np.asarray(gm.filter(ImageFilter.GaussianBlur(1.2)), np.float32) / 255
+    # albedo: the limb, the grip's leather, the metal; the channel darker, the runes holding their colour even unlit
+    col = mat * (1 - grip[..., None]) + lth * grip[..., None]
+    limbs = (1 - grip) * (1 - collar)
+    # a composite bow's layers: pale horn on the belly (toward you), dark sinew on the back, inlaid metal pinstripes
+    # bounding each rune channel
+    belly = np.clip(1 - np.abs(v - 0.5) / 0.09, 0, 1) ** 0.5 * limbs
+    back = np.clip(1 - np.minimum(v, 1 - v) / 0.07, 0, 1) ** 0.5 * limbs
+    pin = np.zeros((H, W), np.float32)
+    for vc in (0.185, 0.315, 0.685, 0.815):
+        pin = np.maximum(pin, np.clip(1 - np.abs(v - vc) * H / 2.5, 0, 1))
+    pin *= (((u > 0.08) & (u < 0.42)) | ((u > 0.58) & (u < 0.92)))
+    horn = np.array([186, 168, 138], np.float32) * 0.6 + np.array(body_col, np.float32) * 0.4
+    col = col * (1 - 0.55 * belly[..., None]) + horn * (0.55 * belly[..., None]) * (0.85 + 0.3 * mh[..., None])
+    col *= (1 - 0.35 * back[..., None])
+    col = col * (1 - collar[..., None]) + met * collar[..., None]
+    col = col * (1 - pin[..., None]) + met * pin[..., None] * 1.15
+    col *= (1 - 0.35 * ch[..., None])
+    gc = np.array(glow, np.float32) * 255
+    col = col * (1 - gly[..., None]) + (gc * 0.55)[None, None] * gly[..., None]
+    # edge wear on the metal and the limb's arrises (round the back seam and along v 0/0.5)
+    height = mh * 0.5 * (1 - collar) + collar * 0.75 + 0.2 * pin + grip * (0.55 + 0.25 * np.asarray(lth_n.resize((W, W)).convert('L'), np.float32)[:H] / 255) - 0.25 * ch - 0.35 * gly
+    gy, gx = np.gradient(height * 7.0)
+    nrm = np.dstack([-gx, gy, np.ones_like(gx)]); nrm /= np.linalg.norm(nrm, axis=2, keepdims=True)
+    spec = np.clip(0.18 + 0.55 * collar + 0.5 * pin + 0.15 * belly + 0.15 * (1 - grip) * (1 - collar) + 0.3 * gly, 0, 1)
+    nimg = Image.fromarray(np.dstack([(nrm * 0.5 + 0.5) * 255, spec[..., None] * 255]).astype(np.uint8), 'RGBA')
+    halo = np.asarray(Image.fromarray((gly * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(5)), np.float32) / 255
+    g = np.clip(gly + 0.45 * halo + 0.08 * ch, 0, 1)
+    gimg = Image.fromarray((g[..., None] * gc[None, None]).clip(0, 255).astype(np.uint8), 'RGB')
+    return Image.fromarray(col.clip(0, 255).astype(np.uint8), 'RGB'), nimg, gimg
+
+
+def limb_uv(P, centre, idx):
+    """our own UVs for the limb: u from bottom tip to top tip, v round its section (0 = its back, toward the target)"""
+    x, y, z = P[idx, 0], P[idx, 1], P[idx, 2]
+    cx = np.array([centre.get(int(round(yy / 4)), xx) for xx, yy in zip(x, y)])
+    uu = np.clip((y + 64.0) / 128.0, 0, 1)
+    vv = (np.arctan2(z, cx - x) / (2 * np.pi) + 0.5) % 1.0
+    return uu, vv
+
+
 def build(bid):
     src, body_col, glow = BOWS[bid]
     V, T, F = load_obj(SRC / f'{src}.obj')
@@ -121,8 +204,8 @@ def build(bid):
     groups = {'string': F[fs], 'trim': F[trim], 'body': F[(~fs) & (~trim)]}
     N = normals(P, F)
     kind = BODY_KIND[bid]
-    d, n = skymat.make(kind, body_col, seed=len(bid), size=2048)   # (Noah: 2K, like the spells)
-    tex = {'d': save_dds(d, f'{bid}_d.dds'), 'n': save_dds(n, f'{bid}_n.dds', True),
+    d, n, gl = bow_maps(kind, body_col, glow, seed=len(bid))   # (Noah: 2K, like the spells - with its own runes)
+    tex = {'d': save_mips(d, f'{bid}_d.dds'), 'n': save_mips(n, f'{bid}_n.dds', True), 'g': save_mips(gl, f'{bid}_g.dds'),
            'flat': save_dds(Image.new('RGBA', (32, 32), (128, 128, 255, 200)), 'flat_n.dds', True)}
     gcol = tuple(int(c * 255) for c in glow)
     tex['glow_d'] = save_dds(Image.new('RGB', (32, 32), gcol), f'{bid}_glow_d.dds')
@@ -138,7 +221,24 @@ def build(bid):
         elif g == 'trim':
             lines.append(f'shape {bid}_trim diffuse={tex["glow_d"]} normal={tex["flat"]} glow={tex["glow_g"]} emit={ec} emitmult=2.4 spec=1.2 gloss=150')
         else:
-            lines.append(f'shape {bid}_body diffuse={tex["d"]} normal={tex["n"]} spec={ {"wood": 0.4, "wood_dark": 0.5, "iron": 1.3, "bone": 0.6, "steel": 1.6, "bronze": 1.4}[kind] } gloss=60')
+            lines.append(f'shape {bid}_body diffuse={tex["d"]} normal={tex["n"]} glow={tex["g"]} emit={ec} emitmult=2.2 spec={ {"wood": 0.4, "wood_dark": 0.5, "iron": 1.3, "bone": 0.6, "steel": 1.6, "bronze": 1.4}[kind] } gloss=60')
+            # its own UVs (limb_uv), the triangles that cross the seam on its back given their own copies of those corners
+            uu, vv = limb_uv(P, centre, np.arange(len(P)))
+            corners, newF = {}, []
+            for tri in GF:
+                vs = vv[tri]; wrap = vs.max() - vs.min() > 0.5
+                ids = []
+                for a in tri:
+                    key = (int(a), bool(wrap and vv[a] < 0.5))
+                    if key not in corners:
+                        corners[key] = len(corners)
+                    ids.append(corners[key])
+                newF.append(ids)
+            for (a, up) in corners:
+                x, y, z = P[a]; nx, ny, nz = N[a]
+                lines.append(f'v {x:.4f} {y:.4f} {z:.4f} {uu[a]:.5f} {vv[a] + (1.0 if up else 0.0):.5f} {nx:.4f} {ny:.4f} {nz:.4f} ' + ' '.join(f'{b} {wt:.4f}' for b, wt in limb_weights(y)))
+            lines += [f't {a} {b} {c}' for a, b, c in newF]
+            continue
         for v in vid:
             x, y, z = P[v]; u, w = (T[v] if len(T) > v else (0, 0))
             if g == 'string':

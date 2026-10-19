@@ -436,7 +436,7 @@ CU = S['curse']
 def fill(t, c):
     return t.replace('{city}', c['town']).replace('{landmark}', c.get('landmark', ''))
 def unnumbered(t):  # the journal can't know the difficulty: "{n} of the risen" -> "the risen", "{s} seconds" -> "the time the altar asks"
-    return t.replace('Put {n} of the risen', 'Put the risen').replace('Slay {n} of the risen', 'Slay the risen').replace('{n} waves', 'Wave upon wave') \
+    return t.replace('Put {n} of the risen', 'Put the risen').replace('Slay {n} of the risen', 'Slay the risen').replace('{n} waves', 'Wave upon wave').replace('Clear {n} whole waves', 'Clear whole waves').replace('clear {n} waves', 'clear the waves') \
             .replace('before {s} seconds pass', 'before the altar\'s time runs out').replace('Hold the circle for {s} seconds.', 'Hold the circle until the runes blaze.')
 for c in CU['cities']:
     boss = CU['bosses'][c['town']]
@@ -519,8 +519,9 @@ def guide_text():
     out = ["<font face='$HandwrittenFont'>", "<p align='center'><font size='28'>A SURVIVOR'S GUIDE TO THE LONG NIGHT</font></p>",
            "<p align='center'>Notes left at the Sleeping Giant Inn by one who made it this far. Read them before dusk.</p>",
            "[pagebreak]", h("Day and Night"),
-           p("A day lasts about fifteen minutes, and so does the night. By day the dead sleep: rest, explore, spend what you earned. "
-             "At dusk they rise, and every night there are more of them, and they are harder to kill. Survive until dawn."),
+           p("A day lasts about fifteen minutes. By day the dead sleep: rest, explore, spend what you earned. "
+             "At dusk they rise in <b>waves</b>, clawing up out of the ground at the same places every night. The first night brings five waves of twenty; "
+             "every night adds one more wave and twenty more dead to each. The night does not end until the last wave is down - then dawn breaks."),
            p("You cannot sleep or wait while the dead walk."),
            "[pagebreak]", h("Septims"),
            p("Every risen thing you kill leaves septims. A headshot leaves more, and a kill with a blade or a spell more still. "
@@ -536,10 +537,10 @@ def guide_text():
              "When three are done the city's Barrow-Jarl rises at night near the altar. Slay it and the city is safe for good. Skyrim's difficulty sets how hard the trials are."),
            "[pagebreak]", h("The Five Trials"),
            p("<b>Ward of the Tongues</b> - stand in the runic circle round the altar while the dead come faster. Step out and the count waits for you."),
-           p("<b>The Culling</b> - kill a number of the risen in the city before the timer runs out, or the count starts again."),
-           p("<b>The Unbroken</b> - kill a number of the risen without falling below half health. Fall below and the count starts again."),
+           p("<b>The Culling</b> - kill a number of the risen in the city."),
+           p("<b>The Unbroken</b> - clear whole waves without falling below half health. Fall below and that wave does not count."),
            p("<b>Trial of Steel</b> - only kills with a melee weapon or your fists count."),
-           p("<b>The Long Night's Breath</b> - waves rise round the altar, each stronger than the last. Clear each before its timer, or it doubles."),
+           p("<b>The Long Night's Breath</b> - stay by the altar while the night's waves are cleared."),
            "[pagebreak]", h("Spells"),
            p("Tap the attack to throw a bolt. Hold it, and both hands gather the spell's full power: the longer you hold, the harder it strikes. "
              "Let go too soon and the power gutters out. Magicka comes back fast."),

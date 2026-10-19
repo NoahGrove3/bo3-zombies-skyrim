@@ -77,7 +77,13 @@ namespace bo3z
 				if (!base) {
 					continue;
 				}
-				const auto want = Local(a_main, d.x * c, d.y * c, d.z);
+				auto want = Local(a_main, d.x * c, d.y * c, d.z);
+				if (d.freed && !d.light && d.z == 0.0f && (d.x != 0.0f || d.y != 0.0f)) {
+					// (Noah: the freed altar's banners and braziers floated) stood on the ground where they are, not at the altar's height
+					if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(want, land) && std::abs(land - want.z) < 160.0f) {
+						want.z = land - 6.0f;
+					}
+				}
 				RE::TESObjectREFR* found = nullptr;
 				RE::TES::GetSingleton()->ForEachReferenceInRange(a_main, 400.0f, [&](RE::TESObjectREFR* r) {
 					if (r && r->GetBaseObject() == base && !r->IsDeleted() && !r->IsDisabled() && r->GetPosition().GetDistance(want) < 80.0f) {

@@ -11,6 +11,7 @@
 #include <fstream>
 #include <filesystem>
 #include <map>
+#include <set>
 #include <array>
 #include <atomic>
 #include <bit>

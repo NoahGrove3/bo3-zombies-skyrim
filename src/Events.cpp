@@ -633,10 +633,20 @@ namespace bo3z
 			if (!dh) {
 				return;
 			}
-			const RE::BGSMovementType* def = nullptr;
+			const RE::BGSMovementType* def = RE::TESForm::LookupByID<RE::BGSMovementType>(0x03580D);  // Skyrim.esm NPC_Default
 			for (auto* mt : dh->GetFormArray<RE::BGSMovementType>()) {
-				if (mt && std::string_view(mt->movementTypeData.typeName.c_str()) == "NPC_Default_MT") {
-					def = mt;
+				if (mt && mt->movementTypeData.typeName.c_str()) {
+					const std::string_view n(mt->movementTypeData.typeName.c_str());
+					if (!def && (n == "NPC_Default_MT" || n == "NPC_Default" || n == "Default" || n == "NPCDefault")) {
+						def = mt;
+					}
+				}
+			}
+			if (!def) {  // (Noah: the default's name differs here) a bow held but not drawn moves at full pace: drawing matches it
+				for (auto* mt : dh->GetFormArray<RE::BGSMovementType>()) {
+					if (mt && mt->movementTypeData.typeName.c_str() && std::string_view(mt->movementTypeData.typeName.c_str()) == "NPCBow") {
+						def = mt;
+					}
 				}
 			}
 			for (auto* mt : dh->GetFormArray<RE::BGSMovementType>()) {
@@ -644,7 +654,7 @@ namespace bo3z
 					continue;
 				}
 				const std::string_view n(mt->movementTypeData.typeName.c_str());
-				if (def && n.find("Bow") != std::string_view::npos && n.find("Horse") == std::string_view::npos) {
+				if (def && mt != def && n.find("Bow") != std::string_view::npos && n.find("Horse") == std::string_view::npos && n.find("Sneak") == std::string_view::npos) {
 					auto& sp = mt->movementTypeData.defaultData.speeds;
 					const float was = sp[RE::Movement::SPEED_DIRECTIONS::kForward][RE::Movement::MaxSpeeds::kRun];
 					for (int d = 0; d < RE::Movement::SPEED_DIRECTIONS::kRotations; ++d) {
@@ -656,7 +666,7 @@ namespace bo3z
 				}
 			}
 			if (!def) {
-				logger::warn("bows: no NPC_Default_MT movement type found - drawing a bow still slows you");
+				logger::warn("bows: no default movement type found - drawing a bow still slows you");
 			}
 		}
 

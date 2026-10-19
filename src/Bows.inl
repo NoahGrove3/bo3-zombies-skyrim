@@ -734,12 +734,44 @@ namespace BowsImpl
 		}
 	}
 
+	// (Noah: letting go did nothing) the release, heard from the animation itself: a draw animation mod can skip the
+	// releasing states between two frames, but it still sends the bow's release event
+	std::atomic<bool> g_releaseHeard{ false };
+	class AnimWatch : public RE::BSTEventSink<RE::BSAnimationGraphEvent>
+	{
+	public:
+		RE::BSEventNotifyControl ProcessEvent(const RE::BSAnimationGraphEvent* a_e, RE::BSTEventSource<RE::BSAnimationGraphEvent>*) override
+		{
+			if (a_e && a_e->tag.c_str()) {
+				std::string t(a_e->tag.c_str());
+				std::transform(t.begin(), t.end(), t.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+				if (t.find("arrowrelease") != std::string::npos || t == "bowrelease" || t == "bowreleased") {
+					g_releaseHeard = true;
+				}
+				static std::set<std::string> seen;
+				if ((t.find("bow") != std::string::npos || t.find("arrow") != std::string::npos) && seen.size() < 40 && seen.insert(t).second) {
+					logger::info("bows: animation event '{}'", t);
+				}
+			}
+			return RE::BSEventNotifyControl::kContinue;
+		}
+	};
+	AnimWatch     g_animWatch;
+	RE::NiAVObject* g_watched = nullptr;
+	float         g_sinceFire = 10.0f;
+
 	void Tick(float a_delta)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !p->Is3DLoaded()) {
 			return;
 		}
+		if (auto* root = p->Get3D(); root != g_watched) {  // (a new body after a load or a race change: listen to its graph)
+			p->RemoveAnimationGraphEventSink(&g_animWatch);
+			p->AddAnimationGraphEventSink(&g_animWatch);
+			g_watched = root;
+		}
+		g_sinceFire += a_delta;
 		const int i = Held();
 		static float quiver = 0;
 		if (i >= 0 && (quiver -= a_delta) <= 0) {
@@ -771,11 +803,24 @@ namespace BowsImpl
 				Spellcraft::BurstAt(row, HeadAt(p), 18.0f, 0.2f);
 			}
 		} else {
-			if (g_wasDrawing && i >= 0 && (st == S::kBowReleasing || st == S::kBowReleased || st == S::kBowNextAttack || st == S::kBowFollowThrough)) {
+			const bool released = st == S::kBowReleasing || st == S::kBowReleased || st == S::kBowNextAttack || st == S::kBowFollowThrough;
+			const bool heard = g_releaseHeard.exchange(false);
+			// let go: the release state, the release event, or simply the draw ending with the bow still out and some pull on it
+			if (g_wasDrawing && i >= 0 && g_sinceFire > 0.2f && (released || heard || (g_draw >= 0.2f && p->AsActorState()->IsWeaponDrawn()))) {
 				Fire(i, g_draw);
+				g_sinceFire = 0;
+				static int said = 0;
+				if (said++ < 5) {
+					logger::info("bows: {} loosed at {:.0f}% draw (state {}, event {})", gen::kBows[i].label, g_draw * 100.0f, static_cast<int>(st), heard);
+				}
 			}
 			g_draw = 0, g_fullSaid = false;
 			HideBall();
+		}
+		if (drawing && g_releaseHeard.exchange(false) && i >= 0 && g_sinceFire > 0.2f) {  // (the event before the state caught up)
+			Fire(i, g_draw);
+			g_sinceFire = 0;
+			g_draw = 0, g_fullSaid = false;
 		}
 		g_wasDrawing = drawing;
 		TickMotes(p, i, a_delta);
