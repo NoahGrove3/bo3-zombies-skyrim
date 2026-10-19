@@ -942,7 +942,27 @@ namespace BowsImpl
 		const float     flick = g_draw >= 0.98f ? 1.0f + 0.08f * std::sin(g_tipT * 18.0f) : 1.0f;
 		RE::NiAVObject* hand = nullptr;
 		RE::NiPoint3    tip;
-		if (ArrowTip(p, hand, tip) && hand->AsNode()) {
+		// the nocked arrow itself (the ammunition's model, 'Arrow:0'): its shape is turned end for end, so its head is at
+		// the shape's own origin and its nock 60 along +Y - the glow goes just past the head
+		auto*        root = p->Get3D(Spellcraft::FirstPerson());
+		auto*        arrow = FindArrow(root, HeadAt(p));
+		RE::NiNode*  ahost = arrow ? (arrow->AsNode() ? arrow->AsNode() : arrow->parent) : nullptr;
+		static int said = 0;
+		if (said < 3) {
+			++said;
+			logger::info("bows: nocked arrow {} ({})", arrow ? arrow->name.c_str() : "not found", ahost ? ahost->name.c_str() : "-");
+		}
+		if (ahost) {
+			if (g_tip.parent != ahost) {
+				if (auto* o = g_tip.obj.get(); o->parent) {
+					o->parent->DetachChild2(o);
+				}
+				ahost->AttachChild(g_tip.obj.get(), true);
+				g_tip.parent = ahost;
+			}
+			const RE::NiPoint3 at = arrow->AsNode() ? RE::NiPoint3{ 0.0f, 1.0f, 0.0f } : arrow->local * RE::NiPoint3{ 0.0f, -2.0f, 0.0f };
+			SetLocal(g_tip, at, RE::NiMatrix3{}, grow * flick);
+		} else if (ArrowTip(p, hand, tip) && hand->AsNode()) {
 			auto* host = hand->AsNode();
 			if (g_tip.parent != host) {
 				if (auto* o = g_tip.obj.get(); o->parent) {
@@ -964,13 +984,18 @@ namespace BowsImpl
 
 	// (Noah: the effect should fly with the arrow) once loosed, the element rides the arrow itself: a copy of the
 	// tip's glow hung on the head of the player's newest arrow in flight
-	std::set<RE::Projectile*> g_ridden;
+	std::set<RE::FormID> g_ridden;  // (by id: a projectile's memory is reused for the next one)
 	void TickRide(float a_delta)
 	{
 		if (g_rideWait <= 0 || g_rideRow < 0) {
 			return;
 		}
-		g_rideWait -= a_delta;
+		if ((g_rideWait -= a_delta) <= 0) {
+			static int miss = 0;
+			if (miss++ < 4) {
+				logger::info("bows: no loosed arrow found to carry the element");
+			}
+		}
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* mgr = RE::Projectile::Manager::GetSingleton();
 		if (!p || !mgr) {
@@ -980,7 +1005,7 @@ namespace BowsImpl
 		for (auto* list : { &mgr->limited, &mgr->unlimited, &mgr->pending }) {
 			for (auto& h : *list) {
 				auto pr = h.get();
-				if (!pr || pr->GetFormType() != RE::FormType::ProjectileArrow || pr->GetProjectileRuntimeData().shooter.get().get() != p || g_ridden.contains(pr.get())) {
+				if (!pr || pr->GetFormType() != RE::FormType::ProjectileArrow || pr->GetProjectileRuntimeData().shooter.get().get() != p || g_ridden.contains(pr->GetFormID())) {
 					continue;
 				}
 				auto* node = pr->Get3D() ? pr->Get3D()->AsNode() : nullptr;
@@ -994,10 +1019,14 @@ namespace BowsImpl
 					RE::NiUpdateData ud;
 					fx->Update(ud);
 				}
-				g_ridden.insert(pr.get());
+				g_ridden.insert(pr->GetFormID());
 				if (g_ridden.size() > 64) {
 					g_ridden.clear();
-					g_ridden.insert(pr.get());
+					g_ridden.insert(pr->GetFormID());
+				}
+				static int told = 0;
+				if (told++ < 4) {
+					logger::info("bows: the element rides the arrow {:08X} ({})", pr->GetFormID(), node->name.c_str());
 				}
 				g_rideWait = 0;
 				return;
@@ -1047,6 +1076,7 @@ namespace BowsImpl
 		const bool drawing = i >= 0 && (st == S::kBowDraw || st == S::kBowAttached || st == S::kBowDrawn);
 		if (drawing && !g_wasDrawing) {
 			g_bowFull = false;
+			g_releaseHeard = false;  // (the last shot's own release event, arriving late: not this draw's)
 		}
 		if (drawing && st == S::kBowDrawn) {
 			g_bowFull = true;
