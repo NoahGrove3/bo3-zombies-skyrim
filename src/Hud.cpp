@@ -2003,6 +2003,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->AddRect(at, kb, live ? kGold : kGoldDim, 3 * k, 0, 1.2f * k);
 				TxtC(dl, g_num, 17 * k, at.x + 13 * k, at.y + 3 * k, live ? kParch : IM_COL32(150, 140, 125, 255), key);
 			};
+			(void)keyCap;  // (the altar is driven by its focus now: Shops Row)
 			// the roll on the shrine itself, over its crown: the shrine gathers its light (a ring of runes drawn in), then a
 			// reel of the spells' emblems turns round the orb - fast, then slowing like a wheel of fortune, the name of the
 			// one in front under it - and stops on the one won (1 of every spell there is), which bursts into light and
@@ -2164,7 +2165,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (s.perkMenu) {
 				const float w = 470 * k;
 				const bool  shout = s.shrineShout >= 0 && s.shrineShout < static_cast<int>(gen::kShouts.size());
-				const float h = (shout ? 610 : 532) * k + 86 * k + 78 * k + (s.chooseOn ? 52 * k : 0.0f);  // (+ the bow wheel)  // (+ the dragon's bond, + a spell to choose)
+				const float h = (shout ? 610 : 532) * k + 86 * k + 78 * k + 56 * k + (s.chooseOn ? 52 * k : 0.0f);  // (+ Leave)  // (+ the bow wheel)  // (+ the dragon's bond, + a spell to choose)
 				const ImVec2 a{ size.x - w - 36 * k, std::max(24 * k, size.y * 0.5f - h * 0.5f - 30 * k) }, b{ a.x + w, a.y + h };
 				Panel(dl, a, b, k, 0.92f);
 				const float cx = (a.x + b.x) * 0.5f;
@@ -2172,6 +2173,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Divider(dl, cx, a.y + 54 * k, w * 0.38f, k);
 				float y = a.y + 68 * k;
 				const float L = a.x + 20 * k, Rr = b.x - 20 * k;
+				// (Noah: one way through the altar) the row in focus - D-pad / W S to move, A / Enter to take it
+				const auto focusRow = [&](int row, float y0, float y1) {
+					if (s.altarFocus != row || s.chooseOn) return;
+					const ImVec2 ra{ a.x + 10 * k, y0 }, rb{ b.x - 10 * k, y1 };
+					dl->AddRectFilled(ra, rb, IM_COL32(200, 160, 92, 26 + static_cast<int>(14 * std::sin(now * 4.0f))), 4 * k);
+					dl->AddRect(ra, rb, kGold, 4 * k, 0, 1.5f * k);
+					const float my = (y0 + y1) * 0.5f;
+					dl->AddTriangleFilled({ ra.x - 2 * k, my - 8 * k }, { ra.x - 2 * k, my + 8 * k }, { ra.x + 7 * k, my }, kGold);
+				};
+				const auto bullet = [&](ImVec2 at, int row, bool live) {  // where each row's key once was: a rune-diamond, lit in focus
+					const ImVec2 c{ at.x + 13 * k, at.y + 13 * k };
+					const bool   on = s.altarFocus == row && !s.chooseOn;
+					const float  r = (on ? 8.0f : 6.0f) * k;
+					dl->AddQuadFilled({ c.x, c.y - r }, { c.x + r, c.y }, { c.x, c.y + r }, { c.x - r, c.y }, on ? kGold : live ? IM_COL32(150, 112, 60, 230) : IM_COL32(70, 60, 50, 200));
+				};
 				auto price = [&](float py, int cost, bool can) {
 					const std::string pr = std::to_string(cost);
 					const float pw = Measure(g_num, 21 * k, pr).x;
@@ -2190,20 +2206,30 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					for (int q = 0; q < 2; ++q) {
 						const int idx = q == 0 ? s.chooseA : s.chooseB;
 						if (idx < 0) continue;
-						keyCap({ L, cy }, keys[q], true);
+						(void)keys;
+						if (s.chooseFocus == q) {
+							dl->AddRectFilled({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, IM_COL32(200, 160, 92, 34), 4 * k);
+							dl->AddRect({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, kGold, 4 * k, 0, 1.5f * k);
+						}
+						dl->AddQuadFilled({ L + 13 * k, cy + 5 * k }, { L + 21 * k, cy + 13 * k }, { L + 13 * k, cy + 21 * k }, { L + 5 * k, cy + 13 * k }, s.chooseFocus == q ? kGold : IM_COL32(150, 112, 60, 230));
 						DrawEmblem(dl, Arcana::kIdBase + idx, { L + 52 * k, cy + 13 * k }, 13 * k, 1.0f, now, 0.5f);
 						Txt(dl, g_body, 18 * k, { L + 74 * k, cy + 2 * k }, IM_COL32(236, 222, 196, 255), "Replace " + ArmsName(Arcana::kIdBase + idx) + (Arcana::Level(idx) > 0 ? "  (its reforging is lost)" : ""));
 						cy += 34 * k;
 					}
-					keyCap({ L, cy }, keys[2], true);
+					if (s.chooseFocus == 2) {
+						dl->AddRectFilled({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, IM_COL32(200, 160, 92, 34), 4 * k);
+						dl->AddRect({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, kGold, 4 * k, 0, 1.5f * k);
+					}
+					dl->AddQuadFilled({ L + 13 * k, cy + 5 * k }, { L + 21 * k, cy + 13 * k }, { L + 13 * k, cy + 21 * k }, { L + 5 * k, cy + 13 * k }, s.chooseFocus == 2 ? kGold : IM_COL32(150, 112, 60, 230));
 					Txt(dl, g_body, 18 * k, { L + 36 * k, cy + 2 * k }, IM_COL32(200, 186, 160, 235), "Keep yours  -  half the roll back (" + std::to_string(s.chooseRefund) + ")");
 					y += 166 * k;
 				} else
 				{
 					const float R = 46 * k;
+					focusRow(0, y - 6 * k, y + 2 * R + 14 * k);
 					rollOrb({ L + R, y + R + 4 * k }, R);
 					const float tx = L + 2 * R + 16 * k;
-					keyCap({ tx, y + 4 * k }, g_padLast ? std::string("X") : Settings::KeyName(0), s.rollPhase == 0);
+					bullet({ tx, y + 4 * k }, 0, s.rollPhase == 0);
 					Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? "CALL A SPELL" : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? (s.rollBow ? "THE BOWS TURN..." : "THE SPELLS TURN...") : ArmsName(s.rollGun));
 					Txt(dl, g_body, 17 * k, { tx, y + 38 * k }, IM_COL32(196, 182, 160, 235),
 						s.rollPhase == 3 ? (s.rollBow ? "Activate the altar to take it - your bow goes back" : "Activate the shrine to take it") : "Two of the altar's spells at a time");
@@ -2217,7 +2243,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// [1b] the bow wheel: one elemental bow at a time
 				{
 					const bool idle = s.rollPhase == 0;
-					keyCap({ L, y + 2 * k }, g_padLast ? std::string("RT") : Settings::KeyName(6), idle);
+					focusRow(1, y - 6 * k, y + 58 * k);
+					bullet({ L, y + 2 * k }, 1, idle);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "CALL A BOW");
 					if (s.bowCarried >= 0) {
 						DrawEmblem(dl, Bows::kIdBase + s.bowCarried, { L + 200 * k, y + 15 * k }, 12 * k, 1.0f, now, 0.5f);
@@ -2239,7 +2266,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const int  g = s.bowHeld >= 0 ? Bows::kIdBase + s.bowHeld : gw >= 0 ? gw : sp >= 0 ? Arcana::kIdBase + sp : -1;
 					const int  lvl = s.bowHeld >= 0 ? Bows::Level(s.bowHeld) : gw >= 0 ? std::clamp(s.slotLevel[act], 0, gen::kForgeMax) : sp >= 0 ? Arcana::Level(sp) : 0;
 					const bool can = g >= 0 && lvl < gen::kForgeMax;
-					keyCap({ L, y + 2 * k }, g_padLast ? std::string("Y") : Settings::KeyName(1), can);
+					focusRow(2, y - 6 * k, y + 58 * k);
+					bullet({ L, y + 2 * k }, 2, can);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "REFORGE");
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235),
 						g < 0 ? "Hold a spell or bow to reforge it" : ArmsName(g) + (lvl >= gen::kForgeMax ? "  -  ascended" : s.bowHeld >= 0 ? "  -  next: " + std::string(Bows::TierName(s.bowHeld, lvl + 1)) : std::string("  -  more power, less magicka")));
@@ -2264,7 +2292,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const int  sel = std::clamp(s.perkSel, 0, n - 1);
 					const auto& p = gen::kPerks[sel];
 					const int  have = s.perkStacks[sel];
-					keyCap({ L, y + 2 * k }, g_padLast ? std::string("A") : Settings::KeyName(2), s.points >= p.cost && have == 0);
+					focusRow(3, y - 6 * k, y + 36 * k + std::min(44 * k, (Rr - L) / n - 4 * k) + 12 * k + 72 * k);
+					bullet({ L, y + 2 * k }, 3, s.points >= p.cost && have == 0);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "TAKE A PERK");
 					const std::string rule = owned >= n ? "every perk taken - death takes them all" : "one of each a life - death takes them all";
 					Txt(dl, g_body, 16 * k, { Rr - Measure(g_body, 16 * k, rule).x, y + 6 * k }, IM_COL32(170, 156, 132, 220), rule);
@@ -2303,7 +2332,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImU32 scol = IM_COL32((sh.color >> 16) & 0xFF, (sh.color >> 8) & 0xFF, sh.color & 0xFF, 255);
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
 					y += 14 * k;
-					keyCap({ L, y + 2 * k }, g_padLast ? std::string("\xE2\x86\x91") : Settings::KeyName(3), true);
+					focusRow(4, y - 6 * k, y + 58 * k);
+					bullet({ L, y + 2 * k }, 4, true);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, scol, "LEARN THE THU'UM: " + std::string(sh.label), 1.5f * k, scol);
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(210, 196, 170, 235), std::string(sh.w1) + "  " + std::string(sh.w2) + "  " + std::string(sh.w3) + "  -  freely given");
 					y += 64 * k;
@@ -2321,7 +2351,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
 					y += 14 * k;
 					const bool can = !maxed && !s.bondLocked && s.points >= Movement::kBondCost[std::min(have, 2)];
-					keyCap({ L, y + 2 * k }, g_padLast ? std::string("\xE2\x86\x93") : Settings::KeyName(5), can);
+					focusRow(5, y - 6 * k, y + 66 * k);
+					bullet({ L, y + 2 * k }, 5, can);
 					const ImU32 tc = kCol[maxed ? 3 : next];
 					static constexpr const char* kNum[4] = { "", "I", "II", "III" };
 					Txt(dl, g_title, 19 * k, { L + 36 * k, y + 4 * k }, tc, "DRAGON BOND " + std::string(kNum[maxed ? 3 : next]) + ": " + kBond[maxed ? 3 : next], 1.5f * k, tc);
@@ -2336,11 +2367,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					y += 72 * k;
 				}
+				// [6] leave
+				{
+					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
+					y += 14 * k;
+					focusRow(20, y - 6 * k, y + 34 * k);
+					bullet({ L, y + 2 * k }, 20, true);
+					Txt(dl, g_title, 20 * k, { L + 36 * k, y + 4 * k }, IM_COL32(210, 196, 170, 255), "LEAVE THE ALTAR");
+					y += 44 * k;
+				}
 				Divider(dl, cx, b.y - 58 * k, w * 0.38f, k, 0.7f);
-				if (g_padLast) {  // the controller's buttons when it is in hand, the keys otherwise
-					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), std::string("D-pad Left / Right: choose a perk   \xC2\xB7   ") + (Settings::PlayStationIcons() ? "Circle" : "B") + " leave");
-				} else {
-					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), "Wheel or Left / Right: choose a perk   \xC2\xB7   E or " + Settings::KeyName(4) + " leave");
+				{
+					const bool        ps = Settings::PlayStationIcons();
+					const std::string hint = g_padLast ? std::string("D-pad: move   \xC2\xB7   ") + (ps ? "Cross" : "A") + ": select   \xC2\xB7   " + (ps ? "Circle" : "B") + ": leave"
+					                                   : std::string("W S: move   \xC2\xB7   A D: choose a perk   \xC2\xB7   Enter: select");
+					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), hint);
 				}
 				// the city's trials, in a panel of their own beside the altar's: any three of the five, then its Barrow-Jarl
 				if (s.trialsOn) {
@@ -2361,7 +2402,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					static constexpr const char* kKeys[5] = { "6", "7", "8", "9", "0" };
 					for (int q = 0; q < 5; ++q) {
 						const bool   done = (s.trialDone >> q) & 1, active = s.trialActive == q + 1, open = !done && !active && !full;
-						const bool   sel = g_padLast && q == std::clamp(s.trialSel, 0, 4);
+						const bool   sel = s.altarFocus == 10 + q;
 						const ImVec2 ra{ TL - 8 * k, ty - 4 * k }, rb{ TR + 8 * k, ty + 62 * k };
 						if (active) {
 							dl->AddRectFilled(ra, rb, IM_COL32(120, 60, 20, static_cast<int>(70 + 40 * std::sin(now * 3.0f))), 3 * k);
@@ -2369,15 +2410,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						if (sel) {
 							dl->AddRect(ra, rb, kGold, 3 * k, 0, 1.6f * k);
 						}
-						if (g_padLast) {
-							if (sel && open) {
-								PadGlyph(dl, { TL + 13 * k, ty + 15 * k }, 13 * k, "DU");
-							} else {
-								TxtC(dl, g_title, 18 * k, TL + 13 * k, ty + 4 * k, done ? kGold : IM_COL32(170, 156, 132, 220), kRoman[q]);
-							}
-						} else {
-							keyCap({ TL, ty + 2 * k }, kKeys[q], open);
-						}
+						(void)kKeys;
+						TxtC(dl, g_title, 18 * k, TL + 13 * k, ty + 4 * k, sel || done ? kGold : IM_COL32(170, 156, 132, 220), kRoman[q]);
 						const ImU32 tc = done ? kGold : active ? IM_COL32(255, 196, 120, 255) : open ? kParch : IM_COL32(140, 130, 116, 220);
 						Txt(dl, g_title, 20 * k, { TL + 38 * k, ty + 2 * k }, tc, std::string(gen::kTrials[q].title));
 						Txt(dl, g_body, 16 * k, { TL + 38 * k, ty + 30 * k }, done || open || active ? IM_COL32(196, 182, 160, 235) : IM_COL32(130, 120, 108, 210), s.trialDesc[q]);
@@ -2400,7 +2434,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					TxtWrap(dl, g_body, 16 * k, { TL, ty + 30 * k }, IM_COL32(196, 182, 160, 235), s.trialBossLine, TR - TL, 2);
 					Divider(dl, tcx, tb.y - 58 * k, tw * 0.38f, k, 0.7f);
 					TxtC(dl, g_body, 16 * k, tcx, tb.y - 44 * k, IM_COL32(200, 186, 160, 225),
-						g_padLast ? std::string("LB / RB: choose a trial   \xC2\xB7   D-pad Up: take it up") : std::string("6 - 0: take up a trial  (a new one sets the last aside)"));
+						std::string(g_padLast ? "D-pad Left: the trials   \xC2\xB7   " : "A: the trials   \xC2\xB7   ") + (g_padLast ? (Settings::PlayStationIcons() ? "Cross" : "A") : "Enter") + ": take one up"));
 				}
 			} else if (s.rollPhase > 0) {
 				// the roll with the menu closed: a small strip under the crosshair

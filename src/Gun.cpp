@@ -2556,6 +2556,9 @@ namespace bo3z
 					MenuEater<3>::func = v3.write_vfunc(0x1, MenuEater<3>::thunk);
 					REL::Relocation<std::uintptr_t> v4{ RE::VTABLE_ThirdPersonState[1] };
 					MenuEater<4>::func = v4.write_vfunc(0x1, MenuEater<4>::thunk);
+					// (Noah: W A S D move through the altar's menu) the walk keys are the menu's while it is open
+					REL::Relocation<std::uintptr_t> v5{ RE::VTABLE_MovementHandler[0] };
+					MenuEater<5>::func = v5.write_vfunc(0x1, MenuEater<5>::thunk);
 				}
 				hooked = true;
 				logger::info("gun: attack/ready input hooks installed");

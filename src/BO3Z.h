@@ -583,6 +583,7 @@ namespace bo3z
 			float       bossHp{ 0 };
 			bool        bossEnraged{ false };
 			int         perkSel{ 0 };
+			int         altarFocus{ 0 }, chooseFocus{ 0 };  // the altar's focused row (Shops Row) and, a third spell won, the choice in focus
 			// the shrine: its roll (0 idle, 1 charging, 2 spinning, 3 offering), progress 0..1, the spell shown, the price; a Thu'um to learn there
 			int         rollPhase{ 0 }, rollGun{ -1 }, rollCost{ 0 }, shrineShout{ -1 };
 			int         dragonBond{ 0 };   // the glider's dragon: its bond (0-3)

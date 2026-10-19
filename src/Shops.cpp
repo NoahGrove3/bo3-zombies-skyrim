@@ -1457,6 +1457,10 @@ namespace bo3z
 
 		int                 g_sel = 0;
 		int                 g_trialSel = 0;  // the controller's pick among the altar's trials
+		// (Noah: one way to drive the altar) a focus moved up and down its rows - D-pad or W/S - and A / Enter to take it
+		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20 };
+		int g_focus = kRowSpell;
+		int g_chooseFocus = 0;  // a third spell: 0 / 1 replace that one, 2 keep yours
 
 		void BuyPerk(int perk, RE::TESObjectREFR* a_ref)
 		{
@@ -1604,9 +1608,9 @@ namespace bo3z
 						return true;
 					}
 				}
-				return code == 0x12 || code == 0xCB || code == 0xCD;
+				return code == 0x12 || code == 0xCB || code == 0xCD || code == 0xC8 || code == 0xD0 || code == 0x11 || code == 0x1E || code == 0x1F || code == 0x20 || code == 0x1C || code == 0x9C;
 			case RE::INPUT_DEVICE::kMouse: return code == 8 || code == 9;
-			case RE::INPUT_DEVICE::kGamepad: return code == 0x4000 || code == 0x8000 || code == 0x1000 || code == 0x2000 || code == 0x0001 || code == 0x0002 || code == 0x0004 || code == 0x0008;
+			case RE::INPUT_DEVICE::kGamepad: return code == 0x4000 || code == 0x8000 || code == 0x1000 || code == 0x2000 || code == 0x0001 || code == 0x0002 || code == 0x0004 || code == 0x0008 || code == 0x0100 || code == 0x0200 || code == 0x000A;
 			default: return false;
 			}
 		}
@@ -1617,6 +1621,12 @@ namespace bo3z
 			auto* b = a_event ? a_event->AsButtonEvent() : nullptr;
 			if (!b || !IsMenuKey(b)) {
 				return false;
+			}
+			if (b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && b->IsUp()) {
+				const auto c = b->GetIDCode();
+				if (c == 0x11 || c == 0x1E || c == 0x1F || c == 0x20) {
+					return false;  // (letting go of a walk key always reaches Skyrim: you never walk on by yourself)
+				}
 			}
 			return g_menu || std::chrono::steady_clock::now() - g_closedAt < std::chrono::milliseconds(350);
 		}
@@ -1648,12 +1658,12 @@ namespace bo3z
 			if (g_choosing) {  // the choice: 1 / X replaces the first, 2 / Y the second, Backspace / B keeps yours
 				if (g_show.phase != Show::Offering) {
 					g_choosing = false;
-				} else if (dev == RE::INPUT_DEVICE::kKeyboard) {
+				} else if (dev == RE::INPUT_DEVICE::kKeyboard && !(code == 0x11 || code == 0xC8 || code == 0x1F || code == 0xD0 || code == 0x1E || code == 0xCB || code == 0x20 || code == 0xCD || code == 0x1C || code == 0x9C)) {
 					if (static_cast<int>(code) == Settings::Key(0)) Choose(0);
 					else if (static_cast<int>(code) == Settings::Key(1)) Choose(1);
 					else if (static_cast<int>(code) == Settings::Key(4) || code == 0x12) Choose(-1);
 					return true;
-				} else if (dev == RE::INPUT_DEVICE::kGamepad) {
+				} else if (dev == RE::INPUT_DEVICE::kGamepad && !(code == 0x0001 || code == 0x0002 || code == 0x0004 || code == 0x0008 || code == 0x1000)) {
 					if (code == 0x4000) Choose(0);
 					else if (code == 0x8000) Choose(1);
 					else if (code == 0x2000) Choose(-1);
@@ -1689,6 +1699,66 @@ namespace bo3z
 				case 5: Movement::BuyBond(ref); break;
 				}
 			};
+			// the one way through it: up / down (W S, the arrows, the D-pad, the wheel) moves the focus, left / right
+			// (A D) picks the perk (or steps between the altar and its trials), Enter / A takes the focused row
+			const bool kb = dev == RE::INPUT_DEVICE::kKeyboard, pad = dev == RE::INPUT_DEVICE::kGamepad;
+			const int  nav = (kb && (code == 0x11 || code == 0xC8)) || (pad && code == 0x0001) || (dev == RE::INPUT_DEVICE::kMouse && code == 8) ? -1
+			               : (kb && (code == 0x1F || code == 0xD0)) || (pad && code == 0x0002) || (dev == RE::INPUT_DEVICE::kMouse && code == 9) ? 1
+			                                                                                                                                 : 0;
+			const int  side = (kb && (code == 0x1E || code == 0xCB)) || (pad && code == 0x0004) ? -1 : (kb && (code == 0x20 || code == 0xCD)) || (pad && code == 0x0008) ? 1 : 0;
+			const bool pick = (kb && (code == 0x1C || code == 0x9C)) || (pad && code == 0x1000);
+			if (g_choosing && g_show.phase == Show::Offering && (nav || side || pick)) {
+				if (nav || side) {
+					g_chooseFocus = (g_chooseFocus + (nav ? nav : side) + 3) % 3;
+					Forms::Play(gen::Sound::ui_move);
+				} else {
+					Choose(g_chooseFocus == 2 ? -1 : g_chooseFocus);
+				}
+				return true;
+			}
+			if (!g_choosing && (nav || side || pick)) {
+				auto* r = g_menuRef.get().get();
+				const int t = r ? TownOf(r) : -1;
+				std::vector<int> rows{ kRowSpell, kRowBow, kRowForge, kRowPerk };
+				if (t >= 0 && Curse::ClaimableShout(t) >= 0) rows.push_back(kRowShout);
+				rows.push_back(kRowBond);
+				const bool trials = t >= 0 && Curse::Altar(t).on;
+				if (trials) for (int q = 0; q < 5; ++q) rows.push_back(kRowTrial + q);
+				rows.push_back(kRowLeave);
+				auto at = std::find(rows.begin(), rows.end(), g_focus);
+				int  i = at == rows.end() ? 0 : static_cast<int>(at - rows.begin());
+				if (nav) {
+					i = (i + nav + static_cast<int>(rows.size())) % static_cast<int>(rows.size());
+					g_focus = rows[i];
+					if (g_focus >= kRowTrial && g_focus < kRowTrial + 5) g_trialSel = g_focus - kRowTrial;
+					Forms::Play(gen::Sound::ui_move);
+				} else if (side) {
+					if (g_focus == kRowPerk) {
+						g_sel = (g_sel + side + n) % n;
+					} else if (trials && g_focus >= kRowTrial && g_focus < kRowTrial + 5) {
+						g_focus = kRowSpell;  // back to the altar's own column
+					} else if (trials) {
+						g_focus = kRowTrial + std::clamp(g_trialSel, 0, 4);  // over to its trials
+					}
+					Forms::Play(gen::Sound::ui_move);
+				} else {
+					switch (g_focus) {
+					case kRowSpell: act(0); break;
+					case kRowBow: act(6); break;
+					case kRowForge: act(1); break;
+					case kRowPerk: act(2); break;
+					case kRowShout: act(3); break;
+					case kRowBond: act(5); break;
+					case kRowLeave: act(4); break;
+					default:
+						if (g_focus >= kRowTrial && g_focus < kRowTrial + 5) {
+							g_trialSel = g_focus - kRowTrial;
+							act(7);
+						}
+					}
+				}
+				return true;
+			}
 			if (dev == RE::INPUT_DEVICE::kKeyboard) {
 				for (int k = 0; k < Settings::kKeys; ++k) {  // 1 2 3 4 Backspace unless rebound (Mod Configuration > The Curse of Alduin)
 					if (static_cast<int>(code) == Settings::Key(k)) {
@@ -1719,23 +1789,12 @@ namespace bo3z
 			}
 			if (dev == RE::INPUT_DEVICE::kGamepad) {
 				switch (code) {
-				case 0x4000: act(0); return true;  // X (square)
-				case 0x8000: act(1); return true;  // Y (triangle)
-				case 0x1000: act(2); return true;  // A (cross)
-				case 0x0001:  // dpad up: a held city's picked trial, a freed city's Thu'um
-					if (const int t = ref ? TownOf(ref) : -1; t >= 0 && !Curse::Freed(t)) {
-						act(7);
-					} else {
-						act(3);
-					}
-					return true;
-				case 0x000A: act(6); return true;  // RT: the bow wheel
-				case 0x0100: g_trialSel = (g_trialSel + 4) % 5; Forms::Play(gen::Sound::ui_move); return true;  // LB: the trial before
-				case 0x0200: g_trialSel = (g_trialSel + 1) % 5; Forms::Play(gen::Sound::ui_move); return true;  // RB: the next
-				case 0x0002: act(5); return true;  // dpad down: bond the dragon
-				case 0x0004: g_sel = (g_sel + n - 1) % n; Forms::Play(gen::Sound::ui_move); return true;  // dpad left
-				case 0x0008: g_sel = (g_sel + 1) % n; Forms::Play(gen::Sound::ui_move); return true;      // dpad right
-				case 0x2000: act(4); return true;  // B (circle)
+				case 0x2000: act(4); return true;  // B (circle): leave
+				case 0x4000:
+				case 0x8000:
+				case 0x000A:
+				case 0x0100:
+				case 0x0200: return true;  // (one way through the altar now: the D-pad and A)
 				default: return false;
 				}
 			}
@@ -1781,6 +1840,7 @@ namespace bo3z
 				auto& h = Hud::Edit();
 				h.perkMenu = g_menu;
 				h.perkSel = g_sel;
+				h.altarFocus = g_focus, h.chooseFocus = g_chooseFocus;
 				h.rollPhase = static_cast<int>(g_show.phase);
 				h.rollT = g_show.phase == Show::Charging ? std::min(1.0f, g_show.t / kChargeTime) : g_show.phase == Show::Spinning ? std::min(1.0f, g_show.t / gen::kShowSpin) : g_show.phase == Show::Offering ? std::min(1.0f, g_show.t / gen::kShowOffer) : 0.0f;
 				h.rollGun = g_show.phase == Show::Idle || g_show.phase == Show::Charging || g_show.shown < 0 ? -1 : (g_show.bow ? Bows::kIdBase : Arcana::kIdBase) + g_show.shown;
@@ -2037,7 +2097,7 @@ namespace bo3z
 			case 1: BuyPerk(o.ref, a_ref); break;
 			case 4:
 				if (!g_menu) {
-					g_menu = true, g_sel = 0;
+					g_menu = true, g_sel = 0, g_focus = kRowSpell, g_chooseFocus = 0;
 					g_menuRef = a_ref->CreateRefHandle();
 					Forms::Play(gen::Sound::coffer_open);
 				} else {
