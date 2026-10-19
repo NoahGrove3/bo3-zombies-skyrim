@@ -128,6 +128,9 @@ o.append('\tstruct DressDef { int object; std::uint32_t formId; bool light; floa
 o.append(f'\tinline constexpr std::array<DressDef, {len(DPIECES)}> kDress{{ {{')
 for oi, kind, key, r in DPIECES: o.append(f'\t\tDressDef{{ {oi}, 0x{IDS[(kind, key)]:03X}, {str(kind == "LIGH").lower()}, {F(r["x"])}, {F(r["y"])}, {F(r["z"])}, {F(r["scale"])}, {F(r["spin"])}, {str(r.get("freed", False)).lower()}, {str(r.get("held", False)).lower()} }},')
 o.append('\t} };')
+o.append(f'\tinline constexpr std::uint32_t kHeartStone = 0x{IDS[("STAT", "heart_stone")]:03X}, kHeartStoneLit = 0x{IDS[("STAT", "heart_stone_lit")]:03X};  // the Echo Altar\'s heart stone (dressing)')
+o.append(f'\tinline constexpr std::array<std::uint32_t, 6> kPillarRock{{ {{ {", ".join("0x%03X" % IDS[("STAT", f"pillar_rock{k}")] for k in range(6))} }} }};  // the rune stones over its columns')
+o.append(f'\tinline constexpr std::array<std::uint32_t, {len(S["bows"]["rows"])}> kBowShowStat{{ {{ {", ".join("0x%03X" % IDS[("STAT", "1st_bow_" + b["id"])] for b in S["bows"]["rows"])} }} }};  // the altar\'s roll shows each bow itself')
 o.append(f'\tinline constexpr std::array<std::uint32_t, {len(W)}> kShowStat{{ {{ {", ".join("0x%03X" % IDS[("STAT", "show_" + w["id"])] for w in W)} }} }};')
 o.append(f'\tinline constexpr std::array<std::uint32_t, 8> kShowElement{{ {{ {", ".join("0x%03X" % IDS[("STAT", "show_el_" + e)] for e in ["fire", "frost", "shock", "poison", "disease", "sun", "blood", "arcane"])} }} }};  // Coffer spells: the roll shows the element')
 sh = S['dressing']['show']

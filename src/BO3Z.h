@@ -583,7 +583,11 @@ namespace bo3z
 			float       bossHp{ 0 };
 			bool        bossEnraged{ false };
 			int         perkSel{ 0 };
-			int         altarFocus{ 0 }, chooseFocus{ 0 };  // the altar's focused row (Shops Row) and, a third spell won, the choice in focus
+			int         altarFocus{ 0 }, chooseFocus{ 0 };
+			// the roll's beams: from each column's rune stone into the heart stone (screen 0..1), how many are lit (0..6)
+			std::array<float, 12> beamFrom{};
+			float       beamToX{ 0 }, beamToY{ 0 };
+			int         beamLit{ 0 };  // the altar's focused row (Shops Row) and, a third spell won, the choice in focus
 			// the shrine: its roll (0 idle, 1 charging, 2 spinning, 3 offering), progress 0..1, the spell shown, the price; a Thu'um to learn there
 			int         rollPhase{ 0 }, rollGun{ -1 }, rollCost{ 0 }, shrineShout{ -1 };
 			int         dragonBond{ 0 };   // the glider's dragon: its bond (0-3)

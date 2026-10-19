@@ -2081,11 +2081,38 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// reel of the spells' emblems turns round the orb - fast, then slowing like a wheel of fortune, the name of the
 			// one in front under it - and stops on the one won (1 of every spell there is), which bursts into light and
 			// hangs there to be taken
+			// the roll's beams: from each column's rune stone into the heart stone, one after another as the altar gathers
+			// its power, all six while it turns - jagged, flickering threads of blue light with a bright core
+			if (s.beamLit > 0) {
+				const ImVec2 to{ s.beamToX * size.x, s.beamToY * size.y };
+				for (int q = 0; q < s.beamLit && q < 6; ++q) {
+					const ImVec2 from{ s.beamFrom[q * 2] * size.x, s.beamFrom[q * 2 + 1] * size.y };
+					const ImVec2 d{ to.x - from.x, to.y - from.y };
+					const float  len = std::sqrt(d.x * d.x + d.y * d.y);
+					if (len < 4.0f) continue;
+					const ImVec2 nrm{ -d.y / len, d.x / len };
+					constexpr int kSeg = 14;
+					ImVec2        pts[kSeg + 1];
+					const float   fl = 0.75f + 0.25f * std::sin(now * 23.0f + q * 1.7f);
+					for (int j = 0; j <= kSeg; ++j) {
+						const float t = static_cast<float>(j) / kSeg;
+						const float jig = (j == 0 || j == kSeg) ? 0.0f : std::sin(now * 31.0f + q * 3.1f + j * 2.3f) * std::sin(t * 3.1416f) * len * 0.035f;
+						pts[j] = { from.x + d.x * t + nrm.x * jig, from.y + d.y * t + nrm.y * jig };
+					}
+					for (int j = 0; j < kSeg; ++j) {
+						dl->AddLine(pts[j], pts[j + 1], IM_COL32(60, 140, 255, static_cast<int>(70 * fl)), 9.0f * k);
+						dl->AddLine(pts[j], pts[j + 1], IM_COL32(120, 200, 255, static_cast<int>(150 * fl)), 4.0f * k);
+						dl->AddLine(pts[j], pts[j + 1], IM_COL32(235, 248, 255, static_cast<int>(230 * fl)), 1.6f * k);
+					}
+					dl->AddCircleFilled(from, 7.0f * k, IM_COL32(150, 210, 255, static_cast<int>(150 * fl)), 16);
+				}
+				dl->AddCircleFilled(to, (10.0f + 2.0f * s.beamLit) * k, IM_COL32(170, 220, 255, 110), 24);
+			}
 			if (s.rollOnScreen && s.rollPhase >= 1) {
 				const ImVec2 c{ s.rollScreenX * size.x, s.rollScreenY * size.y };
 				const float  R = std::clamp(110.0f * 420.0f / std::max(200.0f, s.rollDist), 26.0f, 110.0f) * k;
 				const int    n = std::max(1, Arcana::Count());
-				const ImU32  violet = IM_COL32(168, 112, 255, 255), pale = IM_COL32(236, 226, 255, 255);
+				const ImU32  violet = IM_COL32(90, 165, 255, 255), pale = IM_COL32(225, 240, 255, 255);  // (the new altar's blue)
 				// a soft light: many faint discs, so the edge fades smoothly (no rings in the gradient)
 				const auto glow = [&](ImVec2 at, float r, ImU32 col, float a) {
 					for (int q = 0; q < 14; ++q) {
@@ -2153,14 +2180,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						slots[q] = { Shops::ReelSpell(s.rollTarget, pos, jj), (jj - frac) * kStep };
 					}
 					std::sort(slots.begin(), slots.end(), [](const Slot& x, const Slot& y) { return std::cos(x.a) < std::cos(y.a); });  // far first
-					orbit(rx, ry, 0.0f, 0.0f, kGold, 0.55f, 1.4f * k);  // the track (its far half first)
-					const auto place = [&](float a) { return ImVec2{ c.x + std::sin(a) * rx, c.y + std::cos(a) * ry }; };
-					// (the spells themselves turn in the shrine's crown, as 3D - src/Shops.cpp SpellShow; here only the light
-					// round them, and lit motes riding the ring where each one stands)
-					for (const auto& sl : slots) {
-						const float depth = std::cos(sl.a), nearF = 0.5f + 0.5f * depth;
-						dl->AddCircleFilled(place(sl.a), (1.5f + 2.5f * nearF) * k, Fade(depth > 0.97f ? kGold : IM_COL32(220, 210, 255, 255), 0.3f + 0.6f * nearF), 12);
-					}
+					// (Noah: the real bows and spells roll by with their names, not runes) the model itself turns over the heart
+					// stone (src/Shops.cpp ShowAt); here only its light and, under it, its name
+					(void)slots;
+					(void)rx;
 					// the orb's own light over the far half, and the pointer at the front
 					const ImVec2 tip{ c.x, c.y + ry + R * 0.62f };
 					dl->AddTriangleFilled({ tip.x, tip.y + 14 * k }, { tip.x - 9 * k, tip.y + 28 * k }, { tip.x + 9 * k, tip.y + 28 * k }, Fade(kGold, 0.95f));
@@ -2172,7 +2195,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					tick = std::max(0.0f, tick - dt * 6.0f);
 					const float ny = tip.y + 34 * k;
-					TxtC(dl, g_title, std::max(17.0f, R / k * 0.27f) * k, c.x, ny, Fade(IM_COL32(236, 228, 255, 255), 0.75f + 0.25f * (1.0f - tick)), ArmsName((s.rollBow ? Bows::kIdBase : Arcana::kIdBase) + front), 2 * k, violet);
+					TxtC(dl, g_title, std::max(22.0f, R / k * 0.34f) * k, c.x, ny, Fade(IM_COL32(236, 228, 255, 255), 0.75f + 0.25f * (1.0f - tick)), ArmsName((s.rollBow ? Bows::kIdBase : Arcana::kIdBase) + front), 2 * k, violet);
 				} else if (s.rollPhase == 3 && s.rollGun >= 0) {
 					// won: the emblem leaps up out of the reel, a shockwave and a crown of light rays break from it, sparks
 					// fall away; then it hangs there, breathing, inside a slow ring of runes

@@ -146,16 +146,36 @@ namespace bo3z
 			if (a_own) *a_own = true;
 			return Forms::Ours(gen::kShowElement[Arcana::ElementOf(a_index)]);
 		}
-		void ShowModel(RE::TESBoundObject* a_base, float a_rise, float a_scale = -1.0f)
+		// the heart stone's runes, k times their own light (its shader's emissive; the first value seen is its own)
+		RE::ObjectRefHandle g_glowHeart;
+		void HeartGlow(RE::TESObjectREFR* a_heart, float a_k)
+		{
+			static std::unordered_map<RE::BSLightingShaderProperty*, float> base;
+			if (auto* root = a_heart ? a_heart->Get3D() : nullptr) {
+				RE::BSVisit::TraverseScenegraphGeometries(root, [&](RE::BSGeometry* g) {
+					if (auto* lp = netimmerse_cast<RE::BSLightingShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get())) {
+						auto [it, fresh] = base.try_emplace(lp, lp->emissiveMult);
+						lp->emissiveMult = it->second * a_k;
+					}
+					return RE::BSVisit::BSVisitControl::kContinue;
+				});
+			}
+		}
+		// (Noah: the real bows and spells roll by, with their names - not runes) what the roll shows over the heart stone:
+		// the spell's own display model (Skyrim's Magic menu one) or its element's emblem; a bow, the bow itself, upright
+		RE::TESBoundObject* ShowBase(int a_index, bool a_bow, bool* a_own)
+		{
+			if (a_bow) {
+				*a_own = false;
+				return a_index >= 0 && a_index < static_cast<int>(gen::kBowShowStat.size()) ? Forms::Ours(gen::kBowShowStat[a_index]) : nullptr;
+			}
+			return SpellShow(a_index, a_own);
+		}
+		float g_showPitch = 0.0f;
+		void ShowModel(RE::TESBoundObject* a_base, float a_rise, float a_scale = -1.0f, float a_pitch = 0.0f)
 		{
 			auto chest = g_show.chest.get();
 			Remove(g_show.display);
-			// (Noah: a plain glowing ball over the altar) no model in the world any more: the spells' own animated emblems,
-			// drawn over the altar's crown by the HUD (the reel, then the one won), are the roll
-			constexpr bool kWorldModel = false;
-			if (!kWorldModel) {
-				return;
-			}
 			if (!chest || !a_base) {
 				return;
 			}
@@ -163,10 +183,37 @@ namespace bo3z
 			if (!ref) {
 				return;
 			}
+			g_showPitch = a_pitch;
 			ref->SetPosition(Local(chest.get(), 0, 0, kOrbZ * chest->GetScale() + a_rise));
-			ref->SetAngle({ 0, 0, chest->GetAngleZ() + RE::NI_PI / 2 });
+			ref->SetAngle({ a_pitch, 0, chest->GetAngleZ() + RE::NI_PI / 2 });
 			ref->SetScale(a_scale > 0 ? a_scale : kOrbScale);
 			g_show.display = ref->CreateRefHandle();
+		}
+		void ShowAt(int a_index, float a_rise, bool a_final)
+		{
+			bool own = true;
+			auto* m = ShowBase(a_index, g_show.bow, &own);
+			if (g_show.bow) {
+				ShowModel(m, a_rise, a_final ? 1.15f : 1.0f, -RE::NI_PI / 2);  // (a bow stood on end, its string toward you)
+			} else {
+				ShowModel(m, a_rise, own ? -1.0f : (a_final ? 1.8f : 1.6f));
+			}
+		}
+
+		// Skyrim's own interface sounds (Skyrim.esm), for the altar's menu
+		namespace UiSnd
+		{
+			constexpr RE::FormID kMove = 0x0006CC6F, kChoose = 0x000643FE, kFail = 0x0006D1C6, kLeave = 0x0003F2BF, kLand = 0x00068D83, kOpen = 0x0003F2BD;
+		}
+		void PlayUi(RE::FormID a_id, float a_vol = 1.0f)
+		{
+			auto* d = RE::TESForm::LookupByID<RE::BGSSoundDescriptorForm>(a_id);
+			auto* am = RE::BSAudioManager::GetSingleton();
+			RE::BSSoundHandle h;
+			if (d && am && am->GetSoundHandle(h, static_cast<RE::BSISoundDescriptor*>(d))) {
+				if (a_vol < 0.999f) h.SetVolume(a_vol);
+				h.Play();
+			}
 		}
 
 	}
@@ -226,9 +273,7 @@ namespace bo3z
 					if (front != g_show.shown && g_show.step <= 0) {
 						g_show.shown = front;
 						g_show.step = 0.045f;
-						bool own = true;
-						auto* m = g_show.bow ? nullptr : SpellShow(g_show.shown, &own);
-						ShowModel(m, gen::kShowRise * k, own ? -1.0f : 1.6f);
+						ShowAt(g_show.shown, gen::kShowRise * k, false);
 						Forms::PlayAt(gen::Sound::coffer_spin, chest.get());
 					} else if (auto d = g_show.display.get()) {
 						d->SetPosition(Local(chest.get(), 0, 0, kOrbZ * chest->GetScale() + gen::kShowRise * k));
@@ -236,10 +281,9 @@ namespace bo3z
 					if (g_show.t >= gen::kShowSpin) {
 						g_show.t = 0;
 						g_show.shown = g_show.gun;
-						bool own = true;
-						auto* m = g_show.bow ? nullptr : SpellShow(g_show.gun, &own);
-						ShowModel(m, gen::kShowRise, own ? -1.0f : 1.8f);
+						ShowAt(g_show.gun, gen::kShowRise, true);
 						Forms::PlayAt(gen::Sound::coffer_land, chest.get());
+						PlayUi(UiSnd::kLand, 0.8f);  // (a bright chord as it lands)
 						if (g_show.bow) {
 							Hud::Banner(std::string(Bows::Name(g_show.gun)) + "  -  Activate the altar to take it" + (Bows::Carried() >= 0 ? " (your " + std::string(Bows::Name(Bows::Carried())) + " goes back)" : std::string()), 4.0f);
 							g_show.phase = Show::Offering;
@@ -255,8 +299,14 @@ namespace bo3z
 				}
 			case Show::Offering:
 				if (auto d = g_show.display.get()) {
-					auto a = d->GetAngle();
-					d->SetAngle({ 0, 0, a.z + a_delta * 1.2f });
+					// (a loaded static never turns by its angle: its node is turned instead - slowly round, upright)
+					static float spin = 0;
+					spin += a_delta * 1.2f;
+					if (auto* node = d->Get3D()) {
+						node->local.rotate.SetEulerAnglesXYZ(g_showPitch, 0.0f, -(chest->GetAngleZ() + RE::NI_PI / 2 + spin));
+						RE::NiUpdateData ud;
+						node->Update(ud);
+					}
 					d->SetPosition(Local(chest.get(), 0, 0, kOrbZ * chest->GetScale() + gen::kShowRise + 4.0f * std::sin(g_show.t * 3.0f)));
 				}
 				if (g_choosing) {
@@ -1757,8 +1807,9 @@ namespace bo3z
 			if (g_choosing && g_show.phase == Show::Offering && (nav || side || pick)) {
 				if (nav || side) {
 					g_chooseFocus = (g_chooseFocus + (nav ? nav : side) + 3) % 3;
-					Forms::Play(gen::Sound::ui_move);
+					PlayUi(UiSnd::kMove, 0.7f);
 				} else {
+					PlayUi(UiSnd::kChoose);
 					Choose(g_chooseFocus == 2 ? -1 : g_chooseFocus);
 				}
 				return true;
@@ -1778,7 +1829,7 @@ namespace bo3z
 					i = (i + nav + static_cast<int>(rows.size())) % static_cast<int>(rows.size());
 					g_focus = rows[i];
 					if (g_focus >= kRowTrial && g_focus < kRowTrial + 5) g_trialSel = g_focus - kRowTrial;
-					Forms::Play(gen::Sound::ui_move);
+					PlayUi(UiSnd::kMove, 0.7f);  // (a soft stone tick)
 				} else if (side) {
 					if (g_focus == kRowPerk) {
 						g_sel = (g_sel + side + n) % n;
@@ -1787,8 +1838,14 @@ namespace bo3z
 					} else if (trials) {
 						g_focus = kRowTrial + std::clamp(g_trialSel, 0, 4);  // over to its trials
 					}
-					Forms::Play(gen::Sound::ui_move);
+					PlayUi(UiSnd::kMove, 0.7f);
 				} else {
+					// (Noah: sounds for the altar's menu) a deep rune chime when something is done, a dull thud when it can't be
+					// (too few septims, nothing to reforge, a bond not yet open); leaving has its own soft whoosh
+					const int  pts0 = Points::Get();
+					const auto ph0 = g_show.phase;
+					const bool menu0 = g_menu;
+					const int  trial0 = g_trialSel;
 					switch (g_focus) {
 					case kRowSpell: act(0); break;
 					case kRowBow: act(6); break;
@@ -1802,6 +1859,14 @@ namespace bo3z
 							g_trialSel = g_focus - kRowTrial;
 							act(7);
 						}
+					}
+					(void)trial0;
+					if (g_focus == kRowLeave || (menu0 && !g_menu)) {
+						PlayUi(UiSnd::kLeave);
+					} else if (Points::Get() != pts0 || g_show.phase != ph0 || (g_focus >= kRowTrial && g_focus < kRowTrial + 5) || g_focus == kRowShout) {
+						PlayUi(UiSnd::kChoose);
+					} else {
+						PlayUi(UiSnd::kFail);
 					}
 				}
 				return true;
@@ -1836,7 +1901,7 @@ namespace bo3z
 			}
 			if (dev == RE::INPUT_DEVICE::kGamepad) {
 				switch (code) {
-				case 0x2000: act(4); return true;  // B (circle): leave
+				case 0x2000: act(4); PlayUi(UiSnd::kLeave); return true;  // B (circle): leave
 				case 0x4000:
 				case 0x8000:
 				case 0x000A:
@@ -1898,6 +1963,57 @@ namespace bo3z
 				h.rollCost = RollCost();
 				// where the shrine's crown is on the screen: the roll shows there too, over the crystal itself
 				h.rollOnScreen = false;
+				h.beamLit = 0;
+				if (g_show.phase == Show::Idle || g_show.phase == Show::Offering) {
+					if (auto hr = g_glowHeart.get()) {
+						HeartGlow(hr.get(), 1.0f);  // (its runes back to their own light)
+					}
+					g_glowHeart = {};
+				}
+				if (auto chest = g_show.chest.get(); chest && g_show.phase != Show::Idle && g_show.phase != Show::Offering) {
+					// (the roll: the six column stones light beams into the heart stone one after another as it gathers, all
+					// six while it spins; the stone's runes burn brighter the faster it turns)
+					auto* cam = RE::Main::WorldRootCamera();
+					const float lit = g_show.phase == Show::Charging ? std::clamp(g_show.t / kChargeTime, 0.0f, 1.0f) * 6.5f : 6.0f;
+					RE::TESObjectREFR* heart = nullptr;
+					std::array<RE::TESObjectREFR*, 6> rocks{};
+					RE::TES::GetSingleton()->ForEachReferenceInRange(chest.get(), 420.0f, [&](RE::TESObjectREFR* r) {
+						if (!r || r->IsDisabled() || r->IsDeleted()) {
+							return RE::BSContainer::ForEachResult::kContinue;
+						}
+						auto* b = r->GetBaseObject();
+						if (b && (b == Forms::Ours(gen::kHeartStone) || b == Forms::Ours(gen::kHeartStoneLit))) {
+							heart = r;
+						}
+						for (int q = 0; q < 6; ++q) {
+							if (b && b == Forms::Ours(gen::kPillarRock[q])) rocks[q] = r;
+						}
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
+					auto screen = [&](const RE::NiPoint3& a_p, float& x, float& y) {
+						float z = 0;
+						cam->WorldPtToScreenPt3(a_p, x, y, z, 1e-5f);
+						y = 1.0f - y;
+						return z > 0;
+					};
+					if (cam && heart) {
+						const auto hp = heart->Get3D() ? heart->Get3D()->world.translate : heart->GetPosition();
+						if (screen(hp, h.beamToX, h.beamToY)) {
+							for (int q = 0; q < 6; ++q) {
+								if (rocks[q] && q < static_cast<int>(lit)) {
+									const auto rp = rocks[q]->Get3D() ? rocks[q]->Get3D()->world.translate : rocks[q]->GetPosition();
+									if (screen(rp, h.beamFrom[q * 2], h.beamFrom[q * 2 + 1])) {
+										h.beamLit = q + 1;
+									}
+								}
+							}
+						}
+						// its runes: the stone's own glow, brighter the further the roll has gone
+						const float k = g_show.phase == Show::Charging ? 0.5f * g_show.t / kChargeTime : 0.5f + 0.5f * std::min(1.0f, g_show.t / gen::kShowSpin);
+						HeartGlow(heart, 1.0f + 2.5f * k);
+						g_glowHeart = heart->CreateRefHandle();
+					}
+				}
 				if (auto chest = g_show.chest.get(); chest && g_show.phase != Show::Idle) {
 					if (auto* cam = RE::Main::WorldRootCamera()) {
 						const auto at = Local(chest.get(), 0, 0, kOrbZ * chest->GetScale());
@@ -2137,8 +2253,10 @@ namespace bo3z
 					g_closedAt = std::chrono::steady_clock::now();
 				} else {
 					g_menu = true;
+					g_focus = kRowSpell, g_chooseFocus = 0;
 					g_menuRef = a_ref->CreateRefHandle();
 					Forms::PlayAt(gen::Sound::coffer_open, a_ref);
+					PlayUi(UiSnd::kOpen, 0.6f);
 				}
 				break;
 			case 1: BuyPerk(o.ref, a_ref); break;
