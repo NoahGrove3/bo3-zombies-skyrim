@@ -301,7 +301,7 @@ namespace bo3z
 
 		bool Targetable(RE::Actor* a, RE::PlayerCharacter* player)
 		{
-			return a && a != player && !a->IsDead() && a->Is3DLoaded() && (Director::IsRoundUndead(a) || (a->IsHostileToActor(player) && !(Director::NightNow() && Director::IsSpared(a))));  // nights: the undead and real enemies, never townsfolk
+			return a && a != player && !a->IsDead() && a->Is3DLoaded() && Director::IsFoe(a);  // nights: the undead and real enemies, never townsfolk
 		}
 
 		RE::NiPoint3 HeadPos(RE::Actor* a)

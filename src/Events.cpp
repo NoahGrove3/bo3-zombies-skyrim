@@ -63,11 +63,11 @@ namespace bo3z
 				if (Director::IsRoundUndead(caster)) {
 					return false;
 				}
-				return caster->IsDead() || !caster->IsHostileToActor(player);
+				return caster->IsDead() || !Director::IsFoe(caster);
 			}
 			if (player && caster == player) {
 				auto* target = me->As<RE::Actor>();
-				return target && !Director::IsRoundUndead(target) && (target->IsPlayerTeammate() || !target->IsHostileToActor(player));
+				return target && !Director::IsFoe(target);
 			}
 			return false;
 		}
@@ -467,7 +467,7 @@ namespace bo3z
 				}
 				return;
 			}
-			if (Arcana::Damages(a_index) || a_actor->IsPlayerTeammate() || !a_actor->IsHostileToActor(player) || !Limit(a_actor)) {
+			if (Arcana::Damages(a_index) || !Director::IsFoe(a_actor) || !Limit(a_actor)) {
 				return;
 			}
 			static constexpr float kPart[4] = { 0.07f, 0.09f, 0.12f, 0.16f };

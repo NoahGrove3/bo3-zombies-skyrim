@@ -678,7 +678,7 @@ namespace bo3z
 					if (!a || a.get() == a_player || a->IsDead() || a->IsDisabled() || !a->Is3DLoaded() || IsOursRaw(a.get()) || a.get() == g_boss.handle.get().get()) {
 						continue;
 					}
-					if (!a->IsInCombat() || !a->IsHostileToActor(a_player)) {
+					if (!a->IsInCombat() || !IsFoe(a.get())) {
 						continue;
 					}
 					auto* av = a->AsActorValueOwner();
@@ -2144,6 +2144,20 @@ namespace bo3z
 			}
 		}
 
+		bool IsPerson(RE::Actor* a)
+		{
+			static auto* npcKw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x013794);  // ActorTypeNPC
+			auto*        race = a ? a->GetRace() : nullptr;
+			return race && npcKw && race->HasKeyword(npcKw);
+		}
+		bool Spareable(RE::Actor* a, RE::PlayerCharacter* a_player)
+		{
+			if (a->IsPlayerTeammate() || Party::IsFriend(a)) {
+				return true;
+			}
+			return IsPerson(a) && !a->IsHostileToActor(a_player) && a->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAggression) < 2.0f;
+		}
+
 		void TickTruce(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			if ((g_protectTimer -= a_delta) > 0) {
@@ -2169,13 +2183,21 @@ namespace bo3z
 				if (it == g_protected.end()) {
 					// Townsfolk, followers and anyone friendly are spared for the night; Skyrim's own monsters and
 					// bandits that are out for you stay fair game.
-					const bool spare = a->IsPlayerTeammate() || !a->IsHostileToActor(a_player);
 					const bool ess = a->GetActorRuntimeData().boolFlags.all(RE::Actor::BOOL_FLAGS::kEssential);
-					g_protected.push_back({ a->GetHandle(), ess, spare });
+					g_protected.push_back({ a->GetHandle(), ess, false });
+					it = std::prev(g_protected.end());
+				}
+				// Townsfolk, followers and friends are spared for the night; Skyrim's own monsters, predators and bandits
+				// that are out for you stay fair game (Noah: wolves and the like were spared - they aren't faction-hostile,
+				// only aggressive - and so never fought or took damage). Looked at again every pass.
+				const bool spare = Spareable(a.get(), a_player);
+				if (spare != it->spared) {
+					it->spared = spare;
 					if (spare) {
 						a->GetActorRuntimeData().boolFlags.set(RE::Actor::BOOL_FLAGS::kEssential);
+					} else if (!it->wasEssential) {
+						a->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kEssential);
 					}
-					it = std::prev(g_protected.end());
 				}
 				if (!it->spared) {
 					continue;
@@ -2207,6 +2229,29 @@ namespace bo3z
 					s.tear = 0.2f;
 				}
 			}
+		}
+
+		bool IsFoe(RE::Actor* a)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!a || !p || a == p || a->IsDead() || a->IsPlayerTeammate() || Party::IsFriend(a)) {
+				return false;
+			}
+			if (IsRoundUndead(a)) {
+				return true;
+			}
+			if (IsNight() && IsSpared(a)) {
+				return false;
+			}
+			if (a->IsHostileToActor(p)) {
+				return true;
+			}
+			if (a->IsInCombat()) {
+				if (auto t = a->GetActorRuntimeData().currentCombatTarget.get(); t && t.get() == p) {
+					return true;
+				}
+			}
+			return !IsPerson(a) && a->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAggression) >= 1.0f;  // predators and monsters
 		}
 
 		bool IsSpared(RE::Actor* a_actor)

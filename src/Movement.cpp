@@ -749,7 +749,7 @@ namespace bo3z
 		bool Foe(RE::Actor* a_actor, RE::PlayerCharacter* a_player)
 		{
 			return a_actor && a_actor != a_player && !a_actor->IsDead() &&
-			       (Director::IsRoundUndead(a_actor) || (a_actor->IsHostileToActor(a_player) && !a_actor->IsPlayerTeammate()));
+			       Director::IsFoe(a_actor);
 		}
 
 		bool OnGround(RE::PlayerCharacter* a_player)

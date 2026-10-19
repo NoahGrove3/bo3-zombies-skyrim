@@ -12,7 +12,7 @@ namespace bo3z::Settings
 {
 	namespace
 	{
-		float g_fovFirst = 100.0f, g_fovThird = 85.0f, g_corpse = 10.0f, g_hp = 1.0f, g_dmg = 1.0f, g_bright = 1.0f;
+		float g_fovFirst = kFovMax, g_fovThird = kFovMax, g_corpse = 10.0f, g_hp = 1.0f, g_dmg = 1.0f, g_bright = kBrightMax;  // (Noah: field of view and brightness default to their max)
 		bool  g_shelter = true, g_follow = true, g_padPS = false, g_bankRev = false, g_diveInv = false;
 		int   g_keys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30 };
 		constexpr const wchar_t* kKeyIds[kKeys] = { L"iShrineRoll", L"iShrineReforge", L"iShrineBless", L"iShrineShout", L"iShrineLeave", L"iShrineBond", L"iShrineBow" };
@@ -186,9 +186,9 @@ namespace bo3z::Settings
 					}
 				}
 			}
-			g_fovFirst = std::clamp(Read(L"General", L"fFovFirst", 100.0f), kFovMin, kFovMax);
-			g_fovThird = std::clamp(Read(L"General", L"fFovThird", 85.0f), kFovMin, kFovMax);
-			g_bright = std::clamp(Read(L"General", L"fBrightness", 1.0f), kBrightMin, kBrightMax);
+			g_fovFirst = std::clamp(Read(L"General", L"fFovFirst", kFovMax), kFovMin, kFovMax);
+			g_fovThird = std::clamp(Read(L"General", L"fFovThird", kFovMax), kFovMin, kFovMax);
+			g_bright = std::clamp(Read(L"General", L"fBrightness", kBrightMax), kBrightMin, kBrightMax);
 			g_shelter = Read(L"General", L"bShelter", 1.0f) != 0.0f;
 			g_padPS = Read(L"Controls", L"bPlayStationIcons", 0.0f) != 0.0f;
 			g_bankRev = Read(L"Dragon", L"bBankReverse", 0.0f) != 0.0f;

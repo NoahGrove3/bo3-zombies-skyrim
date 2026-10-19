@@ -106,6 +106,7 @@ namespace bo3z
 		void             Unshelter(const std::vector<RE::FormID>& a_ids);  // a save loaded: everyone back out
 		int              EnemyRow(RE::Actor* a_actor);  // sheet row of one of ours, -1 otherwise
 		bool             IsSpared(RE::Actor* a_actor);
+		bool             IsFoe(RE::Actor* a_actor);  // the night's undead, or anything of Skyrim's out to hurt you (bandits, wolves, trolls...) - never townsfolk, followers or friends
 		void             Frenzy(RE::Actor* a_actor, float a_seconds);  // Mindbreaker: turns on its own kind  // night truce: townsfolk and followers can't be hurt
 		bool             NightNow();  // night hours (the undead are out)
 		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
