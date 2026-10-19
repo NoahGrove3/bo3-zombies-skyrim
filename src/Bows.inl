@@ -395,6 +395,8 @@ namespace BowsImpl
 	// (Noah: no shot unless the bow is fully drawn) let go early and nothing flies: our shot isn't loosed, and Skyrim's own
 	// arrow (already on its way) is hidden and harmless; a soft fizzle of the element at the string says why
 	float g_hideArrow = 0;
+	int   g_rideRow = -1;  // the loosed arrow's element (TickRide)
+	float g_rideWait = 0;
 	void Fizzle(int i)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -962,8 +964,6 @@ namespace BowsImpl
 
 	// (Noah: the effect should fly with the arrow) once loosed, the element rides the arrow itself: a copy of the
 	// tip's glow hung on the head of the player's newest arrow in flight
-	int   g_rideRow = -1;
-	float g_rideWait = 0;
 	std::set<RE::Projectile*> g_ridden;
 	void TickRide(float a_delta)
 	{
