@@ -35,9 +35,9 @@ namespace bo3z
 		Phase                   g_phase = Phase::Day;
 		int                     g_current = 0;   // round being fought
 		int                     g_toSpawn = 0;
-		// (Noah: like BO3) a night is waves: 4 + the night's number of them, 20 more dead in each wave every night; the night
+		// (Noah: like BO3) a night is waves: 4 + the night's number of them; wave k brings 20 x k dead (20, 40, 60...); the night
 		// holds (the clock stops short of dawn) until the last wave is cleared
-		constexpr int   kWavesBase = 4, kWaveDeadPerNight = 20;
+		constexpr int   kWavesBase = 4, kWaveDeadStep = 20;
 		constexpr float kWaveRest = 8.0f;
 		int   g_waves = 0, g_wave = 0, g_waveSize = 0, g_waveSpawned = 0;
 		float g_waveRest = 0;
@@ -1239,7 +1239,7 @@ namespace bo3z
 			g_special = a_round >= R.specialFirstRound && (a_round - R.specialFirstRound) % R.specialEveryRounds == 0;
 			// One round per night: the dead keep coming until dawn. How many walk at once grows night by night.
 			g_toSpawn = std::clamp(static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier / 3.0f)), 12, R.maxAlive);
-			g_waves = kWavesBase + a_round, g_wave = 1, g_waveSize = kWaveDeadPerNight * a_round, g_waveSpawned = 0, g_waveRest = 0, g_nightCleared = false;
+			g_waves = kWavesBase + a_round, g_wave = 1, g_waveSize = kWaveDeadStep, g_waveSpawned = 0, g_waveRest = 0, g_nightCleared = false;
 			Curse::OnWave(false);
 			g_spawnTimer = 0;
 			g_phase = Phase::Fighting;
@@ -1270,7 +1270,7 @@ namespace bo3z
 				Forms::Play(g_special ? gen::Sound::event_bloodmoon : gen::Sound::night_start);
 				Hud::Banner(fmt::format("NIGHT {} - WAVE 1 OF {}{}", a_round, g_waves, g_special ? " - THE HOUNDS ARE LOOSE" : ""));
 			}
-			logger::info("round {} starts: {} waves of {}, up to {} undead at once, {:.0f} Skyrim health each{}", a_round, g_waves, g_waveSize, g_toSpawn, HealthFor(a_round), g_special ? " (hound night)" : "");
+			logger::info("round {} starts: {} waves (the first of {}, 20 more each), up to {} undead at once, {:.0f} Skyrim health each{}", a_round, g_waves, g_waveSize, g_toSpawn, HealthFor(a_round), g_special ? " (hound night)" : "");
 		}
 
 		// Despawning: out of combat and hidden now, deleted a moment later (deleting an actor others are still
@@ -1334,6 +1334,7 @@ namespace bo3z
 				return;
 			}
 			++g_wave;
+			g_waveSize = kWaveDeadStep * g_wave;
 			g_waveSpawned = 0;
 			g_waveRest = kWaveRest;
 			Forms::Play(gen::Sound::round_end);
