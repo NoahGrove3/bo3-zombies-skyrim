@@ -554,6 +554,12 @@ def guide_text():
              "Each page says plainly where a part of a <b>wonder weapon</b> waits and how to take it, and your compass marks the place."),
            p("Some parts fall from the Barrow-Jarls. Some wait in reliquaries at old barrows, guarded, and only wake at night. Some must be earned by killing the dead near a barrow's door."),
            p("Take them to <b>High Hrothgar</b>: a sealed door in the great hall leads down to the Reliquary, where each wonder is forged on its pedestal once its three parts are found."),
+           "[pagebreak]", h("The Wonder Weapons"),
+           p("A forged wonder is taken up from its pedestal and cast from your hands like the altar's spells: tap to strike, hold both hands to unleash it. One at a time - return it to take another."),
+           p("<b>Gravecaller</b> - grave-wisps hunt the dead and feed you their life. Unleashed: three bone warriors claw out of the earth to fight for you."),
+           p("<b>Frostbinder Gauntlets</b> - ice binds what it strikes; strike a bound foe and it shatters, cutting those round it. Unleashed: everything near you freezes, then bursts."),
+           p("<b>Wolf Queen's Crown</b> - spirit-wolves run down the dead in pairs. Unleashed: the Queen howls and her spectral pack runs at your side."),
+           p("<b>Horn of the Barrow-Jarls</b> - a war-cry hurls the dead back. Unleashed: the old war-host charges down the line in front of you."),
            "[pagebreak]", h("Falling"),
            p("At every dawn, and whenever an altar wakes, the day is saved. If you fall, you wake at that dawn. In a party, stand over a fallen friend and hold Activate to lift them."),
            p("Good luck. Stay out of the barrows after dark."), "</font>"]
@@ -593,7 +599,8 @@ def page_text(town):
             "<p>Your compass now marks every part this page speaks of - follow the blue mark with the part's name over it.</p>",
             "<p>Take the parts to <b>High Hrothgar</b>. In the great hall, by the entrance, a <b>sealed door</b> carved with the Tongues' sigil "
             "now opens for you. Behind it is the Reliquary: four pedestals, one for each wonder weapon. Each part you find lights a crystal on its pedestal; "
-            "when all three burn, stand at the pedestal and press Activate to forge the weapon.</p>",
+            "when all three burn, stand at the pedestal and press Activate to forge the weapon. Activate it again to take the wonder up; "
+            "only one answers to you at a time, and in a party each wonder has one wielder - give it back to its pedestal to take another.</p>",
             "<p>Four wonders, three parts each: " + '; '.join(f"<b>{w['label']}</b> - " + ', '.join(q['label'] for q in E['parts'] if q['wonder'] == w['id']) for w in E['wonders']) + ".</p>",
             "<p align='right'><i>- an echo of the Tongues</i></p>", "</font>"]
     return '\n'.join(out)

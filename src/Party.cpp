@@ -23,6 +23,7 @@ namespace bo3z::Party
 			Clock::time_point heard{};
 			RE::ActorHandle  puppet;      // Skyrim Together's figure of that player in our world
 			std::string      name;
+			std::int8_t      wonder{ -1 };  // the wonder weapon they hold (-1 none)
 		};
 
 		std::mutex                                     g_lock;
@@ -31,6 +32,7 @@ namespace bo3z::Party
 		std::vector<std::uint8_t>                      g_outRevive;  // a revive to send (target id, 8 bytes)
 		Life                                           g_life = Life::Alive;
 		float                                          g_left = 0;     // seconds left while down
+		std::atomic<int>                               g_wonder{ -1 }; // the wonder weapon we hold
 		RE::NiPoint3                                   g_at{};
 		float                                          g_reviveT = 0;  // our hold on a fallen friend
 		std::uint64_t                                  g_reviveWho = 0;
@@ -392,6 +394,7 @@ namespace bo3z::Party
 		o.at = g_at;
 		o.left = g_left;
 		o.revive = 0;
+		o.wonder = static_cast<std::int8_t>(g_wonder.load());
 		if (g_outRevive.size() == 8) {
 			std::memcpy(&o.revive, g_outRevive.data(), 8);
 			g_outRevive.clear();
@@ -399,14 +402,26 @@ namespace bo3z::Party
 		return o;
 	}
 
-	void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left)
+	void SetWonder(int a_wonder) { g_wonder = a_wonder; }
+	std::string WonderHolder(int a_wonder)
+	{
+		std::scoped_lock l(g_lock);
+		for (auto& [id, r] : g_remote) {
+			if (r.wonder == a_wonder && Clock::now() - r.heard < std::chrono::seconds(10)) {
+				return r.name.empty() ? std::string("a friend") : r.name;
+			}
+		}
+		return {};
+	}
+
+	void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder)
 	{
 		std::scoped_lock l(g_lock);
 		auto& r = g_remote[a_from];
 		if (a_life == static_cast<std::uint8_t>(Life::Down) && r.state != a_life) {
 			SKSE::GetTaskInterface()->AddTask([] { Forms::Play(gen::Sound::rite_fail); });  // a friend just went down: you hear it
 		}
-		r.state = a_life, r.at = a_at, r.left = a_left, r.heard = Clock::now(), r.name = a_name;
+		r.state = a_life, r.at = a_at, r.left = a_left, r.heard = Clock::now(), r.name = a_name, r.wonder = a_wonder;
 	}
 
 	void Revived(std::uint64_t a_by)

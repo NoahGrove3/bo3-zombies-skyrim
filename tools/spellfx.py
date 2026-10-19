@@ -393,14 +393,19 @@ def main():
     if 'elements' in sys.argv[2:]:
         elements(t)
         return
-    status(t)
+    only = [a.split('=', 1)[1].split(',') for a in sys.argv[2:] if a.startswith('only=')]   # only=<id>,<id>: just those spells
+    if not only:
+        status(t)
     bow_spells = {r['spell'] for r in json.load(open(ROOT / 'sheets' / 'bows.json'))['rows']}
     for s in SPELLS:
+        if only and s[0] not in only[0]:
+            continue
         build(s, t)
         if s[0] in bow_spells:
             arrow(s, t)
         print('built', s[0], s[1])
-    elements(t)
+    if not only:
+        elements(t)
 
 
 if __name__ == '__main__':

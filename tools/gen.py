@@ -93,7 +93,7 @@ for w in W:
 o.append('\t} };')
 for i, w in enumerate(W): o.append(f'\tinline constexpr int kGunIdx_{w["id"]} = {i};')
 _sid = [x['id'] for x in S['sounds']['rows']]
-_gs = lambda pre, w: str(_sid.index(pre + w['id'])) if (pre + w['id']) in _sid else '-1'
+_gs = lambda pre, w: str(_sid.index(pre + w.get('soundAs', w['id']))) if (pre + w.get('soundAs', w['id'])) in _sid else '-1'  # (the wonders borrow a spell's sounds: soundAs)
 o.append('\tstruct GunSounds { int charge, hit, boom, start, full, fizzle, travel; };  // per spell (Spec 12.3): charge hum (loop), bolt impact, gathered burst, charging begins, full charge, early release, bolt in flight (loop); sound index, -1 none')
 o.append(f'\tinline constexpr std::array<GunSounds, {len(W)}> kGunSounds{{ {{ ' + ', '.join('GunSounds{ ' + ', '.join(_gs(p_, w) for p_ in ('charge_', 'hit_', 'boom_', 'start_', 'full_', 'fizzle_', 'travel_')) + ' }' for w in W) + ' } };')
 k = S['melee']['rows'][0]
@@ -242,12 +242,12 @@ o.append(f'\tinline constexpr std::uint32_t kWardBrazier = 0x{IDS[("STAT", "ward
 # the ten spells (sheet: spellcraft): their numbers, colours and attacks for src/Spellcraft.inl
 SC = S['spellcraft']['rows']
 TAPS = ['bolt', 'fan', 'chain', 'gust', 'wisp']
-EFFECTS = ['none', 'ignite', 'freeze', 'chain', 'poison', 'drain', 'push', 'holy', 'pull']
-ULTS = ['lance', 'mortar', 'nova', 'thunder', 'roots', 'bloodnova', 'windball', 'soulstorm', 'sunburst', 'singularity']
+EFFECTS = ['none', 'ignite', 'freeze', 'chain', 'poison', 'drain', 'push', 'holy', 'pull', 'shatter']
+ULTS = ['lance', 'mortar', 'nova', 'thunder', 'roots', 'bloodnova', 'windball', 'soulstorm', 'sunburst', 'singularity', 'gravecall', 'cataclysm', 'wolfpack', 'warhost']
 STYLES = ['arcane', 'fire', 'ice', 'shock', 'thorn', 'blood', 'wind', 'soul', 'dawn', 'void']
 o.append('\tenum SpellTap : int { kTapBolt = 0, kTapFan, kTapChain, kTapGust, kTapWisp };')
-o.append('\tenum SpellEffect : int { kFxNone = 0, kFxIgnite, kFxFreeze, kFxChain, kFxPoison, kFxDrain, kFxPush, kFxHoly, kFxPull };')
-o.append('\tenum SpellUlt : int { kUltLance = 0, kUltMortar, kUltNova, kUltThunder, kUltRoots, kUltBloodNova, kUltWindBall, kUltSoulStorm, kUltSunburst, kUltSingularity };')
+o.append('\tenum SpellEffect : int { kFxNone = 0, kFxIgnite, kFxFreeze, kFxChain, kFxPoison, kFxDrain, kFxPush, kFxHoly, kFxPull, kFxShatter };')
+o.append('\tenum SpellUlt : int { kUltLance = 0, kUltMortar, kUltNova, kUltThunder, kUltRoots, kUltBloodNova, kUltWindBall, kUltSoulStorm, kUltSunburst, kUltSingularity, kUltGravecall, kUltCataclysm, kUltWolfpack, kUltWarhost };')
 o.append('\tstruct SpellcraftDef { std::string_view id, name; std::uint32_t color, accent; int style, tap; float speed, radius, damage; int count; float spread; int pierce; float homing; int effect, ult; std::string_view ultName; float ultDamage, ultRadius; std::string_view text; std::uint32_t handArt, orbStat; };')
 o.append(f'\tinline constexpr std::array<SpellcraftDef, {len(SC)}> kSpellcraft{{ {{')
 for r in SC:

@@ -40,7 +40,7 @@ namespace bo3z::Net
 		constexpr char kBuild[8] = UN_BUILD;  // the commit this game was built from (CI): every player must run the same one
 #pragma pack(push, 1)
 		struct Hello { std::uint8_t type, version; char build[8]; };
-		struct PlayerMsg { std::uint8_t type, life; float x, y, z, left; };
+		struct PlayerMsg { std::uint8_t type, life; float x, y, z, left; std::int8_t wonder; };
 		struct ReviveMsg { std::uint8_t type; std::uint64_t target; };
 #pragma pack(pop)
 		void SendHello(std::uint64_t a_to);
@@ -502,7 +502,7 @@ namespace bo3z::Net
 						if (sz >= static_cast<int>(sizeof(PlayerMsg))) {
 							PlayerMsg m{};
 							std::memcpy(&m, d, sizeof(PlayerMsg));
-							Party::Heard(from, A.GetFriendPersonaName(A.fr, from), m.life, { m.x, m.y, m.z }, m.left);
+							Party::Heard(from, A.GetFriendPersonaName(A.fr, from), m.life, { m.x, m.y, m.z }, m.left, m.wonder);
 						}
 						break;
 					case kRevive:
@@ -745,7 +745,7 @@ namespace bo3z::Net
 			}
 			if ((t -= a_delta) <= 0) {
 				t = 0.25f;
-				const PlayerMsg m{ kPlayer, o.life, o.at.x, o.at.y, o.at.z, o.left };
+				const PlayerMsg m{ kPlayer, o.life, o.at.x, o.at.y, o.at.z, o.left, o.wonder };
 				ToAll(&m, sizeof(m), false);
 			}
 		}

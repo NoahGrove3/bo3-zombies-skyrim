@@ -226,6 +226,66 @@ namespace bo3z
 			}
 		}
 
+		// ---- the wonder weapons (stage 3): each is one of the Coffer's spells in your hands (sheet: weapons/spellcraft) ----
+		int GunOfWonder(int a_w)
+		{
+			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
+				if (gen::kGuns[i].id == gen::kEchoWonders[a_w].id) {
+					return i;
+				}
+			}
+			return -1;
+		}
+		std::uint32_t OrbOfWonder(int a_w)  // its emblem burning in the air (the spell's logo model)
+		{
+			for (const auto& r : gen::kSpellcraft) {
+				if (r.id == gen::kEchoWonders[a_w].id) {
+					return r.orbStat;
+				}
+			}
+			return 0;
+		}
+		int  HeldWonder() { return Read(gen::kEchoGlobHeld) - 1; }
+		void SetHeld(int a_w)
+		{
+			Write(gen::kEchoGlobHeld, a_w + 1);
+			Party::SetWonder(a_w);
+		}
+		void RunOn(RE::TESObjectREFR* a_ref, const std::string& a_cmd)  // a console command on that reference
+		{
+			if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::Script>(); factory && a_ref) {
+				if (auto* script = factory->Create()) {
+					script->SetCommand(a_cmd);
+					script->CompileAndRun(a_ref);
+					delete script;
+				}
+			}
+		}
+		struct Ally
+		{
+			RE::ActorHandle h;
+			float           t;
+		};
+		std::vector<Ally> g_allies;
+		void TickAllies(float a_dt)
+		{
+			for (auto& al : g_allies) {
+				auto a = al.h.get();
+				al.t -= a_dt;
+				if (!a || a->IsDeleted()) {
+					al.t = 0;
+					continue;
+				}
+				if (al.t <= 0 || a->IsDead()) {
+					Gun::FxBlast("dark", a->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f });  // back into the earth
+					a->Disable();
+					a->SetDelete(true);
+					al.t = 0;
+				}
+			}
+			std::erase_if(g_allies, [](const Ally& al) { return al.t <= 0; });
+		}
+
 		// ---- the Reliquary ---------------------------------------------------------------------------------------
 		RE::ObjectRefHandle g_arrive, g_leave;  // the markers the doors move you to
 		RE::NiPoint3 Room(float a_x, float a_y, float a_z) { return P(gen::kRelRoomAt) + RE::NiPoint3{ a_x, a_y, a_z }; }
@@ -271,6 +331,21 @@ namespace bo3z
 				}
 				if (Forged(w)) {
 					Ensure(a_p, cell, gen::kRelBeam, Room(s.x, s.y, s.z + 100.0f), 0, 0.22f);
+					// the wonder rests over its pedestal while no one in your game carries it: its emblem burning in the air
+					const auto orbAt = Room(s.x, s.y, s.z + 165.0f);
+					if (HeldWonder() != w) {
+						if (auto* o = Ensure(a_p, cell, OrbOfWonder(w), orbAt, s.yaw + 180.0f, 2.2f)) {
+							o->SetAngle({ 0, 0, o->GetAngleZ() + 0.03f });  // (turning slowly)
+						}
+					} else if (auto* base = Forms::Ours(OrbOfWonder(w))) {
+						cell->ForEachReference([&](RE::TESObjectREFR* r) {
+							if (r && r->GetBaseObject() == base && !r->IsDeleted() && r->GetPosition().GetDistance(orbAt) < 60.0f) {
+								r->Disable();
+								r->SetDelete(true);
+							}
+							return RE::BSContainer::ForEachResult::kContinue;
+						});
+					}
 				}
 			}
 			auto marker = [&](RE::ObjectRefHandle& a_h, const RE::NiPoint3& a_at, float a_yaw) {
@@ -315,7 +390,37 @@ namespace bo3z
 		{
 			const auto& w = gen::kEchoWonders[a_w];
 			if (Forged(a_w)) {
-				Hud::Banner(Upper(std::string(w.label)) + " IS FORGED - it rests here until its wielder's rite (the next chapter)", 6.0f);
+				const int gun = GunOfWonder(a_w);
+				if (gun < 0) {
+					return;
+				}
+				if (HeldWonder() == a_w) {  // give it back: it rests on its pedestal again (for you, or a friend)
+					if (auto* sp = Forms::GunSpell(gun)) {
+						a_p->RemoveSpell(sp);
+					}
+					SetHeld(-1);
+					Forms::Play(gen::Sound::ward_lit);
+					Hud::Banner(Upper(std::string(w.label)) + " RESTS ON ITS PEDESTAL", 3.5f);
+					BuildReliquary(a_p);
+					return;
+				}
+				if (const auto who = Party::WonderHolder(a_w); !who.empty()) {
+					Hud::Banner(std::string(w.label) + " is in " + who + "'s hands. Each wonder answers to one wielder at a time.", 5.0f);
+					return;
+				}
+				if (const int old = HeldWonder(); old >= 0) {  // one wonder at a time: the one you carry goes back to its pedestal
+					if (auto* sp = Forms::GunSpell(GunOfWonder(old))) {
+						a_p->RemoveSpell(sp);
+					}
+					Hud::Banner(std::string(gen::kEchoWonders[old].label) + " returns to its pedestal", 3.0f);
+				}
+				SetHeld(a_w);
+				Gun::Give(gun);
+				Forms::Play(gen::Sound::shout_learned);
+				Gun::FxBlast("light", a_p->GetPosition() + RE::NiPoint3{ 0, 0, 90.0f });
+				Hud::Lore(Upper(std::string(w.label)), std::string(gen::kGuns[gun].abilityText) + " Return it to this pedestal to take up another wonder - only one answers to you at a time.", 9.0f);
+				BuildReliquary(a_p);
+				logger::info("echo: took up {}", w.id);
 				return;
 			}
 			if (!Ready(a_w)) {
@@ -327,7 +432,7 @@ namespace bo3z
 			Forms::Play(gen::Sound::curse_lifted);
 			const auto& s = gen::kRelPedestals[a_w];
 			Gun::FxBlast("light", Room(s.x, s.y, s.z + 120.0f));
-			Hud::Lore(Upper(std::string(w.label)) + " IS FORGED", std::string(w.text) + " Its three parts burn as one on the pedestal. It waits here for its wielder.", 10.0f);
+			Hud::Lore(Upper(std::string(w.label)) + " IS FORGED", std::string(w.text) + " Its three parts burn as one on the pedestal. Activate the pedestal again to take it up.", 10.0f);
 			Points::Add(3000);
 			BuildReliquary(a_p);
 			logger::info("echo: {} forged", w.id);
@@ -503,7 +608,59 @@ namespace bo3z
 				s = Site{};
 			}
 			g_probe = {}, g_arrive = {}, g_leave = {};
+			for (auto& al : g_allies) {
+				if (auto a = al.h.get()) {
+					a->Disable();
+					a->SetDelete(true);
+				}
+			}
+			g_allies.clear();
 			g_loaded = false, g_clear = false, g_slow = 0;
+		}
+
+		int  WonderHeld() { return Glob(gen::kEchoGlobHeld) ? HeldWonder() : -1; }
+		bool IsAlly(RE::Actor* a_actor)
+		{
+			return a_actor && std::any_of(g_allies.begin(), g_allies.end(), [&](const Ally& al) { return al.h.get().get() == a_actor; });
+		}
+		void Allies(int a_kind, int a_count, float a_seconds, const RE::NiPoint3& a_at)
+		{
+			static constexpr std::array<std::pair<std::string_view, RE::FormID>, 2> kBase{ { { "Dawnguard.esm", 0x0045B9 },   // DLC1SoulCairnBonemanSummon: a bone warrior
+				{ "Skyrim.esm", 0x0F608C } } };                                                                              // PlayerWolfSpirit: a spectral wolf
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			const auto& [plugin, id] = kBase[std::clamp(a_kind, 0, 1)];
+			auto* npc = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESNPC>(id, plugin);
+			if (!p || !npc) {
+				logger::warn("echo: no ally base for kind {}", a_kind);
+				return;
+			}
+			static auto* playerFaction = RE::TESForm::LookupByID<RE::TESFaction>(0x00000DB1);
+			while (static_cast<int>(g_allies.size()) + a_count > 6) {  // (six at most: the oldest go first)
+				if (auto a = g_allies.front().h.get()) {
+					a->Disable();
+					a->SetDelete(true);
+				}
+				g_allies.erase(g_allies.begin());
+			}
+			for (int i = 0; i < a_count; ++i) {
+				const float a = 6.2832f * i / a_count + 0.4f;
+				const RE::NiPoint3 want = a_at + RE::NiPoint3{ std::cos(a) * 170.0f, std::sin(a) * 170.0f, 0 };
+				const auto spot = Walkable(p, want, 400.0f);
+				auto ref = p->PlaceObjectAtMe(npc, false);
+				auto* actor = ref ? ref->As<RE::Actor>() : nullptr;
+				if (!actor) {
+					continue;
+				}
+				actor->SetPosition(spot ? *spot : a_at);
+				if (playerFaction) {
+					actor->AddToFaction(playerFaction, 0);
+				}
+				RunOn(actor, "SetPlayerTeammate 1");
+				RunOn(actor, "SetAV Aggression 1");
+				Gun::FxBlast(a_kind == 0 ? "dark" : "light", actor->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f });
+				g_allies.push_back({ actor->GetHandle(), a_seconds });
+			}
+			logger::info("echo: {} {} answer the call", a_count, a_kind == 0 ? "bone warriors" : "spirit-wolves");
 		}
 
 		bool StoneWaits(int a_town) { return a_town >= 0 && a_town < kTownCount && Curse::Freed(a_town) && !PageRead(a_town); }
@@ -518,6 +675,18 @@ namespace bo3z
 				return;
 			}
 			g_slow = 0.5f;
+			TickAllies(0.5f);
+			// the wonder in your hands: lost (dropped from a slot, a new character) - it rests on its pedestal again
+			if (const int w = HeldWonder(); w >= 0) {
+				const int gun = GunOfWonder(w);
+				if (gun < 0 || !Gun::Owns(gun)) {
+					SetHeld(-1);
+				} else {
+					Party::SetWonder(w);
+				}
+			} else {
+				Party::SetWonder(-1);
+			}
 			// the Barrow-Jarls' parts: yours as soon as their city is freed (yours or the party's)
 			for (int i = 0; i < kParts; ++i) {
 				const auto& q = gen::kEchoParts[i];

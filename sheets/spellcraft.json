@@ -15,8 +15,8 @@
     "spread": "fan spread in degrees",
     "pierce": "enemies one projectile passes through",
     "homing": "turn rate toward the nearest foe (0 = straight)",
-    "effect": "what a left-click hit does besides damage: none ignite freeze chain poison drain push holy pull",
-    "ult": "right-click charged attack: lance mortar nova thunder roots bloodnova windball soulstorm sunburst singularity",
+    "effect": "what a left-click hit does besides damage: none ignite freeze chain poison drain push holy pull shatter (freezes; a frozen foe hit again bursts)",
+    "ult": "right-click charged attack: lance mortar nova thunder roots bloodnova windball soulstorm sunburst singularity | the wonders: gravecall cataclysm wolfpack warhost",
     "ultName": "its name",
     "ultDamage": "its damage",
     "ultRadius": "its radius (area attacks) or beam width",
@@ -42,6 +42,10 @@
     {"id": "aetherium", "name": "Dawnlight", "color": "FFCC5C", "accent": "FFF7CC", "style": "dawn", "tap": "bolt", "speed": 2200, "radius": 20, "damage": 240, "count": 1, "spread": 0, "pierce": 1, "homing": 0, "effect": "holy",
      "ult": "sunburst", "ultName": "Sunburst", "ultDamage": 1300, "ultRadius": 500, "text": "Holy light that sears the undead. Charged: a sunburst that blinds and burns a wide circle."},
     {"id": "mammothlmg", "name": "Voidcall", "color": "1AF2CC", "accent": "B3FFF2", "style": "void", "tap": "bolt", "speed": 1100, "radius": 30, "damage": 300, "count": 1, "spread": 0, "pierce": 2, "homing": 0, "effect": "pull",
-     "ult": "singularity", "ultName": "Singularity", "ultDamage": 1200, "ultRadius": 600, "text": "A slow void orb that drags the dead in. Charged: a black hole that pulls them together and collapses."}
+     "ult": "singularity", "ultName": "Singularity", "ultDamage": 1200, "ultRadius": 600, "text": "A slow void orb that drags the dead in. Charged: a black hole that pulls them together and collapses."},
+    {"id": "gravecaller", "name": "Gravecaller", "color": "5CFF9E", "accent": "D8FFE8", "style": "soul", "tap": "wisp", "speed": 1500, "radius": 22, "damage": 330, "count": 3, "spread": 10, "pierce": 1, "homing": 6, "effect": "drain", "ult": "gravecall", "ultName": "Call the Barrow", "ultDamage": 1100, "ultRadius": 420, "sigil": "skull", "text": "Grave-wisps that hunt the dead and feed you their life. Charged: the barrow answers - three bone warriors claw out of the ground to fight for you."},
+    {"id": "frostbinder", "name": "Frostbinder Gauntlets", "color": "8FE6FF", "accent": "F2FCFF", "style": "ice", "tap": "bolt", "speed": 2800, "radius": 22, "damage": 340, "count": 1, "spread": 0, "pierce": 2, "homing": 0, "effect": "shatter", "ult": "cataclysm", "ultName": "Ice-Hand's Grip", "ultDamage": 1700, "ultRadius": 620, "sigil": "gauntlet", "text": "Ice that binds what it strikes - and shatters what is already bound. Charged: everything round you freezes, then bursts."},
+    {"id": "wolfcrown", "name": "Wolf Queen's Crown", "color": "B97CFF", "accent": "F0E2FF", "style": "arcane", "tap": "wisp", "speed": 1700, "radius": 20, "damage": 300, "count": 2, "spread": 14, "pierce": 2, "homing": 5, "effect": "pull", "ult": "wolfpack", "ultName": "The Queen's Hunt", "ultDamage": 900, "ultRadius": 460, "sigil": "crown", "text": "Spirit-wolves that run down the dead in pairs. Charged: the Queen howls and her pack of spectral wolves runs at your side."},
+    {"id": "barrowhorn", "name": "Horn of the Barrow-Jarls", "color": "FFC45C", "accent": "FFF3D6", "style": "dawn", "tap": "gust", "speed": 1600, "radius": 60, "damage": 560, "count": 1, "spread": 0, "pierce": 5, "homing": 0, "effect": "push", "ult": "warhost", "ultName": "The War-Host Charges", "ultDamage": 1600, "ultRadius": 110, "sigil": "horn", "text": "A war-cry that hurls the dead back in a wave. Charged: the old war-host of the barrows charges down the line in front of you."}
   ]
 }

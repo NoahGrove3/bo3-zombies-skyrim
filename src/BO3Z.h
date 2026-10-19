@@ -341,13 +341,15 @@ namespace bo3z
 			struct Mark { std::string name; float x, y, dist; bool front; Life life; float hp{ 1.0f }; float ang{ 0 }; };  // hp: 0..1 from their figure
 			std::vector<Mark>   marks;            // where each friend is (screen 0..1)
 		};
-		struct Out { std::uint8_t life; RE::NiPoint3 at; float left; std::uint64_t revive; };
+		struct Out { std::uint8_t life; RE::NiPoint3 at; float left; std::uint64_t revive; std::int8_t wonder; };
 		void Tick(float a_delta);                      // game thread
 		bool OnButton(const RE::ButtonEvent* a_b);     // Activate held (revive); arrows switch whom you watch
 		Life State();
 		View Now();
 		Out  Outgoing();                               // Net: what to tell the party
-		void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left);
+		void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder = -1);
+		std::string WonderHolder(int a_wonder);         // the friend in the party holding that wonder weapon ('' none)
+		void        SetWonder(int a_wonder);            // ours (-1 none): told to the party
 		void Revived(std::uint64_t a_by);
 		void Forget(std::uint64_t a_who);
 		// The party's save points: every dawn (and the dawn a freed city brings) each game saves itself a few seconds
@@ -406,6 +408,9 @@ namespace bo3z
 		bool StoneWaits(int a_town);                           // a freed city whose Echo Stone still holds its page
 		bool Target(RE::PlayerCharacter* a_player, RE::NiPoint3& a_at, std::string& a_label);  // where the story wants you
 		bool Strip(std::string& a_title, std::string& a_goal, float& a_frac);                  // a hunt under way (under the compass)
+		void Allies(int a_kind, int a_count, float a_seconds, const RE::NiPoint3& a_at);       // the wonders' summons: 0 the barrow's bone warriors, 1 the Queen's spirit-wolves
+		bool IsAlly(RE::Actor* a_actor);
+		int  WonderHeld();                                     // the wonder weapon in your hands (-1)
 	}
 
 	namespace Intro

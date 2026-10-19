@@ -322,6 +322,8 @@ namespace Spellcraft
 	std::vector<Streak> g_streaks;
 	std::vector<Hold>   g_held;
 	std::vector<Well>   g_wells;
+	struct Pending { float t; RE::NiPoint3 at; int row; float dmg, radius; };
+	std::vector<Pending> g_pending;  // Ice-Hand's Grip: the frozen burst a moment after the freeze
 	std::uint64_t       g_loopId = 0;
 
 	bool  g_tapHeld = false, g_orbHeld = false, g_tapFullSaid = false, g_orbFullSaid = false, g_orbStartSaid = false;
@@ -418,6 +420,20 @@ namespace Spellcraft
 		g_streaks.push_back(std::move(s));
 	}
 
+	bool Held(RE::Actor* a)
+	{
+		return a && std::any_of(g_held.begin(), g_held.end(), [&](const Hold& h) { return h.t > 0 && h.a.get().get() == a; });
+	}
+	void Release(RE::Actor* a)
+	{
+		for (auto& h : g_held) {
+			if (h.a.get().get() == a) {
+				h.t = 0;
+				a->EnableAI(true);
+			}
+		}
+	}
+
 	void HoldStill(RE::Actor* a, float a_seconds, std::uint32_t a_art)
 	{
 		if (!a || a->IsDead()) {
@@ -463,7 +479,24 @@ namespace Spellcraft
 		if (a_effect == gen::kFxHoly && Director::IsRoundUndead(a)) {
 			dmg *= 1.25f;  // holy light sears the dead
 		}
+		bool shattered = false;
+		if (a_effect == gen::kFxShatter && Held(a)) {
+			Release(a);
+			dmg *= 2.2f;
+			shattered = true;
+		}
 		const bool killed = Damage(a, dmg, a_head, false);
+		if (shattered) {
+			const RE::NiPoint3 c = a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f };
+			BurstAt(a_row, c, 220.0f, 0.5f);
+			Gun::FxBlast("frost", c);
+			for (auto* f : Foes(c, 240.0f)) {
+				if (f != a) {
+					Damage(f, a_dmg * 0.9f, false, false);
+				}
+			}
+			a_effect = gen::kFxNone;
+		}
 		auto*      pav = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner();
 		switch (a_effect) {
 		case gen::kFxIgnite:
@@ -477,6 +510,11 @@ namespace Spellcraft
 		case gen::kFxFreeze:
 			if (!killed) {
 				HoldStill(a, kFreezeSeconds, gen::kArtIceShell);
+			}
+			break;
+		case gen::kFxShatter:  // Frostbinder: binds in ice; strike what is already bound and it bursts, the shards cutting all round it
+			if (!killed) {
+				HoldStill(a, 3.0f, gen::kArtIceShell);
 			}
 			break;
 		case gen::kFxPoison:
@@ -1144,9 +1182,67 @@ namespace Spellcraft
 			PlayAt(Snd(a_gun, &gen::GunSounds::boom), at);
 			break;
 		}
+		case gen::kUltGravecall:  // Gravecaller: the ground breaks open round you and the barrow's warriors climb out to fight for you
+			Area(row, feet, d.ultRadius, dmg, gen::kFxDrain);
+			BurstAt(row, feet, d.ultRadius, 0.8f);
+			Gun::FxBlast("dark", feet);
+			PlayAt(Snd(a_gun, &gen::GunSounds::boom), feet);
+			Echo::Allies(0, 3, 25.0f, feet);
+			break;
+		case gen::kUltCataclysm:  // Frostbinder: everything round you is bound in ice - and a heartbeat later it bursts
+			for (auto* f : Foes(feet, d.ultRadius)) {
+				HoldStill(f, 1.6f, gen::kArtIceShell);
+			}
+			BurstAt(row, feet, d.ultRadius, 0.7f);
+			Gun::FxBlast("icevolley", feet);
+			g_pending.push_back({ 1.1f, feet, row, dmg, d.ultRadius });
+			break;
+		case gen::kUltWolfpack:  // the Crown: the Queen's howl staggers the dead, and her spirit-wolves run with you
+			for (auto* f : Foes(feet, d.ultRadius)) {
+				if (!Strike(row, f, dmg, false, gen::kFxNone, feet)) {
+					Stagger(f, 0.9f);
+				}
+			}
+			BurstAt(row, feet, d.ultRadius, 0.7f);
+			PlayAt(Snd(a_gun, &gen::GunSounds::boom), feet);
+			Echo::Allies(1, 3, 30.0f, feet);
+			break;
+		case gen::kUltWarhost:  // the Horn: a line of the war-host's spectral blades charges down the field in front of you
+		{
+			RE::NiPoint3 flat{ dir.x, dir.y, 0 };
+			if (flat.Length() < 0.01f) {
+				flat = { 0, 1, 0 };
+			}
+			flat.Unitize();
+			const RE::NiPoint3 side{ flat.y, -flat.x, 0 };
+			for (int i = 0; i < 7; ++i) {
+				const float off = (i - 3) * 95.0f;
+				Launch(row, a_gun, feet + RE::NiPoint3{ 0, 0, 30.0f } + side * off - flat * std::abs(off) * 0.25f, flat, 1500.0f, dmg, d.ultRadius, 99, 1.6f);
+			}
+			Gun::FxBlast("shoutarea", feet);
+			PlayAt(Snd(a_gun, &gen::GunSounds::boom), feet);
+			break;
+		}
 		default:
 			break;
 		}
+	}
+
+	void TickPending(float a_dt)
+	{
+		for (auto& q : g_pending) {
+			if ((q.t -= a_dt) > 0) {
+				continue;
+			}
+			for (auto* f : Foes(q.at, q.radius * 1.1f)) {  // the bound burst: frozen or not, they all take the shards
+				Release(f);
+				const float fall = 1.0f - 0.35f * std::min(1.0f, f->GetPosition().GetDistance(q.at) / std::max(1.0f, q.radius));
+				Damage(f, q.dmg * fall, false, false);
+			}
+			BurstAt(q.row, q.at, q.radius * 1.1f, 0.6f);
+			Gun::FxBlast("frost", q.at);
+		}
+		std::erase_if(g_pending, [](const Pending& q) { return q.t <= 0; });
 	}
 
 	void TickBeam(float a_dt)
@@ -1506,6 +1602,7 @@ namespace Spellcraft
 			g_bodies.clear();
 		}
 		TickBeam(a_dt);
+		TickPending(a_dt);
 		TickShots(a_dt);
 		TickFx(a_dt);
 		// the HUD: this spell's colour (the crosshair ring is gone; the spell itself shows the charge)
@@ -1534,6 +1631,7 @@ namespace Spellcraft
 			}
 		}
 		g_held.clear();
+		g_pending.clear();
 		for (auto& w : g_wells) {
 			w.ball.Detach();
 		}

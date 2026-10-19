@@ -678,7 +678,7 @@ namespace bo3z
 					if (!a || a.get() == a_player || a->IsDead() || a->IsDisabled() || !a->Is3DLoaded() || IsOursRaw(a.get()) || a.get() == g_boss.handle.get().get()) {
 						continue;
 					}
-					if (!a->IsInCombat() || !IsFoe(a.get())) {
+					if (!a->IsInCombat() || !Director::IsFoe(a.get())) {
 						continue;
 					}
 					auto* av = a->AsActorValueOwner();
@@ -2234,7 +2234,7 @@ namespace bo3z
 		bool IsFoe(RE::Actor* a)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!a || !p || a == p || a->IsDead() || a->IsPlayerTeammate() || Party::IsFriend(a)) {
+			if (!a || !p || a == p || a->IsDead() || a->IsPlayerTeammate() || Party::IsFriend(a) || Echo::IsAlly(a)) {
 				return false;
 			}
 			if (IsRoundUndead(a)) {

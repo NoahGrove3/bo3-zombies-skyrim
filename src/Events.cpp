@@ -521,6 +521,14 @@ namespace bo3z
 						}
 					}
 				}
+				// the wonders' summons (Echo::Allies) keep up with the rounds too: a share of a zombie's round health a blow
+				if (a_event && a_event->cause && a_event->target) {
+					auto* ally = a_event->cause->As<RE::Actor>();
+					auto* z = a_event->target->As<RE::Actor>();
+					if (ally && z && !z->IsDead() && Echo::IsAlly(ally) && Director::IsRoundUndead(z) && Limit(z)) {
+						HurtUndead(z, Director::RoundHealth() * gen::kShareMelee * 0.9f * (0.7f + 0.3f * Arcana::Power()));
+					}
+				}
 				if (a_event && a_event->target.get() == RE::PlayerCharacter::GetSingleton() && a_event->cause) {
 					if (auto* z = a_event->cause->As<RE::Actor>(); z && Director::IsRoundUndead(z)) {
 						Perks::OnZombieHit(z);

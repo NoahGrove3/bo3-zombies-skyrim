@@ -158,6 +158,73 @@ SIGILS = {'arcane': sig_arcane, 'fire': sig_fire, 'ice': sig_ice, 'shock': sig_s
           'wind': sig_wind, 'soul': sig_soul, 'dawn': sig_dawn, 'void': sig_void}
 
 
+# the four wonder weapons (sheet: spellcraft, 'sigil'): their own emblems
+def sig_skull(d, f, s):        # Gravecaller: a draugr's skull, its eyes burning, a barrow-iron crown of spikes over it
+    skull = chaikin([(0, -0.62), (0.42, -0.5), (0.58, -0.1), (0.5, 0.25), (0.3, 0.38), (0.3, 0.62), (-0.3, 0.62), (-0.3, 0.38), (-0.5, 0.25), (-0.58, -0.1), (-0.42, -0.5)], 2)
+    d.polygon(P(skull), fill=f)
+    for sx in (-1, 1):
+        d.polygon(P(chaikin([(sx * 0.08, -0.05), (sx * 0.36, -0.12), (sx * 0.38, 0.08), (sx * 0.12, 0.12)], 1)), fill=(0, 0, 0, 255))
+    d.polygon(P([(0, 0.18), (0.08, 0.32), (-0.08, 0.32)]), fill=(0, 0, 0, 255))
+    for x in (-0.18, -0.06, 0.06, 0.18):
+        d.line(P([(x, 0.42), (x, 0.62)]), fill=(0, 0, 0, 255), width=int(3 * s))
+    for k in range(5):                                         # the crown
+        x = -0.4 + 0.2 * k
+        d.polygon(P([(x - 0.07, -0.58), (x, -0.9 if k % 2 == 0 else -0.78), (x + 0.07, -0.58)]), fill=f)
+
+
+def sig_gauntlet(d, f, s):     # Frostbinder: an armoured fist raised, rimed with ice, shards bursting from the knuckles
+    fist = [(-0.38, -0.15), (0.38, -0.15), (0.42, 0.25), (0.25, 0.42), (0.22, 0.9), (-0.22, 0.9), (-0.25, 0.42), (-0.42, 0.25)]
+    d.polygon(P(fist), fill=f)
+    for k in range(4):                                         # the knuckle plates
+        x0 = -0.38 + 0.19 * k
+        d.polygon(P([(x0 + 0.01, -0.15), (x0 + 0.18, -0.15), (x0 + 0.16, -0.38), (x0 + 0.03, -0.38)]), fill=f)
+        d.line(P([(x0 + 0.02, -0.14), (x0 + 0.17, -0.14)]), fill=(0, 0, 0, 255), width=int(2 * s))
+    for y in (0.5, 0.66):
+        d.line(P([(-0.22, y), (0.22, y)]), fill=(0, 0, 0, 255), width=int(2.5 * s))
+    for a, L in ((-2.1, 0.5), (-1.57, 0.62), (-1.05, 0.5), (-2.6, 0.4), (-0.55, 0.4)):   # ice shards
+        x, y = math.cos(a), math.sin(a)
+        bx, by = x * 0.42, y * 0.42 - 0.2
+        px, py = -y, x
+        d.polygon(P([(bx + px * 0.05, by + py * 0.05), (bx + x * L, by + y * L), (bx - px * 0.05, by - py * 0.05)]), fill=f)
+
+
+def sig_crown(d, f, s):        # Wolf Queen's Crown: a spiked crown over a howling wolf's head
+    band = [(-0.62, -0.05), (0.62, -0.05), (0.56, -0.22), (-0.56, -0.22)]
+    d.polygon(P(band), fill=f)
+    for k in range(5):
+        x = -0.5 + 0.25 * k
+        h = 0.62 if k == 2 else 0.5 if k in (1, 3) else 0.4
+        d.polygon(P([(x - 0.09, -0.22), (x, -0.22 - h), (x + 0.09, -0.22)]), fill=f)
+        d.ellipse(P([(x - 0.04, -0.26 - h), (x + 0.04, -0.18 - h)]), fill=f)
+    wolf = chaikin([(-0.38, 0.92), (-0.36, 0.5), (-0.26, 0.22), (-0.12, 0.12), (-0.08, -0.04), (0.02, 0.1), (0.2, 0.14), (0.56, 0.02), (0.6, 0.1), (0.36, 0.3), (0.22, 0.46), (0.18, 0.92)], 1)
+    d.polygon(P(wolf), fill=f)                                 # a wolf's head, raised in a howl
+    for ex in (-0.16, 0.0):                                    # its ears laid back
+        d.polygon(P([(ex - 0.06, 0.16), (ex - 0.16, -0.12), (ex + 0.06, 0.12)]), fill=f)
+    d.ellipse(P([(0.1, 0.18), (0.18, 0.25)]), fill=(0, 0, 0, 255))
+    d.line(P([(0.3, 0.27), (0.5, 0.14)]), fill=(0, 0, 0, 255), width=int(2 * s))
+
+
+def sig_horn(d, f, s):         # Horn of the Barrow-Jarls: a great curled war-horn bound in iron bands, its call rolling out
+    pts_o, pts_i = [], []
+    for k in range(25):
+        t = k / 24
+        a = math.pi * (0.95 + 1.15 * t)
+        r = 0.82 - 0.4 * t
+        cx, cy = 0.05 + r * math.cos(a), 0.18 + r * math.sin(a) * 0.9
+        w = 0.04 + 0.2 * t ** 1.4
+        nx, ny = math.cos(a), math.sin(a)
+        pts_o.append((cx + nx * w, cy + ny * w)); pts_i.append((cx - nx * w, cy - ny * w))
+    d.polygon(P(pts_o + pts_i[::-1]), fill=f)
+    for k in (8, 14, 20):
+        d.line(P([pts_o[k], pts_i[k]]), fill=(0, 0, 0, 255), width=int(3 * s))
+    mx, my = (pts_o[-1][0] + pts_i[-1][0]) / 2, (pts_o[-1][1] + pts_i[-1][1]) / 2
+    for i, r in enumerate((0.22, 0.36, 0.5)):                    # the call
+        d.line(P(arc_pts(mx, my, r, -0.7, 0.7, 16)), fill=f, width=int((4 - i) * s))
+
+
+SIGILS.update({'skull': sig_skull, 'gauntlet': sig_gauntlet, 'crown': sig_crown, 'horn': sig_horn})
+
+
 # ------------------------------------------------------------------------------------------------- the medallion
 def medallion(color, accent, style):
     c = rgb(color); acc = rgb(accent)
@@ -207,7 +274,7 @@ def main():
     OUT.mkdir(parents=True, exist_ok=True)
     rows = json.load(open(ROOT / 'sheets' / 'spellcraft.json'))['rows']
     for r in rows:
-        medallion(r['color'], r['accent'], r['style']).save(OUT / f"w_{r['id']}.png")
+        medallion(r['color'], r['accent'], r.get('sigil', r['style'])).save(OUT / f"w_{r['id']}.png")
         print('w_' + r['id'])
 
 
