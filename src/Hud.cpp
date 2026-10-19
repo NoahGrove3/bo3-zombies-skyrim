@@ -2434,7 +2434,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					TxtWrap(dl, g_body, 16 * k, { TL, ty + 30 * k }, IM_COL32(196, 182, 160, 235), s.trialBossLine, TR - TL, 2);
 					Divider(dl, tcx, tb.y - 58 * k, tw * 0.38f, k, 0.7f);
 					TxtC(dl, g_body, 16 * k, tcx, tb.y - 44 * k, IM_COL32(200, 186, 160, 225),
-						std::string(g_padLast ? "D-pad Left: the trials   \xC2\xB7   " : "A: the trials   \xC2\xB7   ") + (g_padLast ? (Settings::PlayStationIcons() ? "Cross" : "A") : "Enter") + ": take one up"));
+						std::string(g_padLast ? "D-pad Left / Right: here and back   \xC2\xB7   " : "A / D: here and back   \xC2\xB7   ") + (g_padLast ? (Settings::PlayStationIcons() ? "Cross" : "A") : "Enter") + ": take one up");
 				}
 			} else if (s.rollPhase > 0) {
 				// the roll with the menu closed: a small strip under the crosshair
