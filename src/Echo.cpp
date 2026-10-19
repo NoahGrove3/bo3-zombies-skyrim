@@ -403,8 +403,8 @@ namespace bo3z
 		{
 			auto&       s = g_site[a_part];
 			const auto& q = gen::kEchoParts[a_part];
-			const float far = std::hypot(a_p->GetPosition().x - q.x, a_p->GetPosition().y - q.y);
-			if (far > 6000.0f) {
+			const float dist2d = std::hypot(a_p->GetPosition().x - q.x, a_p->GetPosition().y - q.y);
+			if (dist2d > 6000.0f) {
 				s.relic = {}, s.light = {}, s.beam = {};
 				return;
 			}
