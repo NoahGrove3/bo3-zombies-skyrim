@@ -338,6 +338,7 @@ namespace bo3z
 		StormCharge g_storm;
 		float       g_propKickT = -1.0f;  // a wonder weapon just fired (src/WonderProps.inl: its model's attack motion)
 		bool        g_propKickBig = false;
+		std::atomic<bool> g_weaponSwing{ false };  // (any swing of the weapon in hand, heard by Bows' animation sink: Alduin's Fang's charged swing)
 		bool        g_stormBusy = false;   // (while the lightning or a shout itself is dealing damage: no charge spent)
 		void        StormStrike(RE::Actor* a_target);
 

@@ -33,6 +33,7 @@ namespace Props
 		return w;
 	}
 
+	void ChargedLook(int a_w);
 	struct Hung
 	{
 		Spellcraft::Fx fx;
@@ -314,7 +315,7 @@ namespace Props
 	void TickFang(float a_delta)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
-		if (Bows::g_weaponSwing.exchange(false) && FangInHand(p)) {
+		if (g_weaponSwing.exchange(false) && FangInHand(p)) {
 			auto* proc = p->GetActorRuntimeData().currentProcess;
 			auto* high = proc ? proc->high : nullptr;
 			if (high && high->attackData && high->attackData->data.flags.any(RE::AttackData::AttackFlag::kPowerAttack)) {
