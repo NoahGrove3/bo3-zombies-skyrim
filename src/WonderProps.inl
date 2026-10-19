@@ -276,6 +276,7 @@ namespace Props
 		float               left, tick, dmg, speed;
 		bool                chase;
 		int                 row, kind;
+		std::unordered_map<RE::FormID, float> cd;  // (each body pulled or thrown once in a while)
 	};
 	std::vector<Twister> g_twisters;
 	float FangBase() { return Director::RoundHealth() * gen::kRounds.hpScale; }  // a zombie's whole night health, in BO3 units
@@ -297,7 +298,7 @@ namespace Props
 			a_dir = { 0, 1, 0 };
 		}
 		a_dir.Unitize();
-		g_twisters.push_back({ ref->CreateRefHandle(), at, a_dir, a_seconds, 0.0f, a_damage, a_chase ? 230.0f : 480.0f, a_chase, a_row, a_kind });
+		g_twisters.push_back({ ref->CreateRefHandle(), at, a_dir, a_seconds, 0.0f, a_damage, a_chase ? 230.0f : 480.0f, a_chase, a_row, a_kind, {} });
 		Audio::AtPoint(gen::Sound::unleash_hearth, at);
 		logger::info("tornado: kind {} for {:.0f} s{}", a_kind, a_seconds, a_chase ? ", hunting the dead" : "");
 	}
@@ -362,6 +363,32 @@ namespace Props
 			if (auto r = t.ref.get()) {
 				r->SetPosition(t.at);
 			}
+			for (auto it = t.cd.begin(); it != t.cd.end();) {
+				it = (it->second -= a_delta) <= 0 ? t.cd.erase(it) : std::next(it);
+			}
+			// (Noah: the bows' tornadoes drag in the dead close by and throw them up through the funnel, out of its top)
+			if (t.chase) {
+				auto* proc = RE::PlayerCharacter::GetSingleton()->GetActorRuntimeData().currentProcess;
+				for (auto* f : Foes(t.at, 700.0f)) {
+					if (f->IsDead() || t.cd.contains(f->GetFormID()) || !proc) {
+						continue;
+					}
+					RE::NiPoint3 off = f->GetPosition() - t.at;
+					off.z = 0;
+					const float d = off.Length();
+					if (d > 150.0f) {
+						Spellcraft::Fling(f, t.at, -(1.6f + 1.4f * (1.0f - d / 700.0f)));  // drawn in
+						t.cd[f->GetFormID()] = 0.45f;
+					} else {
+						// up through the middle: thrown from beneath, straight up
+						proc->KnockExplosion(f, f->GetPosition() - RE::NiPoint3{ off.x * 0.3f, off.y * 0.3f, 220.0f }, 7.5f);
+						if (t.row >= 0) {
+							Spellcraft::BurstAt(t.row, t.at + RE::NiPoint3{ 0, 0, 300.0f }, 70.0f, 0.4f);
+						}
+						t.cd[f->GetFormID()] = 1.6f;
+					}
+				}
+			}
 			if ((t.tick -= a_delta) <= 0) {
 				t.tick = 0.25f;
 				for (auto* f : Foes(t.at, 230.0f)) {
@@ -369,7 +396,7 @@ namespace Props
 					if (t.kind == 0) {
 						g_dots.push_back({ f->GetHandle(), t.dmg * 0.5f, 3.0f });  // (fire: it burns on)
 					}
-					if (!f->IsDead()) {
+					if (!f->IsDead() && !t.chase) {
 						Stagger(f, 0.4f);
 					}
 				}
