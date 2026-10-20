@@ -54,8 +54,11 @@ MODELS = {
                         simplify={'Cylinder.001': 36000, 'FLASH3': 16000, 'handel': 16000}, runic=True,
                         # the elf bow's own colour scheme, turned to fire: a charred limb with the runes (our finish),
                         # ember-gold tendrils, black leather grip, flame-leaf blades
-                        matcolors={'Material.003': ((205, 96, 30), 0.55), 'Material.002': ((26, 20, 18), 0.0),
-                                   'Material.001': ((235, 110, 25), 1.2), 'Material.005': ((60, 50, 44), 0.0)}),
+                        # (Noah: the Emberstring looked smooth, not detailed) the limb wears the full runic finish, the
+                        # flame-leaf blades forged metal etched with filigree and veins of fire; the flame skin over it
+                        # dimmed so the work shows through
+                        matcolors={'Material.002': ((26, 20, 18), 0.0), 'Material.005': ((60, 50, 44), 0.0)},
+                        trim_mats={'Material.001'}, shell=0.4),
 }
 
 
@@ -223,6 +226,10 @@ def build(bid):
             r = (tex_dds(dmap, f'{bid}/{bid}_{mat}_d.dds'), tex_dds(Image.fromarray(na, 'RGBA'), f'{bid}/{bid}_{mat}_n.dds', True),
                  tex_dds(Image.fromarray(ga.clip(0, 255).astype(np.uint8)), f'{bid}/{bid}_{mat}_g.dds'), max(gl, 2.0 if role == 'glow' else 0.0), 0.6)
             texcache[key] = r; return r
+        if mat in cfg.get('trim_mats', ()):
+            dmap, nmap, gmap = bowart.trim_maps(row['element'], glow, seed=len(bid) + 7)
+            r = (tex_dds(dmap, f'{bid}/{bid}_{mat}_d.dds'), tex_dds(nmap, f'{bid}/{bid}_{mat}_n.dds', True), tex_dds(gmap, f'{bid}/{bid}_{mat}_g.dds'), 2.0, 0.7)
+            texcache[key] = r; return r
         if cfg.get('runic'):
             kind = row['body']
             dmap, nmap, gmap = bowart.body_maps(kind, tuple(row['bodyColor']), glow, seed=len(bid), element=row['element'])
@@ -368,7 +375,7 @@ def build(bid):
     # Bow's flowing flame shader on a skin a hair outside every part, recoloured to the element, flowing along its length
     pal = palette(bid, glow)
     nif = OUT / 'Meshes/CurseOfAlduin/bow' / (bid + '.nif')
-    r = subprocess.run(['/home/claude/tools/fxshell', str(nif), SPECTRAL, '6', str(nif), pal, '1', '1', '1', '0.9', '0.12', '0.025', '0.08'], capture_output=True, text=True)
+    r = subprocess.run(['/home/claude/tools/fxshell', str(nif), SPECTRAL, '6', str(nif), pal, '1', '1', '1', f"{cfg.get('shell', 0.9)}", '0.12', '0.025', '0.08'], capture_output=True, text=True)
     print('  ', r.stdout.strip(), r.stderr.strip())
     if r.returncode: raise SystemExit(f'fxshell failed for {bid}')
     print(f'   {total} triangles')

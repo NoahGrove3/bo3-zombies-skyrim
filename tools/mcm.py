@@ -38,32 +38,58 @@ def text(t, help=''):
     return {'text': t, 'type': 'text', 'help': help}
 
 
+# (Noah: easier for new players - which mod changes what - and The Curse of Alduin first in the list) the pages run from a
+# Start Here guide through the game's own settings to the other mods' pages; the "!" sorts it to the top of SkyUI's list
 PAGES = [
-    {'pageDisplayName': 'The Curse of Alduin', 'cursorFillMode': 'topToBottom', 'content': [
+    {'pageDisplayName': '1. Start Here', 'cursorFillMode': 'topToBottom', 'content': [
+        header('Welcome to The Curse of Alduin'),
+        text('Survive the nights: the dead rise in waves.', 'Every night brings more waves of undead. Clear the last wave and dawn breaks. Day lasts about 18 minutes.'),
+        text('F1 opens the Codex (story + guide).', 'The Survivor\'s Guide explains the Echo Altar, trials, spells, bows, shouts, the dragon and the hidden quests.'),
+        text('Esc > PARTY: lobby, stats, records.', 'In the Esc menu press P (Y / Triangle on a controller) for the Party window: host or join friends, see everyone\'s night and your records.'),
+        text('Echo Altar: spells, bows, perks, trials.', 'Every city has an Echo Altar. Stand on its base to open it.'),
+        header('The pages of this menu'),
+        text('2. Gameplay - the night, difficulty'),
+        text('3. View & Effects - field of view, blood, fog, flashes'),
+        text('4. Controls - keys, controller icons, the dragon glider'),
+        text('5. Other Mods - QuickLoot, Character Menu'),
+        header('What the other menus in this list change'),
+        text('True Directional Movement - camera, lock-on, moving direction'),
+        text('TrueHUD - enemy health bars, floating damage'),
+        text('TK Dodge - the dodge roll'),
+        text('SkyParkour - climbing and vaulting'),
+        text('Experience - how leveling works'),
+        text('Frozen Electrocuted Combustion - death effects (burned, frozen, shocked bodies)'),
+        text('Embers XD - fire and spell lighting'),
+        text('Realistic Water Two - water'),
+        text('Floating Subtitles - subtitles over speakers'),
+        text('Follower Stats - your followers\' stats'),
+        text('Local Map Upgrade / Fantasy Paper Maps - the map'),
+        text('SkyUI - the menus themselves'),
+    ], 'position': 0},
+    {'pageDisplayName': '2. Gameplay', 'cursorFillMode': 'topToBottom', 'content': [
+        header('The night'),
+        toggle('bShelter:General', 'Townsfolk go indoors', 'From the moment the night\'s countdown starts, everyone out in a city\'s streets goes inside until dawn, so the dead can\'t hurt them.'),
+        slider('fCorpseSeconds:General', 'Bodies fade after', 'Seconds a fallen undead lies there before it crumbles.', 3, 60, 1, '{0} s'),
+        header('Difficulty'),
+        toggle('bFollowSkyrim:Difficulty', 'Follow Skyrim\'s difficulty', 'Skyrim\'s difficulty (Settings > Gameplay) also sets how tough the night\'s dead are and how hard they hit: Novice halves their hits, Legendary triples them.'),
+        slider('fUndeadHealth:Difficulty', 'Undead health', 'On top of Skyrim\'s difficulty: how much health the night\'s dead have.', 0.25, 3.0, 0.05, '{2}x'),
+        slider('fUndeadDamage:Difficulty', 'Undead damage', 'On top of Skyrim\'s difficulty: how hard the night\'s dead hit you.', 0.25, 3.0, 0.05, '{2}x'),
+    ]},
+    {'pageDisplayName': '3. View & Effects', 'cursorFillMode': 'topToBottom', 'content': [
         header('View'),
         slider('fFovFirst:General', 'First-person field of view', 'How wide you see in first person (degrees).', 60, 130, 1, '{0}'),
         slider('fFovThird:General', 'Third-person field of view', 'How wide you see in third person (degrees).', 60, 130, 1, '{0}'),
         slider('fBrightness:General', 'Brightness', 'How bright the world is (1.00 = as Skyrim made it).', 0.5, 2.0, 0.05, '{2}'),
-        header('Controller'),
-        toggle('bPlayStationIcons:Controls', 'PlayStation button icons', 'Show the PlayStation buttons (Cross, Circle, Square, Triangle, L1/R1, L2/R2) in the mod\'s prompts instead of the Xbox ones. Skyrim sees any controller as an Xbox pad, so this is your choice.'),
-        header('Dragon glider'),
-        toggle('bBankReverse:Dragon', 'Reverse the dragon\'s lean', 'Off: the dragon leans into its turns like a real flyer (turning left, its left wing dips). On: it leans the other way (turning left, its right wing dips).'),
-        toggle('bInvertDive:Dragon', 'Invert dive / pull up', 'Off: forward (W / left stick up) dives and back pulls up. On: forward pulls up and back dives, like an aircraft stick.'),
-        header('The night'),
-        toggle('bShelter:General', 'Townsfolk go indoors', 'From the moment the night\'s countdown starts, everyone out in a city\'s streets goes inside until dawn, so the dead can\'t hurt them.'),
-        slider('fCorpseSeconds:General', 'Bodies fade after', 'Seconds a fallen undead lies there before it crumbles.', 3, 60, 1, '{0} s'),
         header('Effects'),
         toggle('bBlood:Effects', 'Blood', 'Headshot kills burst the head in blood, and bodies bleed. Off: kills stay clean.'),
         slider('fFogStrength:Effects', 'Night fog', 'How thick the night\'s fog grows toward the last wave (and on a Blood Fog night). 0 = none.', 0.0, 1.5, 0.05, '{2}x'),
         toggle('bScreenShake:Effects', 'Screen shake', 'The camera shakes with the undead rising, big impacts and the mini-boss\'s arrival.'),
         toggle('bReduceFlashes:Effects', 'Reduce flashes', 'Softer lightning and fewer white flashes (headshots, the sky at wave starts).'),
-        header('Difficulty'),
-        toggle('bFollowSkyrim:Difficulty', 'Follow Skyrim\'s difficulty', 'Skyrim\'s difficulty (Settings > Gameplay) also sets how tough the night\'s dead are and how hard they hit: Novice halves their hits, Legendary triples them.'),
-        slider('fUndeadHealth:Difficulty', 'Undead health', 'On top of Skyrim\'s difficulty: how much health the night\'s dead have.', 0.25, 3.0, 0.05, '{2}x'),
-        slider('fUndeadDamage:Difficulty', 'Undead damage', 'On top of Skyrim\'s difficulty: how hard the night\'s dead hit you.', 0.25, 3.0, 0.05, '{2}x'),
-    ], 'position': 0},
-    {'pageDisplayName': 'Keys', 'cursorFillMode': 'topToBottom', 'content': [
-        header('Echo Altar'),
+    ]},
+    {'pageDisplayName': '4. Controls', 'cursorFillMode': 'topToBottom', 'content': [
+        header('Controller'),
+        toggle('bPlayStationIcons:Controls', 'PlayStation button icons', 'Show the PlayStation buttons (Cross, Circle, Square, Triangle, L1/R1, L2/R2) in the mod\'s prompts instead of the Xbox ones. Skyrim sees any controller as an Xbox pad, so this is your choice.'),
+        header('Echo Altar keys'),
         key('iShrineRoll:Keys', 'Roll the Coffer', 'Spin the shrine for a spell (or take the one it offers).'),
         key('iShrineReforge:Keys', 'Reforge', 'Reforge the spell in your hand.'),
         key('iShrineBless:Keys', 'Take a perk', 'Buy the chosen perk.'),
@@ -71,22 +97,22 @@ PAGES = [
         key('iShrineLeave:Keys', 'Leave the shrine', 'Close the shrine\'s menu.'),
         key('iShrineBond:Keys', 'Bond the dragon', 'Bind your glider\'s dragon closer: its next bond.'),
         key('iShrineBow:Keys', 'Call a bow', 'Spin the altar\'s bow wheel for an elemental bow (or take the one it offers).'),
-        text('Controller: X roll, Y reforge, A bless, D-pad up shout, D-pad down bond, B leave.'),
+        text('Or move with W/S (D-pad) and select with Enter (A / Cross).'),
+        header('Dragon glider'),
+        toggle('bBankReverse:Dragon', 'Reverse the dragon\'s lean', 'Off: the dragon leans into its turns like a real flyer (turning left, its left wing dips). On: it leans the other way (turning left, its right wing dips).'),
+        toggle('bInvertDive:Dragon', 'Invert dive / pull up', 'Off: forward (W / left stick up) dives and back pulls up. On: forward pulls up and back dives, like an aircraft stick.'),
     ]},
-    {'pageDisplayName': 'Other mods', 'cursorFillMode': 'topToBottom', 'content': [
+    {'pageDisplayName': '5. Other Mods', 'cursorFillMode': 'topToBottom', 'content': [
         text('These mods have no menu of their own.', 'Changes here are written to their files when the game starts: they count from the next launch.'),
-        header('QuickLoot'),
+        header('QuickLoot - looting bodies and chests'),
         toggle('bCloseInCombat:QuickLoot', 'Close in combat', 'Close the loot window when a fight starts.'),
         toggle('bCloseOnEmpty:QuickLoot', 'Close when empty', 'Close the loot window once the container is empty.'),
         slider('fScale:QuickLoot', 'Size', 'The loot window\'s size (%).', 50, 150, 5, '{0}%'),
         slider('fHorizontal:QuickLoot', 'Left / right', 'Moves the loot window by this share of the screen\'s width (%).', -50, 50, 1, '{0}%'),
         slider('fVertical:QuickLoot', 'Up / down', 'Moves the loot window by this share of the screen\'s height (%).', -50, 50, 1, '{0}%'),
-        header('Character Menu'),
+        header('Character Menu - the character sheet'),
         key('iOpenMenu:CharacterMenu', 'Open the character sheet', 'The key that opens Character Menu SE.'),
         toggle('bBlur:CharacterMenu', 'Blur behind the sheet', 'Blur the world behind the character sheet.'),
-        header('Mods with their own pages'),
-        text('True Directional Movement, TK Dodge, SkyParkour, Experience, Embers XD, Frozen Electrocuted Combustion'),
-        text('and Realistic Water Two each have a page in this list.'),
     ]},
 ]
 DEFAULTS = {
@@ -111,7 +137,7 @@ def main():
     cfg = OUT / 'MCM' / 'Config' / 'CurseOfAlduin'   # (MCM Helper names a mod's folder after its plugin)
     cfg.mkdir(parents=True, exist_ok=True)
     pages = [{k: v for k, v in p.items() if k != 'position'} for p in PAGES]
-    (cfg / 'config.json').write_text(json.dumps({'modName': 'CurseOfAlduin', 'displayName': 'The Curse of Alduin', 'minMcmVersion': 9,
+    (cfg / 'config.json').write_text(json.dumps({'modName': 'CurseOfAlduin', 'displayName': '! The Curse of Alduin', 'minMcmVersion': 9,
                                                  'cursorFillMode': 'topToBottom', 'pages': pages}, indent=2))
     ini = []
     for sec, vals in DEFAULTS.items():

@@ -322,7 +322,7 @@ def rising(name, tex, halo, n_sheets, alpha, top, extra_halo):
             z = bot + (top - bot) * f
             for side in (-1, 1):
                 p = c + t * hw * side
-                job.append(f'v {p[0]:.2f} {p[1]:.2f} {z:.2f} {0.5 + 0.5 * side + 0.13 * k:.3f} {1.2 * (1 - f) + 0.37 * k:.3f} 1 1 1 {al * alpha:.2f}')
+                job.append(f'v {p[0]:.2f} {p[1]:.2f} {z:.2f} {0.5 + 0.5 * side + 0.13 * k:.3f} {1.2 * f + 0.37 * k:.3f} 1 1 1 {al * alpha:.2f}')
         for r in range(len(rows) - 1):
             i = r * 2
             job += [f't {i} {i + 1} {i + 3}', f't {i} {i + 3} {i + 2}']

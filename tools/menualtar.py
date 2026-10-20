@@ -199,6 +199,14 @@ def main():
         c.draw(rock, frame_xf(k2 * 2, n, n, i * 1.1), emit=(0.35, 0.75, 1.0), glow_gain=1.6)
         c.image(ss=2).save(OUT / f'menu_shard{i}.png', optimize=True)
         c.glow_image(ss=2).save(OUT / f'menu_shard{i}_r.png', optimize=True)
+    # (Noah: the menu's rocks should turn like the altar's) one rock turning: 16 frames, 4 x 4 of 256 px (and its runes'
+    # light), each rock in src/Hud.cpp at its own phase, cross-faded between frames
+    turn = Image.new('RGBA', (n * 4, n * 4), (0, 0, 0, 0)); turnr = Image.new('RGBA', (n * 4, n * 4), (0, 0, 0, 0))
+    for fr in range(16):
+        c = Canvas(n * 2, n * 2)
+        c.draw(rock, frame_xf(k2 * 2, n, n, fr / 16 * 2 * math.pi), emit=(0.35, 0.75, 1.0), glow_gain=1.6)
+        turn.paste(c.image(ss=2), ((fr % 4) * n, (fr // 4) * n)); turnr.paste(c.glow_image(ss=2), ((fr % 4) * n, (fr // 4) * n))
+    turn.save(OUT / 'menu_rock_turn.png', optimize=True); turnr.save(OUT / 'menu_rock_turn_r.png', optimize=True)
     print('rocks written')
     for x, y, z in TOPS:
         print(f'rock at menu ({x * M:.1f}, {y * M:.1f}, {(z - FLOOR) * M:.1f})')

@@ -889,11 +889,12 @@ namespace Spellcraft
 			s.flown += (to - from).Length();
 			if (s.arrow) {  // (Noah: an elemental trail behind the arrow in flight) a streak of the element along its path, lingering
 				const RE::NiPoint3 tail = wf <= 1.0f ? from + (to - from) * wf : to;
-				StreakAt(s.row, from, tail, (s.full ? 1.15f : 0.8f) * s.scale, 0.55f, Def(s.row).style == 3);
+				// (Noah: still no trail to be seen) wide enough to read at a bow's speed, and lingering most of a second
+				StreakAt(s.row, from, tail, (s.full ? 2.8f : 2.0f) * s.scale, 0.9f, Def(s.row).style == 3);
 				s.spark -= a_dt;
 				if (s.spark <= 0) {  // and motes of it shed as it goes
-					s.spark = 0.035f;
-					BurstAt(s.row, tail, 12.0f, 0.35f);
+					s.spark = 0.03f;
+					BurstAt(s.row, tail, 24.0f, 0.5f);
 				}
 			}
 			const RE::NiPoint3 end = wf <= 1.0f ? from + (to - from) * wf : to;

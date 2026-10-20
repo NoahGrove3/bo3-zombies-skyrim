@@ -920,7 +920,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				// the party, left side under the night: each friend's badge, name, health and state
 				{
-					float py = 150 * k;
+					float py = (s.round > 0 ? (s.nightActive && s.nightEvent >= 0 ? 200.0f : 172.0f) : 60.0f) * k;  // (under the night's plaque)
 					for (const auto& m : pv.marks) {
 						const bool  down = m.life == Party::Life::Down, dead = m.life == Party::Life::Dead;
 						const ImU32 col = down ? IM_COL32(240, 70, 60, 255) : dead ? IM_COL32(140, 140, 140, 230) : IM_COL32(110, 220, 255, 255);
@@ -1050,7 +1050,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				static float startT = 0, clearT = 0;
 				static bool  wasRest = false;
 				const float  dtw = ImGui::GetIO().DeltaTime;
-				const bool   on = s.nightActive && s.waves > 0;
+				const bool   on = s.nightActive && s.waves > 0 && s.sanctuary.empty();  // (a sanctuary: nothing rises here)
 				if (on && s.wave != lastWave) startT = 1.0f, lastWave = s.wave;
 				if (on && s.waveRest > 0 && !wasRest) clearT = 1.0f;
 				wasRest = on && s.waveRest > 0;
@@ -1925,7 +1925,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			// Banner: centred line between ornaments, fades and drifts in.
 			if (s.bannerTime > 0 && !s.banner.empty()) {
-				const float a = std::min(1.0f, s.bannerTime * 2), y = size.y * 0.11f + (1.0f - a) * 10 * k;
+				// (Noah: boxes overlapped) below the stack under the compass (a trial's line, the sanctuary, the wave dial)
+				const float a = std::min(1.0f, s.bannerTime * 2), y = size.y * 0.27f + (1.0f - a) * 10 * k;
 				const auto  ts = Measure(g_title, 32 * k, s.banner);
 				TxtC(dl, g_title, 32 * k, size.x * 0.5f, y, Fade(kParch, a), s.banner, 2 * k, IM_COL32(0, 0, 0, 255));
 				Divider(dl, size.x * 0.5f, y + ts.y + 10 * k, std::min(size.x * 0.4f, ts.x * 0.6f + 40 * k), k, a);
@@ -2674,6 +2675,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// has the menu) the mouse's own movement carries it on, so the mouse is never stuck
 		std::atomic<float> g_mouseDX{ 0 }, g_mouseDY{ 0 };
 		ImVec2             g_cursor{ -1, -1 };
+		std::atomic<bool>  g_partyOpen{ false };  // the Party window over the Esc journal
 		ImVec2             g_skCursor{ -1, -1 };  // exactly where Skyrim's own menu cursor is (its menus take the clicks there)
 		void UpdateCursor(ImVec2 a_size)
 		{
@@ -3039,6 +3041,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ID3D11ShaderResourceView* g_sLife = nullptr;     // lily pads on the lake, reeds and bushes in the near corners
 		ID3D11ShaderResourceView* g_sMotes = nullptr;    // motes rising from the shrine's pool: 16x8 flipbook (tools/orbfx.py)
 		std::array<ID3D11ShaderResourceView*, 9> g_sShard{}, g_sShardR{};  // the rocks, and their runes' light (pulsing)
+		ID3D11ShaderResourceView* g_sRockTurn = nullptr, * g_sRockTurnR = nullptr;  // one rock turning (16 frames, 4 x 4) and its runes' light
 		ID3D11ShaderResourceView* g_mGroundFog = nullptr;
 		ID3D11ShaderResourceView* g_mClouds2 = nullptr;    // drifting night clouds that tile left-right (tools/menuscene.py drift_clouds)  // fog wisps that tile left-right (tools/menuscene.py ground_fog)
 		constexpr float kMenuRune[2] = { 1812.0f, 992.0f };  // the middle of the rune-stone's face in the painting
@@ -3560,7 +3563,20 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const auto& r = kRocks[pl.i];
 					const float sz = 200.0f * u;
 					const int   shade = static_cast<int>(std::clamp(235.0f + pl.depth * 0.25f, 170.0f, 255.0f));
-					const float rot = r.rot0 + std::sin(now * r.spin * 3.0f + r.ph) * 0.25f;
+					const float rot = r.rot0 + std::sin(now * r.spin * 3.0f + r.ph) * 0.06f;
+					if (g_sRockTurn) {  // (Noah: as the altar's rocks do in the game) each turns slowly round its upright, its own way
+						const float fpos = std::fmod(now * r.spin * 80.0f / 360.0f * 16.0f + r.ph * 5.0f + 1600.0f, 16.0f);  // (6-10 degrees a second)
+						const int   f0 = static_cast<int>(fpos) % 16, f1 = (f0 + 1) % 16;
+						const float fr = fpos - std::floor(fpos);
+						const ImU32 tint = IM_COL32(shade, shade, std::min(255, shade + 10), 255);
+						const float breath = 0.5f + 0.5f * std::sin(now * 2.4f + r.ph * 1.7f);
+						for (auto [f, wgt] : { std::pair{ f0, 1.0f }, std::pair{ f1, fr } }) {
+							const ImVec2 uv0{ (f % 4) / 4.0f, (f / 4) / 4.0f }, uv1{ uv0.x + 0.25f, uv0.y + 0.25f };
+							sprite(g_sRockTurn, pl.p, sz, sz, rot, (tint & 0x00FFFFFF) | (static_cast<ImU32>(255 * fade * wgt) << 24), uv0, uv1);
+							if (g_sRockTurnR) sprite(g_sRockTurnR, pl.p, sz, sz, rot, IM_COL32(255, 255, 255, static_cast<int>((60 + 195 * breath * breath) * fade * wgt)), uv0, uv1);
+						}
+						return;
+					}
 					sprite(g_sShard[pl.i], pl.p, sz, sz, rot, IM_COL32(shade, shade, std::min(255, shade + 10), static_cast<int>(255 * fade)));
 					if (g_sShardR[pl.i]) {  // the runes breathe blue light, each rock a little out of step
 						const float breath = 0.5f + 0.5f * std::sin(now * 2.4f + r.ph * 1.7f);
@@ -3610,12 +3626,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					};
 					(void)aura;  // (the old orb's purple fire: the heart stone has its runes' own light)
 					if (g_sCrystal) {
-						const int   f = static_cast<int>(now * 9.0f) % 24;  // ~2.7 s a turn
-						const ImVec2 uv0{ (f % 6) / 6.0f, (f / 6) / 4.0f }, uv1{ uv0.x + 1.0f / 6.0f, uv0.y + 0.25f };
+						// (Noah: much slower, as the altar's own) a turn in 45 s, cross-faded between its 24 frames
+						const float fpos = std::fmod(now * 24.0f / 45.0f, 24.0f);
+						const int   f0 = static_cast<int>(fpos) % 24, f1 = (f0 + 1) % 24;
+						const float fr = fpos - std::floor(fpos);
 						const float sc = 1.0f + 0.035f * pulse;
 						const float w = 427 * u * sc, h = 640 * u * sc;  // (320 x 480 frames, square pixels)
 						const ImVec2 mid{ c.x, c.y + (0.5f - 0.56f) * h };  // (the frame's origin sits at 56% of its height)
-						sprite(g_sCrystal, mid, w, h, 0, IM_COL32(255, 255, 255, static_cast<int>(255 * fade)), uv0, uv1);
+						for (auto [f, wgt] : { std::pair{ f0, 1.0f }, std::pair{ f1, fr } }) {
+							const ImVec2 uv0{ (f % 6) / 6.0f, (f / 6) / 4.0f }, uv1{ uv0.x + 1.0f / 6.0f, uv0.y + 0.25f };
+							sprite(g_sCrystal, mid, w, h, 0, IM_COL32(255, 255, 255, static_cast<int>(255 * fade * wgt)), uv0, uv1);
+						}
 					}
 
 					if (g_sSoft) {  // the white heart over it, flaring on the beat
@@ -4425,6 +4446,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			for (auto [file, tex] : { std::pair{ L"menu_shrine_ground.png", &g_sGround }, { L"menu_shrine_glow.png", &g_sGlow }, { L"menu_crystal.png", &g_sCrystal }, { L"menu_softglow.png", &g_sSoft }, { L"menu_mountains.png", &g_sMtn }, { L"menu_lake_refl.png", &g_sRefl }, { L"menu_aurora2.png", &g_sAurora }, { L"menu_lake_life.png", &g_sLife }, { L"menu_motes.png", &g_sMotes } }) {
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\CurseOfAlduin\\") + file).c_str(), nullptr, tex);
 			}
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_rock_turn.png", nullptr, &g_sRockTurn);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_rock_turn_r.png", nullptr, &g_sRockTurnR);
 			for (int i = 0; i < 9; ++i) {
 				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\CurseOfAlduin\\menu_shard" + std::to_wstring(i) + L".png").c_str(), nullptr, &g_sShard[i]);
 				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\CurseOfAlduin\\menu_shard" + std::to_wstring(i) + L"_r.png").c_str(), nullptr, &g_sShardR[i]);
@@ -4896,10 +4919,23 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			} else if (mainMenu) {
 				DrawMenu(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks > 0);
 			} else if (journal || escJournal) {
-				// (the field of view lives in Mod Configuration; Noah: the Party tab - lobby, stats, records - in the Tab menu's corner)
-				if (journal) {
+				// (Noah: the Party tab in Skyrim's system menu) in the Esc journal a PARTY tab at the top left (click it, or P /
+				// Triangle-Y): it opens the party window - the lobby, everyone's night, last night's score and your records
+				if (escJournal) {
 					const float kk = io.DisplaySize.y / 1080.0f;
-					PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { 36 * kk, 36 * kk }, kk, clicks > 0);
+					auto*       dl = ImGui::GetForegroundDrawList();
+					const ImVec2 cur = g_cursor;
+					const ImVec2 ta{ 36 * kk, 30 * kk }, tb{ 236 * kk, 76 * kk };
+					const bool   over = cur.x >= ta.x && cur.x <= tb.x && cur.y >= ta.y && cur.y <= tb.y;
+					if (over && clicks > 0) g_partyOpen = !g_partyOpen;
+					Panel(dl, ta, tb, kk, 0.95f);
+					const std::string lab = g_partyOpen ? "PARTY  -  CLOSE" : (g_padLast ? (Settings::PlayStationIcons() ? "PARTY  (Triangle)" : "PARTY  (Y)") : "PARTY  (P)");
+					TxtC(dl, g_title, 18 * kk, (ta.x + tb.x) * 0.5f, ta.y + 12 * kk, over || g_partyOpen ? kIce : IM_COL32(200, 214, 235, 235), lab, over ? 1.5f * kk : 0.0f, kRune);
+					if (g_partyOpen) {
+						PartyPanel(dl, io.DisplaySize, { 36 * kk, 90 * kk }, kk, clicks > 0 && !over);
+					}
+				} else {
+					g_partyOpen = false;
 				}
 			} else if (InGame() && !DevTools::HudOff()) {
 				Draw(s, io.DisplaySize);
@@ -5098,6 +5134,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_padLast = a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad;
 			}
 			auto* ui = RE::UI::GetSingleton();
+			// the Party tab in the Esc journal: P, or Triangle / Y
+			if (a_b && a_b->IsDown() && ui && ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !ui->IsMenuOpen(RE::MainMenu::MENU_NAME) &&
+				((a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x19) || (a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && a_b->GetIDCode() == 0x8000))) {
+				g_partyOpen = !g_partyOpen;
+			}
 			if (a_b && a_b->IsDown() && ui && g_cxOpenBook >= 0 && ui->IsMenuOpen(RE::BookMenu::MENU_NAME)) {  // the Codex
 				const auto id = a_b->GetIDCode();
 				const auto dev = a_b->GetDevice();

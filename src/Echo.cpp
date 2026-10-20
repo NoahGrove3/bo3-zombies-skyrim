@@ -437,6 +437,10 @@ namespace bo3z
 				if (gun < 0) {
 					return;
 				}
+				if (gen::kGuns[gun].retired) {  // (Noah: the wonders are being remade) forged, but not yet to be taken up
+					Hud::Banner(Upper(std::string(w.label)) + " is being reforged by the Tongues - it can't be taken up yet", 4.0f);
+					return;
+				}
 				if (HeldWonder() == a_w) {  // give it back: it rests on its pedestal again (for you, or a friend)
 					if (auto* sp = Forms::GunSpell(gun)) {
 						a_p->RemoveSpell(sp);

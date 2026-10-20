@@ -70,7 +70,9 @@ namespace bo3z
 			const int obj = gen::kLocations[a_index].object;
 			// (Noah: the freed look once its trials are done and every wave of that night is slain) the city's curse lifted
 			// and no night being fought
-			const bool freed = Curse::Freed(gen::kLocations[a_index].town) && !Director::Fighting();
+			// (its last night ends the moment the Barrow-Jarl falls: freed is complete; the night's own fighting elsewhere
+			// no longer hides it - Noah: the freed rune circle stood still on later nights)
+			const bool freed = Curse::Freed(gen::kLocations[a_index].town);
 			for (const auto& d : gen::kDress) {
 				if (d.object != obj) {
 					continue;

@@ -216,10 +216,10 @@ def build(bid, spell, element, glow):
             for (du, dv, u, v) in ((-1, -1, 0, 1), (1, -1, 1, 1), (1, 1, 1, 0), (-1, 1, 0, 0)):
                 job.append(f'v {ax[0] * du * w:.3f} {-6.0 + dv * 9.5:.3f} {ax[2] * du * w:.3f} {u} {v} 1 1 1 1')
         job += ['t 0 1 2', 't 0 2 3', 't 4 5 6', 't 4 6 7']
-    tall = element == 'fire'
+    tall = element == 'fire'   # (Noah: the fire tip stood far taller than the others) only a little taller now
     for k, (col, sc, sz, ph) in enumerate((('1,1,1', 1.8, 1.0, 0.0), (g, 1.3, 1.4, 1.7))):
-        hh = (14.0 if tall else 8.5) * sz; ww = (7.0 if tall else 8.5) * sz
-        cy = -9.0 if tall else -2.0
+        hh = (9.5 if tall else 8.5) * sz; ww = (7.5 if tall else 8.5) * sz
+        cy = -3.0 if tall else -2.0
         job.append(f'shape fx{k} tex={fxtex} color={col},1 scale={sc} blend=add billboard=2 flip={COLS}x{ROWS} fps=24 phase={ph} at=0,{cy:.2f},0')
         for X_, Y_, u, v in ((-ww, hh, 0, 0), (ww, hh, 1 / COLS, 0), (ww, -hh, 1 / COLS, 1 / ROWS), (-ww, -hh, 0, 1 / ROWS)):
             job.append(f'v {X_:.2f} {Y_:.2f} {0.5 - k:.2f} {u} {v} 1 1 1 1')
