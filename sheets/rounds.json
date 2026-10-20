@@ -1,6 +1,6 @@
 {
   "sheet": "rounds",
-  "about": "How the night rounds run (one round per night). BO3's zombie health curve: hpStart, +hpLinearPerRound each night until hpLinearUntil, then x hpMultAfter per night (gentler after hpCapRound). HP is in BO3 units; divide by hpScale for Skyrim health. Weapons are tiered against it (weapons sheet): the starting staff falls off around night 8, Coffer weapons around night 20-25, relics later, the Reforge (+60% a level) pushes each further. Skyrim weapons and spells take a share of a zombie's night health per hit (skyrimHitShare).",
+  "about": "How the night rounds run (one round per night). Day (nightEnd to nightStart) lasts dayMinutes of real time; the night lasts as long as its waves (its clock moves with the waves cleared, dawn when the last falls). BO3's zombie health curve: hpStart, +hpLinearPerRound each night until hpLinearUntil, then x hpMultAfter per night (gentler after hpCapRound). HP is in BO3 units; divide by hpScale for Skyrim health. Weapons are tiered against it (weapons sheet): the starting staff falls off around night 8, Coffer weapons around night 20-25, relics later, the Reforge (+60% a level) pushes each further. Skyrim weapons and spells take a share of a zombie's night health per hit (skyrimHitShare).",
   "columns": [
     "id",
     "nightStartHour",
@@ -45,6 +45,7 @@
     "manaRegenPerSecond",
     "manaRegenDelay",
     "cycleMinutes",
+    "dayMinutes",
     "verify"
   ],
   "rows": [
@@ -131,7 +132,8 @@
       "zombieWeapons": "melee",
       "manaRegenPerSecond": 0.4,
       "manaRegenDelay": 3.0,
-      "cycleMinutes": 25
+      "cycleMinutes": 25,
+      "dayMinutes": 18
     }
   ]
 }

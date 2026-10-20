@@ -529,7 +529,7 @@ def guide_text():
            "[pagebreak]", h("Day and Night"),
            p("A day lasts about fifteen minutes. By day the dead sleep: rest, explore, spend what you earned. "
              "At dusk they rise in <b>waves</b>, clawing up out of the ground at the same places every night. Each wave brings twenty more than the last: twenty, forty, sixty... "
-             "The first night has five waves; every night adds one more. The night does not end until the last wave is down - then dawn breaks."),
+             "The first night has five waves; every night adds one more. The day lasts about 18 minutes. The night does not end until the last wave is down - then dawn breaks."),
            p("You cannot sleep or wait while the dead walk."),
            "[pagebreak]", h("Septims"),
            p("Every risen thing you kill leaves septims. A headshot leaves more, and a kill with a blade or a spell more still. "

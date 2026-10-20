@@ -159,7 +159,7 @@ $str = Join-Path $data 'SkyrimTogetherReborn'
 if ($Role -eq 'host') {
     $ini = Join-Path $str 'config\STServer.ini'
     $t = Get-Content $ini
-    $t = $t -replace '^uTimeScale=.*', 'uTimeScale=58'                              # The Curse of Alduin's day: 15 minutes of day, 10 of night
+    $t = $t -replace '^uTimeScale=.*', 'uTimeScale=48'                              # The Curse of Alduin's day: 18 minutes of daylight
     $t = $t -replace '^sPassword=.*', ('sPassword=' + $party['Password'])
     $t = $t -replace '^sServerName=.*', 'sServerName=The Curse of Alduin'
     $t = $t -replace '^bAutoPartyJoin=.*', 'bAutoPartyJoin=true'

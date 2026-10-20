@@ -1402,6 +1402,28 @@ namespace bo3z
 			}
 		}
 
+		// the night's clock follows its waves: from dusk to just short of dawn as the waves fall (the sky darkens to
+		// midnight halfway through the night's dead), never backward; dawn itself comes when the last one is down
+		void PaceNight(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			auto* cal = RE::Calendar::GetSingleton();
+			if (!cal || !cal->gameHour || g_phase != Phase::Fighting || g_nightCleared || Coop::Client() || Curse::SafeHere(a_player) || g_waves <= 0) {
+				return;
+			}
+			const float nightHours = std::fmod(R.nightEndHour - R.nightStartHour + 24.0f, 24.0f);
+			const float since = std::fmod(cal->GetHour() - R.nightStartHour + 24.0f, 24.0f);
+			if (since > nightHours) {
+				return;  // (not a night hour)
+			}
+			const int   killed = std::max(0, g_waveSpawned - static_cast<int>(g_alive.size()));
+			const float frac = g_waveSize > 0 ? std::clamp(static_cast<float>(killed) / static_cast<float>(g_waveSize), 0.0f, 1.0f) : 0.0f;
+			const float p = std::clamp((static_cast<float>(std::max(0, g_wave - 1)) + frac) / static_cast<float>(g_waves), 0.0f, 0.97f);
+			const float target = p * (nightHours - 0.3f);
+			if (target > since) {
+				ShiftClock(std::min(target - since, a_delta * 0.03f));  // (at most ~2 game minutes a second: the sky turns smoothly)
+			}
+		}
+
 		void Dawn()
 		{
 			int n = 0;
@@ -2514,11 +2536,14 @@ namespace bo3z
 			}
 			t = 5.0f;
 			static auto* ts = RE::TESForm::LookupByID<RE::TESGlobal>(0x3A);  // TimeScale
-			float        want = std::round(24.0f * 60.0f / gen::kCycleMinutes);  // (whole numbers: Skyrim Together's server runs the same 58)
-			// (Noah: 15 minutes of day, 15 of night) the night's hours (20:00-05:36, 9.6 of the 24) pass at 38, the day's
-			// (14.4) at 58 - in your own game; in a friend's party the shared clock keeps its pace
+			// (Noah: 18 minutes of day; the night lasts as long as its waves) the day's hours (05:36-20:00, 14.4 of the 24)
+			// pass in dayMinutes: 48 (whole numbers: Skyrim Together's server runs the same). While the night is fought
+			// the clock all but stops (1) and PaceNight moves it with the waves cleared; a night with no fighting (a freed
+			// city, before the intro) passes at 38, about 15 minutes. In a friend's party the shared clock keeps its pace.
+			const float dayHours = std::fmod(R.nightStartHour - R.nightEndHour + 24.0f, 24.0f);
+			float       want = std::round(dayHours * 60.0f / gen::kDayMinutes);
 			if (IsNight() && !Coop::Client()) {
-				want = 38.0f;
+				want = (g_phase == Phase::Fighting || g_phase == Phase::Break) && !g_nightCleared ? 1.0f : 38.0f;
 			}
 			if (ts && std::abs(ts->value - want) > 0.01f) {
 				logger::info("clock: timescale {:.1f} -> {:.1f} (a full day in {:.0f} minutes)", ts->value, want, gen::kCycleMinutes);
@@ -2538,7 +2563,7 @@ namespace bo3z
 			Settings::Tick();
 			TickFx(a_delta);
 			TickMist(a_delta, g_phase == Phase::Fighting && g_event == gen::kEvent_fog);
-			TickClock(a_delta);  // (Skyrim Together's server sets the same uTimeScale, 58: 15 minutes of day, 10 of night)
+			TickClock(a_delta);  // (Skyrim Together's server sets the same uTimeScale, 48: 18 minutes of daylight)
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			Undead::Tick(player, a_delta);
 			PublishEnemyBars(player);
@@ -2614,6 +2639,7 @@ namespace bo3z
 				break;
 			case Phase::Fighting:
 				HoldNight(player);
+				PaceNight(player, a_delta);
 				for (auto& s : g_alive) {
 					if (s.webbed > 0 && (s.webbed -= a_delta) <= 0) {
 						if (auto a = s.handle.get()) {

@@ -11,6 +11,7 @@ out.append('\tstruct FormRef { std::string_view plugin; std::uint32_t localId; s
 r = row('rounds', 'night_rounds')
 out.append(f'\tinline constexpr float kChaseRelocateDist = {float(r["chaseRelocateDist"])}f, kChaseRelocateSeconds = {float(r["chaseRelocateSeconds"])}f, kChaseStallSeconds = {float(r["chaseStallSeconds"])}f;')
 out.append(f'\tinline constexpr float kCycleMinutes = {float(r["cycleMinutes"])}f;  // a full Skyrim day; night is nightStart..nightEnd (20:00-05:36 = 40%)')
+out.append(f'\tinline constexpr float kDayMinutes = {float(r["dayMinutes"])}f;  // real minutes from dawn (nightEnd) to dusk (nightStart)')
 out.append(f'\tinline constexpr float kManaRegenPerSecond = {float(r["manaRegenPerSecond"])}f, kManaRegenDelay = {float(r["manaRegenDelay"])}f;')
 out.append(f'\tinline constexpr bool kZombieMeleeWeapons = {str(r["zombieWeapons"] == "melee").lower()};  // keep swords/axes/maces; strip bows, staves, spells')
 out.append('\tstruct Rounds {\n\t\tfloat nightStartHour, nightEndHour, breakSeconds, firstBreakSeconds; int maxAlive, aiMaxBase, aiPerPlayer;\n\t\tstd::array<float, 5> earlyRoundScale; int hpStart, hpLinearPerRound, hpLinearUntil; float hpMultAfter, hpScale;\n\t\tfloat spawnDelayStart, spawnDelayDecay, spawnDelayMin; int specialEveryRounds, specialFirstRound;\n\t\tstd::array<float, 2> spawnRingExterior, spawnRingInterior; float spawnHeightOffset; int maxCorpses; };')
