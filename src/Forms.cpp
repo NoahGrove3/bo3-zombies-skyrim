@@ -597,7 +597,7 @@ namespace bo3z
 			if (a_points <= 0) {
 				return;
 			}
-			a_points *= PowerUps::PointsMult();
+			a_points = static_cast<int>(a_points * PowerUps::PointsMult());
 			// (Noah: too many septims) every earning - kills, trials, rounds, the altars - pays 80%; the fractions carry over
 			static float carry = 0;
 			const float  paid = a_points * 0.8f + carry;
@@ -607,6 +607,7 @@ namespace bo3z
 				return;
 			}
 			Save::Set(gen::kAV_points, Get() + a_points);
+			Stats::OnEarned(a_points);
 			std::scoped_lock l(Hud::Lock());
 			auto& h = Hud::Edit();
 			h.lastGain = a_points;

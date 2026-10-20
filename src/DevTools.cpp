@@ -247,6 +247,14 @@ namespace bo3z
 				int n = 0;
 				in >> n;
 				Points::Add(n);
+			} else if (cmd == "theme") {  // theme <goblinraid|harpyswarm|champions|bloodfog> [night]
+				std::string id, night;
+				in >> id >> night;
+				for (int t = 0; t < static_cast<int>(gen::kEvents.size()); ++t) {
+					if (gen::kEvents[t].id == id) Director::DevTheme(t, night == "night");
+				}
+			} else if (cmd == "miniboss") {
+				Director::DevMiniBoss();
 			} else if (cmd == "testkit") {
 				Gun::TestKit();
 			} else if (cmd == "give") {

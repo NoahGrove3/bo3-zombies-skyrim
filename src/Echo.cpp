@@ -475,6 +475,7 @@ namespace bo3z
 			Forms::Play(gen::Sound::curse_lifted);
 			const auto& s = gen::kRelPedestals[a_w];
 			Gun::FxBlast("light", Room(s.x, s.y, s.z + 120.0f));
+			Stats::Note(Stats::kWonder);
 			Hud::Lore(Upper(std::string(w.label)) + " IS FORGED", std::string(w.text) + " Its three parts burn as one on the pedestal. Activate the pedestal again to take it up.", 10.0f);
 			Points::Add(3000);
 			BuildReliquary(a_p);
@@ -879,6 +880,24 @@ namespace bo3z
 		}
 
 		bool StoneWaits(int a_town) { return a_town >= 0 && a_town < kTownCount && Curse::Freed(a_town) && !PageRead(a_town); }
+		// (Noah: the mini-boss's guaranteed wonder part) the next part you're missing, of the first wonder not yet forged -
+		// a relic's or a barrow's (a Barrow-Jarl's part still waits for its city); false when every one is yours
+		bool AwardNextPart()
+		{
+			for (int pass = 0; pass < 2; ++pass) {
+				for (int w = 0; w < kWonders; ++w) {
+					if (Forged(w)) continue;
+					for (int i = 0; i < kParts; ++i) {
+						const auto& q = gen::kEchoParts[i];
+						if (q.wonder == w && !Held(i) && (pass == 1 || q.how != gen::kEchoBoss)) {
+							Award(i, true);
+							return true;
+						}
+					}
+				}
+			}
+			return false;
+		}
 
 		void Tick(float a_delta)
 		{

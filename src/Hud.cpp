@@ -167,8 +167,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ImFont* g_num = nullptr;    // Segoe UI Semibold
 		ImFont* g_body = nullptr;   // Segoe UI
 
-		constexpr ImU32 kGold = IM_COL32(200, 160, 92, 255);     // aged bronze
-		constexpr ImU32 kGoldDim = IM_COL32(200, 160, 92, 110);
+		// (Noah: the menus to match the Echo Altar) the HUD's accent is the altar's cold rune-blue now; gold is kept for
+		// septims and rare things (kCoin)
+		constexpr ImU32 kGold = IM_COL32(120, 185, 255, 255);    // rune-blue (the old bronze's name kept: every accent follows)
+		constexpr ImU32 kGoldDim = IM_COL32(120, 185, 255, 110);
+		constexpr ImU32 kCoin = IM_COL32(220, 175, 90, 255);     // septims and the rare
 		constexpr ImU32 kBlood = IM_COL32(178, 22, 22, 255);
 		constexpr ImU32 kParch = IM_COL32(236, 226, 200, 255);
 		constexpr ImU32 kGlass = IM_COL32(10, 10, 12, 170);
@@ -391,6 +394,20 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 		void Panel(ImDrawList* dl, ImVec2 a, ImVec2 b, float k, float alpha = 1.0f)
 		{
+			{  // the altar's look: deep navy glass, a cold rune-blue edge with a soft glow, a rune mark at each corner
+				dl->AddRectFilledMultiColor(a, b, Fade(IM_COL32(10, 22, 44, 225), alpha), Fade(IM_COL32(10, 22, 44, 225), alpha), Fade(IM_COL32(4, 9, 20, 235), alpha), Fade(IM_COL32(4, 9, 20, 235), alpha));
+				for (int g = 3; g >= 1; --g) {
+					dl->AddRect({ a.x - g * k, a.y - g * k }, { b.x + g * k, b.y + g * k }, Fade(IM_COL32(90, 165, 255, 18), alpha), 3 * k, 0, 2.0f * k);
+				}
+				dl->AddRect(a, b, Fade(IM_COL32(110, 185, 255, 150), alpha), 2 * k, 0, 1.3f * k);
+				const float t = 12 * k;
+				for (auto [x, y, sx, sy] : { std::tuple{ a.x, a.y, 1.f, 1.f }, { b.x, a.y, -1.f, 1.f }, { a.x, b.y, 1.f, -1.f }, { b.x, b.y, -1.f, -1.f } }) {
+					dl->AddLine({ x, y }, { x + sx * t, y }, Fade(IM_COL32(170, 215, 255, 255), alpha), 2 * k);
+					dl->AddLine({ x, y }, { x, y + sy * t }, Fade(IM_COL32(170, 215, 255, 255), alpha), 2 * k);
+					dl->AddLine({ x + sx * 4 * k, y + sy * 4 * k }, { x + sx * 8 * k, y + sy * 8 * k }, Fade(IM_COL32(170, 215, 255, 200), alpha), 1.5f * k);  // (a rune's stroke)
+				}
+				return;
+			}
 			if (g_frame) {
 				const auto  tex = ImTextureID(reinterpret_cast<std::uintptr_t>(g_frame));
 				const float c = std::min({ 40.0f * k, (b.x - a.x) * 0.5f, (b.y - a.y) * 0.5f });
@@ -509,8 +526,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const ImVec2 a{ cx - W / 2, top }, b{ cx + W / 2, top + H };
 			const float e = H * 0.5f + 8 * k;
 			const ImVec2 plate[6] = { { a.x - e, cy }, { a.x, a.y }, { b.x, a.y }, { b.x + e, cy }, { b.x, b.y }, { a.x, b.y } };
-			dl->AddConvexPolyFilled(plate, 6, IM_COL32(10, 9, 12, 205));
-			dl->AddRectFilledMultiColor(a, { b.x, cy }, IM_COL32(40, 34, 30, 90), IM_COL32(40, 34, 30, 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
+			dl->AddConvexPolyFilled(plate, 6, IM_COL32(7, 15, 32, 215));
+			dl->AddRectFilledMultiColor(a, { b.x, cy }, IM_COL32(40, 80, 140, 70), IM_COL32(40, 80, 140, 70), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
 			dl->AddPolyline(plate, 6, Fade(kGold, 0.9f), ImDrawFlags_Closed, 1.4f * k);
 			auto rel = [&](float ang) {
 				float d = ang - s.heading;
@@ -975,12 +992,26 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 
+			// (Noah: night atmosphere) the sky reddens toward the night's last wave - a blood haze gathering at the top of
+			// the screen, the moon's colour - and the lightning's flash at a wave's start
+			if (s.nightActive && s.nightProgress > 0) {
+				const float pr = s.nightProgress, pulse = 0.9f + 0.1f * std::sin(now * 0.6f);
+				const ImU32 top = IM_COL32(150, 10, 18, static_cast<int>(70 * pr * pulse)), z = IM_COL32(150, 10, 18, 0);
+				dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.42f }, top, top, z, z);
+			}
+			if (s.lightningT > 0) {
+				const float t = 0.45f - s.lightningT;  // (a double flicker: a bright stroke, a gap, a weaker one)
+				const float f = t < 0.06f ? 1.0f : t < 0.12f ? 0.2f : t < 0.2f ? 0.7f : std::max(0.0f, 0.7f * (0.45f - t) / 0.25f);
+				const float soft = Settings::ReduceFlashes() ? 0.25f : 1.0f;
+				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(200, 220, 255, static_cast<int>(110 * f * s.lightningI * soft)));
+			}
+
 			// Event nights colour the screen: a red haze under the Blood Moon, grey murk on a Fog Night, ash, iron.
 			// (Fog Night has no screen tint: its fog is real ground mist in the world, Director::TickMist.)
-			if (s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size()) && s.nightEvent != gen::kEvent_fog) {
+			if (s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size())) {
 				const auto  t = gen::kEvents[s.nightEvent].tint;
 				const int   r = (t >> 24) & 0xFF, g = (t >> 16) & 0xFF, b = (t >> 8) & 0xFF, a = t & 0xFF;
-				const bool  fog = s.nightEvent == gen::kEvent_fog;
+				const bool  fog = s.nightEvent == gen::kEvent_bloodfog;
 				const float pulse = 0.85f + 0.15f * std::sin(now * 0.8f);
 				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(r, g, b, static_cast<int>(a * (fog ? 0.9f : 0.35f) * pulse)));
 				const ImU32 e = IM_COL32(r, g, b, std::min(255, static_cast<int>(a * (fog ? 2.4f : 1.5f)))), z = IM_COL32(r, g, b, 0);  // (subtle: a haze at the edges)
@@ -1156,7 +1187,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->AddConvexPolyFilled(dm, 4, IM_COL32(150, 108, 40, 230));
 				dl->AddCircleFilled({ coin.x - cr * 0.45f, coin.y - cr * 0.45f }, 1.6f * k, IM_COL32(255, 248, 220, 220), 8);
 				Txt(dl, g_num, 26 * k, { coin.x + cr + 9 * k, coin.y - 15 * k }, rising ? IM_COL32(255, 228, 150, 255) : kParch, num, rising ? 2 * k : 1.2f * k, rising ? IM_COL32(255, 200, 80, 255) : IM_COL32(0, 0, 0, 220));
-				Txt(dl, g_body, 11 * k, { coin.x + cr + 10 * k, coin.y - 27 * k }, Fade(kGold, 0.7f), "SEPTIMS", 1 * k, IM_COL32(0, 0, 0, 200));
+				Txt(dl, g_body, 11 * k, { coin.x + cr + 10 * k, coin.y - 27 * k }, Fade(kCoin, 0.85f), "SEPTIMS", 1 * k, IM_COL32(0, 0, 0, 200));
 				if (s.crew >= 0 && s.crew < static_cast<int>(gen::kCrew.size())) {
 					const std::string c(gen::kCrew[s.crew].label);
 					Txt(dl, g_body, 13 * k, { coin.x + cr + 22 * k + numW, coin.y - 8 * k }, IM_COL32(190, 190, 190, 200), c);
@@ -1165,6 +1196,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const std::string g = (s.lastGain > 0 ? "+" : "") + std::to_string(s.lastGain);
 					const float       rise = (1.0f - s.gainTime) * 22 * k;
 					Txt(dl, g_num, 20 * k, { coin.x + cr + 9 * k, coin.y - 52 * k - rise }, Fade(s.lastGain < 0 ? IM_COL32(230, 60, 50, 255) : IM_COL32(240, 205, 90, 255), s.gainTime), g, 1.2f * k, IM_COL32(0, 0, 0, 200));
+				}
+				if (s.styleTime > 0 && !s.styleTag.empty()) {  // (Noah: points for style) its tag over the septims
+					const float a = std::min(1.0f, s.styleTime / 0.4f), pop = 1.0f + 0.25f * std::max(0.0f, s.styleTime - 1.5f) / 0.3f;
+					Txt(dl, g_title, 18 * k * pop, { coin.x + cr + 9 * k, coin.y - 84 * k }, Fade(kRune, a), s.styleTag, 2.0f * k, IM_COL32(20, 60, 140, 255));
 				}
 			}
 
@@ -2690,63 +2725,97 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			return hover && click;
 		}
 
-		// The co-op party: host a Steam party and invite, or join a friend's.
-		// a: the panel's bottom-left corner (or its top-left, a_fromTop)
-		void PartyPanel(ImDrawList* dl, ImVec2 size, ImVec2 a, float k, bool click, bool a_fromTop = false)
+		// (Noah) the Party tab, in the Tab menu's empty top-left corner: host a Steam party and invite, or join a friend's;
+		// who is in the lobby with each one's night (kills, headshots, best streak, septims, revives); last night's score
+		// with the party's MVP; and your character's records. Alone (or without Steam) it shows just you.
+		// a: the panel's top-left corner
+		void PartyPanel(ImDrawList* dl, ImVec2 size, ImVec2 a, float k, bool click)
 		{
-			if (!Net::Available()) {
-				return;
-			}
 			const ImVec2 cur = Cursor(size);
-			click = click && !Net::OverlayBusy();  // a click that closed the Steam overlay is not ours
+			const bool   net = Net::Available();
+			click = click && (!net || !Net::OverlayBusy());
 			static std::vector<Net::FriendGame> friends;
 			static float refresh = 0;
-			if ((refresh -= ImGui::GetIO().DeltaTime) <= 0) {
+			if (net && (refresh -= ImGui::GetIO().DeltaTime) <= 0) {
 				refresh = 2.0f;
 				friends = Net::InLobby() ? std::vector<Net::FriendGame>{} : Net::FriendsInParties();
 			}
-			const float w = 420 * k, rowH = 46 * k;
-			const int   rows = Net::InLobby() ? 2 : 1 + static_cast<int>(std::min<std::size_t>(friends.size(), 4));
-			const float h = 92 * k + rows * (rowH + 8 * k) + 30 * k;
-			if (a_fromTop) {
-				a.y += h;
-			}
-			a.y = std::min(a.y, size.y - 12 * k);  // never below the screen
-			const ImVec2 b{ a.x + w, a.y + h };
-			Panel(dl, { a.x, a.y - h }, { b.x, a.y }, k, 0.95f);
-			float y = a.y - h + 14 * k;
-			Txt(dl, g_title, 26 * k, { a.x + 18 * k, y }, kGold, "CO-OP PARTY", 2 * k, IM_COL32(255, 160, 60, 255));
-			y += 36 * k;
-			Txt(dl, g_body, 16 * k, { a.x + 18 * k, y }, IM_COL32(210, 202, 186, 240), Net::Status() + (Net::InLobby() ? "   (" + std::to_string(Net::Members() + 1) + " in party)" : ""));
+			const auto  me = Stats::Tonight();
+			const auto  last = Stats::LastNight();
+			const auto  rec = Stats::Lifetime();
+			const auto  party = Stats::Party();
+			const float w = 600 * k, rowH = 40 * k;
+			const int   buttons = !net ? 0 : Net::InLobby() ? (Net::IsHost() ? 2 : 1) : 1 + static_cast<int>(std::min<std::size_t>(friends.size(), 3));
+			const int   lines = 1 + static_cast<int>(party.size());
+			const float h = 70 * k + buttons * (rowH + 6 * k) + 40 * k + lines * 26 * k + 30 * k + 64 * k + 30 * k + 82 * k + 20 * k;
+			const ImVec2 b{ a.x + w, std::min(a.y + h, size.y - 10 * k) };
+			Panel(dl, a, b, k, 0.95f);
+			float y = a.y + 14 * k;
+			const float L = a.x + 20 * k;
+			Txt(dl, g_title, 26 * k, { L, y }, kIce, "PARTY", 2 * k, kRune);
 			y += 34 * k;
+			const std::string st = !net ? "Solo" : Net::Status() + (Net::InLobby() ? "   (" + std::to_string(Net::Members() + 1) + " in party)" : "");
+			Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(200, 214, 235, 235), st);
+			y += 26 * k;
 			auto row = [&](const std::string& label, ImU32 accent = kGold) {
-				const bool hit = Button(dl, { a.x + 18 * k, y }, { b.x - 18 * k, y + rowH }, label, cur, click, k, accent);
-				y += rowH + 8 * k;
+				const bool hit = Button(dl, { L, y }, { b.x - 20 * k, y + rowH }, label, cur, click, k, accent);
+				y += rowH + 6 * k;
 				return hit;
 			};
-			if (!Net::InLobby()) {
-				if (row("HOST A PARTY  -  INVITE FRIENDS")) {
-					Net::HostLobby();
-				}
-				for (std::size_t i = 0; i < friends.size() && i < 4; ++i) {
-					if (row("JOIN " + friends[i].name, IM_COL32(120, 200, 255, 255))) {
-						Net::JoinLobby(friends[i].lobby);
+			if (net) {
+				if (!Net::InLobby()) {
+					if (row("HOST A PARTY  -  INVITE FRIENDS")) Net::HostLobby();
+					for (std::size_t i = 0; i < friends.size() && i < 3; ++i) {
+						if (row("JOIN " + friends[i].name, IM_COL32(120, 200, 255, 255))) Net::JoinLobby(friends[i].lobby);
 					}
-				}
-			} else if (Net::IsHost()) {
-				if (row("INVITE FRIENDS (STEAM)")) {
-					Net::InviteFriends();
-				}
-				if (row("CLOSE THE PARTY", IM_COL32(220, 90, 70, 255))) {
+				} else if (Net::IsHost()) {
+					if (row("INVITE FRIENDS (STEAM)")) Net::InviteFriends();
+					if (row("CLOSE THE PARTY", IM_COL32(220, 90, 70, 255))) Net::LeaveLobby();
+				} else if (row("LEAVE " + Net::HostName() + "'S PARTY", IM_COL32(220, 90, 70, 255))) {
 					Net::LeaveLobby();
 				}
-			} else {
-				if (row("LEAVE " + Net::HostName() + "'S PARTY", IM_COL32(220, 90, 70, 255))) {
-					Net::LeaveLobby();
-				}
-				y += rowH + 8 * k;
 			}
-			Txt(dl, g_body, 13 * k, { a.x + 18 * k, a.y - 24 * k }, IM_COL32(170, 162, 146, 200), "Players meet in Skyrim Together; the party shares the nights.");
+			// the lobby, each with their night
+			y += 6 * k;
+			const float cols[6] = { L, L + 210 * k, L + 285 * k, L + 360 * k, L + 435 * k, L + 520 * k };
+			const char* heads[6] = { me.night > 0 ? "TONIGHT" : "PLAYER", "KILLS", "HEADS", "STREAK", "SEPTIMS", "REVIVES" };
+			for (int c = 0; c < 6; ++c) Txt(dl, g_title, 13 * k, { cols[c], y }, Fade(kRune, 0.9f), heads[c]);
+			y += 22 * k;
+			dl->AddLine({ L, y - 3 * k }, { b.x - 20 * k, y - 3 * k }, kRuneDim, 1.0f * k);
+			auto line = [&](const std::string& who, const Stats::Line& v, ImU32 col) {
+				const std::string vals[6] = { who, std::to_string(v.kills), std::to_string(v.heads), std::to_string(v.best), std::to_string(v.septims), std::to_string(v.revives) };
+				for (int c = 0; c < 6; ++c) Txt(dl, g_body, 16 * k, { cols[c], y }, col, vals[c]);
+				y += 26 * k;
+			};
+			auto* pl = RE::PlayerCharacter::GetSingleton();
+			line(pl && pl->GetName() ? std::string(pl->GetName()) + " (you)" : "You", me, kIce);
+			for (const auto& f : party) line(f.name, f.line, IM_COL32(200, 214, 235, 235));
+			// last night
+			y += 10 * k;
+			Txt(dl, g_title, 15 * k, { L, y }, Fade(kRune, 0.95f), last.night > 0 ? fmt::format("LAST NIGHT - NIGHT {}", last.night) : std::string("LAST NIGHT"));
+			y += 22 * k;
+			if (last.night > 0) {
+				Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(220, 230, 245, 235), fmt::format("{} kills   {} headshots   best streak {}   {} septims", last.kills, last.heads, last.best, last.septims));
+				y += 22 * k;
+				std::string mvp = pl && pl->GetName() ? pl->GetName() : "You";
+				int         best = last.kills * 2 + last.heads + last.style / 50;
+				for (const auto& f : party) {
+					const int sc = f.line.kills * 2 + f.line.heads + f.line.style / 50;
+					if (sc > best) best = sc, mvp = f.name;
+				}
+				Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(220, 230, 245, 235), fmt::format("style {}   waves {}   mini-bosses {}{}", last.style, last.waves, last.minis, party.empty() ? std::string() : "   MVP: " + mvp));
+				y += 22 * k;
+			} else {
+				Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(170, 185, 210, 220), "Survive a night and its score shows here.");
+				y += 44 * k;
+			}
+			// records
+			y += 8 * k;
+			Txt(dl, g_title, 15 * k, { L, y }, Fade(kRune, 0.95f), "RECORDS");
+			y += 22 * k;
+			Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(220, 230, 245, 235), fmt::format("best night {}   nights survived {}   kills {}   headshots {}", rec.bestNight, rec.nights, rec.kills, rec.heads));
+			y += 22 * k;
+			Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(220, 230, 245, 235), fmt::format("best streak {}   mini-bosses {}   wonders forged {}   hidden quests {}", rec.bestStreak, rec.minis, rec.wonders, rec.quests));
 		}
 
 		// The player's settings, in the System menu's corner: the field of view, first and third person. Click on a
@@ -4454,8 +4523,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			g_cxYGoal += g_cxScroll.exchange(0) * 70.0f * k;
 
 			// the room: near black, a cold vignette
-			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(7, 6, 9, 255));
-			dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.5f }, IM_COL32(28, 20, 40, 120), IM_COL32(28, 20, 40, 120), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
+			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(5, 10, 22, 255));  // (the altar's navy)
+			dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.5f }, IM_COL32(30, 70, 130, 110), IM_COL32(30, 70, 130, 110), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
 			const float W = std::min(size.x - 60 * k, 1680 * k), H = 960 * k;
 			const ImVec2 o{ (size.x - W) * 0.5f, (size.y - H) * 0.5f };
 
@@ -4501,7 +4570,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const ImVec2 a{ o.x + 18 * k, ly - 6 * k }, z{ o.x + lw - 18 * k, ly + 34 * k };
 				const bool   on = j == at, hv = hover(a, z);
 				if (on || hv) {
-					dl->AddRectFilled(a, z, on ? IM_COL32(200, 160, 92, 46) : IM_COL32(255, 255, 255, 14), 4 * k);
+					dl->AddRectFilled(a, z, on ? IM_COL32(110, 185, 255, 46) : IM_COL32(255, 255, 255, 14), 4 * k);
 				}
 				if (on) {
 					dl->AddRectFilled(a, { a.x + 4 * k, z.y }, kGold);
@@ -4527,7 +4596,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			} else {
 				dl->AddRectFilledMultiColor(pa, pz, IM_COL32(236, 224, 194, 255), IM_COL32(230, 216, 184, 255), IM_COL32(214, 196, 158, 255), IM_COL32(222, 206, 170, 255));
 			}
-			dl->AddRect(pa, pz, IM_COL32(90, 64, 36, 255), 0, 0, 2 * k);
+			dl->AddRect(pa, pz, IM_COL32(110, 185, 255, 220), 0, 0, 2 * k);
 			const auto& ch = codex::kChapters[g_cxCh];
 			const float mx = 70 * k, colW = std::min(pz.x - pa.x - 2 * mx, 900 * k);
 			const float cx = (pa.x + pz.x) * 0.5f, x0 = cx - colW * 0.5f;
@@ -4647,6 +4716,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_state.gainTime = std::max(0.0f, g_state.gainTime - dt);
 				g_state.hitTime = std::max(0.0f, g_state.hitTime - dt);
 				g_state.headBurstT = std::max(0.0f, g_state.headBurstT - dt);
+				g_state.styleTime = std::max(0.0f, g_state.styleTime - dt);
+				g_state.lightningT = std::max(0.0f, g_state.lightningT - dt);
 				g_state.hurtTime = std::max(0.0f, g_state.hurtTime - dt);
 				g_state.loreTime = std::max(0.0f, g_state.loreTime - dt);
 				g_state.questNoteTime = std::max(0.0f, g_state.questNoteTime - dt);
@@ -4805,7 +4876,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			} else if (mainMenu) {
 				DrawMenu(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks > 0);
 			} else if (journal || escJournal) {
-				// (Skyrim's own menus stay clean: the field of view lives in Mod Configuration, the party in the main menu)
+				// (the field of view lives in Mod Configuration; Noah: the Party tab - lobby, stats, records - in the Tab menu's corner)
+				if (journal) {
+					const float kk = io.DisplaySize.y / 1080.0f;
+					PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { 36 * kk, 36 * kk }, kk, clicks > 0);
+				}
 			} else if (InGame() && !DevTools::HudOff()) {
 				Draw(s, io.DisplaySize);
 				// looking at the Echo Altar: Skyrim's own "Commune" prompt gives way to ours (s.orbAim), back for everything else

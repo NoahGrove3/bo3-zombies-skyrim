@@ -395,6 +395,10 @@ namespace bo3z
 				}
 				const auto [gun, head] = Gun::RecentHit(dying->GetFormID());
 				Points::Add(gun ? (head ? gen::kPoints_headshot_kill : gen::kPoints_kill) : gen::kPoints_melee_kill);
+				{
+					const bool bow = Bows::Held() >= 0;
+					Stats::OnKill(dying, gun, head, !gun && !bow, bow, dying->GetPosition().GetDistance(player->GetPosition()));
+				}
 				return RE::BSEventNotifyControl::kContinue;
 			}
 		};

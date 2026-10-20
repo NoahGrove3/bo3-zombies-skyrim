@@ -328,6 +328,10 @@ namespace bo3z::Party
 				std::memcpy(g_outRevive.data(), &nearId, 8);
 				Hud::Banner("You revived " + g_remote[nearId].name, 2.5f);
 				Points::Add(100);
+				Stats::Note(Stats::kRevive);
+				if (g_remote[nearId].left < 5.0f) {
+					Tasks::Add([] { Stats::Style("CLUTCH REVIVE", 100); });
+				}
 				g_reviveT = 0, g_reviveWho = 0;
 			}
 		} else {

@@ -68,6 +68,15 @@ namespace bo3z
 		std::mt19937            g_rng{ std::random_device{}() };
 		bool                    g_loggedBlocked = false;
 		int                     g_event = -1;     // this night's event (sheet: events), -1 none
+		// (Noah) themed waves: a wave of one theme (sheet: events) inside an ordinary night
+		int  g_waveTheme = -1, g_themedCount = 0;
+		bool g_lastThemed = false, g_finaleSpawned = false;
+		int  ThemeNowImpl() { return g_event >= 0 ? g_event : g_waveTheme; }
+		// (Noah) the mini-boss: 1 night in 5, halfway through, a great creature that always drops a wonder part
+		int          g_miniWave = -1;   // the wave it comes with tonight (-1: not tonight)
+		float        g_miniWarn = -1;   // seconds of warning left before it rises
+		std::uint8_t g_miniSlain = 0;   // (counted for the party: each game gives its own part)
+		int          g_miniPick = -1;
 		bool                    g_weatherForced = false;
 		float                   g_pause = 0;      // Nuke: seconds before the dead rise again
 		float                   g_sanctuarySaid = 0;
@@ -82,7 +91,8 @@ namespace bo3z
 			const int   players = Net::InLobby() ? Net::Members() + 1 : 1;
 			const float total = static_cast<float>(kWaveDeadStep) * g_waves * (g_waves + 1) / 2.0f;
 			const float scale = std::min(1.0f, static_cast<float>(kNightCapPerPlayer * std::max(1, players)) / std::max(1.0f, total));
-			return std::max(1, static_cast<int>(std::lround(kWaveDeadStep * a_wave * scale)));
+			const int th = ThemeNowImpl();
+			return std::max(1, static_cast<int>(std::lround(kWaveDeadStep * a_wave * scale * (th >= 0 ? gen::kEvents[th].waveCount : 1.0f))));
 		}
 
 		int TotalFor(int a_round, int a_players = 1)
@@ -194,8 +204,25 @@ namespace bo3z
 			return e.weight;
 		}
 
+		bool ThemeAvailable(int a_t)
+		{
+			if (a_t < 0) return false;
+			const auto& ev = gen::kEvents[a_t];
+			bool any = ev.members[0] < 0;
+			for (int m : ev.members) any |= m >= 0 && Forms::Enemy(static_cast<std::size_t>(m)) != nullptr;
+			return any;
+		}
 		std::optional<std::size_t> PickEnemy()
 		{
+			if (const int th = ThemeNowImpl(); th >= 0 && gen::kEvents[th].members[0] >= 0 && !g_special) {  // a theme's own
+				std::vector<std::size_t> pool;
+				for (int m : gen::kEvents[th].members) {
+					if (m >= 0 && Forms::Enemy(static_cast<std::size_t>(m))) pool.push_back(static_cast<std::size_t>(m));
+				}
+				if (!pool.empty()) {
+					return pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
+				}
+			}
 			int total = 0;
 			for (const auto& e : gen::kEnemies) {
 				if (e.specialRound == g_special && (g_special || e.minRound <= g_current) && Forms::Enemy(static_cast<std::size_t>(&e - gen::kEnemies.data()))) {  // (a creature mod missing: its rows sit out)
@@ -346,6 +373,79 @@ namespace bo3z
 			return from.z + (to.z - from.z) * pick.rayOutput.hitFraction;
 		}
 
+		// (Noah: the undead rising out of the ground) each one starts under the floor and climbs out over a second and a
+		// half - collision and its mind off until it stands on the floor - the ground bursting, a rumble that shakes the
+		// view when it is close
+		struct Riser
+		{
+			RE::ActorHandle h;
+			float           floorZ, t = 0;
+			bool            burst = false;
+		};
+		std::vector<Riser> g_risers;
+		constexpr float    kRiseDepth = 115.0f, kRiseTime = 1.5f;
+		void StartRise(RE::Actor* a_actor, RE::PlayerCharacter* a_player)
+		{
+			if (!a_actor || g_risers.size() > 40) {
+				return;  // (a flood of them: the rest simply stand there)
+			}
+			auto at = a_actor->GetPosition();
+			g_risers.push_back({ a_actor->GetHandle(), at.z });
+			a_actor->SetCollision(false);
+			a_actor->EnableAI(false);
+			at.z -= kRiseDepth;
+			a_actor->SetPosition(at, true);
+			if (Settings::ScreenShake() && a_player && a_player->GetPosition().GetDistance(at) < 700.0f) {
+				RE::ShakeCamera(0.25f, at, 0.6f);
+			}
+		}
+		void TickRisers(float a_delta)
+		{
+			for (auto& r : g_risers) {
+				auto a = r.h.get();
+				if (!a) {
+					r.t = 99;
+					continue;
+				}
+				r.t += a_delta;
+				const float u = std::clamp(r.t / kRiseTime, 0.0f, 1.0f), e = u * u * (3 - 2 * u);
+				auto        at = a->GetPosition();
+				if (u >= 1.0f || a->IsDead()) {
+					at.z = r.floorZ + 4.0f;
+					a->SetPosition(at, true);
+					a->SetCollision(true);
+					a->EnableAI(true);
+					r.t = 99;
+					continue;
+				}
+				at.z = r.floorZ - kRiseDepth * (1.0f - e);
+				a->SetPosition(at, true);
+				if (!r.burst && u > 0.45f) {  // the second burst as the shoulders break the ground
+					r.burst = true;
+					if (auto* fx = Forms::Ours(gen::kRiseFx); fx && g_fx.size() < 24) {
+						if (auto puff = a->PlaceObjectAtMe(fx, false)) {
+							puff->SetPosition({ at.x, at.y, r.floorZ });
+							g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
+						}
+					}
+				}
+			}
+			std::erase_if(g_risers, [](const Riser& r) { return r.t >= 99; });
+		}
+		void EndRisers()  // (dawn, a load: anyone still under the ground is put on it)
+		{
+			for (auto& r : g_risers) {
+				if (auto a = r.h.get()) {
+					auto at = a->GetPosition();
+					at.z = r.floorZ + 4.0f;
+					a->SetPosition(at, true);
+					a->SetCollision(true);
+					a->EnableAI(true);
+				}
+			}
+			g_risers.clear();
+		}
+
 		bool SpawnOne(RE::PlayerCharacter* a_player, int a_force = -1, const RE::NiPoint3* a_at = nullptr)
 		{
 			auto pick = a_force >= 0 ? std::optional<std::size_t>(static_cast<std::size_t>(a_force)) : PickEnemy();
@@ -422,7 +522,8 @@ namespace bo3z
 			} else if (kindRow.kind == 2) {
 				type = Undead::Type::Necro;
 			}
-			const float want = HealthFor(g_current) * kindRow.healthMult * (type ? Undead::HealthMult(*type) : 1.0f) * Settings::UndeadHealthMult();
+			const int   theme = ThemeNowImpl();
+			const float want = HealthFor(g_current) * kindRow.healthMult * (type ? Undead::HealthMult(*type) : 1.0f) * Settings::UndeadHealthMult() * (theme >= 0 ? gen::kEvents[theme].waveHp : 1.0f);
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
 
 			// BO3 tuning: speed tier by round, damage comes from our hit rule (weapon damage turned down),
@@ -433,7 +534,7 @@ namespace bo3z
 					speed = tier[1];
 				}
 			}
-			speed *= kindRow.speedMult * (g_event >= 0 ? gen::kEvents[g_event].speedMult : 1.0f) * (type ? Undead::SpeedMult(*type) : 1.0f);
+			speed *= kindRow.speedMult * (g_event >= 0 ? gen::kEvents[g_event].speedMult : g_waveTheme >= 0 ? gen::kEvents[g_waveTheme].waveSpeed : 1.0f) * (type ? Undead::SpeedMult(*type) : 1.0f);
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, speed - av->GetBaseActorValue(RE::ActorValue::kSpeedMult));
 			av->SetActorValue(RE::ActorValue::kAttackDamageMult, gen::kZombieWeaponDamageMult * (type ? Undead::DamageMult(*type) : 1.0f));
 			av->SetActorValue(RE::ActorValue::kConfidence, 4);
@@ -521,12 +622,13 @@ namespace bo3z
 				Undead::SetEyes(actor, rowId);
 			}
 			Forms::PlayAt(gen::Sound::rise, actor);
-			if (auto* fx = Forms::Ours(gen::kRiseFx)) {  // the ground bursts where they climb out
+			if (auto* fx = Forms::Ours(gen::kRiseFx); fx && g_fx.size() < 24) {  // the ground bursts where they climb out (a few at a time)
 				if (auto puff = actor->PlaceObjectAtMe(fx, false)) {
 					puff->SetPosition(actor->GetPosition());
 					g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
 				}
 			}
+			StartRise(actor, a_player);
 			return true;
 		}
 
@@ -641,6 +743,24 @@ namespace bo3z
 			float           maxHp{ 1 };
 			bool            slainTonight{ false };
 		} g_champ;
+		// the mini-boss down: a wonder part for you - the next one you're missing - and the same for everyone in the party
+		// (each game gives its own: NetFollow sees the host's count go up); all the parts already found: a reforge's worth
+		std::uint8_t g_miniSeen = 0;
+		void MiniBossReward()
+		{
+			if (!Echo::AwardNextPart()) {
+				Points::Refund(5000);
+				Hud::Banner("Every wonder part is yours - 5,000 septims instead", 5.0f);
+			}
+		}
+		void MiniBossSlain()
+		{
+			++g_miniSlain;
+			g_miniSeen = g_miniSlain;
+			Points::Add(1500);
+			MiniBossReward();
+			Stats::Note(Stats::kMiniBoss);
+		}
 		void TickChampion()
 		{
 			auto c = g_champ.handle.get();
@@ -663,6 +783,8 @@ namespace bo3z
 				}
 				if (town >= 0) {
 					Curse::OnChampionSlain(town);
+				} else if (town == -2) {
+					MiniBossSlain();  // (Noah: the mini-boss's wonder part)
 				} else {
 					Echo::OnBearerSlain();  // (a word's bearer: Stage 4)
 				}
@@ -1073,8 +1195,31 @@ namespace bo3z
 			}
 			g_mist.clear();
 		}
-		void TickMist(float a_delta, bool a_on)
+		// (Noah: night atmosphere) how far through the night's waves (0..1; -1 not fighting), and how thick its ground fog:
+		// none for the first half, thickening to the last wave; thick all through Blood Fog. Effects: fog strength.
+		float NightProgress()
 		{
+			if (g_phase != Phase::Fighting || g_waves <= 0) return -1.0f;
+			const int   killed = std::max(0, g_waveSpawned - static_cast<int>(g_alive.size()));
+			const float frac = g_waveSize > 0 ? std::clamp(static_cast<float>(killed) / g_waveSize, 0.0f, 1.0f) : 0.0f;
+			return std::clamp((std::max(0, g_wave - 1) + frac) / static_cast<float>(g_waves), 0.0f, 1.0f);
+		}
+		float MistAmount()
+		{
+			const float pr = NightProgress();
+			if (pr < 0) return 0.0f;
+			const float base = ThemeNowImpl() == gen::kEvent_bloodfog ? 1.3f : std::clamp((pr - 0.5f) * 2.0f, 0.0f, 1.0f);
+			return base * Settings::FogStrength();
+		}
+		int g_mistRings = 0;
+		void TickMist(float a_delta, float a_amount)
+		{
+			const int rings = std::clamp(static_cast<int>(std::lround(a_amount * 3.0f)), 0, 4);
+			const bool a_on = rings > 0;
+			if (rings != g_mistRings && !g_mist.empty()) {
+				ClearMist();  // (thicker now: laid again)
+			}
+			g_mistRings = rings;
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!a_on || !p || !p->GetParentCell() || p->GetParentCell()->IsInteriorCell()) {
 				if (!g_mist.empty()) {
@@ -1095,7 +1240,7 @@ namespace bo3z
 			static const RE::FormID kMist[] = { 0x0B946C, 0x0B945E, 0x0B9466, 0x0B9456, 0x0B9468, 0x0B945B };  // FXMistLowSmokey/Swirls
 			std::uniform_real_distribution<float> jitter(-220.0f, 220.0f), yaw(0.0f, 6.2832f);
 			int placed = 0;
-			for (int ring = 0; ring < 4; ++ring) {
+			for (int ring = 0; ring < g_mistRings; ++ring) {
 				const float r = 250.0f + ring * 700.0f;
 				const int   n = ring == 0 ? 3 : 6 + ring * 4;
 				for (int k = 0; k < n; ++k) {
@@ -1138,9 +1283,7 @@ namespace bo3z
 			}
 			Forms::Play(ev.sound);
 			{  // the night's own bed of sound, under everything until dawn
-				const std::string_view id = ev.id;
-				const auto bed = id == "bloodmoon" ? gen::Sound::amb_bloodmoon : id == "fog" ? gen::Sound::amb_fog : id == "ashstorm" ? gen::Sound::amb_ash : gen::Sound::amb_iron;
-				Audio::LoopStart(Audio::kLoopNight, bed);
+				Audio::LoopStart(Audio::kLoopNight, ev.bed);
 			}
 			if (ev.boss && !Coop::Client() && g_boss.spawnIn < 0 && !g_boss.handle.get() && !g_boss.slainTonight) {
 				g_boss.spawnIn = 20.0f;
@@ -1165,6 +1308,8 @@ namespace bo3z
 		{
 			s.phase = g_phase == Phase::Fighting ? 2 : g_phase == Phase::Break ? 1 : 0;
 			s.event = static_cast<std::int8_t>(g_phase == Phase::Fighting ? g_event : -1);
+			s.pad[0] = static_cast<std::uint8_t>(g_phase == Phase::Fighting ? g_waveTheme + 1 : 0);  // (the themed wave, for the party's dials)
+			s.pad[1] = g_miniSlain;                                                                   // (a mini-boss down: everyone's part)
 			s.round = g_phase == Phase::Fighting ? g_current : Save::Get(gen::kAV_round);
 			s.countdown = g_phase == Phase::Break ? g_breakTimer : 0.0f;
 			auto boss = g_boss.handle.get();
@@ -1206,6 +1351,15 @@ namespace bo3z
 		void NetFollow()
 		{
 			const auto& s = Net::Last();
+			g_waveTheme = s.phase == 2 && s.pad[0] > 0 && s.pad[0] <= gen::kEvents.size() ? s.pad[0] - 1 : -1;
+			static bool primed = false;
+			if (!primed) {
+				primed = true, g_miniSeen = s.pad[1];  // (joined late: only what falls from now on)
+			} else if (s.pad[1] != g_miniSeen) {
+				g_miniSeen = s.pad[1];
+				Hud::Banner("THE MINI-BOSS FALLS - A WONDER PART FOR THE PARTY", 5.0f);
+				MiniBossReward();
+			}
 			if (s.phase == 2) {
 				if (g_phase != Phase::Fighting || g_current != s.round) {
 					Save::Set(gen::kAV_round, std::max(0, s.round - 1));
@@ -1314,11 +1468,24 @@ namespace bo3z
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().countdown = 0;
 			}
-			// Event nights: a one-in-four chance from night 10 on (never on a hound night).
+			// (Noah) event nights: 1 in 8 from night 8 (never on a hound night) - Goblin Raid, Harpy Swarm, Armored
+			// Champions, Blood Fog: the whole night themed, double septims, double the spawn rate
 			g_event = -1;
-			constexpr bool kEventNights = false;  // (Noah: no special nights - no fog, blood moon, ash storm)
-			if (kEventNights && !g_special && a_round >= 10 && std::uniform_real_distribution<float>(0, 1)(g_rng) < gen::kEventChance) {
-				g_event = std::uniform_int_distribution<int>(0, static_cast<int>(gen::kEvents.size()) - 1)(g_rng);
+			g_waveTheme = -1, g_themedCount = 0, g_lastThemed = false, g_finaleSpawned = false;
+			if (!g_special && a_round >= gen::kEventMinNight && std::uniform_real_distribution<float>(0, 1)(g_rng) < gen::kEventChance) {
+				std::vector<int> ok;
+				for (int t = 0; t < static_cast<int>(gen::kEvents.size()); ++t) {
+					if (ThemeAvailable(t)) ok.push_back(t);
+				}
+				if (!ok.empty()) g_event = ok[std::uniform_int_distribution<std::size_t>(0, ok.size() - 1)(g_rng)];
+			}
+			if (g_event >= 0) {
+				g_waveSize = WaveSize(1);  // (the night's theme shapes its waves)
+			}
+			// the mini-boss: 1 night in 5 (not a boss's night), with the middle wave
+			g_miniWave = -1, g_miniWarn = -1, g_miniPick = -1;
+			if (!Coop::Client() && !g_special && g_boss.spawnIn < 0 && std::uniform_int_distribution<int>(1, 5)(g_rng) == 1) {
+				g_miniWave = std::max(2, (g_waves + 1) / 2);
 			}
 			if (Coop::Client()) {
 				g_event = -1;  // the host's game rolls the night
@@ -1332,6 +1499,7 @@ namespace bo3z
 				Forms::Play(g_special ? gen::Sound::event_bloodmoon : gen::Sound::night_start);
 				Hud::Banner(fmt::format("NIGHT {} - WAVE 1 OF {}{}", a_round, g_waves, g_special ? " - THE HOUNDS ARE LOOSE" : ""));
 			}
+			Stats::NightBegins(a_round);
 			logger::info("round {} starts: {} waves (the first of {}, 20 more each), up to {} undead at once, {:.0f} Skyrim health each{}", a_round, g_waves, g_waveSize, g_toSpawn, HealthFor(a_round), g_special ? " (hound night)" : "");
 		}
 
@@ -1360,16 +1528,74 @@ namespace bo3z
 
 		// the night's waves: each one's dead rise from the spawn points until its count is out; when every one of them is
 		// down the next wave comes after a breath, and after the last the night breaks into dawn
+		// (Noah) the mini-boss: a warning (a roar, the sky flashing, a banner), then it rises near you
+		void RaiseMiniBoss(RE::PlayerCharacter* a_player)
+		{
+			static constexpr std::string_view kRows[] = { "mb_minotaur_lord", "mb_ogre_chief", "mb_ice_titan", "mb_vile_imp", "mb_harpy_matriarch", "brute" };
+			std::vector<std::string_view> ok;
+			for (auto r : kRows) {
+				for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
+					if (gen::kEnemies[i].id == r && Forms::Enemy(i)) ok.push_back(r);
+				}
+			}
+			if (ok.empty()) return;
+			const auto row = ok[std::uniform_int_distribution<std::size_t>(0, ok.size() - 1)(g_rng)];
+			std::string name;
+			for (const auto& e : gen::kEnemies) {
+				if (e.id == row) name = std::string(e.label);
+			}
+			if (row == "brute") name = "The Bone Jotunn";
+			// at a spawn point toward you (not on top of you)
+			RE::NiPoint3 at = a_player->GetPosition();
+			float best = 1e9f;
+			for (const auto& pt : g_points.pts) {
+				const float d = std::abs(pt.GetDistance(at) - 1400.0f);
+				if (d < best) best = d, at = pt;
+			}
+			if (Director::RaiseChampion(-2, row, name, 14.0f, at)) {
+				Hud::Banner(name + " - A MINI-BOSS RISES!", 5.0f);
+			}
+		}
+		void TickMiniBoss(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			if (g_miniWarn < 0) return;
+			if ((g_miniWarn -= a_delta) <= 0) {
+				g_miniWarn = -1;
+				RaiseMiniBoss(a_player);
+			}
+		}
+
+		// the night's waves: each one's dead rise from the spawn points until its count is out; when every one of them is
+		// down the next wave comes after a breath, and after the last the night breaks into dawn
+		void WaveBegins()
+		{
+			Forms::Play(gen::Sound::round_start);
+			if (g_waveTheme >= 0) {
+				const auto& ev = gen::kEvents[g_waveTheme];
+				Forms::Play(ev.sound);
+				Hud::Banner(fmt::format("WAVE {} - {}", g_wave, ev.label), 4.0f);
+				Atmos::Lightning(0.8f);
+			} else {
+				Hud::Banner(fmt::format("WAVE {} OF {}", g_wave, g_waves), 3.0f);
+				Atmos::Lightning(0.35f);
+			}
+			if (g_wave == g_miniWave && !Coop::Client() && !g_champ.handle.get()) {  // the mini-boss's warning
+				g_miniWarn = 3.0f;
+				Audio::Game(0x0003F35F, RE::PlayerCharacter::GetSingleton(), 0.6f);  // (a roar out in the dark: a dragon's, far off)
+				Hud::Banner("SOMETHING STIRS IN THE DARK...", 3.0f);
+				Atmos::Lightning(1.0f);
+			}
+			Curse::OnWave(false);
+		}
 		void TickWaves(RE::PlayerCharacter* a_player, float a_delta)
 		{
+			TickMiniBoss(a_player, a_delta);
 			if (g_nightCleared) {
 				return;
 			}
 			if (g_waveRest > 0) {
 				if ((g_waveRest -= a_delta) <= 0) {
-					Forms::Play(gen::Sound::round_start);
-					Hud::Banner(fmt::format("WAVE {} OF {}", g_wave, g_waves), 3.0f);
-					Curse::OnWave(false);
+					WaveBegins();
 				}
 				return;
 			}
@@ -1377,7 +1603,16 @@ namespace bo3z
 				const float boost = Curse::SpawnBoost() * (g_event >= 0 ? gen::kEvents[g_event].spawnMult : 1.0f);
 				const int   want = std::min(static_cast<int>(g_toSpawn * Curse::SpawnBoost()), R.maxAlive * 3 / 2);
 				if (g_pause <= 0 && (g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < want) {
-					if (SpawnOne(a_player)) {
+					const int th = ThemeNowImpl();
+					const int fin = th >= 0 ? gen::kEvents[th].finale : -1;
+					const bool last = g_waveSpawned == g_waveSize - 1;
+					if (last && fin >= 0 && !g_finaleSpawned && Forms::Enemy(static_cast<std::size_t>(fin))) {  // the theme's own last one (the Goblin Warlord)
+						g_finaleSpawned = true;
+						if (SpawnOne(a_player, fin)) {
+							++g_waveSpawned;
+							Hud::Banner(std::string(gen::kEnemies[fin].label) + " leads them!", 3.0f);
+						}
+					} else if (SpawnOne(a_player)) {
 						++g_waveSpawned;
 					}
 					g_spawnTimer = SpawnDelay(g_current) / std::max(0.25f, boost);
@@ -1388,17 +1623,39 @@ namespace bo3z
 				return;
 			}
 			Curse::OnWave(true);
-			logger::info("night {}: wave {} of {} cleared", g_current, g_wave, g_waves);
+			Stats::Note(Stats::kWave);
+			if (auto* pav = a_player->AsActorValueOwner(); pav && !a_player->IsDead() &&
+				pav->GetActorValue(RE::ActorValue::kHealth) < 0.15f * pav->GetPermanentActorValue(RE::ActorValue::kHealth)) {
+				Stats::Style("LAST STAND", 100);  // (Noah: style - a wave survived on the last of your health)
+			}
+			logger::info("night {}: wave {} of {} cleared{}", g_current, g_wave, g_waves, g_waveTheme >= 0 ? fmt::format(" ({})", gen::kEvents[g_waveTheme].id) : std::string());
 			if (g_wave >= g_waves && Echo::EndlessNight() && !Coop::Client()) {
 				++g_waves;  // (Stage 5: the Endless Night - one more wave, always)
 			}
 			if (g_wave >= g_waves) {
 				g_nightCleared = true;
+				g_waveTheme = -1;
 				Forms::Play(gen::Sound::round_end);
 				Director::SkipToDawn(fmt::format("NIGHT {} CLEARED - DAWN BREAKS", g_current).c_str());
 				return;
 			}
 			++g_wave;
+			// (Noah) a themed wave: 1 in 6 from wave 3, never two in a row, two a night at most, never the last; not on an
+			// event night (the whole night is themed) or a hound night
+			const bool wasThemed = g_waveTheme >= 0;
+			g_waveTheme = -1;
+			g_finaleSpawned = false;
+			if (g_event < 0 && !g_special && !Coop::Client() && g_wave >= 3 && g_wave < g_waves && !wasThemed && g_themedCount < 2 &&
+				std::uniform_real_distribution<float>(0, 1)(g_rng) < gen::kWaveThemeChance) {
+				std::vector<int> ok;
+				for (int t = 0; t < static_cast<int>(gen::kEvents.size()); ++t) {
+					if (ThemeAvailable(t)) ok.push_back(t);
+				}
+				if (!ok.empty()) {
+					g_waveTheme = ok[std::uniform_int_distribution<std::size_t>(0, ok.size() - 1)(g_rng)];
+					++g_themedCount;
+				}
+			}
 			g_waveSize = WaveSize(g_wave);
 			g_waveSpawned = 0;
 			g_waveRest = kWaveRest;
@@ -1476,13 +1733,14 @@ namespace bo3z
 			}
 			g_corpses.clear();
 			g_settle.clear();
+			EndRisers();
 			Undead::Reset();  // no mind outlives the night (they reached for people while disabled)
 			if (g_phase == Phase::Fighting) {
 				// Dawn ends the round: one more night survived (one more tally on the board).
 				Save::Set(gen::kAV_round, g_current);
 				Points::Add(gen::kPoints_round_survived);
 				Forms::Play(gen::Sound::night_end);
-				Hud::Banner("DAWN - NIGHT " + std::to_string(g_current) + " SURVIVED", 6.0f);
+				Stats::NightEnds(g_current);
 				logger::info("dawn: night {} survived, {} undead crumbled", g_current, n);
 				Party::DawnSave(g_current);  // every game in the party saves at this same dawn
 			}
@@ -1881,6 +2139,7 @@ namespace bo3z
 		{
 			Audio::BossMusic(false);
 			g_phase = Phase::Day;
+			EndRisers();
 			g_alive.clear();
 			g_corpses.clear();
 			g_ours.clear();
@@ -2123,7 +2382,32 @@ namespace bo3z
 			return true;
 		}
 		int   EventNow() { return g_phase == Phase::Fighting ? g_event : -1; }
-		int   EventPointsMult() { return g_phase == Phase::Fighting && g_event >= 0 ? gen::kEvents[g_event].pointsMult : 1; }
+		float EventPointsMult()
+		{
+			if (g_phase != Phase::Fighting) return 1.0f;
+			if (g_event >= 0) return static_cast<float>(gen::kEvents[g_event].pointsMult);
+			return g_waveTheme >= 0 ? gen::kEvents[g_waveTheme].wavePoints : 1.0f;
+		}
+		int  ThemeNow() { return g_phase == Phase::Fighting ? ThemeNowImpl() : -1; }
+		void DevTheme(int a_theme, bool a_night)
+		{
+			if (a_theme < 0 || a_theme >= static_cast<int>(gen::kEvents.size())) return;
+			if (a_night) {
+				EndEvent();
+				g_event = a_theme;
+				StartEvent(a_theme);
+				Hud::Banner(std::string(gen::kEvents[a_theme].banner), 5.0f);
+			} else {
+				g_waveTheme = a_theme, g_finaleSpawned = false;
+				g_waveSize = WaveSize(g_wave), g_waveSpawned = 0;
+				WaveBegins();
+			}
+			logger::info("dev: theme {} ({})", gen::kEvents[a_theme].id, a_night ? "night" : "wave");
+		}
+		void DevMiniBoss()
+		{
+			if (auto* p = RE::PlayerCharacter::GetSingleton(); p && g_phase == Phase::Fighting) RaiseMiniBoss(p);
+		}
 		float EventDropMult() { return g_phase == Phase::Fighting && g_event >= 0 ? gen::kEvents[g_event].dropMult : 1.0f; }
 		void  Pause(float a_seconds) { g_pause = std::max(g_pause, a_seconds); }
 		float Paused() { return g_pause; }
@@ -2136,7 +2420,7 @@ namespace bo3z
 			if (g_phase != Phase::Fighting || BossAlive() || Coop::Client()) {
 				return;
 			}
-			const int fog = gen::kEvent_fog;
+			const int fog = gen::kEvent_bloodfog;
 			if (g_event != fog) {
 				EndEvent();
 				g_event = fog;
@@ -2588,7 +2872,9 @@ namespace bo3z
 			PowerUps::Tick(a_delta);
 			Settings::Tick();
 			TickFx(a_delta);
-			TickMist(a_delta, g_phase == Phase::Fighting && g_event == gen::kEvent_fog);
+			TickRisers(a_delta);
+			Atmos::Tick(a_delta);
+			TickMist(a_delta, MistAmount());
 			TickClock(a_delta);  // (Skyrim Together's server sets the same uTimeScale, 48: 18 minutes of daylight)
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			Undead::Tick(player, a_delta);
@@ -2623,7 +2909,15 @@ namespace bo3z
 				auto& h = Hud::Edit();
 				h.round = g_phase == Phase::Fighting ? g_current : Save::Get(gen::kAV_round);
 				h.nightActive = g_phase == Phase::Fighting;
-				h.nightEvent = g_phase == Phase::Fighting ? g_event : -1;
+				h.nightEvent = g_phase == Phase::Fighting ? ThemeNowImpl() : -1;
+				h.nightProgress = NightProgress();
+				const int th = g_phase == Phase::Fighting ? g_waveTheme : -1;
+				h.waveTheme = th >= 0 ? std::string(gen::kEvents[th].label) : (g_phase == Phase::Fighting && g_event >= 0 ? std::string(gen::kEvents[g_event].label) + " NIGHT" : std::string());
+				const int tc = th >= 0 ? th : g_event;
+				if (tc >= 0) {
+					const auto c = gen::kEvents[tc].color;
+					h.waveThemeColor = 0xFF000000u | ((c & 0xFFu) << 16) | (c & 0xFF00u) | ((c >> 16) & 0xFFu);  // (RGB -> ImGui's ABGR)
+				}
 				h.nukeLeft = g_pause;
 				const bool waving = g_phase == Phase::Fighting && g_waves > 0;
 				h.wave = waving ? g_wave : 0, h.waves = waving ? g_waves : 0, h.waveSize = g_waveSize;
@@ -2722,7 +3016,7 @@ namespace bo3z
 				g_timers[a_kind] = a_seconds;
 			}
 		}
-		int  PointsMult() { return (g_timers[1] > 0 ? 2 : 1) * Director::EventPointsMult(); }
+		float PointsMult() { return (g_timers[1] > 0 ? 2.0f : 1.0f) * Director::EventPointsMult(); }
 		bool FireSale() { return g_timers[3] > 0; }
 
 		void MaybeDrop(const RE::NiPoint3& a_at)

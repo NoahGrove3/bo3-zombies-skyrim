@@ -2268,6 +2268,7 @@ namespace bo3z
 
 		// the left stick's own events (the glide reads it when the game's movement reading has nothing)
 		bool Dodging() { return g_dodgeT >= 0.0f && g_dodgeT < 0.6f; }
+		bool Gliding() { return g_hadDragon || g_dive; }
 		void OnStick(const RE::ThumbstickEvent* a_event)
 		{
 			if (a_event && a_event->IsLeft()) {

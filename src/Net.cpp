@@ -33,7 +33,7 @@ namespace bo3z::Net
 		using u64 = std::uint64_t;
 		constexpr int kChannel = 7;
 		constexpr std::uint8_t kVersion = 1;
-		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6 };
+		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7 };
 #ifndef UN_BUILD
 #	define UN_BUILD "dev"
 #endif
@@ -42,6 +42,7 @@ namespace bo3z::Net
 		struct Hello { std::uint8_t type, version; char build[8]; };
 		struct PlayerMsg { std::uint8_t type, life; float x, y, z, left; std::int8_t wonder; };
 		struct ReviveMsg { std::uint8_t type; std::uint64_t target; };
+		struct StatsMsg { std::uint8_t type; std::int32_t kills, heads, best, septims, revives, style, waves, minis, night; };  // (Noah: everyone's night in the Party tab)
 #pragma pack(pop)
 		void SendHello(std::uint64_t a_to);
 		std::string g_mismatch;  // a friend on another build (shown until the party ends)
@@ -498,6 +499,13 @@ namespace bo3z::Net
 						}
 						break;
 					}
+					case kStats:
+						if (sz >= static_cast<int>(sizeof(StatsMsg))) {
+							StatsMsg m{};
+							std::memcpy(&m, d, sizeof(StatsMsg));
+							Stats::Heard(from, A.GetFriendPersonaName(A.fr, from), { m.kills, m.heads, m.best, m.septims, m.revives, m.style, m.waves, m.minis, m.night });
+						}
+						break;
 					case kPlayer:
 						if (sz >= static_cast<int>(sizeof(PlayerMsg))) {
 							PlayerMsg m{};
@@ -746,6 +754,13 @@ namespace bo3z::Net
 			if ((t -= a_delta) <= 0) {
 				t = 0.25f;
 				const PlayerMsg m{ kPlayer, o.life, o.at.x, o.at.y, o.at.z, o.left, o.wonder };
+				ToAll(&m, sizeof(m), false);
+			}
+			static float st = 0;
+			if ((st -= a_delta) <= 0) {
+				st = 1.0f;
+				const auto      n = Stats::Tonight();
+				const StatsMsg  m{ kStats, n.kills, n.heads, n.best, n.septims, n.revives, n.style, n.waves, n.minis, n.night };
 				ToAll(&m, sizeof(m), false);
 			}
 		}

@@ -492,7 +492,12 @@ namespace Spellcraft
 			dmg *= 2.2f;
 			shattered = true;
 		}
+		bool burning = false;
+		for (auto& dd : g_dots) burning |= dd.target.get().get() == a;
 		const bool killed = Damage(a, dmg, a_head, false);
+		if (killed && shattered) Stats::Style("SHATTER", 40);
+		if (killed && burning && a_effect != gen::kFxIgnite) Stats::Style("COMBUSTION", 40);
+		if (killed && (a_effect == gen::kFxChain) && a->IsInWater()) Stats::Style("STORM SURGE", 40);
 		if (shattered) {
 			const RE::NiPoint3 c = a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f };
 			BurstAt(a_row, c, 220.0f, 0.5f);

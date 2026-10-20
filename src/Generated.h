@@ -23,7 +23,7 @@ namespace bo3z::gen
 		{ 3400.f, 4600.f }, { 1400.f, 2100.f }, 120.f, 30 };
 	inline constexpr FormRef kIntroQuest{ "Skyrim.esm", 0x03372B, "MQ101" };
 	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; bool rig; };
-	inline constexpr std::array<Enemy, 37> kEnemies{ {
+	inline constexpr std::array<Enemy, 43> kEnemies{ {
 		Enemy{ "zombie", "Haugbui", { "The Restless Dead.esp", 0x194DD1, "zzEnc_RD_DraugrIronScaleArmorM01_Melee1H" }, false, 1, 10, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "hollow2", "Haugbui", { "The Restless Dead.esp", 0x1F5212, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee2H" }, false, 1, 8, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "hollow3", "Haugbui", { "The Restless Dead.esp", 0x1EAFCC, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee1H" }, false, 1, 8, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
@@ -61,6 +61,12 @@ namespace bo3z::gen
 		Enemy{ "hf_ogre", "Cursed Ogre", { "mihailhighfantasypack.esp", 0x000D56, "mihailogre_NPC_savage" }, false, 11, 1, false, "auto", true, 0, false, 0, 2.5f, 0.95f, false },
 		Enemy{ "hf_minotaur", "Bone-Horn Minotaur", { "mihailhighfantasypack.esp", 0x07F285, "mihailminotaurcommonenemy" }, false, 13, 1, false, "auto", true, 0, false, 1, 2.5f, 0.95f, false },
 		Enemy{ "hf_ettin", "Two-Skull Ettin", { "mihailhighfantasypack.esp", 0x000D3B, "mihailettin_NPC" }, false, 16, 1, false, "auto", true, 0, false, 1, 3.0f, 0.9f, false },
+		Enemy{ "hf_goblin_warlord", "Goblin Warlord", { "mihailhighfantasypack.esp", 0x000883, "mihailgoblin6" }, false, 99, 0, false, "auto", true, 0, false, 1, 4.0f, 1.0f, false },
+		Enemy{ "mb_minotaur_lord", "Minotaur Lord", { "mihailhighfantasypack.esp", 0x065C7F, "mihailminotaurcommonLORD" }, false, 99, 0, false, "auto", true, 0, false, 1, 1.0f, 1.0f, false },
+		Enemy{ "mb_ogre_chief", "Ogre Chieftain", { "mihailhighfantasypack.esp", 0x000D66, "mihailogre_NPC_armored" }, false, 99, 0, false, "auto", true, 0, false, 1, 1.0f, 1.0f, false },
+		Enemy{ "mb_ice_titan", "Ice Titan", { "mihailhighfantasypack.esp", 0x000839, "mihailicetitan" }, false, 99, 0, false, "auto", true, 0, false, 1, 1.0f, 1.0f, false },
+		Enemy{ "mb_vile_imp", "Fiery Vile Imp", { "mihailhighfantasypack.esp", 0x000C53, "mihailimpfireBOSS" }, false, 99, 0, false, "auto", true, 0, false, 1, 1.0f, 1.0f, false },
+		Enemy{ "mb_harpy_matriarch", "Harpy Matriarch", { "mihailhighfantasypack.esp", 0x09A0FE, "mihailharpy_NPC3" }, false, 99, 0, false, "auto", true, 0, false, 1, 1.0f, 1.0f, false },
 	} };
 	enum class Sound : int {
 		cast_sidearm = 0,
@@ -1374,15 +1380,16 @@ namespace bo3z::gen
 	inline constexpr float kSpawnMultiplier = 6.0f, kHitDamageFraction = 0.34f, kZombieWeaponDamageMult = 0.1f;
 	inline constexpr bool kIgnoreNpcs = true;
 	inline constexpr std::array<std::array<float, 2>, 4> kSpeedTiers{ { { 1.0f, 100.0f }, { 3.0f, 115.0f }, { 6.0f, 130.0f }, { 10.0f, 145.0f } } };
-	struct EventDef { std::string_view id, label, banner, weatherPlugin; std::uint32_t weatherId; float spawnMult, speedMult; int pointsMult; float championWeight, dropMult; bool boss; std::uint32_t tint; Sound sound; };
-	inline constexpr float kEventChance = 0.25f;
+	struct EventDef { std::string_view id, label, banner, weatherPlugin; std::uint32_t weatherId; float spawnMult, speedMult; int pointsMult; float championWeight, dropMult; bool boss; std::uint32_t tint; Sound sound, bed; std::array<int, 6> members; int finale; float waveCount, waveHp, waveSpeed, wavePoints; std::uint32_t color; };
+	inline constexpr float kEventChance = 0.125f, kWaveThemeChance = 0.1667f;
+	inline constexpr int kEventMinNight = 8;
 	inline constexpr std::array<EventDef, 4> kEvents{ {
-		EventDef{ "bloodmoon", "BLOOD MOON", "BLOOD MOON - THE DEAD RISE FASTER", "Dawnguard.esm", 0x006AEC, 1.5f, 1.0f, 1, 1.0f, 1.0f, false, 0xB4101A1C, Sound::event_bloodmoon },
-		EventDef{ "fog", "FOG NIGHT", "FOG NIGHT - SOMETHING HUNTS IN THE MIST", "Skyrim.esm", 0x0C821E, 0.75f, 1.0f, 1, 1.0f, 1.0f, true, 0x2A2E3460, Sound::event_fog },
-		EventDef{ "ashstorm", "ASH STORM", "ASH STORM - THE DEAD RUN, DOUBLE POINTS", "Dragonborn.esm", 0x032336, 1.0f, 1.25f, 2, 1.0f, 1.0f, false, 0x5A341838, Sound::event_ash },
-		EventDef{ "champions", "NIGHT OF IRON", "NIGHT OF IRON - THE CHAMPIONS MARCH", "Skyrim.esm", 0x0C8220, 1.0f, 1.0f, 1, 2.0f, 2.0f, false, 0x40506030, Sound::event_champions },
+		EventDef{ "goblinraid", "GOBLIN RAID", "GOBLIN RAID - DOUBLE SEPTIMS", "Dawnguard.esm", 0x006AEC, 2.0f, 1.1f, 2, 1.0f, 1.5f, false, 0x6E2A0A22, Sound::event_bloodmoon, Sound::amb_iron, { 24, 25, 28, -1, -1, -1 }, 37, 1.3f, 0.7f, 1.15f, 1.0f, 0xFF8A3C },
+		EventDef{ "harpyswarm", "HARPY SWARM", "HARPY SWARM - DOUBLE SEPTIMS", "Skyrim.esm", 0x0C8220, 2.0f, 1.0f, 2, 1.0f, 1.5f, false, 0x3A4A5A26, Sound::event_ash, Sound::amb_ash, { 29, -1, -1, -1, -1, -1 }, -1, 0.8f, 0.8f, 1.0f, 1.0f, 0xC8A0FF },
+		EventDef{ "champions", "ARMORED CHAMPIONS", "ARMORED CHAMPIONS - DOUBLE SEPTIMS", "Skyrim.esm", 0x0C8220, 2.0f, 1.0f, 2, 2.0f, 2.0f, false, 0x40506030, Sound::event_champions, Sound::amb_iron, { 13, 14, 35, 36, 33, 34 }, -1, 0.4f, 1.0f, 0.95f, 2.0f, 0xB8C4D0 },
+		EventDef{ "bloodfog", "BLOOD FOG", "BLOOD FOG - DOUBLE SEPTIMS", "Skyrim.esm", 0x0C821E, 2.0f, 1.2f, 2, 1.0f, 1.5f, false, 0x8A0A1030, Sound::event_fog, Sound::amb_fog, { -1, -1, -1, -1, -1, -1 }, -1, 1.0f, 1.0f, 1.2f, 1.5f, 0xFF3A3A },
 	} };
-	enum EventId : int { kEvent_bloodmoon = 0, kEvent_fog = 1, kEvent_ashstorm = 2, kEvent_champions = 3 };
+	enum EventId : int { kEvent_goblinraid = 0, kEvent_harpyswarm = 1, kEvent_champions = 2, kEvent_bloodfog = 3 };
 	struct CurseCity { std::string_view landmark; std::uint32_t location; std::uint32_t global; };
 	inline constexpr std::array<CurseCity, 10> kCurseCities{ {
 		CurseCity{ "the Sleeping Giant Inn", 0x013163, 0x98C },

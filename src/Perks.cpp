@@ -250,6 +250,7 @@ namespace bo3z
 			if (Echo::WordSilenced(1)) {
 				a_amount *= 0.8f;  // (DIR silenced: death's refusal)
 			}
+			Stats::OnHurt();
 			auto*       av = p->AsActorValueOwner();
 			const float hp = av->GetActorValue(RE::ActorValue::kHealth);
 			if (hp - a_amount > 1.0f) {

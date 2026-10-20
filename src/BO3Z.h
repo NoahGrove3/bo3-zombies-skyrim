@@ -80,7 +80,7 @@ namespace bo3z
 		void Tick(float a_delta);
 		void MaybeDrop(const RE::NiPoint3& a_at);
 		bool InstaKill();
-		int  PointsMult();
+		float PointsMult();
 		bool FireSale();
 		float Timer(int a_kind);
 		void  SetTimer(int a_kind, float a_seconds);
@@ -118,7 +118,10 @@ namespace bo3z
 		void             Shock(const RE::NiPoint3& a_at, float a_radius, float a_bo3Damage);  // Electric Cherry
 		// event nights (sheet: events) and the nuke
 		int              EventNow();          // -1 none, else gen::kEvents index (this night)
-		int              EventPointsMult();   // Ash Storm: 2
+		float            EventPointsMult();   // an event night: 2; a themed wave: its own (Blood Fog 1.5, Champions 2)
+		int              ThemeNow();          // the theme being fought (event night or themed wave), -1 none
+		void             DevTheme(int a_theme, bool a_night);  // dev: the next wave themed (or tonight an event night)
+		void             DevMiniBoss();
 		float            EventDropMult();
 		void             Pause(float a_seconds);  // Nuke: no undead rise for a while
 		float            Paused();
@@ -422,6 +425,7 @@ namespace bo3z
 		bool WordSilenced(int a_w);                            // Stage 4: 0 GRAH (battle-fury), 1 DIR (death's refusal), 2 LEIN (the world answers)
 		bool CurseBroken();                                    // all three words silenced (Stage 5's rewards open)
 		void OnBearerSlain();                                  // a word's bearer fell (Director's champion with no city)
+		bool AwardNextPart();                                  // the mini-boss's drop: the next missing wonder part (false: all yours)
 		bool BoneDragon();                                     // Stage 5: the glider's dragon wears Alduin's bones
 		bool EndlessNight();                                   // Stage 5: the nights don't end while the brazier burns
 		int  NewGamePlus();                                    // Stage 5: cycles begun again at the Seat of the Awakened (0 = the first)
@@ -511,6 +515,7 @@ namespace bo3z
 	namespace Movement
 	{
 		bool Dodging();  // a dodge roll under way
+		bool Gliding();  // on the dragon glider (or just landed from a dive)
 
 		void OnButton(const RE::ButtonEvent* a_event);  // crouch/jump keys (Skyrim ignores crouch while sprinting)
 		void OnStick(const RE::ThumbstickEvent* a_event);  // the left stick (the dragon glide's steering)
@@ -539,6 +544,34 @@ namespace bo3z
 		void Tick(float a_delta);
 		bool Eats(RE::InputEvent* a_event);           // Skyrim's own handlers must not see this key (the loot list has it)
 		bool OnButton(const RE::ButtonEvent* a_event);
+	}
+
+	// (Noah) the night's atmosphere (src/Atmos.cpp)
+	namespace Atmos
+	{
+		void Lightning(float a_intensity);  // a flash over the sky, thunder after it (0..1)
+		void Tick(float a_delta);
+	}
+
+	// (Noah) the night's score, records and style points (src/Stats.cpp)
+	namespace Stats
+	{
+		struct Line { int kills = 0, heads = 0, best = 0, septims = 0, revives = 0, style = 0, waves = 0, minis = 0, night = 0; };
+		struct Records { int bestNight = 0, kills = 0, heads = 0, nights = 0, minis = 0, bestStreak = 0, quests = 0, wonders = 0; };
+		struct Friend { std::string name; Line line; };
+		enum Kind { kMiniBoss, kRevive, kWave, kQuest, kWonder };
+		void OnKill(RE::Actor* a_dying, bool a_gun, bool a_head, bool a_melee, bool a_bow, float a_dist);
+		void Style(std::string_view a_tag, int a_points);  // a style bonus: the points and the tag by the septims
+		void OnHurt();                                     // the streak ends
+		void OnEarned(int a_septims);
+		void Note(Kind a_kind);
+		void NightBegins(int a_night);
+		void NightEnds(int a_night);
+		Line Tonight();
+		Line LastNight();
+		Records Lifetime();
+		void Heard(std::uint64_t a_from, const std::string& a_name, const Line& a_line);
+		std::vector<Friend> Party();
 	}
 
 	namespace Tasks
@@ -594,6 +627,10 @@ namespace bo3z
 			float       hitTime{ 0 };
 			bool        hitKill{ false };
 			float       headBurstT{ 0 };  // a headshot kill's white flash at the crosshair
+			float       lightningT{ 0 }, lightningI{ 0 };  // the sky's flash (seconds left, strength)
+			float       nightProgress{ -1 };              // 0..1 through the night's waves (-1: not fighting)
+			std::string styleTag;         // a style bonus ("+40 MULTI-KILL") by the septims
+			float       styleTime{ 0 };
 			int         perks{ 0 };      // bitmask
 			std::array<int, 16> perkStacks{};  // how many of each blessing (they stack)
 			int         crew{ -1 };
