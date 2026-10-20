@@ -247,6 +247,8 @@ namespace bo3z
 				int n = 0;
 				in >> n;
 				Points::Add(n);
+			} else if (cmd == "testkit") {
+				Gun::TestKit();
 			} else if (cmd == "give") {
 				std::string id;
 				in >> id;

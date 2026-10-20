@@ -1116,6 +1116,24 @@ namespace bo3z
 			Hud::Banner("WHITERUN'S THU'UM: Dragon's Updraft - shout it and a whirlwind lifts you; open your glider at the top", 5.0f);
 			logger::info("glider: Dragon's Updraft learned ({:08X})", sh->GetFormID());
 		}
+		void TestKit()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			Save::SetDragonBond(3);
+			ApplyBondLook();
+			auto* sh = UpdraftShout();
+			if (!p || !sh || p->HasShout(sh)) {
+				return;
+			}
+			for (auto w : gen::kUpdraftWords) {
+				if (auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(w, gen::kPlugin)) {
+					Gun::Console(fmt::format("player.teachword {:08X}", f->GetFormID()));
+					Gun::Console(fmt::format("player.unlockword {:08X}", f->GetFormID()));
+				}
+			}
+			p->AddShout(sh);
+			logger::info("testkit: Dragon's Updraft and the third bond");
+		}
 		// the whirlwind round you (CurseOfAlduin\fx\whirlwind.nif, tools/whirlwind.py): spinning, swelling, fading
 		void WhirlGone()
 		{

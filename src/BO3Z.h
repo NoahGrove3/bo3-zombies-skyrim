@@ -437,6 +437,7 @@ namespace bo3z
 	{
 		void                  Tick(float a_delta);
 		void                  Reset();
+		void                  TestKit();  // dev: every weapon, spell, bow and shout, 100,000 septims
 		bool                  OnButton(const RE::ButtonEvent* a_event);
 		std::pair<bool, bool> RecentHit(RE::FormID a_actor);  // {gun kill, headshot}
 		bool                  Give(int a_gun);                // buy/box: put in a slot, equip it
@@ -523,6 +524,7 @@ namespace bo3z
 		void DevBreathProj(int a_element, RE::FormID a_proj, float a_scale, float a_beamSign);
 		void DevTakeOff();  // dev: Bond II's Updraft shout
 		bool OnSpellCast(RE::FormID a_spell);  // the Updraft shout spoken: true if it was
+		void TestKit();     // dev: Dragon's Updraft and all three bonds
 		void DevFlyOff();   // dev: the fly-off dragon, in front of you  // after the animation: arms down until the glider's dragon reaches you
 	}
 

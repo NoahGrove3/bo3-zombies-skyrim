@@ -2019,6 +2019,53 @@ namespace bo3z
 			return true;
 		}
 
+		// (Noah: a test kit) every wonder weapon and Echo Altar tome, every Coffer spell, every elemental bow, every
+		// city's shout with Dragon's Updraft and the dragon's three bonds, and 100,000 septims - for trying it all out
+		// (dev command: testkit). Tomes beyond your slots are known all the same: equip one from the Magic menu and it
+		// takes the slot in hand (SlotUnslotted).
+		bool g_kitPending = false;
+		void TestKit()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || !p->Is3DLoaded() || !p->GetParentCell() || !Forms::IntroDone()) {
+				g_kitPending = true;  // (asked for at the main menu or a loading screen: given once you are in the world)
+				return;
+			}
+			g_kitPending = false;
+			int tomes = 0;
+			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
+				const auto& g = gen::kGuns[i];
+				if (g.retired || g.kind == gen::kKindBow) {
+					continue;
+				}
+				if (auto* sp = Forms::GunSpell(i); sp && !p->HasSpell(sp)) {
+					p->AddSpell(sp);
+					++tomes;
+				}
+			}
+			for (int i = 0; i < Arcana::Count(); ++i) {
+				if (!Arcana::Known(i)) {
+					Arcana::Give(i, false);
+				}
+			}
+			for (int i = Bows::Count() - 1; i >= 0; --i) {
+				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kBows[i].weap, gen::kPlugin); w && p->GetItemCount(w) <= 0) {
+					p->AddObjectToContainer(w, nullptr, 1, nullptr);
+				}
+			}
+			for (int i = 0; i < static_cast<int>(gen::kShouts.size()); ++i) {
+				if (!KnowsShout(i)) {
+					LearnShout(i);
+				}
+			}
+			Movement::TestKit();
+			if (const int have = Points::Get(); have < 100000) {
+				Points::Refund(100000 - have);
+			}
+			Hud::Banner("TEST KIT: every wonder weapon, tome, spell, bow and shout - and 100,000 septims", 6.0f);
+			logger::info("testkit: {} tomes, {} Coffer spells, {} bows, {} shouts, septims {}", tomes, Arcana::Count(), Bows::Count(), gen::kShouts.size(), Points::Get());
+		}
+
 		bool g_migrated = false;
 
 		// The old Dwemer guns are retired: take them out of the inventory (slots follow) and make sure
@@ -2560,8 +2607,34 @@ namespace bo3z
 		}
 
 
+		// a tome you know but carry in no slot (the test kit's), equipped from the Magic menu: it takes the slot in your
+		// hand, the one there before stays known
+		void SlotUnslotted()
+		{
+			const int gun = CurrentGun();
+			if (gun < 0 || SlotOf(gun) >= 0 || gen::kGuns[gun].kind == gen::kKindBow || !Forms::GunSpell(gun)) {
+				return;
+			}
+			int slot = -1;
+			for (int s = 0; s < SlotCount() && slot < 0; ++s) {
+				if (Save::GetSlot(s).gun < 0) slot = s;
+			}
+			if (slot < 0) slot = Save::ActiveSlot() % SlotCount();
+			Save::SetSlot(slot, { gun, gen::kGuns[gun].clip, gen::kGuns[gun].reserve });
+			Save::SetActiveSlot(slot);
+			logger::info("gun: {} taken up from the Magic menu -> slot {}", gen::kGuns[gun].id, slot);
+		}
+
 		void Tick(float a_delta)
 		{
+			if (g_kitPending) {
+				static float wait = 0;
+				if ((wait += a_delta) > 5.0f) {
+					wait = 0;
+					TestKit();
+				}
+			}
+			SlotUnslotted();
 			TickStorm(a_delta);
 			Props::Tick(a_delta, GunOut() ? CurrentGun() : -1);
 			Props::TickWorld(a_delta);
