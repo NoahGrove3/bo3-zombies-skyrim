@@ -614,7 +614,7 @@ namespace bo3z
 				g_elites[actor->GetFormID()] = { actor->GetHandle(), 3.0f, 5.0f, false };
 			}
 			g_ours[actor->GetFormID()] = *pick;
-			if (const float hm = HarmMult(actor); hm < 0.999f) {  // (Noah: the harpies hit far too hard) its blows weaker too
+			if (const float hm = Director::HarmMult(actor); hm < 0.999f) {  // (Noah: the harpies hit far too hard) its blows weaker too
 				av->SetBaseActorValue(RE::ActorValue::kAttackDamageMult, hm);
 			}
 			g_alive.push_back({ actor->GetHandle(), *pick });
