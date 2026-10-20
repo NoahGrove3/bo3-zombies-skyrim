@@ -65,6 +65,23 @@ def cast_mgef(key, label, cast=2):
         sub('EDID', z('UN_' + key)), sub('FULL', z(label)), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
 cast_mgef('wandcast', 'Wand Cast', 1)
 
+# ---- the Echo Altar's roll (src/Shops.cpp): each column's rune stone strikes the heart stone with Skyrim's own lightning
+# bolt beam (Skyrim.esm ShockBoltAim, its MAGShock02 impacts), cast from a marker at the stone to a marker in the heart;
+# ShockDamageFFAimed's data with no sounds (Shops plays a vanilla trap bolt once, on each strike), no harm, no hit art
+md = bytearray(bytes.fromhex('050820100000c03f00000000140000002a00000000000000687c05000ad7233c677c05000000000019000000000000000000003f00000000cdcccc3d0000003f05000000180000009c8e0500000000000100000002000000190000009b8e050000000000d99e05000000803f000000000000803f000000000000000000000000000000000000000000000000000000000000000000000000'))
+struct.pack_into('<I', md, 0, 0x200 | 0x400 | 0x800)  # not hostile, no magnitude / duration / area
+struct.pack_into('<f', md, 4, 0.0)
+struct.pack_into('<I', md, 32, 0); struct.pack_into('<I', md, 36, 0)   # no shaders on what it touches
+struct.pack_into('<I', md, 64, 1); struct.pack_into('<i', md, 68, -1)  # script archetype: does nothing itself
+struct.pack_into('<I', md, 80, 1); struct.pack_into('<I', md, 84, 2)    # fire-and-forget, aimed
+for off in (88, 92, 96): struct.pack_into('<I', md, off, 0)             # no second value, casting art or hit art
+recs['MGEF'].append(record('MGEF', fid('MGEF', 'altarbeam'), [
+    sub('EDID', z('UN_AltarBeam')), sub('FULL', z('Altar Beam')), sub('MDOB', bytes.fromhex('a5350400')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+recs['SPEL'].append(record('SPEL', fid('SPEL', 'altarbeam'), [
+    sub('EDID', z('UN_AltarBeamSpell')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Altar Beam')),
+    sub('MDOB', bytes.fromhex('a5350400')), sub('ETYP', tsub('spel_firebolt', 'ETYP')), sub('DESC', z('')),
+    sub('SPIT', struct.pack('<IIIfIIffI', 0, 0x1, 0, 0.0, 1, 2, 0.0, 0.0, 0)), sub('EFID', struct.pack('<I', fid('MGEF', 'altarbeam'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+
 # ---- the cities' shouts (sheet: shouts): our own words of power, a voice spell per word count (it does nothing
 # itself: Gun::Shout does the effect when the spell is cast), recovery per word count
 cast_mgef('shoutcast', 'Thu\'um', 1)
@@ -577,8 +594,7 @@ def guide_text():
            p("Leave the place, or let dawn come, and the word falls quiet until you return. Silence all three and the curse of Alduin is broken."),
            "[pagebreak]", h("The Hall of the Awakened"),
            p("With the curse broken, the Reliquary under High Hrothgar becomes the <b>Hall of the Awakened</b>. Its stations:"),
-           p("<b>Alduin's Fang</b> - a greatsword cut from the World-Eater's jaw, wreathed in fire - the strongest weapon there is: it burns the dead it strikes and the fire leaps to those beside them, and a power attack looses a tornado of fire. "
-             "<b>Robes of the First Dragonborn</b> - wear them and spells and wonders cost a quarter less magicka, and it returns faster. "
+           p("<b>Robes of the First Dragonborn</b> - wear them and spells and wonders cost a quarter less magicka, and it returns faster. "
              "<b>The Bone-Wyrm's Skull</b> - your glider's dragon wears Alduin's bones (touch it again to change back)."),
            p("<b>Brazier of the Endless Night</b> - while it burns, the night never ends: wave after wave, until you put it out. "
              "<b>Seat of the Awakened</b> - begin again: every city falls back under the curse and the nights start over, the dead half again as tough each cycle. "

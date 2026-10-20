@@ -183,13 +183,16 @@ def main():
     # the heart stone turning: frame px per model unit so a 480-high frame shows 640 painting px (src/Hud.cpp)
     fw, fh = 320, 480
     k = S * M / (640.0 / fh)
-    # (Noah: smooth, at 60 fps) 96 frames, 12 x 8 - 3.75 degrees apart, cross-faded by src/Hud.cpp
-    sheet = Image.new('RGBA', (fw * 12, fh * 8), (0, 0, 0, 0))
-    for fr in range(96):
-        c = Canvas(fw * 2, fh * 2)
-        c.draw(stone, frame_xf(k * 2, fw, fh * 2 * 0.56, fr / 96 * 2 * math.pi), emit=(0.35, 0.75, 1.0), glow_gain=1.8)
-        sheet.paste(c.image(ss=2), ((fr % 12) * fw, (fr // 12) * fh))
-    sheet.save(OUT / 'menu_crystal.png', optimize=True)
+    # (Noah: no after-images) 192 frames, 1.875 degrees apart, on two sheets of 12 x 8 (menu_crystal.png, menu_crystal2.png):
+    # neighbours so close that src/Hud.cpp's cross-fade between them leaves no ghost
+    for sh in range(2):
+        sheet = Image.new('RGBA', (fw * 12, fh * 8), (0, 0, 0, 0))
+        for j in range(96):
+            fr = sh * 96 + j
+            c = Canvas(fw * 2, fh * 2)
+            c.draw(stone, frame_xf(k * 2, fw, fh * 2 * 0.56, fr / 192 * 2 * math.pi), emit=(0.35, 0.75, 1.0), glow_gain=1.8)
+            sheet.paste(c.image(ss=2), ((j % 12) * fw, (j // 12) * fh))
+        sheet.save(OUT / ('menu_crystal.png' if sh == 0 else 'menu_crystal2.png'), optimize=True)
     print('stone sheet written')
 
     # the rocks over the columns: one sprite each (turned a little differently), 256 px for 200 painting px
@@ -202,12 +205,16 @@ def main():
         c.glow_image(ss=2).save(OUT / f'menu_shard{i}_r.png', optimize=True)
     # (Noah: the menu's rocks should turn like the altar's) one rock turning: 16 frames, 4 x 4 of 256 px (and its runes'
     # light), each rock in src/Hud.cpp at its own phase, cross-faded between frames
-    turn = Image.new('RGBA', (n * 8, n * 6), (0, 0, 0, 0)); turnr = Image.new('RGBA', (n * 8, n * 6), (0, 0, 0, 0))
-    for fr in range(48):   # (48 frames, 8 x 6: 7.5 degrees apart)
-        c = Canvas(n * 2, n * 2)
-        c.draw(rock, frame_xf(k2 * 2, n, n, fr / 48 * 2 * math.pi), emit=(0.35, 0.75, 1.0), glow_gain=1.6)
-        turn.paste(c.image(ss=2), ((fr % 8) * n, (fr // 8) * n)); turnr.paste(c.glow_image(ss=2), ((fr % 8) * n, (fr // 8) * n))
-    turn.save(OUT / 'menu_rock_turn.png', optimize=True); turnr.save(OUT / 'menu_rock_turn_r.png', optimize=True)
+    # (Noah: no after-images) 144 frames, 2.5 degrees apart, on three sheets of 8 x 6 (menu_rock_turn.png, _2, _3 and their _r)
+    for sh in range(3):
+        turn = Image.new('RGBA', (n * 8, n * 6), (0, 0, 0, 0)); turnr = Image.new('RGBA', (n * 8, n * 6), (0, 0, 0, 0))
+        for j in range(48):
+            fr = sh * 48 + j
+            c = Canvas(n * 2, n * 2)
+            c.draw(rock, frame_xf(k2 * 2, n, n, fr / 144 * 2 * math.pi), emit=(0.35, 0.75, 1.0), glow_gain=1.6)
+            turn.paste(c.image(ss=2), ((j % 8) * n, (j // 8) * n)); turnr.paste(c.glow_image(ss=2), ((j % 8) * n, (j // 8) * n))
+        suf = '' if sh == 0 else f'_{sh + 1}'
+        turn.save(OUT / f'menu_rock_turn{suf}.png', optimize=True); turnr.save(OUT / f'menu_rock_turn{suf}_r.png', optimize=True)
     print('rocks written')
     # (Noah: the golden rune over the shrine, turning, as in the game) the freed altar's rune circle (dressing freed_runes:
     # runecircle.nif, its sigil gold): src/Hud.cpp lays it flat over the shrine and turns it, smoothly, every frame

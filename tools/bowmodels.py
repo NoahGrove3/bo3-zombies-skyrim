@@ -13,7 +13,7 @@ and the string draws with Skyrim's own bow animations:
     python tools/bowmodels.py [bow id ...]"""
 import json, math, pathlib, subprocess, sys
 import numpy as np
-from PIL import Image, ImageFilter, ImageOps
+from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 ROOT = pathlib.Path(__file__).parent.parent
 SRC = pathlib.Path('/home/claude/models_in/newbows')
@@ -50,7 +50,7 @@ MODELS = {
                        simplify={'Bow_Main_': 70000},
                        mats={'m0': ('holographic_hd_jpg.jpg', None, 'self', 0.6), 'm1': ('lightgold_albedo.png', 'lightgold_normal-ogl.png', None, 0.9),
                              'm2': ('Titanium-Scuffed_basecolor.png', 'Titanium-Scuffed_normal.png', None, 0.8), 'm3': (None, None, 'self', 0.6)}),
-    'emberstring': dict(src='elf-bow', up=2, parts={'Cylinder.002': 'string', 'Plane': 'drop', 'FLASH3': 'glow'},
+    'emberstring': dict(src='elf-bow', up=2, parts={'Cylinder.002': 'string', 'Plane': 'drop', 'FLASH3': 'trim'},
                         simplify={'Cylinder.001': 36000, 'FLASH3': 16000, 'handel': 16000}, runic=True,
                         # the elf bow's own colour scheme, turned to fire: a charred limb with the runes (our finish),
                         # ember-gold tendrils, black leather grip, flame-leaf blades
@@ -98,6 +98,35 @@ def simplified(path, target):
         r = subprocess.run([SIMPLIFY, str(path), str(out), str(target)], capture_output=True, text=True)
         if r.returncode: raise SystemExit(r.stdout + r.stderr)
     return out
+
+
+DIM = 0.45   # (Noah: the bows were far too bright) every glow, lit part and flowing flame skin at under half
+
+
+def detail(da, na, seed, amt=1.0):
+    """(Noah: more detail, more real) a worn, handled finish over a model's own texture: cavities darkened from its
+    normal map's curvature (grime in the crevices), edges caught a little lighter, fine grain and scratches in both the
+    colour and the normal map"""
+    h, w = da.shape[:2]
+    n = (na[..., :3].astype(np.float32) - 128) / 127
+    curv = np.gradient(n[..., 0], axis=1) + np.gradient(n[..., 1], axis=0)
+    curv = np.asarray(Image.fromarray(((curv.clip(-0.5, 0.5) + 0.5) * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.5)), np.float32) / 255 - 0.5
+    rng = np.random.default_rng(seed)
+    grain = rng.normal(0, 1, (h // 2, w // 2)).astype(np.float32)
+    grain = np.asarray(Image.fromarray(((grain * 0.25 + 0.5).clip(0, 1) * 255).astype(np.uint8)).resize((w, h), Image.BICUBIC), np.float32) / 255 - 0.5
+    smudge = np.asarray(Image.fromarray(((rng.normal(0, 1, (h // 32, w // 32)) * 0.25 + 0.5).clip(0, 1) * 255).astype(np.uint8)).resize((w, h), Image.BICUBIC), np.float32) / 255 - 0.5
+    scr = Image.new('L', (w, h), 0); dr = ImageDraw.Draw(scr)
+    for _ in range(int(w * h / 9000)):
+        x, y = rng.uniform(0, w), rng.uniform(0, h); a = rng.uniform(0, 2 * math.pi); L = rng.uniform(4, 30)
+        dr.line([(x, y), (x + math.cos(a) * L, y + math.sin(a) * L)], fill=int(rng.uniform(60, 160)), width=1)
+    scr = np.asarray(scr, np.float32) / 255
+    shade = 1.0 + amt * (0.9 * curv.clip(-0.5, 0) + 0.35 * curv.clip(0, 0.5) + 0.10 * grain + 0.12 * smudge) + 0.10 * amt * scr
+    da = da * shade[..., None]
+    na = na.copy()
+    bump = (grain * 10 + scr * 18).astype(np.float32)
+    na[..., 0] = (na[..., 0].astype(np.float32) + np.gradient(bump, axis=1) * 6).clip(0, 255).astype(np.uint8)
+    na[..., 1] = (na[..., 1].astype(np.float32) + np.gradient(bump, axis=0) * 6).clip(0, 255).astype(np.uint8)
+    return da, na
 
 
 def tex_dds(img, rel, alpha=False, size=2048):
@@ -224,16 +253,16 @@ def build(bid):
             na = np.asarray(nmap).copy(); na[..., 3] = 150 if gl == 0 else 200
             ga = np.asarray(dmap, np.float32) / 255 * gcol * (1.0 if role != 'glow' else 1.4)
             r = (tex_dds(dmap, f'{bid}/{bid}_{mat}_d.dds'), tex_dds(Image.fromarray(na, 'RGBA'), f'{bid}/{bid}_{mat}_n.dds', True),
-                 tex_dds(Image.fromarray(ga.clip(0, 255).astype(np.uint8)), f'{bid}/{bid}_{mat}_g.dds'), max(gl, 2.0 if role == 'glow' else 0.0), 0.6)
+                 tex_dds(Image.fromarray(ga.clip(0, 255).astype(np.uint8)), f'{bid}/{bid}_{mat}_g.dds'), max(gl, 2.0 if role == 'glow' else 0.0) * DIM, 0.6)
             texcache[key] = r; return r
-        if mat in cfg.get('trim_mats', ()):
+        if mat in cfg.get('trim_mats', ()) or role == 'trim':  # (Noah: the flame-leaf blades were blinding - forged metal now, fire only in its veins)
             dmap, nmap, gmap = bowart.trim_maps(row['element'], glow, seed=len(bid) + 7)
-            r = (tex_dds(dmap, f'{bid}/{bid}_{mat}_d.dds'), tex_dds(nmap, f'{bid}/{bid}_{mat}_n.dds', True), tex_dds(gmap, f'{bid}/{bid}_{mat}_g.dds'), 2.0, 0.7)
+            r = (tex_dds(dmap, f'{bid}/{bid}_{mat}_d.dds'), tex_dds(nmap, f'{bid}/{bid}_{mat}_n.dds', True), tex_dds(gmap, f'{bid}/{bid}_{mat}_g.dds'), 2.0 * DIM, 0.7)
             texcache[key] = r; return r
         if cfg.get('runic'):
             kind = row['body']
             dmap, nmap, gmap = bowart.body_maps(kind, tuple(row['bodyColor']), glow, seed=len(bid), element=row['element'])
-            r = (tex_dds(dmap, f'{bid}/{bid}_d.dds'), tex_dds(nmap, f'{bid}/{bid}_n.dds', True), tex_dds(gmap, f'{bid}/{bid}_g.dds'), 3.0, 0.6)
+            r = (tex_dds(dmap, f'{bid}/{bid}_d.dds'), tex_dds(nmap, f'{bid}/{bid}_n.dds', True), tex_dds(gmap, f'{bid}/{bid}_g.dds'), 3.0 * DIM, 0.6)
             texcache[key] = r; return r
         spec = cfg['mats'].get(mat)
         if not spec:
@@ -251,7 +280,6 @@ def build(bid):
             da = da * (1 - cfg['tint_amt']) + np.array(cfg['tint'], np.float32) * (0.35 + 1.3 * lum) * cfg['tint_amt']
         if mat == 'm0' and bid == 'stormreach':     # the holographic sheen leans to the storm's violet
             da = da * 0.55 + gcol * 0.45
-        D = tex_dds(Image.fromarray(da.clip(0, 255).astype(np.uint8)), f'{tag}_d.dds')
         # normal + specular (gloss from 1 - roughness)
         if nn:
             nimg = Image.open(d / 'tex' / nn).convert('RGB').resize(dimg.size, Image.LANCZOS)
@@ -259,6 +287,9 @@ def build(bid):
             if cfg.get('dx_normal'): na[..., 1] = 255 - na[..., 1]
         else:
             na = np.zeros(da.shape, np.uint8); na[...] = (128, 128, 255)
+        if role != 'glow' and gn != 'self':
+            da, na = detail(da, na, seed=len(tag))
+        D = tex_dds(Image.fromarray(da.clip(0, 255).astype(np.uint8)), f'{tag}_d.dds')
         if rough:
             ra = np.asarray(Image.open(d / 'tex' / rough).convert('L').resize(dimg.size, Image.LANCZOS), np.float32) / 255
             sa = ((1 - ra) * 230 + 15)
@@ -268,15 +299,15 @@ def build(bid):
         # glow
         if gn == 'self' or role == 'glow':
             g = np.full(da.shape, 1.0, np.float32) * gcol
-            mult = 2.4
+            mult = 2.4 * DIM
         elif gn == 'bright':
             lum = da.mean(2) / 255
             m = np.clip((lum - 0.62) / 0.3, 0, 1) ** 1.5
-            g = m[..., None] * gcol; mult = 1.2
+            g = m[..., None] * gcol; mult = 1.2 * DIM
         elif gn:
             em = np.asarray(Image.open(d / 'tex' / gn).convert('L').resize(dimg.size, Image.LANCZOS), np.float32) / 255
             em = np.maximum(em, np.asarray(Image.fromarray((em * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(6)), np.float32) / 255 * 0.6)
-            g = em[..., None] * gcol; mult = 2.6
+            g = em[..., None] * gcol; mult = 2.6 * DIM
         else:
             g = np.zeros(da.shape, np.float32); mult = 0.0
         G = tex_dds(Image.fromarray(g.clip(0, 255).astype(np.uint8)), f'{tag}_g.dds')
@@ -340,7 +371,7 @@ def build(bid):
                 start = i
                 name = f'{bid}_{stem}_{mat}_{chunk}'.replace('.', '_'); chunk += 1
                 lit = role == 'glow'
-                lines.append(f'shape {name} diffuse={D} normal={N} glow={G} emit={ec} emitmult={mult if not lit else 2.4:.2f} spec={sp:.2f} gloss={80 if sp > 0.6 else 40}')
+                lines.append(f'shape {name} diffuse={D} normal={N} glow={G} emit={ec} emitmult={mult if not lit else 2.4 * DIM:.2f} spec={sp:.2f} gloss={80 if sp > 0.6 else 40}')
                 inv = np.empty(len(used), int)
                 for a, b in used.items(): inv[b] = a
                 for a in inv:
@@ -375,7 +406,7 @@ def build(bid):
     # Bow's flowing flame shader on a skin a hair outside every part, recoloured to the element, flowing along its length
     pal = palette(bid, glow)
     nif = OUT / 'Meshes/CurseOfAlduin/bow' / (bid + '.nif')
-    r = subprocess.run(['/home/claude/tools/fxshell', str(nif), SPECTRAL, '6', str(nif), pal, '1', '1', '1', f"{cfg.get('shell', 0.9)}", '0.12', '0.025', '0.08'], capture_output=True, text=True)
+    r = subprocess.run(['/home/claude/tools/fxshell', str(nif), SPECTRAL, '6', str(nif), pal, '1', '1', '1', f"{cfg.get('shell', 0.9) * DIM:.3f}", '0.12', '0.025', '0.08'], capture_output=True, text=True)
     print('  ', r.stdout.strip(), r.stderr.strip())
     if r.returncode: raise SystemExit(f'fxshell failed for {bid}')
     print(f'   {total} triangles')

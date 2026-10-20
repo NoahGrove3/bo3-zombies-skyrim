@@ -305,7 +305,7 @@ namespace bo3z
 		bool Flag(int a_f) { return (Read(gen::kEchoGlobWords) & a_f) != 0; }
 		void SetFlag(int a_f, bool a_on) { Write(gen::kEchoGlobWords, a_on ? (Read(gen::kEchoGlobWords) | a_f) : (Read(gen::kEchoGlobWords) & ~a_f)); }
 		bool Broken() { return (Read(gen::kEchoGlobWords) & ((1 << kWordCount) - 1)) == (1 << kWordCount) - 1; }
-		RE::TESObjectWEAP* Fang() { return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); }
+		RE::TESObjectWEAP* Fang() { return nullptr; }  // (Noah: Alduin's Fang retired - the wonder weapons are being remade)
 		struct HallSpot
 		{
 			std::uint32_t id;
@@ -370,6 +370,7 @@ namespace bo3z
 			}
 			if (Broken()) {   // the Hall of the Awakened
 				for (const auto& h : HallSpots()) {
+					if (h.id == gen::kHallFang) continue;  // (its stand goes with it)
 					Ensure(a_p, cell, h.id, Room(h.x, h.y, 0), h.yaw);
 					Ensure(a_p, cell, gen::kRelBeam, Room(h.x, h.y, 100.0f), 0, 0.18f);
 				}
@@ -781,7 +782,7 @@ namespace bo3z
 				SetFlag(kFlagHallTold, true);
 				Hud::Lore("THE CURSE OF ALDUIN IS BROKEN",
 					"The dead of Skyrim sleep. Beneath High Hrothgar the Reliquary of the Tongues wakes as the Hall of the Awakened, and what you won waits there: "
-					"Alduin's Fang, the Robes of the First Dragonborn, the Bone-Wyrm's Skull for your dragon, the Brazier of the Endless Night - "
+					"the Robes of the First Dragonborn, the Bone-Wyrm's Skull for your dragon, the Brazier of the Endless Night - "
 					"and the Seat of the Awakened, for when you would face it all again.",
 					20.0f);
 			}
@@ -1157,7 +1158,7 @@ namespace bo3z
 					consider(SiteAt(i) + RE::NiPoint3{ 0, 0, 260.0f }, std::string(gen::kEchoParts[i].label) + " - " + std::string(gen::kEchoParts[i].site));
 				}
 			}
-			if (Broken() && Fang() && a_p->GetItemCount(Fang()) <= 0 && !Flag(kFlagRobes)) {
+			if (Broken() && !Flag(kFlagRobes)) {
 				consider(kHHFront + RE::NiPoint3{ 0, 0, 250.0f }, "High Hrothgar - the Hall of the Awakened");
 			}
 			if (const int wd = NextWord(); wd >= 0) {

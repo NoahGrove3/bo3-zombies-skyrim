@@ -279,6 +279,109 @@ namespace bo3z
 			return pool;
 		}
 
+		// ---- the roll's beams, in the world (Noah: hyper-realistic): Skyrim's own lightning bolt beam from each column's
+		// rune stone into the heart stone (UN_AltarBeamSpell: ShockBoltAim and its MAGShock02 impacts, harmless), cast
+		// between markers set at the stones' moving 3D; each beam strikes with the bolt's crack and then keeps crackling
+		// (re-cast) until the roll lands
+		struct AltarParts
+		{
+			RE::TESObjectREFR* heart{ nullptr };
+			std::array<RE::TESObjectREFR*, 6> rocks{};
+		};
+		AltarParts FindAltarParts(RE::TESObjectREFR* a_chest)
+		{
+			AltarParts o;
+			RE::TES::GetSingleton()->ForEachReferenceInRange(a_chest, 420.0f, [&](RE::TESObjectREFR* r) {
+				if (!r || r->IsDisabled() || r->IsDeleted()) {
+					return RE::BSContainer::ForEachResult::kContinue;
+				}
+				auto* b = r->GetBaseObject();
+				if (b && (b == Forms::Ours(gen::kHeartStone) || b == Forms::Ours(gen::kHeartStoneLit))) {
+					o.heart = r;
+				}
+				for (int q = 0; q < 6; ++q) {
+					if (b && b == Forms::Ours(gen::kPillarRock[q])) o.rocks[q] = r;
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			return o;
+		}
+		std::array<RE::ObjectRefHandle, 7> g_beamMk;  // a marker at each rune stone (0-5) and in the heart (6)
+		std::array<float, 6>               g_beamRecast{};
+		int                                g_beamStruck = 0;
+		RE::TESObjectREFR* BeamMarker(int a_i, RE::TESObjectREFR* a_near, const RE::NiPoint3& a_at)
+		{
+			auto m = g_beamMk[a_i].get();
+			if (!m || m->IsDeleted() || m->GetParentCell() != a_near->GetParentCell()) {
+				auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(0x0000003B);
+				auto  ref = xm ? a_near->PlaceObjectAtMe(xm, false) : nullptr;
+				if (!ref) return nullptr;
+				g_beamMk[a_i] = ref->CreateRefHandle();
+				m = ref;
+			}
+			m->SetPosition(a_at);
+			return m.get();
+		}
+		bool AltarBeam(RE::TESObjectREFR* a_from, RE::TESObjectREFR* a_to)
+		{
+			static auto* spell = RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(gen::kAltarBeamSpell, gen::kPlugin);
+			auto* c = spell && a_from ? a_from->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant) : nullptr;
+			if (!c) return false;
+			c->CastSpellImmediate(spell, false, a_to, 1.0f, false, 0.0f, nullptr);
+			return true;
+		}
+		void StrikeSound(const RE::NiPoint3& a_at, float a_vol)
+		{
+			auto* d = RE::TESForm::LookupByID<RE::BGSSoundDescriptorForm>(0x0003F206);  // MAGShockFFFireSD: the bolt's crack
+			auto* am = RE::BSAudioManager::GetSingleton();
+			RE::BSSoundHandle h;
+			if (d && am && am->BuildSoundDataFromDescriptor(h, static_cast<RE::BSISoundDescriptor*>(d))) {
+				h.SetPosition(a_at);
+				h.SetVolume(a_vol);
+				h.Play();
+			}
+		}
+		bool g_beams3D = false;  // the world's beams are flying (the HUD's drawn ones stand down)
+		void TickBeams(RE::TESObjectREFR* a_chest, float a_delta, float a_k)
+		{
+			const int struck = std::clamp(static_cast<int>(a_k * 6.0f + 1e-4f), 0, 6);
+			const auto parts = FindAltarParts(a_chest);
+			if (!parts.heart) {
+				g_beams3D = false;
+				return;
+			}
+			const auto at = [](RE::TESObjectREFR* r) { return r->Get3D() ? r->Get3D()->world.translate : r->GetPosition(); };
+			auto* heart = BeamMarker(6, a_chest, at(parts.heart));
+			if (!heart) {
+				g_beams3D = false;
+				return;
+			}
+			bool any = false;
+			for (int q = 0; q < 6; ++q) {
+				if (!parts.rocks[q] || q >= struck) continue;
+				const auto rp = at(parts.rocks[q]);
+				auto*      mk = BeamMarker(q, a_chest, rp);
+				if (!mk) continue;
+				const bool fresh = q >= g_beamStruck;
+				if (fresh) {
+					StrikeSound(rp, 0.9f);
+					g_beamRecast[q] = 0;
+				}
+				if ((g_beamRecast[q] -= a_delta) <= 0) {  // (a bolt lives about a third of a second: struck again, out of step with the others)
+					g_beamRecast[q] = 0.22f + 0.05f * static_cast<float>(q % 3);
+					any = AltarBeam(mk, heart) || any;
+				} else {
+					any = true;
+				}
+			}
+			g_beamStruck = struck;
+			g_beams3D = any || g_beams3D;
+		}
+		void EndBeams()
+		{
+			g_beamStruck = 0, g_beamRecast = {}, g_beams3D = false;
+		}
+
 		void TickShow(float a_delta)
 		{
 			if (g_show.phase == Show::Idle) {
@@ -313,15 +416,10 @@ namespace bo3z
 						g_show.step = 0.045f;
 						Forms::PlayAt(gen::Sound::coffer_spin, chest.get());
 					}
-					{
-						static int lastBeams = 0;
-						const int  beams = std::min(6, static_cast<int>(k * 6.0f));
-						if (beams > lastBeams && beams < 6) {
-							PlayUi(UiSnd::kMove, 0.6f);  // (each beam striking the heart)
-						}
-						lastBeams = beams >= 6 || g_show.t < a_delta * 1.5f ? 0 : beams;
-					}
+					TickBeams(chest.get(), a_delta, k);  // (the stones strike the heart one by one: the sixth lands the roll)
 					if (g_show.t >= gen::kShowSpin) {
+						TickBeams(chest.get(), a_delta, 1.0f);
+						EndBeams();
 						g_show.t = 0;
 						g_show.shown = g_show.gun;
 						ShowAt(g_show.gun, gen::kShowRise, true);
@@ -1838,6 +1936,10 @@ namespace bo3z
 				case 0:
 					if (!TakeOffer(ref)) {
 						SpinBox(ref);
+						if (g_show.phase != Show::Idle) {  // (Noah: the box sits mid-screen now - it steps aside to watch the roll)
+							g_menu = false;
+							g_closedAt = std::chrono::steady_clock::now();
+						}
 					}
 					break;
 				case 1:
@@ -1850,6 +1952,10 @@ namespace bo3z
 				case 6:
 					if (!TakeOffer(ref)) {
 						SpinBow(ref);
+						if (g_show.phase != Show::Idle) {  // (Noah: the box sits mid-screen now - it steps aside to watch the roll)
+							g_menu = false;
+							g_closedAt = std::chrono::steady_clock::now();
+						}
 					}
 					break;
 				case 7: Curse::StartTrial(ref ? TownOf(ref) : -1, g_trialSel); break;
@@ -2071,7 +2177,7 @@ namespace bo3z
 						const auto hp = heart->Get3D() ? heart->Get3D()->world.translate : heart->GetPosition();
 						if (screen(hp, h.beamToX, h.beamToY)) {
 							for (int q = 0; q < 6; ++q) {
-								if (rocks[q] && q < static_cast<int>(lit)) {
+								if (rocks[q] && q < static_cast<int>(lit) && !g_beams3D) {  // (drawn only if the world's beams can't fly)
 									const auto rp = rocks[q]->Get3D() ? rocks[q]->Get3D()->world.translate : rocks[q]->GetPosition();
 									if (screen(rp, h.beamFrom[q * 2], h.beamFrom[q * 2 + 1])) {
 										h.beamLit = q + 1;
@@ -2083,8 +2189,9 @@ namespace bo3z
 							}
 						}
 						// its runes: the stone's own glow, brighter the further the roll has gone
-						const float k = std::max(0.0f, lit - 1.0f + (kk >= 6.0f ? 1.0f : kk - std::floor(std::max(0.0f, kk)))) / 6.0f;  // (a step brighter with each beam struck)
-						HeartGlow(heart, 1.0f + 2.5f * k);
+						const float k = std::clamp(std::floor(std::max(0.0f, kk) + 1e-4f), 0.0f, 6.0f) / 6.0f;  // (a step brighter with each beam struck)
+						const float sinceStrike = kk >= 1.0f ? kk - std::floor(kk) : 1.0f;  // (each strike: the runes flare white-hot, then settle)
+						HeartGlow(heart, 1.0f + 2.5f * k + 4.0f * std::max(0.0f, 1.0f - sinceStrike * 5.0f));
 						g_glowHeart = heart->CreateRefHandle();
 					}
 				}

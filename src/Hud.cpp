@@ -258,6 +258,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 		std::uint32_t ArmsColor(int id) { return id >= Bows::kIdBase ? Bows::Color(id - Bows::kIdBase) : id >= Arcana::kIdBase ? Arcana::ElementColor(Arcana::ElementOf(id - Arcana::kIdBase)) : id >= 0 && id < static_cast<int>(gen::kGuns.size()) ? gen::kGuns[id].color : 0xC8A060; }
 
+		struct OrbTex { ID3D11ShaderResourceView* crystal[2]; ID3D11ShaderResourceView* soft; };
+		OrbTex MenuOrbTextures();  // (the menu's heart stone renders and soft light, defined with them below)
 		void DrawEmblem(ImDrawList* dl, int gun, ImVec2 c, float R, float alpha, float now, float flame = 1.0f)
 		{
 			ID3D11ShaderResourceView* iconTex = nullptr;
@@ -2156,20 +2158,97 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const std::uint32_t c = ArmsColor(g);
 				return IM_COL32((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF, static_cast<int>(255 * std::clamp(a, 0.0f, 1.0f)));
 			};
-			const auto rollOrb = [&](ImVec2 c, float R) {  // the roll's mark in the menu: six stones, lit one by one as their beams strike; then what it won
-				dl->AddCircleFilled(c, R, IM_COL32(8, 10, 18, 210), 48);
-				dl->AddCircle(c, R, Fade(kGold, 0.55f), 48, 1.5f * k);
-				const int struck = s.rollPhase == 2 ? std::min(6, static_cast<int>(s.rollT * 6.0f)) : s.rollPhase == 3 ? 6 : 0;
+			const auto rollOrb = [&](ImVec2 c, float R) {
+				// (Noah: hyper-realistic) a window of dark glass in a cold steel bezel, the altar's own heart stone turning
+				// inside it (the menu's renders of it), six rune studs round the rim; as each stone strikes the heart a bolt
+				// of blue lightning forks from its stud into the stone and stays crackling, the stone's light rising; when
+				// the sixth lands, a white flash and what it won in front of the stone
+				const OrbTex tx = MenuOrbTextures();
+				const auto   T = [](ID3D11ShaderResourceView* t) { return ImTextureID(reinterpret_cast<std::uintptr_t>(t)); };
+				const int    struck = s.rollPhase == 2 ? std::min(6, static_cast<int>(s.rollT * 6.0f + 1e-4f)) : s.rollPhase == 3 ? 6 : 0;
+				const float  power = struck / 6.0f;
+				// the glass: deep, darker at the rim (many soft discs: no banding)
+				for (int q = 0; q < 16; ++q) {
+					const float t = 1.0f - q / 16.0f;
+					dl->AddCircleFilled(c, R * t, IM_COL32(static_cast<int>(2 + 10 * (1 - t)), static_cast<int>(4 + 16 * (1 - t)), static_cast<int>(8 + 30 * (1 - t)), 40), 64);
+				}
+				dl->AddCircleFilled(c, R, IM_COL32(2, 3, 6, 120), 64);
+				// the heart stone, turning (faster while the altar rolls), its light swelling with every strike
+				if (tx.soft) {
+					const float g = R * (1.1f + 0.5f * power);
+					dl->AddImage(T(tx.soft), { c.x - g, c.y - g }, { c.x + g, c.y + g }, { 0, 0 }, { 1, 1 }, IM_COL32(70, 150, 255, static_cast<int>(60 + 150 * power)));
+				}
+				if (tx.crystal[0]) {
+					static float turn = 0;
+					turn += dt * (s.rollPhase == 2 ? 60.0f + 160.0f * s.rollT : 10.6f);  // (frames a second: 18 s a turn at rest)
+					const int nF = tx.crystal[1] ? 192 : 96;
+					const int f = static_cast<int>(turn) % nF, ff = f % 96;
+					const ImVec2 uv0{ (ff % 12) / 12.0f, (ff / 12) / 8.0f }, uv1{ uv0.x + 1.0f / 12.0f, uv0.y + 0.125f };
+					const float  hh = R * 1.55f, ww = hh * 320.0f / 480.0f;
+					const ImVec2 mid{ c.x, c.y + (0.5f - 0.56f) * hh * 2.0f * 0.5f };
+					dl->PushClipRect({ c.x - R, c.y - R }, { c.x + R, c.y + R }, true);
+					dl->AddImage(T(tx.crystal[f / 96] ? tx.crystal[f / 96] : tx.crystal[0]), { mid.x - ww * 0.5f, mid.y - hh * 0.5f }, { mid.x + ww * 0.5f, mid.y + hh * 0.5f }, uv0, uv1,
+						IM_COL32(static_cast<int>(200 + 55 * power), static_cast<int>(215 + 40 * power), 255, 255));
+					dl->PopClipRect();
+				}
+				// the bolts: from each struck stud into the stone - a forked, flickering line of blue-white light
+				const auto bolt = [&](ImVec2 a, ImVec2 b, int seed) {
+					constexpr int kSeg = 9;
+					const ImVec2  d{ b.x - a.x, b.y - a.y };
+					const float   len = std::sqrt(d.x * d.x + d.y * d.y);
+					if (len < 2) return;
+					const ImVec2 n{ -d.y / len, d.x / len };
+					const int    tick = static_cast<int>(now * 22.0f);  // (it re-forks some twenty times a second, as lightning does)
+					ImVec2       pts[kSeg + 1];
+					for (int j = 0; j <= kSeg; ++j) {
+						const float t = static_cast<float>(j) / kSeg;
+						const std::uint32_t h = static_cast<std::uint32_t>((tick * 73856093) ^ (seed * 19349663) ^ (j * 83492791));
+						const float jig = (j == 0 || j == kSeg) ? 0.0f : ((h % 1000) / 500.0f - 1.0f) * len * 0.09f * std::sin(t * 3.1416f);
+						pts[j] = { a.x + d.x * t + n.x * jig, a.y + d.y * t + n.y * jig };
+					}
+					for (int j = 0; j < kSeg; ++j) {
+						dl->AddLine(pts[j], pts[j + 1], IM_COL32(40, 110, 255, 60), 6.0f * k);
+						dl->AddLine(pts[j], pts[j + 1], IM_COL32(110, 190, 255, 150), 2.6f * k);
+						dl->AddLine(pts[j], pts[j + 1], IM_COL32(240, 250, 255, 255), 1.0f * k);
+					}
+				};
 				for (int q = 0; q < 6; ++q) {
 					const float  a = -RE::NI_PI / 2 + q * RE::NI_PI / 3.0f;
-					const ImVec2 p{ c.x + std::cos(a) * (R - 6 * k), c.y + std::sin(a) * (R - 6 * k) };
+					const ImVec2 p{ c.x + std::cos(a) * (R - 5 * k), c.y + std::sin(a) * (R - 5 * k) };
 					if (q < struck) {
-						dl->AddLine(p, c, IM_COL32(120, 200, 255, 160), 1.6f * k);
+						bolt(p, { c.x, c.y - R * 0.05f }, q);
 					}
-					dl->AddCircleFilled(p, 2.8f * k, q < struck ? IM_COL32(170, 225, 255, 255) : Fade(kGold, 0.35f), 10);
+				}
+				// the bezel: brushed steel - lit from above, dark below, a fine bright inner lip
+				for (int q = 0; q < 24; ++q) {
+					const float a0 = q * 6.2832f / 24, a1 = (q + 1) * 6.2832f / 24, lum = 0.5f + 0.5f * std::cos((a0 + a1) * 0.5f + 2.3f);
+					const int   v = static_cast<int>(50 + 150 * lum);
+					dl->PathArcTo(c, R + 2.5f * k, a0, a1 + 0.02f, 4);
+					dl->PathStroke(IM_COL32(v, v + 8, std::min(255, v + 22), 255), 0, 4.0f * k);
+				}
+				dl->AddCircle(c, R + 4.6f * k, IM_COL32(8, 10, 14, 255), 64, 1.2f * k);
+				dl->AddCircle(c, R, IM_COL32(150, 200, 255, 120), 64, 1.0f * k);
+				// the glass's reflection: a soft crescent of sky across the top
+				dl->PathArcTo(c, R * 0.82f, -2.6f, -0.55f, 24);
+				dl->PathStroke(IM_COL32(220, 235, 255, 26), 0, R * 0.22f);
+				// the rune studs: dark iron until struck, then burning blue
+				for (int q = 0; q < 6; ++q) {
+					const float  a = -RE::NI_PI / 2 + q * RE::NI_PI / 3.0f;
+					const ImVec2 p{ c.x + std::cos(a) * (R + 2.5f * k), c.y + std::sin(a) * (R + 2.5f * k) };
+					if (q < struck && tx.soft) {
+						const float g = 9 * k;
+						dl->AddImage(T(tx.soft), { p.x - g, p.y - g }, { p.x + g, p.y + g }, { 0, 0 }, { 1, 1 }, IM_COL32(110, 190, 255, 220));
+					}
+					dl->AddCircleFilled(p, 3.2f * k, q < struck ? IM_COL32(200, 235, 255, 255) : IM_COL32(40, 46, 56, 255), 12);
+					dl->AddCircle(p, 3.2f * k, IM_COL32(10, 12, 16, 255), 12, 1.0f * k);
 				}
 				if (s.rollPhase == 3 && s.rollGun >= 0) {
-					DrawEmblem(dl, s.rollGun, c, R * 0.6f, 1.0f, now);
+					const float since = s.rollT * gen::kShowOffer;
+					if (since < 0.6f && tx.soft) {  // the landing's white flash
+						const float f = since / 0.6f, g = R * (1.0f + 1.5f * f);
+						dl->AddImage(T(tx.soft), { c.x - g, c.y - g }, { c.x + g, c.y + g }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(230 * (1.0f - f))));
+					}
+					DrawEmblem(dl, s.rollGun, c, R * 0.55f, std::min(1.0f, since / 0.3f), now);
 				}
 			};
 			const auto keyCap = [&](ImVec2 at, const std::string& key, bool live) {
@@ -2279,7 +2358,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float trialsH = (s.trialsOn ? 112 * k + 5 * 70 * k + 104 * k : 0.0f) + (s.whispers.empty() ? 0.0f : 56 * k + 46 * k * s.whispers.size());
 				const float contentH = (shout ? 610 : 532) * k + 86 * k + 78 * k + 56 * k + (s.chooseOn ? 52 * k : 0.0f) + trialsH;  // (+ Leave)  // (+ the bow wheel)  // (+ the dragon's bond, + a spell to choose)
 				const float h = std::min(contentH, size.y - 60 * k);
-				const ImVec2 a{ size.x - w - 36 * k, std::max(24 * k, size.y * 0.5f - h * 0.5f - 10 * k) }, b{ a.x + w, a.y + h };
+				const ImVec2 a{ size.x * 0.5f - w * 0.5f, std::max(24 * k, size.y * 0.5f - h * 0.5f - 10 * k) }, b{ a.x + w, a.y + h };  // (Noah: centred, clear of the HUD)
 				Panel(dl, a, b, k, 0.92f);
 				static float scroll = 0, scrollGoal = 0;
 				static float focusY0 = 0, focusY1 = 0;
@@ -2584,6 +2663,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		std::atomic<float> g_mouseDX{ 0 }, g_mouseDY{ 0 };
 		ImVec2             g_cursor{ -1, -1 };
 		std::atomic<bool>  g_partyOpen{ false };  // the Party window over the Esc journal
+		std::atomic<int>   g_partyFocus{ 0 }, g_partyPress{ 0 };  // (Noah: the party window by D-pad / arrows) the button in focus, and A / Enter pressed
 		ImVec2             g_skCursor{ -1, -1 };  // exactly where Skyrim's own menu cursor is (its menus take the clicks there)
 		void UpdateCursor(ImVec2 a_size)
 		{
@@ -2677,7 +2757,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const float w = 600 * k, rowH = 40 * k;
 			const int   buttons = !net ? 0 : Net::InLobby() ? (Net::IsHost() ? 2 : 1) : 1 + static_cast<int>(std::min<std::size_t>(friends.size(), 3));
 			const int   lines = 1 + static_cast<int>(party.size());
-			const float h = 70 * k + buttons * (rowH + 6 * k) + 40 * k + lines * 26 * k + 30 * k + 64 * k + 30 * k + 82 * k + 20 * k;
+			const float h = 70 * k + buttons * (rowH + 6 * k) + 40 * k + lines * 26 * k + 30 * k + 64 * k + 30 * k + 82 * k + 20 * k + 56 * k;
 			const ImVec2 b{ a.x + w, std::min(a.y + h, size.y - 10 * k) };
 			Panel(dl, a, b, k, 0.95f);
 			float y = a.y + 14 * k;
@@ -2687,8 +2767,20 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const std::string st = !net ? "Solo" : Net::Status() + (Net::InLobby() ? "   (" + std::to_string(Net::Members() + 1) + " in party)" : "");
 			Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(200, 214, 235, 235), st);
 			y += 26 * k;
+			// (Noah: by controller) D-pad up / down (or the arrow keys) moves the focus through the buttons, A / Enter presses it
+			const int focus = buttons > 0 ? std::clamp(g_partyFocus.load(), 0, buttons - 1) : 0;
+			g_partyFocus = focus;
+			const bool press = g_partyPress.exchange(0) > 0;
+			int        rowIdx = 0;
 			auto row = [&](const std::string& label, ImU32 accent = kGold) {
-				const bool hit = Button(dl, { L, y }, { b.x - 20 * k, y + rowH }, label, cur, click, k, accent);
+				const ImVec2 ra{ L, y }, rb{ b.x - 20 * k, y + rowH };
+				bool hit = Button(dl, ra, rb, label, cur, click, k, accent);
+				if (rowIdx == focus) {
+					dl->AddRect({ ra.x - 3 * k, ra.y - 3 * k }, { rb.x + 3 * k, rb.y + 3 * k }, kRune, 4 * k, 0, 2.0f * k);
+					dl->AddTriangleFilled({ ra.x - 12 * k, (ra.y + rb.y) * 0.5f - 7 * k }, { ra.x - 12 * k, (ra.y + rb.y) * 0.5f + 7 * k }, { ra.x - 5 * k, (ra.y + rb.y) * 0.5f }, kRune);
+					hit = hit || press;
+				}
+				++rowIdx;
 				y += rowH + 6 * k;
 				return hit;
 			};
@@ -2746,6 +2838,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(220, 230, 245, 235), fmt::format("best night {}   nights survived {}   kills {}   headshots {}", rec.bestNight, rec.nights, rec.kills, rec.heads));
 			y += 22 * k;
 			Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(220, 230, 245, 235), fmt::format("best streak {}   mini-bosses {}   wonders forged {}   hidden quests {}", rec.bestStreak, rec.minis, rec.wonders, rec.quests));
+			// the keys, both ways
+			y += 30 * k;
+			dl->AddLine({ L, y - 6 * k }, { b.x - 20 * k, y - 6 * k }, kRuneDim, 1.0f * k);
+			const bool ps = Settings::PlayStationIcons();
+			Txt(dl, g_body, 14 * k, { L, y }, IM_COL32(170, 190, 220, 230), "Keyboard:  P  open / close     Up / Down  move     Enter  select");
+			Txt(dl, g_body, 14 * k, { L, y + 20 * k }, IM_COL32(170, 190, 220, 230), std::string("Controller:  ") + (ps ? "Triangle" : "Y") + "  open / close     D-pad  move     " + (ps ? "Cross" : "A") + "  select");
 		}
 
 		// The player's settings, in the System menu's corner: the field of view, first and third person. Click on a
@@ -2943,14 +3041,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ID3D11ShaderResourceView* g_sGlow = nullptr;
 		ID3D11ShaderResourceView* g_sCrystal = nullptr;
 		ID3D11ShaderResourceView* g_sSoft = nullptr;
+		std::array<ID3D11ShaderResourceView*, 2> g_sCrystalSheet{};  // 192 frames on two 12 x 8 sheets (menu_crystal.png, menu_crystal2.png)
+		OrbTex MenuOrbTextures() { return { { g_sCrystalSheet[0] ? g_sCrystalSheet[0] : g_sCrystal, g_sCrystalSheet[1] }, g_sSoft }; }
 		ID3D11ShaderResourceView* g_sMtn = nullptr;      // the shrine scene's mountains across the lake (tools/menulake.py)
 		ID3D11ShaderResourceView* g_sRefl = nullptr;     // the mountains upside down in the lake
 		ID3D11ShaderResourceView* g_sAurora = nullptr;   // the northern lights
 		ID3D11ShaderResourceView* g_sLife = nullptr;     // lily pads on the lake, reeds and bushes in the near corners
 		ID3D11ShaderResourceView* g_sMotes = nullptr;    // motes rising from the shrine's pool: 16x8 flipbook (tools/orbfx.py)
 		std::array<ID3D11ShaderResourceView*, 9> g_sShard{}, g_sShardR{};  // the rocks, and their runes' light (pulsing)
-		ID3D11ShaderResourceView* g_sRockTurn = nullptr, * g_sRockTurnR = nullptr;  // one rock turning (48 frames, 8 x 6) and its runes' light
-		ID3D11ShaderResourceView* g_sRuneCircle = nullptr;  // the freed altar's golden rune circle (laid flat and turned here)
+		ID3D11ShaderResourceView* g_sRockTurn = nullptr, * g_sRockTurnR = nullptr;
+		std::array<ID3D11ShaderResourceView*, 3> g_sRockSheet{}, g_sRockSheetR{};  // (Noah: no after-images) 144 frames on three 8 x 6 sheets  // one rock turning (48 frames, 8 x 6) and its runes' light
+		ID3D11ShaderResourceView* g_sRuneCircle = nullptr;  // the freed altar's golden rune circle (no longer drawn: Noah)
 		ID3D11ShaderResourceView* g_mGroundFog = nullptr;
 		ID3D11ShaderResourceView* g_mClouds2 = nullptr;    // drifting night clouds that tile left-right (tools/menuscene.py drift_clouds)  // fog wisps that tile left-right (tools/menuscene.py ground_fog)
 		constexpr float kMenuRune[2] = { 1812.0f, 992.0f };  // the middle of the rune-stone's face in the painting
@@ -3474,15 +3575,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const int   shade = static_cast<int>(std::clamp(235.0f + pl.depth * 0.25f, 170.0f, 255.0f));
 					const float rot = r.rot0 + std::sin(now * r.spin * 3.0f + r.ph) * 0.06f;
 					if (g_sRockTurn) {  // (Noah: as the altar's rocks do in the game) each turns slowly round its upright, its own way
-						const float fpos = std::fmod(now * r.spin * 80.0f / 360.0f * 48.0f + r.ph * 15.0f + 4800.0f, 48.0f);  // (6-10 degrees a second, as the altar's)
-						const int   f0 = static_cast<int>(fpos) % 48, f1 = (f0 + 1) % 48;
+						const bool  all3 = g_sRockSheet[1] && g_sRockSheet[2];
+						const int   nF = all3 ? 144 : 48;
+						const float fpos = std::fmod(now * r.spin * 80.0f / 360.0f * nF + r.ph * 15.0f * nF / 48.0f + 100.0f * nF, static_cast<float>(nF));  // (6-10 degrees a second, as the altar's)
+						const int   f0 = static_cast<int>(fpos) % nF, f1 = (f0 + 1) % nF;
 						const float fr = fpos - std::floor(fpos);
 						const ImU32 tint = IM_COL32(shade, shade, std::min(255, shade + 10), 255);
 						const float breath = 0.5f + 0.5f * std::sin(now * 2.4f + r.ph * 1.7f);
 						for (auto [f, wgt] : { std::pair{ f0, 1.0f }, std::pair{ f1, fr } }) {
-							const ImVec2 uv0{ (f % 8) / 8.0f, (f / 8) / 6.0f }, uv1{ uv0.x + 0.125f, uv0.y + 1.0f / 6.0f };
-							sprite(g_sRockTurn, pl.p, sz, sz, rot, (tint & 0x00FFFFFF) | (static_cast<ImU32>(255 * fade * wgt) << 24), uv0, uv1);
-							if (g_sRockTurnR) sprite(g_sRockTurnR, pl.p, sz, sz, rot, IM_COL32(255, 255, 255, static_cast<int>((60 + 195 * breath * breath) * fade * wgt)), uv0, uv1);
+							const int    sh = f / 48, ff = f % 48;
+							const ImVec2 uv0{ (ff % 8) / 8.0f, (ff / 8) / 6.0f }, uv1{ uv0.x + 0.125f, uv0.y + 1.0f / 6.0f };
+							sprite(g_sRockSheet[sh], pl.p, sz, sz, rot, (tint & 0x00FFFFFF) | (static_cast<ImU32>(255 * fade * wgt) << 24), uv0, uv1);
+							if (g_sRockSheetR[sh]) sprite(g_sRockSheetR[sh], pl.p, sz, sz, rot, IM_COL32(255, 255, 255, static_cast<int>((60 + 195 * breath * breath) * fade * wgt)), uv0, uv1);
 						}
 						return;
 					}
@@ -3536,15 +3640,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					(void)aura;  // (the old orb's purple fire: the heart stone has its runes' own light)
 					if (g_sCrystal) {
 						// (Noah: smooth at 60 fps, a little faster) a turn in 18 s, cross-faded between its 96 frames
-						const float fpos = std::fmod(now * 96.0f / 18.0f, 96.0f);
-						const int   f0 = static_cast<int>(fpos) % 96, f1 = (f0 + 1) % 96;
+						const int   nF = g_sCrystalSheet[1] ? 192 : 96;
+						const float fpos = std::fmod(now * nF / 18.0f, static_cast<float>(nF));
+						const int   f0 = static_cast<int>(fpos) % nF, f1 = (f0 + 1) % nF;
 						const float fr = fpos - std::floor(fpos);
 						const float sc = 1.0f + 0.035f * pulse;
 						const float w = 427 * u * sc, h = 640 * u * sc;  // (320 x 480 frames, square pixels)
 						const ImVec2 mid{ c.x, c.y + (0.5f - 0.56f) * h };  // (the frame's origin sits at 56% of its height)
 						for (auto [f, wgt] : { std::pair{ f0, 1.0f }, std::pair{ f1, fr } }) {
-							const ImVec2 uv0{ (f % 12) / 12.0f, (f / 12) / 8.0f }, uv1{ uv0.x + 1.0f / 12.0f, uv0.y + 0.125f };
-							sprite(g_sCrystal, mid, w, h, 0, IM_COL32(255, 255, 255, static_cast<int>(255 * fade * wgt)), uv0, uv1);
+							const int    ff = f % 96;
+							const ImVec2 uv0{ (ff % 12) / 12.0f, (ff / 12) / 8.0f }, uv1{ uv0.x + 1.0f / 12.0f, uv0.y + 0.125f };
+							sprite(g_sCrystalSheet[f / 96], mid, w, h, 0, IM_COL32(255, 255, 255, static_cast<int>(255 * fade * wgt)), uv0, uv1);
 						}
 					}
 
@@ -3555,7 +3661,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					// (the old drawn sparks over the pool are gone too: the motes flipbook is the shrine's only particles)
 				}
 				// (Noah: as the altar in the game) its golden rune circle over the shrine, laid flat and turning smoothly
-				if (g_sRuneCircle) {
+				if ((false) && g_sRuneCircle) {  // (Noah: the golden rune over the menu's altar removed)
 					const float th = now * 10.0f * RE::NI_PI / 180.0f;
 					const auto disc = [&](float R, float Z, ImU32 col) {
 						ImVec2 p[4];
@@ -4373,8 +4479,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\CurseOfAlduin\\") + file).c_str(), nullptr, tex);
 			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_rock_turn.png", nullptr, &g_sRockTurn);
-			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_runecircle.png", nullptr, &g_sRuneCircle);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_rock_turn_r.png", nullptr, &g_sRockTurnR);
+			g_sRockSheet[0] = g_sRockTurn, g_sRockSheetR[0] = g_sRockTurnR, g_sCrystalSheet[0] = g_sCrystal;
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_rock_turn_2.png", nullptr, &g_sRockSheet[1]);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_rock_turn_2_r.png", nullptr, &g_sRockSheetR[1]);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_rock_turn_3.png", nullptr, &g_sRockSheet[2]);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_rock_turn_3_r.png", nullptr, &g_sRockSheetR[2]);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_crystal2.png", nullptr, &g_sCrystalSheet[1]);
 			for (int i = 0; i < 9; ++i) {
 				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\CurseOfAlduin\\menu_shard" + std::to_wstring(i) + L".png").c_str(), nullptr, &g_sShard[i]);
 				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\CurseOfAlduin\\menu_shard" + std::to_wstring(i) + L"_r.png").c_str(), nullptr, &g_sShardR[i]);
@@ -4852,11 +4963,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float kk = io.DisplaySize.y / 1080.0f;
 					auto*       dl = ImGui::GetForegroundDrawList();
 					const ImVec2 cur = g_cursor;
-					const ImVec2 ta{ 36 * kk, 30 * kk }, tb{ 236 * kk, 76 * kk };
+					const ImVec2 ta{ 36 * kk, 30 * kk }, tb{ 306 * kk, 76 * kk };
 					const bool   over = cur.x >= ta.x && cur.x <= tb.x && cur.y >= ta.y && cur.y <= tb.y;
 					if (over && clicks > 0) g_partyOpen = !g_partyOpen;
 					Panel(dl, ta, tb, kk, 0.95f);
-					const std::string lab = g_partyOpen ? "PARTY  -  CLOSE" : (g_padLast ? (Settings::PlayStationIcons() ? "PARTY  (Triangle)" : "PARTY  (Y)") : "PARTY  (P)");
+					const std::string lab = std::string(g_partyOpen ? "CLOSE PARTY" : "PARTY") + "   P / " + (Settings::PlayStationIcons() ? "Triangle" : "Y");  // (Noah: both keys shown)
 					TxtC(dl, g_title, 18 * kk, (ta.x + tb.x) * 0.5f, ta.y + 12 * kk, over || g_partyOpen ? kIce : IM_COL32(200, 214, 235, 235), lab, over ? 1.5f * kk : 0.0f, kRune);
 					if (g_partyOpen) {
 						PartyPanel(dl, io.DisplaySize, { 36 * kk, 90 * kk }, kk, clicks > 0 && !over);
@@ -5065,6 +5176,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (a_b && a_b->IsDown() && ui && ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !ui->IsMenuOpen(RE::MainMenu::MENU_NAME) &&
 				((a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x19) || (a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && a_b->GetIDCode() == 0x8000))) {
 				g_partyOpen = !g_partyOpen;
+				g_partyFocus = 0;
+			}
+			if (a_b && a_b->IsDown() && ui && g_partyOpen && ui->IsMenuOpen(RE::JournalMenu::MENU_NAME)) {  // (Noah) the party window by D-pad / arrows
+				const auto id = a_b->GetIDCode();
+				const auto dev = a_b->GetDevice();
+				if ((dev == RE::INPUT_DEVICE::kGamepad && id == 0x0001) || (dev == RE::INPUT_DEVICE::kKeyboard && id == 0xC8)) g_partyFocus = g_partyFocus - 1;
+				else if ((dev == RE::INPUT_DEVICE::kGamepad && id == 0x0002) || (dev == RE::INPUT_DEVICE::kKeyboard && id == 0xD0)) g_partyFocus = g_partyFocus + 1;
+				else if ((dev == RE::INPUT_DEVICE::kGamepad && id == 0x1000) || (dev == RE::INPUT_DEVICE::kKeyboard && id == 0x1C)) g_partyPress = 1;
 			}
 			if (a_b && a_b->IsDown() && ui && g_cxOpenBook >= 0 && ui->IsMenuOpen(RE::BookMenu::MENU_NAME)) {  // the Codex
 				const auto id = a_b->GetIDCode();

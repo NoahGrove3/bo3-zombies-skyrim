@@ -2214,14 +2214,11 @@ namespace bo3z
 				++spells, ++byEl[el];
 			}
 			NameByElement();
-			// the weapons: every elemental bow (with its arrows) and Alduin's Fang
+			// the weapons: every elemental bow (with its arrows)
 			for (int i = Bows::Count() - 1; i >= 0; --i) {
 				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kBows[i].weap, gen::kPlugin); w && p->GetItemCount(w) <= 0) {
 					p->AddObjectToContainer(w, nullptr, 1, nullptr);
 				}
-			}
-			if (auto* fang = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); fang && p->GetItemCount(fang) <= 0) {
-				p->AddObjectToContainer(fang, nullptr, 1, nullptr);
 			}
 			for (int i = 0; i < static_cast<int>(gen::kShouts.size()); ++i) {
 				if (!KnowsShout(i)) {
@@ -2260,6 +2257,23 @@ namespace bo3z
 			if (!root || root == seen) return;
 			seen = root;
 			if (auto* g = KitGlobal(); g && g->value > 0.5f) NameByElement();
+			// (Noah: Alduin's Fang retired, the wonder weapons to be remade) out of the pack
+			if (auto* fang = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); fang && p->GetItemCount(fang) > 0) {
+				p->RemoveItem(fang, p->GetItemCount(fang), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+			}
+		}
+
+		// (Noah: the test kit - unlimited magicka, so the spells can be tried) kept full while the kit is on
+		void KitMagicka()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || !TestKitOn()) return;
+			auto* av = p->AsActorValueOwner();
+			const float have = av->GetActorValue(RE::ActorValue::kMagicka);
+			const float max = av->GetPermanentActorValue(RE::ActorValue::kMagicka);
+			if (have < max) {
+				av->RestoreActorValue(RE::ActorValue::kMagicka, max - have);
+			}
 		}
 
 		bool g_migrated = false;
@@ -2824,6 +2838,7 @@ namespace bo3z
 		void Tick(float a_delta)
 		{
 			KitOnLoad();
+			KitMagicka();
 			if (g_kitPending) {
 				static float wait = 0;
 				if ((wait += a_delta) > 5.0f) {

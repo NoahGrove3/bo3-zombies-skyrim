@@ -63,23 +63,29 @@ A = tileable(512, 1.9, 1); B = tileable(512, 1.4, 2); C = tileable(512, 1.0, 3)
 
 
 def fx_fire(t, f):
-    """flames streaming back from the head (the head at the top of the frame, the flames trailing down)"""
-    v = (Y + 1) / 2   # 0 bottom (tail) .. 1 top (head)
-    n1 = samp(A, xx * 0.8, yy * 0.9 - t * 2.0); n2 = samp(B, xx * 1.5 + 0.3, yy * 1.7 - t * 3.0); n3 = samp(C, xx * 3, yy * 3 - t * 5.0)
-    warp = (n1 - 0.5) * 0.5 * (1 - v) + (n2 - 0.5) * 0.25 * (1 - v)
-    width = 0.18 + 0.75 * (1 - v) ** 0.7 * v ** 0.3
-    body = np.clip(1 - np.abs(X + warp) / np.maximum(width, 0.02), 0, 1)
-    lick = np.clip(n2 * 0.75 + n3 * 0.15 + n1 * 0.1 - (1 - v) * 0.8 + 0.2, 0, 1) * 1.8
-    core = np.exp(-((X / 0.12) ** 2 + ((Y - 0.55) / 0.22) ** 2))
+    """(Noah: the fire tip was still wrong - a tall column) a white-hot head wrapped in a ball of fire like the other
+    elements' tips: tongues of flame licking out all round it on turbulent noise, curling, an ember or two thrown off -
+    round, so it reads right from any side and the arrow's own direction"""
+    ang = ANG + t * 2 * np.pi
+    n1 = samp(A, np.cos(ang) * R * 0.35 + 0.5, np.sin(ang) * R * 0.35 - t * 2.0)
+    n2 = samp(B, np.cos(ANG) * R * 0.8 + 0.3 + t, np.sin(ANG) * R * 0.8 - t * 3.0)
+    n3 = samp(C, xx * 3, yy * 3 - t * 5.0)
+    rr = R * (1.0 - 0.35 * (n1 - 0.5)) - 0.12 * (n2 - 0.5)          # a ragged, boiling edge
+    ball = np.clip(1 - rr / 0.62, 0, 1) ** 0.9
+    pu = (ANG / (2 * np.pi)) % 1.0                                  # polar noise flowing outward: flames, not spokes
+    fl = samp(A, pu * 3, R * 1.1 - t * 2.0) * 0.6 + samp(B, pu * 6 + 0.37, R * 2.2 - t * 3.5) * 0.4
+    tongues = np.clip((fl - 0.25) * 2.4, 0, 1) * np.clip(1 - R / 0.95, 0, 1) ** 0.8 * np.clip(R / 0.2, 0, 1)
+    core = 0.7 * np.exp(-(R / 0.11) ** 2)
     rng = np.random.default_rng(77)
     emb = np.zeros_like(R)
-    for k in range(9):   # embers riding back on the flames
-        ph = (t * (1.2 + 0.3 * (k % 3)) + k / 9) % 1.0
-        ex, ey = rng.uniform(-0.35, 0.35) + 0.1 * math.sin(ph * 6 + k), 0.5 - ph * 1.5
-        emb += np.exp(-(((X - ex) / 0.018) ** 2 + ((Y - ey) / 0.018) ** 2)) * (1 - ph)
-    inten = np.clip(body ** 0.8 * lick + core + emb, 0, 1)
-    rgb = ramp(inten, [(0, (40, 4, 0)), (0.3, (200, 40, 4)), (0.6, (255, 130, 20)), (0.85, (255, 210, 90)), (1, (255, 250, 220))])
-    return rgb, np.clip(inten * 1.2, 0, 1)
+    for k in range(5):   # embers spun off it
+        ph = (t * (0.9 + 0.25 * (k % 3)) + k / 5) % 1.0
+        a0 = rng.uniform(0, 2 * np.pi); rad = 0.3 + ph * 0.6
+        ex, ey = math.cos(a0) * rad, math.sin(a0) * rad
+        emb += np.exp(-(((X - ex) / 0.02) ** 2 + ((Y - ey) / 0.02) ** 2)) * (1 - ph)
+    inten = np.clip(ball * (0.25 + 0.45 * n3) + tongues * 0.75 * (1.0 - R * 0.6) + core + emb, 0, 1)
+    rgb = ramp(inten, [(0, (30, 3, 0)), (0.3, (170, 30, 2)), (0.6, (245, 110, 15)), (0.85, (255, 200, 80)), (1, (255, 245, 215))])
+    return rgb, np.clip(inten * 1.1, 0, 1) ** 1.2
 
 
 def fx_frost(t, f):
@@ -216,7 +222,7 @@ def build(bid, spell, element, glow):
             for (du, dv, u, v) in ((-1, -1, 0, 1), (1, -1, 1, 1), (1, 1, 1, 0), (-1, 1, 0, 0)):
                 job.append(f'v {ax[0] * du * w:.3f} {-6.0 + dv * 9.5:.3f} {ax[2] * du * w:.3f} {u} {v} 1 1 1 1')
         job += ['t 0 1 2', 't 0 2 3', 't 4 5 6', 't 4 6 7']
-    tall = element == 'fire'   # (Noah: the fire tip stood far taller than the others) only a little taller now
+    tall = False   # (Noah: the fire tip was wrong again) every element's tip the same round size
     for k, (col, sc, sz, ph) in enumerate((('1,1,1', 1.8, 1.0, 0.0), (g, 1.3, 1.4, 1.7))):
         hh = (9.5 if tall else 8.5) * sz; ww = (7.5 if tall else 8.5) * sz
         cy = -3.0 if tall else -2.0

@@ -68,6 +68,7 @@ o.append('\tenum class Fire : int { Semi = 0, Auto = 1, Burst = 2, Pump = 3 };')
 o.append('\tenum class Special : int { None = 0, Splash, Chain, Cone, Wabbajack, Poison, Soul, Slow, Lifesteal, Stagger, Pierce, Stasis, Hex, Plague, Daze };')
 o.append('\tinline constexpr int kKindWand = 0, kKindTome = 1, kKindWonder = 2, kKindBow = 3;')
 o.append(f'\tinline constexpr std::uint32_t kWandCastEffect = 0x{IDS[("MGEF", "wandcast")]:03X};')
+o.append(f'\tinline constexpr std::uint32_t kAltarBeamSpell = 0x{IDS[("SPEL", "altarbeam")]:03X};')
 import json as _json
 BL = sorted(q.stem for q in (root / 'tools/templates/expl').glob('*.json'))
 o.append('\t// spell blasts: Skyrim.esm explosions cloned at runtime with no damage (tools/templates/expl)')
