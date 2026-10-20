@@ -358,7 +358,7 @@ namespace bo3z::Eggs
 			for (auto& h : g_summons) {
 				if (auto a = h.get(); a && !a->IsDead() && a->GetPosition().GetDistance(p->GetPosition()) < 900.0f) {
 					auto* av = p->AsActorValueOwner();
-					av->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.012f * a_delta);
+					av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.012f * a_delta);
 					break;
 				}
 			}
@@ -396,7 +396,7 @@ namespace bo3z::Eggs
 		// Arkay's Mercy: the dead you kill near you sometimes give back a little health
 		if (Has("rites") && a_actor->GetPosition().GetDistance(p->GetPosition()) < 700.0f && std::rand() % 4 == 0) {
 			auto* av = p->AsActorValueOwner();
-			av->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.06f);
+			av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.06f);
 		}
 		const int e = g_live.egg;
 		if (e < 0 || Done(e)) return;
