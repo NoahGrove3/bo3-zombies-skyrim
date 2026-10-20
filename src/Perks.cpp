@@ -243,6 +243,7 @@ namespace bo3z
 
 		void DamagePlayer(float a_amount)
 		{
+			a_amount *= Difficulty::Taken();  // (the night's own blows follow Skyrim's difficulty)
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p || p->IsDead() || a_amount <= 0 || std::chrono::steady_clock::now() < g_dodgeUntil) {
 				return;  // (mid-roll: the blow misses)

@@ -336,8 +336,20 @@ namespace bo3z
 		void OnCast(RE::FormID a_spell);  // a spell you cast: one of your equipped shout's words starts its cooldown
 	}
 
+	// (Noah: everything balanced by Skyrim's own difficulty setting) what the mod scripts itself - bows, staffs, shouts,
+	// Alduin's Bane, the altar's spells' cost, the night's blows - follows the game's difficulty the way Skyrim's own
+	// damage does, gentler at the ends (src/Gun.cpp)
+	namespace Difficulty
+	{
+		int   Level();  // 0 Novice .. 5 Legendary
+		float Dealt();  // your damage: 1.4 .. 0.7
+		float Taken();  // damage to you: 0.5 .. 2.0
+		float Mana();   // magicka costs: 0.8 .. 1.25
+	}
+
 	namespace Party
 	{
+		void  ReviveAt(const RE::NiPoint3& a_at, float a_radius);  // (an upgraded staff's bolt) a fallen friend there gets up
 		float FriendDistance(const RE::NiPoint3& a_at);  // the nearest friend in the party (1e9 alone)
 		bool  IsFriend(RE::Actor* a_actor);              // another player's figure (Skyrim Together)
 		enum class Life : std::uint8_t { Alive = 0, Down = 1, Dead = 2 };

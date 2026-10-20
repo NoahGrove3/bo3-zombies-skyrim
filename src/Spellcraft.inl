@@ -373,7 +373,7 @@ namespace Spellcraft
 	bool Spend(float a_cost)
 	{
 		auto* av = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner();
-		const float cost = a_cost * Perks::ManaMult();
+		const float cost = a_cost * Perks::ManaMult() * Difficulty::Mana();
 		if (av->GetActorValue(RE::ActorValue::kMagicka) < cost) {
 			Forms::Play(gen::Sound::charge_fizzle);
 			Hud::Banner("Not enough magicka", 1.2f);

@@ -22,13 +22,8 @@ namespace Props
 	};
 	const std::vector<Wonder>& Wonders()
 	{
+		// (Noah: the wonders are the four Falmer staffs now - real staffs in the hand, nothing hung on the bones)
 		static const std::vector<Wonder> w{
-			{ "gravecaller", { { "WEAPON", "CurseOfAlduin\\wonder\\gravecaller.nif", true, true, { 0, 0, 0 }, 1.0f, 0 } } },
-			{ "frostbinder", { { "NPC R Hand [RHnd]", "CurseOfAlduin\\wonder\\frostbinder_r.nif", true, true, { 0, 0, 0 }, 1.0f, 1 },
-								 { "NPC L Hand [LHnd]", "CurseOfAlduin\\wonder\\frostbinder_l.nif", true, true, { 0, 0, 0 }, 1.0f, 1 } } },
-			{ "wolfcrown", { { "NPC Head [Head]", "CurseOfAlduin\\wonder\\wolfcrown.nif", false, true, { 0, 1.0f, 6.0f }, 1.0f, 2 },
-							   { "NPC L Hand [LHnd]", "CurseOfAlduin\\wonder\\wolfcrown.nif", true, false, { 0, 9.0f, 7.0f }, 0.38f, 3 } } },
-			{ "barrowhorn", { { "SHIELD", "CurseOfAlduin\\wonder\\barrowhorn.nif", true, true, { 0, 0, 0 }, 1.0f, 4 } } },
 		};
 		return w;
 	}
@@ -302,33 +297,102 @@ namespace Props
 		Audio::AtPoint(gen::Sound::unleash_hearth, at);
 		logger::info("tornado: kind {} for {:.0f} s{}", a_kind, a_seconds, a_chase ? ", hunting the dead" : "");
 	}
+	// ---- Alduin's Bane (the story's last weapon, in the Fang's slot) -------------------------------------------------
+	// every blow burns with dragonfire and the fire leaps; kills fill its soul meter (20), heal you a little; a power
+	// attack looses a crescent of golden fire down the line; a full meter calls Alduin's shade - meteors fall on the
+	// dead round you for 10 s; while it is in your hands your shouts return twice as fast
+	int   g_baneSouls = 0;
+	float g_baneStorm = 0, g_baneMeteor = 0;
+	void BaneKilled(RE::PlayerCharacter* p)
+	{
+		auto* av = p->AsActorValueOwner();
+		av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.04f);
+		if (g_baneStorm > 0) return;
+		if (++g_baneSouls >= 20) {
+			g_baneSouls = 0, g_baneStorm = 10.0f, g_baneMeteor = 0;
+			Forms::Play(gen::Sound::champ_arrive);
+			Hud::Banner("WORLD-EATER'S END - Alduin's shade answers", 3.0f);
+		} else if (g_baneSouls == 10 || g_baneSouls == 15) {
+			Hud::Banner(fmt::format("Alduin's Bane - {} of 20 souls", g_baneSouls), 1.5f);
+		}
+	}
 	void FangHit(RE::Actor* a_z, bool a_power)
 	{
 		if (!a_z || a_z->IsDead()) {
 			return;
 		}
+		auto*       p = RE::PlayerCharacter::GetSingleton();
 		const float base = FangBase();
-		Damage(a_z, base * (a_power ? 2.2f : 1.15f), false, true);
-		g_dots.push_back({ a_z->GetHandle(), base * 0.3f, 4.0f });  // it burns
-		Blast(BlastIndex("fireball"), a_z->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, 0.5f);
+		if (Damage(a_z, base * (a_power ? 2.0f : 1.0f), false, true) && p) BaneKilled(p);
+		g_dots.push_back({ a_z->GetHandle(), base * 0.25f, 4.0f });  // dragonfire: it burns
+		Blast(BlastIndex("dragonfire"), a_z->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, 0.45f);
 		int n = 0;
-		for (auto* f : Foes(a_z->GetPosition(), 340.0f)) {  // and the fire leaps
-			if (f == a_z || n >= (a_power ? 6 : 3)) {
+		for (auto* f : Foes(a_z->GetPosition(), 300.0f)) {  // and the fire leaps
+			if (f == a_z || n >= (a_power ? 5 : 2)) {
 				continue;
 			}
-			Damage(f, base * 0.45f, false, false, true);
-			g_dots.push_back({ f->GetHandle(), base * 0.15f, 3.0f });
-			Blast(BlastIndex("fireball"), f->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f }, 0.08f * ++n, 0.35f);
+			if (Damage(f, base * 0.4f, false, false, true) && p) BaneKilled(p);
+			g_dots.push_back({ f->GetHandle(), base * 0.12f, 3.0f });
+			Blast(BlastIndex("fireball"), f->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f }, 0.08f * ++n, 0.3f);
 		}
 	}
-	void FangTornado(RE::PlayerCharacter* p)
+	void FangTornado(RE::PlayerCharacter* p)  // (the power attack: a crescent of golden fire down the line)
 	{
-		const RE::NiPoint3 dir = AimAt(100.0f).dir;
-		Tornado(0, p->GetPosition() + RE::NiPoint3{ dir.x, dir.y, 0 } * 140.0f, dir, 5.0f, FangBase() * 0.4f, false, -1);
+		const Aim aim = AimAt(1000.0f);
+		RE::NiPoint3 dir = aim.dir; dir.z = 0;
+		if (dir.Length() < 0.01f) dir = { 0, 1, 0 };
+		dir.Unitize();
+		const RE::NiPoint3 side{ -dir.y, dir.x, 0 };
+		const RE::NiPoint3 at0 = p->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f };
+		for (int k = 1; k <= 7; ++k) {  // the arc races out: three across, a step further each beat
+			const float d = 130.0f * k;
+			for (int j = -1; j <= 1; ++j) {
+				const RE::NiPoint3 q = at0 + dir * (d - std::abs(j) * 40.0f) + side * (j * (50.0f + 14.0f * k));
+				Blast(BlastIndex(j == 0 ? "dragonfire" : "fireball"), q, 0.045f * k, j == 0 ? 0.55f : 0.35f);
+			}
+		}
+		for (auto* f : InLine(aim, 950.0f, 190.0f)) {
+			if (Damage(f, FangBase() * 2.5f, false, false, true)) BaneKilled(p);
+			else {
+				g_dots.push_back({ f->GetHandle(), FangBase() * 0.3f, 4.0f });
+				Stagger(f, 0.8f);
+			}
+		}
+		Audio::AtPoint(gen::Sound::unleash_hearth, at0);
+	}
+	void TickBane(RE::PlayerCharacter* p, float a_delta)
+	{
+		static bool  held = false;
+		static float recWas = 1.0f;
+		const bool   now = FangInHand(p);
+		auto*        av = p->AsActorValueOwner();
+		if (now != held) {  // your shouts return twice as fast while you hold it
+			if (now) {
+				recWas = av->GetActorValue(RE::ActorValue::kShoutRecoveryMult);
+				av->SetActorValue(RE::ActorValue::kShoutRecoveryMult, recWas * 0.5f);
+			} else {
+				av->SetActorValue(RE::ActorValue::kShoutRecoveryMult, recWas);
+			}
+			held = now;
+		}
+		if (g_baneStorm > 0) {  // Alduin's shade: meteors on the dead round you
+			g_baneStorm -= a_delta;
+			if ((g_baneMeteor -= a_delta) <= 0) {
+				g_baneMeteor = 0.55f;
+				auto foes = Foes(p->GetPosition(), 1400.0f);
+				const RE::NiPoint3 at = foes.empty() ? p->GetPosition() + RE::NiPoint3{ Rand(-600, 600), Rand(-600, 600), 0 } : foes[static_cast<std::size_t>(Rand(0, static_cast<float>(foes.size()) - 0.01f))]->GetPosition();
+				Blast(BlastIndex("firestorm"), at + RE::NiPoint3{ 0, 0, 40.0f }, 0.0f, 0.8f);
+				for (auto* f : Foes(at, 240.0f)) {
+					if (Damage(f, FangBase() * 2.0f, false, false, true)) BaneKilled(p);
+					else Stagger(f, 0.6f);
+				}
+			}
+		}
 	}
 	void TickFang(float a_delta)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (p) TickBane(p, a_delta);
 		if (g_weaponSwing.exchange(false) && FangInHand(p)) {
 			auto* proc = p->GetActorRuntimeData().currentProcess;
 			auto* high = proc ? proc->high : nullptr;

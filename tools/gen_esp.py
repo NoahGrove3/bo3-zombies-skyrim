@@ -594,7 +594,8 @@ def guide_text():
            p("Leave the place, or let dawn come, and the word falls quiet until you return. Silence all three and the curse of Alduin is broken."),
            "[pagebreak]", h("The Hall of the Awakened"),
            p("With the curse broken, the Reliquary under High Hrothgar becomes the <b>Hall of the Awakened</b>. Its stations:"),
-           p("<b>Robes of the First Dragonborn</b> - wear them and spells and wonders cost a quarter less magicka, and it returns faster. "
+           p("<b>Alduin's Bane</b> - the story's last weapon, a greatsword forged from the World-Eater's defeat: dragonfire on every blow, a crescent of golden fire on a power attack, and when its soul meter fills, Alduin's shade rains meteors round you. While you hold it, kills heal you and your shouts return twice as fast. "
+             "<b>Robes of the First Dragonborn</b> - wear them and spells and wonders cost a quarter less magicka, and it returns faster. "
              "<b>The Bone-Wyrm's Skull</b> - your glider's dragon wears Alduin's bones (touch it again to change back)."),
            p("<b>Brazier of the Endless Night</b> - while it burns, the night never ends: wave after wave, until you put it out. "
              "<b>Seat of the Awakened</b> - begin again: every city falls back under the curse and the nights start over, the dead half again as tough each cycle. "
@@ -687,11 +688,11 @@ for key, model, r in [('rel_room', 'room.nif', 640), ('rel_relic', 'relic.nif', 
     recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
         sub('MODL', z(RQ + model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
 # Stage 5 (src/Echo.cpp Hall): the Hall of the Awakened's stations, and Alduin's Fang
-for key, name, verb in (('hall_fang', "Alduin's Fang", 'Take'), ('hall_robes', 'Robes of the First Dragonborn', 'Take'),
+for key, name, verb in (('hall_fang', "Alduin's Bane", 'Take'), ('hall_robes', 'Robes of the First Dragonborn', 'Take'),
                         ('hall_skull', "The Bone-Wyrm's Skull", 'Bind'), ('hall_endless', 'Brazier of the Endless Night', 'Kindle'),
                         ('hall_throne', 'Seat of the Awakened', 'Begin again')):
     rel_acti(key, name, verb, 'pedestal.nif', 60)
-for key, model, r in (('hall_fang_show', 'CurseOfAlduin\\wonder\\fang.nif', 70), ('1st_fang', 'CurseOfAlduin\\wonder\\fang.nif', 70)):
+for key, model, r in (('hall_fang_show', 'CurseOfAlduin\\wonder\\bane.nif', 70), ('1st_fang', 'CurseOfAlduin\\wonder\\bane.nif', 70)):
     recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
         sub('MODL', z(model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
 for key, model in (('summon', 'emptysummonfx_instant.nif'), ('crystal', 'diamondwallspawnexp.nif'), ('orb', 'lightningrail_orb.nif'),
@@ -705,10 +706,10 @@ ws = []
 for name, hx in T['weap_draugr_gs']['subs']:
     b = bytearray(bytes.fromhex(hx))
     if name == 'EDID': b = z('UN_AlduinsFang')
-    elif name == 'FULL': b = z("Alduin's Fang")
-    elif name == 'MODL': b = z('CurseOfAlduin\\wonder\\fang.nif')
+    elif name == 'FULL': b = z("Alduin's Bane")
+    elif name == 'MODL': b = z('CurseOfAlduin\\wonder\\bane.nif')
     elif name == 'MODT': continue
-    elif name == 'DESC': b = z("Cut from the World-Eater's own jaw when his echo broke over the Throat of the World. It burns the dead it strikes, and the fire leaps to those beside them. A power attack looses a tornado of fire.")
+    elif name == 'DESC': b = z("Forged from the World-Eater's own defeat. Every blow burns with dragonfire and its kills fill it with souls; a power attack looses a crescent of golden fire. Full, it calls Alduin's shade to rain meteors round you. While you hold it, kills heal you and your shouts return twice as fast.")
     elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_fang'))
     elif name == 'DATA': b = bytearray(struct.pack('<IfH', 5000, 16.0, 38))
     ws.append(sub(name, bytes(b)))

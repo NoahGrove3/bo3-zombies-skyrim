@@ -435,6 +435,22 @@ namespace bo3z::Party
 		g_reviveIn.push_back(a_by);
 	}
 
+	// (Noah: the upgraded staffs revive, as Origins' did) a bolt from one lands by a fallen friend: they get up
+	void ReviveAt(const RE::NiPoint3& a_at, float a_radius)
+	{
+		std::scoped_lock l(g_lock);
+		if (g_life != Life::Alive) return;
+		for (auto& [id, r] : g_remote) {
+			if (r.state == static_cast<std::uint8_t>(Life::Down) && Clock::now() - r.heard < std::chrono::seconds(3) && r.at.GetDistance(a_at) < a_radius) {
+				g_outRevive.resize(8);
+				std::memcpy(g_outRevive.data(), &id, 8);
+				const std::string who = r.name;
+				Tasks::Add([who] { Hud::Banner("Your staff raised " + who, 2.5f); Points::Add(100); Stats::Note(Stats::kRevive); });
+				return;
+			}
+		}
+	}
+
 	void Forget(std::uint64_t a_who)
 	{
 		std::scoped_lock l(g_lock);

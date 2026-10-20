@@ -213,6 +213,19 @@ def build(pid):
         r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
         print('fang fire |', r.stdout.strip() or r.stderr.strip())
 
+    elif pid == 'bane':         # Alduin's Bane (the story's last weapon): a greatsword, blade along source -y -> +Y, the grip
+        parts = gather('bane')  # (source y 148..232, under the guard at 127) at the origin, 150 long
+        V = np.vstack([p[0] for p in parts]); L = np.ptp(V[:, 1]); s = 150.0 / L
+        c = np.array([0.0, 190.0, np.median(V[:, 2])])
+        tx = DL / 'bane/textures'
+        D, N, G = textures('bane', tx / 'DefaultMaterial_Base_color.png', tx / 'DefaultMaterial_Normal_OpenGL.png', tx / 'DefaultMaterial_Roughness.png',
+                           None, glow=(1.0, 0.78, 0.35), glow_floor=0.3)
+        P = []
+        for V0, T, F, M in parts:
+            Q = (V0 - c) * s
+            P.append((np.stack([Q[:, 0], -Q[:, 1], -Q[:, 2]], 1), T, F, M))
+        write(pid, P, {'m0': matopts(D, N, G, (1.0, 0.78, 0.35), 0.9, 1.6, 110)}, 'CurseOfAlduin/wonder/bane.nif')
+
 
 if __name__ == '__main__':
     for p in (sys.argv[1:] or ['gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'fang']):

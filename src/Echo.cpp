@@ -305,7 +305,7 @@ namespace bo3z
 		bool Flag(int a_f) { return (Read(gen::kEchoGlobWords) & a_f) != 0; }
 		void SetFlag(int a_f, bool a_on) { Write(gen::kEchoGlobWords, a_on ? (Read(gen::kEchoGlobWords) | a_f) : (Read(gen::kEchoGlobWords) & ~a_f)); }
 		bool Broken() { return (Read(gen::kEchoGlobWords) & ((1 << kWordCount) - 1)) == (1 << kWordCount) - 1; }
-		RE::TESObjectWEAP* Fang() { return nullptr; }  // (Noah: Alduin's Fang retired - the wonder weapons are being remade)
+		RE::TESObjectWEAP* Fang() { return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); }  // (Alduin's Bane now: the Fang's slot)
 		struct HallSpot
 		{
 			std::uint32_t id;
@@ -370,7 +370,6 @@ namespace bo3z
 			}
 			if (Broken()) {   // the Hall of the Awakened
 				for (const auto& h : HallSpots()) {
-					if (h.id == gen::kHallFang) continue;  // (its stand goes with it)
 					Ensure(a_p, cell, h.id, Room(h.x, h.y, 0), h.yaw);
 					Ensure(a_p, cell, gen::kRelBeam, Room(h.x, h.y, 100.0f), 0, 0.18f);
 				}
@@ -438,13 +437,11 @@ namespace bo3z
 				if (gun < 0) {
 					return;
 				}
-				if (gen::kGuns[gun].retired) {  // (Noah: the wonders are being remade) forged, but not yet to be taken up
-					Hud::Banner(Upper(std::string(w.label)) + " is being reforged by the Tongues - it can't be taken up yet", 4.0f);
-					return;
-				}
 				if (HeldWonder() == a_w) {  // give it back: it rests on its pedestal again (for you, or a friend)
 					if (auto* sp = Forms::GunSpell(gun)) {
 						a_p->RemoveSpell(sp);
+					} else if (auto* wp = Forms::Gun(gun); wp && a_p->GetItemCount(wp) > 0) {  // (a staff: back on its pedestal)
+						a_p->RemoveItem(wp, a_p->GetItemCount(wp), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 					}
 					SetHeld(-1);
 					Forms::Play(gen::Sound::ward_lit);
@@ -459,6 +456,8 @@ namespace bo3z
 				if (const int old = HeldWonder(); old >= 0) {  // one wonder at a time: the one you carry goes back to its pedestal
 					if (auto* sp = Forms::GunSpell(GunOfWonder(old))) {
 						a_p->RemoveSpell(sp);
+					} else if (auto* wp = Forms::Gun(GunOfWonder(old)); wp && a_p->GetItemCount(wp) > 0) {
+						a_p->RemoveItem(wp, a_p->GetItemCount(wp), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 					}
 					Hud::Banner(std::string(gen::kEchoWonders[old].label) + " returns to its pedestal", 3.0f);
 				}
@@ -782,7 +781,7 @@ namespace bo3z
 				SetFlag(kFlagHallTold, true);
 				Hud::Lore("THE CURSE OF ALDUIN IS BROKEN",
 					"The dead of Skyrim sleep. Beneath High Hrothgar the Reliquary of the Tongues wakes as the Hall of the Awakened, and what you won waits there: "
-					"the Robes of the First Dragonborn, the Bone-Wyrm's Skull for your dragon, the Brazier of the Endless Night - "
+					"Alduin's Bane, the Robes of the First Dragonborn, the Bone-Wyrm's Skull for your dragon, the Brazier of the Endless Night - "
 					"and the Seat of the Awakened, for when you would face it all again.",
 					20.0f);
 			}
@@ -846,10 +845,11 @@ namespace bo3z
 		}
 		void Allies(int a_kind, int a_count, float a_seconds, const RE::NiPoint3& a_at)
 		{
-			static constexpr std::array<std::pair<std::string_view, RE::FormID>, 2> kBase{ { { "Dawnguard.esm", 0x0045B9 },   // DLC1SoulCairnBonemanSummon: a bone warrior
-				{ "Skyrim.esm", 0x0F608C } } };                                                                              // PlayerWolfSpirit: a spectral wolf
+			static constexpr std::array<std::pair<std::string_view, RE::FormID>, 3> kBase{ { { "Dawnguard.esm", 0x0045B9 },   // DLC1SoulCairnBonemanSummon: a bone warrior
+				{ "Skyrim.esm", 0x0F608C },                                                                                    // PlayerWolfSpirit: a spectral wolf
+				{ "Dragonborn.esm", 0x02095D } } };                                                                            // DLC2ExpSpiderShockCloakingFriend: the Void Staff's spider                                                                              // PlayerWolfSpirit: a spectral wolf
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			const auto& [plugin, id] = kBase[std::clamp(a_kind, 0, 1)];
+			const auto& [plugin, id] = kBase[std::clamp(a_kind, 0, 2)];
 			auto* npc = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESNPC>(id, plugin);
 			if (!p || !npc) {
 				logger::warn("echo: no ally base for kind {}", a_kind);
@@ -1043,11 +1043,11 @@ namespace bo3z
 				if (auto* fang = Fang()) {
 					if (p->GetItemCount(fang) > 0) {
 						p->RemoveItem(fang, p->GetItemCount(fang), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-						Hud::Banner("ALDUIN'S FANG RESTS ON ITS STAND", 3.5f);
+						Hud::Banner("ALDUIN'S BANE RESTS ON ITS STAND", 3.5f);
 					} else {
 						p->AddObjectToContainer(fang, nullptr, 1, nullptr);
 						Forms::Play(gen::Sound::shout_learned);
-						Hud::Lore("ALDUIN'S FANG", "Cut from the World-Eater's own jaw. It burns the dead it strikes, and the fire leaps to those beside them; a power attack looses a tornado of fire. Return it to its stand whenever you like.", 9.0f);
+						Hud::Lore("ALDUIN'S BANE", "Forged from the World-Eater's defeat. Every blow burns with dragonfire and its kills fill it with souls; a power attack looses a crescent of golden fire, and full, it calls Alduin's shade to rain meteors round you. Kills heal you, and your shouts return twice as fast while you hold it. Return it to its stand whenever you like.", 12.0f);
 					}
 					BuildReliquary(p);
 				}
@@ -1158,7 +1158,7 @@ namespace bo3z
 					consider(SiteAt(i) + RE::NiPoint3{ 0, 0, 260.0f }, std::string(gen::kEchoParts[i].label) + " - " + std::string(gen::kEchoParts[i].site));
 				}
 			}
-			if (Broken() && !Flag(kFlagRobes)) {
+			if (Broken() && Fang() && a_p->GetItemCount(Fang()) <= 0 && !Flag(kFlagRobes)) {
 				consider(kHHFront + RE::NiPoint3{ 0, 0, 250.0f }, "High Hrothgar - the Hall of the Awakened");
 			}
 			if (const int wd = NextWord(); wd >= 0) {
@@ -1179,7 +1179,38 @@ namespace bo3z
 		bool Strip(std::string& a_title, std::string& a_goal, float& a_frac)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p || !Glob(gen::kEchoGlobParts) || !InTamriel(p)) {
+			if (!p || !Glob(gen::kEchoGlobParts)) {
+				return false;
+			}
+			// (Noah: the parts each staff still needs, at its pedestal in High Hrothgar) the nearest pedestal: its staff,
+			// how many of its three parts you hold, and where each missing one comes from
+			if (p->GetParentCell() == HH() && InRoom(p)) {
+				int   best = -1;
+				float bd = 420.0f;
+				for (int w = 0; w < kWonders; ++w) {
+					const auto& sp = gen::kRelPedestals[w];
+					if (const float d = p->GetPosition().GetDistance(Room(sp.x, sp.y, sp.z)); d < bd) bd = d, best = w;
+				}
+				if (best >= 0) {
+					int have = 0, need = 0;
+					std::string missing;
+					for (int i = 0; i < kParts; ++i) {
+						const auto& q = gen::kEchoParts[i];
+						if (q.wonder != best) continue;
+						++need;
+						if (Held(i)) { ++have; continue; }
+						const std::string from = q.how == gen::kEchoBoss ? "a boss of " + std::string(gen::kTowns[q.page])
+						                       : PageRead(q.page)        ? std::string(q.site)
+						                                                 : "read " + std::string(gen::kTowns[q.page]) + "'s Echo Shard";
+						missing += (missing.empty() ? "" : ";  ") + std::string(q.label) + " (" + from + ")";
+					}
+					a_title = Upper(std::string(gen::kEchoWonders[best].label)) + fmt::format("  -  {} OF {} PARTS", have, need);
+					a_goal = Forged(best) ? "Forged - activate the pedestal to take it up" : have >= need ? "Every part is here - activate the pedestal to forge it" : "Still needed: " + missing;
+					a_frac = need ? static_cast<float>(have) / need : 1.0f;
+					return true;
+				}
+			}
+			if (!InTamriel(p)) {
 				return false;
 			}
 			if (const int wd = NextWord(); wd >= 0) {

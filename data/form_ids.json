@@ -1189,6 +1189,10 @@
   "SPEL:egg_power_eye": "0xca1",
   "GLOB:test_kit": "0xca2",
   "MGEF:altarbeam": "0xca3",
-  "SPEL:altarbeam": "0xca4"
+  "SPEL:altarbeam": "0xca4",
+  "ENCH:gravecaller": "0xca5",
+  "ENCH:frostbinder": "0xca6",
+  "ENCH:wolfcrown": "0xca7",
+  "ENCH:barrowhorn": "0xca8"
  }
 }

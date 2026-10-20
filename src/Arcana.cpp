@@ -49,7 +49,7 @@ namespace bo3z::Arcana
 					sp->effects[e]->effectItem.magnitude = base[e] * mult;
 				}
 			}
-			sp->data.costOverride = std::max(1, static_cast<int>(std::lround(coffer::kSpells[a_index].cost * kCost * (1.0f - 0.1f * lv))));
+			sp->data.costOverride = std::max(1, static_cast<int>(std::lround(coffer::kSpells[a_index].cost * kCost * (1.0f - 0.1f * lv) * Difficulty::Mana())));
 		}
 	}
 

@@ -459,7 +459,7 @@ namespace bo3z
 			auto*       av = a_target->AsActorValueOwner();
 			const auto  tid = a_target->GetFormID();
 			const float hexMult = g_hexed.contains(tid) ? 1.5f : 1.0f;
-			float       damage = a_bo3Damage * hexMult * Eggs::DamageMult() / gen::kRounds.hpScale;
+			float       damage = a_bo3Damage * hexMult * Eggs::DamageMult() * Difficulty::Dealt() / gen::kRounds.hpScale;
 			if (!Director::IsRoundUndead(a_target)) {
 				// Skyrim's own enemies (bandits, draugr, dragons) are tuned to the player's level, not to the night: our
 				// weapons hit them like gear of your level would (half strength at level 1, full at 25, 1.5x at 50+).
@@ -1055,6 +1055,7 @@ namespace bo3z
 				}
 				if (landed && g.kind != gen::kKindTome && g.kind != gen::kKindWonder) {  // a quick spell is a bolt, not a bomb: only the gathered cast bursts
 					Blast(g.tapBlast, to, BoltDelay(g, origin, to), kTapBlastScale);
+					StaffTap(g, to, firstHit, dmg);
 					// every bolt and arrow splashes a little where it lands: the burst weapons (Splash) hard and wide,
 					// the rest a third of the hit within an arm's reach
 					const bool  burst = sp == gen::Special::Splash && g.splashRadius > 0;
@@ -1082,7 +1083,7 @@ namespace bo3z
 			auto*       player = RE::PlayerCharacter::GetSingleton();
 			if (g.mana > 0) {  // tomes and grimoires run on magicka
 				auto*       av = player->AsActorValueOwner();
-				const float cost = g.mana * Perks::ManaMult();
+				const float cost = g.mana * Perks::ManaMult() * Difficulty::Mana();
 				if (av->GetActorValue(RE::ActorValue::kMagicka) < cost) {
 					if (a_fromTrigger) {
 						Forms::Play(g.emptySnd);
@@ -1229,6 +1230,8 @@ namespace bo3z
 			}
 		}
 
+		bool StaffUnleash(std::string_view a_id, const Aim& a_aim, float a_base);  // (Staffs.inl) the four Falmer staffs' held attacks
+		void StaffTap(const gen::GunDef& g, const RE::NiPoint3& a_to, RE::Actor* a_hit, float a_dmg);
 		// The signature move of each weapon (sheet: weapons.chargeName/chargeText).
 		void Unleash(int a_gun, bool a_echo = false)
 		{
@@ -1244,7 +1247,9 @@ namespace bo3z
 			}
 			logger::info("charge: {} unleashes {}", g.id, g.chargeName);
 
-			if (id == "sidearm" || id == "apprentice" || id == "marksman") {  // lances: a beam of force, everything in the line
+			if (StaffUnleash(id, aim, base)) {
+				// (the Falmer staffs: Staffs.inl)
+			} else if (id == "sidearm" || id == "apprentice" || id == "marksman") {  // lances: a beam of force, everything in the line
 				auto line = InLine(aim, g.range * 1.5f, 75.0f);
 				for (auto* f : line) { hit(f, id == "marksman" ? 5.0f : 4.0f); Stagger(f, 0.9f); }
 				Bolts(p, g, line, 6);
@@ -1664,7 +1669,7 @@ namespace bo3z
 			}
 			if (g.mana > 0) {
 				auto*       av = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner();
-				const float cost = g.mana * g.chargeMana * Perks::ManaMult();
+				const float cost = g.mana * g.chargeMana * Perks::ManaMult() * Difficulty::Mana();
 				if (av->GetActorValue(RE::ActorValue::kMagicka) < cost) {
 					Forms::Play(g.emptySnd);
 					Hud::Banner("Not enough magicka", 1.2f);
@@ -1920,6 +1925,7 @@ namespace bo3z
 		}
 #include "Bows.inl"
 #include "WonderProps.inl"
+#include "Staffs.inl"
 
 		struct PoseHook
 		{
@@ -2220,6 +2226,17 @@ namespace bo3z
 					p->AddObjectToContainer(w, nullptr, 1, nullptr);
 				}
 			}
+			if (auto* bane = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); bane && p->GetItemCount(bane) <= 0) {
+				p->AddObjectToContainer(bane, nullptr, 1, nullptr);  // Alduin's Bane
+			}
+			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {  // the four Falmer staffs (the wonder weapons)
+				const std::string_view id = gen::kGuns[i].id;
+				if (id == "gravecaller" || id == "frostbinder" || id == "wolfcrown" || id == "barrowhorn") {
+					if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kGuns[i].weapId, gen::kPlugin); w && p->GetItemCount(w) <= 0) {
+						p->AddObjectToContainer(w, nullptr, 1, nullptr);
+					}
+				}
+			}
 			for (int i = 0; i < static_cast<int>(gen::kShouts.size()); ++i) {
 				if (!KnowsShout(i)) {
 					LearnShout(i);
@@ -2257,10 +2274,6 @@ namespace bo3z
 			if (!root || root == seen) return;
 			seen = root;
 			if (auto* g = KitGlobal(); g && g->value > 0.5f) NameByElement();
-			// (Noah: Alduin's Fang retired, the wonder weapons to be remade) out of the pack
-			if (auto* fang = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); fang && p->GetItemCount(fang) > 0) {
-				p->RemoveItem(fang, p->GetItemCount(fang), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-			}
 		}
 
 		// (Noah: the test kit - unlimited magicka, so the spells can be tried) kept full while the kit is on
@@ -2868,6 +2881,7 @@ namespace bo3z
 			Props::Tick(a_delta, GunOut() ? CurrentGun() : -1);
 			Props::TickWorld(a_delta);
 			Props::TickFang(a_delta);
+			TickStaffs(a_delta);
 			static bool hooked = false;
 			if (!hooked) {
 				REL::Relocation<std::uintptr_t> ab{ RE::VTABLE_AttackBlockHandler[0] };
@@ -2985,7 +2999,7 @@ namespace bo3z
 				h.clip = s.clip;
 				h.reserve = s.reserve;
 				h.gunKind = gen::kGuns[gun].kind;
-				h.manaCost = gen::kGuns[gun].mana * Perks::ManaMult();
+				h.manaCost = gen::kGuns[gun].mana * Perks::ManaMult() * Difficulty::Mana();
 				{
 					std::string ab(gen::kGuns[gun].abilityText);
 					if (!ab.empty() && ab.back() == '.') {
@@ -3317,4 +3331,16 @@ namespace bo3z
 			BowsImpl::ApplyAllSpeeds();
 		}
 	}
+}
+
+namespace bo3z::Difficulty
+{
+	int Level()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		return p ? std::clamp(static_cast<int>(p->GetGameStatsData().difficulty), 0, 5) : 2;
+	}
+	float Dealt() { static constexpr float k[6] = { 1.4f, 1.2f, 1.0f, 0.9f, 0.8f, 0.7f }; return k[Level()]; }
+	float Taken() { static constexpr float k[6] = { 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f }; return k[Level()]; }
+	float Mana() { static constexpr float k[6] = { 0.8f, 0.9f, 1.0f, 1.08f, 1.16f, 1.25f }; return k[Level()]; }
 }
