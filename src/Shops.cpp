@@ -40,7 +40,7 @@ namespace bo3z
 			bool                bow{ false };  // the bow wheel (gun/shown: Bows indices)
 		} g_show;
 		bool g_choosing = false;  // a third spell won: which of your two it replaces (Choose)
-		constexpr float kChargeTime = 1.1f;
+		constexpr float kChargeTime = 0.35f;  // (a breath before the first beam)
 		constexpr float kOrbZ = 300.0f;   // just over the altar's heart stone (its centre at z 175, its top ~266)
 		constexpr float kOrbScale = 1.6f;
 
@@ -302,18 +302,24 @@ namespace bo3z
 				break;
 			case Show::Spinning:
 				{
-					// the reel (drawn by the HUD over the crown, src/Hud.cpp): kReelPass spells go by, slowing like a wheel
-					// of fortune, and it stops on the one won; a tick for each spell that passes the front
+					// the reel (drawn by the HUD as names over the heart stone, src/Hud.cpp): kReelPass spells go by, slowing
+					// like a wheel of fortune, while the six column stones beam into the heart one at a time; the sixth beam
+					// connecting stops it on the one won, and only then does the spell (or bow) itself appear
 					const float k = std::min(1.0f, g_show.t / gen::kShowSpin);
 					const int   front = ReelFront(g_show.gun, k);
 					g_show.step -= a_delta;
 					if (front != g_show.shown && g_show.step <= 0) {
 						g_show.shown = front;
 						g_show.step = 0.045f;
-						ShowAt(g_show.shown, gen::kShowRise * k, false);
 						Forms::PlayAt(gen::Sound::coffer_spin, chest.get());
-					} else if (auto d = g_show.display.get()) {
-						d->SetPosition(Local(chest.get(), 0, 0, kOrbZ * chest->GetScale() + gen::kShowRise * k));
+					}
+					{
+						static int lastBeams = 0;
+						const int  beams = std::min(6, static_cast<int>(k * 6.0f));
+						if (beams > lastBeams && beams < 6) {
+							PlayUi(UiSnd::kMove, 0.6f);  // (each beam striking the heart)
+						}
+						lastBeams = beams >= 6 || g_show.t < a_delta * 1.5f ? 0 : beams;
 					}
 					if (g_show.t >= gen::kShowSpin) {
 						g_show.t = 0;
@@ -2025,7 +2031,7 @@ namespace bo3z
 				h.rollCost = RollCost();
 				// where the shrine's crown is on the screen: the roll shows there too, over the crystal itself
 				h.rollOnScreen = false;
-				h.beamLit = 0;
+				h.beamLit = 0, h.beamGrow = 0;
 				if (g_show.phase == Show::Idle || g_show.phase == Show::Offering) {
 					if (auto hr = g_glowHeart.get()) {
 						HeartGlow(hr.get(), 1.0f);  // (its runes back to their own light)
@@ -2036,7 +2042,10 @@ namespace bo3z
 					// (the roll: the six column stones light beams into the heart stone one after another as it gathers, all
 					// six while it spins; the stone's runes burn brighter the faster it turns)
 					auto* cam = RE::Main::WorldRootCamera();
-					const float lit = g_show.phase == Show::Charging ? std::clamp(g_show.t / kChargeTime, 0.0f, 1.0f) * 6.5f : 6.0f;
+					// (one at a time across the spin: beam q leaves its stone at q/6 of the way and strikes the heart at (q+1)/6)
+					const float kk = g_show.phase == Show::Spinning ? std::clamp(g_show.t / gen::kShowSpin, 0.0f, 1.0f) * 6.0f : -1.0f;
+					const float lit = kk < 0 ? 0.0f : std::min(6.0f, std::floor(kk) + 1.0f);
+					h.beamGrow = kk < 0 ? 0.0f : kk >= 6.0f ? 1.0f : kk - std::floor(kk);
 					RE::TESObjectREFR* heart = nullptr;
 					std::array<RE::TESObjectREFR*, 6> rocks{};
 					RE::TES::GetSingleton()->ForEachReferenceInRange(chest.get(), 420.0f, [&](RE::TESObjectREFR* r) {
@@ -2069,9 +2078,12 @@ namespace bo3z
 									}
 								}
 							}
+							if (h.beamLit < static_cast<int>(lit)) {
+								h.beamGrow = 1.0f;  // (the newest stone is off the screen: what shows is all struck)
+							}
 						}
 						// its runes: the stone's own glow, brighter the further the roll has gone
-						const float k = g_show.phase == Show::Charging ? 0.5f * g_show.t / kChargeTime : 0.5f + 0.5f * std::min(1.0f, g_show.t / gen::kShowSpin);
+						const float k = std::max(0.0f, lit - 1.0f + (kk >= 6.0f ? 1.0f : kk - std::floor(std::max(0.0f, kk)))) / 6.0f;  // (a step brighter with each beam struck)
 						HeartGlow(heart, 1.0f + 2.5f * k);
 						g_glowHeart = heart->CreateRefHandle();
 					}
