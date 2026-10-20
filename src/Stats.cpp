@@ -107,13 +107,14 @@ namespace bo3z::Stats
 		if (headStreak) Style("HEADSHOT STREAK", 50);
 		if (a_bow && a_dist >= 2800.0f) Style("LONG SHOT", 60);
 		if (Movement::Gliding()) Style("DIVE KILL", 75);
-		if (a_melee && a_dying && (Director::IsElite(a_dying) || Director::IsBoss(a_dying) || Director::EnemyRow(a_dying) >= 0 && gen::kEnemies[Director::EnemyRow(a_dying)].kind == 1)) {
+		if (a_melee && a_dying && (Director::IsElite(a_dying) || Director::IsBoss(a_dying) || (Director::EnemyRow(a_dying) >= 0 && gen::kEnemies[Director::EnemyRow(a_dying)].kind == 1))) {
 			Style("EXECUTIONER", 100);
 		}
 	}
 
 	void OnHurt()
 	{
+		Eggs::OnHurt();
 		std::scoped_lock l(g_lock);
 		g_streak = 0;
 	}

@@ -239,6 +239,7 @@ namespace bo3z
 		void        LeaveLobby();
 		std::vector<FriendGame> FriendsInParties();  // friends in Skyrim with a party open
 		void        PowerUpTaken(int a_kind);
+		void        EggDone(int a_town);  // a hidden quest finished: the party near that altar shares it
 		std::vector<int> TakeRemotePowerUps();
 	}
 
@@ -426,6 +427,7 @@ namespace bo3z
 		bool CurseBroken();                                    // all three words silenced (Stage 5's rewards open)
 		void OnBearerSlain();                                  // a word's bearer fell (Director's champion with no city)
 		bool AwardNextPart();                                  // the mini-boss's drop: the next missing wonder part (false: all yours)
+		std::vector<RE::ActorHandle> Summon(std::string_view a_plugin, RE::FormID a_id, int a_count, const RE::NiPoint3& a_at);  // allies for the night (the hidden quests' summons)
 		bool BoneDragon();                                     // Stage 5: the glider's dragon wears Alduin's bones
 		bool EndlessNight();                                   // Stage 5: the nights don't end while the brazier burns
 		int  NewGamePlus();                                    // Stage 5: cycles begun again at the Seat of the Awakened (0 = the first)
@@ -447,6 +449,7 @@ namespace bo3z
 		void                  Tick(float a_delta);
 		void                  Reset();
 		void                  TestKit();  // dev: every weapon, spell, bow and shout, 100,000 septims
+		void                  EyeBeam();  // Winterhold's hidden quest: a beam of the Eye's light through the dead ahead
 		bool                  OnButton(const RE::ButtonEvent* a_event);
 		std::pair<bool, bool> RecentHit(RE::FormID a_actor);  // {gun kill, headshot}
 		bool                  Give(int a_gun);                // buy/box: put in a slot, equip it
@@ -546,6 +549,21 @@ namespace bo3z
 		bool OnButton(const RE::ButtonEvent* a_event);
 	}
 
+	// (Noah) the hidden quests, one per Echo Altar (src/Eggs.cpp, sheet: eggs)
+	namespace Eggs
+	{
+		void  Tick(float a_delta);
+		void  OnHurt();                          // (the Nightingale's coins)
+		void  OnUndeadDeath(RE::Actor* a_actor); // (marked ground; Arkay's Mercy)
+		void  OnBossSlain(int a_town);           // its named foe fell (Director's champion, town -10 - city)
+		bool  OnSpellCast(RE::FormID a_spell);   // a summon's power, the Eye's beam (true: ours)
+		void  Heard(int a_town);                 // a friend finished that city's quest
+		std::vector<std::string> Whispers(int a_town);  // the altar's hints: a line more for each step found
+		float DamageMult();                      // Vaermina's Gift
+		bool  ShadowStep();                      // the Nightingale's Debt: a dodge hides you
+		void  DevStep(int a_town);
+	}
+
 	// (Noah) the night's atmosphere (src/Atmos.cpp)
 	namespace Atmos
 	{
@@ -628,6 +646,8 @@ namespace bo3z
 			bool        hitKill{ false };
 			float       headBurstT{ 0 };  // a headshot kill's white flash at the crosshair
 			float       lightningT{ 0 }, lightningI{ 0 };  // the sky's flash (seconds left, strength)
+			bool        eggDark{ false };                 // a hidden quest's dark (Riften's, Dawnstar's dream)
+			std::vector<std::string> whispers;            // the altar's hidden quest: its whispers (empty: none yet)
 			float       nightProgress{ -1 };              // 0..1 through the night's waves (-1: not fighting)
 			std::string styleTag;         // a style bonus ("+40 MULTI-KILL") by the septims
 			float       styleTime{ 0 };

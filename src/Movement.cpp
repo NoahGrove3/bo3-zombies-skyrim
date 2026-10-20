@@ -2226,6 +2226,7 @@ namespace bo3z
 		// the stick or WASD against the camera (not against where the body happens to face: True Directional Movement
 		// turns you to run, so its own choice always came out "forward"). In third person the body is turned to the
 		// camera first, so back is back. TK Dodge RE's own key is off (its ini: DodgeHotkey = 0).
+		float g_shadowT = 0;
 		void Dodge()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -2242,6 +2243,10 @@ namespace bo3z
 			auto* av = p->AsActorValueOwner();
 			if (av->GetActorValue(RE::ActorValue::kStamina) < 10.0f) {
 				return;
+			}
+			if (Eggs::ShadowStep()) {  // (Noah: the Nightingale's Debt) the dodge hides you from the dead for two seconds
+				g_shadowT = 2.0f;
+				av->SetActorValue(RE::ActorValue::kInvisibility, 1.0f);
 			}
 			const float camYaw = ViewYaw(p);  // (where the camera looks: your heading plus its free rotation)
 			const char* ev = "TKDodgeBack";  // (standing still: a step back, as TK Dodge does)
@@ -2862,6 +2867,9 @@ namespace bo3z
 				return;
 			}
 			ChaseTick(player, a_delta);
+			if (g_shadowT > 0 && (g_shadowT -= a_delta) <= 0) {
+				player->AsActorValueOwner()->SetActorValue(RE::ActorValue::kInvisibility, 0.0f);
+			}
 			FirstPersonGlide(player, a_delta);
 			if (auto* ss = RE::ScreenSplatter::GetSingleton(); ss && ss->uiCount > 0) {
 				ss->Clear();  // (Skyrim's blood on the screen: the HUD's red edges say you were hit)

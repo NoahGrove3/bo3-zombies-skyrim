@@ -671,6 +671,7 @@ namespace bo3z
 		void OnUndeadDeath(RE::Actor* a_actor)
 		{
 			Echo::OnUndeadDeath(a_actor);  // (a barrow that wants the dead: stage 2's hunt)
+			Eggs::OnUndeadDeath(a_actor);  // (a hidden quest's marked ground)
 			if (!Director::Fighting() || g_zone < 0) {
 				return;
 			}

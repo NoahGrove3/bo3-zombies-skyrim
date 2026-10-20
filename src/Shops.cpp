@@ -2102,6 +2102,7 @@ namespace bo3z
 				h.dragonBond = Save::DragonBond();
 				h.bondLocked = Movement::BondLocked();
 				h.trialsOn = false;
+				h.whispers.clear();
 				h.chooseOn = g_choosing && g_show.phase == Show::Offering;
 				if (h.chooseOn) {
 					const auto have = Arcana::Carried();
@@ -2114,6 +2115,7 @@ namespace bo3z
 					if (auto r = g_menuRef.get()) {
 						const int t = TownOf(r.get());
 						h.shrineShout = Curse::ClaimableShout(t);
+						h.whispers = Eggs::Whispers(t);  // (Noah: the hidden quest's whispers, a line more for each step found)
 						if (const auto v = Curse::Altar(t); v.on) {  // the city still held: its trials
 							h.trialsOn = true;
 							h.trialDone = v.done, h.trialActive = v.active, h.trialSel = g_trialSel;

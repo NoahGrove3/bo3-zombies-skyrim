@@ -879,6 +879,40 @@ namespace bo3z
 			logger::info("echo: {} {} answer the call", a_count, a_kind == 0 ? "bone warriors" : "spirit-wolves");
 		}
 
+		std::vector<RE::ActorHandle> Summon(std::string_view a_plugin, RE::FormID a_id, int a_count, const RE::NiPoint3& a_at)
+		{
+			std::vector<RE::ActorHandle> out;
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* npc = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESNPC>(a_id, a_plugin);
+			if (!npc) {  // (its mod missing: a spirit-wolf comes instead)
+				npc = RE::TESForm::LookupByID<RE::TESNPC>(0x0F608C);
+			}
+			if (!p || !npc) {
+				return out;
+			}
+			static auto* playerFaction = RE::TESForm::LookupByID<RE::TESFaction>(0x00000DB1);
+			for (int i = 0; i < a_count; ++i) {
+				const float a = 6.2832f * i / a_count + 0.8f;
+				const auto  spot = Walkable(p, a_at + RE::NiPoint3{ std::cos(a) * 160.0f, std::sin(a) * 160.0f, 0 }, 400.0f);
+				auto        ref = p->PlaceObjectAtMe(npc, false);
+				auto*       actor = ref ? ref->As<RE::Actor>() : nullptr;
+				if (!actor) {
+					continue;
+				}
+				actor->SetPosition(spot ? *spot : a_at, true);
+				if (playerFaction) {
+					actor->AddToFaction(playerFaction, 0);
+				}
+				RunOn(actor, "SetPlayerTeammate 1");
+				RunOn(actor, "SetAV Aggression 1");
+				Gun::FxBlast("light", actor->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f });
+				g_allies.push_back({ actor->GetHandle(), 1e9f });  // (an ally of the night: the dead and the truce leave it be)
+				out.push_back(actor->GetHandle());
+			}
+			logger::info("eggs: {} summoned ({:06X})", out.size(), a_id);
+			return out;
+		}
+
 		bool StoneWaits(int a_town) { return a_town >= 0 && a_town < kTownCount && Curse::Freed(a_town) && !PageRead(a_town); }
 		// (Noah: the mini-boss's guaranteed wonder part) the next part you're missing, of the first wonder not yet forged -
 		// a relic's or a barrow's (a Barrow-Jarl's part still waits for its city); false when every one is yours

@@ -459,7 +459,7 @@ namespace bo3z
 			auto*       av = a_target->AsActorValueOwner();
 			const auto  tid = a_target->GetFormID();
 			const float hexMult = g_hexed.contains(tid) ? 1.5f : 1.0f;
-			float       damage = a_bo3Damage * hexMult / gen::kRounds.hpScale;
+			float       damage = a_bo3Damage * hexMult * Eggs::DamageMult() / gen::kRounds.hpScale;
 			if (!Director::IsRoundUndead(a_target)) {
 				// Skyrim's own enemies (bandits, draugr, dragons) are tuned to the player's level, not to the night: our
 				// weapons hit them like gear of your level would (half strength at level 1, full at 25, 1.5x at 50+).
@@ -2082,6 +2082,40 @@ namespace bo3z
 		// city's shout with Dragon's Updraft and the dragon's three bonds, and 100,000 septims - for trying it all out
 		// (dev command: testkit). Tomes beyond your slots are known all the same: equip one from the Magic menu and it
 		// takes the slot in hand (SlotUnslotted).
+		// (Noah: Winterhold's hidden quest) the Eye's Reflection: a beam of the Eye's light along your view, 35 m, through
+		// every one of the dead it crosses - most of a zombie's night health each, a boss's a little
+		void EyeBeam()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (!p || !cam || !cam->cameraRoot) {
+				return;
+			}
+			const auto&  m = cam->cameraRoot->world.rotate;
+			RE::NiPoint3 dir{ m.entry[0][1], m.entry[1][1], m.entry[2][1] };
+			dir = dir / std::max(0.001f, dir.Length());
+			const RE::NiPoint3 from = cam->cameraRoot->world.translate - RE::NiPoint3{ 0, 0, 25.0f } + dir * 60.0f;
+			const RE::NiPoint3 to = from + dir * 3500.0f;
+			int row = 0;
+			for (int i = 0; i < static_cast<int>(gen::kSpellcraft.size()); ++i) {
+				if (gen::kSpellcraft[i].id == "aetherium") row = i;
+			}
+			for (int k = 0; k < 3; ++k) {
+				Spellcraft::StreakAt(row, from, to, 3.2f - k, 0.7f + 0.15f * k, k > 0);
+			}
+			FxBlast("lightmassive", to);
+			Forms::Play(gen::Sound::cast_heavy);
+			int hit = 0;
+			for (auto* f : Foes(from + dir * 1750.0f, 1850.0f)) {
+				const RE::NiPoint3 q = f->GetPosition() + RE::NiPoint3{ 0, 0, 80.0f } - from;
+				const float        along = q.Dot(dir);
+				if (along < 0 || along > 3500.0f || (q - dir * along).Length() > 130.0f) continue;
+				Damage(f, Director::RoundHealth() * gen::kRounds.hpScale * (Director::IsBoss(f) ? 0.15f : 0.9f), false, false);
+				++hit;
+			}
+			logger::info("eggs: the Eye's Reflection ({} struck)", hit);
+		}
+
 		bool g_kitPending = false;
 		void TestKit()
 		{

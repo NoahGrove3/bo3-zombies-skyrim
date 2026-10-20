@@ -25,7 +25,9 @@ def assign(S=None, write=False):
              [(k, f"fx_{r['id']}_{n}") for r in S['spellcraft']['rows'] for k, n in (('ARTO', 'hand'), ('STAT', 'orb'), ('LIGH', 'light'))] + [('ARTO', 'fx_' + n) for n in ('iceshell', 'roots', 'burn', 'poison')] + [('QUST', 'mcm')] + [('QUST', 'rites_' + c['town']) for c in S['curse']['cities']] + \
              [(k, f'updraft_{n}') for n in range(3) for k in ('WOOP', 'SPEL')] + [('SHOU', 'updraft')] + \
              [(k, f"{n}_{b['id']}") for b in S.get('bows', {}).get('rows', []) for k, n in (('WEAP', 'bow'), ('AMMO', 'bowarrow'), ('PROJ', 'bowarrow'))] + \
-             echo_ids(S)
+             echo_ids(S) + \
+             [('GLOB', 'egg_' + e['id']) for e in S.get('eggs', {}).get('rows', [])] + [('GLOB', 'egg_gifts')] + \
+             [('SPEL', 'egg_power_' + e['id']) for e in S.get('eggs', {}).get('rows', []) if e['reward'] in ('summon', 'spell')]
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:

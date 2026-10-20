@@ -253,6 +253,10 @@ namespace bo3z
 				for (int t = 0; t < static_cast<int>(gen::kEvents.size()); ++t) {
 					if (gen::kEvents[t].id == id) Director::DevTheme(t, night == "night");
 				}
+			} else if (cmd == "eggstep") {  // eggstep <town index 0-9>: that city's hidden quest one step on
+				int t = -1;
+				in >> t;
+				Eggs::DevStep(t);
 			} else if (cmd == "miniboss") {
 				Director::DevMiniBoss();
 			} else if (cmd == "testkit") {

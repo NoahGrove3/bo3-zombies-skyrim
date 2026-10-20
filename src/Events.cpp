@@ -609,6 +609,8 @@ namespace bo3z
 					Compass::OnCast(a_event->spell);
 					if (Movement::OnSpellCast(a_event->spell)) {
 						// (Bond II's Updraft)
+					} else if (Eggs::OnSpellCast(a_event->spell)) {
+						// (a hidden quest's summon, the Eye's beam)
 					} else if (const int sh = Gun::ShoutOfSpell(a_event->spell, level); sh >= 0) {
 						Gun::Shout(sh, level);
 					} else if (Arcana::IndexOf(RE::TESForm::LookupByID(a_event->spell)) >= 0) {

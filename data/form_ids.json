@@ -1169,6 +1169,23 @@
   "STAT:pillar_rock2": "0xc8d",
   "STAT:pillar_rock3": "0xc8e",
   "STAT:pillar_rock4": "0xc8f",
-  "STAT:pillar_rock5": "0xc90"
+  "STAT:pillar_rock5": "0xc90",
+  "GLOB:egg_toast": "0xc91",
+  "GLOB:egg_sap": "0xc92",
+  "GLOB:egg_court": "0xc93",
+  "GLOB:egg_horn": "0xc94",
+  "GLOB:egg_resonance": "0xc95",
+  "GLOB:egg_debt": "0xc96",
+  "GLOB:egg_rites": "0xc97",
+  "GLOB:egg_lanterns": "0xc98",
+  "GLOB:egg_dream": "0xc99",
+  "GLOB:egg_eye": "0xc9a",
+  "GLOB:egg_gifts": "0xc9b",
+  "SPEL:egg_power_sap": "0xc9c",
+  "SPEL:egg_power_court": "0xc9d",
+  "SPEL:egg_power_horn": "0xc9e",
+  "SPEL:egg_power_resonance": "0xc9f",
+  "SPEL:egg_power_lanterns": "0xca0",
+  "SPEL:egg_power_eye": "0xca1"
  }
 }

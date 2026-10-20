@@ -881,6 +881,46 @@
    "healthMult": 1.0,
    "speedMult": 1.0,
    "rig": false
+  },
+  {
+   "id": "eg_centurion",
+   "label": "The Resonant Centurion",
+   "plugin": "Skyrim.esm",
+   "localId": "0x10F9B9",
+   "editorId": "EncDwarvenCenturion01",
+   "recordType": "NPC_",
+   "minRound": 99,
+   "weight": 0,
+   "specialRound": false,
+   "headNode": "auto",
+   "forceCombat": true,
+   "bossEvery": 0,
+   "elite": false,
+   "verify": [],
+   "kind": "reaper",
+   "healthMult": 1.0,
+   "speedMult": 1.0,
+   "rig": false
+  },
+  {
+   "id": "eg_anomaly",
+   "label": "The Great Anomaly",
+   "plugin": "Skyrim.esm",
+   "localId": "0x0B6F94",
+   "editorId": "EncMagicAnomaly",
+   "recordType": "NPC_",
+   "minRound": 99,
+   "weight": 0,
+   "specialRound": false,
+   "headNode": "auto",
+   "forceCombat": true,
+   "bossEvery": 0,
+   "elite": false,
+   "verify": [],
+   "kind": "reaper",
+   "healthMult": 1.0,
+   "speedMult": 1.0,
+   "rig": false
   }
  ]
 }

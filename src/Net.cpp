@@ -33,7 +33,7 @@ namespace bo3z::Net
 		using u64 = std::uint64_t;
 		constexpr int kChannel = 7;
 		constexpr std::uint8_t kVersion = 1;
-		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7 };
+		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7, kEgg = 8 };
 #ifndef UN_BUILD
 #	define UN_BUILD "dev"
 #endif
@@ -499,6 +499,12 @@ namespace bo3z::Net
 						}
 						break;
 					}
+					case kEgg:
+						if (sz >= 2) {
+							const int town = d[1];
+							Tasks::Add([town] { Eggs::Heard(town); });
+						}
+						break;
 					case kStats:
 						if (sz >= static_cast<int>(sizeof(StatsMsg))) {
 							StatsMsg m{};
@@ -667,6 +673,14 @@ namespace bo3z::Net
 		return out;
 	}
 
+	void EggDone(int a_town)
+	{
+		if (!g_lobby) {
+			return;
+		}
+		const std::uint8_t m[2]{ kEgg, static_cast<std::uint8_t>(a_town) };
+		ToAll(m, 2, true);
+	}
 	void PowerUpTaken(int a_kind)
 	{
 		if (!g_lobby) {

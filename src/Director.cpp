@@ -785,6 +785,8 @@ namespace bo3z
 					Curse::OnChampionSlain(town);
 				} else if (town == -2) {
 					MiniBossSlain();  // (Noah: the mini-boss's wonder part)
+				} else if (town <= -10) {
+					Eggs::OnBossSlain(-10 - town);  // (a hidden quest's named foe)
 				} else {
 					Echo::OnBearerSlain();  // (a word's bearer: Stage 4)
 				}
@@ -2927,6 +2929,7 @@ namespace bo3z
 			g_pause = std::max(0.0f, g_pause - a_delta);
 			Curse::Tick(a_delta);
 			Echo::Tick(a_delta);
+			Eggs::Tick(a_delta);
 			if (!Allowed(player)) {
 				return;
 			}

@@ -999,6 +999,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const ImU32 top = IM_COL32(150, 10, 18, static_cast<int>(70 * pr * pulse)), z = IM_COL32(150, 10, 18, 0);
 				dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.42f }, top, top, z, z);
 			}
+			if (s.eggDark) {  // a hidden quest's dark: the world shrinks to a ring of sight
+				const ImU32 e = IM_COL32(0, 0, 0, 225), z = IM_COL32(0, 0, 0, 0);
+				const float w = size.y * 0.42f;
+				dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, w }, e, e, z, z);
+				dl->AddRectFilledMultiColor({ 0, size.y - w }, size, z, z, e, e);
+				dl->AddRectFilledMultiColor({ 0, 0 }, { w, size.y }, e, z, z, e);
+				dl->AddRectFilledMultiColor({ size.x - w, 0 }, size, z, e, e, z);
+			}
 			if (s.lightningT > 0) {
 				const float t = 0.45f - s.lightningT;  // (a double flicker: a bright stroke, a gap, a weaker one)
 				const float f = t < 0.06f ? 1.0f : t < 0.12f ? 0.2f : t < 0.2f ? 0.7f : std::max(0.0f, 0.7f * (0.45f - t) / 0.25f);
@@ -2359,7 +2367,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const bool  shout = s.shrineShout >= 0 && s.shrineShout < static_cast<int>(gen::kShouts.size());
 				// (Noah: scroll down to the altar's trials) one panel, its trials below the rest; as tall as the screen allows,
 				// the rows sliding to keep the one in focus in view
-				const float trialsH = s.trialsOn ? 112 * k + 5 * 70 * k + 104 * k : 0.0f;
+				const float trialsH = (s.trialsOn ? 112 * k + 5 * 70 * k + 104 * k : 0.0f) + (s.whispers.empty() ? 0.0f : 56 * k + 46 * k * s.whispers.size());
 				const float contentH = (shout ? 610 : 532) * k + 86 * k + 78 * k + 56 * k + (s.chooseOn ? 52 * k : 0.0f) + trialsH;  // (+ Leave)  // (+ the bow wheel)  // (+ the dragon's bond, + a spell to choose)
 				const float h = std::min(contentH, size.y - 60 * k);
 				const ImVec2 a{ size.x - w - 36 * k, std::max(24 * k, size.y * 0.5f - h * 0.5f - 10 * k) }, b{ a.x + w, a.y + h };
@@ -2612,6 +2620,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Txt(dl, g_title, 20 * k, { TL, ty }, bc, "THE BARROW-JARL: " + s.trialBoss, bossUp ? 1.5f * k : 0.0f, bc);
 					TxtWrap(dl, g_body, 16 * k, { TL, ty + 30 * k }, IM_COL32(196, 182, 160, 235), s.trialBossLine, TR - TL, 2);
 					y = ty + 88 * k;
+				}
+				// [5c] (Noah) the hidden quest's whispers: never told outright - a line more for each step found
+				if (!s.whispers.empty()) {
+					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
+					y += 14 * k;
+					TxtC(dl, g_title, 21 * k, cx, y, kIce, "WHISPERS", 2.0f * k, kRune);
+					y += 36 * k;
+					for (const auto& wsp : s.whispers) {
+						TxtWrap(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 210, 240, 235), "\xE2\x80\x9C" + wsp + "\xE2\x80\x9D", Rr - L, 2);
+						y += 46 * k;
+					}
+					y += 6 * k;
 				}
 				// [6] leave
 				{
