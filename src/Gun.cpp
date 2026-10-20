@@ -2197,7 +2197,6 @@ namespace bo3z
 			}
 			logger::info("testkit: {} spells named by element", n);
 		}
-		bool g_kitPending = false;
 		void TestKit()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
