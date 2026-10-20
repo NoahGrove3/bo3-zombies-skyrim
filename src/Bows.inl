@@ -1100,7 +1100,24 @@ namespace BowsImpl
 		}
 		g_tipT += a_delta;
 		const float     grow = 0.25f + 0.75f * g_draw;
-		const float     flick = g_draw >= 0.98f ? 1.0f + 0.08f * std::sin(g_tipT * 18.0f) : 1.0f;
+		// (Noah: the tip should pulse at full draw - ready to fire) a heartbeat once fully drawn: it swells and brightens
+		// twice a second, so you can see it's ready without watching the string
+		static float fullT = 0;
+		fullT = g_draw >= 0.98f ? fullT + a_delta : 0.0f;
+		const float beat = fullT > 0 ? std::pow(0.5f + 0.5f * std::sin(fullT * 12.566f - 1.5708f), 3.0f) : 0.0f;  // (2 beats a second, sharp)
+		const float flick = g_draw >= 0.98f ? 1.12f + 0.3f * beat : 1.0f;
+		{
+			static std::unordered_map<RE::BSEffectShaderMaterial*, float> base;
+			RE::BSVisit::TraverseScenegraphGeometries(g_tip.obj.get(), [&](RE::BSGeometry* g) {
+				if (auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get())) {
+					if (auto* m = static_cast<RE::BSEffectShaderMaterial*>(ep->material)) {
+						auto [it, fresh] = base.try_emplace(m, m->baseColorScale);
+						m->baseColorScale = it->second * (1.0f + 1.4f * beat);
+					}
+				}
+				return RE::BSVisit::BSVisitControl::kContinue;
+			});
+		}
 		RE::NiAVObject* hand = nullptr;
 		RE::NiPoint3    tip;
 		// the nocked arrow itself (the ammunition's model, 'Arrow:0'): its shape is turned end for end, so its head is at
