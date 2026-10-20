@@ -101,6 +101,8 @@ namespace bo3z
 		void             Tick(float a_delta);
 		void             Reset();
 		bool             IsRoundUndead(RE::Actor* a_actor);
+		float            HarmMult(RE::Actor* a_actor);
+		void             OnDying(RE::Actor* a_actor);    // any death: a champion or mini-boss pays out at once  // how hard this one of the night's dead hits you, its spells too (1 = as made)
 		void             HeadlongCombat();  // data loaded: the undead charge straight in
 		std::vector<RE::FormID> Sheltered();                       // townsfolk sent indoors for the night (co-save 'SHLT')
 		void             Unshelter(const std::vector<RE::FormID>& a_ids);  // a save loaded: everyone back out

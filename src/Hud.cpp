@@ -258,7 +258,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 		std::uint32_t ArmsColor(int id) { return id >= Bows::kIdBase ? Bows::Color(id - Bows::kIdBase) : id >= Arcana::kIdBase ? Arcana::ElementColor(Arcana::ElementOf(id - Arcana::kIdBase)) : id >= 0 && id < static_cast<int>(gen::kGuns.size()) ? gen::kGuns[id].color : 0xC8A060; }
 
-		struct OrbTex { ID3D11ShaderResourceView* crystal[2]; ID3D11ShaderResourceView* soft; };
+		struct OrbTex { ID3D11ShaderResourceView* crystal[4]; ID3D11ShaderResourceView* soft; };
 		OrbTex MenuOrbTextures();  // (the menu's heart stone renders and soft light, defined with them below)
 		void DrawEmblem(ImDrawList* dl, int gun, ImVec2 c, float R, float alpha, float now, float flame = 1.0f)
 		{
@@ -2180,8 +2180,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				if (tx.crystal[0]) {
 					static float turn = 0;
-					turn += dt * (s.rollPhase == 2 ? 60.0f + 160.0f * s.rollT : 10.6f);  // (frames a second: 18 s a turn at rest)
-					const int nF = tx.crystal[1] ? 192 : 96;
+					turn += dt * (s.rollPhase == 2 ? 120.0f + 320.0f * s.rollT : 21.3f);  // (frames a second of 384: 18 s a turn at rest)
+					const int nF = tx.crystal[3] ? 384 : tx.crystal[1] ? 192 : 96;
 					const int f = static_cast<int>(turn) % nF, ff = f % 96;
 					const ImVec2 uv0{ (ff % 12) / 12.0f, (ff / 12) / 8.0f }, uv1{ uv0.x + 1.0f / 12.0f, uv0.y + 0.125f };
 					const float  hh = R * 1.55f, ww = hh * 320.0f / 480.0f;
@@ -3041,8 +3041,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ID3D11ShaderResourceView* g_sGlow = nullptr;
 		ID3D11ShaderResourceView* g_sCrystal = nullptr;
 		ID3D11ShaderResourceView* g_sSoft = nullptr;
-		std::array<ID3D11ShaderResourceView*, 2> g_sCrystalSheet{};  // 192 frames on two 12 x 8 sheets (menu_crystal.png, menu_crystal2.png)
-		OrbTex MenuOrbTextures() { return { { g_sCrystalSheet[0] ? g_sCrystalSheet[0] : g_sCrystal, g_sCrystalSheet[1] }, g_sSoft }; }
+		std::array<ID3D11ShaderResourceView*, 4> g_sCrystalSheet{};  // 384 frames on four 12 x 8 sheets (menu_crystal.png, menu_crystal2..4.png)
+		OrbTex MenuOrbTextures() { return { { g_sCrystalSheet[0] ? g_sCrystalSheet[0] : g_sCrystal, g_sCrystalSheet[1], g_sCrystalSheet[2], g_sCrystalSheet[3] }, g_sSoft }; }
 		ID3D11ShaderResourceView* g_sMtn = nullptr;      // the shrine scene's mountains across the lake (tools/menulake.py)
 		ID3D11ShaderResourceView* g_sRefl = nullptr;     // the mountains upside down in the lake
 		ID3D11ShaderResourceView* g_sAurora = nullptr;   // the northern lights
@@ -3640,11 +3640,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					(void)aura;  // (the old orb's purple fire: the heart stone has its runes' own light)
 					if (g_sCrystal) {
 						// (Noah: smooth at 60 fps, a little faster) a turn in 18 s, cross-faded between its 96 frames
-						const int   nF = g_sCrystalSheet[1] ? 192 : 96;
+						const int   nF = g_sCrystalSheet[3] ? 384 : g_sCrystalSheet[1] ? 192 : 96;  // (a sheet missing: the frames it has)
 						const float fpos = std::fmod(now * nF / 18.0f, static_cast<float>(nF));
 						const int   f0 = static_cast<int>(fpos) % nF, f1 = (f0 + 1) % nF;
 						const float fr = fpos - std::floor(fpos);
-						const float sc = 1.0f + 0.035f * pulse;
+						const float sc = 1.0f;  // (Noah: smooth - no heartbeat swelling on the turning stone)
 						const float w = 427 * u * sc, h = 640 * u * sc;  // (320 x 480 frames, square pixels)
 						const ImVec2 mid{ c.x, c.y + (0.5f - 0.56f) * h };  // (the frame's origin sits at 56% of its height)
 						for (auto [f, wgt] : { std::pair{ f0, 1.0f }, std::pair{ f1, fr } }) {
@@ -4486,6 +4486,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_rock_turn_3.png", nullptr, &g_sRockSheet[2]);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_rock_turn_3_r.png", nullptr, &g_sRockSheetR[2]);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_crystal2.png", nullptr, &g_sCrystalSheet[1]);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_crystal3.png", nullptr, &g_sCrystalSheet[2]);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_crystal4.png", nullptr, &g_sCrystalSheet[3]);
 			for (int i = 0; i < 9; ++i) {
 				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\CurseOfAlduin\\menu_shard" + std::to_wstring(i) + L".png").c_str(), nullptr, &g_sShard[i]);
 				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\CurseOfAlduin\\menu_shard" + std::to_wstring(i) + L"_r.png").c_str(), nullptr, &g_sShardR[i]);

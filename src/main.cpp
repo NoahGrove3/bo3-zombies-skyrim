@@ -7,6 +7,9 @@
 // Only one copy may run in a game: a process-wide mutex says who came first. Older installs named the files
 // UndyingNights / BO3Zombies .asi or .dll (older names): if one of those is loaded, it runs this time and its files are renamed out of the way so
 // the next start is ours alone.
+#include <fstream>
+#include <filesystem>
+
 namespace
 {
 	std::atomic_bool g_booted{ false };
@@ -18,6 +21,38 @@ namespace
 			return;
 		}
 		auto path = *dir / "CurseOfAlduin.log";
+		// (Noah: crashes the log lost) the last run's log is kept as CurseOfAlduin.prev.log, and one that ended in a crash
+		// also as CurseOfAlduin-crash-<when>.log (the last 5), so a crash survives the next start
+		{
+			std::error_code ec;
+			if (std::filesystem::exists(path, ec)) {
+				const auto age = std::filesystem::file_time_type::clock::now() - std::filesystem::last_write_time(path, ec);
+				if (!ec && age > std::chrono::seconds(30)) {
+					bool crashed = false;
+					if (std::ifstream in(path); in) {
+						std::string line;
+						while (std::getline(in, line)) {
+							if (line.find("[critical] crash") != std::string::npos) { crashed = true; break; }
+						}
+					}
+					if (crashed) {
+						const auto t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+						std::tm tm{};
+						localtime_s(&tm, &t);
+						char stamp[32];
+						std::strftime(stamp, sizeof(stamp), "%Y%m%d-%H%M%S", &tm);
+						std::filesystem::copy_file(path, *dir / (std::string("CurseOfAlduin-crash-") + stamp + ".log"), std::filesystem::copy_options::overwrite_existing, ec);
+						std::vector<std::filesystem::path> old;
+						for (auto& e : std::filesystem::directory_iterator(*dir, ec)) {
+							if (e.path().filename().string().rfind("CurseOfAlduin-crash-", 0) == 0) old.push_back(e.path());
+						}
+						std::sort(old.begin(), old.end());
+						for (std::size_t i = 0; i + 5 < old.size(); ++i) std::filesystem::remove(old[i], ec);
+					}
+					std::filesystem::copy_file(path, *dir / "CurseOfAlduin.prev.log", std::filesystem::copy_options::overwrite_existing, ec);
+				}
+			}
+		}
 		auto sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(path.string(), true);
 		auto log = std::make_shared<spdlog::logger>("global", std::move(sink));
 		log->set_level(spdlog::level::info);

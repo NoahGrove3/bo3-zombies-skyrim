@@ -185,14 +185,14 @@ def main():
     k = S * M / (640.0 / fh)
     # (Noah: no after-images) 192 frames, 1.875 degrees apart, on two sheets of 12 x 8 (menu_crystal.png, menu_crystal2.png):
     # neighbours so close that src/Hud.cpp's cross-fade between them leaves no ghost
-    for sh in range(2):
+    for sh in range(4):   # (Noah: still jittery at 192) 384 frames, under a degree apart, on four sheets
         sheet = Image.new('RGBA', (fw * 12, fh * 8), (0, 0, 0, 0))
         for j in range(96):
             fr = sh * 96 + j
             c = Canvas(fw * 2, fh * 2)
-            c.draw(stone, frame_xf(k * 2, fw, fh * 2 * 0.56, fr / 192 * 2 * math.pi), emit=(0.35, 0.75, 1.0), glow_gain=1.8)
+            c.draw(stone, frame_xf(k * 2, fw, fh * 2 * 0.56, fr / 384 * 2 * math.pi), emit=(0.35, 0.75, 1.0), glow_gain=1.8)
             sheet.paste(c.image(ss=2), ((j % 12) * fw, (j // 12) * fh))
-        sheet.save(OUT / ('menu_crystal.png' if sh == 0 else 'menu_crystal2.png'), optimize=True)
+        sheet.save(OUT / ('menu_crystal.png' if sh == 0 else f'menu_crystal{sh + 1}.png'), optimize=True)
     print('stone sheet written')
 
     # the rocks over the columns: one sprite each (turned a little differently), 256 px for 200 painting px

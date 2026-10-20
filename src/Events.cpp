@@ -61,6 +61,11 @@ namespace bo3z
 					return true;  // a hazard, a trap, a lingering field with no one behind it
 				}
 				if (Director::IsRoundUndead(caster) && !caster->IsDead()) {
+					if (const float hm = Director::HarmMult(caster); hm < 0.999f) {  // (the harpies' spells, toned down)
+						auto& d = const_cast<RE::MagicTarget::AddTargetData&>(a_data);
+						d.power *= hm;
+						if (d.magnitude > 0) d.magnitude *= hm;
+					}
 					return false;
 				}
 				return caster->IsDead() || !Director::IsFoe(caster);
@@ -156,6 +161,20 @@ namespace bo3z
 				Watchdog::PlayerTicked();
 				T("game");
 				func(a_this, a_delta);
+				// (Noah: crashes at the loading screen after dying) nothing of ours runs while a load is under way (the world
+				// is being torn down under it), and once you are dead only the party, the HUD's sound and the audio go on
+				if (auto* ui = RE::UI::GetSingleton(); ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) {
+					return;
+				}
+				if (a_this && a_this->IsDead()) {
+					try {
+						Party::Tick(a_delta);
+						Audio::Tick(a_delta);
+					} catch (const std::exception& e) {
+						logger::error("tick (dead): {}", e.what());
+					}
+					return;
+				}
 				try {
 					T("save");
 					Save::Guard();
@@ -376,6 +395,9 @@ namespace bo3z
 					logger::info("death: the player died (killer {:08X} {}, at {:.0f},{:.0f},{:.0f} in {}, level {}, hp max {:.0f})", k ? k->GetFormID() : 0, k ? k->GetName() : "none",
 						p.x, p.y, p.z, cell ? cell->GetFormEditorID() : "?", player->GetLevel(), player->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth));
 					Perks::LoseAll();  // death takes every blessing
+				}
+				if (dying) {
+					Director::OnDying(dying);
 				}
 				if (!dying || !Director::IsRoundUndead(dying)) {
 					return RE::BSEventNotifyControl::kContinue;

@@ -614,6 +614,9 @@ namespace bo3z
 				g_elites[actor->GetFormID()] = { actor->GetHandle(), 3.0f, 5.0f, false };
 			}
 			g_ours[actor->GetFormID()] = *pick;
+			if (const float hm = HarmMult(actor); hm < 0.999f) {  // (Noah: the harpies hit far too hard) its blows weaker too
+				av->SetBaseActorValue(RE::ActorValue::kAttackDamageMult, hm);
+			}
 			g_alive.push_back({ actor->GetHandle(), *pick });
 			if (type) {
 				Undead::Assign(actor, *type);
@@ -761,13 +764,18 @@ namespace bo3z
 			MiniBossReward();
 			Stats::Note(Stats::kMiniBoss);
 		}
+		// (Noah: the boss's wonder part was lost when its body crumbled before you reached it) its death is heard the moment
+		// it falls, and the reward is yours then - straight to you, wherever the body goes
+		bool g_champDying = false;
 		void TickChampion()
 		{
 			auto c = g_champ.handle.get();
-			if (!c) {
+			const bool died = g_champDying || (c && c->IsDead());
+			if (!c && !died) {
 				return;
 			}
-			if (c->IsDead()) {
+			if (died) {
+				g_champDying = false;
 				Points::Add(1000);
 				Forms::Play(gen::Sound::night_end);
 				Hud::Banner(g_champ.name + " falls! +1000", 5.0f);
@@ -2356,6 +2364,24 @@ namespace bo3z
 			return a ? a->GetHandle() : RE::ActorHandle{};
 		}
 		bool  IsBoss(RE::Actor* a_actor) { auto b = g_boss.handle.get(); return a_actor && b && b.get() == a_actor; }
+		// (Noah: the harpies do far too much damage) the mod creatures whose own attacks and spells were made for a
+		// high-level hero, brought in line with the rest of the night
+		float HarmMult(RE::Actor* a_actor)
+		{
+			const auto it = a_actor ? g_ours.find(a_actor->GetFormID()) : g_ours.end();
+			if (it == g_ours.end()) return 1.0f;
+			const std::string_view id = gen::kEnemies[it->second].id;
+			if (id == "hf_harpy") return 0.3f;
+			if (id == "mb_harpy_matriarch") return 0.45f;
+			return 1.0f;
+		}
+		void OnDying(RE::Actor* a_actor)
+		{
+			if (a_actor && g_champ.handle.get().get() == a_actor) {
+				g_champDying = true;
+				TickChampion();  // (now: before the body can crumble away)
+			}
+		}
 		bool IsRoundUndead(RE::Actor* a_actor)
 		{
 			if (!a_actor) {

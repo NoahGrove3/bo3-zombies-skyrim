@@ -164,10 +164,10 @@ namespace BowsImpl
 	//   Thirstbow    0 heals you a little   I bleeds   II a blood tether that feeds you   III kills burst into orbs of blood: health and power
 	enum class Kind { Fire, Frost, Shock, Wind, Sun, Blood };
 	constexpr const char* kTierNames[6][4] = {
-		{ "Ember Arrow", "Flare Shot", "Cinder Trail", "Fire Tornado" },
-		{ "Frost Arrow", "Deep Freeze", "Shatter", "Ice Tornado" },
-		{ "Spark Arrow", "Chain Lightning", "Storm Mark", "Lightning Tornado" },
-		{ "Gust Arrow", "Gale Burst", "Cyclone Arrow", "Tornado" },
+		{ "Ember Arrow", "Flare Shot", "Cinder Trail", "Fiery Torrent" },
+		{ "Frost Arrow", "Deep Freeze", "Shatter", "Throat of the World" },
+		{ "Spark Arrow", "Chain Lightning", "Storm Mark", "Storm Bloom" },
+		{ "Gust Arrow", "Gale Burst", "Cyclone Arrow", "Arcane Cyclone" },
 		{ "Sunlit Arrow", "Radiant Burst", "Solar Flare", "Sunfire Tornado" },
 		{ "Leech Arrow", "Hemorrhage", "Blood Tether", "Blood Tornado" } };
 	// (Noah: each bow's last upgrade - a tornado of its element where the arrow lands, slow, hunting the dead for 5 s)
@@ -280,16 +280,59 @@ namespace BowsImpl
 		}
 	}
 
-	void TornadoOf(const Spellcraft::Shot& s, const RE::NiPoint3& p)
+	// (Noah: each bow's last upgrade is a spell of the party's mods, loosed where the arrow strikes) Fire: Fiery Torrent,
+	// Frost: Throat of the World, Shock: Storm Bloom, Wind: Arcane Cyclone - cast from the strike itself (a marker a
+	// little behind it, aimed on through), our numbers doing the damage alongside; Sun and Blood keep their tornado
+	RE::SpellItem* TierThreeSpell(Kind a_k)
+	{
+		auto* dh = RE::TESDataHandler::GetSingleton();
+		switch (a_k) {
+		case Kind::Fire:  return dh->LookupForm<RE::SpellItem>(0x056995, "Conduit.esp");
+		case Kind::Frost: return dh->LookupForm<RE::SpellItem>(0x2E8870, "MysticismMagic.esp");
+		case Kind::Shock: return dh->LookupForm<RE::SpellItem>(0x000956, "StormCalling.esl");
+		case Kind::Wind:  return dh->LookupForm<RE::SpellItem>(0x026E6B, "ForgottenMagic_Redone.esp");
+		default:          return nullptr;
+		}
+	}
+	RE::ObjectRefHandle g_t3Marker;
+	bool CastAtStrike(RE::SpellItem* a_spell, const RE::NiPoint3& p, const RE::NiPoint3& a_vel, RE::Actor* a_target)
+	{
+		auto* pl = RE::PlayerCharacter::GetSingleton();
+		if (!a_spell || !pl) return false;
+		auto m = g_t3Marker.get();
+		if (!m || m->IsDeleted() || m->GetParentCell() != pl->GetParentCell()) {
+			auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(0x0000003B);
+			auto  ref = xm ? pl->PlaceObjectAtMe(xm, false) : nullptr;
+			if (!ref) return false;
+			g_t3Marker = ref->CreateRefHandle();
+			m = ref;
+		}
+		const float len = a_vel.Length();
+		const RE::NiPoint3 dir = len > 1 ? a_vel * (1.0f / len) : RE::NiPoint3{ 0, 1, 0 };
+		m->SetPosition(p - dir * 140.0f + RE::NiPoint3{ 0, 0, 60.0f });
+		auto* c = m->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant);
+		if (!c) return false;
+		c->CastSpellImmediate(a_spell, false, a_target, 1.0f, false, 0.0f, pl);
+		return true;
+	}
+	void TornadoOf(const Spellcraft::Shot& s, const RE::NiPoint3& p, RE::Actor* a_hit = nullptr)
 	{
 		if (s.tier >= 3 && s.full) {
+			RE::Actor* target = a_hit;
+			if (!target) {
+				for (auto* f : Foes(p, 600.0f)) { target = f; break; }
+			}
+			if (CastAtStrike(TierThreeSpell(KindOf(s.bow)), p, s.vel, target)) {
+				Spellcraft::Area(s.row, p, 260.0f, s.damage * 1.2f, gen::kFxNone);  // (the spell's look and sweep; our numbers hit)
+				return;
+			}
 			Props::Tornado(static_cast<int>(KindOf(s.bow)), p, s.vel, 5.0f, s.damage * 0.2f, true, s.row);
 		}
 	}
 	void OnHit(const Spellcraft::Shot& s, RE::Actor* a, const RE::NiPoint3& p, bool killed)
 	{
 		Impact(s, p);
-		TornadoOf(s, a->GetPosition());
+		TornadoOf(s, a->GetPosition(), a);
 		const int  i = s.bow, t = s.tier, row = s.row;
 		const float dmg = s.damage;
 		switch (KindOf(i)) {

@@ -2837,6 +2837,18 @@ namespace bo3z
 					logger::info("glider: opened from first person - the camera turns round for the glide");
 				}
 			}
+			// (Noah: in first person the glider glitched out) however it was opened - the paraglider's own key, Dragon's
+			// Updraft, a jump off a cliff - if it is open while the camera is in first person, the camera goes to third
+			// person and the glider is called again there, so its animations play on the body they were made for
+			if (g_fpGlide == 0 && cam->IsInFirstPerson() && !Riding()) {
+				bool pg = false;
+				a_p->GetGraphVariableBool("bParaGliding", pg);
+				if (pg) {
+					cam->ForceThirdPerson();
+					g_fpGlide = 1, g_fpGlideT = 0, g_fpZoomWas = -1;
+					logger::info("glider: open in first person - to third person, the glider called again");
+				}
+			}
 			if (g_fpGlide == 0) {
 				return;
 			}
