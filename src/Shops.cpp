@@ -335,7 +335,7 @@ namespace bo3z
 			auto* d = RE::TESForm::LookupByID<RE::BGSSoundDescriptorForm>(0x0003F206);  // MAGShockFFFireSD: the bolt's crack
 			auto* am = RE::BSAudioManager::GetSingleton();
 			RE::BSSoundHandle h;
-			if (d && am && am->BuildSoundDataFromDescriptor(h, static_cast<RE::BSISoundDescriptor*>(d))) {
+			if (d && am && am->GetSoundHandle(h, static_cast<RE::BSISoundDescriptor*>(d))) {
 				h.SetPosition(a_at);
 				h.SetVolume(a_vol);
 				h.Play();
