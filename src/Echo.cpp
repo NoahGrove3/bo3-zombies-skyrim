@@ -429,12 +429,145 @@ namespace bo3z
 			return out;
 		}
 
+		// ---- (Noah) the staffs' last step: a staff reforged twice is set on its own pedestal by day and fed 50 souls. Wraiths
+		// rise in the Reliquary; each one killed sends a blue orb of its soul into the staff. It can't be taken back until
+		// it's full - then it's yours again, upgraded. Souls kept per staff (UN_RitualSouls, 6 bits each), the staff on its
+		// stand in UN_RitualStand (wonder + 1).
+		constexpr int kRitualNeed = 50;
+		int  RitualSouls(int a_w) { return (Read(gen::kRitualSouls) >> (6 * a_w)) & 63; }
+		void SetRitualSouls(int a_w, int a_n)
+		{
+			int v = Read(gen::kRitualSouls) & ~(63 << (6 * a_w));
+			Write(gen::kRitualSouls, v | (std::clamp(a_n, 0, 63) << (6 * a_w)));
+		}
+		int OnStand() { return Read(gen::kRitualStand) - 1; }
+		std::vector<RE::ActorHandle> g_wraiths;
+		float g_wraithSpawn = 0;
+		bool  g_ritualToldNight = false;
+		void ClearWraiths()
+		{
+			for (auto& h : g_wraiths) {
+				if (auto a = h.get(); a && !a->IsDead()) { a->Disable(); a->SetDelete(true); }
+			}
+			g_wraiths.clear();
+		}
+		RE::NiPoint3 PedestalAt(int a_w) { const auto& s = gen::kRelPedestals[a_w]; return Room(s.x, s.y, s.z); }
+		void SoulOrb(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to)
+		{
+			constexpr int kSteps = 12;  // a small blue light racing from the body into the staff
+			for (int k = 0; k <= kSteps; ++k) {
+				const float t = static_cast<float>(k) / kSteps;
+				const RE::NiPoint3 q = a_from + (a_to - a_from) * t + RE::NiPoint3{ 0, 0, 120.0f * std::sin(t * 3.1416f) + 60.0f };
+				Gun::FxBlast("light", q, 0.06f * k);
+			}
+			Gun::FxBlast("constellation", a_to + RE::NiPoint3{ 0, 0, 100.0f }, 0.06f * kSteps + 0.05f);
+		}
+		void TickRitual(RE::PlayerCharacter* a_p, float a_dt)
+		{
+			const int w = OnStand();
+			if (w < 0) {
+				if (!g_wraiths.empty()) ClearWraiths();
+				return;
+			}
+			const bool here = a_p->GetParentCell() == HH() && InRoom(a_p);
+			if (!here || Director::Fighting() || RitualSouls(w) >= kRitualNeed) {
+				if (!g_wraiths.empty()) ClearWraiths();
+				if (here && Director::Fighting() && !g_ritualToldNight) {
+					g_ritualToldNight = true;
+					Hud::Banner(std::string(gen::kEchoWonders[w].label) + " waits for daylight to drink again", 4.0f);
+				}
+				return;
+			}
+			g_ritualToldNight = false;
+			const auto at = PedestalAt(w);
+			// the dead give up their souls
+			for (auto it = g_wraiths.begin(); it != g_wraiths.end();) {
+				auto a = it->get();
+				if (!a || a->IsDeleted()) { it = g_wraiths.erase(it); continue; }
+				if (a->IsDead()) {
+					const int n = std::min(kRitualNeed, RitualSouls(w) + 1);
+					SetRitualSouls(w, n);
+					SoulOrb(a->GetPosition(), at);
+					if (n % 10 == 0 && n < kRitualNeed) Hud::Banner(fmt::format("{} - {} of {} souls", gen::kEchoWonders[w].label, n, kRitualNeed), 2.0f);
+					if (n >= kRitualNeed) {
+						Forms::Play(gen::Sound::shout_learned);
+						Gun::FxBlast("lightmassive", at + RE::NiPoint3{ 0, 0, 100.0f }, 0.8f);
+						Hud::Banner(Upper(std::string(gen::kEchoWonders[w].label)) + " IS FULL - take it up from its pedestal", 6.0f);
+						it = g_wraiths.erase(it);
+						ClearWraiths();
+						return;
+					}
+					it = g_wraiths.erase(it);
+					continue;
+				}
+				++it;
+			}
+			// wraiths rise in the hall, five at a time
+			if ((g_wraithSpawn -= a_dt) <= 0 && g_wraiths.size() < 5) {
+				g_wraithSpawn = 1.5f;
+				static constexpr std::array<std::pair<std::string_view, RE::FormID>, 3> kWraith{ { { "Skyrim.esm", 0x023AB3 },   // an ice wraith
+					{ "The Restless Dead.esp", 0x21756C },                                                                        // a blighted wisp
+					{ "mihailhighfantasypack.esp", 0x000BC4 } } };                                                                // a will-o'-the-wisp
+				static int pick = 0;
+				RE::TESNPC* npc = nullptr;
+				for (int k = 0; k < 3 && !npc; ++k, ++pick) {
+					const auto& [pl, id] = kWraith[pick % 3];
+					npc = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESNPC>(id, pl);
+				}
+				if (npc) {
+					const float a = static_cast<float>(std::rand() % 628) * 0.01f, r = 280.0f + static_cast<float>(std::rand() % 200);
+					const auto spot = Walkable(a_p, Room(std::cos(a) * r, std::sin(a) * r, 0), 300.0f);
+					if (auto ref = a_p->PlaceObjectAtMe(npc, false); ref) {
+						if (auto* act = ref->As<RE::Actor>()) {
+							act->SetPosition(spot ? *spot : Room(std::cos(a) * r, std::sin(a) * r, 40.0f), true);
+							act->StartCombat(a_p);
+							Gun::FxBlast("dark", act->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f });
+							g_wraiths.push_back(act->GetHandle());
+						}
+					}
+				}
+			}
+		}
+
 		void Forge(RE::PlayerCharacter* a_p, int a_w)
 		{
 			const auto& w = gen::kEchoWonders[a_w];
+			if (const int st = OnStand(); st >= 0) {  // a staff on its stand, drinking souls
+				const int sgun = GunOfWonder(st);
+				if (st != a_w) {
+					Hud::Banner(std::string(gen::kEchoWonders[st].label) + " is still drinking souls on its stand - finish that first", 4.0f);
+					return;
+				}
+				if (RitualSouls(st) < kRitualNeed) {
+					Hud::Banner(fmt::format("{} - {} of {} souls. It can't be taken up until it's full{}", w.label, RitualSouls(st), kRitualNeed, Director::Fighting() ? " (and only by day)" : ""), 5.0f);
+					return;
+				}
+				Write(gen::kRitualStand, 0);
+				SetRitualSouls(st, 0);
+				Gun::Give(sgun);
+				Gun::SetLevelOf(sgun, gen::kForgeMax);
+				Forms::Play(gen::Sound::shout_learned);
+				Hud::Lore(Upper(std::string(w.label)) + " UPGRADED", std::string(gen::kGuns[sgun].abilityText), 10.0f);
+				logger::info("echo: {} upgraded by the ritual", w.id);
+				BuildReliquary(a_p);
+				return;
+			}
 			if (Forged(a_w)) {
 				const int gun = GunOfWonder(a_w);
 				if (gun < 0) {
+					return;
+				}
+				if (HeldWonder() == a_w && Gun::IsStaffWonder(gun) && Gun::LevelOf(gun) == gen::kForgeMax - 1) {  // the last step begins
+					if (Director::Fighting()) {
+						Hud::Banner("The staff can only drink souls by day - come back at dawn", 4.0f);
+						return;
+					}
+					Gun::TakeAway(gun);
+					Write(gen::kRitualStand, a_w + 1);
+					g_wraithSpawn = 1.0f;
+					Forms::Play(gen::Sound::champ_arrive);
+					Hud::Lore(Upper(std::string(w.label)) + " HUNGERS", fmt::format("It stands on its pedestal and drinks the souls of what you kill here. Wraiths are rising - kill {} of them by day. Until it's full the staff stays on its stand: fight with your other weapons.", kRitualNeed - RitualSouls(a_w)), 9.0f);
+					logger::info("echo: the soul ritual for {} begins", w.id);
 					return;
 				}
 				if (HeldWonder() == a_w) {  // give it back: it rests on its pedestal again (for you, or a friend)
@@ -805,6 +938,7 @@ namespace bo3z
 	{
 		void Reset()
 		{
+			g_wraiths.clear();
 			for (auto& s : g_site) {
 				s = Site{};
 			}
@@ -950,6 +1084,7 @@ namespace bo3z
 			g_slow = 0.5f;
 			g_throneAsk = std::max(0.0f, g_throneAsk - 0.5f);
 			TickAllies(0.5f);
+			TickRitual(p, 0.5f);
 			// the wonder in your hands: lost (dropped from a slot, a new character) - it rests on its pedestal again
 			if (const int w = HeldWonder(); w >= 0) {
 				const int gun = GunOfWonder(w);

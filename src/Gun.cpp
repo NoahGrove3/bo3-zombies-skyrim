@@ -2042,6 +2042,33 @@ namespace bo3z
 			(void)a_gun;  // wands never run dry; tomes run on magicka
 		}
 
+		int LevelOf(int a_gun) { const int s = SlotOf(a_gun); return s >= 0 ? Save::GetSlot(s).level : -1; }
+		void SetLevelOf(int a_gun, int a_level)
+		{
+			if (const int s = SlotOf(a_gun); s >= 0) {
+				auto sl = Save::GetSlot(s);
+				sl.level = std::clamp(a_level, 0, gen::kForgeMax);
+				Save::SetSlot(s, sl);
+			}
+		}
+		bool IsStaffWonder(int a_gun)
+		{
+			if (a_gun < 0 || a_gun >= static_cast<int>(gen::kGuns.size())) return false;
+			const std::string_view id = gen::kGuns[a_gun].id;
+			return id == "gravecaller" || id == "frostbinder" || id == "wolfcrown" || id == "barrowhorn";
+		}
+		int TakeAway(int a_gun)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			const int s = SlotOf(a_gun);
+			if (!p || s < 0) return -1;
+			const int lv = Save::GetSlot(s).level;
+			if (auto* w = Forms::Gun(a_gun); w && p->GetItemCount(w) > 0) {
+				p->RemoveItem(w, p->GetItemCount(w), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+			}
+			Save::SetSlot(s, { -1, 0, 0, 0 });
+			return lv;
+		}
 		bool Give(int a_gun)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -2123,7 +2150,7 @@ namespace bo3z
 		}
 
 		bool g_kitPending = false;
-		constexpr float kKitVersion = 2.0f;  // (raised whenever the kit gains something: test characters get the new things on load)
+		constexpr float kKitVersion = 3.0f;  // (raised whenever the kit gains something: test characters get the new things on load)
 		// (Noah: every spell from my mods that imbues a weapon or does direct damage, to choose the Echo Altar's from)
 		// every castable spell of a mod (not the base game's own) with a damaging effect on health, or one that imbues a
 		// weapon; each named for its element first ("Fire: ...") so the Magic menu lists them by element. The names are
@@ -2236,6 +2263,7 @@ namespace bo3z
 					if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kGuns[i].weapId, gen::kPlugin); w && p->GetItemCount(w) <= 0) {
 						p->AddObjectToContainer(w, nullptr, 1, nullptr);
 					}
+					if (LevelOf(i) >= 0) SetLevelOf(i, gen::kForgeMax);  // (Noah: tier 3 staffs to test; unslotted ones get it as they're taken up)
 				}
 			}
 			for (int i = 0; i < static_cast<int>(gen::kShouts.size()); ++i) {
@@ -2531,6 +2559,10 @@ namespace bo3z
 				return true;
 			}
 			auto s = Save::GetSlot(slot);
+			if (IsStaffWonder(gun) && s.level >= gen::kForgeMax - 1 && s.level < gen::kForgeMax) {  // (Noah: the staffs' last step is a ritual)
+				Hud::Banner(std::string(gen::kGuns[gun].label) + ": its last power can't be bought - set it on its pedestal in High Hrothgar by day and feed it 50 souls", 6.0f);
+				return false;
+			}
 			if (s.level >= gen::kForgeMax) {
 				Hud::Banner(std::string(gen::kGuns[gun].label) + " cannot hold more power", 2.5f);
 				return false;
@@ -2866,7 +2898,7 @@ namespace bo3z
 		void SlotUnslotted()
 		{
 			const int gun = CurrentGun();
-			if (gun < 0 || SlotOf(gun) >= 0 || gen::kGuns[gun].kind == gen::kKindBow || !Forms::GunSpell(gun)) {
+			if (gun < 0 || SlotOf(gun) >= 0 || gen::kGuns[gun].kind == gen::kKindBow || (!Forms::GunSpell(gun) && !IsStaffWonder(gun))) {
 				return;
 			}
 			int slot = -1;
@@ -2874,9 +2906,10 @@ namespace bo3z
 				if (Save::GetSlot(s).gun < 0) slot = s;
 			}
 			if (slot < 0) slot = Save::ActiveSlot() % SlotCount();
-			Save::SetSlot(slot, { gun, gen::kGuns[gun].clip, gen::kGuns[gun].reserve });
+			// (Noah: the test kit's staffs are tier 3)
+			Save::SetSlot(slot, { gun, gen::kGuns[gun].clip, gen::kGuns[gun].reserve, IsStaffWonder(gun) && TestKitOn() ? gen::kForgeMax : 0 });
 			Save::SetActiveSlot(slot);
-			logger::info("gun: {} taken up from the Magic menu -> slot {}", gen::kGuns[gun].id, slot);
+			logger::info("gun: {} taken up from the Magic menu / pack -> slot {}", gen::kGuns[gun].id, slot);
 		}
 
 		void Tick(float a_delta)

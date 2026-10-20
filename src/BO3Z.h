@@ -469,6 +469,10 @@ namespace bo3z
 		bool                  OnButton(const RE::ButtonEvent* a_event);
 		std::pair<bool, bool> RecentHit(RE::FormID a_actor);  // {gun kill, headshot}
 		bool                  Give(int a_gun);                // buy/box: put in a slot, equip it
+		int                   LevelOf(int a_gun);             // its reforge level (-1: not carried)
+		void                  SetLevelOf(int a_gun, int a_level);
+		int                   TakeAway(int a_gun);            // out of its slot and your hands (its level returned; -1 not carried)
+		bool                  IsStaffWonder(int a_gun);       // one of the four Falmer staffs
 		void                  Console(const std::string& a_cmd);  // a console command, run as the player
 		bool                  KnowsShout(int a_shout);        // the cities' shouts (sheet: shouts)
 		void                  LearnShout(int a_shout);

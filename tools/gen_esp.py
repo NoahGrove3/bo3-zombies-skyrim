@@ -638,6 +638,8 @@ for e in S['eggs']['rows']:
             sub('ETYP', struct.pack('<I', 0x025BEE)), sub('DESC', z(e['rewardText'])), sub('SPIT', sp),
             sub('EFID', struct.pack('<I', fid('MGEF', 'shoutcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 recs['GLOB'].append(record('GLOB', fid('GLOB', 'egg_gifts'), [sub('EDID', z('UN_EggGifts')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
+for k, e in (('ritual_souls', 'UN_RitualSouls'), ('ritual_stand', 'UN_RitualStand')):   # (the staffs' last step: souls fed to each, the one on its stand)
+    recs['GLOB'].append(record('GLOB', fid('GLOB', k), [sub('EDID', z(e)), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 recs['GLOB'].append(record('GLOB', fid('GLOB', 'test_kit'), [sub('EDID', z('UN_TestKit')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))  # (Noah's test characters)
 
 def how_text(q):

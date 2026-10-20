@@ -1193,6 +1193,8 @@
   "ENCH:gravecaller": "0xca5",
   "ENCH:frostbinder": "0xca6",
   "ENCH:wolfcrown": "0xca7",
-  "ENCH:barrowhorn": "0xca8"
+  "ENCH:barrowhorn": "0xca8",
+  "GLOB:ritual_souls": "0xca9",
+  "GLOB:ritual_stand": "0xcaa"
  }
 }
