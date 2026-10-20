@@ -1604,7 +1604,7 @@ namespace bo3z
 			if (g_waveSpawned < g_waveSize) {
 				const float boost = Curse::SpawnBoost() * (g_event >= 0 ? gen::kEvents[g_event].spawnMult : 1.0f);
 				const int   want = std::min(static_cast<int>(g_toSpawn * Curse::SpawnBoost()), R.maxAlive * 3 / 2);
-				if (g_pause <= 0 && (g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < want) {
+				if (g_pause <= 0 && (g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < want && !Movement::Gliding() && !a_player->IsInMidair()) {  // (none dropped in under you while you fly: the crash)
 					const int th = ThemeNowImpl();
 					const int fin = th >= 0 ? gen::kEvents[th].finale : -1;
 					const bool last = g_waveSpawned == g_waveSize - 1;
@@ -2022,6 +2022,13 @@ namespace bo3z
 		{
 			SettleCorpses(a_player, a_delta);
 			TickFading(a_delta);
+			// (Noah: crashes while gliding) the left-behind dead were being moved after you every frame you flew - a dozen
+			// actors dropped into cells still loading under a gliding player. Now: never while you glide or fall, only once
+			// you have stood on the ground a moment, and one at a time (a quarter second apart)
+			static float grounded = 0, relocGap = 0;
+			const bool   flying = Movement::Gliding() || a_player->IsInMidair();
+			grounded = flying ? 0.0f : grounded + a_delta;
+			relocGap = std::max(0.0f, relocGap - a_delta);
 			for (auto& s : g_alive) {
 				if (!gen::kEnemies[s.enemy].forceCombat || (s.combatRetry -= a_delta) > 0) {
 					continue;
@@ -2039,7 +2046,8 @@ namespace bo3z
 				const float dist = a->GetPosition().GetDistance(a_player->GetPosition());
 				// Left behind (too far, or its cell unloaded): climb out of the ground again near the player, BO3-style.
 				if (!boss && (dist > gen::kChaseRelocateDist || !a->Is3DLoaded())) {
-					if ((s.behind += kStep) >= gen::kChaseRelocateSeconds) {
+					if ((s.behind += kStep) >= gen::kChaseRelocateSeconds && grounded >= 1.5f && relocGap <= 0) {
+						relocGap = 0.25f;
 						a->StopCombat();
 						a->MoveTo(a_player);
 						a->SetPosition(SpawnSpot(a_player), true);
