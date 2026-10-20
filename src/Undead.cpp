@@ -108,7 +108,7 @@ namespace bo3z
 			bool                      wasAttacking = false;
 		};
 		std::shared_mutex                                    g_lock;
-		std::unordered_map<RE::FormID, std::unique_ptr<Rig>> g_rigs;
+		std::unordered_map<RE::FormID, std::shared_ptr<Rig>> g_rigs;  // (shared: the animation threads keep theirs alive while the game thread replaces or drops it)
 		std::atomic_bool                                     g_logged{ false };
 
 		RE::NiMatrix3 AxisAngle(RE::NiPoint3 a, float t)
@@ -488,11 +488,11 @@ namespace bo3z
 				if (!a_this || a_this->IsDead() || a_this->IsInRagdollState()) {
 					return;
 				}
-				Rig* r = nullptr;
+				std::shared_ptr<Rig> r;
 				{
 					std::shared_lock l(g_lock);
 					if (auto it = g_rigs.find(a_this->GetFormID()); it != g_rigs.end()) {
-						r = it->second.get();
+						r = it->second;
 					}
 				}
 				if (r) {
@@ -595,7 +595,7 @@ namespace bo3z
 			{
 				std::unique_lock l(g_lock);
 				auto& r = g_rigs[a_actor->GetFormID()];
-				r = std::make_unique<Rig>();
+				r = std::make_shared<Rig>();
 				r->type = a_type;
 				r->seed = Rand(0.0f, 10.0f);
 				r->lastPos = a_actor->GetPosition();

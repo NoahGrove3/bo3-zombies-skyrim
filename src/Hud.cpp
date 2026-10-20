@@ -2977,7 +2977,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		void RequestSaves()
 		{
 			g_savesReady = false;
-			SKSE::GetTaskInterface()->AddTask([] {
+			Tasks::Add([] {
 				std::vector<SaveRow> out;
 				if (auto* sl = RE::BGSSaveLoadManager::GetSingleton()) {
 					sl->PopulateSaveList();
@@ -3016,7 +3016,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		void LoadSave(const std::string& a_file)
 		{
 			logger::info("menu: loading '{}'", a_file);
-			SKSE::GetTaskInterface()->AddTask([a_file] {
+			Tasks::Add([a_file] {
 				if (auto* sl = RE::BGSSaveLoadManager::GetSingleton()) sl->Load(a_file.c_str());
 			});
 		}
@@ -4104,7 +4104,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_outro = true, g_veil = 1.0f;
 				g_saveAfterFilm = true;
 				g_outroStart = g_outroBusy = std::chrono::steady_clock::now();
-				SKSE::GetTaskInterface()->AddTask([] {  // into the game in first person
+				Tasks::Add([] {  // into the game in first person
 					if (auto* cam = RE::PlayerCamera::GetSingleton()) {
 						cam->ForceFirstPerson();
 					}
@@ -4578,6 +4578,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 			DevTools::PollFromRender();
 			DevTools::RunQueuedOnMain();  // Present runs on the main thread, also while menus pause the game
+			Tasks::Drain();
 			Hud::State s;
 			{
 				std::scoped_lock l(g_lock);
@@ -4679,7 +4680,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						logger::info("intro: into the game after {:.1f}s of black", since);
 						if (g_saveAfterFilm) {  // the new character's first save: a death now reloads this character, never an older one
 							g_saveAfterFilm = false;
-							SKSE::GetTaskInterface()->AddTask([] {
+							Tasks::Add([] {
 								auto* pl = RE::PlayerCharacter::GetSingleton();
 								auto* sl = RE::BGSSaveLoadManager::GetSingleton();
 								if (pl && sl && !pl->IsDead()) {
@@ -4965,7 +4966,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			// F1, in the world: the Codex, at the Survivor's Guide
 			if (a_b && a_b->IsDown() && a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x3B && InGame()) {
-				SKSE::GetTaskInterface()->AddUITask([] {
+				Tasks::AddUI([] {
 					auto* book = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(gen::kGuideBook, gen::kPlugin);
 					auto* pl = RE::PlayerCharacter::GetSingleton();
 					auto* em = RE::ActorEquipManager::GetSingleton();
@@ -5020,7 +5021,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			g_saveAfterFilm = false;  // (the race menu is still to come: the first save waits for it, AfterCharacterMade)
 			g_holdUntilMs = 0;  // (the long hold was for the film: without it, black lasted 15-20 s)
 			g_outroStart = g_outroBusy = std::chrono::steady_clock::now();
-			SKSE::GetTaskInterface()->AddTask([] {
+			Tasks::Add([] {
 				if (auto* cam = RE::PlayerCamera::GetSingleton()) {
 					cam->ForceFirstPerson();
 				}

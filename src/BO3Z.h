@@ -536,6 +536,13 @@ namespace bo3z
 		bool OnButton(const RE::ButtonEvent* a_event);
 	}
 
+	namespace Tasks
+	{
+		void Add(std::function<void()> a_task);    // on the main thread (SKSE's queue, or ours when loaded as the .asi)
+		void AddUI(std::function<void()> a_task);
+		void Drain();                              // ours: from the Present hook
+	}
+
 	namespace Watchdog
 	{
 		void Beat();   // a frame was drawn (from Present)

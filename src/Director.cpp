@@ -74,6 +74,17 @@ namespace bo3z
 
 		float Uniform(float a, float b) { return std::uniform_real_distribution<float>(a, b)(g_rng); }
 
+		// (Noah: at most 2,000 dead a night for each player - 6,000 for three) the waves keep their rising shape (20, 40,
+		// 60...) but are scaled down together when the night's total would pass the cap
+		constexpr int kNightCapPerPlayer = 2000;
+		int WaveSize(int a_wave)
+		{
+			const int   players = Net::InLobby() ? Net::Members() + 1 : 1;
+			const float total = static_cast<float>(kWaveDeadStep) * g_waves * (g_waves + 1) / 2.0f;
+			const float scale = std::min(1.0f, static_cast<float>(kNightCapPerPlayer * std::max(1, players)) / std::max(1.0f, total));
+			return std::max(1, static_cast<int>(std::lround(kWaveDeadStep * a_wave * scale)));
+		}
+
 		int TotalFor(int a_round, int a_players = 1)
 		{
 			// Black Ops III's zombie count for a round.
@@ -1276,7 +1287,7 @@ namespace bo3z
 			g_special = a_round >= R.specialFirstRound && (a_round - R.specialFirstRound) % R.specialEveryRounds == 0;
 			// One round per night: the dead keep coming until dawn. How many walk at once grows night by night.
 			g_toSpawn = std::clamp(static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier / 3.0f)), 12, R.maxAlive);
-			g_waves = kWavesBase + a_round, g_wave = 1, g_waveSize = kWaveDeadStep, g_waveSpawned = 0, g_waveRest = 0, g_nightCleared = false;
+			g_waves = kWavesBase + a_round, g_wave = 1, g_waveSize = WaveSize(1), g_waveSpawned = 0, g_waveRest = 0, g_nightCleared = false;
 			Curse::OnWave(false);
 			g_spawnTimer = 0;
 			g_phase = Phase::Fighting;
@@ -1374,7 +1385,7 @@ namespace bo3z
 				return;
 			}
 			++g_wave;
-			g_waveSize = kWaveDeadStep * g_wave;
+			g_waveSize = WaveSize(g_wave);
 			g_waveSpawned = 0;
 			g_waveRest = kWaveRest;
 			Forms::Play(gen::Sound::round_end);
@@ -2855,7 +2866,7 @@ namespace bo3z
 		void Unshelter(const std::vector<RE::FormID>& a_ids)
 		{
 			// (runs while the save loads: the references are re-enabled once they exist; the night hides them again)
-			SKSE::GetTaskInterface()->AddTask([a_ids] {
+			Tasks::Add([a_ids] {
 				for (auto id : a_ids) {
 					if (auto* r = id ? RE::TESForm::LookupByID<RE::TESObjectREFR>(id) : nullptr; r && r->IsDisabled()) {
 						r->Enable(false);

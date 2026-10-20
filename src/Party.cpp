@@ -171,7 +171,7 @@ namespace bo3z::Party
 		// a few seconds on: the fallen have risen with the light (Tick), the dead have crumbled
 		std::thread([what] {
 			std::this_thread::sleep_for(std::chrono::seconds(4));
-			SKSE::GetTaskInterface()->AddTask([what] {
+			Tasks::Add([what] {
 				g_saving = false;
 				auto* pl = RE::PlayerCharacter::GetSingleton();
 				auto* sl = RE::BGSSaveLoadManager::GetSingleton();
@@ -180,7 +180,8 @@ namespace bo3z::Party
 					logger::info("party save: skipped ({})", what);
 					return;
 				}
-				const std::string name = std::string("CurseOfAlduin - ") + pl->GetName() + " - " + what;
+				// (audit: a new file every dawn piled up) one dawn save per character, written over each morning
+				const std::string name = std::string("CurseOfAlduin - ") + pl->GetName() + " - Dawn";
 				sl->Save(name.c_str());
 				g_lastSave = name;
 				Hud::Banner("GAME SAVED - " + what, 3.0f);
@@ -295,7 +296,7 @@ namespace bo3z::Party
 				logger::info("party: everyone is dead: loading the most recent save");
 				std::thread([] {
 					std::this_thread::sleep_for(std::chrono::seconds(4));
-					SKSE::GetTaskInterface()->AddTask([] {
+					Tasks::Add([] {
 						g_wipeLoading = false;
 						if (auto* sl = RE::BGSSaveLoadManager::GetSingleton()) {
 							if (!g_lastSave.empty()) {  // the party's last dawn: the same moment on every game
@@ -419,7 +420,7 @@ namespace bo3z::Party
 		std::scoped_lock l(g_lock);
 		auto& r = g_remote[a_from];
 		if (a_life == static_cast<std::uint8_t>(Life::Down) && r.state != a_life) {
-			SKSE::GetTaskInterface()->AddTask([] { Forms::Play(gen::Sound::rite_fail); });  // a friend just went down: you hear it
+			Tasks::Add([] { Forms::Play(gen::Sound::rite_fail); });  // a friend just went down: you hear it
 		}
 		r.state = a_life, r.at = a_at, r.left = a_left, r.heard = Clock::now(), r.name = a_name, r.wonder = a_wonder;
 	}

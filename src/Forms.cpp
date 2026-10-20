@@ -419,7 +419,7 @@ namespace bo3z
 					}
 				}
 				if (!crs2) {
-					SKSE::GetTaskInterface()->AddTask([] { Curse::MigrateRites(); });
+					Tasks::Add([] { Curse::MigrateRites(); });
 				}
 				if (!g_stacksLoaded) {  // an older save: one of each blessing it carries
 					for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 16; ++i) {
