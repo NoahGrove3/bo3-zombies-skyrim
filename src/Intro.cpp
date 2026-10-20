@@ -118,6 +118,7 @@ namespace bo3z
 					Save::SetCrew(-1);  // older saves: drop the crew character
 				} else {
 					Arcana::GiveStarter();  // the Coffer's spells replaced the old ones: a new character starts with one of them
+					Gun::TestKitIfFlagged();  // (Noah's test characters: CurseOfAlduin-testkit.flag beside the log)
 				}
 				Save::SetFlag(Save::kFlagStarted, true);
 				logger::info("intro: started (no crew screen)");

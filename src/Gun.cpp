@@ -2117,6 +2117,87 @@ namespace bo3z
 		}
 
 		bool g_kitPending = false;
+		// (Noah: every spell from my mods that imbues a weapon or does direct damage, to choose the Echo Altar's from)
+		// every castable spell of a mod (not the base game's own) with a damaging effect on health, or one that imbues a
+		// weapon; each named for its element first ("Fire: ...") so the Magic menu lists them by element. The names are
+		// only changed while the test kit is on (UN_TestKit), and again after each load.
+		std::string ElementOfSpell(RE::SpellItem* a_sp)
+		{
+			auto has = [](RE::EffectSetting* m, RE::FormID kw) {
+				return m && m->HasKeywordID(kw);
+			};
+			for (auto* e : a_sp->effects) {
+				auto* m = e ? e->baseEffect : nullptr;
+				if (!m) continue;
+				switch (m->data.resistVariable) {
+				case RE::ActorValue::kResistFire: return "Fire";
+				case RE::ActorValue::kResistFrost: return "Frost";
+				case RE::ActorValue::kResistShock: return "Shock";
+				case RE::ActorValue::kPoisonResist: return "Poison";
+				case RE::ActorValue::kResistDisease: return "Disease";
+				default: break;
+				}
+				if (has(m, 0x0001CEAD)) return "Fire";   // MagicDamageFire
+				if (has(m, 0x0001CEAE)) return "Frost";  // MagicDamageFrost
+				if (has(m, 0x0001CEAF)) return "Shock";  // MagicDamageShock
+			}
+			std::string n = a_sp->GetName();
+			std::transform(n.begin(), n.end(), n.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+			const std::pair<const char*, const char*> kWords[] = { { "fire", "Fire" }, { "flame", "Fire" }, { "burn", "Fire" }, { "ember", "Fire" }, { "inferno", "Fire" }, { "magma", "Fire" },
+				{ "frost", "Frost" }, { "ice", "Frost" }, { "cold", "Frost" }, { "blizzard", "Frost" }, { "freez", "Frost" }, { "shock", "Shock" }, { "lightning", "Shock" },
+				{ "thunder", "Shock" }, { "storm", "Shock" }, { "spark", "Shock" }, { "sun", "Sun" }, { "holy", "Sun" }, { "light", "Sun" }, { "radian", "Sun" },
+				{ "poison", "Poison" }, { "venom", "Poison" }, { "acid", "Poison" }, { "blood", "Blood" }, { "shadow", "Shadow" }, { "dark", "Shadow" },
+				{ "void", "Shadow" }, { "wind", "Wind" }, { "earth", "Earth" }, { "stone", "Earth" }, { "water", "Water" } };
+			for (auto& [w, el] : kWords) {
+				if (n.find(w) != std::string::npos) return el;
+			}
+			return "Arcane";
+		}
+		std::vector<std::pair<RE::SpellItem*, std::string>> ModAttackSpells()
+		{
+			static constexpr std::string_view kBase[] = { "Skyrim.esm", "Update.esm", "Dawnguard.esm", "HearthFires.esm", "Dragonborn.esm", "CurseOfAlduin.esp" };
+			std::vector<std::pair<RE::SpellItem*, std::string>> out;
+			for (auto* sp : RE::TESDataHandler::GetSingleton()->GetFormArray<RE::SpellItem>()) {
+				auto* file = sp ? sp->GetFile(0) : nullptr;
+				if (!file || sp->GetSpellType() != RE::MagicSystem::SpellType::kSpell || !sp->GetFullName() || !*sp->GetFullName()) continue;
+				const std::string_view fn = file->GetFilename();
+				if (std::find(std::begin(kBase), std::end(kBase), fn) != std::end(kBase) || fn.substr(0, 2) == "cc") continue;
+				bool damage = false, imbue = false;
+				for (auto* e : sp->effects) {
+					auto* m = e ? e->baseEffect : nullptr;
+					if (!m) continue;
+					const auto a = m->GetArchetype();
+					if ((a == RE::EffectArchetypes::ArchetypeID::kValueModifier || a == RE::EffectArchetypes::ArchetypeID::kDualValueModifier ||
+							a == RE::EffectArchetypes::ArchetypeID::kPeakValueModifier || a == RE::EffectArchetypes::ArchetypeID::kAbsorb) &&
+						m->data.primaryAV == RE::ActorValue::kHealth && m->IsDetrimental()) {
+						damage = true;
+					}
+					if (a == RE::EffectArchetypes::ArchetypeID::kEnhanceWeapon) imbue = true;
+				}
+				if (!imbue && sp->GetDelivery() == RE::MagicSystem::Delivery::kSelf) {
+					std::string n = sp->GetFullName();
+					std::transform(n.begin(), n.end(), n.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+					imbue = n.find("imbue") != std::string::npos || n.find("weapon") != std::string::npos || n.find("blade") != std::string::npos || n.find("enchant") != std::string::npos;
+				}
+				if (damage && sp->GetDelivery() == RE::MagicSystem::Delivery::kSelf && !imbue) damage = false;  // (a curse on yourself is no attack)
+				if (damage || imbue) out.push_back({ sp, ElementOfSpell(sp) + (imbue && !damage ? " (Imbue)" : "") });
+			}
+			return out;
+		}
+		RE::TESGlobal* KitGlobal() { return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(gen::kTestKitGlob, gen::kPlugin); }
+		void NameByElement()
+		{
+			static std::unordered_map<RE::SpellItem*, std::string> original;
+			int n = 0;
+			for (auto& [sp, el] : ModAttackSpells()) {
+				auto it = original.find(sp);
+				if (it == original.end()) it = original.emplace(sp, sp->GetFullName()).first;
+				sp->fullName = (el + ": " + it->second).c_str();
+				++n;
+			}
+			logger::info("testkit: {} spells named by element", n);
+		}
+		bool g_kitPending = false;
 		void TestKit()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -2125,38 +2206,61 @@ namespace bo3z
 				return;
 			}
 			g_kitPending = false;
-			int tomes = 0;
-			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
-				const auto& g = gen::kGuns[i];
-				if (g.retired || g.kind == gen::kKindBow) {
-					continue;
-				}
-				if (auto* sp = Forms::GunSpell(i); sp && !p->HasSpell(sp)) {
-					p->AddSpell(sp);
-					++tomes;
-				}
+			if (auto* g = KitGlobal()) g->value = 1.0f;  // (the glider unlocked, the spells named by element)
+			// the spells: every mod's attack and imbue spells, named by element
+			int spells = 0;
+			std::map<std::string, int> byEl;
+			for (auto& [sp, el] : ModAttackSpells()) {
+				if (!p->HasSpell(sp)) p->AddSpell(sp);
+				++spells, ++byEl[el];
 			}
-			for (int i = 0; i < Arcana::Count(); ++i) {
-				if (!Arcana::Known(i)) {
-					Arcana::Give(i, false);
-				}
-			}
+			NameByElement();
+			// the weapons: every elemental bow (with its arrows) and Alduin's Fang
 			for (int i = Bows::Count() - 1; i >= 0; --i) {
 				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kBows[i].weap, gen::kPlugin); w && p->GetItemCount(w) <= 0) {
 					p->AddObjectToContainer(w, nullptr, 1, nullptr);
 				}
+			}
+			if (auto* fang = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); fang && p->GetItemCount(fang) <= 0) {
+				p->AddObjectToContainer(fang, nullptr, 1, nullptr);
 			}
 			for (int i = 0; i < static_cast<int>(gen::kShouts.size()); ++i) {
 				if (!KnowsShout(i)) {
 					LearnShout(i);
 				}
 			}
-			Movement::TestKit();
-			if (const int have = Points::Get(); have < 100000) {
-				Points::Refund(100000 - have);
+			Movement::TestKit();  // (Dragon's Updraft, the third bond, the glider)
+			if (const int have = Points::Get(); have < 150000) {
+				Points::Refund(150000 - have);
 			}
-			Hud::Banner("TEST KIT: every wonder weapon, tome, spell, bow and shout - and 100,000 septims", 6.0f);
-			logger::info("testkit: {} tomes, {} Coffer spells, {} bows, {} shouts, septims {}", tomes, Arcana::Count(), Bows::Count(), gen::kShouts.size(), Points::Get());
+			Hud::Banner(fmt::format("TEST KIT: {} spells (by element in the Magic menu), every bow, every shout, the glider, 150,000 septims", spells), 7.0f);
+			std::string list;
+			for (auto& [el, c] : byEl) list += fmt::format("{} {}, ", el, c);
+			logger::info("testkit: {} spells ({}) bows {}, shouts {}, septims {}", spells, list, Bows::Count(), gen::kShouts.size(), Points::Get());
+		}
+		bool TestKitOn()
+		{
+			auto* g = KitGlobal();
+			return g && g->value > 0.5f;
+		}
+		void TestKitIfFlagged()
+		{
+			auto dir = SKSE::log::log_directory();
+			std::error_code ec;
+			if (dir && std::filesystem::exists(*dir / "CurseOfAlduin-testkit.flag", ec)) {
+				logger::info("testkit: a new character - the test kit is on its way");
+				TestKit();
+			}
+		}
+		// a test character loaded again: its spells take their element names back
+		void KitOnLoad()
+		{
+			static RE::NiAVObject* seen = nullptr;
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* root = p ? p->Get3D(false) : nullptr;
+			if (!root || root == seen) return;
+			seen = root;
+			if (auto* g = KitGlobal(); g && g->value > 0.5f) NameByElement();
 		}
 
 		bool g_migrated = false;
@@ -2720,6 +2824,7 @@ namespace bo3z
 
 		void Tick(float a_delta)
 		{
+			KitOnLoad();
 			if (g_kitPending) {
 				static float wait = 0;
 				if ((wait += a_delta) > 5.0f) {

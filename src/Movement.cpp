@@ -2157,7 +2157,7 @@ namespace bo3z
 			const auto have = a_player->GetInventoryCounts([](RE::TESBoundObject& o) { return &o == item; });
 			// (Noah) the dragon is yours once Whiterun's shrine is won - its Dirge lifted - not before
 			constexpr int kWhiterun = 1;
-			const bool    unlocked = Curse::Freed(kWhiterun);
+			const bool    unlocked = Curse::Freed(kWhiterun) || Gun::TestKitOn();
 			static int    wasUnlocked = -1;
 			if (!unlocked) {
 				if (!have.empty()) {
@@ -2187,7 +2187,7 @@ namespace bo3z
 
 		// (Noah) no dragon bond, no Updraft, no glider, before Whiterun's Echo Altar is won
 		constexpr int kWhiterunTown = 1;
-		bool BondLocked() { return !Curse::Freed(kWhiterunTown); }
+		bool BondLocked() { return !Curse::Freed(kWhiterunTown) && !Gun::TestKitOn(); }
 
 		void BuyBond(RE::TESObjectREFR* a_shrine)
 		{

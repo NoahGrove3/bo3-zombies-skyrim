@@ -1186,6 +1186,7 @@
   "SPEL:egg_power_horn": "0xc9e",
   "SPEL:egg_power_resonance": "0xc9f",
   "SPEL:egg_power_lanterns": "0xca0",
-  "SPEL:egg_power_eye": "0xca1"
+  "SPEL:egg_power_eye": "0xca1",
+  "GLOB:test_kit": "0xca2"
  }
 }

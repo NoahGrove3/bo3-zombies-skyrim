@@ -448,7 +448,9 @@ namespace bo3z
 	{
 		void                  Tick(float a_delta);
 		void                  Reset();
-		void                  TestKit();  // dev: every weapon, spell, bow and shout, 100,000 septims
+		void                  TestKit();  // dev: every mod's attack spell (named by element), every bow and shout, the glider, 150,000 septims
+		bool                  TestKitOn();         // a test character (UN_TestKit): the glider unlocked, its spells named by element
+		void                  TestKitIfFlagged();  // a new character: the kit, if CurseOfAlduin-testkit.flag is beside the log
 		void                  EyeBeam();  // Winterhold's hidden quest: a beam of the Eye's light through the dead ahead
 		bool                  OnButton(const RE::ButtonEvent* a_event);
 		std::pair<bool, bool> RecentHit(RE::FormID a_actor);  // {gun kill, headshot}

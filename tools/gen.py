@@ -327,7 +327,7 @@ o.append('\tstruct EggStep { int type, n, element; bool night; float r0, r1; boo
 o.append('\tenum EggStepType : int { ' + ', '.join(f'kEgg{t.capitalize()} = {i}' for i, t in enumerate(STEPT)) + ' };')
 o.append('\tenum EggReward : int { kEggBuff = 0, kEggSummon = 1, kEggSpell = 2 };')
 o.append('\tstruct EggDef { std::string_view id, title, rewardText; int town, reward; std::array<std::string_view, 3> hints; std::array<EggStep, 4> steps; int nSteps; std::uint32_t glob, power; std::string_view summonPlugin; std::uint32_t summonId; int summonCount; };')
-o.append(f'\tinline constexpr std::uint32_t kEggGifts = 0x{IDS[("GLOB", "egg_gifts")]:03X};')
+o.append(f'\tinline constexpr std::uint32_t kEggGifts = 0x{IDS[("GLOB", "egg_gifts")]:03X}, kTestKitGlob = 0x{IDS[("GLOB", "test_kit")]:03X};')
 o.append(f'\tinline constexpr std::array<EggDef, {len(EG)}> kEggs{{ {{')
 for e in EG:
     st = e['steps'] + [dict(type='altar', n=0, text='', element='any', night=False, r0=0, r1=0, nodamage=False, seconds=0, name='', row='none', dark=False)] * (4 - len(e['steps']))

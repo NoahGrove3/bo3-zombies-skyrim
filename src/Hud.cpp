@@ -3041,7 +3041,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ID3D11ShaderResourceView* g_sLife = nullptr;     // lily pads on the lake, reeds and bushes in the near corners
 		ID3D11ShaderResourceView* g_sMotes = nullptr;    // motes rising from the shrine's pool: 16x8 flipbook (tools/orbfx.py)
 		std::array<ID3D11ShaderResourceView*, 9> g_sShard{}, g_sShardR{};  // the rocks, and their runes' light (pulsing)
-		ID3D11ShaderResourceView* g_sRockTurn = nullptr, * g_sRockTurnR = nullptr;  // one rock turning (16 frames, 4 x 4) and its runes' light
+		ID3D11ShaderResourceView* g_sRockTurn = nullptr, * g_sRockTurnR = nullptr;  // one rock turning (48 frames, 8 x 6) and its runes' light
+		ID3D11ShaderResourceView* g_sRuneCircle = nullptr;  // the freed altar's golden rune circle (laid flat and turned here)
 		ID3D11ShaderResourceView* g_mGroundFog = nullptr;
 		ID3D11ShaderResourceView* g_mClouds2 = nullptr;    // drifting night clouds that tile left-right (tools/menuscene.py drift_clouds)  // fog wisps that tile left-right (tools/menuscene.py ground_fog)
 		constexpr float kMenuRune[2] = { 1812.0f, 992.0f };  // the middle of the rune-stone's face in the painting
@@ -3565,13 +3566,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const int   shade = static_cast<int>(std::clamp(235.0f + pl.depth * 0.25f, 170.0f, 255.0f));
 					const float rot = r.rot0 + std::sin(now * r.spin * 3.0f + r.ph) * 0.06f;
 					if (g_sRockTurn) {  // (Noah: as the altar's rocks do in the game) each turns slowly round its upright, its own way
-						const float fpos = std::fmod(now * r.spin * 80.0f / 360.0f * 16.0f + r.ph * 5.0f + 1600.0f, 16.0f);  // (6-10 degrees a second)
-						const int   f0 = static_cast<int>(fpos) % 16, f1 = (f0 + 1) % 16;
+						const float fpos = std::fmod(now * r.spin * 80.0f / 360.0f * 48.0f + r.ph * 15.0f + 4800.0f, 48.0f);  // (6-10 degrees a second, as the altar's)
+						const int   f0 = static_cast<int>(fpos) % 48, f1 = (f0 + 1) % 48;
 						const float fr = fpos - std::floor(fpos);
 						const ImU32 tint = IM_COL32(shade, shade, std::min(255, shade + 10), 255);
 						const float breath = 0.5f + 0.5f * std::sin(now * 2.4f + r.ph * 1.7f);
 						for (auto [f, wgt] : { std::pair{ f0, 1.0f }, std::pair{ f1, fr } }) {
-							const ImVec2 uv0{ (f % 4) / 4.0f, (f / 4) / 4.0f }, uv1{ uv0.x + 0.25f, uv0.y + 0.25f };
+							const ImVec2 uv0{ (f % 8) / 8.0f, (f / 8) / 6.0f }, uv1{ uv0.x + 0.125f, uv0.y + 1.0f / 6.0f };
 							sprite(g_sRockTurn, pl.p, sz, sz, rot, (tint & 0x00FFFFFF) | (static_cast<ImU32>(255 * fade * wgt) << 24), uv0, uv1);
 							if (g_sRockTurnR) sprite(g_sRockTurnR, pl.p, sz, sz, rot, IM_COL32(255, 255, 255, static_cast<int>((60 + 195 * breath * breath) * fade * wgt)), uv0, uv1);
 						}
@@ -3626,15 +3627,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					};
 					(void)aura;  // (the old orb's purple fire: the heart stone has its runes' own light)
 					if (g_sCrystal) {
-						// (Noah: much slower, as the altar's own) a turn in 45 s, cross-faded between its 24 frames
-						const float fpos = std::fmod(now * 24.0f / 45.0f, 24.0f);
-						const int   f0 = static_cast<int>(fpos) % 24, f1 = (f0 + 1) % 24;
+						// (Noah: smooth at 60 fps, a little faster) a turn in 18 s, cross-faded between its 96 frames
+						const float fpos = std::fmod(now * 96.0f / 18.0f, 96.0f);
+						const int   f0 = static_cast<int>(fpos) % 96, f1 = (f0 + 1) % 96;
 						const float fr = fpos - std::floor(fpos);
 						const float sc = 1.0f + 0.035f * pulse;
 						const float w = 427 * u * sc, h = 640 * u * sc;  // (320 x 480 frames, square pixels)
 						const ImVec2 mid{ c.x, c.y + (0.5f - 0.56f) * h };  // (the frame's origin sits at 56% of its height)
 						for (auto [f, wgt] : { std::pair{ f0, 1.0f }, std::pair{ f1, fr } }) {
-							const ImVec2 uv0{ (f % 6) / 6.0f, (f / 6) / 4.0f }, uv1{ uv0.x + 1.0f / 6.0f, uv0.y + 0.25f };
+							const ImVec2 uv0{ (f % 12) / 12.0f, (f / 12) / 8.0f }, uv1{ uv0.x + 1.0f / 12.0f, uv0.y + 0.125f };
 							sprite(g_sCrystal, mid, w, h, 0, IM_COL32(255, 255, 255, static_cast<int>(255 * fade * wgt)), uv0, uv1);
 						}
 					}
@@ -3644,6 +3645,23 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						sprite(g_sSoft, c, g3 * 2, g3 * 2, 0, IM_COL32(230, 245, 255, static_cast<int>((70 + 110 * pulse) * fade)));
 					}
 					// (the old drawn sparks over the pool are gone too: the motes flipbook is the shrine's only particles)
+				}
+				// (Noah: as the altar in the game) its golden rune circle over the shrine, laid flat and turning smoothly
+				if (g_sRuneCircle) {
+					const float th = now * 10.0f * RE::NI_PI / 180.0f;
+					const auto disc = [&](float R, float Z, ImU32 col) {
+						ImVec2 p[4];
+						const float cs = std::cos(th), sn = std::sin(th);
+						const float sx[4] = { -1, 1, 1, -1 }, sy[4] = { -1, -1, 1, 1 };
+						for (int q = 0; q < 4; ++q) {
+							const float x = (sx[q] * cs - sy[q] * sn) * R, y = (sx[q] * sn + sy[q] * cs) * R;
+							p[q] = at(x, y, Z);
+						}
+						fg->AddImageQuad(tex(g_sRuneCircle), p[0], p[1], p[2], p[3], { 0, 0 }, { 1, 0 }, { 1, 1 }, { 0, 1 }, col);
+					};
+					const float bob = std::sin(now * 0.7f) * 9.0f * 0.76f;  // (it floats, as every turning piece of the altar does)
+					disc(175.0f * 0.76f, (330.0f - 6.0f - 73.8f) * 0.76f + bob, IM_COL32(255, 220, 150, static_cast<int>(70 * fade)));
+					disc(150.0f * 0.76f, (330.0f - 73.8f) * 0.76f + bob, IM_COL32(255, 240, 210, static_cast<int>(235 * fade)));
 				}
 				for (const auto& pl : placed) {
 					if (pl.depth <= 0) drawRock(pl);
@@ -4447,6 +4465,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\CurseOfAlduin\\") + file).c_str(), nullptr, tex);
 			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_rock_turn.png", nullptr, &g_sRockTurn);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_runecircle.png", nullptr, &g_sRuneCircle);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_rock_turn_r.png", nullptr, &g_sRockTurnR);
 			for (int i = 0; i < 9; ++i) {
 				DirectX::CreateWICTextureFromFile(g_device, (L"Data\\Interface\\CurseOfAlduin\\menu_shard" + std::to_wstring(i) + L".png").c_str(), nullptr, &g_sShard[i]);

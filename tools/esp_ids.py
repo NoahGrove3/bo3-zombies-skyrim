@@ -26,7 +26,7 @@ def assign(S=None, write=False):
              [(k, f'updraft_{n}') for n in range(3) for k in ('WOOP', 'SPEL')] + [('SHOU', 'updraft')] + \
              [(k, f"{n}_{b['id']}") for b in S.get('bows', {}).get('rows', []) for k, n in (('WEAP', 'bow'), ('AMMO', 'bowarrow'), ('PROJ', 'bowarrow'))] + \
              echo_ids(S) + \
-             [('GLOB', 'egg_' + e['id']) for e in S.get('eggs', {}).get('rows', [])] + [('GLOB', 'egg_gifts')] + \
+             [('GLOB', 'egg_' + e['id']) for e in S.get('eggs', {}).get('rows', [])] + [('GLOB', 'egg_gifts'), ('GLOB', 'test_kit')] + \
              [('SPEL', 'egg_power_' + e['id']) for e in S.get('eggs', {}).get('rows', []) if e['reward'] in ('summon', 'spell')]
     for kind, key in wanted:
         k = f'{kind}:{key}'
