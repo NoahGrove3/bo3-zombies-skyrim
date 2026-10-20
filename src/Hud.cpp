@@ -175,11 +175,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		constexpr ImU32 kBlood = IM_COL32(178, 22, 22, 255);
 		constexpr ImU32 kParch = IM_COL32(236, 226, 200, 255);
 		constexpr ImU32 kGlass = IM_COL32(10, 10, 12, 170);
-		// the Echo Altar's look (Noah: the menus to match the altar): deep navy, cold rune-blue, pale ice
+		// the modpack's look (Noah: black with a blue accent, for every menu): black glass, rune-blue borders and accents, pale ice
 		constexpr ImU32 kRune = IM_COL32(110, 185, 255, 255);
 		constexpr ImU32 kRuneDim = IM_COL32(110, 185, 255, 110);
 		constexpr ImU32 kIce = IM_COL32(225, 240, 255, 255);
-		constexpr ImU32 kNavy = IM_COL32(7, 14, 28, 215);
+		constexpr ImU32 kNavy = IM_COL32(4, 4, 6, 225);  // (the panels' black - the name kept)
 
 		ImU32 Fade(ImU32 c, float a) { return (c & 0x00FFFFFF) | (static_cast<ImU32>(((c >> 24) & 0xFF) * std::clamp(a, 0.0f, 1.0f)) << 24); }
 
@@ -408,12 +408,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 		void Panel(ImDrawList* dl, ImVec2 a, ImVec2 b, float k, float alpha = 1.0f)
 		{
-			{  // the altar's look: deep navy glass, a cold rune-blue edge with a soft glow, a rune mark at each corner
-				dl->AddRectFilledMultiColor(a, b, Fade(IM_COL32(10, 22, 44, 225), alpha), Fade(IM_COL32(10, 22, 44, 225), alpha), Fade(IM_COL32(4, 9, 20, 235), alpha), Fade(IM_COL32(4, 9, 20, 235), alpha));
+			{  // the modpack's look (Noah: black and a blue accent): black glass, a rune-blue border with a soft glow, a rune mark at each corner
+				dl->AddRectFilledMultiColor(a, b, Fade(IM_COL32(10, 10, 12, 235), alpha), Fade(IM_COL32(10, 10, 12, 235), alpha), Fade(IM_COL32(2, 2, 3, 242), alpha), Fade(IM_COL32(2, 2, 3, 242), alpha));
 				for (int g = 3; g >= 1; --g) {
-					dl->AddRect({ a.x - g * k, a.y - g * k }, { b.x + g * k, b.y + g * k }, Fade(IM_COL32(90, 165, 255, 18), alpha), 3 * k, 0, 2.0f * k);
+					dl->AddRect({ a.x - g * k, a.y - g * k }, { b.x + g * k, b.y + g * k }, Fade(IM_COL32(90, 165, 255, 26), alpha), 3 * k, 0, 2.0f * k);
 				}
-				dl->AddRect(a, b, Fade(IM_COL32(110, 185, 255, 150), alpha), 2 * k, 0, 1.3f * k);
+				dl->AddRect(a, b, Fade(IM_COL32(110, 185, 255, 230), alpha), 2 * k, 0, 1.8f * k);
 				const float t = 12 * k;
 				for (auto [x, y, sx, sy] : { std::tuple{ a.x, a.y, 1.f, 1.f }, { b.x, a.y, -1.f, 1.f }, { a.x, b.y, 1.f, -1.f }, { b.x, b.y, -1.f, -1.f } }) {
 					dl->AddLine({ x, y }, { x + sx * t, y }, Fade(IM_COL32(170, 215, 255, 255), alpha), 2 * k);
@@ -540,8 +540,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const ImVec2 a{ cx - W / 2, top }, b{ cx + W / 2, top + H };
 			const float e = H * 0.5f + 8 * k;
 			const ImVec2 plate[6] = { { a.x - e, cy }, { a.x, a.y }, { b.x, a.y }, { b.x + e, cy }, { b.x, b.y }, { a.x, b.y } };
-			dl->AddConvexPolyFilled(plate, 6, IM_COL32(7, 15, 32, 215));
-			dl->AddRectFilledMultiColor(a, { b.x, cy }, IM_COL32(40, 80, 140, 70), IM_COL32(40, 80, 140, 70), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
+			dl->AddConvexPolyFilled(plate, 6, IM_COL32(4, 4, 6, 225));
+			dl->AddRectFilledMultiColor(a, { b.x, cy }, IM_COL32(40, 80, 140, 30), IM_COL32(40, 80, 140, 30), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
 			dl->AddPolyline(plate, 6, Fade(kGold, 0.9f), ImDrawFlags_Closed, 1.4f * k);
 			auto rel = [&](float ang) {
 				float d = ang - s.heading;
@@ -2287,7 +2287,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				scroll += (scrollGoal - scroll) * std::min(1.0f, dt * 10.0f);
 				const float cx = (a.x + b.x) * 0.5f;
 				dl->PushClipRect({ a.x, a.y + 6 * k }, { b.x, b.y - 66 * k }, true);
-				TxtC(dl, g_title, 27 * k, cx, a.y + 16 * k - scroll, IM_COL32(232, 214, 176, 255), "THE ECHO ALTAR", 2.5f * k, IM_COL32(150, 70, 255, 255));
+				TxtC(dl, g_title, 27 * k, cx, a.y + 16 * k - scroll, IM_COL32(232, 214, 176, 255), "THE ECHO ALTAR", 2.5f * k, IM_COL32(70, 140, 255, 255));
 				Divider(dl, cx, a.y + 54 * k - scroll, w * 0.38f, k);
 				float y = a.y + 68 * k - scroll;
 				const float L = a.x + 20 * k, Rr = b.x - 20 * k;
@@ -2296,7 +2296,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (s.altarFocus != row || s.chooseOn) return;
 					focusY0 = y0 + scroll, focusY1 = y1 + scroll;  // (in the content's own space)
 					const ImVec2 ra{ a.x + 10 * k, y0 }, rb{ b.x - 10 * k, y1 };
-					dl->AddRectFilled(ra, rb, IM_COL32(200, 160, 92, 26 + static_cast<int>(14 * std::sin(now * 4.0f))), 4 * k);
+					dl->AddRectFilled(ra, rb, IM_COL32(110, 185, 255, 18 + static_cast<int>(10 * std::sin(now * 4.0f))), 4 * k);
 					dl->AddRect(ra, rb, kGold, 4 * k, 0, 1.5f * k);
 					const float my = (y0 + y1) * 0.5f;
 					dl->AddTriangleFilled({ ra.x - 2 * k, my - 8 * k }, { ra.x - 2 * k, my + 8 * k }, { ra.x + 7 * k, my }, kGold);
@@ -2305,7 +2305,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImVec2 c{ at.x + 13 * k, at.y + 13 * k };
 					const bool   on = s.altarFocus == row && !s.chooseOn;
 					const float  r = (on ? 8.0f : 6.0f) * k;
-					dl->AddQuadFilled({ c.x, c.y - r }, { c.x + r, c.y }, { c.x, c.y + r }, { c.x - r, c.y }, on ? kGold : live ? IM_COL32(150, 112, 60, 230) : IM_COL32(70, 60, 50, 200));
+					dl->AddQuadFilled({ c.x, c.y - r }, { c.x + r, c.y }, { c.x, c.y + r }, { c.x - r, c.y }, on ? kGold : live ? IM_COL32(80, 130, 190, 230) : IM_COL32(50, 55, 65, 200));
 				};
 				auto price = [&](float py, int cost, bool can) {
 					const std::string pr = std::to_string(cost);
@@ -4493,8 +4493,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			g_cxYGoal += g_cxScroll.exchange(0) * 70.0f * k;
 
 			// the room: near black, a cold vignette
-			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(5, 10, 22, 255));  // (the altar's navy)
-			dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.5f }, IM_COL32(30, 70, 130, 110), IM_COL32(30, 70, 130, 110), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
+			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(3, 3, 5, 255));  // (black, the modpack's ground)
+			dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.5f }, IM_COL32(30, 70, 130, 45), IM_COL32(30, 70, 130, 45), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
 			const float W = std::min(size.x - 60 * k, 1680 * k), H = 960 * k;
 			const ImVec2 o{ (size.x - W) * 0.5f, (size.y - H) * 0.5f };
 
