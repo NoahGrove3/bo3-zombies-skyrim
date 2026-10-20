@@ -2264,10 +2264,27 @@ namespace bo3z
 		}
 
 		// (Noah: the test kit - unlimited magicka, so the spells can be tried) kept full while the kit is on
-		void KitMagicka()
+		void KitMagicka(float a_delta)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p || !TestKitOn()) return;
+			// (Noah: the test spells cost nothing) every kit spell and every altar spell at a fixed cost of 0 - kept so each
+			// second, as a form's cost isn't saved and the altar sets its spells' costs again each night
+			static float zeroAt = 0;
+			if ((zeroAt -= a_delta) <= 0) {
+				zeroAt = 1.0f;
+				static std::vector<RE::SpellItem*> kit;
+				if (kit.empty()) {
+					for (auto& [sp, el] : ModAttackSpells()) kit.push_back(sp);
+				}
+				const auto zero = [](RE::SpellItem* sp) {
+					if (!sp) return;
+					sp->data.costOverride = 0;
+					sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
+				};
+				for (auto* sp : kit) zero(sp);
+				for (int i = 0; i < Arcana::Count(); ++i) zero(Arcana::Spell(i));
+			}
 			auto* av = p->AsActorValueOwner();
 			const float have = av->GetActorValue(RE::ActorValue::kMagicka);
 			const float max = av->GetPermanentActorValue(RE::ActorValue::kMagicka);
@@ -2838,7 +2855,7 @@ namespace bo3z
 		void Tick(float a_delta)
 		{
 			KitOnLoad();
-			KitMagicka();
+			KitMagicka(a_delta);
 			if (g_kitPending) {
 				static float wait = 0;
 				if ((wait += a_delta) > 5.0f) {
