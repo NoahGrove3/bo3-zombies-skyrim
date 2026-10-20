@@ -172,6 +172,17 @@ void TickStaffs(float a_delta)
 				}
 			}
 			break;
+		case 5:  // Shadow Step's shadow: draws the dead to it, then bursts
+		case 6:  // Arcane Singularity: pulls them in, then detonates
+			z.crush -= a_delta;
+			if (z.fx <= 0) { z.fx = 0.35f; Blast(BlastIndex(z.kind == 5 ? "dark" : "constellation"), z.at + RE::NiPoint3{ 0, 0, 50.0f }, 0.0f, 0.45f); }
+			if (tick) { z.tick = 0.3f; PullTo(z.at, z.r, z.kind == 5 ? 0.9f : 1.5f); }
+			if (z.crush <= 0) {
+				Blast(BlastIndex(z.kind == 5 ? "darkmassive" : "lightmassive"), z.at + RE::NiPoint3{ 0, 0, 50.0f }, 0.0f, 0.9f);
+				for (auto* f : Foes(z.at, 340.0f)) { if (!Damage(f, z.dmg, false, false, true)) Stagger(f, 1.0f); }
+				z.left = 0;
+			}
+			break;
 		case 3:  // void orb: pulls, then crushes
 			z.crush -= a_delta;
 			if (z.fx <= 0) { z.fx = 0.3f; Blast(BlastIndex("dark"), z.at, 0.0f, 0.5f); }

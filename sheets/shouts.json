@@ -19,40 +19,40 @@
     {
       "id": "ember",
       "town": "",
-      "label": "Armageddon",
+      "label": "Skyforge Volley",
       "words": [
-        "WULD",
-        "TOOR",
-        "SHUL"
+        "VEN",
+        "GAR",
+        "NOS"
       ],
       "translations": [
-        "Whirlwind",
-        "Inferno",
-        "Sun"
+        "Wind",
+        "Unleash",
+        "Strike"
       ],
       "recovery": [
         18,
         32,
         55
       ],
-      "text": "Fire falls from the heavens on everything around you",
-      "color": "FF6A20",
+      "text": "A fan of spectral Skyforge blades pins the dead - more blades and bleeding with each word, and the third makes them explode",
+      "color": "C8D8FF",
       "verify": [],
-      "plugin": "Thunderchild - Epic Shout Package.esp",
-      "shoutId": "0x05294B",
-      "quest": "TC_Questline_Quest_AcolyteOfTheVoice"
+      "plugin": "",
+      "shoutId": "0",
+      "quest": ""
     },
     {
       "id": "gale",
       "town": "Riverwood",
-      "label": "Stormblast",
+      "label": "Thunder Lash",
       "words": [
-        "LOK",
+        "STRUN",
         "BAH",
         "QO"
       ],
       "translations": [
-        "Sky",
+        "Storm",
         "Wrath",
         "Lightning"
       ],
@@ -61,24 +61,24 @@
         32,
         55
       ],
-      "text": "Lightning gathers in your weapon for one devastating blow",
+      "text": "Lightning strikes the nearest dead - three, five or eight bolts, each leaping to one more",
       "color": "BFE8FF",
       "verify": [],
-      "plugin": "Thunderchild - Epic Shout Package.esp",
-      "shoutId": "0x01D462",
-      "quest": "TC_Questline_Quest_AcolyteOfTheVoice"
+      "plugin": "",
+      "shoutId": "0",
+      "quest": ""
     },
     {
       "id": "wail",
       "town": "Solitude",
-      "label": "Dance of the Dead",
+      "label": "Raise the Fallen",
       "words": [
-        "RAAN",
+        "DIL",
         "VAAZ",
         "ZOL"
       ],
       "translations": [
-        "Animal",
+        "Undead",
         "Tear",
         "Zombie"
       ],
@@ -87,128 +87,76 @@
         32,
         55
       ],
-      "text": "The fallen rise again to fight at your side",
+      "text": "The fallen rise to fight for you - two, four or six of them - and burst when their time is up",
       "color": "B07BFF",
       "verify": [],
-      "plugin": "Thunderchild - Epic Shout Package.esp",
-      "shoutId": "0x0CA951",
-      "quest": "TC_Questline_Quest_AcolyteOfTheVoice"
+      "plugin": "",
+      "shoutId": "0",
+      "quest": ""
     },
     {
       "id": "rime",
       "town": "Windhelm",
-      "label": "Iceborn",
+      "label": "Frost Nova",
       "words": [
         "IIZ",
-        "AH",
-        "VIING"
+        "SLEN",
+        "NUS"
       ],
       "translations": [
         "Ice",
-        "Hunter",
-        "Wing"
+        "Flesh",
+        "Statue"
       ],
       "recovery": [
         18,
         32,
         55
       ],
-      "text": "The cruel winds of the North shatter the dead around you",
+      "text": "A ring of frost freezes everything around you solid, and the frozen shatter when struck",
       "color": "9ED8FF",
       "verify": [],
-      "plugin": "Thunderchild - Epic Shout Package.esp",
-      "shoutId": "0x05EBB5",
-      "quest": "TC_Questline_Quest_AcolyteOfTheVoice"
+      "plugin": "",
+      "shoutId": "0",
+      "quest": ""
     },
     {
       "id": "quake",
       "town": "Markarth",
-      "label": "Earthquake",
+      "label": "Dwemer Quake",
       "words": [
-        "FUS",
-        "KLO",
-        "UL"
+        "GOL",
+        "VAH",
+        "DEN"
       ],
       "translations": [
-        "Force",
-        "Sand",
-        "Eternity"
+        "Earth",
+        "Spring",
+        "Hold"
       ],
       "recovery": [
         18,
         32,
         55
       ],
-      "text": "The earth shakes the dead off their feet, or turns them to stone",
+      "text": "The ground heaves in front of you and knocks the dead down - with the third word, stone spikes erupt through them",
       "color": "FFB050",
       "verify": [],
-      "plugin": "Thunderchild - Epic Shout Package.esp",
-      "shoutId": "0x013CB0",
-      "quest": "TC_Questline_Quest_AcolyteOfTheVoice"
+      "plugin": "",
+      "shoutId": "0",
+      "quest": ""
     },
     {
       "id": "shroud",
       "town": "Riften",
-      "label": "Phantom Decoy",
+      "label": "Shadow Step",
       "words": [
-        "FIIK",
-        "LO",
-        "SAH"
-      ],
-      "translations": [
-        "Mirror",
-        "Deceive",
-        "Phantom"
-      ],
-      "recovery": [
-        18,
-        32,
-        55
-      ],
-      "text": "A ghostly double draws the horde away, then bursts",
-      "color": "7A4DFF",
-      "verify": [],
-      "plugin": "Thunderchild - Epic Shout Package.esp",
-      "shoutId": "0x02817C",
-      "quest": "TC_Questline_Quest_AcolyteOfTheVoice"
-    },
-    {
-      "id": "toll",
-      "town": "Falkreath",
-      "label": "Essence Rip",
-      "words": [
-        "LAAS",
-        "RO",
-        "DAH"
-      ],
-      "translations": [
-        "Life",
-        "Balance",
-        "Push"
-      ],
-      "recovery": [
-        18,
-        32,
-        55
-      ],
-      "text": "Tear the life out of the dead to heal your wounds",
-      "color": "E8E4FF",
-      "verify": [],
-      "plugin": "Thunderchild - Epic Shout Package.esp",
-      "shoutId": "0x00541C",
-      "quest": "TC_Questline_Quest_AcolyteOfTheVoice"
-    },
-    {
-      "id": "mire",
-      "town": "Morthal",
-      "label": "Curse",
-      "words": [
-        "FIIK",
+        "FEIM",
         "ZII",
         "GRON"
       ],
       "translations": [
-        "Mirror",
+        "Fade",
         "Spirit",
         "Bind"
       ],
@@ -217,64 +165,116 @@
         32,
         55
       ],
-      "text": "What the dead do to you, they suffer back",
+      "text": "You blink forward through the horde, leaving a shadow that draws the dead to it and then bursts",
+      "color": "7A4DFF",
+      "verify": [],
+      "plugin": "",
+      "shoutId": "0",
+      "quest": ""
+    },
+    {
+      "id": "toll",
+      "town": "Falkreath",
+      "label": "Death's Harvest",
+      "words": [
+        "KRII",
+        "LUN",
+        "AUS"
+      ],
+      "translations": [
+        "Kill",
+        "Leech",
+        "Suffer"
+      ],
+      "recovery": [
+        18,
+        32,
+        55
+      ],
+      "text": "A draining cone that heals you for every one of the dead it touches - the third word also raises a fallen friend nearby",
+      "color": "E8E4FF",
+      "verify": [],
+      "plugin": "",
+      "shoutId": "0",
+      "quest": ""
+    },
+    {
+      "id": "mire",
+      "town": "Morthal",
+      "label": "Mire Grasp",
+      "words": [
+        "ZUN",
+        "HAAL",
+        "VIIK"
+      ],
+      "translations": [
+        "Weapon",
+        "Hand",
+        "Defeat"
+      ],
+      "recovery": [
+        18,
+        32,
+        55
+      ],
+      "text": "Roots burst from the ground where you look, holding the dead in place and poisoning them",
       "color": "7CC23A",
       "verify": [],
-      "plugin": "Thunderchild - Epic Shout Package.esp",
-      "shoutId": "0x0012D7",
-      "quest": "TC_Questline_Quest_AcolyteOfTheVoice"
+      "plugin": "",
+      "shoutId": "0",
+      "quest": ""
     },
     {
       "id": "dread",
       "town": "Dawnstar",
-      "label": "Wail of the Banshee",
+      "label": "Nightmare Howl",
       "words": [
         "FAAS",
-        "ZAH",
-        "FRUL"
+        "RU",
+        "MAAR"
       ],
       "translations": [
         "Fear",
-        "Finite",
-        "Temporary"
+        "Run",
+        "Terror"
       ],
       "recovery": [
         18,
         32,
         55
       ],
-      "text": "A screech that slays the weak and drinks their life",
+      "text": "The dead are thrown back in terror and slowed - and the weakest die of fright",
       "color": "FF4F8F",
       "verify": [],
-      "plugin": "Thunderchild - Epic Shout Package.esp",
-      "shoutId": "0x0043A8",
-      "quest": "TC_Questline_Quest_AcolyteOfTheVoice"
+      "plugin": "",
+      "shoutId": "0",
+      "quest": ""
     },
     {
       "id": "shatter",
       "town": "Winterhold",
-      "label": "Shattersphere",
+      "label": "Arcane Singularity",
       "words": [
-        "FO",
-        "MEY",
-        "GUT"
+        "SU",
+        "GRAH",
+        "DUN"
       ],
       "translations": [
-        "Frost",
-        "Fool",
-        "Far"
+        "Air",
+        "Battle",
+        "Grace"
       ],
       "recovery": [
         18,
         32,
         55
       ],
-      "text": "A sphere of elemental ice from the frozen peaks",
+      "text": "A vortex pulls the dead together where you look, then detonates",
       "color": "7FD8FF",
       "verify": [],
-      "plugin": "Thunderchild - Epic Shout Package.esp",
-      "shoutId": "0x05EBB6",
-      "quest": "TC_Questline_Quest_AcolyteOfTheVoice"
+      "plugin": "",
+      "shoutId": "0",
+      "quest": ""
     }
   ]
 }

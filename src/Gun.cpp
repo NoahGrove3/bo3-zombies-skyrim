@@ -641,6 +641,8 @@ namespace bo3z
 
 		// Where the crosshair lands (physics ray), and the eye and aim it was cast from.
 		struct Aim { RE::NiPoint3 eye, dir, hit; };
+		bool StaffUnleash(std::string_view a_id, const Aim& a_aim, float a_base);  // (Staffs.inl) the four Falmer staffs' held attacks
+		void StaffTap(const gen::GunDef& g, const RE::NiPoint3& a_to, RE::Actor* a_hit, float a_dmg);
 		Aim AimAt(float a_range)
 		{
 			Aim  r;
@@ -1230,8 +1232,6 @@ namespace bo3z
 			}
 		}
 
-		bool StaffUnleash(std::string_view a_id, const Aim& a_aim, float a_base);  // (Staffs.inl) the four Falmer staffs' held attacks
-		void StaffTap(const gen::GunDef& g, const RE::NiPoint3& a_to, RE::Actor* a_hit, float a_dmg);
 		// The signature move of each weapon (sheet: weapons.chargeName/chargeText).
 		void Unleash(int a_gun, bool a_echo = false)
 		{
@@ -2123,6 +2123,7 @@ namespace bo3z
 		}
 
 		bool g_kitPending = false;
+		constexpr float kKitVersion = 2.0f;  // (raised whenever the kit gains something: test characters get the new things on load)
 		// (Noah: every spell from my mods that imbues a weapon or does direct damage, to choose the Echo Altar's from)
 		// every castable spell of a mod (not the base game's own) with a damaging effect on health, or one that imbues a
 		// weapon; each named for its element first ("Fire: ...") so the Magic menu lists them by element. The names are
@@ -2211,7 +2212,7 @@ namespace bo3z
 				return;
 			}
 			g_kitPending = false;
-			if (auto* g = KitGlobal()) g->value = 1.0f;  // (the glider unlocked, the spells named by element)
+			if (auto* g = KitGlobal()) g->value = kKitVersion;  // (the glider unlocked, the spells named by element; the kit's version)
 			// the spells: every mod's attack and imbue spells, named by element
 			int spells = 0;
 			std::map<std::string, int> byEl;
@@ -2241,6 +2242,13 @@ namespace bo3z
 				if (!KnowsShout(i)) {
 					LearnShout(i);
 				}
+			}
+			for (int i = 0; i < Arcana::Count(); ++i) {  // every Echo Altar spell
+				if (Arcana::Spell(i) && !Arcana::Known(i)) Arcana::Give(i, false);
+			}
+			Bows::SetLevels(std::vector<std::uint8_t>(BowsImpl::kN, static_cast<std::uint8_t>(gen::kForgeMax)));  // every bow at tier 3
+			if (auto* bane = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin)) {  // Alduin's Bane, in your hands
+				RE::ActorEquipManager::GetSingleton()->EquipObject(p, bane);
 			}
 			Movement::TestKit();  // (Dragon's Updraft, the third bond, the glider)
 			if (const int have = Points::Get(); have < 150000) {
@@ -2273,7 +2281,13 @@ namespace bo3z
 			auto* root = p ? p->Get3D(false) : nullptr;
 			if (!root || root == seen) return;
 			seen = root;
-			if (auto* g = KitGlobal(); g && g->value > 0.5f) NameByElement();
+			if (auto* g = KitGlobal(); g && g->value > 0.5f) {
+				NameByElement();
+				if (g->value < kKitVersion - 0.5f) {  // (Noah: the kit grew - the staffs, the Bane, the altar's spells, tier-3 bows) topped up
+					logger::info("testkit: version {} -> {}: topping the kit up", g->value, kKitVersion);
+					g_kitPending = true;
+				}
+			}
 		}
 
 		// (Noah: the test kit - unlimited magicka, so the spells can be tried) kept full while the kit is on
@@ -3194,89 +3208,102 @@ namespace bo3z
 			auto        burn = [&](RE::Actor* a, float a_perSec, float a_secs) { g_dots.push_back({ a->GetHandle(), a_perSec, a_secs }); };
 			const std::string_view id = sh.id;
 			struct Busy { Busy() { g_stormBusy = true; } ~Busy() { g_stormBusy = false; } } busy;   // (a shout's own blows spend no charge)
-			if (id == "ember") {        // a cone of fire, the ground left burning
-				const float range = 900.0f + 450.0f * L;
-				for (auto* f : InCone(aim, range, 40.0f)) {
-					Damage(f, base, false, false);
-					burn(f, base * 0.15f, 4.0f);
-				}
-				for (int s = 1; s <= 3 + L; ++s) {
-					blastAt(L == 3 && s == 3 + L ? "firestorm" : "fireball", aim.eye + aim.dir * (range * s / (3.0f + L)), 0.05f * s, 0.55f);
-				}
-			} else if (id == "gale") {  // Stormblast: lightning gathers in your weapon - one charged blow a word, for half a minute
-				g_storm = { L, L, 30.0f, 0.0f };
-				blastAt("skybolt", me, 0.0f, 0.5f);
-				logger::info("shout: Stormblast - {} charged blow(s) in hand", L);
-			} else if (id == "wail") {  // the dead nearest turn on their own
-				int n = 0;
-				for (auto* f : Foes(me, 600.0f + 400.0f * L)) {
-					if (n++ >= 3 + 4 * (L - 1)) {
-						break;
+			// (Noah: every city's shout redone; all three words come with the city) - the damage follows the night (base) and
+			// Skyrim's difficulty (Damage), each word wider and stronger
+			if (id == "ember") {        // Skyforge Volley: a fan of spectral blades
+				const int   n = 1 + 4 * L;                 // 5, 9, 13 blades
+				const float spread = 0.35f + 0.12f * L;    // radians either side
+				RE::NiPoint3 fwd = aim.dir; fwd.z = 0; if (fwd.Length() < 0.01f) fwd = { 0, 1, 0 }; fwd.Unitize();
+				std::unordered_set<RE::Actor*> hit;
+				for (int b = 0; b < n; ++b) {
+					const float a = -spread + 2.0f * spread * b / std::max(1, n - 1);
+					const RE::NiPoint3 d{ fwd.x * std::cos(a) - fwd.y * std::sin(a), fwd.x * std::sin(a) + fwd.y * std::cos(a), 0 };
+					for (int st = 1; st <= 5; ++st) blastAt("light", me + RE::NiPoint3{ 0, 0, 70 } + d * (260.0f * st), 0.03f * st + 0.01f * b, 0.3f);
+					Aim ray{ me + RE::NiPoint3{ 0, 0, 70 }, d, me + d * 1500.0f };
+					for (auto* f : InLine(ray, 1300.0f + 200.0f * L, 70.0f)) {
+						if (!hit.insert(f).second) continue;
+						if (Damage(f, base * 0.9f, false, false)) continue;
+						Director::Web(f->GetPosition(), 40.0f, 1.5f, 90.0f);  // pinned
+						if (L >= 2) burn(f, base * 0.12f, 4.0f);              // bleeding
+						if (L >= 3) {                                          // and the blades burst
+							blastAt("shoutarea", f->GetPosition() + RE::NiPoint3{ 0, 0, 50 }, 0.4f, 0.4f);
+							for (auto* g2 : Foes(f->GetPosition(), 180.0f)) Damage(g2, base * 0.5f, false, false);
+						}
 					}
-					Director::Frenzy(f, 5.0f + 4.0f * L);
-					blastAt("dark", f->GetPosition() + RE::NiPoint3{ 0, 0, 60 }, 0.05f * n, 0.4f);
 				}
-			} else if (id == "rime") {  // a line of frost: frozen solid, then shattered
-				const float range = 1100.0f + 600.0f * L;
-				for (auto* f : InLine(aim, range, 130.0f)) {
-					Director::Web(f->GetPosition(), 60.0f, 2.0f + 1.5f * L, 95.0f, true);
-					Damage(f, base * (L == 3 ? 1.4f : 0.6f), false, false);
+			} else if (id == "gale") {  // Thunder Lash: bolts on the nearest dead, each leaping to one more
+				auto foes = Foes(me, 1800.0f);
+				std::sort(foes.begin(), foes.end(), [&](RE::Actor* a, RE::Actor* b) { return a->GetPosition().GetDistance(me) < b->GetPosition().GetDistance(me); });
+				const int n = L == 1 ? 3 : L == 2 ? 5 : 8;
+				for (int k = 0; k < n && k < static_cast<int>(foes.size()); ++k) {
+					auto* f = foes[k];
+					Cast(gen::kSpell_thunderbolt, f);
+					blastAt("skybolt", f->GetPosition(), 0.08f * k, 0.6f);
+					Damage(f, base * 1.2f, false, false);
+					for (auto* g2 : Foes(f->GetPosition(), 350.0f)) {
+						if (g2 != f && !g2->IsDead()) { g_arcs.push_back({ f->GetPosition() + RE::NiPoint3{ 0, 0, 80 }, g2->GetPosition() + RE::NiPoint3{ 0, 0, 80 }, 0.08f * k + 0.05f }); Damage(g2, base * 0.5f, false, false); break; }
+					}
 				}
-				for (int s = 1; s <= 5; ++s) {
-					blastAt("frost", aim.eye + aim.dir * (range * s / 5.0f), 0.06f * s, 0.5f);
-				}
-			} else if (id == "quake") {  // a shockwave through the ground around you
-				const float r = 400.0f + 350.0f * L;
+			} else if (id == "wail") {  // Raise the Fallen: the barrow's dead fight for you
+				Echo::Allies(0, 2 * L, 12.0f + 4.0f * L, me);
+				for (int k = 0; k < 2 * L; ++k) blastAt("dark", me + RE::NiPoint3{ std::cos(k * 1.3f) * 170.0f, std::sin(k * 1.3f) * 170.0f, 30 }, 0.05f * k, 0.4f);
+			} else if (id == "rime") {  // Frost Nova: everything round you frozen solid (the frozen shatter)
+				const float r = 450.0f + 200.0f * L, secs = L == 1 ? 3.0f : L == 2 ? 4.0f : 6.0f;
 				for (auto* f : Foes(me, r)) {
-					Damage(f, base, false, false);
-					Stagger(f, 0.9f);
+					if (!Damage(f, base * 0.4f, false, false)) FreezeSolid(f, secs);
 				}
-				for (int s = 0; s < 6 + 2 * L; ++s) {
-					const float a = s * 6.2832f / (6 + 2 * L), rr = r * 0.7f;
-					blastAt("giantslam", me + RE::NiPoint3{ std::cos(a) * rr, std::sin(a) * rr, 0 }, 0.04f * s, 0.45f);
+				for (int k = 0; k < 10; ++k) blastAt("frost", me + RE::NiPoint3{ std::cos(k * 0.628f) * r * 0.7f, std::sin(k * 0.628f) * r * 0.7f, 30 }, 0.02f * k, 0.5f);
+				blastAt("icevolley", me + RE::NiPoint3{ 0, 0, 30 }, 0.0f, 0.7f);
+			} else if (id == "quake") {  // Dwemer Quake: the ground heaves in front of you
+				const float range = 800.0f + 300.0f * L;
+				for (auto* f : InCone(aim, range, 45.0f)) {
+					if (Damage(f, base, false, false)) continue;
+					if (proc) { RE::NiPoint3 away = f->GetPosition() - me; away.z = 0; away.Unitize(); proc->KnockExplosion(f, f->GetPosition() - away * 100.0f + RE::NiPoint3{ 0, 0, -60 }, 1.5f + 0.8f * L); }
+					if (L >= 3) { blastAt("giantslam", f->GetPosition(), 0.3f, 0.4f); Damage(f, base * 0.8f, false, false); }  // stone spikes
 				}
-			} else if (id == "shroud") {  // the dead lose you in the dark
-				for (auto* f : Foes(me, 1000.0f + 700.0f * L)) {
-					Director::Web(f->GetPosition(), 60.0f, 2.0f + 2.5f * L, 95.0f);
+				for (int st = 1; st <= 6; ++st) blastAt("giantslam", me + RE::NiPoint3{ aim.dir.x, aim.dir.y, 0 } * (range * st / 6.0f), 0.06f * st, 0.45f);
+			} else if (id == "shroud") {  // Shadow Step: blink forward, a shadow left behind draws the dead and bursts
+				const RE::NiPoint3 from = me;
+				RE::NiPoint3 d = aim.dir; d.z = 0; if (d.Length() < 0.01f) d = { 0, 1, 0 }; d.Unitize();
+				const float want = std::min(500.0f + 200.0f * L, std::max(0.0f, std::hypot(aim.hit.x - me.x, aim.hit.y - me.y) - 60.0f));
+				RE::NiPoint3 to = me + d * want;
+				if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(to, land) && std::abs(land - me.z) < 400.0f) to.z = land;
+				blastAt("dark", from + RE::NiPoint3{ 0, 0, 60 }, 0.0f, 0.5f);
+				p->SetPosition(to, true);
+				blastAt("dark", to + RE::NiPoint3{ 0, 0, 60 }, 0.0f, 0.4f);
+				g_zones.push_back({ 5, from, 600.0f + 150.0f * L, 3.0f, 0.0f, base * (0.8f + 0.5f * L), 0, false, 2.6f });
+			} else if (id == "toll") {  // Death's Harvest: a draining cone that heals you for each it touches
+				int n = 0;
+				for (auto* f : InCone(aim, 800.0f + 200.0f * L, 40.0f + 5.0f * L)) {
+					Damage(f, base * 0.9f, false, false);
+					blastAt("turnundead", f->GetPosition() + RE::NiPoint3{ 0, 0, 60 }, 0.04f * n, 0.3f);
+					++n;
 				}
-				blastAt("dark", me + RE::NiPoint3{ 0, 0, 40 }, 0.0f, 0.6f);
-			} else if (id == "toll") {  // the grave-bell: the weakened crumble
-				const float cut = 0.25f + 0.17f * L;
-				for (auto* f : Foes(me, 700.0f + 400.0f * L)) {
+				auto* av = p->AsActorValueOwner();
+				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * std::min(0.6f, (L == 3 ? 0.06f : 0.04f) * n));
+				if (L >= 3) Party::ReviveAt(me, 700.0f);
+			} else if (id == "mire") {  // Mire Grasp: roots hold the dead where you look, and poison them
+				const float r = 280.0f + 110.0f * L;
+				for (auto* f : Foes(aim.hit, r)) {
+					Director::Web(f->GetPosition(), 45.0f, 2.0f + 1.5f * L, 96.0f);
+					burn(f, base * 0.15f, 6.0f);
+				}
+				blastAt("poisongas", aim.hit, 0.0f, 0.5f + 0.15f * L);
+				for (int k = 0; k < 4 + 2 * L; ++k) blastAt("spiderspit", aim.hit + RE::NiPoint3{ Rand(-r, r) * 0.7f, Rand(-r, r) * 0.7f, 10 }, 0.05f * k, 0.35f);
+			} else if (id == "dread") {  // Nightmare Howl: thrown back in terror, the weakest die of fright
+				const float cut = 0.1f + 0.1f * L;
+				for (auto* f : Foes(me, 600.0f + 300.0f * L)) {
 					auto*       av = f->AsActorValueOwner();
 					const float frac = av->GetActorValue(RE::ActorValue::kHealth) / std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth));
-					const bool  boss = Director::IsBoss(f);
-					Damage(f, frac <= cut && !boss ? 1.0e7f : base * 0.4f, false, false);
+					if (frac <= cut && !Director::IsBoss(f)) { Damage(f, 1.0e7f, false, false); continue; }
+					if (proc) { RE::NiPoint3 away = f->GetPosition() - me; away.z = 0; away.Unitize(); proc->KnockExplosion(f, f->GetPosition() - away * 120.0f, 1.5f + 1.0f * L); }
+					Director::Web(f->GetPosition(), 45.0f, 2.0f + 2.0f * L, 70.0f);
 				}
-				blastAt("turnundead", me + RE::NiPoint3{ 0, 0, 60 }, 0.0f, 0.5f + 0.15f * L);
-			} else if (id == "mire") {  // a rot that spreads as they fall
-				for (auto* f : InCone(aim, 700.0f + 400.0f * L, 55.0f)) {
-					const float dps = base * 0.22f;
-					burn(f, dps, 6.0f);
-					g_plagued[f->GetFormID()] = dps;
-				}
-				blastAt("poisongas", aim.eye + aim.dir * 500.0f, 0.1f, 0.5f + 0.1f * L);
-			} else if (id == "dread") {  // hurled back in terror, burning
-				for (auto* f : Foes(me, 600.0f + 400.0f * L)) {
-					if (proc && !f->IsDead()) {
-						RE::NiPoint3 away = f->GetPosition() - me;
-						away.z = 0;
-						away.Unitize();
-						proc->KnockExplosion(f, f->GetPosition() - away * 120.0f, 2.0f + 2.5f * L);
-					}
-					burn(f, base * 0.2f, 4.0f);
-				}
-				blastAt("dragonfire", me + RE::NiPoint3{ 0, 0, 30 }, 0.0f, 0.5f);
-			} else if (id == "shatter") {  // crystal shards rain round you
-				const int n = 4 + 5 * L;
-				for (int s = 0; s < n; ++s) {
-					const float a = Rand(0.0f, 6.2832f), r = Rand(150.0f, 900.0f);
-					const RE::NiPoint3 at = me + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 };
-					blastAt(s % 3 ? "constellation" : "skybolt", at, 0.12f * s, 0.45f);
-					for (auto* f : Foes(at, 170.0f)) {
-						Damage(f, base * 0.45f, false, false);
-					}
-				}
+				blastAt("dark", me + RE::NiPoint3{ 0, 0, 40 }, 0.0f, 0.6f + 0.1f * L);
+			} else if (id == "shatter") {  // Arcane Singularity: a vortex pulls them in, then detonates
+				g_zones.push_back({ 3, aim.hit + RE::NiPoint3{ 0, 0, 60 }, 450.0f + 150.0f * L, 2.4f, 0.0f, base * (1.2f + 0.8f * L), 0, false, 2.0f });
+				g_zones.back().kind = 6;
+				blastAt("constellation", aim.hit + RE::NiPoint3{ 0, 0, 60 }, 0.0f, 0.6f);
 			}
 			Forms::Play(static_cast<gen::Sound>(sh.sound));
 			{  // the Dragonborn's own voice: a roar for each word spoken (one, two or all three)
