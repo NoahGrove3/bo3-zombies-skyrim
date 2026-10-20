@@ -394,6 +394,62 @@ namespace bo3z
 		std::vector<Arc> g_arcs;           // (Stormblast's lightning, drawn by TickStorm once Spellcraft is in reach)
 		void        StormStrike(RE::Actor* a_target);
 
+		// (Noah: headshots make their heads explode, then they die) a headshot kill bursts the head in blood: Skyrim's own
+		// decapitation where the body has one (the draugr, the men and mer), else the head bone shrunk away; blood sprays
+		// from the neck in every direction, the body's own gore explosion goes off there, and a wet crunch
+		void HeadBurst(RE::Actor* a)
+		{
+			if (!a || !Settings::Blood()) {
+				return;
+			}
+			const RE::NiPoint3 hp = HeadPos(a);
+			const std::string  node(Director::HeadNodeFor(a));
+			bool cut = false;
+			if (auto* race = a->GetRace(); race && race->bodyPartData && race->bodyPartData->parts[RE::BGSBodyPartDefs::LIMB_ENUM::kHead] &&
+											  !race->bodyPartData->parts[RE::BGSBodyPartDefs::LIMB_ENUM::kHead]->goreObjectName.empty()) {
+				cut = a->Decapitate();
+			}
+			if (!cut) {
+				if (auto* root = a->Get3D()) {
+					RE::NiAVObject* h = root->GetObjectByName(node);
+					if (!h) h = FindHead(root);
+					if (h) {
+						h->local.scale = 0.001f;
+						RE::NiUpdateData ud;
+						ud.time = 0.0f;
+						h->Update(ud);
+					}
+				}
+			}
+			static auto* spray = RE::TESForm::LookupByID<RE::BGSImpactDataSet>(0x01F82A);  // BloodSprayImpactSetRed
+			if (auto* im = RE::BGSImpactManager::GetSingleton(); im && spray) {
+				for (int i = 0; i < 6; ++i) {
+					const float ang = i * 1.047f;
+					RE::NiPoint3 dir{ std::cos(ang), std::sin(ang), i % 2 ? 0.6f : -0.3f };
+					im->PlayImpactEffect(a, spray, node.c_str(), dir, 120.0f, false, false);
+				}
+			}
+			if (auto* race = a->GetRace(); race && race->bodyPartData) {
+				for (int part : { static_cast<int>(RE::BGSBodyPartDefs::LIMB_ENUM::kHead), static_cast<int>(RE::BGSBodyPartDefs::LIMB_ENUM::kTorso) }) {
+					auto* bp = race->bodyPartData->parts[part];
+					if (bp && bp->data.dismemberExplosion) {
+						if (auto* m = RE::TESForm::LookupByID<RE::TESBoundObject>(0x3B)) {  // an XMarker at the neck
+							if (auto mk = a->PlaceObjectAtMe(m, false)) {
+								mk->SetPosition(hp);
+								mk->PlaceObjectAtMe(bp->data.dismemberExplosion, false);
+								mk->Disable();
+								mk->SetDelete(true);
+							}
+						}
+						break;
+					}
+				}
+			}
+			Audio::Game(0x0DAB82, a);  // NPCKillGore
+			std::scoped_lock l(Hud::Lock());
+			Hud::Edit().headBurstT = 0.18f;
+		}
+
 		bool Damage(RE::Actor* a_target, float a_bo3Damage, bool a_head, bool a_melee, bool a_quiet = false)
 		{
 			if (!a_quiet && !g_stormBusy && g_storm.charges > 0 && a_target && !a_target->IsDead()) {
@@ -431,6 +487,9 @@ namespace bo3z
 				}
 				if (!a_target->IsDead()) {
 					a_target->KillImpl(player, damage, true, false);
+				}
+				if (a_head && !a_melee) {
+					HeadBurst(a_target);
 				}
 				if (auto it = g_doomed.find(tid); it != g_doomed.end()) {  // Doom Mark: it goes off, and takes the next ones with it
 					g_detonations.push_back({ a_target->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, it->second, 0.15f, 0 });

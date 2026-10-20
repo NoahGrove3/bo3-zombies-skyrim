@@ -52,6 +52,11 @@ PAGES = [
         header('The night'),
         toggle('bShelter:General', 'Townsfolk go indoors', 'From the moment the night\'s countdown starts, everyone out in a city\'s streets goes inside until dawn, so the dead can\'t hurt them.'),
         slider('fCorpseSeconds:General', 'Bodies fade after', 'Seconds a fallen undead lies there before it crumbles.', 3, 60, 1, '{0} s'),
+        header('Effects'),
+        toggle('bBlood:Effects', 'Blood', 'Headshot kills burst the head in blood, and bodies bleed. Off: kills stay clean.'),
+        slider('fFogStrength:Effects', 'Night fog', 'How thick the night\'s fog grows toward the last wave (and on a Blood Fog night). 0 = none.', 0.0, 1.5, 0.05, '{2}x'),
+        toggle('bScreenShake:Effects', 'Screen shake', 'The camera shakes with the undead rising, big impacts and the mini-boss\'s arrival.'),
+        toggle('bReduceFlashes:Effects', 'Reduce flashes', 'Softer lightning and fewer white flashes (headshots, the sky at wave starts).'),
         header('Difficulty'),
         toggle('bFollowSkyrim:Difficulty', 'Follow Skyrim\'s difficulty', 'Skyrim\'s difficulty (Settings > Gameplay) also sets how tough the night\'s dead are and how hard they hit: Novice halves their hits, Legendary triples them.'),
         slider('fUndeadHealth:Difficulty', 'Undead health', 'On top of Skyrim\'s difficulty: how much health the night\'s dead have.', 0.25, 3.0, 0.05, '{2}x'),
@@ -88,6 +93,7 @@ DEFAULTS = {
     'General': {'fFovFirst': 130.0, 'fFovThird': 120.0, 'fBrightness': 1.5, 'bShelter': 1, 'fCorpseSeconds': 10.0},
     'Controls': {'bPlayStationIcons': 0},
     'Dragon': {'bBankReverse': 0, 'bInvertDive': 0},
+    'Effects': {'bBlood': 1, 'fFogStrength': 1.0, 'bScreenShake': 1, 'bReduceFlashes': 0},
     'Difficulty': {'bFollowSkyrim': 1, 'fUndeadHealth': 1.0, 'fUndeadDamage': 1.0},
     'Keys': {'iShrineRoll': 2, 'iShrineReforge': 3, 'iShrineBless': 4, 'iShrineShout': 5, 'iShrineLeave': 14, 'iShrineBond': 6, 'iShrineBow': 48},
     'QuickLoot': {'bCloseInCombat': 0, 'bCloseOnEmpty': 1, 'fScale': 100.0, 'fHorizontal': 20.0, 'fVertical': 0.0},
@@ -96,6 +102,8 @@ DEFAULTS = {
 # Experience: XP a kill gives (a quarter of what the creatures give in the wilds)
 XP = {'zombie': 1, 'hollow2': 1, 'hollow3': 1, 'ash1': 1, 'ash2': 1, 'runner': 1, 'marksman': 2, 'necro': 2, 'hexer_rime': 2,
       'hexer_storm': 2, 'wailer': 2, 'death_hound': 1, 'shadow': 4, 'reaper': 4, 'brute': 5, 'boss': 20, 'boss2': 20, 'boss3': 20,
+      'hf_goblin': 1, 'hf_goblin_archer': 1, 'hf_centipede': 1, 'hf_arachling': 1, 'hf_goblin_shaman': 2, 'hf_harpy': 2, 'hf_imp_fire': 2,
+      'hf_imp_shock': 2, 'hf_ooze': 2, 'hf_troll': 3, 'hf_ogre': 4, 'hf_minotaur': 5, 'hf_ettin': 5,
       'boss4': 20, 'skeleton': 0, 'king': 6, 'knight': 6, 'lich': 6, 'bloater': 6}
 
 

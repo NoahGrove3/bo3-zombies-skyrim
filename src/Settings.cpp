@@ -14,6 +14,8 @@ namespace bo3z::Settings
 	{
 		float g_fovFirst = 130.0f, g_fovThird = 120.0f, g_corpse = 10.0f, g_hp = 1.0f, g_dmg = 1.0f, g_bright = 1.5f;  // (Noah's own: 130 / 120 / 1.5)
 		bool  g_shelter = true, g_follow = true, g_padPS = false, g_bankRev = false, g_diveInv = false;
+		bool  g_blood = true, g_shake = true, g_softFlash = false;
+		float g_fog = 1.0f;
 		int   g_keys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30 };
 		constexpr const wchar_t* kKeyIds[kKeys] = { L"iShrineRoll", L"iShrineReforge", L"iShrineBless", L"iShrineShout", L"iShrineLeave", L"iShrineBond", L"iShrineBow" };
 		bool  g_loaded = false;
@@ -190,6 +192,10 @@ namespace bo3z::Settings
 			g_fovThird = std::clamp(Read(L"General", L"fFovThird", 120.0f), kFovMin, kFovMax);
 			g_bright = std::clamp(Read(L"General", L"fBrightness", 1.5f), kBrightMin, kBrightMax);
 			g_shelter = Read(L"General", L"bShelter", 1.0f) != 0.0f;
+			g_blood = Read(L"Effects", L"bBlood", 1.0f) != 0.0f;
+			g_fog = std::clamp(Read(L"Effects", L"fFogStrength", 1.0f), 0.0f, 1.5f);
+			g_shake = Read(L"Effects", L"bScreenShake", 1.0f) != 0.0f;
+			g_softFlash = Read(L"Effects", L"bReduceFlashes", 0.0f) != 0.0f;
 			g_padPS = Read(L"Controls", L"bPlayStationIcons", 0.0f) != 0.0f;
 			g_bankRev = Read(L"Dragon", L"bBankReverse", 0.0f) != 0.0f;
 			g_diveInv = Read(L"Dragon", L"bInvertDive", 0.0f) != 0.0f;
@@ -238,6 +244,10 @@ namespace bo3z::Settings
 	float FovFirst() { Ensure(); return g_fovFirst; }
 	float FovThird() { Ensure(); return g_fovThird; }
 	bool  Shelter() { Ensure(); return g_shelter; }
+	bool  Blood() { Ensure(); return g_blood; }
+	float FogStrength() { Ensure(); return g_fog; }
+	bool  ScreenShake() { Ensure(); return g_shake; }
+	bool  ReduceFlashes() { Ensure(); return g_softFlash; }
 	bool  PlayStationIcons() { Ensure(); return g_padPS; }
 	bool  DragonBankReverse() { Ensure(); return g_bankRev; }
 	bool  DragonInvertDive() { Ensure(); return g_diveInv; }

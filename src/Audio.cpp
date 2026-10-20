@@ -335,6 +335,22 @@ namespace bo3z::Audio
 		}
 	}
 
+	// one of Skyrim's own sound descriptors, at a reference (3D)
+	void Game(RE::FormID a_sndr, RE::TESObjectREFR* a_at, float a_vol)
+	{
+		auto* d = RE::TESForm::LookupByID<RE::BGSSoundDescriptorForm>(a_sndr);
+		auto* am = RE::BSAudioManager::GetSingleton();
+		RE::BSSoundHandle h;
+		if (!d || !am || !am->GetSoundHandle(h, static_cast<RE::BSISoundDescriptor*>(d))) {
+			return;
+		}
+		if (a_at) {
+			h.SetPosition(a_at->GetPosition());
+			if (auto* node = a_at->Get3D()) h.SetObjectToFollow(node);
+		}
+		if (a_vol < 0.999f) h.SetVolume(a_vol);
+		h.Play();
+	}
 	void Flesh(RE::Actor* a_actor, bool a_death)
 	{
 		if (!a_actor || a_actor->IsDisabled()) {

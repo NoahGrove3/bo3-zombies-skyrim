@@ -162,7 +162,8 @@ namespace bo3z
 		void LoopAt(std::uint64_t a_key, gen::Sound a_s, const RE::NiPoint3& a_at, float a_vol = 1.0f);  // a moving loop (a bolt's flight)
 		void LoopMove(std::uint64_t a_key, const RE::NiPoint3& a_at);
 		void Voice(RE::Actor* a_actor, VoiceEvent a_ev);
-		void Flesh(RE::Actor* a_actor, bool a_death);  // the wet hit of a spell landing (rate-limited per body), the fall when it dies
+		void Flesh(RE::Actor* a_actor, bool a_death);
+		void Game(RE::FormID a_sndr, RE::TESObjectREFR* a_at, float a_vol = 1.0f);  // one of Skyrim's own sounds (SNDR id)  // the wet hit of a spell landing (rate-limited per body), the fall when it dies
 		void InstallSteps();
 		std::string Stats();
 		RE::BGSSoundDescriptorForm* Descriptor(gen::Sound a_s);                            // our undead's footsteps, on their animation's footfalls
@@ -305,6 +306,10 @@ namespace bo3z
 		float       Brightness();                 // the scene's brightness (1 = as Skyrim made it)
 		void        SetBrightness(float a_v);
 		bool        Shelter();                    // townsfolk go indoors at night
+		bool        Blood();                      // headshot blood bursts (MCM: Effects)
+		float       FogStrength();                // the night's fog, 0 .. 1.5
+		bool        ScreenShake();
+		bool        ReduceFlashes();              // softer lightning, fewer white flashes
 		bool        PlayStationIcons();           // controller prompts drawn as PlayStation buttons (a PS5 pad looks like an Xbox one to Skyrim)
 		bool        DragonBankReverse();          // the dragon leans out of its turns instead of into them (Noah's choice)
 		bool        DragonInvertDive();           // forward pulls up, back dives
@@ -564,6 +569,8 @@ namespace bo3z
 			bool        nightActive{ false };
 			int         wave{ 0 }, waves{ 0 }, waveLeft{ 0 }, waveSize{ 0 };  // (Noah: BO3 waves) this night's wave, how many, the dead still to kill in it
 			float       waveRest{ 0 };    // seconds until the next wave rises
+			std::string waveTheme;          // a themed wave's name ("GOBLIN RAID"), else empty
+			std::uint32_t waveThemeColor{ 0 };
 			float       puInsta{ 0 }, puDouble{ 0 }, puFireSale{ 0 };  // power-up seconds left  // a night (round) is being fought; otherwise round = nights survived
 			int         points{ 0 };
 			bool        gunOut{ false };
@@ -586,6 +593,7 @@ namespace bo3z
 			float       gainTime{ 0 };
 			float       hitTime{ 0 };
 			bool        hitKill{ false };
+			float       headBurstT{ 0 };  // a headshot kill's white flash at the crosshair
 			int         perks{ 0 };      // bitmask
 			std::array<int, 16> perkStacks{};  // how many of each blessing (they stack)
 			int         crew{ -1 };

@@ -127,6 +127,19 @@ namespace bo3z
 			return std::max(R.spawnDelayMin, R.spawnDelayStart * std::pow(R.spawnDelayDecay, static_cast<float>(a_round - 1)));
 		}
 
+		// (Noah: the night starts the moment the sun sets) dusk is when the sun reaches the horizon in this place's
+		// climate (the middle of its sunset), not a fixed hour; the sheet's nightStartHour stands in where none is known
+		float DuskHour()
+		{
+			static float dusk = R.nightStartHour;
+			if (auto* sky = RE::Sky::GetSingleton(); sky && sky->currentClimate) {
+				const auto& ss = sky->currentClimate->timing.sunset;
+				if (ss.end > ss.begin) {
+					dusk = std::clamp((ss.begin + ss.end) / 12.0f, 16.5f, 21.0f);  // (10-minute steps: /6 an hour, the two ends averaged)
+				}
+			}
+			return dusk;
+		}
 		bool IsNight()
 		{
 			auto* cal = RE::Calendar::GetSingleton();
@@ -134,7 +147,8 @@ namespace bo3z
 				return false;
 			}
 			const float h = cal->GetHour();
-			return R.nightStartHour > R.nightEndHour ? (h >= R.nightStartHour || h < R.nightEndHour) : (h >= R.nightStartHour && h < R.nightEndHour);
+			const float dusk = DuskHour();
+			return dusk > R.nightEndHour ? (h >= dusk || h < R.nightEndHour) : (h >= dusk && h < R.nightEndHour);
 		}
 
 		bool Allowed(RE::PlayerCharacter* a_player)
@@ -1421,8 +1435,8 @@ namespace bo3z
 			if (!cal || !cal->gameHour || g_phase != Phase::Fighting || g_nightCleared || Coop::Client() || Curse::SafeHere(a_player) || g_waves <= 0) {
 				return;
 			}
-			const float nightHours = std::fmod(R.nightEndHour - R.nightStartHour + 24.0f, 24.0f);
-			const float since = std::fmod(cal->GetHour() - R.nightStartHour + 24.0f, 24.0f);
+			const float nightHours = std::fmod(R.nightEndHour - DuskHour() + 24.0f, 24.0f);
+			const float since = std::fmod(cal->GetHour() - DuskHour() + 24.0f, 24.0f);
 			if (since > nightHours) {
 				return;  // (not a night hour)
 			}
@@ -2551,7 +2565,7 @@ namespace bo3z
 			// pass in dayMinutes: 48 (whole numbers: Skyrim Together's server runs the same). While the night is fought
 			// the clock all but stops (1) and PaceNight moves it with the waves cleared; a night with no fighting (a freed
 			// city, before the intro) passes at 38, about 15 minutes. In a friend's party the shared clock keeps its pace.
-			const float dayHours = std::fmod(R.nightStartHour - R.nightEndHour + 24.0f, 24.0f);
+			const float dayHours = std::fmod(DuskHour() - R.nightEndHour + 24.0f, 24.0f);
 			float       want = std::round(dayHours * 60.0f / gen::kDayMinutes);
 			if (IsNight() && !Coop::Client()) {
 				auto* pl = RE::PlayerCharacter::GetSingleton();

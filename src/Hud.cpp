@@ -172,6 +172,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		constexpr ImU32 kBlood = IM_COL32(178, 22, 22, 255);
 		constexpr ImU32 kParch = IM_COL32(236, 226, 200, 255);
 		constexpr ImU32 kGlass = IM_COL32(10, 10, 12, 170);
+		// the Echo Altar's look (Noah: the menus to match the altar): deep navy, cold rune-blue, pale ice
+		constexpr ImU32 kRune = IM_COL32(110, 185, 255, 255);
+		constexpr ImU32 kRuneDim = IM_COL32(110, 185, 255, 110);
+		constexpr ImU32 kIce = IM_COL32(225, 240, 255, 255);
+		constexpr ImU32 kNavy = IM_COL32(7, 14, 28, 215);
 
 		ImU32 Fade(ImU32 c, float a) { return (c & 0x00FFFFFF) | (static_cast<ImU32>(((c >> 24) & 0xFF) * std::clamp(a, 0.0f, 1.0f)) << 24); }
 
@@ -634,6 +639,16 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const std::string t = centre->label + "   " + std::to_string(m) + " m";
 				TxtC(dl, g_body, 15 * k, cx, b.y + 6 * k, IM_COL32(236, 222, 190, 235), t, 1.5f * k, IM_COL32(0, 0, 0, 255));
 			}
+			// (Noah: a 12-hour clock, easier to read) the time of day at the compass's right end
+			if (auto* cal = RE::Calendar::GetSingleton(); cal && cal->gameHour) {
+				const float h = std::fmod(cal->gameHour->value, 24.0f);
+				int         hh = static_cast<int>(h), mm = static_cast<int>((h - hh) * 60.0f);
+				const bool  pm = hh >= 12;
+				hh %= 12;
+				if (hh == 0) hh = 12;
+				const std::string t = fmt::format("{}:{:02} {}", hh, mm, pm ? "PM" : "AM");
+				Txt(dl, g_title, 17 * k, { b.x + e + 10 * k, cy - 10 * k }, IM_COL32(236, 222, 190, 230), t, 1.5f * k, IM_COL32(0, 0, 0, 255));
+			}
 		}
 
 		void Draw(const Hud::State& s, ImVec2 size)
@@ -988,6 +1003,53 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(255, 220, 150, static_cast<int>(70 * wash)));
 			}
 
+			// (Noah: a wave counter) the rune dial under the compass: one rune per wave round a ring (the cleared ones lit,
+			// the one being fought pulsing), the wave's number in the middle, "WAVE 4 / 9" and the dead still to fall beside
+			// it, a themed wave's name over it. It flares as a wave begins; as one is cleared its ring cracks and fades.
+			{
+				static int   lastWave = 0;
+				static float startT = 0, clearT = 0;
+				static bool  wasRest = false;
+				const float  dtw = ImGui::GetIO().DeltaTime;
+				const bool   on = s.nightActive && s.waves > 0;
+				if (on && s.wave != lastWave) startT = 1.0f, lastWave = s.wave;
+				if (on && s.waveRest > 0 && !wasRest) clearT = 1.0f;
+				wasRest = on && s.waveRest > 0;
+				if (!on) lastWave = 0;
+				startT = std::max(0.0f, startT - dtw * 1.2f);
+				clearT = std::max(0.0f, clearT - dtw * 0.9f);
+				if (on) {
+					const ImVec2 c{ size.x * 0.5f - 92 * k, (s.questTitle.empty() || s.perkMenu ? 128 : 192) * k };  // (below a trial's line)
+					const float  R = 26 * k, flare = startT * startT;
+					Panel(dl, { c.x - R - 14 * k, c.y - R - 10 * k }, { c.x + R + 196 * k, c.y + R + 10 * k }, k * 0.6f, 0.85f);
+					dl->AddCircleFilled(c, R + 4 * k, kNavy, 40);
+					const int   n = std::clamp(s.waves, 1, 40);
+					const float crack = clearT;
+					for (int i = 0; i < n; ++i) {
+						const float a0 = -1.5708f + 6.2832f * i / n + 0.05f, a1 = -1.5708f + 6.2832f * (i + 1) / n - 0.05f;
+						const bool  done = i + 1 < s.wave || (i + 1 == s.wave && s.waveRest > 0);
+						const bool  cur = i + 1 == s.wave && s.waveRest <= 0;
+						float       alpha = done ? 0.95f : cur ? 0.55f + 0.45f * std::sin(now * 5.0f) : 0.22f;
+						if (i + 1 == s.wave && crack > 0) alpha *= 0.4f + 0.6f * (1.0f - crack);  // (cleared: the ring cracks)
+						const float rr = R + (i + 1 == s.wave ? (crack * 5 + flare * 6) * k : 0.0f);
+						dl->PathArcTo(c, rr, a0, a1, 6);
+						dl->PathStroke(Fade(cur || done ? kRune : kIce, alpha), 0, (cur ? 4.0f : 3.0f) * k);
+					}
+					if (flare > 0) {
+						dl->AddCircle(c, R + (10 + 30 * (1 - startT)) * k, IM_COL32(110, 185, 255, static_cast<int>(200 * flare)), 48, 3.0f * k);
+					}
+					TxtC(dl, g_num, 26 * k, c.x, c.y - 15 * k, kIce, std::to_string(s.wave), 2 * k, kRune);
+					const float tx = c.x + R + 16 * k;
+					const bool  themed = !s.waveTheme.empty();
+					if (themed) {
+						Txt(dl, g_title, 15 * k, { tx, c.y - R - 2 * k }, s.waveThemeColor ? s.waveThemeColor : IM_COL32(255, 90, 60, 255), s.waveTheme, 1.5f * k, IM_COL32(0, 0, 0, 255));
+					}
+					Txt(dl, g_title, 20 * k, { tx, c.y - (themed ? 8 : 16) * k }, kIce, fmt::format("WAVE {} / {}", s.wave, s.waves), 1.5f * k, kRune);
+					const std::string sub = s.waveRest > 0 ? fmt::format("NEXT WAVE IN {:.0f}", std::ceil(s.waveRest)) : fmt::format("{} LEFT", std::max(0, s.waveLeft));
+					Txt(dl, g_body, 15 * k, { tx, c.y + (themed ? 14 : 8) * k }, Fade(kRune, 0.95f), sub);
+				}
+			}
+
 			// Night counter, top-left: the nights cut into a dark plaque in blood - each mark a brush stroke, thick in the
 			// middle and tapering at the ends, wet (a sheen runs along it, a drop gathers and falls from its foot), groups of
 			// five struck through. The newest is cut in with a flare when its night begins. From night 11, the numeral.
@@ -997,15 +1059,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float  h = 64 * k, step = 17 * k, gap = 24 * k, top = p.y + 34 * k;
 				const int    groups = (shown + 4) / 5;
 				const float  plateW = shown > 0 ? std::max(150 * k, 16 * k + (shown - groups) * step + groups * gap + 18 * k) : 150 * k;
-				const bool waves = s.nightActive && s.waves > 0;
-				Panel(dl, { p.x - 10 * k, p.y - 6 * k }, { p.x + plateW, top + h + (s.nightActive && s.nightEvent >= 0 ? 44 : 16) * k + (waves ? 46 * k : 0) }, k * 0.7f, 0.8f);
-				if (waves) {  // (Noah: BO3 waves) the wave, and the dead still to fall in it
-					const float wy = top + h + 10 * k;
-					const std::string line = s.waveRest > 0 ? fmt::format("WAVE {} OF {}  -  {:.0f}", s.wave, s.waves, std::ceil(s.waveRest)) : fmt::format("WAVE {} OF {}", s.wave, s.waves);
-					Txt(dl, g_title, 17 * k, { p.x + 4 * k, wy }, Fade(kGold, 0.95f), line);
-					const float frac = s.waveSize > 0 ? 1.0f - std::clamp(static_cast<float>(s.waveLeft) / s.waveSize, 0.0f, 1.0f) : 0.0f;
-					Bar(dl, { p.x + 4 * k, wy + 24 * k }, plateW - 22 * k, 5 * k, frac, frac, IM_COL32(190, 40, 30, 255), k);
-				}
+				Panel(dl, { p.x - 10 * k, p.y - 6 * k }, { p.x + plateW, top + h + (s.nightActive && s.nightEvent >= 0 ? 44 : 16) * k }, k * 0.7f, 0.8f);  // (the wave itself: the rune dial under the compass)
 				Txt(dl, g_title, 19 * k, { p.x + 4 * k, p.y + 2 * k }, Fade(kGold, 0.9f), s.nightActive ? "NIGHT" : "NIGHTS SURVIVED");
 				dl->AddLine({ p.x + 4 * k, p.y + 27 * k }, { p.x + plateW - 14 * k, p.y + 27 * k }, Fade(kGoldDim, 0.7f), 1.0f * k);
 				const float draw = std::clamp(1.0f - (roundFlash - 1.5f), 0.0f, 1.0f);  // the newest is cut in
@@ -1648,6 +1702,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						dl->AddLine({ c.x + sx * a, c.y + sy * a }, { c.x + sx * b, c.y + sy * b }, col, 2.5f * k);
 					}
 				}
+			}
+
+			if (s.headBurstT > 0) {  // a headshot kill: a quick white flare round the crosshair
+				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f };
+				const float  f = s.headBurstT / 0.18f, soft = Settings::ReduceFlashes() ? 0.35f : 1.0f;
+				dl->AddCircleFilled(c, (10 + 26 * (1 - f)) * k, IM_COL32(255, 255, 255, static_cast<int>(120 * f * soft)), 24);
+				dl->AddCircle(c, (16 + 30 * (1 - f)) * k, IM_COL32(255, 235, 220, static_cast<int>(220 * f * soft)), 32, 2.0f * k);
 			}
 
 			// Countdown between nights: the Blood Moon rising. A ring of the Dirge's runes round it, one going dark for
@@ -4585,6 +4646,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_state.bannerTime = std::max(0.0f, g_state.bannerTime - dt);
 				g_state.gainTime = std::max(0.0f, g_state.gainTime - dt);
 				g_state.hitTime = std::max(0.0f, g_state.hitTime - dt);
+				g_state.headBurstT = std::max(0.0f, g_state.headBurstT - dt);
 				g_state.hurtTime = std::max(0.0f, g_state.hurtTime - dt);
 				g_state.loreTime = std::max(0.0f, g_state.loreTime - dt);
 				g_state.questNoteTime = std::max(0.0f, g_state.questNoteTime - dt);
