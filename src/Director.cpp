@@ -2543,7 +2543,8 @@ namespace bo3z
 			const float dayHours = std::fmod(R.nightStartHour - R.nightEndHour + 24.0f, 24.0f);
 			float       want = std::round(dayHours * 60.0f / gen::kDayMinutes);
 			if (IsNight() && !Coop::Client()) {
-				want = (g_phase == Phase::Fighting || g_phase == Phase::Break) && !g_nightCleared ? 1.0f : 38.0f;
+				auto* pl = RE::PlayerCharacter::GetSingleton();
+				want = (g_phase == Phase::Fighting || g_phase == Phase::Break) && !g_nightCleared && !(pl && Curse::SafeHere(pl)) ? 1.0f : 38.0f;
 			}
 			if (ts && std::abs(ts->value - want) > 0.01f) {
 				logger::info("clock: timescale {:.1f} -> {:.1f} (a full day in {:.0f} minutes)", ts->value, want, gen::kCycleMinutes);

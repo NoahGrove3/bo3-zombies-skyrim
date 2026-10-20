@@ -61,6 +61,10 @@ namespace bo3z
 					logger::warn("fantasy: {} ({:06X}) or list {:06X} missing", a.what, a.npc, a.list);
 					continue;
 				}
+				if ((static_cast<std::uint32_t>(list->llFlags) & static_cast<std::uint32_t>(RE::TESLeveledList::Flag::kCalculateFromAllLevelsLTOrEqPCLevel)) == 0) {
+					logger::warn("fantasy: list {:06X} picks only its top level - {} left out", a.list, a.what);
+					continue;
+				}
 				auto&      e = list->entries;
 				const auto n = e.size();
 				if (n >= 250) {

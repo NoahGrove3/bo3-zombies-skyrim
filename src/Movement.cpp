@@ -2365,6 +2365,7 @@ namespace bo3z
 		void Reset()
 		{
 			g_applied = 0, g_slide = 0, g_carry = 0, g_air = 0, g_smooth = 0;
+			g_fpGlide = 0, g_fpWant = false;
 			g_wasAir = false, g_wantSlide = false, g_wantJumpCarry = false, g_forcedSneak = false;
 		}
 
@@ -2824,7 +2825,7 @@ namespace bo3z
 				g_fpWant = false;
 				bool pg = false;
 				a_p->GetGraphVariableBool("bParaGliding", pg);
-				if (g_fpGlide == 0 && cam->IsInFirstPerson() && !OnGround(a_p) && !pg && !Riding()) {
+				if (g_fpGlide == 0 && !BondLocked() && cam->IsInFirstPerson() && !OnGround(a_p) && !pg && !Riding()) {  // (the glider is yours once Whiterun is won)
 					cam->ForceThirdPerson();
 					g_fpGlide = 1, g_fpGlideT = 0, g_fpZoomWas = -1;
 					logger::info("glider: opened from first person - the camera turns round for the glide");
