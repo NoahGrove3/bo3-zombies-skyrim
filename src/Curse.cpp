@@ -346,12 +346,15 @@ namespace bo3z
 
 		// Where the quest wants you now (in your current world): the altar to choose a trial or hold its circle, the
 		// nearest of the dead to kill, the Barrow-Jarl, a freed city's waiting shout, or from the wilds the nearest held city.
-		RE::TESQuest* RiteQuest(int a_town);
+		RE::TESQuest* RiteQuestOf(int a_town)
+		{
+			return a_town >= 0 && a_town < static_cast<int>(gen::kRiteQuests.size()) ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESQuest>(gen::kRiteQuests[a_town], gen::kPlugin) : nullptr;
+		}
 		// (Noah: the quest marker only for the quest selected in the journal) a city's marks show only while its rite is
 		// the active quest; the Echo hunt (no journal quest of its own) only while none of Skyrim's quests is selected
 		bool RiteSelected(int a_town)
 		{
-			auto* q = RiteQuest(a_town);
+			auto* q = RiteQuestOf(a_town);
 			return q && q->IsActive();
 		}
 		bool AnyQuestSelected()
