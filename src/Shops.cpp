@@ -1322,7 +1322,8 @@ namespace bo3z
 					return;
 				}
 				// Clone a game-made marker record (keeps the engine's vtable), then give it our own name.
-				auto* data = static_cast<RE::MapMarkerData*>(RE::malloc(sizeof(RE::MapMarkerData)));
+				auto* data = static_cast<RE::MapMarkerData*>(RE::malloc(0x40));  // (room to spare: this game's record may be bigger)
+				std::memset(static_cast<void*>(data), 0, 0x40);
 				std::memcpy(static_cast<void*>(data), tmpl, sizeof(RE::MapMarkerData));
 				new (&data->locationName.fullName) RE::BSFixedString(name.c_str());
 				data->flags.reset(RE::MapMarkerData::Flag::kShowAllHidden);
