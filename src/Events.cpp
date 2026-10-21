@@ -191,6 +191,7 @@ namespace bo3z
 					T("shops");
 					Shops::Tick(a_delta);
 					Classes::Tick();
+					Classes::TickFast(a_delta);
 					T("perks");
 					Perks::Tick();
 					T("party");
@@ -408,7 +409,7 @@ namespace bo3z
 					auto* killer = a_event->actorKiller.get() ? a_event->actorKiller->As<RE::Actor>() : nullptr;
 					const bool mine = killer == player;
 					const bool summon = killer && killer != player && killer->IsCommandedActor() && killer->GetCommandingActor().get() == player;
-					if (mine || summon) Classes::OnKill(summon);
+					if (mine || summon) Classes::OnKill(summon, dying);
 				}
 				if (dying && dying != player && !Director::IsRoundUndead(dying) && a_event->actorKiller.get() == player && Director::IsFoe(dying)) {
 					PowerUps::MaybeDrop(dying->GetPosition());  // (Noah: any enemy can drop one - bandits, wolves, draugr too)
@@ -575,6 +576,7 @@ namespace bo3z
 				}
 				if (a_event && player && a_event->cause.get() == player && a_event->target && a_event->target.get() != player) {
 					if (auto* t = a_event->target->As<RE::Actor>()) Gun::OnStaffHit(t, a_event->source);
+					if (auto* t = a_event->target->As<RE::Actor>()) Classes::NoteHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));
 					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
 					const bool spellHit = src && src->As<RE::MagicItem>();  // (the charge's own lightning never sets off another charge)
 					if (auto* t = a_event->target->As<RE::Actor>(); t && !spellHit && Director::IsFoe(t)) {
@@ -654,7 +656,9 @@ namespace bo3z
 					int level = 0;
 					Compass::OnCast(a_event->spell);
 					Gun::OnStaffCast(a_event->spell);
-					if (Movement::OnSpellCast(a_event->spell)) {
+					if (Classes::OnCast(a_event->spell)) {
+						// (the Tome of the Six Fires)
+					} else if (Movement::OnSpellCast(a_event->spell)) {
 						// (Bond II's Updraft)
 					} else if (Eggs::OnSpellCast(a_event->spell)) {
 						// (a hidden quest's summon, the Eye's beam)

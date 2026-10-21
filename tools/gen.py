@@ -195,6 +195,7 @@ o.append(f'\tinline constexpr std::string_view kAnimFireCrossbow = {cs(AN["cross
 import esp_ids as _pu
 o.append('\t// BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale (token STAT, light)')
 o.append(f'\tinline constexpr std::array<std::uint32_t, 3> kSummonCapPerks{{ 0x{IDS[("PERK", "summon_cap_2")]:03X}, 0x{IDS[("PERK", "summon_cap_3")]:03X}, 0x{IDS[("PERK", "summon_cap_4")]:03X} }};   // the Summoner holds 2, 3, 4 summons')
+o.append(f'\tinline constexpr std::uint32_t kWonderTomeSpell = 0x{IDS[("SPEL", "wonder_tome")]:03X};   // the Destruction wonder (Classes::OnCast)')
 o.append('\tinline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 5> kPowerups{ {' + ', '.join(f'{{ 0x{IDS[("STAT", "pu_" + k)]:03X}, 0x{IDS[("LIGH", "pu_" + k)]:03X} }}' for k, _ in _pu.POWERUPS) + '} };')
 o.append(f'\tinline constexpr std::uint32_t kReaperScythe = 0x{IDS[("WEAP", "reaper_scythe")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kWyrmClaws = 0x{IDS[("WEAP", "wyrm_claws")]:03X}, kShadowClaws = 0x{IDS[("WEAP", "shadow_claws")]:03X}, kZombieClaws = 0x{IDS[("WEAP", "zombie_claws")]:03X};')

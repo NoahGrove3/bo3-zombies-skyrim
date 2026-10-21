@@ -2019,7 +2019,21 @@ namespace bo3z
 				case 3: Curse::ClaimRelic(ref ? TownOf(ref) : -1); break;
 				case 6:
 					if (!TakeOffer(ref)) {
-						if (Classes::Get() != 2) { Hud::Banner("Only a Ranger draws the altar's bows", 2.5f); break; }
+						if (const int cls = Classes::Get(); cls == 3 || (cls == 2 && std::uniform_int_distribution<int>(0, 9)(g_rng) < 3)) {
+							// (the Spellsword's row: a spell-weapon or spellshield; the Ranger's: three times in ten a crossbow)
+							const int town = TownOfAltar(ref), cost = BowRollCost(town);
+							if (Points::Get() >= cost && Classes::RollGear(cls)) {
+								Points::Spend(cost);
+								if (town >= 0) g_bowRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_bowRollsT[town] + 1));
+								Forms::PlayAt(gen::Sound::coffer_charge, ref);
+							} else if (Points::Get() < cost) {
+								Hud::Banner("It costs " + std::to_string(cost) + " septims", 2.0f);
+							}
+							break;
+						} else if (cls != 2) {
+							Hud::Banner("Only a Ranger or a Spellsword takes the altar's arms", 2.5f);
+							break;
+						}
 						SpinBow(ref);
 						if (g_show.phase != Show::Idle) {  // (Noah: the box sits mid-screen now - it steps aside to watch the roll)
 							g_menu = false;

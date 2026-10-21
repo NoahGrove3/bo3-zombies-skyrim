@@ -270,7 +270,14 @@ namespace bo3z
 		void             SetState(const std::vector<std::uint8_t>& a_v);
 		void             Revert();
 		void             Tick();                   // the Summoner's summon cap, once a second
-		void             OnKill(bool a_bySummon);  // you (or your summon) killed a foe: what you hold trains
+		bool             RollGear(int a_cls);      // a Spellsword weapon or shield / a Ranger's crossbow from the altar (material by freed cities)
+		void             OnKill(bool a_bySummon, RE::Actor* a_dying);  // you (or your summon) killed a foe: what you hold trains, the wonder trial counts
+		void             NoteHit(RE::Actor* a_target, RE::FormID a_source, bool a_power);  // your blow (what killed it; the wonders' on-hit)
+		bool             OnCast(RE::FormID a_spell);   // the Tome of the Six Fires
+		void             TickFast(float a_delta);      // Auriel's arrows seek the dead
+		int              RestockWonder();              // Sunhallowed arrows topped up (quivers, Max Ammo)
+		bool             WonderEarned();               // any class's wonder won (the Three Words follow)
+		std::string      WonderLine();                 // the altar's line: your class wonder's trial
 		int              Mastery(int a_index);     // kills its ladder has earned toward the next rung
 		int              MasteryNeed(int a_index);
 		void             SpendMastery(int a_index);

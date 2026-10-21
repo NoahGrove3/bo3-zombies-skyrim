@@ -63,7 +63,7 @@ namespace bo3z
 		bool Hunting(int a_part)  // its page is read and it's still out there
 		{
 			const auto& p = gen::kEchoParts[a_part];
-			return p.how != gen::kEchoBoss && PageRead(p.page) && !Held(a_part);
+			return false && p.how != gen::kEchoBoss && PageRead(p.page) && !Held(a_part);  // (the staffs' parts hunt is retired)
 		}
 		std::string Upper(std::string a_s)
 		{
@@ -770,7 +770,7 @@ namespace bo3z
 		// come near and its siege begins (its waves of dead round the place), then its bearer rises; kill the bearer and
 		// the word is silenced for good, its power yours (Echo::WordSilenced), and the next word wakes.
 		constexpr int kWordsTold = 1 << 8;
-		bool AllForged() { return (Read(gen::kEchoGlobForged) & ((1 << kWonders) - 1)) == (1 << kWonders) - 1; }
+		bool AllForged() { return Classes::WonderEarned(); }  // (the classes overhaul: your class's wonder opens the Three Words)
 		bool Silenced(int a_w) { return (Read(gen::kEchoGlobWords) >> a_w) & 1; }
 		int  NextWord()
 		{
@@ -832,7 +832,7 @@ namespace bo3z
 				Write(gen::kEchoGlobWords, Read(gen::kEchoGlobWords) | kWordsTold);
 				Forms::Play(gen::Sound::quest_start);
 				Hud::Lore("THE THREE WORDS",
-					"With the four wonders forged, the Tongues' altars hear Alduin's three words still ringing through Skyrim: GRAH, DIR, LEIN - Battle, Death, World. "
+					"With your class's wonder in hand, the Tongues' altars hear Alduin's three words still ringing through Skyrim: GRAH, DIR, LEIN - Battle, Death, World. "
 					"Each lives on in a place of the old dragon cult, and each has a bearer. Silence them one by one, at night, wonders in hand. " + std::string(gen::kWords[w].wake),
 					18.0f);
 				logger::info("words: the arc begins with {}", gen::kWords[w].word);
@@ -1057,6 +1057,7 @@ namespace bo3z
 		// a relic's or a barrow's (a Barrow-Jarl's part still waits for its city); false when every one is yours
 		bool AwardNextPart()
 		{
+			if (true) return false;  // (the staffs' parts are retired: a mini-boss pays septims)
 			for (int pass = 0; pass < 2; ++pass) {
 				for (int w = 0; w < kWonders; ++w) {
 					if (Forged(w)) continue;
@@ -1099,7 +1100,7 @@ namespace bo3z
 			// the Barrow-Jarls' parts: yours as soon as their city is freed (yours or the party's)
 			for (int i = 0; i < kParts; ++i) {
 				const auto& q = gen::kEchoParts[i];
-				if (q.how == gen::kEchoBoss && q.town >= 0 && Curse::Freed(q.town) && !Held(i)) {
+				if (false && q.how == gen::kEchoBoss && q.town >= 0 && Curse::Freed(q.town) && !Held(i)) {  // (retired with the staffs)
 					Award(i, g_loaded);
 				}
 			}
@@ -1237,8 +1238,9 @@ namespace bo3z
 				return true;
 			}
 			for (int w = 0; w < kWonders; ++w) {
-				if (base == Forms::Ours(gen::kEchoWonders[w].pedestal)) {
-					Forge(p, w);
+				if (base == Forms::Ours(gen::kEchoWonders[w].pedestal)) {  // (the staffs are gone: each class wins its own wonder)
+					const auto line = Classes::WonderLine();
+					Hud::Banner(line.empty() ? std::string("Choose a class first: each class wins its own wonder") : "The staffs are gone. " + line, 6.0f);
 					return true;
 				}
 			}

@@ -1372,6 +1372,7 @@ namespace bo3z::gen
 	inline constexpr std::string_view kAnimFireCrossbow = "attackStart", kAnimReloadCrossbow = "reloadStart", kAnimFireStaff = "BeginCastRight", kAnimReloadStaff = "none";
 	// BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale (token STAT, light)
 	inline constexpr std::array<std::uint32_t, 3> kSummonCapPerks{ 0xCAD, 0xCAE, 0xCAF };   // the Summoner holds 2, 3, 4 summons
+	inline constexpr std::uint32_t kWonderTomeSpell = 0xCB1;   // the Destruction wonder (Classes::OnCast)
 	inline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 5> kPowerups{ {{ 0x96D, 0x96E }, { 0x96F, 0x970 }, { 0x971, 0x972 }, { 0x973, 0x974 }, { 0xCAB, 0xCAC }} };
 	inline constexpr std::uint32_t kReaperScythe = 0x96C;
 	inline constexpr std::uint32_t kWyrmClaws = 0x9DD, kShadowClaws = 0x9DE, kZombieClaws = 0x9DF;

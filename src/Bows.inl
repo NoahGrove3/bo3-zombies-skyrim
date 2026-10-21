@@ -127,6 +127,7 @@ namespace BowsImpl
 				++n;
 			}
 		}
+		n += Classes::RestockWonder();  // (Auriel's Bow: its Sunhallowed arrows)
 		return n;
 	}
 	void Give(int i)

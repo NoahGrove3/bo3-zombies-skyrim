@@ -82,6 +82,15 @@ recs['SPEL'].append(record('SPEL', fid('SPEL', 'altarbeam'), [
     sub('MDOB', bytes.fromhex('a5350400')), sub('ETYP', tsub('spel_firebolt', 'ETYP')), sub('DESC', z('')),
     sub('SPIT', struct.pack('<IIIfIIffI', 0, 0x1, 0, 0.0, 1, 2, 0.0, 0.0, 0)), sub('EFID', struct.pack('<I', fid('MGEF', 'altarbeam'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
+# ---- (Noah: each class its own wonder) the Destruction class's Tome of the Six Fires: a spell that does nothing itself -
+# Classes::OnCast looses the six element ladders' top spells when it is cast
+cast_mgef('tomecast', 'Six Fires', 1)
+recs['SPEL'].append(record('SPEL', fid('SPEL', 'wonder_tome'), [
+    sub('EDID', z('UN_WonderTomeSixFires')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Tome of the Six Fires')),
+    sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
+    sub('DESC', z('Your class wonder. One cast looses the top spell of all six element ladders on the dead around you.')),
+    sub('SPIT', struct.pack('<IIIfIIffI', 150, 0x1, 0, 0.5, 1, 0, 0.0, 0.0, 0)), sub('EFID', struct.pack('<I', fid('MGEF', 'tomecast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+
 # ---- the cities' shouts (sheet: shouts): our own words of power, a voice spell per word count (it does nothing
 # itself: Gun::Shout does the effect when the spell is cast), recovery per word count
 cast_mgef('shoutcast', 'Thu\'um', 1)

@@ -126,6 +126,139 @@ namespace bo3z::Classes
 		}
 	}
 
+	// ---- (Noah: each class its own wonder weapon, mid and end game) never rolled: once three cities are freed the
+	// class's wonder trial opens - three steps, each in a different city, of the class's own kind of kill - and its last
+	// step hands over the wonder. After Sovngarde (MQ305 done) each one takes its full, Legendary form.
+	//   Summoner     Horn of the Spectral Wyrm  Calling of the Conjurer's Spectral Dragon, 60 s (Legendary: it stays)
+	//   Destruction  Tome of the Six Fires      one cast looses all six element ladders' top spells round you (Legendary: their runes and storms too)
+	//   Ranger       Auriel's Bow               Sunhallowed arrows that home and burst in sunfire (Legendary: every third hit calls Daybreak)
+	//   Spellsword   Dragon Slayer              each hit carries the spell in your other hand (Legendary: a power attack sends it down the line)
+	namespace
+	{
+		constexpr int kWonderSteps = 3, kStepKills = 40;
+		constexpr const char* kWonderName[4] = { "Horn of the Spectral Wyrm", "Tome of the Six Fires", "Auriel's Bow", "Dragon Slayer" };
+		constexpr const char* kWonderKill[4] = { "kills by your summons", "kills with Destruction spells", "kills with a bow or crossbow", "melee kills" };
+		std::array<std::uint8_t, 4>  g_wStep{};    // per class: 0 not open, 1..3 the step under way, 4 earned
+		std::array<std::uint16_t, 4> g_wKills{};
+		std::array<std::uint32_t, 4> g_wTowns{};   // cities where a step was done (bits)
+		std::unordered_map<RE::FormID, RE::FormID> g_lastHit;  // a foe -> what you last hit it with
+		float g_tomeCool = 0, g_bladeCool = 0;
+		int   g_aurielHits = 0;
+
+		int FreedCount()
+		{
+			int n = 0;
+			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) n += Curse::Freed(t) ? 1 : 0;
+			return n;
+		}
+		bool AfterSovngarde()
+		{
+			static auto* q = RE::TESForm::LookupByEditorID<RE::TESQuest>("MQ305");
+			return q && q->IsCompleted();
+		}
+		RE::SpellItem* WyrmSpell() { auto* f = Lookup(0x019D74, "Calling of the Conjurer.esp"); return f ? f->As<RE::SpellItem>() : nullptr; }
+		RE::SpellItem* TomeSpell() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::SpellItem>(gen::kWonderTomeSpell, gen::kPlugin) : nullptr; }
+		RE::TESObjectWEAP* Auriel() { auto* f = Lookup(0x000800, "Dawnguard.esm"); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }
+		RE::TESAmmo* Sunhallowed() { auto* f = Lookup(0x0098A1, "Dawnguard.esm"); return f ? f->As<RE::TESAmmo>() : nullptr; }
+		RE::TESObjectWEAP* Slayer() { auto* f = Lookup(0x00083D, "Ultra Greatswords.esp"); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }
+		RE::SpellItem* Myst(std::uint32_t a_id) { auto* f = Lookup(a_id, "MysticismMagic.esp"); return f ? f->As<RE::SpellItem>() : nullptr; }
+
+		// the horn's dragon: a minute mid-game, after Sovngarde until it falls
+		void TuneWyrm()
+		{
+			if (auto* sp = WyrmSpell()) {
+				sp->fullName = kWonderName[0];
+				for (auto* e : sp->effects) {
+					if (e) e->effectItem.duration = AfterSovngarde() ? 3600 : 60;
+				}
+			}
+		}
+		void CastFrom(RE::Actor* a_from, RE::SpellItem* a_sp, RE::Actor* a_at)
+		{
+			if (!a_from || !a_sp) return;
+			if (auto* c = a_from->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) c->CastSpellImmediate(a_sp, false, a_at, 1.0f, false, 0.0f, a_from);
+		}
+		std::vector<RE::Actor*> NearFoes(const RE::NiPoint3& a_at, float a_r, std::size_t a_max)
+		{
+			std::vector<std::pair<float, RE::Actor*>> v;
+			for (auto h : Director::AliveHandles()) {
+				auto a = h.get();
+				if (!a || a->IsDead()) continue;
+				if (const float d = a->GetPosition().GetDistance(a_at); d < a_r) v.push_back({ d, a.get() });
+			}
+			std::sort(v.begin(), v.end(), [](auto& x, auto& y) { return x.first < y.first; });
+			std::vector<RE::Actor*> out;
+			for (auto& [d, a] : v) { if (out.size() >= a_max) break; out.push_back(a); }
+			return out;
+		}
+
+		void GrantWonder(int a_cls)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			switch (a_cls) {
+			case coffer::kSummoner:
+				TuneWyrm();
+				if (auto* sp = WyrmSpell()) p->AddSpell(sp);
+				break;
+			case coffer::kDestruction:
+				if (auto* sp = TomeSpell()) p->AddSpell(sp);
+				break;
+			case coffer::kRanger:
+				GiveItem(p, Auriel(), 1, true);
+				GiveItem(p, Sunhallowed(), 60, true);
+				break;
+			case coffer::kSpellsword:
+				GiveItem(p, Slayer(), 1, true);
+				break;
+			}
+			g_wStep[a_cls] = kWonderSteps + 1;
+			Forms::Play(gen::Sound::shout_learned);
+			static constexpr const char* kText[4] = {
+				"A horn of bone that answers with a dragon: Calling of the Conjurer's Spectral Dragon fights at your side for a minute. After Sovngarde it stays until it falls.",
+				"One cast looses the top spell of all six of your element ladders on the dead round you. After Sovngarde each cast also leaves their runes and storms on the ground.",
+				"Auriel's own bow. Its Sunhallowed arrows seek the dead and burst in sunfire. After Sovngarde every third hit calls down Daybreak. More arrows: Q at an Echo Altar, or a Max Ammo.",
+				"The Akaviri dragon slayer. Every hit carries the spell in your other hand. After Sovngarde a power attack sends that spell down the line." };
+			std::string up(kWonderName[a_cls]);
+			for (auto& ch : up) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
+			Hud::Lore(up, kText[a_cls], 12.0f);
+			logger::info("classes: wonder {} earned", kWonderName[a_cls]);
+		}
+
+		// a kill of the class's own kind counts toward the wonder trial's step - in a city not used for a step yet
+		void WonderKill(int a_cls)
+		{
+			if (a_cls < 0 || a_cls > 3) return;
+			auto& st = g_wStep[a_cls];
+			if (st == 0 || st > kWonderSteps) return;
+			const int town = Curse::ZoneTown();
+			if (town < 0) return;  // (a step is fought in a city)
+			if ((g_wTowns[a_cls] >> town) & 1) {
+				static auto told = std::chrono::steady_clock::now() - std::chrono::seconds(120);
+				if (std::chrono::steady_clock::now() - told > std::chrono::seconds(60)) {
+					told = std::chrono::steady_clock::now();
+					Hud::Banner("This city already gave a step of your wonder trial - the next step is in another city", 4.0f);
+				}
+				return;
+			}
+			const int n = ++g_wKills[a_cls];
+			if (n < kStepKills) {
+				if (n % 10 == 0) Hud::Banner(fmt::format("{} - step {} of {}: {} of {} {}", kWonderName[a_cls], st, kWonderSteps, n, kStepKills, kWonderKill[a_cls]), 3.0f);
+				return;
+			}
+			g_wKills[a_cls] = 0;
+			g_wTowns[a_cls] |= 1u << town;
+			if (st == kWonderSteps) {
+				GrantWonder(a_cls);
+				return;
+			}
+			++st;
+			Forms::Play(gen::Sound::quest_step);
+			Hud::Banner(fmt::format("{} - step {} done in {}. Step {} waits in another city", kWonderName[a_cls], st - 1, gen::kTowns[town], st), 5.0f);
+		}
+	}
+
+
 	int  Get() { return g_class.load(); }
 	bool Open() { return g_open.load(); }
 	int  Selected() { return g_sel.load(); }
@@ -174,8 +307,36 @@ namespace bo3z::Classes
 
 	// (each class grows its own way) a kill trains the ladders of what you hold: the spell in each hand for Destruction and
 	// the Spellsword, and your summons' kills (or your own, a summon spell in hand) for the Summoner
-	void OnKill(bool a_bySummon)
+	void OnKill(bool a_bySummon, RE::Actor* a_dying)
 	{
+		// the wonder trial: what made the kill
+		if (const int c = g_class.load(); c >= 0) {
+			int how = -1;  // 0 summon, 1 destruction spell, 2 bow or crossbow, 3 melee
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			RE::TESForm* src = nullptr;
+			if (a_dying) {
+				if (auto it = g_lastHit.find(a_dying->GetFormID()); it != g_lastHit.end()) src = RE::TESForm::LookupByID(it->second);
+			}
+			if (a_bySummon) how = 0;
+			else if (auto* mi = src ? src->As<RE::MagicItem>() : nullptr) how = mi->GetAssociatedSkill() == RE::ActorValue::kDestruction ? 1 : -1;
+			else if (auto* w = src ? src->As<RE::TESObjectWEAP>() : nullptr) how = (w->IsBow() || w->IsCrossbow()) ? 2 : 3;
+			else if (Bows::Held() >= 0) how = 2;  // (the altar's bows strike with our own shots)
+			else if (p) {
+				for (int h : Arcana::Hands()) if (h >= 0 && Arcana::ClassOf(h) == coffer::kDestruction) how = 1;
+			}
+			static constexpr int kWant[4] = { 0, 1, 2, 3 };
+			if (how == kWant[c]) WonderKill(c);
+		}
+		if (FreedCount() >= 3) {
+			for (int c2 = 0; c2 < 4; ++c2) {
+				if (g_wStep[c2] == 0 && c2 == g_class.load()) {
+					g_wStep[c2] = 1;
+					Forms::Play(gen::Sound::quest_start);
+					Hud::Lore(std::string("THE TRIAL OF THE ") + (c2 == 0 ? "WYRM" : c2 == 1 ? "SIX FIRES" : c2 == 2 ? "SUN" : "SLAYER"),
+						fmt::format("Three cities are free, and your class's wonder stirs: {}. Win it in three steps, each in a different city: {} {} per step.", kWonderName[c2], kStepKills, kWonderKill[c2]), 12.0f);
+				}
+			}
+		}
 		for (int h : Arcana::Hands()) {
 			if (h < 0) continue;
 			const int cls = Arcana::ClassOf(h);
@@ -198,6 +359,8 @@ namespace bo3z::Classes
 
 	// (the Summoner's command) how many summons you may hold: 1, then 2 / 3 / 4 as its ladders climb (each rung raised
 	// past the first counts): our hidden perks set Skyrim's commanded-actor limit
+	namespace { std::mutex g_lineLock; std::string g_line; }
+	std::string WonderLineNow();
 	void Tick()
 	{
 		static auto last = std::chrono::steady_clock::now();
@@ -206,6 +369,11 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		if (!p || !dh) return;
+		{
+			auto line = WonderLineNow();
+			std::scoped_lock l(g_lineLock);
+			g_line = std::move(line);
+		}
 		int climbs = 0;
 		if (g_class.load() == coffer::kSummoner) {
 			for (int i : Arcana::Carried()) {
@@ -224,6 +392,186 @@ namespace bo3z::Classes
 			} else if (!want && have) {
 				p->RemovePerk(perk);
 			}
+		}
+	}
+
+	// (the Spellsword's and the Ranger's altar gear) a weapon of the class's mods, its material by how many cities are
+	// freed: Steel and Orcish at first, Dwarven and Elven with one, Glass, Ebony and the Dwemer's best with two, Daedric,
+	// Dragonbone and the named blades with three
+	int MaterialTier(std::string_view a_name)
+	{
+		static constexpr std::pair<std::string_view, int> kTiers[] = { { "Daedric", 3 }, { "Dragon", 3 }, { "Daedra", 3 }, { "Stahlrim", 3 }, { "Cataclysm", 3 }, { "Moonlight", 3 },
+			{ "Giant Crusher", 3 }, { "Spirit Sword", 3 }, { "Glass", 2 }, { "Ebony", 2 }, { "Advanced", 2 }, { "Nordic", 2 }, { "Slayer", 2 }, { "Ballista", 2 },
+			{ "Dwarven", 1 }, { "Dwemer", 1 }, { "Elven", 1 }, { "Silver", 1 }, { "Imperial", 1 }, { "Falmer", 1 }, { "Repeater", 1 }, { "Tribow", 1 }, { "Twin", 1 } };
+		for (auto [k, t] : kTiers) if (a_name.find(k) != std::string_view::npos) return t;
+		return 0;
+	}
+	bool RollGear(int a_cls)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* dh = RE::TESDataHandler::GetSingleton();
+		if (!p || !dh) return false;
+		int freed = 0;
+		for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) freed += Curse::Freed(t) ? 1 : 0;
+		std::vector<RE::TESBoundObject*> pool;
+		const auto from = [&](std::string_view a_plugin, auto* a_type) {
+			using T = std::remove_pointer_t<decltype(a_type)>;
+			for (auto* f : dh->GetFormArray<T>()) {
+				if (!f || !f->GetFile(0) || f->GetFile(0)->GetFilename() != a_plugin) continue;
+				const char* nm = f->GetName();
+				if (!nm || !*nm || MaterialTier(nm) > freed) continue;
+				if (p->GetItemCount(f) > 0) continue;
+				if constexpr (std::is_same_v<T, RE::TESObjectARMO>) {
+					if (!f->IsShield()) continue;
+				}
+				pool.push_back(f);
+			}
+		};
+		if (a_cls == coffer::kSpellsword) {
+			from("Spellsword.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
+			from("Spellsword.esp", static_cast<RE::TESObjectARMO*>(nullptr));
+			from("Light Greatswords.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
+			from("Ultra Greatswords.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
+		} else if (a_cls == coffer::kRanger) {
+			from("Faction Crossbows.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
+			from("OffhandBows.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
+		}
+		if (pool.empty()) {
+			Hud::Banner("The altar has nothing new for you until another city is freed", 3.0f);
+			return false;
+		}
+		static std::mt19937 rng{ std::random_device{}() };
+		auto* pick = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(rng)];
+		p->AddObjectToContainer(pick, nullptr, 1, nullptr);
+		if (auto* w = pick->As<RE::TESObjectWEAP>(); w && w->IsCrossbow()) Bows::Restock();  // (a crossbow comes with its bolts)
+		Hud::Banner(std::string("The altar gives you ") + pick->GetName(), 4.0f);
+		logger::info("classes: altar gear {} ({})", pick->GetName(), Name(a_cls));
+		return true;
+	}
+
+
+	bool WonderEarned()
+	{
+		for (auto s : g_wStep) if (s > kWonderSteps) return true;
+		return false;
+	}
+	std::string WonderLine()
+	{
+		std::scoped_lock l(g_lineLock);
+		return g_line;
+	}
+	std::string WonderLineNow()
+	{
+		const int c = g_class.load();
+		if (c < 0) return {};
+		const int st = g_wStep[c];
+		if (st > kWonderSteps) return std::string(kWonderName[c]) + " is yours";
+		if (st == 0) return fmt::format("{}: free {} more {} to open its trial", kWonderName[c], std::max(0, 3 - FreedCount()), 3 - FreedCount() == 1 ? "city" : "cities");
+		return fmt::format("{} - step {} of {}: {} of {} {} in a new city", kWonderName[c], st, kWonderSteps, g_wKills[c], kStepKills, kWonderKill[c]);
+	}
+
+	void NoteHit(RE::Actor* a_target, RE::FormID a_source, bool a_power)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p || !a_target || a_target == p) return;
+		if (g_lastHit.size() > 400) g_lastHit.clear();
+		g_lastHit[a_target->GetFormID()] = a_source;
+		if (!Director::IsFoe(a_target) || a_target->IsDead()) return;
+		auto* src = RE::TESForm::LookupByID(a_source);
+		if (!src) return;
+		if (src == Auriel()) {  // sunfire on every hit; after Sovngarde every third calls Daybreak
+			CastFrom(p, Myst(0x2466C0), a_target);
+			if (AfterSovngarde() && ++g_aurielHits % 3 == 0) CastFrom(p, Myst(0x7BC311), a_target);
+		} else if (src == Slayer() && g_bladeCool <= 0) {  // the spell in your other hand rides the blade
+			const int left = Arcana::Hands()[0];
+			auto* sp = left >= 0 ? Arcana::Spell(left) : nullptr;
+			if (!sp) return;
+			g_bladeCool = 0.35f;
+			CastFrom(p, sp, a_target);
+			if (a_power && AfterSovngarde()) {
+				for (auto* f : NearFoes(a_target->GetPosition(), 900.0f, 6)) if (f != a_target) CastFrom(p, sp, f);
+				Gun::FxBlast("light", a_target->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f });
+			}
+		}
+	}
+
+	bool OnCast(RE::FormID a_spell)
+	{
+		auto* tome = TomeSpell();
+		if (!tome || a_spell != tome->GetFormID()) return false;
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return true;
+		if (g_tomeCool > 0) {
+			Hud::Banner(fmt::format("The Six Fires gather again ({:.0f} s)", g_tomeCool), 2.0f);
+			return true;
+		}
+		const auto foes = NearFoes(p->GetPosition(), 2600.0f, 6);
+		if (foes.empty()) {
+			Hud::Banner("The Six Fires find nothing to burn", 2.0f);
+			return true;
+		}
+		g_tomeCool = 12.0f;
+		int k = 0;
+		const bool legend = AfterSovngarde();
+		for (const auto& s : coffer::kSpells) {
+			if (s.cls != coffer::kDestruction) continue;
+			const int idx = static_cast<int>(&s - coffer::kSpells.data());
+			RE::Actor* t = foes[k % foes.size()];
+			if (s.rung == s.rungs) CastFrom(p, Arcana::Spell(idx), t), ++k;
+			else if (legend && s.rung == 3) CastFrom(p, Arcana::Spell(idx), foes[(k + 1) % foes.size()]);
+		}
+		Gun::FxBlast("fireball", p->GetPosition() + RE::NiPoint3{ 0, 0, 90.0f });
+		logger::info("classes: the Six Fires on {} foes{}", foes.size(), legend ? " (Legendary)" : "");
+		return true;
+	}
+
+	int RestockWonder()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* bow = Auriel();
+		auto* ar = Sunhallowed();
+		if (!p || !bow || !ar || p->GetItemCount(bow) <= 0) return 0;
+		const int have = p->GetItemCount(ar);
+		if (have >= 60) return 0;
+		p->AddObjectToContainer(ar, nullptr, 60 - have, nullptr);
+		return 1;
+	}
+
+	// every frame: cooldowns, and Auriel's arrows seek the dead
+	void TickFast(float a_delta)
+	{
+		g_tomeCool = std::max(0.0f, g_tomeCool - a_delta);
+		g_bladeCool = std::max(0.0f, g_bladeCool - a_delta);
+		auto* bow = Auriel();
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* mgr = RE::Projectile::Manager::GetSingleton();
+		if (!bow || !p || !mgr || p->GetItemCount(bow) <= 0) return;
+		std::vector<RE::Projectile*> mine;
+		{
+			RE::BSSpinLockGuard lock(mgr->projectileLock);
+			for (auto* list : { &mgr->limited, &mgr->unlimited }) {
+				for (auto& h : *list) {
+					auto pr = h.get();
+					if (!pr || pr->IsDeleted()) continue;
+					auto& rd = pr->GetProjectileRuntimeData();
+					if (rd.weaponSource == bow && rd.shooter.get().get() == p) mine.push_back(pr.get());
+				}
+			}
+		}
+		for (auto* pr : mine) {
+			auto&              rd = pr->GetProjectileRuntimeData();
+			const RE::NiPoint3 at = pr->GetPosition();
+			const auto         near = NearFoes(at, 2200.0f, 1);
+			if (near.empty()) continue;
+			RE::NiPoint3 want = near[0]->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f } - at;
+			if (want.Length() < 1.0f) continue;
+			want.Unitize();
+			const float  sp = std::max(rd.linearVelocity.Length(), 600.0f);
+			RE::NiPoint3 v = rd.linearVelocity.Length() > 1.0f ? rd.linearVelocity / rd.linearVelocity.Length() : want;
+			const float  k = std::min(1.0f, 7.0f * a_delta);
+			v = v * (1.0f - k) + want * k;
+			if (v.Length() > 0.001f) v.Unitize();
+			rd.linearVelocity = v * sp;
 		}
 	}
 
@@ -279,11 +627,18 @@ namespace bo3z::Classes
 				v.push_back(static_cast<std::uint8_t>(lv));
 			}
 		}
+		v.push_back(0xA1);  // the wonder trials: per class [step][kills u16][cities u32]
+		for (int c = 0; c < 4; ++c) {
+			v.push_back(g_wStep[c]);
+			v.push_back(static_cast<std::uint8_t>(g_wKills[c] & 0xFF)), v.push_back(static_cast<std::uint8_t>(g_wKills[c] >> 8));
+			for (int b = 0; b < 4; ++b) v.push_back(static_cast<std::uint8_t>(g_wTowns[c] >> (8 * b)));
+		}
 		return v;
 	}
 	void SetState(const std::vector<std::uint8_t>& a_v)
 	{
 		g_class = -1, g_kit.fill(false);
+		g_wStep.fill(0), g_wKills.fill(0), g_wTowns.fill(0), g_lastHit.clear();
 		for (auto& s : g_stash) s.clear();
 		if (a_v.empty()) return;
 		g_class = static_cast<int>(a_v[0]) - 1;
@@ -305,6 +660,15 @@ namespace bo3z::Classes
 				if (c != g_class) g_stash[c].push_back({ a_v[k], a_v[k + 1] });
 			}
 		}
+		if (k < a_v.size() && a_v[k] == 0xA1 && k + 1 + 4 * 7 <= a_v.size()) {
+			++k;
+			for (int c = 0; c < 4; ++c, k += 7) {
+				g_wStep[c] = a_v[k];
+				g_wKills[c] = static_cast<std::uint16_t>(a_v[k + 1] | (a_v[k + 2] << 8));
+				g_wTowns[c] = a_v[k + 3] | (a_v[k + 4] << 8) | (a_v[k + 5] << 16) | (static_cast<std::uint32_t>(a_v[k + 6]) << 24);
+			}
+		}
+		if (g_wStep[coffer::kSummoner] > kWonderSteps) TuneWyrm();
 		logger::info("classes: loaded ({})", Name(g_class));
 	}
 	void Revert() { SetState({}); g_open = false; g_mastery.fill(0); }

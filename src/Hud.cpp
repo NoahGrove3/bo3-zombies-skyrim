@@ -2483,7 +2483,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float tx = L + 2 * R + 16 * k;
 					bullet({ tx, y + 4 * k }, 0, s.rollPhase == 0);
 					if (s.rollPhase == 3 && Legendary(s.rollGun)) TxtGold(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, ArmsName(s.rollGun));
-					else Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? "CALL A SPELL" : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? (s.rollBow ? "THE BOWS TURN..." : "THE SPELLS TURN...") : ArmsName(s.rollGun));
+					else Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? (Classes::Get() == 2 ? "CALL A BOW" : Classes::Get() == 0 ? "CALL A SUMMON" : "CALL A SPELL") : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? (s.rollBow ? "THE BOWS TURN..." : "THE SPELLS TURN...") : ArmsName(s.rollGun));
 					Txt(dl, g_body, 17 * k, { tx, y + 38 * k }, IM_COL32(196, 182, 160, 235),
 						s.rollPhase == 3 ? (s.rollBow ? "Activate the altar to take it - your bow goes back" : "Activate the shrine to take it") : "Two of the altar's spells at a time");
 					if (s.rollPhase == 0) {
@@ -2498,7 +2498,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const bool idle = s.rollPhase == 0;
 					focusRow(1, y - 6 * k, y + 58 * k);
 					bullet({ L, y + 2 * k }, 1, idle);
-					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "CALL A BOW");
+					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, Classes::Get() == 3 ? "CALL A SPELL-WEAPON" : Classes::Get() == 2 ? "CALL A BOW OR CROSSBOW" : "ARMS (RANGER AND SPELLSWORD)");
 					if (s.bowCarried >= 0) {
 						DrawEmblem(dl, Bows::kIdBase + s.bowCarried, { L + 200 * k, y + 15 * k }, 12 * k, 1.0f, now, 0.5f);
 						Txt(dl, g_body, 16 * k, { L + 218 * k, y + 6 * k }, spellCol(Bows::kIdBase + s.bowCarried, 1.0f), ArmsName(Bows::kIdBase + s.bowCarried));
@@ -2689,6 +2689,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					y += 26 * k;
 					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "R3" : "Q") + "   Fill your quivers  (" + std::to_string(400 + 100 * std::max(0, s.round)) + " septims)");
 					y += 26 * k;
+					if (const auto wl = Classes::WonderLine(); !wl.empty()) {  // (your class's wonder weapon: its trial)
+						TxtGold(dl, g_body, 16 * k, { L, y }, wl);
+						y += 26 * k;
+					}
 				}
 				dl->PopClipRect();
 				// keep the row in focus in view (next frame)

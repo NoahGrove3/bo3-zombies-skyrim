@@ -2081,11 +2081,9 @@ namespace bo3z
 				Save::SetSlot(s, sl);
 			}
 		}
-		bool IsStaffWonder(int a_gun)
+		bool IsStaffWonder(int)
 		{
-			if (a_gun < 0 || a_gun >= static_cast<int>(gen::kGuns.size())) return false;
-			const std::string_view id = gen::kGuns[a_gun].id;
-			return id == "gravecaller" || id == "frostbinder" || id == "wolfcrown" || id == "barrowhorn";
+			return false;  // (Noah: the staff wonders are removed - each class has its own wonder now)
 		}
 		int TakeAway(int a_gun)
 		{
