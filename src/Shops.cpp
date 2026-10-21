@@ -604,7 +604,11 @@ namespace bo3z
 				}
 				const float z = from.z + (to.z - from.z) * pick.rayOutput.hitFraction;
 				auto* hitRef = pick.rayOutput.rootCollidable ? RE::TESHavokUtilities::FindCollidableRef(*pick.rayOutput.rootCollidable) : nullptr;
-				if (hitRef && IsOurBase(hitRef->GetBaseObject())) {
+				// (Noah: Whiterun's altar rose three times while he stood by it) a person, a creature, a tree's crown or a
+				// loose thing is not the floor either: the ray goes on down through them too
+				const auto* hb = hitRef ? hitRef->GetBaseObject() : nullptr;
+				const bool  notFloor = hitRef && (IsOurBase(hb) || hitRef->As<RE::Actor>() || (hb && (hb->Is(RE::FormType::Tree) || hb->Is(RE::FormType::Flora) || hb->Is(RE::FormType::Misc) || hb->Is(RE::FormType::Weapon) || hb->Is(RE::FormType::Armor) || hb->Is(RE::FormType::Projectile))));
+				if (notFloor) {
 					top = z - 2.0f;
 					continue;
 				}
@@ -1055,20 +1059,8 @@ namespace bo3z
 				static int n = 0;
 				if (++n % 8 == 0 && ref->Is3DLoaded()) {
 					Dress(a_index, ref.get());  // now and then: the crystal and the rocks are still there (put back if not)
-					// (Noah: Solitude's altar stood sunk in the floor) the world's solid floor under it, once its collision is
-					// there: if the stand is below it, the stand and every piece of ours round it rise onto it
-					const auto at = ref->GetPosition();
-					if (auto z = FloorZ(ref.get(), at, at.z - 50.0f); z && *z > at.z + 12.0f && *z < at.z + 240.0f) {  // (cast from just above it: never onto a roof)
-						const float dz = *z - at.z + 2.0f;
-						std::vector<RE::TESObjectREFR*> ours;
-						RE::TES::GetSingleton()->ForEachReferenceInRange(ref.get(), 1200.0f, [&](RE::TESObjectREFR* r) {
-							if (r && !r->IsDeleted() && (r == ref.get() || IsOurBase(r->GetBaseObject()))) ours.push_back(r);
-							return RE::BSContainer::ForEachResult::kContinue;
-						});
-						if (std::find(ours.begin(), ours.end(), ref.get()) == ours.end()) ours.push_back(ref.get());
-						for (auto* r : ours) r->SetPosition(r->GetPosition() + RE::NiPoint3{ 0, 0, dz });
-						logger::info("shops: {} station was {:.0f} under the floor - raised with {} pieces", gen::kTowns[loc.town], dz, ours.size());
-					}
+					// (the in-place lift for sunk stations is gone: it caught people and trees over Whiterun's altar and
+					// floated it up - the station check on load moves a floating or sunk stand instead)
 				}
 				return;
 			}

@@ -124,9 +124,9 @@ bool StaffUnleash(std::string_view a_id, const Aim& a_aim, float a_base)
 }
 
 // (Stormreach's tier-III, once the Storm Staff's held attack) a storm ball hanging in the air, zapping all near it
-void StormBallAt(const RE::NiPoint3& a_at, float a_r, float a_secs, float a_dmg)
+void StormBallAt(const RE::NiPoint3& a_at, float a_r, float a_secs, float a_dmg, bool a_hunt)
 {
-	g_zones.push_back({ 2, a_at, a_r, a_secs, 0.0f, a_dmg, 0, false, 0 });
+	g_zones.push_back({ 2, a_at, a_r, a_secs, 0.0f, a_dmg, 0, a_hunt, 0 });
 }
 
 void TickStaffs(float a_delta)
@@ -170,6 +170,11 @@ void TickStaffs(float a_delta)
 			}
 			break;
 		case 2:  // storm ball: zaps the three nearest every 0.4 s
+			if (z.hunt) {  // (Noah: the tier-III storm ball follows the dead)
+				RE::Actor* best = nullptr; float bd = 1800.0f;
+				for (auto* f : Foes(z.at, 1800.0f)) if (const float d = f->GetPosition().GetDistance(z.at); d < bd) bd = d, best = f;
+				if (best && bd > 60.0f) { RE::NiPoint3 d = best->GetPosition() + RE::NiPoint3{ 0, 0, 110.0f } - z.at; d.Unitize(); z.at += d * (260.0f * a_delta); }
+			}
 			if (z.fx <= 0) { z.fx = 0.45f; Blast(BlastIndex("runeshock"), z.at, 0.0f, 0.45f); }
 			if (tick) {
 				z.tick = 0.4f;

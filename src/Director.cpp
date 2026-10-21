@@ -3072,7 +3072,7 @@ namespace bo3z
 		void MaybeDrop(const RE::NiPoint3& a_at)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
-			if (!player || !Director::NightNow()) {
+			if (!player) {  // (Noah: any enemy, any hour)
 				return;
 			}
 			const int night = Save::Get(gen::kAV_round);
@@ -3080,7 +3080,8 @@ namespace bo3z
 				g_night = night, g_dropsThisNight = 0;
 			}
 			// like BO3: a few per round, never two on the ground at once
-			if (!g_drops.empty() || g_dropsThisNight >= 4 || std::uniform_real_distribution<float>(0, 1)(g_prng) > 0.035f * Director::EventDropMult()) {
+			// (Noah: a 10% drop chance for any enemy) no cap a night; at most three lying about at once
+			if (g_drops.size() >= 3 || std::uniform_real_distribution<float>(0, 1)(g_prng) > 0.10f) {
 				return;
 			}
 			const int kind = std::uniform_int_distribution<int>(0, 3)(g_prng);

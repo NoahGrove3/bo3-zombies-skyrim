@@ -403,6 +403,9 @@ namespace bo3z
 				if (dying) {
 					Director::OnDying(dying);
 				}
+				if (dying && dying != player && !Director::IsRoundUndead(dying) && a_event->actorKiller.get() == player && Director::IsFoe(dying)) {
+					PowerUps::MaybeDrop(dying->GetPosition());  // (Noah: any enemy can drop one - bandits, wolves, draugr too)
+				}
 				if (!dying || !Director::IsRoundUndead(dying)) {
 					return RE::BSEventNotifyControl::kContinue;
 				}
@@ -843,6 +846,28 @@ namespace bo3z
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
+		// (Noah: the game crashed loading back after every death) the same loader's other branch: the save says the
+		// reference already carries its ExtraGlobal, the loader asks the list for it, gets nothing, and writes through
+		// that nothing. Missing, a fresh one is made and added for the loader to fill in.
+		struct LoadExtraGet
+		{
+			static RE::BSExtraData* thunk(RE::ExtraDataList* a_list, RE::ExtraDataType a_type)
+			{
+				auto* r = func(a_list, a_type);
+				if (!r && a_list) {
+					auto* e = RE::BSExtraData::Create<RE::ExtraGlobal>();
+					if (e) {
+						e->global = nullptr;
+						a_list->Add(e);
+						r = e;
+						static int said = 0;
+						if (said++ < 10) logger::warn("load: a saved ExtraGlobal was missing from its reference (type {}) - a fresh one made", static_cast<int>(a_type));
+					}
+				}
+				return r;
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
 	}
 
 	namespace Events
@@ -855,9 +880,16 @@ namespace bo3z
 				logger::warn("load: the extra-data loader isn't where it was expected - no guard");
 				return;
 			}
-			SKSE::AllocTrampoline(32);
+			SKSE::AllocTrampoline(64);
 			LoadExtraAdd::func = SKSE::GetTrampoline().write_call<5>(at, LoadExtraAdd::thunk);
-			logger::info("load: guard on saved extra data installed");
+			// ... and its call that fetches the one already there (+0x522)
+			const std::uintptr_t get = REL::ID(12095).address() + 0x522;
+			if (*reinterpret_cast<const std::uint8_t*>(get) == 0xE8) {
+				LoadExtraGet::func = SKSE::GetTrampoline().write_call<5>(get, LoadExtraGet::thunk);
+				logger::info("load: guard on saved extra data installed (add and fetch)");
+			} else {
+				logger::info("load: guard on saved extra data installed (add only)");
+			}
 		}
 		void InstallMenuWatch()
 		{

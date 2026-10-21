@@ -10,7 +10,7 @@
 //   hardest (a quick shot about a third); each reforge tier adds power and a new attack (below: Noah's list).
 //   Skyhowl (the wind bow), drawn full, looses a blast of wind instead: everything before you hurled away (a Thundergun).
 //   Damage: a share of a zombie's night health (sheet: share), the night's power curve, reforging, perks; headshots double.
-void StormBallAt(const RE::NiPoint3& a_at, float a_r, float a_secs, float a_dmg);  // (Staffs.inl: the Storm Staff's old held ball)
+void StormBallAt(const RE::NiPoint3& a_at, float a_r, float a_secs, float a_dmg, bool a_hunt = false);  // (Staffs.inl: the Storm Staff's old held ball)
 namespace BowsImpl
 {
 	constexpr int kN = static_cast<int>(gen::kBows.size());
@@ -295,6 +295,8 @@ namespace BowsImpl
 		}
 	}
 	RE::ObjectRefHandle g_t3Marker;
+	RE::SpellItem*      g_seekSpell = nullptr;  // the last tier-III spell loosed: its missiles chase the dead (TickSeek)
+	float               g_seekLeft = 0;
 	// (Noah: the charged bow hurt me at night) the blasts of these spells do no physical damage of their own: our numbers do it
 	void Defang(RE::SpellItem* a_spell)
 	{
@@ -326,6 +328,7 @@ namespace BowsImpl
 		auto* c = m->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant);
 		if (!c) return false;
 		c->CastSpellImmediate(a_spell, false, a_target, 1.0f, false, 0.0f, pl);
+		g_seekSpell = a_spell, g_seekLeft = 10.0f;
 		return true;
 	}
 	// each bow's last upgrade, where a full-draw arrow strikes (Noah):
@@ -347,7 +350,7 @@ namespace BowsImpl
 			return;
 		}
 		if (k == Kind::Shock) {
-			StormBallAt(p + RE::NiPoint3{ 0, 0, 130.0f }, 480.0f, 6.0f, s.damage * 0.5f);
+			StormBallAt(p + RE::NiPoint3{ 0, 0, 130.0f }, 480.0f, 6.0f, s.damage * 0.5f, true);  // (Noah: it follows the dead)
 			Blast(BlastIndex("shockmass"), p + RE::NiPoint3{ 0, 0, 130.0f }, 0.0f, 0.8f);
 			logger::info("bows: Stormreach - a storm ball where it struck");
 			return;
@@ -635,8 +638,8 @@ namespace BowsImpl
 		}
 		auto& sh = Spellcraft::g_shots2.back();
 		sh.bow = i, sh.tier = t, sh.full = full, sh.effect = effect;
-		if (full && t >= 3 && (kind == Kind::Fire || kind == Kind::Frost)) {
-			sh.homing = 9.0f;  // (Noah: Fiery Torrent and Throat of the World seek the nearest of the dead)
+		if (full && t >= 3) {
+			sh.homing = 9.0f;  // (Noah: every bow's last upgrade seeks the nearest of the dead)
 		}
 	}
 
@@ -1238,6 +1241,47 @@ namespace BowsImpl
 		}
 		std::erase_if(g_rides, [](const Ride& r) { return r.life <= 0; });
 	}  // (by id: a projectile's memory is reused for the next one)
+	// (Noah: the tier-III spells should follow the enemies) for a while after one is loosed, its own missiles - Fiery
+	// Torrent's fire, Throat of the World's frost, the Arcane Cyclone - turn after the nearest of the dead
+	void TickSeek(float a_delta)
+	{
+		if (g_seekLeft <= 0 || !g_seekSpell) return;
+		g_seekLeft -= a_delta;
+		auto* mgr = RE::Projectile::Manager::GetSingleton();
+		if (!mgr) return;
+		std::vector<RE::Projectile*> mine;
+		{
+			RE::BSSpinLockGuard lock(mgr->projectileLock);
+			for (auto* list : { &mgr->limited, &mgr->unlimited, &mgr->pending }) {
+				for (auto& h : *list) {
+					auto pr = h.get();
+					if (pr && !pr->IsDeleted() && pr->GetProjectileRuntimeData().spell == g_seekSpell) mine.push_back(pr.get());
+				}
+			}
+		}
+		static int said = 0;
+		if (!mine.empty() && said++ < 4) logger::info("bows: {} tier-III missile(s) chasing the dead", mine.size());
+		for (auto* pr : mine) {
+			auto&              rd = pr->GetProjectileRuntimeData();
+			const RE::NiPoint3 at = pr->GetPosition();
+			RE::Actor*         best = nullptr;
+			float              bd = 2500.0f;
+			for (auto* f : Foes(at, 2500.0f)) {
+				if (f->IsDead()) continue;
+				if (const float d = f->GetPosition().GetDistance(at); d < bd) bd = d, best = f;
+			}
+			if (!best) continue;
+			RE::NiPoint3 want = best->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f } - at;
+			if (want.Length() < 1.0f) continue;
+			want.Unitize();
+			const float  sp = std::max(rd.linearVelocity.Length(), 450.0f);
+			RE::NiPoint3 v = rd.linearVelocity.Length() > 1.0f ? rd.linearVelocity / rd.linearVelocity.Length() : want;
+			const float  k = std::min(1.0f, 6.0f * a_delta);
+			v = v * (1.0f - k) + want * k;
+			if (v.Length() > 0.001f) v.Unitize();
+			rd.linearVelocity = v * sp;
+		}
+	}
 	void TickRide(float a_delta)
 	{
 		if (g_rideWait <= 0 || g_rideRow < 0) {
@@ -1431,6 +1475,7 @@ namespace BowsImpl
 		TickMotes(p, i, a_delta);
 		TickTip(p, i, drawing, a_delta);
 		TickTiers(a_delta);
+		TickSeek(a_delta);
 		std::scoped_lock l(Hud::Lock());
 		Hud::Edit().bowHeld = i;
 		Hud::Edit().bowDraw = drawing ? g_draw : 0.0f;
