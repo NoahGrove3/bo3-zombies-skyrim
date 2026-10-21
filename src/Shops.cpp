@@ -1132,6 +1132,7 @@ namespace bo3z
 
 		// ---- world-map markers: one "Echo Altar" per town, at the plaza once it is built ----
 		std::array<RE::ObjectRefHandle, gen::kTowns.size()> g_markers{};
+		std::unordered_set<RE::ExtraMapMarker*> g_madeMarkers;  // the ones we made by hand (BeforeLoad)
 		float g_markerTimer = 0;
 
 		RE::MapMarkerData* TemplateMarkerData(RE::PlayerCharacter* a_player)
@@ -1330,6 +1331,7 @@ namespace bo3z
 				x = RE::BSExtraData::Create<RE::ExtraMapMarker>();
 				x->mapData = data;
 				ref->extraList.Add(x);
+				g_madeMarkers.insert(x);
 				logger::info("shops: map marker '{}' at ({:.0f},{:.0f}){}", name, at.x, at.y, ready ? "" : " (until the station is built)");
 			} else if (x->mapData) {
 				if (std::string_view(x->mapData->locationName.fullName.c_str()) != name) {
@@ -2468,5 +2470,28 @@ namespace bo3z
 			default: BuyWall(o); break;
 			}
 		}
+	}
+}
+
+namespace bo3z::Shops
+{
+	// (Noah: every load in a running game crashed) the station icons' ExtraMapMarker records were made by hand (a game
+	// marker's data copied), and Skyrim tearing the world down for a load choked on them. Before any load they are
+	// lifted off their markers (not freed: the engine never touches them again) - a loaded save has its own.
+	void BeforeLoad()
+	{
+		int n = 0;
+		for (auto& h : g_markers) {
+			if (auto r = h.get()) {
+				if (auto* x = r->extraList.GetByType<RE::ExtraMapMarker>(); x && g_madeMarkers.contains(x)) {
+					r->extraList.Remove(RE::ExtraDataType::kMapMarker, x);
+					++n;
+				}
+			}
+			h = {};
+		}
+		g_madeMarkers.clear();
+		g_markerScanned = {};
+		if (n) logger::info("shops: {} hand-made map markers lifted before the load", n);
 	}
 }

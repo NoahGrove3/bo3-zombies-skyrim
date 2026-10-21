@@ -327,6 +327,7 @@ namespace bo3z
 				}
 				if (a_event->menuName == RE::LoadingMenu::MENU_NAME && a_event->opening) {
 					Save::ForgetSnapshot();  // whatever comes next may be another game
+					Shops::BeforeLoad();     // (the crash on every in-game load: our hand-made map markers off first)
 				}
 				if (a_event->menuName == RE::LoadingMenu::MENU_NAME && !a_event->opening && dataLoaded) {
 					// After a new game, a save from the main menu, or a save loaded in game.

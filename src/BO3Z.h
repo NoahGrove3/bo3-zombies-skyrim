@@ -497,6 +497,7 @@ namespace bo3z
 		inline constexpr int kReelPass = 40;          // spells the roll's reel runs past before it stops on the one won
 		float ReelPos(float a_k);                      // where the reel stands at spin progress 0..1 (eased to a stop)
 		int   ReelSpell(int a_target, float a_pos, int a_slot);  // the spell in a slot of the reel (0 = the front)
+		void  BeforeLoad();  // a save is loading over this world: our hand-made map-marker records come off first
 		void Tick(float a_delta);
 		void Reset();
 		void OnActivate(RE::TESObjectREFR* a_ref);
