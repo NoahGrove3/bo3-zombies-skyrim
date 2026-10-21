@@ -12,6 +12,7 @@ namespace bo3z
 		bool                 Resolve();  // after data loaded
 		RE::TESBoundObject*  Enemy(std::size_t a_index);
 		RE::TESQuest*        IntroQuest();
+		std::array<RE::TESQuest*, 3> MQ102();  // MQ102A (Hadvar), MQ102B (Ralof), MQ102
 		bool                 IntroDone();
 		std::string          IntroDebug();
 		RE::TESGlobal*       Quickstart();
@@ -268,6 +269,11 @@ namespace bo3z
 		std::vector<std::uint8_t> State();  // co-save 'CLAS'
 		void             SetState(const std::vector<std::uint8_t>& a_v);
 		void             Revert();
+		void             Tick();                   // the Summoner's summon cap, once a second
+		void             OnKill(bool a_bySummon);  // you (or your summon) killed a foe: what you hold trains
+		int              Mastery(int a_index);     // kills its ladder has earned toward the next rung
+		int              MasteryNeed(int a_index);
+		void             SpendMastery(int a_index);
 	}
 
 	namespace Arcana
@@ -327,7 +333,8 @@ namespace bo3z
 		int                       Roll();             // one you don't carry, of the tiers the altars allow (-1)
 		std::vector<std::uint8_t> Levels();           // for the co-save
 		void                      SetLevels(const std::vector<std::uint8_t>& a_levels);
-		bool                      IsStrikeSpell(const RE::MagicItem* a_item);  // the mods' spells our bows and the Storm Staff loose (they never hurt you)
+		bool                      IsStrikeSpell(const RE::MagicItem* a_item);
+		int                       Restock();          // every quiver full (bow arrows, crossbow bolts): Max Ammo, the altar's quiver  // the mods' spells our bows and the Storm Staff loose (they never hurt you)
 	}
 
 	// The player's settings (CurseOfAlduin.ini [Settings]; the panel in the System menu)

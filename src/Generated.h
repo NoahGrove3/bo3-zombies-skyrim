@@ -1371,7 +1371,8 @@ namespace bo3z::gen
 	namespace elite { inline constexpr float healthMult = 6.0f; inline constexpr float maxAlive = 2.0f; inline constexpr float hitShare = 0.5f; inline constexpr float lungeEvery = 8.0f; inline constexpr float lungeMin = 350.0f; inline constexpr float lungeMax = 1100.0f; inline constexpr float shriekEvery = 12.0f; inline constexpr float shriekRange = 550.0f; inline constexpr float shriekSlow = 40.0f; inline constexpr float shriekSeconds = 3.0f; inline constexpr float shriekDamage = 0.1f; inline constexpr float drainShare = 0.08f; inline constexpr float killPoints = 250.0f; }
 	inline constexpr std::string_view kAnimFireCrossbow = "attackStart", kAnimReloadCrossbow = "reloadStart", kAnimFireStaff = "BeginCastRight", kAnimReloadStaff = "none";
 	// BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale (token STAT, light)
-	inline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 4> kPowerups{ {{ 0x96D, 0x96E }, { 0x96F, 0x970 }, { 0x971, 0x972 }, { 0x973, 0x974 }} };
+	inline constexpr std::array<std::uint32_t, 3> kSummonCapPerks{ 0xCAD, 0xCAE, 0xCAF };   // the Summoner holds 2, 3, 4 summons
+	inline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 5> kPowerups{ {{ 0x96D, 0x96E }, { 0x96F, 0x970 }, { 0x971, 0x972 }, { 0x973, 0x974 }, { 0xCAB, 0xCAC }} };
 	inline constexpr std::uint32_t kReaperScythe = 0x96C;
 	inline constexpr std::uint32_t kWyrmClaws = 0x9DD, kShadowClaws = 0x9DE, kZombieClaws = 0x9DF;
 	inline constexpr std::uint32_t kUndeadFaction = 0x93B;

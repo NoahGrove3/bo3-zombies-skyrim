@@ -157,6 +157,7 @@ namespace bo3z
 
 		RE::TESBoundObject* Enemy(std::size_t a_index) { return a_index < g_enemies.size() ? g_enemies[a_index] : nullptr; }
 		RE::TESQuest*       IntroQuest() { return g_intro; }
+		std::array<RE::TESQuest*, 3> MQ102() { return g_mq102; }
 		// The intro is over when MQ101 is completed (a normal playthrough) or when Bethesda's quick-start
 		// fragment has run: it sets stages 25/26/1000 and then Stop()s the quest without completing it.
 		bool IntroDone()

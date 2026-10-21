@@ -1195,6 +1195,11 @@
   "ENCH:wolfcrown": "0xca7",
   "ENCH:barrowhorn": "0xca8",
   "GLOB:ritual_souls": "0xca9",
-  "GLOB:ritual_stand": "0xcaa"
+  "GLOB:ritual_stand": "0xcaa",
+  "STAT:pu_maxammo": "0xcab",
+  "LIGH:pu_maxammo": "0xcac",
+  "PERK:summon_cap_2": "0xcad",
+  "PERK:summon_cap_3": "0xcae",
+  "PERK:summon_cap_4": "0xcaf"
  }
 }

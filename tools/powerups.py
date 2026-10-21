@@ -14,7 +14,7 @@ def disc(cz, r, thick, seg=40, cy=0.0):
     return P.lathe([(cy - thick / 2, 0.01), (cy - thick / 2, r), (cy + thick / 2, r), (cy + thick / 2, 0.01)], seg)
 
 def token(kind):
-    core = {'instakill': (255, 60, 50), 'double': (255, 205, 70), 'kaboom': (255, 140, 40), 'firesale': (180, 100, 255)}[kind]
+    core = {'instakill': (255, 60, 50), 'double': (255, 205, 70), 'kaboom': (255, 140, 40), 'firesale': (180, 100, 255), 'maxammo': (70, 200, 255)}[kind]
     ring = S.merge([S.ring(0, 0, 0, 13, 14.5, axis='z'), S.ring(0, 0, 0, 15.5, 16.2, tilt=0.6)])
     if kind == 'instakill':     # a skull: cranium, two eye sockets (dark), crossed bones behind
         shape = S.merge([S.sphere(0, 2, 0, 6.5, 16), P.bar((-10, -9, -1), (10, 9, -1), 1.3), P.bar((-10, 9, -1), (10, -9, -1), 1.3)])
@@ -24,6 +24,9 @@ def token(kind):
         dark = None
     elif kind == 'kaboom':      # a star burst
         shape = S.merge([S.crystal(0, 0, 0, 11, 1.6, 4, rot=a, tilt=(0.0, a)) for a in np.linspace(0, 2 * math.pi, 9)[:-1]] + [S.sphere(0, 0, 0, 4.5, 12)])
+        dark = None
+    elif kind == 'maxammo':     # (the Ranger's refill) a sheaf of five arrows, heads up
+        shape = S.merge([P.bar((x, 0, -9), (x * 0.5, 0, 9), 0.9) for x in (-4, -2, 0, 2, 4)] + [S.crystal(x * 0.5, 0, 10, 2.6, 1.4, 4) for x in (-4, -2, 0, 2, 4)])
         dark = None
     else:                       # a little chest
         shape = S.merge([box(-7, -4, -5, 7, 3, 5), box(-7.4, 3, -5.4, 7.4, 6, 5.4)])
@@ -70,5 +73,5 @@ def write(kind, parts):
     print(kind, 'ok')
 
 if __name__ == '__main__':
-    for k in ('instakill', 'double', 'kaboom', 'firesale'):
+    for k in ('instakill', 'double', 'kaboom', 'firesale', 'maxammo'):
         write(k, token(k))

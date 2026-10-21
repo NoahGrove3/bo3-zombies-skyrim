@@ -18,7 +18,7 @@ def group(label, recs):
     data = b''.join(recs)
     return b'GRUP' + struct.pack('<I', 24 + len(data)) + label.encode() + struct.pack('<iHHHH', 0, 0, 0, 44, 0) + data
 fid = lambda kind, key: SELF | IDS[(kind, key)]
-recs = {'WOOP': [], 'SHOU': [], 'GLOB': [], 'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': [], 'MUSC': [], 'MUST': [], 'VTYP': [], 'FSTS': [], 'LSCR': [], 'ARTO': [], 'QUST': []}
+recs = {'WOOP': [], 'SHOU': [], 'GLOB': [], 'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': [], 'MUSC': [], 'MUST': [], 'VTYP': [], 'FSTS': [], 'LSCR': [], 'ARTO': [], 'QUST': [], 'PERK': []}
 
 for p in S['perks']['rows']:
     data = bytearray(tsub('mgef', 'DATA'))
@@ -259,6 +259,14 @@ for bw in S['bows']['rows']:
         elif name == 'DATA': b = struct.pack('<IfH', 0, 1.0, 0)
         subs.append(sub(name, b))
     recs['WEAP'].append(record('WEAP', fid('WEAP', 'bow_' + bw['id']), subs))
+
+# (the classes overhaul) the Summoner's command: hidden perks that set how many summons you may hold (2, 3, 4) -
+# Twin Souls' own entry point (Mod Commanded Actor Limit, Set Value), without its conditions, above it in priority
+for n in (2, 3, 4):
+    recs['PERK'].append(record('PERK', fid('PERK', f'summon_cap_{n}'), [
+        sub('EDID', z(f'UN_SummonCap{n}')), sub('FULL', z(f'Command of {n}')), sub('DESC', z(f'You can hold {n} summons at once.')),
+        sub('DATA', bytes([0, 0, 1, 0, 1])), sub('PRKE', bytes([2, 0, 10 + n])), sub('DATA', bytes([68, 1, 0])),
+        sub('EPFT', bytes([1])), sub('EPFD', struct.pack('<f', float(n))), sub('PRKF', b'')]))
 
 for p in S['perks']['rows']:
     enit = bytearray(tsub('alch', 'ENIT'))

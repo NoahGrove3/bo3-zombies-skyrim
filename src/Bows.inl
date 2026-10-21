@@ -81,24 +81,54 @@ namespace BowsImpl
 	}
 	bool Wind(int i) { return gen::kSpellcraft[gen::kBows[i].spellRow].id == "embermortar"; }
 
-	// its arrows never run out: a quiver kept full, and on the string
-	void TopUp(int i, bool a_equip)
+	// (the classes overhaul: the Ranger's arrows run out) the quiver holds what you bought, found or picked out of the dead;
+	// a_fill tops it up to a full quiver (a new bow, Max Ammo, a quiver bought at the altar), and the arrows stay on the string
+	constexpr int kQuiver = 60;
+	void TopUp(int i, bool a_equip, bool a_fill = false)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* am = Ammo(i);
 		if (!p || !am) {
 			return;
 		}
-		if (const int n = p->GetItemCount(am); n < 40) {
-			p->AddObjectToContainer(am, nullptr, 60 - n, nullptr);
+		if (const int n = p->GetItemCount(am); a_fill && n < kQuiver) {
+			p->AddObjectToContainer(am, nullptr, kQuiver - n, nullptr);
 		}
-		if (a_equip || p->GetCurrentAmmo() != am) {
+		if (p->GetItemCount(am) > 0 && (a_equip || p->GetCurrentAmmo() != am)) {
 			if (auto* em = RE::ActorEquipManager::GetSingleton()) {
 				em->EquipObject(p, am, nullptr, 1, nullptr, false, false, false, true);
 			}
 		}
 	}
-
+	// every quiver full again: the bow's arrows and the bolts of each crossbow you carry (Max Ammo, the altar's quiver)
+	int Restock()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return 0;
+		int n = 0;
+		for (int k = 0; k < kN; ++k) {
+			if (auto* w = Weap(k); w && p->GetItemCount(w) > 0) { TopUp(k, false, true); ++n; }
+		}
+		auto* dh = RE::TESDataHandler::GetSingleton();
+		static constexpr std::uint32_t kBolts[] = { 0x020B04, 0x025A50, 0x025A58, 0x025A60, 0x025A68, 0x025A70 };  // Faction Crossbows' plain bolts
+		bool crossbow = false;
+		for (auto& [obj, data] : p->GetInventory()) {
+			if (auto* w = obj ? obj->As<RE::TESObjectWEAP>() : nullptr; w && w->IsCrossbow() && data.first > 0) crossbow = true;
+		}
+		if (crossbow && dh) {
+			for (auto id : kBolts) {
+				if (auto* b = dh->LookupForm<RE::TESAmmo>(id, "Faction Crossbows.esp"); b && p->GetItemCount(b) > 0 && p->GetItemCount(b) < 30) {
+					p->AddObjectToContainer(b, nullptr, 30 - p->GetItemCount(b), nullptr);
+					++n;
+				}
+			}
+			if (auto* dg = dh->LookupForm<RE::TESAmmo>(0x020B04, "Faction Crossbows.esp"); dg && p->GetItemCount(dg) <= 0) {
+				p->AddObjectToContainer(dg, nullptr, 30, nullptr);
+				++n;
+			}
+		}
+		return n;
+	}
 	void Give(int i)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -123,7 +153,7 @@ namespace BowsImpl
 		if (p->GetItemCount(w) <= 0) {
 			p->AddObjectToContainer(w, nullptr, 1, nullptr);
 		}
-		TopUp(i, false);
+		TopUp(i, false, true);
 		if (auto* em = RE::ActorEquipManager::GetSingleton()) {
 			em->EquipObject(p, w, nullptr, 1, nullptr, false, false, true, true);
 		}
@@ -389,6 +419,11 @@ namespace BowsImpl
 	void OnHit(const Spellcraft::Shot& s, RE::Actor* a, const RE::NiPoint3& p, bool killed)
 	{
 		Impact(s, p);
+		if (killed && Rand(0, 1) < 0.35f) {  // (finite arrows) a third of the time the arrow comes back out of the dead
+			if (auto* am = Ammo(s.bow); am) {
+				RE::PlayerCharacter::GetSingleton()->AddObjectToContainer(am, nullptr, 1, nullptr);
+			}
+		}
 		TierTwoAt(s, a->GetPosition(), a);
 		TornadoOf(s, a->GetPosition(), a);
 		const int  i = s.bow, t = s.tier, row = s.row;
@@ -1382,7 +1417,14 @@ namespace BowsImpl
 		static float quiver = 0;
 		if (i >= 0 && (quiver -= a_delta) <= 0) {
 			quiver = 1.0f;
-			TopUp(i, false);
+			TopUp(i, false);  // (keeps the arrows on the string; never fills)
+			if (auto* am = Ammo(i); am && p->GetItemCount(am) <= 0) {
+				static auto told = std::chrono::steady_clock::now() - std::chrono::seconds(60);
+				if (std::chrono::steady_clock::now() - told > std::chrono::seconds(20)) {
+					told = std::chrono::steady_clock::now();
+					Hud::Banner("Out of arrows - buy a quiver at an Echo Altar (Q), or pull them from the dead", 3.5f);
+				}
+			}
 		}
 		using S = RE::ATTACK_STATE_ENUM;
 		const auto st = p->AsActorState()->GetAttackState();

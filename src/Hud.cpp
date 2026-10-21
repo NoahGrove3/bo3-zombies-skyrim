@@ -717,7 +717,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			struct Card { const char* name; ImU32 col; const char* tag; const char* arms; const char* grow; const char* kit; };
 			static const Card kCards[4] = {
 				{ "SUMMONER", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild",
-				  "Bind Pact: raise each family's summon at the altar", "Conjure Skeleton, Conjure Wolf, the Wandering Summoner's robes" },
+				  "Bind Pact: raise each family's summon at the altar", "Conjure Skeleton, Conjure Wolf, summoner's robes (the Wandering Summoner's for women, hooded conjurer's robes for men)" },
 				{ "DESTRUCTION", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Two-handed casting: fire, frost, shock, sun, poison, blood",
 				  "Reforge: climb each element's ladder to its Legendary spell", "Scorch, Hoarfrost, the Wild Witch's hat and gown" },
 				{ "RANGER", IM_COL32(110, 210, 120, 255), "Bows and crossbows - and every arrow counts", "The six elemental bows, crossbows and their bolts",
@@ -1498,7 +1498,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					const bool legend = Arcana::TierOf(idx) >= 3;
 					if (big) {
-						Txt(dl, g_body, 12 * k, { x0, a.y + 7 * k }, legend ? Fade(IM_COL32(255, 200, 90, 255), 0.95f * al) : Fade(ecol, 0.9f * al), legend ? std::string(hand) + "  -  LEGENDARY" : std::string(hand));
+						std::string top = legend ? std::string(hand) + "  -  LEGENDARY" : std::string(hand);
+						if (Arcana::NextRung(idx) >= 0) top += "  -  " + std::to_string(std::min(Classes::Mastery(idx), Classes::MasteryNeed(idx))) + "/" + std::to_string(Classes::MasteryNeed(idx)) + " to climb";
+						Txt(dl, g_body, 12 * k, { x0, a.y + 7 * k }, legend ? Fade(IM_COL32(255, 200, 90, 255), 0.95f * al) : Fade(ecol, 0.9f * al), top);
 						if (legend) TxtGold(dl, g_title, nameSize, { x0, a.y + 22 * k }, nm, al);
 						else Txt(dl, g_title, nameSize, { x0, a.y + 22 * k }, Fade(kParch, al), nm);
 					} else if (legend) {
@@ -2684,6 +2686,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					y += 44 * k;
 					// (the classes overhaul) changing class here
 					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "Back" : "C") + "   Change class  (" + std::to_string(Classes::SwitchCost()) + " septims)  -  now " + std::string(Classes::Name(Classes::Get())));
+					y += 26 * k;
+					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "R3" : "Q") + "   Fill your quivers  (" + std::to_string(400 + 100 * std::max(0, s.round)) + " septims)");
 					y += 26 * k;
 				}
 				dl->PopClipRect();

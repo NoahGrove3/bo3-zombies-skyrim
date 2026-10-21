@@ -194,7 +194,8 @@ AN = {r['id']: r for r in S['animations']['rows']}
 o.append(f'\tinline constexpr std::string_view kAnimFireCrossbow = {cs(AN["crossbow"]["fire"])}, kAnimReloadCrossbow = {cs(AN["crossbow"]["reload"])}, kAnimFireStaff = {cs(AN["staff"]["fire"])}, kAnimReloadStaff = {cs(AN["staff"]["reload"])};')
 import esp_ids as _pu
 o.append('\t// BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale (token STAT, light)')
-o.append('\tinline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 4> kPowerups{ {' + ', '.join(f'{{ 0x{IDS[("STAT", "pu_" + k)]:03X}, 0x{IDS[("LIGH", "pu_" + k)]:03X} }}' for k, _ in _pu.POWERUPS) + '} };')
+o.append(f'\tinline constexpr std::array<std::uint32_t, 3> kSummonCapPerks{{ 0x{IDS[("PERK", "summon_cap_2")]:03X}, 0x{IDS[("PERK", "summon_cap_3")]:03X}, 0x{IDS[("PERK", "summon_cap_4")]:03X} }};   // the Summoner holds 2, 3, 4 summons')
+o.append('\tinline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 5> kPowerups{ {' + ', '.join(f'{{ 0x{IDS[("STAT", "pu_" + k)]:03X}, 0x{IDS[("LIGH", "pu_" + k)]:03X} }}' for k, _ in _pu.POWERUPS) + '} };')
 o.append(f'\tinline constexpr std::uint32_t kReaperScythe = 0x{IDS[("WEAP", "reaper_scythe")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kWyrmClaws = 0x{IDS[("WEAP", "wyrm_claws")]:03X}, kShadowClaws = 0x{IDS[("WEAP", "shadow_claws")]:03X}, kZombieClaws = 0x{IDS[("WEAP", "zombie_claws")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kUndeadFaction = 0x{IDS[("FACT", "undead")]:03X};')

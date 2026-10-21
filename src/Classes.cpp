@@ -17,6 +17,7 @@ namespace bo3z::Classes
 		std::array<bool, 4>                                    g_kit{};
 		std::array<std::vector<std::pair<int, int>>, 4>        g_stash;  // the spells a class you left carried (index, level)
 		std::chrono::steady_clock::time_point                  g_closedAt{};
+		std::array<std::uint16_t, coffer::kLadders>            g_mastery{};  // kills made with each ladder's spell in hand (its summons' kills for the Summoner)
 
 		RE::TESForm* Lookup(std::uint32_t a_id, std::string_view a_plugin)
 		{
@@ -60,8 +61,13 @@ namespace bo3z::Classes
 			case coffer::kSummoner:
 				GiveSpell(Rung1(a_cls, "The Dead"), false);
 				GiveSpell(Rung1(a_cls, "Beasts"), true);
-				for (std::uint32_t id : { 0xE58u, 0xE5Bu, 0xE5Du, 0xE5Fu, 0xE63u }) {
-					GiveItem(p, Lookup(id, "Wandering Summoner Outfit.esp"), 1, female);  // (a women's outfit: a man carries it)
+				if (female) {
+					for (std::uint32_t id : { 0xE58u, 0xE5Bu, 0xE5Du, 0xE5Fu, 0xE63u }) {
+						GiveItem(p, Lookup(id, "Wandering Summoner Outfit.esp"), 1, true);
+					}
+				} else {  // (Noah: a male Summoner wears a man's summoner robes) the hooded necromancer's robes of conjuration and boots
+					GiveItem(p, RE::TESForm::LookupByID(0x10900E), 1, true);
+					GiveItem(p, RE::TESForm::LookupByID(0x0C36E8), 1, true);
 				}
 				break;
 			case coffer::kDestruction:
@@ -166,6 +172,61 @@ namespace bo3z::Classes
 		if (g_class.load() < 0 && Save::Flag(Save::kFlagStarted)) OpenPicker(false);
 	}
 
+	// (each class grows its own way) a kill trains the ladders of what you hold: the spell in each hand for Destruction and
+	// the Spellsword, and your summons' kills (or your own, a summon spell in hand) for the Summoner
+	void OnKill(bool a_bySummon)
+	{
+		for (int h : Arcana::Hands()) {
+			if (h < 0) continue;
+			const int cls = Arcana::ClassOf(h);
+			if (a_bySummon && cls != coffer::kSummoner) continue;
+			auto& m = g_mastery[coffer::kSpells[h].ladder];
+			if (m < 60000) ++m;
+		}
+	}
+	int Mastery(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? g_mastery[coffer::kSpells[a_index].ladder] : 0; }
+	// kills a ladder needs before its next rung can be raised: 25 to rung 2, 60 to rung 3, 120 to the Legendary
+	int MasteryNeed(int a_index)
+	{
+		const int r = Arcana::RungOf(a_index);
+		return r <= 1 ? 25 : r == 2 ? 60 : 120;
+	}
+	void SpendMastery(int a_index)
+	{
+		if (a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size())) g_mastery[coffer::kSpells[a_index].ladder] = 0;
+	}
+
+	// (the Summoner's command) how many summons you may hold: 1, then 2 / 3 / 4 as its ladders climb (each rung raised
+	// past the first counts): our hidden perks set Skyrim's commanded-actor limit
+	void Tick()
+	{
+		static auto last = std::chrono::steady_clock::now();
+		if (std::chrono::steady_clock::now() - last < std::chrono::seconds(1)) return;
+		last = std::chrono::steady_clock::now();
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* dh = RE::TESDataHandler::GetSingleton();
+		if (!p || !dh) return;
+		int climbs = 0;
+		if (g_class.load() == coffer::kSummoner) {
+			for (int i : Arcana::Carried()) {
+				if (Arcana::ClassOf(i) == coffer::kSummoner) climbs += Arcana::RungOf(i) - 1;
+			}
+		}
+		const int cap = g_class.load() != coffer::kSummoner ? 1 : climbs >= 6 ? 4 : climbs >= 3 ? 3 : climbs >= 1 ? 2 : 1;
+		for (int n = 2; n <= 4; ++n) {
+			auto* perk = dh->LookupForm<RE::BGSPerk>(gen::kSummonCapPerks[n - 2], gen::kPlugin);
+			if (!perk) continue;
+			const bool want = n == cap, have = p->HasPerk(perk);
+			if (want && !have) {
+				p->AddPerk(perk);
+				Hud::Banner("Your command grows: " + std::to_string(n) + " summons at once", 3.0f);
+				logger::info("classes: summon cap {}", n);
+			} else if (!want && have) {
+				p->RemovePerk(perk);
+			}
+		}
+	}
+
 	bool OnButton(const RE::ButtonEvent* a_b)
 	{
 		if (!g_open || !a_b || !a_b->IsDown()) return false;
@@ -202,6 +263,8 @@ namespace bo3z::Classes
 	std::vector<std::uint8_t> State()
 	{
 		std::vector<std::uint8_t> v{ static_cast<std::uint8_t>(g_class.load() + 1) };
+		v.push_back(static_cast<std::uint8_t>(coffer::kLadders));
+		for (auto m : g_mastery) { v.push_back(static_cast<std::uint8_t>(m & 0xFF)); v.push_back(static_cast<std::uint8_t>(m >> 8)); }
 		const int cur = g_class.load();
 		for (int c = 0; c < 4; ++c) {
 			std::vector<std::pair<int, int>> list = g_stash[c];
@@ -225,6 +288,13 @@ namespace bo3z::Classes
 		if (a_v.empty()) return;
 		g_class = static_cast<int>(a_v[0]) - 1;
 		std::size_t k = 1;
+		g_mastery.fill(0);
+		if (k < a_v.size()) {
+			const int nl = a_v[k++];
+			for (int l = 0; l < nl && k + 1 < a_v.size() + 1 && k + 2 <= a_v.size(); ++l, k += 2) {
+				if (l < coffer::kLadders) g_mastery[l] = static_cast<std::uint16_t>(a_v[k] | (a_v[k + 1] << 8));
+			}
+		}
 		for (int c = 0; c < 4 && k + 1 < a_v.size() + 1; ++c) {
 			if (k + 2 > a_v.size()) break;
 			g_kit[c] = a_v[k] != 0;
@@ -237,5 +307,5 @@ namespace bo3z::Classes
 		}
 		logger::info("classes: loaded ({})", Name(g_class));
 	}
-	void Revert() { SetState({}); g_open = false; }
+	void Revert() { SetState({}); g_open = false; g_mastery.fill(0); }
 }

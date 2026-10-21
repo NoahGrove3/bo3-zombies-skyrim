@@ -2607,6 +2607,10 @@ namespace bo3z
 					Hud::Banner(std::string(Arcana::Name(next)) + " waits until " + std::to_string(need) + (need == 1 ? " city is" : " cities are") + " freed", 3.0f);
 					return false;
 				}
+				if (const int have = Classes::Mastery(sp), want = Classes::MasteryNeed(sp); have < want) {
+					Hud::Banner(name + ": " + std::to_string(have) + " / " + std::to_string(want) + " kills with it before it can climb", 3.0f);
+					return false;
+				}
 				if (ForgedTonight(Arcana::kIdBase + sp, name)) {
 					return false;
 				}
@@ -2615,6 +2619,7 @@ namespace bo3z
 					return false;
 				}
 				g_forgedTonight.insert(Arcana::kIdBase + next);
+				Classes::SpendMastery(sp);
 				Arcana::Replace(sp, next);
 				logger::info("forge: {} {} -> {}", verb, name, Arcana::Name(next));
 				Hud::Banner(std::string(verb) + ":  " + name + "  ->  " + std::string(Arcana::Name(next)) + (Arcana::TierOf(next) >= 3 ? "  -  LEGENDARY" : ""), 4.5f);
@@ -3453,6 +3458,7 @@ namespace bo3z
 			return pool.empty() ? -1 : pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
 		}
 		std::vector<std::uint8_t> Levels() { return { BowsImpl::g_level.begin(), BowsImpl::g_level.end() }; }
+		int Restock() { return BowsImpl::Restock(); }
 		bool IsStrikeSpell(const RE::MagicItem* a_item)
 		{
 			if (!a_item) return false;

@@ -3078,7 +3078,7 @@ namespace bo3z
 			float             g_timers[4] = {};   // seconds left: insta-kill, double points, (kaboom), fire sale
 			int               g_dropsThisNight = 0, g_night = -1;
 			std::mt19937      g_prng{ std::random_device{}() };
-			constexpr const char* kNames[4] = { "INSTA-KILL", "DOUBLE POINTS", "NUKE", "FIRE SALE" };
+			constexpr const char* kNames[5] = { "INSTA-KILL", "DOUBLE POINTS", "NUKE", "FIRE SALE", "MAX AMMO" };
 		}
 
 		bool InstaKill() { return g_timers[0] > 0; }
@@ -3107,7 +3107,7 @@ namespace bo3z
 			if (g_drops.size() >= 3 || std::uniform_real_distribution<float>(0, 1)(g_prng) > 0.10f) {
 				return;
 			}
-			const int kind = std::uniform_int_distribution<int>(0, 3)(g_prng);
+			const int kind = std::uniform_int_distribution<int>(0, 4)(g_prng);
 			auto*     dh = RE::TESDataHandler::GetSingleton();
 			auto*     stat = dh->LookupForm<RE::TESBoundObject>(gen::kPowerups[kind].first, gen::kPlugin);
 			auto*     ligh = dh->LookupForm<RE::TESBoundObject>(gen::kPowerups[kind].second, gen::kPlugin);
@@ -3178,6 +3178,12 @@ namespace bo3z
 					Hud::Edit().nukeFlash = 1.0f;
 				}
 				logger::info("powerup: nuke took {}, 20 s before they rise again", n);
+			} else if (a_kind == 4) {  // (the classes overhaul) Max Ammo: every quiver, bolt bundle and weapon full
+				for (int g = 0; g < static_cast<int>(gen::kGuns.size()); ++g) {
+					if (Gun::Owns(g)) Gun::RefillAmmo(g);
+				}
+				Bows::Restock();
+				Forms::Play(gen::Sound::reload_mag);
 			} else {
 				g_timers[a_kind] = 45.0f;  // (Noah: Insta-Kill and Double Points last 45 s)
 			}
@@ -3193,7 +3199,7 @@ namespace bo3z
 				return;
 			}
 			for (int k : Net::TakeRemotePowerUps()) {  // taken by a friend in the party
-				if (k >= 0 && k < 4) {
+				if (k >= 0 && k < 5) {
 					Grab(k, player, true);
 				}
 			}

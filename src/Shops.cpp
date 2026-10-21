@@ -1983,6 +1983,20 @@ namespace bo3z
 				}
 				return true;
 			}
+			// (the Ranger's ammo) Q on the keyboard, the right stick click on a pad: a full quiver and bolt bundles
+			if (!g_choosing && ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x10) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x0080))) {
+				const int cost = 400 + 100 * std::max(0, Save::Get(gen::kAV_round));
+				if (Points::Get() < cost) {
+					Hud::Banner("A quiver costs " + std::to_string(cost) + " septims", 2.0f);
+				} else if (Bows::Restock() <= 0) {
+					Hud::Banner("Your quivers are full (or you carry no bow or crossbow)", 2.5f);
+				} else {
+					Points::Spend(cost);
+					Forms::Play(gen::Sound::reload_mag);
+					Hud::Banner("Quivers filled  (-" + std::to_string(cost) + ")", 2.5f);
+				}
+				return true;
+			}
 			auto*      ref = g_menuRef.get().get();
 			auto act = [&](int a) {
 				switch (a) {

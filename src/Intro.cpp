@@ -9,6 +9,43 @@ namespace bo3z
 	{
 		int  g_settle = 0;
 		bool g_moved = false;  // this game's new character has been moved to Riverwood
+		bool  g_skip = false;        // Helgen skipped this game: once it is done, the move to Riverwood's gate
+		bool  g_skipRace = false;    // ... waiting for the character creator to close first
+		bool  g_raceSeen = false;    // the character creator has been and gone this game
+		float g_skipHold = 0;        // H held this long
+		bool  g_skipHeld = false;
+		void Papyrus(RE::TESForm* a_form, const char* a_class, const char* a_fn, RE::BSScript::IFunctionArguments* a_args)
+		{
+			auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+			if (!vm || !a_form) return;
+			const auto handle = vm->GetObjectHandlePolicy()->GetHandleForObject(a_form->GetFormType(), a_form);
+			RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+			vm->DispatchMethodCall(handle, a_class, a_fn, a_args, none);
+		}
+		void Stage(RE::TESQuest* a_q, int a_stage)
+		{
+			if (!a_q) return;
+			Papyrus(a_q, "Quest", "SetCurrentStageID", RE::MakeFunctionArguments(static_cast<std::int32_t>(a_stage)));  // (the VM owns the arguments)
+		}
+		void DoSkip()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			const auto mq = Forms::MQ102();  // MQ102A (Hadvar), MQ102B (Ralof), MQ102
+			Stage(mq[2], 200);
+			Stage(mq[0], 200);
+			Stage(Forms::IntroQuest(), 1000);
+			g_skip = true;  // Tick moves you once the quests are done
+			if (p) {
+				auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+				RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+				if (vm) {
+					vm->DispatchStaticCall("Game", "EnablePlayerControls", RE::MakeFunctionArguments(true, true, true, true, true, true, true, true, static_cast<std::int32_t>(0)), none);
+				}
+				p->NotifyAnimationGraph("IdleForceDefaultState");  // (the bound hands, the cart's seat: let go)
+			}
+			Hud::Banner("Helgen skipped - you wake at Riverwood's gate", 4.0f);
+			logger::info("intro: Helgen skipped (MQ102 200, MQ102A 200, MQ101 1000)");
+		}
 
 		bool FreshQuickstartGame(RE::PlayerCharacter* a_player)
 		{
@@ -55,17 +92,20 @@ namespace bo3z
 
 	namespace Intro
 	{
+		// (Noah: the real Helgen again, with a skip) MQQuickstart 0: a new game opens in the cart. All through Helgen a
+		// hold of H (Back on a pad) skips it: the character creator first if it hasn't come yet, then Helgen and Before
+		// the Storm are set done and you wake at Riverwood's gate
 		void Install()
 		{
-			if (auto* q = Forms::Quickstart(); q && q->value != 3.0f) {
-				q->value = 3.0f;  // read by MQ101 stage 0 when a new game starts
-				logger::info("intro: MQQuickstart set to 3 (skip Helgen)");
+			if (auto* q = Forms::Quickstart(); q && q->value != 0.0f) {
+				q->value = 0.0f;  // read by MQ101 stage 0 when a new game starts
+				logger::info("intro: MQQuickstart set to 0 (Helgen plays; H skips it)");
 			}
 		}
 
 		bool CrewScreenOpen() { return false; }
 		bool NewGameThisSession() { return g_moved; }
-		void OnMainMenu() { g_moved = false, g_settle = 0; }  // the BO3 crew picker is gone: you play your own character
+		void OnMainMenu() { g_moved = false, g_settle = 0, g_skip = false, g_skipRace = false, g_raceSeen = false, g_skipHold = 0, g_skipHeld = false; }  // the BO3 crew picker is gone: you play your own character
 
 		void Tick()
 		{
@@ -94,12 +134,48 @@ namespace bo3z
 						p.x, p.y, p.z, ui && ui->GameIsPaused(), player->IsDead());
 				}
 			}
-			if (!player || !intro || !ui || ui->GameIsPaused()) {
+			if (!player || !intro || !ui) {
+				return;
+			}
+			// the skip: the creator first if it hasn't been, then Helgen set done
+			const bool raceOpen = ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME);
+			if (raceOpen) g_raceSeen = true;
+			if (g_skipRace && g_raceSeen && !raceOpen) {
+				g_skipRace = false;
+				DoSkip();
+			}
+			if (!Save::Flag(Save::kFlagMoved) && !Forms::IntroDone() && intro->IsRunning() && !g_skip && !g_skipRace) {
+				static auto lastHint = std::chrono::steady_clock::now() - std::chrono::seconds(100);
+				if (!raceOpen && !ui->GameIsPaused() && std::chrono::steady_clock::now() - lastHint > std::chrono::seconds(45)) {
+					lastHint = std::chrono::steady_clock::now();
+					Hud::Banner("Hold H (Back on a controller) to skip Helgen", 4.0f);
+				}
+				if (g_skipHeld && !raceOpen && !ui->GameIsPaused()) {
+					g_skipHold += 1.0f / 60.0f;
+					if (g_skipHold > 1.5f) {
+						g_skipHeld = false, g_skipHold = 0;
+						if (!g_raceSeen && intro->GetCurrentStageID() < 240) {  // (the creator comes at the block: bring it now)
+							g_skipRace = true;
+							auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+							RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+							if (vm) {
+								vm->DispatchStaticCall("Game", "ShowRaceMenu", RE::MakeFunctionArguments(), none);
+							}
+							logger::info("intro: skip asked before the creator - the creator first");
+						} else {
+							DoSkip();
+						}
+					}
+				} else {
+					g_skipHold = 0;
+				}
+			}
+			if (ui->GameIsPaused()) {
 				return;
 			}
 			KeepSurvivalOff();
 			if (!Save::Flag(Save::kFlagMoved) && Forms::IntroDone()) {
-				if (FreshQuickstartGame(player) && !g_moved) {  // (a new game's scripts can wipe our values: never move twice)
+				if (g_skip && FreshQuickstartGame(player) && !g_moved) {  // (played through: you walk out of Helgen yourself; skipped: Riverwood's gate)
 					if (++g_settle < 20) {  // let the skip fragment finish (race menu, choose sides) before moving
 						return;
 					}
@@ -132,6 +208,10 @@ namespace bo3z
 		// while the intro film plays every key is its own: Space / Enter / E / pad A held skips it
 		bool OnButton(const RE::ButtonEvent* a_b)
 		{
+			if (a_b && !Save::Flag(Save::kFlagMoved) && !g_skip && ((a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x23) ||
+				(a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && a_b->GetIDCode() == 0x0020))) {
+				g_skipHeld = a_b->IsPressed();  // (H / Back held: Tick counts it)
+			}
 			if (!a_b || !Hud::IntroActive()) {
 				return false;
 			}

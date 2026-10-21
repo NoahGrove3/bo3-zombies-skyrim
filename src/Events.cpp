@@ -190,6 +190,7 @@ namespace bo3z
 					Gun::Tick(a_delta);
 					T("shops");
 					Shops::Tick(a_delta);
+					Classes::Tick();
 					T("perks");
 					Perks::Tick();
 					T("party");
@@ -402,6 +403,12 @@ namespace bo3z
 				}
 				if (dying) {
 					Director::OnDying(dying);
+				}
+				if (dying && dying != player && Director::IsFoe(dying)) {  // (the classes overhaul) a kill by you or your summons trains what you hold
+					auto* killer = a_event->actorKiller.get() ? a_event->actorKiller->As<RE::Actor>() : nullptr;
+					const bool mine = killer == player;
+					const bool summon = killer && killer != player && killer->IsCommandedActor() && killer->GetCommandingActor().get() == player;
+					if (mine || summon) Classes::OnKill(summon);
 				}
 				if (dying && dying != player && !Director::IsRoundUndead(dying) && a_event->actorKiller.get() == player && Director::IsFoe(dying)) {
 					PowerUps::MaybeDrop(dying->GetPosition());  // (Noah: any enemy can drop one - bandits, wolves, draugr too)
