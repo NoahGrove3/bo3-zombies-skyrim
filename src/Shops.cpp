@@ -1738,7 +1738,7 @@ namespace bo3z
 			}
 			const int pick = Arcana::Roll();  // one of the Coffer's spells you don't know yet
 			if (pick < 0) {
-				Hud::Banner(Arcana::Count() ? "You know every spell the shrine holds" : "The shrine is silent (the spell mods aren't installed)", 2.5f);
+				Hud::Banner(Classes::Get() < 0 ? std::string("Choose a class first") : Arcana::Count() ? "You carry every ladder of the " + std::string(Classes::Name(Classes::Get())) + " - raise them with the altar's upgrade" : std::string("The shrine is silent (the spell mods aren't installed)"), 3.0f);
 				return;
 			}
 			const int town = TownOfAltar(a_ref);
@@ -1972,12 +1972,24 @@ namespace bo3z
 					return true;
 				}
 			}
+			// (the classes overhaul) C on the keyboard, Back on a pad: change class here, for septims
+			if (!g_choosing && ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x2E) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x0020))) {
+				if (g_show.phase != Show::Idle) {
+					Hud::Banner("Wait for the altar to finish its roll", 2.0f);
+				} else {
+					g_menu = false;
+					g_closedAt = std::chrono::steady_clock::now();
+					Classes::OpenPicker(true);
+				}
+				return true;
+			}
 			auto*      ref = g_menuRef.get().get();
 			auto act = [&](int a) {
 				switch (a) {
 				case 0:
 					if (!TakeOffer(ref)) {
-						SpinBox(ref);
+						if (Classes::Get() == 2) SpinBow(ref);  // (the Ranger's roll is the bow wheel)
+						else SpinBox(ref);
 						if (g_show.phase != Show::Idle) {  // (Noah: the box sits mid-screen now - it steps aside to watch the roll)
 							g_menu = false;
 							g_closedAt = std::chrono::steady_clock::now();
@@ -1993,6 +2005,7 @@ namespace bo3z
 				case 3: Curse::ClaimRelic(ref ? TownOf(ref) : -1); break;
 				case 6:
 					if (!TakeOffer(ref)) {
+						if (Classes::Get() != 2) { Hud::Banner("Only a Ranger draws the altar's bows", 2.5f); break; }
 						SpinBow(ref);
 						if (g_show.phase != Show::Idle) {  // (Noah: the box sits mid-screen now - it steps aside to watch the roll)
 							g_menu = false;

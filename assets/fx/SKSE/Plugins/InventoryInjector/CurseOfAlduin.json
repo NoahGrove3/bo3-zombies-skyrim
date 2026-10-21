@@ -22,8 +22,23 @@
         "formType": "Spell",
         "formId": {
           "anyOf": [
-            "mihailesobonecolossus.esp|822",
-            "Apocalypse - Magic of Skyrim.esp|44264"
+            "MysticismMagic.esp|445FD0",
+            "MysticismMagic.esp|2E8870",
+            "MysticismMagic.esp|A0782A",
+            "MysticismMagic.esp|7BC311",
+            "MysticismMagic.esp|1FA75F",
+            "MysticismMagic.esp|1B8A09",
+            "Calling of the Conjurer.esp|103611",
+            "Calling of the Conjurer.esp|19D60",
+            "MysticismMagic.esp|42795A",
+            "Calling of the Conjurer.esp|103621",
+            "ConjureSpriggans.esp|2F9D",
+            "MysticismMagic.esp|1D702D",
+            "MysticismMagic.esp|1D7031",
+            "MysticismMagic.esp|1D702F",
+            "MysticismMagic.esp|2280B0",
+            "MysticismMagic.esp|A0782D",
+            "MysticismMagic.esp|209A76"
           ]
         }
       },

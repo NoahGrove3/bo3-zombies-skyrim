@@ -107,7 +107,7 @@ bool StaffUnleash(std::string_view a_id, const Aim& a_aim, float a_base)
 	if (a_id == "wolfcrown") {  // (Noah: swapped with Stormreach's) Storm Bloom - StormCalling's spell, loosed where you aim
 		RE::Actor* target = nullptr;
 		for (auto* f : Foes(a_aim.hit, 600.0f)) { target = f; break; }
-		const bool cast = BowsImpl::CastAtStrike(RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(0x000956, "StormCalling.esl"), a_aim.hit, a_aim.dir * 1000.0f, target);
+		const bool cast = BowsImpl::CastAtStrike(RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(0x000956, "StormCalling.esl"), a_aim.hit, a_aim.dir * 1000.0f, target, false);
 		for (auto* f : Foes(a_aim.hit, up ? 520.0f : 400.0f)) {  // our numbers alongside its look
 			Damage(f, a_base * (up ? 4.0f : 3.0f), false, false, true);
 		}

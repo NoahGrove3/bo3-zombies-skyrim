@@ -252,7 +252,7 @@ namespace bo3z
 				if (GunOut() && b && b->GetDevice() == RE::INPUT_DEVICE::kGamepad && (b->GetIDCode() == kPadRight || b->GetIDCode() == kPadDown)) {
 					return false;
 				}
-				if (Shops::MenuEats(a_event) || Loot::Eats(a_event)) {  // the shrine's keys (1-4, D-pad) and the loot list's never reach the hotkeys
+				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Loot::Eats(a_event)) {  // the shrine's keys (1-4, D-pad) and the loot list's never reach the hotkeys
 					return false;
 				}
 				return func(a_this, a_event);
@@ -266,7 +266,7 @@ namespace bo3z
 		{
 			static bool thunk(void* a_this, RE::InputEvent* a_event)
 			{
-				if (Shops::MenuEats(a_event) || Loot::Eats(a_event)) {
+				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Loot::Eats(a_event)) {
 					return false;
 				}
 				return func(a_this, a_event);
@@ -278,7 +278,7 @@ namespace bo3z
 		{
 			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
 			{
-				if (GunOut() || Shops::MenuEats(a_event) || Loot::Eats(a_event)) {
+				if (GunOut() || Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Loot::Eats(a_event)) {
 					return false;
 				}
 				return func(a_this, a_event);
@@ -2539,6 +2539,9 @@ namespace bo3z
 				return BowsImpl::g_level[b] >= gen::kForgeMax ? 0 : gen::kForgeCost[BowsImpl::g_level[b]];
 			}
 			if (gun < 0 || slot < 0) {
+				const auto hands = Arcana::Hands();
+				const int  sp = hands[1] >= 0 ? hands[1] : hands[0];
+				if (sp >= 0) return Arcana::NextRung(sp) < 0 ? 0 : gen::kForgeCost[std::clamp(Arcana::RungOf(sp) - 1, 0, 2)];
 				return -1;
 			}
 			const int lvl = Save::GetSlot(slot).level;
@@ -2581,28 +2584,40 @@ namespace bo3z
 				return true;
 			}
 			if (gun < 0 || slot < 0) {
-				// a Coffer spell in hand (the right first): reforged, it strikes harder and costs less
+				// (the classes overhaul) a class spell in hand (the right first) climbs its ladder: Reforge for Destruction,
+				// Bind Pact for the Summoner, Imbue for the Spellsword - the next rung's spell takes its place and its hands
 				const auto hands = Arcana::Hands();
 				const int  sp = hands[1] >= 0 ? hands[1] : hands[0];
 				if (sp < 0) {
-					Hud::Banner("Hold the spell you want reforged", 2.5f);
+					Hud::Banner("Hold the spell you want to raise", 2.5f);
 					return false;
 				}
-				const int lv = Arcana::Level(sp);
-				if (lv >= gen::kForgeMax) {
-					Hud::Banner(std::string(Arcana::Name(sp)) + " cannot hold more power", 2.5f);
+				const int cls = Arcana::ClassOf(sp);
+				const char* verb = cls == 0 ? "Bind Pact" : cls == 3 ? "Imbue" : "Reforge";
+				const int next = Arcana::NextRung(sp);
+				const std::string name(Arcana::Name(sp));
+				if (next < 0) {
+					Hud::Banner(name + " is the last of its " + std::string(Arcana::LadderName(sp)) + " ladder", 2.5f);
 					return false;
 				}
-				if (ForgedTonight(Arcana::kIdBase + sp, std::string(Arcana::Name(sp)))) {
+				int freed = 0;
+				for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) freed += Curse::Freed(t) ? 1 : 0;
+				const int need = Arcana::TierOf(next) >= 3 ? 2 : Arcana::RungOf(next) >= 3 ? 1 : 0;  // (Legendary waits for two freed cities, rung 3 for one)
+				if (freed < need) {
+					Hud::Banner(std::string(Arcana::Name(next)) + " waits until " + std::to_string(need) + (need == 1 ? " city is" : " cities are") + " freed", 3.0f);
 					return false;
 				}
-				if (!Points::Spend(gen::kForgeCost[lv])) {
+				if (ForgedTonight(Arcana::kIdBase + sp, name)) {
 					return false;
 				}
-				g_forgedTonight.insert(Arcana::kIdBase + sp);
-				Arcana::SetLevel(sp, lv + 1);
-				logger::info("forge: {} -> level {}", Arcana::Name(sp), lv + 1);
-				Hud::Banner(std::string(Arcana::Name(sp)) + " reforged  " + std::string(lv + 1, '|') + "  (+" + std::to_string(static_cast<int>(gen::kForgeStep * 100 * (lv + 1))) + "% power, -" + std::to_string(10 * (lv + 1)) + "% magicka)", 4.0f);
+				const int cost = gen::kForgeCost[std::clamp(Arcana::RungOf(sp) - 1, 0, 2)];
+				if (!Points::Spend(cost)) {
+					return false;
+				}
+				g_forgedTonight.insert(Arcana::kIdBase + next);
+				Arcana::Replace(sp, next);
+				logger::info("forge: {} {} -> {}", verb, name, Arcana::Name(next));
+				Hud::Banner(std::string(verb) + ":  " + name + "  ->  " + std::string(Arcana::Name(next)) + (Arcana::TierOf(next) >= 3 ? "  -  LEGENDARY" : ""), 4.5f);
 				return true;
 			}
 			auto s = Save::GetSlot(slot);
@@ -3441,8 +3456,11 @@ namespace bo3z
 		bool IsStrikeSpell(const RE::MagicItem* a_item)
 		{
 			if (!a_item) return false;
-			static const RE::MagicItem* own[5] = { BowsImpl::TierThreeSpell(BowsImpl::Kind::Fire), BowsImpl::TierThreeSpell(BowsImpl::Kind::Frost),
-				BowsImpl::TierThreeSpell(BowsImpl::Kind::Wind), RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(0x000956, "StormCalling.esl"), nullptr };
+			static std::vector<const RE::MagicItem*> own = [] {
+				std::vector<const RE::MagicItem*> v;
+				for (int k = 0; k < 6; ++k) for (int tier = 2; tier <= 3; ++tier) if (auto* sp = BowsImpl::TierSpell(static_cast<BowsImpl::Kind>(k), tier)) v.push_back(sp);
+				return v;
+			}();
 			for (auto* o : own) {
 				if (o && o == a_item) return true;
 			}

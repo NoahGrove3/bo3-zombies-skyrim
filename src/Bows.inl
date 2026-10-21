@@ -164,13 +164,13 @@ namespace BowsImpl
 	//   Dawnspire    0 sears and staggers   I a radiant burst round it   II full draw: a sunbeam through everything   III full draw: dawnbreak - the weak turn to ash
 	//   Thirstbow    0 heals you a little   I bleeds   II a blood tether that feeds you   III kills burst into orbs of blood: health and power
 	enum class Kind { Fire, Frost, Shock, Wind, Sun, Blood };
-	constexpr const char* kTierNames[6][4] = {
-		{ "Ember Arrow", "Flare Shot", "Cinder Trail", "Fiery Torrent" },
-		{ "Frost Arrow", "Deep Freeze", "Shatter", "Throat of the World" },
-		{ "Spark Arrow", "Chain Lightning", "Storm Mark", "Storm Ball" },
-		{ "Gust Arrow", "Gale Burst", "Cyclone Arrow", "Arcane Cyclone" },
-		{ "Sunlit Arrow", "Radiant Burst", "Solar Flare", "Sunfire Tornado" },
-		{ "Leech Arrow", "Hemorrhage", "Blood Tether", "Crimson Harvest" } };
+	constexpr const char* kTierNames[6][4] = {   // (the classes overhaul: tiers II and III cast Mysticism's spells where the arrow strikes)
+		{ "Ember Arrow", "Flare Shot", "Scorch Arrow", "Immolation" },
+		{ "Frost Arrow", "Deep Freeze", "Flash Freeze", "Throat of the World" },
+		{ "Spark Arrow", "Chain Lightning", "Finger of the Mountain", "Electrocution" },
+		{ "Gust Arrow", "Gale Burst", "Cyclone Arrow", "Cinder Gale" },
+		{ "Sunlit Arrow", "Radiant Burst", "Solar Flare", "Eclipse" },
+		{ "Leech Arrow", "Hemorrhage", "Vampiric Bolt", "Blood Lance" } };
 	// (Noah: each bow's last upgrade - a tornado of its element where the arrow lands, slow, hunting the dead for 5 s)
 	Kind KindOf(int i)
 	{
@@ -284,16 +284,22 @@ namespace BowsImpl
 	// (Noah: each bow's last upgrade is a spell of the party's mods, loosed where the arrow strikes) Fire: Fiery Torrent,
 	// Frost: Throat of the World, Shock: Storm Bloom, Wind: Arcane Cyclone - cast from the strike itself (a marker a
 	// little behind it, aimed on through), our numbers doing the damage alongside; Sun and Blood keep their tornado
-	RE::SpellItem* TierThreeSpell(Kind a_k)
+	// (Noah: the bows' tier II and III attacks match the new magic) each tier's spell, Mysticism's own, loosed where the
+	// arrow strikes: II on every arrow of that tier, III on a full draw (and it seeks the dead - TickSeek)
+	RE::SpellItem* TierSpell(Kind a_k, int a_tier)
 	{
-		auto* dh = RE::TESDataHandler::GetSingleton();
-		switch (a_k) {
-		case Kind::Fire:  return dh->LookupForm<RE::SpellItem>(0x056995, "Conduit.esp");
-		case Kind::Frost: return dh->LookupForm<RE::SpellItem>(0x2E8870, "MysticismMagic.esp");
-		case Kind::Wind:  return dh->LookupForm<RE::SpellItem>(0x026E6B, "ForgottenMagic_Redone.esp");
-		default:          return nullptr;
-		}
+		static constexpr std::uint32_t kIds[6][2] = {
+			{ 0x7847E9, 0x1D7020 },   // Fire:  Scorch, Immolate
+			{ 0xA07827, 0x2E8870 },   // Frost: Flash Freeze, Throat of the World
+			{ 0x1DC141, 0xA0782A },   // Shock: Finger of the Mountain, Electrocute
+			{ 0x000000, 0x4B065B },   // Wind:  (Cyclone Arrow is our own), Cinder Storm
+			{ 0x2466C0, 0x48CF09 },   // Sun:   Solar Flare, Eclipse
+			{ 0x1B8A15, 0x1B8A09 } }; // Blood: Vampiric Bolt, Blood Lance
+		if (a_tier < 2 || a_tier > 3) return nullptr;
+		const std::uint32_t id = kIds[static_cast<int>(a_k)][a_tier - 2];
+		return id ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(id, "MysticismMagic.esp") : nullptr;
 	}
+	RE::SpellItem* TierThreeSpell(Kind a_k) { return TierSpell(a_k, 3); }
 	RE::ObjectRefHandle g_t3Marker;
 	RE::SpellItem*      g_seekSpell = nullptr;  // the last tier-III spell loosed: its missiles chase the dead (TickSeek)
 	float               g_seekLeft = 0;
@@ -309,7 +315,7 @@ namespace BowsImpl
 			if (auto* pr = mg->data.projectileBase; pr && pr->data.explosionType) pr->data.explosionType->data.damage = 0.0f;
 		}
 	}
-	bool CastAtStrike(RE::SpellItem* a_spell, const RE::NiPoint3& p, const RE::NiPoint3& a_vel, RE::Actor* a_target)
+	bool CastAtStrike(RE::SpellItem* a_spell, const RE::NiPoint3& p, const RE::NiPoint3& a_vel, RE::Actor* a_target, bool a_seek)
 	{
 		auto* pl = RE::PlayerCharacter::GetSingleton();
 		if (!a_spell || !pl) return false;
@@ -328,7 +334,7 @@ namespace BowsImpl
 		auto* c = m->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant);
 		if (!c) return false;
 		c->CastSpellImmediate(a_spell, false, a_target, 1.0f, false, 0.0f, pl);
-		g_seekSpell = a_spell, g_seekLeft = 10.0f;
+		if (a_seek) g_seekSpell = a_spell, g_seekLeft = 10.0f;
 		return true;
 	}
 	// each bow's last upgrade, where a full-draw arrow strikes (Noah):
@@ -346,37 +352,44 @@ namespace BowsImpl
 			return;
 		}
 		const Kind k = KindOf(s.bow);
-		if (k == Kind::Blood) {
-			return;
-		}
-		if (k == Kind::Shock) {
-			StormBallAt(p + RE::NiPoint3{ 0, 0, 130.0f }, 480.0f, 6.0f, s.damage * 0.5f, true);  // (Noah: it follows the dead)
-			Blast(BlastIndex("shockmass"), p + RE::NiPoint3{ 0, 0, 130.0f }, 0.0f, 0.8f);
-			logger::info("bows: Stormreach - a storm ball where it struck");
-			return;
-		}
-		if (k == Kind::Wind) {  // (Noah: far more knockback round it) everything inside the cyclone's reach hurled away
-			for (auto* f : Foes(p, 520.0f)) {
-				if (!f->IsDead()) Spellcraft::Fling(f, p - RE::NiPoint3{ 0, 0, 60.0f }, 9.0f);
-			}
-		}
 		RE::Actor* target = a_hit;
 		if (!target) {
 			for (auto* f : Foes(p, 600.0f)) { target = f; break; }
 		}
-		if (k != Kind::Sun) {
-			if (CastAtStrike(TierThreeSpell(k), p, s.vel, target)) {
-				Spellcraft::Area(s.row, p, 260.0f, s.damage * 1.2f, gen::kFxNone);  // (the spell's look and sweep; our numbers hit)
-				logger::info("bows: {} - {} cast where it struck", gen::kBows[s.bow].label, kTierNames[static_cast<int>(k)][3]);
-				return;
-			}
-			logger::warn("bows: {} - its tier-III spell could not be cast (mod missing?) - a tornado instead", gen::kBows[s.bow].label);
+		if (k == Kind::Shock) {  // Electrocution: Mysticism's Electrocute, and the storm ball still hangs there hunting
+			StormBallAt(p + RE::NiPoint3{ 0, 0, 130.0f }, 480.0f, 6.0f, s.damage * 0.5f, true);
+			Blast(BlastIndex("shockmass"), p + RE::NiPoint3{ 0, 0, 130.0f }, 0.0f, 0.8f);
 		}
+		if (k == Kind::Wind) {  // Cinder Gale: everything inside the gale's reach hurled away, and Cinder Storm where it struck
+			for (auto* f : Foes(p, 520.0f)) {
+				if (!f->IsDead()) Spellcraft::Fling(f, p - RE::NiPoint3{ 0, 0, 60.0f }, 9.0f);
+			}
+		}
+		if (CastAtStrike(TierSpell(k, 3), p, s.vel, target, true)) {
+			Spellcraft::Area(s.row, p, 260.0f, s.damage * 1.2f, gen::kFxNone);  // (the spell's look and sweep; our numbers hit)
+			logger::info("bows: {} - {} cast where it struck", gen::kBows[s.bow].label, kTierNames[static_cast<int>(k)][3]);
+			if (k == Kind::Sun) Props::Tornado(static_cast<int>(k), p, s.vel, 5.0f, s.damage * 0.2f, true, s.row);
+			return;
+		}
+		logger::warn("bows: {} - its tier-III spell could not be cast (Mysticism missing?) - a tornado instead", gen::kBows[s.bow].label);
 		Props::Tornado(static_cast<int>(k), p, s.vel, 5.0f, s.damage * 0.2f, true, s.row);
+	}
+	// tier II (and up): the tier's own Mysticism spell where the arrow lands, our numbers alongside
+	void TierTwoAt(const Spellcraft::Shot& s, const RE::NiPoint3& p, RE::Actor* a_hit)
+	{
+		if (s.tier < 2) return;
+		RE::Actor* target = a_hit;
+		if (!target) {
+			for (auto* f : Foes(p, 500.0f)) { target = f; break; }
+		}
+		if (CastAtStrike(TierSpell(KindOf(s.bow), 2), p, s.vel, target, false)) {
+			Spellcraft::Area(s.row, p, 200.0f, s.damage * 0.45f, gen::kFxNone);
+		}
 	}
 	void OnHit(const Spellcraft::Shot& s, RE::Actor* a, const RE::NiPoint3& p, bool killed)
 	{
 		Impact(s, p);
+		TierTwoAt(s, a->GetPosition(), a);
 		TornadoOf(s, a->GetPosition(), a);
 		const int  i = s.bow, t = s.tier, row = s.row;
 		const float dmg = s.damage;
@@ -469,6 +482,7 @@ namespace BowsImpl
 	void OnGround(const Spellcraft::Shot& s, const RE::NiPoint3& p)
 	{
 		Impact(s, p);
+		TierTwoAt(s, p, nullptr);
 		TornadoOf(s, p);
 		const int t = s.tier, row = s.row;
 		switch (KindOf(s.bow)) {

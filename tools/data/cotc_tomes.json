@@ -1,0 +1,3466 @@
+[
+ {
+  "spell": "103617",
+  "name": "Conjure Mind Control Spider",
+  "edid": "JConjureMindControlSpider",
+  "school": "-1",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Mind Control Spider",
+  "effects": [
+   "Conjure Mind Control Spider"
+  ]
+ },
+ {
+  "spell": "00FB16",
+  "name": "Conjure Ahzidal",
+  "edid": "JConjureAhzidal",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Dragon Priest Ahzidal",
+  "effects": [
+   "Conjure Ahzidal",
+   "Conjure Ahzidal"
+  ]
+ },
+ {
+  "spell": "1035FD",
+  "name": "Conjure Albino Spider",
+  "edid": "JConjureAlbinoSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Albino Spider",
+  "effects": [
+   "Conjure Albino Spider",
+   "Conjure Albino Spider"
+  ]
+ },
+ {
+  "spell": "13FF67",
+  "name": "Conjure Alchemist",
+  "edid": "JConjureAlchemist",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Alchemist",
+  "effects": [
+   "Conjure Alchemist"
+  ]
+ },
+ {
+  "spell": "13AE35",
+  "name": "Conjure Alea The Huntress",
+  "edid": "JConjureAleaTheHuntress",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Alea The Huntress",
+  "effects": [
+   "Conjure Aela The Huntress",
+   "Conjure Aela The Huntress"
+  ]
+ },
+ {
+  "spell": "13AE24",
+  "name": "Conjure Alpha Wolf",
+  "edid": "JConjureAlphaWolf",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Alpha Wolf",
+  "effects": [
+   "Conjure Alpha Wolf",
+   "Conjure Alpha Wolf"
+  ]
+ },
+ {
+  "spell": "13FF69",
+  "name": "Conjure Alternatist",
+  "edid": "JConjureAlternatist",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Alternatist",
+  "effects": [
+   "Conjure Alternatist"
+  ]
+ },
+ {
+  "spell": "10359F",
+  "name": "Conjure Arch-Curate Vyrthur",
+  "edid": "JConjureArchCurateVyrthur",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Arch-Curate Vyrthur",
+  "effects": [
+   "Conjure Arch-Curate Vyrthur",
+   "Conjure Arch-Curate Vyrthur"
+  ]
+ },
+ {
+  "spell": "13FF60",
+  "name": "Conjure Archer",
+  "edid": "JConjureArcher",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Archer",
+  "effects": [
+   "Conjure Archer"
+  ]
+ },
+ {
+  "spell": "103488",
+  "name": "Conjure Arctic Fox",
+  "edid": "JConjureFoxArctic",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 50,
+  "tome": "Spell Tome: Conjure Arctic Fox",
+  "effects": [
+   "Conjure Arctic Fox"
+  ]
+ },
+ {
+  "spell": "10356C",
+  "name": "Conjure Armored Frost Troll",
+  "edid": "JConjureArmoredFrostTroll",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Armored Frost Troll",
+  "effects": [
+   "Conjure Armored Frost Troll",
+   "Conjure Armored Frost Troll"
+  ]
+ },
+ {
+  "spell": "10356A",
+  "name": "Conjure Armored Husky",
+  "edid": "JConjureArmoredHusky",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Armored Husky",
+  "effects": [
+   "Conjure Armored Husky",
+   "Conjure Armored Husky"
+  ]
+ },
+ {
+  "spell": "10356B",
+  "name": "Conjure Armored Troll",
+  "edid": "JConjureArmoredTroll",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Armored Troll",
+  "effects": [
+   "Conjure Armored Troll",
+   "Conjure Armored Troll"
+  ]
+ },
+ {
+  "spell": "1035FC",
+  "name": "Conjure Ash Hopper",
+  "edid": "JConjureAshHopper",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Ash Hopper",
+  "effects": [
+   "Conjure Ash Hopper",
+   "Conjure Ash Hopper"
+  ]
+ },
+ {
+  "spell": "2A792B",
+  "name": "Conjure Ash Spawn Immolator",
+  "edid": "JConjureAshSpawnImmolator",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Ash Spawn Immolator",
+  "effects": [
+   "Conjure Ash Spawn Immolator"
+  ]
+ },
+ {
+  "spell": "2A792A",
+  "name": "Conjure Ash Spawn Mage",
+  "edid": "JConjureAshSpawnMage",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Ash Spawn Mage",
+  "effects": [
+   "Conjure Ash Spawn Mage"
+  ]
+ },
+ {
+  "spell": "019D59",
+  "name": "Conjure Assasin",
+  "edid": "JConjureAssasin",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Assasin",
+  "effects": [
+   "Conjure Assasin",
+   "Conjure Assasin"
+  ]
+ },
+ {
+  "spell": "1594C4",
+  "name": "Conjure Bandit Army",
+  "edid": "JConjureBanditArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Bandit Army",
+  "effects": [
+   "Conjure Bandit Highwayman",
+   "Conjure Bandit Highwayman",
+   "Conjure Bandit Highwayman",
+   "Conjure Bandit Highwayman",
+   "Conjure Bandit Marauder",
+   "Conjure Bandit Marauder",
+   "Conjure Bandit Thug",
+   "Conjure Bandit Thug",
+   "Conjure Bandit Thug",
+   "Conjure Bandit Thug",
+   "Conjure Bandit Thug",
+   "Conjure Bandit Thug",
+   "Conjure Bandit Thug",
+   "Conjure Bandit Thug",
+   "Conjure Bandit Thug",
+   "Conjure Bandit Thug",
+   "Conjure Bandit Highwayman",
+   "Conjure Bandit Highwayman"
+  ]
+ },
+ {
+  "spell": "14F2A4",
+  "name": "Conjure Bandit Highwayman",
+  "edid": "JConjureBanditHighwayman",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Bandit Highwayman",
+  "effects": [
+   "Conjure Bandit Highwayman",
+   "Conjure Bandit Highwayman"
+  ]
+ },
+ {
+  "spell": "14F2AA",
+  "name": "Conjure Bandit Marauder",
+  "edid": "JConjureBanditMarauder",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Bandit Marauder",
+  "effects": [
+   "Conjure Bandit Marauder",
+   "Conjure Bandit Marauder"
+  ]
+ },
+ {
+  "spell": "14F2A1",
+  "name": "Conjure Bandit Thug",
+  "edid": "JConjureBanditThug",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Bandit Thug",
+  "effects": [
+   "Conjure Bandit Thug",
+   "Conjure Bandit Thug"
+  ]
+ },
+ {
+  "spell": "102E8A",
+  "name": "Conjure Battleaxe",
+  "edid": "JConjureBattleaxe",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Battleaxe",
+  "effects": [
+   "Conjure Battleaxe",
+   "Conjure Battleaxe"
+  ]
+ },
+ {
+  "spell": "103492",
+  "name": "Conjure Bear",
+  "edid": "JConjureBear",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Bear",
+  "effects": [
+   "Conjure Bear",
+   "Conjure Bear"
+  ]
+ },
+ {
+  "spell": "103548",
+  "name": "Conjure Bow",
+  "edid": "JConjureBow",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Bow",
+  "effects": [
+   "Conjure Bow",
+   "Conjure Bow"
+  ]
+ },
+ {
+  "spell": "1035FE",
+  "name": "Conjure Bristleback",
+  "edid": "JConjureBristleback",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Bristleback",
+  "effects": [
+   "Conjure Bristleback",
+   "Conjure Bristleback"
+  ]
+ },
+ {
+  "spell": "019D5A",
+  "name": "Conjure Burnt Spriggan",
+  "edid": "JConjureBurntSpriggan",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Burnt Spriggan",
+  "effects": [
+   "Conjure Burnt Spriggan",
+   "Conjure Burnt Spriggan"
+  ]
+ },
+ {
+  "spell": "1034EF",
+  "name": "Conjure Chaurus",
+  "edid": "JConjureChaurus",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Chaurus",
+  "effects": [
+   "Conjure Chaurus",
+   "Conjure Chaurus"
+  ]
+ },
+ {
+  "spell": "10356F",
+  "name": "Conjure Chaurus Hunter",
+  "edid": "JConjureChaurusHunter",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Chaurus Hunter",
+  "effects": [
+   "Conjure Chaurus Hunter",
+   "Conjure Chaurus Hunter"
+  ]
+ },
+ {
+  "spell": "103489",
+  "name": "Conjure Chicken",
+  "edid": "JConjureChicken",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 50,
+  "tome": "Spell Tome: Conjure Chicken",
+  "effects": [
+   "Conjure Chicken"
+  ]
+ },
+ {
+  "spell": "14F280",
+  "name": "Conjure Chock Mage",
+  "edid": "JConjureMageChock",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Chock Mage",
+  "effects": [
+   "Conjure Chock Mage",
+   "Conjure Chock Mage"
+  ]
+ },
+ {
+  "spell": "13FF57",
+  "name": "Conjure Companions Army",
+  "edid": "JConjureCompanionsArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Companions Army",
+  "effects": [
+   "Conjure Aela The Huntress",
+   "Conjure Aela The Huntress",
+   "Conjure Farkas",
+   "Conjure Farkas",
+   "Conjure Vilkas",
+   "Conjure Vilkas",
+   "Conjure Skjor",
+   "Conjure Skjor",
+   "Conjure Kodlak Whitemane",
+   "Conjure Kodlak Whitemane",
+   "Conjure Werewolf",
+   "Conjure Werewolf",
+   "Conjure Werewolf",
+   "Conjure Werewolf"
+  ]
+ },
+ {
+  "spell": "103508",
+  "name": "Conjure Conjurer",
+  "edid": "JConjureConjurer",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Conjurer",
+  "effects": [
+   "Conjure Conjurer"
+  ]
+ },
+ {
+  "spell": "2A7935",
+  "name": "Conjure Cow",
+  "edid": "JConjureCow",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 50,
+  "tome": "Spell Tome: Conjure Cow",
+  "effects": [
+   "Conjure Cow"
+  ]
+ },
+ {
+  "spell": "0A7B5C",
+  "name": "Conjure Dawnguard Army",
+  "edid": "JConjureDawnguardArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Dawnguard Army",
+  "effects": [
+   "Conjure Isran",
+   "Conjure Isran",
+   "Conjure Armored Frost Troll",
+   "Conjure Armored Frost Troll",
+   "Conjure Armored Frost Troll",
+   "Conjure Armored Frost Troll",
+   "Conjure Armored Husky",
+   "Conjure Armored Husky",
+   "Conjure Armored Husky",
+   "Conjure Armored Husky",
+   "Conjure Vampire Hunter",
+   "Conjure Vampire Hunter",
+   "Conjure Vampire Hunter",
+   "Conjure Vampire Hunter",
+   "Conjure Vampire Hunter",
+   "Conjure Vampire Hunter",
+   "Conjure Vampire Hunter",
+   "Conjure Vampire Hunter"
+  ]
+ },
+ {
+  "spell": "1034E5",
+  "name": "Conjure Dawnstar Guard",
+  "edid": "JConjureGuardDawnstar",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Dawnstar Guard",
+  "effects": [
+   "Conjure Dawnstar Guard",
+   "Conjure Dawnstar Guard"
+  ]
+ },
+ {
+  "spell": "103568",
+  "name": "Conjure Death Hound",
+  "edid": "JConjureDeathHound",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Death Hound",
+  "effects": [
+   "Conjure Death Hound",
+   "Conjure Death Hound"
+  ]
+ },
+ {
+  "spell": "103519",
+  "name": "Conjure Deer",
+  "edid": "JConjureDeer",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 50,
+  "tome": "Spell Tome: Conjure Deer",
+  "effects": [
+   "Conjure Deer"
+  ]
+ },
+ {
+  "spell": "10348F",
+  "name": "Conjure Dog",
+  "edid": "JConjureDog",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Dog",
+  "effects": [
+   "Conjure Dog",
+   "Conjure Dog"
+  ]
+ },
+ {
+  "spell": "09370D",
+  "name": "Conjure Dragon Priest Army",
+  "edid": "JConjureDragonPriestArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Dragon Priest Army",
+  "effects": [
+   "Conjure Zahkriisos",
+   "Conjure Zahkriisos",
+   "Conjure Rahgot",
+   "Conjure Rahgot",
+   "Conjure Krosis",
+   "Conjure Krosis",
+   "Conjure Morokei",
+   "Conjure Morokei",
+   "Conjure Dukaan",
+   "Conjure Dukaan",
+   "Conjure Ahzidal",
+   "Conjure Ahzidal"
+  ]
+ },
+ {
+  "spell": "019D60",
+  "name": "Conjure Draugr Death Overlord",
+  "edid": "JConjureDraugrDeathOverlord",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Draugr Death Overlord",
+  "effects": [
+   "Conjure Draugr Overlord",
+   "Conjure Draugr Overlord"
+  ]
+ },
+ {
+  "spell": "019D5C",
+  "name": "Conjure Draugr Deathlord Archer",
+  "edid": "JConjureDraugrDeathlordArcher",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Draugr Deathlord Archer",
+  "effects": [
+   "Conjure Draugr Deathlord Archer",
+   "Conjure Draugr Deathlord Archer"
+  ]
+ },
+ {
+  "spell": "019D5E",
+  "name": "Conjure Draugr Deathlord Warrior",
+  "edid": "JConjureDraugrDeathlordWarrior",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Draugr Deathlord Warrior",
+  "effects": [
+   "Conjure Draugr Deathlord Warrior",
+   "Conjure Draugr Deathlord Warrior"
+  ]
+ },
+ {
+  "spell": "019D62",
+  "name": "Conjure Draugr Scourge",
+  "edid": "JConjureDraugrScourge",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Draugr Scourge",
+  "effects": [
+   "Conjure Draugr Scourge",
+   "Conjure Draugr Scourge"
+  ]
+ },
+ {
+  "spell": "019D64",
+  "name": "Conjure Draugr Wight",
+  "edid": "JConjureDraugrWight",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Draugr Wight",
+  "effects": [
+   "Conjure Draugr Wight",
+   "Conjure Draugr Wight"
+  ]
+ },
+ {
+  "spell": "10349A",
+  "name": "Conjure Dremora",
+  "edid": "JConjureDremora",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Dremora",
+  "effects": [
+   "Conjure Dremora",
+   "Conjure Dremora"
+  ]
+ },
+ {
+  "spell": "10349B",
+  "name": "Conjure Dremora Archer",
+  "edid": "JConjureDremoraArcher",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Dremora Archer",
+  "effects": [
+   "Conjure Dremora Archer",
+   "Conjure Dremora Archer"
+  ]
+ },
+ {
+  "spell": "10349C",
+  "name": "Conjure Dremora Mage",
+  "edid": "JConjureDremoraMage",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Dremora Mage",
+  "effects": [
+   "Conjure Dremora Mage",
+   "Conjure Dremora Mage"
+  ]
+ },
+ {
+  "spell": "00FB17",
+  "name": "Conjure Dukaan",
+  "edid": "JConjureDukaan",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Dragon Priest Dukaan",
+  "effects": [
+   "Conjure Dukaan",
+   "Conjure Dukaan"
+  ]
+ },
+ {
+  "spell": "0A2A1D",
+  "name": "Conjure Dwarven Army",
+  "edid": "JConjureDwarvenArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Dwarven Army",
+  "effects": [
+   "Conjure Dwarven Centurion Master",
+   "Conjure Dwarven Centurion Master",
+   "Conjure Ballista Guardian",
+   "Conjure Dwarven Ballista Guardian",
+   "Conjure Ballista Guardian",
+   "Conjure Dwarven Ballista Guardian",
+   "Conjure Dwarven Sphere Guardian",
+   "Conjure Dwarven Sphere Guardian",
+   "Conjure Dwarven Sphere Guardian",
+   "Conjure Dwarven Sphere Guardian",
+   "Conjure Dwarven Spider",
+   "Conjure Dwarven Spider",
+   "Conjure Dwarven Spider",
+   "Conjure Dwarven Spider",
+   "Conjure Dwarven Spider",
+   "Conjure Dwarven Spider",
+   "Conjure Dwarven Spider",
+   "Conjure Dwarven Spider"
+  ]
+ },
+ {
+  "spell": "10360C",
+  "name": "Conjure Dwarven Ballista",
+  "edid": "JConjureDwarvenBallista",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Dwarven Ballista",
+  "effects": [
+   "Conjure Dwarven Ballista",
+   "Conjure Dwarven Ballista"
+  ]
+ },
+ {
+  "spell": "10360D",
+  "name": "Conjure Dwarven Ballista Guardian",
+  "edid": "JConjureDwarvenBallistaGuardian",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Dwarven Ballista Guardian",
+  "effects": [
+   "Conjure Dwarven Ballista Guardian",
+   "Conjure Dwarven Ballista Guardian"
+  ]
+ },
+ {
+  "spell": "103621",
+  "name": "Conjure Dwarven Ballista Master",
+  "edid": "JConjureDwarvenBallistaMaster",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Dwarven Ballista Master",
+  "effects": [
+   "Conjure Dwarven Ballista Master",
+   "Conjure Dwarven Ballista Master"
+  ]
+ },
+ {
+  "spell": "103539",
+  "name": "Conjure Dwarven Centurion",
+  "edid": "JConjureDwarvenCenturion",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Dwarven Centurion",
+  "effects": [
+   "Conjure Dwarven Centurion",
+   "Conjure Dwarven Centurion"
+  ]
+ },
+ {
+  "spell": "103531",
+  "name": "Conjure Dwarven Centurion Guardian",
+  "edid": "JConjureDwarvenCenturionGuardian",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Dwarven Centurion Guardian",
+  "effects": [
+   "Conjure Dwarven Centurion Guardian",
+   "Conjure Dwarven Centurion Guardian"
+  ]
+ },
+ {
+  "spell": "103530",
+  "name": "Conjure Dwarven Centurion Master",
+  "edid": "JConjureDwarvenCenturionMaster",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Dwarven Centurion Master",
+  "effects": [
+   "Conjure Dwarven Centurion Master",
+   "Conjure Dwarven Centurion Master"
+  ]
+ },
+ {
+  "spell": "103536",
+  "name": "Conjure Dwarven Sphere",
+  "edid": "JConjureDwarvenSphere",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Dwarven Sphere",
+  "effects": [
+   "Conjure Dwarven Sphere",
+   "Conjure Dwarven Sphere"
+  ]
+ },
+ {
+  "spell": "103538",
+  "name": "Conjure Dwarven Sphere Guardian",
+  "edid": "JConjureDwarvenSphereGuardian",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Dwarven Sphere Guardian",
+  "effects": [
+   "Conjure Dwarven Sphere Guardian",
+   "Conjure Dwarven Sphere Guardian"
+  ]
+ },
+ {
+  "spell": "10353B",
+  "name": "Conjure Dwarven Sphere Master",
+  "edid": "JConjureDwarvenSphereMaster",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Dwarven Sphere Master",
+  "effects": [
+   "Conjure Dwarven Sphere Master",
+   "Conjure Dwarven Sphere Master"
+  ]
+ },
+ {
+  "spell": "10353A",
+  "name": "Conjure Dwarven Spider",
+  "edid": "JConjureDwarvenSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Dwarven Spider",
+  "effects": [
+   "Conjure Dwarven Spider",
+   "Conjure Dwarven Spider"
+  ]
+ },
+ {
+  "spell": "103537",
+  "name": "Conjure Dwarven Spider Guardian",
+  "edid": "JConjureDwarvenSpiderGuardian",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Dwarven Spider Guardian",
+  "effects": [
+   "Conjure Dwarven Spider Guardian",
+   "Conjure Dwarven Spider Guardian"
+  ]
+ },
+ {
+  "spell": "103535",
+  "name": "Conjure Dwarven Spider Worker",
+  "edid": "JConjureDwarvenSpiderWorker",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Dwarven Spider Worker",
+  "effects": [
+   "Conjure Dwarven Spider Worker",
+   "Conjure Dwarven Spider Worker"
+  ]
+ },
+ {
+  "spell": "1034FA",
+  "name": "Conjure Executioner",
+  "edid": "JConjureExecutioner",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Executioner",
+  "effects": [
+   "Conjure Executioner",
+   "Conjure Executioner"
+  ]
+ },
+ {
+  "spell": "1034E4",
+  "name": "Conjure Falkreath Guard",
+  "edid": "JConjureGuardFalkreath",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Falkreath Guard",
+  "effects": [
+   "Conjure Falkreath Guard",
+   "Conjure Falkreath Guard"
+  ]
+ },
+ {
+  "spell": "177B05",
+  "name": "Conjure Falmer Army",
+  "edid": "JConjureFalmerArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Falmer Army",
+  "effects": [
+   "Conjure Frozen Falmer",
+   "Conjure Frozen Falmer",
+   "Conjure Falmer Shadowmaster",
+   "Conjure Falmer Shadowmaster",
+   "Conjure Falmer Shadowmaster",
+   "Conjure Falmer Shadowmaster",
+   "Conjure Falmer Shadowmaster",
+   "Conjure Falmer Shadowmaster",
+   "Conjure Falmer Shadowmaster",
+   "Conjure Falmer Shadowmaster",
+   "Conjure Falmer Shadowmaster",
+   "Conjure Falmer Shadowmaster",
+   "Conjure Falmer Warmonger",
+   "Conjure Falmer Warmonger",
+   "Conjure Falmer Warmonger",
+   "Conjure Falmer Warmonger",
+   "Conjure Falmer Warmonger",
+   "Conjure Falmer Warmonger"
+  ]
+ },
+ {
+  "spell": "1729FD",
+  "name": "Conjure Falmer Shadowmaster",
+  "edid": "JConjureFalmerShadowmaster",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Falmer Shadowmaster",
+  "effects": [
+   "Conjure Falmer Shadowmaster",
+   "Conjure Falmer Shadowmaster"
+  ]
+ },
+ {
+  "spell": "172A00",
+  "name": "Conjure Falmer Warmonger",
+  "edid": "JConjureFalmerWarmonger",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Falmer Warmonger",
+  "effects": [
+   "Conjure Falmer Warmonger",
+   "Conjure Falmer Warmonger"
+  ]
+ },
+ {
+  "spell": "13AE39",
+  "name": "Conjure Farkas",
+  "edid": "JConjureFarkas",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Farkas",
+  "effects": [
+   "Conjure Farkas",
+   "Conjure Farkas"
+  ]
+ },
+ {
+  "spell": "0290A3",
+  "name": "Conjure Felldir the Old",
+  "edid": "JConjureFelldir",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Felldir the Old",
+  "effects": [
+   "Conjure Felldir the Old",
+   "Conjure Felldir the Old"
+  ]
+ },
+ {
+  "spell": "14F281",
+  "name": "Conjure Fire Mage",
+  "edid": "JConjureMageFire",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Fire Mage",
+  "effects": [
+   "Conjure Fire Mage",
+   "Conjure Fire Mage"
+  ]
+ },
+ {
+  "spell": "103607",
+  "name": "Conjure Flame Cloaked Spider",
+  "edid": "JConjureFlameCloakedSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Flame Cloaked Spider",
+  "effects": [
+   "Conjure Flame Cloaked Spider",
+   "Conjure Flame Cloaked Spider"
+  ]
+ },
+ {
+  "spell": "1035A1",
+  "name": "Conjure Forge Master",
+  "edid": "JConjureForgeMaster",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure The Forgemaster",
+  "effects": [
+   "Conjure Forge Master",
+   "Conjure Forge Master"
+  ]
+ },
+ {
+  "spell": "15E5D4",
+  "name": "Conjure Forsworn Army",
+  "edid": "JConjureForswornArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Forsworn Army",
+  "effects": [
+   "Conjure Forsworn Briarheart",
+   "Conjure Forsworn Briarheart",
+   "Conjure Forsworn Ravager",
+   "Conjure Forsworn Ravager",
+   "Conjure Forsworn Ravager",
+   "Conjure Forsworn Ravager",
+   "Conjure Forsworn Ravager",
+   "Conjure Forsworn Ravager",
+   "Conjure Forsworn Ravager",
+   "Conjure Forsworn Ravager",
+   "Conjure Forsworn Ravager",
+   "Conjure Forsworn Ravager",
+   "Conjure Forsworn Warlord",
+   "Conjure Forsworn Warlord",
+   "Conjure Forsworn Warlord",
+   "Conjure Forsworn Warlord",
+   "Conjure Forsworn Warlord",
+   "Conjure Forsworn Warlord"
+  ]
+ },
+ {
+  "spell": "14F2A8",
+  "name": "Conjure Forsworn Briarheart",
+  "edid": "JConjureForswornBriarheart",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Forsworn Briarheart",
+  "effects": [
+   "Conjure Forsworn Briarheart",
+   "Conjure Forsworn Briarheart"
+  ]
+ },
+ {
+  "spell": "14F2A2",
+  "name": "Conjure Forsworn Ravager",
+  "edid": "JConjureForswornRavager",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Forsworn Ravager",
+  "effects": [
+   "Conjure Forsworn Ravager",
+   "Conjure Forsworn Ravager"
+  ]
+ },
+ {
+  "spell": "14F2A6",
+  "name": "Conjure Forsworn Warlord",
+  "edid": "JConjureForswornWarlord",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Forsworn Warlord",
+  "effects": [
+   "Conjure Forsworn Warlord",
+   "Conjure Forsworn Warlord"
+  ]
+ },
+ {
+  "spell": "103486",
+  "name": "Conjure Fox",
+  "edid": "JConjureFox",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 50,
+  "tome": "Spell Tome: Conjure Fox",
+  "effects": [
+   "Conjure Fox"
+  ]
+ },
+ {
+  "spell": "103608",
+  "name": "Conjure Frost Cloaked Spider",
+  "edid": "JConjureFrostCloakedSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Frost Cloaked Spider",
+  "effects": [
+   "Conjure Frost Cloaked Spider",
+   "Conjure Frost Cloaked Spider"
+  ]
+ },
+ {
+  "spell": "1035A2",
+  "name": "Conjure Frost Giant",
+  "edid": "JConjureFrostGiant",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Frost Giant",
+  "effects": [
+   "Conjure Frost Giant",
+   "Conjure Frost Giant"
+  ]
+ },
+ {
+  "spell": "1729FE",
+  "name": "Conjure Frozen Falmer",
+  "edid": "JConjureFalmerFrozen",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Frozen Falmer",
+  "effects": [
+   "Conjure Frozen Falmer",
+   "Conjure Frozen Falmer"
+  ]
+ },
+ {
+  "spell": "103569",
+  "name": "Conjure Gargoyle",
+  "edid": "JConjureGargoyle",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Gargoyle",
+  "effects": [
+   "Conjure Gargoyle",
+   "Conjure Gargoyle"
+  ]
+ },
+ {
+  "spell": "00FB2B",
+  "name": "Conjure General Tullius",
+  "edid": "JConjureGeneralTullius",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure General Tullius",
+  "effects": [
+   "Conjure General Tullius",
+   "Conjure General Tullius"
+  ]
+ },
+ {
+  "spell": "10349E",
+  "name": "Conjure Giant",
+  "edid": "JConjureGiant",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Giant",
+  "effects": [
+   "Conjure Giant",
+   "Conjure Giant"
+  ]
+ },
+ {
+  "spell": "10349D",
+  "name": "Conjure Giant Spider",
+  "edid": "JConjureGiantSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Giant Spider",
+  "effects": [
+   "Conjure Giant Spider",
+   "Conjure Giant Spider"
+  ]
+ },
+ {
+  "spell": "103533",
+  "name": "Conjure Goat",
+  "edid": "JConjureGoat",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 50,
+  "tome": "Spell Tome: Conjure Goat",
+  "effects": [
+   "Conjure Goat"
+  ]
+ },
+ {
+  "spell": "0290A4",
+  "name": "Conjure Gormlaith Golden-Hilt",
+  "edid": "JConjureGormlaith",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Gormlaith Golden-Hilt",
+  "effects": [
+   "Conjure Gormlaith Golden-Hilt",
+   "Conjure Gormlaith Golden-Hilt"
+  ]
+ },
+ {
+  "spell": "103513",
+  "name": "Conjure Greybeard",
+  "edid": "JConjureGreybeard",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Greybeard",
+  "effects": [
+   "Conjure Greybeard",
+   "Conjure Greybeard"
+  ]
+ },
+ {
+  "spell": "0B1DA3",
+  "name": "Conjure Guard Army",
+  "edid": "JConjureGuardArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Guard Army",
+  "effects": [
+   "Conjure Dawnstar Guard",
+   "Conjure Dawnstar Guard",
+   "Conjure Falkreath Guard",
+   "Conjure Falkreath Guard",
+   "Conjure Markarth Guard",
+   "Conjure Markarth Guard",
+   "Conjure Morthal Guard",
+   "Conjure Morthal Guard",
+   "Conjure Redoran Guard",
+   "Conjure Redoran Guard",
+   "Conjure Riften Guard",
+   "Conjure Riften Guard",
+   "Conjure Solitude Guard",
+   "Conjure Solitude Guard",
+   "Conjure Whiterun Guard",
+   "Conjure Whiterun Guard",
+   "Conjure Windhelm Guard",
+   "Conjure Windhelm Guard",
+   "Conjure Winterhold Guard",
+   "Conjure Winterhold Guard"
+  ]
+ },
+ {
+  "spell": "13FF66",
+  "name": "Conjure Guardian",
+  "edid": "JConjureGuardian",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Guardian",
+  "effects": [
+   "Conjure Guardian"
+  ]
+ },
+ {
+  "spell": "103496",
+  "name": "Conjure Hagraven",
+  "edid": "JConjureHagraven",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Hagraven",
+  "effects": [
+   "Conjure Hagraven",
+   "Conjure Hagraven"
+  ]
+ },
+ {
+  "spell": "0290A6",
+  "name": "Conjure Hakon One-Eye",
+  "edid": "JConjureHakon",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Hakon One-Eye",
+  "effects": [
+   "Conjure Hakon One-Eye",
+   "Conjure Hakon One-Eye"
+  ]
+ },
+ {
+  "spell": "0750D5",
+  "name": "Conjure Hallowed Death",
+  "edid": "JConjureDraugrSpectral",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Hallowed Death",
+  "effects": [
+   "Conjure Spectral Draugr",
+   "Conjure Spectral Draugr"
+  ]
+ },
+ {
+  "spell": "1E72FD",
+  "name": "Conjure Headless Horseman",
+  "edid": "JConjureHeadlessHorseman",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Headless Horseman",
+  "effects": [
+   "Conjure Headless Horseman",
+   "Conjure Headless Horseman"
+  ]
+ },
+ {
+  "spell": "0C61F9",
+  "name": "Conjure Hero Army",
+  "edid": "JConjureHeroArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Hero Army",
+  "effects": [
+   "Conjure Felldir The Old",
+   "Conjure Felldir The Old",
+   "Conjure Gormlaith Golden-Hilt",
+   "Conjure Gormlaith Golden-Hilt",
+   "Conjure Hakon One-Eye",
+   "Conjure Hakon One-Eye",
+   "Conjure Torygg",
+   "Conjure Torygg",
+   "Conjure Jurgen Windcaller",
+   "Conjure Jurgen Windcaller",
+   "Conjure Ysgramor",
+   "Conjure Ysgramor",
+   "Conjure Olaf One-Eye",
+   "Conjure Olaf One-Eye"
+  ]
+ },
+ {
+  "spell": "1034FE",
+  "name": "Conjure High King Torygg",
+  "edid": "JConjureHighKingTorygg",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure High King Torygg",
+  "effects": [
+   "Conjure High King Torygg",
+   "Conjure High King Torygg"
+  ]
+ },
+ {
+  "spell": "10348D",
+  "name": "Conjure Horker",
+  "edid": "JConjurerHorker",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Horker",
+  "effects": [
+   "Conjure Horker",
+   "Conjure Horker"
+  ]
+ },
+ {
+  "spell": "10348E",
+  "name": "Conjure Horse",
+  "edid": "JConjurerHorse",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Horse",
+  "effects": [
+   "Conjure Horse"
+  ]
+ },
+ {
+  "spell": "10356D",
+  "name": "Conjure Husky",
+  "edid": "JConjureHusky",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Husky",
+  "effects": [
+   "Conjure Husky",
+   "Conjure Husky"
+  ]
+ },
+ {
+  "spell": "14F283",
+  "name": "Conjure Ice Mage",
+  "edid": "JConjureMageIce",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Ice Mage",
+  "effects": [
+   "Conjure Ice Mage",
+   "Conjure Ice Mage"
+  ]
+ },
+ {
+  "spell": "13AE22",
+  "name": "Conjure Ice Wolf",
+  "edid": "JConjureIceWolf",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Ice Wolf",
+  "effects": [
+   "Conjure Ice Wolf",
+   "Conjure Ice Wolf"
+  ]
+ },
+ {
+  "spell": "1034F2",
+  "name": "Conjure Ice Wraith",
+  "edid": "JConjureIceWraith",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Ice Wraith",
+  "effects": [
+   "Conjure Ice Wraith",
+   "Conjure Ice Wraith"
+  ]
+ },
+ {
+  "spell": "0A2A44",
+  "name": "Conjure Imperial Army",
+  "edid": "JConjureImperialArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Imperial Army",
+  "effects": [
+   "Conjure Imperial Officer",
+   "Conjure Imperial Officer",
+   "Conjure Imperial Officer",
+   "Conjure Imperial Officer",
+   "Conjure General Tullius",
+   "Conjure General Tullius",
+   "Conjure Imperial Soldier",
+   "Conjure Imperial Soldier",
+   "Conjure Imperial Soldier",
+   "Conjure Imperial Soldier",
+   "Conjure Imperial Soldier",
+   "Conjure Imperial Soldier",
+   "Conjure Imperial Soldier",
+   "Conjure Imperial Soldier",
+   "Conjure Imperial Soldier",
+   "Conjure Imperial Soldier",
+   "Conjure Imperial Soldier",
+   "Conjure Imperial Soldier"
+  ]
+ },
+ {
+  "spell": "00FB29",
+  "name": "Conjure Imperial Officer",
+  "edid": "JConjureImperialOfficer",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Imperial Officer",
+  "effects": [
+   "Conjure Imperial Officer",
+   "Conjure Imperial Officer"
+  ]
+ },
+ {
+  "spell": "102EB7",
+  "name": "Conjure Imperial Officer Toy",
+  "edid": "JConjureImperialOfficerToy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Imperial Officer Toy",
+  "effects": [
+   "Conjure Imperial Officer Toy"
+  ]
+ },
+ {
+  "spell": "00FB28",
+  "name": "Conjure Imperial Soldier",
+  "edid": "JConjureImperialSoldier",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Imperial Soldier",
+  "effects": [
+   "Conjure Imperial Soldier",
+   "Conjure Imperial Soldier"
+  ]
+ },
+ {
+  "spell": "102EB5",
+  "name": "Conjure Imperial Soldier Toy",
+  "edid": "JConjureImperialSoldierToy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Imperial Soldier Toy",
+  "effects": [
+   "Conjure Imperial Soldier Toy"
+  ]
+ },
+ {
+  "spell": "1035A3",
+  "name": "Conjure Isran",
+  "edid": "JConjureIsran",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Isran",
+  "effects": [
+   "Conjure Isran",
+   "Conjure Isran"
+  ]
+ },
+ {
+  "spell": "103613",
+  "name": "Conjure Jumping Flame Spider",
+  "edid": "JConjureJumpingFlameSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Jumping Flame Spider",
+  "effects": [
+   "Conjure Jumping Flame Spider",
+   "Conjure Jumping Flame Spider"
+  ]
+ },
+ {
+  "spell": "103614",
+  "name": "Conjure Jumping Frost Spider",
+  "edid": "JConjureJumpingFrostSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Jumping Frost Spider",
+  "effects": [
+   "Conjure Jumping Frost Spider",
+   "Conjure Jumping Frost Spider"
+  ]
+ },
+ {
+  "spell": "103615",
+  "name": "Conjure Jumping Poison Spider",
+  "edid": "JConjureJumpingPoisonSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Jumping Poison Spider",
+  "effects": [
+   "Conjure Jumping Poison Spider",
+   "Conjure Jumping Poison Spider"
+  ]
+ },
+ {
+  "spell": "103616",
+  "name": "Conjure Jumping Shock Spider",
+  "edid": "JConjureJumpingShockSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Jumping Shock Spider",
+  "effects": [
+   "Conjure Jumping Shock Spider",
+   "Conjure Jumping Shock Spider"
+  ]
+ },
+ {
+  "spell": "0290AA",
+  "name": "Conjure Jurgen Windcaller",
+  "edid": "JConjureJurgen",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Jurgen Windcaller",
+  "effects": [
+   "Conjure Jurgen Windcaller",
+   "Conjure Jurgen Windcaller"
+  ]
+ },
+ {
+  "spell": "1E72F6",
+  "name": "Conjure Karliah",
+  "edid": "JConjureKarliah",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Karliah",
+  "effects": [
+   "Conjure Karliah",
+   "Conjure Karliah"
+  ]
+ },
+ {
+  "spell": "103618",
+  "name": "Conjure Karstaag",
+  "edid": "JConjureKarstaag",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Karstaag",
+  "effects": [
+   "Conjure Karstaag",
+   "Conjure Karstaag"
+  ]
+ },
+ {
+  "spell": "10355A",
+  "name": "Conjure Keeper Archer",
+  "edid": "JConjureKeeperArcher",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Keeper Archer",
+  "effects": [
+   "Conjure Keeper Archer",
+   "Conjure Keeper Archer"
+  ]
+ },
+ {
+  "spell": "103557",
+  "name": "Conjure Keeper Guardian",
+  "edid": "JConjureKeeperGuardian",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Keeper Guardian",
+  "effects": [
+   "Conjure Keeper Guardian",
+   "Conjure Keeper Guardian"
+  ]
+ },
+ {
+  "spell": "103554",
+  "name": "Conjure Keeper Two-Handed",
+  "edid": "JConjureKeeper2handed",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Keeper Two-Handed",
+  "effects": [
+   "Conjure Keeper Two-Handed",
+   "Conjure Keeper Two-Handed"
+  ]
+ },
+ {
+  "spell": "13AE34",
+  "name": "Conjure Kodlak Whitemane",
+  "edid": "JConjureKodlakWhiteman",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Kodlak Whitemane",
+  "effects": [
+   "Conjure Kodlak Whiteman",
+   "Conjure Kodlak Whiteman"
+  ]
+ },
+ {
+  "spell": "00FB19",
+  "name": "Conjure Krosis",
+  "edid": "JConjureKrosis",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Dragon Priest Krosis",
+  "effects": [
+   "Conjure Krosis",
+   "Conjure Krosis"
+  ]
+ },
+ {
+  "spell": "103494",
+  "name": "Conjure Large Spider",
+  "edid": "JConjureLargeSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Large Spider",
+  "effects": [
+   "Conjure Large Spider",
+   "Conjure Large Spider"
+  ]
+ },
+ {
+  "spell": "1035A5",
+  "name": "Conjure Lord Harkon",
+  "edid": "JConjureHarkon",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Lord Harkon",
+  "effects": [
+   "Conjure Lord Harkon",
+   "Conjure Lord Harkon"
+  ]
+ },
+ {
+  "spell": "10360F",
+  "name": "Conjure Lurker Sentinel",
+  "edid": "JConjureLurkerSentinel",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Lurker Sentinel",
+  "effects": [
+   "Conjure Lurker Sentinel",
+   "Conjure Lurker Sentinel"
+  ]
+ },
+ {
+  "spell": "103612",
+  "name": "Conjure Lurker Vanguard",
+  "edid": "JConjureLurkerVanguard",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Lurker Vanguard",
+  "effects": [
+   "Conjure Lurker Vanguard",
+   "Conjure Lurker Vanguard"
+  ]
+ },
+ {
+  "spell": "103619",
+  "name": "Conjure Lurker Vindicator",
+  "edid": "JConjureLurkerVindicator",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Lurker Vindicator",
+  "effects": [
+   "Conjure Lurker Vindicator",
+   "Conjure Lurker Vindicator"
+  ]
+ },
+ {
+  "spell": "17CC0F",
+  "name": "Conjure Mage Army",
+  "edid": "JConjureMageArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Mage Army",
+  "effects": [
+   "Conjure Chock Mage",
+   "Conjure Fire Mage",
+   "Conjure Ice Mage",
+   "Conjure Conjurer"
+  ]
+ },
+ {
+  "spell": "1034BD",
+  "name": "Conjure Magic Anomaly",
+  "edid": "JConjureMagicAnomaly",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Magic Anomaly",
+  "effects": [
+   "Conjure Magic Anomaly",
+   "Conjure Magic Anomaly"
+  ]
+ },
+ {
+  "spell": "019D6A",
+  "name": "Conjure Mammoth",
+  "edid": "JConjureMammoth",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Mammoth",
+  "effects": [
+   "Conjure Mammoth",
+   "Conjure Mammoth"
+  ]
+ },
+ {
+  "spell": "1034E3",
+  "name": "Conjure Markarth Guard",
+  "edid": "JConjureGuardMarkarth",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Markarth Guard",
+  "effects": [
+   "Conjure Markarth Guard",
+   "Conjure Markarth Guard"
+  ]
+ },
+ {
+  "spell": "07A1DF",
+  "name": "Conjure Master Vampire",
+  "edid": "JConjureMasterVampire",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Master Vampire",
+  "effects": [
+   "Conjure Master Vampire",
+   "Conjure Master Vampire"
+  ]
+ },
+ {
+  "spell": "019D6C",
+  "name": "Conjure Meridia",
+  "edid": "JConjureMeridia",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 50,
+  "tome": "Spell Tome: Conjure Meridia",
+  "effects": [
+   "Conjure Meridia"
+  ]
+ },
+ {
+  "spell": "0CB318",
+  "name": "Conjure Miraak",
+  "edid": "JConjureMiraak",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Miraak",
+  "effects": [
+   "Conjure Miraak",
+   "Conjure Miraak"
+  ]
+ },
+ {
+  "spell": "00FB1B",
+  "name": "Conjure Morokei",
+  "edid": "JConjureMorokei",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Dragon Priest Morokei",
+  "effects": [
+   "Conjure Morokei",
+   "Conjure Morokei"
+  ]
+ },
+ {
+  "spell": "1034E2",
+  "name": "Conjure Morthal Guard",
+  "edid": "JConjureGuardMorthal",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Morthal Guard",
+  "effects": [
+   "Conjure Morthal Guard",
+   "Conjure Morthal Guard"
+  ]
+ },
+ {
+  "spell": "10348C",
+  "name": "Conjure Mudcrab",
+  "edid": "JConjurerMudcrab",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Mudcrab",
+  "effects": [
+   "Conjure Mudcrab",
+   "Conjure Mudcrab"
+  ]
+ },
+ {
+  "spell": "103507",
+  "name": "Conjure Necromancer",
+  "edid": "JConjureNecromancer",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Necromancer",
+  "effects": [
+   "Conjure Greater Necromancer"
+  ]
+ },
+ {
+  "spell": "103610",
+  "name": "Conjure Neloth",
+  "edid": "JConjureNeloth",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Neloth",
+  "effects": [
+   "Conjure Neloth",
+   "Conjure Neloth"
+  ]
+ },
+ {
+  "spell": "10360B",
+  "name": "Conjure Netch Betty",
+  "edid": "JConjureNetchBetty",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Netch Betty",
+  "effects": [
+   "Conjure Netch Betty",
+   "Conjure Netch Betty"
+  ]
+ },
+ {
+  "spell": "103602",
+  "name": "Conjure Netch Bull",
+  "edid": "JConjureNetchBull",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Netch Bull",
+  "effects": [
+   "Conjure Netch Bull",
+   "Conjure Netch Bull"
+  ]
+ },
+ {
+  "spell": "1035FF",
+  "name": "Conjure Netch Calf",
+  "edid": "JConjureNetchCalf",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Netch Calf",
+  "effects": [
+   "Conjure Netch Calf",
+   "Conjure Netch Calf"
+  ]
+ },
+ {
+  "spell": "10350D",
+  "name": "Conjure Nightingale",
+  "edid": "JConjureNightingale",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Nightingale",
+  "effects": [
+   "Conjure Nightingale"
+  ]
+ },
+ {
+  "spell": "103600",
+  "name": "Conjure Oil Spider",
+  "edid": "JConjureOilSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Oil Spider",
+  "effects": [
+   "Conjure Oil Spider",
+   "Conjure Oil Spider"
+  ]
+ },
+ {
+  "spell": "0290A8",
+  "name": "Conjure Olaf One-Eye",
+  "edid": "JConjureOlaf",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Olaf One-Eye",
+  "effects": [
+   "Conjure Olaf One-Eye",
+   "Conjure Olaf One-Eye"
+  ]
+ },
+ {
+  "spell": "2A7937",
+  "name": "Conjure Painted Cow",
+  "edid": "JConjureCowPainted",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 50,
+  "tome": "Spell Tome: Conjure Painted Cow",
+  "effects": [
+   "Conjure Painted Cow"
+  ]
+ },
+ {
+  "spell": "019D6E",
+  "name": "Conjure Penitus Oculatus Agent",
+  "edid": "JConjurePenitusOculatusAgent",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Penitus Oculatus Agent",
+  "effects": [
+   "Conjure Penitus Oculatus Agent",
+   "Conjure Penitus Oculatus Agent"
+  ]
+ },
+ {
+  "spell": "0ACC6D",
+  "name": "Conjure Pets",
+  "edid": "JConjurePetArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Pet Army",
+  "effects": [
+   "Conjure Chicken",
+   "Conjure Deer",
+   "Conjure Vale Deer",
+   "Conjure Arctic Fox",
+   "Conjure Fox",
+   "Conjure Goat",
+   "Conjure Meridia",
+   "Conjure Rabbit"
+  ]
+ },
+ {
+  "spell": "103609",
+  "name": "Conjure Poisonous Cloaked Spider",
+  "edid": "JConjurePoisonoutCloakedSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Poisonous Cloaked Spider",
+  "effects": [
+   "Conjure Poisonous Cloaked Spider",
+   "Conjure Poisonous Cloaked Spider"
+  ]
+ },
+ {
+  "spell": "10348A",
+  "name": "Conjure Rabbit",
+  "edid": "JConjurerRabbit",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 50,
+  "tome": "Spell Tome: Conjure Rabbit",
+  "effects": [
+   "Conjure Rabbit"
+  ]
+ },
+ {
+  "spell": "00FB1D",
+  "name": "Conjure Rahgot",
+  "edid": "JConjureRahgot",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Dragon Priest Rahgot",
+  "effects": [
+   "Conjure Rahgot",
+   "Conjure Rahgot"
+  ]
+ },
+ {
+  "spell": "1035A0",
+  "name": "Conjure Reaper",
+  "edid": "JConjureReaper",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Reaper",
+  "effects": [
+   "Conjure Reaper",
+   "Conjure Reaper"
+  ]
+ },
+ {
+  "spell": "019D72",
+  "name": "Conjure Reaver Plunderer",
+  "edid": "JConjureReaverPlunderer",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Reaver Plunderer",
+  "effects": [
+   "Conjure Reaver Plunderer",
+   "Conjure Reaver Plunderer"
+  ]
+ },
+ {
+  "spell": "103606",
+  "name": "Conjure Redoran Guard",
+  "edid": "JConjureRedoranGuard",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Redoran Guard",
+  "effects": [
+   "Conjure Redoran Guard",
+   "Conjure Redoran Guard"
+  ]
+ },
+ {
+  "spell": "27A01F",
+  "name": "Conjure Riekling Army",
+  "edid": "JConjureRieklingArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Riekling Army",
+  "effects": [
+   "Conjure Riekling Charger",
+   "Conjure Riekling Chief",
+   "Conjure Riekling Courser",
+   "Conjure Riekling Warrior",
+   "Conjure Riekling Warrior",
+   "Conjure Riekling Hunter",
+   "Conjure Riekling Hunter",
+   "Conjure Riekling Scout",
+   "Conjure Riekling Scout"
+  ]
+ },
+ {
+  "spell": "10360E",
+  "name": "Conjure Riekling Charger",
+  "edid": "JConjureRieklingCharger",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Riekling Charger",
+  "effects": [
+   "Conjure Riekling Charger",
+   "Conjure Riekling Charger"
+  ]
+ },
+ {
+  "spell": "10361A",
+  "name": "Conjure Riekling Chief",
+  "edid": "JConjureRieklingChief",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Riekling Chief",
+  "effects": [
+   "Conjure Riekling Chief",
+   "Conjure Riekling Chief"
+  ]
+ },
+ {
+  "spell": "103603",
+  "name": "Conjure Riekling Courser",
+  "edid": "JConjureRieklingCourser",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Riekling Courser",
+  "effects": [
+   "Conjure Riekling Courser",
+   "Conjure Riekling Courser"
+  ]
+ },
+ {
+  "spell": "103605",
+  "name": "Conjure Riekling Hunter",
+  "edid": "JConjureRieklingHunter",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Riekling Hunter",
+  "effects": [
+   "Conjure Riekling Hunter",
+   "Conjure Riekling Hunter"
+  ]
+ },
+ {
+  "spell": "103601",
+  "name": "Conjure Riekling Scout",
+  "edid": "JConjureRieklingScout",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Riekling Scout",
+  "effects": [
+   "Conjure Riekling Scout",
+   "Conjure Riekling Scout"
+  ]
+ },
+ {
+  "spell": "103604",
+  "name": "Conjure Riekling Warrior",
+  "edid": "JConjureRieklingWarrior",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Riekling Warrior",
+  "effects": [
+   "Conjure Riekling Warrior",
+   "Conjure Riekling Warrior"
+  ]
+ },
+ {
+  "spell": "1034E1",
+  "name": "Conjure Riften Guard",
+  "edid": "JConjureGuardRiften",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Riften Guard",
+  "effects": [
+   "Conjure Riften Guard",
+   "Conjure Riften Guard"
+  ]
+ },
+ {
+  "spell": "103498",
+  "name": "Conjure Sabre Cat",
+  "edid": "JConjureSabreCat",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Sabre Cat",
+  "effects": [
+   "Conjure Sabre Cat",
+   "Conjure Sabre Cat"
+  ]
+ },
+ {
+  "spell": "0FDD78",
+  "name": "Conjure Serana",
+  "edid": "JConjureSerana",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Serana",
+  "effects": [
+   "Conjure Serana",
+   "Conjure Serana"
+  ]
+ },
+ {
+  "spell": "103495",
+  "name": "Conjure Shade",
+  "edid": "JConjureShade",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Shade",
+  "effects": [
+   "Conjure Shade",
+   "Conjure Shade"
+  ]
+ },
+ {
+  "spell": "10360A",
+  "name": "Conjure Shock Cloaked Spider",
+  "edid": "JConjureShockCloakedSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Shock Cloaked Spider",
+  "effects": [
+   "Conjure Shock Cloaked Spider",
+   "Conjure Shock Cloaked Spider"
+  ]
+ },
+ {
+  "spell": "10348B",
+  "name": "Conjure Skeever",
+  "edid": "JConjurerSkeever",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Skeever",
+  "effects": [
+   "Conjure Skeever",
+   "Conjure Skeever"
+  ]
+ },
+ {
+  "spell": "13AE0A",
+  "name": "Conjure Skeleton Archer",
+  "edid": "JConjureSkeletonArcher",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Skeleton Archer",
+  "effects": [
+   "Conjure Skeleton Archer",
+   "Conjure Skeleton Archer"
+  ]
+ },
+ {
+  "spell": "13AE0B",
+  "name": "Conjure Skeleton Guardian",
+  "edid": "JConjureSkeletonGuardian",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Skeleton Guardian",
+  "effects": [
+   "Conjure Skeleton Guardian",
+   "Conjure Skeleton Guardian"
+  ]
+ },
+ {
+  "spell": "13AE0D",
+  "name": "Conjure Skeleton Warrior",
+  "edid": "JConjureSkeletonWarrior",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Skeleton Warrior",
+  "effects": [
+   "Conjure Skeleton Warrior",
+   "Conjure Skeleton Archer"
+  ]
+ },
+ {
+  "spell": "13AE3B",
+  "name": "Conjure Skjor",
+  "edid": "JConjureSkjor",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Skjor",
+  "effects": [
+   "Conjure Skjor",
+   "Conjure Skjor"
+  ]
+ },
+ {
+  "spell": "103493",
+  "name": "Conjure Snow Bear",
+  "edid": "JConjureBearSnow",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Snow Bear",
+  "effects": [
+   "Conjure Snow Bear",
+   "Conjure Snow Bear"
+  ]
+ },
+ {
+  "spell": "103499",
+  "name": "Conjure Snow Sabre Cat",
+  "edid": "JConjureSnowSabreCat",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Snow Sabre Cat",
+  "effects": [
+   "Conjure Snow Sabre Cat",
+   "Conjure Snow Sabre Cat"
+  ]
+ },
+ {
+  "spell": "1034E0",
+  "name": "Conjure Solitude Guard",
+  "edid": "JConjureGuardSolitude",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Solitude Guard",
+  "effects": [
+   "Conjure Solitude Guard",
+   "Conjure Solitude Guard"
+  ]
+ },
+ {
+  "spell": "1034E0",
+  "name": "Conjure Solitude Guard",
+  "edid": "JConjureGuardSolitude",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Exploding Chicken",
+  "effects": [
+   "Conjure Solitude Guard",
+   "Conjure Solitude Guard"
+  ]
+ },
+ {
+  "spell": "019D74",
+  "name": "Conjure Spectral Dragon",
+  "edid": "JConjureSpectralDragon",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Spectral Dragon",
+  "effects": [
+   "Conjure Spectral Dragon",
+   "Conjure Spectral Dragon"
+  ]
+ },
+ {
+  "spell": "103491",
+  "name": "Conjure Spectral Hound",
+  "edid": "JConjureSpectralHound",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Spectral Hound",
+  "effects": [
+   "Conjure Spectral Hound",
+   "Conjure Spectral Hound"
+  ]
+ },
+ {
+  "spell": "103490",
+  "name": "Conjure Spider",
+  "edid": "JConjureSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Spider",
+  "effects": [
+   "Conjure Spider",
+   "Conjure Spider"
+  ]
+ },
+ {
+  "spell": "0A7B55",
+  "name": "Conjure Spider Army",
+  "edid": "JConjureSpiderArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Spider Army",
+  "effects": [
+   "Conjure Spider",
+   "Conjure Spider",
+   "Conjure Spider",
+   "Conjure Spider",
+   "Conjure Spider",
+   "Conjure Spider",
+   "Conjure Spider",
+   "Conjure Spider",
+   "Conjure Spider",
+   "Conjure Spider",
+   "Conjure Spider",
+   "Conjure Spider",
+   "Conjure Giant Spider",
+   "Conjure Giant Spider",
+   "Conjure Large Spider",
+   "Conjure Large Spider",
+   "Conjure Large Spider",
+   "Conjure Large Spider"
+  ]
+ },
+ {
+  "spell": "2ACA46",
+  "name": "Conjure Spirit Bear",
+  "edid": "JConjureBearSpirit",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Spirit Bear",
+  "effects": [
+   "Conjure Spirit Bear"
+  ]
+ },
+ {
+  "spell": "2ACA45",
+  "name": "Conjure Spirit Mammoth",
+  "edid": "JConjureMammothSpirit",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Spirit Mammoth",
+  "effects": [
+   "Conjure Mammoth Spirit"
+  ]
+ },
+ {
+  "spell": "2ACA48",
+  "name": "Conjure Spirit Sabre Cat",
+  "edid": "JConjureSabreCatSpirit",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Spirit Sabre Cat",
+  "effects": [
+   "Conjure Spirit Sabre Cat"
+  ]
+ },
+ {
+  "spell": "1034BC",
+  "name": "Conjure Spriggan",
+  "edid": "JConjureSpriggan",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Spriggan",
+  "effects": [
+   "Conjure Spriggan",
+   "Conjure Spriggan"
+  ]
+ },
+ {
+  "spell": "10357C",
+  "name": "Conjure Spriggan Earth Mother",
+  "edid": "JConjureSprigganEarthMother",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Spriggan Earth Mother",
+  "effects": [
+   "Conjure Spriggan Earth Mother",
+   "Conjure Spriggan Earth Mother"
+  ]
+ },
+ {
+  "spell": "0A2A3C",
+  "name": "Conjure Stormcloak Army",
+  "edid": "JConjureStormcloakArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Stormcloak Army",
+  "effects": [
+   "Conjure Stormcloak Officer",
+   "Conjure Stormcloak Officer",
+   "Conjure Stormcloak Officer",
+   "Conjure Stormcloak Officer",
+   "Conjure Ulfric Stormcloak",
+   "Conjure Ulfric Stormcloak",
+   "Conjure Stormcloak Soldier",
+   "Conjure Stormcloak Soldier",
+   "Conjure Stormcloak Soldier",
+   "Conjure Stormcloak Soldier",
+   "Conjure Stormcloak Soldier",
+   "Conjure Stormcloak Soldier",
+   "Conjure Stormcloak Soldier",
+   "Conjure Stormcloak Soldier",
+   "Conjure Stormcloak Soldier",
+   "Conjure Stormcloak Soldier",
+   "Conjure Stormcloak Soldier",
+   "Conjure Stormcloak Soldier"
+  ]
+ },
+ {
+  "spell": "1034D8",
+  "name": "Conjure Stormcloak Officer",
+  "edid": "JConjureStormcloaklOfficer",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Stormcloak Officer",
+  "effects": [
+   "Conjure Stormcloak Officer",
+   "Conjure Stormcloak Officer"
+  ]
+ },
+ {
+  "spell": "102EAE",
+  "name": "Conjure Stormcloak Officer Toy",
+  "edid": "JConjureStormcloakOfficerToy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Stormcloak Officer Toy",
+  "effects": [
+   "Conjure Stormcloak Officer Toy"
+  ]
+ },
+ {
+  "spell": "1034D9",
+  "name": "Conjure Stormcloak Soldier",
+  "edid": "JConjureStormcloakSoldier",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Stormcloak Soldier",
+  "effects": [
+   "Conjure Stormcloak Soldier",
+   "Conjure Stormcloak Soldier"
+  ]
+ },
+ {
+  "spell": "102EAF",
+  "name": "Conjure Stormcloak Soldier Toy",
+  "edid": "JConjureStormcloakSoldierToy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Stormcloak Soldier Toy",
+  "effects": [
+   "Conjure Stormcloak Soldier Toy"
+  ]
+ },
+ {
+  "spell": "102E8E",
+  "name": "Conjure Swords",
+  "edid": "JConjureSwords",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Swords",
+  "effects": [
+   "Conjure Swords",
+   "Conjure Swords"
+  ]
+ },
+ {
+  "spell": "102E9B",
+  "name": "Conjure Thalmor Soldier",
+  "edid": "JConjureThalmorSoldier",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Thalmor Soldier",
+  "effects": [
+   "Conjure Thalmor Soldier",
+   "Conjure Thalmor Soldier"
+  ]
+ },
+ {
+  "spell": "102EB3",
+  "name": "Conjure Thalmor Soldier Toy",
+  "edid": "JConjureThalmorSoldierToy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Thalmor Soldier Toy",
+  "effects": [
+   "Conjure Thalmor Soldier Toy"
+  ]
+ },
+ {
+  "spell": "102E9C",
+  "name": "Conjure Thalmor Wizard",
+  "edid": "JConjureThalmorWizard",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Thalmor Wizard",
+  "effects": [
+   "Conjure Thalmor Wizard",
+   "Conjure Thalmor Wizard"
+  ]
+ },
+ {
+  "spell": "102EB1",
+  "name": "Conjure Thalmor Wizard Toy",
+  "edid": "JConjureThalmorWizardToy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Thalmor Wizard Toy",
+  "effects": [
+   "Conjure Thalmor Wizard Toy"
+  ]
+ },
+ {
+  "spell": "019D66",
+  "name": "Conjure The Ebony Warrior",
+  "edid": "JConjureEbonyWarrior",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Ebony Warrior",
+  "effects": [
+   "Conjure Ebony Warrior",
+   "Conjure Ebony Warrior"
+  ]
+ },
+ {
+  "spell": "019D76",
+  "name": "Conjure Thief",
+  "edid": "JConjureThief",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Thief",
+  "effects": [
+   "Conjure Thief",
+   "Conjure Thief"
+  ]
+ },
+ {
+  "spell": "103497",
+  "name": "Conjure Troll",
+  "edid": "JConjureTroll",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Troll",
+  "effects": [
+   "Conjure Troll",
+   "Conjure Troll"
+  ]
+ },
+ {
+  "spell": "0290AC",
+  "name": "Conjure Tsun",
+  "edid": "JConjureTsun",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Tsun",
+  "effects": [
+   "Conjure Tsun",
+   "Conjure Tsun"
+  ]
+ },
+ {
+  "spell": "1034D7",
+  "name": "Conjure Ulfric Stormcloak",
+  "edid": "JConjureUlfricStormcloak",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Ulfric Stormcloak",
+  "effects": [
+   "Conjure Ulfric Stormcloak",
+   "Conjure Ulfric Stormcloak"
+  ]
+ },
+ {
+  "spell": "0CB311",
+  "name": "Conjure Undead Army",
+  "edid": "JConjureUndeadArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Undead Army",
+  "effects": [
+   "Conjure Draugr Overlord",
+   "Conjure Draugr Overlord",
+   "Conjure Morokei",
+   "Conjure Morokei",
+   "Conjure Draugr Deathlord Warrior",
+   "Conjure Draugr Deathlord Warrior",
+   "Conjure Draugr Deathlord Archer",
+   "Conjure Draugr Deathlord Archer",
+   "Conjure Draugr Scourge",
+   "Conjure Draugr Scourge",
+   "Conjure Draugr Scourge",
+   "Conjure Draugr Scourge",
+   "Conjure Draugr Wight",
+   "Conjure Draugr Wight",
+   "Conjure Draugr Wight",
+   "Conjure Draugr Wight",
+   "Conjure Draugr Wight",
+   "Conjure Draugr Wight"
+  ]
+ },
+ {
+  "spell": "103571",
+  "name": "Conjure Vale Deer",
+  "edid": "JConjureValeDeer",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 50,
+  "tome": "Spell Tome: Conjure Vale Deer",
+  "effects": [
+   "Conjure Vale Deer"
+  ]
+ },
+ {
+  "spell": "10357D",
+  "name": "Conjure Vale Sabre Cat",
+  "edid": "JConjureValeSabreCat",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Vale Sabre Cat",
+  "effects": [
+   "Conjure Vale Sabre Cat",
+   "Conjure Vale Sabre Cat"
+  ]
+ },
+ {
+  "spell": "1035A4",
+  "name": "Conjure Valerica",
+  "edid": "JConjureValerica",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Valerica",
+  "effects": [
+   "Conjure Valerica",
+   "Conjure Valerica"
+  ]
+ },
+ {
+  "spell": "0B1DBC",
+  "name": "Conjure Vampire Army",
+  "edid": "JConjureVampireArmy",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 1000,
+  "tome": "Spell Tome: Conjure Vampire Army",
+  "effects": [
+   "Conjure Vampire Lord",
+   "Conjure Vampire Lord",
+   "Conjure Vampire Mistwalker",
+   "Conjure Vampire Mistwalker",
+   "Conjure Vampire Mistwalker",
+   "Conjure Vampire Mistwalker",
+   "Conjure Master Vampire",
+   "Conjure Master Vampire",
+   "Conjure Gargoyle",
+   "Conjure Gargoyle",
+   "Conjure Gargoyle",
+   "Conjure Gargoyle",
+   "Conjure Death Hound",
+   "Conjure Death Hound",
+   "Conjure Death Hound",
+   "Conjure Death Hound",
+   "Conjure Harkon",
+   "Conjure Harkon"
+  ]
+ },
+ {
+  "spell": "10357E",
+  "name": "Conjure Vampire Hunter",
+  "edid": "JConjureVampireHunter",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Vampire Hunter",
+  "effects": [
+   "Conjure Vampire Hunter",
+   "Conjure Vampire Hunter"
+  ]
+ },
+ {
+  "spell": "103574",
+  "name": "Conjure Vampire Lord Serana",
+  "edid": "JConjureSeranaVL1",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Vampire Lord Serana",
+  "effects": [
+   "Conjure Serana Vampire Lord",
+   "Conjure Serana Vampire Lord"
+  ]
+ },
+ {
+  "spell": "07A1E0",
+  "name": "Conjure Vampire Mistwalker",
+  "edid": "JConjureVampireMistwalker",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Vampire Mistwalker",
+  "effects": [
+   "Conjure Vampire Mistwalker",
+   "Conjure Vampire Mistwalker"
+  ]
+ },
+ {
+  "spell": "13AE37",
+  "name": "Conjure Vilkas",
+  "edid": "JConjureVilkas",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Vilkas",
+  "effects": [
+   "Conjure Vilkas",
+   "Conjure Vilkas"
+  ]
+ },
+ {
+  "spell": "103611",
+  "name": "Conjure Werebear",
+  "edid": "JConjureWerebear",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 400,
+  "tome": "Spell Tome: Conjure Werebear",
+  "effects": [
+   "Conjure Werebear",
+   "Conjure Werebear"
+  ]
+ },
+ {
+  "spell": "1034A0",
+  "name": "Conjure Werewolf",
+  "edid": "JConjureWerewolf",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Werewolf",
+  "effects": [
+   "Conjure Werewolf",
+   "Conjure Werewolf"
+  ]
+ },
+ {
+  "spell": "019D7A",
+  "name": "Conjure Whispering Spirit",
+  "edid": "JConjureWhisperingSpirit",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Whispering Spirit",
+  "effects": [
+   "Conjure Whispering Spirit",
+   "Conjure Whispering Spirit"
+  ]
+ },
+ {
+  "spell": "2A793A",
+  "name": "Conjure White Stag",
+  "edid": "JConjureWhiteStag",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 50,
+  "tome": "Spell Tome: Conjure White Stag",
+  "effects": [
+   "Conjure White Stag"
+  ]
+ },
+ {
+  "spell": "1034DF",
+  "name": "Conjure Whiterun Guard",
+  "edid": "JConjureGuardWhiterun",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Whiterun Guard",
+  "effects": [
+   "Conjure Whiterun Guard",
+   "Conjure Whiterun Guard"
+  ]
+ },
+ {
+  "spell": "1034DE",
+  "name": "Conjure Windhelm Guard",
+  "edid": "JConjureGuardWindhelm",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Windhelm Guard",
+  "effects": [
+   "Conjure Windhelm Guard",
+   "Conjure Windhelm Guard"
+  ]
+ },
+ {
+  "spell": "1034DD",
+  "name": "Conjure Winterhold Guard",
+  "edid": "JConjureGuardWinterhold",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Winterhold Guard",
+  "effects": [
+   "Conjure Winterhold Guard",
+   "Conjure Winterhold Guard"
+  ]
+ },
+ {
+  "spell": "019D78",
+  "name": "Conjure Wisp",
+  "edid": "JConjureWisp",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 250,
+  "tome": "Spell Tome: Conjure Wisp",
+  "effects": [
+   "Conjure Wisp",
+   "Conjure Wisp"
+  ]
+ },
+ {
+  "spell": "10349F",
+  "name": "Conjure Wisp Mother",
+  "edid": "JConjureWispMother",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Wisp Mother",
+  "effects": [
+   "Conjure Wisp Mother",
+   "Conjure Wisp Mother"
+  ]
+ },
+ {
+  "spell": "103506",
+  "name": "Conjure Wizard",
+  "edid": "JConjureWizard",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Wizard",
+  "effects": [
+   "Conjure Wizard"
+  ]
+ },
+ {
+  "spell": "13AE21",
+  "name": "Conjure Wolf",
+  "edid": "JConjureWolf",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 175,
+  "tome": "Spell Tome: Conjure Wolf",
+  "effects": [
+   "Conjure Wolf",
+   "Conjure Wolf"
+  ]
+ },
+ {
+  "spell": "019D7C",
+  "name": "Conjure Ysgramor",
+  "edid": "JConjureYsgramor",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Ysgramor",
+  "effects": [
+   "Conjure Ysgramor",
+   "Conjure Ysgramor"
+  ]
+ },
+ {
+  "spell": "00FB1F",
+  "name": "Conjure Zakriisos",
+  "edid": "JConjureZakriisos",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 500,
+  "tome": "Spell Tome: Conjure Dragon Priest Zakriisos",
+  "effects": [
+   "Conjure Zahkriisos",
+   "Conjure Zahkriisos"
+  ]
+ },
+ {
+  "spell": "0936F2",
+  "name": "Return To Sender",
+  "edid": "JReturnToSenderSpell",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 1,
+  "tome": "Spell Tome: Return To Sender",
+  "effects": [
+   "Return To Sender"
+  ]
+ }
+]

@@ -711,6 +711,57 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 		}
 
+		// (the classes overhaul) the class picker: four cards across the screen, the chosen one lit in its colour
+		void DrawClassPicker(ImDrawList* dl, ImVec2 size, float k, float now)
+		{
+			struct Card { const char* name; ImU32 col; const char* tag; const char* arms; const char* grow; const char* kit; };
+			static const Card kCards[4] = {
+				{ "SUMMONER", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild",
+				  "Bind Pact: raise each family's summon at the altar", "Conjure Skeleton, Conjure Wolf, the Wandering Summoner's robes" },
+				{ "DESTRUCTION", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Two-handed casting: fire, frost, shock, sun, poison, blood",
+				  "Reforge: climb each element's ladder to its Legendary spell", "Scorch, Hoarfrost, the Wild Witch's hat and gown" },
+				{ "RANGER", IM_COL32(110, 210, 120, 255), "Bows and crossbows - and every arrow counts", "The six elemental bows, crossbows and their bolts",
+				  "Mastery: a bow's kills raise its tier; buy ammo at the altars", "An elemental bow, the Dawnguard Crossbow, 30 bolts" },
+				{ "SPELLSWORD", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "Spell-weapons, spellshields, touch spells, The Wizard Warrior",
+				  "Imbue: raise each element's touch spell; power attacks cast your spell", "Steel Spellsword, Steel Spellshield, Flame Touch" } };
+			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));
+			TxtC(dl, g_title, 46 * k, size.x * 0.5f, size.y * 0.12f, kParch, Classes::Switching() ? "CHANGE YOUR PATH" : "CHOOSE YOUR PATH", 3 * k, Fade(kGold, 0.6f));
+			const std::string sub = Classes::Switching() ? "Switching costs " + std::to_string(Classes::SwitchCost()) + " septims. Each class keeps its own spells and progress."
+			                                             : "Each player picks their own path. Duplicates are allowed.";
+			TxtC(dl, g_body, 20 * k, size.x * 0.5f, size.y * 0.12f + 58 * k, IM_COL32(210, 200, 180, 230), sub);
+			const float cw = 330 * k, ch = 430 * k, gap = 26 * k;
+			const float x0 = size.x * 0.5f - (cw * 4 + gap * 3) * 0.5f, y0 = size.y * 0.5f - ch * 0.5f + 20 * k;
+			const int   sel = Classes::Selected(), cur = Classes::Get();
+			for (int i = 0; i < 4; ++i) {
+				const Card& c = kCards[i];
+				const bool  on = i == sel;
+				const float lift = on ? (6 + 2 * std::sin(now * 3.0f)) * k : 0.0f;
+				const ImVec2 a{ x0 + i * (cw + gap), y0 - lift }, b{ a.x + cw, a.y + ch };
+				Panel(dl, a, b, k, on ? 1.0f : 0.75f);
+				if (on) {
+					dl->AddRect({ a.x - 3 * k, a.y - 3 * k }, { b.x + 3 * k, b.y + 3 * k }, Fade(c.col, 0.9f), 10 * k, 0, 2.5f * k);
+					dl->AddRectFilledMultiColor(a, { b.x, a.y + 90 * k }, Fade(c.col, 0.28f), Fade(c.col, 0.28f), Fade(c.col, 0.0f), Fade(c.col, 0.0f));
+				}
+				const float cx = (a.x + b.x) * 0.5f;
+				TxtC(dl, g_body, 16 * k, cx, a.y + 18 * k, Fade(c.col, 0.9f), std::to_string(i + 1));
+				TxtC(dl, g_title, 30 * k, cx, a.y + 38 * k, on ? IM_COL32(255, 248, 232, 255) : kParch, c.name, on ? 2.5f * k : 0, Fade(c.col, 0.8f));
+				TxtWrap(dl, g_body, 18 * k, { a.x + 22 * k, a.y + 92 * k }, IM_COL32(236, 226, 206, 245), c.tag, cw - 44 * k, 2);
+				float y = a.y + 150 * k;
+				const auto sec = [&](const char* h, const char* t) {
+					Txt(dl, g_body, 14 * k, { a.x + 22 * k, y }, Fade(c.col, 0.95f), h);
+					const int n = TxtWrap(dl, g_body, 16 * k, { a.x + 22 * k, y + 20 * k }, IM_COL32(205, 196, 178, 235), t, cw - 44 * k, 3);
+					y += 28 * k + n * 20 * k;
+				};
+				sec("FIGHTS WITH", c.arms);
+				sec("GROWS BY", c.grow);
+				sec("STARTS WITH", c.kit);
+				if (i == cur) TxtC(dl, g_body, 15 * k, cx, b.y - 30 * k, IM_COL32(255, 210, 110, 255), "YOUR CLASS");
+			}
+			const std::string hint = g_padLast ? (Classes::Switching() ? "D-pad  choose      A  take this path      B  keep yours" : "D-pad  choose      A  take this path")
+			                                   : (Classes::Switching() ? "1-4 or Left / Right  choose      Enter  take this path      Backspace  keep yours" : "1-4 or Left / Right  choose      Enter  take this path");
+			TxtC(dl, g_body, 19 * k, size.x * 0.5f, y0 + ch + 40 * k, IM_COL32(230, 220, 200, 240), hint);
+		}
+
 		void Draw(const Hud::State& s, ImVec2 size)
 		{
 			auto*       dl = ImGui::GetForegroundDrawList();
@@ -724,6 +775,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			const float dt = ImGui::GetIO().DeltaTime;
 			roundFlash = std::max(0.0f, roundFlash - dt);
+			if (Classes::Open()) {  // (the class picker takes the whole screen)
+				DrawClassPicker(dl, size, k, now);
+				return;
+			}
 
 			// The shrine's orb in the crosshair: what Activate does (its aura of cold flame is 3D now, in crystal.nif)
 			if (s.orbOn && s.orbAim && s.orbFade > 0.01f && !s.perkMenu) {
@@ -2627,6 +2682,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					bullet({ L, y + 2 * k }, 20, true);
 					Txt(dl, g_title, 20 * k, { L + 36 * k, y + 4 * k }, IM_COL32(210, 196, 170, 255), "LEAVE THE ALTAR");
 					y += 44 * k;
+					// (the classes overhaul) changing class here
+					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "Back" : "C") + "   Change class  (" + std::to_string(Classes::SwitchCost()) + " septims)  -  now " + std::string(Classes::Name(Classes::Get())));
+					y += 26 * k;
 				}
 				dl->PopClipRect();
 				// keep the row in focus in view (next frame)

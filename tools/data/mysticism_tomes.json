@@ -1,0 +1,2916 @@
+[
+ {
+  "spell": "0B62E6",
+  "name": "Debilitation",
+  "edid": "MAG_Debilitation",
+  "school": "-1",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 958,
+  "tome": "Spell Tome: Debilitation",
+  "effects": [
+   "Paralyze",
+   "Paralyze",
+   "Master of the Mind",
+   "Master of the Mind",
+   "ScreenShake"
+  ]
+ },
+ {
+  "spell": "A0782A",
+  "name": "Electrocute",
+  "edid": "MAG_Electrocute",
+  "school": "-1",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 420,
+  "tome": "Spell Tome: Electrocute",
+  "effects": [
+   "Shock Damage",
+   "Disintegrate",
+   "Perk Impact Stagger"
+  ]
+ },
+ {
+  "spell": "2B0CE9",
+  "name": "Quietude",
+  "edid": "MAG_Quietude",
+  "school": "-1",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 851,
+  "tome": "Spell Tome: Quietude",
+  "effects": [
+   "Silence",
+   "Silence",
+   "Master of the Mind",
+   "Master of the Mind",
+   "ScreenShake"
+  ]
+ },
+ {
+  "spell": "1AE801",
+  "name": "Shocking Touch",
+  "edid": "MAG_ShockingTouch",
+  "school": "-1",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 38,
+  "tome": "Spell Tome: Shocking Touch",
+  "effects": [
+   "Shock Damage",
+   "Disintegrate",
+   "Perk Impact Stagger"
+  ]
+ },
+ {
+  "spell": "CF9FAB",
+  "name": "Static Touch",
+  "edid": "MAG_StaticTouch",
+  "school": "-1",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 130,
+  "tome": "Spell Tome: Static Touch",
+  "effects": [
+   "Shock Damage",
+   "Disintegrate",
+   "Perk Impact Stagger"
+  ]
+ },
+ {
+  "spell": "2E8870",
+  "name": "Throat of the World",
+  "edid": "MAG_ThroatoftheWorld",
+  "school": "-1",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 388,
+  "tome": "Spell Tome: Throat of the World",
+  "effects": [
+   "Frost Damage",
+   "Slow",
+   "Deep Freeze Paralyze",
+   "Perk Impact Stagger"
+  ]
+ },
+ {
+  "spell": "1D702F",
+  "name": "Thundering Grasp",
+  "edid": "MAG_ThunderingGrasp",
+  "school": "-1",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 310,
+  "tome": "Spell Tome: Thundering Grasp",
+  "effects": [
+   "Shock Damage",
+   "Disintegrate",
+   "Perk Impact Stagger"
+  ]
+ },
+ {
+  "spell": "2ED973",
+  "name": "Black Marsh",
+  "edid": "MAG_BlackMarsh",
+  "school": "-1",
+  "minskill": 1036831949,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 697,
+  "tome": "Spell Tome: Black Marsh",
+  "effects": [
+   "Black Marsh",
+   "Black Marsh",
+   "Black Marsh",
+   "Black Marsh",
+   "ScreenShake"
+  ]
+ },
+ {
+  "spell": "1AE7FA",
+  "name": "Burning Touch",
+  "edid": "MAG_BurningTouch",
+  "school": "-1",
+  "minskill": 1077936128,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 35,
+  "tome": "Spell Tome: Burning Touch",
+  "effects": [
+   "Fire Damage",
+   "Intense Flames Fear",
+   "Perk Impact Stagger"
+  ]
+ },
+ {
+  "spell": "25FBFF",
+  "name": "Charged Nova",
+  "edid": "MAG_ChargedNova",
+  "school": "-1",
+  "minskill": 1077936128,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 650,
+  "tome": "Spell Tome: Charged Nova",
+  "effects": [
+   "Sun Damage",
+   "Sun Damage",
+   "Sun Damage",
+   "Sun Damage",
+   "Sun Damage",
+   "ScreenShake"
+  ]
+ },
+ {
+  "spell": "1D702D",
+  "name": "Fiery Grasp",
+  "edid": "MAG_FieryGrasp",
+  "school": "-1",
+  "minskill": 1077936128,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 298,
+  "tome": "Spell Tome: Fiery Grasp",
+  "effects": [
+   "Fire Damage",
+   "Intense Flames Rout",
+   "Perk Impact Stagger"
+  ]
+ },
+ {
+  "spell": "C43A35",
+  "name": "Flame Touch",
+  "edid": "MAG_FlameTouch",
+  "school": "-1",
+  "minskill": 1077936128,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 125,
+  "tome": "Spell Tome: Flame Touch",
+  "effects": [
+   "Fire Damage",
+   "Intense Flames Fear",
+   "Perk Impact Stagger"
+  ]
+ },
+ {
+  "spell": "2A19B9",
+  "name": "Armoreater",
+  "edid": "MAG_ArmorEater",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 384,
+  "tome": "Spell Tome: Armoreater",
+  "effects": [
+   "Damage Armor"
+  ]
+ },
+ {
+  "spell": "1901E5",
+  "name": "Ash Cloud",
+  "edid": "MAG_AshCloud",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 387,
+  "tome": "Spell Tome: Ash Cloud",
+  "effects": [
+   "Ash Cloud"
+  ]
+ },
+ {
+  "spell": "AEB598",
+  "name": "Burden Rune",
+  "edid": "MAG_UnusedBurdenRune",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 421,
+  "tome": "Spell Tome: Burden Rune",
+  "effects": [
+   "Burden Rune"
+  ]
+ },
+ {
+  "spell": "4B065B",
+  "name": "Cinder Storm",
+  "edid": "MAG_CinderStorm",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 658,
+  "tome": "Spell Tome: Cinder Storm",
+  "effects": [
+   "Cinder Storm"
+  ]
+ },
+ {
+  "spell": "29C8AB",
+  "name": "Corrode Armor",
+  "edid": "MAG_CorrodeArmor",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 128,
+  "tome": "Spell Tome: Corrode Armor",
+  "effects": [
+   "Damage Armor"
+  ]
+ },
+ {
+  "spell": "844E4A",
+  "name": "Destroy Construct",
+  "edid": "MAG_DestroyConstruct",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 232,
+  "tome": "Spell Tome: Destroy Construct",
+  "effects": [
+   "Damage Construct"
+  ]
+ },
+ {
+  "spell": "C857B9",
+  "name": "Detect All",
+  "edid": "MAG_DetectAll",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "self",
+  "cost": 88,
+  "tome": "Spell Tome: Detect All",
+  "effects": [
+   "Detect All Friend Interior",
+   "Detect All Friend Exterior",
+   "Detect All Enemy Exterior",
+   "Detect All Enemy Interior",
+   "Detect All Corpse Exterior",
+   "Detect All Corpse Interior"
+  ]
+ },
+ {
+  "spell": "7B720C",
+  "name": "Disintegrate Weapon",
+  "edid": "MAG_DisintegrateWeapon",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 124,
+  "tome": "Spell Tome: Disintegrate Weapon",
+  "effects": [
+   "Damage Weapon",
+   "Damage Weapon"
+  ]
+ },
+ {
+  "spell": "2ABBDC",
+  "name": "Dispel",
+  "edid": "MAG_Dispel",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 103,
+  "tome": "Spell Tome: Dispel",
+  "effects": [
+   "Dispel"
+  ]
+ },
+ {
+  "spell": "2A19B3",
+  "name": "Dwemerbane",
+  "edid": "MAG_Dwemerbane",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 665,
+  "tome": "Spell Tome: Dwemerbane",
+  "effects": [
+   "Damage Construct"
+  ]
+ },
+ {
+  "spell": "292684",
+  "name": "Feather",
+  "edid": "MAG_Feather",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 159,
+  "tome": "Spell Tome: Feather",
+  "effects": [
+   "Fortify Carry Weight"
+  ]
+ },
+ {
+  "spell": "29265E",
+  "name": "Fire Shell",
+  "edid": "MAG_FireShell",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 258,
+  "tome": "Spell Tome: Fire Shell",
+  "effects": [
+   "Resist Fire",
+   "Resist Fire"
+  ]
+ },
+ {
+  "spell": "29265D",
+  "name": "Flame Shield",
+  "edid": "MAG_FlameShield",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 628,
+  "tome": "Spell Tome: Flame Shield",
+  "effects": [
+   "Resist Fire",
+   "Resist Fire"
+  ]
+ },
+ {
+  "spell": "29266B",
+  "name": "Frost Shell",
+  "edid": "MAG_FrostShell",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 255,
+  "tome": "Spell Tome: Frost Shell",
+  "effects": [
+   "Resist Frost",
+   "Resist Frost"
+  ]
+ },
+ {
+  "spell": "2002D0",
+  "name": "Grand Weakness to Fire",
+  "edid": "MAG_GrandWeaknesstoFire",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 657,
+  "tome": "Spell Tome: Grand Weakness to Fire",
+  "effects": [
+   "Weakness to Fire"
+  ]
+ },
+ {
+  "spell": "2002D5",
+  "name": "Grand Weakness to Frost",
+  "edid": "MAG_GrandWeaknesstoFrost",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 634,
+  "tome": "Spell Tome: Grand Weakness to Frost",
+  "effects": [
+   "Weakness to Frost"
+  ]
+ },
+ {
+  "spell": "2002DB",
+  "name": "Grand Weakness to Poison",
+  "edid": "MAG_GrandWeaknesstoPoison",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 683,
+  "tome": "Spell Tome: Grand Weakness to Poison",
+  "effects": [
+   "Weakness to Poison"
+  ]
+ },
+ {
+  "spell": "2002E1",
+  "name": "Grand Weakness to Shock",
+  "edid": "MAG_GrandWeaknesstoShock",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 683,
+  "tome": "Spell Tome: Grand Weakness to Shock",
+  "effects": [
+   "Weakness to Shock"
+  ]
+ },
+ {
+  "spell": "29266C",
+  "name": "Ice Shield",
+  "edid": "MAG_IceShield",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 634,
+  "tome": "Spell Tome: Ice Shield",
+  "effects": [
+   "Resist Frost",
+   "Resist Frost"
+  ]
+ },
+ {
+  "spell": "292665",
+  "name": "Lightning Shield",
+  "edid": "MAG_LightningShield",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 644,
+  "tome": "Spell Tome: Lightning Shield",
+  "effects": [
+   "Resist Shock",
+   "Resist Shock"
+  ]
+ },
+ {
+  "spell": "3C7540",
+  "name": "Open Adept Lock",
+  "edid": "MAG_OpenAdeptLock",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 211,
+  "tome": "Spell Tome: Open Adept Lock",
+  "effects": [
+   "Open Lock"
+  ]
+ },
+ {
+  "spell": "3C753F",
+  "name": "Open Apprentice Lock",
+  "edid": "MAG_OpenApprenticeLock",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 152,
+  "tome": "Spell Tome: Open Apprentice Lock",
+  "effects": [
+   "Open Lock"
+  ]
+ },
+ {
+  "spell": "3C7542",
+  "name": "Open Expert Lock",
+  "edid": "MAG_OpenExpertLock",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 321,
+  "tome": "Spell Tome: Open Expert Lock",
+  "effects": [
+   "Open Lock"
+  ]
+ },
+ {
+  "spell": "3C2436",
+  "name": "Open Novice Lock",
+  "edid": "MAG_OpenNoviceLock",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 71,
+  "tome": "Spell Tome: Open Novice Lock",
+  "effects": [
+   "Open Lock"
+  ]
+ },
+ {
+  "spell": "292689",
+  "name": "Pack Mule",
+  "edid": "MAG_PackMule",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 333,
+  "tome": "Spell Tome: Pack Mule",
+  "effects": [
+   "Fortify Carry Weight"
+  ]
+ },
+ {
+  "spell": "292672",
+  "name": "Poison Shell",
+  "edid": "MAG_PoisonShell",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 261,
+  "tome": "Spell Tome: Poison Shell",
+  "effects": [
+   "Resist Poison",
+   "Resist Poison"
+  ]
+ },
+ {
+  "spell": "1B3907",
+  "name": "Sea Stride",
+  "edid": "MAG_SeaStride",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 212,
+  "tome": "Spell Tome: Sea Stride",
+  "effects": [
+   "Waterwalking"
+  ]
+ },
+ {
+  "spell": "292664",
+  "name": "Shock Shell",
+  "edid": "MAG_ShockShell",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 260,
+  "tome": "Spell Tome: Shock Shell",
+  "effects": [
+   "Resist Shock",
+   "Resist Shock"
+  ]
+ },
+ {
+  "spell": "2977A1",
+  "name": "Slowfall",
+  "edid": "MAG_Slowfall",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 258,
+  "tome": "Spell Tome: Slowfall",
+  "effects": [
+   "Slowfall"
+  ]
+ },
+ {
+  "spell": "9E9213",
+  "name": "Swordbreaker",
+  "edid": "MAG_Swordbreaker",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 380,
+  "tome": "Spell Tome: Swordbreaker",
+  "effects": [
+   "Damage Weapon",
+   "Damage Weapon"
+  ]
+ },
+ {
+  "spell": "FF19E0",
+  "name": "Symmetry",
+  "edid": "MAG_Symmetry",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "self",
+  "cost": 0,
+  "tome": "Spell Tome: Symmetry",
+  "effects": [
+   "Damage Health",
+   "Restore Magicka",
+   "Restore Stamina"
+  ]
+ },
+ {
+  "spell": "4B0648",
+  "name": "The Unwelcome Guest",
+  "edid": "MAG_TheUnwelcomeGuest",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 592,
+  "tome": "Spell Tome: The Unwelcome Guest",
+  "effects": [
+   "Open Lock"
+  ]
+ },
+ {
+  "spell": "292673",
+  "name": "Venom Shield",
+  "edid": "MAG_VenomShield",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 645,
+  "tome": "Spell Tome: Venom Shield",
+  "effects": [
+   "Resist Poison",
+   "Resist Poison"
+  ]
+ },
+ {
+  "spell": "292677",
+  "name": "Weakness to Fire",
+  "edid": "MAG_WeaknesstoFire",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 216,
+  "tome": "Spell Tome: Weakness to Fire",
+  "effects": [
+   "Weakness to Fire"
+  ]
+ },
+ {
+  "spell": "29267C",
+  "name": "Weakness to Frost",
+  "edid": "MAG_WeaknesstoFrost",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 194,
+  "tome": "Spell Tome: Weakness to Frost",
+  "effects": [
+   "Weakness to Frost"
+  ]
+ },
+ {
+  "spell": "292680",
+  "name": "Weakness to Poison",
+  "edid": "MAG_WeaknesstoPoison",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 238,
+  "tome": "Spell Tome: Weakness to Poison",
+  "effects": [
+   "Weakness to Poison"
+  ]
+ },
+ {
+  "spell": "29267B",
+  "name": "Weakness to Shock",
+  "edid": "MAG_WeaknesstoShock",
+  "school": "Alteration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 238,
+  "tome": "Spell Tome: Weakness to Shock",
+  "effects": [
+   "Weakness to Shock"
+  ]
+ },
+ {
+  "spell": "3C7547",
+  "name": "Burden",
+  "edid": "MAG_Burden",
+  "school": "Alteration",
+  "minskill": 1036831949,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 122,
+  "tome": "Spell Tome: Burden",
+  "effects": [
+   "Burden",
+   "Burden",
+   "Burden",
+   "Burden",
+   "Burden"
+  ]
+ },
+ {
+  "spell": "4B065F",
+  "name": "Oppression",
+  "edid": "MAG_Oppression",
+  "school": "Alteration",
+  "minskill": 1036831949,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 364,
+  "tome": "Spell Tome: Oppression",
+  "effects": [
+   "Burden",
+   "Burden",
+   "Burden",
+   "Burden",
+   "Burden"
+  ]
+ },
+ {
+  "spell": "7D0721",
+  "name": "Swift Swim",
+  "edid": "MAG_SwiftSwim",
+  "school": "Alteration",
+  "minskill": 1036831949,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 154,
+  "tome": "Spell Tome: Swift Swim",
+  "effects": [
+   "Fortify Movement Speed",
+   "Swift Swim",
+   "Swift Swim"
+  ]
+ },
+ {
+  "spell": "10D265",
+  "name": "Windrunner",
+  "edid": "MAG_Windrunner",
+  "school": "Alteration",
+  "minskill": 1065353216,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 345,
+  "tome": "Spell Tome: Windrunner",
+  "effects": [
+   "Windrunner",
+   "Windwalker"
+  ]
+ },
+ {
+  "spell": "10D264",
+  "name": "Windwalker",
+  "edid": "MAG_Windwalker",
+  "school": "Alteration",
+  "minskill": 1065353216,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 165,
+  "tome": "Spell Tome: Windwalker",
+  "effects": [
+   "Windwalker",
+   "Windwalker"
+  ]
+ },
+ {
+  "spell": "DC99E1",
+  "name": "Bound Greatsword",
+  "edid": "MAG_BoundGreatsword",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 152,
+  "tome": "Spell Tome: Bound Greatsword",
+  "effects": [
+   "Bound Greatsword",
+   "Bound Greatsword"
+  ]
+ },
+ {
+  "spell": "E01500",
+  "name": "Bound Mace",
+  "edid": "MAG_BoundMace",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 139,
+  "tome": "Spell Tome: Bound Mace",
+  "effects": [
+   "Bound Mace",
+   "Bound Mace"
+  ]
+ },
+ {
+  "spell": "DC48DA",
+  "name": "Bound Shield",
+  "edid": "MAG_BoundShield",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 146,
+  "tome": "Spell Tome: Bound Shield",
+  "effects": [
+   "Bound Shield",
+   "Bound Shield",
+   "Bound Shield"
+  ]
+ },
+ {
+  "spell": "DD3BED",
+  "name": "Bound War Axe",
+  "edid": "MAG_BoundWarAxe",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 137,
+  "tome": "Spell Tome: Bound War Axe",
+  "effects": [
+   "Bound War Axe",
+   "Bound War Axe"
+  ]
+ },
+ {
+  "spell": "DED0F7",
+  "name": "Bound Warhammer",
+  "edid": "MAG_BoundWarhammer",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 188,
+  "tome": "Spell Tome: Bound Warhammer",
+  "effects": [
+   "Bound Warhammer",
+   "Bound Warhammer"
+  ]
+ },
+ {
+  "spell": "43BD87",
+  "name": "Conjure Ancestral Assassin",
+  "edid": "MAG_ConjureAncestralAssassin",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 647,
+  "tome": "Spell Tome: Conjure Ancestral Assassin",
+  "effects": [
+   "Conjure Ancestral Assassin"
+  ]
+ },
+ {
+  "spell": "43BD7A",
+  "name": "Conjure Ancestral Guardian",
+  "edid": "MAG_ConjureAncestralGuardian",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 247,
+  "tome": "Spell Tome: Conjure Ancestral Guardian",
+  "effects": [
+   "Conjure Ancestral Guardian"
+  ]
+ },
+ {
+  "spell": "43BD82",
+  "name": "Conjure Ancestral Wizard",
+  "edid": "MAG_ConjureAncestralWizard",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 376,
+  "tome": "Spell Tome: Conjure Ancestral Wizard",
+  "effects": [
+   "Conjure Ancestral Wizard"
+  ]
+ },
+ {
+  "spell": "45F595",
+  "name": "Conjure Ash Husk",
+  "edid": "MAG_ConjureAshHusk",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 649,
+  "tome": "Spell Tome: Conjure Ash Husk",
+  "effects": [
+   "Conjure Ash Husk"
+  ]
+ },
+ {
+  "spell": "E7FEC6",
+  "name": "Conjure Death Hound",
+  "edid": "MAG_ConjureDeathHound",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 145,
+  "tome": "Spell Tome: Conjure Death Hound",
+  "effects": [
+   "Conjure Death Hound"
+  ]
+ },
+ {
+  "spell": "00FFF4",
+  "name": "Conjure Dremora Hunter",
+  "edid": "MAG_ConjureDremoraHunter",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 658,
+  "tome": "Spell Tome: Conjure Dremora Hunter",
+  "effects": [
+   "Conjure Dremora Hunter"
+  ]
+ },
+ {
+  "spell": "00FFF5",
+  "name": "Conjure Dremora Sorcerer",
+  "edid": "MAG_ConjureDremoraSorcerer",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 658,
+  "tome": "Spell Tome: Conjure Dremora Sorcerer",
+  "effects": [
+   "Conjure Dremora Sorcerer"
+  ]
+ },
+ {
+  "spell": "42795A",
+  "name": "Conjure Dremora Warlock",
+  "edid": "MAG_ConjureDremoraWarlock",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 378,
+  "tome": "Spell Tome: Conjure Dremora Warlock",
+  "effects": [
+   "Conjure Dremora Warlock"
+  ]
+ },
+ {
+  "spell": "41D74F",
+  "name": "Conjure Dremora Warrior",
+  "edid": "MAG_ConjureDremoraWarrior",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 277,
+  "tome": "Spell Tome: Conjure Dremora Warrior",
+  "effects": [
+   "Conjure Dremora Warrior"
+  ]
+ },
+ {
+  "spell": "446019",
+  "name": "Conjure Dwarven Spider",
+  "edid": "MAG_ConjureDwarvenSpider",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 228,
+  "tome": "Spell Tome: Conjure Dwarven Spider",
+  "effects": [
+   "Conjure Dwarven Spider"
+  ]
+ },
+ {
+  "spell": "E7FED0",
+  "name": "Conjure Gargoyle",
+  "edid": "MAG_ConjureGargoyle",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 261,
+  "tome": "Spell Tome: Conjure Gargoyle",
+  "effects": [
+   "Conjure Gargoyle"
+  ]
+ },
+ {
+  "spell": "E7FED5",
+  "name": "Conjure Gargoyle Brute",
+  "edid": "MAG_ConjureGargoyleBrute",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 652,
+  "tome": "Spell Tome: Conjure Gargoyle Brute",
+  "effects": [
+   "Conjure Gargoyle"
+  ]
+ },
+ {
+  "spell": "45538C",
+  "name": "Conjure High Seeker",
+  "edid": "MAG_ConjureHighSeeker",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 645,
+  "tome": "Spell Tome: Conjure High Seeker",
+  "effects": [
+   "Conjure High Seeker"
+  ]
+ },
+ {
+  "spell": "413541",
+  "name": "Conjure Skeleton",
+  "edid": "MAG_ConjureSkeleton",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 90,
+  "tome": "Spell Tome: Conjure Skeleton",
+  "effects": [
+   "Conjure Skeleton"
+  ]
+ },
+ {
+  "spell": "413545",
+  "name": "Conjure Skeleton Archer",
+  "edid": "MAG_ConjureSkeletonArcher",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 149,
+  "tome": "Spell Tome: Conjure Skeleton Archer",
+  "effects": [
+   "Conjure Skeleton Archer"
+  ]
+ },
+ {
+  "spell": "41864C",
+  "name": "Conjure Skeleton Champion",
+  "edid": "MAG_ConjureSkeletonChampion",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 639,
+  "tome": "Spell Tome: Conjure Skeleton Champion",
+  "effects": [
+   "Conjure Skeleton Champion"
+  ]
+ },
+ {
+  "spell": "413549",
+  "name": "Conjure Skeleton Mage",
+  "edid": "MAG_ConjureSkeletonMage",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 254,
+  "tome": "Spell Tome: Conjure Skeleton Mage",
+  "effects": [
+   "Conjure Skeleton Mage"
+  ]
+ },
+ {
+  "spell": "40933C",
+  "name": "Conjure Skeleton Warrior",
+  "edid": "MAG_ConjureSkeletonWarrior",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 389,
+  "tome": "Spell Tome: Conjure Skeleton Warrior",
+  "effects": [
+   "Conjure Skeleton Warrior"
+  ]
+ },
+ {
+  "spell": "43BD6C",
+  "name": "Conjure Spectral Bear",
+  "edid": "MAG_ConjureSpectralBear",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 367,
+  "tome": "Spell Tome: Conjure Spectral Bear",
+  "effects": [
+   "Conjure Spectral Bear"
+  ]
+ },
+ {
+  "spell": "43BD62",
+  "name": "Conjure Spectral Dire Wolf",
+  "edid": "MAG_ConjureSpectralDireWolf",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 147,
+  "tome": "Spell Tome: Conjure Spectral Dire Wolf",
+  "effects": [
+   "Conjure Spectral Dire Wolf"
+  ]
+ },
+ {
+  "spell": "43BD72",
+  "name": "Conjure Spectral Manbeast",
+  "edid": "MAG_ConjureSpectralManbeast",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 647,
+  "tome": "Spell Tome: Conjure Spectral Manbeast",
+  "effects": [
+   "Conjure Spectral Manbeast"
+  ]
+ },
+ {
+  "spell": "43BD66",
+  "name": "Conjure Spectral Sabre Cat",
+  "edid": "MAG_ConjureSpectralSabreCat",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 255,
+  "tome": "Spell Tome: Conjure Spectral Sabre Cat",
+  "effects": [
+   "Conjure Spectral Sabre Cat"
+  ]
+ },
+ {
+  "spell": "43BD6D",
+  "name": "Conjure Spectral Steed",
+  "edid": "MAG_ConjureSpectralSteed",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 237,
+  "tome": "Spell Tome: Conjure Spectral Steed",
+  "effects": [
+   "Conjure Spectral Steed"
+  ]
+ },
+ {
+  "spell": "E7FECB",
+  "name": "Conjure Volkihar Hound",
+  "edid": "MAG_ConjureVolkiharHound",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 372,
+  "tome": "Spell Tome: Conjure Volkihar Hound",
+  "effects": [
+   "Conjure Volkihar Hound"
+  ]
+ },
+ {
+  "spell": "01F2FA",
+  "name": "Conjure Wrathman Marksman",
+  "edid": "MAG_ConjureWrathmanMarksman",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 661,
+  "tome": "Spell Tome: Conjure Wrathman Marksman",
+  "effects": [
+   "Conjure Wrathman Marksman"
+  ]
+ },
+ {
+  "spell": "01F2FB",
+  "name": "Conjure Wrathman Warlock",
+  "edid": "MAG_ConjureWrathmanWarlock",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 661,
+  "tome": "Spell Tome: Conjure Wrathman Warlock",
+  "effects": [
+   "Conjure Wrathman Warlock"
+  ]
+ },
+ {
+  "spell": "45536C",
+  "name": "Mark",
+  "edid": "MAG_Mark",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 350,
+  "tome": "Spell Tome: Mark",
+  "effects": [
+   "Mark"
+  ]
+ },
+ {
+  "spell": "4CECE5",
+  "name": "Planar Anchor",
+  "edid": "MAG_PlanarAnchor",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 425,
+  "tome": "Spell Tome: Planar Anchor",
+  "effects": [
+   "Planar Anchor"
+  ]
+ },
+ {
+  "spell": "45536D",
+  "name": "Recall",
+  "edid": "MAG_Recall",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 360,
+  "tome": "Spell Tome: Recall",
+  "effects": [
+   "Recall"
+  ]
+ },
+ {
+  "spell": "455387",
+  "name": "Shalidor's Beacon",
+  "edid": "MAG_ShalidorsBeacon",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 450,
+  "tome": "Spell Tome: Shalidor's Beacon",
+  "effects": [
+   "Shalidor's Beacon",
+   "Teleporation"
+  ]
+ },
+ {
+  "spell": "4CECE6",
+  "name": "Translimination",
+  "edid": "MAG_Translimination",
+  "school": "Conjuration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 450,
+  "tome": "Spell Tome: Translimination",
+  "effects": [
+   "Liminal Bridge"
+  ]
+ },
+ {
+  "spell": "1B8A09",
+  "name": "Blood Lance",
+  "edid": "MAG_BloodLance",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 476,
+  "tome": "Spell Tome: Blood Lance",
+  "effects": [
+   "Absorb Health",
+   "Absorb Health",
+   "Perk Impact Stagger",
+   "Absorb Health"
+  ]
+ },
+ {
+  "spell": "1AE800",
+  "name": "Chilling Touch",
+  "edid": "MAG_ChillingTouch",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 32,
+  "tome": "Spell Tome: Chilling Touch",
+  "effects": [
+   "Chilling Touch",
+   "Perk Impact Stagger",
+   "Slow",
+   "Deep Freeze Paralyze"
+  ]
+ },
+ {
+  "spell": "445FB7",
+  "name": "Drain Life",
+  "edid": "MAG_drainLife",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 68,
+  "tome": "Spell Tome: Drain Life",
+  "effects": [
+   "Absorb Health",
+   "Absorb Health XP",
+   "Absorb Health"
+  ]
+ },
+ {
+  "spell": "445FC4",
+  "name": "Drain Magicka",
+  "edid": "MAG_DrainMagicka",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 45,
+  "tome": "Spell Tome: Drain Magicka",
+  "effects": [
+   "Absorb Magicka",
+   "Absorb Magicka",
+   "Absorb Magicka"
+  ]
+ },
+ {
+  "spell": "2DE656",
+  "name": "Drain Stamina",
+  "edid": "MAG_DrainStamina",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 45,
+  "tome": "Spell Tome: Drain Stamina",
+  "effects": [
+   "Absorb Stamina",
+   "Absorb Stamina",
+   "Absorb Stamina"
+  ]
+ },
+ {
+  "spell": "A07827",
+  "name": "Flash Freeze",
+  "edid": "MAG_FlashFreeze",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 389,
+  "tome": "Spell Tome: Flash Freeze",
+  "effects": [
+   "Freezing Touch",
+   "Perk Impact Stagger",
+   "Slow",
+   "Deep Freeze Paralyze"
+  ]
+ },
+ {
+  "spell": "1D7031",
+  "name": "Freezing Grasp",
+  "edid": "MAG_FreezingGrasp",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 286,
+  "tome": "Spell Tome: Freezing Grasp",
+  "effects": [
+   "Freezing Touch",
+   "Perk Impact Stagger",
+   "Slow",
+   "Deep Freeze Paralyze"
+  ]
+ },
+ {
+  "spell": "2FCC83",
+  "name": "Greater Frost Rune",
+  "edid": "MAG_GreaterFrostRune",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 388,
+  "tome": "Spell Tome: Greater Frost Rune",
+  "effects": [
+   "Greater Frost Rune"
+  ]
+ },
+ {
+  "spell": "1D702B",
+  "name": "Greater Frostbite",
+  "edid": "MAG_GreaterFrostbite",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 52,
+  "tome": "Spell Tome: Greater Frostbite",
+  "effects": [
+   "Greater Frostbite",
+   "Slow",
+   "Deep Freeze"
+  ]
+ },
+ {
+  "spell": "2FCC82",
+  "name": "Greater Lightning Rune",
+  "edid": "MAG_GreaterLightningRune",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 416,
+  "tome": "Spell Tome: Greater Lightning Rune",
+  "effects": [
+   "Greater Shock Rune"
+  ]
+ },
+ {
+  "spell": "1D702A",
+  "name": "Greater Sparks",
+  "edid": "MAG_GreaterSparks",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 60,
+  "tome": "Spell Tome: Greater Sparks",
+  "effects": [
+   "Greater Sparks",
+   "Disintegrate"
+  ]
+ },
+ {
+  "spell": "445FFD",
+  "name": "Hoarfrost",
+  "edid": "MAG_Hoarfrost",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 168,
+  "tome": "Spell Tome: Hoarfrost",
+  "effects": [
+   "Frost Damage",
+   "Slow",
+   "Deep Freeze"
+  ]
+ },
+ {
+  "spell": "CDB97D",
+  "name": "Icy Touch",
+  "edid": "MAG_IcyTouch",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 120,
+  "tome": "Spell Tome: Icy Touch",
+  "effects": [
+   "Freezing Touch",
+   "Perk Impact Stagger",
+   "Slow",
+   "Deep Freeze Paralyze"
+  ]
+ },
+ {
+  "spell": "440E99",
+  "name": "Leech Life",
+  "edid": "MAG_LeechLife",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 209,
+  "tome": "Spell Tome: Leech Life",
+  "effects": [
+   "Absorb Health",
+   "Absorb Health XP",
+   "Absorb Health"
+  ]
+ },
+ {
+  "spell": "440E96",
+  "name": "Leech Magicka",
+  "edid": "MAG_LeechMagicka",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 140,
+  "tome": "Spell Tome: Leech Magicka",
+  "effects": [
+   "Absorb Magicka",
+   "Absorb Magicka",
+   "Sunder Soul"
+  ]
+ },
+ {
+  "spell": "2DE648",
+  "name": "Leech Stamina",
+  "edid": "MAG_LeechStamina",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 140,
+  "tome": "Spell Tome: Leech Stamina",
+  "effects": [
+   "Absorb Stamina",
+   "Absorb Stamina",
+   "Bone Sap"
+  ]
+ },
+ {
+  "spell": "445FB2",
+  "name": "Sap Essence",
+  "edid": "MAG_SapEssence",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 611,
+  "tome": "Spell Tome: Sap Essence",
+  "effects": [
+   "Absorb Stamina",
+   "Absorb Stamina",
+   "Absorb Stamina"
+  ]
+ },
+ {
+  "spell": "445FA0",
+  "name": "Scion's Embrace",
+  "edid": "MAG_ScionsEmbrace",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 620,
+  "tome": "Spell Tome: Scion's Embrace",
+  "effects": [
+   "Absorb Health",
+   "Absorb Health"
+  ]
+ },
+ {
+  "spell": "445FA8",
+  "name": "Siphon Spirit",
+  "edid": "MAG_SiphonSpirit",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 625,
+  "tome": "Spell Tome: Siphon Spirit",
+  "effects": [
+   "Absorb Magicka",
+   "Absorb Magicka",
+   "Absorb Magicka"
+  ]
+ },
+ {
+  "spell": "399C05",
+  "name": "Stormblast",
+  "edid": "MAG_Stormblast",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 680,
+  "tome": "Spell Tome: Stormblast",
+  "effects": [
+   "Stormblast",
+   "Stormblast",
+   "Stormblast",
+   "Stormblast",
+   "Perk Impact Stagger",
+   "Disintegrate",
+   "ScreenShake",
+   "Stormblast"
+  ]
+ },
+ {
+  "spell": "A0782D",
+  "name": "Touch of Death",
+  "edid": "MAG_TouchofDeath",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 450,
+  "tome": "Spell Tome: Touch of Death",
+  "effects": [
+   "Absorb Health",
+   "Absorb Health",
+   "Perk Impact Stagger",
+   "Absorb Health"
+  ]
+ },
+ {
+  "spell": "46E8A8",
+  "name": "Vampiric Blast",
+  "edid": "MAG_VampiricBlast",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 282,
+  "tome": "Spell Tome: Vampiric Blast",
+  "effects": [
+   "Absorb Health",
+   "Absorb Health",
+   "Perk Impact Stagger",
+   "Absorb Health"
+  ]
+ },
+ {
+  "spell": "1B8A15",
+  "name": "Vampiric Bolt",
+  "edid": "MAG_VampiricBolt",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 134,
+  "tome": "Spell Tome: Vampiric Bolt",
+  "effects": [
+   "Absorb Health",
+   "Absorb Health",
+   "Perk Impact Stagger",
+   "Absorb Health"
+  ]
+ },
+ {
+  "spell": "2E8863",
+  "name": "Vampiric Grasp",
+  "edid": "MAG_VampiricGrasp",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 350,
+  "tome": "Spell Tome: Vampiric Grasp",
+  "effects": [
+   "Absorb Health",
+   "Absorb Health",
+   "Perk Impact Stagger",
+   "Absorb Health"
+  ]
+ },
+ {
+  "spell": "2DE640",
+  "name": "Vampiric Rune",
+  "edid": "MAG_VampiricRune",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 474,
+  "tome": "Spell Tome: Vampiric Rune",
+  "effects": [
+   "Entropic Rune"
+  ]
+ },
+ {
+  "spell": "1B8A10",
+  "name": "Vampiric Touch",
+  "edid": "MAG_VampiricTouch",
+  "school": "Destruction",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 135,
+  "tome": "Spell Tome: Vampiric Touch",
+  "effects": [
+   "Absorb Health",
+   "Absorb Health",
+   "Perk Impact Stagger",
+   "Absorb Health"
+  ]
+ },
+ {
+  "spell": "1DC141",
+  "name": "Finger of the Mountain",
+  "edid": "MAG_FingeroftheMountain",
+  "school": "Destruction",
+  "minskill": 1036831949,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 412,
+  "tome": "Spell Tome: Finger of the Mountain",
+  "effects": [
+   "Shock Damage",
+   "Perk Impact Stagger",
+   "Disintegrate"
+  ]
+ },
+ {
+  "spell": "1FF868",
+  "name": "Greater Fire Rune",
+  "edid": "MAG_GreaterFireRune",
+  "school": "Destruction",
+  "minskill": 1073741824,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 402,
+  "tome": "Spell Tome: Greater Fire Rune",
+  "effects": [
+   "Greater Fire Rune"
+  ]
+ },
+ {
+  "spell": "445FD0",
+  "name": "Flame Tempest",
+  "edid": "MAG_FlameTempest",
+  "school": "Destruction",
+  "minskill": 1077936128,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 176,
+  "tome": "Spell Tome: Flame Tempest",
+  "effects": [
+   "Flames of Oblivion",
+   "Intense Flames Fear",
+   "Fire Damage"
+  ]
+ },
+ {
+  "spell": "1D7023",
+  "name": "Greater Flames",
+  "edid": "MAG_GreaterFlames",
+  "school": "Destruction",
+  "minskill": 1077936128,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 56,
+  "tome": "Spell Tome: Greater Flames",
+  "effects": [
+   "Greater Flames",
+   "Intense Flames Fear",
+   "Fire Damage"
+  ]
+ },
+ {
+  "spell": "1D7020",
+  "name": "Immolate",
+  "edid": "MAG_Immolate",
+  "school": "Destruction",
+  "minskill": 1077936128,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 400,
+  "tome": "Spell Tome: Immolate",
+  "effects": [
+   "Fire Damage",
+   "Perk Impact Stagger",
+   "Intense Flames Rout"
+  ]
+ },
+ {
+  "spell": "7847E9",
+  "name": "Scorch",
+  "edid": "MAG_Scorch",
+  "school": "Destruction",
+  "minskill": 1077936128,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 400,
+  "tome": "Spell Tome: Scorch",
+  "effects": [
+   "Fire Damage",
+   "Perk Impact Stagger",
+   "Intense Flames Rout"
+  ]
+ },
+ {
+  "spell": "3E0AC5",
+  "name": "Calm Rune",
+  "edid": "MAG_CalmRune",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 443,
+  "tome": "Spell Tome: Calm Rune",
+  "effects": [
+   "Calm Rune"
+  ]
+ },
+ {
+  "spell": "2CA222",
+  "name": "Chameleon",
+  "edid": "MAG_Chameleon",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 264,
+  "tome": "Spell Tome: Chameleon",
+  "effects": [
+   "Chameleon"
+  ]
+ },
+ {
+  "spell": "2B0CEE",
+  "name": "Command",
+  "edid": "MAG_Command",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 271,
+  "tome": "Spell Tome: Command",
+  "effects": [
+   "Command",
+   "Command",
+   "Master of the Mind",
+   "Master of the Mind"
+  ]
+ },
+ {
+  "spell": "3E5BE1",
+  "name": "Command Rune",
+  "edid": "MAG_CommandRune",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 491,
+  "tome": "Spell Tome: Command Rune",
+  "effects": [
+   "Command Rune"
+  ]
+ },
+ {
+  "spell": "2CA217",
+  "name": "Control",
+  "edid": "MAG_control",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 449,
+  "tome": "Spell Tome: Control",
+  "effects": [
+   "Command",
+   "Command",
+   "Master of the Mind",
+   "Master of the Mind"
+  ]
+ },
+ {
+  "spell": "2CA219",
+  "name": "Domination",
+  "edid": "MAG_Domination",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 1001,
+  "tome": "Spell Tome: Domination",
+  "effects": [
+   "Command",
+   "Command",
+   "Master of the Mind",
+   "Master of the Mind"
+  ]
+ },
+ {
+  "spell": "A9A573",
+  "name": "Fade",
+  "edid": "MAG_Fade",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target actor",
+  "cost": 412,
+  "tome": "Spell Tome: Fade",
+  "effects": [
+   "Invisibility",
+   "Fade"
+  ]
+ },
+ {
+  "spell": "3E5BEE",
+  "name": "Fear Rune",
+  "edid": "MAG_FearRune",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 445,
+  "tome": "Spell Tome: Fear Rune",
+  "effects": [
+   "Fear Rune"
+  ]
+ },
+ {
+  "spell": "B4B8F4",
+  "name": "Fury",
+  "edid": "MAG_Fury",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 151,
+  "tome": "Spell Tome: Fury",
+  "effects": [
+   "Frenzy",
+   "Master of the Mind",
+   "Frenzy"
+  ]
+ },
+ {
+  "spell": "2CA226",
+  "name": "Ghostwalk",
+  "edid": "MAG_Ghostwalk",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 684,
+  "tome": "Spell Tome: Ghostwalk",
+  "effects": [
+   "Invisibility",
+   "Invisibility",
+   "Invisibility"
+  ]
+ },
+ {
+  "spell": "4AB524",
+  "name": "Hush",
+  "edid": "MAG_Hush",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 260,
+  "tome": "Spell Tome: Hush",
+  "effects": [
+   "Silence",
+   "Silence",
+   "Master of the Mind",
+   "Master of the Mind"
+  ]
+ },
+ {
+  "spell": "4B063B",
+  "name": "Hypnotize",
+  "edid": "MAG_Hypnotize",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 391,
+  "tome": "Spell Tome: Hypnotize",
+  "effects": [
+   "Calm",
+   "Master of the Mind"
+  ]
+ },
+ {
+  "spell": "176CD0",
+  "name": "Immobilize",
+  "edid": "MAG_Immobilize",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 448,
+  "tome": "Spell Tome: Immobilize",
+  "effects": [
+   "Paralyze",
+   "Paralyze",
+   "Master of the Mind",
+   "Master of the Mind"
+  ]
+ },
+ {
+  "spell": "2B5DFA",
+  "name": "Mute",
+  "edid": "MAG_Mute",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 398,
+  "tome": "Spell Tome: Mute",
+  "effects": [
+   "Silence",
+   "Silence",
+   "Master of the Mind",
+   "Master of the Mind"
+  ]
+ },
+ {
+  "spell": "2CF331",
+  "name": "Night Eye",
+  "edid": "MAG_Nighteye",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 112,
+  "tome": "Spell Tome: Night Eye",
+  "effects": [
+   "Night Eye"
+  ]
+ },
+ {
+  "spell": "4AB528",
+  "name": "Panic",
+  "edid": "MAG_Panic",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 265,
+  "tome": "Spell Tome: Panic",
+  "effects": [
+   "Fear",
+   "Master of the Mind"
+  ]
+ },
+ {
+  "spell": "2CF335",
+  "name": "Paralyze Rune",
+  "edid": "MAG_ParalyzeRune",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 495,
+  "tome": "Spell Tome: Paralyze Rune",
+  "effects": [
+   "Paralyze Rune"
+  ]
+ },
+ {
+  "spell": "2A6AC9",
+  "name": "Sanctuary",
+  "edid": "MAG_Sanctuary",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 658,
+  "tome": "Spell Tome: Sanctuary",
+  "effects": [
+   "Shroud"
+  ]
+ },
+ {
+  "spell": "2A6AC8",
+  "name": "Shroud",
+  "edid": "MAG_Shroud",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 260,
+  "tome": "Spell Tome: Shroud",
+  "effects": [
+   "Shroud"
+  ]
+ },
+ {
+  "spell": "B467E6",
+  "name": "Silence",
+  "edid": "MAG_Silence",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 148,
+  "tome": "Spell Tome: Silence",
+  "effects": [
+   "Silence",
+   "Silence",
+   "Master of the Mind",
+   "Master of the Mind"
+  ]
+ },
+ {
+  "spell": "3E5BD3",
+  "name": "Silence Rune",
+  "edid": "MAG_SilenceRune",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 449,
+  "tome": "Spell Tome: Silence Rune",
+  "effects": [
+   "Silence Rune"
+  ]
+ },
+ {
+  "spell": "4B063A",
+  "name": "Soothe",
+  "edid": "MAG_Soothe",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 146,
+  "tome": "Spell Tome: Soothe",
+  "effects": [
+   "Calm",
+   "Master of the Mind"
+  ]
+ },
+ {
+  "spell": "705EAF",
+  "name": "Vanish",
+  "edid": "MAG_Vanish",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 721,
+  "tome": "Spell Tome: Vanish",
+  "effects": [
+   "Vanish",
+   "Muffle"
+  ]
+ },
+ {
+  "spell": "4AB52F",
+  "name": "Wrath",
+  "edid": "MAG_Wrath",
+  "school": "Illusion",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 395,
+  "tome": "Spell Tome: Wrath",
+  "effects": [
+   "Frenzy",
+   "Master of the Mind",
+   "Rally Secondary"
+  ]
+ },
+ {
+  "spell": "9A74CB",
+  "name": "Arkay's Light",
+  "edid": "MAG_ArkaysLight",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 621,
+  "tome": "Spell Tome: Arkay's Light",
+  "effects": [
+   "Regenerate Health",
+   "Regeneration",
+   "Regenerate Stamina"
+  ]
+ },
+ {
+  "spell": "274020",
+  "name": "Attunement",
+  "edid": "MAG_Attunement",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 290,
+  "tome": "Spell Tome: Attunement",
+  "effects": [
+   "Fortify Health",
+   "Fortify Health"
+  ]
+ },
+ {
+  "spell": "274025",
+  "name": "Augur of Aetherius",
+  "edid": "MAG_AugurofAetherius",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 630,
+  "tome": "Spell Tome: Augur of Aetherius",
+  "effects": [
+   "Fortify Health",
+   "Fortify Health"
+  ]
+ },
+ {
+  "spell": "F3637F",
+  "name": "Circle of Life",
+  "edid": "MAG_CircleofLife",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 249,
+  "tome": "Spell Tome: Circle of Life",
+  "effects": [
+   "Restore Health",
+   "Restore Health",
+   "Restore Health",
+   "Restore Health",
+   "Restore Health",
+   "Restore Health",
+   "Restore Health",
+   "Restore Health",
+   "Restore Health",
+   "Restore Health",
+   "Restore Health"
+  ]
+ },
+ {
+  "spell": "F21F4A",
+  "name": "Circle of Strength",
+  "edid": "MAG_CircleofStrength",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 246,
+  "tome": "Spell Tome: Circle of Strength",
+  "effects": [
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration"
+  ]
+ },
+ {
+  "spell": "48CEEB",
+  "name": "Circle of Wisdom",
+  "edid": "MAG_CircleofWisdom",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 241,
+  "tome": "Spell Tome: Circle of Wisdom",
+  "effects": [
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration"
+  ]
+ },
+ {
+  "spell": "27E242",
+  "name": "Close Greater Wounds",
+  "edid": "MAG_CloseGreaterWounds",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 125,
+  "tome": "Spell Tome: Close Greater Wounds",
+  "effects": [
+   "Restore Health",
+   "Respite",
+   "Restore Health",
+   "Respite"
+  ]
+ },
+ {
+  "spell": "515B97",
+  "name": "Close Wounds",
+  "edid": "MAG_CloseWounds",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 66,
+  "tome": "Spell Tome: Close Wounds",
+  "effects": [
+   "Restore Health",
+   "Respite"
+  ]
+ },
+ {
+  "spell": "283346",
+  "name": "Cure Disease",
+  "edid": "MAG_CureDisease",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 500,
+  "tome": "Spell Tome: Cure Disease",
+  "effects": [
+   "Cure Disease",
+   "Cure Disease"
+  ]
+ },
+ {
+  "spell": "209A7A",
+  "name": "Deadly Poison Rune",
+  "edid": "MAG_DeadlyPoisonRune",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 426,
+  "tome": "Spell Tome: Deadly Poison Rune",
+  "effects": [
+   "Deadly Poison Rune"
+  ]
+ },
+ {
+  "spell": "F3B48D",
+  "name": "Font of Life",
+  "edid": "MAG_FontofLife",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 661,
+  "tome": "Spell Tome: Font of Life",
+  "effects": [
+   "Restore Health",
+   "Restore Health",
+   "Restore Health",
+   "Restore Health",
+   "Restore Health",
+   "Restore Health",
+   "Restore Health",
+   "Restore Health",
+   "Restore Health"
+  ]
+ },
+ {
+  "spell": "F3635D",
+  "name": "Font of Strength",
+  "edid": "MAG_FontofStrength",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 641,
+  "tome": "Spell Tome: Font of Strength",
+  "effects": [
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration",
+   "Fortify Stamina Regeneration"
+  ]
+ },
+ {
+  "spell": "F3636B",
+  "name": "Font of Wisdom",
+  "edid": "MAG_FontofWisdom",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 652,
+  "tome": "Spell Tome: Font of Wisdom",
+  "effects": [
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration",
+   "Fortify Magicka Regeneration"
+  ]
+ },
+ {
+  "spell": "27E243",
+  "name": "Grand Healing",
+  "edid": "MAG_GrandHealing",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "self",
+  "cost": 125,
+  "tome": "Spell Tome: Grand Healing",
+  "effects": [
+   "Restore Health",
+   "Restore Stamina",
+   "Restore Health",
+   "Restore Stamina"
+  ]
+ },
+ {
+  "spell": "283349",
+  "name": "Grand Ward",
+  "edid": "MAG_WardGrand",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "self",
+  "cost": 116,
+  "tome": "Spell Tome: Grand Ward",
+  "effects": [
+   "Grand Ward",
+   "Grand Ward Dual Cast",
+   "Grand Ward XP"
+  ]
+ },
+ {
+  "spell": "2559DF",
+  "name": "Mutagen",
+  "edid": "MAG_Mutagen",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 363,
+  "tome": "Spell Tome: Mutagen",
+  "effects": [
+   "Regenerate Health",
+   "Regeneration",
+   "Regenerate Stamina"
+  ]
+ },
+ {
+  "spell": "209A73",
+  "name": "Poison Cloak",
+  "edid": "MAG_PoisonCloak",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 282,
+  "tome": "Spell Tome: Poison Cloak",
+  "effects": [
+   "Poison Cloak",
+   "Poison Cloak"
+  ]
+ },
+ {
+  "spell": "1E634D",
+  "name": "Poisonbolt",
+  "edid": "MAG_Poisonbolt",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 50,
+  "tome": "Spell Tome: Poisonbolt",
+  "effects": [
+   "Poison Damage"
+  ]
+ },
+ {
+  "spell": "209A74",
+  "name": "Poisonous Touch",
+  "edid": "MAG_PoisonousTouch",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 38,
+  "tome": "Spell Tome: Poisonous Touch",
+  "effects": [
+   "Poison Damage"
+  ]
+ },
+ {
+  "spell": "9A74C9",
+  "name": "Rapid Regeneration",
+  "edid": "MAG_RapidRegeneration",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 245,
+  "tome": "Spell Tome: Rapid Regeneration",
+  "effects": [
+   "Regenerate Health",
+   "Regeneration",
+   "Regenerate Stamina"
+  ]
+ },
+ {
+  "spell": "2559DE",
+  "name": "Regeneration",
+  "edid": "MAG_Regeneration",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 179,
+  "tome": "Spell Tome: Regeneration",
+  "effects": [
+   "Regenerate Health",
+   "Regeneration",
+   "Regenerate Stamina"
+  ]
+ },
+ {
+  "spell": "3DB99C",
+  "name": "Spelldrinker",
+  "edid": "MAG_Spelldrinker",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "self",
+  "cost": 173,
+  "tome": "Spell Tome: Spelldrinker",
+  "effects": [
+   "Spelldrinker",
+   "Spelldrinker Dual Cast",
+   "Spelldrinker XP"
+  ]
+ },
+ {
+  "spell": "482CE4",
+  "name": "Stendarr's Mercy",
+  "edid": "MAG_StendarrsMercy",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "self",
+  "cost": 399,
+  "tome": "Spell Tome: Stendarr's Mercy",
+  "effects": [
+   "Restore Health",
+   "Respite",
+   "Restore Health",
+   "Respite"
+  ]
+ },
+ {
+  "spell": "48CF04",
+  "name": "Venomfang",
+  "edid": "MAG_Venomfang",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 425,
+  "tome": "Spell Tome: Venomfang",
+  "effects": [
+   "Poison Damage"
+  ]
+ },
+ {
+  "spell": "D278E3",
+  "name": "Venomous Touch",
+  "edid": "MAG_VenomousTouch",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 150,
+  "tome": "Spell Tome: Venomous Touch",
+  "effects": [
+   "Poison Damage"
+  ]
+ },
+ {
+  "spell": "209A76",
+  "name": "Viper's Grasp",
+  "edid": "MAG_VipersGrasp",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 320,
+  "tome": "Spell Tome: Viper's Grasp",
+  "effects": [
+   "Poison Damage"
+  ]
+ },
+ {
+  "spell": "1E634F",
+  "name": "Viperbolt",
+  "edid": "MAG_Viperbolt",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 262,
+  "tome": "Spell Tome: Viperbolt",
+  "effects": [
+   "Poison Damage"
+  ]
+ },
+ {
+  "spell": "96F9BA",
+  "name": "Wall of Poison",
+  "edid": "MAG_WallofPoison",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 102,
+  "tome": "Spell Tome: Wall of Poison",
+  "effects": [
+   "Poison Damage"
+  ]
+ },
+ {
+  "spell": "9C09E5",
+  "name": "Wall of Sunlight",
+  "edid": "MAG_WallofSunlight",
+  "school": "Restoration",
+  "minskill": 0,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 80,
+  "tome": "Spell Tome: Wall of Sunlight",
+  "effects": [
+   "Wall of Sunfire"
+  ]
+ },
+ {
+  "spell": "1FA75F",
+  "name": "Death Cloud",
+  "edid": "MAG_DeathCloud",
+  "school": "Restoration",
+  "minskill": 1036831949,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 426,
+  "tome": "Spell Tome: Death Cloud",
+  "effects": [
+   "Poison Damage"
+  ]
+ },
+ {
+  "spell": "1E6352",
+  "name": "Poison Cloud",
+  "edid": "MAG_PoisonCloud",
+  "school": "Restoration",
+  "minskill": 1036831949,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 145,
+  "tome": "Spell Tome: Poison Cloud",
+  "effects": [
+   "Poison Damage"
+  ]
+ },
+ {
+  "spell": "9AC5CE",
+  "name": "Radiant Sunlight Rune",
+  "edid": "MAG_RadiantSunlightRune",
+  "school": "Restoration",
+  "minskill": 1073741824,
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 364,
+  "tome": "Spell Tome: Radiant Sunlight Rune",
+  "effects": [
+   "Radiant Sunlight Rune"
+  ]
+ },
+ {
+  "spell": "7BC311",
+  "name": "Daybreak",
+  "edid": "MAG_Daybreak",
+  "school": "Restoration",
+  "minskill": 1077936128,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 160,
+  "tome": "Spell Tome: Daybreak",
+  "effects": [
+   "Sun Damage"
+  ]
+ },
+ {
+  "spell": "9420A3",
+  "name": "Deadly Poison Spray",
+  "edid": "MAG_DeadlyPoisonSpray",
+  "school": "Restoration",
+  "minskill": 1077936128,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 61,
+  "tome": "Spell Tome: Deadly Poison Spray",
+  "effects": [
+   "Poison Damage",
+   "Poison Damage"
+  ]
+ },
+ {
+  "spell": "48CF09",
+  "name": "Eclipse",
+  "edid": "MAG_Eclipse",
+  "school": "Restoration",
+  "minskill": 1077936128,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 385,
+  "tome": "Spell Tome: Eclipse",
+  "effects": [
+   "Sun Damage"
+  ]
+ },
+ {
+  "spell": "9606AC",
+  "name": "Miasma",
+  "edid": "MAG_Miasma",
+  "school": "Restoration",
+  "minskill": 1077936128,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 185,
+  "tome": "Spell Tome: Miasma",
+  "effects": [
+   "Poison Damage",
+   "Poison Damage"
+  ]
+ },
+ {
+  "spell": "8C886D",
+  "name": "Poison Spray",
+  "edid": "MAG_PoisonSpray",
+  "school": "Restoration",
+  "minskill": 1077936128,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 20,
+  "tome": "Spell Tome: Poison Spray",
+  "effects": [
+   "Poison Damage",
+   "Poison Damage"
+  ]
+ },
+ {
+  "spell": "78E9F4",
+  "name": "Radiant Sunbeam",
+  "edid": "MAG_RadiantSunbeam",
+  "school": "Restoration",
+  "minskill": 1077936128,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 48,
+  "tome": "Spell Tome: Radiant Sunbeam",
+  "effects": [
+   "Sun Damage"
+  ]
+ },
+ {
+  "spell": "D45F28",
+  "name": "Radiant Touch",
+  "edid": "MAG_RadiantTouch",
+  "school": "Restoration",
+  "minskill": 1077936128,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 120,
+  "tome": "Spell Tome: Radiant Touch",
+  "effects": [
+   "Sun Damage"
+  ]
+ },
+ {
+  "spell": "2508C9",
+  "name": "Reflective Light",
+  "edid": "MAG_ReflectiveLight",
+  "school": "Restoration",
+  "minskill": 1077936128,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 218,
+  "tome": "Spell Tome: Reflective Light",
+  "effects": [
+   "Sun Damage"
+  ]
+ },
+ {
+  "spell": "2280B0",
+  "name": "Searing Grasp",
+  "edid": "MAG_SearingGrasp",
+  "school": "Restoration",
+  "minskill": 1077936128,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 272,
+  "tome": "Spell Tome: Searing Grasp",
+  "effects": [
+   "Sun Damage"
+  ]
+ },
+ {
+  "spell": "2466C0",
+  "name": "Solar Flare",
+  "edid": "MAG_SolarFlare",
+  "school": "Restoration",
+  "minskill": 1077936128,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 372,
+  "tome": "Spell Tome: Solar Flare",
+  "effects": [
+   "Sun Damage"
+  ]
+ },
+ {
+  "spell": "7388D3",
+  "name": "Sunbeam",
+  "edid": "MAG_Sunbeam",
+  "school": "Restoration",
+  "minskill": 1077936128,
+  "cast": "concentration",
+  "delivery": "aimed",
+  "cost": 16,
+  "tome": "Spell Tome: Sunbeam",
+  "effects": [
+   "Sun Damage"
+  ]
+ },
+ {
+  "spell": "20496A",
+  "name": "Sunlight Touch",
+  "edid": "MAG_SunlightTouch",
+  "school": "Restoration",
+  "minskill": 1077936128,
+  "cast": "fire&forget",
+  "delivery": "aimed",
+  "cost": 32,
+  "tome": "Spell Tome: Sunlight Touch",
+  "effects": [
+   "Sun Damage"
+  ]
+ }
+]

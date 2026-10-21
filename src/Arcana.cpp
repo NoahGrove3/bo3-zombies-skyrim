@@ -248,16 +248,20 @@ namespace bo3z::Arcana
 	// a spell you don't know yet (every one has the same chance); -1 if you know them all
 	int Roll()
 	{
-		// (Noah: harder to grow too strong) the stronger spells wait: tier 2 once an Echo Altar is awake, the legendaries
-		// (tier 3) once two are
-		int freed = 0;
-		for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
-			freed += Curse::Freed(t) ? 1 : 0;
+		// (the classes overhaul) the altar rolls your class's base spells (each ladder's first rung) of ladders you
+		// don't carry yet; the Ranger rolls bows instead (Shops), so it gets none
+		const int cls = Classes::Get();
+		if (cls < 0 || cls == coffer::kRanger) {
+			return -1;
 		}
-		const int maxTier = freed >= 2 ? 3 : freed >= 1 ? 2 : 1;
+		std::array<bool, coffer::kLadders> carried{};
+		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
+			if (g_spell[i] && Known(i)) carried[coffer::kSpells[i].ladder] = true;
+		}
 		std::vector<int> pool;
 		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
-			if (g_spell[i] && !Known(i) && coffer::kSpells[i].tier <= maxTier) {
+			const auto& s = coffer::kSpells[i];
+			if (g_spell[i] && s.cls == cls && s.rung == 1 && !carried[s.ladder]) {
 				pool.push_back(i);
 			}
 		}
@@ -266,13 +270,27 @@ namespace bo3z::Arcana
 		}
 		return pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
 	}
+	int ClassOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].cls : -1; }
+	int RungOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].rung : 0; }
+	int Rungs(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].rungs : 0; }
+	std::string_view LadderName(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].ladderLabel : ""; }
+	int NextRung(int a_index)
+	{
+		if (a_index < 0 || a_index >= static_cast<int>(coffer::kSpells.size())) return -1;
+		const auto& s = coffer::kSpells[a_index];
+		for (int i = 0; i < static_cast<int>(coffer::kSpells.size()); ++i) {
+			if (coffer::kSpells[i].ladder == s.ladder && coffer::kSpells[i].rung == s.rung + 1) return g_spell[i] ? i : -1;
+		}
+		return -1;
+	}
 
 	// every spell in the pool, in order (the shrine's roll flickers through them)
 	int Next(int a_after)
 	{
+		const int cls = Classes::Get();
 		for (int k = 1; k <= static_cast<int>(g_spell.size()); ++k) {
 			const int i = (std::max(a_after, -1) + k) % static_cast<int>(g_spell.size());
-			if (g_spell[i]) {
+			if (g_spell[i] && coffer::kSpells[i].rung == 1 && (cls < 0 || coffer::kSpells[i].cls == cls)) {
 				return i;
 			}
 		}
@@ -298,43 +316,8 @@ namespace bo3z::Arcana
 		logger::info("arcana: {} learned{}", coffer::kSpells[a_index].name, a_equip ? " and in hand" : "");
 	}
 
-	// A new character starts as a Spellsword: a one-handed sword in the right hand, a Coffer spell (Firebolt) in the
-	// left (the SpellSword Moveset animates the pair).
-	void GiveStarter()
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		int   pick = -1;
-		for (int i = 0; i < static_cast<int>(coffer::kSpells.size()) && pick < 0; ++i) {
-			if (std::string_view(coffer::kSpells[i].name) == "Firebolt" && g_spell[i]) {
-				pick = i;
-			}
-		}
-		for (int i = 0; i < static_cast<int>(coffer::kSpells.size()) && pick < 0; ++i) {
-			if (g_spell[i] && coffer::kSpells[i].tier == 0) {
-				pick = i;
-			}
-		}
-		if (!p) {
-			return;
-		}
-		auto* em = RE::ActorEquipManager::GetSingleton();
-		if (pick >= 0) {
-			Give(pick, false);
-			if (em) {
-				em->EquipSpell(p, g_spell[pick], RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x13F43));  // the left hand
-			}
-		}
-		if (auto* sword = RE::TESForm::LookupByID<RE::TESObjectWEAP>(0x13989)) {  // Steel Sword
-			if (p->GetItemCount(sword) <= 0) {
-				p->AddObjectToContainer(sword, nullptr, 1, nullptr);
-			}
-			if (em) {
-				em->EquipObject(p, sword, nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x13F42));
-			}
-		}
-		Hud::Banner("Spellsword: a blade in one hand, a spell in the other", 4.0f);
-		logger::info("arcana: a new Spellsword (sword and {})", pick >= 0 ? coffer::kSpells[pick].name : "no spell");
-	}
+	// (the classes overhaul) a new character's start is its class's kit, handed over by the class picker (Classes.cpp)
+	void GiveStarter() { Classes::OnNewCharacter(); }
 
 	std::string_view Name(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].name : ""; }
 	int              ElementOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].element : coffer::kArcane; }

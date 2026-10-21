@@ -1,0 +1,54 @@
+[
+ {
+  "fid": "011D42",
+  "edid": "ConjureSprigganMatron",
+  "name": "Conjure Spriggan Matron",
+  "type": "spell",
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 179,
+  "school": "Conjuration",
+  "effects": [
+   "Conjure Spriggan Matron"
+  ]
+ },
+ {
+  "fid": "011D4B",
+  "edid": "ConjureSpriggan",
+  "name": "Conjure Spriggan",
+  "type": "spell",
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 122,
+  "school": "Conjuration",
+  "effects": [
+   "Conjure Spriggan"
+  ]
+ },
+ {
+  "fid": "0195F3",
+  "edid": "ConjureBurntSpriggan",
+  "name": "Conjure Burnt Spriggan",
+  "type": "spell",
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 287,
+  "school": "Conjuration",
+  "effects": [
+   "Conjure Burnt Spriggan"
+  ]
+ },
+ {
+  "fid": "002F9D",
+  "edid": "ConjureSprigganEarthMother",
+  "name": "Conjure Spriggan Earth Mother",
+  "type": "spell",
+  "cast": "fire&forget",
+  "delivery": "target location",
+  "cost": 430,
+  "school": "Conjuration",
+  "effects": [
+   "Conjure Spriggan Earth Mother"
+  ]
+ }
+]

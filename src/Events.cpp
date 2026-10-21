@@ -459,6 +459,9 @@ namespace bo3z
 							Hud::OnClick();
 						}
 						Hud::OnMenuButton(b);
+						if (Classes::OnButton(b)) {  // the class picker has the keys while it is up
+							continue;
+						}
 						if (!Intro::OnButton(b) && !Party::OnButton(b)) {  // (down or dead: your hands are still)
 							if (Shops::OnButton(b) || Loot::OnButton(b)) {
 								continue;

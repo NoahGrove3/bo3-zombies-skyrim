@@ -226,12 +226,12 @@ for w in S['weapons']['rows']:
 # (Noah's download: Elemental Arrows, by its author) each bow's arrow: the quiver model on the string and at the hip, the
 # flight model the one you see fly - it flies with our energy shot (same speed, no drop), harmless, so the arrow is seen
 BOW_TIERS = {  # what each reforge adds (src/Bows.inl OnHit/Impact; every tier's impact is the last one, grown)
-    'fire': 'Base: burns. I Flare Shot: bursts into a fireball. II Cinder Trail: the ground behind it burns. III Fiery Torrent: a full draw seeks the nearest of the dead and bursts into a torrent of fire.',
-    'frost': 'Base: slows. I Deep Freeze: freezes solid. II Shatter: the frozen burst into shards. III Throat of the World: a full draw seeks the nearest of the dead and bursts into killing cold.',
-    'shock': 'Base: leaps to one more. I Chain Lightning: leaps to three. II Storm Mark: the struck shock those round them. III Storm Ball: a full draw leaves a storm ball hanging where it strikes, zapping everything near it.',
-    'wind': 'Base: knocks back. I Gale Burst: the dead round its impact are hurled back. II Cyclone Arrow: a whirlwind where it lands. III Arcane Cyclone: a full draw bursts into a cyclone that hurls every one of the dead round it far away.',
-    'sun': 'Base: sears and staggers. I Radiant Burst: light bursts round it. II Solar Flare: its burst of light grows wider. III Sunfire Tornado: a tornado of sunfire hunts the dead.',
-    'blood': 'Base: heals you a little. I Hemorrhage: they bleed. II Blood Tether: a tether feeds you. III Crimson Harvest: kills burst into orbs of blood - health and power.'}
+    'fire': 'Base: burns. I Flare Shot: bursts into a fireball. II Scorch Arrow: Scorch bursts where it strikes. III Immolation: a full draw seeks the nearest of the dead and Immolate engulfs them.',
+    'frost': 'Base: slows. I Deep Freeze: freezes solid. II Flash Freeze: Flash Freeze where it strikes, and the frozen burst into shards. III Throat of the World: a full draw seeks the nearest of the dead and bursts into killing cold.',
+    'shock': 'Base: leaps to one more. I Chain Lightning: leaps to three. II Finger of the Mountain: lightning from the strike, and the struck shock those round them. III Electrocution: a full draw casts Electrocute and leaves a storm ball hunting the dead.',
+    'wind': 'Base: knocks back. I Gale Burst: the dead round its impact are hurled back. II Cyclone Arrow: a whirlwind where it lands. III Cinder Gale: a full draw hurls every one of the dead round it far away inside a Cinder Storm.',
+    'sun': 'Base: sears and staggers. I Radiant Burst: light bursts round it. II Solar Flare: Solar Flare bursts from the strike. III Eclipse: a full draw casts Eclipse and a tornado of sunfire hunts the dead.',
+    'blood': 'Base: heals you a little. I Hemorrhage: they bleed. II Vampiric Bolt: a bolt of blood feeds you from the strike. III Blood Lance: a full draw seeks the dead with Blood Lance, and kills burst into orbs of blood.'}
 NOCK = {'fire': 'flaming', 'frost': 'frost', 'shock': 'thunder', 'wind': 'swarm', 'sun': 'gust', 'blood': 'crimson'}
 for bw in S['bows']['rows']:
     pd = bytearray(tsub('proj_arrow', 'DATA'))

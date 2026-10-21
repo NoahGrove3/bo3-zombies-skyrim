@@ -249,6 +249,27 @@ namespace bo3z
 	}
 
 	// The Coffer's spells: 150 spells from the spell mods, handed out by the shrine (Arcana.cpp, src/CofferSpells.h)
+	// The four classes (the classes overhaul): 0 Summoner, 1 Destruction, 2 Ranger, 3 Spellsword (coffer::Class)
+	namespace Classes
+	{
+		int              Get();            // -1 none chosen yet
+		bool             Open();           // the class picker is up
+		int              Selected();
+		bool             Switching();      // the picker was opened at an altar (a switch, for septims)
+		std::string_view Name(int a_cls);
+		int              SwitchCost();
+		void             OpenPicker(bool a_switch);
+		void             Choose(int a_cls);
+		void             Hover(int a_cls);
+		void             OnNewCharacter();
+		void             OnWorldReady();
+		bool             OnButton(const RE::ButtonEvent* a_b);
+		bool             MenuEats(RE::InputEvent* a_event);
+		std::vector<std::uint8_t> State();  // co-save 'CLAS'
+		void             SetState(const std::vector<std::uint8_t>& a_v);
+		void             Revert();
+	}
+
 	namespace Arcana
 	{
 		inline constexpr int kIdBase = 1000;   // HUD ids: a Coffer spell shows as kIdBase + its index (weapons keep 0..)
@@ -272,7 +293,12 @@ namespace bo3z
 		std::string_view   Name(int a_index);
 		int                ElementOf(int a_index);
 		int                CostOf(int a_index);
-		int                TierOf(int a_index);          // 0 common .. 3 the strongest
+		int                TierOf(int a_index);          // 0 common .. 3 the strongest (3 = a ladder's last rung: Legendary)
+		int                ClassOf(int a_index);         // coffer::Class
+		int                RungOf(int a_index);          // 1 = what the altar rolls
+		int                Rungs(int a_index);           // how many rungs its ladder has
+		int                NextRung(int a_index);        // the same ladder one rung up (-1: the top)
+		std::string_view   LadderName(int a_index);
 		bool               Concentration(int a_index);
 		std::uint32_t      ElementColor(int a_element);
 		std::string_view   ElementName(int a_element);

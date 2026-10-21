@@ -367,7 +367,7 @@ namespace bo3z
 					a_s->WriteRecordData(&g_bond, sizeof(int));
 				}
 				const auto lv = Arcana::Levels();
-				if (a_s->OpenRecord('SPLV', 2)) {  // (2: the 200-spell Coffer; the 150-spell levels are dropped)
+				if (a_s->OpenRecord('SPLV', 3)) {  // (3: the class pools; older levels are dropped)
 					a_s->WriteRecordData(lv.data(), static_cast<std::uint32_t>(lv.size()));
 				}
 				if (const auto bl = Bows::Levels(); a_s->OpenRecord('BWLV', 1)) {  // the altar's bows: how far each is reforged
@@ -376,6 +376,9 @@ namespace bo3z
 				if (a_s->OpenRecord('CRS2', 1)) {  // (ten rites a city: marks a save made with them)
 					const std::uint32_t one = 1;
 					a_s->WriteRecordData(&one, sizeof(one));
+				}
+				if (const auto cs = Classes::State(); a_s->OpenRecord('CLAS', 1)) {  // your class, and the spells of the ones you left
+					a_s->WriteRecordData(cs.data(), static_cast<std::uint32_t>(cs.size()));
 				}
 				if (const auto rs = Shops::RollState(); a_s->OpenRecord('ROLL', 1)) {  // each altar's price tonight
 					a_s->WriteRecordData(rs.data(), static_cast<std::uint32_t>(rs.size()));
@@ -411,6 +414,10 @@ namespace bo3z
 							id = a_s->ResolveFormID(id, n) ? n : 0;
 						}
 						Director::Unshelter(ids);
+					} else if (type == 'CLAS' && version == 1) {
+						std::vector<std::uint8_t> cs(length);
+						a_s->ReadRecordData(cs.data(), length);
+						Classes::SetState(cs);
 					} else if (type == 'ROLL' && version == 1) {
 						std::vector<std::uint8_t> rs(length);
 						a_s->ReadRecordData(rs.data(), length);
@@ -419,7 +426,7 @@ namespace bo3z
 						std::vector<std::uint8_t> bl(length);
 						a_s->ReadRecordData(bl.data(), length);
 						Bows::SetLevels(bl);
-					} else if (type == 'SPLV' && version == 2) {
+					} else if (type == 'SPLV' && version == 3) {
 						std::vector<std::uint8_t> lv(length);
 						a_s->ReadRecordData(lv.data(), length);
 						Arcana::SetLevels(lv);
@@ -439,7 +446,7 @@ namespace bo3z
 					Migrate();
 				}
 			}
-			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}), Bows::SetLevels({}), Shops::SetRollState({}); }
+			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}), Bows::SetLevels({}), Shops::SetRollState({}), Classes::Revert(); }
 		}
 
 		void InstallCoSave()
@@ -594,6 +601,7 @@ namespace bo3z
 			}
 			logger::info("world ready: round {} cleared, {} points, crew {}, perks {:09b}", Get(gen::kAV_round), Get(gen::kAV_points), Crew(), PerkBits());
 			Perks::RearmAfterLoad();
+			Classes::OnWorldReady();
 			Curse::ForgetPendingLift();
 		}
 	}
