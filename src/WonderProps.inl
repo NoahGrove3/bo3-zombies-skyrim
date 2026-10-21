@@ -281,6 +281,7 @@ namespace Props
 		auto* base = p ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kTornado[std::clamp(a_kind, 0, 5)], gen::kPlugin) : nullptr;
 		auto  ref = base ? p->PlaceObjectAtMe(base, false) : nullptr;
 		if (!ref) {
+			logger::warn("tornado: kind {} could not be placed ({})", a_kind, base ? "placing failed" : "its form is missing");
 			return;
 		}
 		RE::NiPoint3 at = a_at;

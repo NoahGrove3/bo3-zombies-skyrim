@@ -31,9 +31,9 @@
         "Strike"
       ],
       "recovery": [
-        18,
-        32,
-        55
+        10,
+        20,
+        30
       ],
       "text": "A fan of spectral Skyforge blades pins the dead - more blades and bleeding with each word, and the third makes them explode",
       "color": "C8D8FF",
@@ -57,9 +57,9 @@
         "Lightning"
       ],
       "recovery": [
-        18,
-        32,
-        55
+        10,
+        20,
+        30
       ],
       "text": "Lightning strikes the nearest dead - three, five or eight bolts, each leaping to one more",
       "color": "BFE8FF",
@@ -83,9 +83,9 @@
         "Zombie"
       ],
       "recovery": [
-        18,
-        32,
-        55
+        10,
+        20,
+        30
       ],
       "text": "The fallen rise to fight for you - two, four or six of them - and burst when their time is up",
       "color": "B07BFF",
@@ -109,9 +109,9 @@
         "Statue"
       ],
       "recovery": [
-        18,
-        32,
-        55
+        10,
+        20,
+        30
       ],
       "text": "A ring of frost freezes everything around you solid, and the frozen shatter when struck",
       "color": "9ED8FF",
@@ -135,9 +135,9 @@
         "Hold"
       ],
       "recovery": [
-        18,
-        32,
-        55
+        10,
+        20,
+        30
       ],
       "text": "The ground heaves in front of you and knocks the dead down - with the third word, stone spikes erupt through them",
       "color": "FFB050",
@@ -161,9 +161,9 @@
         "Bind"
       ],
       "recovery": [
-        18,
-        32,
-        55
+        10,
+        20,
+        30
       ],
       "text": "You blink forward through the horde, leaving a shadow that draws the dead to it and then bursts",
       "color": "7A4DFF",
@@ -187,9 +187,9 @@
         "Suffer"
       ],
       "recovery": [
-        18,
-        32,
-        55
+        10,
+        20,
+        30
       ],
       "text": "A draining cone that heals you for every one of the dead it touches - the third word also raises a fallen friend nearby",
       "color": "E8E4FF",
@@ -213,9 +213,9 @@
         "Defeat"
       ],
       "recovery": [
-        18,
-        32,
-        55
+        10,
+        20,
+        30
       ],
       "text": "Roots burst from the ground where you look, holding the dead in place and poisoning them",
       "color": "7CC23A",
@@ -239,9 +239,9 @@
         "Terror"
       ],
       "recovery": [
-        18,
-        32,
-        55
+        10,
+        20,
+        30
       ],
       "text": "The dead are thrown back in terror and slowed - and the weakest die of fright",
       "color": "FF4F8F",
@@ -265,9 +265,9 @@
         "Grace"
       ],
       "recovery": [
-        18,
-        32,
-        55
+        10,
+        20,
+        30
       ],
       "text": "A vortex pulls the dead together where you look, then detonates",
       "color": "7FD8FF",

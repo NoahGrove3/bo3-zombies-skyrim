@@ -2183,7 +2183,7 @@ namespace bo3z
 		}
 
 		bool g_kitPending = false;
-		constexpr float kKitVersion = 3.0f;  // (raised whenever the kit gains something: test characters get the new things on load)
+		constexpr float kKitVersion = 4.0f;  // (raised whenever the kit gains something: test characters get the new things on load)
 		// (Noah: every spell from my mods that imbues a weapon or does direct damage, to choose the Echo Altar's from)
 		// every castable spell of a mod (not the base game's own) with a damaging effect on health, or one that imbues a
 		// weapon; each named for its element first ("Fire: ...") so the Magic menu lists them by element. The names are
@@ -2252,9 +2252,16 @@ namespace bo3z
 			return out;
 		}
 		RE::TESGlobal* KitGlobal() { return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESGlobal>(gen::kTestKitGlob, gen::kPlugin); }
+		std::unordered_map<RE::SpellItem*, std::string> g_origNames;
+		// (the old kit named every mod spell by its element: those names put back)
+		void RestoreNames()
+		{
+			for (auto& [sp, nm] : g_origNames) sp->fullName = nm.c_str();
+			g_origNames.clear();
+		}
 		void NameByElement()
 		{
-			static std::unordered_map<RE::SpellItem*, std::string> original;
+			auto& original = g_origNames;
 			int n = 0;
 			for (auto& [sp, el] : ModAttackSpells()) {
 				auto it = original.find(sp);
@@ -2273,14 +2280,27 @@ namespace bo3z
 			}
 			g_kitPending = false;
 			if (auto* g = KitGlobal()) g->value = kKitVersion;  // (the glider unlocked, the spells named by element; the kit's version)
-			// the spells: every mod's attack and imbue spells, named by element
-			int spells = 0;
+			// (Noah: the kit is only the Echo Altar's 17 spells, to test them) every other spell you were taught - Skyrim's
+			// tomes, the mods' spells, the old kit's hundreds - is taken away (its race's own two stay: they can't be)
+			int spells = 0, removed = 0;
 			std::map<std::string, int> byEl;
-			for (auto& [sp, el] : ModAttackSpells()) {
-				if (!p->HasSpell(sp)) p->AddSpell(sp);
-				++spells, ++byEl[el];
+			{
+				std::vector<RE::SpellItem*> drop;
+				for (auto* sp : p->GetActorRuntimeData().addedSpells) {
+					if (sp && sp->GetSpellType() == RE::MagicSystem::SpellType::kSpell && Arcana::IndexOf(sp) < 0) drop.push_back(sp);
+				}
+				auto* em = RE::ActorEquipManager::GetSingleton();
+				for (auto* sp : drop) {
+					for (bool left : { false, true }) {
+						if (p->GetEquippedObject(left) == sp && em) {
+							em->UnequipObject(p, sp, nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(left ? 0x13F43 : 0x13F42), false, true, false, true);
+						}
+					}
+					p->RemoveSpell(sp);
+					++removed;
+				}
+				RestoreNames();
 			}
-			NameByElement();
 			// the weapons: every elemental bow (with its arrows)
 			for (int i = Bows::Count() - 1; i >= 0; --i) {
 				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kBows[i].weap, gen::kPlugin); w && p->GetItemCount(w) <= 0) {
@@ -2304,8 +2324,11 @@ namespace bo3z
 					LearnShout(i);
 				}
 			}
-			for (int i = 0; i < Arcana::Count(); ++i) {  // every Echo Altar spell
-				if (Arcana::Spell(i) && !Arcana::Known(i)) Arcana::Give(i, false);
+			for (int i = 0; i < 64; ++i) {  // every Echo Altar spell (all 17)
+				if (Arcana::Spell(i)) {
+					if (!Arcana::Known(i)) Arcana::Give(i, false);
+					++spells, ++byEl[std::string(Arcana::Name(i))];
+				}
 			}
 			Bows::SetLevels(std::vector<std::uint8_t>(BowsImpl::kN, static_cast<std::uint8_t>(gen::kForgeMax)));  // every bow at tier 3
 			if (auto* bane = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin)) {  // Alduin's Bane, in your hands
@@ -2315,10 +2338,10 @@ namespace bo3z
 			if (const int have = Points::Get(); have < 150000) {
 				Points::Refund(150000 - have);
 			}
-			Hud::Banner(fmt::format("TEST KIT: {} spells (by element in the Magic menu), every bow, every shout, the glider, 150,000 septims", spells), 7.0f);
+			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every bow, every shout, the glider, 150,000 septims", spells), 7.0f);
 			std::string list;
 			for (auto& [el, c] : byEl) list += fmt::format("{} {}, ", el, c);
-			logger::info("testkit: {} spells ({}) bows {}, shouts {}, septims {}", spells, list, Bows::Count(), gen::kShouts.size(), Points::Get());
+			logger::info("testkit: {} altar spells ({}) - {} others taken away; bows {}, shouts {}, septims {}", spells, list, removed, Bows::Count(), gen::kShouts.size(), Points::Get());
 		}
 		bool TestKitOn()
 		{
@@ -2343,7 +2366,6 @@ namespace bo3z
 			if (!root || root == seen) return;
 			seen = root;
 			if (auto* g = KitGlobal(); g && g->value > 0.5f) {
-				NameByElement();
 				if (g->value < kKitVersion - 0.5f) {  // (Noah: the kit grew - the staffs, the Bane, the altar's spells, tier-3 bows) topped up
 					logger::info("testkit: version {} -> {}: topping the kit up", g->value, kKitVersion);
 					g_kitPending = true;
@@ -2361,17 +2383,12 @@ namespace bo3z
 			static float zeroAt = 0;
 			if ((zeroAt -= a_delta) <= 0) {
 				zeroAt = 1.0f;
-				static std::vector<RE::SpellItem*> kit;
-				if (kit.empty()) {
-					for (auto& [sp, el] : ModAttackSpells()) kit.push_back(sp);
-				}
 				const auto zero = [](RE::SpellItem* sp) {
 					if (!sp) return;
 					sp->data.costOverride = 0;
 					sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
 				};
-				for (auto* sp : kit) zero(sp);
-				for (int i = 0; i < Arcana::Count(); ++i) zero(Arcana::Spell(i));
+				for (int i = 0; i < 64; ++i) zero(Arcana::Spell(i));
 			}
 			auto* av = p->AsActorValueOwner();
 			const float have = av->GetActorValue(RE::ActorValue::kMagicka);

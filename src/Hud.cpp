@@ -1628,90 +1628,53 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			// Weapon dock, bottom-right: the weapon in hand as a large card (its picture, Reforge marks, ability and
 			// signature move), the other slots as small cards above it with their keys. Dimmed while sheathed.
-			if (!spellHands && !skyHands) {
+			// (Noah: the old dock drew over the new cards) the night's weapon in hand is one slim card like the others: its
+			// emblem aflame, the slot and its reforging, its name, and what it runs on - never while a bow is held
+			if (!spellHands && !skyHands && s.bowHeld < 0) {
 				const bool any = std::any_of(s.slotGun.begin(), s.slotGun.begin() + std::clamp(s.slotCount, 0, 3), [](int g) { return g >= 0; });
-				static float shown = 0, swap = 0;
-				static int   lastActive = -2;
-				shown += ((s.gunOut ? 1.0f : 0.55f) - shown) * std::min(1.0f, dt * 8);
-				if (s.activeSlot != lastActive) {
-					swap = lastActive == -2 ? 0.0f : 1.0f, lastActive = s.activeSlot;
-				}
-				swap = std::max(0.0f, swap - dt * 3.5f);
+				static float shown = 0;
+				shown += ((s.gunOut ? 1.0f : 0.6f) - shown) * std::min(1.0f, dt * 8);
 				const int act = s.activeSlot >= 0 && s.activeSlot < s.slotCount ? s.activeSlot : -1;
 				const int ag = act >= 0 ? s.slotGun[act] : -1;
-				if (any) {
-					const float al = shown;
-					const float  up = s.shoutName.empty() ? 0.0f : 14 * k;  // (above the shout card)
-				const ImVec2 a{ size.x - 470 * k, size.y - 218 * k - up + swap * 18 * k }, b{ size.x - 40 * k, size.y - 92 * k - up + swap * 18 * k };
-					const std::uint32_t ec = ag >= 0 ? gen::kGuns[ag].color : 0xB0A890;
-					const ImU32 el = IM_COL32((ec >> 16) & 0xFF, (ec >> 8) & 0xFF, ec & 0xFF, 255);
-					Panel(dl, a, b, k, al);
-					// the element's light washing in from the left edge
-					dl->AddRectFilledMultiColor({ a.x + 1 * k, a.y + 1 * k }, { a.x + 190 * k, b.y - 1 * k }, Fade(el, 0.20f * al), Fade(el, 0.0f), Fade(el, 0.0f), Fade(el, 0.28f * al));
-					dl->AddRectFilled({ a.x, a.y }, { a.x + 4 * k, b.y }, Fade(el, al));
-					if (ag >= 0) {
-						const auto& g = gen::kGuns[ag];
-						const int   lvl = std::clamp(s.slotLevel[act], 0, 3);
-						DrawEmblem(dl, ag, { b.x - 60 * k, (a.y + b.y) * 0.5f + 1.5f * k * std::sin(now * 1.6f) }, 33 * k, al, now);  // inside the slot, at its right end, aflame
-						const auto  fc = gen::kForgeColor[lvl];
-						const ImU32 nameCol = lvl > 0 ? IM_COL32((fc >> 24) & 0xFF, (fc >> 16) & 0xFF, (fc >> 8) & 0xFF, 255) : kParch;
-						Txt(dl, g_title, 24 * k, { a.x + 18 * k, a.y + 40 * k }, Fade(nameCol, al), std::string(g.label), lvl > 0 ? 2 * k : 0, nameCol);
-						// Reforge marks: three diamonds, lit by level; ASCENDANT at the top
-						float dx = a.x + 22 * k;
-						const float dy = a.y + 80 * k;
-						for (int i = 0; i < 3; ++i) {
-							const bool on = i < lvl;
-							const ImVec2 c{ dx + i * 18 * k, dy };
-							dl->AddQuadFilled({ c.x, c.y - 6 * k }, { c.x + 6 * k, c.y }, { c.x, c.y + 6 * k }, { c.x - 6 * k, c.y }, on ? Fade(nameCol, al) : IM_COL32(60, 56, 50, static_cast<int>(200 * al)));
-							dl->AddQuad({ c.x, c.y - 6 * k }, { c.x + 6 * k, c.y }, { c.x, c.y + 6 * k }, { c.x - 6 * k, c.y }, Fade(kGoldDim, al), 1.0f * k);
-						}
-						Txt(dl, g_body, 14 * k, { dx + 60 * k, dy - 9 * k }, Fade(IM_COL32(200, 190, 170, 255), al), lvl >= 3 ? "ASCENDANT" : lvl > 0 ? "REFORGED " + std::string(lvl == 1 ? "I" : "II") : "UNFORGED");
-						// ability and signature move
-						dl->PushClipRect(a, { b.x - 118 * k, b.y }, true);  // (the emblem has the right end)
-						Txt(dl, g_body, 15 * k, { a.x + 18 * k, a.y + 92 * k }, Fade(IM_COL32(205, 198, 182, 255), al), std::string(g.abilityText));
-						dl->PopClipRect();
-						dl->AddCircleFilled({ a.x + 24 * k, b.y - 13 * k }, 4 * k, Fade(el, al));
-						Txt(dl, g_body, 15 * k, { a.x + 34 * k, b.y - 23 * k }, Fade(el, al), "HOLD  " + std::string(g.chargeName) + (lvl >= 3 ? "  -  ASCENDANT" : ""));
-						// what it runs on, right
-						if (s.gunKind == 0 || s.gunKind == 3 || !s.gunOut) {
-							const std::string inf = "\xE2\x88\x9E";
-							const auto        is = Measure(g_num, 40 * k, inf);
-							Txt(dl, g_num, 40 * k, { b.x - 112 * k - is.x, b.y - 56 * k }, Fade(IM_COL32(250, 246, 236, 255), al), inf);
-						} else {
-							const bool        can = s.mp >= s.manaCost;
-							const std::string cost = std::to_string(static_cast<int>(std::ceil(s.manaCost)));
-							const auto        cs = Measure(g_num, 34 * k, cost);
-							Txt(dl, g_num, 34 * k, { b.x - 158 * k - cs.x, b.y - 52 * k }, can ? IM_COL32(150, 190, 255, 255) : IM_COL32(230, 60, 50, 255), cost);
-							Txt(dl, g_body, 15 * k, { b.x - 152 * k, b.y - 40 * k }, IM_COL32(150, 170, 210, 255), "mana");
-						}
-					} else {
-						Txt(dl, g_title, 22 * k, { a.x + 18 * k, a.y + 48 * k }, Fade(IM_COL32(150, 145, 135, 255), al), "Empty hands");
+				if (any && ag >= 0) {
+					const float         al = shown;
+					const ImVec2        a{ size.x - 400 * k, size.y - 158 * k }, b{ size.x - 40 * k, size.y - 106 * k };
+					const float         rr = (b.y - a.y) * 0.5f;
+					const std::uint32_t ec = gen::kGuns[ag].color;
+					const ImU32         ecol = IM_COL32((ec >> 16) & 0xFF, (ec >> 8) & 0xFF, ec & 0xFF, 255);
+					const int           lvl = std::clamp(s.slotLevel[act], 0, 3);
+					const auto          fc = gen::kForgeColor[lvl];
+					const ImU32         nameCol = lvl > 0 ? IM_COL32((fc >> 24) & 0xFF, (fc >> 16) & 0xFF, (fc >> 8) & 0xFF, 255) : kParch;
+					dl->AddRectFilled(a, b, IM_COL32(8, 8, 10, static_cast<int>(175 * al)), rr);
+					dl->AddRect(a, b, Fade(ecol, 0.55f * al), rr, 0, 1.2f * k);
+					DrawEmblem(dl, ag, { a.x + rr, (a.y + b.y) * 0.5f }, rr - 6 * k, al, now, 0.9f);
+					// right: what it runs on - a mana pip, or the endless mark
+					float textR = b.x - 14 * k;
+					{
+						const bool        endless = s.gunKind == 0 || s.gunKind == 3 || !s.gunOut;
+						const std::string vs = endless ? std::string("\xE2\x88\x9E") : std::to_string(static_cast<int>(std::ceil(s.manaCost)));
+						const float       cz = (endless ? 22 : 18) * k;
+						const auto        cm = Measure(g_num, cz, vs);
+						const ImVec2      p1{ b.x - 10 * k, (a.y + b.y) * 0.5f + cm.y * 0.5f + 3 * k }, p0{ p1.x - cm.x - 16 * k, p1.y - cm.y - 6 * k };
+						const ImU32       pc = endless ? IM_COL32(70, 62, 48, static_cast<int>(200 * al)) : s.mp >= s.manaCost ? IM_COL32(40, 70, 130, static_cast<int>(200 * al)) : IM_COL32(120, 30, 26, static_cast<int>(210 * al));
+						dl->AddRectFilled(p0, p1, pc, (p1.y - p0.y) * 0.5f);
+						Txt(dl, g_num, cz, { p0.x + 8 * k, p0.y + 3 * k }, Fade(IM_COL32(240, 236, 226, 255), al), vs);
+						textR = p0.x - 10 * k;
 					}
-					Txt(dl, g_num, 15 * k, { a.x + 18 * k, a.y + 10 * k }, Fade(kGold, 0.85f * al), "SLOT " + std::to_string(act + 1));
-					// the other slots, small, stacked above; G cycles
-					float y = a.y - 12 * k;
-					for (int i = s.slotCount - 1; i >= 0; --i) {
-						if (i == act) {
-							continue;
-						}
-						const ImVec2 c0{ b.x - 300 * k, y - 50 * k }, c1{ b.x, y };
-						y -= 58 * k;
-						Panel(dl, c0, c1, k, 0.7f * al);
-						const int og = s.slotGun[i];
-						Txt(dl, g_num, 14 * k, { c0.x + 10 * k, c0.y + 6 * k }, Fade(kGoldDim, al), std::to_string(i + 1));
-						if (og >= 0) {
-							DrawEmblem(dl, og, { c1.x - 30 * k, c0.y + 25 * k }, 19 * k, 0.8f * al, now, 0.7f);
-							const int   ol = std::clamp(s.slotLevel[i], 0, 3);
-							const auto  fc = gen::kForgeColor[ol];
-							const ImU32 nc = ol > 0 ? IM_COL32((fc >> 24) & 0xFF, (fc >> 16) & 0xFF, (fc >> 8) & 0xFF, 255) : IM_COL32(210, 202, 186, 255);
-							Txt(dl, g_title, 16 * k, { c0.x + 30 * k, c0.y + 14 * k }, Fade(nc, 0.9f * al), std::string(gen::kGuns[og].label));
-						} else {
-							Txt(dl, g_body, 15 * k, { c0.x + 30 * k, c0.y + 15 * k }, Fade(IM_COL32(140, 136, 128, 255), al), "empty - call a spell at the shrine");
-						}
+					const float x0 = a.x + rr * 2 + 6 * k;
+					dl->PushClipRect(a, { textR, b.y }, true);
+					const std::string head = "SLOT " + std::to_string(act + 1) + "  " + (lvl >= 3 ? "ASCENDANT" : lvl > 0 ? "REFORGED " + std::string(lvl == 1 ? "I" : "II") : "");
+					Txt(dl, g_body, 12 * k, { x0, a.y + 7 * k }, Fade(ecol, 0.9f * al), head);
+					const std::string nm(gen::kGuns[ag].label);
+					float             nameSize = 22 * k;
+					while (nameSize > 11 * k && x0 + Measure(g_title, nameSize, nm).x > textR) {
+						nameSize -= 1 * k;
 					}
+					Txt(dl, g_title, nameSize, { x0, a.y + 22 * k }, Fade(nameCol, al), nm);
+					dl->PopClipRect();
 					if (s.slotCount > 1) {
 						const std::string hint = "G  next weapon";
-						Txt(dl, g_body, 13 * k, { b.x - Measure(g_body, 13 * k, hint).x, b.y + 6 * k }, Fade(IM_COL32(180, 172, 156, 200), al), hint);
+						Txt(dl, g_body, 12 * k, { b.x - Measure(g_body, 12 * k, hint).x - 10 * k, a.y - 18 * k }, Fade(IM_COL32(180, 172, 156, 200), al), hint);
 					}
 				}
 			}

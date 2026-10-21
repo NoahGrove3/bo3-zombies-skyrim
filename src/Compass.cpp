@@ -322,6 +322,16 @@ namespace bo3z::Compass
 		{  // the shout you have equipped and its cooldown (Noah: a shout card under the spell icons, bottom right) - the
 			// game's own recovery time, or our own count from when you spoke it, whichever is longer
 			static float most = 0, ready = 0, last = 0;
+			// (Noah: every shout back within 30 s at most - the whirlwind, Dragon's Updraft, within 5) whatever the
+			// shout's record, perks or other mods say
+			if (pl) {
+				auto*       cur = pl->GetActorRuntimeData().selectedPower;
+				static auto* updraft = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESShout>(gen::kUpdraftShout, gen::kPlugin);
+				const float cap = cur && cur == updraft ? 5.0f : 30.0f;
+				auto&       vt = pl->GetActorRuntimeData().voiceTimer;
+				if (vt > cap) vt = cap;
+				g_cdLeft = std::min(g_cdLeft, cap);
+			}
 			g_cdLeft = std::max(0.0f, g_cdLeft - a_delta);
 			const float rec = std::max(pl ? std::max(0.0f, pl->GetVoiceRecoveryTime()) : 0.0f, g_cdLeft);
 			if (g_cdFresh) most = std::max(rec, 0.1f), g_cdFresh = false;

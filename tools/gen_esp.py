@@ -109,7 +109,7 @@ for n, (w, tr) in enumerate(UPDRAFT_WORDS):
         sub('EFID', struct.pack('<I', fid('MGEF', 'shoutcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 recs['SHOU'].append(record('SHOU', fid('SHOU', 'updraft'), [sub('EDID', z('UN_Shout_updraft')), sub('FULL', z("Dragon's Updraft")),
     sub('DESC', z('A whirlwind lifts you high into the air - open your glider and your dragon takes you.'))] +
-    [sub('SNAM', struct.pack('<IIf', fid('WOOP', f'updraft_{n}'), fid('SPEL', f'updraft_{n}'), 8.0)) for n in range(3)]))
+    [sub('SNAM', struct.pack('<IIf', fid('WOOP', f'updraft_{n}'), fid('SPEL', f'updraft_{n}'), 5.0)) for n in range(3)]))
 
 SCRAFT = {r['id']: r for r in S['spellcraft']['rows']}
 def arto(key, model, kind):
@@ -226,12 +226,12 @@ for w in S['weapons']['rows']:
 # (Noah's download: Elemental Arrows, by its author) each bow's arrow: the quiver model on the string and at the hip, the
 # flight model the one you see fly - it flies with our energy shot (same speed, no drop), harmless, so the arrow is seen
 BOW_TIERS = {  # what each reforge adds (src/Bows.inl OnHit/Impact; every tier's impact is the last one, grown)
-    'fire': 'Base: burns. I Flare Shot: bursts into a fireball. II Cinder Trail: the ground behind it burns. III Fire Tornado: a tornado of flame hunts the dead.',
-    'frost': 'Base: slows. I Deep Freeze: freezes solid. II Shatter: the frozen burst into shards. III Ice Tornado: a tornado of ice hunts the dead.',
-    'shock': 'Base: leaps to one more. I Chain Lightning: leaps to three. II Storm Mark: the struck shock those round them. III Lightning Tornado: a storm funnel hunts the dead.',
-    'wind': 'Base: knocks back. I Gale Burst: the dead round its impact are hurled back. II Cyclone Arrow: a whirlwind where it lands. III Tornado: a tornado hunts the dead.',
+    'fire': 'Base: burns. I Flare Shot: bursts into a fireball. II Cinder Trail: the ground behind it burns. III Fiery Torrent: a full draw seeks the nearest of the dead and bursts into a torrent of fire.',
+    'frost': 'Base: slows. I Deep Freeze: freezes solid. II Shatter: the frozen burst into shards. III Throat of the World: a full draw seeks the nearest of the dead and bursts into killing cold.',
+    'shock': 'Base: leaps to one more. I Chain Lightning: leaps to three. II Storm Mark: the struck shock those round them. III Storm Ball: a full draw leaves a storm ball hanging where it strikes, zapping everything near it.',
+    'wind': 'Base: knocks back. I Gale Burst: the dead round its impact are hurled back. II Cyclone Arrow: a whirlwind where it lands. III Arcane Cyclone: a full draw bursts into a cyclone that hurls every one of the dead round it far away.',
     'sun': 'Base: sears and staggers. I Radiant Burst: light bursts round it. II Solar Flare: its burst of light grows wider. III Sunfire Tornado: a tornado of sunfire hunts the dead.',
-    'blood': 'Base: heals you a little. I Hemorrhage: they bleed. II Blood Tether: a tether feeds you. III Blood Tornado: a tornado of blood hunts the dead.'}
+    'blood': 'Base: heals you a little. I Hemorrhage: they bleed. II Blood Tether: a tether feeds you. III Crimson Harvest: kills burst into orbs of blood - health and power.'}
 NOCK = {'fire': 'flaming', 'frost': 'frost', 'shock': 'thunder', 'wind': 'swarm', 'sun': 'gust', 'blood': 'crimson'}
 for bw in S['bows']['rows']:
     pd = bytearray(tsub('proj_arrow', 'DATA'))

@@ -104,9 +104,15 @@ bool StaffUnleash(std::string_view a_id, const Aim& a_aim, float a_base)
 		Blast(BlastIndex("icevolley"), a_aim.hit, 0.0f, 0.9f);
 		return true;
 	}
-	if (a_id == "wolfcrown") {
-		g_zones.push_back({ 2, a_aim.hit + RE::NiPoint3{ 0, 0, 130.0f }, up ? 550.0f : 420.0f, up ? 8.0f : 4.0f, 0.0f, a_base * 0.8f, 0, false, 0 });
-		Blast(BlastIndex("shockmass"), a_aim.hit + RE::NiPoint3{ 0, 0, 130.0f }, 0.0f, 0.8f);
+	if (a_id == "wolfcrown") {  // (Noah: swapped with Stormreach's) Storm Bloom - StormCalling's spell, loosed where you aim
+		RE::Actor* target = nullptr;
+		for (auto* f : Foes(a_aim.hit, 600.0f)) { target = f; break; }
+		const bool cast = CastAtStrike(RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(0x000956, "StormCalling.esl"), a_aim.hit, a_aim.dir * 1000.0f, target);
+		for (auto* f : Foes(a_aim.hit, up ? 520.0f : 400.0f)) {  // our numbers alongside its look
+			Damage(f, a_base * (up ? 4.0f : 3.0f), false, false, true);
+		}
+		Blast(BlastIndex("shockmass"), a_aim.hit + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, 0.8f);
+		logger::info("staffs: Storm Bloom{}", cast ? "" : " (StormCalling not found - its blast only)");
 		return true;
 	}
 	if (a_id == "gravecaller") {
@@ -115,6 +121,12 @@ bool StaffUnleash(std::string_view a_id, const Aim& a_aim, float a_base)
 		return true;
 	}
 	return false;
+}
+
+// (Stormreach's tier-III, once the Storm Staff's held attack) a storm ball hanging in the air, zapping all near it
+void StormBallAt(const RE::NiPoint3& a_at, float a_r, float a_secs, float a_dmg)
+{
+	g_zones.push_back({ 2, a_at, a_r, a_secs, 0.0f, a_dmg, 0, false, 0 });
 }
 
 void TickStaffs(float a_delta)

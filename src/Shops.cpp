@@ -2117,7 +2117,7 @@ namespace bo3z
 			static float trim = 0;
 			if ((trim -= a_delta) <= 0) {  // a character from before the two-spell rule keeps the two in hand
 				trim = 3.0f;
-				if (auto have = Arcana::Carried(); have.size() > 2) {
+				if (auto have = Arcana::Carried(); have.size() > 2 && !Gun::TestKitOn()) {  // (a test character keeps all 17)
 					for (std::size_t i = 2; i < have.size(); ++i) {
 						Arcana::Forget(have[i]);
 					}

@@ -166,10 +166,10 @@ namespace BowsImpl
 	constexpr const char* kTierNames[6][4] = {
 		{ "Ember Arrow", "Flare Shot", "Cinder Trail", "Fiery Torrent" },
 		{ "Frost Arrow", "Deep Freeze", "Shatter", "Throat of the World" },
-		{ "Spark Arrow", "Chain Lightning", "Storm Mark", "Storm Bloom" },
+		{ "Spark Arrow", "Chain Lightning", "Storm Mark", "Storm Ball" },
 		{ "Gust Arrow", "Gale Burst", "Cyclone Arrow", "Arcane Cyclone" },
 		{ "Sunlit Arrow", "Radiant Burst", "Solar Flare", "Sunfire Tornado" },
-		{ "Leech Arrow", "Hemorrhage", "Blood Tether", "Blood Tornado" } };
+		{ "Leech Arrow", "Hemorrhage", "Blood Tether", "Crimson Harvest" } };
 	// (Noah: each bow's last upgrade - a tornado of its element where the arrow lands, slow, hunting the dead for 5 s)
 	Kind KindOf(int i)
 	{
@@ -289,7 +289,6 @@ namespace BowsImpl
 		switch (a_k) {
 		case Kind::Fire:  return dh->LookupForm<RE::SpellItem>(0x056995, "Conduit.esp");
 		case Kind::Frost: return dh->LookupForm<RE::SpellItem>(0x2E8870, "MysticismMagic.esp");
-		case Kind::Shock: return dh->LookupForm<RE::SpellItem>(0x000956, "StormCalling.esl");
 		case Kind::Wind:  return dh->LookupForm<RE::SpellItem>(0x026E6B, "ForgottenMagic_Redone.esp");
 		default:          return nullptr;
 		}
@@ -315,19 +314,49 @@ namespace BowsImpl
 		c->CastSpellImmediate(a_spell, false, a_target, 1.0f, false, 0.0f, pl);
 		return true;
 	}
+	void StormBallAt(const RE::NiPoint3& a_at, float a_r, float a_secs, float a_dmg);  // (Staffs.inl: the Storm Staff's old held ball)
+	// each bow's last upgrade, where a full-draw arrow strikes (Noah):
+	//   Emberstring  Fiery Torrent        (Conduit's spell) - the arrow seeks the nearest of the dead first (Fire)
+	//   Rimehorn     Throat of the World  (Mysticism's spell) - seeking too
+	//   Stormreach   Storm Ball           a storm ball hangs where it strikes, zapping all near it (swapped with the Storm Staff)
+	//   Skyhowl      Arcane Cyclone       (Forgotten Magic's spell) and every one of the dead round it hurled far away
+	//   Dawnspire    Sunfire Tornado      a tornado of sunfire that hunts the dead
+	//   Thirstbow    Crimson Harvest      (OnHit: kills burst into orbs of blood) - no tornado
 	void TornadoOf(const Spellcraft::Shot& s, const RE::NiPoint3& p, RE::Actor* a_hit = nullptr)
 	{
-		if (s.tier >= 3 && s.full) {
-			RE::Actor* target = a_hit;
-			if (!target) {
-				for (auto* f : Foes(p, 600.0f)) { target = f; break; }
+		if (s.tier < 3 || !s.full) {
+			static int said = 0;
+			if (said++ < 6) logger::info("bows: {} struck at tier {}{} - no tier-III attack", gen::kBows[s.bow].label, s.tier, s.full ? "" : " (not a full draw)");
+			return;
+		}
+		const Kind k = KindOf(s.bow);
+		if (k == Kind::Blood) {
+			return;
+		}
+		if (k == Kind::Shock) {
+			StormBallAt(p + RE::NiPoint3{ 0, 0, 130.0f }, 480.0f, 6.0f, s.damage * 0.5f);
+			Blast(BlastIndex("shockmass"), p + RE::NiPoint3{ 0, 0, 130.0f }, 0.0f, 0.8f);
+			logger::info("bows: Stormreach - a storm ball where it struck");
+			return;
+		}
+		if (k == Kind::Wind) {  // (Noah: far more knockback round it) everything inside the cyclone's reach hurled away
+			for (auto* f : Foes(p, 520.0f)) {
+				if (!f->IsDead()) Spellcraft::Fling(f, p - RE::NiPoint3{ 0, 0, 60.0f }, 9.0f);
 			}
-			if (CastAtStrike(TierThreeSpell(KindOf(s.bow)), p, s.vel, target)) {
+		}
+		RE::Actor* target = a_hit;
+		if (!target) {
+			for (auto* f : Foes(p, 600.0f)) { target = f; break; }
+		}
+		if (k != Kind::Sun) {
+			if (CastAtStrike(TierThreeSpell(k), p, s.vel, target)) {
 				Spellcraft::Area(s.row, p, 260.0f, s.damage * 1.2f, gen::kFxNone);  // (the spell's look and sweep; our numbers hit)
+				logger::info("bows: {} - {} cast where it struck", gen::kBows[s.bow].label, kTierNames[static_cast<int>(k)][3]);
 				return;
 			}
-			Props::Tornado(static_cast<int>(KindOf(s.bow)), p, s.vel, 5.0f, s.damage * 0.2f, true, s.row);
+			logger::warn("bows: {} - its tier-III spell could not be cast (mod missing?) - a tornado instead", gen::kBows[s.bow].label);
 		}
+		Props::Tornado(static_cast<int>(k), p, s.vel, 5.0f, s.damage * 0.2f, true, s.row);
 	}
 	void OnHit(const Spellcraft::Shot& s, RE::Actor* a, const RE::NiPoint3& p, bool killed)
 	{
@@ -376,10 +405,10 @@ namespace BowsImpl
 			}
 			break;
 		case Kind::Wind:
-			if (t >= 1) {  // Gale Burst: the dead round the impact are hurled back from it
-				for (auto* f : Foes(p, 240.0f)) {
-					if (f != a && !f->IsDead()) {
-						Spellcraft::Fling(f, p - RE::NiPoint3{ 0, 0, 40.0f }, 3.0f);
+			if (t >= 1) {  // Gale Burst: the dead round the impact are hurled back from it (Noah: much harder)
+				for (auto* f : Foes(p, 340.0f)) {
+					if (!f->IsDead()) {
+						Spellcraft::Fling(f, p - RE::NiPoint3{ 0, 0, 40.0f }, 6.5f);
 					}
 				}
 			}
@@ -593,6 +622,9 @@ namespace BowsImpl
 		}
 		auto& sh = Spellcraft::g_shots2.back();
 		sh.bow = i, sh.tier = t, sh.full = full, sh.effect = effect;
+		if (full && t >= 3 && (kind == Kind::Fire || kind == Kind::Frost)) {
+			sh.homing = 9.0f;  // (Noah: Fiery Torrent and Throat of the World seek the nearest of the dead)
+		}
 	}
 
 	void TickTiers(float a_delta)

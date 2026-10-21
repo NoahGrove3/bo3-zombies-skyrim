@@ -82,7 +82,7 @@ def textures(tag, base, normal=None, rough=None, emissive=None, glow=(1, 1, 1), 
     return D, N, G
 
 
-def write(pid, parts, mats, nif_rel):
+def write(pid, parts, mats, nif_rel, extra=()):
     """parts: list of (V, T, F, M) already in the prop's node space; mats: name -> modelconv mat line options"""
     WORK.mkdir(parents=True, exist_ok=True)
     obj = WORK / f'{pid}.obj'
@@ -102,6 +102,7 @@ def write(pid, parts, mats, nif_rel):
     job = [f'in {obj}', f'out {out}', 'scale 1', 'ground 0', f'offset {centre[0]:.4f} {centre[1]:.4f} {centre[2]:.4f}']
     for m, opts in mats.items():
         job.append(f'mat {m} ' + opts)
+    job += list(extra)
     jf = WORK / f'{pid}.job'; jf.write_text('\n'.join(job) + '\n')
     r = subprocess.run([CONV, str(jf)], capture_output=True, text=True)
     print(pid, (r.stdout.strip().split('\n') or [''])[-1], r.stderr.strip()[-300:])
@@ -224,7 +225,9 @@ def build(pid):
         for V0, T, F, M in parts:
             Q = (V0 - c) * s
             P.append((np.stack([Q[:, 0], -Q[:, 1], -Q[:, 2]], 1), T, F, M))
-        write(pid, P, {'m0': matopts(D, N, G, (1.0, 0.78, 0.35), 0.9, 1.6, 110)}, 'CurseOfAlduin/wonder/bane.nif')
+        # (Noah: not in my hands when swinging) a weapon's model must say where it hangs (Prn): without it Skyrim leaves
+        # it at the body's root, by the feet - so the greatsword's own: WeaponBack, and drawn, the hand
+        write(pid, P, {'m0': matopts(D, N, G, (1.0, 0.78, 0.35), 0.9, 1.6, 110)}, 'CurseOfAlduin/wonder/bane.nif', ['prn WeaponBack'])
 
 
 if __name__ == '__main__':

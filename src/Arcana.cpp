@@ -120,7 +120,7 @@ namespace bo3z::Arcana
 			for (auto n : kNotAttacks) {
 				if (std::string_view(s.name).find(n) != std::string_view::npos) debuff = true;
 			}
-			if (!g_damages[i] || debuff) {
+			if (false && (!g_damages[i] || debuff)) {  // (Noah chose these 17 himself: every one of them is in the altar)
 				logger::info("arcana: {} left out (not a straight attack)", s.name);
 				g_spell[i] = nullptr;
 				g_index.erase(sp->GetFormID());
