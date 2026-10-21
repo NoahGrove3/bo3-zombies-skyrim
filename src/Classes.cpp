@@ -560,9 +560,9 @@ namespace bo3z::Classes
 		for (auto* pr : mine) {
 			auto&              rd = pr->GetProjectileRuntimeData();
 			const RE::NiPoint3 at = pr->GetPosition();
-			const auto         near = NearFoes(at, 2200.0f, 1);
-			if (near.empty()) continue;
-			RE::NiPoint3 want = near[0]->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f } - at;
+			const auto         closest = NearFoes(at, 2200.0f, 1);
+			if (closest.empty()) continue;
+			RE::NiPoint3 want = closest[0]->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f } - at;
 			if (want.Length() < 1.0f) continue;
 			want.Unitize();
 			const float  sp = std::max(rd.linearVelocity.Length(), 600.0f);
