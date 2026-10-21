@@ -16,6 +16,21 @@
         "iconLabel": "misc_dragonclaw",
         "iconColor": "#e0b060"
       }
+    },
+    {
+      "match": {
+        "formType": "Spell",
+        "formId": {
+          "anyOf": [
+            "mihailesobonecolossus.esp|822",
+            "Apocalypse - Magic of Skyrim.esp|44264"
+          ]
+        }
+      },
+      "assign": {
+        "iconColor": "#ffc94a",
+        "infoSchoolName": "Legendary"
+      }
     }
   ]
 }

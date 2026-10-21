@@ -340,3 +340,19 @@ o.append('\t} };')
 o.append('}')
 with open(root / 'src/Generated.h', 'a') as f: f.write('\n'.join(o) + '\n')
 print('appended v0.2 tables')
+
+# (Noah: Legendary spells in gold in the inventory too) Inventory Interface Information Injector can't colour a name, so a
+# Legendary spell (coffer tier 3) gets a gold icon and "Legendary" as its school line in the Magic menu
+_i4 = root / 'assets/fx/SKSE/Plugins/InventoryInjector/CurseOfAlduin.json'
+_rules = [
+    {"match": {"formType": "MiscItem", "formId": {"anyOf": ["Paragliding.esp|802"]}},
+     "assign": {"subTypeDisplay": "Dragon", "iconSource": "skyui/icons_item_psychosteve.swf", "iconLabel": "misc_dragonclaw", "iconColor": "#e0b060"}},
+]
+_leg = [f'{r["plugin"]}|{int(r["formId"], 16):X}' for r in S['coffer_spells']['rows'] if int(r.get('tier', 0)) >= 3]
+if _leg:
+    _rules.append({"match": {"formType": "Spell", "formId": {"anyOf": _leg}},
+                   "assign": {"iconColor": "#ffc94a", "infoSchoolName": "Legendary"}})
+with open(_i4, 'w', newline='\n') as f:
+    json.dump({"$schema": "https://raw.githubusercontent.com/Exit-9B/InventoryInjector/main/docs/InventoryInjector.schema.json", "rules": _rules}, f, indent=2)
+    f.write('\n')
+print('wrote', _i4.name, len(_leg), 'legendary spells')

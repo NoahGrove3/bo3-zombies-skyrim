@@ -234,6 +234,33 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			Txt(dl, f, px, { cx - Measure(f, px, s).x * 0.5f, y }, col, s, glow, glowCol);
 		}
+		// (Noah: Legendary spells' lettering glowing gold) a warm halo that breathes, a bright gold face and a pale
+		// highlight across its top - on the altar's roll, its offer, and the rune banner bottom right
+		void TxtGold(ImDrawList* dl, ImFont* f, float px, ImVec2 p, const std::string& s, float al = 1.0f)
+		{
+			const float t = static_cast<float>(ImGui::GetTime());
+			const float breathe = 0.75f + 0.25f * std::sin(t * 2.4f);
+			const float glow = px * 0.16f;
+			for (int ring = 0; ring < 2; ++ring) {
+				const float rr = glow * (ring ? 1.0f : 0.55f);
+				for (int i = 0; i < 12; ++i) {
+					const float a = i * 0.5236f;
+					dl->AddText(f, px, { p.x + std::cos(a) * rr, p.y + std::sin(a) * rr }, IM_COL32(255, 170, 40, static_cast<int>((ring ? 26 : 44) * breathe * al)), s.c_str());
+				}
+			}
+			dl->AddText(f, px, { p.x + px * 0.04f, p.y + px * 0.05f }, IM_COL32(40, 20, 0, static_cast<int>(200 * al)), s.c_str());
+			dl->AddText(f, px, p, IM_COL32(255, 206, 92, static_cast<int>(255 * al)), s.c_str());
+			// the highlight: the face again, paler, clipped to its upper half
+			const ImVec2 sz = Measure(f, px, s);
+			dl->PushClipRect({ p.x - 2, p.y }, { p.x + sz.x + 2, p.y + sz.y * 0.48f }, true);
+			dl->AddText(f, px, p, IM_COL32(255, 244, 196, static_cast<int>(190 * al)), s.c_str());
+			dl->PopClipRect();
+		}
+		void TxtGoldC(ImDrawList* dl, ImFont* f, float px, float cx, float y, const std::string& s, float al = 1.0f)
+		{
+			TxtGold(dl, f, px, { cx - Measure(f, px, s).x * 0.5f, y }, s, al);
+		}
+		bool Legendary(int id) { return id >= Arcana::kIdBase && id < Bows::kIdBase && Arcana::TierOf(id - Arcana::kIdBase) >= 3; }
 
 		// Panel: a smoky black field in an iron-and-bronze frame with Nordic corner brackets (nine-slice of
 		// frame.png: 80px corners of 256), or, without the art, dark glass with gold ticks.
@@ -721,7 +748,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->AddCircleFilled(cc, 3.2f * k, IM_COL32(0, 0, 0, 90), 16);
 				dl->AddCircleFilled(cc, 2.2f * k, IM_COL32(255, 255, 255, 235), 16);
 			}
-			if (s.sneaking && !s.perkMenu) {
+			constexpr bool kOwnSneakEye = false;  // (Noah: back to Skyrim's own sneak symbol)
+			if (kOwnSneakEye && s.sneaking && !s.perkMenu) {
 				static float open = 0.15f;
 				open += (std::max(0.15f, s.aware) - open) * std::min(1.0f, dt * 8);
 				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f - 26 * k };
@@ -1413,9 +1441,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					while (nameSize > 11 * k && x0 + Measure(g_title, nameSize, nm).x > textR) {
 						nameSize -= 1 * k;
 					}
+					const bool legend = Arcana::TierOf(idx) >= 3;
 					if (big) {
-						Txt(dl, g_body, 12 * k, { x0, a.y + 7 * k }, Fade(ecol, 0.9f * al), hand);
-						Txt(dl, g_title, nameSize, { x0, a.y + 22 * k }, Fade(kParch, al), nm);
+						Txt(dl, g_body, 12 * k, { x0, a.y + 7 * k }, legend ? Fade(IM_COL32(255, 200, 90, 255), 0.95f * al) : Fade(ecol, 0.9f * al), legend ? std::string(hand) + "  -  LEGENDARY" : std::string(hand));
+						if (legend) TxtGold(dl, g_title, nameSize, { x0, a.y + 22 * k }, nm, al);
+						else Txt(dl, g_title, nameSize, { x0, a.y + 22 * k }, Fade(kParch, al), nm);
+					} else if (legend) {
+						TxtGold(dl, g_title, nameSize, { x0, (a.y + b.y) * 0.5f - nameSize * 0.55f }, nm, 0.9f * al);
 					} else {
 						Txt(dl, g_title, nameSize, { x0, (a.y + b.y) * 0.5f - nameSize * 0.55f }, Fade(kParch, 0.9f * al), nm);
 					}
@@ -2292,7 +2324,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const float a = std::clamp(1.0f - std::abs(off) / (rowH * 1.4f), 0.0f, 1.0f);
 						if (a <= 0.01f) continue;
 						const float y = cy + off - (nameH + typeH) * 0.5f;
-						TxtC(dl, g_title, nameH * (0.8f + 0.2f * a), c.x, y, Fade(IM_COL32(236, 240, 255, 255), a), ArmsName(id), 2 * k, IM_COL32(10, 20, 50, static_cast<int>(255 * a)));
+						if (Legendary(id)) TxtGoldC(dl, g_title, nameH * (0.8f + 0.2f * a), c.x, y, ArmsName(id), a);
+						else TxtC(dl, g_title, nameH * (0.8f + 0.2f * a), c.x, y, Fade(IM_COL32(236, 240, 255, 255), a), ArmsName(id), 2 * k, IM_COL32(10, 20, 50, static_cast<int>(255 * a)));
 						TxtC(dl, g_body, typeH, c.x, y + nameH + 2 * k, Fade(spellCol(id, 1.0f), a * 0.95f), ArmsType(id), 1.5f * k, IM_COL32(0, 0, 0, static_cast<int>(255 * a)));
 					}
 					dl->PopClipRect();
@@ -2307,7 +2340,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (legend) {
 						TxtC(dl, g_title, nameH * 0.7f, c.x, y - nameH * 0.9f, Fade(IM_COL32(255, 222, 130, 255), in), "LEGENDARY", 2 * k, IM_COL32(120, 60, 0, static_cast<int>(255 * in)));
 					}
-					TxtC(dl, g_title, nameH * (1.25f - 0.15f * in), c.x, y, Fade(IM_COL32(250, 246, 235, 255), in), ArmsName(s.rollGun), 2.5f * k, Fade(ec, in));
+					if (legend) TxtGoldC(dl, g_title, nameH * (1.25f - 0.15f * in), c.x, y, ArmsName(s.rollGun), in);
+					else TxtC(dl, g_title, nameH * (1.25f - 0.15f * in), c.x, y, Fade(IM_COL32(250, 246, 235, 255), in), ArmsName(s.rollGun), 2.5f * k, Fade(ec, in));
 					TxtC(dl, g_body, typeH, c.x, y + nameH * 1.15f + 2 * k, Fade(ec, in), ArmsType(s.rollGun), 1.5f * k, IM_COL32(0, 0, 0, static_cast<int>(255 * in)));
 					const float th = nameH * 1.15f + typeH + 10 * k;
 					Divider(dl, c.x, y + th, std::max(60.0f * k, R * 0.9f), k);
@@ -2391,7 +2425,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					rollOrb({ L + R, y + R + 4 * k }, R);
 					const float tx = L + 2 * R + 16 * k;
 					bullet({ tx, y + 4 * k }, 0, s.rollPhase == 0);
-					Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? "CALL A SPELL" : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? (s.rollBow ? "THE BOWS TURN..." : "THE SPELLS TURN...") : ArmsName(s.rollGun));
+					if (s.rollPhase == 3 && Legendary(s.rollGun)) TxtGold(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, ArmsName(s.rollGun));
+					else Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? "CALL A SPELL" : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? (s.rollBow ? "THE BOWS TURN..." : "THE SPELLS TURN...") : ArmsName(s.rollGun));
 					Txt(dl, g_body, 17 * k, { tx, y + 38 * k }, IM_COL32(196, 182, 160, 235),
 						s.rollPhase == 3 ? (s.rollBow ? "Activate the altar to take it - your bow goes back" : "Activate the shrine to take it") : "Two of the altar's spells at a time");
 					if (s.rollPhase == 0) {
@@ -5031,8 +5066,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						// border instead: src/Hud.cpp DrawCompass)
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder._alpha", RE::GFxValue(0.0));
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder._visible", RE::GFxValue(false));
-						// and its sneak eye to ours
-						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.StealthMeterInstance._alpha", RE::GFxValue(0.0));
+						// (Noah: the base Skyrim sneak symbol again) its sneak eye stays its own
+						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.StealthMeterInstance._alpha", RE::GFxValue(100.0));
 						// (Noah: the experience notices sat behind our night plaque) Skyrim's notices top-left move down under it
 						static double msgY0 = 1e9;
 						if (msgY0 > 1e8) {
