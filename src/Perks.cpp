@@ -176,17 +176,6 @@ namespace bo3z
 			}
 			g_lastHp = a_player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth);
 		}
-		// (Noah: after dying and loading back, my first-person hands were invisible until I put on gauntlets) a moment
-		// after every load the camera is flicked and the hands' things put back, as after a revive
-		void RearmAfterLoad()
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p) return;
-			g_handR = p->GetEquippedObject(false);
-			g_handL = p->GetEquippedObject(true);
-			g_wasFirst = false, g_rearmLoad = true;
-			g_rearm = 1.5f;
-		}
 		void SelfHit()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -205,6 +194,17 @@ namespace bo3z
 		RE::TESForm*   g_handR = nullptr;
 		RE::TESForm*   g_handL = nullptr;
 		bool           g_wasFirst = false;
+		// (Noah: after dying and loading back, my first-person hands were invisible until I put on gauntlets) a moment
+		// after every load the camera is flicked and the hands' things put back, as after a revive
+		void RearmAfterLoad()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			g_handR = p->GetEquippedObject(false);
+			g_handL = p->GetEquippedObject(true);
+			g_wasFirst = false, g_rearmLoad = true;
+			g_rearm = 1.5f;
+		}
 		void Rearm(RE::PlayerCharacter* a_player)
 		{
 			auto* em = RE::ActorEquipManager::GetSingleton();
