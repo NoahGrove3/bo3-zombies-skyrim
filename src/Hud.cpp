@@ -3466,6 +3466,22 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				fg->AddImage(tex, { 0, y0 + bob }, { size.x, y1 + bob }, { u0, 0 }, { u0 + rep, 1 }, (rgb & 0x00FFFFFF) | (static_cast<ImU32>(std::min(255.0f, al * 0.85f * fade)) << 24));
 				fg->AddImage(tex, { 0, y0 - bob * 0.6f + (y1 - y0) * 0.08f }, { size.x, y1 }, { u1, 0 }, { u1 + rep * 0.7f, 1 }, (rgb & 0x00FFFFFF) | (static_cast<ImU32>(std::min(255.0f, al * 0.7f * fade)) << 24));
 			};
+			// a bank of mist lying on water: densest along the line y_mid, thinning away both up and down (the fog texture's
+			// soft top edge drawn twice, the lower copy flipped), so it never ends in a hard line (Noah)
+			auto waterMist = [&](float y0, float yMid, float y1, float speed, float rep, int al, ImU32 rgb) {
+				ID3D11ShaderResourceView* t = g_mGroundFog ? g_mGroundFog : g_menuFog;
+				if (!t) {
+					return;
+				}
+				const auto tex = ImTextureID(reinterpret_cast<std::uintptr_t>(t));
+				const float bob = std::sin(now * 0.21f) * 0.006f * size.y;
+				for (int k = 0; k < 2; ++k) {
+					const float u = std::fmod(k == 0 ? now * speed : -now * speed * 0.63f + 0.37f, 1.0f), r = k == 0 ? rep : rep * 0.7f;
+					const ImU32 c = (rgb & 0x00FFFFFF) | (static_cast<ImU32>(std::min(255.0f, al * (k == 0 ? 0.85f : 0.7f) * fade)) << 24);
+					fg->AddImage(tex, { 0, y0 + bob }, { size.x, yMid + bob }, { u, 0 }, { u + r, 1 }, c);
+					fg->AddImage(tex, { 0, yMid + bob }, { size.x, y1 + bob }, { u, 1 }, { u + r, 0 }, c);
+				}
+			};
 			if (g_sGround) {
 				// THE SHRINE (Noah's picture): a round rune floor on a dark plain, a blue crystal turning and pulsing over
 				// it, broken rocks floating round it. All of it at one depth of the parallax, in the painting's pixels.
@@ -3560,7 +3576,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (g_sLife) {  // lily pads riding the swell, reeds in the corners
 					layer(g_sLife, 0.4f, white, { std::sin(now * 0.35f) * 0.0006f, std::sin(now * 0.9f) * 0.0009f });
 				}
-				groundFog(size.y * 0.47f, size.y * 0.62f, 0.006f, 1.6f, 70, IM_COL32(120, 135, 180, 0));  // mist on the far water, at the mountains' feet
+				waterMist(size.y * 0.47f, size.y * 0.565f, size.y * 0.68f, 0.006f, 1.6f, 70, IM_COL32(120, 135, 180, 0));  // mist on the far water, at the mountains' feet
 				layer(g_sGround, kD, white);
 				if (g_sGlow) {  // the runes and the pool breathe with the core
 					layer(g_sGlow, kD, IM_COL32(255, 255, 255, static_cast<int>((150 + 105 * pulse) * fade)));
