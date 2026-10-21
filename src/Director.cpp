@@ -372,6 +372,7 @@ namespace bo3z
 			RE::ActorHandle h;
 			float           floorZ, t = 0;
 			bool            burst = false;
+			int             anim = 0;  // (Noah: Undead Summons Emerge from the Ground) 0 trying, 1 its emerge animation plays, -1 our climb
 		};
 		std::vector<Riser> g_risers;
 		constexpr float    kRiseDepth = 115.0f, kRiseTime = 1.5f;
@@ -399,6 +400,28 @@ namespace bo3z
 					continue;
 				}
 				r.t += a_delta;
+				// the draugr's own summoned-from-the-grave animation (Undead Summons Emerge from the Ground replaces it):
+				// any of the dead on a draugr skeleton (draugr, skeletons, ...) plays it standing on the floor; the rest climb
+				if (r.anim == 0) {
+					if (a->Is3DLoaded() && a->NotifyAnimationGraph("summonStart")) {
+						r.anim = 1, r.t = 0;
+						auto f = a->GetPosition();
+						f.z = r.floorZ + 2.0f;
+						a->SetPosition(f, true);
+						a->SetCollision(true);
+					} else if (r.t > 0.4f) {
+						r.anim = -1, r.t = 0;
+					} else {
+						continue;
+					}
+				}
+				if (r.anim == 1) {
+					if (r.t >= 2.6f || a->IsDead()) {
+						a->EnableAI(true);
+						r.t = 99;
+					}
+					continue;
+				}
 				const float u = std::clamp(r.t / kRiseTime, 0.0f, 1.0f), e = u * u * (3 - 2 * u);
 				auto        at = a->GetPosition();
 				if (u >= 1.0f || a->IsDead()) {
