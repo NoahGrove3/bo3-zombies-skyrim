@@ -298,6 +298,7 @@ namespace bo3z
 		int                       Roll();             // one you don't carry, of the tiers the altars allow (-1)
 		std::vector<std::uint8_t> Levels();           // for the co-save
 		void                      SetLevels(const std::vector<std::uint8_t>& a_levels);
+		bool                      IsStrikeSpell(const RE::MagicItem* a_item);  // the mods' spells our bows and the Storm Staff loose (they never hurt you)
 	}
 
 	// The player's settings (CurseOfAlduin.ini [Settings]; the panel in the System menu)
@@ -817,5 +818,6 @@ namespace bo3z
 	namespace Events
 	{
 		void InstallMenuWatch();
+		void InstallLoadGuard();  // (a save holding an extra twice no longer crashes as it loads)
 	}
 }

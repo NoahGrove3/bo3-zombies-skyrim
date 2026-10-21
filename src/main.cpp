@@ -171,6 +171,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 	logger::info("The Curse of Alduin {} loading as SKSE plugin", bo3z::kVersion);
 	bo3z::Save::InstallCoSave();
 	bo3z::Events::InstallMenuWatch();
+	bo3z::Events::InstallLoadGuard();
 	bo3z::Net::PatchTogether();  // (Skyrim Together loads us through SKSE: its menu must learn to follow the party here too)
 	bo3z::Watchdog::Start(true);  // (SKSE loads plugins on the game's main thread)
 	return true;

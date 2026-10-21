@@ -3235,17 +3235,16 @@ namespace bo3z
 				if (!a_npc) {
 					return;
 				}
+				// (Noah: saves crashed as they loaded) no combat style is made at run time any more: a made form isn't in
+				// the save, yet the night's levelled undead (their copies are saved) pointed at it. Their own style is
+				// changed in place instead
 				auto* old = a_npc->GetCombatStyle();
+				if (!old) {
+					return;
+				}
 				auto& cs = made[old];
 				if (!cs) {
-					cs = factory->Create();
-					if (!cs) {
-						return;
-					}
-					if (old) {
-						cs->generalData = old->generalData, cs->meleeData = old->meleeData, cs->closeRangeData = old->closeRangeData;
-						cs->longRangeData = old->longRangeData, cs->flightData = old->flightData, cs->flags = old->flags;
-					}
+					cs = old;
 					cs->generalData.offensiveMult = 1.0f, cs->generalData.defensiveMult = 0.0f, cs->generalData.groupOffensiveMult = 1.0f;
 					cs->generalData.avoidThreatChance = 0.0f, cs->generalData.meleeScoreMult = std::max(1.0f, cs->generalData.meleeScoreMult);
 					cs->closeRangeData.circleMult = 0.0f, cs->closeRangeData.fallbackMult = 0.0f;
@@ -3255,7 +3254,6 @@ namespace bo3z
 					cs->flightData.groundAttackChance = 1.0f, cs->flightData.groundAttackTimeMult = 3.0f;
 					cs->flightData.perchAttackChance = 0.0f, cs->flightData.diveBombChance = 0.0f, cs->flightData.hoverChance = 0.1f;
 				}
-				a_npc->SetCombatStyle(cs);
 				++n;
 			};
 			for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {

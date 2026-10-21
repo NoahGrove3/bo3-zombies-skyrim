@@ -10,6 +10,7 @@
 //   hardest (a quick shot about a third); each reforge tier adds power and a new attack (below: Noah's list).
 //   Skyhowl (the wind bow), drawn full, looses a blast of wind instead: everything before you hurled away (a Thundergun).
 //   Damage: a share of a zombie's night health (sheet: share), the night's power curve, reforging, perks; headshots double.
+void StormBallAt(const RE::NiPoint3& a_at, float a_r, float a_secs, float a_dmg);  // (Staffs.inl: the Storm Staff's old held ball)
 namespace BowsImpl
 {
 	constexpr int kN = static_cast<int>(gen::kBows.size());
@@ -294,10 +295,23 @@ namespace BowsImpl
 		}
 	}
 	RE::ObjectRefHandle g_t3Marker;
+	// (Noah: the charged bow hurt me at night) the blasts of these spells do no physical damage of their own: our numbers do it
+	void Defang(RE::SpellItem* a_spell)
+	{
+		static std::unordered_set<RE::SpellItem*> done;
+		if (!a_spell || !done.insert(a_spell).second) return;
+		for (auto* e : a_spell->effects) {
+			auto* mg = e ? e->baseEffect : nullptr;
+			if (!mg) continue;
+			if (mg->data.explosion) mg->data.explosion->data.damage = 0.0f;
+			if (auto* pr = mg->data.projectileBase; pr && pr->data.explosionType) pr->data.explosionType->data.damage = 0.0f;
+		}
+	}
 	bool CastAtStrike(RE::SpellItem* a_spell, const RE::NiPoint3& p, const RE::NiPoint3& a_vel, RE::Actor* a_target)
 	{
 		auto* pl = RE::PlayerCharacter::GetSingleton();
 		if (!a_spell || !pl) return false;
+		Defang(a_spell);
 		auto m = g_t3Marker.get();
 		if (!m || m->IsDeleted() || m->GetParentCell() != pl->GetParentCell()) {
 			auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(0x0000003B);
@@ -314,7 +328,6 @@ namespace BowsImpl
 		c->CastSpellImmediate(a_spell, false, a_target, 1.0f, false, 0.0f, pl);
 		return true;
 	}
-	void StormBallAt(const RE::NiPoint3& a_at, float a_r, float a_secs, float a_dmg);  // (Staffs.inl: the Storm Staff's old held ball)
 	// each bow's last upgrade, where a full-draw arrow strikes (Noah):
 	//   Emberstring  Fiery Torrent        (Conduit's spell) - the arrow seeks the nearest of the dead first (Fire)
 	//   Rimehorn     Throat of the World  (Mysticism's spell) - seeking too

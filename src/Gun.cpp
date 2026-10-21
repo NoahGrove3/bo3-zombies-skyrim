@@ -3441,6 +3441,16 @@ namespace bo3z
 			return pool.empty() ? -1 : pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
 		}
 		std::vector<std::uint8_t> Levels() { return { BowsImpl::g_level.begin(), BowsImpl::g_level.end() }; }
+		bool IsStrikeSpell(const RE::MagicItem* a_item)
+		{
+			if (!a_item) return false;
+			static const RE::MagicItem* own[5] = { BowsImpl::TierThreeSpell(BowsImpl::Kind::Fire), BowsImpl::TierThreeSpell(BowsImpl::Kind::Frost),
+				BowsImpl::TierThreeSpell(BowsImpl::Kind::Wind), RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(0x000956, "StormCalling.esl"), nullptr };
+			for (auto* o : own) {
+				if (o && o == a_item) return true;
+			}
+			return false;
+		}
 		void SetLevels(const std::vector<std::uint8_t>& a_levels)
 		{
 			for (int i = 0; i < BowsImpl::kN; ++i) {

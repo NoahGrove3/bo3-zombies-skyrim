@@ -56,6 +56,9 @@ namespace bo3z
 			}
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			auto* caster = a_data.caster ? a_data.caster->As<RE::Actor>() : nullptr;
+			if (player && me == player && Bows::IsStrikeSpell(a_data.magicItem)) {
+				return true;  // (Noah: the charged bow hurt me at night) our bows' spells never touch you, whoever they count as cast by
+			}
 			if (player && me == player) {
 				if (!caster) {
 					return true;  // a hazard, a trap, a lingering field with no one behind it
@@ -810,8 +813,46 @@ namespace bo3z
 		}
 	}
 
+	namespace
+	{
+		// (Noah: every save crashed as it loaded) a save can hold a reference's extra data twice over (an ExtraGlobal the
+		// reference already got from its plugin): the game's loader adds a new one, the list refuses it and hands back
+		// nothing, and the loader writes through that nothing. Refused, the one already there is handed back instead -
+		// the loader fills that in, and the spare is freed.
+		struct LoadExtraAdd
+		{
+			static RE::BSExtraData* thunk(RE::ExtraDataList* a_list, RE::BSExtraData* a_new)
+			{
+				auto* r = func(a_list, a_new);
+				if (!r && a_list && a_new) {
+					const auto type = a_new->GetType();
+					if (auto* have = a_list->GetByType(type)) {
+						static int said = 0;
+						if (said++ < 10) logger::warn("load: a saved extra (type {}) was already on its reference - the one there is used", static_cast<int>(type));
+						delete a_new;
+						return have;
+					}
+				}
+				return r;
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+	}
+
 	namespace Events
 	{
+		void InstallLoadGuard()
+		{
+			// the ExtraGlobal branch of the reference loader (ID 12095): its call that adds the new extra
+			const std::uintptr_t at = REL::ID(12095).address() + 0x55A;
+			if (*reinterpret_cast<const std::uint8_t*>(at) != 0xE8) {
+				logger::warn("load: the extra-data loader isn't where it was expected - no guard");
+				return;
+			}
+			SKSE::AllocTrampoline(32);
+			LoadExtraAdd::func = SKSE::GetTrampoline().write_call<5>(at, LoadExtraAdd::thunk);
+			logger::info("load: guard on saved extra data installed");
+		}
 		void InstallMenuWatch()
 		{
 			RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(MenuWatch::Get());
