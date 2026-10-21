@@ -3045,6 +3045,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		OrbTex MenuOrbTextures() { return { { g_sCrystalSheet[0] ? g_sCrystalSheet[0] : g_sCrystal, g_sCrystalSheet[1], g_sCrystalSheet[2], g_sCrystalSheet[3] }, g_sSoft }; }
 		ID3D11ShaderResourceView* g_sMtn = nullptr;      // the shrine scene's mountains across the lake (tools/menulake.py)
 		ID3D11ShaderResourceView* g_sRefl = nullptr;     // the mountains upside down in the lake
+		ID3D11ShaderResourceView* g_sLake = nullptr;     // the water itself: the sky mirrored through its ripples, Fresnel-dark toward us (tools/menuwater.py)
 		ID3D11ShaderResourceView* g_sAurora = nullptr;   // the northern lights
 		ID3D11ShaderResourceView* g_sLife = nullptr;     // lily pads on the lake, reeds and bushes in the near corners
 		ID3D11ShaderResourceView* g_sMotes = nullptr;    // motes rising from the shrine's pool: 16x8 flipbook (tools/orbfx.py)
@@ -3488,9 +3489,25 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (g_sMtn) {
 						layer(g_sMtn, kL, white);
 					}
+					// the water sways in thin rows, each nudged sideways on its own wave (bigger and slower toward us); the
+					// mountains' reflection below uses the same waves so the two move as one surface
+					constexpr int kRows = 128;
+					auto rowOff = [&](int r) {
+						const float y0 = 800 + 640.0f * r / kRows, tt = (r + 0.5f) / kRows;
+						return std::sin(now * (1.6f - 0.8f * tt) + y0 * (0.19f - 0.12f * tt)) * (1.5f + 16.0f * tt * tt) + std::sin(now * 0.7f + y0 * 0.031f) * 3.0f * tt;
+					};
 					const ImVec2 h0 = toScreen(kL, -60, 800), h1 = toScreen(kL, 2620, 1460);
 					fg->AddRectFilledMultiColor(h0, h1, IM_COL32(20, 27, 52, static_cast<int>(255 * fade)), IM_COL32(20, 27, 52, static_cast<int>(255 * fade)),
 						IM_COL32(6, 9, 20, static_cast<int>(255 * fade)), IM_COL32(6, 9, 20, static_cast<int>(255 * fade)));
+					if (g_sLake) {
+						const auto lt = ImTextureID(reinterpret_cast<std::uintptr_t>(g_sLake));
+						for (int r = 0; r < kRows; ++r) {
+							const float y0 = 800 + 640.0f * r / kRows, y1 = 800 + 640.0f * (r + 1) / kRows;
+							const float du = rowOff(r) / 2560.0f;
+							fg->AddImage(lt, toScreen(kL, 0, y0), toScreen(kL, 2560, y1 + 0.6f), { du, r / static_cast<float>(kRows) }, { 1 + du, (r + 1) / static_cast<float>(kRows) },
+								IM_COL32(255, 255, 255, static_cast<int>(255 * fade)));
+						}
+					}
 					for (const auto& st : stars) {
 						const float py = 1600 - st.y * 1440;
 						if (py < 806 || py > 1430) {
@@ -3507,12 +3524,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					auroraStrips(true, 0.42f);
 					if (g_sRefl) {
 						const auto rt = ImTextureID(reinterpret_cast<std::uintptr_t>(g_sRefl));
-						constexpr int kRows = 128;
 						for (int r = 0; r < kRows; ++r) {
 							const float y0 = 800 + 640.0f * r / kRows, y1 = 800 + 640.0f * (r + 1) / kRows;
-							const float tt = (r + 0.5f) / kRows;
-							const float off = std::sin(now * (1.6f - 0.8f * tt) + y0 * (0.19f - 0.12f * tt)) * (1.5f + 16.0f * tt * tt) + std::sin(now * 0.7f + y0 * 0.031f) * 3.0f * tt;
-							const float du = off / 2560.0f;
+							const float du = rowOff(r) / 2560.0f;
 							fg->AddImage(rt, toScreen(kL, 0, y0), toScreen(kL, 2560, y1 + 0.6f), { du, r / static_cast<float>(kRows) }, { 1 + du, (r + 1) / static_cast<float>(kRows) },
 								IM_COL32(255, 255, 255, static_cast<int>(255 * fade)));
 						}
@@ -4494,7 +4508,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\CurseOfAlduin\\") + file).c_str(), nullptr, tex);
 			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_title.png", nullptr, &g_mTitle);
-			for (auto [file, tex] : { std::pair{ L"menu_shrine_ground.png", &g_sGround }, { L"menu_shrine_glow.png", &g_sGlow }, { L"menu_crystal.png", &g_sCrystal }, { L"menu_softglow.png", &g_sSoft }, { L"menu_mountains.png", &g_sMtn }, { L"menu_lake_refl.png", &g_sRefl }, { L"menu_aurora2.png", &g_sAurora }, { L"menu_lake_life.png", &g_sLife }, { L"menu_motes.png", &g_sMotes } }) {
+			for (auto [file, tex] : { std::pair{ L"menu_shrine_ground.png", &g_sGround }, { L"menu_shrine_glow.png", &g_sGlow }, { L"menu_crystal.png", &g_sCrystal }, { L"menu_softglow.png", &g_sSoft }, { L"menu_mountains.png", &g_sMtn }, { L"menu_lake_refl.png", &g_sRefl }, { L"menu_lake.png", &g_sLake }, { L"menu_aurora2.png", &g_sAurora }, { L"menu_lake_life.png", &g_sLife }, { L"menu_motes.png", &g_sMotes } }) {
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\CurseOfAlduin\\") + file).c_str(), nullptr, tex);
 			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_rock_turn.png", nullptr, &g_sRockTurn);

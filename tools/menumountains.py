@@ -1,31 +1,52 @@
 #!/usr/bin/env python3
-"""(Noah: the menu's mountains, as real as the Echo Altar) the far ranges across the lake, rendered from a real
-height-field instead of painted: ridged, warped multifractal terrain with big massifs at the back, lit by the moon
-from the upper left, snow lying where it would (high, and on gentle slopes), bare rock on the steep faces, pine
-forest low on the near hills, and the night air hazing everything blue with distance. A column ray-caster (front to
-back, per screen column) draws it into the menu's painting space; tools/menulake.py's shore forest and lake
-reflection are laid on as before.
+"""(Noah: the menu's mountains, as real as the Echo Altar) the far ranges across the lake, rendered rather than painted.
 
-    python3 tools/menumountains.py assets/ui
+A height-field is built from warped ridged noise (big massifs at the back, a few landmark peaks framing the altar,
+low forested hills by the shore), then rained on: tools/terrain.c runs droplet erosion over it, which carves the
+gullies, couloirs and debris fans real mountains have, and remembers where the water ran. The same C file then
+ray-marches every pixel (2x2 supersampled) into the eroded terrain with a spruce forest standing on its lower slopes,
+lit by the moon from the upper left with soft cast shadows, snow lying where it would (high, gentle, and down the
+gullies), sky light in the hollows, and the night air hazing it all blue with distance.
 
-Writes menu_mountains.png (2560x1440, alpha clear above the peaks) and menu_lake_refl.png (its reflection)."""
-import math, pathlib, sys
+    python3 tools/menumountains.py assets/ui [scale]
+
+Writes menu_mountains.png (2560x1440, alpha clear above the peaks and below the shore) and menu_lake_refl.png (its
+reflection; tools/menuwater.py redoes that one with the water's own optics when it runs after this)."""
+import ctypes, math, pathlib, subprocess, sys, time
 import numpy as np
-from PIL import Image, ImageFilter
-from scipy.ndimage import map_coordinates, gaussian_filter
+from PIL import Image
+from scipy.ndimage import map_coordinates, gaussian_filter, zoom
 
-sys.path.insert(0, str(pathlib.Path(__file__).parent))
+HERE = pathlib.Path(__file__).parent
 OUT = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else 'menumtn')
 OUT.mkdir(parents=True, exist_ok=True)
-sys.argv = [sys.argv[0], str(OUT)]
-import menulake as ML
+SCALE = float(sys.argv[2]) if len(sys.argv) > 2 else 1.0
 
-W, H, HORIZON = ML.W, ML.H, ML.HORIZON
+W0, H0, HORIZON0 = 2560, 1440, 800
+W, H, HORIZON = int(W0 * SCALE), int(H0 * SCALE), int(HORIZON0 * SCALE)
 N = 3072
 X0, X1 = -26000.0, 26000.0
 Z0, Z1 = 2600.0, 42000.0
-CAM_Y = 60.0
-F = 1280 / math.tan(math.radians(31))
+CAM_Y = 10.0
+F = 1280 / math.tan(math.radians(31)) * SCALE
+BUMP = float(sys.argv[3]) if len(sys.argv) > 3 else 0.2
+HAZE = np.array([34, 41, 62], np.float32)          # the sky low over the far shore (tools/menusky.py's horizon)
+
+
+def lib():
+    so = pathlib.Path('/tmp/terrain.so')
+    src = HERE / 'terrain.c'
+    if not so.exists() or so.stat().st_mtime < src.stat().st_mtime:
+        subprocess.check_call(['gcc', '-O3', '-fopenmp', '-shared', '-fPIC', '-o', str(so), str(src), '-lm'])
+    L = ctypes.CDLL(str(so))
+    fp = ctypes.POINTER(ctypes.c_float)
+    L.erode.argtypes = [fp, fp, ctypes.c_int, ctypes.c_int, ctypes.c_uint, ctypes.c_float]
+    L.render.argtypes = [fp, fp, fp, ctypes.c_int] + [ctypes.c_float] * 7 + [ctypes.c_int] * 6 + [fp, fp]
+    return L
+
+
+def ptr(a):
+    return a.ctypes.data_as(ctypes.POINTER(ctypes.c_float))
 
 
 def noise2(n, base, seed):
@@ -47,99 +68,110 @@ def fbm(n, base, octaves, seed, pers=0.5, ridged=False):
 
 
 def heightfield():
-    """rows: depth (Z0 near .. Z1 far), cols: x"""
     print('terrain...')
     wx = fbm(N, 3, 4, 5) - 0.5; wz = fbm(N, 3, 4, 6) - 0.5
     yy, xx = np.mgrid[0:N, 0:N].astype(np.float32)
     rid = fbm(N, 5, 8, 11, 0.5, ridged=True)
-    rid = map_coordinates(rid, [np.clip(yy + wz * 140, 0, N - 1), np.clip(xx + wx * 140, 0, N - 1)], order=1)
+    rid = map_coordinates(rid, [np.clip(yy + wz * 160, 0, N - 1), np.clip(xx + wx * 160, 0, N - 1)], order=1)
     soft = fbm(N, 3, 6, 21, 0.5)
     zt = np.linspace(0, 1, N, dtype=np.float32)[:, None]
-    env = 140 + 2600 * np.clip((zt - 0.03) / 0.42, 0, 1) ** 1.1          # low hills by the shore, massifs behind
-    h = env * (0.68 * rid ** 1.45 + 0.32 * soft ** 1.3)
-    # a few great peaks (the range's landmarks), placed in painting space so they frame the altar
-    for px, pz, ph, pr in ((-0.29, 0.30, 2100, 0.035), (0.30, 0.28, 1900, 0.035), (-0.02, 0.55, 900, 0.05), (0.14, 0.40, 1100, 0.03), (-0.16, 0.42, 1200, 0.03), (0.40, 0.45, 1500, 0.04), (-0.42, 0.47, 1600, 0.04)):
+    env = 200 + 3100 * np.clip((zt - 0.10) / 0.32, 0, 1) ** 1.1           # forested hills by the shore, massifs behind
+    h = env * 1.25 * (0.78 * rid ** 1.75 + 0.22 * soft ** 1.2)       # (sharp: aretes between the cirques)
+    # the shore's own hills: rounded, wooded, rising a few hundred feet out of the water in front of the range
+    hills = fbm(N, 14, 5, 31, 0.5)
+    h += 340 * np.clip((hills - 0.36) / 0.4, 0, 1) ** 1.5 * np.exp(-((zt - 0.045) / 0.045) ** 2)
+    for px, pz, ph, pr in ((-0.29, 0.30, 2200, 0.036), (0.30, 0.28, 2000, 0.036), (-0.02, 0.55, 900, 0.05), (0.14, 0.40, 1100, 0.03),
+                           (-0.16, 0.42, 1200, 0.03), (0.40, 0.45, 1500, 0.04), (-0.42, 0.47, 1600, 0.04)):
         cx = (px + 1) / 2 * (N - 1); cz = pz * (N - 1)
         d2 = ((xx - cx) / (pr * N)) ** 2 + ((yy - cz) / (pr * N * 0.8)) ** 2
-        h += ph * np.exp(-np.sqrt(d2) * 2.2) * (0.35 + 1.1 * rid)   # (a cone, not a dome: sharp summits)
-    # rock: fine ridged detail that grows with height - gullies, aretes and buttresses down every face
-    det = fbm(N, 22, 5, 51, 0.55, ridged=True)
-    h = h * (0.78 + 0.44 * det)
-    # a touch of erosion: valleys carved along the soft noise's low lines
-    h -= 260 * np.clip(0.35 - soft, 0, 1) * zt
-    h = gaussian_filter(h, 1.4)
-    return h.astype(np.float32)
+        h += ph * np.exp(-np.sqrt(d2) * 2.2) * (0.35 + 1.1 * rid)
+    det = fbm(N, 22, 4, 51, 0.55, ridged=True)
+    h = h * (0.82 + 0.36 * det)
+    # the shore: the land runs down to the water in a ragged line (coves where it dips under)
+    shore = 0.012 + 0.03 * fbm(N, 7, 4, 61)[0:1, :]
+    h = 6 + (h - 6) * np.clip((zt - shore + 0.004) / 0.03, 0, 1) ** 0.8 - 18 * np.clip(1 - zt / shore, 0, 1)
+    h = gaussian_filter(h, 0.8).astype(np.float32)
+    return h
 
 
-def render(h):
+def erode_at(L, h, n, drops, seed):
+    """rain on the terrain at n x n: returns the change it made and where the water ran (both at full size)"""
+    k = n / N
+    small = zoom(h, k, order=1).astype(np.float32) if n != N else h.copy()
+    cell = (Z1 - Z0) / n
+    hc = np.ascontiguousarray(small / cell, np.float32)
+    before = hc.copy()
+    flow = np.zeros_like(hc)
+    L.erode(ptr(hc), ptr(flow), n, drops, seed, 1.0)
+    delta = (hc - before) * cell
+    if n != N:
+        delta = zoom(delta, N / n, order=3)[:N, :N]
+        flow = zoom(flow, N / n, order=1)[:N, :N]
+    flow = gaussian_filter(flow, 1.0)
+    flow = 1 - np.exp(-flow / (np.percentile(flow, 96) + 1e-6))
+    return delta.astype(np.float32), flow.astype(np.float32)
+
+
+def erode(L, h):
+    print('erosion...')
+    t = time.time()
+    d1, f1 = erode_at(L, h, 1024, 1_500_000, 1234)        # the big gullies and fans
+    h = h + gaussian_filter(d1, 1.5)
+    d2, f2 = erode_at(L, h, N, 3_000_000, 4321)           # the fine runnels down every face
+    h2 = (h + gaussian_filter(d2, 0.7)).astype(np.float32)
+    flow = np.maximum(f1 * 0.8, f2)
+    print(f'  {time.time() - t:.0f}s, carved {np.abs(d1).mean():.1f} + {np.abs(d2).mean():.1f} units on average')
+    return h2, flow.astype(np.float32)
+
+
+def render(L, h, flow):
     print('rendering...')
-    gz, gx = np.gradient(h, (Z1 - Z0) / N, (X1 - X0) / N)
-    nrm = np.dstack([-gx, np.ones_like(h), -gz]); nrm /= np.linalg.norm(nrm, axis=2, keepdims=True)
-    slope = 1 - nrm[..., 1]                                              # 0 flat .. 1 vertical
-    L = np.array([-0.78, 0.38, 0.30], np.float32); L /= np.linalg.norm(L)  # the moon: up-left, a little behind
-    lam = np.clip(nrm @ L, 0, 1)
-    # snow: above a ragged snowline, and only where it can lie
-    snowline = 850 + 450 * fbm(N, 6, 4, 33)
-    snow = np.clip((h - snowline) / 300, 0, 1) * np.clip((0.42 - slope) / 0.16, 0, 1)
-    snow = np.maximum(snow, np.clip((h - 1900) / 400, 0, 1) * np.clip((0.62 - slope) / 0.2, 0, 1))
-    grain = fbm(N, 64, 3, 41)
-    forestm = np.clip((700 - h) / 300, 0, 1) * np.clip((0.6 - slope) / 0.3, 0, 1) * (1 - snow)
-    rock = np.array([58, 62, 74], np.float32) * (0.6 + 0.8 * grain[..., None])
-    snowc = np.array([205, 218, 240], np.float32)
-    pine = np.array([14, 22, 26], np.float32) * (0.8 + 0.4 * grain[..., None])
-    alb = rock * (1 - snow[..., None]) + snowc * snow[..., None]
-    alb = alb * (1 - forestm[..., None]) + pine * forestm[..., None]
-    amb = np.array([0.30, 0.35, 0.50], np.float32)
-    sky_occ = 0.6 + 0.4 * nrm[..., 1]
-    col = alb * (amb[None, None] * sky_occ[..., None] + np.array([0.85, 0.92, 1.08], np.float32)[None, None] * lam[..., None] * 1.25)
-    # the column ray-caster: front to back
-    rgb = np.zeros((H, W, 3), np.float32); a = np.zeros((H, W), np.float32)
-    ybuf = np.full(W, HORIZON + 6, np.float32)                     # nothing below the shore (the lake is the game's)
+    ao = np.clip(1 + (h - gaussian_filter(h, 10)) / 160, 0.25, 1.25).astype(np.float32)
+    Ld = np.array([-0.80, 0.42, 0.14], np.float32); Ld /= np.linalg.norm(Ld)
+    P = np.array([*Ld, 0.66, 0.72, 0.90, 0.026, 0.036, 0.062, *(HAZE / 255) ** 2.2, 30000.0, 900.0, 820.0, BUMP], np.float32)
+    out = np.zeros((H, W, 5), np.float32)
+    y1 = HORIZON + int(8 * SCALE)
+    t = time.time()
+    ss = 2
+    L.render(ptr(h), ptr(flow), ptr(ao), N, X0, X1, Z0, Z1, float(h.max()), CAM_Y, F, W, H, HORIZON, 0, y1, ss, ptr(P), ptr(out))
+    print(f'  {time.time() - t:.0f}s')
+    rgb, a, dep = out[..., :3], out[..., 3], out[..., 4]
+    # exposure and the display curve (a gentle toe: the night stays deep, the moonlit snow keeps its shape)
+    rgb = np.clip(rgb * 1.45, 0, None)
+    rgb = rgb / (1 + rgb * 0.35)
+    srgb = np.clip(rgb, 0, 1) ** (1 / 2.2) * 255
+    # low mist lying on the water along the far shore, and a faint band of it in the valleys
     rows = np.arange(H, dtype=np.float32)[:, None]
-    sx = (np.arange(W, dtype=np.float32) - W / 2) / F
-    z = Z0; dz = 4.0
-    haze = np.array([44, 54, 82], np.float32)
-    while z < Z1:
-        x = sx * z
-        u = (x - X0) / (X1 - X0) * (N - 1); v = np.full(W, (z - Z0) / (Z1 - Z0) * (N - 1), np.float32)
-        ok = (u >= 0) & (u <= N - 1)
-        hh = map_coordinates(h, [v, np.clip(u, 0, N - 1)], order=3)
-        top = HORIZON - (hh - CAM_Y) * F / z
-        draw = ok & (top < ybuf)
-        if draw.any():
-            c = np.stack([map_coordinates(col[..., k], [v, np.clip(u, 0, N - 1)], order=1) for k in range(3)], 1)
-            fog = 1 - np.exp(-(z - Z0) / 34000.0)
-            c = c * (1 - fog) + haze * fog * 0.95
-            m = draw[None, :] & (rows >= np.floor(top)[None, :]) & (rows < ybuf[None, :])
-            # (anti-aliased crest: the top pixel takes its coverage)
-            rgb[m] = np.broadcast_to(c[None, :, :], (H, W, 3))[m]
-            a[m] = 1.0
-            frac = 1 - (top - np.floor(top))
-            tp = np.clip(np.floor(top).astype(int) - 1, 0, H - 1)
-            cov = draw & (a[tp, np.arange(W)] < 1)
-            a[tp[cov], np.arange(W)[cov]] = np.maximum(a[tp[cov], np.arange(W)[cov]], 1 - frac[cov])
-            rgb[tp[cov], np.arange(W)[cov]] = c[cov]
-            ybuf = np.where(draw, np.minimum(ybuf, np.floor(top)), ybuf)
-        z += dz; dz *= 1.005
-    # low mist along the shore
-    mist = np.clip((rows - (HORIZON - 70)) / 70.0, 0, 1) ** 1.6
-    rgb = rgb * (1 - 0.55 * mist[..., None]) + haze * 0.55 * mist[..., None]
-    rgb[HORIZON + 4:] = 0; a[HORIZON + 4:] = 0
-    return rgb, a
+    mist = np.clip((rows - (HORIZON - 46 * SCALE)) / (50 * SCALE), 0, 1) ** 1.8
+    hz = HAZE * 1.05
+    srgb = srgb * (1 - 0.38 * mist[..., None]) + hz * 0.38 * mist[..., None]
+    a = a.copy(); a[HORIZON + int(3 * SCALE):] = 0
+    return srgb, a
+
+
+def rgba(rgb, a):
+    return Image.fromarray(np.dstack([np.clip(rgb, 0, 255), np.clip(a, 0, 1) * 255]).astype(np.uint8), 'RGBA')
+
+
+def reflection(img):
+    """the ranges mirrored in the lake (a plain mirror: tools/menuwater.py gives it the water's optics)"""
+    m = np.asarray(img, np.float32)
+    top = m[HORIZON0 - 640:HORIZON0][::-1].copy()
+    t = np.linspace(0, 1, 640, dtype=np.float32)[:, None, None]
+    rgb = top[..., :3] * (0.72 - 0.30 * t) + np.array([8, 12, 24], np.float32) * (0.28 + 0.30 * t)
+    rgba(rgb, top[..., 3] / 255).save(OUT / 'menu_lake_refl.png', optimize=True)
 
 
 if __name__ == '__main__':
+    L = lib()
     h = heightfield()
-    rgb, a = render(h)
-    # the shore's own dark line under the trees, as menulake draws it
-    yy = np.arange(H)[:, None]
-    shore = HORIZON - 6 - 10 * ML.fbm1(W, 6, 40, 77)
-    tm = ((yy >= shore[None, :]) & (yy <= HORIZON + 2)).astype(np.float32)
-    rgb = rgb * (1 - tm[..., None]) + np.array([14, 17, 28])[None, None] * tm[..., None]
-    a = np.maximum(a, tm)
-    img = ML.forest(ML.rgba(rgb, a))
-    img.save(OUT / 'menu_mountains.png', optimize=True)
-    ML.reflection(img)
-    prev = Image.new('RGBA', (W, H), (18, 22, 38, 255)); prev.alpha_composite(img)
-    prev.convert('RGB').resize((1280, 720), Image.LANCZOS).save('/tmp/claude-0/mtn_new.jpg', quality=90)
-    print('menumountains: wrote menu_mountains.png, menu_lake_refl.png')
+    import os
+    h, flow = erode(L, h) if not os.environ.get('NOERODE') else (h, np.zeros_like(h))
+    rgb, a = render(L, h, flow)
+    img = rgba(rgb, a)
+    if SCALE == 1.0:
+        img.save(OUT / 'menu_mountains.png', optimize=True)
+        reflection(img)
+    prev = Image.new('RGBA', img.size, (18, 22, 38, 255)); prev.alpha_composite(img)
+    prev.convert('RGB').save(OUT / 'mtn_preview.jpg', quality=92)
+    print('menumountains: done')
