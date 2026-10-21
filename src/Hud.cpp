@@ -3600,21 +3600,39 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (pl.depth > 0) drawRock(pl);
 				}
 				// (the pool's motes and light shaft after the far rocks: a rock swinging round the back of the orb passes behind them)
-				// motes of light rising from the pool to the crystal, spiralling in (tools/orbfx.py motes, the game's own)
-				if (g_sMotes) {
-					const ImVec2 pool = at(0, 0, 0), top = at(0, 0, kCrystalZ);
-					const float  hgt = (pool.y - top.y) * 1.2f;
-					const int    fr = static_cast<int>(now * 24.0f) % 128;
-					const ImVec2 uv0{ (fr % 16) / 16.0f, (fr / 16) / 8.0f }, uv1{ uv0.x + 1.0f / 16.0f, uv0.y + 0.125f };
-					sprite(g_sMotes, { pool.x, (pool.y + top.y) * 0.5f }, hgt * 0.5f, hgt, 0, IM_COL32(255, 255, 255, static_cast<int>(235 * fade)), uv0, uv1);
-				}
+				// (Noah: realistic particles) motes of light rising out of the altar's base: each its own life - born in the pool,
+				// drifting up on a slow spiral with a little turbulence, brightening, then thinning out to nothing above the
+				// stone; small, soft, a few larger and dimmer (out of focus), those behind the stone drawn before it
+				const ImVec2 kPool = at(0, 0, 0), kTop = at(0, 0, kCrystalZ);
+				const auto motes = [&](bool a_front) {
+					if (!g_sSoft) return;
+					const float rise = (kPool.y - kTop.y) * 1.65f;
+					for (int q = 0; q < 140; ++q) {
+						const float seed = q * 0.6180339f;
+						const float speed = 0.075f + 0.05f * std::fmod(seed * 7.3f, 1.0f);
+						const float life = std::fmod(now * speed + seed, 1.0f);              // 0 born .. 1 gone
+						const float ang = seed * 6.2832f + now * (0.35f + 0.25f * std::fmod(seed * 3.1f, 1.0f)) + life * 2.5f;
+						const float rad = (18.0f + 70.0f * std::fmod(seed * 5.7f, 1.0f)) * u * (0.55f + 0.9f * life);
+						const bool  front = std::cos(ang) > 0;
+						if (front != a_front) continue;
+						const float tx = std::sin(now * 1.3f + q) * 6.0f * u, ty = std::sin(now * 0.9f + q * 1.7f) * 4.0f * u;  // turbulence
+						const ImVec2 pos{ kPool.x + std::sin(ang) * rad + tx, kPool.y - life * rise + std::cos(ang) * rad * 0.25f + ty };
+						const float fadeIn = std::clamp(life / 0.12f, 0.0f, 1.0f), fadeOut = std::clamp((1.0f - life) / 0.35f, 0.0f, 1.0f);
+						const bool  big = q % 9 == 0;                                             // out of focus, nearer the eye
+						const float sz = (big ? 9.0f : 2.2f + 2.2f * std::fmod(seed * 11.0f, 1.0f)) * u * kS;
+						const float al = fadeIn * fadeOut * (big ? 0.25f : 0.9f) * (0.6f + 0.4f * std::sin(now * 5.0f + q)) * fade;
+						sprite(g_sSoft, pos, sz * 6, sz * 6, 0, IM_COL32(90, 170, 255, static_cast<int>(70 * al)));
+						sprite(g_sSoft, pos, sz * 2, sz * 2, 0, IM_COL32(200, 235, 255, static_cast<int>(230 * al)));
+					}
+				};
+				motes(false);
 				// the light rising from the pool to the crystal: a soft shaft (the round light stretched tall)
 				if (g_sSoft) {
 					const ImVec2 pool = at(0, 0, 0), top = at(0, 0, kCrystalZ);
 					const ImVec2 mid{ pool.x, (pool.y + top.y) * 0.5f };
 					const float  len = (pool.y - top.y) * 1.25f, bw = (70 + 16 * pulse) * u * kS;
-					sprite(g_sSoft, mid, bw * 2.0f, len, 0, IM_COL32(110, 190, 255, static_cast<int>((70 + 40 * pulse) * fade)));
-					sprite(g_sSoft, mid, bw * 0.7f, len, 0, IM_COL32(210, 240, 255, static_cast<int>((80 + 60 * pulse) * fade)));
+					sprite(g_sSoft, mid, bw * 2.0f, len, 0, IM_COL32(110, 190, 255, static_cast<int>((30 + 20 * pulse) * fade)));
+					sprite(g_sSoft, mid, bw * 0.7f, len, 0, IM_COL32(170, 220, 255, static_cast<int>((25 + 20 * pulse) * fade)));
 					sprite(g_sSoft, pool, bw * 3.2f, bw * 1.0f, 0, IM_COL32(120, 200, 255, static_cast<int>((90 + 60 * pulse) * fade)));  // the pool's glow on the floor
 				}
 				// the crystal: turning (its frames), swelling with the heartbeat, its light round it
@@ -3622,9 +3640,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float  bob = std::sin(now * 0.9f) * 6 * u;  // the orb rises and falls; its light and aura go with it
 					const ImVec2 c = [&] { auto p = at(0, 0, kCrystalZ); p.y += bob; return p; }();
 					if (g_sSoft) {
-						const float g1 = (420 + 90 * pulse) * u, g2 = (200 + 50 * pulse) * u;
-						sprite(g_sSoft, c, g1 * 2, g1 * 2, 0, IM_COL32(70, 140, 255, static_cast<int>((50 + 40 * pulse) * fade)));
-						sprite(g_sSoft, c, g2 * 2, g2 * 2, 0, IM_COL32(140, 200, 255, static_cast<int>((60 + 50 * pulse) * fade)));
+						// (Noah: a realistic glow, no white circle) light scattering off the stone into the night air: a wide faint
+						// halo and a closer one, both blue, breathing slowly - no hot core
+						const float br = 0.8f + 0.2f * std::sin(now * 1.1f);
+						const float g1 = 560 * u, g2 = 300 * u, g3 = 170 * u;
+						sprite(g_sSoft, c, g1 * 2, g1 * 2.2f, 0, IM_COL32(40, 90, 200, static_cast<int>(38 * br * fade)));
+						sprite(g_sSoft, c, g2 * 2, g2 * 2.3f, 0, IM_COL32(70, 140, 240, static_cast<int>(48 * br * fade)));
+						sprite(g_sSoft, c, g3 * 2, g3 * 2.6f, 0, IM_COL32(110, 180, 255, static_cast<int>(40 * br * fade)));
 					}
 					// purple fire made of magic round it (the in-game orb's own flipbook: tools/magicfire.py, 16x8 frames), two
 					// passes out of step and a little apart in size
@@ -3654,10 +3676,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 					}
 
-					if (g_sSoft) {  // the white heart over it, flaring on the beat
-						const float g3 = (60 + 40 * pulse) * u;
-						sprite(g_sSoft, c, g3 * 2, g3 * 2, 0, IM_COL32(230, 245, 255, static_cast<int>((70 + 110 * pulse) * fade)));
-					}
+					motes(true);  // (the motes in front of the stone; the white heart is gone)
 					// (the old drawn sparks over the pool are gone too: the motes flipbook is the shrine's only particles)
 				}
 				// (Noah: as the altar in the game) its golden rune circle over the shrine, laid flat and turning smoothly
