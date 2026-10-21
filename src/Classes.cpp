@@ -75,10 +75,16 @@ namespace bo3z::Classes
 				break;
 			case coffer::kRanger:
 				if (const int b = Bows::Roll(); b >= 0) Bows::Give(b);
+				for (std::uint32_t id : { 0x857u, 0x858u, 0x859u }) {  // (Noah) the Drifter Outfit, light armoured
+					GiveItem(p, Lookup(id, "DrifterArmorAndOutfitByXtudo.esp"), 1, true);
+				}
 				GiveItem(p, Lookup(0x002F9A, "Faction Crossbows.esp"), 1, false);  // Dawnguard Crossbow
 				GiveItem(p, Lookup(0x020B04, "Faction Crossbows.esp"), 30, false);  // Dawnguard Bolts
 				break;
 			case coffer::kSpellsword:
+				for (std::uint32_t id : { 0x800u, 0x802u, 0x805u }) {  // (Noah) the Practical Pirate outfit
+					GiveItem(p, Lookup(id, "practical_pirate.esp"), 1, true);
+				}
 				GiveItem(p, Lookup(0x00B550, "Spellsword.esp"), 1, true);   // Steel Spellsword
 				GiveItem(p, Lookup(0x00B569, "Spellsword.esp"), 1, false);  // Steel Spellshield
 				if (auto* ww = Lookup(0x00087C, "The Wizard Warrior.esp")) {

@@ -721,9 +721,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				{ "DESTRUCTION", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Two-handed casting: fire, frost, shock, sun, poison, blood",
 				  "Reforge: climb each element's ladder to its Legendary spell", "Scorch, Hoarfrost, the Wild Witch's hat and gown" },
 				{ "RANGER", IM_COL32(110, 210, 120, 255), "Bows and crossbows - and every arrow counts", "The six elemental bows, crossbows and their bolts",
-				  "Mastery: a bow's kills raise its tier; buy ammo at the altars", "An elemental bow, the Dawnguard Crossbow, 30 bolts" },
+				  "Mastery: a bow's kills raise its tier; buy ammo at the altars", "An elemental bow, the Dawnguard Crossbow, 30 bolts, the Drifter Outfit" },
 				{ "SPELLSWORD", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "Spell-weapons, spellshields, touch spells, The Wizard Warrior",
-				  "Imbue: raise each element's touch spell; power attacks cast your spell", "Steel Spellsword, Steel Spellshield, Flame Touch" } };
+				  "Imbue: raise each element's touch spell; power attacks cast your spell", "Steel Spellsword, Steel Spellshield, Flame Touch, the Practical Pirate outfit" } };
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));
 			TxtC(dl, g_title, 46 * k, size.x * 0.5f, size.y * 0.12f, kParch, Classes::Switching() ? "CHANGE YOUR PATH" : "CHOOSE YOUR PATH", 3 * k, Fade(kGold, 0.6f));
 			const std::string sub = Classes::Switching() ? "Switching costs " + std::to_string(Classes::SwitchCost()) + " septims. Each class keeps its own spells and progress."
