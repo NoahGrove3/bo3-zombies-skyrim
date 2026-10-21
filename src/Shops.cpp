@@ -606,7 +606,7 @@ namespace bo3z
 				auto* hitRef = pick.rayOutput.rootCollidable ? RE::TESHavokUtilities::FindCollidableRef(*pick.rayOutput.rootCollidable) : nullptr;
 				// (Noah: Whiterun's altar rose three times while he stood by it) a person, a creature, a tree's crown or a
 				// loose thing is not the floor either: the ray goes on down through them too
-				const auto* hb = hitRef ? hitRef->GetBaseObject() : nullptr;
+				auto* hb = hitRef ? hitRef->GetBaseObject() : nullptr;
 				const bool  notFloor = hitRef && (IsOurBase(hb) || hitRef->As<RE::Actor>() || (hb && (hb->Is(RE::FormType::Tree) || hb->Is(RE::FormType::Flora) || hb->Is(RE::FormType::Misc) || hb->Is(RE::FormType::Weapon) || hb->Is(RE::FormType::Armor) || hb->Is(RE::FormType::Projectile))));
 				if (notFloor) {
 					top = z - 2.0f;
