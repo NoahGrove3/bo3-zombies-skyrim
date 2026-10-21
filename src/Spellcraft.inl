@@ -494,7 +494,9 @@ namespace Spellcraft
 		}
 		bool burning = false;
 		for (auto& dd : g_dots) burning |= dd.target.get().get() == a;
+		g_fecElem = FecOfEffect(a_effect == -2 ? d.effect : a_effect);
 		const bool killed = Damage(a, dmg, a_head, false);
+		g_fecElem = -1;
 		if (killed && shattered) Stats::Style("SHATTER", 40);
 		if (killed && burning && a_effect != gen::kFxIgnite) Stats::Style("COMBUSTION", 40);
 		if (killed && (a_effect == gen::kFxChain) && a->IsInWater()) Stats::Style("STORM SURGE", 40);

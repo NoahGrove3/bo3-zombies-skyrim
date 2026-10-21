@@ -2075,7 +2075,7 @@ namespace bo3z
 				if (t >= 0 && Curse::ClaimableShout(t) >= 0) rows.push_back(kRowShout);
 				rows.push_back(kRowBond);
 				const bool trials = t >= 0 && Curse::Altar(t).on;
-				if (trials) for (int q = 0; q < 5; ++q) rows.push_back(kRowTrial + q);
+				if (trials) for (int q : { 0, 1, 4, 3 }) rows.push_back(kRowTrial + q);  // (the Unbroken folded into the Breath; 3 is the class trial)
 				rows.push_back(kRowLeave);
 				auto at = std::find(rows.begin(), rows.end(), g_focus);
 				int  i = at == rows.end() ? 0 : static_cast<int>(at - rows.begin());
@@ -2132,8 +2132,9 @@ namespace bo3z
 						return true;
 					}
 				}
-				if (code >= 0x07 && code <= 0x0B) {  // 6 7 8 9 0: the trials
-					g_trialSel = static_cast<int>(code) - 0x07;
+				if (code >= 0x07 && code <= 0x0A) {  // 6 7 8 9: the trials, as listed
+					static constexpr int kKeyTrial[4] = { 0, 1, 4, 3 };
+					g_trialSel = kKeyTrial[static_cast<int>(code) - 0x07];
 					Curse::StartTrial(ref ? TownOf(ref) : -1, g_trialSel);
 					return true;
 				}

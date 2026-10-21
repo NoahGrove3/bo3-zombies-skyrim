@@ -265,7 +265,7 @@ o.append(f'\tinline constexpr std::array<SpellcraftDef, {len(SC)}> kSpellcraft{{
 for r in SC:
     o.append(f'\t\tSpellcraftDef{{ {cs(r["id"])}, {cs(r["name"])}, 0x{r["color"]}, 0x{r["accent"]}, {STYLES.index(r["style"])}, {TAPS.index(r["tap"])}, {F(r["speed"])}, {F(r["radius"])}, {F(r["damage"])}, {r["count"]}, {F(r["spread"])}, {r["pierce"]}, {F(r["homing"])}, {EFFECTS.index(r["effect"])}, {ULTS.index(r["ult"])}, {cs(r["ultName"])}, {F(r["ultDamage"])}, {F(r["ultRadius"])}, {cs(r["text"])}, 0x{IDS[("ARTO", "fx_" + r["id"] + "_hand")]:03X}, 0x{IDS[("STAT", "fx_" + r["id"] + "_orb")]:03X} }},')
 o.append('\t} };')
-o.append(f'\tinline constexpr std::uint32_t kArtIceShell = 0x{IDS[("ARTO", "fx_iceshell")]:03X}, kArtRoots = 0x{IDS[("ARTO", "fx_roots")]:03X}, kArtBurn = 0x{IDS[("ARTO", "fx_burn")]:03X}, kArtPoison = 0x{IDS[("ARTO", "fx_poison")]:03X};  // status looks on the struck')
+o.append(f'\tinline constexpr std::uint32_t kArtIceShell = 0x{IDS[("ARTO", "fx_iceshell")]:03X}, kArtRoots = 0x{IDS[("ARTO", "fx_roots")]:03X}, kArtBurn = 0x{IDS[("ARTO", "fx_burn")]:03X}, kArtPoison = 0x{IDS[("ARTO", "fx_poison")]:03X}, kArtPortal = 0x{IDS[("ARTO", "fx_portal")]:03X};  // status looks on the struck')
 # the Echo Altar's bows (sheet: bows): src/Gun.cpp Bows
 BW = S['bows']['rows']
 EL8 = ['fire', 'frost', 'shock', 'poison', 'disease', 'sun', 'blood', 'arcane']

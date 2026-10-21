@@ -251,6 +251,18 @@ namespace bo3z
 
 	// The Coffer's spells: 150 spells from the spell mods, handed out by the shrine (Arcana.cpp, src/CofferSpells.h)
 	// The four classes (the classes overhaul): 0 Summoner, 1 Destruction, 2 Ranger, 3 Spellsword (coffer::Class)
+	// The Curse follows the main story (src/Story.cpp)
+	namespace Story
+	{
+		int  Stage();             // 0 Helgen .. 7 Alduin fallen in Sovngarde
+		void Reset();             // a load / a new game
+		bool SceneHold();         // a set piece of the main quest is playing out here: no night begins
+		bool TrialsOpen(int a_town, std::string* a_why = nullptr);
+		bool BarrowJarlsOpen();   // after Bleak Falls Barrow
+		bool ElitesOpen();        // after Dragon Rising
+		bool AlduinFallen();      // after Sovngarde
+	}
+
 	namespace Classes
 	{
 		int              Get();            // -1 none chosen yet
@@ -460,6 +472,8 @@ namespace bo3z
 		int   Steps(int a_town);                         // trials done (0-3), 4 when freed
 		void  StartTrial(int a_town, int a_trial);       // the altar's menu: take up one of the five trials (gen::kTrials)
 		void  NoteHit(RE::FormID a_target, bool a_melee);  // the player's last blow on one of the dead (Trial of Steel)
+		void  OnClassKill(int a_how, int a_element, float a_dist);  // the class trial: 0 summon, 1 Destruction spell, 2 bow/crossbow, 3 melee
+		std::string TrialTitle(int a_trial);             // its name (the class trial's follows your class)
 		struct AltarView
 		{
 			bool                       on{ false };  // the city is still held (its trials are offered)

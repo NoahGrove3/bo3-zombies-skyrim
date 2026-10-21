@@ -1,6 +1,6 @@
 {
   "sheet": "curse",
-  "about": "The Curse of Alduin: lore, and the trials every city's Echo Altar sets before it wakes. At the altar the player picks any three of the five trials (trials), in any order; when three are done the city's Barrow-Jarl (bosses, by town) rises near the altar at night, and slaying it frees the city. Each trial's n and seconds are given per Skyrim difficulty, Novice to Legendary (iDifficulty 0-5). Progress lives in one global per city (1000000 + doneBits*100000 + active*10000 + progress, 9000000 = freed), saved with the game. {city} is filled per city, {n} and {s} with the trial's count and seconds. A freed city is a sanctuary: no undead rise within zoneRadius of its station or in its own location; its shout waits at the altar.",
+  "about": "The Curse of Alduin: lore, and the trials every city's Echo Altar sets before it wakes. At the altar the player takes the three shared trials (ward, culling, breath) and the class trial (the steel slot: Pact of the Host, Trial of the Elements, Trial of the Long Shot or Trial of Steel, by the player's class), in any order; the Unbroken is folded into the Long Night's Breath (Expert and up: waves held above half health). When the four are done the city's Barrow-Jarl (bosses, by town) rises near the altar at night, and slaying it frees the city. Each trial's n and seconds are given per Skyrim difficulty, Novice to Legendary (iDifficulty 0-5). Progress lives in one global per city (1000000 + doneBits*100000 + active*10000 + progress, 9000000 = freed), saved with the game. {city} is filled per city, {n} and {s} with the trial's count and seconds. A freed city is a sanctuary: no undead rise within zoneRadius of its station or in its own location; its shout waits at the altar.",
   "prologueTitle": "THE CURSE OF ALDUIN",
   "prologue": "Helgen burned, and you lived. But Alduin did not flee: as he rose from the ash he shouted three words into the earth - GRAH DIR LEIN, Battle, Death, World - and every barrow in Skyrim answered. Now when the sun goes down the dead claw their way up to finish what he began. Only the Echo Altars the ancient Tongues raised in every hold can still his voice, and they have gone dark. Wake them, city by city, and their dead will sleep again.",
   "liftedBanner": "THE ECHO ALTAR OF {CITY} AWAKENS",
@@ -66,7 +66,7 @@
       "title": "Ward of the Tongues",
       "short": "Hold the runic circle at the altar",
       "goal": "Stand in the runic circle at the Echo Altar of {city}",
-      "text": "The Tongues who raised the Echo Altar of {city} sealed it with a circle of runes that only a living voice can hold open. Stand inside it while Alduin's echo drives the dead against you, thicker than any night before; step out and the runes fall quiet until you return. Hold the circle for {s} seconds.",
+      "text": "The Tongues who raised the Echo Altar of {city} sealed it with a circle of runes that only a living voice can hold open. Stand inside it while Alduin's echo summons the dead against you, thicker than any night before; step out and the runes fall quiet until you return. Hold the circle for {s} seconds.",
       "n": [
         0,
         0,
@@ -89,7 +89,7 @@
       "title": "The Culling",
       "short": "Slay the risen within the city",
       "goal": "Slay the risen within {city}",
-      "text": "GRAH - Battle. The first of Alduin's three words calls the dead to war, and the altar answers war with war. Put {n} of the risen down within {city} - every wave that claws up out of the ground counts.",
+      "text": "GRAH - Battle. The first of Alduin's three words calls the dead to war, and the altar answers war with war. Put {n} of the risen down within {city} - every one the night conjures up counts.",
       "n": [
         40,
         50,
@@ -110,7 +110,7 @@
     {
       "id": "unbroken",
       "title": "The Unbroken",
-      "short": "Clear whole waves without falling below half health",
+      "short": "Folded into the Long Night's Breath",
       "goal": "Clear waves of the risen in {city} without falling below half health",
       "text": "DIR - Death. Alduin's second word feeds on the wounded. Clear {n} whole waves of the risen in {city} without letting your health fall below half; bleed past it and that wave does not count.",
       "n": [
@@ -132,10 +132,10 @@
     },
     {
       "id": "steel",
-      "title": "Trial of Steel",
-      "short": "Slay the risen in melee alone",
-      "goal": "Slay the risen within {city} with blade, axe, mace or fist",
-      "text": "The Barrow-Jarls ruled by the sword, and the old dead respect nothing else. Put {n} of the risen in {city} down in melee - no spell, no bow, no Thu'um counts.",
+      "title": "Your Class's Trial",
+      "short": "The trial of your own class",
+      "goal": "Win your class's trial in {city}",
+      "text": "The altar of {city} asks each who comes of their own craft. A Summoner's host must make the kills (Pact of the Host); a Destruction mage must kill with two elements or more (Trial of the Elements); a Ranger must kill from 30 m or more with bow or crossbow (Trial of the Long Shot); a Spellsword must kill in melee with a spell in the other hand (Trial of Steel).",
       "n": [
         10,
         12,
@@ -158,7 +158,7 @@
       "title": "The Long Night's Breath",
       "short": "Hold the altar while the waves are cleared",
       "goal": "Hold the Echo Altar of {city} through the night's waves",
-      "text": "LEIN - World. The last word is Alduin breathing the world back into his dead. Stand by the altar of {city} while the night's waves rise against it: clear {n} waves without straying from it, and its breath is broken.",
+      "text": "LEIN - World. The last word is Alduin breathing the world back into his dead. Stand by the altar of {city} while the night's waves rise against it: clear {n} waves without straying from it, and its breath is broken. On Expert and above the Unbroken's rule holds too: a wave counts only if you never fell below half health.",
       "n": [
         1,
         2,

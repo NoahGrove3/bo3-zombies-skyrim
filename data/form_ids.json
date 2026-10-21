@@ -1202,6 +1202,7 @@
   "PERK:summon_cap_3": "0xcae",
   "PERK:summon_cap_4": "0xcaf",
   "MGEF:tomecast": "0xcb0",
-  "SPEL:wonder_tome": "0xcb1"
+  "SPEL:wonder_tome": "0xcb1",
+  "ARTO:fx_portal": "0xcb2"
  }
 }

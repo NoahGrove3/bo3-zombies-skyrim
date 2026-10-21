@@ -18,7 +18,7 @@ namespace bo3z
 	namespace
 	{
 		constexpr int kTrialCount = static_cast<int>(gen::kTrials.size());
-		constexpr int kNeeded = 3;            // trials to take before the Barrow-Jarl
+		constexpr int kNeeded = 4;            // trials to take before the Barrow-Jarl (the classes overhaul: the three shared and your class's)
 		constexpr int kFreed = kNeeded + 1;   // steps: three trials and the Barrow-Jarl
 		constexpr int kBase = 1'000'000, kFreedValue = 9'000'000, kBossActive = 6;
 		constexpr float kBreathRange = 3000.0f;  // the Long Night's Breath: how near the altar you hold it
@@ -119,7 +119,18 @@ namespace bo3z
 			const int t = std::max(0, static_cast<int>(std::ceil(a_seconds)));
 			return fmt::format("{}:{:02}", t / 60, t % 60);
 		}
-		std::string_view Title(int a_trial) { return gen::kTrials[a_trial].title; }
+		// (the classes overhaul) the steel slot is the class trial: its name and goal follow the class of whoever takes it
+		constexpr const char* kClassTrial[4] = { "Pact of the Host", "Trial of the Elements", "Trial of the Long Shot", "Trial of Steel" };
+		std::string_view Title(int a_trial)
+		{
+			if (a_trial == gen::kTrial_steel) {
+				const int c = Classes::Get();
+				return c >= 0 && c < 4 ? kClassTrial[c] : "Your Class's Trial";
+			}
+			return gen::kTrials[a_trial].title;
+		}
+		constexpr float kLongShot = 2100.0f;  // 30 m
+		std::uint32_t   g_elementsUsed = 0;   // Trial of the Elements: the elements that have killed (this run)
 		std::string_view BossName(int a_town) { return gen::kCityBosses[a_town].name; }
 
 		// Quest news lives in the tracker (top right): a line under the goal for a few seconds. No pop-ups.
@@ -275,8 +286,15 @@ namespace bo3z
 			case gen::kTrial_ward: return fmt::format("Hold the runic circle {} seconds", s);
 			case gen::kTrial_culling: return fmt::format("{} kills in the city", n);
 			case gen::kTrial_unbroken: return fmt::format("{} {} cleared, never below half health", n, n == 1 ? "wave" : "waves");
-			case gen::kTrial_steel: return fmt::format("{} melee kills", n);
-			case gen::kTrial_breath: return fmt::format("{} {} held at the altar", n, n == 1 ? "wave" : "waves");
+			case gen::kTrial_steel:
+				switch (Classes::Get()) {
+				case 0: return fmt::format("{} kills by your summons", n * 2);
+				case 1: return fmt::format("{} kills with Destruction spells, of two elements or more", n * 2);
+				case 2: return fmt::format("{} bow or crossbow kills from 30 m or more", n);
+				case 3: return fmt::format("{} melee kills with a spell in your other hand", n);
+				default: return "Choose a class first";
+				}
+			case gen::kTrial_breath: return fmt::format("{} {} held at the altar{}", n, n == 1 ? "wave" : "waves", Diff() >= 4 ? ", never below half health" : "");
 			default: return {};
 			}
 		}
@@ -535,8 +553,14 @@ namespace bo3z
 				h.questWarn = g_waveBroken || (player && HealthFrac(player) < 0.6f);
 				break;
 			case gen::kTrial_steel:
-				h.questGoal = fmt::format("Melee kills  {} / {}", s.prog, n);
-				h.questFrac = static_cast<float>(s.prog) / std::max(1, n);
+				{
+					const int need = Classes::Get() <= 1 ? n * 2 : n;
+					static constexpr const char* kWhat[4] = { "Kills by your summons", "Destruction kills", "Kills from 30 m", "Melee kills, a spell in hand" };
+					const int c = Classes::Get();
+					h.questGoal = fmt::format("{}  {} / {}{}", c >= 0 && c < 4 ? kWhat[c] : "Choose a class", s.prog, need,
+						c == 1 && s.prog >= need ? "  (kill with a second element)" : "");
+					h.questFrac = static_cast<float>(s.prog) / std::max(1, need);
+				}
 				break;
 			case gen::kTrial_breath:
 				{
@@ -641,8 +665,20 @@ namespace bo3z
 				Hud::Banner(title + " is done", 2.5f);
 				return;
 			}
+			if (std::string why; !Story::TrialsOpen(a_town, &why)) {
+				Hud::Banner(why.empty() ? std::string("The altar sleeps until the story moves on") : why, 4.0f);
+				return;
+			}
+			if (a_trial == gen::kTrial_unbroken) {
+				Hud::Banner("The Unbroken is now part of the Long Night's Breath", 3.0f);
+				return;
+			}
+			if (a_trial == gen::kTrial_steel && Classes::Get() < 0) {
+				Hud::Banner("Choose a class first: the fourth trial is your class's own", 3.0f);
+				return;
+			}
 			if (s.Boss() || s.Count() >= kNeeded) {
-				Hud::Banner("Three trials are done - " + std::string(BossName(a_town)) + " must fall", 3.0f);
+				Hud::Banner("The four trials are done - " + std::string(BossName(a_town)) + " must fall", 3.0f);
 				return;
 			}
 			if (s.Trial() == a_trial) {
@@ -651,6 +687,7 @@ namespace bo3z
 			}
 			const int was = s.Trial();
 			s.active = a_trial + 1, s.prog = 0;
+			g_elementsUsed = 0;
 			Put(a_town, s);
 			ClearRun();
 			Forms::Play(gen::Sound::quest_start);
@@ -671,7 +708,7 @@ namespace bo3z
 				v.desc[i] = Ask(i);
 			}
 			v.boss = std::string(BossName(a_town));
-			v.bossLine = s.Boss() ? "Rises near the altar at night - slay it to wake the altar" : fmt::format("Rises when three trials are done ({} of {})", s.Count(), kNeeded);
+			v.bossLine = s.Boss() ? "Rises near the altar at night - slay it to wake the altar" : fmt::format("Rises when the four trials are done ({} of {})", s.Count(), kNeeded);
 			return v;
 		}
 
@@ -702,20 +739,42 @@ namespace bo3z
 			const int z = g_zone;
 			St s = Get(z);
 			const int tr = s.freed ? -1 : s.Trial();
-			if (tr != gen::kTrial_culling && tr != gen::kTrial_steel) {
-				return;
-			}
-			auto* player = RE::PlayerCharacter::GetSingleton();
-			if (tr == gen::kTrial_steel) {
-				const auto it = a_actor ? g_lastBlow.find(a_actor->GetFormID()) : g_lastBlow.end();
-				if (it == g_lastBlow.end() || !it->second.second || std::chrono::steady_clock::now() - it->second.first > std::chrono::seconds(6)) {
-					return;  // the killing blow wasn't steel (or wasn't yours)
-				}
+			if (tr != gen::kTrial_culling) {
+				return;  // (the class trial counts in OnClassKill)
 			}
 			if (++s.prog >= N(tr)) {
 				CompleteTrial(z);
 			} else {
 				Put(z, s);
+			}
+		}
+
+		// (the classes overhaul) the class trial: a kill of your class's own kind (Classes::OnKill tells us how it was made)
+		std::string TrialTitle(int a_trial) { return a_trial >= 0 && a_trial < kTrialCount ? std::string(Title(a_trial)) : std::string(); }
+		void OnClassKill(int a_how, int a_element, float a_dist)
+		{
+			if (!Director::Fighting() || g_zone < 0) return;
+			const int z = g_zone;
+			St s = Get(z);
+			if (s.freed || s.Trial() != gen::kTrial_steel) return;
+			const int c = Classes::Get();
+			bool ok = false;
+			switch (c) {
+			case 0: ok = a_how == 0; break;
+			case 1: ok = a_how == 1; break;
+			case 2: ok = a_how == 2 && a_dist >= kLongShot; break;
+			case 3: ok = a_how == 3 && Arcana::Hands()[0] >= 0; break;
+			}
+			if (!ok) return;
+			if (a_element >= 0) g_elementsUsed |= 1u << a_element;
+			const int need = c <= 1 ? N(gen::kTrial_steel) * 2 : N(gen::kTrial_steel);
+			s.prog = std::min(s.prog + 1, need);
+			const bool twoElements = (g_elementsUsed & (g_elementsUsed - 1)) != 0;  // (two bits or more)
+			if (s.prog >= need && (c != 1 || twoElements)) {
+				CompleteTrial(z);
+			} else {
+				Put(z, s);
+				if (s.prog % 10 == 0) Forms::Play(gen::Sound::quest_step);
 			}
 		}
 
@@ -738,6 +797,11 @@ namespace bo3z
 			if (tr == gen::kTrial_unbroken) {
 				count = !g_waveBroken;
 			} else if (tr == gen::kTrial_breath) {
+				if (Diff() >= 4 && g_waveBroken) {  // (the Unbroken, folded in: on Expert and up the wave must be held above half health)
+					Hud::Banner("THE LONG NIGHT'S BREATH - you fell below half health: that wave doesn't count", 4.0f);
+					g_waveBroken = false;
+					return;
+				}
 				RE::NiPoint3       c;
 				float              yaw = 0;
 				RE::TESWorldSpace* ws = nullptr;
@@ -1051,7 +1115,7 @@ namespace bo3z
 			case gen::kTrial_breath:  // counted as each wave is cleared (Curse::OnWave)
 				break;
 			default:
-				if (s.Boss() && here && !Director::ChampionActive(z)) {  // the Barrow-Jarl rises out in the city, once a night until it falls
+				if (s.Boss() && here && Story::BarrowJarlsOpen() && !Director::ChampionActive(z)) {  // (from Bleak Falls Barrow on)  // the Barrow-Jarl rises out in the city, once a night until it falls
 					static float retry = 0;
 					if ((retry -= a_delta) <= 0) {
 						retry = 4.0f;

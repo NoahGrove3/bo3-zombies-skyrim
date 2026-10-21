@@ -456,6 +456,41 @@ namespace bo3z
 			Hud::Edit().headBurstT = 0.18f;
 		}
 
+		// (Noah: Frozen Electrocuted Combustion's death effects on our own kills too) the element of the blow being struck
+		// (Spellcraft::Strike sets it): a killing blow lays that element's touch spell on the body just before it dies, so
+		// FEC sees a fire / frost / shock / sun / drain / poison death
+		int g_fecElem = -1;  // a coffer::Element, -1 none
+		void FecMark(RE::Actor* a_target, int a_elem)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || !a_target || a_elem < 0) return;
+			static std::array<RE::SpellItem*, 8> cache{};
+			static std::array<bool, 8>           looked{};
+			if (a_elem >= 8) return;
+			if (!looked[a_elem]) {
+				looked[a_elem] = true;
+				for (int i = 0; i < Arcana::Count(); ++i) {
+					if (Arcana::ClassOf(i) == 3 && Arcana::RungOf(i) == 1 && Arcana::ElementOf(i) == a_elem) cache[a_elem] = Arcana::Spell(i);
+				}
+			}
+			if (auto* sp = cache[a_elem]; sp) {
+				if (auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) c->CastSpellImmediate(sp, false, a_target, 1.0f, false, 0.0f, p);
+			}
+		}
+		int FecOfEffect(int a_fx)
+		{
+			switch (a_fx) {
+			case gen::kFxIgnite: return 0;   // fire
+			case gen::kFxFreeze:
+			case gen::kFxShatter: return 1;  // frost
+			case gen::kFxChain: return 2;    // shock
+			case gen::kFxPoison: return 3;   // poison
+			case gen::kFxHoly: return 5;     // sun
+			case gen::kFxDrain: return 6;    // blood (drain)
+			default: return -1;
+			}
+		}
+
 		bool Damage(RE::Actor* a_target, float a_bo3Damage, bool a_head, bool a_melee, bool a_quiet = false)
 		{
 			if (!a_quiet && !g_stormBusy && g_storm.charges > 0 && a_target && !a_target->IsDead()) {
@@ -489,6 +524,7 @@ namespace bo3z
 					Audio::Voice(a_target, Audio::VoiceEvent::kDeath);  // its death cry the instant the blow lands
 				}
 				if (!a_target->IsDead()) {
+					if (g_fecElem >= 0) FecMark(a_target, g_fecElem);  // (FEC: the element's death)
 					a_target->KillImpl(player, damage, true, false);
 				}
 				if (a_head && !a_melee) {
