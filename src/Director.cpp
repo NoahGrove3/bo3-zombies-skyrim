@@ -163,6 +163,14 @@ namespace bo3z
 				return false;
 			}
 			g_loggedBlocked = false;
+			if (Story::SceneHold()) {  // (the story's set pieces play out undisturbed)
+				static auto told = std::chrono::steady_clock::now() - std::chrono::seconds(600);
+				if (std::chrono::steady_clock::now() - told > std::chrono::seconds(300)) {
+					told = std::chrono::steady_clock::now();
+					logger::info("rounds hold: a main-quest scene is playing here");
+				}
+				return false;
+			}
 			// a new character's arrival (the black, the film, the black after it) and a grace after it: no night begins
 			// on a player who cannot yet see or move (it used to start under the veil and kill the newcomer)
 			static auto calm = std::chrono::steady_clock::now();
@@ -186,7 +194,7 @@ namespace bo3z
 		}
 		int Weight(const gen::Enemy& e)
 		{
-			if (e.elite && EliteCount() >= static_cast<int>(gen::elite::maxAlive)) {
+			if (e.elite && (!Story::ElitesOpen() || EliteCount() >= static_cast<int>(gen::elite::maxAlive))) {  // (elites from Dragon Rising on)
 				return 0;
 			}
 			if (g_event >= 0 && (e.kind == 1 || e.kind == 2)) {  // Night of Iron: the champions march
@@ -410,10 +418,26 @@ namespace bo3z
 						a->SetPosition(f, true);
 						a->SetCollision(true);
 					} else if (r.t > 0.4f) {
-						r.anim = -1, r.t = 0;
+						// (Noah: the night's spawns look conjured) no draugr rise for this one: it steps out of a portal
+						r.anim = 2, r.t = 0;
+						auto f = a->GetPosition();
+						f.z = r.floorZ + 2.0f;
+						a->SetPosition(f, true);
+						a->SetCollision(true);
+						if (auto* dh = RE::TESDataHandler::GetSingleton()) {
+							if (auto* art = dh->LookupForm<RE::BGSArtObject>(gen::kArtPortal, gen::kPlugin)) a->ApplyArtObject(art, 2.2f);
+						}
+						continue;
 					} else {
 						continue;
 					}
+				}
+				if (r.anim == 2) {  // through the portal: a moment to step out, then it hunts
+					if (r.t >= 1.1f || a->IsDead()) {
+						a->EnableAI(true);
+						r.t = 99;
+					}
+					continue;
 				}
 				if (r.anim == 1) {
 					if (r.t >= 2.6f || a->IsDead()) {
@@ -2170,6 +2194,7 @@ namespace bo3z
 
 		void Reset()
 		{
+			Story::Reset();
 			Audio::BossMusic(false);
 			g_phase = Phase::Day;
 			EndRisers();

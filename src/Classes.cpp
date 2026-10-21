@@ -151,11 +151,7 @@ namespace bo3z::Classes
 			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) n += Curse::Freed(t) ? 1 : 0;
 			return n;
 		}
-		bool AfterSovngarde()
-		{
-			static auto* q = RE::TESForm::LookupByEditorID<RE::TESQuest>("MQ305");
-			return q && q->IsCompleted();
-		}
+		bool AfterSovngarde() { return Story::AlduinFallen(); }
 		RE::SpellItem* WyrmSpell() { auto* f = Lookup(0x019D74, "Calling of the Conjurer.esp"); return f ? f->As<RE::SpellItem>() : nullptr; }
 		RE::SpellItem* TomeSpell() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::SpellItem>(gen::kWonderTomeSpell, gen::kPlugin) : nullptr; }
 		RE::TESObjectWEAP* Auriel() { auto* f = Lookup(0x000800, "Dawnguard.esm"); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }
@@ -318,14 +314,17 @@ namespace bo3z::Classes
 				if (auto it = g_lastHit.find(a_dying->GetFormID()); it != g_lastHit.end()) src = RE::TESForm::LookupByID(it->second);
 			}
 			if (a_bySummon) how = 0;
-			else if (auto* mi = src ? src->As<RE::MagicItem>() : nullptr) how = mi->GetAssociatedSkill() == RE::ActorValue::kDestruction ? 1 : -1;
+			else if (auto* mi = src ? src->As<RE::MagicItem>() : nullptr) how = (mi->GetAssociatedSkill() == RE::ActorValue::kDestruction || (Arcana::IndexOf(src) >= 0 && Arcana::ClassOf(Arcana::IndexOf(src)) == coffer::kDestruction)) ? 1 : -1;
 			else if (auto* w = src ? src->As<RE::TESObjectWEAP>() : nullptr) how = (w->IsBow() || w->IsCrossbow()) ? 2 : 3;
 			else if (Bows::Held() >= 0) how = 2;  // (the altar's bows strike with our own shots)
 			else if (p) {
 				for (int h : Arcana::Hands()) if (h >= 0 && Arcana::ClassOf(h) == coffer::kDestruction) how = 1;
 			}
-			static constexpr int kWant[4] = { 0, 1, 2, 3 };
-			if (how == kWant[c]) WonderKill(c);
+			if (how == c) WonderKill(c);  // (the classes' kinds of kill line up with the class order)
+			int element = -1;
+			if (const int ci = src ? Arcana::IndexOf(src) : -1; ci >= 0) element = coffer::kSpells[ci].element;
+			const float dist = a_dying && p ? a_dying->GetPosition().GetDistance(p->GetPosition()) : 0.0f;
+			if (how >= 0) Curse::OnClassKill(how, element, dist);
 		}
 		if (FreedCount() >= 3) {
 			for (int c2 = 0; c2 < 4; ++c2) {
