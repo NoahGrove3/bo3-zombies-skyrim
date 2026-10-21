@@ -9,7 +9,7 @@ namespace bo3z::gen
 	struct FormRef { std::string_view plugin; std::uint32_t localId; std::string_view editorId; };
 	inline constexpr float kChaseRelocateDist = 4000.0f, kChaseRelocateSeconds = 3.0f, kChaseStallSeconds = 2.5f;
 	inline constexpr float kCycleMinutes = 25.0f;  // a full Skyrim day; night is nightStart..nightEnd (20:00-05:36 = 40%)
-	inline constexpr float kDayMinutes = 18.0f;  // real minutes from dawn (nightEnd) to dusk (nightStart)
+	inline constexpr float kDayMinutes = 20.0f;  // real minutes from dawn (nightEnd) to dusk (nightStart)
 	inline constexpr float kManaRegenPerSecond = 0.4f, kManaRegenDelay = 3.0f;
 	inline constexpr bool kZombieMeleeWeapons = true;  // keep swords/axes/maces; strip bows, staves, spells
 	struct Rounds {
@@ -17,7 +17,7 @@ namespace bo3z::gen
 		std::array<float, 5> earlyRoundScale; int hpStart, hpLinearPerRound, hpLinearUntil; float hpMultAfter, hpScale;
 		float spawnDelayStart, spawnDelayDecay, spawnDelayMin; int specialEveryRounds, specialFirstRound;
 		std::array<float, 2> spawnRingExterior, spawnRingInterior; float spawnHeightOffset; int maxCorpses; };
-	inline constexpr Rounds kRounds{ 20.0f, 5.6f, 15.0f, 15.0f, 64, 24, 6,
+	inline constexpr Rounds kRounds{ 21.0f, 5.6f, 15.0f, 15.0f, 64, 24, 6,
 		{ 0.25f, 0.3f, 0.5f, 0.7f, 0.9f }, 150, 100, 9, 1.1f, 8.0f,
 		1.0f, 0.95f, 0.15f, 6, 10,
 		{ 3400.f, 4600.f }, { 1400.f, 2100.f }, 120.f, 30 };
@@ -1108,7 +1108,7 @@ namespace bo3z::gen
 	inline constexpr int kPerk_frostbite = 7;
 	inline constexpr int kPerk_stormcrown = 8;
 	inline constexpr std::array<std::string_view, 9> kPerkDesc{ { "Skin like a troll: +100 health each draught, so it takes more hits to go down.", "Quicksilver in the veins: spells cost 15% less magicka each draught (up to 75%).", "Twin strike: your spells hit 50% harder each draught.", "When you would fall, the hearth calls you back - once for each tonic.", "Run faster and sprint longer with each brew.", "Clear sight, clear mind: magicka returns 50% faster each draught.", "A mammoth's back: +50 magicka each draught.", "When the dead strike you, frost webs slow everything nearby - wider and colder each draught.", "Every 12th spell looses a lightning burst around you - sooner and stronger each cider." } };
-	inline constexpr int kMaxPerks = 5;
+	inline constexpr int kMaxPerks = 9;
 	struct CrewDef { std::string_view id, label, quote; int passive; float value; std::string_view passiveText; };
 	inline constexpr std::array<CrewDef, 4> kCrew{ {
 		CrewDef{ "halvard", "Halvard Stone-Fist", "Legion taught me to march. The dead taught me to run.", 0, 1.1f, "+10% weapon damage" },
@@ -1149,12 +1149,11 @@ namespace bo3z::gen
 		ObjectDef{ "relic_altar", "Echo Altar", 6, 0, -1, 0x9DA, 0.8f, true },
 	} };
 	struct DressDef { int object; std::uint32_t formId; bool light; float x, y, z, scale, spin; bool freed, held; };  // held: only while the city is still cursed
-	inline constexpr std::array<DressDef, 84> kDress{ {
+	inline constexpr std::array<DressDef, 83> kDress{ {
 		DressDef{ 0, 0x926, false, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, false, false },
 		DressDef{ 0, 0xC87, false, 0.0f, 0.0f, 175.0f, 1.0f, 8.0f, false, true },
 		DressDef{ 0, 0xC88, false, 0.0f, 0.0f, 175.0f, 1.0f, 8.0f, true, false },
-		DressDef{ 0, 0xC89, false, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, false, true },
-		DressDef{ 0, 0xC8A, false, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, true, false },
+		DressDef{ 0, 0xC89, false, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, false, false },
 		DressDef{ 0, 0xC8B, false, 194.0f, 0.0f, 204.6f, 1.0f, 6.0f, false, false },
 		DressDef{ 0, 0xC8C, false, 96.5f, -168.0f, 231.6f, 1.0f, 7.0f, false, false },
 		DressDef{ 0, 0xC8D, false, -96.6f, -167.5f, 282.0f, 1.0f, 8.0f, false, false },

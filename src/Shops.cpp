@@ -136,6 +136,7 @@ namespace bo3z
 						ref->SetScale(d.scale * cc);
 					}
 					found = ref.get();
+					if (d.freed) logger::info("shops: {} freed piece {:03X} placed at z {:.0f}", gen::kTowns[gen::kLocations[a_index].town], d.formId, want.z);
 				}
 				if (d.spin != 0) {
 					const auto h = found->CreateRefHandle();
@@ -1054,6 +1055,20 @@ namespace bo3z
 				static int n = 0;
 				if (++n % 8 == 0 && ref->Is3DLoaded()) {
 					Dress(a_index, ref.get());  // now and then: the crystal and the rocks are still there (put back if not)
+					// (Noah: Solitude's altar stood sunk in the floor) the world's solid floor under it, once its collision is
+					// there: if the stand is below it, the stand and every piece of ours round it rise onto it
+					const auto at = ref->GetPosition();
+					if (auto z = FloorZ(ref.get(), at, at.z - 50.0f); z && *z > at.z + 12.0f && *z < at.z + 240.0f) {  // (cast from just above it: never onto a roof)
+						const float dz = *z - at.z + 2.0f;
+						std::vector<RE::TESObjectREFR*> ours;
+						RE::TES::GetSingleton()->ForEachReferenceInRange(ref.get(), 1200.0f, [&](RE::TESObjectREFR* r) {
+							if (r && !r->IsDeleted() && (r == ref.get() || IsOurBase(r->GetBaseObject()))) ours.push_back(r);
+							return RE::BSContainer::ForEachResult::kContinue;
+						});
+						if (std::find(ours.begin(), ours.end(), ref.get()) == ours.end()) ours.push_back(ref.get());
+						for (auto* r : ours) r->SetPosition(r->GetPosition() + RE::NiPoint3{ 0, 0, dz });
+						logger::info("shops: {} station was {:.0f} under the floor - raised with {} pieces", gen::kTowns[loc.town], dz, ours.size());
+					}
 				}
 				return;
 			}
@@ -1637,29 +1652,58 @@ namespace bo3z
 		}
 
 		// (Noah: harder to grow too strong) each spell called costs a quarter more than the last, until the next night
-		int g_rollsNight = -1, g_rolls = 0;
-		int RollsTonight()
+		// (Noah: each altar's price starts at its lowest, and goes back to what it was when you load a save) how many times
+		// each city's altar has been rolled tonight - spells and bows apart - kept in the co-save (Save 'ROLL')
+		constexpr int kRollTowns = 16;
+		std::array<std::uint8_t, kRollTowns> g_spellRolls{}, g_bowRollsT{};
+		int g_rollNight = -1;
+		void RollNight()
 		{
 			const int night = Save::Get(gen::kAV_round);
-			if (night != g_rollsNight) g_rollsNight = night, g_rolls = 0;
-			return g_rolls;
+			if (night != g_rollNight) g_rollNight = night, g_spellRolls.fill(0), g_bowRollsT.fill(0);
 		}
-		int RollCost()
+		int TownOfAltar(RE::TESObjectREFR* a_ref)
+		{
+			if (!a_ref) return -1;
+			for (int t = 0; t < static_cast<int>(gen::kTowns.size()) && t < kRollTowns; ++t) {
+				if (Shops::Placed(t, 0) == a_ref) return t;
+			}
+			return -1;
+		}
+		// (Noah: one roller at a time) a friend's roll at an altar holds it for everyone else until their reel is done
+		struct Busy { std::string who; std::chrono::steady_clock::time_point until; };
+		std::array<Busy, 16> g_busy{};
+		int g_myBusy = -1;  // the altar our own roll holds (told to the party)
+		bool BusyForMe(int a_town)
+		{
+			if (a_town < 0 || a_town >= 16 || g_busy[a_town].who.empty()) return false;
+			if (std::chrono::steady_clock::now() > g_busy[a_town].until) { g_busy[a_town].who.clear(); return false; }
+			Hud::Banner(g_busy[a_town].who + " is rolling at this altar - wait for their reel to stop", 2.0f);
+			return true;
+		}
+		int CurrentTown()
+		{
+			auto r = g_menuRef.get();
+			return TownOfAltar(r.get());
+		}
+		int RollBase()
 		{
 			const int crew = Save::Crew();
-			const int base = crew >= 0 && gen::kCrew[crew].passive == 3 ? static_cast<int>(gen::kCrew[crew].value) : gen::kObjects[0].cost;
-			return PowerUps::FireSale() ? 10 : static_cast<int>(std::lround(base * std::pow(1.25, RollsTonight()) / 10.0) * 10);
+			return crew >= 0 && gen::kCrew[crew].passive == 3 ? static_cast<int>(gen::kCrew[crew].value) : gen::kObjects[0].cost;
 		}
-
-		// (the bow wheel: its own price, a quarter more each call tonight)
-		int g_bowNight = -1, g_bowRolls = 0;
-		int BowRollCost()
+		int RollCost(int a_town = -2)
 		{
-			const int night = Save::Get(gen::kAV_round);
-			if (night != g_bowNight) g_bowNight = night, g_bowRolls = 0;
-			const int crew = Save::Crew();
-			const int base = crew >= 0 && gen::kCrew[crew].passive == 3 ? static_cast<int>(gen::kCrew[crew].value) : gen::kObjects[0].cost;
-			return PowerUps::FireSale() ? 10 : static_cast<int>(std::lround(base * std::pow(1.25, g_bowRolls) / 10.0) * 10);
+			RollNight();
+			const int t = a_town == -2 ? CurrentTown() : a_town;
+			const int n = t >= 0 && t < kRollTowns ? g_spellRolls[t] : 0;
+			return PowerUps::FireSale() ? 10 : static_cast<int>(std::lround(RollBase() * std::pow(1.25, n) / 10.0) * 10);
+		}
+		int BowRollCost(int a_town = -2)
+		{
+			RollNight();
+			const int t = a_town == -2 ? CurrentTown() : a_town;
+			const int n = t >= 0 && t < kRollTowns ? g_bowRollsT[t] : 0;
+			return PowerUps::FireSale() ? 10 : static_cast<int>(std::lround(RollBase() * std::pow(1.25, n) / 10.0) * 10);
 		}
 		void SpinBow(RE::TESObjectREFR* a_ref)
 		{
@@ -1674,12 +1718,14 @@ namespace bo3z
 				Hud::Banner("The altar has no other bow for you yet", 2.5f);
 				return;
 			}
-			const int cost = BowRollCost();
+			const int town = TownOfAltar(a_ref);
+			if (BusyForMe(town)) return;
+			const int cost = BowRollCost(town);
 			if (!Points::Spend(cost)) {
 				return;
 			}
 			g_lastRollCost = cost;
-			++g_bowRolls;
+			if (town >= 0) g_bowRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_bowRollsT[town] + 1));
 			g_show = {};
 			g_show.bow = true;
 			g_show.chest = a_ref->CreateRefHandle();
@@ -1703,13 +1749,14 @@ namespace bo3z
 				Hud::Banner(Arcana::Count() ? "You know every spell the shrine holds" : "The shrine is silent (the spell mods aren't installed)", 2.5f);
 				return;
 			}
-			const int cost = RollCost();
+			const int town = TownOfAltar(a_ref);
+			if (BusyForMe(town)) return;
+			const int cost = RollCost(town);
 			if (!Points::Spend(cost)) {
 				return;
 			}
 			g_lastRollCost = cost;
-			RollsTonight();
-			++g_rolls;
+			if (town >= 0) g_spellRolls[town] = static_cast<std::uint8_t>(std::min(250, g_spellRolls[town] + 1));
 			g_show = {};
 			g_show.chest = a_ref->CreateRefHandle();
 			g_show.phase = Show::Charging;
@@ -1734,7 +1781,7 @@ namespace bo3z
 				Hud::Banner(std::string("You already carry ") + std::string(gen::kPerks[perk].label), 2.5f);
 				return;
 			}
-			int held = 0;  // (Noah: five perk slots)
+			int held = 0;  // (Noah: every draught can be held at once - the limit is the whole list)
 			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
 				held += Save::PerkStacks(i) > 0 ? 1 : 0;
 			}
@@ -2385,6 +2432,15 @@ namespace bo3z
 				}
 			}
 			TickShow(a_delta);
+			{  // our roll holds the altar for the party while it turns (and lets go when it's done)
+				const int busy = g_show.phase != Show::Idle ? TownOfAltar(g_show.chest.get().get()) : -1;
+				static float resend = 0;
+				if (busy != g_myBusy || (busy >= 0 && (resend -= a_delta) <= 0)) {
+					if (g_myBusy >= 0 && busy != g_myBusy) Net::AltarBusy(g_myBusy, false);
+					if (busy >= 0) Net::AltarBusy(busy, true), resend = 5.0f;
+					g_myBusy = busy;
+				}
+			}
 			if (auto* pl = RE::PlayerCharacter::GetSingleton()) {
 				TickMarkers(pl, a_delta);
 			}
@@ -2494,5 +2550,26 @@ namespace bo3z::Shops
 		g_madeMarkers.clear();
 		g_markerScanned = {};
 		if (n) logger::info("shops: {} hand-made map markers lifted before the load", n);
+	}
+	std::vector<std::uint8_t> RollState()
+	{
+		RollNight();
+		std::vector<std::uint8_t> out(2 + kRollTowns * 2);
+		out[0] = static_cast<std::uint8_t>(g_rollNight & 0xFF), out[1] = static_cast<std::uint8_t>((g_rollNight >> 8) & 0xFF);
+		for (int t = 0; t < kRollTowns; ++t) out[2 + t] = g_spellRolls[t], out[2 + kRollTowns + t] = g_bowRollsT[t];
+		return out;
+	}
+	void SetRollState(const std::vector<std::uint8_t>& a_s)
+	{
+		g_spellRolls.fill(0), g_bowRollsT.fill(0), g_rollNight = -1;
+		if (a_s.size() != 2 + kRollTowns * 2) return;
+		g_rollNight = a_s[0] | (a_s[1] << 8);
+		for (int t = 0; t < kRollTowns; ++t) g_spellRolls[t] = a_s[2 + t], g_bowRollsT[t] = a_s[2 + kRollTowns + t];
+	}
+	void HeardBusy(int a_town, const std::string& a_who, bool a_on)
+	{
+		if (a_town < 0 || a_town >= 16) return;
+		if (a_on) g_busy[a_town] = { a_who, std::chrono::steady_clock::now() + std::chrono::seconds(12) };
+		else g_busy[a_town].who.clear();
 	}
 }

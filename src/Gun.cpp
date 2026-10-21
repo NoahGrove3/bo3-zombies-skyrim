@@ -472,10 +472,7 @@ namespace bo3z
 				damage *= std::clamp(0.5f + 0.02f * static_cast<float>(player->GetLevel()), 0.5f, 1.5f);
 			}
 			if (PowerUps::InstaKill() && Director::IsRoundUndead(a_target)) {
-				const int row = Director::EnemyRow(a_target);
-				if (row < 0 || gen::kEnemies[row].bossEvery == 0) {
-					damage = av->GetActorValue(RE::ActorValue::kHealth) + 1.0f;  // Insta-Kill
-				}
+				damage = av->GetActorValue(RE::ActorValue::kHealth) + 1.0f;  // Insta-Kill (every one of them, one hit)
 			}
 			av->DamageActorValue(RE::ActorValue::kHealth, damage);
 			const bool ours = Director::IsRoundUndead(a_target);

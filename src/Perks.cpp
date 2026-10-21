@@ -163,12 +163,29 @@ namespace bo3z
 						continue;
 					}
 					const auto* base = ae->GetBaseObject();
-					if (base && base->IsHostile() && ae->caster.get().get() == a_player) {
+					if (!base || !(base->IsHostile() || base->IsDetrimental())) {
+						continue;
+					}
+					// (Noah: burning, frozen, shocked corpses still hurt me) a harmful effect on you from yourself, from no
+					// one (a lingering field), or from the dead is lifted the moment it lands
+					auto c = ae->caster.get();
+					if (!c || c.get() == a_player || c->IsDead()) {
 						ae->Dispel(true);
 					}
 				}
 			}
 			g_lastHp = a_player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth);
+		}
+		// (Noah: after dying and loading back, my first-person hands were invisible until I put on gauntlets) a moment
+		// after every load the camera is flicked and the hands' things put back, as after a revive
+		void RearmAfterLoad()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			g_handR = p->GetEquippedObject(false);
+			g_handL = p->GetEquippedObject(true);
+			g_wasFirst = false, g_rearmLoad = true;
+			g_rearm = 1.5f;
 		}
 		void SelfHit()
 		{
@@ -184,6 +201,7 @@ namespace bo3z
 		// (Noah: after a revive the first-person hands were gone and spells wouldn't cast until re-equipped) a moment after
 		// standing, the camera is flicked back to first person and what was in each hand is taken off and put back
 		float          g_rearm = -1;
+		bool           g_rearmLoad = false;  // (a load, not a revive: the camera is flicked only if it's in first person then)
 		RE::TESForm*   g_handR = nullptr;
 		RE::TESForm*   g_handL = nullptr;
 		bool           g_wasFirst = false;
@@ -192,7 +210,7 @@ namespace bo3z
 			auto* em = RE::ActorEquipManager::GetSingleton();
 			auto* right = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42);
 			auto* left = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43);
-			if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && g_wasFirst) {
+			if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && (g_wasFirst || (g_rearmLoad && cam->IsInFirstPerson()))) {
 				cam->ForceThirdPerson();
 				cam->ForceFirstPerson();
 			}
@@ -286,9 +304,31 @@ namespace bo3z
 			}
 			auto* av = player->AsActorValueOwner();
 			const float max = av->GetPermanentActorValue(RE::ActorValue::kHealth);
+			{  // (Noah: the harpies' beam nearly one-shot me on Expert) with a harpy near, no moment takes more than a quarter
+				static float prevHp = -1;
+				const float hp = av->GetActorValue(RE::ActorValue::kHealth);
+				if (prevHp > 0 && hp < prevHp && prevHp - hp > 0.25f * max && Director::HarpyNear(player->GetPosition(), 5000.0f)) {
+					av->RestoreActorValue(RE::ActorValue::kHealth, (prevHp - hp) - 0.25f * max);
+				}
+				prevHp = av->GetActorValue(RE::ActorValue::kHealth);
+			}
+			// and their lasting spells (the beam) on you weakened as they take hold
+			if (auto* list = player->AsMagicTarget()->GetActiveEffectList()) {
+				static std::unordered_set<RE::ActiveEffect*> scaled;
+				for (auto* ae : *list) {
+					if (!ae || scaled.contains(ae)) continue;
+					auto c = ae->caster.get();
+					const float hm = c ? Director::HarmMult(c.get()) : 1.0f;
+					if (hm < 0.999f && ae->magnitude > 0) {
+						ae->magnitude *= hm;
+						scaled.insert(ae);
+					}
+				}
+				if (scaled.size() > 256) scaled.clear();
+			}
 			if (g_rearm > 0 && (g_rearm -= dt) <= 0 && !player->AsActorState()->IsBleedingOut()) {
 				Rearm(player);
-				g_wasFirst = false;
+				g_wasFirst = false, g_rearmLoad = false;
 				g_rearm = -10.0f;
 			} else if (g_rearm <= 0 && g_rearm > -5.0f && player->AsActorState()->IsBleedingOut()) {
 				g_rearm = 0.3f;  // (still on its knees: once it's up)

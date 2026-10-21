@@ -51,7 +51,7 @@
   "rows": [
     {
       "id": "night_rounds",
-      "nightStartHour": 20.0,
+      "nightStartHour": 21.0,
       "nightEndHour": 5.6,
       "breakSeconds": 15.0,
       "firstBreakSeconds": 15.0,
@@ -133,7 +133,7 @@
       "manaRegenPerSecond": 0.4,
       "manaRegenDelay": 3.0,
       "cycleMinutes": 25,
-      "dayMinutes": 18
+      "dayMinutes": 20
     }
   ]
 }

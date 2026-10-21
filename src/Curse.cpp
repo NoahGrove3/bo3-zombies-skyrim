@@ -346,9 +346,27 @@ namespace bo3z
 
 		// Where the quest wants you now (in your current world): the altar to choose a trial or hold its circle, the
 		// nearest of the dead to kill, the Barrow-Jarl, a freed city's waiting shout, or from the wilds the nearest held city.
+		RE::TESQuest* RiteQuest(int a_town);
+		// (Noah: the quest marker only for the quest selected in the journal) a city's marks show only while its rite is
+		// the active quest; the Echo hunt (no journal quest of its own) only while none of Skyrim's quests is selected
+		bool RiteSelected(int a_town)
+		{
+			auto* q = RiteQuest(a_town);
+			return q && q->IsActive();
+		}
+		bool AnyQuestSelected()
+		{
+			for (auto* q : RE::TESDataHandler::GetSingleton()->GetFormArray<RE::TESQuest>()) {
+				if (q && q->IsActive()) return true;
+			}
+			return false;
+		}
 		bool ObjectiveTarget(RE::PlayerCharacter* a_player, RE::NiPoint3& a_at, std::string& a_label)
 		{
 			const int z = g_zone;
+			if (z >= 0 && !RiteSelected(z)) {
+				return false;
+			}
 			if (z >= 0) {
 				const St s = Get(z);
 				if (s.freed) {
@@ -376,7 +394,7 @@ namespace bo3z
 				const int  sh = ShoutOf(t);
 				const bool wants = !s.freed || (sh >= 0 && !Gun::KnowsShout(sh));
 				RE::NiPoint3 at;
-				if (!wants || !Shops::Discovered(t) || !Shops::StationTarget(t, at)) {
+				if (!wants || !RiteSelected(t) || !Shops::Discovered(t) || !Shops::StationTarget(t, at)) {
 					continue;
 				}
 				if (const float d = at.GetDistance(a_player->GetPosition()); d < best) {
@@ -387,7 +405,10 @@ namespace bo3z
 			// stage 2: a wonder's part, the Reliquary - whichever is nearer
 			RE::NiPoint3 eat;
 			std::string  elabel;
-			if (Echo::Target(a_player, eat, elabel) && eat.GetDistance(a_player->GetPosition()) < best) {
+			static float anyT = 0;
+			static bool  any = false;
+			if ((anyT -= 0.016f) <= 0) anyT = 1.0f, any = AnyQuestSelected();
+			if (!any && Echo::Target(a_player, eat, elabel) && eat.GetDistance(a_player->GetPosition()) < best) {
 				a_at = eat, a_label = std::move(elabel);
 				return true;
 			}
@@ -737,15 +758,28 @@ namespace bo3z
 
 		void OnBossSlain() {}  // (the old Herald: the Barrow-Jarls are the cities' champions now)
 
+		// (Noah: killing the Barrow-Jarl freed the shrine at once - it isn't freed until every wave of that night is slain)
+		// the Jarl's fall is held; the city is freed the moment the night's last wave falls (OnNightCleared)
+		int g_pendingLift = -1;
 		void OnChampionSlain(int a_town)
 		{
 			if (a_town >= 0 && Get(a_town).Boss()) {
-				if (auto* player = RE::PlayerCharacter::GetSingleton()) {
-					Forms::Play(gen::Sound::quest_step);
-					Lift(player, a_town);
-				}
+				Forms::Play(gen::Sound::quest_step);
+				g_pendingLift = a_town;
+				Hud::Banner(Upper(std::string(BossName(a_town))) + " FALLS - slay the night's last waves to free " + std::string(gen::kTowns[a_town]), 5.0f);
+				logger::info("curse: {}'s Barrow-Jarl slain - freed when the night's waves are done", gen::kTowns[a_town]);
 			}
 		}
+		void OnNightCleared()
+		{
+			if (g_pendingLift < 0) return;
+			const int t = g_pendingLift;
+			g_pendingLift = -1;
+			if (auto* player = RE::PlayerCharacter::GetSingleton(); player && Get(t).Boss()) {
+				Lift(player, t);
+			}
+		}
+		void ForgetPendingLift() { g_pendingLift = -1; }
 
 		int  Raw(int a_town) { return a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size()) ? Value(a_town) : 0; }
 		void SetRaw(int a_town, int a_value)

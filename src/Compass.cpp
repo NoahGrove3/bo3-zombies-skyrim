@@ -236,8 +236,8 @@ namespace bo3z::Compass
 			RE::BSSpinLockGuard guard(pl->GetQuestTargetsLock());
 			int shown = 0;
 			for (auto& [quest, targets] : pl->GetQuestTargets()) {
-				if (!quest || !targets) {
-					continue;
+				if (!quest || !targets || !quest->IsActive()) {
+					continue;  // (Noah: only the quest you have selected in the journal shows its marker)
 				}
 				for (auto* t : *targets) {
 					if (!t || shown >= 6) {

@@ -278,10 +278,14 @@ namespace Props
 	void Tornado(int a_kind, const RE::NiPoint3& a_at, RE::NiPoint3 a_dir, float a_seconds, float a_damage, bool a_chase, int a_row)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
-		auto* base = p ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kTornado[std::clamp(a_kind, 0, 5)], gen::kPlugin) : nullptr;
+		const auto     id = gen::kTornado[std::clamp(a_kind, 0, 5)];
+		RE::TESForm*   raw = p ? RE::TESDataHandler::GetSingleton()->LookupForm(id, gen::kPlugin) : nullptr;
+		if (!raw) raw = Forms::Ours(id);
+		auto* base = raw && raw->IsBoundObject() ? static_cast<RE::TESBoundObject*>(raw) : nullptr;
 		auto  ref = base ? p->PlaceObjectAtMe(base, false) : nullptr;
 		if (!ref) {
-			logger::warn("tornado: kind {} could not be placed ({})", a_kind, base ? "placing failed" : "its form is missing");
+			logger::warn("tornado: kind {} ({:03X}) could not be placed ({}, form type {})", a_kind, id, base ? "placing failed" : "its form is missing",
+				raw ? static_cast<int>(raw->GetFormType()) : -1);
 			return;
 		}
 		RE::NiPoint3 at = a_at;

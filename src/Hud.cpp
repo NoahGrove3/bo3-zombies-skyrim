@@ -1695,7 +1695,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const float       w = ts.x + 90 * k, x0 = size.x * 0.5f - w * 0.5f;
 						dl->AddRectFilled({ x0, y - 4 * k }, { x0 + w, y + 30 * k }, IM_COL32(8, 8, 10, 190), 15 * k);
 						dl->AddRect({ x0, y - 4 * k }, { x0 + w, y + 30 * k }, Fade(pu.col, 0.8f), 15 * k, 0, 1.5f * k);
-						dl->AddRectFilled({ x0 + 14 * k, y + 25 * k }, { x0 + 14 * k + (w - 28 * k) * std::clamp(pu.t / 30.0f, 0.0f, 1.0f), y + 27 * k }, pu.col);
+						dl->AddRectFilled({ x0 + 14 * k, y + 25 * k }, { x0 + 14 * k + (w - 28 * k) * std::clamp(pu.t / 45.0f, 0.0f, 1.0f), y + 27 * k }, pu.col);
 						Txt(dl, g_title, 20 * k, { x0 + 18 * k, y }, pu.col, txt, 1.5f * k, pu.col);
 						Txt(dl, g_num, 20 * k, { x0 + w - 18 * k - Measure(g_num, 20 * k, sec).x, y }, kParch, sec);
 						y -= 40 * k;

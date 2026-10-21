@@ -86,24 +86,6 @@
     "z"
    ],
    "freed": false,
-   "held": true
-  },
-  {
-   "id": "heart_motes_lit",
-   "for": "objects:coffer",
-   "type": "stat",
-   "model": "CurseOfAlduin\\shrine\\risemotes_lit.nif",
-   "color": "none",
-   "radius": 0,
-   "x": 0,
-   "y": 0,
-   "z": 0,
-   "scale": 1.0,
-   "spin": 0,
-   "verify": [
-    "z"
-   ],
-   "freed": true,
    "held": false
   },
   {

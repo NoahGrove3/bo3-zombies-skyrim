@@ -33,7 +33,7 @@ namespace bo3z::Net
 		using u64 = std::uint64_t;
 		constexpr int kChannel = 7;
 		constexpr std::uint8_t kVersion = 1;
-		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7, kEgg = 8 };
+		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7, kEgg = 8, kAltar = 9 };
 #ifndef UN_BUILD
 #	define UN_BUILD "dev"
 #endif
@@ -499,6 +499,14 @@ namespace bo3z::Net
 						}
 						break;
 					}
+					case kAltar:
+						if (sz >= 3) {
+							const int  town = d[1];
+							const bool on = d[2] != 0;
+							std::string who = A.GetFriendPersonaName(A.fr, from);
+							Tasks::Add([town, on, who] { Shops::HeardBusy(town, who.empty() ? std::string("A friend") : who, on); });
+						}
+						break;
 					case kEgg:
 						if (sz >= 2) {
 							const int town = d[1];
@@ -673,6 +681,14 @@ namespace bo3z::Net
 		return out;
 	}
 
+	void AltarBusy(int a_town, bool a_on)
+	{
+		if (!g_lobby) {
+			return;
+		}
+		const std::uint8_t m[3]{ kAltar, static_cast<std::uint8_t>(a_town), static_cast<std::uint8_t>(a_on ? 1 : 0) };
+		ToAll(m, 3, true);
+	}
 	void EggDone(int a_town)
 	{
 		if (!g_lobby) {

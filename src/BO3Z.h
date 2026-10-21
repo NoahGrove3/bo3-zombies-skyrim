@@ -102,6 +102,8 @@ namespace bo3z
 		void             Reset();
 		bool             IsRoundUndead(RE::Actor* a_actor);
 		float            HarmMult(RE::Actor* a_actor);
+		bool  HarpyNear(const RE::NiPoint3& a_at, float a_r);  // a living harpy this close (the per-hit cap)
+		std::vector<RE::ActorHandle> AliveHandles();
 		void             OnDying(RE::Actor* a_actor);    // any death: a champion or mini-boss pays out at once  // how hard this one of the night's dead hits you, its spells too (1 = as made)
 		void             HeadlongCombat();  // data loaded: the undead charge straight in
 		std::vector<RE::FormID> Sheltered();                       // townsfolk sent indoors for the night (co-save 'SHLT')
@@ -241,6 +243,7 @@ namespace bo3z
 		void        LeaveLobby();
 		std::vector<FriendGame> FriendsInParties();  // friends in Skyrim with a party open
 		void        PowerUpTaken(int a_kind);
+		void        AltarBusy(int a_town, bool a_on);  // our roll holds that altar (one roller at a time)
 		void        EggDone(int a_town);  // a hidden quest finished: the party near that altar shares it
 		std::vector<int> TakeRemotePowerUps();
 	}
@@ -401,6 +404,8 @@ namespace bo3z
 		void  OnBossSlain();
 		void  OnWave(bool a_cleared);       // the night's waves: one begins (false) or is cleared (true)
 		void  OnChampionSlain(int a_town);  // a city's champion fell (Director)
+		void  OnNightCleared();     // the night's last wave fell: a city whose Barrow-Jarl fell tonight is freed now
+		void  ForgetPendingLift();  // a load: no Jarl's fall is waiting
 		void  MigrateRites();               // a save from the four-rite cities: freed stays freed, the rest begin the trials
 		void  NewGamePlus();                // Stage 5, the Seat of the Awakened: every city back under the curse, the nights start over
 		bool  Freed(int a_town);            // its Echo Altar is awake (three trials and its Barrow-Jarl)
@@ -499,6 +504,9 @@ namespace bo3z
 		float ReelPos(float a_k);                      // where the reel stands at spin progress 0..1 (eased to a stop)
 		int   ReelSpell(int a_target, float a_pos, int a_slot);  // the spell in a slot of the reel (0 = the front)
 		void  BeforeLoad();  // a save is loading over this world: our hand-made map-marker records come off first
+		std::vector<std::uint8_t> RollState();                    // each altar's rolls tonight (the co-save)
+		void  SetRollState(const std::vector<std::uint8_t>& a_s);
+		void  HeardBusy(int a_town, const std::string& a_who, bool a_on);  // a friend's roll holds (or frees) that altar
 		void Tick(float a_delta);
 		void Reset();
 		void OnActivate(RE::TESObjectREFR* a_ref);
@@ -524,6 +532,7 @@ namespace bo3z
 		void Tick();
 		bool SelfRevive();         // Quick Revive held: a killing blow is a fall instead
 		void SelfHit();            // your own spell hit you: what it took is given back
+		void RearmAfterLoad();     // a moment after a load: the first-person hands rebuilt
 		void DamagePlayer(float a_amount);
 		void Dodged(float a_seconds);  // a dodge: the night's blows miss you this long  // the night's blows on the player (a killing one caught by the tonic / the party's fall)
 		float ManaMult();          // magicka cost (tomes)

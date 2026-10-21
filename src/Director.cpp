@@ -139,17 +139,8 @@ namespace bo3z
 
 		// (Noah: the night starts the moment the sun sets) dusk is when the sun reaches the horizon in this place's
 		// climate (the middle of its sunset), not a fixed hour; the sheet's nightStartHour stands in where none is known
-		float DuskHour()
-		{
-			static float dusk = R.nightStartHour;
-			if (auto* sky = RE::Sky::GetSingleton(); sky && sky->currentClimate) {
-				const auto& ss = sky->currentClimate->timing.sunset;
-				if (ss.end > ss.begin) {
-					dusk = std::clamp((ss.begin + ss.end) / 12.0f, 16.5f, 21.0f);  // (10-minute steps: /6 an hour, the two ends averaged)
-				}
-			}
-			return dusk;
-		}
+		// (Noah: night starts at 9pm) a fixed hour now, wherever you are
+		float DuskHour() { return R.nightStartHour; }
 		bool IsNight()
 		{
 			auto* cal = RE::Calendar::GetSingleton();
@@ -1645,6 +1636,7 @@ namespace bo3z
 			if (g_wave >= g_waves) {
 				g_nightCleared = true;
 				g_waveTheme = -1;
+				Curse::OnNightCleared();
 				Forms::Play(gen::Sound::round_end);
 				Director::SkipToDawn(fmt::format("NIGHT {} CLEARED - DAWN BREAKS", g_current).c_str());
 				return;
@@ -2371,9 +2363,23 @@ namespace bo3z
 			const auto it = a_actor ? g_ours.find(a_actor->GetFormID()) : g_ours.end();
 			if (it == g_ours.end()) return 1.0f;
 			const std::string_view id = gen::kEnemies[it->second].id;
-			if (id == "hf_harpy") return 0.3f;
-			if (id == "mb_harpy_matriarch") return 0.45f;
+			if (id == "hf_harpy") return 0.1f;            // (Noah: still nearly one shot on Expert - a third of before)
+			if (id == "mb_harpy_matriarch") return 0.15f;
 			return 1.0f;
+		}
+		bool HarpyNear(const RE::NiPoint3& a_at, float a_r)
+		{
+			for (auto& z : g_alive) {
+				auto a = z.handle.get();
+				if (a && !a->IsDead() && HarmMult(a.get()) < 0.999f && a->GetPosition().GetDistance(a_at) < a_r) return true;
+			}
+			return false;
+		}
+		std::vector<RE::ActorHandle> AliveHandles()
+		{
+			std::vector<RE::ActorHandle> v;
+			for (auto& z : g_alive) v.push_back(z.handle);
+			return v;
 		}
 		void OnDying(RE::Actor* a_actor)
 		{
@@ -2872,6 +2878,7 @@ namespace bo3z
 			return a_actor && std::any_of(g_protected.begin(), g_protected.end(), [&](const Protected& p) { return p.spared && p.handle.get().get() == a_actor; });
 		}
 
+		constexpr float kNightMinutes = 10.0f;  // a night's real minutes, dusk to the hold before dawn
 		// Shorter days and nights (sheet: rounds.cycleMinutes): Skyrim's TimeScale global.
 		void TickClock(float a_delta)
 		{
@@ -2888,8 +2895,14 @@ namespace bo3z
 			const float dayHours = std::fmod(DuskHour() - R.nightEndHour + 24.0f, 24.0f);
 			float       want = std::round(dayHours * 60.0f / gen::kDayMinutes);
 			if (IsNight() && !Coop::Client()) {
-				auto* pl = RE::PlayerCharacter::GetSingleton();
-				want = (g_phase == Phase::Fighting || g_phase == Phase::Break) && !g_nightCleared && !(pl && Curse::SafeHere(pl)) ? 1.0f : 38.0f;
+				// (Noah: the night passes by - about ten minutes - and pauses just before dawn until its last wave is down,
+				// then the morning comes) near dawn while waves remain the clock all but stops (HoldNight keeps it there)
+				auto* pl  = RE::PlayerCharacter::GetSingleton();
+				auto* cal = RE::Calendar::GetSingleton();
+				const float nightHours = std::fmod(R.nightEndHour - DuskHour() + 24.0f, 24.0f);
+				const float left = cal ? std::fmod(R.nightEndHour - cal->GetHour() + 24.0f, 24.0f) : 12.0f;
+				const bool  fighting = (g_phase == Phase::Fighting || g_phase == Phase::Break) && !g_nightCleared && !(pl && Curse::SafeHere(pl));
+				want = fighting && left < 0.4f ? 1.0f : std::round(nightHours * 60.0f / kNightMinutes);
 			}
 			if (ts && std::abs(ts->value - want) > 0.01f) {
 				logger::info("clock: timescale {:.1f} -> {:.1f} (a full day in {:.0f} minutes)", ts->value, want, gen::kCycleMinutes);
@@ -2996,7 +3009,7 @@ namespace bo3z
 				break;
 			case Phase::Fighting:
 				HoldNight(player);
-				PaceNight(player, a_delta);
+				(void)&PaceNight;  // (Noah: the night passes at its own pace and holds just before dawn: HoldNight)
 				for (auto& s : g_alive) {
 					if (s.webbed > 0 && (s.webbed -= a_delta) <= 0) {
 						if (auto a = s.handle.get()) {
@@ -3120,13 +3133,17 @@ namespace bo3z
 					Hud::Edit().nukeFlash = 1.0f;
 					return;
 				}
-				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				// (Noah: the nuke takes the whole wave) every living thing the night sent, near or far, the wyrms too
+				for (auto& h : Director::AliveHandles()) {
+					if (auto a = h.get(); a && !a->IsDead()) {
+						a->KillImpl(a_player, 9999.0f, true, false);
+						++n;
+					}
+				}
+				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {  // (and any stray of ours the list lost)
 					if (auto a = h.get(); a && !a->IsDead() && Director::IsRoundUndead(a.get())) {
-						const int row = Director::EnemyRow(a.get());
-						if (row < 0 || gen::kEnemies[row].bossEvery == 0) {  // the wyrm shrugs it off
-							a->KillImpl(a_player, 9999.0f, true, false);
-							++n;
-						}
+						a->KillImpl(a_player, 9999.0f, true, false);
+						++n;
 					}
 				}
 				Points::Add(400);
@@ -3138,7 +3155,7 @@ namespace bo3z
 				}
 				logger::info("powerup: nuke took {}, 20 s before they rise again", n);
 			} else {
-				g_timers[a_kind] = 30.0f;
+				g_timers[a_kind] = 45.0f;  // (Noah: Insta-Kill and Double Points last 45 s)
 			}
 		}
 

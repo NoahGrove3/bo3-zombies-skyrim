@@ -571,6 +571,12 @@ namespace bo3z
 				if (a_event && player && a_event->cause.get() == player && a_event->target.get() == player) {
 					Perks::SelfHit();  // (your own spells never hurt you)
 				}
+				// (Noah: Insta-Kill means one hit) any blow of yours - blade, fist, Skyrim's bows and spells - drops a wave undead
+				if (a_event && player && a_event->cause.get() == player && a_event->target && PowerUps::InstaKill()) {
+					if (auto* z = a_event->target->As<RE::Actor>(); z && z != player && !z->IsDead() && Director::IsRoundUndead(z)) {
+						z->KillImpl(player, 9999.0f, true, false);
+					}
+				}
 				// Skyrim weapons and spells keep up with the rounds: each hit takes a share of a zombie's round health.
 				if (a_event && a_event->cause.get() == player && a_event->target) {
 					auto* z = a_event->target->As<RE::Actor>();

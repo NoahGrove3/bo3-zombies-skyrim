@@ -377,6 +377,9 @@ namespace bo3z
 					const std::uint32_t one = 1;
 					a_s->WriteRecordData(&one, sizeof(one));
 				}
+				if (const auto rs = Shops::RollState(); a_s->OpenRecord('ROLL', 1)) {  // each altar's price tonight
+					a_s->WriteRecordData(rs.data(), static_cast<std::uint32_t>(rs.size()));
+				}
 				const auto sh = Director::Sheltered();
 				if (a_s->OpenRecord('SHLT', 1)) {
 					a_s->WriteRecordData(sh.data(), static_cast<std::uint32_t>(sizeof(RE::FormID) * sh.size()));
@@ -408,6 +411,10 @@ namespace bo3z
 							id = a_s->ResolveFormID(id, n) ? n : 0;
 						}
 						Director::Unshelter(ids);
+					} else if (type == 'ROLL' && version == 1) {
+						std::vector<std::uint8_t> rs(length);
+						a_s->ReadRecordData(rs.data(), length);
+						Shops::SetRollState(rs);
 					} else if (type == 'BWLV' && version == 1) {
 						std::vector<std::uint8_t> bl(length);
 						a_s->ReadRecordData(bl.data(), length);
@@ -432,7 +439,7 @@ namespace bo3z
 					Migrate();
 				}
 			}
-			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}), Bows::SetLevels({}); }
+			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}), Bows::SetLevels({}), Shops::SetRollState({}); }
 		}
 
 		void InstallCoSave()
@@ -586,6 +593,8 @@ namespace bo3z
 				logger::info("save moved to v0.3 perk layout ({:07b})", old);
 			}
 			logger::info("world ready: round {} cleared, {} points, crew {}, perks {:09b}", Get(gen::kAV_round), Get(gen::kAV_points), Crew(), PerkBits());
+			Perks::RearmAfterLoad();
+			Curse::ForgetPendingLift();
 		}
 	}
 
