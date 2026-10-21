@@ -1037,9 +1037,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const int   r = (t >> 24) & 0xFF, g = (t >> 16) & 0xFF, b = (t >> 8) & 0xFF, a = t & 0xFF;
 				const bool  fog = s.nightEvent == gen::kEvent_bloodfog;
 				const float pulse = 0.85f + 0.15f * std::sin(now * 0.8f);
-				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(r, g, b, static_cast<int>(a * (fog ? 0.9f : 0.35f) * pulse)));
-				const ImU32 e = IM_COL32(r, g, b, std::min(255, static_cast<int>(a * (fog ? 2.4f : 1.5f)))), z = IM_COL32(r, g, b, 0);  // (subtle: a haze at the edges)
-				const float w = size.y * (fog ? 0.45f : 0.3f);
+				// (Noah: the blood fog was overwhelming) no wash over the whole screen - only a light gradient in from the borders
+				const ImU32 e = IM_COL32(r, g, b, std::min(255, static_cast<int>(a * (fog ? 1.6f : 1.3f) * pulse))), z = IM_COL32(r, g, b, 0);
+				const float w = size.y * (fog ? 0.26f : 0.22f);
 				dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, w }, e, e, z, z);
 				dl->AddRectFilledMultiColor({ 0, size.y - w }, size, z, z, e, e);
 				dl->AddRectFilledMultiColor({ 0, 0 }, { w, size.y }, e, z, z, e);

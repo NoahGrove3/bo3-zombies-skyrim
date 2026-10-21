@@ -336,6 +336,25 @@ namespace Props
 			Blast(BlastIndex("fireball"), f->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f }, 0.08f * ++n, 0.3f);
 		}
 	}
+	// (Noah: a fire slash on every swing, hitting or not) a light swing looses a short arc of fire ahead of you
+	void BaneSlash(RE::PlayerCharacter* p)
+	{
+		const Aim aim = AimAt(700.0f);
+		RE::NiPoint3 dir = aim.dir; dir.z = 0;
+		if (dir.Length() < 0.01f) dir = { 0, 1, 0 };
+		dir.Unitize();
+		const RE::NiPoint3 side{ -dir.y, dir.x, 0 };
+		const RE::NiPoint3 at0 = p->GetPosition() + RE::NiPoint3{ 0, 0, 80.0f };
+		for (int k = 1; k <= 4; ++k) {
+			for (int j = -1; j <= 1; ++j) {
+				Blast(BlastIndex(j == 0 ? "dragonfire" : "fireball"), at0 + dir * (120.0f * k - std::abs(j) * 30.0f) + side * (j * (40.0f + 10.0f * k)), 0.04f * k, j == 0 ? 0.4f : 0.25f);
+			}
+		}
+		for (auto* f : InLine(aim, 520.0f, 150.0f)) {
+			if (Damage(f, FangBase() * 0.9f, false, false, true)) BaneKilled(p);
+			else g_dots.push_back({ f->GetHandle(), FangBase() * 0.15f, 3.0f });
+		}
+	}
 	void FangTornado(RE::PlayerCharacter* p)  // (the power attack: a crescent of golden fire down the line)
 	{
 		const Aim aim = AimAt(1000.0f);
@@ -360,6 +379,29 @@ namespace Props
 		}
 		Audio::AtPoint(gen::Sound::unleash_hearth, at0);
 	}
+	RE::ObjectRefHandle g_skyMark;
+	void SkyFireball(const RE::NiPoint3& a_at)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		static auto* ball = RE::TESForm::LookupByID<RE::SpellItem>(0x0001C789);  // Fireball
+		auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(0x0000003B);
+		if (!p || !ball || !xm) return;
+		auto m = g_skyMark.get();
+		if (!m || m->IsDeleted() || m->GetParentCell() != p->GetParentCell()) {
+			auto ref = p->PlaceObjectAtMe(xm, false);
+			if (!ref) return;
+			g_skyMark = ref->CreateRefHandle();
+			m = ref;
+		}
+		// a target to fall on: the nearest of the dead there, else a marker on the ground
+		RE::Actor* tgt = nullptr;
+		for (auto* f : Foes(a_at, 120.0f)) { tgt = f; break; }
+		m->SetPosition(a_at + RE::NiPoint3{ Rand(-250.0f, 250.0f), Rand(-250.0f, 250.0f), 1800.0f });
+		m->SetAngle({ 1.45f, 0.0f, Rand(0.0f, 6.28f) });  // (facing down, a little slanted: with no one there it falls on the spot)
+		if (auto* c = m->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
+			c->CastSpellImmediate(ball, false, tgt, 1.0f, false, 0.0f, p);
+		}
+	}
 	void TickBane(RE::PlayerCharacter* p, float a_delta)
 	{
 		static bool  held = false;
@@ -381,11 +423,10 @@ namespace Props
 				g_baneMeteor = 0.55f;
 				auto foes = Foes(p->GetPosition(), 1400.0f);
 				const RE::NiPoint3 at = foes.empty() ? p->GetPosition() + RE::NiPoint3{ Rand(-600, 600), Rand(-600, 600), 0 } : foes[static_cast<std::size_t>(Rand(0, static_cast<float>(foes.size()) - 0.01f))]->GetPosition();
-				Blast(BlastIndex("firestorm"), at + RE::NiPoint3{ 0, 0, 40.0f }, 0.0f, 0.8f);
-				for (auto* f : Foes(at, 240.0f)) {
-					if (Damage(f, FangBase() * 2.0f, false, false, true)) BaneKilled(p);
-					else Stagger(f, 0.6f);
-				}
+				// (Noah: the meteors themselves should be seen falling) Skyrim's fireball loosed from high above, falling on
+				// the spot; the strike (ours) lands as it does
+				SkyFireball(at);
+				g_zones.push_back({ 4, at, 240.0f, 0.95f, 0.9f, FangBase() * 2.0f, 0, false, 0 });
 			}
 		}
 	}
@@ -398,6 +439,8 @@ namespace Props
 			auto* high = proc ? proc->high : nullptr;
 			if (high && high->attackData && high->attackData->data.flags.any(RE::AttackData::AttackFlag::kPowerAttack)) {
 				FangTornado(p);
+			} else {
+				BaneSlash(p);
 			}
 		}
 		for (auto& t : g_twisters) {

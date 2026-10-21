@@ -557,6 +557,7 @@ namespace bo3z
 					}
 				}
 				if (a_event && player && a_event->cause.get() == player && a_event->target && a_event->target.get() != player) {
+					if (auto* t = a_event->target->As<RE::Actor>()) Gun::OnStaffHit(t, a_event->source);
 					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
 					const bool spellHit = src && src->As<RE::MagicItem>();  // (the charge's own lightning never sets off another charge)
 					if (auto* t = a_event->target->As<RE::Actor>(); t && !spellHit && Director::IsFoe(t)) {
@@ -629,6 +630,7 @@ namespace bo3z
 				if (a_event && a_event->object && a_event->object.get() == RE::PlayerCharacter::GetSingleton()) {
 					int level = 0;
 					Compass::OnCast(a_event->spell);
+					Gun::OnStaffCast(a_event->spell);
 					if (Movement::OnSpellCast(a_event->spell)) {
 						// (Bond II's Updraft)
 					} else if (Eggs::OnSpellCast(a_event->spell)) {

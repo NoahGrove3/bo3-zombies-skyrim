@@ -2227,6 +2227,7 @@ namespace bo3z
 		// turns you to run, so its own choice always came out "forward"). In third person the body is turned to the
 		// camera first, so back is back. TK Dodge RE's own key is off (its ini: DodgeHotkey = 0).
 		float g_shadowT = 0;
+		bool g_dodgeGhost = false;  // the roll's i-frames (setghost)
 		void Dodge()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -2267,7 +2268,9 @@ namespace bo3z
 			}
 			last = now;
 			av->DamageActorValue(RE::ActorValue::kStamina, 10.0f);
-			Perks::Dodged(0.35f);
+			Perks::Dodged(0.55f);
+			Gun::Console("setghost 1");  // (Noah: untouchable for the whole roll - blows, arrows and spells pass through)
+			g_dodgeGhost = true;
 			g_dodgeT = 0, g_dodgeDir = dir;  // (Noah: farther - first person barely moved) carried along, below
 		}
 
@@ -2900,6 +2903,10 @@ namespace bo3z
 			Dragon(player, a_delta);
 			if (g_dodgeT >= 0) {  // the dodge's push: a quick shove along the roll, easing off over its length
 				g_dodgeT += a_delta;
+				if (g_dodgeGhost && g_dodgeT > 0.55f) {
+					g_dodgeGhost = false;
+					Gun::Console("setghost 0");
+				}
 				if (auto* dcc = player->GetCharController(); dcc && g_dodgeT < 0.45f) {
 					RE::NiPoint3 dv{};
 					GetVel(dcc, dv);

@@ -120,7 +120,13 @@ namespace bo3z
 		bool                    g_swingWanted = false;
 		bool                    g_dual = false;     // hand spells: the left hand has come up for the charge
 		float                   g_tapT = -1.0f;   // >= 0: the staff's short thrust for a normal shot is playing
-		bool IsStaff(int a_gun) { return a_gun >= 0 && gen::kGuns[a_gun].kind == gen::kKindWand; }
+		bool IsNativeStaff(int a_gun)  // (Noah) the Falmer staffs: Skyrim casts them (its animation, its spell); ours on the hit
+		{
+			if (a_gun < 0) return false;
+			const std::string_view id = gen::kGuns[a_gun].id;
+			return id == "gravecaller" || id == "frostbinder" || id == "wolfcrown" || id == "barrowhorn";
+		}
+		bool IsStaff(int a_gun) { return a_gun >= 0 && gen::kGuns[a_gun].kind == gen::kKindWand && !IsNativeStaff(a_gun); }
 		bool IsSpell(int a_gun) { return a_gun >= 0 && (gen::kGuns[a_gun].kind == gen::kKindTome || gen::kGuns[a_gun].kind == gen::kKindWonder); }
 
 		// Controllers (Xbox, and PlayStation through Steam Input, which Skyrim reads as an Xbox pad):
@@ -167,7 +173,7 @@ namespace bo3z
 						return;
 					}
 				}
-				if (GunOut() && gen::kGuns[CurrentGun()].kind != gen::kKindBow && IsFireButton(a_event)) {
+				if (GunOut() && gen::kGuns[CurrentGun()].kind != gen::kKindBow && !IsNativeStaff(CurrentGun()) && IsFireButton(a_event)) {
 					auto& rd = a_event->GetRuntimeData();
 					if (a_event->IsDown()) {
 						g_nativeCut = false;
@@ -1924,8 +1930,8 @@ namespace bo3z
 			void Tornado(int a_kind, const RE::NiPoint3& a_at, RE::NiPoint3 a_dir, float a_seconds, float a_damage, bool a_chase, int a_row);
 		}
 #include "Bows.inl"
-#include "WonderProps.inl"
 #include "Staffs.inl"
+#include "WonderProps.inl"
 
 		struct PoseHook
 		{
@@ -2042,6 +2048,33 @@ namespace bo3z
 			(void)a_gun;  // wands never run dry; tomes run on magicka
 		}
 
+		// a Falmer staff's own bolt struck something: our numbers and its element's work (Staffs.inl StaffTap)
+		bool TestKitOn();
+		bool OnStaffHit(RE::Actor* a_target, RE::FormID a_source)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			const int gun = CurrentGun();
+			if (!p || !a_target || !IsNativeStaff(gun)) return false;
+			auto* w = Forms::Gun(gun);
+			if (!w || (a_source != w->GetFormID() && !(w->formEnchanting && a_source == w->formEnchanting->GetFormID()))) return false;
+			static std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> last;  // (an area spell reports each target once)
+			const auto now = std::chrono::steady_clock::now();
+			if (auto it = last.find(a_target->GetFormID()); it != last.end() && now - it->second < std::chrono::milliseconds(150)) return true;
+			last[a_target->GetFormID()] = now;
+			const auto& g = gen::kGuns[gun];
+			const float dmg = g.damage * Perks::DamageMult() * (1.0f + gen::kForgeStep * ForgeLevel());
+			if (Director::IsFoe(a_target)) Damage(a_target, dmg, false, false, true);
+			StaffTap(g, a_target->GetPosition(), a_target, dmg);
+			return true;
+		}
+		void OnStaffCast(RE::FormID a_spell)  // a Falmer staff cast: its magicka (staffs run on it here)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			const int gun = CurrentGun();
+			auto* w = IsNativeStaff(gun) ? Forms::Gun(gun) : nullptr;
+			if (!p || !w || !w->formEnchanting || w->formEnchanting->GetFormID() != a_spell) return;
+			if (!TestKitOn()) p->AsActorValueOwner()->DamageActorValue(RE::ActorValue::kMagicka, gen::kGuns[gun].mana * Perks::ManaMult() * Difficulty::Mana());
+		}
 		int LevelOf(int a_gun) { const int s = SlotOf(a_gun); return s >= 0 ? Save::GetSlot(s).level : -1; }
 		void SetLevelOf(int a_gun, int a_level)
 		{
@@ -2361,7 +2394,7 @@ namespace bo3z
 			g_migrated = true;
 			int removed = 0;
 			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {
-				if (!gen::kGuns[i].retired) {
+				if (!gen::kGuns[i].retired || IsStaffWonder(i)) {  // (the Falmer staffs are out of the box, not retired)
 					continue;
 				}
 				auto* w = Forms::Gun(i);
@@ -2373,7 +2406,7 @@ namespace bo3z
 			}
 			for (int s = 0; s < 3; ++s) {
 				auto sl = Save::GetSlot(s);
-				if (sl.gun >= 0 && gen::kGuns[sl.gun].retired) {
+				if (sl.gun >= 0 && gen::kGuns[sl.gun].retired && !IsStaffWonder(sl.gun)) {
 					Save::SetSlot(s, {});
 				}
 			}
@@ -2617,6 +2650,14 @@ namespace bo3z
 			}
 			if (!GunOut()) {
 				g_trigger = g_adsHeld = g_dualHeld = false;
+				return false;
+			}
+			if (const int cg = CurrentGun(); IsNativeStaff(cg)) {  // a Falmer staff: Skyrim casts it; a long hold also looses its held attack
+				if (IsFireButton(a_event)) {
+					if (down) g_charge = 0;
+					if (up && g_trigger) TryUnleash(true);
+					g_trigger = !up;
+				}
 				return false;
 			}
 			if (const int cg = CurrentGun(); Spellcraft::Is(cg)) {  // the ten spells (Spellcraft.inl)

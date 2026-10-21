@@ -129,10 +129,20 @@ for w in S['weapons']['rows']:
     if kind == 'wand':
         # enchantment: concentration, aimed, staff-type, free (infinite casts)
         # staff cast (point and release), aimed: Skyrim launches the wand's own element bolt from the tip
-        enit = struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 0, 0x0C, 0.0, 0, 0)  # fire-and-forget, self (nothing launched natively), staff enchantment, free
-        recs['ENCH'].append(record('ENCH', fid('ENCH', w['id']), [
-            sub('EDID', z('UN_WandEnch_' + w['id'])), sub('OBND', bytes(12)), sub('FULL', z(w['label'])), sub('ENIT', enit),
-            sub('EFID', struct.pack('<I', fid('MGEF', 'wandcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))  # staff cast look only: the bolt is ours (one per click)
+        if w.get('nativeEnch'):
+            # (Noah: the Falmer staffs cast for real) Skyrim's own staff spell - its projectile, its staff casting animation -
+            # with the vanilla staff's effects (Skyrim.esm MGEFs), free of charge; our code adds its numbers on the hit
+            enit = struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 2, 0x0C, 0.5, 0, 0)  # fire-and-forget, aimed, staff enchantment, free
+            effs = []
+            for mg, mag, area, dur in w['nativeEnch']:
+                effs += [sub('EFID', struct.pack('<I', int(mg, 16))), sub('EFIT', struct.pack('<fII', float(mag), area, dur))]
+            recs['ENCH'].append(record('ENCH', fid('ENCH', w['id']), [
+                sub('EDID', z('UN_WandEnch_' + w['id'])), sub('OBND', bytes(12)), sub('FULL', z(w['label'])), sub('ENIT', enit)] + effs))
+        else:
+            enit = struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 0, 0x0C, 0.0, 0, 0)  # fire-and-forget, self (nothing launched natively), staff enchantment, free
+            recs['ENCH'].append(record('ENCH', fid('ENCH', w['id']), [
+                sub('EDID', z('UN_WandEnch_' + w['id'])), sub('OBND', bytes(12)), sub('FULL', z(w['label'])), sub('ENIT', enit),
+                sub('EFID', struct.pack('<I', fid('MGEF', 'wandcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))  # staff cast look only: the bolt is ours (one per click)
         subs = []
         for name, hx in T['weap_staff']['subs']:
             b = bytes.fromhex(hx)

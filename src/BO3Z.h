@@ -470,6 +470,8 @@ namespace bo3z
 		std::pair<bool, bool> RecentHit(RE::FormID a_actor);  // {gun kill, headshot}
 		bool                  Give(int a_gun);                // buy/box: put in a slot, equip it
 		int                   LevelOf(int a_gun);             // its reforge level (-1: not carried)
+		bool                  OnStaffHit(RE::Actor* a_target, RE::FormID a_source);  // a Falmer staff's own bolt struck it
+		void                  OnStaffCast(RE::FormID a_spell);
 		void                  SetLevelOf(int a_gun, int a_level);
 		int                   TakeAway(int a_gun);            // out of its slot and your hands (its level returned; -1 not carried)
 		bool                  IsStaffWonder(int a_gun);       // one of the four Falmer staffs

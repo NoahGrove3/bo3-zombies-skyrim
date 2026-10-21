@@ -1964,7 +1964,21 @@
       "handLook": "none",
       "soundAs": "triad",
       "wonder": true,
-      "firstModel": "CurseOfAlduin\\staff\\falmer\\summon.nif"
+      "firstModel": "CurseOfAlduin\\staff\\falmer\\summon.nif",
+      "nativeEnch": [
+        [
+          "1EA6E",
+          0,
+          0,
+          3
+        ],
+        [
+          "A44C0",
+          1,
+          0,
+          0
+        ]
+      ]
     },
     {
       "id": "frostbinder",
@@ -2030,7 +2044,21 @@
       "handLook": "none",
       "soundAs": "frostlancer",
       "wonder": true,
-      "firstModel": "CurseOfAlduin\\staff\\falmer\\ice.nif"
+      "firstModel": "CurseOfAlduin\\staff\\falmer\\ice.nif",
+      "nativeEnch": [
+        [
+          "1CEA3",
+          40,
+          15,
+          0
+        ],
+        [
+          "B729F",
+          50,
+          0,
+          5
+        ]
+      ]
     },
     {
       "id": "wolfcrown",
@@ -2096,7 +2124,21 @@
       "handLook": "none",
       "soundAs": "mammothlmg",
       "wonder": true,
-      "firstModel": "CurseOfAlduin\\staff\\falmer\\storm.nif"
+      "firstModel": "CurseOfAlduin\\staff\\falmer\\storm.nif",
+      "nativeEnch": [
+        [
+          "5DBAE",
+          40,
+          20,
+          0
+        ],
+        [
+          "A44C0",
+          1,
+          0,
+          0
+        ]
+      ]
     },
     {
       "id": "barrowhorn",
@@ -2162,7 +2204,15 @@
       "handLook": "none",
       "soundAs": "embermortar",
       "wonder": true,
-      "firstModel": "CurseOfAlduin\\staff\\falmer\\fire.nif"
+      "firstModel": "CurseOfAlduin\\staff\\falmer\\fire.nif",
+      "nativeEnch": [
+        [
+          "1CEA1",
+          40,
+          15,
+          0
+        ]
+      ]
     }
   ],
   "balance": "Damage is in BO3 units against round health (rounds.hpStart 400 at night 1, ~1500 by night 10, ~2200 by night 30). Box staves ~330-420 per shot (0.75 s): one body shot at night 1, ~4 at night 10, ~5-6 at night 30; headshots x2. Reforge +50%/level (x2.5 at level 3, which also makes the signature move Ascendant: x1.25, 25% shorter cooldown, an echo at 75%). City relics ~1.6x the box. Against Skyrim's own enemies every hit is scaled by the player's level (0.5x at 1, 1x at 25, 1.5x at 50)."
