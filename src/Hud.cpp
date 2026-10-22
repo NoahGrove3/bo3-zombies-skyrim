@@ -48,6 +48,9 @@ namespace bo3z
 		ID3D11PixelShader*        g_keyPs = nullptr;
 		ID3D11Buffer*             g_keyCb = nullptr;
 		ImVec2                    g_keyCursor{ -1000, -1000 };
+		// (Noah: Edge UI's main menu over our painting) Edge UI's own buttons and load list are laid over our picture as
+		// they are (keyed by brightness, the whole screen); our word list, CO-OP PARTY entry and question panel stand down
+		constexpr bool            kEdgeMenu = true;
 
 		constexpr const char* kKeyHlsl = R"(
 cbuffer K : register(b0) { float2 cursor; float2 pad; };
@@ -62,7 +65,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 	if (d.x > -6 && d.x < 46 && d.y > -6 && d.y < 56) a = 0;
 	// only the lower right (the buttons and their yes/no prompts): Skyrim's emblem, the Bethesda mark and the
 	// Anniversary banner are never laid over the picture
-	if (uv.x < 0.62 || uv.y < 0.58) a = 0;
+	// (Edge UI's menu: its words may stand anywhere, so the whole screen is keyed - pad.x = 1)
+	if (pad.x < 0.5 && (uv.x < 0.62 || uv.y < 0.58)) a = 0;
 	return float4(c.rgb, a * col.a);
 }
 )";
@@ -101,7 +105,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			D3D11_MAPPED_SUBRESOURCE m{};
 			if (g_keyCb && SUCCEEDED(g_context->Map(g_keyCb, 0, D3D11_MAP_WRITE_DISCARD, 0, &m))) {
-				const float v[4]{ g_keyCursor.x, g_keyCursor.y, 0, 0 };
+				const float v[4]{ g_keyCursor.x, g_keyCursor.y, kEdgeMenu ? 1.0f : 0.0f, 0 };
 				std::memcpy(m.pData, v, sizeof(v));
 				g_context->Unmap(g_keyCb, 0);
 			}
@@ -3924,7 +3928,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			// a question (Start a new game?): the scene dims and one dark field sits exactly under Skyrim's own box, so its
 			// words and frame read as one panel
-			{
+			if (!kEdgeMenu) {
 				static float qa = 0;
 				ImVec4       qb{};
 				const bool   up = MenuQuestionBounds(size, qb);
@@ -3950,7 +3954,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// the menu: Skyrim's own entries as words only, the way the base game shows them (no plates, no boxes): the
 			// chosen word bright with a soft cold glow, the rest dim; keys and pad move Skyrim's selection, the mouse moves
 			// it by hovering a word, a click or Enter does what Skyrim would
-			{
+			if (!kEdgeMenu) {
 				RE::GFxMovieView* mv = nullptr;
 				const auto entries = ReadMainList(&mv);
 				// CO-OP PARTY is one more word in the list (under LOAD); pressed, the list turns into the party's own words
@@ -5010,7 +5014,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			// (Noah: Edge UI's main menu now, not ours) our redrawn main menu - Skyrim's words over our own picture, the CO-OP
 			// PARTY entry - is retired: Edge UI draws the main menu and the load list; the party lives in the Esc journal's tab
-			constexpr bool kOwnMainMenu = false;
+			constexpr bool kOwnMainMenu = true;  // (our painting stays; with kEdgeMenu, Edge UI's own words are laid over it)
 			const bool onMainMenu = uiM && uiM->IsMenuOpen(RE::MainMenu::MENU_NAME);
 			const bool mainMenu = kOwnMainMenu && onMainMenu && (!popup || steamOver);
 			const bool codex = !mainMenu && CodexWanted(uiM);
