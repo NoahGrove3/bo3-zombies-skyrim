@@ -77,18 +77,27 @@ namespace bo3z
 		// (Noah: in a party each player takes three trials at an altar, then the night's waves are finished together) the
 		// trials you were there for, per city - your own, whoever's game counted the last step (co-save 'MINE')
 		std::array<std::uint8_t, 16> g_mine{};
-		constexpr int kPartyNeed = 3;
-		int  Mine(int a_town) { return a_town >= 0 && a_town < 16 ? std::popcount(static_cast<unsigned>(g_mine[a_town] & 31)) : 0; }
+		// (Noah: the three shared trials with the party's help, the class trial each player's own) the shared ones' bits and
+		// progress come over from the party; the class trial (the steel slot) never does: each player wins their own
+		constexpr int kSharedMask = 31 & ~(1 << gen::kTrial_steel);
+		bool OwnClassTrial(int a_town) { return a_town >= 0 && a_town < 16 && ((g_mine[a_town] >> gen::kTrial_steel) & 1); }
+		int  Mine(int a_town) { return OwnClassTrial(a_town) ? 1 : 0; }  // (told to the party: your class trial won here)
 		bool InParty() { return Party::FriendCount() > 0; }
-		// the Dragon Priest may rise: alone, the four trials; in a party, three of your own and three of every friend's
+		bool SharedDone(const St& a_s)
+		{
+			for (int t : { gen::kTrial_ward, gen::kTrial_culling, gen::kTrial_breath }) if (!((a_s.done >> t) & 1)) return false;
+			return true;
+		}
+		// the Dragon Priest may rise: alone, the four trials; in a party, the three shared ones (anyone's work) and every
+		// player's own class trial
 		bool PriestReady(int a_town, const St& a_s, std::string* a_wait = nullptr)
 		{
 			if (!InParty()) return a_s.Count() >= kNeeded;
 			std::string names;
-			const int short_ = Party::FriendsShort(a_town, kPartyNeed, &names);
-			if (Mine(a_town) < kPartyNeed) names = std::string("you") + (names.empty() ? "" : ", " + names);
+			const int short_ = Party::FriendsShort(a_town, 1, &names);
+			if (!OwnClassTrial(a_town)) names = std::string("you") + (names.empty() ? "" : ", " + names);
 			if (a_wait) *a_wait = names;
-			return Mine(a_town) >= kPartyNeed && short_ == 0;
+			return SharedDone(a_s) && OwnClassTrial(a_town) && short_ == 0;
 		}
 
 		// Skyrim's difficulty picks each trial's numbers
@@ -365,7 +374,7 @@ namespace bo3z
 			if (s.Boss()) {
 				Hud::Banner(head + "   " + std::string(BossName(a_town)) + " rises at the altar when night falls", 7.0f);
 			} else if (InParty()) {
-				Hud::Banner(head + "   (yours: " + std::to_string(Mine(a_town)) + " of " + std::to_string(kPartyNeed) + (wait.empty() ? std::string(")") : ")   still to finish three: " + wait), 6.0f);
+				Hud::Banner(head + (SharedDone(s) ? std::string("   the party's three trials are done") : std::string()) + (wait.empty() ? std::string() : "   class trials still to win: " + wait), 6.0f);
 			} else {
 				Hud::Banner(head + "   (" + std::to_string(s.Count()) + " of " + std::to_string(kNeeded) + ")", 5.0f);
 			}
@@ -686,7 +695,7 @@ namespace bo3z
 				Hud::Banner("The Echo Altar of " + std::string(gen::kTowns[a_town]) + " is awake", 2.5f);
 				return;
 			}
-			if (((s.done >> a_trial) & 1) && (!InParty() || ((g_mine[a_town] >> a_trial) & 1))) {
+			if ((s.done >> a_trial) & 1) {
 				Hud::Banner(title + " is done", 2.5f);
 				return;
 			}
@@ -702,8 +711,8 @@ namespace bo3z
 				Hud::Banner("Choose a class first: the fourth trial is your class's own", 3.0f);
 				return;
 			}
-			if (s.Boss() || (!InParty() && s.Count() >= kNeeded) || (InParty() && Mine(a_town) >= kPartyNeed)) {
-				Hud::Banner(InParty() && !s.Boss() ? "Your three trials are done - the rest of the party must finish theirs" : "The four trials are done - " + std::string(BossName(a_town)) + " must fall", 3.0f);
+			if (s.Boss() || s.Count() >= kNeeded) {
+				Hud::Banner(InParty() && !s.Boss() ? "Your trials are done - the rest of the party must win their class trials" : "The four trials are done - " + std::string(BossName(a_town)) + " must fall", 3.0f);
 				return;
 			}
 			if (s.Trial() == a_trial) {
@@ -728,7 +737,7 @@ namespace bo3z
 			}
 			const St s = Get(a_town);
 			v.on = !s.freed;
-			v.done = InParty() ? g_mine[a_town] : s.done, v.active = s.active;
+			v.done = s.done, v.active = s.active;
 			for (int i = 0; i < kTrialCount; ++i) {
 				v.desc[i] = Ask(i);
 			}
@@ -884,10 +893,22 @@ namespace bo3z
 			// Priest's rising and the freeing come over from the party; trials and their progress stay each player's
 			{
 				const St in = Decode(a_value);
-				if (before.freed || (!in.freed && !(in.Boss() && !before.Boss()))) return;
+				if (before.freed) return;
 				St mine = before;
-				if (in.freed) mine.freed = true;
-				else mine.active = kBossActive, mine.prog = 0;
+				if (in.freed) {
+					mine.freed = true;
+				} else if (in.Boss() && !before.Boss()) {
+					mine.active = kBossActive, mine.prog = 0;
+				} else {
+					mine.done |= in.done & kSharedMask;  // (the shared trials a friend finished)
+					const int it = in.Trial();
+					if (it >= 0 && it != gen::kTrial_steel && !((mine.done >> it) & 1) && !mine.Boss()) {  // (a shared trial under way: its count is the party's)
+						if (mine.active == in.active) mine.prog = std::max(mine.prog, in.prog);
+						else if (mine.active == 0) mine.active = in.active, mine.prog = in.prog;
+					}
+					if (mine.Trial() >= 0 && ((mine.done >> mine.Trial()) & 1)) mine.active = 0, mine.prog = 0;  // (finished by a friend)
+				}
+				if (Encode(mine) == Encode(before)) return;
 				SetValue(a_town, Encode(mine));
 			}
 			const St after = Get(a_town);

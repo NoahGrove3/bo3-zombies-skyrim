@@ -2712,8 +2712,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						doneCount += (s.trialDone >> q) & 1;
 					}
 					const bool party = Party::FriendCount() > 0;  // (in a party: three of your own each, then the night's waves together)
-					const bool full = doneCount >= (party ? 3 : 4) || s.trialActive == 6;
-					TxtC(dl, g_body, 16 * k, tcx, y + 34 * k, IM_COL32(196, 182, 160, 235), party ? "Every player takes three trials of their own, then the night's waves are finished together  -  yours: " + std::to_string(std::min(doneCount, 3)) + " of 3"
+					const bool full = doneCount >= 4 || s.trialActive == 6;
+					TxtC(dl, g_body, 16 * k, tcx, y + 34 * k, IM_COL32(196, 182, 160, 235), party ? "The three shared trials with your party's help, your class's trial on your own  -  " + std::to_string(std::min(doneCount, 4)) + " of 4 done"
 					                                                                                     : "Three shared trials and your class's own, in any order  -  " + std::to_string(std::min(doneCount, 4)) + " of 4 done");
 					float ty = y + 66 * k;
 					static constexpr const char* kRoman[5] = { "I", "II", "III", "IV", "V" };
