@@ -1953,6 +1953,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->AddRectFilled({ cxs - bw * 0.5f, y0 + 52 * k }, { cxs + bw * 0.5f, y0 + 55 * k }, IM_COL32(20, 16, 12, 170));
 				dl->AddRectFilled({ cxs - bw * 0.5f, y0 + 52 * k }, { cxs - bw * 0.5f + bw * fr, y0 + 55 * k }, IM_COL32(214, 178, 96, 255));
 			}
+			// (Noah: seamless on a controller) the mod weapon's own controls, the first few times one comes out each session
+			{
+				static bool  wasOut = false;
+				static int   told = 0;
+				static float hintT = 0;
+				if (s.gunOut && !wasOut && told < 3) ++told, hintT = 7.0f;
+				wasOut = s.gunOut;
+				if (hintT > 0 && s.gunOut) {
+					hintT -= dt;
+					const float a = std::clamp(hintT / 1.0f, 0.0f, 1.0f);
+					const std::string t = g_padLast ? "D-pad right  next weapon (hold: put away)     D-pad down  knife     tap " + PadWord("LB") + "  dodge"
+					                                : std::string("G  next weapon (hold: put away)     V  knife     Left Alt  dodge");
+					TxtC(dl, g_body, 17 * k, size.x * 0.5f, size.y - 150 * k, Fade(IM_COL32(230, 220, 200, 235), a), t, 1.2f * k, Fade(IM_COL32(0, 0, 0, 220), a));
+				}
+			}
 			// the heart-stone's runes become words: each one burns out of the rock in turn (a second apart), glows, and
 			// settles into its meaning; the shout's name comes last
 			if (s.revealTime > 0) {
@@ -2483,7 +2498,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					for (int q = 0; q < 2; ++q) {
 						const int idx = q == 0 ? s.chooseA : s.chooseB;
 						if (idx < 0) continue;
-						(void)keys;
+						if (g_padLast) PadGlyph(dl, { b.x - 30 * k, cy + 13 * k }, 11 * k, q == 0 ? "X" : "Y");
+						else Txt(dl, g_body, 15 * k, { b.x - 40 * k, cy + 4 * k }, IM_COL32(200, 186, 160, 220), keys[q]);
 						if (s.chooseFocus == q) {
 							dl->AddRectFilled({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, IM_COL32(200, 160, 92, 34), 4 * k);
 							dl->AddRect({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, kGold, 4 * k, 0, 1.5f * k);
@@ -4886,7 +4902,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			};
 			arrowBtn(false);
 			arrowBtn(true);
-			TxtC(dl, g_body, 15 * k, o.x + lw * 0.5f, bottom + 10 * k, IM_COL32(140, 130, 115, 255), "Wheel / W S  scroll    A D  chapter    Q E  book    Esc  close");
+			TxtC(dl, g_body, 15 * k, o.x + lw * 0.5f, bottom + 10 * k, IM_COL32(140, 130, 115, 255),
+				g_padLast ? "D-pad up / down  scroll    D-pad left / right  chapter    " + PadWord("LB") + " / " + PadWord("RB") + "  book    " + PadWord("B") + "  close"
+				          : std::string("Wheel / W S  scroll    A D  chapter    Q E  book    Esc  close"));
 			if (cur.x >= 0) {
 				DrawPingCursor(dl, cur, k, now);
 			}
@@ -5310,6 +5328,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 
 		void OnClick() { ++g_clicks; }
+		bool PadLast() { return g_padLast; }
+		void NotePad() { g_padLast = true; }
+		std::string PadWord(std::string_view a_x)
+		{
+			if (!Settings::PlayStationIcons()) return std::string(a_x == "BACK" ? "View" : a_x == "START" ? "Menu" : a_x);
+			return a_x == "A" ? "Cross" : a_x == "B" ? "Circle" : a_x == "X" ? "Square" : a_x == "Y" ? "Triangle" : a_x == "LB" ? "L1" : a_x == "RB" ? "R1" :
+			       a_x == "LT" ? "L2" : a_x == "RT" ? "R2" : a_x == "BACK" ? "Create" : a_x == "START" ? "Options" : std::string(a_x);
+		}
 		void OnMouseMove(float a_dx, float a_dy)
 		{
 			g_mouseDX = g_mouseDX + a_dx, g_mouseDY = g_mouseDY + a_dy;

@@ -148,7 +148,7 @@ namespace bo3z
 				static auto lastHint = std::chrono::steady_clock::now() - std::chrono::seconds(100);
 				if (!raceOpen && !ui->GameIsPaused() && std::chrono::steady_clock::now() - lastHint > std::chrono::seconds(45)) {
 					lastHint = std::chrono::steady_clock::now();
-					Hud::Banner("Hold H (Back on a controller) to skip Helgen", 4.0f);
+					Hud::Banner(Hud::PadLast() ? "Hold " + Hud::PadWord("A") + " to skip Helgen" : std::string("Hold H to skip Helgen"), 4.0f);
 				}
 				if (g_skipHeld && !raceOpen && !ui->GameIsPaused()) {
 					g_skipHold += 1.0f / 60.0f;
@@ -209,8 +209,10 @@ namespace bo3z
 		bool OnButton(const RE::ButtonEvent* a_b)
 		{
 			if (a_b && !Save::Flag(Save::kFlagMoved) && !g_skip && ((a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x23) ||
-				(a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && a_b->GetIDCode() == 0x0020))) {
-				g_skipHeld = a_b->IsPressed();  // (H / Back held: Tick counts it)
+				(a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && a_b->GetIDCode() == 0x1000))) {
+				// (H / pad A held: Tick counts it; Back was Skyrim's Wait) - a fresh press, never the A still held from skipping the film
+				if (!a_b->IsPressed()) g_skipHeld = false;
+				else if (a_b->IsDown() && !Hud::IntroActive()) g_skipHeld = true;
 			}
 			if (!a_b || !Hud::IntroActive()) {
 				return false;

@@ -309,7 +309,7 @@ namespace bo3z
 			std::string text = Fill(gen::kCurseLiftedBanner, a_town);
 			if (const int sh = ShoutOf(a_town); sh >= 0) {
 				// its shout waits on the Echo Altar at the station (nothing is forced into your hands)
-				text += " - its Thu'um, " + std::string(gen::kShouts[sh].label) + ", waits at the city's altar (" + Settings::KeyName(3) + " in its menu)";
+				text += " - its Thu'um, " + std::string(gen::kShouts[sh].label) + ", waits in the runes of the city's altar (" + (Hud::PadLast() ? std::string("its LEARN THE THU'UM row") : Settings::KeyName(3) + " in its menu") + ")";
 			}
 			Note(text, 10.0f);
 			Party::CityFreed(a_town);  // (the dawn that follows saves under the city's name)

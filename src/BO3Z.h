@@ -865,7 +865,10 @@ namespace bo3z
 		std::mutex& Lock();
 		void        Banner(std::string a_text, float a_seconds = 4.0f);
 		void        Lore(std::string a_title, std::string a_text, float a_seconds = 14.0f);
-		void        WordReveal(int a_shout);  // the altar's runes give up a shout's three words (Curse::ClaimRelic)  // a scroll of the Curse
+		void        WordReveal(int a_shout);
+		bool        PadLast();                                // the last input was a controller (prompts follow it)
+		void        NotePad();                                // a stick moved: the player is on a controller
+		std::string PadWord(std::string_view a_xbox);         // a pad button's name as the player's pad prints it (A -> Cross with PlayStation icons)  // the altar's runes give up a shout's three words (Curse::ClaimRelic)  // a scroll of the Curse
 		void        Install();
 		void        OnClick();  // a left click (menus: the party panel's buttons)
 		void        OnMouseMove(float a_dx, float a_dy);  // raw mouse movement (the menu cursor never sticks)

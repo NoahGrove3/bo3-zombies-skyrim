@@ -1912,7 +1912,7 @@ namespace bo3z
 				}
 				return code == 0x12 || code == 0xCB || code == 0xCD || code == 0xC8 || code == 0xD0 || code == 0x11 || code == 0x1E || code == 0x1F || code == 0x20 || code == 0x1C || code == 0x9C;
 			case RE::INPUT_DEVICE::kMouse: return code == 8 || code == 9;
-			case RE::INPUT_DEVICE::kGamepad: return code == 0x4000 || code == 0x8000 || code == 0x1000 || code == 0x2000 || code == 0x0001 || code == 0x0002 || code == 0x0004 || code == 0x0008 || code == 0x0100 || code == 0x0200 || code == 0x000A;
+			case RE::INPUT_DEVICE::kGamepad: return code == 0x4000 || code == 0x8000 || code == 0x1000 || code == 0x2000 || code == 0x0001 || code == 0x0002 || code == 0x0004 || code == 0x0008 || code == 0x0100 || code == 0x0200 || code == 0x000A || code == 0x0009 || code == 0x0020 || code == 0x0040 || code == 0x0080;  // (+ Back, L3, R3, LT: the altar's change-class / outfit / quivers must not also wait, sneak or turn the camera)
 			default: return false;
 			}
 		}
@@ -1937,8 +1937,8 @@ namespace bo3z
 		// Keyboard: 1 roll a spell, 2 reforge, 3 take the chosen perk, 4 learn the city's Thu'um, 5 bond the dragon,
 		// 6 7 8 9 0 take up one of the five trials, mouse wheel or Left/Right picks a perk, Activate (E) or Backspace
 		// leaves; walking away closes it too.
-		// Gamepad: X roll, Y reforge, A perk, D-pad left/right pick, LB/RB pick a trial, D-pad up take it up (once the
-		// city is freed: its Thu'um), D-pad down bond, B leave.
+		// Gamepad: D-pad up/down move through the rows, D-pad left/right step into the trials or pick a perk, A takes the
+		// row, B leaves; Back changes class, L3 the outfit, R3 fills the quivers.
 		bool OnButton(const RE::ButtonEvent* a_event)
 		{
 			// the shrine's orb in the crosshair: Activate opens the shrine (Skyrim's own pick only finds its floor)
