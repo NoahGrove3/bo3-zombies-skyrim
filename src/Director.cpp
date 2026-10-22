@@ -414,7 +414,7 @@ namespace bo3z
 				if (r.anim == 0 && a->Is3DLoaded() && !r.portal) {  // (Noah's plan: every one of the night's dead comes through the Curse's red portal; elites and bosses a bigger one)
 					r.portal = true;
 					if (auto* dh = RE::TESDataHandler::GetSingleton()) {
-						const bool big = IsBoss(a) || g_elites.contains(a->GetFormID());
+						const bool big = Director::IsBoss(a.get()) || g_elites.contains(a->GetFormID());
 						if (auto* art = dh->LookupForm<RE::BGSArtObject>(big ? gen::kArtPortalBig : gen::kArtPortal, gen::kPlugin)) a->ApplyArtObject(art, big ? 3.0f : 2.2f);
 					}
 				}
