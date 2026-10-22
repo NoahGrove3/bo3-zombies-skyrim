@@ -40,7 +40,7 @@ namespace bo3z::Net
 		constexpr char kBuild[8] = UN_BUILD;  // the commit this game was built from (CI): every player must run the same one
 #pragma pack(push, 1)
 		struct Hello { std::uint8_t type, version; char build[8]; };
-		struct PlayerMsg { std::uint8_t type, life; float x, y, z, left; std::int8_t wonder; };
+		struct PlayerMsg { std::uint8_t type, life; float x, y, z, left; std::int8_t wonder; std::int8_t cls{ -1 }; };  // cls: their class (the party HUD)
 		struct ReviveMsg { std::uint8_t type; std::uint64_t target; };
 		struct StatsMsg { std::uint8_t type; std::int32_t kills, heads, best, septims, revives, style, waves, minis, night; };  // (Noah: everyone's night in the Party tab)
 #pragma pack(pop)
@@ -524,7 +524,7 @@ namespace bo3z::Net
 						if (sz >= static_cast<int>(sizeof(PlayerMsg))) {
 							PlayerMsg m{};
 							std::memcpy(&m, d, sizeof(PlayerMsg));
-							Party::Heard(from, A.GetFriendPersonaName(A.fr, from), m.life, { m.x, m.y, m.z }, m.left, m.wonder);
+							Party::Heard(from, A.GetFriendPersonaName(A.fr, from), m.life, { m.x, m.y, m.z }, m.left, m.wonder, m.cls);
 						}
 						break;
 					case kRevive:
@@ -783,7 +783,7 @@ namespace bo3z::Net
 			}
 			if ((t -= a_delta) <= 0) {
 				t = 0.25f;
-				const PlayerMsg m{ kPlayer, o.life, o.at.x, o.at.y, o.at.z, o.left, o.wonder };
+				const PlayerMsg m{ kPlayer, o.life, o.at.x, o.at.y, o.at.z, o.left, o.wonder, o.cls };
 				ToAll(&m, sizeof(m), false);
 			}
 			static float st = 0;

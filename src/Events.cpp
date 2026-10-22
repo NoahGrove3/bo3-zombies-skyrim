@@ -542,9 +542,12 @@ namespace bo3z
 			static constexpr float kTier[4] = { 1.0f, 1.3f, 1.7f, 2.2f };
 			const int   tier = std::clamp(Arcana::TierOf(a_index), 0, 3);
 			const float grow = (1.0f + gen::kForgeStep * Arcana::Level(a_index)) * (1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike)) * (0.7f + 0.3f * Arcana::Power());
+			// (Noah's plan, Destruction) dual-casting one element: the same spell in both hands hits a third harder
+			const auto  hands = Arcana::Hands();
+			const float twin = Classes::Get() == 1 && hands[0] == a_index && hands[1] == a_index ? 1.35f : 1.0f;
 			if (Director::IsRoundUndead(a_actor)) {
 				if (Limit(a_actor)) {
-					HurtUndead(a_actor, Director::RoundHealth() * gen::kShareSpell * kTier[tier] * grow);
+					HurtUndead(a_actor, Director::RoundHealth() * gen::kShareSpell * kTier[tier] * grow * twin);
 				}
 				return;
 			}
@@ -553,7 +556,7 @@ namespace bo3z
 			}
 			static constexpr float kPart[4] = { 0.07f, 0.09f, 0.12f, 0.16f };
 			const float max = a_actor->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth);
-			HurtUndead(a_actor, std::max(8.0f, max * kPart[tier] * grow));
+			HurtUndead(a_actor, std::max(8.0f, max * kPart[tier] * grow * twin));
 		}
 
 		class HitWatch : public RE::BSTEventSink<RE::TESHitEvent>

@@ -290,6 +290,9 @@ namespace bo3z
 		int              RestockWonder();              // Sunhallowed arrows topped up (quivers, Max Ammo)
 		bool             WonderEarned();               // any class's wonder won (the Three Words follow)
 		std::string      WonderLine();                 // the altar's line: your class wonder's trial
+		bool             RollSupport();                // Destruction's altar side-pick: Ash Cloud, Cinder Storm, Charged Nova or Symmetry
+		void             NextOutfit();                 // the altar's outfit picker: the next outfit (any class), worn
+		std::string      OutfitName();                 // the one worn from the picker ('' none yet)
 		int              Mastery(int a_index);     // kills its ladder has earned toward the next rung
 		int              MasteryNeed(int a_index);
 		void             SpendMastery(int a_index);
@@ -418,16 +421,16 @@ namespace bo3z
 			float               reviveFrac{ -1 };  // reviving a friend: 0..1 (-1 none near)
 			std::string         reviveName;
 			std::vector<Fallen> fallen;           // friends down right now
-			struct Mark { std::string name; float x, y, dist; bool front; Life life; float hp{ 1.0f }; float ang{ 0 }; };  // hp: 0..1 from their figure
+			struct Mark { std::string name; float x, y, dist; bool front; Life life; float hp{ 1.0f }; float ang{ 0 }; int cls{ -1 }; };  // cls: their class  // hp: 0..1 from their figure
 			std::vector<Mark>   marks;            // where each friend is (screen 0..1)
 		};
-		struct Out { std::uint8_t life; RE::NiPoint3 at; float left; std::uint64_t revive; std::int8_t wonder; };
+		struct Out { std::uint8_t life; RE::NiPoint3 at; float left; std::uint64_t revive; std::int8_t wonder; std::int8_t cls{ -1 }; };
 		void Tick(float a_delta);                      // game thread
 		bool OnButton(const RE::ButtonEvent* a_b);     // Activate held (revive); arrows switch whom you watch
 		Life State();
 		View Now();
 		Out  Outgoing();                               // Net: what to tell the party
-		void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder = -1);
+		void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder = -1, std::int8_t a_cls = -1);
 		std::string WonderHolder(int a_wonder);         // the friend in the party holding that wonder weapon ('' none)
 		void        SetWonder(int a_wonder);            // ours (-1 none): told to the party
 		void Revived(std::uint64_t a_by);

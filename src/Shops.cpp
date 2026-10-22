@@ -1983,6 +1983,11 @@ namespace bo3z
 				}
 				return true;
 			}
+			// (the class framework's outfit picker) O on the keyboard, the left stick click on a pad: the next outfit, any class
+			if (!g_choosing && ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x18) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x0040))) {
+				Classes::NextOutfit();
+				return true;
+			}
 			// (the Ranger's ammo) Q on the keyboard, the right stick click on a pad: a full quiver and bolt bundles
 			if (!g_choosing && ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x10) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x0080))) {
 				const int cost = 400 + 100 * std::max(0, Save::Get(gen::kAV_round));
@@ -2030,8 +2035,18 @@ namespace bo3z
 								Hud::Banner("It costs " + std::to_string(cost) + " septims", 2.0f);
 							}
 							break;
+						} else if (cls == 1) {  // (Destruction's side-picks: its support spells)
+							const int town = TownOfAltar(ref), cost = BowRollCost(town);
+							if (Points::Get() < cost) {
+								Hud::Banner("It costs " + std::to_string(cost) + " septims", 2.0f);
+							} else if (Classes::RollSupport()) {
+								Points::Spend(cost);
+								if (town >= 0) g_bowRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_bowRollsT[town] + 1));
+								Forms::PlayAt(gen::Sound::coffer_charge, ref);
+							}
+							break;
 						} else if (cls != 2) {
-							Hud::Banner("Only a Ranger or a Spellsword takes the altar's arms", 2.5f);
+							Hud::Banner("Only a Ranger, a Spellsword or a Destruction mage takes this row", 2.5f);
 							break;
 						}
 						SpinBow(ref);

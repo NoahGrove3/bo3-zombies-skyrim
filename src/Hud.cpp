@@ -997,7 +997,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->AddCircleFilled({ p.x, p.y - r * 0.32f }, r * 0.26f, col, 16);  // head
 					dl->PathArcTo({ p.x, p.y + r * 0.62f }, r * 0.52f, 3.1416f, 6.2832f, 16);  // shoulders
 					dl->PathFillConvex(col);
-					const std::string label = m.name + "   " + std::to_string(static_cast<int>(m.dist / 70.0f)) + " m";
+					const std::string label = m.name + (m.cls >= 0 ? "  -  " + std::string(Classes::Name(m.cls)) : std::string()) + "   " + std::to_string(static_cast<int>(m.dist / 70.0f)) + " m";  // (their class)
 					TxtC(dl, g_title, 18 * k, p.x, p.y + r + 6 * k, col, label);
 				}
 				if (pv.life == Party::Life::Down) {
@@ -1032,6 +1032,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						dl->PathArcTo({ bc.x, bc.y + br * 0.64f }, br * 0.52f, 3.1416f, 6.2832f, 14);
 						dl->PathFillConvex(col);
 						Txt(dl, g_title, 17 * k, { a.x + 44 * k, py + 4 * k }, kParch, m.name);
+						if (m.cls >= 0) {  // (the party sees each other's class)
+							Txt(dl, g_body, 13 * k, { a.x + 44 * k + Measure(g_title, 17 * k, m.name).x + 8 * k, py + 7 * k }, kGoldDim, std::string(Classes::Name(m.cls)));
+						}
 						const std::string st = down ? "DOWN" : dead ? "FALLEN" : std::to_string(static_cast<int>(m.dist / 70.0f)) + " m";
 						Txt(dl, g_num, 13 * k, { b.x - 12 * k - Measure(g_num, 13 * k, st).x, py + 6 * k }, col, st);
 						const float bx0 = a.x + 44 * k, bx1 = b.x - 12 * k, by = py + 28 * k;
@@ -2497,7 +2500,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const bool idle = s.rollPhase == 0;
 					focusRow(1, y - 6 * k, y + 58 * k);
 					bullet({ L, y + 2 * k }, 1, idle);
-					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, Classes::Get() == 3 ? "CALL A SPELL-WEAPON" : Classes::Get() == 2 ? "CALL A BOW OR CROSSBOW" : "ARMS (RANGER AND SPELLSWORD)");
+					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, Classes::Get() == 3 ? "CALL A SPELL-WEAPON" : Classes::Get() == 2 ? "CALL A BOW OR CROSSBOW" : Classes::Get() == 1 ? "CALL A SUPPORT SPELL" : "ARMS (NOT FOR THE SUMMONER)");
 					if (s.bowCarried >= 0) {
 						DrawEmblem(dl, Bows::kIdBase + s.bowCarried, { L + 200 * k, y + 15 * k }, 12 * k, 1.0f, now, 0.5f);
 						Txt(dl, g_body, 16 * k, { L + 218 * k, y + 6 * k }, spellCol(Bows::kIdBase + s.bowCarried, 1.0f), ArmsName(Bows::kIdBase + s.bowCarried));
@@ -2690,6 +2693,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					y += 26 * k;
 					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "R3" : "Q") + "   Fill your quivers  (" + std::to_string(400 + 100 * std::max(0, s.round)) + " septims)");
 					y += 26 * k;
+					{  // (the outfit picker: any outfit for any class)
+						const auto on = Classes::OutfitName();
+						Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "L3" : "O") + "   Change outfit" + (on.empty() ? std::string() : "  -  now " + on));
+						y += 26 * k;
+					}
 					if (const auto wl = Classes::WonderLine(); !wl.empty()) {  // (your class's wonder weapon: its trial)
 						TxtGold(dl, g_body, 16 * k, { L, y }, wl);
 						y += 26 * k;

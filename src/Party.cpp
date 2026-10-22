@@ -24,6 +24,7 @@ namespace bo3z::Party
 			RE::ActorHandle  puppet;      // Skyrim Together's figure of that player in our world
 			std::string      name;
 			std::int8_t      wonder{ -1 };  // the wonder weapon they hold (-1 none)
+			std::int8_t      cls{ -1 };     // their class (-1 none chosen)
 		};
 
 		std::mutex                                     g_lock;
@@ -215,7 +216,7 @@ namespace bo3z::Party
 					at.z += 150.0f;
 					float x = 0, y = 0, z = 0;
 					cam->WorldPtToScreenPt3(at, x, y, z, 1e-5f);
-					marks.push_back({ r.name, x, 1.0f - y, at.GetDistance(p->GetPosition()), z > 0.0f, static_cast<Life>(r.state), hp, std::atan2(at.x - p->GetPosition().x, at.y - p->GetPosition().y) });
+					marks.push_back({ r.name, x, 1.0f - y, at.GetDistance(p->GetPosition()), z > 0.0f, static_cast<Life>(r.state), hp, std::atan2(at.x - p->GetPosition().x, at.y - p->GetPosition().y), r.cls });
 				}
 			}
 			std::scoped_lock l(g_lock);
@@ -400,6 +401,7 @@ namespace bo3z::Party
 		o.left = g_left;
 		o.revive = 0;
 		o.wonder = static_cast<std::int8_t>(g_wonder.load());
+		o.cls = static_cast<std::int8_t>(Classes::Get());
 		if (g_outRevive.size() == 8) {
 			std::memcpy(&o.revive, g_outRevive.data(), 8);
 			g_outRevive.clear();
@@ -419,14 +421,14 @@ namespace bo3z::Party
 		return {};
 	}
 
-	void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder)
+	void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder, std::int8_t a_cls)
 	{
 		std::scoped_lock l(g_lock);
 		auto& r = g_remote[a_from];
 		if (a_life == static_cast<std::uint8_t>(Life::Down) && r.state != a_life) {
 			Tasks::Add([] { Forms::Play(gen::Sound::rite_fail); });  // a friend just went down: you hear it
 		}
-		r.state = a_life, r.at = a_at, r.left = a_left, r.heard = Clock::now(), r.name = a_name, r.wonder = a_wonder;
+		r.state = a_life, r.at = a_at, r.left = a_left, r.heard = Clock::now(), r.name = a_name, r.wonder = a_wonder, r.cls = a_cls;
 	}
 
 	void Revived(std::uint64_t a_by)
