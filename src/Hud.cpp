@@ -63,6 +63,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 	// (Edge UI: everything Skyrim drew over its black, empty menu scene - buttons, panels and pop-ups whole - lies over
 	// our painting; the old way kept only the bright words)
 	float a = pad.x > 0.5 ? smoothstep(0.004, 0.03, max(c.r, max(c.g, c.b))) : smoothstep(0.20, 0.40, l);
+	// (Noah: Edge UI's floating embers belong on its loading screen, not over our painting) the menu's orange sparks - hot,
+	// strongly saturated orange, unlike Edge's white words and pale gold rules - are keyed out
+	if (pad.x > 0.5 && c.r > 0.25 && c.b < 0.38 * c.r && c.g < 0.78 * c.r) a = 0;
 	float2 d = pos.xy - cursor;
 	if (d.x > -6 && d.x < 46 && d.y > -6 && d.y < 56) a = 0;
 	// only the lower right (the buttons and their yes/no prompts): Skyrim's emblem, the Bethesda mark and the
