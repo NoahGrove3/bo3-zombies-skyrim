@@ -291,6 +291,7 @@ namespace bo3z
 		bool             WonderEarned();               // any class's wonder won (the Three Words follow)
 		std::string      WonderLine();                 // the altar's line: your class wonder's trial
 		bool             RollSupport();                // Destruction's altar side-pick: Ash Cloud, Cinder Storm, Charged Nova or Symmetry
+		std::string      BoltLine();                   // the Ranger's crossbow mastery, for the altar ('' other classes)
 		void             NextOutfit();                 // the altar's outfit picker: the next outfit (any class), worn
 		std::string      OutfitName();                 // the one worn from the picker ('' none yet)
 		int              Mastery(int a_index);     // kills its ladder has earned toward the next rung

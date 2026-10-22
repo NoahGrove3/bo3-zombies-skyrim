@@ -2693,6 +2693,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					y += 26 * k;
 					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "R3" : "Q") + "   Fill your quivers  (" + std::to_string(400 + 100 * std::max(0, s.round)) + " septims)");
 					y += 26 * k;
+					if (const auto bl = Classes::BoltLine(); !bl.empty()) {  // (the Ranger's crossbow mastery)
+						Txt(dl, g_body, 15 * k, { L + 24 * k, y - 4 * k }, kGoldDim, bl);
+						y += 22 * k;
+					}
 					{  // (the outfit picker: any outfit for any class)
 						const auto on = Classes::OutfitName();
 						Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "L3" : "O") + "   Change outfit" + (on.empty() ? std::string() : "  -  now " + on));
