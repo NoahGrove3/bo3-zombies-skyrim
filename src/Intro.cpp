@@ -11,6 +11,7 @@ namespace bo3z
 		bool g_moved = false;  // this game's new character has been moved to Riverwood
 		bool  g_skip = false;        // Helgen skipped this game: once it is done, the move to Riverwood's gate
 		bool  g_skipRace = false;    // ... waiting for the character creator to close first
+		bool  reachedHelgen = false;  // the cart has rolled into Helgen: no more skip
 		bool  g_raceSeen = false;    // the character creator has been and gone this game
 		int   g_raceAfterSkip = 0;   // (Noah: skip first, then the creator at Riverwood) 1 wanted, 2 shown
 		float g_skipHold = 0;        // H held this long
@@ -106,7 +107,7 @@ namespace bo3z
 
 		bool CrewScreenOpen() { return false; }
 		bool NewGameThisSession() { return g_moved; }
-		void OnMainMenu() { g_moved = false, g_settle = 0, g_skip = false, g_skipRace = false, g_raceSeen = false, g_skipHold = 0, g_skipHeld = false, g_raceAfterSkip = 0; }  // the BO3 crew picker is gone: you play your own character
+		void OnMainMenu() { g_moved = false, g_settle = 0, g_skip = false, g_skipRace = false, g_raceSeen = false, reachedHelgen = false, g_skipHold = 0, g_skipHeld = false, g_raceAfterSkip = 0; }  // the BO3 crew picker is gone: you play your own character
 
 		void Tick()
 		{
@@ -138,6 +139,42 @@ namespace bo3z
 			if (!player || !intro || !ui) {
 				return;
 			}
+			// (Noah: "Ulfric gets stuck saying the same sentence after I've already looted Gunjar with QuickLoot") Unbound's
+			// "Loot Gunjar's body" moves on only when his body is opened: QuickLoot takes the gear without opening it, so
+			// once his body holds no more armour or weapons it is opened for you (and the empty window shut at once)
+			{
+				static int  look = 0;
+				static bool opened = false;
+				static int  shut = 0;
+				if (shut > 0 && --shut == 0) {
+					if (auto* q = RE::UIMessageQueue::GetSingleton(); q && ui->IsMenuOpen(RE::ContainerMenu::MENU_NAME)) q->AddMessage(RE::ContainerMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+				}
+				if (!intro->IsRunning() || intro->GetCurrentStageID() >= 900 || intro->GetCurrentStageID() < 250) {
+					opened = false;
+				} else if (!opened && ++look % 30 == 0 && !ui->GameIsPaused()) {
+					RE::TESObjectREFR* gunjar = nullptr;
+					RE::TES::GetSingleton()->ForEachReferenceInRange(player, 1500.0f, [&](RE::TESObjectREFR* r) {
+						auto* a = r ? r->As<RE::Actor>() : nullptr;
+						if (a && a->IsDead() && a->GetName() && std::string_view(a->GetName()) == "Gunjar") {
+							gunjar = a;
+							return RE::BSContainer::ForEachResult::kStop;
+						}
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
+					if (gunjar) {
+						int gear = 0;
+						for (auto& [obj, data] : gunjar->GetInventory()) {
+							if (data.first > 0 && obj && (obj->IsArmor() || obj->IsWeapon())) gear += data.first;
+						}
+						if (gear == 0) {
+							opened = true;
+							gunjar->ActivateRef(player, 0, nullptr, 0, false);
+							shut = 2;
+							logger::info("intro: Gunjar's body looted with QuickLoot - opened for Unbound (stage {})", intro->GetCurrentStageID());
+						}
+					}
+				}
+			}
 			// the skip: the creator first if it hasn't been, then Helgen set done
 			const bool raceOpen = ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME);
 			// (Noah: when the class and its kit come) Helgen skipped: right after the creator - the skip moves you to Riverwood's
@@ -148,7 +185,19 @@ namespace bo3z
 				g_skipRace = false;
 				DoSkip();
 			}
-			const bool canSkip = !Save::Flag(Save::kFlagMoved) && !Forms::IntroDone() && intro->IsRunning() && !g_skip && !g_skipRace;
+			// (Noah) the skip is offered on the cart ride only: it ends for good once the cart rolls into Helgen
+			if (!reachedHelgen) {
+				for (auto* loc = player->GetCurrentLocation(); loc; loc = loc->parentLoc) {
+					if (const char* n = loc->GetFullName(); n && std::string_view(n) == "Helgen") {
+						reachedHelgen = true;
+						logger::info("intro: the cart is in Helgen - the skip is over");
+						break;
+					}
+					if (loc == loc->parentLoc) break;
+				}
+				if (g_raceSeen) reachedHelgen = true;
+			}
+			const bool canSkip = !reachedHelgen && !Save::Flag(Save::kFlagMoved) && !Forms::IntroDone() && intro->IsRunning() && !g_skip && !g_skipRace;
 			{  // (Noah: the skip never showed) a standing line at the foot of the screen while Helgen can be skipped - and the hold's progress
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().skipHint = canSkip && !raceOpen && !ui->GameIsPaused() && !Hud::IntroActive();
@@ -158,11 +207,6 @@ namespace bo3z
 				logger::info("intro: skip {} (moved {} done {} running {} skip {} race {})", canSkip, Save::Flag(Save::kFlagMoved), Forms::IntroDone(), intro->IsRunning(), g_skip, g_skipRace);
 			}
 			if (canSkip) {
-				static auto lastHint = std::chrono::steady_clock::now() - std::chrono::seconds(100);
-				if (!raceOpen && !ui->GameIsPaused() && std::chrono::steady_clock::now() - lastHint > std::chrono::seconds(45)) {
-					lastHint = std::chrono::steady_clock::now();
-					Hud::Banner(Hud::PadLast() ? "Hold " + Hud::PadWord("A") + " to skip Helgen" : std::string("Hold H to skip Helgen"), 4.0f);
-				}
 				if (g_skipHeld && !raceOpen && !ui->GameIsPaused()) {
 					g_skipHold += 1.0f / 60.0f;
 					if (g_skipHold > 1.5f) {

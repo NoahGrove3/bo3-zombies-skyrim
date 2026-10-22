@@ -5102,10 +5102,10 @@
       ],
       "shift": -50,
       "layer": "none",
-      "atten": 6,
+      "atten": 13,
       "cat": "sfx",
       "loop": false,
-      "use": "the dead climb out of the earth"
+      "use": "the dead climb out of the earth (Noah: quieter)"
     },
     {
       "id": "step_shambler",

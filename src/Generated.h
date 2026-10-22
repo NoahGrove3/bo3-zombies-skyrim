@@ -1391,10 +1391,10 @@ namespace bo3z::gen
 	inline constexpr float kEventChance = 0.125f, kWaveThemeChance = 0.1667f;
 	inline constexpr int kEventMinNight = 8;
 	inline constexpr std::array<EventDef, 4> kEvents{ {
-		EventDef{ "goblinraid", "GOBLIN RAID", "GOBLIN RAID - DOUBLE SEPTIMS", "Dawnguard.esm", 0x006AEC, 2.0f, 1.1f, 2, 1.0f, 1.5f, false, 0x6E2A0A22, Sound::event_bloodmoon, Sound::amb_iron, { 25, 26, 29, -1, -1, -1 }, 38, 1.3f, 0.7f, 1.15f, 1.0f, 0xFF8A3C },
-		EventDef{ "harpyswarm", "HARPY SWARM", "HARPY SWARM - DOUBLE SEPTIMS", "Skyrim.esm", 0x0C8220, 2.0f, 1.0f, 2, 1.0f, 1.5f, false, 0x3A4A5A26, Sound::event_ash, Sound::amb_ash, { 30, -1, -1, -1, -1, -1 }, -1, 0.8f, 0.8f, 1.0f, 1.0f, 0xC8A0FF },
-		EventDef{ "champions", "ARMORED CHAMPIONS", "ARMORED CHAMPIONS - DOUBLE SEPTIMS", "Skyrim.esm", 0x0C8220, 2.0f, 1.0f, 2, 2.0f, 2.0f, false, 0x40506030, Sound::event_champions, Sound::amb_iron, { 13, 14, 36, 37, 34, 35 }, -1, 0.4f, 1.0f, 0.95f, 2.0f, 0xB8C4D0 },
-		EventDef{ "bloodfog", "BLOOD FOG", "BLOOD FOG - DOUBLE SEPTIMS", "Skyrim.esm", 0x0C821E, 2.0f, 1.2f, 2, 1.0f, 1.5f, false, 0x8A0A1030, Sound::event_fog, Sound::amb_fog, { -1, -1, -1, -1, -1, -1 }, -1, 1.0f, 1.0f, 1.2f, 1.5f, 0xFF3A3A },
+		EventDef{ "goblinraid", "GOBLIN RAID", "GOBLIN RAID - DOUBLE ESSENCE", "Dawnguard.esm", 0x006AEC, 2.0f, 1.1f, 2, 1.0f, 1.5f, false, 0x6E2A0A22, Sound::event_bloodmoon, Sound::amb_iron, { 25, 26, 29, -1, -1, -1 }, 38, 1.3f, 0.7f, 1.15f, 1.0f, 0xFF8A3C },
+		EventDef{ "harpyswarm", "HARPY SWARM", "HARPY SWARM - DOUBLE ESSENCE", "Skyrim.esm", 0x0C8220, 2.0f, 1.0f, 2, 1.0f, 1.5f, false, 0x3A4A5A26, Sound::event_ash, Sound::amb_ash, { 30, -1, -1, -1, -1, -1 }, -1, 0.8f, 0.8f, 1.0f, 1.0f, 0xC8A0FF },
+		EventDef{ "champions", "ARMORED CHAMPIONS", "ARMORED CHAMPIONS - DOUBLE ESSENCE", "Skyrim.esm", 0x0C8220, 2.0f, 1.0f, 2, 2.0f, 2.0f, false, 0x40506030, Sound::event_champions, Sound::amb_iron, { 13, 14, 36, 37, 34, 35 }, -1, 0.4f, 1.0f, 0.95f, 2.0f, 0xB8C4D0 },
+		EventDef{ "bloodfog", "BLOOD FOG", "BLOOD FOG - DOUBLE ESSENCE", "Skyrim.esm", 0x0C821E, 2.0f, 1.2f, 2, 1.0f, 1.5f, false, 0x8A0A1030, Sound::event_fog, Sound::amb_fog, { -1, -1, -1, -1, -1, -1 }, -1, 1.0f, 1.0f, 1.2f, 1.5f, 0xFF3A3A },
 	} };
 	enum EventId : int { kEvent_goblinraid = 0, kEvent_harpyswarm = 1, kEvent_champions = 2, kEvent_bloodfog = 3 };
 	struct CurseCity { std::string_view landmark; std::uint32_t location; std::uint32_t global; };

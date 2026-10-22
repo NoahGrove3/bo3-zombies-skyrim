@@ -289,6 +289,8 @@ namespace bo3z
 		void             OnKill(bool a_bySummon, RE::Actor* a_dying);  // you (or your summon) killed a foe: what you hold trains, the wonder trial counts
 		void             NoteHit(RE::Actor* a_target, RE::FormID a_source, bool a_power);  // your blow (what killed it; the wonders' on-hit)
 		bool             OnCast(RE::FormID a_spell);   // the Tome of the Six Fires
+		void             NoteCast(RE::FormID a_spell); // a summon spell: called up here if Skyrim's own didn't come
+		bool             IsOwnSummon(RE::Actor* a_actor);
 		void             TickFast(float a_delta);      // Auriel's arrows seek the dead
 		int              RestockWonder();              // Sunhallowed arrows topped up (quivers, Max Ammo)
 		bool             WonderEarned();               // any class's wonder won (the Three Words follow)
@@ -779,6 +781,8 @@ namespace bo3z
 			int         rollPhase{ 0 }, rollGun{ -1 }, rollCost{ 0 }, shrineShout{ -1 };
 			int         dragonBond{ 0 };   // the glider's dragon: its bond (0-3)
 			bool        bondLocked{ false };
+			std::vector<std::array<float, 3>> motes;  // (Noah: the dead give up their essence) screen x, y (0-1) where a kill fell, its age in seconds
+			int         freedCount{ 0 }, forgeAt{ 3 }, legendAt{ 6 };  // Echo Altars freed; the reforge and the Legendary roll open at these
 			// the altar's trials (the city still held): which are done, the one under way, the controller's pick, each with tonight's numbers
 			bool        chooseOn{ false };   // the altar: a third spell won - which of your two does it replace?
 			int         chooseNew{ -1 }, chooseA{ -1 }, chooseB{ -1 }, chooseRefund{ 0 };  // (Arcana indices)
@@ -877,6 +881,7 @@ namespace bo3z
 		State&      Edit();
 		std::mutex& Lock();
 		void        Banner(std::string a_text, float a_seconds = 4.0f);
+		void        Essence(const RE::NiPoint3& a_at);  // a kill's essence flies from the body to your count
 		void        Lore(std::string a_title, std::string a_text, float a_seconds = 14.0f);
 		void        WordReveal(int a_shout);
 		bool        PadLast();                                // the last input was a controller (prompts follow it)

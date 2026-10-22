@@ -411,13 +411,17 @@ namespace bo3z
 				r.t += a_delta;
 				// the draugr's own summoned-from-the-grave animation (Undead Summons Emerge from the Ground replaces it):
 				// any of the dead on a draugr skeleton (draugr, skeletons, ...) plays it standing on the floor; the rest climb
-				if (r.anim == 0 && a->Is3DLoaded() && !r.portal) {  // (Noah's plan: every one of the night's dead comes through the Curse's red portal; elites and bosses a bigger one)
+				// (Noah's plan: every one of the night's dead comes through the Curse's red portal; elites and bosses a bigger
+				// one) - opened once it stands at the floor (Noah: "I hear the bubble but can't see it": it opened while the
+				// body still lay under the ground, and had played out by the time it rose)
+				const auto openPortal = [&] {
+					if (r.portal) return;
 					r.portal = true;
 					if (auto* dh = RE::TESDataHandler::GetSingleton()) {
 						const bool big = Director::IsBoss(a.get()) || g_elites.contains(a->GetFormID());
-						if (auto* art = dh->LookupForm<RE::BGSArtObject>(big ? gen::kArtPortalBig : gen::kArtPortal, gen::kPlugin)) a->ApplyArtObject(art, big ? 3.0f : 2.2f);
+						if (auto* art = dh->LookupForm<RE::BGSArtObject>(big ? gen::kArtPortalBig : gen::kArtPortal, gen::kPlugin)) a->ApplyArtObject(art, big ? 3.0f : 2.4f);
 					}
-				}
+				};
 				if (r.anim == 0) {
 					if (a->Is3DLoaded() && a->NotifyAnimationGraph("summonStart")) {
 						r.anim = 1, r.t = 0;
@@ -425,6 +429,7 @@ namespace bo3z
 						f.z = r.floorZ + 2.0f;
 						a->SetPosition(f, true);
 						a->SetCollision(true);
+						openPortal();
 					} else if (r.t > 0.4f) {
 						// (Noah: the night's spawns look conjured) no draugr rise for this one: it steps out of a portal
 						r.anim = 2, r.t = 0;
@@ -432,7 +437,8 @@ namespace bo3z
 						f.z = r.floorZ + 2.0f;
 						a->SetPosition(f, true);
 						a->SetCollision(true);
-						continue;  // (its portal is already open)
+						openPortal();
+						continue;
 					} else {
 						continue;
 					}
@@ -489,6 +495,22 @@ namespace bo3z
 			g_risers.clear();
 		}
 
+		// (Noah: "stop the shield bashing - run straight at me instead of hesitating a few feet away and strafing") a
+		// combat style made headlong in place: all offence, no circling, falling back, flanking, stalking or strafing,
+		// no dueling or flanking stance, and no bashes
+		void MakeHeadlong(RE::TESCombatStyle* cs)
+		{
+			if (!cs) return;
+			cs->generalData.offensiveMult = 1.0f, cs->generalData.defensiveMult = 0.0f, cs->generalData.groupOffensiveMult = 1.0f;
+			cs->generalData.avoidThreatChance = 0.0f, cs->generalData.meleeScoreMult = std::max(1.0f, cs->generalData.meleeScoreMult);
+			cs->closeRangeData.circleMult = 0.0f, cs->closeRangeData.fallbackMult = 0.0f;
+			cs->closeRangeData.flankDistanceMult = 0.0f, cs->closeRangeData.stalkTimeMult = 0.0f;
+			cs->longRangeData.strafeMult = 0.0f;
+			cs->meleeData.bashMult = 0.0f, cs->meleeData.bashRecoilMult = 0.0f, cs->meleeData.bashAttackMult = 0.0f, cs->meleeData.bashPowerAttackMult = 0.0f;
+			cs->flags.reset(RE::TESCombatStyle::FLAG::kDuelingStyle, RE::TESCombatStyle::FLAG::kFlankingStyle);
+			cs->flightData.groundAttackChance = 1.0f, cs->flightData.groundAttackTimeMult = 3.0f;
+			cs->flightData.perchAttackChance = 0.0f, cs->flightData.diveBombChance = 0.0f, cs->flightData.hoverChance = 0.1f;
+		}
 		bool SpawnOne(RE::PlayerCharacter* a_player, int a_force = -1, const RE::NiPoint3* a_at = nullptr)
 		{
 			auto pick = a_force >= 0 ? std::optional<std::size_t>(static_cast<std::size_t>(a_force)) : PickEnemy();
@@ -657,6 +679,9 @@ namespace bo3z
 				g_elites[actor->GetFormID()] = { actor->GetHandle(), 3.0f, 5.0f, false };
 			}
 			g_ours[actor->GetFormID()] = *pick;
+			if (auto* base = actor->GetActorBase()) MakeHeadlong(base->GetCombatStyle());  // (its levelled copy's own style too)
+			av->SetActorValue(RE::ActorValue::kConfidence, 4.0f);  // (foolhardy: never hangs back)
+			av->SetActorValue(RE::ActorValue::kAggression, 2.0f);
 			if (const float hm = Director::HarmMult(actor); hm < 0.999f) {  // (Noah: the harpies hit far too hard) its blows weaker too
 				av->SetBaseActorValue(RE::ActorValue::kAttackDamageMult, hm);
 			}
@@ -809,7 +834,7 @@ namespace bo3z
 		{
 			if (!Echo::AwardNextPart()) {
 				Points::Refund(5000);
-				Hud::Banner("Every wonder part is yours - 5,000 septims instead", 5.0f);
+				Hud::Banner("Every wonder part is yours - 5,000 essence instead", 5.0f);
 			}
 		}
 		void MiniBossSlain()
@@ -3343,14 +3368,7 @@ namespace bo3z
 				auto& cs = made[old];
 				if (!cs) {
 					cs = old;
-					cs->generalData.offensiveMult = 1.0f, cs->generalData.defensiveMult = 0.0f, cs->generalData.groupOffensiveMult = 1.0f;
-					cs->generalData.avoidThreatChance = 0.0f, cs->generalData.meleeScoreMult = std::max(1.0f, cs->generalData.meleeScoreMult);
-					cs->closeRangeData.circleMult = 0.0f, cs->closeRangeData.fallbackMult = 0.0f;
-					cs->closeRangeData.flankDistanceMult = 0.0f, cs->closeRangeData.stalkTimeMult = 0.0f;
-					cs->longRangeData.strafeMult = 0.0f;
-					// a dragon among them (the Hollow Wyrm, Diverse Dragons) lands to fight and stays down
-					cs->flightData.groundAttackChance = 1.0f, cs->flightData.groundAttackTimeMult = 3.0f;
-					cs->flightData.perchAttackChance = 0.0f, cs->flightData.diveBombChance = 0.0f, cs->flightData.hoverChance = 0.1f;
+					MakeHeadlong(cs);
 				}
 				++n;
 			};

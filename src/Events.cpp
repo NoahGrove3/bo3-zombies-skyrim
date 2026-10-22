@@ -293,15 +293,14 @@ namespace bo3z
 					}
 					lamps.clear();
 					if (a_event->opening && pl && pl->Is3DLoaded()) {
-						if (cal && cal->gameHour) {
-							hourWas = cal->gameHour->value;
-							cal->gameHour->value = 12.5f;
-						}
+						// (Noah: "the character creation lighting is very bright, it's hard to see") no midday and no key light
+						// any more: only the soft fill from the side, over RaceMenu's own light
+						(void)cal;
 						const float        yaw = pl->GetAngleZ();
 						const RE::NiPoint3 F{ std::sin(yaw), std::cos(yaw), 0 }, R{ std::cos(yaw), -std::sin(yaw), 0 };
 						const RE::NiPoint3 at = pl->GetPosition();
 						struct L { RE::FormID id; RE::NiPoint3 off; };
-						const L kLamps[2] = { { 0x105300, F * 140.0f + R * 40.0f + RE::NiPoint3{ 0, 0, 150 } }, { 0x105305, F * 60.0f - R * 160.0f + RE::NiPoint3{ 0, 0, 110 } } };
+						const L kLamps[1] = { { 0x105305, F * 90.0f - R * 220.0f + RE::NiPoint3{ 0, 0, 120 } } };
 						for (const auto& l : kLamps) {
 							auto* base = RE::TESForm::LookupByID<RE::TESBoundObject>(l.id);
 							if (!base) continue;
@@ -408,7 +407,7 @@ namespace bo3z
 				if (dying && dying != player && Director::IsFoe(dying)) {  // (the classes overhaul) a kill by you or your summons trains what you hold
 					auto* killer = a_event->actorKiller.get() ? a_event->actorKiller->As<RE::Actor>() : nullptr;
 					const bool mine = killer == player;
-					const bool summon = killer && killer != player && killer->IsCommandedActor() && killer->GetCommandingActor().get() == player;
+					const bool summon = killer && killer != player && ((killer->IsCommandedActor() && killer->GetCommandingActor().get() == player) || Classes::IsOwnSummon(killer));
 					if (mine || summon) Classes::OnKill(summon, dying);
 				}
 				if (dying && dying != player && !Director::IsRoundUndead(dying) && a_event->actorKiller.get() == player && Director::IsFoe(dying)) {
@@ -432,6 +431,7 @@ namespace bo3z
 				}
 				const auto [gun, head] = Gun::RecentHit(dying->GetFormID());
 				Points::Add(gun ? (head ? gen::kPoints_headshot_kill : gen::kPoints_kill) : gen::kPoints_melee_kill);
+				Hud::Essence(dying->GetPosition());
 				{
 					const bool bow = Bows::Held() >= 0;
 					Stats::OnKill(dying, gun, head, !gun && !bow, bow, dying->GetPosition().GetDistance(player->GetPosition()));
@@ -638,7 +638,7 @@ namespace bo3z
 					auto* ally = a_event->cause->As<RE::Actor>();
 					auto* z = a_event->target->As<RE::Actor>();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
-					const bool mySummon = ally && pl && ally != pl && ally->IsCommandedActor() && ally->GetCommandingActor().get() == pl;  // (Noah's plan: the Summoner's summons scale with the night's round)
+					const bool mySummon = ally && pl && ally != pl && ((ally->IsCommandedActor() && ally->GetCommandingActor().get() == pl) || Classes::IsOwnSummon(ally));  // (Noah's plan: the Summoner's summons scale with the night's round)
 					if (ally && z && !z->IsDead() && (Echo::IsAlly(ally) || mySummon) && Director::IsRoundUndead(z) && Limit(z)) {
 						HurtUndead(z, Director::RoundHealth() * gen::kShareMelee * (mySummon ? 0.6f + 0.15f * std::max(0, Arcana::RungOf(Arcana::Hands()[1]) - 1) : 0.9f) * (0.7f + 0.3f * Arcana::Power()));
 					}
@@ -667,6 +667,7 @@ namespace bo3z
 					int level = 0;
 					Compass::OnCast(a_event->spell);
 					Gun::OnStaffCast(a_event->spell);
+					Classes::NoteCast(a_event->spell);
 					if (Classes::OnCast(a_event->spell)) {
 						// (the Tome of the Six Fires)
 					} else if (Movement::OnSpellCast(a_event->spell)) {
@@ -711,6 +712,13 @@ namespace bo3z
 		void DarkenNights()
 		{
 			auto  scale = [](RE::Color& c, float f) { c.red = static_cast<std::uint8_t>(c.red * f), c.green = static_cast<std::uint8_t>(c.green * f), c.blue = static_cast<std::uint8_t>(c.blue * f); };
+			// (Noah: "make nighttime a little brighter - it's really hard to see even at 1.5 brightness") the night's light
+			// raised and given a cool moonlit floor, so the dark still reads as night but the ground and the dead show
+			auto  lift = [](RE::Color& c, float f, int floorR, int floorG, int floorB) {
+				c.red = static_cast<std::uint8_t>(std::clamp(static_cast<int>(c.red * f) + floorR, 0, 255));
+				c.green = static_cast<std::uint8_t>(std::clamp(static_cast<int>(c.green * f) + floorG, 0, 255));
+				c.blue = static_cast<std::uint8_t>(std::clamp(static_cast<int>(c.blue * f) + floorB, 0, 255));
+			};
 			using CT = RE::TESWeather::ColorTypes;
 			constexpr auto N = RE::TESWeather::ColorTimes::kNight;
 			int n = 0;
@@ -718,15 +726,18 @@ namespace bo3z
 				if (!w) {
 					continue;
 				}
-				for (auto t : { CT::kAmbient, CT::kSunlight, CT::kEffectLighting, CT::kCloudLODAmbient, CT::kCloudLODDiffuse, CT::kSkyStatics }) {
-					scale(w->colorData[t][N], 0.72f);
+				for (auto t : { CT::kAmbient, CT::kEffectLighting, CT::kCloudLODAmbient }) {
+					lift(w->colorData[t][N], 1.45f, 16, 20, 30);
 				}
-				for (auto t : { CT::kFogNear, CT::kFogFar, CT::kSkyLower, CT::kHorizon, CT::kSkyUpper }) {
-					scale(w->colorData[t][N], 0.85f);
+				for (auto t : { CT::kSunlight, CT::kCloudLODDiffuse, CT::kSkyStatics }) {
+					lift(w->colorData[t][N], 1.35f, 10, 12, 18);
+				}
+				for (auto t : { CT::kFogNear, CT::kFogFar, CT::kSkyLower, CT::kHorizon }) {
+					lift(w->colorData[t][N], 1.15f, 4, 5, 8);
 				}
 				auto& d = w->directionalAmbientLightingColors[N].directional;
 				for (auto* c : { &d.x.max, &d.x.min, &d.y.max, &d.y.min, &d.z.max, &d.z.min }) {
-					scale(*c, 0.72f);
+					lift(*c, 1.45f, 14, 18, 26);
 				}
 				// and the day a little dimmer too (it was glaring with the graphics mods)
 				for (auto tm : { RE::TESWeather::ColorTimes::kDay, RE::TESWeather::ColorTimes::kSunrise, RE::TESWeather::ColorTimes::kSunset }) {
@@ -741,7 +752,7 @@ namespace bo3z
 				}
 				++n;
 			}
-			logger::info("world: nights darkened, days dimmed, in {} weathers", n);
+			logger::info("world: nights brightened, days dimmed, in {} weathers", n);
 		}
 
 		// (Noah: full movement while drawing any bow) the bow's movement types (Skyrim slows you while it is drawn) move at

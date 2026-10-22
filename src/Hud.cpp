@@ -183,6 +183,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		constexpr ImU32 kCoin = IM_COL32(222, 190, 92, 255);     // septims and the rare
 		constexpr ImU32 kBlood = IM_COL32(178, 22, 22, 255);
 		constexpr ImU32 kParch = IM_COL32(232, 226, 214, 255);   // Edge's warm off-white text
+		constexpr ImU32 kLockedCol = IM_COL32(118, 112, 104, 215);  // (an altar row not yet open: greyed)
 		constexpr ImU32 kGlass = IM_COL32(16, 15, 13, 170);
 		constexpr ImU32 kRune = IM_COL32(150, 134, 98, 255);     // bronze rules and borders
 		constexpr ImU32 kRuneDim = IM_COL32(150, 134, 98, 90);
@@ -743,7 +744,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			struct Card { const char* name; const char* lore; ImU32 col; const char* tag; const char* arms; const char* grow; const char* kit; };
 			static const Card kCards[4] = {
 				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild",
-				  "Bind Pact: raise each family's summon at the altar", "Conjure Skeleton, Conjure Wolf, summoner's robes (the Wandering Summoner's for women, hooded conjurer's robes for men)" },
+				  "Bind Pact: raise each family's summon at the altar", "Conjure Skeleton, Conjure Wolf, summoner's robes" },
 				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Two-handed casting: fire, frost, shock, sun, poison, blood",
 				  "Reforge: climb each element's ladder to its Legendary spell", "Scorch, Hoarfrost, the Wild Witch's hat and gown" },
 				{ "RANGER", "Sworn to the Dawnguard", IM_COL32(110, 210, 120, 255), "Bows and crossbows - and every arrow counts", "The six elemental bows, crossbows and their bolts",
@@ -752,7 +753,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				  "Imbue: raise each element's touch spell; power attacks cast your spell", "Steel Spellsword, Steel Spellshield, Flame Touch, the Practical Pirate outfit" } };
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));
 			TxtC(dl, g_title, 46 * k, size.x * 0.5f, size.y * 0.12f, kParch, Classes::Switching() ? "CHANGE YOUR PATH" : "CHOOSE YOUR PATH", 3 * k, Fade(kGold, 0.6f));
-			const std::string sub = Classes::Switching() ? "Switching costs " + std::to_string(Classes::SwitchCost()) + " septims. Each class keeps its own spells and progress."
+			const std::string sub = Classes::Switching() ? "Switching costs " + std::to_string(Classes::SwitchCost()) + " essence. Each class keeps its own spells and progress."
 			                                             : "Each player picks their own path. Duplicates are allowed.";
 			TxtC(dl, g_body, 20 * k, size.x * 0.5f, size.y * 0.12f + 58 * k, IM_COL32(210, 200, 180, 230), sub);
 			const float cw = 330 * k, ch = 430 * k, gap = 26 * k;
@@ -1186,7 +1187,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (!on) lastWave = 0;
 				startT = std::max(0.0f, startT - dtw * 1.2f);
 				clearT = std::max(0.0f, clearT - dtw * 0.9f);
-				if (on) {
+				if (on && !Hud::kEdgeHud) {  // (Edge UI: the wave sits in the night's box, top-left - below)
 					const ImVec2 c{ size.x * 0.5f - 92 * k, (s.questTitle.empty() || s.perkMenu ? 128 : 192) * k };  // (below a trial's line)
 					const float  R = 26 * k, flare = startT * startT;
 					Panel(dl, { c.x - R - 14 * k, c.y - R - 10 * k }, { c.x + R + 196 * k, c.y + R + 10 * k }, k * 0.6f, 0.85f);
@@ -1221,7 +1222,55 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// Night counter, top-left: the nights cut into a dark plaque in blood - each mark a brush stroke, thick in the
 			// middle and tapering at the ends, wet (a sheen runs along it, a drop gathers and falls from its foot), groups of
 			// five struck through. The newest is cut in with a flare when its night begins. From night 11, the numeral.
-			if (s.round > 0) {
+			// (Noah: "the wave marker overlaps the compass - one box on the top left, to match the new UI") Edge UI: the night
+			// and its wave in one panel - NIGHT n over a hairline, the night's kind at its right; the wave's rune ring with its
+			// number, WAVE x / y and the dead still to fall (or the breath before the next) under it
+			if (Hud::kEdgeHud && s.round > 0) {
+				const bool   waveOn = s.nightActive && s.waves > 0 && s.sanctuary.empty();
+				const bool   ev = s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size());
+				const float  W = 300 * k, H = (waveOn ? 112 : 46) * k + (waveOn && !s.waveTheme.empty() ? 18 * k : 0.0f);
+				const ImVec2 a{ 24 * k, 20 * k }, b{ a.x + W, a.y + H };
+				Panel(dl, a, b, k * 0.7f, 0.85f);
+				const float  flash = std::clamp(roundFlash, 0.0f, 1.0f);
+				const std::string head = s.nightActive ? "NIGHT " + std::to_string(s.round) : "NIGHTS SURVIVED  " + std::to_string(s.round);
+				Txt(dl, g_title, 22 * k, { a.x + 16 * k, a.y + 10 * k }, flash > 0 ? IM_COL32(255, 120, 90, 255) : Fade(kGold, 0.95f), head, flash > 0 ? 2 * k * flash : 0.0f, IM_COL32(200, 40, 20, 255));
+				if (ev) {
+					const auto  t = gen::kEvents[s.nightEvent].tint;
+					const ImU32 c = IM_COL32(std::min(255, static_cast<int>(((t >> 24) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 16) & 0xFF) * 1.6f) + 60), std::min(255, static_cast<int>(((t >> 8) & 0xFF) * 1.6f) + 60), 255);
+					const std::string lab = Upper(std::string(gen::kEvents[s.nightEvent].label));
+					Txt(dl, g_body, 14 * k, { b.x - 16 * k - Measure(g_body, 14 * k, lab).x, a.y + 15 * k }, c, lab);
+				}
+				if (waveOn) {
+					static int   lastWaveE = 0;
+					static float startE = 0;
+					if (s.wave != lastWaveE) startE = 1.0f, lastWaveE = s.wave;
+					startE = std::max(0.0f, startE - dt * 1.2f);
+					Divider(dl, (a.x + b.x) * 0.5f, a.y + 44 * k, W * 0.42f, k, 0.8f);
+					float ty = a.y + 54 * k;
+					if (!s.waveTheme.empty()) {
+						Txt(dl, g_title, 14 * k, { a.x + 16 * k, ty }, s.waveThemeColor ? s.waveThemeColor : IM_COL32(255, 90, 60, 255), Upper(s.waveTheme));
+						ty += 18 * k;
+					}
+					const float  R = 21 * k;
+					const ImVec2 c{ a.x + 16 * k + R, ty + R + 2 * k };
+					dl->AddCircleFilled(c, R + 3 * k, IM_COL32(10, 10, 12, 200), 40);
+					const int n = std::clamp(s.waves, 1, 40);
+					for (int i = 0; i < n; ++i) {
+						const float a0 = -1.5708f + 6.2832f * i / n + 0.06f, a1 = -1.5708f + 6.2832f * (i + 1) / n - 0.06f;
+						const bool  done = i + 1 < s.wave || (i + 1 == s.wave && s.waveRest > 0);
+						const bool  cur = i + 1 == s.wave && s.waveRest <= 0;
+						const float alpha = done ? 0.95f : cur ? 0.55f + 0.45f * std::sin(now * 5.0f) : 0.22f;
+						dl->PathArcTo(c, R + (cur ? startE * 5 * k : 0.0f), a0, a1, 6);
+						dl->PathStroke(Fade(done || cur ? kGold : kParch, alpha), 0, (cur ? 3.5f : 2.5f) * k);
+					}
+					TxtC(dl, g_num, 22 * k, c.x, c.y - 13 * k, kParch, std::to_string(s.wave));
+					const float tx = c.x + R + 16 * k;
+					Txt(dl, g_title, 19 * k, { tx, c.y - 20 * k }, kParch, fmt::format("WAVE {} / {}", s.wave, s.waves));
+					const std::string sub = s.waveRest > 0 ? fmt::format("Next wave in {:.0f}", std::ceil(s.waveRest)) : fmt::format("{} left to fall", std::max(0, s.waveLeft));
+					Txt(dl, g_body, 15 * k, { tx, c.y + 4 * k }, Fade(kGold, 0.9f), sub);
+				}
+			}
+			if (!Hud::kEdgeHud && s.round > 0) {
 				const ImVec2 p{ 40 * k, 20 * k };
 				const int    shown = s.round <= 10 ? s.round : 0;
 				const float  h = 64 * k, step = 17 * k, gap = 24 * k, top = p.y + 34 * k;
@@ -1315,17 +1364,94 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const ImVec2      coin{ 30 * k, foot - 30 * k };
 				const float       w = 62 * k + numW;
 				dl->AddRectFilledMultiColor({ 0, foot - 58 * k }, { w + 70 * k, foot }, IM_COL32(0, 0, 0, Hud::kEdgeHud ? 60 : 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, Hud::kEdgeHud ? 90 : 140));
-				// the coin: a rim, a face, a stamped dragon-diamond, a glint
+				// (Noah: their own essence, not septims) a mote of soul-essence: a pale blue flame over a glowing core
 				const float cr = 11 * k;
-				if (rising) dl->AddCircleFilled(coin, cr * 1.9f, IM_COL32(255, 200, 80, 40), 32);
-				dl->AddCircleFilled(coin, cr, IM_COL32(150, 108, 40, 255), 40);
-				dl->AddCircleFilled({ coin.x - 0.8f * k, coin.y - 0.8f * k }, cr * 0.84f, IM_COL32(222, 178, 86, 255), 40);
-				dl->AddCircle(coin, cr * 0.66f, IM_COL32(150, 108, 40, 200), 40, 1.2f * k);
-				const ImVec2 dm[4] = { { coin.x, coin.y - cr * 0.42f }, { coin.x + cr * 0.32f, coin.y }, { coin.x, coin.y + cr * 0.42f }, { coin.x - cr * 0.32f, coin.y } };
-				dl->AddConvexPolyFilled(dm, 4, IM_COL32(150, 108, 40, 230));
-				dl->AddCircleFilled({ coin.x - cr * 0.45f, coin.y - cr * 0.45f }, 1.6f * k, IM_COL32(255, 248, 220, 220), 8);
-				Txt(dl, g_num, 26 * k, { coin.x + cr + 9 * k, coin.y - 15 * k }, rising ? IM_COL32(255, 228, 150, 255) : kParch, num, rising ? 2 * k : 1.2f * k, rising ? IM_COL32(255, 200, 80, 255) : IM_COL32(0, 0, 0, 220));
-				Txt(dl, g_body, 11 * k, { coin.x + cr + 10 * k, coin.y - 27 * k }, Fade(kCoin, 0.85f), "SEPTIMS", 1 * k, IM_COL32(0, 0, 0, 200));
+				const float flick = 0.5f + 0.5f * std::sin(now * 5.3f);
+				dl->AddCircleFilled(coin, cr * (rising ? 2.1f : 1.6f), IM_COL32(90, 150, 255, rising ? 70 : 36), 32);
+				{
+					const ImVec2 tip{ coin.x + std::sin(now * 3.1f) * 1.5f * k, coin.y - cr * (1.75f + 0.15f * flick) };
+					dl->AddBezierQuadratic({ coin.x - cr * 0.8f, coin.y }, { coin.x - cr * 0.7f, coin.y - cr * 1.1f }, tip, IM_COL32(150, 200, 255, 230), 1.0f * k);
+					const ImVec2 flame[5] = { { coin.x - cr * 0.78f, coin.y - cr * 0.1f }, { coin.x - cr * 0.45f, coin.y - cr * 1.05f }, tip, { coin.x + cr * 0.45f, coin.y - cr * 1.05f }, { coin.x + cr * 0.78f, coin.y - cr * 0.1f } };
+					dl->AddConvexPolyFilled(flame, 5, IM_COL32(120, 180, 255, 200));
+				}
+				dl->AddCircleFilled(coin, cr * 0.82f, IM_COL32(110, 170, 255, 255), 40);
+				dl->AddCircleFilled({ coin.x, coin.y + cr * 0.05f }, cr * 0.55f, IM_COL32(205, 230, 255, 255), 32);
+				dl->AddCircleFilled({ coin.x - cr * 0.22f, coin.y - cr * 0.2f }, cr * 0.2f, IM_COL32(255, 255, 255, 240), 12);
+				Txt(dl, g_num, 26 * k, { coin.x + cr + 9 * k, coin.y - 15 * k }, rising ? IM_COL32(200, 228, 255, 255) : kParch, num, rising ? 2 * k : 1.2f * k, rising ? IM_COL32(90, 150, 255, 255) : IM_COL32(0, 0, 0, 220));
+				Txt(dl, g_body, 11 * k, { coin.x + cr + 10 * k, coin.y - 27 * k }, IM_COL32(150, 200, 255, 220), "ESSENCE", 1 * k, IM_COL32(0, 0, 0, 200));
+				for (const auto& m : s.motes) {  // the kills' essence, flying in
+					const float u = std::clamp(m[2] / 0.75f, 0.0f, 1.0f), e = u * u * (3 - 2 * u);
+					const ImVec2 from{ m[0] * size.x, m[1] * size.y };
+					const ImVec2 mid{ (from.x + coin.x) * 0.5f, std::min(from.y, coin.y) - 120 * k };
+					const float  iu = 1 - e;
+					const ImVec2 p{ iu * iu * from.x + 2 * iu * e * mid.x + e * e * coin.x, iu * iu * from.y + 2 * iu * e * mid.y + e * e * coin.y };
+					const float  r = (5.5f - 2.5f * e) * k;
+					dl->AddCircleFilled(p, r * 2.6f, IM_COL32(90, 150, 255, 60), 16);
+					dl->AddCircleFilled(p, r, IM_COL32(170, 210, 255, 235), 16);
+					dl->AddCircleFilled(p, r * 0.45f, IM_COL32(245, 250, 255, 255), 10);
+				}
+				if (Hud::kEdgeHud) {
+					// (Noah: the perks beside the essence, above Edge UI's bars) the same sockets, smaller, in a row to its right
+					static std::array<int, 16>   lastStacks{};
+					static std::array<float, 16> burst{};
+					static bool                  seeded = false;
+					for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 16; ++i) {
+						if (seeded && s.perkStacks[i] > lastStacks[i]) {
+							burst[i] = 1.4f;
+						}
+						lastStacks[i] = s.perkStacks[i];
+						burst[i] = std::max(0.0f, burst[i] - dt);
+					}
+					seeded = true;
+					int n = 0;
+					for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
+						n += (s.perks >> i) & 1;
+					}
+					const float r = 15 * k, pg = 38 * k;
+					float       x = coin.x + cr + 9 * k + std::max(numW, Measure(g_body, 11 * k, "ESSENCE").x) + 26 * k + r;
+					for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
+						if (!((s.perks >> i) & 1)) {
+							continue;
+						}
+						const float py = coin.y - 4 * k;
+						const auto  c = gen::kPerkColor[i];
+						const int   cr = (c >> 24) & 0xFF, cg = (c >> 16) & 0xFF, cb = (c >> 8) & 0xFF;
+						const float bt = i < 16 ? burst[i] / 1.4f : 0.0f;                // 1 at the moment it's bought, down to 0
+						const float pop = 1.0f + 0.9f * bt * bt;
+						dl->AddCircleFilled({ x, py }, r + 5 * k, IM_COL32(8, 7, 9, 210), 40);       // the socket
+						dl->AddCircle({ x, py }, r + 5 * k, Fade(kGoldDim, 0.9f), 40, 1.2f * k);
+						if (bt > 0) {  // the burst: a ring flung outward, rays turning, a flash
+							const float e = 1.0f - bt;
+							dl->AddCircle({ x, py }, r * (1.2f + 3.2f * e), IM_COL32(cr, cg, cb, static_cast<int>(230 * bt)), 48, 3.0f * k * bt + 1.0f);
+							dl->AddCircleFilled({ x, py }, r * 1.6f * pop, IM_COL32(std::min(255, cr + 80), std::min(255, cg + 80), std::min(255, cb + 80), static_cast<int>(90 * bt)), 40);
+							for (int ray = 0; ray < 10; ++ray) {
+								const float a = ray * 0.6283f + now * 1.5f, r0 = r * (1.3f + 1.4f * e), r1 = r0 + r * 0.9f * bt;
+								dl->AddLine({ x + std::cos(a) * r0, py + std::sin(a) * r0 }, { x + std::cos(a) * r1, py + std::sin(a) * r1 }, IM_COL32(255, 236, 190, static_cast<int>(220 * bt)), 2.0f * k);
+							}
+							const std::string nm = Upper(std::string(gen::kPerks[i].label));
+							TxtC(dl, g_title, 22 * k, x, py - r * 2.6f - 26 * k * e, IM_COL32(255, 230, 190, static_cast<int>(255 * std::min(1.0f, bt * 2.0f))), nm, 2 * k, IM_COL32(cr / 2, cg / 2, cb / 2, static_cast<int>(200 * bt)));
+						}
+						const float rr = r * pop;
+						if (auto* icon = g_perkIcons[i]) {
+							dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { x - rr, py - rr }, { x + rr, py + rr });
+						} else {
+							dl->AddCircleFilled({ x, py }, rr, Col(c));
+						}
+						{  // the trim: breathing softly in the brew's colour
+							const float br = 0.6f + 0.4f * std::sin(now * 2.2f + i);
+							dl->AddCircle({ x, py }, rr + 2.6f * k, IM_COL32(cr, cg, cb, static_cast<int>(60 * br)), 48, 5.0f * k);
+							dl->AddCircle({ x, py }, rr + 1.2f * k, IM_COL32(std::min(255, cr + 60), std::min(255, cg + 60), std::min(255, cb + 60), static_cast<int>(200 * br)), 48, 1.6f * k);
+						}
+						if (s.perkStacks[i] > 1) {  // taken more than once: how many
+							const std::string cnt = "x" + std::to_string(s.perkStacks[i]);
+							const ImVec2 bc{ x + r * 0.82f, py + r * 0.66f };
+							dl->AddCircleFilled(bc, 9 * k, IM_COL32(20, 14, 10, 235), 20);
+							dl->AddCircle(bc, 9 * k, kGold, 20, 1.2f * k);
+							TxtC(dl, g_num, 12 * k, bc.x, bc.y - 7 * k, kParch, cnt);
+						}
+						x += pg;
+					}
+				}
 				if (s.crew >= 0 && s.crew < static_cast<int>(gen::kCrew.size())) {
 					const std::string c(gen::kCrew[s.crew].label);
 					Txt(dl, g_body, 13 * k, { coin.x + cr + 22 * k + numW, coin.y - 8 * k }, IM_COL32(190, 190, 190, 200), c);
@@ -2487,7 +2613,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// (Noah: scroll down to the altar's trials) one panel, its trials below the rest; as tall as the screen allows,
 				// the rows sliding to keep the one in focus in view
 				const float trialsH = (s.trialsOn ? 112 * k + 5 * 70 * k + 104 * k : 0.0f) + (s.whispers.empty() ? 0.0f : 56 * k + 46 * k * s.whispers.size());
-				const float contentH = (shout ? 610 : 532) * k + 86 * k + 78 * k + 56 * k + (s.chooseOn ? 52 * k : 0.0f) + trialsH;  // (+ Leave)  // (+ the bow wheel)  // (+ the dragon's bond, + a spell to choose)
+				static float measuredH = 0;  // (Noah: "five white dots under Leave the Altar" - the tops of the lines below it, cut by a short guess) the panel's real height, from the last frame
+				const float guessH = (shout ? 610 : 532) * k + 86 * k + 78 * k + 56 * k + (s.chooseOn ? 52 * k : 0.0f) + trialsH;
+				const float contentH = measuredH > 0 ? measuredH + 70 * k : guessH;
 				const float h = std::min(contentH, size.y - 60 * k);
 				const ImVec2 a{ size.x * 0.5f - w * 0.5f, std::max(24 * k, size.y * 0.5f - h * 0.5f - 10 * k) }, b{ a.x + w, a.y + h };  // (Noah: centred, clear of the HUD)
 				Panel(dl, a, b, k, 0.92f);
@@ -2525,11 +2653,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				auto price = [&](float py, int cost, bool can) {
 					const std::string pr = std::to_string(cost);
 					const float pw = Measure(g_num, 21 * k, pr).x;
-					const ImU32 pc = can ? IM_COL32(236, 196, 112, 255) : IM_COL32(190, 70, 56, 255);
+					const ImU32 pc = can ? IM_COL32(170, 210, 255, 255) : IM_COL32(190, 70, 56, 255);
 					Txt(dl, g_num, 21 * k, { Rr - pw, py }, pc, pr);
-					const ImVec2 coin{ Rr - pw - 13 * k, py + 12 * k };
-					dl->AddCircleFilled(coin, 7 * k, Fade(pc, 0.9f));
-					dl->AddCircle(coin, 4.5f * k, IM_COL32(60, 40, 20, 200), 0, 1.3f * k);
+					const ImVec2 coin{ Rr - pw - 13 * k, py + 13 * k };  // (an essence mote)
+					dl->AddCircleFilled(coin, 9 * k, IM_COL32(90, 150, 255, can ? 50 : 20), 20);
+					dl->AddTriangleFilled({ coin.x - 5 * k, coin.y - 1 * k }, { coin.x + 5 * k, coin.y - 1 * k }, { coin.x, coin.y - 12 * k }, Fade(IM_COL32(120, 180, 255, 255), can ? 0.85f : 0.4f));
+					dl->AddCircleFilled(coin, 5.5f * k, Fade(IM_COL32(150, 200, 255, 255), can ? 1.0f : 0.5f), 16);
+					dl->AddCircleFilled(coin, 3 * k, Fade(IM_COL32(230, 242, 255, 255), can ? 1.0f : 0.5f), 12);
 				};
 				// [1] roll a spell - or, a third one won, the choice of which of your two it replaces
 				if (s.chooseOn) {
@@ -2579,15 +2709,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				y += 14 * k;
 				// [1b] the bow wheel: one elemental bow at a time
 				{
-					const bool idle = s.rollPhase == 0;
+					const bool heroLocked = Classes::Get() == 0 && s.freedCount < s.legendAt && !Gun::TestKitOn();  // (Noah: no Legendary until six altars are freed)
+					const bool idle = s.rollPhase == 0 && !heroLocked;
 					focusRow(1, y - 6 * k, y + 58 * k);
 					bullet({ L, y + 2 * k }, 1, idle);
-					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, Classes::Get() == 3 ? "CALL A SPELL-WEAPON" : Classes::Get() == 2 ? "CALL A BOW OR CROSSBOW" : Classes::Get() == 1 ? "CALL A SUPPORT SPELL" : Classes::Get() == 0 ? "BIND A HERO (LEGENDARY)" : "CHOOSE A CLASS");
+					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, heroLocked ? kLockedCol : kParch, Classes::Get() == 3 ? "CALL A SPELL-WEAPON" : Classes::Get() == 2 ? "CALL A BOW OR CROSSBOW" : Classes::Get() == 1 ? "CALL A SUPPORT SPELL" : Classes::Get() == 0 ? "BIND A HERO (LEGENDARY)" : "CHOOSE A CLASS");
 					if (s.bowCarried >= 0) {
 						DrawEmblem(dl, Bows::kIdBase + s.bowCarried, { L + 200 * k, y + 15 * k }, 12 * k, 1.0f, now, 0.5f);
 						Txt(dl, g_body, 16 * k, { L + 218 * k, y + 6 * k }, spellCol(Bows::kIdBase + s.bowCarried, 1.0f), ArmsName(Bows::kIdBase + s.bowCarried));
 					}
-					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235), s.bowCarried >= 0 ? "A new one takes your bow's place" : "Fire, frost, storm and more - one at a time");
+					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, heroLocked ? kLockedCol : IM_COL32(196, 182, 160, 235),
+						heroLocked ? "Locked until six Echo Altars are freed (" + std::to_string(s.freedCount) + " of " + std::to_string(s.legendAt) + ")"
+						: Classes::Get() == 0 ? std::string("A hero or an army sworn to you") : s.bowCarried >= 0 ? std::string("A new one takes your bow's place") : std::string("Fire, frost, storm and more - one at a time"));
 					if (idle) {
 						price(y + 30 * k, s.bowRollCost, s.points >= s.bowRollCost);
 					}
@@ -2602,14 +2735,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const int  sp = gw >= 0 ? -1 : (s.handSpell[1] >= 0 ? s.handSpell[1] : s.handSpell[0]);  // else a Coffer spell in hand
 					const int  g = s.bowHeld >= 0 ? Bows::kIdBase + s.bowHeld : gw >= 0 ? gw : sp >= 0 ? Arcana::kIdBase + sp : -1;
 					const int  lvl = s.bowHeld >= 0 ? Bows::Level(s.bowHeld) : gw >= 0 ? std::clamp(s.slotLevel[act], 0, gen::kForgeMax) : sp >= 0 ? Arcana::Level(sp) : 0;
-					const bool locked = s.trialsOn;  // (Noah: the forge wakes with the altar) locked until this city is freed
+					const bool locked = s.freedCount < s.forgeAt && !Gun::TestKitOn();  // (Noah: the reforge opens once three altars are freed)
 					const bool can = !locked && g >= 0 && lvl < gen::kForgeMax;
 					focusRow(2, y - 6 * k, y + 58 * k);
 					bullet({ L, y + 2 * k }, 2, can);
-					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "REFORGE");
-					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235),
-						locked ? "Locked until " + s.trialCity + "'s altar is freed" : g < 0 ? "Hold a spell or bow to reforge it" : ArmsName(g) + (lvl >= gen::kForgeMax ? "  -  ascended" : s.bowHeld >= 0 ? "  -  next: " + std::string(Bows::TierName(s.bowHeld, lvl + 1)) : std::string("  -  more power, less magicka")));
-					for (int q = 0; q < gen::kForgeMax; ++q) {  // the forge marks
+					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, locked ? kLockedCol : kParch, "REFORGE");
+					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, locked ? kLockedCol : IM_COL32(196, 182, 160, 235),
+						locked ? "Locked until three Echo Altars are freed (" + std::to_string(s.freedCount) + " of " + std::to_string(s.forgeAt) + ")" : g < 0 ? "Hold a spell or bow to reforge it" : ArmsName(g) + (lvl >= gen::kForgeMax ? "  -  ascended" : s.bowHeld >= 0 ? "  -  next: " + std::string(Bows::TierName(s.bowHeld, lvl + 1)) : std::string("  -  more power, less magicka")));
+					for (int q = 0; q < (locked ? 0 : gen::kForgeMax); ++q) {  // the forge marks
 						const ImVec2 pc{ L + 150 * k + q * 18 * k, y + 14 * k };
 						dl->AddQuadFilled({ pc.x, pc.y - 6 * k }, { pc.x + 5 * k, pc.y }, { pc.x, pc.y + 6 * k }, { pc.x - 5 * k, pc.y }, q < lvl ? spellCol(g, 1.0f) : IM_COL32(60, 52, 46, 220));
 					}
@@ -2676,8 +2809,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(210, 196, 170, 235), std::string(sh.w1) + "  " + std::string(sh.w2) + "  " + std::string(sh.w3) + "  -  freely given");
 					y += 64 * k;
 				}
-				// [5] the glider's dragon: its next bond
-				{
+				// [5] the glider's dragon: its next bond (Noah: unseen until Whiterun is freed)
+				if (!s.bondLocked) {
 					static constexpr const char* kBond[4] = { "", "WIND-RIDER", "TALON STRIKE", "ALDUIN'S THRALL" };
 					static constexpr const char* kWhat[4] = { "",
 						"Jump mid-glide: two quick wing-beats and a great one to climb - its fire turns blue",
@@ -2774,9 +2907,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Txt(dl, g_title, 20 * k, { L + 36 * k, y + 4 * k }, IM_COL32(210, 196, 170, 255), "LEAVE THE ALTAR");
 					y += 44 * k;
 					// (the classes overhaul) changing class here
-					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "Back" : "C") + "   Change class  (" + std::to_string(Classes::SwitchCost()) + " septims)  -  now " + std::string(Classes::Name(Classes::Get())));
+					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "Back" : "C") + "   Change class  (" + std::to_string(Classes::SwitchCost()) + " essence)  -  now " + std::string(Classes::Name(Classes::Get())));
 					y += 26 * k;
-					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "R3" : "Q") + "   Fill your quivers  (" + std::to_string(400 + 100 * std::max(0, s.round)) + " septims)");
+					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "R3" : "Q") + "   Fill your quivers  (" + std::to_string(400 + 100 * std::max(0, s.round)) + " essence)");
 					y += 26 * k;
 					if (const auto bl = Classes::BoltLine(); !bl.empty()) {  // (the Ranger's crossbow mastery)
 						Txt(dl, g_body, 15 * k, { L + 24 * k, y - 4 * k }, kGoldDim, bl);
@@ -2792,7 +2925,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						y += 26 * k;
 					}
 				}
+				measuredH = y + scroll - a.y;
 				dl->PopClipRect();
+				if (s.altarFocus == 20 && !s.chooseOn) scrollGoal = std::max(0.0f, contentH - h);  // (Leave in focus: all the way down, the lines under it in view)
 				// keep the row in focus in view (next frame)
 				// (focusY0/1: the focused row in the content's own space; on screen it stands at focusY - scroll)
 				if (focusY1 - scrollGoal > b.y - 80 * k) scrollGoal = focusY1 - (b.y - 80 * k);
@@ -2805,7 +2940,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Divider(dl, cx, b.y - 58 * k, w * 0.38f, k, 0.7f);
 				{
 					const bool        ps = Settings::PlayStationIcons();
-					const std::string hint = g_padLast ? std::string("D-pad: move   \xC2\xB7   ") + (ps ? "Cross" : "A") + ": select   \xC2\xB7   " + (ps ? "Circle" : "B") + ": leave"
+					const std::string hint = g_padLast ? std::string("D-pad: move   \xC2\xB7   ") + (ps ? "X" : "A") + ": select   \xC2\xB7   " + (ps ? "O" : "B") + ": leave"
 					                                   : std::string("W S: move   \xC2\xB7   A D: choose a perk   \xC2\xB7   Enter: select");
 					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), hint);
 				}
@@ -3057,7 +3192,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// the lobby, each with their night
 			y += 6 * k;
 			const float cols[6] = { L, L + 210 * k, L + 285 * k, L + 360 * k, L + 435 * k, L + 520 * k };
-			const char* heads[6] = { me.night > 0 ? "TONIGHT" : "PLAYER", "KILLS", "HEADS", "STREAK", "SEPTIMS", "REVIVES" };
+			const char* heads[6] = { me.night > 0 ? "TONIGHT" : "PLAYER", "KILLS", "HEADS", "STREAK", "ESSENCE", "REVIVES" };
 			for (int c = 0; c < 6; ++c) Txt(dl, g_title, 13 * k, { cols[c], y }, Fade(kRune, 0.9f), heads[c]);
 			y += 22 * k;
 			dl->AddLine({ L, y - 3 * k }, { b.x - 20 * k, y - 3 * k }, kRuneDim, 1.0f * k);
@@ -3074,7 +3209,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			Txt(dl, g_title, 15 * k, { L, y }, Fade(kRune, 0.95f), last.night > 0 ? fmt::format("LAST NIGHT - NIGHT {}", last.night) : std::string("LAST NIGHT"));
 			y += 22 * k;
 			if (last.night > 0) {
-				Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(220, 230, 245, 235), fmt::format("{} kills   {} headshots   best streak {}   {} septims", last.kills, last.heads, last.best, last.septims));
+				Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(220, 230, 245, 235), fmt::format("{} kills   {} headshots   best streak {}   {} essence", last.kills, last.heads, last.best, last.septims));
 				y += 22 * k;
 				std::string mvp = pl && pl->GetName() ? pl->GetName() : "You";
 				int         best = last.kills * 2 + last.heads + last.style / 50;
@@ -3100,7 +3235,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			dl->AddLine({ L, y - 6 * k }, { b.x - 20 * k, y - 6 * k }, kRuneDim, 1.0f * k);
 			const bool ps = Settings::PlayStationIcons();
 			Txt(dl, g_body, 14 * k, { L, y }, IM_COL32(170, 190, 220, 230), "Keyboard:  P  open / close     Up / Down  move     Enter  select");
-			Txt(dl, g_body, 14 * k, { L, y + 20 * k }, IM_COL32(170, 190, 220, 230), std::string("Controller:  ") + (ps ? "Triangle" : "Y") + "  open / close     D-pad  move     " + (ps ? "Cross" : "A") + "  select");
+			Txt(dl, g_body, 14 * k, { L, y + 20 * k }, IM_COL32(170, 190, 220, 230), std::string("Controller:  ") + (ps ? "Triangle" : "Y") + "  open / close     D-pad  move     " + (ps ? "X" : "A") + "  select");
 		}
 
 		// The player's settings, in the System menu's corner: the field of view, first and third person. Click on a
@@ -5114,6 +5249,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_state.revealTime = std::max(0.0f, g_state.revealTime - dt);
 				g_state.questNoteTime = std::max(0.0f, g_state.questNoteTime - dt);
 				g_state.nukeFlash = std::max(0.0f, g_state.nukeFlash - dt * 1.25f);
+				for (auto& m : g_state.motes) m[2] += dt;
+				std::erase_if(g_state.motes, [](const auto& m) { return m[2] >= 0.75f; });
 				s = g_state;
 			}
 			if (!Init(a_swap)) {
@@ -5477,6 +5614,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		State&      Edit() { return g_state; }
 		std::mutex& Lock() { return g_lock; }
 
+		void Essence(const RE::NiPoint3& a_at)
+		{
+			auto* cam = RE::Main::WorldRootCamera();
+			if (!cam) return;
+			float x = 0, y = 0, z = 0;
+			cam->WorldPtToScreenPt3(a_at + RE::NiPoint3{ 0, 0, 70.0f }, x, y, z, 1e-5f);
+			if (z < 0 || x < -0.2f || x > 1.2f || y < -0.2f || y > 1.2f) { x = 0.5f, y = 0.45f; }  // (off screen: from the middle)
+			else y = 1.0f - y;
+			std::scoped_lock l(g_lock);
+			if (g_state.motes.size() < 24) g_state.motes.push_back({ x, y, 0.0f });
+		}
 		void Banner(std::string a_text, float a_seconds)
 		{
 			std::scoped_lock l(g_lock);
@@ -5490,7 +5638,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		std::string PadWord(std::string_view a_x)
 		{
 			if (!Settings::PlayStationIcons()) return std::string(a_x == "BACK" ? "View" : a_x == "START" ? "Menu" : a_x);
-			return a_x == "A" ? "X" : a_x == "B" ? "Circle" : a_x == "X" ? "Square" : a_x == "Y" ? "Triangle" : a_x == "LB" ? "L1" : a_x == "RB" ? "R1" :
+			return a_x == "A" ? "X" : a_x == "B" ? "O" : a_x == "X" ? "Square" : a_x == "Y" ? "Triangle" : a_x == "LB" ? "L1" : a_x == "RB" ? "R1" :
 			       a_x == "LT" ? "L2" : a_x == "RT" ? "R2" : a_x == "BACK" ? "Create" : a_x == "START" ? "Options" : std::string(a_x);
 		}
 		void OnMouseMove(float a_dx, float a_dy)

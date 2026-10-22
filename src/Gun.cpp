@@ -2369,10 +2369,10 @@ namespace bo3z
 			if (const int have = Points::Get(); have < 150000) {
 				Points::Refund(150000 - have);
 			}
-			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every bow, every shout, the glider, 150,000 septims", spells), 7.0f);
+			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every bow, every shout, the glider, 150,000 essence", spells), 7.0f);
 			std::string list;
 			for (auto& [el, c] : byEl) list += fmt::format("{} {}, ", el, c);
-			logger::info("testkit: {} altar spells ({}) - {} others taken away; bows {}, shouts {}, septims {}", spells, list, removed, Bows::Count(), gen::kShouts.size(), Points::Get());
+			logger::info("testkit: {} altar spells ({}) - {} others taken away; bows {}, shouts {}, essence {}", spells, list, removed, Bows::Count(), gen::kShouts.size(), Points::Get());
 		}
 		bool TestKitOn()
 		{

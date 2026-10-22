@@ -103,6 +103,64 @@ namespace bo3z::Classes
 			logger::info("classes: {} starter kit given", coffer::kClassName[a_cls]);
 		}
 
+		void Console(RE::TESObjectREFR* a_ref, const char* a_cmd)
+		{
+			if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::Script>(); factory && a_ref) {
+				if (auto* script = factory->Create()) {
+					script->SetCommand(a_cmd);
+					script->CompileAndRun(a_ref);
+					delete script;
+				}
+			}
+		}
+		// (Noah: a new character holds only its race's powers and its class's kit) the vanilla starting spells and the spells
+		// other mods slip into every character (their config menus and toggles) are taken off; run on the class pick and
+		// every few seconds after, since some of those mods hand theirs back on each load
+		void Purge()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			const int cls = g_class.load();
+			auto unwanted = [cls](RE::SpellItem* a_sp) {
+				if (!a_sp) return false;
+				const auto type = a_sp->GetSpellType();
+				if (type != RE::MagicSystem::SpellType::kSpell && type != RE::MagicSystem::SpellType::kLesserPower && type != RE::MagicSystem::SpellType::kPower) return false;
+				std::string n = a_sp->GetName();
+				for (auto& ch : n) ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+				if (auto* f = a_sp->GetFile(0); f && std::string_view(f->GetFilename()) == "Skyrim.esm" && (n == "flames" || n == "healing" || n == "sparks")) return true;
+				for (std::string_view bad : { "diverse dragons spell menu", "azurite meditation" }) {
+					if (n.find(bad) != std::string::npos) return true;
+				}
+				// (the Wizard Warrior's own spells are the Spellsword's kit: for the other classes they go)
+				return (n.find("import mode") != std::string::npos || n.find("magical shout") != std::string::npos) && cls != coffer::kSpellsword;
+			};
+			std::vector<RE::SpellItem*> drop;
+			for (auto* sp : p->GetActorRuntimeData().addedSpells) {
+				if (unwanted(sp)) drop.push_back(sp);
+			}
+			for (auto* sp : drop) {
+				p->RemoveSpell(sp);
+				logger::info("classes: {} taken off (not of your race or class)", sp->GetName());
+			}
+			// (Noah: "Obtain the Spellsword Manual - what is that for?") the Spellsword mod's own start quest: its manual
+			// is never needed here (the Spellsword's kit comes from the class)
+			if (auto* q = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESQuest>(0x009A24, "Spellsword.esp"); q && q->IsRunning()) {
+				Console(p, "StopQuest _Spellsword_Start_Quest");
+				logger::info("classes: the Spellsword mod's manual quest stopped");
+			}
+			if (auto* base = p->GetActorBase(); base && base->actorEffects) {
+				std::vector<RE::SpellItem*> baseDrop;
+				for (std::uint32_t i = 0; i < base->actorEffects->numSpells; ++i) {
+					if (unwanted(base->actorEffects->spells[i])) baseDrop.push_back(base->actorEffects->spells[i]);
+				}
+				for (auto* sp : baseDrop) {
+					base->actorEffects->RemoveSpell(sp);
+					p->RemoveSpell(sp);
+					logger::info("classes: {} taken off the character's base spells", sp->GetName());
+				}
+			}
+		}
+
 		// the class's spells off you (kept for when you come back to it), the new class's back on
 		void Swap(int a_from, int a_to)
 		{
@@ -307,6 +365,7 @@ namespace bo3z::Classes
 			return;
 		}
 		g_class = a_cls;
+		Purge();
 		Swap(from, a_cls);
 		g_open = false;
 		g_closedAt = std::chrono::steady_clock::now();
@@ -410,6 +469,7 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		if (!p || !dh) return;
+		if (static int purge = 0; ++purge % 5 == 0 && Save::Flag(Save::kFlagStarted)) Purge();
 		{
 			auto line = WonderLineNow();
 			std::scoped_lock l(g_lineLock);
@@ -804,6 +864,100 @@ namespace bo3z::Classes
 		}
 	}
 
+	// (Noah: "I get the casting animation and the sound, but nothing is spawning") a summon spell cast: if no new
+	// summon of yours stands within a moment and you are under your cap, the creature is called up here instead and
+	// held for the spell's duration
+	namespace
+	{
+		struct PendingSummon { RE::TESBoundObject* what = nullptr; float wait = 0, seconds = 60; int before = 0; std::string name; };
+		std::vector<PendingSummon>                        g_pendingSummon;
+		std::vector<std::pair<RE::ActorHandle, float>>    g_ownSummons;  // the ones called up here: seconds left
+		int CommandedNow(RE::PlayerCharacter* a_p)
+		{
+			int n = 0;
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				if (auto a = h.get(); a && a.get() != a_p && !a->IsDead() && !a->IsDisabled() && a->IsCommandedActor() && a->GetCommandingActor().get() == a_p) ++n;
+			}
+			return n;
+		}
+		int SummonCap(RE::PlayerCharacter* a_p)
+		{
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			for (int n = 4; n >= 2; --n) {
+				if (auto* perk = dh ? dh->LookupForm<RE::BGSPerk>(gen::kSummonCapPerks[n - 2], gen::kPlugin) : nullptr; perk && a_p->HasPerk(perk)) return n;
+			}
+			return 1;
+		}
+		void TickSummons(float a_delta)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			for (auto& [h, t] : g_ownSummons) {
+				auto a = h.get();
+				if (!a || a->IsDisabled()) { t = 0; continue; }
+				if ((t -= a_delta) <= 0 || a->IsDead()) {
+					Gun::FxBlast("dark", a->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f });
+					a->Disable();
+					a->SetDelete(true);
+					t = 0;
+				}
+			}
+			std::erase_if(g_ownSummons, [](const auto& e) { return e.second <= 0; });
+			for (auto& ps : g_pendingSummon) {
+				if ((ps.wait -= a_delta) > 0) continue;
+				const int now = CommandedNow(p) + static_cast<int>(g_ownSummons.size());
+				if (now > ps.before) {
+					logger::info("classes: {} came as it should ({} summons up)", ps.name, now);
+					continue;
+				}
+				const int cap = SummonCap(p);
+				while (!g_ownSummons.empty() && static_cast<int>(g_ownSummons.size()) >= cap) {  // (the oldest goes, as Skyrim's own do)
+					if (auto a = g_ownSummons.front().first.get()) a->Disable(), a->SetDelete(true);
+					g_ownSummons.erase(g_ownSummons.begin());
+				}
+				const float yaw = p->GetAngleZ();
+				const RE::NiPoint3 at = p->GetPosition() + RE::NiPoint3{ std::sin(yaw) * 220.0f, std::cos(yaw) * 220.0f, 0 };
+				auto ref = p->PlaceObjectAtMe(ps.what, false);
+				auto* actor = ref ? ref->As<RE::Actor>() : nullptr;
+				if (!actor) {
+					logger::warn("classes: {} could not be called up", ps.name);
+					continue;
+				}
+				actor->SetPosition(at, true);
+				static auto* playerFaction = RE::TESForm::LookupByID<RE::TESFaction>(0x00000DB1);
+				if (playerFaction) actor->AddToFaction(playerFaction, 0);
+				Gun::FxBlast("dark", at + RE::NiPoint3{ 0, 0, 40.0f });
+				g_ownSummons.push_back({ actor->GetHandle(), ps.seconds });
+				Console(actor, "SetPlayerTeammate 1");
+				logger::info("classes: {} did not come - called up here for {:.0f} s", ps.name, ps.seconds);
+			}
+			std::erase_if(g_pendingSummon, [](const PendingSummon& ps) { return ps.wait <= 0; });
+		}
+	}
+	bool IsOwnSummon(RE::Actor* a_actor)
+	{
+		return a_actor && std::any_of(g_ownSummons.begin(), g_ownSummons.end(), [&](const auto& e) { return e.first.get().get() == a_actor; });
+	}
+	void NoteCast(RE::FormID a_spell)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(a_spell);
+		if (!p || !sp) return;
+		for (auto* e : sp->effects) {
+			auto* mg = e ? e->baseEffect : nullptr;
+			if (!mg || mg->GetArchetype() != RE::EffectArchetypes::ArchetypeID::kSummonCreature) continue;
+			auto* what = mg->data.associatedForm ? mg->data.associatedForm->As<RE::TESBoundObject>() : nullptr;
+			if (!what) continue;
+			const int before = CommandedNow(p) + static_cast<int>(g_ownSummons.size());
+			if (before >= SummonCap(p)) {
+				logger::info("classes: {} cast at the cap ({}) - Skyrim swaps the oldest", sp->GetName(), before);
+				return;
+			}
+			g_pendingSummon.push_back({ what, 1.5f, std::max(30.0f, static_cast<float>(e->effectItem.duration)), before, sp->GetName() });
+			return;
+		}
+	}
+
 	bool OnCast(RE::FormID a_spell)
 	{
 		auto* tome = TomeSpell();
@@ -850,6 +1004,7 @@ namespace bo3z::Classes
 	// every frame: cooldowns, and Auriel's arrows seek the dead
 	void TickFast(float a_delta)
 	{
+		TickSummons(a_delta);
 		g_tomeCool = std::max(0.0f, g_tomeCool - a_delta);
 		g_bladeCool = std::max(0.0f, g_bladeCool - a_delta);
 		auto* bow = Auriel();

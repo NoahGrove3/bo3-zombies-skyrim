@@ -274,6 +274,10 @@ namespace bo3z
 			const float hp = av->GetActorValue(RE::ActorValue::kHealth);
 			if (hp - a_amount > 1.0f) {
 				av->DamageActorValue(RE::ActorValue::kHealth, a_amount);
+				if (static int said = 0; said++ % 15 == 0) {  // (Noah: "after the health brew I took no damage") what a blow did, now and then
+					logger::info("hurt: {:.1f} taken, health {:.0f} -> {:.0f} of {:.0f} (god {}, grace {:.1f})", a_amount, hp, av->GetActorValue(RE::ActorValue::kHealth),
+						av->GetPermanentActorValue(RE::ActorValue::kHealth), RE::PlayerCharacter::IsGodMode(), g_grace);
+				}
 				return;
 			}
 			if (g_grace > 0) {

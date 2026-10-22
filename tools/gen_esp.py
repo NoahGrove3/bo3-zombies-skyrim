@@ -328,7 +328,7 @@ LOADING_TIPS = [
     "Wake a city's Echo Altar and its dead sleep again. Its Thu'um waits for you there.",
     "A spell reforged three times is Ascendant: its great strike falls twice.",
     "Watch the dead for tokens: a skull, a coin, a falling star, a chest.",
-    "The altars take no gold - only the septims the dead leave behind.",
+    "The altars take no gold - only the essence the dead leave behind.",
     "Every spell the Echo Altar gives is the echo of a fallen mage's last. Carry it well.",
     "The violet fire in the altar is Alduin's own Thu'um, caught and turned back. The blue runes hold it there.",
     "Win Whiterun's altar and a dragon will answer your call: jump, then Activate in mid-air.",
@@ -593,9 +593,9 @@ def guide_text():
              "At dusk they rise in <b>waves</b>, clawing up out of the ground at the same places every night. Each wave brings twenty more than the last: twenty, forty, sixty... "
              "The first night has five waves; every night adds one more (never more than 2,000 dead a night for each player). The day lasts about 18 minutes. The night does not end until the last wave is down - then dawn breaks."),
            p("You cannot sleep or wait while the dead walk."),
-           "[pagebreak]", h("Septims"),
-           p("Every risen thing you kill leaves septims. A headshot leaves more, and a kill with a blade or a spell more still. "
-             "Septims are the only coin the Echo Altars take."),
+           "[pagebreak]", h("Essence"),
+           p("Every risen thing you kill leaves essence. A headshot leaves more, and a kill with a blade or a spell more still. "
+             "Essence are the only coin the Echo Altars take."),
            p("Watch the dead for tokens: a skull (Insta-Kill), a coin (Double Points), a falling star (it destroys every corpse risen tonight) and a chest (a Fire Sale at the altar)."),
            "[pagebreak]", h("The Echo Altar"),
            p("Every city has one. Look into its star and press Activate. Its menu does not stop the night. Move through it with the D-pad (or W and S) and take a row with A (or Enter); B leaves."),
@@ -649,7 +649,7 @@ def guide_text():
            p("Every freed altar keeps a secret. Nobody will tell you what it is. Stand at a freed altar and its <b>whispers</b> show in its menu - another line for each step you find. These are the first:"),
            ] + [p(f"<b>{e['town']}</b> - {e['hints'][0]}") for e in S['eggs']['rows']] + [
            "[pagebreak]", h("Event Nights and Themed Waves"),
-           p("From night 8, about one night in eight is an <b>event night</b>: a Goblin Raid, a Harpy Swarm, Armored Champions or a Blood Fog. The whole night belongs to it - and it pays <b>double septims</b>, with the dead coming twice as fast."),
+           p("From night 8, about one night in eight is an <b>event night</b>: a Goblin Raid, a Harpy Swarm, Armored Champions or a Blood Fog. The whole night belongs to it - and it pays <b>double essence</b>, with the dead coming twice as fast."),
            p("On ordinary nights, from the third wave, about one wave in six is <b>themed</b> the same way. Its name shows on the wave dial under the compass."),
            p("About one night in five, halfway through, <b>something stirs in the dark</b>: a mini-boss. It always drops a wonder weapon part - the next one you're missing - for everyone in the party."),
            "[pagebreak]", h("Falling"),

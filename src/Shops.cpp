@@ -1704,6 +1704,14 @@ namespace bo3z
 			const int n = t >= 0 && t < kRollTowns ? g_spellRolls[t] : 0;
 			return PowerUps::FireSale() ? 10 : static_cast<int>(std::lround(RollBase() * std::pow(1.25, n) / 10.0) * 10);
 		}
+		// (Noah) the altar's late rows open with the cities freed: the reforge at three, the Legendary roll at six
+		int FreedCount()
+		{
+			int n = 0;
+			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) n += Curse::Freed(t) ? 1 : 0;
+			return n;
+		}
+		constexpr int kForgeAt = 3, kLegendAt = 6;
 		int BowRollCost(int a_town = -2)
 		{
 			RollNight();
@@ -2021,7 +2029,7 @@ namespace bo3z
 			if (!g_choosing && ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x10) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x0080))) {
 				const int cost = 400 + 100 * std::max(0, Save::Get(gen::kAV_round));
 				if (Points::Get() < cost) {
-					Hud::Banner("A quiver costs " + std::to_string(cost) + " septims", 2.0f);
+					Hud::Banner("A quiver costs " + std::to_string(cost) + " essence", 2.0f);
 				} else if (Bows::Restock() <= 0) {
 					Hud::Banner("Your quivers are full (or you carry no bow or crossbow)", 2.5f);
 				} else {
@@ -2045,8 +2053,8 @@ namespace bo3z
 					}
 					break;
 				case 1:
-					if (const int ft = ref ? TownOf(ref) : -1; ft >= 0 && !Curse::Freed(ft)) {  // (Noah: the forge wakes with the altar)
-						Hud::Banner("The altar's forge sleeps until " + std::string(gen::kTowns[ft]) + " is freed", 3.0f);
+					if (const int fc = FreedCount(); fc < kForgeAt && !Gun::TestKitOn()) {  // (Noah: the reforge opens once three altars are freed)
+						Hud::Banner("The altar's forge sleeps until three Echo Altars are freed (" + std::to_string(fc) + " of 3)", 3.0f);
 						break;
 					}
 					if (Gun::Reforge() && ref) {
@@ -2069,13 +2077,13 @@ namespace bo3z
 								SpinPrize(ref, std::move(pz));
 								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
 							} else if (Points::Get() < cost) {
-								Hud::Banner("It costs " + std::to_string(cost) + " septims", 2.0f);
+								Hud::Banner("It costs " + std::to_string(cost) + " essence", 2.0f);
 							}
 							break;
 						} else if (cls == 1) {  // (Destruction's side-picks: its support spells)
 							const int town = TownOfAltar(ref), cost = BowRollCost(town);
 							if (Points::Get() < cost) {
-								Hud::Banner("It costs " + std::to_string(cost) + " septims", 2.0f);
+								Hud::Banner("It costs " + std::to_string(cost) + " essence", 2.0f);
 							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollSupport(&pz)) {
 								Points::Spend(cost);
 								if (town >= 0) g_bowRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_bowRollsT[town] + 1));
@@ -2085,8 +2093,10 @@ namespace bo3z
 							break;
 						} else if (cls == 0) {  // (the Summoner's late Legendaries: heroes and armies)
 							const int town = TownOfAltar(ref), cost = BowRollCost(town) * 2;
-							if (Points::Get() < cost) {
-								Hud::Banner("A hero's pact costs " + std::to_string(cost) + " septims", 2.0f);
+							if (const int fc = FreedCount(); fc < kLegendAt && !Gun::TestKitOn()) {  // (Noah: no Legendary until six altars are freed)
+								Hud::Banner("A hero's pact waits until six Echo Altars are freed (" + std::to_string(fc) + " of 6)", 3.0f);
+							} else if (Points::Get() < cost) {
+								Hud::Banner("A hero's pact costs " + std::to_string(cost) + " essence", 2.0f);
 							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollHero(&pz)) {
 								Points::Spend(cost);
 								SpinPrize(ref, std::move(pz));
@@ -2136,7 +2146,7 @@ namespace bo3z
 				const int t = r ? TownOf(r) : -1;
 				std::vector<int> rows{ kRowSpell, kRowBow, kRowForge, kRowPerk };
 				if (t >= 0 && Curse::ClaimableShout(t) >= 0) rows.push_back(kRowShout);
-				rows.push_back(kRowBond);
+				if (!Movement::BondLocked()) rows.push_back(kRowBond);  // (Noah: the dragon's bond unseen until Whiterun is freed)
 				const bool trials = t >= 0 && Curse::Altar(t).on;
 				if (trials) for (int q : { 0, 1, 4, 3 }) rows.push_back(kRowTrial + q);  // (the Unbroken folded into the Breath; 3 is the class trial)
 				rows.push_back(kRowLeave);
@@ -2279,7 +2289,9 @@ namespace bo3z
 				h.rollGun = g_show.phase == Show::Idle || g_show.phase == Show::Charging || g_show.shown < 0 ? -1 : (g_show.bow ? Bows::kIdBase : Arcana::kIdBase) + g_show.shown;
 				h.rollBow = g_show.bow && g_show.phase != Show::Idle;
 				h.rollPrize = g_show.prize && g_show.phase == Show::Offering ? g_show.pz.name : std::string();
-				h.bowRollCost = BowRollCost();
+				h.bowRollCost = BowRollCost() * (Classes::Get() == 0 ? 2 : 1);  // (Noah: the hero's pact shown at what it really costs)
+				h.freedCount = FreedCount();
+				h.forgeAt = kForgeAt, h.legendAt = kLegendAt;
 				h.bowCarried = Bows::Carried();
 				h.rollTarget = g_show.phase == Show::Spinning || g_show.phase == Show::Offering ? g_show.gun : -1;
 				h.rollCost = RollCost();
