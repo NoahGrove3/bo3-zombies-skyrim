@@ -2655,6 +2655,7 @@ namespace bo3z
 				g_forgedTonight.insert(Arcana::kIdBase + next);
 				Classes::SpendMastery(sp);
 				Arcana::Replace(sp, next);
+				if (cls == 3) Classes::ImbueWeapon();  // (Noah's plan, the Spellsword) Imbue also steps the held spell-weapon up a material
 				logger::info("forge: {} {} -> {}", verb, name, Arcana::Name(next));
 				Hud::Banner(std::string(verb) + ":  " + name + "  ->  " + std::string(Arcana::Name(next)) + (Arcana::TierOf(next) >= 3 ? "  -  LEGENDARY" : ""), 4.5f);
 				return true;

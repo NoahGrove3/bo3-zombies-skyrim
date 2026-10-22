@@ -6,13 +6,14 @@ side (the path is rewritten in place, same length; the normal map, specular and 
 
     python3 tools/aurielbows.py <the FOMOD zip> <Data dir for the textures>
 
-writes assets/fx/Meshes/CurseOfAlduin/bow/<bow>.nif and the textures under <Data dir> (they are 22 MB each, so they
-ship with the Party Pack's files, not in the repo).
+writes meshes/CurseOfAlduin/bow/<bow>.nif and the textures under <Data dir>. They are made from another author's mod,
+so they go straight into the game and the Party Pack's files - never into this (public) repo.
 """
 import pathlib, sys, zipfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-COLOUR = {'emberstring': 'Red', 'rimehorn': 'White', 'stormreach': 'Blue', 'skyhowl': 'Green', 'dawnspire': 'Yellow', 'thirstbow': 'Pink'}
+COLOUR = {'emberstring': 'Red', 'rimehorn': 'Blue', 'stormreach': 'Pink', 'skyhowl': 'White', 'dawnspire': 'Yellow', 'thirstbow': 'Red'}  # (the plan's table)
+TINT = {'stormreach': (0.62, 0.33, 1.0), 'thirstbow': (0.62, 0.0, 0.06)}   # violet / crimson glow (the shader's emissive colour, at 340784)
 OLD = b'textures\\dlc01\\weapons\\auriel\\'
 
 
@@ -26,7 +27,12 @@ def main(zpath, data):
         for f in (b'aurielsbow.DDS', b'aurielsbowbase_g.DDS'):
             assert nif.count(OLD + f) == 1
             nif = nif.replace(OLD + f, new + f)
-        (ROOT / 'assets/fx/Meshes/CurseOfAlduin/bow' / f'{bid}.nif').write_bytes(nif)
+        if bid in TINT:
+            import struct
+            nif = bytearray(nif); struct.pack_into('<3f', nif, 340784, *TINT[bid]); nif = bytes(nif)
+        md = pathlib.Path(data) / 'meshes' / 'CurseOfAlduin' / 'bow'
+        md.mkdir(parents=True, exist_ok=True)
+        (md / f'{bid}.nif').write_bytes(nif)
         td = pathlib.Path(data) / 'textures' / 'CurseOfAlduin' / tag
         td.mkdir(parents=True, exist_ok=True)
         for f in ('aurielsbow.dds', 'aurielsbowbase_g.dds'):

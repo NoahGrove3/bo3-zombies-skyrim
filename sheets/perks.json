@@ -111,6 +111,17 @@
       "description": "Every 12th spell looses a lightning burst around you - sooner and stronger each cider.",
       "verify": [],
       "color": "40D0F0"
+    },
+    {
+      "id": "fletcher",
+      "label": "Fletcher's Sap Draught",
+      "cost": 1500,
+      "effect": "regrow_arrows",
+      "value": 1.0,
+      "description": "Green sap of the Eldergleam: your arrows and bolts slowly grow back, faster each draught.",
+      "potionModel": "Clutter\\Potions\\PotionHealthSmall.nif",
+      "verify": [],
+      "color": "6FBF4A"
     }
   ],
   "limits": {

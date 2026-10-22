@@ -2500,7 +2500,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const bool idle = s.rollPhase == 0;
 					focusRow(1, y - 6 * k, y + 58 * k);
 					bullet({ L, y + 2 * k }, 1, idle);
-					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, Classes::Get() == 3 ? "CALL A SPELL-WEAPON" : Classes::Get() == 2 ? "CALL A BOW OR CROSSBOW" : Classes::Get() == 1 ? "CALL A SUPPORT SPELL" : "ARMS (NOT FOR THE SUMMONER)");
+					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, Classes::Get() == 3 ? "CALL A SPELL-WEAPON" : Classes::Get() == 2 ? "CALL A BOW OR CROSSBOW" : Classes::Get() == 1 ? "CALL A SUPPORT SPELL" : Classes::Get() == 0 ? "BIND A HERO (LEGENDARY)" : "CHOOSE A CLASS");
 					if (s.bowCarried >= 0) {
 						DrawEmblem(dl, Bows::kIdBase + s.bowCarried, { L + 200 * k, y + 15 * k }, 12 * k, 1.0f, now, 0.5f);
 						Txt(dl, g_body, 16 * k, { L + 218 * k, y + 6 * k }, spellCol(Bows::kIdBase + s.bowCarried, 1.0f), ArmsName(Bows::kIdBase + s.bowCarried));

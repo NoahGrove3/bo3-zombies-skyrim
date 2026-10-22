@@ -69,7 +69,14 @@ def stormcrown(d):   # crown with a bolt
     d.polygon(P((.26, .64), (.26, .36), (.38, .5), (.5, .3), (.62, .5), (.74, .36), (.74, .64)), outline=W, width=18)
     d.line(P((.54, .5), (.46, .6), (.56, .6), (.48, .74)), fill=W, width=14)
 
-DRAW = {'trollshide': trollshide, 'quicksilver': quicksilver, 'twinstrike': twinstrike, 'hearthfire': hearthfire,
+def fletcher(d):     # an arrow growing from a sprouting stem: the Ranger's arrows grow back
+    d.line(P((.3, .76), (.66, .3)), fill=W, width=14)
+    d.polygon(P((.62, .24), (.76, .2), (.72, .34)), fill=W)
+    for k in range(3):
+        y = .58 + k * .07; d.line(P((.36 - k * .03, y + .1), (.3 - k * .03, y)), fill=W, width=10)
+    d.ellipse(P((.48, .48), (.6, .58)), outline=W, width=8)
+
+DRAW = {'fletcher': fletcher, 'trollshide': trollshide, 'quicksilver': quicksilver, 'twinstrike': twinstrike, 'hearthfire': hearthfire,
         'windrunner': windrunner, 'hawkeye': hawkeye, 'mammoth': mammoth, 'frostbite': frostbite, 'stormcrown': stormcrown}
 
 def medallion(color, glyph):

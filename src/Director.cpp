@@ -381,6 +381,7 @@ namespace bo3z
 			float           floorZ, t = 0;
 			bool            burst = false;
 			int             anim = 0;  // (Noah: Undead Summons Emerge from the Ground) 0 trying, 1 its emerge animation plays, -1 our climb
+			bool            portal = false;  // its red portal opened
 		};
 		std::vector<Riser> g_risers;
 		constexpr float    kRiseDepth = 115.0f, kRiseTime = 1.5f;
@@ -410,6 +411,13 @@ namespace bo3z
 				r.t += a_delta;
 				// the draugr's own summoned-from-the-grave animation (Undead Summons Emerge from the Ground replaces it):
 				// any of the dead on a draugr skeleton (draugr, skeletons, ...) plays it standing on the floor; the rest climb
+				if (r.anim == 0 && a->Is3DLoaded() && !r.portal) {  // (Noah's plan: every one of the night's dead comes through the Curse's red portal; elites and bosses a bigger one)
+					r.portal = true;
+					if (auto* dh = RE::TESDataHandler::GetSingleton()) {
+						const bool big = IsBoss(a) || g_elites.contains(a->GetFormID());
+						if (auto* art = dh->LookupForm<RE::BGSArtObject>(big ? gen::kArtPortalBig : gen::kArtPortal, gen::kPlugin)) a->ApplyArtObject(art, big ? 3.0f : 2.2f);
+					}
+				}
 				if (r.anim == 0) {
 					if (a->Is3DLoaded() && a->NotifyAnimationGraph("summonStart")) {
 						r.anim = 1, r.t = 0;
@@ -424,10 +432,7 @@ namespace bo3z
 						f.z = r.floorZ + 2.0f;
 						a->SetPosition(f, true);
 						a->SetCollision(true);
-						if (auto* dh = RE::TESDataHandler::GetSingleton()) {
-							if (auto* art = dh->LookupForm<RE::BGSArtObject>(gen::kArtPortal, gen::kPlugin)) a->ApplyArtObject(art, 2.2f);
-						}
-						continue;
+						continue;  // (its portal is already open)
 					} else {
 						continue;
 					}
@@ -1013,6 +1018,9 @@ namespace bo3z
 		void TickBoss(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			Hazards(a_player, a_delta);
+			if (g_boss.spawnIn > 0 && !Story::GrimmvarOpen()) {
+				g_boss.spawnIn = -1;  // (the story: Grimmvar the Undying Wyrm can be hunted only after Alduin's Bane)
+			}
 			if (g_boss.spawnIn > 0 && (g_boss.spawnIn -= a_delta) <= 0) {
 				g_boss.spawnIn = -1;
 				if (!SpawnBoss(a_player)) {

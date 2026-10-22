@@ -101,7 +101,7 @@ o.append(f'\tinline constexpr std::array<GunSounds, {len(W)}> kGunSounds{{ {{ ' 
 k = S['melee']['rows'][0]
 o.append('\tstruct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };')
 o.append(f'\tinline constexpr KnifeDef kKnife{{ {k["key"]}, {F(k["damage"])}, {F(k["range"])}, {F(k["coneDeg"])}, {k["cooldownMs"]} }};')
-effects = {'health': 0, 'charge_speed': 1, 'fire_rate_and_damage': 2, 'self_revive': 3, 'speed_and_stamina': 4, 'headshots': 5, 'third_gun': 6, 'web_grenade': 7, 'cast_shock': 8}
+effects = {'health': 0, 'charge_speed': 1, 'fire_rate_and_damage': 2, 'self_revive': 3, 'speed_and_stamina': 4, 'headshots': 5, 'third_gun': 6, 'web_grenade': 7, 'cast_shock': 8, 'regrow_arrows': 9}
 P = S['perks']['rows']
 o.append('\tstruct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };')
 o.append(f'\tinline constexpr std::array<PerkDef, {len(P)}> kPerks{{ {{')
@@ -265,7 +265,7 @@ o.append(f'\tinline constexpr std::array<SpellcraftDef, {len(SC)}> kSpellcraft{{
 for r in SC:
     o.append(f'\t\tSpellcraftDef{{ {cs(r["id"])}, {cs(r["name"])}, 0x{r["color"]}, 0x{r["accent"]}, {STYLES.index(r["style"])}, {TAPS.index(r["tap"])}, {F(r["speed"])}, {F(r["radius"])}, {F(r["damage"])}, {r["count"]}, {F(r["spread"])}, {r["pierce"]}, {F(r["homing"])}, {EFFECTS.index(r["effect"])}, {ULTS.index(r["ult"])}, {cs(r["ultName"])}, {F(r["ultDamage"])}, {F(r["ultRadius"])}, {cs(r["text"])}, 0x{IDS[("ARTO", "fx_" + r["id"] + "_hand")]:03X}, 0x{IDS[("STAT", "fx_" + r["id"] + "_orb")]:03X} }},')
 o.append('\t} };')
-o.append(f'\tinline constexpr std::uint32_t kArtIceShell = 0x{IDS[("ARTO", "fx_iceshell")]:03X}, kArtRoots = 0x{IDS[("ARTO", "fx_roots")]:03X}, kArtBurn = 0x{IDS[("ARTO", "fx_burn")]:03X}, kArtPoison = 0x{IDS[("ARTO", "fx_poison")]:03X}, kArtPortal = 0x{IDS[("ARTO", "fx_portal")]:03X};  // status looks on the struck')
+o.append(f'\tinline constexpr std::uint32_t kArtIceShell = 0x{IDS[("ARTO", "fx_iceshell")]:03X}, kArtRoots = 0x{IDS[("ARTO", "fx_roots")]:03X}, kArtBurn = 0x{IDS[("ARTO", "fx_burn")]:03X}, kArtPoison = 0x{IDS[("ARTO", "fx_poison")]:03X}, kArtPortal = 0x{IDS[("ARTO", "fx_portal")]:03X}, kArtPortalBig = 0x{IDS[("ARTO", "fx_portal_big")]:03X};  // status looks on the struck')
 # the Echo Altar's bows (sheet: bows): src/Gun.cpp Bows
 BW = S['bows']['rows']
 EL8 = ['fire', 'frost', 'shock', 'poison', 'disease', 'sun', 'blood', 'arcane']

@@ -1222,6 +1222,10 @@ namespace bo3z
 				return true;
 			}
 			if (base == Forms::Ours(gen::kHallThrone)) {
+				if (!Story::AlduinFallen()) {  // (the story: the Seat of the Awakened wakes once Alduin falls in Sovngarde)
+					Hud::Banner("The Seat of the Awakened is cold. It wakes when Alduin falls in Sovngarde.", 5.0f);
+					return true;
+				}
 				if (g_throneAsk <= 0) {
 					g_throneAsk = 8.0f;
 					Hud::Banner("BEGIN AGAIN? Every city falls back under the curse and the nights start over, the dead stronger. Your wonders, bows and powers stay. Touch the Seat again to begin.", 8.0f);

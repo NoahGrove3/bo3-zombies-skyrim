@@ -644,6 +644,7 @@ namespace bo3z
 		int ClaimableShout(int a_town)
 		{
 			const int sh = a_town >= 0 ? ShoutOf(a_town) : -1;
+			if (Story::Stage() < 4) return -1;  // (the story: the cities' shouts join the altar after the Way of the Voice)
 			return sh >= 0 && Get(a_town).freed && !Gun::KnowsShout(sh) ? sh : -1;
 		}
 		bool  SafeHere(RE::PlayerCharacter*) { return g_zone >= 0 && Get(g_zone).freed; }

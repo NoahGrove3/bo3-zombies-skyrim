@@ -133,7 +133,8 @@ for r in SCRAFT.values():
     recs['LIGH'].append(record('LIGH', fid('LIGH', 'fx_' + r['id'] + '_light'), [sub('EDID', z('UN_SpellLight_' + r['id'])), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.0))]))
 for n in ('iceshell', 'roots', 'burn', 'poison'):
     arto('fx_' + n, 'CurseOfAlduin\\fx\\status_' + n + '.nif', 1)                             # magic hit effect art
-arto('fx_portal', 'Magic\\SummonTargetFX.nif', 1)   # (the night's spawns without the draugr's rise come through a conjuring portal: KittyVFX - Portals replaces it)
+arto('fx_portal', 'CurseOfAlduin\\fx\\portal_red.nif', 1)        # (the night's dead come through a conjuring portal: KittyVFX - Portals' summon mesh, in the Curse's red -
+arto('fx_portal_big', 'CurseOfAlduin\\fx\\portal_red_big.nif', 1)  #  tools/modelconv/fxtint, shipped with the Party Pack; elites and bosses get the big one)
 for w in S['weapons']['rows']:
     kind = w.get('kind', 'wand')
     if kind == 'wand':
