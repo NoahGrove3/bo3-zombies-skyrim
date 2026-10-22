@@ -36,7 +36,7 @@ namespace bo3z::Classes
 		{
 			auto* obj = a_form ? a_form->As<RE::TESBoundObject>() : nullptr;
 			if (!obj) return;
-			a_p->AddObjectToContainer(obj, nullptr, a_count, nullptr);
+			if (a_count > 0) a_p->AddObjectToContainer(obj, nullptr, a_count, nullptr);
 			if (a_equip) {
 				if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(a_p, obj, nullptr, 1, nullptr, false, true, false, true);
 			}
@@ -448,6 +448,92 @@ namespace bo3z::Classes
 		return true;
 	}
 
+
+	// ---- (Noah: the class framework) the outfit picker: any outfit for any class, as a cosmetic. Each altar visit can
+	// step through them (O / left stick); a piece you don't have yet is handed to you, and the outfit is put on.
+	namespace
+	{
+		struct Outfit { const char* name; const char* plugin; std::array<std::uint32_t, 5> ids; };
+		constexpr Outfit kOutfits[] = {
+			{ "Wandering Summoner", "Wandering Summoner Outfit.esp", { 0xE58, 0xE5B, 0xE5D, 0xE5F, 0xE63 } },
+			{ "Necromancer's Robes", "Skyrim.esm", { 0x10900E, 0x0C36E8, 0, 0, 0 } },
+			{ "Wild Witch", "ksws03.esp", { 0x808, 0x809, 0x80B, 0x811, 0x80D } },
+			{ "Drifter", "DrifterArmorAndOutfitByXtudo.esp", { 0x857, 0x858, 0x859, 0, 0 } },
+			{ "Practical Pirate", "practical_pirate.esp", { 0x800, 0x802, 0x805, 0, 0 } },
+			{ "Wizard Hat", "sirwho_Wizard_Hats-Full.esp", { 0, 0, 0, 0, 0 } },  // (each press: the next of its hats)
+		};
+		std::atomic<int> g_outfit{ -1 };
+		int              g_hat = -1;
+		std::mutex       g_outfitLock;
+		std::string      g_outfitName;
+	}
+	void NextOutfit()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* dh = RE::TESDataHandler::GetSingleton();
+		if (!p || !dh) return;
+		constexpr int n = static_cast<int>(std::size(kOutfits));
+		for (int tries = 0; tries < n; ++tries) {
+			int next = (g_outfit.load() + 1) % n;
+			const auto& o = kOutfits[next];
+			std::vector<RE::TESBoundObject*> pieces;
+			if (o.ids[0] == 0) {  // the hats: the next one in the plugin
+				std::vector<RE::TESObjectARMO*> hats;
+				for (auto* a : dh->GetFormArray<RE::TESObjectARMO>()) {
+					if (a && a->GetFile(0) && a->GetFile(0)->GetFilename() == o.plugin && a->GetName() && *a->GetName()) hats.push_back(a);
+				}
+				if (!hats.empty()) {
+					g_hat = (g_hat + 1) % static_cast<int>(hats.size());
+					pieces.push_back(hats[g_hat]);
+					if (g_hat + 1 < static_cast<int>(hats.size())) next = next - 1 + n, next %= n;  // (stay on the hats until the last one)
+				}
+			} else {
+				for (auto id : o.ids) {
+					if (!id) continue;
+					auto* f = std::string_view(o.plugin) == "Skyrim.esm" ? RE::TESForm::LookupByID(id) : dh->LookupForm(id, o.plugin);
+					if (auto* b = f ? f->As<RE::TESBoundObject>() : nullptr) pieces.push_back(b);
+				}
+			}
+			g_outfit = next;
+			if (pieces.empty()) continue;  // (that outfit's mod isn't installed)
+			for (auto* b : pieces) GiveItem(p, b, p->GetItemCount(b) > 0 ? 0 : 1, true);
+			std::string nm = o.ids[0] == 0 ? std::string(pieces[0]->GetName()) : std::string(o.name);
+			{
+				std::scoped_lock l(g_outfitLock);
+				g_outfitName = nm;
+			}
+			Hud::Banner("Outfit: " + nm + "   (O / left stick: the next one)", 2.5f);
+			return;
+		}
+		Hud::Banner("No outfits found", 2.0f);
+	}
+	std::string OutfitName()
+	{
+		std::scoped_lock l(g_outfitLock);
+		return g_outfitName;
+	}
+
+	// (Noah's plan, Destruction) its support spells come as the altar's side-pick, for this class only
+	bool RollSupport()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return false;
+		static constexpr std::uint32_t kSupport[] = { 0x1901E5, 0x4B065B, 0x25FBFF, 0xFF19E0 };  // Ash Cloud, Cinder Storm, Charged Nova, Symmetry
+		std::vector<RE::SpellItem*> pool;
+		for (auto id : kSupport) {
+			if (auto* sp = Myst(id); sp && !p->HasSpell(sp)) pool.push_back(sp);
+		}
+		if (pool.empty()) {
+			Hud::Banner("You know every support spell the altar holds", 2.5f);
+			return false;
+		}
+		static std::mt19937 rng{ std::random_device{}() };
+		auto* sp = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(rng)];
+		p->AddSpell(sp);
+		Hud::Banner(std::string("Support spell learned: ") + sp->GetName(), 4.0f);
+		logger::info("classes: support spell {}", sp->GetName());
+		return true;
+	}
 
 	bool WonderEarned()
 	{
