@@ -65,7 +65,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 	float a = pad.x > 0.5 ? smoothstep(0.004, 0.03, max(c.r, max(c.g, c.b))) : smoothstep(0.20, 0.40, l);
 	// (Noah: Edge UI's floating embers belong on its loading screen, not over our painting) the menu's orange sparks - hot,
 	// strongly saturated orange, unlike Edge's white words and pale gold rules - are keyed out
-	if (pad.x > 0.5 && c.r > 0.25 && c.b < 0.38 * c.r && c.g < 0.78 * c.r) a = 0;
+	if (pad.x > 0.5 && c.r > 0.45 && c.b < 0.5 * c.r && c.g < 0.85 * c.r) a = 0;  // (orange to amber, bright: Edge's dark gold bar and pale gold words stay)
 	float2 d = pos.xy - cursor;
 	if (d.x > -6 && d.x < 46 && d.y > -6 && d.y < 56) a = 0;
 	// only the lower right (the buttons and their yes/no prompts): Skyrim's emblem, the Bethesda mark and the
@@ -1311,9 +1311,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const bool        rising = shownPts < s.points - 0.5f;
 				const std::string num = std::to_string(static_cast<int>(std::lround(shownPts)));
 				const float       numW = Measure(g_num, 26 * k, num).x;
-				const ImVec2      coin{ 30 * k, size.y - 30 * k };
+				const float       foot = Hud::kEdgeHud ? size.y - 112 * k : size.y;  // (Noah: clear of Edge UI's bars in the bottom-left corner)
+				const ImVec2      coin{ 30 * k, foot - 30 * k };
 				const float       w = 62 * k + numW;
-				dl->AddRectFilledMultiColor({ 0, size.y - 58 * k }, { w + 70 * k, size.y }, IM_COL32(0, 0, 0, 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 140));
+				dl->AddRectFilledMultiColor({ 0, foot - 58 * k }, { w + 70 * k, foot }, IM_COL32(0, 0, 0, Hud::kEdgeHud ? 60 : 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, Hud::kEdgeHud ? 90 : 140));
 				// the coin: a rim, a face, a stamped dragon-diamond, a glint
 				const float cr = 11 * k;
 				if (rising) dl->AddCircleFilled(coin, cr * 1.9f, IM_COL32(255, 200, 80, 40), 32);
@@ -2833,8 +2834,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		struct SysList
 		{
 			RE::GFxValue list;
+			std::string  path;  // (found once; looked up again from the movie each time - a held value dies with the page)
 			bool         found{ false }, logged{ false };
-			int          ours{ -1 };
+			int          ours{ -1 }, frame{ 0 };
 		} g_sys;
 		bool FindSystemList(RE::GFxValue a_obj, int a_depth, RE::GFxValue& a_out, std::string& a_path, const std::string& a_here)
 		{
@@ -2865,12 +2867,20 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		void PartyInSystemList(RE::GFxMovieView* a_mv, int a_clicks)
 		{
 			if (!a_mv) return;
+			const int pressedNow = g_sysAccept.load();
+			if (++g_sys.frame % 6 != 0 && pressedNow == 0 && a_clicks == 0) return;  // (a few times a second is plenty)
 			if (!g_sys.found) {
 				RE::GFxValue root;
 				std::string  path;
 				if (!a_mv->GetVariable(&root, "_root") || !FindSystemList(root, 0, g_sys.list, path, "_root")) return;
 				g_sys.found = true;
+				g_sys.path = path;
 				logger::info("party: the system list is {}", path);
+			}
+			g_sys.list = {};
+			if (g_sys.path.empty() || !a_mv->GetVariable(&g_sys.list, g_sys.path.c_str()) || !g_sys.list.IsObject()) {
+				g_sys.found = false;
+				return;
 			}
 			RE::GFxValue entries;
 			if (!g_sys.list.GetMember("entryList", &entries) || !entries.IsArray()) {
