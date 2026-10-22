@@ -1464,7 +1464,7 @@ namespace bo3z
 			}
 			g_pause = std::max(g_pause, s.nuke);
 			for (int t = 0; t < static_cast<int>(gen::kCurseCities.size()) && t < 10; ++t) {
-				if (s.curse[t] > Curse::Raw(t)) {
+				if (true) {  // (Curse::SetRaw takes only the Dragon Priest and the freeing: trials are each player's own)
 					Curse::SetRaw(t, s.curse[t]);
 				}
 			}

@@ -880,7 +880,16 @@ namespace bo3z
 				return;  // (an older party member's numbers mean nothing here)
 			}
 			const St before = Get(a_town);
-			SetValue(a_town, a_value);
+			// (Noah: in a party each player's trials are their own - a Summoner's and a Ranger's differ) only the Dragon
+			// Priest's rising and the freeing come over from the party; trials and their progress stay each player's
+			{
+				const St in = Decode(a_value);
+				if (before.freed || (!in.freed && !(in.Boss() && !before.Boss()))) return;
+				St mine = before;
+				if (in.freed) mine.freed = true;
+				else mine.active = kBossActive, mine.prog = 0;
+				SetValue(a_town, Encode(mine));
+			}
 			const St after = Get(a_town);
 			// a friend did a trial: it completes here too, with its reward (the party shares the quests)
 			for (int i = 0; i < kTrialCount && !after.freed; ++i) {

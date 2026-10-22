@@ -2045,6 +2045,10 @@ namespace bo3z
 					}
 					break;
 				case 1:
+					if (const int ft = ref ? TownOf(ref) : -1; ft >= 0 && !Curse::Freed(ft)) {  // (Noah: the forge wakes with the altar)
+						Hud::Banner("The altar's forge sleeps until " + std::string(gen::kTowns[ft]) + " is freed", 3.0f);
+						break;
+					}
 					if (Gun::Reforge() && ref) {
 						Forms::PlayAt(gen::Sound::forge_upgrade, ref);
 					}

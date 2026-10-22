@@ -560,9 +560,7 @@ namespace bo3z::Net
 							for (std::size_t t = 0; t < gen::kCurseCities.size(); ++t) {
 								std::int32_t v;
 								std::memcpy(&v, d + 1 + 4 * t, 4);
-								if (v > Curse::Raw(static_cast<int>(t))) {
-									Curse::SetRaw(static_cast<int>(t), v);  // a friend's quest work counts for everyone
-								}
+								Curse::SetRaw(static_cast<int>(t), v);  // (only a friend's Dragon Priest and freeing count: trials are each player's own)
 							}
 						}
 						break;
