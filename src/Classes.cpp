@@ -142,6 +142,30 @@ namespace bo3z::Classes
 		std::array<std::uint16_t, 4> g_wKills{};
 		std::array<std::uint32_t, 4> g_wTowns{};   // cities where a step was done (bits)
 		std::unordered_map<RE::FormID, RE::FormID> g_lastHit;  // a foe -> what you last hit it with
+		std::uint16_t g_boltKills = 0;  // (the Ranger's crossbow mastery) kills with a crossbow: fire bolts at 25, ice at 60, shock at 120
+		constexpr std::uint32_t kBoltFamilies[] = { 0x020B04, 0x025A50, 0x025A58, 0x025A60, 0x025A68, 0x025A70 };  // Faction Crossbows' plain bolts (fire +1, ice +2, shock +3)
+		constexpr int           kBoltNeed[3] = { 25, 60, 120 };
+		constexpr const char*   kBoltElem[3] = { "fire", "ice", "shock" };
+		int BoltsUnlocked() { int n = 0; for (int t : kBoltNeed) n += g_boltKills >= t ? 1 : 0; return n; }
+		int TopUpBolts(int a_to)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			if (!p || !dh) return 0;
+			int n = 0;
+			const int un = BoltsUnlocked();
+			for (auto base : kBoltFamilies) {
+				auto* plain = dh->LookupForm<RE::TESAmmo>(base, "Faction Crossbows.esp");
+				if (!plain || p->GetItemCount(plain) <= 0) continue;  // (only the families you shoot)
+				for (int e = 0; e < un; ++e) {
+					if (auto* b = dh->LookupForm<RE::TESAmmo>(base + 1 + e, "Faction Crossbows.esp"); b && p->GetItemCount(b) < a_to) {
+						p->AddObjectToContainer(b, nullptr, a_to - p->GetItemCount(b), nullptr);
+						++n;
+					}
+				}
+			}
+			return n;
+		}
 		float g_tomeCool = 0, g_bladeCool = 0;
 		int   g_aurielHits = 0;
 
@@ -315,7 +339,18 @@ namespace bo3z::Classes
 			}
 			if (a_bySummon) how = 0;
 			else if (auto* mi = src ? src->As<RE::MagicItem>() : nullptr) how = (mi->GetAssociatedSkill() == RE::ActorValue::kDestruction || (Arcana::IndexOf(src) >= 0 && Arcana::ClassOf(Arcana::IndexOf(src)) == coffer::kDestruction)) ? 1 : -1;
-			else if (auto* w = src ? src->As<RE::TESObjectWEAP>() : nullptr) how = (w->IsBow() || w->IsCrossbow()) ? 2 : 3;
+			else if (auto* w = src ? src->As<RE::TESObjectWEAP>() : nullptr) {
+				how = (w->IsBow() || w->IsCrossbow()) ? 2 : 3;
+				if (w->IsCrossbow() && c == coffer::kRanger && g_boltKills < 60000) {
+					const int before = BoltsUnlocked();
+					++g_boltKills;
+					if (const int now = BoltsUnlocked(); now > before) {
+						Forms::Play(gen::Sound::quest_step);
+						Hud::Banner(fmt::format("CROSSBOW MASTERY - {} bolts unlocked: refilled with your quivers (Q at an altar)", kBoltElem[now - 1]), 5.0f);
+						TopUpBolts(20);
+					}
+				}
+			}
 			else if (Bows::Held() >= 0) how = 2;  // (the altar's bows strike with our own shots)
 			else if (p) {
 				for (int h : Arcana::Hands()) if (h >= 0 && Arcana::ClassOf(h) == coffer::kDestruction) how = 1;
@@ -535,6 +570,14 @@ namespace bo3z::Classes
 		return true;
 	}
 
+	std::string BoltLine()
+	{
+		if (g_class.load() != coffer::kRanger) return {};
+		const int un = BoltsUnlocked();
+		if (un >= 3) return "Crossbow mastery: fire, ice and shock bolts";
+		return fmt::format("Crossbow mastery: {} of {} crossbow kills to {} bolts", g_boltKills, kBoltNeed[un], kBoltElem[un]);
+	}
+
 	bool WonderEarned()
 	{
 		for (auto s : g_wStep) if (s > kWonderSteps) return true;
@@ -615,11 +658,12 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* bow = Auriel();
 		auto* ar = Sunhallowed();
-		if (!p || !bow || !ar || p->GetItemCount(bow) <= 0) return 0;
+		int n = TopUpBolts(20);  // (crossbow mastery's elemental bolts)
+		if (!p || !bow || !ar || p->GetItemCount(bow) <= 0) return n;
 		const int have = p->GetItemCount(ar);
-		if (have >= 60) return 0;
+		if (have >= 60) return n;
 		p->AddObjectToContainer(ar, nullptr, 60 - have, nullptr);
-		return 1;
+		return n + 1;
 	}
 
 	// every frame: cooldowns, and Auriel's arrows seek the dead
@@ -718,12 +762,14 @@ namespace bo3z::Classes
 			v.push_back(static_cast<std::uint8_t>(g_wKills[c] & 0xFF)), v.push_back(static_cast<std::uint8_t>(g_wKills[c] >> 8));
 			for (int b = 0; b < 4; ++b) v.push_back(static_cast<std::uint8_t>(g_wTowns[c] >> (8 * b)));
 		}
+		v.push_back(0xA2);  // crossbow mastery: [kills u16]
+		v.push_back(static_cast<std::uint8_t>(g_boltKills & 0xFF)), v.push_back(static_cast<std::uint8_t>(g_boltKills >> 8));
 		return v;
 	}
 	void SetState(const std::vector<std::uint8_t>& a_v)
 	{
 		g_class = -1, g_kit.fill(false);
-		g_wStep.fill(0), g_wKills.fill(0), g_wTowns.fill(0), g_lastHit.clear();
+		g_wStep.fill(0), g_wKills.fill(0), g_wTowns.fill(0), g_lastHit.clear(), g_boltKills = 0;
 		for (auto& s : g_stash) s.clear();
 		if (a_v.empty()) return;
 		g_class = static_cast<int>(a_v[0]) - 1;
@@ -752,6 +798,10 @@ namespace bo3z::Classes
 				g_wKills[c] = static_cast<std::uint16_t>(a_v[k + 1] | (a_v[k + 2] << 8));
 				g_wTowns[c] = a_v[k + 3] | (a_v[k + 4] << 8) | (a_v[k + 5] << 16) | (static_cast<std::uint32_t>(a_v[k + 6]) << 24);
 			}
+		}
+		if (k < a_v.size() && a_v[k] == 0xA2 && k + 3 <= a_v.size()) {
+			g_boltKills = static_cast<std::uint16_t>(a_v[k + 1] | (a_v[k + 2] << 8));
+			k += 3;
 		}
 		if (g_wStep[coffer::kSummoner] > kWonderSteps) TuneWyrm();
 		logger::info("classes: loaded ({})", Name(g_class));
