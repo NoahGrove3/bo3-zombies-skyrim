@@ -5008,7 +5008,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					lastPopup = popupName;
 				}
 			}
-			const bool mainMenu = uiM && uiM->IsMenuOpen(RE::MainMenu::MENU_NAME) && (!popup || steamOver);
+			// (Noah: Edge UI's main menu now, not ours) our redrawn main menu - Skyrim's words over our own picture, the CO-OP
+			// PARTY entry - is retired: Edge UI draws the main menu and the load list; the party lives in the Esc journal's tab
+			constexpr bool kOwnMainMenu = false;
+			const bool onMainMenu = uiM && uiM->IsMenuOpen(RE::MainMenu::MENU_NAME);
+			const bool mainMenu = kOwnMainMenu && onMainMenu && (!popup || steamOver);
 			const bool codex = !mainMenu && CodexWanted(uiM);
 			// Skyrim's cursor never shows: ours (DrawPingCursor) is drawn in its place, on the main menu and in game
 			// (the world map moves Skyrim's cursor without its cursor menu: ours is drawn there too)
@@ -5042,10 +5046,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (film) {  // another pausing menu opened over the film (the journal, a loading screen): the film yields
 				auto* ui = RE::UI::GetSingleton();
 				const bool loading = ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME);
-				if (ui && (ui->numPausesGame > g_filmPauses + 1 || loading || mainMenu)) {
-					logger::info("intro: film yields (pauses {} vs {}, loading {}, main menu {})", ui->numPausesGame, g_filmPauses + 1, loading, mainMenu);
+				if (ui && (ui->numPausesGame > g_filmPauses + 1 || loading || onMainMenu)) {
+					logger::info("intro: film yields (pauses {} vs {}, loading {}, main menu {})", ui->numPausesGame, g_filmPauses + 1, loading, onMainMenu);
 					FilmStop();
-					if (!mainMenu && g_filmT < 20.0f) {
+					if (!onMainMenu && g_filmT < 20.0f) {
 						g_filmReq = true;  // a prompt (survival mode, a quest box) came up first: the film starts again once it is answered
 					}
 				}
@@ -5080,11 +5084,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					g_reqSince = t;
 				}
 				const long long ms = std::chrono::duration_cast<std::chrono::milliseconds>(t.time_since_epoch()).count();
-			const bool want = !mainMenu && (g_filmOn || g_outro || ms < g_holdUntilMs || (g_filmReq && t - g_reqSince < std::chrono::seconds(20)));
-				if (g_veilNow.exchange(false) && !mainMenu) {
+			const bool want = !onMainMenu && (g_filmOn || g_outro || ms < g_holdUntilMs || (g_filmReq && t - g_reqSince < std::chrono::seconds(20)));
+				if (g_veilNow.exchange(false) && !onMainMenu) {
 					g_veil = 1.0f;  // a new character's arrival: black at once, never a glimpse of the road first
 				}
-				g_veil = mainMenu ? 0.0f : want ? std::min(1.0f, g_veil + dt * 4.0f) : std::max(0.0f, g_veil - dt / 1.2f);
+				g_veil = onMainMenu ? 0.0f : want ? std::min(1.0f, g_veil + dt * 4.0f) : std::max(0.0f, g_veil - dt / 1.2f);
 			}
 			// (a menu with a pointer - the world map, the inventory - still draws: our cursor is the only one there)
 			if (((!InGame() && !mainMenu && !journal && !escJournal && !cursorUp && !codex) || (DevTools::HudOff() && !mainMenu && !codex)) && !g_filmOn && g_veil <= 0) {
