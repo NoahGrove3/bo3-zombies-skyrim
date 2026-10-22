@@ -139,12 +139,30 @@ namespace bo3z
 			}
 			// the skip: the creator first if it hasn't been, then Helgen set done
 			const bool raceOpen = ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME);
+			// (Noah: the starter kit right after the character is made) the creator closing on a new character: the class
+			// picker at once (its kit comes with the choice), not after Helgen
+			if (static bool wasOpen = false; wasOpen && !raceOpen && player->GetLevel() <= 1) {
+				logger::info("intro: the creator closed on a new character - the class picker");
+				Classes::OnNewCharacter();
+				wasOpen = raceOpen;
+			} else {
+				wasOpen = raceOpen;
+			}
 			if (raceOpen) g_raceSeen = true;
 			if (g_skipRace && g_raceSeen && !raceOpen) {
 				g_skipRace = false;
 				DoSkip();
 			}
-			if (!Save::Flag(Save::kFlagMoved) && !Forms::IntroDone() && intro->IsRunning() && !g_skip && !g_skipRace) {
+			const bool canSkip = !Save::Flag(Save::kFlagMoved) && !Forms::IntroDone() && intro->IsRunning() && !g_skip && !g_skipRace;
+			{  // (Noah: the skip never showed) a standing line at the foot of the screen while Helgen can be skipped - and the hold's progress
+				std::scoped_lock l(Hud::Lock());
+				Hud::Edit().skipHint = canSkip && !raceOpen && !ui->GameIsPaused() && !Hud::IntroActive();
+				Hud::Edit().skipFrac = canSkip ? std::clamp(g_skipHold / 1.5f, 0.0f, 1.0f) : 0.0f;
+			}
+			if (static int said = 0; said++ % 600 == 0) {
+				logger::info("intro: skip {} (moved {} done {} running {} skip {} race {})", canSkip, Save::Flag(Save::kFlagMoved), Forms::IntroDone(), intro->IsRunning(), g_skip, g_skipRace);
+			}
+			if (canSkip) {
 				static auto lastHint = std::chrono::steady_clock::now() - std::chrono::seconds(100);
 				if (!raceOpen && !ui->GameIsPaused() && std::chrono::steady_clock::now() - lastHint > std::chrono::seconds(45)) {
 					lastHint = std::chrono::steady_clock::now();

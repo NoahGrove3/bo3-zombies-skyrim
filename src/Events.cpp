@@ -795,8 +795,8 @@ namespace bo3z
 			// Skyrim's own floating quest markers give way to ours (src/Hud.cpp: drawn in the game's style)
 			if (auto* prefs = RE::INIPrefSettingCollection::GetSingleton()) {
 				if (auto* st = prefs->GetSetting("bShowFloatingQuestMarkers:GamePlay")) {
-					st->data.b = false;
-					logger::info("quests: Skyrim's floating quest markers off (ours instead)");
+					st->data.b = Hud::kEdgeHud;  // (Edge UI: Skyrim's own markers; they were off for ours)
+					logger::info("quests: Skyrim's floating quest markers {}", Hud::kEdgeHud ? "on (Edge UI)" : "off (ours instead)");
 				}
 			}
 			// (no blood splattered over the screen when you are hit - the red edges of the HUD say it: wiped each frame in

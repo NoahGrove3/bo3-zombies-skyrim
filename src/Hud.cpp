@@ -442,6 +442,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 		void Panel(ImDrawList* dl, ImVec2 a, ImVec2 b, float k, float alpha = 1.0f)
 		{
+			if (Hud::kEdgeHud) {  // (Noah: Edge UI's look) a dark smoked pane, darker toward its foot, a gold hairline over and under that
+				// fades out at both ends, the faintest edge - no corners, no glow
+				const float w = b.x - a.x;
+				dl->AddRectFilledMultiColor(a, b, Fade(IM_COL32(12, 12, 12, 205), alpha), Fade(IM_COL32(12, 12, 12, 205), alpha), Fade(IM_COL32(5, 5, 5, 230), alpha), Fade(IM_COL32(5, 5, 5, 230), alpha));
+				dl->AddRect(a, b, Fade(IM_COL32(255, 255, 255, 14), alpha), 0, 0, 1.0f * k);
+				for (const float y : { a.y, b.y }) {
+					dl->AddRectFilledMultiColor({ a.x, y - 0.6f * k }, { a.x + w * 0.5f, y + 0.6f * k }, Fade(IM_COL32(196, 170, 112, 0), alpha), Fade(IM_COL32(196, 170, 112, 190), alpha), Fade(IM_COL32(196, 170, 112, 190), alpha), Fade(IM_COL32(196, 170, 112, 0), alpha));
+					dl->AddRectFilledMultiColor({ a.x + w * 0.5f, y - 0.6f * k }, { b.x, y + 0.6f * k }, Fade(IM_COL32(196, 170, 112, 190), alpha), Fade(IM_COL32(196, 170, 112, 0), alpha), Fade(IM_COL32(196, 170, 112, 0), alpha), Fade(IM_COL32(196, 170, 112, 190), alpha));
+				}
+				return;
+			}
 			{  // the modpack's look (Noah: black and a blue accent): black glass, a rune-blue border with a soft glow, a rune mark at each corner
 				dl->AddRectFilledMultiColor(a, b, Fade(IM_COL32(10, 10, 12, 235), alpha), Fade(IM_COL32(10, 10, 12, 235), alpha), Fade(IM_COL32(2, 2, 3, 242), alpha), Fade(IM_COL32(2, 2, 3, 242), alpha));
 				for (int g = 3; g >= 1; --g) {
@@ -482,6 +493,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// Ornamental divider: line - diamond - line.
 		void Divider(ImDrawList* dl, float cx, float y, float half, float k, float alpha = 1.0f)
 		{
+			if (Hud::kEdgeHud) {  // (Edge UI) a gold hairline fading out to both ends, a small diamond at its heart
+				dl->AddRectFilledMultiColor({ cx - half, y - 0.6f * k }, { cx, y + 0.6f * k }, Fade(IM_COL32(196, 170, 112, 0), alpha), Fade(IM_COL32(196, 170, 112, 200), alpha), Fade(IM_COL32(196, 170, 112, 200), alpha), Fade(IM_COL32(196, 170, 112, 0), alpha));
+				dl->AddRectFilledMultiColor({ cx, y - 0.6f * k }, { cx + half, y + 0.6f * k }, Fade(IM_COL32(196, 170, 112, 200), alpha), Fade(IM_COL32(196, 170, 112, 0), alpha), Fade(IM_COL32(196, 170, 112, 0), alpha), Fade(IM_COL32(196, 170, 112, 200), alpha));
+				const float d = 3.2f * k;
+				dl->AddQuadFilled({ cx, y - d }, { cx + d, y }, { cx, y + d }, { cx - d, y }, Fade(IM_COL32(222, 196, 132, 235), alpha));
+				return;
+			}
 			if (g_divider) {
 				const float h = std::max(14.0f * k, half * 48.0f / 512.0f);
 				dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_divider)), { cx - half, y - h / 2 }, { cx + half, y + h / 2 }, { 0, 0 }, { 1, 1 }, Fade(IM_COL32(255, 255, 255, 255), alpha));
@@ -798,13 +816,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 
 			if (s.compassOn && !s.perkMenu && s.bossName.empty()) {  // (a boss's bar takes the top of the screen while it lives)
-				DrawCompass(dl, s, size, k, now);
+				if (!Hud::kEdgeHud) DrawCompass(dl, s, size, k, now);
 			}
 
 			// The crosshair: a small white dot (Skyrim's own is hidden), and while you sneak a small clean eye just over
 			// it - a thin almond that opens as the most watchful one grows suspicious, white while hidden, amber when
 			// they wonder, red when you are seen
-			if (!s.perkMenu && !s.lootOn) {
+			if (!Hud::kEdgeHud && !s.perkMenu && !s.lootOn) {
 				const ImVec2 cc{ size.x * 0.5f, size.y * 0.5f };
 				dl->AddCircleFilled(cc, 3.2f * k, IM_COL32(0, 0, 0, 90), 16);
 				dl->AddCircleFilled(cc, 2.2f * k, IM_COL32(255, 255, 255, 235), 16);
@@ -833,7 +851,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 
 			// The quests chosen in the journal, top left (under Skyrim's notices): name in gold, open goals beneath
-			if (!s.tracked.empty() && !s.perkMenu) {
+			if (!Hud::kEdgeHud && !s.tracked.empty() && !s.perkMenu) {
 				float y = size.y * 0.24f;
 				const float x = 34 * k;
 				for (const auto& t : s.tracked) {
@@ -941,7 +959,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 			// The quests' targets in the world (Skyrim's floating quest markers, which are turned off, in our style): a
 			// small burning diamond over each, its distance under it, the quest's name when you look right at it
-			if (!s.perkMenu) {
+			if (!Hud::kEdgeHud && !s.perkMenu) {
 				const ImU32 col = IM_COL32(236, 168, 72, 255), dark = IM_COL32(20, 12, 8, 230);
 				const float pulse = 0.75f + 0.25f * std::sin(now * 3.0f);
 				for (const auto& q : s.qmarks) {
@@ -1023,8 +1041,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						pv.watching.empty() ? std::string("No one left standing...") : "Watching " + pv.watching + "   \xE2\x97\x80 \xE2\x96\xB6 to switch");
 					TxtC(dl, g_body, 20 * k, size.x / 2, size.y * 0.10f + 80 * k, IM_COL32(190, 180, 165, 220), "You rise again when a trial is complete, or at dawn");
 				}
-				// the party, left side under the night: each friend's badge, name, health and state
-				{
+				// the party, left side under the night: each friend's badge, name, health and state (Edge: in the pause menu's Party page)
+				if (!Hud::kEdgeHud) {
 					float py = (s.round > 0 ? (s.nightActive && s.nightEvent >= 0 ? 200.0f : 172.0f) : 60.0f) * k;  // (under the night's plaque)
 					for (const auto& m : pv.marks) {
 						const bool  down = m.life == Party::Life::Down, dead = m.life == Party::Life::Dead;
@@ -1323,7 +1341,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// notched in, its number on it, a pale wound trailing each hit, a red pulse when it runs low), magicka on the
 			// left and stamina on the right, all three draining from the left, each with its sigil; the perks sit above in sockets
 			// and a new draught bursts in (its name rising over the row).
-			if (s.hpMax > 0) {
+			if (!Hud::kEdgeHud && s.hpMax > 0) {
 				auto ease = [&](float& g, float v) { g = v > g ? v : std::max(v, g - dt * 0.35f); };
 				ease(hpGhost, hpFrac);
 				const float mpF = s.mpMax > 0 ? std::clamp(s.mp / s.mpMax, 0.0f, 1.0f) : 0, spF = s.spMax > 0 ? std::clamp(s.sp / s.spMax, 0.0f, 1.0f) : 0;
@@ -1474,7 +1492,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// Spell dock, bottom-right, when the hands hold the Coffer's spells: the right hand's spell as a large card
 			// (its element's emblem aflame, its name, element and magicka cost), the left hand's small above it.
 			const bool spellHands = s.handSpell[0] >= 0 || s.handSpell[1] >= 0;
-			if (spellHands) {
+			if (!Hud::kEdgeHud && spellHands) {
 				static float shownS = 0;
 				shownS += ((s.gunOut ? 1.0f : 0.6f) - shownS) * std::min(1.0f, dt * 8);
 				const float al = shownS;
@@ -1529,7 +1547,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			// The altar's bow in hand: its card in the dock (its emblem aflame with its reforging, its name), and while it
 			// is drawn a thin ring round the crosshair filling in the element's colour, bright when the draw is full
-			if (s.bowHeld >= 0 && !spellHands) {
+			if (!Hud::kEdgeHud && s.bowHeld >= 0 && !spellHands) {
 				const int    id = Bows::kIdBase + s.bowHeld;
 				const auto   bc = ArmsColor(id);
 				const ImU32  ecol = IM_COL32((bc >> 16) & 0xFF, (bc >> 8) & 0xFF, bc & 0xFF, 255);
@@ -1558,7 +1576,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// like a Nord shield-band, bronze-rimmed with knotwork studs; at its left a round iron shield bearing the three
 			// claw-strokes of a Word Wall (the Thu'um), its bronze rim draining as the shout recovers; the shout's name in
 			// the title face and the seconds left on a bronze rune-stone (READY when it can be spoken again)
-			if (!s.shoutName.empty()) {
+			if (!Hud::kEdgeHud && !s.shoutName.empty()) {
 				static float shownSh = 0;
 				shownSh += (1.0f - shownSh) * std::min(1.0f, dt * 6);
 				const float  al = shownSh;
@@ -1655,7 +1673,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// slim card per hand in the same style - a drawn glyph of its kind, the hand, its name, and its damage (gold),
 			// armour (grey) or magicka cost (blue)
 			const bool skyHands = !spellHands && s.bowHeld < 0 && (s.skyKind[0] > 0 || s.skyKind[1] > 0);
-			if (skyHands) {
+			if (!Hud::kEdgeHud && skyHands) {
 				const auto card = [&](int i, ImVec2 a, ImVec2 b) {
 					const std::uint32_t c = s.skyColor[i];
 					const ImU32 ecol = IM_COL32((c >> 16) & 0xFF, (c >> 8) & 0xFF, c & 0xFF, 255);
@@ -1728,7 +1746,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// signature move), the other slots as small cards above it with their keys. Dimmed while sheathed.
 			// (Noah: the old dock drew over the new cards) the night's weapon in hand is one slim card like the others: its
 			// emblem aflame, the slot and its reforging, its name, and what it runs on - never while a bow is held
-			if (!spellHands && !skyHands && s.bowHeld < 0) {
+			if (!Hud::kEdgeHud && !spellHands && !skyHands && s.bowHeld < 0) {
 				const bool any = std::any_of(s.slotGun.begin(), s.slotGun.begin() + std::clamp(s.slotCount, 0, 3), [](int g) { return g >= 0; });
 				static float shown = 0;
 				shown += ((s.gunOut ? 1.0f : 0.6f) - shown) * std::min(1.0f, dt * 8);
@@ -1915,7 +1933,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 
 			// Boss bar: name over a long ornate bar at the top.
-			if (!s.bossName.empty()) {
+			if (!Hud::kEdgeHud && !s.bossName.empty()) {
 				const float w = size.x * 0.42f, h = 14 * k, x = size.x * 0.5f - w / 2, y = 74 * k;  // (where the compass was: it steps aside for the fight)
 				TxtC(dl, g_title, 26 * k, size.x * 0.5f, y - 36 * k, s.bossEnraged ? IM_COL32(255, 120, 60, 255) : kParch, s.bossName, s.bossEnraged ? 3 * k : 0, IM_COL32(255, 60, 20, 255));
 				static float bossGhost = 1;
@@ -1973,6 +1991,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					                                : std::string("G  next weapon (hold: put away)     V  knife     Left Alt  dodge");
 					TxtC(dl, g_body, 17 * k, size.x * 0.5f, size.y - 150 * k, Fade(IM_COL32(230, 220, 200, 235), a), t, 1.2f * k, Fade(IM_COL32(0, 0, 0, 220), a));
 				}
+			}
+			// (Noah: the Helgen skip never showed) its standing line at the foot of the screen, a gold bar filling as it is held
+			if (s.skipHint) {
+				const std::string t = g_padLast ? "Hold " + Hud::PadWord("A") + " to skip Helgen" : std::string("Hold H to skip Helgen");
+				const float cy = size.y - 92 * k, w = Measure(g_body, 20 * k, t).x + 60 * k;
+				Panel(dl, { size.x * 0.5f - w * 0.5f, cy - 8 * k }, { size.x * 0.5f + w * 0.5f, cy + 34 * k }, k, 0.85f);
+				TxtC(dl, g_body, 20 * k, size.x * 0.5f, cy, IM_COL32(232, 226, 214, 240), t);
+				if (s.skipFrac > 0) dl->AddRectFilled({ size.x * 0.5f - w * 0.5f, cy + 31 * k }, { size.x * 0.5f - w * 0.5f + w * s.skipFrac, cy + 34 * k }, kGold);
 			}
 			// the heart-stone's runes become words: each one burns out of the rock in turn (a second apart), glows, and
 			// settles into its meaning; the shout's name comes last
@@ -2049,7 +2075,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// health bars over the wounded: black iron plates with chamfered ends and bronze caps, the blood (always red)
 			// draining from the right with a pale wound that follows it down; the tougher the foe, the hotter the red fire
 			// round its plate (FlameBorder: specials smoulder, elites blaze, champions roar); other foes' names in iron (these replace Skyrim's bar under the compass)
-			if (!s.perkMenu) {
+			if (!Hud::kEdgeHud && !s.perkMenu) {
 				static std::unordered_map<std::uint32_t, std::pair<float, float>> wound;  // id -> (pale wound, fade in)
 				static float sweep = 0;
 				if ((sweep += dt) > 5.0f) {
@@ -2466,7 +2492,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				scroll += (scrollGoal - scroll) * std::min(1.0f, dt * 10.0f);
 				const float cx = (a.x + b.x) * 0.5f;
 				dl->PushClipRect({ a.x, a.y + 6 * k }, { b.x, b.y - 66 * k }, true);
-				TxtC(dl, g_title, 27 * k, cx, a.y + 16 * k - scroll, IM_COL32(232, 214, 176, 255), "THE ECHO ALTAR", 2.5f * k, IM_COL32(70, 140, 255, 255));
+				TxtC(dl, g_title, 27 * k, cx, a.y + 16 * k - scroll, IM_COL32(232, 214, 176, 255), "THE ECHO ALTAR", Hud::kEdgeHud ? 0.0f : 2.5f * k, IM_COL32(70, 140, 255, 255));
 				Divider(dl, cx, a.y + 54 * k - scroll, w * 0.38f, k);
 				float y = a.y + 68 * k - scroll;
 				const float L = a.x + 20 * k, Rr = b.x - 20 * k;
@@ -2475,6 +2501,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (s.altarFocus != row || s.chooseOn) return;
 					focusY0 = y0 + scroll, focusY1 = y1 + scroll;  // (in the content's own space)
 					const ImVec2 ra{ a.x + 10 * k, y0 }, rb{ b.x - 10 * k, y1 };
+					if (Hud::kEdgeHud) {  // (Edge UI) a soft gold wash fading to the right, a thin gold bar at its left
+						dl->AddRectFilledMultiColor(ra, rb, IM_COL32(196, 170, 112, 52), IM_COL32(196, 170, 112, 0), IM_COL32(196, 170, 112, 0), IM_COL32(196, 170, 112, 52));
+						dl->AddRectFilled(ra, { ra.x + 2.5f * k, rb.y }, kGold);
+						return;
+					}
 					dl->AddRectFilled(ra, rb, IM_COL32(196, 170, 112, 18 + static_cast<int>(10 * std::sin(now * 4.0f))), 4 * k);
 					dl->AddRect(ra, rb, kGold, 4 * k, 0, 1.5f * k);
 					const float my = (y0 + y1) * 0.5f;
@@ -2484,7 +2515,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImVec2 c{ at.x + 13 * k, at.y + 13 * k };
 					const bool   on = s.altarFocus == row && !s.chooseOn;
 					const float  r = (on ? 8.0f : 6.0f) * k;
-					dl->AddQuadFilled({ c.x, c.y - r }, { c.x + r, c.y }, { c.x, c.y + r }, { c.x - r, c.y }, on ? kGold : live ? IM_COL32(80, 130, 190, 230) : IM_COL32(50, 55, 65, 200));
+					dl->AddQuadFilled({ c.x, c.y - r }, { c.x + r, c.y }, { c.x, c.y + r }, { c.x - r, c.y }, on ? kGold : live ? (Hud::kEdgeHud ? IM_COL32(170, 160, 140, 200) : IM_COL32(80, 130, 190, 230)) : IM_COL32(50, 55, 65, 200));
 				};
 				auto price = [&](float py, int cost, bool can) {
 					const std::string pr = std::to_string(cost);
@@ -2785,6 +2816,92 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		std::atomic<float> g_mouseDX{ 0 }, g_mouseDY{ 0 };
 		ImVec2             g_cursor{ -1, -1 };
 		std::atomic<bool>  g_partyOpen{ false };  // the Party window over the Esc journal
+		std::atomic<int>   g_sysAccept{ 0 };      // Enter / E / A pressed in the Esc journal (the Party entry checks it on the next frame)
+
+		// (Noah: the party under Settings, in Edge UI's own list) "PARTY" joins the pause menu's system list - Skyrim's own
+		// list as Edge UI draws it, so it looks like every other entry. The list is found by its entries (the one holding
+		// Settings), our entry is added at its end so Skyrim's own entries keep their places, and taking it opens the party
+		// window. Logged once: the list's path and entries.
+		struct SysList
+		{
+			RE::GFxValue list;
+			bool         found{ false }, logged{ false };
+			int          ours{ -1 };
+		} g_sys;
+		bool FindSystemList(RE::GFxValue a_obj, int a_depth, RE::GFxValue& a_out, std::string& a_path, const std::string& a_here)
+		{
+			if (a_depth > 10 || !a_obj.IsObject()) return false;
+			RE::GFxValue entries;
+			if (a_obj.HasMember("entryList") && a_obj.GetMember("entryList", &entries) && entries.IsArray()) {
+				for (std::uint32_t i = 0; i < entries.GetArraySize(); ++i) {
+					RE::GFxValue e, t;
+					if (entries.GetElement(i, &e) && e.IsObject() && e.GetMember("text", &t) && t.IsString()) {
+						std::string up = t.GetString();
+						std::transform(up.begin(), up.end(), up.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+						if (up.find("SETTING") != std::string::npos) {
+							a_out = a_obj, a_path = a_here;
+							return true;
+						}
+					}
+				}
+			}
+			bool found = false;
+			a_obj.VisitMembers([&](const char* a_name, const RE::GFxValue& a_v) {
+				if (!found && a_v.IsDisplayObject()) {
+					found = FindSystemList(a_v, a_depth + 1, a_out, a_path, a_here + "." + (a_name ? a_name : "?"));
+				}
+			});
+			return found;
+		}
+		// each frame while the Esc journal is up: our entry in place; taken (A / Enter / a click while it is selected) -> the party
+		void PartyInSystemList(RE::GFxMovieView* a_mv, int a_clicks)
+		{
+			if (!a_mv) return;
+			if (!g_sys.found) {
+				RE::GFxValue root;
+				std::string  path;
+				if (!a_mv->GetVariable(&root, "_root") || !FindSystemList(root, 0, g_sys.list, path, "_root")) return;
+				g_sys.found = true;
+				logger::info("party: the system list is {}", path);
+			}
+			RE::GFxValue entries;
+			if (!g_sys.list.GetMember("entryList", &entries) || !entries.IsArray()) {
+				g_sys.found = false;
+				return;
+			}
+			const std::uint32_t n = entries.GetArraySize();
+			int                 ours = -1;
+			std::string         settingsText;
+			for (std::uint32_t i = 0; i < n; ++i) {
+				RE::GFxValue e, t, mark;
+				if (!entries.GetElement(i, &e) || !e.IsObject()) continue;
+				if (e.GetMember("curseParty", &mark) && mark.IsBool()) ours = static_cast<int>(i);
+				if (e.GetMember("text", &t) && t.IsString()) {
+					std::string up = t.GetString();
+					std::transform(up.begin(), up.end(), up.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+					if (up.find("SETTING") != std::string::npos) settingsText = t.GetString();
+					if (!g_sys.logged) logger::info("party: system entry {} '{}'", i, t.GetString());
+				}
+			}
+			g_sys.logged = true;
+			if (ours < 0) {  // (the page rebuilds its list each time it opens: ours goes back on)
+				RE::GFxValue e;
+				a_mv->CreateObject(&e);
+				const bool caps = !settingsText.empty() && settingsText.find_first_of("abcdefghijklmnopqrstuvwxyz") == std::string::npos;
+				e.SetMember("text", RE::GFxValue(caps ? "PARTY" : "Party"));
+				e.SetMember("curseParty", RE::GFxValue(true));
+				entries.PushBack(e);
+				ours = static_cast<int>(n);
+				if (g_sys.list.HasMember("InvalidateData")) g_sys.list.Invoke("InvalidateData");
+				else if (g_sys.list.HasMember("UpdateList")) g_sys.list.Invoke("UpdateList");
+			}
+			g_sys.ours = ours;
+			const int pressed = g_sysAccept.exchange(0) + a_clicks;
+			RE::GFxValue sel;
+			if (pressed > 0 && g_sys.list.GetMember("selectedIndex", &sel) && sel.IsNumber() && static_cast<int>(sel.GetNumber()) == ours) {
+				g_partyOpen = !g_partyOpen;
+			}
+		}
 		std::atomic<int>   g_partyFocus{ 0 }, g_partyPress{ 0 };  // (Noah: the party window by D-pad / arrows) the button in focus, and A / Enter pressed
 		ImVec2             g_skCursor{ -1, -1 };  // exactly where Skyrim's own menu cursor is (its menus take the clicks there)
 		void UpdateCursor(ImVec2 a_size)
@@ -5142,18 +5259,26 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (escJournal) {
 					const float kk = io.DisplaySize.y / 1080.0f;
 					auto*       dl = ImGui::GetForegroundDrawList();
-					const ImVec2 cur = g_cursor;
-					const ImVec2 ta{ 36 * kk, 30 * kk }, tb{ 306 * kk, 76 * kk };
-					const bool   over = cur.x >= ta.x && cur.x <= tb.x && cur.y >= ta.y && cur.y <= tb.y;
-					if (over && clicks > 0) g_partyOpen = !g_partyOpen;
-					Panel(dl, ta, tb, kk, 0.95f);
-					const std::string lab = std::string(g_partyOpen ? "CLOSE PARTY" : "PARTY") + "   P / " + (Settings::PlayStationIcons() ? "Triangle" : "Y");  // (Noah: both keys shown)
-					TxtC(dl, g_title, 18 * kk, (ta.x + tb.x) * 0.5f, ta.y + 12 * kk, over || g_partyOpen ? kIce : IM_COL32(200, 214, 235, 235), lab, over ? 1.5f * kk : 0.0f, kRune);
+					bool over = false;
+					if (Hud::kEdgeHud) {  // (Noah) PARTY is an entry of the pause menu's own list now (Edge UI draws it)
+						if (auto jm = uiM ? uiM->GetMenu(RE::JournalMenu::MENU_NAME) : nullptr; jm && jm->uiMovie) {
+							PartyInSystemList(jm->uiMovie.get(), g_partyOpen ? 0 : clicks);
+						}
+					} else {
+						const ImVec2 cur = g_cursor;
+						const ImVec2 ta{ 36 * kk, 30 * kk }, tb{ 306 * kk, 76 * kk };
+						over = cur.x >= ta.x && cur.x <= tb.x && cur.y >= ta.y && cur.y <= tb.y;
+						if (over && clicks > 0) g_partyOpen = !g_partyOpen;
+						Panel(dl, ta, tb, kk, 0.95f);
+						const std::string lab = std::string(g_partyOpen ? "CLOSE PARTY" : "PARTY") + "   P / " + (Settings::PlayStationIcons() ? "Triangle" : "Y");  // (Noah: both keys shown)
+						TxtC(dl, g_title, 18 * kk, (ta.x + tb.x) * 0.5f, ta.y + 12 * kk, over || g_partyOpen ? kIce : IM_COL32(200, 214, 235, 235), lab, over ? 1.5f * kk : 0.0f, kRune);
+					}
 					if (g_partyOpen) {
-						PartyPanel(dl, io.DisplaySize, { 36 * kk, 90 * kk }, kk, clicks > 0 && !over);
+						PartyPanel(dl, io.DisplaySize, { Hud::kEdgeHud ? io.DisplaySize.x * 0.5f - 380 * kk : 36 * kk, 90 * kk }, kk, clicks > 0 && !over);
 					}
 				} else {
 					g_partyOpen = false;
+					g_sys = {};  // (the journal closed: its list is gone)
 				}
 			} else if (InGame() && !DevTools::HudOff()) {
 				Draw(s, io.DisplaySize);
@@ -5192,11 +5317,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// Skyrim's enemy bar under the compass gives way to ours over each foe
 				if (static int vb = 0; vb++ % 15 == 0) {
 					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
-						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.EnemyHealth_mc._visible", RE::GFxValue(false));
+						if (!Hud::kEdgeHud) hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.EnemyHealth_mc._visible", RE::GFxValue(false));
 						// Skyrim's compass gives way to ours - its shout meter too (Noah: the cooldown is drawn round our compass's
 						// border instead: src/Hud.cpp DrawCompass)
-						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder._alpha", RE::GFxValue(0.0));
-						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder._visible", RE::GFxValue(false));
+						if (!Hud::kEdgeHud) {
+							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder._alpha", RE::GFxValue(0.0));
+							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CompassShoutMeterHolder._visible", RE::GFxValue(false));
+						}
 						// (Noah: the base Skyrim sneak symbol again) its sneak eye stays its own
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.StealthMeterInstance._alpha", RE::GFxValue(100.0));
 						// (Noah: the experience notices sat behind our night plaque) Skyrim's notices top-left move down under it
@@ -5212,11 +5339,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.QuestUpdateBaseInstance._alpha", RE::GFxValue(0.0));
 						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.QuestUpdateBaseInstance._visible", RE::GFxValue(false));
 						// and its crosshair to our dot
-						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CrosshairInstance._alpha", RE::GFxValue(0.0));
-						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CrosshairAlert._alpha", RE::GFxValue(0.0));
+						if (!Hud::kEdgeHud) {
+							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CrosshairInstance._alpha", RE::GFxValue(0.0));
+							hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.CrosshairAlert._alpha", RE::GFxValue(0.0));
+						}
 						// (Noah: the arrow count sat behind our bow card) the altar's bows never run dry, so Skyrim's arrow line
 						// bottom-right goes while one is in hand; any other bow keeps it
-						hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.ArrowInfoInstance._alpha", RE::GFxValue(s.bowHeld >= 0 ? 0.0 : 100.0));
+						if (!Hud::kEdgeHud) hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.ArrowInfoInstance._alpha", RE::GFxValue(s.bowHeld >= 0 ? 0.0 : 100.0));
 					}
 				}
 			}
@@ -5362,9 +5491,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			auto* ui = RE::UI::GetSingleton();
 			// the Party tab in the Esc journal: P, or Triangle / Y
 			if (a_b && a_b->IsDown() && ui && ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !ui->IsMenuOpen(RE::MainMenu::MENU_NAME) &&
-				((a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x19) || (a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && a_b->GetIDCode() == 0x8000))) {
+				((a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x19) || (!Hud::kEdgeHud && a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && a_b->GetIDCode() == 0x8000))) {
 				g_partyOpen = !g_partyOpen;
 				g_partyFocus = 0;
+			}
+			if (a_b && a_b->IsDown() && ui && ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !ui->IsMenuOpen(RE::MainMenu::MENU_NAME)) {
+				const auto id = a_b->GetIDCode();
+				const auto dev = a_b->GetDevice();
+				const bool accept = (dev == RE::INPUT_DEVICE::kGamepad && id == 0x1000) || (dev == RE::INPUT_DEVICE::kKeyboard && (id == 0x1C || id == 0x12 || id == 0x9C));
+				const bool back = (dev == RE::INPUT_DEVICE::kGamepad && id == 0x2000) || (dev == RE::INPUT_DEVICE::kKeyboard && (id == 0x0E || id == 0x0F));
+				if (!g_partyOpen && accept) ++g_sysAccept;      // (the PARTY entry looks on the next frame whether it is the one selected)
+				else if (g_partyOpen && back) g_partyOpen = false;  // (B / Backspace / Tab: back to the list)
 			}
 			if (a_b && a_b->IsDown() && ui && g_partyOpen && ui->IsMenuOpen(RE::JournalMenu::MENU_NAME)) {  // (Noah) the party window by D-pad / arrows
 				const auto id = a_b->GetIDCode();

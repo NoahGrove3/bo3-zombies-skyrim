@@ -704,6 +704,9 @@ namespace bo3z
 
 	namespace Hud
 	{
+		// (Noah: Edge UI is the game's UI) our compass, vitals, equip cards, health and boss bars, quest list and markers,
+		// crosshair and party panel stand down: Skyrim's own HUD (Edge UI, TrueHUD) shows them
+		inline constexpr bool kEdgeHud = true;
 		struct State
 		{
 			bool        inGame{ false };
@@ -797,6 +800,8 @@ namespace bo3z
 			float       loreTime{ 0 }, loreTotal{ 0 };
 			// (Noah: no Word Walls) the altar's heart-stone teaching its city's Thu'um: the three words rise from its runes one by one
 			std::string revealW[3], revealT[3], revealName;
+			bool        skipHint{ false };  // Helgen can be skipped now: its line shows (Intro)
+			float       skipFrac{ 0 };      // how far the hold has come
 			float       revealTime{ 0 };
 			std::uint32_t revealColor{ 0 };
 			float       wardFrac{ 0 };     // kindling a ward-fire

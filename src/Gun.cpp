@@ -2513,6 +2513,7 @@ namespace bo3z
 
 		void HideVanillaBars()
 		{
+			if (Hud::kEdgeHud) return;  // (Edge UI's own bars show)
 			static auto next = std::chrono::steady_clock::now();
 			if (std::chrono::steady_clock::now() < next) {
 				return;
