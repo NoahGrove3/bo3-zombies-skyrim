@@ -1963,7 +1963,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (hintT > 0 && s.gunOut) {
 					hintT -= dt;
 					const float a = std::clamp(hintT / 1.0f, 0.0f, 1.0f);
-					const std::string t = g_padLast ? "D-pad right  next weapon (hold: put away)     D-pad down  knife     tap " + PadWord("LB") + "  dodge"
+					const std::string t = g_padLast ? std::string("D-pad right  next weapon (hold: put away)     D-pad down  knife     tap ") + Hud::PadWord("LB") + "  dodge"
 					                                : std::string("G  next weapon (hold: put away)     V  knife     Left Alt  dodge");
 					TxtC(dl, g_body, 17 * k, size.x * 0.5f, size.y - 150 * k, Fade(IM_COL32(230, 220, 200, 235), a), t, 1.2f * k, Fade(IM_COL32(0, 0, 0, 220), a));
 				}
@@ -4903,7 +4903,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			arrowBtn(false);
 			arrowBtn(true);
 			TxtC(dl, g_body, 15 * k, o.x + lw * 0.5f, bottom + 10 * k, IM_COL32(140, 130, 115, 255),
-				g_padLast ? "D-pad up / down  scroll    D-pad left / right  chapter    " + PadWord("LB") + " / " + PadWord("RB") + "  book    " + PadWord("B") + "  close"
+				g_padLast ? std::string("D-pad up / down  scroll    D-pad left / right  chapter    ") + Hud::PadWord("LB") + " / " + Hud::PadWord("RB") + "  book    " + Hud::PadWord("B") + "  close"
 				          : std::string("Wheel / W S  scroll    A D  chapter    Q E  book    Esc  close"));
 			if (cur.x >= 0) {
 				DrawPingCursor(dl, cur, k, now);
