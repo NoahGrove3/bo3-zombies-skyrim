@@ -167,18 +167,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		ImFont* g_num = nullptr;    // Segoe UI Semibold
 		ImFont* g_body = nullptr;   // Segoe UI
 
-		// (Noah: our UI redone in Nordic UI's style) Nordic UI's look: black glass, warm-white lettering and thin silver
-		// lines, no colour but what means something - septims (kCoin), Legendary gold (TxtGold), blood, the elements
-		constexpr ImU32 kGold = IM_COL32(232, 228, 218, 255);    // Nordic white (the old bronze's name kept: every accent follows)
-		constexpr ImU32 kGoldDim = IM_COL32(232, 228, 218, 100);
-		constexpr ImU32 kCoin = IM_COL32(220, 175, 90, 255);     // septims and the rare
+		// (Noah: Edge UI is the game's UI now) our screens in Edge UI's look: charcoal glass, translucent bronze bands and
+		// rules, warm off-white lettering; colour only where it means something - septims, Legendary gold, blood, elements
+		constexpr ImU32 kGold = IM_COL32(196, 170, 112, 255);    // Edge bronze (the old name kept: every accent follows)
+		constexpr ImU32 kGoldDim = IM_COL32(196, 170, 112, 105);
+		constexpr ImU32 kCoin = IM_COL32(222, 190, 92, 255);     // septims and the rare
 		constexpr ImU32 kBlood = IM_COL32(178, 22, 22, 255);
-		constexpr ImU32 kParch = IM_COL32(214, 210, 200, 255);
-		constexpr ImU32 kGlass = IM_COL32(0, 0, 0, 165);
-		constexpr ImU32 kRune = IM_COL32(196, 200, 206, 255);    // silver lines and borders
-		constexpr ImU32 kRuneDim = IM_COL32(196, 200, 206, 90);
-		constexpr ImU32 kIce = IM_COL32(245, 245, 242, 255);
-		constexpr ImU32 kNavy = IM_COL32(0, 0, 0, 205);  // (the panels' black - the name kept)
+		constexpr ImU32 kParch = IM_COL32(232, 226, 214, 255);   // Edge's warm off-white text
+		constexpr ImU32 kGlass = IM_COL32(16, 15, 13, 170);
+		constexpr ImU32 kRune = IM_COL32(150, 134, 98, 255);     // bronze rules and borders
+		constexpr ImU32 kRuneDim = IM_COL32(150, 134, 98, 90);
+		constexpr ImU32 kIce = IM_COL32(244, 240, 232, 255);
+		constexpr ImU32 kNavy = IM_COL32(18, 17, 15, 210);  // (Edge's charcoal panels - the name kept)
 
 		ImU32 Fade(ImU32 c, float a) { return (c & 0x00FFFFFF) | (static_cast<ImU32>(((c >> 24) & 0xFF) * std::clamp(a, 0.0f, 1.0f)) << 24); }
 
@@ -439,9 +439,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			{  // the modpack's look (Noah: black and a blue accent): black glass, a rune-blue border with a soft glow, a rune mark at each corner
 				dl->AddRectFilledMultiColor(a, b, Fade(IM_COL32(10, 10, 12, 235), alpha), Fade(IM_COL32(10, 10, 12, 235), alpha), Fade(IM_COL32(2, 2, 3, 242), alpha), Fade(IM_COL32(2, 2, 3, 242), alpha));
 				for (int g = 3; g >= 1; --g) {
-					dl->AddRect({ a.x - g * k, a.y - g * k }, { b.x + g * k, b.y + g * k }, Fade(IM_COL32(220, 220, 214, 22), alpha), 3 * k, 0, 2.0f * k);
+					dl->AddRect({ a.x - g * k, a.y - g * k }, { b.x + g * k, b.y + g * k }, Fade(IM_COL32(196, 170, 112, 24), alpha), 3 * k, 0, 2.0f * k);
 				}
-				dl->AddRect(a, b, Fade(IM_COL32(200, 202, 206, 210), alpha), 2 * k, 0, 1.8f * k);
+				dl->AddRect(a, b, Fade(IM_COL32(150, 134, 98, 220), alpha), 2 * k, 0, 1.8f * k);
 				const float t = 12 * k;
 				for (auto [x, y, sx, sy] : { std::tuple{ a.x, a.y, 1.f, 1.f }, { b.x, a.y, -1.f, 1.f }, { a.x, b.y, 1.f, -1.f }, { b.x, b.y, -1.f, -1.f } }) {
 					dl->AddLine({ x, y }, { x + sx * t, y }, Fade(IM_COL32(170, 215, 255, 255), alpha), 2 * k);
@@ -1176,7 +1176,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						dl->PathStroke(Fade(cur || done ? kRune : kIce, alpha), 0, (cur ? 4.0f : 3.0f) * k);
 					}
 					if (flare > 0) {
-						dl->AddCircle(c, R + (10 + 30 * (1 - startT)) * k, IM_COL32(230, 228, 220, static_cast<int>(200 * flare)), 48, 3.0f * k);
+						dl->AddCircle(c, R + (10 + 30 * (1 - startT)) * k, IM_COL32(196, 170, 112, static_cast<int>(200 * flare)), 48, 3.0f * k);
 					}
 					TxtC(dl, g_num, 26 * k, c.x, c.y - 15 * k, kIce, std::to_string(s.wave), 2 * k, kRune);
 					const float tx = c.x + R + 16 * k;
@@ -2431,7 +2431,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (s.altarFocus != row || s.chooseOn) return;
 					focusY0 = y0 + scroll, focusY1 = y1 + scroll;  // (in the content's own space)
 					const ImVec2 ra{ a.x + 10 * k, y0 }, rb{ b.x - 10 * k, y1 };
-					dl->AddRectFilled(ra, rb, IM_COL32(230, 228, 220, 18 + static_cast<int>(10 * std::sin(now * 4.0f))), 4 * k);
+					dl->AddRectFilled(ra, rb, IM_COL32(196, 170, 112, 18 + static_cast<int>(10 * std::sin(now * 4.0f))), 4 * k);
 					dl->AddRect(ra, rb, kGold, 4 * k, 0, 1.5f * k);
 					const float my = (y0 + y1) * 0.5f;
 					dl->AddTriangleFilled({ ra.x - 2 * k, my - 8 * k }, { ra.x - 2 * k, my + 8 * k }, { ra.x + 7 * k, my }, kGold);
@@ -4779,7 +4779,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const ImVec2 a{ o.x + 18 * k, ly - 6 * k }, z{ o.x + lw - 18 * k, ly + 34 * k };
 				const bool   on = j == at, hv = hover(a, z);
 				if (on || hv) {
-					dl->AddRectFilled(a, z, on ? IM_COL32(230, 228, 220, 40) : IM_COL32(255, 255, 255, 14), 4 * k);
+					dl->AddRectFilled(a, z, on ? IM_COL32(196, 170, 112, 40) : IM_COL32(255, 255, 255, 14), 4 * k);
 				}
 				if (on) {
 					dl->AddRectFilled(a, { a.x + 4 * k, z.y }, kGold);
@@ -4805,7 +4805,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			} else {
 				dl->AddRectFilledMultiColor(pa, pz, IM_COL32(236, 224, 194, 255), IM_COL32(230, 216, 184, 255), IM_COL32(214, 196, 158, 255), IM_COL32(222, 206, 170, 255));
 			}
-			dl->AddRect(pa, pz, IM_COL32(200, 202, 206, 210), 0, 0, 2 * k);
+			dl->AddRect(pa, pz, IM_COL32(150, 134, 98, 220), 0, 0, 2 * k);
 			const auto& ch = codex::kChapters[g_cxCh];
 			const float mx = 70 * k, colW = std::min(pz.x - pa.x - 2 * mx, 900 * k);
 			const float cx = (pa.x + pz.x) * 0.5f, x0 = cx - colW * 0.5f;
