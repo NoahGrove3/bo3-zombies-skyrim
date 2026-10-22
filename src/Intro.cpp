@@ -139,15 +139,9 @@ namespace bo3z
 			}
 			// the skip: the creator first if it hasn't been, then Helgen set done
 			const bool raceOpen = ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME);
-			// (Noah: the starter kit right after the character is made) the creator closing on a new character: the class
-			// picker at once (its kit comes with the choice), not after Helgen
-			if (static bool wasOpen = false; wasOpen && !raceOpen && player->GetLevel() <= 1) {
-				logger::info("intro: the creator closed on a new character - the class picker");
-				Classes::OnNewCharacter();
-				wasOpen = raceOpen;
-			} else {
-				wasOpen = raceOpen;
-			}
+			// (Noah: when the class and its kit come) Helgen skipped: right after the creator - the skip moves you to Riverwood's
+			// gate and the picker opens as you arrive (the start step below); played through: as you walk out of the cave
+			// into Skyrim (MQ101 done, Before the Storm begun: the same start step)
 			if (raceOpen) g_raceSeen = true;
 			if (g_skipRace && g_raceSeen && !raceOpen) {
 				g_skipRace = false;
