@@ -2877,7 +2877,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_sys.path = path;
 				logger::info("party: the system list is {}", path);
 			}
-			g_sys.list = {};
+			g_sys.list = RE::GFxValue();
 			if (g_sys.path.empty() || !a_mv->GetVariable(&g_sys.list, g_sys.path.c_str()) || !g_sys.list.IsObject()) {
 				g_sys.found = false;
 				return;
