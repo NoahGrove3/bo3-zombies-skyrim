@@ -25,6 +25,7 @@ namespace bo3z::Party
 			std::string      name;
 			std::int8_t      wonder{ -1 };  // the wonder weapon they hold (-1 none)
 			std::int8_t      cls{ -1 };     // their class (-1 none chosen)
+			std::uint32_t    credit{ 0 };   // their own trials per city (3 bits a city)
 		};
 
 		std::mutex                                     g_lock;
@@ -421,14 +422,36 @@ namespace bo3z::Party
 		return {};
 	}
 
-	void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder, std::int8_t a_cls)
+	void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder, std::int8_t a_cls, std::uint32_t a_credit)
 	{
 		std::scoped_lock l(g_lock);
 		auto& r = g_remote[a_from];
 		if (a_life == static_cast<std::uint8_t>(Life::Down) && r.state != a_life) {
 			Tasks::Add([] { Forms::Play(gen::Sound::rite_fail); });  // a friend just went down: you hear it
 		}
-		r.state = a_life, r.at = a_at, r.left = a_left, r.heard = Clock::now(), r.name = a_name, r.wonder = a_wonder, r.cls = a_cls;
+		r.state = a_life, r.at = a_at, r.left = a_left, r.heard = Clock::now(), r.name = a_name, r.wonder = a_wonder, r.cls = a_cls, r.credit = a_credit;
+	}
+
+	// (Noah: in a party every player takes three trials at an altar) who of the party (heard in the last 15 s) still lacks them
+	int FriendsShort(int a_town, int a_need, std::string* a_names)
+	{
+		std::scoped_lock l(g_lock);
+		int n = 0;
+		for (const auto& [id, r] : g_remote) {
+			if (Clock::now() - r.heard > std::chrono::seconds(15) || a_town < 0 || a_town >= 10) continue;
+			if (static_cast<int>((r.credit >> (3 * a_town)) & 7) < a_need) {
+				++n;
+				if (a_names) *a_names += (a_names->empty() ? "" : ", ") + r.name;
+			}
+		}
+		return n;
+	}
+	int FriendCount()
+	{
+		std::scoped_lock l(g_lock);
+		int n = 0;
+		for (const auto& [id, r] : g_remote) n += Clock::now() - r.heard < std::chrono::seconds(15) ? 1 : 0;
+		return n;
 	}
 
 	void Revived(std::uint64_t a_by)

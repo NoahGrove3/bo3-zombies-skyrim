@@ -74,6 +74,23 @@ namespace bo3z
 			return s.freed ? kFreed : s.Count();
 		}
 
+		// (Noah: in a party each player takes three trials at an altar, then the night's waves are finished together) the
+		// trials you were there for, per city - your own, whoever's game counted the last step (co-save 'MINE')
+		std::array<std::uint8_t, 16> g_mine{};
+		constexpr int kPartyNeed = 3;
+		int  Mine(int a_town) { return a_town >= 0 && a_town < 16 ? std::popcount(static_cast<unsigned>(g_mine[a_town] & 31)) : 0; }
+		bool InParty() { return Party::FriendCount() > 0; }
+		// the Dragon Priest may rise: alone, the four trials; in a party, three of your own and three of every friend's
+		bool PriestReady(int a_town, const St& a_s, std::string* a_wait = nullptr)
+		{
+			if (!InParty()) return a_s.Count() >= kNeeded;
+			std::string names;
+			const int short_ = Party::FriendsShort(a_town, kPartyNeed, &names);
+			if (Mine(a_town) < kPartyNeed) names = std::string("you") + (names.empty() ? "" : ", " + names);
+			if (a_wait) *a_wait = names;
+			return Mine(a_town) >= kPartyNeed && short_ == 0;
+		}
+
 		// Skyrim's difficulty picks each trial's numbers
 		int Diff() { return std::clamp(Settings::Difficulty(), 0, 5); }
 		int N(int a_trial) { return gen::kTrials[a_trial].n[Diff()]; }
@@ -337,7 +354,9 @@ namespace bo3z
 			}
 			s.done |= 1 << tr;
 			s.prog = 0;
-			s.active = s.Count() >= kNeeded ? kBossActive : 0;
+			if (a_town >= 0 && a_town < 16) g_mine[a_town] |= static_cast<std::uint8_t>(1 << tr);
+			std::string wait;
+			s.active = PriestReady(a_town, s, &wait) ? kBossActive : 0;
 			Put(a_town, s);
 			ClearRun();
 			Forms::Play(gen::Sound::quest_step);
@@ -345,10 +364,12 @@ namespace bo3z
 			const std::string head = Upper(std::string(Title(tr))) + " - COMPLETE";
 			if (s.Boss()) {
 				Hud::Banner(head + "   " + std::string(BossName(a_town)) + " rises at the altar when night falls", 7.0f);
+			} else if (InParty()) {
+				Hud::Banner(head + "   (yours: " + std::to_string(Mine(a_town)) + " of " + std::to_string(kPartyNeed) + (wait.empty() ? std::string(")") : ")   still to finish three: " + wait), 6.0f);
 			} else {
 				Hud::Banner(head + "   (" + std::to_string(s.Count()) + " of " + std::to_string(kNeeded) + ")", 5.0f);
 			}
-			logger::info("curse: {} trial {} done ({} of {})", gen::kTowns[a_town], gen::kTrials[tr].id, s.Count(), kNeeded);
+			logger::info("curse: {} trial {} done ({} of {}, yours {})", gen::kTowns[a_town], gen::kTrials[tr].id, s.Count(), kNeeded, Mine(a_town));
 		}
 		// the count starts again
 		void Broken(int a_town, std::string_view a_why)
@@ -665,7 +686,7 @@ namespace bo3z
 				Hud::Banner("The Echo Altar of " + std::string(gen::kTowns[a_town]) + " is awake", 2.5f);
 				return;
 			}
-			if ((s.done >> a_trial) & 1) {
+			if (((s.done >> a_trial) & 1) && (!InParty() || ((g_mine[a_town] >> a_trial) & 1))) {
 				Hud::Banner(title + " is done", 2.5f);
 				return;
 			}
@@ -681,8 +702,8 @@ namespace bo3z
 				Hud::Banner("Choose a class first: the fourth trial is your class's own", 3.0f);
 				return;
 			}
-			if (s.Boss() || s.Count() >= kNeeded) {
-				Hud::Banner("The four trials are done - " + std::string(BossName(a_town)) + " must fall", 3.0f);
+			if (s.Boss() || (!InParty() && s.Count() >= kNeeded) || (InParty() && Mine(a_town) >= kPartyNeed)) {
+				Hud::Banner(InParty() && !s.Boss() ? "Your three trials are done - the rest of the party must finish theirs" : "The four trials are done - " + std::string(BossName(a_town)) + " must fall", 3.0f);
 				return;
 			}
 			if (s.Trial() == a_trial) {
@@ -707,7 +728,7 @@ namespace bo3z
 			}
 			const St s = Get(a_town);
 			v.on = !s.freed;
-			v.done = s.done, v.active = s.active;
+			v.done = InParty() ? g_mine[a_town] : s.done, v.active = s.active;
 			for (int i = 0; i < kTrialCount; ++i) {
 				v.desc[i] = Ask(i);
 			}
@@ -864,6 +885,7 @@ namespace bo3z
 			// a friend did a trial: it completes here too, with its reward (the party shares the quests)
 			for (int i = 0; i < kTrialCount && !after.freed; ++i) {
 				if (((after.done >> i) & 1) && !((before.done >> i) & 1)) {
+					if (g_zone == a_town) g_mine[a_town] |= static_cast<std::uint8_t>(1 << i);  // (you were there: it is yours too)
 					Forms::Play(gen::Sound::quest_step);
 					Hud::Banner(Upper(std::string(Title(i))) + " - COMPLETE (your party)", 5.0f);
 					Points::Add(500 * after.Count());
@@ -894,6 +916,18 @@ namespace bo3z
 		}
 
 		bool Freed(int a_town) { return a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size()) && Get(a_town).freed; }
+		std::uint32_t CreditBits()
+		{
+			std::uint32_t b = 0;
+			for (int t = 0; t < 10; ++t) b |= static_cast<std::uint32_t>(std::min(7, Mine(t))) << (3 * t);
+			return b;
+		}
+		std::vector<std::uint8_t> MineState() { return { g_mine.begin(), g_mine.end() }; }
+		void SetMineState(const std::vector<std::uint8_t>& a_s)
+		{
+			g_mine.fill(0);
+			for (std::size_t i = 0; i < a_s.size() && i < g_mine.size(); ++i) g_mine[i] = a_s[i];
+		}
 
 		void NewGamePlus()
 		{
@@ -1016,6 +1050,16 @@ namespace bo3z
 					logger::info("curse: entered {}", z >= 0 ? std::string(gen::kTowns[z]) : std::string("the wilds"));
 				}
 				g_zone = z;
+				// (a party's altar) the last of the party finished three trials: the Dragon Priest may rise now
+				if (z >= 0) {
+					if (St cs = Get(z); !cs.freed && cs.active == 0 && InParty() && PriestReady(z, cs)) {
+						cs.active = kBossActive;
+						Put(z, cs);
+						Forms::Play(gen::Sound::quest_step);
+						Hud::Banner("THE PARTY'S TRIALS ARE DONE   " + std::string(BossName(z)) + " rises at the altar when night falls - then finish the night's waves", 7.0f);
+						logger::info("curse: {} - every player has three trials: the Dragon Priest", gen::kTowns[z]);
+					}
+				}
 				Arcana::RefreshPower();  // (the spells grow with the altars woken)
 				// saves from the ten-rite cities: a freed city stays freed, the rest begin the trials
 				if (g_normDelay > 0) {

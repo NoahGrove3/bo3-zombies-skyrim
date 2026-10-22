@@ -437,7 +437,9 @@ namespace bo3z
 		Life State();
 		View Now();
 		Out  Outgoing();                               // Net: what to tell the party
-		void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder = -1, std::int8_t a_cls = -1);
+		void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder = -1, std::int8_t a_cls = -1, std::uint32_t a_credit = 0);
+		int  FriendsShort(int a_town, int a_need, std::string* a_names = nullptr);  // (co-op altars) friends in the party with fewer than a_need own trials there
+		int  FriendCount();                                // other players in the party now
 		std::string WonderHolder(int a_wonder);         // the friend in the party holding that wonder weapon ('' none)
 		void        SetWonder(int a_wonder);            // ours (-1 none): told to the party
 		void Revived(std::uint64_t a_by);
@@ -471,6 +473,9 @@ namespace bo3z
 		void  MigrateRites();               // a save from the four-rite cities: freed stays freed, the rest begin the trials
 		void  NewGamePlus();                // Stage 5, the Seat of the Awakened: every city back under the curse, the nights start over
 		bool  Freed(int a_town);            // its Echo Altar is awake (three trials and its Dragon Priest)
+		std::uint32_t CreditBits();          // (co-op) your own trials per city, 3 bits a city: told to the party
+		std::vector<std::uint8_t> MineState();               // the co-save: which trials you did yourself, per city
+		void                      SetMineState(const std::vector<std::uint8_t>& a_s);
 		bool  SafeHere(RE::PlayerCharacter* a_player);  // in a freed city: no undead rise here
 		float SpawnBoost();                              // holding a shrine: the night pushes harder
 		int   ZoneTown();                                // city the player is in (-1)

@@ -383,6 +383,9 @@ namespace bo3z
 				if (const auto cs = Classes::State(); a_s->OpenRecord('CLAS', 1)) {  // your class, and the spells of the ones you left
 					a_s->WriteRecordData(cs.data(), static_cast<std::uint32_t>(cs.size()));
 				}
+				if (const auto mn = Curse::MineState(); a_s->OpenRecord('MINE', 1)) {  // (a party's altars) the trials you did yourself
+					a_s->WriteRecordData(mn.data(), static_cast<std::uint32_t>(mn.size()));
+				}
 				if (const auto rs = Shops::RollState(); a_s->OpenRecord('ROLL', 1)) {  // each altar's price tonight
 					a_s->WriteRecordData(rs.data(), static_cast<std::uint32_t>(rs.size()));
 				}
@@ -421,6 +424,10 @@ namespace bo3z
 						std::vector<std::uint8_t> cs(length);
 						a_s->ReadRecordData(cs.data(), length);
 						Classes::SetState(cs);
+					} else if (type == 'MINE' && version == 1) {
+						std::vector<std::uint8_t> mn(length);
+						a_s->ReadRecordData(mn.data(), length);
+						Curse::SetMineState(mn);
 					} else if (type == 'ROLL' && version == 1) {
 						std::vector<std::uint8_t> rs(length);
 						a_s->ReadRecordData(rs.data(), length);
@@ -449,7 +456,7 @@ namespace bo3z
 					Migrate();
 				}
 			}
-			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}), Bows::SetLevels({}), Shops::SetRollState({}), Classes::Revert(); }
+			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}), Bows::SetLevels({}), Shops::SetRollState({}), Curse::SetMineState({}), Classes::Revert(); }
 		}
 
 		void InstallCoSave()
