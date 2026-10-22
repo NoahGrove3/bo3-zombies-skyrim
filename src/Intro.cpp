@@ -12,6 +12,7 @@ namespace bo3z
 		bool  g_skip = false;        // Helgen skipped this game: once it is done, the move to Riverwood's gate
 		bool  g_skipRace = false;    // ... waiting for the character creator to close first
 		bool  g_raceSeen = false;    // the character creator has been and gone this game
+		int   g_raceAfterSkip = 0;   // (Noah: skip first, then the creator at Riverwood) 1 wanted, 2 shown
 		float g_skipHold = 0;        // H held this long
 		bool  g_skipHeld = false;
 		void Papyrus(RE::TESForm* a_form, const char* a_class, const char* a_fn, RE::BSScript::IFunctionArguments* a_args)
@@ -105,7 +106,7 @@ namespace bo3z
 
 		bool CrewScreenOpen() { return false; }
 		bool NewGameThisSession() { return g_moved; }
-		void OnMainMenu() { g_moved = false, g_settle = 0, g_skip = false, g_skipRace = false, g_raceSeen = false, g_skipHold = 0, g_skipHeld = false; }  // the BO3 crew picker is gone: you play your own character
+		void OnMainMenu() { g_moved = false, g_settle = 0, g_skip = false, g_skipRace = false, g_raceSeen = false, g_skipHold = 0, g_skipHeld = false, g_raceAfterSkip = 0; }  // the BO3 crew picker is gone: you play your own character
 
 		void Tick()
 		{
@@ -166,17 +167,11 @@ namespace bo3z
 					g_skipHold += 1.0f / 60.0f;
 					if (g_skipHold > 1.5f) {
 						g_skipHeld = false, g_skipHold = 0;
-						if (!g_raceSeen && intro->GetCurrentStageID() < 240) {  // (the creator comes at the block: bring it now)
-							g_skipRace = true;
-							auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
-							RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
-							if (vm) {
-								vm->DispatchStaticCall("Game", "ShowRaceMenu", RE::MakeFunctionArguments(), none);
-							}
-							logger::info("intro: skip asked before the creator - the creator first");
-						} else {
-							DoSkip();
-						}
+						// (Noah) skipped: the loading screen, Riverwood's gate, and only then the creator (if it hasn't been yet),
+						// then the class and its kit
+						g_raceAfterSkip = g_raceSeen ? 0 : 1;
+						logger::info("intro: Helgen skipped{}", g_raceAfterSkip ? " - the creator opens at Riverwood" : "");
+						DoSkip();
 					}
 				} else {
 					g_skipHold = 0;
@@ -201,6 +196,22 @@ namespace bo3z
 				Save::SetFlag(Save::kFlagMoved, true);
 			}
 			// No crew pick any more: you play your own Skyrim character. First time in, you get the starting wand.
+			if (Save::Flag(Save::kFlagMoved) && Forms::IntroDone() && !Save::Flag(Save::kFlagStarted) && g_raceAfterSkip) {
+				// the creator at Riverwood's gate, once the world is there (the move's loading screen gone); the class waits for it to close
+				if (g_raceAfterSkip == 1 && player->Is3DLoaded() && !ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME) && !Hud::IntroBusy()) {
+					static int settle = 0;
+					if (++settle > 60) {
+						settle = 0, g_raceAfterSkip = 2;
+						auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+						RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+						if (vm) vm->DispatchStaticCall("Game", "ShowRaceMenu", RE::MakeFunctionArguments(), none);
+						logger::info("intro: at Riverwood - the creator");
+					}
+					return;
+				}
+				if (g_raceAfterSkip == 2 && (ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME) || !g_raceSeen)) return;
+				g_raceAfterSkip = 0;  // (made: on to the class)
+			}
 			if (Save::Flag(Save::kFlagMoved) && Forms::IntroDone() && !Save::Flag(Save::kFlagStarted)) {
 				if (Save::Crew() >= 0) {
 					Save::SetCrew(-1);  // older saves: drop the crew character

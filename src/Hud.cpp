@@ -5490,7 +5490,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		std::string PadWord(std::string_view a_x)
 		{
 			if (!Settings::PlayStationIcons()) return std::string(a_x == "BACK" ? "View" : a_x == "START" ? "Menu" : a_x);
-			return a_x == "A" ? "Cross" : a_x == "B" ? "Circle" : a_x == "X" ? "Square" : a_x == "Y" ? "Triangle" : a_x == "LB" ? "L1" : a_x == "RB" ? "R1" :
+			return a_x == "A" ? "X" : a_x == "B" ? "Circle" : a_x == "X" ? "Square" : a_x == "Y" ? "Triangle" : a_x == "LB" ? "L1" : a_x == "RB" ? "R1" :
 			       a_x == "LT" ? "L2" : a_x == "RT" ? "R2" : a_x == "BACK" ? "Create" : a_x == "START" ? "Options" : std::string(a_x);
 		}
 		void OnMouseMove(float a_dx, float a_dy)
