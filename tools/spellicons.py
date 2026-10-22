@@ -204,7 +204,7 @@ def sig_crown(d, f, s):        # Wolf Queen's Crown: a spiked crown over a howli
     d.line(P([(0.3, 0.27), (0.5, 0.14)]), fill=(0, 0, 0, 255), width=int(2 * s))
 
 
-def sig_horn(d, f, s):         # Horn of the Barrow-Jarls: a great curled war-horn bound in iron bands, its call rolling out
+def sig_horn(d, f, s):         # Horn of the Dragon Priests: a great curled war-horn bound in iron bands, its call rolling out
     pts_o, pts_i = [], []
     for k in range(25):
         t = k / 24

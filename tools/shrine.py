@@ -268,7 +268,7 @@ def tex_halo(n=256):
 
 
 def tex_rock(n=1024, seed=5):
-    """the floating rocks: dark slate, cracked and worn, carved with the Dirge's runes that glow blue in their
+    """the floating rocks: dark slate, cracked and worn, carved with the Curse's runes that glow blue in their
     grooves (diffuse, normal and glow maps)"""
     rng = random.Random(seed)
     nrng = np.random.default_rng(seed)

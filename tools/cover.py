@@ -362,7 +362,7 @@ for sgn in (-1, 1):   # knotwork-ish rules either side of the line
     d.line([(x0, ty + 175 * kk), (x1, ty + 175 * kk)], fill=(200, 120, 80, 200), width=max(1, int(3 * kk)))
     d.polygon([(x0, ty + 175 * kk - 12 * kk), (x0 + sgn * 18 * kk, ty + 175 * kk), (x0, ty + 175 * kk + 12 * kk), (x0 - sgn * 18 * kk, ty + 175 * kk)], fill=(230, 140, 90, 230))
 fB = ImageFont.truetype(FR, int(50 * kk))
-if not MENU: draw_text(lay, 'ROUND-BASED UNDEAD SURVIVAL  •  HAND MAGIC & THE THU\'UM  •  THE UNDYING DIRGE', fB, h - 90 * kk, 10 * kk, (210, 190, 170, 200))
+if not MENU: draw_text(lay, 'ROUND-BASED UNDEAD SURVIVAL  •  HAND MAGIC & THE THU\'UM  •  ALDUIN\'S CURSE', fB, h - 90 * kk, 10 * kk, (210, 190, 170, 200))
 out = Image.alpha_composite(out.convert('RGBA'), lay).convert('RGB')
 if MENU:  # Skyrim's own buttons (Continue, New, Load...) are drawn over the bottom-right: a darker, quieter corner for them
     ww, hh = out.size

@@ -861,7 +861,7 @@ def sky(seed=200):
 
 @scene
 def graves(seed=300):
-    """the Dirge rolls from peak to plain, and every grave in Skyrim hears it"""
+    """the Curse rolls from peak to plain, and every grave in Skyrim hears it"""
     out = {}
     back = Layer(seed)
     for i, r in enumerate([260, 380, 520, 680, 860]):
@@ -1203,7 +1203,7 @@ def carved_text(text, size, colour=INK, width=None, seed=0):
 LINES = {
     'l01a': ('In the Fourth Era, two hundred and one,', 40), 'l01b': ('Helgen burned beneath a blackened sun.', 40),
     'l02a': ('You lived. But rising from the ash and flame,', 40), 'l02b': ('the World-Eater sang a word no tongue can name.', 40),
-    'l03a': ('The Undying Dirge rolled out from peak to plain,', 40), 'l03b': ('and every grave in Skyrim heard its strain.', 40),
+    'l03a': ("Alduin's Curse rolled out from peak to plain,", 40), 'l03b': ('and every grave in Skyrim heard its strain.', 40),
     'l04a': ('By day it sleeps beneath the barrow stone.', 40), 'l04b': ('But when the sun goes down, the dead come home.', 40),
     'l05a': ('They come with the Moon, each night more fierce, more fed:', 38), 'l05b': ('the Undead run you down, the Wailers call the dead.', 38),
     'l06a': ('Champions stride among them, terrible and grim:', 38), 'l06b': ('the Bone Knight, the Barrow King, the Lich who sings the hymn.', 38),

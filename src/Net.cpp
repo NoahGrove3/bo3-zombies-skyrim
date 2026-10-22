@@ -11,8 +11,8 @@
 //
 // Messages: Steam's ISteamNetworkingMessages, peer to peer through Steam's relays, on channel 7.
 //   host -> everyone, 4 times a second: the night (phase, round, countdown, event), the boss bar, the Coffer's
-//           town, power-up timers and the Nuke, and the Undying Dirge's progress in every city
-//   client -> host, once a second: its Dirge progress (the larger of the two wins, so anyone's quest work counts)
+//           town, power-up timers and the Nuke, and Alduin's Curse's progress in every city
+//   client -> host, once a second: its Curse progress (the larger of the two wins, so anyone's quest work counts)
 //   anyone -> everyone: a power-up taken (the host relays a client's)
 // Everything goes through steam_api64.dll's flat C API, loaded at run time (Skyrim ships it and runs its callbacks).
 namespace bo3z::Relay
@@ -763,7 +763,7 @@ namespace bo3z::Net
 			g_memberTimer = 1.0f;
 			RefreshMembers();
 			auto* pl = RE::PlayerCharacter::GetSingleton();
-			if (!IsHost() && pl && pl->Is3DLoaded()) {  // our Dirge progress to the host (the larger counts)
+			if (!IsHost() && pl && pl->Is3DLoaded()) {  // our Curse progress to the host (the larger counts)
 				std::vector<std::uint8_t> m(1 + 4 * gen::kCurseCities.size());
 				m[0] = kCurse;
 				for (std::size_t t = 0; t < gen::kCurseCities.size(); ++t) {

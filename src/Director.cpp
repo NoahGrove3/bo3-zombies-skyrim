@@ -736,11 +736,24 @@ namespace bo3z
 
 		// The bosses take turns: the first on night 10, the next on night 20, and round again (each time on a later,
 		// harder night). Host and party agree, since the night number is shared.
+		// (Noah: Grimmvar is one of Diverse Dragons' own) the Herald (row herald, the Dark Dragon) comes only on the
+		// Fog Nights, once Alduin's Bane is done; the every-tenth-night bosses take turns without him
+		bool g_wantHerald = false;
+		int  HeraldRow()
+		{
+			for (int i = 0; i < static_cast<int>(gen::kEnemies.size()); ++i) {
+				if (gen::kEnemies[i].id == std::string_view("herald")) return Forms::Enemy(i) ? i : -1;
+			}
+			return -1;
+		}
 		int BossRow()
 		{
+			if (g_wantHerald) {
+				if (const int h = HeraldRow(); h >= 0) return h;
+			}
 			int rows[16], n = 0, every = 10;
 			for (int i = 0; i < static_cast<int>(gen::kEnemies.size()) && n < 16; ++i) {
-				if (gen::kEnemies[i].bossEvery > 0 && Forms::Enemy(i)) {
+				if (gen::kEnemies[i].bossEvery > 0 && gen::kEnemies[i].id != std::string_view("herald") && Forms::Enemy(i)) {
 					rows[n++] = i, every = gen::kEnemies[i].bossEvery;
 				}
 			}
@@ -1018,8 +1031,8 @@ namespace bo3z
 		void TickBoss(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			Hazards(a_player, a_delta);
-			if (g_boss.spawnIn > 0 && !Story::GrimmvarOpen()) {
-				g_boss.spawnIn = -1;  // (the story: Grimmvar the Undying Wyrm can be hunted only after Alduin's Bane)
+			if (g_boss.spawnIn > 0 && g_wantHerald && !Story::GrimmvarOpen()) {
+				g_boss.spawnIn = -1, g_wantHerald = false;  // (the story: Grimmvar, Alduin's Herald, hunts only after Alduin's Bane)
 			}
 			if (g_boss.spawnIn > 0 && (g_boss.spawnIn -= a_delta) <= 0) {
 				g_boss.spawnIn = -1;
@@ -1341,8 +1354,8 @@ namespace bo3z
 			{  // the night's own bed of sound, under everything until dawn
 				Audio::LoopStart(Audio::kLoopNight, ev.bed);
 			}
-			if (ev.boss && !Coop::Client() && g_boss.spawnIn < 0 && !g_boss.handle.get() && !g_boss.slainTonight) {
-				g_boss.spawnIn = 20.0f;
+			if (ev.boss && !Coop::Client() && g_boss.spawnIn < 0 && !g_boss.handle.get() && !g_boss.slainTonight && Story::GrimmvarOpen()) {
+				g_boss.spawnIn = 20.0f, g_wantHerald = true;
 			}
 			logger::info("event: {} night", ev.id);
 		}
@@ -1517,6 +1530,7 @@ namespace bo3z
 			g_phase = Phase::Fighting;
 			g_boss.slainTonight = false;
 			g_champ.slainTonight = false;
+			if (!g_boss.handle.get()) g_wantHerald = false;
 			if (const int row = BossRow(); !Coop::Client() && row >= 0 && a_round >= gen::kEnemies[row].minRound && a_round % gen::kEnemies[row].bossEvery == 0) {
 				g_boss.spawnIn = gen::boss::spawnDelay;
 			}
@@ -2524,8 +2538,12 @@ namespace bo3z
 				g_event = fog;
 				StartEvent(fog);
 			}
-			g_boss.spawnIn = 20.0f;
-			Hud::Banner("THE FOG ROLLS IN - ALDUIN'S HERALD IS COMING", 6.0f);
+			if (!Story::GrimmvarOpen()) {
+				Hud::Banner("THE FOG ROLLS IN - but Alduin's Herald does not answer yet (after Alduin's Bane)", 6.0f);
+				return;
+			}
+			g_boss.spawnIn = 20.0f, g_wantHerald = true;
+			Hud::Banner("THE FOG ROLLS IN - GRIMMVAR, ALDUIN'S HERALD, IS COMING", 6.0f);
 		}
 		// The curse lifted: a wave of light runs out from the shrine and each of the night's dead it reaches is struck
 		// down (a flash of Turn Undead where it stands, the body falls), then crumbles to grave-dust a few seconds on -

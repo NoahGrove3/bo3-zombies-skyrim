@@ -47,7 +47,7 @@ STAFFS = {
     'longshot':   ('spire', {'shaft': ('steel', (118, 124, 140)), 'band': ('gold', None), 'coil': (120, 180, 255), 'gem': (210, 235, 255)}, (0.55, 0.75, 1.0), 'stars'),
     'centurion':  ('crookgem', {'wood': ('wood_dark', (60, 64, 36)), 'band': ('iron', (74, 76, 62)), 'gem': (130, 255, 60), 'leaf': ('vines', (64, 84, 32))}, (0.5, 1.0, 0.2), 'drops'),
     'kagrenac':   ('crook', {'wood': ('wood', (86, 60, 74)), 'band': ('silver', None)}, (1.0, 0.35, 0.8), 'mindeye'),
-    # city relics (rewards of the Undying Dirge): grander finishes, two add-ons each
+    # city relics (rewards of Alduin's Curse): grander finishes, two add-ons each
     'hearth':     ('seed', {'wood': ('wood', (112, 72, 44)), 'accent': ('gold', None), 'leaf': ('tex', (190, 80, 34)), 'gem': (255, 130, 40)}, (1.0, 0.5, 0.15), ('wisps', 'halo')),
     'gildergreen': ('vine', {'wood': ('tex', (170, 140, 96)), 'leaf': ('vines', (96, 160, 64))}, (0.65, 1.0, 0.4), ('spores', 'halo')),
     'arkay':      ('heaven', {'wood': ('bone', (226, 220, 204)), 'wings': ('silver', (212, 214, 228)), 'gem': (236, 232, 255), 'particle': (222, 216, 255)}, (0.9, 0.9, 1.0), ('halo', 'runes')),

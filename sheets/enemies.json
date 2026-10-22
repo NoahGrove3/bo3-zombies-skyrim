@@ -323,6 +323,26 @@
    "rig": false
   },
   {
+   "id": "herald",
+   "label": "Grimmvar, Alduin's Herald",
+   "plugin": "DiverseDragonsCollectionSE.esp",
+   "localId": "0x023F3F",
+   "editorId": "ogdd_EncDragonDark01",
+   "recordType": "NPC_",
+   "minRound": 1,
+   "weight": 0,
+   "specialRound": false,
+   "headNode": "NPC Head",
+   "forceCombat": true,
+   "bossEvery": 10,
+   "elite": false,
+   "verify": [],
+   "kind": "zombie",
+   "healthMult": 1.0,
+   "speedMult": 1.0,
+   "rig": false
+  },
+  {
    "id": "boss",
    "label": "Haugrisi, the Mound-Giant",
    "plugin": "mihailesobonecolossus.esp",

@@ -1,11 +1,11 @@
 {
   "sheet": "curse",
-  "about": "The Curse of Alduin: lore, and the trials every city's Echo Altar sets before it wakes. At the altar the player takes the three shared trials (ward, culling, breath) and the class trial (the steel slot: Pact of the Host, Trial of the Elements, Trial of the Long Shot or Trial of Steel, by the player's class), in any order; the Unbroken is folded into the Long Night's Breath (Expert and up: waves held above half health). When the four are done the city's Barrow-Jarl (bosses, by town) rises near the altar at night, and slaying it frees the city. Each trial's n and seconds are given per Skyrim difficulty, Novice to Legendary (iDifficulty 0-5). Progress lives in one global per city (1000000 + doneBits*100000 + active*10000 + progress, 9000000 = freed), saved with the game. {city} is filled per city, {n} and {s} with the trial's count and seconds. A freed city is a sanctuary: no undead rise within zoneRadius of its station or in its own location; its shout waits at the altar.",
+  "about": "The Curse of Alduin: lore, and the trials every city's Echo Altar sets before it wakes. At the altar the player takes the three shared trials (ward, culling, breath) and the class trial (the steel slot: Pact of the Host, Trial of the Elements, Trial of the Long Shot or Trial of Steel, by the player's class), in any order; the Unbroken is folded into the Long Night's Breath (Expert and up: waves held above half health). When the four are done the city's Dragon Priest (bosses, by town) rises near the altar at night, and slaying it frees the city. Each trial's n and seconds are given per Skyrim difficulty, Novice to Legendary (iDifficulty 0-5). Progress lives in one global per city (1000000 + doneBits*100000 + active*10000 + progress, 9000000 = freed), saved with the game. {city} is filled per city, {n} and {s} with the trial's count and seconds. A freed city is a sanctuary: no undead rise within zoneRadius of its station or in its own location; its shout waits at the altar.",
   "prologueTitle": "THE CURSE OF ALDUIN",
-  "prologue": "Helgen burned, and you lived. But Alduin did not flee: as he rose from the ash he shouted three words into the earth - GRAH DIR LEIN, Battle, Death, World - and every barrow in Skyrim answered. Now when the sun goes down the dead claw their way up to finish what he began. Only the Echo Altars the ancient Tongues raised in every hold can still his voice, and they have gone dark. Wake them, city by city, and their dead will sleep again.",
+  "prologue": "Helgen burned, and you lived. But Alduin did not flee: as he rose from the ash he shouted three words into the earth - SLEN TIID VO, Flesh, Time, Undo - the shout that raises the dead, and every barrow in Skyrim answered. His mist rolled over the door of Sovngarde, and now the dead of Skyrim cannot pass to Shor's hall: they lie restless in the ground, and when the sun goes down they claw their way up. The Dragon Priests who swore themselves to Alduin in the Merethic Era remember their oaths and wake with them. Only the Echo Altars the ancient Tongues raised in every hold can still his voice, and they have gone dark. Wake them, city by city, and their dead will sleep again.",
   "liftedBanner": "THE ECHO ALTAR OF {CITY} AWAKENS",
-  "liftedText": "The altar of {city} rings with the old Tongues' answer, and Alduin's voice falls silent here. Its dead sleep again: none will rise within its bounds.",
-  "freedAll": "Every Echo Altar in Skyrim is awake. Alduin's voice lingers only in the wild places, and it will not fall silent until the World-Eater does.",
+  "liftedText": "The altar of {city} rings with the old Tongues' answer, and Alduin's voice falls silent here. Its dead sleep again - none will rise within its bounds - and the mist on Sovngarde's door thins a little.",
+  "freedAll": "Every Echo Altar in Skyrim is awake. Alduin's voice lingers only in the wild places, and the mist will not lift from Sovngarde's door until the World-Eater falls.",
   "zoneRadius": 6500,
   "holdRadius": 900,
   "cities": [
@@ -89,7 +89,7 @@
       "title": "The Culling",
       "short": "Slay the risen within the city",
       "goal": "Slay the risen within {city}",
-      "text": "GRAH - Battle. The first of Alduin's three words calls the dead to war, and the altar answers war with war. Put {n} of the risen down within {city} - every one the night conjures up counts.",
+      "text": "SLEN - Flesh. The first of Alduin's three words puts flesh back on the dead, and the altar answers by striking it off again. Put {n} of the risen down within {city} - every one the night conjures up counts.",
       "n": [
         40,
         50,
@@ -112,7 +112,7 @@
       "title": "The Unbroken",
       "short": "Folded into the Long Night's Breath",
       "goal": "Clear waves of the risen in {city} without falling below half health",
-      "text": "DIR - Death. Alduin's second word feeds on the wounded. Clear {n} whole waves of the risen in {city} without letting your health fall below half; bleed past it and that wave does not count.",
+      "text": "TIID - Time. Alduin's second word gives the dead back the years the grave took, and it feeds on the wounded. Clear {n} whole waves of the risen in {city} without letting your health fall below half; bleed past it and that wave does not count.",
       "n": [
         1,
         1,
@@ -135,7 +135,7 @@
       "title": "Your Class's Trial",
       "short": "The trial of your own class",
       "goal": "Win your class's trial in {city}",
-      "text": "The altar of {city} asks each who comes of their own craft. A Summoner's host must make the kills (Pact of the Host); a Destruction mage must kill with two elements or more (Trial of the Elements); a Ranger must kill from 30 m or more with bow or crossbow (Trial of the Long Shot); a Spellsword must kill in melee with a spell in the other hand (Trial of Steel).",
+      "text": "The altar of {city} asks each who comes of their own craft. A Summoner, a conjurer of the College, lets the host make the kills (Pact of the Host); a Destruction mage, a College battle-mage, kills with two elements or more (Trial of the Elements); a Ranger of the Dawnguard kills from 30 m or more with bow or crossbow (Trial of the Long Shot); a Spellsword of the Vigilants kills in melee with a spell in the other hand (Trial of Steel).",
       "n": [
         10,
         12,
@@ -158,7 +158,7 @@
       "title": "The Long Night's Breath",
       "short": "Hold the altar while the waves are cleared",
       "goal": "Hold the Echo Altar of {city} through the night's waves",
-      "text": "LEIN - World. The last word is Alduin breathing the world back into his dead. Stand by the altar of {city} while the night's waves rise against it: clear {n} waves without straying from it, and its breath is broken. On Expert and above the Unbroken's rule holds too: a wave counts only if you never fell below half health.",
+      "text": "VO - Undo. The last word undoes death itself, and the dead keep coming while it is spoken. Stand by the altar of {city} while the night's waves rise against it: clear {n} waves without straying from it, and its word is undone in turn. On Expert and above the Unbroken's rule holds too: a wave counts only if you never fell below half health.",
       "n": [
         1,
         2,
@@ -179,64 +179,64 @@
   ],
   "bosses": {
     "Riverwood": {
-      "name": "Skjold Barrowborn",
+      "name": "Vahlok the Jailor",
       "row": "knight",
       "health": 20,
-      "text": "Skjold was laid in Bleak Falls Barrow before Riverwood had a name, a jarl of the first Nords who swore he would hold the valley forever. Alduin took him at his word. He rises from the river mist to keep the altar silent."
+      "text": "Vahlok kept the cult's prisoners in the Merethic Era, and his oath to Alduin was the last he swore. It has brought him out of his tomb and across the sea to the barrow above Riverwood, to keep the valley's altar dark."
     },
     "Whiterun": {
-      "name": "Jarl Ulfgar the Bone-Crowned",
+      "name": "Nahkriin, Warden of Skuldafn",
       "row": "king",
       "health": 26,
-      "text": "Before Dragonsreach there was Ulfgar, who ruled the plains from a hall of turf and wore the skulls of his rivals as a crown. Grah Dir Lein woke him under the Gildergreen's roots, and he means to rule Whiterun again."
+      "text": "Nahkriin guarded Skuldafn, the gate to Sovngarde, for Alduin, and the mist that bars Sovngarde's door is his to keep. He has come down from the mountains to the plains, so that Whiterun's dead never find the way home."
     },
     "Solitude": {
-      "name": "The Wolf Queen's Shade",
+      "name": "Volsung of Volskygge",
       "row": "lich",
       "health": 26,
-      "text": "Potema Septim raised the dead of Solitude once in life and was sealed beneath the city for it. Alduin's word slipped through the seal. What rises is not the queen but her hunger, still calling the dead to her court."
+      "text": "Volsung ruled the peaks above Haafingar from Volskygge, and his mask let him breathe where no man could. He climbs down to Solitude now, and the dead of the Blue Palace's crypts rise at his word."
     },
     "Windhelm": {
-      "name": "Vrolund Ice-Hand",
+      "name": "Zahkriisos the Frost-Priest",
       "row": "hexer_rime",
       "health": 28,
-      "text": "Vrolund held Windhelm's gate in the Dragon War and froze the sea to keep the Atmorans' foes out. His barrow lies under the snow by the docks. His hand is still cold enough to stop a heart."
+      "text": "Zahkriisos lay in his tomb on Solstheim until Alduin's shout crossed the Sea of Ghosts. He walked over the ice to Windhelm's docks, and the cold he carries stops a heart."
     },
     "Markarth": {
-      "name": "The Briar-Heart King",
+      "name": "Otar the Mad",
       "row": "reaper",
       "health": 24,
-      "text": "The Reach's oldest king cut out his own heart and grew a briar in its place, so that no blade could find it. The Forsworn forgot him; the dead did not. He climbs from the stone beneath Markarth to guard the altar."
+      "text": "Otar was so cruel that his own cult sealed him alive in Ragnvald. His oath to Alduin outlived his reason. He climbs out of the Reach's stone beneath Markarth to guard its altar."
     },
     "Riften": {
-      "name": "Lady Hjaldis of the Black Mire",
+      "name": "Rahgot of Forelhost",
       "row": "wailer",
       "health": 22,
-      "text": "Hjaldis drowned herself in the Black Mire rather than yield Riften to the dragons, and the swamp kept her. When Alduin shouted, the mire gave her back - wailing, and with the fen's dead at her heels."
+      "text": "Rahgot's followers poisoned themselves in Forelhost rather than surrender him to the Tongues. They rise with him now, and the Rift's dead follow them down to Riften's altar."
     },
     "Falkreath": {
-      "name": "Hagla the Gravemother",
+      "name": "Krosis of Shearpoint",
       "row": "brute",
       "health": 26,
-      "text": "Falkreath's graveyard is older than the town, and Hagla tended it when it was young. She buried every child of the hold, and now she wants them back. She rises from the oldest grave to keep them."
+      "text": "Krosis guarded the word at Shearpoint, mourning, for a thousand years. Alduin's shout gave him something to do with his sorrow: he comes down to Falkreath's graveyard to keep its children in the ground no longer."
     },
     "Morthal": {
-      "name": "The Drowned Jarl of Hjaalmarch",
+      "name": "Hevnoraak of Valthume",
       "row": "bloater",
       "health": 24,
-      "text": "Hjaalmarch's first jarl sank with his longship in the marsh and never rose - until Grah Dir Lein. He walks out of the fog bloated with black water, and the marsh's dead follow him."
+      "text": "Hevnoraak's servants sealed him in Valthume to stop him rising. The seal could not hold against SLEN TIID VO: he walks out of the marsh fog, and Hjaalmarch's drowned dead follow him."
     },
     "Dawnstar": {
-      "name": "The Nightcaller Wight",
+      "name": "Vokun of High Gate",
       "row": "shadow",
       "health": 22,
-      "text": "Once a priest of the Nightcaller Temple, the wight dreamed Alduin's return a thousand years before it came. It woke smiling. Kill it, and Dawnstar's nightmares end."
+      "text": "Vokun was a priest of shadows, and the Nightcaller's dreamers in Dawnstar dreamed his return a thousand years before it came. Kill him, and Dawnstar's nightmares end."
     },
     "Winterhold": {
-      "name": "Archmage Valdrek the Collapsed",
+      "name": "Morokei of Labyrinthian",
       "row": "hexer_storm",
       "health": 24,
-      "text": "Valdrek fell into the sea with half of Winterhold in the Great Collapse, still casting. The storm he was raising never finished. Now it walks the cliff-tops in his bones, and it is not finished yet."
+      "text": "Morokei once held the Staff of Magnus in Labyrinthian, and the College has feared him ever since. He has come to the cliffs above Winterhold, and the storm he calls has not finished yet."
     }
   }
 }

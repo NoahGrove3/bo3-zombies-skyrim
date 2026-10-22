@@ -164,10 +164,10 @@ for t in towns:
     o.append(f'\t\tStationDef{{ true, 0x{int(r["worldspace"],16):06X}, {F(r["x"])}, {F(r["y"])}, {F(r["z"])}, {F(r["yawDeg"])}, {F(r["compact"])} }},' if r else '\t\tStationDef{ false, 0, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f },')
 o.append('\t} };')
 SH = S['shouts']['rows']
-o.append('\tstruct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; int sound; std::string_view extPlugin; std::uint32_t extShout; std::string_view quest; };')
+o.append('\tstruct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; int sound; std::string_view extPlugin; std::uint32_t extShout; std::string_view quest; std::string_view t1, t2, t3; };')
 o.append(f'\tinline constexpr std::array<ShoutDef, {len(SH)}> kShouts{{ {{')
 for h in SH:
-    o.append(f'\t\tShoutDef{{ {cs(h["id"])}, {cs(h["label"])}, {cs(h["text"])}, {towns.index(h["town"]) if h["town"] else -1}, 0x{IDS[("SHOU", h["id"])]:03X}, {{ ' + ', '.join(f'0x{IDS[("WOOP", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + ' }, { ' + ', '.join(f'0x{IDS[("SPEL", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + f' }}, 0x{h["color"]}, {cs(h["words"][0])}, {cs(h["words"][1])}, {cs(h["words"][2])}, {[x["id"] for x in S["sounds"]["rows"]].index("shout_" + h["id"])}, {cs(h.get("plugin", ""))}, 0x{int(h.get("shoutId", "0"), 16):06X}, {cs(h.get("quest", ""))} }},')
+    o.append(f'\t\tShoutDef{{ {cs(h["id"])}, {cs(h["label"])}, {cs(h["text"])}, {towns.index(h["town"]) if h["town"] else -1}, 0x{IDS[("SHOU", h["id"])]:03X}, {{ ' + ', '.join(f'0x{IDS[("WOOP", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + ' }, { ' + ', '.join(f'0x{IDS[("SPEL", "shout_" + h["id"] + "_" + str(n))]:03X}' for n in range(3)) + f' }}, 0x{h["color"]}, {cs(h["words"][0])}, {cs(h["words"][1])}, {cs(h["words"][2])}, {[x["id"] for x in S["sounds"]["rows"]].index("shout_" + h["id"])}, {cs(h.get("plugin", ""))}, 0x{int(h.get("shoutId", "0"), 16):06X}, {cs(h.get("quest", ""))}, ' + ', '.join(cs(x) for x in (h.get("translations") or ["", "", ""])[:3]) + ' },')
 o.append('\t} };')
 o.append('\tstruct LocationDef { int town; std::uint32_t anchor; int object; int slot; };')
 o.append(f'\tinline constexpr std::array<LocationDef, {len(L)}> kLocations{{ {{')
@@ -241,7 +241,7 @@ for r in CU['trials']:
 o.append('\t} };')
 o.append('\tenum TrialId : int { ' + ', '.join(f'kTrial_{r["id"]} = {i}' for i, r in enumerate(CU['trials'])) + ' };')
 enemyIds = {r['id'] for r in S['enemies']['rows']}
-o.append('\tstruct CityBoss { std::string_view name, row, text; float health; };  // each city\'s Barrow-Jarl, the fourth step (health: in a zombie\'s night health)')
+o.append('\tstruct CityBoss { std::string_view name, row, text; float health; };  // each city\'s Dragon Priest, the fourth step (health: in a zombie\'s night health)')
 o.append(f'\tinline constexpr std::array<CityBoss, {len(towns)}> kCityBosses{{ {{')
 for t in towns:
     bo = CU['bosses'][t]; assert bo['row'] in enemyIds, (t, bo['row'])

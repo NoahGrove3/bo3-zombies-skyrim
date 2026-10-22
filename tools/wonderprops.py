@@ -1,5 +1,5 @@
 """The wonder weapons' own models (Noah's downloads: Gravecaller staff, Frostbinder gauntlet, Wolf Queen's Crown, Horn of
-the Barrow-Jarls, Alduin's Fang) as static NIFs posed for the node each hangs on in the hands (src/Echo.cpp WonderProps):
+the Dragon Priests, Alduin's Fang) as static NIFs posed for the node each hangs on in the hands (src/Echo.cpp WonderProps):
 
   gravecaller  WEAPON node (right hand): the staff up its +Y, the grip at the origin (as Skyrim's staffs)
   frostbinder  NPC L Hand [LHnd] as it is, NPC R Hand [RHnd] mirrored: fingers down the bone's +Z, the back of the
@@ -176,7 +176,7 @@ def build(pid):
         parts = gather('barrowhorn')
         V = np.vstack([p[0] for p in parts]); L = np.ptp(V[:, 0]); s = 46.0 / L
         c = np.array([V[:, 0].min() + 0.45 * L, np.median(V[:, 1]), V[:, 2].mean()])
-        tx = DL / 'Horn of the Barrow-Jarls/textures'
+        tx = DL / 'Horn of the Dragon Priests/textures'
         D, N, G = textures('barrowhorn', tx / 'LP_DefaultMaterial_BaseColor.png', tx / 'LP_DefaultMaterial_Normal.png', tx / 'LP_DefaultMaterial_Roughness.png',
                            None, glow=(1.0, 0.75, 0.38), glow_floor=0.4)
         P = []

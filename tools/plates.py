@@ -82,7 +82,7 @@ def burn_sky(x):
 
 
 def violet_crown(x):
-    """The shrine's crown light: an over-bright white bloom in the capture, turned to the Dirge's violet."""
+    """The shrine's crown light: an over-bright white bloom in the capture, turned to the Curse's violet."""
     h, s, v = rgb2hsv(x)
     hot = np.clip((v - 0.55) * 3, 0, 1) * np.clip((0.45 - s) * 3, 0, 1)
     hot = np.asarray(Image.fromarray((hot * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(10)), np.float32) / 255

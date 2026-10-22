@@ -1,6 +1,6 @@
 #include "BO3Z.h"
 
-// The Curse of Alduin (sheet: curse). At Helgen, Alduin shouted GRAH DIR LEIN into the earth and every barrow in
+// The Curse of Alduin (sheet: curse). At Helgen, Alduin shouted SLEN TIID VO (his raising shout) into the earth and every barrow in
 // Skyrim answered; the Echo Altars the Tongues raised in every city have woken only half. Each altar sets five trials
 // (curse.trials); the player takes up any three, in any order, at the altar's menu:
 //   ward      Ward of the Tongues: stand in the runic circle round the altar while the dead come faster (leaving pauses it)
@@ -8,18 +8,18 @@
 //   unbroken  The Unbroken: n kills without falling below half health (or the count starts again)
 //   steel     Trial of Steel: n melee kills
 //   breath    The Long Night's Breath: n waves round the altar, each stronger; clear each before its clock or it doubles
-// When three are done the city's Barrow-Jarl (curse.bosses) rises near the altar at night; slay it and the city is freed
+// When three are done the city's Dragon Priest (curse.bosses) rises near the altar at night; slay it and the city is freed
 // (and the night ends): a sanctuary where no undead rise, its shout waiting at the altar. Counts, clocks, the ward's
-// swarm, the waves' elites and the Barrow-Jarl's health follow Skyrim's difficulty (Novice..Legendary). Trials run at night.
+// swarm, the waves' elites and the Dragon Priest's health follow Skyrim's difficulty (Novice..Legendary). Trials run at night.
 // Progress: one global per city, 1000000 + doneBits*100000 + active*10000 + progress (active 0 none, 1-5 a trial, 6 the
-// Barrow-Jarl), 9000000 freed. Every step only grows the value, so the party's sync (the biggest wins) carries it.
+// Dragon Priest), 9000000 freed. Every step only grows the value, so the party's sync (the biggest wins) carries it.
 namespace bo3z
 {
 	namespace
 	{
 		constexpr int kTrialCount = static_cast<int>(gen::kTrials.size());
-		constexpr int kNeeded = 4;            // trials to take before the Barrow-Jarl (the classes overhaul: the three shared and your class's)
-		constexpr int kFreed = kNeeded + 1;   // steps: three trials and the Barrow-Jarl
+		constexpr int kNeeded = 4;            // trials to take before the Dragon Priest (the classes overhaul: the three shared and your class's)
+		constexpr int kFreed = kNeeded + 1;   // steps: three trials and the Dragon Priest
 		constexpr int kBase = 1'000'000, kFreedValue = 9'000'000, kBossActive = 6;
 		constexpr float kBreathRange = 3000.0f;  // the Long Night's Breath: how near the altar you hold it
 		static_assert(kTrialCount == 5);
@@ -80,7 +80,7 @@ namespace bo3z
 		int Secs(int a_trial) { return gen::kTrials[a_trial].seconds[Diff()]; }
 		constexpr float kWardSwarm[6] = { 1.5f, 1.75f, 2.0f, 2.25f, 2.5f, 3.0f };      // the dead come this much faster in the circle
 		constexpr int   kWaveBase[6] = { 4, 5, 6, 7, 8, 10 };                          // the first wave (each after: +2)
-		constexpr float kBossHealth[6] = { 0.6f, 0.8f, 1.0f, 1.3f, 1.6f, 2.0f };       // the Barrow-Jarl's health
+		constexpr float kBossHealth[6] = { 0.6f, 0.8f, 1.0f, 1.3f, 1.6f, 2.0f };       // the Dragon Priest's health
 		[[maybe_unused]] int Elites(int a_wave, int a_waves)  // Thanes of the Mound and Bone Jotnar in a wave
 		{
 			const int d = Diff();
@@ -313,7 +313,7 @@ namespace bo3z
 			}
 			Note(text, 10.0f);
 			Party::CityFreed(a_town);  // (the dawn that follows saves under the city's name)
-			// (Noah: a night is won by slaying all of its waves, not by the Barrow-Jarl's fall) the night goes on
+			// (Noah: a night is won by slaying all of its waves, not by the Dragon Priest's fall) the night goes on
 			auto* shrine = Shops::Placed(a_town, 0);
 			Director::LiftWave(shrine ? shrine->GetPosition() : a_player->GetPosition());
 			Points::Add(5000);
@@ -327,7 +327,7 @@ namespace bo3z
 			}
 		}
 
-		// a trial done: three of them call the Barrow-Jarl
+		// a trial done: three of them call the Dragon Priest
 		void CompleteTrial(int a_town)
 		{
 			St s = Get(a_town);
@@ -363,7 +363,7 @@ namespace bo3z
 		}
 
 		// Where the quest wants you now (in your current world): the altar to choose a trial or hold its circle, the
-		// nearest of the dead to kill, the Barrow-Jarl, a freed city's waiting shout, or from the wilds the nearest held city.
+		// nearest of the dead to kill, the Dragon Priest, a freed city's waiting shout, or from the wilds the nearest held city.
 		RE::TESQuest* RiteQuestOf(int a_town)
 		{
 			return a_town >= 0 && a_town < static_cast<int>(gen::kRiteQuests.size()) ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESQuest>(gen::kRiteQuests[a_town], gen::kPlugin) : nullptr;
@@ -530,7 +530,7 @@ namespace bo3z
 			h.questCity = Upper(std::string(gen::kTowns[a_zone]));
 			h.questStep = s.Count();
 			if (s.Boss()) {
-				h.questTitle = "THE BARROW-JARL";
+				h.questTitle = "THE DRAGON PRIEST";
 				h.questGoal = "Slay " + std::string(BossName(a_zone));
 				return;
 			}
@@ -613,9 +613,12 @@ namespace bo3z
 					Hud::Banner("You already know " + name, 2.5f);
 					return;
 				}
+				// (Noah: no Word Walls) the runes cut into the altar's heart-stone are the words: they burn out of the rock
+				// one by one and sink into you, as a Word Wall's would
 				Gun::LearnShout(sh);
 				Forms::Play(gen::Sound::shout_learned);
-				Note("THU'UM LEARNED: " + name + "  (" + std::string(gen::kShouts[sh].w1) + " " + std::string(gen::kShouts[sh].w2) + " " + std::string(gen::kShouts[sh].w3) + ") - equip it in the Magic menu", 8.0f);
+				Hud::WordReveal(sh);
+				Note("The runes of the heart-stone give up their words: " + name + "  (" + std::string(gen::kShouts[sh].w1) + " " + std::string(gen::kShouts[sh].w2) + " " + std::string(gen::kShouts[sh].w3) + ") - equip it in the Magic menu", 9.0f);
 				logger::info("curse: {} learned at {}", gen::kShouts[sh].id, gen::kTowns[a_town]);
 				return;
 			}
@@ -824,9 +827,9 @@ namespace bo3z
 			}
 		}
 
-		void OnBossSlain() {}  // (the old Herald: the Barrow-Jarls are the cities' champions now)
+		void OnBossSlain() {}  // (the old Herald: the Dragon Priests are the cities' champions now)
 
-		// (Noah: killing the Barrow-Jarl freed the shrine at once - it isn't freed until every wave of that night is slain)
+		// (Noah: killing the Dragon Priest freed the shrine at once - it isn't freed until every wave of that night is slain)
 		// the Jarl's fall is held; the city is freed the moment the night's last wave falls (OnNightCleared)
 		int g_pendingLift = -1;
 		void OnChampionSlain(int a_town)
@@ -835,7 +838,7 @@ namespace bo3z
 				Forms::Play(gen::Sound::quest_step);
 				g_pendingLift = a_town;
 				Hud::Banner(Upper(std::string(BossName(a_town))) + " FALLS - slay the night's last waves to free " + std::string(gen::kTowns[a_town]), 5.0f);
-				logger::info("curse: {}'s Barrow-Jarl slain - freed when the night's waves are done", gen::kTowns[a_town]);
+				logger::info("curse: {}'s Dragon Priest slain - freed when the night's waves are done", gen::kTowns[a_town]);
 			}
 		}
 		void OnNightCleared()
@@ -918,7 +921,7 @@ namespace bo3z
 
 		// ---- the journal: each city's altar as a quest in Skyrim's Quests tab (tools/gen_esp.py) ----
 		// A city's quest begins the first time you walk into it. Stage 10 is the altar's call, 20+i a trial taken up,
-		// 100 the Barrow-Jarl, 200 freed. Objectives: 0 choose a trial, 1-5 the trials, 6 the Barrow-Jarl - shown, hidden and
+		// 100 the Dragon Priest, 200 freed. Objectives: 0 choose a trial, 1-5 the trials, 6 the Dragon Priest - shown, hidden and
 		// ticked to follow the city's progress. Its Target alias (the compass and map marker) sits on an unseen marker
 		// moved to wherever the trial wants you.
 		RE::TESQuest* RiteQuest(int a_town)
@@ -1037,6 +1040,32 @@ namespace bo3z
 				journal = 1.0f;
 				Journal(player);
 			}
+			// (Noah: no Word Walls) a freed altar whose Thu'um you haven't learned calls to you as a Word Wall does: its
+			// heart-stone whispers while you're near it
+			{
+				static RE::BSSoundHandle whisper;
+				static float             check = 0;
+				static bool              nearAltar = false;
+				if ((check -= a_delta) <= 0) {
+					check = 0.5f;
+					nearAltar = false;
+					RE::NiPoint3        at;
+					float               yaw = 0;
+					RE::TESWorldSpace*  ws = nullptr;
+					if (g_zone >= 0 && ClaimableShout(g_zone) >= 0 && Shops::StandFrame(g_zone, at, yaw, ws) && player->GetWorldspace() == ws) {
+						nearAltar = player->GetPosition().GetDistance(at) < 1400.0f;
+					}
+				}
+				if (nearAltar && !whisper.IsValid()) {
+					auto* d = RE::TESForm::LookupByID<RE::BGSSoundDescriptorForm>(0x00021705);  // QSTWordWallWhisper2DLPSD (a loop)
+					if (auto* am = RE::BSAudioManager::GetSingleton(); d && am && am->GetSoundHandle(whisper, static_cast<RE::BSISoundDescriptor*>(d))) {
+						whisper.SetVolume(0.5f);
+						whisper.Play();
+					}
+				} else if (!nearAltar && whisper.IsValid()) {
+					whisper.FadeOutAndRelease(1200);
+				}
+			}
 			// The prologue: as soon as the new character is made (out of Helgen, at Riverwood), the books are in the pack
 			if (Save::Flag(Save::kFlagStarted)) {
 				if (auto* intro = Global(gen::kCurseIntroGlobal); intro && intro->value < 1.5f) {  // (1 = an older save saw the pop-up: it gets the books too)
@@ -1116,7 +1145,7 @@ namespace bo3z
 			case gen::kTrial_breath:  // counted as each wave is cleared (Curse::OnWave)
 				break;
 			default:
-				if (s.Boss() && here && Story::BarrowJarlsOpen() && !Director::ChampionActive(z)) {  // (from Bleak Falls Barrow on)  // the Barrow-Jarl rises out in the city, once a night until it falls
+				if (s.Boss() && here && Story::BarrowJarlsOpen() && !Director::ChampionActive(z)) {  // (from Bleak Falls Barrow on)  // the Dragon Priest rises out in the city, once a night until it falls
 					static float retry = 0;
 					if ((retry -= a_delta) <= 0) {
 						retry = 4.0f;

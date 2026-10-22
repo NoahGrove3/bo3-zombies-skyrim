@@ -713,15 +713,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// (the classes overhaul) the class picker: four cards across the screen, the chosen one lit in its colour
 		void DrawClassPicker(ImDrawList* dl, ImVec2 size, float k, float now)
 		{
-			struct Card { const char* name; ImU32 col; const char* tag; const char* arms; const char* grow; const char* kit; };
+			struct Card { const char* name; const char* lore; ImU32 col; const char* tag; const char* arms; const char* grow; const char* kit; };
 			static const Card kCards[4] = {
-				{ "SUMMONER", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild",
+				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild",
 				  "Bind Pact: raise each family's summon at the altar", "Conjure Skeleton, Conjure Wolf, summoner's robes (the Wandering Summoner's for women, hooded conjurer's robes for men)" },
-				{ "DESTRUCTION", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Two-handed casting: fire, frost, shock, sun, poison, blood",
+				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Two-handed casting: fire, frost, shock, sun, poison, blood",
 				  "Reforge: climb each element's ladder to its Legendary spell", "Scorch, Hoarfrost, the Wild Witch's hat and gown" },
-				{ "RANGER", IM_COL32(110, 210, 120, 255), "Bows and crossbows - and every arrow counts", "The six elemental bows, crossbows and their bolts",
+				{ "RANGER", "Sworn to the Dawnguard", IM_COL32(110, 210, 120, 255), "Bows and crossbows - and every arrow counts", "The six elemental bows, crossbows and their bolts",
 				  "Mastery: a bow's kills raise its tier; buy ammo at the altars", "An elemental bow, the Dawnguard Crossbow, 30 bolts, the Drifter Outfit" },
-				{ "SPELLSWORD", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "Spell-weapons, spellshields, touch spells, The Wizard Warrior",
+				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "Spell-weapons, spellshields, touch spells, The Wizard Warrior",
 				  "Imbue: raise each element's touch spell; power attacks cast your spell", "Steel Spellsword, Steel Spellshield, Flame Touch, the Practical Pirate outfit" } };
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));
 			TxtC(dl, g_title, 46 * k, size.x * 0.5f, size.y * 0.12f, kParch, Classes::Switching() ? "CHANGE YOUR PATH" : "CHOOSE YOUR PATH", 3 * k, Fade(kGold, 0.6f));
@@ -744,8 +744,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float cx = (a.x + b.x) * 0.5f;
 				TxtC(dl, g_body, 16 * k, cx, a.y + 18 * k, Fade(c.col, 0.9f), std::to_string(i + 1));
 				TxtC(dl, g_title, 30 * k, cx, a.y + 38 * k, on ? IM_COL32(255, 248, 232, 255) : kParch, c.name, on ? 2.5f * k : 0, Fade(c.col, 0.8f));
-				TxtWrap(dl, g_body, 18 * k, { a.x + 22 * k, a.y + 92 * k }, IM_COL32(236, 226, 206, 245), c.tag, cw - 44 * k, 2);
-				float y = a.y + 150 * k;
+				TxtC(dl, g_body, 14 * k, cx, a.y + 72 * k, Fade(c.col, 0.85f), c.lore);  // (the story: where each class learned its craft)
+				TxtWrap(dl, g_body, 18 * k, { a.x + 22 * k, a.y + 96 * k }, IM_COL32(236, 226, 206, 245), c.tag, cw - 44 * k, 2);
+				float y = a.y + 154 * k;
 				const auto sec = [&](const char* h, const char* t) {
 					Txt(dl, g_body, 14 * k, { a.x + 22 * k, y }, Fade(c.col, 0.95f), h);
 					const int n = TxtWrap(dl, g_body, 16 * k, { a.x + 22 * k, y + 20 * k }, IM_COL32(205, 196, 178, 235), t, cw - 44 * k, 3);
@@ -1824,7 +1825,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->AddCircle(c, (16 + 30 * (1 - f)) * k, IM_COL32(255, 235, 220, static_cast<int>(220 * f * soft)), 32, 2.0f * k);
 			}
 
-			// Countdown between nights: the Blood Moon rising. A ring of the Dirge's runes round it, one going dark for
+			// Countdown between nights: the Blood Moon rising. A ring of the Curse's runes round it, one going dark for
 			// each second spent; the moon's face fills with blood as the night comes on; cold-blue fire licks round the
 			// ring, turning red and climbing higher in the last seconds, when the numeral beats like a heart.
 			if (s.countdown > 0.05f) {
@@ -1951,6 +1952,28 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float fr = std::clamp(s.questFrac, 0.0f, 1.0f);
 				dl->AddRectFilled({ cxs - bw * 0.5f, y0 + 52 * k }, { cxs + bw * 0.5f, y0 + 55 * k }, IM_COL32(20, 16, 12, 170));
 				dl->AddRectFilled({ cxs - bw * 0.5f, y0 + 52 * k }, { cxs - bw * 0.5f + bw * fr, y0 + 55 * k }, IM_COL32(214, 178, 96, 255));
+			}
+			// the heart-stone's runes become words: each one burns out of the rock in turn (a second apart), glows, and
+			// settles into its meaning; the shout's name comes last
+			if (s.revealTime > 0) {
+				const float t = 8.0f - s.revealTime, out = std::clamp(s.revealTime / 1.2f, 0.0f, 1.0f);
+				const ImU32 col = IM_COL32((s.revealColor >> 16) & 0xFF, (s.revealColor >> 8) & 0xFF, s.revealColor & 0xFF, 255);
+				const float cy = size.y * 0.34f, gap = 230 * k;
+				for (int i = 0; i < 3; ++i) {
+					const float ti = t - 0.4f - 1.1f * i;
+					if (ti <= 0 || s.revealW[i].empty()) continue;
+					const float in = std::clamp(ti / 0.6f, 0.0f, 1.0f), burn = std::max(0.0f, 1.0f - ti / 1.4f);
+					const float x = size.x * 0.5f + (i - 1) * gap, rise = (1.0f - in) * 26 * k;
+					TxtC(dl, g_title, (46 + 14 * burn) * k, x, cy + rise, Fade(burn > 0.05f ? IM_COL32(255, 244, 220, 255) : kIce, in * out), s.revealW[i], (3 + 8 * burn) * k, Fade(col, (0.55f + 0.45f * burn) * in * out));
+					if (ti > 0.8f && !s.revealT[i].empty()) {
+						TxtC(dl, g_body, 19 * k, x, cy + 66 * k, Fade(IM_COL32(220, 210, 190, 235), std::clamp((ti - 0.8f) / 0.6f, 0.0f, 1.0f) * out), s.revealT[i], 1.2f * k, IM_COL32(0, 0, 0, 200));
+					}
+				}
+				if (t > 4.2f) {
+					const float a = std::clamp((t - 4.2f) / 0.8f, 0.0f, 1.0f) * out;
+					Divider(dl, size.x * 0.5f, cy + 104 * k, 260 * k, k, a);
+					TxtC(dl, g_title, 24 * k, size.x * 0.5f, cy + 122 * k, Fade(kGold, a), "THU'UM LEARNED: " + s.revealName, 2 * k, Fade(col, 0.6f * a));
+				}
 			}
 			if (!s.sanctuary.empty()) {
 				TxtC(dl, g_title, 24 * k, size.x * 0.5f, 104 * k, Fade(kGold, 0.9f), "SANCTUARY OF " + s.sanctuary, 2 * k, IM_COL32(255, 220, 120, 255));
@@ -2622,7 +2645,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					y += 72 * k;
 				}
-				// [5b] the city's trials: any three of the five, then its Barrow-Jarl
+				// [5b] the city's trials: any three of the five, then its Dragon Priest
 				if (s.trialsOn) {
 					const float TL = L, TR = Rr, tcx = cx;
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
@@ -2664,7 +2687,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					ty += 16 * k;
 					const bool  bossUp = s.trialActive == 6;
 					const ImU32 bc = bossUp ? IM_COL32(255, 92, 60, 255) : IM_COL32(170, 120, 104, 230);
-					Txt(dl, g_title, 20 * k, { TL, ty }, bc, "THE BARROW-JARL: " + s.trialBoss, bossUp ? 1.5f * k : 0.0f, bc);
+					Txt(dl, g_title, 20 * k, { TL, ty }, bc, "THE DRAGON PRIEST: " + s.trialBoss, bossUp ? 1.5f * k : 0.0f, bc);
 					TxtWrap(dl, g_body, 16 * k, { TL, ty + 30 * k }, IM_COL32(196, 182, 160, 235), s.trialBossLine, TR - TL, 2);
 					y = ty + 88 * k;
 				}
@@ -4929,6 +4952,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_state.lightningT = std::max(0.0f, g_state.lightningT - dt);
 				g_state.hurtTime = std::max(0.0f, g_state.hurtTime - dt);
 				g_state.loreTime = std::max(0.0f, g_state.loreTime - dt);
+				g_state.revealTime = std::max(0.0f, g_state.revealTime - dt);
 				g_state.questNoteTime = std::max(0.0f, g_state.questNoteTime - dt);
 				g_state.nukeFlash = std::max(0.0f, g_state.nukeFlash - dt * 1.25f);
 				s = g_state;
@@ -5445,6 +5469,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			logger::info("dev: party {}", a_what);
 		}
 
+		void WordReveal(int a_shout)
+		{
+			if (a_shout < 0 || a_shout >= static_cast<int>(gen::kShouts.size())) return;
+			const auto& sh = gen::kShouts[a_shout];
+			std::scoped_lock l(g_lock);
+			g_state.revealW[0] = sh.w1, g_state.revealW[1] = sh.w2, g_state.revealW[2] = sh.w3;
+			g_state.revealT[0] = sh.t1, g_state.revealT[1] = sh.t2, g_state.revealT[2] = sh.t3;
+			g_state.revealName = sh.label;
+			g_state.revealColor = sh.color;
+			g_state.revealTime = 8.0f;
+		}
 		void Lore(std::string a_title, std::string a_text, float a_seconds)
 		{
 			std::scoped_lock l(g_lock);

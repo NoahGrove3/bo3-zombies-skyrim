@@ -316,7 +316,9 @@ for key, edid, track, flags, prio, fade in (('boss', 'UN_MUSBoss', 'Data\\Music\
 recs['FSTS'].append(record('FSTS', fid('FSTS', 'silent'), [sub('EDID', z('UN_SilentFootsteps')), sub('XCNT', struct.pack('<5I', 0, 0, 0, 0, 0)), sub('DATA', b'')]))
 # loading screens of our own among Skyrim's: the shrine or the lore book turning, and a hint
 LOADING_TIPS = [
-    "Alduin shouted three words into the earth at Helgen - GRAH DIR LEIN, Battle, Death, World - and every barrow answered.",
+    "Alduin shouted three words into the earth at Helgen - SLEN TIID VO, Flesh, Time, Undo - and every barrow answered.",
+    "Alduin's mist lies on the door of Sovngarde. The dead cannot pass to Shor's hall, so they rise instead.",
+    "A woken altar's heart-stone is cut with its city's words. Stand at it, and the runes give them up to you.",
     "An Echo Altar stands in every city. Call a spell, reforge the one in your hands or take a perk - the night does not wait while you bargain.",
     "Fen-Wailers call the horde to them with their scream. Kill them first.",
     "Sewn Thralls burst when they fall. Strike them from afar.",
@@ -482,8 +484,8 @@ recs['QUST'].append(record('QUST', fid('QUST', 'mcm'), [
     sub('ALFR', struct.pack('<I', 0x14)), sub('VTCK', struct.pack('<I', 0)), sub('ALED', b'')]))
 
 # Each city's Echo Altar in Skyrim's Quests journal: one quest per city (Dawnguard's crest). Stage 10 tells the altar's
-# call; stage 20+i the story of trial i when it is taken up (any three, in any order); stage 100 the city's Barrow-Jarl; stage
-# 200 when the city is freed. Objectives: 0 choose a trial at the altar, 1-5 the trials, 6 slay the Barrow-Jarl (src/Curse.cpp
+# call; stage 20+i the story of trial i when it is taken up (any three, in any order); stage 100 the city's Dragon Priest; stage
+# 200 when the city is freed. Objectives: 0 choose a trial at the altar, 1-5 the trials, 6 slay the Dragon Priest (src/Curse.cpp
 # Journal shows and ticks them). One alias, the Target, which the game points at where the trial wants you: its compass and
 # map marker. (Counts and seconds follow Skyrim's difficulty, so the log gives them in the trial's own HUD line instead.)
 CU = S['curse']
@@ -497,7 +499,7 @@ for c in CU['cities']:
     subs = [sub('EDID', z('UN_Rites_' + c['town'])), sub('FULL', z('The Echo Altar: ' + c['town'])),
             sub('DNAM', struct.pack('<HBBII', 0x0000, 60, 0xFF, 0, 10)), sub('NEXT', b'')]
     stages = [(10, f"The Echo Altar of {c['town']} has woken, but only half: Alduin's echo still holds the city. The altar offers five trials. "
-                   f"Any three will do, in any order - and when three are done, the Barrow-Jarl who silenced the altar, {boss['name']}, will rise to stop me.")]
+                   f"Any three will do, in any order - and when three are done, the Dragon Priest who silenced the altar, {boss['name']}, will rise to stop me.")]
     stages += [(20 + i, f"{tr['title']}: " + fill(unnumbered(tr['text']), c)) for i, tr in enumerate(CU['trials'])]
     stages += [(100, f"{boss['name']}: {boss['text']} It walks the night near the Echo Altar. Strike it down and the altar wakes.")]
     for st, text in stages:
@@ -532,9 +534,12 @@ def lore_text():
            "<p align='center'>Set down at High Hrothgar by a Greybeard who has broken his silence, for whoever lived through Helgen</p>",
            "[pagebreak]", "<p align='center'><font size='24'>I. Three Words</font></p>", img('helgen', 300, 176),
            f"<p>{cu['prologue']}</p>",
-           "<p>We heard it on the mountain. Not a shout to break stone, but a Word sung slow, that sank into the earth and stayed there: "
-           "<b>Grah</b>, battle. <b>Dir</b>, death. <b>Lein</b>, the world. By day it sleeps in the ground. When the sun goes down it wakes, "
-           "and every barrow, every crypt and every churchyard in the holds remembers that it is owed a war.</p>",
+           "<p>We heard it on the mountain. Not a shout to break stone, but Words sung slow, that sank into the earth and stayed there: "
+           "<b>Slen</b>, flesh. <b>Tiid</b>, time. <b>Vo</b>, undo. It is the shout by which Alduin raises his fallen kin from their burial mounds, "
+           "and this time he gave it to the earth itself. By day it sleeps in the ground. When the sun goes down it wakes, "
+           "and every barrow, every crypt and every churchyard in the holds remembers it.</p>",
+           "<p>Worse: his mist has rolled over the door of <b>Sovngarde</b>. The honoured dead cannot cross to Shor's hall, and a soul with nowhere to go "
+           "stays with its body. That is why they rise. Free Sovngarde, and the Curse ends.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>II. The Dead Who Answer</font></p>", img('graves', 300, 176),
            "<p>From dusk until first light the dead climb out of the earth, more each night and harder to kill. At dawn they fall back to dust. "
            "The Nords of old had names for them, and the names are true again:</p>",
@@ -544,7 +549,8 @@ def lore_text():
            "<b>Fen-Wailers</b> scream, and the horde comes to the scream: kill them first. <b>Sewn Thralls</b> burst when they fall. "
            "<b>Grave-Hounds</b> run in packs, and the <b>Bone Jotunn</b> is the skeleton of a giant, walking.</p>",
            "<p>Over them all ride the great ones: the <b>Thanes of the Mound</b>, the <b>Mother of Mounds</b>, <b>Haugrisi the Mound-Giant</b>, "
-           "<b>the Elk-Crowned</b>, and <b>Grahzah</b>, Alduin's Grave-Wing, a dragon of bone. Look at a wounded thing and a pale bar shows how much life it has left; "
+           "<b>the Elk-Crowned</b>, <b>Grahzah</b>, Alduin's Grave-Wing, a dragon of bone, and on the Fog Nights <b>Grimmvar</b>, Alduin's Herald, a dragon of shadow - "
+           "Vulmidviing in his own tongue, 'dark, loyal wings'. Look at a wounded thing and a pale bar shows how much life it has left; "
            "the great ones' bars burn gold and bear their names.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>III. The Echo Altars</font></p>",
            "<p>This is not the first time Alduin has shouted the dead awake. In the Dragon War he did it once over the barrows of the Atmorans, and the Tongues - "
@@ -553,13 +559,23 @@ def lore_text():
            "<p>The fire is Alduin's own Thu'um, caught and turned back on itself. The runes are the Tongues' answer, holding it there. Every mage who fell in that war "
            "gave their last spell to the star, and the star kept it: that is why the altars have so many to give, and why the holds call them <b>Echo Altars</b>.</p>",
            "<p>When Alduin was cast out of time the altars went dark and sank into the earth, and towns grew over them. At Helgen he returned, and the altars woke - "
-           "but only half. Each one has been silenced by a dead jarl of old, raised to guard it against the living: a <b>Barrow-Jarl</b>.</p>",
+           "but only half. Each one has been silenced by one of the <b>Dragon Priests</b> who ruled Skyrim for Alduin in the Merethic Era: "
+           "their oaths to him outlived them, and the draugr that guard their tombs were their servants in life. When Alduin returned, the oaths woke, and each priest came down from his tomb to the altar nearest it.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>IV. Waking an Altar</font></p>", img('wards', 300, 176),
            "<p>The altars answer to you. Perhaps it is because you heard the three Words at Helgen and lived; perhaps it is something older. "
            "Stand before one and it will set you <b>trials</b> - hold its runic circle while the dead come for you, cull the risen in its streets - "
-           "and when they are done its Barrow-Jarl rises to stop you. Strike him down and the altar rings with the Tongues' answer. Its city becomes a sanctuary: "
-           "no dead rise within its walls, and the altar gives you the city's own <b>Thu'um</b>.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>V. The Voices of the Holds</font></p>"]
+           "and when they are done its Dragon Priest rises to stop you. Strike him down and the altar rings with the Tongues' answer. Its city becomes a sanctuary: "
+           "no dead rise within its walls.</p>",
+           "<p>There is no Word Wall at an altar. The Tongues cut their words into the altar's <b>heart-stone</b> instead - the great rock at its centre, "
+           "ringed with runes. Once you have walked the Way of the Voice, stand at a woken altar and the runes give up their words to you, as a Word Wall would: "
+           "the city's own <b>Thu'um</b>.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>V. The Way of the Voice</font></p>",
+           "<p>Arngeir will tell you, when you have climbed the Seven Thousand Steps, that the altars are older than High Hrothgar. Jurgen Windcaller's Tongues found them "
+           "after Red Mountain, already ancient, and kept them as he taught: the Voice for worship, not for war. They wrote down what each altar holds - the pages "
+           "a woken altar gives you, <i>The Broken Words</i>, are theirs.</p>",
+           "<p>Those who stand against the dead with you have their own reasons. The conjurers and battle-mages of the <b>College of Winterhold</b> have seen Morokei walk again; "
+           "the <b>Dawnguard</b> hunt what rises at night; the <b>Vigilants of Stendarr</b> will not let the dead walk while they draw breath.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>VI. The Voices of the Holds</font></p>"]
     for h in S['shouts']['rows']:
         if h.get('town'):
             out.append(f"<p><b>{h['town']}</b>: <i>{h['label']}</i> ({' '.join(h['words'])}, '{' '.join(h['translations'])}'). {h['text']}.</p>")
@@ -588,7 +604,7 @@ def guide_text():
            p("<b>Reforge</b> - make the spell or bow in your hands stronger, three times over. Every tier gives a bow a new attack: the fire bow's arrows burst, then leave burning ground, then a full draw calls down a volley of meteors."),
            p("<b>Perks</b> - lasting gifts. You carry five at most."),
            p("<b>Trials</b> - the quest that wakes the altar. It offers five; take up any three, in any order (step over to them with D-pad left or right, or A and D). "
-             "When three are done the city's Barrow-Jarl rises at night near the altar. Slay it and the city is safe for good. Skyrim's difficulty sets how hard the trials are."),
+             "When three are done the city's Dragon Priest rises at night near the altar. Slay it and the city is safe for good. Skyrim's difficulty sets how hard the trials are."),
            "[pagebreak]", h("The Five Trials"),
            p("<b>Ward of the Tongues</b> - stand in the runic circle round the altar while the dead come faster. Step out and the count waits for you."),
            p("<b>The Culling</b> - kill a number of the risen in the city."),
@@ -599,27 +615,27 @@ def guide_text():
            p("Tap the attack to throw a bolt. Hold it, and both hands gather the spell's full power: the longer you hold, the harder it strikes. "
              "Let go too soon and the power gutters out. Magicka comes back fast."),
            "[pagebreak]", h("Shouts"),
-           p("A woken altar teaches you its city's Thu'um. Equip it like any shout. Its cooldown shows under your spells, bottom right."),
+           p("Once you have walked the Way of the Voice, the runes on a woken altar's heart-stone teach you its city's Thu'um - no Word Wall needed. Equip it like any shout. Its cooldown shows under your spells, bottom right."),
            "[pagebreak]", h("The Dragon"),
            p("Wake Whiterun's altar and a dragon will answer you. Jump and press Activate in mid-air: it swoops down and you take hold of its harness."),
            p("Steer with the stick or WASD. Forward dives, back climbs. Attack to make it breathe fire on the dead below - only the dead, never your friends. "
              "At the altar you can make deeper bonds with it."),
            "[pagebreak]", h("Echo Stones and the Reliquary"),
-           p("When a city's altar is freed and its night won, its heart stone turns to blue light. Step onto the altar and it gives you a page: <i>The Broken Words</i>, one for each city. "
-             "Each page says plainly where a part of a <b>wonder weapon</b> waits and how to take it, and your compass marks the place."),
-           p("Some parts fall from the Barrow-Jarls. Some wait in reliquaries at old barrows, guarded, and only wake at night. Some must be earned by killing the dead near a barrow's door."),
+           p("When a city's altar is freed and its night won, its heart-stone turns to blue light. Step onto the altar and it gives you a page: <i>The Broken Words</i>, one for each city - "
+             "a Tongue's writing on that city's Dragon Priest and on the words cut into its heart-stone. Once you have walked the Way of the Voice, the heart-stone's runes teach you the city's Thu'um."),
+           p("Some parts fall from the Dragon Priests. Some wait in reliquaries at old barrows, guarded, and only wake at night. Some must be earned by killing the dead near a barrow's door."),
            p("Take them to <b>High Hrothgar</b>: a sealed door in the great hall leads down to the Reliquary, where each wonder is forged on its pedestal once its three parts are found."),
            "[pagebreak]", h("The Wonder Weapons"),
            p("A forged wonder is taken up from its pedestal and cast from your hands like the altar's spells: tap to strike, hold both hands to unleash it. One at a time - return it to take another."),
            p("<b>Gravecaller</b> - grave-wisps hunt the dead and feed you their life. Unleashed: three bone warriors claw out of the earth to fight for you."),
            p("<b>Frostbinder Gauntlets</b> - ice binds what it strikes; strike a bound foe and it shatters, cutting those round it. Unleashed: everything near you freezes, then bursts."),
            p("<b>Wolf Queen's Crown</b> - spirit-wolves run down the dead in pairs. Unleashed: the Queen howls and her spectral pack runs at your side."),
-           p("<b>Horn of the Barrow-Jarls</b> - a war-cry hurls the dead back. Unleashed: the old war-host charges down the line in front of you."),
+           p("<b>Horn of the Dragon Priests</b> - a war-cry hurls the dead back. Unleashed: the old war-host charges down the line in front of you."),
            "[pagebreak]", h("The Three Words"),
-           p("When all four wonders are forged, Alduin's three words wake one after another: <b>GRAH</b> at the Word Wall of Grah in the Reach, <b>DIR</b> in the courtyard of Labyrinthian, "
-             "<b>LEIN</b> on the summit of the Throat of the World. Your compass marks the word that is awake."),
+           p("With your class's wonder in hand, Alduin's three words wake one after another: <b>SLEN</b> at the cult's old shrine in the Reach, <b>TIID</b> in the courtyard of Labyrinthian, "
+             "<b>VO</b> on the summit of the Throat of the World. Your compass marks the word that is awake."),
            p("Go there at night. Its dead rise round you in waves; when the last wave falls, the word's bearer rises. Kill it and the word is silenced for good, and its power stays with you: "
-             "<b>GRAH</b> - everything you wield hits 15% harder; <b>DIR</b> - the night's blows hurt you 20% less; <b>LEIN</b> - your magicka returns half again as fast."),
+             "<b>SLEN</b> - everything you wield hits 15% harder; <b>TIID</b> - the night's blows hurt you 20% less; <b>VO</b> - your magicka returns half again as fast."),
            p("Leave the place, or let dawn come, and the word falls quiet until you return. Silence all three and the curse of Alduin is broken."),
            "[pagebreak]", h("The Hall of the Awakened"),
            p("With the curse broken, the Reliquary under High Hrothgar becomes the <b>Hall of the Awakened</b>. Its stations:"),
@@ -674,7 +690,7 @@ recs['GLOB'].append(record('GLOB', fid('GLOB', 'test_kit'), [sub('EDID', z('UN_T
 def how_text(q):
     w = WON[q['wonder']]['label']
     if q['how'] == 'boss':
-        return f"<b>{q['label']}</b> (for {w}): it falls from {q['town']}'s Barrow-Jarl when the altar there is freed."
+        return f"<b>{q['label']}</b> (for {w}): it falls from {q['town']}'s Dragon Priest when the altar there is freed."
     if q['how'] == 'relic':
         return (f"<b>{q['label']}</b> (for {w}): a reliquary burning with blue Tongue-fire waits at <b>{q['site']}</b>. It wakes only at night: "
                 f"come near after dusk and its guardians rise. Kill them all, then walk up to the reliquary and the part is yours.")
@@ -682,19 +698,19 @@ def how_text(q):
             f"A counter shows how many more it needs; when it is full, the part is yours.")
 
 def page_text(town):
+    # (the story) each freed altar's page is a Tongue's own writing: Jurgen Windcaller's followers, on the city's Dragon Priest
+    # and the words cut into its altar's heart-stone (the staffs' parts hunt it once described is retired)
     pg = E['pages'][town]
-    parts = [q for q in E['parts'] if q['page'] == town]
+    boss = S['curse']['bosses'].get(town, {})
+    sh = next((h for h in S['shouts']['rows'] if h.get('town') == town), None)
     out = ["<font face='$HandwrittenFont'>", f"<p align='center'><font size='26'>THE BROKEN WORDS</font></p><p align='center'><font size='22'>{town}</font></p>",
-           f"<p><i>{pg['echo']}</i></p>", "<p align='center'>~</p>", f"<p><b>Where:</b> {pg['where']}</p>"]
-    out += [f"<p>{how_text(q)}</p>" for q in parts]
-    out += ["[pagebreak]", "<p align='center'><font size='22'>The Reliquary</font></p>",
-            "<p>Your compass now marks every part this page speaks of - follow the blue mark with the part's name over it.</p>",
-            "<p>Take the parts to <b>High Hrothgar</b>. In the great hall, by the entrance, a <b>sealed door</b> carved with the Tongues' sigil "
-            "now opens for you. Behind it is the Reliquary: four pedestals, one for each wonder weapon. Each part you find lights a crystal on its pedestal; "
-            "when all three burn, stand at the pedestal and press Activate to forge the weapon. Activate it again to take the wonder up; "
-            "only one answers to you at a time, and in a party each wonder has one wielder - give it back to its pedestal to take another.</p>",
-            "<p>Four wonders, three parts each: " + '; '.join(f"<b>{w['label']}</b> - " + ', '.join(q['label'] for q in E['parts'] if q['wonder'] == w['id']) for w in E['wonders']) + ".</p>",
-            "<p align='right'><i>- an echo of the Tongues</i></p>", "</font>"]
+           f"<p><i>{pg['echo']}</i></p>", "<p align='center'>~</p>"]
+    if boss:
+        out.append(f"<p>The Dragon Priest of {town}: <b>{boss['name']}</b>. {boss['text']}</p>")
+    if sh:
+        out.append(f"<p>The words on the heart-stone: <b>{' '.join(sh['words'])}</b> ('{' '.join(sh['translations'])}') - <i>{sh['label']}</i>. "
+                   "Stand at the woken altar and the runes give them up to you, as a Word Wall would.</p>")
+    out += [f"<p align='right'><i>- {pg['by']}</i></p>", "</font>"]
     return '\n'.join(out)
 
 for c in S['curse']['cities']:

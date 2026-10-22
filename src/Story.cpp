@@ -4,11 +4,11 @@
 // main-quest step opens the next part of it:
 //   0 Unbound              no nights yet (Helgen plays, or is skipped)
 //   1 Before the Storm     the first nights; every city's trials but Whiterun's, Solitude's and Windhelm's
-//   2 Bleak Falls Barrow   the Barrow-Jarls rise in the cities
+//   2 Bleak Falls Barrow   the Dragon Priests rise in the cities
 //   3 Dragon Rising        the nights' elites; Whiterun's trials
 //   4 The Way of the Voice  the freed cities' shouts at their altars
 //   5 Diplomatic Immunity / Season Unending   Solitude's and Windhelm's trials
-//   6 Alduin's Bane         Grimmvar the Undying Wyrm can be hunted
+//   6 Alduin's Bane         Grimmvar, Alduin's Herald (a Diverse Dragons dragon), comes on the Fog Nights
 //   7 Sovngarde            the class wonders take their Legendary form; the Seat of the Awakened (Stage 5) wakes
 // and the story's set pieces are never interrupted: no night begins while you're in one (the Watchtower's dragon,
 // Dragonsreach's trap, the Throat of the World, the Peace Council, Sovngarde).
@@ -76,8 +76,8 @@ namespace bo3z::Story
 			const int now = Compute();
 			if (g_stage >= 0 && now > g_stage) {
 				static constexpr const char* kNews[8] = { "", "Night falls on Skyrim: the dead rise",
-					"The Dragonstone named the burial mounds: the Barrow-Jarls rise in the cities", "The dragon is slain - Whiterun's trials open, and the nights bring their elites",
-					"The Greybeards have spoken - the freed cities' shouts wait at their altars", "Solitude's and Windhelm's trials open", "Grimmvar the Undying Wyrm can be hunted on the nights of his herald", "Alduin is fallen - your class's wonder takes its full form" };
+					"The Dragonstone named the burial mounds: the Dragon Priests rise in the cities", "The dragon is slain - Whiterun's trials open, and the nights bring their elites",
+					"Arngeir speaks of the Echo Altars - the words on their heart-stones are yours to learn", "Solitude's and Windhelm's trials open", "Grimmvar, Alduin's Herald, hunts on the Fog Nights", "Alduin is fallen - your class's wonder takes its full form" };
 				Forms::Play(gen::Sound::quest_start);
 				Hud::Banner(std::string("THE CURSE DEEPENS - ") + kNews[now], 6.0f);
 			}
@@ -117,5 +117,5 @@ namespace bo3z::Story
 	bool BarrowJarlsOpen() { return Stage() >= 2; }
 	bool ElitesOpen() { return Stage() >= 3; }
 	bool AlduinFallen() { return Stage() >= 7; }
-	bool GrimmvarOpen() { return Stage() >= 6; }
+	bool GrimmvarOpen() { return Stage() >= 6; }  // (Director: only the Herald waits for it; the other bosses keep their nights)
 }

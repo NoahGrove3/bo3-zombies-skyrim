@@ -3,7 +3,7 @@
 // A freed city's altar raises an Echo Stone behind it (dressing: echo_stone). Walk up to it and it gives you the
 // city's page, The Broken Words: <City> (a note in your pack; its words are shown as you take it), and from then on
 // your compass marks every part that page names. A part is one of:
-//   boss   dropped by that city's Barrow-Jarl (given as soon as the city is freed)
+//   boss   dropped by that city's Dragon Priest (given as soon as the city is freed)
 //   relic  a reliquary of Tongue-fire at a landmark: it wakes only at night - its guardians rise as you come near;
 //          kill them, then walk up to it
 //   kill   strike down the dead near a landmark at night until it has drunk enough (a counter under the compass)
@@ -649,19 +649,7 @@ namespace bo3z
 				a_p->AddObjectToContainer(book, nullptr, 1, nullptr);
 			}
 			Forms::Play(gen::Sound::quest_start);
-			std::string text = "The stone speaks with the Tongues' voice. ";
-			for (int i = 0; i < kParts; ++i) {
-				const auto& q = gen::kEchoParts[i];
-				if (q.page != a_town) {
-					continue;
-				}
-				const std::string w(gen::kEchoWonders[q.wonder].label);
-				text += q.how == gen::kEchoBoss  ? std::string(q.label) + " (" + w + ") is yours: it fell with the Barrow-Jarl. "
-				        : q.how == gen::kEchoRelic ? std::string(q.label) + " (" + w + ") waits at " + std::string(q.site) + " - at night, kill its guardians and take it. "
-				                                   : std::string(q.label) + " (" + w + ") - at night, kill the dead at " + std::string(q.site) + ". ";
-			}
-			text += "Your compass marks the way. Forge the parts at High Hrothgar, behind the sealed door.";
-			Hud::Lore("THE BROKEN WORDS: " + Upper(std::string(gen::kTowns[a_town])), text, 16.0f);
+			Hud::Banner("A page of the Tongues' writing is in your pack: The Broken Words: " + std::string(gen::kTowns[a_town]), 7.0f);
 			logger::info("echo: page of {} taken", gen::kTowns[a_town]);
 		}
 
@@ -832,7 +820,7 @@ namespace bo3z
 				Write(gen::kEchoGlobWords, Read(gen::kEchoGlobWords) | kWordsTold);
 				Forms::Play(gen::Sound::quest_start);
 				Hud::Lore("THE THREE WORDS",
-					"With your class's wonder in hand, the Tongues' altars hear Alduin's three words still ringing through Skyrim: GRAH, DIR, LEIN - Battle, Death, World. "
+					"With your class's wonder in hand, the Tongues' altars hear Alduin's three words still ringing through Skyrim: SLEN, TIID, VO - Flesh, Time, Undo. "
 					"Each lives on in a place of the old dragon cult, and each has a bearer. Silence them one by one, at night, wonders in hand. " + std::string(gen::kWords[w].wake),
 					18.0f);
 				logger::info("words: the arc begins with {}", gen::kWords[w].word);
@@ -908,6 +896,7 @@ namespace bo3z
 			const int next = NextWord();
 			Hud::Lore(std::string(W.word) + " IS SILENCED",
 				std::string(W.silenced) + "  " + std::string(W.power) + (next >= 0 ? "  The next word stirs: " + std::string(gen::kWords[next].site) + "." : ""), 16.0f);
+			Hud::Banner(std::string(W.word) + " IS SILENCED - " + std::string(W.power), 8.0f);
 			logger::info("words: {} silenced", W.word);
 			EndSiege("silenced");
 			if (next < 0) {
@@ -931,7 +920,7 @@ namespace bo3z
 		// wonders, bows, powers and the words' gifts stay yours). Flags in UN_EchoWords.
 
 		float g_slow = 0;
-		bool  g_loaded = false;  // the first pass after a load: the Barrow-Jarls' parts already won are given quietly
+		bool  g_loaded = false;  // the first pass after a load: the Dragon Priests' parts already won are given quietly
 	}
 
 	namespace Echo
@@ -1054,7 +1043,7 @@ namespace bo3z
 
 		bool StoneWaits(int a_town) { return a_town >= 0 && a_town < kTownCount && Curse::Freed(a_town) && !PageRead(a_town); }
 		// (Noah: the mini-boss's guaranteed wonder part) the next part you're missing, of the first wonder not yet forged -
-		// a relic's or a barrow's (a Barrow-Jarl's part still waits for its city); false when every one is yours
+		// a relic's or a barrow's (a Dragon Priest's part still waits for its city); false when every one is yours
 		bool AwardNextPart()
 		{
 			if (true) return false;  // (the staffs' parts are retired: a mini-boss pays septims)
@@ -1097,7 +1086,7 @@ namespace bo3z
 			} else {
 				Party::SetWonder(-1);
 			}
-			// the Barrow-Jarls' parts: yours as soon as their city is freed (yours or the party's)
+			// the Dragon Priests' parts: yours as soon as their city is freed (yours or the party's)
 			for (int i = 0; i < kParts; ++i) {
 				const auto& q = gen::kEchoParts[i];
 				if (false && q.how == gen::kEchoBoss && q.town >= 0 && Curse::Freed(q.town) && !Held(i)) {  // (retired with the staffs)

@@ -4,7 +4,7 @@ v: round the limb, its seam on the back toward the target), every part worked li
   limbs   the bow's own material (charred horn, bone, blued iron, ash, bronze-shod wood) with its grain running the
           length and fine pores/hammer marks, a pale horn belly and dark sinew back, worn bright on the arrises
   runes   a bevelled channel cut down each flank of both limbs, its floor dark, a braided knotwork border either side,
-          the Dirge's runes cut into it and inlaid with gold that glows in the bow's element
+          the Curse's runes cut into it and inlaid with gold that glows in the bow's element
   grip    leather wrapped in overlapping diagonal turns, each edge stitched, darkened by the hand
   metal   chased collars and tip caps: engraved scrollwork, a raised rim and rivets
   blades  (the bow's spurs and blades: trim_maps) element-forged metal etched with runic filigree, veins of the element

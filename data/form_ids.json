@@ -1206,6 +1206,8 @@
   "ARTO:fx_portal": "0xcb2",
   "MGEF:fletcher": "0xcb3",
   "ALCH:fletcher": "0xcb4",
-  "ARTO:fx_portal_big": "0xcb5"
+  "ARTO:fx_portal_big": "0xcb5",
+  "LSCR:ls_14": "0xcb6",
+  "LSCR:ls_15": "0xcb7"
  }
 }

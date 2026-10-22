@@ -1433,7 +1433,7 @@ namespace bo3z
 				for (auto* f : foes) hit(f, 1.2f);
 				Bolts(p, g, foes, 8);
 			}
-			// ---- the city relics (rewards of the Undying Dirge) ----
+			// ---- the city relics (rewards of Alduin's Curse) ----
 			else if (id == "hearth") {  // Riverwood, Hearthfire Nova: six meteors round you, everything near you burns
 				const auto pp = p->GetPosition();
 				for (int k = 0; k < 6; ++k) {

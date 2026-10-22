@@ -217,7 +217,7 @@ namespace bo3z
 			float         pu[4];                 // power-up seconds left: insta-kill, double points, -, fire sale
 			float         nuke;                  // seconds the dead still lie low
 			std::int32_t  boxAv;                 // the Coffer's town and spins (save AV)
-			std::int32_t  curse[10];             // the Dirge in every city
+			std::int32_t  curse[10];             // the Curse in every city
 			std::uint32_t weather;               // the host's sky (form id): everyone sees the same rain
 			std::uint32_t weatherLocal;          // the same, by its plugin (load orders differ) ...
 			char          weatherPlugin[48];
@@ -455,7 +455,7 @@ namespace bo3z
 		bool TogetherLoaded();  // Skyrim Together runs the clock
 	}
 
-	// The Undying Dirge (sheet: curse): four night quests per city; a freed city is a sanctuary.
+	// Alduin's Curse (sheet: curse): four night quests per city; a freed city is a sanctuary.
 	namespace Curse
 	{
 		void  Tick(float a_delta);
@@ -464,11 +464,11 @@ namespace bo3z
 		void  OnBossSlain();
 		void  OnWave(bool a_cleared);       // the night's waves: one begins (false) or is cleared (true)
 		void  OnChampionSlain(int a_town);  // a city's champion fell (Director)
-		void  OnNightCleared();     // the night's last wave fell: a city whose Barrow-Jarl fell tonight is freed now
+		void  OnNightCleared();     // the night's last wave fell: a city whose Dragon Priest fell tonight is freed now
 		void  ForgetPendingLift();  // a load: no Jarl's fall is waiting
 		void  MigrateRites();               // a save from the four-rite cities: freed stays freed, the rest begin the trials
 		void  NewGamePlus();                // Stage 5, the Seat of the Awakened: every city back under the curse, the nights start over
-		bool  Freed(int a_town);            // its Echo Altar is awake (three trials and its Barrow-Jarl)
+		bool  Freed(int a_town);            // its Echo Altar is awake (three trials and its Dragon Priest)
 		bool  SafeHere(RE::PlayerCharacter* a_player);  // in a freed city: no undead rise here
 		float SpawnBoost();                              // holding a shrine: the night pushes harder
 		int   ZoneTown();                                // city the player is in (-1)
@@ -485,7 +485,7 @@ namespace bo3z
 		struct AltarView
 		{
 			bool                       on{ false };  // the city is still held (its trials are offered)
-			int                        done{ 0 }, active{ 0 };  // bits of trials done; 0 none, 1-5 a trial, 6 the Barrow-Jarl
+			int                        done{ 0 }, active{ 0 };  // bits of trials done; 0 none, 1-5 a trial, 6 the Dragon Priest
 			std::array<std::string, 5> desc;         // each trial with tonight's numbers
 			std::string                boss, bossLine;
 		};
@@ -505,7 +505,7 @@ namespace bo3z
 		void Allies(int a_kind, int a_count, float a_seconds, const RE::NiPoint3& a_at);       // the wonders' summons: 0 the barrow's bone warriors, 1 the Queen's spirit-wolves
 		bool IsAlly(RE::Actor* a_actor);
 		int  WonderHeld();                                     // the wonder weapon in your hands (-1)
-		bool WordSilenced(int a_w);                            // Stage 4: 0 GRAH (battle-fury), 1 DIR (death's refusal), 2 LEIN (the world answers)
+		bool WordSilenced(int a_w);                            // Stage 4: 0 SLEN (flesh remade), 1 TIID (borrowed time), 2 VO (the curse undone)
 		bool CurseBroken();                                    // all three words silenced (Stage 5's rewards open)
 		void OnBearerSlain();                                  // a word's bearer fell (Director's champion with no city)
 		bool AwardNextPart();                                  // the mini-boss's drop: the next missing wonder part (false: all yours)
@@ -795,6 +795,10 @@ namespace bo3z
 			std::string sanctuary;         // in a freed city at night: its name
 			std::string loreTitle, loreText;
 			float       loreTime{ 0 }, loreTotal{ 0 };
+			// (Noah: no Word Walls) the altar's heart-stone teaching its city's Thu'um: the three words rise from its runes one by one
+			std::string revealW[3], revealT[3], revealName;
+			float       revealTime{ 0 };
+			std::uint32_t revealColor{ 0 };
 			float       wardFrac{ 0 };     // kindling a ward-fire
 			float       nukeLeft{ 0 }, nukeFlash{ 0 };
 			std::string questNote;        // quest news in the tracker
@@ -860,7 +864,8 @@ namespace bo3z
 		State&      Edit();
 		std::mutex& Lock();
 		void        Banner(std::string a_text, float a_seconds = 4.0f);
-		void        Lore(std::string a_title, std::string a_text, float a_seconds = 14.0f);  // a scroll of the Dirge
+		void        Lore(std::string a_title, std::string a_text, float a_seconds = 14.0f);
+		void        WordReveal(int a_shout);  // the altar's runes give up a shout's three words (Curse::ClaimRelic)  // a scroll of the Curse
 		void        Install();
 		void        OnClick();  // a left click (menus: the party panel's buttons)
 		void        OnMouseMove(float a_dx, float a_dy);  // raw mouse movement (the menu cursor never sticks)

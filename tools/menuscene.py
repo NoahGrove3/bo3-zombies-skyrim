@@ -1,7 +1,7 @@
 """The Curse of Alduin main menu: a CG night composed from scratch and rendered offline (tools/scene3d.py), in parallax layers
 the menu animates. Our own undead (the risen, the Hollow Bride, the Drowned Wailer, the Abomination, the reaper, the
 necromancer) come down from a barrow under the Blood Moon, led by the champions (the Horned Bone Knight, the Barrow King,
-the Lich of the Dirge); a rune-stone of the Dirge glows in the snow in front; a dark outcrop on the right carries the menu.
+the Lich of the Curse); a rune-stone of the Curse glows in the snow in front; a dark outcrop on the right carries the menu.
 
     python tools/menuscene.py <out dir> [preview.jpg] [scale]
 
@@ -216,7 +216,7 @@ def build():
     _it = sc.add(cap[0] @ S.rot((0, 1, 0), 25).T + np.array([ax - 50, ay + 10, az + top + 62]), cap[1], cap[2], proc=stone); _it.layer = 'mid'; _it.detail = relief(70, 0.6, grime=0.4, crack=0.45, fine=True, snowcap=0.7)
     for i, (dx, dy, hh) in enumerate([(-420, 60, 160), (-300, -40, 110), (340, -30, 150), (470, 80, 200), (620, 0, 100), (-600, 140, 120)]):
         slab(10 + i, ax + dx, ay + dy, 36 + rng.uniform(-6, 8), 30, hh, rng.uniform(-30, 30), (rng.uniform(-6, 6), rng.uniform(-8, 8)))
-    # the rune-stone of the Dirge, in front, with glowing runes (a separate emissive strip down its face)
+    # the rune-stone of the Curse, in front, with glowing runes (a separate emissive strip down its face)
     rx, ry = 95.0, 420.0
     rs = slab(40, rx, ry, 22, 15, 92, 8, (0, 2), layer='near')
     rz = float(ground_h(np.array(rx), np.array(ry)))

@@ -98,7 +98,7 @@ GLYPHS = [[(0, -1, 0, 1), (0, -0.3, 0.6, -0.9)], [(-0.5, 1, 0, -1), (0.5, 1, 0, 
 def bow_maps(kind, body_col, glow, seed, W=2048, H=1024):
     """the bow's own finish, laid out on its limb (u: bottom tip to top tip, v: round the limb, the seam on its back):
     the limb's material with its grain running the length, a wrapped leather grip between two collars, metal-capped tips,
-    and a channel carved down each flank of both limbs with the Dirge's runes cut into it, glowing in the bow's element"""
+    and a channel carved down each flank of both limbs with the Curse's runes cut into it, glowing in the bow's element"""
     from PIL import ImageDraw
     d0, n0 = skymat.make(kind, body_col, seed=seed, size=W)
     mat = np.asarray(d0.rotate(90, expand=True).resize((W, W)), np.float32)[:H]          # grain along the limb (u)

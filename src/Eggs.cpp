@@ -478,7 +478,7 @@ namespace bo3z::Eggs
 		return out;
 	}
 
-	float DamageMult()  // Vaermina's Gift: +10% at night (+5% once GRAH is silenced: the night's bonuses are capped)
+	float DamageMult()  // Vaermina's Gift: +10% at night (+5% once SLEN is silenced: the night's bonuses are capped)
 	{
 		if (!Has("dream") || !Director::NightNow()) return 1.0f;
 		return Echo::WordSilenced(0) ? 1.05f : 1.10f;

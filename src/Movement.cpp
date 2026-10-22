@@ -660,7 +660,7 @@ namespace bo3z
 		//   II  Talon Strike   the shout Dragon's Updraft (learned with the bond): a whirlwind lifts you high, open the glider; attack
 		//                      while looking down mid-glide and it hurls you at the ground - you land in a shockwave that
 		//                      throws the dead about. Its markings turn glacier blue.
-		//   III Alduin's Thrall (needs a city freed from the Dirge) black scales, ember eyes - its fire breath is real now:
+		//   III Alduin's Thrall (needs a city freed from the Curse) black scales, ember eyes - its fire breath is real now:
 		//                      it turns on the dead below you, in the element of the spell in your hand (fire burns
 		//                      hotter, frost slows them, lightning leaps to the next).
 		// Its look: Paragliding.esp's animated object (ANIO 0x800) is given the bond's nif before you glide, the dragon
@@ -2155,7 +2155,7 @@ namespace bo3z
 				}
 			}
 			const auto have = a_player->GetInventoryCounts([](RE::TESBoundObject& o) { return &o == item; });
-			// (Noah) the dragon is yours once Whiterun's shrine is won - its Dirge lifted - not before
+			// (Noah) the dragon is yours once Whiterun's shrine is won - its Curse lifted - not before
 			constexpr int kWhiterun = 1;
 			const bool    unlocked = Curse::Freed(kWhiterun) || Gun::TestKitOn();
 			static int    wasUnlocked = -1;

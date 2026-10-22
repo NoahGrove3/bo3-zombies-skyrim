@@ -88,7 +88,7 @@ M = {  # id: (files, pitch shift %, layer id, 2d/3d)
  'forge_ritual': (f('mag\\altars\\mag_altars_blessing_fire_01_2d.wav'), -20, None),
  **{f'brew_{k}': (f('dlc02\\mag\\mag_standingstoneactivate_a_01.wav' if i % 2 else 'dlc02\\mag\\mag_standingstoneactivate_b_01.wav'), -6 - 3 * i, None)
     for i, k in enumerate(['trollshide', 'quicksilver', 'twinstrike', 'hearthfire', 'windrunner', 'hawkeye', 'mammoth', 'frostbite', 'stormcrown'])},
- # ---- the nights and the Dirge
+ # ---- the nights and the Curse
  'night_start': (f(*n('npc\\wolf\\howl\\npc_wolf_howl', 3)), -15, 'night_thunder'),
  'night_falls': (f(*n('npc\\wolf\\howl\\npc_wolf_howl', 3)), -25, 'night_thunder'),
  'night_thunder': (f(*n('amb\\weather\\thunder\\amb_weather_thunder_distant', 4)), -10, None),

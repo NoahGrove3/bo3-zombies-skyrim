@@ -70,7 +70,7 @@ namespace bo3z
 			const int obj = gen::kLocations[a_index].object;
 			// (Noah: the freed look once its trials are done and every wave of that night is slain) the city's curse lifted
 			// and no night being fought
-			// (its last night ends the moment the Barrow-Jarl falls: freed is complete; the night's own fighting elsewhere
+			// (its last night ends the moment the Dragon Priest falls: freed is complete; the night's own fighting elsewhere
 			// no longer hides it - Noah: the freed rune circle stood still on later nights)
 			const bool freed = Curse::Freed(gen::kLocations[a_index].town);
 			for (const auto& d : gen::kDress) {
@@ -1388,7 +1388,7 @@ namespace bo3z
 					return RE::BSContainer::ForEachResult::kContinue;
 				}
 				if (auto* b = r->GetBaseObject(); b == Forms::Ours(gen::kWardBrazier) || b == Forms::Ours(gen::kWardFire) || b == Forms::Ours(gen::kWardLight)) {
-					return RE::BSContainer::ForEachResult::kContinue;  // the Dirge's ward-fires (Curse.cpp keeps them)
+					return RE::BSContainer::ForEachResult::kContinue;  // the Curse's ward-fires (Curse.cpp keeps them)
 				}
 				for (const auto& h : g_placed) {
 					if (h.get().get() == r) {
@@ -2510,7 +2510,7 @@ namespace bo3z
 			TickTowns();
 		}
 
-		// The city's Dirge is lifted: the shrine sends out a wave - a burst of light that rolls outward three times, a
+		// The city's Curse is lifted: the shrine sends out a wave - a burst of light that rolls outward three times, a
 		// deep toll heard across the city - and from now on it burns gold with a beam of light over it (Dress: freed pieces).
 		void FreedPulse(int a_town)
 		{
@@ -2531,7 +2531,7 @@ namespace bo3z
 					g_dressed[i] = false;  // dress it again now: the gold glow and the beam
 				}
 			}
-			logger::info("shops: {}'s shrine pulses - the Dirge is lifted", gen::kTowns[a_town]);
+			logger::info("shops: {}'s shrine pulses - the Curse is lifted", gen::kTowns[a_town]);
 		}
 
 		void OnActivate(RE::TESObjectREFR* a_ref)

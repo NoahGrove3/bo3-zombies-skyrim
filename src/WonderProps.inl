@@ -1,7 +1,7 @@
 // The wonder weapons in your hands (Noah's models, tools/wonderprops.py): while one is drawn its model hangs on the
 // bones that hold it, in first person and in third - Gravecaller's staff in the right hand, the Frostbinder gauntlets
 // on both hands, the Wolf Queen's Crown on your head (and, in first person, a small one turning over your left hand),
-// the Horn of the Barrow-Jarls in the left hand. Each breathes with its colour while held, sheds its element's motes,
+// the Horn of the Dragon Priests in the left hand. Each breathes with its colour while held, sheds its element's motes,
 // and moves with every shot: a tap kicks it, a charged attack swings it through (Gun's Spellcraft::Launch sets the
 // kick). Included by Gun.cpp inside its anonymous namespace, after Spellcraft and Bows.
 namespace Props

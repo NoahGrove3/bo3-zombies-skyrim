@@ -657,7 +657,7 @@ def quest_start():  # a low choir swells and a single bell
     return hall(mix(chord(choir, ['A2', 'E3', 'A3'], 2.6, vowel='a', bright=0.7) * 0.7, place(np.zeros(1), bell(hz('E4'), 2.0, 2.76, 3.0) * 0.6, 0.4)), 0.45, 3.2)
 def quest_step():  # two rising bells
     return hall(mix(bell(hz('A4'), 1.4, 2.76, 2.5) * 0.7, place(np.zeros(1), bell(hz('E5'), 1.6, 2.76, 2.5) * 0.7, 0.25)), 0.4, 2.5)
-def curse_lifted():  # the dirge breaks: a full major choir, a horn call, bells
+def curse_lifted():  # the curse breaks: a full major choir, a horn call, bells
     ch = mix(chord(choir, ['D3', 'F#3', 'A3', 'D4'], 4.5, vowel='a', bright=1.1), place(np.zeros(1), chord(choir, ['G3', 'B3', 'D4', 'G4'], 3.5, vowel='a', bright=1.2), 2.0))
     hn = place(np.zeros(1), seq(horn, [('D4', 0.8), ('A4', 0.8), ('D5', 2.0)], 100, bright=.7) * 0.7, 0.6)
     bl = mix(*[place(np.zeros(1), bell(hz(n), 2.5, 2.76, 2.0) * 0.4, 1.4 + 0.3 * k) for k, n in enumerate(('D5', 'F#5', 'A5', 'D6'))])

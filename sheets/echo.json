@@ -1,6 +1,6 @@
 {
  "sheet": "echo",
- "about": "Stage 2 of the story (src/Echo.cpp): the Echo Stones and the Reliquary. A freed city's altar raises an Echo Stone; walk up to it and it gives you that city's page, The Broken Words: <City> (a BOOK each), which says plainly which wonder-weapon part waits where and how to take it - and from then on your compass marks it. Parts: boss = dropped by that city's Barrow-Jarl; relic = a glowing reliquary at a landmark that only wakes at night, guarded (kill the guardians, then take it); kill = strike down the dead near a landmark at night until the barrow is fed. Each wonder needs its three parts, forged on its pedestal in the Reliquary behind the sealed door at High Hrothgar. Positions in Skyrim units (Tamriel or the HighHrothgar cell); yaw in degrees, clockwise from north.",
+ "about": "Stage 2 of the story (src/Echo.cpp): the Echo Stones and the Reliquary. A freed city's altar raises an Echo Stone; walk up to it and it gives you that city's page, The Broken Words: <City> (a BOOK each), which says plainly which wonder-weapon part waits where and how to take it - and from then on your compass marks it. Parts: boss = dropped by that city's Dragon Priest; relic = a glowing reliquary at a landmark that only wakes at night, guarded (kill the guardians, then take it); kill = strike down the dead near a landmark at night until the barrow is fed. Each wonder needs its three parts, forged on its pedestal in the Reliquary behind the sealed door at High Hrothgar. Positions in Skyrim units (Tamriel or the HighHrothgar cell); yaw in degrees, clockwise from north.",
  "wonders": [
   {
    "id": "gravecaller",
@@ -175,56 +175,56 @@
  ],
  "pages": {
   "Riverwood": {
-   "echo": "The Betrayed came up out of the dark once, to the valley. Skjold took the violet eye from their shaman's staff, and the haft they left in the barrow on the mountain.",
-   "where": "The Void Eye falls from Skjold Barrowborn himself - you took it when you freed Riverwood. The Void Staff's Haft waits at the doors of Bleak Falls Barrow, up the mountain path west of Riverwood."
+   "echo": "We raised this altar in the valley where the river runs out of the mountains, and cut the valley's words into its heart-stone. Vahlok, the cult's jailor, watched us do it from the barrow on the peak. He swore to Alduin that no prisoner of his would ever go free - and the dead, to him, are prisoners.",
+   "by": "set down by a Tongue of the Way of the Voice, after Jurgen Windcaller"
   },
   "Whiterun": {
-   "echo": "The shaman's mandibles were burned with the first dead of the plains at the cairn. The ash never cooled. It wants more of them.",
-   "where": "Go to Dustman's Cairn, north-west of Whiterun across the plains. At night, cut down the dead around its door until the cairn has drunk enough; the Void Staff's Mandibles rise for you."
+   "echo": "The plains' altar is the one Nahkriin hates most, for it stands nearest the road to Sovngarde. He kept that road for Alduin at Skuldafn. When the World-Eater's mist lies on the door, Nahkriin will come to the plains to keep it there.",
+   "by": "set down by a Tongue of the Way of the Voice, after Jurgen Windcaller"
   },
   "Solitude": {
-   "echo": "Potema took the storm-eye from a Falmer staff and set it in her circlet. The staff's mandibles she left with her wolves, in the cave where she was worshipped.",
-   "where": "The Storm Eye falls from the Wolf Queen's shade - you took it when you freed Solitude. The Storm Staff's Mandibles wait at the mouth of Wolfskull Cave, west of Solitude along the coast."
+   "echo": "Volsung could breathe on the peaks where we could not, and he laughed at our altar under the cliffs of Haafingar. But the Voice carries further than breath. The runes on its heart-stone hold the words that answer him.",
+   "by": "set down by a Tongue of the Way of the Voice, after Jurgen Windcaller"
   },
   "Windhelm": {
-   "echo": "Vrolund broke a Falmer staff of rime over his knee and buried the mandibles with his men in the barrow by the sea.",
-   "where": "The Rime Staff's Mandibles wait at the doors of Yngol Barrow, north-east of Windhelm on the coast."
+   "echo": "Zahkriisos was not of this land; he came over the Sea of Ghosts with the cult's fleet, and the cold came with him. We set the altar of the east by the water so that it would hear him first if he ever came back across the ice.",
+   "by": "set down by a Tongue of the Way of the Voice, after Jurgen Windcaller"
   },
   "Markarth": {
-   "echo": "The Briar-Heart King pried the ember-eye from a Falmer staff found deep under the Reach, and wore it in his chest.",
-   "where": "The Ember Eye falls from the Briar-Heart King - you took it when you freed Markarth."
+   "echo": "Even the cult feared Otar. They walled him up in Ragnvald while he still breathed. We did not trust the wall, so we raised an altar on the Reach's stone and cut into it words he could not shout down.",
+   "by": "set down by a Tongue of the Way of the Voice, after Jurgen Windcaller"
   },
   "Riften": {
-   "echo": "The ember staff's haft was hung in the barrow above Ivarstead, where the Rift's old jarls still keep watch.",
-   "where": "The Ember Staff's Haft waits at the doors of Shroud Hearth Barrow, above Ivarstead - far west of Riften, at the foot of the Throat of the World."
+   "echo": "Rahgot's people drank poison sooner than see him taken. A priest who can ask that of his followers will ask it again. When he rises, the Rift's dead will come with him, and the altar must be woken to send them back.",
+   "by": "set down by a Tongue of the Way of the Voice, after Jurgen Windcaller"
   },
   "Falkreath": {
-   "echo": "Falkreath's Barrow-Jarl kept the ember staff's mandibles on a cord round his neck, and never put them down.",
-   "where": "The Ember Staff's Mandibles fall from Falkreath's Barrow-Jarl - you took them when you freed Falkreath."
+   "echo": "Krosis wept for a thousand years at Shearpoint, guarding a word no one came to learn. Grief is a long oath. The altar of the pines is cut with gentler words than the rest - to put children back to sleep.",
+   "by": "set down by a Tongue of the Way of the Voice, after Jurgen Windcaller"
   },
   "Morthal": {
-   "echo": "In the marsh, a storm staff's haft lies in the tomb under the Mire-Eye. It opens only when it has seen enough of the dead fall.",
-   "where": "Go to Ustengrav, north-east of Morthal in the marsh. At night, cut down the dead around its door until the tomb opens; the Storm Staff's Haft is yours."
+   "echo": "Hevnoraak's own servants sealed him in Valthume, and set the seal with his blood. No seal holds against SLEN TIID VO. When the marsh fog thickens, look to the altar, and to the words on its heart-stone.",
+   "by": "set down by a Tongue of the Way of the Voice, after Jurgen Windcaller"
   },
   "Dawnstar": {
-   "echo": "The rime-eye froze in the temple on the hill, where the priests of dreams went mad. Only death thaws it.",
-   "where": "Go to Nightcaller Temple, on the hill east of Dawnstar. At night, cut down the dead around its door until the Rime Eye thaws; then it is yours."
+   "echo": "Vokun's shadows reached into men's dreams. The priests at the temple on the hill dreamed of him for a thousand years before he came. Wake the altar, and the town will sleep without dreaming of him again.",
+   "by": "set down by a Tongue of the Way of the Voice, after Jurgen Windcaller"
   },
   "Winterhold": {
-   "echo": "The rime staff's haft was taken north by Vrolund's enemies and sealed under the snow, where the sanctum keeps it.",
-   "where": "The Rime Staff's Haft waits at the doors of Snow Veil Sanctum, south-east of Winterhold on the road toward Windhelm."
+   "echo": "Morokei held the Staff of Magnus in Bromjunaar, and the mages who came after us have never forgotten him. The northern altar stands on the cliffs where the storms break; its words are cut deepest of all, for he is the strongest of them.",
+   "by": "set down by a Tongue of the Way of the Voice, after Jurgen Windcaller"
   }
  },
  "words": {
-  "about": "Stage 4 (src/Words.cpp): the Three Words. Once all four wonders are forged, Alduin's three words must be silenced one after another, each at its own place in the wilds and only at night: come near and the word's siege begins (waves of its dead round the place), and when the last wave falls the word's bearer rises. Kill it and the word is silenced for good - a power that stays with you, and the next word wakes. Saved in UN_EchoWords (bit per word; bit 8: the arc told). waves/elites per wave, health: x a zombie's night health (like the Barrow-Jarls).",
+  "about": "Stage 4 (src/Words.cpp): the Three Words. Once all four wonders are forged, Alduin's three words must be silenced one after another, each at its own place in the wilds and only at night: come near and the word's siege begins (waves of its dead round the place), and when the last wave falls the word's bearer rises. Kill it and the word is silenced for good - a power that stays with you, and the next word wakes. Saved in UN_EchoWords (bit per word; bit 8: the arc told). waves/elites per wave, health: x a zombie's night health (like the Dragon Priests).",
   "wakeRange": 3200,
   "leashRange": 6500,
   "rows": [
    {
     "id": "grah",
-    "word": "GRAH",
-    "meaning": "Battle",
-    "site": "the Word Wall of Grah, in the Reach",
+    "word": "SLEN",
+    "meaning": "Flesh",
+    "site": "the cult's old shrine in the Reach",
     "at": [
      -140739,
      47973,
@@ -233,7 +233,7 @@
     "yaw": 148,
     "bearer": {
      "row": "lich",
-     "name": "Vokun-Grah, the War-Priest",
+     "name": "Slen-Vaaz, the Flesh-Warden",
      "health": 9.0,
      "scale": 1.45
     },
@@ -247,14 +247,14 @@
      1,
      2
     ],
-    "wake": "GRAH. The first word shakes the ground under the Reach. A dragon priest who served Alduin in the Merethic Era answers it, and calls his barrow-dead to war around the wall that holds his word.",
-    "silenced": "The War-Priest falls and the word wall goes dark. GRAH is silenced: the battle-fury Alduin poured into the dead now runs in you.",
-    "power": "Battle-Fury: every weapon, bow, spell and wonder hits 15% harder."
+    "wake": "SLEN. The first word shakes the ground under the Reach. A dragon priest who served Alduin in the Merethic Era answers it, and puts flesh back on his barrow-dead around the shrine where the word was first spoken.",
+    "silenced": "The Flesh-Warden falls and the shrine goes dark. SLEN is silenced: the strength Alduin poured into the dead now runs in you.",
+    "power": "Flesh Remade: every weapon, bow, spell and wonder hits 15% harder."
    },
    {
     "id": "dir",
-    "word": "DIR",
-    "meaning": "Death",
+    "word": "TIID",
+    "meaning": "Time",
     "site": "the courtyard of Labyrinthian",
     "at": [
      -23574,
@@ -264,7 +264,7 @@
     "yaw": 186,
     "bearer": {
      "row": "knight",
-     "name": "Dir-Vaaldar, the Death-Thane",
+     "name": "Tiid-Vaaldar, the Time-Thane",
      "health": 11.0,
      "scale": 1.5
     },
@@ -280,14 +280,14 @@
      2,
      3
     ],
-    "wake": "DIR. The second word lies under Labyrinthian, the great tomb of Bromjunaar, where the dragon cult laid its dead by the thousand. Every one of them hears it.",
-    "silenced": "The Death-Thane crumbles in the courtyard of Bromjunaar. DIR is silenced: death has a weaker grip on you now.",
-    "power": "Death's Refusal: the night's blows hurt you 20% less."
+    "wake": "TIID. The second word lies under Labyrinthian, the great tomb of Bromjunaar, where the dragon cult laid its dead by the thousand. It gives them back the years the grave took, and every one of them hears it.",
+    "silenced": "The Time-Thane crumbles in the courtyard of Bromjunaar. TIID is silenced: the time the dead stole is yours now.",
+    "power": "Borrowed Time: the night's blows hurt you 20% less."
    },
    {
     "id": "lein",
-    "word": "LEIN",
-    "meaning": "World",
+    "word": "VO",
+    "meaning": "Undo",
     "site": "the summit of the Throat of the World",
     "at": [
      56044,
@@ -311,9 +311,9 @@
      2,
      3
     ],
-    "wake": "LEIN. The last word was shouted from the top of the world. Climb the Throat of the World at night: Alduin's echo still circles the summit, breathing his dead back into the world.",
-    "silenced": "The Echo of Alduin breaks apart over the summit and its shout dies on the wind. GRAH, DIR, LEIN - all three words are silenced. The World-Eater's curse is broken.",
-    "power": "The World Answers: your magicka returns half again as fast."
+    "wake": "VO. The last word was shouted from the top of the world, where the Tongues once cast Alduin out of time. Climb the Throat of the World at night: his echo still circles the summit, undoing every death in Skyrim.",
+    "silenced": "The Echo of Alduin breaks apart over the summit and its shout dies on the wind. SLEN, TIID, VO - all three words are silenced, and the dead can rest. The rest is Sovngarde's to finish.",
+    "power": "The Curse Undone: your magicka returns half again as fast."
    }
   ]
  },

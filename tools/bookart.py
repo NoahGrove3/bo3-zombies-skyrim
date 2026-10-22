@@ -1,4 +1,4 @@
-"""Woodcut-style ink illustrations for "The Undying Dirge" (the lore book), drawn from nothing: dark iron-gall ink on
+"""Woodcut-style ink illustrations for "Alduin's Curse" (the lore book), drawn from nothing: dark iron-gall ink on
 transparent, so they sit on Skyrim's parchment pages. Data/Textures/CurseOfAlduin/Book/<name>.png
     python tools/bookart.py <out Data dir> [preview.png]"""
 import math, pathlib, sys
@@ -122,7 +122,7 @@ def wards():
     p.frame(); return p.save('wards')
 
 def herald():
-    """the Herald of the Dirge: a horned wyrm's skull looming out of banks of fog"""
+    """the Herald of the Curse: a horned wyrm's skull looming out of banks of fog"""
     p = Plate(512, 300)
     cx, cy = 256, 120
     # long snout pointing down, wide brow, cheek spikes
@@ -148,7 +148,7 @@ def herald():
     p.frame(); return p.save('herald')
 
 def sigil():
-    """the seal of the Dirge: a knotwork ring round a skull rune"""
+    """the seal of the Curse: a knotwork ring round a skull rune"""
     p = Plate(320, 320); c = 160
     p.ellipse((c - 140, c - 140, c + 140, c + 140), outline=255, w=4); p.ellipse((c - 122, c - 122, c + 122, c + 122), outline=255, w=2)
     for k in range(24):                                                                            # knot crossings

@@ -130,7 +130,7 @@ XP = {'zombie': 1, 'hollow2': 1, 'hollow3': 1, 'ash1': 1, 'ash2': 1, 'runner': 1
       'hexer_storm': 2, 'wailer': 2, 'death_hound': 1, 'shadow': 4, 'reaper': 4, 'brute': 5, 'boss': 20, 'boss2': 20, 'boss3': 20,
       'hf_goblin': 1, 'hf_goblin_archer': 1, 'hf_centipede': 1, 'hf_arachling': 1, 'hf_goblin_shaman': 2, 'hf_harpy': 2, 'hf_imp_fire': 2,
       'hf_imp_shock': 2, 'hf_ooze': 2, 'hf_troll': 3, 'hf_ogre': 4, 'hf_minotaur': 5, 'hf_ettin': 5,
-      'boss4': 20, 'skeleton': 0, 'king': 6, 'knight': 6, 'lich': 6, 'bloater': 6}
+      'boss4': 20, 'herald': 25, 'skeleton': 0, 'king': 6, 'knight': 6, 'lich': 6, 'bloater': 6}
 
 
 def main():

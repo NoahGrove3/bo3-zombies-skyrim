@@ -1,6 +1,6 @@
 """The shrine's floating rocks, shared by the game's model (tools/shrine.py) and the main menu's painting
 (tools/menushrine.py): one 2K slate texture set, mapped round each rock like a sleeve - u runs along the rock's
-length, v round it (so the texture is seamless top to bottom) - with a bracelet of the Dirge's runes round each end
+length, v round it (so the texture is seamless top to bottom) - with a bracelet of the Curse's runes round each end
 of the stone: two carved bands whose runes glow blue (the game pulses them).
 
     rock_maps(n=2048) -> diffuse (RGB), normal (RGBA), glow (RGB) PIL images

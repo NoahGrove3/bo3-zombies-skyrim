@@ -52,7 +52,7 @@ def blur(a, r):
 
 
 def glyph_mask(w, h, cells, seed, width_frac=0.085, vertical=False, wrap=False):
-    """a line of runes: cells (cx, cy, half-size) in pixels, each one of the Dirge's glyphs, drawn as carved strokes"""
+    """a line of runes: cells (cx, cy, half-size) in pixels, each one of the Curse's glyphs, drawn as carved strokes"""
     rnd = random.Random(seed)
     glyphs = AA.glyphs(24, seed)
     m = Image.new('L', (w, h), 0)
