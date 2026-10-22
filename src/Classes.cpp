@@ -493,7 +493,7 @@ namespace bo3z::Classes
 		for (auto [k, t] : kTiers) if (a_name.find(k) != std::string_view::npos) return t;
 		return 0;
 	}
-	bool RollGear(int a_cls)
+	bool RollGear(int a_cls, Prize* a_out)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* dh = RE::TESDataHandler::GetSingleton();
@@ -530,6 +530,11 @@ namespace bo3z::Classes
 			static std::mt19937 rng2{ std::random_device{}() };
 			if (!spells.empty() && (pool.empty() || std::uniform_int_distribution<int>(0, 3)(rng2) == 0)) {
 				auto* sp = spells[std::uniform_int_distribution<std::size_t>(0, spells.size() - 1)(rng2)];
+				if (a_out) {
+					a_out->name = sp->GetName();
+					a_out->give = [sp] { if (auto* pl = RE::PlayerCharacter::GetSingleton()) pl->AddSpell(sp); Hud::Banner(std::string("The altar teaches you ") + sp->GetName(), 4.0f); };
+					return true;
+				}
 				p->AddSpell(sp);
 				Hud::Banner(std::string("The altar teaches you ") + sp->GetName(), 4.0f);
 				return true;
@@ -541,6 +546,18 @@ namespace bo3z::Classes
 		}
 		static std::mt19937 rng{ std::random_device{}() };
 		auto* pick = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(rng)];
+		if (a_out) {
+			a_out->name = pick->GetName();
+			a_out->give = [pick, a_cls] {
+				auto* pl = RE::PlayerCharacter::GetSingleton();
+				if (!pl) return;
+				pl->AddObjectToContainer(pick, nullptr, 1, nullptr);
+				if (auto* w = pick->As<RE::TESObjectWEAP>(); w && w->IsCrossbow()) Bows::Restock();
+				Hud::Banner(std::string("The altar gives you ") + pick->GetName(), 4.0f);
+				logger::info("classes: altar gear {} ({})", pick->GetName(), Name(a_cls));
+			};
+			return true;
+		}
 		p->AddObjectToContainer(pick, nullptr, 1, nullptr);
 		if (auto* w = pick->As<RE::TESObjectWEAP>(); w && w->IsCrossbow()) Bows::Restock();  // (a crossbow comes with its bolts)
 		Hud::Banner(std::string("The altar gives you ") + pick->GetName(), 4.0f);
@@ -614,7 +631,7 @@ namespace bo3z::Classes
 	}
 
 	// (Noah's plan, Destruction) its support spells come as the altar's side-pick, for this class only
-	bool RollSupport()
+	bool RollSupport(Prize* a_out)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return false;
@@ -629,6 +646,11 @@ namespace bo3z::Classes
 		}
 		static std::mt19937 rng{ std::random_device{}() };
 		auto* sp = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(rng)];
+		if (a_out) {
+			a_out->name = sp->GetName();
+			a_out->give = [sp] { if (auto* pl = RE::PlayerCharacter::GetSingleton()) pl->AddSpell(sp); Hud::Banner(std::string("Support spell learned: ") + sp->GetName(), 4.0f); logger::info("classes: support spell {}", sp->GetName()); };
+			return true;
+		}
 		p->AddSpell(sp);
 		Hud::Banner(std::string("Support spell learned: ") + sp->GetName(), 4.0f);
 		logger::info("classes: support spell {}", sp->GetName());
@@ -701,7 +723,7 @@ namespace bo3z::Classes
 
 	// (Noah's plan, the Summoner: Calling of the Conjurer's heroes and armies as late Legendaries) once one of your families
 	// is Legendary and two cities are free, the altar's second row binds a hero - then, with four cities free, an army
-	bool RollHero()
+	bool RollHero(Prize* a_out)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return false;
@@ -724,6 +746,11 @@ namespace bo3z::Classes
 		}
 		static std::mt19937 rng{ std::random_device{}() };
 		auto* sp = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(rng)];
+		if (a_out) {
+			a_out->name = sp->GetName();
+			a_out->give = [sp] { if (auto* pl = RE::PlayerCharacter::GetSingleton()) pl->AddSpell(sp); Forms::Play(gen::Sound::shout_learned); Hud::Banner(std::string("A LEGENDARY PACT - ") + sp->GetName(), 5.0f); logger::info("classes: hero pact {}", sp->GetName()); };
+			return true;
+		}
 		p->AddSpell(sp);
 		Forms::Play(gen::Sound::shout_learned);
 		Hud::Banner(std::string("A LEGENDARY PACT - ") + sp->GetName(), 5.0f);

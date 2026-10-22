@@ -38,6 +38,8 @@ namespace bo3z
 			int                 gun{ -1 }, shown{ -1 };
 			float               t{ 0 }, step{ 0 };
 			bool                bow{ false };  // the bow wheel (gun/shown: Bows indices)
+			bool                prize{ false };  // (Noah: a class row's win rolls too) the reel turns the class's spells, it lands on pz
+			Classes::Prize      pz;
 		} g_show;
 		bool g_choosing = false;  // a third spell won: which of your two it replaces (Choose)
 		constexpr float kChargeTime = 0.35f;  // (a breath before the first beam)
@@ -423,9 +425,14 @@ namespace bo3z
 						EndBeams();
 						g_show.t = 0;
 						g_show.shown = g_show.gun;
-						ShowAt(g_show.gun, gen::kShowRise, true);
+						if (!g_show.prize) ShowAt(g_show.gun, gen::kShowRise, true);
 						Forms::PlayAt(gen::Sound::coffer_land, chest.get());
 						PlayUi(UiSnd::kLand, 0.8f);  // (a bright chord as it lands)
+						if (g_show.prize) {
+							Hud::Banner(g_show.pz.name + "  -  Activate the altar to take it", 4.0f);
+							g_show.phase = Show::Offering;
+							break;
+						}
 						if (g_show.bow) {
 							Hud::Banner(std::string(Bows::Name(g_show.gun)) + "  -  Activate the altar to take it" + (Bows::Carried() >= 0 ? " (your " + std::string(Bows::Name(Bows::Carried())) + " goes back)" : std::string()), 4.0f);
 							g_show.phase = Show::Offering;
@@ -1617,6 +1624,13 @@ namespace bo3z
 			if (g_show.phase != Show::Offering || g_show.chest.get().get() != a_ref) {
 				return false;
 			}
+			if (g_show.prize) {  // a class row's win: given now
+				if (g_show.pz.give) g_show.pz.give();
+				Forms::Play(gen::Sound::coffer_take);
+				logger::info("shrine: took {}", g_show.pz.name);
+				EndOffer();
+				return true;
+			}
 			if (g_show.bow) {  // the bow wheel: one bow at a time, the new one takes the old one's place
 				const int old = Bows::Carried();
 				Bows::Give(g_show.gun);
@@ -1725,6 +1739,21 @@ namespace bo3z
 			g_show.gun = pick;
 			Forms::PlayAt(gen::Sound::coffer_charge, a_ref);
 			logger::info("shrine: rolling the bow {}", Bows::Name(pick));
+		}
+
+		// (Noah: no roll on the class rows) a class row's win turns on the altar like a spell: the reel runs the class's own
+		// spells (the stones strike the heart one by one), then lands on what was won, to be taken off the altar
+		void SpinPrize(RE::TESObjectREFR* a_ref, Classes::Prize a_pz)
+		{
+			g_show = {};
+			g_show.chest = a_ref->CreateRefHandle();
+			g_show.phase = Show::Charging;
+			const auto carried = Arcana::Carried();
+			g_show.gun = carried.empty() ? 0 : carried.front();  // (the reel's spells: what is shown as it turns)
+			g_show.prize = true;
+			g_show.pz = std::move(a_pz);
+			Forms::PlayAt(gen::Sound::coffer_charge, a_ref);
+			logger::info("shrine: rolling {}", g_show.pz.name);
 		}
 
 		// Roll a spell: every spell you do not carry has the same chance.
@@ -2027,10 +2056,14 @@ namespace bo3z
 						if (const int cls = Classes::Get(); cls == 3 || (cls == 2 && std::uniform_int_distribution<int>(0, 9)(g_rng) < 3)) {
 							// (the Spellsword's row: a spell-weapon or spellshield; the Ranger's: three times in ten a crossbow)
 							const int town = TownOfAltar(ref), cost = BowRollCost(town);
-							if (Points::Get() >= cost && Classes::RollGear(cls)) {
+							Classes::Prize pz;
+							if (g_show.phase != Show::Idle) {
+								Hud::Banner("The altar is still turning", 1.5f);
+							} else if (Points::Get() >= cost && ref && Classes::RollGear(cls, &pz)) {
 								Points::Spend(cost);
 								if (town >= 0) g_bowRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_bowRollsT[town] + 1));
-								Forms::PlayAt(gen::Sound::coffer_charge, ref);
+								SpinPrize(ref, std::move(pz));
+								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
 							} else if (Points::Get() < cost) {
 								Hud::Banner("It costs " + std::to_string(cost) + " septims", 2.0f);
 							}
@@ -2039,19 +2072,21 @@ namespace bo3z
 							const int town = TownOfAltar(ref), cost = BowRollCost(town);
 							if (Points::Get() < cost) {
 								Hud::Banner("It costs " + std::to_string(cost) + " septims", 2.0f);
-							} else if (Classes::RollSupport()) {
+							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollSupport(&pz)) {
 								Points::Spend(cost);
 								if (town >= 0) g_bowRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_bowRollsT[town] + 1));
-								Forms::PlayAt(gen::Sound::coffer_charge, ref);
+								SpinPrize(ref, std::move(pz));
+								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
 							}
 							break;
 						} else if (cls == 0) {  // (the Summoner's late Legendaries: heroes and armies)
 							const int town = TownOfAltar(ref), cost = BowRollCost(town) * 2;
 							if (Points::Get() < cost) {
 								Hud::Banner("A hero's pact costs " + std::to_string(cost) + " septims", 2.0f);
-							} else if (Classes::RollHero()) {
+							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollHero(&pz)) {
 								Points::Spend(cost);
-								Forms::PlayAt(gen::Sound::coffer_charge, ref);
+								SpinPrize(ref, std::move(pz));
+								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
 							}
 							break;
 						} else if (cls != 2) {
@@ -2239,6 +2274,7 @@ namespace bo3z
 				h.rollT = g_show.phase == Show::Charging ? std::min(1.0f, g_show.t / kChargeTime) : g_show.phase == Show::Spinning ? std::min(1.0f, g_show.t / gen::kShowSpin) : g_show.phase == Show::Offering ? std::min(1.0f, g_show.t / gen::kShowOffer) : 0.0f;
 				h.rollGun = g_show.phase == Show::Idle || g_show.phase == Show::Charging || g_show.shown < 0 ? -1 : (g_show.bow ? Bows::kIdBase : Arcana::kIdBase) + g_show.shown;
 				h.rollBow = g_show.bow && g_show.phase != Show::Idle;
+				h.rollPrize = g_show.prize && g_show.phase == Show::Offering ? g_show.pz.name : std::string();
 				h.bowRollCost = BowRollCost();
 				h.bowCarried = Bows::Carried();
 				h.rollTarget = g_show.phase == Show::Spinning || g_show.phase == Show::Offering ? g_show.gun : -1;

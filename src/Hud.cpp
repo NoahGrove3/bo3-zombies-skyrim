@@ -2372,7 +2372,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const float f = since / 0.6f, g = R * (1.0f + 1.5f * f);
 						dl->AddImage(T(tx.soft), { c.x - g, c.y - g }, { c.x + g, c.y + g }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(230 * (1.0f - f))));
 					}
-					DrawEmblem(dl, s.rollGun, c, R * 0.55f, std::min(1.0f, since / 0.3f), now);
+					if (s.rollPrize.empty()) DrawEmblem(dl, s.rollGun, c, R * 0.55f, std::min(1.0f, since / 0.3f), now);
 				}
 			};
 			const auto keyCap = [&](ImVec2 at, const std::string& key, bool live) {
@@ -2464,14 +2464,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				} else if (s.rollPhase == 3 && s.rollGun >= 0) {
 					const float since = s.rollT * gen::kShowOffer, in = std::min(1.0f, since / 0.35f);
 					const ImU32 ec = spellCol(s.rollGun, 1.0f);
-					const bool  legend = s.rollGun >= Arcana::kIdBase && s.rollGun < Bows::kIdBase && Arcana::TierOf(s.rollGun - Arcana::kIdBase) >= 3;
+					const bool  legend = s.rollPrize.empty() && s.rollGun >= Arcana::kIdBase && s.rollGun < Bows::kIdBase && Arcana::TierOf(s.rollGun - Arcana::kIdBase) >= 3;
 					const float y = cy - (nameH + typeH) * 0.5f;
+					const std::string rollName = s.rollPrize.empty() ? ArmsName(s.rollGun) : s.rollPrize, rollType = s.rollPrize.empty() ? ArmsType(s.rollGun) : std::string("From the altar");
 					if (legend) {
 						TxtC(dl, g_title, nameH * 0.7f, c.x, y - nameH * 0.9f, Fade(IM_COL32(255, 222, 130, 255), in), "LEGENDARY", 2 * k, IM_COL32(120, 60, 0, static_cast<int>(255 * in)));
 					}
-					if (legend) TxtGoldC(dl, g_title, nameH * (1.25f - 0.15f * in), c.x, y, ArmsName(s.rollGun), in);
-					else TxtC(dl, g_title, nameH * (1.25f - 0.15f * in), c.x, y, Fade(IM_COL32(250, 246, 235, 255), in), ArmsName(s.rollGun), 2.5f * k, Fade(ec, in));
-					TxtC(dl, g_body, typeH, c.x, y + nameH * 1.15f + 2 * k, Fade(ec, in), ArmsType(s.rollGun), 1.5f * k, IM_COL32(0, 0, 0, static_cast<int>(255 * in)));
+					if (legend) TxtGoldC(dl, g_title, nameH * (1.25f - 0.15f * in), c.x, y, rollName, in);
+					else TxtC(dl, g_title, nameH * (1.25f - 0.15f * in), c.x, y, Fade(IM_COL32(250, 246, 235, 255), in), rollName, 2.5f * k, Fade(ec, in));
+					TxtC(dl, g_body, typeH, c.x, y + nameH * 1.15f + 2 * k, Fade(ec, in), rollType, 1.5f * k, IM_COL32(0, 0, 0, static_cast<int>(255 * in)));
 					const float th = nameH * 1.15f + typeH + 10 * k;
 					Divider(dl, c.x, y + th, std::max(60.0f * k, R * 0.9f), k);
 				}
@@ -2560,7 +2561,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					rollOrb({ L + R, y + R + 4 * k }, R);
 					const float tx = L + 2 * R + 16 * k;
 					bullet({ tx, y + 4 * k }, 0, s.rollPhase == 0);
-					if (s.rollPhase == 3 && Legendary(s.rollGun)) TxtGold(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, ArmsName(s.rollGun));
+					if (s.rollPhase == 3 && !s.rollPrize.empty()) Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPrize);
+					else if (s.rollPhase == 3 && Legendary(s.rollGun)) TxtGold(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, ArmsName(s.rollGun));
 					else Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? (Classes::Get() == 2 ? "CALL A BOW" : Classes::Get() == 0 ? "CALL A SUMMON" : "CALL A SPELL") : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? (s.rollBow ? "THE BOWS TURN..." : "THE SPELLS TURN...") : ArmsName(s.rollGun));
 					Txt(dl, g_body, 17 * k, { tx, y + 38 * k }, IM_COL32(196, 182, 160, 235),
 						s.rollPhase == 3 ? (s.rollBow ? "Activate the altar to take it - your bow goes back" : "Activate the shrine to take it") : "Two of the altar's spells at a time");
@@ -2805,7 +2807,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float R = 30 * k;
 				const ImVec2 c{ size.x * 0.5f - 90 * k, size.y * 0.5f + 150 * k };
 				rollOrb(c, R);
-				const std::string t = s.rollPhase == 1 ? "The shrine gathers..." : s.rollPhase == 2 ? "The spells turn..." : ArmsName(s.rollGun) + "  -  take it at the shrine";
+				const std::string t = s.rollPhase == 1 ? "The shrine gathers..." : s.rollPhase == 2 ? "The spells turn..." : (s.rollPrize.empty() ? ArmsName(s.rollGun) : s.rollPrize) + "  -  take it at the shrine";
 				Txt(dl, g_title, 19 * k, { c.x + R + 12 * k, c.y - 12 * k }, s.rollPhase == 3 ? spellCol(s.rollGun, 1.0f) : kParch, t, 1.5f * k, IM_COL32(0, 0, 0, 255));
 			}
 		}

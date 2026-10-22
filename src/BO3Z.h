@@ -283,7 +283,9 @@ namespace bo3z
 		void             SetState(const std::vector<std::uint8_t>& a_v);
 		void             Revert();
 		void             Tick();                   // the Summoner's summon cap, once a second
-		bool             RollGear(int a_cls);      // a Spellsword weapon or shield / a Ranger's crossbow from the altar (material by freed cities)
+		// (Noah: the altar's rows keep their roll) what a class row won, given when it is taken off the altar after the roll
+		struct Prize { std::string name; std::function<void()> give; };
+		bool             RollGear(int a_cls, Prize* a_out = nullptr);      // a Spellsword weapon or shield / a Ranger's crossbow from the altar (material by freed cities)
 		void             OnKill(bool a_bySummon, RE::Actor* a_dying);  // you (or your summon) killed a foe: what you hold trains, the wonder trial counts
 		void             NoteHit(RE::Actor* a_target, RE::FormID a_source, bool a_power);  // your blow (what killed it; the wonders' on-hit)
 		bool             OnCast(RE::FormID a_spell);   // the Tome of the Six Fires
@@ -293,8 +295,8 @@ namespace bo3z
 		std::string      WonderLine();                 // the altar's line: your class wonder's trial
 		void             ImbueWeapon();                // the Spellsword's Imbue: the held spell-weapon one material up, its element kept
 		void             OnBlock(RE::Actor* a_attacker, bool a_spell);  // a blow blocked with a spellshield: reflect / stagger
-		bool             RollHero();                   // the Summoner's late Legendaries: a hero or an army (needs a Legendary summon)
-		bool             RollSupport();                // Destruction's altar side-pick: Ash Cloud, Cinder Storm, Charged Nova or Symmetry
+		bool             RollHero(Prize* a_out = nullptr);                   // the Summoner's late Legendaries: a hero or an army (needs a Legendary summon)
+		bool             RollSupport(Prize* a_out = nullptr);                // Destruction's altar side-pick: Ash Cloud, Cinder Storm, Charged Nova or Symmetry
 		std::string      BoltLine();                   // the Ranger's crossbow mastery, for the altar ('' other classes)
 		void             NextOutfit();                 // the altar's outfit picker: the next outfit (any class), worn
 		std::string      OutfitName();                 // the one worn from the picker ('' none yet)
@@ -782,6 +784,7 @@ namespace bo3z
 			int         bowHeld{ -1 };    // the altar's bow in hand (Bows index), and how far it is drawn
 			float       bowDraw{ 0 };
 			bool        rollBow{ false };  // the altar's roll is the bow wheel
+			std::string rollPrize;  // a class row's win, landed (its name over the altar in place of a spell's)
 			int         bowRollCost{ 0 }, bowCarried{ -1 };
 			float       questTimer{ -1 };  // the trial under way: seconds left on its clock (-1 none)
 			bool        questWarn{ false };  // ...and it is in danger (time short, health low)

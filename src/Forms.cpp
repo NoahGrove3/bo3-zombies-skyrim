@@ -169,7 +169,9 @@ namespace bo3z
 				return true;
 			}
 			for (auto* q : g_mq102) {  // Before the Storm has started: Helgen is behind us
-				if (q && (q->IsRunning() || q->IsCompleted())) {
+				// (Noah: the Helgen skip never showed, the class came at once) with Skyrim Together, Before the Storm's three
+				// quests are running from the very start at stage 0: only a stage past 0 means you are out of Helgen
+				if (q && (q->IsCompleted() || (q->IsRunning() && q->GetCurrentStageID() > 0))) {
 					return true;
 				}
 			}
