@@ -1087,7 +1087,7 @@ namespace bo3z::gen
 	struct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };
 	inline constexpr KnifeDef kKnife{ 47, 150.0f, 170.0f, 45.0f, 650 };
 	struct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };
-	inline constexpr std::array<PerkDef, 9> kPerks{ {
+	inline constexpr std::array<PerkDef, 10> kPerks{ {
 		PerkDef{ "trollshide", "Troll's Hide Mead", 2500, 0, 100.0f, 0x800, 0x820 },
 		PerkDef{ "quicksilver", "Quicksilver Draught", 3000, 1, 0.6f, 0x801, 0x821 },
 		PerkDef{ "twinstrike", "Twin Strike Ale", 2000, 2, 2.0f, 0x802, 0x822 },
@@ -1097,6 +1097,7 @@ namespace bo3z::gen
 		PerkDef{ "mammoth", "Mammoth Back Porter", 4000, 6, 3.0f, 0x806, 0x826 },
 		PerkDef{ "frostbite", "Frostbite Venom", 4000, 7, 4.0f, 0x827, 0x82B },
 		PerkDef{ "stormcrown", "Stormcrown Cider", 2000, 8, 500.0f, 0x828, 0x82C },
+		PerkDef{ "fletcher", "Fletcher's Sap Draught", 1500, 9, 1.0f, 0xCB3, 0xCB4 },
 	} };
 	inline constexpr int kPerk_trollshide = 0;
 	inline constexpr int kPerk_quicksilver = 1;
@@ -1107,7 +1108,8 @@ namespace bo3z::gen
 	inline constexpr int kPerk_mammoth = 6;
 	inline constexpr int kPerk_frostbite = 7;
 	inline constexpr int kPerk_stormcrown = 8;
-	inline constexpr std::array<std::string_view, 9> kPerkDesc{ { "Skin like a troll: +100 health each draught, so it takes more hits to go down.", "Quicksilver in the veins: spells cost 15% less magicka each draught (up to 75%).", "Twin strike: your spells hit 50% harder each draught.", "When you would fall, the hearth calls you back - once for each tonic.", "Run faster and sprint longer with each brew.", "Clear sight, clear mind: magicka returns 50% faster each draught.", "A mammoth's back: +50 magicka each draught.", "When the dead strike you, frost webs slow everything nearby - wider and colder each draught.", "Every 12th spell looses a lightning burst around you - sooner and stronger each cider." } };
+	inline constexpr int kPerk_fletcher = 9;
+	inline constexpr std::array<std::string_view, 10> kPerkDesc{ { "Skin like a troll: +100 health each draught, so it takes more hits to go down.", "Quicksilver in the veins: spells cost 15% less magicka each draught (up to 75%).", "Twin strike: your spells hit 50% harder each draught.", "When you would fall, the hearth calls you back - once for each tonic.", "Run faster and sprint longer with each brew.", "Clear sight, clear mind: magicka returns 50% faster each draught.", "A mammoth's back: +50 magicka each draught.", "When the dead strike you, frost webs slow everything nearby - wider and colder each draught.", "Every 12th spell looses a lightning burst around you - sooner and stronger each cider.", "Green sap of the Eldergleam: your arrows and bolts slowly grow back, faster each draught." } };
 	inline constexpr int kMaxPerks = 9;
 	struct CrewDef { std::string_view id, label, quote; int passive; float value; std::string_view passiveText; };
 	inline constexpr std::array<CrewDef, 4> kCrew{ {
@@ -1244,7 +1246,7 @@ namespace bo3z::gen
 	inline constexpr std::array<std::uint32_t, 3> kUpdraftWords{ { 0xC03, 0xC05, 0xC07 } }, kUpdraftSpells{ { 0xC04, 0xC06, 0xC08 } };
 	inline constexpr float kSkullScale = 0.3f;
 	inline constexpr float kShowRise = 45.0f, kShowSpin = 4.2f, kShowOffer = 12.0f;
-	inline constexpr std::array<std::uint32_t, 9> kPerkColor{ { 0xD02020FF, 0x30C040FF, 0xE0A020FF, 0x3070F0FF, 0xF0D840FF, 0xB0B8C0FF, 0x7AA040FF, 0x9040E0FF, 0x40D0F0FF } };
+	inline constexpr std::array<std::uint32_t, 10> kPerkColor{ { 0xD02020FF, 0x30C040FF, 0xE0A020FF, 0x3070F0FF, 0xF0D840FF, 0xB0B8C0FF, 0x7AA040FF, 0x9040E0FF, 0x40D0F0FF, 0x6FBF4AFF } };
 	inline constexpr std::array<std::string_view, 10> kTowns{ { "Riverwood", "Whiterun", "Solitude", "Windhelm", "Markarth", "Riften", "Falkreath", "Morthal", "Dawnstar", "Winterhold" } };
 	struct SlotDef { float x, y, faceDeg; };
 	inline constexpr std::array<SlotDef, 8> kSlots{ { SlotDef{ 0.0f, 0.0f, 0.0f }, SlotDef{ 175.0f, 0.0f, 90.0f }, SlotDef{ 0.0f, 0.0f, 180.0f }, SlotDef{ 0.0f, 175.0f, 0.0f }, SlotDef{ -200.0f, -120.0f, 180.0f }, SlotDef{ 200.0f, -120.0f, 180.0f }, SlotDef{ 0.0f, -150.0f, 180.0f }, SlotDef{ -175.0f, 0.0f, 270.0f } } };
@@ -1454,7 +1456,7 @@ namespace bo3z::gen
 		SpellcraftDef{ "wolfcrown", "Wolf Queen's Crown", 0xB97CFF, 0xF0E2FF, 0, 4, 1700.0f, 20.0f, 300.0f, 2, 14.0f, 2, 5.0f, 8, 12, "The Queen's Hunt", 900.0f, 460.0f, "Spirit-wolves that run down the dead in pairs. Charged: the Queen howls and her pack of spectral wolves runs at your side.", 0xC6B, 0xC6C },
 		SpellcraftDef{ "barrowhorn", "Horn of the Barrow-Jarls", 0xFFC45C, 0xFFF3D6, 8, 3, 1600.0f, 60.0f, 560.0f, 1, 0.0f, 5, 0.0f, 6, 13, "The War-Host Charges", 1600.0f, 110.0f, "A war-cry that hurls the dead back in a wave. Charged: the old war-host of the barrows charges down the line in front of you.", 0xC6E, 0xC6F },
 	} };
-	inline constexpr std::uint32_t kArtIceShell = 0xBC0, kArtRoots = 0xBC1, kArtBurn = 0xBC2, kArtPoison = 0xBC3, kArtPortal = 0xCB2;  // status looks on the struck
+	inline constexpr std::uint32_t kArtIceShell = 0xBC0, kArtRoots = 0xBC1, kArtBurn = 0xBC2, kArtPoison = 0xBC3, kArtPortal = 0xCB2, kArtPortalBig = 0xCB5;  // status looks on the struck
 	struct BowDef { std::string_view id, label, text, element; int spellRow, tier; float share; std::uint32_t color, weap, ammo; };  // element: its emblem (bw_<element>.png)
 	inline constexpr std::array<BowDef, 6> kBows{ {
 		BowDef{ "emberstring", "Emberstring", "Charred horn strung with a thread of living flame. Its arrows set the dead burning.", "fire", 1, 1, 0.38f, 0xFF6B14, 0xC11, 0xC12 },

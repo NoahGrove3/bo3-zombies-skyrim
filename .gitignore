@@ -6,3 +6,6 @@ assets/models/
 assets/shrine/magicfire.png
 assets/shrine/orb_swirl.png
 assets/shrine/motes.png
+
+# meshes made from other authors' mods (Auriel's Bow of Light, KittyVFX - Portals): built locally (tools/aurielbows.py, tools/modelconv/fxtint) and shipped with the Party Pack, never committed
+assets/fx/Meshes/CurseOfAlduin/fx/portal_red*.nif

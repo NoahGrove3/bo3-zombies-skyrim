@@ -415,11 +415,28 @@ namespace bo3z::Classes
 			std::scoped_lock l(g_lineLock);
 			g_line = std::move(line);
 		}
+		// (Noah's plan, the Ranger's brew) Fletcher's Sap Draught: the arrows or bolts in use grow back, one every 20 s, faster each draught
+		if (const int fl = Save::PerkStacks(gen::kPerk_fletcher); fl > 0) {
+			static int tick = 0;
+			if (++tick >= std::max(4, 20 / fl)) {
+				tick = 0;
+				if (auto* ammo = p->GetCurrentAmmo(); ammo && p->GetItemCount(ammo) < 60) p->AddObjectToContainer(ammo, nullptr, 1, nullptr);
+			}
+		}
 		// (Noah's plan, the Spellsword) Imbue unlocks The Wizard Warrior's Enchantment Powers 1 to 4, one per rung climbed
 		if (g_class.load() == coffer::kSpellsword) {
 			int imbued = 0;
 			for (int i : Arcana::Carried()) {
 				if (Arcana::ClassOf(i) == coffer::kSpellsword) imbued += Arcana::RungOf(i) - 1;
+			}
+			// ... and its three Magical Shouts are the class's shout slot: the first from the start, the others with Powers 2 and 4
+			static constexpr std::uint32_t kShouts[3] = { 0x0008B6, 0x0008B7, 0x0008B8 };
+			for (int n = 0; n < 3; ++n) {
+				if (n > 0 && imbued < n * 2) break;
+				if (auto* sh = dh->LookupForm<RE::SpellItem>(kShouts[n], "The Wizard Warrior.esp"); sh && !p->HasSpell(sh)) {
+					p->AddSpell(sh);
+					if (n > 0) Hud::Banner(fmt::format("The Wizard Warrior: Magical Shout {} learned", n + 1), 4.0f);
+				}
 			}
 			static constexpr std::uint32_t kPowers[4] = { 0x0008A0, 0x000893, 0x0008A1, 0x002F6A };
 			for (int n = 0; n < std::min(imbued, 4); ++n) {
@@ -429,6 +446,18 @@ namespace bo3z::Classes
 					Forms::Play(gen::Sound::shout_learned);
 					Hud::Banner(fmt::format("The Wizard Warrior: Enchantment Power {} unlocked (Powers menu)", n + 1), 4.0f);
 					logger::info("classes: Wizard Warrior enchantment power {}", n + 1);
+				}
+			}
+		}
+		// (Noah's plan, the Summoner's mounts) an Indrik mount for each freed city
+		if (g_class.load() == coffer::kSummoner) {
+			static constexpr std::uint32_t kIndrik[] = { 0x801, 0x847, 0x848, 0x849, 0x84A, 0x84B, 0x84C, 0x84D, 0x84E, 0x84F };
+			const int freed = FreedCount();
+			for (int n = 0; n < std::min<int>(freed, static_cast<int>(std::size(kIndrik))); ++n) {
+				auto* sp = dh->LookupForm<RE::SpellItem>(kIndrik[n], "mihailindrikmounts.esp");
+				if (sp && !p->HasSpell(sp)) {
+					p->AddSpell(sp);
+					Hud::Banner(std::string("A city's gift: ") + sp->GetName(), 4.0f);
 				}
 			}
 		}
@@ -493,6 +522,18 @@ namespace bo3z::Classes
 		} else if (a_cls == coffer::kRanger) {
 			from("Faction Crossbows.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
 			from("OffhandBows.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
+		}
+		if (a_cls == coffer::kSpellsword) {  // (Noah's plan) its shells and cloaks come from this row too, a quarter of the time
+			static constexpr std::uint32_t kShells[] = { 0x29265E, 0x29266B, 0x292664, 0x292672, 0x29265D, 0x29266C, 0x292665, 0x292673, 0x209A73 };
+			std::vector<RE::SpellItem*> spells;
+			for (auto id : kShells) if (auto* sp = Myst(id); sp && !p->HasSpell(sp)) spells.push_back(sp);
+			static std::mt19937 rng2{ std::random_device{}() };
+			if (!spells.empty() && (pool.empty() || std::uniform_int_distribution<int>(0, 3)(rng2) == 0)) {
+				auto* sp = spells[std::uniform_int_distribution<std::size_t>(0, spells.size() - 1)(rng2)];
+				p->AddSpell(sp);
+				Hud::Banner(std::string("The altar teaches you ") + sp->GetName(), 4.0f);
+				return true;
+			}
 		}
 		if (pool.empty()) {
 			Hud::Banner("The altar has nothing new for you until another city is freed", 3.0f);
@@ -600,6 +641,94 @@ namespace bo3z::Classes
 		const int un = BoltsUnlocked();
 		if (un >= 3) return "Crossbow mastery: fire, ice and shock bolts";
 		return fmt::format("Crossbow mastery: {} of {} crossbow kills to {} bolts", g_boltKills, kBoltNeed[un], kBoltElem[un]);
+	}
+
+	// (Noah's plan, the Spellsword) Imbue moves the held spell-weapon up a material - Steel, Orcish, Dwarven, Elven, Glass,
+	// Ebony, Daedric - keeping its kind and, where that material has it, its element
+	void ImbueWeapon()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* dh = RE::TESDataHandler::GetSingleton();
+		auto* held = p ? p->GetEquippedObject(false) : nullptr;
+		auto* w = held ? held->As<RE::TESObjectWEAP>() : nullptr;
+		if (!w || !w->GetFile(0) || w->GetFile(0)->GetFilename() != "Spellsword.esp" || !dh) return;
+		static constexpr std::string_view kMat[] = { "Steel", "Orcish", "Dwarven", "Elven", "Glass", "Ebony", "Daedric" };
+		const std::string name = w->GetName();
+		int m = -1;
+		for (int i = 0; i < 7; ++i) if (name.starts_with(kMat[i])) m = i;
+		if (name.starts_with("Dwemer")) m = 2;
+		if (m < 0 || m >= 6) return;
+		const std::string rest = name.substr(name.find(' '));                 // " Spellsword of Fire"
+		const std::string kind = rest.substr(0, rest.find(" of "));           // " Spellsword"
+		const std::string elem = rest.find(" of ") != std::string::npos ? rest.substr(rest.find(" of ")) : std::string();
+		RE::TESObjectWEAP* best = nullptr;
+		int bestScore = -1;
+		for (int nm = m + 1; nm < 7 && !best; ++nm) {
+			for (auto* c : dh->GetFormArray<RE::TESObjectWEAP>()) {
+				if (!c || !c->GetFile(0) || c->GetFile(0)->GetFilename() != "Spellsword.esp" || !c->GetName()) continue;
+				const std::string cn = c->GetName();
+				if (!cn.starts_with(kMat[nm])) continue;
+				const int score = (cn.find(kind) != std::string::npos ? 2 : 0) + (!elem.empty() && cn.ends_with(elem) ? 1 : 0) + (c->GetWeaponType() == w->GetWeaponType() ? 2 : 0);
+				if (score > bestScore) bestScore = score, best = c;
+			}
+		}
+		if (!best || bestScore < 2) return;
+		p->RemoveItem(w, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+		GiveItem(p, best, 1, true);
+		Hud::Banner(std::string("Imbued: ") + name + "  ->  " + best->GetName(), 4.0f);
+		logger::info("classes: imbued {} -> {}", name, best->GetName());
+	}
+
+	// (Noah's plan, the Spellsword's defence) a spellshield blocks and turns spells back; a blocked blow staggers the dead
+	void OnBlock(RE::Actor* a_attacker, bool a_spell)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p || !a_attacker || a_attacker->IsDead() || g_class.load() != coffer::kSpellsword) return;
+		auto* left = p->GetEquippedObject(true);
+		auto* sh = left ? left->As<RE::TESObjectARMO>() : nullptr;
+		if (!sh || !sh->GetFile(0) || sh->GetFile(0)->GetFilename() != "Spellsword.esp") return;
+		static auto last = std::chrono::steady_clock::now() - std::chrono::seconds(5);
+		if (std::chrono::steady_clock::now() - last < std::chrono::milliseconds(600)) return;
+		last = std::chrono::steady_clock::now();
+		if (a_spell) {  // the spell turned back: a share of it returns to its caster
+			auto* av = a_attacker->AsActorValueOwner();
+			av->DamageActorValue(RE::ActorValue::kHealth, 0.35f * av->GetPermanentActorValue(RE::ActorValue::kHealth));
+			Gun::FxBlast("light", a_attacker->GetPosition() + RE::NiPoint3{ 0, 0, 80.0f });
+		} else if (Director::IsRoundUndead(a_attacker)) {
+			a_attacker->NotifyAnimationGraph("staggerStart");
+		}
+	}
+
+	// (Noah's plan, the Summoner: Calling of the Conjurer's heroes and armies as late Legendaries) once one of your families
+	// is Legendary and two cities are free, the altar's second row binds a hero - then, with four cities free, an army
+	bool RollHero()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return false;
+		bool legend = false;
+		for (int i : Arcana::Carried()) legend |= Arcana::ClassOf(i) == coffer::kSummoner && Arcana::RungOf(i) >= coffer::kSpells[i].rungs;
+		const int freed = FreedCount();
+		if (!legend || freed < 2) {
+			Hud::Banner("Heroes answer only a Legendary summoner, with two cities free", 3.0f);
+			return false;
+		}
+		static constexpr std::uint32_t kHeroes[] = { 0x019D7C, 0x0290A4, 0x0290A3, 0x0290A6, 0x0CB318, 0x103618, 0x019D66 };  // Ysgramor, Gormlaith, Felldir, Hakon, Miraak, Karstaag, the Ebony Warrior
+		static constexpr std::uint32_t kArmies[] = { 0x09370D, 0x0A2A1D, 0x0CB311, 0x0C61F9 };  // the Dragon Priest, Dwarven, Undead and Hero armies
+		std::vector<RE::SpellItem*> pool;
+		auto add = [&](std::uint32_t id) { if (auto* f = Lookup(id, "Calling of the Conjurer.esp"); f) if (auto* sp = f->As<RE::SpellItem>(); sp && !p->HasSpell(sp)) pool.push_back(sp); };
+		for (auto id : kHeroes) add(id);
+		if (freed >= 4) for (auto id : kArmies) add(id);
+		if (pool.empty()) {
+			Hud::Banner(freed >= 4 ? "Every hero and army already answers you" : "Every hero answers you - the armies wait for four free cities", 3.0f);
+			return false;
+		}
+		static std::mt19937 rng{ std::random_device{}() };
+		auto* sp = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(rng)];
+		p->AddSpell(sp);
+		Forms::Play(gen::Sound::shout_learned);
+		Hud::Banner(std::string("A LEGENDARY PACT - ") + sp->GetName(), 5.0f);
+		logger::info("classes: hero pact {}", sp->GetName());
+		return true;
 	}
 
 	bool WonderEarned()

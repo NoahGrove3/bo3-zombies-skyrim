@@ -261,6 +261,7 @@ namespace bo3z
 		bool BarrowJarlsOpen();   // after Bleak Falls Barrow
 		bool ElitesOpen();        // after Dragon Rising
 		bool AlduinFallen();      // after Sovngarde
+		bool GrimmvarOpen();      // after Alduin's Bane: the Undying Wyrm can be hunted
 	}
 
 	namespace Classes
@@ -290,6 +291,9 @@ namespace bo3z
 		int              RestockWonder();              // Sunhallowed arrows topped up (quivers, Max Ammo)
 		bool             WonderEarned();               // any class's wonder won (the Three Words follow)
 		std::string      WonderLine();                 // the altar's line: your class wonder's trial
+		void             ImbueWeapon();                // the Spellsword's Imbue: the held spell-weapon one material up, its element kept
+		void             OnBlock(RE::Actor* a_attacker, bool a_spell);  // a blow blocked with a spellshield: reflect / stagger
+		bool             RollHero();                   // the Summoner's late Legendaries: a hero or an army (needs a Legendary summon)
 		bool             RollSupport();                // Destruction's altar side-pick: Ash Cloud, Cinder Storm, Charged Nova or Symmetry
 		std::string      BoltLine();                   // the Ranger's crossbow mastery, for the altar ('' other classes)
 		void             NextOutfit();                 // the altar's outfit picker: the next outfit (any class), worn

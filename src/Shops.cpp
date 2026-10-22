@@ -2045,8 +2045,17 @@ namespace bo3z
 								Forms::PlayAt(gen::Sound::coffer_charge, ref);
 							}
 							break;
+						} else if (cls == 0) {  // (the Summoner's late Legendaries: heroes and armies)
+							const int town = TownOfAltar(ref), cost = BowRollCost(town) * 2;
+							if (Points::Get() < cost) {
+								Hud::Banner("A hero's pact costs " + std::to_string(cost) + " septims", 2.0f);
+							} else if (Classes::RollHero()) {
+								Points::Spend(cost);
+								Forms::PlayAt(gen::Sound::coffer_charge, ref);
+							}
+							break;
 						} else if (cls != 2) {
-							Hud::Banner("Only a Ranger, a Spellsword or a Destruction mage takes this row", 2.5f);
+							Hud::Banner("Choose a class first", 2.5f);
 							break;
 						}
 						SpinBow(ref);
