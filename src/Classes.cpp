@@ -142,6 +142,7 @@ namespace bo3z::Classes
 		std::array<std::uint16_t, 4> g_wKills{};
 		std::array<std::uint32_t, 4> g_wTowns{};   // cities where a step was done (bits)
 		std::unordered_map<RE::FormID, RE::FormID> g_lastHit;  // a foe -> what you last hit it with
+		std::unordered_set<RE::FormID> g_powerHit;  // foes your last blow on was a power attack (the Spellsword's resonance)
 		std::uint16_t g_boltKills = 0;  // (the Ranger's crossbow mastery) kills with a crossbow: fire bolts at 25, ice at 60, shock at 120
 		constexpr std::uint32_t kBoltFamilies[] = { 0x020B04, 0x025A50, 0x025A58, 0x025A60, 0x025A68, 0x025A70 };  // Faction Crossbows' plain bolts (fire +1, ice +2, shock +3)
 		constexpr int           kBoltNeed[3] = { 25, 60, 120 };
@@ -329,9 +330,10 @@ namespace bo3z::Classes
 	// the Spellsword, and your summons' kills (or your own, a summon spell in hand) for the Summoner
 	void OnKill(bool a_bySummon, RE::Actor* a_dying)
 	{
+		int killHow = -1;
 		// the wonder trial: what made the kill
 		if (const int c = g_class.load(); c >= 0) {
-			int how = -1;  // 0 summon, 1 destruction spell, 2 bow or crossbow, 3 melee
+			int& how = killHow;  // 0 summon, 1 destruction spell, 2 bow or crossbow, 3 melee
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			RE::TESForm* src = nullptr;
 			if (a_dying) {
@@ -371,13 +373,18 @@ namespace bo3z::Classes
 				}
 			}
 		}
+		// (Noah's plan, the Spellsword's resonance) its touch spells climb on melee kills only - a power attack counts twice
+		const bool power = a_dying && g_powerHit.contains(a_dying->GetFormID());
 		for (int h : Arcana::Hands()) {
 			if (h < 0) continue;
 			const int cls = Arcana::ClassOf(h);
 			if (a_bySummon && cls != coffer::kSummoner) continue;
+			if (cls == coffer::kSpellsword && killHow != 3) continue;
 			auto& m = g_mastery[coffer::kSpells[h].ladder];
-			if (m < 60000) ++m;
+			const int add = cls == coffer::kSpellsword && power ? 2 : 1;
+			m = static_cast<std::uint16_t>(std::min(60000, m + add));
 		}
+		if (a_dying) g_powerHit.erase(a_dying->GetFormID());
 	}
 	int Mastery(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? g_mastery[coffer::kSpells[a_index].ladder] : 0; }
 	// kills a ladder needs before its next rung can be raised: 25 to rung 2, 60 to rung 3, 120 to the Legendary
@@ -407,6 +414,23 @@ namespace bo3z::Classes
 			auto line = WonderLineNow();
 			std::scoped_lock l(g_lineLock);
 			g_line = std::move(line);
+		}
+		// (Noah's plan, the Spellsword) Imbue unlocks The Wizard Warrior's Enchantment Powers 1 to 4, one per rung climbed
+		if (g_class.load() == coffer::kSpellsword) {
+			int imbued = 0;
+			for (int i : Arcana::Carried()) {
+				if (Arcana::ClassOf(i) == coffer::kSpellsword) imbued += Arcana::RungOf(i) - 1;
+			}
+			static constexpr std::uint32_t kPowers[4] = { 0x0008A0, 0x000893, 0x0008A1, 0x002F6A };
+			for (int n = 0; n < std::min(imbued, 4); ++n) {
+				auto* sp = dh->LookupForm<RE::SpellItem>(kPowers[n], "The Wizard Warrior.esp");
+				if (sp && !p->HasSpell(sp)) {
+					p->AddSpell(sp);
+					Forms::Play(gen::Sound::shout_learned);
+					Hud::Banner(fmt::format("The Wizard Warrior: Enchantment Power {} unlocked (Powers menu)", n + 1), 4.0f);
+					logger::info("classes: Wizard Warrior enchantment power {}", n + 1);
+				}
+			}
 		}
 		int climbs = 0;
 		if (g_class.load() == coffer::kSummoner) {
@@ -602,8 +626,9 @@ namespace bo3z::Classes
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !a_target || a_target == p) return;
-		if (g_lastHit.size() > 400) g_lastHit.clear();
+		if (g_lastHit.size() > 400) g_lastHit.clear(), g_powerHit.clear();
 		g_lastHit[a_target->GetFormID()] = a_source;
+		if (a_power) g_powerHit.insert(a_target->GetFormID()); else g_powerHit.erase(a_target->GetFormID());
 		if (!Director::IsFoe(a_target) || a_target->IsDead()) return;
 		auto* src = RE::TESForm::LookupByID(a_source);
 		if (!src) return;
