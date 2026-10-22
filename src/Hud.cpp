@@ -60,7 +60,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 {
 	float4 c = t0.Sample(s0, uv);
 	float l = dot(c.rgb, float3(0.299, 0.587, 0.114));
-	float a = smoothstep(0.20, 0.40, l);
+	// (Edge UI: everything Skyrim drew over its black, empty menu scene - buttons, panels and pop-ups whole - lies over
+	// our painting; the old way kept only the bright words)
+	float a = pad.x > 0.5 ? smoothstep(0.004, 0.03, max(c.r, max(c.g, c.b))) : smoothstep(0.20, 0.40, l);
 	float2 d = pos.xy - cursor;
 	if (d.x > -6 && d.x < 46 && d.y > -6 && d.y < 56) a = 0;
 	// only the lower right (the buttons and their yes/no prompts): Skyrim's emblem, the Bethesda mark and the
@@ -5016,7 +5018,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// PARTY entry - is retired: Edge UI draws the main menu and the load list; the party lives in the Esc journal's tab
 			constexpr bool kOwnMainMenu = true;  // (our painting stays; with kEdgeMenu, Edge UI's own words are laid over it)
 			const bool onMainMenu = uiM && uiM->IsMenuOpen(RE::MainMenu::MENU_NAME);
-			const bool mainMenu = kOwnMainMenu && onMainMenu && (!popup || steamOver);
+			const bool mainMenu = kOwnMainMenu && onMainMenu && (kEdgeMenu || !popup || steamOver);  // (Edge: its pop-ups come through the key)
 			const bool codex = !mainMenu && CodexWanted(uiM);
 			// Skyrim's cursor never shows: ours (DrawPingCursor) is drawn in its place, on the main menu and in game
 			// (the world map moves Skyrim's cursor without its cursor menu: ours is drawn there too)
