@@ -714,6 +714,34 @@ namespace bo3z
 		// The nights are a little darker (Noah: 'make night time a little bit darker'): every weather's night light -
 		// ambient, moon light, the directional ambient, fog, sky and horizon - turned down once at start-up. Day,
 		// dusk and dawn are untouched; whatever weather mod is installed is darkened the same way.
+		// (Noah: "use Load Screen Compendium for all the loading screens - random") with its plugin on, every other loading
+		// screen (Skyrim's, the DLCs', other mods', our own) gets a condition that is never true, so the engine picks
+		// at random among the Compendium's alone
+		void OnlyCompendiumScreens()
+		{
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			if (!dh || !dh->LookupModByName("LoadScreenCompendium.esp")) return;
+			int off = 0, on = 0;
+			for (auto* ls : dh->GetFormArray<RE::TESLoadScreen>()) {
+				if (!ls) continue;
+				auto* f = ls->GetFile(0);
+				if (f && std::string_view(f->GetFilename()) == "LoadScreenCompendium.esp") {
+					++on;
+					continue;
+				}
+				auto* never = new RE::TESConditionItem();
+				never->data.functionData.function = RE::FUNCTION_DATA::FunctionID::kGetRandomPercent;
+				never->data.functionData.params[0] = nullptr, never->data.functionData.params[1] = nullptr;
+				never->data.comparisonValue.f = -1.0f;
+				never->data.flags.opCode = RE::CONDITION_ITEM_DATA::OpCode::kLessThan;
+				never->data.flags.isOR = false;
+				never->data.object = RE::CONDITIONITEMOBJECT::kSelf;
+				never->next = ls->conditions.head;
+				ls->conditions.head = never;
+				++off;
+			}
+			logger::info("world: loading screens - {} from the Compendium, {} others set aside", on, off);
+		}
 		void DarkenNights()
 		{
 			auto  scale = [](RE::Color& c, float f) { c.red = static_cast<std::uint8_t>(c.red * f), c.green = static_cast<std::uint8_t>(c.green * f), c.blue = static_cast<std::uint8_t>(c.blue * f); };
@@ -819,6 +847,7 @@ namespace bo3z
 			// Movement::Tick, never switched off - with bBloodSplatterEnabled off the game never builds its splatter node, and
 			// opening the map, which hides that node, crashed the game)
 			DarkenNights();
+			OnlyCompendiumScreens();
 			logger::info("data loaded");
 			if (!Forms::Resolve()) {
 				logger::error("a form the mashup needs is missing; rounds stay off");
