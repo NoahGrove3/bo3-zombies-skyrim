@@ -261,16 +261,21 @@ namespace bo3z
 					auto* em = RE::ActorEquipManager::GetSingleton();
 					if (pl && em && a_event->opening) {
 						worn.clear();
+						auto* under = Classes::Underwear();
 						for (auto& [obj, e] : pl->GetInventory([](RE::TESBoundObject& o) { return o.IsArmor(); })) {
-							if (obj && e.second && e.second->IsWorn()) {
+							if (obj && obj != under && e.second && e.second->IsWorn()) {
 								worn.push_back(obj);
 							}
 						}
 						for (auto* o : worn) {
 							em->UnequipObject(pl, o, nullptr, 1, nullptr, false, false, false, true);
 						}
+						Classes::DressUnder(true);  // (Noah: her bra and underwear on while you shape her, not bare)
 						logger::info("character menu: {} pieces of armour taken off", worn.size());
-					} else if (pl && em && !a_event->opening && !worn.empty()) {
+					} else if (pl && em && !a_event->opening) {
+						if (auto* under = Classes::Underwear(); under && !(pl->GetActorBase() && pl->GetActorBase()->IsFemale()) && pl->GetItemCount(under) > 0) {
+							em->UnequipObject(pl, under, nullptr, 1, nullptr, false, false, false, true);  // (a man keeps HIMBO's own)
+						}
 						for (auto* o : worn) {
 							em->EquipObject(pl, o, nullptr, 1, nullptr, false, false, false, true);
 						}

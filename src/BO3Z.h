@@ -267,6 +267,8 @@ namespace bo3z
 	namespace Classes
 	{
 		int              Get();            // -1 none chosen yet
+		RE::TESObjectARMO* Underwear();    // (Noah: no bare body) Underwear.esp's bra and underwear
+		void             DressUnder(bool a_anySex = false);  // nothing on the body slot: the underwear goes on (women; anyone with a_anySex)
 		bool             Open();           // the class picker is up
 		int              Selected();
 		bool             Switching();      // the picker was opened at an altar (a switch, for septims)

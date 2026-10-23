@@ -470,6 +470,7 @@ namespace bo3z::Classes
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		if (!p || !dh) return;
 		if (static int purge = 0; ++purge % 5 == 0 && Save::Flag(Save::kFlagStarted)) Purge();
+		if (auto* ui = RE::UI::GetSingleton(); ui && !ui->IsMenuOpen(RE::InventoryMenu::MENU_NAME) && !ui->IsMenuOpen(RE::ContainerMenu::MENU_NAME)) DressUnder();  // (Noah: a bra and underwear, never bare)
 		{
 			auto line = WonderLineNow();
 			std::scoped_lock l(g_lineLock);
@@ -933,6 +934,22 @@ namespace bo3z::Classes
 			}
 			std::erase_if(g_pendingSummon, [](const PendingSummon& ps) { return ps.wait <= 0; });
 		}
+	}
+	RE::TESObjectARMO* Underwear()
+	{
+		auto* dh = RE::TESDataHandler::GetSingleton();
+		return dh ? dh->LookupForm<RE::TESObjectARMO>(0x801, "Underwear.esp") : nullptr;
+	}
+	void DressUnder(bool a_anySex)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* uw = Underwear();
+		auto* em = RE::ActorEquipManager::GetSingleton();
+		if (!p || !uw || !em || p->IsDead() || !p->Is3DLoaded()) return;
+		if (!a_anySex && !(p->GetActorBase() && p->GetActorBase()->IsFemale())) return;
+		if (p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kBody)) return;
+		if (p->GetItemCount(uw) <= 0) p->AddObjectToContainer(uw, nullptr, 1, nullptr);
+		em->EquipObject(p, uw, nullptr, 1, nullptr, false, true, false, true);
 	}
 	bool IsOwnSummon(RE::Actor* a_actor)
 	{
