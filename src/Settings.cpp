@@ -190,6 +190,10 @@ namespace bo3z::Settings
 			}
 			g_fovFirst = std::clamp(Read(L"General", L"fFovFirst", 130.0f), kFovMin, kFovMax);
 			g_fovThird = std::clamp(Read(L"General", L"fFovThird", 120.0f), kFovMin, kFovMax);
+			// (Noah: the field-of-view slider's pop-up crashed the game) the Mod Configuration menu steps it instead, in 5s
+			// from 60: a step, when there, is the one the menu set (our own Esc menu writes both)
+			if (const float st = Read(L"General", L"iFovFirstStep", -1.0f); st >= 0) g_fovFirst = std::clamp(60.0f + 5.0f * std::round(st), kFovMin, kFovMax);
+			if (const float st = Read(L"General", L"iFovThirdStep", -1.0f); st >= 0) g_fovThird = std::clamp(60.0f + 5.0f * std::round(st), kFovMin, kFovMax);
 			g_bright = std::clamp(Read(L"General", L"fBrightness", 1.5f), kBrightMin, kBrightMax);
 			g_shelter = Read(L"General", L"bShelter", 1.0f) != 0.0f;
 			g_blood = Read(L"Effects", L"bBlood", 1.0f) != 0.0f;
@@ -274,6 +278,7 @@ namespace bo3z::Settings
 		const float v = std::clamp(std::round(a_v), kFovMin, kFovMax);
 		(a_first ? g_fovFirst : g_fovThird) = v;
 		Write(L"General", a_first ? L"fFovFirst" : L"fFovThird", v, false);
+		Write(L"General", a_first ? L"iFovFirstStep" : L"iFovThirdStep", std::clamp(std::round((v - 60.0f) / 5.0f), 0.0f, 14.0f), true);
 	}
 
 	std::string KeyName(int a_action)

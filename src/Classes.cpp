@@ -38,7 +38,7 @@ namespace bo3z::Classes
 			if (!obj) return;
 			if (a_count > 0) a_p->AddObjectToContainer(obj, nullptr, a_count, nullptr);
 			if (a_equip) {
-				if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(a_p, obj, nullptr, 1, nullptr, false, true, false, true);
+				if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(a_p, obj, nullptr, 1, nullptr, false, false, false, true);
 			}
 		}
 		void GiveSpell(int a_index, bool a_left)
@@ -147,6 +147,19 @@ namespace bo3z::Classes
 			if (auto* q = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESQuest>(0x009A24, "Spellsword.esp"); q && q->IsRunning()) {
 				Console(p, "StopQuest _Spellsword_Start_Quest");
 				logger::info("classes: the Spellsword mod's manual quest stopped");
+			}
+			// (Noah: "Flames, Healing, Sparks - am I supposed to start with these?") the race's own starting spells go too
+			// (its powers and abilities - Ancestor's Wrath - stay)
+			if (auto* race = p->GetRace(); race && race->actorEffects) {
+				std::vector<RE::SpellItem*> raceDrop;
+				for (std::uint32_t i = 0; i < race->actorEffects->numSpells; ++i) {
+					if (auto* sp = race->actorEffects->spells[i]; sp && sp->GetSpellType() == RE::MagicSystem::SpellType::kSpell && unwanted(sp)) raceDrop.push_back(sp);
+				}
+				for (auto* sp : raceDrop) {
+					race->actorEffects->RemoveSpell(sp);
+					p->RemoveSpell(sp);
+					logger::info("classes: {} taken off the race's starting spells", sp->GetName());
+				}
 			}
 			if (auto* base = p->GetActorBase(); base && base->actorEffects) {
 				std::vector<RE::SpellItem*> baseDrop;
@@ -382,6 +395,19 @@ namespace bo3z::Classes
 	// a save loaded with no class yet (older saves): the picker too
 	void OnWorldReady()
 	{
+		// (Noah: "it only lets me equip a helmet and boots") the kit and the underwear went on locked in older builds: each
+		// worn piece is taken off and put back on, free to change
+		if (auto* p = RE::PlayerCharacter::GetSingleton(); p) {
+			if (auto* em = RE::ActorEquipManager::GetSingleton()) {
+				std::vector<RE::TESBoundObject*> worn;
+				for (auto& [obj, e] : p->GetInventory([](RE::TESBoundObject& o) { return o.IsArmor(); })) {
+					if (obj && e.second && e.second->IsWorn()) worn.push_back(obj);
+				}
+				for (auto* o : worn) em->UnequipObject(p, o, nullptr, 1, nullptr, false, true, false, true);
+				for (auto* o : worn) em->EquipObject(p, o, nullptr, 1, nullptr, false, false, false, true);
+				if (!worn.empty()) logger::info("classes: {} worn pieces put back on unlocked", worn.size());
+			}
+		}
 		if (g_class.load() < 0 && Save::Flag(Save::kFlagStarted)) OpenPicker(false);
 	}
 
@@ -469,7 +495,7 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		if (!p || !dh) return;
-		if (static int purge = 0; ++purge % 5 == 0 && Save::Flag(Save::kFlagStarted)) Purge();
+		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();  // (Noah: still there before the class was chosen - from the first moment now)
 		if (auto* ui = RE::UI::GetSingleton(); ui && !ui->IsMenuOpen(RE::InventoryMenu::MENU_NAME) && !ui->IsMenuOpen(RE::ContainerMenu::MENU_NAME)) DressUnder();  // (Noah: a bra and underwear, never bare)
 		{
 			auto line = WonderLineNow();
@@ -949,7 +975,7 @@ namespace bo3z::Classes
 		if (!a_anySex && !(p->GetActorBase() && p->GetActorBase()->IsFemale())) return;
 		if (p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kBody)) return;
 		if (p->GetItemCount(uw) <= 0) p->AddObjectToContainer(uw, nullptr, 1, nullptr);
-		em->EquipObject(p, uw, nullptr, 1, nullptr, false, true, false, true);
+		em->EquipObject(p, uw, nullptr, 1, nullptr, false, false, false, true);
 	}
 	bool IsOwnSummon(RE::Actor* a_actor)
 	{

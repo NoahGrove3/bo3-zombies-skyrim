@@ -222,7 +222,7 @@ namespace bo3z
 					em->EquipSpell(a_player, sp, slot);
 				} else if (auto* obj = form->As<RE::TESBoundObject>()) {
 					em->UnequipObject(a_player, obj, nullptr, 1, slot, false, true, false, true);
-					em->EquipObject(a_player, obj, nullptr, 1, slot, false, true, false, true);
+					em->EquipObject(a_player, obj, nullptr, 1, slot, false, false, false, true);
 				}
 			}
 			a_player->DrawWeaponMagicHands(true);

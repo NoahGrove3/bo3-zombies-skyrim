@@ -22,6 +22,10 @@ def slider(id, text, help, lo, hi, step, fmt='{0}'):
     return {'id': id, 'text': text, 'type': 'slider', 'help': help, 'valueOptions': {'min': lo, 'max': hi, 'step': step, 'formatString': fmt, 'sourceType': 'ModSettingFloat'}}
 
 
+def stepper(id, text, help, options):
+    return {'id': id, 'text': text, 'type': 'stepper', 'help': help, 'valueOptions': {'options': options, 'sourceType': 'ModSettingInt'}}
+
+
 def toggle(id, text, help):
     return {'id': id, 'text': text, 'type': 'toggle', 'help': help, 'valueOptions': {'sourceType': 'ModSettingBool'}}
 
@@ -77,8 +81,8 @@ PAGES = [
     ]},
     {'pageDisplayName': '3. View & Effects', 'cursorFillMode': 'topToBottom', 'content': [
         header('View'),
-        slider('fFovFirst:General', 'First-person field of view', 'How wide you see in first person (degrees).', 60, 130, 1, '{0}'),
-        slider('fFovThird:General', 'Third-person field of view', 'How wide you see in third person (degrees).', 60, 130, 1, '{0}'),
+        stepper('iFovFirstStep:General', 'First-person field of view', 'How wide you see in first person (degrees). Left / right to step it.', [str(60 + 5 * i) for i in range(15)]),
+        stepper('iFovThirdStep:General', 'Third-person field of view', 'How wide you see in third person (degrees). Left / right to step it.', [str(60 + 5 * i) for i in range(15)]),
         slider('fBrightness:General', 'Brightness', 'How bright the world is (1.00 = as Skyrim made it).', 0.5, 2.0, 0.05, '{2}'),
         header('Effects'),
         toggle('bBlood:Effects', 'Blood', 'Headshot kills burst the head in blood, and bodies bleed. Off: kills stay clean.'),
@@ -116,7 +120,7 @@ PAGES = [
     ]},
 ]
 DEFAULTS = {
-    'General': {'fFovFirst': 130.0, 'fFovThird': 120.0, 'fBrightness': 1.5, 'bShelter': 1, 'fCorpseSeconds': 10.0},
+    'General': {'fFovFirst': 130.0, 'fFovThird': 120.0, 'iFovFirstStep': 14, 'iFovThirdStep': 12, 'fBrightness': 1.5, 'bShelter': 1, 'fCorpseSeconds': 10.0},
     'Controls': {'bPlayStationIcons': 0},
     'Dragon': {'bBankReverse': 0, 'bInvertDive': 0},
     'Effects': {'bBlood': 1, 'fFogStrength': 1.0, 'bScreenShake': 1, 'bReduceFlashes': 0},
