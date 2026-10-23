@@ -5,6 +5,7 @@
 #include <imgui.h>
 #include <imgui_impl_dx11.h>
 #include <WICTextureLoader.h>
+#include <DDSTextureLoader.h>
 #include <d3dcompiler.h>
 
 // BO3-style HUD (sheet: hud), drawn with Dear ImGui over Skyrim's frame from a Present hook
@@ -5209,6 +5210,43 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			return true;
 		}
 
+		void DrawBootScreen(ImVec2 a_size)
+		{
+			static ID3D11ShaderResourceView* pic = nullptr;
+			static ImVec2                    picSize{ 16, 9 };
+			static bool                      tried = false;
+			if (!tried && g_device) {
+				tried = true;
+				std::vector<std::filesystem::path> all;
+				std::error_code ec;
+				for (const auto& e : std::filesystem::directory_iterator("Data/textures/loreloadscreens", ec)) {
+					if (e.is_regular_file(ec) && e.path().extension() == ".dds") all.push_back(e.path());
+				}
+				std::shuffle(all.begin(), all.end(), std::mt19937(static_cast<unsigned>(std::chrono::steady_clock::now().time_since_epoch().count())));
+				for (std::size_t i = 0; i < all.size() && i < 5 && !pic; ++i) {
+					ID3D11Resource* res = nullptr;
+					if (SUCCEEDED(DirectX::CreateDDSTextureFromFile(g_device, all[i].wstring().c_str(), &res, &pic)) && res) {
+						if (ID3D11Texture2D* tex = nullptr; SUCCEEDED(res->QueryInterface(__uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&tex))) && tex) {
+							D3D11_TEXTURE2D_DESC td{};
+							tex->GetDesc(&td);
+							picSize = { static_cast<float>(td.Width), static_cast<float>(td.Height) };
+							tex->Release();
+						}
+						res->Release();
+						logger::info("hud: the first loading screen is {}", all[i].filename().string());
+					}
+				}
+				if (!pic) logger::info("hud: no Load Screen Compendium picture for the first loading screen ({} found)", all.size());
+			}
+			auto* dl = ImGui::GetBackgroundDrawList();
+			dl->AddRectFilled({ 0, 0 }, a_size, IM_COL32(0, 0, 0, 255));
+			if (pic) {  // (filling the screen, cropped to keep its shape)
+				const float s = std::max(a_size.x / picSize.x, a_size.y / picSize.y);
+				const ImVec2 sz{ picSize.x * s, picSize.y * s }, at{ (a_size.x - sz.x) * 0.5f, (a_size.y - sz.y) * 0.5f };
+				dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(pic)), at, { at.x + sz.x, at.y + sz.y });
+			}
+		}
+
 		bool InGame()
 		{
 			auto* ui = RE::UI::GetSingleton();
@@ -5370,8 +5408,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				g_veil = onMainMenu ? 0.0f : want ? std::min(1.0f, g_veil + dt * 4.0f) : std::max(0.0f, g_veil - dt / 1.2f);
 			}
+			// (Noah: "when the game first launches it uses Edge UI's loading screen - make it one of the Compendium's") from the
+			// start until the main menu first shows, one of Load Screen Compendium's pictures, chosen at random, fills the screen
+			static bool sawMainMenu = false;
+			if (onMainMenu) sawMainMenu = true;
+			const bool bootScreen = !sawMainMenu && !g_filmOn;
 			// (a menu with a pointer - the world map, the inventory - still draws: our cursor is the only one there)
-			if (((!InGame() && !mainMenu && !journal && !escJournal && !cursorUp && !codex) || (DevTools::HudOff() && !mainMenu && !codex)) && !g_filmOn && g_veil <= 0) {
+			if (((!InGame() && !mainMenu && !journal && !escJournal && !cursorUp && !codex) || (DevTools::HudOff() && !mainMenu && !codex)) && !g_filmOn && g_veil <= 0 && !bootScreen) {
 				if (static int m = 0; m++ % 1200 == 0) {
 					auto* ui = RE::UI::GetSingleton();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
@@ -5406,6 +5449,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			ImGui::NewFrame();
 			if (g_filmOn) {
 				DrawFilm(io.DisplaySize, dt);
+			} else if (bootScreen) {
+				DrawBootScreen(io.DisplaySize);
 			} else if (codex) {
 				DrawCodex(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks);
 			} else if (mainMenu) {
