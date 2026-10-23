@@ -60,7 +60,6 @@ jobs:
           New-Item -ItemType Directory -Force -Path "$stage\Data\SKSE\Plugins" | Out-Null
           Copy-Item build\CurseOfAlduin.dll "$stage\Data\SKSE\Plugins\CurseOfAlduin.dll"  # Skyrim Together runs the game from its own folder (no ASI loader there): SKSE loads this copy
           Copy-Item data\CurseOfAlduin.esp "$stage\Data\CurseOfAlduin.esp"
-          Copy-Item data\CurseOfAlduin_Bestiary_DISTR.ini "$stage\Data\"   # our creatures in The Dragonborn's Bestiary (tools/bestiary.py)
           Copy-Item third_party\address-library\versionlib-1-7-104-0.bin "$stage\Data\SKSE\Plugins\"
           python -m pip install --quiet numpy scipy pillow
           python tools/icons.py "$stage\Data\Interface\CurseOfAlduin"
