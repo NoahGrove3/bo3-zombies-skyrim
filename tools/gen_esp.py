@@ -303,7 +303,7 @@ recs['ACTI'].append(record('ACTI', fid('ACTI', 'vortexfx'), [sub('EDID', z('UN_V
 for n in (2, 3, 4, 5):
     recs['PERK'].append(record('PERK', fid('PERK', f'summon_cap_{n}'), [
         sub('EDID', z(f'UN_SummonCap{n}')), sub('FULL', z(f'Command of {n}')), sub('DESC', z(f'You can hold {n} summons at once.')),
-        sub('DATA', bytes([0, 0, 1, 0, 1])), sub('PRKE', bytes([2, 0, 10 + n])), sub('DATA', bytes([68, 1, 0])),
+        sub('DATA', bytes([0, 0, 1, 0, 1])), sub('PRKE', bytes([2, 0, 10 + n])), sub('DATA', bytes([68, 1, 2])),
         sub('EPFT', bytes([1])), sub('EPFD', struct.pack('<f', float(n))), sub('PRKF', b'')]))
 
 for p in S['perks']['rows']:
@@ -863,7 +863,7 @@ count = sum(len(v) for v in recs.values())
 hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('The Curse of Alduin: round-based undead survival for Skyrim'))]
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
-for k in ['GLOB', 'FACT', 'VTYP', 'FSTS', 'LSCR', 'MUSC', 'MUST', 'ARTO', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR', 'QUST']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
+for k in ['GLOB', 'FACT', 'VTYP', 'FSTS', 'LSCR', 'MUSC', 'MUST', 'ARTO', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'PERK', 'ARMA', 'SNDR', 'QUST']: out += group(k, recs[k])  # (PERK: the Summoner's command - it was never written before)  # Bethesda's group order: effects load before the spells that use them
 (ROOT / 'data').mkdir(exist_ok=True)
 (ROOT / 'data' / PLUGIN).write_bytes(out)
 print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')
