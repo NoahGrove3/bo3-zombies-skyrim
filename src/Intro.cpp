@@ -260,22 +260,38 @@ namespace bo3z
 			}
 			if (!Save::Flag(Save::kFlagMoved) && Forms::IntroDone()) {
 				if (g_skip && FreshQuickstartGame(player) && !g_moved) {  // (played through: you walk out of Helgen yourself; skipped: Riverwood's gate)
-					if (++g_settle < 20) {  // let the skip fragment finish (race menu, choose sides) before moving
+					// (Noah: skipped on the cart, the cart flew and Helgen's soldiers fought, the move never happened) off the
+					// cart's seat first - a seated player isn't moved - then to Riverwood, and checked: tried again until there
+					if (player->GetOccupiedFurniture()) {
+						player->StopInteractingQuick(true);
+						player->NotifyAnimationGraph("IdleForceDefaultState");
+					}
+					if (++g_settle < 20 || player->GetOccupiedFurniture()) {
 						return;
 					}
-					g_moved = true;
-					Hud::IntroVeil(3.0f);  // (Skyrim's loading screen covers the move; the outro lifts the black once the world is there)
-					if (auto* marker = Forms::RiverwoodMarker()) {
-						player->MoveTo(marker);
-						logger::info("intro: moved the new character to Riverwood");
+					auto* marker = Forms::RiverwoodMarker();
+					static int tries = 0;
+					if (marker && player->GetPosition().GetDistance(marker->GetPosition()) > 3000.0f) {
+						if (g_settle % 90 == 20 && tries < 8) {  // (every 1.5 s, the move's loading screen in between)
+							++tries;
+							Hud::IntroVeil(3.0f);  // (Skyrim's loading screen covers the move; the outro lifts the black once the world is there)
+							player->MoveTo(marker);
+							logger::info("intro: moving the new character to Riverwood (try {})", tries);
+						}
+						if (tries < 8) return;
 					}
+					g_moved = true, tries = 0;
+					logger::info("intro: the new character is at Riverwood");
 				}
 				Save::SetFlag(Save::kFlagMoved, true);
 			}
 			// No crew pick any more: you play your own Skyrim character. First time in, you get the starting wand.
 			if (Save::Flag(Save::kFlagMoved) && Forms::IntroDone() && !Save::Flag(Save::kFlagStarted) && g_raceAfterSkip) {
 				// the creator at Riverwood's gate, once the world is there (the move's loading screen gone); the class waits for it to close
-				if (g_raceAfterSkip == 1 && player->Is3DLoaded() && !ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME) && !Hud::IntroBusy()) {
+				if (g_raceAfterSkip == 1 && !(player->Is3DLoaded() && !ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME) && !Hud::IntroBusy())) {
+					return;  // (Noah: the class came first, with no creator) still loading in: the creator waits, and the class after it
+				}
+				if (g_raceAfterSkip == 1) {
 					static int settle = 0;
 					if (++settle > 60) {
 						settle = 0, g_raceAfterSkip = 2;
