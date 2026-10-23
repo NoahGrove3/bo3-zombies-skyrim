@@ -3007,6 +3007,20 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (!a_mv) return;
 			const int pressedNow = g_sysAccept.load();
 			if (++g_sys.frame % 6 != 0 && pressedNow == 0 && a_clicks == 0) return;  // (a few times a second is plenty)
+			// (Noah: the game crashed changing the field of view in the Mod Configuration menu, twice) while a mod's settings
+			// page is up, the pause menu's list is left alone - the Bestiary's own hook was working the same movie
+			{
+				RE::GFxValue vis, alpha, fvis;
+				const bool panelUp = a_mv->GetVariable(&vis, "_root.ConfigPanelFader.configPanel._visible") && vis.IsBool() && vis.GetBool() &&
+				                     a_mv->GetVariable(&alpha, "_root.ConfigPanelFader._alpha") && alpha.IsNumber() && alpha.GetNumber() > 1.0 &&
+				                     !(a_mv->GetVariable(&fvis, "_root.ConfigPanelFader._visible") && fvis.IsBool() && !fvis.GetBool());
+				static int was = -1;
+				if (was != static_cast<int>(panelUp)) {
+					was = panelUp;
+					logger::info("party: mod settings page {}", panelUp ? "up - the pause list left alone" : "closed");
+				}
+				if (panelUp) return;
+			}
 			if (!g_sys.found) {
 				RE::GFxValue root;
 				std::string  path;
