@@ -145,8 +145,21 @@ namespace bo3z::Classes
 			// (Noah: "Obtain the Spellsword Manual - what is that for?") the Spellsword mod's own start quest: its manual
 			// is never needed here (the Spellsword's kit comes from the class)
 			if (auto* q = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESQuest>(0x009A24, "Spellsword.esp"); q && q->IsRunning()) {
-				Console(p, "StopQuest _Spellsword_Start_Quest");
-				logger::info("classes: the Spellsword mod's manual quest stopped");
+				// (a console StopQuest didn't hold: the mod's own scripts start it again) Quest.Stop() through Papyrus, and
+				// the objective taken off the journal; tried a few times, then left
+				static int tries = 0;
+				if (tries < 6) {
+					++tries;
+					if (auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton()) {
+						const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(q->GetFormType(), q);
+						RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+						vm->DispatchMethodCall(hd, "Quest", "SetObjectiveDisplayed", RE::MakeFunctionArguments(static_cast<std::int32_t>(0), false, false), none);
+						vm->DispatchMethodCall(hd, "Quest", "SetObjectiveDisplayed", RE::MakeFunctionArguments(static_cast<std::int32_t>(10), false, false), none);
+						vm->DispatchMethodCall(hd, "Quest", "Stop", RE::MakeFunctionArguments(), none);
+					}
+					Console(p, "StopQuest _Spellsword_Start_Quest");
+					logger::info("classes: the Spellsword mod's manual quest stopped (try {})", tries);
+				}
 			}
 			// (Noah: "Flames, Healing, Sparks - am I supposed to start with these?") the race's own starting spells go too
 			// (its powers and abilities - Ancestor's Wrath - stay)
@@ -930,6 +943,36 @@ namespace bo3z::Classes
 				}
 			}
 			std::erase_if(g_ownSummons, [](const auto& e) { return e.second <= 0; });
+			// (Noah: "they aren't attacking the Curse's enemies") every summon of yours not already fighting goes for the
+			// nearest of the night's dead within reach
+			if (static float look = 0; (look += a_delta) > 1.0f) {
+				look = 0;
+				std::vector<RE::Actor*> mine;
+				for (auto& [h, t] : g_ownSummons) if (auto a = h.get()) mine.push_back(a.get());
+				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+					if (auto a = h.get(); a && a.get() != p && !a->IsDead() && a->IsCommandedActor() && a->GetCommandingActor().get() == p) mine.push_back(a.get());
+				}
+				for (auto* s : mine) {
+					if (s->IsDead() || s->IsDisabled()) continue;
+					auto cur = s->GetActorRuntimeData().currentCombatTarget.get();
+					if (cur && !cur->IsDead() && Director::IsFoe(cur.get())) continue;
+					RE::Actor* best = nullptr;
+					float bestD = 3000.0f;
+					for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+						auto z = h.get();
+						if (!z || z->IsDead() || z->IsDisabled() || !Director::IsFoe(z.get())) continue;
+						if (z->IsCommandedActor() && z->GetCommandingActor().get() == p) continue;
+						if (const float d = z->GetPosition().GetDistance(s->GetPosition()); d < bestD) bestD = d, best = z.get();
+					}
+					if (best) {
+						if (auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton()) {
+							const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(s->GetFormType(), s);
+							RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+							vm->DispatchMethodCall(hd, "Actor", "StartCombat", RE::MakeFunctionArguments(static_cast<RE::Actor*>(best)), none);
+						}
+					}
+				}
+			}
 			for (auto& ps : g_pendingSummon) {
 				if ((ps.wait -= a_delta) > 0) continue;
 				const int now = CommandedNow(p) + static_cast<int>(g_ownSummons.size());
@@ -991,7 +1034,16 @@ namespace bo3z::Classes
 			if (!mg || mg->GetArchetype() != RE::EffectArchetypes::ArchetypeID::kSummonCreature) continue;
 			auto* what = mg->data.associatedForm ? mg->data.associatedForm->As<RE::TESBoundObject>() : nullptr;
 			if (!what) continue;
-			const int before = CommandedNow(p) + static_cast<int>(g_ownSummons.size());
+			int before = CommandedNow(p) + static_cast<int>(g_ownSummons.size());
+			// (Noah: "it only worked one time") at the cap, one called up here makes room itself - Skyrim never swaps ours
+			while (before >= SummonCap(p) && !g_ownSummons.empty()) {
+				if (auto a = g_ownSummons.front().first.get()) {
+					Gun::FxBlast("dark", a->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f });
+					a->Disable(), a->SetDelete(true);
+				}
+				g_ownSummons.erase(g_ownSummons.begin());
+				--before;
+			}
 			if (before >= SummonCap(p)) {
 				logger::info("classes: {} cast at the cap ({}) - Skyrim swaps the oldest", sp->GetName(), before);
 				return;

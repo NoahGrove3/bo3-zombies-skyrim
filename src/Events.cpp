@@ -649,6 +649,9 @@ namespace bo3z
 					}
 				}
 				if (a_event && a_event->target.get() == RE::PlayerCharacter::GetSingleton() && a_event->cause) {
+					if (auto* z = a_event->cause->As<RE::Actor>(); z && z != RE::PlayerCharacter::GetSingleton() && Director::IsFoe(z)) {
+						if (static int said = 0; said++ < 12) logger::info("hurt: hit by {} (ours {}, foe {})", z->GetName(), Director::IsRoundUndead(z), Director::IsFoe(z));
+					}
 					if (auto* z = a_event->cause->As<RE::Actor>(); z && Director::IsRoundUndead(z)) {
 						Perks::OnZombieHit(z);
 					}

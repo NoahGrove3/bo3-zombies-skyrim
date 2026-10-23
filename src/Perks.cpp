@@ -101,6 +101,9 @@ namespace bo3z
 			}
 			t = now;
 			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (static int said = 0; said++ < 12 || said % 25 == 0) {  // (Noah: "I don't take damage from the Curse's enemies") every hit of theirs, traced
+				logger::info("hurt: {} hits you (god {}, difficulty x{:.2f}, undead damage x{:.2f})", a_zombie->GetName(), RE::PlayerCharacter::IsGodMode(), Difficulty::Taken(), Settings::UndeadDamageMult());
+			}
 			if (RE::PlayerCharacter::IsGodMode()) {
 				return;  // (console god mode: the dead's hands pass through)
 			}
@@ -263,6 +266,9 @@ namespace bo3z
 		{
 			a_amount *= Difficulty::Taken();  // (the night's own blows follow Skyrim's difficulty)
 			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (a_amount <= 0 || std::chrono::steady_clock::now() < g_dodgeUntil) {
+				if (static int said = 0; said++ < 8) logger::info("hurt: a blow of {:.1f} missed (dodging {})", a_amount, std::chrono::steady_clock::now() < g_dodgeUntil);
+			}
 			if (!p || p->IsDead() || a_amount <= 0 || std::chrono::steady_clock::now() < g_dodgeUntil) {
 				return;  // (mid-roll: the blow misses)
 			}

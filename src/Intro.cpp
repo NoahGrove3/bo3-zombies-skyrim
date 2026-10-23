@@ -225,6 +225,13 @@ namespace bo3z
 				return;
 			}
 			KeepSurvivalOff();
+			// (Noah: "it should stay daytime until the player leaves the cave from Helgen") until the class is chosen - out of
+			// the cave, or at Riverwood after a skip - the clock holds at day
+			if (!Save::Flag(Save::kFlagStarted)) {
+				if (auto* cal = RE::Calendar::GetSingleton(); cal && cal->gameHour && (cal->gameHour->value < 8.0f || cal->gameHour->value > 16.0f)) {
+					cal->gameHour->value = 11.0f;
+				}
+			}
 			if (!Save::Flag(Save::kFlagMoved) && Forms::IntroDone()) {
 				if (g_skip && FreshQuickstartGame(player) && !g_moved) {  // (played through: you walk out of Helgen yourself; skipped: Riverwood's gate)
 					if (++g_settle < 20) {  // let the skip fragment finish (race menu, choose sides) before moving
@@ -256,7 +263,9 @@ namespace bo3z
 				if (g_raceAfterSkip == 2 && (ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME) || !g_raceSeen)) return;
 				g_raceAfterSkip = 0;  // (made: on to the class)
 			}
-			if (Save::Flag(Save::kFlagMoved) && Forms::IntroDone() && !Save::Flag(Save::kFlagStarted)) {
+			// (Noah: "the class pop-up came at the end of the cave, not when I left it") only out under the sky
+			const bool outside = player->GetParentCell() && !player->GetParentCell()->IsInteriorCell() && !ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME);
+			if (Save::Flag(Save::kFlagMoved) && Forms::IntroDone() && !Save::Flag(Save::kFlagStarted) && outside) {
 				if (Save::Crew() >= 0) {
 					Save::SetCrew(-1);  // older saves: drop the crew character
 				} else {
