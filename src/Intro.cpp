@@ -97,11 +97,16 @@ namespace bo3z
 		// (Noah: the real Helgen again, with a skip) MQQuickstart 0: a new game opens in the cart. All through Helgen a
 		// hold of H (Back on a pad) skips it: the character creator first if it hasn't come yet, then Helgen and Before
 		// the Storm are set done and you wake at Riverwood's gate
+		// (Noah: "the skip never moved me - remove the Helgen part for now and start every player at Riverwood's gate like
+		// before") Bethesda's own quick start again: the creator, then Riverwood's gate, then the class. Helgen and its skip
+		// come back with this set true
+		constexpr bool kPlayHelgen = false;
 		void Install()
 		{
-			if (auto* q = Forms::Quickstart(); q && q->value != 0.0f) {
-				q->value = 0.0f;  // read by MQ101 stage 0 when a new game starts
-				logger::info("intro: MQQuickstart set to 0 (Helgen plays; H skips it)");
+			const float want = kPlayHelgen ? 0.0f : 3.0f;
+			if (auto* q = Forms::Quickstart(); q && q->value != want) {
+				q->value = want;  // read by MQ101 stage 0 when a new game starts
+				logger::info("intro: MQQuickstart set to {} ({})", want, kPlayHelgen ? "Helgen plays; H skips it" : "no Helgen: the creator, then Riverwood's gate");
 			}
 		}
 
@@ -197,7 +202,7 @@ namespace bo3z
 				}
 				if (g_raceSeen) reachedHelgen = true;
 			}
-			const bool canSkip = !reachedHelgen && !Save::Flag(Save::kFlagMoved) && !Forms::IntroDone() && intro->IsRunning() && !g_skip && !g_skipRace;
+			const bool canSkip = kPlayHelgen && !reachedHelgen && !Save::Flag(Save::kFlagMoved) && !Forms::IntroDone() && intro->IsRunning() && !g_skip && !g_skipRace;
 			{  // (Noah: the skip never showed) a standing line at the foot of the screen while Helgen can be skipped - and the hold's progress
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().skipHint = canSkip && !raceOpen && !ui->GameIsPaused() && !Hud::IntroActive();
@@ -259,7 +264,7 @@ namespace bo3z
 				}
 			}
 			if (!Save::Flag(Save::kFlagMoved) && Forms::IntroDone()) {
-				if (g_skip && FreshQuickstartGame(player) && !g_moved) {  // (played through: you walk out of Helgen yourself; skipped: Riverwood's gate)
+				if ((g_skip || !kPlayHelgen) && FreshQuickstartGame(player) && !g_moved) {  // (played through: you walk out of Helgen yourself; skipped: Riverwood's gate)
 					// (Noah: skipped on the cart, the cart flew and Helgen's soldiers fought, the move never happened) off the
 					// cart's seat first - a seated player isn't moved - then to Riverwood, and checked: tried again until there
 					if (player->GetOccupiedFurniture()) {
