@@ -91,9 +91,15 @@ namespace bo3z
 
 		// BO3 hits: each zombie hit takes a fixed share of the player's health without Juggernog,
 		// so Juggernog's extra health means more hits to go down.
+		std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> g_zombieHitAt;
+		float SinceZombieHit(RE::FormID a_zombie)
+		{
+			auto it = g_zombieHitAt.find(a_zombie);
+			return it == g_zombieHitAt.end() ? 1e9f : std::chrono::duration<float>(std::chrono::steady_clock::now() - it->second).count();
+		}
 		void OnZombieHit(RE::Actor* a_zombie)
 		{
-			static std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> last;
+			auto& last = g_zombieHitAt;
 			const auto now = std::chrono::steady_clock::now();
 			auto& t = last[a_zombie->GetFormID()];
 			if (now - t < 600ms) {

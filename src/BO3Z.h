@@ -601,6 +601,7 @@ namespace bo3z
 		bool Grant(int a_perk);    // bought: applied at once (one at a time)
 		void LoseAll();            // death takes them all
 		void OnZombieHit(RE::Actor* a_zombie);  // a round zombie hit the player
+		float SinceZombieHit(RE::FormID a_zombie);  // seconds since this one's blow last landed (large: never)
 		void OnCast(int a_shots);  // Stormcrown
 		void Tick();
 		bool SelfRevive();         // Quick Revive held: a killing blow is a fall instead

@@ -1994,6 +1994,42 @@ namespace bo3z
 			return -1;
 		}
 
+		// (Noah: "my character still doesn't take damage from the Curse's enemies") their swings never reached Skyrim's hit
+		// (no hit was ever logged from one): within arm's reach and facing you, one of the dead that hasn't landed a blow in
+		// a while swings, and the blow lands - the same share of your health as a Skyrim hit of theirs would take
+		void TickReach(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			static std::unordered_map<RE::FormID, float> swing;  // seconds until its next swing lands (<0: none coming)
+			if (!a_player || a_player->IsDead() || Coop::Client()) return;
+			const auto pp = a_player->GetPosition();
+			for (auto& s : g_alive) {
+				auto a = s.handle.get();
+				if (!a || a->IsDead() || a->IsDisabled() || !a->Is3DLoaded() || s.frenzy > 0) continue;
+				const int kind = gen::kEnemies[s.enemy].kind;
+				if (kind == 1 || Director::IsBoss(a.get())) continue;  // (the Reaper and the bosses have their own blows)
+				auto&       t = swing.try_emplace(a->GetFormID(), -1.0f).first->second;
+				const auto  ap = a->GetPosition();
+				const float dist = std::hypot(ap.x - pp.x, ap.y - pp.y), dz = std::abs(ap.z - pp.z);
+				const float reach = 150.0f + a->GetBoundRadius() * 0.5f;
+				if (t >= 0) {
+					if ((t -= a_delta) < 0) {
+						if (dist < reach + 40.0f && dz < 160.0f && Perks::SinceZombieHit(a->GetFormID()) > 0.5f) {
+							Perks::OnZombieHit(a.get());
+							if (static int said = 0; said++ < 10) logger::info("hurt: {} reached you ({:.0f} away)", a->GetName(), dist);
+						}
+						t = -1.0f;
+					}
+					continue;
+				}
+				if (dist > reach || dz > 160.0f || Perks::SinceZombieHit(a->GetFormID()) < 1.6f) continue;
+				const float face = std::atan2(pp.x - ap.x, pp.y - ap.y);
+				float d = std::fmod(face - a->GetAngleZ() + 3.0f * RE::NI_PI, 2.0f * RE::NI_PI) - RE::NI_PI;
+				if (std::abs(d) > 1.2f) continue;
+				a->NotifyAnimationGraph("attackStart");  // (the swing shows; its blow lands a moment later)
+				t = 0.45f;
+			}
+			if (swing.size() > 400) std::erase_if(swing, [](const auto& e) { return e.second < 0; });
+		}
 		void TickChampions(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			// a necromancer raises our own dead (never Skyrim's skeletons with their swords and maces)
@@ -3150,6 +3186,7 @@ namespace bo3z
 				}
 				KeepThemComing(player, a_delta);
 				TickChampions(player, a_delta);
+				TickReach(player, a_delta);
 				TickFrenzy(player, a_delta);
 				TickBoss(player, a_delta);
 				TickChampion();
