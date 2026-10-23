@@ -77,7 +77,7 @@ PAGES = [
         stepper('iDrawSpeedStep:General', 'Bow and crossbow draw speed', 'How fast bows draw and crossbows reload.', [f'{1 + i / 10:.1f}x' for i in range(11)]),
         slider('fCorpseSeconds:General', 'Bodies fade after', 'Seconds a fallen undead lies there before it crumbles.', 3, 60, 1, '{0} s'),
         header('Difficulty'),
-        toggle('bFollowSkyrim:Difficulty', 'Follow Skyrim\'s difficulty', 'Skyrim\'s difficulty (Settings > Gameplay) also sets how tough the night\'s dead are and how hard they hit: Novice halves their hits, Legendary triples them.'),
+        toggle('bFollowSkyrim:Difficulty', 'Follow Skyrim\'s difficulty', 'Skyrim\'s difficulty (Settings > Gameplay) also sets how tough the night\'s dead are and how hard they hit: from Novice to Legendary, 0.6x to 1.8x their health and 0.5x to 2x their blows.'),
         slider('fUndeadHealth:Difficulty', 'Undead health', 'On top of Skyrim\'s difficulty: how much health the night\'s dead have.', 0.25, 3.0, 0.05, '{2}x'),
         slider('fUndeadDamage:Difficulty', 'Undead damage', 'On top of Skyrim\'s difficulty: how hard the night\'s dead hit you.', 0.25, 3.0, 0.05, '{2}x'),
     ]},

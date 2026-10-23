@@ -398,6 +398,7 @@ namespace bo3z
 		float MeleeSpeed();     // melee weapons' swing speed (1.0 - 2.0)
 		float DrawSpeed();      // bows' draw and crossbows' reload speed (1.0 - 2.0)
 		int         Difficulty();                 // Skyrim's difficulty, 0 Novice .. 5 Legendary (the trials follow it)
+		bool        FollowDifficulty();           // the Mod Configuration menu's 'Follow Skyrim's difficulty'
 		float       UndeadHealthMult();           // Skyrim's difficulty (if followed) x the MCM's own
 		float       UndeadDamageMult();
 		int         Key(int a_action);

@@ -83,7 +83,10 @@ namespace BowsImpl
 
 	// (the classes overhaul: the Ranger's arrows run out) the quiver holds what you bought, found or picked out of the dead;
 	// a_fill tops it up to a full quiver (a new bow, Max Ammo, a quiver bought at the altar), and the arrows stay on the string
-	constexpr int kQuiver = 60;
+	// (Noah: "the archer class should get increased arrow capacity each upgrade") 60 arrows, then 100, 150 and 200 a
+	// full quiver as the bow is reforged - and from tier I its arrows grow back on their own (TickRegrow)
+	constexpr int kQuiverByTier[4] = { 60, 100, 150, 200 };
+	int Quiver(int i) { return i >= 0 && i < kN ? kQuiverByTier[std::clamp<int>(g_level[i], 0, 3)] : 60; }
 	void TopUp(int i, bool a_equip, bool a_fill = false)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -91,8 +94,8 @@ namespace BowsImpl
 		if (!p || !am) {
 			return;
 		}
-		if (const int n = p->GetItemCount(am); a_fill && n < kQuiver) {
-			p->AddObjectToContainer(am, nullptr, kQuiver - n, nullptr);
+		if (const int n = p->GetItemCount(am); a_fill && n < Quiver(i)) {
+			p->AddObjectToContainer(am, nullptr, Quiver(i) - n, nullptr);
 		}
 		if (p->GetItemCount(am) > 0 && (a_equip || p->GetCurrentAmmo() != am)) {
 			if (auto* em = RE::ActorEquipManager::GetSingleton()) {
@@ -168,7 +171,10 @@ namespace BowsImpl
 	{
 		const float tier = std::pow(1.25f, static_cast<float>(std::clamp<int>(g_level[i], 0, 3)));
 		const float pull = 0.35f + 0.65f * std::clamp(a_draw, 0.0f, 1.0f);
-		return 30.0f * tier * pull * gen::kRounds.hpScale * Perks::DamageMult();
+		// (the balance pass) it keeps up with the night as Skyrim's own bows do: a full draw takes 55% of a zombie's
+		// night health at tier 0 (never less than the old 30) - two full draws a body, a tier sooner each 25% more
+		const float base = std::max(30.0f, 0.55f * Director::RoundHealth() * (0.7f + 0.3f * Arcana::Power()));
+		return base * tier * pull * gen::kRounds.hpScale * Perks::DamageMult();
 	}
 
 	// where the arrow's head sits while drawn: in first person a point in the view (the arms have their own camera),
@@ -1415,6 +1421,12 @@ namespace BowsImpl
 		TickCards(a_delta);
 		g_sinceFire += a_delta;
 		const int i = Held();
+		// (each tier: the arrows grow back - one every 6 s at tier I, 4 s at II, 2 s at III, up to a full quiver)
+		static float regrow = 0;
+		if (i >= 0 && g_level[i] > 0 && (regrow += a_delta) >= (g_level[i] >= 3 ? 2.0f : g_level[i] == 2 ? 4.0f : 6.0f)) {
+			regrow = 0;
+			if (auto* am = Ammo(i); am && p->GetItemCount(am) < Quiver(i)) p->AddObjectToContainer(am, nullptr, 1, nullptr);
+		}
 		static float quiver = 0;
 		if (i >= 0 && (quiver -= a_delta) <= 0) {
 			quiver = 1.0f;

@@ -553,7 +553,10 @@ namespace bo3z
 			const float twin = Classes::Get() == 1 && hands[0] == a_index && hands[1] == a_index ? 1.35f : 1.0f;
 			if (Director::IsRoundUndead(a_actor)) {
 				if (Limit(a_actor)) {
-					HurtUndead(a_actor, Director::RoundHealth() * gen::kShareSpell * kTier[tier] * grow * twin);
+					// (the balance pass) a concentration spell lands four times a second: each touch takes a third of a
+					// cast's share, so a stream and a bolt kill about as fast for the magicka
+					const float stream = Arcana::Concentration(a_index) ? 0.35f : 1.0f;
+					HurtUndead(a_actor, Director::RoundHealth() * gen::kShareSpell * kTier[tier] * grow * twin * stream);
 				}
 				return;
 			}
@@ -645,7 +648,15 @@ namespace bo3z
 					auto* pl = RE::PlayerCharacter::GetSingleton();
 					const bool mySummon = ally && pl && ally != pl && ((ally->IsCommandedActor() && ally->GetCommandingActor().get() == pl) || Classes::IsOwnSummon(ally));  // (Noah's plan: the Summoner's summons scale with the night's round)
 					if (ally && z && !z->IsDead() && (Echo::IsAlly(ally) || mySummon) && Director::IsRoundUndead(z) && Limit(z)) {
-						HurtUndead(z, Director::RoundHealth() * gen::kShareMelee * (mySummon ? 0.6f + 0.15f * std::max(0, Arcana::RungOf(Arcana::Hands()[1]) - 1) : 0.9f) * (0.7f + 0.3f * Arcana::Power()));
+						// (the balance pass) your summons hit by the highest rung of the summon spells you carry (0.6x of a
+						// blade at the first rung, up to 1.05x at the Legendary), half again with Bonebinder's Brew
+						float tierMult = 0.9f;
+						if (mySummon) {
+							int best = 1;
+							for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0) best = std::max(best, Arcana::RungOf(i));
+							tierMult = (0.6f + 0.15f * static_cast<float>(best - 1)) * (Perks::SummonMight() ? 1.5f : 1.0f);
+						}
+						HurtUndead(z, Director::RoundHealth() * gen::kShareMelee * tierMult * (0.7f + 0.3f * Arcana::Power()));
 					}
 				}
 				if (a_event && a_event->target.get() == RE::PlayerCharacter::GetSingleton() && a_event->cause) {

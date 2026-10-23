@@ -1409,7 +1409,7 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kStandStat = 0x926;  // the station platform (dressing on the Coffer)
 	inline constexpr float kStandHalfX = 220.0f, kStandFrontY = -220.0f, kStandBackY = 220.0f, kStandMaxSlope = 70.0f;  // footprint in plan space (tools/stand.py)
 	inline constexpr float kRegenDelay = 5.0f, kRegenPerSecond = 0.35f;
-	inline constexpr float kSpawnMultiplier = 6.0f, kHitDamageFraction = 0.34f, kZombieWeaponDamageMult = 0.1f;
+	inline constexpr float kSpawnMultiplier = 6.0f, kHitDamageFraction = 0.3f, kZombieWeaponDamageMult = 0.1f;
 	inline constexpr bool kIgnoreNpcs = true;
 	inline constexpr std::array<std::array<float, 2>, 4> kSpeedTiers{ { { 1.0f, 100.0f }, { 3.0f, 115.0f }, { 6.0f, 130.0f }, { 10.0f, 145.0f } } };
 	struct EventDef { std::string_view id, label, banner, weatherPlugin; std::uint32_t weatherId; float spawnMult, speedMult; int pointsMult; float championWeight, dropMult; bool boss; std::uint32_t tint; Sound sound, bed; std::array<int, 6> members; int finale; float waveCount, waveHp, waveSpeed, wavePoints; std::uint32_t color; };

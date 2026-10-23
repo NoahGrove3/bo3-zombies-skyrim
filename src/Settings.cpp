@@ -236,8 +236,10 @@ namespace bo3z::Settings
 			}
 			return 2;
 		}
-		constexpr float kDealt[6] = { 2.0f, 1.5f, 1.0f, 0.75f, 0.5f, 0.25f };
-		constexpr float kTaken[6] = { 0.5f, 0.75f, 1.0f, 1.5f, 2.0f, 3.0f };
+		// (Noah: "balance everything so it blends together, using Skyrim's difficulty from Novice to Legendary") the
+		// difficulty is applied ONCE: the night's dead get tougher here, their blows harder in Difficulty::Taken
+		// (src/Gun.cpp). (Before, each was counted twice - Legendary's dead took 5.7x the hits and hit 6x as hard.)
+		constexpr float kUndeadHp[6] = { 0.6f, 0.8f, 1.0f, 1.25f, 1.5f, 1.8f };
 	}
 
 	float Brightness() { Ensure(); return g_bright; }
@@ -263,17 +265,18 @@ namespace bo3z::Settings
 	int   Key(int a_action) { Ensure(); return a_action >= 0 && a_action < kKeys ? g_keys[a_action] : 0; }
 
 	int Difficulty() { return GameDifficulty(); }
+	bool FollowDifficulty() { Ensure(); return g_follow; }
 
 	// the night's dead: their health against your hits, and their hits against you
 	float UndeadHealthMult()
 	{
 		Ensure();
-		return g_hp / (g_follow ? kDealt[GameDifficulty()] : 1.0f);
+		return g_hp * (g_follow ? kUndeadHp[GameDifficulty()] : 1.0f);
 	}
 	float UndeadDamageMult()
 	{
 		Ensure();
-		return g_dmg * (g_follow ? kTaken[GameDifficulty()] : 1.0f);
+		return g_dmg;  // (the difficulty's share: Difficulty::Taken, in Perks::DamagePlayer)
 	}
 
 	void SetFov(bool a_first, float a_v)

@@ -500,7 +500,9 @@ namespace bo3z
 			auto*       av = a_target->AsActorValueOwner();
 			const auto  tid = a_target->GetFormID();
 			const float hexMult = g_hexed.contains(tid) ? 1.5f : 1.0f;
-			float       damage = a_bo3Damage * hexMult * Eggs::DamageMult() * Difficulty::Dealt() / gen::kRounds.hpScale;
+			// (the difficulty reaches the night's dead through their health alone - Settings::UndeadHealthMult; Skyrim's
+			// own enemies take our scripted blows scaled by it here, as Skyrim scales yours)
+			float       damage = a_bo3Damage * hexMult * Eggs::DamageMult() * (Director::IsRoundUndead(a_target) ? 1.0f : Difficulty::Dealt()) / gen::kRounds.hpScale;
 			if (!Director::IsRoundUndead(a_target)) {
 				// Skyrim's own enemies (bandits, draugr, dragons) are tuned to the player's level, not to the night: our
 				// weapons hit them like gear of your level would (half strength at level 1, full at 25, 1.5x at 50+).
@@ -3612,6 +3614,6 @@ namespace bo3z::Difficulty
 		return p ? std::clamp(static_cast<int>(p->GetGameStatsData().difficulty), 0, 5) : 2;
 	}
 	float Dealt() { static constexpr float k[6] = { 1.4f, 1.2f, 1.0f, 0.9f, 0.8f, 0.7f }; return k[Level()]; }
-	float Taken() { static constexpr float k[6] = { 0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f }; return k[Level()]; }
+	float Taken() { static constexpr float k[6] = { 0.5f, 0.7f, 1.0f, 1.3f, 1.6f, 2.0f }; return Settings::FollowDifficulty() ? k[Level()] : 1.0f; }  // (the night's blows: the only place the difficulty touches them)
 	float Mana() { static constexpr float k[6] = { 0.8f, 0.9f, 1.0f, 1.08f, 1.16f, 1.25f }; return k[Level()]; }
 }

@@ -479,7 +479,7 @@ namespace bo3z::Classes
 			else if (auto* mi = src ? src->As<RE::MagicItem>() : nullptr) how = (mi->GetAssociatedSkill() == RE::ActorValue::kDestruction || (Arcana::IndexOf(src) >= 0 && Arcana::ClassOf(Arcana::IndexOf(src)) == coffer::kDestruction)) ? 1 : -1;
 			else if (auto* w = src ? src->As<RE::TESObjectWEAP>() : nullptr) {
 				how = (w->IsBow() || w->IsCrossbow()) ? 2 : 3;
-				if (const int b = Bows::IndexOf(w); b >= 0 && b < static_cast<int>(g_bowMastery.size())) g_bowMastery[b] = static_cast<std::uint16_t>(std::min(60000, g_bowMastery[b] + 1));
+				if (const int b = Bows::IndexOf(w); b >= 0 && b < static_cast<int>(g_bowMastery.size()) && (FreedCount() >= 3 || Gun::TestKitOn())) g_bowMastery[b] = static_cast<std::uint16_t>(std::min(60000, g_bowMastery[b] + 1));
 				if (w->IsCrossbow() && c == coffer::kRanger && g_boltKills < 60000) {
 					const int before = BoltsUnlocked();
 					++g_boltKills;
@@ -492,7 +492,7 @@ namespace bo3z::Classes
 			}
 			else if (const int b = Bows::Held(); b >= 0) {  // (the altar's bows strike with our own shots)
 				how = 2;
-				if (b < static_cast<int>(g_bowMastery.size())) g_bowMastery[b] = static_cast<std::uint16_t>(std::min(60000, g_bowMastery[b] + 1));
+				if (b < static_cast<int>(g_bowMastery.size()) && (FreedCount() >= 3 || Gun::TestKitOn())) g_bowMastery[b] = static_cast<std::uint16_t>(std::min(60000, g_bowMastery[b] + 1));
 			}
 			else if (p) {
 				for (int h : Arcana::Hands()) if (h >= 0 && Arcana::ClassOf(h) == coffer::kDestruction) how = 1;
@@ -515,8 +515,11 @@ namespace bo3z::Classes
 			}
 		}
 		// (Noah's plan, the Spellsword's resonance) its touch spells climb on melee kills only - a power attack counts twice
+		// (Noah: "make kills count after the forge opens") nothing counts toward a climb before three altars are freed
+		const bool forgeOpen = FreedCount() >= 3 || Gun::TestKitOn();
 		const bool power = a_dying && g_powerHit.contains(a_dying->GetFormID());
 		for (int h : Arcana::Hands()) {
+			if (!forgeOpen) break;
 			if (h < 0) continue;
 			const int cls = Arcana::ClassOf(h);
 			if (a_bySummon && cls != coffer::kSummoner) continue;
@@ -575,7 +578,7 @@ namespace bo3z::Classes
 			} else {
 				const int have = std::min(Mastery(i), MasteryNeed(i)), need = MasteryNeed(i);
 				out.push_back(fmt::format("<b>{}</b> ({} ladder) - rung {} of {}. Kills toward <b>{}</b>: {} / {}{}", Arcana::Name(i), Arcana::LadderName(i), r, n,
-					Arcana::Name(next), have, need, have >= need ? (freed >= 3 ? " - ready: raise it at an altar's forge" : " - ready once the forge opens") : ""));
+					Arcana::Name(next), have, need, have >= need ? " - ready: raise it at an altar's forge" : freed < 3 ? " (kills count once the forge opens)" : ""));
 			}
 		}
 		if (!any && c != coffer::kRanger) out.push_back("You carry none of your class's altar spells right now - call one at an Echo Altar.");
@@ -600,11 +603,11 @@ namespace bo3z::Classes
 				if (b < 0) {
 					out.push_back("You carry no elemental bow - call one at an Echo Altar's bow row.");
 				} else if (Bows::Level(b) >= 3) {
-					out.push_back(fmt::format("<b>Your bow: {}</b>, tier 3 of 3 - {}: <b>fully reforged</b>.", Bows::Name(b), Bows::TierName(b, 3)));
+					out.push_back(fmt::format("<b>Your bow: {}</b>, tier 3 of 3 - {}: <b>fully reforged</b>. Quiver: 200 arrows, growing back one every 2 s.", Bows::Name(b), Bows::TierName(b, 3)));
 				} else {
 					const int have = std::min(BowMastery(b), BowMasteryNeed(b)), need = BowMasteryNeed(b);
 					out.push_back(fmt::format("<b>Your bow: {}</b>, tier {} of 3 - {}. Kills toward tier {} ({}): {} / {}{}", Bows::Name(b), Bows::Level(b), Bows::TierName(b, Bows::Level(b)),
-						Bows::Level(b) + 1, Bows::TierName(b, Bows::Level(b) + 1), have, need, have >= need ? (freed >= 3 ? " - ready: reforge it at an altar" : " - ready once the forge opens") : ""));
+						Bows::Level(b) + 1, Bows::TierName(b, Bows::Level(b) + 1), have, need, have >= need ? " - ready: reforge it at an altar" : freed < 3 ? " (kills count once the forge opens)" : ""));
 				}
 				out.push_back(BoltLine() + ".");
 			}

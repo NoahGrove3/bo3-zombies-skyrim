@@ -114,7 +114,7 @@
           145
         ]
       ],
-      "hitDamageFraction": 0.34,
+      "hitDamageFraction": 0.3,
       "weaponDamageMult": 0.1,
       "ignoreNpcs": true,
       "regenDelaySeconds": 5,
