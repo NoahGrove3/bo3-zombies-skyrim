@@ -225,6 +225,32 @@ namespace bo3z
 				return;
 			}
 			KeepSurvivalOff();
+			// (Noah: "my game crashed after dying in the Helgen cave") Helgen can't kill you: until you are out of it you fall
+			// to your knees instead and rise with your health back (Skyrim's own reload after a death there crashed)
+			{
+				static bool held = false;
+				const bool inHelgen = !Save::Flag(Save::kFlagMoved) && intro->IsRunning();
+				auto& flags = player->GetActorRuntimeData().boolFlags;
+				if (inHelgen && !held) {
+					held = true;
+					flags.set(RE::Actor::BOOL_FLAGS::kEssential);
+				} else if (!inHelgen && held) {
+					held = false;
+					if (!Net::InLobby() && !Coop::Client()) flags.reset(RE::Actor::BOOL_FLAGS::kEssential);
+				}
+				if (held && player->AsActorState()->IsBleedingOut()) {
+					static float down = 0;
+					if ((down += 1.0f / 60.0f) > 3.0f) {
+						down = 0;
+						auto* av = player->AsActorValueOwner();
+						av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth));
+						player->AsActorState()->actorState1.lifeState = RE::ACTOR_LIFE_STATE::kAlive;
+						player->NotifyAnimationGraph("BleedOutStop");
+						player->NotifyAnimationGraph("IdleForceDefaultState");
+						logger::info("intro: back on your feet in Helgen");
+					}
+				}
+			}
 			// (Noah: "it should stay daytime until the player leaves the cave from Helgen") until the class is chosen - out of
 			// the cave, or at Riverwood after a skip - the clock holds at day
 			if (!Save::Flag(Save::kFlagStarted)) {
