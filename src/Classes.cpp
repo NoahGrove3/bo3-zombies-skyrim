@@ -226,7 +226,8 @@ namespace bo3z::Classes
 		std::array<std::uint32_t, 4> g_wTowns{};   // cities where a step was done (bits)
 		std::unordered_map<RE::FormID, RE::FormID> g_lastHit;  // a foe -> what you last hit it with
 		std::unordered_set<RE::FormID> g_powerHit;  // foes your last blow on was a power attack (the Spellsword's resonance)
-		std::uint16_t g_boltKills = 0;  // (the Ranger's crossbow mastery) kills with a crossbow: fire bolts at 25, ice at 60, shock at 120
+		std::uint16_t g_boltKills = 0;
+		std::array<std::uint16_t, 16> g_bowMastery{};  // (Noah: "make the ranger class also need kills") each altar bow's kills toward its next tier  // (the Ranger's crossbow mastery) kills with a crossbow: fire bolts at 25, ice at 60, shock at 120
 		constexpr std::uint32_t kBoltFamilies[] = { 0x020B04, 0x025A50, 0x025A58, 0x025A60, 0x025A68, 0x025A70 };  // Faction Crossbows' plain bolts (fire +1, ice +2, shock +3)
 		constexpr int           kBoltNeed[3] = { 25, 60, 120 };
 		constexpr const char*   kBoltElem[3] = { "fire", "ice", "shock" };
@@ -478,6 +479,7 @@ namespace bo3z::Classes
 			else if (auto* mi = src ? src->As<RE::MagicItem>() : nullptr) how = (mi->GetAssociatedSkill() == RE::ActorValue::kDestruction || (Arcana::IndexOf(src) >= 0 && Arcana::ClassOf(Arcana::IndexOf(src)) == coffer::kDestruction)) ? 1 : -1;
 			else if (auto* w = src ? src->As<RE::TESObjectWEAP>() : nullptr) {
 				how = (w->IsBow() || w->IsCrossbow()) ? 2 : 3;
+				if (const int b = Bows::IndexOf(w); b >= 0 && b < static_cast<int>(g_bowMastery.size())) g_bowMastery[b] = static_cast<std::uint16_t>(std::min(60000, g_bowMastery[b] + 1));
 				if (w->IsCrossbow() && c == coffer::kRanger && g_boltKills < 60000) {
 					const int before = BoltsUnlocked();
 					++g_boltKills;
@@ -488,7 +490,10 @@ namespace bo3z::Classes
 					}
 				}
 			}
-			else if (Bows::Held() >= 0) how = 2;  // (the altar's bows strike with our own shots)
+			else if (const int b = Bows::Held(); b >= 0) {  // (the altar's bows strike with our own shots)
+				how = 2;
+				if (b < static_cast<int>(g_bowMastery.size())) g_bowMastery[b] = static_cast<std::uint16_t>(std::min(60000, g_bowMastery[b] + 1));
+			}
 			else if (p) {
 				for (int h : Arcana::Hands()) if (h >= 0 && Arcana::ClassOf(h) == coffer::kDestruction) how = 1;
 			}
@@ -522,6 +527,9 @@ namespace bo3z::Classes
 		}
 		if (a_dying) g_powerHit.erase(a_dying->GetFormID());
 	}
+	int BowMastery(int a_bow) { return a_bow >= 0 && a_bow < static_cast<int>(g_bowMastery.size()) ? g_bowMastery[a_bow] : 0; }
+	int BowMasteryNeed(int a_bow) { const int lv = Bows::Level(a_bow); return lv <= 0 ? 25 : lv == 1 ? 60 : 120; }
+	void SpendBowMastery(int a_bow) { if (a_bow >= 0 && a_bow < static_cast<int>(g_bowMastery.size())) g_bowMastery[a_bow] = 0; }
 	int Mastery(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? g_mastery[coffer::kSpells[a_index].ladder] : 0; }
 	// kills a ladder needs before its next rung can be raised: 25 to rung 2, 60 to rung 3, 120 to the Legendary
 	int MasteryNeed(int a_index)
@@ -589,8 +597,15 @@ namespace bo3z::Classes
 		case coffer::kRanger:
 			{
 				const int b = Bows::Carried();
-				out.push_back(b >= 0 ? fmt::format("<b>Your bow: {}</b>, tier {} of 3 - {}.", Bows::Name(b), Bows::Level(b), Bows::TierName(b, Bows::Level(b)))
-				                     : std::string("You carry no elemental bow - call one at an Echo Altar's bow row."));
+				if (b < 0) {
+					out.push_back("You carry no elemental bow - call one at an Echo Altar's bow row.");
+				} else if (Bows::Level(b) >= 3) {
+					out.push_back(fmt::format("<b>Your bow: {}</b>, tier 3 of 3 - {}: <b>fully reforged</b>.", Bows::Name(b), Bows::TierName(b, 3)));
+				} else {
+					const int have = std::min(BowMastery(b), BowMasteryNeed(b)), need = BowMasteryNeed(b);
+					out.push_back(fmt::format("<b>Your bow: {}</b>, tier {} of 3 - {}. Kills toward tier {} ({}): {} / {}{}", Bows::Name(b), Bows::Level(b), Bows::TierName(b, Bows::Level(b)),
+						Bows::Level(b) + 1, Bows::TierName(b, Bows::Level(b) + 1), have, need, have >= need ? (freed >= 3 ? " - ready: reforge it at an altar" : " - ready once the forge opens") : ""));
+				}
 				out.push_back(BoltLine() + ".");
 			}
 			break;
@@ -1328,6 +1343,9 @@ namespace bo3z::Classes
 		}
 		v.push_back(0xA2);  // crossbow mastery: [kills u16]
 		v.push_back(static_cast<std::uint8_t>(g_boltKills & 0xFF)), v.push_back(static_cast<std::uint8_t>(g_boltKills >> 8));
+		v.push_back(0xA3);  // the altar bows' kills: [n] then n x u16
+		v.push_back(static_cast<std::uint8_t>(g_bowMastery.size()));
+		for (auto m : g_bowMastery) v.push_back(static_cast<std::uint8_t>(m & 0xFF)), v.push_back(static_cast<std::uint8_t>(m >> 8));
 		return v;
 	}
 	void SetState(const std::vector<std::uint8_t>& a_v)
@@ -1366,6 +1384,14 @@ namespace bo3z::Classes
 		if (k < a_v.size() && a_v[k] == 0xA2 && k + 3 <= a_v.size()) {
 			g_boltKills = static_cast<std::uint16_t>(a_v[k + 1] | (a_v[k + 2] << 8));
 			k += 3;
+		}
+		g_bowMastery.fill(0);
+		if (k + 1 < a_v.size() && a_v[k] == 0xA3) {
+			const int n = a_v[k + 1];
+			k += 2;
+			for (int b = 0; b < n && k + 2 <= a_v.size(); ++b, k += 2) {
+				if (b < static_cast<int>(g_bowMastery.size())) g_bowMastery[b] = static_cast<std::uint16_t>(a_v[k] | (a_v[k + 1] << 8));
+			}
 		}
 		if (g_wStep[coffer::kSummoner] > kWonderSteps) TuneWyrm();
 		logger::info("classes: loaded ({})", Name(g_class));

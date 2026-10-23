@@ -2686,12 +2686,17 @@ namespace bo3z
 					Hud::Banner(name + " cannot hold more power", 2.5f);
 					return false;
 				}
+				if (const int have = Classes::BowMastery(b), want = Classes::BowMasteryNeed(b); have < want) {  // (Noah: the Ranger's bows need kills too)
+					Hud::Banner(name + ": " + std::to_string(have) + " / " + std::to_string(want) + " kills with it before it can be reforged", 3.0f);
+					return false;
+				}
 				if (ForgedTonight(Bows::kIdBase + b, name)) {
 					return false;
 				}
 				if (!Points::Spend(gen::kForgeCost[lv])) {
 					return false;
 				}
+				Classes::SpendBowMastery(b);
 				g_forgedTonight.insert(Bows::kIdBase + b);
 				BowsImpl::g_level[b] = static_cast<std::uint8_t>(lv + 1);
 				BowsImpl::ApplySpeed(b);

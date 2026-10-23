@@ -307,6 +307,9 @@ namespace bo3z
 		void             NextOutfit();                 // the altar's outfit picker: the next outfit (any class), worn
 		std::string      OutfitName();                 // the one worn from the picker ('' none yet)
 		int              Mastery(int a_index);     // kills its ladder has earned toward the next rung
+		int              BowMastery(int a_bow);    // an altar bow's kills toward its next tier
+		int              BowMasteryNeed(int a_bow);
+		void             SpendBowMastery(int a_bow);
 		int              MasteryNeed(int a_index);
 		void             SpendMastery(int a_index);
 	}
