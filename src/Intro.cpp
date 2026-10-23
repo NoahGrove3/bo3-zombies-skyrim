@@ -124,7 +124,11 @@ namespace bo3z
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			auto* intro = Forms::IntroQuest();
 			auto* ui = RE::UI::GetSingleton();
-			if (player && g_moved && Hud::IntroBusy() && !player->IsDead()) {  // nothing hurts a newcomer who cannot yet see
+			static auto movedAt = std::chrono::steady_clock::now();
+			if (!g_moved) movedAt = std::chrono::steady_clock::now();
+			// (Noah: "I still don't take damage from the Curse's enemies") the newcomer's shield ends after half a minute, whatever
+			// the black screen's state says
+			if (player && g_moved && Hud::IntroBusy() && !player->IsDead() && std::chrono::steady_clock::now() - movedAt < std::chrono::seconds(30)) {  // nothing hurts a newcomer who cannot yet see
 				auto* av = player->AsActorValueOwner();
 				const float mx = av->GetPermanentActorValue(RE::ActorValue::kHealth), hp = av->GetActorValue(RE::ActorValue::kHealth);
 				if (hp < mx) {

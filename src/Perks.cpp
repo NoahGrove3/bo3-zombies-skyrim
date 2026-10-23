@@ -262,6 +262,7 @@ namespace bo3z
 		// Hearthfire Tonic (you rise whole), in the moments after rising, or (in a party) by falling to your knees
 		void Dodged(float a_seconds) { g_dodgeUntil = std::chrono::steady_clock::now() + std::chrono::milliseconds(static_cast<int>(a_seconds * 1000)); }
 
+		struct HurtCheck { float hp = -1, t = 0; } g_hurtCheck;  // a blow's health, watched for a moment: put back by something?
 		void DamagePlayer(float a_amount)
 		{
 			a_amount *= Difficulty::Taken();  // (the night's own blows follow Skyrim's difficulty)
@@ -280,7 +281,8 @@ namespace bo3z
 			const float hp = av->GetActorValue(RE::ActorValue::kHealth);
 			if (hp - a_amount > 1.0f) {
 				av->DamageActorValue(RE::ActorValue::kHealth, a_amount);
-				if (static int said = 0; said++ % 15 == 0) {  // (Noah: "after the health brew I took no damage") what a blow did, now and then
+				g_hurtCheck = { av->GetActorValue(RE::ActorValue::kHealth), 0.6f };
+				if (static int said = 0; said++ < 20 || said % 15 == 0) {  // (Noah: "after the health brew I took no damage") what a blow did, now and then
 					logger::info("hurt: {:.1f} taken, health {:.0f} -> {:.0f} of {:.0f} (god {}, grace {:.1f})", a_amount, hp, av->GetActorValue(RE::ActorValue::kHealth),
 						av->GetPermanentActorValue(RE::ActorValue::kHealth), RE::PlayerCharacter::IsGodMode(), g_grace);
 				}
@@ -314,6 +316,12 @@ namespace bo3z
 			}
 			auto* av = player->AsActorValueOwner();
 			const float max = av->GetPermanentActorValue(RE::ActorValue::kHealth);
+			if (g_hurtCheck.t > 0 && (g_hurtCheck.t -= dt) <= 0) {
+				if (const float now = av->GetActorValue(RE::ActorValue::kHealth); now > g_hurtCheck.hp + 0.1f * max) {
+					logger::info("hurt: health went back up from {:.0f} to {:.0f} within a moment of the blow (grace {:.1f}, essential {})", g_hurtCheck.hp, now, g_grace,
+						player->GetActorRuntimeData().boolFlags.any(RE::Actor::BOOL_FLAGS::kEssential));
+				}
+			}
 			{  // (Noah: the harpies' beam nearly one-shot me on Expert) with a harpy near, no moment takes more than a quarter
 				static float prevHp = -1;
 				const float hp = av->GetActorValue(RE::ActorValue::kHealth);
