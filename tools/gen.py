@@ -101,7 +101,9 @@ o.append(f'\tinline constexpr std::array<GunSounds, {len(W)}> kGunSounds{{ {{ ' 
 k = S['melee']['rows'][0]
 o.append('\tstruct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };')
 o.append(f'\tinline constexpr KnifeDef kKnife{{ {k["key"]}, {F(k["damage"])}, {F(k["range"])}, {F(k["coneDeg"])}, {k["cooldownMs"]} }};')
-effects = {'health': 0, 'charge_speed': 1, 'fire_rate_and_damage': 2, 'self_revive': 3, 'speed_and_stamina': 4, 'headshots': 5, 'third_gun': 6, 'web_grenade': 7, 'cast_shock': 8, 'regrow_arrows': 9}
+effects = {'health': 0, 'charge_speed': 1, 'fire_rate_and_damage': 2, 'self_revive': 3, 'speed_and_stamina': 4, 'headshots': 5, 'third_gun': 6, 'web_grenade': 7, 'cast_shock': 8, 'regrow_arrows': 9,
+           'summon_might': 10, 'summon_tether': 11, 'summon_command': 12, 'dest_echo': 13, 'dest_focus': 14, 'dest_siphon': 15,
+           'ranger_draw': 16, 'ranger_ward': 17, 'ss_bladesong': 18, 'ss_spellbind': 19, 'ss_tempo': 20}
 P = S['perks']['rows']
 o.append('\tstruct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };')
 o.append(f'\tinline constexpr std::array<PerkDef, {len(P)}> kPerks{{ {{')
@@ -110,6 +112,8 @@ o.append('\t} };')
 for i, p in enumerate(P): o.append(f'\tinline constexpr int kPerk_{p["id"]} = {i};')
 o.append(f'\tinline constexpr std::array<std::string_view, {len(P)}> kPerkDesc{{ {{ {", ".join(cs(p["description"]) for p in P)} }} }};')
 o.append(f'\tinline constexpr int kMaxPerks = {S["perks"]["limits"]["maxPerks"]};')
+_PCLS = {'': -1, 'summoner': 0, 'destruction': 1, 'ranger': 2, 'spellsword': 3}
+o.append(f'\tinline constexpr std::array<int, {len(P)}> kPerkClass{{ {{ {", ".join(str(_PCLS[p.get("cls", "")]) for p in P)} }} }};  // the class a perk belongs to (-1: every class)')
 C = S['crew']['rows']; passives = {'gun_damage_mult': 0, 'bonus_health': 1, 'knife_damage_mult': 2, 'box_cost': 3}
 o.append('\tstruct CrewDef { std::string_view id, label, quote; int passive; float value; std::string_view passiveText; };')
 o.append(f'\tinline constexpr std::array<CrewDef, {len(C)}> kCrew{{ {{')
@@ -194,8 +198,10 @@ AN = {r['id']: r for r in S['animations']['rows']}
 o.append(f'\tinline constexpr std::string_view kAnimFireCrossbow = {cs(AN["crossbow"]["fire"])}, kAnimReloadCrossbow = {cs(AN["crossbow"]["reload"])}, kAnimFireStaff = {cs(AN["staff"]["fire"])}, kAnimReloadStaff = {cs(AN["staff"]["reload"])};')
 import esp_ids as _pu
 o.append('\t// BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale (token STAT, light)')
-o.append(f'\tinline constexpr std::array<std::uint32_t, 3> kSummonCapPerks{{ 0x{IDS[("PERK", "summon_cap_2")]:03X}, 0x{IDS[("PERK", "summon_cap_3")]:03X}, 0x{IDS[("PERK", "summon_cap_4")]:03X} }};   // the Summoner holds 2, 3, 4 summons')
+o.append(f'\tinline constexpr std::array<std::uint32_t, 4> kSummonCapPerks{{ 0x{IDS[("PERK", "summon_cap_2")]:03X}, 0x{IDS[("PERK", "summon_cap_3")]:03X}, 0x{IDS[("PERK", "summon_cap_4")]:03X}, 0x{IDS[("PERK", "summon_cap_5")]:03X} }};   // the Summoner holds 2, 3, 4, 5 summons')
 o.append(f'\tinline constexpr std::uint32_t kWonderTomeSpell = 0x{IDS[("SPEL", "wonder_tome")]:03X};   // the Destruction wonder (Classes::OnCast)')
+o.append(f'\tinline constexpr std::uint32_t kVortexWeap = 0x{IDS[("WEAP", "vortex")]:03X}, kVortexAmmo = 0x{IDS[("AMMO", "vortexarrow")]:03X}, kVortexFx = 0x{IDS[("ACTI", "vortexfx")]:03X};   // the Ranger\'s wonder, the Subsuming Vortex')
+o.append('\tinline constexpr std::array<std::uint32_t, 4> kClassGuides{ ' + ', '.join(f'0x{IDS[("BOOK", "guide_" + c)]:03X}' for c in ('summoner', 'destruction', 'ranger', 'spellsword')) + ' };   // each class\'s guide book')
 o.append('\tinline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 5> kPowerups{ {' + ', '.join(f'{{ 0x{IDS[("STAT", "pu_" + k)]:03X}, 0x{IDS[("LIGH", "pu_" + k)]:03X} }}' for k, _ in _pu.POWERUPS) + '} };')
 o.append(f'\tinline constexpr std::uint32_t kReaperScythe = 0x{IDS[("WEAP", "reaper_scythe")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kWyrmClaws = 0x{IDS[("WEAP", "wyrm_claws")]:03X}, kShadowClaws = 0x{IDS[("WEAP", "shadow_claws")]:03X}, kZombieClaws = 0x{IDS[("WEAP", "zombie_claws")]:03X};')

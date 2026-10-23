@@ -899,6 +899,10 @@ namespace bo3z
 		{
 			RE::NiPoint3 at;
 			float        left, base, pulse;
+			float        reach = 950.0f, pull = 340.0f, burst = 420.0f;  // (the Subsuming Vortex's holes: their own size and pull)
+			bool         vortex = false;
+			RE::ObjectRefHandle fx{};  // its black hole, placed in the world
+			float        life = 0;       // how long it has stood (the look swells in, then spins)
 		};
 		std::vector<Well> g_wells;
 
@@ -1608,32 +1612,54 @@ namespace bo3z
 			for (auto& w : g_wells) {
 				w.left -= a_delta;
 				w.pulse -= a_delta;
-				for (auto* f : Foes(w.at, 950.0f)) {
+				w.life += a_delta;
+				for (auto* f : Foes(w.at, w.reach)) {
 					auto       pos = f->GetPosition();
 					RE::NiPoint3 to = w.at - pos;
 					to.z = 0;
 					const float d = to.Length();
 					if (d > 70.0f) {
-						pos += to * (std::min(d - 60.0f, 340.0f * a_delta) / d);  // dragged toward the centre
+						// dragged toward the centre (the Vortex's pull grows as they near it)
+						const float pull = w.vortex ? w.pull * (1.0f + 1.2f * (1.0f - std::min(1.0f, d / w.reach))) : w.pull;
+						pos += to * (std::min(d - 60.0f, pull * a_delta) / d);
 						f->SetPosition(pos, true);
+					}
+				}
+				if (auto r = w.fx.get()) {  // the hole: swells in, spins, and shrinks to a point just before it bursts
+					const float grow = std::min(1.0f, w.life / 0.35f) * (w.left < 0.25f ? std::max(0.05f, w.left / 0.25f) : 1.0f);
+					r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(grow * w.burst / 420.0f * (1.0f + 0.06f * std::sin(w.life * 9.0f)), 0.05f, 9.0f) * 100.0f);
+					r->SetAngle({ 0.0f, 0.0f, w.life * 2.4f });
+					if (auto* n = r->Get3D()) {
+						n->local.scale = r->GetReferenceRuntimeData().refScale / 100.0f;
+						RE::NiUpdateData ud;
+						n->Update(ud);
 					}
 				}
 				if (w.pulse <= 0) {
 					w.pulse = 0.5f;
-					Blast(BlastIndex("dark"), w.at + RE::NiPoint3{ 0, 0, 60.0f });
-					for (auto* f : Foes(w.at, 260.0f)) {
+					Blast(BlastIndex(w.vortex ? "daedraball" : "dark"), w.at + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, w.vortex ? 0.35f : kBlastScale);
+					for (auto* f : Foes(w.at, w.vortex ? w.burst * 0.55f : 260.0f)) {
 						Damage(f, w.base * 0.4f, false, false, true);
 					}
 				}
 				if (w.left <= 0) {  // collapse
-					Blast(BlastIndex("darkmassive"), w.at + RE::NiPoint3{ 0, 0, 60.0f });
+					Blast(BlastIndex("darkmassive"), w.at + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, w.vortex ? std::clamp(w.burst / 420.0f, 0.5f, 2.0f) : kBlastScale);
+					if (w.vortex) {
+						Blast(BlastIndex("constellation"), w.at + RE::NiPoint3{ 0, 0, 60.0f }, 0.05f, std::clamp(w.burst / 500.0f, 0.4f, 1.6f));
+						Blast(BlastIndex("daedraball"), w.at + RE::NiPoint3{ 0, 0, 80.0f }, 0.1f, 0.6f);
+					}
 					Forms::Play(gen::Sound::cast_heavy);
-					for (auto* f : Foes(w.at, 420.0f)) {
+					for (auto* f : Foes(w.at, w.burst)) {
 						Damage(f, w.base * 6.0f, false, false);
 						if (!f->IsDead()) {
 							Stagger(f, 1.0f);
 						}
 					}
+					if (auto r = w.fx.get()) {
+						r->Disable();
+						r->SetDelete(true);
+					}
+					w.fx = {};
 				}
 			}
 			std::erase_if(g_wells, [](const Well& w) { return w.left <= 0; });
@@ -2073,6 +2099,43 @@ namespace bo3z
 	{
 		int   SlotCount() { return Save::HasPerk(gen::kPerk_mammoth) ? 3 : 2; }
 		void  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay) { Blast(BlastIndex(a_name), a_at, a_delay, 0.6f); }
+		// (the class perks: Ember Heart) the night's dead round a point lose a share of a whole zombie's health
+		void  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast)
+		{
+			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
+			for (auto* f : Foes(a_at, a_radius)) {
+				Damage(f, whole * a_share, false, false, true);
+			}
+			if (!a_blast.empty()) Blast(BlastIndex(a_blast), a_at, 0.0f, 0.45f);
+		}
+		// (Noah: the Ranger's wonder, the Subsuming Vortex) "a purple black hole that sucks in enemies then explodes - its
+		// Legendary form a larger black hole with stronger pull": a hole opens where the arrow struck, drags the dead in for
+		// 2.2 s (3 s Legendary), gnawing at those it holds, then bursts. At most three stand at once.
+		void  BlackHole(const RE::NiPoint3& a_at, bool a_legendary)
+		{
+			if (std::count_if(g_wells.begin(), g_wells.end(), [](const Well& w) { return w.vortex; }) >= 3) return;
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			RE::NiPoint3 at = a_at;
+			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && land > at.z - 300.0f && land < at.z + 60.0f) {
+				at.z = std::max(at.z, land + 70.0f);  // (hanging just over the ground, never in it)
+			}
+			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
+			Well w{ at, a_legendary ? 3.0f : 2.2f, whole * (a_legendary ? 0.32f : 0.22f), 0.15f };
+			w.vortex = true;
+			w.reach = a_legendary ? 1300.0f : 800.0f;
+			w.pull = a_legendary ? 620.0f : 360.0f;
+			w.burst = a_legendary ? 620.0f : 400.0f;
+			auto* base = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kVortexFx, gen::kPlugin);
+			if (auto ref = p && base ? p->PlaceObjectAtMe(base, false) : nullptr) {
+				ref->SetPosition(at);
+				ref->GetReferenceRuntimeData().refScale = 5;
+				w.fx = ref->CreateRefHandle();
+			}
+			Blast(BlastIndex("daedramouth"), at, 0.0f, 0.4f);
+			Audio::AtPoint(gen::Sound::unleash_hearth, at);
+			g_wells.push_back(std::move(w));
+			logger::info("vortex: a black hole opens{}", a_legendary ? " (Legendary)" : "");
+		}
 		float AdsBlend() { return g_ads; }
 		bool  Owns(int a_gun) { return SlotOf(a_gun) >= 0; }
 
@@ -3173,7 +3236,7 @@ namespace bo3z
 			}
 			h.points = Points::Get();
 			h.perks = Save::PerkBits();
-			for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 16; ++i) {
+			for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 32; ++i) {
 				h.perkStacks[i] = Save::PerkStacks(i);
 			}
 			h.slotCount = SlotCount();

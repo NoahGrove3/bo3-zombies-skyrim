@@ -27,6 +27,7 @@ GLYPHS = [[(0, -1, 0, 1), (0, -0.3, 0.6, -0.9)], [(-0.5, 1, 0, -1), (0.5, 1, 0, 
 METALS = {   # the blades' metal per element: base, highlight
     'fire': ((46, 36, 32), (120, 80, 60)), 'frost': ((150, 168, 186), (230, 240, 250)), 'shock': ((62, 64, 78), (150, 150, 180)),
     'wind': ((168, 176, 170), (235, 240, 236)), 'sun': ((196, 150, 70), (255, 228, 150)), 'blood': ((70, 22, 26), (150, 60, 60)),
+    'void': ((30, 22, 44), (140, 96, 200)),   # (the Ranger's wonder, the Subsuming Vortex: black-violet steel)
 }
 
 
@@ -144,6 +145,18 @@ def element_pattern(element, W, H, seed):
                 d.line([(cx, cy), (cx + math.cos(a) * r, cy + math.sin(a) * r * 0.8)], fill=200, width=2)
             d.ellipse([cx - 5, cy - 5, cx + 5, cy + 5], fill=255)
         return np.asarray(im.filter(ImageFilter.GaussianBlur(1.4)), np.float32) / 255
+    if element == 'void':   # (the Subsuming Vortex) little whirlpools along the limb, each arm curling into a black heart
+        for k in range(46):
+            cx, cy = rng.uniform(0, W), rng.uniform(0, H); s = rng.uniform(26, 60); turn = rng.choice([-1, 1])
+            for arm in range(3):
+                pts = []
+                for t in np.linspace(0, 1, 60):
+                    a = arm * 2.094 + turn * t * 2.6 * np.pi
+                    r = s * (1 - t) + 4
+                    pts.append((cx + math.cos(a) * r * 1.6, cy + math.sin(a) * r * 0.75))
+                d.line(pts, fill=255, width=4)
+            d.ellipse([cx - 6, cy - 4, cx + 6, cy + 4], fill=0)
+        return np.asarray(im.filter(ImageFilter.GaussianBlur(1.5)), np.float32) / 255
     for _ in range(40):   # blood veins
         x, y = rng.uniform(0, W), rng.uniform(0, H); a = rng.uniform(0, 6.28); pts = [(x, y)]; wdt = 4
         for _ in range(24):

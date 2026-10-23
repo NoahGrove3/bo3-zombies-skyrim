@@ -166,12 +166,12 @@ namespace bo3z
 			Hud::Edit().questNote = std::move(a_text);
 			Hud::Edit().questNoteTime = a_seconds;
 		}
-		// The lore lives in a book, "The Curse of Alduin", and how to play in "A Survivor's Guide to the Long Night" -
-		// both in the player's pack from the moment the character is made
+		// The lore lives in a book, "The Curse of Alduin", in the player's pack from the moment the character is made;
+		// (Noah: two books) how to play is in the class guide, given when a class is chosen (src/Classes.cpp)
 		bool GiveBook(RE::PlayerCharacter* a_player)
 		{
 			bool gave = false;
-			for (auto id : { gen::kDirgeBook, gen::kGuideBook }) {
+			for (auto id : { gen::kDirgeBook }) {
 				auto* book = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(id, gen::kPlugin);
 				if (!book || !a_player) {
 					continue;
@@ -1150,7 +1150,7 @@ namespace bo3z
 					}
 					GiveBook(player);
 					Forms::Play(gen::Sound::quest_start);
-					Note("Two books are in your pack: The Curse of Alduin, and A Survivor's Guide to the Long Night", 8.0f);
+					Note("The Curse of Alduin is in your pack (Books). Your class guide follows when you choose a class at an Echo Altar", 8.0f);
 					return;
 				}
 			}

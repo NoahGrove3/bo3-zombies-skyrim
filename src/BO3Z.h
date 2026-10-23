@@ -28,7 +28,7 @@ namespace bo3z
 		RE::MagicItem*       Spell(int a_spell);                         // sheet: spells (a WEAP row = its enchantment)
 		void                 Play(gen::Sound a_sound);
 		void                 PlayAt(gen::Sound a_sound, RE::TESObjectREFR* a_at);  // 3D, follows the reference
-		inline gen::Sound    Brew(int a_perk) { return static_cast<gen::Sound>(static_cast<int>(gen::Sound::brew_trollshide) + a_perk); }
+		inline gen::Sound    Brew(int a_perk) { return static_cast<gen::Sound>(static_cast<int>(gen::Sound::brew_trollshide) + a_perk % 9); }  // (nine jingles: the later perks share them)
 	}
 
 	// Plugins.txt: make sure CurseOfAlduin.esp is enabled (called from DllMain, before the game reads it).
@@ -60,7 +60,8 @@ namespace bo3z
 		bool HasPerk(int a_perk);
 		void SetPerk(int a_perk, bool a_on);
 		int  PerkCount();
-		int  PerkBits();
+		std::uint32_t PerkBits();
+		bool PerkBit(int a_perk);  // the old flags' bit (the first nine perks)
 		int  ActiveSlot();
 		void SetActiveSlot(int a_slot);
 		void Guard();           // every tick: puts the mod's values back if something wiped them (see Forms.cpp)
@@ -73,7 +74,7 @@ namespace bo3z
 		void SetPerkStacks(int a_perk, int a_n);
 		int  DragonBond();               // the glider's dragon: 0 none, 1-3 the Echo Altar's bonds (kept for the whole game)
 		void SetDragonBond(int a_bond);
-		inline constexpr int kFlagInit = 0, kFlagReserveV2 = 4, kFlagStarted = 5, kFlagMoved = 11, kPerkShift = 14, kFlagPerksV2 = 23;  // bits: init | crew 1-3 | (old perks 4-10) | moved 11 | slot 12-13 | perks 14-22 | v2 23
+		inline constexpr int kFlagInit = 0, kFlagReserveV2 = 4, kFlagStarted = 5, kFlagMoved = 11, kPerkShift = 14, kFlagPerksV2 = 23, kOldPerkBits = 9;  // bits: init | crew 1-3 | (old perks 4-10) | moved 11 | slot 12-13 | perks 14-22 | v2 23
 	}
 
 	namespace PowerUps
@@ -293,10 +294,11 @@ namespace bo3z
 		bool             OnCast(RE::FormID a_spell);   // the Tome of the Six Fires
 		void             NoteCast(RE::FormID a_spell); // a summon spell: called up here if Skyrim's own didn't come
 		bool             IsOwnSummon(RE::Actor* a_actor);
-		void             TickFast(float a_delta);      // Auriel's arrows seek the dead
-		int              RestockWonder();              // Sunhallowed arrows topped up (quivers, Max Ammo)
+		void             TickFast(float a_delta);      // where the Subsuming Vortex's arrows come down
+		int              RestockWonder();              // the Vortex's arrows topped up (quivers, Max Ammo)
 		bool             WonderEarned();               // any class's wonder won (the Three Words follow)
 		std::string      WonderLine();                 // the altar's line: your class wonder's trial
+		std::vector<std::string> Progress(int& a_cls);  // the class guide's live page (paragraphs, <b> kept) and the class it is for
 		void             ImbueWeapon();                // the Spellsword's Imbue: the held spell-weapon one material up, its element kept
 		void             OnBlock(RE::Actor* a_attacker, bool a_spell);  // a blow blocked with a spellshield: reflect / stagger
 		bool             RollHero(Prize* a_out = nullptr);                   // the Summoner's late Legendaries: a hero or an army (needs a Legendary summon)
@@ -391,6 +393,7 @@ namespace bo3z
 		bool        DragonInvertDive();           // forward pulls up, back dives
 		float       CorpseSeconds();
 		float MeleeSpeed();     // melee weapons' swing speed (1.0 - 2.0)
+		float DrawSpeed();      // bows' draw and crossbows' reload speed (1.0 - 2.0)
 		int         Difficulty();                 // Skyrim's difficulty, 0 Novice .. 5 Legendary (the trials follow it)
 		float       UndeadHealthMult();           // Skyrim's difficulty (if followed) x the MCM's own
 		float       UndeadDamageMult();
@@ -569,6 +572,8 @@ namespace bo3z
 		int                   SlotCount();
 		float                 AdsBlend();                     // 0..1, for movement and HUD
 		void                  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay = 0.0f);  // a no-damage Skyrim explosion (look only)
+		void                  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast);  // the night's dead round a point lose a share of a whole zombie's health
+		void                  BlackHole(const RE::NiPoint3& a_at, bool a_legendary);  // the Subsuming Vortex: a purple singularity pulls the dead in, then bursts
 		void                  DevCast(const std::string& a_mode);  // dev: 'cast tap|full|ult|orb|hand' with a spell in hand
 	}
 
@@ -616,6 +621,15 @@ namespace bo3z
 		float FireDelayMult();
 		float DamageMult();
 		float HeadMult();
+		std::vector<int> Menu();          // the altar's perks for your class: the shared ones, then your class's
+		int   MenuAt(int a_pos);
+		bool  Live(int a_perk);           // carried, and (a class perk) you are of its class
+		float DrawSpeedMult();            // Eagle-Eye Draught
+		float SwingSpeedMult();           // Steel-Wind Ale
+		float WardMult();                 // Dawnwatch Tonic (bow or crossbow in hand)
+		bool  SummonMight();              // Bonebinder's Brew
+		void  OnClassKill(int a_how, RE::Actor* a_dying);  // 0 summon, 1 Destruction spell, 2 bow/crossbow, 3 melee
+		void  OnMeleeHit();               // Bladesong Mead
 	}
 
 	namespace Fantasy
@@ -762,8 +776,8 @@ namespace bo3z
 			float       nightProgress{ -1 };              // 0..1 through the night's waves (-1: not fighting)
 			std::string styleTag;         // a style bonus ("+40 MULTI-KILL") by the septims
 			float       styleTime{ 0 };
-			int         perks{ 0 };      // bitmask
-			std::array<int, 16> perkStacks{};  // how many of each blessing (they stack)
+			std::uint32_t perks{ 0 };    // bitmask
+			std::array<int, 32> perkStacks{};  // how many of each blessing (they stack)
 			int         crew{ -1 };
 			bool        crewScreen{ false };
 			int         crewHighlight{ 0 };

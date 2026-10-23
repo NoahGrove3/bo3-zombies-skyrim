@@ -1,9 +1,10 @@
 {
   "sheet": "perks",
-  "about": "Nordic brews. Bought with points at the shrine; the blessing takes effect at once. They stack: take each as often as you can pay for. Death takes them all.",
+  "about": "Nordic brews. Bought with points at the shrine; the blessing takes effect at once. They stack: take each as often as you can pay for. Death takes them all. Each class has its own three (cls), offered only to that class at the altar; the rest are shared.",
   "columns": [
     "id",
     "label",
+    "cls",
     "cost",
     "effect",
     "value",
@@ -22,7 +23,8 @@
       "description": "Skin like a troll: +100 health each draught, so it takes more hits to go down.",
       "potionModel": "Clutter\\Potions\\PotionHealthGreat.nif",
       "verify": [],
-      "color": "D02020"
+      "color": "D02020",
+      "cls": ""
     },
     {
       "id": "quicksilver",
@@ -33,7 +35,8 @@
       "description": "Quicksilver in the veins: spells cost 15% less magicka each draught (up to 75%).",
       "potionModel": "Clutter\\Potions\\PotionFortifyStaminaGreat.nif",
       "verify": [],
-      "color": "30C040"
+      "color": "30C040",
+      "cls": ""
     },
     {
       "id": "twinstrike",
@@ -44,7 +47,8 @@
       "description": "Twin strike: your spells hit 50% harder each draught.",
       "potionModel": "Clutter\\Potions\\MeadHonningBrew01.nif",
       "verify": [],
-      "color": "E0A020"
+      "color": "E0A020",
+      "cls": ""
     },
     {
       "id": "hearthfire",
@@ -55,7 +59,8 @@
       "description": "When you would fall, the hearth calls you back - once for each tonic.",
       "potionModel": "Clutter\\Potions\\PotionMagickaLesser.nif",
       "verify": [],
-      "color": "3070F0"
+      "color": "3070F0",
+      "cls": ""
     },
     {
       "id": "windrunner",
@@ -66,7 +71,8 @@
       "description": "Run faster and sprint longer with each brew.",
       "potionModel": "Clutter\\Potions\\PotionStaminaGreat.nif",
       "verify": [],
-      "color": "F0D840"
+      "color": "F0D840",
+      "cls": ""
     },
     {
       "id": "hawkeye",
@@ -77,7 +83,8 @@
       "description": "Clear sight, clear mind: magicka returns 50% faster each draught.",
       "potionModel": "Clutter\\Potions\\PotionInvisibiltyGreat.nif",
       "verify": [],
-      "color": "B0B8C0"
+      "color": "B0B8C0",
+      "cls": ""
     },
     {
       "id": "mammoth",
@@ -88,7 +95,8 @@
       "description": "A mammoth's back: +50 magicka each draught.",
       "potionModel": "Clutter\\Potions\\PotionHealthExtreme.nif",
       "verify": [],
-      "color": "7AA040"
+      "color": "7AA040",
+      "cls": ""
     },
     {
       "id": "frostbite",
@@ -99,7 +107,8 @@
       "potionModel": "Clutter\\Potions\\PotionResistMagicka50.nif",
       "description": "When the dead strike you, frost webs slow everything nearby - wider and colder each draught.",
       "verify": [],
-      "color": "9040E0"
+      "color": "9040E0",
+      "cls": ""
     },
     {
       "id": "stormcrown",
@@ -110,7 +119,8 @@
       "potionModel": "Clutter\\Potions\\PotionFortifyMagickaExtreme.nif",
       "description": "Every 12th spell looses a lightning burst around you - sooner and stronger each cider.",
       "verify": [],
-      "color": "40D0F0"
+      "color": "40D0F0",
+      "cls": ""
     },
     {
       "id": "fletcher",
@@ -121,10 +131,143 @@
       "description": "Green sap of the Eldergleam: your arrows and bolts slowly grow back, faster each draught.",
       "potionModel": "Clutter\\Potions\\PotionHealthSmall.nif",
       "verify": [],
-      "color": "6FBF4A"
+      "color": "6FBF4A",
+      "cls": "ranger"
+    },
+    {
+      "id": "bonebinder",
+      "label": "Bonebinder's Brew",
+      "cls": "summoner",
+      "cost": 2500,
+      "effect": "summon_might",
+      "value": 1.5,
+      "potionModel": "Clutter\\Potions\\PotionHealthExtreme.nif",
+      "description": "Your summons rise stronger: half again as much health, and they hit half again as hard.",
+      "color": "9A6BFF",
+      "verify": ""
+    },
+    {
+      "id": "soultether",
+      "label": "Soul-Tether Wine",
+      "cls": "summoner",
+      "cost": 2000,
+      "effect": "summon_tether",
+      "value": 0.05,
+      "potionModel": "Clutter\\Potions\\PotionHealthSmall.nif",
+      "description": "Every kill your summons make sends 5% of your health back to you.",
+      "color": "C070E0",
+      "verify": ""
+    },
+    {
+      "id": "command",
+      "label": "Conjurer's Command Mead",
+      "cls": "summoner",
+      "cost": 3500,
+      "effect": "summon_command",
+      "value": 1,
+      "potionModel": "Clutter\\Potions\\PotionFortifyMagickaExtreme.nif",
+      "description": "You can hold one more summon at once (up to five).",
+      "color": "7A50D0",
+      "verify": ""
+    },
+    {
+      "id": "emberheart",
+      "label": "Ember Heart Ale",
+      "cls": "destruction",
+      "cost": 3000,
+      "effect": "dest_echo",
+      "value": 0.35,
+      "potionModel": "Clutter\\Potions\\MeadHonningBrew01.nif",
+      "description": "Kills with Destruction spells burst, hurting the dead around them.",
+      "color": "FF7A30",
+      "verify": ""
+    },
+    {
+      "id": "arcanist",
+      "label": "Arcanist's Focus Tea",
+      "cls": "destruction",
+      "cost": 2500,
+      "effect": "dest_focus",
+      "value": 25,
+      "potionModel": "Clutter\\Potions\\PotionMagickaLesser.nif",
+      "description": "Destruction spells cost 25% less magicka.",
+      "color": "5090FF",
+      "verify": ""
+    },
+    {
+      "id": "siphon",
+      "label": "Mana-Siphon Draught",
+      "cls": "destruction",
+      "cost": 2000,
+      "effect": "dest_siphon",
+      "value": 0.06,
+      "potionModel": "Clutter\\Potions\\PotionResistMagicka50.nif",
+      "description": "Each Destruction kill gives back 6% of your magicka.",
+      "color": "40B8E0",
+      "verify": ""
+    },
+    {
+      "id": "eagleeye",
+      "label": "Eagle-Eye Draught",
+      "cls": "ranger",
+      "cost": 2500,
+      "effect": "ranger_draw",
+      "value": 1.25,
+      "potionModel": "Clutter\\Potions\\PotionInvisibiltyGreat.nif",
+      "description": "Bows draw and crossbows reload 25% faster.",
+      "color": "C8D870",
+      "verify": ""
+    },
+    {
+      "id": "dawnwatch",
+      "label": "Dawnwatch Tonic",
+      "cls": "ranger",
+      "cost": 3000,
+      "effect": "ranger_ward",
+      "value": 0.25,
+      "potionModel": "Clutter\\Potions\\PotionStaminaGreat.nif",
+      "description": "With a bow or crossbow in your hands, the night's blows hurt you 25% less.",
+      "color": "E8C060",
+      "verify": ""
+    },
+    {
+      "id": "bladesong",
+      "label": "Bladesong Mead",
+      "cls": "spellsword",
+      "cost": 2500,
+      "effect": "ss_bladesong",
+      "value": 0.02,
+      "potionModel": "Clutter\\Potions\\PotionHealthGreat.nif",
+      "description": "Every melee blow you land on the dead heals you 2% of your health.",
+      "color": "E05050",
+      "verify": ""
+    },
+    {
+      "id": "spellbind",
+      "label": "Spellbinder's Draught",
+      "cls": "spellsword",
+      "cost": 2000,
+      "effect": "ss_spellbind",
+      "value": 0.1,
+      "potionModel": "Clutter\\Potions\\PotionFortifyStaminaGreat.nif",
+      "description": "Melee kills give back 10% of your magicka, for the spell in your other hand.",
+      "color": "60A0FF",
+      "verify": ""
+    },
+    {
+      "id": "steelwind",
+      "label": "Steel-Wind Ale",
+      "cls": "spellsword",
+      "cost": 3000,
+      "effect": "ss_tempo",
+      "value": 1.2,
+      "potionModel": "Clutter\\Potions\\PotionMagickaLesser.nif",
+      "description": "Your melee swings are 20% faster.",
+      "color": "A0C8E8",
+      "verify": ""
     }
   ],
   "limits": {
-    "maxPerks": 9
+    "maxPerks": 12
   }
 }

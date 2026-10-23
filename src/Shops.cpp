@@ -1993,7 +1993,9 @@ namespace bo3z
 			}
 			const auto code = a_event->GetIDCode();
 			const auto dev = a_event->GetDevice();
-			const int  n = static_cast<int>(gen::kPerks.size());
+			const auto menuPerks = Perks::Menu();  // (Noah: each class its own perks) the shared draughts and your class's
+			const int  n = std::max(1, static_cast<int>(menuPerks.size()));
+			g_sel = std::clamp(g_sel, 0, n - 1);
 			if (g_choosing) {  // the choice: 1 / X replaces the first, 2 / Y the second, Backspace / B keeps yours
 				if (g_show.phase != Show::Offering) {
 					g_choosing = false;
@@ -2065,7 +2067,7 @@ namespace bo3z
 						Forms::PlayAt(gen::Sound::forge_upgrade, ref);
 					}
 					break;
-				case 2: BuyPerk(g_sel, ref); break;
+				case 2: BuyPerk(Perks::MenuAt(g_sel), ref); break;
 				case 3: Curse::ClaimRelic(ref ? TownOf(ref) : -1); break;
 				case 6:
 					if (!TakeOffer(ref)) {
@@ -2635,7 +2637,7 @@ namespace bo3z
 					g_menuRef = a_ref->CreateRefHandle();
 					Forms::Play(gen::Sound::coffer_open);
 				} else {
-					BuyPerk(g_sel, a_ref);
+					BuyPerk(Perks::MenuAt(g_sel), a_ref);
 				}
 				break;
 			case 3: BuyAmmo(o); break;

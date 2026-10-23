@@ -28,7 +28,8 @@ def assign(S=None, write=False):
              echo_ids(S) + \
              [('GLOB', 'egg_' + e['id']) for e in S.get('eggs', {}).get('rows', [])] + [('GLOB', 'egg_gifts'), ('GLOB', 'test_kit'), ('GLOB', 'ritual_souls'), ('GLOB', 'ritual_stand')] + [('MGEF', 'altarbeam'), ('SPEL', 'altarbeam')] + \
              [('SPEL', 'egg_power_' + e['id']) for e in S.get('eggs', {}).get('rows', []) if e['reward'] in ('summon', 'spell')] + \
-             [('PERK', f'summon_cap_{n}') for n in (2, 3, 4)] + [('MGEF', 'tomecast'), ('SPEL', 'wonder_tome')]
+             [('PERK', f'summon_cap_{n}') for n in (2, 3, 4, 5)] + [('MGEF', 'tomecast'), ('SPEL', 'wonder_tome')] + \
+             [('WEAP', 'vortex'), ('AMMO', 'vortexarrow'), ('PROJ', 'vortexarrow'), ('ACTI', 'vortexfx')] + [('BOOK', 'guide_' + c) for c in ('summoner', 'destruction', 'ranger', 'spellsword')]
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:
@@ -83,6 +84,7 @@ def dressing(S):
         records[('STAT', '1st_' + w['id'])] = {'model': w.get('firstModel', w['standinModel']), 'color': '', 'radius': 0}
         sc_ids = {r['id'] for r in S['spellcraft']['rows']} if 'spellcraft' in S else set()
         records[('STAT', 'show_' + w['id'])] = {'model': f"CurseOfAlduin\\fx\\{w['id']}_icon.nif" if w['id'] in sc_ids else w['standinModel'], 'color': '', 'radius': 0}  # the roll shows the spell's logo
+    records[('STAT', '1st_vortex')] = {'model': 'CurseOfAlduin\\bow\\vortex.nif', 'color': '', 'radius': 0}   # the Ranger's wonder: the Subsuming Vortex
     for b in S.get('bows', {}).get('rows', []):   # the altar's bows: their first-person model
         records[('STAT', '1st_bow_' + b['id'])] = {'model': f"CurseOfAlduin\\bow\\{b['id']}.nif", 'color': '', 'radius': 0}
     records[('STAT', 'show_cheese')] = {'model': S['dressing']['show']['cheeseModel'], 'color': '', 'radius': 0}

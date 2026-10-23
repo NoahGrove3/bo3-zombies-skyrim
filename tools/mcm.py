@@ -74,6 +74,7 @@ PAGES = [
         header('The night'),
         toggle('bShelter:General', 'Townsfolk go indoors', 'From the moment the night\'s countdown starts, everyone out in a city\'s streets goes inside until dawn, so the dead can\'t hurt them.'),
         stepper('iMeleeSpeedStep:General', 'Melee attack speed', 'How fast swords, axes, maces and fists swing.', [f'{1 + i / 10:.1f}x' for i in range(11)]),
+        stepper('iDrawSpeedStep:General', 'Bow and crossbow draw speed', 'How fast bows draw and crossbows reload.', [f'{1 + i / 10:.1f}x' for i in range(11)]),
         slider('fCorpseSeconds:General', 'Bodies fade after', 'Seconds a fallen undead lies there before it crumbles.', 3, 60, 1, '{0} s'),
         header('Difficulty'),
         toggle('bFollowSkyrim:Difficulty', 'Follow Skyrim\'s difficulty', 'Skyrim\'s difficulty (Settings > Gameplay) also sets how tough the night\'s dead are and how hard they hit: Novice halves their hits, Legendary triples them.'),
@@ -121,7 +122,7 @@ PAGES = [
     ]},
 ]
 DEFAULTS = {
-    'General': {'fFovFirst': 130.0, 'fFovThird': 120.0, 'iFovFirstStep': 14, 'iFovThirdStep': 12, 'fBrightness': 1.5, 'bShelter': 1, 'fCorpseSeconds': 10.0, 'iMeleeSpeedStep': 3},
+    'General': {'fFovFirst': 130.0, 'fFovThird': 120.0, 'iFovFirstStep': 14, 'iFovThirdStep': 12, 'fBrightness': 1.5, 'bShelter': 1, 'fCorpseSeconds': 10.0, 'iMeleeSpeedStep': 3, 'iDrawSpeedStep': 0},
     'Controls': {'bPlayStationIcons': 0},
     'Dragon': {'bBankReverse': 0, 'bInvertDive': 0},
     'Effects': {'bBlood': 1, 'fFogStrength': 1.0, 'bScreenShake': 1, 'bReduceFlashes': 0},

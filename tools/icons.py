@@ -76,7 +76,55 @@ def fletcher(d):     # an arrow growing from a sprouting stem: the Ranger's arro
         y = .58 + k * .07; d.line(P((.36 - k * .03, y + .1), (.3 - k * .03, y)), fill=W, width=10)
     d.ellipse(P((.48, .48), (.6, .58)), outline=W, width=8)
 
-DRAW = {'fletcher': fletcher, 'trollshide': trollshide, 'quicksilver': quicksilver, 'twinstrike': twinstrike, 'hearthfire': hearthfire,
+# (the class perks) three a class
+def bonebinder(d):   # a skull over crossed bones: summons rise stronger
+    d.ellipse(P((.36, .2), (.64, .48)), outline=W, width=18)
+    d.ellipse(P((.42, .3), (.48, .36)), fill=W); d.ellipse(P((.52, .3), (.58, .36)), fill=W)
+    d.line(P((.44, .48), (.44, .54)), fill=W, width=10); d.line(P((.56, .48), (.56, .54)), fill=W, width=10)
+    d.line(P((.28, .58), (.72, .8)), fill=W, width=18); d.line(P((.72, .58), (.28, .8)), fill=W, width=18)
+def soultether(d):   # two rings bound by a cord, a drop of life flowing along it
+    d.ellipse(P((.2, .3), (.42, .52)), outline=W, width=16); d.ellipse(P((.58, .48), (.8, .7)), outline=W, width=16)
+    d.line(P((.4, .46), (.5, .52), (.6, .56)), fill=W, width=10, joint='curve')
+    d.polygon(P((.5, .38), (.55, .46), (.5, .5), (.45, .46)), fill=W)
+def command(d):      # a raised hand over five small figures: one more answers
+    for k in range(5):
+        x = .26 + k * .12; d.ellipse(P((x - .035, .62), (x + .035, .69)), fill=W); d.line(P((x, .69), (x, .8)), fill=W, width=12)
+    d.polygon(P((.42, .52), (.42, .3), (.46, .22), (.5, .3), (.54, .22), (.58, .3), (.58, .52)), outline=W, width=14)
+def emberheart(d):   # a heart of fire bursting
+    d.polygon(P((.5, .76), (.28, .5), (.3, .34), (.42, .3), (.5, .4), (.58, .3), (.7, .34), (.72, .5)), outline=W, width=18)
+    for a in range(8):
+        t = a * math.pi / 4; d.line(P((.5 + .3 * math.cos(t), .5 + .3 * math.sin(t)), (.5 + .38 * math.cos(t), .5 + .38 * math.sin(t))), fill=W, width=10)
+def arcanist(d):     # an open book with a thin flame: spells cost less
+    d.polygon(P((.22, .4), (.5, .48), (.78, .4), (.78, .72), (.5, .8), (.22, .72)), outline=W, width=16)
+    d.line(P((.5, .48), (.5, .8)), fill=W, width=10)
+    d.polygon(P((.5, .16), (.56, .3), (.5, .4), (.44, .3)), fill=W)
+def siphon(d):       # a spiral drawing light inward
+    pts = [(.5 + .3 * (1 - t) * math.cos(t * 12), .5 + .3 * (1 - t) * math.sin(t * 12)) for t in [i / 60 for i in range(61)]]
+    d.line(P(*pts), fill=W, width=14, joint='curve')
+    d.ellipse(P((.46, .46), (.54, .54)), fill=W)
+def eagleeye(d):     # an eye with an arrow through its gaze
+    d.ellipse(P((.2, .34), (.8, .62)), outline=W, width=16); d.ellipse(P((.44, .4), (.56, .56)), fill=W)
+    d.line(P((.18, .76), (.78, .76)), fill=W, width=12); d.polygon(P((.8, .76), (.72, .7), (.72, .82)), fill=W)
+def dawnwatch(d):    # the Dawnguard's sun over a shield
+    d.polygon(P((.5, .3), (.72, .38), (.7, .6), (.5, .82), (.3, .6), (.28, .38)), outline=W, width=16)
+    d.ellipse(P((.42, .44), (.58, .6)), fill=W)
+    for a in range(6):
+        t = -math.pi / 2 + (a - 2.5) * 0.4; d.line(P((.5 + .2 * math.cos(t), .3 + .2 * math.sin(t)), (.5 + .3 * math.cos(t), .3 + .3 * math.sin(t))), fill=W, width=9)
+def bladesong(d):    # a sword with a note of light along it
+    d.line(P((.3, .78), (.68, .24)), fill=W, width=18); d.line(P((.3, .58), (.5, .72)), fill=W, width=14)
+    d.ellipse(P((.62, .52), (.72, .62)), fill=W); d.line(P((.71, .57), (.71, .36)), fill=W, width=8)
+def spellbind(d):    # a blade and a flame side by side, bound by a ring
+    d.line(P((.38, .78), (.38, .24)), fill=W, width=16); d.line(P((.3, .64), (.46, .64)), fill=W, width=12)
+    d.polygon(P((.62, .26), (.7, .44), (.66, .6), (.58, .6), (.54, .44)), fill=W)
+    d.ellipse(P((.24, .4), (.76, .56)), outline=W, width=8)
+def steelwind(d):    # a blade with speed lines behind it
+    d.line(P((.4, .76), (.74, .3)), fill=W, width=18)
+    for k in range(3):
+        y = .38 + k * .12; d.line(P((.2, y), (.42 - k * .04, y)), fill=W, width=10)
+
+DRAW = {'bonebinder': bonebinder, 'soultether': soultether, 'command': command, 'emberheart': emberheart, 'arcanist': arcanist,
+        'siphon': siphon, 'eagleeye': eagleeye, 'dawnwatch': dawnwatch, 'bladesong': bladesong, 'spellbind': spellbind, 'steelwind': steelwind,
+        'fletcher': fletcher, 'trollshide': trollshide, 'quicksilver': quicksilver, 'twinstrike': twinstrike, 'hearthfire': hearthfire,
         'windrunner': windrunner, 'hawkeye': hawkeye, 'mammoth': mammoth, 'frostbite': frostbite, 'stormcrown': stormcrown}
 
 def medallion(color, glyph):

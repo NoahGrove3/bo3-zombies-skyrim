@@ -28,6 +28,10 @@ _ROWS = json.load(open(ROOT / 'sheets' / 'bows.json'))['rows']
 BODY_KIND = {r['id']: r['body'] for r in _ROWS}
 BOWS = {r['id']: (r['mesh'], tuple(r['bodyColor']), tuple(r['glow'])) for r in _ROWS}
 ELEMENT = {r['id']: r['element'] for r in _ROWS}
+# (Noah: the Ranger's wonder) the Subsuming Vortex: not on the altar's wheel, made the same way - black-violet bone, violet light
+WONDERS = {'vortex': ('Bow-03', 'steel', (34, 20, 52), (0.62, 0.22, 1.0), 'void')}
+for _id, (_m, _k, _b, _g, _e) in WONDERS.items():
+    BOWS[_id] = (_m, _b, _g); BODY_KIND[_id] = _k; ELEMENT[_id] = _e
 
 def load_obj(path):
     V, T, F = [], [], []
@@ -272,5 +276,7 @@ def build(bid):
     print(f'{bid}: {src} flip={flip} depth x{k:.2f} string {len(groups["string"])} trim {len(groups["trim"])} body {len(groups["body"])} tris')
 
 if __name__ == '__main__':
+    only = sys.argv[4:]   # (optional: just these bows)
     for b in BOWS:
-        build(b)
+        if not only or b in only:
+            build(b)

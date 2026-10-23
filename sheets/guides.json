@@ -1,0 +1,280 @@
+{
+  "sheet": "guides",
+  "about": "The class guides (Noah: a guide book for each class that tracks progression, given when the class is chosen). Each class's book is its own chapters, then a live 'Your Progress' page (drawn by the Codex from src/Classes.cpp ProgressNow), then the shared chapters. Paragraphs keep <b> and <i>. tools/gen_esp.py writes the books (BOOK guide_<class>) and src/Codex.h.",
+  "columns": [
+    "id",
+    "book",
+    "chapters"
+  ],
+  "progressTitle": "Your Progress",
+  "rows": [
+    {
+      "id": "summoner",
+      "book": "The Summoner's Path",
+      "chapters": [
+        {
+          "title": "The Summoner",
+          "paras": [
+            "You are a conjurer of the <b>College of Winterhold</b>. You do not fight the dead yourself: you call an army that does, and it grows family by family.",
+            "You start with <b>Conjure Skeleton</b> in your right hand and <b>Conjure Wolf</b> in your left, and the summoner's robes (a man's hooded robes of conjuration and boots, a woman's Wandering Summoner outfit).",
+            "Cast a summon and it fights the nearest of the dead for you. Every kill your summons make is yours: it pays essence, trains the spell, and counts for your trials."
+          ]
+        },
+        {
+          "title": "Your Summons",
+          "paras": [
+            "Your spells come in five families, each a ladder of four rungs. The Echo Altar's first row (<i>Call a Summon</i>) gives you the first rung of a family you don't have; you carry two at a time.",
+            "<b>The Dead</b>: Skeleton, Draugr Wight, Draugr Deathlord Warrior, Draugr Death Overlord.",
+            "<b>Beasts</b>: Wolf, Ice Wolf, Alpha Wolf, Werebear.",
+            "<b>Daedra</b>: Dremora, Dremora Archer, Dremora Mage, Dremora Warlock.",
+            "<b>Dwemer</b>: Dwarven Spider, Dwarven Sphere, Dwarven Centurion, Dwarven Ballista Master.",
+            "<b>The Wild</b>: Spriggan, Burnt Spriggan, Spriggan Matron, Spriggan Earth Mother. The fourth rung of each family is Legendary."
+          ]
+        },
+        {
+          "title": "Binding Pacts",
+          "paras": [
+            "A family climbs on <b>kills by your summons</b> (or your own kills with that summon spell in hand). It needs <b>25 kills</b> to reach rung 2, <b>60</b> to reach rung 3 and <b>120</b> to reach the Legendary rung. The count starts again after each climb.",
+            "With the kills in, hold the spell and take the altar's <b>Bind Pact</b> row (the forge). It opens once <b>three Echo Altars are freed</b>, costs 5,000, 8,000, then 12,000 essence, and each spell can climb once a night.",
+            "<b>Command</b>: you hold one summon at first. Your first climb lets you hold 2, three climbs 3, six climbs 4. At your limit a new summon takes the oldest one's place.",
+            "Every freed city also teaches you an <b>Indrik mount</b>."
+          ]
+        },
+        {
+          "title": "The Hero's Pact",
+          "paras": [
+            "Your altar's second row is the <b>Hero's Pact</b>, the Summoner's Legendary. It opens once <b>six Echo Altars are freed</b> and costs twice a bow roll.",
+            "It binds a hero of old to you - Ysgramor, Gormlaith, Felldir, Hakon, Miraak, Karstaag or the Ebony Warrior - or one of the great armies: the Dragon Priests', the Dwarven, the Undead or the Heroes'. Each answers once; you keep the spell."
+          ]
+        },
+        {
+          "title": "Your Perks",
+          "paras": [
+            "Besides the shared draughts, the altar's perk row offers the Summoner three of its own:",
+            "<b>Bonebinder's Brew</b> - your summons rise with half again as much health and hit half again as hard.",
+            "<b>Soul-Tether Wine</b> - every kill your summons make sends 5% of your health back to you.",
+            "<b>Conjurer's Command Mead</b> - hold one more summon at once (up to five).",
+            "You can carry one of each draught a life; death takes them all."
+          ]
+        },
+        {
+          "title": "Pact of the Host",
+          "paras": [
+            "One of each city's four trials is your class's: <b>Pact of the Host</b>. Let your summons make the kills - 10 on Novice up to 30 on Legendary."
+          ]
+        },
+        {
+          "title": "Horn of the Spectral Wyrm",
+          "paras": [
+            "Once three cities are free your wonder stirs. Its trial is three steps, each in a different city: <b>40 kills by your summons</b> per step.",
+            "The <b>Horn of the Spectral Wyrm</b> calls a spectral dragon that fights at your side for a minute. After Alduin falls in Sovngarde it takes its Legendary form: the dragon stays until it falls."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "destruction",
+      "book": "The Battle-mage's Path",
+      "chapters": [
+        {
+          "title": "The Battle-mage",
+          "paras": [
+            "You are a battle-mage of the <b>College of Winterhold</b>: two hands, two elements, and the dead burn, freeze or break before they reach you.",
+            "You start with <b>Scorch</b> in your right hand and <b>Hoarfrost</b> in your left, the Wild Witch's hat and gown, the Sweeper of the Sorceress and a Destruction tome at your hip."
+          ]
+        },
+        {
+          "title": "The Six Elements",
+          "paras": [
+            "Your spells are six elements, each a ladder of four rungs. The altar's first row (<i>Call a Spell</i>) gives you the first rung of an element you don't have; you carry two at a time.",
+            "<b>Fire</b>: Scorch, Immolate, Greater Flames, Flame Tempest.",
+            "<b>Frost</b>: Hoarfrost, Greater Frostbite, Greater Frost Rune, Throat of the World.",
+            "<b>Shock</b>: Finger of the Mountain, Greater Sparks, Greater Lightning Rune, Electrocute.",
+            "<b>Sun</b>: Solar Flare, Sunbeam, Radiant Sunbeam, Daybreak.",
+            "<b>Poison</b>: Poisonbolt, Poison Spray, Miasma, Death Cloud.",
+            "<b>Blood</b>: Vampiric Bolt, Leech Life, Vampiric Blast, Blood Lance. The fourth rung of each is Legendary."
+          ]
+        },
+        {
+          "title": "Reforging",
+          "paras": [
+            "An element climbs on <b>kills with that spell in hand</b>: <b>25 kills</b> to reach rung 2, <b>60</b> to reach rung 3, <b>120</b> to reach the Legendary rung. The count starts again after each climb.",
+            "With the kills in, hold the spell and take the altar's <b>Reforge</b> row. It opens once <b>three Echo Altars are freed</b>, costs 5,000, 8,000, then 12,000 essence, and each spell can climb once a night."
+          ]
+        },
+        {
+          "title": "Support Spells",
+          "paras": [
+            "Your altar's second row calls a <b>support spell</b> you don't know yet: <b>Ash Cloud</b>, <b>Cinder Storm</b>, <b>Charged Nova</b> or <b>Symmetry</b>. They are yours to keep, in the Magic menu."
+          ]
+        },
+        {
+          "title": "Your Perks",
+          "paras": [
+            "Besides the shared draughts, the altar's perk row offers the battle-mage three of its own:",
+            "<b>Ember Heart Ale</b> - kills with Destruction spells burst, hurting the dead around them.",
+            "<b>Arcanist's Focus Tea</b> - Destruction spells cost 25% less magicka.",
+            "<b>Mana-Siphon Draught</b> - each Destruction kill gives back 6% of your magicka.",
+            "You can carry one of each draught a life; death takes them all."
+          ]
+        },
+        {
+          "title": "Trial of the Elements",
+          "paras": [
+            "One of each city's four trials is your class's: the <b>Trial of the Elements</b>. Kill with two elements or more - 10 on Novice up to 30 on Legendary. Keep a different element in each hand."
+          ]
+        },
+        {
+          "title": "Tome of the Six Fires",
+          "paras": [
+            "Once three cities are free your wonder stirs. Its trial is three steps, each in a different city: <b>40 kills with Destruction spells</b> per step.",
+            "The <b>Tome of the Six Fires</b>: one cast looses the top spell of all six of your element ladders on the dead round you. After Alduin falls in Sovngarde it takes its Legendary form: each cast also leaves their runes and storms on the ground."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ranger",
+      "book": "The Ranger's Path",
+      "chapters": [
+        {
+          "title": "The Ranger",
+          "paras": [
+            "You are sworn to the <b>Dawnguard</b>, who hunt what rises at night. Bows and crossbows - and every arrow counts.",
+            "You start with one of the altar's <b>elemental bows</b>, the <b>Dawnguard Crossbow</b> with 30 bolts, and the Drifter Outfit (light armour)."
+          ]
+        },
+        {
+          "title": "The Elemental Bows",
+          "paras": [
+            "Your altar's first row is the bow wheel (<i>Call a Bow</i>). You carry one elemental bow; a new one takes its place.",
+            "<b>Emberstring</b> (fire), <b>Rimehorn</b> (frost), <b>Stormreach</b> (shock), <b>Skyhowl</b> (wind), <b>Dawnspire</b> (sun) and <b>Thirstbow</b> (blood). Their arrows strike as their element, and a full draw hits hardest.",
+            "Hold your bow and take the altar's <b>Reforge</b> row to raise it a tier (three tiers): more power, a faster draw and a new attack each tier. The forge opens once <b>three Echo Altars are freed</b> and costs 5,000, 8,000, then 12,000 essence; a bow can climb once a night."
+          ]
+        },
+        {
+          "title": "Crossbows and Bolts",
+          "paras": [
+            "Your altar's second row: seven times in ten an elemental bow, three times in ten a crossbow or an offhand bow from the Faction Crossbows and Offhand Bows. Better ones come as more cities are freed: Dwarven and Elven at one, Glass and Ebony at two, Daedric and Dragonbone at three.",
+            "<b>Crossbow mastery</b>: kills with a crossbow unlock elemental bolts - <b>fire</b> at 25 kills, <b>ice</b> at 60, <b>shock</b> at 120. Your quivers refill them (the altar's quiver row, or a Max Ammo)."
+          ]
+        },
+        {
+          "title": "Your Perks",
+          "paras": [
+            "Besides the shared draughts, the altar's perk row offers the Ranger three of its own:",
+            "<b>Fletcher's Sap Draught</b> - the arrows or bolts in use slowly grow back.",
+            "<b>Eagle-Eye Draught</b> - bows draw and crossbows reload 25% faster.",
+            "<b>Dawnwatch Tonic</b> - with a bow or crossbow in your hands, the night's blows hurt you 25% less.",
+            "You can carry one of each draught a life; death takes them all."
+          ]
+        },
+        {
+          "title": "Trial of the Long Shot",
+          "paras": [
+            "One of each city's four trials is your class's: the <b>Trial of the Long Shot</b>. Kill from 30 metres or more with a bow or crossbow - 10 on Novice up to 30 on Legendary."
+          ]
+        },
+        {
+          "title": "The Subsuming Vortex",
+          "paras": [
+            "Once three cities are free your wonder stirs. Its trial is three steps, each in a different city: <b>40 kills with a bow or crossbow</b> per step.",
+            "The <b>Subsuming Vortex</b> is a bow of black-violet steel. Every arrow it looses tears open a purple black hole where it lands: the dead are dragged into it, gnawed at while it holds them, and then it bursts.",
+            "After Alduin falls in Sovngarde it takes its Legendary form: the holes open wider, pull far harder and burst bigger. Its arrows refill with your quivers."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "spellsword",
+      "book": "The Spellsword's Path",
+      "chapters": [
+        {
+          "title": "The Spellsword",
+          "paras": [
+            "You are a <b>Vigilant of Stendarr</b>, who will not let the dead walk while you draw breath. Steel in one hand, a spell in the other.",
+            "You start with the <b>Steel Spellsword</b> in your hand, a <b>Steel Spellshield</b> in your pack, <b>Flame Touch</b> in your left hand, the Practical Pirate outfit, and The Wizard Warrior's <b>Import Mode</b> and first <b>Magical Shout</b>."
+          ]
+        },
+        {
+          "title": "The Wizard Warrior",
+          "paras": [
+            "<b>Import Mode</b> is a power. Hold a spell in a hand (or one in each), use Import Mode, and it asks where to bind that spell: your right or left weapon swing, a bow shot, a block, a bash, an instant cast, a power attack in a given direction, or your <b>Magical Shout</b> - then which of its four groups to keep it in.",
+            "From then on, while the Wizard Warrior power is on (its Toggle Ability key, on its own page of the Mod Configuration menu), that action casts the bound spell for you, paying its magicka.",
+            "<b>Magical Shout</b> casts whatever you bound to it - its first word the first spell, its second word the second. Until you bind a spell to it with Import Mode it does nothing.",
+            "Imbuing (below) also unlocks the Wizard Warrior's four <b>Enchantment Powers</b> (one per imbue) and its other two Magical Shouts (at 2 and 4 imbues)."
+          ]
+        },
+        {
+          "title": "Touch Spells and Imbuing",
+          "paras": [
+            "Your spells are six elements of touch magic, each a ladder of three rungs. The altar's first row (<i>Call a Spell</i>) gives you the first rung of one you don't have; you carry two at a time.",
+            "<b>Fire</b>: Flame Touch, Burning Touch, Fiery Grasp. <b>Frost</b>: Icy Touch, Chilling Touch, Freezing Grasp. <b>Shock</b>: Static Touch, Shocking Touch, Thundering Grasp.",
+            "<b>Sun</b>: Sunlight Touch, Radiant Touch, Searing Grasp. <b>Blood</b>: Vampiric Touch, Vampiric Grasp, Touch of Death. <b>Poison</b>: Poisonous Touch, Venomous Touch, Viper's Grasp.",
+            "Your touch spells climb on <b>melee kills only</b> (a power-attack kill counts twice) while the spell is in hand: <b>25</b> to reach rung 2 and <b>60</b> to reach the top.",
+            "With the kills in, hold the spell and take the altar's <b>Imbue</b> row. It opens once <b>three Echo Altars are freed</b>, costs 5,000 then 8,000 essence, and each spell can climb once a night. Imbuing also steps your held spell-weapon up a material."
+          ]
+        },
+        {
+          "title": "Spell-weapons",
+          "paras": [
+            "Your altar's second row calls a <b>spell-weapon or spellshield</b> (Spellsword, Light and Ultra Greatswords) - and a quarter of the time one of Mysticism's shells or cloaks instead.",
+            "Better ones come as more cities are freed: Steel and Orcish at first, Dwarven and Elven at one, Glass and Ebony at two, Daedric, Dragonbone and the named blades at three."
+          ]
+        },
+        {
+          "title": "Your Perks",
+          "paras": [
+            "Besides the shared draughts, the altar's perk row offers the Spellsword three of its own:",
+            "<b>Bladesong Mead</b> - every melee blow you land on the dead heals you 2% of your health.",
+            "<b>Spellbinder's Draught</b> - melee kills give back 10% of your magicka, for the spell in your other hand.",
+            "<b>Steel-Wind Ale</b> - your melee swings are 20% faster.",
+            "You can carry one of each draught a life; death takes them all."
+          ]
+        },
+        {
+          "title": "Trial of Steel",
+          "paras": [
+            "One of each city's four trials is your class's: the <b>Trial of Steel</b>. Kill in melee with a spell in your other hand - 10 on Novice up to 30 on Legendary."
+          ]
+        },
+        {
+          "title": "Dragon Slayer",
+          "paras": [
+            "Once three cities are free your wonder stirs. Its trial is three steps, each in a different city: <b>40 melee kills</b> per step.",
+            "The <b>Dragon Slayer</b>, the Akaviri greatsword: every hit carries the spell in your other hand. After Alduin falls in Sovngarde it takes its Legendary form: a power attack sends that spell down the line."
+          ]
+        }
+      ]
+    }
+  ],
+  "shared": [
+    {
+      "title": "The Long Night",
+      "paras": [
+        "A day lasts about twenty minutes. By day the dead sleep: rest, explore, spend what you earned. You cannot sleep or wait while they walk.",
+        "At dusk they rise in <b>waves</b>, clawing up out of the ground, more each night and harder to kill. The night does not end until the last wave is down - then dawn breaks, and the dead fall back to dust.",
+        "Every risen thing you kill leaves <b>essence</b>, the coin the Echo Altars take; your count sits beside your perks. Watch the dead for tokens: a skull (Insta-Kill), a coin (Double Points), a falling star (every corpse risen tonight is destroyed) and a chest (a Fire Sale at the altar)."
+      ]
+    },
+    {
+      "title": "The Echo Altar",
+      "paras": [
+        "Every city has one. Look into its star and press Activate; its menu does not stop the night. Move with the D-pad (or W and S), take a row with A (or Enter), leave with B.",
+        "<b>Class</b> - choose your path (free the first time) or change it for 2,500 essence. Each class keeps its own spells and progress for when you return to it.",
+        "<b>Call</b> - your class's spell (or bow) wheel; each call costs more than the last until dawn. Your <b>second row</b> is your class's own (see your chapters).",
+        "<b>Reforge / Bind Pact / Imbue</b> - raise the spell or bow in your hands (opens at three freed altars). <b>Perks</b> - the shared draughts and your class's three.",
+        "<b>Trials</b> - four wake the altar: the Ward of the Tongues, the Culling, the Long Night's Breath and your class's trial, in any order. When all four are done the city's <b>Dragon Priest</b> rises near the altar at night. Slay him and the city is a sanctuary: no dead rise within it, and once you have walked the Way of the Voice its heart-stone teaches you the city's Thu'um. Whiterun's altar also brings a dragon you can ride."
+      ]
+    },
+    {
+      "title": "Settings",
+      "paras": [
+        "The <b>Mod Configuration Menu</b> (System menu, Mod Configuration) has a page for <b>The Curse of Alduin</b> with its gameplay settings:",
+        "<b>Gameplay</b> - townsfolk going indoors at night, <b>melee attack speed</b>, <b>bow and crossbow draw speed</b>, how long bodies lie, and how tough the dead are and how hard they hit (following Skyrim's difficulty or your own sliders).",
+        "<b>View and Effects</b> - first- and third-person field of view, brightness, blood, the night's fog, screen shake and softer flashes.",
+        "<b>Controls</b> - PlayStation button icons and the dragon's flight controls. Its first page, <i>Start Here</i>, explains which mod changes what."
+      ]
+    }
+  ]
+}

@@ -1395,10 +1395,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				if (Hud::kEdgeHud) {
 					// (Noah: the perks beside the essence, above Edge UI's bars) the same sockets, smaller, in a row to its right
-					static std::array<int, 16>   lastStacks{};
-					static std::array<float, 16> burst{};
+					static std::array<int, 32>   lastStacks{};
+					static std::array<float, 32> burst{};
 					static bool                  seeded = false;
-					for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 16; ++i) {
+					for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 32; ++i) {
 						if (seeded && s.perkStacks[i] > lastStacks[i]) {
 							burst[i] = 1.4f;
 						}
@@ -1419,7 +1419,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const float py = coin.y - 4 * k;
 						const auto  c = gen::kPerkColor[i];
 						const int   cr = (c >> 24) & 0xFF, cg = (c >> 16) & 0xFF, cb = (c >> 8) & 0xFF;
-						const float bt = i < 16 ? burst[i] / 1.4f : 0.0f;                // 1 at the moment it's bought, down to 0
+						const float bt = i < 32 ? burst[i] / 1.4f : 0.0f;                // 1 at the moment it's bought, down to 0
 						const float pop = 1.0f + 0.9f * bt * bt;
 						dl->AddCircleFilled({ x, py }, r + 5 * k, IM_COL32(8, 7, 9, 210), 40);       // the socket
 						dl->AddCircle({ x, py }, r + 5 * k, Fade(kGoldDim, 0.9f), 40, 1.2f * k);
@@ -1561,10 +1561,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 				}
 				// perk row: sockets, the draughts in them; a new draught bursts in
-				static std::array<int, 16>   lastStacks{};
-				static std::array<float, 16> burst{};
+				static std::array<int, 32>   lastStacks{};
+				static std::array<float, 32> burst{};
 				static bool                  seeded = false;
-				for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 16; ++i) {
+				for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 32; ++i) {
 					if (seeded && s.perkStacks[i] > lastStacks[i]) {
 						burst[i] = 1.4f;
 					}
@@ -1585,7 +1585,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float py = y - 40 * k;
 					const auto  c = gen::kPerkColor[i];
 					const int   cr = (c >> 24) & 0xFF, cg = (c >> 16) & 0xFF, cb = (c >> 8) & 0xFF;
-					const float bt = i < 16 ? burst[i] / 1.4f : 0.0f;                // 1 at the moment it's bought, down to 0
+					const float bt = i < 32 ? burst[i] / 1.4f : 0.0f;                // 1 at the moment it's bought, down to 0
 					const float pop = 1.0f + 0.9f * bt * bt;
 					dl->AddCircleFilled({ x, py }, r + 5 * k, IM_COL32(8, 7, 9, 210), 40);       // the socket
 					dl->AddCircle({ x, py }, r + 5 * k, Fade(kGoldDim, 0.9f), 40, 1.2f * k);
@@ -2772,12 +2772,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				y += 14 * k;
 				// [3] brews: a row of medallions, the chosen one described under it
 				{
-					const int n = static_cast<int>(gen::kPerks.size());
+					const auto menu = Perks::Menu();  // (Noah: each class its own perks) the shared draughts, then your class's
+					const int  n = std::max(1, static_cast<int>(menu.size()));
 					int owned = 0;
-					for (int q = 0; q < n; ++q) {
-						owned += (s.perks >> q) & 1;
+					for (int q : menu) {
+						owned += s.perkStacks[q] > 0 ? 1 : 0;
 					}
-					const int  sel = std::clamp(s.perkSel, 0, n - 1);
+					const int  sel = menu.empty() ? 0 : menu[std::clamp(s.perkSel, 0, n - 1)];
 					const auto& p = gen::kPerks[sel];
 					const int  have = s.perkStacks[sel];
 					focusRow(3, y - 6 * k, y + 36 * k + std::min(44 * k, (Rr - L) / n - 4 * k) + 12 * k + 72 * k);
@@ -2787,9 +2788,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Txt(dl, g_body, 16 * k, { Rr - Measure(g_body, 16 * k, rule).x, y + 6 * k }, IM_COL32(170, 156, 132, 220), rule);
 					y += 36 * k;
 					const float d = std::min(44 * k, (Rr - L) / n - 4 * k), gap = ((Rr - L) - d * n) / std::max(1, n - 1);
-					for (int q = 0; q < n; ++q) {
-						const ImVec2 c{ L + d * 0.5f + q * (d + gap), y + d * 0.5f };
-						const bool   on = q == sel, drunk = (s.perks >> q) & 1;
+					for (int j = 0; j < static_cast<int>(menu.size()); ++j) {
+						const int    q = menu[j];
+						const ImVec2 c{ L + d * 0.5f + j * (d + gap), y + d * 0.5f };
+						const bool   on = q == sel, drunk = s.perkStacks[q] > 0;
+						if (gen::kPerkClass[q] >= 0) {  // your class's own: a thin ring of its colour
+							dl->AddCircle(c, d * 0.56f, Fade(kGold, 0.55f), 32, 1.2f * k);
+						}
 						if (on) {
 							dl->AddCircleFilled(c, d * 0.62f, IM_COL32(200, 80, 30, 90), 32);
 							dl->AddCircle(c, d * 0.62f, kGold, 32, 2.0f * k);
@@ -2807,7 +2812,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 					}
 					y += d + 12 * k;
-					Txt(dl, g_title, 19 * k, { L, y }, IM_COL32(250, 236, 205, 255), std::string(p.label) + (have > 0 ? "   - taken" : ""));
+					Txt(dl, g_title, 19 * k, { L, y }, IM_COL32(250, 236, 205, 255), std::string(p.label) + (gen::kPerkClass[sel] >= 0 ? "   (" + std::string(Classes::Name(gen::kPerkClass[sel])) + ")" : "") + (have > 0 ? "   - taken" : ""));
 					if (have == 0) {
 						price(y, p.cost, s.points >= p.cost);
 					}
@@ -4975,13 +4980,16 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 
 
-		// ---- The Codex (Noah: the lore and the guide easier to read than a book): reading either book opens this over
-		// Skyrim's book, which is hidden: a tab per book, its chapters down the left, the chapter on a parchment page with
-		// its woodcut. Wheel or W/S scroll, A/D or the list change chapter, Q/E or the tabs change book, Esc closes.
+		// ---- The Codex (Noah: the lore and the guide easier to read than a book): reading one of our books opens this over
+		// Skyrim's book, which is hidden. (Noah: "both of these books should have a matching UI for Edge's UI") Edge UI's
+		// look: a smoked charcoal room, the books as tabs, the chapters down the left in a dark glass pane with bronze
+		// hairlines, the chapter on a second pane in warm off-white, its woodcut on a small parchment plate. Two books:
+		// The Curse of Alduin (0) and your class's guide (1-4), whose 'Your Progress' page is drawn live.
+		// Wheel or W/S scroll, A/D or the list change chapter, Q/E or the tabs change book, Esc closes.
 		int                       g_cxOpenBook = -1;  // the book being read (-1: none)
+		int                       g_cxGuide = 0;      // the class guide beside the lore (1-4; 0 none yet)
 		int                       g_cxCh = 0;         // its chapter (index into codex::kChapters)
 		float                     g_cxY = 0, g_cxYGoal = 0, g_cxH = 0;
-		ID3D11ShaderResourceView* g_cxPaper = nullptr;
 		std::unordered_map<std::string, std::pair<ID3D11ShaderResourceView*, ImVec2>> g_cxArt;
 		int CodexBookOf(const RE::TESObjectBOOK* a_book)
 		{
@@ -4989,7 +4997,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				return -1;
 			}
 			const auto local = a_book->GetLocalFormID();
-			return local == gen::kDirgeBook ? 0 : local == gen::kGuideBook ? 1 : -1;
+			if (local == gen::kDirgeBook) return 0;
+			for (int c = 0; c < 4; ++c) {
+				if (local == gen::kClassGuides[c]) return 1 + c;
+			}
+			if (local == gen::kGuideBook) return Classes::Get() >= 0 ? 1 + Classes::Get() : 0;  // (the old Survivor's Guide: your class's guide now, or the lore)
+			return -1;
 		}
 		std::vector<int> CodexChapters(int a_book)
 		{
@@ -5005,7 +5018,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// a paragraph with <b> and <i>, wrapped word by word; returns its height
 		float RichText(ImDrawList* dl, std::string_view a_text, ImVec2 a_at, float a_width, float px, bool a_draw)
 		{
-			constexpr ImU32 kInk = IM_COL32(44, 30, 20, 255), kBold = IM_COL32(122, 26, 18, 255), kItal = IM_COL32(86, 62, 38, 255);
+			constexpr ImU32 kInk = IM_COL32(222, 216, 202, 255), kBold = IM_COL32(226, 196, 132, 255), kItal = IM_COL32(176, 166, 146, 255);  // (Edge UI: warm off-white, bronze, muted)
 			bool  bold = false, ital = false;
 			float x = 0, y = 0;
 			const float lineH = px * 1.42f;
@@ -5059,9 +5072,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const ImVec2 cur = g_cursor;
 			auto hover = [&](ImVec2 a, ImVec2 b) { return cur.x >= a.x && cur.x <= b.x && cur.y >= a.y && cur.y <= b.y; };
 			bool click = clicks > 0;
+			// the two books: the lore, and your class's guide (when you have one)
+			std::vector<int> books{ 0 };
+			if (g_cxGuide >= 1) books.push_back(g_cxGuide);
 			// input since the last frame
-			if (const int b = g_cxBook.exchange(0); b != 0) {
-				g_cxOpenBook = (g_cxOpenBook + (b > 0 ? 1 : 1)) % 2, g_cxCh = CodexChapters(g_cxOpenBook).front(), g_cxY = g_cxYGoal = 0;
+			if (const int b = g_cxBook.exchange(0); b != 0 && books.size() > 1) {
+				g_cxOpenBook = g_cxOpenBook == 0 ? books[1] : 0, g_cxCh = CodexChapters(g_cxOpenBook).front(), g_cxY = g_cxYGoal = 0;
 			}
 			auto chs = CodexChapters(g_cxOpenBook);
 			if (chs.empty()) {
@@ -5077,36 +5093,38 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			g_cxYGoal += g_cxScroll.exchange(0) * 70.0f * k;
 
-			// the room: near black, a cold vignette
-			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(3, 3, 5, 255));  // (black, the modpack's ground)
-			dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.5f }, IM_COL32(30, 70, 130, 45), IM_COL32(30, 70, 130, 45), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
+			// the room: Edge UI's smoked charcoal over the world, darker at the edges
+			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(6, 6, 7, 222));
+			dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, size.y * 0.35f }, IM_COL32(0, 0, 0, 120), IM_COL32(0, 0, 0, 120), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0));
+			dl->AddRectFilledMultiColor({ 0, size.y * 0.65f }, size, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 140), IM_COL32(0, 0, 0, 140));
 			const float W = std::min(size.x - 60 * k, 1680 * k), H = 960 * k;
 			const ImVec2 o{ (size.x - W) * 0.5f, (size.y - H) * 0.5f };
 
-			// the two books, as tabs
+			// the books, as tabs: spaced capitals, the open one in bronze with a hairline under it
 			const float tabY = o.y + 8 * k;
 			float       tx = o.x + 20 * k;
-			for (int b = 0; b < 2; ++b) {
+			for (int b : books) {
 				const std::string t = Upper(std::string(codex::kBooks[b]));
-				const ImVec2      m = Measure(g_title, 26 * k, t);
+				const ImVec2      m = Measure(g_title, 24 * k, t);
 				const ImVec2      a{ tx, tabY }, z{ tx + m.x, tabY + m.y + 10 * k };
 				const bool        on = b == g_cxOpenBook, hv = hover(a, z);
-				Txt(dl, g_title, 26 * k, a, on ? kGold : hv ? IM_COL32(230, 215, 185, 255) : IM_COL32(150, 140, 125, 255), t, on ? 2.0f * k : 0, kGold);
+				Txt(dl, g_title, 24 * k, a, on ? kGold : hv ? IM_COL32(230, 220, 200, 255) : IM_COL32(150, 144, 132, 255), t);
 				if (on) {
-					dl->AddLine({ a.x, z.y }, { z.x, z.y }, kGold, 2 * k);
+					dl->AddRectFilledMultiColor({ a.x - 10 * k, z.y - 0.7f * k }, { (a.x + z.x) * 0.5f, z.y + 0.7f * k }, Fade(kGold, 0.0f), kGold, kGold, Fade(kGold, 0.0f));
+					dl->AddRectFilledMultiColor({ (a.x + z.x) * 0.5f, z.y - 0.7f * k }, { z.x + 10 * k, z.y + 0.7f * k }, kGold, Fade(kGold, 0.0f), Fade(kGold, 0.0f), kGold);
 				}
 				if (hv && click && !on) {
 					g_cxOpenBook = b, chs = CodexChapters(b), at = 0, g_cxCh = chs[0], g_cxY = g_cxYGoal = 0, click = false;
 				}
-				tx += m.x + 60 * k;
+				tx += m.x + 64 * k;
 			}
 			// close
 			{
 				const ImVec2 c{ o.x + W - 26 * k, tabY + 18 * k };
 				const bool   hv = hover({ c.x - 22 * k, c.y - 22 * k }, { c.x + 22 * k, c.y + 22 * k });
-				const ImU32  col = hv ? kGold : IM_COL32(170, 160, 140, 255);
-				dl->AddLine({ c.x - 11 * k, c.y - 11 * k }, { c.x + 11 * k, c.y + 11 * k }, col, 2.4f * k);
-				dl->AddLine({ c.x + 11 * k, c.y - 11 * k }, { c.x - 11 * k, c.y + 11 * k }, col, 2.4f * k);
+				const ImU32  col = hv ? kGold : IM_COL32(170, 162, 146, 255);
+				dl->AddLine({ c.x - 10 * k, c.y - 10 * k }, { c.x + 10 * k, c.y + 10 * k }, col, 1.6f * k);
+				dl->AddLine({ c.x + 10 * k, c.y - 10 * k }, { c.x - 10 * k, c.y + 10 * k }, col, 1.6f * k);
 				if (hv && click) {
 					if (auto* q = RE::UIMessageQueue::GetSingleton()) {
 						q->AddMessage(RE::BookMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
@@ -5116,62 +5134,53 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 
 			const float top = o.y + 70 * k, bottom = o.y + H - 40 * k;
-			// the chapters
+			// the chapters: a dark glass pane, the chosen one marked by a bronze bar and a faint wash
 			const float lw = 400 * k;
 			Panel(dl, { o.x, top }, { o.x + lw, bottom }, k);
-			float ly = top + 34 * k;
+			float ly = top + 30 * k;
 			for (int j = 0; j < static_cast<int>(chs.size()); ++j) {
 				const auto&  ch = codex::kChapters[chs[j]];
-				const ImVec2 a{ o.x + 18 * k, ly - 6 * k }, z{ o.x + lw - 18 * k, ly + 34 * k };
+				const ImVec2 a{ o.x + 14 * k, ly - 6 * k }, z{ o.x + lw - 14 * k, ly + 30 * k };
 				const bool   on = j == at, hv = hover(a, z);
+				const bool   live = ch.image == "@progress";
 				if (on || hv) {
-					dl->AddRectFilled(a, z, on ? IM_COL32(196, 170, 112, 40) : IM_COL32(255, 255, 255, 14), 4 * k);
+					dl->AddRectFilledMultiColor(a, z, on ? IM_COL32(196, 170, 112, 46) : IM_COL32(255, 255, 255, 14), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), on ? IM_COL32(196, 170, 112, 46) : IM_COL32(255, 255, 255, 14));
 				}
 				if (on) {
-					dl->AddRectFilled(a, { a.x + 4 * k, z.y }, kGold);
+					dl->AddRectFilled(a, { a.x + 3 * k, z.y }, kGold);
 				}
-				TxtWrap(dl, g_title, 20 * k, { a.x + 16 * k, ly }, on ? kParch : hv ? IM_COL32(225, 212, 188, 255) : IM_COL32(165, 155, 138, 255), std::string(ch.title), lw - 70 * k, 1);
+				if (live) {  // the live page: a small bronze diamond
+					const ImVec2 dm{ a.x + 14 * k, (a.y + z.y) * 0.5f };
+					dl->AddQuadFilled({ dm.x, dm.y - 4 * k }, { dm.x + 4 * k, dm.y }, { dm.x, dm.y + 4 * k }, { dm.x - 4 * k, dm.y }, kGold);
+				}
+				TxtWrap(dl, g_title, 19 * k, { a.x + (live ? 26 : 16) * k, ly }, on ? kParch : hv ? IM_COL32(225, 214, 192, 255) : IM_COL32(160, 152, 138, 255), std::string(ch.title), lw - 70 * k, 1);
 				if (hv && click) {
 					at = j, g_cxCh = chs[j], g_cxY = g_cxYGoal = 0, click = false;
 				}
-				ly += 46 * k;
+				ly += 40 * k;
 			}
 
-			// the page
-			const ImVec2 pa{ o.x + lw + 24 * k, top }, pz{ o.x + W, bottom };
-			if (!g_cxPaper) {
-				static bool tried = false;
-				if (!tried) {
-					tried = true;
-					LoadTex("legend\\page_paper.jpg", &g_cxPaper, nullptr, nullptr);
-				}
-			}
-			if (g_cxPaper) {
-				dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_cxPaper)), pa, pz);
-			} else {
-				dl->AddRectFilledMultiColor(pa, pz, IM_COL32(236, 224, 194, 255), IM_COL32(230, 216, 184, 255), IM_COL32(214, 196, 158, 255), IM_COL32(222, 206, 170, 255));
-			}
-			dl->AddRect(pa, pz, IM_COL32(150, 134, 98, 220), 0, 0, 2 * k);
+			// the page: a second pane, the chapter's words in warm off-white
+			const ImVec2 pa{ o.x + lw + 22 * k, top }, pz{ o.x + W, bottom };
+			Panel(dl, pa, pz, k);
 			const auto& ch = codex::kChapters[g_cxCh];
 			const float mx = 70 * k, colW = std::min(pz.x - pa.x - 2 * mx, 900 * k);
 			const float cx = (pa.x + pz.x) * 0.5f, x0 = cx - colW * 0.5f;
-			const float viewTop = pa.y + 26 * k, viewBot = pz.y - 26 * k;
+			const float viewTop = pa.y + 22 * k, viewBot = pz.y - 22 * k;
 			const float maxY = std::max(0.0f, g_cxH - (viewBot - viewTop));
 			g_cxYGoal = std::clamp(g_cxYGoal, 0.0f, maxY);
 			g_cxY += (g_cxYGoal - g_cxY) * std::min(1.0f, ImGui::GetIO().DeltaTime * 14.0f);
 			dl->PushClipRect({ pa.x, viewTop }, { pz.x, viewBot }, true);
 			float y = viewTop + 30 * k - g_cxY;
 			{
-				const std::string t(ch.title);
-				const float       tw = Measure(g_title, 38 * k, t).x;
-				dl->AddText(g_title, 38 * k, { cx - tw * 0.5f, y }, IM_COL32(70, 34, 20, 255), t.c_str());
-				y += 54 * k;
-				dl->AddLine({ cx - 160 * k, y }, { cx - 10 * k, y }, IM_COL32(110, 74, 40, 200), 1.5f * k);
-				dl->AddLine({ cx + 10 * k, y }, { cx + 160 * k, y }, IM_COL32(110, 74, 40, 200), 1.5f * k);
-				dl->AddQuadFilled({ cx, y - 6 * k }, { cx + 6 * k, y }, { cx, y + 6 * k }, { cx - 6 * k, y }, IM_COL32(122, 26, 18, 255));
-				y += 30 * k;
+				const std::string t = Upper(std::string(ch.title));
+				const float       tw = Measure(g_title, 34 * k, t).x;
+				Txt(dl, g_title, 34 * k, { cx - tw * 0.5f, y }, kParch, t);
+				y += 50 * k;
+				Divider(dl, cx, y, 170 * k, k, 0.9f);
+				y += 28 * k;
 			}
-			if (!ch.image.empty()) {
+			if (!ch.image.empty() && ch.image != "@progress") {
 				auto it = g_cxArt.find(std::string(ch.image));
 				if (it == g_cxArt.end()) {
 					ID3D11ShaderResourceView* t = nullptr;
@@ -5180,45 +5189,69 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					it = g_cxArt.emplace(std::string(ch.image), std::make_pair(t, ImVec2{ w, h })).first;
 				}
 				if (auto* t = it->second.first; t && it->second.second.x > 0) {
-					const float w = std::min(colW * 0.7f, it->second.second.x * 1.4f * k), h = w * it->second.second.y / it->second.second.x;
-					dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(t)), { cx - w * 0.5f, y }, { cx + w * 0.5f, y + h });
-					y += h + 26 * k;
+					// (the woodcuts are ink: they sit on a small parchment plate, framed in bronze)
+					const float w = std::min(colW * 0.6f, it->second.second.x * 1.2f * k), h = w * it->second.second.y / it->second.second.x;
+					const ImVec2 a{ cx - w * 0.5f - 14 * k, y }, z{ cx + w * 0.5f + 14 * k, y + h + 28 * k };
+					dl->AddRectFilledMultiColor(a, z, IM_COL32(214, 200, 168, 236), IM_COL32(210, 194, 160, 236), IM_COL32(190, 172, 136, 236), IM_COL32(198, 182, 146, 236));
+					dl->AddRect(a, z, Fade(kGold, 0.85f), 0, 0, 1.2f * k);
+					dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(t)), { cx - w * 0.5f, y + 14 * k }, { cx + w * 0.5f, y + 14 * k + h });
+					y += h + 28 * k + 26 * k;
+				}
+			}
+			if (ch.image == "@progress") {
+				// (Noah: "a guide book for each class that tracks progression") built each second by src/Classes.cpp
+				int                      cls = -1;
+				const auto               lines = Classes::Progress(cls);
+				const int                bookCls = g_cxOpenBook - 1;
+				std::vector<std::string> show;
+				if (cls < 0) {
+					show.push_back("You have not chosen a class yet. Choose one at an Echo Altar's top row and this page fills in.");
+				} else if (cls != bookCls) {
+					show.push_back(std::string("You walk the ") + std::string(Classes::Name(cls)) + "'s path now. Change back at an Echo Altar to take this one up again - it keeps its spells and progress for you.");
+				} else {
+					show = lines;
+				}
+				show.push_back("<i>This page follows you as you play: it is written fresh every time you open the book.</i>");
+				for (const auto& para : show) {
+					// each line a row of the ledger: a small bronze diamond, then the words
+					dl->AddQuadFilled({ x0 - 18 * k, y + 12 * k }, { x0 - 14 * k, y + 16 * k }, { x0 - 18 * k, y + 20 * k }, { x0 - 22 * k, y + 16 * k }, Fade(kGold, 0.8f));
+					y += RichText(dl, para, { x0, y }, colW, 22 * k, true) + 14 * k;
 				}
 			}
 			for (const auto& para : ch.paras) {
-				y += RichText(dl, para, { x0, y }, colW, 23 * k, true) + 16 * k;
+				y += RichText(dl, para, { x0, y }, colW, 22 * k, true) + 15 * k;
 			}
 			g_cxH = y + g_cxY - viewTop + 30 * k;
 			dl->PopClipRect();
-			// more below / above
+			// more below
 			if (g_cxY < maxY - 2) {
-				dl->AddRectFilledMultiColor({ pa.x + 2, viewBot - 50 * k }, { pz.x - 2, viewBot }, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(60, 40, 20, 70), IM_COL32(60, 40, 20, 70));
+				dl->AddRectFilledMultiColor({ pa.x + 1, viewBot - 50 * k }, { pz.x - 1, viewBot }, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 170), IM_COL32(0, 0, 0, 170));
 			}
 			// prev / next chapter along the bottom of the page
 			auto arrowBtn = [&](bool a_next) {
 				const bool ok = a_next ? at + 1 < static_cast<int>(chs.size()) : at > 0;
 				if (!ok) return;
 				const std::string t = a_next ? std::string(codex::kChapters[chs[at + 1]].title) + "  >" : "<  " + std::string(codex::kChapters[chs[at - 1]].title);
-				const ImVec2      m = Measure(g_title, 18 * k, t);
-				const ImVec2      a{ a_next ? pz.x - m.x - 24 * k : pa.x + 24 * k, bottom + 8 * k }, z{ a.x + m.x, a.y + m.y };
+				const ImVec2      m = Measure(g_title, 17 * k, t);
+				const ImVec2      a{ a_next ? pz.x - m.x - 24 * k : pa.x + 24 * k, bottom + 9 * k }, z{ a.x + m.x, a.y + m.y };
 				const bool        hv = hover(a, z);
-				Txt(dl, g_title, 18 * k, a, hv ? kGold : IM_COL32(170, 158, 138, 255), t);
+				Txt(dl, g_title, 17 * k, a, hv ? kGold : IM_COL32(168, 160, 144, 255), t);
 				if (hv && click) {
 					at += a_next ? 1 : -1, g_cxCh = chs[at], g_cxY = g_cxYGoal = 0, click = false;
 				}
 			};
 			arrowBtn(false);
 			arrowBtn(true);
-			TxtC(dl, g_body, 15 * k, o.x + lw * 0.5f, bottom + 10 * k, IM_COL32(140, 130, 115, 255),
-				g_padLast ? std::string("D-pad up / down  scroll    D-pad left / right  chapter    ") + Hud::PadWord("LB") + " / " + Hud::PadWord("RB") + "  book    " + Hud::PadWord("B") + "  close"
-				          : std::string("Wheel / W S  scroll    A D  chapter    Q E  book    Esc  close"));
+			TxtC(dl, g_body, 15 * k, o.x + lw * 0.5f, bottom + 10 * k, IM_COL32(140, 134, 122, 255),
+				g_padLast ? std::string("D-pad up / down  scroll    D-pad left / right  chapter    ") + (books.size() > 1 ? Hud::PadWord("LB") + " / " + Hud::PadWord("RB") + "  book    " : std::string()) + Hud::PadWord("B") + "  close"
+				          : std::string("Wheel / W S  scroll    A D  chapter    ") + (books.size() > 1 ? "Q E  book    " : "") + "Esc  close");
 			if (cur.x >= 0) {
 				DrawPingCursor(dl, cur, k, now);
 			}
 		}
 
 		bool CodexOpen() { return g_cxOpenBook >= 0; }
-		// each frame: is one of our two books open in Skyrim's book menu? then the Codex shows in its place
+		// each frame: is one of our books open in Skyrim's book menu? then the Codex shows in its place
 		bool CodexWanted(RE::UI* a_ui)
 		{
 			const bool book = a_ui && a_ui->IsMenuOpen(RE::BookMenu::MENU_NAME);
@@ -5229,6 +5262,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			if (g_cxOpenBook < 0) {  // just opened: at the book picked, its first chapter (the scroll and keys from before forgotten)
 				g_cxOpenBook = which, g_cxCh = CodexChapters(which).front(), g_cxY = g_cxYGoal = 0;
+				g_cxGuide = which >= 1 ? which : Classes::Get() >= 0 ? 1 + Classes::Get() : 0;  // (the guide beside the lore: the one opened, else your class's)
 				g_cxScroll = 0, g_cxChapter = 0, g_cxBook = 0;
 				logger::info("hud: the Codex opens at {}", codex::kBooks[which]);
 			}
@@ -5774,10 +5808,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				return;
 			}
-			// F1, in the world: the Codex, at the Survivor's Guide
+			// F1, in the world: the Codex, at your class's guide (the lore, before you have a class)
 			if (a_b && a_b->IsDown() && a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x3B && InGame()) {
 				Tasks::AddUI([] {
-					auto* book = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(gen::kGuideBook, gen::kPlugin);
+					const int cls = Classes::Get();
+					auto* book = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(cls >= 0 ? gen::kClassGuides[cls] : gen::kDirgeBook, gen::kPlugin);
 					auto* pl = RE::PlayerCharacter::GetSingleton();
 					auto* em = RE::ActorEquipManager::GetSingleton();
 					if (book && pl && em && !RE::UI::GetSingleton()->IsMenuOpen(RE::BookMenu::MENU_NAME)) {

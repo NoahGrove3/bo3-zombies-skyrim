@@ -29,6 +29,62 @@ namespace bo3z
 		float DamageMult() { return Stack(gen::kPerk_twinstrike) * (Echo::WordSilenced(0) ? 1.15f : 1.0f); }  // (SLEN silenced: flesh remade)
 		float HeadMult() { return Stack(gen::kPerk_hawkeye); }
 
+		// (Noah: "each class should get its own perks") the altar's list: the shared draughts first, then your class's three
+		std::vector<int> Menu()
+		{
+			std::vector<int> out;
+			const int        cls = Classes::Get();
+			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
+				if (gen::kPerkClass[i] < 0) out.push_back(i);
+			}
+			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
+				if (gen::kPerkClass[i] >= 0 && gen::kPerkClass[i] == cls) out.push_back(i);
+			}
+			return out;
+		}
+		int MenuAt(int a_pos)
+		{
+			const auto m = Menu();
+			return m.empty() ? -1 : m[std::clamp(a_pos, 0, static_cast<int>(m.size()) - 1)];
+		}
+		// a class perk counts only while you are of its class (a switch keeps it, asleep, until you come back or die)
+		bool Live(int a_perk) { return N(a_perk) > 0 && (gen::kPerkClass[a_perk] < 0 || gen::kPerkClass[a_perk] == Classes::Get()); }
+		float DrawSpeedMult() { return Live(gen::kPerk_eagleeye) ? gen::kPerks[gen::kPerk_eagleeye].value : 1.0f; }
+		float SwingSpeedMult() { return Live(gen::kPerk_steelwind) ? gen::kPerks[gen::kPerk_steelwind].value : 1.0f; }
+		float WardMult()
+		{
+			if (!Live(gen::kPerk_dawnwatch)) return 1.0f;
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* held = p ? p->GetEquippedObject(false) : nullptr;
+			auto* w = held ? held->As<RE::TESObjectWEAP>() : nullptr;
+			return w && (w->IsBow() || w->IsCrossbow()) ? 1.0f - gen::kPerks[gen::kPerk_dawnwatch].value : 1.0f;
+		}
+		bool SummonMight() { return Live(gen::kPerk_bonebinder); }
+		// a kill: what your class's perks make of it (how: 0 your summon, 1 a Destruction spell, 2 bow or crossbow, 3 melee)
+		void OnClassKill(int a_how, RE::Actor* a_dying)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			auto* av = p->AsActorValueOwner();
+			auto give = [&](RE::ActorValue a_av, float a_share) { av->RestoreActorValue(a_av, av->GetPermanentActorValue(a_av) * a_share); };
+			if (a_how == 0 && Live(gen::kPerk_soultether)) give(RE::ActorValue::kHealth, gen::kPerks[gen::kPerk_soultether].value);
+			if (a_how == 1 && Live(gen::kPerk_siphon)) give(RE::ActorValue::kMagicka, gen::kPerks[gen::kPerk_siphon].value);
+			if (a_how == 1 && Live(gen::kPerk_emberheart) && a_dying) {
+				Gun::AreaHurt(a_dying->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f }, 320.0f, gen::kPerks[gen::kPerk_emberheart].value, "fireball");
+			}
+			if (a_how == 3 && Live(gen::kPerk_spellbind)) give(RE::ActorValue::kMagicka, gen::kPerks[gen::kPerk_spellbind].value);
+		}
+		// a melee blow you landed on one of the dead (the Spellsword's Bladesong)
+		void OnMeleeHit()
+		{
+			if (!Live(gen::kPerk_bladesong)) return;
+			static auto last = std::chrono::steady_clock::now() - 1s;
+			if (std::chrono::steady_clock::now() - last < 250ms) return;  // (one heal a swing, however many it cuts)
+			last = std::chrono::steady_clock::now();
+			auto* av = RE::PlayerCharacter::GetSingleton()->AsActorValueOwner();
+			av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::kPerks[gen::kPerk_bladesong].value);
+		}
+
 		// Buying a blessing applies it at once (no potion to drink). Each can be bought again and again: they stack.
 		bool Grant(int a_perk)
 		{
@@ -48,6 +104,7 @@ namespace bo3z
 				break;
 			case 2: for (auto av : kSchoolPower) Mod(av, 50.0f); break;                                 // Twin Strike: spells 50% stronger each
 			case 6: Mod(RE::ActorValue::kMagicka, 50.0f); break;                                         // Mammoth Back: +50 magicka each
+			case 14: Mod(RE::ActorValue::kDestructionModifier, p.value); break;                          // Arcanist's Focus: Destruction costs less
 			default: break;
 			}
 			Forms::Play(gen::Sound::drink);
@@ -71,6 +128,7 @@ namespace bo3z
 				case 1: for (auto av : kSchoolCost) Mod(av, -15.0f * std::min(n, 5)); break;
 				case 2: for (auto av : kSchoolPower) Mod(av, -50.0f * n); break;
 				case 6: Mod(RE::ActorValue::kMagicka, -50.0f * n); break;
+				case 14: Mod(RE::ActorValue::kDestructionModifier, -p.value * n); break;
 				default: break;
 				}
 				Save::SetPerkStacks(i, 0);
@@ -282,6 +340,7 @@ namespace bo3z
 			if (Echo::WordSilenced(1)) {
 				a_amount *= 0.8f;  // (TIID silenced: borrowed time)
 			}
+			a_amount *= WardMult();  // (the Ranger's Dawnwatch Tonic)
 			Stats::OnHurt();
 			auto*       av = p->AsActorValueOwner();
 			const float hp = av->GetActorValue(RE::ActorValue::kHealth);

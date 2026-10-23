@@ -76,6 +76,7 @@ def render(sh, yaw, W=520, H=700, glowcol=(1, 1, 1)):
 if __name__ == '__main__':
     import json
     rows = {r['id']: r for r in json.load(open(ROOT / 'sheets' / 'bows.json'))['rows']}
+    rows.setdefault('vortex', {'glow': [0.62, 0.22, 1.0]})  # (the Ranger's wonder)
     ids = sys.argv[2:]
     tiles = []
     for b in ids:

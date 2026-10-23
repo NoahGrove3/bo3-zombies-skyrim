@@ -215,12 +215,12 @@ namespace bo3z::Classes
 	// step hands over the wonder. After Sovngarde (MQ305 done) each one takes its full, Legendary form.
 	//   Summoner     Horn of the Spectral Wyrm  Calling of the Conjurer's Spectral Dragon, 60 s (Legendary: it stays)
 	//   Destruction  Tome of the Six Fires      one cast looses all six element ladders' top spells round you (Legendary: their runes and storms too)
-	//   Ranger       Auriel's Bow               Sunhallowed arrows that home and burst in sunfire (Legendary: every third hit calls Daybreak)
+	//   Ranger       Subsuming Vortex           (Noah) a purple bow: each arrow opens a black hole that drags the dead in, then bursts (Legendary: wider, stronger pull)
 	//   Spellsword   Dragon Slayer              each hit carries the spell in your other hand (Legendary: a power attack sends it down the line)
 	namespace
 	{
 		constexpr int kWonderSteps = 3, kStepKills = 40;
-		constexpr const char* kWonderName[4] = { "Horn of the Spectral Wyrm", "Tome of the Six Fires", "Auriel's Bow", "Dragon Slayer" };
+		constexpr const char* kWonderName[4] = { "Horn of the Spectral Wyrm", "Tome of the Six Fires", "Subsuming Vortex", "Dragon Slayer" };
 		constexpr const char* kWonderKill[4] = { "kills by your summons", "kills with Destruction spells", "kills with a bow or crossbow", "melee kills" };
 		std::array<std::uint8_t, 4>  g_wStep{};    // per class: 0 not open, 1..3 the step under way, 4 earned
 		std::array<std::uint16_t, 4> g_wKills{};
@@ -251,8 +251,9 @@ namespace bo3z::Classes
 			}
 			return n;
 		}
-		float g_tomeCool = 0, g_bladeCool = 0;
-		int   g_aurielHits = 0;
+		float g_tomeCool = 0, g_bladeCool = 0, g_vortexCool = 0;
+		struct VortexArrowState { RE::NiPoint3 last; bool done, hit; };
+		std::unordered_map<RE::FormID, VortexArrowState> g_vortexArrows;  // the Subsuming Vortex's arrows in flight
 
 		int FreedCount()
 		{
@@ -263,11 +264,21 @@ namespace bo3z::Classes
 		bool AfterSovngarde() { return Story::AlduinFallen(); }
 		RE::SpellItem* WyrmSpell() { auto* f = Lookup(0x019D74, "Calling of the Conjurer.esp"); return f ? f->As<RE::SpellItem>() : nullptr; }
 		RE::SpellItem* TomeSpell() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::SpellItem>(gen::kWonderTomeSpell, gen::kPlugin) : nullptr; }
-		RE::TESObjectWEAP* Auriel() { auto* f = Lookup(0x000800, "Dawnguard.esm"); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }
-		RE::TESAmmo* Sunhallowed() { auto* f = Lookup(0x0098A1, "Dawnguard.esm"); return f ? f->As<RE::TESAmmo>() : nullptr; }
+		RE::TESObjectWEAP* Vortex() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::TESObjectWEAP>(gen::kVortexWeap, gen::kPlugin) : nullptr; }
+		RE::TESAmmo* VortexArrow() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::TESAmmo>(gen::kVortexAmmo, gen::kPlugin) : nullptr; }
 		RE::TESObjectWEAP* Slayer() { auto* f = Lookup(0x00083D, "Ultra Greatswords.esp"); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }
 		RE::SpellItem* Myst(std::uint32_t a_id) { auto* f = Lookup(a_id, "MysticismMagic.esp"); return f ? f->As<RE::SpellItem>() : nullptr; }
 
+		// (the Subsuming Vortex) a hole where an arrow came down - one a moment, however fast you loose
+		void OpenVortex(const RE::NiPoint3& a_at, bool a_onHit)
+		{
+			if (a_onHit) {
+				for (auto& [id, a] : g_vortexArrows) if (!a.done) { a.done = true, a.hit = true; break; }  // (the arrow that struck: no second hole where it falls)
+			}
+			if (g_vortexCool > 0) return;
+			g_vortexCool = 0.6f;
+			Gun::BlackHole(a_at, AfterSovngarde());
+		}
 		// the horn's dragon: a minute mid-game, after Sovngarde until it falls
 		void TuneWyrm()
 		{
@@ -310,8 +321,8 @@ namespace bo3z::Classes
 				if (auto* sp = TomeSpell()) p->AddSpell(sp);
 				break;
 			case coffer::kRanger:
-				GiveItem(p, Auriel(), 1, true);
-				GiveItem(p, Sunhallowed(), 60, true);
+				GiveItem(p, Vortex(), 1, true);
+				GiveItem(p, VortexArrow(), 60, true);
 				break;
 			case coffer::kSpellsword:
 				GiveItem(p, Slayer(), 1, true);
@@ -322,7 +333,7 @@ namespace bo3z::Classes
 			static constexpr const char* kText[4] = {
 				"A horn of bone that answers with a dragon: Calling of the Conjurer's Spectral Dragon fights at your side for a minute. After Sovngarde it stays until it falls.",
 				"One cast looses the top spell of all six of your element ladders on the dead round you. After Sovngarde each cast also leaves their runes and storms on the ground.",
-				"Auriel's own bow. Its Sunhallowed arrows seek the dead and burst in sunfire. After Sovngarde every third hit calls down Daybreak. More arrows: Q at an Echo Altar, or a Max Ammo.",
+				"A bow of black-violet steel. Every arrow tears open a black hole where it lands: the dead are dragged in, then it bursts. After Sovngarde the holes grow wider and pull harder. More arrows: Q at an Echo Altar, or a Max Ammo.",
 				"The Akaviri dragon slayer. Every hit carries the spell in your other hand. After Sovngarde a power attack sends that spell down the line." };
 			std::string up(kWonderName[a_cls]);
 			for (auto& ch : up) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
@@ -379,6 +390,25 @@ namespace bo3z::Classes
 		Hud::Banner(a_switch ? "Choose your new class" : "Choose your class", 3.0f);
 	}
 
+	// (Noah: "the second will be the class guide after selecting a class") the class's guide book, in your pack once
+	namespace
+	{
+		RE::TESObjectBOOK* Guide(int a_cls)
+		{
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			return dh && a_cls >= 0 && a_cls < 4 ? dh->LookupForm<RE::TESObjectBOOK>(gen::kClassGuides[a_cls], gen::kPlugin) : nullptr;
+		}
+		bool GiveGuide(int a_cls)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* b = Guide(a_cls);
+			if (!p || !b || p->GetItemCount(b) > 0) return false;
+			p->AddObjectToContainer(b, nullptr, 1, nullptr);
+			logger::info("classes: {} added", b->GetName());
+			return true;
+		}
+	}
+
 	void Choose(int a_cls)
 	{
 		if (a_cls < 0 || a_cls >= 4) return;
@@ -397,6 +427,12 @@ namespace bo3z::Classes
 		g_closedAt = std::chrono::steady_clock::now();
 		Forms::Play(gen::Sound::quest_step);
 		{ std::string u(coffer::kClassName[a_cls]); for (auto& ch : u) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch))); Hud::Banner(u, 4.0f); }
+		if (GiveGuide(a_cls)) {
+			auto* b = Guide(a_cls);
+			std::string t(b ? b->GetName() : "Your class guide");
+			for (auto& ch : t) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
+			Hud::Lore(t, "Your class guide is in your pack, under Books. It shows how your class grows and keeps a live page of how far you have come.", 9.0f);
+		}
 		logger::info("classes: {} -> {}{}", Name(from), Name(a_cls), g_switching ? " (switched at an altar)" : "");
 	}
 
@@ -409,6 +445,7 @@ namespace bo3z::Classes
 	// a save loaded with no class yet (older saves): the picker too
 	void OnWorldReady()
 	{
+		if (const int c = g_class.load(); c >= 0) GiveGuide(c);  // (a save from before the guides: its class's guide)
 		// (Noah: "it only lets me equip a helmet and boots") the kit and the underwear went on locked in older builds: each
 		// worn piece is taken off and put back on, free to change
 		if (auto* p = RE::PlayerCharacter::GetSingleton(); p) {
@@ -461,6 +498,7 @@ namespace bo3z::Classes
 			if (const int ci = src ? Arcana::IndexOf(src) : -1; ci >= 0) element = coffer::kSpells[ci].element;
 			const float dist = a_dying && p ? a_dying->GetPosition().GetDistance(p->GetPosition()) : 0.0f;
 			if (how >= 0) Curse::OnClassKill(how, element, dist);
+			if (how >= 0) Perks::OnClassKill(how, a_dying);  // (the class perks: Soul-Tether, Ember Heart, Mana-Siphon, Spellbinder)
 		}
 		if (FreedCount() >= 3) {
 			for (int c2 = 0; c2 < 4; ++c2) {
@@ -499,7 +537,82 @@ namespace bo3z::Classes
 
 	// (the Summoner's command) how many summons you may hold: 1, then 2 / 3 / 4 as its ladders climb (each rung raised
 	// past the first counts): our hidden perks set Skyrim's commanded-actor limit
-	namespace { std::mutex g_lineLock; std::string g_line; }
+	namespace { std::mutex g_lineLock; std::string g_line; std::vector<std::string> g_progress; int g_progressCls = -1; }
+	std::string BoltLine();
+	std::string WonderLineNow();
+	// (Noah: "a guide book for each class that tracks progression") the class guide's live page: built here once a second
+	// (the game's own thread), read by the Codex when the book is open
+	std::vector<std::string> ProgressNow()
+	{
+		std::vector<std::string> out;
+		const int c = g_class.load();
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (c < 0 || !p) return out;
+		const int freed = FreedCount();
+		std::string towns;
+		for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
+			if (Curse::Freed(t)) towns += (towns.empty() ? "" : ", ") + std::string(gen::kTowns[t]);
+		}
+		out.push_back(fmt::format("<b>Echo Altars freed: {} of {}</b>{}", freed, gen::kTowns.size(), towns.empty() ? std::string(" - none yet. Start with Riverwood's altar.") : " (" + towns + ")."));
+		out.push_back(fmt::format("The altar's forge (raising your spells and bows): {}. Your class's Legendary row: {}.",
+			freed >= 3 ? std::string("<b>open</b>") : fmt::format("opens at 3 freed altars ({} to go)", 3 - freed),
+			freed >= 6 ? std::string("<b>open</b>") : fmt::format("opens at 6 freed altars ({} to go)", 6 - freed)));
+		// the spells you carry: where each stands on its ladder, and the kills it still needs
+		bool any = false;
+		for (int i : Arcana::Carried()) {
+			if (Arcana::ClassOf(i) != c) continue;
+			any = true;
+			const int r = Arcana::RungOf(i), n = Arcana::Rungs(i), next = Arcana::NextRung(i);
+			if (next < 0) {
+				out.push_back(fmt::format("<b>{}</b> ({} ladder) - rung {} of {}: <b>Legendary</b>, the top of its ladder.", Arcana::Name(i), Arcana::LadderName(i), r, n));
+			} else {
+				const int have = std::min(Mastery(i), MasteryNeed(i)), need = MasteryNeed(i);
+				out.push_back(fmt::format("<b>{}</b> ({} ladder) - rung {} of {}. Kills toward <b>{}</b>: {} / {}{}", Arcana::Name(i), Arcana::LadderName(i), r, n,
+					Arcana::Name(next), have, need, have >= need ? (freed >= 3 ? " - ready: raise it at an altar's forge" : " - ready once the forge opens") : ""));
+			}
+		}
+		if (!any && c != coffer::kRanger) out.push_back("You carry none of your class's altar spells right now - call one at an Echo Altar.");
+		switch (c) {
+		case coffer::kSummoner:
+			{
+				int cap = 1;
+				for (int k = 5; k >= 2; --k) {
+					if (auto* perk = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSPerk>(gen::kSummonCapPerks[k - 2], gen::kPlugin); perk && p->HasPerk(perk)) { cap = k; break; }
+				}
+				out.push_back(fmt::format("<b>Command: {} summon{} at once.</b> Each rung you raise widens it: 2 after your first, 3 after three, 4 after six (one more with the Conjurer's Command Mead).", cap, cap == 1 ? "" : "s"));
+				out.push_back(fmt::format("Indrik mounts: {} of 10 - one for each altar you free.", std::min(freed, 10)));
+				out.push_back(freed >= 6 ? std::string("<b>Hero's Pact</b> is open: bind a hero or an army at any altar's second row.") : fmt::format("Hero's Pact: opens at 6 freed altars ({} to go).", 6 - freed));
+			}
+			break;
+		case coffer::kDestruction:
+			out.push_back("Hold a different element in each hand: the Trial of the Elements wants kills with two elements or more.");
+			break;
+		case coffer::kRanger:
+			{
+				const int b = Bows::Carried();
+				out.push_back(b >= 0 ? fmt::format("<b>Your bow: {}</b>, tier {} of 3 - {}.", Bows::Name(b), Bows::Level(b), Bows::TierName(b, Bows::Level(b)))
+				                     : std::string("You carry no elemental bow - call one at an Echo Altar's bow row."));
+				out.push_back(BoltLine() + ".");
+			}
+			break;
+		case coffer::kSpellsword:
+			{
+				int imbued = 0;
+				for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == coffer::kSpellsword) imbued += Arcana::RungOf(i) - 1;
+				out.push_back(fmt::format("<b>Imbues: {}.</b> Enchantment Powers unlocked: {} of 4. Magical Shouts: {} of 3 (the 2nd at 2 imbues, the 3rd at 4).", imbued, std::min(imbued, 4), imbued >= 4 ? 3 : imbued >= 2 ? 2 : 1));
+			}
+			break;
+		}
+		// the class's own perks
+		std::string perks;
+		for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
+			if (gen::kPerkClass[i] != c) continue;
+			perks += (perks.empty() ? "" : ", ") + std::string(gen::kPerks[i].label) + (Save::PerkStacks(i) > 0 ? " (taken)" : "");
+		}
+		if (!perks.empty()) out.push_back("Your class's perks at the altar: " + perks + ".");
+		out.push_back("<b>Wonder:</b> " + WonderLineNow() + ".");
+		return out;
+	}
 	std::string WonderLineNow();
 	void Tick()
 	{
@@ -511,16 +624,24 @@ namespace bo3z::Classes
 		if (!p || !dh) return;
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();
 		{  // (Noah: "increase the attack speed with melee weapons") both hands' swing speed, from the Mod Configuration menu
+			// (Noah: "a bow and crossbow draw speed changer next to the melee speed") Skyrim's weapon speed scales a bow's
+			// draw and a crossbow's reload as it does a swing: with a bow or crossbow in hand it takes the draw setting
 			auto*       av = p->AsActorValueOwner();
-			const float want = Settings::MeleeSpeed();
+			auto*       held = p->GetEquippedObject(false);
+			auto*       wp = held ? held->As<RE::TESObjectWEAP>() : nullptr;
+			const bool  ranged = wp && (wp->IsBow() || wp->IsCrossbow());
+			const float want = ranged ? Settings::DrawSpeed() * Perks::DrawSpeedMult() : Settings::MeleeSpeed() * Perks::SwingSpeedMult();
 			if (std::abs(av->GetBaseActorValue(RE::ActorValue::kWeaponSpeedMult) - want) > 0.01f) av->SetBaseActorValue(RE::ActorValue::kWeaponSpeedMult, want);
 			if (std::abs(av->GetBaseActorValue(RE::ActorValue::kLeftWeaponSpeedMultiply) - want) > 0.01f) av->SetBaseActorValue(RE::ActorValue::kLeftWeaponSpeedMultiply, want);
 		}  // (Noah: still there before the class was chosen - from the first moment now)
 		if (auto* ui = RE::UI::GetSingleton(); ui && !ui->IsMenuOpen(RE::InventoryMenu::MENU_NAME) && !ui->IsMenuOpen(RE::ContainerMenu::MENU_NAME)) DressUnder();  // (Noah: a bra and underwear, never bare)
 		{
 			auto line = WonderLineNow();
+			auto prog = ProgressNow();
 			std::scoped_lock l(g_lineLock);
 			g_line = std::move(line);
+			g_progress = std::move(prog);
+			g_progressCls = g_class.load();
 		}
 		// (Noah's plan, the Ranger's brew) Fletcher's Sap Draught: the arrows or bolts in use grow back, one every 20 s, faster each draught
 		if (const int fl = Save::PerkStacks(gen::kPerk_fletcher); fl > 0) {
@@ -574,8 +695,9 @@ namespace bo3z::Classes
 				if (Arcana::ClassOf(i) == coffer::kSummoner) climbs += Arcana::RungOf(i) - 1;
 			}
 		}
-		const int cap = g_class.load() != coffer::kSummoner ? 1 : climbs >= 6 ? 4 : climbs >= 3 ? 3 : climbs >= 1 ? 2 : 1;
-		for (int n = 2; n <= 4; ++n) {
+		int cap = g_class.load() != coffer::kSummoner ? 1 : climbs >= 6 ? 4 : climbs >= 3 ? 3 : climbs >= 1 ? 2 : 1;
+		if (g_class.load() == coffer::kSummoner && Save::PerkStacks(gen::kPerk_command) > 0) cap = std::min(5, cap + 1);  // (the Conjurer's Command: one more)
+		for (int n = 2; n <= 5; ++n) {
 			auto* perk = dh->LookupForm<RE::BGSPerk>(gen::kSummonCapPerks[n - 2], gen::kPlugin);
 			if (!perk) continue;
 			const bool want = n == cap, have = p->HasPerk(perk);
@@ -828,19 +950,14 @@ namespace bo3z::Classes
 		}
 	}
 
-	// (Noah's plan, the Summoner: Calling of the Conjurer's heroes and armies as late Legendaries) once one of your families
-	// is Legendary and two cities are free, the altar's second row binds a hero - then, with four cities free, an army
+	// (Noah's plan, the Summoner: Calling of the Conjurer's heroes and armies as late Legendaries) the altar's second row
+	// binds a hero or an army - (Noah: "keep the 6 free cities gate instead of both") its only gate is the altar's six
+	// freed cities (src/Shops.cpp), no Legendary family needed
 	bool RollHero(Prize* a_out)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return false;
-		bool legend = false;
-		for (int i : Arcana::Carried()) legend |= Arcana::ClassOf(i) == coffer::kSummoner && Arcana::RungOf(i) >= coffer::kSpells[i].rungs;
-		const int freed = FreedCount();
-		if (!legend || freed < 2) {
-			Hud::Banner("Heroes answer only a Legendary summoner, with two cities free", 3.0f);
-			return false;
-		}
+		const int freed = std::max(FreedCount(), 4);  // (past the altar's gate of six: the armies answer too)
 		static constexpr std::uint32_t kHeroes[] = { 0x019D7C, 0x0290A4, 0x0290A3, 0x0290A6, 0x0CB318, 0x103618, 0x019D66 };  // Ysgramor, Gormlaith, Felldir, Hakon, Miraak, Karstaag, the Ebony Warrior
 		static constexpr std::uint32_t kArmies[] = { 0x09370D, 0x0A2A1D, 0x0CB311, 0x0C61F9 };  // the Dragon Priest, Dwarven, Undead and Hero armies
 		std::vector<RE::SpellItem*> pool;
@@ -870,6 +987,12 @@ namespace bo3z::Classes
 		for (auto s : g_wStep) if (s > kWonderSteps) return true;
 		return false;
 	}
+	std::vector<std::string> Progress(int& a_cls)
+	{
+		std::scoped_lock l(g_lineLock);
+		a_cls = g_progressCls;
+		return g_progress;
+	}
 	std::string WonderLine()
 	{
 		std::scoped_lock l(g_lineLock);
@@ -895,9 +1018,10 @@ namespace bo3z::Classes
 		if (!Director::IsFoe(a_target) || a_target->IsDead()) return;
 		auto* src = RE::TESForm::LookupByID(a_source);
 		if (!src) return;
-		if (src == Auriel()) {  // sunfire on every hit; after Sovngarde every third calls Daybreak
-			CastFrom(p, Myst(0x2466C0), a_target);
-			if (AfterSovngarde() && ++g_aurielHits % 3 == 0) CastFrom(p, Myst(0x7BC311), a_target);
+		if (auto* w = src->As<RE::TESObjectWEAP>(); w && !w->IsBow() && !w->IsCrossbow() && !w->IsStaff()) Perks::OnMeleeHit();  // (Bladesong Mead)
+		if (src == Vortex()) {
+			// (its arrow found one of the dead: the hole opens on it - TickFast sees the arrow gone and lets it be)
+			OpenVortex(a_target->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, true);
 		} else if (src == Slayer() && g_bladeCool <= 0) {  // the spell in your other hand rides the blade
 			const int left = Arcana::Hands()[0];
 			auto* sp = left >= 0 ? Arcana::Spell(left) : nullptr;
@@ -930,7 +1054,7 @@ namespace bo3z::Classes
 		int SummonCap(RE::PlayerCharacter* a_p)
 		{
 			auto* dh = RE::TESDataHandler::GetSingleton();
-			for (int n = 4; n >= 2; --n) {
+			for (int n = 5; n >= 2; --n) {
 				if (auto* perk = dh ? dh->LookupForm<RE::BGSPerk>(gen::kSummonCapPerks[n - 2], gen::kPlugin) : nullptr; perk && a_p->HasPerk(perk)) return n;
 			}
 			return 1;
@@ -959,8 +1083,17 @@ namespace bo3z::Classes
 				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 					if (auto a = h.get(); a && a.get() != p && !a->IsDead() && a->IsCommandedActor() && a->GetCommandingActor().get() == p) mine.push_back(a.get());
 				}
+				static std::unordered_set<RE::FormID> mighty;  // (Bonebinder's Brew) each summon made stronger once
+				if (mighty.size() > 200) mighty.clear();
 				for (auto* s : mine) {
 					if (s->IsDead() || s->IsDisabled()) continue;
+					if (Perks::SummonMight() && mighty.insert(s->GetFormID()).second) {
+						auto*       sav = s->AsActorValueOwner();
+						const float more = gen::kPerks[gen::kPerk_bonebinder].value - 1.0f;
+						sav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, sav->GetPermanentActorValue(RE::ActorValue::kHealth) * more);
+						sav->RestoreActorValue(RE::ActorValue::kHealth, 1.0e6f);
+						sav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kAttackDamageMult, more);
+					}
 					auto cur = s->GetActorRuntimeData().currentCombatTarget.get();
 					if (cur && !cur->IsDead() && Director::IsFoe(cur.get())) continue;
 					RE::Actor* best = nullptr;
@@ -1093,8 +1226,8 @@ namespace bo3z::Classes
 	int RestockWonder()
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
-		auto* bow = Auriel();
-		auto* ar = Sunhallowed();
+		auto* bow = Vortex();
+		auto* ar = VortexArrow();
 		int n = TopUpBolts(20);  // (crossbow mastery's elemental bolts)
 		if (!p || !bow || !ar || p->GetItemCount(bow) <= 0) return n;
 		const int have = p->GetItemCount(ar);
@@ -1103,17 +1236,22 @@ namespace bo3z::Classes
 		return n + 1;
 	}
 
-	// every frame: cooldowns, and Auriel's arrows seek the dead
+	// every frame: cooldowns, and where the Subsuming Vortex's arrows come down
 	void TickFast(float a_delta)
 	{
 		TickSummons(a_delta);
 		g_tomeCool = std::max(0.0f, g_tomeCool - a_delta);
 		g_bladeCool = std::max(0.0f, g_bladeCool - a_delta);
-		auto* bow = Auriel();
+		g_vortexCool = std::max(0.0f, g_vortexCool - a_delta);
+		auto* bow = Vortex();
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* mgr = RE::Projectile::Manager::GetSingleton();
-		if (!bow || !p || !mgr || p->GetItemCount(bow) <= 0) return;
-		std::vector<RE::Projectile*> mine;
+		if (!bow || !p || !mgr || p->GetItemCount(bow) <= 0) {
+			g_vortexArrows.clear();
+			return;
+		}
+		// each arrow of ours in flight: where it is; one that stops, or is gone, came down there - a hole opens
+		std::unordered_map<RE::FormID, std::pair<RE::NiPoint3, float>> now;
 		{
 			RE::BSSpinLockGuard lock(mgr->projectileLock);
 			for (auto* list : { &mgr->limited, &mgr->unlimited }) {
@@ -1121,24 +1259,22 @@ namespace bo3z::Classes
 					auto pr = h.get();
 					if (!pr || pr->IsDeleted()) continue;
 					auto& rd = pr->GetProjectileRuntimeData();
-					if (rd.weaponSource == bow && rd.shooter.get().get() == p) mine.push_back(pr.get());
+					if (rd.weaponSource == bow && rd.shooter.get().get() == p) now[pr->GetFormID()] = { pr->GetPosition(), rd.linearVelocity.Length() };
 				}
 			}
 		}
-		for (auto* pr : mine) {
-			auto&              rd = pr->GetProjectileRuntimeData();
-			const RE::NiPoint3 at = pr->GetPosition();
-			const auto         closest = NearFoes(at, 2200.0f, 1);
-			if (closest.empty()) continue;
-			RE::NiPoint3 want = closest[0]->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f } - at;
-			if (want.Length() < 1.0f) continue;
-			want.Unitize();
-			const float  sp = std::max(rd.linearVelocity.Length(), 600.0f);
-			RE::NiPoint3 v = rd.linearVelocity.Length() > 1.0f ? rd.linearVelocity / rd.linearVelocity.Length() : want;
-			const float  k = std::min(1.0f, 7.0f * a_delta);
-			v = v * (1.0f - k) + want * k;
-			if (v.Length() > 0.001f) v.Unitize();
-			rd.linearVelocity = v * sp;
+		for (auto& [id, a] : g_vortexArrows) {
+			auto it = now.find(id);
+			const bool gone = it == now.end();
+			if (!a.done && (gone || it->second.second < 60.0f)) {
+				a.done = true;
+				if (!a.hit) OpenVortex(gone ? a.last : it->second.first, false);
+			}
+			if (!gone) a.last = it->second.first;
+		}
+		std::erase_if(g_vortexArrows, [&](const auto& e) { return !now.contains(e.first); });
+		for (auto& [id, pv] : now) {
+			if (!g_vortexArrows.contains(id)) g_vortexArrows[id] = { pv.first, false, false };
 		}
 	}
 

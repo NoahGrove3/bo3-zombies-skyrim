@@ -321,7 +321,7 @@ namespace bo3z
 				gen::kAV_reserve0, gen::kAV_reserve1, gen::kAV_reserve2 };
 			std::array<int, std::size(kSavedAVs)> g_val{};
 			bool                                  g_coSave = false;
-			std::array<int, 16>                   g_stacks{};  // blessings bought, each
+			std::array<int, 32>                   g_stacks{};  // blessings bought, each (32: the class perks)
 			bool                                  g_stacksLoaded = false;
 			int                                   g_stamBonus = 0;
 			int                                   g_bond = 0;  // the dragon's bond  // the extra stamina given to this character  // SKSE's serialization is ours (else: the old actor values)
@@ -360,7 +360,7 @@ namespace bo3z
 				if (a_s->OpenRecord(kRecord, kRecordVersion)) {
 					a_s->WriteRecordData(g_val.data(), static_cast<std::uint32_t>(sizeof(int) * g_val.size()));
 				}
-				if (a_s->OpenRecord('PRKS', 1)) {
+				if (a_s->OpenRecord('PRKS', 2)) {  // (2: room for 32)
 					a_s->WriteRecordData(g_stacks.data(), static_cast<std::uint32_t>(sizeof(int) * g_stacks.size()));
 				}
 				if (a_s->OpenRecord('STAM', 1)) {
@@ -401,7 +401,8 @@ namespace bo3z
 				while (a_s->GetNextRecordInfo(type, version, length)) {
 					if (type == kRecord && length == sizeof(int) * g_val.size()) {
 						found = a_s->ReadRecordData(g_val.data(), length) == length;
-					} else if (type == 'PRKS' && length == sizeof(int) * g_stacks.size()) {
+					} else if (type == 'PRKS' && (length == sizeof(int) * g_stacks.size() || length == sizeof(int) * 16)) {  // (16: before the class perks)
+						g_stacks.fill(0);
 						g_stacksLoaded = a_s->ReadRecordData(g_stacks.data(), length) == length;
 					} else if (type == 'STAM' && length == sizeof(int)) {
 						a_s->ReadRecordData(&g_stamBonus, length);
@@ -446,7 +447,7 @@ namespace bo3z
 					Tasks::Add([] { Curse::MigrateRites(); });
 				}
 				if (!g_stacksLoaded) {  // an older save: one of each blessing it carries
-					for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 16; ++i) {
+					for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 32; ++i) {
 						g_stacks[i] = 0;
 					}
 				}
@@ -478,12 +479,12 @@ namespace bo3z
 
 		int PerkStacks(int a_perk)
 		{
-			if (a_perk < 0 || a_perk >= 16) {
+			if (a_perk < 0 || a_perk >= 32) {
 				return 0;
 			}
 			if (!g_stacksLoaded) {  // an older save (or the old actor values): what its perk bits say
-				for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 16; ++i) {
-					g_stacks[i] = HasPerk(i) ? 1 : 0;
+				for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 32; ++i) {
+					g_stacks[i] = PerkBit(i) ? 1 : 0;
 				}
 				g_stacksLoaded = true;
 			}
@@ -491,12 +492,12 @@ namespace bo3z
 		}
 		void SetPerkStacks(int a_perk, int a_n)
 		{
-			if (a_perk < 0 || a_perk >= 16) {
+			if (a_perk < 0 || a_perk >= 32) {
 				return;
 			}
 			PerkStacks(a_perk);
 			g_stacks[a_perk] = std::max(0, a_n);
-			SetPerk(a_perk, a_n > 0);
+			if (a_perk < kOldPerkBits) SetPerk(a_perk, a_n > 0);  // (the flags hold the first nine: bit 23 is the layout's own)
 		}
 
 		int Get(int a_av)
@@ -542,9 +543,16 @@ namespace bo3z
 		int  Crew() { return ((Flags() >> 1) & 0x7) - 1; }
 		void SetCrew(int a_crew) { SetFlags((Flags() & ~(0x7 << 1)) | (((a_crew + 1) & 0x7) << 1)); }
 		// v0.3 layout: perks moved to bits 14-22 so nine fit (v0.2 kept seven at bits 4-10).
-		bool HasPerk(int a_perk) { return (Flags() >> (kPerkShift + a_perk)) & 1; }
-		void SetPerk(int a_perk, bool a_on) { SetFlag(kPerkShift + a_perk, a_on); }
-		int  PerkBits() { return (Flags() >> kPerkShift) & 0x1FF; }
+		// (the class perks: past the nine the flags have room for, a perk lives in the co-save's counts alone)
+		bool PerkBit(int a_perk) { return a_perk >= 0 && a_perk < kOldPerkBits && ((Flags() >> (kPerkShift + a_perk)) & 1); }
+		bool HasPerk(int a_perk) { return PerkStacks(a_perk) > 0; }
+		void SetPerk(int a_perk, bool a_on) { if (a_perk >= 0 && a_perk < kOldPerkBits) SetFlag(kPerkShift + a_perk, a_on); }
+		std::uint32_t PerkBits()
+		{
+			std::uint32_t b = 0;
+			for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 32; ++i) b |= (PerkStacks(i) > 0 ? 1u : 0u) << i;
+			return b;
+		}
 		int  PerkCount()
 		{
 			int n = 0;

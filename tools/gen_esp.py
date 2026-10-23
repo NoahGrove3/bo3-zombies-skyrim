@@ -271,9 +271,36 @@ for bw in S['bows']['rows']:
         subs.append(sub(name, b))
     recs['WEAP'].append(record('WEAP', fid('WEAP', 'bow_' + bw['id']), subs))
 
+# (Noah: the Ranger's wonder is a purple bow, the Subsuming Vortex) a real bow - its arrows hit as arrows - whose every
+# arrow opens a black hole where it lands (src/Classes.cpp TickFast finds where it struck; src/Gun.cpp BlackHole)
+pd = bytearray(tsub('proj_arrow', 'DATA'))
+struct.pack_into('<I', pd, 16, 0)                     # no light
+recs['PROJ'].append(record('PROJ', fid('PROJ', 'vortexarrow'), [
+    sub('EDID', z('UN_VortexArrowProj')), sub('OBND', tsub('proj_arrow', 'OBND')), sub('FULL', z('Vortex Arrow')),
+    sub('MODL', z('Weapons\\BoundWeapons\\BoundArrowFlight.nif')), sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', tsub('proj_arrow', 'VNAM'))]))
+recs['AMMO'].append(record('AMMO', fid('AMMO', 'vortexarrow'), [
+    sub('EDID', z('UN_VortexArrow')), sub('OBND', tsub('ammo_iron', 'OBND')), sub('FULL', z('Vortex Arrow')),
+    sub('MODL', z('Weapons\\BoundWeapons\\BoundArrow.nif')), sub('YNAM', tsub('ammo_iron', 'YNAM')), sub('ZNAM', tsub('ammo_iron', 'ZNAM')),
+    sub('KSIZ', tsub('ammo_iron', 'KSIZ')), sub('KWDA', tsub('ammo_iron', 'KWDA')), sub('DATA', struct.pack('<IIfIf', fid('PROJ', 'vortexarrow'), 0x4, 20.0, 0, 0.0))]))
+subs = []
+for name, hx in T['weap_longbow']['subs']:
+    b = bytes.fromhex(hx)
+    if name == 'EDID': b = z('UN_SubsumingVortex')
+    elif name == 'FULL': b = z('Subsuming Vortex')
+    elif name == 'MODL': b = z('CurseOfAlduin\\bow\\vortex.nif')
+    elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_vortex'))
+    elif name == 'MODT': continue
+    elif name == 'DESC': b = z("A bow of black-violet steel that hums like a held breath. Every arrow it looses tears open a black hole where it lands: the dead are dragged in, then it bursts. After Sovngarde the holes grow wider and pull harder.")
+    elif name == 'DATA': b = struct.pack('<IfH', 5000, 1.0, 22)
+    subs.append(sub(name, b))
+recs['WEAP'].append(record('WEAP', fid('WEAP', 'vortex'), subs))
+recs['ACTI'].append(record('ACTI', fid('ACTI', 'vortexfx'), [sub('EDID', z('UN_VortexFx')), sub('OBND', struct.pack('<6h', -170, -170, -150, 170, 170, 150)),
+    sub('MODL', z('CurseOfAlduin\\fx\\vortex.nif')), sub('FNAM', b'\0\0')]))
+
 # (the classes overhaul) the Summoner's command: hidden perks that set how many summons you may hold (2, 3, 4) -
 # Twin Souls' own entry point (Mod Commanded Actor Limit, Set Value), without its conditions, above it in priority
-for n in (2, 3, 4):
+# (5: the Conjurer's Command perk's one more)
+for n in (2, 3, 4, 5):
     recs['PERK'].append(record('PERK', fid('PERK', f'summon_cap_{n}'), [
         sub('EDID', z(f'UN_SummonCap{n}')), sub('FULL', z(f'Command of {n}')), sub('DESC', z(f'You can hold {n} summons at once.')),
         sub('DATA', bytes([0, 0, 1, 0, 1])), sub('PRKE', bytes([2, 0, 10 + n])), sub('DATA', bytes([68, 1, 0])),
@@ -575,7 +602,16 @@ def lore_text():
            "a woken altar gives you, <i>The Broken Words</i>, are theirs.</p>",
            "<p>Those who stand against the dead with you have their own reasons. The conjurers and battle-mages of the <b>College of Winterhold</b> have seen Morokei walk again; "
            "the <b>Dawnguard</b> hunt what rises at night; the <b>Vigilants of Stendarr</b> will not let the dead walk while they draw breath.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>VI. The Voices of the Holds</font></p>"]
+           "[pagebreak]", "<p align='center'><font size='24'>VI. The Dragonborn's Road</font></p>",
+           # (Noah: the lore book "containing the lore and how it ties to the Skyrim story")
+           "<p>The Curse does not replace your own story; it walks beside it. Everything the Greybeards foretold for the Dragonborn still waits for you, and each step of it touches the Long Night.</p>",
+           "<p><b>Helgen</b> is where it began: Alduin's return, and the three Words he sank into the earth. You came out of it alive, and the road brought you to <b>Riverwood</b>, whose Echo Altar stands nearest the place he rose. It is the first to wake.</p>",
+           "<p>At <b>Whiterun</b> the Jarl will send you to the Western Watchtower, and the first dragon soul you take will show you what you are. Whiterun's altar answers that soul: wake it, and a dragon of your own will carry you.</p>",
+           "<p>When the Greybeards call you up the Seven Thousand Steps to <b>High Hrothgar</b>, walk the <b>Way of the Voice</b>. Without it the altars' heart-stones keep their words; with it, every woken altar teaches you its city's Thu'um. The Greybeards' hall also hides the <b>Reliquary</b>, where the parts the Dragon Priests left behind are forged into wonders.</p>",
+           "<p>The Blades, Alduin's Wall, the Elder Scroll, the truce at High Hrothgar and the hunt for Alduin's lair are the old story, and the Curse does not change them. But Alduin fled to <b>Sovngarde</b>, and his mist on its door is the reason the dead rise. When you follow him there and he falls - the <b>Dragonslayer</b> - the mist thins: the class wonders you have won wake to their <b>Legendary</b> form.</p>",
+           "<p>Even then his three Words lie in the ground. With your class's wonder in hand they wake one by one - <b>SLEN</b>, <b>TIID</b> and <b>VO</b> - each at an old place of the Dragon Cult. Silence all three and the Curse of Alduin is broken for good.</p>",
+           "<p>Those who stand with you have their own roads too: the conjurers and battle-mages of the <b>College of Winterhold</b>, the <b>Dawnguard</b> of Fort Dawnguard, and the <b>Vigilants of Stendarr</b>. Choose your path at an Echo Altar, and your guide will tell you how it grows.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>VII. The Voices of the Holds</font></p>"]
     for h in S['shouts']['rows']:
         if h.get('town'):
             out.append(f"<p><b>{h['town']}</b>: <i>{h['label']}</i> ({' '.join(h['words'])}, '{' '.join(h['translations'])}'). {h['text']}.</p>")
@@ -664,6 +700,27 @@ for key, edid, name, text, model in (('dirge', 'UN_UndyingDirgeBook', 'The Curse
         sub('MODL', z(model)), sub('DESC', z(text)),
         sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x000937A2)),
         sub('DATA', struct.pack('<BBHIIf', 0, 0, 0, 0, 25, 1.0)), sub('INAM', struct.pack('<I', 0x0008ADAE)), sub('CNAM', struct.pack('<I', 0))]))
+
+# ---- (Noah: "a guide book for each class that tracks progression") the four class guides (sheet: guides), given when the
+# class is chosen; read in the Codex (src/Hud.cpp), which adds the live 'Your Progress' page. The book's own text is the
+# same chapters, should the Codex ever not show.
+G = S['guides']
+GUIDE_KEEP = ['The Dragon', 'Echo Stones and the Reliquary', 'The Wonder Weapons', 'The Three Words', 'The Hall of the Awakened',
+              'Whispers of the Altars', 'Event Nights and Themed Waves', 'Falling']   # (the old Survivor's Guide's chapters still true)
+def guide_chapters(cls):
+    out = [(c['title'], '', c['paras']) for c in cls['chapters']]
+    out.insert(1, (G['progressTitle'], '@progress', []))   # (second: right after who you are)
+    out += [(c['title'], '', c['paras']) for c in G['shared'][:-1]]
+    return out
+def guide_tail():
+    return [(c['title'], '', c['paras']) for c in G['shared'][-1:]]
+def class_book_text(cls, extra):
+    out = ["<font face='$HandwrittenFont'>", f"<p align='center'><font size='28'>{cls['book'].upper()}</font></p>"]
+    for title, image, paras in guide_chapters(cls) + extra + guide_tail():
+        if image == '@progress':
+            continue
+        out += ['[pagebreak]', f"<p align='center'><font size='24'>{title}</font></p>"] + [f'<p>{q}</p>' for q in paras]
+    return '\n'.join(out + ['</font>'])
 
 # ---- Stage 2 (sheet: echo, src/Echo.cpp): the Echo Stones' pages, the hunt's globals, the Reliquary under High Hrothgar
 E = S['echo']
@@ -767,17 +824,7 @@ for key, col, radius in (('rel_blue', '5AA8FF', 620), ('rel_warm', 'FFD9A0', 110
     recs['LIGH'].append(record('LIGH', fid('LIGH', key), [sub('EDID', z('UN_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.0))]))
 
 # (spell blasts are cloned from Skyrim's explosions at runtime: EXPL records in an ESL crashed the game at load)
-count = sum(len(v) for v in recs.values())
-hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('The Curse of Alduin: round-based undead survival for Skyrim'))]
-for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
-out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
-for k in ['GLOB', 'FACT', 'VTYP', 'FSTS', 'LSCR', 'MUSC', 'MUST', 'ARTO', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR', 'QUST']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
-(ROOT / 'data').mkdir(exist_ok=True)
-(ROOT / 'data' / PLUGIN).write_bytes(out)
-print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')
-
-# ---- (Noah: the lore and the guide read in a window of their own, not a book) src/Codex.h: both books as chapters
-# (title, picture, paragraphs with <b>/<i> kept) for the Codex (src/Hud.cpp DrawCodex), shown when either book is read
+# (the Codex's chapter parser, shared by the class guides' book text and src/Codex.h below)
 import re as _re
 def codex_chapters(html, first, last):
     pages = html.replace('</font>', '').split('[pagebreak]')
@@ -803,14 +850,36 @@ def codex_chapters(html, first, last):
             title = first if n == 0 else last
         out.append((title, image, paras))
     return out
+_GUIDE_OLD = {t: (t, im, ps) for t, im, ps in codex_chapters(guide_text(), 'Before Dusk', 'Good Luck')}
+GUIDE_EXTRA = [_GUIDE_OLD[t] for t in GUIDE_KEEP if t in _GUIDE_OLD]
+for cls in G['rows']:
+    recs['BOOK'].append(record('BOOK', fid('BOOK', 'guide_' + cls['id']), [
+        sub('EDID', z('UN_ClassGuide_' + cls['id'])), sub('OBND', bytes.fromhex('f5fff1fffdff0b000f000300')), sub('FULL', z(cls['book'])),
+        sub('MODL', z('Clutter\\Books\\Book02LowPoly02.nif')), sub('DESC', z(class_book_text(cls, GUIDE_EXTRA))),
+        sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x000937A2)),
+        sub('DATA', struct.pack('<BBHIIf', 0, 0, 0, 0, 25, 1.0)), sub('INAM', struct.pack('<I', 0x0008ADAE)), sub('CNAM', struct.pack('<I', 0))]))
+
+count = sum(len(v) for v in recs.values())
+hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('The Curse of Alduin: round-based undead survival for Skyrim'))]
+for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
+out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
+for k in ['GLOB', 'FACT', 'VTYP', 'FSTS', 'LSCR', 'MUSC', 'MUST', 'ARTO', 'MGEF', 'BOOK', 'ENCH', 'SPEL', 'WOOP', 'SHOU', 'ACTI', 'ARMO', 'LIGH', 'STAT', 'WEAP', 'AMMO', 'NPC_', 'ALCH', 'PROJ', 'ARMA', 'SNDR', 'QUST']: out += group(k, recs[k])  # Bethesda's group order: effects load before the spells that use them
+(ROOT / 'data').mkdir(exist_ok=True)
+(ROOT / 'data' / PLUGIN).write_bytes(out)
+print('wrote', PLUGIN, len(out), 'bytes,', count, 'records')
+
+# ---- (Noah: the lore and the guide read in a window of their own, not a book) src/Codex.h: both books as chapters
+# (title, picture, paragraphs with <b>/<i> kept) for the Codex (src/Hud.cpp DrawCodex), shown when either book is read
 def _cs(s):
     return '"' + s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', ' ') + '"'
 _cx = ['// generated by tools/gen_esp.py from the lore book and the guide - do not edit', '#pragma once', '#include <array>', '#include <string_view>', '#include <vector>',
        'namespace bo3z::codex', '{', '\tstruct Chapter { int book; std::string_view title, image; std::vector<std::string_view> paras; };',
-       '\tinline constexpr std::array<std::string_view, 2> kBooks{ "The Curse of Alduin", "A Survivor\'s Guide" };',
+       '\tinline constexpr std::array<std::string_view, 5> kBooks{ "The Curse of Alduin", ' + ', '.join(_cs(c['book']) for c in G['rows']) + ' };  // 0 the lore, 1-4 the class guides (Summoner, Destruction, Ranger, Spellsword)',
        '\tinline const std::vector<Chapter> kChapters{']
-for b, (html, first, last) in enumerate([(lore_text(), 'The Greybeard\'s Account', 'Epilogue'), (guide_text(), 'Before Dusk', 'Good Luck')]):
-    for title, image, paras in codex_chapters(html, first, last):
+for title, image, paras in codex_chapters(lore_text(), 'The Greybeard\'s Account', 'Epilogue'):
+    _cx.append('\t\t{ %d, %s, %s, { %s } },' % (0, _cs(title), _cs(image), ', '.join(_cs(p) for p in paras)))
+for b, cls in enumerate(G['rows'], 1):   # (each class guide: its chapters, the live page (image '@progress'), the shared ones, the old guide's still-true ones, Settings)
+    for title, image, paras in guide_chapters(cls) + GUIDE_EXTRA + guide_tail():
         _cx.append('\t\t{ %d, %s, %s, { %s } },' % (b, _cs(title), _cs(image), ', '.join(_cs(p) for p in paras)))
 _cx += ['\t};', '}', '']
 (ROOT / 'src' / 'Codex.h').write_text('\n'.join(_cx), encoding='utf-8')
