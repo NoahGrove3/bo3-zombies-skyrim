@@ -1225,7 +1225,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// (Noah: "the wave marker overlaps the compass - one box on the top left, to match the new UI") Edge UI: the night
 			// and its wave in one panel - NIGHT n over a hairline, the night's kind at its right; the wave's rune ring with its
 			// number, WAVE x / y and the dead still to fall (or the breath before the next) under it
-			if (Hud::kEdgeHud && s.round > 0) {
+			// (Noah: hidden until a class is chosen - the essence, the perks and the night's box)
+			const bool classChosen = Classes::Get() >= 0;
+			if (Hud::kEdgeHud && s.round > 0 && classChosen) {
 				const bool   waveOn = s.nightActive && s.waves > 0 && s.sanctuary.empty();
 				const bool   ev = s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size());
 				const float  W = 300 * k, H = (waveOn ? 112 : 46) * k + (waveOn && !s.waveTheme.empty() ? 18 * k : 0.0f);
@@ -1353,7 +1355,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 			// Points: small and clean in the very bottom-left corner - a gold septim and the count, on a shadow that
 			// fades out to the right (no frame)
-			{
+			if (classChosen) {
 				static float shownPts = 0;
 				shownPts += (s.points - shownPts) * std::min(1.0f, dt * 9.0f);
 				if (std::abs(s.points - shownPts) < 1.0f) shownPts = static_cast<float>(s.points);
