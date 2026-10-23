@@ -34,8 +34,9 @@
         {
           "title": "Binding Pacts",
           "paras": [
-            "A family climbs on <b>kills by your summons</b> (or your own kills with that summon spell in hand). It needs <b>25 kills</b> to reach rung 2, <b>60</b> to reach rung 3 and <b>120</b> to reach the Legendary rung. The count starts again after each climb.",
-            "With the kills in, hold the spell and take the altar's <b>Bind Pact</b> row (the forge). It opens once <b>three Echo Altars are freed</b>, costs 5,000, 8,000, then 12,000 essence, and each spell can climb once a night.",
+            "A spell grows in two steps. <b>First you earn it with kills</b>: kills made by your summons (or by you) while the spell is in your hand fill its count. <b>Then the Echo Altar does the raising</b>: the count alone changes nothing until you take it to an altar.",
+            "<b>Kills needed</b>: 25 to reach rung 2, 60 to reach rung 3 and 120 to reach the Legendary rung. The count belongs to the spell's whole ladder, and starts again from zero after each climb. Your class guide's <i>Your Progress</i> page shows every spell's count.",
+            "<b>At the altar</b>: equip the spell (right hand, or left if the right is empty), look into the altar's star, and take the <b>Bind Pact</b> row. It swaps your spell for the next one up its ladder. The row opens once <b>three Echo Altars are freed</b>, costs 5,000, 8,000, then 12,000 essence, and each spell can climb once a night. If the kills aren't in yet, the altar tells you how many are left.",
             "<b>Command</b>: you hold one summon at first. Your first climb lets you hold 2, three climbs 3, six climbs 4. At your limit a new summon takes the oldest one's place.",
             "Every freed city also teaches you an <b>Indrik mount</b>."
           ]
@@ -98,8 +99,9 @@
         {
           "title": "Reforging",
           "paras": [
-            "An element climbs on <b>kills with that spell in hand</b>: <b>25 kills</b> to reach rung 2, <b>60</b> to reach rung 3, <b>120</b> to reach the Legendary rung. The count starts again after each climb.",
-            "With the kills in, hold the spell and take the altar's <b>Reforge</b> row. It opens once <b>three Echo Altars are freed</b>, costs 5,000, 8,000, then 12,000 essence, and each spell can climb once a night."
+            "A spell grows in two steps. <b>First you earn it with kills</b>: your kills while the spell is in your hand fill its count. <b>Then the Echo Altar does the raising</b>: the count alone changes nothing until you take it to an altar.",
+            "<b>Kills needed</b>: 25 to reach rung 2, 60 to reach rung 3 and 120 to reach the Legendary rung. The count belongs to the spell's whole ladder, and starts again from zero after each climb. Your class guide's <i>Your Progress</i> page shows every spell's count.",
+            "<b>At the altar</b>: equip the spell (right hand, or left if the right is empty), look into the altar's star, and take the <b>Reforge</b> row. It swaps your spell for the next one up its ladder. The row opens once <b>three Echo Altars are freed</b>, costs 5,000, 8,000, then 12,000 essence, and each spell can climb once a night. If the kills aren't in yet, the altar tells you how many are left."
           ]
         },
         {
@@ -193,16 +195,7 @@
           "title": "The Spellsword",
           "paras": [
             "You are a <b>Vigilant of Stendarr</b>, who will not let the dead walk while you draw breath. Steel in one hand, a spell in the other.",
-            "You start with the <b>Steel Spellsword</b> in your hand, a <b>Steel Spellshield</b> in your pack, <b>Flame Touch</b> in your left hand, the Practical Pirate outfit, and The Wizard Warrior's <b>Import Mode</b> and first <b>Magical Shout</b>."
-          ]
-        },
-        {
-          "title": "The Wizard Warrior",
-          "paras": [
-            "<b>Import Mode</b> is a power. Hold a spell in a hand (or one in each), use Import Mode, and it asks where to bind that spell: your right or left weapon swing, a bow shot, a block, a bash, an instant cast, a power attack in a given direction, or your <b>Magical Shout</b> - then which of its four groups to keep it in.",
-            "From then on, while the Wizard Warrior power is on (its Toggle Ability key, on its own page of the Mod Configuration menu), that action casts the bound spell for you, paying its magicka.",
-            "<b>Magical Shout</b> casts whatever you bound to it - its first word the first spell, its second word the second. Until you bind a spell to it with Import Mode it does nothing.",
-            "Imbuing (below) also unlocks the Wizard Warrior's four <b>Enchantment Powers</b> (one per imbue) and its other two Magical Shouts (at 2 and 4 imbues)."
+            "You start with the <b>Steel Spellsword</b> in your hand, a <b>Steel Spellshield</b> in your pack, <b>Flame Touch</b> in your left hand and the Practical Pirate outfit."
           ]
         },
         {
@@ -211,8 +204,10 @@
             "Your spells are six elements of touch magic, each a ladder of three rungs. The altar's first row (<i>Call a Spell</i>) gives you the first rung of one you don't have; you carry two at a time.",
             "<b>Fire</b>: Flame Touch, Burning Touch, Fiery Grasp. <b>Frost</b>: Icy Touch, Chilling Touch, Freezing Grasp. <b>Shock</b>: Static Touch, Shocking Touch, Thundering Grasp.",
             "<b>Sun</b>: Sunlight Touch, Radiant Touch, Searing Grasp. <b>Blood</b>: Vampiric Touch, Vampiric Grasp, Touch of Death. <b>Poison</b>: Poisonous Touch, Venomous Touch, Viper's Grasp.",
-            "Your touch spells climb on <b>melee kills only</b> (a power-attack kill counts twice) while the spell is in hand: <b>25</b> to reach rung 2 and <b>60</b> to reach the top.",
-            "With the kills in, hold the spell and take the altar's <b>Imbue</b> row. It opens once <b>three Echo Altars are freed</b>, costs 5,000 then 8,000 essence, and each spell can climb once a night. Imbuing also steps your held spell-weapon up a material."
+            "A spell grows in two steps. <b>First you earn it with kills</b>: your melee kills (a power-attack kill counts twice) while the spell is in your hand fill its count. <b>Then the Echo Altar does the raising</b>: the count alone changes nothing until you take it to an altar.",
+            "<b>Kills needed</b>: 25 to reach rung 2, 60 to reach rung 3 (the top of a touch ladder). The count belongs to the spell's whole ladder, and starts again from zero after each climb. Your class guide's <i>Your Progress</i> page shows every spell's count.",
+            "<b>At the altar</b>: equip the spell (right hand, or left if the right is empty), look into the altar's star, and take the <b>Imbue</b> row. It swaps your spell for the next one up its ladder. The row opens once <b>three Echo Altars are freed</b>, costs 5,000 then 8,000 essence, and each spell can climb once a night. If the kills aren't in yet, the altar tells you how many are left.",
+            "Imbuing also steps your held spell-weapon up a material, and each imbue unlocks one of The Wizard Warrior's four <b>Enchantment Powers</b> (in your Powers)."
           ]
         },
         {
@@ -254,7 +249,8 @@
       "paras": [
         "A day lasts about twenty minutes. By day the dead sleep: rest, explore, spend what you earned. You cannot sleep or wait while they walk.",
         "At dusk they rise in <b>waves</b>, clawing up out of the ground, more each night and harder to kill. The night does not end until the last wave is down - then dawn breaks, and the dead fall back to dust.",
-        "Every risen thing you kill leaves <b>essence</b>, the coin the Echo Altars take; your count sits beside your perks. Watch the dead for tokens: a skull (Insta-Kill), a coin (Double Points), a falling star (every corpse risen tonight is destroyed) and a chest (a Fire Sale at the altar)."
+        "Every risen thing you kill leaves <b>essence</b>, the coin the Echo Altars take; your count sits beside your perks. Watch the dead for tokens: a skull (Insta-Kill), a coin (Double Points), a falling star (every corpse risen tonight is destroyed) and a chest (a Fire Sale at the altar).",
+        "Your health (middle), magicka (left) and stamina (right) sit on one plate at the bottom of the screen. When you shout, the plate's rim burns blue; the glow drains away from the middle out to the two points as your shout comes back, and the rim flashes once when you can shout again."
       ]
     },
     {

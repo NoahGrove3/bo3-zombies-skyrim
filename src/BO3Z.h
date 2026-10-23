@@ -734,6 +734,7 @@ namespace bo3z
 		// (Noah: Edge UI is the game's UI) our compass, vitals, equip cards, health and boss bars, quest list and markers,
 		// crosshair and party panel stand down: Skyrim's own HUD (Edge UI, TrueHUD) shows them
 		inline constexpr bool kEdgeHud = true;
+		inline constexpr bool kOwnBars = true;  // (Noah: our own health, stamina and magicka plate instead of Edge UI's bars - with the shout's cooldown round it)
 		struct State
 		{
 			bool        inGame{ false };

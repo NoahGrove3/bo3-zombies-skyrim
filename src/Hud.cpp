@@ -1474,7 +1474,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// notched in, its number on it, a pale wound trailing each hit, a red pulse when it runs low), magicka on the
 			// left and stamina on the right, all three draining from the left, each with its sigil; the perks sit above in sockets
 			// and a new draught bursts in (its name rising over the row).
-			if (!Hud::kEdgeHud && s.hpMax > 0) {
+			if ((!Hud::kEdgeHud || Hud::kOwnBars) && s.hpMax > 0) {
 				auto ease = [&](float& g, float v) { g = v > g ? v : std::max(v, g - dt * 0.35f); };
 				ease(hpGhost, hpFrac);
 				const float mpF = s.mpMax > 0 ? std::clamp(s.mp / s.mpMax, 0.0f, 1.0f) : 0, spF = s.spMax > 0 ? std::clamp(s.sp / s.spMax, 0.0f, 1.0f) : 0;
@@ -1560,6 +1560,48 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 					}
 				}
+				// (Noah: "a shout cooldown on our stat bars - a blue outline, then it slowly fades from center to the outside")
+				// the shout spoken: the plate's rim burns blue all round, and as the shout comes back the glow drains away
+				// from the middle out to the two points; when it is ready the whole rim flashes once
+				{
+					const float t = y - 13 * k, b = y + h + 13 * k, m = (t + b) * 0.5f;
+					const float half = (R - L) * 0.5f + 18 * k;
+					const float gone = s.shoutCd > 0.001f ? 1.0f - s.shoutCd : 1.0f;  // how far out from the middle the glow has drained (0..1)
+					auto glowLine = [&](ImVec2 p0, ImVec2 p1, float al) {
+						for (int g = 3; g >= 1; --g) {
+							dl->AddLine(p0, p1, IM_COL32(70, 150, 255, static_cast<int>(al * 40.0f / g)), (2.0f + 3.2f * g) * k);
+						}
+						dl->AddLine(p0, p1, IM_COL32(150, 205, 255, static_cast<int>(al * 230.0f)), 1.6f * k);
+					};
+					if (s.shoutCd > 0.001f) {
+						const float d = gone * half;  // the drained span either side of the middle
+						for (int side = -1; side <= 1; side += 2) {
+							const float xin = cx + side * d;                                  // where the glow still starts
+							const float xEnd = side < 0 ? L : R;                              // the straight edges end here, then the point
+							const float tipX = side < 0 ? L - 18 * k : R + 18 * k;
+							const float pulse = 0.75f + 0.25f * std::sin(now * 3.0f);
+							if ((side < 0 && xin > xEnd) || (side > 0 && xin < xEnd)) {      // the long top and bottom edges
+								glowLine({ xin, t }, { xEnd, t }, pulse);
+								glowLine({ xin, b }, { xEnd, b }, pulse);
+								glowLine({ xEnd, t }, { tipX, m }, pulse);
+								glowLine({ xEnd, b }, { tipX, m }, pulse);
+							} else {                                                          // only the pointed ends are left
+								const float f = std::clamp((tipX - xin) / (tipX - xEnd), 0.0f, 1.0f);  // what is left of the point's two edges
+								const ImVec2 tp{ tipX + (xEnd - tipX) * f, m + (t - m) * f }, bp{ tipX + (xEnd - tipX) * f, m + (b - m) * f };
+								glowLine(tp, { tipX, m }, pulse);
+								glowLine(bp, { tipX, m }, pulse);
+							}
+						}
+					}
+					if (s.shoutReady > 0.01f) {  // ready again: the whole rim flashes once and fades
+						const ImVec2 plate[6] = { { L - 18 * k, m }, { L, t }, { R, t }, { R + 18 * k, m }, { R, b }, { L, b } };
+						for (int g = 3; g >= 1; --g) {
+							dl->AddPolyline(plate, 6, IM_COL32(110, 180, 255, static_cast<int>(s.shoutReady * 70.0f / g)), ImDrawFlags_Closed, (2.0f + 4.0f * g) * k);
+						}
+						dl->AddPolyline(plate, 6, IM_COL32(200, 230, 255, static_cast<int>(s.shoutReady * 255.0f)), ImDrawFlags_Closed, 1.8f * k);
+					}
+				}
+				if (!Hud::kEdgeHud) {  // (with Edge UI the perks sit beside the essence, bottom left)
 				// perk row: sockets, the draughts in them; a new draught bursts in
 				static std::array<int, 32>   lastStacks{};
 				static std::array<float, 32> burst{};
@@ -1619,6 +1661,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						TxtC(dl, g_num, 12 * k, bc.x, bc.y - 7 * k, kParch, cnt);
 					}
 					x += pg;
+				}
 				}
 			}
 

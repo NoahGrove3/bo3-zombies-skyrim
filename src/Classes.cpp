@@ -93,9 +93,6 @@ namespace bo3z::Classes
 				}
 				GiveItem(p, Lookup(0x00B550, "Spellsword.esp"), 1, true);   // Steel Spellsword
 				GiveItem(p, Lookup(0x00B569, "Spellsword.esp"), 1, false);  // Steel Spellshield
-				if (auto* ww = Lookup(0x00087C, "The Wizard Warrior.esp")) {
-					if (auto* sp = ww->As<RE::SpellItem>()) p->AddSpell(sp);
-				}
 				GiveSpell(Rung1(a_cls, "Fire"), true);
 				break;
 			}
@@ -131,8 +128,10 @@ namespace bo3z::Classes
 				for (std::string_view bad : { "diverse dragons spell menu", "azurite meditation" }) {
 					if (n.find(bad) != std::string::npos) return true;
 				}
-				// (the Wizard Warrior's own spells are the Spellsword's kit: for the other classes they go)
-				return (n.find("import mode") != std::string::npos || n.find("magical shout") != std::string::npos) && cls != coffer::kSpellsword;
+				// (Noah: "remove the import mode and magical shout for spellsword") the Wizard Warrior's Import Mode and Magical
+				// Shouts go for every class (its Enchantment Powers stay the Spellsword's)
+				(void)cls;
+				return n.find("import mode") != std::string::npos || n.find("magical shout") != std::string::npos;
 			};
 			std::vector<RE::SpellItem*> drop;
 			for (auto* sp : p->GetActorRuntimeData().addedSpells) {
@@ -599,7 +598,7 @@ namespace bo3z::Classes
 			{
 				int imbued = 0;
 				for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == coffer::kSpellsword) imbued += Arcana::RungOf(i) - 1;
-				out.push_back(fmt::format("<b>Imbues: {}.</b> Enchantment Powers unlocked: {} of 4. Magical Shouts: {} of 3 (the 2nd at 2 imbues, the 3rd at 4).", imbued, std::min(imbued, 4), imbued >= 4 ? 3 : imbued >= 2 ? 2 : 1));
+				out.push_back(fmt::format("<b>Imbues: {}.</b> Enchantment Powers unlocked: {} of 4 (one for each imbue, in your Powers).", imbued, std::min(imbued, 4)));
 			}
 			break;
 		}
@@ -656,15 +655,6 @@ namespace bo3z::Classes
 			int imbued = 0;
 			for (int i : Arcana::Carried()) {
 				if (Arcana::ClassOf(i) == coffer::kSpellsword) imbued += Arcana::RungOf(i) - 1;
-			}
-			// ... and its three Magical Shouts are the class's shout slot: the first from the start, the others with Powers 2 and 4
-			static constexpr std::uint32_t kShouts[3] = { 0x0008B6, 0x0008B7, 0x0008B8 };
-			for (int n = 0; n < 3; ++n) {
-				if (n > 0 && imbued < n * 2) break;
-				if (auto* sh = dh->LookupForm<RE::SpellItem>(kShouts[n], "The Wizard Warrior.esp"); sh && !p->HasSpell(sh)) {
-					p->AddSpell(sh);
-					if (n > 0) Hud::Banner(fmt::format("The Wizard Warrior: Magical Shout {} learned", n + 1), 4.0f);
-				}
 			}
 			static constexpr std::uint32_t kPowers[4] = { 0x0008A0, 0x000893, 0x0008A1, 0x002F6A };
 			for (int n = 0; n < std::min(imbued, 4); ++n) {

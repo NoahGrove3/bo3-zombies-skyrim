@@ -2576,12 +2576,12 @@ namespace bo3z
 
 		void HideVanillaBars()
 		{
-			if (Hud::kEdgeHud) return;  // (Edge UI's own bars show)
+			if (Hud::kEdgeHud && !Hud::kOwnBars) return;  // (Edge UI's own bars show)
 			static auto next = std::chrono::steady_clock::now();
 			if (std::chrono::steady_clock::now() < next) {
 				return;
 			}
-			next = std::chrono::steady_clock::now() + 1s;
+			next = std::chrono::steady_clock::now() + 250ms;
 			auto* ui = RE::UI::GetSingleton();
 			auto  hud = ui ? ui->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr;
 			if (!hud || !hud->uiMovie) {
@@ -2589,6 +2589,24 @@ namespace bo3z
 			}
 			for (const char* bar : { "_root.HUDMovieBaseInstance.Health._alpha", "_root.HUDMovieBaseInstance.Magica._alpha", "_root.HUDMovieBaseInstance.Stamina._alpha" }) {
 				hud->uiMovie->SetVariable(bar, RE::GFxValue(0.0));
+			}
+			// (Noah: "bring back the health, stamina and mana bars we made instead of Edge's") Edge UI's own bars may be
+			// clips of other names: any of the HUD's clips named for health, magicka or stamina (not an enemy's) is hidden
+			static std::set<std::string> told;
+			for (const char* root : { "_root.HUDMovieBaseInstance", "_root" }) {
+				RE::GFxValue obj;
+				if (!hud->uiMovie->GetVariable(&obj, root) || !obj.IsObject()) continue;
+				obj.VisitMembers([&](const char* a_name, const RE::GFxValue& a_v) {
+					if (!a_name || !a_v.IsDisplayObject()) return;
+					std::string low(a_name);
+					std::transform(low.begin(), low.end(), low.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+					const bool vital = low.find("health") != std::string::npos || low.find("magica") != std::string::npos || low.find("stamina") != std::string::npos;
+					if (!vital || low.find("enemy") != std::string::npos || low.find("boss") != std::string::npos) return;
+					RE::GFxValue::DisplayInfo off;
+					off.SetVisible(false);
+					const_cast<RE::GFxValue&>(a_v).SetDisplayInfo(off);
+					if (told.insert(std::string(root) + "." + a_name).second) logger::info("hud: Skyrim's / Edge UI's {}.{} hidden (our own bars instead)", root, a_name);
+				});
 			}
 		}
 
