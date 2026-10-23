@@ -403,7 +403,8 @@ namespace bo3z::Classes
 	// a new character, out of the creator: the picker
 	void OnNewCharacter()
 	{
-		if (g_class.load() < 0) OpenPicker(false);
+		// (Noah: "the class chooser built into the Echo Altar") no pop-up: the altar is where a class is chosen
+		if (g_class.load() < 0) Hud::Banner("Go to Riverwood's Echo Altar and choose your class", 6.0f);
 	}
 	// a save loaded with no class yet (older saves): the picker too
 	void OnWorldReady()
@@ -421,7 +422,7 @@ namespace bo3z::Classes
 				if (!worn.empty()) logger::info("classes: {} worn pieces put back on unlocked", worn.size());
 			}
 		}
-		if (g_class.load() < 0 && Save::Flag(Save::kFlagStarted)) OpenPicker(false);
+		if (g_class.load() < 0 && Save::Flag(Save::kFlagStarted)) Hud::Banner("Choose your class at an Echo Altar", 6.0f);
 	}
 
 	// (each class grows its own way) a kill trains the ladders of what you hold: the spell in each hand for Destruction and

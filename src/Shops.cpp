@@ -1797,7 +1797,7 @@ namespace bo3z
 		int                 g_sel = 0;
 		int                 g_trialSel = 0;  // the controller's pick among the altar's trials
 		// (Noah: one way to drive the altar) a focus moved up and down its rows - D-pad or W/S - and A / Enter to take it
-		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20 };
+		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30 };
 		int g_focus = kRowSpell;
 		int g_chooseFocus = 0;  // a third spell: 0 / 1 replace that one, 2 keep yours
 
@@ -2016,7 +2016,7 @@ namespace bo3z
 				} else {
 					g_menu = false;
 					g_closedAt = std::chrono::steady_clock::now();
-					Classes::OpenPicker(true);
+					Classes::OpenPicker(Classes::Get() >= 0);
 				}
 				return true;
 			}
@@ -2043,6 +2043,10 @@ namespace bo3z
 			auto act = [&](int a) {
 				switch (a) {
 				case 0:
+					if (Classes::Get() < 0 && g_show.phase == Show::Idle) {
+						Hud::Banner("Choose your class first - the top of the altar", 2.5f);
+						break;
+					}
 					if (!TakeOffer(ref)) {
 						if (Classes::Get() == 2) SpinBow(ref);  // (the Ranger's roll is the bow wheel)
 						else SpinBox(ref);
@@ -2144,7 +2148,7 @@ namespace bo3z
 			if (!g_choosing && (nav || side || pick)) {
 				auto* r = g_menuRef.get().get();
 				const int t = r ? TownOf(r) : -1;
-				std::vector<int> rows{ kRowSpell, kRowBow, kRowForge, kRowPerk };
+				std::vector<int> rows{ kRowClass, kRowSpell, kRowBow, kRowForge, kRowPerk };  // (Noah: the class is chosen and changed at the altar)
 				if (t >= 0 && Curse::ClaimableShout(t) >= 0) rows.push_back(kRowShout);
 				if (!Movement::BondLocked()) rows.push_back(kRowBond);  // (Noah: the dragon's bond unseen until Whiterun is freed)
 				const bool trials = t >= 0 && Curse::Altar(t).on;
@@ -2174,6 +2178,15 @@ namespace bo3z
 					const bool menu0 = g_menu;
 					const int  trial0 = g_trialSel;
 					switch (g_focus) {
+					case kRowClass:
+						if (g_show.phase != Show::Idle) {
+							Hud::Banner("Wait for the altar to finish its roll", 2.0f);
+						} else {
+							g_menu = false;
+							g_closedAt = std::chrono::steady_clock::now();
+							Classes::OpenPicker(Classes::Get() >= 0);  // (the first is free; a change costs)
+						}
+						break;
 					case kRowSpell: act(0); break;
 					case kRowBow: act(6); break;
 					case kRowForge: act(1); break;
@@ -2609,7 +2622,7 @@ namespace bo3z
 					g_closedAt = std::chrono::steady_clock::now();
 				} else {
 					g_menu = true;
-					g_focus = kRowSpell, g_chooseFocus = 0;
+					g_focus = Classes::Get() < 0 ? kRowClass : kRowSpell, g_chooseFocus = 0;
 					g_menuRef = a_ref->CreateRefHandle();
 					Forms::PlayAt(gen::Sound::coffer_open, a_ref);
 					PlayUi(UiSnd::kOpen, 0.6f);
@@ -2618,7 +2631,7 @@ namespace bo3z
 			case 1: BuyPerk(o.ref, a_ref); break;
 			case 4:
 				if (!g_menu) {
-					g_menu = true, g_sel = 0, g_focus = kRowSpell, g_chooseFocus = 0;
+					g_menu = true, g_sel = 0, g_focus = Classes::Get() < 0 ? kRowClass : kRowSpell, g_chooseFocus = 0;
 					g_menuRef = a_ref->CreateRefHandle();
 					Forms::Play(gen::Sound::coffer_open);
 				} else {

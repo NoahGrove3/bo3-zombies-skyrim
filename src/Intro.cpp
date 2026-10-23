@@ -11,7 +11,8 @@ namespace bo3z
 		bool g_moved = false;  // this game's new character has been moved to Riverwood
 		bool  g_skip = false;        // Helgen skipped this game: once it is done, the move to Riverwood's gate
 		bool  g_skipRace = false;    // ... waiting for the character creator to close first
-		bool  reachedHelgen = false;  // the cart has rolled into Helgen: no more skip
+		bool  reachedHelgen = false;
+		bool  g_creatorDeferred = false;  // the quick start's own creator closed, to open at Riverwood  // the cart has rolled into Helgen: no more skip
 		bool  g_raceSeen = false;    // the character creator has been and gone this game
 		int   g_raceAfterSkip = 0;   // (Noah: skip first, then the creator at Riverwood) 1 wanted, 2 shown
 		float g_skipHold = 0;        // H held this long
@@ -112,7 +113,7 @@ namespace bo3z
 
 		bool CrewScreenOpen() { return false; }
 		bool NewGameThisSession() { return g_moved; }
-		void OnMainMenu() { g_moved = false, g_settle = 0, g_skip = false, g_skipRace = false, g_raceSeen = false, reachedHelgen = false, g_skipHold = 0, g_skipHeld = false, g_raceAfterSkip = 0; }  // the BO3 crew picker is gone: you play your own character
+		void OnMainMenu() { g_moved = false, g_settle = 0, g_skip = false, g_skipRace = false, g_raceSeen = false, reachedHelgen = false, g_creatorDeferred = false, g_skipHold = 0, g_skipHeld = false, g_raceAfterSkip = 0; }  // the BO3 crew picker is gone: you play your own character
 
 		void Tick()
 		{
@@ -186,6 +187,16 @@ namespace bo3z
 			// gate and the picker opens as you arrive (the start step below); played through: as you walk out of the cave
 			// into Skyrim (MQ101 done, Before the Storm begun: the same start step)
 			if (raceOpen) g_raceSeen = true;
+			// (Noah: "the character creation is at the end of the cave - I should spawn at Riverwood's gates to create my
+			// character") the quick start's creator, opened where Helgen ends, is closed at once; it opens again at the gate
+			if (!kPlayHelgen && raceOpen && !Save::Flag(Save::kFlagMoved) && !g_creatorDeferred) {
+				g_creatorDeferred = true;
+				g_raceSeen = false;
+				g_raceAfterSkip = 1;
+				Hud::IntroVeil(4.0f);
+				if (auto* q = RE::UIMessageQueue::GetSingleton()) q->AddMessage(RE::RaceSexMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+				logger::info("intro: the quick start's creator closed - it opens at Riverwood's gate");
+			}
 			if (g_skipRace && g_raceSeen && !raceOpen) {
 				g_skipRace = false;
 				DoSkip();

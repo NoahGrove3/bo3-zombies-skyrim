@@ -2664,6 +2664,20 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->AddCircleFilled(coin, 5.5f * k, Fade(IM_COL32(150, 200, 255, 255), can ? 1.0f : 0.5f), 16);
 					dl->AddCircleFilled(coin, 3 * k, Fade(IM_COL32(230, 242, 255, 255), can ? 1.0f : 0.5f), 12);
 				};
+				// [0] (Noah: "the class chooser built into the Echo Altar") your class - chosen here the first time, changed here after
+				if (!s.chooseOn) {
+					const int  cls = Classes::Get();
+					focusRow(30, y - 6 * k, y + 58 * k);
+					bullet({ L, y + 2 * k }, 30, true);
+					const ImU32 cc = cls < 0 ? IM_COL32(255, 210, 120, 255) : kParch;
+					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, cc, cls < 0 ? std::string("CHOOSE YOUR CLASS") : "CLASS: " + Upper(std::string(Classes::Name(cls))));
+					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235),
+						cls < 0 ? std::string("Summoner, Destruction, Ranger or Spellsword - free, your first path") : std::string("Change class - each keeps its own spells and progress"));
+					if (cls >= 0) price(y + 2 * k, Classes::SwitchCost(), s.points >= Classes::SwitchCost());
+					y += 64 * k;
+					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
+					y += 14 * k;
+				}
 				// [1] roll a spell - or, a third one won, the choice of which of your two it replaces
 				if (s.chooseOn) {
 					Txt(dl, g_title, 21 * k, { L, y + 2 * k }, kParch, "A THIRD SPELL: " + ArmsName(Arcana::kIdBase + s.chooseNew));
