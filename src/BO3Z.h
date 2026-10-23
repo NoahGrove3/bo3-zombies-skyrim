@@ -390,6 +390,7 @@ namespace bo3z
 		bool        DragonBankReverse();          // the dragon leans out of its turns instead of into them (Noah's choice)
 		bool        DragonInvertDive();           // forward pulls up, back dives
 		float       CorpseSeconds();
+		float MeleeSpeed();     // melee weapons' swing speed (1.0 - 2.0)
 		int         Difficulty();                 // Skyrim's difficulty, 0 Novice .. 5 Legendary (the trials follow it)
 		float       UndeadHealthMult();           // Skyrim's difficulty (if followed) x the MCM's own
 		float       UndeadDamageMult();

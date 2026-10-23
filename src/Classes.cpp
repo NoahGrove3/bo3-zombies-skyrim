@@ -509,7 +509,13 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		if (!p || !dh) return;
-		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();  // (Noah: still there before the class was chosen - from the first moment now)
+		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();
+		{  // (Noah: "increase the attack speed with melee weapons") both hands' swing speed, from the Mod Configuration menu
+			auto*       av = p->AsActorValueOwner();
+			const float want = Settings::MeleeSpeed();
+			if (std::abs(av->GetBaseActorValue(RE::ActorValue::kWeaponSpeedMult) - want) > 0.01f) av->SetBaseActorValue(RE::ActorValue::kWeaponSpeedMult, want);
+			if (std::abs(av->GetBaseActorValue(RE::ActorValue::kLeftWeaponSpeedMultiply) - want) > 0.01f) av->SetBaseActorValue(RE::ActorValue::kLeftWeaponSpeedMultiply, want);
+		}  // (Noah: still there before the class was chosen - from the first moment now)
 		if (auto* ui = RE::UI::GetSingleton(); ui && !ui->IsMenuOpen(RE::InventoryMenu::MENU_NAME) && !ui->IsMenuOpen(RE::ContainerMenu::MENU_NAME)) DressUnder();  // (Noah: a bra and underwear, never bare)
 		{
 			auto line = WonderLineNow();

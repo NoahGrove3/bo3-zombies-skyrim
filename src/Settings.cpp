@@ -12,7 +12,7 @@ namespace bo3z::Settings
 {
 	namespace
 	{
-		float g_fovFirst = 130.0f, g_fovThird = 120.0f, g_corpse = 10.0f, g_hp = 1.0f, g_dmg = 1.0f, g_bright = 1.5f;  // (Noah's own: 130 / 120 / 1.5)
+		float g_melee = 1.3f, g_fovFirst = 130.0f, g_fovThird = 120.0f, g_corpse = 10.0f, g_hp = 1.0f, g_dmg = 1.0f, g_bright = 1.5f;  // (Noah's own: 130 / 120 / 1.5)
 		bool  g_shelter = true, g_follow = true, g_padPS = false, g_bankRev = false, g_diveInv = false;
 		bool  g_blood = true, g_shake = true, g_softFlash = false;
 		float g_fog = 1.0f;
@@ -204,6 +204,7 @@ namespace bo3z::Settings
 			g_bankRev = Read(L"Dragon", L"bBankReverse", 0.0f) != 0.0f;
 			g_diveInv = Read(L"Dragon", L"bInvertDive", 0.0f) != 0.0f;
 			g_corpse = std::clamp(Read(L"General", L"fCorpseSeconds", 10.0f), 3.0f, 60.0f);
+			g_melee = 1.0f + 0.1f * std::clamp(std::round(Read(L"General", L"iMeleeSpeedStep", 3.0f)), 0.0f, 10.0f);  // (Noah: faster melee swings) 1.0x to 2.0x
 			g_follow = Read(L"Difficulty", L"bFollowSkyrim", 1.0f) != 0.0f;
 			g_hp = std::clamp(Read(L"Difficulty", L"fUndeadHealth", 1.0f), 0.25f, 4.0f);
 			g_dmg = std::clamp(Read(L"Difficulty", L"fUndeadDamage", 1.0f), 0.25f, 4.0f);
@@ -256,6 +257,7 @@ namespace bo3z::Settings
 	bool  DragonBankReverse() { Ensure(); return g_bankRev; }
 	bool  DragonInvertDive() { Ensure(); return g_diveInv; }
 	float CorpseSeconds() { Ensure(); return g_corpse; }
+	float MeleeSpeed() { Ensure(); return g_melee; }
 	int   Key(int a_action) { Ensure(); return a_action >= 0 && a_action < kKeys ? g_keys[a_action] : 0; }
 
 	int Difficulty() { return GameDifficulty(); }
