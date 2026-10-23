@@ -382,6 +382,7 @@ namespace bo3z
 			bool            burst = false;
 			int             anim = 0;  // (Noah: Undead Summons Emerge from the Ground) 0 trying, 1 its emerge animation plays, -1 our climb
 			bool            portal = false;  // its red portal opened
+			bool            hidden = false;  // (Noah: it showed standing on the ground a moment before the emerge took it under) unseen till the emerge has begun
 		};
 		std::vector<Riser> g_risers;
 		constexpr float    kRiseDepth = 115.0f, kRiseTime = 1.5f;
@@ -398,6 +399,13 @@ namespace bo3z
 			a_actor->SetPosition(at, true);
 			if (Settings::ScreenShake() && a_player && a_player->GetPosition().GetDistance(at) < 700.0f) {
 				RE::ShakeCamera(0.25f, at, 0.6f);
+			}
+		}
+		void ShowRiser(RE::Actor* a_a, bool a_show)
+		{
+			if (auto* root = a_a ? a_a->Get3D() : nullptr) {
+				if (a_show) root->GetFlags().reset(RE::NiAVObject::Flag::kHidden);
+				else root->GetFlags().set(RE::NiAVObject::Flag::kHidden);
 			}
 		}
 		void TickRisers(float a_delta)
@@ -417,12 +425,21 @@ namespace bo3z
 				const auto openPortal = [&] {
 					if (r.portal) return;
 					r.portal = true;
+					// (the map crashed with a queue of art being built: only the near ones get a portal, a few at a time)
+					static auto lastPortal = std::chrono::steady_clock::now() - std::chrono::seconds(5);
+					auto* pc = RE::PlayerCharacter::GetSingleton();
+					if (!pc || pc->GetPosition().GetDistance(a->GetPosition()) > 2500.0f || std::chrono::steady_clock::now() - lastPortal < std::chrono::milliseconds(400)) return;
+					if (auto* ui = RE::UI::GetSingleton(); ui && ui->IsMenuOpen(RE::MapMenu::MENU_NAME)) return;
+					lastPortal = std::chrono::steady_clock::now();
 					if (auto* dh = RE::TESDataHandler::GetSingleton()) {
 						const bool big = Director::IsBoss(a.get()) || g_elites.contains(a->GetFormID());
 						if (auto* art = dh->LookupForm<RE::BGSArtObject>(big ? gen::kArtPortalBig : gen::kArtPortal, gen::kPlugin)) a->ApplyArtObject(art, big ? 3.0f : 2.4f);
 					}
 				};
 				if (r.anim == 0) {
+					if (a->Is3DLoaded()) {
+						ShowRiser(a.get(), false), r.hidden = true;  // (unseen until the emerge has it in hand)
+					}
 					if (a->Is3DLoaded() && a->NotifyAnimationGraph("summonStart")) {
 						r.anim = 1, r.t = 0;
 						auto f = a->GetPosition();
@@ -437,6 +454,7 @@ namespace bo3z
 						f.z = r.floorZ + 2.0f;
 						a->SetPosition(f, true);
 						a->SetCollision(true);
+						ShowRiser(a.get(), true), r.hidden = false;
 						openPortal();
 						continue;
 					} else {
@@ -451,7 +469,14 @@ namespace bo3z
 					continue;
 				}
 				if (r.anim == 1) {
+					if (r.hidden && (r.t >= 0.15f || a->IsDead())) ShowRiser(a.get(), true), r.hidden = false;  // (the emerge's first pose is under the ground)
 					if (r.t >= 2.6f || a->IsDead()) {
+						// (Noah: "I don't want any zombies to get stuck under the floor") stood on the floor, whatever the animation did
+						if (auto at = a->GetPosition(); at.z < r.floorZ - 20.0f) {
+							at.z = r.floorZ + 4.0f;
+							a->SetPosition(at, true);
+						}
+						a->SetCollision(true);
 						a->EnableAI(true);
 						r.t = 99;
 					}
@@ -479,12 +504,19 @@ namespace bo3z
 					}
 				}
 			}
+			for (auto& r : g_risers) {
+				if (r.t >= 99 && r.hidden) {
+					if (auto a = r.h.get()) ShowRiser(a.get(), true);
+					r.hidden = false;
+				}
+			}
 			std::erase_if(g_risers, [](const Riser& r) { return r.t >= 99; });
 		}
 		void EndRisers()  // (dawn, a load: anyone still under the ground is put on it)
 		{
 			for (auto& r : g_risers) {
 				if (auto a = r.h.get()) {
+					ShowRiser(a.get(), true);
 					auto at = a->GetPosition();
 					at.z = r.floorZ + 4.0f;
 					a->SetPosition(at, true);
