@@ -1,4 +1,5 @@
 #include "BO3Z.h"
+#include "ClipBlend.h"
 
 #include <atomic>
 #include <shared_mutex>
@@ -108,9 +109,9 @@ namespace bo3z
 			bool                      wasAttacking = false;
 			// (the Mixamo clips) what it plays now and what it is blending out of
 			int                       clipSet = -1;     // 0 draugr skeleton, 1 human; -1 not looked at yet, -2 none
-			int                       clip = -1, prevClip = -1;
-			float                     clipT = 0, prevT = 0, blend = 1, prevRate = 1;
-			bool                      prevLoop = false;
+			zclip::Player             player;
+			std::vector<zclip::Q4>    pose;
+			zclip::V3f                com;
 			int                       nextAttack = 0;
 			std::atomic<float>        hitAt{ -1.0f };   // a flinch asked for (main thread writes)
 			std::vector<RE::NiAVObject*> clipNodes;     // the clip's bones on this body (by the clip's bone list)
@@ -499,18 +500,7 @@ namespace bo3z
 		// (Noah: "Dying Light zombies" - sprinting, lunging, screaming, getting up off the ground) clips from Mixamo,
 		// retargeted onto Skyrim's draugr and human skeletons by tools/zprev (bake): per bone its rotation against its
 		// parent each frame, and the COM's place (a run's drift across the ground taken out; the game moves the body)
-		enum ClipId { kRun, kAttack, kPunch, kScream, kHit, kHit2, kStandUp, kClips };
-		constexpr const char* kClipFile[kClips] = { "run", "attack", "punch", "scream", "hit", "hit2", "standup" };
-		struct Clip
-		{
-			int                      fps = 30, frames = 0;
-			float                    speed = 0;  // units a second its body travelled (the run: matched to the pace)
-			std::vector<std::string> bones;
-			std::vector<float>       q;   // frames * bones * (w x y z)
-			std::vector<float>       com; // frames * 3
-			float Seconds() const { return frames > 1 ? (frames - 1) / static_cast<float>(fps) : 0.0f; }
-		};
-		struct ClipSet { std::array<Clip, kClips> c; bool ok = false; };
+		using namespace zclip;  // (src/ClipBlend.h: the clips' blending, shared with the preview renderer)
 		std::array<ClipSet, 2> g_clipSets;
 		std::once_flag         g_clipsLoaded;
 		bool LoadClip(const std::string& a_path, Clip& a_out)
@@ -541,7 +531,9 @@ namespace bo3z
 					for (int c = 0; c < kClips; ++c) {
 						all &= LoadClip(std::string("Data\\SKSE\\Plugins\\CurseOfAlduin\\anims\\") + kSkel[k] + "\\" + kClipFile[c] + ".zan", g_clipSets[k].c[c]);
 					}
-					g_clipSets[k].ok = all && g_clipSets[k].c[kRun].bones == g_clipSets[k].c[kAttack].bones;
+					for (int c = 1; c < kClips && all; ++c) all &= g_clipSets[k].c[c].bones == g_clipSets[k].c[kRun].bones;
+					g_clipSets[k].ok = all;
+					if (all) g_clipSets[k].Prepare();
 					logger::info("undead: the {} skeleton's clips {}", kSkel[k], g_clipSets[k].ok ? "loaded" : "missing - the old rig moves them");
 				}
 			});
@@ -558,23 +550,6 @@ namespace bo3z
 			}
 			return 1;
 		}
-		using Q4 = std::array<float, 4>;
-		Q4 Slerp(const Q4& a, Q4 b, float t)
-		{
-			float d = a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3];
-			if (d < 0) { d = -d; for (auto& x : b) x = -x; }
-			Q4 r;
-			if (d > 0.9995f) {
-				for (int i = 0; i < 4; ++i) r[i] = a[i] + (b[i] - a[i]) * t;
-			} else {
-				const float th = std::acos(std::clamp(d, -1.0f, 1.0f)), s = std::sin(th);
-				const float wa = std::sin((1 - t) * th) / s, wb = std::sin(t * th) / s;
-				for (int i = 0; i < 4; ++i) r[i] = a[i] * wa + b[i] * wb;
-			}
-			const float l = std::sqrt(r[0] * r[0] + r[1] * r[1] + r[2] * r[2] + r[3] * r[3]);
-			for (auto& x : r) x /= std::max(1e-6f, l);
-			return r;
-		}
 		RE::NiMatrix3 MatOf(const Q4& q)
 		{
 			const float w = q[0], x = q[1], y = q[2], z = q[3];
@@ -584,29 +559,14 @@ namespace bo3z
 			m.entry[2][0] = 2 * (x * z - w * y), m.entry[2][1] = 2 * (y * z + w * x), m.entry[2][2] = 1 - 2 * (x * x + y * y);
 			return m;
 		}
-		// one bone's rotation and the COM's place at t seconds (looped or held at its end)
-		void Sample(const Clip& c, float t, bool loop, std::size_t bone, Q4& q)
+		// (each kind's swing speed against the clip's own)
+		float RateFor(const Rig& r, int c)
 		{
-			float f = t * c.fps;
-			const int n = c.frames;
-			if (loop) f = std::fmod(std::max(0.0f, f), static_cast<float>(n - 1)); else f = std::clamp(f, 0.0f, static_cast<float>(n - 1));
-			const int i0 = static_cast<int>(f), i1 = std::min(n - 1, i0 + 1);
-			const float u = f - i0;
-			const std::size_t nb = c.bones.size();
-			Q4 a, b;
-			for (int k = 0; k < 4; ++k) a[k] = c.q[(i0 * nb + bone) * 4 + k], b[k] = c.q[(i1 * nb + bone) * 4 + k];
-			q = Slerp(a, b, u);
+			float rate = ClipRate(c);
+			if (c == kAttack && (r.volatileOne.load() || r.type == Type::Runner)) rate *= r.volatileOne.load() ? 1.3f : 1.12f;  // (their claws come faster)
+			if (c == kPunch && r.type == Type::Wailer) rate *= 0.9f;
+			return rate;
 		}
-		RE::NiPoint3 SampleCom(const Clip& c, float t, bool loop)
-		{
-			float f = t * c.fps;
-			const int n = c.frames;
-			if (loop) f = std::fmod(std::max(0.0f, f), static_cast<float>(n - 1)); else f = std::clamp(f, 0.0f, static_cast<float>(n - 1));
-			const int i0 = static_cast<int>(f), i1 = std::min(n - 1, i0 + 1);
-			const float u = f - i0;
-			return { c.com[i0 * 3] + (c.com[i1 * 3] - c.com[i0 * 3]) * u, c.com[i0 * 3 + 1] + (c.com[i1 * 3 + 1] - c.com[i0 * 3 + 1]) * u, c.com[i0 * 3 + 2] + (c.com[i1 * 3 + 2] - c.com[i0 * 3 + 2]) * u };
-		}
-		float ClipRate(int a_clip) { return a_clip == kAttack || a_clip == kPunch ? 1.5f : a_clip == kHit || a_clip == kHit2 ? 1.4f : a_clip == kStandUp ? 1.15f : 1.0f; }
 		// true: the clips posed it this frame (the old rig stays out)
 		bool ClipPose(RE::Actor* a_actor, Rig& r, float dt, bool attacking, int cue)
 		{
@@ -623,8 +583,9 @@ namespace bo3z
 				for (std::size_t i = 0; i < names.size(); ++i) r.clipNodes[i] = r.root->GetObjectByName(names[i]);
 				r.comNode = r.root->GetObjectByName("NPC COM [COM ]");
 			}
+			auto& P = r.player;
 			// what it should be doing
-			const bool oneShotOn = r.clip >= 0 && r.clip != kRun && r.clipT < S.c[r.clip].Seconds() / ClipRate(r.clip);
+			const bool oneShotOn = P.OneShotOn(S);
 			int want = -1;
 			if (cue == Undead::kCueStandUp) want = kStandUp;
 			else if (cue == Undead::kCueScream || cue == Undead::kCueRoar) want = kScream;
@@ -637,45 +598,22 @@ namespace bo3z
 				else if (r.type == Type::Wailer) want = (n % 3 == 2) ? kAttack : kPunch;
 				else want = (n % 3 == 2) ? kPunch : kAttack;
 			}
-			else if (const float h = r.hitAt.exchange(-1.0f); h >= 0 && !(oneShotOn && (r.clip == kAttack || r.clip == kPunch || r.clip == kStandUp || r.clip == kScream))) want = (r.nextAttack & 1) ? kHit : kHit2;
+			else if (const float h = r.hitAt.exchange(-1.0f); h >= 0 && !(oneShotOn && (P.clip == kAttack || P.clip == kPunch || P.clip == kStandUp || P.clip == kScream))) want = (r.nextAttack & 1) ? kHit : kHit2;
 			r.wasAttacking = attacking;
 			if (want < 0) {
-				if (oneShotOn && r.clip != kStandUp) want = r.clip;
-				else if (r.clip == kStandUp && cue == Undead::kCueStandUp) want = kStandUp;
+				if (oneShotOn && P.clip != kStandUp) want = P.clip;
+				else if (P.clip == kStandUp && cue == Undead::kCueStandUp) want = kStandUp;
 				else want = kRun;
-			}
-			if (want != r.clip) {
-				r.prevClip = r.clip, r.prevT = r.clipT, r.prevLoop = r.clip == kRun, r.prevRate = r.clip == kRun ? std::clamp(r.speed / std::max(1.0f, S.c[kRun].speed), 0.0f, 2.0f) : (r.clip >= 0 ? ClipRate(r.clip) : 1.0f);
-				r.clip = want, r.clipT = 0, r.blend = r.prevClip >= 0 ? 0.0f : 1.0f;
 			}
 			// its pace: a run plays as fast as it moves (standing still, held mid-stride); the rest at their own speed
 			const float runRate = std::clamp(r.speed / std::max(1.0f, S.c[kRun].speed), 0.0f, 2.0f);
-			float rate = r.clip == kRun ? runRate : ClipRate(r.clip);
-			if (r.clip == kAttack && (r.volatileOne.load() || r.type == Type::Runner)) rate *= r.volatileOne.load() ? 1.45f : 1.25f;  // (their claws come faster)
-			if (r.clip == kPunch && r.type == Type::Wailer) rate *= 0.9f;
-			r.clipT += dt * rate;
-			r.prevT += dt * r.prevRate;
-			r.blend = std::min(1.0f, r.blend + dt / 0.22f);
-			const Clip& C = S.c[r.clip];
-			const bool loop = r.clip == kRun;
-			const float w = r.blend * r.blend * (3 - 2 * r.blend);
-			for (std::size_t i = 0; i < r.clipNodes.size(); ++i) {
-				auto* n = r.clipNodes[i];
-				if (!n) continue;
-				Q4 q; Sample(C, r.clipT, loop, i, q);
-				if (w < 1.0f && r.prevClip >= 0) {
-					Q4 p; Sample(S.c[r.prevClip], r.prevT, r.prevLoop, i, p);
-					q = Slerp(p, q, w);
-				}
-				n->local.rotate = MatOf(q);
+			P.Play(want, want == kRun ? runRate : RateFor(r, want), S);
+			P.Tick(S, dt, runRate, r.pose, r.com);
+			for (std::size_t i = 0; i < r.clipNodes.size() && i < r.pose.size(); ++i) {
+				if (auto* n = r.clipNodes[i]) n->local.rotate = MatOf(r.pose[i]);
 			}
 			if (r.comNode) {
-				RE::NiPoint3 c = SampleCom(C, r.clipT, loop);
-				if (w < 1.0f && r.prevClip >= 0) {
-					const RE::NiPoint3 p = SampleCom(S.c[r.prevClip], r.prevT, r.prevLoop);
-					c = p + (c - p) * w;
-				}
-				r.comNode->local.translate = c;
+				r.comNode->local.translate = { r.com.x, r.com.y, r.com.z };
 				RE::NiUpdateData ud;
 				ud.time = 0.0f;
 				r.comNode->UpdateDownwardPass(ud, 0);
@@ -904,8 +842,8 @@ namespace bo3z
 		float StandUpSeconds()
 		{
 			LoadClips();
-			const auto& c = g_clipSets[0].ok ? g_clipSets[0].c[kStandUp] : g_clipSets[1].c[kStandUp];
-			return std::max(0.5f, c.Seconds() / ClipRate(kStandUp));
+			const auto& c = g_clipSets[0].ok ? g_clipSets[0].c[zclip::kStandUp] : g_clipSets[1].c[zclip::kStandUp];
+			return std::max(0.5f, c.Seconds() / zclip::ClipRate(zclip::kStandUp));
 		}
 		void SetVolatile(RE::Actor* a_actor)
 		{

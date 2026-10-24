@@ -8,6 +8,7 @@
 // its own rest direction has been aimed along the Mixamo bone's rest direction; bones keep their Skyrim lengths;
 // the pelvis follows the hips' travel scaled by the two hips' heights. Unmapped bones (twists, pauldrons) follow
 // their parent.
+#include "../../src/ClipBlend.h"
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
 #include <assimp/scene.h>
@@ -452,6 +453,76 @@ static int RunNif(const char* modelPath, const char* skelPath, const char* animP
 		float lo = 1e9f, hi = -1e9f;
 		for (auto& s : shapes) for (auto& v : s.v) lo = std::min(lo, v.z), hi = std::max(hi, v.z);
 		cam.refH = hi - lo, cam.refLo = lo;
+	}
+	// ZGAME="<anims dir>|<script>": play the baked clips through the game's own blending (src/ClipBlend.h) instead of
+	// the FBX - script: segments "seconds@runRate@clip@rate" joined by ',' (clip: run attack punch hit hit2 scream standup)
+	if (const char* zg = getenv("ZGAME"); zg && !bakeOut) {
+		const std::string all = zg; const auto bar = all.find('|');
+		const std::string dir = all.substr(0, bar), script = all.substr(bar + 1);
+		zclip::ClipSet S;
+		bool ok = true;
+		for (int c = 0; c < zclip::kClips; c++) {
+			FILE* f = fopen((dir + "/" + zclip::kClipFile[c] + ".zan").c_str(), "rb");
+			if (!f) { ok = false; break; }
+			char mg[4]; uint32_t fps, nf, nb; float sp;
+			fread(mg, 1, 4, f); fread(&fps, 4, 1, f); fread(&nf, 4, 1, f); fread(&nb, 4, 1, f); fread(&sp, 4, 1, f);
+			auto& C = S.c[c]; C.fps = fps, C.frames = nf, C.speed = sp; C.bones.resize(nb);
+			for (auto& b : C.bones) { uint8_t l; fread(&l, 1, 1, f); b.resize(l); fread(b.data(), 1, l, f); }
+			C.q.resize((size_t)nf * nb * 4); C.com.resize((size_t)nf * 3);
+			fread(C.q.data(), 4, C.q.size(), f); fread(C.com.data(), 4, C.com.size(), f); fclose(f);
+		}
+		if (!ok) { fprintf(stderr, "clips missing in %s\n", dir.c_str()); return 1; }
+		S.Prepare();
+		std::vector<int> skOf(S.c[0].bones.size());
+		for (size_t i = 0; i < skOf.size(); i++) skOf[i] = FindBone(sk, S.c[0].bones[i]);
+		struct Seg { float secs, run, rate; int clip; };
+		std::vector<Seg> segs;
+		{
+			size_t a = 0;
+			while (a < script.size()) {
+				size_t e = script.find(',', a); if (e == std::string::npos) e = script.size();
+				std::string t = script.substr(a, e - a); a = e + 1;
+				Seg g{ 1, 1, 1, 0 }; char nm[32] = "run";
+				sscanf(t.c_str(), "%f@%f@%31[^@]@%f", &g.secs, &g.run, nm, &g.rate);
+				for (int c = 0; c < zclip::kClips; c++) if (!strcmp(nm, zclip::kClipFile[c])) g.clip = c;
+				segs.push_back(g);
+			}
+		}
+		auto M3of = [](const zclip::Q4& q) { const float w = q[0], x = q[1], y = q[2], z = q[3]; M3 m;
+			m.m[0][0] = 1 - 2 * (y * y + z * z), m.m[0][1] = 2 * (x * y - w * z), m.m[0][2] = 2 * (x * z + w * y);
+			m.m[1][0] = 2 * (x * y + w * z), m.m[1][1] = 1 - 2 * (x * x + z * z), m.m[1][2] = 2 * (y * z - w * x);
+			m.m[2][0] = 2 * (x * z - w * y), m.m[2][1] = 2 * (y * z + w * x), m.m[2][2] = 1 - 2 * (x * x + y * y); return m; };
+		zclip::Player P; std::vector<zclip::Q4> pose; zclip::V3f cp;
+		const float dt = 1.0f / 30.0f; int fi = 0;
+		for (auto& g : segs) {
+			const int n = std::max(1, (int)std::lround(g.secs * 30));
+			for (int k = 0; k < n; k++, fi++) {
+				if (k == 0 && g.clip != zclip::kRun) P.Play(g.clip, zclip::ClipRate(g.clip) * g.rate, S);
+				if (P.clip < 0 || P.clip == zclip::kRun || !P.OneShotOn(S)) P.Play(zclip::kRun, g.run, S);
+				P.Tick(S, dt, g.run, pose, cp);
+				std::vector<Xf> loc(sk.size());
+				for (size_t b = 0; b < sk.size(); b++) loc[b] = sk[b].local;
+				for (size_t i = 0; i < skOf.size(); i++) if (skOf[i] >= 0) loc[skOf[i]].R = M3of(pose[i]);
+				if (com >= 0) loc[com].t = { cp.x, cp.y, cp.z };
+				std::vector<Xf> W_(sk.size());
+				for (size_t b = 0; b < sk.size(); b++) W_[b] = sk[b].parent >= 0 ? compose(W_[sk[b].parent], loc[b]) : loc[b];
+				Mesh m;
+				for (auto& s : shapes) {
+					const int base = (int)m.p.size();
+					for (size_t v = 0; v < s.v.size(); v++) {
+						V3 acc; float ws = 0;
+						for (auto& [bi, wt] : s.w[v]) { const int sb = s.bones[bi]; if (sb < 0) continue; acc = acc + apply(compose(W_[sb], s.s2b[bi]), s.v[v]) * wt; ws += wt; }
+						m.p.push_back(ws > 0 ? acc * (1.0f / ws) : s.v[v]);
+						m.uv.push_back(s.uv[v * 2]), m.uv.push_back(s.uv[v * 2 + 1]);
+					}
+					for (size_t t = 0; t < s.tri.size(); t += 3) { for (int q = 0; q < 3; q++) m.tri.push_back(base + s.tri[t + q]); m.triTex.push_back(s.tex); }
+				}
+				char name[64]; snprintf(name, sizeof name, "/f%04d.ppm", fi);
+				Render(m, texs, cam, W, H, outDir + name);
+			}
+		}
+		printf("%d frames (game blend)\n", fi);
+		return 0;
 	}
 	for (int fi = 0; fi <= frames; fi++) {
 		std::map<std::string, aiMatrix4x4> now;
