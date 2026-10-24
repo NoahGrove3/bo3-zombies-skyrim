@@ -232,6 +232,11 @@ namespace bo3z
 						q->AddMessage(RE::TutorialMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
 					}
 				}
+				if (a_event->opening && a_event->menuName == RE::SleepWaitMenu::MENU_NAME && dataLoaded && !Save::Flag(Save::kFlagStarted)) {
+					// (Noah: "I can wait all the way through the night, and it resets to day") before a class is chosen the
+					// clock holds at day - said so, rather than a night that silently turns back to morning
+					Hud::Banner("The nights begin once you choose your class at an Echo Altar - until then it stays day", 5.0f);
+				}
 				if (a_event->opening && a_event->menuName == RE::SleepWaitMenu::MENU_NAME && dataLoaded) {
 					if (std::string why; !Director::MayRest(why)) {
 						if (auto* q = RE::UIMessageQueue::GetSingleton()) {

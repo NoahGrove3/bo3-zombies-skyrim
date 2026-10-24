@@ -33,10 +33,15 @@ namespace bo3z
 		void DoSkip()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			const auto mq = Forms::MQ102();  // MQ102A (Hadvar), MQ102B (Ralof), MQ102
-			Stage(mq[2], 200);
-			Stage(mq[0], 200);
+			const auto mq = Forms::MQ102();  // MQ102A, MQ102B (helpers), MQ102 Before the Storm
+			// (Noah: "my quests from Helgen aren't up to date") the main quest where a Helgen survivor at Riverwood would have
+			// it: Unbound completed (its stage 900 completes it, with its journal entry), Before the Storm on "Talk to the
+			// Jarl of Whiterun" (stage 30) - the Jarl then moves it on and gives Bleak Falls Barrow as Skyrim does.
+			// (Before: Before the Storm was set to its last stage 200, which neither completes it nor ever starts Bleak Falls)
+			Stage(Forms::IntroQuest(), 900);
 			Stage(Forms::IntroQuest(), 1000);
+			Stage(mq[2], 10);
+			Stage(mq[2], 30);
 			g_skip = true;  // Tick moves you once the quests are done
 			if (p) {
 				auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
@@ -47,7 +52,7 @@ namespace bo3z
 				p->NotifyAnimationGraph("IdleForceDefaultState");  // (the bound hands, the cart's seat: let go)
 			}
 			Hud::Banner("You wake at Riverwood's gate", 4.0f);
-			logger::info("intro: Helgen skipped (MQ102 200, MQ102A 200, MQ101 1000)");
+			logger::info("intro: Helgen skipped (MQ101 900/1000, MQ102 10/30)");
 		}
 
 		bool FreshQuickstartGame(RE::PlayerCharacter* a_player)
@@ -254,6 +259,19 @@ namespace bo3z
 					g_creatorDeferred = true;
 					logger::info("intro: a new game began in Helgen (stage {}) - skipped: Riverwood's gate, then the creator", intro->GetCurrentStageID());
 					DoSkip();
+				}
+			}
+			// (a character made with the old skip: Before the Storm stuck on its last stage, Unbound never completed) put right once
+			if (static bool fixed = false; !fixed && Save::Flag(Save::kFlagMoved) && player->Is3DLoaded() && !ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) {
+				fixed = true;
+				auto* bts = Forms::MQ102()[2];
+				auto* bfb = RE::TESForm::LookupByID<RE::TESQuest>(0x000D0800);  // MQ103 Bleak Falls Barrow
+				if (bts && bfb && !bts->IsCompleted() && bts->GetCurrentStageID() >= 200 && !bfb->IsRunning() && !bfb->IsCompleted()) {
+					Papyrus(bts, "Quest", "Reset", RE::MakeFunctionArguments());
+					Stage(bts, 10);
+					Stage(bts, 30);
+					if (!intro->IsCompleted()) Stage(intro, 900);
+					logger::info("intro: the old skip's quests put right - Unbound completed, Before the Storm on 'Talk to the Jarl of Whiterun'");
 				}
 			}
 			if (ui->GameIsPaused()) {
