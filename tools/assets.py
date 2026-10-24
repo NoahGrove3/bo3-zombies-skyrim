@@ -23,8 +23,29 @@ def save_dds(im, rel, alpha=False):
     p = OUT / 'Textures' / TEX / rel
     p.parent.mkdir(parents=True, exist_ok=True)
     im = im.convert('RGBA' if alpha else 'RGB')
-    im.save(p, pixel_format='DXT5' if alpha else 'DXT1')
+    write_dds_mips(im, p, 'DXT5' if alpha else 'DXT1')
     return f'{TEX}\\{rel}'.replace('/', '\\')
+
+def write_dds_mips(im, path, fmt):
+    """A DDS with its full mip chain (PIL writes only the top level: textures then shimmer and sparkle at a distance
+    in game, every texel fighting for the pixel). Each level box-filtered from the one above, compressed by PIL."""
+    import io, struct
+    levels, cur = [], im
+    while True:
+        levels.append(cur)
+        if min(cur.size) <= 4: break
+        cur = cur.resize((max(4, cur.size[0] // 2), max(4, cur.size[1] // 2)), Image.BOX)
+    payload = b''
+    for lv in levels:
+        b = io.BytesIO(); lv.save(b, format='DDS', pixel_format=fmt); d = b.getvalue()
+        payload += d[128:]
+    b = io.BytesIO(); im.save(b, format='DDS', pixel_format=fmt); hdr = bytearray(b.getvalue()[:128])
+    flags = struct.unpack_from('<I', hdr, 8)[0] | 0x20000          # DDSD_MIPMAPCOUNT
+    struct.pack_into('<I', hdr, 8, flags)
+    struct.pack_into('<I', hdr, 28, len(levels))                   # dwMipMapCount
+    caps = struct.unpack_from('<I', hdr, 108)[0] | 0x8 | 0x400000  # DDSCAPS_COMPLEX | DDSCAPS_MIPMAP
+    struct.pack_into('<I', hdr, 108, caps)
+    with open(path, 'wb') as f: f.write(bytes(hdr) + payload)
 
 def normal_with_spec(normal_path, rough_path=None, size=1024, flip_green=False):
     n = np.asarray(load(normal_path, size), dtype=np.uint8).copy()

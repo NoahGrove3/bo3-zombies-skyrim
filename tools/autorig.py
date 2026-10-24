@@ -144,14 +144,14 @@ JOBS = {
 
 # (Noah: the Volatile) an infected creep - a vertex-coloured sculpt, decimated and its colours baked into an atlas
 # (work/creep: simplify -> bake.py); arms out and down, tall and gaunt
-JOBS['volatile'] = dict(obj=WORK / 'creep/creep_s2.obj', skel=WORK / 'skel/draugr_nodes.txt', top=170.0, out='volatile/volatile.nif', vn=True,
+JOBS['volatile'] = dict(obj=WORK / 'creep2/low40uv.obj', skel=WORK / 'skel/draugr_nodes.txt', top=170.0, out='volatile/volatile.nif', vn=True,
                         joints={'NPC Pelvis [Pelv]': (0, 0, 80), 'NPC Spine [Spn0]': (0, 0, 86), 'NPC Spine1 [Spn1]': (0, 0, 97), 'NPC Spine2 [Spn2]': (0, -1, 110),
                                 'NPC Neck [Neck]': (0, 0, 134), 'NPC Head [Head]': (0, 2, 145),
                                 R_ARM[0]: (6, -2, 130), R_ARM[1]: (20, 0, 128), R_ARM[2]: (39, 1, 115), R_ARM[3]: (57, 2, 104),
                                 L_ARM[0]: (-6, -2, 130), L_ARM[1]: (-20, 0, 128), L_ARM[2]: (-39, 1, 115), L_ARM[3]: (-57, 2, 104),
                                 'NPC R Thigh [RThg]': (10, 0, 75), 'NPC R Calf [RClf]': (16, 0, 41), 'NPC R Foot [Rft ]': (20, -3, 8), 'NPC R Toe0 [RToe]': (22, 9, 1),
                                 'NPC L Thigh [LThg]': (-10, 0, 75), 'NPC L Calf [LClf]': (-16, 0, 41), 'NPC L Foot [LLft ]': (-20, -3, 8), 'NPC L Toe0 [LToe]': (-22, 9, 1)},
-                        props=[], tex=dict(base=WORK / 'creep/exp/tex0.png', normal=None, rough=None), glow=None, spec=0.35, gloss=25)
+                        props=[], tex=dict(base=WORK / 'creep2/volatile_albedo.png', normal=WORK / 'creep2/volatile_normal.png', rough=None), glow=None, spec=0.35, gloss=25)
 
 def to_skyrim(V, top, shift=(0, 0)):
     P = np.stack([-V[:, 0], V[:, 2], V[:, 1]], 1).astype(np.float64)
