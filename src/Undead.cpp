@@ -207,6 +207,7 @@ namespace bo3z
 		}
 
 		bool ClipPose(RE::Actor* a_actor, Rig& r, float dt, bool attacking, int cue);  // (below: the Mixamo clips)
+		bool UsesClips(Type a_t);
 		void PoseRig(RE::Actor* a_actor, Rig& r, float a_delta)
 		{
 			auto* root = a_actor->Get3D(false);
