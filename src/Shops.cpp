@@ -41,7 +41,8 @@ namespace bo3z
 			bool                prize{ false };  // (Noah: a class row's win rolls too) the reel turns the class's spells, it lands on pz
 			Classes::Prize      pz;
 		} g_show;
-		bool g_choosing = false;  // a third spell won: which of your two it replaces (Choose)
+		bool g_choosing = false;  // an offer waits in the altar's menu: take it (a spell: which of your two it replaces), roll again, or leave it
+		int  g_chooseFocus = 0;   // spells: 0 / 1 replace that one; bows and class wins: 0 take; 2 roll again; 3 leave it
 		constexpr float kChargeTime = 0.35f;  // (a breath before the first beam)
 		constexpr float kOrbZ = 300.0f;   // just over the altar's heart stone (its centre at z 175, its top ~266)
 		constexpr float kOrbScale = 1.6f;
@@ -1585,6 +1586,7 @@ namespace bo3z
 		// (Noah: two of the altar's spells at a time - Skyrim's own spells don't count) a third won asks which of your two it
 		// replaces (that one is gone for good), or you leave it on the altar for half the roll back
 		int  g_lastRollCost = 0;
+		int  g_lastRollRow = 0;  // which roll made the offer (0 the first row, 6 the second / the Ranger's): "roll again" repeats it
 		bool g_menu = false;
 		RE::ObjectRefHandle g_menuRef;
 		void EndOffer()
@@ -1593,7 +1595,13 @@ namespace bo3z
 			g_show.phase = Show::Idle;
 			g_choosing = false;
 		}
-		void Choose(int a_slot)  // 0/1: replace that spell, -1: keep yours
+		std::string OfferName()
+		{
+			return g_show.prize ? g_show.pz.name : g_show.bow ? std::string(Bows::Name(g_show.gun)) : std::string(Arcana::Name(g_show.gun));
+		}
+		// (Noah: "as the ranger I couldn't choose to reroll or take the rolled one - it would only replace what's in my hand")
+		// every offer is a choice in the altar's menu: take it, roll again, or leave it for half the roll back
+		void Choose(int a_slot)  // spells: 0/1 replace that spell; bows and class wins: 0 take it; -1: leave it (half back)
 		{
 			if (!g_choosing || g_show.phase != Show::Offering) {
 				g_choosing = false;
@@ -1604,8 +1612,24 @@ namespace bo3z
 				const int back = g_lastRollCost / 2;
 				Points::Refund(back);
 				Forms::Play(gen::Sound::ui_close);
-				Hud::Banner(std::string(Arcana::Name(g_show.gun)) + " left on the altar  (+" + std::to_string(back) + ")", 2.5f);
-				logger::info("shrine: left {} (refund {})", Arcana::Name(g_show.gun), back);
+				Hud::Banner(OfferName() + " left on the altar  (+" + std::to_string(back) + ")", 2.5f);
+				logger::info("shrine: left {} (refund {})", OfferName(), back);
+				EndOffer();
+				return;
+			}
+			if (g_show.prize || g_show.bow) {
+				if (a_slot != 0) return;
+				if (g_show.prize) {
+					if (g_show.pz.give) g_show.pz.give();
+					Forms::Play(gen::Sound::coffer_take);
+					logger::info("shrine: took {}", g_show.pz.name);
+				} else {
+					const int old = Bows::Carried();
+					Bows::Give(g_show.gun);
+					Forms::Play(gen::Sound::coffer_take);
+					Hud::Banner(std::string(Bows::Name(g_show.gun)) + "  -  in your hands" + (old >= 0 && old != g_show.gun ? "  (" + std::string(Bows::Name(old)) + " given back)" : std::string()), 3.0f);
+					logger::info("shrine: took the bow {}", Bows::Name(g_show.gun));
+				}
 				EndOffer();
 				return;
 			}
@@ -1624,26 +1648,11 @@ namespace bo3z
 			if (g_show.phase != Show::Offering || g_show.chest.get().get() != a_ref) {
 				return false;
 			}
-			if (g_show.prize) {  // a class row's win: given now
-				if (g_show.pz.give) g_show.pz.give();
-				Forms::Play(gen::Sound::coffer_take);
-				logger::info("shrine: took {}", g_show.pz.name);
-				EndOffer();
-				return true;
-			}
-			if (g_show.bow) {  // the bow wheel: one bow at a time, the new one takes the old one's place
-				const int old = Bows::Carried();
-				Bows::Give(g_show.gun);
-				Forms::Play(gen::Sound::coffer_take);
-				Hud::Banner(std::string(Bows::Name(g_show.gun)) + "  -  in your hands" + (old >= 0 && old != g_show.gun ? "  (" + std::string(Bows::Name(old)) + " given back)" : std::string()), 3.0f);
-				logger::info("shrine: took the bow {}", Bows::Name(g_show.gun));
-				EndOffer();
-				return true;
-			}
-			if (Arcana::Carried().size() >= 2) {  // the choice, in the altar's menu
+			if (g_show.prize || g_show.bow || Arcana::Carried().size() >= 2) {  // the choice, in the altar's menu (take / roll again / leave)
 				if (!g_choosing) {
 					g_choosing = true;
 					g_menu = true;
+					g_chooseFocus = 0;
 					g_menuRef = a_ref->CreateRefHandle();
 					Forms::Play(gen::Sound::ui_move);
 				}
@@ -1800,7 +1809,6 @@ namespace bo3z
 		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30 };
 		int g_focus = kRowSpell;
 		RE::ObjectRefHandle g_pickAltar;  // the altar whose class picker is up (no class yet): it opens when one is chosen
-		int g_chooseFocus = 0;  // a third spell: 0 / 1 replace that one, 2 keep yours
 
 		void BuyPerk(int perk, RE::TESObjectREFR* a_ref)
 		{
@@ -1997,19 +2005,23 @@ namespace bo3z
 			const auto menuPerks = Perks::Menu();  // (Noah: each class its own perks) the shared draughts and your class's
 			const int  n = std::max(1, static_cast<int>(menuPerks.size()));
 			g_sel = std::clamp(g_sel, 0, n - 1);
-			if (g_choosing) {  // the choice: 1 / X replaces the first, 2 / Y the second, Backspace / B keeps yours
+			bool wantReroll = false;  // (an offer's "roll again": done once the rolls below are in reach)
+			if (g_choosing) {  // the choice: 1 / X takes it (a spell: replaces the first), 2 / Y the second spell, R / Y rolls again, Backspace / B leaves it
+				const bool single = g_show.bow || g_show.prize;
 				if (g_show.phase != Show::Offering) {
 					g_choosing = false;
 				} else if (dev == RE::INPUT_DEVICE::kKeyboard && !(code == 0x11 || code == 0xC8 || code == 0x1F || code == 0xD0 || code == 0x1E || code == 0xCB || code == 0x20 || code == 0xCD || code == 0x1C || code == 0x9C)) {
 					if (static_cast<int>(code) == Settings::Key(0)) Choose(0);
-					else if (static_cast<int>(code) == Settings::Key(1)) Choose(1);
+					else if (static_cast<int>(code) == Settings::Key(1) && !single) Choose(1);
+					else if (code == 0x13 || (single && static_cast<int>(code) == Settings::Key(1))) wantReroll = true;  // R
 					else if (static_cast<int>(code) == Settings::Key(4) || code == 0x12) Choose(-1);
-					return true;
+					if (!wantReroll) return true;
 				} else if (dev == RE::INPUT_DEVICE::kGamepad && !(code == 0x0001 || code == 0x0002 || code == 0x0004 || code == 0x0008 || code == 0x1000)) {
 					if (code == 0x4000) Choose(0);
-					else if (code == 0x8000) Choose(1);
+					else if (code == 0x8000 && !single) Choose(1);
+					else if (code == 0x8000 && single) wantReroll = true;
 					else if (code == 0x2000) Choose(-1);
-					return true;
+					if (!wantReroll) return true;
 				}
 			}
 			// (the classes overhaul) C on the keyboard, Back on a pad: change class here, for septims
@@ -2044,6 +2056,7 @@ namespace bo3z
 			}
 			auto*      ref = g_menuRef.get().get();
 			auto act = [&](int a) {
+				if ((a == 0 || a == 6) && g_show.phase == Show::Idle) g_lastRollRow = a;
 				switch (a) {
 				case 0:
 					if (Classes::Get() < 0 && g_show.phase == Show::Idle) {
@@ -2080,6 +2093,7 @@ namespace bo3z
 								Hud::Banner("The altar is still turning", 1.5f);
 							} else if (Points::Get() >= cost && ref && Classes::RollGear(cls, &pz)) {
 								Points::Spend(cost);
+								g_lastRollCost = cost;
 								if (town >= 0) g_bowRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_bowRollsT[town] + 1));
 								SpinPrize(ref, std::move(pz));
 								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
@@ -2093,6 +2107,7 @@ namespace bo3z
 								Hud::Banner("It costs " + std::to_string(cost) + " essence", 2.0f);
 							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollSupport(&pz)) {
 								Points::Spend(cost);
+								g_lastRollCost = cost;
 								if (town >= 0) g_bowRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_bowRollsT[town] + 1));
 								SpinPrize(ref, std::move(pz));
 								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
@@ -2106,6 +2121,7 @@ namespace bo3z
 								Hud::Banner("A hero's pact costs " + std::to_string(cost) + " essence", 2.0f);
 							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollHero(&pz)) {
 								Points::Spend(cost);
+								g_lastRollCost = cost;
 								SpinPrize(ref, std::move(pz));
 								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
 							}
@@ -2138,13 +2154,45 @@ namespace bo3z
 			                                                                                                                                 : 0;
 			const int  side = (kb && (code == 0x1E || code == 0xCB)) || (pad && code == 0x0004) ? -1 : (kb && (code == 0x20 || code == 0xCD)) || (pad && code == 0x0008) ? 1 : 0;
 			const bool pick = (kb && (code == 0x1C || code == 0x9C)) || (pad && code == 0x1000);
+			// roll again: the offer goes back (no refund) and the same roll turns once more, at its next price
+			const auto reroll = [&] {
+				const int row = g_lastRollRow;
+				const int cost = row == 6 ? BowRollCost() * (Classes::Get() == 0 ? 2 : 1) : (Classes::Get() == 2 ? BowRollCost() : RollCost());
+				if (Points::Get() < cost) {  // (too few: the offer stays where it is)
+					Hud::Banner("Rolling again costs " + std::to_string(cost) + " essence", 2.0f);
+					PlayUi(UiSnd::kFail);
+					return;
+				}
+				EndOffer();
+				act(row);
+			};
+			if (wantReroll && g_choosing && g_show.phase == Show::Offering) {
+				PlayUi(UiSnd::kChoose);
+				reroll();
+				return true;
+			}
 			if (g_choosing && g_show.phase == Show::Offering && (nav || side || pick)) {
+				// the options: a spell - replace the first, replace the second, roll again, leave it; a bow or a class win -
+				// take it, roll again, leave it
+				std::vector<int> opts;
+				if (g_show.bow || g_show.prize) opts = { 0, 2, 3 };
+				else {
+					opts = { 0 };
+					if (Arcana::Carried().size() > 1) opts.push_back(1);
+					opts.push_back(2), opts.push_back(3);
+				}
+				auto at = std::find(opts.begin(), opts.end(), g_chooseFocus);
+				int  i = at == opts.end() ? 0 : static_cast<int>(at - opts.begin());
 				if (nav || side) {
-					g_chooseFocus = (g_chooseFocus + (nav ? nav : side) + 3) % 3;
+					i = (i + (nav ? nav : side) + static_cast<int>(opts.size())) % static_cast<int>(opts.size());
+					g_chooseFocus = opts[i];
 					PlayUi(UiSnd::kMove, 0.7f);
 				} else {
 					PlayUi(UiSnd::kChoose);
-					Choose(g_chooseFocus == 2 ? -1 : g_chooseFocus);
+					g_chooseFocus = opts[i];
+					if (g_chooseFocus == 3) Choose(-1);
+					else if (g_chooseFocus == 2) reroll();
+					else Choose(g_chooseFocus);
 				}
 				return true;
 			}
@@ -2418,6 +2466,10 @@ namespace bo3z
 				h.chooseOn = g_choosing && g_show.phase == Show::Offering;
 				if (h.chooseOn) {
 					const auto have = Arcana::Carried();
+					h.chooseKind = g_show.prize ? 2 : g_show.bow ? 1 : 0;
+					h.chooseName = OfferName();
+					h.chooseOld = g_show.bow && Bows::Carried() >= 0 && Bows::Carried() != g_show.gun ? std::string(Bows::Name(Bows::Carried())) : std::string();
+					h.chooseReroll = g_lastRollRow == 6 ? BowRollCost() * (Classes::Get() == 0 ? 2 : 1) : (Classes::Get() == 2 ? BowRollCost() : RollCost());
 					h.chooseNew = g_show.gun;
 					h.chooseA = have.size() > 0 ? have[0] : -1;
 					h.chooseB = have.size() > 1 ? have[1] : -1;

@@ -2756,33 +2756,47 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
 					y += 14 * k;
 				}
-				// [1] roll a spell - or, a third one won, the choice of which of your two it replaces
+				// [1] roll - or, with an offer waiting, the choice: take it, roll again, or leave it
 				if (s.chooseOn) {
-					Txt(dl, g_title, 21 * k, { L, y + 2 * k }, kParch, "A THIRD SPELL: " + ArmsName(Arcana::kIdBase + s.chooseNew));
-					Txt(dl, g_body, 16 * k, { L, y + 32 * k }, IM_COL32(196, 182, 160, 235), "You carry two of the altar's spells. Give one back:");
+					// (Noah: "I couldn't choose to reroll or take the rolled one") every offer: take it (a spell: in place of
+					// which of your two), roll again, or leave it for half the roll back
+					const bool spell = s.chooseKind == 0;
+					Txt(dl, g_title, 21 * k, { L, y + 2 * k }, kParch, (spell ? "A THIRD SPELL: " : "THE ALTAR OFFERS: ") + Upper(s.chooseName));
+					Txt(dl, g_body, 16 * k, { L, y + 32 * k }, IM_COL32(196, 182, 160, 235), spell ? "You carry two of the altar's spells. Give one back, or roll again:" : std::string("Take it, roll again, or leave it:"));
 					float cy = y + 60 * k;
-					const std::string keys[3] = { g_padLast ? std::string("X") : Settings::KeyName(0), g_padLast ? std::string("Y") : Settings::KeyName(1), g_padLast ? std::string("B") : Settings::KeyName(4) };
-					for (int q = 0; q < 2; ++q) {
-						const int idx = q == 0 ? s.chooseA : s.chooseB;
-						if (idx < 0) continue;
-						if (g_padLast) PadGlyph(dl, { b.x - 30 * k, cy + 13 * k }, 11 * k, q == 0 ? "X" : "Y");
-						else Txt(dl, g_body, 15 * k, { b.x - 40 * k, cy + 4 * k }, IM_COL32(200, 186, 160, 220), keys[q]);
-						if (s.chooseFocus == q) {
-							dl->AddRectFilled({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, IM_COL32(200, 160, 92, 34), 4 * k);
-							dl->AddRect({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, kGold, 4 * k, 0, 1.5f * k);
+					struct Opt { int id; std::string text, key; };
+					std::vector<Opt> opts;
+					const bool ps = Settings::PlayStationIcons();
+					if (spell) {
+						if (s.chooseA >= 0) opts.push_back({ 0, "Replace " + ArmsName(Arcana::kIdBase + s.chooseA) + (Arcana::Level(s.chooseA) > 0 ? "  (its reforging is lost)" : ""), g_padLast ? (ps ? "Square" : "X") : Settings::KeyName(0) });
+						if (s.chooseB >= 0) opts.push_back({ 1, "Replace " + ArmsName(Arcana::kIdBase + s.chooseB) + (Arcana::Level(s.chooseB) > 0 ? "  (its reforging is lost)" : ""), g_padLast ? (ps ? "Triangle" : "Y") : Settings::KeyName(1) });
+					} else {
+						opts.push_back({ 0, "Take " + s.chooseName + (s.chooseOld.empty() ? std::string() : "  (" + s.chooseOld + " goes back)"), g_padLast ? (ps ? "Square" : "X") : Settings::KeyName(0) });
+					}
+					opts.push_back({ 2, "Roll again  (" + std::to_string(s.chooseReroll) + " essence)", g_padLast ? (spell ? "" : (ps ? "Triangle" : "Y")) : std::string("R") });
+					opts.push_back({ 3, "Leave it  -  half the roll back (" + std::to_string(s.chooseRefund) + ")", g_padLast ? (ps ? "O" : "B") : Settings::KeyName(4) });
+					for (const auto& o : opts) {
+						const bool on = s.chooseFocus == o.id;
+						if (on) {
+							if (Hud::kEdgeHud) {
+								dl->AddRectFilledMultiColor({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, IM_COL32(196, 170, 112, 52), IM_COL32(196, 170, 112, 0), IM_COL32(196, 170, 112, 0), IM_COL32(196, 170, 112, 52));
+								dl->AddRectFilled({ a.x + 10 * k, cy - 4 * k }, { a.x + 12.5f * k, cy + 30 * k }, tint);
+							} else {
+								dl->AddRectFilled({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, IM_COL32(200, 160, 92, 34), 4 * k);
+								dl->AddRect({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, kGold, 4 * k, 0, 1.5f * k);
+							}
 						}
-						dl->AddQuadFilled({ L + 13 * k, cy + 5 * k }, { L + 21 * k, cy + 13 * k }, { L + 13 * k, cy + 21 * k }, { L + 5 * k, cy + 13 * k }, s.chooseFocus == q ? kGold : IM_COL32(150, 112, 60, 230));
-						DrawEmblem(dl, Arcana::kIdBase + idx, { L + 52 * k, cy + 13 * k }, 13 * k, 1.0f, now, 0.5f);
-						Txt(dl, g_body, 18 * k, { L + 74 * k, cy + 2 * k }, IM_COL32(236, 222, 196, 255), "Replace " + ArmsName(Arcana::kIdBase + idx) + (Arcana::Level(idx) > 0 ? "  (its reforging is lost)" : ""));
+						dl->AddQuadFilled({ L + 13 * k, cy + 5 * k }, { L + 21 * k, cy + 13 * k }, { L + 13 * k, cy + 21 * k }, { L + 5 * k, cy + 13 * k }, on ? kGold : IM_COL32(150, 112, 60, 230));
+						float tx = L + 36 * k;
+						if (spell && (o.id == 0 || o.id == 1)) {
+							DrawEmblem(dl, Arcana::kIdBase + (o.id == 0 ? s.chooseA : s.chooseB), { L + 52 * k, cy + 13 * k }, 13 * k, 1.0f, now, 0.5f);
+							tx = L + 74 * k;
+						}
+						TxtWrap(dl, g_body, 17 * k, { tx, cy + 2 * k }, o.id == 3 ? IM_COL32(200, 186, 160, 235) : IM_COL32(236, 222, 196, 255), o.text, b.x - 50 * k - tx, 1);
+						if (!o.key.empty()) Txt(dl, g_body, 15 * k, { b.x - 40 * k, cy + 4 * k }, IM_COL32(200, 186, 160, 220), o.key);
 						cy += 34 * k;
 					}
-					if (s.chooseFocus == 2) {
-						dl->AddRectFilled({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, IM_COL32(200, 160, 92, 34), 4 * k);
-						dl->AddRect({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, kGold, 4 * k, 0, 1.5f * k);
-					}
-					dl->AddQuadFilled({ L + 13 * k, cy + 5 * k }, { L + 21 * k, cy + 13 * k }, { L + 13 * k, cy + 21 * k }, { L + 5 * k, cy + 13 * k }, s.chooseFocus == 2 ? kGold : IM_COL32(150, 112, 60, 230));
-					Txt(dl, g_body, 18 * k, { L + 36 * k, cy + 2 * k }, IM_COL32(200, 186, 160, 235), "Keep yours  -  half the roll back (" + std::to_string(s.chooseRefund) + ")");
-					y += 166 * k;
+					y = cy + 8 * k;
 				} else
 				{
 					const float R = 46 * k;
@@ -2794,7 +2808,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					else if (s.rollPhase == 3 && Legendary(s.rollGun)) TxtGold(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, ArmsName(s.rollGun));
 					else Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? (altarCls == 2 ? "CALL A BOW OR CROSSBOW" : altarCls == 0 ? "CALL A SUMMON" : "CALL A SPELL") : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? (s.rollBow ? "THE BOWS TURN..." : "THE ALTAR TURNS...") : ArmsName(s.rollGun));
 					std::string rollLine;
-					if (s.rollPhase == 3) rollLine = s.rollBow || !s.rollPrize.empty() ? "Activate the altar to take it - yours goes back" : "Activate the altar to take it";
+					if (s.rollPhase == 3) rollLine = "Activate the altar: take it, roll again, or leave it";
 					else if (altarCls == 2) rollLine = s.bowCarried >= 0 ? "Carrying " + ArmsName(Bows::kIdBase + s.bowCarried) + " - a new one takes its place" : std::string("Six elemental bows, or a crossbow");
 					else if (altarCls == 0) rollLine = "Two summon spells at a time";
 					else rollLine = "Two of the altar's spells at a time";
@@ -3064,7 +3078,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float R = 30 * k;
 				const ImVec2 c{ size.x * 0.5f - 90 * k, size.y * 0.5f + 150 * k };
 				rollOrb(c, R);
-				const std::string t = s.rollPhase == 1 ? "The shrine gathers..." : s.rollPhase == 2 ? "The spells turn..." : (s.rollPrize.empty() ? ArmsName(s.rollGun) : s.rollPrize) + "  -  take it at the shrine";
+				const std::string t = s.rollPhase == 1 ? "The shrine gathers..." : s.rollPhase == 2 ? "The spells turn..." : (s.rollPrize.empty() ? ArmsName(s.rollGun) : s.rollPrize) + "  -  activate the altar to choose";
 				Txt(dl, g_title, 19 * k, { c.x + R + 12 * k, c.y - 12 * k }, s.rollPhase == 3 ? spellCol(s.rollGun, 1.0f) : kParch, t, 1.5f * k, IM_COL32(0, 0, 0, 255));
 			}
 		}

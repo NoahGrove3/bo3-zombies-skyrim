@@ -815,6 +815,8 @@ namespace bo3z
 			// the altar's trials (the city still held): which are done, the one under way, the controller's pick, each with tonight's numbers
 			bool        chooseOn{ false };   // the altar: a third spell won - which of your two does it replace?
 			int         chooseNew{ -1 }, chooseA{ -1 }, chooseB{ -1 }, chooseRefund{ 0 };  // (Arcana indices)
+			int         chooseKind{ 0 }, chooseReroll{ 0 };  // the offer: 0 a spell, 1 a bow, 2 a class win; what rolling again costs
+			std::string chooseName, chooseOld;              // what is offered; the bow it would replace
 			bool        trialsOn{ false };
 			int         trialDone{ 0 }, trialActive{ 0 }, trialSel{ 0 };
 			std::array<std::string, 5> trialDesc;
