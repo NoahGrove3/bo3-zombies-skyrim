@@ -472,6 +472,14 @@ static int RunNif(const char* modelPath, const char* skelPath, const char* animP
 			fread(C.q.data(), 4, C.q.size(), f); fread(C.com.data(), 4, C.com.size(), f); fclose(f);
 		}
 		if (!ok) { fprintf(stderr, "clips missing in %s\n", dir.c_str()); return 1; }
+		if (FILE* f = fopen((dir + "/rest.zan").c_str(), "rb"); f && !getenv("ZNOREST")) {
+			char mg[4]; uint32_t fps, nf, nb; float sp;
+			fread(mg, 1, 4, f); fread(&fps, 4, 1, f); fread(&nf, 4, 1, f); fread(&nb, 4, 1, f); fread(&sp, 4, 1, f);
+			auto& C = S.rest; C.fps = fps, C.frames = nf; C.bones.resize(nb);
+			for (auto& b : C.bones) { uint8_t l; fread(&l, 1, 1, f); b.resize(l); fread(b.data(), 1, l, f); }
+			C.q.resize((size_t)nf * nb * 4); C.com.resize((size_t)nf * 3);
+			fread(C.q.data(), 4, C.q.size(), f); fread(C.com.data(), 4, C.com.size(), f); fclose(f);
+		}
 		S.Prepare();
 		std::vector<int> skOf(S.c[0].bones.size());
 		for (size_t i = 0; i < skOf.size(); i++) skOf[i] = FindBone(sk, S.c[0].bones[i]);
@@ -641,11 +649,35 @@ static int RunNif(const char* modelPath, const char* skelPath, const char* animP
 	return 0;
 }
 
+// rest <skeleton.nif> <like.zan> <out.zan>: one frame, each of like.zan's bones at its bind rotation (the game's "straight")
+static int RunRest(const char* skelPath, const char* likePath, const char* outPath)
+{
+	nifly::NifFile skel; if (skel.Load(skelPath)) return 1;
+	std::vector<SkBone> sk;
+	std::function<void(nifly::NiNode*, int, const Xf&)> walk = [&](nifly::NiNode* n, int parent, const Xf& pw) {
+		SkBone b; b.name = n->name.get(); b.parent = parent; b.local = fromNif(n->GetTransformToParent()); b.restWorld = compose(pw, b.local);
+		sk.push_back(b); const int me = (int)sk.size() - 1;
+		for (auto* c : skel.GetChildren<nifly::NiNode>(n)) walk(c, me, sk[me].restWorld);
+	};
+	walk(skel.GetRootNode(), -1, Xf{});
+	FILE* f = fopen(likePath, "rb"); if (!f) return 1;
+	char mg[4]; uint32_t fps, nf, nb; float sp;
+	fread(mg, 1, 4, f); fread(&fps, 4, 1, f); fread(&nf, 4, 1, f); fread(&nb, 4, 1, f); fread(&sp, 4, 1, f);
+	std::vector<std::string> names(nb); for (auto& b : names) { uint8_t l; fread(&l, 1, 1, f); b.resize(l); fread(b.data(), 1, l, f); }
+	fclose(f);
+	FILE* o = fopen(outPath, "wb"); const uint32_t one = 1; const float z = 0;
+	fwrite("ZAN1", 1, 4, o); fwrite(&fps, 4, 1, o); fwrite(&one, 4, 1, o); fwrite(&nb, 4, 1, o); fwrite(&z, 4, 1, o);
+	for (auto& nm : names) { uint8_t l = (uint8_t)nm.size(); fwrite(&l, 1, 1, o); fwrite(nm.data(), 1, l, o); }
+	for (auto& nm : names) { const int b = FindBone(sk, nm); float q[4] = { 1, 0, 0, 0 }; if (b >= 0) QuatOf(sk[b].local.R, q); fwrite(q, 4, 4, o); }
+	const int com = FindBone(sk, "NPC COM"); V3 c = com >= 0 ? sk[com].local.t : V3{}; fwrite(&c.x, 4, 3, o);
+	fclose(o); printf("rest %u bones -> %s\n", nb, outPath); return 0;
+}
 int main(int argc, char** argv)
 {
 	if (argc < 2) { fprintf(stderr, "usage: zprev mix|nif ...\n"); return 1; }
 	const std::string mode = argv[1];
 	if (mode == "mix" && argc >= 5) return RunMix(argv[2], argv[3], argv[4], argc > 6 ? atoi(argv[5]) : 480, argc > 6 ? atoi(argv[6]) : 640);
+	if (mode == "rest" && argc >= 5) return RunRest(argv[2], argv[3], argv[4]);
 	if (mode == "bake" && argc >= 5) return RunNif("", argv[2], argv[3], "", "", 0, 0, argv[4], argc > 5 ? atoi(argv[5]) : 0);  // bake <skeleton.nif> <anim.fbx> <out.zan> [travel]
 	if (mode == "nif" && argc >= 7) return RunNif(argv[2], argv[3], argv[4], argv[5], argv[6], argc > 8 ? atoi(argv[7]) : 480, argc > 8 ? atoi(argv[8]) : 640);
 	fprintf(stderr, "bad args\n");

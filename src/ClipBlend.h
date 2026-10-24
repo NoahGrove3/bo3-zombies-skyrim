@@ -17,6 +17,9 @@
 // (Noah: "now do the same for the wrists") each hand hangs loose from its forearm the same way: it trails the forearm
 // as the arm whips round and flicks through after it, bending back and forth and a little side to side (every bone
 // of both skeletons runs along its own Z, so a wrist bends about its X and Y)
+// (Noah: "the enemies wrists are bent they should be straight and animated through the attack swings") the retargeted
+// clips held each hand turned 40-90 degrees off its forearm the whole time; now a hand rests straight - the skeleton's
+// own bind pose (rest.zan) - and plays only the clip's motion about that hand's average pose, seen from the forearm
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -47,6 +50,8 @@ namespace zclip
 		std::vector<float>       upper;  // per bone: how much of a layered swing it takes (legs 0, arms 1)
 		std::vector<float>       tau;    // per bone: its follow-through lag in seconds (0 none)
 		std::array<int, 2>       upperArm{ -1, -1 }, forearm{ -1, -1 }, hand{ -1, -1 };  // (left, right: elbows, wrists)
+		Clip                     rest;                        // (one frame: the skeleton's bind rotations; optional)
+		std::array<std::array<Q4, kClips>, 2> handMean{};     // (each clip's average turn of each hand)
 		void Prepare()
 		{
 			const auto& names = c[kRun].bones;
@@ -68,6 +73,23 @@ namespace zclip
 				if (side >= 0 && has("UpperArm")) upperArm[side] = static_cast<int>(i);
 				if (side >= 0 && has("Forearm")) forearm[side] = static_cast<int>(i);
 				if (side >= 0 && has("Hand")) hand[side] = static_cast<int>(i);
+			}
+			const std::size_t nb = names.size();
+			for (int side = 0; side < 2; ++side) {
+				if (hand[side] < 0) continue;
+				const std::size_t h = static_cast<std::size_t>(hand[side]);
+				for (int k = 0; k < kClips; ++k) {
+					const Clip& C = c[k];
+					Q4 acc{ 0, 0, 0, 0 }, first{ 1, 0, 0, 0 };
+					for (int f = 0; f < C.frames; ++f) {
+						Q4 q; for (int j = 0; j < 4; ++j) q[j] = C.q[(f * nb + h) * 4 + j];
+						if (f == 0) first = q;
+						const float d = q[0] * first[0] + q[1] * first[1] + q[2] * first[2] + q[3] * first[3];
+						for (int j = 0; j < 4; ++j) acc[j] += d < 0 ? -q[j] : q[j];
+					}
+					const float l = std::sqrt(acc[0] * acc[0] + acc[1] * acc[1] + acc[2] * acc[2] + acc[3] * acc[3]);
+					handMean[side][k] = l > 1e-6f ? Q4{ acc[0] / l, acc[1] / l, acc[2] / l, acc[3] / l } : Q4{ 1, 0, 0, 0 };
+				}
 			}
 		}
 	};
@@ -164,12 +186,23 @@ namespace zclip
 			fade = a_want == kRun ? (Layered(prevClip) ? 0.3f : 0.25f) : Layered(a_want) ? 0.12f : 0.22f;
 			(void)S;
 		}
+		// a hand: straight off its forearm, moving as the clip moves it about its average
+		static Q4 Straight(const ClipSet& S, int c, std::size_t i, const Q4& q)
+		{
+			if (S.rest.frames < 1 || S.rest.bones.size() != S.c[kRun].bones.size()) return q;
+			for (int side = 0; side < 2; ++side) {
+				if (S.hand[side] != static_cast<int>(i)) continue;
+				Q4 r; for (int j = 0; j < 4; ++j) r[j] = S.rest.q[i * 4 + j];
+				return Mul(Mul(q, Conj(S.handMean[side][c])), r);
+			}
+			return q;
+		}
 		// one clip's pose for one bone, the run under a layered swing
 		Q4 PoseOf(const ClipSet& S, int c, float t, std::size_t i) const
 		{
-			const Q4 run = Sample(S.c[kRun], runT, true, i);
+			const Q4 run = Straight(S, kRun, i, Sample(S.c[kRun], runT, true, i));
 			if (c < 0 || c == kRun) return run;
-			const Q4 act = Sample(S.c[c], t, false, i);
+			const Q4 act = Straight(S, c, i, Sample(S.c[c], t, false, i));
 			if (!Layered(c)) return act;
 			const float m = S.upper[i] + (1.0f - S.upper[i]) * still;
 			return m >= 0.999f ? act : m <= 0.001f ? run : Slerp(run, act, m);

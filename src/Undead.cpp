@@ -533,6 +533,7 @@ namespace bo3z
 					}
 					for (int c = 1; c < kClips && all; ++c) all &= g_clipSets[k].c[c].bones == g_clipSets[k].c[kRun].bones;
 					g_clipSets[k].ok = all;
+					LoadClip(std::string("Data\\SKSE\\Plugins\\CurseOfAlduin\\anims\\") + kSkel[k] + "\\rest.zan", g_clipSets[k].rest);  // (optional: straight wrists)
 					if (all) g_clipSets[k].Prepare();
 					logger::info("undead: the {} skeleton's clips {}", kSkel[k], g_clipSets[k].ok ? "loaded" : "missing - the old rig moves them");
 				}
