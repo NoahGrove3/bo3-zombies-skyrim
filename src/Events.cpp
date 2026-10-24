@@ -870,6 +870,12 @@ namespace bo3z
 			// opening the map, which hides that node, crashed the game)
 			DarkenNights();
 			OnlyCompendiumScreens();
+			// (Noah: "Obtain the Spellsword Manual" still in the journal) the Spellsword mod's start quest never starts on a
+			// new game at all (stopping it once it ran didn't hold) - the class gives the Spellsword's kit
+			if (auto* q = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESQuest>(0x009A24, "Spellsword.esp")) {
+				q->data.flags.reset(RE::QuestFlag::kStartsEnabled);
+				logger::info("quests: the Spellsword mod's manual quest no longer starts with a new game");
+			}
 			logger::info("data loaded");
 			if (!Forms::Resolve()) {
 				logger::error("a form the mashup needs is missing; rounds stay off");
