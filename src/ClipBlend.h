@@ -14,6 +14,9 @@
 // Mixamo run holds each elbow within ten degrees the whole stride; now each elbow lives: it bends as its arm swings
 // forward and opens as it swings back, and the forearm carries weight - it lags as the arm whips into a swing and
 // snaps through as the arm stops (a damped spring on the elbow hinge), never past straight
+// (Noah: "now do the same for the wrists") each hand hangs loose from its forearm the same way: it trails the forearm
+// as the arm whips round and flicks through after it, bending back and forth and a little side to side (every bone
+// of both skeletons runs along its own Z, so a wrist bends about its X and Y)
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -43,7 +46,7 @@ namespace zclip
 		bool                     ok = false;
 		std::vector<float>       upper;  // per bone: how much of a layered swing it takes (legs 0, arms 1)
 		std::vector<float>       tau;    // per bone: its follow-through lag in seconds (0 none)
-		std::array<int, 2>       upperArm{ -1, -1 }, forearm{ -1, -1 };  // (left, right: the elbows)
+		std::array<int, 2>       upperArm{ -1, -1 }, forearm{ -1, -1 }, hand{ -1, -1 };  // (left, right: elbows, wrists)
 		void Prepare()
 		{
 			const auto& names = c[kRun].bones;
@@ -64,6 +67,7 @@ namespace zclip
 				const int side = has(" L ") ? 0 : has(" R ") ? 1 : -1;
 				if (side >= 0 && has("UpperArm")) upperArm[side] = static_cast<int>(i);
 				if (side >= 0 && has("Forearm")) forearm[side] = static_cast<int>(i);
+				if (side >= 0 && has("Hand")) hand[side] = static_cast<int>(i);
 			}
 		}
 	};
@@ -145,6 +149,8 @@ namespace zclip
 		bool            heldOk = false;
 		struct Elbow { float off = 0, vel = 0, w = 0; Q4 prevU{ 1, 0, 0, 0 }, meanU{ 1, 0, 0, 0 }; bool ok = false; };
 		std::array<Elbow, 2> elbow;
+		struct Wrist { float x = 0, y = 0, vx = 0, vy = 0; V3f w{}; Q4 prev{ 1, 0, 0, 0 }; bool ok = false; };
+		std::array<Wrist, 2> wrist;
 
 		bool OneShotOn(const ClipSet& S) const { return clip >= 0 && clip != kRun && clipT < S.c[clip].Seconds(); }
 		// start a clip (rate: its speed against its own); a no-op when it already plays
@@ -228,6 +234,30 @@ namespace zclip
 				if (e.off > hi) e.off = hi, e.vel = std::min(0.0f, e.vel);
 				const float h = -e.off * 0.5f;
 				a_out[f] = Mul(qf, { std::cos(h), std::sin(h), 0, 0 });
+			}
+			// the wrists: the forearm's turn (carried by its upper arm), seen from the hand, its changes swinging the hand
+			for (int side = 0; side < 2; ++side) {
+				const int u = S.upperArm[side], f = S.forearm[side], h = S.hand[side];
+				if (u < 0 || f < 0 || h < 0) continue;
+				Wrist& e = wrist[side];
+				const Q4 qa = Mul(a_out[u], a_out[f]);  // (the forearm against the shoulder)
+				if (!e.ok || snap || dt <= 0.0f) { e = Wrist{}; e.prev = qa; e.ok = true; continue; }
+				const V3f wb = RotVec(Mul(Conj(e.prev), qa));  // (its turn this frame, in its own frame)
+				const V3f wh = Rotate(Conj(a_out[h]), { wb.x / dt, wb.y / dt, wb.z / dt });
+				const float sm = 1.0f - std::exp(-dt / 0.03f);
+				const V3f wS{ e.w.x + (wh.x - e.w.x) * sm, e.w.y + (wh.y - e.w.y) * sm, e.w.z + (wh.z - e.w.z) * sm };
+				const float ax = (wS.x - e.w.x) / dt, ay = (wS.y - e.w.y) / dt;
+				e.w = wS, e.prev = qa;
+				constexpr float k = 200.0f, c = 7.0f;
+				e.vx += (-k * e.x - c * e.vx - 1.1f * ax) * dt, e.x += e.vx * dt;
+				e.vy += (-k * e.y - c * e.vy - 0.5f * ay) * dt, e.y += e.vy * dt;
+				if (std::abs(e.x) > 0.7f) e.x = std::copysign(0.7f, e.x), e.vx = 0;
+				if (std::abs(e.y) > 0.35f) e.y = std::copysign(0.35f, e.y), e.vy = 0;
+				const float ang = std::sqrt(e.x * e.x + e.y * e.y);
+				if (ang > 1e-5f) {
+					const float sn = std::sin(ang * 0.5f) / ang;
+					a_out[h] = Mul(a_out[h], { std::cos(ang * 0.5f), e.x * sn, e.y * sn, 0 });
+				}
 			}
 			a_com = ComOf(S, clip, clipT);
 			if (w < 1.0f && prevClip >= 0) a_com = Lerp(ComOf(S, prevClip, prevT), a_com, w);
