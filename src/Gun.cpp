@@ -566,6 +566,7 @@ namespace bo3z
 				}
 				if (ours) {
 					Audio::Flesh(a_target, false);  // the flesh taking the hit (the spell's own impact plays where it lands)
+					Undead::OnHit(a_target);         // (its flinch, now and then)
 				}
 				if (!a_target->IsInCombat()) {
 					a_target->StartCombat(player);

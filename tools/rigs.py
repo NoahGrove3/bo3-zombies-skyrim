@@ -39,8 +39,8 @@ def write_job(name, fbx, maps, mats, extra=()):
     print(r.stdout.strip(), r.stderr.strip())
     if r.returncode: raise SystemExit('skinconv failed')
 
-# ---------------------------------------------------------------- zombie (3ds Max Biped rig)
-def zombie():
+# ---------------------------------------------------------------- the old Risen Dead (3ds Max Biped rig) - retired for Mixamo's zombie
+def risen():
     d = A.SRC / 'zombie'; T = lambda n: d / 'textures' / n
     dif = A.save_dds(A.load(T('Zombie.png'), 1024), 'zombie/zombie_d.dds')
     nrm = A.save_dds(A.normal_with_spec(T('Zombie_nm.png'), None, 1024), 'zombie/zombie_n.dds', alpha=True)
@@ -119,7 +119,37 @@ def shadow():
     write_job('shadow/shadow.nif', d / 'source/lesnoy.glb', maps,
               [f'mat * diffuse={dif} normal={nrm} glow={glow} emit=0.7,0.3,1.0 emitmult=2.2 spec=0.25 gloss=30'])
 
+# ---------------------------------------------------------------- the Risen Dead: Mixamo's zombie (Ch10, Mixamo rig)
+# (Noah: it takes the old Risen Dead's place, its own proportions) its raw files stay out of the repo (Mixamo: no
+# redistribution of the raw files); the source is the user's download, extracted textures beside it (work/zanim/ch10tex)
+LONGNECK_FBX = pathlib.Path('/mnt/user-data/uploads/Zombie Models & Animations/Ch10_nonPBR.fbx')
+LONGNECK_TEX = pathlib.Path('/home/claude/work/zanim/ch10tex')
+def zombie():
+    mats = []
+    for mat, tile in (('Ch10_body', '1001'), ('Ch10_body1', '1002')):
+        dif = A.save_dds(A.load(LONGNECK_TEX / f'Ch10_{tile}_Diffuse.png', 2048), f'zombie/zombie_{tile}_d.dds')
+        gloss = LONGNECK_TEX / f'Ch10_{tile}_Glossiness.png'
+        n = np.asarray(A.load(LONGNECK_TEX / f'Ch10_{tile}_Normal.png', 2048), dtype=np.uint8)
+        g = np.asarray(A.load(gloss, 2048, 'L'), dtype=np.float32)
+        nrm = A.save_dds(Image.fromarray(np.dstack([n, (g * 0.5).astype(np.uint8)]), 'RGBA'), f'zombie/zombie_{tile}_n.dds', alpha=True)
+        mats.append(f'mat {mat} diffuse={dif} normal={nrm} spec=0.35 gloss=30')
+    X = 'mixamorig5:'  # (this download's rig prefix)
+    maps = [(f'{X}Hips', 'NPC Pelvis [Pelv]'), (f'{X}Spine', 'NPC Spine [Spn0]'), (f'{X}Spine1', 'NPC Spine1 [Spn1]'), (f'{X}Spine2', 'NPC Spine2 [Spn2]'),
+            (f'{X}Neck', 'NPC Neck [Neck]'), (f'{X}Head', 'NPC Head [Head]'), (f'{X}HeadTop_End', 'NPC Head [Head]')]
+    fing = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
+    for side, S in (('Left', 'L'), ('Right', 'R')):
+        foot = 'NPC L Foot [LLft ]' if S == 'L' else 'NPC R Foot [Rft ]'
+        maps += [(f'{X}{side}Shoulder', f'NPC {S} Clavicle [{S}Clv]'), (f'{X}{side}Arm', f'NPC {S} UpperArm [{S}Uar]'), (f'{X}{side}ForeArm', f'NPC {S} Forearm [{S}Lar]'),
+                 (f'{X}{side}Hand', f'NPC {S} Hand [{S}Hnd]'),
+                 (f'{X}{side}UpLeg', f'NPC {S} Thigh [{S}Thg]'), (f'{X}{side}Leg', f'NPC {S} Calf [{S}Clf]'), (f'{X}{side}Foot', foot),
+                 (f'{X}{side}ToeBase', f'NPC {S} Toe0 [{S}Toe]'), (f'{X}{side}Toe_End', f'NPC {S} Toe0 [{S}Toe]')]
+        for f, fn in enumerate(fing):
+            for j in range(3):
+                maps.append((f'{X}{side}Hand{fn}{j+1}', f'NPC {S} Finger{f}{j} [{S}F{f}{j}]'))
+            maps.append((f'{X}{side}Hand{fn}4', f'NPC {S} Finger{f}2 [{S}F{f}2]'))
+    write_job('zombie/zombie.nif', LONGNECK_FBX, maps, mats)
+
 if __name__ == '__main__':
-    for n, fn in {'zombie': zombie, 'boss': boss, 'shadow': shadow}.items():
+    for n, fn in {'zombie': zombie, 'risen': risen, 'boss': boss, 'shadow': shadow}.items():
         if not ONLY or n in ONLY:
             print('==', n); fn()

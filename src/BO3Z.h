@@ -191,7 +191,10 @@ namespace bo3z
 	namespace Undead
 	{
 		enum class Type { Shambler, Runner, Crawler, Wailer, Bloater, Stalker, Reaper, Necro, Wyrm };
-		enum Cue { kCueNone = 0, kCueRoar, kCueScream, kCueGrab, kCueSwipeL, kCueSwipeR, kCueCrouch, kCueChannel };
+		enum Cue { kCueNone = 0, kCueRoar, kCueScream, kCueGrab, kCueSwipeL, kCueSwipeR, kCueCrouch, kCueChannel, kCueStandUp };
+		bool  HasClips(RE::Actor* a_actor);    // moves by the Mixamo clips (Data/SKSE/Plugins/CurseOfAlduin/anims)
+		float StandUpSeconds();                 // the stand-up clip's length as it plays
+		void  OnHit(RE::Actor* a_actor);       // a hit landed on it: its flinch (now and then)
 		void  Assign(RE::Actor* a_actor, Type a_type);
 		void  Forget(RE::Actor* a_actor);
 		void  CueFor(RE::Actor* a_actor, int a_cue, float a_seconds);

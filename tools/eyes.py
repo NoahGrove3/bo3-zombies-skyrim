@@ -16,9 +16,9 @@ UP = pathlib.Path('/mnt/user-data/uploads/common--Skyrim Special Edition/Data/Me
 ICE, EMBER, VIOLET = (0.62, 0.85, 1.0), (1.0, 0.48, 0.16), (0.78, 0.5, 1.0)
 RED = (1.0, 0.10, 0.06)
 MODELS = {  # creature id: (nif, glow colour, size)
-    'zombie': (W / 'out4/Data/Meshes/CurseOfAlduin/zombie/zombie.nif', ICE, 1.0),
-    'runner': (W / 'out3/Data/Meshes/CurseOfAlduin/hooded/hooded.nif', ICE, 0.9),
-    'wailer': (W / 'out3/Data/Meshes/CurseOfAlduin/hag/hag.nif', ICE, 0.9),
+    'zombie': (W / 'creatures/Data/Meshes/CurseOfAlduin/zombie/zombie.nif', ICE, 1.0),   # (Mixamo's zombie now: tools/rigs.py zombie)
+    'runner': (W / 'creatures/Data/Meshes/CurseOfAlduin/hooded/hooded.nif', ICE, 0.9),
+    'wailer': (W / 'creatures/Data/Meshes/CurseOfAlduin/hag/hag.nif', ICE, 0.9),
     'bloater': (W / 'out3/Data/Meshes/CurseOfAlduin/abom/abom.nif', ICE, 1.2),
     'shadow': (UP / 'shadow/shadow.nif', ICE, 1.0),
     'reaper': (W / 'out3/Data/Meshes/CurseOfAlduin/reaper/reaper.nif', EMBER, 1.1),

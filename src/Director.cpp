@@ -432,6 +432,7 @@ namespace bo3z
 			int             anim = 0;  // (Noah: Undead Summons Emerge from the Ground) 0 trying, 1 its emerge animation plays, -1 our climb
 			bool            portal = false;  // its red portal opened
 			bool            hidden = false;  // (Noah: it showed standing on the ground a moment before the emerge took it under) unseen till the emerge has begun
+			float           standFor = 0;    // the stand-up clip's length (anim 3)
 		};
 		std::vector<Riser> g_risers;
 		constexpr float    kRiseDepth = 115.0f, kRiseTime = 1.5f;
@@ -503,6 +504,24 @@ namespace bo3z
 						Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
 						continue;
 					}
+					if (!summoned && a->Is3DLoaded() && Undead::HasClips(a.get())) {
+						// (Noah: the dead "come from the ground") lying in the earth it bursts from, it drags itself up - the
+						// Mixamo stand-up - and only then runs at you
+						r.anim = 3, r.t = 0;
+						auto f = a->GetPosition();
+						f.z = r.floorZ + 2.0f;
+						a->SetPosition(f, true);
+						a->SetCollision(true);
+						r.standFor = Undead::StandUpSeconds();
+						Undead::CueFor(a.get(), Undead::kCueStandUp, r.standFor);
+						if (auto* fx = Forms::Ours(gen::kRiseFx); fx && g_fx.size() < 24) {
+							if (auto puff = a->PlaceObjectAtMe(fx, false)) {
+								puff->SetPosition({ f.x, f.y, r.floorZ });
+								g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
+							}
+						}
+						continue;
+					}
 					if (!summoned && a->Is3DLoaded() && a->NotifyAnimationGraph("summonStart")) {
 						// (Noah: the dead "come from the ground") the emerge-from-the-ground animation; no portal for the
 						// common dead - the ground bursts instead
@@ -534,6 +553,14 @@ namespace bo3z
 					} else {
 						continue;
 					}
+				}
+				if (r.anim == 3) {  // getting up off the ground (its first moment hidden: the clip starts lying down)
+					if (r.hidden && (r.t >= 0.08f || a->IsDead())) ShowRiser(a.get(), true), r.hidden = false;
+					if (r.t >= r.standFor || a->IsDead()) {
+						a->EnableAI(true);
+						r.t = 99;
+					}
+					continue;
 				}
 				if (r.anim == 2) {  // through the portal: a moment to step out, then it hunts
 					if (r.t >= 1.1f || a->IsDead()) {

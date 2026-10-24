@@ -137,6 +137,7 @@ JOBS = {
                            'NPC L Thigh [LThg]': (-9, 3, 70), 'NPC L Calf [LClf]': (-11, 2, 36), 'NPC L Foot [Lft ]': (-12, -3, 7), 'NPC L Toe0 [LToe]': (-14, 7, 1)},
                    props=[],
                    tex=dict(base=pathlib.Path('/home/claude/work/enemies2/hooded/exp/tex0.png'), normal=None, rough=None),
+                   skirt=dict(hip=68.0, legMax=0.55, blend=7.0, footTop=10.0, footR=7.0, power=1.4),
                    glow=None, spec=0.2, gloss=15),
 }
 
@@ -218,6 +219,26 @@ def build(name, preview_only=False):
         W[inside] = 0; W[inside, names.index(bone)] = 1.0
     top = np.argsort(-W, 1)[:, :4]
     tw = np.take_along_axis(W, top, 1); tw /= tw.sum(1, keepdims=True)
+    if J.get('skirt'):
+        # (Noah: "fix the Draugr Bride's dress") a long dress is not two trouser legs: below the hips it hangs from the
+        # pelvis and is only drawn after the thighs, more toward the hem, each side by its own leg and the middle by
+        # both - so it sways and parts as she runs instead of splitting and stretching with the legs; it never bends
+        # at the knees
+        sk = J['skirt']
+        hip = sk['hip']; pel = names.index('NPC Pelvis [Pelv]')
+        lt = names.index('NPC L Thigh [LThg]'); rt = names.index('NPC R Thigh [RThg]')
+        feet = [bind[FOOT[S]][0] for S in 'LR']
+        for v in np.nonzero(P[:, 2] < hip)[0]:
+            z, x = P[v, 2], P[v, 0]
+            if z < sk.get('footTop', 0) and min(np.linalg.norm(P[v, :2] - f[:2]) for f in feet) < sk.get('footR', 0):
+                continue  # (a foot peeking out: its own weights)
+            if any(k in names[top[v, 0]] for k in ('Hand', 'Forearm', 'UpperArm', 'Finger', 'Clavicle')):
+                continue  # (her hands hang low beside the dress: they stay the arms')
+            t = np.clip((hip - z) / hip, 0, 1)
+            leg = sk['legMax'] * t ** sk.get('power', 0.8)
+            sL = np.clip(0.5 - x / (2 * sk['blend']), 0, 1)  # left is -X
+            top[v, :] = [pel, lt, rt, pel]
+            tw[v, :] = [1 - leg, leg * sL, leg * (1 - sL), 0]
     used = sorted(set(top[tw > 0.01].ravel()))
     idx = {b: k for k, b in enumerate(used)}
     N = M_normals(P, F)

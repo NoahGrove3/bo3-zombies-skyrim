@@ -644,6 +644,7 @@ namespace bo3z
 								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
 							}
 							HurtUndead(z, Director::RoundHealth() * share * (0.7f + 0.3f * Arcana::Power()));  // (the night's power curve)
+							Undead::OnHit(z);
 						}
 					}
 				}
