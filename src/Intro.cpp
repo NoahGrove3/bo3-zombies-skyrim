@@ -46,7 +46,7 @@ namespace bo3z
 				}
 				p->NotifyAnimationGraph("IdleForceDefaultState");  // (the bound hands, the cart's seat: let go)
 			}
-			Hud::Banner("Helgen skipped - you wake at Riverwood's gate", 4.0f);
+			if (kPlayHelgen) Hud::Banner("Helgen skipped - you wake at Riverwood's gate", 4.0f);
 			logger::info("intro: Helgen skipped (MQ102 200, MQ102A 200, MQ101 1000)");
 		}
 
@@ -239,6 +239,21 @@ namespace bo3z
 					}
 				} else {
 					g_skipHold = 0;
+				}
+			}
+			// (Noah: "the spawn and character creation changes weren't made" - a new game opened on the cart: Bethesda's quick
+			// start didn't take) no Helgen: a new game found on the cart (or anywhere in Helgen) is skipped at once, under the
+			// black - Helgen and Before the Storm set done, the move to Riverwood's gate, and the creator there
+			if (!kPlayHelgen && !Save::Flag(Save::kFlagMoved) && !Forms::IntroDone() && intro->IsRunning() && !g_skip && !g_skipRace && !raceOpen &&
+				FreshQuickstartGame(player) && player->Is3DLoaded() && !ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) {
+				static int wait = 0;
+				Hud::IntroVeil(3.0f, wait == 0);  // (black at once: the cart never shows)
+				if (++wait > 90) {  // (a moment for the new game's scripts to settle)
+					wait = 0;
+					g_raceAfterSkip = g_raceSeen ? 0 : 1;
+					g_creatorDeferred = true;
+					logger::info("intro: a new game began in Helgen (stage {}) - skipped: Riverwood's gate, then the creator", intro->GetCurrentStageID());
+					DoSkip();
 				}
 			}
 			if (ui->GameIsPaused()) {
