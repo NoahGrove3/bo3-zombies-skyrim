@@ -495,6 +495,7 @@ namespace Spellcraft
 		bool burning = false;
 		for (auto& dd : g_dots) burning |= dd.target.get().get() == a;
 		g_fecElem = FecOfEffect(a_effect == -2 ? d.effect : a_effect);
+		if (g_fecElem < 0) g_fecElem = FecOfRow(a_row);  // (a bow's arrow: its element's death even without an effect)
 		const bool killed = Damage(a, dmg, a_head, false);
 		g_fecElem = -1;
 		if (killed && shattered) Stats::Style("SHATTER", 40);

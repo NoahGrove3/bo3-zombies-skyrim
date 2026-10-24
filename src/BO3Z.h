@@ -423,6 +423,9 @@ namespace bo3z
 		float Dealt();  // your damage: 1.4 .. 0.7
 		float Taken();  // damage to you: 0.5 .. 2.0
 		float Mana();   // magicka costs: 0.8 .. 1.25
+		int   Freed();  // Echo Altars freed (checked every few seconds)
+		float FoeToughness();  // Skyrim's own foes against your class's weapons: 1 .. 2.2, more with each altar freed
+		void  TickFoeDamage();  // Skyrim's damage-to-you settings raised with your progress
 	}
 
 	namespace Party

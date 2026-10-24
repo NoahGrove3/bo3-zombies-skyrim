@@ -2191,6 +2191,16 @@ namespace bo3z
 			const bool   flying = Movement::Gliding() || a_player->IsInMidair();
 			grounded = flying ? 0.0f : grounded + a_delta;
 			relocGap = std::max(0.0f, relocGap - a_delta);
+			std::vector<std::size_t> refill;  // (spawned after the loop: g_alive must not grow under it)
+			struct Refill
+			{
+				std::vector<std::size_t>& v;
+				RE::PlayerCharacter*      p;
+				~Refill()
+				{
+					for (auto e : v) SpawnOne(p, static_cast<int>(e));
+				}
+			} refiller{ refill, a_player };
 			for (auto& s : g_alive) {
 				if (!gen::kEnemies[s.enemy].forceCombat || (s.combatRetry -= a_delta) > 0) {
 					continue;
@@ -2198,7 +2208,7 @@ namespace bo3z
 				constexpr float kStep = 0.75f;
 				s.combatRetry = kStep;
 				auto a = s.handle.get();
-				if (!a || a->IsDead()) {
+				if (!a || a->IsDead() || a->IsDisabled()) {
 					continue;
 				}
 				if (s.frenzy > 0) {
@@ -2209,14 +2219,23 @@ namespace bo3z
 				// Left behind (too far, or its cell unloaded): climb out of the ground again near the player, BO3-style.
 				if (!boss && (dist > gen::kChaseRelocateDist || !a->Is3DLoaded())) {
 					if ((s.behind += kStep) >= gen::kChaseRelocateSeconds && grounded >= 1.5f && relocGap <= 0) {
-						relocGap = 0.25f;
-						a->StopCombat();
-						a->MoveTo(a_player);
-						a->SetPosition(SpawnSpot(a_player), true);
-						a->MoveToNearestNavmesh();
-						a->StartCombat(a_player);
+						// (crashes right after a burst of these: an actor dragged across cells with MoveTo and then set
+						// down elsewhere the same frame, its body still loading on a worker thread) one a second; one still
+						// loaded in your worldspace is only set down near you, one whose cell unloaded is taken away and a
+						// fresh one climbs out instead
+						relocGap = 1.0f;
 						s.behind = 0, s.stall = 0, s.lastDist = -1;
-						logger::info("night: relocated {} that fell behind ({:.0f} away)", gen::kEnemies[s.enemy].id, dist);
+						if (a->Is3DLoaded() && a->GetWorldspace() == a_player->GetWorldspace() && a->GetParentCell() && a_player->GetParentCell() &&
+							a->GetParentCell()->IsInteriorCell() == a_player->GetParentCell()->IsInteriorCell() && (!a->GetParentCell()->IsInteriorCell() || a->GetParentCell() == a_player->GetParentCell())) {
+							a->SetPosition(SpawnSpot(a_player), true);
+							a->MoveToNearestNavmesh();
+							a->StartCombat(a_player);
+							logger::info("night: {} that fell behind set down near you ({:.0f} away)", gen::kEnemies[s.enemy].id, dist);
+						} else {
+							refill.push_back(s.enemy);
+							Vanish(a.get());
+							logger::info("night: {} that fell behind replaced ({:.0f} away, unloaded)", gen::kEnemies[s.enemy].id, dist);
+						}
 					}
 					continue;
 				}

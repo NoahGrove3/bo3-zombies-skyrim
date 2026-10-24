@@ -144,21 +144,24 @@ namespace bo3z::Classes
 			// (Noah: "Obtain the Spellsword Manual - what is that for?") the Spellsword mod's own start quest: its manual
 			// is never needed here (the Spellsword's kit comes from the class)
 			if (auto* q = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESQuest>(0x009A24, "Spellsword.esp"); q && q->IsRunning()) {
-				// (a console StopQuest didn't hold: the mod's own scripts start it again) Quest.Stop() through Papyrus, and
-				// the objective taken off the journal; tried a few times, then left
+				// (a console StopQuest didn't hold, nor Quest.Stop() through Papyrus, nor keeping it from starting with a new
+				// game: the Spellsword mod's own scripts start it again) its objectives are put back to dormant every pass -
+				// a quest showing none is not in the journal - and Stop tried natively a few times
+				int hidden = 0;
+				for (auto* o : q->objectives) {
+					if (o && o->state.get() != RE::QUEST_OBJECTIVE_STATE::kDormant) {
+						o->state = RE::QUEST_OBJECTIVE_STATE::kDormant;
+						++hidden;
+					}
+				}
+				q->data.flags.reset(RE::QuestFlag::kDisplayedInHUD, RE::QuestFlag::kActive);
 				static int tries = 0;
 				if (tries < 6) {
 					++tries;
-					if (auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton()) {
-						const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(q->GetFormType(), q);
-						RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
-						vm->DispatchMethodCall(hd, "Quest", "SetObjectiveDisplayed", RE::MakeFunctionArguments(static_cast<std::int32_t>(0), false, false), none);
-						vm->DispatchMethodCall(hd, "Quest", "SetObjectiveDisplayed", RE::MakeFunctionArguments(static_cast<std::int32_t>(10), false, false), none);
-						vm->DispatchMethodCall(hd, "Quest", "Stop", RE::MakeFunctionArguments(), none);
-					}
+					q->Stop();
 					Console(p, "StopQuest _Spellsword_Start_Quest");
-					logger::info("classes: the Spellsword mod's manual quest stopped (try {})", tries);
 				}
+				if (hidden) logger::info("classes: the Spellsword mod's manual quest kept off the journal ({} objective(s) hidden, stop try {})", hidden, tries);
 			}
 			// (Noah: "Flames, Healing, Sparks - am I supposed to start with these?") the race's own starting spells go too
 			// (its powers and abilities - Ancestor's Wrath - stay)

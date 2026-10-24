@@ -382,6 +382,7 @@ namespace bo3z::Settings
 			return;
 		}
 		next = now + std::chrono::seconds(2);
+		Difficulty::TickFoeDamage();
 		std::error_code ec;
 		const auto t = std::filesystem::last_write_time(UserIni(), ec);
 		if (!g_loaded || (!ec && t != g_stamp)) {

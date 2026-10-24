@@ -209,6 +209,16 @@ namespace BowsImpl
 		{ "Sunlit Arrow", "Radiant Burst", "Solar Flare", "Eclipse" },
 		{ "Leech Arrow", "Hemorrhage", "Vampiric Bolt", "Blood Lance" } };
 	// (Noah: each bow's last upgrade - a tornado of its element where the arrow lands, slow, hunting the dead for 5 s)
+	// a blow of a bow's own (chains, tornadoes, marks, tethers): its element's death for the death-effect mod
+	bool DamageAs(int a_row, RE::Actor* a, float a_dmg, bool a_head, bool a_melee, bool a_quiet = false)
+	{
+		const int was = g_fecElem;
+		if (was < 0) g_fecElem = FecOfRow(a_row);
+		const bool k = Damage(a, a_dmg, a_head, a_melee, a_quiet);
+		g_fecElem = was;
+		return k;
+	}
+
 	Kind KindOf(int i)
 	{
 		const std::string_view e = gen::kBows[i].element;
@@ -263,7 +273,7 @@ namespace BowsImpl
 			}
 			d *= 0.7f;
 			Spellcraft::StreakAt(row, HeadPos(cur) - RE::NiPoint3{ 0, 0, 30 }, HeadPos(next) - RE::NiPoint3{ 0, 0, 30 }, 0.5f, 0.18f, true);
-			Damage(next, d, false, false);
+			DamageAs(row, next, d, false, false);
 			done.push_back(next);
 			cur = next;
 		}
@@ -279,7 +289,7 @@ namespace BowsImpl
 			auto*       av = f->AsActorValueOwner();
 			const float frac = av->GetActorValue(RE::ActorValue::kHealth) / std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth));
 			if (Director::IsRoundUndead(f) && !Director::IsBoss(f) && frac < 0.35f) {
-				Damage(f, 1.0e7f, false, false);  // turned to ash
+				DamageAs(row, f, 1.0e7f, false, false);  // turned to ash
 			} else {
 				Spellcraft::Strike(row, f, dmg * 1.2f, false, gen::kFxHoly, at);
 			}
@@ -453,7 +463,7 @@ namespace BowsImpl
 				Director::Web(a->GetPosition(), 70.0f, 3.0f, 60.0f, true);  // slowed
 			}
 			if (t >= 2 && Frozen(a) && !killed) {  // Shatter: the frozen one bursts into shards
-				Damage(a, dmg * 1.5f, false, false);
+				DamageAs(row, a, dmg * 1.5f, false, false);
 				Spellcraft::Area(row, p, 220.0f, dmg * 0.6f, gen::kFxNone);
 				Spellcraft::BurstAt(row, p, 140.0f, 0.5f);
 			}
@@ -721,7 +731,7 @@ namespace BowsImpl
 			if ((c.tick -= a_delta) <= 0) {
 				c.tick = 0.5f;
 				for (auto* f : Foes(c.at, c.r)) {
-					Damage(f, c.dps * 0.5f, false, false, true);
+					DamageAs(c.row, f, c.dps * 0.5f, false, false, true);
 				}
 				Spellcraft::BurstAt(c.row, c.at + RE::NiPoint3{ Rand(-30, 30), Rand(-30, 30), 10 }, c.r * 0.5f, 0.45f);
 			}
@@ -740,7 +750,7 @@ namespace BowsImpl
 				for (auto* f : Foes(a->GetPosition(), 350.0f)) {
 					if (f != a.get() && n++ < 2) {
 						Spellcraft::StreakAt(m.row, HeadPos(a.get()) - RE::NiPoint3{ 0, 0, 25 }, HeadPos(f) - RE::NiPoint3{ 0, 0, 25 }, 0.45f, 0.15f, true);
-						Damage(f, m.dmg, false, false, true);
+						DamageAs(m.row, f, m.dmg, false, false, true);
 					}
 				}
 			}
@@ -783,7 +793,7 @@ namespace BowsImpl
 			}
 			if ((b.tick -= a_delta) <= 0) {
 				b.tick = 0.5f;
-				Damage(a.get(), b.dmg, false, false, true);
+				DamageAs(b.row, a.get(), b.dmg, false, false, true);
 				Heal(0.02f);
 				Spellcraft::StreakAt(b.row, HeadAt(p), HeadPos(a.get()) - RE::NiPoint3{ 0, 0, 30 }, 0.35f, 0.45f, false);
 			}

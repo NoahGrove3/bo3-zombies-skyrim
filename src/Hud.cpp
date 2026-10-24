@@ -1189,7 +1189,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				startT = std::max(0.0f, startT - dtw * 1.2f);
 				clearT = std::max(0.0f, clearT - dtw * 0.9f);
 				if (on && !Hud::kEdgeHud) {  // (Edge UI: the wave sits in the night's box, top-left - below)
-					const ImVec2 c{ size.x * 0.5f - 92 * k, (s.questTitle.empty() || s.perkMenu ? 128 : 192) * k };  // (below a trial's line)
+					const ImVec2 c{ size.x * 0.5f - 92 * k, (s.questTitle.empty() || s.perkMenu ? 128 : (Hud::kEdgeHud ? 250 : 192)) * k };  // (below a trial's line)
 					const float  R = 26 * k, flare = startT * startT;
 					Panel(dl, { c.x - R - 14 * k, c.y - R - 10 * k }, { c.x + R + 196 * k, c.y + R + 10 * k }, k * 0.6f, 0.85f);
 					dl->AddCircleFilled(c, R + 4 * k, kNavy, 40);
@@ -2138,7 +2138,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			// the trial under way at night: a slim line under the compass - its name, its count, its clock
 			if (!s.questTitle.empty() && !s.perkMenu) {
-				const float y0 = 100 * k, cxs = size.x * 0.5f;
+				// (Noah: "the box displaying the current trial" sat over Edge UI's compass) below it
+				const float y0 = (Hud::kEdgeHud ? 158 : 100) * k, cxs = size.x * 0.5f;
 				const ImU32 warn = IM_COL32(255, 96, 70, 255);
 				const bool  blink = s.questWarn && std::fmod(now, 0.8f) < 0.4f;
 				TxtC(dl, g_title, 20 * k, cxs, y0, Fade(kGold, 0.95f), s.questTitle, 2 * k, IM_COL32(150, 70, 255, 200));

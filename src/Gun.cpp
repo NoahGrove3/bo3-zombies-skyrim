@@ -491,6 +491,18 @@ namespace bo3z
 			}
 		}
 
+		// (Noah: "the bows weren't causing the death effect mods") a bow's element for a blow that names none of its own -
+		// so a storm arrow's kill crackles with lightning like the storm spells', a fire arrow's burns, a frost one freezes
+		int FecOfRow(int a_row)
+		{
+			for (const auto& b : gen::kBows) {
+				if (b.spellRow != a_row) continue;
+				const std::string_view e = b.element;
+				return e == "fire" ? 0 : e == "frost" ? 1 : e == "shock" ? 2 : e == "sun" ? 5 : e == "blood" ? 6 : -1;
+			}
+			return -1;
+		}
+
 		bool Damage(RE::Actor* a_target, float a_bo3Damage, bool a_head, bool a_melee, bool a_quiet = false)
 		{
 			if (!a_quiet && !g_stormBusy && g_storm.charges > 0 && a_target && !a_target->IsDead()) {
@@ -507,6 +519,7 @@ namespace bo3z
 				// Skyrim's own enemies (bandits, draugr, dragons) are tuned to the player's level, not to the night: our
 				// weapons hit them like gear of your level would (half strength at level 1, full at 25, 1.5x at 50+).
 				damage *= std::clamp(0.5f + 0.02f * static_cast<float>(player->GetLevel()), 0.5f, 1.5f);
+				damage /= Difficulty::FoeToughness();
 			}
 			if (PowerUps::InstaKill() && Director::IsRoundUndead(a_target)) {
 				damage = av->GetActorValue(RE::ActorValue::kHealth) + 1.0f;  // Insta-Kill (every one of them, one hit)
@@ -2592,9 +2605,24 @@ namespace bo3z
 			for (const char* bar : { "_root.HUDMovieBaseInstance.Health._alpha", "_root.HUDMovieBaseInstance.Magica._alpha", "_root.HUDMovieBaseInstance.Stamina._alpha" }) {
 				hud->uiMovie->SetVariable(bar, RE::GFxValue(0.0));
 			}
+			// the shout meter rides inside the compass's holder (the compass itself stays)
+			for (const char* sm : { "_root.HUDMovieBaseInstance.CompassShoutMeterHolder.ShoutMeter_mc._visible", "_root.HUDMovieBaseInstance.ShoutMeter_mc._visible" }) {
+				hud->uiMovie->SetVariable(sm, RE::GFxValue(false));
+			}
 			// (Noah: "bring back the health, stamina and mana bars we made instead of Edge's") Edge UI's own bars may be
 			// clips of other names: any of the HUD's clips named for health, magicka or stamina (not an enemy's) is hidden
 			static std::set<std::string> told;
+			if (static bool listed = false; !listed) {  // (once: every clip on the HUD, by name - to find the rest of Edge UI's pieces)
+				RE::GFxValue base;
+				if (hud->uiMovie->GetVariable(&base, "_root.HUDMovieBaseInstance") && base.IsObject()) {
+					listed = true;
+					std::string names;
+					base.VisitMembers([&](const char* a_name, const RE::GFxValue& a_v) {
+						if (a_name && a_v.IsDisplayObject()) names += std::string(a_name) + " ";
+					});
+					logger::info("hud: the HUD's clips: {}", names);
+				}
+			}
 			for (const char* root : { "_root.HUDMovieBaseInstance", "_root" }) {
 				RE::GFxValue obj;
 				if (!hud->uiMovie->GetVariable(&obj, root) || !obj.IsObject()) continue;
@@ -2602,7 +2630,10 @@ namespace bo3z
 					if (!a_name || !a_v.IsDisplayObject()) return;
 					std::string low(a_name);
 					std::transform(low.begin(), low.end(), low.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-					const bool vital = low.find("health") != std::string::npos || low.find("magica") != std::string::npos || low.find("stamina") != std::string::npos;
+					// (Noah: "remove the Edge's UI shout meter on the bottom left") its shout meter too: our bars' blue rim
+					// shows the shout's cooldown
+					const bool vital = low.find("health") != std::string::npos || low.find("magica") != std::string::npos || low.find("stamina") != std::string::npos ||
+					                   (low.find("shout") != std::string::npos && low.find("compass") == std::string::npos);
 					if (!vital || low.find("enemy") != std::string::npos || low.find("boss") != std::string::npos) return;
 					RE::GFxValue::DisplayInfo off;
 					off.SetVisible(false);
@@ -3616,4 +3647,42 @@ namespace bo3z::Difficulty
 	float Dealt() { static constexpr float k[6] = { 1.4f, 1.2f, 1.0f, 0.9f, 0.8f, 0.7f }; return k[Level()]; }
 	float Taken() { static constexpr float k[6] = { 0.5f, 0.7f, 1.0f, 1.3f, 1.6f, 2.0f }; return Settings::FollowDifficulty() ? k[Level()] : 1.0f; }  // (the night's blows: the only place the difficulty touches them)
 	float Mana() { static constexpr float k[6] = { 0.8f, 0.9f, 1.0f, 1.08f, 1.16f, 1.25f }; return k[Level()]; }
+	int Freed()
+	{
+		static int  n = 0;
+		static auto at = std::chrono::steady_clock::now() - std::chrono::seconds(10);
+		if (std::chrono::steady_clock::now() - at > std::chrono::seconds(5)) {
+			at = std::chrono::steady_clock::now(), n = 0;
+			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) n += Curse::Freed(t) ? 1 : 0;
+		}
+		return n;
+	}
+	// (Noah: "players are stronger than normal Skyrim characters - strengthen the normal Skyrim and modded enemies") how
+	// much tougher Skyrim's own foes are against your class's weapons: by the difficulty, and more with each Echo Altar
+	// you free (the stronger you get, the more they hold)
+	float FoeToughness()
+	{
+		static constexpr float k[6] = { 1.0f, 1.0f, 1.2f, 1.5f, 1.8f, 2.2f };
+		return k[Level()] * (1.0f + 0.08f * static_cast<float>(std::min(Freed(), 12)));
+	}
+	// and how much harder they hit: Skyrim's own damage-to-you settings (each difficulty's) raised with your progress
+	void TickFoeDamage()
+	{
+		static constexpr const char* kNames[6] = { "fDiffMultHPToPCVE", "fDiffMultHPToPCE", "fDiffMultHPToPCN", "fDiffMultHPToPCH", "fDiffMultHPToPCVH", "fDiffMultHPToPCL" };
+		static constexpr float       kExtra[6] = { 1.0f, 1.0f, 1.0f, 1.15f, 1.25f, 1.3f };
+		static float orig[6] = { -1, -1, -1, -1, -1, -1 };
+		static float applied = -1;
+		auto* gs = RE::GameSettingCollection::GetSingleton();
+		if (!gs) return;
+		const float prog = 1.0f + 0.06f * static_cast<float>(std::min(Freed(), 12));
+		if (std::abs(prog - applied) < 1e-3f) return;
+		for (int i = 0; i < 6; ++i) {
+			auto* st = gs->GetSetting(kNames[i]);
+			if (!st) continue;
+			if (orig[i] < 0) orig[i] = st->GetFloat();
+			st->data.f = orig[i] * kExtra[i] * prog;
+		}
+		if (applied < 0 || std::abs(prog - applied) > 1e-3f) logger::info("difficulty: Skyrim's foes hit x{:.2f} (on top of the difficulty's own), and hold x{:.2f} against your class's weapons", prog, FoeToughness());
+		applied = prog;
+	}
 }
