@@ -84,7 +84,7 @@ namespace BowsImpl
 	// (the classes overhaul: the Ranger's arrows run out) the quiver holds what you bought, found or picked out of the dead;
 	// a_fill tops it up to a full quiver (a new bow, Max Ammo, a quiver bought at the altar), and the arrows stay on the string
 	// (Noah: "the archer class should get increased arrow capacity each upgrade") 60 arrows, then 100, 150 and 200 a
-	// full quiver as the bow is reforged - and from tier I its arrows grow back on their own (TickRegrow)
+	// full quiver as the bow is reforged - and its arrows grow back on their own, faster each tier
 	constexpr int kQuiverByTier[4] = { 60, 100, 150, 200 };
 	int Quiver(int i) { return i >= 0 && i < kN ? kQuiverByTier[std::clamp<int>(g_level[i], 0, 3)] : 60; }
 	void TopUp(int i, bool a_equip, bool a_fill = false)
@@ -1421,9 +1421,9 @@ namespace BowsImpl
 		TickCards(a_delta);
 		g_sinceFire += a_delta;
 		const int i = Held();
-		// (each tier: the arrows grow back - one every 6 s at tier I, 4 s at II, 2 s at III, up to a full quiver)
+		// (the arrows grow back - one every 8 s as rolled (Noah), 6 s at tier I, 4 s at II, 2 s at III, up to a full quiver)
 		static float regrow = 0;
-		if (i >= 0 && g_level[i] > 0 && (regrow += a_delta) >= (g_level[i] >= 3 ? 2.0f : g_level[i] == 2 ? 4.0f : 6.0f)) {
+		if (i >= 0 && (regrow += a_delta) >= (g_level[i] >= 3 ? 2.0f : g_level[i] == 2 ? 4.0f : g_level[i] == 1 ? 6.0f : 8.0f)) {
 			regrow = 0;
 			if (auto* am = Ammo(i); am && p->GetItemCount(am) < Quiver(i)) p->AddObjectToContainer(am, nullptr, 1, nullptr);
 		}
