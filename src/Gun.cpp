@@ -810,6 +810,7 @@ namespace bo3z
 
 		void Blast(int a_expl, const RE::NiPoint3& a_at, float a_delay = 0.0f, float a_scale = kBlastScale)
 		{
+			Director::Noise(2.0f);  // (the Volatiles) a spell bursting is heard far off
 			if (a_expl >= 0 && g_blasts.size() < 32) {
 				g_blasts.push_back({ a_at, a_delay, a_expl, a_scale });
 			}

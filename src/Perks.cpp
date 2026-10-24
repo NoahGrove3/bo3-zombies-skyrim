@@ -34,11 +34,12 @@ namespace bo3z
 		{
 			std::vector<int> out;
 			const int        cls = Classes::Get();
-			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
-				if (gen::kPerkClass[i] < 0) out.push_back(i);
-			}
+			// (the altar's rework) your class's own first, then the shared draughts
 			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
 				if (gen::kPerkClass[i] >= 0 && gen::kPerkClass[i] == cls) out.push_back(i);
+			}
+			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
+				if (gen::kPerkClass[i] < 0) out.push_back(i);
 			}
 			return out;
 		}

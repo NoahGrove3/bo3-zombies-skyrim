@@ -632,10 +632,12 @@ namespace bo3z
 			const float u = Rand(0.0f, 1.0f);
 			// every night is a mix of all the risen (Noah: no night of one model): the Risen Dead most, then the Hollow
 			// Bride, the Stitched Abomination and the Drowned Wailer; a little more of the dangerous ones as nights go on
-			const float runners = std::min(0.20f, 0.12f + 0.006f * a_round);  // (Noah: mostly plain risen dead)
+			// (Noah: "fast runners that sprint" like Dying Light's - no lurching shamblers) runners are the night now: most of
+			// it from the first, nearly all of it later; a few wailers and bloaters for the horde's variety
+			const float wailers = std::min(0.07f, 0.04f + 0.003f * a_round);
+			const float bloaters = std::min(0.08f, 0.05f + 0.003f * a_round);
+			const float runners = 1.0f - wailers - bloaters - std::max(0.0f, 0.25f - 0.03f * a_round);  // (a quarter shamble on night 1, none from night 9)
 			const float crawlers = 0.0f;  // (retired: the crawl rig slid along the ground)
-			const float wailers = std::min(0.08f, 0.05f + 0.003f * a_round);
-			const float bloaters = std::min(0.12f, 0.08f + 0.003f * a_round);
 			if (u < runners) return Type::Runner;
 			if (u < runners + crawlers) return Type::Crawler;
 			if (u < runners + crawlers + wailers) return Type::Wailer;
@@ -659,7 +661,7 @@ namespace bo3z
 		float HealthMult(Type a_type)
 		{
 			switch (a_type) {
-			case Type::Runner: return 0.7f;
+			case Type::Runner: return 0.9f;   // (the night's main body now: nearly a full zombie's health)
 			case Type::Crawler: return 0.6f;
 			case Type::Bloater: return 2.4f;
 			case Type::Wailer: return 1.1f;
@@ -669,7 +671,7 @@ namespace bo3z
 		float DamageMult(Type a_type)
 		{
 			switch (a_type) {  // how hard each kind hits
-			case Type::Runner: return 0.75f;
+			case Type::Runner: return 0.85f;
 			case Type::Bloater: return 1.6f;
 			case Type::Wailer: return 0.8f;
 			case Type::Stalker: return 1.2f;
@@ -722,7 +724,7 @@ namespace bo3z
 						m.burst = true;
 						const auto at = a->GetPosition();
 						Gun::FxBlast("poisongas", at + RE::NiPoint3{ 0, 0, 40 });
-						Director::Hazard(at, 0.05f, 230.0f, 0.15f, "", true);
+						Director::Hazard(at, 0.05f, 230.0f, 0.15f, "", false);  // (no stagger: Noah)
 						for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 							if (auto z = h.get(); z && z.get() != a.get() && !z->IsDead() && Director::IsRoundUndead(z.get()) && z->GetPosition().GetDistance(at) < 260.0f) {
 								z->AsActorValueOwner()->DamageActorValue(RE::ActorValue::kHealth, Director::RoundHealth() * 0.6f);

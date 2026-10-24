@@ -64,6 +64,15 @@ namespace bo3z
 			bool            paid;
 		};
 		std::unordered_map<RE::FormID, Elite> g_elites;
+		// (Noah: "elites, bosses and trial bosses should spawn with the summon animation, not coming from the ground") the
+		// ones raised through a portal: set while a boss, champion, mini-boss or trial elite is being raised (g_summonRaise)
+		std::unordered_set<RE::FormID> g_summoned;
+		int                            g_summonRaise = 0;
+		struct SummonScope
+		{
+			SummonScope() { ++g_summonRaise; }
+			~SummonScope() { --g_summonRaise; }
+		};
 		float g_slowLeft = 0;  // Terror Shriek slow on the player  // short-lived effects (rise bursts)
 		std::mt19937            g_rng{ std::random_device{}() };
 		bool                    g_loggedBlocked = false;
@@ -285,22 +294,51 @@ namespace bo3z
 			RE::NiPoint3              anchor{};
 			std::vector<RE::NiPoint3> pts;
 		} g_points;
+		std::optional<float> WalkTop(RE::TESObjectCELL* a_cell, const RE::NiPoint3& a_at, float a_above);
+		// (Noah: "from the ground - on road and dirt, not inside houses or on their porches") a spot is good ground when
+		// the first thing a ray from high above meets there is the land itself (nothing built over it or on it: no roof,
+		// no porch, no house), and best when the land is road or dirt
+		int GroundKind(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_at, float a_land)
+		{
+			auto* cell = a_player->GetParentCell();
+			if (const auto top = WalkTop(cell, { a_at.x, a_at.y, a_land }, 900.0f); top && std::abs(*top - a_land) > 24.0f) {
+				return 0;  // something stands there (a house, a porch, a wall, a rock shelf)
+			}
+			switch (RE::TES::GetSingleton()->GetLandMaterialType({ a_at.x, a_at.y, a_land })) {
+			case RE::MATERIAL_ID::kDirt:
+			case RE::MATERIAL_ID::kGravel:
+			case RE::MATERIAL_ID::kMud:
+			case RE::MATERIAL_ID::kStoneBroken: return 2;  // road and dirt
+			default: return 1;                            // open land
+			}
+		}
 		void LayPoints(RE::PlayerCharacter* a_player, int a_town, const RE::NiPoint3& a_anchor)
 		{
 			g_points.ws = a_player->GetWorldspace(), g_points.town = a_town, g_points.anchor = a_anchor;
 			g_points.pts.clear();
 			const float turn = std::fmod(std::abs(a_anchor.x * 0.0013f + a_anchor.y * 0.0007f), 6.2832f);  // (the same layout every night in a place)
-			constexpr int kN = 12;
-			for (int k = 0; k < kN; ++k) {
-				const float ang = turn + 6.2832f * k / kN;
-				const float r = (k % 3 == 0 ? 1400.0f : k % 3 == 1 ? 2000.0f : 2600.0f);
+			// candidates all the way round, at three distances; the good ground kept - road and dirt first
+			std::vector<RE::NiPoint3> road, open;
+			constexpr int kAround = 24;
+			for (int k = 0; k < kAround * 3; ++k) {
+				const float ang = turn + 6.2832f * (k % kAround) / kAround + (k / kAround) * 0.13f;
+				const float r = (k / kAround == 0 ? 1400.0f : k / kAround == 1 ? 2000.0f : 2600.0f);
 				RE::NiPoint3 p{ a_anchor.x + std::cos(ang) * r, a_anchor.y + std::sin(ang) * r, a_anchor.z };
-				if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(p, land)) {
-					p.z = land;
-				}
-				g_points.pts.push_back(p);
+				float land = 0;
+				if (!RE::TES::GetSingleton()->GetLandHeight(p, land)) continue;
+				p.z = land;
+				const int kind = GroundKind(a_player, p, land);
+				if (kind == 2) road.push_back(p);
+				else if (kind == 1) open.push_back(p);
 			}
-			logger::info("spawn: {} points laid round {}", kN, a_town >= 0 ? std::string(gen::kTowns[a_town]) : std::string("the wilds"));
+			// (12 at the most, spread round: road and dirt, topped up with open land when the roads are few)
+			auto pick = [&](std::vector<RE::NiPoint3>& from, std::size_t want) {
+				const std::size_t step = std::max<std::size_t>(1, from.size() / std::max<std::size_t>(1, want));
+				for (std::size_t q = 0; q < from.size() && g_points.pts.size() < 12; q += step) g_points.pts.push_back(from[q]);
+			};
+			pick(road, 12);
+			if (g_points.pts.size() < 8) pick(open, 12 - g_points.pts.size());
+			logger::info("spawn: {} points laid round {} ({} on road or dirt, {} open ground found)", g_points.pts.size(), a_town >= 0 ? std::string(gen::kTowns[a_town]) : std::string("the wilds"), road.size(), open.size());
 		}
 
 		RE::NiPoint3 SpawnSpot(RE::PlayerCharacter* a_player)
@@ -325,7 +363,18 @@ namespace bo3z
 					}
 				}
 				if (!ok.empty()) {
-					RE::NiPoint3 p = *ok[std::uniform_int_distribution<std::size_t>(0, ok.size() - 1)(g_rng)];
+					// (Noah: "hordes surround me instead of queuing up") the next one comes from the side the fewest are on now:
+					// the dead round you counted in eight directions, each spawn point weighted against its own
+					std::array<int, 8> crowd{};
+					const auto         pp = a_player->GetPosition();
+					const auto         bin = [&](const RE::NiPoint3& q) { return static_cast<int>(std::floor((std::atan2(q.y - pp.y, q.x - pp.x) + 3.14159265f) / 6.2831853f * 8.0f)) & 7; };
+					for (const auto& z : g_alive) {
+						if (auto za = z.handle.get(); za && !za->IsDead() && za->GetPosition().GetDistance(pp) < 4000.0f) ++crowd[bin(za->GetPosition())];
+					}
+					std::vector<float> wts;
+					for (const auto* q : ok) wts.push_back(1.0f / (1.0f + 1.5f * static_cast<float>(crowd[bin(*q)])));
+					std::discrete_distribution<std::size_t> pickPt(wts.begin(), wts.end());
+					RE::NiPoint3 p = *ok[pickPt(g_rng)];
 					p.x += Uniform(-90.0f, 90.0f), p.y += Uniform(-90.0f, 90.0f);  // (a few steps apart, not stacked)
 					p.z += R.spawnHeightOffset;
 					return p;
@@ -436,17 +485,42 @@ namespace bo3z
 						if (auto* art = dh->LookupForm<RE::BGSArtObject>(big ? gen::kArtPortalBig : gen::kArtPortal, gen::kPlugin)) a->ApplyArtObject(art, big ? 3.0f : 2.4f);
 					}
 				};
+				const bool summoned = g_summoned.contains(a->GetFormID()) || Director::IsBoss(a.get()) || g_elites.contains(a->GetFormID());
 				if (r.anim == 0) {
 					if (a->Is3DLoaded()) {
 						ShowRiser(a.get(), false), r.hidden = true;  // (unseen until the emerge has it in hand)
 					}
-					if (a->Is3DLoaded() && a->NotifyAnimationGraph("summonStart")) {
+					if (summoned && a->Is3DLoaded() && r.t > 0.05f) {
+						// (elites, bosses, champions, trial elites) never out of the ground: the Curse's portal opens and it steps
+						// out of it, its summoning shown
+						r.anim = 2, r.t = 0;
+						auto f = a->GetPosition();
+						f.z = r.floorZ + 2.0f;
+						a->SetPosition(f, true);
+						a->SetCollision(true);
+						ShowRiser(a.get(), true), r.hidden = false;
+						openPortal();
+						Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
+						continue;
+					}
+					if (!summoned && a->Is3DLoaded() && a->NotifyAnimationGraph("summonStart")) {
+						// (Noah: the dead "come from the ground") the emerge-from-the-ground animation; no portal for the
+						// common dead - the ground bursts instead
 						r.anim = 1, r.t = 0;
 						auto f = a->GetPosition();
 						f.z = r.floorZ + 2.0f;
 						a->SetPosition(f, true);
 						a->SetCollision(true);
-						openPortal();
+						if (auto* fx = Forms::Ours(gen::kRiseFx); fx && g_fx.size() < 24) {
+							if (auto puff = a->PlaceObjectAtMe(fx, false)) {
+								puff->SetPosition({ f.x, f.y, r.floorZ });
+								g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
+							}
+						}
+					} else if (!summoned && r.t > 0.4f && a->Is3DLoaded()) {
+						// no emerge animation for this body: it climbs out of the ground (our own rise, below)
+						r.anim = -1, r.t = 0;
+						ShowRiser(a.get(), true), r.hidden = false;
 					} else if (r.t > 0.4f) {
 						// (Noah: the night's spawns look conjured) no draugr rise for this one: it steps out of a portal
 						r.anim = 2, r.t = 0;
@@ -553,7 +627,9 @@ namespace bo3z
 			std::optional<Undead::Type> rolled;
 			if (gen::kEnemies[*pick].rig && gen::kEnemies[*pick].id == "zombie") {
 				rolled = Undead::Roll(g_current);
-				const std::string_view alt = *rolled == Undead::Type::Runner ? "runner" : *rolled == Undead::Type::Wailer ? "wailer" : *rolled == Undead::Type::Bloater ? "bloater" : "";
+				// (runners are most of the night now: the risen dead's own bodies run too - one in three the Hollow Bride's)
+				const bool brideBody = *rolled == Undead::Type::Runner && std::uniform_int_distribution<int>(0, 2)(g_rng) == 0;
+				const std::string_view alt = brideBody ? "runner" : *rolled == Undead::Type::Wailer ? "wailer" : *rolled == Undead::Type::Bloater ? "bloater" : "";
 				for (std::size_t i = 0; !alt.empty() && i < gen::kEnemies.size(); ++i) {
 					if (gen::kEnemies[i].id == alt && Forms::Enemy(i)) {
 						pick = i;
@@ -731,6 +807,7 @@ namespace bo3z
 					g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
 				}
 			}
+			if (g_summonRaise > 0 || kindRow.elite || kindRow.bossEvery > 0 || g_elites.contains(actor->GetFormID())) g_summoned.insert(actor->GetFormID());
 			StartRise(actor, a_player);
 			return true;
 		}
@@ -922,6 +999,66 @@ namespace bo3z
 			}
 		}
 
+		// ---- (Noah: "I like the volatiles concept - drawn by noise: spell impacts, running, shouts...") the Volatiles ----
+		// The night listens. Noise builds a meter - a spell bursting, a shout, sprinting, running, a fight - and it fades
+		// when you go quiet. Fill it and a Volatile hears you: an elite night-runner, far faster than the rest, many times
+		// their health and hitting half again as hard, that comes out of the Curse's portal hunting you. One at a time
+		// (two from the eighth night), never twice within a minute and a half, from the second night on.
+		float g_noise = 0, g_volatileWait = 30.0f;
+		std::vector<RE::ActorHandle> g_volatiles;
+		constexpr float kNoiseFull = 100.0f;
+		bool IsVolatile(RE::Actor* a) { return a && std::any_of(g_volatiles.begin(), g_volatiles.end(), [&](const RE::ActorHandle& h) { return h.get().get() == a; }); }
+		void RaiseVolatile(RE::PlayerCharacter* a_player)
+		{
+			std::optional<std::size_t> row;
+			for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
+				if (gen::kEnemies[i].id == "runner" && Forms::Enemy(i)) row = i;
+			}
+			if (!row) return;
+			RE::NiPoint3 at = SpawnSpot(a_player);
+			{
+				SummonScope summon;  // (through a portal, like every elite)
+				if (!SpawnOne(a_player, static_cast<int>(*row), &at) || g_alive.empty()) return;
+			}
+			auto v = g_alive.back().handle.get();
+			if (!v) return;
+			auto* av = v->AsActorValueOwner();
+			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 5.0f);  // (6x a runner's health)
+			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, 45.0f);                                              // far faster than the rest
+			av->SetActorValue(RE::ActorValue::kAttackDamageMult, av->GetActorValue(RE::ActorValue::kAttackDamageMult) * 1.5f);
+			v->SetDisplayName("Volatile", true);
+			g_summoned.insert(v->GetFormID());
+			g_volatiles.push_back(v->GetHandle());
+			Forms::PlayAt(gen::Sound::wailer_scream, v.get());
+			Hud::Banner("A VOLATILE HEARS YOU", 3.5f);
+			if (Settings::ScreenShake()) RE::ShakeCamera(0.35f, a_player->GetPosition(), 0.8f);
+			logger::info("night: a Volatile rises (noise {:.0f})", g_noise);
+		}
+		void TickVolatiles(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			// what you do is heard: running and sprinting; the rest comes through Director::Noise
+			if (a_player->AsActorState()->IsSprinting()) g_noise += 7.0f * a_delta;
+			else if (a_player->IsRunning()) g_noise += 1.5f * a_delta;
+			g_noise = std::max(0.0f, g_noise - g_noise * 0.07f * a_delta - 1.0f * a_delta);  // (quiet a while and it fades)
+			std::erase_if(g_volatiles, [](const RE::ActorHandle& h) {
+				auto a = h.get();
+				if (a && a->IsDead()) {
+					Points::Add(500);
+					Hud::Banner("Volatile slain  +500", 2.5f);
+				}
+				return !a || a->IsDead() || a->IsDeleted();
+			});
+			g_volatileWait = std::max(0.0f, g_volatileWait - a_delta);
+			const int most = g_current >= 8 ? 2 : 1;
+			if (g_current >= 2 && g_noise >= kNoiseFull && g_volatileWait <= 0 && static_cast<int>(g_volatiles.size()) < most && !Coop::Client()) {
+				RaiseVolatile(a_player);
+				g_noise = 25.0f;
+				g_volatileWait = 90.0f;
+			}
+			std::scoped_lock l(Hud::Lock());
+			Hud::Edit().noise = std::clamp(g_noise / kNoiseFull, 0.0f, 1.0f);
+		}
+
 		// ---- Gloomstalkers (sheet: elite) ----
 		void TickElites(RE::PlayerCharacter* a_player, float a_delta)
 		{
@@ -957,7 +1094,7 @@ namespace bo3z
 						}
 					}
 					// Umbral Pounce: out of the shadow straight into a flurry; the dark claws up where you stand
-					g_hazards.push_back({ OnGround(p), 0.45f, 150.0f, 0.10f, "tentacle", true });
+					g_hazards.push_back({ OnGround(p), 0.45f, 150.0f, 0.10f, "tentacle", false });  // (Noah: no movement-blocking hits)
 					a->NotifyAnimationGraph("attackPowerStartForward");
 					e.lunge = gen::elite::lungeEvery;
 				}
@@ -965,10 +1102,7 @@ namespace bo3z
 				if ((e.shriek -= a_delta) <= 0 && dist < gen::elite::shriekRange) {
 					auto* pav = a_player->AsActorValueOwner();
 					Perks::DamagePlayer(pav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::elite::shriekDamage * Settings::UndeadDamageMult());
-					if (g_slowLeft <= 0) {
-						pav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -gen::elite::shriekSlow);
-					}
-					g_slowLeft = gen::elite::shriekSeconds;
+					// (Noah: no movement-blocking attacks) it wounds, it no longer slows you
 					Forms::PlayAt(gen::Sound::wailer_scream, a.get());
 					{
 						std::scoped_lock l(Hud::Lock());
@@ -2339,6 +2473,8 @@ namespace bo3z
 			g_boss = {};
 			g_champ = {};
 			g_elites.clear();
+			g_volatiles.clear(), g_noise = 0, g_volatileWait = 30.0f;
+			g_summoned.clear();
 			g_slowLeft = 0;
 			g_pause = 0;
 			EndEvent();
@@ -2395,6 +2531,7 @@ namespace bo3z
 					row = i;
 				}
 			}
+			SummonScope summon;  // (a champion steps out of a portal)
 			if (row < 0 || !SpawnOne(p, row, &a_at)) {
 				return false;
 			}
@@ -2531,6 +2668,8 @@ namespace bo3z
 			} else {
 				row = PickEnemy();
 			}
+			std::optional<SummonScope> summon;
+			if (a_elite) summon.emplace();  // (a trial's elite steps out of a portal)
 			if (!row || !SpawnOne(p, static_cast<int>(*row), &a_at)) {
 				return {};
 			}
@@ -2538,6 +2677,7 @@ namespace bo3z
 			return a ? a->GetHandle() : RE::ActorHandle{};
 		}
 		bool  IsBoss(RE::Actor* a_actor) { auto b = g_boss.handle.get(); return a_actor && b && b.get() == a_actor; }
+		void  Noise(float a_amount) { if (g_phase == Phase::Fighting) g_noise = std::min(kNoiseFull * 1.5f, g_noise + a_amount); }
 		// (Noah: the harpies do far too much damage) the mod creatures whose own attacks and spells were made for a
 		// high-level hero, brought in line with the rest of the night
 		float HarmMult(RE::Actor* a_actor)
@@ -3210,6 +3350,7 @@ namespace bo3z
 				TickBoss(player, a_delta);
 				TickChampion();
 				TickElites(player, a_delta);
+				TickVolatiles(player, a_delta);
 				if (Coop::Client()) {
 					break;  // the host raises the dead; the night here is for counting and the HUD
 				}

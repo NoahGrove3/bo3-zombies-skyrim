@@ -1398,6 +1398,7 @@ namespace bo3z::gen
 	inline constexpr std::string_view kAnimFireCrossbow = "attackStart", kAnimReloadCrossbow = "reloadStart", kAnimFireStaff = "BeginCastRight", kAnimReloadStaff = "none";
 	// BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale (token STAT, light)
 	inline constexpr std::array<std::uint32_t, 4> kSummonCapPerks{ 0xCAD, 0xCAE, 0xCAF, 0xCCF };   // the Summoner holds 2, 3, 4, 5 summons
+	inline constexpr std::uint32_t kSteadyPerk = 0xCD8;   // the night's dead never stagger you (Mod Incoming Stagger x0)
 	inline constexpr std::uint32_t kWonderTomeSpell = 0xCB1;   // the Destruction wonder (Classes::OnCast)
 	inline constexpr std::uint32_t kVortexWeap = 0xCD0, kVortexAmmo = 0xCD1, kVortexFx = 0xCD3;   // the Ranger's wonder, the Subsuming Vortex
 	inline constexpr std::array<std::uint32_t, 4> kClassGuides{ 0xCD4, 0xCD5, 0xCD6, 0xCD7 };   // each class's guide book

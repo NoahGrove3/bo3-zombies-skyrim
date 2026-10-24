@@ -1240,6 +1240,7 @@
   "BOOK:guide_summoner": "0xcd4",
   "BOOK:guide_destruction": "0xcd5",
   "BOOK:guide_ranger": "0xcd6",
-  "BOOK:guide_spellsword": "0xcd7"
+  "BOOK:guide_spellsword": "0xcd7",
+  "PERK:steady": "0xcd8"
  }
 }

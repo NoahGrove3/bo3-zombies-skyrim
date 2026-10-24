@@ -692,6 +692,12 @@ namespace bo3z
 			{
 				if (a_event && a_event->object && a_event->object.get() == RE::PlayerCharacter::GetSingleton()) {
 					int level = 0;
+					// (the Volatiles) the night hears you: a shout most of all, any spell a little
+					{
+						auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(a_event->spell);
+						const bool shout = sp && sp->GetSpellType() == RE::MagicSystem::SpellType::kVoicePower;
+						Director::Noise(shout ? 35.0f : 5.0f);
+					}
 					Compass::OnCast(a_event->spell);
 					Gun::OnStaffCast(a_event->spell);
 					Classes::NoteCast(a_event->spell);

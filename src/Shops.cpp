@@ -1799,6 +1799,7 @@ namespace bo3z
 		// (Noah: one way to drive the altar) a focus moved up and down its rows - D-pad or W/S - and A / Enter to take it
 		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30 };
 		int g_focus = kRowSpell;
+		RE::ObjectRefHandle g_pickAltar;  // the altar whose class picker is up (no class yet): it opens when one is chosen
 		int g_chooseFocus = 0;  // a third spell: 0 / 1 replace that one, 2 keep yours
 
 		void BuyPerk(int perk, RE::TESObjectREFR* a_ref)
@@ -2071,7 +2072,7 @@ namespace bo3z
 				case 3: Curse::ClaimRelic(ref ? TownOf(ref) : -1); break;
 				case 6:
 					if (!TakeOffer(ref)) {
-						if (const int cls = Classes::Get(); cls == 3 || (cls == 2 && std::uniform_int_distribution<int>(0, 9)(g_rng) < 3)) {
+						if (const int cls = Classes::Get(); cls == 3 || (cls == 2 && std::uniform_int_distribution<int>(0, 9)(g_rng) < 4)) {
 							// (the Spellsword's row: a spell-weapon or spellshield; the Ranger's: three times in ten a crossbow)
 							const int town = TownOfAltar(ref), cost = BowRollCost(town);
 							Classes::Prize pz;
@@ -2150,7 +2151,11 @@ namespace bo3z
 			if (!g_choosing && (nav || side || pick)) {
 				auto* r = g_menuRef.get().get();
 				const int t = r ? TownOf(r) : -1;
-				std::vector<int> rows{ kRowClass, kRowSpell, kRowBow, kRowForge, kRowPerk };  // (Noah: the class is chosen and changed at the altar)
+				// (Noah: "the echo altar changes depending on which class the player is using") the Ranger has one roll - bows
+				// and crossbows both - the other classes their roll and their second wheel
+				std::vector<int> rows{ kRowClass, kRowSpell };  // (Noah: the class is chosen and changed at the altar)
+				if (Classes::Get() != 2) rows.push_back(kRowBow);
+				rows.push_back(kRowForge), rows.push_back(kRowPerk);
 				if (t >= 0 && Curse::ClaimableShout(t) >= 0) rows.push_back(kRowShout);
 				if (!Movement::BondLocked()) rows.push_back(kRowBond);  // (Noah: the dragon's bond unseen until Whiterun is freed)
 				const bool trials = t >= 0 && Curse::Altar(t).on;
@@ -2189,7 +2194,7 @@ namespace bo3z
 							Classes::OpenPicker(Classes::Get() >= 0);  // (the first is free; a change costs)
 						}
 						break;
-					case kRowSpell: act(0); break;
+					case kRowSpell: act(Classes::Get() == 2 ? 6 : 0); break;  // (the Ranger's one roll: a bow or a crossbow)
 					case kRowBow: act(6); break;
 					case kRowForge: act(1); break;
 					case kRowPerk: act(2); break;
@@ -2282,6 +2287,17 @@ namespace bo3z
 			}
 			if (!g_menu) {
 				g_choosing = false;  // (walked away: the spell waits on the altar a while yet)
+			}
+			// the class picker opened from an altar (no class yet) closed: with a class chosen, that altar opens on its rows
+			if (g_pickAltar && !Classes::Open()) {
+				auto pr = g_pickAltar.get();
+				g_pickAltar.reset();
+				if (pr && Classes::Get() >= 0 && OnAltarBase(pr.get()) && !g_menu) {
+					g_menu = true;
+					g_focus = kRowSpell, g_chooseFocus = 0, g_sel = 0;
+					g_menuRef = pr->CreateRefHandle();
+					PlayUi(UiSnd::kOpen, 0.6f);
+				}
 			}
 			static float trim = 0;
 			if ((trim -= a_delta) <= 0) {  // a character from before the two-spell rule keeps the two in hand
@@ -2622,6 +2638,12 @@ namespace bo3z
 					Forms::Play(gen::Sound::ui_close);
 					g_menu = false;
 					g_closedAt = std::chrono::steady_clock::now();
+				} else if (Classes::Get() < 0 && g_show.phase == Show::Idle) {
+					// (Noah: "for players who haven't chosen a class yet the echo altar UI should just be the class selection") the
+					// class picker alone; once a class is chosen the altar opens on that class's own rows (TickPickAltar)
+					g_pickAltar = a_ref->CreateRefHandle();
+					Forms::PlayAt(gen::Sound::coffer_open, a_ref);
+					Classes::OpenPicker(false);
 				} else {
 					g_menu = true;
 					g_focus = Classes::Get() < 0 ? kRowClass : kRowSpell, g_chooseFocus = 0;

@@ -199,6 +199,7 @@ o.append(f'\tinline constexpr std::string_view kAnimFireCrossbow = {cs(AN["cross
 import esp_ids as _pu
 o.append('\t// BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale (token STAT, light)')
 o.append(f'\tinline constexpr std::array<std::uint32_t, 4> kSummonCapPerks{{ 0x{IDS[("PERK", "summon_cap_2")]:03X}, 0x{IDS[("PERK", "summon_cap_3")]:03X}, 0x{IDS[("PERK", "summon_cap_4")]:03X}, 0x{IDS[("PERK", "summon_cap_5")]:03X} }};   // the Summoner holds 2, 3, 4, 5 summons')
+o.append(f'\tinline constexpr std::uint32_t kSteadyPerk = 0x{IDS[("PERK", "steady")]:03X};   // the night\'s dead never stagger you (Mod Incoming Stagger x0)')
 o.append(f'\tinline constexpr std::uint32_t kWonderTomeSpell = 0x{IDS[("SPEL", "wonder_tome")]:03X};   // the Destruction wonder (Classes::OnCast)')
 o.append(f'\tinline constexpr std::uint32_t kVortexWeap = 0x{IDS[("WEAP", "vortex")]:03X}, kVortexAmmo = 0x{IDS[("AMMO", "vortexarrow")]:03X}, kVortexFx = 0x{IDS[("ACTI", "vortexfx")]:03X};   // the Ranger\'s wonder, the Subsuming Vortex')
 o.append('\tinline constexpr std::array<std::uint32_t, 4> kClassGuides{ ' + ', '.join(f'0x{IDS[("BOOK", "guide_" + c)]:03X}' for c in ('summoner', 'destruction', 'ranger', 'spellsword')) + ' };   // each class\'s guide book')

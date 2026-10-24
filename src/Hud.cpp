@@ -1231,7 +1231,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (Hud::kEdgeHud && s.round > 0 && classChosen) {
 				const bool   waveOn = s.nightActive && s.waves > 0 && s.sanctuary.empty();
 				const bool   ev = s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size());
-				const float  W = 300 * k, H = (waveOn ? 112 : 46) * k + (waveOn && !s.waveTheme.empty() ? 18 * k : 0.0f);
+				const bool   noiseOn = waveOn && s.round >= 2;  // (the Volatiles: how loud you've been)
+				const float  W = 300 * k, H = (waveOn ? 112 : 46) * k + (waveOn && !s.waveTheme.empty() ? 18 * k : 0.0f) + (noiseOn ? 22 * k : 0.0f);
 				const ImVec2 a{ 24 * k, 20 * k }, b{ a.x + W, a.y + H };
 				Panel(dl, a, b, k * 0.7f, 0.85f);
 				const float  flash = std::clamp(roundFlash, 0.0f, 1.0f);
@@ -1271,6 +1272,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Txt(dl, g_title, 19 * k, { tx, c.y - 20 * k }, kParch, fmt::format("WAVE {} / {}", s.wave, s.waves));
 					const std::string sub = s.waveRest > 0 ? fmt::format("Next wave in {:.0f}", std::ceil(s.waveRest)) : fmt::format("{} left to fall", std::max(0, s.waveLeft));
 					Txt(dl, g_body, 15 * k, { tx, c.y + 4 * k }, Fade(kGold, 0.9f), sub);
+					if (noiseOn) {  // NOISE: a thin bar that fills as the night hears you; full, a Volatile comes
+						const float ny = c.y + R + 14 * k, nx = a.x + 16 * k, nw = W - 32 * k;
+						const float fr = std::clamp(s.noise, 0.0f, 1.0f);
+						const bool  loud = fr > 0.75f;
+						Txt(dl, g_body, 13 * k, { nx, ny - 8 * k }, loud ? IM_COL32(255, 120, 90, 230) : IM_COL32(170, 160, 140, 210), "NOISE");
+						const float bx = nx + 52 * k;
+						dl->AddRectFilled({ bx, ny - 1 * k }, { nx + nw, ny + 2 * k }, IM_COL32(30, 28, 24, 200));
+						dl->AddRectFilled({ bx, ny - 1 * k }, { bx + (nx + nw - bx) * fr, ny + 2 * k }, loud ? IM_COL32(230, 90, 60, static_cast<int>(200 + 55 * std::sin(now * 8.0f))) : kGold);
+					}
 				}
 			}
 			if (!Hud::kEdgeHud && s.round > 0) {
@@ -2244,9 +2254,23 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (s.bannerTime > 0 && !s.banner.empty()) {
 				// (Noah: boxes overlapped) below the stack under the compass (a trial's line, the sanctuary, the wave dial)
 				const float a = std::min(1.0f, s.bannerTime * 2), y = size.y * 0.27f + (1.0f - a) * 10 * k;
-				const auto  ts = Measure(g_title, 32 * k, s.banner);
-				TxtC(dl, g_title, 32 * k, size.x * 0.5f, y, Fade(kParch, a), s.banner, 2 * k, IM_COL32(0, 0, 0, 255));
-				Divider(dl, size.x * 0.5f, y + ts.y + 10 * k, std::min(size.x * 0.4f, ts.x * 0.6f + 40 * k), k, a);
+				if (Hud::kEdgeHud) {
+					// (Noah: the messages in Edge UI's look) a smoked band that fades out to both sides, gold hairlines over and
+					// under it, the words in Edge's Futura, upper case, warm white
+					const std::string up = Upper(s.banner);
+					const float       px = 26 * k;
+					const auto        ts = Measure(g_title, px, up);
+					const float       half = std::min(size.x * 0.45f, ts.x * 0.5f + 140 * k), cx = size.x * 0.5f, top = y - 12 * k, bot = y + ts.y + 12 * k;
+					dl->AddRectFilledMultiColor({ cx - half, top }, { cx, bot }, IM_COL32(8, 8, 8, 0), Fade(IM_COL32(8, 8, 8, 200), a), Fade(IM_COL32(8, 8, 8, 200), a), IM_COL32(8, 8, 8, 0));
+					dl->AddRectFilledMultiColor({ cx, top }, { cx + half, bot }, Fade(IM_COL32(8, 8, 8, 200), a), IM_COL32(8, 8, 8, 0), IM_COL32(8, 8, 8, 0), Fade(IM_COL32(8, 8, 8, 200), a));
+					Divider(dl, cx, top, half * 0.8f, k, a);
+					Divider(dl, cx, bot, half * 0.8f, k, a);
+					TxtC(dl, g_title, px, cx, y, Fade(kParch, a), up, 0.0f, 0);
+				} else {
+					const auto ts = Measure(g_title, 32 * k, s.banner);
+					TxtC(dl, g_title, 32 * k, size.x * 0.5f, y, Fade(kParch, a), s.banner, 2 * k, IM_COL32(0, 0, 0, 255));
+					Divider(dl, size.x * 0.5f, y + ts.y + 10 * k, std::min(size.x * 0.4f, ts.x * 0.6f + 40 * k), k, a);
+				}
 			}
 
 			// health bars over the wounded: black iron plates with chamfered ends and bronze caps, the blood (always red)
@@ -2672,9 +2696,19 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				scroll += (scrollGoal - scroll) * std::min(1.0f, dt * 10.0f);
 				const float cx = (a.x + b.x) * 0.5f;
 				dl->PushClipRect({ a.x, a.y + 6 * k }, { b.x, b.y - 66 * k }, true);
+				// (Noah: "a complete rework of the echo altar UI so it changes depending on which class the player is using")
+				// the class's own colour runs through it - its name under the title, its rows' marks, its progress bars
+				const int   altarCls = Classes::Get();
+				static constexpr ImU32 kClassTint[4] = { IM_COL32(178, 132, 255, 255), IM_COL32(255, 138, 70, 255), IM_COL32(132, 206, 112, 255), IM_COL32(120, 182, 255, 255) };
+				const ImU32 tint = altarCls >= 0 && altarCls < 4 ? kClassTint[altarCls] : kGold;
 				TxtC(dl, g_title, 27 * k, cx, a.y + 16 * k - scroll, IM_COL32(232, 214, 176, 255), "THE ECHO ALTAR", Hud::kEdgeHud ? 0.0f : 2.5f * k, IM_COL32(70, 140, 255, 255));
 				Divider(dl, cx, a.y + 54 * k - scroll, w * 0.38f, k);
 				float y = a.y + 68 * k - scroll;
+				if (altarCls >= 0) {
+					static constexpr const char* kCalling[4] = { "THE SUMMONER'S ALTAR", "THE DESTRUCTION MAGE'S ALTAR", "THE RANGER'S ALTAR", "THE SPELLSWORD'S ALTAR" };
+					TxtC(dl, g_body, 15 * k, cx, y - 8 * k, Fade(tint, 0.95f), kCalling[altarCls], 0.0f, 0);
+					y += 18 * k;
+				}
 				const float L = a.x + 20 * k, Rr = b.x - 20 * k;
 				// (Noah: one way through the altar) the row in focus - D-pad / W S to move, A / Enter to take it
 				const auto focusRow = [&](int row, float y0, float y1) {
@@ -2683,7 +2717,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImVec2 ra{ a.x + 10 * k, y0 }, rb{ b.x - 10 * k, y1 };
 					if (Hud::kEdgeHud) {  // (Edge UI) a soft gold wash fading to the right, a thin gold bar at its left
 						dl->AddRectFilledMultiColor(ra, rb, IM_COL32(196, 170, 112, 52), IM_COL32(196, 170, 112, 0), IM_COL32(196, 170, 112, 0), IM_COL32(196, 170, 112, 52));
-						dl->AddRectFilled(ra, { ra.x + 2.5f * k, rb.y }, kGold);
+						dl->AddRectFilled(ra, { ra.x + 2.5f * k, rb.y }, tint);  // (in the class's colour)
 						return;
 					}
 					dl->AddRectFilled(ra, rb, IM_COL32(196, 170, 112, 18 + static_cast<int>(10 * std::sin(now * 4.0f))), 4 * k);
@@ -2758,37 +2792,38 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					bullet({ tx, y + 4 * k }, 0, s.rollPhase == 0);
 					if (s.rollPhase == 3 && !s.rollPrize.empty()) Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPrize);
 					else if (s.rollPhase == 3 && Legendary(s.rollGun)) TxtGold(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, ArmsName(s.rollGun));
-					else Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? (Classes::Get() == 2 ? "CALL A BOW" : Classes::Get() == 0 ? "CALL A SUMMON" : "CALL A SPELL") : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? (s.rollBow ? "THE BOWS TURN..." : "THE SPELLS TURN...") : ArmsName(s.rollGun));
-					Txt(dl, g_body, 17 * k, { tx, y + 38 * k }, IM_COL32(196, 182, 160, 235),
-						s.rollPhase == 3 ? (s.rollBow ? "Activate the altar to take it - your bow goes back" : "Activate the shrine to take it") : "Two of the altar's spells at a time");
+					else Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? (altarCls == 2 ? "CALL A BOW OR CROSSBOW" : altarCls == 0 ? "CALL A SUMMON" : "CALL A SPELL") : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? (s.rollBow ? "THE BOWS TURN..." : "THE ALTAR TURNS...") : ArmsName(s.rollGun));
+					std::string rollLine;
+					if (s.rollPhase == 3) rollLine = s.rollBow || !s.rollPrize.empty() ? "Activate the altar to take it - yours goes back" : "Activate the altar to take it";
+					else if (altarCls == 2) rollLine = s.bowCarried >= 0 ? "Carrying " + ArmsName(Bows::kIdBase + s.bowCarried) + " - a new one takes its place" : std::string("Six elemental bows, or a crossbow");
+					else if (altarCls == 0) rollLine = "Two summon spells at a time";
+					else rollLine = "Two of the altar's spells at a time";
+					TxtWrap(dl, g_body, 17 * k, { tx, y + 38 * k }, IM_COL32(196, 182, 160, 235), rollLine, Rr - tx - 70 * k, 2);
 					if (s.rollPhase == 0) {
-						price(y + 66 * k, s.rollCost, s.points >= s.rollCost);
+						const int rc = altarCls == 2 ? s.bowRollCost : s.rollCost;
+						price(y + 66 * k, rc, s.points >= rc);
 					}
 					y += 2 * R + 22 * k;
 				}
 				Divider(dl, cx, y, w * 0.30f, k, 0.6f);
 				y += 14 * k;
-				// [1b] the bow wheel: one elemental bow at a time
-				{
+				// [1b] the class's second wheel (the Ranger's bows and crossbows share the one roll above)
+				if (altarCls != 2 && altarCls >= 0) {
 					const bool heroLocked = Classes::Get() == 0 && s.freedCount < s.legendAt && !Gun::TestKitOn();  // (Noah: no Legendary until six altars are freed)
 					const bool idle = s.rollPhase == 0 && !heroLocked;
 					focusRow(1, y - 6 * k, y + 58 * k);
 					bullet({ L, y + 2 * k }, 1, idle);
-					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, heroLocked ? kLockedCol : kParch, Classes::Get() == 3 ? "CALL A SPELL-WEAPON" : Classes::Get() == 2 ? "CALL A BOW OR CROSSBOW" : Classes::Get() == 1 ? "CALL A SUPPORT SPELL" : Classes::Get() == 0 ? "BIND A HERO (LEGENDARY)" : "CHOOSE A CLASS");
-					if (s.bowCarried >= 0) {
-						DrawEmblem(dl, Bows::kIdBase + s.bowCarried, { L + 200 * k, y + 15 * k }, 12 * k, 1.0f, now, 0.5f);
-						Txt(dl, g_body, 16 * k, { L + 218 * k, y + 6 * k }, spellCol(Bows::kIdBase + s.bowCarried, 1.0f), ArmsName(Bows::kIdBase + s.bowCarried));
-					}
+					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, heroLocked ? kLockedCol : kParch, altarCls == 3 ? "CALL A SPELL-WEAPON" : altarCls == 1 ? "CALL A SUPPORT SPELL" : "BIND A HERO (LEGENDARY)");
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, heroLocked ? kLockedCol : IM_COL32(196, 182, 160, 235),
 						heroLocked ? "Locked until six Echo Altars are freed (" + std::to_string(s.freedCount) + " of " + std::to_string(s.legendAt) + ")"
-						: Classes::Get() == 0 ? std::string("A hero or an army sworn to you") : s.bowCarried >= 0 ? std::string("A new one takes your bow's place") : std::string("Fire, frost, storm and more - one at a time"));
+						: altarCls == 0 ? std::string("A hero or an army sworn to you") : altarCls == 3 ? std::string("A blade or a spellshield of the altar's steel") : std::string("Wards, cures and blessings to fight beside your fire"));
 					if (idle) {
 						price(y + 30 * k, s.bowRollCost, s.points >= s.bowRollCost);
 					}
 					y += 64 * k;
+					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
+					y += 14 * k;
 				}
-				Divider(dl, cx, y, w * 0.30f, k, 0.6f);
-				y += 14 * k;
 				// [2] reforge the spell in hand
 				{
 					const int  act = s.activeSlot >= 0 && s.activeSlot < s.slotCount ? s.activeSlot : -1;
@@ -2809,6 +2844,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					if (can) {
 						price(y + 2 * k, gen::kForgeCost[lvl], s.points >= gen::kForgeCost[lvl]);
+					}
+					// the kills its next reforge still needs, as a bar in the class's colour
+					if (!locked && lvl < gen::kForgeMax && (s.bowHeld >= 0 || sp >= 0)) {
+						const int have = s.bowHeld >= 0 ? Classes::BowMastery(s.bowHeld) : Classes::Mastery(sp);
+						const int need = std::max(1, s.bowHeld >= 0 ? Classes::BowMasteryNeed(s.bowHeld) : Classes::MasteryNeed(sp));
+						const float fr = std::clamp(static_cast<float>(have) / static_cast<float>(need), 0.0f, 1.0f);
+						const float bx = L + 36 * k, bw = Rr - bx - 120 * k, by = y + 56 * k;
+						dl->AddRectFilled({ bx, by }, { bx + bw, by + 3 * k }, IM_COL32(30, 26, 22, 200));
+						dl->AddRectFilled({ bx, by }, { bx + bw * fr, by + 3 * k }, tint);
+						const std::string kl = std::to_string(std::min(have, need)) + " / " + std::to_string(need) + " kills";
+						Txt(dl, g_body, 14 * k, { Rr - Measure(g_body, 14 * k, kl).x, by - 8 * k }, have >= need ? tint : IM_COL32(170, 156, 132, 220), kl);
+						y += 10 * k;
 					}
 					y += 64 * k;
 				}
@@ -2837,7 +2884,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						const ImVec2 c{ L + d * 0.5f + j * (d + gap), y + d * 0.5f };
 						const bool   on = q == sel, drunk = s.perkStacks[q] > 0;
 						if (gen::kPerkClass[q] >= 0) {  // your class's own: a thin ring of its colour
-							dl->AddCircle(c, d * 0.56f, Fade(kGold, 0.55f), 32, 1.2f * k);
+							dl->AddCircle(c, d * 0.56f, Fade(tint, 0.8f), 32, 1.4f * k);
 						}
 						if (on) {
 							dl->AddCircleFilled(c, d * 0.62f, IM_COL32(200, 80, 30, 90), 32);
@@ -2975,8 +3022,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					// (the classes overhaul) changing class here
 					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "Back" : "C") + "   Change class  (" + std::to_string(Classes::SwitchCost()) + " essence)  -  now " + std::string(Classes::Name(Classes::Get())));
 					y += 26 * k;
-					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "R3" : "Q") + "   Fill your quivers  (" + std::to_string(400 + 100 * std::max(0, s.round)) + " essence)");
-					y += 26 * k;
+					if (altarCls == 2) {  // (the Ranger's alone)
+						Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "R3" : "Q") + "   Fill your quivers  (" + std::to_string(400 + 100 * std::max(0, s.round)) + " essence)");
+						y += 26 * k;
+					}
 					if (const auto bl = Classes::BoltLine(); !bl.empty()) {  // (the Ranger's crossbow mastery)
 						Txt(dl, g_body, 15 * k, { L + 24 * k, y - 4 * k }, kGoldDim, bl);
 						y += 22 * k;
@@ -4942,9 +4991,16 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const std::string p = std::string("Data\\Interface\\CurseOfAlduin\\fonts\\") + a_file;
 				return ::GetFileAttributesA(p.c_str()) != INVALID_FILE_ATTRIBUTES ? io.Fonts->AddFontFromFileTTF(p.c_str(), 64.0f, nullptr, kRanges) : nullptr;
 			};
-			g_title = own("Cinzel-Bold.ttf");
-			g_num = own("Cinzel-Medium.ttf");
-			g_body = own("CormorantGaramond-SemiBold.ttf");
+			// (Noah: "redesign the Curse of Alduin messages and pop-ups to match the font and colour of Edge's UI") with Edge UI
+			// our type is Jost - a Futura of the Open Font License, the face Edge UI's menus are set in
+			if (Hud::kEdgeHud) {
+				g_title = own("Jost-Medium.ttf");
+				g_num = own("Jost-Medium.ttf");
+				g_body = own("Jost-Regular.ttf");
+			}
+			if (!g_title) g_title = own("Cinzel-Bold.ttf");
+			if (!g_num) g_num = own("Cinzel-Medium.ttf");
+			if (!g_body) g_body = own("CormorantGaramond-SemiBold.ttf");
 			g_title = g_title ? g_title : font("georgiab.ttf");
 			g_num = g_num ? g_num : font("seguisb.ttf");
 			g_body = g_body ? g_body : font("segoeui.ttf");

@@ -306,6 +306,16 @@ for n in (2, 3, 4, 5):
         sub('DATA', bytes([0, 0, 1, 0, 1])), sub('PRKE', bytes([2, 0, 10 + n])), sub('DATA', bytes([68, 1, 2])),
         sub('EPFT', bytes([1])), sub('EPFD', struct.pack('<f', float(n))), sub('PRKF', b'')]))
 
+# (Noah: "I don't want stagger and lurch - it's annoying to get spammed with movement blocking attacks") the night's
+# dead never stagger you: Mod Incoming Stagger (entry point 33), Multiply Value x0, when the attacker is in the undead
+# faction (tab 1: the attacker). Given to the player at load (src/Director.cpp)
+_ctda = struct.pack('<B3xfHHIIIIi', 0, 1.0, 71, 0, fid('FACT', 'undead'), 0, 0, 0, -1)  # GetInFaction(UN_UndeadFaction) == 1, run on the subject (the attacker)
+recs['PERK'].append(record('PERK', fid('PERK', 'steady'), [
+    sub('EDID', z('UN_SteadyAgainstTheDead')), sub('FULL', z('Steady')), sub('DESC', z("The night's dead never stagger you.")),
+    sub('DATA', bytes([0, 0, 1, 0, 1])), sub('PRKE', bytes([2, 0, 0])), sub('DATA', bytes([33, 3, 2])),
+    sub('PRKC', bytes([1])), sub('CTDA', _ctda),
+    sub('EPFT', bytes([1])), sub('EPFD', struct.pack('<f', 0.0)), sub('PRKF', b'')]))
+
 for p in S['perks']['rows']:
     enit = bytearray(tsub('alch', 'ENIT'))
     struct.pack_into('<iIIf', enit, 0, 0, 0x1, 0, 0.0)       # value 0, no auto-calc, no addiction
@@ -851,7 +861,8 @@ def codex_chapters(html, first, last):
         out.append((title, image, paras))
     return out
 _GUIDE_OLD = {t: (t, im, ps) for t, im, ps in codex_chapters(guide_text(), 'Before Dusk', 'Good Luck')}
-GUIDE_EXTRA = [_GUIDE_OLD[t] for t in GUIDE_KEEP if t in _GUIDE_OLD]
+GUIDE_EXTRA = []  # (Noah: "make the guide book simpler - way too much information spread out") the old guide's chapters left out
+_unused_extra = [_GUIDE_OLD[t] for t in GUIDE_KEEP if t in _GUIDE_OLD]
 for cls in G['rows']:
     recs['BOOK'].append(record('BOOK', fid('BOOK', 'guide_' + cls['id']), [
         sub('EDID', z('UN_ClassGuide_' + cls['id'])), sub('OBND', bytes.fromhex('f5fff1fffdff0b000f000300')), sub('FULL', z(cls['book'])),

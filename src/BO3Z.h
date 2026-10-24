@@ -118,6 +118,7 @@ namespace bo3z
 		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
 		bool             IsElite(RE::Actor* a_actor);
 		bool             IsBoss(RE::Actor* a_actor);
+		void             Noise(float a_amount);  // the night hears you (spells bursting, shouts, fights): enough draws a Volatile
 		std::string_view HeadNodeFor(RE::Actor* a_actor);
 		void             LogState();
 		void             Web(const RE::NiPoint3& a_at, float a_radius, float a_seconds, float a_amount = 60.0f, bool a_frostFx = false);   // Widow's Wine / wand slows
@@ -793,6 +794,7 @@ namespace bo3z
 			float       countdown{ 0 };  // seconds until the next night starts (0 = none)
 			float       hp{ 0 }, hpMax{ 0 }, mp{ 0 }, mpMax{ 0 }, sp{ 0 }, spMax{ 0 };
 			float       hurtTime{ 0 };   // red vignette after taking a hit
+			float       noise{ 0 };      // how loud you've been tonight (0..1: full, a Volatile hears you)
 			bool        perkMenu{ false };
 			std::string bossName;  // empty = no boss
 			float       bossHp{ 0 };

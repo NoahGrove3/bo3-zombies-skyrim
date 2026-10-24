@@ -604,7 +604,7 @@ namespace bo3z::Classes
 			{
 				const int b = Bows::Carried();
 				if (b < 0) {
-					out.push_back("You carry no elemental bow - call one at an Echo Altar's bow row.");
+					out.push_back("You carry no elemental bow - call one at an Echo Altar.");
 				} else if (Bows::Level(b) >= 3) {
 					out.push_back(fmt::format("<b>Your bow: {}</b>, tier 3 of 3 - {}: <b>fully reforged</b>. Quiver: 200 arrows, growing back one every 2 s.", Bows::Name(b), Bows::TierName(b, 3)));
 				} else {
@@ -643,6 +643,11 @@ namespace bo3z::Classes
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		if (!p || !dh) return;
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();
+		// (Noah: no movement-blocking hits) the night's dead never stagger you: the Steady perk (Mod Incoming Stagger x0)
+		if (auto* steady = dh->LookupForm<RE::BGSPerk>(gen::kSteadyPerk, gen::kPlugin); steady && !p->HasPerk(steady)) {
+			p->AddPerk(steady);
+			logger::info("classes: Steady given - the night's dead never stagger you");
+		}
 		{  // (Noah: "increase the attack speed with melee weapons") both hands' swing speed, from the Mod Configuration menu
 			// (Noah: "a bow and crossbow draw speed changer next to the melee speed") Skyrim's weapon speed scales a bow's
 			// draw and a crossbow's reload as it does a swing: with a bow or crossbow in hand it takes the draw setting

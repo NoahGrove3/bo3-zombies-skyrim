@@ -29,7 +29,7 @@ def assign(S=None, write=False):
              [('GLOB', 'egg_' + e['id']) for e in S.get('eggs', {}).get('rows', [])] + [('GLOB', 'egg_gifts'), ('GLOB', 'test_kit'), ('GLOB', 'ritual_souls'), ('GLOB', 'ritual_stand')] + [('MGEF', 'altarbeam'), ('SPEL', 'altarbeam')] + \
              [('SPEL', 'egg_power_' + e['id']) for e in S.get('eggs', {}).get('rows', []) if e['reward'] in ('summon', 'spell')] + \
              [('PERK', f'summon_cap_{n}') for n in (2, 3, 4, 5)] + [('MGEF', 'tomecast'), ('SPEL', 'wonder_tome')] + \
-             [('WEAP', 'vortex'), ('AMMO', 'vortexarrow'), ('PROJ', 'vortexarrow'), ('ACTI', 'vortexfx')] + [('BOOK', 'guide_' + c) for c in ('summoner', 'destruction', 'ranger', 'spellsword')]
+             [('WEAP', 'vortex'), ('AMMO', 'vortexarrow'), ('PROJ', 'vortexarrow'), ('ACTI', 'vortexfx')] + [('BOOK', 'guide_' + c) for c in ('summoner', 'destruction', 'ranger', 'spellsword')] + [('PERK', 'steady')]
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:
