@@ -137,7 +137,7 @@ JOBS = {
                            'NPC L Thigh [LThg]': (-9, 3, 70), 'NPC L Calf [LClf]': (-11, 2, 36), 'NPC L Foot [Lft ]': (-12, -3, 7), 'NPC L Toe0 [LToe]': (-14, 7, 1)},
                    props=[],
                    tex=dict(base=pathlib.Path('/home/claude/work/enemies2/hooded/exp/tex0.png'), normal=None, rough=None),
-                   skirt=dict(hip=68.0, legMax=0.55, blend=7.0, footTop=10.0, footR=7.0, power=1.4),
+                   skirt=dict(hip=68.0, legMax=0.55, blend=7.0, footTop=10.0, footR=7.0, power=1.4), armRadius=3.2,
                    glow=None, spec=0.2, gloss=15),
 }
 
@@ -233,6 +233,38 @@ def build(name, preview_only=False):
     for lo, hi, bone in J['props']:
         inside = np.all((P >= np.array(lo)) & (P <= np.array(hi)), 1)
         W[inside] = 0; W[inside, names.index(bone)] = 1.0
+    if J.get('armRadius'):
+        # (Noah: "the Bride's dress is still attached to her arms") her arms are fused to the dress in one mesh, hanging
+        # against it: an arm bone may pull a point only if the point is reached from that arm along the surface about as
+        # directly as through the air - the arm itself; the cloth beside it is reached only the long way round (up the
+        # arm, over the shoulder, down the dress) and keeps to the body
+        from scipy.sparse import coo_matrix
+        from scipy.sparse.csgraph import dijkstra
+        key = np.round(P * 50).astype(np.int64); _, inv = np.unique(key, axis=0, return_inverse=True); inv = inv.ravel()
+        Fw = inv[F]; nW = inv.max() + 1
+        Pw = np.zeros((nW, 3)); Pw[inv] = P
+        e0 = np.concatenate([Fw[:, 0], Fw[:, 1], Fw[:, 2]]); e1 = np.concatenate([Fw[:, 1], Fw[:, 2], Fw[:, 0]])
+        wl = np.linalg.norm(Pw[e0] - Pw[e1], axis=1) + 1e-6
+        G = coo_matrix((wl, (e0, e1)), shape=(nW, nW)).tocsr()
+        for k, n in enumerate(names):
+            if not any(x in n for x in ('UpperArm', 'Forearm', 'Hand', 'Finger')):
+                continue
+            dE = D[:, k]  # (per original vertex) distance through the air to this bone
+            dEw = np.full(nW, 1e9); np.minimum.at(dEw, inv, dE)
+            seeds = np.nonzero(dEw < J['armRadius'])[0]
+            if len(seeds) == 0:
+                W[:, k] = 0
+                continue
+            dg = dijkstra(G, directed=False, indices=seeds, min_only=True)
+            dGw = dg + J['armRadius']
+            okw = (dGw <= dEw * 1.4 + 3.0).astype(np.float64)
+            # (softened across the surface: an arm's edge fades out over a few rings, nothing tears)
+            A = coo_matrix((np.ones(len(e0)), (e0, e1)), shape=(nW, nW)).tocsr(); A = A + A.T
+            deg = np.asarray(A.sum(1)).ravel() + 1
+            for _ in range(4):
+                okw = (A @ okw + okw) / deg
+            W[:, k] *= np.clip(okw[inv] * 1.6 - 0.3, 0, 1)
+        W[W.sum(1) <= 0, names.index('NPC Spine2 [Spn2]')] = 1.0
     top = np.argsort(-W, 1)[:, :4]
     tw = np.take_along_axis(W, top, 1); tw /= tw.sum(1, keepdims=True)
     if J.get('skirt'):
