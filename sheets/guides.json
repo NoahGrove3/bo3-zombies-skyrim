@@ -200,6 +200,7 @@
    "paras": [
     "Every city has one. Step onto it and activate it. Move with the D-pad or W/S, choose with A or Enter, leave with B.",
     "From the top: <b>your class</b> (change it for 2,500 essence - each class keeps its own progress), <b>your rolls</b>, <b>Reforge</b> (after three freed altars), <b>perks</b>, then the city's <b>trials</b>.",
+    "<b>After a roll</b>, activate the altar again: <b>take it</b> (it replaces what it would), <b>roll again</b> at the next price, or <b>leave it</b> for half the roll back.",
     "<b>Freeing a city</b>: finish four trials (three shared, one your class's), then slay its <b>Dragon Priest</b>, who rises at night. A freed city is a sanctuary, teaches you its Thu'um, and Whiterun gives you a dragon to ride."
    ]
   },
