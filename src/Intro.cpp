@@ -9,6 +9,7 @@ namespace bo3z
 	{
 		int  g_settle = 0;
 		bool g_moved = false;  // this game's new character has been moved to Riverwood
+		float g_emptyHandsFor = 0;  // seconds left telling the hands they hold nothing (the quick start's axe taken away)
 		bool  g_skip = false;        // Helgen skipped this game: once it is done, the move to Riverwood's gate
 		bool  g_skipRace = false;    // ... waiting for the character creator to close first
 		bool  reachedHelgen = false;
@@ -164,6 +165,20 @@ namespace bo3z
 			auto* ui = RE::UI::GetSingleton();
 			static auto movedAt = std::chrono::steady_clock::now();
 			if (!g_moved) movedAt = std::chrono::steady_clock::now();
+			// (the axe that wasn't there) while the hands hold nothing, the animation graph is told so: no weapon type in
+			// either hand, so the first-person arms stand empty instead of gripping an axe that's gone
+			if (player && g_emptyHandsFor > 0) {
+				static auto last = std::chrono::steady_clock::now();
+				const auto  nowT = std::chrono::steady_clock::now();
+				g_emptyHandsFor -= std::chrono::duration<float>(nowT - last).count();
+				last = nowT;
+				if (!player->GetEquippedObject(false) && !player->GetEquippedObject(true) && !player->AsActorState()->IsWeaponDrawn()) {
+					player->SetGraphVariableInt("iRightHandType", 0);
+					player->SetGraphVariableInt("iLeftHandType", 0);
+					player->SetGraphVariableInt("iRightHandEquipped", 0);
+					player->SetGraphVariableInt("iLeftHandEquipped", 0);
+				}
+			}
 			// (Noah: "I still don't take damage from the Curse's enemies") the newcomer's shield ends after half a minute, whatever
 			// the black screen's state says
 			if (player && g_moved && Hud::IntroBusy() && !player->IsDead() && std::chrono::steady_clock::now() - movedAt < std::chrono::seconds(30)) {  // nothing hurts a newcomer who cannot yet see
@@ -410,6 +425,15 @@ namespace bo3z
 						auto* dirge = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(gen::kDirgeBook, gen::kPlugin);
 						auto* under = Classes::Underwear();
 						int   gone = 0;
+						// (Noah: "when I first spawn in with nothing it thinks I'm holding an axe") the quick start's axe is
+						// taken out of the hands properly first - sheathed, unequipped - so the hands' animation forgets it
+						auto* em = RE::ActorEquipManager::GetSingleton();
+						if (player->AsActorState()->IsWeaponDrawn()) player->DrawWeaponMagicHands(false);
+						for (bool left : { false, true }) {
+							if (auto* eq = player->GetEquippedObject(left); eq && em) {
+								if (auto* b = eq->As<RE::TESBoundObject>()) em->UnequipObject(player, b, nullptr, 1, nullptr, false, true, false, true);
+							}
+						}
 						for (auto& [obj, data] : player->GetInventory()) {
 							if (!obj || data.first <= 0 || obj == dirge || obj == under) continue;
 							if (data.second && data.second->IsQuestObject()) continue;
@@ -417,6 +441,7 @@ namespace bo3z
 							gone += data.first;
 						}
 						logger::info("intro: the new character's pack emptied ({} items) - the lore book and the race's own powers only", gone);
+						g_emptyHandsFor = 6.0f;  // (and for a few seconds the hands are told they hold nothing: TickEmptyHands)
 					}
 					Arcana::GiveStarter();  // the Coffer's spells replaced the old ones: a new character starts with one of them
 					Gun::TestKitIfFlagged();  // (Noah's test characters: CurseOfAlduin-testkit.flag beside the log)
