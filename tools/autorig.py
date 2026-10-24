@@ -141,6 +141,17 @@ JOBS = {
                    glow=None, spec=0.2, gloss=15),
 }
 
+# (Noah: the Volatile) an infected creep - a vertex-coloured sculpt, decimated and its colours baked into an atlas
+# (work/creep: simplify -> bake.py); arms out and down, tall and gaunt
+JOBS['volatile'] = dict(obj=WORK / 'creep/creep_s2.obj', skel=WORK / 'skel/draugr_nodes.txt', top=170.0, out='volatile/volatile.nif', vn=True,
+                        joints={'NPC Pelvis [Pelv]': (0, 0, 80), 'NPC Spine [Spn0]': (0, 0, 86), 'NPC Spine1 [Spn1]': (0, 0, 97), 'NPC Spine2 [Spn2]': (0, -1, 110),
+                                'NPC Neck [Neck]': (0, 0, 134), 'NPC Head [Head]': (0, 2, 145),
+                                R_ARM[0]: (6, -2, 130), R_ARM[1]: (20, 0, 128), R_ARM[2]: (39, 1, 115), R_ARM[3]: (57, 2, 104),
+                                L_ARM[0]: (-6, -2, 130), L_ARM[1]: (-20, 0, 128), L_ARM[2]: (-39, 1, 115), L_ARM[3]: (-57, 2, 104),
+                                'NPC R Thigh [RThg]': (10, 0, 75), 'NPC R Calf [RClf]': (16, 0, 41), 'NPC R Foot [Rft ]': (20, -3, 8), 'NPC R Toe0 [RToe]': (22, 9, 1),
+                                'NPC L Thigh [LThg]': (-10, 0, 75), 'NPC L Calf [LClf]': (-16, 0, 41), 'NPC L Foot [LLft ]': (-20, -3, 8), 'NPC L Toe0 [LToe]': (-22, 9, 1)},
+                        props=[], tex=dict(base=WORK / 'creep/exp/tex0.png', normal=None, rough=None), glow=None, spec=0.35, gloss=25)
+
 def to_skyrim(V, top, shift=(0, 0)):
     P = np.stack([-V[:, 0], V[:, 2], V[:, 1]], 1).astype(np.float64)
     P *= top / np.ptp(P[:, 2])
@@ -178,6 +189,11 @@ def build(name, preview_only=False):
     J = JOBS[name]
     V, T, F = M.load_obj(J['obj'])
     P = to_skyrim(V, J['top'], J.get('shift', (0, 0)))
+    VN = None
+    if J.get('vn'):  # (an atlas of separate triangles: its smooth normals come with it, the welded ones)
+        vn = [l[3:] for l in open(J['obj']) if l.startswith('vn ')]
+        VN = np.loadtxt(vn, dtype=np.float64)
+        VN = np.stack([-VN[:, 0], VN[:, 2], VN[:, 1]], 1)
     skel = read_nodes(J['skel'])
     for S in 'LR':
         FOOT[S] = next(k for k in skel if k.startswith(f'NPC {S} Foot ['))
@@ -241,7 +257,7 @@ def build(name, preview_only=False):
             tw[v, :] = [1 - leg, leg * sL, leg * (1 - sL), 0]
     used = sorted(set(top[tw > 0.01].ravel()))
     idx = {b: k for k, b in enumerate(used)}
-    N = M_normals(P, F)
+    N = VN if VN is not None else M_normals(P, F)
     lines = ['bones ' + str(len(used))]
     for b in used:
         pos, rot = bind[names[b]]

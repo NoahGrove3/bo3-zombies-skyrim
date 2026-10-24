@@ -131,6 +131,18 @@
    "verify": [],
    "race": "draugr",
    "weapon": "none"
+  },
+  {
+   "id": "volatile",
+   "label": "Volatile",
+   "model": "CurseOfAlduin\\volatile\\volatile.nif",
+   "heightScale": 1.05,
+   "level": 30,
+   "verify": [
+    "heightScale"
+   ],
+   "race": "draugr",
+   "weapon": "none"
   }
  ]
 }

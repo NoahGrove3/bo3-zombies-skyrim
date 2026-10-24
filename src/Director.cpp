@@ -707,7 +707,7 @@ namespace bo3z
 				type = rolled;
 			} else if (rowId == "zombie") {
 				type = Undead::Roll(g_current);
-			} else if (rowId == "runner") {
+			} else if (rowId == "runner" || rowId == "volatile") {
 				type = Undead::Type::Runner;
 			} else if (rowId == "wailer") {
 				type = Undead::Type::Wailer;
@@ -756,7 +756,7 @@ namespace bo3z
 			// Armed: an ancient Nord sword, an iron sword or a dagger (bare-handed undead swing slowly); the Iron
 			// Reaper swings its scythe two-handed; necromancers fight with spells; raised skeletons keep their own.
 			const std::string_view eid = gen::kEnemies[*pick].id;
-			const std::uint32_t    own = !kindRow.rig ? 0 : kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : (eid == "zombie" || eid == "runner" || eid == "wailer" || eid == "bloater" || eid == "lich") ? gen::kZombieClaws : 0;
+			const std::uint32_t    own = !kindRow.rig ? 0 : kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : (eid == "zombie" || eid == "runner" || eid == "wailer" || eid == "bloater" || eid == "lich" || eid == "volatile") ? gen::kZombieClaws : 0;
 			if (own) {  // their own fighting style: the Reaper's scythe, Grimmvar's raking claws, the Gloomstalker's quick slashes
 				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(own, gen::kPlugin)) {
 					RE::ActorEquipManager::GetSingleton()->EquipObject(actor, w);
@@ -1039,6 +1039,9 @@ namespace bo3z
 		{
 			std::optional<std::size_t> row;
 			for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
+				if (gen::kEnemies[i].id == "volatile" && Forms::Enemy(i)) row = i;  // (Noah: the infected creep)
+			}
+			for (std::size_t i = 0; !row && i < gen::kEnemies.size(); ++i) {
 				if (gen::kEnemies[i].id == "runner" && Forms::Enemy(i)) row = i;
 			}
 			if (!row) return;
@@ -1054,6 +1057,8 @@ namespace bo3z
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, 45.0f);                                              // far faster than the rest
 			av->SetActorValue(RE::ActorValue::kAttackDamageMult, av->GetActorValue(RE::ActorValue::kAttackDamageMult) * 1.5f);
 			v->SetDisplayName("Volatile", true);
+			Undead::SetVolatile(v.get());
+			Undead::CueFor(v.get(), Undead::kCueScream, 2.6f);  // (it screams as it comes through)
 			g_summoned.insert(v->GetFormID());
 			g_volatiles.push_back(v->GetHandle());
 			Forms::PlayAt(gen::Sound::wailer_scream, v.get());

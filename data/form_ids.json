@@ -1241,6 +1241,10 @@
   "BOOK:guide_destruction": "0xcd5",
   "BOOK:guide_ranger": "0xcd6",
   "BOOK:guide_spellsword": "0xcd7",
-  "PERK:steady": "0xcd8"
+  "PERK:steady": "0xcd8",
+  "ARMA:volatile": "0xcd9",
+  "ARMO:volatile": "0xcda",
+  "NPC_:volatile": "0xcdb",
+  "ARMA:eyes_volatile": "0xcdc"
  }
 }

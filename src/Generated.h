@@ -23,7 +23,7 @@ namespace bo3z::gen
 		{ 3400.f, 4600.f }, { 1400.f, 2100.f }, 120.f, 30 };
 	inline constexpr FormRef kIntroQuest{ "Skyrim.esm", 0x03372B, "MQ101" };
 	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; bool rig; };
-	inline constexpr std::array<Enemy, 46> kEnemies{ {
+	inline constexpr std::array<Enemy, 47> kEnemies{ {
 		Enemy{ "zombie", "Risen Dead", { "CurseOfAlduin.esp", 0x0008C3, "UN_zombie" }, false, 1, 10, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, true },
 		Enemy{ "hollow2", "Haugbui", { "The Restless Dead.esp", 0x1F5212, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee2H" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "hollow3", "Haugbui", { "The Restless Dead.esp", 0x1EAFCC, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee1H" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
@@ -70,6 +70,7 @@ namespace bo3z::gen
 		Enemy{ "mb_harpy_matriarch", "Harpy Matriarch", { "mihailhighfantasypack.esp", 0x09A0FE, "mihailharpy_NPC3" }, false, 99, 0, false, "auto", true, 0, false, 1, 1.0f, 1.0f, false },
 		Enemy{ "eg_centurion", "The Resonant Centurion", { "Skyrim.esm", 0x10F9B9, "EncDwarvenCenturion01" }, false, 99, 0, false, "auto", true, 0, false, 1, 1.0f, 1.0f, false },
 		Enemy{ "eg_anomaly", "The Great Anomaly", { "Skyrim.esm", 0x0B6F94, "EncMagicAnomaly" }, false, 99, 0, false, "auto", true, 0, false, 1, 1.0f, 1.0f, false },
+		Enemy{ "volatile", "Volatile", { "CurseOfAlduin.esp", 0x000CDB, "UN_volatile" }, false, 99, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, true },
 	} };
 	enum class Sound : int {
 		cast_sidearm = 0,

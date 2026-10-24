@@ -195,6 +195,7 @@ namespace bo3z
 		bool  HasClips(RE::Actor* a_actor);    // moves by the Mixamo clips (Data/SKSE/Plugins/CurseOfAlduin/anims)
 		float StandUpSeconds();                 // the stand-up clip's length as it plays
 		void  OnHit(RE::Actor* a_actor);       // a hit landed on it: its flinch (now and then)
+		void  SetVolatile(RE::Actor* a_actor); // the Volatile: its own fast claws, and it pounces
 		void  Assign(RE::Actor* a_actor, Type a_type);
 		void  Forget(RE::Actor* a_actor);
 		void  CueFor(RE::Actor* a_actor, int a_cue, float a_seconds);

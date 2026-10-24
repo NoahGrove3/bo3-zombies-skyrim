@@ -941,6 +941,26 @@
    "healthMult": 1.0,
    "speedMult": 1.0,
    "rig": false
+  },
+  {
+   "id": "volatile",
+   "label": "Volatile",
+   "plugin": "CurseOfAlduin.esp",
+   "localId": "0xCDB",
+   "editorId": "UN_volatile",
+   "recordType": "NPC_",
+   "minRound": 99,
+   "weight": 0,
+   "specialRound": false,
+   "headNode": "NPC Head [Head]",
+   "forceCombat": true,
+   "bossEvery": 0,
+   "elite": false,
+   "verify": [],
+   "kind": "zombie",
+   "healthMult": 1.0,
+   "speedMult": 1.0,
+   "rig": true
   }
  ]
 }

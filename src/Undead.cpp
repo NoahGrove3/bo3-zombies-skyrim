@@ -115,6 +115,7 @@ namespace bo3z
 			std::atomic<float>        hitAt{ -1.0f };   // a flinch asked for (main thread writes)
 			std::vector<RE::NiAVObject*> clipNodes;     // the clip's bones on this body (by the clip's bone list)
 			RE::NiAVObject*           comNode = nullptr;
+			std::atomic<bool>         volatileOne{ false };  // (the Volatile: its own claws)
 		};
 		std::shared_mutex                                    g_lock;
 		std::unordered_map<RE::FormID, std::shared_ptr<Rig>> g_rigs;  // (shared: the animation threads keep theirs alive while the game thread replaces or drops it)
@@ -627,7 +628,15 @@ namespace bo3z
 			int want = -1;
 			if (cue == Undead::kCueStandUp) want = kStandUp;
 			else if (cue == Undead::kCueScream || cue == Undead::kCueRoar) want = kScream;
-			else if (attacking && !r.wasAttacking) want = (r.nextAttack++ % 3 == 2) ? kPunch : kAttack;  // (mostly the lunge and claw, now and then the flurry)
+			else if (attacking && !r.wasAttacking) {
+				// (Noah: "will these enemies have different attacks to make them unique?") each its own: the Risen Dead
+				// mostly lunge and claw, a flurry of blows now and then; the Bride only the leaping claw, fast; the Skald
+				// pummels (and screams the horde on: Undead::Tick); the Volatile claws fastest of all (and pounces)
+				const int n = r.nextAttack++;
+				if (r.volatileOne.load() || r.type == Type::Runner) want = kAttack;
+				else if (r.type == Type::Wailer) want = (n % 3 == 2) ? kAttack : kPunch;
+				else want = (n % 3 == 2) ? kPunch : kAttack;
+			}
 			else if (const float h = r.hitAt.exchange(-1.0f); h >= 0 && !(oneShotOn && (r.clip == kAttack || r.clip == kPunch || r.clip == kStandUp || r.clip == kScream))) want = (r.nextAttack & 1) ? kHit : kHit2;
 			r.wasAttacking = attacking;
 			if (want < 0) {
@@ -641,7 +650,9 @@ namespace bo3z
 			}
 			// its pace: a run plays as fast as it moves (standing still, held mid-stride); the rest at their own speed
 			const float runRate = std::clamp(r.speed / std::max(1.0f, S.c[kRun].speed), 0.0f, 2.0f);
-			const float rate = r.clip == kRun ? runRate : ClipRate(r.clip);
+			float rate = r.clip == kRun ? runRate : ClipRate(r.clip);
+			if (r.clip == kAttack && (r.volatileOne.load() || r.type == Type::Runner)) rate *= r.volatileOne.load() ? 1.45f : 1.25f;  // (their claws come faster)
+			if (r.clip == kPunch && r.type == Type::Wailer) rate *= 0.9f;
 			r.clipT += dt * rate;
 			r.prevT += dt * r.prevRate;
 			r.blend = std::min(1.0f, r.blend + dt / 0.22f);
@@ -707,6 +718,9 @@ namespace bo3z
 			float           lunge = -1.0f;    // lunge in flight
 			RE::NiPoint3    lungeDir{};
 			bool            burst = false;    // bloater: has it popped
+			bool            volatileOne = false;
+			RE::NiPoint3    pounceFrom{}, pounceTo{};
+			float           pounceT = -1.0f;  // seconds into its pounce (-1 none)
 		};
 		std::vector<Mind> g_minds;
 
@@ -893,6 +907,17 @@ namespace bo3z
 			const auto& c = g_clipSets[0].ok ? g_clipSets[0].c[kStandUp] : g_clipSets[1].c[kStandUp];
 			return std::max(0.5f, c.Seconds() / ClipRate(kStandUp));
 		}
+		void SetVolatile(RE::Actor* a_actor)
+		{
+			if (!a_actor) return;
+			{
+				std::shared_lock l(g_lock);
+				if (auto it = g_rigs.find(a_actor->GetFormID()); it != g_rigs.end()) it->second->volatileOne.store(true);
+			}
+			for (auto& m : g_minds) {
+				if (m.handle.get().get() == a_actor) m.volatileOne = true, m.cd = Rand(3.0f, 5.0f);
+			}
+		}
 		void OnHit(RE::Actor* a_actor)
 		{
 			if (!a_actor) return;
@@ -960,6 +985,39 @@ namespace bo3z
 				}
 				const float dist = a->GetPosition().GetDistance(pp);
 				m.cd -= a_delta;
+				// the Volatile's pounce: from mid range, a leap that closes most of the gap in a third of a second (only with a
+				// clear line to you, never through a wall), its claws coming as it lands
+				if (m.volatileOne) {
+					if (m.pounceT >= 0) {
+						m.pounceT += a_delta;
+						const float u = std::min(1.0f, m.pounceT / 0.35f);
+						RE::NiPoint3 at = m.pounceFrom + (m.pounceTo - m.pounceFrom) * u;
+						at.z += std::sin(u * RE::NI_PI) * 70.0f;
+						a->SetPosition(at, true);
+						if (u >= 1.0f) {
+							m.pounceT = -1.0f;
+							a->MoveToNearestNavmesh();
+						}
+						continue;
+					}
+					bool los = false;
+					if (m.cd <= 0 && dist > 260.0f && dist < 760.0f && a->HasLineOfSight(a_player, los) && los) {
+						RE::NiPoint3 dir = pp - a->GetPosition();
+						dir.z = 0;
+						const float d = dir.Length();
+						dir.Unitize();
+						m.pounceFrom = a->GetPosition();
+						m.pounceTo = m.pounceFrom + dir * std::max(0.0f, d - 120.0f);
+						if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(m.pounceTo, land) && std::abs(land - m.pounceTo.z) < 120.0f) m.pounceTo.z = land;
+						else m.pounceTo.z = m.pounceFrom.z;
+						m.pounceT = 0.0f;
+						m.cd = Rand(5.0f, 7.5f);
+						SetCue(a.get(), kCueGrab, 0.5f);
+						Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
+						continue;
+					}
+					continue;  // (its scream came when it rose; no other specials)
+				}
 				if (m.wind >= 0) {
 					if ((m.wind -= a_delta) < 0) {
 						if (m.type == Type::Wailer) {  // the scream: the horde comes, faster
