@@ -198,7 +198,13 @@ namespace bo3z
 			if (raceOpen) g_raceSeen = true;
 			// (Noah: "the character creation is at the end of the cave - I should spawn at Riverwood's gates to create my
 			// character") the quick start's creator, opened where Helgen ends, is closed at once; it opens again at the gate
-			if (!kPlayHelgen && raceOpen && !Save::Flag(Save::kFlagMoved) && !g_creatorDeferred) {
+			// (Noah: "the race menu opened again after I created my character") a creator Skyrim opens itself once we're at
+			// Riverwood's gate (the quick start's own) is the one we were about to open: it counts, and ours never follows
+			if (raceOpen && g_raceAfterSkip == 1 && Save::Flag(Save::kFlagMoved)) {
+				g_raceAfterSkip = 2;
+				logger::info("intro: Skyrim opened the creator at Riverwood itself - ours won't follow");
+			}
+			if (!kPlayHelgen && raceOpen && !Save::Flag(Save::kFlagMoved)) {
 				g_creatorDeferred = true;
 				g_raceSeen = false;
 				g_raceAfterSkip = 1;
@@ -256,7 +262,6 @@ namespace bo3z
 				if (++wait > 90) {  // (a moment for the new game's scripts to settle)
 					wait = 0;
 					g_raceAfterSkip = g_raceSeen ? 0 : 1;
-					g_creatorDeferred = true;
 					logger::info("intro: a new game began in Helgen (stage {}) - skipped: Riverwood's gate, then the creator", intro->GetCurrentStageID());
 					DoSkip();
 				}
@@ -364,6 +369,21 @@ namespace bo3z
 				if (Save::Crew() >= 0) {
 					Save::SetCrew(-1);  // older saves: drop the crew character
 				} else {
+					// (Noah: "I should start with nothing but the Curse of Alduin lore book, and what comes with my race") whatever
+					// the quick start and other mods put in the pack goes (quest items and the underwear stay); the lore book
+					// follows at once (src/Curse.cpp), the race's powers are spells and stay
+					if (FreshQuickstartGame(player)) {
+						auto* dirge = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(gen::kDirgeBook, gen::kPlugin);
+						auto* under = Classes::Underwear();
+						int   gone = 0;
+						for (auto& [obj, data] : player->GetInventory()) {
+							if (!obj || data.first <= 0 || obj == dirge || obj == under) continue;
+							if (data.second && data.second->IsQuestObject()) continue;
+							player->RemoveItem(obj, data.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+							gone += data.first;
+						}
+						logger::info("intro: the new character's pack emptied ({} items) - the lore book and the race's own powers only", gone);
+					}
 					Arcana::GiveStarter();  // the Coffer's spells replaced the old ones: a new character starts with one of them
 					Gun::TestKitIfFlagged();  // (Noah's test characters: CurseOfAlduin-testkit.flag beside the log)
 				}

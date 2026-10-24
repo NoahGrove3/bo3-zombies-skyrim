@@ -786,8 +786,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				sec("STARTS WITH", c.kit);
 				if (i == cur) TxtC(dl, g_body, 15 * k, cx, b.y - 30 * k, IM_COL32(255, 210, 110, 255), "YOUR CLASS");
 			}
-			const std::string hint = g_padLast ? (Classes::Switching() ? "D-pad  choose      A  take this path      B  keep yours" : "D-pad  choose      A  take this path")
-			                                   : (Classes::Switching() ? "1-4 or Left / Right  choose      Enter  take this path      Backspace  keep yours" : "1-4 or Left / Right  choose      Enter  take this path");
+			const std::string hint = g_padLast ? (Classes::Switching() ? "D-pad  choose      A  take this path      B  keep yours" : "D-pad  choose      A  take this path      B  not yet")
+			                                   : (Classes::Switching() ? "1-4 or Left / Right  choose      Enter  take this path      Esc  keep yours" : "1-4 or Left / Right  choose      Enter  take this path      Esc  not yet");
 			TxtC(dl, g_body, 19 * k, size.x * 0.5f, y0 + ch + 40 * k, IM_COL32(230, 220, 200, 240), hint);
 		}
 

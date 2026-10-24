@@ -1296,14 +1296,14 @@ namespace bo3z::Classes
 			if (code == 0xCB || code == 0x1E) g_sel = (sel + 3) % 4;          // Left / A
 			else if (code == 0xCD || code == 0x20) g_sel = (sel + 1) % 4;     // Right / D
 			else if (code == 0x1C || code == 0x9C || code == 0x12) Choose(sel);  // Enter / E
-			else if ((code == 0x0E || code == 0x01) && g_switching) g_open = false;  // Backspace / Esc: keep your class
+			else if (code == 0x0E || code == 0x01) g_open = false;  // Backspace / Esc: back out (the first time too - Noah)
 			return true;
 		}
 		if (a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad) {
 			if (code == 0x0004) g_sel = (sel + 3) % 4;       // D-pad left
 			else if (code == 0x0008) g_sel = (sel + 1) % 4;  // D-pad right
 			else if (code == 0x1000) Choose(sel);           // A
-			else if (code == 0x2000 && g_switching) g_open = false;  // B
+			else if (code == 0x2000) g_open = false;  // B
 			return true;
 		}
 		if (a_b->GetDevice() == RE::INPUT_DEVICE::kMouse && code == 0) {
