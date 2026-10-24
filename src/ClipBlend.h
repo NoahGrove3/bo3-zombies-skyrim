@@ -10,6 +10,10 @@
 //  - follow-through: each arm joint trails the one above it by a few hundredths of a second (shoulder, elbow,
 //    wrist, fingers), so a swing whips through instead of snapping between keys; the head settles the same way
 //  - the swings play nearer their own speed (they were rushed up to twice over)
+// (Noah: "instead of keeping their elbows locked make it more fluid ... their elbows being stuck at one angle") the
+// Mixamo run holds each elbow within ten degrees the whole stride; now each elbow lives: it bends as its arm swings
+// forward and opens as it swings back, and the forearm carries weight - it lags as the arm whips into a swing and
+// snaps through as the arm stops (a damped spring on the elbow hinge), never past straight
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -39,6 +43,7 @@ namespace zclip
 		bool                     ok = false;
 		std::vector<float>       upper;  // per bone: how much of a layered swing it takes (legs 0, arms 1)
 		std::vector<float>       tau;    // per bone: its follow-through lag in seconds (0 none)
+		std::array<int, 2>       upperArm{ -1, -1 }, forearm{ -1, -1 };  // (left, right: the elbows)
 		void Prepare()
 		{
 			const auto& names = c[kRun].bones;
@@ -56,6 +61,9 @@ namespace zclip
 				else if (has("Finger")) tau[i] = 0.09f;
 				else if (has("Head")) tau[i] = 0.05f;
 				else if (has("Neck")) tau[i] = 0.035f;
+				const int side = has(" L ") ? 0 : has(" R ") ? 1 : -1;
+				if (side >= 0 && has("UpperArm")) upperArm[side] = static_cast<int>(i);
+				if (side >= 0 && has("Forearm")) forearm[side] = static_cast<int>(i);
 			}
 		}
 	};
@@ -100,6 +108,26 @@ namespace zclip
 		return { at(i0, 0) + (at(i1, 0) - at(i0, 0)) * u, at(i0, 1) + (at(i1, 1) - at(i0, 1)) * u, at(i0, 2) + (at(i1, 2) - at(i0, 2)) * u };
 	}
 	inline V3f Lerp(const V3f& a, const V3f& b, float t) { return { a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t, a.z + (b.z - a.z) * t }; }
+	inline Q4 Mul(const Q4& a, const Q4& b)
+	{
+		return { a[0] * b[0] - a[1] * b[1] - a[2] * b[2] - a[3] * b[3], a[0] * b[1] + a[1] * b[0] + a[2] * b[3] - a[3] * b[2],
+			a[0] * b[2] - a[1] * b[3] + a[2] * b[0] + a[3] * b[1], a[0] * b[3] + a[1] * b[2] - a[2] * b[1] + a[3] * b[0] };
+	}
+	inline Q4 Conj(const Q4& a) { return { a[0], -a[1], -a[2], -a[3] }; }
+	inline V3f RotVec(Q4 q)  // (axis * angle)
+	{
+		if (q[0] < 0) for (auto& x : q) x = -x;
+		const float s = std::sqrt(q[1] * q[1] + q[2] * q[2] + q[3] * q[3]);
+		if (s < 1e-7f) return { 2 * q[1], 2 * q[2], 2 * q[3] };
+		const float a = 2 * std::atan2(s, q[0]) / s;
+		return { q[1] * a, q[2] * a, q[3] * a };
+	}
+	inline V3f Rotate(const Q4& q, const V3f& v)
+	{
+		const Q4 r = Mul(Mul(q, { 0, v.x, v.y, v.z }), Conj(q));
+		return { r[1], r[2], r[3] };
+	}
+	inline float Dot(const V3f& a, const V3f& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 	inline float ClipRate(int a_clip)
 	{
 		return a_clip == kAttack ? 1.2f : a_clip == kPunch ? 1.15f : a_clip == kHit || a_clip == kHit2 ? 1.15f : a_clip == kStandUp ? 1.15f : 1.0f;
@@ -115,6 +143,8 @@ namespace zclip
 		float           still = 1;           // 1 standing (a swing takes the whole body), 0 running (only the top)
 		std::vector<Q4> held;                // the follow-through: where each bone actually is
 		bool            heldOk = false;
+		struct Elbow { float off = 0, vel = 0, w = 0; Q4 prevU{ 1, 0, 0, 0 }, meanU{ 1, 0, 0, 0 }; bool ok = false; };
+		std::array<Elbow, 2> elbow;
 
 		bool OneShotOn(const ClipSet& S) const { return clip >= 0 && clip != kRun && clipT < S.c[clip].Seconds(); }
 		// start a clip (rate: its speed against its own); a no-op when it already plays
@@ -170,6 +200,35 @@ namespace zclip
 				a_out[i] = held[i];
 			}
 			heldOk = true;
+			// the elbows (their hinge: each forearm's own X; -X bends)
+			for (int side = 0; side < 2; ++side) {
+				const int u = S.upperArm[side], f = S.forearm[side];
+				if (u < 0 || f < 0) continue;
+				Elbow& e = elbow[side];
+				const Q4 qu = a_out[u];
+				if (!e.ok || snap || dt <= 0.0f) { e = Elbow{}; e.prevU = e.meanU = qu; e.ok = true; continue; }
+				const V3f hinge = Rotate(a_out[f], { 1, 0, 0 });               // (in the upper arm's frame)
+				// its swing: how far forward of its own recent middle the upper arm hangs (forward: -X, as the elbow)
+				e.meanU = Slerp(e.meanU, qu, 1.0f - std::exp(-dt / 0.6f));
+				const float swing = -Dot(RotVec(Mul(Conj(e.meanU), qu)), hinge);
+				const float target = std::clamp(0.45f * swing, -0.35f, 0.35f);
+				// the forearm's weight: the upper arm's turn rate about the hinge, its change pushing the elbow the other way
+				const float wNow = -Dot(RotVec(Mul(Conj(e.prevU), qu)), hinge) / dt;
+				const float wS = e.w + (wNow - e.w) * (1.0f - std::exp(-dt / 0.03f));
+				const float acc = (wS - e.w) / dt;
+				e.w = wS, e.prevU = qu;
+				constexpr float k = 480.0f, c = 15.0f, g = 0.6f;
+				e.vel += (-k * (e.off - target) - c * e.vel - g * acc) * dt;
+				e.off += e.vel * dt;
+				// never past straight, never folded shut
+				const Q4& qf = a_out[f];
+				const float bend = -RotVec(qf).x;
+				const float lo = std::max(-0.45f, 0.22f - bend), hi = std::min(0.6f, 2.6f - bend);
+				if (e.off < lo) e.off = lo, e.vel = std::max(0.0f, e.vel);
+				if (e.off > hi) e.off = hi, e.vel = std::min(0.0f, e.vel);
+				const float h = -e.off * 0.5f;
+				a_out[f] = Mul(qf, { std::cos(h), std::sin(h), 0, 0 });
+			}
 			a_com = ComOf(S, clip, clipT);
 			if (w < 1.0f && prevClip >= 0) a_com = Lerp(ComOf(S, prevClip, prevT), a_com, w);
 		}
