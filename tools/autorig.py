@@ -8,6 +8,7 @@ props (a scythe, a staff) locked to a hand.
 
     python tools/autorig.py <job name>      (jobs are defined in JOBS below)"""
 import math, pathlib, re, subprocess, sys
+import os
 import numpy as np
 from PIL import Image, ImageDraw
 
@@ -246,6 +247,7 @@ def build(name, preview_only=False):
         e0 = np.concatenate([Fw[:, 0], Fw[:, 1], Fw[:, 2]]); e1 = np.concatenate([Fw[:, 1], Fw[:, 2], Fw[:, 0]])
         wl = np.linalg.norm(Pw[e0] - Pw[e1], axis=1) + 1e-6
         G = coo_matrix((wl, (e0, e1)), shape=(nW, nW)).tocsr()
+        armOk = {}
         for k, n in enumerate(names):
             if not any(x in n for x in ('UpperArm', 'Forearm', 'Hand', 'Finger')):
                 continue
@@ -264,7 +266,18 @@ def build(name, preview_only=False):
             for _ in range(4):
                 okw = (A @ okw + okw) / deg
             W[:, k] *= np.clip(okw[inv] * 1.6 - 0.3, 0, 1)
+            armOk[n] = okw[inv]
         W[W.sum(1) <= 0, names.index('NPC Spine2 [Spn2]')] = 1.0
+        # (Noah: "the finger tips on the bride are still stretched to the dress") her fingers reach past the hand bone,
+        # down beside her thighs, and the legs claimed the tips: a point that is truly the hand's (reached along the arm)
+        # takes no leg, hip or spine at all, so every finger moves with its hand
+        body = [i for i, n in enumerate(names) if not any(x in n for x in ('UpperArm', 'Forearm', 'Hand', 'Clavicle'))]
+        Wn = W / W.sum(1, keepdims=True)
+        for S in 'LR':
+            hk = names.index(f'NPC {S} Hand [{S}Hnd]')
+            arm = [i for i, n in enumerate(names) if f' {S} ' in n and any(x in n for x in ('Forearm', 'Hand'))]
+            own = (Wn[:, arm].sum(1) >= 0.04) & (armOk[names[hk]] > 0.55) & (D[:, hk] < 14.0)
+            W[np.ix_(own, body)] = 0
     top = np.argsort(-W, 1)[:, :4]
     tw = np.take_along_axis(W, top, 1); tw /= tw.sum(1, keepdims=True)
     if J.get('skirt'):
@@ -287,6 +300,8 @@ def build(name, preview_only=False):
             sL = np.clip(0.5 - x / (2 * sk['blend']), 0, 1)  # left is -X
             top[v, :] = [pel, lt, rt, pel]
             tw[v, :] = [1 - leg, leg * sL, leg * (1 - sL), 0]
+    if os.environ.get('AUTORIG_DUMP'):
+        np.savez(os.environ['AUTORIG_DUMP'], P=P, F=F, top=top, tw=tw, D=D, names=np.array(names))
     used = sorted(set(top[tw > 0.01].ravel()))
     idx = {b: k for k, b in enumerate(used)}
     N = VN if VN is not None else M_normals(P, F)
