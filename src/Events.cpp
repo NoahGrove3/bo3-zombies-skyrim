@@ -325,6 +325,7 @@ namespace bo3z
 						hourWas = -1;
 					}
 				}
+				if (a_event->menuName == RE::RaceSexMenu::MENU_NAME) Intro::OnRaceMenu(a_event->opening);
 				if (a_event->menuName == RE::RaceSexMenu::MENU_NAME && !a_event->opening) {
 					// a character just made in a new game: black from here until the film (no glimpse of the road first)
 					auto* pl = RE::PlayerCharacter::GetSingleton();

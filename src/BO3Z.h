@@ -543,6 +543,7 @@ namespace bo3z
 		void Tick();
 		bool CrewScreenOpen();
 		bool OnButton(const RE::ButtonEvent* a_event);  // true = consumed
+		void OnRaceMenu(bool a_opening);  // the character creator opened or closed (whoever opened it)
 	}
 
 	namespace Gun

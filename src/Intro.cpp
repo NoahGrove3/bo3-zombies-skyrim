@@ -30,6 +30,15 @@ namespace bo3z
 			if (!a_q) return;
 			Papyrus(a_q, "Quest", "SetCurrentStageID", RE::MakeFunctionArguments(static_cast<std::int32_t>(a_stage)));  // (the VM owns the arguments)
 		}
+		// Before the Storm's first two objectives (talk to the friend in Riverwood, travel there with them) never belong to a
+		// survivor who wakes at the gate: taken off the journal
+		void HideFriendObjectives(RE::TESQuest* a_q)
+		{
+			if (!a_q) return;
+			for (int o : { 10, 20 }) {
+				Papyrus(a_q, "Quest", "SetObjectiveDisplayed", RE::MakeFunctionArguments(static_cast<std::int32_t>(o), false, false));
+			}
+		}
 		void DoSkip()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -38,10 +47,14 @@ namespace bo3z
 			// it: Unbound completed (its stage 900 completes it, with its journal entry), Before the Storm on "Talk to the
 			// Jarl of Whiterun" (stage 30) - the Jarl then moves it on and gives Bleak Falls Barrow as Skyrim does.
 			// (Before: Before the Storm was set to its last stage 200, which neither completes it nor ever starts Bleak Falls)
+			// (Noah: "I should be on the Stormcloaks' side and start just before speaking to the Jarl") the escape with Ralof:
+			// his helper quest (MQ102B) at stage 10 picks the Stormcloak lines, then Before the Storm straight to stage 30 -
+			// "Ralof's sister Gerdur asked me to take word to the Jarl" - with only "Talk to the Jarl of Whiterun" shown
 			Stage(Forms::IntroQuest(), 900);
 			Stage(Forms::IntroQuest(), 1000);
-			Stage(mq[2], 10);
+			Stage(mq[1], 10);
 			Stage(mq[2], 30);
+			HideFriendObjectives(mq[2]);
 			g_skip = true;  // Tick moves you once the quests are done
 			if (p) {
 				auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
@@ -52,7 +65,7 @@ namespace bo3z
 				p->NotifyAnimationGraph("IdleForceDefaultState");  // (the bound hands, the cart's seat: let go)
 			}
 			Hud::Banner("You wake at Riverwood's gate", 4.0f);
-			logger::info("intro: Helgen skipped (MQ101 900/1000, MQ102 10/30)");
+			logger::info("intro: Helgen skipped (MQ101 900/1000, MQ102B 10, MQ102 30)");
 		}
 
 		bool FreshQuickstartGame(RE::PlayerCharacter* a_player)
@@ -117,6 +130,26 @@ namespace bo3z
 		}
 
 		bool CrewScreenOpen() { return false; }
+		// (Noah: "the race menu still opens a second time") the game's Tick never sees the creator - it runs paused - so the
+		// menu's own open/close tells it: a creator Skyrim opens at Riverwood's gate is ours (none follows); one opened in
+		// Helgen before the move is closed (it opens at the gate)
+		void OnRaceMenu(bool a_opening)
+		{
+			if (!a_opening) {
+				return;
+			}
+			if (g_raceAfterSkip == 1 && Save::Flag(Save::kFlagMoved)) {
+				g_raceAfterSkip = 2;
+				logger::info("intro: Skyrim opened the creator at Riverwood itself - ours won't follow");
+			}
+			g_raceSeen = true;
+			if (!kPlayHelgen && !Save::Flag(Save::kFlagMoved) && !Forms::IntroDone()) {
+				g_raceSeen = false;
+				if (g_raceAfterSkip == 0) g_raceAfterSkip = 1;
+				if (auto* q = RE::UIMessageQueue::GetSingleton()) q->AddMessage(RE::RaceSexMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+				logger::info("intro: a creator in Helgen closed - it opens at Riverwood's gate");
+			}
+		}
 		bool NewGameThisSession() { return g_moved; }
 		void OnMainMenu() { g_moved = false, g_settle = 0, g_skip = false, g_skipRace = false, g_raceSeen = false, reachedHelgen = false, g_creatorDeferred = false, g_skipHold = 0, g_skipHeld = false, g_raceAfterSkip = 0; }  // the BO3 crew picker is gone: you play your own character
 
@@ -273,8 +306,9 @@ namespace bo3z
 				auto* bfb = RE::TESForm::LookupByID<RE::TESQuest>(0x000D0800);  // MQ103 Bleak Falls Barrow
 				if (bts && bfb && !bts->IsCompleted() && bts->GetCurrentStageID() >= 200 && !bfb->IsRunning() && !bfb->IsCompleted()) {
 					Papyrus(bts, "Quest", "Reset", RE::MakeFunctionArguments());
-					Stage(bts, 10);
+					Stage(Forms::MQ102()[1], 10);
 					Stage(bts, 30);
+					HideFriendObjectives(bts);
 					if (!intro->IsCompleted()) Stage(intro, 900);
 					logger::info("intro: the old skip's quests put right - Unbound completed, Before the Storm on 'Talk to the Jarl of Whiterun'");
 				}
@@ -360,7 +394,7 @@ namespace bo3z
 					}
 					return;
 				}
-				if (g_raceAfterSkip == 2 && (ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME) || !g_raceSeen)) return;
+				if (g_raceAfterSkip == 2 && (ui->IsMenuOpen(RE::RaceSexMenu::MENU_NAME) || !g_raceSeen) && Classes::Get() < 0) return;
 				g_raceAfterSkip = 0;  // (made: on to the class)
 			}
 			// (Noah: "the class pop-up came at the end of the cave, not when I left it") only out under the sky
@@ -372,7 +406,7 @@ namespace bo3z
 					// (Noah: "I should start with nothing but the Curse of Alduin lore book, and what comes with my race") whatever
 					// the quick start and other mods put in the pack goes (quest items and the underwear stay); the lore book
 					// follows at once (src/Curse.cpp), the race's powers are spells and stay
-					if (FreshQuickstartGame(player)) {
+					if (FreshQuickstartGame(player) && Classes::Get() < 0) {  // (never the class kit)
 						auto* dirge = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectBOOK>(gen::kDirgeBook, gen::kPlugin);
 						auto* under = Classes::Underwear();
 						int   gone = 0;

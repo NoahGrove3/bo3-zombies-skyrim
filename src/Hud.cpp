@@ -3164,6 +3164,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// the tip that breathes - on the main menu and in every Skyrim menu with a cursor.
 		void DrawPingCursor(ImDrawList* a_dl, ImVec2 a_tip, float k, float a_now)
 		{
+			if (g_padLast) return;  // (Noah: "hide the mouse cursor when I'm using a controller") it shows again with the mouse or keyboard
 			if (g_cursorTex) {  // the Moonlit Spirit cursor (an animated Windows cursor: 8 frames played 0..7..0, 9/60 s each)
 				static constexpr int kSeq[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0 };
 				const int   f = kSeq[static_cast<int>(a_now * 60.0f / 9.0f) % 16];
