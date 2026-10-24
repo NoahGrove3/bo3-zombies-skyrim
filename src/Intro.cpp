@@ -46,7 +46,7 @@ namespace bo3z
 				}
 				p->NotifyAnimationGraph("IdleForceDefaultState");  // (the bound hands, the cart's seat: let go)
 			}
-			if (kPlayHelgen) Hud::Banner("Helgen skipped - you wake at Riverwood's gate", 4.0f);
+			Hud::Banner("You wake at Riverwood's gate", 4.0f);
 			logger::info("intro: Helgen skipped (MQ102 200, MQ102A 200, MQ101 1000)");
 		}
 
