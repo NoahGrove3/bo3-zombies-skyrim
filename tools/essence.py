@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""The Cursed Essence emblem for the HUD: a soul caught in Alduin's curse - a burning wisp of spectral violet flame
-with a slit dragon's eye in its heart, ringed by a slowly turning circle of dragon-script ticks. A seamlessly looping
+"""The Cursed Essence emblem for the HUD: a soul caught in Alduin's curse - a burning wisp of spectral violet flame,
+ringed by a slowly turning circle of dragon-script ticks. A seamlessly looping
 flipbook drawn by src/Hud.cpp (the essence counter, bottom-left).
 
     python3 tools/essence.py <out.png> [preview.gif]
@@ -68,20 +68,6 @@ def frame(t, A, B, C):
                                                    [0.75, 110, 200, 255], [1.0, 205, 255, 245], [1.2, 255, 255, 255]])
     flame_a = np.clip(heat * 1.5, 0, 1)
 
-    # --- the dragon's eye in its heart: an almond of molten gold-green with a slit pupil that breathes
-    ex, ey = x / 0.28, (y - cy + 0.02) / 0.15
-    almond = 1 - (np.abs(ex) ** 2 + np.abs(ey) ** 2 * (1 + 0.6 * np.abs(ex)))
-    eye_a = np.clip(almond / 0.08, 0, 1)
-    breathe = 0.5 + 0.5 * np.sin(tau)
-    slit_w = 0.035 + 0.035 * breathe
-    slit = np.clip((slit_w * (1 - np.abs(ey * 0.9) ** 2) - np.abs(ex * 0.30)) / 0.012, 0, 1) * eye_a
-    iris_r = np.hypot(ex, ey)
-    streak = sample(A, th * 0.6366, iris_r * 0.25 - t)  # (th/pi*2: radial streaks round the iris)
-    iris_h = np.clip(1.15 - iris_r * 0.95 + 0.22 * streak, 0, 1.2)
-    iris_rgb = ramp(iris_h, [[0.0, 80, 10, 40], [0.35, 200, 60, 20], [0.7, 255, 170, 40], [1.0, 255, 240, 160], [1.2, 255, 255, 230]])
-    iris_rgb = iris_rgb * (1 - slit[..., None]) + np.array([8, 0, 14], np.float32) * slit[..., None]
-    lid = np.clip((0.12 - np.abs(almond - 0.04)) / 0.12, 0, 1) * np.clip(1 - almond / 0.25, 0, 1)  # dark lid rim
-
     # --- the turning ring of dragon-script ticks (12-fold: one twelfth of a turn per loop, so it loops)
     ring_r, ring_w = 0.80, 0.045
     rot = th - tau / 12
@@ -104,18 +90,10 @@ def frame(t, A, B, C):
     # composite (straight alpha, over)
     rgb = glow_rgb * glow_a[..., None]
     a = glow_a
+    tau = tau  # (the ring's turn)
     for c_rgb, c_a in ((ring_rgb, ring_a * 0.9), (flame_rgb, flame_a)):
         rgb = c_rgb * c_a[..., None] + rgb * (1 - c_a[..., None])
         a = c_a + a * (1 - c_a)
-    lid_a = lid * 0.85
-    rgb = np.array([20, 0, 30], np.float32) * lid_a[..., None] + rgb * (1 - lid_a[..., None])
-    a = lid_a + a * (1 - lid_a)
-    rgb = iris_rgb * eye_a[..., None] + rgb * (1 - eye_a[..., None])
-    a = eye_a + a * (1 - eye_a)
-    # a soft bloom of the eye's light over the flame
-    bloom = gaussian_filter(eye_a * (1 - slit), 6 * SS) * 0.6
-    rgb = rgb + np.array([255, 160, 60], np.float32) * bloom[..., None] * 0.5
-    a = np.maximum(a, bloom * 0.8)
     a = np.clip(a, 0, 1)
     rgb = np.where(a[..., None] > 1e-4, rgb / np.maximum(a[..., None], 1e-4), 0)  # (premultiplied -> straight)
     img = np.dstack([np.clip(rgb, 0, 255), np.clip(a, 0, 1) * 255]).astype(np.float32)

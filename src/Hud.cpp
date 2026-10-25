@@ -1378,8 +1378,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const ImVec2      coin{ 40 * k, foot - 36 * k };
 				const float       w = 70 * k + std::max(numW, Measure(g_body, 11 * k, "CURSED ESSENCE").x);
 				dl->AddRectFilledMultiColor({ 0, foot - 76 * k }, { w + 70 * k, foot }, IM_COL32(0, 0, 0, Hud::kEdgeHud ? 60 : 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, Hud::kEdgeHud ? 90 : 140));
-				// (Noah: their own essence, not septims - "Cursed Essence", animated) a soul burning in Alduin's curse with his
-				// slit eye in its heart, ringed by turning dragon-script (tools/essence.py: an 8x6 flipbook, 24 frames a second)
+				// (Noah: their own essence, not septims - "Cursed Essence", animated) a soul burning in Alduin's curse,
+				// ringed by turning dragon-script (tools/essence.py: an 8x6 flipbook, 24 frames a second)
 				const float cr = 15 * k;
 				if (g_essence) {
 					const int   fr = static_cast<int>(now * 24.0f) % 48;
