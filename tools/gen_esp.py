@@ -599,8 +599,8 @@ def lore_text():
            "<p>The Curse walks beside your own story; it does not replace it.</p>",
            "<p><b>Riverwood's</b> altar, nearest Helgen, wakes first. <b>Whiterun's</b> answers your first dragon soul and gives you a dragon to ride. "
            "At <b>High Hrothgar</b>, the Way of the Voice opens the altars' shouts, and the <b>Reliquary</b> forges what the Dragon Priests leave behind into wonders.</p>",
-           "<p>When you follow Alduin to Sovngarde and he falls, the mist thins and your wonders wake to their <b>Legendary</b> form. "
-           "His three Words still lie in the ground: silence <b>SLEN</b>, <b>TIID</b> and <b>VO</b> at the old places of the Dragon Cult, and the Curse is broken for good.</p>",
+           "<p>Win your path's <b>wonder</b> and Alduin's three Words wake, one at a time, at old places of the Dragon Cult. Silence <b>SLEN</b>, <b>TIID</b> and <b>VO</b> "
+           "and the Curse is broken for good. And when you follow Alduin to Sovngarde and he falls, the mist thins and your wonder wakes to its <b>Legendary</b> form.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>VI. The Voices of the Holds</font></p>"]
     for h in S['shouts']['rows']:
         if h.get('town'):
