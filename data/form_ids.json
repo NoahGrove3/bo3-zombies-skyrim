@@ -1245,6 +1245,10 @@
   "ARMA:volatile": "0xcd9",
   "ARMO:volatile": "0xcda",
   "NPC_:volatile": "0xcdb",
-  "ARMA:eyes_volatile": "0xcdc"
+  "ARMA:eyes_volatile": "0xcdc",
+  "SPEL:egg_power_toast": "0xcdd",
+  "SPEL:egg_power_debt": "0xcde",
+  "SPEL:egg_power_rites": "0xcdf",
+  "SPEL:egg_power_dream": "0xce0"
  }
 }

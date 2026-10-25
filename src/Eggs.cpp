@@ -7,8 +7,8 @@
 //            all inside a time if seconds)            order  stones touched in the order they light up
 //   altar    back to the altar                         kills  the night's dead slain on the marked ground
 //   survive  the dead risen round the altar            boss   a named foe (Director's champion, town -10 - city)
-// Its reward: a permanent buff, a summon (a lesser power: one summon out at a time, for the night) or Winterhold's
-// beam. In a party, whoever finishes a quest gives its reward to everyone near that altar (Net kEgg).
+// Its reward: a summon of its own (a lesser power: one summon out at a time, for the night - Noah: summons, not
+// permanent buffs; the buff and beam code stays for the sheet). In a party, whoever finishes a quest gives its reward to everyone near that altar (Net kEgg).
 // Progress lives in one global per quest (step x 1000 + progress; 99000 done), the gifts in another (bits).
 namespace bo3z::Eggs
 {
@@ -41,7 +41,7 @@ namespace bo3z::Eggs
 			}
 			return -1;
 		}
-		bool Has(std::string_view a_id) { const int e = Index(a_id); return e >= 0 && Gifted(e); }
+		bool Has(std::string_view a_id) { const int e = Index(a_id); return e >= 0 && Gifted(e) && gen::kEggs[e].reward == gen::kEggBuff; }  // (a buff's only: the quests now give summons)
 
 		void Remove(RE::ObjectRefHandle& h)
 		{
@@ -353,6 +353,15 @@ namespace bo3z::Eggs
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !p->Is3DLoaded()) return;
 		g_beamCd = std::max(0.0f, g_beamCd - a_delta);
+		// (Noah: every quest a summon) a quest won before its reward became a summon: its power now, once a session
+		static bool granted = false;
+		if (!granted) {
+			granted = true;
+			for (int e = 0; e < kCount; ++e) {
+				if (!Gifted(e) || gen::kEggs[e].reward != gen::kEggSummon) continue;
+				if (auto* sp = RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(gen::kEggs[e].power, gen::kPlugin); sp && !p->HasSpell(sp)) p->AddSpell(sp);
+			}
+		}
 		// the Gildergreen's Guardian mends you while it stands near
 		if (g_summonEgg >= 0 && gen::kEggs[g_summonEgg].id == "sap") {
 			for (auto& h : g_summons) {
