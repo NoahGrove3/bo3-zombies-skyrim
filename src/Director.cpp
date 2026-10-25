@@ -1053,7 +1053,7 @@ namespace bo3z
 			auto v = g_alive.back().handle.get();
 			if (!v) return;
 			auto* av = v->AsActorValueOwner();
-			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 5.0f);  // (6x a runner's health)
+			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 1.4f);  // (the row is already a brute's 2.5x: ~6x a runner's)
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, 45.0f);                                              // far faster than the rest
 			av->SetActorValue(RE::ActorValue::kAttackDamageMult, av->GetActorValue(RE::ActorValue::kAttackDamageMult) * 1.5f);
 			v->SetDisplayName("Volatile", true);

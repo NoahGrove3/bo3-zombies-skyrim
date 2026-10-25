@@ -382,13 +382,26 @@ static int RunNif(const char* modelPath, const char* skelPath, const char* animP
 	Anim anim; anim.Init(as);
 	std::map<std::string, aiMatrix4x4> rest;
 	Worlds(as, anim, 0, true, rest);
+	// ZMIRROR=1: the clip played by the other side (Left reads Right, everything reflected across the body's middle):
+	// a right-handed swing becomes a left-handed one
+	const bool mirror = getenv("ZMIRROR") != nullptr;
 	auto mixXf = [&](const std::map<std::string, aiMatrix4x4>& w, const char* n, Xf& out) {
-		auto it = w.find(n);
+		std::string name = n;
+		if (mirror) {
+			if (name.rfind("Left", 0) == 0) name = "Right" + name.substr(4);
+			else if (name.rfind("Right", 0) == 0) name = "Left" + name.substr(5);
+		}
+		auto it = w.find(name);
 		if (it == w.end()) return false;
 		Xf x = fromAi(it->second);
 		out.R = mul(mul(kM, x.R), tr(kM));
 		out.t = mul(kM, x.t);
 		out.s = x.s;
+		if (mirror) {
+			M3 F; F.m[0][0] = -1;  // (Skyrim's X runs across the body)
+			out.R = mul(mul(F, out.R), F);
+			out.t.x = -out.t.x;
+		}
 		return true;
 	};
 	// per mapped bone: its Skyrim index, the aim correction C (Skyrim rest direction onto Mixamo rest direction)

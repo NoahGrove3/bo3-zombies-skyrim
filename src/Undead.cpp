@@ -117,6 +117,7 @@ namespace bo3z
 			std::vector<RE::NiAVObject*> clipNodes;     // the clip's bones on this body (by the clip's bone list)
 			RE::NiAVObject*           comNode = nullptr;
 			std::atomic<bool>         volatileOne{ false };  // (the Volatile: its own claws)
+			std::atomic<bool>         leftBlade{ false };    // (Noah: "make him swing the sword arm on his left hand") the Mutant
 		};
 		std::shared_mutex                                    g_lock;
 		std::unordered_map<RE::FormID, std::shared_ptr<Rig>> g_rigs;  // (shared: the animation threads keep theirs alive while the game thread replaces or drops it)
@@ -564,7 +565,7 @@ namespace bo3z
 		float RateFor(const Rig& r, int c)
 		{
 			float rate = ClipRate(c);
-			if (c == kAttack && (r.volatileOne.load() || r.type == Type::Runner)) rate *= r.volatileOne.load() ? 1.3f : 1.12f;  // (their claws come faster)
+			if ((c == kAttack || c == kAttackL) && (r.volatileOne.load() || r.type == Type::Runner)) rate *= r.volatileOne.load() ? 1.3f : 1.12f;  // (their claws come faster)
 			if (c == kPunch && r.type == Type::Wailer) rate *= 0.9f;
 			return rate;
 		}
@@ -595,11 +596,12 @@ namespace bo3z
 				// mostly lunge and claw, a flurry of blows now and then; the Bride only the leaping claw, fast; the Skald
 				// pummels (and screams the horde on: Undead::Tick); the Volatile claws fastest of all (and pounces)
 				const int n = r.nextAttack++;
-				if (r.volatileOne.load() || r.type == Type::Runner) want = kAttack;
+				if (r.leftBlade.load()) want = kAttackL;
+				else if (r.volatileOne.load() || r.type == Type::Runner) want = kAttack;
 				else if (r.type == Type::Wailer) want = (n % 3 == 2) ? kAttack : kPunch;
 				else want = (n % 3 == 2) ? kPunch : kAttack;
 			}
-			else if (const float h = r.hitAt.exchange(-1.0f); h >= 0 && !(oneShotOn && (P.clip == kAttack || P.clip == kPunch || P.clip == kStandUp || P.clip == kScream))) want = (r.nextAttack & 1) ? kHit : kHit2;
+			else if (const float h = r.hitAt.exchange(-1.0f); h >= 0 && !(oneShotOn && (P.clip == kAttack || P.clip == kAttackL || P.clip == kPunch || P.clip == kStandUp || P.clip == kScream))) want = (r.nextAttack & 1) ? kHit : kHit2;
 			r.wasAttacking = attacking;
 			if (want < 0) {
 				if (oneShotOn && P.clip != kStandUp) want = P.clip;
@@ -762,6 +764,10 @@ namespace bo3z
 		{
 			if (a_actor) {
 				g_eyes[a_actor->GetFormID()] = { std::string(a_id), nullptr };
+				if (a_id == "volatile") {  // (its row tells: the Mutant's blade is on its left arm)
+					std::shared_lock l(g_lock);
+					if (auto it = g_rigs.find(a_actor->GetFormID()); it != g_rigs.end()) it->second->leftBlade.store(true);
+				}
 			}
 		}
 

@@ -28,8 +28,8 @@
 
 namespace zclip
 {
-	enum ClipId { kRun, kAttack, kPunch, kScream, kHit, kHit2, kStandUp, kClips };
-	inline constexpr const char* kClipFile[kClips] = { "run", "attack", "punch", "scream", "hit", "hit2", "standup" };
+	enum ClipId { kRun, kAttack, kPunch, kScream, kHit, kHit2, kStandUp, kAttackL, kClips };  // (kAttackL: the swing mirrored, for a left-handed blade)
+	inline constexpr const char* kClipFile[kClips] = { "run", "attack", "punch", "scream", "hit", "hit2", "standup", "attack_l" };
 	using Q4 = std::array<float, 4>;  // w x y z
 	struct V3f { float x = 0, y = 0, z = 0; };
 
@@ -156,9 +156,9 @@ namespace zclip
 	inline float Dot(const V3f& a, const V3f& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 	inline float ClipRate(int a_clip)
 	{
-		return a_clip == kAttack ? 1.2f : a_clip == kPunch ? 1.15f : a_clip == kHit || a_clip == kHit2 ? 1.15f : a_clip == kStandUp ? 1.15f : 1.0f;
+		return a_clip == kAttack || a_clip == kAttackL ? 1.2f : a_clip == kPunch ? 1.15f : a_clip == kHit || a_clip == kHit2 ? 1.15f : a_clip == kStandUp ? 1.15f : 1.0f;
 	}
-	inline bool Layered(int a_clip) { return a_clip == kAttack || a_clip == kPunch || a_clip == kHit || a_clip == kHit2; }
+	inline bool Layered(int a_clip) { return a_clip == kAttack || a_clip == kAttackL || a_clip == kPunch || a_clip == kHit || a_clip == kHit2; }
 
 	struct Player
 	{
