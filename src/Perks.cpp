@@ -172,6 +172,13 @@ namespace bo3z
 			if (RE::PlayerCharacter::IsGodMode()) {
 				return;  // (console god mode: the dead's hands pass through)
 			}
+			// (Noah: "it feels really buggy ... make it fluid and fun") a mob's claws no longer land all in the same instant:
+			// after a hit, the next one from anyone counts only once 0.45 s have passed (time to react, BO3's own rhythm)
+			static auto anyHit = std::chrono::steady_clock::time_point{};
+			if (now - anyHit < 450ms) {
+				return;
+			}
+			anyHit = now;
 			auto* av = player->AsActorValueOwner();
 			const float jug = gen::kPerks[gen::kPerk_trollshide].value * N(gen::kPerk_trollshide);
 			const float baseHealth = std::max(50.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth) - jug);
@@ -179,7 +186,9 @@ namespace bo3z
 			const bool boss = Director::IsBoss(a_zombie);  // his claws come in flurries: each rake takes less
 			// each kind hits as hard as it is (Undead::DamageMult, carried on its attack-damage value)
 			const float kindMult = boss || elite ? 1.0f : std::clamp(a_zombie->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAttackDamageMult) / std::max(0.001f, gen::kZombieWeaponDamageMult), 0.5f, 2.0f);
-			DamagePlayer(baseHealth * (boss ? gen::boss::meleeShare : elite ? gen::elite::hitShare : gen::kHitDamageFraction * kindMult) * Settings::UndeadDamageMult());
+			// the first nights are gentler (a new character learns the dead): a quarter less on night 1, full by night 9
+			const float early = std::clamp(0.75f + 0.03125f * static_cast<float>(Save::Get(gen::kAV_round)), 0.75f, 1.0f);
+			DamagePlayer(baseHealth * (boss ? gen::boss::meleeShare : elite ? gen::elite::hitShare : gen::kHitDamageFraction * kindMult * early) * Settings::UndeadDamageMult());
 			if (elite) {  // Life Drain
 				auto* zav = a_zombie->AsActorValueOwner();
 				zav->RestoreActorValue(RE::ActorValue::kHealth, zav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::elite::drainShare);

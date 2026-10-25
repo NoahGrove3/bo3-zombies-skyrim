@@ -865,9 +865,71 @@ namespace bo3z
 			}
 		}
 
+		// (Noah: "the spells I was using went invisible when I switched from one spell to the other") Skyrim drops a
+		// hand's magic art now and then when a spell is swapped in: a moment after any spell goes into your hand it is put
+		// in again (the same spell, the same hand), which brings its art back. (Its own re-equip is not answered.)
+		class EquipWatch : public RE::BSTEventSink<RE::TESEquipEvent>
+		{
+		public:
+			static EquipWatch* Get()
+			{
+				static EquipWatch w;
+				return &w;
+			}
+			static inline std::atomic_bool s_mine{ false };
+			RE::BSEventNotifyControl ProcessEvent(const RE::TESEquipEvent* a_event, RE::BSTEventSource<RE::TESEquipEvent>*) override
+			{
+				if (!a_event || !a_event->equipped || s_mine.load() || !a_event->actor || !a_event->actor->IsPlayerRef()) {
+					return RE::BSEventNotifyControl::kContinue;
+				}
+				auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(a_event->baseObject);
+				if (!sp || sp->GetSpellType() != RE::MagicSystem::SpellType::kSpell) {
+					return RE::BSEventNotifyControl::kContinue;
+				}
+				const RE::FormID id = sp->GetFormID();
+				std::thread([id] {
+					std::this_thread::sleep_for(std::chrono::milliseconds(300));
+					Tasks::Add([id] {
+						auto* pl = RE::PlayerCharacter::GetSingleton();
+						auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(id);
+						auto* em = RE::ActorEquipManager::GetSingleton();
+						if (!pl || !sp || !em || pl->IsDead()) return;
+						for (bool left : { false, true }) {
+							if (pl->GetEquippedObject(left) != sp) continue;
+							auto* slot = RE::TESForm::LookupByID<RE::BGSEquipSlot>(left ? 0x013F43 : 0x013F42);
+							s_mine = true;
+							em->EquipSpell(pl, sp, slot);
+							s_mine = false;
+						}
+					});
+				}).detach();
+				return RE::BSEventNotifyControl::kContinue;
+			}
+		};
+
 		void OnDataLoaded()
 		{
 			FreeBowMovement();
+			// (Noah: "the hoarfrost casting animation is very bright, hard to see when casting") Mysticism's Hoarfrost
+			// wears Skyrim's own Frostbite in the hands (its art and its light), not its blinding own
+			if (auto* dh = RE::TESDataHandler::GetSingleton()) {
+				auto* frost = RE::TESForm::LookupByID<RE::SpellItem>(0x0002B96C);  // Frostbite
+				RE::BGSArtObject* art = nullptr;
+				RE::TESObjectLIGH* light = nullptr;
+				if (frost) {
+					for (auto* e : frost->effects) {
+						if (e && e->baseEffect) { art = e->baseEffect->data.castingArt, light = e->baseEffect->data.light; break; }
+					}
+				}
+				if (auto* hf = dh->LookupForm<RE::SpellItem>(0x445FFD, "MysticismMagic.esp"); hf && frost) {
+					int n = 0;
+					for (auto* e : hf->effects) {
+						if (!e || !e->baseEffect) continue;
+						e->baseEffect->data.castingArt = art, e->baseEffect->data.light = light, ++n;
+					}
+					logger::info("spells: Hoarfrost's hands dimmed to Frostbite's ({} effects)", n);
+				}
+			}
 			// Skyrim's own floating quest markers give way to ours (src/Hud.cpp: drawn in the game's style)
 			if (auto* prefs = RE::INIPrefSettingCollection::GetSingleton()) {
 				if (auto* st = prefs->GetSetting("bShowFloatingQuestMarkers:GamePlay")) {
@@ -923,6 +985,7 @@ namespace bo3z
 			events->AddEventSink<RE::TESMagicEffectApplyEvent>(EffectWatch::Get());
 			events->AddEventSink<RE::TESSpellCastEvent>(CastWatch::Get());
 			events->AddEventSink<RE::TESHitEvent>(HitWatch::Get());
+			events->AddEventSink<RE::TESEquipEvent>(EquipWatch::Get());
 			Intro::Install();
 			RE::BSInputDeviceManager::GetSingleton()->AddEventSink(InputWatch::Get());
 			Hud::Install();

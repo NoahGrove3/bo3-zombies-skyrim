@@ -38,6 +38,11 @@ namespace bo3z
 		// (Noah: like BO3) a night is waves: 4 + the night's number of them; wave k brings 20 x k dead (20, 40, 60...); the night
 		// holds (the clock stops short of dawn) until the last wave is cleared
 		constexpr int   kWavesBase = 4, kWaveDeadStep = 20;
+		// (Noah: "make it fluid and fun") the first nights build up: fewer waves, smaller ones, fewer dead at once - a new
+		// character finds its feet before the full horde (from night 5 on, as before)
+		int WavesFor(int a_round) { return a_round >= 5 ? kWavesBase + a_round : 2 + a_round + (a_round >= 3 ? 1 : 0); }
+		int WaveStep() { return g_current >= 5 ? kWaveDeadStep : std::clamp(6 + 3 * g_current, 9, kWaveDeadStep); }
+		int AtOnceMin(int a_round) { return std::min(12, 4 + 2 * std::max(1, a_round)); }
 		constexpr float kWaveRest = 8.0f;
 		int   g_waves = 0, g_wave = 0, g_waveSize = 0, g_waveSpawned = 0;
 		float g_waveRest = 0;
@@ -98,10 +103,10 @@ namespace bo3z
 		int WaveSize(int a_wave)
 		{
 			const int   players = Net::InLobby() ? Net::Members() + 1 : 1;
-			const float total = static_cast<float>(kWaveDeadStep) * g_waves * (g_waves + 1) / 2.0f;
+			const float total = static_cast<float>(WaveStep()) * g_waves * (g_waves + 1) / 2.0f;
 			const float scale = std::min(1.0f, static_cast<float>(kNightCapPerPlayer * std::max(1, players)) / std::max(1.0f, total));
 			const int th = ThemeNowImpl();
-			return std::max(1, static_cast<int>(std::lround(kWaveDeadStep * a_wave * scale * (th >= 0 ? gen::kEvents[th].waveCount : 1.0f))));
+			return std::max(1, static_cast<int>(std::lround(WaveStep() * a_wave * scale * (th >= 0 ? gen::kEvents[th].waveCount : 1.0f))));
 		}
 
 		int TotalFor(int a_round, int a_players = 1)
@@ -765,6 +770,20 @@ namespace bo3z
 			const std::uint32_t    own = !kindRow.rig ? 0 : kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : (eid == "zombie" || eid == "runner" || eid == "wailer" || eid == "bloater" || eid == "lich" || eid == "volatile" || eid == "mage" || eid == "girl") ? gen::kZombieClaws : 0;
 			if (own) {  // their own fighting style: the Reaper's scythe, Grimmvar's raking claws, the Gloomstalker's quick slashes
 				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(own, gen::kPlugin)) {
+					// (Noah: "some of them carry weapons") nothing else in their hands or packs: every other weapon and
+					// shield goes, so only their own (unseen) claws are swung
+					auto other = actor->GetInventory([w](RE::TESBoundObject& a_obj) {
+						if (&a_obj == w) return false;
+						if (a_obj.IsWeapon() || a_obj.IsAmmo()) return true;
+						auto* ar = a_obj.As<RE::TESObjectARMO>();
+						return ar && ar->IsShield();
+					});
+					for (auto& [obj, data] : other) {
+						if (data.first > 0) actor->RemoveItem(obj, data.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+					}
+					if (auto* lh = actor->GetEquippedObject(true); lh && lh != w) {
+						if (auto* b = lh->As<RE::TESBoundObject>()) RE::ActorEquipManager::GetSingleton()->UnequipObject(actor, b);
+					}
 					RE::ActorEquipManager::GetSingleton()->EquipObject(actor, w);
 				}
 			} else if (kindRow.rig && kindRow.kind == 0 && !actor->GetEquippedObject(false)) {
@@ -1676,7 +1695,7 @@ namespace bo3z
 					Dawn();
 				}
 				if (g_phase == Phase::Day) {
-					Hud::Banner("NIGHT FALLS. THE DEAD RISE.", 4.0f);
+					// (Noah: "two pop-ups when a night is starting") the night's own title under the circle says it - no banner over it
 					Forms::Play(gen::Sound::night_falls);
 				}
 				g_phase = Phase::Break;
@@ -1752,8 +1771,8 @@ namespace bo3z
 			g_current = a_round;
 			g_special = a_round >= R.specialFirstRound && (a_round - R.specialFirstRound) % R.specialEveryRounds == 0;
 			// One round per night: the dead keep coming until dawn. How many walk at once grows night by night.
-			g_toSpawn = std::clamp(static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier / 3.0f)), 12, R.maxAlive);
-			g_waves = kWavesBase + a_round, g_wave = 1, g_waveSize = WaveSize(1), g_waveSpawned = 0, g_waveRest = 0, g_nightCleared = false;
+			g_toSpawn = std::clamp(static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier / 3.0f)), AtOnceMin(a_round), a_round < 4 ? AtOnceMin(a_round) : R.maxAlive);
+			g_waves = WavesFor(a_round), g_wave = 1, g_waveSize = WaveSize(1), g_waveSpawned = 0, g_waveRest = 0, g_nightCleared = false;
 			Curse::OnWave(false);
 			g_spawnTimer = 0;
 			g_phase = Phase::Fighting;
@@ -3432,7 +3451,7 @@ namespace bo3z
 			case Phase::Day:
 				g_phase = Phase::Break;
 				g_breakTimer = R.firstBreakSeconds;
-				Hud::Banner("NIGHT FALLS. THE DEAD RISE.", 4.0f);
+				// (Noah: "two pop-ups when a night is starting") the night's own title under the circle says it - no banner over it
 				Forms::Play(gen::Sound::night_falls);
 				break;
 			case Phase::Break:

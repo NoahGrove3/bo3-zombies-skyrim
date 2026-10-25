@@ -129,6 +129,8 @@ namespace bo3z
 		std::shared_mutex                                    g_lock;
 		std::unordered_map<RE::FormID, std::shared_ptr<Rig>> g_rigs;  // (shared: the animation threads keep theirs alive while the game thread replaces or drops it)
 		std::atomic_bool                                     g_logged{ false };
+		// (Noah: "the enemies don't have any attack animations") how the posing goes, told in the log now and then
+		std::atomic<std::uint64_t> g_hookCalls{ 0 }, g_hookRigs{ 0 }, g_clipPosed{ 0 }, g_clipNo{ 0 };
 
 		RE::NiMatrix3 AxisAngle(RE::NiPoint3 a, float t)
 		{
@@ -614,7 +616,10 @@ namespace bo3z
 				r.clipSet = w, r.player = Player{};
 				r.clipNodes.clear(), r.comNode = nullptr;  // (its own set's bones, by its own names)
 			}
-			if (r.clipSet < 0 || !r.root) return false;
+			if (r.clipSet < 0 || !r.root) {
+				g_clipNo.fetch_add(1, std::memory_order_relaxed);
+				return false;
+			}
 			const ClipSet& S = g_clipSets[r.clipSet];
 			if (r.clipNodes.empty()) {
 				const auto& names = S.c[kRun].bones;
@@ -676,6 +681,7 @@ namespace bo3z
 				else if (P.clip == kStandUp && !r.startDone && S.Has(kStart)) want = kStart, r.startDone = true;  // (up off the ground and straight into a sprint)
 				else want = kRun;
 			}
+			g_clipPosed.fetch_add(1, std::memory_order_relaxed);
 			P.Play(want, want == kRun ? 1.0f : RateFor(r, want), S);
 			P.Tick(S, dt, loco, r.pose, r.com);
 			for (std::size_t i = 0; i < r.clipNodes.size() && i < r.pose.size(); ++i) {
@@ -695,6 +701,7 @@ namespace bo3z
 			static void thunk(RE::Character* a_this, float a_delta)
 			{
 				func(a_this, a_delta);
+				g_hookCalls.fetch_add(1, std::memory_order_relaxed);
 				if (!a_this || a_this->IsDead() || a_this->IsInRagdollState()) {
 					return;
 				}
@@ -706,6 +713,7 @@ namespace bo3z
 					}
 				}
 				if (r) {
+					g_hookRigs.fetch_add(1, std::memory_order_relaxed);
 					try {
 						PoseRig(a_this, *r, a_delta);
 					} catch (...) {
@@ -1196,6 +1204,16 @@ namespace bo3z
 			}
 			std::erase_if(g_minds, [](const Mind& m) { return m.cd <= -99; });
 			// rigs of the gone (deleted, unloaded) are dropped now and then
+			static float told = 0;
+			if ((told += a_delta) > 15.0f) {
+				told = 0;
+				std::size_t rigs = 0;
+				{
+					std::shared_lock l(g_lock);
+					rigs = g_rigs.size();
+				}
+				if (rigs > 0) logger::info("undead: {} rigs - animation updates {} ({} of ours), clip poses {}, no clip set {}", rigs, g_hookCalls.exchange(0), g_hookRigs.exchange(0), g_clipPosed.exchange(0), g_clipNo.exchange(0));
+			}
 			static float sweep = 0;
 			if ((sweep += a_delta) > 5.0f) {
 				sweep = 0;
