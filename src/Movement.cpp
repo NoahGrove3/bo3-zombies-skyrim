@@ -1343,6 +1343,8 @@ namespace bo3z
 		float        g_catchK = 0;                   // 0 at the catch .. 1 once the controls are fully yours
 		float        g_stickX = 0, g_stickY = 0;     // the left stick, as its own events last said
 		bool         g_keyF = false, g_keyB = false, g_keyL = false, g_keyR = false;
+		bool         g_sprintKey = false;  // sprint held (omni-sprint in first person)
+		float        g_omni = 0;           // the omni-sprint's share now (eased 0..1)
 		bool         g_chaseOn = false;              // (dev: the filming camera is turning the view itself)
 		const RE::NiMatrix3* BindRot(const char* a_name);
 		float BankSign() { return Settings::DragonBankReverse() ? -1.0f : 1.0f; }
@@ -2292,6 +2294,7 @@ namespace bo3z
 				else if (q == ue0->back) g_keyB = held;
 				else if (q == ue0->strafeLeft) g_keyL = held;
 				else if (q == ue0->strafeRight) g_keyR = held;
+				if (q == ue0->sprint) g_sprintKey = held;
 			}
 			// the dodge (Left Alt; on a controller a quick tap of sprint, LB / L1 - holding it still sprints)
 			if (a_event && a_event->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_event->GetIDCode() == 0x38 && a_event->IsDown()) {
@@ -2891,6 +2894,7 @@ namespace bo3z
 			}
 			if (auto* ui = RE::UI::GetSingleton(); ui && (ui->GameIsPaused() || ui->IsMenuOpen(RE::InventoryMenu::MENU_NAME) || ui->IsMenuOpen(RE::MapMenu::MENU_NAME))) {
 				g_keyF = g_keyB = g_keyL = g_keyR = false;  // (a key let go of while a menu had it is never heard: start again)
+				g_sprintKey = false;
 				g_stickX = g_stickY = 0;
 			}
 			TuneGameSettings();
@@ -3009,6 +3013,24 @@ namespace bo3z
 
 			// ---- run/sprint speed, eased so switching sprint <-> run <-> strafe never jolts
 			float want = gen::kRunBoost + (sprint ? gen::kSprintBoost : 0.0f) + gen::kAdsSpeed * Gun::AdsBlend();
+			// (Noah: "sprint in all directions like omni-movement in first person ... sprint backwards while casting spells or
+			// drawing a bow") in first person, sprint held while moving any way - back, sideways, casting, a bow drawn - runs
+			// you at sprint speed (Skyrim only sprints forward with empty hands, so its own sprint is left to that). It costs
+			// stamina as a sprint does, and ends when the stamina does.
+			{
+				auto*       cam = RE::PlayerCamera::GetSingleton();
+				auto*       pcs = RE::PlayerControls::GetSingleton();
+				const auto  mv = pcs ? pcs->data.moveInputVec : RE::NiPoint2{};
+				const bool  moving = mv.x * mv.x + mv.y * mv.y > 0.09f;
+				auto*       av = player->AsActorValueOwner();
+				const float stam = av->GetActorValue(RE::ActorValue::kStamina);
+				const bool  omni = g_sprintKey && moving && !sprint && !air && cam && cam->IsInFirstPerson() && !st->IsSneaking() && stam > 1.0f && !Riding() && g_slide <= 0;
+				g_omni += ((omni ? 1.0f : 0.0f) - g_omni) * std::min(1.0f, a_delta * 8.0f);
+				if (g_omni > 0.01f) {
+					want += g_omni * ((100.0f + gen::kRunBoost) * 0.45f + gen::kSprintBoost);  // (Skyrim's sprint is about 1.45x its run)
+					if (omni) av->DamageActorValue(RE::ActorValue::kStamina, a_delta * 7.0f * gen::kSprintStamina);
+				}
+			}
 			if (g_slide > 0) {
 				want += gen::kSprintBoost;  // the crouch would otherwise drag the controller back to sneak speed
 			}
