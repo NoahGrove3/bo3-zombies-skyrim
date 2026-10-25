@@ -1,5 +1,6 @@
 #include "BO3Z.h"
 #include <psapi.h>
+#include <tlhelp32.h>
 
 // The watchdog: if the game stops drawing frames (a hang - after a load, at the main menu), it writes where the main
 // thread is stuck to the log (module + offset per frame of its stack), so a hang can be traced to the mod behind it.
@@ -87,6 +88,58 @@ namespace bo3z::Watchdog
 			}
 		}
 
+		// (Noah: the game froze loading back after a death - the main thread waiting on something) every other thread too:
+		// where each one is and the code on its stack, to see which one the main thread waits for. Each is copied while
+		// it is stopped, and written out only after it runs again (writing needs the heap a stopped thread may hold).
+		void DumpAll()
+		{
+			struct One { DWORD id; DWORD64 rip; std::vector<DWORD64> st; };
+			std::vector<DWORD> ids;
+			ids.reserve(256);
+			HANDLE snap = ::CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+			if (snap == INVALID_HANDLE_VALUE) return;
+			THREADENTRY32 te{ sizeof(te) };
+			const DWORD pid = ::GetCurrentProcessId(), self = ::GetCurrentThreadId();
+			for (BOOL ok = ::Thread32First(snap, &te); ok; ok = ::Thread32Next(snap, &te)) {
+				if (te.th32OwnerProcessID == pid && te.th32ThreadID != self && te.th32ThreadID != g_main.load()) ids.push_back(te.th32ThreadID);
+			}
+			::CloseHandle(snap);
+			std::vector<One> all;
+			all.reserve(ids.size());
+			static std::array<DWORD64, 1024> buf{};  // 8 KB of each
+			for (DWORD id : ids) {
+				HANDLE th = ::OpenThread(THREAD_SUSPEND_RESUME | THREAD_GET_CONTEXT | THREAD_QUERY_INFORMATION, FALSE, id);
+				if (!th) continue;
+				DWORD64 rip = 0;
+				SIZE_T  got = 0;
+				if (::SuspendThread(th) != static_cast<DWORD>(-1)) {
+					CONTEXT ctx{};
+					ctx.ContextFlags = CONTEXT_CONTROL;
+					if (::GetThreadContext(th, &ctx)) {
+						rip = ctx.Rip;
+						::ReadProcessMemory(::GetCurrentProcess(), reinterpret_cast<LPCVOID>(ctx.Rsp), buf.data(), sizeof(buf), &got);
+					}
+					::ResumeThread(th);
+				}
+				::CloseHandle(th);
+				One o{ id, rip, {} };
+				for (std::size_t i = 0; i < got / 8 && o.st.size() < 14; ++i) {
+					if (const Mod* m = ModOf(buf[i]); m && buf[i] - m->base > 0x1000) o.st.push_back(buf[i]);
+				}
+				all.push_back(std::move(o));
+			}
+			auto where = [](DWORD64 a) {
+				const Mod* m = ModOf(a);
+				return m ? fmt::format("{}+{:X}", m->name, a - m->base) : fmt::format("{:X}", a);
+			};
+			logger::warn("watchdog: the other {} threads:", all.size());
+			for (const auto& o : all) {
+				std::string line;
+				for (auto a : o.st) line += " < " + where(a);
+				logger::warn("watchdog:   thread {} at {}{}", o.id, where(o.rip), line);
+			}
+		}
+
 		DWORD WINAPI Watch(LPVOID)
 		{
 			long long snapAt = 0;
@@ -110,6 +163,10 @@ namespace bo3z::Watchdog
 				// once at 12 s without a frame, again every 30 s while it stays stuck (to see whether it moves)
 				if (stuck > 12000) {
 					Dump(static_cast<int>(stuck / 1000));
+					if (stuck > 40000) {
+						static long long toldBeat = 0;
+						if (toldBeat != beat) toldBeat = beat, DumpAll();
+					}
 					for (int i = 0; i < 30 && g_beat.load() == beat; ++i) {
 						::Sleep(1000);
 					}

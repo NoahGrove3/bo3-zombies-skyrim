@@ -86,6 +86,7 @@ PAGES = [
         stepper('iFovFirstStep:General', 'First-person field of view', 'How wide you see in first person (degrees). Left / right to step it.', [str(60 + 5 * i) for i in range(15)]),
         stepper('iFovThirdStep:General', 'Third-person field of view', 'How wide you see in third person (degrees). Left / right to step it.', [str(60 + 5 * i) for i in range(15)]),
         slider('fBrightness:General', 'Brightness', 'How bright the world is (1.00 = as Skyrim made it).', 0.5, 2.0, 0.05, '{2}'),
+        slider('fAdsSensitivity:General', 'ADS sensitivity', 'How fast you look around while aiming down sights, against Skyrim\'s own look sensitivity (1.00 = the same).', 0.1, 2.0, 0.05, '{2}'),
         header('Effects'),
         toggle('bBlood:Effects', 'Blood', 'Headshot kills burst the head in blood, and bodies bleed. Off: kills stay clean.'),
         slider('fFogStrength:Effects', 'Night fog', 'How thick the night\'s fog grows toward the last wave (and on a Blood Fog night). 0 = none.', 0.0, 1.5, 0.05, '{2}x'),
@@ -122,7 +123,7 @@ PAGES = [
     ]},
 ]
 DEFAULTS = {
-    'General': {'fFovFirst': 130.0, 'fFovThird': 120.0, 'iFovFirstStep': 14, 'iFovThirdStep': 12, 'fBrightness': 1.5, 'bShelter': 1, 'fCorpseSeconds': 10.0, 'iMeleeSpeedStep': 3, 'iDrawSpeedStep': 0},
+    'General': {'fFovFirst': 130.0, 'fFovThird': 120.0, 'iFovFirstStep': 14, 'iFovThirdStep': 12, 'fBrightness': 1.5, 'fAdsSensitivity': 1.0, 'bShelter': 1, 'fCorpseSeconds': 10.0, 'iMeleeSpeedStep': 3, 'iDrawSpeedStep': 0},
     'Controls': {'bPlayStationIcons': 0},
     'Dragon': {'bBankReverse': 0, 'bInvertDive': 0},
     'Effects': {'bBlood': 1, 'fFogStrength': 1.0, 'bScreenShake': 1, 'bReduceFlashes': 0},

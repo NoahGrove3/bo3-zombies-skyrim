@@ -226,6 +226,9 @@ namespace bo3z
 			}
 			if (root != r.root) {  // new 3D: find the bones again
 				r.root = root;
+				// (Noah: "some of them are floating along the floor ... move like Draugr") the clips' bones too: a body set
+				// down somewhere else (or loaded again) has new bones - the old ones were posed in its place, not these
+				r.clipNodes.clear(), r.comNode = nullptr;
 				for (int i = 0; i < kBones; ++i) {
 					r.bones[i] = {};
 					r.bones[i].node = root->GetObjectByName(kBoneNames[i]);
@@ -604,10 +607,12 @@ namespace bo3z
 				LoadClips();
 				const int k = SkeletonOf(a_actor);
 				r.clipSet = g_clipSets[k].ok ? k : -2;
+				if (r.clipSet == -2) logger::warn("undead: {} {:08X} has no clips for its skeleton ({}) - Skyrim's own animations", a_actor->GetName(), a_actor->GetFormID(), kSetName[k]);
 			}
 			// its row's own clips once known (SetEyes): the same bones, so only the player starts over
 			if (const int w = r.wantSet.load(); w >= 0 && w != r.clipSet && r.clipSet != -2 && g_clipSets[w].ok) {
 				r.clipSet = w, r.player = Player{};
+				r.clipNodes.clear(), r.comNode = nullptr;  // (its own set's bones, by its own names)
 			}
 			if (r.clipSet < 0 || !r.root) return false;
 			const ClipSet& S = g_clipSets[r.clipSet];
@@ -616,6 +621,11 @@ namespace bo3z
 				r.clipNodes.resize(names.size(), nullptr);
 				for (std::size_t i = 0; i < names.size(); ++i) r.clipNodes[i] = r.root->GetObjectByName(names[i]);
 				r.comNode = r.root->GetObjectByName("NPC COM [COM ]");
+				static std::atomic_int told{ 0 };
+				if (told.fetch_add(1) < 24) {
+					const auto found = std::count_if(r.clipNodes.begin(), r.clipNodes.end(), [](RE::NiAVObject* n) { return n != nullptr; });
+					logger::info("undead: {} {:08X} posed by the {} clips ({} of {} bones found, com {})", a_actor->GetName(), a_actor->GetFormID(), kSetName[r.clipSet], found, names.size(), r.comNode != nullptr);
+				}
 			}
 			auto& P = r.player;
 			// its feet: pace, and how much of it is sideways (for a sidestep)

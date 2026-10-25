@@ -2618,10 +2618,7 @@ namespace bo3z
 			for (const char* bar : { "_root.HUDMovieBaseInstance.Health._alpha", "_root.HUDMovieBaseInstance.Magica._alpha", "_root.HUDMovieBaseInstance.Stamina._alpha" }) {
 				hud->uiMovie->SetVariable(bar, RE::GFxValue(0.0));
 			}
-			// the shout meter rides inside the compass's holder (the compass itself stays)
-			for (const char* sm : { "_root.HUDMovieBaseInstance.CompassShoutMeterHolder.ShoutMeter_mc._visible", "_root.HUDMovieBaseInstance.ShoutMeter_mc._visible" }) {
-				hud->uiMovie->SetVariable(sm, RE::GFxValue(false));
-			}
+			// (Noah: "just keep the Edge's shout meter") the shout meter is left alone - Skyrim's and Edge UI's
 			// (Noah: "bring back the health, stamina and mana bars we made instead of Edge's") Edge UI's own bars may be
 			// clips of other names: any of the HUD's clips named for health, magicka or stamina (not an enemy's) is hidden
 			static std::set<std::string> told;
@@ -2643,20 +2640,10 @@ namespace bo3z
 					if (!a_name || !a_v.IsDisplayObject()) return;
 					std::string low(a_name);
 					std::transform(low.begin(), low.end(), low.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-					// (Noah: "remove the Edge's UI shout meter on the bottom left") its shout meter too: our bars' blue rim
-					// shows the shout's cooldown
-					const bool vital = low.find("health") != std::string::npos || low.find("magica") != std::string::npos || low.find("stamina") != std::string::npos ||
-					                   (low.find("shout") != std::string::npos && low.find("compass") == std::string::npos);
+					const bool vital = low.find("health") != std::string::npos || low.find("magica") != std::string::npos || low.find("stamina") != std::string::npos;
 					if (!vital || low.find("enemy") != std::string::npos || low.find("boss") != std::string::npos) return;
 					RE::GFxValue::DisplayInfo off;
 					off.SetVisible(false);
-					// (Noah: "I can still see Edge's UI's shout meter") Edge UI turns its shout meter back on every frame it
-					// updates it: shrunk to nothing and moved far off the screen as well, it stays gone whatever it does
-					if (low.find("shout") != std::string::npos) {
-						off.SetAlpha(0.0);
-						off.SetScale(0.0, 0.0);
-						off.SetPosition(-20000.0, -20000.0);
-					}
 					const_cast<RE::GFxValue&>(a_v).SetDisplayInfo(off);
 					if (told.insert(std::string(root) + "." + a_name).second) logger::info("hud: Skyrim's / Edge UI's {}.{} hidden (our own bars instead)", root, a_name);
 				});
@@ -3278,6 +3265,30 @@ namespace bo3z
 				// the hands follow the same slider: a wider view draws them smaller and further off, a narrower one closer
 				const float vm = std::clamp(gen::kViewmodelFov + (Settings::FovFirst() - 100.0f) * 0.6f, 55.0f, 110.0f);
 				rd.firstPersonFOV = vm + (gen::kAdsViewmodelFov - vm) * g_ads;
+			}
+			// (Noah: "an ADS sensitivity slider") while you aim - down a staff's sights, or a drawn bow - the look turns at
+			// Skyrim's own sensitivity times ours; let go (or open a menu) and Skyrim's own comes back exactly as it was
+			{
+				static float skyrimSens = -1.0f;  // Skyrim's own while ours is applied (-1: not applied)
+				auto*       pl = RE::PlayerCharacter::GetSingleton();
+				float       aim = g_ads;
+				if (pl) {
+					const auto as = pl->AsActorState()->GetAttackState();
+					if (as == RE::ATTACK_STATE_ENUM::kBowDraw || as == RE::ATTACK_STATE_ENUM::kBowAttached || as == RE::ATTACK_STATE_ENUM::kBowDrawn) aim = 1.0f;
+				}
+				auto* ui = RE::UI::GetSingleton();
+				const bool menus = ui && (ui->GameIsPaused() || ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) || ui->IsMenuOpen(RE::MainMenu::MENU_NAME));
+				auto* prefs = RE::INIPrefSettingCollection::GetSingleton();
+				auto* set = prefs ? prefs->GetSetting("fMouseHeadingSensitivity:Controls") : nullptr;
+				if (set) {
+					const float mult = Settings::AdsSensitivity();
+					if (aim > 0.01f && !menus && std::abs(mult - 1.0f) > 0.001f) {
+						if (skyrimSens < 0) skyrimSens = set->data.f;
+						set->data.f = skyrimSens * (1.0f + (mult - 1.0f) * aim);
+					} else if (skyrimSens >= 0) {
+						set->data.f = skyrimSens, skyrimSens = -1.0f;
+					}
+				}
 			}
 			AimViewmodel(RE::PlayerCharacter::GetSingleton(), 0.0f);  // staffs and bows stay in Skyrim's own pose; aiming is the zoom
 			// (staffs never spin: the twirl was a wand thing)

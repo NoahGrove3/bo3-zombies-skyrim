@@ -24,7 +24,7 @@ namespace bo3z::gen
 	inline constexpr FormRef kIntroQuest{ "Skyrim.esm", 0x03372B, "MQ101" };
 	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; bool rig; };
 	inline constexpr std::array<Enemy, 49> kEnemies{ {
-		Enemy{ "zombie", "Risen Dead", { "CurseOfAlduin.esp", 0x0008C3, "UN_zombie" }, false, 1, 8, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.2f, true },
+		Enemy{ "zombie", "Risen Dead", { "CurseOfAlduin.esp", 0x0008C3, "UN_zombie" }, false, 1, 8, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 0.95f, true },
 		Enemy{ "hollow2", "Haugbui", { "The Restless Dead.esp", 0x1F5212, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee2H" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "hollow3", "Haugbui", { "The Restless Dead.esp", 0x1EAFCC, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee1H" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "ash1", "Pyre-Thrall", { "The Restless Dead.esp", 0x5793C4, "zzEnc_DC_Skeleton01Warrior1H" }, false, 2, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },

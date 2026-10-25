@@ -16,6 +16,7 @@ namespace bo3z::Settings
 		bool  g_shelter = true, g_follow = true, g_padPS = false, g_bankRev = false, g_diveInv = false;
 		bool  g_blood = true, g_shake = true, g_softFlash = false;
 		float g_fog = 1.0f;
+		float g_adsSens = 1.0f;  // (Noah) the look's speed while aiming down sights, against Skyrim's own sensitivity
 		int   g_keys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30 };
 		constexpr const wchar_t* kKeyIds[kKeys] = { L"iShrineRoll", L"iShrineReforge", L"iShrineBless", L"iShrineShout", L"iShrineLeave", L"iShrineBond", L"iShrineBow" };
 		bool  g_loaded = false;
@@ -195,6 +196,7 @@ namespace bo3z::Settings
 			if (const float st = Read(L"General", L"iFovFirstStep", -1.0f); st >= 0) g_fovFirst = std::clamp(60.0f + 5.0f * std::round(st), kFovMin, kFovMax);
 			if (const float st = Read(L"General", L"iFovThirdStep", -1.0f); st >= 0) g_fovThird = std::clamp(60.0f + 5.0f * std::round(st), kFovMin, kFovMax);
 			g_bright = std::clamp(Read(L"General", L"fBrightness", 1.5f), kBrightMin, kBrightMax);
+			g_adsSens = std::clamp(Read(L"General", L"fAdsSensitivity", 1.0f), kAdsSensMin, kAdsSensMax);
 			g_shelter = Read(L"General", L"bShelter", 1.0f) != 0.0f;
 			g_blood = Read(L"Effects", L"bBlood", 1.0f) != 0.0f;
 			g_fog = std::clamp(Read(L"Effects", L"fFogStrength", 1.0f), 0.0f, 1.5f);
@@ -248,6 +250,13 @@ namespace bo3z::Settings
 		Ensure();
 		g_bright = std::clamp(std::round(a_v * 20.0f) / 20.0f, kBrightMin, kBrightMax);
 		Write(L"General", L"fBrightness", g_bright, false);
+	}
+	float AdsSensitivity() { Ensure(); return g_adsSens; }
+	void  SetAdsSensitivity(float a_v)
+	{
+		Ensure();
+		g_adsSens = std::clamp(std::round(a_v * 20.0f) / 20.0f, kAdsSensMin, kAdsSensMax);
+		Write(L"General", L"fAdsSensitivity", g_adsSens, false);
 	}
 	float FovFirst() { Ensure(); return g_fovFirst; }
 	float FovThird() { Ensure(); return g_fovThird; }

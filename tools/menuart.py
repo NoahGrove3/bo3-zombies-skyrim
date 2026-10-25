@@ -283,7 +283,8 @@ for sgn in (-1, 1):
 dla = np.asarray(dl, np.float32) / 255
 rgb = rgb * (1 - dla[..., None]) + C('#7a8c9c') * dla[..., None]
 alpha = np.clip(alpha + dla, 0, 1)
-Image.fromarray(np.dstack([np.clip(rgb, 0, 255), alpha * 255]).astype(np.uint8), 'RGBA').save(OUT / 'menu_title.png', optimize=True)
+# (Noah: the tagline taken off, the title sharper and with a sweeping shine) the title is tools/menutitle.py's now
+import subprocess; subprocess.run([sys.executable, str(pathlib.Path(__file__).parent / 'menutitle.py'), str(OUT)], check=True)
 print('wrote menu_title.png', (TW, TH))
 
 # a flat preview of the whole menu (for review)

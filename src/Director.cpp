@@ -442,7 +442,9 @@ namespace bo3z
 				return;  // (a flood of them: the rest simply stand there)
 			}
 			auto at = a_actor->GetPosition();
-			g_risers.push_back({ a_actor->GetHandle(), at.z });
+			float floor = at.z;  // (Noah: "some of them get stuck in the ground when spawning") the walkable top under it, if higher
+			if (const auto top = WalkTop(a_actor->GetParentCell(), at, 120.0f); top && *top > floor && *top < floor + 120.0f) floor = *top;
+			g_risers.push_back({ a_actor->GetHandle(), floor });
 			a_actor->SetCollision(false);
 			a_actor->EnableAI(false);
 			at.z -= kRiseDepth;
@@ -554,18 +556,32 @@ namespace bo3z
 						continue;
 					}
 				}
+				if (r.anim == 9) {  // risen: for two seconds more, anyone found sunk under the floor is set back on it
+					if (r.t >= 2.0f || a->IsDead()) {
+						r.t = 99;
+						continue;
+					}
+					if (auto at = a->GetPosition(); at.z < r.floorZ - 35.0f) {
+						at.z = r.floorZ + 4.0f;
+						a->SetPosition(at, true);
+						a->SetCollision(true);
+						static int told = 0;
+						if (told++ < 10) logger::info("night: {:08X} sank into the ground after rising - set back on the floor", a->GetFormID());
+					}
+					continue;
+				}
 				if (r.anim == 3) {  // getting up off the ground (its first moment hidden: the clip starts lying down)
 					if (r.hidden && (r.t >= 0.08f || a->IsDead())) ShowRiser(a.get(), true), r.hidden = false;
 					if (r.t >= r.standFor || a->IsDead()) {
 						a->EnableAI(true);
-						r.t = 99;
+						r.anim = 9, r.t = 0;  // (then watched a moment: it must stay on the floor)
 					}
 					continue;
 				}
 				if (r.anim == 2) {  // through the portal: a moment to step out, then it hunts
 					if (r.t >= 1.1f || a->IsDead()) {
 						a->EnableAI(true);
-						r.t = 99;
+						r.anim = 9, r.t = 0;  // (then watched a moment: it must stay on the floor)
 					}
 					continue;
 				}
@@ -579,7 +595,7 @@ namespace bo3z
 						}
 						a->SetCollision(true);
 						a->EnableAI(true);
-						r.t = 99;
+						r.anim = 9, r.t = 0;  // (then watched a moment: it must stay on the floor)
 					}
 					continue;
 				}
@@ -590,7 +606,7 @@ namespace bo3z
 					a->SetPosition(at, true);
 					a->SetCollision(true);
 					a->EnableAI(true);
-					r.t = 99;
+					r.anim = 9, r.t = 0;  // (then watched a moment: it must stay on the floor)
 					continue;
 				}
 				at.z = r.floorZ - kRiseDepth * (1.0f - e);
@@ -3320,6 +3336,18 @@ namespace bo3z
 
 		void Tick(float a_delta)
 		{
+			// (Noah: "my game crashed after I died" - it froze loading back) dead for good, the game is about to load the
+			// last save: nothing more is spawned, moved or posed meanwhile (the load waits on the world's work to finish)
+			static bool quiet = false;
+			if (auto* pl = RE::PlayerCharacter::GetSingleton(); pl && pl->IsDead()) {
+				if (!quiet) {
+					quiet = true;
+					Undead::Reset();
+					logger::info("death: the night held still until the save loads");
+				}
+				return;
+			}
+			quiet = false;
 			// a rest that runs into dusk ends there (the countdown has begun)
 			if (auto* ui = RE::UI::GetSingleton(); ui && g_phase != Phase::Day && ui->IsMenuOpen(RE::SleepWaitMenu::MENU_NAME)) {
 				if (auto* q = RE::UIMessageQueue::GetSingleton()) {

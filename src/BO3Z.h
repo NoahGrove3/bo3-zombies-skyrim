@@ -397,6 +397,9 @@ namespace bo3z
 		inline constexpr float kBrightMin = 0.5f, kBrightMax = 2.0f;
 		float       Brightness();                 // the scene's brightness (1 = as Skyrim made it)
 		void        SetBrightness(float a_v);
+		inline constexpr float kAdsSensMin = 0.1f, kAdsSensMax = 2.0f;
+		float       AdsSensitivity();             // (Noah) the look's speed aiming down sights, times Skyrim's own (1 = the same)
+		void        SetAdsSensitivity(float a_v);
 		bool        Shelter();                    // townsfolk go indoors at night
 		bool        Blood();                      // headshot blood bursts (MCM: Effects)
 		float       FogStrength();                // the night's fog, 0 .. 1.5

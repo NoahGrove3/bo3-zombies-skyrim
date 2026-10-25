@@ -39,7 +39,7 @@
    "verify": [],
    "kind": "zombie",
    "healthMult": 1.0,
-   "speedMult": 1.2,
+   "speedMult": 0.95,
    "rig": true
   },
   {

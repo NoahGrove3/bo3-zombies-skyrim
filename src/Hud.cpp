@@ -1408,68 +1408,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->AddCircleFilled(p, r, IM_COL32(205, 175, 255, 235), 16);
 					dl->AddCircleFilled(p, r * 0.45f, IM_COL32(245, 250, 255, 255), 10);
 				}
-				if (Hud::kEdgeHud) {
-					// (Noah: the perks beside the essence, above Edge UI's bars) the same sockets, smaller, in a row to its right
-					static std::array<int, 32>   lastStacks{};
-					static std::array<float, 32> burst{};
-					static bool                  seeded = false;
-					for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 32; ++i) {
-						if (seeded && s.perkStacks[i] > lastStacks[i]) {
-							burst[i] = 1.4f;
-						}
-						lastStacks[i] = s.perkStacks[i];
-						burst[i] = std::max(0.0f, burst[i] - dt);
-					}
-					seeded = true;
-					int n = 0;
-					for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
-						n += (s.perks >> i) & 1;
-					}
-					const float r = 15 * k, pg = 38 * k;
-					float       x = coin.x + cr + 22 * k + std::max(numW, Measure(g_body, 11 * k, "CURSED ESSENCE").x) + 26 * k + r;
-					for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
-						if (!((s.perks >> i) & 1)) {
-							continue;
-						}
-						const float py = coin.y - 4 * k;
-						const auto  c = gen::kPerkColor[i];
-						const int   cr = (c >> 24) & 0xFF, cg = (c >> 16) & 0xFF, cb = (c >> 8) & 0xFF;
-						const float bt = i < 32 ? burst[i] / 1.4f : 0.0f;                // 1 at the moment it's bought, down to 0
-						const float pop = 1.0f + 0.9f * bt * bt;
-						dl->AddCircleFilled({ x, py }, r + 5 * k, IM_COL32(8, 7, 9, 210), 40);       // the socket
-						dl->AddCircle({ x, py }, r + 5 * k, Fade(kGoldDim, 0.9f), 40, 1.2f * k);
-						if (bt > 0) {  // the burst: a ring flung outward, rays turning, a flash
-							const float e = 1.0f - bt;
-							dl->AddCircle({ x, py }, r * (1.2f + 3.2f * e), IM_COL32(cr, cg, cb, static_cast<int>(230 * bt)), 48, 3.0f * k * bt + 1.0f);
-							dl->AddCircleFilled({ x, py }, r * 1.6f * pop, IM_COL32(std::min(255, cr + 80), std::min(255, cg + 80), std::min(255, cb + 80), static_cast<int>(90 * bt)), 40);
-							for (int ray = 0; ray < 10; ++ray) {
-								const float a = ray * 0.6283f + now * 1.5f, r0 = r * (1.3f + 1.4f * e), r1 = r0 + r * 0.9f * bt;
-								dl->AddLine({ x + std::cos(a) * r0, py + std::sin(a) * r0 }, { x + std::cos(a) * r1, py + std::sin(a) * r1 }, IM_COL32(255, 236, 190, static_cast<int>(220 * bt)), 2.0f * k);
-							}
-							const std::string nm = Upper(std::string(gen::kPerks[i].label));
-							TxtC(dl, g_title, 22 * k, x, py - r * 2.6f - 26 * k * e, IM_COL32(255, 230, 190, static_cast<int>(255 * std::min(1.0f, bt * 2.0f))), nm, 2 * k, IM_COL32(cr / 2, cg / 2, cb / 2, static_cast<int>(200 * bt)));
-						}
-						const float rr = r * pop;
-						if (auto* icon = g_perkIcons[i]) {
-							dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(icon)), { x - rr, py - rr }, { x + rr, py + rr });
-						} else {
-							dl->AddCircleFilled({ x, py }, rr, Col(c));
-						}
-						{  // the trim: breathing softly in the brew's colour
-							const float br = 0.6f + 0.4f * std::sin(now * 2.2f + i);
-							dl->AddCircle({ x, py }, rr + 2.6f * k, IM_COL32(cr, cg, cb, static_cast<int>(60 * br)), 48, 5.0f * k);
-							dl->AddCircle({ x, py }, rr + 1.2f * k, IM_COL32(std::min(255, cr + 60), std::min(255, cg + 60), std::min(255, cb + 60), static_cast<int>(200 * br)), 48, 1.6f * k);
-						}
-						if (s.perkStacks[i] > 1) {  // taken more than once: how many
-							const std::string cnt = "x" + std::to_string(s.perkStacks[i]);
-							const ImVec2 bc{ x + r * 0.82f, py + r * 0.66f };
-							dl->AddCircleFilled(bc, 9 * k, IM_COL32(20, 14, 10, 235), 20);
-							dl->AddCircle(bc, 9 * k, kGold, 20, 1.2f * k);
-							TxtC(dl, g_num, 12 * k, bc.x, bc.y - 7 * k, kParch, cnt);
-						}
-						x += pg;
-					}
-				}
 				if (s.crew >= 0 && s.crew < static_cast<int>(gen::kCrew.size())) {
 					const std::string c(gen::kCrew[s.crew].label);
 					Txt(dl, g_body, 13 * k, { coin.x + cr + 22 * k + numW, coin.y - 8 * k }, IM_COL32(190, 190, 190, 200), c);
@@ -1575,48 +1513,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 					}
 				}
-				// (Noah: "a shout cooldown on our stat bars - a blue outline, then it slowly fades from center to the outside")
-				// the shout spoken: the plate's rim burns blue all round, and as the shout comes back the glow drains away
-				// from the middle out to the two points; when it is ready the whole rim flashes once
-				{
-					const float t = y - 13 * k, b = y + h + 13 * k, m = (t + b) * 0.5f;
-					const float half = (R - L) * 0.5f + 18 * k;
-					const float gone = s.shoutCd > 0.001f ? 1.0f - s.shoutCd : 1.0f;  // how far out from the middle the glow has drained (0..1)
-					auto glowLine = [&](ImVec2 p0, ImVec2 p1, float al) {
-						for (int g = 3; g >= 1; --g) {
-							dl->AddLine(p0, p1, IM_COL32(70, 150, 255, static_cast<int>(al * 40.0f / g)), (2.0f + 3.2f * g) * k);
-						}
-						dl->AddLine(p0, p1, IM_COL32(150, 205, 255, static_cast<int>(al * 230.0f)), 1.6f * k);
-					};
-					if (s.shoutCd > 0.001f) {
-						const float d = gone * half;  // the drained span either side of the middle
-						for (int side = -1; side <= 1; side += 2) {
-							const float xin = cx + side * d;                                  // where the glow still starts
-							const float xEnd = side < 0 ? L : R;                              // the straight edges end here, then the point
-							const float tipX = side < 0 ? L - 18 * k : R + 18 * k;
-							const float pulse = 0.75f + 0.25f * std::sin(now * 3.0f);
-							if ((side < 0 && xin > xEnd) || (side > 0 && xin < xEnd)) {      // the long top and bottom edges
-								glowLine({ xin, t }, { xEnd, t }, pulse);
-								glowLine({ xin, b }, { xEnd, b }, pulse);
-								glowLine({ xEnd, t }, { tipX, m }, pulse);
-								glowLine({ xEnd, b }, { tipX, m }, pulse);
-							} else {                                                          // only the pointed ends are left
-								const float f = std::clamp((tipX - xin) / (tipX - xEnd), 0.0f, 1.0f);  // what is left of the point's two edges
-								const ImVec2 tp{ tipX + (xEnd - tipX) * f, m + (t - m) * f }, bp{ tipX + (xEnd - tipX) * f, m + (b - m) * f };
-								glowLine(tp, { tipX, m }, pulse);
-								glowLine(bp, { tipX, m }, pulse);
-							}
-						}
-					}
-					if (s.shoutReady > 0.01f) {  // ready again: the whole rim flashes once and fades
-						const ImVec2 plate[6] = { { L - 18 * k, m }, { L, t }, { R, t }, { R + 18 * k, m }, { R, b }, { L, b } };
-						for (int g = 3; g >= 1; --g) {
-							dl->AddPolyline(plate, 6, IM_COL32(110, 180, 255, static_cast<int>(s.shoutReady * 70.0f / g)), ImDrawFlags_Closed, (2.0f + 4.0f * g) * k);
-						}
-						dl->AddPolyline(plate, 6, IM_COL32(200, 230, 255, static_cast<int>(s.shoutReady * 255.0f)), ImDrawFlags_Closed, 1.8f * k);
-					}
-				}
-				if (!Hud::kEdgeHud) {  // (with Edge UI the perks sit beside the essence, bottom left)
+				// (Noah: "just keep Edge's shout meter") no shout glow on the plate's rim any more
+				{  // (Noah: "move the perk icons to above my health bar, centered")
 				// perk row: sockets, the draughts in them; a new draught bursts in
 				static std::array<int, 32>   lastStacks{};
 				static std::array<float, 32> burst{};
@@ -1639,7 +1537,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (!((s.perks >> i) & 1)) {
 						continue;
 					}
-					const float py = y - 40 * k;
+					const float py = y - 46 * k;
 					const auto  c = gen::kPerkColor[i];
 					const int   cr = (c >> 24) & 0xFF, cg = (c >> 16) & 0xFF, cb = (c >> 8) & 0xFF;
 					const float bt = i < 32 ? burst[i] / 1.4f : 0.0f;                // 1 at the moment it's bought, down to 0
@@ -3394,7 +3292,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		void SettingsPanel(ImDrawList* dl, ImVec2 size, float k, bool click)
 		{
 			const ImVec2 cur = Cursor(size);
-			const float  w = 560 * k, h = 232 * k;  // narrow enough to stay left of Skyrim's level bar
+			const float  w = 560 * k, h = 318 * k;  // narrow enough to stay left of Skyrim's level bar
 			const ImVec2 a{ 48 * k, size.y - 14 * k - h }, b{ a.x + w, a.y + h };
 			Panel(dl, a, b, k, 0.95f);
 			Txt(dl, g_title, 21 * k, { a.x + 18 * k, a.y + 12 * k }, kGold, "THE CURSE OF ALDUIN - VIEW", 2 * k, IM_COL32(255, 160, 60, 255));
@@ -3446,6 +3344,30 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				if (click && cur.x >= bx0 - 6 * k && cur.x <= bx1 + 6 * k && std::abs(cur.y - by) < 14 * k) {
 					Settings::SetBrightness(Settings::kBrightMin + (Settings::kBrightMax - Settings::kBrightMin) * std::clamp((cur.x - bx0) / (bx1 - bx0), 0.0f, 1.0f));
+				}
+			}
+			{  // (Noah: "an ADS sensitivity slider") under the brightness: the look's speed while aiming, against Skyrim's own
+				const float x0 = a.x + 18 * k, x1 = b.x - 18 * k, y = a.y + 226 * k;
+				const float v = Settings::AdsSensitivity();
+				char lab[48];
+				std::snprintf(lab, sizeof(lab), "ADS sensitivity   %.2fx", v);
+				Txt(dl, g_body, 16 * k, { x0, y }, IM_COL32(220, 210, 190, 240), lab);
+				const float  bx0 = x0 + 32 * k, bx1 = x1 - 32 * k, by = y + 46 * k;
+				const ImVec2 m0{ x0, by - 12 * k }, m1{ x0 + 22 * k, by + 12 * k }, p0{ x1 - 22 * k, by - 12 * k }, p1{ x1, by + 12 * k };
+				dl->AddRectFilled({ bx0, by - 4 * k }, { bx1, by + 4 * k }, IM_COL32(30, 26, 22, 230), 4 * k);
+				const float t = (v - Settings::kAdsSensMin) / (Settings::kAdsSensMax - Settings::kAdsSensMin);
+				dl->AddRectFilled({ bx0, by - 4 * k }, { bx0 + (bx1 - bx0) * t, by + 4 * k }, kGold, 4 * k);
+				dl->AddCircleFilled({ bx0 + (bx1 - bx0) * t, by }, 9 * k, IM_COL32(250, 236, 200, 255));
+				for (auto [q0, q1, sign] : { std::tuple{ m0, m1, -1.0f }, std::tuple{ p0, p1, 1.0f } }) {
+					const bool hov = cur.x >= q0.x && cur.x <= q1.x && cur.y >= q0.y && cur.y <= q1.y;
+					dl->AddRect(q0, q1, hov ? kGold : kGoldDim, 3 * k, 0, 1.5f * k);
+					TxtC(dl, g_title, 18 * k, (q0.x + q1.x) / 2, q0.y + 1 * k, kParch, sign < 0 ? "-" : "+");
+					if (hov && click) {
+						Settings::SetAdsSensitivity(v + sign * 0.05f);
+					}
+				}
+				if (click && cur.x >= bx0 - 6 * k && cur.x <= bx1 + 6 * k && std::abs(cur.y - by) < 14 * k) {
+					Settings::SetAdsSensitivity(Settings::kAdsSensMin + (Settings::kAdsSensMax - Settings::kAdsSensMin) * std::clamp((cur.x - bx0) / (bx1 - bx0), 0.0f, 1.0f));
 				}
 			}
 		}
@@ -3599,6 +3521,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		constexpr float kMenuRune[2] = { 1812.0f, 992.0f };  // the middle of the rune-stone's face in the painting
 		constexpr float kMenuArch[2] = { 1176.0f, 455.0f };  // the barrow door
 		ID3D11ShaderResourceView* g_mTitle = nullptr;
+		ID3D11ShaderResourceView* g_mTitleShine = nullptr;  // the title's lit faces, swept across it (tools/menutitle.py)
 
 		float g_pressT = -10, g_pressY = 0;  // the main menu entry last pressed (its flare)
 		// Skyrim's question box on the main menu (Start a new game?): where it sits on screen, from its own bounds
@@ -4342,11 +4265,29 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			fg->AddRectFilledMultiColor({ size.x * 0.62f, 0 }, size, IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 90), IM_COL32(0, 0, 0, 90), IM_COL32(0, 0, 0, 0));  // the menu side
 			// the title, settling in
 			if (g_mTitle) {
-				const float tw = size.x * 0.62f, th = tw * 396.0f / 2479.0f;
-				const float ty = size.y * 0.06f + (1.0f - EaseOut(std::clamp(openT / 1.6f, 0.0f, 1.0f))) * 14 * k;
+				// (Noah: "remove the text under the curse of Alduin ... higher quality and slightly animated") the title alone,
+				// drawn sharp (tools/menutitle.py); it breathes a little, and now and then a cold shine sweeps across it
+				const float tw = size.x * 0.60f, th = tw * 430.0f / 3200.0f;
+				const float in = std::clamp(openT / 1.6f, 0.0f, 1.0f);
+				const float ty = size.y * 0.075f + (1.0f - EaseOut(in)) * 14 * k + std::sin(now * 0.55f) * 3.0f * k;
 				const ImVec2 a{ (size.x - tw) / 2 - lean.x * 6 * k, ty };
-				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_mTitle)), a, { a.x + tw, a.y + th }, { 0, 0 }, { 1, 1 }, IM_COL32(255, 255, 255, static_cast<int>(255 * std::clamp(openT / 1.6f, 0.0f, 1.0f))));
+				const float breath = 0.94f + 0.06f * std::sin(now * 1.3f);
+				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_mTitle)), a, { a.x + tw, a.y + th }, { 0, 0 }, { 1, 1 }, IM_COL32(static_cast<int>(255 * breath), static_cast<int>(255 * breath), 255, static_cast<int>(255 * in)));
+				if (g_mTitleShine && in >= 1.0f) {
+					const float cyc = std::fmod(now, 7.0f), sweep = cyc / 1.8f;  // across in 1.8 s, once every 7
+					if (sweep <= 1.0f) {
+						const float c = -0.15f + 1.3f * sweep;
+						constexpr int kSlices = 64;
+						for (int i = 0; i < kSlices; ++i) {
+							const float u0 = static_cast<float>(i) / kSlices, u1 = static_cast<float>(i + 1) / kSlices, um = (u0 + u1) * 0.5f;
+							const float d = (um - c) / 0.07f, al = std::exp(-d * d) * 0.75f;
+							if (al < 0.01f) continue;
+							fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_mTitleShine)), { a.x + tw * u0, a.y }, { a.x + tw * u1, a.y + th }, { u0, 0 }, { u1, 1 }, IM_COL32(220, 235, 255, static_cast<int>(255 * al)));
+						}
+					}
+				}
 			}
+
 			// a question (Start a new game?): the scene dims and one dark field sits exactly under Skyrim's own box, so its
 			// words and frame read as one panel
 			if (!kEdgeMenu) {
@@ -4405,6 +4346,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						char b[48];
 						std::snprintf(b, sizeof(b), "Brightness   <  %.2f  >", Settings::Brightness());
 						rows.push_back({ b, false, false, 8, 2, 0 });
+						std::snprintf(b, sizeof(b), "ADS sensitivity   <  %.2fx  >", Settings::AdsSensitivity());
+						rows.push_back({ b, false, false, 8, 3, 0 });
 					}
 					rows.push_back({ "Back", false, false, 6, 0, 0 });
 				} else if (!partyMode) {
@@ -4558,6 +4501,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (sides != 0 && rows[padFocus].kind == 8) {
 						if (rows[padFocus].arg == 2) {
 							Settings::SetBrightness(Settings::Brightness() + 0.05f * sides);
+						} else if (rows[padFocus].arg == 3) {
+							Settings::SetAdsSensitivity(Settings::AdsSensitivity() + 0.05f * sides);
 						} else {
 							const bool first = rows[padFocus].arg == 0;
 							Settings::SetFov(first, (first ? Settings::FovFirst() : Settings::FovThird()) + 5.0f * sides);
@@ -4594,6 +4539,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							if (r.arg == 2) {
 								const float bv = Settings::Brightness() + 0.05f;
 								Settings::SetBrightness(bv > Settings::kBrightMax + 1e-3f ? Settings::kBrightMin : bv);
+								break;
+							}
+							if (r.arg == 3) {
+								const float av = Settings::AdsSensitivity() + 0.05f;
+								Settings::SetAdsSensitivity(av > Settings::kAdsSensMax + 1e-3f ? Settings::kAdsSensMin : av);
 								break;
 							}
 							const bool  first = r.arg == 0;
@@ -5072,6 +5022,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\CurseOfAlduin\\") + file).c_str(), nullptr, tex);
 			}
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_title.png", nullptr, &g_mTitle);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_title_shine.png", nullptr, &g_mTitleShine);
 			for (auto [file, tex] : { std::pair{ L"menu_shrine_ground.png", &g_sGround }, { L"menu_shrine_glow.png", &g_sGlow }, { L"menu_crystal.png", &g_sCrystal }, { L"menu_softglow.png", &g_sSoft }, { L"menu_mountains.png", &g_sMtn }, { L"menu_lake_refl.png", &g_sRefl }, { L"menu_lake.png", &g_sLake }, { L"menu_aurora2.png", &g_sAurora }, { L"menu_lake_life.png", &g_sLife }, { L"menu_motes.png", &g_sMotes } }) {
 				DirectX::CreateWICTextureFromFile(g_device, (std::wstring(L"Data\\Interface\\CurseOfAlduin\\") + file).c_str(), nullptr, tex);
 			}
