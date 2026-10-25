@@ -67,7 +67,7 @@ namespace zclip
 		// sidesteps and the start stay absent (the feet use what the set has)
 		void Fill(const ClipSet* a_base, const ClipSet* a_dance)
 		{
-			auto from = [&](int k, const Clip& src) { if (!own[k] && src.frames > 0) c[k] = src; };
+			auto from = [&](int k, const Clip& src) { if (!own[k] && c[k].frames == 0 && src.frames > 0) c[k] = src; };  // (first stand-in wins: the dances before the idle)
 			if (a_base) for (int k : { kRun, kAttack, kPunch, kScream, kHit, kHit2, kStandUp }) from(k, a_base->c[k]);
 			from(kAttackL, c[kAttack]);
 			from(kCast, c[kAttack]);
