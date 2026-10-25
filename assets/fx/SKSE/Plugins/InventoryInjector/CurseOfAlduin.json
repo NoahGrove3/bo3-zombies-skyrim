@@ -22,12 +22,12 @@
         "formType": "Spell",
         "formId": {
           "anyOf": [
-            "MysticismMagic.esp|445FD0",
+            "Skyrim.esm|10F7ED",
             "MysticismMagic.esp|2E8870",
-            "MysticismMagic.esp|A0782A",
+            "Skyrim.esm|10F7EE",
             "MysticismMagic.esp|7BC311",
-            "MysticismMagic.esp|1FA75F",
             "MysticismMagic.esp|1B8A09",
+            "MysticismMagic.esp|1FA75F",
             "Calling of the Conjurer.esp|103611",
             "Calling of the Conjurer.esp|19D60",
             "MysticismMagic.esp|42795A",
@@ -38,7 +38,12 @@
             "MysticismMagic.esp|1D702F",
             "MysticismMagic.esp|2280B0",
             "MysticismMagic.esp|A0782D",
-            "MysticismMagic.esp|209A76"
+            "MysticismMagic.esp|209A76",
+            "MysticismMagic.esp|445FD0",
+            "MysticismMagic.esp|A07827",
+            "MysticismMagic.esp|A0782A",
+            "MysticismMagic.esp|9606AC",
+            "MysticismMagic.esp|440E99"
           ]
         }
       },

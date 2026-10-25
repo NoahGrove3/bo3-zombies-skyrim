@@ -17,16 +17,22 @@ D = ROOT / 'tools' / 'data'
 MYST = 'MysticismMagic.esp'
 COTC = 'Calling of the Conjurer.esp'
 SPRIG = 'ConjureSpriggans.esp'
+SKY = 'Skyrim.esm'
+# Skyrim's own bolts (not in a tome list): form id, cost, concentration, school
+VANILLA = {'Firebolt': (0x012FD0, 45), 'Fireball': (0x01C789, 132), 'Incinerate': (0x10F7ED, 240), 'Ice Spike': (0x02B96C, 40), 'Ice Storm': (0x045F9C, 124),
+           'Icy Spear': (0x10F7EC, 228), 'Lightning Bolt': (0x02DD29, 50), 'Chain Lightning': (0x045F9D, 144), 'Thunderbolt': (0x10F7EE, 252)}
 CLASSES = ['summoner', 'destruction', 'ranger', 'spellsword']
 
 # (class, ladder id, label, element, [(plugin, spell name), ... rung 1 .. last])
 LADDERS = [
-    ('destruction', 'fire', 'Fire', 'fire', [(MYST, 'Scorch'), (MYST, 'Immolate'), (MYST, 'Greater Flames'), (MYST, 'Flame Tempest')]),
-    ('destruction', 'frost', 'Frost', 'frost', [(MYST, 'Hoarfrost'), (MYST, 'Greater Frostbite'), (MYST, 'Greater Frost Rune'), (MYST, 'Throat of the World')]),
-    ('destruction', 'shock', 'Shock', 'shock', [(MYST, 'Finger of the Mountain'), (MYST, 'Greater Sparks'), (MYST, 'Greater Lightning Rune'), (MYST, 'Electrocute')]),
+    # (Noah: "the battle mage class should be ranged magic damage") the Battle-mage's ladders are all bolts, beams, cones
+    # and runes, cast from afar; the close-range sprays and blasts went to the Spellsword (below)
+    ('destruction', 'fire', 'Fire', 'fire', [(SKY, 'Firebolt'), (MYST, 'Immolate'), (SKY, 'Fireball'), (SKY, 'Incinerate')]),
+    ('destruction', 'frost', 'Frost', 'frost', [(SKY, 'Ice Spike'), (SKY, 'Ice Storm'), (SKY, 'Icy Spear'), (MYST, 'Throat of the World')]),
+    ('destruction', 'shock', 'Shock', 'shock', [(SKY, 'Lightning Bolt'), (MYST, 'Finger of the Mountain'), (SKY, 'Chain Lightning'), (SKY, 'Thunderbolt')]),
     ('destruction', 'sun', 'Sun', 'sun', [(MYST, 'Solar Flare'), (MYST, 'Sunbeam'), (MYST, 'Radiant Sunbeam'), (MYST, 'Daybreak')]),
-    ('destruction', 'poison', 'Poison', 'poison', [(MYST, 'Poisonbolt'), (MYST, 'Poison Spray'), (MYST, 'Miasma'), (MYST, 'Death Cloud')]),
-    ('destruction', 'blood', 'Blood', 'blood', [(MYST, 'Vampiric Bolt'), (MYST, 'Leech Life'), (MYST, 'Vampiric Blast'), (MYST, 'Blood Lance')]),
+    ('destruction', 'blood', 'Blood', 'blood', [(MYST, 'Vampiric Bolt'), (MYST, 'Vampiric Blast'), (MYST, 'Vampiric Rune'), (MYST, 'Blood Lance')]),
+    ('destruction', 'runes', 'Runes', 'frost', [(MYST, 'Greater Frost Rune'), (MYST, 'Greater Lightning Rune'), (MYST, 'Greater Fire Rune'), (MYST, 'Death Cloud')]),
     ('summoner', 'beasts', 'Beasts', 'arcane', [(COTC, 'Conjure Wolf'), (COTC, 'Conjure Ice Wolf'), (COTC, 'Conjure Alpha Wolf'), (COTC, 'Conjure Werebear')]),
     ('summoner', 'dead', 'The Dead', 'arcane', [(MYST, 'Conjure Skeleton'), (COTC, 'Conjure Draugr Wight'), (COTC, 'Conjure Draugr Deathlord Warrior'), (COTC, 'Conjure Draugr Death Overlord')]),
     ('summoner', 'daedra', 'Daedra', 'arcane', [(COTC, 'Conjure Dremora'), (COTC, 'Conjure Dremora Archer'), (COTC, 'Conjure Dremora Mage'), (MYST, 'Conjure Dremora Warlock')]),
@@ -38,6 +44,12 @@ LADDERS = [
     ('spellsword', 'sun', 'Sun', 'sun', [(MYST, 'Sunlight Touch'), (MYST, 'Radiant Touch'), (MYST, 'Searing Grasp')]),
     ('spellsword', 'blood', 'Blood', 'blood', [(MYST, 'Vampiric Touch'), (MYST, 'Vampiric Grasp'), (MYST, 'Touch of Death')]),
     ('spellsword', 'poison', 'Poison', 'poison', [(MYST, 'Poisonous Touch'), (MYST, 'Venomous Touch'), (MYST, "Viper's Grasp")]),
+    # (Noah: "keep the close range spells like the fire one for the spellsword") the sprays and point-blank blasts
+    ('spellsword', 'fire_breath', 'Flame Breath', 'fire', [(MYST, 'Scorch'), (MYST, 'Greater Flames'), (MYST, 'Flame Tempest')]),
+    ('spellsword', 'frost_breath', 'Frost Breath', 'frost', [(MYST, 'Hoarfrost'), (MYST, 'Greater Frostbite'), (MYST, 'Flash Freeze')]),
+    ('spellsword', 'shock_breath', 'Storm Breath', 'shock', [(MYST, 'Greater Sparks'), (MYST, 'Electrocute')]),
+    ('spellsword', 'poison_breath', 'Poison Breath', 'poison', [(MYST, 'Poison Spray'), (MYST, 'Miasma')]),
+    ('spellsword', 'blood_breath', 'Blood Breath', 'blood', [(MYST, 'Drain Life'), (MYST, 'Leech Life')]),
 ]
 ELEMENTS = ['fire', 'frost', 'shock', 'poison', 'disease', 'sun', 'blood', 'arcane']
 
@@ -50,6 +62,8 @@ def load():
         out.setdefault((COTC, x['name']), (int(x['spell'], 16), x['cost'], x['cast'] == 'concentration', 'Conjuration'))
     for x in json.load(open(D / 'spriggans_spells.json')):
         out[(SPRIG, x['name'])] = (int(x['fid'], 16), x['cost'], x['cast'] == 'concentration', 'Conjuration')
+    for n, (fid, cost) in VANILLA.items():
+        out[(SKY, n)] = (fid, cost, False, 'Destruction')
     return out
 
 
