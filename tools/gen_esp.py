@@ -564,69 +564,49 @@ for key, edid in [('curse_' + c['town'], 'UN_Curse_' + c['town']) for c in S['cu
 
 # The Curse of Alduin: the lore book, and A Survivor's Guide (both in the pack when a character is made)
 def lore_text():
+    # (Noah: "clean up and simplify ... the Curse of Alduin lore book so it's easier to understand") short chapters, plain
+    # words: what happened, what rises, what to do about it, and how it ties to the Dragonborn's own story
     img = lambda n, w, h: f"<p align='center'><img src='img://Textures/CurseOfAlduin/Book/{n}.png' width='{w}' height='{h}'></p>"
-    cu = S['curse']
     out = [f"<font face='$HandwrittenFont'>", img('sigil', 200, 200),
            "<p align='center'><font size='30'>THE CURSE OF ALDUIN</font></p>",
-           "<p align='center'>Set down at High Hrothgar by a Greybeard who has broken his silence, for whoever lived through Helgen</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>I. Three Words</font></p>", img('helgen', 300, 176),
-           f"<p>{cu['prologue']}</p>",
-           "<p>We heard it on the mountain. Not a shout to break stone, but Words sung slow, that sank into the earth and stayed there: "
-           "<b>Slen</b>, flesh. <b>Tiid</b>, time. <b>Vo</b>, undo. It is the shout by which Alduin raises his fallen kin from their burial mounds, "
-           "and this time he gave it to the earth itself. By day it sleeps in the ground. When the sun goes down it wakes, "
-           "and every barrow, every crypt and every churchyard in the holds remembers it.</p>",
-           "<p>Worse: his mist has rolled over the door of <b>Sovngarde</b>. The honoured dead cannot cross to Shor's hall, and a soul with nowhere to go "
-           "stays with its body. That is why they rise. Free Sovngarde, and the Curse ends.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>II. The Dead Who Answer</font></p>", img('graves', 300, 176),
-           "<p>From dusk until first light the dead climb out of the earth, more each night and harder to kill. At dawn they fall back to dust. "
-           "The Nords of old had names for them, and the names are true again:</p>",
-           "<p><b>Haugbui</b>, the mound-dwellers - slow, many, never tired. <b>Pyre-Thralls</b>, the burned dead, still smouldering. "
-           "<b>Gravegnawers</b>, quick and starved. <b>Barrow Archers</b> on the walls.</p>",
-           "<p>The <b>Tongues</b> - Ash, Rime and Storm - were shouters once; their dead mouths still hold a word or two. "
-           "<b>Fen-Wailers</b> scream, and the horde comes to the scream: kill them first. <b>Sewn Thralls</b> burst when they fall. "
-           "<b>Grave-Hounds</b> run in packs, and the <b>Bone Jotunn</b> is the skeleton of a giant, walking.</p>",
-           "<p>Over them all ride the great ones: the <b>Thanes of the Mound</b>, the <b>Mother of Mounds</b>, <b>Haugrisi the Mound-Giant</b>, "
-           "<b>the Elk-Crowned</b>, <b>Grahzah</b>, Alduin's Grave-Wing, a dragon of bone, and on the Fog Nights <b>Grimmvar</b>, Alduin's Herald, a dragon of shadow - "
-           "Vulmidviing in his own tongue, 'dark, loyal wings'. Look at a wounded thing and a pale bar shows how much life it has left; "
-           "the great ones' bars burn gold and bear their names.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>III. The Echo Altars</font></p>",
-           "<p>This is not the first time Alduin has shouted the dead awake. In the Dragon War he did it once over the barrows of the Atmorans, and the Tongues - "
-           "the first men to learn the Voice - answered him. They raised an altar in every hold where the dead marched: a star of violet fire caught in a ring of "
-           "floating stones, bound with runes of blue, standing on a floor of black stone inlaid with gold.</p>",
-           "<p>The fire is Alduin's own Thu'um, caught and turned back on itself. The runes are the Tongues' answer, holding it there. Every mage who fell in that war "
-           "gave their last spell to the star, and the star kept it: that is why the altars have so many to give, and why the holds call them <b>Echo Altars</b>.</p>",
-           "<p>When Alduin was cast out of time the altars went dark and sank into the earth, and towns grew over them. At Helgen he returned, and the altars woke - "
-           "but only half. Each one has been silenced by one of the <b>Dragon Priests</b> who ruled Skyrim for Alduin in the Merethic Era: "
-           "their oaths to him outlived them, and the draugr that guard their tombs were their servants in life. When Alduin returned, the oaths woke, and each priest came down from his tomb to the altar nearest it.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>IV. Waking an Altar</font></p>", img('wards', 300, 176),
-           "<p>The altars answer to you. Perhaps it is because you heard the three Words at Helgen and lived; perhaps it is something older. "
-           "Stand before one and it will set you <b>trials</b> - hold its runic circle while the dead come for you, cull the risen in its streets - "
-           "and when they are done its Dragon Priest rises to stop you. Strike him down and the altar rings with the Tongues' answer. Its city becomes a sanctuary: "
-           "no dead rise within its walls.</p>",
-           "<p>There is no Word Wall at an altar. The Tongues cut their words into the altar's <b>heart-stone</b> instead - the great rock at its centre, "
-           "ringed with runes. Once you have walked the Way of the Voice, stand at a woken altar and the runes give up their words to you, as a Word Wall would: "
-           "the city's own <b>Thu'um</b>.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>V. The Way of the Voice</font></p>",
-           "<p>Arngeir will tell you, when you have climbed the Seven Thousand Steps, that the altars are older than High Hrothgar. Jurgen Windcaller's Tongues found them "
-           "after Red Mountain, already ancient, and kept them as he taught: the Voice for worship, not for war. They wrote down what each altar holds - the pages "
-           "a woken altar gives you, <i>The Broken Words</i>, are theirs.</p>",
-           "<p>Those who stand against the dead with you have their own reasons. The conjurers and battle-mages of the <b>College of Winterhold</b> have seen Morokei walk again; "
-           "the <b>Dawnguard</b> hunt what rises at night; the <b>Vigilants of Stendarr</b> will not let the dead walk while they draw breath.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>VI. The Dragonborn's Road</font></p>",
-           # (Noah: the lore book "containing the lore and how it ties to the Skyrim story")
-           "<p>The Curse does not replace your own story; it walks beside it. Everything the Greybeards foretold for the Dragonborn still waits for you, and each step of it touches the Long Night.</p>",
-           "<p><b>Helgen</b> is where it began: Alduin's return, and the three Words he sank into the earth. You came out of it alive, and the road brought you to <b>Riverwood</b>, whose Echo Altar stands nearest the place he rose. It is the first to wake.</p>",
-           "<p>At <b>Whiterun</b> the Jarl will send you to the Western Watchtower, and the first dragon soul you take will show you what you are. Whiterun's altar answers that soul: wake it, and a dragon of your own will carry you.</p>",
-           "<p>When the Greybeards call you up the Seven Thousand Steps to <b>High Hrothgar</b>, walk the <b>Way of the Voice</b>. Without it the altars' heart-stones keep their words; with it, every woken altar teaches you its city's Thu'um. The Greybeards' hall also hides the <b>Reliquary</b>, where the parts the Dragon Priests left behind are forged into wonders.</p>",
-           "<p>The Blades, Alduin's Wall, the Elder Scroll, the truce at High Hrothgar and the hunt for Alduin's lair are the old story, and the Curse does not change them. But Alduin fled to <b>Sovngarde</b>, and his mist on its door is the reason the dead rise. When you follow him there and he falls - the <b>Dragonslayer</b> - the mist thins: the class wonders you have won wake to their <b>Legendary</b> form.</p>",
-           "<p>Even then his three Words lie in the ground. With your class's wonder in hand they wake one by one - <b>SLEN</b>, <b>TIID</b> and <b>VO</b> - each at an old place of the Dragon Cult. Silence all three and the Curse of Alduin is broken for good.</p>",
-           "<p>Those who stand with you have their own roads too: the conjurers and battle-mages of the <b>College of Winterhold</b>, the <b>Dawnguard</b> of Fort Dawnguard, and the <b>Vigilants of Stendarr</b>. Choose your path at an Echo Altar, and your guide will tell you how it grows.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>VII. The Voices of the Holds</font></p>"]
+           "<p align='center'>Written at High Hrothgar by a Greybeard who broke his silence, for whoever lived through Helgen</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>I. What Happened</font></p>", img('helgen', 300, 176),
+           "<p>When Alduin rose over Helgen, he shouted three Words into the earth: <b>SLEN TIID VO</b> - Flesh, Time, Undo. "
+           "It is the shout that raises the dead.</p>",
+           "<p>His mist also covers the door of <b>Sovngarde</b>, so the dead of Skyrim cannot pass on. They lie restless in the ground. "
+           "By day they sleep. When the sun goes down, they rise.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>II. The Dead</font></p>", img('graves', 300, 176),
+           "<p>Each night the dead come in <b>waves</b>, more of them and harder to kill as the nights go on. They claw up out of open ground - "
+           "roads and fields, never inside a house - and come at you from every side. Dawn comes only when the last wave falls.</p>",
+           "<p>Four kinds make up the horde:</p>",
+           "<p><b>Risen Dead</b> - the most common. Wound one past half and it turns frenzied. Finish them fast.</p>",
+           "<p><b>Draugr Brides</b> - quick and frail. They leap at you from a distance.</p>",
+           "<p><b>Drowned Skalds</b> - their scream raises more dead and drives the horde faster. Kill them first.</p>",
+           "<p><b>Volatiles</b> - bladed brutes. Their hide turns half of every blow unless you strike the head or the back.</p>",
+           "<p>Noise draws worse. Loud spells, shouts and running wake an elite Volatile, faster still, that comes through a portal and pounces. "
+           "The Curse's champions and great ones step out of portals too - and their names burn gold over their heads.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>III. The Echo Altars</font></p>", img('wards', 300, 176),
+           "<p>Long ago the <b>Tongues</b>, the first masters of the Voice, raised an altar in every hold to hold Alduin's shout back. "
+           "Every mage who fell in the Dragon War gave a last spell to them, which is why an altar still has spells, bows and gifts to give.</p>",
+           "<p>Alduin's return woke the altars only halfway. Each one is held silent by a <b>Dragon Priest</b>, still bound by his old oath to Alduin.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>IV. Waking an Altar</font></p>",
+           "<p>Stand at an altar and it sets you <b>trials</b>: hold its rune circle, cull the dead in its streets, hold the altar through a night's waves, "
+           "and pass the trial of your own path. "
+           "Finish them and its Dragon Priest rises at night. Kill him and the altar wakes.</p>",
+           "<p>A woken altar makes its city a <b>sanctuary</b> - no dead rise inside it. If you have walked the <b>Way of the Voice</b> at High Hrothgar, "
+           "its heart-stone also teaches you the city's own <b>shout</b>.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>V. The Dragonborn's Road</font></p>",
+           "<p>The Curse walks beside your own story; it does not replace it.</p>",
+           "<p><b>Riverwood's</b> altar, nearest Helgen, wakes first. <b>Whiterun's</b> answers your first dragon soul and gives you a dragon to ride. "
+           "At <b>High Hrothgar</b>, the Way of the Voice opens the altars' shouts, and the <b>Reliquary</b> forges what the Dragon Priests leave behind into wonders.</p>",
+           "<p>When you follow Alduin to Sovngarde and he falls, the mist thins and your wonders wake to their <b>Legendary</b> form. "
+           "His three Words still lie in the ground: silence <b>SLEN</b>, <b>TIID</b> and <b>VO</b> at the old places of the Dragon Cult, and the Curse is broken for good.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>VI. The Voices of the Holds</font></p>"]
     for h in S['shouts']['rows']:
         if h.get('town'):
-            out.append(f"<p><b>{h['town']}</b>: <i>{h['label']}</i> ({' '.join(h['words'])}, '{' '.join(h['translations'])}'). {h['text']}.</p>")
-    out += ["<p><b>Whiterun</b>: <i>Dragon's Updraft</i>. A whirlwind lifts you high - and with it, a dragon that will carry you.</p>",
-            "[pagebreak]", f"<p>{cu['freedAll']}</p>", "<p align='right'><i>- written in the silence of High Hrothgar</i></p>", "</font>"]
+            out.append(f"<p><b>{h['town']}</b>: <i>{h['label']}</i> ({' '.join(h['words'])}). {h['text']}.</p>")
+    out += ["<p><b>Whiterun</b>: <i>Dragon's Updraft</i>. A whirlwind lifts you high - and a dragon to carry you.</p>",
+            "[pagebreak]", f"<p>{S['curse']['freedAll']}</p>", "<p align='right'><i>- written in the silence of High Hrothgar</i></p>", "</font>"]
     return '\n'.join(out)
 
 def guide_text():
