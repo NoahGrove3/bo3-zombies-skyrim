@@ -52,7 +52,7 @@
    "id": "reaper",
    "label": "Iron Reaper",
    "model": "CurseOfAlduin\\reaper\\reaper.nif",
-   "heightScale": 1.05,
+   "heightScale": 1.25,
    "level": 30,
    "verify": [
     "heightScale"
@@ -136,7 +136,7 @@
    "id": "volatile",
    "label": "Volatile",
    "model": "CurseOfAlduin\\volatile\\volatile.nif",
-   "heightScale": 1.05,
+   "heightScale": 1.25,
    "level": 30,
    "verify": [
     "heightScale"
