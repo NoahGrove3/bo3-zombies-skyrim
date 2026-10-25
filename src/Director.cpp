@@ -2732,9 +2732,9 @@ namespace bo3z
 				n += Undead::Dance(a.get(), 20.0f) ? 1 : 0;
 			}
 			if (auto* snd = dh->LookupForm<RE::BGSSoundDescriptorForm>(gen::kDanceSong, gen::kPlugin)) {
-				RE::BSSoundHandle h;
-				RE::BSAudioManager::GetSingleton()->BuildSoundDataFromDescriptor(h, snd);
-				h.Play();
+				static RE::BSSoundHandle h;
+				h.Stop();
+				if (auto* am = RE::BSAudioManager::GetSingleton(); am && am->GetSoundHandle(h, static_cast<RE::BSISoundDescriptor*>(snd))) h.Play();
 			}
 			Hud::Banner(n > 0 ? fmt::format("DANCE OF DEATH - {} of the dead dance", n) : std::string("DANCE OF DEATH - no one near enough to dance"), 3.5f);
 			logger::info("dance of death: {} dance (night {}, wave {})", n, g_current, g_wave);
