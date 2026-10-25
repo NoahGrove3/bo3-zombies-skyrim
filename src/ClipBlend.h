@@ -239,34 +239,43 @@ namespace zclip
 				a_out[i] = held[i];
 			}
 			heldOk = true;
-			// the elbows (their hinge: each forearm's own X; -X bends)
+			// the elbows. (Noah: "his sword arm is getting stuck") the bend is measured as it is - the angle between the
+			// upper arm and the forearm (every bone runs along its own Z) - and bent further about the axis it is already
+			// bending on, so no twist in a clip (the mirrored blade swing is full of it) can pin an elbow at a limit
 			for (int side = 0; side < 2; ++side) {
 				const int u = S.upperArm[side], f = S.forearm[side];
 				if (u < 0 || f < 0) continue;
 				Elbow& e = elbow[side];
 				const Q4 qu = a_out[u];
 				if (!e.ok || snap || dt <= 0.0f) { e = Elbow{}; e.prevU = e.meanU = qu; e.ok = true; continue; }
-				const V3f hinge = Rotate(a_out[f], { 1, 0, 0 });               // (in the upper arm's frame)
-				// its swing: how far forward of its own recent middle the upper arm hangs (forward: -X, as the elbow)
+				const Q4& qf = a_out[f];
+				const V3f fz = Rotate(qf, { 0, 0, 1 });                       // (the forearm's line, in the upper arm's frame)
+				const float bend = std::acos(std::clamp(fz.z, -1.0f, 1.0f));
+				V3f axis{ -fz.y, fz.x, 0 };                                   // (Z x fz: turning about it bends further)
+				const float al = std::sqrt(axis.x * axis.x + axis.y * axis.y);
+				const V3f hingeX = Rotate(qf, { -1, 0, 0 });                  // (nearly straight: the forearm's own hinge)
+				const float t = std::clamp(al / 0.2f, 0.0f, 1.0f);
+				axis = al > 1e-5f ? V3f{ axis.x / al * t + hingeX.x * (1 - t), axis.y / al * t + hingeX.y * (1 - t), hingeX.z * (1 - t) } : hingeX;
+				const float an = std::sqrt(Dot(axis, axis));
+				axis = { axis.x / an, axis.y / an, axis.z / an };
+				// its swing: how far forward of its own recent middle the upper arm hangs
 				e.meanU = Slerp(e.meanU, qu, 1.0f - std::exp(-dt / 0.6f));
-				const float swing = -Dot(RotVec(Mul(Conj(e.meanU), qu)), hinge);
+				const float swing = Dot(RotVec(Mul(Conj(e.meanU), qu)), axis);
 				const float target = std::clamp(0.45f * swing, -0.35f, 0.35f);
 				// the forearm's weight: the upper arm's turn rate about the hinge, its change pushing the elbow the other way
-				const float wNow = -Dot(RotVec(Mul(Conj(e.prevU), qu)), hinge) / dt;
+				const float wNow = Dot(RotVec(Mul(Conj(e.prevU), qu)), axis) / dt;
 				const float wS = e.w + (wNow - e.w) * (1.0f - std::exp(-dt / 0.03f));
 				const float acc = (wS - e.w) / dt;
 				e.w = wS, e.prevU = qu;
 				constexpr float k = 480.0f, c = 15.0f, g = 0.6f;
 				e.vel += (-k * (e.off - target) - c * e.vel - g * acc) * dt;
 				e.off += e.vel * dt;
-				// never past straight, never folded shut
-				const Q4& qf = a_out[f];
-				const float bend = -RotVec(qf).x;
-				const float lo = std::max(-0.45f, 0.22f - bend), hi = std::min(0.6f, 2.6f - bend);
+				// never past straight, never folded shut (and where the clip itself is already past either, no further)
+				const float lo = std::max(-0.45f, std::min(0.0f, 0.22f - bend)), hi = std::min(0.6f, std::max(0.0f, 2.6f - bend));
 				if (e.off < lo) e.off = lo, e.vel = std::max(0.0f, e.vel);
 				if (e.off > hi) e.off = hi, e.vel = std::min(0.0f, e.vel);
-				const float h = -e.off * 0.5f;
-				a_out[f] = Mul(qf, { std::cos(h), std::sin(h), 0, 0 });
+				const float h = e.off * 0.5f, sh = std::sin(h);
+				a_out[f] = Mul(Q4{ std::cos(h), axis.x * sh, axis.y * sh, axis.z * sh }, qf);
 			}
 			// the wrists: the forearm's turn (carried by its upper arm), seen from the hand, its changes swinging the hand
 			for (int side = 0; side < 2; ++side) {

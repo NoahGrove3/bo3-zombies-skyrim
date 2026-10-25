@@ -530,8 +530,11 @@ namespace bo3z
 				for (int k = 0; k < 2; ++k) {
 					bool all = true;
 					for (int c = 0; c < kClips; ++c) {
-						all &= LoadClip(std::string("Data\\SKSE\\Plugins\\CurseOfAlduin\\anims\\") + kSkel[k] + "\\" + kClipFile[c] + ".zan", g_clipSets[k].c[c]);
+						const bool got = LoadClip(std::string("Data\\SKSE\\Plugins\\CurseOfAlduin\\anims\\") + kSkel[k] + "\\" + kClipFile[c] + ".zan", g_clipSets[k].c[c]);
+						if (c != kAttackL) all &= got;
 					}
+					// (the mirrored swing is a nicety: missing or not lined up with the rest, the plain swing stands in)
+					if (g_clipSets[k].c[kAttackL].bones != g_clipSets[k].c[kRun].bones) g_clipSets[k].c[kAttackL] = g_clipSets[k].c[kAttack];
 					for (int c = 1; c < kClips && all; ++c) all &= g_clipSets[k].c[c].bones == g_clipSets[k].c[kRun].bones;
 					g_clipSets[k].ok = all;
 					LoadClip(std::string("Data\\SKSE\\Plugins\\CurseOfAlduin\\anims\\") + kSkel[k] + "\\rest.zan", g_clipSets[k].rest);  // (optional: straight wrists)

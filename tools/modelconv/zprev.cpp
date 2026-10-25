@@ -545,6 +545,19 @@ static int RunNif(const char* modelPath, const char* skelPath, const char* animP
 		printf("%d frames (game blend)\n", fi);
 		return 0;
 	}
+	// the bones a bake writes: the mapped ones, or ZLIKE=<zan>'s exact list (so a mirrored clip lines up with the rest)
+	std::vector<int> outBones;
+	if (const char* like = getenv("ZLIKE")) {
+		FILE* f = fopen(like, "rb");
+		char mg[4]; uint32_t fps_, nf_, nb_; float sp_;
+		if (f && fread(mg, 1, 4, f) == 4 && fread(&fps_, 4, 1, f) && fread(&nf_, 4, 1, f) && fread(&nb_, 4, 1, f) && fread(&sp_, 4, 1, f)) {
+			for (uint32_t i = 0; i < nb_; i++) { uint8_t l = 0; if (!fread(&l, 1, 1, f)) break; std::string nm(l, ' '); if (fread(nm.data(), 1, l, f) != l) break;
+				int b = -1; for (size_t k = 0; k < sk.size(); k++) if (sk[k].name == nm) b = (int)k;
+				if (b < 0) { fprintf(stderr, "ZLIKE bone %s not in skeleton\n", nm.c_str()); return 1; }
+				outBones.push_back(b); }
+		}
+		if (f) fclose(f);
+	} else for (size_t b = 0; b < sk.size(); b++) if (mapOf[b] >= 0) outBones.push_back((int)b);
 	for (int fi = 0; fi <= frames; fi++) {
 		std::map<std::string, aiMatrix4x4> now;
 		Worlds(as, anim, fi, false, now);
@@ -597,11 +610,13 @@ static int RunNif(const char* modelPath, const char* skelPath, const char* animP
 				printf("f%d sky %s dir %.2f %.2f %.2f pos %.1f %.1f %.1f\n", fi, nm, d.x, d.y, d.z, W_[b].t.x, W_[b].t.y, W_[b].t.z);
 			}
 		}
+		if (getenv("ZPOS")) {
+			for (const char* nm : { "NPC L Hand", "NPC R Hand", "NPC L Forearm", "NPC R Forearm" }) { int b = FindBone(sk, nm); printf("%d %s %.1f %.1f %.1f\n", fi, nm, W_[b].t.x, W_[b].t.y, W_[b].t.z); }
+		}
 		if (bakeOut) {
 			bakeFrames.push_back({});
 			auto& fr = bakeFrames.back();
-			for (size_t b = 0; b < sk.size(); b++) {
-				if (mapOf[b] < 0) continue;
+			for (int b : outBones) {
 				const M3 pr = sk[b].parent >= 0 ? W_[sk[b].parent].R : M3{};
 				float q[4]; QuatOf(mul(tr(pr), W_[b].R), q);
 				fr.insert(fr.end(), q, q + 4);
@@ -648,7 +663,7 @@ static int RunNif(const char* modelPath, const char* skelPath, const char* animP
 		}
 		FILE* o = fopen(bakeOut, "wb");
 		const uint32_t fps = (uint32_t)std::lround(anim.tps), nf = (uint32_t)n;
-		std::vector<std::string> names; for (size_t b = 0; b < sk.size(); b++) if (mapOf[b] >= 0) names.push_back(sk[b].name);
+		std::vector<std::string> names; for (int b : outBones) names.push_back(sk[b].name);
 		const uint32_t nb = (uint32_t)names.size();
 		fwrite("ZAN1", 1, 4, o); fwrite(&fps, 4, 1, o); fwrite(&nf, 4, 1, o); fwrite(&nb, 4, 1, o); fwrite(&speed, 4, 1, o);
 		for (auto& nm : names) { uint8_t l = (uint8_t)nm.size(); fwrite(&l, 1, 1, o); fwrite(nm.data(), 1, l, o); }
