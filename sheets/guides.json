@@ -15,7 +15,7 @@
     {
      "title": "The Summoner",
      "paras": [
-      "A conjurer of the <b>College of Winterhold</b>. Your summons fight for you - every kill they make is yours: essence, progress and trials.",
+      "A conjurer of the <b>College of Winterhold</b>. Your summons fight for you - every kill they make is yours: Cursed Essence, progress and trials.",
       "<b>You start with</b> Conjure Skeleton (right hand), Conjure Wolf (left hand) and the summoner's robes."
      ]
     },
@@ -30,7 +30,7 @@
     {
      "title": "Getting Stronger",
      "paras": [
-      "<b>Kills fill it, the altar raises it.</b> Kills with the spell in your hand count toward its next rung - <b>25</b>, then <b>60</b>, then <b>120</b> for the Legendary rung - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, then <b>12,000</b> essence, once a night per spell. The altar's Reforge row and <i>Your Progress</i> show the count.",
+      "<b>Kills fill it, the altar raises it.</b> Kills with the spell in your hand count toward its next rung - <b>25</b>, then <b>60</b>, then <b>120</b> for the Legendary rung - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, then <b>12,000</b> Cursed Essence, once a night per spell. The altar's Reforge row and <i>Your Progress</i> show the count.",
       "<b>Command</b> - how many summons you can have out at once. You start with 1; it grows to 2, 3 and 4 as your two carried families climb (1, 3 and 6 climbs in all). At the limit a new summon replaces the oldest."
      ]
     },
@@ -74,7 +74,7 @@
     {
      "title": "Getting Stronger",
      "paras": [
-      "<b>Kills fill it, the altar raises it.</b> Kills with the spell in your hand count toward its next rung - <b>25</b>, then <b>60</b>, then <b>120</b> for the Legendary rung - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, then <b>12,000</b> essence, once a night per spell. The altar's Reforge row and <i>Your Progress</i> show the count."
+      "<b>Kills fill it, the altar raises it.</b> Kills with the spell in your hand count toward its next rung - <b>25</b>, then <b>60</b>, then <b>120</b> for the Legendary rung - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, then <b>12,000</b> Cursed Essence, once a night per spell. The altar's Reforge row and <i>Your Progress</i> show the count."
      ]
     },
     {
@@ -117,7 +117,7 @@
     {
      "title": "Getting Stronger",
      "paras": [
-      "<b>Kills fill it, the altar raises it.</b> Kills with a bow count toward its next tier - <b>25</b>, <b>60</b>, then <b>120</b> - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, <b>12,000</b> essence, once a night.",
+      "<b>Kills fill it, the altar raises it.</b> Kills with a bow count toward its next tier - <b>25</b>, <b>60</b>, then <b>120</b> - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, <b>12,000</b> Cursed Essence, once a night.",
       "Each tier: more damage, a new attack and a bigger quiver - <b>60</b>, <b>100</b>, <b>150</b>, <b>200</b> arrows - that regrows one arrow every <b>8</b>, <b>6</b>, <b>4</b>, then <b>2</b> seconds.",
       "<b>Crossbows</b>: kills unlock elemental bolts - fire at 25, ice at 60, shock at 120."
      ]
@@ -161,7 +161,7 @@
     {
      "title": "Getting Stronger",
      "paras": [
-      "<b>Kills fill it, the altar raises it.</b> Melee kills with the spell in your other hand count toward its next rung - <b>25</b>, then <b>60</b> (a power-attack kill counts twice) - once three Echo Altars are freed. Then take the altar's <b>Reforge</b> row: <b>5,000</b> then <b>8,000</b> essence, once a night.",
+      "<b>Kills fill it, the altar raises it.</b> Melee kills with the spell in your other hand count toward its next rung - <b>25</b>, then <b>60</b> (a power-attack kill counts twice) - once three Echo Altars are freed. Then take the altar's <b>Reforge</b> row: <b>5,000</b> then <b>8,000</b> Cursed Essence, once a night.",
       "Each reforge also raises your held spell-weapon a material and unlocks one of four <b>Enchantment Powers</b> (in your Powers)."
      ]
     },
@@ -188,11 +188,11 @@
   {
    "title": "How a Night Works",
    "paras": [
-    "<b>Day</b> (about 20 minutes): the dead sleep. Explore, rest and spend your essence.",
+    "<b>Day</b> (about 20 minutes): the dead sleep. Explore, rest and spend your Cursed Essence.",
     "<b>Night</b>: the dead claw up out of the ground (on open ground, never in houses) in <b>waves</b> - fast runners, more and tougher each night, coming from every side. Elites and bosses step out of the Curse's portals. Dawn only comes when the last wave falls.",
     "The night's dead come in four kinds: the <b>Risen Dead</b> sprint at you and claw fast - hurt one past half and it turns frenzied; the <b>Shambling Maiden</b> is slower but tougher, and her blows come slow; the <b>Grave Witch</b> keeps back, hurls fire and calls more Risen Dead out of the ground - kill her first; the <b>Volatile</b>, a bladed brute, is slow but hits hardest and shrugs off half of every blow unless you hit its head or its back, and it leaps at you from a distance.",
     "<b>Noise</b> brings worse: spells bursting, shouts and sprinting fill the <i>Noise</i> bar under the wave count; let it fill and an elite <b>Volatile</b> comes through a portal for you - far faster, and it pounces. Go quiet and it drains.",
-    "<b>Essence</b> drops from every kill - spend it at the Echo Altars. Watch for tokens: skull (Insta-Kill), coin (Double Points), falling star (destroys tonight's corpses), chest (Fire Sale).",
+    "<b>Cursed Essence</b> drops from every kill - spend it at the Echo Altars. Watch for tokens: skull (Insta-Kill), coin (Double Points), falling star (destroys tonight's corpses), chest (Fire Sale).",
     "Your health, magicka and stamina sit on one plate at the bottom; its rim glows blue while your shout recovers."
    ]
   },
@@ -200,7 +200,7 @@
    "title": "The Echo Altar",
    "paras": [
     "Every city has one. Step onto it and activate it. Move with the D-pad or W/S, choose with A or Enter, leave with B.",
-    "From the top: <b>your class</b> (change it for 2,500 essence - each class keeps its own progress), <b>your rolls</b>, <b>Reforge</b> (after three freed altars), <b>perks</b>, then the city's <b>trials</b>.",
+    "From the top: <b>your class</b> (change it for 2,500 Cursed Essence - each class keeps its own progress), <b>your rolls</b>, <b>Reforge</b> (after three freed altars), <b>perks</b>, then the city's <b>trials</b>.",
     "<b>After a roll</b>, activate the altar again: <b>take it</b> (it replaces what it would), <b>roll again</b> at the next price, or <b>leave it</b> for half the roll back.",
     "<b>Freeing a city</b>: finish four trials (three shared, one your class's), then slay its <b>Dragon Priest</b>, who rises at night. A freed city is a sanctuary, teaches you its Thu'um, and Whiterun gives you a dragon to ride."
    ]

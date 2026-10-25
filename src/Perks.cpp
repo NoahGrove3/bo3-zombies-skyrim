@@ -286,14 +286,25 @@ namespace bo3z
 				if (!form || !em) {
 					continue;
 				}
+				// (Noah: "my character still thinks it's holding a weapon ... invisible") a new character's pack is emptied
+				// between the load and this: what it held then (the start's Iron War Axe) is gone - never put back a thing
+				// you no longer carry, or a spell you no longer know (an equipped ghost: draw sounds, nothing in the hand)
 				if (auto* sp = form->As<RE::SpellItem>()) {
-					em->EquipSpell(a_player, sp, slot);
-				} else if (auto* obj = form->As<RE::TESBoundObject>()) {
+					if (a_player->HasSpell(sp)) em->EquipSpell(a_player, sp, slot);
+				} else if (auto* obj = form->As<RE::TESBoundObject>(); obj && a_player->GetItemCount(obj) <= 0) {
+					// (already a ghost - an older save: the hand still holds what isn't in the pack) lent for a moment so it
+					// can be taken off properly, then taken back
+					a_player->AddObjectToContainer(obj, nullptr, 1, nullptr);
+					em->UnequipObject(a_player, obj, nullptr, 1, slot, false, true, false, true);
+					a_player->RemoveItem(obj, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+					logger::info("perk: a ghost in the hand taken off ({})", obj->GetName());
+					continue;
+				} else if (obj) {
 					em->UnequipObject(a_player, obj, nullptr, 1, slot, false, true, false, true);
 					em->EquipObject(a_player, obj, nullptr, 1, slot, false, false, false, true);
 				}
 			}
-			a_player->DrawWeaponMagicHands(true);
+			if (!g_rearmLoad) a_player->DrawWeaponMagicHands(true);  // (after a revive the hands come up; a load leaves them as they were)
 			logger::info("perk: revive - hands re-armed ({} / {})", g_handR ? g_handR->GetName() : "none", g_handL ? g_handL->GetName() : "none");
 		}
 

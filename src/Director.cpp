@@ -960,7 +960,7 @@ namespace bo3z
 		{
 			if (!Echo::AwardNextPart()) {
 				Points::Refund(5000);
-				Hud::Banner("Every wonder part is yours - 5,000 essence instead", 5.0f);
+				Hud::Banner("Every wonder part is yours - 5,000 Cursed Essence instead", 5.0f);
 			}
 		}
 		void MiniBossSlain()

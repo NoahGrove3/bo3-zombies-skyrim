@@ -30,6 +30,7 @@ namespace bo3z
 		ID3D11ShaderResourceView* g_menuBg = nullptr;   // the main menu's backdrop (tools/cover.py, MENU=1)
 		ID3D11ShaderResourceView* g_menuFog = nullptr;  // a tileable fog layer that drifts over it
 		ID3D11ShaderResourceView* g_mapIcons = nullptr;  // the world map's marker icons, an 8x8 atlas (tools/mapicons.py)
+		ID3D11ShaderResourceView* g_essence = nullptr;  // the Cursed Essence emblem: 8x6 flipbook (tools/essence.py)
 		ID3D11ShaderResourceView* g_fire = nullptr;     // the shrine orb's purple magic fire: 16x8 flipbook (tools/magicfire.py)
 		ID3D11ShaderResourceView* g_flame = nullptr;    // the aura round a spell emblem: 4x4 atlas of a looping white flame ring (tools/flameaura.py)
 		ID3D11ShaderResourceView* g_frame = nullptr;
@@ -754,7 +755,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				  "Imbue: raise each element's touch spell; power attacks cast your spell", "Steel Spellsword, Steel Spellshield, Flame Touch, the Practical Pirate outfit" } };
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));
 			TxtC(dl, g_title, 46 * k, size.x * 0.5f, size.y * 0.12f, kParch, Classes::Switching() ? "CHANGE YOUR PATH" : "CHOOSE YOUR PATH", 3 * k, Fade(kGold, 0.6f));
-			const std::string sub = Classes::Switching() ? "Switching costs " + std::to_string(Classes::SwitchCost()) + " essence. Each class keeps its own spells and progress."
+			const std::string sub = Classes::Switching() ? "Switching costs " + std::to_string(Classes::SwitchCost()) + " Cursed Essence. Each class keeps its own spells and progress."
 			                                             : "Each player picks their own path. Duplicates are allowed.";
 			TxtC(dl, g_body, 20 * k, size.x * 0.5f, size.y * 0.12f + 58 * k, IM_COL32(210, 200, 180, 230), sub);
 			const float cw = 330 * k, ch = 430 * k, gap = 26 * k;
@@ -1374,24 +1375,28 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const std::string num = std::to_string(static_cast<int>(std::lround(shownPts)));
 				const float       numW = Measure(g_num, 26 * k, num).x;
 				const float       foot = Hud::kEdgeHud ? size.y - 112 * k : size.y;  // (Noah: clear of Edge UI's bars in the bottom-left corner)
-				const ImVec2      coin{ 30 * k, foot - 30 * k };
-				const float       w = 62 * k + numW;
-				dl->AddRectFilledMultiColor({ 0, foot - 58 * k }, { w + 70 * k, foot }, IM_COL32(0, 0, 0, Hud::kEdgeHud ? 60 : 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, Hud::kEdgeHud ? 90 : 140));
-				// (Noah: their own essence, not septims) a mote of soul-essence: a pale blue flame over a glowing core
-				const float cr = 11 * k;
-				const float flick = 0.5f + 0.5f * std::sin(now * 5.3f);
-				dl->AddCircleFilled(coin, cr * (rising ? 2.1f : 1.6f), IM_COL32(90, 150, 255, rising ? 70 : 36), 32);
-				{
-					const ImVec2 tip{ coin.x + std::sin(now * 3.1f) * 1.5f * k, coin.y - cr * (1.75f + 0.15f * flick) };
-					dl->AddBezierQuadratic({ coin.x - cr * 0.8f, coin.y }, { coin.x - cr * 0.7f, coin.y - cr * 1.1f }, tip, IM_COL32(150, 200, 255, 230), 1.0f * k);
-					const ImVec2 flame[5] = { { coin.x - cr * 0.78f, coin.y - cr * 0.1f }, { coin.x - cr * 0.45f, coin.y - cr * 1.05f }, tip, { coin.x + cr * 0.45f, coin.y - cr * 1.05f }, { coin.x + cr * 0.78f, coin.y - cr * 0.1f } };
-					dl->AddConvexPolyFilled(flame, 5, IM_COL32(120, 180, 255, 200));
+				const ImVec2      coin{ 40 * k, foot - 36 * k };
+				const float       w = 70 * k + std::max(numW, Measure(g_body, 11 * k, "CURSED ESSENCE").x);
+				dl->AddRectFilledMultiColor({ 0, foot - 76 * k }, { w + 70 * k, foot }, IM_COL32(0, 0, 0, Hud::kEdgeHud ? 60 : 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, Hud::kEdgeHud ? 90 : 140));
+				// (Noah: their own essence, not septims - "Cursed Essence", animated) a soul burning in Alduin's curse with his
+				// slit eye in its heart, ringed by turning dragon-script (tools/essence.py: an 8x6 flipbook, 24 frames a second)
+				const float cr = 15 * k;
+				if (g_essence) {
+					const int   fr = static_cast<int>(now * 24.0f) % 48;
+					const float uu = (fr % 8) / 8.0f, vv = (fr / 8) / 6.0f;
+					const float hh = cr * (rising ? 2.45f : 2.2f);
+					dl->AddCircleFilled(coin, hh * 0.9f, IM_COL32(0, 0, 0, 110), 40);
+					dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_essence)), { coin.x - hh, coin.y - hh }, { coin.x + hh, coin.y + hh }, { uu, vv }, { uu + 0.125f, vv + 1.0f / 6.0f });
+					if (rising) {
+						dl->AddCircleFilled(coin, hh * 1.05f, IM_COL32(150, 90, 255, 40), 40);
+					}
+				} else {  // (the texture missing: the old mote)
+					dl->AddCircleFilled(coin, cr * (rising ? 2.1f : 1.6f), IM_COL32(140, 90, 255, rising ? 70 : 36), 32);
+					dl->AddCircleFilled(coin, cr * 0.82f, IM_COL32(150, 110, 255, 255), 40);
+					dl->AddCircleFilled({ coin.x, coin.y + cr * 0.05f }, cr * 0.55f, IM_COL32(230, 215, 255, 255), 32);
 				}
-				dl->AddCircleFilled(coin, cr * 0.82f, IM_COL32(110, 170, 255, 255), 40);
-				dl->AddCircleFilled({ coin.x, coin.y + cr * 0.05f }, cr * 0.55f, IM_COL32(205, 230, 255, 255), 32);
-				dl->AddCircleFilled({ coin.x - cr * 0.22f, coin.y - cr * 0.2f }, cr * 0.2f, IM_COL32(255, 255, 255, 240), 12);
-				Txt(dl, g_num, 26 * k, { coin.x + cr + 9 * k, coin.y - 15 * k }, rising ? IM_COL32(200, 228, 255, 255) : kParch, num, rising ? 2 * k : 1.2f * k, rising ? IM_COL32(90, 150, 255, 255) : IM_COL32(0, 0, 0, 220));
-				Txt(dl, g_body, 11 * k, { coin.x + cr + 10 * k, coin.y - 27 * k }, IM_COL32(150, 200, 255, 220), "ESSENCE", 1 * k, IM_COL32(0, 0, 0, 200));
+				Txt(dl, g_num, 26 * k, { coin.x + cr + 22 * k, coin.y - 9 * k }, rising ? IM_COL32(200, 228, 255, 255) : kParch, num, rising ? 2 * k : 1.2f * k, rising ? IM_COL32(90, 150, 255, 255) : IM_COL32(0, 0, 0, 220));
+				Txt(dl, g_body, 11 * k, { coin.x + cr + 23 * k, coin.y - 23 * k }, IM_COL32(190, 160, 255, 230), "CURSED ESSENCE", 1 * k, IM_COL32(0, 0, 0, 200));
 				for (const auto& m : s.motes) {  // the kills' essence, flying in
 					const float u = std::clamp(m[2] / 0.75f, 0.0f, 1.0f), e = u * u * (3 - 2 * u);
 					const ImVec2 from{ m[0] * size.x, m[1] * size.y };
@@ -1399,8 +1404,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float  iu = 1 - e;
 					const ImVec2 p{ iu * iu * from.x + 2 * iu * e * mid.x + e * e * coin.x, iu * iu * from.y + 2 * iu * e * mid.y + e * e * coin.y };
 					const float  r = (5.5f - 2.5f * e) * k;
-					dl->AddCircleFilled(p, r * 2.6f, IM_COL32(90, 150, 255, 60), 16);
-					dl->AddCircleFilled(p, r, IM_COL32(170, 210, 255, 235), 16);
+					dl->AddCircleFilled(p, r * 2.6f, IM_COL32(150, 90, 255, 60), 16);
+					dl->AddCircleFilled(p, r, IM_COL32(205, 175, 255, 235), 16);
 					dl->AddCircleFilled(p, r * 0.45f, IM_COL32(245, 250, 255, 255), 10);
 				}
 				if (Hud::kEdgeHud) {
@@ -1421,7 +1426,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						n += (s.perks >> i) & 1;
 					}
 					const float r = 15 * k, pg = 38 * k;
-					float       x = coin.x + cr + 9 * k + std::max(numW, Measure(g_body, 11 * k, "ESSENCE").x) + 26 * k + r;
+					float       x = coin.x + cr + 22 * k + std::max(numW, Measure(g_body, 11 * k, "CURSED ESSENCE").x) + 26 * k + r;
 					for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
 						if (!((s.perks >> i) & 1)) {
 							continue;
@@ -2773,7 +2778,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					} else {
 						opts.push_back({ 0, "Take " + s.chooseName + (s.chooseOld.empty() ? std::string() : "  (" + s.chooseOld + " goes back)"), g_padLast ? (ps ? "Square" : "X") : Settings::KeyName(0) });
 					}
-					opts.push_back({ 2, "Roll again  (" + std::to_string(s.chooseReroll) + " essence)", g_padLast ? (spell ? "" : (ps ? "Triangle" : "Y")) : std::string("R") });
+					opts.push_back({ 2, "Roll again  (" + std::to_string(s.chooseReroll) + " Cursed Essence)", g_padLast ? (spell ? "" : (ps ? "Triangle" : "Y")) : std::string("R") });
 					opts.push_back({ 3, "Leave it  -  half the roll back (" + std::to_string(s.chooseRefund) + ")", g_padLast ? (ps ? "O" : "B") : Settings::KeyName(4) });
 					for (const auto& o : opts) {
 						const bool on = s.chooseFocus == o.id;
@@ -3034,10 +3039,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Txt(dl, g_title, 20 * k, { L + 36 * k, y + 4 * k }, IM_COL32(210, 196, 170, 255), "LEAVE THE ALTAR");
 					y += 44 * k;
 					// (the classes overhaul) changing class here
-					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "Back" : "C") + "   Change class  (" + std::to_string(Classes::SwitchCost()) + " essence)  -  now " + std::string(Classes::Name(Classes::Get())));
+					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "Back" : "C") + "   Change class  (" + std::to_string(Classes::SwitchCost()) + " Cursed Essence)  -  now " + std::string(Classes::Name(Classes::Get())));
 					y += 26 * k;
 					if (altarCls == 2) {  // (the Ranger's alone)
-						Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "R3" : "Q") + "   Fill your quivers  (" + std::to_string(400 + 100 * std::max(0, s.round)) + " essence)");
+						Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "R3" : "Q") + "   Fill your quivers  (" + std::to_string(400 + 100 * std::max(0, s.round)) + " Cursed Essence)");
 						y += 26 * k;
 					}
 					if (const auto bl = Classes::BoltLine(); !bl.empty()) {  // (the Ranger's crossbow mastery)
@@ -3335,8 +3340,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			// the lobby, each with their night
 			y += 6 * k;
-			const float cols[6] = { L, L + 210 * k, L + 285 * k, L + 360 * k, L + 435 * k, L + 520 * k };
-			const char* heads[6] = { me.night > 0 ? "TONIGHT" : "PLAYER", "KILLS", "HEADS", "STREAK", "ESSENCE", "REVIVES" };
+			const float cols[6] = { L, L + 170 * k, L + 235 * k, L + 300 * k, L + 365 * k, L + 495 * k };  // (room for CURSED ESSENCE)
+			const char* heads[6] = { me.night > 0 ? "TONIGHT" : "PLAYER", "KILLS", "HEADS", "STREAK", "CURSED ESSENCE", "REVIVES" };
 			for (int c = 0; c < 6; ++c) Txt(dl, g_title, 13 * k, { cols[c], y }, Fade(kRune, 0.9f), heads[c]);
 			y += 22 * k;
 			dl->AddLine({ L, y - 3 * k }, { b.x - 20 * k, y - 3 * k }, kRuneDim, 1.0f * k);
@@ -3353,7 +3358,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			Txt(dl, g_title, 15 * k, { L, y }, Fade(kRune, 0.95f), last.night > 0 ? fmt::format("LAST NIGHT - NIGHT {}", last.night) : std::string("LAST NIGHT"));
 			y += 22 * k;
 			if (last.night > 0) {
-				Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(220, 230, 245, 235), fmt::format("{} kills   {} headshots   best streak {}   {} essence", last.kills, last.heads, last.best, last.septims));
+				Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(220, 230, 245, 235), fmt::format("{} kills   {} headshots   best streak {}   {} Cursed Essence", last.kills, last.heads, last.best, last.septims));
 				y += 22 * k;
 				std::string mvp = pl && pl->GetName() ? pl->GetName() : "You";
 				int         best = last.kills * 2 + last.heads + last.style / 50;
@@ -5088,6 +5093,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\cursor_moonlit.png", nullptr, &g_cursorTex);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\flame_ring.png", nullptr, &g_flame);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\menu_fire.png", nullptr, &g_fire);
+			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\essence.png", nullptr, &g_essence);
 			DirectX::CreateWICTextureFromFile(g_device, L"Data\\Interface\\CurseOfAlduin\\divider.png", nullptr, &g_divider);
 			g_init = true;
 			logger::info("hud: ready ({} perk icons, {} weapon icons, menu art {})", icons, wicons, bg);

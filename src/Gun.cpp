@@ -2460,7 +2460,7 @@ namespace bo3z
 			if (const int have = Points::Get(); have < 150000) {
 				Points::Refund(150000 - have);
 			}
-			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every bow, every shout, the glider, 150,000 essence", spells), 7.0f);
+			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every bow, every shout, the glider, 150,000 Cursed Essence", spells), 7.0f);
 			std::string list;
 			for (auto& [el, c] : byEl) list += fmt::format("{} {}, ", el, c);
 			logger::info("testkit: {} altar spells ({}) - {} others taken away; bows {}, shouts {}, essence {}", spells, list, removed, Bows::Count(), gen::kShouts.size(), Points::Get());
@@ -2650,6 +2650,13 @@ namespace bo3z
 					if (!vital || low.find("enemy") != std::string::npos || low.find("boss") != std::string::npos) return;
 					RE::GFxValue::DisplayInfo off;
 					off.SetVisible(false);
+					// (Noah: "I can still see Edge's UI's shout meter") Edge UI turns its shout meter back on every frame it
+					// updates it: shrunk to nothing and moved far off the screen as well, it stays gone whatever it does
+					if (low.find("shout") != std::string::npos) {
+						off.SetAlpha(0.0);
+						off.SetScale(0.0, 0.0);
+						off.SetPosition(-20000.0, -20000.0);
+					}
 					const_cast<RE::GFxValue&>(a_v).SetDisplayInfo(off);
 					if (told.insert(std::string(root) + "." + a_name).second) logger::info("hud: Skyrim's / Edge UI's {}.{} hidden (our own bars instead)", root, a_name);
 				});

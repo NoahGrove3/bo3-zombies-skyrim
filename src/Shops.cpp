@@ -2044,7 +2044,7 @@ namespace bo3z
 			if (!g_choosing && ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x10) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x0080))) {
 				const int cost = 400 + 100 * std::max(0, Save::Get(gen::kAV_round));
 				if (Points::Get() < cost) {
-					Hud::Banner("A quiver costs " + std::to_string(cost) + " essence", 2.0f);
+					Hud::Banner("A quiver costs " + std::to_string(cost) + " Cursed Essence", 2.0f);
 				} else if (Bows::Restock() <= 0) {
 					Hud::Banner("Your quivers are full (or you carry no bow or crossbow)", 2.5f);
 				} else {
@@ -2098,13 +2098,13 @@ namespace bo3z
 								SpinPrize(ref, std::move(pz));
 								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
 							} else if (Points::Get() < cost) {
-								Hud::Banner("It costs " + std::to_string(cost) + " essence", 2.0f);
+								Hud::Banner("It costs " + std::to_string(cost) + " Cursed Essence", 2.0f);
 							}
 							break;
 						} else if (cls == 1) {  // (Destruction's side-picks: its support spells)
 							const int town = TownOfAltar(ref), cost = BowRollCost(town);
 							if (Points::Get() < cost) {
-								Hud::Banner("It costs " + std::to_string(cost) + " essence", 2.0f);
+								Hud::Banner("It costs " + std::to_string(cost) + " Cursed Essence", 2.0f);
 							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollSupport(&pz)) {
 								Points::Spend(cost);
 								g_lastRollCost = cost;
@@ -2118,7 +2118,7 @@ namespace bo3z
 							if (const int fc = FreedCount(); fc < kLegendAt && !Gun::TestKitOn()) {  // (Noah: no Legendary until six altars are freed)
 								Hud::Banner("A hero's pact waits until six Echo Altars are freed (" + std::to_string(fc) + " of 6)", 3.0f);
 							} else if (Points::Get() < cost) {
-								Hud::Banner("A hero's pact costs " + std::to_string(cost) + " essence", 2.0f);
+								Hud::Banner("A hero's pact costs " + std::to_string(cost) + " Cursed Essence", 2.0f);
 							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollHero(&pz)) {
 								Points::Spend(cost);
 								g_lastRollCost = cost;
@@ -2159,7 +2159,7 @@ namespace bo3z
 				const int row = g_lastRollRow;
 				const int cost = row == 6 ? BowRollCost() * (Classes::Get() == 0 ? 2 : 1) : (Classes::Get() == 2 ? BowRollCost() : RollCost());
 				if (Points::Get() < cost) {  // (too few: the offer stays where it is)
-					Hud::Banner("Rolling again costs " + std::to_string(cost) + " essence", 2.0f);
+					Hud::Banner("Rolling again costs " + std::to_string(cost) + " Cursed Essence", 2.0f);
 					PlayUi(UiSnd::kFail);
 					return;
 				}

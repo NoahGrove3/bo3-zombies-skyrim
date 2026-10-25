@@ -1,6 +1,6 @@
 {
  "sheet": "events",
- "about": "Event nights and themed waves (Noah). Each theme is two things: an EVENT NIGHT - from night minNight, a 1 in 8 chance at nightfall (never on a hound night), the whole night themed: its weather forced, the screen tinted (tint RRGGBBAA), double essence (pointsMult) and double the spawn rate (spawnMult) - and a THEMED WAVE: from wave 3 of an ordinary night, a 1 in 6 chance per wave (never two in a row, two a night at most, never the last wave). members: the enemies (enemies sheet ids) the theme's waves draw from (empty = the night's own roster); finale: one that rises last; waveCount/Hp/Speed/Points: the themed wave's dead, as multiples. color: the theme's colour on the wave dial. sound: its sting; bed: its ambience.",
+ "about": "Event nights and themed waves (Noah). Each theme is two things: an EVENT NIGHT - from night minNight, a 1 in 8 chance at nightfall (never on a hound night), the whole night themed: its weather forced, the screen tinted (tint RRGGBBAA), double Cursed Essence (pointsMult) and double the spawn rate (spawnMult) - and a THEMED WAVE: from wave 3 of an ordinary night, a 1 in 6 chance per wave (never two in a row, two a night at most, never the last wave). members: the enemies (enemies sheet ids) the theme's waves draw from (empty = the night's own roster); finale: one that rises last; waveCount/Hp/Speed/Points: the themed wave's dead, as multiples. color: the theme's colour on the wave dial. sound: its sting; bed: its ambience.",
  "chance": 0.125,
  "waveChance": 0.1667,
  "minNight": 8,
@@ -31,7 +31,7 @@
   {
    "id": "goblinraid",
    "label": "GOBLIN RAID",
-   "banner": "GOBLIN RAID - DOUBLE ESSENCE",
+   "banner": "GOBLIN RAID - DOUBLE CURSED ESSENCE",
    "weather": "Dawnguard.esm|0x006AEC",
    "spawnMult": 2.0,
    "speedMult": 1.1,
@@ -58,7 +58,7 @@
   {
    "id": "harpyswarm",
    "label": "HARPY SWARM",
-   "banner": "HARPY SWARM - DOUBLE ESSENCE",
+   "banner": "HARPY SWARM - DOUBLE CURSED ESSENCE",
    "weather": "Skyrim.esm|0x0C8220",
    "spawnMult": 2.0,
    "speedMult": 1.0,
@@ -83,7 +83,7 @@
   {
    "id": "champions",
    "label": "ARMORED CHAMPIONS",
-   "banner": "ARMORED CHAMPIONS - DOUBLE ESSENCE",
+   "banner": "ARMORED CHAMPIONS - DOUBLE CURSED ESSENCE",
    "weather": "Skyrim.esm|0x0C8220",
    "spawnMult": 2.0,
    "speedMult": 1.0,
@@ -113,7 +113,7 @@
   {
    "id": "bloodfog",
    "label": "BLOOD FOG",
-   "banner": "BLOOD FOG - DOUBLE ESSENCE",
+   "banner": "BLOOD FOG - DOUBLE CURSED ESSENCE",
    "weather": "Skyrim.esm|0x0C821E",
    "spawnMult": 2.0,
    "speedMult": 1.2,
