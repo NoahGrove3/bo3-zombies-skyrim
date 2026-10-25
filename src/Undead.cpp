@@ -119,6 +119,12 @@ namespace bo3z
 			std::atomic<bool>         volatileOne{ false };  // (the Volatile: its own claws)
 			std::atomic<bool>         leftBlade{ false };    // (Noah: "make him swing the sword arm on his left hand") the Mutant
 			std::atomic<bool>         turned{ false };       // (the Risen Dead, wounded: frenzied, its claws faster)
+			std::atomic<int>          wantSet{ -1 };         // (its row's own clips: SetEyes)
+			std::atomic<float>        danceT{ 0 };           // (the Dance Of Death: seconds of dancing left)
+			int                       danceK = 0;
+			float                     lateral = 0;           // its sideways share of its pace (-1 left .. 1 right)
+			RE::NiPoint3              locoLast{};
+			bool                      startDone = false;
 		};
 		std::shared_mutex                                    g_lock;
 		std::unordered_map<RE::FormID, std::shared_ptr<Rig>> g_rigs;  // (shared: the animation threads keep theirs alive while the game thread replaces or drops it)
@@ -503,8 +509,13 @@ namespace bo3z
 		// retargeted onto Skyrim's draugr and human skeletons by tools/zprev (bake): per bone its rotation against its
 		// parent each frame, and the COM's place (a run's drift across the ground taken out; the game moves the body)
 		using namespace zclip;  // (src/ClipBlend.h: the clips' blending, shared with the preview renderer)
-		std::array<ClipSet, 2> g_clipSets;
+		// 0 draugr, 1 human (the shared sets), 2 risen, 3 brute, 4 mage, 5 girl (each kind its own: Noah's folders)
+		constexpr int          kSets = 6;
+		constexpr const char*  kSetName[kSets] = { "draugr", "human", "risen", "brute", "mage", "girl" };
+		std::array<ClipSet, kSets> g_clipSets;
+		ClipSet                g_dance;
 		std::once_flag         g_clipsLoaded;
+		int SetOfRow(std::string_view a_id) { return a_id == "zombie" ? 2 : a_id == "volatile" ? 3 : a_id == "mage" ? 4 : a_id == "girl" ? 5 : -1; }
 		bool LoadClip(const std::string& a_path, Clip& a_out)
 		{
 			std::ifstream f(a_path, std::ios::binary);
@@ -527,20 +538,25 @@ namespace bo3z
 		void LoadClips()
 		{
 			std::call_once(g_clipsLoaded, [] {
-				static constexpr const char* kSkel[2] = { "draugr", "human" };
-				for (int k = 0; k < 2; ++k) {
-					bool all = true;
-					for (int c = 0; c < kClips; ++c) {
-						const bool got = LoadClip(std::string("Data\\SKSE\\Plugins\\CurseOfAlduin\\anims\\") + kSkel[k] + "\\" + kClipFile[c] + ".zan", g_clipSets[k].c[c]);
-						if (c != kAttackL) all &= got;
+				const std::string root = "Data\\SKSE\\Plugins\\CurseOfAlduin\\anims\\";
+				for (int d = kDance0; d <= kDance3; ++d) g_dance.own[d] = LoadClip(root + "dance\\" + kClipFile[d] + ".zan", g_dance.c[d]);
+				for (int k = 0; k < kSets; ++k) {
+					auto& S = g_clipSets[k];
+					for (int c = 0; c < kClips; ++c) S.own[c] = LoadClip(root + kSetName[k] + "\\" + kClipFile[c] + ".zan", S.c[c]);
+					const bool shared = k < 2;
+					bool core = true;
+					if (shared) for (int c : { kRun, kAttack, kPunch, kScream, kHit, kHit2, kStandUp }) core &= S.own[c];
+					else core = g_clipSets[0].ok || S.own[kRun];
+					S.Fill(shared ? nullptr : &g_clipSets[0], &g_dance);
+					// (a clip not lined up with the run - a stale file - is dropped for what stands in for it)
+					for (int c = 1; c < kClips; ++c) {
+						if (S.c[c].frames > 0 && S.c[c].bones != S.c[kRun].bones) S.c[c] = Clip{}, S.own[c] = false;
 					}
-					// (the mirrored swing is a nicety: missing or not lined up with the rest, the plain swing stands in)
-					if (g_clipSets[k].c[kAttackL].bones != g_clipSets[k].c[kRun].bones) g_clipSets[k].c[kAttackL] = g_clipSets[k].c[kAttack];
-					for (int c = 1; c < kClips && all; ++c) all &= g_clipSets[k].c[c].bones == g_clipSets[k].c[kRun].bones;
-					g_clipSets[k].ok = all;
-					LoadClip(std::string("Data\\SKSE\\Plugins\\CurseOfAlduin\\anims\\") + kSkel[k] + "\\rest.zan", g_clipSets[k].rest);  // (optional: straight wrists)
-					if (all) g_clipSets[k].Prepare();
-					logger::info("undead: the {} skeleton's clips {}", kSkel[k], g_clipSets[k].ok ? "loaded" : "missing - the old rig moves them");
+					S.Fill(shared ? nullptr : &g_clipSets[0], &g_dance);
+					S.ok = core && S.c[kRun].frames > 1;
+					LoadClip(root + (k == 1 ? "human" : "draugr") + "\\rest.zan", S.rest);  // (optional: straight wrists)
+					if (S.ok) S.Prepare();
+					logger::info("undead: the {} clips {}", kSetName[k], S.ok ? "loaded" : "missing");
 				}
 			});
 		}
@@ -569,9 +585,16 @@ namespace bo3z
 		float RateFor(const Rig& r, int c)
 		{
 			float rate = ClipRate(c);
-			if ((c == kAttack || c == kAttackL) && (r.volatileOne.load() || r.type == Type::Runner)) rate *= r.volatileOne.load() ? 1.3f : 1.12f;  // (their claws come faster)
-			if (c == kPunch && r.type == Type::Wailer) rate *= 0.9f;
-			if (r.turned.load() && (c == kAttack || c == kPunch)) rate *= 1.3f;
+			const bool swing = c == kAttack || c == kAttackL || c == kAttack2 || c == kAttack3 || c == kPunch;
+			switch (r.clipSet) {
+			case 2: if (swing) rate *= r.turned.load() ? 1.3f : 1.1f; break;  // the Risen Dead: quick claws, quicker frenzied
+			case 3: if (swing) rate *= 0.85f; break;                          // the Brute: slow, heavy swings
+			case 5: if (swing) rate *= 0.8f; break;                           // the zombie girl: slower than the Risen Dead
+			default:
+				if ((c == kAttack || c == kAttackL) && (r.volatileOne.load() || r.type == Type::Runner)) rate *= r.volatileOne.load() ? 1.3f : 1.12f;
+				if (c == kPunch && r.type == Type::Wailer) rate *= 0.9f;
+				if (r.turned.load() && (c == kAttack || c == kPunch)) rate *= 1.3f;
+			}
 			return rate;
 		}
 		// true: the clips posed it this frame (the old rig stays out)
@@ -582,6 +605,10 @@ namespace bo3z
 				const int k = SkeletonOf(a_actor);
 				r.clipSet = g_clipSets[k].ok ? k : -2;
 			}
+			// its row's own clips once known (SetEyes): the same bones, so only the player starts over
+			if (const int w = r.wantSet.load(); w >= 0 && w != r.clipSet && r.clipSet != -2 && g_clipSets[w].ok) {
+				r.clipSet = w, r.player = Player{};
+			}
 			if (r.clipSet < 0 || !r.root) return false;
 			const ClipSet& S = g_clipSets[r.clipSet];
 			if (r.clipNodes.empty()) {
@@ -591,32 +618,56 @@ namespace bo3z
 				r.comNode = r.root->GetObjectByName("NPC COM [COM ]");
 			}
 			auto& P = r.player;
+			// its feet: pace, and how much of it is sideways (for a sidestep)
+			Loco loco{ r.speed, 0.0f, r.turned.load() };
+			{
+				const auto pos = a_actor->GetPosition();
+				if (dt > 0) {
+					const float vx = (pos.x - r.locoLast.x) / dt, vy = (pos.y - r.locoLast.y) / dt, v = std::hypot(vx, vy);
+					const float yaw = a_actor->GetAngleZ();
+					const float lat = v > 20.0f ? (vx * std::cos(yaw) - vy * std::sin(yaw)) / v : 0.0f;
+					r.lateral += (lat - r.lateral) * std::min(1.0f, dt * 5.0f);
+				}
+				r.locoLast = pos;
+				loco.lateral = r.lateral;
+			}
 			// what it should be doing
 			const bool oneShotOn = P.OneShotOn(S);
 			int want = -1;
-			if (cue == Undead::kCueStandUp) want = kStandUp;
-			else if (cue == Undead::kCueScream || cue == Undead::kCueRoar) want = kScream;
-			else if (attacking && !r.wasAttacking) {
-				// (Noah: "will these enemies have different attacks to make them unique?") each its own: the Risen Dead
-				// mostly lunge and claw, a flurry of blows now and then; the Bride only the leaping claw, fast; the Skald
-				// pummels (and screams the horde on: Undead::Tick); the Volatile claws fastest of all (and pounces)
-				const int n = r.nextAttack++;
-				if (r.leftBlade.load()) want = kAttackL;
-				else if (r.volatileOne.load() || r.type == Type::Runner) want = kAttack;
-				else if (r.type == Type::Wailer) want = (n % 3 == 2) ? kAttack : kPunch;
-				else want = (n % 3 == 2) ? kPunch : kAttack;
+			if (float dl = r.danceT.load(); dl > 0) {  // the Dance Of Death: nothing else until it ends
+				r.danceT.store(dl - dt);
+				want = kDance0 + r.danceK % kDances;
 			}
-			else if (const float h = r.hitAt.exchange(-1.0f); h >= 0 && !(oneShotOn && (P.clip == kAttack || P.clip == kAttackL || P.clip == kPunch || P.clip == kStandUp || P.clip == kScream))) want = (r.nextAttack & 1) ? kHit : kHit2;
+			else if (cue == Undead::kCueStandUp) want = kStandUp;
+			else if (cue == Undead::kCueCast) want = kCast;
+			else if (cue == Undead::kCueLeap) want = kLeap;
+			else if (cue == Undead::kCueScream || cue == Undead::kCueRoar) want = r.clipSet == 4 ? kSummon : kScream;
+			else if (attacking && !r.wasAttacking) {
+				// (Noah: each its own attacks) the Risen Dead claw left and right; the Brute swipes three ways and punches;
+				// the mage blasts; the zombie girl claws, and now and then brings both arms down
+				const int n = r.nextAttack++;
+				switch (r.clipSet) {
+				case 2: want = (n & 1) ? kAttackL : kAttack; break;
+				case 3: { static constexpr int kB[4] = { kAttack, kAttack2, kAttack3, kPunch }; want = kB[(n * 7 + 3) % 4]; break; }
+				case 4: want = kCast; break;
+				case 5: want = (n % 3 == 2) ? kPunch : kAttack; break;
+				default:
+					if (r.leftBlade.load()) want = kAttackL;
+					else if (r.volatileOne.load() || r.type == Type::Runner) want = kAttack;
+					else if (r.type == Type::Wailer) want = (n % 3 == 2) ? kAttack : kPunch;
+					else want = (n % 3 == 2) ? kPunch : kAttack;
+				}
+			}
+			else if (const float h = r.hitAt.exchange(-1.0f); h >= 0 && !(oneShotOn && P.clip != kHit && P.clip != kHit2)) want = (r.nextAttack & 1) ? kHit : kHit2;
 			r.wasAttacking = attacking;
 			if (want < 0) {
 				if (oneShotOn && P.clip != kStandUp) want = P.clip;
 				else if (P.clip == kStandUp && cue == Undead::kCueStandUp) want = kStandUp;
+				else if (P.clip == kStandUp && !r.startDone && S.Has(kStart)) want = kStart, r.startDone = true;  // (up off the ground and straight into a sprint)
 				else want = kRun;
 			}
-			// its pace: a run plays as fast as it moves (standing still, held mid-stride); the rest at their own speed
-			const float runRate = std::clamp(r.speed / std::max(1.0f, S.c[kRun].speed), 0.0f, 2.0f);
-			P.Play(want, want == kRun ? runRate : RateFor(r, want), S);
-			P.Tick(S, dt, runRate, r.pose, r.com);
+			P.Play(want, want == kRun ? 1.0f : RateFor(r, want), S);
+			P.Tick(S, dt, loco, r.pose, r.com);
 			for (std::size_t i = 0; i < r.clipNodes.size() && i < r.pose.size(); ++i) {
 				if (auto* n = r.clipNodes[i]) n->local.rotate = MatOf(r.pose[i]);
 			}
@@ -670,8 +721,12 @@ namespace bo3z
 			bool            turns = false;    // the Risen Dead: wounded, it frenzies
 			bool            turned = false;
 			bool            brute = false;    // the Volatile: an armoured hide (Gun: half damage unless the head or the back)
+			bool            caster = false;   // the mage: a bolt at you now and then (and its summoning scream: Wailer)
+			float           castCd = 4.0f, castWind = -1.0f;
+			float           pinT = 0;         // held where it stands (casting, summoning)
+			RE::NiPoint3    pinAt{};
 			RE::NiPoint3    pounceFrom{}, pounceTo{};
-			float           pounceT = -1.0f;  // seconds into its pounce (-1 none)
+			float           pounceT = -1.0f;  // seconds into its pounce (-1 none; below 0 and above -1: its wind-up)
 		};
 		std::vector<Mind> g_minds;
 
@@ -724,6 +779,13 @@ namespace bo3z
 		std::mt19937      g_rng{ std::random_device{}() };
 		float             Rand(float a, float b) { return std::uniform_real_distribution<float>(a, b)(g_rng); }
 
+		// the mage's bolt: Skyrim's own Firebolt, cast from its hands at you
+		void CastBolt(RE::Actor* a_from, RE::Actor* a_at)
+		{
+			static auto* bolt = RE::TESForm::LookupByID<RE::SpellItem>(0x0007E882);  // (the flame atronach's Firebolt: a creature's own spell)
+			if (!bolt || !a_from || !a_at) return;
+			if (auto* c = a_from->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) c->CastSpellImmediate(bolt, false, a_at, 1.0f, false, 0.0f, a_from);
+		}
 		void SetCue(RE::Actor* a, int a_cue, float a_seconds)
 		{
 			std::shared_lock l(g_lock);
@@ -774,22 +836,63 @@ namespace bo3z
 		{
 			if (a_actor) {
 				g_eyes[a_actor->GetFormID()] = { std::string(a_id), nullptr };
-				if (a_id == "volatile") {  // (its row tells: the Mutant's blade is on its left arm)
+				{  // (its row's own clips: Noah's folders)
 					std::shared_lock l(g_lock);
-					if (auto it = g_rigs.find(a_actor->GetFormID()); it != g_rigs.end()) it->second->leftBlade.store(true);
+					if (auto it = g_rigs.find(a_actor->GetFormID()); it != g_rigs.end()) it->second->wantSet.store(SetOfRow(a_id));
 				}
 				// each common kind's own trick (Noah: "something that sets them apart from the rest other than their look")
 				for (auto& m : g_minds) {
 					if (m.handle.get().get() != a_actor) continue;
 					if (a_id == "zombie") m.turns = true;
 					else if (a_id == "runner") m.leaper = true, m.cd = Rand(2.0f, 4.0f);
+					else if (a_id == "mage") m.caster = true, m.castCd = Rand(2.5f, 5.0f), m.cd = Rand(6.0f, 10.0f);
 					else if (a_id == "volatile") {
-						m.brute = true;
+						m.brute = true, m.leaper = true, m.cd = Rand(4.0f, 8.0f);
 						auto* av = a_actor->AsActorValueOwner();
-						av->SetActorValue(RE::ActorValue::kAttackDamageMult, av->GetActorValue(RE::ActorValue::kAttackDamageMult) * 1.6f);  // (the blade: heavy)
+						av->SetActorValue(RE::ActorValue::kAttackDamageMult, av->GetActorValue(RE::ActorValue::kAttackDamageMult) * 2.0f);  // (Noah: slower, more health and damage)
 					}
 				}
 			}
+		}
+
+		// (Noah: the Dance Of Death) the dead dance where they stand: their own clips play a dance (one of the four, at
+		// random), their minds stop (no step, no swing) and they take half again as much from every blow - for a_seconds
+		std::vector<std::pair<RE::ActorHandle, float>> g_dancers;
+		bool Dance(RE::Actor* a_actor, float a_seconds)
+		{
+			if (!a_actor || a_actor->IsDead()) return false;
+			{
+				std::shared_lock l(g_lock);
+				if (auto it = g_rigs.find(a_actor->GetFormID()); it != g_rigs.end()) {
+					it->second->danceK = static_cast<int>(Rand(0.0f, 3.999f));
+					it->second->danceT.store(a_seconds);
+				}
+			}
+			a_actor->EnableAI(false);
+			a_actor->StopCombat();
+			for (auto& d : g_dancers) {
+				if (d.first.get().get() == a_actor) { d.second = a_seconds; return true; }
+			}
+			g_dancers.push_back({ a_actor->GetHandle(), a_seconds });
+			return true;
+		}
+		bool IsDancing(RE::Actor* a_actor)
+		{
+			if (!a_actor) return false;
+			for (auto& d : g_dancers) {
+				if (d.second > 0 && d.first.get().get() == a_actor) return true;
+			}
+			return false;
+		}
+		void TickDancers(float a_delta)
+		{
+			for (auto& d : g_dancers) {
+				d.second -= a_delta;
+				if (d.second <= 0) {
+					if (auto a = d.first.get(); a && !a->IsDead()) a->EnableAI(true);
+				}
+			}
+			std::erase_if(g_dancers, [](const auto& d) { return d.second <= 0; });
 		}
 
 		bool IsBrute(RE::Actor* a_actor)
@@ -913,6 +1016,7 @@ namespace bo3z
 			}
 			g_grabbed = std::max(0.0f, g_grabbed - a_delta);
 			g_wailBoost = std::max(0.0f, g_wailBoost - a_delta);
+			TickDancers(a_delta);
 			// a grab holds you: the player's speed drops while the hands are on you
 			{
 				g_grabSlow = std::max(0.0f, g_grabSlow - a_delta);
@@ -959,6 +1063,7 @@ namespace bo3z
 					continue;
 				}
 				const float dist = a->GetPosition().GetDistance(pp);
+				if (IsDancing(a.get())) continue;  // (the Dance Of Death: no tricks while it dances)
 				m.cd -= a_delta;
 				// the Risen Dead turns: hurt past half, it shrieks and comes on in a frenzy - faster feet, faster claws
 				if (m.turns && !m.turned) {
@@ -978,9 +1083,41 @@ namespace bo3z
 				// the pounce (the Volatile risen by noise: long and often; the Draugr Bride: a shorter leap): from mid range, a
 				// leap that closes most of the gap in a third of a second (only with a clear line to you, never through a
 				// wall), its claws coming as it lands
+				// (the mage, the summoning brute) held where it stands while it casts
+				if (m.pinT > 0) {
+					m.pinT -= a_delta;
+					a->SetPosition(m.pinAt, true);
+				}
+				// the mage's bolt: a moment's wind-up (its cast), then a spell of fire at you - only with a clear line
+				if (m.caster) {
+					if (m.castWind >= 0) {
+						if ((m.castWind -= a_delta) < 0) {
+							bool los = false;
+							if (a->HasLineOfSight(a_player, los) && los) CastBolt(a.get(), a_player);
+						}
+					} else if ((m.castCd -= a_delta) <= 0 && m.wind < 0) {
+						bool los = false;
+						if (dist > 350.0f && dist < 2600.0f && a->HasLineOfSight(a_player, los) && los) {
+							m.castWind = 0.95f;
+							m.castCd = Rand(5.0f, 8.0f);
+							m.pinT = 1.6f, m.pinAt = a->GetPosition();
+							SetCue(a.get(), kCueCast, 0.3f);
+							Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
+						} else {
+							m.castCd = 0.5f;
+						}
+					}
+				}
 				if (m.volatileOne || m.leaper) {
-					const float pMin = m.volatileOne ? 260.0f : 220.0f, pMax = m.volatileOne ? 760.0f : 540.0f;
-					const float pDur = m.volatileOne ? 0.35f : 0.4f, pH = m.volatileOne ? 70.0f : 55.0f;
+					// (the Brute's jump attack: a crouch before it leaves the ground - its clip - then a heavy arc)
+					const float pMin = m.volatileOne ? 260.0f : m.brute ? 280.0f : 220.0f, pMax = m.volatileOne ? 760.0f : m.brute ? 650.0f : 540.0f;
+					const float pDur = m.volatileOne ? 0.35f : m.brute ? 0.75f : 0.4f, pH = m.volatileOne ? 70.0f : m.brute ? 85.0f : 55.0f;
+					if (m.pounceT < 0 && m.pounceT > -1.0f) {  // its wind-up
+						m.pounceT += a_delta;
+						a->SetPosition(m.pounceFrom, true);
+						if (m.pounceT >= 0) m.pounceT = 0.0f;
+						continue;
+					}
 					if (m.pounceT >= 0) {
 						m.pounceT += a_delta;
 						const float u = std::min(1.0f, m.pounceT / pDur);
@@ -1003,9 +1140,9 @@ namespace bo3z
 						m.pounceTo = m.pounceFrom + dir * std::max(0.0f, d - 120.0f);
 						if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(m.pounceTo, land) && std::abs(land - m.pounceTo.z) < 120.0f) m.pounceTo.z = land;
 						else m.pounceTo.z = m.pounceFrom.z;
-						m.pounceT = 0.0f;
-						m.cd = m.volatileOne ? Rand(5.0f, 7.5f) : Rand(6.0f, 9.0f);
-						SetCue(a.get(), kCueGrab, 0.5f);
+						m.pounceT = m.brute ? -0.55f : 0.0f;
+						m.cd = m.volatileOne ? Rand(5.0f, 7.5f) : m.brute ? Rand(7.0f, 11.0f) : Rand(6.0f, 9.0f);
+						SetCue(a.get(), m.brute ? kCueLeap : kCueGrab, m.brute ? 0.3f : 0.5f);
 						Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
 						continue;
 					}
@@ -1034,8 +1171,9 @@ namespace bo3z
 				}
 				switch (m.type) {
 				case Type::Wailer:
-					if (dist < 1800.0f) {
+					if (dist < 1800.0f && m.castWind < 0) {
 						m.wind = 1.1f;
+						if (m.caster) m.pinT = 3.0f, m.pinAt = a->GetPosition(), m.castCd = std::max(m.castCd, 3.5f);  // (the mage stands to summon)
 						SetCue(a.get(), kCueScream, 1.6f);
 						Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
 						m.cd = Rand(9.0f, 13.0f);
@@ -1065,6 +1203,10 @@ namespace bo3z
 
 		void Reset()
 		{
+			for (auto& d : g_dancers) {
+				if (auto a = d.first.get(); a && !a->IsDead()) a->EnableAI(true);
+			}
+			g_dancers.clear();
 			std::unique_lock l(g_lock);
 			g_rigs.clear();
 			g_minds.clear();

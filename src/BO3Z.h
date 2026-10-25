@@ -119,6 +119,7 @@ namespace bo3z
 		bool             IsElite(RE::Actor* a_actor);
 		bool             IsBoss(RE::Actor* a_actor);
 		void             Noise(float a_amount);  // the night hears you (spells bursting, shouts, fights): enough draws a Volatile
+		bool             DanceOfDeath(RE::FormID a_spell);  // (Noah) the Dance Of Death spoken: the dead near you dance (true: it was that shout)
 		std::string_view HeadNodeFor(RE::Actor* a_actor);
 		void             LogState();
 		void             Web(const RE::NiPoint3& a_at, float a_radius, float a_seconds, float a_amount = 60.0f, bool a_frostFx = false);   // Widow's Wine / wand slows
@@ -191,7 +192,7 @@ namespace bo3z
 	namespace Undead
 	{
 		enum class Type { Shambler, Runner, Crawler, Wailer, Bloater, Stalker, Reaper, Necro, Wyrm };
-		enum Cue { kCueNone = 0, kCueRoar, kCueScream, kCueGrab, kCueSwipeL, kCueSwipeR, kCueCrouch, kCueChannel, kCueStandUp };
+		enum Cue { kCueNone = 0, kCueRoar, kCueScream, kCueGrab, kCueSwipeL, kCueSwipeR, kCueCrouch, kCueChannel, kCueStandUp, kCueCast, kCueLeap };
 		bool  HasClips(RE::Actor* a_actor);    // moves by the Mixamo clips (Data/SKSE/Plugins/CurseOfAlduin/anims)
 		float StandUpSeconds();                 // the stand-up clip's length as it plays
 		void  OnHit(RE::Actor* a_actor);       // a hit landed on it: its flinch (now and then)
@@ -201,6 +202,8 @@ namespace bo3z
 		void  CueFor(RE::Actor* a_actor, int a_cue, float a_seconds);
 		void  SetEyes(RE::Actor* a_actor, std::string_view a_id);  // its glowing eyes (meshes/CurseOfAlduin/eyes/<id>_glow.nif), and its row's own trick (the Risen Dead turn, the Bride leaps, the Volatile is armoured)
 		bool  IsBrute(RE::Actor* a_actor);    // the Volatile's armoured hide
+		bool  Dance(RE::Actor* a_actor, float a_seconds);  // (the Dance Of Death) it dances, mind stopped, for a_seconds
+		bool  IsDancing(RE::Actor* a_actor);  // (its blows land half again as hard)
 		Type  Roll(int a_round);         // which of the risen dead this one is
 		float SpeedMult(Type a_type);
 		float HealthMult(Type a_type);

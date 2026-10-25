@@ -472,20 +472,27 @@ static int RunNif(const char* modelPath, const char* skelPath, const char* animP
 	if (const char* zg = getenv("ZGAME"); zg && !bakeOut) {
 		const std::string all = zg; const auto bar = all.find('|');
 		const std::string dir = all.substr(0, bar), script = all.substr(bar + 1);
-		zclip::ClipSet S;
-		bool ok = true;
-		for (int c = 0; c < zclip::kClips; c++) {
-			FILE* f = fopen((dir + "/" + zclip::kClipFile[c] + ".zan").c_str(), "rb");
-			if (!f) { ok = false; break; }
-			char mg[4]; uint32_t fps, nf, nb; float sp;
-			fread(mg, 1, 4, f); fread(&fps, 4, 1, f); fread(&nf, 4, 1, f); fread(&nb, 4, 1, f); fread(&sp, 4, 1, f);
-			auto& C = S.c[c]; C.fps = fps, C.frames = nf, C.speed = sp; C.bones.resize(nb);
-			for (auto& b : C.bones) { uint8_t l; fread(&l, 1, 1, f); b.resize(l); fread(b.data(), 1, l, f); }
-			C.q.resize((size_t)nf * nb * 4); C.com.resize((size_t)nf * 3);
-			fread(C.q.data(), 4, C.q.size(), f); fread(C.com.data(), 4, C.com.size(), f); fclose(f);
-		}
-		if (!ok) { fprintf(stderr, "clips missing in %s\n", dir.c_str()); return 1; }
-		if (FILE* f = fopen((dir + "/rest.zan").c_str(), "rb"); f && !getenv("ZNOREST")) {
+		auto loadSet = [](const std::string& d, zclip::ClipSet& S) {
+			for (int c = 0; c < zclip::kClips; c++) {
+				FILE* f = fopen((d + "/" + zclip::kClipFile[c] + ".zan").c_str(), "rb");
+				S.own[c] = f != nullptr;
+				if (!f) continue;
+				char mg[4]; uint32_t fps, nf, nb; float sp;
+				fread(mg, 1, 4, f); fread(&fps, 4, 1, f); fread(&nf, 4, 1, f); fread(&nb, 4, 1, f); fread(&sp, 4, 1, f);
+				auto& C = S.c[c]; C.fps = fps, C.frames = nf, C.speed = sp; C.bones.resize(nb);
+				for (auto& b : C.bones) { uint8_t l; fread(&l, 1, 1, f); b.resize(l); fread(b.data(), 1, l, f); }
+				C.q.resize((size_t)nf * nb * 4); C.com.resize((size_t)nf * 3);
+				fread(C.q.data(), 4, C.q.size(), f); fread(C.com.data(), 4, C.com.size(), f); fclose(f);
+			}
+		};
+		const std::string up = dir.substr(0, dir.find_last_of('/'));
+		zclip::ClipSet S, base, dance;
+		loadSet(dir, S);
+		if (dir.substr(dir.find_last_of('/') + 1) != "draugr" && dir.substr(dir.find_last_of('/') + 1) != "human") loadSet(up + "/draugr", base), base.Fill(nullptr, nullptr);
+		loadSet(up + "/dance", dance);
+		S.Fill(base.c[zclip::kRun].frames > 0 ? &base : nullptr, &dance);
+		if (S.c[zclip::kRun].frames <= 1) { fprintf(stderr, "clips missing in %s\n", dir.c_str()); return 1; }
+		if (FILE* f = fopen((up + "/draugr/rest.zan").c_str(), "rb"); f && !getenv("ZNOREST")) {
 			char mg[4]; uint32_t fps, nf, nb; float sp;
 			fread(mg, 1, 4, f); fread(&fps, 4, 1, f); fread(&nf, 4, 1, f); fread(&nb, 4, 1, f); fread(&sp, 4, 1, f);
 			auto& C = S.rest; C.fps = fps, C.frames = nf; C.bones.resize(nb);
@@ -496,15 +503,15 @@ static int RunNif(const char* modelPath, const char* skelPath, const char* animP
 		S.Prepare();
 		std::vector<int> skOf(S.c[0].bones.size());
 		for (size_t i = 0; i < skOf.size(); i++) skOf[i] = FindBone(sk, S.c[0].bones[i]);
-		struct Seg { float secs, run, rate; int clip; };
+		struct Seg { float secs, run, rate; int clip; float lat; };  // (run: the pace in units a second)
 		std::vector<Seg> segs;
 		{
 			size_t a = 0;
 			while (a < script.size()) {
 				size_t e = script.find(',', a); if (e == std::string::npos) e = script.size();
 				std::string t = script.substr(a, e - a); a = e + 1;
-				Seg g{ 1, 1, 1, 0 }; char nm[32] = "run";
-				sscanf(t.c_str(), "%f@%f@%31[^@]@%f", &g.secs, &g.run, nm, &g.rate);
+				Seg g{ 1, 1, 1, 0, 0 }; char nm[32] = "run";
+				sscanf(t.c_str(), "%f@%f@%31[^@]@%f@%f", &g.secs, &g.run, nm, &g.rate, &g.lat);
 				for (int c = 0; c < zclip::kClips; c++) if (!strcmp(nm, zclip::kClipFile[c])) g.clip = c;
 				segs.push_back(g);
 			}
@@ -518,9 +525,9 @@ static int RunNif(const char* modelPath, const char* skelPath, const char* animP
 		for (auto& g : segs) {
 			const int n = std::max(1, (int)std::lround(g.secs * 30));
 			for (int k = 0; k < n; k++, fi++) {
-				if (k == 0 && g.clip != zclip::kRun) P.Play(g.clip, zclip::ClipRate(g.clip) * g.rate, S);
-				if (P.clip < 0 || P.clip == zclip::kRun || !P.OneShotOn(S)) P.Play(zclip::kRun, g.run, S);
-				P.Tick(S, dt, g.run, pose, cp);
+				if ((k == 0 && g.clip != zclip::kRun) || zclip::Loops(g.clip)) P.Play(g.clip, zclip::ClipRate(g.clip) * g.rate, S);
+				else if (P.clip < 0 || zclip::Loops(P.clip) || !P.OneShotOn(S)) P.Play(zclip::kRun, 1.0f, S);
+				P.Tick(S, dt, zclip::Loco{ g.run, g.lat, false }, pose, cp);
 				std::vector<Xf> loc(sk.size());
 				for (size_t b = 0; b < sk.size(); b++) loc[b] = sk[b].local;
 				for (size_t i = 0; i < skOf.size(); i++) if (skOf[i] >= 0) loc[skOf[i]].R = M3of(pose[i]);
@@ -611,7 +618,7 @@ static int RunNif(const char* modelPath, const char* skelPath, const char* animP
 			}
 		}
 		if (getenv("ZPOS")) {
-			for (const char* nm : { "NPC L Hand", "NPC R Hand", "NPC L Forearm", "NPC R Forearm" }) { int b = FindBone(sk, nm); printf("%d %s %.1f %.1f %.1f\n", fi, nm, W_[b].t.x, W_[b].t.y, W_[b].t.z); }
+			for (const char* nm : { "NPC L Hand", "NPC R Hand", "NPC L Forearm", "NPC R Forearm", "NPC L Foot", "NPC R Foot" }) { int b = FindBone(sk, nm); printf("%d %s %.1f %.1f %.1f\n", fi, nm, W_[b].t.x, W_[b].t.y, W_[b].t.z); }
 		}
 		if (bakeOut) {
 			bakeFrames.push_back({});

@@ -20,6 +20,10 @@
 // (Noah: "the enemies wrists are bent they should be straight and animated through the attack swings") the retargeted
 // clips held each hand turned 40-90 degrees off its forearm the whole time; now a hand rests straight - the skeleton's
 // own bind pose (rest.zan) - and plays only the clip's motion about that hand's average pose, seen from the forearm
+// (Noah: "make the enemies attacks and movement make sense with what is in the folders") each kind has its own set of
+// clips (anims/<set>: risen, brute, mage, girl), anything a set lacks taken from the shared one; its feet pick the
+// walk, run or sprint nearest its pace (and a sidestep when it moves sideways), cross-fading between them on one
+// stride; the dances (anims/dance) are shared by all
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -28,8 +32,13 @@
 
 namespace zclip
 {
-	enum ClipId { kRun, kAttack, kPunch, kScream, kHit, kHit2, kStandUp, kAttackL, kClips };  // (kAttackL: the swing mirrored, for a left-handed blade)
-	inline constexpr const char* kClipFile[kClips] = { "run", "attack", "punch", "scream", "hit", "hit2", "standup", "attack_l" };
+	enum ClipId { kRun, kAttack, kPunch, kScream, kHit, kHit2, kStandUp, kAttackL,  // (kAttackL: the swing mirrored, for a left-handed blade)
+		kWalk, kSprint, kIdle, kCast, kSummon, kLeap, kAttack2, kAttack3, kStrafeL, kStrafeR, kStart, kDance0, kDance1, kDance2, kDance3, kClips };
+	inline constexpr const char* kClipFile[kClips] = { "run", "attack", "punch", "scream", "hit", "hit2", "standup", "attack_l",
+		"walk", "sprint", "idle", "cast", "summon", "leap", "attack2", "attack3", "strafe_l", "strafe_r", "start", "dance0", "dance1", "dance2", "dance3" };
+	inline constexpr int kDances = 4;
+	inline bool Loops(int a_clip) { return a_clip == kRun || a_clip == kWalk || a_clip == kSprint || a_clip == kIdle || a_clip == kStrafeL || a_clip == kStrafeR || (a_clip >= kDance0 && a_clip <= kDance3); }
+	inline bool Locomotion(int a_clip) { return a_clip == kRun || a_clip == kWalk || a_clip == kSprint || a_clip == kIdle || a_clip == kStrafeL || a_clip == kStrafeR; }
 	using Q4 = std::array<float, 4>;  // w x y z
 	struct V3f { float x = 0, y = 0, z = 0; };
 
@@ -46,12 +55,32 @@ namespace zclip
 	struct ClipSet
 	{
 		std::array<Clip, kClips> c;
+		std::array<bool, kClips> own{};  // (the set's own file; the rest stood in by Fill)
 		bool                     ok = false;
 		std::vector<float>       upper;  // per bone: how much of a layered swing it takes (legs 0, arms 1)
 		std::vector<float>       tau;    // per bone: its follow-through lag in seconds (0 none)
 		std::array<int, 2>       upperArm{ -1, -1 }, forearm{ -1, -1 }, hand{ -1, -1 };  // (left, right: elbows, wrists)
 		Clip                     rest;                        // (one frame: the skeleton's bind rotations; optional)
 		std::array<std::array<Q4, kClips>, 2> handMean{};     // (each clip's average turn of each hand)
+		// what this set lacks: the shared set's run, scream, flinches and stand-up; a cast or a summon from its swing or
+		// its scream; the second and third swings from the first; the dances from the dance set. Walk, sprint, idle,
+		// sidesteps and the start stay absent (the feet use what the set has)
+		void Fill(const ClipSet* a_base, const ClipSet* a_dance)
+		{
+			auto from = [&](int k, const Clip& src) { if (!own[k] && src.frames > 0) c[k] = src; };
+			if (a_base) for (int k : { kRun, kAttack, kPunch, kScream, kHit, kHit2, kStandUp }) from(k, a_base->c[k]);
+			from(kAttackL, c[kAttack]);
+			from(kCast, c[kAttack]);
+			from(kSummon, c[kScream]);
+			from(kLeap, c[kAttack]);
+			from(kAttack2, c[kAttack]);
+			from(kAttack3, c[kAttack2]);
+			for (int d = kDance0; d <= kDance3; ++d) {
+				if (a_dance && a_dance->own[d]) from(d, a_dance->c[d]);
+				from(d, c[kIdle].frames > 0 ? c[kIdle] : c[kRun]);
+			}
+		}
+		bool Has(int k) const { return own[k] && c[k].frames > 1; }
 		void Prepare()
 		{
 			const auto& names = c[kRun].bones;
@@ -156,16 +185,21 @@ namespace zclip
 	inline float Dot(const V3f& a, const V3f& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
 	inline float ClipRate(int a_clip)
 	{
-		return a_clip == kAttack || a_clip == kAttackL ? 1.2f : a_clip == kPunch ? 1.15f : a_clip == kHit || a_clip == kHit2 ? 1.15f : a_clip == kStandUp ? 1.15f : 1.0f;
+		return a_clip == kAttack || a_clip == kAttackL || a_clip == kAttack2 || a_clip == kAttack3 ? 1.2f : a_clip == kPunch ? 1.15f : a_clip == kHit || a_clip == kHit2 ? 1.15f : a_clip == kStandUp ? 1.15f : 1.0f;
 	}
-	inline bool Layered(int a_clip) { return a_clip == kAttack || a_clip == kAttackL || a_clip == kPunch || a_clip == kHit || a_clip == kHit2; }
+	inline bool Layered(int a_clip) { return a_clip == kAttack || a_clip == kAttackL || a_clip == kAttack2 || a_clip == kAttack3 || a_clip == kPunch || a_clip == kHit || a_clip == kHit2; }
+	// what the feet are doing this frame: pace (units a second), sideways share of it (-1 left .. 1 right), frenzied
+	struct Loco { float speed = 0, lateral = 0; bool frenzy = false; };
 
 	struct Player
 	{
 		int             clip = -1, prevClip = -1;
 		float           clipT = 0, prevT = 0, rate = 1, prevRate = 1;
 		float           blend = 1, fade = 0.2f;
-		float           runT = 0;            // the stride, always going
+		float           runT = 0;            // (unused: the stride is phase now)
+		float           phase = 0;           // the stride, 0..1, always going, shared by every gait so a change keeps the step
+		int             loco = kRun, prevLoco = -1;
+		float           locoRate = 0, prevLocoRate = 0, locoBlend = 1;
 		float           still = 1;           // 1 standing (a swing takes the whole body), 0 running (only the top)
 		std::vector<Q4> held;                // the follow-through: where each bone actually is
 		bool            heldOk = false;
@@ -174,7 +208,45 @@ namespace zclip
 		struct Wrist { float x = 0, y = 0, vx = 0, vy = 0; V3f w{}; Q4 prev{ 1, 0, 0, 0 }; bool ok = false; };
 		std::array<Wrist, 2> wrist;
 
-		bool OneShotOn(const ClipSet& S) const { return clip >= 0 && clip != kRun && clipT < S.c[clip].Seconds(); }
+		bool OneShotOn(const ClipSet& S) const { return clip >= 0 && !Loops(clip) && clipT < S.c[clip].Seconds(); }
+		// the gait nearest the pace (a step past the current one is needed before it changes: no flicker at the edges)
+		void PickLoco(const ClipSet& S, const Loco& in)
+		{
+			int want = kRun;
+			float rate = 0;
+			if (in.speed < 15.0f) {
+				want = S.Has(kIdle) ? kIdle : kRun;
+				rate = S.Has(kIdle) ? 1.0f : 0.0f;
+			} else if (std::abs(in.lateral) > 0.65f && S.Has(in.lateral > 0 ? kStrafeR : kStrafeL)) {
+				want = in.lateral > 0 ? kStrafeR : kStrafeL;
+			} else {
+				float best = 1e9f;
+				for (int k : { kWalk, kRun, kSprint }) {
+					if ((k != kRun && !S.Has(k)) || S.c[k].speed <= 1.0f) continue;
+					float d = std::abs(std::log(in.speed / S.c[k].speed));
+					if (k == kSprint && in.frenzy) d -= 0.6f;
+					if (k == loco) d -= 0.15f;
+					if (d < best) best = d, want = k;
+				}
+			}
+			if (in.speed >= 15.0f) rate = std::clamp(in.speed / std::max(1.0f, S.c[want].speed), 0.4f, 2.2f);
+			if (want != loco) prevLoco = loco, prevLocoRate = locoRate, locoBlend = 0;
+			loco = want, locoRate = rate;
+		}
+		Q4 LocoPose(const ClipSet& S, std::size_t i) const
+		{
+			auto at = [&](int k) { const float t = phase * S.c[k].Seconds(); return Straight(S, k, i, Sample(S.c[k], t, true, i)); };
+			Q4 q = at(loco);
+			if (locoBlend < 1.0f && prevLoco >= 0) q = Slerp(at(prevLoco), q, locoBlend * locoBlend * (3 - 2 * locoBlend));
+			return q;
+		}
+		V3f LocoCom(const ClipSet& S) const
+		{
+			auto at = [&](int k) { return SampleCom(S.c[k], phase * S.c[k].Seconds(), true); };
+			V3f c = at(loco);
+			if (locoBlend < 1.0f && prevLoco >= 0) c = Lerp(at(prevLoco), c, locoBlend * locoBlend * (3 - 2 * locoBlend));
+			return c;
+		}
 		// start a clip (rate: its speed against its own); a no-op when it already plays
 		void Play(int a_want, float a_rate, const ClipSet& S)
 		{
@@ -200,31 +272,36 @@ namespace zclip
 		// one clip's pose for one bone, the run under a layered swing
 		Q4 PoseOf(const ClipSet& S, int c, float t, std::size_t i) const
 		{
-			const Q4 run = Straight(S, kRun, i, Sample(S.c[kRun], runT, true, i));
+			const Q4 run = LocoPose(S, i);
 			if (c < 0 || c == kRun) return run;
-			const Q4 act = Straight(S, c, i, Sample(S.c[c], t, false, i));
+			const Q4 act = Straight(S, c, i, Sample(S.c[c], t, Loops(c), i));
 			if (!Layered(c)) return act;
 			const float m = S.upper[i] + (1.0f - S.upper[i]) * still;
 			return m >= 0.999f ? act : m <= 0.001f ? run : Slerp(run, act, m);
 		}
 		V3f ComOf(const ClipSet& S, int c, float t) const
 		{
-			const V3f run = SampleCom(S.c[kRun], runT, true);
+			const V3f run = LocoCom(S);
 			if (c < 0 || c == kRun) return run;
-			const V3f act = SampleCom(S.c[c], t, false);
+			const V3f act = SampleCom(S.c[c], t, Loops(c));
 			return Layered(c) ? Lerp(run, act, still) : act;
 		}
 		// advance dt and pose: a_out per clip bone (against its parent), a_com the COM's place
-		void Tick(const ClipSet& S, float dt, float a_runRate, std::vector<Q4>& a_out, V3f& a_com)
+		void Tick(const ClipSet& S, float dt, float a_runRate, std::vector<Q4>& a_out, V3f& a_com)  // (the old call: a pace as a share of the run's)
+		{
+			Tick(S, dt, Loco{ a_runRate * std::max(1.0f, S.c[kRun].speed), 0.0f, false }, a_out, a_com);
+		}
+		void Tick(const ClipSet& S, float dt, const Loco& a_in, std::vector<Q4>& a_out, V3f& a_com)
 		{
 			dt = std::clamp(dt, 0.0f, 0.25f);
-			runT += dt * a_runRate;
-			if (clip == kRun) rate = a_runRate;
-			if (prevClip == kRun) prevRate = a_runRate;
+			PickLoco(S, a_in);
+			locoBlend = std::min(1.0f, locoBlend + dt / 0.25f);
+			phase = std::fmod(phase + dt * locoRate / std::max(0.1f, S.c[loco].Seconds()), 1.0f);
+			if (clip == kRun) rate = 1.0f;
 			clipT += dt * rate, prevT += dt * prevRate;
 			blend = std::min(1.0f, blend + dt / std::max(0.01f, fade));
 			// standing or running: eased, so a swing begun mid-stride settles into the legs
-			const float wantStill = std::clamp(1.0f - a_runRate / 0.35f, 0.0f, 1.0f);
+			const float wantStill = std::clamp(1.0f - a_in.speed / 50.0f, 0.0f, 1.0f);
 			still += (wantStill - still) * (1.0f - std::exp(-dt / 0.15f));
 			const float w = blend * blend * blend * (blend * (blend * 6 - 15) + 10);  // (smootherstep)
 			const std::size_t nb = S.c[kRun].bones.size();

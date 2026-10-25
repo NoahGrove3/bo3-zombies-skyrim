@@ -20,6 +20,8 @@ MODELS = {  # creature id: (nif, glow colour, size)
     'runner': (W / 'creatures/Data/Meshes/CurseOfAlduin/hooded/hooded.nif', ICE, 0.9),
     'wailer': (W / 'creatures/Data/Meshes/CurseOfAlduin/hag/hag.nif', ICE, 0.9),
     'volatile': (W / 'creatures/Data/Meshes/CurseOfAlduin/volatile/volatile.nif', RED, 1.1),  # (the Mutant brute: red, like a hunter's)
+    'mage': (W / 'creatures/Data/Meshes/CurseOfAlduin/mage/mage.nif', ICE, 0.9),  # (the Grave Witch)
+    'girl': (W / 'creatures/Data/Meshes/CurseOfAlduin/girl/girl.nif', ICE, 0.85),  # (the Shambling Maiden)
     'bloater': (W / 'out3/Data/Meshes/CurseOfAlduin/abom/abom.nif', ICE, 1.2),
     'shadow': (UP / 'shadow/shadow.nif', ICE, 1.0),
     'reaper': (W / 'out3/Data/Meshes/CurseOfAlduin/reaper/reaper.nif', EMBER, 1.1),

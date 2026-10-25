@@ -695,12 +695,12 @@ namespace bo3z
 				// a creature from the party's mods: its own body, animations and attacks (no rig, no Undying body type)
 			} else if (rolled) {
 				type = rolled;
-			} else if (rowId == "zombie") {
-				type = Undead::Type::Shambler;  // (Noah: each of the four its own: the Risen Dead run, and turn when hurt - Undead SetEyes)
-			} else if (rowId == "runner" || rowId == "volatile") {
-				type = Undead::Type::Runner;
-			} else if (rowId == "wailer") {
-				type = Undead::Type::Wailer;
+			} else if (rowId == "zombie" || rowId == "runner" || rowId == "volatile") {
+				type = Undead::Type::Runner;  // (Noah: the Risen Dead fast melee; the Brute's slowness is its row's)
+			} else if (rowId == "wailer" || rowId == "mage") {
+				type = Undead::Type::Wailer;  // (the Grave Witch: the summoning scream - Undead; her bolt: SetEyes)
+			} else if (rowId == "girl") {
+				type = Undead::Type::Shambler;  // (Noah: slower, a little more health, slower swings)
 			} else if (rowId == "bloater") {
 				type = Undead::Type::Bloater;
 			} else if (rowId == "shadow") {
@@ -746,7 +746,7 @@ namespace bo3z
 			// Armed: an ancient Nord sword, an iron sword or a dagger (bare-handed undead swing slowly); the Iron
 			// Reaper swings its scythe two-handed; necromancers fight with spells; raised skeletons keep their own.
 			const std::string_view eid = gen::kEnemies[*pick].id;
-			const std::uint32_t    own = !kindRow.rig ? 0 : kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : (eid == "zombie" || eid == "runner" || eid == "wailer" || eid == "bloater" || eid == "lich" || eid == "volatile") ? gen::kZombieClaws : 0;
+			const std::uint32_t    own = !kindRow.rig ? 0 : kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : (eid == "zombie" || eid == "runner" || eid == "wailer" || eid == "bloater" || eid == "lich" || eid == "volatile" || eid == "mage" || eid == "girl") ? gen::kZombieClaws : 0;
 			if (own) {  // their own fighting style: the Reaper's scythe, Grimmvar's raking claws, the Gloomstalker's quick slashes
 				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(own, gen::kPlugin)) {
 					RE::ActorEquipManager::GetSingleton()->EquipObject(actor, w);
@@ -2699,6 +2699,66 @@ namespace bo3z
 			return a ? a->GetHandle() : RE::ActorHandle{};
 		}
 		bool  IsBoss(RE::Actor* a_actor) { auto b = g_boss.handle.get(); return a_actor && b && b.get() == a_actor; }
+		// ---- (Noah: "Make it a shout and can be used once per wave. Make it last 20 seconds and make the name of it Dance Of
+		// Death. It should only work on enemies of The Curse Of Alduin") every one of the night's dead within 20 m (1400
+		// units) dances for 20 s - a dance of the four at random each - unable to move or strike, taking half again as much
+		// from every blow (Gun, Events); the song plays (Noah's own cut, 0:37-0:57, installed beside the mod). Once a wave.
+		// Learned when Solitude's altar wakes - the Bards' city (TickDanceShout)
+		int g_danceWave = -1;
+		bool DanceOfDeath(RE::FormID a_spell)
+		{
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			bool ours = false;
+			for (auto id : gen::kDanceSpells) {
+				if (auto* f = dh->LookupForm(id, gen::kPlugin); f && f->GetFormID() == a_spell) ours = true;
+			}
+			if (!ours) return false;
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return true;
+			if (g_phase != Phase::Fighting) {
+				Hud::Banner("The dead only dance at night", 3.0f);
+				return true;
+			}
+			const int key = g_current * 1000 + g_wave;
+			if (g_danceWave == key) {
+				Hud::Banner("The dead won't dance again until the next wave", 3.0f);
+				return true;
+			}
+			g_danceWave = key;
+			int n = 0;
+			for (auto& s : g_alive) {
+				auto a = s.handle.get();
+				if (!a || a->IsDead() || a->IsDisabled() || a->GetPosition().GetDistance(p->GetPosition()) > 1400.0f) continue;
+				n += Undead::Dance(a.get(), 20.0f) ? 1 : 0;
+			}
+			if (auto* snd = dh->LookupForm<RE::BGSSoundDescriptorForm>(gen::kDanceSong, gen::kPlugin)) {
+				RE::BSSoundHandle h;
+				RE::BSAudioManager::GetSingleton()->BuildSoundDataFromDescriptor(h, snd);
+				h.Play();
+			}
+			Hud::Banner(n > 0 ? fmt::format("DANCE OF DEATH - {} of the dead dance", n) : std::string("DANCE OF DEATH - no one near enough to dance"), 3.5f);
+			logger::info("dance of death: {} dance (night {}, wave {})", n, g_current, g_wave);
+			return true;
+		}
+		void TickDanceShout(float a_delta)
+		{
+			static float t = 0;
+			if ((t += a_delta) < 5.0f) return;
+			t = 0;
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* sh = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESShout>(gen::kDanceShout, gen::kPlugin);
+			if (!p || !sh || !Curse::Freed(2) || p->HasShout(sh)) return;  // (2: Solitude)
+			for (auto w : gen::kDanceWords) {
+				if (auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(w, gen::kPlugin)) {
+					Gun::Console(fmt::format("player.teachword {:08X}", f->GetFormID()));
+					Gun::Console(fmt::format("player.unlockword {:08X}", f->GetFormID()));
+				}
+			}
+			p->AddShout(sh);
+			Forms::Play(gen::Sound::shout_learned);
+			Hud::Lore("DANCE OF DEATH", "The Bards of Solitude remember an old song the dead cannot resist. Shout it, and the Curse's dead within twenty paces dance for twenty seconds - unable to move or strike, and taking half again as much harm. Once a wave.", 12.0f);
+			logger::info("dance of death: learned");
+		}
 		void  Noise(float a_amount) { if (g_phase == Phase::Fighting) g_noise = std::min(kNoiseFull * 1.5f, g_noise + a_amount); }
 		// (Noah: the harpies do far too much damage) the mod creatures whose own attacks and spells were made for a
 		// high-level hero, brought in line with the rest of the night
@@ -3325,6 +3385,7 @@ namespace bo3z
 			Curse::Tick(a_delta);
 			Echo::Tick(a_delta);
 			Eggs::Tick(a_delta);
+			TickDanceShout(a_delta);
 			if (!Allowed(player)) {
 				return;
 			}

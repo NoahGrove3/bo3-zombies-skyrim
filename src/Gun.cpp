@@ -531,6 +531,7 @@ namespace bo3z
 				const bool behind = l > 1.0f && (to.x * std::sin(z) + to.y * std::cos(z)) / l < -0.3f;
 				if (!behind) damage *= 0.5f;
 			}
+			if (Undead::IsDancing(a_target)) damage *= 1.5f;  // (the Dance Of Death: half again as hard)
 			if (PowerUps::InstaKill() && Director::IsRoundUndead(a_target)) {
 				damage = av->GetActorValue(RE::ActorValue::kHealth) + 1.0f;  // Insta-Kill (every one of them, one hit)
 			}

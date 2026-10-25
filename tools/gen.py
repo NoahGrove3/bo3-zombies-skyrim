@@ -143,6 +143,8 @@ sh = S['dressing']['show']
 o.append(f'\tinline constexpr std::uint32_t kShowCheese = 0x{IDS[("STAT", "show_cheese")]:03X}, kRiseFx = 0x{IDS[("STAT", "rise_fx")]:03X}, kDragonAway = 0x{IDS[("STAT", "dragon_away")]:03X}, kWhirlwind = 0x{IDS[("STAT", "whirlwind")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kUpdraftShout = 0x{IDS[("SHOU", "updraft")]:03X};  // Bond II: the Updraft shout')
 o.append(f'\tinline constexpr std::array<std::uint32_t, 3> kUpdraftWords{{ {{ {", ".join("0x%03X" % IDS[("WOOP", f"updraft_{n}")] for n in range(3))} }} }}, kUpdraftSpells{{ {{ {", ".join("0x%03X" % IDS[("SPEL", f"updraft_{n}")] for n in range(3))} }} }};')
+o.append(f'\tinline constexpr std::uint32_t kDanceShout = 0x{IDS[("SHOU", "dance")]:03X}, kDanceSong = 0x{IDS[("SNDR", "dance_song")]:03X};  // (Noah) the Dance Of Death')
+o.append(f'\tinline constexpr std::array<std::uint32_t, 3> kDanceWords{{ {{ {", ".join("0x%03X" % IDS[("WOOP", f"dance_{n}")] for n in range(3))} }} }}, kDanceSpells{{ {{ {", ".join("0x%03X" % IDS[("SPEL", f"dance_{n}")] for n in range(3))} }} }};')
 o.append(f'\tinline constexpr float kSkullScale = {F(sh["cheeseScale"])};')
 o.append(f'\tinline constexpr float kShowRise = {F(sh["riseUnits"])}, kShowSpin = {F(sh["spinSeconds"])}, kShowOffer = {F(sh["offerSeconds"])};')
 o.append(f'\tinline constexpr std::array<std::uint32_t, {len(P)}> kPerkColor{{ {{ {", ".join("0x%sFF" % p["color"] for p in P)} }} }};')

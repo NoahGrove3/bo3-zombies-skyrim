@@ -534,6 +534,7 @@ namespace bo3z
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			auto* av = a_actor->AsActorValueOwner();
+			if (Undead::IsDancing(a_actor)) a_damage *= 1.5f;  // (the Dance Of Death: half again as hard)
 			av->DamageActorValue(RE::ActorValue::kHealth, a_damage);
 			if (av->GetActorValue(RE::ActorValue::kHealth) <= 0) {
 				a_actor->KillImpl(player, a_damage, true, false);
@@ -704,6 +705,8 @@ namespace bo3z
 					Classes::NoteCast(a_event->spell);
 					if (Classes::OnCast(a_event->spell)) {
 						// (the Tome of the Six Fires)
+					} else if (Director::DanceOfDeath(a_event->spell)) {
+						// (the Dance Of Death)
 					} else if (Movement::OnSpellCast(a_event->spell)) {
 						// (Bond II's Updraft)
 					} else if (Eggs::OnSpellCast(a_event->spell)) {

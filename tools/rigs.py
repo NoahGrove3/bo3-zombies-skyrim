@@ -178,7 +178,45 @@ def mutant():
     write_job('volatile/volatile.nif', MUTANT_FBX, maps,
               [f'mat * diffuse={dif} normal={nrm} glow={glow} emit=0.3,0.9,1.0 emitmult=2.0 spec=0.3 gloss=25'])
 
+# ---------------------------------------------------------------- (Noah: the Bride and the Skald replaced) the mage who raises the dead
+# (Mixamo's Nightshade) and the slow zombie girl (Mixamo's Zombiegirl) - both on the draugr skeleton, their textures
+# pulled out of the FBX by zanim/fbxtex
+NEW2 = pathlib.Path('/home/claude/work/new2')
+ATT = pathlib.Path('/mnt/user-data/attachments/0ec68033-d637-57d9-8f95-48d7c09e98c8')
+def mixamo_maps(X, fingers=True, extra=()):
+    maps = [(f'{X}Hips', 'NPC Pelvis [Pelv]'), (f'{X}Spine', 'NPC Spine [Spn0]'), (f'{X}Spine1', 'NPC Spine1 [Spn1]'), (f'{X}Spine2', 'NPC Spine2 [Spn2]'),
+            (f'{X}Neck', 'NPC Neck [Neck]'), (f'{X}Head', 'NPC Head [Head]'), (f'{X}HeadTop_End', 'NPC Head [Head]')] + list(extra)
+    fing = ['Thumb', 'Index', 'Middle', 'Ring', 'Pinky']
+    for side, S in (('Left', 'L'), ('Right', 'R')):
+        foot = 'NPC L Foot [LLft ]' if S == 'L' else 'NPC R Foot [Rft ]'
+        maps += [(f'{X}{side}Shoulder', f'NPC {S} Clavicle [{S}Clv]'), (f'{X}{side}Arm', f'NPC {S} UpperArm [{S}Uar]'), (f'{X}{side}ForeArm', f'NPC {S} Forearm [{S}Lar]'),
+                 (f'{X}{side}Hand', f'NPC {S} Hand [{S}Hnd]'),
+                 (f'{X}{side}UpLeg', f'NPC {S} Thigh [{S}Thg]'), (f'{X}{side}Leg', f'NPC {S} Calf [{S}Clf]'), (f'{X}{side}Foot', foot),
+                 (f'{X}{side}ToeBase', f'NPC {S} Toe0 [{S}Toe]'), (f'{X}{side}Toe_End', f'NPC {S} Toe0 [{S}Toe]')]
+        if fingers:
+            for f, fn in enumerate(fing):
+                for j in range(3):
+                    maps.append((f'{X}{side}Hand{fn}{j+1}', f'NPC {S} Finger{f}{j} [{S}F{f}{j}]'))
+                maps.append((f'{X}{side}Hand{fn}4', f'NPC {S} Finger{f}2 [{S}F{f}2]'))
+    return maps
+def mage():
+    T = NEW2 / 'tex_16241a56-Nightshade_J_Friedrich'
+    dif = A.save_dds(A.load(T / 'Nightshade_diffuse.png', 2048), 'mage/mage_d.dds')
+    nrm = A.save_dds(A.normal_with_spec(T / 'Nightshade_normal.png', None, 2048), 'mage/mage_n.dds', alpha=True)
+    glow = A.save_dds(A.load(T / 'Nightshade_glow.png', 1024), 'mage/mage_g.dds')
+    X = 'mixamorig:'
+    maps = mixamo_maps(X, extra=[(f'{X}Ribbon1', 'NPC Pelvis [Pelv]'), (f'{X}Ribbon2', 'NPC Pelvis [Pelv]'), (f'{X}Ribbon3', 'NPC Pelvis [Pelv]')])
+    write_job('mage/mage.nif', ATT / '16241a56-Nightshade_J_Friedrich.fbx', maps,
+              [f'mat * diffuse={dif} normal={nrm} glow={glow} emit=0.6,0.4,1.0 emitmult=1.6 spec=0.3 gloss=25'])
+def girl():
+    T = NEW2 / 'tex_2d19d912-Zombiegirl_W_Kurniawan'
+    body = A.save_dds(A.load(T / 'zombie_body_diffuse.png', 2048), 'girl/girl_body_d.dds')
+    rest = A.save_dds(A.load(T / 'zombie_diffuse.png', 2048), 'girl/girl_d.dds')
+    nrm = A.save_dds(A.normal_with_spec(T / 'zombie_normal.png', None, 2048), 'girl/girl_n.dds', alpha=True)
+    write_job('girl/girl.nif', ATT / '2d19d912-Zombiegirl_W_Kurniawan.fbx', mixamo_maps('mixamorig:'),
+              [f'mat ZombieGirl_body_Material diffuse={body} normal={nrm} spec=0.3 gloss=25', f'mat ZombieGirl_Material diffuse={rest} normal={nrm} spec=0.3 gloss=25'])
+
 if __name__ == '__main__':
-    for n, fn in {'zombie': zombie, 'risen': risen, 'boss': boss, 'shadow': shadow, 'mutant': mutant}.items():
+    for n, fn in {'zombie': zombie, 'risen': risen, 'boss': boss, 'shadow': shadow, 'mutant': mutant, 'mage': mage, 'girl': girl}.items():
         if not ONLY or n in ONLY:
             print('==', n); fn()

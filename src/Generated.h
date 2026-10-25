@@ -23,18 +23,18 @@ namespace bo3z::gen
 		{ 3400.f, 4600.f }, { 1400.f, 2100.f }, 120.f, 30 };
 	inline constexpr FormRef kIntroQuest{ "Skyrim.esm", 0x03372B, "MQ101" };
 	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; bool rig; };
-	inline constexpr std::array<Enemy, 47> kEnemies{ {
-		Enemy{ "zombie", "Risen Dead", { "CurseOfAlduin.esp", 0x0008C3, "UN_zombie" }, false, 1, 8, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.15f, true },
+	inline constexpr std::array<Enemy, 49> kEnemies{ {
+		Enemy{ "zombie", "Risen Dead", { "CurseOfAlduin.esp", 0x0008C3, "UN_zombie" }, false, 1, 8, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.2f, true },
 		Enemy{ "hollow2", "Haugbui", { "The Restless Dead.esp", 0x1F5212, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee2H" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "hollow3", "Haugbui", { "The Restless Dead.esp", 0x1EAFCC, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee1H" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "ash1", "Pyre-Thrall", { "The Restless Dead.esp", 0x5793C4, "zzEnc_DC_Skeleton01Warrior1H" }, false, 2, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "ash2", "Pyre-Thrall", { "The Restless Dead.esp", 0x5D9796, "zzEnc_DC_Skeleton01Warrior1HShield" }, false, 2, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
-		Enemy{ "runner", "Draugr Bride", { "CurseOfAlduin.esp", 0x000A78, "UN_runner" }, false, 1, 5, false, "NPC Head [Head]", true, 0, false, 0, 0.9f, 1.0f, true },
+		Enemy{ "runner", "Draugr Bride", { "CurseOfAlduin.esp", 0x000A78, "UN_runner" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 0.9f, 1.0f, true },
 		Enemy{ "marksman", "Barrow Archer", { "The Restless Dead.esp", 0x5E39C7, "zzEnc_DC_Skeleton01Archer" }, false, 4, 0, false, "NPC Head [Head]", true, 0, false, 2, 0.8f, 1.0f, false },
 		Enemy{ "necro", "Ash Tongue", { "The Restless Dead.esp", 0x06DEA8, "zzEnc_DC_DraugrMageFireM02" }, false, 5, 0, false, "NPC Head [Head]", true, 0, false, 2, 1.2f, 1.0f, false },
 		Enemy{ "hexer_rime", "Rime Tongue", { "The Restless Dead.esp", 0x0311F3, "zzEnc_DC_DraugrMageFrostM02" }, false, 5, 0, false, "NPC Head [Head]", true, 0, false, 2, 1.2f, 1.0f, false },
 		Enemy{ "hexer_storm", "Storm Tongue", { "The Restless Dead.esp", 0x1E9BF1, "zzEnc_DC_DraugrMageShockM02" }, false, 6, 0, false, "NPC Head [Head]", true, 0, false, 2, 1.2f, 1.0f, false },
-		Enemy{ "wailer", "Drowned Skald", { "CurseOfAlduin.esp", 0x000A7B, "UN_wailer" }, false, 2, 3, false, "NPC Head [Head]", true, 0, false, 0, 1.2f, 1.0f, true },
+		Enemy{ "wailer", "Drowned Skald", { "CurseOfAlduin.esp", 0x000A7B, "UN_wailer" }, false, 2, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.2f, 1.0f, true },
 		Enemy{ "death_hound", "Grave-Hound", { "mihailoldgod.esp", 0x000861, "mihailleshenwolfSPIRIT" }, false, 1, 1, true, "Canine_Head", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "shadow", "Draugr Warlord", { "mihailesobonecolossus.esp", 0x0008C4, "mihailbonemasterFIRE" }, false, 5, 1, false, "NPC Head [Head]", true, 0, true, 0, 1.0f, 1.0f, false },
 		Enemy{ "reaper", "Thane of the Mound", { "The Restless Dead.esp", 0x5DE8BD, "zzEnc_DC_Skeleton06Warrior1H" }, false, 7, 0, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.9f, false },
@@ -70,7 +70,9 @@ namespace bo3z::gen
 		Enemy{ "mb_harpy_matriarch", "Harpy Matriarch", { "mihailhighfantasypack.esp", 0x09A0FE, "mihailharpy_NPC3" }, false, 99, 0, false, "auto", true, 0, false, 1, 1.0f, 1.0f, false },
 		Enemy{ "eg_centurion", "The Resonant Centurion", { "Skyrim.esm", 0x10F9B9, "EncDwarvenCenturion01" }, false, 99, 0, false, "auto", true, 0, false, 1, 1.0f, 1.0f, false },
 		Enemy{ "eg_anomaly", "The Great Anomaly", { "Skyrim.esm", 0x0B6F94, "EncMagicAnomaly" }, false, 99, 0, false, "auto", true, 0, false, 1, 1.0f, 1.0f, false },
-		Enemy{ "volatile", "Volatile", { "CurseOfAlduin.esp", 0x000CDB, "UN_volatile" }, false, 3, 2, false, "NPC Head [Head]", true, 0, false, 0, 2.5f, 0.8f, true },
+		Enemy{ "volatile", "Volatile", { "CurseOfAlduin.esp", 0x000CDB, "UN_volatile" }, false, 3, 2, false, "NPC Head [Head]", true, 0, false, 0, 3.5f, 0.55f, true },
+		Enemy{ "girl", "Shambling Maiden", { "CurseOfAlduin.esp", 0x000CEE, "UN_girl" }, false, 1, 4, false, "NPC Head [Head]", true, 0, false, 0, 1.3f, 0.7f, true },
+		Enemy{ "mage", "Grave Witch", { "CurseOfAlduin.esp", 0x000CEB, "UN_mage" }, false, 2, 3, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 0.6f, true },
 	} };
 	enum class Sound : int {
 		cast_sidearm = 0,
@@ -1269,6 +1271,8 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kShowCheese = 0x870, kRiseFx = 0x8A2, kDragonAway = 0xC01, kWhirlwind = 0xC02;
 	inline constexpr std::uint32_t kUpdraftShout = 0xC09;  // Bond II: the Updraft shout
 	inline constexpr std::array<std::uint32_t, 3> kUpdraftWords{ { 0xC03, 0xC05, 0xC07 } }, kUpdraftSpells{ { 0xC04, 0xC06, 0xC08 } };
+	inline constexpr std::uint32_t kDanceShout = 0xCF7, kDanceSong = 0xCF8;  // (Noah) the Dance Of Death
+	inline constexpr std::array<std::uint32_t, 3> kDanceWords{ { 0xCF1, 0xCF3, 0xCF5 } }, kDanceSpells{ { 0xCF2, 0xCF4, 0xCF6 } };
 	inline constexpr float kSkullScale = 0.3f;
 	inline constexpr float kShowRise = 45.0f, kShowSpin = 4.2f, kShowOffer = 12.0f;
 	inline constexpr std::array<std::uint32_t, 21> kPerkColor{ { 0xD02020FF, 0x30C040FF, 0xE0A020FF, 0x3070F0FF, 0xF0D840FF, 0xB0B8C0FF, 0x7AA040FF, 0x9040E0FF, 0x40D0F0FF, 0x6FBF4AFF, 0x9A6BFFFF, 0xC070E0FF, 0x7A50D0FF, 0xFF7A30FF, 0x5090FFFF, 0x40B8E0FF, 0xC8D870FF, 0xE8C060FF, 0xE05050FF, 0x60A0FFFF, 0xA0C8E8FF } };

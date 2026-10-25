@@ -1257,6 +1257,22 @@
   "GLOB:egg_wyrm_town": "0xce5",
   "GLOB:egg_sixfires_town": "0xce6",
   "GLOB:egg_vortex_town": "0xce7",
-  "GLOB:egg_slayer_town": "0xce8"
+  "GLOB:egg_slayer_town": "0xce8",
+  "ARMA:mage": "0xce9",
+  "ARMO:mage": "0xcea",
+  "NPC_:mage": "0xceb",
+  "ARMA:girl": "0xcec",
+  "ARMO:girl": "0xced",
+  "NPC_:girl": "0xcee",
+  "ARMA:eyes_mage": "0xcef",
+  "ARMA:eyes_girl": "0xcf0",
+  "WOOP:dance_0": "0xcf1",
+  "SPEL:dance_0": "0xcf2",
+  "WOOP:dance_1": "0xcf3",
+  "SPEL:dance_1": "0xcf4",
+  "WOOP:dance_2": "0xcf5",
+  "SPEL:dance_2": "0xcf6",
+  "SHOU:dance": "0xcf7",
+  "SNDR:dance_song": "0xcf8"
  }
 }

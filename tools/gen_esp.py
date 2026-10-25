@@ -120,6 +120,20 @@ recs['SHOU'].append(record('SHOU', fid('SHOU', 'updraft'), [sub('EDID', z('UN_Sh
     sub('DESC', z('A whirlwind lifts you high into the air - open your glider and your dragon takes you.'))] +
     [sub('SNAM', struct.pack('<IIf', fid('WOOP', f'updraft_{n}'), fid('SPEL', f'updraft_{n}'), 5.0)) for n in range(3)]))
 
+# ---- (Noah: "Make it a shout ... once per wave ... 20 seconds ... Dance Of Death") the dead within 20 m dance; every
+# word count does the same (Gun::DanceOfDeath); learned when Solitude's altar wakes (the Bards' city)
+DANCE_WORDS = [('DUN', 'Grace'), ('GRAH', 'Battle'), ('MAAR', 'Terror')]
+for n, (w, tr) in enumerate(DANCE_WORDS):
+    recs['WOOP'].append(record('WOOP', fid('WOOP', f'dance_{n}'), [sub('EDID', z(f'UN_Word_dance_{n}')), sub('FULL', z(w)), sub('TNAM', z(tr))]))
+    sp = struct.pack('<IIIfIIffI', 0, 0x1, 11, 0.0, 1, 0, 0.0, 0.0, 0)
+    recs['SPEL'].append(record('SPEL', fid('SPEL', f'dance_{n}'), [
+        sub('EDID', z(f'UN_ShoutSpell_dance_{n}')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Dance Of Death')),
+        sub('ETYP', struct.pack('<I', 0x025BEE)), sub('DESC', z('')), sub('SPIT', sp),
+        sub('EFID', struct.pack('<I', fid('MGEF', 'shoutcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+recs['SHOU'].append(record('SHOU', fid('SHOU', 'dance'), [sub('EDID', z('UN_Shout_dance')), sub('FULL', z('Dance Of Death')),
+    sub('DESC', z("The Curse's dead within twenty paces dance for twenty seconds: they cannot move or strike, and take half again as much harm. Once a wave."))] +
+    [sub('SNAM', struct.pack('<IIf', fid('WOOP', f'dance_{n}'), fid('SPEL', f'dance_{n}'), 5.0)) for n in range(3)]))
+
 SCRAFT = {r['id']: r for r in S['spellcraft']['rows']}
 def arto(key, model, kind):
     recs['ARTO'].append(record('ARTO', fid('ARTO', key), [sub('EDID', z('UN_Art_' + key)), sub('OBND', struct.pack('<6h', -20, -20, -20, 20, 20, 20)),
@@ -339,6 +353,13 @@ for s in S['sounds']['rows']:
     recs['SNDR'].append(record('SNDR', fid('SNDR', s['id']), [
         sub('EDID', z(s['editorId'])), sub('CNAM', tsub(tpl, 'CNAM')), sub('GNAM', gnam)] +
         [sub('ANAM', z(fl)) for fl in files] + [sub('ONAM', tsub(tpl, 'ONAM')), sub('LNAM', bytes(lnam)), sub('BNAM', bnam)]))
+
+# (Noah) the Dance Of Death's song: 20 s cut from a track Noah supplied - not shipped with the mod (his own copy is
+# installed beside it: Data\Sound\fx\CurseOfAlduin\dance\dance_of_death.wav); the record plays nothing when it's absent
+recs['SNDR'].append(record('SNDR', fid('SNDR', 'dance_song'), [
+    sub('EDID', z('UN_dance_song')), sub('CNAM', tsub('sndr_ui', 'CNAM')), sub('GNAM', struct.pack('<I', 0x000172A1)),
+    sub('ANAM', z('fx\\CurseOfAlduin\\dance\\dance_of_death.wav')), sub('ONAM', tsub('sndr_ui', 'ONAM')), sub('LNAM', tsub('sndr_ui', 'LNAM')),
+    sub('BNAM', struct.pack('<bBBBH', 0, 3, 128, 0, 0))]))
 
 # music: Grimmvar's fight and a city freed play through Skyrim's own music system (music slider, ducking, no clash
 # with the combat music: higher priority), from tracks cut out of the supplied library
@@ -579,10 +600,10 @@ def lore_text():
            "<p>Each night the dead come in <b>waves</b>, more of them and harder to kill as the nights go on. They claw up out of open ground - "
            "roads and fields, never inside a house - and come at you from every side. Dawn comes only when the last wave falls.</p>",
            "<p>Four kinds make up the horde:</p>",
-           "<p><b>Risen Dead</b> - the most common. Wound one past half and it turns frenzied. Finish them fast.</p>",
-           "<p><b>Draugr Brides</b> - quick and frail. They leap at you from a distance.</p>",
-           "<p><b>Drowned Skalds</b> - their scream raises more dead and drives the horde faster. Kill them first.</p>",
-           "<p><b>Volatiles</b> - bladed brutes. Their hide turns half of every blow unless you strike the head or the back.</p>",
+           "<p><b>Risen Dead</b> - the most common. Fast, and quick with their claws. Wound one past half and it turns frenzied.</p>",
+           "<p><b>Shambling Maidens</b> - slower, tougher, their blows slow and heavy.</p>",
+           "<p><b>Grave Witches</b> - they hang back, hurl fire and call more Risen Dead out of the earth. Kill them first.</p>",
+           "<p><b>Volatiles</b> - bladed brutes, slow but the hardest hitters. Their hide turns half of every blow unless you strike the head or the back, and they leap at you from a distance.</p>",
            "<p>Noise draws worse. Loud spells, shouts and running wake an elite Volatile, faster still, that comes through a portal and pounces. "
            "The Curse's champions and great ones step out of portals too - and their names burn gold over their heads.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>III. The Echo Altars</font></p>", img('wards', 300, 176),

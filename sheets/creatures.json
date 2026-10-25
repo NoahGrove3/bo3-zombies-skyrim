@@ -143,6 +143,30 @@
    ],
    "race": "draugr",
    "weapon": "none"
+  },
+  {
+   "id": "mage",
+   "label": "Grave Witch",
+   "model": "CurseOfAlduin\\mage\\mage.nif",
+   "heightScale": 1.0,
+   "level": 20,
+   "verify": [
+    "heightScale"
+   ],
+   "race": "draugr",
+   "weapon": "none"
+  },
+  {
+   "id": "girl",
+   "label": "Shambling Maiden",
+   "model": "CurseOfAlduin\\girl\\girl.nif",
+   "heightScale": 1.0,
+   "level": 20,
+   "verify": [
+    "heightScale"
+   ],
+   "race": "draugr",
+   "weapon": "none"
   }
  ]
 }
