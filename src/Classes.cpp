@@ -212,18 +212,18 @@ namespace bo3z::Classes
 		}
 	}
 
-	// ---- (Noah: each class its own wonder weapon, mid and end game) never rolled: once three cities are freed the
-	// class's wonder trial opens - three steps, each in a different city, of the class's own kind of kill - and its last
-	// step hands over the wonder. After Sovngarde (MQ305 done) each one takes its full, Legendary form.
+	// ---- (Noah: each class its own wonder weapon, mid and end game) never rolled: (Noah: "make the wonders harder to
+	// obtain so players can't get over powered early on") once six cities are freed the class's secret quest wakes (src/
+	// Eggs.cpp: a long hidden quest, step by step from city to city) and its end hands over the wonder. After Sovngarde
+	// (MQ305 done) each one takes its full, Legendary form.
 	//   Summoner     Horn of the Spectral Wyrm  Calling of the Conjurer's Spectral Dragon, 60 s (Legendary: it stays)
 	//   Destruction  Tome of the Six Fires      one cast looses all six element ladders' top spells round you (Legendary: their runes and storms too)
 	//   Ranger       Subsuming Vortex           (Noah) a purple bow: each arrow opens a black hole that drags the dead in, then bursts (Legendary: wider, stronger pull)
 	//   Spellsword   Dragon Slayer              each hit carries the spell in your other hand (Legendary: a power attack sends it down the line)
 	namespace
 	{
-		constexpr int kWonderSteps = 3, kStepKills = 40;
+		constexpr int kWonderSteps = 3, kWonderOpensAt = 6;  // (g_wStep: 0 shut, 1-3 its quest open, 4 won)
 		constexpr const char* kWonderName[4] = { "Horn of the Spectral Wyrm", "Tome of the Six Fires", "Subsuming Vortex", "Dragon Slayer" };
-		constexpr const char* kWonderKill[4] = { "kills by your summons", "kills with Destruction spells", "kills with a bow or crossbow", "melee kills" };
 		std::array<std::uint8_t, 4>  g_wStep{};    // per class: 0 not open, 1..3 the step under way, 4 earned
 		std::array<std::uint16_t, 4> g_wKills{};
 		std::array<std::uint32_t, 4> g_wTowns{};   // cities where a step was done (bits)
@@ -344,36 +344,13 @@ namespace bo3z::Classes
 			logger::info("classes: wonder {} earned", kWonderName[a_cls]);
 		}
 
-		// a kill of the class's own kind counts toward the wonder trial's step - in a city not used for a step yet
+		// a kill of the class's own kind: the secret quest's "classkills" steps count it (Eggs)
 		void WonderKill(int a_cls)
 		{
 			if (a_cls < 0 || a_cls > 3) return;
-			auto& st = g_wStep[a_cls];
+			const auto st = g_wStep[a_cls];
 			if (st == 0 || st > kWonderSteps) return;
-			const int town = Curse::ZoneTown();
-			if (town < 0) return;  // (a step is fought in a city)
-			if ((g_wTowns[a_cls] >> town) & 1) {
-				static auto told = std::chrono::steady_clock::now() - std::chrono::seconds(120);
-				if (std::chrono::steady_clock::now() - told > std::chrono::seconds(60)) {
-					told = std::chrono::steady_clock::now();
-					Hud::Banner("This city already gave a step of your wonder trial - the next step is in another city", 4.0f);
-				}
-				return;
-			}
-			const int n = ++g_wKills[a_cls];
-			if (n < kStepKills) {
-				if (n % 10 == 0) Hud::Banner(fmt::format("{} - step {} of {}: {} of {} {}", kWonderName[a_cls], st, kWonderSteps, n, kStepKills, kWonderKill[a_cls]), 3.0f);
-				return;
-			}
-			g_wKills[a_cls] = 0;
-			g_wTowns[a_cls] |= 1u << town;
-			if (st == kWonderSteps) {
-				GrantWonder(a_cls);
-				return;
-			}
-			++st;
-			Forms::Play(gen::Sound::quest_step);
-			Hud::Banner(fmt::format("{} - step {} done in {}. Step {} waits in another city", kWonderName[a_cls], st - 1, gen::kTowns[town], st), 5.0f);
+			Eggs::OnClassKill();
 		}
 	}
 
@@ -507,14 +484,13 @@ namespace bo3z::Classes
 			if (how >= 0) Curse::OnClassKill(how, element, dist);
 			if (how >= 0) Perks::OnClassKill(how, a_dying);  // (the class perks: Soul-Tether, Ember Heart, Mana-Siphon, Spellbinder)
 		}
-		if (FreedCount() >= 3) {
-			for (int c2 = 0; c2 < 4; ++c2) {
-				if (g_wStep[c2] == 0 && c2 == g_class.load()) {
-					g_wStep[c2] = 1;
-					Forms::Play(gen::Sound::quest_start);
-					Hud::Lore(std::string("THE TRIAL OF THE ") + (c2 == 0 ? "WYRM" : c2 == 1 ? "SIX FIRES" : c2 == 2 ? "SUN" : "SLAYER"),
-						fmt::format("Three cities are free, and your class's wonder stirs: {}. Win it in three steps, each in a different city: {} {} per step.", kWonderName[c2], kStepKills, kWonderKill[c2]), 12.0f);
-				}
+		if (const int c2 = g_class.load(); c2 >= 0 && c2 < 4) {
+			if (g_wStep[c2] >= 1 && g_wStep[c2] <= kWonderSteps && FreedCount() < kWonderOpensAt) g_wStep[c2] = 0;  // (an old save's three-city trial: shut again until six)
+			if (g_wStep[c2] == 0 && FreedCount() >= kWonderOpensAt) {
+				g_wStep[c2] = 1;
+				Forms::Play(gen::Sound::quest_start);
+				Hud::Lore("YOUR PATH'S SECRET",
+					fmt::format("Six cities are free, and the {} stirs somewhere beneath the Echo Altars. Nobody will tell you how to win it. Stand at a freed altar and listen to its whispers.", kWonderName[c2]), 12.0f);
 			}
 		}
 		// (Noah's plan, the Spellsword's resonance) its touch spells climb on melee kills only - a power attack counts twice
@@ -998,6 +974,15 @@ namespace bo3z::Classes
 		return true;
 	}
 
+	bool WonderOpen()
+	{
+		const int c = g_class.load();
+		return c >= 0 && c < 4 && g_wStep[c] >= 1 && g_wStep[c] <= kWonderSteps;
+	}
+	void EarnWonder(int a_cls)
+	{
+		if (a_cls >= 0 && a_cls < 4 && g_wStep[a_cls] <= kWonderSteps) GrantWonder(a_cls);
+	}
 	bool WonderEarned()
 	{
 		for (auto s : g_wStep) if (s > kWonderSteps) return true;
@@ -1020,8 +1005,8 @@ namespace bo3z::Classes
 		if (c < 0) return {};
 		const int st = g_wStep[c];
 		if (st > kWonderSteps) return std::string(kWonderName[c]) + " is yours";
-		if (st == 0) return fmt::format("{}: free {} more {} to open its trial", kWonderName[c], std::max(0, 3 - FreedCount()), 3 - FreedCount() == 1 ? "city" : "cities");
-		return fmt::format("{} - step {} of {}: {} of {} {} in a new city", kWonderName[c], st, kWonderSteps, g_wKills[c], kStepKills, kWonderKill[c]);
+		if (st == 0) return fmt::format("{}: free {} more {} to wake your path's secret", kWonderName[c], std::max(0, kWonderOpensAt - FreedCount()), kWonderOpensAt - FreedCount() == 1 ? "city" : "cities");
+		return std::string(kWonderName[c]) + ": " + Eggs::Line();
 	}
 
 	void NoteHit(RE::Actor* a_target, RE::FormID a_source, bool a_power)

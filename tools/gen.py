@@ -331,20 +331,18 @@ o.append(f'\tinline constexpr std::uint32_t kRelDoorIn = 0x{IDS[("ACTI", "rel_do
 # (Noah) the hidden quests (sheet: eggs, src/Eggs.cpp)
 EG = S['eggs']['rows']
 _rowi = {r['id']: i for i, r in enumerate(en)}
-STEPT = ['touch', 'order', 'altar', 'kills', 'survive', 'boss']
+STEPT = ['touch', 'order', 'altar', 'kills', 'survive', 'boss', 'classkills']
 ELEM = ['any', 'fire', 'frost', 'shock']
-o.append('\tstruct EggStep { int type, n, element; bool night; float r0, r1; bool nodamage; float seconds; std::string_view name, text; int row; bool dark; };')
+CLS = ['summoner', 'destruction', 'ranger', 'spellsword']
+o.append('\tstruct EggStep { int type, n, element; bool night; float r0, r1; bool nodamage; float seconds; std::string_view name, text; int row; bool dark; std::string_view hint; };')
 o.append('\tenum EggStepType : int { ' + ', '.join(f'kEgg{t.capitalize()} = {i}' for i, t in enumerate(STEPT)) + ' };')
-o.append('\tenum EggReward : int { kEggBuff = 0, kEggSummon = 1, kEggSpell = 2 };')
-o.append('\tstruct EggDef { std::string_view id, title, rewardText; int town, reward; std::array<std::string_view, 3> hints; std::array<EggStep, 4> steps; int nSteps; std::uint32_t glob, power; std::string_view summonPlugin; std::uint32_t summonId; int summonCount; };')
+o.append('\tstruct EggDef { std::string_view id, title, rewardText; int cls; std::array<EggStep, 8> steps; int nSteps; std::uint32_t glob, townGlob; };  // (one per class: it wins the class wonder)')
 o.append(f'\tinline constexpr std::uint32_t kEggGifts = 0x{IDS[("GLOB", "egg_gifts")]:03X}, kTestKitGlob = 0x{IDS[("GLOB", "test_kit")]:03X}, kRitualSouls = 0x{IDS[("GLOB", "ritual_souls")]:03X}, kRitualStand = 0x{IDS[("GLOB", "ritual_stand")]:03X};')
 o.append(f'\tinline constexpr std::array<EggDef, {len(EG)}> kEggs{{ {{')
 for e in EG:
-    st = e['steps'] + [dict(type='altar', n=0, text='', element='any', night=False, r0=0, r1=0, nodamage=False, seconds=0, name='', row='none', dark=False)] * (4 - len(e['steps']))
-    steps = ', '.join(f'EggStep{{ {STEPT.index(s["type"])}, {s["n"]}, {ELEM.index(s["element"])}, {str(s["night"]).lower()}, {F(s["r0"])}, {F(s["r1"])}, {str(s["nodamage"]).lower()}, {F(s["seconds"])}, {cs(s["name"])}, {cs(s["text"])}, {_rowi[s["row"]] if s["row"] != "none" else -1}, {str(s["dark"]).lower()} }}' for s in st)
-    sp, sid, sc = (e['summon'].split('|') + ['', '0', '0'])[:3] if e['summon'] != 'none' else ('', '0', '0')
-    pw = IDS.get(('SPEL', 'egg_power_' + e['id']), 0)
-    o.append(f'\t\tEggDef{{ {cs(e["id"])}, {cs(e["title"])}, {cs(e["rewardText"])}, {towns.index(e["town"])}, {["buff", "summon", "spell"].index(e["reward"])}, {{ {", ".join(cs(h) for h in e["hints"])} }}, {{ {steps} }}, {len(e["steps"])}, 0x{IDS[("GLOB", "egg_" + e["id"])]:03X}, 0x{pw:03X}, {cs(sp)}, 0x{int(sid, 16):06X}, {int(sc)} }},')
+    st = e['steps'] + [dict(type='altar', n=0, text='', element='any', night=False, r0=0, r1=0, nodamage=False, seconds=0, name='', row='none', dark=False, hint='')] * (8 - len(e['steps']))
+    steps = ', '.join(f'EggStep{{ {STEPT.index(s["type"])}, {s["n"]}, {ELEM.index(s["element"])}, {str(s["night"]).lower()}, {F(s["r0"])}, {F(s["r1"])}, {str(s["nodamage"]).lower()}, {F(s["seconds"])}, {cs(s["name"])}, {cs(s["text"])}, {_rowi[s["row"]] if s["row"] != "none" else -1}, {str(s["dark"]).lower()}, {cs(s.get("hint", ""))} }}' for s in st)
+    o.append(f'\t\tEggDef{{ {cs(e["id"])}, {cs(e["title"])}, {cs(e["rewardText"])}, {CLS.index(e["cls"])}, {{ {steps} }}, {len(e["steps"])}, 0x{IDS[("GLOB", "egg_" + e["id"])]:03X}, 0x{IDS[("GLOB", "egg_" + e["id"] + "_town")]:03X} }},')
 o.append('\t} };')
 o.append('}')
 with open(root / 'src/Generated.h', 'a') as f: f.write('\n'.join(o) + '\n')

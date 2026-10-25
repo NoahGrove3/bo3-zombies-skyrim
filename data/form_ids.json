@@ -1249,6 +1249,14 @@
   "SPEL:egg_power_toast": "0xcdd",
   "SPEL:egg_power_debt": "0xcde",
   "SPEL:egg_power_rites": "0xcdf",
-  "SPEL:egg_power_dream": "0xce0"
+  "SPEL:egg_power_dream": "0xce0",
+  "GLOB:egg_wyrm": "0xce1",
+  "GLOB:egg_sixfires": "0xce2",
+  "GLOB:egg_vortex": "0xce3",
+  "GLOB:egg_slayer": "0xce4",
+  "GLOB:egg_wyrm_town": "0xce5",
+  "GLOB:egg_sixfires_town": "0xce6",
+  "GLOB:egg_vortex_town": "0xce7",
+  "GLOB:egg_slayer_town": "0xce8"
  }
 }

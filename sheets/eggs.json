@@ -1,52 +1,33 @@
 {
  "sheet": "eggs",
- "about": "(Noah) the hidden quests, BO3-style: one for each city's Echo Altar, begun once the city is freed and never explained in game (the altar's menu shows its whispers, a line more for each step found; the Codex keeps the first). Steps: touch (find n glowing things round the altar, element in hand if asked, at night if night, without being hurt if nodamage, within seconds if set), order (touch n stones in the order they light), altar (return to the altar), kills (n of the night's dead on marked ground), survive (n of the dead risen round the altar; dark: the screen darkens), boss (a named foe: an enemies row). rewards: summon (plugin|id|count: a lesser power that calls them for the night, one summon out at a time) - every quest its own (Noah: summons, not permanent buffs); buff and spell are still understood.",
+ "about": "(Noah: one longer Easter egg for each class, and the wonders harder to win) one hidden quest per class, opened once 6 cities are freed and never explained in game; finishing it is the only way to win the class's wonder. Each step is played at a freed city's Echo Altar, and never in the same city as the step before (the altar's menu shows its whispers - each step's hint, a line more for each step found). Steps: touch (find n glowing things round the altar, element in hand if asked, at night if night, without being hurt if nodamage, within seconds if set), order (touch n stones in the order they light), altar (return to an altar), kills (n of the night's dead on marked ground), classkills (n of the night's dead killed your class's way in that city at night), survive (n of the dead risen round the altar; dark: the screen darkens), boss (a named foe: an enemies row).",
  "rows": [
   {
-   "id": "toast",
-   "town": "Riverwood",
-   "title": "The Sleeping Giant's Toast",
-   "reward": "summon",
-   "rewardText": "The Sleeping Giant: a giant wakes and fights beside you for the night.",
-   "summon": "Skyrim.esm|0x10157F|1",
-   "hints": [
-    "The Giant sleeps, but his cups are scattered about the village after dark.",
-    "Three cups, and an altar thirsty for a toast.",
-    "Drunk dead don't stay down for long."
-   ],
+   "id": "wyrm",
+   "cls": "summoner",
+   "title": "The Wyrm's Calling",
+   "reward": "wonder",
+   "rewardText": "The Horn of the Spectral Wyrm is yours: a horn of bone that answers with a dragon.",
    "steps": [
     {
      "type": "touch",
-     "n": 3,
-     "text": "Find the three glowing mead-cups hidden around Riverwood at night",
+     "n": 4,
+     "text": "Find the four wyrm-bone shards buried round an Echo Altar at night",
      "element": "any",
      "night": true,
      "r0": 500,
      "r1": 1400,
      "nodamage": false,
      "seconds": 0,
-     "name": "mead-cup",
+     "name": "wyrm-bone shard",
      "row": "none",
-     "dark": false
+     "dark": false,
+     "hint": "Bones of a wyrm lie shallow round the altars. They wake only in the dark."
     },
     {
-     "type": "altar",
-     "n": 1,
-     "text": "Raise the toast at the Echo Altar",
-     "element": "any",
-     "night": false,
-     "r0": 0,
-     "r1": 0,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "the altar",
-     "row": "none",
-     "dark": false
-    },
-    {
-     "type": "survive",
-     "n": 12,
-     "text": "Survive the drunken dead",
+     "type": "classkills",
+     "n": 30,
+     "text": "Feed the bones: 30 of the dead slain by your summons, in another freed city at night",
      "element": "any",
      "night": true,
      "r0": 0,
@@ -55,255 +36,142 @@
      "seconds": 0,
      "name": "",
      "row": "none",
-     "dark": false
+     "dark": false,
+     "hint": "What you call must do the killing. The bones drink only what your servants kill."
+    },
+    {
+     "type": "order",
+     "n": 4,
+     "text": "Wake the four bone-totems in the order they glow",
+     "element": "any",
+     "night": true,
+     "r0": 350,
+     "r1": 800,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "bone-totem",
+     "row": "none",
+     "dark": false,
+     "hint": "The totems remember the order they were raised. Watch them."
+    },
+    {
+     "type": "altar",
+     "n": 1,
+     "text": "Lay the bones on an Echo Altar",
+     "element": "any",
+     "night": false,
+     "r0": 0,
+     "r1": 0,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "the altar",
+     "row": "none",
+     "dark": false,
+     "hint": "The bones want an altar's fire."
+    },
+    {
+     "type": "survive",
+     "n": 18,
+     "text": "Hold the altar in the dark while the wyrm's soul stirs",
+     "element": "any",
+     "night": true,
+     "r0": 0,
+     "r1": 0,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "",
+     "row": "none",
+     "dark": true,
+     "hint": "When the wyrm stirs, the light goes out. Hold."
+    },
+    {
+     "type": "touch",
+     "n": 5,
+     "text": "Catch the five spirit-flames before they gutter out",
+     "element": "any",
+     "night": true,
+     "r0": 500,
+     "r1": 1400,
+     "nodamage": false,
+     "seconds": 75,
+     "name": "spirit-flame",
+     "row": "none",
+     "dark": false,
+     "hint": "Five flames, and not long to catch them."
+    },
+    {
+     "type": "boss",
+     "n": 1,
+     "text": "Destroy the Bone-Caller, who would bind the wyrm before you",
+     "element": "any",
+     "night": true,
+     "r0": 0,
+     "r1": 0,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "The Bone-Caller",
+     "row": "lich",
+     "dark": false,
+     "hint": "Someone else is calling the wyrm."
     }
    ]
   },
   {
-   "id": "sap",
-   "town": "Whiterun",
-   "title": "Sap of the Gildergreen",
-   "reward": "summon",
-   "rewardText": "The Gildergreen's Guardian: a spriggan answers your call and mends your wounds.",
-   "summon": "Skyrim.esm|0x023AB9|1",
-   "hints": [
-    "The Gildergreen weeps golden sap - but only flame will loosen it.",
-    "Bring what the tree gave you to the altar.",
-    "Kynareth's tree is jealous of its gifts."
-   ],
+   "id": "sixfires",
+   "cls": "destruction",
+   "title": "The Six Fires",
+   "reward": "wonder",
+   "rewardText": "The Tome of the Six Fires is yours: one cast looses the top spell of all six elements.",
    "steps": [
     {
      "type": "touch",
-     "n": 4,
-     "text": "Burn loose the four drops of golden sap (a fire spell or the fire bow in hand)",
+     "n": 3,
+     "text": "Burn open the three ember-seals round an Echo Altar (fire in hand)",
      "element": "fire",
      "night": true,
      "r0": 500,
      "r1": 1400,
      "nodamage": false,
      "seconds": 0,
-     "name": "drop of sap",
+     "name": "ember-seal",
      "row": "none",
-     "dark": false
+     "dark": false,
+     "hint": "Three seals sleep in the ashes. Only flame will open them."
     },
-    {
-     "type": "altar",
-     "n": 1,
-     "text": "Pour the sap on the Echo Altar",
-     "element": "any",
-     "night": false,
-     "r0": 0,
-     "r1": 0,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "the altar",
-     "row": "none",
-     "dark": false
-    },
-    {
-     "type": "survive",
-     "n": 16,
-     "text": "Hold the altar while the sap takes",
-     "element": "any",
-     "night": true,
-     "r0": 0,
-     "r1": 0,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "",
-     "row": "none",
-     "dark": false
-    }
-   ]
-  },
-  {
-   "id": "court",
-   "town": "Solitude",
-   "title": "The Wolf Queen's Court",
-   "reward": "summon",
-   "rewardText": "The Wolf Queen's Pack: three spectral wolves answer your call.",
-   "summon": "Skyrim.esm|0x0F608C|3",
-   "hints": [
-    "Her braziers remember the order she lit them in.",
-    "Watch which flame wakes first.",
-    "Her court is fed with the dead."
-   ],
-   "steps": [
-    {
-     "type": "order",
-     "n": 3,
-     "text": "Light the Wolf Queen's three braziers in the order they flicker",
-     "element": "any",
-     "night": true,
-     "r0": 350,
-     "r1": 800,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "brazier",
-     "row": "none",
-     "dark": false
-    },
-    {
-     "type": "kills",
-     "n": 25,
-     "text": "Feed her court: kill 25 of the dead on the marked ground",
-     "element": "any",
-     "night": true,
-     "r0": 600,
-     "r1": 900,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "the marked ground",
-     "row": "none",
-     "dark": false
-    }
-   ]
-  },
-  {
-   "id": "horn",
-   "town": "Windhelm",
-   "title": "Ysgramor's Horn",
-   "reward": "summon",
-   "rewardText": "A Shield-Brother of Ysgramor: a spectral warrior answers your call.",
-   "summon": "Dawnguard.esm|0x0045B7|1",
-   "hints": [
-    "Five horns lie frozen in the ice around the city.",
-    "Ice yields to cold harder still.",
-    "Sound the horn and his brothers come - to test you."
-   ],
-   "steps": [
     {
      "type": "touch",
-     "n": 5,
-     "text": "Shatter the five frozen horns with frost",
+     "n": 3,
+     "text": "Shatter the three rime-seals in another freed city (frost in hand)",
      "element": "frost",
      "night": true,
      "r0": 500,
      "r1": 1400,
      "nodamage": false,
      "seconds": 0,
-     "name": "frozen horn",
+     "name": "rime-seal",
      "row": "none",
-     "dark": false
+     "dark": false,
+     "hint": "The next seals are ice. Cold breaks cold."
     },
-    {
-     "type": "altar",
-     "n": 1,
-     "text": "Sound the horn at the Echo Altar",
-     "element": "any",
-     "night": false,
-     "r0": 0,
-     "r1": 0,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "the altar",
-     "row": "none",
-     "dark": false
-    },
-    {
-     "type": "survive",
-     "n": 18,
-     "text": "Prove yourself to Ysgramor's brothers",
-     "element": "any",
-     "night": true,
-     "r0": 0,
-     "r1": 0,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "",
-     "row": "none",
-     "dark": false
-    }
-   ]
-  },
-  {
-   "id": "resonance",
-   "town": "Markarth",
-   "title": "The Resonance",
-   "reward": "summon",
-   "rewardText": "The Centurion's Oath: a Dwemer Centurion answers your call.",
-   "summon": "Skyrim.esm|0x10F9B9|1",
-   "hints": [
-    "Four resonators hum beneath the stone city's shadow.",
-    "Strike them as they sing - high to low, as they show you.",
-    "What the Dwemer built still guards what they left."
-   ],
-   "steps": [
-    {
-     "type": "order",
-     "n": 4,
-     "text": "Strike the four resonators in the order they sing",
-     "element": "any",
-     "night": true,
-     "r0": 350,
-     "r1": 800,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "resonator",
-     "row": "none",
-     "dark": false
-    },
-    {
-     "type": "boss",
-     "n": 1,
-     "text": "Destroy the Centurion the resonance woke",
-     "element": "any",
-     "night": true,
-     "r0": 0,
-     "r1": 0,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "The Resonant Centurion",
-     "row": "eg_centurion",
-     "dark": false
-    }
-   ]
-  },
-  {
-   "id": "debt",
-   "town": "Riften",
-   "title": "The Nightingale's Debt",
-   "reward": "summon",
-   "rewardText": "The Nightingale's Due: two Nightingale agents step out of the shadows to fight for you.",
-   "summon": "Skyrim.esm|0x0E0CDE|2",
-   "hints": [
-    "Three shadow coins, taken by night.",
-    "A Nightingale is never touched. Bleed, and the coins slip away.",
-    "Pay the debt in darkness."
-   ],
-   "steps": [
     {
      "type": "touch",
      "n": 3,
-     "text": "Take the three shadow coins at night without being hurt",
-     "element": "any",
+     "text": "Wake the three storm-seals in another freed city (lightning in hand)",
+     "element": "shock",
      "night": true,
      "r0": 500,
      "r1": 1400,
-     "nodamage": true,
-     "seconds": 0,
-     "name": "shadow coin",
-     "row": "none",
-     "dark": false
-    },
-    {
-     "type": "altar",
-     "n": 1,
-     "text": "Pay the debt at the Echo Altar",
-     "element": "any",
-     "night": false,
-     "r0": 0,
-     "r1": 0,
      "nodamage": false,
      "seconds": 0,
-     "name": "the altar",
+     "name": "storm-seal",
      "row": "none",
-     "dark": false
+     "dark": false,
+     "hint": "The last seals hum. Give them lightning."
     },
     {
-     "type": "survive",
-     "n": 14,
-     "text": "Survive the dark",
+     "type": "classkills",
+     "n": 40,
+     "text": "Kindle the tome: 40 of the dead slain with Destruction, in another freed city at night",
      "element": "any",
      "night": true,
      "r0": 0,
@@ -312,193 +180,8 @@
      "seconds": 0,
      "name": "",
      "row": "none",
-     "dark": true
-    }
-   ]
-  },
-  {
-   "id": "rites",
-   "town": "Falkreath",
-   "title": "Arkay's Last Rites",
-   "reward": "summon",
-   "rewardText": "Arkay's Honoured Dead: two spirits of the honoured dead rise to fight for you.",
-   "summon": "Skyrim.esm|0x104B61|2",
-   "hints": [
-    "Six graves cry out to be fed.",
-    "The ground near the altar is hungry for the night's dead.",
-    "A fallen priest still keeps the rites."
-   ],
-   "steps": [
-    {
-     "type": "kills",
-     "n": 30,
-     "text": "Feed the graves: kill 30 of the dead on the hallowed ground",
-     "element": "any",
-     "night": true,
-     "r0": 600,
-     "r1": 900,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "the marked ground",
-     "row": "none",
-     "dark": false
-    },
-    {
-     "type": "altar",
-     "n": 1,
-     "text": "Ring the rites at the Echo Altar at midnight",
-     "element": "any",
-     "night": false,
-     "r0": 0,
-     "r1": 0,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "the altar",
-     "row": "none",
-     "dark": false
-    },
-    {
-     "type": "boss",
-     "n": 1,
-     "text": "Lay the Fallen Priest to rest",
-     "element": "any",
-     "night": true,
-     "r0": 0,
-     "r1": 0,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "The Fallen Priest of Arkay",
-     "row": "lich",
-     "dark": false
-    }
-   ]
-  },
-  {
-   "id": "lanterns",
-   "town": "Morthal",
-   "title": "Lanterns of the Drowned",
-   "reward": "summon",
-   "rewardText": "A Will-o'-the-Wisp answers your call and shocks the dead near you.",
-   "summon": "mihailhighfantasypack.esp|0x000BC4|1",
-   "hints": [
-    "Lanterns burn in the marsh - but not for long.",
-    "Five, before the last light dies.",
-    "The drowned sing when the lanterns are lit."
-   ],
-   "steps": [
-    {
-     "type": "touch",
-     "n": 5,
-     "text": "Light the five marsh lanterns within a minute",
-     "element": "any",
-     "night": true,
-     "r0": 500,
-     "r1": 1400,
-     "nodamage": false,
-     "seconds": 60,
-     "name": "lantern",
-     "row": "none",
-     "dark": false
-    },
-    {
-     "type": "boss",
-     "n": 1,
-     "text": "Silence the Drowned Skald",
-     "element": "any",
-     "night": true,
-     "r0": 0,
-     "r1": 0,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "The Drowned Skald",
-     "row": "wailer",
-     "dark": false
-    }
-   ]
-  },
-  {
-   "id": "dream",
-   "town": "Dawnstar",
-   "title": "Vaermina's Dream",
-   "reward": "summon",
-   "rewardText": "Vaermina's Servant: a Dremora Lord steps out of her dream to fight for you.",
-   "summon": "Skyrim.esm|0x10DDEE|1",
-   "hints": [
-    "Shards of a nightmare litter the cold shore.",
-    "Rest at the altar and dream.",
-    "In her dream, nothing is seen until it is close."
-   ],
-   "steps": [
-    {
-     "type": "touch",
-     "n": 3,
-     "text": "Gather three nightmare shards",
-     "element": "any",
-     "night": true,
-     "r0": 500,
-     "r1": 1400,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "nightmare shard",
-     "row": "none",
-     "dark": false
-    },
-    {
-     "type": "altar",
-     "n": 1,
-     "text": "Dream at the Echo Altar",
-     "element": "any",
-     "night": false,
-     "r0": 0,
-     "r1": 0,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "the altar",
-     "row": "none",
-     "dark": false
-    },
-    {
-     "type": "survive",
-     "n": 16,
-     "text": "Wake from the nightmare",
-     "element": "any",
-     "night": true,
-     "r0": 0,
-     "r1": 0,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "",
-     "row": "none",
-     "dark": true
-    }
-   ]
-  },
-  {
-   "id": "eye",
-   "town": "Winterhold",
-   "title": "The Eye's Reflection",
-   "reward": "summon",
-   "rewardText": "The Eye's Reflection: a magic anomaly answers your call and burns the dead with the Eye's light.",
-   "summon": "Skyrim.esm|0x0B6F94|1",
-   "hints": [
-    "Four anomalies drift at the cliff's edge.",
-    "Turn the College's light upon the altar - in the order it shows.",
-    "The Eye guards its light."
-   ],
-   "steps": [
-    {
-     "type": "touch",
-     "n": 4,
-     "text": "Gather the four floating anomalies",
-     "element": "any",
-     "night": true,
-     "r0": 500,
-     "r1": 1400,
-     "nodamage": false,
-     "seconds": 0,
-     "name": "anomaly",
-     "row": "none",
-     "dark": false
+     "dark": false,
+     "hint": "The tome is kindled with the dead your spells burn."
     },
     {
      "type": "order",
@@ -512,7 +195,23 @@
      "seconds": 0,
      "name": "light-stone",
      "row": "none",
-     "dark": false
+     "dark": false,
+     "hint": "Four stones shine in turn. Turn them as they show you."
+    },
+    {
+     "type": "touch",
+     "n": 4,
+     "text": "Gather the four drifting anomalies without being hurt",
+     "element": "any",
+     "night": true,
+     "r0": 500,
+     "r1": 1400,
+     "nodamage": true,
+     "seconds": 0,
+     "name": "anomaly",
+     "row": "none",
+     "dark": false,
+     "hint": "The anomalies scatter from a bleeding hand."
     },
     {
      "type": "boss",
@@ -526,9 +225,246 @@
      "seconds": 0,
      "name": "The Great Anomaly",
      "row": "eg_anomaly",
-     "dark": false
+     "dark": false,
+     "hint": "All that magic drew something. It waits."
+    }
+   ]
+  },
+  {
+   "id": "vortex",
+   "cls": "ranger",
+   "title": "The Vortex's Eye",
+   "reward": "wonder",
+   "rewardText": "The Subsuming Vortex is yours: every arrow tears open a black hole.",
+   "steps": [
+    {
+     "type": "touch",
+     "n": 5,
+     "text": "Catch the five falling stars round an Echo Altar before they fade",
+     "element": "any",
+     "night": true,
+     "r0": 500,
+     "r1": 1400,
+     "nodamage": false,
+     "seconds": 60,
+     "name": "falling star",
+     "row": "none",
+     "dark": false,
+     "hint": "Stars fall near the altars at night - five, and they fade fast."
+    },
+    {
+     "type": "classkills",
+     "n": 40,
+     "text": "Feed the dark: 40 of the dead slain with a bow or crossbow, in another freed city at night",
+     "element": "any",
+     "night": true,
+     "r0": 0,
+     "r1": 0,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "",
+     "row": "none",
+     "dark": false,
+     "hint": "Only the string feeds it."
+    },
+    {
+     "type": "touch",
+     "n": 3,
+     "text": "Take the three shadow coins without being hurt",
+     "element": "any",
+     "night": true,
+     "r0": 500,
+     "r1": 1400,
+     "nodamage": true,
+     "seconds": 0,
+     "name": "shadow coin",
+     "row": "none",
+     "dark": false,
+     "hint": "Three coins in the shadows. Bleed and they slip away."
+    },
+    {
+     "type": "altar",
+     "n": 1,
+     "text": "Pay the coins to an Echo Altar",
+     "element": "any",
+     "night": false,
+     "r0": 0,
+     "r1": 0,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "the altar",
+     "row": "none",
+     "dark": false,
+     "hint": "Coins are for paying. The altar is owed."
+    },
+    {
+     "type": "order",
+     "n": 4,
+     "text": "Light the four braziers in the order they flicker",
+     "element": "any",
+     "night": true,
+     "r0": 350,
+     "r1": 800,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "brazier",
+     "row": "none",
+     "dark": false,
+     "hint": "The braziers flicker in an order. Light them in it."
+    },
+    {
+     "type": "survive",
+     "n": 16,
+     "text": "Hold the altar in the dark",
+     "element": "any",
+     "night": true,
+     "r0": 0,
+     "r1": 0,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "",
+     "row": "none",
+     "dark": true,
+     "hint": "The dark comes for whoever holds the eye."
+    },
+    {
+     "type": "boss",
+     "n": 1,
+     "text": "Bring down the Matriarch of the Black Sky",
+     "element": "any",
+     "night": true,
+     "r0": 0,
+     "r1": 0,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "The Matriarch of the Black Sky",
+     "row": "mb_harpy_matriarch",
+     "dark": false,
+     "hint": "Something circles above the altars. Look up."
+    }
+   ]
+  },
+  {
+   "id": "slayer",
+   "cls": "spellsword",
+   "title": "The Slayer's Oath",
+   "reward": "wonder",
+   "rewardText": "Dragon Slayer is yours: the Akaviri blade that carries the spell in your other hand.",
+   "steps": [
+    {
+     "type": "kills",
+     "n": 30,
+     "text": "Feed the hallowed ground: 30 of the dead slain on it, near an Echo Altar at night",
+     "element": "any",
+     "night": true,
+     "r0": 600,
+     "r1": 900,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "the marked ground",
+     "row": "none",
+     "dark": false,
+     "hint": "A patch of ground near the altar is hungry. Feed it the dead."
+    },
+    {
+     "type": "classkills",
+     "n": 40,
+     "text": "Blood the oath: 40 of the dead slain in melee, in another freed city at night",
+     "element": "any",
+     "night": true,
+     "r0": 0,
+     "r1": 0,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "",
+     "row": "none",
+     "dark": false,
+     "hint": "The oath is sworn with a blade, not a spell."
+    },
+    {
+     "type": "touch",
+     "n": 5,
+     "text": "Find the five broken blade-shards",
+     "element": "any",
+     "night": true,
+     "r0": 500,
+     "r1": 1400,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "blade-shard",
+     "row": "none",
+     "dark": false,
+     "hint": "The old blade lies broken in five pieces, scattered by night."
+    },
+    {
+     "type": "order",
+     "n": 4,
+     "text": "Strike the four rune-stones in the order they sing",
+     "element": "any",
+     "night": true,
+     "r0": 350,
+     "r1": 800,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "rune-stone",
+     "row": "none",
+     "dark": false,
+     "hint": "Four stones sing in turn. Strike them as they sing."
+    },
+    {
+     "type": "survive",
+     "n": 20,
+     "text": "Keep your oath: survive the dead risen round the altar",
+     "element": "any",
+     "night": true,
+     "r0": 0,
+     "r1": 0,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "",
+     "row": "none",
+     "dark": false,
+     "hint": "An oath is proven by standing."
+    },
+    {
+     "type": "boss",
+     "n": 1,
+     "text": "Take the blade's hilt from Thorgar the Skulltaker",
+     "element": "any",
+     "night": true,
+     "r0": 0,
+     "r1": 0,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "Thorgar the Skulltaker",
+     "row": "knight",
+     "dark": false,
+     "hint": "A skull-taker carries what is missing."
+    },
+    {
+     "type": "boss",
+     "n": 1,
+     "text": "Defeat the Gatekeeper, the blade's last guardian",
+     "element": "any",
+     "night": true,
+     "r0": 0,
+     "r1": 0,
+     "nodamage": false,
+     "seconds": 0,
+     "name": "The Gatekeeper",
+     "row": "king",
+     "dark": false,
+     "hint": "Every blade has a keeper. This one guards a gate."
     }
    ]
   }
+ ],
+ "columns": [
+  "id",
+  "cls",
+  "title",
+  "reward",
+  "rewardText",
+  "steps"
  ]
 }

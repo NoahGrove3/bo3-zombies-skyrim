@@ -1,15 +1,16 @@
 #include "BO3Z.h"
 
-// (Noah) the hidden quests, Black Ops style (sheet: eggs): one for each city's Echo Altar, waiting once the city is
-// freed, never explained in game. The altar's menu keeps its whispers (a line more for each step found) and the Codex
-// the first. A quest's steps:
+// (Noah: "one longer Easter egg for each class ... make the wonders harder to obtain") the hidden quests, Black Ops style
+// (sheet: eggs): one per class, waking once six cities are freed, never explained in game - and finishing it is the
+// only way to win the class's wonder. Each step is played at a freed city's Echo Altar, and never in the same city as the
+// step before. The altar's menu keeps its whispers (each step's hint, a line more for each step found). A step:
 //   touch    glowing things round the altar (an element in hand if asked; at night if night; unhurt if nodamage;
 //            all inside a time if seconds)            order  stones touched in the order they light up
-//   altar    back to the altar                         kills  the night's dead slain on the marked ground
-//   survive  the dead risen round the altar            boss   a named foe (Director's champion, town -10 - city)
-// Its reward: a summon of its own (a lesser power: one summon out at a time, for the night - Noah: summons, not
-// permanent buffs; the buff and beam code stays for the sheet). In a party, whoever finishes a quest gives its reward to everyone near that altar (Net kEgg).
-// Progress lives in one global per quest (step x 1000 + progress; 99000 done), the gifts in another (bits).
+//   altar    back to an altar                          kills  the night's dead slain on the marked ground
+//   classkills  the night's dead killed your class's way in that city   survive  the dead risen round the altar
+//   boss     a named foe (Director's champion, town -10 - city)
+// Progress lives in one global per quest (step x 1000 + progress; 99000 done) and one for its cities (the city of the
+// step under way + 1, and x 100 the city of the step before + 1).
 namespace bo3z::Eggs
 {
 	namespace
@@ -27,22 +28,20 @@ namespace bo3z::Eggs
 		bool Done(int e) { return Raw(e) >= kDone; }
 		int  Step(int e) { return Done(e) ? gen::kEggs[e].nSteps : Raw(e) / 1000; }
 		int  Prog(int e) { return Done(e) ? 0 : Raw(e) % 1000; }
-		int  EggOf(int a_town)
+		// your class's quest, once it is open (Classes: six cities freed) and not yet done
+		int Active()
 		{
+			const int c = Classes::Get();
+			if (c < 0 || !Classes::WonderOpen()) return -1;
 			for (int e = 0; e < kCount; ++e) {
-				if (gen::kEggs[e].town == a_town) return e;
+				if (gen::kEggs[e].cls == c) return Done(e) ? -1 : e;
 			}
 			return -1;
 		}
-		int Index(std::string_view a_id)
-		{
-			for (int e = 0; e < kCount; ++e) {
-				if (gen::kEggs[e].id == a_id) return e;
-			}
-			return -1;
-		}
-		bool Has(std::string_view a_id) { const int e = Index(a_id); return e >= 0 && Gifted(e) && gen::kEggs[e].reward == gen::kEggBuff; }  // (a buff's only: the quests now give summons)
-
+		int  Towns(int e) { auto* g = Glob(gen::kEggs[e].townGlob); return g ? static_cast<int>(g->value) : 0; }
+		void SetTowns(int e, int v) { if (auto* g = Glob(gen::kEggs[e].townGlob)) g->value = static_cast<float>(v); }
+		int  CurTown(int e) { return Towns(e) % 100 - 1; }   // the city of the step under way (-1 none yet)
+		int  PrevTown(int e) { return Towns(e) / 100 - 1; }  // the city of the step before (-1 none)
 		void Remove(RE::ObjectRefHandle& h)
 		{
 			if (auto r = h.get()) {
@@ -112,9 +111,10 @@ namespace bo3z::Eggs
 			float                        timer = -1, showT = 0, holdT = 0;
 			int                          last = -1;  // the order stone last touched (step off it before the next)
 		} g_live;
-		std::vector<RE::ActorHandle> g_summons;
-		int                          g_summonEgg = -1;
 		float                        g_beamCd = 0;
+		int                          g_hintKey = -1, g_lastProg = 0;  // (the hints: the step they're for, its progress last seen)
+		float                        g_stuck = 0;                     // night seconds spent on it without getting anywhere
+		bool                         g_plain = false;                 // the altar has said plainly what it wants
 
 		void Clear()
 		{
@@ -171,19 +171,11 @@ namespace bo3z::Eggs
 			if (Gifted(e)) return;
 			SetGift(e);
 			const auto& d = gen::kEggs[e];
-			auto*       p = RE::PlayerCharacter::GetSingleton();
-			if (d.reward == gen::kEggSummon || d.reward == gen::kEggSpell) {
-				if (auto* sp = RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(d.power, gen::kPlugin); sp && p && !p->HasSpell(sp)) {
-					p->AddSpell(sp);
-				}
-			} else if (d.id == "toast" && p) {  // Hearth-Mead: health and stamina come back 15% faster, for good
-				p->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealRateMult, 15.0f);
-				p->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kStaminaRateMult, 15.0f);
-			}
 			if (a_loud) {
 				Hud::Lore(std::string(d.title), std::string(d.rewardText), 9.0f);
 				Forms::Play(gen::Sound::curse_lifted);
 			}
+			Classes::EarnWonder(d.cls);  // (the quest's end is the wonder)
 			logger::info("eggs: {} rewarded", d.id);
 		}
 		void Complete(int e)
@@ -193,7 +185,6 @@ namespace bo3z::Eggs
 			Stats::Note(Stats::kQuest);
 			Points::Add(2500);
 			Award(e, true);
-			Net::EggDone(gen::kEggs[e].town);
 			logger::info("eggs: {} done", gen::kEggs[e].id);
 		}
 		void Advance(int e)
@@ -205,6 +196,7 @@ namespace bo3z::Eggs
 				return;
 			}
 			SetRaw(e, st * 1000);
+			SetTowns(e, (CurTown(e) + 1) * 100);  // (this city did its step: the next is found in another)
 			Hud::Banner(std::string(gen::kEggs[e].steps[st].text), 6.0f);  // (found the way on: the next step is told)
 			logger::info("eggs: {} step {}", gen::kEggs[e].id, st);
 		}
@@ -323,9 +315,9 @@ namespace bo3z::Eggs
 						break;
 					}
 					if (s.type == gen::kEggBoss) {
-						if (!g_live.started && s.row >= 0 && !Director::ChampionActive(-10 - gen::kEggs[e].town)) {
+						if (!g_live.started && s.row >= 0 && !Director::ChampionActive(-10 - CurTown(e))) {
 							const auto at = Walkable(a_p, c + RE::NiPoint3{ 700.0f, 0, 0 }, 500.0f).value_or(c);
-							g_live.started = Director::RaiseChampion(-10 - gen::kEggs[e].town, gen::kEnemies[s.row].id, s.name, 12.0f, at);
+							g_live.started = Director::RaiseChampion(-10 - CurTown(e), gen::kEnemies[s.row].id, s.name, 14.0f, at);
 						}
 						break;  // (OnBossSlain moves it on)
 					}
@@ -353,40 +345,52 @@ namespace bo3z::Eggs
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !p->Is3DLoaded()) return;
 		g_beamCd = std::max(0.0f, g_beamCd - a_delta);
-		// (Noah: every quest a summon) a quest won before its reward became a summon: its power now, once a session
-		static bool granted = false;
-		if (!granted) {
-			granted = true;
-			for (int e = 0; e < kCount; ++e) {
-				if (!Gifted(e) || gen::kEggs[e].reward != gen::kEggSummon) continue;
-				if (auto* sp = RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(gen::kEggs[e].power, gen::kPlugin); sp && !p->HasSpell(sp)) p->AddSpell(sp);
-			}
-		}
-		// the Gildergreen's Guardian mends you while it stands near
-		if (g_summonEgg >= 0 && gen::kEggs[g_summonEgg].id == "sap") {
-			for (auto& h : g_summons) {
-				if (auto a = h.get(); a && !a->IsDead() && a->GetPosition().GetDistance(p->GetPosition()) < 900.0f) {
-					auto* av = p->AsActorValueOwner();
-					av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.012f * a_delta);
-					break;
-				}
-			}
-		}
-		if (!Director::NightNow() && !g_summons.empty()) {  // dawn: the summons go back
-			for (auto& h : g_summons) {
-				if (auto a = h.get()) a->Disable(), a->SetDelete(true);
-			}
-			g_summons.clear();
-		}
+		const int e = Active();
 		const int town = Curse::ZoneTown();
-		const int e = town >= 0 && Curse::Freed(town) ? EggOf(town) : -1;
-		if (e < 0 || Done(e)) {
+		if (e < 0 || town < 0 || !Curse::Freed(town)) {
 			if (g_live.egg >= 0) Clear();
 			return;
+		}
+		// which city this step is played in: the first freed city you reach that did not give the step before - and once
+		// the step has begun, only that one
+		const int cur = CurTown(e);
+		if (cur != town) {
+			static float told = 0;
+			told = std::max(0.0f, told - a_delta);
+			if (cur >= 0 && Prog(e) > 0) {
+				if (told <= 0) told = 90.0f, Hud::Banner(fmt::format("Your path's secret waits in {}", gen::kTowns[cur]), 4.0f);
+				if (g_live.egg >= 0) Clear();
+				return;
+			}
+			if (town == PrevTown(e)) {
+				if (told <= 0 && Step(e) > 0) told = 90.0f, Hud::Banner("The altar here has given its sign. The next waits in another freed city.", 4.0f);
+				if (g_live.egg >= 0) Clear();
+				return;
+			}
+			SetTowns(e, (PrevTown(e) + 1) * 100 + town + 1);
 		}
 		auto* altar = Shops::Placed(town, 0);
 		if (!altar) return;
 		const int st = Step(e);
+		// (Noah: "how would players figure out the Easter eggs with no prior context?") the hints come to you: reach a city
+		// where the step can be played and its whisper is spoken; spend long enough on a step without getting anywhere
+		// (about two nights' worth, here at night) and the altar says plainly what it wants - and keeps saying it in its
+		// whispers
+		{
+			static int   lastTown = -1, lastKey = -1;
+			const int    key = e * 100 + st;
+			if (key != g_hintKey) g_hintKey = key, g_stuck = 0, g_plain = false, g_lastProg = Prog(e);
+			if (town != lastTown || key != lastKey) {
+				lastTown = town, lastKey = key;
+				Hud::Banner("The altar whispers: " + std::string(gen::kEggs[e].steps[st].hint), 6.0f);
+			}
+			if (Prog(e) != g_lastProg) g_lastProg = Prog(e), g_stuck = std::max(0.0f, g_stuck - 120.0f);
+			if (Director::NightNow() && !g_plain && (g_stuck += a_delta) > 480.0f) {
+				g_plain = true;
+				Forms::Play(gen::Sound::quest_step);
+				Hud::Lore("THE ALTAR SPEAKS PLAINLY", std::string(gen::kEggs[e].steps[st].text), 9.0f);
+			}
+		}
 		if (g_live.egg != e || g_live.step != st) Setup(p, e, st, altar);
 		TickStep(p, e, altar, a_delta);
 		{
@@ -402,11 +406,6 @@ namespace bo3z::Eggs
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!a_actor || !p) return;
-		// Arkay's Mercy: the dead you kill near you sometimes give back a little health
-		if (Has("rites") && a_actor->GetPosition().GetDistance(p->GetPosition()) < 700.0f && std::rand() % 4 == 0) {
-			auto* av = p->AsActorValueOwner();
-			av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.06f);
-		}
 		const int e = g_live.egg;
 		if (e < 0 || Done(e)) return;
 		const auto& s = gen::kEggs[e].steps[Step(e)];
@@ -422,80 +421,72 @@ namespace bo3z::Eggs
 		}
 	}
 
+	void OnClassKill()  // (Classes) a kill your class's own way
+	{
+		const int e = g_live.egg;
+		if (e < 0 || Done(e) || !Director::NightNow() || Curse::ZoneTown() != CurTown(e)) return;
+		const auto& s = gen::kEggs[e].steps[Step(e)];
+		if (s.type != gen::kEggClasskills) return;
+		const int prog = Prog(e) + 1;
+		SetRaw(e, Step(e) * 1000 + prog);
+		if (prog >= s.n) {
+			Advance(e);
+		} else if (prog % 10 == 0) {
+			Forms::Play(gen::Sound::quest_step);
+			Hud::Banner(fmt::format("The secret drinks: {} of {}", prog, s.n), 2.5f);
+		}
+	}
+
 	void OnBossSlain(int a_town)
 	{
-		const int e = EggOf(a_town);
-		if (e >= 0 && !Done(e) && gen::kEggs[e].steps[Step(e)].type == gen::kEggBoss) {
+		const int e = Active();
+		if (e >= 0 && a_town == CurTown(e) && gen::kEggs[e].steps[Step(e)].type == gen::kEggBoss) {
 			Advance(e);
 		}
 	}
 
-	bool OnSpellCast(RE::FormID a_spell)
-	{
-		auto* sp = RE::TESForm::LookupByID(a_spell);
-		auto* file = sp ? sp->GetFile(0) : nullptr;
-		if (!file || file->GetFilename() != gen::kPlugin) return false;
-		const auto local = sp->GetLocalFormID();
-		for (int e = 0; e < kCount; ++e) {
-			const auto& d = gen::kEggs[e];
-			if (d.power == 0 || local != d.power) continue;
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (d.reward == gen::kEggSpell) {
-				if (g_beamCd > 0) {
-					Hud::Banner(fmt::format("The Eye's light gathers again ({:.0f}s)", std::ceil(g_beamCd)), 2.0f);
-				} else {
-					g_beamCd = 45.0f;
-					Gun::EyeBeam();
-				}
-				return true;
-			}
-			// a summon: one out at a time, for the night
-			for (auto& h : g_summons) {
-				if (auto a = h.get()) a->Disable(), a->SetDelete(true);
-			}
-			g_summons = Echo::Summon(d.summonPlugin, d.summonId, std::max(1, d.summonCount), p->GetPosition());
-			g_summonEgg = e;
-			return true;
-		}
-		return false;
-	}
+	bool OnSpellCast(RE::FormID) { return false; }  // (the city quests' summon powers are retired)
 
-	void Heard(int a_town)  // a friend finished this city's quest: yours too if you were there
-	{
-		const int e = EggOf(a_town);
-		auto*     p = RE::PlayerCharacter::GetSingleton();
-		auto*     altar = e >= 0 ? Shops::Placed(a_town, 0) : nullptr;
-		if (e < 0 || !p || !altar || p->GetPosition().GetDistance(altar->GetPosition()) > 4000.0f || Gifted(e)) return;
-		SetRaw(e, kDone);
-		Clear();
-		Stats::Note(Stats::kQuest);
-		Award(e, true);
-	}
+	void Heard(int) {}  // (each class keeps its own quest: a friend's isn't yours)
 
 	std::vector<std::string> Whispers(int a_town)
 	{
 		std::vector<std::string> out;
-		const int e = EggOf(a_town);
-		if (e < 0 || !Curse::Freed(a_town)) return out;
-		const auto& d = gen::kEggs[e];
-		if (Done(e)) {
-			out.push_back(std::string(d.title) + " - done. " + std::string(d.rewardText));
-			return out;
+		if (!Curse::Freed(a_town)) return out;
+		const int c = Classes::Get();
+		for (int e = 0; e < kCount; ++e) {
+			const auto& d = gen::kEggs[e];
+			if (d.cls != c) continue;
+			if (Done(e) || Gifted(e)) {
+				out.push_back(std::string(d.title) + " - done. " + std::string(d.rewardText));
+			} else if (Classes::WonderOpen()) {
+				const int shown = std::clamp(Step(e) + 1, 1, d.nSteps);
+				for (int i = 0; i < shown; ++i) out.push_back(std::string(d.steps[i].hint));
+				if (g_plain && g_hintKey == e * 100 + Step(e)) out.push_back("Plainly: " + std::string(d.steps[Step(e)].text));
+				if (a_town == PrevTown(e)) out.push_back("(This altar has given its sign. The next waits in another freed city.)");
+			}
 		}
-		const int shown = std::clamp(Step(e) + 1, 1, 3);
-		for (int i = 0; i < shown; ++i) out.push_back(std::string(d.hints[i]));
 		return out;
 	}
 
-	float DamageMult()  // Vaermina's Gift: +10% at night (+5% once SLEN is silenced: the night's bonuses are capped)
+	std::string Line()  // the class guide's line: how far along your path's secret you are
 	{
-		if (!Has("dream") || !Director::NightNow()) return 1.0f;
-		return Echo::WordSilenced(0) ? 1.05f : 1.10f;
+		const int c = Classes::Get();
+		for (int e = 0; e < kCount; ++e) {
+			const auto& d = gen::kEggs[e];
+			if (d.cls != c) continue;
+			if (Done(e)) return std::string(d.title) + " - done";
+			const int cur = CurTown(e);
+			return fmt::format("{} - step {} of {}{}", d.title, Step(e) + 1, d.nSteps, cur >= 0 && Prog(e) > 0 ? fmt::format(" (under way in {})", gen::kTowns[cur]) : std::string(" (listen to the altars' whispers)"));
+		}
+		return {};
 	}
-	bool ShadowStep() { return Has("debt"); }
-	void DevStep(int a_town)  // dev: the city's quest one step on
+
+	float DamageMult() { return 1.0f; }  // (Vaermina's Gift retired with the city quests)
+	bool  ShadowStep() { return false; }  // (the Nightingale's Debt retired with them)
+	void DevStep(int)  // dev: your class's quest one step on
 	{
-		const int e = EggOf(a_town);
+		const int e = Active();
 		if (e >= 0 && !Done(e)) Advance(e);
 	}
 }

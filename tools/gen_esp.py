@@ -672,12 +672,13 @@ def guide_text():
              "<b>Seat of the Awakened</b> - begin again: every city falls back under the curse and the nights start over, the dead half again as tough each cycle. "
              "Your wonders, bows, powers and the words' gifts stay yours."),
            "[pagebreak]", h("Whispers of the Altars"),
-           p("Every freed altar keeps a secret. Nobody will tell you what it is. Stand at a freed altar and its <b>whispers</b> show in its menu - another line for each step you find. These are the first:"),
-           ] + [p(f"<b>{e['town']}</b> - {e['hints'][0]}") for e in S['eggs']['rows']] + [
+           p("Each path keeps a secret, and it is the only road to the path's <b>wonder</b>. It wakes once six cities are free, and nobody will tell you what to do. Stand at a freed altar and its <b>whispers</b> show in its menu - another line for each step you find. "
+             "Each step is found at a freed altar, never in the same city as the step before. These are the first whispers:"),
+           ] + [p(f"<b>{ {'summoner': 'The Summoner', 'destruction': 'The Battle-mage', 'ranger': 'The Ranger', 'spellsword': 'The Spellsword'}[e['cls']] }</b> - {e['steps'][0]['hint']}") for e in S['eggs']['rows']] + [
            "[pagebreak]", h("Event Nights and Themed Waves"),
            p("From night 8, about one night in eight is an <b>event night</b>: a Goblin Raid, a Harpy Swarm, Armored Champions or a Blood Fog. The whole night belongs to it - and it pays <b>double essence</b>, with the dead coming twice as fast."),
            p("On ordinary nights, from the third wave, about one wave in six is <b>themed</b> the same way. Its name shows on the wave dial under the compass."),
-           p("About one night in five, halfway through, <b>something stirs in the dark</b>: a mini-boss. It always drops a wonder weapon part - the next one you're missing - for everyone in the party."),
+           p("About one night in five, halfway through, <b>something stirs in the dark</b>: a mini-boss, with a purse of septims for everyone in the party."),
            "[pagebreak]", h("Falling"),
            p("At every dawn, and whenever an altar wakes, the day is saved. If you fall, you wake at that dawn. In a party, stand over a fallen friend and hold Activate to lift them."),
            p("Good luck. Stay out of the barrows after dark."), "</font>"]
@@ -721,14 +722,8 @@ for key in ['echo_pages', 'echo_parts', 'echo_forged', 'echo_held', 'echo_words'
 # ---- (Noah) the hidden quests (sheet: eggs, src/Eggs.cpp): a global per quest (its step and progress), one for the gifts
 # won, and a lesser power for each summon (and Winterhold's beam) - the power does nothing itself: Eggs::OnSpellCast does
 for e in S['eggs']['rows']:
-    recs['GLOB'].append(record('GLOB', fid('GLOB', 'egg_' + e['id']), [sub('EDID', z('UN_Egg_' + e['id'])), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
-    if e['reward'] in ('summon', 'spell'):
-        label = e['rewardText'].split(':')[0]
-        sp = struct.pack('<IIIfIIffI', 0, 0x1, 3, 0.0, 1, 0, 0.0, 0.0, 0)   # free, a lesser power, fire-and-forget, self
-        recs['SPEL'].append(record('SPEL', fid('SPEL', 'egg_power_' + e['id']), [
-            sub('EDID', z('UN_EggPower_' + e['id'])), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(label)),
-            sub('ETYP', struct.pack('<I', 0x025BEE)), sub('DESC', z(e['rewardText'])), sub('SPIT', sp),
-            sub('EFID', struct.pack('<I', fid('MGEF', 'shoutcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+    for k, ed in (('egg_' + e['id'], 'UN_Egg_' + e['id']), ('egg_' + e['id'] + '_town', 'UN_Egg_' + e['id'] + '_Town')):
+        recs['GLOB'].append(record('GLOB', fid('GLOB', k), [sub('EDID', z(ed)), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 recs['GLOB'].append(record('GLOB', fid('GLOB', 'egg_gifts'), [sub('EDID', z('UN_EggGifts')), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))
 for k, e in (('ritual_souls', 'UN_RitualSouls'), ('ritual_stand', 'UN_RitualStand')):   # (the staffs' last step: souls fed to each, the one on its stand)
     recs['GLOB'].append(record('GLOB', fid('GLOB', k), [sub('EDID', z(e)), sub('FNAM', b'f'), sub('FLTV', struct.pack('<f', 0.0))]))

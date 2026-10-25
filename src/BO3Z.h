@@ -303,6 +303,8 @@ namespace bo3z
 		void             TickFast(float a_delta);      // where the Subsuming Vortex's arrows come down
 		int              RestockWonder();              // the Vortex's arrows topped up (quivers, Max Ammo)
 		bool             WonderEarned();               // any class's wonder won (the Three Words follow)
+		bool             WonderOpen();                 // your class's secret quest is open (six cities freed) and the wonder not yet won
+		void             EarnWonder(int a_cls);        // (Eggs) the quest done: the wonder
 		std::string      WonderLine();                 // the altar's line: your class wonder's trial
 		std::vector<std::string> Progress(int& a_cls);  // the class guide's live page (paragraphs, <b> kept) and the class it is for
 		void             ImbueWeapon();                // the Spellsword's Imbue: the held spell-weapon one material up, its element kept
@@ -689,14 +691,16 @@ namespace bo3z
 	namespace Eggs
 	{
 		void  Tick(float a_delta);
-		void  OnHurt();                          // (the Nightingale's coins)
-		void  OnUndeadDeath(RE::Actor* a_actor); // (marked ground; Arkay's Mercy)
+		void  OnHurt();                          // (a coin step: taken unhurt)
+		void  OnUndeadDeath(RE::Actor* a_actor); // (marked ground)
+		void  OnClassKill();                     // (Classes) a kill your class's own way
 		void  OnBossSlain(int a_town);           // its named foe fell (Director's champion, town -10 - city)
-		bool  OnSpellCast(RE::FormID a_spell);   // a summon's power, the Eye's beam (true: ours)
-		void  Heard(int a_town);                 // a friend finished that city's quest
+		bool  OnSpellCast(RE::FormID a_spell);   // (retired: false)
+		void  Heard(int a_town);                 // (retired)
 		std::vector<std::string> Whispers(int a_town);  // the altar's hints: a line more for each step found
-		float DamageMult();                      // Vaermina's Gift
-		bool  ShadowStep();                      // the Nightingale's Debt: a dodge hides you
+		std::string Line();                      // your class's quest, for the guide
+		float DamageMult();                      // (retired: 1)
+		bool  ShadowStep();                      // (retired: false)
 		void  DevStep(int a_town);
 	}
 
