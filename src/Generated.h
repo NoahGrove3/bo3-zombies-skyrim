@@ -24,17 +24,17 @@ namespace bo3z::gen
 	inline constexpr FormRef kIntroQuest{ "Skyrim.esm", 0x03372B, "MQ101" };
 	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; bool rig; };
 	inline constexpr std::array<Enemy, 47> kEnemies{ {
-		Enemy{ "zombie", "Risen Dead", { "CurseOfAlduin.esp", 0x0008C3, "UN_zombie" }, false, 1, 10, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, true },
+		Enemy{ "zombie", "Risen Dead", { "CurseOfAlduin.esp", 0x0008C3, "UN_zombie" }, false, 1, 8, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.15f, true },
 		Enemy{ "hollow2", "Haugbui", { "The Restless Dead.esp", 0x1F5212, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee2H" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "hollow3", "Haugbui", { "The Restless Dead.esp", 0x1EAFCC, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee1H" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "ash1", "Pyre-Thrall", { "The Restless Dead.esp", 0x5793C4, "zzEnc_DC_Skeleton01Warrior1H" }, false, 2, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "ash2", "Pyre-Thrall", { "The Restless Dead.esp", 0x5D9796, "zzEnc_DC_Skeleton01Warrior1HShield" }, false, 2, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
-		Enemy{ "runner", "Draugr Bride", { "CurseOfAlduin.esp", 0x000A78, "UN_runner" }, false, 1, 4, false, "NPC Head [Head]", true, 0, false, 0, 0.9f, 1.0f, true },
+		Enemy{ "runner", "Draugr Bride", { "CurseOfAlduin.esp", 0x000A78, "UN_runner" }, false, 1, 5, false, "NPC Head [Head]", true, 0, false, 0, 0.9f, 1.0f, true },
 		Enemy{ "marksman", "Barrow Archer", { "The Restless Dead.esp", 0x5E39C7, "zzEnc_DC_Skeleton01Archer" }, false, 4, 0, false, "NPC Head [Head]", true, 0, false, 2, 0.8f, 1.0f, false },
 		Enemy{ "necro", "Ash Tongue", { "The Restless Dead.esp", 0x06DEA8, "zzEnc_DC_DraugrMageFireM02" }, false, 5, 0, false, "NPC Head [Head]", true, 0, false, 2, 1.2f, 1.0f, false },
 		Enemy{ "hexer_rime", "Rime Tongue", { "The Restless Dead.esp", 0x0311F3, "zzEnc_DC_DraugrMageFrostM02" }, false, 5, 0, false, "NPC Head [Head]", true, 0, false, 2, 1.2f, 1.0f, false },
 		Enemy{ "hexer_storm", "Storm Tongue", { "The Restless Dead.esp", 0x1E9BF1, "zzEnc_DC_DraugrMageShockM02" }, false, 6, 0, false, "NPC Head [Head]", true, 0, false, 2, 1.2f, 1.0f, false },
-		Enemy{ "wailer", "Drowned Skald", { "CurseOfAlduin.esp", 0x000A7B, "UN_wailer" }, false, 2, 2, false, "NPC Head [Head]", true, 0, false, 0, 1.2f, 1.0f, true },
+		Enemy{ "wailer", "Drowned Skald", { "CurseOfAlduin.esp", 0x000A7B, "UN_wailer" }, false, 2, 3, false, "NPC Head [Head]", true, 0, false, 0, 1.2f, 1.0f, true },
 		Enemy{ "death_hound", "Grave-Hound", { "mihailoldgod.esp", 0x000861, "mihailleshenwolfSPIRIT" }, false, 1, 1, true, "Canine_Head", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "shadow", "Draugr Warlord", { "mihailesobonecolossus.esp", 0x0008C4, "mihailbonemasterFIRE" }, false, 5, 1, false, "NPC Head [Head]", true, 0, true, 0, 1.0f, 1.0f, false },
 		Enemy{ "reaper", "Thane of the Mound", { "The Restless Dead.esp", 0x5DE8BD, "zzEnc_DC_Skeleton06Warrior1H" }, false, 7, 0, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.9f, false },
@@ -70,7 +70,7 @@ namespace bo3z::gen
 		Enemy{ "mb_harpy_matriarch", "Harpy Matriarch", { "mihailhighfantasypack.esp", 0x09A0FE, "mihailharpy_NPC3" }, false, 99, 0, false, "auto", true, 0, false, 1, 1.0f, 1.0f, false },
 		Enemy{ "eg_centurion", "The Resonant Centurion", { "Skyrim.esm", 0x10F9B9, "EncDwarvenCenturion01" }, false, 99, 0, false, "auto", true, 0, false, 1, 1.0f, 1.0f, false },
 		Enemy{ "eg_anomaly", "The Great Anomaly", { "Skyrim.esm", 0x0B6F94, "EncMagicAnomaly" }, false, 99, 0, false, "auto", true, 0, false, 1, 1.0f, 1.0f, false },
-		Enemy{ "volatile", "Volatile", { "CurseOfAlduin.esp", 0x000CDB, "UN_volatile" }, false, 3, 2, false, "NPC Head [Head]", true, 0, false, 0, 2.5f, 1.0f, true },
+		Enemy{ "volatile", "Volatile", { "CurseOfAlduin.esp", 0x000CDB, "UN_volatile" }, false, 3, 2, false, "NPC Head [Head]", true, 0, false, 0, 2.5f, 0.8f, true },
 	} };
 	enum class Sound : int {
 		cast_sidearm = 0,

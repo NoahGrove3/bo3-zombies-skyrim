@@ -199,7 +199,8 @@ namespace bo3z
 		void  Assign(RE::Actor* a_actor, Type a_type);
 		void  Forget(RE::Actor* a_actor);
 		void  CueFor(RE::Actor* a_actor, int a_cue, float a_seconds);
-		void  SetEyes(RE::Actor* a_actor, std::string_view a_id);  // its glowing eyes (meshes/CurseOfAlduin/eyes/<id>_glow.nif)
+		void  SetEyes(RE::Actor* a_actor, std::string_view a_id);  // its glowing eyes (meshes/CurseOfAlduin/eyes/<id>_glow.nif), and its row's own trick (the Risen Dead turn, the Bride leaps, the Volatile is armoured)
+		bool  IsBrute(RE::Actor* a_actor);    // the Volatile's armoured hide
 		Type  Roll(int a_round);         // which of the risen dead this one is
 		float SpeedMult(Type a_type);
 		float HealthMult(Type a_type);

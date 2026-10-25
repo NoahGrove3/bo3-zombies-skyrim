@@ -30,7 +30,7 @@
    "editorId": "UN_zombie",
    "recordType": "NPC_",
    "minRound": 1,
-   "weight": 10,
+   "weight": 8,
    "specialRound": false,
    "headNode": "NPC Head [Head]",
    "forceCombat": true,
@@ -39,7 +39,7 @@
    "verify": [],
    "kind": "zombie",
    "healthMult": 1.0,
-   "speedMult": 1.0,
+   "speedMult": 1.15,
    "rig": true
   },
   {
@@ -130,7 +130,7 @@
    "editorId": "UN_runner",
    "recordType": "NPC_",
    "minRound": 1,
-   "weight": 4,
+   "weight": 5,
    "specialRound": false,
    "headNode": "NPC Head [Head]",
    "forceCombat": true,
@@ -230,7 +230,7 @@
    "editorId": "UN_wailer",
    "recordType": "NPC_",
    "minRound": 2,
-   "weight": 2,
+   "weight": 3,
    "specialRound": false,
    "headNode": "NPC Head [Head]",
    "forceCombat": true,
@@ -959,7 +959,7 @@
    "verify": [],
    "kind": "zombie",
    "healthMult": 2.5,
-   "speedMult": 1.0,
+   "speedMult": 0.8,
    "rig": true
   }
  ]

@@ -650,19 +650,9 @@ namespace bo3z
 			if (!pick) {
 				return false;
 			}
-			// which of the risen dead it is: the Runner, the Wailer and the Bloater have bodies of their own
+			// (Noah: the four common kinds spread across the night by their own weights - the sheet - no longer re-rolled
+			// out of the Risen Dead's row)
 			std::optional<Undead::Type> rolled;
-			if (gen::kEnemies[*pick].rig && gen::kEnemies[*pick].id == "zombie") {
-				rolled = Undead::Roll(g_current);
-				// (runners are most of the night now: the risen dead's own bodies run too - one in three the Hollow Bride's)
-				const bool brideBody = *rolled == Undead::Type::Runner && std::uniform_int_distribution<int>(0, 2)(g_rng) == 0;
-				const std::string_view alt = brideBody ? "runner" : *rolled == Undead::Type::Wailer ? "wailer" : *rolled == Undead::Type::Bloater ? "bloater" : "";
-				for (std::size_t i = 0; !alt.empty() && i < gen::kEnemies.size(); ++i) {
-					if (gen::kEnemies[i].id == alt && Forms::Enemy(i)) {
-						pick = i;
-					}
-				}
-			}
 			auto* cell = a_player->GetParentCell();
 			const bool interior = cell->IsInteriorCell();
 			RE::NiPoint3 pos = a_at ? *a_at : SpawnSpot(a_player);
@@ -706,7 +696,7 @@ namespace bo3z
 			} else if (rolled) {
 				type = rolled;
 			} else if (rowId == "zombie") {
-				type = Undead::Roll(g_current);
+				type = Undead::Type::Shambler;  // (Noah: each of the four its own: the Risen Dead run, and turn when hurt - Undead SetEyes)
 			} else if (rowId == "runner" || rowId == "volatile") {
 				type = Undead::Type::Runner;
 			} else if (rowId == "wailer") {

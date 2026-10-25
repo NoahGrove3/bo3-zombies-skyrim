@@ -118,6 +118,7 @@ namespace bo3z
 			RE::NiAVObject*           comNode = nullptr;
 			std::atomic<bool>         volatileOne{ false };  // (the Volatile: its own claws)
 			std::atomic<bool>         leftBlade{ false };    // (Noah: "make him swing the sword arm on his left hand") the Mutant
+			std::atomic<bool>         turned{ false };       // (the Risen Dead, wounded: frenzied, its claws faster)
 		};
 		std::shared_mutex                                    g_lock;
 		std::unordered_map<RE::FormID, std::shared_ptr<Rig>> g_rigs;  // (shared: the animation threads keep theirs alive while the game thread replaces or drops it)
@@ -570,6 +571,7 @@ namespace bo3z
 			float rate = ClipRate(c);
 			if ((c == kAttack || c == kAttackL) && (r.volatileOne.load() || r.type == Type::Runner)) rate *= r.volatileOne.load() ? 1.3f : 1.12f;  // (their claws come faster)
 			if (c == kPunch && r.type == Type::Wailer) rate *= 0.9f;
+			if (r.turned.load() && (c == kAttack || c == kPunch)) rate *= 1.3f;
 			return rate;
 		}
 		// true: the clips posed it this frame (the old rig stays out)
@@ -663,6 +665,11 @@ namespace bo3z
 			RE::NiPoint3    lungeDir{};
 			bool            burst = false;    // bloater: has it popped
 			bool            volatileOne = false;
+			// (Noah: "something that sets them apart from the rest other than their look") each common kind's own trick
+			bool            leaper = false;   // the Draugr Bride: leaps on you from mid range
+			bool            turns = false;    // the Risen Dead: wounded, it frenzies
+			bool            turned = false;
+			bool            brute = false;    // the Volatile: an armoured hide (Gun: half damage unless the head or the back)
 			RE::NiPoint3    pounceFrom{}, pounceTo{};
 			float           pounceT = -1.0f;  // seconds into its pounce (-1 none)
 		};
@@ -771,7 +778,27 @@ namespace bo3z
 					std::shared_lock l(g_lock);
 					if (auto it = g_rigs.find(a_actor->GetFormID()); it != g_rigs.end()) it->second->leftBlade.store(true);
 				}
+				// each common kind's own trick (Noah: "something that sets them apart from the rest other than their look")
+				for (auto& m : g_minds) {
+					if (m.handle.get().get() != a_actor) continue;
+					if (a_id == "zombie") m.turns = true;
+					else if (a_id == "runner") m.leaper = true, m.cd = Rand(2.0f, 4.0f);
+					else if (a_id == "volatile") {
+						m.brute = true;
+						auto* av = a_actor->AsActorValueOwner();
+						av->SetActorValue(RE::ActorValue::kAttackDamageMult, av->GetActorValue(RE::ActorValue::kAttackDamageMult) * 1.6f);  // (the blade: heavy)
+					}
+				}
 			}
+		}
+
+		bool IsBrute(RE::Actor* a_actor)
+		{
+			if (!a_actor) return false;
+			for (auto& m : g_minds) {
+				if (m.brute && m.handle.get().get() == a_actor) return true;
+			}
+			return false;
 		}
 
 		void CueFor(RE::Actor* a_actor, int a_cue, float a_seconds)
@@ -933,14 +960,32 @@ namespace bo3z
 				}
 				const float dist = a->GetPosition().GetDistance(pp);
 				m.cd -= a_delta;
-				// the Volatile's pounce: from mid range, a leap that closes most of the gap in a third of a second (only with a
-				// clear line to you, never through a wall), its claws coming as it lands
-				if (m.volatileOne) {
+				// the Risen Dead turns: hurt past half, it shrieks and comes on in a frenzy - faster feet, faster claws
+				if (m.turns && !m.turned) {
+					auto* zav = a->AsActorValueOwner();
+					const float mx = zav->GetPermanentActorValue(RE::ActorValue::kHealth);
+					if (mx > 0 && zav->GetActorValue(RE::ActorValue::kHealth) < 0.5f * mx) {
+						m.turned = true;
+						zav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 40.0f);
+						{
+							std::shared_lock l(g_lock);
+							if (auto it = g_rigs.find(a->GetFormID()); it != g_rigs.end()) it->second->turned.store(true);
+						}
+						SetCue(a.get(), kCueRoar, 0.7f);
+						Audio::Voice(a.get(), Audio::VoiceEvent::kHurt);
+					}
+				}
+				// the pounce (the Volatile risen by noise: long and often; the Draugr Bride: a shorter leap): from mid range, a
+				// leap that closes most of the gap in a third of a second (only with a clear line to you, never through a
+				// wall), its claws coming as it lands
+				if (m.volatileOne || m.leaper) {
+					const float pMin = m.volatileOne ? 260.0f : 220.0f, pMax = m.volatileOne ? 760.0f : 540.0f;
+					const float pDur = m.volatileOne ? 0.35f : 0.4f, pH = m.volatileOne ? 70.0f : 55.0f;
 					if (m.pounceT >= 0) {
 						m.pounceT += a_delta;
-						const float u = std::min(1.0f, m.pounceT / 0.35f);
+						const float u = std::min(1.0f, m.pounceT / pDur);
 						RE::NiPoint3 at = m.pounceFrom + (m.pounceTo - m.pounceFrom) * u;
-						at.z += std::sin(u * RE::NI_PI) * 70.0f;
+						at.z += std::sin(u * RE::NI_PI) * pH;
 						a->SetPosition(at, true);
 						if (u >= 1.0f) {
 							m.pounceT = -1.0f;
@@ -949,7 +994,7 @@ namespace bo3z
 						continue;
 					}
 					bool los = false;
-					if (m.cd <= 0 && dist > 260.0f && dist < 760.0f && a->HasLineOfSight(a_player, los) && los) {
+					if (m.cd <= 0 && dist > pMin && dist < pMax && a->HasLineOfSight(a_player, los) && los) {
 						RE::NiPoint3 dir = pp - a->GetPosition();
 						dir.z = 0;
 						const float d = dir.Length();
@@ -959,12 +1004,12 @@ namespace bo3z
 						if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(m.pounceTo, land) && std::abs(land - m.pounceTo.z) < 120.0f) m.pounceTo.z = land;
 						else m.pounceTo.z = m.pounceFrom.z;
 						m.pounceT = 0.0f;
-						m.cd = Rand(5.0f, 7.5f);
+						m.cd = m.volatileOne ? Rand(5.0f, 7.5f) : Rand(6.0f, 9.0f);
 						SetCue(a.get(), kCueGrab, 0.5f);
 						Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
 						continue;
 					}
-					continue;  // (its scream came when it rose; no other specials)
+					if (m.volatileOne) continue;  // (its scream came when it rose; no other specials)
 				}
 				if (m.wind >= 0) {
 					if ((m.wind -= a_delta) < 0) {

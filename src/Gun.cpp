@@ -521,6 +521,16 @@ namespace bo3z
 				damage *= std::clamp(0.5f + 0.02f * static_cast<float>(player->GetLevel()), 0.5f, 1.5f);
 				damage /= Difficulty::FoeToughness();
 			}
+			// (Noah: each common kind its own trick) the Volatile's hide turns half of every blow - but not one to the head,
+			// and not one from behind it
+			if (!a_head && Director::IsRoundUndead(a_target) && Undead::IsBrute(a_target)) {
+				const float z = a_target->GetAngleZ();
+				RE::NiPoint3 to = player->GetPosition() - a_target->GetPosition();
+				to.z = 0;
+				const float l = to.Length();
+				const bool behind = l > 1.0f && (to.x * std::sin(z) + to.y * std::cos(z)) / l < -0.3f;
+				if (!behind) damage *= 0.5f;
+			}
 			if (PowerUps::InstaKill() && Director::IsRoundUndead(a_target)) {
 				damage = av->GetActorValue(RE::ActorValue::kHealth) + 1.0f;  // Insta-Kill (every one of them, one hit)
 			}
