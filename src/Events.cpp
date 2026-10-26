@@ -910,6 +910,7 @@ namespace bo3z
 		void OnDataLoaded()
 		{
 			FreeBowMovement();
+			Undead::InstallHooks();
 			// (Noah: "the hoarfrost casting animation is very bright, hard to see when casting") Mysticism's Hoarfrost
 			// wears Skyrim's own Frostbite in the hands (its art and its light), not its blinding own
 			if (auto* dh = RE::TESDataHandler::GetSingleton()) {
@@ -1013,6 +1014,14 @@ namespace bo3z
 						return have;
 					}
 				}
+				if (!r && a_new) {
+					// (Noah: "my game crashed after I died" - in this loader, writing through nothing: the list refused the
+					// new one and had none of its kind) the new one is handed back unadded - the loader fills it in and
+					// it is simply left aside, rather than written through nothing
+					static int said = 0;
+					if (said++ < 10) logger::warn("load: a saved extra (type {}) had no list to go into - set aside", static_cast<int>(a_new->GetType()));
+					return a_new;
+				}
 				return r;
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
@@ -1025,11 +1034,18 @@ namespace bo3z
 			static RE::BSExtraData* thunk(RE::ExtraDataList* a_list, RE::ExtraDataType a_type)
 			{
 				auto* r = func(a_list, a_type);
+				if (!r && !a_list) {  // (no list at all: the loader fills a spare that belongs to nothing)
+					static RE::BSExtraData* spare = RE::BSExtraData::Create<RE::ExtraGlobal>();
+					return spare;
+				}
 				if (!r && a_list) {
 					auto* e = RE::BSExtraData::Create<RE::ExtraGlobal>();
 					if (e) {
 						e->global = nullptr;
-						a_list->Add(e);
+						if (!a_list->Add(e)) {
+							static int said2 = 0;
+							if (said2++ < 10) logger::warn("load: a fresh ExtraGlobal was refused by its list - the loader fills a spare");
+						}
 						r = e;
 						static int said = 0;
 						if (said++ < 10) logger::warn("load: a saved ExtraGlobal was missing from its reference (type {}) - a fresh one made", static_cast<int>(a_type));

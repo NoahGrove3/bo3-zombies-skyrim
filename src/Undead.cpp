@@ -132,6 +132,8 @@ namespace bo3z
 		// (Noah: "the enemies don't have any attack animations") how the posing goes, told in the log now and then
 		std::atomic<std::uint64_t> g_hookCalls{ 0 }, g_hookRigs{ 0 }, g_clipPosed{ 0 }, g_clipNo{ 0 };
 		std::atomic_bool           g_camOn{ false };  // the camera's update poses them (CamHook)
+		std::atomic<std::uint64_t> g_camCalls{ 0 }, g_camSkip{ 0 }, g_graphCalls{ 0 }, g_graphPoses{ 0 };
+		std::atomic_bool           g_graphOn{ false };  // the animation graph's own update poses them (GraphHook)
 
 		RE::NiMatrix3 AxisAngle(RE::NiPoint3 a, float t)
 		{
@@ -713,7 +715,7 @@ namespace bo3z
 						r = it->second;
 					}
 				}
-				if (r && g_camOn.load()) {
+				if (r && (g_camOn.load() || g_graphOn.load())) {
 					g_hookRigs.fetch_add(1, std::memory_order_relaxed);
 					return;  // (the camera's update poses them: once a frame, not twice)
 				}
@@ -737,6 +739,8 @@ namespace bo3z
 			static void thunk(RE::TESCamera* a_this)
 			{
 				func(a_this);
+				g_camCalls.fetch_add(1, std::memory_order_relaxed);
+				if (g_graphOn.load()) return;  // (the graph's update poses them)
 				g_camOn = true;
 				auto* ui = RE::UI::GetSingleton();
 				if (ui && ui->GameIsPaused()) return;
@@ -749,7 +753,10 @@ namespace bo3z
 				}
 				for (auto& [id, r] : rigs) {
 					auto* a = RE::TESForm::LookupByID<RE::Actor>(id);
-					if (!a || !r || a->IsDead() || a->IsDisabled() || !a->Is3DLoaded() || a->IsInRagdollState()) continue;
+					if (!a || !r || a->IsDead() || a->IsDisabled() || !a->Is3DLoaded() || a->IsInRagdollState()) {
+						g_camSkip.fetch_add(1, std::memory_order_relaxed);
+						continue;
+					}
 					try {
 						PoseRig(a, *r, dt);
 						g_camPoses.fetch_add(1, std::memory_order_relaxed);
@@ -758,6 +765,114 @@ namespace bo3z
 				}
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
+		};
+
+		// (Noah: still Draugr moves, with both tables hooked - the log: neither is ever called in his game) the one place
+		// every body's animation is worked out: its animation graph's update (IAnimationGraphManagerHolder::
+		// UpdateAnimationGraphManager). It is called directly, never through a table, so it is hooked where it begins: its
+		// first instructions are copied out to run before it continues, and a jump to ours is written in their place.
+		namespace Detour
+		{
+			// the length of one of the instructions a function usually begins with (0: not one we know - no hook)
+			std::size_t ModRm(const std::uint8_t* p)
+			{
+				const std::uint8_t m = p[0], mod = m >> 6, rm = m & 7;
+				if (mod == 3) return 1;
+				if (mod == 0 && rm == 5) return 0;  // (rip-relative: can't be copied as it is)
+				std::size_t n = 1;
+				if (rm == 4) {
+					++n;
+					if (mod == 0 && (p[1] & 7) == 5) n += 4;
+				}
+				return n + (mod == 1 ? 1 : mod == 2 ? 4 : 0);
+			}
+			std::size_t Len(const std::uint8_t* p)
+			{
+				std::size_t pre = 0;
+				if ((p[0] & 0xF0) == 0x40) pre = 1;  // REX
+				const std::uint8_t op = p[pre];
+				if (op >= 0x50 && op <= 0x57) return pre + 1;                                    // push r
+				if (op == 0x89 || op == 0x8B || op == 0x8D || op == 0x33 || op == 0x31 || op == 0x2B || op == 0x03 || op == 0x85) {  // mov, lea, xor, sub, add, test
+					const std::size_t m = ModRm(p + pre + 1);
+					return m ? pre + 1 + m : 0;
+				}
+				if (op == 0x83) { const std::size_t m = ModRm(p + pre + 1); return m ? pre + 1 + m + 1 : 0; }   // op r/m, imm8
+				if (op == 0x81) { const std::size_t m = ModRm(p + pre + 1); return m ? pre + 1 + m + 4 : 0; }   // op r/m, imm32
+				if (op == 0x0F && (p[pre + 1] == 0x29 || p[pre + 1] == 0x28 || p[pre + 1] == 0x11 || p[pre + 1] == 0x10)) {  // movaps / movups
+					const std::size_t m = ModRm(p + pre + 2);
+					return m ? pre + 2 + m : 0;
+				}
+				if (op == 0xB8 + (op & 7) && op >= 0xB8 && op <= 0xBF) return pre + 1 + ((p[0] == 0x48 || p[0] == 0x49) ? 8 : 4);  // mov r, imm
+				return 0;
+			}
+			SKSE::Trampoline& Tramp()
+			{
+				static SKSE::Trampoline t{ "CurseOfAlduin.undead" };
+				static bool made = false;
+				if (!made) {
+					made = true;
+					t.create(256, REL::Module::get().pointer());
+				}
+				return t;
+			}
+			// hooks the function at a_at to run a_to; returns what runs the original (0: not hooked)
+			std::uintptr_t Install(std::uintptr_t a_at, std::uintptr_t a_to, std::string_view a_name)
+			{
+				const auto* p = reinterpret_cast<const std::uint8_t*>(a_at);
+				std::string bytes;
+				for (int i = 0; i < 16; ++i) bytes += fmt::format("{:02X} ", p[i]);
+				auto& t = Tramp();
+				std::uint8_t* stub = nullptr;
+				std::size_t   n = 0;
+				if (p[0] == 0xE9) {  // already hooked by another mod (a jump): we go first, then on to theirs
+					const std::uintptr_t dst = a_at + 5 + *reinterpret_cast<const std::int32_t*>(p + 1);
+					stub = static_cast<std::uint8_t*>(t.allocate(14));
+					stub[0] = 0xFF, stub[1] = 0x25, std::memset(stub + 2, 0, 4), std::memcpy(stub + 6, &dst, 8);
+				} else {
+					while (n < 5) {
+						const std::size_t l = Len(p + n);
+						if (!l) {
+							logger::warn("undead: {} not hooked - it begins with what we can't move ({})", a_name, bytes);
+							return 0;
+						}
+						n += l;
+					}
+					stub = static_cast<std::uint8_t*>(t.allocate(n + 14));
+					std::memcpy(stub, p, n);
+					const std::uintptr_t back = a_at + n;
+					stub[n] = 0xFF, stub[n + 1] = 0x25, std::memset(stub + n + 2, 0, 4), std::memcpy(stub + n + 6, &back, 8);
+				}
+				t.write_branch<5>(a_at, a_to, true);
+				logger::info("undead: {} hooked where it begins ({} bytes moved: {})", a_name, n, bytes);
+				return reinterpret_cast<std::uintptr_t>(stub);
+			}
+		}
+		struct GraphHook
+		{
+			static bool thunk(RE::IAnimationGraphManagerHolder* a_this, const RE::BSAnimationUpdateData& a_data)
+			{
+				const bool r = func(a_this, a_data);
+				g_graphCalls.fetch_add(1, std::memory_order_relaxed);
+				auto* refr = a_data.refr;
+				if (!refr || refr->GetFormType() != RE::FormType::ActorCharacter) return r;
+				auto* a = static_cast<RE::Actor*>(refr);
+				if (a->IsPlayerRef() || a->IsDead() || a->IsInRagdollState()) return r;
+				std::shared_ptr<Rig> rig;
+				{
+					std::shared_lock l(g_lock);
+					if (auto it = g_rigs.find(a->GetFormID()); it != g_rigs.end()) rig = it->second;
+				}
+				if (rig) {
+					g_graphOn = true;
+					try {
+						PoseRig(a, *rig, std::clamp(a_data.deltaTime, 0.0f, 0.1f));
+						g_graphPoses.fetch_add(1, std::memory_order_relaxed);
+					} catch (...) {
+					}
+				}
+				return r;
+			}
+			static inline bool (*func)(RE::IAnimationGraphManagerHolder*, const RE::BSAnimationUpdateData&) = nullptr;
 		};
 
 		// ---- the fight: what each kind does besides walking at you (main thread)
@@ -854,6 +969,16 @@ namespace bo3z
 
 	namespace Undead
 	{
+		// (at the main menu, before any body moves: code is rewritten only while nothing runs it)
+		void InstallHooks()
+		{
+			static bool done = false;
+			if (done) return;
+			done = true;
+			if (const auto orig = Detour::Install(REL::Relocation<std::uintptr_t>{ RELOCATION_ID(32155, 32899) }.address(), reinterpret_cast<std::uintptr_t>(&GraphHook::thunk), "the animation graph's update")) {
+				GraphHook::func = reinterpret_cast<decltype(GraphHook::func)>(orig);
+			}
+		}
 		void Assign(RE::Actor* a_actor, Type a_type)
 		{
 			if (!a_actor) {
@@ -1262,7 +1387,7 @@ namespace bo3z
 					std::shared_lock l(g_lock);
 					rigs = g_rigs.size();
 				}
-				if (rigs > 0) logger::info("undead: {} rigs - animation updates {} ({} of ours), camera poses {}, clip poses {}, no clip set {}", rigs, g_hookCalls.exchange(0), g_hookRigs.exchange(0), g_camPoses.exchange(0), g_clipPosed.exchange(0), g_clipNo.exchange(0));
+				if (rigs > 0) logger::info("undead: {} rigs - animation updates {} ({} of ours), camera updates {} (poses {}, skipped {}), graph updates {} (poses {}), clip poses {}, no clip set {}", rigs, g_hookCalls.exchange(0), g_hookRigs.exchange(0), g_camCalls.exchange(0), g_camPoses.exchange(0), g_camSkip.exchange(0), g_graphCalls.exchange(0), g_graphPoses.exchange(0), g_clipPosed.exchange(0), g_clipNo.exchange(0));
 			}
 			static float sweep = 0;
 			if ((sweep += a_delta) > 5.0f) {

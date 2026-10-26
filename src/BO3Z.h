@@ -191,6 +191,7 @@ namespace bo3z
 
 	namespace Undead
 	{
+		void InstallHooks();  // the animation graph's update, hooked where it begins (once, at the main menu)
 		enum class Type { Shambler, Runner, Crawler, Wailer, Bloater, Stalker, Reaper, Necro, Wyrm };
 		enum Cue { kCueNone = 0, kCueRoar, kCueScream, kCueGrab, kCueSwipeL, kCueSwipeR, kCueCrouch, kCueChannel, kCueStandUp, kCueCast, kCueLeap };
 		bool  HasClips(RE::Actor* a_actor);    // moves by the Mixamo clips (Data/SKSE/Plugins/CurseOfAlduin/anims)
