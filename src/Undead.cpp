@@ -712,10 +712,47 @@ namespace bo3z
 						r = it->second;
 					}
 				}
+				if (r && g_camOn.load()) {
+					g_hookRigs.fetch_add(1, std::memory_order_relaxed);
+					return;  // (the camera's update poses them: once a frame, not twice)
+				}
 				if (r) {
 					g_hookRigs.fetch_add(1, std::memory_order_relaxed);
 					try {
 						PoseRig(a_this, *r, a_delta);
+					} catch (...) {
+					}
+				}
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+
+		// (Noah: "they still move like Draugr ... they don't swing when they deal damage" - the log showed the hook above is
+		// never called in his game: no animation update reaches it, not one) the poses are put on from the camera's update
+		// instead: on the main thread, once a frame, after the world's animation has run and before the frame is drawn
+		std::atomic<std::uint64_t> g_camPoses{ 0 };
+		std::atomic_bool           g_camOn{ false };
+		struct CamHook
+		{
+			static void thunk(RE::TESCamera* a_this)
+			{
+				func(a_this);
+				g_camOn = true;
+				auto* ui = RE::UI::GetSingleton();
+				if (ui && ui->GameIsPaused()) return;
+				const float dt = std::clamp(RE::GetSecondsSinceLastFrame(), 0.0f, 0.1f);
+				std::vector<std::pair<RE::FormID, std::shared_ptr<Rig>>> rigs;
+				{
+					std::shared_lock l(g_lock);
+					rigs.reserve(g_rigs.size());
+					for (auto& [id, r] : g_rigs) rigs.emplace_back(id, r);
+				}
+				for (auto& [id, r] : rigs) {
+					auto* a = RE::TESForm::LookupByID<RE::Actor>(id);
+					if (!a || !r || a->IsDead() || a->IsDisabled() || !a->Is3DLoaded() || a->IsInRagdollState()) continue;
+					try {
+						PoseRig(a, *r, dt);
+						g_camPoses.fetch_add(1, std::memory_order_relaxed);
 					} catch (...) {
 					}
 				}
@@ -827,6 +864,8 @@ namespace bo3z
 				hooked = true;
 				REL::Relocation<std::uintptr_t> vt{ RE::VTABLE_Character[0] };
 				AnimHook::func = vt.write_vfunc(0x7D, AnimHook::thunk);
+				REL::Relocation<std::uintptr_t> cam{ RE::VTABLE_PlayerCamera[0] };
+				CamHook::func = cam.write_vfunc(0x2, CamHook::thunk);
 				logger::info("undead: animation hook installed");
 			}
 			{
@@ -1212,7 +1251,7 @@ namespace bo3z
 					std::shared_lock l(g_lock);
 					rigs = g_rigs.size();
 				}
-				if (rigs > 0) logger::info("undead: {} rigs - animation updates {} ({} of ours), clip poses {}, no clip set {}", rigs, g_hookCalls.exchange(0), g_hookRigs.exchange(0), g_clipPosed.exchange(0), g_clipNo.exchange(0));
+				if (rigs > 0) logger::info("undead: {} rigs - animation updates {} ({} of ours), camera poses {}, clip poses {}, no clip set {}", rigs, g_hookCalls.exchange(0), g_hookRigs.exchange(0), g_camPoses.exchange(0), g_clipPosed.exchange(0), g_clipNo.exchange(0));
 			}
 			static float sweep = 0;
 			if ((sweep += a_delta) > 5.0f) {

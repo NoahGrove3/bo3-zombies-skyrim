@@ -2589,7 +2589,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float trialsH = (s.trialsOn ? 112 * k + 5 * 70 * k + 104 * k : 0.0f) + (s.whispers.empty() ? 0.0f : 56 * k + 46 * k * s.whispers.size());
 				static float measuredH = 0;  // (Noah: "five white dots under Leave the Altar" - the tops of the lines below it, cut by a short guess) the panel's real height, from the last frame
 				const float guessH = (shout ? 610 : 532) * k + 86 * k + 78 * k + 56 * k + (s.chooseOn ? 52 * k : 0.0f) + trialsH;
-				const float contentH = measuredH > 0 ? measuredH + 70 * k : guessH;
+				const float contentH = measuredH > 0 ? measuredH + 92 * k : guessH;
 				const float h = std::min(contentH, size.y - 60 * k);
 				const ImVec2 a{ size.x * 0.5f - w * 0.5f, std::max(24 * k, size.y * 0.5f - h * 0.5f - 10 * k) }, b{ a.x + w, a.y + h };  // (Noah: centred, clear of the HUD)
 				Panel(dl, a, b, k, 0.92f);
@@ -2964,6 +2964,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// (focusY0/1: the focused row in the content's own space; on screen it stands at focusY - scroll)
 				if (focusY1 - scrollGoal > b.y - 80 * k) scrollGoal = focusY1 - (b.y - 80 * k);
 				if (focusY0 - scrollGoal < a.y + 20 * k) scrollGoal = focusY0 - (a.y + 20 * k);
+				// (Noah: "the D-pad doesn't scroll all the way to the top or the bottom - it stops just short and cuts off words")
+				// the first rows in focus show the panel from its very top (the title too); the last ones, to its very end
+				if (focusY0 - a.y < 240 * k) scrollGoal = 0;
+				if (contentH - (focusY1 - a.y) < 260 * k) scrollGoal = std::max(0.0f, contentH - h);
 				if (contentH - h > 1.0f) {  // a thin bar: how far down you are
 					const float track = h - 90 * k, frac = std::clamp(scroll / (contentH - h), 0.0f, 1.0f);
 					const float bh = std::max(30 * k, track * h / contentH);
@@ -5728,6 +5732,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		HRESULT WINAPI PresentHook(IDXGISwapChain* a_swap, UINT a_sync, UINT a_flags)
 		{
 			Watchdog::Beat();
+			// (Noah: "my wait timer should stop when it hits the time that the night starts") waiting runs the clock with
+			// the game's own update stopped: the night's arrival is watched from here, every frame, and ends the wait
+			if (auto* uiW = RE::UI::GetSingleton(); uiW && uiW->IsMenuOpen(RE::SleepWaitMenu::MENU_NAME) && Save::Flag(Save::kFlagStarted) && Director::NightNow()) {
+				static auto lastClose = std::chrono::steady_clock::now() - std::chrono::seconds(5);
+				if (std::chrono::steady_clock::now() - lastClose > std::chrono::milliseconds(500)) {
+					lastClose = std::chrono::steady_clock::now();
+					if (auto* q = RE::UIMessageQueue::GetSingleton()) q->AddMessage(RE::SleepWaitMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+				}
+			}
 			try {
 				static auto netLast = std::chrono::steady_clock::now();
 				const auto  netNow = std::chrono::steady_clock::now();

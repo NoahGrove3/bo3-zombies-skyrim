@@ -21,6 +21,7 @@ namespace bo3z
 			float           webAmount{ 0 };
 			float           behind{ 0 };       // seconds spent too far away / unloaded
 			float           stall{ 0 };     // seconds spent not closing in
+			float           stuck{ 0 };     // (Noah: "some hang out behind buildings") seconds loaded, out of reach and not getting closer
 			float           lastDist{ -1 };
 			float           ability{ 4.0f };   // Iron Reaper: next reap / Necromancer: next summon
 			float           windup{ -1.0f };   // Iron Reaper: seconds until the telegraphed sweep lands
@@ -154,7 +155,19 @@ namespace bo3z
 		// (Noah: the night starts the moment the sun sets) dusk is when the sun reaches the horizon in this place's
 		// climate (the middle of its sunset), not a fixed hour; the sheet's nightStartHour stands in where none is known
 		// (Noah: night starts at 9pm) a fixed hour now, wherever you are
-		float DuskHour() { return R.nightStartHour; }
+		// (Noah, later: "nighttime to start as soon as daytime ends, till just before the sunrise") from the end of this
+		// place's sunset to the start of its sunrise (Skyrim's climate timing, in ten-minute steps); the sheet's hours stand
+		// in where no climate is known
+		float ClimateHour(bool a_dusk)
+		{
+			auto* sky = RE::Sky::GetSingleton();
+			auto* cl = sky ? sky->currentClimate : nullptr;
+			if (!cl) return a_dusk ? 20.0f : 5.0f;
+			const float h = (a_dusk ? cl->timing.sunset.end : cl->timing.sunrise.begin) / 6.0f;
+			return a_dusk ? (h >= 16.0f && h <= 23.0f ? h : 20.0f) : (h >= 3.0f && h <= 8.0f ? h : 5.0f);
+		}
+		float DuskHour() { return ClimateHour(true); }
+		float DawnHour() { return ClimateHour(false); }
 		bool IsNight()
 		{
 			auto* cal = RE::Calendar::GetSingleton();
@@ -163,7 +176,7 @@ namespace bo3z
 			}
 			const float h = cal->GetHour();
 			const float dusk = DuskHour();
-			return dusk > R.nightEndHour ? (h >= dusk || h < R.nightEndHour) : (h >= dusk && h < R.nightEndHour);
+			return dusk > DawnHour() ? (h >= dusk || h < DawnHour()) : (h >= dusk && h < DawnHour());
 		}
 
 		bool Allowed(RE::PlayerCharacter* a_player)
@@ -1990,7 +2003,7 @@ namespace bo3z
 				return;
 			}
 			const float h = cal->GetHour();
-			const float left = std::fmod(R.nightEndHour - h + 24.0f, 24.0f);
+			const float left = std::fmod(DawnHour() - h + 24.0f, 24.0f);
 			if (left > 12.0f) {
 				return;  // (not a night hour)
 			}
@@ -2011,7 +2024,7 @@ namespace bo3z
 			if (!cal || !cal->gameHour || g_phase != Phase::Fighting || g_nightCleared || Coop::Client() || Curse::SafeHere(a_player) || g_waves <= 0) {
 				return;
 			}
-			const float nightHours = std::fmod(R.nightEndHour - DuskHour() + 24.0f, 24.0f);
+			const float nightHours = std::fmod(DawnHour() - DuskHour() + 24.0f, 24.0f);
 			const float since = std::fmod(cal->GetHour() - DuskHour() + 24.0f, 24.0f);
 			if (since > nightHours) {
 				return;  // (not a night hour)
@@ -2408,8 +2421,17 @@ namespace bo3z
 				const bool  boss = gen::kEnemies[s.enemy].bossEvery > 0;
 				const float dist = a->GetPosition().GetDistance(a_player->GetPosition());
 				// Left behind (too far, or its cell unloaded): climb out of the ground again near the player, BO3-style.
-				if (!boss && (dist > gen::kChaseRelocateDist || !a->Is3DLoaded())) {
-					if ((s.behind += kStep) >= gen::kChaseRelocateSeconds && grounded >= 1.5f && relocGap <= 0) {
+				// (Noah: "6 enemies left but they were nowhere to be seen" - the log: the dead replaced again and again, each
+				// one "unloaded" though it stood a few steps away, its body still loading - a churn that never let one arrive)
+				// one near you that hasn't loaded yet is given time (15 s) before it is replaced; only the far are moved at once
+				const bool farOff = dist > gen::kChaseRelocateDist;
+				if (!boss && (farOff || !a->Is3DLoaded())) {
+					static std::deque<std::chrono::steady_clock::time_point> recent;
+					const auto nowR = std::chrono::steady_clock::now();
+					while (!recent.empty() && nowR - recent.front() > std::chrono::seconds(30)) recent.pop_front();
+					const float wait = farOff ? gen::kChaseRelocateSeconds : 15.0f;
+					if ((s.behind += kStep) >= wait && grounded >= 1.5f && relocGap <= 0 && recent.size() < 8) {
+						recent.push_back(nowR);
 						// (crashes right after a burst of these: an actor dragged across cells with MoveTo and then set
 						// down elsewhere the same frame, its body still loading on a worker thread) one a second; one still
 						// loaded in your worldspace is only set down near you, one whose cell unloaded is taken away and a
@@ -2433,6 +2455,20 @@ namespace bo3z
 				s.behind = 0;
 				if (!a->Is3DLoaded()) {
 					continue;
+				}
+				// stuck behind a building or on a rock: out of reach and not getting closer for 10 s - it climbs out of the
+				// ground again near you (out of sight is not checked: it simply comes back into the fight)
+				if (!boss && dist > 450.0f && s.lastDist >= 0 && dist > s.lastDist - 30.0f) {
+					if ((s.stuck += kStep) >= 10.0f && grounded >= 1.5f && relocGap <= 0) {
+						relocGap = 1.0f, s.stuck = 0, s.stall = 0, s.lastDist = -1;
+						a->SetPosition(SpawnSpot(a_player), true);
+						a->MoveToNearestNavmesh();
+						a->StartCombat(a_player);
+						logger::info("night: {} stuck out of reach ({:.0f} away) set down near you", gen::kEnemies[s.enemy].id, dist);
+						continue;
+					}
+				} else {
+					s.stuck = 0;
 				}
 				// Not closing in while still out of reach: it lost track of the player, so re-target from scratch.
 				const bool closing = s.lastDist < 0 || dist < s.lastDist - 30.0f || dist < 350.0f || (gen::kEnemies[s.enemy].kind == 2 && dist < 2600.0f);  // casters hold their range
@@ -2616,7 +2652,7 @@ namespace bo3z
 			}
 			// the clock jumps to first light; the night's round counts as survived (Dawn, from the Director's tick)
 			const float h = cal->GetHour();
-			const float hours = std::fmod(R.nightEndHour - h + 24.0f, 24.0f) + 0.05f;
+			const float hours = std::fmod(DawnHour() - h + 24.0f, 24.0f) + 0.05f;
 			if (cal->gameHour && cal->gameDaysPassed) {
 				float nh = cal->gameHour->value + hours;
 				if (nh >= 24.0f) {
@@ -3335,15 +3371,15 @@ namespace bo3z
 			// pass in dayMinutes: 48 (whole numbers: Skyrim Together's server runs the same). While the night is fought
 			// the clock all but stops (1) and PaceNight moves it with the waves cleared; a night with no fighting (a freed
 			// city, before the intro) passes at 38, about 15 minutes. In a friend's party the shared clock keeps its pace.
-			const float dayHours = std::fmod(DuskHour() - R.nightEndHour + 24.0f, 24.0f);
+			const float dayHours = std::fmod(DuskHour() - DawnHour() + 24.0f, 24.0f);
 			float       want = std::round(dayHours * 60.0f / gen::kDayMinutes);
 			if (IsNight() && !Coop::Client()) {
 				// (Noah: the night passes by - about ten minutes - and pauses just before dawn until its last wave is down,
 				// then the morning comes) near dawn while waves remain the clock all but stops (HoldNight keeps it there)
 				auto* pl  = RE::PlayerCharacter::GetSingleton();
 				auto* cal = RE::Calendar::GetSingleton();
-				const float nightHours = std::fmod(R.nightEndHour - DuskHour() + 24.0f, 24.0f);
-				const float left = cal ? std::fmod(R.nightEndHour - cal->GetHour() + 24.0f, 24.0f) : 12.0f;
+				const float nightHours = std::fmod(DawnHour() - DuskHour() + 24.0f, 24.0f);
+				const float left = cal ? std::fmod(DawnHour() - cal->GetHour() + 24.0f, 24.0f) : 12.0f;
 				const bool  fighting = (g_phase == Phase::Fighting || g_phase == Phase::Break) && !g_nightCleared && !(pl && Curse::SafeHere(pl));
 				want = fighting && left < 0.4f ? 1.0f : std::round(nightHours * 60.0f / kNightMinutes);
 			}
@@ -3367,6 +3403,20 @@ namespace bo3z
 				return;
 			}
 			quiet = false;
+			// (Noah: "I was able to save during the night ... it let me save and it crashed my game") no saving from nightfall
+			// to dawn: Skyrim's own switch for it (the one its opening uses), set as the night begins and lifted at dawn
+			{
+				static int noSave = -1;
+				const int want = (Save::Flag(Save::kFlagStarted) && (g_phase != Phase::Day || IsNight())) ? 1 : 0;
+				if (Save::Flag(Save::kFlagStarted) && want != noSave) {
+					noSave = want;
+					if (auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton()) {
+						RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+						vm->DispatchStaticCall("Game", "SetInChargen", RE::MakeFunctionArguments(static_cast<bool>(want), static_cast<bool>(want), false), none);
+					}
+					logger::info("night: saving {}", want ? "locked until dawn" : "allowed again");
+				}
+			}
 			// a rest that runs into dusk ends there (the countdown has begun)
 			if (auto* ui = RE::UI::GetSingleton(); ui && g_phase != Phase::Day && ui->IsMenuOpen(RE::SleepWaitMenu::MENU_NAME)) {
 				if (auto* q = RE::UIMessageQueue::GetSingleton()) {
