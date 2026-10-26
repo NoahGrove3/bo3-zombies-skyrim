@@ -131,6 +131,7 @@ namespace bo3z
 		std::atomic_bool                                     g_logged{ false };
 		// (Noah: "the enemies don't have any attack animations") how the posing goes, told in the log now and then
 		std::atomic<std::uint64_t> g_hookCalls{ 0 }, g_hookRigs{ 0 }, g_clipPosed{ 0 }, g_clipNo{ 0 };
+		std::atomic_bool           g_camOn{ false };  // the camera's update poses them (CamHook)
 
 		RE::NiMatrix3 AxisAngle(RE::NiPoint3 a, float t)
 		{
@@ -731,7 +732,6 @@ namespace bo3z
 		// never called in his game: no animation update reaches it, not one) the poses are put on from the camera's update
 		// instead: on the main thread, once a frame, after the world's animation has run and before the frame is drawn
 		std::atomic<std::uint64_t> g_camPoses{ 0 };
-		std::atomic_bool           g_camOn{ false };
 		struct CamHook
 		{
 			static void thunk(RE::TESCamera* a_this)
