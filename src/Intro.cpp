@@ -381,13 +381,13 @@ namespace bo3z
 					if (!player->Is3DLoaded() || !player->GetParentCell() || !player->GetParentCell()->IsAttached()) {
 						return;
 					}
-					if (++g_settle < 60 || player->GetOccupiedFurniture()) {
+					if (++g_settle < 330 || player->GetOccupiedFurniture()) {  // (5.5 s: the water of Riverwood is built from a template Skyrim loads in the background)
 						return;
 					}
 					auto* marker = Forms::RiverwoodMarker();
 					static int tries = 0;
 					if (marker && player->GetPosition().GetDistance(marker->GetPosition()) > 3000.0f) {
-						if ((g_settle - 60) % 120 == 0 && tries < 8) {  // (every 2 s, the move's loading screen in between)
+						if ((g_settle - 330) % 120 == 0 && tries < 8) {  // (every 2 s, the move's loading screen in between)
 							++tries;
 							Hud::IntroVeil(3.0f);  // (Skyrim's loading screen covers the move; the outro lifts the black once the world is there)
 							player->MoveTo(marker);
