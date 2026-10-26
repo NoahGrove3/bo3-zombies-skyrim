@@ -601,6 +601,29 @@ namespace bo3z
 					if (auto* t = a_event->target->As<RE::Actor>(); t && !spellHit && Director::IsFoe(t)) {
 						Gun::StormHit(t);  // (a blade, a fist or Skyrim's own bow: the Stormblast charge goes off too)
 					}
+					// (Noah: "nothing I try lets me imbue my sword with a spell") the Spellsword's blade carries the spell in
+					// the other hand by itself - no storing, no keys: each blade hit on one of the dead also strikes it with
+					// that spell (a moment apart, for free). The Spellsword mod's own "contains one spell" slot is not used.
+					if (auto* t = a_event->target->As<RE::Actor>(); t && !spellHit && !t->IsDead() && Director::IsFoe(t) && src && src->As<RE::TESObjectWEAP>() &&
+						Classes::Get() == 3) {  // (3: the Spellsword - src/CofferSpells.h)
+						static auto last = std::chrono::steady_clock::time_point{};
+						const auto  now = std::chrono::steady_clock::now();
+						if (now - last > std::chrono::milliseconds(350)) {
+							RE::SpellItem* sp = nullptr;
+							for (bool left : { true, false }) {
+								if (auto* f = player->GetEquippedObject(left); f && f->As<RE::SpellItem>()) {
+									sp = f->As<RE::SpellItem>();
+									break;
+								}
+							}
+							if (sp && sp->GetSpellType() == RE::MagicSystem::SpellType::kSpell) {
+								last = now;
+								if (auto* c = player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) c->CastSpellImmediate(sp, false, t, 1.0f, false, 0.0f, player);
+								static int told = 0;
+								if (told++ < 5) logger::info("spellsword: the blade struck with {}", sp->GetName());
+							}
+						}
+					}
 				}
 				if (a_event && player && a_event->cause.get() == player && a_event->target.get() == player) {
 					Perks::SelfHit();  // (your own spells never hurt you)
