@@ -201,15 +201,72 @@ namespace bo3z::Watchdog
 			i += mod == 1 ? 1 : mod == 2 ? 4 : 0;
 			return i + imm;
 		}
+		// a read through nothing: mov r, [m] (and movzx) - its register is given 0 and the read stepped over
+		std::size_t ReadLen(const std::uint8_t* p, int& a_reg)
+		{
+			std::size_t i = 0;
+			std::uint8_t rex = 0;
+			if ((p[i] & 0xF0) == 0x40) rex = p[i++];
+			const std::uint8_t op = p[i++];
+			if (op == 0x0F && (p[i] == 0xB6 || p[i] == 0xB7 || p[i] == 0xBE || p[i] == 0xBF)) ++i;
+			else if (op != 0x8B && op != 0x8A) return 0;
+			const std::uint8_t m = p[i++], mod = m >> 6, rm = m & 7;
+			if (mod == 3 || (mod == 0 && rm == 5)) return 0;
+			a_reg = ((m >> 3) & 7) | ((rex & 4) ? 8 : 0);
+			if (rm == 4) {
+				const std::uint8_t sib = p[i++];
+				if (mod == 0 && (sib & 7) == 5) i += 4;
+			}
+			return i + (mod == 1 ? 1 : mod == 2 ? 4 : 0);
+		}
+		// which reference was being loaded: the first thing on the stack that looks like one (its form id and type)
+		void TellRef(const CONTEXT* a_ctx)
+		{
+			const auto* sp = reinterpret_cast<const std::uint64_t*>(a_ctx->Rsp);
+			for (int i = 0; i < 96; ++i) {
+				std::uint64_t v = 0;
+				SIZE_T        got = 0;
+				if (!::ReadProcessMemory(::GetCurrentProcess(), sp + i, &v, 8, &got) || v < 0x10000) continue;
+				std::uint8_t buf[0x50]{};
+				if (!::ReadProcessMemory(::GetCurrentProcess(), reinterpret_cast<const void*>(v), buf, sizeof(buf), &got)) continue;
+				const std::uint64_t vt = *reinterpret_cast<std::uint64_t*>(buf);
+				const Mod*          m = ModOf(vt);
+				const std::uint8_t  type = buf[0x1A];
+				const std::uint32_t id = *reinterpret_cast<std::uint32_t*>(buf + 0x14);
+				if (!m || m->name != "SkyrimSE.exe" || !id || (type != 0x3D && type != 0x3E && type != 0x3F && type != 0x40 && type != 0x41 && type != 0x42 && type != 0x43 && type != 0x44)) continue;
+				std::uint64_t base = *reinterpret_cast<std::uint64_t*>(buf + 0x40);
+				std::uint32_t baseId = 0;
+				std::uint8_t  bb[0x20]{};
+				if (base && ::ReadProcessMemory(::GetCurrentProcess(), reinterpret_cast<const void*>(base), bb, sizeof(bb), &got)) baseId = *reinterpret_cast<std::uint32_t*>(bb + 0x14);
+				logger::warn("load: the reference being loaded: {:08X} (type {:X}, base {:08X})", id, type, baseId);
+				return;
+			}
+		}
 		LONG CALLBACK StepOverLoaderWrite(EXCEPTION_POINTERS* a_info)
 		{
 			if (!a_info || !a_info->ExceptionRecord || a_info->ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION) return EXCEPTION_CONTINUE_SEARCH;
 			const auto& er = *a_info->ExceptionRecord;
-			if (er.NumberParameters < 2 || er.ExceptionInformation[0] != 1 || er.ExceptionInformation[1] >= 0x1000) return EXCEPTION_CONTINUE_SEARCH;  // (a write, near address 0)
+			if (er.NumberParameters < 2 || er.ExceptionInformation[1] >= 0x1000) return EXCEPTION_CONTINUE_SEARCH;  // (near address 0)
 			static const std::uintptr_t fn = REL::ID(12095).address();
 			auto*                       ctx = a_info->ContextRecord;
 			if (ctx->Rip < fn || ctx->Rip >= fn + 0x35F0) return EXCEPTION_CONTINUE_SEARCH;
 			const auto* code = reinterpret_cast<const std::uint8_t*>(ctx->Rip);
+			if (static std::atomic_int refs{ 0 }; refs.fetch_add(1) < 4) TellRef(ctx);
+			if (er.ExceptionInformation[0] == 0) {  // a read
+				int reg = -1;
+				const std::size_t rl = ReadLen(code, reg);
+				static std::atomic_int toldR{ 0 };
+				if (toldR.fetch_add(1) < 8) {
+					std::string b;
+					for (int i = -8; i < 12; ++i) b += fmt::format("{:02X}{}", code[i], i == -1 ? " | " : " ");
+					logger::warn("load: the reference loader read from nothing at +{:X} ({}) - {}", ctx->Rip - fn, b, rl ? "read as 0" : "not a read we know: left to crash");
+				}
+				if (!rl || reg < 0 || reg == 4) return EXCEPTION_CONTINUE_SEARCH;
+				(&ctx->Rax)[reg] = 0;
+				ctx->Rip += rl;
+				return EXCEPTION_CONTINUE_EXECUTION;
+			}
+			if (er.ExceptionInformation[0] != 1) return EXCEPTION_CONTINUE_SEARCH;
 			const std::size_t len = WriteLen(code);
 			static std::atomic_int told{ 0 };
 			if (told.fetch_add(1) < 8) {
