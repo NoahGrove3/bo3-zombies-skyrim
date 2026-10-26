@@ -144,7 +144,7 @@ namespace bo3z
 				logger::info("intro: Skyrim opened the creator at Riverwood itself - ours won't follow");
 			}
 			g_raceSeen = true;
-			if (!kPlayHelgen && !Save::Flag(Save::kFlagMoved) && !Forms::IntroDone()) {
+			if (!kPlayHelgen && !Save::Flag(Save::kFlagMoved)) {  // (Noah: the creator opened in Helgen's cave with a broken face, before the move: Helgen is already marked done by then)
 				g_raceSeen = false;
 				if (g_raceAfterSkip == 0) g_raceAfterSkip = 1;
 				if (auto* q = RE::UIMessageQueue::GetSingleton()) q->AddMessage(RE::RaceSexMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
@@ -374,20 +374,20 @@ namespace bo3z
 						player->NotifyAnimationGraph("IdleForceDefaultState");
 					}
 					// (Noah: "it crashed when starting a new character", twice - in Skyrim's own water building as the move
-					// began, 1.8 s into the new game) the world is let settle first: four seconds, nothing loading, you in it
+					// began, 1.8 s into the new game) the world is let settle first: nothing loading, you in it, then a second more
 					if (auto* ui0 = RE::UI::GetSingleton(); ui0 && ui0->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) {
 						return;
 					}
 					if (!player->Is3DLoaded() || !player->GetParentCell() || !player->GetParentCell()->IsAttached()) {
 						return;
 					}
-					if (++g_settle < 240 || player->GetOccupiedFurniture()) {
+					if (++g_settle < 60 || player->GetOccupiedFurniture()) {
 						return;
 					}
 					auto* marker = Forms::RiverwoodMarker();
 					static int tries = 0;
 					if (marker && player->GetPosition().GetDistance(marker->GetPosition()) > 3000.0f) {
-						if ((g_settle - 240) % 120 == 0 && tries < 8) {  // (every 2 s, the move's loading screen in between)
+						if ((g_settle - 60) % 120 == 0 && tries < 8) {  // (every 2 s, the move's loading screen in between)
 							++tries;
 							Hud::IntroVeil(3.0f);  // (Skyrim's loading screen covers the move; the outro lifts the black once the world is there)
 							player->MoveTo(marker);
