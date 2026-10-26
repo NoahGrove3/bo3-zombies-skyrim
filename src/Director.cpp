@@ -2229,10 +2229,12 @@ namespace bo3z
 				auto&       t = swing.try_emplace(a->GetFormID(), -1.0f).first->second;
 				const auto  ap = a->GetPosition();
 				const float dist = std::hypot(ap.x - pp.x, ap.y - pp.y), dz = std::abs(ap.z - pp.z);
-				const float reach = 150.0f + a->GetBoundRadius() * 0.5f;
+				// (Noah: "they can hit me before I'm in range to hit them with my sword - make their melee range closer") a
+				// sword's reach, not a spear's: about the same distance your own blade lands from
+				const float reach = 95.0f + a->GetBoundRadius() * 0.5f;
 				if (t >= 0) {
 					if ((t -= a_delta) < 0) {
-						if (dist < reach + 40.0f && dz < 160.0f && Perks::SinceZombieHit(a->GetFormID()) > 0.5f) {
+						if (dist < reach + 15.0f && dz < 160.0f && Perks::SinceZombieHit(a->GetFormID()) > 0.5f) {
 							Perks::OnZombieHit(a.get());
 							if (static int said = 0; said++ < 10) logger::info("hurt: {} reached you ({:.0f} away)", a->GetName(), dist);
 						}
@@ -2240,12 +2242,18 @@ namespace bo3z
 					}
 					continue;
 				}
-				if (dist > reach || dz > 160.0f || Perks::SinceZombieHit(a->GetFormID()) < 1.6f) continue;
+				// (Noah: "delay their swinging and attacking frequency") a swing every 2.6 s or so each, give or take
+				static std::unordered_map<RE::FormID, float> cool;  // seconds until it may swing again (landed or missed)
+				auto& c = cool.try_emplace(a->GetFormID(), 0.0f).first->second;
+				if ((c -= a_delta) > 0.0f) continue;
+				if (dist > reach || dz > 160.0f || Perks::SinceZombieHit(a->GetFormID()) < 2.6f) continue;
+				if (cool.size() > 400) cool.clear();
 				const float face = std::atan2(pp.x - ap.x, pp.y - ap.y);
 				float d = std::fmod(face - a->GetAngleZ() + 3.0f * RE::NI_PI, 2.0f * RE::NI_PI) - RE::NI_PI;
 				if (std::abs(d) > 1.2f) continue;
 				a->NotifyAnimationGraph("attackStart");  // (the swing shows; its blow lands a moment later)
-				t = 0.45f;
+				t = 0.55f;  // (a beat longer to see it coming)
+				cool[a->GetFormID()] = 2.6f + std::uniform_real_distribution<float>(0.0f, 0.9f)(g_rng);
 			}
 			if (swing.size() > 400) std::erase_if(swing, [](const auto& e) { return e.second < 0; });
 		}

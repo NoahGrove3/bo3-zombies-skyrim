@@ -109,6 +109,15 @@ namespace bo3z
 					continue;
 				}
 				if (d.freed && !freed) {
+					// (Noah: "when I load into a save, the altar has the particle effects before it's been freed") a freed
+					// piece left from another game (or placed a moment before this save's own state was read) is taken away
+					RE::TES::GetSingleton()->ForEachReferenceInRange(a_main, 700.0f, [&](RE::TESObjectREFR* r) {
+						if (r && r->GetBaseObject() == base && !r->IsDeleted() && !r->IsDisabled()) {
+							r->Disable();
+							r->SetDelete(true);
+						}
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
 					continue;
 				}
 				if (d.freed && !d.light && d.z == 0.0f && (d.x != 0.0f || d.y != 0.0f)) {

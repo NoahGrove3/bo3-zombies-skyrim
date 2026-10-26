@@ -177,6 +177,51 @@ namespace bo3z::Watchdog
 
 	namespace
 	{
+		// (Noah: "after dying, my game is still crashing on the loading screen - and loading back into a save") the save's
+		// reference loader (ID 12095) writes a saved global's value into an extra that isn't there (address 0 + 0x10), at
+		// the same place every time. That one write is stepped over: the reference loads without that value (a global it
+		// would have pointed at), instead of the game ending.
+		std::size_t WriteLen(const std::uint8_t* p)
+		{
+			std::size_t i = 0;
+			if (p[i] == 0x66) ++i;                       // (16-bit operand)
+			if ((p[i] & 0xF0) == 0x40) ++i;              // REX
+			const std::uint8_t op = p[i++];
+			std::size_t imm = 0;
+			if (op == 0xC7) imm = (p[0] == 0x66 || p[1] == 0x66) ? 2 : 4;
+			else if (op == 0xC6) imm = 1;
+			else if (op == 0x0F && (p[i] == 0x11 || p[i] == 0x29 || p[i] == 0x7F || p[i] == 0xD6)) ++i;   // movups/movaps/movdqa/movq stores
+			else if (op != 0x89 && op != 0x88) return 0;
+			const std::uint8_t m = p[i++], mod = m >> 6, rm = m & 7;
+			if (mod == 3 || (mod == 0 && rm == 5)) return 0;
+			if (rm == 4) {
+				const std::uint8_t sib = p[i++];
+				if (mod == 0 && (sib & 7) == 5) i += 4;
+			}
+			i += mod == 1 ? 1 : mod == 2 ? 4 : 0;
+			return i + imm;
+		}
+		LONG CALLBACK StepOverLoaderWrite(EXCEPTION_POINTERS* a_info)
+		{
+			if (!a_info || !a_info->ExceptionRecord || a_info->ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION) return EXCEPTION_CONTINUE_SEARCH;
+			const auto& er = *a_info->ExceptionRecord;
+			if (er.NumberParameters < 2 || er.ExceptionInformation[0] != 1 || er.ExceptionInformation[1] >= 0x1000) return EXCEPTION_CONTINUE_SEARCH;  // (a write, near address 0)
+			static const std::uintptr_t fn = REL::ID(12095).address();
+			auto*                       ctx = a_info->ContextRecord;
+			if (ctx->Rip < fn || ctx->Rip >= fn + 0x35F0) return EXCEPTION_CONTINUE_SEARCH;
+			const auto* code = reinterpret_cast<const std::uint8_t*>(ctx->Rip);
+			const std::size_t len = WriteLen(code);
+			static std::atomic_int told{ 0 };
+			if (told.fetch_add(1) < 8) {
+				std::string b;
+				for (int i = -8; i < 12; ++i) b += fmt::format("{:02X}{}", code[i], i == -1 ? " | " : " ");
+				logger::warn("load: the reference loader wrote into nothing at +{:X} ({}) - {}", ctx->Rip - fn, b, len ? "stepped over" : "not a write we know: left to crash");
+			}
+			if (!len) return EXCEPTION_CONTINUE_SEARCH;
+			ctx->Rip += len;
+			return EXCEPTION_CONTINUE_EXECUTION;
+		}
+
 		// a crash: where it happened and what is on that thread's stack (module + offset), written before the game dies
 		LONG CALLBACK OnCrash(EXCEPTION_POINTERS* a_info)
 		{
@@ -235,6 +280,7 @@ namespace bo3z::Watchdog
 			}
 			SnapModules();
 			::AddVectoredExceptionHandler(1, OnCrash);
+			::AddVectoredExceptionHandler(1, StepOverLoaderWrite);  // (first: it runs before the crash report)
 			::CreateThread(nullptr, 0, Watch, nullptr, 0, nullptr);
 		}
 	}
