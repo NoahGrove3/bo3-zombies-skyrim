@@ -2179,6 +2179,43 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// health bars over the wounded: black iron plates with chamfered ends and bronze caps, the blood (always red)
 			// draining from the right with a pale wound that follows it down; the tougher the foe, the hotter the red fire
 			// round its plate (FlameBorder: specials smoulder, elites blaze, champions roar); other foes' names in iron (these replace Skyrim's bar under the compass)
+			// (Noah: "bring back the health bars above enemies - super simplistic and high quality, to match Edge UI") with
+			// Edge UI: a slim bar over each wounded foe - a dark smoked trough, a thin bronze hairline round it, the blood
+			// draining from the right with a pale wound following; elites and bosses a little longer, their names above
+			if (Hud::kEdgeHud && !s.perkMenu) {
+				static std::unordered_map<std::uint32_t, std::pair<float, float>> edgeWound;  // id -> (pale wound, fade in)
+				static float edgeSweep = 0;
+				if ((edgeSweep += dt) > 5.0f) {
+					edgeSweep = 0;
+					std::erase_if(edgeWound, [&](const auto& e) { return std::none_of(s.enemyBars.begin(), s.enemyBars.end(), [&](const auto& b) { return b.id == e.first; }); });
+				}
+				for (const auto& b : s.enemyBars) {
+					auto& [pale, in] = edgeWound.try_emplace(b.id, b.frac, 0.0f).first->second;
+					pale = b.frac > pale ? b.frac : std::max(b.frac, pale - dt * 0.5f);
+					in = std::min(1.0f, in + dt * 6.0f);
+					const float  sc = std::clamp(b.scale, 0.6f, 1.4f);
+					const float  w = std::round((b.rank == 2 ? 120.0f : b.rank == 1 ? 96.0f : 72.0f) * k * sc), h = std::max(2.0f, std::round((b.rank >= 1 && b.rank <= 2 ? 5.0f : 4.0f) * k * sc));
+					const ImVec2 c{ std::round(b.x * size.x), std::round(b.y * size.y) };
+					const ImVec2 a{ c.x - w * 0.5f, c.y - h * 0.5f }, z{ c.x + w * 0.5f, c.y + h * 0.5f };
+					const float  al = in;
+					dl->AddRectFilled({ a.x - 2 * k, a.y - 2 * k }, { z.x + 2 * k, z.y + 2 * k }, Fade(IM_COL32(6, 6, 8, 170), al));  // the smoked plate
+					dl->AddRect({ a.x - 2 * k, a.y - 2 * k }, { z.x + 2 * k, z.y + 2 * k }, Fade(kGoldDim, al), 0.0f, 0, 1.0f);       // the bronze hairline
+					dl->AddRectFilled(a, z, Fade(IM_COL32(40, 14, 14, 200), al));                                                   // the trough
+					if (pale > b.frac) dl->AddRectFilled({ a.x + w * b.frac, a.y }, { a.x + w * pale, z.y }, Fade(IM_COL32(232, 214, 186, 170), al));
+					const ImU32 lit = b.rank == 2 ? IM_COL32(214, 72, 46, 255) : IM_COL32(186, 34, 30, 255), deep = IM_COL32(110, 16, 16, 255);
+					dl->AddRectFilledMultiColor(a, { a.x + w * b.frac, z.y }, Fade(lit, al), Fade(lit, al), Fade(deep, al), Fade(deep, al));
+					if (b.rank == 1 || b.rank == 2) {  // a small diamond at each end, as Edge's dividers
+						for (float x : { a.x - 6 * k, z.x + 6 * k }) {
+							dl->AddQuadFilled({ x, c.y - 3 * k }, { x + 3 * k, c.y }, { x, c.y + 3 * k }, { x - 3 * k, c.y }, Fade(kGold, al));
+						}
+						if (!b.name.empty()) {
+							const float  fs = std::max(10.0f * k, 12.0f * k * sc);
+							const ImVec2 ts = Measure(g_body, fs, b.name);
+							Txt(dl, g_body, fs, { std::round(c.x - ts.x * 0.5f), std::round(a.y - 4 * k - ts.y) }, Fade(IM_COL32(228, 216, 190, 235), al), b.name, 1.0f * k, IM_COL32(0, 0, 0, 220));
+						}
+					}
+				}
+			}
 			if (!Hud::kEdgeHud && !s.perkMenu) {
 				static std::unordered_map<std::uint32_t, std::pair<float, float>> wound;  // id -> (pale wound, fade in)
 				static float sweep = 0;
