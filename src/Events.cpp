@@ -1067,7 +1067,7 @@ namespace bo3z
 				logger::warn("load: the extra-data loader isn't where it was expected - no guard");
 				return;
 			}
-			SKSE::AllocTrampoline(64);
+			SKSE::AllocTrampoline(256);  // (the load guard's two calls, and the animation graph's hook: src/Undead.cpp)
 			LoadExtraAdd::func = SKSE::GetTrampoline().write_call<5>(at, LoadExtraAdd::thunk);
 			// ... and its call that fetches the one already there (+0x522)
 			const std::uintptr_t get = REL::ID(12095).address() + 0x522;

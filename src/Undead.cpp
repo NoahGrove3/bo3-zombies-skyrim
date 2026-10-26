@@ -805,16 +805,9 @@ namespace bo3z
 				if (op == 0xB8 + (op & 7) && op >= 0xB8 && op <= 0xBF) return pre + 1 + ((p[0] == 0x48 || p[0] == 0x49) ? 8 : 4);  // mov r, imm
 				return 0;
 			}
-			SKSE::Trampoline& Tramp()
-			{
-				static SKSE::Trampoline t{ "CurseOfAlduin.undead" };
-				static bool made = false;
-				if (!made) {
-					made = true;
-					t.create(256, REL::Module::get().pointer());
-				}
-				return t;
-			}
+			// (Noah: "failed to create trampoline" at launch - no free memory near the game for one of our own) SKSE's
+			// shared one, made at load (src/Events.cpp InstallLoadGuard asks for room enough)
+			SKSE::Trampoline& Tramp() { return SKSE::GetTrampoline(); }
 			// hooks the function at a_at to run a_to; returns what runs the original (0: not hooked)
 			std::uintptr_t Install(std::uintptr_t a_at, std::uintptr_t a_to, std::string_view a_name)
 			{
@@ -822,6 +815,10 @@ namespace bo3z
 				std::string bytes;
 				for (int i = 0; i < 16; ++i) bytes += fmt::format("{:02X} ", p[i]);
 				auto& t = Tramp();
+				if (t.free_size() < 64) {
+					logger::warn("undead: {} not hooked - no room left in SKSE's trampoline", a_name);
+					return 0;
+				}
 				std::uint8_t* stub = nullptr;
 				std::size_t   n = 0;
 				if (p[0] == 0xE9) {  // already hooked by another mod (a jump): we go first, then on to theirs
