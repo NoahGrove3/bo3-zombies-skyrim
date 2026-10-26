@@ -196,9 +196,25 @@ namespace bo3z
 			const bool boss = Director::IsBoss(a_zombie);  // his claws come in flurries: each rake takes less
 			// each kind hits as hard as it is (Undead::DamageMult, carried on its attack-damage value)
 			const float kindMult = boss || elite ? 1.0f : std::clamp(a_zombie->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAttackDamageMult) / std::max(0.001f, gen::kZombieWeaponDamageMult), 0.5f, 2.0f);
+			// (Noah: "the shield should also work against the Curse of Alduin enemies, same as Skyrim") a blow taken on a raised
+			// guard, from in front: a shield stops most of it (80%), a blade or a staff about half; the guard costs stamina
+			float guard = 1.0f;
+			if (player->IsBlocking()) {
+				auto       to = a_zombie->GetPosition() - player->GetPosition();
+				const float yaw = player->GetAngleZ();
+				to.z = 0;
+				if (to.Unitize() > 0.0f && to.x * std::sin(yaw) + to.y * std::cos(yaw) > 0.35f) {  // (within about 70 degrees of where you face)
+					auto*       lh = player->GetEquippedObject(true);
+					const bool  shield = lh && lh->Is(RE::FormType::Armor);
+					guard = shield ? 0.2f : 0.5f;
+					av->DamageActorValue(RE::ActorValue::kStamina, shield ? 12.0f : 18.0f);
+					static int told = 0;
+					if (told++ < 5) logger::info("hurt: blocked with {} - {:.0f}% of the blow taken", shield ? "a shield" : "a weapon", guard * 100.0f);
+				}
+			}
 			// the first nights are gentler (a new character learns the dead): a quarter less on night 1, full by night 9
 			const float early = std::clamp(0.75f + 0.03125f * static_cast<float>(Save::Get(gen::kAV_round)), 0.75f, 1.0f);
-			DamagePlayer(baseHealth * (boss ? gen::boss::meleeShare : elite ? gen::elite::hitShare : gen::kHitDamageFraction * kindMult * early) * Settings::UndeadDamageMult());
+			DamagePlayer(baseHealth * (boss ? gen::boss::meleeShare : elite ? gen::elite::hitShare : gen::kHitDamageFraction * kindMult * early) * Settings::UndeadDamageMult() * guard);
 			if (elite) {  // Life Drain
 				auto* zav = a_zombie->AsActorValueOwner();
 				zav->RestoreActorValue(RE::ActorValue::kHealth, zav->GetPermanentActorValue(RE::ActorValue::kHealth) * gen::elite::drainShare);
