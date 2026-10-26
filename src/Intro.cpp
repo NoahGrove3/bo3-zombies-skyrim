@@ -373,13 +373,21 @@ namespace bo3z
 						player->StopInteractingQuick(true);
 						player->NotifyAnimationGraph("IdleForceDefaultState");
 					}
-					if (++g_settle < 20 || player->GetOccupiedFurniture()) {
+					// (Noah: "it crashed when starting a new character", twice - in Skyrim's own water building as the move
+					// began, 1.8 s into the new game) the world is let settle first: four seconds, nothing loading, you in it
+					if (auto* ui0 = RE::UI::GetSingleton(); ui0 && ui0->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) {
+						return;
+					}
+					if (!player->Is3DLoaded() || !player->GetParentCell() || !player->GetParentCell()->IsAttached()) {
+						return;
+					}
+					if (++g_settle < 240 || player->GetOccupiedFurniture()) {
 						return;
 					}
 					auto* marker = Forms::RiverwoodMarker();
 					static int tries = 0;
 					if (marker && player->GetPosition().GetDistance(marker->GetPosition()) > 3000.0f) {
-						if (g_settle % 90 == 20 && tries < 8) {  // (every 1.5 s, the move's loading screen in between)
+						if ((g_settle - 240) % 120 == 0 && tries < 8) {  // (every 2 s, the move's loading screen in between)
 							++tries;
 							Hud::IntroVeil(3.0f);  // (Skyrim's loading screen covers the move; the outro lifts the black once the world is there)
 							player->MoveTo(marker);
