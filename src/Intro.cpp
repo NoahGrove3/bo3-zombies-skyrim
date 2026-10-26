@@ -311,6 +311,7 @@ namespace bo3z
 					wait = 0;
 					g_raceAfterSkip = g_raceSeen ? 0 : 1;
 					logger::info("intro: a new game began in Helgen (stage {}) - skipped: Riverwood's gate, then the creator", intro->GetCurrentStageID());
+					g_settle = 0;  // (the move counts its wait from here)
 					DoSkip();
 				}
 			}
