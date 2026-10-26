@@ -229,7 +229,9 @@ namespace zclip
 					if (d < best) best = d, want = k;
 				}
 			}
-			if (in.speed >= 15.0f) rate = std::clamp(in.speed / std::max(1.0f, S.c[want].speed), 0.4f, 2.2f);
+			// (Noah: "the sprint looks too fast for how he's moving") the legs follow the pace only partly (a square root):
+			// a faster body takes longer strides as much as quicker ones, so the cycle never spins
+			if (in.speed >= 15.0f) rate = std::clamp(std::sqrt(in.speed / std::max(1.0f, S.c[want].speed)), 0.65f, 1.4f);
 			if (want != loco) prevLoco = loco, prevLocoRate = locoRate, locoBlend = 0;
 			loco = want, locoRate = rate;
 		}

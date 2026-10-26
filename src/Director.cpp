@@ -262,6 +262,21 @@ namespace bo3z
 			for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
 				const auto& e = gen::kEnemies[i];
 				if (e.specialRound == g_special && (g_special || e.minRound <= g_current) && Forms::Enemy(i) && Weight(e) > 0 && (roll -= Weight(e)) <= 0) {
+					// (Noah: four Grave Witches at once early in night 2 - "it summoned itself") never more than two Witches
+					// up at a time (one on the first nights): past that, a Risen Dead comes instead
+					if (e.id == "mage") {
+						int witches = 0;
+						for (const auto& s : g_alive) {
+							if (gen::kEnemies[s.enemy].id == "mage") {
+								if (auto a = s.handle.get(); a && !a->IsDead()) ++witches;
+							}
+						}
+						if (witches >= (g_current < 4 ? 1 : 2)) {
+							for (std::size_t z = 0; z < gen::kEnemies.size(); ++z) {
+								if (gen::kEnemies[z].id == "zombie" && Forms::Enemy(z)) return z;
+							}
+						}
+					}
 					return Forms::Enemy(i) ? std::optional{ i } : std::nullopt;
 				}
 			}
@@ -2766,7 +2781,13 @@ namespace bo3z
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (p && g_phase == Phase::Fighting && !Coop::Client() && static_cast<int>(g_alive.size()) < R.maxAlive + 6) {
-				SpawnOne(p, 0, &a_at);
+				// (Noah: "the Grave Witch summoned itself instead of more of the normal enemy") the sheet's first row is not
+				// always the Risen Dead: the row is found by its name
+				int row = 0;
+				for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
+					if (gen::kEnemies[i].id == "zombie") row = static_cast<int>(i);
+				}
+				SpawnOne(p, row, &a_at);
 			}
 		}
 		// a trial's wave (src/Curse.cpp): one of tonight's dead at a point (or a Thane of the Mound / Bone Jotunn when elite),
