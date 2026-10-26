@@ -899,11 +899,11 @@ namespace bo3z::gen
 	inline constexpr std::array<int, 409> kSoundLayer{ { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 } };  // a second sound played with each (-1 none)
 	inline constexpr std::uint32_t kMusicBoss = 0xB09, kMusicFreed = 0xB0B, kMusicIntro = 0xB15;  // our MUSC records
 	inline constexpr int kPoints_start = 500;  // new_game_after_intro
-	inline constexpr int kPoints_hit = 5;  // gun_hit_round_undead
-	inline constexpr int kPoints_kill = 15;  // kill_round_undead
-	inline constexpr int kPoints_headshot_kill = 30;  // headshot_kill_round_undead
-	inline constexpr int kPoints_melee_kill = 35;  // skyrim_weapon_or_spell_kill_round_undead
-	inline constexpr int kPoints_round_survived = 0;  // round_cleared
+	inline constexpr int kPoints_hit = 10;  // gun_hit_round_undead
+	inline constexpr int kPoints_kill = 40;  // kill_round_undead
+	inline constexpr int kPoints_headshot_kill = 70;  // headshot_kill_round_undead
+	inline constexpr int kPoints_melee_kill = 75;  // skyrim_weapon_or_spell_kill_round_undead
+	inline constexpr int kPoints_round_survived = 250;  // round_cleared
 	inline constexpr std::uint32_t kKey_fire = 0;  // mouse: fire_gun
 	inline constexpr std::uint32_t kKey_ads = 1;  // mouse: aim_down_sights
 	inline constexpr std::uint32_t kKey_reload = 19;  // keyboard: reload_gun

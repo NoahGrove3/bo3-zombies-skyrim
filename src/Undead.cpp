@@ -862,11 +862,22 @@ namespace bo3z
 			static bool hooked = false;
 			if (!hooked) {
 				hooked = true;
-				REL::Relocation<std::uintptr_t> vt{ RE::VTABLE_Character[0] };
+				// (Noah: still Draugr moves - the log: neither hook was ever called) the table of functions these bodies
+				// really use is read off a live one (the game's listed table for Character is not theirs here - the same
+				// was found for its magic: src/Events.cpp HookHarm), and the camera's off the camera itself
+				const std::uintptr_t base = REL::Module::get().base();
+				const std::uintptr_t liveA = *reinterpret_cast<std::uintptr_t*>(a_actor);
+				const std::uintptr_t statA = REL::Relocation<std::uintptr_t>{ RE::VTABLE_Character[0] }.address();
+				REL::Relocation<std::uintptr_t> vt{ liveA };
 				AnimHook::func = vt.write_vfunc(0x7D, AnimHook::thunk);
-				REL::Relocation<std::uintptr_t> cam{ RE::VTABLE_PlayerCamera[0] };
-				CamHook::func = cam.write_vfunc(0x2, CamHook::thunk);
-				logger::info("undead: animation hook installed");
+				auto*                pcam = RE::PlayerCamera::GetSingleton();
+				const std::uintptr_t liveC = pcam ? *reinterpret_cast<std::uintptr_t*>(pcam) : 0;
+				const std::uintptr_t statC = REL::Relocation<std::uintptr_t>{ RE::VTABLE_PlayerCamera[0] }.address();
+				if (liveC) {
+					REL::Relocation<std::uintptr_t> cam{ liveC };
+					CamHook::func = cam.write_vfunc(0x2, CamHook::thunk);
+				}
+				logger::info("undead: animation hooks installed - the body's table +{:X} (listed +{:X}), the camera's +{:X} (listed +{:X})", liveA - base, statA - base, liveC ? liveC - base : 0, statC - base);
 			}
 			{
 				std::unique_lock l(g_lock);

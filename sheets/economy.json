@@ -1,48 +1,48 @@
 {
-  "sheet": "economy",
-  "about": "Points, BO3 Zombies values. One row per way of earning or spending.",
-  "columns": [
-    "id",
-    "event",
-    "points",
-    "verify"
-  ],
-  "rows": [
-    {
-      "id": "start",
-      "event": "new_game_after_intro",
-      "points": 500,
-      "verify": []
-    },
-    {
-      "id": "hit",
-      "event": "gun_hit_round_undead",
-      "points": 5,
-      "verify": []
-    },
-    {
-      "id": "kill",
-      "event": "kill_round_undead",
-      "points": 15,
-      "verify": []
-    },
-    {
-      "id": "headshot_kill",
-      "event": "headshot_kill_round_undead",
-      "points": 30,
-      "verify": []
-    },
-    {
-      "id": "melee_kill",
-      "event": "skyrim_weapon_or_spell_kill_round_undead",
-      "points": 35,
-      "verify": []
-    },
-    {
-      "id": "round_survived",
-      "event": "round_cleared",
-      "points": 0,
-      "verify": []
-    }
-  ]
+ "sheet": "economy",
+ "about": "Points, BO3 Zombies values. One row per way of earning or spending. (Noah 2026-10-26: \"make enemies drop more cursed essence\" - kills about double, spell and blade kills 75, a night survived 250)",
+ "columns": [
+  "id",
+  "event",
+  "points",
+  "verify"
+ ],
+ "rows": [
+  {
+   "id": "start",
+   "event": "new_game_after_intro",
+   "points": 500,
+   "verify": []
+  },
+  {
+   "id": "hit",
+   "event": "gun_hit_round_undead",
+   "points": 10,
+   "verify": []
+  },
+  {
+   "id": "kill",
+   "event": "kill_round_undead",
+   "points": 40,
+   "verify": []
+  },
+  {
+   "id": "headshot_kill",
+   "event": "headshot_kill_round_undead",
+   "points": 70,
+   "verify": []
+  },
+  {
+   "id": "melee_kill",
+   "event": "skyrim_weapon_or_spell_kill_round_undead",
+   "points": 75,
+   "verify": []
+  },
+  {
+   "id": "round_survived",
+   "event": "round_cleared",
+   "points": 250,
+   "verify": []
+  }
+ ]
 }

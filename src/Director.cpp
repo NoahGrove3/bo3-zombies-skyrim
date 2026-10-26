@@ -2415,6 +2415,33 @@ namespace bo3z
 				if (!a || a->IsDead() || a->IsDisabled()) {
 					continue;
 				}
+				// (Noah: "some of them are carrying Nordic weapons - they shouldn't have any weapons at all") a weapon that
+				// came back after the spawn (the body's outfit put on again as it loaded, a distributor's gift) is taken
+				// away again, and its own unseen claws put back in its hands
+				if (const std::string_view rid = gen::kEnemies[s.enemy].id; rid == "zombie" || rid == "runner" || rid == "wailer" || rid == "bloater" || rid == "volatile" || rid == "mage" || rid == "girl") {
+					auto* claws = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kZombieClaws, gen::kPlugin);
+					auto* em = RE::ActorEquipManager::GetSingleton();
+					bool  armed = false;
+					for (bool left : { false, true }) {
+						if (auto* eq = a->GetEquippedObject(left); eq && eq != claws && (eq->IsWeapon() || (eq->Is(RE::FormType::Armor) && eq->As<RE::TESObjectARMO>()->IsShield()))) {
+							armed = true;
+							if (auto* b = eq->As<RE::TESBoundObject>()) em->UnequipObject(a.get(), b);
+						}
+					}
+					if (armed && claws) {
+						auto other = a->GetInventory([claws](RE::TESBoundObject& o) {
+							if (&o == claws) return false;
+							auto* ar = o.As<RE::TESObjectARMO>();
+							return o.IsWeapon() || o.IsAmmo() || (ar && ar->IsShield());
+						});
+						for (auto& [obj, data] : other) {
+							if (data.first > 0) a->RemoveItem(obj, data.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+						}
+						em->EquipObject(a.get(), claws);
+						static int told = 0;
+						if (told++ < 10) logger::info("night: a {} was holding a weapon again - taken away", rid);
+					}
+				}
 				if (s.frenzy > 0) {
 					continue;  // turned on its own kind (TickFrenzy)
 				}

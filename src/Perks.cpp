@@ -174,6 +174,16 @@ namespace bo3z
 			}
 			// (Noah: "it feels really buggy ... make it fluid and fun") a mob's claws no longer land all in the same instant:
 			// after a hit, the next one from anyone counts only once 0.45 s have passed (time to react, BO3's own rhythm)
+			// (Noah: "enemies can still hit me when doing an assassination animation with melee weapons") untouchable while
+			// a kill move plays, and for half a second after it
+			static auto killMoveEnd = std::chrono::steady_clock::time_point{};
+			if (player->IsInKillMove()) {
+				killMoveEnd = now + 500ms;
+				return;
+			}
+			if (now < killMoveEnd) {
+				return;
+			}
 			static auto anyHit = std::chrono::steady_clock::time_point{};
 			if (now - anyHit < 450ms) {
 				return;
