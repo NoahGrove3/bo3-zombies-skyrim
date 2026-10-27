@@ -242,16 +242,61 @@ namespace bo3z::Watchdog
 				return;
 			}
 		}
+		// the memory operand's base register (index into CONTEXT's Rax..R15), or -1 (none, RIP-relative, or unknown)
+		int BaseReg(const std::uint8_t* p)
+		{
+			std::size_t  i = 0;
+			std::uint8_t rex = 0;
+			while (p[i] == 0x66 || p[i] == 0xF2 || p[i] == 0xF3) ++i;
+			if ((p[i] & 0xF0) == 0x40) rex = p[i++];
+			if (p[i] == 0x0F) {
+				++i;
+				if (p[i] == 0x38 || p[i] == 0x3A) ++i;
+			}
+			++i;  // the opcode
+			const std::uint8_t m = p[i++], mod = m >> 6, rm = m & 7;
+			if (mod == 3 || (mod == 0 && rm == 5)) return -1;
+			if (rm == 4) {
+				const std::uint8_t sib = p[i];
+				if (mod == 0 && (sib & 7) == 5) return -1;
+				return (sib & 7) | ((rex & 1) ? 8 : 0);
+			}
+			return rm | ((rex & 1) ? 8 : 0);
+		}
+		// (Noah: "my game crashed after I died, loading a save" - again) stepping over the loader's write left the extra it
+		// wrote to as nothing, and the loader read through that same nothing a moment later and crashed. Now the nothing is
+		// given somewhere to be: the register holding it is pointed at a spare, empty block, and the instruction runs again -
+		// the loader fills in the spare (an extra that belongs to no one) and reads back zeros from it, and the load goes on
+		alignas(64) std::uint8_t g_spare[0x4000]{};
+		bool GiveNothingSomewhere(CONTEXT* a_ctx)
+		{
+			const auto* code = reinterpret_cast<const std::uint8_t*>(a_ctx->Rip);
+			const int   reg = BaseReg(code);
+			if (reg < 0 || reg == 4) return false;
+			auto& v = (&a_ctx->Rax)[reg];
+			if (v >= 0x1000) return false;
+			static std::atomic_int tries{ 0 };
+			if (tries.fetch_add(1) > 400) return false;  // (never a loop)
+			static std::atomic_int told{ 0 };
+			if (told.fetch_add(1) < 12) logger::warn("load: a register held nothing ({:X}) at {:X} - pointed at a spare block", v, a_ctx->Rip - REL::Module::get().base());
+			v = reinterpret_cast<std::uintptr_t>(g_spare) + v;
+			return true;
+		}
 		LONG CALLBACK StepOverLoaderWrite(EXCEPTION_POINTERS* a_info)
 		{
 			if (!a_info || !a_info->ExceptionRecord || a_info->ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION) return EXCEPTION_CONTINUE_SEARCH;
 			const auto& er = *a_info->ExceptionRecord;
 			if (er.NumberParameters < 2 || er.ExceptionInformation[1] >= 0x1000) return EXCEPTION_CONTINUE_SEARCH;  // (near address 0)
 			static const std::uintptr_t fn = REL::ID(12095).address();
+			static const std::uintptr_t lookup = REL::ID(12179).address();  // (the extra-data lookup it calls with what it loaded)
 			auto*                       ctx = a_info->ContextRecord;
-			if (ctx->Rip < fn || ctx->Rip >= fn + 0x35F0) return EXCEPTION_CONTINUE_SEARCH;
+			const bool inLoader = ctx->Rip >= fn && ctx->Rip < fn + 0x35F0;
+			const bool inLookup = ctx->Rip >= lookup && ctx->Rip < lookup + 0x100;
+			if (!inLoader && !inLookup) return EXCEPTION_CONTINUE_SEARCH;
 			const auto* code = reinterpret_cast<const std::uint8_t*>(ctx->Rip);
 			if (static std::atomic_int refs{ 0 }; refs.fetch_add(1) < 4) TellRef(ctx);
+			if (GiveNothingSomewhere(ctx)) return EXCEPTION_CONTINUE_EXECUTION;
+			if (!inLoader) return EXCEPTION_CONTINUE_SEARCH;
 			if (er.ExceptionInformation[0] == 0) {  // a read
 				int reg = -1;
 				const std::size_t rl = ReadLen(code, reg);

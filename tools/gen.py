@@ -214,6 +214,7 @@ o.append('\tinline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>,
 o.append(f'\tinline constexpr std::uint32_t kReaperScythe = 0x{IDS[("WEAP", "reaper_scythe")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kWyrmClaws = 0x{IDS[("WEAP", "wyrm_claws")]:03X}, kShadowClaws = 0x{IDS[("WEAP", "shadow_claws")]:03X}, kZombieClaws = 0x{IDS[("WEAP", "zombie_claws")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kUndeadFaction = 0x{IDS[("FACT", "undead")]:03X};')
+o.append(f'\tinline constexpr std::uint32_t kClassChest = 0x{IDS[("CONT", "classchest")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kMuzzleLight = 0x{IDS[("LIGH", "muzzle")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kStandStat = 0x{IDS[("STAT", "stand")]:03X};  // the station platform (dressing on the Coffer)')
 o.append('\tinline constexpr float kStandHalfX = 220.0f, kStandFrontY = -220.0f, kStandBackY = 220.0f, kStandMaxSlope = 70.0f;  // footprint in plan space (tools/stand.py)')

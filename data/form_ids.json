@@ -1281,6 +1281,7 @@
   "ARMA:bonebrute": "0xcfd",
   "ARMO:bonebrute": "0xcfe",
   "NPC_:bonebrute": "0xcff",
-  "ARMA:eyes_bonebrute": "0xd00"
+  "ARMA:eyes_bonebrute": "0xd00",
+  "CONT:classchest": "0xd01"
  }
 }

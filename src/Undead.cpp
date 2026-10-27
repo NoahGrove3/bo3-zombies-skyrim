@@ -1266,12 +1266,18 @@ namespace bo3z
 			else if (a_scale < 1.2f) pWalk = 0.4f, pSprint = 0.0f;
 			else if (a_scale < 1.35f) pWalk = 0.15f, pSprint = 0.25f;
 			else pWalk = 0.0f, pSprint = 0.6f;
+			// (Noah: "the male zombie movement should be slower") the Risen Dead mostly walk, and run a little under their clip
+			const bool risen = r->wantSet.load() == 2;
+			if (risen) {
+				pWalk = a_scale < 1.05f ? 0.9f : a_scale < 1.2f ? 0.7f : a_scale < 1.35f ? 0.5f : 0.3f;
+				pSprint = a_scale < 1.2f ? 0.0f : a_scale < 1.35f ? 0.08f : 0.18f;
+			}
 			int cap = u < pWalk ? zclip::kWalk : u > 1.0f - pSprint ? zclip::kSprint : zclip::kRun;
 			if (r->wantSet.load() == 6) cap = zclip::kRun;  // (the Skeleton Mutant: it runs you down)
 			if (r->wantSet.load() == 4) cap = -1;  // (the mage: as the game moves it - it walks, runs and sidesteps to keep its distance)
 			r->gaitCap.store(cap);
 			for (auto& m : g_minds) {
-				if (m.handle.get().get() == a_actor) m.paceVar = Rand(0.93f, 1.07f), m.gaitPos = a_actor->GetPosition();
+				if (m.handle.get().get() == a_actor) m.paceVar = risen ? Rand(0.82f, 0.92f) : Rand(0.93f, 1.07f), m.gaitPos = a_actor->GetPosition();
 			}
 		}
 
@@ -1380,12 +1386,12 @@ namespace bo3z
 					const float mx = zav->GetPermanentActorValue(RE::ActorValue::kHealth);
 					if (mx > 0 && zav->GetActorValue(RE::ActorValue::kHealth) < 0.5f * mx) {
 						m.turned = true;
-						zav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 40.0f);
+						zav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 20.0f);
 						{
 							std::shared_lock l(g_lock);
-							if (auto it = g_rigs.find(a->GetFormID()); it != g_rigs.end()) it->second->turned.store(true), it->second->gaitCap.store(zclip::kSprint);
+							if (auto it = g_rigs.find(a->GetFormID()); it != g_rigs.end()) it->second->turned.store(true), it->second->gaitCap.store(zclip::kRun);  // (Noah: slower - a frenzied Risen Dead runs, never sprints)
 						}
-						SetCue(a.get(), kCueRoar, 0.7f);
+						// (no roar: Noah - combat only; its frenzy shows in its pace and its claws)
 						Audio::Voice(a.get(), Audio::VoiceEvent::kHurt);
 					}
 				}

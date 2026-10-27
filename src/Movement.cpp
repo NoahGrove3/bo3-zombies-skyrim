@@ -2265,7 +2265,13 @@ namespace bo3z
 			}
 			TurnKeepView(p, camYaw);  // face where you look (the camera stays put): the roll goes the way you meant
 			if (!p->NotifyAnimationGraph(ev)) {
-				logger::info("dodge: {} not taken", ev);
+				// (Noah's last seconds before dying: six rolls refused in a row - staggered, held) the roll's animation
+				// can't start, but the shove still carries you out of reach (no i-frames without the roll)
+				static int said = 0;
+				if (said++ < 20) logger::info("dodge: {} not taken - shoved anyway", ev);
+				last = now;
+				av->DamageActorValue(RE::ActorValue::kStamina, 10.0f);
+				g_dodgeT = 0, g_dodgeDir = dir;
 				return;
 			}
 			last = now;
@@ -2911,11 +2917,13 @@ namespace bo3z
 					g_dodgeGhost = false;
 					Gun::Console("setghost 0");
 				}
-				if (auto* dcc = player->GetCharController(); dcc && g_dodgeT < 0.45f) {
+				// (Noah: "increase the distance of the dodge roll - I don't get far enough out of range") about 4.5 m of shove,
+				// was 2.6 m: a roll now clears a swing's reach
+				if (auto* dcc = player->GetCharController(); dcc && g_dodgeT < 0.5f) {
 					RE::NiPoint3 dv{};
 					GetVel(dcc, dv);
-					const float k = 1.0f - Smooth(g_dodgeT / 0.45f);
-					const float sp = 820.0f * k;
+					const float k = 1.0f - Smooth(g_dodgeT / 0.5f);
+					const float sp = 1280.0f * k;
 					dv.x = g_dodgeDir.x * sp + dv.x * (1 - k), dv.y = g_dodgeDir.y * sp + dv.y * (1 - k);
 					SetVel(dcc, dv);
 				} else {

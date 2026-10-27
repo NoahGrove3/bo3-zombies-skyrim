@@ -1251,7 +1251,7 @@ namespace bo3z
 			av->SetActorValue(RE::ActorValue::kAttackDamageMult, av->GetActorValue(RE::ActorValue::kAttackDamageMult) * 1.5f);
 			v->SetDisplayName("Volatile", true);
 			Undead::SetVolatile(v.get());
-			Undead::CueFor(v.get(), Undead::kCueScream, 2.6f);  // (it screams as it comes through)
+			// (Noah: "remove any taunting or roaring - combat only") it comes through straight into the hunt, no scream
 			g_summoned.insert(v->GetFormID());
 			g_volatiles.push_back(v->GetHandle());
 			Forms::PlayAt(gen::Sound::wailer_scream, v.get());
@@ -2662,7 +2662,6 @@ namespace bo3z
 					if (id == "bonebrute" && !s.berserk && hp < maxHp * 0.5f) {  // past half: it roars and goes berserk
 						s.berserk = true;
 						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 40.0f);
-						Undead::CueFor(a.get(), Undead::kCueRoar, 1.4f);
 						Forms::PlayAt(gen::Sound::champ_enrage, a.get());
 						if (flat < 2500.0f) Hud::Banner("BERSERK", 0.9f);
 					}
@@ -4589,6 +4588,13 @@ namespace bo3z
 		// ours gets a combat style of its own with no circling, no falling back, no flanking, no stalking, no strafing.
 		void HeadlongCombat()
 		{
+			// (Noah: "remove any taunting or roaring - the enemies' animations combat only") the taunts Skyrim's fighters
+			// play with their combat taunt lines (a raised weapon, a beat of the chest) never come round
+			if (auto* gs = RE::GameSettingCollection::GetSingleton()) {
+				for (const char* n : { "fCombatDialogueTauntMinElapsedTime", "fCombatDialogueTauntMaxElapsedTime" }) {
+					if (auto* st = gs->GetSetting(n)) st->data.f = 100000.0f;
+				}
+			}
 			auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::TESCombatStyle>();
 			if (!factory) {
 				return;

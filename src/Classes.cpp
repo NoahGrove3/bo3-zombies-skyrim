@@ -17,6 +17,11 @@ namespace bo3z::Classes
 		std::array<bool, 4>                                    g_kit{};
 		int                                                    g_staffLevel = 0;  // (Noah) the Conjurer's Staff's reforges at the altar, 0..3
 		std::array<std::vector<std::pair<int, int>>, 4>        g_stash;  // the spells a class you left carried (index, level)
+		// (Noah: "switching classes - my items should stay in the correct class, almost like an inventory swap, saveable") each
+		// class's gear waits in its own hidden chest (a persistent, disabled container) while another class is played
+		std::array<RE::FormID, 4>                              g_chest{};      // per class: its chest's reference (0 none yet)
+		std::array<std::array<Save::Slot, 3>, 4>               g_slotStash{};  // per class: its three weapon slots
+		std::array<std::vector<RE::FormID>, 4>                 g_wornStash;    // per class: what it had on / in hand
 		std::chrono::steady_clock::time_point                  g_closedAt{};
 		std::array<std::uint16_t, coffer::kLadders>            g_mastery{};  // kills made with each ladder's spell in hand (its summons' kills for the Summoner)
 
@@ -250,9 +255,107 @@ namespace bo3z::Classes
 			}
 		}
 
+		void DismissSummons();
+		RE::FormID ResolveId(RE::FormID a_id)
+		{
+			RE::FormID n = 0;
+			if (auto* si = SKSE::GetSerializationInterface(); si && si->ResolveFormID(a_id, n)) return n;
+			return 0;
+		}
+		bool ClassGear(RE::TESBoundObject* a_obj, const RE::InventoryEntryData* a_entry)
+		{
+			if (!a_obj || (a_entry && a_entry->IsQuestObject())) return false;
+			const auto t = a_obj->GetFormType();
+			if (t != RE::FormType::Weapon && t != RE::FormType::Armor && t != RE::FormType::Ammo && t != RE::FormType::Scroll) return false;
+			if (a_obj == Underwear()) return false;  // (worn by every class)
+			// our own plugin's pieces are the night's rewards (Alduin's Bane, the hall's relics), kept by every class - but the
+			// class weapons it makes (wands, tomes, bows, the Conjurer's Staff) belong to their class
+			if (auto* f = a_obj->GetFile(0); f && std::string_view(f->GetFilename()) == gen::kPlugin && Forms::GunIndexOf(a_obj) < 0) return false;
+			return true;
+		}
+		RE::TESObjectREFR* ChestOf(int a_cls, bool a_make)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || a_cls < 0 || a_cls >= 4) return nullptr;
+			if (g_chest[a_cls]) {
+				if (auto* r = RE::TESForm::LookupByID<RE::TESObjectREFR>(g_chest[a_cls]); r && !r->IsDeleted()) return r;
+				g_chest[a_cls] = 0;
+			}
+			if (!a_make) return nullptr;
+			auto* base = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kClassChest, gen::kPlugin);
+			auto  ref = base ? p->PlaceObjectAtMe(base, true) : nullptr;
+			if (!ref) return nullptr;
+			ref->Disable();
+			g_chest[a_cls] = ref->GetFormID();
+			logger::info("classes: {}'s chest made ({:08X})", Name(a_cls), ref->GetFormID());
+			return ref.get();
+		}
+		// everything the class you leave was carrying (its weapons, armour, ammunition and scrolls; the night's relics, quest
+		// items and your underwear stay) into its chest; what it had on, and its weapon slots, noted
+		void StashGear(int a_cls)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* chest = ChestOf(a_cls, true);
+			if (!p || !chest) return;
+			g_wornStash[a_cls].clear();
+			for (int s = 0; s < 3; ++s) g_slotStash[a_cls][s] = Save::GetSlot(s), Save::SetSlot(s, {});
+			struct Move { RE::TESBoundObject* obj; std::int32_t count; RE::ExtraDataList* x; };
+			std::vector<Move> moves;
+			for (auto& [obj, e] : p->GetInventory()) {
+				if (!obj || e.first <= 0 || !ClassGear(obj, e.second.get())) continue;
+				if (e.second && e.second->IsWorn()) g_wornStash[a_cls].push_back(obj->GetFormID());
+				std::int32_t left = e.first;
+				if (e.second && e.second->extraLists) {
+					for (auto* x : *e.second->extraLists) {
+						if (!x) continue;
+						const std::int32_t c = std::max<std::int32_t>(1, x->GetCount());
+						moves.push_back({ obj, std::min(c, left), x });
+						left -= std::min(c, left);
+					}
+				}
+				if (left > 0) moves.push_back({ obj, left, nullptr });
+			}
+			for (auto& m : moves) p->RemoveItem(m.obj, m.count, RE::ITEM_REMOVE_REASON::kStoreInContainer, m.x, chest);
+			logger::info("classes: {}'s gear put away ({} stacks)", Name(a_cls), moves.size());
+		}
+		// a class you come back to: its chest emptied back into your pack, its pieces back on, its slots back
+		bool RestoreGear(int a_cls)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* chest = ChestOf(a_cls, false);
+			if (!p || !chest) return false;
+			struct Move { RE::TESBoundObject* obj; std::int32_t count; RE::ExtraDataList* x; };
+			std::vector<Move> moves;
+			for (auto& [obj, e] : chest->GetInventory()) {
+				if (!obj || e.first <= 0) continue;
+				std::int32_t left = e.first;
+				if (e.second && e.second->extraLists) {
+					for (auto* x : *e.second->extraLists) {
+						if (!x) continue;
+						const std::int32_t c = std::max<std::int32_t>(1, x->GetCount());
+						moves.push_back({ obj, std::min(c, left), x });
+						left -= std::min(c, left);
+					}
+				}
+				if (left > 0) moves.push_back({ obj, left, nullptr });
+			}
+			for (auto& m : moves) chest->RemoveItem(m.obj, m.count, RE::ITEM_REMOVE_REASON::kStoreInContainer, m.x, p);
+			for (int s = 0; s < 3; ++s) Save::SetSlot(s, g_slotStash[a_cls][s]);
+			if (auto* em = RE::ActorEquipManager::GetSingleton()) {
+				for (auto id : g_wornStash[a_cls]) {
+					auto* o = RE::TESForm::LookupByID<RE::TESBoundObject>(id);
+					if (o && (o->IsArmor() || o->GetFormType() == RE::FormType::Ammo || (o->IsWeapon() && Forms::GunIndexOf(o) < 0)) && p->GetItemCount(o) > 0) em->EquipObject(p, o, nullptr, 1, nullptr, false, false, false, true);
+				}
+			}
+			logger::info("classes: {}'s gear taken back out ({} stacks)", Name(a_cls), moves.size());
+			return true;
+		}
+
 		// the class's spells off you (kept for when you come back to it), the new class's back on
 		void Swap(int a_from, int a_to)
 		{
+			if (a_from == coffer::kSummoner && a_to != coffer::kSummoner) DismissSummons();
+			if (a_from >= 0 && a_from < 4 && a_from != a_to) StashGear(a_from);
 			if (a_from >= 0 && a_from < 4) {
 				g_stash[a_from].clear();
 				for (int i : Arcana::Carried()) {
@@ -263,6 +366,7 @@ namespace bo3z::Classes
 			if (!g_kit[a_to]) {
 				GiveKit(a_to);
 			} else {
+				RestoreGear(a_to);
 				bool left = false;
 				for (auto [i, lv] : g_stash[a_to]) {
 					GiveSpell(i, left);
@@ -1135,6 +1239,7 @@ namespace bo3z::Classes
 				if (!a || a->IsDisabled()) { t = 0; continue; }
 				if ((t -= a_delta) <= 0 || a->IsDead()) {
 					Gun::FxBlast("dark", a->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f });
+					Console(a.get(), "SetPlayerTeammate 0");  // (no teammate the save remembers and can't find)
 					a->Disable();
 					a->SetDelete(true);
 					t = 0;
@@ -1195,13 +1300,37 @@ namespace bo3z::Classes
 							if (auto* mt = s->AsMagicTarget()) { RE::BSPointerHandle<RE::Actor> none; mt->DispelEffect(sp, none); }
 						}
 						if (!drop.empty()) logger::info("summons: {} - {} wild spell(s) taken (auras, swarms, mind spells)", s->GetName(), drop.size());
+						// (Noah: "the Dremora and the Dwarven Spider are particularly strong") Skyrim's own weapon damage is
+						// turned down as the dead's is: what a summon does to them is the share counted on its hit (src/Events.cpp)
+						auto* sav0 = s->AsActorValueOwner();
+						sav0->SetActorValue(RE::ActorValue::kAttackDamageMult, 0.1f);
+						logger::info("summons: {} {:08X} ({:.0f} health) joined", s->GetName(), s->GetFormID(), sav0->GetPermanentActorValue(RE::ActorValue::kHealth));
+					}
+					// (Noah: "summons stay within 20 meters of the player at all times - they wander off and fight") past 20 m it
+					// drops its fight and comes back to you; past 34 m it is brought to your side
+					{
+						const float pd = s->GetPosition().GetDistance(p->GetPosition());
+						if (pd > 2400.0f || (pd > 1400.0f && !s->Is3DLoaded())) {
+							const float yaw = p->GetAngleZ() + 2.4f;
+							s->StopCombat();
+							s->SetPosition(p->GetPosition() + RE::NiPoint3{ std::sin(yaw) * 180.0f, std::cos(yaw) * 180.0f, 0.0f }, true);
+							continue;
+						}
+						if (pd > 1400.0f) {
+							s->StopCombat();
+							s->EvaluatePackage(true, false);
+							continue;
+						}
+						if (auto t = s->GetActorRuntimeData().currentCombatTarget.get(); t && t->GetPosition().GetDistance(p->GetPosition()) > 1500.0f) {
+							s->StopCombat();  // (its quarry ran past your 20 m: let it go)
+						}
 					}
 					if (Perks::SummonMight() && mighty.insert(s->GetFormID()).second) {
 						auto*       sav = s->AsActorValueOwner();
 						const float more = gen::kPerks[gen::kPerk_bonebinder].value - 1.0f;
 						sav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, sav->GetPermanentActorValue(RE::ActorValue::kHealth) * more);
 						sav->RestoreActorValue(RE::ActorValue::kHealth, 1.0e6f);
-						sav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kAttackDamageMult, more);
+						(void)more;  // (its might shows in the share it lands: src/Events.cpp)
 					}
 					auto cur = s->GetActorRuntimeData().currentCombatTarget.get();
 					// (Noah: "a staff that when attacks hit a target the summons focus that enemy until they're dead or a
@@ -1211,7 +1340,7 @@ namespace bo3z::Classes
 						float md = 6000.0f;
 						for (auto& mh : g_summonMarks) {
 							auto c = mh.get();
-							if (!c || c->IsDead() || c->IsDisabled() || !c->Is3DLoaded() || Director::Rising(c.get())) continue;
+							if (!c || c->IsDead() || c->IsDisabled() || !c->Is3DLoaded() || Director::Rising(c.get()) || c->GetPosition().GetDistance(p->GetPosition()) > 1450.0f) continue;
 							if (c.get() == cur.get()) { m = c; break; }  // (already on one of them: it stays on it)
 							if (const float d = c->GetPosition().GetDistance(s->GetPosition()); d < md) md = d, m = c;
 						}
@@ -1232,6 +1361,7 @@ namespace bo3z::Classes
 					for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 						auto z = h.get();
 						if (!z || z->IsDead() || z->IsDisabled() || !z->Is3DLoaded() || !Director::IsFoe(z.get()) || Director::Rising(z.get())) continue;  // (not one still in the ground)
+						if (z->GetPosition().GetDistance(p->GetPosition()) > 1400.0f) continue;  // (only what comes within 20 m of you)
 						if (z->IsCommandedActor() && z->GetCommandingActor().get() == p) continue;
 						if (const float d = z->GetPosition().GetDistance(s->GetPosition()); d < bestD) bestD = d, best = z.get();
 					}
@@ -1247,13 +1377,20 @@ namespace bo3z::Classes
 			for (auto& ps : g_pendingSummon) {
 				if ((ps.wait -= a_delta) > 0) continue;
 				const int now = CommandedNow(p) + static_cast<int>(g_ownSummons.size());
+				const int cap = SummonCap(p);
 				if (now > ps.before) {
 					logger::info("classes: {} came as it should ({} summons up)", ps.name, now);
 					continue;
 				}
-				const int cap = SummonCap(p);
+				// (Noah: "the Dremora is particularly strong" - the log: one cast, the Dremora came, and then a second was called
+				// up beside it, again and again) at the cap Skyrim swaps its oldest for the new one - the count stays the same,
+				// which is not a failed call
+				if (now >= cap || ps.before >= cap) {
+					logger::info("classes: {} cast at the cap ({}) - Skyrim's own swap, nothing added", ps.name, cap);
+					continue;
+				}
 				while (!g_ownSummons.empty() && static_cast<int>(g_ownSummons.size()) >= cap) {  // (the oldest goes, as Skyrim's own do)
-					if (auto a = g_ownSummons.front().first.get()) a->Disable(), a->SetDelete(true);
+					if (auto a = g_ownSummons.front().first.get()) Console(a.get(), "SetPlayerTeammate 0"), a->Disable(), a->SetDelete(true);
 					g_ownSummons.erase(g_ownSummons.begin());
 				}
 				const float yaw = p->GetAngleZ();
@@ -1268,11 +1405,36 @@ namespace bo3z::Classes
 				static auto* playerFaction = RE::TESForm::LookupByID<RE::TESFaction>(0x00000DB1);
 				if (playerFaction) actor->AddToFaction(playerFaction, 0);
 				Gun::FxBlast("dark", at + RE::NiPoint3{ 0, 0, 40.0f });
-				g_ownSummons.push_back({ actor->GetHandle(), ps.seconds });
+				g_ownSummons.push_back({ actor->GetHandle(), std::min(ps.seconds, 90.0f) });  // (a called-up stand-in lasts as a summon spell does, never an hour)
 				Console(actor, "SetPlayerTeammate 1");
-				logger::info("classes: {} did not come - called up here for {:.0f} s", ps.name, ps.seconds);
+				logger::info("classes: {} did not come - called up here for {:.0f} s", ps.name, std::min(ps.seconds, 90.0f));
 			}
 			std::erase_if(g_pendingSummon, [](const PendingSummon& ps) { return ps.wait <= 0; });
+		}
+		// your summons, all of them, gone (a class change away from the Summoner)
+		void DismissSummons()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			int n = 0;
+			for (auto& [h, t] : g_ownSummons) {
+				if (auto a = h.get()) {
+					Gun::FxBlast("dark", a->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f });
+					Console(a.get(), "SetPlayerTeammate 0");
+					a->Disable(), a->SetDelete(true), ++n;
+				}
+			}
+			g_ownSummons.clear();
+			g_pendingSummon.clear();
+			if (auto* mt = p->AsMagicTarget()) mt->DispelEffectsWithArchetype(RE::EffectArchetypes::ArchetypeID::kSummonCreature, true);
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {  // (any left over: banished)
+				if (auto a = h.get(); a && !a->IsDead() && a->IsCommandedActor() && a->GetCommandingActor().get() == p) {
+					Gun::FxBlast("dark", a->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f });
+					a->KillImmediate(), ++n;
+				}
+			}
+			g_summonMarks.clear();
+			logger::info("classes: summons dismissed ({} of ours, and Skyrim's own)", n);
 		}
 	}
 	RE::TESObjectARMO* Underwear()
@@ -1367,6 +1529,7 @@ namespace bo3z::Classes
 			while (before >= SummonCap(p) && !g_ownSummons.empty()) {
 				if (auto a = g_ownSummons.front().first.get()) {
 					Gun::FxBlast("dark", a->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f });
+					Console(a.get(), "SetPlayerTeammate 0");
 					a->Disable(), a->SetDelete(true);
 				}
 				g_ownSummons.erase(g_ownSummons.begin());
@@ -1376,6 +1539,7 @@ namespace bo3z::Classes
 				logger::info("classes: {} cast at the cap ({}) - Skyrim swaps the oldest", sp->GetName(), before);
 				return;
 			}
+			if (std::any_of(g_pendingSummon.begin(), g_pendingSummon.end(), [&](const PendingSummon& q) { return q.what == what; })) return;  // (one cast seen twice - both hands, or the cast and its release: one summon)
 			g_pendingSummon.push_back({ what, 1.5f, std::max(30.0f, static_cast<float>(e->effectItem.duration)), before, sp->GetName() });
 			return;
 		}
@@ -1531,6 +1695,16 @@ namespace bo3z::Classes
 		for (auto m : g_bowMastery) v.push_back(static_cast<std::uint8_t>(m & 0xFF)), v.push_back(static_cast<std::uint8_t>(m >> 8));
 		v.push_back(0xA4);  // the Conjurer's Staff's reforges
 		v.push_back(static_cast<std::uint8_t>(g_staffLevel));
+		v.push_back(0xA5);  // each class's chest, slots and worn pieces: per class [chest u32][3 x (gun i16, clip i16, reserve i16, level u8)][n u8][n x u32]
+		auto u32 = [&](std::uint32_t x) { for (int b = 0; b < 4; ++b) v.push_back(static_cast<std::uint8_t>(x >> (8 * b))); };
+		auto i16 = [&](int x) { const auto u = static_cast<std::uint16_t>(static_cast<std::int16_t>(std::clamp(x, -32768, 32767))); v.push_back(static_cast<std::uint8_t>(u & 0xFF)), v.push_back(static_cast<std::uint8_t>(u >> 8)); };
+		for (int c = 0; c < 4; ++c) {
+			u32(g_chest[c]);
+			for (auto& sl : g_slotStash[c]) i16(sl.gun), i16(sl.clip), i16(sl.reserve), v.push_back(static_cast<std::uint8_t>(sl.level));
+			const auto n = std::min<std::size_t>(g_wornStash[c].size(), 255);
+			v.push_back(static_cast<std::uint8_t>(n));
+			for (std::size_t i = 0; i < n; ++i) u32(g_wornStash[c][i]);
+		}
 		return v;
 	}
 	void SetState(const std::vector<std::uint8_t>& a_v)
@@ -1580,6 +1754,32 @@ namespace bo3z::Classes
 		}
 		g_staffLevel = 0;
 		if (k + 1 < a_v.size() && a_v[k] == 0xA4) g_staffLevel = std::min<int>(a_v[k + 1], gen::kForgeMax), k += 2;
+		g_chest.fill(0);
+		for (auto& c : g_slotStash) c.fill({});
+		for (auto& w : g_wornStash) w.clear();
+		if (k < a_v.size() && a_v[k] == 0xA5) {
+			++k;
+			auto u32 = [&](std::uint32_t& x) { if (k + 4 > a_v.size()) return false; x = a_v[k] | (a_v[k + 1] << 8) | (a_v[k + 2] << 16) | (static_cast<std::uint32_t>(a_v[k + 3]) << 24); k += 4; return true; };
+			auto i16 = [&](int& x) { if (k + 2 > a_v.size()) return false; x = static_cast<std::int16_t>(a_v[k] | (a_v[k + 1] << 8)); k += 2; return true; };
+			for (int c = 0; c < 4; ++c) {
+				std::uint32_t ch = 0;
+				if (!u32(ch)) break;
+				g_chest[c] = ResolveId(ch);
+				bool ok = true;
+				for (auto& sl : g_slotStash[c]) {
+					ok = i16(sl.gun) && i16(sl.clip) && i16(sl.reserve) && k < a_v.size();
+					if (!ok) break;
+					sl.level = a_v[k++];
+				}
+				if (!ok || k >= a_v.size()) break;
+				const int n = a_v[k++];
+				for (int i = 0; i < n; ++i) {
+					std::uint32_t id = 0;
+					if (!u32(id)) break;
+					if (const auto r = ResolveId(id)) g_wornStash[c].push_back(r);
+				}
+			}
+		}
 		if (g_wStep[coffer::kSummoner] > kWonderSteps) TuneWyrm();
 		logger::info("classes: loaded ({})", Name(g_class));
 	}

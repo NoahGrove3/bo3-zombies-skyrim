@@ -77,6 +77,16 @@ namespace bo3z
 				auto* target = me->As<RE::Actor>();
 				return target && !Director::IsFoe(target);
 			}
+			// (Noah: "the summons are too strong ... they deal too much damage") a summon's own spells barely scratch the
+			// night's dead - what its blows and bolts do to them is the share counted on the hit (TESHitEvent below), by the
+			// rung of your summon spells; and the night's dead's spells hurt your summons by that same rule the other way
+			if (player && caster && caster != player && Director::PlayerSide(caster, player)) {
+				if (auto* target = me->As<RE::Actor>(); target && Director::IsRoundUndead(target)) {
+					auto& d = const_cast<RE::MagicTarget::AddTargetData&>(a_data);
+					d.power *= 0.1f;
+					if (d.magnitude > 0) d.magnitude *= 0.1f;
+				}
+			}
 			return false;
 		}
 		template <int N>
@@ -683,15 +693,40 @@ namespace bo3z
 					auto* pl = RE::PlayerCharacter::GetSingleton();
 					const bool mySummon = ally && pl && ally != pl && ((ally->IsCommandedActor() && ally->GetCommandingActor().get() == pl) || Classes::IsOwnSummon(ally));  // (Noah's plan: the Summoner's summons scale with the night's round)
 					if (ally && z && !z->IsDead() && (Echo::IsAlly(ally) || mySummon) && Director::IsRoundUndead(z) && Limit(z)) {
-						// (the balance pass) your summons hit by the highest rung of the summon spells you carry (0.6x of a
-						// blade at the first rung, up to 1.05x at the Legendary), half again with Bonebinder's Brew
+						// (the balance pass) your summons hit by the highest rung of the summon spells you carry (0.3x of a
+						// blade at the first rung, up to 0.51x at the Legendary), a third again with Bonebinder's Brew
 						float tierMult = 0.9f;
 						if (mySummon) {
 							int best = 1;
 							for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0) best = std::max(best, Arcana::RungOf(i));
-							tierMult = (0.6f + 0.15f * static_cast<float>(best - 1)) * (Perks::SummonMight() ? 1.5f : 1.0f);
+							tierMult = (0.3f + 0.07f * static_cast<float>(best - 1)) * (Perks::SummonMight() ? 1.3f : 1.0f);  // (was 0.6 + 0.15 a rung, half again with the Brew)
 						}
-						HurtUndead(z, Director::RoundHealth() * gen::kShareMelee * tierMult * (0.7f + 0.3f * Arcana::Power()));
+						// (Noah: "summons are too strong") a summon lands its share at most once every 0.7 s, however fast it bites
+						// or how many bolts it throws, and that share is a third of a blade's at the first rung
+						static std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> beat;
+						auto&      b = beat[ally->GetFormID()];
+						const auto now = std::chrono::steady_clock::now();
+						if (beat.size() > 300) beat.clear();
+						if (!mySummon || now - b >= std::chrono::milliseconds(700)) {
+							b = now;
+							HurtUndead(z, Director::RoundHealth() * gen::kShareMelee * tierMult * (0.7f + 0.3f * Arcana::Power()));
+						}
+					}
+				}
+				// (Noah: "my summons have way too much health") the night's dead hurt your summons for real: each blow a share
+				// of the summon's own health (a brute's, an elite's or a boss's twice that), by the difficulty's damage
+				if (a_event && a_event->cause && a_event->target) {
+					auto* z = a_event->cause->As<RE::Actor>();
+					auto* sm = a_event->target->As<RE::Actor>();
+					auto* pl = RE::PlayerCharacter::GetSingleton();
+					if (z && sm && pl && sm != pl && !sm->IsDead() && Director::IsRoundUndead(z) && Director::PlayerSide(sm, pl) &&
+						((sm->IsCommandedActor() && sm->GetCommandingActor().get() == pl) || Classes::IsOwnSummon(sm)) && Limit(sm)) {
+						const int   row = Director::EnemyRow(z);
+						const bool  big = Director::IsBoss(z) || Director::IsElite(z) || (row >= 0 && gen::kEnemies[row].kind == 1);
+						auto*       sav = sm->AsActorValueOwner();
+						const float hurt = sav->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.08f * (big ? 2.0f : 1.0f) * Settings::UndeadDamageMult();
+						sav->DamageActorValue(RE::ActorValue::kHealth, hurt);
+						if (sav->GetActorValue(RE::ActorValue::kHealth) <= 0 && !sm->IsDead()) sm->KillImpl(z, hurt, true, false);
 					}
 				}
 				if (a_event && a_event->target.get() == RE::PlayerCharacter::GetSingleton() && a_event->cause) {

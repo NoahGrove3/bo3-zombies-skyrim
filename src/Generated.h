@@ -1515,6 +1515,7 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kReaperScythe = 0x96C;
 	inline constexpr std::uint32_t kWyrmClaws = 0x9DD, kShadowClaws = 0x9DE, kZombieClaws = 0x9DF;
 	inline constexpr std::uint32_t kUndeadFaction = 0x93B;
+	inline constexpr std::uint32_t kClassChest = 0xD01;
 	inline constexpr std::uint32_t kMuzzleLight = 0x8DC;
 	inline constexpr std::uint32_t kStandStat = 0x926;  // the station platform (dressing on the Coffer)
 	inline constexpr float kStandHalfX = 220.0f, kStandFrontY = -220.0f, kStandBackY = 220.0f, kStandMaxSlope = 70.0f;  // footprint in plan space (tools/stand.py)
