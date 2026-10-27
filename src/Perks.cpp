@@ -137,6 +137,51 @@ namespace bo3z
 			}
 		}
 
+		// (Noah: "the perks as well for classes when switching to another class") a class you leave keeps its blessings:
+		// they come off you (what they added to you taken back) and are handed back when you play that class again
+		std::vector<std::uint8_t> TakeAll()
+		{
+			std::vector<std::uint8_t> v(gen::kPerks.size(), 0);
+			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) {
+				const int n = N(i);
+				if (n <= 0) continue;
+				const auto& p = gen::kPerks[i];
+				switch (p.effect) {
+				case 0: Mod(RE::ActorValue::kHealth, -p.value * n); break;
+				case 4: Mod(RE::ActorValue::kSpeedMult, -p.value * n); Mod(RE::ActorValue::kStaminaRateMult, -30.0f * n); break;
+				case 1: for (auto av : kSchoolCost) Mod(av, -15.0f * std::min(n, 5)); break;
+				case 2: for (auto av : kSchoolPower) Mod(av, -50.0f * n); break;
+				case 6: Mod(RE::ActorValue::kMagicka, -50.0f * n); break;
+				case 14: Mod(RE::ActorValue::kDestructionModifier, -p.value * n); break;
+				default: break;
+				}
+				Save::SetPerkStacks(i, 0);
+				v[i] = static_cast<std::uint8_t>(std::min(n, 255));
+			}
+			logger::info("perk: the class's blessings put away");
+			return v;
+		}
+		void GiveBack(const std::vector<std::uint8_t>& a_v)
+		{
+			for (int i = 0; i < static_cast<int>(std::min(a_v.size(), gen::kPerks.size())); ++i) {
+				const auto& p = gen::kPerks[i];
+				for (int k = 0; k < a_v[i]; ++k) {
+					const int n = N(i) + 1;
+					Save::SetPerkStacks(i, n);
+					switch (p.effect) {
+					case 0: Mod(RE::ActorValue::kHealth, p.value); break;
+					case 4: Mod(RE::ActorValue::kSpeedMult, p.value); Mod(RE::ActorValue::kStaminaRateMult, 30.0f); break;
+					case 1: if (n <= 5) for (auto av : kSchoolCost) Mod(av, 15.0f); break;
+					case 2: for (auto av : kSchoolPower) Mod(av, 50.0f); break;
+					case 6: Mod(RE::ActorValue::kMagicka, 50.0f); break;
+					case 14: Mod(RE::ActorValue::kDestructionModifier, p.value); break;
+					default: break;
+					}
+				}
+			}
+			logger::info("perk: the class's blessings handed back");
+		}
+
 		// an old potion still in a pack (bought before blessings applied at once): drinking it grants it the same way
 		void OnEffect(RE::FormID a_mgef)
 		{

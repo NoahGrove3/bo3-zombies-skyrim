@@ -647,6 +647,8 @@ namespace bo3z
 		void OnEffect(RE::FormID a_mgef);
 		bool Grant(int a_perk);    // bought: applied at once (one at a time)
 		void LoseAll();            // death takes them all
+		std::vector<std::uint8_t> TakeAll();                         // (a class left) its blessings off you, per perk its stacks
+		void                      GiveBack(const std::vector<std::uint8_t>& a_stacks);  // (a class taken up again) back on
 		void OnZombieHit(RE::Actor* a_zombie);  // a round zombie hit the player
 		float SinceZombieHit(RE::FormID a_zombie);  // seconds since this one's blow last landed (large: never)
 		void OnCast(int a_shots);  // Stormcrown

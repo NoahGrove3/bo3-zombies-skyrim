@@ -22,6 +22,7 @@ namespace bo3z::Classes
 		std::array<RE::FormID, 4>                              g_chest{};      // per class: its chest's reference (0 none yet)
 		std::array<std::array<Save::Slot, 3>, 4>               g_slotStash{};  // per class: its three weapon slots
 		std::array<std::vector<RE::FormID>, 4>                 g_wornStash;    // per class: what it had on / in hand
+		std::array<std::vector<std::uint8_t>, 4>               g_perkStash;    // per class: its altar blessings' stacks
 		std::chrono::steady_clock::time_point                  g_closedAt{};
 		std::array<std::uint16_t, coffer::kLadders>            g_mastery{};  // kills made with each ladder's spell in hand (its summons' kills for the Summoner)
 
@@ -355,7 +356,7 @@ namespace bo3z::Classes
 		void Swap(int a_from, int a_to)
 		{
 			if (a_from == coffer::kSummoner && a_to != coffer::kSummoner) DismissSummons();
-			if (a_from >= 0 && a_from < 4 && a_from != a_to) StashGear(a_from);
+			if (a_from >= 0 && a_from < 4 && a_from != a_to) StashGear(a_from), g_perkStash[a_from] = Perks::TakeAll();
 			if (a_from >= 0 && a_from < 4) {
 				g_stash[a_from].clear();
 				for (int i : Arcana::Carried()) {
@@ -367,6 +368,7 @@ namespace bo3z::Classes
 				GiveKit(a_to);
 			} else {
 				RestoreGear(a_to);
+				if (!g_perkStash[a_to].empty()) Perks::GiveBack(g_perkStash[a_to]), g_perkStash[a_to].clear();
 				bool left = false;
 				for (auto [i, lv] : g_stash[a_to]) {
 					GiveSpell(i, left);
@@ -1713,6 +1715,12 @@ namespace bo3z::Classes
 			v.push_back(static_cast<std::uint8_t>(n));
 			for (std::size_t i = 0; i < n; ++i) u32(g_wornStash[c][i]);
 		}
+		v.push_back(0xA6);  // each class's blessings: per class [n u8][n x stacks u8]
+		for (int c = 0; c < 4; ++c) {
+			const auto n = std::min<std::size_t>(g_perkStash[c].size(), 255);
+			v.push_back(static_cast<std::uint8_t>(n));
+			for (std::size_t i = 0; i < n; ++i) v.push_back(g_perkStash[c][i]);
+		}
 		return v;
 	}
 	void SetState(const std::vector<std::uint8_t>& a_v)
@@ -1786,6 +1794,14 @@ namespace bo3z::Classes
 					if (!u32(id)) break;
 					if (const auto r = ResolveId(id)) g_wornStash[c].push_back(r);
 				}
+			}
+		}
+		for (auto& ps : g_perkStash) ps.clear();
+		if (k < a_v.size() && a_v[k] == 0xA6) {
+			++k;
+			for (int c = 0; c < 4 && k < a_v.size(); ++c) {
+				const int n = a_v[k++];
+				for (int i = 0; i < n && k < a_v.size(); ++i) g_perkStash[c].push_back(a_v[k++]);
 			}
 		}
 		if (g_wStep[coffer::kSummoner] > kWonderSteps) TuneWyrm();
