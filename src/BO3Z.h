@@ -106,6 +106,7 @@ namespace bo3z
 		void             Tick(float a_delta);
 		bool             Scouting();                     // (Noah) scout mode: flying, unhurt, no undead - arrows mark spawn points
 		void             ScoutMark(const RE::NiPoint3& a_at);  // an arrow of the player's came to rest here
+		void             ScoutKey(const RE::ButtonEvent* a_b);  // F10 scout mode on / off; while scouting B marks where you look, N puts the city's altar where you stand
 		void             Reset();
 		bool             IsRoundUndead(RE::Actor* a_actor);
 		float            HarmMult(RE::Actor* a_actor);
@@ -408,7 +409,8 @@ namespace bo3z
 		void        SetAdsSensitivity(float a_v);
 		bool        Shelter();                    // townsfolk go indoors at night
 		bool        Blood();                      // headshot blood bursts (MCM: Effects)
-		bool        Scout();                      // (Noah) scout mode, for laying out each city's spawn points (MCM: 6. Scout)
+		bool        Scout();                      // (Noah) scout mode, for laying out each city's spawn points (MCM: 6. Scout, or F10)
+		void        SetScout(bool a_on);
 		float       FogStrength();                // the night's fog, 0 .. 1.5
 		bool        ScreenShake();
 		bool        ReduceFlashes();              // softer lightning, fewer white flashes
@@ -943,7 +945,8 @@ namespace bo3z
 		void        Install();
 		void        OnClick();  // a left click (menus: the party panel's buttons)
 		void        OnMouseMove(float a_dx, float a_dy);  // raw mouse movement (the menu cursor never sticks)
-		void        OnMenuButton(const RE::ButtonEvent* a_b);  // main menu: pad / arrow keys over our words
+		void        OnMenuButton(const RE::ButtonEvent* a_b);
+		void        InstallInputGate();  // main menu: pad / arrow keys over our words
 		void        DevMenuPick(const std::string& a_text);  // dev: press a main-menu word
 		void        IntroStart();             // the Curse of Alduin intro film (once, for a new character)
 		bool        IntroActive();

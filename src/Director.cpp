@@ -3606,7 +3606,6 @@ namespace bo3z
 				g_scoutOn = want;
 				if (want) {
 					if (!RE::PlayerCharacter::IsGodMode()) ScoutConsole("tgm");
-					ScoutConsole("tcl");
 					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 200.0f);
 					g_hover = a_player->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f };
 					// (Noah: "only really fast movement speed") the arrows already lying about are not marks: only ones shot now
@@ -3635,11 +3634,10 @@ namespace bo3z
 						RE::TESWorldSpace* ws = nullptr;
 						if (Shops::StandFrame(t, c, yaw, ws)) logger::info("scout: the Echo Altar of {} stands at ({:.0f}, {:.0f}, {:.0f}) facing {:.0f} deg", TownName(t), c.x, c.y, c.z, yaw * 57.2958f);
 					}
-					Hud::Banner("SCOUT MODE - fly where you look, arrows mark spawn points", 5.0f);
+					Hud::Banner("SCOUT MODE - fly where you look - arrows or B mark spawn points - N moves the altar here", 6.0f);
 					logger::info("scout: on");
 				} else {
 					if (RE::PlayerCharacter::IsGodMode()) ScoutConsole("tgm");
-					ScoutConsole("tcl");
 					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -200.0f);
 					if (auto* ctrl = a_player->GetCharController()) ctrl->gravity = 1.0f;
 					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.1f), av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.1f);
@@ -3651,22 +3649,49 @@ namespace bo3z
 			}
 			if (!g_scoutOn) return false;
 			TickPurge(a_delta);
-			// flight: you hang where you are, and move where you look - up and down too - fast; sprint to go faster
-			if (auto* ctrl = a_player->GetCharController()) ctrl->gravity = 0.0f, ctrl->fallTime = 0.0f;
+			// flight: moving, you go where you look - up and down too - fast (sprint: faster); let go high up and you hang
+			// there; let go near the ground and you come down onto it, on your feet (Noah: "stuck in the falling animation":
+			// a bow can't be drawn in the air - B marks from up there instead)
 			{
 				auto* ui = RE::UI::GetSingleton();
 				const bool paused = ui && ui->GameIsPaused();
+				auto*      ctrl = a_player->GetCharController();
 				if (a_player->GetPosition().GetDistance(g_hover) > 400.0f) g_hover = a_player->GetPosition();  // (a door, a load: start from there)
 				RE::NiPoint2 in{};
 				if (auto* pc = RE::PlayerControls::GetSingleton()) in = pc->data.moveInputVec;
+				const bool moving = std::abs(in.x) + std::abs(in.y) > 0.05f;
+				float      ground = g_hover.z - 5000.0f;
+				if (const auto top = WalkTop(a_player->GetParentCell(), g_hover, 40.0f)) ground = *top;
+				static bool landed = true;
 				if (!paused) {
-					const float yaw = a_player->data.angle.z, pitch = a_player->data.angle.x;
-					const RE::NiPoint3 fwd{ std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch) };
-					const RE::NiPoint3 right{ std::cos(yaw), -std::sin(yaw), 0.0f };
-					const float speed = a_player->AsActorState()->IsSprinting() ? 5000.0f : 1800.0f;
-					const float dt = std::min(a_delta, 0.05f);
-					g_hover += (fwd * in.y + right * in.x) * (speed * dt);
-					a_player->SetPosition(g_hover, true);
+					if (moving) {
+						const float yaw = a_player->data.angle.z, pitch = a_player->data.angle.x;
+						const RE::NiPoint3 fwd{ std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch) };
+						const RE::NiPoint3 right{ std::cos(yaw), -std::sin(yaw), 0.0f };
+						const float speed = a_player->AsActorState()->IsSprinting() ? 5000.0f : 1800.0f;
+						const float dt = std::min(a_delta, 0.05f);
+						RE::NiPoint3 next = g_hover + (fwd * in.y + right * in.x) * (speed * dt);
+						if (const auto top = WalkTop(a_player->GetParentCell(), next, 60.0f); top && next.z < *top + 4.0f) next.z = *top + 4.0f;  // (never into the ground)
+						const bool skim = next.z - ground < 120.0f && pitch >= -0.05f;  // (on the ground and not looking up: you just run, fast)
+						if (skim) {
+							landed = true, g_hover = a_player->GetPosition();
+							if (ctrl) ctrl->gravity = 1.0f;
+						} else {
+							landed = false, g_hover = next;
+							if (ctrl) ctrl->gravity = 0.0f, ctrl->fallTime = 0.0f;
+							a_player->SetPosition(g_hover, true);
+						}
+					} else if (!landed && g_hover.z - ground > 300.0f) {  // hanging in the air
+						if (ctrl) ctrl->gravity = 0.0f, ctrl->fallTime = 0.0f;
+						a_player->SetPosition(g_hover, true);
+					} else {  // near the ground: down onto it
+						if (!landed) {
+							landed = true;
+							a_player->SetPosition({ g_hover.x, g_hover.y, ground + 6.0f }, true);
+						}
+						if (ctrl) ctrl->gravity = 1.0f;
+						g_hover = a_player->GetPosition();
+					}
 				}
 			}
 			// arrows of yours at rest: each a mark (gathered under the projectiles' lock, marked after it)
@@ -3698,6 +3723,79 @@ namespace bo3z
 			return true;
 		}
 		bool Scouting() { return g_scoutOn; }
+		// where the crosshair meets the world (from the camera, along where you look)
+		std::optional<RE::NiPoint3> LookHit(RE::PlayerCharacter* a_player)
+		{
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			auto* cell = a_player->GetParentCell();
+			auto* world = cell ? cell->GetbhkWorld() : nullptr;
+			if (!cam || !cam->cameraRoot || !world) return std::nullopt;
+			const RE::NiPoint3 from = cam->cameraRoot->world.translate;
+			const float yaw = a_player->data.angle.z, pitch = a_player->data.angle.x;
+			const RE::NiPoint3 dir{ std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch) };
+			const RE::NiPoint3 to = from + dir * 25000.0f;
+			const float s = RE::bhkWorld::GetWorldScale();
+			RE::bhkPickData pick;
+			pick.rayInput.from = RE::hkVector4(from * s);
+			pick.rayInput.to = RE::hkVector4(to * s);
+			pick.rayInput.filterInfo.SetCollisionLayer(RE::COL_LAYER::kLOS);
+			{
+				RE::BSReadLockGuard lock(world->worldLock);
+				world->PickObject(pick);
+			}
+			if (!pick.rayOutput.HasHit()) return std::nullopt;
+			return from + (to - from) * pick.rayOutput.hitFraction;
+		}
+		int NearestTown(const RE::NiPoint3& a_at, RE::TESWorldSpace* a_ws)
+		{
+			int best = -1;
+			float bestD = 12000.0f;
+			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
+				RE::NiPoint3 c;
+				float yaw = 0;
+				RE::TESWorldSpace* ws = nullptr;
+				if (Shops::StandFrame(t, c, yaw, ws) && ws == a_ws && c.GetDistance(a_at) < bestD) bestD = c.GetDistance(a_at), best = t;
+			}
+			return best;
+		}
+		void ScoutKey(const RE::ButtonEvent* a_b)
+		{
+			if (!a_b || !a_b->IsDown() || a_b->GetDevice() != RE::INPUT_DEVICE::kKeyboard) return;
+			auto* ui = RE::UI::GetSingleton();
+			if (!ui || ui->GameIsPaused() || ui->IsMenuOpen(RE::Console::MENU_NAME) || !Save::Flag(Save::kFlagStarted)) return;
+			const auto id = a_b->GetIDCode();
+			if (id == 0x44) {  // F10: scout mode on / off
+				SKSE::GetTaskInterface()->AddTask([] { Settings::SetScout(!Settings::Scout()); });
+				return;
+			}
+			if (!g_scoutOn) return;
+			if (id == 0x30) {  // B: a spawn point where you look
+				SKSE::GetTaskInterface()->AddTask([] {
+					auto* pl = RE::PlayerCharacter::GetSingleton();
+					if (!pl) return;
+					if (const auto at = LookHit(pl)) ScoutMark(*at);
+					else Hud::Banner("NOTHING THERE TO MARK - LOOK AT THE GROUND", 2.0f);
+				});
+			} else if (id == 0x31) {  // N: this city's Echo Altar where you stand, facing the way you face
+				SKSE::GetTaskInterface()->AddTask([] {
+					auto* pl = RE::PlayerCharacter::GetSingleton();
+					if (!pl) return;
+					auto at = pl->GetPosition();
+					if (const auto top = WalkTop(pl->GetParentCell(), at, 60.0f)) at.z = *top;
+					const int t = NearestTown(at, pl->GetWorldspace());
+					if (t < 0) {
+						Hud::Banner("NO CITY NEAR ENOUGH FOR AN ALTAR", 2.5f);
+						return;
+					}
+					const float yawDeg = pl->data.angle.z * 57.2958f;
+					const auto d = SKSE::log::log_directory();
+					std::ofstream out((d ? *d : std::filesystem::path{}) / "CurseOfAlduin-altars.txt", std::ios::app);
+					out << fmt::format("{} {:.0f} {:.0f} {:.0f} {:.0f}\n", TownName(t), at.x, at.y, at.z, yawDeg);
+					Hud::Banner(fmt::format("ECHO ALTAR SPOT SAVED FOR {}", TownName(t)), 3.0f);
+					logger::info("scout: the Echo Altar of {} wanted at ({:.0f}, {:.0f}, {:.0f}) facing {:.0f} deg", TownName(t), at.x, at.y, at.z, yawDeg);
+				});
+			}
+		}
 		void ScoutMark(const RE::NiPoint3& a_at)
 		{
 			auto* pl = RE::PlayerCharacter::GetSingleton();

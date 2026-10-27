@@ -264,6 +264,12 @@ namespace bo3z::Settings
 	bool  Shelter() { Ensure(); return g_shelter; }
 	bool  Blood() { Ensure(); return g_blood; }
 	bool  Scout() { Ensure(); return g_scout; }
+	void  SetScout(bool a_on)
+	{
+		Ensure();
+		g_scout = a_on;
+		Write(L"Scout", L"bScout", a_on ? 1.0f : 0.0f, true);
+	}
 	float FogStrength() { Ensure(); return g_fog; }
 	bool  ScreenShake() { Ensure(); return g_shake; }
 	bool  ReduceFlashes() { Ensure(); return g_softFlash; }

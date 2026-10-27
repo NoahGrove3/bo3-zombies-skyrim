@@ -479,6 +479,7 @@ namespace bo3z
 							Hud::OnClick();
 						}
 						Hud::OnMenuButton(b);
+						Director::ScoutKey(b);
 						if (Classes::OnButton(b)) {  // the class picker has the keys while it is up
 							continue;
 						}
@@ -934,6 +935,7 @@ namespace bo3z
 		{
 			FreeBowMovement();
 			Undead::InstallHooks();
+			Hud::InstallInputGate();
 			// (Noah: "the hoarfrost casting animation is very bright, hard to see when casting") Mysticism's Hoarfrost
 			// wears Skyrim's own Frostbite in the hands (its art and its light), not its blinding own
 			if (auto* dh = RE::TESDataHandler::GetSingleton()) {

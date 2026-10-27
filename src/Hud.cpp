@@ -3220,6 +3220,66 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// who is in the lobby with each one's night (kills, headshots, best streak, septims, revives); last night's score
 		// with the party's MVP; and your character's records. Alone (or without Steam) it shows just you.
 		// a: the panel's top-left corner
+		// (Noah: "make access to the party one of the buttons under Load on the main menu, in Edge UI's style") CO-OP PARTY
+		// is put into the main menu's own list just under LOAD - Edge UI draws it like the rest - and taking it (A / Enter /
+		// a click while it is the one selected) opens the party window. False while the list can't be found.
+		std::atomic<int> g_mainAccept{ 0 };
+		bool PartyInMainList(int a_clicks)
+		{
+			auto* ui = RE::UI::GetSingleton();
+			auto  menu = ui ? ui->GetMenu(RE::MainMenu::MENU_NAME) : nullptr;
+			RE::GFxMovieView* mv = menu ? menu->uiMovie.get() : nullptr;
+			RE::GFxValue      list, entries;
+			if (!mv || !mv->GetVariable(&list, "_root.MenuHolder.Menu_mc.MainList") || !list.IsDisplayObject() || !list.GetMember("entryList", &entries) || !entries.IsArray()) {
+				return false;
+			}
+			const std::uint32_t n = entries.GetArraySize();
+			int ours = -1, load = -1;
+			for (std::uint32_t i = 0; i < n; ++i) {
+				RE::GFxValue e, t, mark;
+				if (!entries.GetElement(i, &e) || !e.IsObject()) continue;
+				if (e.GetMember("curseParty", &mark) && mark.IsBool()) ours = static_cast<int>(i);
+				if (e.GetMember("text", &t) && t.IsString()) {
+					std::string up = t.GetString();
+					std::transform(up.begin(), up.end(), up.begin(), [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
+					if (up == "LOAD" || up == "$LOAD") load = static_cast<int>(i);
+				}
+			}
+			if (ours < 0) {
+				if (load < 0) return false;
+				RE::GFxValue e, t;
+				mv->CreateObject(&e);
+				if (entries.GetElement(static_cast<std::uint32_t>(load), &t) && t.IsObject()) {
+					RE::GFxValue txt;
+					t.GetMember("text", &txt);
+					const std::string lt = txt.IsString() ? txt.GetString() : "LOAD";
+					const bool caps = lt.find_first_of("abcdefghijklmnopqrstuvwxyz") == std::string::npos;
+					e.SetMember("text", RE::GFxValue(caps ? "CO-OP PARTY" : "Co-op Party"));
+				}
+				e.SetMember("index", RE::GFxValue(999));
+				e.SetMember("disabled", RE::GFxValue(false));
+				e.SetMember("curseParty", RE::GFxValue(true));
+				entries.PushBack(e);
+				for (int i = static_cast<int>(n); i > load + 1; --i) {  // (moved up to just under LOAD)
+					RE::GFxValue prev;
+					entries.GetElement(static_cast<std::uint32_t>(i - 1), &prev);
+					entries.SetElement(static_cast<std::uint32_t>(i), prev);
+				}
+				entries.SetElement(static_cast<std::uint32_t>(load + 1), e);
+				ours = load + 1;
+				if (list.HasMember("InvalidateData")) list.Invoke("InvalidateData");
+				else if (list.HasMember("UpdateList")) list.Invoke("UpdateList");
+				static int told = 0;
+				if (told++ < 3) logger::info("party: CO-OP PARTY put in the main menu's list (entry {} of {})", ours, n + 1);
+			}
+			const int pressed = g_mainAccept.exchange(0) + a_clicks;
+			RE::GFxValue sel;
+			if (pressed > 0 && !g_partyOpen && list.GetMember("selectedIndex", &sel) && sel.IsNumber() && static_cast<int>(sel.GetNumber()) == ours) {
+				g_partyOpen = true;
+				g_partyFocus = 0;
+			}
+			return true;
+		}
 		// the PARTY tab at the top left (the Esc journal, the main menu): click it, or P / Triangle-Y
 		bool PartyTab(ImDrawList* a_dl, float a_kk, int a_clicks, const char* a_name)
 		{
@@ -5676,10 +5736,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// (Noah: "I don't see the party tab in game or the main menu") Edge UI draws the main menu's words, so the
 				// co-op party is our own tab at the top left (click it, or P / Triangle-Y), opening the same party window
 				const float kk = io.DisplaySize.y / 1080.0f;
-				const bool  over = Net::Available() && PartyTab(ImGui::GetForegroundDrawList(), kk, clicks, "CO-OP PARTY");
+				bool        over = false;
+				static int  missing = 0;  // (frames the list could not be found: then our own tab, top left)
+				if (Net::Available()) {
+					if (PartyInMainList(g_partyOpen ? 0 : clicks)) missing = 0;
+					else if (++missing > 90) over = PartyTab(ImGui::GetForegroundDrawList(), kk, clicks, "CO-OP PARTY");
+				}
 				DrawMenu(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks > 0 && !over && !g_partyOpen);
 				if (g_partyOpen && Net::Available()) {
-					PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { 36 * kk, 90 * kk }, kk, clicks > 0 && !over);
+					PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { io.DisplaySize.x * 0.5f - 380 * kk, 150 * kk }, kk, clicks > 0 && !over);
 				}
 			} else if (journal || escJournal) {
 				// (Noah: the Party tab in Skyrim's system menu) in the Esc journal a PARTY tab at the top left (click it, or P /
@@ -5888,6 +5953,33 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 	namespace Hud
 	{
+		// (Noah: "the party UI needs to be navigable with a controller") while the party window is up over the main menu
+		// or the Esc journal, the keys and buttons are the window's alone: the menu under it doesn't also move or take them
+		struct MenuControlsGate
+		{
+			static RE::BSEventNotifyControl thunk(RE::MenuControls* a_this, RE::InputEvent* const* a_ev, RE::BSTEventSource<RE::InputEvent*>* a_src)
+			{
+				if (g_partyOpen && a_ev && *a_ev) {
+					auto* ui = RE::UI::GetSingleton();
+					if (ui && (ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) || ui->IsMenuOpen(RE::MainMenu::MENU_NAME))) {
+						for (auto* e = *a_ev; e; e = e->next) {
+							if (e->GetEventType() == RE::INPUT_EVENT_TYPE::kButton || e->GetEventType() == RE::INPUT_EVENT_TYPE::kThumbstick) {
+								return RE::BSEventNotifyControl::kContinue;
+							}
+						}
+					}
+				}
+				return func(a_this, a_ev, a_src);
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+		void InstallInputGate()
+		{
+			REL::Relocation<std::uintptr_t> vt{ RE::VTABLE_MenuControls[0] };
+			MenuControlsGate::func = vt.write_vfunc(0x1, MenuControlsGate::thunk);
+			logger::info("party: the menus give the party window their keys while it is open");
+		}
+
 		State&      Edit() { return g_state; }
 		std::mutex& Lock() { return g_lock; }
 
@@ -5938,6 +6030,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				((a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x19) || ((!Hud::kEdgeHud || !g_sys.found) && a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && a_b->GetIDCode() == 0x8000))) {
 				g_partyOpen = !g_partyOpen;
 				g_partyFocus = 0;
+			}
+			if (a_b && a_b->IsDown() && ui && ui->IsMenuOpen(RE::MainMenu::MENU_NAME)) {
+				const auto id = a_b->GetIDCode();
+				const auto dev = a_b->GetDevice();
+				const bool accept = (dev == RE::INPUT_DEVICE::kGamepad && id == 0x1000) || (dev == RE::INPUT_DEVICE::kKeyboard && (id == 0x1C || id == 0x12 || id == 0x9C));
+				const bool back = (dev == RE::INPUT_DEVICE::kGamepad && id == 0x2000) || (dev == RE::INPUT_DEVICE::kKeyboard && (id == 0x0E || id == 0x0F || id == 0x01));
+				if (!g_partyOpen && accept) ++g_mainAccept;
+				else if (g_partyOpen && back) g_partyOpen = false;
 			}
 			if (a_b && a_b->IsDown() && ui && ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !ui->IsMenuOpen(RE::MainMenu::MENU_NAME)) {
 				const auto id = a_b->GetIDCode();

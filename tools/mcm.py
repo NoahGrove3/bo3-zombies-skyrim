@@ -111,7 +111,7 @@ PAGES = [
     ]},
     {'pageDisplayName': '6. Scout', 'cursorFillMode': 'topToBottom', 'content': [
         header('Laying out spawn points'),
-        toggle('bScout:Scout', 'Scout mode', 'For marking where the dead climb out in each city. On: you fly where you look (Skyrim\'s no-clip) and fast, nothing can hurt you, no undead rise, and you get a Hunting Bow and arrows - every arrow that comes to rest is saved as a spawn point for the city you are in. Off: back to normal.'),
+        toggle('bScout:Scout', 'Scout mode', 'For marking where the dead climb out in each city (F10 turns it on and off too). On: you fly where you look and fast, nothing can hurt you, no undead rise, and you get a Hunting Bow and arrows - every arrow that comes to rest is saved as a spawn point for the city you are in. Off: back to normal.'),
     ]},
     {'pageDisplayName': '5. Other Mods', 'cursorFillMode': 'topToBottom', 'content': [
         text('These mods have no menu of their own.', 'Changes here are written to their files when the game starts: they count from the next launch.'),
