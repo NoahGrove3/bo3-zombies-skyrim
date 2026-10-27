@@ -85,7 +85,7 @@
    "verify": [
     "z"
    ],
-   "freed": false,
+   "freed": true,
    "held": false
   },
   {
@@ -265,7 +265,7 @@
    "verify": [
     "scale"
    ],
-   "freed": false,
+   "freed": true,
    "held": false
   },
   {

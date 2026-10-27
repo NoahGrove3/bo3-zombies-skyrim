@@ -23,6 +23,8 @@ namespace bo3z
 			float           stall{ 0 };     // seconds spent not closing in
 			float           stuck{ 0 };     // (Noah: "some hang out behind buildings") seconds loaded, out of reach and not getting closer
 			float           lastDist{ -1 };
+			RE::NiPoint3    lastPos{};      // (Noah: "stuck on porches and behind houses") where it stood a few seconds ago
+			float           still{ 0 };     // seconds it has barely moved while out of reach
 			float           ability{ 4.0f };   // Iron Reaper: next reap / Necromancer: next summon
 			float           windup{ -1.0f };   // Iron Reaper: seconds until the telegraphed sweep lands
 			float           mounted{ 0 };      // the extra speed it has while the player rides (MountChase)
@@ -406,9 +408,39 @@ namespace bo3z
 					}
 					std::vector<float> wts;
 					for (const auto* q : ok) wts.push_back(1.0f / (1.0f + 1.5f * static_cast<float>(crowd[bin(*q)])));
+					// (Noah: "they spawn on top of each other") a spot just used rests a few seconds, and each one is set
+					// where none of the dead already stands: tried round its point until it is clear by a body's width
+					static std::vector<std::pair<RE::NiPoint3, std::chrono::steady_clock::time_point>> used;
+					const auto nowU = std::chrono::steady_clock::now();
+					std::erase_if(used, [&](const auto& u) { return nowU - u.second > std::chrono::milliseconds(3500); });
+					const auto recentlyUsed = [&](const RE::NiPoint3& q) {
+						for (const auto& u : used) if (std::hypot(u.first.x - q.x, u.first.y - q.y) < 350.0f) return true;
+						return false;
+					};
+					for (std::size_t k = 0; k < wts.size(); ++k) if (recentlyUsed(*ok[k])) wts[k] *= 0.05f;
 					std::discrete_distribution<std::size_t> pickPt(wts.begin(), wts.end());
-					RE::NiPoint3 p = *ok[pickPt(g_rng)];
-					p.x += Uniform(-90.0f, 90.0f), p.y += Uniform(-90.0f, 90.0f);  // (a few steps apart, not stacked)
+					const RE::NiPoint3 base = *ok[pickPt(g_rng)];
+					const auto clearOf = [&](const RE::NiPoint3& q) {
+						for (const auto& z : g_alive) {
+							if (auto za = z.handle.get(); za && !za->IsDead()) {
+								const auto zp = za->GetPosition();
+								if (std::hypot(zp.x - q.x, zp.y - q.y) < 110.0f) return false;
+							}
+						}
+						for (const auto& u : used) if (u.first.GetDistance(q) < 110.0f) return false;
+						return true;
+					};
+					RE::NiPoint3 p = base;
+					for (int tryN = 0; tryN < 10; ++tryN) {
+						const float ang = Uniform(0.0f, 6.2832f), r = tryN == 0 ? Uniform(0.0f, 60.0f) : 90.0f + 25.0f * tryN;
+						RE::NiPoint3 q{ base.x + std::cos(ang) * r, base.y + std::sin(ang) * r, base.z };
+						float land = 0;
+						if (tryN > 0 && (!RE::TES::GetSingleton()->GetLandHeight(q, land) || std::abs(land - base.z) > 60.0f || GroundKind(a_player, q, land) == 0)) continue;
+						if (tryN > 0) q.z = land;
+						p = q;
+						if (clearOf(q)) break;
+					}
+					used.emplace_back(p, nowU);
 					p.z += R.spawnHeightOffset;
 					return p;
 				}
@@ -466,6 +498,7 @@ namespace bo3z
 			bool            portal = false;  // its red portal opened
 			bool            hidden = false;  // (Noah: it showed standing on the ground a moment before the emerge took it under) unseen till the emerge has begun
 			float           standFor = 0;    // the stand-up clip's length (anim 3)
+			int             resets = 0;      // times set back on the floor after rising
 		};
 		std::vector<Riser> g_risers;
 		constexpr float    kRiseDepth = 115.0f, kRiseTime = 1.5f;
@@ -476,7 +509,7 @@ namespace bo3z
 			}
 			auto at = a_actor->GetPosition();
 			float floor = at.z;  // (Noah: "some of them get stuck in the ground when spawning") the walkable top under it, if higher
-			if (const auto top = WalkTop(a_actor->GetParentCell(), at, 120.0f); top && *top > floor && *top < floor + 120.0f) floor = *top;
+			if (const auto top = WalkTop(a_actor->GetParentCell(), at, 45.0f); top && *top > floor - 40.0f && *top < floor + 40.0f) floor = *top;
 			g_risers.push_back({ a_actor->GetHandle(), floor });
 			a_actor->SetCollision(false);
 			a_actor->EnableAI(false);
@@ -485,6 +518,21 @@ namespace bo3z
 			if (Settings::ScreenShake() && a_player && a_player->GetPosition().GetDistance(at) < 700.0f) {
 				RE::ShakeCamera(0.25f, at, 0.6f);
 			}
+		}
+		bool IsRising(RE::Actor* a_a)
+		{
+			for (const auto& r : g_risers) if (r.anim != 9 && r.h.get().get() == a_a) return true;
+			return false;
+		}
+		// (Noah: stuck or left behind) set at a spawn point near you, on the navmesh, and climbs out of the ground there
+		// like a fresh one - never a body popping into place
+		void Resurface(RE::Actor* a_a, RE::PlayerCharacter* a_player)
+		{
+			std::erase_if(g_risers, [&](const Riser& r) { return r.h.get().get() == a_a; });
+			a_a->SetPosition(SpawnSpot(a_player), true);
+			a_a->MoveToNearestNavmesh();
+			StartRise(a_a, a_player);
+			a_a->StartCombat(a_player);
 		}
 		void ShowRiser(RE::Actor* a_a, bool a_show)
 		{
@@ -594,8 +642,15 @@ namespace bo3z
 						r.t = 99;
 						continue;
 					}
-					if (auto at = a->GetPosition(); at.z < r.floorZ - 35.0f) {
-						at.z = r.floorZ + 4.0f;
+					// (Noah: "stuck in the floor for a moment") measured against the ground under it now - a ray from just over
+					// its head - not the floor it rose from, and set back at most twice (a third time means the floor it
+					// rose to was wrong: the body's own fall is right, and fighting it is the stutter)
+					auto at = a->GetPosition();
+					float ground = r.floorZ;
+					if (const auto top = WalkTop(a->GetParentCell(), { at.x, at.y, r.floorZ }, 60.0f); top && std::abs(*top - r.floorZ) < 90.0f) ground = *top;
+					if (at.z < ground - 35.0f && r.resets < 2) {
+						++r.resets;
+						at.z = ground + 4.0f;
 						a->SetPosition(at, true);
 						a->SetCollision(true);
 						static int told = 0;
@@ -728,7 +783,9 @@ namespace bo3z
 			// on the floor itself: standing at floor level, never under it (a little over it, they settle)
 			{
 				auto at = actor->GetPosition();
-				if (auto top = WalkTop(cell, at, 150.0f); top && *top > at.z - 300.0f) {  // (from just over their head: never onto a roof)
+				// (Noah: "stuck in the floor", "stuck on porches") the navmesh's height is the ground it walks on; a ray from
+				// over its head only lifts it for a bump in the ground a step high, never onto a porch, a cart or a fence
+				if (auto top = WalkTop(cell, at, 45.0f); top && *top > at.z - 40.0f && *top < at.z + 40.0f) {
 					at.z = *top + 6.0f;
 					actor->SetPosition(at, true);
 				}
@@ -2490,9 +2547,7 @@ namespace bo3z
 						s.behind = 0, s.stall = 0, s.lastDist = -1;
 						if (a->Is3DLoaded() && a->GetWorldspace() == a_player->GetWorldspace() && a->GetParentCell() && a_player->GetParentCell() &&
 							a->GetParentCell()->IsInteriorCell() == a_player->GetParentCell()->IsInteriorCell() && (!a->GetParentCell()->IsInteriorCell() || a->GetParentCell() == a_player->GetParentCell())) {
-							a->SetPosition(SpawnSpot(a_player), true);
-							a->MoveToNearestNavmesh();
-							a->StartCombat(a_player);
+							Resurface(a.get(), a_player);
 							logger::info("night: {} that fell behind set down near you ({:.0f} away)", gen::kEnemies[s.enemy].id, dist);
 						} else {
 							refill.push_back(s.enemy);
@@ -2508,17 +2563,25 @@ namespace bo3z
 				}
 				// stuck behind a building or on a rock: out of reach and not getting closer for 10 s - it climbs out of the
 				// ground again near you (out of sight is not checked: it simply comes back into the fight)
-				if (!boss && dist > 450.0f && s.lastDist >= 0 && dist > s.lastDist - 30.0f) {
-					if ((s.stuck += kStep) >= 10.0f && grounded >= 1.5f && relocGap <= 0) {
-						relocGap = 1.0f, s.stuck = 0, s.stall = 0, s.lastDist = -1;
-						a->SetPosition(SpawnSpot(a_player), true);
-						a->MoveToNearestNavmesh();
-						a->StartCombat(a_player);
-						logger::info("night: {} stuck out of reach ({:.0f} away) set down near you", gen::kEnemies[s.enemy].id, dist);
-						continue;
-					}
-				} else {
-					s.stuck = 0;
+				// (Noah: "getting stuck in porches and behind houses - I constantly have to be looking for zombies") two
+				// ways to tell: it has barely moved for three seconds while out of reach (caught on a porch rail, a corner),
+				// or it has not got closer for six - either way it climbs out of the ground again at a spawn point near you
+				const bool caster = gen::kEnemies[s.enemy].kind == 2;
+				{
+					const auto here = a->GetPosition();
+					if (std::hypot(here.x - s.lastPos.x, here.y - s.lastPos.y) < 70.0f) s.still += kStep;
+					else s.lastPos = here, s.still = 0;
+					if (IsRising(a.get())) s.lastPos = here, s.still = 0;
+				}
+				const bool pinned = !boss && !caster && dist > 260.0f && s.still >= 3.0f;
+				if (!boss && dist > 400.0f && s.lastDist >= 0 && dist > s.lastDist - 30.0f) s.stuck += kStep;
+				else s.stuck = 0;
+				if ((pinned || s.stuck >= 6.0f) && grounded >= 1.5f && relocGap <= 0 && !IsRising(a.get())) {
+					relocGap = 0.5f, s.stuck = 0, s.stall = 0, s.still = 0, s.lastDist = -1;
+					Resurface(a.get(), a_player);
+					s.lastPos = a->GetPosition();
+					logger::info("night: {} {} ({:.0f} away) - risen again near you", gen::kEnemies[s.enemy].id, pinned ? "caught on something" : "not getting closer", dist);
+					continue;
 				}
 				// Not closing in while still out of reach: it lost track of the player, so re-target from scratch.
 				const bool closing = s.lastDist < 0 || dist < s.lastDist - 30.0f || dist < 350.0f || (gen::kEnemies[s.enemy].kind == 2 && dist < 2600.0f);  // casters hold their range
