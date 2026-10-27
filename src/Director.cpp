@@ -3586,13 +3586,13 @@ namespace bo3z
 		{
 			auto* form = ScoutBeamForm();
 			for (auto& m : g_marks) {
-				const bool near = m.p.GetDistance(a_player->GetPosition()) < 9000.0f;
-				if (near && !m.beam.get() && form) {
+				const bool close = m.p.GetDistance(a_player->GetPosition()) < 9000.0f;
+				if (close && !m.beam.get() && form) {
 					if (auto b = a_player->PlaceObjectAtMe(form, false)) {
 						b->SetPosition(m.p);
 						m.beam = b->CreateRefHandle();
 					}
-				} else if (!near && m.beam.get()) {
+				} else if (!close && m.beam.get()) {
 					DropBeam(m);
 				}
 			}
@@ -3606,8 +3606,8 @@ namespace bo3z
 				if (want) {
 					if (!RE::PlayerCharacter::IsGodMode()) ScoutConsole("tgm");
 					ScoutConsole("tcl");
-					av->ModActorValue(RE::ActorValue::kSpeedMult, 400.0f);
-					av->ModActorValue(RE::ActorValue::kCarryWeight, 0.1f), av->ModActorValue(RE::ActorValue::kCarryWeight, -0.1f);  // (so the new speed takes)
+					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 400.0f);
+					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.1f), av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.1f);  // (so the new speed takes)
 					for (auto& z : g_alive) {
 						if (auto a = z.handle.get(); a && !a->IsDead()) Vanish(a.get());
 					}
@@ -3629,8 +3629,8 @@ namespace bo3z
 				} else {
 					if (RE::PlayerCharacter::IsGodMode()) ScoutConsole("tgm");
 					ScoutConsole("tcl");
-					av->ModActorValue(RE::ActorValue::kSpeedMult, -400.0f);
-					av->ModActorValue(RE::ActorValue::kCarryWeight, 0.1f), av->ModActorValue(RE::ActorValue::kCarryWeight, -0.1f);
+					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -400.0f);
+					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.1f), av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.1f);
 					for (auto& m : g_marks) DropBeam(m);
 					g_scoutArrows.clear();
 					Hud::Banner("SCOUT MODE OFF", 2.5f);
