@@ -169,6 +169,11 @@ for t in towns:
     r = ST.get(t)
     o.append(f'\t\tStationDef{{ true, 0x{int(r["worldspace"],16):06X}, {F(r["x"])}, {F(r["y"])}, {F(r["z"])}, {F(r["yawDeg"])}, {F(r["compact"])} }},' if r else '\t\tStationDef{ false, 0, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f },')
 o.append('\t} };')
+SPP = S['spawnpoints']['rows']
+o.append('\tstruct SpawnPointDef { int town; float x, y, z; };  // sheet: spawnpoints (hand-placed, the city\'s worldspace)')
+o.append(f'\tinline constexpr std::array<SpawnPointDef, {len(SPP)}> kSpawnPoints{{ {{')
+for r in SPP: o.append(f'\t\tSpawnPointDef{{ {towns.index(r["town"])}, {F(r["x"])}, {F(r["y"])}, {F(r["z"])} }},')
+o.append('\t} };')
 SH = S['shouts']['rows']
 o.append('\tstruct ShoutDef { std::string_view id, label, text; int town; std::uint32_t shout, words[3], spells[3]; std::uint32_t color; std::string_view w1, w2, w3; int sound; std::string_view extPlugin; std::uint32_t extShout; std::string_view quest; std::string_view t1, t2, t3; };')
 o.append(f'\tinline constexpr std::array<ShoutDef, {len(SH)}> kShouts{{ {{')

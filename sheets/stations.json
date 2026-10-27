@@ -1,157 +1,157 @@
 {
-  "sheet": "stations",
-  "about": "Where each town's The Curse of Alduin station stands: inside the walled cities (their own worldspaces: the market or main square) and in the heart of each town. Picked offline from Skyrim.esm's navmesh (spots2.py: open ground where paths meet, at least 2-3 m clear of any building or prop all round, near level out to 3 m; the whole compacted stand and its approach on walkable, near-level ground, clear of doors), then checked in game. x, y, z in the worldspace; yawDeg turns the stand (its front, where you walk up, faces local -y); compact shrinks the stand's layout to fit city streets. The world-map icon of a walled city stays at its gate outside.",
-  "columns": [
-    "id",
-    "town",
-    "worldspace",
+ "sheet": "stations",
+ "about": "Where each town's The Curse of Alduin station stands: inside the walled cities (their own worldspaces: the market or main square) and in the heart of each town. (Noah, Oct 2026: every spot now placed by hand in scout mode - stood on, N pressed; the stand faces the way he faced.) Picked offline from Skyrim.esm's navmesh (spots2.py: open ground where paths meet, at least 2-3 m clear of any building or prop all round, near level out to 3 m; the whole compacted stand and its approach on walkable, near-level ground, clear of doors), then checked in game. x, y, z in the worldspace; yawDeg turns the stand (its front, where you walk up, faces local -y); compact shrinks the stand's layout to fit city streets. The world-map icon of a walled city stays at its gate outside.",
+ "columns": [
+  "id",
+  "town",
+  "worldspace",
+  "x",
+  "y",
+  "z",
+  "yawDeg",
+  "compact",
+  "verify"
+ ],
+ "rows": [
+  {
+   "town": "Whiterun",
+   "worldspace": "0x01A26F",
+   "x": 20891,
+   "y": -7468,
+   "z": -3621,
+   "yawDeg": 49,
+   "compact": 0.8,
+   "verify": [
     "x",
-    "y",
-    "z",
-    "yawDeg",
-    "compact",
-    "verify"
-  ],
-  "rows": [
-    {
-      "town": "Whiterun",
-      "worldspace": "0x01A26F",
-      "x": 24180,
-      "y": -7620,
-      "z": -3401,
-      "yawDeg": 30,
-      "compact": 0.8,
-      "verify": [
-        "x",
-        "y"
-      ],
-      "id": "whiterun"
-    },
-    {
-      "town": "Solitude",
-      "worldspace": "0x037EDF",
-      "x": -61460,
-      "y": 105700,
-      "z": -8388,
-      "yawDeg": 90,
-      "compact": 0.8,
-      "verify": [
-        "x",
-        "y"
-      ],
-      "id": "solitude"
-    },
-    {
-      "town": "Windhelm",
-      "worldspace": "0x01691D",
-      "x": 130860,
-      "y": 36100,
-      "z": -12272,
-      "yawDeg": 300,
-      "compact": 0.8,
-      "verify": [
-        "x",
-        "y"
-      ],
-      "id": "windhelm"
-    },
-    {
-      "town": "Markarth",
-      "worldspace": "0x016D71",
-      "x": -173820,
-      "y": 5340,
-      "z": -3394,
-      "yawDeg": 30,
-      "compact": 0.8,
-      "verify": [
-        "x",
-        "y"
-      ],
-      "id": "markarth"
-    },
-    {
-      "town": "Riften",
-      "worldspace": "0x016BB4",
-      "x": 172500,
-      "y": -96220,
-      "z": 11128,
-      "yawDeg": 150,
-      "compact": 0.8,
-      "verify": [
-        "x",
-        "y"
-      ],
-      "id": "riften"
-    },
-    {
-      "town": "Riverwood",
-      "worldspace": "0x00003C",
-      "x": 22180,
-      "y": -44700,
-      "z": -144,
-      "yawDeg": 180,
-      "compact": 0.8,
-      "verify": [
-        "x",
-        "y"
-      ],
-      "id": "riverwood"
-    },
-    {
-      "town": "Falkreath",
-      "worldspace": "0x00003C",
-      "x": -30620,
-      "y": -86820,
-      "z": -3125,
-      "yawDeg": 120,
-      "compact": 0.8,
-      "verify": [
-        "x",
-        "y"
-      ],
-      "id": "falkreath"
-    },
-    {
-      "town": "Morthal",
-      "worldspace": "0x00003C",
-      "x": -38180,
-      "y": 68300,
-      "z": -14088,
-      "yawDeg": 180,
-      "compact": 0.8,
-      "verify": [
-        "x",
-        "y"
-      ],
-      "id": "morthal"
-    },
-    {
-      "town": "Dawnstar",
-      "worldspace": "0x00003C",
-      "x": 30620,
-      "y": 105740,
-      "z": -14094,
-      "yawDeg": 0,
-      "compact": 0.8,
-      "verify": [
-        "x",
-        "y"
-      ],
-      "id": "dawnstar"
-    },
-    {
-      "town": "Winterhold",
-      "worldspace": "0x00003C",
-      "x": 109020,
-      "y": 103500,
-      "z": -9013,
-      "yawDeg": 180,
-      "compact": 0.8,
-      "verify": [
-        "x",
-        "y"
-      ],
-      "id": "winterhold"
-    }
-  ]
+    "y"
+   ],
+   "id": "whiterun"
+  },
+  {
+   "town": "Solitude",
+   "worldspace": "0x037EDF",
+   "x": -62562,
+   "y": 106200,
+   "z": -8414,
+   "yawDeg": 103,
+   "compact": 0.8,
+   "verify": [
+    "x",
+    "y"
+   ],
+   "id": "solitude"
+  },
+  {
+   "town": "Windhelm",
+   "worldspace": "0x01691D",
+   "x": 134843,
+   "y": 39389,
+   "z": -12057,
+   "yawDeg": 180,
+   "compact": 0.8,
+   "verify": [
+    "x",
+    "y"
+   ],
+   "id": "windhelm"
+  },
+  {
+   "town": "Markarth",
+   "worldspace": "0x016D71",
+   "x": -174938,
+   "y": 1748,
+   "z": -3612,
+   "yawDeg": 331,
+   "compact": 0.8,
+   "verify": [
+    "x",
+    "y"
+   ],
+   "id": "markarth"
+  },
+  {
+   "town": "Riften",
+   "worldspace": "0x016BB4",
+   "x": 172519,
+   "y": -96397,
+   "z": 11128,
+   "yawDeg": 217,
+   "compact": 0.8,
+   "verify": [
+    "x",
+    "y"
+   ],
+   "id": "riften"
+  },
+  {
+   "town": "Riverwood",
+   "worldspace": "0x00003C",
+   "x": 21014,
+   "y": -42596,
+   "z": -129,
+   "yawDeg": 337,
+   "compact": 0.8,
+   "verify": [
+    "x",
+    "y"
+   ],
+   "id": "riverwood"
+  },
+  {
+   "town": "Falkreath",
+   "worldspace": "0x00003C",
+   "x": -30704,
+   "y": -87322,
+   "z": -3134,
+   "yawDeg": 273,
+   "compact": 0.8,
+   "verify": [
+    "x",
+    "y"
+   ],
+   "id": "falkreath"
+  },
+  {
+   "town": "Morthal",
+   "worldspace": "0x00003C",
+   "x": -39145,
+   "y": 70972,
+   "z": -13883,
+   "yawDeg": 237,
+   "compact": 0.8,
+   "verify": [
+    "x",
+    "y"
+   ],
+   "id": "morthal"
+  },
+  {
+   "town": "Dawnstar",
+   "worldspace": "0x00003C",
+   "x": 26716,
+   "y": 102298,
+   "z": -13280,
+   "yawDeg": 307,
+   "compact": 0.8,
+   "verify": [
+    "x",
+    "y"
+   ],
+   "id": "dawnstar"
+  },
+  {
+   "town": "Winterhold",
+   "worldspace": "0x00003C",
+   "x": 110265,
+   "y": 100666,
+   "z": -9030,
+   "yawDeg": 144,
+   "compact": 0.8,
+   "verify": [
+    "x",
+    "y"
+   ],
+   "id": "winterhold"
+  }
+ ]
 }

@@ -3050,7 +3050,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			if (a_depth > 10 || !a_obj.IsObject()) return false;
 			RE::GFxValue entries;
-			if (a_obj.HasMember("entryList") && a_obj.GetMember("entryList", &entries) && entries.IsArray()) {
+			if (a_obj.GetMember("entryList", &entries) && entries.IsArray()) {  // (Edge UI: a getter, which HasMember doesn't see)
 				for (std::uint32_t i = 0; i < entries.GetArraySize(); ++i) {
 					RE::GFxValue e, t;
 					if (entries.GetElement(i, &e) && e.IsObject() && e.GetMember("text", &t) && t.IsString()) {
@@ -3071,7 +3071,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			});
 			return found;
 		}
-		bool PartyTab(ImDrawList* a_dl, float a_kk, int a_clicks, const char* a_name);
+		bool PartyTab(ImDrawList* a_dl, float a_kk, int a_clicks, const char* a_name, float a_screenW = 0);
 		// each frame while the Esc journal is up: our entry in place; taken (A / Enter / a click while it is selected) -> the party
 		void PartyInSystemList(RE::GFxMovieView* a_mv, int a_clicks)
 		{
@@ -3095,7 +3095,16 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (!g_sys.found) {
 				RE::GFxValue root;
 				std::string  path;
-				if (!a_mv->GetVariable(&root, "_root") || !FindSystemList(root, 0, g_sys.list, path, "_root")) return;
+				// (the system page's list where Skyrim keeps it, else searched for)
+				for (const char* known : { "_root.QuestJournalFader.Menu_mc.SystemFader.Page_mc.CategoryList", "_root.QuestJournalFader.Menu_mc.SystemFader.Page_mc.CategoryList_mc" }) {
+					RE::GFxValue l, e;
+					if (path.empty() && a_mv->GetVariable(&l, known) && l.IsObject() && l.GetMember("entryList", &e) && e.IsArray() && e.GetArraySize() > 2) path = known, g_sys.list = l;
+				}
+				if (path.empty() && (!a_mv->GetVariable(&root, "_root") || !FindSystemList(root, 0, g_sys.list, path, "_root"))) {
+					static int told = 0;
+					if (told++ < 2) logger::info("party: the pause menu's system list was not found - the PARTY tab is drawn instead");
+					return;
+				}
 				g_sys.found = true;
 				g_sys.path = path;
 				logger::info("party: the system list is {}", path);
@@ -3171,9 +3180,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// Our cursor, in the quest ping's style (the burning diamond over quest targets): a tall diamond tipped up and
 		// to the left so its point is the hotspot, a dark heart, an amber rim, a soft glow round it and a hot core near
 		// the tip that breathes - on the main menu and in every Skyrim menu with a cursor.
-		void DrawPingCursor(ImDrawList* a_dl, ImVec2 a_tip, float k, float a_now)
+		void DrawPingCursor(ImDrawList* a_dl, ImVec2 a_tip, float k, float a_now, bool a_always = false)
 		{
-			if (g_padLast) return;  // (Noah: "hide the mouse cursor when I'm using a controller") it shows again with the mouse or keyboard
+			if (g_padLast && !a_always) return;  // (Noah: "hide the mouse cursor when I'm using a controller") it shows again with the mouse or keyboard
 			if (g_cursorTex) {  // the Moonlit Spirit cursor (an animated Windows cursor: 8 frames played 0..7..0, 9/60 s each)
 				static constexpr int kSeq[16] = { 0, 1, 2, 3, 4, 5, 6, 7, 7, 6, 5, 4, 3, 2, 1, 0 };
 				const int   f = kSeq[static_cast<int>(a_now * 60.0f / 9.0f) % 16];
@@ -3267,10 +3276,45 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				entries.SetElement(static_cast<std::uint32_t>(load + 1), e);
 				ours = load + 1;
+				// (Noah: "the quit button is gone now") the list draws its words in a fixed set of slots (Entry0, Entry1, ...):
+				// one more word needs one more slot, so the last slot is copied below itself - handlers and all
+				int clips = 0;
+				for (RE::GFxValue c; list.GetMember(("Entry" + std::to_string(clips)).c_str(), &c) && c.IsDisplayObject();) ++clips;
+				RE::GFxValue shownV;
+				list.GetMember("iMaxItemsShown", &shownV);
+				const int shown = shownV.IsNumber() ? static_cast<int>(shownV.GetNumber()) : clips;
+				std::string texts;
+				for (std::uint32_t i = 0; i < entries.GetArraySize(); ++i) {
+					RE::GFxValue e2, t2;
+					if (entries.GetElement(i, &e2) && e2.IsObject() && e2.GetMember("text", &t2) && t2.IsString()) texts += std::string(t2.GetString()) + " | ";
+				}
+				if (clips >= 2 && shown < static_cast<int>(n) + 1) {
+					RE::GFxValue last, prev, nc;
+					list.GetMember(("Entry" + std::to_string(clips - 1)).c_str(), &last);
+					list.GetMember(("Entry" + std::to_string(clips - 2)).c_str(), &prev);
+					const std::string name = "Entry" + std::to_string(clips);
+					RE::GFxValue args[2]{ RE::GFxValue(name.c_str()), RE::GFxValue(static_cast<double>(16000 + clips)) };
+					last.Invoke("duplicateMovieClip", &nc, args, 2);
+					if (!nc.IsDisplayObject()) list.GetMember(name.c_str(), &nc);
+					if (nc.IsDisplayObject()) {
+						RE::GFxValue::DisplayInfo li, pi, ni;
+						last.GetDisplayInfo(&li), prev.GetDisplayInfo(&pi), nc.GetDisplayInfo(&ni);
+						ni.SetPosition(li.GetX() + (li.GetX() - pi.GetX()), li.GetY() + (li.GetY() - pi.GetY()));
+						nc.SetDisplayInfo(ni);
+						for (const char* h : { "onRollOver", "onRollOut", "onPress", "onPressAux", "onRelease", "onReleaseOutside", "onDragOver", "onDragOut", "onMouseDown" }) {
+							RE::GFxValue fn;
+							if (last.GetMember(h, &fn) && !fn.IsUndefined()) nc.SetMember(h, fn);
+						}
+						nc.SetMember("clipIndex", RE::GFxValue(static_cast<double>(clips)));
+						if (RE::GFxValue arr; list.GetMember("EntriesA", &arr) && arr.IsArray()) arr.PushBack(nc);
+						list.SetMember("iMaxItemsShown", RE::GFxValue(static_cast<double>(shown + 1)));
+					}
+					logger::info("party: the main menu list had {} slots for {} words - one more slot {}", clips, n + 1, nc.IsDisplayObject() ? "made" : "could not be made");
+				}
 				if (list.HasMember("InvalidateData")) list.Invoke("InvalidateData");
 				else if (list.HasMember("UpdateList")) list.Invoke("UpdateList");
 				static int told = 0;
-				if (told++ < 3) logger::info("party: CO-OP PARTY put in the main menu's list (entry {} of {})", ours, n + 1);
+				if (told++ < 3) logger::info("party: CO-OP PARTY put in the main menu's list (entry {} of {}; slots {}, shown {}): {}", ours, n + 1, clips, shown, texts);
 			}
 			const int pressed = g_mainAccept.exchange(0) + a_clicks;
 			RE::GFxValue sel;
@@ -3281,10 +3325,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			return true;
 		}
 		// the PARTY tab at the top left (the Esc journal, the main menu): click it, or P / Triangle-Y
-		bool PartyTab(ImDrawList* a_dl, float a_kk, int a_clicks, const char* a_name)
+		bool PartyTab(ImDrawList* a_dl, float a_kk, int a_clicks, const char* a_name, float a_screenW)
 		{
 			const ImVec2 cur = g_cursor;
-			const ImVec2 ta{ 36 * a_kk, 30 * a_kk }, tb{ 336 * a_kk, 76 * a_kk };
+			const float  x0 = a_screenW > 0 ? a_screenW - 336 * a_kk : 36 * a_kk;  // (in game: the top right, clear of Edge UI's tabs)
+			const ImVec2 ta{ x0, 30 * a_kk }, tb{ x0 + 300 * a_kk, 76 * a_kk };
 			const bool   over = cur.x >= ta.x && cur.x <= tb.x && cur.y >= ta.y && cur.y <= tb.y;
 			if (over && a_clicks > 0) g_partyOpen = !g_partyOpen;
 			Panel(a_dl, ta, tb, a_kk, 0.95f);
@@ -3311,6 +3356,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const int   buttons = !net ? 0 : Net::InLobby() ? (Net::IsHost() ? 2 : 1) : 1 + static_cast<int>(std::min<std::size_t>(friends.size(), 3));
 			const int   lines = 1 + static_cast<int>(party.size());
 			const float h = 70 * k + buttons * (rowH + 6 * k) + 40 * k + lines * 26 * k + 30 * k + 64 * k + 30 * k + 82 * k + 20 * k + 56 * k;
+			if (a.x < 0) a = { (size.x - w) * 0.5f, std::max(10 * k, (size.y - h) * 0.5f) };  // (Noah: "the party pop-up centered with the screen")
 			const ImVec2 b{ a.x + w, std::min(a.y + h, size.y - 10 * k) };
 			Panel(dl, a, b, k, 0.95f);
 			float y = a.y + 14 * k;
@@ -5744,7 +5790,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 				DrawMenu(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks > 0 && !over && !g_partyOpen);
 				if (g_partyOpen && Net::Available()) {
-					PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { io.DisplaySize.x * 0.5f - 380 * kk, 150 * kk }, kk, clicks > 0 && !over);
+					PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { -1, -1 }, kk, clicks > 0 && !over);
 				}
 			} else if (journal || escJournal) {
 				// (Noah: the Party tab in Skyrim's system menu) in the Esc journal a PARTY tab at the top left (click it, or P /
@@ -5759,10 +5805,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 					}
 					if (!Hud::kEdgeHud || !g_sys.found) {  // (Noah: "I still don't see the party tab") otherwise our own tab, top left
-						over = PartyTab(dl, kk, clicks, "PARTY");
+						over = PartyTab(dl, kk, clicks, "PARTY", io.DisplaySize.x);
 					}
 					if (g_partyOpen) {
-						PartyPanel(dl, io.DisplaySize, { 36 * kk, 90 * kk }, kk, clicks > 0 && !over);
+						PartyPanel(dl, io.DisplaySize, { -1, -1 }, kk, clicks > 0 && !over);
 					}
 				} else {
 					g_partyOpen = false;
@@ -5837,8 +5883,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 				}
 			}
-			if (cursorUp && !mainMenu && !codex && !g_filmOn && g_skCursor.x >= 0) {  // in Skyrim's own menus: ours, right where its cursor is
-				DrawPingCursor(ImGui::GetForegroundDrawList(), g_skCursor, io.DisplaySize.y / 1080.0f, static_cast<float>(ImGui::GetTime()));
+			// (Noah: "my map cursor is invisible") on the world map ours always shows - with a pad too (the map is steered by
+			// it: the cursor stands in the middle), and in the middle if Skyrim's cursor hasn't been placed yet
+			const bool onMap = uiM && uiM->IsMenuOpen(RE::MapMenu::MENU_NAME);
+			if (cursorUp && !mainMenu && !codex && !g_filmOn && (g_skCursor.x >= 0 || onMap)) {  // in Skyrim's own menus: ours, right where its cursor is
+				const ImVec2 at = onMap && (g_padLast || g_skCursor.x < 0) ? ImVec2{ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f } : g_skCursor;
+				DrawPingCursor(ImGui::GetForegroundDrawList(), at, io.DisplaySize.y / 1080.0f, static_cast<float>(ImGui::GetTime()), onMap);
 			}
 			if (g_veil > 0 && !g_filmOn && !mainMenu) {
 				ImGui::GetForegroundDrawList()->AddRectFilled({ 0, 0 }, io.DisplaySize, IM_COL32(0, 0, 0, static_cast<int>(255 * g_veil * g_veil * (3 - 2 * g_veil))));

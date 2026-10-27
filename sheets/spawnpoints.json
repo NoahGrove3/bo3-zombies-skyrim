@@ -1,0 +1,713 @@
+{
+ "sheet": "spawnpoints",
+ "about": "Where the night's dead climb out of the ground in each city: placed by hand by Noah in scout mode (an arrow or B on each spot), in the city's own worldspace (the station's). x, y, z in that worldspace. Out in the wilds and in dungeons there are none: the dead rise at random clear floor within 25 m of you.",
+ "columns": [
+  "id",
+  "town",
+  "x",
+  "y",
+  "z"
+ ],
+ "rows": [
+  {
+   "id": "riverwood_1",
+   "town": "Riverwood",
+   "x": 23900,
+   "y": -43201,
+   "z": -30
+  },
+  {
+   "id": "riverwood_2",
+   "town": "Riverwood",
+   "x": 23503,
+   "y": -42881,
+   "z": -28
+  },
+  {
+   "id": "riverwood_3",
+   "town": "Riverwood",
+   "x": 24308,
+   "y": -46416,
+   "z": -5
+  },
+  {
+   "id": "riverwood_4",
+   "town": "Riverwood",
+   "x": 23734,
+   "y": -46770,
+   "z": -8
+  },
+  {
+   "id": "riverwood_5",
+   "town": "Riverwood",
+   "x": 21469,
+   "y": -46058,
+   "z": -138
+  },
+  {
+   "id": "riverwood_6",
+   "town": "Riverwood",
+   "x": 19863,
+   "y": -46095,
+   "z": -126
+  },
+  {
+   "id": "riverwood_7",
+   "town": "Riverwood",
+   "x": 19610,
+   "y": -43380,
+   "z": -152
+  },
+  {
+   "id": "riverwood_8",
+   "town": "Riverwood",
+   "x": 21632,
+   "y": -41698,
+   "z": -155
+  },
+  {
+   "id": "riverwood_9",
+   "town": "Riverwood",
+   "x": 22556,
+   "y": -44732,
+   "z": -47
+  },
+  {
+   "id": "riverwood_10",
+   "town": "Riverwood",
+   "x": 22205,
+   "y": -44199,
+   "z": -157
+  },
+  {
+   "id": "falkreath_1",
+   "town": "Falkreath",
+   "x": -29478,
+   "y": -88142,
+   "z": -3005
+  },
+  {
+   "id": "falkreath_2",
+   "town": "Falkreath",
+   "x": -31677,
+   "y": -88622,
+   "z": -3168
+  },
+  {
+   "id": "falkreath_3",
+   "town": "Falkreath",
+   "x": -33024,
+   "y": -88470,
+   "z": -3117
+  },
+  {
+   "id": "falkreath_4",
+   "town": "Falkreath",
+   "x": -33267,
+   "y": -88652,
+   "z": -3129
+  },
+  {
+   "id": "falkreath_5",
+   "town": "Falkreath",
+   "x": -30769,
+   "y": -85841,
+   "z": -3125
+  },
+  {
+   "id": "falkreath_6",
+   "town": "Falkreath",
+   "x": -28919,
+   "y": -85201,
+   "z": -3133
+  },
+  {
+   "id": "falkreath_7",
+   "town": "Falkreath",
+   "x": -30386,
+   "y": -86188,
+   "z": -3113
+  },
+  {
+   "id": "falkreath_8",
+   "town": "Falkreath",
+   "x": -30122,
+   "y": -87827,
+   "z": -3069
+  },
+  {
+   "id": "falkreath_9",
+   "town": "Falkreath",
+   "x": -30587,
+   "y": -85764,
+   "z": -3126
+  },
+  {
+   "id": "falkreath_10",
+   "town": "Falkreath",
+   "x": -30197,
+   "y": -86843,
+   "z": -3133
+  },
+  {
+   "id": "whiterun_1",
+   "town": "Whiterun",
+   "x": 22170,
+   "y": -7426,
+   "z": -3530
+  },
+  {
+   "id": "whiterun_2",
+   "town": "Whiterun",
+   "x": 22853,
+   "y": -7929,
+   "z": -3513
+  },
+  {
+   "id": "whiterun_3",
+   "town": "Whiterun",
+   "x": 23504,
+   "y": -7658,
+   "z": -3465
+  },
+  {
+   "id": "whiterun_4",
+   "town": "Whiterun",
+   "x": 24071,
+   "y": -7897,
+   "z": -3414
+  },
+  {
+   "id": "whiterun_5",
+   "town": "Whiterun",
+   "x": 20663,
+   "y": -6808,
+   "z": -3605
+  },
+  {
+   "id": "whiterun_6",
+   "town": "Whiterun",
+   "x": 21531,
+   "y": -8883,
+   "z": -3637
+  },
+  {
+   "id": "whiterun_7",
+   "town": "Whiterun",
+   "x": 21522,
+   "y": -8685,
+   "z": -3608
+  },
+  {
+   "id": "whiterun_8",
+   "town": "Whiterun",
+   "x": 24926,
+   "y": -7746,
+   "z": -3391
+  },
+  {
+   "id": "whiterun_9",
+   "town": "Whiterun",
+   "x": 24379,
+   "y": -8235,
+   "z": -3378
+  },
+  {
+   "id": "whiterun_10",
+   "town": "Whiterun",
+   "x": 22593,
+   "y": -8328,
+   "z": -3592
+  },
+  {
+   "id": "windhelm_1",
+   "town": "Windhelm",
+   "x": 133901,
+   "y": 38230,
+   "z": -12270
+  },
+  {
+   "id": "windhelm_2",
+   "town": "Windhelm",
+   "x": 134034,
+   "y": 36545,
+   "z": -12269
+  },
+  {
+   "id": "windhelm_3",
+   "town": "Windhelm",
+   "x": 135098,
+   "y": 38267,
+   "z": -12269
+  },
+  {
+   "id": "windhelm_4",
+   "town": "Windhelm",
+   "x": 135513,
+   "y": 38360,
+   "z": -12277
+  },
+  {
+   "id": "windhelm_5",
+   "town": "Windhelm",
+   "x": 136139,
+   "y": 39334,
+   "z": -12363
+  },
+  {
+   "id": "windhelm_6",
+   "town": "Windhelm",
+   "x": 136049,
+   "y": 38758,
+   "z": -12361
+  },
+  {
+   "id": "windhelm_7",
+   "town": "Windhelm",
+   "x": 134513,
+   "y": 41313,
+   "z": -11893
+  },
+  {
+   "id": "windhelm_8",
+   "town": "Windhelm",
+   "x": 135345,
+   "y": 40404,
+   "z": -11937
+  },
+  {
+   "id": "windhelm_9",
+   "town": "Windhelm",
+   "x": 134708,
+   "y": 38210,
+   "z": -12269
+  },
+  {
+   "id": "windhelm_10",
+   "town": "Windhelm",
+   "x": 134000,
+   "y": 37641,
+   "z": -12267
+  },
+  {
+   "id": "winterhold_1",
+   "town": "Winterhold",
+   "x": 109071,
+   "y": 101866,
+   "z": -9032
+  },
+  {
+   "id": "winterhold_2",
+   "town": "Winterhold",
+   "x": 108957,
+   "y": 102247,
+   "z": -9039
+  },
+  {
+   "id": "winterhold_3",
+   "town": "Winterhold",
+   "x": 109508,
+   "y": 103040,
+   "z": -9024
+  },
+  {
+   "id": "winterhold_4",
+   "town": "Winterhold",
+   "x": 110504,
+   "y": 100873,
+   "z": -9041
+  },
+  {
+   "id": "winterhold_5",
+   "town": "Winterhold",
+   "x": 110536,
+   "y": 99676,
+   "z": -8996
+  },
+  {
+   "id": "winterhold_6",
+   "town": "Winterhold",
+   "x": 108124,
+   "y": 102069,
+   "z": -9031
+  },
+  {
+   "id": "winterhold_7",
+   "town": "Winterhold",
+   "x": 109594,
+   "y": 104428,
+   "z": -8996
+  },
+  {
+   "id": "winterhold_8",
+   "town": "Winterhold",
+   "x": 110057,
+   "y": 104875,
+   "z": -8917
+  },
+  {
+   "id": "winterhold_9",
+   "town": "Winterhold",
+   "x": 110017,
+   "y": 103096,
+   "z": -9037
+  },
+  {
+   "id": "winterhold_10",
+   "town": "Winterhold",
+   "x": 109819,
+   "y": 102486,
+   "z": -9037
+  },
+  {
+   "id": "dawnstar_1",
+   "town": "Dawnstar",
+   "x": 28001,
+   "y": 104095,
+   "z": -13655
+  },
+  {
+   "id": "dawnstar_2",
+   "town": "Dawnstar",
+   "x": 28953,
+   "y": 104723,
+   "z": -13895
+  },
+  {
+   "id": "dawnstar_3",
+   "town": "Dawnstar",
+   "x": 28806,
+   "y": 102410,
+   "z": -13302
+  },
+  {
+   "id": "dawnstar_4",
+   "town": "Dawnstar",
+   "x": 28421,
+   "y": 102724,
+   "z": -13331
+  },
+  {
+   "id": "dawnstar_5",
+   "town": "Dawnstar",
+   "x": 27174,
+   "y": 101026,
+   "z": -13206
+  },
+  {
+   "id": "dawnstar_6",
+   "town": "Dawnstar",
+   "x": 26311,
+   "y": 100737,
+   "z": -13249
+  },
+  {
+   "id": "dawnstar_7",
+   "town": "Dawnstar",
+   "x": 25287,
+   "y": 100794,
+   "z": -13208
+  },
+  {
+   "id": "dawnstar_8",
+   "town": "Dawnstar",
+   "x": 27052,
+   "y": 99434,
+   "z": -13055
+  },
+  {
+   "id": "dawnstar_9",
+   "town": "Dawnstar",
+   "x": 26397,
+   "y": 99178,
+   "z": -13128
+  },
+  {
+   "id": "dawnstar_10",
+   "town": "Dawnstar",
+   "x": 25213,
+   "y": 99594,
+   "z": -13134
+  },
+  {
+   "id": "solitude_1",
+   "town": "Solitude",
+   "x": -62167,
+   "y": 104770,
+   "z": -8334
+  },
+  {
+   "id": "solitude_2",
+   "town": "Solitude",
+   "x": -61820,
+   "y": 105889,
+   "z": -8394
+  },
+  {
+   "id": "solitude_3",
+   "town": "Solitude",
+   "x": -63758,
+   "y": 105881,
+   "z": -8415
+  },
+  {
+   "id": "solitude_4",
+   "town": "Solitude",
+   "x": -64203,
+   "y": 106427,
+   "z": -8404
+  },
+  {
+   "id": "solitude_5",
+   "town": "Solitude",
+   "x": -63733,
+   "y": 105268,
+   "z": -8416
+  },
+  {
+   "id": "solitude_6",
+   "town": "Solitude",
+   "x": -65015,
+   "y": 105113,
+   "z": -8413
+  },
+  {
+   "id": "solitude_7",
+   "town": "Solitude",
+   "x": -64484,
+   "y": 104236,
+   "z": -8400
+  },
+  {
+   "id": "solitude_8",
+   "town": "Solitude",
+   "x": -64718,
+   "y": 104110,
+   "z": -8403
+  },
+  {
+   "id": "solitude_9",
+   "town": "Solitude",
+   "x": -59979,
+   "y": 105379,
+   "z": -8379
+  },
+  {
+   "id": "solitude_10",
+   "town": "Solitude",
+   "x": -59437,
+   "y": 105378,
+   "z": -8407
+  },
+  {
+   "id": "morthal_1",
+   "town": "Morthal",
+   "x": -37763,
+   "y": 70999,
+   "z": -13921
+  },
+  {
+   "id": "morthal_2",
+   "town": "Morthal",
+   "x": -38425,
+   "y": 71825,
+   "z": -13655
+  },
+  {
+   "id": "morthal_3",
+   "town": "Morthal",
+   "x": -38921,
+   "y": 72646,
+   "z": -13592
+  },
+  {
+   "id": "morthal_4",
+   "town": "Morthal",
+   "x": -40110,
+   "y": 72257,
+   "z": -13719
+  },
+  {
+   "id": "morthal_5",
+   "town": "Morthal",
+   "x": -40387,
+   "y": 71415,
+   "z": -13854
+  },
+  {
+   "id": "morthal_6",
+   "town": "Morthal",
+   "x": -37078,
+   "y": 70673,
+   "z": -13945
+  },
+  {
+   "id": "morthal_7",
+   "town": "Morthal",
+   "x": -36574,
+   "y": 72189,
+   "z": -13529
+  },
+  {
+   "id": "morthal_8",
+   "town": "Morthal",
+   "x": -37592,
+   "y": 74092,
+   "z": -13457
+  },
+  {
+   "id": "morthal_9",
+   "town": "Morthal",
+   "x": -40540,
+   "y": 74184,
+   "z": -13844
+  },
+  {
+   "id": "morthal_10",
+   "town": "Morthal",
+   "x": -40439,
+   "y": 72840,
+   "z": -13710
+  },
+  {
+   "id": "markarth_1",
+   "town": "Markarth",
+   "x": -175859,
+   "y": 1856,
+   "z": -3302
+  },
+  {
+   "id": "markarth_2",
+   "town": "Markarth",
+   "x": -174767,
+   "y": 2758,
+   "z": -4085
+  },
+  {
+   "id": "markarth_3",
+   "town": "Markarth",
+   "x": -174577,
+   "y": 1402,
+   "z": -3608
+  },
+  {
+   "id": "markarth_4",
+   "town": "Markarth",
+   "x": -174020,
+   "y": 2453,
+   "z": -3903
+  },
+  {
+   "id": "markarth_5",
+   "town": "Markarth",
+   "x": -174390,
+   "y": 1031,
+   "z": -3609
+  },
+  {
+   "id": "markarth_6",
+   "town": "Markarth",
+   "x": -175438,
+   "y": 2815,
+   "z": -3569
+  },
+  {
+   "id": "markarth_7",
+   "town": "Markarth",
+   "x": -174594,
+   "y": 3188,
+   "z": -3872
+  },
+  {
+   "id": "markarth_8",
+   "town": "Markarth",
+   "x": -176151,
+   "y": 1598,
+   "z": -3306
+  },
+  {
+   "id": "markarth_9",
+   "town": "Markarth",
+   "x": -176024,
+   "y": 1709,
+   "z": -3298
+  },
+  {
+   "id": "markarth_10",
+   "town": "Markarth",
+   "x": -174635,
+   "y": 2138,
+   "z": -3806
+  },
+  {
+   "id": "riften_1",
+   "town": "Riften",
+   "x": 174256,
+   "y": -97060,
+   "z": 11121
+  },
+  {
+   "id": "riften_2",
+   "town": "Riften",
+   "x": 173394,
+   "y": -97843,
+   "z": 11119
+  },
+  {
+   "id": "riften_3",
+   "town": "Riften",
+   "x": 173365,
+   "y": -98666,
+   "z": 11118
+  },
+  {
+   "id": "riften_4",
+   "town": "Riften",
+   "x": 172679,
+   "y": -97756,
+   "z": 11122
+  },
+  {
+   "id": "riften_5",
+   "town": "Riften",
+   "x": 172031,
+   "y": -96673,
+   "z": 11190
+  },
+  {
+   "id": "riften_6",
+   "town": "Riften",
+   "x": 172417,
+   "y": -94933,
+   "z": 11122
+  },
+  {
+   "id": "riften_7",
+   "town": "Riften",
+   "x": 173620,
+   "y": -96062,
+   "z": 11156
+  },
+  {
+   "id": "riften_8",
+   "town": "Riften",
+   "x": 173899,
+   "y": -96296,
+   "z": 11123
+  },
+  {
+   "id": "riften_9",
+   "town": "Riften",
+   "x": 172803,
+   "y": -97225,
+   "z": 11157
+  },
+  {
+   "id": "riften_10",
+   "town": "Riften",
+   "x": 173217,
+   "y": -96547,
+   "z": 11139
+  }
+ ]
+}

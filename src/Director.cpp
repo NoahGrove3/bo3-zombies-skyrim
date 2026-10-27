@@ -377,24 +377,88 @@ namespace bo3z
 			logger::info("spawn: {} points laid round {} ({} on road or dirt, {} open ground found)", g_points.pts.size(), a_town >= 0 ? std::string(gen::kTowns[a_town]) : std::string("the wilds"), road.size(), open.size());
 		}
 
+		// a ray between two points meets something (the line-of-sight layer: the world's solid things)
+		bool RayBlocked(RE::TESObjectCELL* a_cell, const RE::NiPoint3& a_from, const RE::NiPoint3& a_to)
+		{
+			auto* world = a_cell ? a_cell->GetbhkWorld() : nullptr;
+			if (!world) return false;
+			const float s = RE::bhkWorld::GetWorldScale();
+			RE::bhkPickData pick;
+			pick.rayInput.from = RE::hkVector4(a_from * s);
+			pick.rayInput.to = RE::hkVector4(a_to * s);
+			pick.rayInput.filterInfo.SetCollisionLayer(RE::COL_LAYER::kLOS);
+			RE::BSReadLockGuard lock(world->worldLock);
+			world->PickObject(pick);
+			return pick.rayOutput.HasHit();
+		}
+		// (Noah: "in the wild or a dungeon the enemies should spawn randomly within 25 meters of the player on floor level
+		// and not in any objects - only clear spaces") a spot 7-25 m from you on the floor you stand on: open above it
+		// (no roof, table or shelf over it, room to stand), clear all round (no wall, rock or prop touching it), and not
+		// shut off from you by a wall (a clear line from your chest, or else from your feet's level)
+		std::optional<RE::NiPoint3> RandomClearSpot(RE::PlayerCharacter* a_player)
+		{
+			auto* cell = a_player->GetParentCell();
+			if (!cell) return std::nullopt;
+			const auto pp = a_player->GetPosition();
+			for (int tryN = 0; tryN < 32; ++tryN) {
+				const float ang = Uniform(0.0f, 6.2832f), dist = Uniform(500.0f, 1750.0f);
+				RE::NiPoint3 c{ pp.x + std::cos(ang) * dist, pp.y + std::sin(ang) * dist, pp.z };
+				const auto floor = WalkTop(cell, c, 160.0f);
+				if (!floor || std::abs(*floor - pp.z) > 220.0f) continue;  // (another floor, a pit, a ledge)
+				c.z = *floor;
+				if (RayBlocked(cell, c + RE::NiPoint3{ 0, 0, 12.0f }, c + RE::NiPoint3{ 0, 0, 200.0f })) continue;  // (something over it)
+				bool tight = false;
+				for (int k = 0; k < 6 && !tight; ++k) {
+					const float a = 6.2832f * k / 6.0f;
+					const RE::NiPoint3 mid = c + RE::NiPoint3{ 0, 0, 55.0f };
+					tight = RayBlocked(cell, mid, mid + RE::NiPoint3{ std::cos(a) * 55.0f, std::sin(a) * 55.0f, 0 });
+				}
+				if (tight) continue;
+				if (RayBlocked(cell, pp + RE::NiPoint3{ 0, 0, 90.0f }, c + RE::NiPoint3{ 0, 0, 90.0f }) &&
+					RayBlocked(cell, pp + RE::NiPoint3{ 0, 0, 30.0f }, c + RE::NiPoint3{ 0, 0, 30.0f })) continue;  // (behind a wall)
+				if (Party::FriendDistance(c) < 400.0f) continue;
+				bool crowded = false;
+				for (const auto& z : g_alive) {
+					if (auto za = z.handle.get(); za && !za->IsDead() && za->GetPosition().GetDistance(c) < 110.0f) crowded = true;
+				}
+				if (crowded) continue;
+				c.z += R.spawnHeightOffset;
+				return c;
+			}
+			return std::nullopt;
+		}
 		RE::NiPoint3 SpawnSpot(RE::PlayerCharacter* a_player)
 		{
 			const bool  interior = a_player->GetParentCell() && a_player->GetParentCell()->IsInteriorCell();
 			const auto& ring = interior ? R.spawnRingInterior : R.spawnRingExterior;
+			// (Noah: "I have placed all my city echo altars and enemy spawn points within cities") in a city the dead climb
+			// out at its hand-placed spots (sheet: spawnpoints); anywhere else - the wilds, a dungeon - at clear floor
+			// near you (RandomClearSpot)
+			int city = -1;
 			if (!interior) {
-				const int    z = Curse::ZoneTown();
-				RE::NiPoint3 c = a_player->GetPosition();
-				float        yaw = 0;
-				RE::TESWorldSpace* ws = nullptr;
-				const bool   town = z >= 0 && Shops::StandFrame(z, c, yaw, ws) && ws == a_player->GetWorldspace();
-				const int    key = town ? z : -1;
-				if (g_points.ws != a_player->GetWorldspace() || g_points.town != key || (!town && g_points.anchor.GetDistance(a_player->GetPosition()) > 3200.0f)) {
-					LayPoints(a_player, key, town ? c : a_player->GetPosition());
+				const auto pp = a_player->GetPosition();
+				auto*      pws = a_player->GetWorldspace();
+				for (int t = 0; t < static_cast<int>(gen::kStations.size()); ++t) {
+					const auto& st = gen::kStations[t];
+					if (st.fixed && pws && pws->GetFormID() == st.world && std::hypot(st.x - pp.x, st.y - pp.y) < 6500.0f) city = t;
+				}
+			}
+			if (city < 0) {
+				if (const auto spot = RandomClearSpot(a_player)) return *spot;
+			}
+			if (city >= 0) {
+				if (g_points.town != city || g_points.ws != a_player->GetWorldspace()) {
+					g_points.town = city, g_points.ws = a_player->GetWorldspace();
+					g_points.pts.clear();
+					for (const auto& sp : gen::kSpawnPoints) {
+						if (sp.town == city) g_points.pts.push_back({ sp.x, sp.y, sp.z });
+					}
+					logger::info("spawn: {} hand-placed spawn points in {}", g_points.pts.size(), gen::kTowns[city]);
 				}
 				std::vector<const RE::NiPoint3*> ok;
 				for (const auto& p : g_points.pts) {
 					const float d = p.GetDistance(a_player->GetPosition());
-					if (d > 650.0f && d < 3600.0f && Party::FriendDistance(p) > 500.0f) {
+					if (d > 500.0f && d < 6000.0f && Party::FriendDistance(p) > 400.0f) {
 						ok.push_back(&p);
 					}
 				}
@@ -408,7 +472,10 @@ namespace bo3z
 						if (auto za = z.handle.get(); za && !za->IsDead() && za->GetPosition().GetDistance(pp) < 4000.0f) ++crowd[bin(za->GetPosition())];
 					}
 					std::vector<float> wts;
-					for (const auto* q : ok) wts.push_back(1.0f / (1.0f + 1.5f * static_cast<float>(crowd[bin(*q)])));
+					for (const auto* q : ok) {
+						const float d = q->GetDistance(pp);
+						wts.push_back((d < 3200.0f ? 1.0f : 0.25f) / (1.0f + 1.5f * static_cast<float>(crowd[bin(*q)])));  // (the near ones first)
+					}
 					// (Noah: "they spawn on top of each other") a spot just used rests a few seconds, and each one is set
 					// where none of the dead already stands: tried round its point until it is clear by a body's width
 					static std::vector<std::pair<RE::NiPoint3, std::chrono::steady_clock::time_point>> used;
