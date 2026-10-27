@@ -577,10 +577,10 @@ namespace bo3z::Classes
 		case coffer::kSummoner:
 			{
 				int cap = 1;
-				for (int k = 7; k >= 2; --k) {
+				for (int k = 8; k >= 2; --k) {
 					if (auto* perk = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSPerk>(gen::kSummonCapPerks[k - 2], gen::kPlugin); perk && p->HasPerk(perk)) { cap = k; break; }
 				}
-				out.push_back(fmt::format("<b>Summon slots: {}.</b> You start with 2 and get one more for every 2 Echo Altars you free, up to 7 (the Conjurer's Command Mead adds one).", cap));
+				out.push_back(fmt::format("<b>Summon slots: {}.</b> You start with 2 and get one more for every 2 Echo Altars you free, up to 7 - and the Conjurer's Command Mead adds one more, up to 8.", cap));
 				out.push_back(fmt::format("Indrik mounts: {} of 10 - one for each altar you free.", std::min(freed, 10)));
 				out.push_back(freed >= 6 ? std::string("<b>Hero's Pact</b> is open: bind a hero or an army at any altar's second row.") : fmt::format("Hero's Pact: opens at 6 freed altars ({} to go).", 6 - freed));
 			}
@@ -702,9 +702,9 @@ namespace bo3z::Classes
 		int cap = 1;
 		if (g_class.load() == coffer::kSummoner) {
 			cap = std::min(7, 2 + FreedCount() / 2);
-			if (Save::PerkStacks(gen::kPerk_command) > 0) cap = std::min(7, cap + 1);  // (the Conjurer's Command Mead: one more)
+			if (Save::PerkStacks(gen::kPerk_command) > 0) cap = std::min(8, cap + 1);  // (the Conjurer's Command Mead: one more - 8 at most)
 		}
-		for (int n = 2; n <= 7; ++n) {
+		for (int n = 2; n <= 8; ++n) {
 			auto* perk = dh->LookupForm<RE::BGSPerk>(gen::kSummonCapPerks[n - 2], gen::kPlugin);
 			if (!perk) continue;
 			const bool want = n == cap, have = p->HasPerk(perk);
@@ -1071,7 +1071,7 @@ namespace bo3z::Classes
 		int SummonCap(RE::PlayerCharacter* a_p)
 		{
 			auto* dh = RE::TESDataHandler::GetSingleton();
-			for (int n = 7; n >= 2; --n) {
+			for (int n = 8; n >= 2; --n) {
 				if (auto* perk = dh ? dh->LookupForm<RE::BGSPerk>(gen::kSummonCapPerks[n - 2], gen::kPlugin) : nullptr; perk && a_p->HasPerk(perk)) return n;
 			}
 			return 1;

@@ -205,7 +205,7 @@ AN = {r['id']: r for r in S['animations']['rows']}
 o.append(f'\tinline constexpr std::string_view kAnimFireCrossbow = {cs(AN["crossbow"]["fire"])}, kAnimReloadCrossbow = {cs(AN["crossbow"]["reload"])}, kAnimFireStaff = {cs(AN["staff"]["fire"])}, kAnimReloadStaff = {cs(AN["staff"]["reload"])};')
 import esp_ids as _pu
 o.append('\t// BO3 power-ups: Insta-Kill, Double Points, Kaboom, Fire Sale (token STAT, light)')
-o.append('\tinline constexpr std::array<std::uint32_t, 6> kSummonCapPerks{ ' + ', '.join(f'0x{IDS[("PERK", f"summon_cap_{n}")]:03X}' for n in range(2, 8)) + ' };   // the Summoner holds 2 .. 7 summons')
+o.append('\tinline constexpr std::array<std::uint32_t, 7> kSummonCapPerks{ ' + ', '.join(f'0x{IDS[("PERK", f"summon_cap_{n}")]:03X}' for n in range(2, 9)) + ' };   // the Summoner holds 2 .. 8 summons')
 o.append(f'\tinline constexpr std::uint32_t kSteadyPerk = 0x{IDS[("PERK", "steady")]:03X};   // the night\'s dead never stagger you (Mod Incoming Stagger x0)')
 o.append(f'\tinline constexpr std::uint32_t kWonderTomeSpell = 0x{IDS[("SPEL", "wonder_tome")]:03X};   // the Destruction wonder (Classes::OnCast)')
 o.append(f'\tinline constexpr std::uint32_t kVortexWeap = 0x{IDS[("WEAP", "vortex")]:03X}, kVortexAmmo = 0x{IDS[("AMMO", "vortexarrow")]:03X}, kVortexFx = 0x{IDS[("ACTI", "vortexfx")]:03X};   // the Ranger\'s wonder, the Subsuming Vortex')

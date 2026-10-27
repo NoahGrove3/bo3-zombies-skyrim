@@ -31,7 +31,7 @@
      "title": "Getting Stronger",
      "paras": [
       "<b>Kills fill it, the altar raises it.</b> Kills with the spell in your hand count toward its next rung - <b>25</b>, then <b>60</b>, then <b>120</b> for the Legendary rung - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, then <b>12,000</b> Cursed Essence, once a night per spell. The altar's Reforge row and <i>Your Progress</i> show the count.",
-      "<b>Summon slots</b> - how many summons you can have out at the same time. You start with <b>2</b>, and get one more for every <b>2 Echo Altars</b> you free, up to <b>7</b>. When every slot is full, a new summon replaces your oldest one."
+      "<b>Summon slots</b> - how many summons you can have out at the same time. You start with <b>2</b>, and get one more for every <b>2 Echo Altars</b> you free, up to <b>7</b> (<b>8</b> with the Conjurer's Command Mead). When every slot is full, a new summon replaces your oldest one."
      ]
     },
     {
@@ -39,7 +39,7 @@
      "paras": [
       "<b>Bonebinder's Brew</b> - your summons have 50% more health and deal 50% more damage.",
       "<b>Soul-Tether Wine</b> - each time one of your summons kills an enemy, you heal 5% of your maximum health.",
-      "<b>Conjurer's Command Mead</b> - one more summon slot (up to 7).",
+      "<b>Conjurer's Command Mead</b> - one more summon slot (up to 8).",
       "One of each perk a life - death takes them all."
      ]
     },
