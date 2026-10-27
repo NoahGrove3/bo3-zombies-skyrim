@@ -3032,6 +3032,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// has the menu) the mouse's own movement carries it on, so the mouse is never stuck
 		std::atomic<float> g_mouseDX{ 0 }, g_mouseDY{ 0 };
 		ImVec2             g_cursor{ -1, -1 };
+		std::atomic<float> g_lsX{ 0 }, g_lsY{ 0 };  // the left stick (the world map's cursor)
 		std::atomic<bool>  g_partyOpen{ false };  // the Party window over the Esc journal
 		std::atomic<int>   g_sysAccept{ 0 };      // Enter / E / A pressed in the Esc journal (the Party entry checks it on the next frame)
 
@@ -6041,7 +6042,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
-		std::atomic<float> g_lsX{ 0 }, g_lsY{ 0 };
 		void OnLeftStick(float a_x, float a_y) { g_lsX = a_x, g_lsY = a_y; }
 		void InstallInputGate()
 		{
