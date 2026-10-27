@@ -12,7 +12,7 @@ namespace bo3z::coffer
 	struct Spell { const char* plugin; std::uint32_t id; const char* name; Element element; std::uint8_t tier; std::uint16_t cost; bool concentration; float power;
 		Class cls; std::uint8_t ladder, rung, rungs; const char* ladderLabel; };   // rung 1 is what the altar rolls; the last rung is Legendary
 	inline constexpr int kLadders = 22;
-	inline constexpr std::array<Spell, 74> kSpells{ {
+	inline constexpr std::array<Spell, 73> kSpells{ {
 		{ "Skyrim.esm", 0x012FD0, "Firebolt", kFire, 0, 11, false, 1.0f, kDestruction, 0, 1, 4, "Fire" },
 		{ "MysticismMagic.esp", 0x1D7020, "Immolate", kFire, 1, 60, false, 1.0f, kDestruction, 0, 2, 4, "Fire" },
 		{ "Skyrim.esm", 0x01C789, "Fireball", kFire, 2, 33, false, 1.0f, kDestruction, 0, 3, 4, "Fire" },
@@ -21,10 +21,9 @@ namespace bo3z::coffer
 		{ "Skyrim.esm", 0x045F9C, "Ice Storm", kFrost, 1, 31, false, 1.0f, kDestruction, 1, 2, 4, "Frost" },
 		{ "Skyrim.esm", 0x10F7EC, "Icy Spear", kFrost, 2, 57, false, 1.0f, kDestruction, 1, 3, 4, "Frost" },
 		{ "MysticismMagic.esp", 0x2E8870, "Throat of the World", kFrost, 3, 60, false, 1.0f, kDestruction, 1, 4, 4, "Frost" },
-		{ "Skyrim.esm", 0x02DD29, "Lightning Bolt", kShock, 0, 12, false, 1.0f, kDestruction, 2, 1, 4, "Shock" },
-		{ "MysticismMagic.esp", 0x1DC141, "Finger of the Mountain", kShock, 1, 60, false, 1.0f, kDestruction, 2, 2, 4, "Shock" },
-		{ "Skyrim.esm", 0x045F9D, "Chain Lightning", kShock, 2, 36, false, 1.0f, kDestruction, 2, 3, 4, "Shock" },
-		{ "Skyrim.esm", 0x10F7EE, "Thunderbolt", kShock, 3, 60, false, 1.0f, kDestruction, 2, 4, 4, "Shock" },
+		{ "Skyrim.esm", 0x045F9D, "Chain Lightning", kShock, 0, 36, false, 1.0f, kDestruction, 2, 1, 3, "Shock" },
+		{ "MysticismMagic.esp", 0x1DC141, "Finger of the Mountain", kShock, 1, 60, false, 1.0f, kDestruction, 2, 2, 3, "Shock" },
+		{ "Skyrim.esm", 0x10F7EE, "Thunderbolt", kShock, 3, 60, false, 1.0f, kDestruction, 2, 3, 3, "Shock" },
 		{ "MysticismMagic.esp", 0x2466C0, "Solar Flare", kSun, 0, 60, false, 1.0f, kDestruction, 3, 1, 4, "Sun" },
 		{ "MysticismMagic.esp", 0x7388D3, "Sunbeam", kSun, 1, 8, true, 1.0f, kDestruction, 3, 2, 4, "Sun" },
 		{ "MysticismMagic.esp", 0x78E9F4, "Radiant Sunbeam", kSun, 2, 12, true, 1.0f, kDestruction, 3, 3, 4, "Sun" },

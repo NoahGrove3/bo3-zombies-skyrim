@@ -1081,7 +1081,7 @@ namespace bo3z
 				// each common kind's own trick (Noah: "something that sets them apart from the rest other than their look")
 				for (auto& m : g_minds) {
 					if (m.handle.get().get() != a_actor) continue;
-					if (a_id == "zombie") m.turns = true;
+					// (Noah: "the zombies shouldn't have a frenzy mode - it makes them look broken; keep them one speed") the Risen Dead no longer turn
 					else if (a_id == "runner") m.leaper = true, m.cd = Rand(2.0f, 4.0f);
 					else if (a_id == "mage") m.caster = true, m.castCd = Rand(2.5f, 5.0f), m.cd = Rand(6.0f, 10.0f);
 					else if (a_id == "volatile") {

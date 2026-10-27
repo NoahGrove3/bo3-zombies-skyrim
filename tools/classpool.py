@@ -29,7 +29,9 @@ LADDERS = [
     # and runes, cast from afar; the close-range sprays and blasts went to the Spellsword (below)
     ('destruction', 'fire', 'Fire', 'fire', [(SKY, 'Firebolt'), (MYST, 'Immolate'), (SKY, 'Fireball'), (SKY, 'Incinerate')]),
     ('destruction', 'frost', 'Frost', 'frost', [(SKY, 'Ice Spike'), (SKY, 'Ice Storm'), (SKY, 'Icy Spear'), (MYST, 'Throat of the World')]),
-    ('destruction', 'shock', 'Shock', 'shock', [(SKY, 'Lightning Bolt'), (MYST, 'Finger of the Mountain'), (SKY, 'Chain Lightning'), (SKY, 'Thunderbolt')]),
+    # (Noah: "Lightning Bolt stopped shooting after about ten casts - take it out of the Echo Altar") Chain Lightning is the
+    # rung the altar rolls now; the ladder is three rungs, all bolts
+    ('destruction', 'shock', 'Shock', 'shock', [(SKY, 'Chain Lightning'), (MYST, 'Finger of the Mountain'), (SKY, 'Thunderbolt')]),
     ('destruction', 'sun', 'Sun', 'sun', [(MYST, 'Solar Flare'), (MYST, 'Sunbeam'), (MYST, 'Radiant Sunbeam'), (MYST, 'Daybreak')]),
     ('destruction', 'blood', 'Blood', 'blood', [(MYST, 'Vampiric Bolt'), (MYST, 'Vampiric Blast'), (MYST, 'Vampiric Rune'), (MYST, 'Blood Lance')]),
     ('destruction', 'runes', 'Runes', 'frost', [(MYST, 'Greater Frost Rune'), (MYST, 'Greater Lightning Rune'), (MYST, 'Greater Fire Rune'), (MYST, 'Death Cloud')]),

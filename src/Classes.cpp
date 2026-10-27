@@ -192,6 +192,12 @@ namespace bo3z::Classes
 				std::string n = a_sp->GetName();
 				for (auto& ch : n) ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
 				if (auto* f = a_sp->GetFile(0); f && std::string_view(f->GetFilename()) == "Skyrim.esm" && (n == "flames" || n == "healing" || n == "sparks")) return true;
+				// (Noah: "a dragon's MCM item - I used it and it broke the game: spells stopped casting, some audio stopped")
+				// Diverse Dragons' "ACCM: Diverse Dragons Col. 3 Spell Menu", whatever its full name says
+				if (n.find("spell menu") != std::string::npos || n.rfind("accm", 0) == 0) return true;
+				// (Noah: "remove the magical shout") the Wizard Warrior's shout slots go with its shout
+				if (n.find("the wizard warrior") != std::string::npos && n.find("shout") != std::string::npos) return true;
+				if (auto* f = a_sp->GetFile(0); f && std::string_view(f->GetFilename()) == "Skyrim.esm" && Arcana::IndexOf(a_sp) >= 0) return false;  // (an altar spell you were given)
 				for (std::string_view bad : { "diverse dragons spell menu", "azurite meditation" }) {
 					if (n.find(bad) != std::string::npos) return true;
 				}
@@ -207,6 +213,19 @@ namespace bo3z::Classes
 			for (auto* sp : drop) {
 				p->RemoveSpell(sp);
 				logger::info("classes: {} taken off (not of your race or class)", sp->GetName());
+			}
+			// (Noah: "please remove the magical shout from inventories") the Wizard Warrior's Magical Shout, a shout of its own
+			if (auto* sh = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESShout>(0x0008B2, "The Wizard Warrior.esp"); sh && p->GetActorRuntimeData().selectedPower == sh) {
+				p->GetActorRuntimeData().selectedPower = nullptr;
+			}
+			if (auto* sh = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESShout>(0x0008B2, "The Wizard Warrior.esp")) {
+				static std::chrono::steady_clock::time_point told{};
+				if (auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton(); vm && std::chrono::steady_clock::now() - told > std::chrono::seconds(20)) {
+					told = std::chrono::steady_clock::now();
+					const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(p->GetFormType(), p);
+					RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+					vm->DispatchMethodCall(hd, "Actor", "RemoveShout", RE::MakeFunctionArguments(static_cast<RE::TESShout*>(sh)), none);
+				}
 			}
 			// (Noah: "Obtain the Spellsword Manual - what is that for?") the Spellsword mod's own start quest: its manual
 			// is never needed here (the Spellsword's kit comes from the class)
