@@ -113,6 +113,7 @@ namespace bo3z
 		float            HarmMult(RE::Actor* a_actor);
 		bool  HarpyNear(const RE::NiPoint3& a_at, float a_r);  // a living harpy this close (the per-hit cap)
 		std::vector<RE::ActorHandle> AliveHandles();
+		float            TakenMult(RE::Actor* a_actor);  // how much harder one of ours is hurt (a dazed Barrow Champion 2, a berserk Skeleton Mutant 1.25)
 		void             OnDying(RE::Actor* a_actor);    // any death: a champion or mini-boss pays out at once  // how hard this one of the night's dead hits you, its spells too (1 = as made)
 		void             HeadlongCombat();  // data loaded: the undead charge straight in
 		std::vector<RE::FormID> Sheltered();                       // townsfolk sent indoors for the night (co-save 'SHLT')
@@ -214,6 +215,7 @@ namespace bo3z
 		bool  IsDancing(RE::Actor* a_actor);  // (its blows land half again as hard)
 		Type  Roll(int a_round);         // which of the risen dead this one is
 		float SpeedMult(Type a_type);
+		void  SetPace(RE::Actor* a_actor, float a_scale);  // its round's pace (1 = round one): walker, runner or sprinter, its speed held at its gait's clip
 		float HealthMult(Type a_type);
 		float DamageMult(Type a_type);
 		void  Tick(RE::PlayerCharacter* a_player, float a_delta);

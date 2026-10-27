@@ -216,7 +216,23 @@ def girl():
     write_job('girl/girl.nif', ATT / '2d19d912-Zombiegirl_W_Kurniawan.fbx', mixamo_maps('mixamorig:'),
               [f'mat ZombieGirl_body_Material diffuse={body} normal={nrm} spec=0.3 gloss=25', f'mat ZombieGirl_Material diffuse={rest} normal={nrm} spec=0.3 gloss=25'])
 
+# ---------------------------------------------------------------- (Noah: "for the brute enemies, I want to add one more") the Skeleton
+# Mutant: Mixamo's Skeletonzombie (T. Avelange) on the draugr skeleton, played by the mutant clips (anims/mutant); its cloth
+# strips and hip skin follow the pelvis. Source: Noah's Creature_Pack.zip (not in the repo)
+SKELZ_FBX = pathlib.Path('/tmp/claude-0/-home-claude/0ec68033-d637-57d9-8f95-48d7c09e98c8/scratchpad/mix/cp/Skeletonzombie T Avelange.fbx')
+def bonebrute():
+    T = NEW2 / 'tex_skelzombie'
+    body = A.save_dds(A.load(T / 'skeletonZombie_body_diffuse.png', 2048), 'bonebrute/bonebrute_body_d.dds')
+    rest = A.save_dds(A.load(T / 'skeletonZombie_diffuse.png', 2048), 'bonebrute/bonebrute_d.dds')
+    nrm = A.save_dds(A.normal_with_spec(T / 'skeletonZombie_normal.png', None, 2048), 'bonebrute/bonebrute_n.dds', alpha=True)
+    glow = A.save_dds(A.load(T / 'skeletonZombie_glow.png', 512), 'bonebrute/bonebrute_g.dds')
+    X = 'mixamorig:'
+    cloth = [(f'{X}{n}{k}', 'NPC Pelvis [Pelv]') for n in ('BackCloth', 'FrontCloth') for k in range(1, 5)] + [(f'{X}Hips_skin', 'NPC Pelvis [Pelv]')]
+    write_job('bonebrute/bonebrute.nif', SKELZ_FBX, mixamo_maps(X, extra=cloth),
+              [f'mat skeletonZombie_Material1 diffuse={body} normal={nrm} glow={glow} emit=0.5,1.0,0.6 emitmult=1.5 spec=0.3 gloss=25',
+               f'mat skeletonZombie_Material diffuse={rest} normal={nrm} glow={glow} emit=0.5,1.0,0.6 emitmult=1.5 spec=0.3 gloss=25 doublesided=1'])
+
 if __name__ == '__main__':
-    for n, fn in {'zombie': zombie, 'risen': risen, 'boss': boss, 'shadow': shadow, 'mutant': mutant, 'mage': mage, 'girl': girl}.items():
+    for n, fn in {'zombie': zombie, 'risen': risen, 'boss': boss, 'shadow': shadow, 'mutant': mutant, 'mage': mage, 'girl': girl, 'bonebrute': bonebrute}.items():
         if not ONLY or n in ONLY:
             print('==', n); fn()

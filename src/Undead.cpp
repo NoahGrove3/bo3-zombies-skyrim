@@ -2,6 +2,7 @@
 #include "ClipBlend.h"
 
 #include <atomic>
+#include <cstring>
 #include <shared_mutex>
 
 // The new dead (sheet: undead). Our creatures stand on Skyrim's draugr skeleton, so left alone they would move
@@ -123,6 +124,13 @@ namespace bo3z
 			std::atomic<float>        danceT{ 0 };           // (the Dance Of Death: seconds of dancing left)
 			int                       danceK = 0;
 			float                     lateral = 0;           // its sideways share of its pace (-1 left .. 1 right)
+			float                     ahead = 1;             // its forward share of its pace (-1 backing off .. 1 straight on)
+			float                     bodyYaw = 0;           // (no sidesteps in its set) the body turned toward where it goes (radians)
+			RE::NiMatrix3             comBase, comWrote;     // (the COM's turn before ours, and as we left it)
+			bool                      comTurned = false;
+			std::atomic<int>          gaitCap{ -1 };         // its fastest gait (main thread: SetPace / its frenzy)
+			std::atomic<int>          setNow{ -1 };          // its clip set, for the main thread
+			std::atomic<float>        gaitV{ 0 };            // the clip speed its legs play now (0: standing or a full-body move)
 			RE::NiPoint3              locoLast{};
 			bool                      startDone = false;
 		};
@@ -290,7 +298,7 @@ namespace bo3z
 				}
 			}
 
-			if (UsesClips(r.type) && ClipPose(a_actor, r, dt, attacking, cue)) {
+			if ((UsesClips(r.type) || r.wantSet.load(std::memory_order_relaxed) == 6) && ClipPose(a_actor, r, dt, attacking, cue)) {
 				return;  // (the Mixamo clips moved it)
 			}
 			const float yaw = a_actor->GetAngleZ();
@@ -520,13 +528,13 @@ namespace bo3z
 		// retargeted onto Skyrim's draugr and human skeletons by tools/zprev (bake): per bone its rotation against its
 		// parent each frame, and the COM's place (a run's drift across the ground taken out; the game moves the body)
 		using namespace zclip;  // (src/ClipBlend.h: the clips' blending, shared with the preview renderer)
-		// 0 draugr, 1 human (the shared sets), 2 risen, 3 brute, 4 mage, 5 girl (each kind its own: Noah's folders)
-		constexpr int          kSets = 6;
-		constexpr const char*  kSetName[kSets] = { "draugr", "human", "risen", "brute", "mage", "girl" };
+		// 0 draugr, 1 human (the shared sets), 2 risen, 3 brute, 4 mage, 5 girl, 6 mutant (each kind its own: Noah's folders)
+		constexpr int          kSets = 7;
+		constexpr const char*  kSetName[kSets] = { "draugr", "human", "risen", "brute", "mage", "girl", "mutant" };
 		std::array<ClipSet, kSets> g_clipSets;
 		ClipSet                g_dance;
 		std::once_flag         g_clipsLoaded;
-		int SetOfRow(std::string_view a_id) { return a_id == "zombie" ? 2 : a_id == "volatile" ? 3 : a_id == "mage" ? 4 : a_id == "girl" ? 5 : -1; }
+		int SetOfRow(std::string_view a_id) { return a_id == "zombie" ? 2 : a_id == "volatile" ? 3 : a_id == "mage" ? 4 : a_id == "girl" ? 5 : a_id == "bonebrute" ? 6 : -1; }
 		bool LoadClip(const std::string& a_path, Clip& a_out)
 		{
 			std::ifstream f(a_path, std::ios::binary);
@@ -601,6 +609,7 @@ namespace bo3z
 			case 2: if (swing) rate *= r.turned.load() ? 1.3f : 1.1f; break;  // the Risen Dead: quick claws, quicker frenzied
 			case 3: if (swing) rate *= 0.85f; break;                          // the Brute: slow, heavy swings
 			case 5: if (swing) rate *= 0.8f; break;                           // the zombie girl: slower than the Risen Dead
+			case 6: if (swing) rate *= 0.95f; break;                          // the Skeleton Mutant
 			default:
 				if ((c == kAttack || c == kAttackL) && (r.volatileOne.load() || r.type == Type::Runner)) rate *= r.volatileOne.load() ? 1.3f : 1.12f;
 				if (c == kPunch && r.type == Type::Wailer) rate *= 0.9f;
@@ -647,10 +656,13 @@ namespace bo3z
 					const float vx = (pos.x - r.locoLast.x) / dt, vy = (pos.y - r.locoLast.y) / dt, v = std::hypot(vx, vy);
 					const float yaw = a_actor->GetAngleZ();
 					const float lat = v > 20.0f ? (vx * std::cos(yaw) - vy * std::sin(yaw)) / v : 0.0f;
+					const float fwd = v > 20.0f ? (vx * std::sin(yaw) + vy * std::cos(yaw)) / v : 1.0f;
 					r.lateral += (lat - r.lateral) * std::min(1.0f, dt * 5.0f);
+					r.ahead += (fwd - r.ahead) * std::min(1.0f, dt * 5.0f);
 				}
 				r.locoLast = pos;
 				loco.lateral = r.lateral;
+				loco.cap = r.gaitCap.load(std::memory_order_relaxed);
 			}
 			// what it should be doing
 			const bool oneShotOn = P.OneShotOn(S);
@@ -671,6 +683,7 @@ namespace bo3z
 				case 2: want = (n & 1) ? kAttackL : kAttack; break;
 				case 3: { static constexpr int kB[4] = { kAttack, kAttack2, kAttack3, kPunch }; want = kB[(n * 7 + 3) % 4]; break; }
 				case 4: want = kCast; break;
+				case 6: want = (n % 3 == 2) ? kPunch : kAttack; break;  // (the Skeleton Mutant: swipes, and now and then a hammer punch)
 				case 5: want = (n % 3 == 2) ? kPunch : kAttack; break;
 				default:
 					if (r.leftBlade.load()) want = kAttackL;
@@ -693,8 +706,35 @@ namespace bo3z
 			for (std::size_t i = 0; i < r.clipNodes.size() && i < r.pose.size(); ++i) {
 				if (auto* n = r.clipNodes[i]) n->local.rotate = MatOf(r.pose[i]);
 			}
+			r.setNow.store(r.clipSet, std::memory_order_relaxed);
+			r.gaitV.store(P.clip == kRun && P.loco != kIdle ? S.c[P.loco].speed : 0.0f, std::memory_order_relaxed);
+			// (Noah: "when they face me and move left or right they float along the floor doing a forward walk") a set
+			// with no sidesteps turns its whole body - the COM, which carries the hips and the spine - toward where it is
+			// really going, up to 75 degrees off its facing, and back square on as it stops or swings
+			if (r.comNode) {
+				float want = 0;
+				if (!S.Has(kStrafeL) && P.clip == kRun && r.speed > 30.0f && r.ahead > -0.35f)
+					want = std::clamp(std::atan2(r.lateral, std::max(r.ahead, 0.15f)), -1.3f, 1.3f);
+				r.bodyYaw += (want - r.bodyYaw) * std::min(1.0f, dt * 6.0f);
+			}
 			if (r.comNode) {
 				r.comNode->local.translate = { r.com.x, r.com.y, r.com.z };
+				// (the graph writes the COM's turn each frame; where it did not, what we wrote is taken back off first)
+				const bool ours = r.comTurned && std::memcmp(&r.comNode->local.rotate, &r.comWrote, sizeof(RE::NiMatrix3)) == 0;
+				if (ours) r.comNode->local.rotate = r.comBase;
+				r.comTurned = false;
+				if (std::abs(r.bodyYaw) > 0.01f) {
+					// (Skyrim's heading turns clockwise from above: to its right is a turn the other way about the root's Z)
+					const float c = std::cos(-r.bodyYaw), sn = std::sin(-r.bodyYaw);
+					r.comBase = r.comNode->local.rotate;
+					RE::NiMatrix3 z;
+					z.entry[0][0] = c, z.entry[0][1] = -sn, z.entry[0][2] = 0;
+					z.entry[1][0] = sn, z.entry[1][1] = c, z.entry[1][2] = 0;
+					z.entry[2][0] = 0, z.entry[2][1] = 0, z.entry[2][2] = 1;
+					r.comNode->local.rotate = z * r.comNode->local.rotate;
+					r.comNode->local.translate = { c * r.com.x - sn * r.com.y, sn * r.com.x + c * r.com.y, r.com.z };
+					r.comWrote = r.comNode->local.rotate, r.comTurned = true;
+				}
 				RE::NiUpdateData ud;
 				ud.time = 0.0f;
 				r.comNode->UpdateDownwardPass(ud, 0);
@@ -897,6 +937,11 @@ namespace bo3z
 			RE::NiPoint3    pinAt{};
 			RE::NiPoint3    pounceFrom{}, pounceTo{};
 			float           pounceT = -1.0f;  // seconds into its pounce (-1 none; below 0 and above -1: its wind-up)
+			// (Noah: "the enemy's actual movement syncs with their movement animations") its gait's own speed held
+			float           gaitMod = 0;      // our share of its SpeedMult (temporary)
+			float           gaitT = 0;        // to the next look at its pace
+			float           paceVar = 1;      // (each its own stride: a few percent either way)
+			RE::NiPoint3    gaitPos{};
 		};
 		std::vector<Mind> g_minds;
 
@@ -1160,6 +1205,72 @@ namespace bo3z
 
 		float PlayerSlow() { return g_grabSlow > 0 ? 0.35f : 1.0f; }
 
+		std::shared_ptr<Rig> RigOf(RE::Actor* a_actor)
+		{
+			std::shared_lock l(g_lock);
+			auto it = g_rigs.find(a_actor->GetFormID());
+			return it != g_rigs.end() ? it->second : nullptr;
+		}
+		// the speed its legs are made for: its gait's clip (a set without that gait: the next one down it has)
+		float GaitClipSpeed(int a_set, int a_cap)
+		{
+			if (a_set < 0 || a_set >= kSets || !g_clipSets[a_set].ok) return 0;
+			const ClipSet& S = g_clipSets[a_set];
+			if (a_cap == zclip::kSprint && !S.Has(zclip::kSprint)) a_cap = zclip::kRun;
+			if (a_cap == zclip::kWalk && !S.Has(zclip::kWalk)) a_cap = zclip::kRun;
+			return S.c[a_cap].speed;
+		}
+		// four times a second: its pace against its gait's clip, and its SpeedMult eased so the two meet (the game's own
+		// walk / run speeds are nothing like a Mixamo stride). Its other speed changes (its frenzy, a web, the hurry
+		// after a lost chase) still count: they scale the pace wanted, and the legs speed up or slow down with them
+		void SyncGait(RE::Actor* a, Mind& m, float dt, float dist)
+		{
+			if ((m.gaitT -= dt) > 0) return;
+			const float span = 0.25f - m.gaitT;
+			m.gaitT = 0.25f;
+			const auto pos = a->GetPosition();
+			const float pace = std::hypot(pos.x - m.gaitPos.x, pos.y - m.gaitPos.y) / std::max(0.05f, span);
+			m.gaitPos = pos;
+			auto r = RigOf(a);
+			if (!r || !(UsesClips(r->type) || r->wantSet.load() == 6)) return;
+			const int cap = r->gaitCap.load();
+			float clipV = cap >= 0 ? GaitClipSpeed(r->setNow.load(), cap) : r->gaitV.load();
+			if (cap >= 0 && r->gaitV.load() <= 0) clipV = 0;  // (standing, or a full-body move: leave it be)
+			auto* av = a->AsActorValueOwner();
+			const float cur = av->GetActorValue(RE::ActorValue::kSpeedMult);
+			const float other = cur - m.gaitMod;
+			if (clipV < 1.0f || pace < 30.0f || pace > 2000.0f || m.pinT > 0 || dist < 170.0f || Director::Rising(a) || cur < 1.0f) return;
+			const float base = std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kSpeedMult));
+			const float target = clipV * m.paceVar * std::clamp(other / base, 0.2f, 2.5f);
+			const float want = std::clamp(cur * target / pace - other, -0.9f * other, 3.0f * other);
+			const float step = (want - m.gaitMod) * 0.5f;
+			if (std::abs(step) < 1.5f) return;
+			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, step);
+			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.01f);  // (so the new speed takes at once)
+			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.01f);
+			m.gaitMod += step;
+		}
+		void SetPace(RE::Actor* a_actor, float a_scale)
+		{
+			if (!a_actor) return;
+			auto r = RigOf(a_actor);
+			if (!r) return;
+			// BO3: the round's pace decides how many walk, run or sprint (the Hollow Bride's 1.45 and up: mostly sprinters)
+			const float u = Rand(0.0f, 1.0f);
+			float pWalk, pSprint;
+			if (a_scale < 1.05f) pWalk = 0.75f, pSprint = 0.0f;
+			else if (a_scale < 1.2f) pWalk = 0.4f, pSprint = 0.0f;
+			else if (a_scale < 1.35f) pWalk = 0.15f, pSprint = 0.25f;
+			else pWalk = 0.0f, pSprint = 0.6f;
+			int cap = u < pWalk ? zclip::kWalk : u > 1.0f - pSprint ? zclip::kSprint : zclip::kRun;
+			if (r->wantSet.load() == 6) cap = zclip::kRun;  // (the Skeleton Mutant: it runs you down)
+			if (r->wantSet.load() == 4) cap = -1;  // (the mage: as the game moves it - it walks, runs and sidesteps to keep its distance)
+			r->gaitCap.store(cap);
+			for (auto& m : g_minds) {
+				if (m.handle.get().get() == a_actor) m.paceVar = Rand(0.93f, 1.07f), m.gaitPos = a_actor->GetPosition();
+			}
+		}
+
 		bool HasClips(RE::Actor* a_actor)
 		{
 			if (!a_actor) return false;
@@ -1257,6 +1368,7 @@ namespace bo3z
 				}
 				const float dist = a->GetPosition().GetDistance(pp);
 				if (IsDancing(a.get())) continue;  // (the Dance Of Death: no tricks while it dances)
+				SyncGait(a.get(), m, a_delta, dist);
 				m.cd -= a_delta;
 				// the Risen Dead turns: hurt past half, it shrieks and comes on in a frenzy - faster feet, faster claws
 				if (m.turns && !m.turned) {
@@ -1267,7 +1379,7 @@ namespace bo3z
 						zav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 40.0f);
 						{
 							std::shared_lock l(g_lock);
-							if (auto it = g_rigs.find(a->GetFormID()); it != g_rigs.end()) it->second->turned.store(true);
+							if (auto it = g_rigs.find(a->GetFormID()); it != g_rigs.end()) it->second->turned.store(true), it->second->gaitCap.store(zclip::kSprint);
 						}
 						SetCue(a.get(), kCueRoar, 0.7f);
 						Audio::Voice(a.get(), Audio::VoiceEvent::kHurt);

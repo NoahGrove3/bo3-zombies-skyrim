@@ -167,6 +167,18 @@
    ],
    "race": "draugr",
    "weapon": "none"
+  },
+  {
+   "id": "bonebrute",
+   "label": "Skeleton Mutant",
+   "model": "CurseOfAlduin\\bonebrute\\bonebrute.nif",
+   "heightScale": 1.25,
+   "level": 35,
+   "verify": [
+    "heightScale"
+   ],
+   "race": "draugr",
+   "weapon": "none"
   }
  ]
 }

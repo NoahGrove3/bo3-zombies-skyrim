@@ -1277,6 +1277,10 @@
   "PERK:summon_cap_6": "0xcf9",
   "PERK:summon_cap_7": "0xcfa",
   "PERK:summon_cap_8": "0xcfb",
-  "MGEF:conjurerbolt": "0xcfc"
+  "MGEF:conjurerbolt": "0xcfc",
+  "ARMA:bonebrute": "0xcfd",
+  "ARMO:bonebrute": "0xcfe",
+  "NPC_:bonebrute": "0xcff",
+  "ARMA:eyes_bonebrute": "0xd00"
  }
 }

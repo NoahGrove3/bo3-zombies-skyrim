@@ -34,6 +34,20 @@ namespace bo3z
 			bool            enraged{ false };
 			float           frenzy{ 0 };       // Mindbreaker: seconds left fighting its own kind
 			float           tear{ 0 };
+			// (Noah: "each brute its own unique ability" - the chain hook and the shared scythe gone) the brutes' moves
+			float           dash{ -1.0f };     // a charge / a leap in flight: seconds left
+			float           dashLen{ 0 };
+			RE::NiPoint3    dashDir{}, dashFrom{}, dashTo{};
+			float           stun{ 0 };         // (the Barrow Champion, into a wall) dazed: held, and hurt twice as hard
+			RE::NiPoint3    stunAt{};
+			float           breath{ -1.0f };   // (the Ettin) frost breath: seconds left
+			float           breathTick{ 0 };
+			float           gate{ 0 };         // (the Gatekeeper) its bone gate: seconds left
+			RE::NiPoint3    gateAt{}, gateN{};
+			float           gateFx{ 0 }, gateHp{ 0 };
+			int             trophies{ 0 };     // (Thorgar) skulls taken
+			bool            berserk{ false };  // (the Skeleton Mutant) past half: berserk
+			std::vector<RE::ActorHandle> band; // (the Goblin Warlord) the goblins it called
 		};
 
 		Phase                   g_phase = Phase::Day;
@@ -920,7 +934,7 @@ namespace bo3z
 			// Armed: an ancient Nord sword, an iron sword or a dagger (bare-handed undead swing slowly); the Iron
 			// Reaper swings its scythe two-handed; necromancers fight with spells; raised skeletons keep their own.
 			const std::string_view eid = gen::kEnemies[*pick].id;
-			const std::uint32_t    own = !kindRow.rig ? 0 : kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : (eid == "zombie" || eid == "runner" || eid == "wailer" || eid == "bloater" || eid == "lich" || eid == "volatile" || eid == "mage" || eid == "girl") ? gen::kZombieClaws : 0;
+			const std::uint32_t    own = !kindRow.rig ? 0 : eid == "bonebrute" ? gen::kZombieClaws : kindRow.kind == 1 ? gen::kReaperScythe : eid == "boss" ? gen::kWyrmClaws : eid == "shadow" ? gen::kShadowClaws : (eid == "zombie" || eid == "runner" || eid == "wailer" || eid == "bloater" || eid == "lich" || eid == "volatile" || eid == "mage" || eid == "girl") ? gen::kZombieClaws : 0;
 			if (own) {  // their own fighting style: the Reaper's scythe, Grimmvar's raking claws, the Gloomstalker's quick slashes
 				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(own, gen::kPlugin)) {
 					// (Noah: "some of them carry weapons") nothing else in their hands or packs: every other weapon and
@@ -1005,6 +1019,7 @@ namespace bo3z
 			if (kindRow.rig && rowId != "death_hound" && rowId != "skeleton") {
 				Undead::SetEyes(actor, rowId);
 			}
+			if (type) Undead::SetPace(actor, speed / 100.0f);  // (after its row's clips are known: the mage keeps the game's own pace)
 			Forms::PlayAt(gen::Sound::rise, actor);
 			if (auto* fx = Forms::Ours(gen::kRiseFx); fx && g_fx.size() < 24) {  // the ground bursts where they climb out (a few at a time)
 				if (auto puff = actor->PlaceObjectAtMe(fx, false)) {
@@ -2002,7 +2017,7 @@ namespace bo3z
 		// (Noah) the mini-boss: a warning (a roar, the sky flashing, a banner), then it rises near you
 		void RaiseMiniBoss(RE::PlayerCharacter* a_player)
 		{
-			static constexpr std::string_view kRows[] = { "mb_minotaur_lord", "mb_ogre_chief", "mb_ice_titan", "mb_vile_imp", "mb_harpy_matriarch", "brute" };
+			static constexpr std::string_view kRows[] = { "mb_minotaur_lord", "mb_ogre_chief", "mb_ice_titan", "mb_vile_imp", "mb_harpy_matriarch", "brute", "bonebrute" };
 			std::vector<std::string_view> ok;
 			for (auto r : kRows) {
 				for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
@@ -2350,7 +2365,7 @@ namespace bo3z
 				auto a = s.handle.get();
 				if (!a || a->IsDead() || a->IsDisabled() || !a->Is3DLoaded() || s.frenzy > 0) continue;
 				const int kind = gen::kEnemies[s.enemy].kind;
-				if (kind == 1 || Director::IsBoss(a.get())) continue;  // (the Reaper and the bosses have their own blows)
+				if (Director::IsBoss(a.get()) || s.dash > 0 || s.stun > 0 || (kind == 1 && s.windup >= 0)) continue;  // (the bosses have their own blows; a brute mid-move is busy)
 				auto&       t = swing.try_emplace(a->GetFormID(), -1.0f).first->second;
 				const auto  ap = a->GetPosition();
 				const float dist = std::hypot(ap.x - pp.x, ap.y - pp.y), dz = std::abs(ap.z - pp.z);
@@ -2378,9 +2393,62 @@ namespace bo3z
 				if (std::abs(d) > 1.2f) continue;
 				a->NotifyAnimationGraph("attackStart");  // (the swing shows; its blow lands a moment later)
 				t = 0.55f;  // (a beat longer to see it coming)
-				cool[a->GetFormID()] = 2.6f + std::uniform_real_distribution<float>(0.0f, 0.9f)(g_rng);
+				cool[a->GetFormID()] = (s.berserk ? 1.4f : 2.6f) + std::uniform_real_distribution<float>(0.0f, 0.9f)(g_rng);  // (the Skeleton Mutant berserk: swipe after swipe)
 			}
 			if (swing.size() > 400) std::erase_if(swing, [](const auto& e) { return e.second < 0; });
+		}
+		// (the Ettin's frost) you slowed a while; (its roar) the dead near it quicker a while
+		float g_chill = 0;
+		bool  g_chilled = false;
+		void ChillPlayer(float a_seconds) { g_chill = std::max(g_chill, a_seconds); }
+		std::vector<std::pair<RE::ActorHandle, float>> g_roused;
+		void Rouse(const RE::NiPoint3& a_at, float a_r, RE::Actor* a_self)
+		{
+			for (auto& o : g_alive) {
+				auto z = o.handle.get();
+				if (!z || z.get() == a_self || z->IsDead() || z->GetPosition().GetDistance(a_at) > a_r) continue;
+				if (std::any_of(g_roused.begin(), g_roused.end(), [&](const auto& e) { return e.first == o.handle; })) continue;
+				z->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 25.0f);
+				g_roused.push_back({ o.handle, 6.0f });
+			}
+		}
+		void TickBruteAfter(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			auto* pav = a_player->AsActorValueOwner();
+			g_chill = std::max(0.0f, g_chill - a_delta);
+			if (g_chill > 0 && !g_chilled) {
+				pav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -30.0f), g_chilled = true;
+				pav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.01f), pav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.01f);
+			} else if (g_chill <= 0 && g_chilled) {
+				pav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 30.0f), g_chilled = false;
+				pav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.01f), pav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.01f);
+			}
+			for (auto& [h, t] : g_roused) {
+				if ((t -= a_delta) > 0) continue;
+				if (auto z = h.get(); z && !z->IsDead()) z->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -25.0f);
+			}
+			std::erase_if(g_roused, [](const auto& e) { return e.second <= 0; });
+			// (the Goblin Warlord fallen) its goblins scatter, and are gone
+			static std::vector<std::pair<RE::ActorHandle, float>> fleeing;
+			for (auto& [h, t] : fleeing) {
+				if ((t -= a_delta) > 0) continue;
+				if (auto g = h.get(); g && !g->IsDead()) g->KillImmediate();
+			}
+			std::erase_if(fleeing, [](const auto& e) { return e.second <= 0; });
+			for (auto& s : g_alive) {
+				if (s.band.empty() || gen::kEnemies[s.enemy].id != "hf_goblin_warlord") continue;
+				auto w = s.handle.get();
+				if (w && !w->IsDead()) continue;
+				for (auto& h : s.band) {
+					if (auto g = h.get(); g && !g->IsDead()) {
+						g->AsActorValueOwner()->SetActorValue(RE::ActorValue::kConfidence, 0);
+						g->StopCombat();
+						g->StartCombat(a_player);  // (cowardly now: it runs)
+						fleeing.push_back({ h, 5.0f });
+					}
+				}
+				s.band.clear();
+			}
 		}
 		void TickChampions(RE::PlayerCharacter* a_player, float a_delta)
 		{
@@ -2389,6 +2457,8 @@ namespace bo3z
 			static std::vector<RE::ActorHandle> raised;
 			std::erase_if(raised, [](const RE::ActorHandle& h) { auto a = h.get(); return !a || a->IsDead() || a->IsDeleted(); });
 			std::vector<RE::NiPoint3> raise;
+			std::vector<std::pair<RE::ActorHandle, RE::NiPoint3>> calls;  // (the Goblin Warlord's horn)
+			static int goblinRow = [] { for (int i = 0; i < static_cast<int>(gen::kEnemies.size()); ++i) if (gen::kEnemies[i].id == "hf_goblin") return i; return -1; }();
 			int minions = static_cast<int>(raised.size());
 			for (auto& s : g_alive) {
 				const int kind = gen::kEnemies[s.enemy].kind;
@@ -2402,49 +2472,233 @@ namespace bo3z
 				const float dist = a->GetPosition().GetDistance(a_player->GetPosition());
 				auto*       av = a->AsActorValueOwner();
 				if (kind == 1) {
-					// enraged below a third of its health: faster, and it reaps more often
-					if (!s.enraged && av->GetActorValue(RE::ActorValue::kHealth) < av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.35f) {
+					// (Noah: "I don't want brutes to have that snare ability - I want each brute to have their own unique
+					// ability") no chain hook, no shared scythe: each its own move below, its blows otherwise its own (TickReach)
+					const std::string_view id = gen::kEnemies[s.enemy].id;
+					const float maxHp = av->GetPermanentActorValue(RE::ActorValue::kHealth), hp = av->GetActorValue(RE::ActorValue::kHealth);
+					// enraged below a third of its health: faster, and its move comes round sooner
+					if (!s.enraged && hp < maxHp * 0.35f) {
 						s.enraged = true;
 						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 35.0f);
 						Forms::PlayAt(gen::Sound::champ_enrage, a.get());
 					}
-					if (s.windup >= 0) {
-						if ((s.windup -= a_delta) < 0) {  // the sweep lands: everything in reach is cut and thrown
-							if (dist < 300.0f && !a_player->IsDead()) {
-								auto* pav = a_player->AsActorValueOwner();
-								Perks::DamagePlayer(pav->GetPermanentActorValue(RE::ActorValue::kHealth) * (s.enraged ? 0.32f : 0.24f) * Settings::UndeadDamageMult());
-								a_player->SetGraphVariableFloat("staggerMagnitude", 0.7f);
-								a_player->NotifyAnimationGraph("staggerStart");
-								Hud::Banner("REAPED", 0.8f);
+					const RE::NiPoint3 ap = a->GetPosition(), pp = a_player->GetPosition();
+					const float  yaw = a->GetAngleZ();
+					const RE::NiPoint3 fwd{ std::sin(yaw), std::cos(yaw), 0.0f };
+					RE::NiPoint3 toP = pp - ap;
+					toP.z = 0;
+					const float  flat = toP.Length();
+					const RE::NiPoint3 dirP = flat > 1.0f ? toP / flat : fwd;
+					const float  dz = std::abs(pp.z - ap.z);
+					const bool   up = a_player->IsInMidair();  // (jumped: the ground's blows miss you)
+					const bool   alive = !a_player->IsDead();
+					const float  cdm = s.enraged ? 0.65f : 1.0f;
+					auto*        cell = a->GetParentCell();
+					auto clear = [&] { bool l = false; return a->HasLineOfSight(a_player, l) && l; };
+					auto ring = [&](const RE::NiPoint3& c, float r, int n, std::string_view look) {
+						for (int k = 0; k < n; ++k) {
+							const float t = 2.0f * RE::NI_PI * k / n;
+							Gun::FxBlast(look, OnGround(c + RE::NiPoint3{ std::cos(t) * r, std::sin(t) * r, 0.0f }) + RE::NiPoint3{ 0, 0, 10 }, 0.02f * k);
+						}
+					};
+					auto knock = [&](float mag) {
+						if (auto* pr = a_player->GetActorRuntimeData().currentProcess) pr->KnockExplosion(a_player, ap, mag);
+					};
+					auto windUp = [&](float sec, const char* anim) {
+						s.windup = sec;
+						if (anim) a->NotifyAnimationGraph(anim);
+						Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
+					};
+					// a charge or a leap in flight (the body carried, its own legs running or its leap clip playing)
+					if (s.dash > 0) {
+						s.dash -= a_delta;
+						if (id == "hf_minotaur") {  // (it bends its run toward you, but slowly: a side-step beats it)
+							const float want = std::atan2(dirP.x, dirP.y), have = std::atan2(s.dashDir.x, s.dashDir.y);
+							float d = std::fmod(want - have + 3.0f * RE::NI_PI, 2.0f * RE::NI_PI) - RE::NI_PI;
+							d = std::clamp(d, -0.7f * a_delta, 0.7f * a_delta);
+							s.dashDir = { std::sin(have + d), std::cos(have + d), 0.0f };
+						}
+						if (id == "bonebrute") {  // the leap: an arc onto where you stood
+							const float u = std::clamp(1.0f - s.dash / s.dashLen, 0.0f, 1.0f);
+							RE::NiPoint3 at = s.dashFrom + (s.dashTo - s.dashFrom) * u;
+							// (the clip itself lifts the body: its jump attack's own arc, 1.3 m at the top)
+							a->SetPosition(at, true);
+							if (s.dash <= 0) {  // it lands: the ground cracks
+								Gun::FxBlast("giantslam", s.dashTo);
+								ring(s.dashTo, 200.0f, 6, "dark");
+								Forms::PlayAt(gen::Sound::boss_quake, a.get());
+								if (alive && pp.GetDistance(s.dashTo) < 300.0f && !up) {
+									Director::HurtPlayer(0.15f, true);
+									Hud::Banner("CRUSHED", 0.8f);
+								}
+								s.ability = 9.0f * cdm;
 							}
-							Forms::PlayAt(gen::Sound::boss_land, a.get());
-							s.ability = s.enraged ? 4.0f : 6.5f;
+						} else {
+							const float speed = id == "hf_minotaur" ? 760.0f : 860.0f;
+							const RE::NiPoint3 chest = ap + RE::NiPoint3{ 0, 0, 70 };
+							a->SetHeading(std::atan2(s.dashDir.x, s.dashDir.y));
+							if (alive && flat < 120.0f && dz < 150.0f) {  // it runs you down
+								s.dash = -1.0f;
+								if (id == "hf_minotaur") {
+									Director::HurtPlayer(0.18f, false);
+									knock(1.2f);
+									Hud::Banner("GORED", 0.8f);
+								} else {
+									Director::HurtPlayer(0.16f, true);
+									Hud::Banner("BASHED", 0.8f);
+								}
+								Forms::PlayAt(gen::Sound::boss_land, a_player);
+							} else if (RayBlocked(cell, chest, chest + s.dashDir * 95.0f)) {  // into a wall
+								s.dash = -1.0f;
+								Forms::PlayAt(gen::Sound::boss_land, a.get());
+								Gun::FxBlast("giantslam", ap + s.dashDir * 60.0f);
+								if (id == "bloater") {  // the Barrow Champion: dazed for three seconds - your moment
+									s.stun = 3.0f, s.stunAt = ap;
+									a->NotifyAnimationGraph("staggerStart");
+									if (flat < 2500.0f) Hud::Banner("STUNNED - STRIKE NOW", 1.2f);
+								} else {
+									s.stun = 1.0f, s.stunAt = ap;
+									a->NotifyAnimationGraph("staggerStart");
+								}
+							} else {
+								RE::NiPoint3 next = ap + s.dashDir * (speed * a_delta);
+								next = OnGround(next);
+								if (std::abs(next.z - ap.z) > 60.0f) next.z = ap.z;  // (indoors no land: the floor it is on)
+								a->SetPosition(next, true);
+							}
 						}
-					} else if ((s.ability -= a_delta) <= 0 && dist < 280.0f) {
-						s.windup = 0.7f;  // telegraph: a heavy breath and a raised scythe before it falls
-						a->NotifyAnimationGraph("attackPowerStartForward");
-						Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
+						continue;
 					}
-					// Chain Hook: from mid range it hurls a chain and drags you into scythe reach
-					if (s.hookWind >= 0) {
-						if ((s.hookWind -= a_delta) < 0 && dist > 300.0f && dist < 1300.0f && !a_player->IsDead()) {
-							// the chain bites and staggers - it no longer drags you (it pulled people through bridges)
-							const RE::NiPoint3 land = a_player->GetPosition();
-							Director::HurtPlayer(0.08f, true);
-							a_player->SetGraphVariableFloat("staggerMagnitude", 0.5f);
-							a_player->NotifyAnimationGraph("staggerStart");
-							Gun::FxBlast("dark", land + RE::NiPoint3{ 0, 0, 60 });
-							Forms::PlayAt(gen::Sound::champ_chain, a_player);
-							Hud::Banner("CHAINED", 0.9f);
-							s.ability = std::min(s.ability, 0.6f);  // and the scythe comes right after
+					if (s.stun > 0) {  // dazed where it hit
+						s.stun -= a_delta;
+						a->SetPosition(s.stunAt, true);
+						continue;
+					}
+					if (s.windup >= 0) {
+						if ((s.windup -= a_delta) >= 0) continue;
+						// the move it wound up for
+						if (id == "reaper") {  // Thane of the Mound - Grave Sweep: a half circle in front of it
+							for (int k = -2; k <= 2; ++k) {
+								const float t = yaw + 0.38f * k;
+								Gun::FxBlast("dark", OnGround(ap + RE::NiPoint3{ std::sin(t) * 220.0f, std::cos(t) * 220.0f, 0 }) + RE::NiPoint3{ 0, 0, 40 }, 0.03f * (k + 2));
+							}
+							Forms::PlayAt(gen::Sound::boss_claw, a.get());
+							if (alive && flat < 340.0f && dz < 160.0f && (fwd.x * dirP.x + fwd.y * dirP.y) > -0.05f && !up) {
+								Director::HurtPlayer(0.15f, false);
+								auto* pav = a_player->AsActorValueOwner();
+								pav->DamageActorValue(RE::ActorValue::kStamina, pav->GetActorValue(RE::ActorValue::kStamina) * 0.5f);
+								knock(0.6f);
+								Hud::Banner("SWEPT", 0.8f);
+							}
+							s.ability = 7.0f * cdm;
+						} else if (id == "brute") {  // the Bone Jotunn - Ground Pound: a ring 6 m round
+							Gun::FxBlast("giantslam", ap);
+							ring(ap, 240.0f, 8, "shoutarea");
+							Forms::PlayAt(gen::Sound::boss_quake, a.get());
+							if (alive && flat < 420.0f && dz < 150.0f && !up) {
+								Director::HurtPlayer(0.14f, false);
+								a_player->SetGraphVariableFloat("staggerMagnitude", 0.9f);
+								a_player->NotifyAnimationGraph("staggerStart");
+								Hud::Banner("QUAKE", 0.8f);
+							}
+							s.ability = 8.0f * cdm;
+						} else if (id == "king") {  // the Gatekeeper - Sealed Gate: bones rise behind you
+							s.gate = 4.0f, s.gateN = dirP, s.gateAt = pp + dirP * 220.0f, s.gateFx = 0, s.gateHp = hp;
+							Forms::PlayAt(gen::Sound::champ_summon, a.get());
+							if (flat < 2500.0f) Hud::Banner("THE GATE IS SEALED", 1.0f);
+							s.ability = 15.0f * cdm;
+						} else if (id == "knight") {  // Thorgar - Skull Toss: a burning skull where you stand, then a fire that lingers
+							const RE::NiPoint3 at = OnGround(pp);
+							Forms::PlayAt(gen::Sound::cast_heavy, a.get());
+							g_hazards.push_back({ at, 0.7f, 150.0f, 0.08f, "fireball", false });
+							for (int k = 1; k <= 5; ++k) g_hazards.push_back({ at, 0.7f + 0.5f * k, 130.0f, 0.025f, "atrofire", false });
+							s.ability = 6.0f * cdm;
+						} else if (id == "bloater" || id == "hf_minotaur") {  // Shield Charge / Gore Rush
+							s.dashDir = dirP, s.dashLen = s.dash = id == "hf_minotaur" ? 1.8f : 1.2f;
+							Forms::PlayAt(gen::Sound::boss_growl, a.get());
+							s.ability = (id == "hf_minotaur" ? 10.0f : 9.0f) * cdm;
+						} else if (id == "hf_ettin") {  // the frost head breathes
+							s.breath = 1.5f, s.breathTick = 0;
+							Forms::PlayAt(gen::Sound::boss_breath, a.get());
+							s.ability = 8.0f * cdm;
+						} else if (id == "bonebrute") {  // the Skeleton Mutant leaps
+							s.dashFrom = ap, s.dashTo = OnGround(pp - dirP * 60.0f), s.dashLen = s.dash = 1.07f;  // (frames 16-48 of its jump attack: in the air)
 						}
-					} else if ((s.hook -= a_delta) <= 0 && dist > 420.0f && dist < 1100.0f) {
-						s.hookWind = 0.6f;
-						s.hook = s.enraged ? 7.0f : 10.0f;
-						a->NotifyAnimationGraph("attackStart");
-						Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
+						continue;
 					}
-				} else if (kind == 2) {
+					// (the Gatekeeper) the gate's own bones: you cannot walk back through them
+					if (s.gate > 0) {
+						s.gate -= a_delta;
+						const RE::NiPoint3 side{ -s.gateN.y, s.gateN.x, 0.0f };
+						if ((s.gateFx -= a_delta) <= 0) {
+							s.gateFx = 0.45f;
+							for (int k = -3; k <= 3; ++k) Gun::FxBlast("paralyze", OnGround(s.gateAt + side * (110.0f * k)) + RE::NiPoint3{ 0, 0, 20 }, 0.02f * (k + 3));
+						}
+						const RE::NiPoint3 rel = pp - s.gateAt;
+						const float past = rel.x * s.gateN.x + rel.y * s.gateN.y, along = std::abs(rel.x * side.x + rel.y * side.y);
+						if (alive && past > -20.0f && along < 380.0f && std::abs(rel.z) < 250.0f) {
+							a_player->SetPosition(pp - s.gateN * (past + 30.0f), true);
+						}
+						if (hp < s.gateHp - maxHp * 0.08f) {  // hurt it hard enough and the bones fall
+							s.gate = 0;
+							for (int k = -3; k <= 3; ++k) Gun::FxBlast("dark", OnGround(s.gateAt + side * (110.0f * k)) + RE::NiPoint3{ 0, 0, 40 });
+							if (flat < 2500.0f) Hud::Banner("THE GATE BREAKS", 0.8f);
+						}
+					}
+					// (the Ettin) frost breath in a cone before it: slows you
+					if (s.breath > 0) {
+						s.breath -= a_delta;
+						if ((s.breathTick -= a_delta) <= 0) {
+							s.breathTick = 0.25f;
+							for (int k = 1; k <= 3; ++k) Gun::FxBlast("frost", ap + fwd * (150.0f * k) + RE::NiPoint3{ 0, 0, 90 });
+							if (alive && flat < 540.0f && dz < 200.0f && (fwd.x * dirP.x + fwd.y * dirP.y) > 0.8f) {
+								Director::HurtPlayer(0.02f, false);
+								ChillPlayer(3.0f);
+							}
+						}
+					}
+					s.ability -= a_delta;
+					s.hook -= a_delta;
+					if (id == "bonebrute" && !s.berserk && hp < maxHp * 0.5f) {  // past half: it roars and goes berserk
+						s.berserk = true;
+						av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 40.0f);
+						Undead::CueFor(a.get(), Undead::kCueRoar, 1.4f);
+						Forms::PlayAt(gen::Sound::champ_enrage, a.get());
+						if (flat < 2500.0f) Hud::Banner("BERSERK", 0.9f);
+					}
+					if (s.ability > 0 && !(id == "hf_ettin" && s.hook <= 0) && !(id == "hf_goblin_warlord")) continue;
+					if (id == "reaper" && flat < 320.0f) windUp(0.8f, "attackPowerStartForward");
+					else if (id == "brute" && flat < 600.0f) windUp(0.9f, "attackPowerStart");
+					else if (id == "king" && flat > 250.0f && flat < 1500.0f && clear()) windUp(0.6f, "attackStart");
+					else if (id == "knight" && flat > 400.0f && flat < 1500.0f && clear()) windUp(0.6f, "attackStart");
+					else if ((id == "bloater" || id == "hf_minotaur") && flat > 450.0f && flat < 1600.0f && clear()) windUp(0.8f, "attackPowerStartForward");
+					else if (id == "bonebrute" && flat > 450.0f && flat < 1400.0f && clear()) {
+						windUp(0.53f, nullptr);  // (its crouch: the clip's first 16 frames)
+						Undead::CueFor(a.get(), Undead::kCueLeap, 0.3f);
+					}
+					else if (id == "hf_ettin") {
+						if (s.hook <= 0 && flat < 2500.0f) {  // the other head roars: the dead near it come on faster
+							s.hook = 13.0f * cdm;
+							Gun::FxBlast("shoutarea", ap + RE::NiPoint3{ 0, 0, 80 });
+							Forms::PlayAt(gen::Sound::boss_growl, a.get());
+							Rouse(ap, 900.0f, a.get());
+						} else if (s.ability <= 0 && flat < 480.0f && (fwd.x * dirP.x + fwd.y * dirP.y) > 0.6f) windUp(0.6f, "attackPowerStart");
+					}
+					else if (id == "hf_goblin_warlord" && s.ability <= 0 && flat < 3000.0f && goblinRow >= 0) {  // Rally Horn
+						std::erase_if(s.band, [](const RE::ActorHandle& h) { auto g = h.get(); return !g || g->IsDead(); });
+						s.ability = 20.0f;
+						const int n = std::min(3, 4 - static_cast<int>(s.band.size()));
+						if (n > 0) {
+							Forms::PlayAt(gen::Sound::shout_toll, a.get());
+							if (flat < 2500.0f) Hud::Banner("THE WAR HORN SOUNDS", 1.0f);
+							for (int k = 0; k < n; ++k) {
+								const float ang = Uniform(0.0f, 2.0f * RE::NI_PI);
+								const RE::NiPoint3 at = ap + RE::NiPoint3{ std::cos(ang) * 160.0f, std::sin(ang) * 160.0f, 0.0f };
+								calls.push_back({ s.handle, at });
+							}
+						}
+					}
+								} else if (kind == 2) {
 					// Void Hex: a mark of dark fire under your feet a moment before it bursts (its own sound, no Skyrim spell)
 					if ((s.hook -= a_delta) <= 0 && dist > 250.0f && dist < 1800.0f) {
 						s.hook = s.enraged ? 3.0f : 4.5f;
@@ -2472,6 +2726,12 @@ namespace bo3z
 			for (auto& at : raise) {
 				if (SpawnOne(a_player, minionRow, &at) && !g_alive.empty()) {
 					raised.push_back(g_alive.back().handle);
+				}
+			}
+			for (auto& [boss, at] : calls) {
+				if (SpawnOne(a_player, goblinRow, &at) && !g_alive.empty()) {
+					const auto h = g_alive.back().handle;
+					for (auto& o : g_alive) if (o.handle == boss) o.band.push_back(h);
 				}
 			}
 		}
@@ -2949,7 +3209,8 @@ namespace bo3z
 			}
 			std::optional<std::size_t> row;
 			if (a_elite) {
-				const std::string_view pick = std::uniform_int_distribution<int>(0, 1)(g_rng) ? "reaper" : "brute";
+				static constexpr std::string_view kElite[] = { "reaper", "brute", "bonebrute" };
+				const std::string_view pick = kElite[std::uniform_int_distribution<int>(0, 2)(g_rng)];
 				for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
 					if (gen::kEnemies[i].id == pick) {
 						row = i;
@@ -3053,8 +3314,33 @@ namespace bo3z
 			for (auto& z : g_alive) v.push_back(z.handle);
 			return v;
 		}
+		bool PlayerSide(RE::Actor* a, RE::PlayerCharacter* a_player);
+		float TakenMult(RE::Actor* a_actor)
+		{
+			for (const auto& s : g_alive) {
+				if (s.handle.get().get() != a_actor) continue;
+				return s.stun > 1.05f || (s.stun > 0 && gen::kEnemies[s.enemy].id == "bloater") ? 2.0f : s.berserk ? 1.25f : 1.0f;
+			}
+			return 1.0f;
+		}
 		void OnDying(RE::Actor* a_actor)
 		{
+			// (Thorgar the Skulltaker) a player or a summon falls near it: its trophy - it heals, grows and quickens
+			if (auto* pl = RE::PlayerCharacter::GetSingleton(); a_actor && pl && PlayerSide(a_actor, pl)) {
+				for (auto& s : g_alive) {
+					if (gen::kEnemies[s.enemy].id != "knight" || s.trophies >= 5) continue;
+					auto t = s.handle.get();
+					if (!t || t->IsDead() || t->GetPosition().GetDistance(a_actor->GetPosition()) > 900.0f) continue;
+					++s.trophies;
+					auto* tav = t->AsActorValueOwner();
+					tav->RestoreActorValue(RE::ActorValue::kHealth, tav->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.15f);
+					tav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 6.0f);
+					tav->SetActorValue(RE::ActorValue::kAttackDamageMult, tav->GetActorValue(RE::ActorValue::kAttackDamageMult) * 1.1f);
+					t->SetScale(t->GetScale() * 1.06f);
+					Forms::PlayAt(gen::Sound::champ_enrage, t.get());
+					Hud::Banner("THE SKULLTAKER TAKES A TROPHY", 1.2f);
+				}
+			}
 			if (a_actor && g_champ.handle.get().get() == a_actor) {
 				g_champDying = true;
 				TickChampion();  // (now: before the body can crumble away)
@@ -4048,6 +4334,7 @@ namespace bo3z
 				}
 				KeepThemComing(player, a_delta);
 				TickChampions(player, a_delta);
+				TickBruteAfter(player, a_delta);
 				TickReach(player, a_delta);
 				TickFrenzy(player, a_delta);
 				TickBoss(player, a_delta);

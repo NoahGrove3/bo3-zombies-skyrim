@@ -23,7 +23,7 @@ namespace bo3z::gen
 		{ 3400.f, 4600.f }, { 1400.f, 2100.f }, 120.f, 30 };
 	inline constexpr FormRef kIntroQuest{ "Skyrim.esm", 0x03372B, "MQ101" };
 	struct Enemy { std::string_view id, label; FormRef form; bool isLeveledList; int minRound, weight; bool specialRound; std::string_view headNode; bool forceCombat; int bossEvery; bool elite; int kind; float healthMult, speedMult; bool rig; };
-	inline constexpr std::array<Enemy, 49> kEnemies{ {
+	inline constexpr std::array<Enemy, 50> kEnemies{ {
 		Enemy{ "zombie", "Risen Dead", { "CurseOfAlduin.esp", 0x0008C3, "UN_zombie" }, false, 1, 8, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 0.95f, true },
 		Enemy{ "hollow2", "Haugbui", { "The Restless Dead.esp", 0x1F5212, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee2H" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "hollow3", "Haugbui", { "The Restless Dead.esp", 0x1EAFCC, "zzEnc_RD_DraugrIronLamellarArmorM01_Melee1H" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 1.0f, false },
@@ -73,6 +73,7 @@ namespace bo3z::gen
 		Enemy{ "volatile", "Volatile", { "CurseOfAlduin.esp", 0x000CDB, "UN_volatile" }, false, 3, 2, false, "NPC Head [Head]", true, 0, false, 0, 3.5f, 0.55f, true },
 		Enemy{ "girl", "Shambling Maiden", { "CurseOfAlduin.esp", 0x000CEE, "UN_girl" }, false, 1, 4, false, "NPC Head [Head]", true, 0, false, 0, 1.3f, 0.7f, true },
 		Enemy{ "mage", "Grave Witch", { "CurseOfAlduin.esp", 0x000CEB, "UN_mage" }, false, 2, 3, false, "NPC Head [Head]", true, 0, false, 0, 1.0f, 0.6f, true },
+		Enemy{ "bonebrute", "Skeleton Mutant", { "CurseOfAlduin.esp", 0x000CFF, "UN_bonebrute" }, false, 8, 0, false, "NPC Head [Head]", true, 0, false, 1, 3.2f, 1.0f, true },
 	} };
 	enum class Sound : int {
 		cast_sidearm = 0,
@@ -1521,14 +1522,14 @@ namespace bo3z::gen
 	inline constexpr float kSpawnMultiplier = 6.0f, kHitDamageFraction = 0.3f, kZombieWeaponDamageMult = 0.1f;
 	inline constexpr bool kIgnoreNpcs = true;
 	inline constexpr std::array<std::array<float, 2>, 4> kSpeedTiers{ { { 1.0f, 100.0f }, { 3.0f, 115.0f }, { 6.0f, 130.0f }, { 10.0f, 145.0f } } };
-	struct EventDef { std::string_view id, label, banner, weatherPlugin; std::uint32_t weatherId; float spawnMult, speedMult; int pointsMult; float championWeight, dropMult; bool boss; std::uint32_t tint; Sound sound, bed; std::array<int, 6> members; int finale; float waveCount, waveHp, waveSpeed, wavePoints; std::uint32_t color; };
+	struct EventDef { std::string_view id, label, banner, weatherPlugin; std::uint32_t weatherId; float spawnMult, speedMult; int pointsMult; float championWeight, dropMult; bool boss; std::uint32_t tint; Sound sound, bed; std::array<int, 8> members; int finale; float waveCount, waveHp, waveSpeed, wavePoints; std::uint32_t color; };
 	inline constexpr float kEventChance = 0.125f, kWaveThemeChance = 0.1667f;
 	inline constexpr int kEventMinNight = 8;
 	inline constexpr std::array<EventDef, 4> kEvents{ {
-		EventDef{ "goblinraid", "GOBLIN RAID", "GOBLIN RAID - DOUBLE CURSED ESSENCE", "Dawnguard.esm", 0x006AEC, 2.0f, 1.1f, 2, 1.0f, 1.5f, false, 0x6E2A0A22, Sound::event_bloodmoon, Sound::amb_iron, { 25, 26, 29, -1, -1, -1 }, 38, 1.3f, 0.7f, 1.15f, 1.0f, 0xFF8A3C },
-		EventDef{ "harpyswarm", "HARPY SWARM", "HARPY SWARM - DOUBLE CURSED ESSENCE", "Skyrim.esm", 0x0C8220, 2.0f, 1.0f, 2, 1.0f, 1.5f, false, 0x3A4A5A26, Sound::event_ash, Sound::amb_ash, { 30, -1, -1, -1, -1, -1 }, -1, 0.8f, 0.8f, 1.0f, 1.0f, 0xC8A0FF },
-		EventDef{ "champions", "ARMORED CHAMPIONS", "ARMORED CHAMPIONS - DOUBLE CURSED ESSENCE", "Skyrim.esm", 0x0C8220, 2.0f, 1.0f, 2, 2.0f, 2.0f, false, 0x40506030, Sound::event_champions, Sound::amb_iron, { 13, 14, 36, 37, 34, 35 }, -1, 0.4f, 1.0f, 0.95f, 2.0f, 0xB8C4D0 },
-		EventDef{ "bloodfog", "BLOOD FOG", "BLOOD FOG - DOUBLE CURSED ESSENCE", "Skyrim.esm", 0x0C821E, 2.0f, 1.2f, 2, 1.0f, 1.5f, false, 0x8A0A1030, Sound::event_fog, Sound::amb_fog, { -1, -1, -1, -1, -1, -1 }, -1, 1.0f, 1.0f, 1.2f, 1.5f, 0xFF3A3A },
+		EventDef{ "goblinraid", "GOBLIN RAID", "GOBLIN RAID - DOUBLE CURSED ESSENCE", "Dawnguard.esm", 0x006AEC, 2.0f, 1.1f, 2, 1.0f, 1.5f, false, 0x6E2A0A22, Sound::event_bloodmoon, Sound::amb_iron, { 25, 26, 29, -1, -1, -1, -1, -1 }, 38, 1.3f, 0.7f, 1.15f, 1.0f, 0xFF8A3C },
+		EventDef{ "harpyswarm", "HARPY SWARM", "HARPY SWARM - DOUBLE CURSED ESSENCE", "Skyrim.esm", 0x0C8220, 2.0f, 1.0f, 2, 1.0f, 1.5f, false, 0x3A4A5A26, Sound::event_ash, Sound::amb_ash, { 30, -1, -1, -1, -1, -1, -1, -1 }, -1, 0.8f, 0.8f, 1.0f, 1.0f, 0xC8A0FF },
+		EventDef{ "champions", "ARMORED CHAMPIONS", "ARMORED CHAMPIONS - DOUBLE CURSED ESSENCE", "Skyrim.esm", 0x0C8220, 2.0f, 1.0f, 2, 2.0f, 2.0f, false, 0x40506030, Sound::event_champions, Sound::amb_iron, { 13, 14, 36, 37, 34, 35, 49, -1 }, -1, 0.4f, 1.0f, 0.95f, 2.0f, 0xB8C4D0 },
+		EventDef{ "bloodfog", "BLOOD FOG", "BLOOD FOG - DOUBLE CURSED ESSENCE", "Skyrim.esm", 0x0C821E, 2.0f, 1.2f, 2, 1.0f, 1.5f, false, 0x8A0A1030, Sound::event_fog, Sound::amb_fog, { -1, -1, -1, -1, -1, -1, -1, -1 }, -1, 1.0f, 1.0f, 1.2f, 1.5f, 0xFF3A3A },
 	} };
 	enum EventId : int { kEvent_goblinraid = 0, kEvent_harpyswarm = 1, kEvent_champions = 2, kEvent_bloodfog = 3 };
 	struct CurseCity { std::string_view landmark; std::uint32_t location; std::uint32_t global; };

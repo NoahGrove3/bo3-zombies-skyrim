@@ -1001,6 +1001,26 @@
    "healthMult": 1.0,
    "speedMult": 0.6,
    "rig": true
+  },
+  {
+   "id": "bonebrute",
+   "label": "Skeleton Mutant",
+   "plugin": "CurseOfAlduin.esp",
+   "localId": "0xCFF",
+   "editorId": "UN_bonebrute",
+   "recordType": "NPC_",
+   "minRound": 8,
+   "weight": 0,
+   "specialRound": false,
+   "headNode": "NPC Head [Head]",
+   "forceCombat": true,
+   "bossEvery": 0,
+   "elite": false,
+   "verify": [],
+   "kind": "reaper",
+   "healthMult": 3.2,
+   "speedMult": 1.0,
+   "rig": true
   }
  ]
 }

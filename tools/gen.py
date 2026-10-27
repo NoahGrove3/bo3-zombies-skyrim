@@ -223,15 +223,15 @@ o.append(f'\tinline constexpr bool kIgnoreNpcs = {str(R0["ignoreNpcs"]).lower()}
 o.append(f'\tinline constexpr std::array<std::array<float, 2>, {len(R0["speedTiers"])}> kSpeedTiers{{ {{ ' + ', '.join('{ %s, %s }' % (F(a), F(b)) for a, b in R0["speedTiers"]) + ' } };')
 # event nights (sheet: events)
 EV = S['events']
-o.append('\tstruct EventDef { std::string_view id, label, banner, weatherPlugin; std::uint32_t weatherId; float spawnMult, speedMult; int pointsMult; float championWeight, dropMult; bool boss; std::uint32_t tint; Sound sound, bed; std::array<int, 6> members; int finale; float waveCount, waveHp, waveSpeed, wavePoints; std::uint32_t color; };')
+o.append('\tstruct EventDef { std::string_view id, label, banner, weatherPlugin; std::uint32_t weatherId; float spawnMult, speedMult; int pointsMult; float championWeight, dropMult; bool boss; std::uint32_t tint; Sound sound, bed; std::array<int, 8> members; int finale; float waveCount, waveHp, waveSpeed, wavePoints; std::uint32_t color; };')
 o.append(f'\tinline constexpr float kEventChance = {F(EV["chance"])}, kWaveThemeChance = {F(EV["waveChance"])};')
 o.append(f'\tinline constexpr int kEventMinNight = {EV["minNight"]};')
 o.append(f'\tinline constexpr std::array<EventDef, {len(EV["rows"])}> kEvents{{ {{')
 _eidx = {r['id']: i for i, r in enumerate(en)}
 for e in EV['rows']:
     wp, wid = e['weather'].split('|')
-    mem = [_eidx[m] for m in e['members']] + [-1] * (6 - len(e['members']))
-    assert len(mem) == 6
+    mem = [_eidx[m] for m in e['members']] + [-1] * (8 - len(e["members"]))
+    assert len(mem) == 8
     fin = _eidx[e['finale']] if e['finale'] != 'none' else -1
     o.append(f'\t\tEventDef{{ {cs(e["id"])}, {cs(e["label"])}, {cs(e["banner"])}, {cs(wp)}, 0x{int(wid, 16):06X}, {F(e["spawnMult"])}, {F(e["speedMult"])}, {e["pointsMult"]}, {F(e["championWeight"])}, {F(e["dropMult"])}, {str(e["boss"]).lower()}, 0x{e["tint"]}, Sound::{e["sound"].split(":")[1]}, Sound::{e["bed"].split(":")[1]}, {{ {", ".join(map(str, mem))} }}, {fin}, {F(e["waveCount"])}, {F(e["waveHp"])}, {F(e["waveSpeed"])}, {F(e["wavePoints"])}, 0x{e["color"]} }},')
 o.append('\t} };')

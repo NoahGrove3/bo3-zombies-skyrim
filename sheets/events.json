@@ -100,7 +100,8 @@
     "hf_minotaur",
     "hf_ettin",
     "hf_troll",
-    "hf_ogre"
+    "hf_ogre",
+    "bonebrute"
    ],
    "finale": "none",
    "waveCount": 0.4,

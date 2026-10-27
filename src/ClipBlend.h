@@ -189,7 +189,7 @@ namespace zclip
 	}
 	inline bool Layered(int a_clip) { return a_clip == kAttack || a_clip == kAttackL || a_clip == kAttack2 || a_clip == kAttack3 || a_clip == kPunch || a_clip == kHit || a_clip == kHit2; }
 	// what the feet are doing this frame: pace (units a second), sideways share of it (-1 left .. 1 right), frenzied
-	struct Loco { float speed = 0, lateral = 0; bool frenzy = false; };
+	struct Loco { float speed = 0, lateral = 0; bool frenzy = false; int cap = -1; };  // cap: its fastest gait (its round's walker, runner or sprinter; -1 any)
 
 	struct Player
 	{
@@ -223,6 +223,8 @@ namespace zclip
 				float best = 1e9f;
 				for (int k : { kWalk, kRun, kSprint }) {
 					if ((k != kRun && !S.Has(k)) || S.c[k].speed <= 1.0f) continue;
+					if (in.cap == kWalk && k != kWalk && S.Has(kWalk)) continue;  // (a walker never breaks into a run)
+					if (in.cap == kRun && k == kSprint) continue;
 					float d = std::abs(std::log(in.speed / S.c[k].speed));
 					if (k == kSprint && in.frenzy) d -= 0.6f;
 					if (k == loco) d -= 0.15f;
@@ -231,7 +233,10 @@ namespace zclip
 			}
 			// (Noah: "the sprint looks too fast for how he's moving") the legs follow the pace only partly (a square root):
 			// a faster body takes longer strides as much as quicker ones, so the cycle never spins
-			if (in.speed >= 10.0f && want != kIdle) rate = std::clamp(std::sqrt(in.speed / std::max(1.0f, S.c[want].speed)), 0.65f, 1.6f);
+			// (Noah: "make sure the enemy's actual movement syncs with their movement animations") the legs now play at the
+			// body's own pace against the clip's (a straight share: the feet stay planted), the body's speed itself being held
+			// at the clip's (Undead: its gait's SpeedMult) so the share stays near 1
+			if (in.speed >= 10.0f && want != kIdle) rate = std::clamp(in.speed / std::max(1.0f, S.c[want].speed), 0.5f, 1.8f);
 			if (want != loco) prevLoco = loco, prevLocoRate = locoRate, locoBlend = 0;
 			loco = want, locoRate = rate;
 		}
