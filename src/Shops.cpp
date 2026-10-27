@@ -1063,6 +1063,13 @@ namespace bo3z
 				}
 			}
 			plan.top = top ? *top : plan.center.z;
+			// (Noah: "the Whiterun / Markarth / Solitude / Windhelm altar is in the floor") a hand-placed spot's height is
+			// where he stood: the walled cities' paving isn't seen by the floor search (it found the land far under the
+			// streets), so a floor found far from his height gives way to it
+			if (const auto& st = gen::kStations[a_town]; st.fixed && std::abs(plan.top - (st.z + kStandLift)) > 40.0f) {
+				logger::info("shops: {} floor search said z {:.0f} - the placed height {:.0f} is used", gen::kTowns[a_town], plan.top, st.z + kStandLift);
+				plan.top = st.z + kStandLift;
+			}
 			plan.topSet = true;
 			logger::info("shops: {} stand floor at z {:.0f}", gen::kTowns[a_town], plan.top);
 			ClearSite(a_town, a_anchor);

@@ -946,7 +946,8 @@ namespace bo3z
 		void        OnClick();  // a left click (menus: the party panel's buttons)
 		void        OnMouseMove(float a_dx, float a_dy);  // raw mouse movement (the menu cursor never sticks)
 		void        OnMenuButton(const RE::ButtonEvent* a_b);
-		void        InstallInputGate();  // main menu: pad / arrow keys over our words
+		void        InstallInputGate();
+		void        OnLeftStick(float a_x, float a_y);  // the world map: the left stick moves the cursor  // main menu: pad / arrow keys over our words
 		void        DevMenuPick(const std::string& a_text);  // dev: press a main-menu word
 		void        IntroStart();             // the Curse of Alduin intro film (once, for a new character)
 		bool        IntroActive();

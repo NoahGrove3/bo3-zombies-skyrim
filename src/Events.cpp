@@ -472,6 +472,7 @@ namespace bo3z
 					}
 					if (e->GetEventType() == RE::INPUT_EVENT_TYPE::kThumbstick) {
 						Movement::OnStick(static_cast<RE::ThumbstickEvent*>(e));
+						if (auto* ts = static_cast<RE::ThumbstickEvent*>(e); ts && ts->IsLeft()) Hud::OnLeftStick(ts->xValue, ts->yValue);
 						if (auto* ts = static_cast<RE::ThumbstickEvent*>(e); ts && std::abs(ts->xValue) + std::abs(ts->yValue) > 0.35f) Hud::NotePad();
 					}
 					if (auto* b = e->AsButtonEvent()) {

@@ -5886,8 +5886,26 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// (Noah: "my map cursor is invisible") on the world map ours always shows - with a pad too (the map is steered by
 			// it: the cursor stands in the middle), and in the middle if Skyrim's cursor hasn't been placed yet
 			const bool onMap = uiM && uiM->IsMenuOpen(RE::MapMenu::MENU_NAME);
+			// (Noah: "on controller in the map my left stick should move the cursor - it's stuck in place") the stick moves
+			// Skyrim's own cursor (the one the map picks markers with), unless Skyrim is already moving it
+			if (onMap && g_padLast) {
+				static ImVec2 written{ -1, -1 };
+				const float lx = g_lsX.load(), ly = g_lsY.load();
+				if (auto* mc = RE::MenuCursor::GetSingleton(); mc && std::hypot(lx, ly) > 0.15f) {
+					auto&       r = mc->GetRuntimeData();
+					const bool  skyrimMoves = written.x >= 0 && (std::abs(r.cursorPosX - written.x) + std::abs(r.cursorPosY - written.y) > 0.5f);
+					if (!skyrimMoves) {
+						const float sp = 900.0f * (r.screenWidthY > 1 ? r.screenWidthY / 1080.0f : 1.0f) * std::min(io.DeltaTime, 0.05f);
+						r.cursorPosX = std::clamp(r.cursorPosX + lx * sp, 0.0f, r.screenWidthX > 1 ? static_cast<float>(r.screenWidthX) : 1920.0f);
+						r.cursorPosY = std::clamp(r.cursorPosY - ly * sp, 0.0f, r.screenWidthY > 1 ? static_cast<float>(r.screenWidthY) : 1080.0f);
+					}
+					written = { r.cursorPosX, r.cursorPosY };
+				} else {
+					written = { -1, -1 };
+				}
+			}
 			if (cursorUp && !mainMenu && !codex && !g_filmOn && (g_skCursor.x >= 0 || onMap)) {  // in Skyrim's own menus: ours, right where its cursor is
-				const ImVec2 at = onMap && (g_padLast || g_skCursor.x < 0) ? ImVec2{ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f } : g_skCursor;
+				const ImVec2 at = g_skCursor.x < 0 ? ImVec2{ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f } : g_skCursor;  // (the map moves Skyrim's cursor by the left stick: ours follows it)
 				DrawPingCursor(ImGui::GetForegroundDrawList(), at, io.DisplaySize.y / 1080.0f, static_cast<float>(ImGui::GetTime()), onMap);
 			}
 			if (g_veil > 0 && !g_filmOn && !mainMenu) {
@@ -6023,6 +6041,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
+		std::atomic<float> g_lsX{ 0 }, g_lsY{ 0 };
+		void OnLeftStick(float a_x, float a_y) { g_lsX = a_x, g_lsY = a_y; }
 		void InstallInputGate()
 		{
 			REL::Relocation<std::uintptr_t> vt{ RE::VTABLE_MenuControls[0] };
