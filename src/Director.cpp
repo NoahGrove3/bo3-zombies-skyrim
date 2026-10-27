@@ -3580,6 +3580,9 @@ namespace bo3z
 		// you fly where you look and nothing hurts you; no undead rise and the night stands still; every arrow of yours that
 		// comes to rest is a spawn point for the city you are in - a beam of light stands on it, and it is written to
 		// SKSE/CurseOfAlduin-spawnpoints.txt. An arrow landing on a beam already there takes that point away again.
+		// (Noah: "remove the scout mode so players can't use it - we can add it again later") off: no MCM page, no F10.
+		// Set true (and put the MCM page back in tools/mcm.py) to lay out spawn points again.
+		constexpr bool kScoutAvailable = false;
 		struct ScoutMk
 		{
 			int                 town;
@@ -3667,7 +3670,7 @@ namespace bo3z
 		}
 		bool TickScout(RE::PlayerCharacter* a_player, float a_delta)
 		{
-			const bool want = Settings::Scout() && Save::Flag(Save::kFlagStarted);
+			const bool want = kScoutAvailable && Settings::Scout() && Save::Flag(Save::kFlagStarted);
 			auto*      av = a_player->AsActorValueOwner();
 			if (want != g_scoutOn) {
 				g_scoutOn = want;
@@ -3827,7 +3830,7 @@ namespace bo3z
 		}
 		void ScoutKey(const RE::ButtonEvent* a_b)
 		{
-			if (!a_b || !a_b->IsDown() || a_b->GetDevice() != RE::INPUT_DEVICE::kKeyboard) return;
+			if (!kScoutAvailable || !a_b || !a_b->IsDown() || a_b->GetDevice() != RE::INPUT_DEVICE::kKeyboard) return;
 			auto* ui = RE::UI::GetSingleton();
 			if (!ui || ui->GameIsPaused() || ui->IsMenuOpen(RE::Console::MENU_NAME) || !Save::Flag(Save::kFlagStarted)) return;
 			const auto id = a_b->GetIDCode();
