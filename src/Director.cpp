@@ -3521,11 +3521,12 @@ namespace bo3z
 		};
 		std::vector<ScoutMk> g_marks;
 		bool                 g_scoutOn = false, g_marksLoaded = false;
+		RE::NiPoint3         g_hover{};  // (scout flight) where you hang in the air
 		struct ScoutArrow
 		{
 			RE::NiPoint3 last;
 			float        still = 0;
-			bool         marked = false, seen = true;
+			bool         marked = false, seen = true, moved = false;
 		};
 		std::unordered_map<std::uint32_t, ScoutArrow> g_scoutArrows;
 		std::filesystem::path ScoutFile()
@@ -3606,7 +3607,17 @@ namespace bo3z
 				if (want) {
 					if (!RE::PlayerCharacter::IsGodMode()) ScoutConsole("tgm");
 					ScoutConsole("tcl");
-					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 400.0f);
+					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 200.0f);
+					g_hover = a_player->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f };
+					// (Noah: "only really fast movement speed") the arrows already lying about are not marks: only ones shot now
+					if (auto* mgr = RE::Projectile::Manager::GetSingleton()) {
+						RE::BSSpinLockGuard lock(mgr->projectileLock);
+						for (auto* list : { &mgr->limited, &mgr->unlimited, &mgr->pending }) {
+							for (auto& h : *list) {
+								if (auto pr = h.get(); pr && pr->GetFormType() == RE::FormType::ProjectileArrow) g_scoutArrows[pr->GetFormID()] = ScoutArrow{ pr->GetPosition(), 0, true };
+							}
+						}
+					}
 					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.1f), av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.1f);  // (so the new speed takes)
 					for (auto& z : g_alive) {
 						if (auto a = z.handle.get(); a && !a->IsDead()) Vanish(a.get());
@@ -3629,7 +3640,8 @@ namespace bo3z
 				} else {
 					if (RE::PlayerCharacter::IsGodMode()) ScoutConsole("tgm");
 					ScoutConsole("tcl");
-					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -400.0f);
+					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, -200.0f);
+					if (auto* ctrl = a_player->GetCharController()) ctrl->gravity = 1.0f;
 					av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.1f), av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.1f);
 					for (auto& m : g_marks) DropBeam(m);
 					g_scoutArrows.clear();
@@ -3639,6 +3651,24 @@ namespace bo3z
 			}
 			if (!g_scoutOn) return false;
 			TickPurge(a_delta);
+			// flight: you hang where you are, and move where you look - up and down too - fast; sprint to go faster
+			if (auto* ctrl = a_player->GetCharController()) ctrl->gravity = 0.0f, ctrl->fallTime = 0.0f;
+			{
+				auto* ui = RE::UI::GetSingleton();
+				const bool paused = ui && ui->GameIsPaused();
+				if (a_player->GetPosition().GetDistance(g_hover) > 400.0f) g_hover = a_player->GetPosition();  // (a door, a load: start from there)
+				RE::NiPoint2 in{};
+				if (auto* pc = RE::PlayerControls::GetSingleton()) in = pc->data.moveInputVec;
+				if (!paused) {
+					const float yaw = a_player->data.angle.z, pitch = a_player->data.angle.x;
+					const RE::NiPoint3 fwd{ std::sin(yaw) * std::cos(pitch), std::cos(yaw) * std::cos(pitch), -std::sin(pitch) };
+					const RE::NiPoint3 right{ std::cos(yaw), -std::sin(yaw), 0.0f };
+					const float speed = a_player->AsActorState()->IsSprinting() ? 5000.0f : 1800.0f;
+					const float dt = std::min(a_delta, 0.05f);
+					g_hover += (fwd * in.y + right * in.x) * (speed * dt);
+					a_player->SetPosition(g_hover, true);
+				}
+			}
 			// arrows of yours at rest: each a mark (gathered under the projectiles' lock, marked after it)
 			std::vector<RE::NiPoint3> rest;
 			if (auto* mgr = RE::Projectile::Manager::GetSingleton()) {
@@ -3654,10 +3684,10 @@ namespace bo3z
 						a.seen = true;
 						if (!fresh) {
 							if (pos.GetDistance(a.last) < 2.0f) a.still += a_delta;
-							else a.still = 0;
+							else a.still = 0, a.moved = true;
 							a.last = pos;
 						}
-						if (!a.marked && a.still >= 0.25f) a.marked = true, rest.push_back(pos);
+						if (!a.marked && a.moved && a.still >= 0.25f) a.marked = true, rest.push_back(pos);
 					}
 				}
 				std::erase_if(g_scoutArrows, [](const auto& e) { return !e.second.seen; });

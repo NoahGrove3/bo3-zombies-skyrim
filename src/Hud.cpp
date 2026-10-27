@@ -5547,6 +5547,37 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 				}
 			}
+			// (Noah: "add a slow zoom in on all loading screens") the loading screen's picture drifts slowly closer while it
+			// shows - about a tenth larger over twenty seconds, easing out - and its camera's view narrows with it
+			{
+				static RE::NiAVObject* model = nullptr;
+				static float           baseScale = 1.0f, baseFov = 0.0f;
+				static auto            since = std::chrono::steady_clock::now();
+				auto*                  ui = RE::UI::GetSingleton();
+				RE::BSFadeNode*        now = nullptr;
+				RE::MistMenu*          mist = nullptr;
+				if (ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) {
+					if (auto m = ui->GetMenu<RE::MistMenu>(); m) {
+						mist = m.get();
+						now = mist->GetRuntimeData().loadScreenModel.get();
+					}
+				}
+				if (now != model) {
+					model = now;
+					since = std::chrono::steady_clock::now();
+					if (now) {
+						baseScale = now->local.scale, baseFov = mist->GetRuntimeData().cameraFOV;
+						static int told = 0;
+						if (told++ < 3) logger::info("loading: zooming the loading screen in (scale {:.2f}, view {:.0f})", baseScale, baseFov);
+					}
+				}
+				if (now && mist) {
+					const float u = std::clamp(std::chrono::duration<float>(std::chrono::steady_clock::now() - since).count() / 20.0f, 0.0f, 1.0f);
+					const float e = 1.0f - (1.0f - u) * (1.0f - u);  // (eases out)
+					now->local.scale = baseScale * (1.0f + 0.10f * e);
+					if (baseFov > 1.0f) mist->GetRuntimeData().cameraFOV = baseFov * (1.0f - 0.08f * e);
+				}
+			}
 			{
 				const auto t = std::chrono::steady_clock::now();
 				auto*      ui = RE::UI::GetSingleton();
