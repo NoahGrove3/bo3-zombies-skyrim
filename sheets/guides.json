@@ -16,7 +16,7 @@
      "title": "The Summoner",
      "paras": [
       "A conjurer of the <b>College of Winterhold</b>. Your summons fight for you - every kill they make is yours: Cursed Essence, progress and trials.",
-      "<b>You start with</b> Conjure Skeleton (right hand), Conjure Wolf (left hand) and the summoner's robes."
+      "<b>You start with</b> Conjure Skeleton, Conjure Wolf, the <b>Conjurer's Staff</b> (its bolts mark an enemy: all your summons attack it until it dies or you mark another; hold it at an Echo Altar and take the Reforge row to make it stronger) and the summoner's robes."
      ]
     },
     {
@@ -31,15 +31,15 @@
      "title": "Getting Stronger",
      "paras": [
       "<b>Kills fill it, the altar raises it.</b> Kills with the spell in your hand count toward its next rung - <b>25</b>, then <b>60</b>, then <b>120</b> for the Legendary rung - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, then <b>12,000</b> Cursed Essence, once a night per spell. The altar's Reforge row and <i>Your Progress</i> show the count.",
-      "<b>Command</b> - how many summons you can have out at once. You start with 1; it grows to 2, 3 and 4 as your two carried families climb (1, 3 and 6 climbs in all). At the limit a new summon replaces the oldest."
+      "<b>Summon slots</b> - how many summons you can have out at the same time. You start with <b>2</b>, and get one more for every <b>2 Echo Altars</b> you free, up to <b>7</b>. When every slot is full, a new summon replaces your oldest one."
      ]
     },
     {
      "title": "Your Perks",
      "paras": [
-      "<b>Bonebinder's Brew</b> - summons have 50% more health and hit 50% harder.",
-      "<b>Soul-Tether Wine</b> - each summon kill heals you 5%.",
-      "<b>Conjurer's Command Mead</b> - one more summon at once (up to 5).",
+      "<b>Bonebinder's Brew</b> - your summons have 50% more health and deal 50% more damage.",
+      "<b>Soul-Tether Wine</b> - each time one of your summons kills an enemy, you heal 5% of your maximum health.",
+      "<b>Conjurer's Command Mead</b> - one more summon slot (up to 7).",
       "One of each perk a life - death takes them all."
      ]
     },

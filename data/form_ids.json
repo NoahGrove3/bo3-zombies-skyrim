@@ -1273,6 +1273,8 @@
   "WOOP:dance_2": "0xcf5",
   "SPEL:dance_2": "0xcf6",
   "SHOU:dance": "0xcf7",
-  "SNDR:dance_song": "0xcf8"
+  "SNDR:dance_song": "0xcf8",
+  "PERK:summon_cap_6": "0xcf9",
+  "PERK:summon_cap_7": "0xcfa"
  }
 }

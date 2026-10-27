@@ -313,8 +313,8 @@ recs['ACTI'].append(record('ACTI', fid('ACTI', 'vortexfx'), [sub('EDID', z('UN_V
 
 # (the classes overhaul) the Summoner's command: hidden perks that set how many summons you may hold (2, 3, 4) -
 # Twin Souls' own entry point (Mod Commanded Actor Limit, Set Value), without its conditions, above it in priority
-# (5: the Conjurer's Command perk's one more)
-for n in (2, 3, 4, 5):
+# (Noah: 2 to start, one more for every 2 freed altars, up to 7)
+for n in (2, 3, 4, 5, 6, 7):
     recs['PERK'].append(record('PERK', fid('PERK', f'summon_cap_{n}'), [
         sub('EDID', z(f'UN_SummonCap{n}')), sub('FULL', z(f'Command of {n}')), sub('DESC', z(f'You can hold {n} summons at once.')),
         sub('DATA', bytes([0, 0, 1, 0, 1])), sub('PRKE', bytes([2, 0, 10 + n])), sub('DATA', bytes([68, 1, 2])),
