@@ -2188,6 +2188,7 @@ namespace bo3z
 			const auto& g = gen::kGuns[gun];
 			const float dmg = g.damage * Perks::DamageMult() * (1.0f + gen::kForgeStep * ForgeLevel());
 			if (Director::IsFoe(a_target)) Damage(a_target, dmg, false, false, true);
+			if (g.id == "gravecaller" && Director::IsFoe(a_target) && !a_target->IsDead()) Classes::MarkForSummons(a_target);  // (the Conjurer's Staff)
 			StaffTap(g, a_target->GetPosition(), a_target, dmg);
 			return true;
 		}

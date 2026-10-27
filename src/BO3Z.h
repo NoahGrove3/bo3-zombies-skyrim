@@ -104,7 +104,8 @@ namespace bo3z
 	namespace Director
 	{
 		void             Tick(float a_delta);
-		bool             Scouting();                     // (Noah) scout mode: flying, unhurt, no undead - arrows mark spawn points
+		bool             Scouting();
+		bool             Rising(RE::Actor* a_actor);    // still climbing out of the ground (not to be fought yet)                     // (Noah) scout mode: flying, unhurt, no undead - arrows mark spawn points
 		void             ScoutMark(const RE::NiPoint3& a_at);  // an arrow of the player's came to rest here
 		void             ScoutKey(const RE::ButtonEvent* a_b);  // F10 scout mode on / off; while scouting B marks where you look, N puts the city's altar where you stand
 		void             Reset();
@@ -310,6 +311,7 @@ namespace bo3z
 		bool             OnCast(RE::FormID a_spell);   // the Tome of the Six Fires
 		void             NoteCast(RE::FormID a_spell); // a summon spell: called up here if Skyrim's own didn't come
 		bool             IsOwnSummon(RE::Actor* a_actor);
+		void             MarkForSummons(RE::Actor* a_target);  // (the Summoner's staff) every summon of yours turns on it until it dies or another is marked
 		void             TickFast(float a_delta);      // where the Subsuming Vortex's arrows come down
 		int              RestockWonder();              // the Vortex's arrows topped up (quivers, Max Ammo)
 		bool             WonderEarned();               // any class's wonder won (the Three Words follow)

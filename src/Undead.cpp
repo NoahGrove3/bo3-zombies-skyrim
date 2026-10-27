@@ -257,7 +257,10 @@ namespace bo3z
 			const auto  pos = a_actor->GetPosition();
 			if (dt > 0) {
 				const float v = std::hypot(pos.x - r.lastPos.x, pos.y - r.lastPos.y) / dt;
-				r.speed += (std::min(v, 900.0f) - r.speed) * std::min(1.0f, dt * 6.0f);
+				// (Noah: "they start sliding towards me while standing before the walk -> run animations start") the pace is
+				// taken up at once when it rises - the legs start with the body - and let go of more gently
+				const float target = std::min(v, 900.0f);
+				r.speed += (target - r.speed) * std::min(1.0f, dt * (target > r.speed ? 22.0f : 7.0f));
 			}
 			const RE::NiPoint3 prevPos = r.lastPos;
 			r.lastPos = pos;

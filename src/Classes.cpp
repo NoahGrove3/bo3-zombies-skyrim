@@ -52,6 +52,17 @@ namespace bo3z::Classes
 			}
 		}
 
+		int ConjurerStaff()
+		{
+			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) if (gen::kGuns[i].id == "gravecaller") return i;
+			return -1;
+		}
+		bool g_staffChecked = false;
+		void GiveConjurerStaff()
+		{
+			const int i = ConjurerStaff();
+			if (i >= 0 && !Gun::Owns(i) && Gun::Give(i)) logger::info("classes: the Conjurer's Staff given");
+		}
 		void GiveKit(int a_cls)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -61,6 +72,7 @@ namespace bo3z::Classes
 			case coffer::kSummoner:
 				GiveSpell(Rung1(a_cls, "The Dead"), false);
 				GiveSpell(Rung1(a_cls, "Beasts"), true);
+				GiveConjurerStaff();  // (Noah) the staff whose bolts tell your summons what to kill
 				if (female) {
 					for (std::uint32_t id : { 0xE58u, 0xE5Bu, 0xE5Du, 0xE5Fu, 0xE63u }) {
 						GiveItem(p, Lookup(id, "Wandering Summoner Outfit.esp"), 1, true);
@@ -619,6 +631,11 @@ namespace bo3z::Classes
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		if (!p || !dh) return;
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();
+		// (Noah) a Summoner from before the staff came gets it once, a moment into the game
+		if (!g_staffChecked && p->Is3DLoaded() && g_class.load() == coffer::kSummoner && g_kit[coffer::kSummoner]) {
+			g_staffChecked = true;
+			GiveConjurerStaff();
+		}
 		// (Noah: no movement-blocking hits) the night's dead never stagger you: the Steady perk (Mod Incoming Stagger x0)
 		if (auto* steady = dh->LookupForm<RE::BGSPerk>(gen::kSteadyPerk, gen::kPlugin); steady && !p->HasPerk(steady)) {
 			p->AddPerk(steady);
@@ -1044,6 +1061,7 @@ namespace bo3z::Classes
 		struct PendingSummon { RE::TESBoundObject* what = nullptr; float wait = 0, seconds = 60; int before = 0; std::string name; };
 		std::vector<PendingSummon>                        g_pendingSummon;
 		std::vector<std::pair<RE::ActorHandle, float>>    g_ownSummons;  // the ones called up here: seconds left
+		RE::ActorHandle g_summonMark;  // (the Summoner's staff) the one your summons are told to kill
 		int CommandedNow(RE::PlayerCharacter* a_p)
 		{
 			int n = 0;
@@ -1096,12 +1114,25 @@ namespace bo3z::Classes
 						sav->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kAttackDamageMult, more);
 					}
 					auto cur = s->GetActorRuntimeData().currentCombatTarget.get();
+					// (Noah: "a staff that when attacks hit a target the summons focus that enemy until they're dead or a
+					// different enemy is targeted") the marked one first
+					if (auto m = g_summonMark.get(); m && !m->IsDead() && !m->IsDisabled() && m->Is3DLoaded() && !Director::Rising(m.get()) &&
+						m->GetPosition().GetDistance(s->GetPosition()) < 6000.0f) {
+						if (cur.get() != m.get()) {
+							if (auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton()) {
+								const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(s->GetFormType(), s);
+								RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+								vm->DispatchMethodCall(hd, "Actor", "StartCombat", RE::MakeFunctionArguments(static_cast<RE::Actor*>(m.get())), none);
+							}
+						}
+						continue;
+					}
 					if (cur && !cur->IsDead() && Director::IsFoe(cur.get())) continue;
 					RE::Actor* best = nullptr;
 					float bestD = 3000.0f;
 					for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 						auto z = h.get();
-						if (!z || z->IsDead() || z->IsDisabled() || !Director::IsFoe(z.get())) continue;
+						if (!z || z->IsDead() || z->IsDisabled() || !z->Is3DLoaded() || !Director::IsFoe(z.get()) || Director::Rising(z.get())) continue;  // (not one still in the ground)
 						if (z->IsCommandedActor() && z->GetCommandingActor().get() == p) continue;
 						if (const float d = z->GetPosition().GetDistance(s->GetPosition()); d < bestD) bestD = d, best = z.get();
 					}
@@ -1160,6 +1191,15 @@ namespace bo3z::Classes
 		if (p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kBody)) return;
 		if (p->GetItemCount(uw) <= 0) p->AddObjectToContainer(uw, nullptr, 1, nullptr);
 		em->EquipObject(p, uw, nullptr, 1, nullptr, false, false, false, true);
+	}
+	void MarkForSummons(RE::Actor* a_target)
+	{
+		if (!a_target || a_target->IsDead()) return;
+		if (g_summonMark.get().get() != a_target) {
+			g_summonMark = a_target->GetHandle();
+			static int told = 0;
+			if (told++ < 10) logger::info("classes: your summons turn on {} ({:08X})", a_target->GetName(), a_target->GetFormID());
+		}
 	}
 	bool IsOwnSummon(RE::Actor* a_actor)
 	{
@@ -1392,5 +1432,5 @@ namespace bo3z::Classes
 		if (g_wStep[coffer::kSummoner] > kWonderSteps) TuneWyrm();
 		logger::info("classes: loaded ({})", Name(g_class));
 	}
-	void Revert() { SetState({}); g_open = false; g_mastery.fill(0); }
+	void Revert() { SetState({}); g_open = false; g_mastery.fill(0); g_staffChecked = false; g_summonMark = {}; }
 }

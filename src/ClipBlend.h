@@ -214,7 +214,7 @@ namespace zclip
 		{
 			int want = kRun;
 			float rate = 0;
-			if (in.speed < 15.0f) {
+			if (in.speed < 10.0f) {
 				want = S.Has(kIdle) ? kIdle : kRun;
 				rate = S.Has(kIdle) ? 1.0f : 0.0f;
 			} else if (std::abs(in.lateral) > 0.65f && S.Has(in.lateral > 0 ? kStrafeR : kStrafeL)) {
@@ -231,7 +231,7 @@ namespace zclip
 			}
 			// (Noah: "the sprint looks too fast for how he's moving") the legs follow the pace only partly (a square root):
 			// a faster body takes longer strides as much as quicker ones, so the cycle never spins
-			if (in.speed >= 15.0f) rate = std::clamp(std::sqrt(in.speed / std::max(1.0f, S.c[want].speed)), 0.65f, 1.4f);
+			if (in.speed >= 10.0f) rate = std::clamp(std::sqrt(in.speed / std::max(1.0f, S.c[want].speed)), 0.65f, 1.6f);
 			if (want != loco) prevLoco = loco, prevLocoRate = locoRate, locoBlend = 0;
 			loco = want, locoRate = rate;
 		}
@@ -297,7 +297,7 @@ namespace zclip
 		{
 			dt = std::clamp(dt, 0.0f, 0.25f);
 			PickLoco(S, a_in);
-			locoBlend = std::min(1.0f, locoBlend + dt / 0.25f);
+			locoBlend = std::min(1.0f, locoBlend + dt / (prevLoco == kIdle ? 0.1f : 0.2f));  // (out of standing: quick, the feet go with the body)
 			phase = std::fmod(phase + dt * locoRate / std::max(0.1f, S.c[loco].Seconds()), 1.0f);
 			if (clip == kRun) rate = 1.0f;
 			clipT += dt * rate, prevT += dt * prevRate;

@@ -3452,7 +3452,11 @@ namespace bo3z
 		// chase loop. Followers and summons still fight anything that comes for the players.
 		bool PlayerSide(RE::Actor* a, RE::PlayerCharacter* a_player)
 		{
-			return a && (a == a_player || a->IsPlayerTeammate() || Party::IsFriend(a) || Echo::IsAlly(a));
+			// (Noah: "my summons were ignoring the Curse's enemies") a summon of yours is on your side: its fights are kept
+			if (a && a->IsCommandedActor()) {
+				if (auto c = a->GetCommandingActor(); c && (c.get() == a_player || Party::IsFriend(c.get()))) return true;
+			}
+			return a && (a == a_player || a->IsPlayerTeammate() || Party::IsFriend(a) || Echo::IsAlly(a) || Classes::IsOwnSummon(a));
 		}
 		void TickPeace(RE::PlayerCharacter* a_player, float a_delta)
 		{
@@ -3793,6 +3797,7 @@ namespace bo3z
 			return true;
 		}
 		bool Scouting() { return g_scoutOn; }
+		bool Rising(RE::Actor* a_actor) { return IsRising(a_actor); }
 		// where the crosshair meets the world (from the camera, along where you look)
 		std::optional<RE::NiPoint3> LookHit(RE::PlayerCharacter* a_player)
 		{
