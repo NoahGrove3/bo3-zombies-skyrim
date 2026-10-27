@@ -1426,7 +1426,15 @@ namespace bo3z::Classes
 			}
 			g_ownSummons.clear();
 			g_pendingSummon.clear();
-			if (auto* mt = p->AsMagicTarget()) mt->DispelEffectsWithArchetype(RE::EffectArchetypes::ArchetypeID::kSummonCreature, true);
+			if (auto* mt = p->AsMagicTarget()) {  // (Skyrim's own summon spells on you: ended)
+				std::vector<RE::ActiveEffect*> ends;
+				if (auto* list = mt->GetActiveEffectList()) {
+					for (auto* ae : *list) {
+						if (ae && ae->effect && ae->effect->baseEffect && ae->effect->baseEffect->GetArchetype() == RE::EffectArchetypes::ArchetypeID::kSummonCreature) ends.push_back(ae);
+					}
+				}
+				for (auto* ae : ends) ae->Dispel(true);
+			}
 			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {  // (any left over: banished)
 				if (auto a = h.get(); a && !a->IsDead() && a->IsCommandedActor() && a->GetCommandingActor().get() == p) {
 					Gun::FxBlast("dark", a->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f });
