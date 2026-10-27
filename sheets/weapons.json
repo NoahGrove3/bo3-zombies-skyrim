@@ -1945,7 +1945,7 @@
       "element": "B070FF",
       "wandStyle": "none",
       "abilityValue": 0,
-      "abilityText": "The Summoner's staff. It casts a green bolt that bursts on what it hits, hurting the dead within 3 meters - and marks the one it hit: every summon of yours attacks it until it dies or you mark another. It hits a little harder for every Echo Altar you free.",
+      "abilityText": "The Summoner's staff. It casts a green bolt that bursts where it hits, hurting every enemy within 3 meters - and marking them: your summons attack the marked enemies until they die or you mark new ones. Reforge it at an Echo Altar (hold it and take the Reforge row, once three altars are freed): each reforge makes the burst 1 meter wider and hit harder.",
       "chargeName": "Void Orb",
       "chargeText": "A void orb drags the dead together, then crushes them",
       "chargeSeconds": 1.3,

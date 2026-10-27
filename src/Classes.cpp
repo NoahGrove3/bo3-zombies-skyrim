@@ -15,6 +15,7 @@ namespace bo3z::Classes
 		std::atomic<int>  g_sel{ 0 };
 		std::atomic<bool> g_switching{ false };
 		std::array<bool, 4>                                    g_kit{};
+		int                                                    g_staffLevel = 0;  // (Noah) the Conjurer's Staff's reforges at the altar, 0..3
 		std::array<std::vector<std::pair<int, int>>, 4>        g_stash;  // the spells a class you left carried (index, level)
 		std::chrono::steady_clock::time_point                  g_closedAt{};
 		std::array<std::uint16_t, coffer::kLadders>            g_mastery{};  // kills made with each ladder's spell in hand (its summons' kills for the Summoner)
@@ -1070,7 +1071,7 @@ namespace bo3z::Classes
 		struct PendingSummon { RE::TESBoundObject* what = nullptr; float wait = 0, seconds = 60; int before = 0; std::string name; };
 		std::vector<PendingSummon>                        g_pendingSummon;
 		std::vector<std::pair<RE::ActorHandle, float>>    g_ownSummons;  // the ones called up here: seconds left
-		RE::ActorHandle g_summonMark;  // (the Summoner's staff) the one your summons are told to kill
+		std::vector<RE::ActorHandle> g_summonMarks;  // (the Summoner's staff) the ones your summons are told to kill
 		int CommandedNow(RE::PlayerCharacter* a_p)
 		{
 			int n = 0;
@@ -1133,8 +1134,17 @@ namespace bo3z::Classes
 					auto cur = s->GetActorRuntimeData().currentCombatTarget.get();
 					// (Noah: "a staff that when attacks hit a target the summons focus that enemy until they're dead or a
 					// different enemy is targeted") the marked one first
-					if (auto m = g_summonMark.get(); m && !m->IsDead() && !m->IsDisabled() && m->Is3DLoaded() && !Director::Rising(m.get()) &&
-						m->GetPosition().GetDistance(s->GetPosition()) < 6000.0f) {
+					RE::NiPointer<RE::Actor> m;
+					{
+						float md = 6000.0f;
+						for (auto& mh : g_summonMarks) {
+							auto c = mh.get();
+							if (!c || c->IsDead() || c->IsDisabled() || !c->Is3DLoaded() || Director::Rising(c.get())) continue;
+							if (c.get() == cur.get()) { m = c; break; }  // (already on one of them: it stays on it)
+							if (const float d = c->GetPosition().GetDistance(s->GetPosition()); d < md) md = d, m = c;
+						}
+					}
+					if (m) {
 						if (cur.get() != m.get()) {
 							if (auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton()) {
 								const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(s->GetFormType(), s);
@@ -1218,19 +1228,51 @@ namespace bo3z::Classes
 		const auto now = std::chrono::steady_clock::now();
 		if (now - last < std::chrono::milliseconds(200)) return;  // (one bolt, one burst)
 		last = now;
-		// a burst 3 m round what it hit: a fifth of one of the dead's health, a little more for each freed altar
-		const float share = 0.2f + 0.02f * static_cast<float>(FreedCount());
-		Gun::AreaHurt(a_target->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, 210.0f, share, "");
-		if (Director::IsFoe(a_target) && !a_target->IsDead()) MarkForSummons(a_target);
+		// (Noah: "the Echo Altar should increase the area of damage on impact, and the damage itself - and any enemy within
+		// the damage area gets marked for the summons") a burst round what it hit: 3 m and a fifth of one of the dead's
+		// health at first, each reforge 1 m wider and harder; everyone in it is marked
+		const float radius = 210.0f + 70.0f * static_cast<float>(g_staffLevel);
+		const float share = 0.2f + 0.1f * static_cast<float>(g_staffLevel);
+		const auto  at = a_target->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f };
+		Gun::AreaHurt(at, radius, share, "");
+		std::vector<RE::ActorHandle> marks;
+		for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+			auto z = h.get();
+			if (z && !z->IsDead() && !z->IsDisabled() && Director::IsFoe(z.get()) && z->GetPosition().GetDistance(at) <= radius + 40.0f) marks.push_back(z->GetHandle());
+		}
+		if (Director::IsFoe(a_target) && !a_target->IsDead() && std::none_of(marks.begin(), marks.end(), [&](const RE::ActorHandle& m) { return m.get().get() == a_target; })) marks.push_back(a_target->GetHandle());
+		if (!marks.empty()) {
+			g_summonMarks = std::move(marks);
+			static int told = 0;
+			if (told++ < 10) logger::info("classes: your summons turn on {} marked (level {} staff)", g_summonMarks.size(), g_staffLevel);
+		}
 	}
 	void MarkForSummons(RE::Actor* a_target)
 	{
 		if (!a_target || a_target->IsDead()) return;
-		if (g_summonMark.get().get() != a_target) {
-			g_summonMark = a_target->GetHandle();
-			static int told = 0;
-			if (told++ < 10) logger::info("classes: your summons turn on {} ({:08X})", a_target->GetName(), a_target->GetFormID());
+		g_summonMarks = { a_target->GetHandle() };
+	}
+	bool HoldsConjurerStaff()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		const int i = ConjurerStaff();
+		auto* w = i >= 0 ? Forms::Gun(i) : nullptr;
+		return p && w && (p->GetEquippedObject(false) == w || p->GetEquippedObject(true) == w);
+	}
+	// (Noah: "upgrading the summon staff at the Echo Altar") the altar's Reforge row with the staff in hand: three steps,
+	// the same prices as a spell's
+	bool ReforgeStaff()
+	{
+		const std::string name = "Conjurer's Staff";
+		if (g_staffLevel >= gen::kForgeMax) {
+			Hud::Banner(name + " cannot hold more power", 2.5f);
+			return false;
 		}
+		if (!Points::Spend(gen::kForgeCost[g_staffLevel])) return false;
+		++g_staffLevel;
+		Hud::Banner(name + " reforged  " + std::string(g_staffLevel, '|') + fmt::format("  - its burst {} m, harder", 3 + g_staffLevel), 4.0f);
+		logger::info("forge: Conjurer's Staff -> level {}", g_staffLevel);
+		return true;
 	}
 	bool IsOwnSummon(RE::Actor* a_actor)
 	{
@@ -1413,11 +1455,13 @@ namespace bo3z::Classes
 		v.push_back(0xA3);  // the altar bows' kills: [n] then n x u16
 		v.push_back(static_cast<std::uint8_t>(g_bowMastery.size()));
 		for (auto m : g_bowMastery) v.push_back(static_cast<std::uint8_t>(m & 0xFF)), v.push_back(static_cast<std::uint8_t>(m >> 8));
+		v.push_back(0xA4);  // the Conjurer's Staff's reforges
+		v.push_back(static_cast<std::uint8_t>(g_staffLevel));
 		return v;
 	}
 	void SetState(const std::vector<std::uint8_t>& a_v)
 	{
-		g_class = -1, g_kit.fill(false);
+		g_class = -1, g_kit.fill(false), g_staffLevel = 0;
 		g_wStep.fill(0), g_wKills.fill(0), g_wTowns.fill(0), g_lastHit.clear(), g_boltKills = 0;
 		for (auto& s : g_stash) s.clear();
 		if (a_v.empty()) return;
@@ -1460,8 +1504,10 @@ namespace bo3z::Classes
 				if (b < static_cast<int>(g_bowMastery.size())) g_bowMastery[b] = static_cast<std::uint16_t>(a_v[k] | (a_v[k + 1] << 8));
 			}
 		}
+		g_staffLevel = 0;
+		if (k + 1 < a_v.size() && a_v[k] == 0xA4) g_staffLevel = std::min<int>(a_v[k + 1], gen::kForgeMax), k += 2;
 		if (g_wStep[coffer::kSummoner] > kWonderSteps) TuneWyrm();
 		logger::info("classes: loaded ({})", Name(g_class));
 	}
-	void Revert() { SetState({}); g_open = false; g_mastery.fill(0); g_staffChecked = false; g_summonMark = {}; }
+	void Revert() { SetState({}); g_open = false; g_mastery.fill(0); g_staffChecked = false; g_summonMarks.clear(); }
 }
