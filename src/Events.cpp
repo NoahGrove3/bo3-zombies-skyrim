@@ -618,7 +618,7 @@ namespace bo3z
 							}
 							if (sp && sp->GetSpellType() == RE::MagicSystem::SpellType::kSpell) {
 								last = now;
-								if (auto* c = player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) c->CastSpellImmediate(sp, false, t, 1.0f, false, 0.0f, player);
+								Forms::CastOnce(player, sp, t, 1.0f, player);
 								static int told = 0;
 								if (told++ < 5) logger::info("spellsword: the blade struck with {}", sp->GetName());
 							}

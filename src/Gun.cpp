@@ -474,7 +474,7 @@ namespace bo3z
 				}
 			}
 			if (auto* sp = cache[a_elem]; sp) {
-				if (auto* c = p->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) c->CastSpellImmediate(sp, false, a_target, 1.0f, false, 0.0f, p);
+				Forms::CastOnce(p, sp, a_target, 1.0f, p);
 			}
 		}
 		int FecOfEffect(int a_fx)

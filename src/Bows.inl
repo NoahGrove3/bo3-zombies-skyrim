@@ -378,9 +378,8 @@ namespace BowsImpl
 		const float len = a_vel.Length();
 		const RE::NiPoint3 dir = len > 1 ? a_vel * (1.0f / len) : RE::NiPoint3{ 0, 1, 0 };
 		m->SetPosition(p - dir * 140.0f + RE::NiPoint3{ 0, 0, 60.0f });
-		auto* c = m->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant);
-		if (!c) return false;
-		c->CastSpellImmediate(a_spell, false, a_target, 1.0f, false, 0.0f, pl);
+		if (!m->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) return false;
+		Forms::CastOnce(m.get(), a_spell, a_target, 1.0f, pl);
 		if (a_seek) g_seekSpell = a_spell, g_seekLeft = 10.0f;
 		return true;
 	}

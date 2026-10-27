@@ -29,6 +29,27 @@ namespace bo3z
 
 	namespace Forms
 	{
+		void CastOnce(RE::TESObjectREFR* a_from, RE::SpellItem* a_spell, RE::TESObjectREFR* a_target, float a_strength, RE::Actor* a_blame)
+		{
+			if (!a_from || !a_spell) return;
+			auto* c = a_from->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant);
+			if (!c) return;
+			c->CastSpellImmediate(a_spell, false, a_target, a_strength, false, 0.0f, a_blame);
+			if (a_spell->GetCastingType() != RE::MagicSystem::CastingType::kConcentration) return;
+			// held spells: one short burst, then the caster lets go (and again a little later, in case it took hold late)
+			const auto h = a_from->CreateRefHandle();
+			std::thread([h] {
+				for (int ms : { 250, 400 }) {
+					std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+					SKSE::GetTaskInterface()->AddTask([h] {
+						if (auto r = h.get()) {
+							if (auto* mc = r->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) mc->InterruptCast(false);
+						}
+					});
+				}
+			}).detach();
+		}
+
 		bool Resolve()
 		{
 			bool ok = true;

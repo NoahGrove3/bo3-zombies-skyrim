@@ -295,7 +295,7 @@ namespace bo3z::Classes
 		void CastFrom(RE::Actor* a_from, RE::SpellItem* a_sp, RE::Actor* a_at)
 		{
 			if (!a_from || !a_sp) return;
-			if (auto* c = a_from->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) c->CastSpellImmediate(a_sp, false, a_at, 1.0f, false, 0.0f, a_from);
+			Forms::CastOnce(a_from, a_sp, a_at, 1.0f, a_from);
 		}
 		std::vector<RE::Actor*> NearFoes(const RE::NiPoint3& a_at, float a_r, std::size_t a_max)
 		{

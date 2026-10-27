@@ -9,6 +9,9 @@ namespace bo3z
 	// Forms read from the player's own Skyrim and from CurseOfAlduin.esp.
 	namespace Forms
 	{
+		// (Noah: "the magic tied to the bow and the sword keeps firing until I'm out of mana") a spell cast once from a
+		// ref's instant caster - a concentration spell (Flames, a torrent) is let go of a moment later instead of being held
+		void                 CastOnce(RE::TESObjectREFR* a_from, RE::SpellItem* a_spell, RE::TESObjectREFR* a_target, float a_strength = 1.0f, RE::Actor* a_blame = nullptr);
 		bool                 Resolve();  // after data loaded
 		RE::TESBoundObject*  Enemy(std::size_t a_index);
 		RE::TESQuest*        IntroQuest();
