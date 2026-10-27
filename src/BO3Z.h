@@ -104,6 +104,8 @@ namespace bo3z
 	namespace Director
 	{
 		void             Tick(float a_delta);
+		bool             Scouting();                     // (Noah) scout mode: flying, unhurt, no undead - arrows mark spawn points
+		void             ScoutMark(const RE::NiPoint3& a_at);  // an arrow of the player's came to rest here
 		void             Reset();
 		bool             IsRoundUndead(RE::Actor* a_actor);
 		float            HarmMult(RE::Actor* a_actor);
@@ -406,6 +408,7 @@ namespace bo3z
 		void        SetAdsSensitivity(float a_v);
 		bool        Shelter();                    // townsfolk go indoors at night
 		bool        Blood();                      // headshot blood bursts (MCM: Effects)
+		bool        Scout();                      // (Noah) scout mode, for laying out each city's spawn points (MCM: 6. Scout)
 		float       FogStrength();                // the night's fog, 0 .. 1.5
 		bool        ScreenShake();
 		bool        ReduceFlashes();              // softer lightning, fewer white flashes

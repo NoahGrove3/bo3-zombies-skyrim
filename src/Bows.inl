@@ -532,6 +532,10 @@ namespace BowsImpl
 	// an arrow of ours lands in the world
 	void OnGround(const Spellcraft::Shot& s, const RE::NiPoint3& p)
 	{
+		if (Director::Scouting()) {
+			Director::ScoutMark(p);
+			return;
+		}
 		Impact(s, p);
 		TierTwoAt(s, p, nullptr);
 		TornadoOf(s, p);

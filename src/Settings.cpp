@@ -14,7 +14,7 @@ namespace bo3z::Settings
 	{
 		float g_melee = 1.3f, g_draw = 1.0f, g_fovFirst = 130.0f, g_fovThird = 120.0f, g_corpse = 10.0f, g_hp = 1.0f, g_dmg = 1.0f, g_bright = 1.5f;  // (Noah's own: 130 / 120 / 1.5)
 		bool  g_shelter = true, g_follow = true, g_padPS = false, g_bankRev = false, g_diveInv = false;
-		bool  g_blood = true, g_shake = true, g_softFlash = false;
+		bool  g_blood = true, g_shake = true, g_softFlash = false, g_scout = false;
 		float g_fog = 1.0f;
 		float g_adsSens = 1.0f;  // (Noah) the look's speed while aiming down sights, against Skyrim's own sensitivity
 		int   g_keys[kKeys] = { 0x02, 0x03, 0x04, 0x05, 0x0E, 0x06, 0x30 };
@@ -199,6 +199,7 @@ namespace bo3z::Settings
 			g_adsSens = std::clamp(Read(L"General", L"fAdsSensitivity", 1.0f), kAdsSensMin, kAdsSensMax);
 			g_shelter = Read(L"General", L"bShelter", 1.0f) != 0.0f;
 			g_blood = Read(L"Effects", L"bBlood", 1.0f) != 0.0f;
+			g_scout = Read(L"Scout", L"bScout", 0.0f) != 0.0f;
 			g_fog = std::clamp(Read(L"Effects", L"fFogStrength", 1.0f), 0.0f, 1.5f);
 			g_shake = Read(L"Effects", L"bScreenShake", 1.0f) != 0.0f;
 			g_softFlash = Read(L"Effects", L"bReduceFlashes", 0.0f) != 0.0f;
@@ -262,6 +263,7 @@ namespace bo3z::Settings
 	float FovThird() { Ensure(); return g_fovThird; }
 	bool  Shelter() { Ensure(); return g_shelter; }
 	bool  Blood() { Ensure(); return g_blood; }
+	bool  Scout() { Ensure(); return g_scout; }
 	float FogStrength() { Ensure(); return g_fog; }
 	bool  ScreenShake() { Ensure(); return g_shake; }
 	bool  ReduceFlashes() { Ensure(); return g_softFlash; }

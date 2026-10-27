@@ -109,6 +109,10 @@ PAGES = [
         toggle('bBankReverse:Dragon', 'Reverse the dragon\'s lean', 'Off: the dragon leans into its turns like a real flyer (turning left, its left wing dips). On: it leans the other way (turning left, its right wing dips).'),
         toggle('bInvertDive:Dragon', 'Invert dive / pull up', 'Off: forward (W / left stick up) dives and back pulls up. On: forward pulls up and back dives, like an aircraft stick.'),
     ]},
+    {'pageDisplayName': '6. Scout', 'cursorFillMode': 'topToBottom', 'content': [
+        header('Laying out spawn points'),
+        toggle('bScout:Scout', 'Scout mode', 'For marking where the dead climb out in each city. On: you fly where you look (Skyrim\'s no-clip) and fast, nothing can hurt you, no undead rise, and you get a Hunting Bow and arrows - every arrow that comes to rest is saved as a spawn point for the city you are in. Off: back to normal.'),
+    ]},
     {'pageDisplayName': '5. Other Mods', 'cursorFillMode': 'topToBottom', 'content': [
         text('These mods have no menu of their own.', 'Changes here are written to their files when the game starts: they count from the next launch.'),
         header('QuickLoot - looting bodies and chests'),
@@ -126,6 +130,7 @@ DEFAULTS = {
     'General': {'fFovFirst': 130.0, 'fFovThird': 120.0, 'iFovFirstStep': 14, 'iFovThirdStep': 12, 'fBrightness': 1.5, 'fAdsSensitivity': 1.0, 'bShelter': 1, 'fCorpseSeconds': 10.0, 'iMeleeSpeedStep': 3, 'iDrawSpeedStep': 0},
     'Controls': {'bPlayStationIcons': 0},
     'Dragon': {'bBankReverse': 0, 'bInvertDive': 0},
+    'Scout': {'bScout': 0},
     'Effects': {'bBlood': 1, 'fFogStrength': 1.0, 'bScreenShake': 1, 'bReduceFlashes': 0},
     'Difficulty': {'bFollowSkyrim': 1, 'fUndeadHealth': 1.0, 'fUndeadDamage': 1.0},
     'Keys': {'iShrineRoll': 2, 'iShrineReforge': 3, 'iShrineBless': 4, 'iShrineShout': 5, 'iShrineLeave': 14, 'iShrineBond': 6, 'iShrineBow': 48},

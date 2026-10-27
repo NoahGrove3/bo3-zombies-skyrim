@@ -1,3 +1,4 @@
+#include <sstream>
 #include "BO3Z.h"
 
 // Night rounds (sheet: rounds). Rounds run from nightStartHour to nightEndHour on Skyrim's clock.
@@ -3508,6 +3509,195 @@ namespace bo3z
 			}
 		}
 
+		// (Noah: "I will pick all the spawn points per city ... I will fire an arrow where I want each one to be") scout mode:
+		// you fly where you look and nothing hurts you; no undead rise and the night stands still; every arrow of yours that
+		// comes to rest is a spawn point for the city you are in - a beam of light stands on it, and it is written to
+		// SKSE/CurseOfAlduin-spawnpoints.txt. An arrow landing on a beam already there takes that point away again.
+		struct ScoutMk
+		{
+			int                 town;
+			RE::NiPoint3        p;
+			RE::ObjectRefHandle beam;
+		};
+		std::vector<ScoutMk> g_marks;
+		bool                 g_scoutOn = false, g_marksLoaded = false;
+		struct ScoutArrow
+		{
+			RE::NiPoint3 last;
+			float        still = 0;
+			bool         marked = false, seen = true;
+		};
+		std::unordered_map<std::uint32_t, ScoutArrow> g_scoutArrows;
+		std::filesystem::path ScoutFile()
+		{
+			const auto d = SKSE::log::log_directory();
+			return (d ? *d : std::filesystem::path{}) / "CurseOfAlduin-spawnpoints.txt";
+		}
+		std::string TownName(int t) { return t >= 0 && t < static_cast<int>(gen::kTowns.size()) ? std::string(gen::kTowns[t]) : std::string("Wilds"); }
+		void SaveMarks()
+		{
+			std::ofstream out(ScoutFile(), std::ios::trunc);
+			out << "# town x y z - spawn points marked in scout mode\n";
+			for (const auto& m : g_marks) out << fmt::format("{} {:.0f} {:.0f} {:.0f}\n", TownName(m.town), m.p.x, m.p.y, m.p.z);
+		}
+		void LoadMarks()
+		{
+			g_marksLoaded = true;
+			std::ifstream in(ScoutFile());
+			std::string   line;
+			while (std::getline(in, line)) {
+				if (line.empty() || line[0] == '#') continue;
+				std::istringstream ls(line);
+				std::string        town;
+				RE::NiPoint3       p;
+				if (!(ls >> town >> p.x >> p.y >> p.z)) continue;
+				int t = -1;
+				for (int i = 0; i < static_cast<int>(gen::kTowns.size()); ++i) if (gen::kTowns[i] == town) t = i;
+				g_marks.push_back({ t, p, {} });
+			}
+			logger::info("scout: {} spawn points read back", g_marks.size());
+		}
+		RE::TESBoundObject* ScoutBeamForm()
+		{
+			for (const auto& d : gen::kDress) {
+				if (d.object == 0 && !d.light && d.z == 250.0f) return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(d.formId, gen::kPlugin);
+			}
+			return nullptr;
+		}
+		void DropBeam(ScoutMk& m)
+		{
+			if (auto b = m.beam.get()) {
+				b->Disable();
+				b->SetDelete(true);
+			}
+			m.beam = {};
+		}
+		void ScoutConsole(const std::string& a_cmd)
+		{
+			if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::Script>()) {
+				if (auto* script = factory->Create()) {
+					script->SetCommand(a_cmd);
+					script->CompileAndRun(RE::PlayerCharacter::GetSingleton());
+					delete script;
+				}
+			}
+		}
+		void ScoutBeams(RE::PlayerCharacter* a_player)
+		{
+			auto* form = ScoutBeamForm();
+			for (auto& m : g_marks) {
+				const bool near = m.p.GetDistance(a_player->GetPosition()) < 9000.0f;
+				if (near && !m.beam.get() && form) {
+					if (auto b = a_player->PlaceObjectAtMe(form, false)) {
+						b->SetPosition(m.p);
+						m.beam = b->CreateRefHandle();
+					}
+				} else if (!near && m.beam.get()) {
+					DropBeam(m);
+				}
+			}
+		}
+		bool TickScout(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			const bool want = Settings::Scout() && Save::Flag(Save::kFlagStarted);
+			auto*      av = a_player->AsActorValueOwner();
+			if (want != g_scoutOn) {
+				g_scoutOn = want;
+				if (want) {
+					if (!RE::PlayerCharacter::IsGodMode()) ScoutConsole("tgm");
+					ScoutConsole("tcl");
+					av->ModActorValue(RE::ActorValue::kSpeedMult, 400.0f);
+					av->ModActorValue(RE::ActorValue::kCarryWeight, 0.1f), av->ModActorValue(RE::ActorValue::kCarryWeight, -0.1f);  // (so the new speed takes)
+					for (auto& z : g_alive) {
+						if (auto a = z.handle.get(); a && !a->IsDead()) Vanish(a.get());
+					}
+					g_alive.clear();
+					EndRisers();
+					auto* dh = RE::TESDataHandler::GetSingleton();
+					if (auto* bow = RE::TESForm::LookupByID<RE::TESBoundObject>(0x00013985); bow && a_player->GetItemCount(bow) == 0) a_player->AddObjectToContainer(bow, nullptr, 1, nullptr);
+					if (auto* arrows = RE::TESForm::LookupByID<RE::TESBoundObject>(0x0001397D)) a_player->AddObjectToContainer(arrows, nullptr, 100, nullptr);
+					(void)dh;
+					if (!g_marksLoaded) LoadMarks();
+					for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {
+						RE::NiPoint3       c;
+						float              yaw = 0;
+						RE::TESWorldSpace* ws = nullptr;
+						if (Shops::StandFrame(t, c, yaw, ws)) logger::info("scout: the Echo Altar of {} stands at ({:.0f}, {:.0f}, {:.0f}) facing {:.0f} deg", TownName(t), c.x, c.y, c.z, yaw * 57.2958f);
+					}
+					Hud::Banner("SCOUT MODE - fly where you look, arrows mark spawn points", 5.0f);
+					logger::info("scout: on");
+				} else {
+					if (RE::PlayerCharacter::IsGodMode()) ScoutConsole("tgm");
+					ScoutConsole("tcl");
+					av->ModActorValue(RE::ActorValue::kSpeedMult, -400.0f);
+					av->ModActorValue(RE::ActorValue::kCarryWeight, 0.1f), av->ModActorValue(RE::ActorValue::kCarryWeight, -0.1f);
+					for (auto& m : g_marks) DropBeam(m);
+					g_scoutArrows.clear();
+					Hud::Banner("SCOUT MODE OFF", 2.5f);
+					logger::info("scout: off");
+				}
+			}
+			if (!g_scoutOn) return false;
+			TickPurge(a_delta);
+			// arrows of yours at rest: each a mark (gathered under the projectiles' lock, marked after it)
+			std::vector<RE::NiPoint3> rest;
+			if (auto* mgr = RE::Projectile::Manager::GetSingleton()) {
+				RE::BSSpinLockGuard lock(mgr->projectileLock);
+				for (auto& [k, a] : g_scoutArrows) a.seen = false;
+				for (auto* list : { &mgr->limited, &mgr->unlimited, &mgr->pending }) {
+					for (auto& h : *list) {
+						auto pr = h.get();
+						if (!pr || pr->GetFormType() != RE::FormType::ProjectileArrow || pr->GetProjectileRuntimeData().shooter.get().get() != a_player) continue;
+						const auto pos = pr->GetPosition();
+						auto [it, fresh] = g_scoutArrows.try_emplace(pr->GetFormID(), ScoutArrow{ pos });
+						auto& a = it->second;
+						a.seen = true;
+						if (!fresh) {
+							if (pos.GetDistance(a.last) < 2.0f) a.still += a_delta;
+							else a.still = 0;
+							a.last = pos;
+						}
+						if (!a.marked && a.still >= 0.25f) a.marked = true, rest.push_back(pos);
+					}
+				}
+				std::erase_if(g_scoutArrows, [](const auto& e) { return !e.second.seen; });
+			}
+			for (const auto& p : rest) ScoutMark(p);
+			static float beams = 0;
+			if ((beams -= a_delta) <= 0) beams = 1.0f, ScoutBeams(a_player);
+			return true;
+		}
+		bool Scouting() { return g_scoutOn; }
+		void ScoutMark(const RE::NiPoint3& a_at)
+		{
+			auto* pl = RE::PlayerCharacter::GetSingleton();
+			if (!g_scoutOn || !pl) return;
+			static auto        lastT = std::chrono::steady_clock::now() - std::chrono::seconds(5);
+			static RE::NiPoint3 lastP{};
+			const auto now = std::chrono::steady_clock::now();
+			if (now - lastT < std::chrono::milliseconds(1200) && lastP.GetDistance(a_at) < 400.0f) return;  // (one arrow, seen twice)
+			lastT = now, lastP = a_at;
+			const int town = Curse::ZoneTown();
+			for (std::size_t i = 0; i < g_marks.size(); ++i) {
+				if (g_marks[i].p.GetDistance(a_at) < 110.0f) {
+					DropBeam(g_marks[i]);
+					const int t = g_marks[i].town;
+					g_marks.erase(g_marks.begin() + static_cast<std::ptrdiff_t>(i));
+					SaveMarks();
+					const auto n = std::count_if(g_marks.begin(), g_marks.end(), [&](const ScoutMk& m) { return m.town == t; });
+					Hud::Banner(fmt::format("SPAWN POINT REMOVED - {} LEFT IN {}", n, TownName(t)), 2.5f);
+					logger::info("scout: removed the spawn point at ({:.0f}, {:.0f}, {:.0f}) in {}", a_at.x, a_at.y, a_at.z, TownName(t));
+					return;
+				}
+			}
+			g_marks.push_back({ town, a_at, {} });
+			SaveMarks();
+			ScoutBeams(pl);
+			const auto n = std::count_if(g_marks.begin(), g_marks.end(), [&](const ScoutMk& m) { return m.town == town; });
+			Hud::Banner(fmt::format("SPAWN POINT {} - {}", n, TownName(town)), 2.5f);
+			logger::info("scout: spawn point {} in {} at ({:.0f}, {:.0f}, {:.0f})", n, TownName(town), a_at.x, a_at.y, a_at.z);
+		}
+
 		void Tick(float a_delta)
 		{
 			// (Noah: "my game crashed after I died" - it froze loading back) dead for good, the game is about to load the
@@ -3522,6 +3712,7 @@ namespace bo3z
 				return;
 			}
 			quiet = false;
+			if (auto* pl = RE::PlayerCharacter::GetSingleton(); pl && TickScout(pl, a_delta)) return;
 			// (Noah: "I was able to save during the night ... it let me save and it crashed my game") no saving from nightfall
 			// to dawn: Skyrim's own switch for it (the one its opening uses), set as the night begins and lifted at dawn
 			{
