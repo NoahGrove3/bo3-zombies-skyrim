@@ -989,12 +989,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 
-			// Damage vignette: red edges when hurt, stronger when low.
+			// Damage vignette. (Noah: "make that more subtle - a light red border around the screen, not covering the whole
+			// screen") a thin soft red edge when hurt (a little deeper when low), never reaching in past 7% of the screen
 			const float hpFrac = s.hpMax > 0 ? s.hp / s.hpMax : 1.0f;
-			const float hurt = std::max(std::clamp(s.hurtTime, 0.0f, 1.0f) * 0.8f, std::clamp((0.4f - hpFrac) / 0.4f, 0.0f, 1.0f) * (0.6f + 0.25f * std::sin(now * 5)));
+			const float hurt = std::max(std::clamp(s.hurtTime, 0.0f, 1.0f) * 0.7f, std::clamp((0.35f - hpFrac) / 0.35f, 0.0f, 1.0f) * (0.45f + 0.15f * std::sin(now * 4)));
 			if (hurt > 0.01f) {
-				const ImU32 r = IM_COL32(150, 0, 0, static_cast<int>(200 * hurt)), z = IM_COL32(150, 0, 0, 0);
-				const float e = size.y * 0.28f;
+				const ImU32 r = IM_COL32(210, 30, 30, static_cast<int>(105 * hurt)), z = IM_COL32(210, 30, 30, 0);
+				const float e = size.y * (0.045f + 0.025f * hurt);
 				dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, e }, r, r, z, z);
 				dl->AddRectFilledMultiColor({ 0, size.y - e }, size, z, z, r, r);
 				dl->AddRectFilledMultiColor({ 0, 0 }, { e, size.y }, r, z, z, r);

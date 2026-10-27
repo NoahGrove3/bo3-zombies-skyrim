@@ -59,6 +59,43 @@ namespace bo3z::Classes
 			return -1;
 		}
 		bool g_staffChecked = false;
+		// (Noah: "instead of a spiderweb bolt, another spell from our mods that makes sense - not one the Echo Altar or the
+		// other classes use") the Conjurer's Staff casts Mysticism's Armoreater: its rust-red charge in the staff's head as it
+		// charges, its corroding mass bolt, and its rust burst wherever the bolt lands - an armor-eating mark that your
+		// summons fall on. The bolt's own effect is ours (no armor taken: Classes::ConjurerStaffHit does the burst and marks);
+		// its look - projectile, burst, charge art, hit art, impact set, light and sounds - is the Armoreater's, set once.
+		void DressStaffBolt(float a_radius)
+		{
+			const int i = ConjurerStaff();
+			auto*     w = i >= 0 ? Forms::Gun(i) : nullptr;
+			auto*     ench = w ? w->formEnchanting : nullptr;
+			if (!ench || ench->effects.empty() || !ench->effects[0] || !ench->effects[0]->baseEffect) return;
+			auto* ours = ench->effects[0]->baseEffect;
+			static RE::EffectSetting* theirs = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(0xAC7E88, "MysticismMagic.esp");  // MAG_DamageArmorFFAimedArea75 (Armoreater)
+			if (!theirs) {
+				static bool warned = false;
+				if (!warned) warned = true, logger::warn("classes: Mysticism's Armoreater not found - the staff keeps its green bolt");
+				return;
+			}
+			static bool dressed = false;
+			if (!dressed) {
+				dressed = true;
+				auto& d = ours->data;
+				const auto& t = theirs->data;
+				d.projectileBase = t.projectileBase, d.explosion = Gun::Quiet(t.explosion), d.castingArt = t.castingArt, d.hitEffectArt = t.hitEffectArt;
+				d.impactDataSet = t.impactDataSet, d.light = t.light, d.effectShader = t.effectShader, d.dualCastData = t.dualCastData;
+				ours->effectSounds = theirs->effectSounds;
+				logger::info("classes: the Conjurer's Staff casts Armoreater (projectile {:08X}, burst {:08X})", d.projectileBase ? d.projectileBase->GetFormID() : 0, d.explosion ? d.explosion->GetFormID() : 0);
+			}
+			// its burst reaches as far as the staff's splash (3 m, a metre more each reforge)
+			if (auto* ex = ours->data.explosion) ex->data.radius = a_radius;
+			ench->effects[0]->effectItem.area = static_cast<std::uint32_t>(a_radius / 21.33f + 0.5f);  // (feet: everyone in it is struck - and marked)
+		}
+		RE::BGSExplosion* StaffBurstLook()
+		{
+			static auto* m = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(0xAC7E88, "MysticismMagic.esp");
+			return m ? m->data.explosion : nullptr;
+		}
 		void GiveConjurerStaff()
 		{
 			// (Noah: "remake the staff") a plain Skyrim staff now - in your hand, never in a gun slot (a slot that held it
@@ -1092,6 +1129,7 @@ namespace bo3z::Classes
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p) return;
+			DressStaffBolt(210.0f + 70.0f * static_cast<float>(g_staffLevel));
 			for (auto& [h, t] : g_ownSummons) {
 				auto a = h.get();
 				if (!a || a->IsDisabled()) { t = 0; continue; }
@@ -1122,8 +1160,42 @@ namespace bo3z::Classes
 							t ? fmt::format("({:.0f} away, foe {})", t->GetPosition().GetDistance(s->GetPosition()), Director::IsFoe(t.get())) : std::string());
 					}
 				}
+				static auto* playerFaction = RE::TESForm::LookupByID<RE::TESFaction>(0x00000DB1);
 				for (auto* s : mine) {
 					if (s->IsDead() || s->IsDisabled()) continue;
+					// (Noah: "my summons still weren't attacking the Curse's enemies, and the enemies weren't attacking them") on
+					// the player's side by faction too: the night's dead (enemies of the player's faction) and it are foes
+					if (playerFaction && !s->IsInFaction(playerFaction)) s->AddToFaction(playerFaction, 0);
+					// (Noah: "the Spriggan summon made my screen super bright colors ... it kills all the enemies in a long area")
+					// a summon keeps its bolts and blows: its auras, cloaks, swarms and mind spells (calm, frenzy, fear,
+					// paralysis) and anything that tints the screen are taken from it once, when first seen
+					static std::unordered_set<RE::FormID> tamed;
+					if (tamed.size() > 400) tamed.clear();
+					if (tamed.insert(s->GetFormID()).second) {
+						auto wild = [](RE::SpellItem* sp) {
+							if (!sp) return false;
+							for (auto* e : sp->effects) {
+								auto* m = e ? e->baseEffect : nullptr;
+								if (!m) continue;
+								using A = RE::EffectArchetypes::ArchetypeID;
+								const auto k = m->GetArchetype();
+								if (m->data.imageSpaceMod || k == A::kCloak || k == A::kCalm || k == A::kFrenzy || k == A::kDemoralize || k == A::kParalysis ||
+									k == A::kInvisibility || e->GetArea() > 20 || (sp->GetSpellType() == RE::MagicSystem::SpellType::kAbility && m->IsHostile()))
+									return true;
+							}
+							return false;
+						};
+						std::vector<RE::SpellItem*> drop;
+						if (auto* base = s->GetActorBase(); base && base->actorEffects && base->actorEffects->spells) {
+							for (std::uint32_t i = 0; i < base->actorEffects->numSpells; ++i) if (wild(base->actorEffects->spells[i])) drop.push_back(base->actorEffects->spells[i]);
+						}
+						for (auto* sp : s->GetActorRuntimeData().addedSpells) if (wild(sp)) drop.push_back(sp);
+						for (auto* sp : drop) {
+							s->RemoveSpell(sp);
+							if (auto* mt = s->AsMagicTarget()) { RE::BSPointerHandle<RE::Actor> none; mt->DispelEffect(sp, none); }
+						}
+						if (!drop.empty()) logger::info("summons: {} - {} wild spell(s) taken (auras, swarms, mind spells)", s->GetName(), drop.size());
+					}
 					if (Perks::SummonMight() && mighty.insert(s->GetFormID()).second) {
 						auto*       sav = s->AsActorValueOwner();
 						const float more = gen::kPerks[gen::kPerk_bonebinder].value - 1.0f;
@@ -1235,6 +1307,8 @@ namespace bo3z::Classes
 		const float share = 0.2f + 0.1f * static_cast<float>(g_staffLevel);
 		const auto  at = a_target->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f };
 		Gun::AreaHurt(at, radius, share, "");
+		// the rust burst grown to the splash's own reach (a reforged staff's wider ring shows as wider)
+		if (g_staffLevel > 0) Gun::FxFrom(StaffBurstLook(), a_target->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, radius / 210.0f);
 		std::vector<RE::ActorHandle> marks;
 		for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 			auto z = h.get();

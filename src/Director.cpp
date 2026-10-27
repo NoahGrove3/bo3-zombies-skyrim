@@ -2792,6 +2792,19 @@ namespace bo3z
 			}
 		}
 
+		// the nearest of your summons (or a friend's) within a_r of a_of
+		RE::Actor* NearestSummon(RE::Actor* a_of, RE::PlayerCharacter* a_player, float a_r)
+		{
+			RE::Actor* best = nullptr;
+			const auto at = a_of->GetPosition();
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				auto z = h.get();
+				if (!z || z.get() == a_player || z->IsDead() || !z->Is3DLoaded() || IsOurs(z.get())) continue;
+				if (!(z->IsCommandedActor() || Classes::IsOwnSummon(z.get())) || !Director::PlayerSide(z.get(), a_player)) continue;
+				if (const float d = z->GetPosition().GetDistance(at); d < a_r) a_r = d, best = z.get();
+			}
+			return best;
+		}
 		void KeepThemComing(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			SettleCorpses(a_player, a_delta);
@@ -2928,6 +2941,16 @@ namespace bo3z
 				auto target = a->GetActorRuntimeData().currentCombatTarget.get();
 				if (a->IsInCombat() && target.get() == a_player && s.stall < gen::kChaseStallSeconds) {
 					s.inCombat = true;
+					// (Noah: "the enemies aren't attacking my summons") a summon of yours at its throat: it turns on the summon
+					if (auto sm = NearestSummon(a.get(), a_player, 260.0f)) {
+						a->StartCombat(sm);
+					}
+					continue;
+				}
+				// fighting one of your summons close by: it keeps at it
+				if (a->IsInCombat() && target && !target->IsDead() && target.get() != a_player && Director::PlayerSide(target.get(), a_player) &&
+					target->GetPosition().GetDistance(a->GetPosition()) < 900.0f) {
+					s.inCombat = true;
 					continue;
 				}
 				if (a->IsInCombat()) {
@@ -2941,7 +2964,7 @@ namespace bo3z
 			if (gen::kIgnoreNpcs) {
 				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 					auto npc = h.get();
-					if (!npc || npc.get() == a_player || IsOurs(npc.get()) || !npc->IsInCombat()) {
+					if (!npc || npc.get() == a_player || IsOurs(npc.get()) || !npc->IsInCombat() || Director::PlayerSide(npc.get(), a_player)) {  // (your summons and allies keep their fights)
 						continue;
 					}
 					auto tgt = npc->GetActorRuntimeData().currentCombatTarget.get();
@@ -3314,7 +3337,6 @@ namespace bo3z
 			for (auto& z : g_alive) v.push_back(z.handle);
 			return v;
 		}
-		bool PlayerSide(RE::Actor* a, RE::PlayerCharacter* a_player);
 		float TakenMult(RE::Actor* a_actor)
 		{
 			for (const auto& s : g_alive) {

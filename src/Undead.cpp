@@ -707,7 +707,7 @@ namespace bo3z
 				if (auto* n = r.clipNodes[i]) n->local.rotate = MatOf(r.pose[i]);
 			}
 			r.setNow.store(r.clipSet, std::memory_order_relaxed);
-			r.gaitV.store(P.clip == kRun && P.loco != kIdle ? S.c[P.loco].speed : 0.0f, std::memory_order_relaxed);
+			r.gaitV.store(P.clip != kRun ? -1.0f : P.loco == kIdle ? 0.0f : S.c[P.loco].speed, std::memory_order_relaxed);  // (-1 a full-body move, 0 standing)
 			// (Noah: "when they face me and move left or right they float along the floor doing a forward walk") a set
 			// with no sidesteps turns its whole body - the COM, which carries the hips and the spine - toward where it is
 			// really going, up to 75 degrees off its facing, and back square on as it stops or swings
@@ -1233,13 +1233,17 @@ namespace bo3z
 			m.gaitPos = pos;
 			auto r = RigOf(a);
 			if (!r || !(UsesClips(r->type) || r->wantSet.load() == 6)) return;
-			const int cap = r->gaitCap.load();
-			float clipV = cap >= 0 ? GaitClipSpeed(r->setNow.load(), cap) : r->gaitV.load();
-			if (cap >= 0 && r->gaitV.load() <= 0) clipV = 0;  // (standing, or a full-body move: leave it be)
+			const int   cap = r->gaitCap.load();
+			const float legs = r->gaitV.load();
+			if (legs < 0) return;  // (a swing, a flinch, a scream: leave it be)
+			const float clipV = cap >= 0 ? GaitClipSpeed(r->setNow.load(), cap) : legs;
 			auto* av = a->AsActorValueOwner();
 			const float cur = av->GetActorValue(RE::ActorValue::kSpeedMult);
 			const float other = cur - m.gaitMod;
-			if (clipV < 1.0f || pace < 30.0f || pace > 2000.0f || m.pinT > 0 || dist < 170.0f || Director::Rising(a) || cur < 1.0f) return;
+			// (Noah's clips: one stood in its idle stance creeping along) any pace at all counts - a body held too slow by
+			// the last correction (the game had dropped from its run to its walk) is brought back up to its gait, never
+			// left creeping under the legs' standing threshold
+			if (clipV < 1.0f || pace < 4.0f || pace > 2000.0f || m.pinT > 0 || dist < 170.0f || Director::Rising(a) || cur < 1.0f) return;
 			const float base = std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kSpeedMult));
 			const float target = clipV * m.paceVar * std::clamp(other / base, 0.2f, 2.5f);
 			const float want = std::clamp(cur * target / pace - other, -0.9f * other, 3.0f * other);

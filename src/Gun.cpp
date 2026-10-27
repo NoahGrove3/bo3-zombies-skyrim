@@ -762,6 +762,7 @@ namespace bo3z
 			float        delay;
 			int          expl;
 			float        scale;
+			RE::BGSExplosion* form = nullptr;  // (FxFrom: another mod's burst, quieted)
 		};
 		// Skyrim's explosions are built for dragons and Dragonborn shouts: ours are shrunk so a hit reads as a hit,
 		// not a screen-filling burst. Shots use the small size, signature moves the larger one.
@@ -811,6 +812,28 @@ namespace bo3z
 			return made[a_index];
 		}
 
+		// any explosion, quieted as the templates are (no damage, no knockdown, no screen tint, no dragon-loud sound)
+		RE::BGSExplosion* QuietClone(RE::BGSExplosion* a_src)
+		{
+			static std::unordered_map<RE::BGSExplosion*, RE::BGSExplosion*> made;
+			if (!a_src) return nullptr;
+			if (auto it = made.find(a_src); it != made.end()) return it->second;
+			RE::BGSExplosion* ex = nullptr;
+			if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::BGSExplosion>(); factory && (ex = factory->Create())) {
+				ex->boundData = a_src->boundData;
+				ex->SetModel(a_src->GetModel());
+				ex->data = a_src->data;
+				ex->data.damage = 0.0f;
+				ex->data.force = std::min(a_src->data.force, 40.0f);
+				ex->data.flags.reset(RE::BGSExplosionData::Flag::kKnockDown_Always, RE::BGSExplosionData::Flag::kKnockDown_ByFormula);
+				ex->data.spawnProjectile = nullptr;
+				ex->formEnchanting = nullptr;
+				ex->imageSpaceModifying = nullptr;
+				ex->data.imageSpaceRadius = 0.0f;
+			}
+			made[a_src] = ex;
+			return ex;
+		}
 		int BlastIndex(std::string_view a_name)
 		{
 			for (std::size_t i = 0; i < gen::kBlasts.size(); ++i) {
@@ -832,7 +855,7 @@ namespace bo3z
 		void Detonate(const PendingBlast& b)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
-			auto* ex = BlastForm(b.expl);
+			auto* ex = b.form ? b.form : BlastForm(b.expl);
 			if (!player || !ex || !player->GetParentCell() || b.at.GetDistance(player->GetPosition()) > 9000.0f) {
 				return;
 			}
@@ -2128,6 +2151,11 @@ namespace bo3z
 	{
 		int   SlotCount() { return Save::HasPerk(gen::kPerk_mammoth) ? 3 : 2; }
 		void  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay) { Blast(BlastIndex(a_name), a_at, a_delay, 0.6f); }
+		void  FxFrom(RE::BGSExplosion* a_src, const RE::NiPoint3& a_at, float a_scale)
+		{
+			if (auto* q = QuietClone(a_src); q && g_blasts.size() < 32) g_blasts.push_back({ a_at, 0.0f, -1, a_scale, q });
+		}
+		RE::BGSExplosion* Quiet(RE::BGSExplosion* a_src) { return QuietClone(a_src); }
 		// (the class perks: Ember Heart) the night's dead round a point lose a share of a whole zombie's health
 		void  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast)
 		{

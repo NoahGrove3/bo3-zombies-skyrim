@@ -168,7 +168,7 @@ for w in S['weapons']['rows']:
         if w.get('nativeEnch'):
             # (Noah: the Falmer staffs cast for real) Skyrim's own staff spell - its projectile, its staff casting animation -
             # with the vanilla staff's effects (Skyrim.esm MGEFs), free of charge; our code adds its numbers on the hit
-            enit = struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 2, 0x0C, 0.5, 0, 0)  # fire-and-forget, aimed, staff enchantment, free
+            enit = struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 2, 0x0C, 0.35, 0, 0)  # fire-and-forget, aimed, staff enchantment, free; (Noah: "30% shorter charge on all staffs") 0.35 s, was 0.5
             effs = []
             for mg, mag, area, dur in w['nativeEnch']:
                 mgid = fid('MGEF', mg[5:]) if mg.startswith('ours:') else int(mg, 16)

@@ -113,6 +113,7 @@ namespace bo3z
 		float            HarmMult(RE::Actor* a_actor);
 		bool  HarpyNear(const RE::NiPoint3& a_at, float a_r);  // a living harpy this close (the per-hit cap)
 		std::vector<RE::ActorHandle> AliveHandles();
+		bool             PlayerSide(RE::Actor* a, RE::PlayerCharacter* a_player);  // the player, a friend, a follower, an Echo ally or a summon of yours
 		float            TakenMult(RE::Actor* a_actor);  // how much harder one of ours is hurt (a dazed Barrow Champion 2, a berserk Skeleton Mutant 1.25)
 		void             OnDying(RE::Actor* a_actor);    // any death: a champion or mini-boss pays out at once  // how hard this one of the night's dead hits you, its spells too (1 = as made)
 		void             HeadlongCombat();  // data loaded: the undead charge straight in
@@ -610,6 +611,8 @@ namespace bo3z
 		int                   SlotCount();
 		float                 AdsBlend();                     // 0..1, for movement and HUD
 		void                  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay = 0.0f);  // a no-damage Skyrim explosion (look only)
+		void                  FxFrom(RE::BGSExplosion* a_src, const RE::NiPoint3& a_at, float a_scale);  // any mod's burst, quieted (look only), at a_scale
+		RE::BGSExplosion*     Quiet(RE::BGSExplosion* a_src);  // that burst's quiet copy (no damage, no knockdown, no tint)
 		void                  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast);  // the night's dead round a point lose a share of a whole zombie's health
 		void                  BlackHole(const RE::NiPoint3& a_at, bool a_legendary);  // the Subsuming Vortex: a purple singularity pulls the dead in, then bursts
 		void                  DevCast(const std::string& a_mode);  // dev: 'cast tap|full|ult|orb|hand' with a spell in hand
