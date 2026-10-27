@@ -53,6 +53,16 @@ namespace bo3z
 				logger::info("fantasy: the High Fantasy Pack isn't installed - Skyrim's encounters left as they are");
 				return;
 			}
+			// (Noah: "the Minotaur's enemy audio is way too loud") its two sounds (its voice, its entrance) brought down
+			// 14 dB - about a third as loud
+			for (const std::uint32_t id : { 0x000D0Eu, 0x000D25u }) {
+				if (auto* sd = dh->LookupForm<RE::BGSSoundDescriptorForm>(id, kPack); sd && sd->soundDescriptor) {
+					if (auto* sdef = skyrim_cast<RE::BGSStandardSoundDef*>(sd->soundDescriptor)) {
+						sdef->soundCharacteristics.staticAttenuation = static_cast<std::uint16_t>(std::min(10000, sdef->soundCharacteristics.staticAttenuation + 1400));
+						logger::info("fantasy: minotaur sound {:06X} made quieter (attenuation {:.1f} dB)", id, sdef->soundCharacteristics.staticAttenuation / 100.0f);
+					}
+				}
+			}
 			int added = 0;
 			for (const auto& a : kAdds) {
 				auto* list = RE::TESForm::LookupByID<RE::TESLevCharacter>(a.list);

@@ -1080,6 +1080,29 @@ namespace bo3z
 		{
 			const auto& loc = gen::kLocations[a_index];
 			if (auto ref = g_placed[a_index].get(); ref && !ref->IsDeleted()) {
+				// (Noah: "when I first open the door into a city the Echo Altar doesn't load in properly until I leave and
+				// come back") a station piece whose cell is up and in view but whose body never loaded is turned off and
+				// on again - Skyrim then loads it, as it does coming back in
+				{
+					static std::array<std::chrono::steady_clock::time_point, 64> since{};
+					auto* pl = RE::PlayerCharacter::GetSingleton();
+					auto* cell = ref->GetParentCell();
+					const auto now = std::chrono::steady_clock::now();
+					const bool missing = pl && cell && cell->IsAttached() && !ref->IsDisabled() && !ref->Is3DLoaded() &&
+					                     ref->GetWorldspace() == pl->GetWorldspace() && ref->GetPosition().GetDistance(pl->GetPosition()) < 4000.0f;
+					if (a_index < since.size()) {
+						if (!missing) {
+							since[a_index] = {};
+						} else if (since[a_index] == std::chrono::steady_clock::time_point{}) {
+							since[a_index] = now;
+						} else if (now - since[a_index] > std::chrono::milliseconds(1500)) {
+							since[a_index] = {};
+							ref->Disable();
+							ref->Enable(false);
+							logger::info("shops: {} in {} hadn't loaded - turned off and on to load it", gen::kObjects[loc.object].id, gen::kTowns[loc.town]);
+						}
+					}
+				}
 				static int n = 0;
 				if (++n % 8 == 0 && ref->Is3DLoaded()) {
 					Dress(a_index, ref.get());  // now and then: the crystal and the rocks are still there (put back if not)
