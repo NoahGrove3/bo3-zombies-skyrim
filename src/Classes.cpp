@@ -60,8 +60,19 @@ namespace bo3z::Classes
 		bool g_staffChecked = false;
 		void GiveConjurerStaff()
 		{
+			// (Noah: "remake the staff") a plain Skyrim staff now - in your hand, never in a gun slot (a slot that held it
+			// from before is emptied)
 			const int i = ConjurerStaff();
-			if (i >= 0 && !Gun::Owns(i) && Gun::Give(i)) logger::info("classes: the Conjurer's Staff given");
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* w = i >= 0 ? Forms::Gun(i) : nullptr;
+			if (!p || !w) return;
+			for (int s = 0; s < 3; ++s) {
+				if (Save::GetSlot(s).gun == i) Save::SetSlot(s, {});
+			}
+			if (p->GetItemCount(w) <= 0) {
+				GiveItem(p, w, 1, true);
+				logger::info("classes: the Conjurer's Staff given");
+			}
 		}
 		void GiveKit(int a_cls)
 		{
@@ -1102,6 +1113,14 @@ namespace bo3z::Classes
 				}
 				static std::unordered_set<RE::FormID> mighty;  // (Bonebinder's Brew) each summon made stronger once
 				if (mighty.size() > 200) mighty.clear();
+				static int diag = 0;
+				if (!mine.empty() && diag++ % 5 == 0 && diag < 200) {  // (Noah: "my summons still weren't attacking") what each is doing
+					for (auto* s : mine) {
+						auto t = s->GetActorRuntimeData().currentCombatTarget.get();
+						logger::info("summons: {} {:08X} - in combat {}, target {} {}", s->GetName(), s->GetFormID(), s->IsInCombat(), t ? t->GetName() : "none",
+							t ? fmt::format("({:.0f} away, foe {})", t->GetPosition().GetDistance(s->GetPosition()), Director::IsFoe(t.get())) : std::string());
+					}
+				}
 				for (auto* s : mine) {
 					if (s->IsDead() || s->IsDisabled()) continue;
 					if (Perks::SummonMight() && mighty.insert(s->GetFormID()).second) {
@@ -1189,6 +1208,20 @@ namespace bo3z::Classes
 		if (p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kBody)) return;
 		if (p->GetItemCount(uw) <= 0) p->AddObjectToContainer(uw, nullptr, 1, nullptr);
 		em->EquipObject(p, uw, nullptr, 1, nullptr, false, false, false, true);
+	}
+	void ConjurerStaffHit(RE::Actor* a_target, RE::FormID a_source)
+	{
+		const int i = ConjurerStaff();
+		auto*     w = i >= 0 ? Forms::Gun(i) : nullptr;
+		if (!w || !a_target || (a_source != w->GetFormID() && !(w->formEnchanting && a_source == w->formEnchanting->GetFormID()))) return;
+		static std::chrono::steady_clock::time_point last{};
+		const auto now = std::chrono::steady_clock::now();
+		if (now - last < std::chrono::milliseconds(200)) return;  // (one bolt, one burst)
+		last = now;
+		// a burst 3 m round what it hit: a fifth of one of the dead's health, a little more for each freed altar
+		const float share = 0.2f + 0.02f * static_cast<float>(FreedCount());
+		Gun::AreaHurt(a_target->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, 210.0f, share, "");
+		if (Director::IsFoe(a_target) && !a_target->IsDead()) MarkForSummons(a_target);
 	}
 	void MarkForSummons(RE::Actor* a_target)
 	{

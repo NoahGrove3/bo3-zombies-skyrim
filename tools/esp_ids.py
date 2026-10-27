@@ -16,7 +16,7 @@ def assign(S=None, write=False):
              [('SNDR', s['id']) for s in S['sounds']['rows'] if s['plugin'] == PLUGIN] + \
              list(dressing(S)[0].keys()) + \
              [(k, c['id']) for c in S['creatures']['rows'] for k in ('ARMA', 'ARMO', 'NPC_')] + [('ARMA', 'eyes_' + c['id']) for c in S['creatures']['rows']] + [('WEAP', 'reaper_scythe'), ('WEAP', 'wyrm_claws'), ('WEAP', 'shadow_claws'), ('WEAP', 'zombie_claws')] + \
-             [(k, 'bullet_' + p['id']) for p in S['projectiles']['rows'] for k in ('PROJ', 'MGEF', 'SPEL')] + [('LIGH', 'muzzle'), ('PROJ', 'castflame'), ('MGEF', 'wandcast'), ('FACT', 'undead')] + \
+             [(k, 'bullet_' + p['id']) for p in S['projectiles']['rows'] for k in ('PROJ', 'MGEF', 'SPEL')] + [('LIGH', 'muzzle'), ('PROJ', 'castflame'), ('MGEF', 'wandcast'), ('MGEF', 'conjurerbolt'), ('FACT', 'undead')] + \
              [('ENCH', w['id']) for w in S['weapons']['rows'] if w.get('kind') == 'wand'] + \
              [(k, 'hand_' + w['id']) for w in S['weapons']['rows'] if w.get('kind') in ('tome', 'wonder') for k in ('SPEL', 'MGEF')] + \
              [(k, 'arrow_' + w['id']) for w in S['weapons']['rows'] if w.get('kind') == 'bow' for k in ('AMMO', 'PROJ')] + \

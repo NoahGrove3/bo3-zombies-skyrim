@@ -214,7 +214,7 @@ namespace zclip
 		{
 			int want = kRun;
 			float rate = 0;
-			if (in.speed < 10.0f) {
+			if (in.speed < (loco == kIdle ? 25.0f : 10.0f)) {  // (out of standing only on a clear pace: no flicker between stand and walk)
 				want = S.Has(kIdle) ? kIdle : kRun;
 				rate = S.Has(kIdle) ? 1.0f : 0.0f;
 			} else if (std::abs(in.lateral) > 0.65f && S.Has(in.lateral > 0 ? kStrafeR : kStrafeL)) {
@@ -231,7 +231,7 @@ namespace zclip
 			}
 			// (Noah: "the sprint looks too fast for how he's moving") the legs follow the pace only partly (a square root):
 			// a faster body takes longer strides as much as quicker ones, so the cycle never spins
-			if (in.speed >= 10.0f) rate = std::clamp(std::sqrt(in.speed / std::max(1.0f, S.c[want].speed)), 0.65f, 1.6f);
+			if (in.speed >= 10.0f && want != kIdle) rate = std::clamp(std::sqrt(in.speed / std::max(1.0f, S.c[want].speed)), 0.65f, 1.6f);
 			if (want != loco) prevLoco = loco, prevLocoRate = locoRate, locoBlend = 0;
 			loco = want, locoRate = rate;
 		}

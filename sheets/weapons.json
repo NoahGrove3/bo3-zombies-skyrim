@@ -1945,7 +1945,7 @@
       "element": "B070FF",
       "wandStyle": "none",
       "abilityValue": 0,
-      "abilityText": "The Summoner's staff. Its void bolts mark what they strike: every summon of yours turns on it and fights it until it dies or you mark another. What it kills can rise as a spectral spider that fights for you. Hold: a void orb pulls the crowd in, then crushes it. Reforge it at an Echo Altar (hold it, take the Reforge row): harder bolts, a wider pull, three spiders every time - and a bolt that lands by a fallen friend raises them.",
+      "abilityText": "The Summoner's staff. It casts a green bolt that bursts on what it hits, hurting the dead within 3 meters - and marks the one it hit: every summon of yours attacks it until it dies or you mark another. It hits a little harder for every Echo Altar you free.",
       "chargeName": "Void Orb",
       "chargeText": "A void orb drags the dead together, then crushes them",
       "chargeSeconds": 1.3,
@@ -1967,13 +1967,7 @@
       "firstModel": "CurseOfAlduin\\staff\\falmer\\summon.nif",
       "nativeEnch": [
         [
-          "1EA6E",
-          0,
-          0,
-          3
-        ],
-        [
-          "A44C0",
+          "ours:conjurerbolt",
           1,
           0,
           0

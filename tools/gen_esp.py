@@ -149,6 +149,17 @@ for n in ('iceshell', 'roots', 'burn', 'poison'):
     arto('fx_' + n, 'CurseOfAlduin\\fx\\status_' + n + '.nif', 1)                             # magic hit effect art
 arto('fx_portal', 'CurseOfAlduin\\fx\\portal_red.nif', 1)        # (the night's dead come through a conjuring portal: KittyVFX - Portals' summon mesh, in the Curse's red -
 arto('fx_portal_big', 'CurseOfAlduin\\fx\\portal_red_big.nif', 1)  #  tools/modelconv/fxtint, shipped with the Party Pack; elites and bosses get the big one)
+# (Noah: "remake the staff - a green orb, three meters of splash damage, one-time damage that sets the target for the
+# summons") the Conjurer's Staff's bolt: Skyrim's own staff cast launching the frostbite spider's green spit; it does next
+# to nothing itself - Classes::ConjurerStaffHit does the damage round it and marks the target
+md = bytearray(tsub('mgef_firebolt', 'DATA'))
+struct.pack_into('<I', md, 24, 0)                     # no light
+struct.pack_into('<I', md, 32, 0)                     # no hit shader
+struct.pack_into('<I', md, 72, 0x0004600A)            # MAGSpiderSpitProjectile: a green glob
+struct.pack_into('<I', md, 76, 0)                     # no explosion (ours is the splash)
+for off in (92, 96, 100): struct.pack_into('<I', md, off, 0)   # no fire in the hand, no fire on the target
+recs['MGEF'].append(record('MGEF', fid('MGEF', 'conjurerbolt'), [
+    sub('EDID', z('UN_ConjurerBolt')), sub('FULL', z("Conjurer's Bolt")), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
 for w in S['weapons']['rows']:
     kind = w.get('kind', 'wand')
     if kind == 'wand':
@@ -160,7 +171,8 @@ for w in S['weapons']['rows']:
             enit = struct.pack('<iIIiIIfII', 0, 0x1, 1, 3000, 2, 0x0C, 0.5, 0, 0)  # fire-and-forget, aimed, staff enchantment, free
             effs = []
             for mg, mag, area, dur in w['nativeEnch']:
-                effs += [sub('EFID', struct.pack('<I', int(mg, 16))), sub('EFIT', struct.pack('<fII', float(mag), area, dur))]
+                mgid = fid('MGEF', mg[5:]) if mg.startswith('ours:') else int(mg, 16)
+                effs += [sub('EFID', struct.pack('<I', mgid)), sub('EFIT', struct.pack('<fII', float(mag), area, dur))]
             recs['ENCH'].append(record('ENCH', fid('ENCH', w['id']), [
                 sub('EDID', z('UN_WandEnch_' + w['id'])), sub('OBND', bytes(12)), sub('FULL', z(w['label'])), sub('ENIT', enit)] + effs))
         else:

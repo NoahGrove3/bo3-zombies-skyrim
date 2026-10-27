@@ -2641,10 +2641,20 @@ namespace bo3z
 					else s.lastPos = here, s.still = 0;
 					if (IsRising(a.get())) s.lastPos = here, s.still = 0;
 				}
-				const bool pinned = !boss && !caster && dist > 260.0f && s.still >= 3.0f;
+				// (Noah: "the spawn frequency and locations" - the log: one of the dead set back down every second or two) slower to
+				// call one stuck, and never where you are looking: only one out of your sight is taken back to a spawn point
+				const bool pinned = !boss && !caster && dist > 260.0f && s.still >= 5.0f;
 				if (!boss && dist > 400.0f && s.lastDist >= 0 && dist > s.lastDist - 30.0f) s.stuck += kStep;
 				else s.stuck = 0;
-				if ((pinned || s.stuck >= 6.0f) && grounded >= 1.5f && relocGap <= 0 && !IsRising(a.get())) {
+				bool inView = false;
+				{
+					const auto pp = a_player->GetPosition(), zp = a->GetPosition();
+					const float yaw = a_player->GetAngleZ();
+					const float dx = zp.x - pp.x, dy = zp.y - pp.y, len = std::max(1.0f, std::hypot(dx, dy));
+					const float facing = (dx * std::sin(yaw) + dy * std::cos(yaw)) / len;  // 1 straight ahead
+					inView = facing > 0.45f && dist < 2500.0f && !RayBlocked(a_player->GetParentCell(), pp + RE::NiPoint3{ 0, 0, 110.0f }, zp + RE::NiPoint3{ 0, 0, 90.0f });
+				}
+				if ((pinned || s.stuck >= 10.0f) && !inView && grounded >= 1.5f && relocGap <= 0 && !IsRising(a.get())) {
 					relocGap = 0.5f, s.stuck = 0, s.stall = 0, s.still = 0, s.lastDist = -1;
 					Resurface(a.get(), a_player);
 					s.lastPos = a->GetPosition();

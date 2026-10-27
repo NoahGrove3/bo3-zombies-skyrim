@@ -1276,6 +1276,7 @@
   "SNDR:dance_song": "0xcf8",
   "PERK:summon_cap_6": "0xcf9",
   "PERK:summon_cap_7": "0xcfa",
-  "PERK:summon_cap_8": "0xcfb"
+  "PERK:summon_cap_8": "0xcfb",
+  "MGEF:conjurerbolt": "0xcfc"
  }
 }

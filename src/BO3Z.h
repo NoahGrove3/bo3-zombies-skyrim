@@ -311,7 +311,8 @@ namespace bo3z
 		bool             OnCast(RE::FormID a_spell);   // the Tome of the Six Fires
 		void             NoteCast(RE::FormID a_spell); // a summon spell: called up here if Skyrim's own didn't come
 		bool             IsOwnSummon(RE::Actor* a_actor);
-		void             MarkForSummons(RE::Actor* a_target);  // (the Summoner's staff) every summon of yours turns on it until it dies or another is marked
+		void             MarkForSummons(RE::Actor* a_target);
+		void             ConjurerStaffHit(RE::Actor* a_target, RE::FormID a_source);  // the Conjurer's Staff's bolt struck: a burst, and the mark  // (the Summoner's staff) every summon of yours turns on it until it dies or another is marked
 		void             TickFast(float a_delta);      // where the Subsuming Vortex's arrows come down
 		int              RestockWonder();              // the Vortex's arrows topped up (quivers, Max Ammo)
 		bool             WonderEarned();               // any class's wonder won (the Three Words follow)

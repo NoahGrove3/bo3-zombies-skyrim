@@ -260,7 +260,7 @@ namespace bo3z
 				// (Noah: "they start sliding towards me while standing before the walk -> run animations start") the pace is
 				// taken up at once when it rises - the legs start with the body - and let go of more gently
 				const float target = std::min(v, 900.0f);
-				r.speed += (target - r.speed) * std::min(1.0f, dt * (target > r.speed ? 22.0f : 7.0f));
+				r.speed += (target - r.speed) * std::min(1.0f, dt * (target > r.speed ? 12.0f : 6.0f));  // (too quick and the frame-to-frame jitter flickered the gaits)
 			}
 			const RE::NiPoint3 prevPos = r.lastPos;
 			r.lastPos = pos;
