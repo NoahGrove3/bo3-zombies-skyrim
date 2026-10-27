@@ -3071,6 +3071,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			});
 			return found;
 		}
+		bool PartyTab(ImDrawList* a_dl, float a_kk, int a_clicks, const char* a_name);
 		// each frame while the Esc journal is up: our entry in place; taken (A / Enter / a click while it is selected) -> the party
 		void PartyInSystemList(RE::GFxMovieView* a_mv, int a_clicks)
 		{
@@ -3219,6 +3220,18 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// who is in the lobby with each one's night (kills, headshots, best streak, septims, revives); last night's score
 		// with the party's MVP; and your character's records. Alone (or without Steam) it shows just you.
 		// a: the panel's top-left corner
+		// the PARTY tab at the top left (the Esc journal, the main menu): click it, or P / Triangle-Y
+		bool PartyTab(ImDrawList* a_dl, float a_kk, int a_clicks, const char* a_name)
+		{
+			const ImVec2 cur = g_cursor;
+			const ImVec2 ta{ 36 * a_kk, 30 * a_kk }, tb{ 336 * a_kk, 76 * a_kk };
+			const bool   over = cur.x >= ta.x && cur.x <= tb.x && cur.y >= ta.y && cur.y <= tb.y;
+			if (over && a_clicks > 0) g_partyOpen = !g_partyOpen;
+			Panel(a_dl, ta, tb, a_kk, 0.95f);
+			const std::string lab = std::string(g_partyOpen ? "CLOSE" : a_name) + "   P / " + (Settings::PlayStationIcons() ? "Triangle" : "Y");
+			TxtC(a_dl, g_title, 18 * a_kk, (ta.x + tb.x) * 0.5f, ta.y + 12 * a_kk, over || g_partyOpen ? kIce : IM_COL32(200, 214, 235, 235), lab, over ? 1.5f * a_kk : 0.0f, kRune);
+			return over;
+		}
 		void PartyPanel(ImDrawList* dl, ImVec2 size, ImVec2 a, float k, bool click)
 		{
 			const ImVec2 cur = Cursor(size);
@@ -5660,7 +5673,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			} else if (codex) {
 				DrawCodex(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks);
 			} else if (mainMenu) {
-				DrawMenu(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks > 0);
+				// (Noah: "I don't see the party tab in game or the main menu") Edge UI draws the main menu's words, so the
+				// co-op party is our own tab at the top left (click it, or P / Triangle-Y), opening the same party window
+				const float kk = io.DisplaySize.y / 1080.0f;
+				const bool  over = Net::Available() && PartyTab(ImGui::GetForegroundDrawList(), kk, clicks, "CO-OP PARTY");
+				DrawMenu(io.DisplaySize, static_cast<float>(ImGui::GetTime()), clicks > 0 && !over && !g_partyOpen);
+				if (g_partyOpen && Net::Available()) {
+					PartyPanel(ImGui::GetForegroundDrawList(), io.DisplaySize, { 36 * kk, 90 * kk }, kk, clicks > 0 && !over);
+				}
 			} else if (journal || escJournal) {
 				// (Noah: the Party tab in Skyrim's system menu) in the Esc journal a PARTY tab at the top left (click it, or P /
 				// Triangle-Y): it opens the party window - the lobby, everyone's night, last night's score and your records
@@ -5668,21 +5688,16 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float kk = io.DisplaySize.y / 1080.0f;
 					auto*       dl = ImGui::GetForegroundDrawList();
 					bool over = false;
-					if (Hud::kEdgeHud) {  // (Noah) PARTY is an entry of the pause menu's own list now (Edge UI draws it)
+					if (Hud::kEdgeHud) {  // (Noah) PARTY as an entry of the pause menu's own list, when Edge UI's list can be found
 						if (auto jm = uiM ? uiM->GetMenu(RE::JournalMenu::MENU_NAME) : nullptr; jm && jm->uiMovie) {
 							PartyInSystemList(jm->uiMovie.get(), g_partyOpen ? 0 : clicks);
 						}
-					} else {
-						const ImVec2 cur = g_cursor;
-						const ImVec2 ta{ 36 * kk, 30 * kk }, tb{ 306 * kk, 76 * kk };
-						over = cur.x >= ta.x && cur.x <= tb.x && cur.y >= ta.y && cur.y <= tb.y;
-						if (over && clicks > 0) g_partyOpen = !g_partyOpen;
-						Panel(dl, ta, tb, kk, 0.95f);
-						const std::string lab = std::string(g_partyOpen ? "CLOSE PARTY" : "PARTY") + "   P / " + (Settings::PlayStationIcons() ? "Triangle" : "Y");  // (Noah: both keys shown)
-						TxtC(dl, g_title, 18 * kk, (ta.x + tb.x) * 0.5f, ta.y + 12 * kk, over || g_partyOpen ? kIce : IM_COL32(200, 214, 235, 235), lab, over ? 1.5f * kk : 0.0f, kRune);
+					}
+					if (!Hud::kEdgeHud || !g_sys.found) {  // (Noah: "I still don't see the party tab") otherwise our own tab, top left
+						over = PartyTab(dl, kk, clicks, "PARTY");
 					}
 					if (g_partyOpen) {
-						PartyPanel(dl, io.DisplaySize, { Hud::kEdgeHud ? io.DisplaySize.x * 0.5f - 380 * kk : 36 * kk, 90 * kk }, kk, clicks > 0 && !over);
+						PartyPanel(dl, io.DisplaySize, { 36 * kk, 90 * kk }, kk, clicks > 0 && !over);
 					}
 				} else {
 					g_partyOpen = false;
@@ -5918,8 +5933,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			auto* ui = RE::UI::GetSingleton();
 			// the Party tab in the Esc journal: P, or Triangle / Y
-			if (a_b && a_b->IsDown() && ui && ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !ui->IsMenuOpen(RE::MainMenu::MENU_NAME) &&
-				((a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x19) || (!Hud::kEdgeHud && a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && a_b->GetIDCode() == 0x8000))) {
+			const bool partyScreen = ui && ((ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) && !ui->IsMenuOpen(RE::MainMenu::MENU_NAME)) || (ui->IsMenuOpen(RE::MainMenu::MENU_NAME) && Net::Available()));
+			if (a_b && a_b->IsDown() && partyScreen &&
+				((a_b->GetDevice() == RE::INPUT_DEVICE::kKeyboard && a_b->GetIDCode() == 0x19) || ((!Hud::kEdgeHud || !g_sys.found) && a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && a_b->GetIDCode() == 0x8000))) {
 				g_partyOpen = !g_partyOpen;
 				g_partyFocus = 0;
 			}
@@ -5931,7 +5947,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (!g_partyOpen && accept) ++g_sysAccept;      // (the PARTY entry looks on the next frame whether it is the one selected)
 				else if (g_partyOpen && back) g_partyOpen = false;  // (B / Backspace / Tab: back to the list)
 			}
-			if (a_b && a_b->IsDown() && ui && g_partyOpen && ui->IsMenuOpen(RE::JournalMenu::MENU_NAME)) {  // (Noah) the party window by D-pad / arrows
+			if (a_b && a_b->IsDown() && ui && g_partyOpen && (ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) || ui->IsMenuOpen(RE::MainMenu::MENU_NAME))) {  // (Noah) the party window by D-pad / arrows
 				const auto id = a_b->GetIDCode();
 				const auto dev = a_b->GetDevice();
 				if ((dev == RE::INPUT_DEVICE::kGamepad && id == 0x0001) || (dev == RE::INPUT_DEVICE::kKeyboard && id == 0xC8)) g_partyFocus = g_partyFocus - 1;
