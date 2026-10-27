@@ -97,7 +97,7 @@ namespace bo3z
 			Save::SetPerkStacks(a_perk, n);
 			switch (p.effect) {
 			case 0: Mod(RE::ActorValue::kHealth, p.value); break;                                     // Troll's Hide: more health each time
-			case 4: Mod(RE::ActorValue::kSpeedMult, p.value); Mod(RE::ActorValue::kStamina, 100); break;  // Windrunner
+			case 4: Mod(RE::ActorValue::kSpeedMult, p.value); Mod(RE::ActorValue::kStaminaRateMult, 30.0f); break;  // Windrunner: 30% faster on foot, stamina back 30% sooner
 			case 1:                                                                                     // Quicksilver: spells cost 15% less each (to 75%)
 				if (n <= 5) {
 					for (auto av : kSchoolCost) Mod(av, 15.0f);
@@ -125,7 +125,7 @@ namespace bo3z
 				const auto& p = gen::kPerks[i];
 				switch (p.effect) {
 				case 0: Mod(RE::ActorValue::kHealth, -p.value * n); break;
-				case 4: Mod(RE::ActorValue::kSpeedMult, -p.value * n); Mod(RE::ActorValue::kStamina, -100.0f * n); break;
+				case 4: Mod(RE::ActorValue::kSpeedMult, -p.value * n); Mod(RE::ActorValue::kStaminaRateMult, -30.0f * n); break;
 				case 1: for (auto av : kSchoolCost) Mod(av, -15.0f * std::min(n, 5)); break;
 				case 2: for (auto av : kSchoolPower) Mod(av, -50.0f * n); break;
 				case 6: Mod(RE::ActorValue::kMagicka, -50.0f * n); break;

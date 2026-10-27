@@ -11,8 +11,8 @@
   "rows": [
     {
       "id": "run_boost",
-      "what": "extra SpeedMult always (Skyrim's run feels sluggish)",
-      "value": 30,
+      "what": "extra SpeedMult always (Noah, Oct 27: the whole pace 30% slower than before - 130 down to 91; the Windrunner Brew gives it back)",
+      "value": -9,
       "durationMs": 0,
       "verify": [
         "value"
@@ -20,8 +20,8 @@
     },
     {
       "id": "sprint_boost",
-      "what": "extra SpeedMult while sprinting (halved from 60 at Noah's ask: sprinting was too fast)",
-      "value": 30,
+      "what": "extra SpeedMult while sprinting (30% slower with the run: 160 down to 112)",
+      "value": 21,
       "durationMs": 0,
       "verify": [
         "value"

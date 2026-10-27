@@ -1096,7 +1096,7 @@ namespace bo3z::gen
 		PerkDef{ "quicksilver", "Quicksilver Draught", 3000, 1, 0.6f, 0x801, 0x821 },
 		PerkDef{ "twinstrike", "Twin Strike Ale", 2000, 2, 2.0f, 0x802, 0x822 },
 		PerkDef{ "hearthfire", "Hearthfire Tonic", 500, 3, 1.0f, 0x803, 0x823 },
-		PerkDef{ "windrunner", "Windrunner Brew", 2000, 4, 15.0f, 0x804, 0x824 },
+		PerkDef{ "windrunner", "Windrunner Brew", 2000, 4, 27.0f, 0x804, 0x824 },
 		PerkDef{ "hawkeye", "Hawkeye Tincture", 1500, 5, 1.5f, 0x805, 0x825 },
 		PerkDef{ "mammoth", "Mammoth Back Porter", 4000, 6, 3.0f, 0x806, 0x826 },
 		PerkDef{ "frostbite", "Frostbite Venom", 4000, 7, 4.0f, 0x827, 0x82B },
@@ -1135,7 +1135,7 @@ namespace bo3z::gen
 	inline constexpr int kPerk_bladesong = 18;
 	inline constexpr int kPerk_spellbind = 19;
 	inline constexpr int kPerk_steelwind = 20;
-	inline constexpr std::array<std::string_view, 21> kPerkDesc{ { "+100 maximum health per drink.", "Your spells cost 15% less magicka per drink (up to 75% less).", "Your spells deal 50% more damage per drink.", "Saves you from one death: instead of dying, you get back up. Each tonic is one save.", "You move faster and can sprint longer. Each brew adds more.", "Your magicka refills 50% faster per drink.", "+50 maximum magicka per drink.", "When an enemy hits you, frost webs burst out and slow every enemy nearby. Each drink makes the webs wider and colder.", "Every 12th spell you cast sends out a lightning burst around you. Each cider makes it come sooner and hit harder.", "Your arrows and bolts slowly grow back in your quiver. Each drink makes them grow back faster.", "Your summons have 50% more health and deal 50% more damage.", "Each time one of your summons kills an enemy, you heal 5% of your maximum health.", "You can have one more summon out at a time (up to 8).", "Enemies you kill with Destruction spells explode, hurting the enemies around them.", "Destruction spells cost 25% less magicka.", "Each kill with a Destruction spell gives you back 6% of your magicka.", "You draw bows and reload crossbows 25% faster.", "While you hold a bow or crossbow, enemies' hits do 25% less damage to you.", "Each melee hit you land on an enemy heals you 2% of your maximum health.", "Each melee kill gives you back 10% of your magicka.", "Your melee attacks are 20% faster." } };
+	inline constexpr std::array<std::string_view, 21> kPerkDesc{ { "+100 maximum health per drink.", "Your spells cost 15% less magicka per drink (up to 75% less).", "Your spells deal 50% more damage per drink.", "Saves you from one death: instead of dying, you get back up. Each tonic is one save.", "You move 30% faster and your stamina refills 30% faster (per drink).", "Your magicka refills 50% faster per drink.", "+50 maximum magicka per drink.", "When an enemy hits you, frost webs burst out and slow every enemy nearby. Each drink makes the webs wider and colder.", "Every 12th spell you cast sends out a lightning burst around you. Each cider makes it come sooner and hit harder.", "Your arrows and bolts slowly grow back in your quiver. Each drink makes them grow back faster.", "Your summons have 50% more health and deal 50% more damage.", "Each time one of your summons kills an enemy, you heal 5% of your maximum health.", "You can have one more summon out at a time (up to 8).", "Enemies you kill with Destruction spells explode, hurting the enemies around them.", "Destruction spells cost 25% less magicka.", "Each kill with a Destruction spell gives you back 6% of your magicka.", "You draw bows and reload crossbows 25% faster.", "While you hold a bow or crossbow, enemies' hits do 25% less damage to you.", "Each melee hit you land on an enemy heals you 2% of your maximum health.", "Each melee kill gives you back 10% of your magicka.", "Your melee attacks are 20% faster." } };
 	inline constexpr int kMaxPerks = 12;
 	inline constexpr std::array<int, 21> kPerkClass{ { -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3 } };  // the class a perk belongs to (-1: every class)
 	struct CrewDef { std::string_view id, label, quote; int passive; float value; std::string_view passiveText; };
@@ -1478,7 +1478,7 @@ namespace bo3z::gen
 		LocationDef{ 8, 0x01773A, 19, 7 },
 		LocationDef{ 9, 0x0177EF, 19, 7 },
 	} };
-	inline constexpr float kRunBoost = 30.0f, kSprintBoost = 30.0f, kSlideSpeed = 720.0f, kSlideSeconds = 0.9f, kSlideBoost = 0.0f, kSlideJump = 1.0f, kAirControl = 520.0f, kAirMax = 0.0f, kSprintStamina = 0.2f, kJumpHeight = 1.2f;
+	inline constexpr float kRunBoost = -9.0f, kSprintBoost = 21.0f, kSlideSpeed = 720.0f, kSlideSeconds = 0.9f, kSlideBoost = 0.0f, kSlideJump = 1.0f, kAirControl = 520.0f, kAirMax = 0.0f, kSprintStamina = 0.2f, kJumpHeight = 1.2f;
 	inline constexpr float kStrafeSpeed = 0.97f, kBackSpeed = 0.85f, kGroundAccel = 14.0f, kTurnRate = 2.0f;
 	inline constexpr float kAdsFov = 55.0f, kAdsSeconds = 0.12f, kAdsSpeed = -30.0f, kWorldFov = 115.0f, kViewmodelFov = 80.0f, kFpsCap = 0.0f;
 	inline constexpr float kAdsEyeDistance = 20.0f, kAdsSightHeight = 5.0f, kAdsViewmodelFov = 62.0f;
