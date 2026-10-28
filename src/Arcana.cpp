@@ -327,7 +327,7 @@ namespace bo3z::Arcana
 
 	std::uint32_t ElementColor(int a_element)
 	{
-		static constexpr std::uint32_t kCol[coffer::kElements] = { 0xFF6A1E, 0x6FC8FF, 0x8C7CFF, 0x6FD24A, 0x9AA84A, 0xFFC83C, 0xD0202E, 0xB45CFF };
+		static constexpr std::uint32_t kCol[coffer::kElements] = { 0xFF6A1E, 0x6FC8FF, 0x8C7CFF, 0x6FD24A, 0xC8642E, 0xFFC83C, 0xD0202E, 0xB45CFF };
 		return a_element >= 0 && a_element < coffer::kElements ? kCol[a_element] : 0xB45CFF;
 	}
 	std::string_view ElementName(int a_element) { return a_element >= 0 && a_element < coffer::kElements ? coffer::kElementName[a_element] : "arcane"; }

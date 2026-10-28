@@ -126,9 +126,12 @@ namespace bo3z::Classes
 			const bool female = p->GetActorBase() && p->GetActorBase()->IsFemale();
 			switch (a_cls) {
 			case coffer::kSummoner:
-				GiveSpell(Rung1(a_cls, "The Dead"), false);
+				// (Noah: "remove the staff the Summoner comes with - an upgradable spell of an element no other class uses")
+				// Corrosion in the right hand (its bolts tell your summons what to kill), the Beasts in the left, the Dead in
+				// the book
+				Arcana::Give(Rung1(a_cls, "The Dead"), false);
+				GiveSpell(Rung1(a_cls, "Corrosion"), false);
 				GiveSpell(Rung1(a_cls, "Beasts"), true);
-				GiveConjurerStaff();  // (Noah) the staff whose bolts tell your summons what to kill
 				if (female) {
 					for (std::uint32_t id : { 0xE58u, 0xE5Bu, 0xE5Du, 0xE5Fu, 0xE63u }) {
 						GiveItem(p, Lookup(id, "Wandering Summoner Outfit.esp"), 1, true);
@@ -862,10 +865,22 @@ namespace bo3z::Classes
 				}
 			}
 		}
-		// (Noah) a Summoner from before the staff came gets it once, a moment into the game
-		if (!g_staffChecked && p->Is3DLoaded() && g_class.load() == coffer::kSummoner && g_kit[coffer::kSummoner]) {
+		// (Noah: the staff is gone) a Summoner from before gives it back once and learns Corrosion in its place
+		if (!g_staffChecked && p->Is3DLoaded()) {
 			g_staffChecked = true;
-			GiveConjurerStaff();
+			const int si = ConjurerStaff();
+			if (auto* w = si >= 0 ? Forms::Gun(si) : nullptr; w && p->GetItemCount(w) > 0) {
+				if (auto* em = RE::ActorEquipManager::GetSingleton(); em && (p->GetEquippedObject(false) == w || p->GetEquippedObject(true) == w)) em->UnequipObject(p, w);
+				p->RemoveItem(w, p->GetItemCount(w), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				logger::info("classes: the Conjurer's Staff taken back - Corrosion in its place");
+			}
+			if (g_class.load() == coffer::kSummoner && g_kit[coffer::kSummoner]) {
+				bool knows = false;
+				for (int i = 0; i < static_cast<int>(coffer::kSpells.size()); ++i) {
+					if (coffer::kSpells[i].cls == coffer::kSummoner && std::string_view(coffer::kSpells[i].ladderLabel) == "Corrosion" && Arcana::Spell(i) && p->HasSpell(Arcana::Spell(i))) knows = true;
+				}
+				if (!knows) GiveSpell(Rung1(coffer::kSummoner, "Corrosion"), false);
+			}
 		}
 		// (Noah: no movement-blocking hits) the night's dead never stagger you: the Steady perk (Mod Incoming Stagger x0)
 		if (auto* steady = dh->LookupForm<RE::BGSPerk>(gen::kSteadyPerk, gen::kPlugin); steady && !p->HasPerk(steady)) {
@@ -1556,9 +1571,13 @@ namespace bo3z::Classes
 	}
 	void ConjurerStaffHit(RE::Actor* a_target, RE::FormID a_source)
 	{
-		const int i = ConjurerStaff();
-		auto*     w = i >= 0 ? Forms::Gun(i) : nullptr;
-		if (!w || !a_target || (a_source != w->GetFormID() && !(w->formEnchanting && a_source == w->formEnchanting->GetFormID()))) return;
+		// (Noah: the staff's work is Corrosion's now) one of Corrosion's bolts struck: its rung sets the burst
+		int level = -1;
+		for (int k = 0; k < static_cast<int>(coffer::kSpells.size()); ++k) {
+			if (std::string_view(coffer::kSpells[k].ladderLabel) != "Corrosion" || coffer::kSpells[k].cls != coffer::kSummoner) continue;
+			if (auto* sp = Arcana::Spell(k); sp && sp->GetFormID() == a_source) level = coffer::kSpells[k].rung - 1;
+		}
+		if (level < 0 || !a_target) return;
 		static std::chrono::steady_clock::time_point last{};
 		const auto now = std::chrono::steady_clock::now();
 		if (now - last < std::chrono::milliseconds(200)) return;  // (one bolt, one burst)
@@ -1566,12 +1585,12 @@ namespace bo3z::Classes
 		// (Noah: "the Echo Altar should increase the area of damage on impact, and the damage itself - and any enemy within
 		// the damage area gets marked for the summons") a burst round what it hit: 3 m and a fifth of one of the dead's
 		// health at first, each reforge 1 m wider and harder; everyone in it is marked
-		const float radius = 210.0f + 70.0f * static_cast<float>(g_staffLevel);
-		const float share = 0.2f + 0.1f * static_cast<float>(g_staffLevel);
+		const float radius = 210.0f + 70.0f * static_cast<float>(level);
+		const float share = 0.2f + 0.1f * static_cast<float>(level);
 		const auto  at = a_target->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f };
 		Gun::AreaHurt(at, radius, share, "");
 		// the rust burst grown to the splash's own reach (a reforged staff's wider ring shows as wider)
-		if (g_staffLevel > 0) Gun::FxFrom(StaffBurstLook(), a_target->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, radius / 210.0f);
+		Gun::FxFrom(StaffBurstLook(), a_target->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, radius / 210.0f);
 		std::vector<RE::ActorHandle> marks;
 		for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 			auto z = h.get();
@@ -1581,7 +1600,7 @@ namespace bo3z::Classes
 		if (!marks.empty()) {
 			g_summonMarks = std::move(marks);
 			static int told = 0;
-			if (told++ < 10) logger::info("classes: your summons turn on {} marked (level {} staff)", g_summonMarks.size(), g_staffLevel);
+			if (told++ < 10) logger::info("classes: your summons turn on {} marked (Corrosion rung {})", g_summonMarks.size(), level + 1);
 		}
 	}
 	void MarkForSummons(RE::Actor* a_target)

@@ -5,14 +5,14 @@
 
 namespace bo3z::coffer
 {
-	enum Element : std::uint8_t { kFire, kFrost, kShock, kPoison, kDisease, kSun, kBlood, kArcane, kElements };
-	inline constexpr const char* kElementName[kElements] = { "fire", "frost", "shock", "poison", "disease", "sun", "blood", "arcane" };
+	enum Element : std::uint8_t { kFire, kFrost, kShock, kPoison, kCorrosion, kSun, kBlood, kArcane, kElements };
+	inline constexpr const char* kElementName[kElements] = { "fire", "frost", "shock", "poison", "corrosion", "sun", "blood", "arcane" };
 	enum Class : std::uint8_t { kSummoner, kDestruction, kRanger, kSpellsword, kClasses };
 	inline constexpr const char* kClassName[kClasses] = { "Summoner", "Destruction", "Ranger", "Spellsword" };
 	struct Spell { const char* plugin; std::uint32_t id; const char* name; Element element; std::uint8_t tier; std::uint16_t cost; bool concentration; float power;
 		Class cls; std::uint8_t ladder, rung, rungs; const char* ladderLabel; };   // rung 1 is what the altar rolls; the last rung is Legendary
-	inline constexpr int kLadders = 22;
-	inline constexpr std::array<Spell, 73> kSpells{ {
+	inline constexpr int kLadders = 23;
+	inline constexpr std::array<Spell, 76> kSpells{ {
 		{ "Skyrim.esm", 0x012FD0, "Firebolt", kFire, 0, 11, false, 1.0f, kDestruction, 0, 1, 4, "Fire" },
 		{ "MysticismMagic.esp", 0x1D7020, "Immolate", kFire, 1, 60, false, 1.0f, kDestruction, 0, 2, 4, "Fire" },
 		{ "Skyrim.esm", 0x01C789, "Fireball", kFire, 2, 33, false, 1.0f, kDestruction, 0, 3, 4, "Fire" },
@@ -86,5 +86,8 @@ namespace bo3z::coffer
 		{ "MysticismMagic.esp", 0x9606AC, "Miasma", kPoison, 3, 46, true, 1.0f, kSpellsword, 20, 2, 2, "Poison Breath" },
 		{ "MysticismMagic.esp", 0x445FB7, "Drain Life", kBlood, 0, 17, true, 1.0f, kSpellsword, 21, 1, 2, "Blood Breath" },
 		{ "MysticismMagic.esp", 0x440E99, "Leech Life", kBlood, 3, 52, true, 1.0f, kSpellsword, 21, 2, 2, "Blood Breath" },
+		{ "MysticismMagic.esp", 0x29C8AB, "Corrode Armor", kCorrosion, 0, 32, false, 1.0f, kSummoner, 22, 1, 3, "Corrosion" },
+		{ "MysticismMagic.esp", 0x2A19B9, "Armoreater", kCorrosion, 1, 60, false, 1.0f, kSummoner, 22, 2, 3, "Corrosion" },
+		{ "MysticismMagic.esp", 0x9E9213, "Swordbreaker", kCorrosion, 3, 60, false, 1.0f, kSummoner, 22, 3, 3, "Corrosion" },
 	} };
 }

@@ -20,7 +20,7 @@
   "cost",
   "power"
  ],
- "count": 73,
+ "count": 76,
  "rows": [
   {
    "id": "destruction_fire_1",
@@ -1407,6 +1407,63 @@
    "tier": 3,
    "baseCost": 209,
    "cost": 52,
+   "power": 1.0
+  },
+  {
+   "id": "summoner_corrosion_1",
+   "plugin": "MysticismMagic.esp",
+   "formId": "29C8AB",
+   "name": "Corrode Armor",
+   "mod": "MysticismMagic.esp",
+   "element": "corrosion",
+   "school": "alteration",
+   "cast": "fire-and-forget",
+   "cls": "summoner",
+   "ladder": "summoner_corrosion",
+   "ladderLabel": "Corrosion",
+   "rung": 1,
+   "rungs": 3,
+   "tier": 0,
+   "baseCost": 128,
+   "cost": 32,
+   "power": 1.0
+  },
+  {
+   "id": "summoner_corrosion_2",
+   "plugin": "MysticismMagic.esp",
+   "formId": "2A19B9",
+   "name": "Armoreater",
+   "mod": "MysticismMagic.esp",
+   "element": "corrosion",
+   "school": "alteration",
+   "cast": "fire-and-forget",
+   "cls": "summoner",
+   "ladder": "summoner_corrosion",
+   "ladderLabel": "Corrosion",
+   "rung": 2,
+   "rungs": 3,
+   "tier": 1,
+   "baseCost": 384,
+   "cost": 60,
+   "power": 1.0
+  },
+  {
+   "id": "summoner_corrosion_3",
+   "plugin": "MysticismMagic.esp",
+   "formId": "9E9213",
+   "name": "Swordbreaker",
+   "mod": "MysticismMagic.esp",
+   "element": "corrosion",
+   "school": "alteration",
+   "cast": "fire-and-forget",
+   "cls": "summoner",
+   "ladder": "summoner_corrosion",
+   "ladderLabel": "Corrosion",
+   "rung": 3,
+   "rungs": 3,
+   "tier": 3,
+   "baseCost": 380,
+   "cost": 60,
    "power": 1.0
   }
  ]

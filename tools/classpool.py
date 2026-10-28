@@ -52,8 +52,13 @@ LADDERS = [
     ('spellsword', 'shock_breath', 'Storm Breath', 'shock', [(MYST, 'Greater Sparks'), (MYST, 'Electrocute')]),
     ('spellsword', 'poison_breath', 'Poison Breath', 'poison', [(MYST, 'Poison Spray'), (MYST, 'Miasma')]),
     ('spellsword', 'blood_breath', 'Blood Breath', 'blood', [(MYST, 'Drain Life'), (MYST, 'Leech Life')]),
+    # (Noah: "remove the staff the Summoner comes with - a spell that's upgradable instead, of an element no other class
+    # uses") Corrosion: Mysticism's metal-eating bolts. Each strikes a burst round what it hits and marks everyone in it for
+    # your summons (Classes::CorrosionHit); Bind Pact climbs it, each rung a wider, harder burst. (last: the indices before
+    # it stay as they were)
+    ('summoner', 'corrosion', 'Corrosion', 'corrosion', [(MYST, 'Corrode Armor'), (MYST, 'Armoreater'), (MYST, 'Swordbreaker')]),
 ]
-ELEMENTS = ['fire', 'frost', 'shock', 'poison', 'disease', 'sun', 'blood', 'arcane']
+ELEMENTS = ['fire', 'frost', 'shock', 'poison', 'corrosion', 'sun', 'blood', 'arcane']  # (corrosion took disease's place: nothing used it)
 
 
 def load():
