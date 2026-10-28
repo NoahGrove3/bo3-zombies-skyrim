@@ -199,7 +199,7 @@
       ],
       "shift": 10,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "loop": false,
       "use": "centurion: gathered burst at the target"
     },
@@ -574,7 +574,7 @@
       ],
       "shift": 15,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "loop": false,
       "use": "steampump: gathered burst at the target"
     },
@@ -732,7 +732,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "cat": "sfx",
       "loop": false,
       "use": "animunculi: signature release"
@@ -769,7 +769,7 @@
       ],
       "shift": 10,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "loop": false,
       "use": "animunculi: gathered burst at the target"
     },
@@ -844,7 +844,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "loop": false,
       "use": "kagrenac: bolt impact where it lands (its own sound, sheet sfx hit_kagrenac)"
     },
@@ -1241,7 +1241,7 @@
       ],
       "shift": 10,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "loop": false,
       "use": "flamerepeater: gathered burst at the target"
     },
@@ -4164,7 +4164,7 @@
       ],
       "shift": -15,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "cat": "sfx",
       "loop": false,
       "use": "Thu'um: wail"
@@ -4206,7 +4206,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "cat": "sfx",
       "loop": false,
       "use": "Thu'um: quake"
@@ -4529,7 +4529,7 @@
       ],
       "shift": 20,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "loop": false,
       "use": "wailer: attack"
     },
@@ -4548,7 +4548,7 @@
       ],
       "shift": 35,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "loop": false,
       "use": "wailer: hurt"
     },
@@ -4829,7 +4829,7 @@
       ],
       "shift": 10,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "loop": false,
       "use": "necro: attack"
     },
@@ -4901,7 +4901,7 @@
       ],
       "shift": 20,
       "layer": "none",
-      "atten": 0,
+      "atten": 3,
       "loop": false,
       "use": "knight: attack"
     },
@@ -4973,7 +4973,7 @@
       ],
       "shift": 10,
       "layer": "none",
-      "atten": 0,
+      "atten": 3,
       "loop": false,
       "use": "king: attack"
     },
@@ -5047,7 +5047,7 @@
       ],
       "shift": -10,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "loop": false,
       "use": "lich: attack"
     },
@@ -5680,7 +5680,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "cat": "sfx",
       "loop": false,
       "use": "Wailer screams: the horde comes faster"
@@ -5698,7 +5698,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "cat": "sfx",
       "loop": false,
       "use": "Bloater bursts"
@@ -5771,7 +5771,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 0,
+      "atten": 1,
       "loop": false,
       "use": "Grimmvar fire breath"
     },
@@ -5807,7 +5807,7 @@
       ],
       "shift": 25,
       "layer": "none",
-      "atten": 0,
+      "atten": 3,
       "loop": false,
       "use": "Grimmvar claw strike lands"
     },
@@ -5843,7 +5843,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 0,
+      "atten": 3,
       "loop": false,
       "use": "Grimmvar lands from his leap"
     },
@@ -5863,7 +5863,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "loop": false,
       "use": "eruption: the ground bursts"
     },
@@ -5917,7 +5917,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 0,
+      "atten": 1,
       "loop": false,
       "use": "Grimmvar rises (stinger)"
     },
@@ -6226,7 +6226,7 @@
       ],
       "shift": -15,
       "layer": "none",
-      "atten": 0,
+      "atten": 2,
       "cat": "sfx",
       "loop": false,
       "use": "Nuke power-up"
@@ -7481,7 +7481,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 0,
+      "atten": 1,
       "loop": false,
       "use": "shroud shout spoken with 2 word(s)"
     },
@@ -7499,7 +7499,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 0,
+      "atten": 1,
       "loop": false,
       "use": "shroud shout spoken with 3 word(s)"
     },

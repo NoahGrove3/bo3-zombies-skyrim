@@ -500,12 +500,16 @@ namespace bo3z
 					// where none of the dead already stands: tried round its point until it is clear by a body's width
 					static std::vector<std::pair<RE::NiPoint3, std::chrono::steady_clock::time_point>> used;
 					const auto nowU = std::chrono::steady_clock::now();
-					std::erase_if(used, [&](const auto& u) { return nowU - u.second > std::chrono::milliseconds(3500); });
+					std::erase_if(used, [&](const auto& u) { return nowU - u.second > std::chrono::milliseconds(2500); });
 					const auto recentlyUsed = [&](const RE::NiPoint3& q) {
 						for (const auto& u : used) if (std::hypot(u.first.x - q.x, u.first.y - q.y) < 350.0f) return true;
 						return false;
 					};
-					for (std::size_t k = 0; k < wts.size(); ++k) if (recentlyUsed(*ok[k])) wts[k] *= 0.05f;
+					// (Noah: "the enemies spawn one at a time from each spawn point") a portal still open (the last 2.5 s) takes no
+					// other: only when every point is busy does the least loaded one take a second
+					bool anyFree = false;
+					for (std::size_t k = 0; k < wts.size(); ++k) anyFree |= !recentlyUsed(*ok[k]);
+					for (std::size_t k = 0; k < wts.size(); ++k) if (recentlyUsed(*ok[k])) wts[k] *= anyFree ? 0.0f : 0.05f;
 					std::discrete_distribution<std::size_t> pickPt(wts.begin(), wts.end());
 					const RE::NiPoint3 base = *ok[pickPt(g_rng)];
 					const auto clearOf = [&](const RE::NiPoint3& q) {
@@ -649,7 +653,7 @@ namespace bo3z
 					// (the map crashed with a queue of art being built: only the near ones get a portal, a few at a time)
 					static auto lastPortal = std::chrono::steady_clock::now() - std::chrono::seconds(5);
 					auto* pc = RE::PlayerCharacter::GetSingleton();
-					if (!pc || pc->GetPosition().GetDistance(a->GetPosition()) > 2500.0f || std::chrono::steady_clock::now() - lastPortal < std::chrono::milliseconds(400)) return;
+					if (!pc || pc->GetPosition().GetDistance(a->GetPosition()) > 4500.0f || std::chrono::steady_clock::now() - lastPortal < std::chrono::milliseconds(120)) return;
 					if (auto* ui = RE::UI::GetSingleton(); ui && ui->IsMenuOpen(RE::MapMenu::MENU_NAME)) return;
 					lastPortal = std::chrono::steady_clock::now();
 					if (auto* dh = RE::TESDataHandler::GetSingleton()) {
@@ -670,9 +674,10 @@ namespace bo3z
 						f.z = r.floorZ + 2.0f;
 						a->SetPosition(f, true);
 						a->SetCollision(true);
-						ShowRiser(a.get(), true), r.hidden = false;
+						r.hidden = true;  // (unseen a breath while the portal opens round it, then it steps out)
 						openPortal();
-						Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
+						const bool great = Director::IsBoss(a.get()) || g_elites.contains(a->GetFormID());
+						if (great) Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
 						continue;
 					}
 					if (!summoned && a->Is3DLoaded() && Undead::HasClips(a.get())) {
@@ -755,6 +760,7 @@ namespace bo3z
 					continue;
 				}
 				if (r.anim == 2) {  // through the portal: a moment to step out, then it hunts
+					if (r.hidden && (r.t >= 0.35f || a->IsDead())) ShowRiser(a.get(), true), r.hidden = false;
 					if (r.t >= 1.1f || a->IsDead()) {
 						a->EnableAI(true);
 						r.anim = 9, r.t = 0;  // (then watched a moment: it must stay on the floor)
@@ -1026,14 +1032,11 @@ namespace bo3z
 				Undead::SetEyes(actor, rowId);
 			}
 			if (type) Undead::SetPace(actor, speed / 100.0f);  // (after its row's clips are known: the mage keeps the game's own pace)
-			Forms::PlayAt(gen::Sound::rise, actor);
-			if (auto* fx = Forms::Ours(gen::kRiseFx); fx && g_fx.size() < 24) {  // the ground bursts where they climb out (a few at a time)
-				if (auto puff = actor->PlaceObjectAtMe(fx, false)) {
-					puff->SetPosition(actor->GetPosition());
-					g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
-				}
-			}
-			if (g_summonRaise > 0 || kindRow.elite || kindRow.bossEvery > 0 || g_elites.contains(actor->GetFormID())) g_summoned.insert(actor->GetFormID());
+			// (Noah: "something better for the spawns instead of coming from the ground - it's constantly looking broken; summon
+			// portals with really low audio at the spawn points") every one of the night's dead steps out of the Curse's red
+			// portal now, its whoosh barely above a breath (no ground burst, no climbing out)
+			Audio::At(gen::Sound::rise, actor, 0.22f);
+			g_summoned.insert(actor->GetFormID());
 			StartRise(actor, a_player);
 			return true;
 		}

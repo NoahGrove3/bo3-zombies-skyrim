@@ -75,6 +75,37 @@ namespace bo3z
 				}
 			}
 			logger::info("fantasy: {} of {} loud creature sounds brought down to the mix", mixed, gen::kAudioMix.size());
+			// (Noah: "the vampire spell's sound is way too loud - balance every spell sound") a spell of several effects played
+			// each effect's sounds at once - Mysticism gives its perk and dummy effects the main effect's own sounds, so a
+			// Vampiric Bolt let go of the same release three times over. A later effect whose sounds the first one already
+			// plays falls silent (never one that leads any spell, scroll, staff or potion of its own)
+			{
+				std::unordered_set<RE::EffectSetting*> leads;
+				auto lead = [&](RE::MagicItem* m) { if (m && !m->effects.empty() && m->effects[0] && m->effects[0]->baseEffect) leads.insert(m->effects[0]->baseEffect); };
+				for (auto* x : dh->GetFormArray<RE::SpellItem>()) lead(x);
+				for (auto* x : dh->GetFormArray<RE::ScrollItem>()) lead(x);
+				for (auto* x : dh->GetFormArray<RE::EnchantmentItem>()) lead(x);
+				for (auto* x : dh->GetFormArray<RE::AlchemyItem>()) lead(x);
+				std::unordered_set<RE::EffectSetting*> hushed;
+				auto hush = [&](RE::MagicItem* m) {
+					if (!m || m->effects.size() < 2 || !m->effects[0] || !m->effects[0]->baseEffect) return;
+					auto* first = m->effects[0]->baseEffect;
+					std::unordered_set<RE::BGSSoundDescriptorForm*> have;
+					for (auto& sp : first->effectSounds) if (sp.sound) have.insert(sp.sound);
+					if (have.empty()) return;
+					for (std::size_t i = 1; i < m->effects.size(); ++i) {
+						auto* mg = m->effects[i] ? m->effects[i]->baseEffect : nullptr;
+						if (!mg || mg == first || leads.contains(mg) || mg->effectSounds.empty() || hushed.contains(mg)) continue;
+						bool same = true;
+						for (auto& sp : mg->effectSounds) same &= !sp.sound || have.contains(sp.sound);
+						if (same) mg->effectSounds.clear(), hushed.insert(mg);
+					}
+				};
+				for (auto* x : dh->GetFormArray<RE::SpellItem>()) hush(x);
+				for (auto* x : dh->GetFormArray<RE::ScrollItem>()) hush(x);
+				for (auto* x : dh->GetFormArray<RE::EnchantmentItem>()) hush(x);
+				logger::info("audio: {} doubled spell sounds silenced (an effect echoing its spell's first)", hushed.size());
+			}
 			int added = 0;
 			for (const auto& a : kAdds) {
 				auto* list = RE::TESForm::LookupByID<RE::TESLevCharacter>(a.list);
