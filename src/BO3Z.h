@@ -694,6 +694,7 @@ namespace bo3z
 	namespace Fantasy
 	{
 		void Inject();  // the High Fantasy Pack's creatures into Skyrim's wilderness and bandit encounters (data loaded)
+		void HushAltarEchoes();  // the altar's spells: their effects' doubled sounds silenced (after Arcana::Load)
 	}
 
 	namespace Movement

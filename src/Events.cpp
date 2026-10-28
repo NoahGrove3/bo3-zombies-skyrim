@@ -680,15 +680,7 @@ namespace bo3z
 							if (sp && sp->GetSpellType() == RE::MagicSystem::SpellType::kSpell) {
 								last = now;
 								Forms::CastOnce(player, sp, t, 1.0f, player);
-								// (the classes' growth: Twin Resonance) your other Spellsword spell - the one in the book - rides it
-								// too, a quarter as strong
-								for (int other : Arcana::Carried()) {
-									if (other == bi || Arcana::ClassOf(other) != 3) continue;
-									if (auto* sp2 = Arcana::Spell(other); sp2 && sp2->GetSpellType() == RE::MagicSystem::SpellType::kSpell) {
-										Forms::CastOnce(player, sp2, t, 0.25f, player);
-										break;
-									}
-								}
+								// (Noah: "only the one I'm holding") Twin Resonance taken out: the blade carries one spell
 								static int told = 0;
 								if (told++ < 5) logger::info("spellsword: the blade struck with {}", sp->GetName());
 							}
@@ -1092,6 +1084,7 @@ namespace bo3z
 			Audio::InstallSteps();
 			Fantasy::Inject();
 			Arcana::Load();
+			Fantasy::HushAltarEchoes();
 			Director::HeadlongCombat();
 			Settings::ApplyMods();
 			if (auto* ini = RE::INIPrefSettingCollection::GetSingleton()) {  // (and no tutorials at all)

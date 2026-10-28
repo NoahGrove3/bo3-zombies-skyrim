@@ -46,6 +46,35 @@ namespace bo3z
 			};
 		}
 
+		void HushAltarEchoes()
+		{
+			// (Noah: "the Vampiric Touch is still really loud") the altar's own spells: Mysticism's dummy and perk effects
+			// echo the touch's sounds two times more, and another mod leads with them, so the rule above let them be - for
+			// the altar's spells they fall silent all the same (unless one leads an altar spell of its own)
+			{
+				std::unordered_set<RE::EffectSetting*> altarLeads;
+				for (int i = 0; i < 256; ++i) {
+					if (auto* sp = Arcana::Spell(i); sp && !sp->effects.empty() && sp->effects[0] && sp->effects[0]->baseEffect) altarLeads.insert(sp->effects[0]->baseEffect);
+				}
+				int n = 0;
+				for (int i = 0; i < 256; ++i) {
+					auto* m = Arcana::Spell(i);
+					if (!m || m->effects.size() < 2 || !m->effects[0] || !m->effects[0]->baseEffect) continue;
+					auto* first = m->effects[0]->baseEffect;
+					std::unordered_set<RE::BGSSoundDescriptorForm*> have;
+					for (auto& sp : first->effectSounds) if (sp.sound) have.insert(sp.sound);
+					if (have.empty()) continue;
+					for (std::size_t e = 1; e < m->effects.size(); ++e) {
+						auto* mg = m->effects[e] ? m->effects[e]->baseEffect : nullptr;
+						if (!mg || mg == first || altarLeads.contains(mg) || mg->effectSounds.empty()) continue;
+						bool same = true;
+						for (auto& sp : mg->effectSounds) same &= !sp.sound || have.contains(sp.sound);
+						if (same) mg->effectSounds.clear(), ++n;
+					}
+				}
+				logger::info("audio: {} more echoes of the altar's spells silenced", n);
+			}
+		}
 		void Inject()
 		{
 			auto* dh = RE::TESDataHandler::GetSingleton();
@@ -104,6 +133,7 @@ namespace bo3z
 				for (auto* x : dh->GetFormArray<RE::SpellItem>()) hush(x);
 				for (auto* x : dh->GetFormArray<RE::ScrollItem>()) hush(x);
 				for (auto* x : dh->GetFormArray<RE::EnchantmentItem>()) hush(x);
+
 				logger::info("audio: {} doubled spell sounds silenced (an effect echoing its spell's first)", hushed.size());
 			}
 			int added = 0;

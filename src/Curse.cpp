@@ -372,7 +372,7 @@ namespace bo3z
 			Points::Add(500 * s.Count());
 			const std::string head = Upper(std::string(Title(tr))) + " - COMPLETE";
 			if (s.Boss()) {
-				Hud::Banner(head + "   " + std::string(BossName(a_town)) + " rises at the altar when night falls", 7.0f);
+				Hud::Banner(head + "   " + std::string(BossName(a_town)) + (Story::BarrowJarlsOpen() ? " rises at the altar when night falls" : " stirs - it rises once you bring back the Dragonstone from Bleak Falls Barrow"), 7.0f);
 			} else if (InParty()) {
 				Hud::Banner(head + (SharedDone(s) ? std::string("   the party's three trials are done") : std::string()) + (wait.empty() ? std::string() : "   class trials still to win: " + wait), 6.0f);
 			} else {
@@ -562,7 +562,10 @@ namespace bo3z
 			h.questStep = s.Count();
 			if (s.Boss()) {
 				h.questTitle = "THE DRAGON PRIEST";
-				h.questGoal = "Slay " + std::string(BossName(a_zone));
+				// (Noah: "the Dragon Priest never spawned at the end of my night") it only wakes once the story reaches Bleak
+				// Falls Barrow - now it says so, wherever it waits
+				h.questGoal = Story::BarrowJarlsOpen() ? "Slay " + std::string(BossName(a_zone)) : std::string(BossName(a_zone)) + " sleeps until you bring back the Dragonstone from Bleak Falls Barrow";
+				h.questWarn = !Story::BarrowJarlsOpen();
 				return;
 			}
 			const int tr = s.Trial(), n = N(tr), sec = Secs(tr);
@@ -743,7 +746,7 @@ namespace bo3z
 				v.desc[i] = Ask(i);
 			}
 			v.boss = std::string(BossName(a_town));
-			v.bossLine = s.Boss() ? "Rises near the altar at night - slay it to wake the altar" : fmt::format("Rises when the four trials are done ({} of {})", s.Count(), kNeeded);
+			v.bossLine = s.Boss() ? (Story::BarrowJarlsOpen() ? "Rises near the altar at night - slay it to wake the altar" : "Sleeps until the Dragonstone is brought back from Bleak Falls Barrow") : fmt::format("Rises when the four trials are done ({} of {})", s.Count(), kNeeded);
 			return v;
 		}
 
