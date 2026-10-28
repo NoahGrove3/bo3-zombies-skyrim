@@ -97,7 +97,7 @@ namespace BowsImpl
 		if (const int n = p->GetItemCount(am); a_fill && n < Quiver(i)) {
 			p->AddObjectToContainer(am, nullptr, Quiver(i) - n, nullptr);
 		}
-		if (p->GetItemCount(am) > 0 && (a_equip || p->GetCurrentAmmo() != am)) {
+		if (p->GetItemCount(am) > 0 && (a_equip || (Held() == i && p->GetCurrentAmmo() != am))) {  // (Noah: a quiver bought put a bow's arrows on the crossbow in your hands)
 			if (auto* em = RE::ActorEquipManager::GetSingleton()) {
 				em->EquipObject(p, am, nullptr, 1, nullptr, false, false, false, true);
 			}
@@ -108,6 +108,11 @@ namespace BowsImpl
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return 0;
+		auto* nocked = p->GetCurrentAmmo();  // (whatever is on the string goes back on it once the quivers are full)
+		struct Renock { RE::PlayerCharacter* p; RE::TESAmmo* am; ~Renock() {
+			if (am && p->GetItemCount(am) > 0)  // (put on again even when it is still the same: a refilled stack came off the string)
+				if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(p, am, nullptr, 1, nullptr, false, false, false, true);
+		} } renock{ p, nocked };
 		int n = 0;
 		for (int k = 0; k < kN; ++k) {
 			if (auto* w = Weap(k); w && p->GetItemCount(w) > 0) {  // (the audit: a full quiver counted, and was charged for)
@@ -119,9 +124,12 @@ namespace BowsImpl
 		}
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		static constexpr std::uint32_t kBolts[] = { 0x020B04, 0x025A50, 0x025A58, 0x025A60, 0x025A68, 0x025A70 };  // Faction Crossbows' plain bolts
-		bool crossbow = false;
+		bool crossbow = false, elemental = false;
 		for (auto& [obj, data] : p->GetInventory()) {
-			if (auto* w = obj ? obj->As<RE::TESObjectWEAP>() : nullptr; w && (w->IsCrossbow() || (w->GetFile(0) && std::string_view(w->GetFile(0)->GetFilename()) == "OffhandBows.esp")) && data.first > 0) crossbow = true;
+			if (auto* w = obj ? obj->As<RE::TESObjectWEAP>() : nullptr; w && (w->IsCrossbow() || (w->GetFile(0) && std::string_view(w->GetFile(0)->GetFilename()) == "OffhandBows.esp")) && data.first > 0) {
+				crossbow = true;
+				elemental |= Classes::CrossbowElement(w) >= 0;
+			}
 		}
 		if (crossbow && dh) {
 			for (auto id : kBolts) {
@@ -130,7 +138,7 @@ namespace BowsImpl
 					++n;
 				}
 			}
-			if (auto* dg = dh->LookupForm<RE::TESAmmo>(0x020B04, "Faction Crossbows.esp"); dg && p->GetItemCount(dg) <= 0) {
+			if (auto* dg = dh->LookupForm<RE::TESAmmo>(0x020B04, "Faction Crossbows.esp"); dg && !elemental && p->GetItemCount(dg) <= 0) {
 				p->AddObjectToContainer(dg, nullptr, 30, nullptr);
 				++n;
 			}
