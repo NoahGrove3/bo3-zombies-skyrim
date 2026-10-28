@@ -313,6 +313,28 @@ namespace BowsImpl
 		Blast(BlastIndex("turnundead"), at, 0.0f, 0.8f);
 	}
 
+	// (Noah: "the bolt's impact: an area of 5 metres with no fall-off - everyone in it takes the same damage; the same for
+	// the bows; each upgrade 1 metre more") 350 units, 70 more a tier; every foe in it but the one struck takes the shot's
+	// full damage and its element
+	float SplashRadius(int a_tier) { return 350.0f + 70.0f * static_cast<float>(std::clamp(a_tier, 0, 3)); }
+	int EffectFor(Kind a_k, int a_t, bool a_full)
+	{
+		switch (a_k) {
+		case Kind::Fire: return gen::kFxIgnite;
+		case Kind::Frost: return a_full && a_t >= 1 ? gen::kFxFreeze : gen::kFxNone;
+		case Kind::Shock: return a_t >= 1 ? gen::kFxChain : gen::kFxNone;
+		case Kind::Wind: return gen::kFxPush;
+		case Kind::Sun: return gen::kFxHoly;
+		default: return gen::kFxDrain;
+		}
+	}
+	void Splash(const Spellcraft::Shot& s, const RE::NiPoint3& p, RE::Actor* a_struck)
+	{
+		const int eff = EffectFor(KindOf(s.bow), s.tier, s.full);
+		for (auto* f : Foes(p, SplashRadius(s.tier))) {
+			if (f != a_struck && !f->IsDead()) Spellcraft::Strike(s.row, f, s.damage, false, eff, p);
+		}
+	}
 	// an arrow of ours strikes a body
 	// every arrow lands with its element: Skyrim's own explosion of that element and a burst of the spell's light
 	void Impact(const Spellcraft::Shot& s, const RE::NiPoint3& p)
@@ -321,7 +343,7 @@ namespace BowsImpl
 		static constexpr const char* kBig[6] = { "firestorm", "icevolley", "shockmass", "giantslam", "lightmassive", "darkmassive" };
 		const int k = static_cast<int>(KindOf(s.bow));
 		// (Noah: from the first tier the arrow lands as a small burst) everything close round the impact is hurt too
-		Spellcraft::Area(s.row, p, 230.0f + 45.0f * s.tier, s.damage * 0.55f, gen::kFxNone);  // (Noah: a wider burst)
+		// (the splash's damage: Splash, from OnHit and OnGround - full, no fall-off)
 		// (Noah: each tier's impact is the base one, upgraded) the same burst of the element, bigger and fuller each
 		// tier: I a ring of sparks of it round the burst, II Skyrim's great blast of the element and a second, wider wave;
 		// III all of that and the tornado (TornadoOf)
@@ -449,9 +471,16 @@ namespace BowsImpl
 	// (Noah: "the spell on impact from the elemental bolt should upgrade per element") an elemental crossbow's bolt lands
 	// as the matching bow's arrow would at the crossbow's reforge tier: the element's burst (wider, fuller each tier), the
 	// tier-II spell where it strikes, and at tier III the element's great spell
-	void CrossbowStrike(int a_elem, int a_tier, RE::Actor* a_hit, float a_damage)
+	void OnHit(const Spellcraft::Shot& s, RE::Actor* a, const RE::NiPoint3& p, bool killed);
+	// (Noah: "the crossbow and the bows do the same base damage, just a different element") a full draw's damage at a tier
+	float FullShotAt(int a_tier)
 	{
-		if (!a_hit) return;
+		const float base = std::max(30.0f, 0.55f * Director::RoundHealth() * (0.7f + 0.3f * Arcana::Power()));
+		return base * UpgradeMult(std::clamp(a_tier, 0, 3)) * gen::kRounds.hpScale * Perks::DamageMult();
+	}
+	void CrossbowStrike(int a_elem, int a_tier, RE::Actor* a_hit, float)
+	{
+		if (!a_hit || a_hit->IsDead()) return;
 		const Kind want = a_elem == 0 ? Kind::Fire : a_elem == 1 ? Kind::Frost : Kind::Shock;
 		int b = -1;
 		for (int i = 0; i < kN; ++i) if (KindOf(i) == want) { b = i; break; }
@@ -460,21 +489,21 @@ namespace BowsImpl
 		const auto now = std::chrono::steady_clock::now();
 		if (auto& t = last[a_hit->GetFormID()]; now - t < std::chrono::milliseconds(150)) return; else t = now;
 		Spellcraft::Shot s{};
-		s.row = gen::kBows[b].spellRow, s.gun = GunOf(b), s.bow = b, s.tier = std::clamp(a_tier, 0, 3), s.full = s.tier >= 3;
-		s.damage = a_damage;
+		s.row = gen::kBows[b].spellRow, s.gun = GunOf(b), s.bow = b, s.tier = std::clamp(a_tier, 0, 3), s.full = true, s.arrow = false;
+		s.damage = FullShotAt(s.tier);  // (a bolt is a full draw: a crossbow has no half pull)
 		auto* pl = RE::PlayerCharacter::GetSingleton();
-		const auto p = a_hit->GetPosition();
+		const auto p = a_hit->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f };
 		s.vel = pl ? (p - pl->GetPosition()) : RE::NiPoint3{ 0, 1, 0 };
 		if (const float l = s.vel.Length(); l > 1) s.vel = s.vel * (4800.0f / l);
 		s.pos = p;
-		Impact(s, p);
-		TierTwoAt(s, p, a_hit);
-		TornadoOf(s, p, a_hit);
+		const bool killed = Spellcraft::Strike(s.row, a_hit, s.damage, false, EffectFor(want, s.tier, true), p);
+		OnHit(s, a_hit, p, killed);
 	}
 	void OnHit(const Spellcraft::Shot& s, RE::Actor* a, const RE::NiPoint3& p, bool killed)
 	{
 		Impact(s, p);
-		if (killed && Rand(0, 1) < 0.35f) {  // (finite arrows) a third of the time the arrow comes back out of the dead
+		Splash(s, p, a);
+		if (s.arrow && killed && Rand(0, 1) < 0.35f) {  // (finite arrows) a third of the time the arrow comes back out of the dead
 			if (auto* am = Ammo(s.bow); am) {
 				RE::PlayerCharacter::GetSingleton()->AddObjectToContainer(am, nullptr, 1, nullptr);
 			}
@@ -576,6 +605,7 @@ namespace BowsImpl
 			return;
 		}
 		Impact(s, p);
+		Splash(s, p, nullptr);
 		TierTwoAt(s, p, nullptr);
 		TornadoOf(s, p);
 		const int t = s.tier, row = s.row;

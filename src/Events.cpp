@@ -748,7 +748,13 @@ namespace bo3z
 						const bool melee = !a_event->projectile && (src ? (w && !w->IsBow() && !w->IsCrossbow() && !w->IsStaff() && Forms::GunIndexOf(src) < 0) : true);
 						Curse::NoteHit(z->GetFormID(), melee);
 					}
-					if (const int ci = Arcana::IndexOf(src); z && ci >= 0) {
+					if (const int xe = Classes::CrossbowElement(src); z && xe >= 0) {
+						// (Noah: the crossbow and the bows the same) an elemental crossbow's bolt hits as an altar bow's full draw
+						if (!z->IsDead() && Director::IsFoe(z) && Limit(z)) {
+							Bows::CrossbowStrike(xe, Classes::CrossbowLevel(src), z, 0.0f);
+							if (Director::IsRoundUndead(z)) MarkHit(z);
+						}
+					} else if (const int ci = Arcana::IndexOf(src); z && ci >= 0) {
 						CofferHit(z, ci);  // the Coffer's spells: every one of them hurts every enemy
 						if (Director::IsRoundUndead(z)) MarkHit(z);
 					} else if (z && !z->IsDead() && Director::IsRoundUndead(z)) {
@@ -768,9 +774,6 @@ namespace bo3z
 								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
 							}
 							HurtUndead(z, Director::RoundHealth() * share * (0.7f + 0.3f * Arcana::Power()));  // (the night's power curve)
-							if (auto* w = src->As<RE::TESObjectWEAP>(); w && w->IsCrossbow()) {
-								if (const int el = Classes::CrossbowElement(w); el >= 0) Bows::CrossbowStrike(el, Classes::CrossbowLevel(w), z, Director::RoundHealth() * share * 0.5f);
-							}
 							Undead::OnHit(z);
 							MarkHit(z);
 						}
