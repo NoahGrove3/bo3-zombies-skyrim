@@ -4445,7 +4445,7 @@ namespace bo3z
 			if (Party::SoloFallen()) return;
 			if (now - asked > std::chrono::seconds(4)) {
 				asked = now;
-				Hud::Banner(fmt::format("PRESS F11 AGAIN TO SKIP NIGHT {} - IT WILL NOT COUNT", g_phase == Phase::Fighting ? g_current : Save::Get(gen::kAV_round) + 1), 4.0f);
+				Hud::Banner(fmt::format("PRESS F11 (OR L3 + R3) AGAIN TO SKIP NIGHT {} - IT WILL NOT COUNT", g_phase == Phase::Fighting ? g_current : Save::Get(gen::kAV_round) + 1), 4.0f);
 				return;
 			}
 			asked = {};
@@ -4455,6 +4455,15 @@ namespace bo3z
 		}
 		void ScoutKey(const RE::ButtonEvent* a_b)
 		{
+			// (Noah: "what is the controller button for that?") on a pad: click both sticks together (L3 + R3), twice
+			if (a_b && a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && (a_b->GetIDCode() == 0x0040 || a_b->GetIDCode() == 0x0080)) {
+				static bool l3 = false, r3 = false;
+				const bool  was = l3 && r3;
+				(a_b->GetIDCode() == 0x0040 ? l3 : r3) = a_b->IsPressed();
+				auto* ui = RE::UI::GetSingleton();
+				if (!was && l3 && r3 && ui && !ui->GameIsPaused() && Save::Flag(Save::kFlagStarted)) SKSE::GetTaskInterface()->AddTask([] { AskSkipNight(); });
+				return;
+			}
 			if (!a_b || !a_b->IsDown() || a_b->GetDevice() != RE::INPUT_DEVICE::kKeyboard) return;
 			auto* ui = RE::UI::GetSingleton();
 			if (!ui || ui->GameIsPaused() || ui->IsMenuOpen(RE::Console::MENU_NAME) || !Save::Flag(Save::kFlagStarted)) return;
