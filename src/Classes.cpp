@@ -104,6 +104,40 @@ namespace bo3z::Classes
 		// (Noah: "the Corrosion impact is way too big and I don't want it to shake my screen - it should be the size of the
 		// area damage") its own bolts' bursts: Mysticism's (an area of 75 feet, a jolt on the camera) made quiet - no damage,
 		// no shove, no screen effect - and each rung's area set to the burst our hit deals (3 m, a metre more each rung)
+		// (Noah: "the one-handed weapons in the Echo Altar shouldn't have traditional enchantments - they contain one spell,
+		// so it uses whatever spell is in your opposite hand") every one-handed Spellsword blade carries the mod's plain
+		// "Contains 1 spell" enchantment (no fire, frost or fear of its own), its name without the " of ..." it no longer has
+		void TuneSpellswordGear()
+		{
+			static bool done = false;
+			if (done) return;
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			auto* plain = dh ? dh->LookupForm<RE::EnchantmentItem>(0x003E16, "Spellsword.esp") : nullptr;
+			if (!dh) return;
+			done = true;
+			if (!plain) {
+				logger::info("classes: Spellsword.esp's plain spell-enchantment not found - its blades left as they are");
+				return;
+			}
+			int n = 0;
+			for (auto* w : dh->GetFormArray<RE::TESObjectWEAP>()) {
+				if (!w || !w->GetFile(0) || w->GetFile(0)->GetFilename() != "Spellsword.esp") continue;
+				if (!w->IsOneHandedSword() && !w->IsOneHandedDagger() && !w->IsOneHandedAxe() && !w->IsOneHandedMace()) continue;
+				if (w->formEnchanting == plain) continue;
+				w->formEnchanting = plain;
+				std::string nm = w->GetName() ? w->GetName() : "";
+				if (const auto at = nm.find(" of "); at != std::string::npos) nm.resize(at);
+				for (std::string_view cut : { ", Advanced", " Empowered", " Modified" }) {
+					if (const auto at = nm.find(cut); at != std::string::npos) nm.erase(at, cut.size());
+				}
+				for (std::string_view pre : { "Reverent ", "Dovah Sos " }) {
+					if (nm.rfind(pre, 0) == 0) nm.erase(0, pre.size());
+				}
+				if (!nm.empty() && nm != w->GetName()) w->fullName = nm;
+				++n;
+			}
+			logger::info("classes: {} one-handed Spellsword blades now hold one spell, no enchantment of their own", n);
+		}
 		void TuneCorrosion()
 		{
 			static bool done = false;
@@ -957,6 +991,17 @@ namespace bo3z::Classes
 		if (!p || !dh) return;
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();
 		TuneCorrosion();
+		TuneSpellswordGear();
+		// (the shells the Spell-weapon row once gave - Flame Shield's 600 magicka and the like - are taken back)
+		if (static bool shellsGone = false; !shellsGone && p->Is3DLoaded()) {
+			shellsGone = true;
+			for (std::uint32_t id : { 0x29265Eu, 0x29266Bu, 0x292664u, 0x292672u, 0x29265Du, 0x29266Cu, 0x292665u, 0x292673u, 0x209A73u }) {
+				if (auto* sp = Myst(id); sp && p->HasSpell(sp)) {
+					p->RemoveSpell(sp);
+					logger::info("classes: {} taken back (the altar no longer gives the Mysticism shells)", sp->GetName());
+				}
+			}
+		}
 		// (Noah: "the Spellsword should only have touch spells") a breath spell carried from before goes back, and the first
 		// rung of a touch you don't carry takes its place
 		if (g_class.load() == coffer::kSpellsword && p->Is3DLoaded()) {
@@ -1179,6 +1224,27 @@ namespace bo3z::Classes
 		for (auto [k, t] : kTiers) if (a_name.find(k) != std::string_view::npos) return t;
 		return 0;
 	}
+	// (Noah: "unique two-handed weapons in the Echo Altar for the Spellsword, with enchantments") Skyrim's named
+	// greatswords, battleaxes and warhammers, each at its own number of freed altars; the Ebony Blade is Legendary
+	struct Unique { std::string_view plugin; RE::FormID id; int tier; };
+	constexpr Unique kTwoHanders[] = {
+		{ "Skyrim.esm", 0x06AF63, 0 },      // Trollsbane
+		{ "Skyrim.esm", 0x01C4E6, 1 },      // the Rueful Axe
+		{ "Dawnguard.esm", 0x011BAD, 2 },   // the Dawnguard Rune Hammer
+		{ "Spellsword.esp", 0x00C0C5, 2 },  // Greatsword of the Righteous
+		{ "Dragonborn.esm", 0x01AEA4, 3 },  // the Bloodskal Blade
+		{ "Skyrim.esm", 0x02ACD2, 3 },      // Volendrung
+		{ "Spellsword.esp", 0x01910A, 4 },  // the Aetherial Great Spellsword
+		{ "Skyrim.esm", 0x04A38F, 6 },      // the Ebony Blade
+	};
+	int GearTier(const RE::TESBoundObject* a_obj)
+	{
+		if (!a_obj) return 0;
+		for (const auto& u : kTwoHanders) {
+			if (a_obj->GetLocalFormID() == u.id && a_obj->GetFile(0) && a_obj->GetFile(0)->GetFilename() == u.plugin) return u.tier;
+		}
+		return a_obj->GetName() ? MaterialTier(a_obj->GetName()) : 0;
+	}
 	bool RollGear(int a_cls, Prize* a_out)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -1208,28 +1274,19 @@ namespace bo3z::Classes
 		if (a_cls == coffer::kSpellsword) {
 			from("Spellsword.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
 			from("Spellsword.esp", static_cast<RE::TESObjectARMO*>(nullptr));
+			for (const auto& u : kTwoHanders) {
+				auto* w = dh->LookupForm<RE::TESObjectWEAP>(u.id, u.plugin);
+				if (!w || u.tier > freed || p->GetItemCount(w) > 0 || (w->GetName() && held.contains(w->GetName()))) continue;
+				pool.push_back(w);
+			}
+			// (one of each name: the blades that lost their " of ..." share theirs)
+			std::unordered_set<std::string> names;
+			std::erase_if(pool, [&](RE::TESBoundObject* f) { return !names.insert(f->GetName() ? f->GetName() : "").second; });
 		} else if (a_cls == coffer::kRanger) {
 			from("Faction Crossbows.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
 			from("OffhandBows.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
 		}
-		if (a_cls == coffer::kSpellsword) {  // (Noah's plan) its shells and cloaks come from this row too, a quarter of the time
-			static constexpr std::uint32_t kShells[] = { 0x29265E, 0x29266B, 0x292664, 0x292672, 0x29265D, 0x29266C, 0x292665, 0x292673, 0x209A73 };
-			std::vector<RE::SpellItem*> spells;
-			for (auto id : kShells) if (auto* sp = Myst(id); sp && !p->HasSpell(sp)) spells.push_back(sp);
-			static std::mt19937 rng2{ std::random_device{}() };
-			if (!spells.empty() && (pool.empty() || std::uniform_int_distribution<int>(0, 3)(rng2) == 0)) {
-				auto* sp = spells[std::uniform_int_distribution<std::size_t>(0, spells.size() - 1)(rng2)];
-				if (a_out) {
-					a_out->name = sp->GetName();
-					FillReel(a_out, spells, sp, "Mysticism Shell");
-					a_out->give = [sp] { Learn(sp); Hud::Banner(std::string(sp->GetName()) + "  -  learned", 4.0f); };
-					return true;
-				}
-				Learn(sp);
-				Hud::Banner(std::string("The altar teaches you ") + sp->GetName(), 4.0f);
-				return true;
-			}
-		}
+		// (Noah: "a spell I can't even use - it costs too much mana") the Mysticism shells (Flame Shield and the rest) no longer come from this row
 		if (pool.empty()) {
 			Hud::Banner("The altar has nothing new for you until another city is freed", 3.0f);
 			return false;
@@ -1240,8 +1297,9 @@ namespace bo3z::Classes
 			a_out->name = pick->GetName();
 			{
 				auto* pw = pick->As<RE::TESObjectWEAP>();
-				const bool legend = pick->GetName() && MaterialTier(pick->GetName()) >= 6;
-				FillReel(a_out, pool, pick, a_cls == coffer::kRanger ? "Crossbow" : legend ? "Legendary Spell-weapon" : pw ? "Spell-weapon" : "Spellshield", legend);
+				const bool legend = GearTier(pick) >= 6;
+				const bool two = pw && (pw->IsTwoHandedSword() || pw->IsTwoHandedAxe());
+				FillReel(a_out, pool, pick, a_cls == coffer::kRanger ? "Crossbow" : legend ? (two ? "Legendary Greatweapon" : "Legendary Spell-weapon") : two ? "Unique Greatweapon" : pw ? "Spell-weapon" : "Spellshield", legend);
 			}
 			a_out->give = [pick, a_cls] {
 				auto* pl = RE::PlayerCharacter::GetSingleton();

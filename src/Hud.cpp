@@ -1363,7 +1363,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// A freed shrine's wave: golden rings rolling out from it across the screen, a soft gold wash as it passes.
 			if (s.pulseOn && s.pulseT > 0) {
 				const ImVec2 c{ s.pulseX * size.x, s.pulseY * size.y };
-				const float  life = 3.5f, el = life - s.pulseT;
+				const float  life = 5.0f, el = life - s.pulseT;  // (Shops kPulseSeconds)
 				(void)c;  // (Noah: no gold rings any more - the wash, the sound and the music stay)
 				const float wash = std::clamp(1.0f - el / 1.2f, 0.0f, 1.0f);
 				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(255, 220, 150, static_cast<int>(70 * wash)));
@@ -3022,7 +3022,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, heroLocked ? kLockedCol : kParch, altarCls == 3 ? "CALL A SPELL-WEAPON" : altarCls == 1 ? "CALL A SUPPORT SPELL" : "BIND A HERO (LEGENDARY)");
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, heroLocked ? kLockedCol : IM_COL32(196, 182, 160, 235),
 						heroLocked ? "Locked until six Echo Altars are freed (" + std::to_string(s.freedCount) + " of " + std::to_string(s.legendAt) + ")"
-						: altarCls == 0 ? std::string("A hero or an army sworn to you") : altarCls == 3 ? std::string("A one-handed spell-weapon, a spellshield or a Mysticism shell") : std::string("Storms and novas to fight beside your fire"));
+						: altarCls == 0 ? std::string("A hero or an army sworn to you") : altarCls == 3 ? std::string("A spell-weapon, a spellshield or a unique greatweapon") : std::string("Storms and novas to fight beside your fire"));
 					if (idle) {
 						price(y + 30 * k, s.bowRollCost, s.points >= s.bowRollCost);
 					}
@@ -5488,6 +5488,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		int                       g_cxCh = 0;         // its chapter (index into codex::kChapters)
 		float                     g_cxY = 0, g_cxYGoal = 0, g_cxH = 0;
 		std::unordered_map<std::string, std::pair<ID3D11ShaderResourceView*, ImVec2>> g_cxArt;
+		std::vector<int> CodexChapters(int a_book);
+		int              g_cxPage = -1;  // a freed city's page open beside the books (5+), -1 none
 		int CodexBookOf(const RE::TESObjectBOOK* a_book)
 		{
 			if (!a_book || !a_book->GetFile(0) || a_book->GetFile(0)->GetFilename() != gen::kPlugin) {
@@ -5499,6 +5501,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (local == gen::kClassGuides[c]) return 1 + c;
 			}
 			if (local == gen::kGuideBook) return Classes::Get() >= 0 ? 1 + Classes::Get() : 0;  // (the old Survivor's Guide: your class's guide now, or the lore)
+			for (int t = 0; t < static_cast<int>(gen::kEchoPages.size()); ++t) {
+				if (local == gen::kEchoPages[t] && 5 + t < static_cast<int>(codex::kBooks.size()) && !CodexChapters(5 + t).empty()) return 5 + t;  // (Noah) a freed city's page
+			}
 			return -1;
 		}
 		std::vector<int> CodexChapters(int a_book)
@@ -5572,9 +5577,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// the two books: the lore, and your class's guide (when you have one)
 			std::vector<int> books{ 0 };
 			if (g_cxGuide >= 1) books.push_back(g_cxGuide);
+			if (g_cxPage >= 5) books.push_back(g_cxPage);
 			// input since the last frame
 			if (const int b = g_cxBook.exchange(0); b != 0 && books.size() > 1) {
-				g_cxOpenBook = g_cxOpenBook == 0 ? books[1] : 0, g_cxCh = CodexChapters(g_cxOpenBook).front(), g_cxY = g_cxYGoal = 0;
+				const auto it = std::find(books.begin(), books.end(), g_cxOpenBook);
+				const std::size_t i = it == books.end() ? 0 : static_cast<std::size_t>(it - books.begin());
+				g_cxOpenBook = books[(i + 1) % books.size()], g_cxCh = CodexChapters(g_cxOpenBook).front(), g_cxY = g_cxYGoal = 0;
 			}
 			auto chs = CodexChapters(g_cxOpenBook);
 			if (chs.empty()) {
@@ -5759,7 +5767,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			if (g_cxOpenBook < 0) {  // just opened: at the book picked, its first chapter (the scroll and keys from before forgotten)
 				g_cxOpenBook = which, g_cxCh = CodexChapters(which).front(), g_cxY = g_cxYGoal = 0;
-				g_cxGuide = which >= 1 ? which : Classes::Get() >= 0 ? 1 + Classes::Get() : 0;  // (the guide beside the lore: the one opened, else your class's)
+				g_cxGuide = which >= 1 && which <= 4 ? which : Classes::Get() >= 0 ? 1 + Classes::Get() : 0;  // (the guide beside the lore: the one opened, else your class's)
+				g_cxPage = which >= 5 ? which : -1;
 				g_cxScroll = 0, g_cxChapter = 0, g_cxBook = 0;
 				logger::info("hud: the Codex opens at {}", codex::kBooks[which]);
 			}

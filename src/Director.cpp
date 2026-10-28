@@ -57,13 +57,15 @@ namespace bo3z
 		int                     g_current = 0;   // round being fought
 		bool                    g_skipped = false;  // (Noah) this night was passed by: its dawn is no night survived
 		int                     g_toSpawn = 0;
-		// (Noah: like BO3) a night is waves: 4 + the night's number of them; wave k brings 20 x k dead (20, 40, 60...); the night
-		// holds (the clock stops short of dawn) until the last wave is cleared
-		constexpr int   kWavesBase = 4, kWaveDeadStep = 20;
+		// (Noah: like BO3) a night is waves; the night holds (the clock stops short of dawn) until the last wave is cleared
 		// (Noah: "make it fluid and fun") the first nights build up: fewer waves, smaller ones, fewer dead at once - a new
 		// character finds its feet before the full horde (from night 5 on, as before)
-		int WavesFor(int a_round) { return a_round >= 5 ? kWavesBase + a_round : 2 + a_round + (a_round >= 3 ? 1 : 0); }
-		int WaveStep() { return g_current >= 5 ? kWaveDeadStep : std::clamp(6 + 3 * g_current, 9, kWaveDeadStep); }
+		// (Noah: "from night one to night three the jump in enemies per wave is insane") a gentle climb, BO3's own pace:
+		// 3 waves on the first night, one more every second night to 8; a night's first wave is 6 dead on night 1 and two
+		// more each night after (to 40), and each wave after it brings a quarter more than the first:
+		//   night 1: 6 8 9 (23)   night 2: 8 10 12 14 (44)   night 3: 10 13 15 18 (56)   night 5: 14 ... 28 (105)
+		int WavesFor(int a_round) { return std::min(8, 3 + std::max(1, a_round) / 2); }
+		int WaveStep() { return std::min(40, 6 + 2 * (std::max(1, g_current) - 1)); }  // (the night's first wave)
 		int AtOnceMin(int a_round) { return std::min(12, 4 + 2 * std::max(1, a_round)); }
 		constexpr float kWaveRest = 8.0f;
 		int   g_waves = 0, g_wave = 0, g_waveSize = 0, g_waveSpawned = 0;
@@ -125,10 +127,10 @@ namespace bo3z
 		int WaveSize(int a_wave)
 		{
 			const int   players = Net::InLobby() ? Net::Members() + 1 : 1;
-			const float total = static_cast<float>(WaveStep()) * g_waves * (g_waves + 1) / 2.0f;
-			const float scale = std::min(1.0f, static_cast<float>(kNightCapPerPlayer * std::max(1, players)) / std::max(1.0f, total));
-			const int th = ThemeNowImpl();
-			return std::max(1, static_cast<int>(std::lround(WaveStep() * a_wave * scale * (th >= 0 ? gen::kEvents[th].waveCount : 1.0f))));
+			const float party = 1.0f + 0.5f * static_cast<float>(std::max(0, players - 1));  // (each friend: half again)
+			const int   th = ThemeNowImpl();
+			const float size = WaveStep() * (1.0f + 0.25f * static_cast<float>(std::max(1, a_wave) - 1)) * party * (th >= 0 ? gen::kEvents[th].waveCount : 1.0f);
+			return std::max(1, static_cast<int>(std::lround(std::min(size, static_cast<float>(kNightCapPerPlayer)))));
 		}
 
 		int TotalFor(int a_round, int a_players = 1)

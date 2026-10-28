@@ -24,6 +24,7 @@ namespace bo3z
 		std::array<bool, gen::kLocations.size()> g_dressed{};
 		struct Pulse { RE::ObjectRefHandle shrine; float t; };
 		std::optional<Pulse>                     g_pulse;  // a freed shrine's wave (FreedPulse)
+		constexpr float                          kPulseSeconds = 5.0f;
 		std::vector<Spinner>                     g_spinners;
 		RE::ObjectRefHandle                      g_orbAim;  // the shrine whose orb is in the crosshair (Activate opens it)
 		bool                                     g_humming = false;  // the shrine's hum is playing (a load stops every loop)
@@ -2512,6 +2513,20 @@ namespace bo3z
 				if (g_pulse && (g_pulse->t -= a_delta) > 0) {
 					h.pulseT = g_pulse->t;
 					if (auto r = g_pulse->shrine.get(); r) {
+						// (Noah: "the freeing didn't have the rune and particle effects on the stone itself") all six column
+						// stones beam into the heart-stone, its runes flare white-hot and settle, and sparks of light burst off it
+						const float u = std::clamp(1.0f - g_pulse->t / kPulseSeconds, 0.0f, 1.0f);
+						TickBeams(r.get(), a_delta, std::min(1.0f, u * 1.6f));  // (the six strike one after another)
+						if (const auto parts = FindAltarParts(r.get()); parts.heart) {
+							HeartGlow(parts.heart, 1.0f + 7.0f * std::sin(u * RE::NI_PI) + 3.0f * std::max(0.0f, std::sin(u * 40.0f)));
+							g_glowHeart = parts.heart->CreateRefHandle();
+							static float spark = 0;
+							if ((spark -= a_delta) <= 0) {
+								spark = 0.45f;
+								const auto hp = parts.heart->Get3D() ? parts.heart->Get3D()->world.translate : parts.heart->GetPosition();
+								Gun::FxBlast("light", hp);
+							}
+						}
 						if (auto* cam = RE::Main::WorldRootCamera()) {
 							float x = 0, y = 0, z = 0;
 							cam->WorldPtToScreenPt3(r->GetPosition() + RE::NiPoint3{ 0, 0, 175.0f }, x, y, z, 1e-5f);
@@ -2519,6 +2534,11 @@ namespace bo3z
 						}
 					}
 				} else {
+					if (g_pulse) {
+						EndBeams();
+						if (auto hr = g_glowHeart.get()) HeartGlow(hr.get(), 1.0f);
+						g_glowHeart = {};
+					}
 					g_pulse.reset();
 				}
 				h.shrineShout = -1;
@@ -2724,7 +2744,7 @@ namespace bo3z
 			Gun::FxBlast("turnundead", at, 2.4f);
 			Forms::Play(gen::Sound::nuke);
 			Forms::PlayAt(gen::Sound::shout_toll, shrine);
-			g_pulse = Pulse{ shrine->CreateRefHandle(), 3.5f };
+			g_pulse = Pulse{ shrine->CreateRefHandle(), kPulseSeconds };
 			for (std::size_t i = 0; i < gen::kLocations.size(); ++i) {
 				if (gen::kLocations[i].town == a_town) {
 					g_dressed[i] = false;  // dress it again now: the gold glow and the beam
