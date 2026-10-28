@@ -181,6 +181,7 @@ namespace BowsImpl
 
 	// (Noah: base 30, a quarter more each tier) a full-draw arrow's damage to a body: 30, 37.5, 46.9, 58.6 - in BO3 units
 	// (x hpScale) as every shot is counted; the perks still add theirs
+	constexpr float kBowOverBolt = 1.6f;  // a bow's arrow against a crossbow's bolt (the bolt flies more often)
 	float ShotDamage(int i, float a_draw)
 	{
 		const float tier = UpgradeMult(std::clamp<int>(g_level[i], 0, 3));  // (Noah: the one upgrade curve every altar item grows by)
@@ -188,7 +189,8 @@ namespace BowsImpl
 		// (the balance pass) it keeps up with the night as Skyrim's own bows do: a full draw takes 55% of a zombie's
 		// night health at tier 0 (never less than the old 30) - two full draws a body, a tier sooner each 25% more
 		const float base = std::max(30.0f, 0.55f * Director::RoundHealth() * (0.7f + 0.3f * Arcana::Power()));
-		return base * tier * pull * gen::kRounds.hpScale * Perks::DamageMult();
+		// (Noah: "crossbow = faster fire rate, bows = bigger blast, slower") a bow's arrow hits 1.6 times a bolt
+		return base * tier * pull * gen::kRounds.hpScale * Perks::DamageMult() * kBowOverBolt;
 	}
 
 	// where the arrow's head sits while drawn: in first person a point in the view (the arms have their own camera),
@@ -316,7 +318,8 @@ namespace BowsImpl
 	// (Noah: "the bolt's impact: an area of 5 metres with no fall-off - everyone in it takes the same damage; the same for
 	// the bows; each upgrade 1 metre more") 350 units, 70 more a tier; every foe in it but the one struck takes the shot's
 	// full damage and its element
-	float SplashRadius(int a_tier) { return 350.0f + 70.0f * static_cast<float>(std::clamp(a_tier, 0, 3)); }
+	// (a bow's arrow: 7 metres, a crossbow's bolt 5; a metre more each reforge for both)
+	float SplashRadius(int a_tier, bool a_bow) { return (a_bow ? 490.0f : 350.0f) + 70.0f * static_cast<float>(std::clamp(a_tier, 0, 3)); }
 	int EffectFor(Kind a_k, int a_t, bool a_full)
 	{
 		switch (a_k) {
@@ -331,7 +334,7 @@ namespace BowsImpl
 	void Splash(const Spellcraft::Shot& s, const RE::NiPoint3& p, RE::Actor* a_struck)
 	{
 		const int eff = EffectFor(KindOf(s.bow), s.tier, s.full);
-		for (auto* f : Foes(p, SplashRadius(s.tier))) {
+		for (auto* f : Foes(p, SplashRadius(s.tier, s.arrow))) {
 			if (f != a_struck && !f->IsDead()) Spellcraft::Strike(s.row, f, s.damage, false, eff, p);
 		}
 	}
@@ -1096,6 +1099,13 @@ namespace BowsImpl
 			if (w->fullName != want.c_str()) {
 				w->fullName = want;
 			}
+		}
+		// (the elemental crossbows: what a bolt does, shown the same way)
+		for (std::uint32_t id : gen::kElemCrossbows) {
+			auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(id, gen::kPlugin);
+			if (!w) continue;
+			const float dmg = FullShotAt(Classes::CrossbowLevel(w)) / std::max(0.01f, gen::kRounds.hpScale);
+			w->attackDamage = menu ? static_cast<std::uint16_t>(std::clamp(dmg, 1.0f, 65000.0f)) : 22;
 		}
 	}
 
