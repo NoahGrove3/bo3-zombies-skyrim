@@ -74,6 +74,9 @@ namespace bo3z::Classes
 			}
 			return -1;
 		}
+		RE::TESObjectWEAP* ElemCrossbow(int a_e);  // (the Ranger's elemental crossbows: below)
+		RE::TESAmmo*       ElemBolts(int a_e);
+		int                BoltCap(int a_level);
 		void GiveItem(RE::PlayerCharacter* a_p, RE::TESForm* a_form, int a_count, bool a_equip)
 		{
 			auto* obj = a_form ? a_form->As<RE::TESBoundObject>() : nullptr;
