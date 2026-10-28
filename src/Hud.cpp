@@ -1334,7 +1334,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->AddRectFilledMultiColor({ 0, 0 }, { w, size.y }, e, z, z, e);
 				dl->AddRectFilledMultiColor({ size.x - w, 0 }, size, z, e, e, z);
 			}
-			if (s.lightningT > 0) {
+			if (false && s.lightningT > 0) {  // (Noah: "remove the white flash when a new wave starts") the thunder stays, the flash is gone
 				const float t = 0.45f - s.lightningT;  // (a double flicker: a bright stroke, a gap, a weaker one)
 				const float f = t < 0.06f ? 1.0f : t < 0.12f ? 0.2f : t < 0.2f ? 0.7f : std::max(0.0f, 0.7f * (0.45f - t) / 0.25f);
 				const float soft = Settings::ReduceFlashes() ? 0.25f : 1.0f;

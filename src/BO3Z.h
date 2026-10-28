@@ -207,6 +207,7 @@ namespace bo3z
 		void StopAll();
 		void BossMusic(bool a_on);
 		void FreedMusic();
+		void NightMusic(bool a_on);  // the night's song, dusk to dawn
 		void IntroMusic(bool a_on);  // the intro's music (our MUSC: the music slider applies, the hold's music waits)
 		void FilmQuiet(bool a_on);   // Skyrim's own sound (world, voices, its music) silent while the intro film plays
 		void SetMenuMusic();

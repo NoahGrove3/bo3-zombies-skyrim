@@ -4733,6 +4733,7 @@ namespace bo3z
 				}
 			}
 			TickRest();
+			Audio::NightMusic(g_phase != Phase::Day && !Scouting());  // (the night's song, from the countdown to dawn)
 			// a rest that runs into dusk ends there (the countdown has begun)
 			if (auto* ui = RE::UI::GetSingleton(); ui && g_phase != Phase::Day && ui->IsMenuOpen(RE::SleepWaitMenu::MENU_NAME)) {
 				if (auto* q = RE::UIMessageQueue::GetSingleton()) {

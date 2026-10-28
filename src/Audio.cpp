@@ -423,6 +423,7 @@ namespace bo3z::Audio
 
 	// ---- per frame: delayed impacts, loops whose owner is gone, idle chatter and attack swings of the horde
 	void TickFreed(float a_delta);
+	void TickNightMusic(float a_delta);
 	// (Noah: "an audio mixing pass") the music steps back under a moment that matters - a night or wave beginning, a
 	// wave cleared, a boss or mini-boss rising, your fall - then comes back up (9 dB down, eased both ways)
 	namespace
@@ -460,6 +461,7 @@ namespace bo3z::Audio
 	{
 		TickDuck(a_delta);
 		TickFreed(a_delta);
+		TickNightMusic(a_delta);
 		for (auto& p : g_pending) {
 			p.delay -= a_delta;
 		}
@@ -541,7 +543,7 @@ namespace bo3z::Audio
 	{
 		RE::BGSMusicType* Music(std::string_view a_key)
 		{
-			const auto  id = a_key == "boss" ? gen::kMusicBoss : a_key == "intro" ? gen::kMusicIntro : gen::kMusicFreed;
+			const auto  id = a_key == "boss" ? gen::kMusicBoss : a_key == "intro" ? gen::kMusicIntro : a_key == "night" ? gen::kMusicNight : gen::kMusicFreed;
 			auto*       f = RE::TESDataHandler::GetSingleton()->LookupForm(id, gen::kPlugin);
 			return f ? f->As<RE::BGSMusicType>() : nullptr;
 		}
@@ -631,6 +633,41 @@ namespace bo3z::Audio
 		logger::info("audio: the freed city's song");
 	}
 
+	// (Noah: "this song during nights - in the background, low but noticeable, fading in to the night and out") the
+	// night's song plays from dusk to dawn under everything (the file is mixed down low; the music slider sets it),
+	// fading in and out. Grimmvar's fight and a freed city's song take its place while they play; it comes back after.
+	namespace
+	{
+		bool  g_nightWanted = false;
+		float g_nightCheck = 0;
+	}
+	void NightMusic(bool a_on)
+	{
+		if (a_on == g_nightWanted) return;
+		g_nightWanted = a_on;
+		auto* m = Music("night");
+		if (!m) return;
+		if (a_on) {
+			if (auto* mm = RE::BSMusicManager::GetSingleton(); mm && mm->current && mm->current != static_cast<RE::BSIMusicType*>(m) && !g_bossMusic && g_freedLeft <= 0) {
+				mm->current->DoFinish(true);  // (Skyrim's own track fades out under it)
+			}
+			if (!g_bossMusic && g_freedLeft <= 0) m->DoPlay();
+		} else {
+			m->DoFinish(true);
+		}
+		logger::info("audio: the night's song {}", a_on ? "fades in" : "fades out");
+	}
+	void TickNightMusic(float a_delta)
+	{
+		if (!g_nightWanted || (g_nightCheck -= a_delta) > 0) return;
+		g_nightCheck = 3.0f;
+		if (g_bossMusic || g_freedLeft > 0) return;
+		auto* m = Music("night");
+		auto* mm = RE::BSMusicManager::GetSingleton();
+		if (!m || !mm || mm->current == static_cast<RE::BSIMusicType*>(m)) return;
+		if (mm->current) mm->current->DoFinish(true);  // (combat music, the hold's music: the night's song is the night's)
+		m->DoPlay();
+	}
 	void TickFreed(float a_delta)
 	{
 		if (g_freedLeft <= 0) {

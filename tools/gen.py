@@ -38,7 +38,7 @@ for s in snd: out.append(f'\t\tFormRef{{ {cs(s["plugin"])}, 0x{(_SIDS[("SNDR", s
 out.append('\t} };')
 ids_ = [x['id'] for x in snd]
 out.append(f'\tinline constexpr std::array<int, {len(snd)}> kSoundLayer{{ {{ ' + ', '.join(str(ids_.index(x['layer'])) if x.get('layer', 'none') != 'none' else '-1' for x in snd) + ' } };  // a second sound played with each (-1 none)')
-out.append(f'\tinline constexpr std::uint32_t kMusicBoss = 0x{_SIDS[("MUSC", "boss")]:03X}, kMusicFreed = 0x{_SIDS[("MUSC", "freed")]:03X}, kMusicIntro = 0x{_SIDS[("MUSC", "intro")]:03X};  // our MUSC records')
+out.append(f'\tinline constexpr std::uint32_t kMusicBoss = 0x{_SIDS[("MUSC", "boss")]:03X}, kMusicFreed = 0x{_SIDS[("MUSC", "freed")]:03X}, kMusicIntro = 0x{_SIDS[("MUSC", "intro")]:03X}, kMusicNight = 0x{_SIDS[("MUSC", "night")]:03X};  // our MUSC records')
 # economy
 for e in S['economy']['rows']: out.append(f'\tinline constexpr int kPoints_{e["id"]} = {e["points"]};  // {e["event"]}')
 # input
