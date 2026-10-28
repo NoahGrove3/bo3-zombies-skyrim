@@ -189,10 +189,26 @@ namespace bo3z::Party
 			g_controlsOff = a_off;
 			if (auto* cm = RE::ControlMap::GetSingleton()) cm->ToggleControls(kFallControls, !a_off, false);
 		}
+		bool g_fallFirstPerson = false;
+		// (Noah: "a death animation for my character when 'You have fallen' shows") you collapse where you stand - the body
+		// goes limp (Skyrim's own ragdoll), seen from behind in third person; your view comes back as it was when you rise
+		void Collapse(RE::PlayerCharacter* p)
+		{
+			if (auto* cam = RE::PlayerCamera::GetSingleton()) {
+				g_fallFirstPerson = cam->IsInFirstPerson();
+				if (g_fallFirstPerson) cam->ForceThirdPerson();
+			}
+			if (auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton()) {
+				const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(p->GetFormType(), p);
+				RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+				vm->DispatchMethodCall(hd, "ObjectReference", "PushActorAway", RE::MakeFunctionArguments(static_cast<RE::Actor*>(p), 1.0f), none);
+			}
+		}
 		void SoloFall(RE::PlayerCharacter* p)
 		{
 			FallControls(true);
 			p->NotifyAnimationGraph("BleedoutStart");
+			Collapse(p);
 			g_soloT = 0.0f, g_soloPressed = false, ++g_fallGen;
 			Audio::LoopStop(Audio::kLoopCharge, 150), Audio::LoopStop(Audio::kLoopSpell, 150);  // (a charging hum no longer plays on through the fall)
 			HoldDown();
@@ -238,6 +254,10 @@ namespace bo3z::Party
 			}
 			++g_fallGen, g_soloLoading = false;
 			FallControls(false);
+			if (g_fallFirstPerson) {
+				g_fallFirstPerson = false;
+				if (auto* cam = RE::PlayerCamera::GetSingleton()) cam->ForceFirstPerson();
+			}
 			{
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().deathLoading = false;

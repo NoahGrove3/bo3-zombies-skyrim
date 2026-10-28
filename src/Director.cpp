@@ -3785,6 +3785,16 @@ namespace bo3z
 			g_rest.open = true, g_rest.hours = 1;
 			logger::info("rest: the rest screen opened ({})", g_phase == Phase::Fighting ? "night" : "day");
 		}
+		// (Noah: "I got 'you can't wait with enemies nearby' or 'you can't wait in this location'") Skyrim refused to open its
+		// wait menu at all, so the Wait key is taken first: once your nights have begun it opens the rest screen anywhere
+		bool WaitKey(RE::InputEvent* a_event)
+		{
+			auto* b = a_event ? a_event->AsButtonEvent() : nullptr;
+			auto* ue = RE::UserEvents::GetSingleton();
+			if (!b || !ue || b->QUserEvent() != ue->wait || !Save::Flag(Save::kFlagStarted)) return false;
+			if (b->IsDown()) SKSE::GetTaskInterface()->AddTask([] { if (!RestOpen()) OpenRest(); });
+			return true;
+		}
 		bool RestOpen()
 		{
 			std::scoped_lock l(g_restLock);

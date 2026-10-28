@@ -61,7 +61,7 @@ namespace bo3z
 					int db = 400;
 					switch (sp.id) {
 					case RE::MagicSystem::SoundID::kDrawSheatheLPM:
-					case RE::MagicSystem::SoundID::kReadyLoop: db = 1000; break;
+					case RE::MagicSystem::SoundID::kReadyLoop: db = 1600; break;
 					case RE::MagicSystem::SoundID::kCharge:
 					case RE::MagicSystem::SoundID::kCastLoop: db = 600; break;
 					default: break;
@@ -77,7 +77,15 @@ namespace bo3z
 				sdef->soundCharacteristics.staticAttenuation = static_cast<std::uint16_t>(std::min(10000, sdef->soundCharacteristics.staticAttenuation + db));
 				++n;
 			}
-			logger::info("audio: {} magic sounds brought down (draw and readied loops 10 dB, charge 6, release and hit 4)", n);
+			logger::info("audio: {} magic sounds brought down (draw and readied loops 16 dB, charge 6, release and hit 4)", n);
+			// (Noah: "the drawing spell sound when drawing a weapon is still really loud") the Spellsword mod's own sound when a
+			// blade takes up its spell (a bright magic whoosh, played as the weapon is drawn): 24 dB down
+			if (auto* sd = dh->LookupForm<RE::BGSSoundDescriptorForm>(0x009F88, "Spellsword.esp"); sd && sd->soundDescriptor) {
+				if (auto* sdef = skyrim_cast<RE::BGSStandardSoundDef*>(sd->soundDescriptor)) {
+					sdef->soundCharacteristics.staticAttenuation = static_cast<std::uint16_t>(std::min(10000, sdef->soundCharacteristics.staticAttenuation + 2400));
+					logger::info("audio: the Spellsword's change-spell sound brought down to {:.1f} dB", sdef->soundCharacteristics.staticAttenuation / 100.0f);
+				}
+			}
 		}
 		void HushAltarEchoes()
 		{

@@ -270,6 +270,9 @@ namespace bo3z
 				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event)) {
 					return false;
 				}
+				if constexpr (N == 2) {  // (the menu-open handler) the Wait key opens the Curse's rest screen - Skyrim's "enemies nearby" never stops it
+					if (Director::WaitKey(a_event)) return false;
+				}
 				return func(a_this, a_event);
 			}
 			static inline REL::Relocation<decltype(thunk)> func;

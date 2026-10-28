@@ -138,6 +138,7 @@ namespace bo3z
 		};
 		void             OpenRest();                       // the Curse's rest screen (in place of Skyrim's wait menu)
 		bool             RestOpen();
+		bool             WaitKey(RE::InputEvent* a_event);  // the Wait key: the rest screen (true: taken)
 		bool             RestEats(RE::InputEvent* a_event);
 		bool             RestButton(const RE::ButtonEvent* a_b);  // its keys (true: taken)
 		RestView         RestNow();
