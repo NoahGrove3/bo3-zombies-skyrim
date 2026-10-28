@@ -1017,6 +1017,13 @@ namespace bo3z::Classes
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();
 		TuneCorrosion();
 		TuneSpellswordGear();
+		// (Noah: "all the weapons with enchantments shouldn't need a soul gem to recharge") what you hold never runs dry
+		{
+			auto* av = p->AsActorValueOwner();
+			for (auto v : { RE::ActorValue::kRightItemCharge, RE::ActorValue::kLeftItemCharge }) {
+				if (av->GetActorValue(v) < av->GetPermanentActorValue(v)) av->RestoreActorValue(v, av->GetPermanentActorValue(v));
+			}
+		}
 		// (Noah) worn armour made only for the other body is taken off; a man's Drifter Outfit becomes the Dawnguard's
 		if (static int fitCheck = 0; ++fitCheck % 3 == 0 && p->Is3DLoaded()) {
 			const bool fem = PlayerFemale();
@@ -1332,7 +1339,9 @@ namespace bo3z::Classes
 			std::erase_if(pool, [&](RE::TESBoundObject* f) { return !names.insert(f->GetName() ? f->GetName() : "").second; });
 		} else if (a_cls == coffer::kRanger) {
 			from("Faction Crossbows.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
-			from("OffhandBows.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
+			// (Noah: "the wristbow broke my crossbow, doesn't work properly, and does 45 frost") OffhandBows' one-hand
+			// crossbows are staves to Skyrim: one in the off hand can't be held with the Ranger's two-handed bows and
+			// crossbows, and it fires on enchantment charge - the altar no longer gives them
 		}
 		// (Noah: "a spell I can't even use - it costs too much mana") the Mysticism shells (Flame Shield and the rest) no longer come from this row
 		if (pool.empty()) {
