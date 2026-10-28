@@ -1046,7 +1046,7 @@ namespace bo3z
 					shown(0, s.active == 0 && s.Count() < kNeeded, false);
 					for (int i = 0; i < kTrialCount; ++i) {
 						const bool done = (s.done >> i) & 1;
-						shown(1 + i, done || s.Trial() == i, done);
+						shown(1 + i, true, done);  // (Noah: every trial listed from the start - open until done, ticked once done)
 					}
 					shown(6, s.Boss(), false);
 				}
