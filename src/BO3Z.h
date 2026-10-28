@@ -199,7 +199,7 @@ namespace bo3z
 		void FilmQuiet(bool a_on);   // Skyrim's own sound (world, voices, its music) silent while the intro film plays
 		void SetMenuMusic();
 		void MenuUiSounds(bool a_on);  // the main menu's own focus/accept/back sounds play ours while it is up
-		inline constexpr std::uint64_t kLoopCharge = 1, kLoopRite = 2, kLoopNight = 3, kLoopMenu = 4, kLoopShrine = 5;
+		inline constexpr std::uint64_t kLoopCharge = 1, kLoopRite = 2, kLoopNight = 3, kLoopMenu = 4, kLoopShrine = 5, kLoopSpell = 6;  // (kLoopSpell: Spellcraft's own hum - the gun pose stopped kLoopCharge every frame under it)
 	}
 
 	namespace Undead
@@ -354,6 +354,8 @@ namespace bo3z
 		float              Power();                      // the spells', bows' and shouts' power for the night (0.5 .. 1.5)
 		void               RefreshPower();               // a new night (or a save loaded): the power follows
 		std::vector<int>   Carried();                    // the altar's spells you carry (in hand first) - two at most
+		std::vector<int>   Carried(int a_cls);           // the same, counting only that class's (-1: every one)
+		std::size_t        CarryCap();                   // spells you may carry: 2, the Summoner 3
 		void               Forget(int a_index);          // gone for good: unequipped, out of the Magic menu, reforging lost
 		void               Replace(int a_old, int a_new);  // the new spell in the old one's place (and hands)
 		RE::SpellItem*     Spell(int a_index);
@@ -469,6 +471,7 @@ namespace bo3z
 		void  ReviveAt(const RE::NiPoint3& a_at, float a_radius);  // (an upgraded staff's bolt) a fallen friend there gets up
 		float FriendDistance(const RE::NiPoint3& a_at);  // the nearest friend in the party (1e9 alone)
 		bool  IsFriend(RE::Actor* a_actor);              // another player's figure (Skyrim Together)
+		bool  SoloFallen();                              // alone and on the death screen
 		enum class Life : std::uint8_t { Alive = 0, Down = 1, Dead = 2 };
 		struct Fallen { std::string name; float left, dist; };
 		struct View

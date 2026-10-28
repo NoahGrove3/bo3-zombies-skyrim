@@ -34,6 +34,8 @@ namespace bo3z
 			bool            enraged{ false };
 			float           frenzy{ 0 };       // Mindbreaker: seconds left fighting its own kind
 			float           tear{ 0 };
+			float           loaded{ 0 };       // seconds it has had its body (nothing is taken off a body still being built)
+			RE::FormID      fid{ 0 };          // (kept: once its handle is gone, its ID still leaves our books)
 			// (Noah: "each brute its own unique ability" - the chain hook and the shared scythe gone) the brutes' moves
 			float           dash{ -1.0f };     // a charge / a leap in flight: seconds left
 			float           dashLen{ 0 };
@@ -473,7 +475,7 @@ namespace bo3z
 				std::vector<const RE::NiPoint3*> ok;
 				for (const auto& p : g_points.pts) {
 					const float d = p.GetDistance(a_player->GetPosition());
-					if (d > 500.0f && d < 6000.0f && Party::FriendDistance(p) > 400.0f) {
+					if (d > 500.0f && d < gen::kChaseRelocateDist * 0.85f && Party::FriendDistance(p) > 400.0f) {  // (the audit: a point past the chase distance was "far behind" the moment it rose)
 						ok.push_back(&p);
 					}
 				}
@@ -622,6 +624,7 @@ namespace bo3z
 		void Resurface(RE::Actor* a_a, RE::PlayerCharacter* a_player)
 		{
 			std::erase_if(g_risers, [&](const Riser& r) { return r.h.get().get() == a_a; });
+			ShowRiser(a_a, true), a_a->SetCollision(true), a_a->EnableAI(true);  // (the audit: should StartRise refuse, it isn't left hidden, AI off)
 			a_a->SetPosition(SpawnSpot(a_player), true);
 			a_a->MoveToNearestNavmesh();
 			StartRise(a_a, a_player);
@@ -725,7 +728,7 @@ namespace bo3z
 						a->SetPosition(f, true);
 						a->SetCollision(true);
 						ShowRiser(a.get(), true), r.hidden = false;
-						openPortal();
+						if (a->Is3DLoaded()) openPortal();  // (the audit: no portal art on a body not built yet)
 						continue;
 					} else {
 						continue;
@@ -823,7 +826,7 @@ namespace bo3z
 		void EndRisers()  // (dawn, a load: anyone still under the ground is put on it)
 		{
 			for (auto& r : g_risers) {
-				if (auto a = r.h.get()) {
+				if (auto a = r.h.get(); a && !a->IsDisabled() && !a->IsDeleted()) {  // (the audit: not the ones just vanished)
 					ShowRiser(a.get(), true);
 					auto at = a->GetPosition();
 					at.z = r.floorZ + 4.0f;
@@ -861,6 +864,7 @@ namespace bo3z
 			// out of the Risen Dead's row)
 			std::optional<Undead::Type> rolled;
 			auto* cell = a_player->GetParentCell();
+			if (!cell) return false;  // (the audit: a trial's raise could come before you stand in a cell)
 			const bool interior = cell->IsInteriorCell();
 			RE::NiPoint3 pos = a_at ? *a_at : SpawnSpot(a_player);
 			if (a_at && !interior) {
@@ -875,13 +879,22 @@ namespace bo3z
 				logger::warn("could not resolve {} to an NPC", gen::kEnemies[*pick].id);
 				return false;
 			}
-			auto ref = a_player->PlaceObjectAtMe(npc, false);
+			// (the audit: placed at you and slid to the spawn point, its parent cell stayed yours - its navmesh snap searched
+			// your cell, and one set down in the next cell could sit there without ever getting a body) made where it stands,
+			// in that spot's own cell
+			RE::NiPointer<RE::TESObjectREFR> ref;
+			if (auto* tcell = interior ? cell : RE::TES::GetSingleton()->GetCell(pos); tcell && tcell->IsAttached()) {
+				const auto d = a_player->GetPosition() - pos;
+				ref = RE::TESDataHandler::GetSingleton()->CreateReferenceAtLocation(npc, pos, { 0.0f, 0.0f, std::atan2(d.x, d.y) }, tcell, interior ? nullptr : a_player->GetWorldspace(), nullptr, nullptr, {}, false, true).get();
+			}
+			const bool placed = static_cast<bool>(ref);
+			if (!ref) ref = a_player->PlaceObjectAtMe(npc, false);
 			auto* actor = ref ? ref->As<RE::Actor>() : nullptr;
 			if (!actor) {
 				logger::warn("spawn failed for {}", gen::kEnemies[*pick].id);
 				return false;
 			}
-			actor->SetPosition(pos, true);
+			if (!placed) actor->SetPosition(pos, true);
 			actor->MoveToNearestNavmesh();
 			// on the floor itself: standing at floor level, never under it (a little over it, they settle)
 			{
@@ -1034,6 +1047,7 @@ namespace bo3z
 				av->SetBaseActorValue(RE::ActorValue::kAttackDamageMult, hm);
 			}
 			g_alive.push_back({ actor->GetHandle(), *pick });
+			g_alive.back().fid = actor->GetFormID();
 			if (type) {
 				Undead::Assign(actor, *type);
 			}
@@ -2013,7 +2027,7 @@ namespace bo3z
 		std::vector<std::pair<RE::ActorHandle, float>> g_fading;  // the fallen: seconds until the body crumbles
 		void Vanish(RE::Actor* a)
 		{
-			g_ours.erase(a->GetFormID());
+			g_ours.erase(a->GetFormID()), g_summoned.erase(a->GetFormID()), g_elites.erase(a->GetFormID());
 			a->StopCombat();
 			a->Disable();
 			g_purge.push_back({ a->GetHandle(), 2.0f });
@@ -2335,6 +2349,8 @@ namespace bo3z
 			for (auto it = g_alive.begin(); it != g_alive.end();) {
 				auto a = it->handle.get();
 				if (!a || a->IsDeleted()) {
+					// (the audit: a reused FormID read as one of ours - the nuke struck it, the truce left it unguarded)
+					if (it->fid) g_ours.erase(it->fid), g_summoned.erase(it->fid), g_elites.erase(it->fid);
 					it = g_alive.erase(it);
 				} else if (a->IsDead()) {
 					g_corpses.push_back(it->handle);
@@ -2904,12 +2920,17 @@ namespace bo3z
 				// (Noah: "some of them are carrying Nordic weapons - they shouldn't have any weapons at all") a weapon that
 				// came back after the spawn (the body's outfit put on again as it loaded, a distributor's gift) is taken
 				// away again, and its own unseen claws put back in its hands
-				if (const std::string_view rid = gen::kEnemies[s.enemy].id; rid == "zombie" || rid == "runner" || rid == "wailer" || rid == "bloater" || rid == "volatile" || rid == "mage" || rid == "girl") {
-					auto* claws = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kZombieClaws, gen::kPlugin);
+				s.loaded = a->Is3DLoaded() ? s.loaded + kStep : 0.0f;
+				// (the audit: the crash came the frame the outfit went back on, HDT-SMP still building it) only a body that
+				// has stood whole for two seconds, out of its portal, is disarmed
+				if (const std::string_view rid = gen::kEnemies[s.enemy].id; s.loaded >= 2.0f && !IsRising(a.get()) && (rid == "zombie" || rid == "runner" || rid == "wailer" || rid == "bloater" || rid == "volatile" || rid == "mage" || rid == "girl")) {
+					static auto* claws = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kZombieClaws, gen::kPlugin);
 					auto* em = RE::ActorEquipManager::GetSingleton();
 					bool  armed = false;
+					RE::TESForm* first = nullptr;
 					for (bool left : { false, true }) {
-						if (auto* eq = a->GetEquippedObject(left); eq && eq != claws && (eq->IsWeapon() || (eq->Is(RE::FormType::Armor) && eq->As<RE::TESObjectARMO>()->IsShield()))) {
+						if (auto* eq = a->GetEquippedObject(left); eq && eq != claws && eq != first && (eq->IsWeapon() || (eq->Is(RE::FormType::Armor) && eq->As<RE::TESObjectARMO>()->IsShield()))) {
+							first = eq;  // (a two-handed weapon fills both hands: unequipped once)
 							armed = true;
 							if (auto* b = eq->As<RE::TESBoundObject>()) em->UnequipObject(a.get(), b);
 						}
@@ -2920,7 +2941,7 @@ namespace bo3z
 						// unequip has played out, a second and a half later
 						std::thread([h = a->GetHandle(), claws] { std::this_thread::sleep_for(std::chrono::milliseconds(1500)); Tasks::Add([h, claws] {
 							auto b = h.get();
-							if (!b || b->IsDisabled() || b->IsDeleted()) return;
+							if (!b || b->IsDisabled() || b->IsDeleted() || b->IsDead() || !b->Is3DLoaded()) return;
 							auto other = b->GetInventory([claws](RE::TESBoundObject& o) {
 								if (&o == claws) return false;
 								auto* ar = o.As<RE::TESObjectARMO>();
@@ -2945,7 +2966,7 @@ namespace bo3z
 				// one "unloaded" though it stood a few steps away, its body still loading - a churn that never let one arrive)
 				// one near you that hasn't loaded yet is given time (15 s) before it is replaced; only the far are moved at once
 				const bool farOff = dist > gen::kChaseRelocateDist;
-				if (!boss && (farOff || !a->Is3DLoaded())) {
+				if (!boss && !IsRising(a.get()) && (farOff || !a->Is3DLoaded())) {  // (one still in its portal is never "behind")
 					// (Noah: "on night two, halfway through, the enemies just stopped spawning" - the log: every new one stayed
 					// bodiless, replaced every few seconds by another that never loaded either) one near you still without a body
 					// after 4 s: why is logged, and whatever holds it back is undone (disabled, its AI off) and its body asked for
@@ -2959,7 +2980,6 @@ namespace bo3z
 						}
 						if (a->IsDisabled()) a->Enable(false);
 						if (!a->IsAIEnabled()) a->EnableAI(true);
-						if (cell && cell->IsAttached() && !a->IsDisabled()) a->Load3D(true);
 					}
 					static std::deque<std::chrono::steady_clock::time_point> recent;
 					const auto nowR = std::chrono::steady_clock::now();
@@ -3131,6 +3151,8 @@ namespace bo3z
 			g_summoned.clear();
 			g_slowLeft = 0;
 			g_pause = 0;
+			// (the audit: a hazard pending at the load erupted at the old spot on the first night's tick)
+			g_hazards.clear(), g_purge.clear(), g_fading.clear(), g_settle.clear(), g_fx.clear(), g_roused.clear();
 			EndEvent();
 			Undead::Reset();
 			Curse::Reset();

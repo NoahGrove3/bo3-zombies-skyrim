@@ -15,7 +15,7 @@ ELEMENTS = {
     'frost': ('6FC8FF', 'E6F6FF', 'ice'),
     'shock': ('8C7CFF', 'E8E2FF', 'shock'),
     'poison': ('6FD24A', 'D8FFB0', 'thorn'),
-    'disease': ('9AA84A', 'E2E8A0', 'soul'),
+    'corrosion': ('C8642E', 'FFC8A0', 'void'),  # (the Summoner's own: rust)
     'sun': ('FFC83C', 'FFF4C8', 'dawn'),
     'blood': ('D0202E', 'FF9A9A', 'blood'),
     'arcane': ('B45CFF', 'F0D8FF', 'arcane'),

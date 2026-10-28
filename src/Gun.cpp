@@ -218,6 +218,7 @@ namespace bo3z
 				return;
 			}
 			FireButton::func(g_abHandler, ev, g_abData);
+			ev->~ButtonEvent();  // (the audit: its event-name string was never released)
 			RE::free(ev);
 			static int said = 0;
 			if (said++ < 4) {
@@ -2699,6 +2700,12 @@ namespace bo3z
 			g_burstLeft = 0;
 			Spellcraft::Reset();
 			BowsImpl::Reset();
+			// (the audit: a load mid-unleash let the old game's stars fall, wells pull and storms crackle in the new one)
+			g_detonations.clear(), g_arcs.clear(), g_dots.clear(), g_shrink.clear(), g_blasts.clear(), g_wells.clear(), g_frozen.clear(), g_prisms.clear();
+			g_hexed.clear(), g_doomed.clear(), g_plagued.clear();
+			g_zones.clear(), g_chill.clear(), g_frozenUntil.clear();
+			Props::g_world.clear(), Props::g_twisters.clear();
+			g_storm.charges = 0;
 		}
 
 		// dev channel: 'cast tap|full|ult|orb' with the spell in hand (synthetic mouse input does not cast)

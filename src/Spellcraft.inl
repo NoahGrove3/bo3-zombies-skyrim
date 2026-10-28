@@ -393,6 +393,7 @@ namespace Spellcraft
 
 	void BurstAt(int a_row, const RE::NiPoint3& a_at, float a_radius, float a_dur = 0.45f)
 	{
+		if (g_bursts.size() >= 240) return;  // (the audit: a volley of arrows built hundreds of these - a hitch with the horde)
 		Burst b{ { Load(Def(a_row).id, "burst") }, 0.0f, a_dur, a_radius / 40.0f, Rand(0, 6.28f), a_at };
 		if (!b.fx.obj) {
 			return;
@@ -400,7 +401,7 @@ namespace Spellcraft
 		b.fx.Attach(WorldRoot());
 		b.fx.Place(a_at, Spin(b.spin), 0.01f);
 		g_bursts.push_back(std::move(b));
-		if (a_dur > 0.0f && a_radius > 0.0f) {  // the after-wave: a wider, slower second ring, and sparks of the spell thrown round
+		if (a_dur > 0.0f && a_radius > 0.0f && g_bursts.size() < 140) {  // the after-wave: a wider, slower second ring, and sparks of the spell thrown round
 			Burst w{ { Load(Def(a_row).id, "burst") }, 0.0f, a_dur * 1.7f, a_radius * 1.6f / 40.0f, Rand(0, 6.28f), a_at };
 			if (w.fx.obj) {
 				w.fx.Attach(WorldRoot());
@@ -421,6 +422,7 @@ namespace Spellcraft
 
 	void StreakAt(int a_row, const RE::NiPoint3& a, const RE::NiPoint3& b, float w, float t, bool jitter)
 	{
+		if (g_streaks.size() >= 200) return;
 		Streak s{ {}, a, b, t, w, jitter };
 		s.beam.row = a_row;
 		s.beam.Lay(a, b, w, jitter);
@@ -1318,7 +1320,7 @@ namespace Spellcraft
 		if (g_beamT <= 0 || Row(gun) != g_beamRow) {
 			g_beam.Clear();
 			g_beamT = -1;
-			Audio::LoopStop(Audio::kLoopCharge, 200);
+			Audio::LoopStop(Audio::kLoopSpell, 200);
 			return;
 		}
 		const auto& d = Def(g_beamRow);
@@ -1331,9 +1333,9 @@ namespace Spellcraft
 		}
 		const float grow = std::min(1.0f, (kBeamSeconds - g_beamT) / 0.15f) * std::min(1.0f, g_beamT / 0.2f);
 		g_beam.Lay(from, aim.hit, (d.ultRadius / 55.0f) * (0.4f + 0.6f * grow) * (1.0f + 0.07f * std::sin(g_time * 40.0f)));
-		if (!Audio::Looping(Audio::kLoopCharge)) {
+		if (!Audio::Looping(Audio::kLoopSpell)) {
 			if (const int hum = Snd(gun, &gen::GunSounds::charge); hum >= 0) {
-				Audio::LoopStart(Audio::kLoopCharge, static_cast<gen::Sound>(hum));
+				Audio::LoopStart(Audio::kLoopSpell, static_cast<gen::Sound>(hum));
 			}
 		}
 		if ((g_beamTick -= a_dt) <= 0) {  // the beam bites five times a second, through everything in its line
@@ -1366,7 +1368,7 @@ namespace Spellcraft
 		} else if (a_up && g_tapHeld) {
 			g_tapHeld = false;
 			SendAttack(false, 0.0f, 0.1f);
-			Audio::LoopStop(Audio::kLoopCharge, 120);
+			Audio::LoopStop(Audio::kLoopSpell, 120);
 			Tap(a_gun, g_tapT >= kTapFull);
 			g_tapT = 0;
 		}
@@ -1385,7 +1387,7 @@ namespace Spellcraft
 			g_orbHeld = false;
 			SendAttack(false, 0.0f, std::max(0.05f, g_orbT));
 			SendAttack(true, 0.0f, std::max(0.05f, g_orbT));
-			Audio::LoopStop(Audio::kLoopCharge, 150);
+			Audio::LoopStop(Audio::kLoopSpell, 150);
 			const float full = gen::kGuns[a_gun].chargeSeconds * Perks::ChargeMult();
 			if (g_orbT >= full) {
 				Ult(a_gun);
@@ -1604,7 +1606,7 @@ namespace Spellcraft
 		const bool live = Is(gun) && GunOut();
 		if (!live) {
 			if (g_tapHeld || g_orbHeld) {
-				Audio::LoopStop(Audio::kLoopCharge, 150);
+				Audio::LoopStop(Audio::kLoopSpell, 150);
 			}
 			g_tapHeld = g_orbHeld = false;
 		}
@@ -1633,7 +1635,7 @@ namespace Spellcraft
 			if (before < 0.12f && g_tapT >= 0.12f) {
 				Play2D(Snd(gun, &gen::GunSounds::start), 0.6f);
 				if (const int hum = Snd(gun, &gen::GunSounds::charge); hum >= 0) {
-					Audio::LoopStart(Audio::kLoopCharge, static_cast<gen::Sound>(hum));
+					Audio::LoopStart(Audio::kLoopSpell, static_cast<gen::Sound>(hum));
 				}
 			}
 			if (g_tapT >= kTapFull && !g_tapFullSaid) {
@@ -1647,7 +1649,7 @@ namespace Spellcraft
 			if (g_orbT >= 0.15f && !g_orbStartSaid) {
 				Play2D(Snd(gun, &gen::GunSounds::start));
 				if (const int hum = Snd(gun, &gen::GunSounds::charge); hum >= 0) {
-					Audio::LoopStart(Audio::kLoopCharge, static_cast<gen::Sound>(hum));
+					Audio::LoopStart(Audio::kLoopSpell, static_cast<gen::Sound>(hum));
 				}
 				g_orbStartSaid = true;
 			}
@@ -1675,6 +1677,7 @@ namespace Spellcraft
 	{
 		for (auto& s : g_shots2) {
 			s.fx.Detach();
+			s.ball.Detach();  // (the audit: a shot in flight at a load left its glowing ball in the new world)
 			if (s.loop) {
 				Audio::LoopStop(s.loop, 0);
 			}
@@ -1688,6 +1691,8 @@ namespace Spellcraft
 			s.beam.Clear();
 		}
 		g_streaks.clear();
+		for (auto& w : g_wells) w.ball.Detach();
+		g_wells.clear();
 		for (auto& h : g_held) {
 			if (auto a = h.a.get()) {
 				a->EnableAI(true);

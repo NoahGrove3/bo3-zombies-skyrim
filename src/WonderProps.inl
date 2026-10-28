@@ -409,18 +409,11 @@ namespace Props
 	}
 	void TickBane(RE::PlayerCharacter* p, float a_delta)
 	{
-		static bool  held = false;
-		static float recWas = 1.0f;
-		const bool   now = FangInHand(p);
-		auto*        av = p->AsActorValueOwner();
-		if (now != held) {  // your shouts return twice as fast while you hold it
-			if (now) {
-				recWas = av->GetActorValue(RE::ActorValue::kShoutRecoveryMult);
-				av->SetActorValue(RE::ActorValue::kShoutRecoveryMult, recWas * 0.5f);
-			} else {
-				av->SetActorValue(RE::ActorValue::kShoutRecoveryMult, recWas);
-			}
-			held = now;
+		// your shouts return twice as fast while you hold it: the shout's cooldown runs down a second time each frame
+		// (the audit: halving ShoutRecoveryMult was saved with the game and halved again on every load - a lasting change)
+		if (FangInHand(p)) {
+			auto& vt = p->GetActorRuntimeData().voiceTimer;
+			if (vt > 0) vt = std::max(0.0f, vt - a_delta);
 		}
 		if (g_baneStorm > 0) {  // Alduin's shade: meteors on the dead round you
 			g_baneStorm -= a_delta;

@@ -571,7 +571,7 @@ for c in CU['cities']:
     # (Noah: "update the Echo Altar's quest description") the journal shows the latest entry only: each one opens with what
     # the altar asks as a whole, then the trial in hand
     overview = (f"The Echo Altar of {c['town']} is only half awake: Alduin's echo still holds the city and raises its dead each night. "
-                f"The altar sets five trials - complete any four, in any order (with a party: the Ward, the Culling, the Long Night's Breath and each player's own class trial). When they are done, {boss['name']}, the Dragon Priest "
+                f"The altar sets four trials - the Ward of the Tongues, the Culling, the Long Night's Breath and my class's own - to be won in any order (in a party, each player wins their own class trial). When all four are done, {boss['name']}, the Dragon Priest "
                 f"who silenced the altar, rises at nightfall. Slay it and the altar wakes: {c['town']}'s dead sleep again, its spells grow "
                 f"stronger and its Thu'um is mine to learn.")
     stages = [(10, overview + " Choose a trial at the altar.")]

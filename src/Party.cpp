@@ -160,11 +160,13 @@ namespace bo3z::Party
 		float           g_soloT = -1.0f;  // seconds since you fell (-1: standing)
 		bool            g_soloPressed = false;
 		bool            g_soloLoading = false;
+		std::atomic<int> g_fallGen{ 0 };  // (the audit) each fall, rise and load a new number: a stale save-load task does nothing
 		float           g_soloLoadAt = 0;
 		constexpr float kSoloAuto = 8.0f, kSoloMayRise = 3.2f;
 		void SoloFall(RE::PlayerCharacter* p)
 		{
-			g_soloT = 0.0f, g_soloPressed = false;
+			g_soloT = 0.0f, g_soloPressed = false, ++g_fallGen;
+			Audio::LoopStop(Audio::kLoopCharge, 150), Audio::LoopStop(Audio::kLoopSpell, 150);  // (a charging hum no longer plays on through the fall)
 			HoldDown();
 			Gun::Console("setghost 1");  // (nothing more lands on you while you lie there)
 			Director::SlowTime(1.1f, 0.3f);
@@ -206,6 +208,11 @@ namespace bo3z::Party
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().deathT = -1.0f;
 			}
+			++g_fallGen, g_soloLoading = false;
+			{
+				std::scoped_lock l(Hud::Lock());
+				Hud::Edit().deathLoading = false;
+			}
 			Hud::Banner("YOU RISE AGAIN", 3.0f);
 			Forms::Play(gen::Sound::round_start);
 			g_soloT = -1.0f;
@@ -218,6 +225,9 @@ namespace bo3z::Party
 		}
 		void TickSolo(RE::PlayerCharacter* p, float a_delta)
 		{
+			// (the audit: a death the essential flag couldn't stop - a script's kill - is Skyrim's own to reload; ours on top
+			// would start a second load)
+			if (p->IsDead()) return;
 			auto*       av = p->AsActorValueOwner();
 			const float hp = av->GetActorValue(RE::ActorValue::kHealth);
 			if (g_soloT < 0.0f) {
@@ -251,9 +261,11 @@ namespace bo3z::Party
 				}
 				Director::NormalTime();
 				logger::info("fallen: loading the most recent save");
-				std::thread([] {
+				std::thread([gen = g_fallGen.load()] {
 					std::this_thread::sleep_for(std::chrono::milliseconds(1200));
-					Tasks::Add([] {
+					Tasks::Add([gen] {
+						auto* ui = RE::UI::GetSingleton();
+						if (gen != g_fallGen.load() || !g_soloLoading || g_soloT < 0.0f || (ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME))) return;
 						if (auto* sl = RE::BGSSaveLoadManager::GetSingleton()) sl->LoadMostRecentSaveGame();
 					});
 				}).detach();
@@ -471,11 +483,18 @@ namespace bo3z::Party
 		}
 	}
 
+	bool SoloFallen() { return g_soloT >= 0.0f; }
+
 	void OnLoad()
 	{
 		if (g_soloT >= 0.0f || g_soloLoading) logger::info("fallen: your save loaded - the fall is over");
 		g_soloT = -1.0f, g_soloLoading = false, g_soloPressed = false;
 		Director::NormalTime();
+		++g_fallGen;
+		// (the audit: a wiped party's load kept you "dead" and pinned at 1 health) the party's life state starts over too
+		g_life = Life::Alive, g_left = 0, g_reviveIn.clear(), g_watch = 0, g_wasFighting = false, g_riteSum = -1;
+		if (auto* p = RE::PlayerCharacter::GetSingleton()) p->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery);
+		Tasks::Add([] { Gun::Console("setghost 0"); });  // (a quicksave made mid-roll or mid-fall carried the ghost flag)
 		std::scoped_lock l(Hud::Lock());
 		Hud::Edit().deathT = -1.0f, Hud::Edit().deathLoading = false;
 	}

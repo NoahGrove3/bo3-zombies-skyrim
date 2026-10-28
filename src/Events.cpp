@@ -407,7 +407,7 @@ namespace bo3z
 				{
 					static std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> seen;
 					const auto now = std::chrono::steady_clock::now();
-					std::erase_if(seen, [&](const auto& e) { return now - e.second > std::chrono::seconds(30); });
+					std::erase_if(seen, [&](const auto& e) { return now - e.second > std::chrono::seconds(3); });  // (a short window: a reused FormID's death must count)
 					const auto id = a_event->actorDying->GetFormID();
 					if (seen.contains(id)) {
 						return RE::BSEventNotifyControl::kContinue;
@@ -449,6 +449,10 @@ namespace bo3z
 					auto* killer = a_event->actorKiller.get() ? a_event->actorKiller->As<RE::Actor>() : nullptr;
 					if (Net::InLobby() && Party::IsFriend(killer)) {
 						Points::Add(gen::kPoints_kill);
+					} else if (killer && ((killer->IsCommandedActor() && killer->GetCommandingActor().get() == player) || Classes::IsOwnSummon(killer) || Echo::IsAlly(killer))) {
+						// (the audit: since a summon's kill became the summon's, it paid nothing) your summons' and allies' kills pay
+						Points::Add(gen::kPoints_kill);
+						Hud::Essence(dying->GetPosition());
 					}
 					return RE::BSEventNotifyControl::kContinue;  // dawn, followers, guards: no points
 				}
@@ -532,11 +536,14 @@ namespace bo3z
 		};
 
 		// one hit a quarter second on each body (a spell's several effects and its hit all land at once)
-		bool Limit(RE::Actor* a_actor)
+		// (the audit: one window per body swallowed your blows while your summons bit it) one window per attacker and body
+		bool Limit(RE::Actor* a_actor, RE::Actor* a_by = nullptr)
 		{
-			static std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> last;
+			static std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> last;
 			const auto now = std::chrono::steady_clock::now();
-			auto&      t = last[a_actor->GetFormID()];
+			if (last.size() > 512) std::erase_if(last, [&](const auto& e) { return now - e.second > 2s; });
+			const std::uint64_t key = (static_cast<std::uint64_t>(a_by ? a_by->GetFormID() : 0x14) << 32) | a_actor->GetFormID();
+			auto&      t = last[key];
 			if (now - t <= 250ms) {
 				return false;
 			}
@@ -696,7 +703,7 @@ namespace bo3z
 								ourSpell = true;
 							}
 						}
-						if (src && !ourSpell && Forms::GunIndexOf(src) < 0 && Limit(z)) {
+						if (src && !ourSpell && Forms::GunIndexOf(src) < 0 && !(fangId && src->GetFormID() == fangId) && Limit(z)) {  // (the Fang's blows are FangHit's alone)
 							float share = gen::kShareSpell;
 							if (auto* w = src->As<RE::TESObjectWEAP>()) {
 								share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow : gen::kShareMelee;
@@ -715,7 +722,7 @@ namespace bo3z
 					auto* z = a_event->target->As<RE::Actor>();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
 					const bool mySummon = ally && pl && ally != pl && ((ally->IsCommandedActor() && ally->GetCommandingActor().get() == pl) || Classes::IsOwnSummon(ally));  // (Noah's plan: the Summoner's summons scale with the night's round)
-					if (ally && z && !z->IsDead() && (Echo::IsAlly(ally) || mySummon) && Director::IsRoundUndead(z) && Limit(z)) {
+					if (ally && z && !z->IsDead() && (Echo::IsAlly(ally) || mySummon) && Director::IsRoundUndead(z) && Limit(z, ally)) {
 						// (the balance pass) your summons hit by the highest rung of the summon spells you carry (0.3x of a
 						// blade at the first rung, up to 0.51x at the Legendary), a third again with Bonebinder's Brew
 						float tierMult = 0.9f;
@@ -821,7 +828,11 @@ namespace bo3z
 					Perks::OnEffect(a_event->magicEffect);
 				} else if (a_event && a_event->caster.get() == RE::PlayerCharacter::GetSingleton() && a_event->target) {
 					if (const int ci = Arcana::IndexOfEffect(a_event->magicEffect); ci >= 0) {
-						CofferHit(a_event->target->As<RE::Actor>(), ci);
+						// (the audit: a kill inside the engine's own effect-apply can dispel the list it is walking) the hit
+						// lands just after, on the main thread's task queue
+						if (auto* t = a_event->target->As<RE::Actor>()) {
+							Tasks::Add([h = t->GetHandle(), ci] { if (auto a = h.get(); a && !a->IsDeleted()) CofferHit(a.get(), ci); });
+						}
 					}
 				}
 				return RE::BSEventNotifyControl::kContinue;

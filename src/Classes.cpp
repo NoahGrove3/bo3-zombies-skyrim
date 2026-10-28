@@ -302,7 +302,8 @@ namespace bo3z::Classes
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p || a_cls < 0 || a_cls >= 4) return nullptr;
 			if (g_chest[a_cls]) {
-				if (auto* r = RE::TESForm::LookupByID<RE::TESObjectREFR>(g_chest[a_cls]); r && !r->IsDeleted()) return r;
+				static auto* chestBase = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kClassChest, gen::kPlugin);
+				if (auto* r = RE::TESForm::LookupByID<RE::TESObjectREFR>(g_chest[a_cls]); r && !r->IsDeleted() && r->GetBaseObject() == chestBase) return r;  // (only our own chest - never a reused ID)
 				g_chest[a_cls] = 0;
 			}
 			if (!a_make) return nullptr;
@@ -382,7 +383,7 @@ namespace bo3z::Classes
 			if (a_from >= 0 && a_from < 4 && a_from != a_to) StashGear(a_from), g_perkStash[a_from] = Perks::TakeAll();
 			if (a_from >= 0 && a_from < 4) {
 				g_stash[a_from].clear();
-				for (int i : Arcana::Carried()) {
+				for (int i : Arcana::Carried(-1)) {  // (every altar spell you hold goes with the class you leave - g_class is already the new one)
 					g_stash[a_from].push_back({ i, Arcana::Level(i) });
 				}
 				for (auto [i, lv] : g_stash[a_from]) Arcana::Forget(i);
@@ -880,6 +881,11 @@ namespace bo3z::Classes
 					if (coffer::kSpells[i].cls == coffer::kSummoner && std::string_view(coffer::kSpells[i].ladderLabel) == "Corrosion" && Arcana::Spell(i) && p->HasSpell(Arcana::Spell(i))) knows = true;
 				}
 				if (!knows) GiveSpell(Rung1(coffer::kSummoner, "Corrosion"), false);
+			} else if (g_kit[coffer::kSummoner]) {
+				// (the audit) a Summoner waiting in its stash gets Corrosion there, for when you come back to it
+				auto& st = g_stash[coffer::kSummoner];
+				const bool has = std::any_of(st.begin(), st.end(), [](const auto& e) { return e.first >= 0 && e.first < static_cast<int>(coffer::kSpells.size()) && std::string_view(coffer::kSpells[e.first].ladderLabel) == "Corrosion"; });
+				if (!has && Rung1(coffer::kSummoner, "Corrosion") >= 0) st.insert(st.begin(), { Rung1(coffer::kSummoner, "Corrosion"), 0 });
 			}
 		}
 		// (Noah: no movement-blocking hits) the night's dead never stagger you: the Steady perk (Mod Incoming Stagger x0)
@@ -1172,6 +1178,7 @@ namespace bo3z::Classes
 		for (int i = 0; i < 7; ++i) if (name.starts_with(kMat[i])) m = i;
 		if (name.starts_with("Dwemer")) m = 2;
 		if (m < 0 || m >= 6) return;
+		if (name.find(' ') == std::string::npos) return;  // (the audit: a one-word name threw here)
 		const std::string rest = name.substr(name.find(' '));                 // " Spellsword of Fire"
 		const std::string kind = rest.substr(0, rest.find(" of "));           // " Spellsword"
 		const std::string elem = rest.find(" of ") != std::string::npos ? rest.substr(rest.find(" of ")) : std::string();
@@ -1181,7 +1188,7 @@ namespace bo3z::Classes
 			for (auto* c : dh->GetFormArray<RE::TESObjectWEAP>()) {
 				if (!c || !c->GetFile(0) || c->GetFile(0)->GetFilename() != "Spellsword.esp" || !c->GetName()) continue;
 				const std::string cn = c->GetName();
-				if (!cn.starts_with(kMat[nm])) continue;
+				if (!cn.starts_with(kMat[nm]) || c->GetWeaponType() != w->GetWeaponType()) continue;  // (the same kind of weapon only: one-handed stays one-handed)
 				const int score = (cn.find(kind) != std::string::npos ? 2 : 0) + (!elem.empty() && cn.ends_with(elem) ? 1 : 0) + (c->GetWeaponType() == w->GetWeaponType() ? 2 : 0);
 				if (score > bestScore) bestScore = score, best = c;
 			}
@@ -1341,7 +1348,7 @@ namespace bo3z::Classes
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p) return;
-			DressStaffBolt(210.0f + 70.0f * static_cast<float>(g_staffLevel));
+			// (the staff is gone: its bolt is no longer dressed each frame)
 			for (auto& [h, t] : g_ownSummons) {
 				auto a = h.get();
 				if (!a || a->IsDisabled()) { t = 0; continue; }
@@ -1840,6 +1847,11 @@ namespace bo3z::Classes
 		g_class = -1, g_kit.fill(false), g_staffLevel = 0;
 		g_wStep.fill(0), g_wKills.fill(0), g_wTowns.fill(0), g_lastHit.clear(), g_boltKills = 0;
 		for (auto& s : g_stash) s.clear();
+		// (the audit: a new game kept the last game's chests, stashes and guide - its first class switch moved your gear
+		// into an unrelated reference) all of it cleared before anything is read
+		g_chest.fill(0), g_slotStash = {}, g_guide = 0, g_bowMastery.fill(0);
+		for (auto& w : g_wornStash) w.clear();
+		for (auto& ps : g_perkStash) ps.clear();
 		if (a_v.empty()) return;
 		g_class = static_cast<int>(a_v[0]) - 1;
 		std::size_t k = 1;
@@ -1921,5 +1933,10 @@ namespace bo3z::Classes
 		if (g_wStep[coffer::kSummoner] > kWonderSteps) TuneWyrm();
 		logger::info("classes: loaded ({})", Name(g_class));
 	}
-	void Revert() { SetState({}); g_open = false; g_mastery.fill(0); g_staffChecked = false; g_summonMarks.clear(); }
+	void Revert()
+	{
+		SetState({});
+		g_open = false, g_mastery.fill(0), g_staffChecked = false;
+		g_summonMarks.clear(), g_pendingSummon.clear(), g_ownSummons.clear(), g_lastBlade.clear(), g_powerHit.clear(), g_vortexArrows.clear();
+	}
 }

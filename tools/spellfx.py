@@ -339,7 +339,7 @@ def status(t):
     m.write(MESH / 'status_poison.nif')
 
 
-ELEMENTS = {'fire': 'FF6A1E', 'frost': '6FC8FF', 'shock': '8C7CFF', 'poison': '6FD24A', 'disease': '9AA84A', 'sun': 'FFC83C', 'blood': 'D0202E', 'arcane': 'B45CFF'}
+ELEMENTS = {'fire': 'FF6A1E', 'frost': '6FC8FF', 'shock': '8C7CFF', 'poison': '6FD24A', 'corrosion': 'C8642E', 'sun': 'FFC83C', 'blood': 'D0202E', 'arcane': 'B45CFF'}
 
 
 def elements(t):

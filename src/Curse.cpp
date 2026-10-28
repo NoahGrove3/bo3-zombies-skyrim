@@ -415,7 +415,8 @@ namespace bo3z
 		bool ObjectiveTarget(RE::PlayerCharacter* a_player, RE::NiPoint3& a_at, std::string& a_label)
 		{
 			const int z = g_zone;
-			if (z >= 0 && !RiteSelected(z)) {
+			// (the audit: a freed city's quest is completed and can't be selected - its shout and Echo markers never showed)
+			if (z >= 0 && !Get(z).freed && !RiteSelected(z)) {
 				return false;
 			}
 			if (z >= 0) {
@@ -445,7 +446,7 @@ namespace bo3z
 				const int  sh = ShoutOf(t);
 				const bool wants = !s.freed || (sh >= 0 && !Gun::KnowsShout(sh));
 				RE::NiPoint3 at;
-				if (!wants || !RiteSelected(t) || !Shops::Discovered(t) || !Shops::StationTarget(t, at)) {
+				if (!wants || !(s.freed || RiteSelected(t)) || !Shops::Discovered(t) || !Shops::StationTarget(t, at)) {
 					continue;
 				}
 				if (const float d = at.GetDistance(a_player->GetPosition()); d < best) {
@@ -826,7 +827,7 @@ namespace bo3z
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			if (!a_cleared) {
-				g_waveBroken = player && HealthFrac(player) < 0.5f;
+				g_waveBroken = false;  // (the audit: sampled only as the wave began - a fresh wave starts clean, the fall is watched through it)
 				return;
 			}
 			const int z = g_zone;
@@ -876,18 +877,23 @@ namespace bo3z
 			if (a_town >= 0 && Get(a_town).Boss()) {
 				Forms::Play(gen::Sound::quest_step);
 				g_pendingLift = a_town;
+				// (the audit: the kill lived only in memory - a save and load raised the Priest again) kept in the city's own
+				// value: the Boss state with its progress 1 means "fallen, the night's last wave still to go"
+				St fs = Get(a_town);
+				fs.prog = 1;
+				Put(a_town, fs);
 				Hud::Banner(Upper(std::string(BossName(a_town))) + " FALLS - slay the night's last waves to free " + std::string(gen::kTowns[a_town]), 5.0f);
 				logger::info("curse: {}'s Dragon Priest slain - freed when the night's waves are done", gen::kTowns[a_town]);
 			}
 		}
 		void OnNightCleared()
 		{
-			if (g_pendingLift < 0) return;
-			const int t = g_pendingLift;
-			g_pendingLift = -1;
-			if (auto* player = RE::PlayerCharacter::GetSingleton(); player && Get(t).Boss()) {
-				Lift(player, t);
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (!player) return;
+			for (int t = 0; t < static_cast<int>(gen::kCurseCities.size()); ++t) {
+				if (const St st = Get(t); st.Boss() && (st.prog >= 1 || t == g_pendingLift)) Lift(player, t);
 			}
+			g_pendingLift = -1;
 		}
 		void ForgetPendingLift() { g_pendingLift = -1; }
 
@@ -975,6 +981,7 @@ namespace bo3z
 				Gun::Console("resetquest UN_Rites_" + std::string(gen::kTowns[t]));
 			}
 			Save::Set(gen::kAV_round, 0);
+			g_mine.fill(0), g_elementsUsed = 0;  // (the audit: last cycle's class-trial credit carried over)
 			logger::info("curse: begun again - every city under the curse, night 1 next");
 		}
 
@@ -1046,7 +1053,9 @@ namespace bo3z
 					shown(0, s.active == 0 && s.Count() < kNeeded, false);
 					for (int i = 0; i < kTrialCount; ++i) {
 						const bool done = (s.done >> i) & 1;
-						shown(1 + i, true, done);  // (Noah: every trial listed from the start - open until done, ticked once done)
+						// (Noah: every trial listed from the start - open until done, ticked once done; the Unbroken, folded into
+						// the Long Night's Breath, only if an old save had it done)
+						shown(1 + i, i != gen::kTrial_unbroken || done, done);
 					}
 					shown(6, s.Boss(), false);
 				}
@@ -1059,6 +1068,11 @@ namespace bo3z
 			auto*        q = RiteQuest(g_zone);
 			if (q && q->IsEnabled() && !q->IsCompleted() && ObjectiveTarget(a_player, at, label)) {
 				auto m = g_marker.get();
+				if (m && (m->GetWorldspace() != a_player->GetWorldspace() || m->GetParentCell() == nullptr)) {
+					// (the audit: placed once near Riverwood, it was only slid to Whiterun's coordinates, still in Tamriel)
+					m->Disable(), m->SetDelete(true);
+					g_marker = {}, m = nullptr;
+				}
 				if (!m) {
 					if (auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(0x00003B)) {  // XMarker
 						if (auto r = a_player->PlaceObjectAtMe(xm, false)) {
@@ -1224,11 +1238,21 @@ namespace bo3z
 					g_belowHalf = below;
 				}
 				break;
+			case gen::kTrial_breath:  // counted as each wave is cleared (Curse::OnWave); on Expert and up, watched for the fall below half
+				if (Diff() >= 4) {
+					const bool below = HealthFrac(player) < 0.5f;
+					if (below && !g_belowHalf && !g_waveBroken && Director::Fighting()) {
+						g_waveBroken = true;
+						Forms::Play(gen::Sound::rite_reset);
+						Hud::Banner("THE LONG NIGHT'S BREATH - you fell below half health: this wave won't count", 4.0f);
+					}
+					g_belowHalf = below;
+				}
+				break;
 			case gen::kTrial_steel:
-			case gen::kTrial_breath:  // counted as each wave is cleared (Curse::OnWave)
 				break;
 			default:
-				if (s.Boss() && here && Story::BarrowJarlsOpen() && !Director::ChampionActive(z)) {  // (from Bleak Falls Barrow on)  // the Dragon Priest rises out in the city, once a night until it falls
+				if (s.Boss() && s.prog == 0 && here && Story::BarrowJarlsOpen() && !Director::ChampionActive(z)) {  // (from Bleak Falls Barrow on)  // the Dragon Priest rises out in the city, once a night until it falls
 					static float retry = 0;
 					if ((retry -= a_delta) <= 0) {
 						retry = 4.0f;

@@ -1687,7 +1687,7 @@ namespace bo3z
 			if (g_show.phase != Show::Offering || g_show.chest.get().get() != a_ref) {
 				return false;
 			}
-			if (g_show.prize || g_show.bow || Arcana::Carried().size() >= 2) {  // the choice, in the altar's menu (take / roll again / leave)
+			if (g_show.prize || g_show.bow || Arcana::Carried().size() >= Arcana::CarryCap()) {  // the choice, in the altar's menu (take / roll again / leave)
 				if (!g_choosing) {
 					g_choosing = true;
 					g_menu = true;
@@ -2161,6 +2161,7 @@ namespace bo3z
 							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollHero(&pz)) {
 								Points::Spend(cost);
 								g_lastRollCost = cost;
+								if (town >= 0) g_bowRollsT[town] = static_cast<std::uint8_t>(std::min(250, g_bowRollsT[town] + 1));  // (the audit: its price never rose)
 								SpinPrize(ref, std::move(pz));
 								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
 							}
@@ -2389,8 +2390,8 @@ namespace bo3z
 			static float trim = 0;
 			if ((trim -= a_delta) <= 0) {  // a character from before the two-spell rule keeps the two in hand
 				trim = 3.0f;
-				if (auto have = Arcana::Carried(); have.size() > 2 && !Gun::TestKitOn()) {  // (a test character keeps all 17)
-					for (std::size_t i = 2; i < have.size(); ++i) {
+				if (auto have = Arcana::Carried(); have.size() > Arcana::CarryCap() && !Gun::TestKitOn()) {  // (a test character keeps all 17)
+					for (std::size_t i = Arcana::CarryCap(); i < have.size(); ++i) {
 						Arcana::Forget(have[i]);
 					}
 					Hud::Banner("The altars let you carry two of their spells - the rest went back", 4.0f);

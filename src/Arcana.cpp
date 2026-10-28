@@ -164,21 +164,28 @@ namespace bo3z::Arcana
 	}
 
 	// (Noah: two of the altar's spells at a time) the altar's spells you carry, the ones in your hands first
-	std::vector<int> Carried()
+	// (the audit: a Firebolt read from a looted tome counted as one of a Summoner's altar spells, and pushed its own out)
+	// only your class's spells count
+	std::vector<int> Carried() { return Carried(Classes::Get()); }
+	std::vector<int> Carried(int a_cls)
 	{
 		std::vector<int> out;
+		const int cls = a_cls;
+		auto mine = [cls](int i) { return cls < 0 || ClassOf(i) == cls; };
 		for (int h : Hands()) {
-			if (h >= 0 && Known(h) && std::ranges::find(out, h) == out.end()) {
+			if (h >= 0 && Known(h) && mine(h) && std::ranges::find(out, h) == out.end()) {
 				out.push_back(h);
 			}
 		}
 		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
-			if (g_spell[i] && Known(i) && std::ranges::find(out, i) == out.end()) {
+			if (g_spell[i] && Known(i) && mine(i) && std::ranges::find(out, i) == out.end()) {
 				out.push_back(i);
 			}
 		}
 		return out;
 	}
+	// how many you may carry: two - three for the Summoner (its Corrosion took the staff's place beside its two summons)
+	std::size_t CarryCap() { return Classes::Get() == coffer::kSummoner ? 3 : 2; }
 	// one of them gone for good: out of your hands, out of the Magic menu, its reforging lost
 	void Forget(int a_index)
 	{

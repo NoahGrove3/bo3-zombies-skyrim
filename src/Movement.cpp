@@ -2385,6 +2385,7 @@ namespace bo3z
 			g_applied = 0, g_slide = 0, g_carry = 0, g_air = 0, g_smooth = 0;
 			g_fpGlide = 0, g_fpWant = false;
 			g_wasAir = false, g_wantSlide = false, g_wantJumpCarry = false, g_forcedSneak = false;
+			g_dodgeT = -1.0f, g_dodgeGhost = false;  // (the audit: a roll's leftover shove landed on the loaded game)
 		}
 
 		// ---- hanging from the harness (after the animation each frame: Gun's pose hook). In order:
@@ -2915,7 +2916,7 @@ namespace bo3z
 				g_dodgeT += a_delta;
 				if (g_dodgeGhost && g_dodgeT > 0.55f) {
 					g_dodgeGhost = false;
-					Gun::Console("setghost 0");
+					if (!Party::SoloFallen()) Gun::Console("setghost 0");  // (the audit: a fall mid-roll kept its own ghost)
 				}
 				// (Noah: "increase the distance of the dodge roll - I don't get far enough out of range") about 4.5 m of shove,
 				// was 2.6 m: a roll now clears a swing's reach

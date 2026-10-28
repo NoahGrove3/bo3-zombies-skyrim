@@ -124,7 +124,12 @@ namespace bo3z
 				}
 				const auto& p = gen::kPerks[i];
 				switch (p.effect) {
-				case 0: Mod(RE::ActorValue::kHealth, -p.value * n); break;
+				case 0:
+					// (the audit: a wounded switch took the health above it and could kill you at the altar) the wound is
+					// healed by as much as the cap drops first
+					if (auto* pl = RE::PlayerCharacter::GetSingleton()) pl->AsActorValueOwner()->RestoreActorValue(RE::ActorValue::kHealth, p.value * n);
+					Mod(RE::ActorValue::kHealth, -p.value * n);
+					break;
 				case 4: Mod(RE::ActorValue::kSpeedMult, -p.value * n); Mod(RE::ActorValue::kStaminaRateMult, -30.0f * n); break;
 				case 1: for (auto av : kSchoolCost) Mod(av, -15.0f * std::min(n, 5)); break;
 				case 2: for (auto av : kSchoolPower) Mod(av, -50.0f * n); break;
@@ -147,7 +152,12 @@ namespace bo3z
 				if (n <= 0) continue;
 				const auto& p = gen::kPerks[i];
 				switch (p.effect) {
-				case 0: Mod(RE::ActorValue::kHealth, -p.value * n); break;
+				case 0:
+					// (the audit: a wounded switch took the health above it and could kill you at the altar) the wound is
+					// healed by as much as the cap drops first
+					if (auto* pl = RE::PlayerCharacter::GetSingleton()) pl->AsActorValueOwner()->RestoreActorValue(RE::ActorValue::kHealth, p.value * n);
+					Mod(RE::ActorValue::kHealth, -p.value * n);
+					break;
 				case 4: Mod(RE::ActorValue::kSpeedMult, -p.value * n); Mod(RE::ActorValue::kStaminaRateMult, -30.0f * n); break;
 				case 1: for (auto av : kSchoolCost) Mod(av, -15.0f * std::min(n, 5)); break;
 				case 2: for (auto av : kSchoolPower) Mod(av, -50.0f * n); break;

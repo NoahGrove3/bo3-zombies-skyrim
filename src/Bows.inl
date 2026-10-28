@@ -1318,19 +1318,26 @@ namespace BowsImpl
 		g_seekLeft -= a_delta;
 		auto* mgr = RE::Projectile::Manager::GetSingleton();
 		if (!mgr) return;
-		std::vector<RE::Projectile*> mine;
+		// (the audit: raw pointers outlived the lock, and enemy casters' missiles of the same spell were steered too) held
+		// references, and only the ones you (or your marker) loosed
+		std::vector<RE::NiPointer<RE::Projectile>> mine;
 		{
+			auto* pc = RE::PlayerCharacter::GetSingleton();
 			RE::BSSpinLockGuard lock(mgr->projectileLock);
 			for (auto* list : { &mgr->limited, &mgr->unlimited, &mgr->pending }) {
 				for (auto& h : *list) {
 					auto pr = h.get();
-					if (pr && !pr->IsDeleted() && pr->GetProjectileRuntimeData().spell == g_seekSpell) mine.push_back(pr.get());
+					if (!pr || pr->IsDeleted() || pr->GetProjectileRuntimeData().spell != g_seekSpell) continue;
+					auto shooter = pr->GetProjectileRuntimeData().shooter.get();
+					auto cause = pr->GetProjectileRuntimeData().actorCause;
+					const bool ours = (shooter && (shooter.get() == pc || shooter.get() == g_t3Marker.get().get())) || (cause && cause->actor.get().get() == pc);
+					if (ours) mine.push_back(pr);
 				}
 			}
 		}
 		static int said = 0;
 		if (!mine.empty() && said++ < 4) logger::info("bows: {} tier-III missile(s) chasing the dead", mine.size());
-		for (auto* pr : mine) {
+		for (auto& pr : mine) {
 			auto&              rd = pr->GetProjectileRuntimeData();
 			const RE::NiPoint3 at = pr->GetPosition();
 			RE::Actor*         best = nullptr;
@@ -1569,6 +1576,8 @@ namespace BowsImpl
 		for (auto& o : g_orbs) {
 			o.ball.Detach();
 		}
+		for (auto& r : g_rides) r.fx.Detach();
+		g_rides.clear(), g_ridden.clear();
 		g_orbs.clear(), g_patches.clear(), g_marks.clear(), g_cyclones.clear(), g_tethers.clear(), g_meteors.clear(), g_harvest = 0;
 		g_ball.Detach();
 		g_tip.Detach();

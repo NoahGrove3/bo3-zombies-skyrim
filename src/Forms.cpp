@@ -371,6 +371,12 @@ namespace bo3z
 			}
 			void Migrate()  // an older save: its values are in the actor values; take them, then clear them
 			{
+				// (the audit: a save from before the mod had its Variable01-10 - other mods' and Survival's - read as ours and
+				// zeroed) only a save whose flags value carries our own mark is ours to move
+				if (const float f = ReadAV(kSavedAVs[3]); !(f >= 1.0f && f < 16777216.0f && ((static_cast<int>(f) >> Save::kFlagInit) & 1))) {
+					logger::info("save: no values of ours to move (a save from before the mod)");
+					return;
+				}
 				for (std::size_t i = 0; i < std::size(kSavedAVs); ++i) {
 					g_val[i] = static_cast<int>(std::lround(ReadAV(kSavedAVs[i])));
 					WriteAV(kSavedAVs[i], 0.0f);

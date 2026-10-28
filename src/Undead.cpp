@@ -96,7 +96,7 @@ namespace bo3z
 		struct Rig
 		{
 			Type                      type = Type::Shambler;
-			RE::NiAVObject*           root = nullptr;
+			RE::NiPointer<RE::NiAVObject> root;              // (held: a freed skeleton's address can't come back as "the same 3D" - the audit)
 			std::array<BoneState, kBones> bones{};
 			float                     phase = 0, twitchT = 0, twitchX = 0, twitchY = 0, seed = 0;
 			RE::NiPoint3              lastPos{};
@@ -237,6 +237,8 @@ namespace bo3z
 
 		bool ClipPose(RE::Actor* a_actor, Rig& r, float dt, bool attacking, int cue);  // (below: the Mixamo clips)
 		bool UsesClips(Type a_t);
+		std::mutex                                 g_graveLock;
+		std::vector<RE::NiPointer<RE::NiAVObject>> g_grave;  // skeletons a rig let go of, released on the main thread
 		void PoseRig(RE::Actor* a_actor, Rig& r, float a_delta)
 		{
 			Perf::Scope perf(Perf::kAnim);
@@ -244,7 +246,11 @@ namespace bo3z
 			if (!root) {
 				return;
 			}
-			if (root != r.root) {  // new 3D: find the bones again
+			if (root != r.root.get()) {  // new 3D: find the bones again
+				if (r.root) {  // (the old skeleton is let go on the main thread, never freed here on the animation thread)
+					std::scoped_lock gl(g_graveLock);
+					g_grave.push_back(std::move(r.root));
+				}
 				r.root = root;
 				// (Noah: "some of them are floating along the floor ... move like Draugr") the clips' bones too: a body set
 				// down somewhere else (or loaded again) has new bones - the old ones were posed in its place, not these
@@ -983,6 +989,7 @@ namespace bo3z
 			float           gaitMod = 0;      // our share of its SpeedMult (temporary)
 			float           gaitT = 0;        // to the next look at its pace
 			float           paceVar = 1;      // (each its own stride: a few percent either way)
+			int             lastCap = -2;     // the gait it was last held to (a change is met in one step, not eased - no sliding)
 			RE::NiPoint3    gaitPos{};
 		};
 		std::vector<Mind> g_minds;
@@ -1289,7 +1296,9 @@ namespace bo3z
 			const float base = std::max(1.0f, av->GetPermanentActorValue(RE::ActorValue::kSpeedMult));
 			const float target = clipV * m.paceVar * std::clamp(other / base, 0.2f, 2.5f);
 			const float want = std::clamp(cur * target / pace - other, -0.9f * other, 3.0f * other);
-			const float step = (want - m.gaitMod) * 0.5f;
+			const bool  changed = cap != m.lastCap;
+			m.lastCap = cap;
+			const float step = (want - m.gaitMod) * (changed ? 1.0f : 0.5f);
 			if (std::abs(step) < 1.5f) return;
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, step);
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.01f);  // (so the new speed takes at once)
@@ -1391,6 +1400,7 @@ namespace bo3z
 				}
 			}
 			const auto pp = a_player->GetPosition();
+			std::vector<RE::NiPoint3> raise;  // (the audit: the scream spawned inside this loop - a push_back on g_minds left it dangling)
 			for (auto& m : g_minds) {
 				auto a = m.handle.get();
 				if (!a) {
@@ -1516,7 +1526,7 @@ namespace bo3z
 							g_wailBoost = 6.0f;
 							for (int i = 0; i < 3; ++i) {
 								const float ang = Rand(0, 6.2832f);
-								Director::RaiseAt(a->GetPosition() + RE::NiPoint3{ std::cos(ang) * 260.0f, std::sin(ang) * 260.0f, 40.0f });
+								raise.push_back(a->GetPosition() + RE::NiPoint3{ std::cos(ang) * 260.0f, std::sin(ang) * 260.0f, 40.0f });
 							}
 							for (auto& o : g_minds) {
 								if (auto z = o.handle.get(); z && !z->IsDead() && z->GetPosition().GetDistance(a->GetPosition()) < 1400.0f) {
@@ -1546,6 +1556,7 @@ namespace bo3z
 					break;
 				}
 			}
+			for (const auto& at : raise) Director::RaiseAt(at);  // (after the loop: a spawn adds to g_minds)
 			std::erase_if(g_minds, [](const Mind& m) { return m.cd <= -99; });
 			// rigs of the gone (deleted, unloaded) are dropped now and then
 			static float told = 0;
@@ -1566,6 +1577,13 @@ namespace bo3z
 					auto* f = RE::TESForm::LookupByID<RE::Actor>(e.first);
 					return !f || f->IsDeleted();
 				});
+				{
+					std::vector<RE::NiPointer<RE::NiAVObject>> drop;
+					{
+						std::scoped_lock gl(g_graveLock);
+						drop.swap(g_grave);
+					}
+				}
 				std::erase_if(g_rigs, [](const auto& e) {
 					auto* f = RE::TESForm::LookupByID<RE::Actor>(e.first);
 					return !f || f->IsDeleted() || f->IsDead();
