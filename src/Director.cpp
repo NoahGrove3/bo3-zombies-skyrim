@@ -794,7 +794,7 @@ namespace bo3z
 				}
 				if (r.anim == 2) {  // through the portal: a moment to step out, then it hunts
 					if (r.hidden && (r.t >= 0.35f || a->IsDead())) ShowRiser(a.get(), true), r.hidden = false;
-					if (r.t >= 1.1f || a->IsDead()) {
+					if (r.t >= 0.45f || a->IsDead()) {  // (Noah: "it takes them a few seconds before they chase me - make it instant") the moment it steps out
 						a->EnableAI(true);
 						// (Noah: "their AI gets confused and they just run in a random direction") it steps out facing you, its
 						// hunt begun at once - no package of its own to wander off on first

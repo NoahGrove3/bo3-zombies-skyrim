@@ -134,7 +134,7 @@ namespace bo3z
 			std::uint32_t             lodTick = 0;
 			float                     lodDt = 0;
 			std::atomic<int>          gaitCap{ -1 };         // its fastest gait (main thread: SetPace / its frenzy)
-			std::atomic<float>        warmup{ 2.5f };        // (Noah: "start walking, then run") seconds of walking left before it takes its gait
+			std::atomic<float>        warmup{ 1.5f };        // (Noah: "start walking, then run") seconds of walking left before it takes its gait
 			std::atomic<int>          setNow{ -1 };          // its clip set, for the main thread
 			std::atomic<float>        gaitV{ 0 };            // the clip speed its legs play now (0: standing or a full-body move)
 			RE::NiPoint3              locoLast{};
@@ -1307,7 +1307,7 @@ namespace bo3z
 		}
 		void FreshStep(RE::Actor* a_actor)
 		{
-			if (auto r = a_actor ? RigOf(a_actor) : nullptr) r->warmup.store(2.5f);
+			if (auto r = a_actor ? RigOf(a_actor) : nullptr) r->warmup.store(1.5f);
 		}
 		void SetPace(RE::Actor* a_actor, float a_scale)
 		{
