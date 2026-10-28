@@ -83,6 +83,27 @@ namespace bo3z::Classes
 				if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(a_p, obj, nullptr, 1, nullptr, false, false, false, true);
 			}
 		}
+		// (Noah: "with a male character the class armour sets make my body invisible - they're for women") a piece fits
+		// you when one of its addons has a model for your sex (the Drifter Outfit and the Wandering Summoner have none for men)
+		bool Fits(const RE::TESObjectARMO* a_armo, bool a_female)
+		{
+			if (!a_armo) return true;
+			bool any = false;
+			for (auto* aa : a_armo->armorAddons) {
+				if (!aa) continue;
+				any = true;
+				const char* m = aa->bipedModels[a_female ? RE::SEXES::kFemale : RE::SEXES::kMale].GetModel();
+				if (m && *m) return true;
+			}
+			return !any;
+		}
+		bool PlayerFemale()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			return p && p->GetActorBase() && p->GetActorBase()->IsFemale();
+		}
+		// a man's Ranger wears the Dawnguard's own light armour in the Drifter's place
+		constexpr std::uint32_t kDawnguardLight[] = { 0x00F3FB, 0x00F400, 0x00F3FE };  // cuirass, boots, gauntlets (Dawnguard.esm)
 		void GiveSpell(int a_index, bool a_left)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -199,8 +220,12 @@ namespace bo3z::Classes
 				break;
 			case coffer::kRanger:
 				if (const int b = Bows::Roll(); b >= 0) Bows::Give(b);
-				for (std::uint32_t id : { 0x857u, 0x858u, 0x859u }) {  // (Noah) the Drifter Outfit, light armoured
-					GiveItem(p, Lookup(id, "DrifterArmorAndOutfitByXtudo.esp"), 1, true);
+				if (female) {
+					for (std::uint32_t id : { 0x857u, 0x858u, 0x859u }) {  // (Noah) the Drifter Outfit, light armoured
+						GiveItem(p, Lookup(id, "DrifterArmorAndOutfitByXtudo.esp"), 1, true);
+					}
+				} else {
+					for (auto id : kDawnguardLight) GiveItem(p, Lookup(id, "Dawnguard.esm"), 1, true);
 				}
 				GiveItem(p, Lookup(0x002F9A, "Faction Crossbows.esp"), 1, false);  // Dawnguard Crossbow
 				GiveItem(p, Lookup(0x020B04, "Faction Crossbows.esp"), 30, false);  // Dawnguard Bolts
@@ -992,6 +1017,29 @@ namespace bo3z::Classes
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();
 		TuneCorrosion();
 		TuneSpellswordGear();
+		// (Noah) worn armour made only for the other body is taken off; a man's Drifter Outfit becomes the Dawnguard's
+		if (static int fitCheck = 0; ++fitCheck % 3 == 0 && p->Is3DLoaded()) {
+			const bool fem = PlayerFemale();
+			std::vector<RE::TESObjectARMO*> off;
+			for (auto& [obj, data] : p->GetInventory()) {
+				auto* a = obj ? obj->As<RE::TESObjectARMO>() : nullptr;
+				if (a && data.second && data.second->IsWorn() && !Fits(a, fem)) off.push_back(a);
+			}
+			bool drifter = false;
+			for (auto* a : off) {
+				if (auto* em = RE::ActorEquipManager::GetSingleton()) em->UnequipObject(p, a, nullptr, 1, nullptr, false, false, false, true);
+				drifter |= a->GetFile(0) && a->GetFile(0)->GetFilename() == "DrifterArmorAndOutfitByXtudo.esp";
+				logger::info("classes: {} taken off - it has no model for a {} body", a->GetName(), fem ? "woman's" : "man's");
+			}
+			if (drifter) {
+				for (auto id : kDawnguardLight) {
+					auto* f = Lookup(id, "Dawnguard.esm");
+					auto* b = f ? f->As<RE::TESBoundObject>() : nullptr;
+					if (b) GiveItem(p, b, p->GetItemCount(b) > 0 ? 0 : 1, true);
+				}
+				Hud::Banner("The Drifter Outfit is made for a woman's body - the Dawnguard's light armour in its place", 4.0f);
+			}
+		}
 		// (the shells the Spell-weapon row once gave - Flame Shield's 600 magicka and the like - are taken back)
 		if (static bool shellsGone = false; !shellsGone && p->Is3DLoaded()) {
 			shellsGone = true;
@@ -1338,6 +1386,7 @@ namespace bo3z::Classes
 			{ "Necromancer's Robes", "Skyrim.esm", { 0x10900E, 0x0C36E8, 0, 0, 0 } },
 			{ "Wild Witch", "ksws03.esp", { 0x808, 0x809, 0x80B, 0x811, 0x80D } },
 			{ "Drifter", "DrifterArmorAndOutfitByXtudo.esp", { 0x857, 0x858, 0x859, 0, 0 } },
+			{ "Dawnguard", "Dawnguard.esm", { 0x00F3FB, 0x00F400, 0x00F3FE, 0, 0 } },
 			{ "Practical Pirate", "practical_pirate.esp", { 0x800, 0x802, 0x805, 0, 0 } },
 			{ "Wizard Hat", "sirwho_Wizard_Hats-Full.esp", { 0, 0, 0, 0, 0 } },  // (each press: the next of its hats)
 		};
@@ -1374,7 +1423,11 @@ namespace bo3z::Classes
 				}
 			}
 			g_outfit = next;
-			if (pieces.empty()) continue;  // (that outfit's mod isn't installed)
+			{
+				const bool fem = PlayerFemale();
+				std::erase_if(pieces, [&](RE::TESBoundObject* b) { return !Fits(b->As<RE::TESObjectARMO>(), fem); });  // (none your body can't wear)
+			}
+			if (pieces.empty()) continue;  // (that outfit's mod isn't installed, or it isn't made for you)
 			for (auto* b : pieces) GiveItem(p, b, p->GetItemCount(b) > 0 ? 0 : 1, true);
 			std::string nm = o.ids[0] == 0 ? std::string(pieces[0]->GetName()) : std::string(o.name);
 			{
