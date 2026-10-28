@@ -134,6 +134,7 @@ namespace bo3z
 			std::uint32_t             lodTick = 0;
 			float                     lodDt = 0;
 			std::atomic<int>          gaitCap{ -1 };         // its fastest gait (main thread: SetPace / its frenzy)
+			std::atomic<float>        warmup{ 2.5f };        // (Noah: "start walking, then run") seconds of walking left before it takes its gait
 			std::atomic<int>          setNow{ -1 };          // its clip set, for the main thread
 			std::atomic<float>        gaitV{ 0 };            // the clip speed its legs play now (0: standing or a full-body move)
 			RE::NiPoint3              locoLast{};
@@ -624,6 +625,14 @@ namespace bo3z
 			return rate;
 		}
 		// true: the clips posed it this frame (the old rig stays out)
+		// the gait it plays now: its own (walk or run - never a sprint), but a walk for its first steps out of the portal
+		int EffCap(const Rig& r)
+		{
+			int cap = r.gaitCap.load(std::memory_order_relaxed);
+			if (cap == zclip::kSprint) cap = zclip::kRun;
+			if (cap == zclip::kRun && r.warmup.load(std::memory_order_relaxed) > 0) cap = zclip::kWalk;
+			return cap;
+		}
 		bool ClipPose(RE::Actor* a_actor, Rig& r, float dt, bool attacking, int cue)
 		{
 			if (r.clipSet == -1) {
@@ -690,7 +699,8 @@ namespace bo3z
 				}
 				r.locoLast = pos;
 				loco.lateral = r.lateral;
-				loco.cap = r.gaitCap.load(std::memory_order_relaxed);
+				loco.cap = EffCap(r);
+				if (r.speed >= 10.0f && r.warmup.load(std::memory_order_relaxed) > 0) r.warmup.store(r.warmup.load(std::memory_order_relaxed) - dt, std::memory_order_relaxed);
 			}
 			// what it should be doing
 			const bool oneShotOn = P.OneShotOn(S);
@@ -1265,7 +1275,7 @@ namespace bo3z
 			m.gaitPos = pos;
 			auto r = RigOf(a);
 			if (!r || !(UsesClips(r->type) || r->wantSet.load() == 6)) return;
-			const int   cap = r->gaitCap.load();
+			const int   cap = EffCap(*r);
 			const float legs = r->gaitV.load();
 			if (legs < 0) return;  // (a swing, a flinch, a scream: leave it be)
 			const float clipV = cap >= 0 ? GaitClipSpeed(r->setNow.load(), cap) : legs;
@@ -1286,6 +1296,10 @@ namespace bo3z
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.01f);
 			m.gaitMod += step;
 		}
+		void FreshStep(RE::Actor* a_actor)
+		{
+			if (auto r = a_actor ? RigOf(a_actor) : nullptr) r->warmup.store(2.5f);
+		}
 		void SetPace(RE::Actor* a_actor, float a_scale)
 		{
 			if (!a_actor) return;
@@ -1304,7 +1318,8 @@ namespace bo3z
 				pWalk = a_scale < 1.05f ? 0.9f : a_scale < 1.2f ? 0.7f : a_scale < 1.35f ? 0.5f : 0.3f;
 				pSprint = a_scale < 1.2f ? 0.0f : a_scale < 1.35f ? 0.08f : 0.18f;
 			}
-			int cap = u < pWalk ? zclip::kWalk : u > 1.0f - pSprint ? zclip::kSprint : zclip::kRun;
+			int cap = u < pWalk ? zclip::kWalk : zclip::kRun;  // (Noah: "no sprinting - only walking and running")
+			(void)pSprint;
 			if (r->wantSet.load() == 6) cap = zclip::kRun;  // (the Skeleton Mutant: it runs you down)
 			if (r->wantSet.load() == 4) cap = -1;  // (the mage: as the game moves it - it walks, runs and sidesteps to keep its distance)
 			r->gaitCap.store(cap);

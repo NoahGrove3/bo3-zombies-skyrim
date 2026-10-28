@@ -603,6 +603,7 @@ namespace bo3z
 			float floor = at.z;  // (Noah: "some of them get stuck in the ground when spawning") the walkable top under it, if higher
 			if (const auto top = WalkTop(a_actor->GetParentCell(), at, 45.0f); top && *top > floor - 40.0f && *top < floor + 40.0f) floor = *top;
 			g_risers.push_back({ a_actor->GetHandle(), floor });
+			Undead::FreshStep(a_actor);
 			a_actor->SetCollision(false);
 			a_actor->EnableAI(false);
 			at.z -= kRiseDepth;
@@ -763,6 +764,14 @@ namespace bo3z
 					if (r.hidden && (r.t >= 0.35f || a->IsDead())) ShowRiser(a.get(), true), r.hidden = false;
 					if (r.t >= 1.1f || a->IsDead()) {
 						a->EnableAI(true);
+						// (Noah: "their AI gets confused and they just run in a random direction") it steps out facing you, its
+						// hunt begun at once - no package of its own to wander off on first
+						if (auto* pc = RE::PlayerCharacter::GetSingleton(); pc && !a->IsDead()) {
+							const auto d = pc->GetPosition() - a->GetPosition();
+							a->SetAngle({ 0.0f, 0.0f, std::atan2(d.x, d.y) });
+							a->StopCombat();
+							a->StartCombat(pc);
+						}
 						r.anim = 9, r.t = 0;  // (then watched a moment: it must stay on the floor)
 					}
 					continue;
@@ -2906,15 +2915,22 @@ namespace bo3z
 						}
 					}
 					if (armed && claws) {
-						auto other = a->GetInventory([claws](RE::TESBoundObject& o) {
-							if (&o == claws) return false;
-							auto* ar = o.As<RE::TESObjectARMO>();
-							return o.IsWeapon() || o.IsAmmo() || (ar && ar->IsShield());
-						});
-						for (auto& [obj, data] : other) {
-							if (data.first > 0) a->RemoveItem(obj, data.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-						}
 						em->EquipObject(a.get(), claws);
+						// (Noah: a crash 10 ms after this - HDT-SMP still held the weapon's 3D) the weapon leaves its pack only once the
+						// unequip has played out, a second and a half later
+						std::thread([h = a->GetHandle(), claws] { std::this_thread::sleep_for(std::chrono::milliseconds(1500)); Tasks::Add([h, claws] {
+							auto b = h.get();
+							if (!b || b->IsDisabled() || b->IsDeleted()) return;
+							auto other = b->GetInventory([claws](RE::TESBoundObject& o) {
+								if (&o == claws) return false;
+								auto* ar = o.As<RE::TESObjectARMO>();
+								return o.IsWeapon() || o.IsAmmo() || (ar && ar->IsShield());
+							});
+							for (auto& [obj, data] : other) {
+								if (data.first <= 0 || b->GetEquippedObject(false) == obj || b->GetEquippedObject(true) == obj) continue;  // (still in a hand: the next pass)
+								b->RemoveItem(obj, data.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+							}
+						}); }).detach();
 						static int told = 0;
 						if (told++ < 10) logger::info("night: a {} was holding a weapon again - taken away", rid);
 					}

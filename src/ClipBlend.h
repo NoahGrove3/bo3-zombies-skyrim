@@ -221,7 +221,15 @@ namespace zclip
 				want = in.lateral > 0 ? kStrafeR : kStrafeL;
 			} else {
 				float best = 1e9f;
-				for (int k : { kWalk, kRun, kSprint }) {
+				// (Noah: "some walk, then run, then walk, then run - it doesn't look smooth ... no sprinting, only walking and
+				// running") a body with a gait of its own keeps to it whatever its pace (its legs only quicken or slow); only
+				// one without (the mage) picks by pace - and none sprints
+				if (in.cap == kWalk || in.cap == kRun || in.cap == kSprint) {
+					want = in.cap == kWalk && S.Has(kWalk) ? kWalk : kRun;
+					best = -1e9f;
+				}
+				for (int k : { kWalk, kRun }) {
+					if (best < -1e8f) break;
 					if ((k != kRun && !S.Has(k)) || S.c[k].speed <= 1.0f) continue;
 					if (in.cap == kWalk && k != kWalk && S.Has(kWalk)) continue;  // (a walker never breaks into a run)
 					if (in.cap == kRun && k == kSprint) continue;

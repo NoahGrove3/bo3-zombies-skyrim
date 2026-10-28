@@ -220,6 +220,7 @@ namespace bo3z
 		bool  IsDancing(RE::Actor* a_actor);  // (its blows land half again as hard)
 		Type  Roll(int a_round);         // which of the risen dead this one is
 		float SpeedMult(Type a_type);
+		void  FreshStep(RE::Actor* a_actor);  // its first steps (out of a portal) walked before it takes its own gait
 		void  SetPace(RE::Actor* a_actor, float a_scale);  // its round's pace (1 = round one): walker, runner or sprinter, its speed held at its gait's clip
 		float HealthMult(Type a_type);
 		float DamageMult(Type a_type);
