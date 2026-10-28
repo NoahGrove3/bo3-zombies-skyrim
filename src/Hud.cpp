@@ -831,8 +831,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			// what it cost, and what comes next
 			const float ni = std::clamp((t - 2.0f) / 0.8f, 0.0f, 1.0f);
-			const std::string cost = s.deathPerks > 0 ? fmt::format("Your {} blessing{} faded with you.  The wave begins again.", s.deathPerks, s.deathPerks == 1 ? "" : "s")
-			                                          : std::string("The wave begins again.");
+			const std::string cost = "You return to your last save.";
 			TxtC(dl, g_body, 20 * k, size.x * 0.5f, py + ph + 30 * k, Fade(IM_COL32(220, 210, 192, 235), ni), cost);
 			// rising: a ring that fills on its own; once it may, a press rises at once
 			const ImVec2 rc{ size.x * 0.5f, py + ph + 118 * k };
@@ -843,16 +842,20 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->PathStroke(Fade(kGold, ni), 0, 3.0f * k);
 			}
 			const float pulse = 0.75f + 0.25f * std::sin(now * 4.0f);
-			if (s.deathReady) {
+			if (s.deathLoading) {
+				// (its ring turning while the save loads)
+				dl->PathArcTo(rc, R, now * 5.0f, now * 5.0f + 4.2f, 40);
+				dl->PathStroke(Fade(kGold, ni), 0, 3.0f * k);
+				TxtC(dl, g_title, 22 * k, size.x * 0.5f, rc.y + R + 14 * k, Fade(kParch, ni * pulse), "LOADING YOUR LAST SAVE", 2 * k, Fade(kGold, 0.5f * ni));
+			} else if (s.deathReady) {
 				if (g_padLast) {
 					PadGlyph(dl, rc, 13 * k, "A", ni);
-					TxtC(dl, g_title, 22 * k, size.x * 0.5f, rc.y + R + 14 * k, Fade(kParch, ni * pulse), "RISE", 2 * k, Fade(kGold, 0.5f * ni));
 				} else {
 					TxtC(dl, g_num, 18 * k, rc.x, rc.y - 12 * k, Fade(kParch, ni), "E");
-					TxtC(dl, g_title, 22 * k, size.x * 0.5f, rc.y + R + 14 * k, Fade(kParch, ni * pulse), "RISE", 2 * k, Fade(kGold, 0.5f * ni));
 				}
+				TxtC(dl, g_title, 22 * k, size.x * 0.5f, rc.y + R + 14 * k, Fade(kParch, ni * pulse), "CONTINUE", 2 * k, Fade(kGold, 0.5f * ni));
 			} else {
-				TxtC(dl, g_title, 20 * k, size.x * 0.5f, rc.y + R + 14 * k, Fade(IM_COL32(200, 190, 170, 220), ni), "RISING...");
+				TxtC(dl, g_title, 20 * k, size.x * 0.5f, rc.y + R + 14 * k, Fade(IM_COL32(200, 190, 170, 220), ni), "RETURNING TO YOUR LAST SAVE...");
 			}
 		}
 
@@ -2700,7 +2703,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->PushClipRect({ c.x - 420 * k, cy - rowH * 1.5f }, { c.x + 420 * k, cy + rowH * 1.5f }, true);
 					for (int jj = -2; jj <= 2; ++jj) {
 						const int   id = base + Shops::ReelSpell(s.rollTarget, pos, jj);
-						const float off = (jj - frac + 0.5f) * rowH;  // (the slot slides up as the reel turns)
+						const float off = (jj - frac) * rowH;  // (the slot slides up as the reel turns; at rest the front sits square in the window)
 						const float a = std::clamp(1.0f - std::abs(off) / (rowH * 1.4f), 0.0f, 1.0f);
 						if (a <= 0.01f) continue;
 						const float y = cy + off - (nameH + typeH) * 0.5f;

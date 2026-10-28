@@ -416,6 +416,7 @@ namespace bo3z::Classes
 		std::array<std::uint32_t, 4> g_wTowns{};   // cities where a step was done (bits)
 		std::unordered_map<RE::FormID, RE::FormID> g_lastHit;  // a foe -> what you last hit it with
 		std::unordered_set<RE::FormID> g_powerHit;  // foes your last blow on was a power attack (the Spellsword's resonance)
+		std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> g_lastBlade;  // a foe -> when your blade last struck it
 		std::uint16_t g_boltKills = 0;
 		std::array<std::uint16_t, 16> g_bowMastery{};  // (Noah: "make the ranger class also need kills") each altar bow's kills toward its next tier  // (the Ranger's crossbow mastery) kills with a crossbow: fire bolts at 25, ice at 60, shock at 120
 		constexpr std::uint32_t kBoltFamilies[] = { 0x020B04, 0x025A50, 0x025A58, 0x025A60, 0x025A68, 0x025A70 };  // Faction Crossbows' plain bolts (fire +1, ice +2, shock +3)
@@ -664,6 +665,10 @@ namespace bo3z::Classes
 			else if (p) {
 				for (int h : Arcana::Hands()) if (h >= 0 && Arcana::ClassOf(h) == coffer::kDestruction) how = 1;
 			}
+			// a blade struck it within the last second and a half: a melee kill, whatever spell rode the blade after it
+			if (how != 0 && how != 2 && a_dying) {
+				if (auto it = g_lastBlade.find(a_dying->GetFormID()); it != g_lastBlade.end() && std::chrono::steady_clock::now() - it->second < std::chrono::milliseconds(1500)) how = 3;
+			}
 			if (how == c) WonderKill(c);  // (the classes' kinds of kill line up with the class order)
 			int element = -1;
 			if (const int ci = src ? Arcana::IndexOf(src) : -1; ci >= 0) element = coffer::kSpells[ci].element;
@@ -806,6 +811,25 @@ namespace bo3z::Classes
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		if (!p || !dh) return;
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();
+		// (Noah: "the weapons that contain a spell shouldn't need a soul gem - only the Echo Altar's, not Skyrim's own") an
+		// altar weapon in either hand never runs dry: its charge is topped up each second
+		for (const bool left : { false, true }) {
+			auto* obj = p->GetEquippedObject(left);
+			auto* w = obj ? obj->As<RE::TESObjectWEAP>() : nullptr;
+			auto* file = w ? w->GetFile(0) : nullptr;
+			if (!file || !w->formEnchanting) continue;
+			const std::string_view fn = file->GetFilename();
+			if (fn != "Spellsword.esp" && fn != "Light Greatswords.esp" && fn != "Ultra Greatswords.esp") continue;
+			p->AsActorValueOwner()->RestoreActorValue(left ? RE::ActorValue::kLeftItemCharge : RE::ActorValue::kRightItemCharge, 1.0e6f);
+			// (and on the item itself: the charge it carries in your pack)
+			const float full = static_cast<float>(w->amountofEnchantment);
+			for (auto& [item, data] : p->GetInventory([w](RE::TESBoundObject& a_o) { return &a_o == w; })) {
+				if (!data.second || !data.second->extraLists) continue;
+				for (auto* xl : *data.second->extraLists) {
+					if (auto* xc = xl ? xl->GetByType<RE::ExtraCharge>() : nullptr; xc && full > 0 && xc->charge < full) xc->charge = full;
+				}
+			}
+		}
 		// (Noah: "a guided first night") a new character's first steps, each card shown once: the altar, septims, the night's
 		// waves, the breath between them, and the first dawn
 		if (p->Is3DLoaded() && Save::Flag(Save::kFlagMoved) && !Open()) {
@@ -954,14 +978,15 @@ namespace bo3z::Classes
 				if constexpr (std::is_same_v<T, RE::TESObjectARMO>) {
 					if (!f->IsShield()) continue;
 				}
+				if constexpr (std::is_same_v<T, RE::TESObjectWEAP>) {  // (Noah: the Spellsword's altar weapons are one-handed only)
+					if (a_cls == coffer::kSpellsword && !f->IsOneHandedSword() && !f->IsOneHandedDagger() && !f->IsOneHandedAxe() && !f->IsOneHandedMace()) continue;
+				}
 				pool.push_back(f);
 			}
 		};
 		if (a_cls == coffer::kSpellsword) {
 			from("Spellsword.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
 			from("Spellsword.esp", static_cast<RE::TESObjectARMO*>(nullptr));
-			from("Light Greatswords.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
-			from("Ultra Greatswords.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
 		} else if (a_cls == coffer::kRanger) {
 			from("Faction Crossbows.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
 			from("OffhandBows.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
@@ -994,8 +1019,17 @@ namespace bo3z::Classes
 			a_out->give = [pick, a_cls] {
 				auto* pl = RE::PlayerCharacter::GetSingleton();
 				if (!pl) return;
+				const auto had = pl->GetItemCount(pick);
 				pl->AddObjectToContainer(pick, nullptr, 1, nullptr);
 				if (auto* w = pick->As<RE::TESObjectWEAP>(); w && w->IsCrossbow()) Bows::Restock();
+				// (Noah: "I collected two of the item") keep it to the one given - anything that doubled the add is taken back
+				std::thread([pick, had] { std::this_thread::sleep_for(std::chrono::milliseconds(1500)); Tasks::Add([pick, had] {
+					auto* q = RE::PlayerCharacter::GetSingleton();
+					if (const auto extra = q ? q->GetItemCount(pick) - (had + 1) : 0; extra > 0) {
+						q->RemoveItem(pick, extra, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+						logger::info("classes: altar gear came twice ({} extra taken back)", extra);
+					}
+				}); }).detach();
 				Hud::Banner(std::string("The altar gives you ") + pick->GetName(), 4.0f);
 				logger::info("classes: altar gear {} ({})", pick->GetName(), Name(a_cls));
 			};
@@ -1236,10 +1270,15 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !a_target || a_target == p) return;
 		if (g_lastHit.size() > 400) g_lastHit.clear(), g_powerHit.clear();
+		auto* src = RE::TESForm::LookupByID(a_source);
+		// (Noah: "melee kills with a spell in hand don't count") the blade's own spell strikes a moment after the blade: it must
+		// not take the blade's place as the last thing to hit (the blade's time is kept on its own too)
+		const bool blade = src && src->As<RE::TESObjectWEAP>() && !src->As<RE::TESObjectWEAP>()->IsBow() && !src->As<RE::TESObjectWEAP>()->IsCrossbow() && !src->As<RE::TESObjectWEAP>()->IsStaff();
+		if (blade) g_lastBlade[a_target->GetFormID()] = std::chrono::steady_clock::now();
+		if (g_lastBlade.size() > 400) g_lastBlade.clear();
 		g_lastHit[a_target->GetFormID()] = a_source;
 		if (a_power) g_powerHit.insert(a_target->GetFormID()); else g_powerHit.erase(a_target->GetFormID());
 		if (!Director::IsFoe(a_target) || a_target->IsDead()) return;
-		auto* src = RE::TESForm::LookupByID(a_source);
 		if (!src) return;
 		if (auto* w = src->As<RE::TESObjectWEAP>(); w && !w->IsBow() && !w->IsCrossbow() && !w->IsStaff()) Perks::OnMeleeHit();  // (Bladesong Mead)
 		if (src == Vortex()) {

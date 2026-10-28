@@ -2930,6 +2930,21 @@ namespace bo3z
 				// one near you that hasn't loaded yet is given time (15 s) before it is replaced; only the far are moved at once
 				const bool farOff = dist > gen::kChaseRelocateDist;
 				if (!boss && (farOff || !a->Is3DLoaded())) {
+					// (Noah: "on night two, halfway through, the enemies just stopped spawning" - the log: every new one stayed
+					// bodiless, replaced every few seconds by another that never loaded either) one near you still without a body
+					// after 4 s: why is logged, and whatever holds it back is undone (disabled, its AI off) and its body asked for
+					if (!farOff && !a->Is3DLoaded() && s.behind < 4.0f && s.behind + kStep >= 4.0f) {
+						auto* cell = a->GetParentCell();
+						static int told = 0;
+						if (told++ < 20) {
+							logger::info("night: {} {:08X} has no body {:.0f} away - disabled {} ai {} cell {:08X} attached {} z {:.0f} (you {:.0f}) process {}",
+								gen::kEnemies[s.enemy].id, a->GetFormID(), dist, a->IsDisabled(), a->IsAIEnabled(), cell ? cell->GetFormID() : 0,
+								cell && cell->IsAttached(), a->GetPosition().z, a_player->GetPosition().z, a->GetActorRuntimeData().currentProcess ? static_cast<int>(a->GetActorRuntimeData().currentProcess->processLevel.get()) : -1);
+						}
+						if (a->IsDisabled()) a->Enable(false);
+						if (!a->IsAIEnabled()) a->EnableAI(true);
+						if (cell && cell->IsAttached() && !a->IsDisabled()) a->Load3D(true);
+					}
 					static std::deque<std::chrono::steady_clock::time_point> recent;
 					const auto nowR = std::chrono::steady_clock::now();
 					while (!recent.empty() && nowR - recent.front() > std::chrono::seconds(30)) recent.pop_front();
@@ -3513,6 +3528,7 @@ namespace bo3z
 		}
 		float EventDropMult() { return g_phase == Phase::Fighting && g_event >= 0 ? gen::kEvents[g_event].dropMult : 1.0f; }
 		void  Pause(float a_seconds) { g_pause = std::max(g_pause, a_seconds); }
+		float g_nukeLeft = 0;
 		float Paused() { return g_pause; }
 		bool  Fighting() { return g_phase == Phase::Fighting; }
 		void  NetFill(Net::State& a_state) { NetFillImpl(a_state); }
@@ -4384,7 +4400,7 @@ namespace bo3z
 					const auto c = gen::kEvents[tc].color;
 					h.waveThemeColor = 0xFF000000u | ((c & 0xFFu) << 16) | (c & 0xFF00u) | ((c >> 16) & 0xFFu);  // (RGB -> ImGui's ABGR)
 				}
-				h.nukeLeft = g_pause;
+				h.nukeLeft = g_nukeLeft > 0 ? g_pause : 0.0f;  // (only a nuke's own lull is shown as one: a fall or a revive's isn't)
 				const bool waving = g_phase == Phase::Fighting && g_waves > 0;
 				h.wave = waving ? g_wave : 0, h.waves = waving ? g_waves : 0, h.waveSize = g_waveSize;
 				h.waveLeft = waving ? std::max(0, g_waveSize - g_waveSpawned) + static_cast<int>(g_alive.size()) : 0;
@@ -4407,6 +4423,7 @@ namespace bo3z
 			}
 			TickSlow();
 			g_pause = std::max(0.0f, g_pause - a_delta);
+			g_nukeLeft = std::max(0.0f, g_nukeLeft - a_delta);
 			Curse::Tick(a_delta);
 			Echo::Tick(a_delta);
 			Eggs::Tick(a_delta);
@@ -4506,8 +4523,11 @@ namespace bo3z
 		float PointsMult() { return (g_timers[1] > 0 ? 2.0f : 1.0f) * Director::EventPointsMult(); }
 		bool FireSale() { return g_timers[3] > 0; }
 
+		// (Noah: "remove the BO3 power-up drops from the game for now") nothing drops; set true to bring them back
+		constexpr bool kDropsOn = false;
 		void MaybeDrop(const RE::NiPoint3& a_at)
 		{
+			if (!kDropsOn) return;
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			if (!player) {  // (Noah: any enemy, any hour)
 				return;
@@ -4568,7 +4588,7 @@ namespace bo3z
 					Director::Pause(20.0f);
 					Forms::Play(gen::Sound::nuke);
 					std::scoped_lock l(Hud::Lock());
-					Hud::Edit().nukeFlash = 1.0f;
+					Hud::Edit().nukeFlash = 1.0f, Director::g_nukeLeft = 20.0f;
 					return;
 				}
 				// (Noah: the nuke takes the whole wave) every living thing the night sent, near or far, the wyrms too
@@ -4589,7 +4609,7 @@ namespace bo3z
 				Forms::Play(gen::Sound::nuke);
 				{
 					std::scoped_lock l(Hud::Lock());
-					Hud::Edit().nukeFlash = 1.0f;
+					Hud::Edit().nukeFlash = 1.0f, Director::g_nukeLeft = 20.0f;
 				}
 				logger::info("powerup: nuke took {}, 20 s before they rise again", n);
 			} else if (a_kind == 4) {  // (the classes overhaul) Max Ammo: every quiver, bolt bundle and weapon full

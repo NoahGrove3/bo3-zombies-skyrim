@@ -797,7 +797,16 @@ namespace bo3z
 			case 0: ok = a_how == 0; break;
 			case 1: ok = a_how == 1; break;
 			case 2: ok = a_how == 2 && a_dist >= kLongShot; break;
-			case 3: ok = a_how == 3 && Arcana::Hands()[0] >= 0; break;
+			case 3: {  // a melee kill with a spell in either hand (an altar spell, or any spell)
+				auto* pl = RE::PlayerCharacter::GetSingleton();
+				const auto h = Arcana::Hands();
+				bool spell = h[0] >= 0 || h[1] >= 0;
+				for (bool left : { true, false }) {
+					if (auto* f = pl ? pl->GetEquippedObject(left) : nullptr; f && f->As<RE::SpellItem>()) spell = true;
+				}
+				ok = a_how == 3 && spell;
+				break;
+			}
 			}
 			if (!ok) return;
 			if (a_element >= 0) g_elementsUsed |= 1u << a_element;

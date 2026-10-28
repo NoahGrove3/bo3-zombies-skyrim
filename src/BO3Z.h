@@ -482,6 +482,7 @@ namespace bo3z
 			std::vector<Mark>   marks;            // where each friend is (screen 0..1)
 		};
 		struct Out { std::uint8_t life; RE::NiPoint3 at; float left; std::uint64_t revive; std::int8_t wonder; std::int8_t cls{ -1 }; };
+		void OnLoad();                                 // a save is loading: the fall's screen and hold let go
 		void Tick(float a_delta);                      // game thread
 		bool OnButton(const RE::ButtonEvent* a_b);     // Activate held (revive); arrows switch whom you watch
 		Life State();
@@ -829,6 +830,7 @@ namespace bo3z
 			int         deathNight{ 0 }, deathWave{ 0 }, deathWaves{ 0 }, deathKills{ 0 }, deathHeads{ 0 }, deathBest{ 0 }, deathSeptims{ 0 }, deathPerks{ 0 };
 			float       deathRise{ 0 };
 			bool        deathReady{ false };  // (a press rises now)
+			bool        deathLoading{ false };  // (your last save is being loaded)
 			float       headBurstT{ 0 };  // a headshot kill's white flash at the crosshair
 			float       lightningT{ 0 }, lightningI{ 0 };  // the sky's flash (seconds left, strength)
 			bool        eggDark{ false };                 // a hidden quest's dark (Riften's, Dawnstar's dream)

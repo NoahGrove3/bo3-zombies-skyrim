@@ -544,9 +544,11 @@ namespace bo3z
 			return true;
 		}
 
-		void HurtUndead(RE::Actor* a_actor, float a_damage)
+		void HurtUndead(RE::Actor* a_actor, float a_damage, RE::Actor* a_by = nullptr)
 		{
-			auto* player = RE::PlayerCharacter::GetSingleton();
+			// (Noah: "the class quests aren't progressing - summon kills don't count") the blow's own maker is the killer: a
+			// summon's kill is the summon's (it was always counted as yours, and so never as a summon's)
+			auto* player = a_by ? a_by : RE::PlayerCharacter::GetSingleton();
 			auto* av = a_actor->AsActorValueOwner();
 			if (Undead::IsDancing(a_actor)) a_damage *= 1.5f;  // (the Dance Of Death: half again as hard)
 			a_damage *= Director::TakenMult(a_actor);  // (a brute dazed or berserk)
@@ -730,7 +732,7 @@ namespace bo3z
 						if (beat.size() > 300) beat.clear();
 						if (!mySummon || now - b >= std::chrono::milliseconds(700)) {
 							b = now;
-							HurtUndead(z, Director::RoundHealth() * gen::kShareMelee * tierMult * (0.7f + 0.3f * Arcana::Power()));
+							HurtUndead(z, Director::RoundHealth() * gen::kShareMelee * tierMult * (0.7f + 0.3f * Arcana::Power()), ally);
 						}
 					}
 				}

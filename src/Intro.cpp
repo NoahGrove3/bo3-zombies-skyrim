@@ -329,6 +329,23 @@ namespace bo3z
 					logger::info("intro: the old skip's quests put right - Unbound completed, Before the Storm on 'Talk to the Jarl of Whiterun'");
 				}
 			}
+			// (Noah: "Before the Storm gets stuck - even when I talk to Gerdur it doesn't check it off") a survivor who woke at
+			// Riverwood's gate never had Ralof bring them to Gerdur, so her own lines never close that objective: while Before
+			// the Storm waits on the Jarl (stage 30 on), Riverwood's two objectives stand done and the Jarl's is the one shown
+			if (static float bts = 0; (bts += 1.0f / 60.0f) > 5.0f && Save::Flag(Save::kFlagMoved)) {
+				bts = 0;
+				if (auto* q = Forms::MQ102()[2]; q && q->IsRunning() && !q->IsCompleted() && q->GetCurrentStageID() >= 30 && q->GetCurrentStageID() < 200) {
+					int fixedN = 0;
+					for (auto* o : q->objectives) {
+						if (!o) continue;
+						if ((o->index == 10 || o->index == 20) && o->state.get() != RE::QUEST_OBJECTIVE_STATE::kCompletedDisplayed && o->state.get() != RE::QUEST_OBJECTIVE_STATE::kDormant) {
+							o->state = RE::QUEST_OBJECTIVE_STATE::kCompletedDisplayed, ++fixedN;
+						}
+						if (o->index == 30 && o->state.get() == RE::QUEST_OBJECTIVE_STATE::kDormant) o->state = RE::QUEST_OBJECTIVE_STATE::kDisplayed, ++fixedN;
+					}
+					if (fixedN) logger::info("intro: Before the Storm - Riverwood's objectives done, the Jarl's shown ({} set)", fixedN);
+				}
+			}
 			if (ui->GameIsPaused()) {
 				return;
 			}

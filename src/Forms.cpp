@@ -479,7 +479,7 @@ namespace bo3z
 					Migrate();
 				}
 			}
-			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}), Bows::SetLevels({}), Shops::SetRollState({}), Curse::SetMineState({}), Classes::Revert(); }
+			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}), Bows::SetLevels({}), Shops::SetRollState({}), Curse::SetMineState({}), Classes::Revert(), Party::OnLoad(); }
 		}
 
 		void InstallCoSave()

@@ -67,8 +67,8 @@ namespace bo3z::Party
 			} else {
 				f.reset(RE::Actor::BOOL_FLAGS::kEssential, RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery);
 			}
+			if (a_on != g_essentialSet) logger::info("party: you {} fall instead of dying", a_on ? "now" : "no longer");  // (only on a change: something clears the flag every frame and it is set back)
 			g_essentialSet = a_on;
-			logger::info("party: you {} fall instead of dying", a_on ? "now" : "no longer");
 		}
 
 		// Skyrim Together's figure of a friend: the living actor nearest to where that friend says they stand
@@ -159,13 +159,14 @@ namespace bo3z::Party
 	{
 		float           g_soloT = -1.0f;  // seconds since you fell (-1: standing)
 		bool            g_soloPressed = false;
+		bool            g_soloLoading = false;
+		float           g_soloLoadAt = 0;
 		constexpr float kSoloAuto = 8.0f, kSoloMayRise = 3.2f;
 		void SoloFall(RE::PlayerCharacter* p)
 		{
 			g_soloT = 0.0f, g_soloPressed = false;
 			HoldDown();
 			Gun::Console("setghost 1");  // (nothing more lands on you while you lie there)
-			Director::Pause(30.0f);
 			Director::SlowTime(1.1f, 0.3f);
 			Audio::Duck(10.0f);
 			Forms::Play(gen::Sound::rite_fail);
@@ -201,7 +202,6 @@ namespace bo3z::Party
 			p->NotifyAnimationGraph("BleedOutStop");
 			p->NotifyAnimationGraph("bleedOutStop");
 			p->NotifyAnimationGraph("IdleForceDefaultState");
-			Director::Pause(4.0f);
 			{
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().deathT = -1.0f;
@@ -239,7 +239,34 @@ namespace bo3z::Party
 				h.deathT = g_soloT, h.deathRise = rise, h.deathReady = ready;
 				h.hurtTime = 0.0f;
 			}
-			if (g_soloT >= kSoloAuto || (ready && g_soloPressed)) SoloRise(p);
+			// (Noah: "it shouldn't revive me where I died - it should go back to my save, and say that it's doing that") the
+			// screen says so, then your most recent save loads (you are still alive in the game as it loads: on your knees,
+			// not dead - the state every crash after a death loaded from). Should no save load in a few seconds (none made
+			// yet), you rise where you fell instead.
+			if (!g_soloLoading && (g_soloT >= kSoloAuto || (ready && g_soloPressed))) {
+				g_soloLoading = true, g_soloLoadAt = g_soloT;
+				{
+					std::scoped_lock l(Hud::Lock());
+					Hud::Edit().deathLoading = true;
+				}
+				Director::NormalTime();
+				logger::info("fallen: loading the most recent save");
+				std::thread([] {
+					std::this_thread::sleep_for(std::chrono::milliseconds(1200));
+					Tasks::Add([] {
+						if (auto* sl = RE::BGSSaveLoadManager::GetSingleton()) sl->LoadMostRecentSaveGame();
+					});
+				}).detach();
+			}
+			if (g_soloLoading && g_soloT - g_soloLoadAt > 6.0f) {
+				logger::info("fallen: no save loaded - rising where you fell");
+				g_soloLoading = false;
+				{
+					std::scoped_lock l(Hud::Lock());
+					Hud::Edit().deathLoading = false;
+				}
+				SoloRise(p);
+			}
 		}
 	}
 
@@ -442,6 +469,15 @@ namespace bo3z::Party
 		if (nearId && !g_reviveWho) {
 			g_reviveWho = nearId;
 		}
+	}
+
+	void OnLoad()
+	{
+		if (g_soloT >= 0.0f || g_soloLoading) logger::info("fallen: your save loaded - the fall is over");
+		g_soloT = -1.0f, g_soloLoading = false, g_soloPressed = false;
+		Director::NormalTime();
+		std::scoped_lock l(Hud::Lock());
+		Hud::Edit().deathT = -1.0f, Hud::Edit().deathLoading = false;
 	}
 
 	bool OnButton(const RE::ButtonEvent* a_b)
