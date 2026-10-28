@@ -621,6 +621,7 @@ namespace bo3z
 		}
 		// (Noah: stuck or left behind) set at a spawn point near you, on the navmesh, and climbs out of the ground there
 		// like a fresh one - never a body popping into place
+		void ShowRiser(RE::Actor* a_a, bool a_show);
 		void Resurface(RE::Actor* a_a, RE::PlayerCharacter* a_player)
 		{
 			std::erase_if(g_risers, [&](const Riser& r) { return r.h.get().get() == a_a; });
@@ -2924,7 +2925,7 @@ namespace bo3z
 				// (the audit: the crash came the frame the outfit went back on, HDT-SMP still building it) only a body that
 				// has stood whole for two seconds, out of its portal, is disarmed
 				if (const std::string_view rid = gen::kEnemies[s.enemy].id; s.loaded >= 2.0f && !IsRising(a.get()) && (rid == "zombie" || rid == "runner" || rid == "wailer" || rid == "bloater" || rid == "volatile" || rid == "mage" || rid == "girl")) {
-					static auto* claws = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kZombieClaws, gen::kPlugin);
+					auto* claws = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kZombieClaws, gen::kPlugin);
 					auto* em = RE::ActorEquipManager::GetSingleton();
 					bool  armed = false;
 					RE::TESForm* first = nullptr;
