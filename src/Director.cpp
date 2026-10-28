@@ -3056,6 +3056,19 @@ namespace bo3z
 						}
 						if (a->IsDisabled()) a->Enable(false);
 						if (!a->IsAIEnabled()) a->EnableAI(true);
+						// (Noah: "my spells stop working and the dead on the compass can't be seen - everything freezes") when the
+						// game stops building new bodies altogether (three without one in ten seconds), its cell buffers are
+						// purged once - Skyrim's own "pcb" - to free the loader, at most once a minute and a half
+						static std::deque<std::chrono::steady_clock::time_point> noBody;
+						static auto lastPurge = std::chrono::steady_clock::now() - std::chrono::minutes(5);
+						const auto nb = std::chrono::steady_clock::now();
+						noBody.push_back(nb);
+						while (!noBody.empty() && nb - noBody.front() > std::chrono::seconds(10)) noBody.pop_front();
+						if (noBody.size() >= 3 && nb - lastPurge > std::chrono::seconds(90)) {
+							lastPurge = nb, noBody.clear();
+							Gun::Console("pcb");
+							logger::warn("night: new bodies have stopped loading - cell buffers purged (pcb)");
+						}
 					}
 					static std::deque<std::chrono::steady_clock::time_point> recent;
 					const auto nowR = std::chrono::steady_clock::now();

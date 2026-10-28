@@ -5,6 +5,7 @@
 #include <atomic>
 #include <chrono>
 #include <string_view>
+#include <psapi.h>
 
 namespace bo3z::Perf
 {
@@ -49,6 +50,15 @@ namespace bo3z::Perf
 			total += per;
 			if (per >= 0.01 || worst >= 0.5) line += fmt::format(" {} {:.2f}/{:.1f}", kNames[i], per, worst);
 		}
-		logger::info("perf: {:.2f} ms a frame over {} frames (average/worst ms):{}", total, frames, line);
+		// (the vanishing-dead hunt: every new body stopped loading, spells too) the game's memory beside its frame cost
+		PROCESS_MEMORY_COUNTERS_EX pm{};
+		pm.cb = sizeof(pm);
+		MEMORYSTATUSEX ms{};
+		ms.dwLength = sizeof(ms);
+		const bool havePm = K32GetProcessMemoryInfo(GetCurrentProcess(), reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&pm), sizeof(pm));
+		GlobalMemoryStatusEx(&ms);
+		const int highs = RE::ProcessLists::GetSingleton() ? static_cast<int>(RE::ProcessLists::GetSingleton()->highActorHandles.size()) : -1;
+		logger::info("perf: {:.2f} ms a frame over {} frames (average/worst ms):{} | memory {} MB in use ({} MB peak), {} MB free of {} MB, {} actors in high process", total, frames, line,
+			havePm ? pm.PrivateUsage >> 20 : 0, havePm ? pm.PeakWorkingSetSize >> 20 : 0, ms.ullAvailPhys >> 20, ms.ullTotalPhys >> 20, highs);
 	}
 }

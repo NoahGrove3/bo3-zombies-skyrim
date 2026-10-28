@@ -359,6 +359,7 @@ namespace bo3z
 		std::vector<int>   Carried();                    // the altar's spells you carry (in hand first) - two at most
 		std::vector<int>   Carried(int a_cls);           // the same, counting only that class's (-1: every one)
 		std::size_t        CarryCap();                   // spells you may carry: 2, the Summoner 3
+		bool               Rollable(int a_index);           // the altar still rolls it (the Spellsword: touches only)
 		std::vector<int>   ReelPool();                   // your class's base spells (what the altar's reel turns through)
 		void               Forget(int a_index);          // gone for good: unequipped, out of the Magic menu, reforging lost
 		void               Replace(int a_old, int a_new);  // the new spell in the old one's place (and hands)

@@ -957,6 +957,26 @@ namespace bo3z::Classes
 		if (!p || !dh) return;
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();
 		TuneCorrosion();
+		// (Noah: "the Spellsword should only have touch spells") a breath spell carried from before goes back, and the first
+		// rung of a touch you don't carry takes its place
+		if (g_class.load() == coffer::kSpellsword && p->Is3DLoaded()) {
+			for (int i : Arcana::Carried()) {
+				if (Arcana::Rollable(i)) continue;
+				std::array<bool, coffer::kLadders> have{};
+				for (int c : Arcana::Carried()) have[coffer::kSpells[c].ladder] = true;
+				int pick = -1;
+				for (int j = 0; j < static_cast<int>(coffer::kSpells.size()) && pick < 0; ++j) {
+					const auto& sj = coffer::kSpells[j];
+					if (sj.cls == coffer::kSpellsword && sj.rung == 1 && Arcana::Rollable(j) && !have[sj.ladder] && Arcana::Spell(j)) pick = j;
+				}
+				const std::string was(Arcana::Name(i));
+				if (pick >= 0) Arcana::Replace(i, pick);
+				else Arcana::Forget(i);
+				Hud::Banner("The Spellsword's spells are touches: " + was + " went back to the altar" + (pick >= 0 ? " - " + std::string(Arcana::Name(pick)) + " in its place" : std::string()), 5.0f);
+				logger::info("classes: {} (a breath) given back{}", was, pick >= 0 ? fmt::format(" for {}", Arcana::Name(pick)) : std::string());
+				break;
+			}
+		}
 		// (the Summoner review) Alduin's fall mid-session turns the Horn of the Spectral Wyrm Legendary at once, not at the next load
 		if (static bool was = AfterSovngarde(); AfterSovngarde() != was) {
 			was = AfterSovngarde();

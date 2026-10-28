@@ -267,6 +267,13 @@ namespace bo3z::Arcana
 	}
 
 	// a spell you don't know yet (every one has the same chance); -1 if you know them all
+	// (Noah: "the Spellsword should only have touch spells") the breath ladders are no longer rolled
+	bool Rollable(int a_index)
+	{
+		if (a_index < 0 || a_index >= static_cast<int>(coffer::kSpells.size())) return false;
+		const auto& s = coffer::kSpells[a_index];
+		return !(s.cls == coffer::kSpellsword && std::string_view(s.ladderLabel).find("Breath") != std::string_view::npos);
+	}
 	int Roll()
 	{
 		// (the classes overhaul) the altar rolls your class's base spells (each ladder's first rung) of ladders you
@@ -282,7 +289,7 @@ namespace bo3z::Arcana
 		std::vector<int> pool;
 		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
 			const auto& s = coffer::kSpells[i];
-			if (g_spell[i] && s.cls == cls && s.rung == 1 && !carried[s.ladder]) {
+			if (g_spell[i] && s.cls == cls && s.rung == 1 && !carried[s.ladder] && Rollable(i)) {
 				pool.push_back(i);
 			}
 		}
@@ -297,7 +304,7 @@ namespace bo3z::Arcana
 		std::vector<int> out;
 		const int cls = Classes::Get();
 		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
-			if (g_spell[i] && coffer::kSpells[i].cls == cls && coffer::kSpells[i].rung == 1) out.push_back(i);
+			if (g_spell[i] && coffer::kSpells[i].cls == cls && coffer::kSpells[i].rung == 1 && Rollable(i)) out.push_back(i);
 		}
 		return out;
 	}

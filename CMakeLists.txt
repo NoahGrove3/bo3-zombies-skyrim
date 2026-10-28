@@ -31,7 +31,7 @@ set_target_properties(CurseOfAlduin PROPERTIES OUTPUT_NAME CurseOfAlduin)  # Cur
 target_include_directories(CurseOfAlduin PRIVATE src)
 target_precompile_headers(CurseOfAlduin PRIVATE src/PCH.h)
 set_source_files_properties(src/Relay.cpp PROPERTIES SKIP_PRECOMPILE_HEADERS ON)  # winsock before windows.h
-target_link_libraries(CurseOfAlduin PRIVATE imgui::imgui Microsoft::DirectXTK d3d11.lib dxgi.lib windowscodecs.lib ole32.lib winmm.lib ws2_32.lib)
+target_link_libraries(CurseOfAlduin PRIVATE imgui::imgui Microsoft::DirectXTK d3d11.lib dxgi.lib windowscodecs.lib ole32.lib winmm.lib ws2_32.lib psapi.lib)
 target_compile_definitions(CurseOfAlduin PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
 # the build's commit (CI), so players in a party can see they run the same build (Net.cpp only: no full rebuild)
 if(DEFINED ENV{GITHUB_SHA})
