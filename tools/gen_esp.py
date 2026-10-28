@@ -621,7 +621,7 @@ def lore_text():
            "<p><b>Shambling Maidens</b> - slower, tougher, their blows slow and heavy.</p>",
            "<p><b>Grave Witches</b> - they hang back, hurl fire and call more Risen Dead out of the earth. Kill them first.</p>",
            "<p><b>Volatiles</b> - bladed brutes, slow but the hardest hitters. Their hide turns half of every blow unless you strike the head or the back, and they leap at you from a distance.</p>",
-           "<p>Noise draws worse. Loud spells, shouts and running wake an elite Volatile, faster still, that comes through a portal and pounces. "
+           "<p>Some nights bring an elite Volatile, faster still, that comes through a portal and pounces. "
            "The Curse's champions and great ones step out of portals too - and their names burn gold over their heads.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>III. The Echo Altars</font></p>", img('wards', 300, 176),
            "<p>Long ago the <b>Tongues</b>, the first masters of the Voice, raised an altar in every hold to hold Alduin's shout back. "

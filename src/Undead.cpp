@@ -134,6 +134,7 @@ namespace bo3z
 			std::uint32_t             lodTick = 0;
 			float                     lodDt = 0;
 			std::atomic<int>          gaitCap{ -1 };         // its fastest gait (main thread: SetPace / its frenzy)
+			std::atomic<std::int64_t> contactAt{ 0 };       // (Noah: "the damage at the end of their contact swing") when its swing lands (steady ns)
 			std::atomic<float>        warmup{ 1.5f };        // (Noah: "start walking, then run") seconds of walking left before it takes its gait
 			std::atomic<int>          setNow{ -1 };          // its clip set, for the main thread
 			std::atomic<float>        gaitV{ 0 };            // the clip speed its legs play now (0: standing or a full-body move)
@@ -745,7 +746,13 @@ namespace bo3z
 				else want = kRun;
 			}
 			g_clipPosed.fetch_add(1, std::memory_order_relaxed);
+			const int clipWas = P.clip;
 			P.Play(want, want == kRun ? 1.0f : RateFor(r, want), S);
+			if (P.clip != clipWas && (P.clip == kAttack || P.clip == kAttackL || P.clip == kAttack2 || P.clip == kAttack3 || P.clip == kPunch) && S.Has(P.clip)) {
+				// a new swing: its blow lands two-thirds of the way through the clip, where the claws meet you
+				const float secs = S.c[P.clip].Seconds() / std::max(0.2f, P.rate) * 0.62f;
+				r.contactAt.store(std::chrono::steady_clock::now().time_since_epoch().count() + static_cast<std::int64_t>(secs * 1e9), std::memory_order_relaxed);
+			}
 			P.Tick(S, dt, loco, r.pose, r.com);
 			r.poseM.resize(r.clipNodes.size());
 			for (std::size_t i = 0; i < r.clipNodes.size() && i < r.pose.size(); ++i) {
@@ -1305,6 +1312,13 @@ namespace bo3z
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.01f);
 			m.gaitMod += step;
 		}
+		float HitDelay(RE::Actor* a_actor)
+		{
+			auto r = a_actor ? RigOf(a_actor) : nullptr;
+			if (!r) return 0.0f;
+			const double left = (r->contactAt.load(std::memory_order_relaxed) - std::chrono::steady_clock::now().time_since_epoch().count()) / 1e9;
+			return left > 0.0 && left < 2.0 ? static_cast<float>(left) : 0.0f;
+		}
 		void FreshStep(RE::Actor* a_actor)
 		{
 			if (auto r = a_actor ? RigOf(a_actor) : nullptr) r->warmup.store(1.5f);
@@ -1499,6 +1513,12 @@ namespace bo3z
 						if (u >= 1.0f) {
 							m.pounceT = -1.0f;
 							a->MoveToNearestNavmesh();
+							// (Noah: "the Volatile doesn't do any damage when he does the jump attack") it lands on you: the blow
+							const auto lp = a->GetPosition();
+							if (std::hypot(lp.x - pp.x, lp.y - pp.y) < 190.0f && std::abs(lp.z - pp.z) < 160.0f && Perks::SinceZombieHit(a->GetFormID()) > 0.4f) {
+								Perks::OnZombieHit(a.get());
+								if (static int said = 0; said++ < 10) logger::info("hurt: {} landed its leap on you", a->GetName());
+							}
 						}
 						continue;
 					}

@@ -1304,7 +1304,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (Hud::kEdgeHud && s.round > 0 && classChosen) {
 				const bool   waveOn = s.nightActive && s.waves > 0 && s.sanctuary.empty();
 				const bool   ev = s.nightActive && s.nightEvent >= 0 && s.nightEvent < static_cast<int>(gen::kEvents.size());
-				const bool   noiseOn = waveOn && s.round >= 2;  // (the Volatiles: how loud you've been)
+				const bool   noiseOn = false;  // (Noah: the noise meter removed)  // (the Volatiles: how loud you've been)
 				const float  W = 300 * k, H = (waveOn ? 112 : 46) * k + (waveOn && !s.waveTheme.empty() ? 18 * k : 0.0f) + (noiseOn ? 22 * k : 0.0f);
 				const ImVec2 a{ 24 * k, 20 * k }, b{ a.x + W, a.y + H };
 				Panel(dl, a, b, k * 0.7f, 0.85f);

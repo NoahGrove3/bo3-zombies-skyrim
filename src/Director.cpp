@@ -1341,13 +1341,14 @@ namespace bo3z
 			});
 			g_volatileWait = std::max(0.0f, g_volatileWait - a_delta);
 			const int most = g_current >= 8 ? 2 : 1;
-			if (g_current >= 2 && g_noise >= kNoiseFull && g_volatileWait <= 0 && static_cast<int>(g_volatiles.size()) < most && !Coop::Client()) {
+			// (Noah: "I don't want noise to be an issue") the night no longer listens: no Volatile is drawn by noise
+			if (false && g_current >= 2 && g_noise >= kNoiseFull && g_volatileWait <= 0 && static_cast<int>(g_volatiles.size()) < most && !Coop::Client()) {
 				RaiseVolatile(a_player);
 				g_noise = 25.0f;
 				g_volatileWait = 90.0f;
 			}
 			std::scoped_lock l(Hud::Lock());
-			Hud::Edit().noise = std::clamp(g_noise / kNoiseFull, 0.0f, 1.0f);
+			Hud::Edit().noise = 0.0f;
 		}
 
 		// ---- Gloomstalkers (sheet: elite) ----
@@ -2498,6 +2499,7 @@ namespace bo3z
 		// (Noah: "my character still doesn't take damage from the Curse's enemies") their swings never reached Skyrim's hit
 		// (no hit was ever logged from one): within arm's reach and facing you, one of the dead that hasn't landed a blow in
 		// a while swings, and the blow lands - the same share of your health as a Skyrim hit of theirs would take
+		std::vector<std::pair<RE::ActorHandle, float>> g_queuedHits;  // (Skyrim's own blows, landing when the swing does)
 		void TickReach(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			static std::unordered_map<RE::FormID, float> swing;  // seconds until its next swing lands (<0: none coming)
@@ -2516,6 +2518,11 @@ namespace bo3z
 				const float reach = 95.0f + a->GetBoundRadius() * 0.5f;
 				if (t >= 0) {
 					if ((t -= a_delta) < 0) {
+						// (Noah: "the damage at the end of their contact swing, not the beginning") it waits for the claws to meet you
+						if (const float wait = Undead::HitDelay(a.get()); wait > 0.02f) {
+							t = wait;
+							continue;
+						}
 						if (dist < reach + 15.0f && dz < 160.0f && Perks::SinceZombieHit(a->GetFormID()) > 0.5f) {
 							Perks::OnZombieHit(a.get());
 							if (static int said = 0; said++ < 10) logger::info("hurt: {} reached you ({:.0f} away)", a->GetName(), dist);
@@ -2538,6 +2545,16 @@ namespace bo3z
 				cool[a->GetFormID()] = (s.berserk ? 1.4f : 2.6f) + std::uniform_real_distribution<float>(0.0f, 0.9f)(g_rng);  // (the Skeleton Mutant berserk: swipe after swipe)
 			}
 			if (swing.size() > 400) std::erase_if(swing, [](const auto& e) { return e.second < 0; });
+			// Skyrim's own blows from them, held until their swing's claws meet you
+			for (auto& q : g_queuedHits) {
+				if ((q.second -= a_delta) > 0) continue;
+				q.second = -99.0f;
+				auto z = q.first.get();
+				if (!z || z->IsDead() || z->IsDisabled()) continue;
+				const auto zp = z->GetPosition();
+				if (std::hypot(zp.x - pp.x, zp.y - pp.y) < 95.0f + z->GetBoundRadius() * 0.5f + 80.0f && std::abs(zp.z - pp.z) < 180.0f && Perks::SinceZombieHit(z->GetFormID()) > 0.4f) Perks::OnZombieHit(z.get());
+			}
+			std::erase_if(g_queuedHits, [](const auto& q) { return q.second <= -98.0f; });
 		}
 		// (the Ettin's frost) you slowed a while; (its roar) the dead near it quicker a while
 		float g_chill = 0;
@@ -3510,6 +3527,7 @@ namespace bo3z
 			Hud::Lore("DANCE OF DEATH", "The Bards of Solitude remember an old song the dead cannot resist. Shout it, and the Curse's dead within twenty paces dance for twenty seconds - unable to move or strike, and taking half again as much harm. Once a wave.", 12.0f);
 			logger::info("dance of death: learned");
 		}
+		void  QueueZombieHit(RE::Actor* a_zombie, float a_seconds) { if (a_zombie && g_queuedHits.size() < 64) g_queuedHits.emplace_back(a_zombie->GetHandle(), a_seconds); }
 		void  Noise(float a_amount) { if (g_phase == Phase::Fighting) g_noise = std::min(kNoiseFull * 1.5f, g_noise + a_amount); }
 		// (Noah: the harpies do far too much damage) the mod creatures whose own attacks and spells were made for a
 		// high-level hero, brought in line with the rest of the night

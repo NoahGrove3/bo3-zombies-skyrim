@@ -513,6 +513,7 @@ namespace bo3z::Party
 	}
 
 	bool SoloFallen() { return g_soloT >= 0.0f; }
+	bool HoldsDeath() { return g_essentialSet && !g_wipeLoading; }
 
 	void OnLoad()
 	{

@@ -153,6 +153,25 @@ namespace bo3z
 			}
 		}
 
+		// (Noah: "sometimes when I die I don't get the death screen at all - just the normal Skyrim death") a blow that
+		// lands in the instant the essential flag is off (something clears it each frame; it is set back) killed you for
+		// real. Skyrim's kill itself is turned aside now: you are left on 1 health and the fall takes it from there.
+		struct PlayerKill
+		{
+			static void thunk(RE::Actor* a_this, RE::Actor* a_attacker, float a_damage, bool a_sendEvent, bool a_ragdollInstant)
+			{
+				if (a_this && !a_this->IsDead() && Party::HoldsDeath()) {
+					auto*       av = a_this->AsActorValueOwner();
+					const float hp = av->GetActorValue(RE::ActorValue::kHealth);
+					if (hp < 1.0f) av->RestoreActorValue(RE::ActorValue::kHealth, 1.0f - hp);
+					a_this->GetActorRuntimeData().boolFlags.set(RE::Actor::BOOL_FLAGS::kEssential);
+					if (static int said = 0; said++ < 10) logger::info("death: a killing blow ({} , {:.0f}) turned aside - you fall instead", a_attacker ? a_attacker->GetName() : "none", a_damage);
+					return;
+				}
+				func(a_this, a_attacker, a_damage, a_sendEvent, a_ragdollInstant);
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
 		struct PlayerUpdate
 		{
 			static void thunk(RE::PlayerCharacter* a_this, float a_delta)
@@ -807,7 +826,9 @@ namespace bo3z
 						if ((ours ? saidOurs++ : saidOther++) < 15) logger::info("hurt: hit by {} (ours {}, foe {})", z->GetName(), ours, Director::IsFoe(z));
 					}
 					if (auto* z = a_event->cause->As<RE::Actor>(); z && Director::IsRoundUndead(z)) {
-						Perks::OnZombieHit(z);
+						// (Noah: the damage at the end of the contact swing) held until the claws meet you
+						if (const float wait = Undead::HitDelay(z); wait > 0.02f) Director::QueueZombieHit(z, wait);
+						else Perks::OnZombieHit(z);
 					}
 				}
 				return RE::BSEventNotifyControl::kContinue;
@@ -1104,6 +1125,7 @@ namespace bo3z
 			}
 			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
 			PlayerUpdate::func = vtbl.write_vfunc(0xAD, PlayerUpdate::thunk);
+			PlayerKill::func = vtbl.write_vfunc(0x10E, PlayerKill::thunk);
 			logger::info("hooked PlayerCharacter::Update");
 			REL::Relocation<std::uintptr_t> hud{ RE::VTABLE_HUDMenu[0] };
 			NoticeFilter::func = hud.write_vfunc(0x4, NoticeFilter::thunk);

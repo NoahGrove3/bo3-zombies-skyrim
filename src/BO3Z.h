@@ -130,6 +130,7 @@ namespace bo3z
 		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
 		bool             IsElite(RE::Actor* a_actor);
 		bool             IsBoss(RE::Actor* a_actor);
+		void             QueueZombieHit(RE::Actor* a_zombie, float a_seconds);  // its blow lands when its swing does
 		void             Noise(float a_amount);  // the night hears you (spells bursting, shouts, fights): enough draws a Volatile
 		bool             DanceOfDeath(RE::FormID a_spell);  // (Noah) the Dance Of Death spoken: the dead near you dance (true: it was that shout)
 		std::string_view HeadNodeFor(RE::Actor* a_actor);
@@ -220,6 +221,7 @@ namespace bo3z
 		bool  IsDancing(RE::Actor* a_actor);  // (its blows land half again as hard)
 		Type  Roll(int a_round);         // which of the risen dead this one is
 		float SpeedMult(Type a_type);
+		float HitDelay(RE::Actor* a_actor);   // seconds until its swing's claws meet you (0: none coming)
 		void  FreshStep(RE::Actor* a_actor);  // its first steps (out of a portal) walked before it takes its own gait
 		void  SetPace(RE::Actor* a_actor, float a_scale);  // its round's pace (1 = round one): walker, runner or sprinter, its speed held at its gait's clip
 		float HealthMult(Type a_type);
@@ -478,6 +480,7 @@ namespace bo3z
 		float FriendDistance(const RE::NiPoint3& a_at);  // the nearest friend in the party (1e9 alone)
 		bool  IsFriend(RE::Actor* a_actor);              // another player's figure (Skyrim Together)
 		bool  SoloFallen();                              // alone and on the death screen
+		bool  HoldsDeath();                              // the player falls instead of dying (a killing blow is turned aside)
 		inline constexpr std::uint32_t kGhostRoll = 1, kGhostFall = 2;
 		void  Ghost(std::uint32_t a_why, bool a_on);     // untouchable while any reason holds (setghost, counted)
 		enum class Life : std::uint8_t { Alive = 0, Down = 1, Dead = 2 };
