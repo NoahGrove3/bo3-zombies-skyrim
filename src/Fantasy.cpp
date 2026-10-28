@@ -63,6 +63,18 @@ namespace bo3z
 					}
 				}
 			}
+			// (Noah: "the audio mixing pass") every creature sound of the packs measured louder than Skyrim's own is turned
+			// down to meet them (tools/audiomix.py: its files' level less its own attenuation, to -21 dB)
+			int mixed = 0;
+			for (const auto& m : gen::kAudioMix) {
+				if (auto* sd = dh->LookupForm<RE::BGSSoundDescriptorForm>(m.id, m.plugin); sd && sd->soundDescriptor) {
+					if (auto* sdef = skyrim_cast<RE::BGSStandardSoundDef*>(sd->soundDescriptor)) {
+						sdef->soundCharacteristics.staticAttenuation = static_cast<std::uint16_t>(std::min(10000, sdef->soundCharacteristics.staticAttenuation + static_cast<int>(m.extraDb * 100.0f)));
+						++mixed;
+					}
+				}
+			}
+			logger::info("fantasy: {} of {} loud creature sounds brought down to the mix", mixed, gen::kAudioMix.size());
 			int added = 0;
 			for (const auto& a : kAdds) {
 				auto* list = RE::TESForm::LookupByID<RE::TESLevCharacter>(a.list);

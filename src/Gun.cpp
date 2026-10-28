@@ -587,8 +587,9 @@ namespace bo3z
 			if (!a_quiet || kill) {
 				Forms::Play(a_head && !a_melee ? gen::Sound::headshot : gen::Sound::hitmarker);
 				std::scoped_lock l(Hud::Lock());
-				Hud::Edit().hitTime = 0.2f;
+				Hud::Edit().hitTime = kill ? 0.3f : 0.2f;
 				Hud::Edit().hitKill = kill;
+				Hud::Edit().hitHead = a_head && !a_melee;
 			}
 			return kill;
 		}
@@ -905,6 +906,15 @@ namespace bo3z
 				}
 			}
 			std::erase_if(g_blasts, [](const PendingBlast& b) { return b.delay <= 0; });
+			// (the performance pass) at most six bursts placed a frame: a crowd's worth of them spreads over a few frames
+			// instead of one long hitch (each one is a new reference, its model and its light)
+			constexpr std::size_t kPerFrame = 6;
+			for (std::size_t i = kPerFrame; i < now.size(); ++i) {
+				auto b = now[i];
+				b.delay = 0.016f * static_cast<float>(1 + (i - kPerFrame) / kPerFrame);
+				g_blasts.push_back(b);
+			}
+			if (now.size() > kPerFrame) now.resize(kPerFrame);
 			for (const auto& b : now) {
 				Detonate(b);
 			}

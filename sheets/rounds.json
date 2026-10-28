@@ -94,7 +94,7 @@
         "speedTiers",
         "hitDamageFraction"
       ],
-      "maxCorpses": 30,
+      "maxCorpses": 18,
       "spawnMultiplier": 6.0,
       "speedTiers": [
         [

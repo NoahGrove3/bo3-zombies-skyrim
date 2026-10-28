@@ -1,4 +1,5 @@
 #include "BO3Z.h"
+#include "Perf.h"
 
 namespace bo3z
 {
@@ -189,31 +190,32 @@ namespace bo3z
 					return;
 				}
 				try {
+					using Perf::Scope;
+					static std::uint64_t frames = 0;
+					Perf::Report(++frames);
 					T("save");
-					Save::Guard();
-					DevTools::RunQueuedInGame();
+					{ Scope q(Perf::kSave); Save::Guard(); DevTools::RunQueuedInGame(); }
 					T("intro");
-					Intro::Tick();
+					{ Scope q(Perf::kIntro); Intro::Tick(); }
 					T("director");
-					Director::Tick(a_delta);
+					{ Scope q(Perf::kDirector); Director::Tick(a_delta); }
 					T("gun");
-					Gun::Tick(a_delta);
+					{ Scope q(Perf::kGun); Gun::Tick(a_delta); }
 					T("shops");
-					Shops::Tick(a_delta);
-					Classes::Tick();
-					Classes::TickFast(a_delta);
+					{ Scope q(Perf::kShops); Shops::Tick(a_delta); }
+					{ Scope q(Perf::kClasses); Classes::Tick(); Classes::TickFast(a_delta); }
 					T("perks");
-					Perks::Tick();
+					{ Scope q(Perf::kPerks); Perks::Tick(); }
 					T("party");
-					Party::Tick(a_delta);
+					{ Scope q(Perf::kParty); Party::Tick(a_delta); }
 					T("compass");
-					Compass::Tick(a_delta);
+					{ Scope q(Perf::kCompass); Compass::Tick(a_delta); }
 					T("loot");
-					Loot::Tick(a_delta);
+					{ Scope q(Perf::kLoot); Loot::Tick(a_delta); }
 					T("movement");
-					Movement::Tick(a_delta);
+					{ Scope q(Perf::kMovement); Movement::Tick(a_delta); }
 					T("audio");
-					Audio::Tick(a_delta);
+					{ Scope q(Perf::kAudio); Audio::Tick(a_delta); }
 					T("done");
 				} catch (const std::exception& e) {
 					logger::error("tick: {}", e.what());
@@ -554,6 +556,23 @@ namespace bo3z
 			}
 		}
 
+		// (Noah: "better feedback when I hit enemies") your blade, your bow and your spells mark a hit on one of the dead as
+		// the wands do: the cross at the crosshair (red and larger on a kill) and its tick (a kill's own sound)
+		void MarkHit(RE::Actor* a_z)
+		{
+			if (!a_z) return;
+			static auto last = std::chrono::steady_clock::time_point{};
+			const auto  now = std::chrono::steady_clock::now();
+			const bool  kill = a_z->IsDead() || a_z->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth) <= 0;
+			if (!kill && now - last < std::chrono::milliseconds(90)) return;
+			last = now;
+			Forms::Play(kill ? gen::Sound::headshot : gen::Sound::hitmarker);
+			std::scoped_lock l(Hud::Lock());
+			Hud::Edit().hitTime = kill ? 0.3f : 0.2f;
+			Hud::Edit().hitKill = kill;
+			Hud::Edit().hitHead = false;
+		}
+
 		// A Coffer spell reached an actor (its hit, or one of its effects taking hold - some, like Paralyze or Magicka
 		// Void, never hit). Noah: every spell from the shrine hurts every enemy. The night's undead lose a share of
 		// their round health (rarer spells more, a reforge adds its step, each Twin Strike Ale half again - their own
@@ -667,6 +686,7 @@ namespace bo3z
 					}
 					if (const int ci = Arcana::IndexOf(src); z && ci >= 0) {
 						CofferHit(z, ci);  // the Coffer's spells: every one of them hurts every enemy
+						if (Director::IsRoundUndead(z)) MarkHit(z);
 					} else if (z && !z->IsDead() && Director::IsRoundUndead(z)) {
 						bool ourSpell = false;
 						for (int i = 0; i < static_cast<int>(gen::kSpells.size()); ++i) {
@@ -683,6 +703,7 @@ namespace bo3z
 							}
 							HurtUndead(z, Director::RoundHealth() * share * (0.7f + 0.3f * Arcana::Power()));  // (the night's power curve)
 							Undead::OnHit(z);
+							MarkHit(z);
 						}
 					}
 				}

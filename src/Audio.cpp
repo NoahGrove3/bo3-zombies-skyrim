@@ -423,8 +423,42 @@ namespace bo3z::Audio
 
 	// ---- per frame: delayed impacts, loops whose owner is gone, idle chatter and attack swings of the horde
 	void TickFreed(float a_delta);
+	// (Noah: "an audio mixing pass") the music steps back under a moment that matters - a night or wave beginning, a
+	// wave cleared, a boss or mini-boss rising, your fall - then comes back up (9 dB down, eased both ways)
+	namespace
+	{
+		float g_duck = 0, g_duckNow = 0;
+		RE::BGSSoundCategory* MusicCategory()
+		{
+			static RE::BGSSoundCategory* cat = [] {
+				RE::BGSSoundCategory* found = nullptr;
+				if (auto* dh = RE::TESDataHandler::GetSingleton()) {
+					for (auto* c : dh->GetFormArray<RE::BGSSoundCategory>()) {
+						if (c && std::string_view(c->GetName()) == "Music") { found = c; break; }
+					}
+				}
+				logger::info("audio: the music category {}", found ? "found (ducking on)" : "not found (no ducking)");
+				return found;
+			}();
+			return cat;
+		}
+		void TickDuck(float a_delta)
+		{
+			auto* cat = MusicCategory();
+			if (!cat) return;
+			static const std::uint16_t base = cat->GetCategoryAttenuation();
+			g_duck = std::max(0.0f, g_duck - a_delta);
+			const float want = g_duck > 0 ? 1.0f : 0.0f;
+			g_duckNow += (want - g_duckNow) * std::min(1.0f, a_delta * (want > g_duckNow ? 6.0f : 1.2f));
+			const auto att = static_cast<std::uint16_t>(base + 900.0f * g_duckNow);
+			if (att != cat->GetCategoryAttenuation()) cat->SetCategoryAttenuation(att);
+		}
+	}
+	void Duck(float a_seconds) { g_duck = std::max(g_duck, a_seconds); }
+
 	void Tick(float a_delta)
 	{
+		TickDuck(a_delta);
 		TickFreed(a_delta);
 		for (auto& p : g_pending) {
 			p.delay -= a_delta;

@@ -792,6 +792,70 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			TxtC(dl, g_body, 19 * k, size.x * 0.5f, y0 + ch + 40 * k, IM_COL32(230, 220, 200, 240), hint);
 		}
 
+
+		// (Noah: "BO3 death style instead of reloading a save - high quality, Edge's UI") you fell: the world darkens and
+		// drains of colour, the night's tally rises out of it in Edge's smoked pane, and a ring fills toward rising again
+		void DrawDeath(ImDrawList* dl, const Hud::State& s, ImVec2 size, float k, float now)
+		{
+			const float t = s.deathT;
+			const float veil = std::clamp(t / 1.4f, 0.0f, 1.0f);
+			// the dark: deep at the edges, a little lighter at the heart, and a slow blood bloom from below
+			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(150 * veil)));
+			const float e = size.y * 0.42f;
+			const ImU32 edge = IM_COL32(0, 0, 0, static_cast<int>(200 * veil)), clr = IM_COL32(0, 0, 0, 0);
+			dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, e }, edge, edge, clr, clr);
+			dl->AddRectFilledMultiColor({ 0, size.y - e }, size, clr, clr, edge, edge);
+			dl->AddRectFilledMultiColor({ 0, size.y * 0.55f }, size, IM_COL32(90, 8, 8, 0), IM_COL32(90, 8, 8, 0), IM_COL32(90, 8, 8, static_cast<int>(70 * veil)), IM_COL32(90, 8, 8, static_cast<int>(70 * veil)));
+			const float in = EaseOut(std::clamp((t - 0.6f) / 0.9f, 0.0f, 1.0f));
+			if (in <= 0.0f) return;
+			// the words
+			const float ty = size.y * 0.24f - (1.0f - in) * 24 * k;
+			TxtC(dl, g_title, 70 * k, size.x * 0.5f, ty, Fade(kParch, in), "YOU HAVE FALLEN", 4 * k, Fade(kBlood, 0.85f * in));
+			const float rw = 260 * k;
+			dl->AddRectFilledMultiColor({ size.x * 0.5f - rw, ty + 92 * k }, { size.x * 0.5f, ty + 93.4f * k }, Fade(kGold, 0), Fade(kGold, in), Fade(kGold, in), Fade(kGold, 0));
+			dl->AddRectFilledMultiColor({ size.x * 0.5f, ty + 92 * k }, { size.x * 0.5f + rw, ty + 93.4f * k }, Fade(kGold, in), Fade(kGold, 0), Fade(kGold, 0), Fade(kGold, in));
+			const std::string where = s.deathWaves > 0 ? fmt::format("NIGHT {}     WAVE {} OF {}", s.deathNight, s.deathWave, s.deathWaves) : fmt::format("NIGHT {}", std::max(1, s.deathNight));
+			TxtC(dl, g_num, 22 * k, size.x * 0.5f, ty + 104 * k, Fade(kGold, in), where);
+			// the tally: four columns in Edge's pane, each number counting up as it appears
+			const float pw = 860 * k, ph = 170 * k, px = size.x * 0.5f - pw * 0.5f, py = size.y * 0.47f;
+			Panel(dl, { px, py }, { px + pw, py + ph }, k, in);
+			struct Col { const char* label; int value; ImU32 col; };
+			const Col cols[4] = { { "KILLS", s.deathKills, kParch }, { "HEADSHOTS", s.deathHeads, kCoin }, { "BEST STREAK", s.deathBest, kParch }, { "SEPTIMS EARNED", s.deathSeptims, kCoin } };
+			for (int i = 0; i < 4; ++i) {
+				const float cx = px + pw * (0.125f + 0.25f * i);
+				const float ci = EaseOut(std::clamp((t - 1.1f - 0.18f * i) / 0.8f, 0.0f, 1.0f));
+				const int   shown = static_cast<int>(std::round(cols[i].value * ci));
+				TxtC(dl, g_num, 52 * k, cx, py + 34 * k, Fade(cols[i].col, ci), std::to_string(shown));
+				TxtC(dl, g_body, 15 * k, cx, py + 108 * k, Fade(kGold, 0.9f * ci), cols[i].label);
+				if (i > 0) dl->AddLine({ px + pw * 0.25f * i, py + 30 * k }, { px + pw * 0.25f * i, py + ph - 30 * k }, Fade(kRuneDim, ci), 1.0f * k);
+			}
+			// what it cost, and what comes next
+			const float ni = std::clamp((t - 2.0f) / 0.8f, 0.0f, 1.0f);
+			const std::string cost = s.deathPerks > 0 ? fmt::format("Your {} blessing{} faded with you.  The wave begins again.", s.deathPerks, s.deathPerks == 1 ? "" : "s")
+			                                          : std::string("The wave begins again.");
+			TxtC(dl, g_body, 20 * k, size.x * 0.5f, py + ph + 30 * k, Fade(IM_COL32(220, 210, 192, 235), ni), cost);
+			// rising: a ring that fills on its own; once it may, a press rises at once
+			const ImVec2 rc{ size.x * 0.5f, py + ph + 118 * k };
+			const float  R = 26 * k;
+			dl->AddCircle(rc, R, Fade(kRuneDim, ni), 48, 2.0f * k);
+			if (s.deathRise > 0.001f) {
+				dl->PathArcTo(rc, R, -1.5708f, -1.5708f + 6.2832f * std::clamp(s.deathRise, 0.0f, 1.0f), 48);
+				dl->PathStroke(Fade(kGold, ni), 0, 3.0f * k);
+			}
+			const float pulse = 0.75f + 0.25f * std::sin(now * 4.0f);
+			if (s.deathReady) {
+				if (g_padLast) {
+					PadGlyph(dl, rc, 13 * k, "A", ni);
+					TxtC(dl, g_title, 22 * k, size.x * 0.5f, rc.y + R + 14 * k, Fade(kParch, ni * pulse), "RISE", 2 * k, Fade(kGold, 0.5f * ni));
+				} else {
+					TxtC(dl, g_num, 18 * k, rc.x, rc.y - 12 * k, Fade(kParch, ni), "E");
+					TxtC(dl, g_title, 22 * k, size.x * 0.5f, rc.y + R + 14 * k, Fade(kParch, ni * pulse), "RISE", 2 * k, Fade(kGold, 0.5f * ni));
+				}
+			} else {
+				TxtC(dl, g_title, 20 * k, size.x * 0.5f, rc.y + R + 14 * k, Fade(IM_COL32(200, 190, 170, 220), ni), "RISING...");
+			}
+		}
+
 		void Draw(const Hud::State& s, ImVec2 size)
 		{
 			auto*       dl = ImGui::GetForegroundDrawList();
@@ -807,6 +871,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			roundFlash = std::max(0.0f, roundFlash - dt);
 			if (Classes::Open()) {  // (the class picker takes the whole screen)
 				DrawClassPicker(dl, size, k, now);
+				return;
+			}
+			if (s.deathT >= 0.0f) {  // (you fell: the fall's screen over everything)
+				DrawDeath(dl, s, size, k, now);
 				return;
 			}
 
@@ -992,7 +1060,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// Damage vignette. (Noah: "make that more subtle - a light red border around the screen, not covering the whole
 			// screen") a thin soft red edge when hurt (a little deeper when low), never reaching in past 7% of the screen
 			const float hpFrac = s.hpMax > 0 ? s.hp / s.hpMax : 1.0f;
-			const float hurt = std::max(std::clamp(s.hurtTime, 0.0f, 1.0f) * 0.7f, std::clamp((0.35f - hpFrac) / 0.35f, 0.0f, 1.0f) * (0.45f + 0.15f * std::sin(now * 4)));
+			const float hurt = std::max(std::clamp(s.hurtTime, 0.0f, 1.0f) * 0.7f + std::clamp(s.kickT / 0.35f, 0.0f, 1.0f) * 0.5f, std::clamp((0.35f - hpFrac) / 0.35f, 0.0f, 1.0f) * (0.45f + 0.15f * std::sin(now * 4)));  // (a big blow: a moment deeper)
 			if (hurt > 0.01f) {
 				const ImU32 r = IM_COL32(210, 30, 30, static_cast<int>(105 * hurt)), z = IM_COL32(210, 30, 30, 0);
 				const float e = size.y * (0.045f + 0.025f * hurt);
@@ -1924,10 +1992,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (s.hitTime > 0) {
 				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f };
 				const float  a = 6 * k, b = (14 + 6 * (0.2f - s.hitTime) * 5) * k;
-				const ImU32  col = s.hitKill ? IM_COL32(235, 50, 40, 255) : IM_COL32(255, 245, 225, 240);
+				// (Noah: "better feedback when I hit enemies") a hit white, a headshot gold, a kill red and bigger; a kill's
+				// marker pops outward and lingers a moment longer
+				const ImU32  col = s.hitKill ? IM_COL32(235, 50, 40, 255) : s.hitHead ? IM_COL32(255, 200, 80, 255) : IM_COL32(255, 245, 225, 240);
+				const float  grow = s.hitKill ? 1.35f : s.hitHead ? 1.15f : 1.0f;
 				for (int sx : { -1, 1 }) {
 					for (int sy : { -1, 1 }) {
-						dl->AddLine({ c.x + sx * a, c.y + sy * a }, { c.x + sx * b, c.y + sy * b }, col, 2.5f * k);
+						dl->AddLine({ c.x + sx * a * grow, c.y + sy * a * grow }, { c.x + sx * b * grow, c.y + sy * b * grow }, col, (s.hitKill ? 3.2f : 2.5f) * k);
 					}
 				}
 			}
@@ -1937,6 +2008,44 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float  f = s.headBurstT / 0.18f, soft = Settings::ReduceFlashes() ? 0.35f : 1.0f;
 				dl->AddCircleFilled(c, (10 + 26 * (1 - f)) * k, IM_COL32(255, 255, 255, static_cast<int>(120 * f * soft)), 24);
 				dl->AddCircle(c, (16 + 30 * (1 - f)) * k, IM_COL32(255, 235, 220, static_cast<int>(220 * f * soft)), 32, 2.0f * k);
+			}
+
+			// (Noah: "smoother round flow") the last three seconds before a wave: the numeral, beating once a second
+			if (s.nightActive && s.waveRest > 0.02f && s.waveRest <= 3.0f) {
+				const int   n = static_cast<int>(std::ceil(s.waveRest));
+				const float f = s.waveRest - std::floor(s.waveRest);  // (1 just ticked .. 0)
+				const float pop = 1.0f + 0.35f * f * f;
+				const float al = std::clamp(0.35f + f * 1.2f, 0.0f, 1.0f);
+				TxtC(dl, g_title, 84 * k * pop, size.x * 0.5f, size.y * 0.30f - 42 * k * pop, Fade(kParch, al), std::to_string(n), 4 * k, Fade(kBlood, 0.8f * al));
+				TxtC(dl, g_num, 18 * k, size.x * 0.5f, size.y * 0.30f + 54 * k, Fade(kGold, 0.9f), fmt::format("WAVE {} RISES", s.wave));
+			}
+			// (the round flow) a wave's last three: each one marked, through walls, with its distance; off screen, at the edge
+			for (const auto& m : s.lastDead) {
+				ImVec2 p{ m[0] * size.x, m[1] * size.y };
+				const bool on = m[2] > 0.5f && p.x > 30 * k && p.x < size.x - 30 * k && p.y > 40 * k && p.y < size.y - 40 * k;
+				if (!on) {
+					ImVec2 d{ p.x - size.x / 2, p.y - size.y / 2 };
+					if (m[2] < 0.5f) d = { -d.x, -d.y };
+					const float len = std::max(1.0f, std::sqrt(d.x * d.x + d.y * d.y));
+					d = { d.x / len, d.y / len };
+					const float sx = (size.x / 2 - 40 * k) / std::max(0.001f, std::abs(d.x)), sy = (size.y / 2 - 60 * k) / std::max(0.001f, std::abs(d.y));
+					const float tt = std::min(sx, sy);
+					p = { size.x / 2 + d.x * tt, size.y / 2 + d.y * tt };
+				}
+				const float r = 9 * k, pulse = 0.7f + 0.3f * std::sin(now * 5.0f);
+				dl->AddQuadFilled({ p.x, p.y - r }, { p.x + r, p.y }, { p.x, p.y + r }, { p.x - r, p.y }, IM_COL32(200, 30, 25, static_cast<int>(230 * pulse)));
+				dl->AddQuad({ p.x, p.y - r - 3 * k }, { p.x + r + 3 * k, p.y }, { p.x, p.y + r + 3 * k }, { p.x - r - 3 * k, p.y }, IM_COL32(255, 210, 190, 160), 1.2f * k);
+				TxtC(dl, g_num, 14 * k, p.x, p.y + r + 4 * k, IM_COL32(240, 220, 210, 230), std::to_string(static_cast<int>(m[3] * 0.01428f)) + " m");
+			}
+			// (hit feedback) a blow from where you weren't looking: a red arc on that side of the crosshair
+			if (s.hurtDirT > 0.0f) {
+				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f };
+				const float  R = size.y * 0.16f, al = std::clamp(s.hurtDirT / 0.4f, 0.0f, 1.0f);
+				const float  mid = s.hurtDir - 1.5708f;  // (0 = straight ahead: the arc's top)
+				dl->PathArcTo(c, R, mid - 0.45f, mid + 0.45f, 24);
+				dl->PathStroke(IM_COL32(220, 40, 30, static_cast<int>(210 * al)), 0, 5.0f * k);
+				dl->PathArcTo(c, R + 7 * k, mid - 0.3f, mid + 0.3f, 18);
+				dl->PathStroke(IM_COL32(255, 120, 90, static_cast<int>(120 * al)), 0, 2.0f * k);
 			}
 
 			// Countdown between nights: the Blood Moon rising. A ring of the Curse's runes round it, one going dark for
@@ -5577,6 +5686,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_state.bannerTime = std::max(0.0f, g_state.bannerTime - dt);
 				g_state.gainTime = std::max(0.0f, g_state.gainTime - dt);
 				g_state.hitTime = std::max(0.0f, g_state.hitTime - dt);
+				g_state.hurtDirT = std::max(0.0f, g_state.hurtDirT - dt);
+				g_state.kickT = std::max(0.0f, g_state.kickT - dt);
 				g_state.headBurstT = std::max(0.0f, g_state.headBurstT - dt);
 				g_state.styleTime = std::max(0.0f, g_state.styleTime - dt);
 				g_state.lightningT = std::max(0.0f, g_state.lightningT - dt);

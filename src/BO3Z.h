@@ -114,6 +114,9 @@ namespace bo3z
 		bool  HarpyNear(const RE::NiPoint3& a_at, float a_r);  // a living harpy this close (the per-hit cap)
 		std::vector<RE::ActorHandle> AliveHandles();
 		bool             PlayerSide(RE::Actor* a, RE::PlayerCharacter* a_player);  // the player, a friend, a follower, an Echo ally or a summon of yours
+		void             RestartWave();   // (the BO3 fall, solo) the wave's dead gone, the wave begins again
+		void             SlowTime(float a_realSeconds, float a_mult);  // the world slowed for a beat (solo only)
+		void             NormalTime();
 		float            TakenMult(RE::Actor* a_actor);  // how much harder one of ours is hurt (a dazed Barrow Champion 2, a berserk Skeleton Mutant 1.25)
 		void             OnDying(RE::Actor* a_actor);    // any death: a champion or mini-boss pays out at once  // how hard this one of the night's dead hits you, its spells too (1 = as made)
 		void             HeadlongCombat();  // data loaded: the undead charge straight in
@@ -187,6 +190,7 @@ namespace bo3z
 		void InstallSteps();
 		std::string Stats();
 		RE::BGSSoundDescriptorForm* Descriptor(gen::Sound a_s);                            // our undead's footsteps, on their animation's footfalls
+		void Duck(float a_seconds);  // the music 9 dB down for a moment (a wave, a boss, your fall)
 		void Tick(float a_delta);
 		void StopAll();
 		void BossMusic(bool a_on);
@@ -791,6 +795,7 @@ namespace bo3z
 			bool        nightActive{ false };
 			int         wave{ 0 }, waves{ 0 }, waveLeft{ 0 }, waveSize{ 0 };  // (Noah: BO3 waves) this night's wave, how many, the dead still to kill in it
 			float       waveRest{ 0 };    // seconds until the next wave rises
+			std::vector<std::array<float, 4>> lastDead;  // (the round flow) a wave's last three: screen x, y, in front (1/0), distance
 			std::string waveTheme;          // a themed wave's name ("GOBLIN RAID"), else empty
 			std::uint32_t waveThemeColor{ 0 };
 			float       puInsta{ 0 }, puDouble{ 0 }, puFireSale{ 0 };  // power-up seconds left  // a night (round) is being fought; otherwise round = nights survived
@@ -815,6 +820,15 @@ namespace bo3z
 			float       gainTime{ 0 };
 			float       hitTime{ 0 };
 			bool        hitKill{ false };
+			bool        hitHead{ false };  // (hit feedback) a headshot: the marker in gold
+			float       hurtDirT{ 0 }, hurtDir{ 0 };  // (hit feedback) a blow from where you can't see: its side (radians from your facing), and its fade
+			float       kickT{ 0 };                   // (hit feedback) a big blow: the screen's edge flinches
+			// (Noah: "BO3 death instead of reloading a save") the fall's screen: seconds since you fell (-1 none), the night as it
+			// stood, and how near you are to rising (0..1)
+			float       deathT{ -1 };
+			int         deathNight{ 0 }, deathWave{ 0 }, deathWaves{ 0 }, deathKills{ 0 }, deathHeads{ 0 }, deathBest{ 0 }, deathSeptims{ 0 }, deathPerks{ 0 };
+			float       deathRise{ 0 };
+			bool        deathReady{ false };  // (a press rises now)
 			float       headBurstT{ 0 };  // a headshot kill's white flash at the crosshair
 			float       lightningT{ 0 }, lightningI{ 0 };  // the sky's flash (seconds left, strength)
 			bool        eggDark{ false };                 // a hidden quest's dark (Riften's, Dawnstar's dream)

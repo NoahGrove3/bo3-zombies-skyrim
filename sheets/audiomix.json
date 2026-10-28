@@ -1,0 +1,415 @@
+{
+ "sheet": "audiomix",
+ "about": "The night creatures' sounds turned down to one loudness (tools/audiomix.py): extraDb added to each sound's static attenuation.",
+ "columns": [
+  "plugin",
+  "localId",
+  "edid",
+  "measured",
+  "attenuation",
+  "extraDb"
+ ],
+ "count": 50,
+ "rows": [
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x00084E",
+   "edid": "mihailicetitansound",
+   "measured": -20.0,
+   "attenuation": 0.0,
+   "extraDb": 1.0
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x029029",
+   "edid": "mihailicetitandraw",
+   "measured": -18.9,
+   "attenuation": 0.0,
+   "extraDb": 2.1
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x02902A",
+   "edid": "mihailicetitanhit",
+   "measured": -13.7,
+   "attenuation": 0.0,
+   "extraDb": 7.3
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000810",
+   "edid": "mihaildurzog_hitDUPLICATE009",
+   "measured": -7.0,
+   "attenuation": 0.0,
+   "extraDb": 14.0
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x0008AE",
+   "edid": "mihaildurzog_hitDUPLICATE002",
+   "measured": -7.0,
+   "attenuation": 0.0,
+   "extraDb": 14.0
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x0B88BA",
+   "edid": "mihailharpy_FleshImpact_sound",
+   "measured": -7.0,
+   "attenuation": 0.0,
+   "extraDb": 14.0
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x0008EC",
+   "edid": "mihailwerebear_FootWalkRSD",
+   "measured": -18.1,
+   "attenuation": 0.0,
+   "extraDb": 2.9
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x0008F1",
+   "edid": "mihailgriffinsound",
+   "measured": -17.3,
+   "attenuation": 0.0,
+   "extraDb": 3.7
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x023F32",
+   "edid": "mihailgriffincry4",
+   "measured": -12.5,
+   "attenuation": 0.0,
+   "extraDb": 8.5
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x00090A",
+   "edid": "mihailornaug_hit1",
+   "measured": -7.0,
+   "attenuation": 0.0,
+   "extraDb": 14.0
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x00091D",
+   "edid": "mihailcockatricesound",
+   "measured": -12.7,
+   "attenuation": 3.52,
+   "extraDb": 4.8
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x029049",
+   "edid": "mihailsoundcockatricespit",
+   "measured": -9.6,
+   "attenuation": 4.85,
+   "extraDb": 6.6
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x02904A",
+   "edid": "mihailsoundcockatricepar",
+   "measured": -6.9,
+   "attenuation": 6.61,
+   "extraDb": 7.5
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000951",
+   "edid": "mihailcentaurSOUNDdraw",
+   "measured": -4.1,
+   "attenuation": 0.0,
+   "extraDb": 16.9
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000952",
+   "edid": "mihailcentaurSOUNDattack",
+   "measured": -4.1,
+   "attenuation": 0.0,
+   "extraDb": 16.9
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000953",
+   "edid": "mihailcentaurSOUNDattack2",
+   "measured": -8.7,
+   "attenuation": 0.0,
+   "extraDb": 12.3
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x03D461",
+   "edid": "mihailwamparacefleshimpact_3",
+   "measured": -7.9,
+   "attenuation": 0.0,
+   "extraDb": 13.1
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x0290AA",
+   "edid": "mihailindrick_impactdatasound",
+   "measured": -14.4,
+   "attenuation": 0.0,
+   "extraDb": 6.6
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x0290AE",
+   "edid": "mihailindrick_ghost_spell__sound",
+   "measured": -13.6,
+   "attenuation": 0.0,
+   "extraDb": 7.4
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x02E1C8",
+   "edid": "mihailindrick_horn_spell_2_sound",
+   "measured": -15.5,
+   "attenuation": 0.0,
+   "extraDb": 5.5
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x0009FD",
+   "edid": "soundleshen",
+   "measured": -16.7,
+   "attenuation": 0.0,
+   "extraDb": 4.3
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000AFC",
+   "edid": "mihailfirewyrm_sound_conscious",
+   "measured": -19.7,
+   "attenuation": 0.0,
+   "extraDb": 1.3
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000B01",
+   "edid": "mihailwyrm_sound_hit",
+   "measured": -14.6,
+   "attenuation": 0.0,
+   "extraDb": 6.4
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000B07",
+   "edid": "mihailmagicanomaly_impactsound",
+   "measured": -15.3,
+   "attenuation": 0.0,
+   "extraDb": 5.7
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000B09",
+   "edid": "mihailmagicanomaly_sound",
+   "measured": -5.7,
+   "attenuation": 0.0,
+   "extraDb": 15.3
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000B10",
+   "edid": "mihailmagicanomaly_deathsound",
+   "measured": -6.8,
+   "attenuation": 0.0,
+   "extraDb": 14.2
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x03833F",
+   "edid": "mihailgelatinouscube_sound2",
+   "measured": -8.6,
+   "attenuation": 0.0,
+   "extraDb": 12.4
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x038340",
+   "edid": "mihailgelatinouscube_sound3",
+   "measured": -6.0,
+   "attenuation": 0.0,
+   "extraDb": 15.0
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000BE0",
+   "edid": "mihailfrostgiant_sound_weapon_draw",
+   "measured": -16.9,
+   "attenuation": 0.0,
+   "extraDb": 4.1
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x023F22",
+   "edid": "mihailbolgansound",
+   "measured": -15.6,
+   "attenuation": 0.0,
+   "extraDb": 5.4
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x06FED6",
+   "edid": "mihailbolgan_stepsLsound",
+   "measured": -12.9,
+   "attenuation": 0.0,
+   "extraDb": 8.1
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x06FED7",
+   "edid": "mihailbolgan_stepsRsound",
+   "measured": -12.6,
+   "attenuation": 0.0,
+   "extraDb": 8.4
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000C80",
+   "edid": "mihail_giantclub_ImpactSet_Flesh_sound",
+   "measured": -12.4,
+   "attenuation": 0.0,
+   "extraDb": 8.6
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000C81",
+   "edid": "mihail_giantclub_ImpactSet_Dirt_sound",
+   "measured": -10.2,
+   "attenuation": 0.0,
+   "extraDb": 10.8
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x029055",
+   "edid": "mihailpitroamer_impactbite_entrance_sound",
+   "measured": -7.0,
+   "attenuation": 0.0,
+   "extraDb": 14.0
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000D40",
+   "edid": "mihailettin_draw_1",
+   "measured": -13.7,
+   "attenuation": 0.0,
+   "extraDb": 7.3
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000D41",
+   "edid": "mihailettin__attack_1",
+   "measured": -10.3,
+   "attenuation": 0.0,
+   "extraDb": 10.7
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000D42",
+   "edid": "mihailettin__impact_1",
+   "measured": -13.8,
+   "attenuation": 0.0,
+   "extraDb": 7.2
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000D43",
+   "edid": "mihailettin__soundsave_1",
+   "measured": -13.7,
+   "attenuation": 0.0,
+   "extraDb": 7.3
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000D46",
+   "edid": "mihailettin_impact_b",
+   "measured": -9.0,
+   "attenuation": 0.0,
+   "extraDb": 12.0
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000D48",
+   "edid": "mihailettin__sound",
+   "measured": -16.2,
+   "attenuation": 0.0,
+   "extraDb": 4.8
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x000D49",
+   "edid": "mihailettin__soundR",
+   "measured": -16.2,
+   "attenuation": 0.0,
+   "extraDb": 4.8
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x03D4B5",
+   "edid": "mihailogre_sound_draw_1",
+   "measured": -13.7,
+   "attenuation": 0.0,
+   "extraDb": 7.3
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x03D4B6",
+   "edid": "mihailogre_sound_attack_1",
+   "measured": -10.3,
+   "attenuation": 0.0,
+   "extraDb": 10.7
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x03D4B8",
+   "edid": "mihailogre_sound_impact_1",
+   "measured": -13.8,
+   "attenuation": 0.0,
+   "extraDb": 7.2
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x03D4B9",
+   "edid": "mihailogre_sound_save_1",
+   "measured": -13.7,
+   "attenuation": 0.0,
+   "extraDb": 7.3
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x0476C2",
+   "edid": "mihailogre_sound_impact_b",
+   "measured": -9.0,
+   "attenuation": 0.0,
+   "extraDb": 12.0
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x0476C5",
+   "edid": "mihailogre_sound_footL",
+   "measured": -18.4,
+   "attenuation": 0.0,
+   "extraDb": 2.6
+  },
+  {
+   "plugin": "mihailhighfantasypack.esp",
+   "localId": "0x0476C6",
+   "edid": "mihailogre_sound_footR",
+   "measured": -12.0,
+   "attenuation": 0.0,
+   "extraDb": 9.0
+  },
+  {
+   "plugin": "mihailoldgod.esp",
+   "localId": "0x00080E",
+   "edid": "soundleshen",
+   "measured": -16.7,
+   "attenuation": 0.0,
+   "extraDb": 4.3
+  }
+ ]
+}

@@ -1,5 +1,6 @@
 #include "BO3Z.h"
 #include "ClipBlend.h"
+#include "Perf.h"
 
 #include <atomic>
 #include <cstring>
@@ -128,6 +129,10 @@ namespace bo3z
 			float                     bodyYaw = 0;           // (no sidesteps in its set) the body turned toward where it goes (radians)
 			RE::NiMatrix3             comBase, comWrote;     // (the COM's turn before ours, and as we left it)
 			bool                      comTurned = false;
+			std::vector<RE::NiMatrix3> poseM;            // (the pose as written: put back on a far body's off frames)
+			RE::NiPoint3              comT{};
+			std::uint32_t             lodTick = 0;
+			float                     lodDt = 0;
 			std::atomic<int>          gaitCap{ -1 };         // its fastest gait (main thread: SetPace / its frenzy)
 			std::atomic<int>          setNow{ -1 };          // its clip set, for the main thread
 			std::atomic<float>        gaitV{ 0 };            // the clip speed its legs play now (0: standing or a full-body move)
@@ -233,6 +238,7 @@ namespace bo3z
 		bool UsesClips(Type a_t);
 		void PoseRig(RE::Actor* a_actor, Rig& r, float a_delta)
 		{
+			Perf::Scope perf(Perf::kAnim);
 			auto* root = a_actor->Get3D(false);
 			if (!root) {
 				return;
@@ -648,6 +654,28 @@ namespace bo3z
 				}
 			}
 			auto& P = r.player;
+			// (Noah: "incredibly optimized") far bodies (past 40 m) work out a new pose every other frame - the one between
+			// puts back the last pose (cheap), so nothing ever shows Skyrim's own animation between - and their springs get
+			// both frames' time at once
+			if (auto* pl = RE::PlayerCharacter::GetSingleton(); pl && !r.clipNodes.empty() && r.pose.size() == r.clipNodes.size()) {
+				const auto ap = a_actor->GetPosition(), pp = pl->GetPosition();
+				const float d2 = (ap.x - pp.x) * (ap.x - pp.x) + (ap.y - pp.y) * (ap.y - pp.y);
+				if (d2 > 2800.0f * 2800.0f && (++r.lodTick & 1) && r.danceT.load() <= 0) {
+					r.lodDt += dt;
+					for (std::size_t i = 0; i < r.clipNodes.size(); ++i) {
+						if (auto* n = r.clipNodes[i]) n->local.rotate = r.poseM[i];
+					}
+					if (r.comNode) {
+						r.comNode->local.translate = r.comT;
+						if (r.comTurned) r.comNode->local.rotate = r.comWrote;
+						RE::NiUpdateData ud;
+						ud.time = 0.0f;
+						r.comNode->UpdateDownwardPass(ud, 0);
+					}
+					return true;
+				}
+				dt += r.lodDt, r.lodDt = 0;
+			}
 			// its feet: pace, and how much of it is sideways (for a sidestep)
 			Loco loco{ r.speed, 0.0f, r.turned.load() };
 			{
@@ -703,8 +731,10 @@ namespace bo3z
 			g_clipPosed.fetch_add(1, std::memory_order_relaxed);
 			P.Play(want, want == kRun ? 1.0f : RateFor(r, want), S);
 			P.Tick(S, dt, loco, r.pose, r.com);
+			r.poseM.resize(r.clipNodes.size());
 			for (std::size_t i = 0; i < r.clipNodes.size() && i < r.pose.size(); ++i) {
-				if (auto* n = r.clipNodes[i]) n->local.rotate = MatOf(r.pose[i]);
+				r.poseM[i] = MatOf(r.pose[i]);
+				if (auto* n = r.clipNodes[i]) n->local.rotate = r.poseM[i];
 			}
 			r.setNow.store(r.clipSet, std::memory_order_relaxed);
 			r.gaitV.store(P.clip != kRun ? -1.0f : P.loco == kIdle ? 0.0f : S.c[P.loco].speed, std::memory_order_relaxed);  // (-1 a full-body move, 0 standing)
@@ -719,6 +749,7 @@ namespace bo3z
 			}
 			if (r.comNode) {
 				r.comNode->local.translate = { r.com.x, r.com.y, r.com.z };
+				r.comT = r.comNode->local.translate;
 				// (the graph writes the COM's turn each frame; where it did not, what we wrote is taken back off first)
 				const bool ours = r.comTurned && std::memcmp(&r.comNode->local.rotate, &r.comWrote, sizeof(RE::NiMatrix3)) == 0;
 				if (ours) r.comNode->local.rotate = r.comBase;
@@ -734,6 +765,7 @@ namespace bo3z
 					r.comNode->local.rotate = z * r.comNode->local.rotate;
 					r.comNode->local.translate = { c * r.com.x - sn * r.com.y, sn * r.com.x + c * r.com.y, r.com.z };
 					r.comWrote = r.comNode->local.rotate, r.comTurned = true;
+					r.comT = r.comNode->local.translate;
 				}
 				RE::NiUpdateData ud;
 				ud.time = 0.0f;

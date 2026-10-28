@@ -55,10 +55,13 @@ namespace bo3z::Party
 		void SetEssential(bool a_on)
 		{
 			auto* p = P();
-			if (!p || a_on == g_essentialSet) {
+			if (!p) {
 				return;
 			}
 			auto& f = p->GetActorRuntimeData().boolFlags;
+			if (a_on == f.all(RE::Actor::BOOL_FLAGS::kEssential) && a_on == g_essentialSet) {
+				return;  // (as it should be - read off the body each time: Helgen's own hold sets and clears it too)
+			}
 			if (a_on) {
 				f.set(RE::Actor::BOOL_FLAGS::kEssential);
 			} else {
@@ -148,6 +151,98 @@ namespace bo3z::Party
 		}
 	}
 
+	// ---- (Noah: "BO3 death style instead of reloading a save, so we don't experience that crashing anymore") alone, you
+	// never die: at zero health you fall, the world slows and darkens, the night's tally comes up (Hud: DrawDeath), and
+	// you rise where you fell - your blessings gone, the wave's dead gone with them and the wave begun again. No save is
+	// ever loaded (every crash after a death was in that load).
+	namespace
+	{
+		float           g_soloT = -1.0f;  // seconds since you fell (-1: standing)
+		bool            g_soloPressed = false;
+		constexpr float kSoloAuto = 8.0f, kSoloMayRise = 3.2f;
+		void SoloFall(RE::PlayerCharacter* p)
+		{
+			g_soloT = 0.0f, g_soloPressed = false;
+			HoldDown();
+			Gun::Console("setghost 1");  // (nothing more lands on you while you lie there)
+			Director::Pause(30.0f);
+			Director::SlowTime(1.1f, 0.3f);
+			Audio::Duck(10.0f);
+			Forms::Play(gen::Sound::rite_fail);
+			const auto line = Stats::Tonight();
+			int perks = 0;
+			for (int i = 0; i < static_cast<int>(gen::kPerks.size()); ++i) perks += Save::PerkStacks(i);
+			{
+				std::scoped_lock l(Hud::Lock());
+				auto& h = Hud::Edit();
+				h.deathT = 0.0f, h.deathRise = 0.0f, h.deathReady = false;
+				h.deathNight = h.round, h.deathWave = h.wave, h.deathWaves = h.waves;
+				h.deathKills = line.kills, h.deathHeads = line.heads, h.deathBest = line.best, h.deathSeptims = line.septims, h.deathPerks = perks;
+			}
+			Stats::OnHurt();
+			logger::info("fallen: you fell (night {}, {} kills tonight) - no save is loaded, the wave begins again", line.night, line.kills);
+			(void)p;
+		}
+		void SoloRise(RE::PlayerCharacter* p)
+		{
+			Perks::LoseAll();  // (the cost: every blessing)
+			Director::RestartWave();
+			Director::NormalTime();
+			auto& f = p->GetActorRuntimeData().boolFlags;
+			f.reset(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery);
+			auto*       av = p->AsActorValueOwner();
+			const float mx = av->GetPermanentActorValue(RE::ActorValue::kHealth);
+			av->RestoreActorValue(RE::ActorValue::kHealth, mx);
+			av->RestoreActorValue(RE::ActorValue::kStamina, av->GetPermanentActorValue(RE::ActorValue::kStamina));
+			av->RestoreActorValue(RE::ActorValue::kMagicka, av->GetPermanentActorValue(RE::ActorValue::kMagicka));
+			if (p->AsActorState()->GetLifeState() == RE::ACTOR_LIFE_STATE::kEssentialDown || p->AsActorState()->GetLifeState() == RE::ACTOR_LIFE_STATE::kBleedout) {
+				p->AsActorState()->actorState1.lifeState = RE::ACTOR_LIFE_STATE::kAlive;
+			}
+			p->NotifyAnimationGraph("BleedOutStop");
+			p->NotifyAnimationGraph("bleedOutStop");
+			p->NotifyAnimationGraph("IdleForceDefaultState");
+			Director::Pause(4.0f);
+			{
+				std::scoped_lock l(Hud::Lock());
+				Hud::Edit().deathT = -1.0f;
+			}
+			Hud::Banner("YOU RISE AGAIN", 3.0f);
+			Forms::Play(gen::Sound::round_start);
+			g_soloT = -1.0f;
+			// a breath of safety as you stand: ghostly another two seconds
+			std::thread([] {
+				std::this_thread::sleep_for(std::chrono::seconds(2));
+				Tasks::Add([] { if (g_soloT < 0.0f) Gun::Console("setghost 0"); });
+			}).detach();
+			logger::info("fallen: risen again");
+		}
+		void TickSolo(RE::PlayerCharacter* p, float a_delta)
+		{
+			auto*       av = p->AsActorValueOwner();
+			const float hp = av->GetActorValue(RE::ActorValue::kHealth);
+			if (g_soloT < 0.0f) {
+				// (Helgen's own hold, the Hearthfire Tonic and its grace see to a fall themselves)
+				if (!Save::Flag(Save::kFlagMoved) || Perks::SelfRevive()) return;
+				if (hp <= 1.0f || p->AsActorState()->IsBleedingOut()) SoloFall(p);
+				return;
+			}
+			// (real seconds: the slowed world doesn't slow the screen)
+			const float dt = std::clamp(RE::GetSecondsSinceLastFrame(), 0.0f, 0.1f);
+			(void)a_delta;
+			g_soloT += dt;
+			HoldDown();
+			const float rise = std::clamp(g_soloT / kSoloAuto, 0.0f, 1.0f);
+			const bool  ready = g_soloT >= kSoloMayRise;
+			{
+				std::scoped_lock l(Hud::Lock());
+				auto& h = Hud::Edit();
+				h.deathT = g_soloT, h.deathRise = rise, h.deathReady = ready;
+				h.hurtTime = 0.0f;
+			}
+			if (g_soloT >= kSoloAuto || (ready && g_soloPressed)) SoloRise(p);
+		}
+	}
+
 	// ---- the party's save points (dawn, and a freed city's dawn) ----
 	namespace
 	{
@@ -224,7 +319,7 @@ namespace bo3z::Party
 			g_marks = std::move(marks);
 		}
 		const bool active = Active();
-		SetEssential(active || Perks::SelfRevive());
+		SetEssential(true);  // (alone too: a fall is the BO3 fall below, never Skyrim's death and its reload)
 		std::scoped_lock l(g_lock);
 		g_at = p->GetPosition();
 		if (!active) {
@@ -232,8 +327,10 @@ namespace bo3z::Party
 				Rise(1.0f, "On your feet");
 			}
 			g_remote.clear();
+			TickSolo(p, a_delta);
 			return;
 		}
+		if (g_soloT >= 0.0f) SoloRise(p);  // (a party joined while you lay there)
 		// fallen: zero health (Skyrim holds an essential player in bleedout instead of killing them)
 		auto*       av = p->AsActorValueOwner();
 		const float hp = av->GetActorValue(RE::ActorValue::kHealth);
@@ -356,7 +453,9 @@ namespace bo3z::Party
 		const auto id = a_b->GetIDCode();
 		if ((dev == RE::INPUT_DEVICE::kKeyboard && id == 18) || (dev == RE::INPUT_DEVICE::kGamepad && id == 0x1000)) {
 			g_activateHeld = a_b->IsPressed();
+			if (g_soloT >= 0.0f && a_b->IsDown()) g_soloPressed = true;
 		}
+		if (g_soloT >= 0.0f) return true;  // (fallen: nothing else answers)
 		std::scoped_lock l(g_lock);
 		if (g_life != Life::Dead || !a_b->IsDown()) {
 			return g_life != Life::Alive;

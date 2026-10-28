@@ -23,6 +23,7 @@ namespace bo3z::Classes
 		std::array<std::array<Save::Slot, 3>, 4>               g_slotStash{};  // per class: its three weapon slots
 		std::array<std::vector<RE::FormID>, 4>                 g_wornStash;    // per class: what it had on / in hand
 		std::array<std::vector<std::uint8_t>, 4>               g_perkStash;    // per class: its altar blessings' stacks
+		std::uint8_t                                           g_guide = 0;    // (the guided first night) which of its cards have been shown (bits)
 		std::chrono::steady_clock::time_point                  g_closedAt{};
 		std::array<std::uint16_t, coffer::kLadders>            g_mastery{};  // kills made with each ladder's spell in hand (its summons' kills for the Summoner)
 
@@ -805,6 +806,38 @@ namespace bo3z::Classes
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		if (!p || !dh) return;
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();
+		// (Noah: "a guided first night") a new character's first steps, each card shown once: the altar, septims, the night's
+		// waves, the breath between them, and the first dawn
+		if (p->Is3DLoaded() && Save::Flag(Save::kFlagMoved) && !Open()) {
+			static float wait = 0;
+			auto card = [&](int a_bit, const char* a_title, const char* a_text) {
+				if (g_guide & (1 << a_bit)) return false;
+				g_guide |= static_cast<std::uint8_t>(1 << a_bit);
+				Hud::Lore(a_title, a_text, 11.0f);
+				wait = 13.0f;  // (one card at a time)
+				logger::info("guide: '{}' shown", a_title);
+				return true;
+			};
+			struct { int wave = 0, round = 0; } hs;
+			{
+				std::scoped_lock l(Hud::Lock());
+				hs.wave = Hud::Edit().wave, hs.round = Hud::Edit().round;
+			}
+			if ((wait -= 1.0f) <= 0) {
+				const bool fighting = Director::Fighting();
+				if (g_class.load() < 0) {
+					card(0, "THE ECHO ALTAR", "Walk to Riverwood's Echo Altar and press Activate to choose your class. Every city has an altar: it is where you spend septims on spells, blessings and upgrades.");
+				} else if (!fighting && !(g_guide & 2)) {
+					card(1, "SEPTIMS", "Every hit and every kill on the dead earns septims - your total sits at the top of the screen. Spend them at an Echo Altar between waves and by day.");
+				} else if (fighting && hs.wave <= 1 && !(g_guide & 4)) {
+					card(2, "THE NIGHT", "At dusk the dead rise in waves. The counter at the top shows how many are left in this wave. Clear every wave and dawn breaks. Fall, and the wave begins again - and your blessings are lost.");
+				} else if (fighting && hs.wave >= 2 && !(g_guide & 8)) {
+					card(3, "BETWEEN WAVES", "A few seconds' breath before the next wave rises: heal, reload, find better ground, or run for an altar. The last few of every wave come straight for you.");
+				} else if (!fighting && hs.round >= 1 && (g_guide & 4) && !(g_guide & 16)) {
+					card(4, "DAWN", "The dead crumble at first light. Spend your septims, then rest until dusk - every night is harder than the last.");
+				}
+			}
+		}
 		// (Noah) a Summoner from before the staff came gets it once, a moment into the game
 		if (!g_staffChecked && p->Is3DLoaded() && g_class.load() == coffer::kSummoner && g_kit[coffer::kSummoner]) {
 			g_staffChecked = true;
@@ -1734,6 +1767,8 @@ namespace bo3z::Classes
 			v.push_back(static_cast<std::uint8_t>(n));
 			for (std::size_t i = 0; i < n; ++i) u32(g_wornStash[c][i]);
 		}
+		v.push_back(0xA7);  // the guided first night's cards shown
+		v.push_back(g_guide);
 		v.push_back(0xA6);  // each class's blessings: per class [n u8][n x stacks u8]
 		for (int c = 0; c < 4; ++c) {
 			const auto n = std::min<std::size_t>(g_perkStash[c].size(), 255);
@@ -1816,6 +1851,8 @@ namespace bo3z::Classes
 			}
 		}
 		for (auto& ps : g_perkStash) ps.clear();
+		g_guide = 0;
+		if (k + 1 < a_v.size() && a_v[k] == 0xA7) g_guide = a_v[k + 1], k += 2;
 		if (k < a_v.size() && a_v[k] == 0xA6) {
 			++k;
 			for (int c = 0; c < 4 && k < a_v.size(); ++c) {

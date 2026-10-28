@@ -234,6 +234,16 @@ namespace bo3z
 				return;
 			}
 			anyHit = now;
+			{  // (Noah: "a sound cue for things that hit you from behind") a blow from outside your view: its side marked, a low thud
+				const auto  zp = a_zombie->GetPosition(), pp = player->GetPosition();
+				const float face = std::atan2(zp.x - pp.x, zp.y - pp.y);
+				float       rel = std::fmod(face - player->GetAngleZ() + 3.0f * RE::NI_PI, 2.0f * RE::NI_PI) - RE::NI_PI;
+				if (std::abs(rel) > 0.9f) {
+					std::scoped_lock l(Hud::Lock());
+					Hud::Edit().hurtDir = rel, Hud::Edit().hurtDirT = 1.0f;
+					Audio::Ui(gen::Sound::flesh_hit, 0.45f);
+				}
+			}
 			auto* av = player->AsActorValueOwner();
 			const float jug = gen::kPerks[gen::kPerk_trollshide].value * N(gen::kPerk_trollshide);
 			const float baseHealth = std::max(50.0f, av->GetPermanentActorValue(RE::ActorValue::kHealth) - jug);
@@ -436,6 +446,10 @@ namespace bo3z
 			Stats::OnHurt();
 			auto*       av = p->AsActorValueOwner();
 			const float hp = av->GetActorValue(RE::ActorValue::kHealth);
+			if (a_amount > 0.15f * av->GetPermanentActorValue(RE::ActorValue::kHealth)) {  // (hit feedback: a big blow is felt)
+				std::scoped_lock l(Hud::Lock());
+				Hud::Edit().kickT = 0.35f;
+			}
 			if (hp - a_amount > 1.0f) {
 				av->DamageActorValue(RE::ActorValue::kHealth, a_amount);
 				g_hurtCheck = { av->GetActorValue(RE::ActorValue::kHealth), 0.6f };

@@ -48,6 +48,7 @@ namespace bo3z
 			int             trophies{ 0 };     // (Thorgar) skulls taken
 			bool            berserk{ false };  // (the Skeleton Mutant) past half: berserk
 			std::vector<RE::ActorHandle> band; // (the Goblin Warlord) the goblins it called
+			bool            straggler{ false };  // (the round flow) one of a wave's last three: sent straight at you
 		};
 
 		Phase                   g_phase = Phase::Day;
@@ -486,9 +487,14 @@ namespace bo3z
 						if (auto za = z.handle.get(); za && !za->IsDead() && za->GetPosition().GetDistance(pp) < 4000.0f) ++crowd[bin(za->GetPosition())];
 					}
 					std::vector<float> wts;
+					// (the performance pass: no pop-in) a spot close by and right before your eyes is used last
+					const float yawP = a_player->GetAngleZ();
+					const RE::NiPoint3 fwd{ std::sin(yawP), std::cos(yawP), 0.0f };
 					for (const auto* q : ok) {
 						const float d = q->GetDistance(pp);
-						wts.push_back((d < 3200.0f ? 1.0f : 0.25f) / (1.0f + 1.5f * static_cast<float>(crowd[bin(*q)])));  // (the near ones first)
+						const float face = d > 1.0f ? ((q->x - pp.x) * fwd.x + (q->y - pp.y) * fwd.y) / d : 0.0f;
+						const float seen = (d < 1600.0f && face > 0.55f) ? 0.15f : 1.0f;
+						wts.push_back(seen * (d < 3200.0f ? 1.0f : 0.25f) / (1.0f + 1.5f * static_cast<float>(crowd[bin(*q)])));  // (the near ones first)
 					}
 					// (Noah: "they spawn on top of each other") a spot just used rests a few seconds, and each one is set
 					// where none of the dead already stands: tried round its point until it is clear by a body's width
@@ -2012,6 +2018,42 @@ namespace bo3z
 			std::erase_if(g_purge, [](const auto& e) { return e.second <= 0; });
 		}
 
+		// (Noah: "smoother round flow") the wave's last kill: the world slows to a third for half a second, then back
+		std::chrono::steady_clock::time_point g_slowUntil{};
+		bool                                  g_slowOn = false;
+		void SlowBeat(float a_realSeconds, float a_mult)
+		{
+			if (Net::InLobby()) return;  // (never in a party: everyone's clock must keep the same time)
+			if (auto* t = RE::BSTimer::GetSingleton()) t->SetGlobalTimeMultiplier(a_mult, true);
+			g_slowOn = true;
+			g_slowUntil = std::chrono::steady_clock::now() + std::chrono::milliseconds(static_cast<int>(a_realSeconds * 1000.0f));
+		}
+		void TickSlow()
+		{
+			if (g_slowOn && std::chrono::steady_clock::now() >= g_slowUntil) {
+				if (auto* t = RE::BSTimer::GetSingleton()) t->SetGlobalTimeMultiplier(1.0f, true);
+				g_slowOn = false;
+			}
+		}
+		// (the round flow) a wave's last three come straight for you: on your trail, a little quicker, and drawn up from
+		// far off - no hunting the town for a straggler
+		void Stragglers(RE::PlayerCharacter* a_player)
+		{
+			if (g_waveSpawned < g_waveSize || g_alive.empty() || g_alive.size() > 3) return;
+			for (auto& s : g_alive) {
+				auto a = s.handle.get();
+				if (!a || a->IsDead() || Director::IsBoss(a.get()) || Director::Rising(a.get())) continue;
+				if (!s.straggler) {
+					s.straggler = true;
+					a->AsActorValueOwner()->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, 20.0f);
+				}
+				if (auto t = a->GetActorRuntimeData().currentCombatTarget.get(); !t || t.get() != a_player) {
+					a->StopCombat();
+					a->StartCombat(a_player);
+				}
+			}
+		}
+
 		// the night's waves: each one's dead rise from the spawn points until its count is out; when every one of them is
 		// down the next wave comes after a breath, and after the last the night breaks into dawn
 		// (Noah) the mini-boss: a warning (a roar, the sky flashing, a banner), then it rises near you
@@ -2040,6 +2082,7 @@ namespace bo3z
 			}
 			if (Director::RaiseChampion(-2, row, name, 14.0f, at)) {
 				Hud::Banner(name + " - A MINI-BOSS RISES!", 5.0f);
+				Audio::Duck(4.0f);
 			}
 		}
 		void TickMiniBoss(RE::PlayerCharacter* a_player, float a_delta)
@@ -2056,6 +2099,7 @@ namespace bo3z
 		void WaveBegins()
 		{
 			Forms::Play(gen::Sound::round_start);
+			Audio::Duck(2.5f);
 			if (g_waveTheme >= 0) {
 				const auto& ev = gen::kEvents[g_waveTheme];
 				Forms::Play(ev.sound);
@@ -2080,11 +2124,19 @@ namespace bo3z
 				return;
 			}
 			if (g_waveRest > 0) {
-				if ((g_waveRest -= a_delta) <= 0) {
+				// (Noah: "a short countdown with a rising sound before each wave") the last three seconds tick, the rise beneath
+				const float before = g_waveRest;
+				g_waveRest -= a_delta;
+				if (before > 3.0f && g_waveRest <= 3.0f) Forms::Play(gen::Sound::charge_up);
+				for (int sec : { 3, 2, 1 }) {
+					if (before > static_cast<float>(sec) && g_waveRest <= static_cast<float>(sec)) Audio::Ui(gen::Sound::ui_move, 0.8f);
+				}
+				if (g_waveRest <= 0) {
 					WaveBegins();
 				}
 				return;
 			}
+			Stragglers(a_player);
 			if (g_waveSpawned < g_waveSize) {
 				const float boost = Curse::SpawnBoost() * (g_event >= 0 ? gen::kEvents[g_event].spawnMult : 1.0f);
 				const int   want = std::min(static_cast<int>(g_toSpawn * Curse::SpawnBoost()), R.maxAlive * 3 / 2);
@@ -2110,6 +2162,8 @@ namespace bo3z
 			}
 			Curse::OnWave(true);
 			Stats::Note(Stats::kWave);
+			SlowBeat(0.55f, 0.3f);  // (the last of the wave falls in slow time)
+			Audio::Duck(3.0f);
 			if (auto* pav = a_player->AsActorValueOwner(); pav && !a_player->IsDead() &&
 				pav->GetActorValue(RE::ActorValue::kHealth) < 0.15f * pav->GetPermanentActorValue(RE::ActorValue::kHealth)) {
 				Stats::Style("LAST STAND", 100);  // (Noah: style - a wave survived on the last of your health)
@@ -3336,6 +3390,31 @@ namespace bo3z
 			for (auto& z : g_alive) v.push_back(z.handle);
 			return v;
 		}
+		// (Noah: "BO3-style death instead of reloading a save") you fell: the wave's dead are gone and the wave begins again
+		// after a breath (a boss stays where it is)
+		void RestartWave()
+		{
+			int n = 0;
+			for (auto& s : g_alive) {
+				if (auto a = s.handle.get(); a && !Director::IsBoss(a.get())) Vanish(a.get()), ++n;
+			}
+			std::erase_if(g_alive, [](const Spawned& s) { auto a = s.handle.get(); return !a || !Director::IsBoss(a.get()); });
+			for (auto& h : g_corpses) {
+				if (auto a = h.get()) Vanish(a.get());
+			}
+			g_corpses.clear();
+			g_settle.clear();
+			g_hazards.clear();
+			EndRisers();
+			if (g_phase == Phase::Fighting && g_wave > 0 && !g_nightCleared) {
+				g_waveSize = WaveSize(g_wave);
+				g_waveSpawned = 0;
+				g_waveRest = kWaveRest + 2.0f;
+			}
+			logger::info("fallen: wave {} begins again ({} of the dead gone)", g_wave, n);
+		}
+		void SlowTime(float a_realSeconds, float a_mult) { SlowBeat(a_realSeconds, a_mult); }
+		void NormalTime() { g_slowUntil = std::chrono::steady_clock::now(); TickSlow(); }
 		float TakenMult(RE::Actor* a_actor)
 		{
 			for (const auto& s : g_alive) {
@@ -4307,7 +4386,23 @@ namespace bo3z
 				h.wave = waving ? g_wave : 0, h.waves = waving ? g_waves : 0, h.waveSize = g_waveSize;
 				h.waveLeft = waving ? std::max(0, g_waveSize - g_waveSpawned) + static_cast<int>(g_alive.size()) : 0;
 				h.waveRest = g_waveRest;
+				// the last of a wave: where each is (screen), for the HUD's markers
+				h.lastDead.clear();
+				if (waving && g_waveSpawned >= g_waveSize && !g_alive.empty() && g_alive.size() <= 3) {
+					if (auto* cam = RE::Main::WorldRootCamera()) {
+						for (auto& sp : g_alive) {
+							auto a = sp.handle.get();
+							if (!a || a->IsDead()) continue;
+							RE::NiPoint3 at = a->GetPosition();
+							at.z += 120.0f;
+							float x = 0, y = 0, z = 0;
+							cam->WorldPtToScreenPt3(at, x, y, z, 1e-5f);
+							h.lastDead.push_back({ x, 1.0f - y, z > 0.0f ? 1.0f : 0.0f, at.GetDistance(player->GetPosition()) });
+						}
+					}
+				}
 			}
+			TickSlow();
 			g_pause = std::max(0.0f, g_pause - a_delta);
 			Curse::Tick(a_delta);
 			Echo::Tick(a_delta);
