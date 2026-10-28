@@ -3459,6 +3459,25 @@ namespace bo3z
 		}
 		void OnDying(RE::Actor* a_actor)
 		{
+			// (Noah: "the armored warrior knights all had loot in their inventory - no items on the Curse's corpses, only
+			// ours, not Skyrim's") one of ours that falls can't be searched, and whatever it carried that isn't on its body
+			// is gone; what it wears stays for its look, out of reach (taken off a body mid-fall is what crashed HDT-SMP)
+			if (a_actor && IsOurs(a_actor)) {
+				a_actor->SetActivationBlocked(true);
+				std::thread([h = a_actor->GetHandle()] { std::this_thread::sleep_for(std::chrono::milliseconds(800)); Tasks::Add([h] {
+					auto b = h.get();
+					if (!b || b->IsDeleted()) return;
+					b->SetActivationBlocked(true);
+					int n = 0;
+					for (auto& [obj, data] : b->GetInventory()) {
+						if (data.first <= 0 || !obj || (data.second && data.second->IsWorn())) continue;
+						b->RemoveItem(obj, data.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+						++n;
+					}
+					static int told = 0;
+					if (n && told++ < 10) logger::info("night: {} things taken off a fallen {:08X} (none of the Curse's dead carry loot)", n, b->GetFormID());
+				}); }).detach();
+			}
 			// (Thorgar the Skulltaker) a player or a summon falls near it: its trophy - it heals, grows and quickens
 			if (auto* pl = RE::PlayerCharacter::GetSingleton(); a_actor && pl && PlayerSide(a_actor, pl)) {
 				for (auto& s : g_alive) {
