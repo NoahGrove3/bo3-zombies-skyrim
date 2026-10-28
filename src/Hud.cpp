@@ -2830,7 +2830,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					// which of your two), roll again, or leave it for half the roll back
 					const bool spell = s.chooseKind == 0;
 					Txt(dl, g_title, 21 * k, { L, y + 2 * k }, kParch, (spell ? "A THIRD SPELL: " : "THE ALTAR OFFERS: ") + Upper(s.chooseName));
-					Txt(dl, g_body, 16 * k, { L, y + 32 * k }, IM_COL32(196, 182, 160, 235), spell ? "You carry two of the altar's spells. Give one back, or roll again:" : std::string("Take it, roll again, or leave it:"));
+					Txt(dl, g_body, 16 * k, { L, y + 32 * k }, IM_COL32(196, 182, 160, 235), spell ? (s.chooseC >= 0 ? "You carry three of the altar's spells. Give one back, or roll again:" : "You carry two of the altar's spells. Give one back, or roll again:") : std::string("Take it, roll again, or leave it:"));
 					float cy = y + 60 * k;
 					struct Opt { int id; std::string text, key; };
 					std::vector<Opt> opts;
@@ -2838,6 +2838,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					if (spell) {
 						if (s.chooseA >= 0) opts.push_back({ 0, "Replace " + ArmsName(Arcana::kIdBase + s.chooseA) + (Arcana::RungOf(s.chooseA) > 1 ? "  (its climb is lost)" : ""), g_padLast ? (ps ? "Square" : "X") : Settings::KeyName(0) });
 						if (s.chooseB >= 0) opts.push_back({ 1, "Replace " + ArmsName(Arcana::kIdBase + s.chooseB) + (Arcana::RungOf(s.chooseB) > 1 ? "  (its climb is lost)" : ""), g_padLast ? (ps ? "Triangle" : "Y") : Settings::KeyName(1) });
+						if (s.chooseC >= 0) opts.push_back({ 4, "Replace " + ArmsName(Arcana::kIdBase + s.chooseC) + (Arcana::RungOf(s.chooseC) > 1 ? "  (its climb is lost)" : ""), std::string() });
 					} else {
 						opts.push_back({ 0, "Take " + s.chooseName + (s.chooseOld.empty() ? std::string() : "  (" + s.chooseOld + " goes back)"), g_padLast ? (ps ? "Square" : "X") : Settings::KeyName(0) });
 					}
@@ -2918,8 +2919,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const int  nextSp = ladder ? Arcana::NextRung(sp) : -1;
 					const int  marks = ladder ? std::max(0, Arcana::Rungs(sp) - 1) : gen::kForgeMax;
 					const int  lvl = s.bowHeld >= 0 ? Bows::Level(s.bowHeld) : gw >= 0 ? std::clamp(s.slotLevel[act], 0, gen::kForgeMax) : sp >= 0 ? Arcana::RungOf(sp) - 1 : 0;
-					const bool maxed = ladder ? nextSp < 0 : lvl >= gen::kForgeMax;
-					const int  cost = ladder ? (nextSp >= 0 && Arcana::TierOf(nextSp) >= 3 ? gen::kForgeCost[2] : gen::kForgeCost[std::clamp(lvl, 0, 1)]) : gen::kForgeCost[std::clamp(lvl, 0, gen::kForgeMax - 1)];
+					const int  asc = ladder && nextSp < 0 ? Arcana::Level(sp) : -1;  // (the top rung: its Ascends, 0..3)
+					const bool maxed = ladder ? (nextSp < 0 && asc >= gen::kForgeMax) : lvl >= gen::kForgeMax;
+					const int  cost = asc >= 0 ? gen::kForgeCost[std::clamp(asc, 0, gen::kForgeMax - 1)] : ladder ? (nextSp >= 0 && Arcana::TierOf(nextSp) >= 3 ? gen::kForgeCost[2] : gen::kForgeCost[std::clamp(lvl, 0, 1)]) : gen::kForgeCost[std::clamp(lvl, 0, gen::kForgeMax - 1)];
 					const bool locked = s.freedCount < s.forgeAt && !Gun::TestKitOn();  // (Noah: the reforge opens once three altars are freed)
 					const bool can = !locked && g >= 0 && !maxed;
 					static constexpr const char* kRowName[4] = { "BIND PACT", "REFORGE", "REFORGE", "IMBUE" };
@@ -2930,7 +2932,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const char* holdWhat = altarCls == 2 ? "Hold an elemental bow to reforge it" : altarCls == 0 ? "Hold a summon spell to bind its next pact" : altarCls == 3 ? "Hold a touch to imbue it (and your blade)" : "Hold a spell to reforge it";
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, locked ? kLockedCol : IM_COL32(196, 182, 160, 235),
 						locked ? "Locked until three Echo Altars are freed (" + std::to_string(s.freedCount) + " of " + std::to_string(s.forgeAt) + ")" : g < 0 ? std::string(holdWhat)
-						: ArmsName(g) + (maxed ? (ladder ? "  -  the last of its ladder" : "  -  ascended") : s.bowHeld >= 0 ? "  -  next: " + std::string(Bows::TierName(s.bowHeld, lvl + 1)) : ladder ? "  -  next: " + std::string(Arcana::Name(nextSp)) : std::string("  -  more power, less magicka")));
+						: ArmsName(g) + (maxed ? std::string("  -  fully ascended") : s.bowHeld >= 0 ? "  -  next: " + std::string(Bows::TierName(s.bowHeld, lvl + 1)) : asc >= 0 ? "  -  next: Ascend " + std::to_string(asc + 1) + " of 3 (six freed altars)" : ladder ? "  -  next: " + std::string(Arcana::Name(nextSp)) : std::string("  -  more power, less magicka")));
 					for (int q = 0; q < (locked ? 0 : marks); ++q) {  // the forge marks
 						const ImVec2 pc{ L + 150 * k + q * 18 * k, y + 14 * k };
 						dl->AddQuadFilled({ pc.x, pc.y - 6 * k }, { pc.x + 5 * k, pc.y }, { pc.x, pc.y + 6 * k }, { pc.x - 5 * k, pc.y }, q < lvl ? spellCol(g, 1.0f) : IM_COL32(60, 52, 46, 220));

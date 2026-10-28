@@ -480,7 +480,7 @@ namespace BowsImpl
 			if (t >= 2 && !killed) {  // Storm Mark
 				g_marks.push_back({ a->GetHandle(), row, 4.0f, 0.0f, dmg * 0.25f });
 			}
-			if (false && t >= 3 && s.full) {  // Thunderstrike
+			if (t >= 3 && s.full && Story::AlduinFallen()) {  // (the classes' growth: back as the bow's Legendary strike after Sovngarde)  // Thunderstrike
 				Spellcraft::StreakAt(row, p + RE::NiPoint3{ Rand(-60, 60), Rand(-60, 60), 1400.0f }, p, 1.4f, 0.35f, true);
 				for (auto* f : Foes(p, 330.0f)) {
 					Spellcraft::Strike(row, f, dmg * 1.5f, false, gen::kFxNone, p);
@@ -512,7 +512,7 @@ namespace BowsImpl
 				}
 				Spellcraft::BurstAt(row, p, rr * 0.6f, 0.4f);
 			}
-			if (false && t >= 3 && s.full) {
+			if (t >= 3 && s.full && Story::AlduinFallen()) {  // (the classes' growth: back as the bow's Legendary strike after Sovngarde)
 				Dawnbreak(row, p, dmg);
 			}
 			break;
@@ -562,12 +562,12 @@ namespace BowsImpl
 			}
 			break;
 		case Kind::Sun:
-			if (false && t >= 3 && s.full) {
+			if (t >= 3 && s.full && Story::AlduinFallen()) {  // (the classes' growth: back as the bow's Legendary strike after Sovngarde)
 				Dawnbreak(row, p, s.damage);
 			}
 			break;
 		case Kind::Shock:
-			if (false && t >= 3 && s.full) {
+			if (t >= 3 && s.full && Story::AlduinFallen()) {  // (the classes' growth: back as the bow's Legendary strike after Sovngarde)
 				Spellcraft::StreakAt(row, p + RE::NiPoint3{ 0, 0, 1400.0f }, p, 1.4f, 0.35f, true);
 				for (auto* f : Foes(p, 330.0f)) {
 					Spellcraft::Strike(row, f, s.damage * 1.5f, false, gen::kFxNone, p);

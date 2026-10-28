@@ -23,6 +23,7 @@ namespace bo3z::Classes
 		std::array<std::array<Save::Slot, 3>, 4>               g_slotStash{};  // per class: its three weapon slots
 		std::array<std::vector<RE::FormID>, 4>                 g_wornStash;    // per class: what it had on / in hand
 		std::array<std::vector<std::uint8_t>, 4>               g_perkStash;    // per class: its altar blessings' stacks
+		std::unordered_map<RE::FormID, std::pair<std::uint8_t, std::uint16_t>> g_xbow;  // (the classes' growth) a crossbow's reforges and its kills toward the next
 		std::array<std::vector<RE::FormID>, 4>                 g_extra;        // (the audit) per class: the altar's other spells it was taught (shells, support, pacts, wonders)
 		std::uint8_t                                           g_guide = 0;    // (the guided first night) which of its cards have been shown (bits)
 		std::chrono::steady_clock::time_point                  g_closedAt{};
@@ -667,7 +668,7 @@ namespace bo3z::Classes
 
 	// (each class grows its own way) a kill trains the ladders of what you hold: the spell in each hand for Destruction and
 	// the Spellsword, and your summons' kills (or your own, a summon spell in hand) for the Summoner
-	void OnKill(bool a_bySummon, RE::Actor* a_dying)
+	void OnKill(bool a_bySummon, RE::Actor* a_dying, RE::Actor* a_killer)
 	{
 		int killHow = -1;
 		// the wonder trial: what made the kill
@@ -685,6 +686,10 @@ namespace bo3z::Classes
 			else if (auto* mi = src && !bowSpell ? src->As<RE::MagicItem>() : nullptr) how = (mi->GetAssociatedSkill() == RE::ActorValue::kDestruction || (Arcana::IndexOf(src) >= 0 && Arcana::ClassOf(Arcana::IndexOf(src)) == coffer::kDestruction)) ? 1 : -1;
 			else if (auto* w = src && !bowSpell ? src->As<RE::TESObjectWEAP>() : nullptr) {
 				how = IsRangerWeapon(w) ? 2 : 3;  // (OffhandBows' one-hand crossbows are staves to Skyrim)
+				if (how == 2 && !w->IsBow() && Bows::IndexOf(w) < 0 && (FreedCount() >= 3 || Gun::TestKitOn())) {
+					auto& x = g_xbow[w->GetFormID()];
+					x.second = static_cast<std::uint16_t>(std::min(60000, x.second + 1));
+				}
 				if (const int b = Bows::IndexOf(w); b >= 0 && b < static_cast<int>(g_bowMastery.size()) && (FreedCount() >= 3 || Gun::TestKitOn())) g_bowMastery[b] = static_cast<std::uint16_t>(std::min(60000, g_bowMastery[b] + 1));
 				if (w->IsCrossbow() && c == coffer::kRanger && g_boltKills < 60000) {
 					const int before = BoltsUnlocked();
@@ -723,12 +728,27 @@ namespace bo3z::Classes
 					fmt::format("Six cities are free, and the {} stirs somewhere beneath the Echo Altars. Nobody will tell you how to win it. Stand at a freed altar and listen to its whispers.", kWonderName[c2]), 12.0f);
 			}
 		}
+		// (the classes' growth, the Ranger's own reward) a long shot - 30 m or more - gives its arrow back and a breath of stamina
+		if (auto* pl = RE::PlayerCharacter::GetSingleton(); pl && a_dying && g_class.load() == coffer::kRanger && killHow == 2 &&
+			a_dying->GetPosition().GetDistance(pl->GetPosition()) >= 2100.0f) {
+			if (auto* ammo = pl->GetCurrentAmmo()) pl->AddObjectToContainer(ammo, nullptr, 1, nullptr);
+			auto* av = pl->AsActorValueOwner();
+			av->RestoreActorValue(RE::ActorValue::kStamina, 0.15f * av->GetPermanentActorValue(RE::ActorValue::kStamina));
+		}
 		// (Noah's plan, the Spellsword's resonance) its touch spells climb on melee kills only - a power attack counts twice
 		// (Noah: "make kills count after the forge opens") nothing counts toward a climb before three altars are freed
 		const bool forgeOpen = FreedCount() >= 3 || Gun::TestKitOn();
 		const bool power = a_dying && g_powerHit.contains(a_dying->GetFormID());
 		auto handsNow = Arcana::Hands();
 		if (g_class.load() == coffer::kSpellsword && handsNow[0] < 0 && handsNow[1] < 0) handsNow[0] = BladeSpell();  // (a two-handed blade: the spell it carries)
+		// (the classes' growth: a summon's kill trained whatever was in your hands) it trains the family that called it up
+		if (a_bySummon && forgeOpen) {
+			if (const int fam = SummonFamily(a_killer); fam >= 0) {
+				auto& m = g_mastery[coffer::kSpells[fam].ladder];
+				m = static_cast<std::uint16_t>(std::min(60000, m + 1));
+				handsNow = { -1, -1 };
+			}
+		}
 		for (int h : handsNow) {
 			if (!forgeOpen) break;
 			if (h < 0) continue;
@@ -761,13 +781,75 @@ namespace bo3z::Classes
 		auto* w = p ? p->GetEquippedObject(false) : nullptr;
 		auto* wp = w ? w->As<RE::TESObjectWEAP>() : nullptr;
 		const bool twoHands = wp && (wp->IsTwoHandedSword() || wp->IsTwoHandedAxe());
-		if (twoHands && remembered >= 0 && Arcana::Known(remembered)) return remembered;
+		// (the classes' growth: the bound spell) a spellshield raised in the left keeps the last spell on the blade
+		auto* l = p ? p->GetEquippedObject(true) : nullptr;
+		auto* sh = l ? l->As<RE::TESObjectARMO>() : nullptr;
+		const bool shield = sh && sh->IsShield() && sh->GetFile(0) && std::string_view(sh->GetFile(0)->GetFilename()) == "Spellsword.esp";
+		if ((twoHands || shield) && remembered >= 0 && Arcana::Known(remembered)) return remembered;
 		return -1;
+	}
+	// (the classes' growth) the summon family an actor of yours came from: its creature's form, or its name, against what
+	// each Summoner spell calls up (-1: none of the altar's)
+	int SummonFamily(RE::Actor* a_actor)
+	{
+		static std::unordered_map<RE::FormID, int> byForm;
+		static std::unordered_map<std::string, int> byName;
+		static bool built = false;
+		if (!built) {
+			built = true;
+			for (int i = 0; i < static_cast<int>(coffer::kSpells.size()); ++i) {
+				if (coffer::kSpells[i].cls != coffer::kSummoner) continue;
+				auto* sp = Arcana::Spell(i);
+				if (!sp) continue;
+				for (auto* e : sp->effects) {
+					auto* m = e ? e->baseEffect : nullptr;
+					if (!m || m->GetArchetype() != RE::EffectArchetypes::ArchetypeID::kSummonCreature || !m->data.associatedForm) continue;
+					byForm[m->data.associatedForm->GetFormID()] = i;
+					if (const char* n = m->data.associatedForm->GetName(); n && *n) byName[n] = i;
+				}
+			}
+		}
+		auto* base = a_actor ? a_actor->GetActorBase() : nullptr;
+		if (!base) return -1;
+		if (auto it = byForm.find(base->GetFormID()); it != byForm.end()) return it->second;
+		if (const char* n = a_actor->GetName(); n && *n) {
+			if (auto it = byName.find(n); it != byName.end()) return it->second;
+		}
+		return -1;
+	}
+	// ---- (the classes' growth) a crossbow reforged at the altar: three times, a quarter more each, on its own kills
+	int CrossbowLevel(const RE::TESForm* a_w) { if (!a_w) return 0; auto it = g_xbow.find(a_w->GetFormID()); return it == g_xbow.end() ? 0 : it->second.first; }
+	RE::TESObjectWEAP* HeldCrossbow()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		for (bool left : { false, true }) {
+			auto* o = p ? p->GetEquippedObject(left) : nullptr;
+			if (auto* w = o ? o->As<RE::TESObjectWEAP>() : nullptr; w && IsRangerWeapon(w) && !w->IsBow() && Bows::IndexOf(w) < 0) return w;
+		}
+		return nullptr;
+	}
+	int ReforgeCrossbow(int a_freed, bool& a_spent)
+	{
+		a_spent = false;
+		auto* w = HeldCrossbow();
+		if (!w) return -1;  // (none in hand)
+		auto& x = g_xbow[w->GetFormID()];
+		const std::string name = w->GetName() ? w->GetName() : "Crossbow";
+		if (x.first >= gen::kForgeMax) { Hud::Banner(name + " cannot hold more power", 2.5f); return 0; }
+		const int need = x.first == 0 ? 25 : x.first == 1 ? 60 : 120;
+		if (x.first + 1 >= 3 && a_freed < 6 && !Gun::TestKitOn()) { Hud::Banner(name + "'s last reforge waits until six Echo Altars are freed (" + std::to_string(a_freed) + " of 6)", 3.0f); return 0; }
+		if (x.second < need) { Hud::Banner(name + ": " + std::to_string(x.second) + " / " + std::to_string(need) + " kills with it before it can be reforged", 3.0f); return 0; }
+		if (!Points::Spend(gen::kForgeCost[x.first])) return 0;
+		x.second = 0, ++x.first;
+		a_spent = true;
+		Hud::Banner(name + " reforged  " + std::string(x.first, '|') + "  - its bolts strike harder", 4.0f);
+		logger::info("forge: crossbow {} -> level {}", name, x.first);
+		return 1;
 	}
 	int MasteryNeed(int a_index)
 	{
 		const int next = Arcana::NextRung(a_index);
-		if (next >= 0 && Arcana::TierOf(next) >= 3) return 120;
+		if (next < 0 || Arcana::TierOf(next) >= 3) return 120;  // (a Legendary, and each Ascend after it)
 		const int r = Arcana::RungOf(a_index);
 		return r <= 1 ? 25 : 60;
 	}
@@ -1071,7 +1153,7 @@ namespace bo3z::Classes
 	int MaterialTier(std::string_view a_name)
 	{
 		static constexpr std::pair<std::string_view, int> kTiers[] = { { "Daedric", 3 }, { "Dragon", 3 }, { "Daedra", 3 }, { "Stahlrim", 3 }, { "Cataclysm", 3 }, { "Moonlight", 3 },
-			{ "Giant Crusher", 3 }, { "Spirit Sword", 3 }, { "Deathbane", 3 }, { "Mirror", 3 }, { "Shadow Blade", 3 }, { "Hex", 3 },  // (the Spellsword review: uniques read as steel)
+			{ "Giant Crusher", 3 }, { "Spirit Sword", 3 }, { "Deathbane", 6 }, { "Mirror", 6 }, { "Shadow Blade", 6 }, { "Hex", 6 },  // (the classes' growth: the Spellsword's Legendary steel, at six freed altars)
 			 { "Glass", 2 }, { "Ebony", 2 }, { "Advanced", 2 }, { "Nordic", 2 }, { "Slayer", 2 }, { "Ballista", 2 },
 			{ "Dwarven", 1 }, { "Dwemer", 1 }, { "Elven", 1 }, { "Silver", 1 }, { "Imperial", 1 }, { "Falmer", 1 }, { "Repeater", 1 }, { "Tribow", 1 }, { "Twin", 1 } };
 		for (auto [k, t] : kTiers) if (a_name.find(k) != std::string_view::npos) return t;
@@ -1138,7 +1220,8 @@ namespace bo3z::Classes
 			a_out->name = pick->GetName();
 			{
 				auto* pw = pick->As<RE::TESObjectWEAP>();
-				FillReel(a_out, pool, pick, a_cls == coffer::kRanger ? "Crossbow" : pw ? "Spell-weapon" : "Spellshield");
+				const bool legend = pick->GetName() && MaterialTier(pick->GetName()) >= 6;
+				FillReel(a_out, pool, pick, a_cls == coffer::kRanger ? "Crossbow" : legend ? "Legendary Spell-weapon" : pw ? "Spell-weapon" : "Spellshield", legend);
 			}
 			a_out->give = [pick, a_cls] {
 				auto* pl = RE::PlayerCharacter::GetSingleton();
@@ -1939,6 +2022,16 @@ namespace bo3z::Classes
 			v.push_back(static_cast<std::uint8_t>(n));
 			for (std::size_t i = 0; i < n; ++i) v.push_back(g_perkStash[c][i]);
 		}
+		v.push_back(0xA9);  // the crossbows' reforges: [n u8][n x (u32 form, u8 level, u16 kills)]
+		{
+			const auto n = std::min<std::size_t>(g_xbow.size(), 255);
+			v.push_back(static_cast<std::uint8_t>(n));
+			std::size_t k = 0;
+			for (auto& [id, x] : g_xbow) {
+				if (k++ >= n) break;
+				u32(id), v.push_back(x.first), v.push_back(static_cast<std::uint8_t>(x.second & 0xFF)), v.push_back(static_cast<std::uint8_t>(x.second >> 8));
+			}
+		}
 		v.push_back(0xA8);  // each class's other altar spells: per class [n u8][n x u32]
 		for (int c = 0; c < 4; ++c) {
 			const auto n = std::min<std::size_t>(g_extra[c].size(), 255);
@@ -1958,6 +2051,7 @@ namespace bo3z::Classes
 		for (auto& w : g_wornStash) w.clear();
 		for (auto& ps : g_perkStash) ps.clear();
 		for (auto& e : g_extra) e.clear();
+		g_xbow.clear();
 		if (a_v.empty()) return;
 		g_class = static_cast<int>(a_v[0]) - 1;
 		std::size_t k = 1;
@@ -2034,6 +2128,14 @@ namespace bo3z::Classes
 			for (int c = 0; c < 4 && k < a_v.size(); ++c) {
 				const int n = a_v[k++];
 				for (int i = 0; i < n && k < a_v.size(); ++i) g_perkStash[c].push_back(a_v[k++]);
+			}
+		}
+		if (k < a_v.size() && a_v[k] == 0xA9) {
+			++k;
+			const int n = k < a_v.size() ? a_v[k++] : 0;
+			for (int i = 0; i < n && k + 7 <= a_v.size(); ++i, k += 7) {
+				const RE::FormID id = a_v[k] | (a_v[k + 1] << 8) | (a_v[k + 2] << 16) | (static_cast<std::uint32_t>(a_v[k + 3]) << 24);
+				g_xbow[id] = { a_v[k + 4], static_cast<std::uint16_t>(a_v[k + 5] | (a_v[k + 6] << 8)) };
 			}
 		}
 		if (k < a_v.size() && a_v[k] == 0xA8) {

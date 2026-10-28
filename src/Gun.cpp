@@ -2791,6 +2791,12 @@ namespace bo3z
 				logger::info("forge: {} -> level {}", name, lv + 1);
 				return true;
 			}
+			if (Classes::Get() == 2) {  // (the classes' growth) a crossbow in hand is reforged on its own kills
+				int freedX = 0;
+				for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) freedX += Curse::Freed(t) ? 1 : 0;
+				bool spent = false;
+				if (const int r = Classes::ReforgeCrossbow(freedX, spent); r >= 0) return spent;
+			}
 			if (gun < 0 || slot < 0) {
 				// (the classes overhaul) a class spell in hand (the right first) climbs its ladder: Reforge for Destruction,
 				// Bind Pact for the Summoner, Imbue for the Spellsword - the next rung's spell takes its place and its hands
@@ -2805,12 +2811,33 @@ namespace bo3z
 				const char* verb = cls == 0 ? "Bind Pact" : cls == 3 ? "Imbue" : "Reforge";
 				const int next = Arcana::NextRung(sp);
 				const std::string name(Arcana::Name(sp));
-				if (next < 0) {
-					Hud::Banner(name + " is the last of its " + std::string(Arcana::LadderName(sp)) + " ladder", 2.5f);
-					return false;
-				}
 				int freed = 0;
 				for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) freed += Curse::Freed(t) ? 1 : 0;
+				if (next < 0) {
+					// (the classes' growth: nothing came after a Legendary) Ascend - the top of a ladder grows three times more,
+					// each a share more power (a summon family: harder-hitting summons), at six freed altars, 120 kills each
+					const int lv = Arcana::Level(sp);
+					if (lv >= gen::kForgeMax) {
+						Hud::Banner(name + " has ascended as far as it can", 2.5f);
+						return false;
+					}
+					if (freed < 6 && !TestKitOn()) {
+						Hud::Banner(name + " ascends once six Echo Altars are freed (" + std::to_string(freed) + " of 6)", 3.0f);
+						return false;
+					}
+					if (const int have = Classes::Mastery(sp), want = Classes::MasteryNeed(sp); have < want) {
+						Hud::Banner(name + ": " + std::to_string(have) + " / " + std::to_string(want) + " kills with it before it can ascend", 3.0f);
+						return false;
+					}
+					if (ForgedTonight(Arcana::kIdBase + sp, name)) return false;
+					if (!Points::Spend(gen::kForgeCost[std::clamp(lv, 0, gen::kForgeMax - 1)])) return false;
+					g_forgedTonight.insert(Arcana::kIdBase + sp);
+					Classes::SpendMastery(sp);
+					Arcana::SetLevel(sp, lv + 1);
+					logger::info("forge: {} {} ascends to {}", verb, name, lv + 1);
+					Hud::Banner(name + "  -  ASCENDED  " + std::string(lv + 1, '|'), 4.5f);
+					return true;
+				}
 				// (the consistency pass: the old gates sat under the forge's own three) every class alike: a third rung waits for
 				// four freed altars, a Legendary for six - as the Summoner's Legendary pacts do
 				const int need = Arcana::TierOf(next) >= 3 ? 6 : Arcana::RungOf(next) >= 3 ? 4 : 0;

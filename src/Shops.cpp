@@ -2237,6 +2237,7 @@ namespace bo3z
 				else {
 					opts = { 0 };
 					if (Arcana::Carried().size() > 1) opts.push_back(1);
+					if (Arcana::Carried().size() > 2) opts.push_back(4);  // (the Summoner's third spell can be given back too)
 					opts.push_back(2), opts.push_back(3);
 				}
 				auto at = std::find(opts.begin(), opts.end(), g_chooseFocus);
@@ -2250,7 +2251,7 @@ namespace bo3z
 					g_chooseFocus = opts[i];
 					if (g_chooseFocus == 3) Choose(-1);
 					else if (g_chooseFocus == 2) reroll();
-					else Choose(g_chooseFocus);
+					else Choose(g_chooseFocus == 4 ? 2 : g_chooseFocus);
 				}
 				return true;
 			}
@@ -2535,6 +2536,7 @@ namespace bo3z
 					h.chooseNew = g_show.gun;
 					h.chooseA = have.size() > 0 ? have[0] : -1;
 					h.chooseB = have.size() > 1 ? have[1] : -1;
+					h.chooseC = have.size() > 2 ? have[2] : -1;
 					h.chooseRefund = g_lastRollCost / 2;
 				}
 				if (g_menu) {

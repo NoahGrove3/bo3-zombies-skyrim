@@ -315,11 +315,14 @@ namespace bo3z
 		// a class row's win: its name, how it is given, and what the altar's reel turns through before landing on it (reel[at])
 		struct Prize { std::string name; std::function<void()> give; std::vector<std::string> reel; int at{ 0 }; std::string kind; bool legendary{ false }; };
 		bool             RollGear(int a_cls, Prize* a_out = nullptr);      // a Spellsword weapon or shield / a Ranger's crossbow from the altar (material by freed cities)
-		void             OnKill(bool a_bySummon, RE::Actor* a_dying);  // you (or your summon) killed a foe: what you hold trains, the wonder trial counts
+		void             OnKill(bool a_bySummon, RE::Actor* a_dying, RE::Actor* a_killer = nullptr);  // you (or your summon) killed a foe: what you hold trains, the wonder trial counts
 		void             NoteHit(RE::Actor* a_target, RE::FormID a_source, bool a_power);  // your blow (what killed it; the wonders' on-hit)
 		bool             OnCast(RE::FormID a_spell);   // the Tome of the Six Fires
 		void             NoteCast(RE::FormID a_spell); // a summon spell: called up here if Skyrim's own didn't come
 		bool             IsOwnSummon(RE::Actor* a_actor);
+		int              SummonFamily(RE::Actor* a_actor);  // the Summoner spell (kSpells index) that called it up (-1)
+		int              CrossbowLevel(const RE::TESForm* a_w);  // a crossbow's reforges (0..3)
+		int              ReforgeCrossbow(int a_freed, bool& a_spent);  // the one in hand (-1: none held; 0 refused; 1 done)
 		int              BladeSpell();  // the Spellsword spell your blade carries (in a hand, or the last held with a two-handed blade; -1)
 		void             MarkForSummons(RE::Actor* a_target);  // (the Summoner's staff) every summon of yours turns on it until it dies or another is marked
 		void             ConjurerStaffHit(RE::Actor* a_target, RE::FormID a_source);  // the Conjurer's Staff's bolt struck: a burst, and the marks
@@ -875,7 +878,7 @@ namespace bo3z
 			int         freedCount{ 0 }, forgeAt{ 3 }, legendAt{ 6 };  // Echo Altars freed; the reforge and the Legendary roll open at these
 			// the altar's trials (the city still held): which are done, the one under way, the controller's pick, each with tonight's numbers
 			bool        chooseOn{ false };   // the altar: a third spell won - which of your two does it replace?
-			int         chooseNew{ -1 }, chooseA{ -1 }, chooseB{ -1 }, chooseRefund{ 0 };  // (Arcana indices)
+			int         chooseNew{ -1 }, chooseA{ -1 }, chooseB{ -1 }, chooseC{ -1 }, chooseRefund{ 0 };  // (Arcana indices; C: the Summoner's third)
 			int         chooseKind{ 0 }, chooseReroll{ 0 };  // the offer: 0 a spell, 1 a bow, 2 a class win; what rolling again costs
 			std::string chooseName, chooseOld;              // what is offered; the bow it would replace
 			bool        trialsOn{ false };

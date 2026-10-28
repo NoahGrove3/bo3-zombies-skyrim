@@ -440,7 +440,7 @@ namespace bo3z
 					auto* killer = a_event->actorKiller.get() ? a_event->actorKiller->As<RE::Actor>() : nullptr;
 					const bool mine = killer == player;
 					const bool summon = killer && killer != player && ((killer->IsCommandedActor() && killer->GetCommandingActor().get() == player) || Classes::IsOwnSummon(killer));
-					if (mine || summon) Classes::OnKill(summon, dying);
+					if (mine || summon) Classes::OnKill(summon, dying, killer);
 				}
 				if (dying && dying != player && !Director::IsRoundUndead(dying) && a_event->actorKiller.get() == player && Director::IsFoe(dying)) {
 					PowerUps::MaybeDrop(dying->GetPosition());  // (Noah: any enemy can drop one - bandits, wolves, draugr too)
@@ -680,6 +680,15 @@ namespace bo3z
 							if (sp && sp->GetSpellType() == RE::MagicSystem::SpellType::kSpell) {
 								last = now;
 								Forms::CastOnce(player, sp, t, 1.0f, player);
+								// (the classes' growth: Twin Resonance) your other Spellsword spell - the one in the book - rides it
+								// too, a quarter as strong
+								for (int other : Arcana::Carried()) {
+									if (other == bi || Arcana::ClassOf(other) != 3) continue;
+									if (auto* sp2 = Arcana::Spell(other); sp2 && sp2->GetSpellType() == RE::MagicSystem::SpellType::kSpell) {
+										Forms::CastOnce(player, sp2, t, 0.25f, player);
+										break;
+									}
+								}
 								static int told = 0;
 								if (told++ < 5) logger::info("spellsword: the blade struck with {}", sp->GetName());
 							}
@@ -725,7 +734,7 @@ namespace bo3z
 						if (src && !ourSpell && Forms::GunIndexOf(src) < 0 && !(fangId && src->GetFormID() == fangId) && Limit(z)) {  // (the Fang's blows are FangHit's alone)
 							float share = gen::kShareSpell;
 							if (auto* w = src->As<RE::TESObjectWEAP>()) {
-								share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow : gen::kShareMelee;
+								share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow * (1.0f + 0.25f * static_cast<float>(Classes::CrossbowLevel(w))) : gen::kShareMelee;  // (a reforged crossbow: a quarter more each)
 							} else if (src->Is(RE::FormType::Spell)) {
 								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
 							}
@@ -746,9 +755,15 @@ namespace bo3z
 						// blade at the first rung, up to 0.51x at the Legendary), a third again with Bonebinder's Brew
 						float tierMult = 0.9f;
 						if (mySummon) {
-							int best = 1;
-							for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0) best = std::max(best, Arcana::RungOf(i));
-							tierMult = (0.3f + 0.07f * static_cast<float>(best - 1)) * (Perks::SummonMight() ? gen::kPerks[gen::kPerk_bonebinder].value : 1.0f);  // (the Brew: its own half again, as it says)
+							// (the classes' growth) its own family's rung and Ascends - the best you carry if it isn't the altar's
+							int best = 1, asc = 0;
+							if (const int fam = Classes::SummonFamily(ally); fam >= 0) {
+								best = Arcana::RungOf(fam), asc = Arcana::Level(fam);
+								for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0 && Arcana::LadderName(i) == Arcana::LadderName(fam)) best = std::max(best, Arcana::RungOf(i)), asc = std::max(asc, Arcana::Level(i));
+							} else {
+								for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0) best = std::max(best, Arcana::RungOf(i)), asc = std::max(asc, Arcana::Level(i));
+							}
+							tierMult = (0.3f + 0.07f * static_cast<float>(best - 1)) * (1.0f + 0.15f * static_cast<float>(asc)) * (Perks::SummonMight() ? gen::kPerks[gen::kPerk_bonebinder].value : 1.0f);  // (the Brew: its own half again, as it says)
 						}
 						// (Noah: "summons are too strong") a summon lands its share at most once every 0.7 s, however fast it bites
 						// or how many bolts it throws, and that share is a third of a blade's at the first rung

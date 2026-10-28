@@ -29,7 +29,10 @@ namespace bo3z::Arcana
 			const int n = std::max(1, a_night);
 			return n <= 10 ? 0.5f + 0.5f * (n - 1) / 9.0f : std::min(1.5f, 1.0f + 0.025f * (n - 10));
 		}
-		float AltarPower() { return NightPower(g_night); }
+		// (the classes' growth) the story counts too: a little more for every Echo Altar freed, and a step more once Alduin falls
+		int  g_freedNow = 0;
+		bool g_alduinNow = false;
+		float AltarPower() { return NightPower(g_night) * (1.0f + 0.03f * static_cast<float>(g_freedNow)) * (g_alduinNow ? 1.1f : 1.0f); }
 
 		// Balance (Noah: most of them one-shot Skyrim's own enemies): every Coffer spell does 45% of the damage its mod
 		// gave it and costs 75% of the pool's price.
@@ -153,14 +156,17 @@ namespace bo3z::Arcana
 	void  RefreshPower()
 	{
 		const int night = Save::Get(gen::kAV_round) + 1;  // (the night being fought, or the next)
-		if (night == g_night) {
+		int freed = 0;
+		for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) freed += Curse::Freed(t) ? 1 : 0;
+		const bool alduin = Story::AlduinFallen();
+		if (night == g_night && freed == g_freedNow && alduin == g_alduinNow) {
 			return;
 		}
-		g_night = night;
+		g_night = night, g_freedNow = freed, g_alduinNow = alduin;
 		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
 			Apply(i);
 		}
-		logger::info("arcana: night {} - spells, bows and shouts at {:.0f}% power", night, AltarPower() * 100.0f);
+		logger::info("arcana: night {}, {} altars freed{} - spells, bows and shouts at {:.0f}% power", night, freed, alduin ? ", Alduin fallen" : "", AltarPower() * 100.0f);
 	}
 
 	// (Noah: two of the altar's spells at a time) the altar's spells you carry, the ones in your hands first
