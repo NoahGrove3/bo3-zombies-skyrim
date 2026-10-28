@@ -176,8 +176,23 @@ namespace bo3z::Party
 		std::atomic<int> g_fallGen{ 0 };  // (the audit) each fall, rise and load a new number: a stale save-load task does nothing
 		float           g_soloLoadAt = 0;
 		constexpr float kSoloAuto = 8.0f, kSoloMayRise = 3.2f;
+		// (Noah: "the death screen came up but I could still move and fight") while you lie there Skyrim's own controls are
+		// off too - moving, fighting, jumping, sneaking, activating - and you go down on your knees
+		constexpr auto kFallControls = static_cast<RE::UserEvents::USER_EVENT_FLAG>(
+			static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kMovement) | static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kFighting) |
+			static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kJumping) | static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kSneaking) |
+			static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kActivate) | static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kPOVSwitch));
+		bool g_controlsOff = false;
+		void FallControls(bool a_off)
+		{
+			if (a_off == g_controlsOff) return;
+			g_controlsOff = a_off;
+			if (auto* cm = RE::ControlMap::GetSingleton()) cm->ToggleControls(kFallControls, !a_off, false);
+		}
 		void SoloFall(RE::PlayerCharacter* p)
 		{
+			FallControls(true);
+			p->NotifyAnimationGraph("BleedoutStart");
 			g_soloT = 0.0f, g_soloPressed = false, ++g_fallGen;
 			Audio::LoopStop(Audio::kLoopCharge, 150), Audio::LoopStop(Audio::kLoopSpell, 150);  // (a charging hum no longer plays on through the fall)
 			HoldDown();
@@ -222,6 +237,7 @@ namespace bo3z::Party
 				Hud::Edit().deathT = -1.0f;
 			}
 			++g_fallGen, g_soloLoading = false;
+			FallControls(false);
 			{
 				std::scoped_lock l(Hud::Lock());
 				Hud::Edit().deathLoading = false;
@@ -504,6 +520,7 @@ namespace bo3z::Party
 		g_soloT = -1.0f, g_soloLoading = false, g_soloPressed = false;
 		Director::NormalTime();
 		++g_fallGen;
+		FallControls(false);
 		// (the audit: a wiped party's load kept you "dead" and pinned at 1 health) the party's life state starts over too
 		g_life = Life::Alive, g_left = 0, g_reviveIn.clear(), g_watch = 0, g_wasFighting = false, g_riteSum = -1;
 		if (auto* p = RE::PlayerCharacter::GetSingleton()) p->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery);
