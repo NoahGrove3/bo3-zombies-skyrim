@@ -1637,6 +1637,7 @@ namespace bo3z::gen
 		WordDef{ "lein", "VO", "Undo", "the summit of the Throat of the World", "VO. The last word was shouted from the top of the world, where the Tongues once cast Alduin out of time. Climb the Throat of the World at night: his echo still circles the summit, undoing every death in Skyrim.", "The Echo of Alduin breaks apart over the summit and its shout dies on the wind. SLEN, TIID, VO - all three words are silenced, and the dead can rest. The rest is Sovngarde's to finish.", "The Curse Undone: your magicka returns half again as fast.", "boss4", "The Echo of Alduin", 56044.0f, -47760.0f, 36055.0f, 0.0f, 16.0f, 1.0f, { 10, 12, 14, 0 }, { 2, 2, 3, 0 }, 3 },
 	} };
 	inline constexpr float kWordWake = 3200.0f, kWordLeash = 6500.0f;
+	inline constexpr std::array<std::uint32_t, 3> kElemCrossbows{ { 0xD04, 0xD05, 0xD06 } };  // the Ranger's elemental crossbows: fire, frost, shock
 	inline constexpr std::uint32_t kHallFang = 0xC72, kHallRobes = 0xC73, kHallSkull = 0xC74, kHallEndless = 0xC75, kHallThrone = 0xC76, kHallFangShow = 0xC77, kFangWeap = 0xC79;
 	inline constexpr std::array<std::uint32_t, 5> kEmmFx{ 0xC7A, 0xC7B, 0xC7C, 0xC7D, 0xC7E };  // summon, crystal, orb, storm, tornado
 	inline constexpr std::array<std::uint32_t, 6> kTornado{ 0xC7E, 0xC7F, 0xC80, 0xC81, 0xC82, 0xC83 };  // by element (Bows Kind order)

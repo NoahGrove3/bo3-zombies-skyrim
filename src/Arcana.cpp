@@ -20,6 +20,16 @@ namespace bo3z::Arcana
 		std::mt19937                                        g_rng{ std::random_device{}() };
 		std::array<std::uint8_t, coffer::kSpells.size()>    g_level{};
 		std::array<std::vector<float>, coffer::kSpells.size()> g_baseMag;  // each effect's magnitude as the mod made it
+		std::array<int, coffer::kSpells.size()>                g_dmgEffect{};  // its first health-damage effect (-1 none)
+		bool IsDamageEffect(const RE::Effect* e)
+		{
+			auto* mg = e ? e->baseEffect : nullptr;
+			if (!mg) return false;
+			using A = RE::EffectArchetypes::ArchetypeID;
+			const auto arch = mg->GetArchetype();
+			return mg->data.primaryAV == RE::ActorValue::kHealth && mg->IsDetrimental() && e->effectItem.magnitude > 0 &&
+			       (arch == A::kValueModifier || arch == A::kDualValueModifier || arch == A::kAbsorb || arch == A::kPeakValueModifier);
+		}
 		std::array<std::uint8_t, coffer::kSpells.size()>    g_school{};  // 0 destruction, 1 conjuration, 2 restoration, 3 alteration, 4 illusion
 		int                                                 g_night = -1;  // the night the spells' power was set for
 		// (Noah: balanced the whole way through - no early spell that one-shots) the spells', bows' and shouts' power
@@ -45,12 +55,22 @@ namespace bo3z::Arcana
 				return;
 			}
 			const int   lv = g_level[a_index];
-			const float mult = kPower * AltarPower() * (1.0f + gen::kForgeStep * lv);
+			// (Noah: "the same base damage per upgrade: 10, then 25, 50, 65...") its damage is its ladder's first rung's,
+			// on the one upgrade curve: its rung and its Ascends are its upgrades. What isn't damage stays as the mod made it.
+			const auto& me = coffer::kSpells[a_index];
+			int first = a_index;
+			for (int j = 0; j < static_cast<int>(coffer::kSpells.size()); ++j) {
+				if (coffer::kSpells[j].cls == me.cls && coffer::kSpells[j].ladder == me.ladder && coffer::kSpells[j].rung == 1) { first = j; break; }
+			}
+			float firstDmg = -1.0f;
+			if (const int d = g_dmgEffect[first]; d >= 0 && d < static_cast<int>(g_baseMag[first].size())) firstDmg = g_baseMag[first][d];
+			const int   ups = std::clamp(static_cast<int>(me.tier), 0, 3) + std::max(0, lv);
+			const float mult = kPower * AltarPower();
 			auto&       base = g_baseMag[a_index];
 			for (std::size_t e = 0; e < sp->effects.size() && e < base.size(); ++e) {
-				if (sp->effects[e]) {
-					sp->effects[e]->effectItem.magnitude = base[e] * mult;
-				}
+				if (!sp->effects[e]) continue;
+				const bool dmg = static_cast<int>(e) == g_dmgEffect[a_index] || (g_dmgEffect[a_index] >= 0 && base[e] == base[g_dmgEffect[a_index]] && IsDamageEffect(sp->effects[e]));
+				sp->effects[e]->effectItem.magnitude = dmg && firstDmg > 0 ? firstDmg * UpgradeMult(ups) * mult : base[e] * mult;
 			}
 			sp->data.costOverride = std::max(1, static_cast<int>(std::lround(coffer::kSpells[a_index].cost * kCost * (1.0f - 0.1f * lv) * Difficulty::Mana())));
 		}
@@ -80,6 +100,10 @@ namespace bo3z::Arcana
 			g_index[sp->GetFormID()] = static_cast<int>(i);
 			g_baseMag[i].clear();
 			g_damages[i] = false;
+			g_dmgEffect[i] = -1;
+			for (std::size_t e = 0; e < sp->effects.size(); ++e) {
+				if (IsDamageEffect(sp->effects[e])) { g_dmgEffect[i] = static_cast<int>(e); break; }
+			}
 			for (auto* e : sp->effects) {
 				g_baseMag[i].push_back(e ? e->effectItem.magnitude : 0.0f);
 				auto* mg = e ? e->baseEffect : nullptr;

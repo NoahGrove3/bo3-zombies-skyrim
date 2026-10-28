@@ -628,9 +628,9 @@ namespace bo3z
 			if (!a_actor || !player || a_actor == player || a_actor->IsDead()) {
 				return;
 			}
-			static constexpr float kTier[4] = { 1.0f, 1.3f, 1.7f, 2.2f };
-			const int   tier = std::clamp(Arcana::TierOf(a_index), 0, 3);
-			const float grow = (1.0f + gen::kForgeStep * Arcana::Level(a_index)) * (1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike)) * (0.7f + 0.3f * Arcana::Power());
+			// (Noah: the one upgrade curve) its rung and its Ascends are its upgrades
+			const int   ups = std::clamp(Arcana::TierOf(a_index), 0, 3) + std::max(0, Arcana::Level(a_index));
+			const float grow = UpgradeMult(ups) * (1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike)) * (0.7f + 0.3f * Arcana::Power());
 			// (Noah's plan, Destruction) dual-casting one element: the same spell in both hands hits a third harder
 			const auto  hands = Arcana::Hands();
 			const float twin = Classes::Get() == 1 && hands[0] == a_index && hands[1] == a_index ? 1.35f : 1.0f;
@@ -639,16 +639,15 @@ namespace bo3z
 					// (the balance pass) a concentration spell lands four times a second: each touch takes a third of a
 					// cast's share, so a stream and a bolt kill about as fast for the magicka
 					const float stream = Arcana::Concentration(a_index) ? 0.35f : 1.0f;
-					HurtUndead(a_actor, Director::RoundHealth() * gen::kShareSpell * kTier[tier] * grow * twin * stream);
+					HurtUndead(a_actor, Director::RoundHealth() * gen::kShareSpell * grow * twin * stream);
 				}
 				return;
 			}
 			if (Arcana::Damages(a_index) || !Director::IsFoe(a_actor) || !Limit(a_actor)) {
 				return;
 			}
-			static constexpr float kPart[4] = { 0.07f, 0.09f, 0.12f, 0.16f };
 			const float max = a_actor->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth);
-			HurtUndead(a_actor, std::max(8.0f, max * kPart[tier] * grow * twin));
+			HurtUndead(a_actor, std::max(8.0f, max * std::min(0.6f, 0.07f * grow * twin)));  // (Skyrim's own foes: a share of their health, on the same curve)
 		}
 
 		class HitWatch : public RE::BSTEventSink<RE::TESHitEvent>
@@ -762,11 +761,16 @@ namespace bo3z
 						if (src && !ourSpell && Forms::GunIndexOf(src) < 0 && !(fangId && src->GetFormID() == fangId) && Limit(z)) {  // (the Fang's blows are FangHit's alone)
 							float share = gen::kShareSpell;
 							if (auto* w = src->As<RE::TESObjectWEAP>()) {
-								share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow * (1.0f + 0.25f * static_cast<float>(Classes::CrossbowLevel(w))) : gen::kShareMelee;  // (a reforged crossbow: a quarter more each)
+								// (Noah: the one upgrade curve) a crossbow by its reforges, an altar spell-weapon by its steel
+								const int gear = Classes::AltarGearUpgrades(w);
+								share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow * UpgradeMult(Classes::CrossbowLevel(w)) : gen::kShareMelee * (gear >= 0 ? UpgradeMult(gear) : 1.0f);
 							} else if (src->Is(RE::FormType::Spell)) {
 								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
 							}
 							HurtUndead(z, Director::RoundHealth() * share * (0.7f + 0.3f * Arcana::Power()));  // (the night's power curve)
+							if (auto* w = src->As<RE::TESObjectWEAP>(); w && w->IsCrossbow()) {
+								if (const int el = Classes::CrossbowElement(w); el >= 0) Bows::CrossbowStrike(el, Classes::CrossbowLevel(w), z, Director::RoundHealth() * share * 0.5f);
+							}
 							Undead::OnHit(z);
 							MarkHit(z);
 						}
@@ -791,7 +795,7 @@ namespace bo3z
 							} else {
 								for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0) best = std::max(best, Arcana::RungOf(i)), asc = std::max(asc, Arcana::Level(i));
 							}
-							tierMult = (0.3f + 0.07f * static_cast<float>(best - 1)) * (1.0f + 0.15f * static_cast<float>(asc)) * (Perks::SummonMight() ? gen::kPerks[gen::kPerk_bonebinder].value : 1.0f);  // (the Brew: its own half again, as it says)
+							tierMult = 0.3f * UpgradeMult(std::max(0, best - 1) + std::max(0, asc)) * (Perks::SummonMight() ? gen::kPerks[gen::kPerk_bonebinder].value : 1.0f);  // (Noah: the one upgrade curve - rungs past the first and Ascends)  // (the Brew: its own half again, as it says)
 						}
 						// (Noah: "summons are too strong") a summon lands its share at most once every 0.7 s, however fast it bites
 						// or how many bolts it throws, and that share is a third of a blade's at the first rung

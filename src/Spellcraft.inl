@@ -354,7 +354,7 @@ namespace Spellcraft
 	float g_mpLast = -1;
 
 	const gen::SpellcraftDef& Def(int a_row) { return gen::kSpellcraft[a_row]; }
-	float Mult() { return Perks::DamageMult() * CrewMult(0) * (1.0f + gen::kForgeStep * ForgeLevel()); }
+	float Mult() { return Perks::DamageMult() * CrewMult(0) * UpgradeMult(ForgeLevel()); }
 	int   Snd(int a_gun, int gen::GunSounds::*a_m) { return a_gun >= 0 ? gen::kGunSounds[a_gun].*a_m : -1; }
 	void  Play2D(int a_s, float a_vol = 1.0f)
 	{

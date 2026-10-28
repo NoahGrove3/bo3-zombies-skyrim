@@ -219,7 +219,8 @@ namespace bo3z::Classes
 				if (auto* tome = Lookup(0x817, "Equipable Tomes - Redone.esp")) GiveItem(p, tome, 1, true);  // a Destruction tome at the hip
 				break;
 			case coffer::kRanger:
-				if (const int b = Bows::Roll(); b >= 0) Bows::Give(b);
+				// (Noah: "they should start with only the crossbow, the armour and the bolts - the bows stay at the altar") the
+				// Ember Crossbow and its fire bolts, the bolts nocked
 				if (female) {
 					for (std::uint32_t id : { 0x857u, 0x858u, 0x859u }) {  // (Noah) the Drifter Outfit, light armoured
 						GiveItem(p, Lookup(id, "DrifterArmorAndOutfitByXtudo.esp"), 1, true);
@@ -227,8 +228,13 @@ namespace bo3z::Classes
 				} else {
 					for (auto id : kDawnguardLight) GiveItem(p, Lookup(id, "Dawnguard.esm"), 1, true);
 				}
-				GiveItem(p, Lookup(0x002F9A, "Faction Crossbows.esp"), 1, false);  // Dawnguard Crossbow
-				GiveItem(p, Lookup(0x020B04, "Faction Crossbows.esp"), 30, false);  // Dawnguard Bolts
+				if (auto* xb = ElemCrossbow(0)) {
+					GiveItem(p, xb, 1, true);
+					GiveItem(p, ElemBolts(0), BoltCap(0), true);
+				} else {  // (our plugin's crossbow missing: Faction Crossbows' own)
+					GiveItem(p, Lookup(0x002F9A, "Faction Crossbows.esp"), 1, false);
+					GiveItem(p, Lookup(0x020B04, "Faction Crossbows.esp"), 30, false);
+				}
 				break;
 			case coffer::kSpellsword:
 				for (std::uint32_t id : { 0x800u, 0x802u, 0x805u }) {  // (Noah) the Practical Pirate outfit
@@ -514,25 +520,31 @@ namespace bo3z::Classes
 		std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> g_lastBlade;  // a foe -> when your blade last struck it
 		std::uint16_t g_boltKills = 0;
 		std::array<std::uint16_t, 16> g_bowMastery{};  // (Noah: "make the ranger class also need kills") each altar bow's kills toward its next tier  // (the Ranger's crossbow mastery) kills with a crossbow: fire bolts at 25, ice at 60, shock at 120
-		constexpr std::uint32_t kBoltFamilies[] = { 0x020B04, 0x025A50, 0x025A58, 0x025A60, 0x025A68, 0x025A70 };  // Faction Crossbows' plain bolts (fire +1, ice +2, shock +3)
-		constexpr int           kBoltNeed[3] = { 25, 60, 120 };
-		constexpr const char*   kBoltElem[3] = { "fire", "ice", "shock" };
-		int BoltsUnlocked() { int n = 0; for (int t : kBoltNeed) n += g_boltKills >= t ? 1 : 0; return n; }
-		int TopUpBolts(int a_to)
+		// (Noah) the Ranger's elemental crossbows (Ember, Rime, Storm) and their bolts: Faction Crossbows' Dawnguard bolts
+		// of that element. A crossbow's quiver holds 40 bolts, 20 more for each reforge
+		RE::TESObjectWEAP* ElemCrossbow(int a_e)
+		{
+			return a_e >= 0 && a_e < 3 ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kElemCrossbows[a_e], gen::kPlugin) : nullptr;
+		}
+		RE::TESAmmo* ElemBolts(int a_e)
+		{
+			return a_e >= 0 && a_e < 3 ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESAmmo>(0x020B05 + a_e, "Faction Crossbows.esp") : nullptr;
+		}
+		int  BoltCap(int a_level) { return 40 + 20 * std::max(0, a_level); }
+		int  CrossbowLevelImpl(const RE::TESForm* a_w);
+		int TopUpBolts(int)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			auto* dh = RE::TESDataHandler::GetSingleton();
-			if (!p || !dh) return 0;
+			if (!p) return 0;
 			int n = 0;
-			const int un = BoltsUnlocked();
-			for (auto base : kBoltFamilies) {
-				auto* plain = dh->LookupForm<RE::TESAmmo>(base, "Faction Crossbows.esp");
-				if (!plain || p->GetItemCount(plain) <= 0) continue;  // (only the families you shoot)
-				for (int e = 0; e < un; ++e) {
-					if (auto* b = dh->LookupForm<RE::TESAmmo>(base + 1 + e, "Faction Crossbows.esp"); b && p->GetItemCount(b) < a_to) {
-						p->AddObjectToContainer(b, nullptr, a_to - p->GetItemCount(b), nullptr);
-						++n;
-					}
+			for (int e = 0; e < 3; ++e) {
+				auto* w = ElemCrossbow(e);
+				auto* b = ElemBolts(e);
+				if (!w || !b || p->GetItemCount(w) <= 0) continue;
+				const int cap = BoltCap(CrossbowLevelImpl(w));
+				if (const int have = p->GetItemCount(b); have < cap) {
+					p->AddObjectToContainer(b, nullptr, cap - have, nullptr);
+					++n;
 				}
 			}
 			return n;
@@ -750,15 +762,7 @@ namespace bo3z::Classes
 					x.second = static_cast<std::uint16_t>(std::min(60000, x.second + 1));
 				}
 				if (const int b = Bows::IndexOf(w); b >= 0 && b < static_cast<int>(g_bowMastery.size()) && (FreedCount() >= 3 || Gun::TestKitOn())) g_bowMastery[b] = static_cast<std::uint16_t>(std::min(60000, g_bowMastery[b] + 1));
-				if (w->IsCrossbow() && c == coffer::kRanger && g_boltKills < 60000) {
-					const int before = BoltsUnlocked();
-					++g_boltKills;
-					if (const int now = BoltsUnlocked(); now > before) {
-						Forms::Play(gen::Sound::quest_step);
-						Hud::Banner(fmt::format("CROSSBOW MASTERY - {} bolts unlocked: refilled with your quivers (Q at an altar)", kBoltElem[now - 1]), 5.0f);
-						TopUpBolts(20);
-					}
-				}
+				if (w->IsCrossbow() && c == coffer::kRanger && g_boltKills < 60000) ++g_boltKills;  // (the elemental crossbows bring their own bolts now)
 			}
 			else if (const int b = Bows::Held(); b >= 0) {  // (the altar's bows strike with our own shots)
 				how = 2;
@@ -878,6 +882,13 @@ namespace bo3z::Classes
 	}
 	// ---- (the classes' growth) a crossbow reforged at the altar: three times, a quarter more each, on its own kills
 	int CrossbowLevel(const RE::TESForm* a_w) { if (!a_w) return 0; auto it = g_xbow.find(a_w->GetFormID()); return it == g_xbow.end() ? 0 : it->second.first; }
+	namespace { int CrossbowLevelImpl(const RE::TESForm* a_w) { return CrossbowLevel(a_w); } }
+	int CrossbowElement(const RE::TESForm* a_w)
+	{
+		if (!a_w) return -1;
+		for (int e = 0; e < 3; ++e) if (a_w == ElemCrossbow(e)) return e;
+		return -1;
+	}
 	RE::TESObjectWEAP* HeldCrossbow()
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -901,7 +912,8 @@ namespace bo3z::Classes
 		if (!Points::Spend(gen::kForgeCost[x.first])) return 0;
 		x.second = 0, ++x.first;
 		a_spent = true;
-		Hud::Banner(name + " reforged  " + std::string(x.first, '|') + "  - its bolts strike harder", 4.0f);
+		TopUpBolts(0);
+		Hud::Banner(name + " reforged  " + std::string(x.first, '|') + (CrossbowElement(w) >= 0 ? fmt::format("  - harder bolts, a bigger blast, a quiver of {}", BoltCap(x.first)) : std::string("  - its bolts strike harder")), 4.0f);
 		logger::info("forge: crossbow {} -> level {}", name, x.first);
 		return 1;
 	}
@@ -1017,6 +1029,26 @@ namespace bo3z::Classes
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();
 		TuneCorrosion();
 		TuneSpellswordGear();
+		// (Noah) a Ranger from before the elemental crossbows is handed the Ember Crossbow and its bolts, once
+		if (static bool xbowGiven = false; !xbowGiven && g_class.load() == coffer::kRanger && p->Is3DLoaded()) {
+			xbowGiven = true;
+			bool any = false;
+			for (int e = 0; e < 3; ++e) if (auto* w = ElemCrossbow(e); w && p->GetItemCount(w) > 0) any = true;
+			if (!any && ElemCrossbow(0)) {
+				GiveItem(p, ElemCrossbow(0), 1, false);
+				GiveItem(p, ElemBolts(0), BoltCap(0), false);
+				Hud::Banner("The Ember Crossbow and its fire bolts are in your pack - the Rime and Storm Crossbows wait at the Echo Altar", 6.0f);
+			}
+		}
+		// (Noah) an elemental crossbow in hand nocks its own element's bolts
+		if (auto* w = HeldCrossbow(); w && p->Is3DLoaded()) {
+			if (const int e = CrossbowElement(w); e >= 0) {
+				auto* want = ElemBolts(e);
+				if (want && p->GetItemCount(want) > 0 && p->GetCurrentAmmo() != want) {
+					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(p, want, nullptr, 1, nullptr, false, false, false, true);
+				}
+			}
+		}
 		// (Noah: "all the weapons with enchantments shouldn't need a soul gem to recharge") what you hold never runs dry
 		{
 			auto* av = p->AsActorValueOwner();
@@ -1300,6 +1332,14 @@ namespace bo3z::Classes
 		}
 		return a_obj->GetName() ? MaterialTier(a_obj->GetName()) : 0;
 	}
+	int AltarGearUpgrades(const RE::TESForm* a_w)
+	{
+		auto* b = a_w ? a_w->As<RE::TESBoundObject>() : nullptr;
+		if (!b || !b->GetFile(0)) return -1;
+		bool altar = b->GetFile(0)->GetFilename() == "Spellsword.esp";
+		for (const auto& u : kTwoHanders) altar |= b->GetLocalFormID() == u.id && b->GetFile(0)->GetFilename() == u.plugin;
+		return altar ? std::clamp(GearTier(b), 0, 3) : -1;
+	}
 	bool RollGear(int a_cls, Prize* a_out)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -1338,7 +1378,10 @@ namespace bo3z::Classes
 			std::unordered_set<std::string> names;
 			std::erase_if(pool, [&](RE::TESBoundObject* f) { return !names.insert(f->GetName() ? f->GetName() : "").second; });
 		} else if (a_cls == coffer::kRanger) {
-			from("Faction Crossbows.esp", static_cast<RE::TESObjectWEAP*>(nullptr));
+			// (Noah) the Ranger's crossbows are the three elemental ones (Ember, Rime, Storm): one of each, the bows beside them
+			for (int e = 0; e < 3; ++e) {
+				if (auto* w = ElemCrossbow(e); w && p->GetItemCount(w) <= 0) pool.push_back(w);
+			}
 			// (Noah: "the wristbow broke my crossbow, doesn't work properly, and does 45 frost") OffhandBows' one-hand
 			// crossbows are staves to Skyrim: one in the off hand can't be held with the Ranger's two-handed bows and
 			// crossbows, and it fires on enchantment charge - the altar no longer gives them
@@ -1485,9 +1528,19 @@ namespace bo3z::Classes
 	std::string BoltLine()
 	{
 		if (g_class.load() != coffer::kRanger) return {};
-		const int un = BoltsUnlocked();
-		if (un >= 3) return "Crossbow mastery: fire, ice and shock bolts";
-		return fmt::format("Crossbow mastery: {} of {} crossbow kills to {} bolts", g_boltKills, kBoltNeed[un], kBoltElem[un]);
+		std::string out;
+		static constexpr const char* kName[3] = { "Ember", "Rime", "Storm" };
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		for (int e = 0; e < 3; ++e) {
+			auto* w = ElemCrossbow(e);
+			if (!w || !p || p->GetItemCount(w) <= 0) continue;
+			auto it = g_xbow.find(w->GetFormID());
+			const int lv = it == g_xbow.end() ? 0 : it->second.first, kills = it == g_xbow.end() ? 0 : it->second.second;
+			const int need = lv == 0 ? 25 : lv == 1 ? 60 : 120;
+			out += (out.empty() ? "" : "; ") + fmt::format("{} Crossbow {} (quiver {}{})", kName[e], lv == 0 ? std::string("unforged") : "reforged " + std::string(lv, '|'), BoltCap(lv),
+				lv >= 3 ? std::string(", fully reforged") : fmt::format(", {} of {} kills to the next", kills, need));
+		}
+		return out.empty() ? std::string("Crossbows: the Ember, Rime and Storm Crossbows wait at the Echo Altar") : out;
 	}
 
 	// (Noah's plan, the Spellsword) Imbue moves the held spell-weapon up a material - Steel, Orcish, Dwarven, Elven, Glass,

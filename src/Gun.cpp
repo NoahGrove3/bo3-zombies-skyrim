@@ -1014,7 +1014,7 @@ namespace bo3z
 			const float headMult = g.headMult * Perks::HeadMult();
 			const float headRadius = g.headRadius * (Perks::HeadMult() > 1.0f ? 1.5f : 1.0f);
 			const int   lvl = SlotOf(CurrentGun()) >= 0 ? Save::GetSlot(SlotOf(CurrentGun())).level : 0;
-			const float dmg = g.damage * Perks::DamageMult() * CrewMult(0) * (1.0f + gen::kForgeStep * lvl);
+			const float dmg = g.damage * Perks::DamageMult() * CrewMult(0) * UpgradeMult(lvl);
 			++g_shots;
 			if (g.special == 3) {  // cone blast (Thu'um Cannon): everything in front of you, harder up close
 				bool los = false;
@@ -1230,7 +1230,7 @@ namespace bo3z
 		int   ForgeLevel() { return SlotOf(CurrentGun()) >= 0 ? Save::GetSlot(SlotOf(CurrentGun())).level : 0; }
 		float BaseDamage(const gen::GunDef& g)
 		{
-			return g.damage * Perks::DamageMult() * CrewMult(0) * (1.0f + gen::kForgeStep * ForgeLevel()) * g_unleashMult;
+			return g.damage * Perks::DamageMult() * CrewMult(0) * UpgradeMult(ForgeLevel()) * g_unleashMult;
 		}
 
 		std::vector<RE::Actor*> Foes(const RE::NiPoint3& a_at, float a_radius)
@@ -2229,7 +2229,7 @@ namespace bo3z
 			if (auto it = last.find(a_target->GetFormID()); it != last.end() && now - it->second < std::chrono::milliseconds(150)) return true;
 			last[a_target->GetFormID()] = now;
 			const auto& g = gen::kGuns[gun];
-			const float dmg = g.damage * Perks::DamageMult() * (1.0f + gen::kForgeStep * ForgeLevel());
+			const float dmg = g.damage * Perks::DamageMult() * UpgradeMult(ForgeLevel());
 			if (Director::IsFoe(a_target)) Damage(a_target, dmg, false, false, true);
 			if (g.id == "gravecaller" && Director::IsFoe(a_target) && !a_target->IsDead()) Classes::MarkForSummons(a_target);  // (the Conjurer's Staff)
 			StaffTap(g, a_target->GetPosition(), a_target, dmg);
@@ -2891,7 +2891,7 @@ namespace bo3z
 			if (s.level >= gen::kForgeMax) {
 				Hud::Banner(std::string(gen::kGuns[gun].label) + " ASCENDED  |||  " + std::string(gen::kGuns[gun].chargeName) + " now strikes twice", 5.0f);
 			} else {
-				Hud::Banner(std::string(gen::kGuns[gun].label) + " reforged  " + std::string(s.level, '|') + "  (+" + std::to_string(static_cast<int>(gen::kForgeStep * 100 * s.level)) + "% damage)", 4.0f);
+				Hud::Banner(std::string(gen::kGuns[gun].label) + " reforged  " + std::string(s.level, '|') + "  (x" + fmt::format("{:.1f}", UpgradeMult(s.level)) + " damage)", 4.0f);
 			}
 			return true;
 		}
@@ -3725,6 +3725,7 @@ namespace bo3z
 		}
 		std::vector<std::uint8_t> Levels() { return { BowsImpl::g_level.begin(), BowsImpl::g_level.end() }; }
 		int Restock() { return BowsImpl::Restock(); }
+		void CrossbowStrike(int a_elem, int a_tier, RE::Actor* a_hit, float a_damage) { BowsImpl::CrossbowStrike(a_elem, a_tier, a_hit, a_damage); }
 		bool IsStrikeSpell(const RE::MagicItem* a_item)
 		{
 			if (!a_item) return false;

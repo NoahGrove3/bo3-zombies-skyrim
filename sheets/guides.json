@@ -30,7 +30,7 @@
     {
      "title": "Getting Stronger",
      "paras": [
-      "<b>Kills fill it, the altar raises it.</b> Kills by your summons (or your own, the spell in hand) count toward its next rung - <b>25</b>, then <b>60</b>, then <b>120</b> for the Legendary rung - once three Echo Altars are freed. Then hold it and take the altar's <b>Bind Pact</b> row: <b>5,000</b>, <b>8,000</b>, then <b>12,000</b> Cursed Essence, once a night per spell. A third rung waits for <b>four</b> freed altars, a Legendary for <b>six</b>. The Bind Pact row and <i>Your Progress</i> show the count.",
+      "<b>Kills fill it, the altar raises it.</b> Every class grows on the same curve: an altar weapon, spell, bow, crossbow or summon does 2.5 times its first damage after one upgrade, 5 times after two, 6.5 times after three, and 1.5 times more with each Ascend after that. Kills by your summons (or your own, the spell in hand) count toward its next rung - <b>25</b>, then <b>60</b>, then <b>120</b> for the Legendary rung - once three Echo Altars are freed. Then hold it and take the altar's <b>Bind Pact</b> row: <b>5,000</b>, <b>8,000</b>, then <b>12,000</b> Cursed Essence, once a night per spell. A third rung waits for <b>four</b> freed altars, a Legendary for <b>six</b>. The Bind Pact row and <i>Your Progress</i> show the count.",
       "<b>Summon slots</b> - how many summons you can have out at the same time. You start with <b>2</b>, and get one more for every <b>2 Echo Altars</b> you free, up to <b>7</b> (<b>8</b> with the Conjurer's Command Mead). When every slot is full, a new summon replaces your oldest one."
      ]
     },
@@ -74,7 +74,7 @@
     {
      "title": "Getting Stronger",
      "paras": [
-      "<b>Kills fill it, the altar raises it.</b> Kills with the spell in your hand count toward its next rung - <b>25</b>, then <b>60</b>, then <b>120</b> for the Legendary rung - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, then <b>12,000</b> Cursed Essence, once a night per spell. A third rung waits for <b>four</b> freed altars, a Legendary for <b>six</b>. The altar's Reforge row and <i>Your Progress</i> show the count."
+      "<b>Kills fill it, the altar raises it.</b> Every class grows on the same curve: an altar weapon, spell, bow, crossbow or summon does 2.5 times its first damage after one upgrade, 5 times after two, 6.5 times after three, and 1.5 times more with each Ascend after that. Kills with the spell in your hand count toward its next rung - <b>25</b>, then <b>60</b>, then <b>120</b> for the Legendary rung - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, then <b>12,000</b> Cursed Essence, once a night per spell. A third rung waits for <b>four</b> freed altars, a Legendary for <b>six</b>. The altar's Reforge row and <i>Your Progress</i> show the count."
      ]
     },
     {
@@ -103,7 +103,7 @@
      "title": "The Ranger",
      "paras": [
       "Sworn to the <b>Dawnguard</b>. Bows and crossbows - every arrow counts.",
-      "<b>You start with</b> an elemental bow, the Dawnguard Crossbow with 30 bolts and the Drifter Outfit."
+      "<b>You start with</b> the Ember Crossbow, 40 fire bolts and the Drifter Outfit (the Dawnguard's light armour for a man). The Rime and Storm Crossbows and the six elemental bows wait at the Echo Altar. Each reforge of a crossbow hits harder, holds 20 more bolts and makes its bolts' blast greater: its element's burst, then its spell where the bolt lands, then its great spell."
      ]
     },
     {
@@ -117,7 +117,7 @@
     {
      "title": "Getting Stronger",
      "paras": [
-      "<b>Kills fill it, the altar raises it.</b> Kills with a bow count toward its next tier - <b>25</b>, <b>60</b>, then <b>120</b> - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, <b>12,000</b> Cursed Essence, once a night.",
+      "<b>Kills fill it, the altar raises it.</b> Every class grows on the same curve: an altar weapon, spell, bow, crossbow or summon does 2.5 times its first damage after one upgrade, 5 times after two, 6.5 times after three, and 1.5 times more with each Ascend after that. Kills with a bow count toward its next tier - <b>25</b>, <b>60</b>, then <b>120</b> - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, <b>12,000</b> Cursed Essence, once a night.",
       "Each tier: more damage, a new attack and a bigger quiver - <b>60</b>, <b>100</b>, <b>150</b>, <b>200</b> arrows - that regrows one arrow every <b>8</b>, <b>6</b>, <b>4</b>, then <b>2</b> seconds.",
       "<b>Crossbows</b>: kills unlock elemental bolts - fire at 25, ice at 60, shock at 120."
      ]
@@ -161,7 +161,7 @@
     {
      "title": "Getting Stronger",
      "paras": [
-      "<b>Kills fill it, the altar raises it.</b> Melee kills with the spell in your other hand count toward its next rung - <b>25</b>, then <b>60</b>, <b>120</b> for a Legendary (a power-attack kill counts twice) - once three Echo Altars are freed. Then take the altar's <b>Imbue</b> row: <b>5,000</b> then <b>8,000</b> Cursed Essence (<b>12,000</b> for a Legendary), once a night. A third rung waits for <b>four</b> freed altars, a Legendary for <b>six</b>.",
+      "<b>Kills fill it, the altar raises it.</b> Every class grows on the same curve: an altar weapon, spell, bow, crossbow or summon does 2.5 times its first damage after one upgrade, 5 times after two, 6.5 times after three, and 1.5 times more with each Ascend after that. Melee kills with the spell in your other hand count toward its next rung - <b>25</b>, then <b>60</b>, <b>120</b> for a Legendary (a power-attack kill counts twice) - once three Echo Altars are freed. Then take the altar's <b>Imbue</b> row: <b>5,000</b> then <b>8,000</b> Cursed Essence (<b>12,000</b> for a Legendary), once a night. A third rung waits for <b>four</b> freed altars, a Legendary for <b>six</b>.",
       "Each reforge also raises your held spell-weapon a material and unlocks one of four <b>Enchantment Powers</b> (in your Powers)."
      ]
     },

@@ -175,7 +175,7 @@ namespace BowsImpl
 	// (x hpScale) as every shot is counted; the perks still add theirs
 	float ShotDamage(int i, float a_draw)
 	{
-		const float tier = std::pow(1.25f, static_cast<float>(std::clamp<int>(g_level[i], 0, 3)));
+		const float tier = UpgradeMult(std::clamp<int>(g_level[i], 0, 3));  // (Noah: the one upgrade curve every altar item grows by)
 		const float pull = 0.35f + 0.65f * std::clamp(a_draw, 0.0f, 1.0f);
 		// (the balance pass) it keeps up with the night as Skyrim's own bows do: a full draw takes 55% of a zombie's
 		// night health at tier 0 (never less than the old 30) - two full draws a body, a tier sooner each 25% more
@@ -437,6 +437,31 @@ namespace BowsImpl
 		if (CastAtStrike(TierSpell(KindOf(s.bow), 2), p, s.vel, target, false)) {
 			Spellcraft::Area(s.row, p, 200.0f, s.damage * 0.45f, gen::kFxNone);
 		}
+	}
+	// (Noah: "the spell on impact from the elemental bolt should upgrade per element") an elemental crossbow's bolt lands
+	// as the matching bow's arrow would at the crossbow's reforge tier: the element's burst (wider, fuller each tier), the
+	// tier-II spell where it strikes, and at tier III the element's great spell
+	void CrossbowStrike(int a_elem, int a_tier, RE::Actor* a_hit, float a_damage)
+	{
+		if (!a_hit) return;
+		const Kind want = a_elem == 0 ? Kind::Fire : a_elem == 1 ? Kind::Frost : Kind::Shock;
+		int b = -1;
+		for (int i = 0; i < kN; ++i) if (KindOf(i) == want) { b = i; break; }
+		if (b < 0) return;
+		static std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> last;  // (one blast a bolt: Skyrim reports some hits twice)
+		const auto now = std::chrono::steady_clock::now();
+		if (auto& t = last[a_hit->GetFormID()]; now - t < std::chrono::milliseconds(150)) return; else t = now;
+		Spellcraft::Shot s{};
+		s.row = gen::kBows[b].spellRow, s.gun = GunOf(b), s.bow = b, s.tier = std::clamp(a_tier, 0, 3), s.full = s.tier >= 3;
+		s.damage = a_damage;
+		auto* pl = RE::PlayerCharacter::GetSingleton();
+		const auto p = a_hit->GetPosition();
+		s.vel = pl ? (p - pl->GetPosition()) : RE::NiPoint3{ 0, 1, 0 };
+		if (const float l = s.vel.Length(); l > 1) s.vel = s.vel * (4800.0f / l);
+		s.pos = p;
+		Impact(s, p);
+		TierTwoAt(s, p, a_hit);
+		TornadoOf(s, p, a_hit);
 	}
 	void OnHit(const Spellcraft::Shot& s, RE::Actor* a, const RE::NiPoint3& p, bool killed)
 	{

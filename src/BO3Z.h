@@ -101,6 +101,16 @@ namespace bo3z
 
 	namespace Net { struct State; }
 
+	// (Noah: "each weapon, spell, bow, crossbow - anything from the Echo Altar - should have the same base damage per
+	// upgrade: 10, then 25 reforged, then 50, then 65, and so on") the one curve every altar item grows by: what it does
+	// unforged, times this for the upgrades it has had (a spell's rungs and Ascends, a bow's or crossbow's reforges, a
+	// summon family's rungs and Ascends, a spell-weapon's steel)
+	inline float UpgradeMult(int a_upgrades)
+	{
+		static constexpr float kCurve[4] = { 1.0f, 2.5f, 5.0f, 6.5f };
+		return a_upgrades <= 0 ? 1.0f : a_upgrades <= 3 ? kCurve[a_upgrades] : 6.5f + 1.5f * static_cast<float>(a_upgrades - 3);
+	}
+
 	namespace Director
 	{
 		void             Tick(float a_delta);
@@ -337,6 +347,8 @@ namespace bo3z
 		bool             IsOwnSummon(RE::Actor* a_actor);
 		int              SummonFamily(RE::Actor* a_actor);  // the Summoner spell (kSpells index) that called it up (-1)
 		int              CrossbowLevel(const RE::TESForm* a_w);  // a crossbow's reforges (0..3)
+		int              CrossbowElement(const RE::TESForm* a_w);
+		int              AltarGearUpgrades(const RE::TESForm* a_w);  // an altar spell-weapon's steel as upgrades (0..3), -1 when it isn't altar gear  // the Ember (0), Rime (1) or Storm (2) Crossbow, else -1
 		int              ReforgeCrossbow(int a_freed, bool& a_spent);  // the one in hand (-1: none held; 0 refused; 1 done)
 		int              BladeSpell();  // the Spellsword spell your blade carries (in a hand, or the last held with a two-handed blade; -1)
 		void             MarkForSummons(RE::Actor* a_target);  // (the Summoner's staff) every summon of yours turns on it until it dies or another is marked
@@ -425,6 +437,7 @@ namespace bo3z
 		std::vector<std::uint8_t> Levels();           // for the co-save
 		void                      SetLevels(const std::vector<std::uint8_t>& a_levels);
 		bool                      IsStrikeSpell(const RE::MagicItem* a_item);
+		void                      CrossbowStrike(int a_elem, int a_tier, RE::Actor* a_hit, float a_damage);  // an elemental crossbow's bolt landing: its element's blast, grown by tier
 		int                       Restock();          // every quiver full (bow arrows, crossbow bolts): Max Ammo, the altar's quiver  // the mods' spells our bows and the Storm Staff loose (they never hurt you)
 	}
 

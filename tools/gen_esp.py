@@ -297,6 +297,23 @@ for bw in S['bows']['rows']:
         subs.append(sub(name, b))
     recs['WEAP'].append(record('WEAP', fid('WEAP', 'bow_' + bw['id']), subs))
 
+# (Noah: "the Ranger starts with a crossbow with elemental bolts - a crossbow for each element; the fire one to start, the
+# rest at the Echo Altar; reforging raises its damage, its quiver and the spell its bolts strike with") Dawnguard's
+# crossbow, one for each element (src/Classes.cpp: its bolts, its quiver; src/Bows.inl CrossbowStrike: its impact)
+XBOWS = {'fire': ('Ember Crossbow', 'Its bolts burst into fire. Each reforge: harder bolts, a fuller quiver, and a greater blast of flame - Flare Shot, Scorch, then Immolation.'),
+         'frost': ('Rime Crossbow', 'Its bolts burst into frost. Each reforge: harder bolts, a fuller quiver, and a greater blast of cold - Deep Freeze, Flash Freeze, then Throat of the World.'),
+         'shock': ('Storm Crossbow', 'Its bolts burst into lightning. Each reforge: harder bolts, a fuller quiver, and a greater storm - Chain Lightning, Finger of the Mountain, then Electrocution.')}
+for el, (label, text) in XBOWS.items():
+    subs = []
+    for name, hx in T['weap_crossbow']['subs']:
+        b = bytes.fromhex(hx)
+        if name == 'EDID': b = z('UN_Crossbow_' + el)
+        elif name == 'FULL': b = z(label)
+        elif name == 'DESC': b = z(text)
+        elif name == 'DATA': b = struct.pack('<IfH', 600, 14.0, 22)
+        subs.append(sub(name, b))
+    recs['WEAP'].append(record('WEAP', fid('WEAP', 'xbow_' + el), subs))
+
 # (Noah: the Ranger's wonder is a purple bow, the Subsuming Vortex) a real bow - its arrows hit as arrows - whose every
 # arrow opens a black hole where it lands (src/Classes.cpp TickFast finds where it struck; src/Gun.cpp BlackHole)
 pd = bytearray(tsub('proj_arrow', 'DATA'))

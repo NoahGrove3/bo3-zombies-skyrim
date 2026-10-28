@@ -1284,6 +1284,9 @@
   "ARMA:eyes_bonebrute": "0xd00",
   "CONT:classchest": "0xd01",
   "MUST:night": "0xd02",
-  "MUSC:night": "0xd03"
+  "MUSC:night": "0xd03",
+  "WEAP:xbow_fire": "0xd04",
+  "WEAP:xbow_frost": "0xd05",
+  "WEAP:xbow_shock": "0xd06"
  }
 }
