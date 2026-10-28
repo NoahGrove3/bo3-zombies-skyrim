@@ -76,6 +76,32 @@ namespace bo3z::Classes
 		}
 		bool g_staffChecked = false;
 		// (the Conjurer's Staff is gone: Corrosion took its work) Mysticism's Armoreater burst, drawn round a Corrosion bolt's hit
+		// (Noah: "the Corrosion impact is way too big and I don't want it to shake my screen - it should be the size of the
+		// area damage") its own bolts' bursts: Mysticism's (an area of 75 feet, a jolt on the camera) made quiet - no damage,
+		// no shove, no screen effect - and each rung's area set to the burst our hit deals (3 m, a metre more each rung)
+		void TuneCorrosion()
+		{
+			static bool done = false;
+			if (done) return;
+			done = true;
+			for (int k = 0; k < static_cast<int>(coffer::kSpells.size()); ++k) {
+				if (std::string_view(coffer::kSpells[k].ladderLabel) != "Corrosion" || coffer::kSpells[k].cls != coffer::kSummoner) continue;
+				auto* sp = Arcana::Spell(k);
+				if (!sp) continue;
+				const float radius = 210.0f + 70.0f * static_cast<float>(coffer::kSpells[k].rung - 1);
+				for (auto* e : sp->effects) {
+					if (!e) continue;
+					e->effectItem.area = static_cast<std::uint32_t>(radius / 21.33f + 0.5f);
+					if (auto* m = e->baseEffect; m && m->data.explosion) {
+						if (auto* q = Gun::Quiet(m->data.explosion)) {
+							q->data.radius = std::min(q->data.radius, radius);
+							m->data.explosion = q;
+						}
+					}
+				}
+				logger::info("classes: Corrosion rung {} ({}) - its burst {:.0f} units, quiet", coffer::kSpells[k].rung, sp->GetName(), radius);
+			}
+		}
 		RE::BGSExplosion* StaffBurstLook()
 		{
 			static auto* m = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(0xAC7E88, "MysticismMagic.esp");
@@ -791,6 +817,29 @@ namespace bo3z::Classes
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		if (!p || !dh) return;
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();
+		TuneCorrosion();
+		// (Noah: "random Dremora at the Echo Altar attack me and my summons") a conjured creature with no master - a summon
+		// whose spell ended while it was out of the world, or a stand-in from before a load - crumbles instead of turning on you
+		if (static int sweep = 0; ++sweep % 5 == 0 && Party::FriendCount() == 0) {  // (alone: a friend's summons show here masterless)
+			static std::unordered_set<RE::FormID> g_masterless;
+			std::unordered_set<RE::FormID> nowMasterless;
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				auto a = h.get();
+				if (!a || a.get() == p || a->IsDead() || a->IsDisabled() || a->IsCommandedActor() || IsOwnSummon(a.get()) || Echo::IsAlly(a.get()) || Party::IsFriend(a.get())) continue;
+				auto* base = a->GetActorBase();
+				if (!base || !base->IsSummonable()) continue;
+				if (Director::IsRoundUndead(a.get()) || (base->GetFile(0) && std::string_view(base->GetFile(0)->GetFilename()) == gen::kPlugin)) continue;
+				// (masterless on two sweeps running, five seconds apart: never a summon in its first moments)
+				if (!g_masterless.contains(a->GetFormID())) {
+					nowMasterless.insert(a->GetFormID());
+					continue;
+				}
+				logger::info("classes: a masterless conjured {} ({:08X}) let go", a->GetName(), a->GetFormID());
+				a->Disable();
+				a->SetDelete(true);
+			}
+			g_masterless = std::move(nowMasterless);
+		}
 		// (Noah: "the weapons that contain a spell shouldn't need a soul gem - only the Echo Altar's, not Skyrim's own") an
 		// altar weapon in either hand never runs dry: its charge is topped up each second
 		for (const bool left : { false, true }) {
@@ -1372,6 +1421,13 @@ namespace bo3z::Classes
 				static auto* playerFaction = RE::TESForm::LookupByID<RE::TESFaction>(0x00000DB1);
 				for (auto* s : mine) {
 					if (s->IsDead() || s->IsDisabled()) continue;
+					// (Noah: "my summons start to kill me if I am damaging them") a stray blow of yours never turns one on you
+					// or on a friend: it drops that fight at once
+					if (auto t = s->GetActorRuntimeData().currentCombatTarget.get(); t && Director::PlayerSide(t.get(), p)) {
+						s->StopCombat();
+						static int told = 0;
+						if (told++ < 10) logger::info("summons: {} turned on {} - called off", s->GetName(), t->GetName());
+					}
 					// (Noah: "my summons still weren't attacking the Curse's enemies, and the enemies weren't attacking them") on
 					// the player's side by faction too: the night's dead (enemies of the player's faction) and it are foes
 					if (playerFaction && !s->IsInFaction(playerFaction)) s->AddToFaction(playerFaction, 0);
@@ -1586,7 +1642,7 @@ namespace bo3z::Classes
 		const auto  at = a_target->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f };
 		Gun::AreaHurt(at, radius, share, "");
 		// the rust burst grown to the splash's own reach (a reforged staff's wider ring shows as wider)
-		Gun::FxFrom(StaffBurstLook(), a_target->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, radius / 210.0f);
+		// (the bolt's own burst is the look now, sized to this reach - TuneCorrosion; no second one on top)
 		std::vector<RE::ActorHandle> marks;
 		for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 			auto z = h.get();

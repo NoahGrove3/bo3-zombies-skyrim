@@ -643,6 +643,18 @@ namespace bo3z
 						Gun::FangHit(t, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));
 					}
 				}
+				// (Noah: "my summons start to kill me if I am damaging them") your blow on your own summon: it doesn't hold it
+				// against you (just after the hit, when the fight it picked would begin)
+				if (a_event && player && a_event->cause.get() == player && a_event->target) {
+					if (auto* sm = a_event->target->As<RE::Actor>(); sm && sm != player && ((sm->IsCommandedActor() && sm->GetCommandingActor().get() == player) || Classes::IsOwnSummon(sm))) {
+						Tasks::Add([h = sm->GetHandle()] {
+							auto* pc = RE::PlayerCharacter::GetSingleton();
+							if (auto a = h.get(); a && pc && !a->IsDead()) {
+								if (auto t = a->GetActorRuntimeData().currentCombatTarget.get(); t && Director::PlayerSide(t.get(), pc)) a->StopCombat();
+							}
+						});
+					}
+				}
 				if (a_event && player && a_event->cause.get() == player && a_event->target && a_event->target.get() != player) {
 					if (auto* t = a_event->target->As<RE::Actor>()) Gun::OnStaffHit(t, a_event->source);
 					if (auto* t = a_event->target->As<RE::Actor>()) Classes::ConjurerStaffHit(t, a_event->source);

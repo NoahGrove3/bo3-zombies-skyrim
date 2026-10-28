@@ -3877,6 +3877,11 @@ namespace bo3z
 				if (!g_sheltered.empty()) {
 					for (auto& h : g_sheltered) {
 						if (auto r = h.get(); r && r->IsDisabled()) {
+							// (a summoned creature sent indoors by an older build is let go, never walked back out masterless)
+							if (auto* ra = r->As<RE::Actor>(); ra && ra->GetActorBase() && ra->GetActorBase()->IsSummonable()) {
+								r->SetDelete(true);
+								continue;
+							}
 							r->Enable(false);
 						}
 					}
@@ -3906,7 +3911,10 @@ namespace bo3z
 			int n = 0;
 			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 				auto a = h.get();
-				if (!a || a.get() == a_player || a->IsDead() || a->IsDisabled() || a->IsPlayerTeammate() || IsOurs(a.get()) || Party::IsFriend(a.get())) {
+				if (!a || a.get() == a_player || a->IsDead() || a->IsDisabled() || a->IsPlayerTeammate() || IsOurs(a.get()) || Party::IsFriend(a.get()) ||
+					a->IsCommandedActor() || (a->GetActorBase() && a->GetActorBase()->IsSummonable()) || Classes::IsOwnSummon(a.get()) || Director::PlayerSide(a.get(), a_player)) {
+					// (Noah: "random Dremora spawn at the Echo Altar at dawn and attack me" - your own Conjure Dremora, a person
+					// in town, was sent indoors for the night the moment it came, and walked back out at dawn its own master)
 					continue;
 				}
 				auto* race = a->GetRace();
