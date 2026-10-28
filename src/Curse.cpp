@@ -90,6 +90,12 @@ namespace bo3z
 		}
 		// the Dragon Priest may rise: alone, the four trials; in a party, the three shared ones (anyone's work) and every
 		// player's own class trial
+		// (Noah: "the Dragon Priests shouldn't wait for a Skyrim quest - they spawn as soon as all the trials are done: the
+		// next wave if mid-night, the next night if it was the last wave") each wave that begins is counted; a priest whose
+		// trials were finished during wave N rises from wave N+1 on (the next night's first, after a last wave or by day)
+		int                 g_waveSerial = 0;
+		std::array<int, 16> g_priestAfter = [] { std::array<int, 16> a{}; a.fill(-1); return a; }();
+		bool PriestDue(int a_town) { return a_town < 0 || a_town >= 16 || g_waveSerial > g_priestAfter[a_town]; }
 		bool PriestReady(int a_town, const St& a_s, std::string* a_wait = nullptr)
 		{
 			if (!InParty()) return a_s.Count() >= kNeeded;
@@ -366,13 +372,14 @@ namespace bo3z
 			if (a_town >= 0 && a_town < 16) g_mine[a_town] |= static_cast<std::uint8_t>(1 << tr);
 			std::string wait;
 			s.active = PriestReady(a_town, s, &wait) ? kBossActive : 0;
+			if (s.Boss() && a_town >= 0 && a_town < 16) g_priestAfter[a_town] = g_waveSerial;  // (it rises from the next wave)
 			Put(a_town, s);
 			ClearRun();
 			Forms::Play(gen::Sound::quest_step);
 			Points::Add(500 * s.Count());
 			const std::string head = Upper(std::string(Title(tr))) + " - COMPLETE";
 			if (s.Boss()) {
-				Hud::Banner(head + "   " + std::string(BossName(a_town)) + (Story::BarrowJarlsOpen() ? " rises at the altar when night falls" : " stirs - it rises once you bring back the Dragonstone from Bleak Falls Barrow"), 7.0f);
+				Hud::Banner(head + "   " + std::string(BossName(a_town)) + (Director::Fighting() ? " rises with the next wave" : " rises when night falls"), 7.0f);
 			} else if (InParty()) {
 				Hud::Banner(head + (SharedDone(s) ? std::string("   the party's three trials are done") : std::string()) + (wait.empty() ? std::string() : "   class trials still to win: " + wait), 6.0f);
 			} else {
@@ -564,8 +571,8 @@ namespace bo3z
 				h.questTitle = "THE DRAGON PRIEST";
 				// (Noah: "the Dragon Priest never spawned at the end of my night") it only wakes once the story reaches Bleak
 				// Falls Barrow - now it says so, wherever it waits
-				h.questGoal = Story::BarrowJarlsOpen() ? "Slay " + std::string(BossName(a_zone)) : std::string(BossName(a_zone)) + " sleeps until you bring back the Dragonstone from Bleak Falls Barrow";
-				h.questWarn = !Story::BarrowJarlsOpen();
+				h.questGoal = PriestDue(a_zone) ? "Slay " + std::string(BossName(a_zone)) : std::string(BossName(a_zone)) + (Director::Fighting() ? " rises with the next wave" : " rises when night falls");
+				h.questWarn = false;
 				return;
 			}
 			const int tr = s.Trial(), n = N(tr), sec = Secs(tr);
@@ -746,7 +753,7 @@ namespace bo3z
 				v.desc[i] = Ask(i);
 			}
 			v.boss = std::string(BossName(a_town));
-			v.bossLine = s.Boss() ? (Story::BarrowJarlsOpen() ? "Rises near the altar at night - slay it to wake the altar" : "Sleeps until the Dragonstone is brought back from Bleak Falls Barrow") : fmt::format("Rises when the four trials are done ({} of {})", s.Count(), kNeeded);
+			v.bossLine = s.Boss() ? std::string(PriestDue(a_town) ? "Rises near the altar at night - slay it to wake the altar" : Director::Fighting() ? "Rises with the next wave - slay it to wake the altar" : "Rises when night falls - slay it to wake the altar") : fmt::format("Rises when the four trials are done ({} of {})", s.Count(), kNeeded);
 			return v;
 		}
 
@@ -830,6 +837,7 @@ namespace bo3z
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			if (!a_cleared) {
+				++g_waveSerial;
 				g_waveBroken = false;  // (the audit: sampled only as the wave began - a fresh wave starts clean, the fall is watched through it)
 				return;
 			}
@@ -1255,7 +1263,7 @@ namespace bo3z
 			case gen::kTrial_steel:
 				break;
 			default:
-				if (s.Boss() && s.prog == 0 && here && Story::BarrowJarlsOpen() && !Director::ChampionActive(z)) {  // (from Bleak Falls Barrow on)  // the Dragon Priest rises out in the city, once a night until it falls
+				if (s.Boss() && s.prog == 0 && here && PriestDue(z) && !Director::ChampionActive(z)) {  // (no story gate: from the wave after its trials)  // the Dragon Priest rises out in the city, once a night until it falls
 					static float retry = 0;
 					if ((retry -= a_delta) <= 0) {
 						retry = 4.0f;

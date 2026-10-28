@@ -4,7 +4,7 @@
 // main-quest step opens the next part of it:
 //   0 Unbound              no nights yet (Helgen plays, or is skipped)
 //   1 Before the Storm     the first nights; every city's trials but Whiterun's, Solitude's and Windhelm's
-//   2 Bleak Falls Barrow   the Dragon Priests rise in the cities
+//   2 Bleak Falls Barrow   (the Dragon Priests no longer wait for it: they rise once a city's trials are done)
 //   3 Dragon Rising        the nights' elites; Whiterun's trials
 //   4 The Way of the Voice  the freed cities' shouts at their altars
 //   5 Diplomatic Immunity / Season Unending   Solitude's and Windhelm's trials
@@ -76,7 +76,7 @@ namespace bo3z::Story
 			const int now = Compute();
 			if (g_stage >= 0 && now > g_stage) {
 				static constexpr const char* kNews[8] = { "", "Night falls on Skyrim: the dead rise",
-					"The Dragonstone named the burial mounds: the Dragon Priests rise in the cities", "The dragon is slain - Whiterun's trials open, and the nights bring their elites",
+					"The Dragonstone named the burial mounds of the old Dragon Cult", "The dragon is slain - Whiterun's trials open, and the nights bring their elites",
 					"Arngeir speaks of the Echo Altars - the words on their heart-stones are yours to learn", "Solitude's and Windhelm's trials open", "Grimmvar, Alduin's Herald, hunts on the Fog Nights", "Alduin is fallen - your class's wonder takes its full form" };
 				Forms::Play(gen::Sound::quest_start);
 				Hud::Banner(std::string("THE CURSE DEEPENS - ") + kNews[now], 6.0f);
