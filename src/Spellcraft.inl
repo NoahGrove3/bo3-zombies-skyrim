@@ -443,6 +443,7 @@ namespace Spellcraft
 		}
 	}
 
+	bool g_hitPreFrozen = false;  // the struck one was already frozen before this hit (the Rimehorn's Shatter)
 	void HoldStill(RE::Actor* a, float a_seconds, std::uint32_t a_art)
 	{
 		if (!a || a->IsDead()) {
@@ -920,6 +921,8 @@ namespace Spellcraft
 				const int   gi = s.gun;
 				const float hm = head2 ? gen::kGuns[gi].headMult * Perks::HeadMult() : 1.0f;
 				const float pierceFall = s.struck.size() > 1 ? 0.85f : 1.0f;
+				// (the audit: the arrow's own freeze came first, so Shatter fired on every hit) frozen before this arrow?
+				g_hitPreFrozen = std::any_of(g_held.begin(), g_held.end(), [&](const auto& h) { return h.a.get().get() == f && h.t > 0; });
 				const bool  killedNow = Strike(s.row, f, s.damage * hm * pierceFall, head2, s.ult == gen::kUltSoulStorm ? gen::kFxNone : s.effect != -2 ? s.effect : Def(s.row).effect, p);
 				if (s.bow >= 0 && g_bowHit) {
 					g_bowHit(s, f, p, killedNow);

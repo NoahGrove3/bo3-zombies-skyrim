@@ -58,7 +58,8 @@ namespace bo3z
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* held = p ? p->GetEquippedObject(false) : nullptr;
 			auto* w = held ? held->As<RE::TESObjectWEAP>() : nullptr;
-			return w && (w->IsBow() || w->IsCrossbow()) ? 1.0f - gen::kPerks[gen::kPerk_dawnwatch].value : 1.0f;
+			const bool offhand = w && w->GetFile(0) && std::string_view(w->GetFile(0)->GetFilename()) == "OffhandBows.esp";  // (one-hand crossbows: staves to Skyrim)
+			return w && (w->IsBow() || w->IsCrossbow() || offhand) ? 1.0f - gen::kPerks[gen::kPerk_dawnwatch].value : 1.0f;
 		}
 		bool SummonMight() { return Live(gen::kPerk_bonebinder); }
 		// a kill: what your class's perks make of it (how: 0 your summon, 1 a Destruction spell, 2 bow or crossbow, 3 melee)

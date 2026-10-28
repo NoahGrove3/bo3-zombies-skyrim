@@ -1902,7 +1902,7 @@
     },
     {
       "id": "gravecaller",
-      "label": "Conjurer's Staff",
+      "label": "Void Staff",
       "fire": "semi",
       "damage": 800,
       "headMult": 2.0,
@@ -1945,7 +1945,7 @@
       "element": "B070FF",
       "wandStyle": "none",
       "abilityValue": 0,
-      "abilityText": "The Summoner's staff. It casts a green bolt that bursts where it hits, hurting every enemy within 3 meters - and marking them: your summons attack the marked enemies until they die or you mark new ones. Reforge it at an Echo Altar (hold it and take the Reforge row, once three altars are freed): each reforge makes the burst 1 meter wider and hit harder.",
+      "abilityText": "One of the four elemental staffs: its bolts drag the dead together and a kill may rise as a spectral spider. Held, a void orb pulls the crowd in, then crushes it. Upgraded, a wider pull and three spiders every time.",
       "chargeName": "Void Orb",
       "chargeText": "A void orb drags the dead together, then crushes them",
       "chargeSeconds": 0.91,
@@ -1967,7 +1967,13 @@
       "firstModel": "CurseOfAlduin\\staff\\falmer\\summon.nif",
       "nativeEnch": [
         [
-          "ours:conjurerbolt",
+          "1EA6E",
+          0,
+          0,
+          3
+        ],
+        [
+          "A44C0",
           1,
           0,
           0

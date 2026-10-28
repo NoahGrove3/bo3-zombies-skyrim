@@ -226,10 +226,18 @@ namespace bo3z::Arcana
 		}
 	}
 
+	// (the Battle-mage review: Mysticism shares one effect along a ladder - every rung's hit read as its Legendary's) the
+	// spell you carry with that effect first, the map's (highest) one only if none does
 	int IndexOfEffect(RE::FormID a_effect)
 	{
 		auto it = g_byEffect.find(a_effect);
-		return it == g_byEffect.end() ? -1 : it->second;
+		if (it == g_byEffect.end()) return -1;
+		for (int i : Carried(-1)) {
+			if (auto* sp = Spell(i)) {
+				for (auto* e : sp->effects) if (e && e->baseEffect && e->baseEffect->GetFormID() == a_effect) return i;
+			}
+		}
+		return it->second;
 	}
 
 	bool Damages(int a_index) { return a_index >= 0 && a_index < static_cast<int>(g_damages.size()) && g_damages[a_index]; }
@@ -276,6 +284,16 @@ namespace bo3z::Arcana
 			return -1;
 		}
 		return pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(g_rng)];
+	}
+	// (the reel) every base spell your class's altar can roll - the reel turns through these, never another class's
+	std::vector<int> ReelPool()
+	{
+		std::vector<int> out;
+		const int cls = Classes::Get();
+		for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) {
+			if (g_spell[i] && coffer::kSpells[i].cls == cls && coffer::kSpells[i].rung == 1) out.push_back(i);
+		}
+		return out;
 	}
 	int ClassOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].cls : -1; }
 	int RungOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].rung : 0; }

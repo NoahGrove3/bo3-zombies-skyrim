@@ -672,13 +672,11 @@ namespace bo3z
 						static auto last = std::chrono::steady_clock::time_point{};
 						const auto  now = std::chrono::steady_clock::now();
 						if (now - last > std::chrono::milliseconds(350)) {
-							RE::SpellItem* sp = nullptr;
-							for (bool left : { true, false }) {
-								if (auto* f = player->GetEquippedObject(left); f && f->As<RE::SpellItem>()) {
-									sp = f->As<RE::SpellItem>();
-									break;
-								}
-							}
+							// (the Spellsword review: a shell or cloak in hand was cast at the foe) only the altar's Spellsword spells ride
+							// the blade - the one in a hand, or the last held with a two-handed blade
+							auto*          bw = src->As<RE::TESObjectWEAP>();
+							const int      bi = bw && (bw->IsTwoHandedSword() || bw->IsTwoHandedAxe()) ? -1 : Classes::BladeSpell();  // (a two-handed wonder casts its own)
+							RE::SpellItem* sp = bi >= 0 ? Arcana::Spell(bi) : nullptr;
 							if (sp && sp->GetSpellType() == RE::MagicSystem::SpellType::kSpell) {
 								last = now;
 								Forms::CastOnce(player, sp, t, 1.0f, player);
@@ -750,7 +748,7 @@ namespace bo3z
 						if (mySummon) {
 							int best = 1;
 							for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0) best = std::max(best, Arcana::RungOf(i));
-							tierMult = (0.3f + 0.07f * static_cast<float>(best - 1)) * (Perks::SummonMight() ? 1.3f : 1.0f);  // (was 0.6 + 0.15 a rung, half again with the Brew)
+							tierMult = (0.3f + 0.07f * static_cast<float>(best - 1)) * (Perks::SummonMight() ? gen::kPerks[gen::kPerk_bonebinder].value : 1.0f);  // (the Brew: its own half again, as it says)
 						}
 						// (Noah: "summons are too strong") a summon lands its share at most once every 0.7 s, however fast it bites
 						// or how many bolts it throws, and that share is a third of a blade's at the first rung
@@ -775,7 +773,12 @@ namespace bo3z
 						const int   row = Director::EnemyRow(z);
 						const bool  big = Director::IsBoss(z) || Director::IsElite(z) || (row >= 0 && gen::kEnemies[row].kind == 1);
 						auto*       sav = sm->AsActorValueOwner();
-						const float hurt = sav->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.08f * (big ? 2.0f : 1.0f) * Settings::UndeadDamageMult();
+						// (the Summoner review: every summon fell in a dozen blows whatever its rung, and the Brew's health counted for
+						// nothing) a higher pact takes its blows better, and Bonebinder's Brew's half again of health is real
+						int best = 1;
+						for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0) best = std::max(best, Arcana::RungOf(i));
+						const float might = Perks::SummonMight() ? gen::kPerks[gen::kPerk_bonebinder].value : 1.0f;
+						const float hurt = sav->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.08f / (1.0f + 0.35f * static_cast<float>(best - 1)) / might * (big ? 2.0f : 1.0f) * Settings::UndeadDamageMult();
 						sav->DamageActorValue(RE::ActorValue::kHealth, hurt);
 						if (sav->GetActorValue(RE::ActorValue::kHealth) <= 0 && !sm->IsDead()) sm->KillImpl(z, hurt, true, false);
 					}

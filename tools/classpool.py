@@ -27,22 +27,24 @@ CLASSES = ['summoner', 'destruction', 'ranger', 'spellsword']
 LADDERS = [
     # (Noah: "the battle mage class should be ranged magic damage") the Battle-mage's ladders are all bolts, beams, cones
     # and runes, cast from afar; the close-range sprays and blasts went to the Spellsword (below)
-    ('destruction', 'fire', 'Fire', 'fire', [(SKY, 'Firebolt'), (MYST, 'Immolate'), (SKY, 'Fireball'), (SKY, 'Incinerate')]),
+    ('destruction', 'fire', 'Fire', 'fire', [(SKY, 'Firebolt'), (SKY, 'Fireball'), (SKY, 'Incinerate'), (MYST, 'Immolate')]),
     ('destruction', 'frost', 'Frost', 'frost', [(SKY, 'Ice Spike'), (SKY, 'Ice Storm'), (SKY, 'Icy Spear'), (MYST, 'Throat of the World')]),
     # (Noah: "Lightning Bolt stopped shooting after about ten casts - take it out of the Echo Altar") Chain Lightning is the
     # rung the altar rolls now; the ladder is three rungs, all bolts
-    ('destruction', 'shock', 'Shock', 'shock', [(SKY, 'Chain Lightning'), (MYST, 'Finger of the Mountain'), (SKY, 'Thunderbolt')]),
+    ('destruction', 'shock', 'Shock', 'shock', [(SKY, 'Chain Lightning'), (SKY, 'Thunderbolt'), (MYST, 'Finger of the Mountain')]),
     ('destruction', 'sun', 'Sun', 'sun', [(MYST, 'Solar Flare'), (MYST, 'Sunbeam'), (MYST, 'Radiant Sunbeam'), (MYST, 'Daybreak')]),
     ('destruction', 'blood', 'Blood', 'blood', [(MYST, 'Vampiric Bolt'), (MYST, 'Vampiric Blast'), (MYST, 'Vampiric Rune'), (MYST, 'Blood Lance')]),
-    ('destruction', 'runes', 'Runes', 'frost', [(MYST, 'Greater Frost Rune'), (MYST, 'Greater Lightning Rune'), (MYST, 'Greater Fire Rune'), (MYST, 'Death Cloud')]),
+    # (the class review: every rune read as frost - the Elements trial counted one element, the seals missed them) each rung
+    # its own element
+    ('destruction', 'runes', 'Runes', 'frost', [(MYST, 'Greater Frost Rune'), (MYST, 'Greater Lightning Rune', 'shock'), (MYST, 'Greater Fire Rune', 'fire'), (MYST, 'Death Cloud', 'poison')]),
     ('summoner', 'beasts', 'Beasts', 'arcane', [(COTC, 'Conjure Wolf'), (COTC, 'Conjure Ice Wolf'), (COTC, 'Conjure Alpha Wolf'), (COTC, 'Conjure Werebear')]),
     ('summoner', 'dead', 'The Dead', 'arcane', [(MYST, 'Conjure Skeleton'), (COTC, 'Conjure Draugr Wight'), (COTC, 'Conjure Draugr Deathlord Warrior'), (COTC, 'Conjure Draugr Death Overlord')]),
     ('summoner', 'daedra', 'Daedra', 'arcane', [(COTC, 'Conjure Dremora'), (COTC, 'Conjure Dremora Archer'), (COTC, 'Conjure Dremora Mage'), (MYST, 'Conjure Dremora Warlock')]),
     ('summoner', 'dwemer', 'Dwemer', 'arcane', [(COTC, 'Conjure Dwarven Spider'), (COTC, 'Conjure Dwarven Sphere'), (COTC, 'Conjure Dwarven Centurion'), (COTC, 'Conjure Dwarven Ballista Master')]),
-    ('summoner', 'wild', 'The Wild', 'arcane', [(SPRIG, 'Conjure Spriggan'), (SPRIG, 'Conjure Burnt Spriggan'), (SPRIG, 'Conjure Spriggan Matron'), (SPRIG, 'Conjure Spriggan Earth Mother')]),
-    ('spellsword', 'fire', 'Fire', 'fire', [(MYST, 'Flame Touch'), (MYST, 'Burning Touch'), (MYST, 'Fiery Grasp')]),
-    ('spellsword', 'frost', 'Frost', 'frost', [(MYST, 'Icy Touch'), (MYST, 'Chilling Touch'), (MYST, 'Freezing Grasp')]),
-    ('spellsword', 'shock', 'Shock', 'shock', [(MYST, 'Static Touch'), (MYST, 'Shocking Touch'), (MYST, 'Thundering Grasp')]),
+    ('summoner', 'wild', 'The Wild', 'arcane', [(SPRIG, 'Conjure Spriggan'), (SPRIG, 'Conjure Spriggan Matron'), (SPRIG, 'Conjure Burnt Spriggan'), (SPRIG, 'Conjure Spriggan Earth Mother')]),
+    ('spellsword', 'fire', 'Fire', 'fire', [(MYST, 'Burning Touch'), (MYST, 'Flame Touch'), (MYST, 'Fiery Grasp')]),
+    ('spellsword', 'frost', 'Frost', 'frost', [(MYST, 'Chilling Touch'), (MYST, 'Icy Touch'), (MYST, 'Freezing Grasp')]),
+    ('spellsword', 'shock', 'Shock', 'shock', [(MYST, 'Shocking Touch'), (MYST, 'Static Touch'), (MYST, 'Thundering Grasp')]),
     ('spellsword', 'sun', 'Sun', 'sun', [(MYST, 'Sunlight Touch'), (MYST, 'Radiant Touch'), (MYST, 'Searing Grasp')]),
     ('spellsword', 'blood', 'Blood', 'blood', [(MYST, 'Vampiric Touch'), (MYST, 'Vampiric Grasp'), (MYST, 'Touch of Death')]),
     ('spellsword', 'poison', 'Poison', 'poison', [(MYST, 'Poisonous Touch'), (MYST, 'Venomous Touch'), (MYST, "Viper's Grasp")]),
@@ -79,9 +81,11 @@ def main():
     rows = []
     for cls, lad, label, elem, rungs in LADDERS:
         for r, key in enumerate(rungs):
+            rel = key[2] if len(key) > 2 else elem
+            key = key[:2]
             fid, cost, conc, school = known[key]
             last = r == len(rungs) - 1
-            rows.append(dict(id=f'{cls}_{lad}_{r + 1}', plugin=key[0], formId=f'{fid:06X}', name=key[1], mod=key[0], element=elem,
+            rows.append(dict(id=f'{cls}_{lad}_{r + 1}', plugin=key[0], formId=f'{fid:06X}', name=key[1], mod=key[0], element=rel,
                              school=school.lower() if school else 'destruction', cast='concentration' if conc else 'fire-and-forget',
                              cls=cls, ladder=f'{cls}_{lad}', ladderLabel=label, rung=r + 1, rungs=len(rungs),
                              tier=3 if last else min(r, 2), baseCost=cost, cost=max(8, min(60, round(cost * 0.25))), power=1.0))

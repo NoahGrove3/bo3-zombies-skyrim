@@ -745,14 +745,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			struct Card { const char* name; const char* lore; ImU32 col; const char* tag; const char* arms; const char* grow; const char* kit; };
 			static const Card kCards[4] = {
-				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild",
-				  "Bind Pact: raise each family's summon at the altar", "Conjure Skeleton, Conjure Wolf, summoner's robes" },
-				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Two-handed casting: fire, frost, shock, sun, poison, blood",
+				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild - and Corrosion",
+				  "Bind Pact: raise each family's summon at the altar", "Conjure Wolf, Corrode Armor, Conjure Skeleton, summoner's robes" },
+				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Ranged spells: fire, frost, shock, sun, blood and runes",
 				  "Reforge: climb each element's ladder to its Legendary spell", "Firebolt, Ice Spike, the Wild Witch's hat and gown" },
 				{ "RANGER", "Sworn to the Dawnguard", IM_COL32(110, 210, 120, 255), "Bows and crossbows - and every arrow counts", "The six elemental bows, crossbows and their bolts",
 				  "Mastery: a bow's kills raise its tier; buy ammo at the altars", "An elemental bow, the Dawnguard Crossbow, 30 bolts, the Drifter Outfit" },
 				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "Spell-weapons, spellshields, touch spells, The Wizard Warrior",
-				  "Imbue: raise each element's touch spell; power attacks cast your spell", "Steel Spellsword, Steel Spellshield, Flame Touch, the Practical Pirate outfit" } };
+				  "Imbue: raise each element's touch spell; every blade hit casts it", "Steel Spellsword, Steel Spellshield, Burning Touch, the Practical Pirate outfit" } };
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));
 			TxtC(dl, g_title, 46 * k, size.x * 0.5f, size.y * 0.12f, kParch, Classes::Switching() ? "CHANGE YOUR PATH" : "CHOOSE YOUR PATH", 3 * k, Fade(kGold, 0.6f));
 			const std::string sub = Classes::Switching() ? "Switching costs " + std::to_string(Classes::SwitchCost()) + " Cursed Essence. Each class keeps its own spells and progress."
@@ -2702,11 +2702,26 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float rowH = nameH + typeH + 10 * k;
 					dl->PushClipRect({ c.x - 420 * k, cy - rowH * 1.5f }, { c.x + 420 * k, cy + rowH * 1.5f }, true);
 					for (int jj = -2; jj <= 2; ++jj) {
-						const int   id = base + Shops::ReelSpell(s.rollTarget, pos, jj);
+						// (the reel's own list, copied over with the HUD's state - never read from the altar's while it changes)
+						const int   rid = [&] {
+							const bool list = !s.rollReel.empty();
+							const int  n = std::max(1, list ? static_cast<int>(s.rollReel.size()) : s.rollBow ? Bows::Count() : Arcana::Count());
+							const int  i = (list ? s.rollReelAt : s.rollTarget) - Shops::kReelPass + static_cast<int>(std::floor(pos)) + jj;
+							const int  w = ((i % n) + n) % n;
+							return list ? s.rollReel[w] : w;
+						}();
+						const int   id = base + rid;
 						const float off = (jj - frac) * rowH;  // (the slot slides up as the reel turns; at rest the front sits square in the window)
 						const float a = std::clamp(1.0f - std::abs(off) / (rowH * 1.4f), 0.0f, 1.0f);
 						if (a <= 0.01f) continue;
 						const float y = cy + off - (nameH + typeH) * 0.5f;
+						if (!s.rollReelNames.empty()) {  // (a class row's win: its own pool goes by, the kind under each)
+							const std::string& nm = s.rollReelNames[static_cast<std::size_t>(std::clamp(rid, 0, static_cast<int>(s.rollReelNames.size()) - 1))];
+							if (s.rollPrizeLegend) TxtGoldC(dl, g_title, nameH * (0.8f + 0.2f * a), c.x, y, nm, a);
+							else TxtC(dl, g_title, nameH * (0.8f + 0.2f * a), c.x, y, Fade(IM_COL32(236, 240, 255, 255), a), nm, 2 * k, IM_COL32(10, 20, 50, static_cast<int>(255 * a)));
+							TxtC(dl, g_body, typeH, c.x, y + nameH + 2 * k, Fade(kGold, a * 0.95f), s.rollReelKind, 1.5f * k, IM_COL32(0, 0, 0, static_cast<int>(255 * a)));
+							continue;
+						}
 						if (Legendary(id)) TxtGoldC(dl, g_title, nameH * (0.8f + 0.2f * a), c.x, y, ArmsName(id), a);
 						else TxtC(dl, g_title, nameH * (0.8f + 0.2f * a), c.x, y, Fade(IM_COL32(236, 240, 255, 255), a), ArmsName(id), 2 * k, IM_COL32(10, 20, 50, static_cast<int>(255 * a)));
 						TxtC(dl, g_body, typeH, c.x, y + nameH + 2 * k, Fade(spellCol(id, 1.0f), a * 0.95f), ArmsType(id), 1.5f * k, IM_COL32(0, 0, 0, static_cast<int>(255 * a)));
@@ -2717,10 +2732,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->AddLine({ c.x - hw, cy + rowH * 0.5f }, { c.x + hw, cy + rowH * 0.5f }, Fade(kGold, 0.6f), 1.2f * k);
 				} else if (s.rollPhase == 3 && s.rollGun >= 0) {
 					const float since = s.rollT * gen::kShowOffer, in = std::min(1.0f, since / 0.35f);
-					const ImU32 ec = spellCol(s.rollGun, 1.0f);
-					const bool  legend = s.rollPrize.empty() && s.rollGun >= Arcana::kIdBase && s.rollGun < Bows::kIdBase && Arcana::TierOf(s.rollGun - Arcana::kIdBase) >= 3;
+					const ImU32 ec = s.rollPrize.empty() ? spellCol(s.rollGun, 1.0f) : kGold;
+					const bool  legend = s.rollPrize.empty() ? (s.rollGun >= Arcana::kIdBase && s.rollGun < Bows::kIdBase && Arcana::TierOf(s.rollGun - Arcana::kIdBase) >= 3) : s.rollPrizeLegend;
 					const float y = cy - (nameH + typeH) * 0.5f;
-					const std::string rollName = s.rollPrize.empty() ? ArmsName(s.rollGun) : s.rollPrize, rollType = s.rollPrize.empty() ? ArmsType(s.rollGun) : std::string("From the altar");
+					const std::string rollName = s.rollPrize.empty() ? ArmsName(s.rollGun) : s.rollPrize, rollType = s.rollPrize.empty() ? ArmsType(s.rollGun) : (s.rollReelKind.empty() ? std::string("From the altar") : s.rollReelKind);
 					if (legend) {
 						TxtC(dl, g_title, nameH * 0.7f, c.x, y - nameH * 0.9f, Fade(IM_COL32(255, 222, 130, 255), in), "LEGENDARY", 2 * k, IM_COL32(120, 60, 0, static_cast<int>(255 * in)));
 					}
@@ -2821,8 +2836,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					std::vector<Opt> opts;
 					const bool ps = Settings::PlayStationIcons();
 					if (spell) {
-						if (s.chooseA >= 0) opts.push_back({ 0, "Replace " + ArmsName(Arcana::kIdBase + s.chooseA) + (Arcana::Level(s.chooseA) > 0 ? "  (its reforging is lost)" : ""), g_padLast ? (ps ? "Square" : "X") : Settings::KeyName(0) });
-						if (s.chooseB >= 0) opts.push_back({ 1, "Replace " + ArmsName(Arcana::kIdBase + s.chooseB) + (Arcana::Level(s.chooseB) > 0 ? "  (its reforging is lost)" : ""), g_padLast ? (ps ? "Triangle" : "Y") : Settings::KeyName(1) });
+						if (s.chooseA >= 0) opts.push_back({ 0, "Replace " + ArmsName(Arcana::kIdBase + s.chooseA) + (Arcana::RungOf(s.chooseA) > 1 ? "  (its climb is lost)" : ""), g_padLast ? (ps ? "Square" : "X") : Settings::KeyName(0) });
+						if (s.chooseB >= 0) opts.push_back({ 1, "Replace " + ArmsName(Arcana::kIdBase + s.chooseB) + (Arcana::RungOf(s.chooseB) > 1 ? "  (its climb is lost)" : ""), g_padLast ? (ps ? "Triangle" : "Y") : Settings::KeyName(1) });
 					} else {
 						opts.push_back({ 0, "Take " + s.chooseName + (s.chooseOld.empty() ? std::string() : "  (" + s.chooseOld + " goes back)"), g_padLast ? (ps ? "Square" : "X") : Settings::KeyName(0) });
 					}
@@ -2859,11 +2874,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					bullet({ tx, y + 4 * k }, 0, s.rollPhase == 0);
 					if (s.rollPhase == 3 && !s.rollPrize.empty()) Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPrize);
 					else if (s.rollPhase == 3 && Legendary(s.rollGun)) TxtGold(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, ArmsName(s.rollGun));
-					else Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? (altarCls == 2 ? "CALL A BOW OR CROSSBOW" : altarCls == 0 ? "CALL A SUMMON" : "CALL A SPELL") : s.rollPhase == 1 ? "THE SHRINE GATHERS..." : s.rollPhase == 2 ? (s.rollBow ? "THE BOWS TURN..." : "THE ALTAR TURNS...") : ArmsName(s.rollGun));
+					else Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? (altarCls == 2 ? "CALL A BOW OR CROSSBOW" : altarCls == 0 ? "CALL A SUMMON" : "CALL A SPELL") : s.rollPhase == 1 ? "THE ALTAR GATHERS..." : s.rollPhase == 2 ? (s.rollBow ? "THE BOWS TURN..." : "THE ALTAR TURNS...") : ArmsName(s.rollGun));
 					std::string rollLine;
 					if (s.rollPhase == 3) rollLine = "Activate the altar: take it, roll again, or leave it";
 					else if (altarCls == 2) rollLine = s.bowCarried >= 0 ? "Carrying " + ArmsName(Bows::kIdBase + s.bowCarried) + " - a new one takes its place" : std::string("Six elemental bows, or a crossbow");
-					else if (altarCls == 0) rollLine = "Two summon spells at a time";
+					else if (altarCls == 0) rollLine = "Three spells at a time";
 					else rollLine = "Two of the altar's spells at a time";
 					TxtWrap(dl, g_body, 17 * k, { tx, y + 38 * k }, IM_COL32(196, 182, 160, 235), rollLine, Rr - tx - 70 * k, 2);
 					if (s.rollPhase == 0) {
@@ -2883,7 +2898,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, heroLocked ? kLockedCol : kParch, altarCls == 3 ? "CALL A SPELL-WEAPON" : altarCls == 1 ? "CALL A SUPPORT SPELL" : "BIND A HERO (LEGENDARY)");
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, heroLocked ? kLockedCol : IM_COL32(196, 182, 160, 235),
 						heroLocked ? "Locked until six Echo Altars are freed (" + std::to_string(s.freedCount) + " of " + std::to_string(s.legendAt) + ")"
-						: altarCls == 0 ? std::string("A hero or an army sworn to you") : altarCls == 3 ? std::string("A blade or a spellshield of the altar's steel") : std::string("Wards, cures and blessings to fight beside your fire"));
+						: altarCls == 0 ? std::string("A hero or an army sworn to you") : altarCls == 3 ? std::string("A one-handed spell-weapon, a spellshield or a Mysticism shell") : std::string("Storms and novas to fight beside your fire"));
 					if (idle) {
 						price(y + 30 * k, s.bowRollCost, s.points >= s.bowRollCost);
 					}
@@ -2897,20 +2912,31 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const int  gw = act >= 0 ? s.slotGun[act] : -1;
 					const int  sp = gw >= 0 ? -1 : (s.handSpell[1] >= 0 ? s.handSpell[1] : s.handSpell[0]);  // else a Coffer spell in hand
 					const int  g = s.bowHeld >= 0 ? Bows::kIdBase + s.bowHeld : gw >= 0 ? gw : sp >= 0 ? Arcana::kIdBase + sp : -1;
-					const int  lvl = s.bowHeld >= 0 ? Bows::Level(s.bowHeld) : gw >= 0 ? std::clamp(s.slotLevel[act], 0, gen::kForgeMax) : sp >= 0 ? Arcana::Level(sp) : 0;
+					// (the consistency pass) a class spell climbs its ladder: its rung, its next rung's name and its real price, the
+					// row named as the class names it - Bind Pact, Reforge, Imbue
+					const bool ladder = s.bowHeld < 0 && gw < 0 && sp >= 0;
+					const int  nextSp = ladder ? Arcana::NextRung(sp) : -1;
+					const int  marks = ladder ? std::max(0, Arcana::Rungs(sp) - 1) : gen::kForgeMax;
+					const int  lvl = s.bowHeld >= 0 ? Bows::Level(s.bowHeld) : gw >= 0 ? std::clamp(s.slotLevel[act], 0, gen::kForgeMax) : sp >= 0 ? Arcana::RungOf(sp) - 1 : 0;
+					const bool maxed = ladder ? nextSp < 0 : lvl >= gen::kForgeMax;
+					const int  cost = ladder ? (nextSp >= 0 && Arcana::TierOf(nextSp) >= 3 ? gen::kForgeCost[2] : gen::kForgeCost[std::clamp(lvl, 0, 1)]) : gen::kForgeCost[std::clamp(lvl, 0, gen::kForgeMax - 1)];
 					const bool locked = s.freedCount < s.forgeAt && !Gun::TestKitOn();  // (Noah: the reforge opens once three altars are freed)
-					const bool can = !locked && g >= 0 && lvl < gen::kForgeMax;
+					const bool can = !locked && g >= 0 && !maxed;
+					static constexpr const char* kRowName[4] = { "BIND PACT", "REFORGE", "REFORGE", "IMBUE" };
+					const char* rowName = altarCls >= 0 && altarCls < 4 ? kRowName[altarCls] : "REFORGE";
 					focusRow(2, y - 6 * k, y + 58 * k);
 					bullet({ L, y + 2 * k }, 2, can);
-					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, locked ? kLockedCol : kParch, "REFORGE");
+					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, locked ? kLockedCol : kParch, rowName);
+					const char* holdWhat = altarCls == 2 ? "Hold an elemental bow to reforge it" : altarCls == 0 ? "Hold a summon spell to bind its next pact" : altarCls == 3 ? "Hold a touch to imbue it (and your blade)" : "Hold a spell to reforge it";
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, locked ? kLockedCol : IM_COL32(196, 182, 160, 235),
-						locked ? "Locked until three Echo Altars are freed (" + std::to_string(s.freedCount) + " of " + std::to_string(s.forgeAt) + ")" : g < 0 ? "Hold a spell or bow to reforge it" : ArmsName(g) + (lvl >= gen::kForgeMax ? "  -  ascended" : s.bowHeld >= 0 ? "  -  next: " + std::string(Bows::TierName(s.bowHeld, lvl + 1)) : std::string("  -  more power, less magicka")));
-					for (int q = 0; q < (locked ? 0 : gen::kForgeMax); ++q) {  // the forge marks
+						locked ? "Locked until three Echo Altars are freed (" + std::to_string(s.freedCount) + " of " + std::to_string(s.forgeAt) + ")" : g < 0 ? std::string(holdWhat)
+						: ArmsName(g) + (maxed ? (ladder ? "  -  the last of its ladder" : "  -  ascended") : s.bowHeld >= 0 ? "  -  next: " + std::string(Bows::TierName(s.bowHeld, lvl + 1)) : ladder ? "  -  next: " + std::string(Arcana::Name(nextSp)) : std::string("  -  more power, less magicka")));
+					for (int q = 0; q < (locked ? 0 : marks); ++q) {  // the forge marks
 						const ImVec2 pc{ L + 150 * k + q * 18 * k, y + 14 * k };
 						dl->AddQuadFilled({ pc.x, pc.y - 6 * k }, { pc.x + 5 * k, pc.y }, { pc.x, pc.y + 6 * k }, { pc.x - 5 * k, pc.y }, q < lvl ? spellCol(g, 1.0f) : IM_COL32(60, 52, 46, 220));
 					}
 					if (can) {
-						price(y + 2 * k, gen::kForgeCost[lvl], s.points >= gen::kForgeCost[lvl]);
+						price(y + 2 * k, cost, s.points >= cost);
 					}
 					// the kills its next reforge still needs, as a bar in the class's colour
 					if (!locked && lvl < gen::kForgeMax && (s.bowHeld >= 0 || sp >= 0)) {
@@ -3135,7 +3161,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float R = 30 * k;
 				const ImVec2 c{ size.x * 0.5f - 90 * k, size.y * 0.5f + 150 * k };
 				rollOrb(c, R);
-				const std::string t = s.rollPhase == 1 ? "The shrine gathers..." : s.rollPhase == 2 ? "The spells turn..." : (s.rollPrize.empty() ? ArmsName(s.rollGun) : s.rollPrize) + "  -  activate the altar to choose";
+				const std::string t = s.rollPhase == 1 ? "The altar gathers..." : s.rollPhase == 2 ? "The spells turn..." : (s.rollPrize.empty() ? ArmsName(s.rollGun) : s.rollPrize) + "  -  activate the altar to choose";
 				Txt(dl, g_title, 19 * k, { c.x + R + 12 * k, c.y - 12 * k }, s.rollPhase == 3 ? spellCol(s.rollGun, 1.0f) : kParch, t, 1.5f * k, IM_COL32(0, 0, 0, 255));
 			}
 		}

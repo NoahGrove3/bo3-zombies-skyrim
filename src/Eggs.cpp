@@ -301,7 +301,27 @@ namespace bo3z::Eggs
 				}
 				break;
 			case gen::kEggKills:
-				break;  // (OnUndeadDeath counts them)
+			case gen::kEggClasskills:
+				{
+					// (the class review: these steps are played in a freed city, where no waves run and the dead crumble - the
+					// count could never move) while the step is live at night, the dead keep coming for you here, a few at a time
+					if (!night || !Director::Fighting() || Coop::Client()) {
+						g_live.foes.clear();
+						break;
+					}
+					std::erase_if(g_live.foes, [](const RE::ActorHandle& h) { auto a = h.get(); return !a || a->IsDead() || a->IsDisabled(); });
+					if ((g_live.holdT -= a_dt) <= 0 && g_live.foes.size() < 6) {
+						g_live.holdT = 2.5f;
+						static std::mt19937 rr{ std::random_device{}() };
+						std::uniform_real_distribution<float> u(0.0f, 1.0f);
+						const float a = u(rr) * 6.2832f, r = 900.0f + 500.0f * u(rr);
+						const auto  spot = Walkable(a_p, pp + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, 0 }, 500.0f);
+						if (spot) {
+							if (auto h = Director::RaiseTrial(*spot, false); h) g_live.foes.push_back(h);
+						}
+					}
+					break;  // (OnUndeadDeath and OnClassKill count them)
+				}
 			case gen::kEggSurvive:
 			case gen::kEggBoss:
 				{
@@ -419,6 +439,15 @@ namespace bo3z::Eggs
 				Hud::Banner(fmt::format("The ground drinks: {} of {}", prog, s.n), 2.5f);
 			}
 		}
+	}
+
+	// (Director) a step here wants the dead about: the freed city doesn't crumble them while it runs
+	bool WantsDead()
+	{
+		const int e = g_live.egg;
+		if (e < 0 || Done(e) || Curse::ZoneTown() != CurTown(e)) return false;
+		const auto t = gen::kEggs[e].steps[Step(e)].type;
+		return t == gen::kEggKills || t == gen::kEggClasskills || t == gen::kEggSurvive || t == gen::kEggBoss;
 	}
 
 	void OnClassKill()  // (Classes) a kill your class's own way

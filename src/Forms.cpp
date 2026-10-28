@@ -215,7 +215,6 @@ namespace bo3z
 		{
 			for (int i = 0; a_form && i < static_cast<int>(g_guns.size()); ++i) {
 				if (g_guns[i] == a_form || (g_gunSpells[i] && g_gunSpells[i] == a_form)) {
-					if (gen::kGuns[i].id == "gravecaller") return -1;  // (the Conjurer's Staff is a plain Skyrim staff: no aiming, no gun ways - Classes)
 					return i;
 				}
 			}

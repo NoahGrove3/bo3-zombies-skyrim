@@ -2797,7 +2797,8 @@ namespace bo3z
 				const auto hands = Arcana::Hands();
 				const int  sp = hands[1] >= 0 ? hands[1] : hands[0];
 				if (sp < 0) {
-					Hud::Banner("Hold the spell you want to raise", 2.5f);
+					const int c0 = Classes::Get();
+					Hud::Banner(c0 == 2 ? "Hold an elemental bow to reforge it" : c0 == 0 ? "Hold the summon spell you want to Bind" : c0 == 3 ? "Hold the touch you want to Imbue" : "Hold the spell you want to Reforge", 2.5f);
 					return false;
 				}
 				const int cls = Arcana::ClassOf(sp);
@@ -2810,9 +2811,11 @@ namespace bo3z
 				}
 				int freed = 0;
 				for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) freed += Curse::Freed(t) ? 1 : 0;
-				const int need = Arcana::TierOf(next) >= 3 ? 2 : Arcana::RungOf(next) >= 3 ? 1 : 0;  // (Legendary waits for two freed cities, rung 3 for one)
-				if (freed < need) {
-					Hud::Banner(std::string(Arcana::Name(next)) + " waits until " + std::to_string(need) + (need == 1 ? " city is" : " cities are") + " freed", 3.0f);
+				// (the consistency pass: the old gates sat under the forge's own three) every class alike: a third rung waits for
+				// four freed altars, a Legendary for six - as the Summoner's Legendary pacts do
+				const int need = Arcana::TierOf(next) >= 3 ? 6 : Arcana::RungOf(next) >= 3 ? 4 : 0;
+				if (freed < need && !TestKitOn()) {
+					Hud::Banner(std::string(Arcana::Name(next)) + " waits until " + std::to_string(need) + " Echo Altars are freed (" + std::to_string(freed) + " of " + std::to_string(need) + ")", 3.0f);
 					return false;
 				}
 				if (const int have = Classes::Mastery(sp), want = Classes::MasteryNeed(sp); have < want) {
@@ -2822,7 +2825,7 @@ namespace bo3z
 				if (ForgedTonight(Arcana::kIdBase + sp, name)) {
 					return false;
 				}
-				const int cost = gen::kForgeCost[std::clamp(Arcana::RungOf(sp) - 1, 0, 2)];
+				const int cost = Arcana::TierOf(next) >= 3 ? gen::kForgeCost[2] : gen::kForgeCost[std::clamp(Arcana::RungOf(sp) - 1, 0, 1)];  // (a Legendary always the dearest)
 				if (!Points::Spend(cost)) {
 					return false;
 				}

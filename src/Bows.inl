@@ -110,13 +110,18 @@ namespace BowsImpl
 		if (!p) return 0;
 		int n = 0;
 		for (int k = 0; k < kN; ++k) {
-			if (auto* w = Weap(k); w && p->GetItemCount(w) > 0) { TopUp(k, false, true); ++n; }
+			if (auto* w = Weap(k); w && p->GetItemCount(w) > 0) {  // (the audit: a full quiver counted, and was charged for)
+				auto*     am = Ammo(k);
+				const int before = am ? p->GetItemCount(am) : 0;
+				TopUp(k, false, true);
+				if (am && p->GetItemCount(am) > before) ++n;
+			}
 		}
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		static constexpr std::uint32_t kBolts[] = { 0x020B04, 0x025A50, 0x025A58, 0x025A60, 0x025A68, 0x025A70 };  // Faction Crossbows' plain bolts
 		bool crossbow = false;
 		for (auto& [obj, data] : p->GetInventory()) {
-			if (auto* w = obj ? obj->As<RE::TESObjectWEAP>() : nullptr; w && w->IsCrossbow() && data.first > 0) crossbow = true;
+			if (auto* w = obj ? obj->As<RE::TESObjectWEAP>() : nullptr; w && (w->IsCrossbow() || (w->GetFile(0) && std::string_view(w->GetFile(0)->GetFilename()) == "OffhandBows.esp")) && data.first > 0) crossbow = true;
 		}
 		if (crossbow && dh) {
 			for (auto id : kBolts) {
@@ -147,6 +152,7 @@ namespace BowsImpl
 			if (auto* ow = Weap(k); ow && p->GetItemCount(ow) > 0) {
 				p->RemoveItem(ow, p->GetItemCount(ow), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 				g_level[k] = 0;
+				Classes::SpendBowMastery(k);  // (its kills go back with it: rolled again, it starts from nothing, as its tier does)
 				ApplySpeed(k);
 				logger::info("bows: {} given back", gen::kBows[k].label);
 			}
@@ -461,7 +467,7 @@ namespace BowsImpl
 			if (t < 1 || !s.full) {
 				Director::Web(a->GetPosition(), 70.0f, 3.0f, 60.0f, true);  // slowed
 			}
-			if (t >= 2 && Frozen(a) && !killed) {  // Shatter: the frozen one bursts into shards
+			if (t >= 2 && Spellcraft::g_hitPreFrozen && !killed) {  // Shatter: the one already frozen bursts into shards
 				DamageAs(row, a, dmg * 1.5f, false, false);
 				Spellcraft::Area(row, p, 220.0f, dmg * 0.6f, gen::kFxNone);
 				Spellcraft::BurstAt(row, p, 140.0f, 0.5f);

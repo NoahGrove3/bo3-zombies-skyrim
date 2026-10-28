@@ -22,9 +22,9 @@
         "formType": "Spell",
         "formId": {
           "anyOf": [
-            "Skyrim.esm|10F7ED",
+            "MysticismMagic.esp|1D7020",
             "MysticismMagic.esp|2E8870",
-            "Skyrim.esm|10F7EE",
+            "MysticismMagic.esp|1DC141",
             "MysticismMagic.esp|7BC311",
             "MysticismMagic.esp|1B8A09",
             "MysticismMagic.esp|1FA75F",

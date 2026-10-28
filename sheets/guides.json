@@ -22,7 +22,7 @@
     {
      "title": "Your Altar",
      "paras": [
-      "<b>Call a Summon</b> - the first rung of a summon family you don't have. You carry two families at a time.",
+      "<b>Call a Summon</b> - the first rung of a summon family you don't have. You carry three of the altar's spells at a time - Corrosion and two summon families, or any three.",
       "<b>Bind a Hero</b> - your Legendary pact: a hero of old (Ysgramor, Miraak, the Ebony Warrior...) or a great army. Opens at <b>six freed altars</b>.",
       "The five families: <b>the Dead</b> (Skeleton to Death Overlord), <b>Beasts</b> (Wolf to Werebear), <b>Daedra</b> (Dremora to Warlock), <b>Dwemer</b> (Spider to Ballista Master) and <b>the Wild</b> (Spriggan to Earth Mother)."
      ]
@@ -30,7 +30,7 @@
     {
      "title": "Getting Stronger",
      "paras": [
-      "<b>Kills fill it, the altar raises it.</b> Kills with the spell in your hand count toward its next rung - <b>25</b>, then <b>60</b>, then <b>120</b> for the Legendary rung - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, then <b>12,000</b> Cursed Essence, once a night per spell. The altar's Reforge row and <i>Your Progress</i> show the count.",
+      "<b>Kills fill it, the altar raises it.</b> Kills by your summons (or your own, the spell in hand) count toward its next rung - <b>25</b>, then <b>60</b>, then <b>120</b> for the Legendary rung - once three Echo Altars are freed. Then hold it and take the altar's <b>Bind Pact</b> row: <b>5,000</b>, <b>8,000</b>, then <b>12,000</b> Cursed Essence, once a night per spell. A third rung waits for <b>four</b> freed altars, a Legendary for <b>six</b>. The Bind Pact row and <i>Your Progress</i> show the count.",
       "<b>Summon slots</b> - how many summons you can have out at the same time. You start with <b>2</b>, and get one more for every <b>2 Echo Altars</b> you free, up to <b>7</b> (<b>8</b> with the Conjurer's Command Mead). When every slot is full, a new summon replaces your oldest one."
      ]
     },
@@ -46,7 +46,7 @@
     {
      "title": "Your Trial and Wonder",
      "paras": [
-      "<b>Pact of the Host</b> (your city trial): let your summons make the kills - 10 on Novice up to 30 on Legendary.",
+      "<b>Pact of the Host</b> (your city trial): let your summons make the kills - 20 on Novice up to 60 on Legendary.",
       "<b>Horn of the Spectral Wyrm</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. Its last step hands you the wonder. It calls a spectral dragon for a minute - until it falls once Alduin is slain."
      ]
     }
@@ -74,7 +74,7 @@
     {
      "title": "Getting Stronger",
      "paras": [
-      "<b>Kills fill it, the altar raises it.</b> Kills with the spell in your hand count toward its next rung - <b>25</b>, then <b>60</b>, then <b>120</b> for the Legendary rung - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, then <b>12,000</b> Cursed Essence, once a night per spell. The altar's Reforge row and <i>Your Progress</i> show the count."
+      "<b>Kills fill it, the altar raises it.</b> Kills with the spell in your hand count toward its next rung - <b>25</b>, then <b>60</b>, then <b>120</b> for the Legendary rung - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, then <b>12,000</b> Cursed Essence, once a night per spell. A third rung waits for <b>four</b> freed altars, a Legendary for <b>six</b>. The altar's Reforge row and <i>Your Progress</i> show the count."
      ]
     },
     {
@@ -89,7 +89,7 @@
     {
      "title": "Your Trial and Wonder",
      "paras": [
-      "<b>Trial of the Elements</b> (your city trial): kill with two or more elements - 10 on Novice up to 30 on Legendary.",
+      "<b>Trial of the Elements</b> (your city trial): kill with two or more elements - 20 on Novice up to 60 on Legendary.",
       "<b>Tome of the Six Fires</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. Its last step hands you the wonder. One cast looses the top spell of all six elements around you."
      ]
     }
@@ -155,13 +155,13 @@
      "title": "Your Altar",
      "paras": [
       "<b>Call a Spell</b> - the first rung of a close-range spell you don't have: the touches (Fire, Frost, Shock, Sun, Blood, Poison) or the breaths (Flame, Frost, Storm, Poison, Blood sprays). You carry two at a time.",
-      "<b>Call a Spell-Weapon</b> - a spellsword, greatsword or spellshield (sometimes a Mysticism shell or cloak). Better steel comes as cities are freed."
+      "<b>Call a Spell-Weapon</b> - a one-handed spell-weapon or a spellshield (sometimes a Mysticism shell or cloak). Better steel comes as cities are freed."
      ]
     },
     {
      "title": "Getting Stronger",
      "paras": [
-      "<b>Kills fill it, the altar raises it.</b> Melee kills with the spell in your other hand count toward its next rung - <b>25</b>, then <b>60</b> (a power-attack kill counts twice) - once three Echo Altars are freed. Then take the altar's <b>Reforge</b> row: <b>5,000</b> then <b>8,000</b> Cursed Essence, once a night.",
+      "<b>Kills fill it, the altar raises it.</b> Melee kills with the spell in your other hand count toward its next rung - <b>25</b>, then <b>60</b>, <b>120</b> for a Legendary (a power-attack kill counts twice) - once three Echo Altars are freed. Then take the altar's <b>Imbue</b> row: <b>5,000</b> then <b>8,000</b> Cursed Essence (<b>12,000</b> for a Legendary), once a night. A third rung waits for <b>four</b> freed altars, a Legendary for <b>six</b>.",
       "Each reforge also raises your held spell-weapon a material and unlocks one of four <b>Enchantment Powers</b> (in your Powers)."
      ]
     },
@@ -200,7 +200,7 @@
    "title": "The Echo Altar",
    "paras": [
     "Every city has one. Step onto it and activate it. Move with the D-pad or W/S, choose with A or Enter, leave with B.",
-    "From the top: <b>your class</b> (change it for 2,500 Cursed Essence - each class keeps its own progress), <b>your rolls</b>, <b>Reforge</b> (after three freed altars), <b>perks</b>, then the city's <b>trials</b>.",
+    "From the top: <b>your class</b> (change it for 2,500 Cursed Essence - each class keeps its own progress), <b>your rolls</b>, <b>Reforge / Bind Pact / Imbue</b> (after three freed altars), <b>perks</b>, then the city's <b>trials</b>.",
     "<b>After a roll</b>, activate the altar again: <b>take it</b> (it replaces what it would), <b>roll again</b> at the next price, or <b>leave it</b> for half the roll back.",
     "<b>Freeing a city</b>: finish four trials (three shared, one your class's), then slay its <b>Dragon Priest</b>, who rises at night. A freed city is a sanctuary, teaches you its Thu'um, and Whiterun gives you a dragon to ride."
    ]

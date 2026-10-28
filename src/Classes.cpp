@@ -41,6 +41,30 @@ namespace bo3z::Classes
 			p->AddSpell(a_sp);
 			if (const int c = g_class.load(); c >= 0 && c < 4 && std::find(g_extra[c].begin(), g_extra[c].end(), a_sp->GetFormID()) == g_extra[c].end()) g_extra[c].push_back(a_sp->GetFormID());
 		}
+		// (the consistency pass) a class prize's reel: up to a dozen of its pool's names, the won one among them
+		template <class T>
+		void FillReel(Classes::Prize* a_out, const std::vector<T*>& a_pool, T* a_pick, const char* a_kind, bool a_legend = false)
+		{
+			if (!a_out) return;
+			a_out->kind = a_kind, a_out->legendary = a_legend, a_out->reel.clear();
+			std::vector<T*> pool = a_pool;
+			static std::mt19937 rr{ std::random_device{}() };
+			std::shuffle(pool.begin(), pool.end(), rr);
+			if (pool.size() > 12) pool.resize(12);
+			if (std::find(pool.begin(), pool.end(), a_pick) == pool.end()) pool.back() = a_pick;
+			for (auto* x : pool) {
+				if (x == a_pick) a_out->at = static_cast<int>(a_out->reel.size());
+				a_out->reel.emplace_back(x && x->GetName() ? x->GetName() : "");
+			}
+		}
+		// a bow, a crossbow, or one of OffhandBows' one-hand crossbows (staves to Skyrim)
+		bool IsRangerWeapon(const RE::TESObjectWEAP* a_w)
+		{
+			if (!a_w) return false;
+			if (a_w->IsBow() || a_w->IsCrossbow()) return true;
+			auto* f = a_w->GetFile(0);
+			return f && std::string_view(f->GetFilename()) == "OffhandBows.esp";
+		}
 		int Rung1(int a_cls, std::string_view a_ladderLabel)
 		{
 			for (int i = 0; i < static_cast<int>(coffer::kSpells.size()); ++i) {
@@ -395,11 +419,16 @@ namespace bo3z::Classes
 			} else {
 				RestoreGear(a_to);
 				if (!g_perkStash[a_to].empty()) Perks::GiveBack(g_perkStash[a_to]), g_perkStash[a_to].clear();
-				bool left = false;
+				// (the class review: hands came back swapped - and the Spellsword's blade knocked out of its right) the stash is
+				// kept left hand first: it goes back there, the next to the right, the rest to the book; the Spellsword's right
+				// hand is its blade's, so its others wait in the book
+				int n = 0;
 				for (auto [i, lv] : g_stash[a_to]) {
-					GiveSpell(i, left);
+					if (n == 0) GiveSpell(i, true);
+					else if (n == 1 && a_to != coffer::kSpellsword) GiveSpell(i, false);
+					else Arcana::Give(i, false);
 					Arcana::SetLevel(i, lv);
-					left = !left;
+					++n;
 				}
 			}
 		}
@@ -649,10 +678,13 @@ namespace bo3z::Classes
 			if (a_dying) {
 				if (auto it = g_lastHit.find(a_dying->GetFormID()); it != g_lastHit.end()) src = RE::TESForm::LookupByID(it->second);
 			}
+			// (the Ranger review: an altar bow's tier II/III strikes are Mysticism spells - its kills read as a Battle-mage's) the
+			// bow in your hands made them
+			const bool bowSpell = Bows::Held() >= 0 && src && src->As<RE::MagicItem>() && Arcana::IndexOf(src) < 0;
 			if (a_bySummon) how = 0;
-			else if (auto* mi = src ? src->As<RE::MagicItem>() : nullptr) how = (mi->GetAssociatedSkill() == RE::ActorValue::kDestruction || (Arcana::IndexOf(src) >= 0 && Arcana::ClassOf(Arcana::IndexOf(src)) == coffer::kDestruction)) ? 1 : -1;
-			else if (auto* w = src ? src->As<RE::TESObjectWEAP>() : nullptr) {
-				how = (w->IsBow() || w->IsCrossbow()) ? 2 : 3;
+			else if (auto* mi = src && !bowSpell ? src->As<RE::MagicItem>() : nullptr) how = (mi->GetAssociatedSkill() == RE::ActorValue::kDestruction || (Arcana::IndexOf(src) >= 0 && Arcana::ClassOf(Arcana::IndexOf(src)) == coffer::kDestruction)) ? 1 : -1;
+			else if (auto* w = src && !bowSpell ? src->As<RE::TESObjectWEAP>() : nullptr) {
+				how = IsRangerWeapon(w) ? 2 : 3;  // (OffhandBows' one-hand crossbows are staves to Skyrim)
 				if (const int b = Bows::IndexOf(w); b >= 0 && b < static_cast<int>(g_bowMastery.size()) && (FreedCount() >= 3 || Gun::TestKitOn())) g_bowMastery[b] = static_cast<std::uint16_t>(std::min(60000, g_bowMastery[b] + 1));
 				if (w->IsCrossbow() && c == coffer::kRanger && g_boltKills < 60000) {
 					const int before = BoltsUnlocked();
@@ -695,7 +727,9 @@ namespace bo3z::Classes
 		// (Noah: "make kills count after the forge opens") nothing counts toward a climb before three altars are freed
 		const bool forgeOpen = FreedCount() >= 3 || Gun::TestKitOn();
 		const bool power = a_dying && g_powerHit.contains(a_dying->GetFormID());
-		for (int h : Arcana::Hands()) {
+		auto handsNow = Arcana::Hands();
+		if (g_class.load() == coffer::kSpellsword && handsNow[0] < 0 && handsNow[1] < 0) handsNow[0] = BladeSpell();  // (a two-handed blade: the spell it carries)
+		for (int h : handsNow) {
 			if (!forgeOpen) break;
 			if (h < 0) continue;
 			const int cls = Arcana::ClassOf(h);
@@ -712,10 +746,30 @@ namespace bo3z::Classes
 	void SpendBowMastery(int a_bow) { if (a_bow >= 0 && a_bow < static_cast<int>(g_bowMastery.size())) g_bowMastery[a_bow] = 0; }
 	int Mastery(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? g_mastery[coffer::kSpells[a_index].ladder] : 0; }
 	// kills a ladder needs before its next rung can be raised: 25 to rung 2, 60 to rung 3, 120 to the Legendary
+	// (the consistency pass: a short ladder's Legendary came after 25 kills and 5,000) the Legendary rung always asks the most
+	// (the Spellsword review: Dragon Slayer is two-handed - with it no spell could be held, so its own power, the resonance,
+	// the trial and the climbs all stopped) the spell your blade carries: the Spellsword spell in a hand, or - with a
+	// two-handed blade - the last one you held
+	int BladeSpell()
+	{
+		static int remembered = -1;
+		const auto h = Arcana::Hands();
+		for (int i : { h[0], h[1] }) {
+			if (i >= 0 && Arcana::ClassOf(i) == coffer::kSpellsword) return remembered = i;
+		}
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* w = p ? p->GetEquippedObject(false) : nullptr;
+		auto* wp = w ? w->As<RE::TESObjectWEAP>() : nullptr;
+		const bool twoHands = wp && (wp->IsTwoHandedSword() || wp->IsTwoHandedAxe());
+		if (twoHands && remembered >= 0 && Arcana::Known(remembered)) return remembered;
+		return -1;
+	}
 	int MasteryNeed(int a_index)
 	{
+		const int next = Arcana::NextRung(a_index);
+		if (next >= 0 && Arcana::TierOf(next) >= 3) return 120;
 		const int r = Arcana::RungOf(a_index);
-		return r <= 1 ? 25 : r == 2 ? 60 : 120;
+		return r <= 1 ? 25 : 60;
 	}
 	void SpendMastery(int a_index)
 	{
@@ -741,9 +795,12 @@ namespace bo3z::Classes
 			if (Curse::Freed(t)) towns += (towns.empty() ? "" : ", ") + std::string(gen::kTowns[t]);
 		}
 		out.push_back(fmt::format("<b>Echo Altars freed: {} of {}</b>{}", freed, gen::kTowns.size(), towns.empty() ? std::string(" - none yet. Start with Riverwood's altar.") : " (" + towns + ")."));
-		out.push_back(fmt::format("The altar's forge (raising your spells and bows): {}. Your class's Legendary row: {}.",
+		// (the consistency pass: every class was told of a Legendary row only the Summoner has) the forge's gates, as they are
+		out.push_back(fmt::format("The altar's forge (raising your spells and bows): {}. Third rungs: {}. Legendary rungs{}: {}.",
 			freed >= 3 ? std::string("<b>open</b>") : fmt::format("opens at 3 freed altars ({} to go)", 3 - freed),
-			freed >= 6 ? std::string("<b>open</b>") : fmt::format("opens at 6 freed altars ({} to go)", 6 - freed)));
+			freed >= 4 ? std::string("<b>open</b>") : fmt::format("at 4 freed altars ({} to go)", 4 - freed),
+			g_class.load() == coffer::kSummoner ? " and your hero pacts" : "",
+			freed >= 6 ? std::string("<b>open</b>") : fmt::format("at 6 freed altars ({} to go)", 6 - freed)));
 		// the spells you carry: where each stands on its ladder, and the kills it still needs
 		bool any = false;
 		for (int i : Arcana::Carried()) {
@@ -818,6 +875,11 @@ namespace bo3z::Classes
 		if (!p || !dh) return;
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();
 		TuneCorrosion();
+		// (the Summoner review) Alduin's fall mid-session turns the Horn of the Spectral Wyrm Legendary at once, not at the next load
+		if (static bool was = AfterSovngarde(); AfterSovngarde() != was) {
+			was = AfterSovngarde();
+			if (g_wStep[coffer::kSummoner] > kWonderSteps) TuneWyrm();
+		}
 		// (Noah: "random Dremora at the Echo Altar attack me and my summons") a conjured creature with no master - a summon
 		// whose spell ended while it was out of the world, or a stand-in from before a load - crumbles instead of turning on you
 		if (static int sweep = 0; ++sweep % 5 == 0 && Party::FriendCount() == 0) {  // (alone: a friend's summons show here masterless)
@@ -891,15 +953,10 @@ namespace bo3z::Classes
 				}
 			}
 		}
-		// (Noah: the staff is gone) a Summoner from before gives it back once and learns Corrosion in its place
+		// (Noah: the staff is gone) a Summoner from before learns Corrosion in its place (the staff itself is the Echo's Void
+		// Staff, the same weapon - it is never taken: the audit found that took the wonder from whoever held it)
 		if (!g_staffChecked && p->Is3DLoaded()) {
 			g_staffChecked = true;
-			const int si = ConjurerStaff();
-			if (auto* w = si >= 0 ? Forms::Gun(si) : nullptr; w && p->GetItemCount(w) > 0) {
-				if (auto* em = RE::ActorEquipManager::GetSingleton(); em && (p->GetEquippedObject(false) == w || p->GetEquippedObject(true) == w)) em->UnequipObject(p, w);
-				p->RemoveItem(w, p->GetItemCount(w), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-				logger::info("classes: the Conjurer's Staff taken back - Corrosion in its place");
-			}
 			if (g_class.load() == coffer::kSummoner && g_kit[coffer::kSummoner]) {
 				bool knows = false;
 				for (int i = 0; i < static_cast<int>(coffer::kSpells.size()); ++i) {
@@ -924,7 +981,7 @@ namespace bo3z::Classes
 			auto*       av = p->AsActorValueOwner();
 			auto*       held = p->GetEquippedObject(false);
 			auto*       wp = held ? held->As<RE::TESObjectWEAP>() : nullptr;
-			const bool  ranged = wp && (wp->IsBow() || wp->IsCrossbow());
+			const bool  ranged = IsRangerWeapon(wp);
 			const float want = ranged ? Settings::DrawSpeed() * Perks::DrawSpeedMult() : Settings::MeleeSpeed() * Perks::SwingSpeedMult();
 			if (std::abs(av->GetBaseActorValue(RE::ActorValue::kWeaponSpeedMult) - want) > 0.01f) av->SetBaseActorValue(RE::ActorValue::kWeaponSpeedMult, want);
 			if (std::abs(av->GetBaseActorValue(RE::ActorValue::kLeftWeaponSpeedMultiply) - want) > 0.01f) av->SetBaseActorValue(RE::ActorValue::kLeftWeaponSpeedMultiply, want);
@@ -943,7 +1000,7 @@ namespace bo3z::Classes
 			static int tick = 0;
 			if (++tick >= std::max(4, 20 / fl)) {
 				tick = 0;
-				if (auto* ammo = p->GetCurrentAmmo(); ammo && p->GetItemCount(ammo) < 60) p->AddObjectToContainer(ammo, nullptr, 1, nullptr);
+				if (auto* ammo = p->GetCurrentAmmo(); ammo && p->GetItemCount(ammo) < (Bows::Held() >= 0 ? 200 : 60)) p->AddObjectToContainer(ammo, nullptr, 1, nullptr);
 			}
 		}
 		// (Noah's plan, the Spellsword) Imbue unlocks The Wizard Warrior's Enchantment Powers 1 to 4, one per rung climbed
@@ -1014,7 +1071,8 @@ namespace bo3z::Classes
 	int MaterialTier(std::string_view a_name)
 	{
 		static constexpr std::pair<std::string_view, int> kTiers[] = { { "Daedric", 3 }, { "Dragon", 3 }, { "Daedra", 3 }, { "Stahlrim", 3 }, { "Cataclysm", 3 }, { "Moonlight", 3 },
-			{ "Giant Crusher", 3 }, { "Spirit Sword", 3 }, { "Glass", 2 }, { "Ebony", 2 }, { "Advanced", 2 }, { "Nordic", 2 }, { "Slayer", 2 }, { "Ballista", 2 },
+			{ "Giant Crusher", 3 }, { "Spirit Sword", 3 }, { "Deathbane", 3 }, { "Mirror", 3 }, { "Shadow Blade", 3 }, { "Hex", 3 },  // (the Spellsword review: uniques read as steel)
+			 { "Glass", 2 }, { "Ebony", 2 }, { "Advanced", 2 }, { "Nordic", 2 }, { "Slayer", 2 }, { "Ballista", 2 },
 			{ "Dwarven", 1 }, { "Dwemer", 1 }, { "Elven", 1 }, { "Silver", 1 }, { "Imperial", 1 }, { "Falmer", 1 }, { "Repeater", 1 }, { "Tribow", 1 }, { "Twin", 1 } };
 		for (auto [k, t] : kTiers) if (a_name.find(k) != std::string_view::npos) return t;
 		return 0;
@@ -1027,13 +1085,15 @@ namespace bo3z::Classes
 		int freed = 0;
 		for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) freed += Curse::Freed(t) ? 1 : 0;
 		std::vector<RE::TESBoundObject*> pool;
+		std::unordered_set<std::string> held;
+		for (auto& [obj, data] : p->GetInventory()) if (obj && data.first > 0 && obj->GetName() && *obj->GetName()) held.insert(obj->GetName());
 		const auto from = [&](std::string_view a_plugin, auto* a_type) {
 			using T = std::remove_pointer_t<decltype(a_type)>;
 			for (auto* f : dh->GetFormArray<T>()) {
 				if (!f || !f->GetFile(0) || f->GetFile(0)->GetFilename() != a_plugin) continue;
 				const char* nm = f->GetName();
 				if (!nm || !*nm || MaterialTier(nm) > freed) continue;
-				if (p->GetItemCount(f) > 0) continue;
+				if (p->GetItemCount(f) > 0 || held.contains(nm)) continue;  // (one by that name already yours: no second "Steel Spellsword")
 				if constexpr (std::is_same_v<T, RE::TESObjectARMO>) {
 					if (!f->IsShield()) continue;
 				}
@@ -1059,7 +1119,8 @@ namespace bo3z::Classes
 				auto* sp = spells[std::uniform_int_distribution<std::size_t>(0, spells.size() - 1)(rng2)];
 				if (a_out) {
 					a_out->name = sp->GetName();
-					a_out->give = [sp] { Learn(sp); Hud::Banner(std::string("The altar teaches you ") + sp->GetName(), 4.0f); };
+					FillReel(a_out, spells, sp, "Mysticism Shell");
+					a_out->give = [sp] { Learn(sp); Hud::Banner(std::string(sp->GetName()) + "  -  learned", 4.0f); };
 					return true;
 				}
 				Learn(sp);
@@ -1075,12 +1136,16 @@ namespace bo3z::Classes
 		auto* pick = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(rng)];
 		if (a_out) {
 			a_out->name = pick->GetName();
+			{
+				auto* pw = pick->As<RE::TESObjectWEAP>();
+				FillReel(a_out, pool, pick, a_cls == coffer::kRanger ? "Crossbow" : pw ? "Spell-weapon" : "Spellshield");
+			}
 			a_out->give = [pick, a_cls] {
 				auto* pl = RE::PlayerCharacter::GetSingleton();
 				if (!pl) return;
 				const auto had = pl->GetItemCount(pick);
 				pl->AddObjectToContainer(pick, nullptr, 1, nullptr);
-				if (auto* w = pick->As<RE::TESObjectWEAP>(); w && w->IsCrossbow()) Bows::Restock();
+				if (auto* w = pick->As<RE::TESObjectWEAP>(); IsRangerWeapon(w) && !w->IsBow()) Bows::Restock();
 				// (Noah: "I collected two of the item") keep it to the one given - anything that doubled the add is taken back
 				std::thread([pick, had] { std::this_thread::sleep_for(std::chrono::milliseconds(1500)); Tasks::Add([pick, had] {
 					auto* q = RE::PlayerCharacter::GetSingleton();
@@ -1089,14 +1154,14 @@ namespace bo3z::Classes
 						logger::info("classes: altar gear came twice ({} extra taken back)", extra);
 					}
 				}); }).detach();
-				Hud::Banner(std::string("The altar gives you ") + pick->GetName(), 4.0f);
+				Hud::Banner(std::string(pick->GetName()) + "  -  in your pack", 4.0f);
 				logger::info("classes: altar gear {} ({})", pick->GetName(), Name(a_cls));
 			};
 			return true;
 		}
 		p->AddObjectToContainer(pick, nullptr, 1, nullptr);
-		if (auto* w = pick->As<RE::TESObjectWEAP>(); w && w->IsCrossbow()) Bows::Restock();  // (a crossbow comes with its bolts)
-		Hud::Banner(std::string("The altar gives you ") + pick->GetName(), 4.0f);
+		if (auto* w = pick->As<RE::TESObjectWEAP>(); IsRangerWeapon(w) && !w->IsBow()) Bows::Restock();  // (a crossbow comes with its bolts)
+		Hud::Banner(std::string(pick->GetName()) + "  -  in your pack", 4.0f);
 		logger::info("classes: altar gear {} ({})", pick->GetName(), Name(a_cls));
 		return true;
 	}
@@ -1184,7 +1249,8 @@ namespace bo3z::Classes
 		auto* sp = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(rng)];
 		if (a_out) {
 			a_out->name = sp->GetName();
-			a_out->give = [sp] { Learn(sp); Hud::Banner(std::string("Support spell learned: ") + sp->GetName(), 4.0f); logger::info("classes: support spell {}", sp->GetName()); };
+			FillReel(a_out, pool, sp, "Support Spell");
+			a_out->give = [sp] { Learn(sp); Hud::Banner(std::string(sp->GetName()) + "  -  learned", 4.0f); logger::info("classes: support spell {}", sp->GetName()); };
 			return true;
 		}
 		Learn(sp);
@@ -1209,13 +1275,19 @@ namespace bo3z::Classes
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		auto* held = p ? p->GetEquippedObject(false) : nullptr;
 		auto* w = held ? held->As<RE::TESObjectWEAP>() : nullptr;
-		if (!w || !w->GetFile(0) || w->GetFile(0)->GetFilename() != "Spellsword.esp" || !dh) return;
+		if (!w || !w->GetFile(0) || w->GetFile(0)->GetFilename() != "Spellsword.esp" || !dh) {
+			Hud::Banner("Hold a spell-weapon as you Imbue and its steel rises too", 3.0f);  // (the consistency pass: it was silent)
+			return;
+		}
 		static constexpr std::string_view kMat[] = { "Steel", "Orcish", "Dwarven", "Elven", "Glass", "Ebony", "Daedric" };
 		const std::string name = w->GetName();
 		int m = -1;
 		for (int i = 0; i < 7; ++i) if (name.starts_with(kMat[i])) m = i;
 		if (name.starts_with("Dwemer")) m = 2;
-		if (m < 0 || m >= 6) return;
+		if (m < 0 || m >= 6) {
+			Hud::Banner(std::string(w->GetName()) + " has reached its finest steel", 3.0f);
+			return;
+		}
 		if (name.find(' ') == std::string::npos) return;  // (the audit: a one-word name threw here)
 		const std::string rest = name.substr(name.find(' '));                 // " Spellsword of Fire"
 		const std::string kind = rest.substr(0, rest.find(" of "));           // " Spellsword"
@@ -1231,7 +1303,10 @@ namespace bo3z::Classes
 				if (score > bestScore) bestScore = score, best = c;
 			}
 		}
-		if (!best || bestScore < 2) return;
+		if (!best) {
+			Hud::Banner("There is no finer steel for " + name + " at the altar", 3.0f);
+			return;
+		}
 		p->RemoveItem(w, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 		GiveItem(p, best, 1, true);
 		Hud::Banner(std::string("Imbued: ") + name + "  ->  " + best->GetName(), 4.0f);
@@ -1265,7 +1340,7 @@ namespace bo3z::Classes
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return false;
-		const int freed = std::max(FreedCount(), 4);  // (past the altar's gate of six: the armies answer too)
+		constexpr int freed = 6;  // (the row opens at six freed altars: heroes and armies both answer)
 		static constexpr std::uint32_t kHeroes[] = { 0x019D7C, 0x0290A4, 0x0290A3, 0x0290A6, 0x0CB318, 0x103618, 0x019D66 };  // Ysgramor, Gormlaith, Felldir, Hakon, Miraak, Karstaag, the Ebony Warrior
 		static constexpr std::uint32_t kArmies[] = { 0x09370D, 0x0A2A1D, 0x0CB311, 0x0C61F9 };  // the Dragon Priest, Dwarven, Undead and Hero armies
 		std::vector<RE::SpellItem*> pool;
@@ -1280,7 +1355,8 @@ namespace bo3z::Classes
 		auto* sp = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(rng)];
 		if (a_out) {
 			a_out->name = sp->GetName();
-			a_out->give = [sp] { Learn(sp); Forms::Play(gen::Sound::shout_learned); Hud::Banner(std::string("A LEGENDARY PACT - ") + sp->GetName(), 5.0f); logger::info("classes: hero pact {}", sp->GetName()); };
+			FillReel(a_out, pool, sp, "Legendary Pact", true);
+			a_out->give = [sp] { Learn(sp); Forms::Play(gen::Sound::shout_learned); Hud::Banner(std::string(sp->GetName()) + "  -  a Legendary pact, learned", 5.0f); logger::info("classes: hero pact {}", sp->GetName()); };
 			return true;
 		}
 		Learn(sp);
@@ -1345,7 +1421,7 @@ namespace bo3z::Classes
 			// (its arrow found one of the dead: the hole opens on it - TickFast sees the arrow gone and lets it be)
 			OpenVortex(a_target->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, true);
 		} else if (src == Slayer() && g_bladeCool <= 0) {  // the spell in your other hand rides the blade
-			const int left = Arcana::Hands()[0];
+			const int left = BladeSpell();  // (two-handed: the last Spellsword spell you held)
 			auto* sp = left >= 0 ? Arcana::Spell(left) : nullptr;
 			if (!sp) return;
 			g_bladeCool = 0.35f;

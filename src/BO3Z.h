@@ -312,13 +312,15 @@ namespace bo3z
 		void             Revert();
 		void             Tick();                   // the Summoner's summon cap, once a second
 		// (Noah: the altar's rows keep their roll) what a class row won, given when it is taken off the altar after the roll
-		struct Prize { std::string name; std::function<void()> give; };
+		// a class row's win: its name, how it is given, and what the altar's reel turns through before landing on it (reel[at])
+		struct Prize { std::string name; std::function<void()> give; std::vector<std::string> reel; int at{ 0 }; std::string kind; bool legendary{ false }; };
 		bool             RollGear(int a_cls, Prize* a_out = nullptr);      // a Spellsword weapon or shield / a Ranger's crossbow from the altar (material by freed cities)
 		void             OnKill(bool a_bySummon, RE::Actor* a_dying);  // you (or your summon) killed a foe: what you hold trains, the wonder trial counts
 		void             NoteHit(RE::Actor* a_target, RE::FormID a_source, bool a_power);  // your blow (what killed it; the wonders' on-hit)
 		bool             OnCast(RE::FormID a_spell);   // the Tome of the Six Fires
 		void             NoteCast(RE::FormID a_spell); // a summon spell: called up here if Skyrim's own didn't come
 		bool             IsOwnSummon(RE::Actor* a_actor);
+		int              BladeSpell();  // the Spellsword spell your blade carries (in a hand, or the last held with a two-handed blade; -1)
 		void             MarkForSummons(RE::Actor* a_target);  // (the Summoner's staff) every summon of yours turns on it until it dies or another is marked
 		void             ConjurerStaffHit(RE::Actor* a_target, RE::FormID a_source);  // the Conjurer's Staff's bolt struck: a burst, and the marks
 		void             TickFast(float a_delta);      // where the Subsuming Vortex's arrows come down
@@ -354,6 +356,7 @@ namespace bo3z
 		std::vector<int>   Carried();                    // the altar's spells you carry (in hand first) - two at most
 		std::vector<int>   Carried(int a_cls);           // the same, counting only that class's (-1: every one)
 		std::size_t        CarryCap();                   // spells you may carry: 2, the Summoner 3
+		std::vector<int>   ReelPool();                   // your class's base spells (what the altar's reel turns through)
 		void               Forget(int a_index);          // gone for good: unequipped, out of the Magic menu, reforging lost
 		void               Replace(int a_old, int a_new);  // the new spell in the old one's place (and hands)
 		RE::SpellItem*     Spell(int a_index);
@@ -731,6 +734,7 @@ namespace bo3z
 		void  OnHurt();                          // (a coin step: taken unhurt)
 		void  OnUndeadDeath(RE::Actor* a_actor); // (marked ground)
 		void  OnClassKill();                     // (Classes) a kill your class's own way
+		bool  WantsDead();                       // a secret's step in this freed city wants the dead about (they don't crumble)
 		void  OnBossSlain(int a_town);           // its named foe fell (Director's champion, town -10 - city)
 		bool  OnSpellCast(RE::FormID a_spell);   // (retired: false)
 		void  Heard(int a_town);                 // (retired)
@@ -882,6 +886,11 @@ namespace bo3z
 			float       bowDraw{ 0 };
 			bool        rollBow{ false };  // the altar's roll is the bow wheel
 			std::string rollPrize;  // a class row's win, landed (its name over the altar in place of a spell's)
+			std::vector<std::string> rollReelNames;  // a class row's reel (its pool's names) while it turns
+			std::vector<int> rollReel;              // what the reel turns through (spell / bow ids, or places in rollReelNames); empty: all
+			int              rollReelAt{ 0 };
+			std::string rollReelKind;                // and what they are ("Spell-weapon", "Support Spell", ...)
+			bool        rollPrizeLegend{ false };
 			int         bowRollCost{ 0 }, bowCarried{ -1 };
 			float       questTimer{ -1 };  // the trial under way: seconds left on its clock (-1 none)
 			bool        questWarn{ false };  // ...and it is in danger (time short, health low)

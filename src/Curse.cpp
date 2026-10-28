@@ -801,7 +801,7 @@ namespace bo3z
 			case 3: {  // a melee kill with a spell in either hand (an altar spell, or any spell)
 				auto* pl = RE::PlayerCharacter::GetSingleton();
 				const auto h = Arcana::Hands();
-				bool spell = h[0] >= 0 || h[1] >= 0;
+				bool spell = h[0] >= 0 || h[1] >= 0 || Classes::BladeSpell() >= 0;  // (a two-handed blade carries the last one held)
 				for (bool left : { true, false }) {
 					if (auto* f = pl ? pl->GetEquippedObject(left) : nullptr; f && f->As<RE::SpellItem>()) spell = true;
 				}

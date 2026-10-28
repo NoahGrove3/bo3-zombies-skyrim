@@ -4624,7 +4624,7 @@ namespace bo3z
 				}
 				if (Curse::SafeHere(player)) {
 					// a freed city: the dead cannot enter (any that followed you in fall where they stand)
-					if ((g_sanctuarySaid -= a_delta) <= 0 && !g_alive.empty()) {
+					if ((g_sanctuarySaid -= a_delta) <= 0 && !g_alive.empty() && !Eggs::WantsDead()) {
 						CrumbleNear(player->GetPosition(), 1.0e9f);
 						g_sanctuarySaid = 1.0f;
 					}
