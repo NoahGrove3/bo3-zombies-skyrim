@@ -347,6 +347,28 @@ namespace bo3z
 			RE::NiPoint3              anchor{};
 			std::vector<RE::NiPoint3> pts;
 		} g_points;
+		RE::NiPoint3 g_spotBase{};       // the hand-placed point SpawnSpot last chose (its marker spawns the next one)
+		bool         g_spotBaseSet = false;
+		// (the audit's suggestion: spawn markers) an XMarker stands at each hand-placed spawn point once it is used; the dead
+		// are placed at it - Skyrim's own PlaceAtMe from a reference already in that spot's cell - so each one is made in
+		// the right cell, on the right ground, in one step
+		std::unordered_map<std::int64_t, RE::ObjectRefHandle> g_spawnMarks;
+		RE::TESObjectREFR* SpawnMark(RE::PlayerCharacter* a_player, const RE::NiPoint3& a_at)
+		{
+			const std::int64_t key = (static_cast<std::int64_t>(std::lround(a_at.x / 8.0f)) << 32) ^ static_cast<std::int64_t>(std::lround(a_at.y / 8.0f) & 0xFFFFFFFF);
+			if (auto it = g_spawnMarks.find(key); it != g_spawnMarks.end()) {
+				if (auto m = it->second.get(); m && !m->IsDeleted() && m->GetWorldspace() == a_player->GetWorldspace() && m->GetParentCell() && m->GetParentCell()->IsAttached()) return m.get();
+				g_spawnMarks.erase(it);
+			}
+			auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(0x00003B);  // XMarker
+			auto* cell = RE::TES::GetSingleton()->GetCell(a_at);
+			if (!xm || !cell || !cell->IsAttached() || cell->IsInteriorCell()) return nullptr;
+			auto h = RE::TESDataHandler::GetSingleton()->CreateReferenceAtLocation(xm, a_at, {}, cell, a_player->GetWorldspace(), nullptr, nullptr, {}, false, true);
+			auto m = h.get();
+			if (!m) return nullptr;
+			g_spawnMarks[key] = h;
+			return m.get();
+		}
 		std::optional<float> WalkTop(RE::TESObjectCELL* a_cell, const RE::NiPoint3& a_at, float a_above);
 		// (Noah: "from the ground - on road and dirt, not inside houses or on their porches") a spot is good ground when
 		// the first thing a ray from high above meets there is the land itself (nothing built over it or on it: no roof,
@@ -492,10 +514,15 @@ namespace bo3z
 					// (the performance pass: no pop-in) a spot close by and right before your eyes is used last
 					const float yawP = a_player->GetAngleZ();
 					const RE::NiPoint3 fwd{ std::sin(yawP), std::cos(yawP), 0.0f };
+					// (the audit's suggestion) truly out of sight - a ray from your eyes to where it would step out meets a wall, a
+					// house, a rock - and close is best; in view and in front of you is the last resort
+					auto* pcell = a_player->GetParentCell();
+					const RE::NiPoint3 eye = pp + RE::NiPoint3{ 0, 0, 120.0f };
 					for (const auto* q : ok) {
 						const float d = q->GetDistance(pp);
 						const float face = d > 1.0f ? ((q->x - pp.x) * fwd.x + (q->y - pp.y) * fwd.y) / d : 0.0f;
-						const float seen = (d < 1600.0f && face > 0.55f) ? 0.15f : 1.0f;
+						const bool  inView = face > 0.25f && !RayBlocked(pcell, eye, *q + RE::NiPoint3{ 0, 0, 100.0f });
+						const float seen = inView ? (d < 2400.0f ? 0.08f : 0.4f) : (d < 2400.0f ? 1.6f : 1.0f);
 						wts.push_back(seen * (d < 3200.0f ? 1.0f : 0.25f) / (1.0f + 1.5f * static_cast<float>(crowd[bin(*q)])));  // (the near ones first)
 					}
 					// (Noah: "they spawn on top of each other") a spot just used rests a few seconds, and each one is set
@@ -536,6 +563,7 @@ namespace bo3z
 					}
 					used.emplace_back(p, nowU);
 					p.z += R.spawnHeightOffset;
+					g_spotBase = base, g_spotBaseSet = true;  // (SpawnOne steps it out of this point's marker)
 					return p;
 				}
 			}
@@ -884,7 +912,12 @@ namespace bo3z
 			// your cell, and one set down in the next cell could sit there without ever getting a body) made where it stands,
 			// in that spot's own cell
 			RE::NiPointer<RE::TESObjectREFR> ref;
-			if (auto* tcell = interior ? cell : RE::TES::GetSingleton()->GetCell(pos); tcell && tcell->IsAttached()) {
+			const bool fromPoint = !a_at && g_spotBaseSet && !interior && std::hypot(g_spotBase.x - pos.x, g_spotBase.y - pos.y) < 400.0f;
+			g_spotBaseSet = false;
+			if (auto* mark = fromPoint ? SpawnMark(a_player, g_spotBase) : nullptr) {
+				ref = mark->PlaceObjectAtMe(npc, false);
+				if (auto* ac = ref ? ref->As<RE::Actor>() : nullptr) ac->SetPosition(pos, true);  // (a step off its point, clear of the others)
+			} else if (auto* tcell = interior ? cell : RE::TES::GetSingleton()->GetCell(pos); tcell && tcell->IsAttached()) {
 				const auto d = a_player->GetPosition() - pos;
 				ref = RE::TESDataHandler::GetSingleton()->CreateReferenceAtLocation(npc, pos, { 0.0f, 0.0f, std::atan2(d.x, d.y) }, tcell, interior ? nullptr : a_player->GetWorldspace(), nullptr, nullptr, {}, false, true).get();
 			}
@@ -2164,6 +2197,32 @@ namespace bo3z
 				return;
 			}
 			Stragglers(a_player);
+			// (the audit: saving is locked at night, so a wave that can't finish ends the run) the progress watchdog: should
+			// neither a spawn nor a kill come for two minutes, the wave is helped along - the ones that can't be reached (no
+			// body, or far off) crumble, and any still to come are let go - and why is logged. Those near you and whole are
+			// left to you; a boss or a champion out holds it off.
+			{
+				static int   lastSpawned = -1, lastAlive = -1, lastWave = -1;
+				static float still = 0;
+				const int alive = static_cast<int>(g_alive.size());
+				if (g_waveSpawned != lastSpawned || alive != lastAlive || g_wave != lastWave || g_boss.handle.get() || g_champ.handle.get()) {
+					lastSpawned = g_waveSpawned, lastAlive = alive, lastWave = g_wave, still = 0;
+				} else if ((still += a_delta) >= 120.0f) {
+					still = 0;
+					int gone = 0;
+					for (auto& z : g_alive) {
+						auto a = z.handle.get();
+						if (a && !a->IsDead() && a->Is3DLoaded() && a->GetPosition().GetDistance(a_player->GetPosition()) < 1500.0f) continue;
+						if (a) Vanish(a.get());
+						++gone;
+					}
+					std::erase_if(g_alive, [&](const Spawned& z) { auto a = z.handle.get(); return !a || a->IsDisabled(); });
+					logger::warn("night {}: wave {} made no progress for 2 minutes ({} of {} spawned, {} alive) - {} out of reach crumbled{}", g_current, g_wave,
+						g_waveSpawned, g_waveSize, alive, gone, g_waveSpawned < g_waveSize ? ", the rest let go" : "");
+					if (g_waveSpawned < g_waveSize) g_waveSpawned = g_waveSize;
+					lastSpawned = -1;
+				}
+			}
 			if (g_waveSpawned < g_waveSize) {
 				const float boost = Curse::SpawnBoost() * (g_event >= 0 ? gen::kEvents[g_event].spawnMult : 1.0f);
 				const int   want = std::min(static_cast<int>(g_toSpawn * Curse::SpawnBoost()), R.maxAlive * 3 / 2);
@@ -2967,6 +3026,22 @@ namespace bo3z
 				// one "unloaded" though it stood a few steps away, its body still loading - a churn that never let one arrive)
 				// one near you that hasn't loaded yet is given time (15 s) before it is replaced; only the far are moved at once
 				const bool farOff = dist > gen::kChaseRelocateDist;
+				// (the audit: a boss behind a door or caught in a wall held the night forever) out of reach ten seconds, it comes
+				// to you: one still whole in your world is set down at a spawn point near you, one whose cell let it go is brought
+				// to you first (and set down properly on the next pass)
+				if (boss && !IsRising(a.get())) {
+					const bool sameWorld = a->Is3DLoaded() && a->GetWorldspace() == a_player->GetWorldspace() && a->GetParentCell() && a_player->GetParentCell() &&
+						a->GetParentCell()->IsInteriorCell() == a_player->GetParentCell()->IsInteriorCell();
+					if (farOff || !sameWorld) {
+						if ((s.behind += kStep) >= 10.0f && relocGap <= 0) {
+							relocGap = 1.0f, s.behind = 0, s.stall = 0, s.lastDist = -1;
+							if (sameWorld) Resurface(a.get(), a_player);
+							else a->MoveTo(a_player);
+							logger::info("night: the boss {} out of reach ({:.0f} away) - brought to you", gen::kEnemies[s.enemy].id, dist);
+						}
+						continue;
+					}
+				}
 				if (!boss && !IsRising(a.get()) && (farOff || !a->Is3DLoaded())) {  // (one still in its portal is never "behind")
 					// (Noah: "on night two, halfway through, the enemies just stopped spawning" - the log: every new one stayed
 					// bodiless, replaced every few seconds by another that never loaded either) one near you still without a body
@@ -3154,6 +3229,7 @@ namespace bo3z
 			g_pause = 0;
 			// (the audit: a hazard pending at the load erupted at the old spot on the first night's tick)
 			g_hazards.clear(), g_purge.clear(), g_fading.clear(), g_settle.clear(), g_fx.clear(), g_roused.clear();
+			g_spawnMarks.clear(), g_spotBaseSet = false;
 			EndEvent();
 			Undead::Reset();
 			Curse::Reset();

@@ -209,7 +209,16 @@ namespace bo3z
 					T("party");
 					{ Scope q(Perf::kParty); Party::Tick(a_delta); }
 					T("compass");
-					{ Scope q(Perf::kCompass); Compass::Tick(a_delta); }
+					{  // (the audit's performance pass) the compass's marks are world bearings - turning is drawn each frame by the
+						// HUD - so they are worked out 15 times a second, not every frame
+						static float acc = 0;
+						Compass::Heading();
+						if ((acc += a_delta) >= 1.0f / 15.0f) {
+							Scope q(Perf::kCompass);
+							Compass::Tick(acc);
+							acc = 0;
+						}
+					}
 					T("loot");
 					{ Scope q(Perf::kLoot); Loot::Tick(a_delta); }
 					T("movement");

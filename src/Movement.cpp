@@ -2277,7 +2277,7 @@ namespace bo3z
 			last = now;
 			av->DamageActorValue(RE::ActorValue::kStamina, 10.0f);
 			Perks::Dodged(0.55f);
-			Gun::Console("setghost 1");  // (Noah: untouchable for the whole roll - blows, arrows and spells pass through)
+			Party::Ghost(Party::kGhostRoll, true);  // (Noah: untouchable for the whole roll - blows, arrows and spells pass through)
 			g_dodgeGhost = true;
 			g_dodgeT = 0, g_dodgeDir = dir;  // (Noah: farther - first person barely moved) carried along, below
 		}
@@ -2916,7 +2916,7 @@ namespace bo3z
 				g_dodgeT += a_delta;
 				if (g_dodgeGhost && g_dodgeT > 0.55f) {
 					g_dodgeGhost = false;
-					if (!Party::SoloFallen()) Gun::Console("setghost 0");  // (the audit: a fall mid-roll kept its own ghost)
+					Party::Ghost(Party::kGhostRoll, false);  // (the fall's own ghost stays if you fell mid-roll)
 				}
 				// (Noah: "increase the distance of the dodge roll - I don't get far enough out of range") about 4.5 m of shove,
 				// was 2.6 m: a roll now clears a swing's reach

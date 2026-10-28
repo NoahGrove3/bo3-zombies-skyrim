@@ -23,6 +23,7 @@ namespace bo3z::Classes
 		std::array<std::array<Save::Slot, 3>, 4>               g_slotStash{};  // per class: its three weapon slots
 		std::array<std::vector<RE::FormID>, 4>                 g_wornStash;    // per class: what it had on / in hand
 		std::array<std::vector<std::uint8_t>, 4>               g_perkStash;    // per class: its altar blessings' stacks
+		std::array<std::vector<RE::FormID>, 4>                 g_extra;        // (the audit) per class: the altar's other spells it was taught (shells, support, pacts, wonders)
 		std::uint8_t                                           g_guide = 0;    // (the guided first night) which of its cards have been shown (bits)
 		std::chrono::steady_clock::time_point                  g_closedAt{};
 		std::array<std::uint16_t, coffer::kLadders>            g_mastery{};  // kills made with each ladder's spell in hand (its summons' kills for the Summoner)
@@ -31,6 +32,14 @@ namespace bo3z::Classes
 		{
 			auto* dh = RE::TESDataHandler::GetSingleton();
 			return dh ? dh->LookupForm(a_id, a_plugin) : nullptr;
+		}
+		// a spell the altar teaches the class you play (not one of its ladders): learned, and kept with that class
+		void Learn(RE::SpellItem* a_sp)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || !a_sp) return;
+			p->AddSpell(a_sp);
+			if (const int c = g_class.load(); c >= 0 && c < 4 && std::find(g_extra[c].begin(), g_extra[c].end(), a_sp->GetFormID()) == g_extra[c].end()) g_extra[c].push_back(a_sp->GetFormID());
 		}
 		int Rung1(int a_cls, std::string_view a_ladderLabel)
 		{
@@ -66,58 +75,11 @@ namespace bo3z::Classes
 			return -1;
 		}
 		bool g_staffChecked = false;
-		// (Noah: "instead of a spiderweb bolt, another spell from our mods that makes sense - not one the Echo Altar or the
-		// other classes use") the Conjurer's Staff casts Mysticism's Armoreater: its rust-red charge in the staff's head as it
-		// charges, its corroding mass bolt, and its rust burst wherever the bolt lands - an armor-eating mark that your
-		// summons fall on. The bolt's own effect is ours (no armor taken: Classes::ConjurerStaffHit does the burst and marks);
-		// its look - projectile, burst, charge art, hit art, impact set, light and sounds - is the Armoreater's, set once.
-		void DressStaffBolt(float a_radius)
-		{
-			const int i = ConjurerStaff();
-			auto*     w = i >= 0 ? Forms::Gun(i) : nullptr;
-			auto*     ench = w ? w->formEnchanting : nullptr;
-			if (!ench || ench->effects.empty() || !ench->effects[0] || !ench->effects[0]->baseEffect) return;
-			auto* ours = ench->effects[0]->baseEffect;
-			static RE::EffectSetting* theirs = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(0xAC7E88, "MysticismMagic.esp");  // MAG_DamageArmorFFAimedArea75 (Armoreater)
-			if (!theirs) {
-				static bool warned = false;
-				if (!warned) warned = true, logger::warn("classes: Mysticism's Armoreater not found - the staff keeps its green bolt");
-				return;
-			}
-			static bool dressed = false;
-			if (!dressed) {
-				dressed = true;
-				auto& d = ours->data;
-				const auto& t = theirs->data;
-				d.projectileBase = t.projectileBase, d.explosion = Gun::Quiet(t.explosion), d.castingArt = t.castingArt, d.hitEffectArt = t.hitEffectArt;
-				d.impactDataSet = t.impactDataSet, d.light = t.light, d.effectShader = t.effectShader, d.dualCastData = t.dualCastData;
-				ours->effectSounds = theirs->effectSounds;
-				logger::info("classes: the Conjurer's Staff casts Armoreater (projectile {:08X}, burst {:08X})", d.projectileBase ? d.projectileBase->GetFormID() : 0, d.explosion ? d.explosion->GetFormID() : 0);
-			}
-			// its burst reaches as far as the staff's splash (3 m, a metre more each reforge)
-			if (auto* ex = ours->data.explosion) ex->data.radius = a_radius;
-			ench->effects[0]->effectItem.area = static_cast<std::uint32_t>(a_radius / 21.33f + 0.5f);  // (feet: everyone in it is struck - and marked)
-		}
+		// (the Conjurer's Staff is gone: Corrosion took its work) Mysticism's Armoreater burst, drawn round a Corrosion bolt's hit
 		RE::BGSExplosion* StaffBurstLook()
 		{
 			static auto* m = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(0xAC7E88, "MysticismMagic.esp");
 			return m ? m->data.explosion : nullptr;
-		}
-		void GiveConjurerStaff()
-		{
-			// (Noah: "remake the staff") a plain Skyrim staff now - in your hand, never in a gun slot (a slot that held it
-			// from before is emptied)
-			const int i = ConjurerStaff();
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			auto* w = i >= 0 ? Forms::Gun(i) : nullptr;
-			if (!p || !w) return;
-			for (int s = 0; s < 3; ++s) {
-				if (Save::GetSlot(s).gun == i) Save::SetSlot(s, {});
-			}
-			if (p->GetItemCount(w) <= 0) {
-				GiveItem(p, w, 1, true);
-				logger::info("classes: the Conjurer's Staff given");
-			}
 		}
 		void GiveKit(int a_cls)
 		{
@@ -294,7 +256,10 @@ namespace bo3z::Classes
 			if (a_obj == Underwear()) return false;  // (worn by every class)
 			// our own plugin's pieces are the night's rewards (Alduin's Bane, the hall's relics), kept by every class - but the
 			// class weapons it makes (wands, tomes, bows, the Conjurer's Staff) belong to their class
-			if (auto* f = a_obj->GetFile(0); f && std::string_view(f->GetFilename()) == gen::kPlugin && Forms::GunIndexOf(a_obj) < 0) return false;
+			// (the audit: the Ranger's altar bows and the Subsuming Vortex followed you into every class) they are class gear too
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			const bool vortex = dh && (a_obj == dh->LookupForm(gen::kVortexWeap, gen::kPlugin) || a_obj == dh->LookupForm(gen::kVortexAmmo, gen::kPlugin));
+			if (auto* f = a_obj->GetFile(0); f && std::string_view(f->GetFilename()) == gen::kPlugin && Forms::GunIndexOf(a_obj) < 0 && Bows::IndexOf(a_obj) < 0 && !vortex) return false;
 			return true;
 		}
 		RE::TESObjectREFR* ChestOf(int a_cls, bool a_make)
@@ -387,6 +352,17 @@ namespace bo3z::Classes
 					g_stash[a_from].push_back({ i, Arcana::Level(i) });
 				}
 				for (auto [i, lv] : g_stash[a_from]) Arcana::Forget(i);
+				// (the audit) the altar's other spells it taught this class go with it
+				if (a_from != a_to) {
+					if (auto* p = RE::PlayerCharacter::GetSingleton()) {
+						for (auto id : g_extra[a_from]) if (auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(id)) p->RemoveSpell(sp);
+					}
+				}
+			}
+			if (a_to >= 0 && a_to < 4 && a_from != a_to) {
+				if (auto* p = RE::PlayerCharacter::GetSingleton()) {
+					for (auto id : g_extra[a_to]) if (auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(id)) p->AddSpell(sp);
+				}
 			}
 			if (!g_kit[a_to]) {
 				GiveKit(a_to);
@@ -510,10 +486,10 @@ namespace bo3z::Classes
 			switch (a_cls) {
 			case coffer::kSummoner:
 				TuneWyrm();
-				if (auto* sp = WyrmSpell()) p->AddSpell(sp);
+				if (auto* sp = WyrmSpell()) Learn(sp);
 				break;
 			case coffer::kDestruction:
-				if (auto* sp = TomeSpell()) p->AddSpell(sp);
+				if (auto* sp = TomeSpell()) Learn(sp);
 				break;
 			case coffer::kRanger:
 				GiveItem(p, Vortex(), 1, true);
@@ -922,31 +898,44 @@ namespace bo3z::Classes
 			}
 		}
 		// (Noah's plan, the Spellsword) Imbue unlocks The Wizard Warrior's Enchantment Powers 1 to 4, one per rung climbed
+		// (the audit: the Spellsword's Enchantment Powers and the Summoner's Indrik mounts followed you into every class)
+		// another class's are taken off; coming back gives them again, without the banner a second time
+		static std::unordered_set<RE::FormID> announced;
+		static constexpr std::uint32_t kPowers[4] = { 0x0008A0, 0x000893, 0x0008A1, 0x002F6A };
+		static constexpr std::uint32_t kIndrik[] = { 0x801, 0x847, 0x848, 0x849, 0x84A, 0x84B, 0x84C, 0x84D, 0x84E, 0x84F };
+		if (g_class.load() >= 0) {
+			if (g_class.load() != coffer::kSpellsword) {
+				for (auto id : kPowers) if (auto* sp = dh->LookupForm<RE::SpellItem>(id, "The Wizard Warrior.esp"); sp && p->HasSpell(sp)) p->RemoveSpell(sp);
+			}
+			if (g_class.load() != coffer::kSummoner) {
+				for (auto id : kIndrik) if (auto* sp = dh->LookupForm<RE::SpellItem>(id, "mihailindrikmounts.esp"); sp && p->HasSpell(sp)) p->RemoveSpell(sp);
+			}
+		}
 		if (g_class.load() == coffer::kSpellsword) {
 			int imbued = 0;
 			for (int i : Arcana::Carried()) {
 				if (Arcana::ClassOf(i) == coffer::kSpellsword) imbued += Arcana::RungOf(i) - 1;
 			}
-			static constexpr std::uint32_t kPowers[4] = { 0x0008A0, 0x000893, 0x0008A1, 0x002F6A };
 			for (int n = 0; n < std::min(imbued, 4); ++n) {
 				auto* sp = dh->LookupForm<RE::SpellItem>(kPowers[n], "The Wizard Warrior.esp");
 				if (sp && !p->HasSpell(sp)) {
 					p->AddSpell(sp);
-					Forms::Play(gen::Sound::shout_learned);
-					Hud::Banner(fmt::format("The Wizard Warrior: Enchantment Power {} unlocked (Powers menu)", n + 1), 4.0f);
-					logger::info("classes: Wizard Warrior enchantment power {}", n + 1);
+					if (announced.insert(sp->GetFormID()).second) {
+						Forms::Play(gen::Sound::shout_learned);
+						Hud::Banner(fmt::format("The Wizard Warrior: Enchantment Power {} unlocked (Powers menu)", n + 1), 4.0f);
+						logger::info("classes: Wizard Warrior enchantment power {}", n + 1);
+					}
 				}
 			}
 		}
 		// (Noah's plan, the Summoner's mounts) an Indrik mount for each freed city
 		if (g_class.load() == coffer::kSummoner) {
-			static constexpr std::uint32_t kIndrik[] = { 0x801, 0x847, 0x848, 0x849, 0x84A, 0x84B, 0x84C, 0x84D, 0x84E, 0x84F };
 			const int freed = FreedCount();
 			for (int n = 0; n < std::min<int>(freed, static_cast<int>(std::size(kIndrik))); ++n) {
 				auto* sp = dh->LookupForm<RE::SpellItem>(kIndrik[n], "mihailindrikmounts.esp");
 				if (sp && !p->HasSpell(sp)) {
 					p->AddSpell(sp);
-					Hud::Banner(std::string("A city's gift: ") + sp->GetName(), 4.0f);
+					if (announced.insert(sp->GetFormID()).second) Hud::Banner(std::string("A city's gift: ") + sp->GetName(), 4.0f);
 				}
 			}
 		}
@@ -1021,10 +1010,10 @@ namespace bo3z::Classes
 				auto* sp = spells[std::uniform_int_distribution<std::size_t>(0, spells.size() - 1)(rng2)];
 				if (a_out) {
 					a_out->name = sp->GetName();
-					a_out->give = [sp] { if (auto* pl = RE::PlayerCharacter::GetSingleton()) pl->AddSpell(sp); Hud::Banner(std::string("The altar teaches you ") + sp->GetName(), 4.0f); };
+					a_out->give = [sp] { Learn(sp); Hud::Banner(std::string("The altar teaches you ") + sp->GetName(), 4.0f); };
 					return true;
 				}
-				p->AddSpell(sp);
+				Learn(sp);
 				Hud::Banner(std::string("The altar teaches you ") + sp->GetName(), 4.0f);
 				return true;
 			}
@@ -1146,10 +1135,10 @@ namespace bo3z::Classes
 		auto* sp = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(rng)];
 		if (a_out) {
 			a_out->name = sp->GetName();
-			a_out->give = [sp] { if (auto* pl = RE::PlayerCharacter::GetSingleton()) pl->AddSpell(sp); Hud::Banner(std::string("Support spell learned: ") + sp->GetName(), 4.0f); logger::info("classes: support spell {}", sp->GetName()); };
+			a_out->give = [sp] { Learn(sp); Hud::Banner(std::string("Support spell learned: ") + sp->GetName(), 4.0f); logger::info("classes: support spell {}", sp->GetName()); };
 			return true;
 		}
-		p->AddSpell(sp);
+		Learn(sp);
 		Hud::Banner(std::string("Support spell learned: ") + sp->GetName(), 4.0f);
 		logger::info("classes: support spell {}", sp->GetName());
 		return true;
@@ -1242,10 +1231,10 @@ namespace bo3z::Classes
 		auto* sp = pool[std::uniform_int_distribution<std::size_t>(0, pool.size() - 1)(rng)];
 		if (a_out) {
 			a_out->name = sp->GetName();
-			a_out->give = [sp] { if (auto* pl = RE::PlayerCharacter::GetSingleton()) pl->AddSpell(sp); Forms::Play(gen::Sound::shout_learned); Hud::Banner(std::string("A LEGENDARY PACT - ") + sp->GetName(), 5.0f); logger::info("classes: hero pact {}", sp->GetName()); };
+			a_out->give = [sp] { Learn(sp); Forms::Play(gen::Sound::shout_learned); Hud::Banner(std::string("A LEGENDARY PACT - ") + sp->GetName(), 5.0f); logger::info("classes: hero pact {}", sp->GetName()); };
 			return true;
 		}
-		p->AddSpell(sp);
+		Learn(sp);
 		Forms::Play(gen::Sound::shout_learned);
 		Hud::Banner(std::string("A LEGENDARY PACT - ") + sp->GetName(), 5.0f);
 		logger::info("classes: hero pact {}", sp->GetName());
@@ -1615,28 +1604,6 @@ namespace bo3z::Classes
 		if (!a_target || a_target->IsDead()) return;
 		g_summonMarks = { a_target->GetHandle() };
 	}
-	bool HoldsConjurerStaff()
-	{
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		const int i = ConjurerStaff();
-		auto* w = i >= 0 ? Forms::Gun(i) : nullptr;
-		return p && w && (p->GetEquippedObject(false) == w || p->GetEquippedObject(true) == w);
-	}
-	// (Noah: "upgrading the summon staff at the Echo Altar") the altar's Reforge row with the staff in hand: three steps,
-	// the same prices as a spell's
-	bool ReforgeStaff()
-	{
-		const std::string name = "Conjurer's Staff";
-		if (g_staffLevel >= gen::kForgeMax) {
-			Hud::Banner(name + " cannot hold more power", 2.5f);
-			return false;
-		}
-		if (!Points::Spend(gen::kForgeCost[g_staffLevel])) return false;
-		++g_staffLevel;
-		Hud::Banner(name + " reforged  " + std::string(g_staffLevel, '|') + fmt::format("  - its burst {} m, harder", 3 + g_staffLevel), 4.0f);
-		logger::info("forge: Conjurer's Staff -> level {}", g_staffLevel);
-		return true;
-	}
 	bool IsOwnSummon(RE::Actor* a_actor)
 	{
 		return a_actor && std::any_of(g_ownSummons.begin(), g_ownSummons.end(), [&](const auto& e) { return e.first.get().get() == a_actor; });
@@ -1840,6 +1807,12 @@ namespace bo3z::Classes
 			v.push_back(static_cast<std::uint8_t>(n));
 			for (std::size_t i = 0; i < n; ++i) v.push_back(g_perkStash[c][i]);
 		}
+		v.push_back(0xA8);  // each class's other altar spells: per class [n u8][n x u32]
+		for (int c = 0; c < 4; ++c) {
+			const auto n = std::min<std::size_t>(g_extra[c].size(), 255);
+			v.push_back(static_cast<std::uint8_t>(n));
+			for (std::size_t i = 0; i < n; ++i) u32(g_extra[c][i]);
+		}
 		return v;
 	}
 	void SetState(const std::vector<std::uint8_t>& a_v)
@@ -1852,6 +1825,7 @@ namespace bo3z::Classes
 		g_chest.fill(0), g_slotStash = {}, g_guide = 0, g_bowMastery.fill(0);
 		for (auto& w : g_wornStash) w.clear();
 		for (auto& ps : g_perkStash) ps.clear();
+		for (auto& e : g_extra) e.clear();
 		if (a_v.empty()) return;
 		g_class = static_cast<int>(a_v[0]) - 1;
 		std::size_t k = 1;
@@ -1928,6 +1902,13 @@ namespace bo3z::Classes
 			for (int c = 0; c < 4 && k < a_v.size(); ++c) {
 				const int n = a_v[k++];
 				for (int i = 0; i < n && k < a_v.size(); ++i) g_perkStash[c].push_back(a_v[k++]);
+			}
+		}
+		if (k < a_v.size() && a_v[k] == 0xA8) {
+			++k;
+			for (int c = 0; c < 4 && k < a_v.size(); ++c) {
+				const int n = a_v[k++];
+				for (int i = 0; i < n && k + 4 <= a_v.size(); ++i, k += 4) g_extra[c].push_back(static_cast<RE::FormID>(a_v[k] | (a_v[k + 1] << 8) | (a_v[k + 2] << 16) | (static_cast<std::uint32_t>(a_v[k + 3]) << 24)));
 			}
 		}
 		if (g_wStep[coffer::kSummoner] > kWonderSteps) TuneWyrm();

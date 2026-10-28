@@ -2766,7 +2766,6 @@ namespace bo3z
 		bool Reforge()
 		{
 			const int gun = CurrentGun(), slot = SlotOf(gun);
-			if (Classes::HoldsConjurerStaff()) return Classes::ReforgeStaff();  // (the Summoner's staff: its own reforges)
 			if (const int b = BowsImpl::Held(); b >= 0) {  // the altar's bow in hand: more power, then piercing, then three arrows
 				const int lv = BowsImpl::g_level[b];
 				const std::string name(gen::kBows[b].label);

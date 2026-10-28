@@ -321,8 +321,6 @@ namespace bo3z
 		bool             IsOwnSummon(RE::Actor* a_actor);
 		void             MarkForSummons(RE::Actor* a_target);  // (the Summoner's staff) every summon of yours turns on it until it dies or another is marked
 		void             ConjurerStaffHit(RE::Actor* a_target, RE::FormID a_source);  // the Conjurer's Staff's bolt struck: a burst, and the marks
-		bool             HoldsConjurerStaff();
-		bool             ReforgeStaff();  // the altar's Reforge row with the Conjurer's Staff in hand
 		void             TickFast(float a_delta);      // where the Subsuming Vortex's arrows come down
 		int              RestockWonder();              // the Vortex's arrows topped up (quivers, Max Ammo)
 		bool             WonderEarned();               // any class's wonder won (the Three Words follow)
@@ -449,6 +447,7 @@ namespace bo3z
 	namespace Compass
 	{
 		void Tick(float a_delta);  // game thread: the heading and the marks round you, for the HUD's compass
+		void Heading();            // game thread, every frame: just the heading
 		void OnCast(RE::FormID a_spell);  // a spell you cast: one of your equipped shout's words starts its cooldown
 	}
 
@@ -472,6 +471,8 @@ namespace bo3z
 		float FriendDistance(const RE::NiPoint3& a_at);  // the nearest friend in the party (1e9 alone)
 		bool  IsFriend(RE::Actor* a_actor);              // another player's figure (Skyrim Together)
 		bool  SoloFallen();                              // alone and on the death screen
+		inline constexpr std::uint32_t kGhostRoll = 1, kGhostFall = 2;
+		void  Ghost(std::uint32_t a_why, bool a_on);     // untouchable while any reason holds (setghost, counted)
 		enum class Life : std::uint8_t { Alive = 0, Down = 1, Dead = 2 };
 		struct Fallen { std::string name; float left, dist; };
 		struct View

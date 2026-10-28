@@ -10,6 +10,19 @@
 // message to the fallen (kRevive). The game thread runs this; Net (the render thread) moves the messages.
 namespace bo3z::Party
 {
+	// (the audit: the roll's and the fall's "ghost" fought - one's end undid the other's) one count of reasons; the console
+	// is told only when the first reason comes and the last one goes, and a load starts it again from none
+	namespace
+	{
+		std::uint32_t g_ghostWhy = 0;
+	}
+	void Ghost(std::uint32_t a_why, bool a_on)
+	{
+		const std::uint32_t was = g_ghostWhy;
+		g_ghostWhy = a_on ? (g_ghostWhy | a_why) : (g_ghostWhy & ~a_why);
+		if ((was == 0) != (g_ghostWhy == 0)) Gun::Console(g_ghostWhy ? "setghost 1" : "setghost 0");
+	}
+
 	namespace
 	{
 		using Clock = std::chrono::steady_clock;
@@ -168,7 +181,7 @@ namespace bo3z::Party
 			g_soloT = 0.0f, g_soloPressed = false, ++g_fallGen;
 			Audio::LoopStop(Audio::kLoopCharge, 150), Audio::LoopStop(Audio::kLoopSpell, 150);  // (a charging hum no longer plays on through the fall)
 			HoldDown();
-			Gun::Console("setghost 1");  // (nothing more lands on you while you lie there)
+			Ghost(kGhostFall, true);  // (nothing more lands on you while you lie there)
 			Director::SlowTime(1.1f, 0.3f);
 			Audio::Duck(10.0f);
 			Forms::Play(gen::Sound::rite_fail);
@@ -219,7 +232,7 @@ namespace bo3z::Party
 			// a breath of safety as you stand: ghostly another two seconds
 			std::thread([] {
 				std::this_thread::sleep_for(std::chrono::seconds(2));
-				Tasks::Add([] { if (g_soloT < 0.0f) Gun::Console("setghost 0"); });
+				Tasks::Add([] { if (g_soloT < 0.0f) Ghost(kGhostFall, false); });
 			}).detach();
 			logger::info("fallen: risen again");
 		}
@@ -494,6 +507,7 @@ namespace bo3z::Party
 		// (the audit: a wiped party's load kept you "dead" and pinned at 1 health) the party's life state starts over too
 		g_life = Life::Alive, g_left = 0, g_reviveIn.clear(), g_watch = 0, g_wasFighting = false, g_riteSum = -1;
 		if (auto* p = RE::PlayerCharacter::GetSingleton()) p->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery);
+		g_ghostWhy = 0;
 		Tasks::Add([] { Gun::Console("setghost 0"); });  // (a quicksave made mid-roll or mid-fall carried the ghost flag)
 		std::scoped_lock l(Hud::Lock());
 		Hud::Edit().deathT = -1.0f, Hud::Edit().deathLoading = false;

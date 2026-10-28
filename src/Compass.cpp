@@ -156,6 +156,16 @@ namespace bo3z::Compass
 		}
 	}
 
+	// every frame: the way you face (the marks round you are worked out 15 times a second, in Tick)
+	void Heading()
+	{
+		auto* cam = RE::PlayerCamera::GetSingleton();
+		if (!cam || !cam->cameraRoot) return;
+		const auto& m = cam->cameraRoot->world.rotate;
+		const float heading = std::atan2(m.entry[0][1], m.entry[1][1]);
+		std::scoped_lock l(Hud::Lock());
+		Hud::Edit().heading = heading;
+	}
 	void Tick(float a_delta)
 	{
 		static float scan = 0, settle = 0;
