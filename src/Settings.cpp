@@ -242,7 +242,10 @@ namespace bo3z::Settings
 		// (Noah: "balance everything so it blends together, using Skyrim's difficulty from Novice to Legendary") the
 		// difficulty is applied ONCE: the night's dead get tougher here, their blows harder in Difficulty::Taken
 		// (src/Gun.cpp). (Before, each was counted twice - Legendary's dead took 5.7x the hits and hit 6x as hard.)
-		constexpr float kUndeadHp[6] = { 0.6f, 0.8f, 1.0f, 1.25f, 1.5f, 1.8f };
+		// (Noah: "Novice very easy, Apprentice easy, Adept normal, Expert hard, Master very hard, Legendary almost
+		// impossible") the dead's health; and as your gear climbs the one upgrade curve (x6.5 at three upgrades) the dead
+		// hold on with your progress: 30% more for each Echo Altar freed (to ten)
+		constexpr float kUndeadHp[6] = { 0.5f, 0.75f, 1.0f, 1.5f, 2.2f, 3.2f };
 	}
 
 	float Brightness() { Ensure(); return g_bright; }
@@ -288,7 +291,7 @@ namespace bo3z::Settings
 	float UndeadHealthMult()
 	{
 		Ensure();
-		return g_hp * (g_follow ? kUndeadHp[GameDifficulty()] : 1.0f);
+		return g_hp * (g_follow ? kUndeadHp[GameDifficulty()] : 1.0f) * (1.0f + 0.3f * static_cast<float>(std::min(bo3z::Difficulty::Freed(), 10)));
 	}
 	float UndeadDamageMult()
 	{

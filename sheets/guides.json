@@ -209,7 +209,7 @@
   {
    "title": "Settings",
    "paras": [
-    "<b>Difficulty</b> is Skyrim's own (Settings, Gameplay). From Novice to Legendary the dead have <b>0.6x, 0.8x, 1x, 1.6x, 2.2x, 3x</b> health and hit <b>0.5x to 2x</b> as hard. Until three altars are freed, on Adept or harder, no single hit takes more than 60% of a zombie's health.",
+    "<b>Difficulty</b> is Skyrim's own (Settings, Gameplay). Novice is very easy, Apprentice easy, Adept normal, Expert hard, Master very hard and Legendary close to impossible. From Novice to Legendary the dead (and Skyrim's own foes against your altar gear) have <b>0.5x, 0.75x, 1x, 1.5x, 2.2x, 3.2x</b> health, and the dead hit <b>0.4x, 0.65x, 1x, 1.4x, 1.9x, 2.6x</b> as hard. Every Echo Altar freed makes them all 30% tougher (up to ten), to keep up with your upgraded gear. Until three altars are freed, on Adept or harder, no single hit takes more than 60% of a zombie's health.",
     "Skyrim's own enemies get tougher with the difficulty and with every altar you free, so they keep up with you.",
     "The <b>Mod Configuration Menu</b> page <i>The Curse of Alduin</i> has the rest: attack and draw speed, field of view, brightness, effects and controls."
    ]

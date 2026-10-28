@@ -3757,7 +3757,7 @@ namespace bo3z::Difficulty
 		return p ? std::clamp(static_cast<int>(p->GetGameStatsData().difficulty), 0, 5) : 2;
 	}
 	float Dealt() { static constexpr float k[6] = { 1.4f, 1.2f, 1.0f, 0.9f, 0.8f, 0.7f }; return k[Level()]; }
-	float Taken() { static constexpr float k[6] = { 0.5f, 0.7f, 1.0f, 1.3f, 1.6f, 2.0f }; return Settings::FollowDifficulty() ? k[Level()] : 1.0f; }  // (the night's blows: the only place the difficulty touches them)
+	float Taken() { static constexpr float k[6] = { 0.4f, 0.65f, 1.0f, 1.4f, 1.9f, 2.6f }; return Settings::FollowDifficulty() ? k[Level()] : 1.0f; }  // (the night's blows: the only place the difficulty touches them)
 	float Mana() { static constexpr float k[6] = { 0.8f, 0.9f, 1.0f, 1.08f, 1.16f, 1.25f }; return k[Level()]; }
 	int Freed()
 	{
@@ -3774,14 +3774,16 @@ namespace bo3z::Difficulty
 	// you free (the stronger you get, the more they hold)
 	float FoeToughness()
 	{
-		static constexpr float k[6] = { 1.0f, 1.0f, 1.2f, 1.5f, 1.8f, 2.2f };
-		return k[Level()] * (1.0f + 0.08f * static_cast<float>(std::min(Freed(), 12)));
+		// (Noah: the difficulty pass) Skyrim's own and the modded foes, against your altar gear: the same steps as the dead,
+		// and the same 30% more with each Echo Altar freed (your gear's upgrade curve)
+		static constexpr float k[6] = { 0.7f, 0.85f, 1.0f, 1.4f, 1.9f, 2.6f };
+		return k[Level()] * (1.0f + 0.3f * static_cast<float>(std::min(Freed(), 10)));
 	}
 	// and how much harder they hit: Skyrim's own damage-to-you settings (each difficulty's) raised with your progress
 	void TickFoeDamage()
 	{
 		static constexpr const char* kNames[6] = { "fDiffMultHPToPCVE", "fDiffMultHPToPCE", "fDiffMultHPToPCN", "fDiffMultHPToPCH", "fDiffMultHPToPCVH", "fDiffMultHPToPCL" };
-		static constexpr float       kExtra[6] = { 1.0f, 1.0f, 1.0f, 1.15f, 1.25f, 1.3f };
+		static constexpr float       kExtra[6] = { 0.8f, 0.9f, 1.0f, 1.15f, 1.3f, 1.5f };  // (on Skyrim's own 0.5x .. 3x)
 		static float orig[6] = { -1, -1, -1, -1, -1, -1 };
 		static float applied = -1;
 		auto* gs = RE::GameSettingCollection::GetSingleton();

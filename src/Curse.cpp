@@ -112,7 +112,7 @@ namespace bo3z
 		int Secs(int a_trial) { return gen::kTrials[a_trial].seconds[Diff()]; }
 		constexpr float kWardSwarm[6] = { 1.5f, 1.75f, 2.0f, 2.25f, 2.5f, 3.0f };      // the dead come this much faster in the circle
 		constexpr int   kWaveBase[6] = { 4, 5, 6, 7, 8, 10 };                          // the first wave (each after: +2)
-		constexpr float kBossHealth[6] = { 0.6f, 0.8f, 1.0f, 1.3f, 1.6f, 2.0f };       // the Dragon Priest's health
+		constexpr float kBossHealth[6] = { 1.0f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f };       // the Dragon Priest's health (the difficulty is applied once: Settings::UndeadHealthMult)
 		[[maybe_unused]] int Elites(int a_wave, int a_waves)  // Thanes of the Mound and Bone Jotnar in a wave
 		{
 			const int d = Diff();
