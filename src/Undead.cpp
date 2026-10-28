@@ -251,7 +251,7 @@ namespace bo3z
 					std::scoped_lock gl(g_graveLock);
 					g_grave.push_back(std::move(r.root));
 				}
-				r.root = root;
+				r.root = RE::NiPointer<RE::NiAVObject>(root);
 				// (Noah: "some of them are floating along the floor ... move like Draugr") the clips' bones too: a body set
 				// down somewhere else (or loaded again) has new bones - the old ones were posed in its place, not these
 				r.clipNodes.clear(), r.comNode = nullptr;
