@@ -46,6 +46,39 @@ namespace bo3z
 			};
 		}
 
+		// (Noah: "the magic sound effects are still too loud, especially when drawing a magical sword or weapon") every
+		// magic effect's sounds brought down, hardest where they drone: the draw / sheathe and the readied loop (a spell or
+		// a spell-blade held ready) 10 dB, the charge and the cast loop 6 dB, the release and the hit 4 dB. Each sound once.
+		void TameSpellSounds()
+		{
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			if (!dh) return;
+			std::unordered_map<RE::BGSSoundDescriptorForm*, int> cut;  // the most each sound's roles ask (centi-dB)
+			for (auto* mg : dh->GetFormArray<RE::EffectSetting>()) {
+				if (!mg) continue;
+				for (auto& sp : mg->effectSounds) {
+					if (!sp.sound) continue;
+					int db = 400;
+					switch (sp.id) {
+					case RE::MagicSystem::SoundID::kDrawSheatheLPM:
+					case RE::MagicSystem::SoundID::kReadyLoop: db = 1000; break;
+					case RE::MagicSystem::SoundID::kCharge:
+					case RE::MagicSystem::SoundID::kCastLoop: db = 600; break;
+					default: break;
+					}
+					auto& c = cut[sp.sound];
+					c = std::max(c, db);
+				}
+			}
+			int n = 0;
+			for (auto& [sd, db] : cut) {
+				auto* sdef = sd->soundDescriptor ? skyrim_cast<RE::BGSStandardSoundDef*>(sd->soundDescriptor) : nullptr;
+				if (!sdef) continue;
+				sdef->soundCharacteristics.staticAttenuation = static_cast<std::uint16_t>(std::min(10000, sdef->soundCharacteristics.staticAttenuation + db));
+				++n;
+			}
+			logger::info("audio: {} magic sounds brought down (draw and readied loops 10 dB, charge 6, release and hit 4)", n);
+		}
 		void HushAltarEchoes()
 		{
 			// (Noah: "the Vampiric Touch is still really loud") the altar's own spells: Mysticism's dummy and perk effects

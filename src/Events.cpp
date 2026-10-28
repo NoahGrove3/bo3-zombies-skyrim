@@ -277,7 +277,11 @@ namespace bo3z
 					// clock holds at day - said so, rather than a night that silently turns back to morning
 					Hud::Banner("The nights begin once you choose your class at an Echo Altar - until then it stays day", 5.0f);
 				}
-				if (a_event->opening && a_event->menuName == RE::SleepWaitMenu::MENU_NAME && dataLoaded) {
+				if (a_event->opening && a_event->menuName == RE::SleepWaitMenu::MENU_NAME && dataLoaded && Save::Flag(Save::kFlagStarted)) {
+					// (Noah) once the nights have begun the Curse's own rest screen takes the wait menu's place
+					if (auto* q = RE::UIMessageQueue::GetSingleton()) q->AddMessage(RE::SleepWaitMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
+					SKSE::GetTaskInterface()->AddTask([] { Director::OpenRest(); });
+				} else if (a_event->opening && a_event->menuName == RE::SleepWaitMenu::MENU_NAME && dataLoaded) {
 					if (std::string why; !Director::MayRest(why)) {
 						if (auto* q = RE::UIMessageQueue::GetSingleton()) {
 							q->AddMessage(RE::SleepWaitMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
@@ -525,6 +529,9 @@ namespace bo3z
 						}
 						Hud::OnMenuButton(b);
 						Director::ScoutKey(b);
+						if (Director::RestButton(b)) {  // the rest screen has the keys while it is up
+							continue;
+						}
 						if (Classes::OnButton(b)) {  // the class picker has the keys while it is up
 							continue;
 						}
@@ -1116,6 +1123,7 @@ namespace bo3z
 			Fantasy::Inject();
 			Arcana::Load();
 			Fantasy::HushAltarEchoes();
+			Fantasy::TameSpellSounds();
 			Director::HeadlongCombat();
 			Settings::ApplyMods();
 			if (auto* ini = RE::INIPrefSettingCollection::GetSingleton()) {  // (and no tutorials at all)

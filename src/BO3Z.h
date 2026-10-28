@@ -130,6 +130,17 @@ namespace bo3z
 		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
 		bool             IsElite(RE::Actor* a_actor);
 		bool             IsBoss(RE::Actor* a_actor);
+		struct RestView
+		{
+			bool  open = false, night = false, canSkip = false, armed = false, waiting = false, stopsAtDusk = false;
+			int   hours = 1, nightNo = 1;
+			float now = 12, target = 12, dusk = 20, dawn = 5.6f, rise = 20.4f;
+		};
+		void             OpenRest();                       // the Curse's rest screen (in place of Skyrim's wait menu)
+		bool             RestOpen();
+		bool             RestEats(RE::InputEvent* a_event);
+		bool             RestButton(const RE::ButtonEvent* a_b);  // its keys (true: taken)
+		RestView         RestNow();
 		void             QueueZombieHit(RE::Actor* a_zombie, float a_seconds);  // its blow lands when its swing does
 		void             Noise(float a_amount);  // the night hears you (spells bursting, shouts, fights): enough draws a Volatile
 		bool             DanceOfDeath(RE::FormID a_spell);  // (Noah) the Dance Of Death spoken: the dead near you dance (true: it was that shout)
@@ -698,6 +709,7 @@ namespace bo3z
 	namespace Fantasy
 	{
 		void Inject();  // the High Fantasy Pack's creatures into Skyrim's wilderness and bandit encounters (data loaded)
+		void TameSpellSounds();  // every magic effect sound quieter (the drawn / readied drones most)
 		void HushAltarEchoes();  // the altar's spells: their effects' doubled sounds silenced (after Arcana::Load)
 	}
 

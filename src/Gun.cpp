@@ -253,7 +253,7 @@ namespace bo3z
 				if (GunOut() && b && b->GetDevice() == RE::INPUT_DEVICE::kGamepad && (b->GetIDCode() == kPadRight || b->GetIDCode() == kPadDown)) {
 					return false;
 				}
-				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Loot::Eats(a_event)) {  // the shrine's keys (1-4, D-pad) and the loot list's never reach the hotkeys
+				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event)) {  // the shrine's keys (1-4, D-pad) and the loot list's never reach the hotkeys
 					return false;
 				}
 				return func(a_this, a_event);
@@ -267,7 +267,7 @@ namespace bo3z
 		{
 			static bool thunk(void* a_this, RE::InputEvent* a_event)
 			{
-				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Loot::Eats(a_event)) {
+				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event)) {
 					return false;
 				}
 				return func(a_this, a_event);
@@ -279,7 +279,7 @@ namespace bo3z
 		{
 			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
 			{
-				if (GunOut() || Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Loot::Eats(a_event)) {
+				if (GunOut() || Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event)) {
 					return false;
 				}
 				return func(a_this, a_event);

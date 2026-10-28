@@ -2379,6 +2379,10 @@ namespace bo3z
 			}
 			g_phase = Phase::Day;
 			g_skipped = false;
+			{
+				std::scoped_lock l(Hud::Lock());
+				Hud::Edit().countdown = 0;  // (Noah: the countdown stayed up after a skipped night)
+			}
 			g_toSpawn = 0;
 			g_waves = 0, g_wave = 0, g_waveSpawned = 0, g_waveRest = 0;
 			g_pause = 0;
@@ -3658,6 +3662,209 @@ namespace bo3z
 			return -1;
 		}
 		bool NightNow() { return IsNight(); }
+		constexpr float kNightMinutes = 10.0f;  // a night's real minutes, dusk to the hold before dawn
+		// ---- (Noah: "the wait screen in 12-hour time, the circle marking when the Curse wakes, when the dead start and
+		// stop rising, and a Skip the Night button - only at night, after the countdown - that goes through the whole
+		// night and doesn't count") the Curse's own rest screen, in place of Skyrim's wait menu once your nights have begun
+		struct Rest
+		{
+			bool  open = false, waiting = false, armed = false;
+			int   hours = 1;
+			float target = 0, done = 0, total = 0;
+		};
+		Rest       g_rest;
+		std::mutex g_restLock;
+		RestView   g_restView;  // (built on the game's thread, read by the HUD's)
+		RestView   BuildRestView();
+		constexpr auto kRestControls = static_cast<RE::UserEvents::USER_EVENT_FLAG>(
+			static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kMovement) | static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kLooking) |
+			static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kFighting) | static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kJumping) |
+			static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kSneaking) | static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kActivate) |
+			static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kPOVSwitch) | static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kMenu) |
+			static_cast<std::uint32_t>(RE::UserEvents::USER_EVENT_FLAG::kWheelZoom));
+		std::chrono::steady_clock::time_point g_restClosed{};
+		void RestControls(bool a_off)
+		{
+			static bool off = false;
+			if (a_off == off) return;
+			off = a_off;
+			if (auto* cm = RE::ControlMap::GetSingleton()) cm->ToggleControls(kRestControls, !a_off, false);
+		}
+		void CloseRest()
+		{
+			{
+				std::scoped_lock l(g_restLock);
+				g_rest.open = false, g_rest.waiting = false, g_rest.armed = false;
+				g_restView.open = false;
+			}
+			g_restClosed = std::chrono::steady_clock::now();
+			RestControls(false);
+		}
+		void AddHours(float a_hours)
+		{
+			auto* cal = RE::Calendar::GetSingleton();
+			if (!cal || !cal->gameHour || !cal->gameDaysPassed || a_hours <= 0) return;
+			float nh = cal->gameHour->value + a_hours;
+			while (nh >= 24.0f) {
+				nh -= 24.0f;
+				if (cal->gameDay) cal->gameDay->value += 1.0f;
+			}
+			cal->gameHour->value = nh;
+			cal->gameDaysPassed->value += a_hours / 24.0f;
+		}
+		float NightScale() { return std::round(std::fmod(DawnHour() - DuskHour() + 24.0f, 24.0f) * 60.0f / kNightMinutes); }
+		// when the first of the night's dead come up: the countdown after dusk, in game hours
+		float RiseHour()
+		{
+			const float wait = g_phase == Phase::Break ? g_breakTimer : static_cast<float>(R.firstBreakSeconds);
+			const float from = g_phase == Phase::Break && RE::Calendar::GetSingleton() ? RE::Calendar::GetSingleton()->GetHour() : DuskHour();
+			return std::fmod(from + wait * NightScale() / 3600.0f, 24.0f);
+		}
+		void SkipNightNow()
+		{
+			if (Coop::Client() || g_phase != Phase::Fighting || !IsNight()) return;
+			logger::info("night: night {} skipped from the rest screen - it will not count", g_current);
+			g_skipped = true;
+			SkipToDawn("THE NIGHT PASSES YOU BY - IT DOES NOT COUNT");
+			if (!IsNight()) Dawn();
+		}
+		void TickRest()
+		{
+			Rest r;
+			{
+				std::scoped_lock l(g_restLock);
+				r = g_rest;
+			}
+			if (!r.open) {
+				std::scoped_lock l(g_restLock);
+				g_restView.open = false;
+				return;
+			}
+			{
+				const auto v = BuildRestView();
+				std::scoped_lock l(g_restLock);
+				g_restView = v;
+			}
+			auto* ui = RE::UI::GetSingleton();
+			auto* pl = RE::PlayerCharacter::GetSingleton();
+			if (!pl || pl->IsDead() || Party::SoloFallen() || (ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME))) {
+				CloseRest();
+				return;
+			}
+			RestControls(true);
+			if (!r.waiting) return;
+			// the hours run by in about two seconds (the hand sweeps the dial), stopping at dusk
+			const float dt = std::clamp(RE::GetSecondsSinceLastFrame(), 0.0f, 0.1f);
+			const float step = std::min(r.total - r.done, std::max(2.0f, r.total / 1.8f) * dt);
+			AddHours(step);
+			r.done += step;
+			if (IsNight() || r.done >= r.total - 1e-4f) {
+				auto* av = pl->AsActorValueOwner();
+				for (auto v : { RE::ActorValue::kHealth, RE::ActorValue::kMagicka, RE::ActorValue::kStamina }) {
+					av->RestoreActorValue(v, av->GetPermanentActorValue(v));  // (rested)
+				}
+				CloseRest();
+				Hud::Banner(IsNight() ? "NIGHT FALLS - THE CURSE WAKES" : "RESTED", 3.0f);
+				return;
+			}
+			std::scoped_lock l(g_restLock);
+			g_rest.done = r.done;
+		}
+		void OpenRest()
+		{
+			if (Coop::Client()) {
+				Hud::Banner("Only the host can rest. Their clock moves the whole party.", 3.5f);
+				return;
+			}
+			if (g_phase == Phase::Break) {
+				Hud::Banner("The countdown has begun - the night can be skipped once the dead rise", 3.5f);
+				return;
+			}
+			std::scoped_lock l(g_restLock);
+			g_rest = {};
+			g_rest.open = true, g_rest.hours = 1;
+			logger::info("rest: the rest screen opened ({})", g_phase == Phase::Fighting ? "night" : "day");
+		}
+		bool RestOpen()
+		{
+			std::scoped_lock l(g_restLock);
+			return g_rest.open;
+		}
+		bool RestEats(RE::InputEvent* a_event)
+		{
+			if (!a_event || !a_event->AsButtonEvent()) return false;
+			return RestOpen() || std::chrono::steady_clock::now() - g_restClosed < std::chrono::milliseconds(350);
+		}
+		RestView RestNow()
+		{
+			std::scoped_lock l(g_restLock);
+			return g_restView;
+		}
+		RestView BuildRestView()
+		{
+			RestView v;
+			Rest r;
+			{
+				std::scoped_lock l(g_restLock);
+				r = g_rest;
+			}
+			v.open = r.open;
+			if (!r.open) return v;
+			auto* cal = RE::Calendar::GetSingleton();
+			v.now = cal ? cal->GetHour() : 12.0f;
+			v.dusk = DuskHour(), v.dawn = DawnHour(), v.rise = RiseHour();
+			v.night = g_phase == Phase::Fighting && IsNight();
+			v.canSkip = v.night && !Coop::Client();
+			v.armed = r.armed, v.waiting = r.waiting, v.hours = r.hours;
+			v.nightNo = g_phase == Phase::Fighting ? g_current : Save::Get(gen::kAV_round) + 1;
+			const float toDusk = std::fmod(v.dusk - v.now + 24.0f, 24.0f);
+			v.target = r.waiting ? std::fmod(v.now + (r.total - r.done), 24.0f) : std::fmod(v.now + std::min<float>(static_cast<float>(r.hours), toDusk), 24.0f);
+			v.stopsAtDusk = !v.night && static_cast<float>(r.hours) > toDusk;
+			return v;
+		}
+		bool RestButton(const RE::ButtonEvent* a_b)
+		{
+			if (!a_b || !RestOpen()) return false;
+			if (!a_b->IsDown()) return true;
+			const auto id = a_b->GetIDCode();
+			const auto dev = a_b->GetDevice();
+			const bool pad = dev == RE::INPUT_DEVICE::kGamepad, key = dev == RE::INPUT_DEVICE::kKeyboard, mouse = dev == RE::INPUT_DEVICE::kMouse;
+			const bool less = (pad && id == 0x0004) || (key && (id == 0xCB || id == 0x1E)) || (mouse && id == 9);
+			const bool more = (pad && id == 0x0008) || (key && (id == 0xCD || id == 0x20)) || (mouse && id == 8);
+			const bool accept = (pad && id == 0x1000) || (key && (id == 0x1C || id == 0x9C || id == 0x12));
+			const bool skip = (pad && id == 0x4000) || (key && id == 0x13);
+			const bool back = (pad && id == 0x2000) || (key && (id == 0x01 || id == 0x0E || id == 0x0F));
+			bool doSkip = false, close = false;
+			{
+				std::scoped_lock l(g_restLock);
+				const bool night = g_phase == Phase::Fighting && IsNight();
+				if (back) {
+					close = true;
+				} else if (g_rest.waiting) {
+					// (the hours running by: only Back stops them)
+				} else if (night) {
+					if (skip || accept) {
+						if (g_rest.armed) doSkip = true;
+						else g_rest.armed = true, Forms::Play(gen::Sound::rite_fail);
+					}
+				} else if (less || more) {
+					g_rest.hours = std::clamp(g_rest.hours + (more ? 1 : -1), 1, 24);
+				} else if (accept) {
+					auto* cal = RE::Calendar::GetSingleton();
+					const float toDusk = cal ? std::fmod(DuskHour() - cal->GetHour() + 24.0f, 24.0f) : 24.0f;
+					g_rest.total = std::min<float>(static_cast<float>(g_rest.hours), toDusk), g_rest.done = 0;
+					g_rest.waiting = g_rest.total > 0.01f;
+				} else if (skip) {
+					Hud::Banner("Skip the Night opens once the dead have risen", 2.5f);
+				}
+			}
+			if (close) CloseRest();
+			if (doSkip) {
+				CloseRest();
+				SKSE::GetTaskInterface()->AddTask([] { SkipNightNow(); });
+			}
+			return true;
+		}
 		bool MayRest(std::string& a_why)
 		{
 			if (g_phase != Phase::Day || IsNight()) {
@@ -4142,7 +4349,6 @@ namespace bo3z
 			return a_actor && std::any_of(g_protected.begin(), g_protected.end(), [&](const Protected& p) { return p.spared && p.handle.get().get() == a_actor; });
 		}
 
-		constexpr float kNightMinutes = 10.0f;  // a night's real minutes, dusk to the hold before dawn
 		// Shorter days and nights (sheet: rounds.cycleMinutes): Skyrim's TimeScale global.
 		void TickClock(float a_delta)
 		{
@@ -4173,6 +4379,7 @@ namespace bo3z
 				ts->value = want;
 			}
 		}
+
 
 		// (Noah: "I will pick all the spawn points per city ... I will fire an arrow where I want each one to be") scout mode:
 		// you fly where you look and nothing hurts you; no undead rise and the night stands still; every arrow of yours that
@@ -4427,51 +4634,12 @@ namespace bo3z
 			}
 			return best;
 		}
-		// (Noah: "a way to skip a night if I'm mid quest and don't want to deal with all the enemies") F11, then F11 again
-		// within 4 seconds: the clock jumps to dawn, the dead crumble, and nothing is counted - no night survived, no
-		// points, no dawn save. The next dusk brings the very night you passed by.
-		void AskSkipNight()
-		{
-			static std::chrono::steady_clock::time_point asked{};
-			const auto now = std::chrono::steady_clock::now();
-			if (Coop::Client() || Net::Fresh()) {
-				Hud::Banner("ONLY THE HOST CAN PASS THE NIGHT BY", 2.5f);
-				return;
-			}
-			if (!IsNight() || g_phase == Phase::Day) {
-				Hud::Banner("IT IS NOT NIGHT", 2.0f);
-				return;
-			}
-			if (Party::SoloFallen()) return;
-			if (now - asked > std::chrono::seconds(4)) {
-				asked = now;
-				Hud::Banner(fmt::format("PRESS F11 (OR L3 + R3) AGAIN TO SKIP NIGHT {} - IT WILL NOT COUNT", g_phase == Phase::Fighting ? g_current : Save::Get(gen::kAV_round) + 1), 4.0f);
-				return;
-			}
-			asked = {};
-			g_skipped = true;
-			SkipToDawn("THE NIGHT PASSES YOU BY - IT DOES NOT COUNT");
-			if (!IsNight()) Dawn();
-		}
 		void ScoutKey(const RE::ButtonEvent* a_b)
 		{
-			// (Noah: "what is the controller button for that?") on a pad: click both sticks together (L3 + R3), twice
-			if (a_b && a_b->GetDevice() == RE::INPUT_DEVICE::kGamepad && (a_b->GetIDCode() == 0x0040 || a_b->GetIDCode() == 0x0080)) {
-				static bool l3 = false, r3 = false;
-				const bool  was = l3 && r3;
-				(a_b->GetIDCode() == 0x0040 ? l3 : r3) = a_b->IsPressed();
-				auto* ui = RE::UI::GetSingleton();
-				if (!was && l3 && r3 && ui && !ui->GameIsPaused() && Save::Flag(Save::kFlagStarted)) SKSE::GetTaskInterface()->AddTask([] { AskSkipNight(); });
-				return;
-			}
 			if (!a_b || !a_b->IsDown() || a_b->GetDevice() != RE::INPUT_DEVICE::kKeyboard) return;
 			auto* ui = RE::UI::GetSingleton();
 			if (!ui || ui->GameIsPaused() || ui->IsMenuOpen(RE::Console::MENU_NAME) || !Save::Flag(Save::kFlagStarted)) return;
 			const auto id = a_b->GetIDCode();
-			if (id == 0x57) {  // (Noah) F11: pass this night by (twice to be sure)
-				SKSE::GetTaskInterface()->AddTask([] { AskSkipNight(); });
-				return;
-			}
 			if (!kScoutAvailable) return;
 			if (id == 0x44) {  // F10: scout mode on / off
 				SKSE::GetTaskInterface()->AddTask([] { Settings::SetScout(!Settings::Scout()); });
@@ -4564,6 +4732,7 @@ namespace bo3z
 					logger::info("night: saving {}", want ? "locked until dawn" : "allowed again");
 				}
 			}
+			TickRest();
 			// a rest that runs into dusk ends there (the countdown has begun)
 			if (auto* ui = RE::UI::GetSingleton(); ui && g_phase != Phase::Day && ui->IsMenuOpen(RE::SleepWaitMenu::MENU_NAME)) {
 				if (auto* q = RE::UIMessageQueue::GetSingleton()) {
