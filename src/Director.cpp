@@ -3766,7 +3766,7 @@ namespace bo3z
 					av->RestoreActorValue(v, av->GetPermanentActorValue(v));  // (rested)
 				}
 				CloseRest();
-				Hud::Banner(IsNight() ? "NIGHT FALLS - THE CURSE WAKES" : "RESTED", 3.0f);
+				if (!IsNight()) Hud::Banner("RESTED", 3.0f);  // (Noah: no pop-up when the night begins)
 				return;
 			}
 			std::scoped_lock l(g_restLock);

@@ -892,6 +892,28 @@ namespace bo3z::Classes
 		for (int e = 0; e < 3; ++e) if (a_w == ElemCrossbow(e)) return e;
 		return -1;
 	}
+	// (Noah: "one crossbow and one bow at a time - the Storm Crossbow should have replaced my fire one and its bolts")
+	// every elemental crossbow but this one goes back, with its bolts
+	void KeepOnlyCrossbow(int a_keep)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* em = RE::ActorEquipManager::GetSingleton();
+		if (!p) return;
+		for (int e = 0; e < 3; ++e) {
+			if (e == a_keep) continue;
+			auto* w = ElemCrossbow(e);
+			auto* b = ElemBolts(e);
+			if (w && p->GetItemCount(w) > 0) {
+				for (bool left : { false, true }) if (em && p->GetEquippedObject(left) == w) em->UnequipObject(p, w, nullptr, 1, nullptr, false, false, false, true);
+				p->RemoveItem(w, p->GetItemCount(w), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				logger::info("classes: {} given back - one crossbow at a time", w->GetName());
+			}
+			if (b && p->GetItemCount(b) > 0) {
+				if (em && p->GetCurrentAmmo() == b) em->UnequipObject(p, b, nullptr, 1, nullptr, false, false, false, true);
+				p->RemoveItem(b, p->GetItemCount(b), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+			}
+		}
+	}
 	RE::TESObjectWEAP* HeldCrossbow()
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -1043,11 +1065,25 @@ namespace bo3z::Classes
 				Hud::Banner("The Ember Crossbow and its fire bolts are in your pack - the Rime and Storm Crossbows wait at the Echo Altar", 6.0f);
 			}
 		}
+		auto* uiN = RE::UI::GetSingleton();
+		const bool menus = !uiN || uiN->GameIsPaused() || uiN->IsMenuOpen(RE::InventoryMenu::MENU_NAME) || uiN->IsMenuOpen(RE::FavoritesMenu::MENU_NAME) || uiN->IsMenuOpen(RE::ContainerMenu::MENU_NAME) || uiN->IsMenuOpen(RE::BarterMenu::MENU_NAME);
+		// (one crossbow at a time) more than one carried from before: the one in hand stays, else the last of them
+		if (!menus) {
+			int owned = 0, keep = -1;
+			for (int e = 0; e < 3; ++e) if (auto* w = ElemCrossbow(e); w && p->GetItemCount(w) > 0) ++owned, keep = e;
+			if (owned > 1) {
+				if (const int h = CrossbowElement(HeldCrossbow()); h >= 0) keep = h;
+				KeepOnlyCrossbow(keep);
+			}
+		}
 		// (Noah) an elemental crossbow in hand nocks its own element's bolts
-		if (auto* w = HeldCrossbow(); w && p->Is3DLoaded()) {
+		// (Noah: the game crashed switching bolts in the inventory) never while a menu is open, and never over bolts you
+		// chose yourself: only when what is nocked isn't a bolt at all
+		if (auto* w = HeldCrossbow(); w && p->Is3DLoaded() && !menus) {
 			if (const int e = CrossbowElement(w); e >= 0) {
 				auto* want = ElemBolts(e);
-				if (want && p->GetItemCount(want) > 0 && p->GetCurrentAmmo() != want) {
+				auto* cur = p->GetCurrentAmmo();
+				if (want && p->GetItemCount(want) > 0 && (!cur || !cur->IsBolt())) {
 					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(p, want, nullptr, 1, nullptr, false, false, false, true);
 				}
 			}
@@ -1060,7 +1096,7 @@ namespace bo3z::Classes
 			}
 		}
 		// (Noah) worn armour made only for the other body is taken off; a man's Drifter Outfit becomes the Dawnguard's
-		if (static int fitCheck = 0; ++fitCheck % 3 == 0 && p->Is3DLoaded()) {
+		if (static int fitCheck = 0; ++fitCheck % 3 == 0 && p->Is3DLoaded() && !menus) {
 			const bool fem = PlayerFemale();
 			std::vector<RE::TESObjectARMO*> off;
 			for (auto& [obj, data] : p->GetInventory()) {
@@ -1408,7 +1444,16 @@ namespace bo3z::Classes
 				auto* pl = RE::PlayerCharacter::GetSingleton();
 				if (!pl) return;
 				const auto had = pl->GetItemCount(pick);
+				const int  xe = CrossbowElement(pick);
+				if (xe >= 0) KeepOnlyCrossbow(xe);  // (the old crossbow and its bolts go back)
 				pl->AddObjectToContainer(pick, nullptr, 1, nullptr);
+				if (xe >= 0) {
+					TopUpBolts(0);
+					if (auto* em = RE::ActorEquipManager::GetSingleton()) {
+						em->EquipObject(pl, pick, nullptr, 1, nullptr, false, false, false, true);
+						if (auto* b = ElemBolts(xe); b && pl->GetItemCount(b) > 0) em->EquipObject(pl, b, nullptr, 1, nullptr, false, false, false, true);
+					}
+				}
 				if (auto* w = pick->As<RE::TESObjectWEAP>(); IsRangerWeapon(w) && !w->IsBow()) Bows::Restock();
 				// (Noah: "I collected two of the item") keep it to the one given - anything that doubled the add is taken back
 				std::thread([pick, had] { std::this_thread::sleep_for(std::chrono::milliseconds(1500)); Tasks::Add([pick, had] {
