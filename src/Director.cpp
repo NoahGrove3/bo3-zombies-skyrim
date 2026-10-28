@@ -55,6 +55,7 @@ namespace bo3z
 
 		Phase                   g_phase = Phase::Day;
 		int                     g_current = 0;   // round being fought
+		bool                    g_skipped = false;  // (Noah) this night was passed by: its dawn is no night survived
 		int                     g_toSpawn = 0;
 		// (Noah: like BO3) a night is waves: 4 + the night's number of them; wave k brings 20 x k dead (20, 40, 60...); the night
 		// holds (the clock stops short of dawn) until the last wave is cleared
@@ -2363,7 +2364,11 @@ namespace bo3z
 			g_settle.clear();
 			EndRisers();
 			Undead::Reset();  // no mind outlives the night (they reached for people while disabled)
-			if (g_phase == Phase::Fighting) {
+			if (g_skipped) {
+				// (Noah: "skip a night... it shouldn't count as a night survived; the following night is the one it would have been")
+				logger::info("dawn: night {} passed by - not counted, {} undead crumbled", Save::Get(gen::kAV_round) + 1, n);
+				Curse::OnWave(false);  // (a trial's count for the passed night starts over)
+			} else if (g_phase == Phase::Fighting) {
 				// Dawn ends the round: one more night survived (one more tally on the board).
 				Save::Set(gen::kAV_round, g_current);
 				Points::Add(gen::kPoints_round_survived);
@@ -2373,6 +2378,7 @@ namespace bo3z
 				Party::DawnSave(g_current);  // every game in the party saves at this same dawn
 			}
 			g_phase = Phase::Day;
+			g_skipped = false;
 			g_toSpawn = 0;
 			g_waves = 0, g_wave = 0, g_waveSpawned = 0, g_waveRest = 0;
 			g_pause = 0;
@@ -4421,12 +4427,43 @@ namespace bo3z
 			}
 			return best;
 		}
+		// (Noah: "a way to skip a night if I'm mid quest and don't want to deal with all the enemies") F11, then F11 again
+		// within 4 seconds: the clock jumps to dawn, the dead crumble, and nothing is counted - no night survived, no
+		// points, no dawn save. The next dusk brings the very night you passed by.
+		void AskSkipNight()
+		{
+			static std::chrono::steady_clock::time_point asked{};
+			const auto now = std::chrono::steady_clock::now();
+			if (Coop::Client() || Net::Fresh()) {
+				Hud::Banner("ONLY THE HOST CAN PASS THE NIGHT BY", 2.5f);
+				return;
+			}
+			if (!IsNight() || g_phase == Phase::Day) {
+				Hud::Banner("IT IS NOT NIGHT", 2.0f);
+				return;
+			}
+			if (Party::SoloFallen()) return;
+			if (now - asked > std::chrono::seconds(4)) {
+				asked = now;
+				Hud::Banner(fmt::format("PRESS F11 AGAIN TO SKIP NIGHT {} - IT WILL NOT COUNT", g_phase == Phase::Fighting ? g_current : Save::Get(gen::kAV_round) + 1), 4.0f);
+				return;
+			}
+			asked = {};
+			g_skipped = true;
+			SkipToDawn("THE NIGHT PASSES YOU BY - IT DOES NOT COUNT");
+			if (!IsNight()) Dawn();
+		}
 		void ScoutKey(const RE::ButtonEvent* a_b)
 		{
-			if (!kScoutAvailable || !a_b || !a_b->IsDown() || a_b->GetDevice() != RE::INPUT_DEVICE::kKeyboard) return;
+			if (!a_b || !a_b->IsDown() || a_b->GetDevice() != RE::INPUT_DEVICE::kKeyboard) return;
 			auto* ui = RE::UI::GetSingleton();
 			if (!ui || ui->GameIsPaused() || ui->IsMenuOpen(RE::Console::MENU_NAME) || !Save::Flag(Save::kFlagStarted)) return;
 			const auto id = a_b->GetIDCode();
+			if (id == 0x57) {  // (Noah) F11: pass this night by (twice to be sure)
+				SKSE::GetTaskInterface()->AddTask([] { AskSkipNight(); });
+				return;
+			}
+			if (!kScoutAvailable) return;
 			if (id == 0x44) {  // F10: scout mode on / off
 				SKSE::GetTaskInterface()->AddTask([] { Settings::SetScout(!Settings::Scout()); });
 				return;
