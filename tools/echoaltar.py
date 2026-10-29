@@ -352,7 +352,9 @@ def main():
     col = [(194, 0, 222), (96.5, -168, 270), (-96.6, -167.5, 340), (-193.4, 0, 270), (-96.6, 167.5, 340), (97.6, 168, 340)]
     lines = [f'in {SRC / "altar/source/runestone_lp.fbx"}', f'out {mesh("shrine.nif")}', f'scale {S}', 'rotate 90 0 0', 'ground 1', f'offset 0 0 {LIFT}',
              'skip stone',
-             f'collidefrustum -205 -205 205 205 {LIFT + 63 * S:.1f} {LIFT:.1f} 6',
+             # (Noah: "I always get caught on some invisible blocker walking onto the altar") the old box stood 38 units
+             # straight up at the rim, its corners past the round steps: now a gentle ramp up the steps (29 degrees) to the top
+             f'collidefrustum -150 -150 150 150 {LIFT + 32:.1f} {LIFT:.1f} 62',
              f'mat platform diffuse={pdif} normal={pnrm} glow={pglo} emit=0.4,0.8,1.0 emitmult=1.8 spec=0.3 gloss=30',
              f'mat pillars diffuse={cdif} normal={cnrm} spec=0.25 gloss=25']
     for x, y, h in col:

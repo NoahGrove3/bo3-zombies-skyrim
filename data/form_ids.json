@@ -1295,6 +1295,7 @@
   "STAT:pu_thuum": "0xd0b",
   "LIGH:pu_thuum": "0xd0c",
   "STAT:pu_mercy": "0xd0d",
-  "LIGH:pu_mercy": "0xd0e"
+  "LIGH:pu_mercy": "0xd0e",
+  "LIGH:lantern": "0xd0f"
  }
 }

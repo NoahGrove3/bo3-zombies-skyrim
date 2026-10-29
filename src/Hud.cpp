@@ -999,6 +999,21 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				DrawRest(dl, rest, size, k, now);
 				return;
 			}
+			if (s.deathT < 0.0f && s.dread > 0.01f) {
+				// (Noah: "really subtle") surrounded: the screen's edges darken a little, breathing slowly
+				const float d = std::clamp(s.dread, 0.0f, 1.0f) * (0.85f + 0.15f * std::sin(now * 2.2f));
+				const ImU32 e = IM_COL32(8, 0, 2, static_cast<int>(70 * d)), z = IM_COL32(8, 0, 2, 0);
+				const float w = size.y * 0.30f;
+				dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, w }, e, e, z, z);
+				dl->AddRectFilledMultiColor({ 0, size.y - w }, size, z, z, e, e);
+				dl->AddRectFilledMultiColor({ 0, 0 }, { w, size.y }, e, z, z, e);
+				dl->AddRectFilledMultiColor({ size.x - w, 0 }, size, z, e, e, z);
+			}
+			if (s.deathT < 0.0f && s.sayTime > 0 && !s.sayLine.empty()) {  // (the townsfolk's words, as Skyrim's subtitles)
+				const float a = std::clamp(s.sayTime / 0.5f, 0.0f, 1.0f);
+				const std::string t = s.sayWho.empty() ? s.sayLine : s.sayWho + ":  " + s.sayLine;
+				TxtC(dl, g_body, 22 * k, size.x * 0.5f, size.y * 0.78f, Fade(IM_COL32(240, 236, 226, 255), a), t, 1.5f * k, Fade(IM_COL32(0, 0, 0, 255), 0.6f * a));
+			}
 			if (s.deathT < 0.0f) {
 				// (Noah's power-ups) what's running, over the bars: its name and the seconds left, blinking in the last five
 				static constexpr const char* kPu[8] = { "", "DOUBLE ESSENCE", "", "MERCHANT'S BLESSING", "", "SHADOW OF NOCTURNAL", "THU'UM UNBOUND", "" };
@@ -5869,6 +5884,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			{
 				std::scoped_lock l(g_lock);
 				g_state.bannerTime = std::max(0.0f, g_state.bannerTime - dt);
+				g_state.sayTime = std::max(0.0f, g_state.sayTime - dt);
 				g_state.gainTime = std::max(0.0f, g_state.gainTime - dt);
 				g_state.hitTime = std::max(0.0f, g_state.hitTime - dt);
 				g_state.hurtDirT = std::max(0.0f, g_state.hurtDirT - dt);
@@ -6360,6 +6376,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			else y = 1.0f - y;
 			std::scoped_lock l(g_lock);
 			if (g_state.motes.size() < 24) g_state.motes.push_back({ x, y, 0.0f });
+		}
+		void Say(std::string a_who, std::string a_line, float a_seconds)
+		{
+			std::scoped_lock l(g_lock);
+			g_state.sayWho = std::move(a_who), g_state.sayLine = std::move(a_line), g_state.sayTime = a_seconds;
 		}
 		void Banner(std::string a_text, float a_seconds)
 		{

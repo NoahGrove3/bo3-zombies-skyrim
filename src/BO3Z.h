@@ -870,6 +870,9 @@ namespace bo3z
 			float       ads{ 0 };
 			std::string banner;
 			float       bannerTime{ 0 };
+			std::string sayWho, sayLine;  // (a townsperson speaks: a subtitle)
+			float       sayTime{ 0 };
+			float       dread{ 0 };       // (surrounded: 0..1, the screen's edges darken a little)
 			int         lastGain{ 0 };
 			float       gainTime{ 0 };
 			float       hitTime{ 0 };
@@ -1024,6 +1027,7 @@ namespace bo3z
 		State&      Edit();
 		std::mutex& Lock();
 		void        Banner(std::string a_text, float a_seconds = 4.0f);
+		void        Say(std::string a_who, std::string a_line, float a_seconds = 4.5f);  // a townsperson's words, as a subtitle
 		void        Essence(const RE::NiPoint3& a_at);  // a kill's essence flies from the body to your count
 		void        Lore(std::string a_title, std::string a_text, float a_seconds = 14.0f);
 		void        WordReveal(int a_shout);

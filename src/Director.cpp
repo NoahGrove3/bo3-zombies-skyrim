@@ -76,6 +76,7 @@ namespace bo3z
 		bool                    g_special = false;
 		std::vector<Spawned>    g_alive;
 		std::deque<RE::ActorHandle> g_corpses;
+		std::vector<RE::ObjectRefHandle> g_ashPiles;  // (dawn's aftermath: the dead's ash, cleared by midday)
 		struct Settle
 		{
 			RE::ActorHandle handle;
@@ -2350,8 +2351,15 @@ namespace bo3z
 				}
 			}
 			// Dawn: the dead (standing or fallen) are gone with the light.
+			// (Noah: "aftermath at dawn") each leaves a pile of ash where it stood, gone by midday
+			std::vector<RE::NiPoint3> ash;
+			auto* pl = RE::PlayerCharacter::GetSingleton();
+			const auto keepAsh = [&](RE::Actor* a) {
+				if (pl && ash.size() < 40 && a->Is3DLoaded() && a->GetParentCell() == pl->GetParentCell() && a->GetPosition().GetDistance(pl->GetPosition()) < 6000.0f) ash.push_back(a->GetPosition());
+			};
 			for (auto& s : g_alive) {
 				if (auto a = s.handle.get()) {
+					keepAsh(a.get());
 					Vanish(a.get());
 					++n;
 				}
@@ -2359,8 +2367,18 @@ namespace bo3z
 			g_alive.clear();
 			for (auto& h : g_corpses) {
 				if (auto a = h.get()) {
+					keepAsh(a.get());
 					Vanish(a.get());
 				}
+			}
+			if (static auto* ashBase = RE::TESForm::LookupByID<RE::TESBoundObject>(0x0000001B); ashBase && pl) {  // DefaultAshPile1
+				for (const auto& at : ash) {
+					if (auto r = pl->PlaceObjectAtMe(ashBase, false)) {
+						r->SetPosition(at);
+						g_ashPiles.push_back(r->CreateRefHandle());
+					}
+				}
+				if (!ash.empty()) logger::info("dawn: {} piles of ash left where the dead fell", ash.size());
 			}
 			g_corpses.clear();
 			g_settle.clear();
@@ -4124,11 +4142,136 @@ namespace bo3z
 		// Night in a town: from the moment the countdown starts, everyone out in the streets goes indoors (they are taken
 		// out of the world, so nothing of the night can hurt them), and walks back out at dawn. Followers, other players
 		// and creatures stay. Every player's game does this for itself.
+		// ---- (Noah: immersion) the belt lantern, dread, the townsfolk's words and offerings, the dawn's ash ----
+		// the belt lantern: from dusk to dawn a warm light 20 m round you (snuffed by Shadow of Nocturnal)
+		RE::ObjectRefHandle g_lantern;
+		void TickLantern(RE::PlayerCharacter* a_player)
+		{
+			const bool want = g_phase != Phase::Day && Save::Flag(Save::kFlagStarted) && !PowerUps::Shadow() && a_player->Is3DLoaded();
+			auto l = g_lantern.get();
+			if (l && (!want || l->GetParentCell() != a_player->GetParentCell())) {
+				l->Disable();
+				l->SetDelete(true);
+				g_lantern = {};
+				l = nullptr;
+			}
+			if (!want) return;
+			if (!l) {
+				static auto* base = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kLanternLight, gen::kPlugin);
+				if (!base) return;
+				if (auto r = a_player->PlaceObjectAtMe(base, false)) g_lantern = r->CreateRefHandle(), l = r;
+				if (!l) return;
+				logger::info("lantern: lit for the night");
+			}
+			l->SetPosition(a_player->GetPosition() + RE::NiPoint3{ 0, 0, 105.0f });
+		}
+		// dread: six or more of the dead within 8 m - the screen's edges darken, slowly (really subtle)
+		void TickDread(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			static float now = 0;
+			int n = 0;
+			if (g_phase == Phase::Fighting) {
+				const auto pp = a_player->GetPosition();
+				for (auto& s : g_alive) {
+					if (auto a = s.handle.get(); a && !a->IsDead() && a->GetPosition().GetDistance(pp) < 560.0f) ++n;
+				}
+			}
+			const float want = std::clamp((static_cast<float>(n) - 5.0f) / 6.0f, 0.0f, 1.0f);
+			now += (want - now) * std::min(1.0f, a_delta * (want > now ? 1.2f : 0.6f));
+			std::scoped_lock l(Hud::Lock());
+			Hud::Edit().dread = now;
+		}
+		// the townsfolk speak: a guard's warning as the countdown begins, thanks at dawn (subtitles)
+		RE::Actor* NearestTownsperson(RE::PlayerCharacter* a_player, float a_range, bool a_guard)
+		{
+			static auto* npcKw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x013794);  // ActorTypeNPC
+			RE::Actor* best = nullptr;
+			float      bestD = a_range;
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				auto a = h.get();
+				if (!a || a.get() == a_player || a->IsDead() || a->IsDisabled() || a->IsPlayerTeammate() || IsOurs(a.get()) || Party::IsFriend(a.get())) continue;
+				auto* race = a->GetRace();
+				if (!race || (npcKw && !race->HasKeyword(npcKw)) || a->IsHostileToActor(a_player)) continue;
+				const std::string_view nm = a->GetName() ? a->GetName() : "";
+				if (nm.empty() || (a_guard && nm.find("Guard") == std::string_view::npos)) continue;
+				const float d = a->GetPosition().GetDistance(a_player->GetPosition());
+				if (d < bestD) bestD = d, best = a.get();
+			}
+			return best;
+		}
+		int Pick(int a_n) { static std::mt19937 rng{ std::random_device{}() }; return std::uniform_int_distribution<int>(0, a_n - 1)(rng); }
+		void DuskWords(RE::PlayerCharacter* a_player)
+		{
+			static constexpr const char* kLines[] = { "Get inside! The dead are rising - bar your doors!", "Curse's waking! Everyone off the streets, now!",
+				"To your homes! Shutters closed, and don't open them till dawn!", "They're coming up out of the ground again. Inside, all of you!" };
+			if (auto* g = NearestTownsperson(a_player, 4000.0f, true)) Hud::Say(g->GetName(), kLines[Pick(4)], 5.0f);
+		}
+		void DawnWords(RE::PlayerCharacter* a_player)
+		{
+			static constexpr const char* kGuard[] = { "By the Nine... you held them off. Thank you.", "Dawn, at last. We owe you, friend.", "You fought them all night? Talos guide you.",
+				"The dead are ash again. The city won't forget this." };
+			static constexpr const char* kFolk[] = { "Is it over? Gods, it's over...", "I heard you out there all night. Thank you.", "The ash... is that all that's left of them?",
+				"We barred the door and prayed. Looks like someone answered." };
+			auto* g = NearestTownsperson(a_player, 2500.0f, true);
+			const bool guard = g != nullptr;
+			if (!g) g = NearestTownsperson(a_player, 2500.0f, false);
+			if (g) Hud::Say(g->GetName(), guard ? kGuard[Pick(4)] : kFolk[Pick(4)], 5.0f);
+		}
+		// the ash of the night's dead: gone by midday
+		void TickAsh()
+		{
+			auto* cal = RE::Calendar::GetSingleton();
+			if (g_ashPiles.empty() || !cal) return;
+			const float h = cal->GetHour();
+			if (g_phase == Phase::Day && (h >= 12.0f && h < DuskHour())) {
+				for (auto& r : g_ashPiles) if (auto a = r.get()) a->Disable(), a->SetDelete(true);
+				logger::info("ash: the night's ash blown away by midday ({})", g_ashPiles.size());
+				g_ashPiles.clear();
+			}
+		}
+		// (Noah: "a freed city: its people leave offerings") once a day, the first time you come to a freed city's altar by
+		// day, its people have left something for you there
+		std::array<int, 16> g_offeredDay = [] { std::array<int, 16> a{}; a.fill(-1); return a; }();
+		void TickOfferings(RE::PlayerCharacter* a_player)
+		{
+			auto* cal = RE::Calendar::GetSingleton();
+			if (!cal || g_phase != Phase::Day || Coop::Client()) return;
+			const int day = static_cast<int>(cal->GetDaysPassed());
+			for (int t = 0; t < static_cast<int>(gen::kTowns.size()) && t < 16; ++t) {
+				if (!Curse::Freed(t) || g_offeredDay[t] == day) continue;
+				auto* altar = Shops::Placed(t, 0);
+				if (!altar || altar->GetPosition().GetDistance(a_player->GetPosition()) > 600.0f) continue;
+				g_offeredDay[t] = day;
+				const int essence = 250 + 50 * Difficulty::Freed();
+				Points::Add(essence);
+				if (auto* gold = RE::TESForm::LookupByID<RE::TESBoundObject>(0x0000000F)) a_player->AddObjectToContainer(gold, nullptr, 100, nullptr);
+				Forms::Play(gen::Sound::quest_step);
+				Hud::Banner(fmt::format("The people of {} left an offering at their altar: {} Cursed Essence and 100 gold", gen::kTowns[t], essence), 5.0f);
+				if (auto* g = NearestTownsperson(a_player, 1500.0f, false)) Hud::Say(g->GetName(), "We leave what we can at the altar. It's the least we owe you.", 5.0f);
+			}
+		}
+		std::vector<std::pair<RE::ObjectRefHandle, float>> g_fading;  // townsfolk leaving at dusk: seconds till they fade from sight
+		void FadeShow(RE::TESObjectREFR* a_ref, bool a_show)
+		{
+			auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton();
+			if (!vm || !a_ref) {
+				if (a_ref) a_show ? a_ref->Enable(false) : a_ref->Disable();
+				return;
+			}
+			const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(a_ref->GetFormType(), a_ref);
+			RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
+			vm->DispatchMethodCall(hd, "ObjectReference", a_show ? "Enable" : "Disable", RE::MakeFunctionArguments(true), none);  // (fading)
+		}
 		std::vector<RE::ObjectRefHandle> g_sheltered;
 		void TickShelter(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			static float scan = 0;
 			const bool   night = (g_phase == Phase::Break || g_phase == Phase::Fighting) && Settings::Shelter();
+			static bool wasNight = false;
+			static float dawnTalk = -1;
+			if (night && !wasNight) DuskWords(a_player);
+			wasNight = night;
+			if (dawnTalk > 0 && (dawnTalk -= a_delta) <= 0) DawnWords(a_player);
 			if (!night) {
 				if (!g_sheltered.empty()) {
 					for (auto& h : g_sheltered) {
@@ -4138,13 +4281,22 @@ namespace bo3z
 								r->SetDelete(true);
 								continue;
 							}
-							r->Enable(false);
+							FadeShow(r.get(), true);  // (they step back out, fading in)
 						}
 					}
 					logger::info("shelter: dawn, {} townsfolk back out", g_sheltered.size());
 					g_sheltered.clear();
+					dawnTalk = 4.0f;
 				}
+				g_fading.clear();
 				return;
+			}
+			// (Noah: townsfolk who live through it) those already told to go in fade out one by one, not all at once
+			for (auto& f : g_fading) {
+				if ((f.second -= a_delta) <= 0 && f.second > -50.0f) {
+					f.second = -99.0f;
+					if (auto r = f.first.get(); r && !r->IsDisabled()) FadeShow(r.get(), false);
+				}
 			}
 			if ((scan -= a_delta) > 0) {
 				return;
@@ -4178,6 +4330,15 @@ namespace bo3z
 					continue;
 				}
 				a->StopCombat();
+				// (the near ones hurry off and fade from sight over a few seconds; the far ones are simply gone)
+				if (a->GetPosition().GetDistance(a_player->GetPosition()) < 3500.0f) {
+					if (std::none_of(g_fading.begin(), g_fading.end(), [&](const auto& f) { return f.first.get().get() == a.get(); })) {
+						g_fading.push_back({ a->CreateRefHandle(), 1.0f + 6.0f * static_cast<float>(Pick(100)) / 100.0f });
+						g_sheltered.push_back(a->CreateRefHandle());
+						++n;
+					}
+					continue;
+				}
 				a->Disable();
 				g_sheltered.push_back(a->CreateRefHandle());
 				++n;
@@ -4785,6 +4946,10 @@ namespace bo3z
 			TickTruce(player, a_delta);
 			TickPeace(player, a_delta);
 			TickShelter(player, a_delta);
+			TickLantern(player);
+			TickDread(player, a_delta);
+			TickAsh();
+			TickOfferings(player);
 			Prune();
 			MountChase(player);
 			{
