@@ -294,7 +294,7 @@ namespace bo3z
 				if (a_event->opening && a_event->menuName == RE::SleepWaitMenu::MENU_NAME && dataLoaded && Save::Flag(Save::kFlagStarted)) {
 					// (Noah) once the nights have begun the Curse's own rest screen takes the wait menu's place
 					if (auto* q = RE::UIMessageQueue::GetSingleton()) q->AddMessage(RE::SleepWaitMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kHide, nullptr);
-					SKSE::GetTaskInterface()->AddTask([] { Director::OpenRest(); });
+					Tasks::Add([] { Director::OpenRest(); });
 				} else if (a_event->opening && a_event->menuName == RE::SleepWaitMenu::MENU_NAME && dataLoaded) {
 					if (std::string why; !Director::MayRest(why)) {
 						if (auto* q = RE::UIMessageQueue::GetSingleton()) {
@@ -1117,9 +1117,7 @@ namespace bo3z
 					return RE::BSEventNotifyControl::kContinue;
 				}
 				const RE::FormID id = sp->GetFormID();
-				std::thread([id] {
-					std::this_thread::sleep_for(std::chrono::milliseconds(300));
-					Tasks::Add([id] {
+				Tasks::Later(0.3f, [id] {
 						auto* pl = RE::PlayerCharacter::GetSingleton();
 						auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(id);
 						auto* em = RE::ActorEquipManager::GetSingleton();
@@ -1131,8 +1129,7 @@ namespace bo3z
 							em->EquipSpell(pl, sp, slot);
 							s_mine = false;
 						}
-					});
-				}).detach();
+				});
 				return RE::BSEventNotifyControl::kContinue;
 			}
 		};

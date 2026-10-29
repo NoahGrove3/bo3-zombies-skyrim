@@ -26,7 +26,7 @@ namespace bo3z::Eggs
 		void SetGift(int e) { if (auto* g = Glob(gen::kEggGifts)) g->value = static_cast<float>(Gifts() | (1 << e)); }
 		bool Gifted(int e) { return (Gifts() >> e) & 1; }
 		bool Done(int e) { return Raw(e) >= kDone; }
-		int  Step(int e) { return Done(e) ? gen::kEggs[e].nSteps : Raw(e) / 1000; }
+		int  Step(int e) { return Done(e) ? gen::kEggs[e].nSteps : std::clamp(Raw(e) / 1000, 0, std::max(0, static_cast<int>(gen::kEggs[e].nSteps) - 1)); }  // (the audit: a bad save or console edit never indexes past its steps)
 		int  Prog(int e) { return Done(e) ? 0 : Raw(e) % 1000; }
 		// your class's quest, once it is open (Classes: six cities freed) and not yet done
 		int Active()

@@ -603,6 +603,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			dl->AddPolyline(plate, 6, Fade(kGold, 0.9f), ImDrawFlags_Closed, 1.4f * k);
 			auto rel = [&](float ang) {
 				float d = ang - s.heading;
+				if (!std::isfinite(d)) d = 0.0f;
 				while (d > RE::NI_PI) d -= 2 * RE::NI_PI;
 				while (d < -RE::NI_PI) d += 2 * RE::NI_PI;
 				return d;
@@ -5882,7 +5883,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 			DevTools::PollFromRender();
 			DevTools::RunQueuedOnMain();  // Present runs on the main thread, also while menus pause the game
-			Tasks::Drain();
+			if (auto* lui = RE::UI::GetSingleton(); !lui || !lui->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) Tasks::Drain();  // (the audit: kept while a loading screen tears the world down)
 			Hud::State s;
 			{
 				std::scoped_lock l(g_lock);

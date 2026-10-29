@@ -1212,7 +1212,7 @@ namespace bo3z
 				h.bossName.clear();
 				return;
 			}
-			h.bossName = std::string(gen::kEnemies[BossRow()].label);
+			if (const int br = BossRow(); br >= 0 && br < static_cast<int>(gen::kEnemies.size())) h.bossName = std::string(gen::kEnemies[br].label);  // (the audit: no boss row - no name, no crash)
 			h.bossHp = std::max(0.0f, a_boss->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth)) / g_boss.maxHp;
 			h.bossEnraged = g_boss.enraged;
 		}
@@ -1280,7 +1280,7 @@ namespace bo3z
 						g_waveTheme = -1;
 						Curse::OnNightCleared();
 						Forms::Play(gen::Sound::round_end);
-						SkipToDawn(fmt::format("{} FALLS - DAWN BREAKS", champName).c_str());
+						Director::SkipToDawn(fmt::format("{} FALLS - DAWN BREAKS", champName).c_str());
 					}
 				} else if (town == -2) {
 					MiniBossSlain();  // (Noah: the mini-boss's wonder part)
@@ -3063,7 +3063,7 @@ namespace bo3z
 						em->EquipObject(a.get(), claws);
 						// (Noah: a crash 10 ms after this - HDT-SMP still held the weapon's 3D) the weapon leaves its pack only once the
 						// unequip has played out, a second and a half later
-						std::thread([h = a->GetHandle(), claws] { std::this_thread::sleep_for(std::chrono::milliseconds(1500)); Tasks::Add([h, claws] {
+						Tasks::Later(1.5f, [h = a->GetHandle(), claws] {
 							auto b = h.get();
 							if (!b || b->IsDisabled() || b->IsDeleted() || b->IsDead() || !b->Is3DLoaded()) return;
 							auto other = b->GetInventory([claws](RE::TESBoundObject& o) {
@@ -3075,7 +3075,7 @@ namespace bo3z
 								if (data.first <= 0 || b->GetEquippedObject(false) == obj || b->GetEquippedObject(true) == obj) continue;  // (still in a hand: the next pass)
 								b->RemoveItem(obj, data.first, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 							}
-						}); }).detach();
+						});
 						static int told = 0;
 						if (told++ < 10) logger::info("night: a {} was holding a weapon again - taken away", rid);
 					}
@@ -3100,6 +3100,7 @@ namespace bo3z
 						if ((s.behind += kStep) >= 10.0f && relocGap <= 0) {
 							relocGap = 1.0f, s.behind = 0, s.stall = 0, s.lastDist = -1;
 							if (sameWorld) Resurface(a.get(), a_player);
+							else if (auto* bc = a->GetParentCell(); !a->Is3DLoaded() && bc && bc->IsAttached()) continue;  // (the audit: its body still loading - never dragged mid-load)
 							else a->MoveTo(a_player);
 							logger::info("night: the boss {} out of reach ({:.0f} away) - brought to you", gen::kEnemies[s.enemy].id, dist);
 						}
@@ -3630,7 +3631,7 @@ namespace bo3z
 			// is gone; what it wears stays for its look, out of reach (taken off a body mid-fall is what crashed HDT-SMP)
 			if (a_actor && IsOurs(a_actor)) {
 				a_actor->SetActivationBlocked(true);
-				std::thread([h = a_actor->GetHandle()] { std::this_thread::sleep_for(std::chrono::milliseconds(800)); Tasks::Add([h] {
+				Tasks::Later(0.8f, [h = a_actor->GetHandle()] {
 					auto b = h.get();
 					if (!b || b->IsDeleted()) return;
 					b->SetActivationBlocked(true);
@@ -3642,7 +3643,7 @@ namespace bo3z
 					}
 					static int told = 0;
 					if (n && told++ < 10) logger::info("night: {} things taken off a fallen {:08X} (none of the Curse's dead carry loot)", n, b->GetFormID());
-				}); }).detach();
+				});
 			}
 			// (Thorgar the Skulltaker) a player or a summon falls near it: its trophy - it heals, grows and quickens
 			if (auto* pl = RE::PlayerCharacter::GetSingleton(); a_actor && pl && PlayerSide(a_actor, pl)) {
@@ -3818,7 +3819,7 @@ namespace bo3z
 			auto* b = a_event ? a_event->AsButtonEvent() : nullptr;
 			auto* ue = RE::UserEvents::GetSingleton();
 			if (!b || !ue || b->QUserEvent() != ue->wait || !Save::Flag(Save::kFlagStarted)) return false;
-			if (b->IsDown()) SKSE::GetTaskInterface()->AddTask([] { if (!RestOpen()) OpenRest(); });
+			if (b->IsDown()) Tasks::Add([] { if (!RestOpen()) OpenRest(); });
 			return true;
 		}
 		bool RestOpen()
@@ -3897,7 +3898,7 @@ namespace bo3z
 			if (close) CloseRest();
 			if (doSkip) {
 				CloseRest();
-				SKSE::GetTaskInterface()->AddTask([] { SkipNightNow(); });
+				Tasks::Add([] { SkipNightNow(); });
 			}
 			return true;
 		}
@@ -4822,19 +4823,19 @@ namespace bo3z
 			const auto id = a_b->GetIDCode();
 			if (!kScoutAvailable) return;
 			if (id == 0x44) {  // F10: scout mode on / off
-				SKSE::GetTaskInterface()->AddTask([] { Settings::SetScout(!Settings::Scout()); });
+				Tasks::Add([] { Settings::SetScout(!Settings::Scout()); });
 				return;
 			}
 			if (!g_scoutOn) return;
 			if (id == 0x30) {  // B: a spawn point where you look
-				SKSE::GetTaskInterface()->AddTask([] {
+				Tasks::Add([] {
 					auto* pl = RE::PlayerCharacter::GetSingleton();
 					if (!pl) return;
 					if (const auto at = LookHit(pl)) ScoutMark(*at);
 					else Hud::Banner("NOTHING THERE TO MARK - LOOK AT THE GROUND", 2.0f);
 				});
 			} else if (id == 0x31) {  // N: this city's Echo Altar where you stand, facing the way you face
-				SKSE::GetTaskInterface()->AddTask([] {
+				Tasks::Add([] {
 					auto* pl = RE::PlayerCharacter::GetSingleton();
 					if (!pl) return;
 					auto at = pl->GetPosition();

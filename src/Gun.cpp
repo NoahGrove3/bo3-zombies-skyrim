@@ -2152,7 +2152,7 @@ namespace bo3z
 				auto* w = Forms::Gun(sl.gun);
 				const auto counts = p->GetInventoryCounts([w](RE::TESBoundObject& o) { return &o == w; });
 				if (counts.empty() || s >= Gun::SlotCount()) {
-					if (s >= Gun::SlotCount() && !counts.empty()) {
+					if (s >= Gun::SlotCount() && !counts.empty() && !ItemMenusOpen()) {
 						p->RemoveItem(w, 1, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);  // lost the third slot
 					}
 					Save::SetSlot(s, {});
@@ -2899,8 +2899,8 @@ namespace bo3z
 		bool OnButton(const RE::ButtonEvent* a_event)
 		{
 			auto* ui = RE::UI::GetSingleton();
-			if (!ui || ui->GameIsPaused() || ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME) || Intro::CrewScreenOpen()) {
-				return false;
+			if (!ui || ui->GameIsPaused() || ui->IsMenuOpen(RE::DialogueMenu::MENU_NAME) || Intro::CrewScreenOpen() || ItemMenusOpen()) {
+				return false;  // (the audit: G or the knife key in the inventory equipped from under it)
 			}
 			const auto dev = a_event->GetDevice();
 			const auto code = a_event->GetIDCode();

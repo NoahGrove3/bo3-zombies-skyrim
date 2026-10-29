@@ -1623,6 +1623,7 @@ namespace BowsImpl
 		if (sinceShot < (sap ? 2.0f : 5.0f)) return;
 		if ((tick -= a_delta) > 0) return;
 		tick = sap ? 0.5f : 1.0f;
+		if (ItemMenusOpen()) return;  // (the audit: the quiver grows back only with no item menu open)
 		p->AddObjectToContainer(am, nullptr, 1, nullptr);
 		lastCount = have + 1;
 		auto* ui = RE::UI::GetSingleton();

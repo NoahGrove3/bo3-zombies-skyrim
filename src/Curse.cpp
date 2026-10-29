@@ -1037,6 +1037,11 @@ namespace bo3z
 					if (t != g_zone && !s.freed && s.done == 0 && s.active == 0) {
 						continue;  // not been there yet
 					}
+					// (the audit: a quest that won't start was asked again every second, fights and all - and starting one
+					// waits on its aliases) three tries a town a session, never in the night's fighting
+					static std::array<int, 32> tries{};
+					if (t >= static_cast<int>(tries.size()) || tries[t] >= 3 || Director::NightNow()) continue;
+					++tries[t];
 					Gun::Console("startquest " + edid);
 					g_journalKey[t] = -1;
 					continue;  // (the stages follow once it runs)

@@ -643,6 +643,11 @@ namespace bo3z
 		std::optional<RE::NiPoint3> Snap(RE::TESObjectREFR* a_anchor, const RE::NiPoint3& a_at)
 		{
 			auto probe = g_probe.get();
+			if (probe && (probe->IsDeleted() || probe->GetParentCell() != a_anchor->GetParentCell())) {  // (the audit: never one left in a cell let go)
+				probe->Disable();
+				probe->SetDelete(true);
+				probe.reset();
+			}
 			if (!probe) {
 				auto* marker = RE::TESForm::LookupByID<RE::TESBoundObject>(0x3B);  // XMarker
 				auto  ref = marker ? a_anchor->PlaceObjectAtMe(marker, false) : nullptr;
@@ -1100,10 +1105,16 @@ namespace bo3z
 							since[a_index] = {};
 						} else if (since[a_index] == std::chrono::steady_clock::time_point{}) {
 							since[a_index] = now;
-						} else if (now - since[a_index] > std::chrono::milliseconds(1500)) {
+						} else if (now - since[a_index] > std::chrono::milliseconds(5000)) {
 							since[a_index] = {};
-							ref->Disable();
-							ref->Enable(false);
+							// (the audit: turned off and on while its model sat in the loader, every 1.5 s if a mesh was missing)
+							// five seconds' wait, and at most twice for each piece in a session
+							static std::unordered_map<RE::FormID, int> toggles;
+							if (toggles.size() > 500) toggles.clear();
+							if (toggles[ref->GetFormID()]++ < 2) {
+								ref->Disable();
+								ref->Enable(false);
+							}
 							logger::info("shops: {} in {} hadn't loaded - turned off and on to load it", gen::kObjects[loc.object].id, gen::kTowns[loc.town]);
 						}
 					}

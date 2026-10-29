@@ -979,7 +979,8 @@ namespace bo3z
 				return;
 			}
 			static auto* playerFaction = RE::TESForm::LookupByID<RE::TESFaction>(0x00000DB1);
-			while (static_cast<int>(g_allies.size()) + a_count > 6) {  // (six at most: the oldest go first)
+			a_count = std::min(a_count, 6);
+			while (!g_allies.empty() && static_cast<int>(g_allies.size()) + a_count > 6) {  // (six at most: the oldest go first)
 				if (auto a = g_allies.front().h.get()) {
 					a->Disable();
 					a->SetDelete(true);

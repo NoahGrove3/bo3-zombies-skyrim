@@ -38,16 +38,13 @@ namespace bo3z
 			if (a_spell->GetCastingType() != RE::MagicSystem::CastingType::kConcentration) return;
 			// held spells: one short burst, then the caster lets go (and again a little later, in case it took hold late)
 			const auto h = a_from->CreateRefHandle();
-			std::thread([h] {
-				for (int ms : { 250, 400 }) {
-					std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-					SKSE::GetTaskInterface()->AddTask([h] {
-						if (auto r = h.get()) {
-							if (auto* mc = r->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) mc->InterruptCast(false);
-						}
-					});
-				}
-			}).detach();
+			for (float sec : { 0.25f, 0.65f }) {  // (one timer, no thread per cast)
+				Tasks::Later(sec, [h] {
+					if (auto r = h.get()) {
+						if (auto* mc = r->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) mc->InterruptCast(false);
+					}
+				});
+			}
 		}
 
 		bool Resolve()

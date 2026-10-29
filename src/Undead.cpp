@@ -1595,6 +1595,7 @@ namespace bo3z
 				}
 				if (rigs > 0) logger::info("undead: {} rigs - animation updates {} ({} of ours), camera updates {} (poses {}, skipped {}), graph updates {} (poses {}), clip poses {}, no clip set {}", rigs, g_hookCalls.exchange(0), g_hookRigs.exchange(0), g_camCalls.exchange(0), g_camPoses.exchange(0), g_camSkip.exchange(0), g_graphCalls.exchange(0), g_graphPoses.exchange(0), g_clipPosed.exchange(0), g_clipNo.exchange(0));
 			}
+			[[maybe_unused]] static const bool clipsRead = (LoadClips(), true);  // (the audit: read here, on the main thread, never first on an animation thread)
 			static float sweep = 0;
 			if ((sweep += a_delta) > 5.0f) {
 				sweep = 0;
@@ -1610,9 +1611,15 @@ namespace bo3z
 						drop.swap(g_grave);
 					}
 				}
+				// (the audit: a rig dropped here could be freed on an animation thread still holding it, its skeleton with
+				// it) dropped rigs wait a sweep, and are let go here only once nothing else holds them
+				static std::vector<std::shared_ptr<Rig>> rigGrave;
+				std::erase_if(rigGrave, [](const std::shared_ptr<Rig>& r) { return r.use_count() <= 1; });
 				std::erase_if(g_rigs, [](const auto& e) {
 					auto* f = RE::TESForm::LookupByID<RE::Actor>(e.first);
-					return !f || f->IsDeleted() || f->IsDead();
+					const bool gone = !f || f->IsDeleted() || f->IsDead();
+					if (gone && e.second) rigGrave.push_back(e.second);
+					return gone;
 				});
 			}
 		}

@@ -1069,7 +1069,7 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* dh = RE::TESDataHandler::GetSingleton();
 		if (!p || !dh) return;
-		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded()) Purge();
+		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded() && !ItemMenusOpen()) Purge();  // (the audit: never under the Magic menu)
 		TuneCorrosion();
 		TuneSpellswordGear();
 		// (Noah) a Ranger from before the elemental crossbows is handed the Ember Crossbow and its bolts, once
@@ -1488,13 +1488,14 @@ namespace bo3z::Classes
 				}
 				if (auto* w = pick->As<RE::TESObjectWEAP>(); IsRangerWeapon(w) && !w->IsBow()) Bows::Restock();
 				// (Noah: "I collected two of the item") keep it to the one given - anything that doubled the add is taken back
-				std::thread([pick, had] { std::this_thread::sleep_for(std::chrono::milliseconds(1500)); Tasks::Add([pick, had] {
+				Tasks::Later(1.5f, [pick, had] {
+					if (ItemMenusOpen()) return;  // (the audit: never with an item menu open - the extra stays)
 					auto* q = RE::PlayerCharacter::GetSingleton();
 					if (const auto extra = q ? q->GetItemCount(pick) - (had + 1) : 0; extra > 0) {
 						q->RemoveItem(pick, extra, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 						logger::info("classes: altar gear came twice ({} extra taken back)", extra);
 					}
-				}); }).detach();
+				});
 				Hud::Banner(std::string(pick->GetName()) + "  -  in your pack", 4.0f);
 				logger::info("classes: altar gear {} ({})", pick->GetName(), Name(a_cls));
 			};
@@ -2160,11 +2161,14 @@ namespace bo3z::Classes
 		auto* base = RE::TESForm::LookupByID<RE::TESNPC>(0x000204C0);  // SummonAtronachFlame
 		const float yaw = std::atan2(p->GetPosition().x - a_target->GetPosition().x, p->GetPosition().y - a_target->GetPosition().y);
 		const RE::NiPoint3 at = a_target->GetPosition() + RE::NiPoint3{ std::sin(yaw) * 110.0f, std::cos(yaw) * 110.0f, 0.0f };
-		Gun::FxBlast("fireball", at + RE::NiPoint3{ 0, 0, 60.0f });
-		if (auto* t = RaiseAlly(p, base, at, 10.0f, 0.0f, 2)) {
-			static int told = 0;
-			if (told++ < 10) logger::info("classes: Riftblade - a rift opens, {} steps out for 10 s", t->GetName());
-		}
+		Tasks::Add([base, at] {  // (out of the hit event: set down on the main thread's own turn)
+			auto* pl = RE::PlayerCharacter::GetSingleton();
+			Gun::FxBlast("fireball", at + RE::NiPoint3{ 0, 0, 60.0f });
+			if (auto* t = RaiseAlly(pl, base, at, 10.0f, 0.0f, 2)) {
+				static int told = 0;
+				if (told++ < 10) logger::info("classes: Riftblade - a rift opens, {} steps out for 10 s", t->GetName());
+			}
+		});
 	}
 	bool IsRiftblade(RE::FormID a_source)
 	{

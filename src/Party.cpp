@@ -273,10 +273,7 @@ namespace bo3z::Party
 			Forms::Play(gen::Sound::round_start);
 			g_soloT = -1.0f;
 			// a breath of safety as you stand: ghostly another two seconds
-			std::thread([] {
-				std::this_thread::sleep_for(std::chrono::seconds(2));
-				Tasks::Add([] { if (g_soloT < 0.0f) Ghost(kGhostFall, false); });
-			}).detach();
+			Tasks::Later(2.0f, [] { if (g_soloT < 0.0f) Ghost(kGhostFall, false); });
 			logger::info("fallen: risen again");
 		}
 		void TickSolo(RE::PlayerCharacter* p, float a_delta)
@@ -317,14 +314,11 @@ namespace bo3z::Party
 				}
 				Director::NormalTime();
 				logger::info("fallen: loading the most recent save");
-				std::thread([gen = g_fallGen.load()] {
-					std::this_thread::sleep_for(std::chrono::milliseconds(1200));
-					Tasks::Add([gen] {
+				Tasks::Later(1.2f, [gen = g_fallGen.load()] {
 						auto* ui = RE::UI::GetSingleton();
 						if (gen != g_fallGen.load() || !g_soloLoading || g_soloT < 0.0f || (ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME))) return;
 						if (auto* sl = RE::BGSSaveLoadManager::GetSingleton()) sl->LoadMostRecentSaveGame();
-					});
-				}).detach();
+				});
 			}
 			if (g_soloLoading && g_soloT - g_soloLoadAt > 6.0f) {
 				logger::info("fallen: no save loaded - rising where you fell");
@@ -361,9 +355,7 @@ namespace bo3z::Party
 		std::string what = g_freedName.empty() ? "Dawn after Night " + std::to_string(a_night) : g_freedName + " Freed (Night " + std::to_string(a_night) + ")";
 		g_freedName.clear();
 		// a few seconds on: the fallen have risen with the light (Tick), the dead have crumbled
-		std::thread([what] {
-			std::this_thread::sleep_for(std::chrono::seconds(4));
-			Tasks::Add([what] {
+		Tasks::Later(4.0f, [what] {
 				g_saving = false;
 				auto* pl = RE::PlayerCharacter::GetSingleton();
 				auto* sl = RE::BGSSaveLoadManager::GetSingleton();
@@ -378,8 +370,7 @@ namespace bo3z::Party
 				g_lastSave = name;
 				Hud::Banner("GAME SAVED - " + what, 3.0f);
 				logger::info("party save: '{}'", name);
-			});
-		}).detach();
+		});
 	}
 
 	void Tick(float a_delta)
@@ -488,9 +479,7 @@ namespace bo3z::Party
 				g_wipeLoading = true;
 				Hud::Banner("THE PARTY HAS FALLEN", 4.0f);
 				logger::info("party: everyone is dead: loading the most recent save");
-				std::thread([] {
-					std::this_thread::sleep_for(std::chrono::seconds(4));
-					Tasks::Add([] {
+				Tasks::Later(4.0f, [] {
 						g_wipeLoading = false;
 						if (auto* sl = RE::BGSSaveLoadManager::GetSingleton()) {
 							if (!g_lastSave.empty()) {  // the party's last dawn: the same moment on every game
@@ -500,8 +489,7 @@ namespace bo3z::Party
 								sl->LoadMostRecentSaveGame();
 							}
 						}
-					});
-				}).detach();
+				});
 			}
 		}
 		// reviving a fallen friend: stand by them and hold Activate

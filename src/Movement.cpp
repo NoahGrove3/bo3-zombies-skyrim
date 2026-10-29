@@ -1399,6 +1399,7 @@ namespace bo3z
 				const float view = ViewYaw(a_p);
 				a_p->SetHeading(a_yaw);
 				float fx = view - a_yaw;
+				if (!std::isfinite(fx)) fx = 0.0f;  // (the audit: never a loop without end)
 				while (fx > 3.14159f) fx -= 6.28318f;
 				while (fx < -3.14159f) fx += 6.28318f;
 				tp->freeRotationEnabled = true;
@@ -1608,6 +1609,7 @@ namespace bo3z
 				const float  aF = acc.x * F.x + acc.y * F.y;
 				static float lastYawS = yawNow;
 				float        dyS = yawNow - lastYawS;
+				if (!std::isfinite(dyS)) dyS = 0.0f;  // (the audit: never a loop without end)
 				while (dyS > 3.14159f) dyS -= 6.28318f;
 				while (dyS < -3.14159f) dyS += 6.28318f;
 				lastYawS = yawNow;
@@ -1865,6 +1867,7 @@ namespace bo3z
 					// turning: up to 100 degrees a second
 					const float rate = 1.75f * g_inX * g_catchK;
 					g_glideYaw += rate * dt;
+					if (!std::isfinite(g_glideYaw)) g_glideYaw = 0.0f;  // (the audit: never a loop without end)
 					while (g_glideYaw > 3.14159f) g_glideYaw -= 6.28318f;
 					while (g_glideYaw < -3.14159f) g_glideYaw += 6.28318f;
 					TurnKeepView(a_player, g_glideYaw);
@@ -1904,6 +1907,7 @@ namespace bo3z
 					auto* tp = static_cast<RE::ThirdPersonState*>(pcam->currentState.get());
 					if (tp->freeRotationEnabled) {
 						float& fx = tp->freeRotation.x;
+						if (!std::isfinite(fx)) fx = 0.0f;  // (the audit: never a loop without end)
 						while (fx > 3.14159f) fx -= 6.28318f;
 						while (fx < -3.14159f) fx += 6.28318f;
 						fx -= fx * std::min(1.0f, dt * 1.6f * Smooth((idle - 0.8f) / 0.6f));
@@ -1941,6 +1945,7 @@ namespace bo3z
 						if (!tp->freeRotationEnabled) tp->freeRotationEnabled = true, tp->freeRotation.x = 0.0f;
 					}
 					float d = g_glideYaw - camYawWas;
+					if (!std::isfinite(d)) d = 0.0f;  // (the audit: never a loop without end)
 					while (d > 3.14159f) d -= 6.28318f;
 					while (d < -3.14159f) d += 6.28318f;
 					camYawWas = g_glideYaw;
@@ -1950,6 +1955,7 @@ namespace bo3z
 				}
 			}
 			float dy = yaw - lastYaw;
+			if (!std::isfinite(dy)) dy = 0.0f;  // (the audit: never a loop without end)
 			while (dy > 3.14159f) dy -= 6.28318f;
 			while (dy < -3.14159f) dy += 6.28318f;
 			lastYaw = yaw;
@@ -1971,6 +1977,7 @@ namespace bo3z
 				camYaw = std::atan2(m.entry[0][1], m.entry[1][1]);
 			}
 			float rel = camYaw - yaw;
+			if (!std::isfinite(rel)) rel = 0.0f;  // (the audit: never a loop without end)
 			while (rel > 3.14159f) rel -= 6.28318f;
 			while (rel < -3.14159f) rel += 6.28318f;
 			const float wanderYaw = 0.22f * std::sin(wanderT * 0.53f) + 0.12f * std::sin(wanderT * 1.31f + 1.7f);
@@ -2162,7 +2169,7 @@ namespace bo3z
 			const bool    unlocked = Curse::Freed(kWhiterun) || Gun::TestKitOn();
 			static int    wasUnlocked = -1;
 			if (!unlocked) {
-				if (!have.empty()) {
+				if (!have.empty() && !ItemMenusOpen()) {
 					a_player->RemoveItem(item, have.begin()->second, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 					logger::info("glider: the harness is not yours yet (Whiterun's shrine not won)");
 				}

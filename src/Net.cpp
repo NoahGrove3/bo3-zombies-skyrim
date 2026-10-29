@@ -273,7 +273,7 @@ namespace bo3z::Net
 		std::string             g_connectPw;
 		std::uint16_t           g_serverPort = 10578;
 		std::atomic_bool        g_relayOn{ false };
-		std::thread             g_relay;
+		std::thread&            g_relay = *new std::thread();  // (the audit: never a static thread object - its destructor at exit ended the game)
 
 		std::filesystem::path TogetherDir()
 		{

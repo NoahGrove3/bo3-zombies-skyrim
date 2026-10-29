@@ -102,6 +102,19 @@ namespace bo3z
 
 	namespace Net { struct State; }
 
+	// (the audit: inventories changed with the inventory open crash Skyrim - and with Skyrim Souls the world goes on while
+	// it is) any menu that shows items or spells, or the game paused: no adding, removing or equipping now
+	inline bool ItemMenusOpen()
+	{
+		auto* ui = RE::UI::GetSingleton();
+		if (!ui) return true;
+		for (const auto& n : { RE::InventoryMenu::MENU_NAME, RE::ContainerMenu::MENU_NAME, RE::BarterMenu::MENU_NAME, RE::GiftMenu::MENU_NAME,
+				 RE::FavoritesMenu::MENU_NAME, RE::MagicMenu::MENU_NAME, RE::LoadingMenu::MENU_NAME }) {
+			if (ui->IsMenuOpen(n)) return true;
+		}
+		return false;
+	}
+
 	// (Noah: "each weapon, spell, bow, crossbow - anything from the Echo Altar - should have the same base damage per
 	// upgrade: 10, then 25 reforged, then 50, then 65, and so on") the one curve every altar item grows by: what it does
 	// unforged, times this for the upgrades it has had (a spell's rungs and Ascends, a bow's or crossbow's reforges, a
@@ -825,6 +838,7 @@ namespace bo3z
 		void Add(std::function<void()> a_task);    // on the main thread (SKSE's queue, or ours when loaded as the .asi)
 		void AddUI(std::function<void()> a_task);
 		void Drain();                              // ours: from the Present hook
+		void Later(float a_seconds, std::function<void()> a_task);  // on the main thread, after a while (one timer thread for all)
 	}
 
 	namespace Watchdog
