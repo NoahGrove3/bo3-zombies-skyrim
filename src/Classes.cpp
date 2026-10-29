@@ -2600,7 +2600,7 @@ namespace bo3z::Classes
 	// (Noah: "the Spellsword should be a one-hand sword selected from one of the weapon mods to look unique") its blade
 	RE::TESObjectWEAP* SpellswordBlade()
 	{
-		static constexpr std::pair<std::string_view, std::uint32_t> kBlade[] = { { "Spellsword.esp", 0x00B550 } };  // (the first of these found)
+		static constexpr std::pair<std::string_view, std::uint32_t> kBlade[] = { { "mihailhighfantasypack.esp", 0x065CAF }, { "Spellsword.esp", 0x00B550 } };  // (Noah: the Bolgan Sword; the Steel Spellsword if the High Fantasy Pack is missing)
 		for (const auto& [plugin, id] : kBlade) {
 			if (auto* f = Lookup(id, plugin)) {
 				if (auto* w = f->As<RE::TESObjectWEAP>()) return w;

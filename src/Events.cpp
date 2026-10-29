@@ -765,7 +765,7 @@ namespace bo3z
 								Forms::CastOnce(player, sp, t, 1.0f, player);
 								// (Noah: "only the one I'm holding - multiple spells from one weapon as an upgrade") Twin Resonance is
 								// earned: a Legendary touch on the blade brings your other touch along, a quarter as strong
-								if (Arcana::TierOf(bi) >= 3) {
+								if (Arcana::Ups(bi) >= 3) {  // (the altar rework: Tier III and up)
 									for (int other : Arcana::Carried()) {
 										if (other == bi || Arcana::ClassOf(other) != 3) continue;
 										if (auto* sp2 = Arcana::Spell(other); sp2 && sp2->GetSpellType() == RE::MagicSystem::SpellType::kSpell) {
