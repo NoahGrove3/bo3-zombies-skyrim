@@ -834,8 +834,8 @@ namespace bo3z::Kit
 		} else if (kind == 8) {  // Soul Siphon
 			if (auto* p = RE::PlayerCharacter::GetSingleton(); p && !p->IsDead()) {
 				auto* av = p->AsActorValueOwner();
-				av->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kMagicka, av->GetPermanentActorValue(RE::ActorValue::kMagicka) * 0.08f);
-				av->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.03f);
+				av->RestoreActorValue(RE::ActorValue::kMagicka, av->GetPermanentActorValue(RE::ActorValue::kMagicka) * 0.08f);
+				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.03f);
 			}
 		}
 	}
