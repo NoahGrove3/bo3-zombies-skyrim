@@ -145,6 +145,7 @@ namespace bo3z
 				logger::info("intro: Skyrim opened the creator at Riverwood itself - ours won't follow");
 			}
 			g_raceSeen = true;
+			if (!Save::Flag(Save::kFlagMoved) && !Save::Flag(Save::kFlagStarted)) g_freshGame = true;  // (a creator before the move: a new game's character)
 			if (!kPlayHelgen && !Save::Flag(Save::kFlagMoved)) {  // (Noah: the creator opened in Helgen's cave with a broken face, before the move: Helgen is already marked done by then)
 				g_raceSeen = false;
 				if (g_raceAfterSkip == 0) g_raceAfterSkip = 1;
