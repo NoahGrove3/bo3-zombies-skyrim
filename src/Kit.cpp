@@ -513,9 +513,21 @@ namespace bo3z::Kit
 				const bool rift = std::string_view(defs[i].ref) == "riftblade";
 				auto*      w = rift ? Classes::Riftblade() : Classes::SpellswordBlade();
 				Look(w, t);
-				if (rift && w) {
+				// (the Riftblade's fire, the Madness Sword's violet fire: brighter each tier)
+				const bool mad = !rift && w && w == RE::TESDataHandler::GetSingleton()->LookupForm(gen::kMadnessSword, gen::kPlugin);
+				if ((rift || mad) && w) {
+					// (Noah: "remove the charge bar - it doesn't even use charge") no charge on it, nor on the one you carry
+					w->amountofEnchantment = 0;
+					if (auto* p = RE::PlayerCharacter::GetSingleton()) {
+						if (auto* inv = p->GetInventoryChanges(); inv && inv->entryList) {
+							for (auto* e : *inv->entryList) {
+								if (!e || e->object != w || !e->extraLists) continue;
+								for (auto* x : *e->extraLists) if (x && x->HasType(RE::ExtraDataType::kCharge)) x->RemoveByType(RE::ExtraDataType::kCharge);
+							}
+						}
+					}
 					auto*       orig = g_base[w->GetFormID()].ench;
-					auto*       want = t <= 0 ? orig : RE::TESDataHandler::GetSingleton()->LookupForm<RE::EnchantmentItem>(gen::kRiftEnch[std::clamp(t, 1, 3) - 1], gen::kPlugin);
+					auto*       want = t <= 0 ? orig : RE::TESDataHandler::GetSingleton()->LookupForm<RE::EnchantmentItem>((rift ? gen::kRiftEnch : gen::kMadEnch)[std::clamp(t, 1, 3) - 1], gen::kPlugin);
 					if (want && w->formEnchanting != want) {
 						w->formEnchanting = want;
 						// (the blade in hand: taken off and on again, so its new fire shows)

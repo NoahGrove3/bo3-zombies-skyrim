@@ -88,10 +88,71 @@ namespace bo3z
 			}
 		}
 
+		// (Noah: "using melee attack weapons should cost stamina, just like how magic costs mana - otherwise I could just
+		// infinitely swing until whatever I'm trying to kill dies") every swing of a blade, axe, mace or fist costs stamina
+		// (a dagger 8, a one-handed weapon 12, a two-handed one 20, a fist 6; a power attack Skyrim's own cost instead); with
+		// too little left for the next swing the attack doesn't start, the stamina bar flashes - like a spell without magicka
+		// a hand's melee weapon (or bare fist) and what a swing of it costs; false for spells, bows, staves, shields, blocking
+		bool MeleeCost(RE::PlayerCharacter* a_p, bool a_left, float& a_cost)
+		{
+			auto* obj = a_p->GetEquippedObject(a_left);
+			if (obj && obj->GetFormType() != RE::FormType::Weapon) return false;  // (a spell, a shield, a torch)
+			auto* w = obj ? obj->As<RE::TESObjectWEAP>() : nullptr;
+			if (w) {
+				if (w->IsBow() || w->IsCrossbow() || w->IsStaff() || Forms::GunIndexOf(w) >= 0) return false;
+				const bool two = w->IsTwoHandedSword() || w->IsTwoHandedAxe();
+				if (a_left && two) return false;  // (the left button with a two-hander is its block)
+				a_cost = w->IsHandToHandMelee() ? 6.0f : w->IsOneHandedDagger() ? 8.0f : two ? 20.0f : 12.0f;
+				return true;
+			}
+			if (a_left && a_p->GetEquippedObject(false)) return false;  // (an empty left hand beside a weapon: the block)
+			a_cost = 6.0f;
+			return true;
+		}
+		bool PowerAttacking(RE::PlayerCharacter* a_p)
+		{
+			auto* proc = a_p->GetActorRuntimeData().currentProcess;
+			auto* hd = proc ? proc->high : nullptr;
+			return hd && hd->attackData && hd->attackData->data.flags.any(RE::AttackData::AttackFlag::kPowerAttack);
+		}
+		float Stamina(RE::PlayerCharacter* a_p) { return a_p->AsActorValueOwner()->GetActorValue(RE::ActorValue::kStamina); }
+		// the swing itself (heard from the animation, Bows.inl's sink): its stamina taken
+		void MeleeSwing(bool a_left)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			float cost = 0;
+			if (!p || !MeleeCost(p, a_left, cost) || PowerAttacking(p)) return;
+			static std::chrono::steady_clock::time_point last[2]{};  // (one swing heard from both bodies' graphs, first and third person: paid once)
+			const auto now = std::chrono::steady_clock::now();
+			if (now - last[a_left] < std::chrono::milliseconds(150)) return;
+			last[a_left] = now;
+			p->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kStamina, -std::min(cost, std::max(0.0f, Stamina(p))));
+		}
+		// the attack button: refused while there isn't stamina for the swing
+		bool MeleeRefused(RE::InputEvent* a_event)
+		{
+			auto* b = a_event ? a_event->AsButtonEvent() : nullptr;
+			auto* ue = RE::UserEvents::GetSingleton();
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!b || !ue || !p || b->IsUp() || !b->IsPressed()) return false;
+			const auto& ev = b->QUserEvent();
+			const bool right = ev == ue->rightAttack, left = ev == ue->leftAttack;
+			if ((!right && !left) || !p->AsActorState()->IsWeaponDrawn()) return false;
+			float cost = 0;
+			if (!MeleeCost(p, left, cost) || Stamina(p) >= cost) return false;
+			static auto flashed = std::chrono::steady_clock::now() - std::chrono::seconds(5);
+			if (std::chrono::steady_clock::now() - flashed > std::chrono::milliseconds(600)) {
+				flashed = std::chrono::steady_clock::now();
+				RE::HUDMenu::FlashMeter(RE::ActorValue::kStamina);
+			}
+			return true;
+		}
+
 		struct InputBlock
 		{
 			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
 			{
+				if (MeleeRefused(a_event)) return false;
 				if (GunOut()) {
 					// The fire button goes through: Skyrim plays the staff/hand cast. Right mouse (left-hand
 					// attack/block) stays ours for aiming.

@@ -1317,6 +1317,9 @@ namespace BowsImpl
 				}
 				if (t == "weaponswing") {
 					g_weaponSwing = true;
+					MeleeSwing(false);
+				} else if (t == "weaponleftswing") {
+					MeleeSwing(true);
 				}
 				static std::set<std::string> seen;
 				if ((t.find("bow") != std::string::npos || t.find("arrow") != std::string::npos) && seen.size() < 40 && seen.insert(t).second) {

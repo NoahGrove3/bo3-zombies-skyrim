@@ -5,7 +5,7 @@ import json, struct, pathlib
 from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing, blasts
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
-T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger', 'efsh_enchfire', 'mgef_enchfire', 'ench_fire05']}
+T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger', 'efsh_enchfire', 'mgef_enchfire', 'ench_fire05', 'weap_madness', 'stat_madness1st', 'efsh_enchpurple']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
 def z(s): return s.encode('cp1252') + b'\0'
 def sub(name, data):
@@ -324,6 +324,7 @@ for name, hx in T['weap_daedricdagger']['subs']:
     elif name == 'FULL': b = z('Riftblade')
     elif name == 'DESC': b = z('A Daedric blade that burns. Its strikes tear rifts: a Flame Atronach steps out to fight for you. Base: every 5th strike, 10 s. I: every 4th, 15 s, larger. II: every 3rd, a potent atronach, 20 s, two at once. III: a great one, 25 s, three at once - the rift bursts into flame.')
     elif name == 'DATA': b = struct.pack('<IfH', 900, 6.0, 14)
+    elif name == 'EAMT': b = struct.pack('<H', 0)   # (Noah: "remove the charge bar - it doesn't even use charge") no charge to run down
     subs.append(sub(name, b))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'riftblade'), subs))
 
@@ -360,6 +361,64 @@ for n, t in enumerate(RIFT_TIERS, start=1):
         sub('KSIZ', tsub('mgef_enchfire', 'KSIZ')), sub('KWDA', tsub('mgef_enchfire', 'KWDA')), sub('DATA', bytes(md)), sub('DNAM', z('Burns the target for <mag> points.'))]))
     recs['ENCH'].append(record('ENCH', fid('ENCH', f'riftfire{n}'), [sub('EDID', z(f'UN_RiftEnch{n}')), sub('OBND', bytes(12)), sub('FULL', z('Fire Damage')),
         sub('ENIT', tsub('ench_fire05', 'ENIT')), sub('EFID', struct.pack('<I', fid('MGEF', f'riftfire{n}'))), sub('EFIT', tsub('ench_fire05', 'EFIT'))]))
+
+# (Noah: "use the Madness Sword for the Spellsword's weapon") Saints & Seducers' Madness Sword as a record of our own: its
+# stats and look, its first-person model a static of ours, so the class needs only the model and its textures (the
+# Party Pack carries them loose), not the Creation Club plugin itself
+MAD_GLOW = [  # its tiers: the blade's own violet fire, brighter each tier (src/Kit.cpp swaps the enchantment); no damage of its own
+    dict(persist=0.7, pulse=0.6, particles=False, fill=(190, 140, 255)),
+    dict(persist=0.95, pulse=0.45, particles=True, birth=50.0, alpha=(0.05, 0.30, 0.05), scale2=7.0, fill=(205, 160, 255), keys=((245, 230, 255), (200, 150, 255), (150, 80, 235))),
+    dict(persist=1.2, pulse=0.3, particles=True, birth=90.0, alpha=(0.10, 0.55, 0.10), scale2=9.0, life=0.75, fill=(235, 215, 255), keys=((255, 250, 255), (220, 170, 255), (190, 60, 220)), edge=(220, 90, 255)),
+]
+subs = []
+for name, hx in T['stat_madness1st']['subs']:
+    b = bytes.fromhex(hx)
+    if name == 'EDID': b = z('UN_MadnessSword1st')
+    subs.append(sub(name, b))
+recs['STAT'].append(record('STAT', fid('STAT', 'madness_1st'), subs))
+subs = []
+for name, hx in T['weap_madness']['subs']:
+    b = bytes.fromhex(hx)
+    if name == 'EDID': b = z('UN_MadnessSword')
+    elif name == 'FULL': b = z('Madness Sword')
+    elif name == 'MODL': b = z('CreationClub\\BGSSSE025\\Weapons\\Madness\\3rdPersonMadnessSword.nif')
+    elif name == 'DESC': b = z('A blade of the Shivering Isles, cut from Madness ore. Its violet fire burns brighter with each tier at the Echo Altar.')
+    elif name == 'KSIZ': b = struct.pack('<I', 2)
+    elif name == 'KWDA': b = bytes.fromhex(hx)[:8]   # (Skyrim's sword keywords; the Creation Club's own material keyword left out)
+    elif name == 'WNAM': b = struct.pack('<I', fid('STAT', 'madness_1st'))
+    subs.append(sub(name, b))
+    if name == 'MODT': subs.append(sub('EAMT', struct.pack('<H', 0)))   # (Noah: "remove the charge bar - it doesn't even use charge") no charge: its tier fire never runs down
+recs['WEAP'].append(record('WEAP', fid('WEAP', 'madness'), subs))
+for n, t in enumerate(MAD_GLOW, start=1):
+    d = bytearray(tsub('efsh_enchpurple', 'DATA'))
+    d[0] = d[0] & ~0x08 if t['particles'] else d[0]
+    struct.pack_into('<f', d, 0x20, t['persist'])
+    struct.pack_into('<f', d, 0x24, t['pulse'])
+    d[0x10:0x13] = bytes(c // 5 for c in t['fill'])       # (Skyrim's purple enchantment's fill, a touch of violet in it)
+    if t['particles']:
+        struct.pack_into('<f', d, 0x7C, t['birth'])
+        struct.pack_into('<fff', d, 0xC8, *t['alpha'])
+        struct.pack_into('<f', d, 0xB0, t['scale2'])
+        for k, rgb in enumerate(t['keys']): d[0xBC + 4 * k:0xBC + 4 * k + 3] = bytes(rgb)
+        if 'life' in t: struct.pack_into('<f', d, 0x84, t['life'])
+    d[0x38:0x3B] = bytes(t.get('edge', t['fill']))       # its edge glow
+    subs = [sub('EDID', z(f'UN_MadShader{n}'))]
+    for name, hx in T['efsh_enchpurple']['subs']:
+        if name == 'EDID': continue
+        subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
+    recs['EFSH'].append(record('EFSH', fid('EFSH', f'madshader{n}'), subs))
+    md = bytearray(tsub('mgef_enchfire', 'DATA'))
+    struct.pack_into('<I', md, 24, 0)                     # no light of its own
+    struct.pack_into('<I', md, 32, 0)                     # nothing on the struck
+    struct.pack_into('<I', md, 36, fid('EFSH', f'madshader{n}'))
+    struct.pack_into('<I', md, 96, 0)
+    struct.pack_into('<I', md, 0, struct.unpack_from('<I', md, 0)[0] | 0x8000)   # hidden in the effects list
+    recs['MGEF'].append(record('MGEF', fid('MGEF', f'madglow{n}'), [sub('EDID', z(f'UN_MadGlow{n}')), sub('FULL', z('Violet Fire')), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
+        sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+    en = bytearray(tsub('ench_fire05', 'ENIT'))
+    struct.pack_into('<I', en, 0, 0); struct.pack_into('<I', en, 4, struct.unpack_from('<I', en, 4)[0] | 0x1)   # costs no charge
+    recs['ENCH'].append(record('ENCH', fid('ENCH', f'madglow{n}'), [sub('EDID', z(f'UN_MadGlowEnch{n}')), sub('OBND', bytes(12)), sub('FULL', z('Violet Fire')),
+        sub('ENIT', bytes(en)), sub('EFID', struct.pack('<I', fid('MGEF', f'madglow{n}'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
 # (Noah: "change the summoner spell to something more fitting" - Reanimate) a dark bolt: Skyrim's own Reanimate look (its
 # projectile, its hand and hit art, its sounds), but aimed at the living; it barely hurts by itself - Classes::ConjurerStaffHit
@@ -931,11 +990,37 @@ for name, hx in T['weap_draugr_gs']['subs']:
     elif name == 'DATA': b = bytearray(struct.pack('<IfH', 5000, 16.0, 38))
     ws.append(sub(name, bytes(b)))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'fang'), ws))
-for key, col, radius in (('rel_blue', '5AA8FF', 620), ('rel_warm', 'FFD9A0', 1100), ('rel_relic', '6AB8FF', 700), ('lantern', 'FFD6A0', 1400)):  # (lantern: Noah's belt lantern, 20 m)
+for key, col, radius in (('rel_blue', '5AA8FF', 620), ('rel_warm', 'FFD9A0', 1100), ('rel_relic', '6AB8FF', 700), ('lantern', 'FFC890', 1050)):  # (Noah: "a soft, warm light that makes everywhere around me visible, but not blindingly bright, within 15 meters")
     data = bytearray(tsub('ligh', 'DATA')); c = int(col, 16)
     struct.pack_into('<I', data, 4, radius); struct.pack_into('<BBBB', data, 8, c >> 16, (c >> 8) & 255, c & 255, 0)
     if key == 'lantern': struct.pack_into('<I', data, 12, 1)  # (the lantern: a steady light, no flicker)
-    recs['LIGH'].append(record('LIGH', fid('LIGH', key), [sub('EDID', z('UN_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.6 if key == 'lantern' else 1.0))]))  # (Noah: bright enough to see a cave by)
+    recs['LIGH'].append(record('LIGH', fid('LIGH', key), [sub('EDID', z('UN_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.2 if key == 'lantern' else 1.0))]))  # (soft: a warm fill, not a glare)
+
+# (Noah: "the belt lantern should be an equipable item like the book for battle mage classes - when unequipped it shouldn't
+# give illumination, when equipped it should"; "a Skyrim-looking smaller lantern attached by a chain from your body at your
+# hip") the Belt Lantern: a small iron candle lantern hung on a chain at the left hip (tools/lantern.py builds its model),
+# worn in slot 60. While it is worn src/Director.cpp keeps its light on you: Candlelight's own kind of light effect (the
+# game carries it with you, so it never lags behind), hidden, an hour at a time
+md = bytearray(bytes.fromhex('001040000000003f58fa030012000000ffffffff00000000091f040000000000000000000000000000000000000000000000003f0000000000000000000000000c000000ffffffff00000000000000000100000000000000ffffffff081f0400061f0400000000008fc2f53d000000000000803f000000000000000000000000000000000000000000000000000000000000000000000000'))  # (Skyrim's LightFFSelf, Candlelight's effect)
+struct.pack_into('<I', md, 0, struct.unpack_from('<I', md, 0)[0] | 0x8000)   # hidden in the effects list
+struct.pack_into('<I', md, 8, fid('LIGH', 'lantern'))                         # its light: the lantern's
+struct.pack_into('<I', md, 24, 0)                                              # no casting light
+for off in (92, 96): struct.pack_into('<I', md, off, 0)                        # no orb, no hand art
+recs['MGEF'].append(record('MGEF', fid('MGEF', 'lanternlight'), [sub('EDID', z('UN_LanternLightFX')), sub('FULL', z('Belt Lantern')), sub('MDOB', struct.pack('<I', 0)),
+    sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x0A9B1E)), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+recs['SPEL'].append(record('SPEL', fid('SPEL', 'lanternlight'), [sub('EDID', z('UN_LanternLight')), sub('OBND', bytes(12)), sub('FULL', z('Belt Lantern')),
+    sub('ETYP', struct.pack('<I', 0x013F44)), sub('DESC', z('')),
+    sub('SPIT', struct.pack('<IIIfIIffI', 0, 0x1 | 0x200000, 0, 0.0, 1, 0, 0.0, 0.0, 0)),   # (no cost, no charge time: fire and forget, on yourself)
+    sub('EFID', struct.pack('<I', fid('MGEF', 'lanternlight'))), sub('EFIT', struct.pack('<fII', 5.0, 0, 3600))]))
+LANTERN_NIF = 'CurseOfAlduin\\lantern\\beltlantern.nif'
+recs['ARMA'].append(record('ARMA', fid('ARMA', 'lantern'), [sub('EDID', z('UN_BeltLanternAA')), sub('BOD2', struct.pack('<II', 1 << 30, 2)), sub('RNAM', struct.pack('<I', 0x19)),
+    sub('DNAM', bytes.fromhex('0a0a00000000000000000000')), sub('MOD2', z(LANTERN_NIF)), sub('MOD3', z(LANTERN_NIF))] +
+    [sub('MODL', bytes.fromhex(h)) for h in '40370100 3a880800 41370100 3c880800 3d7a0900 42370100 3d880800 d87c0600 ba820a00 43370100 40880800 44370100 44880800 45370100 45880800 0a761000 46370100 94870800 47370100 b9820a00 48370100 46880800 49370100 84880800'.split()]))
+recs['ARMO'].append(record('ARMO', fid('ARMO', 'lantern'), [sub('EDID', z('UN_BeltLantern')), sub('OBND', struct.pack('<6h', -6, -6, 0, 6, 6, 18)), sub('FULL', z('Belt Lantern')),
+    sub('MOD2', z('Clutter\\Common\\CandleLanternWithCandle01.nif')), sub('BOD2', struct.pack('<II', 1 << 30, 2)), sub('RNAM', struct.pack('<I', 0x19)),
+    sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x08F95B)),   # (ArmorClothing)
+    sub('DESC', z('A small iron lantern on a chain at your hip. Worn, its candle lights everything within fifteen metres of you; taken off, it goes dark.')),
+    sub('MODL', struct.pack('<I', fid('ARMA', 'lantern'))), sub('DATA', struct.pack('<If', 25, 1.0)), sub('DNAM', struct.pack('<I', 0))]))
 
 # (spell blasts are cloned from Skyrim's explosions at runtime: EXPL records in an ESL crashed the game at load)
 # (the Codex's chapter parser, shared by the class guides' book text and src/Codex.h below)

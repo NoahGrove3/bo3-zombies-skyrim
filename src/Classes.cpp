@@ -205,6 +205,19 @@ namespace bo3z::Classes
 			static auto* m = RE::TESDataHandler::GetSingleton()->LookupForm<RE::EffectSetting>(0xAC7E88, "MysticismMagic.esp");
 			return m ? m->data.explosion : nullptr;
 		}
+		// (Noah: "the belt lantern should be an equipable item like the book for battle mage classes") one Belt Lantern for
+		// the character, worn: every class shares it (it never goes in a class's chest), so it is only handed over when you
+		// have none and have never been given one
+		bool g_lanternGiven = false;
+		void GiveLantern(RE::PlayerCharacter* a_p)
+		{
+			auto* l = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(gen::kLanternItem, gen::kPlugin);
+			if (!a_p || !l || g_lanternGiven) return;
+			g_lanternGiven = true;
+			if (a_p->GetItemCount(l) > 0) return;
+			GiveItem(a_p, l, 1, true);
+			logger::info("classes: the Belt Lantern given, worn");
+		}
 		void GiveKit(int a_cls)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -268,6 +281,7 @@ namespace bo3z::Classes
 				GiveSpell(Rung1(a_cls, "Fire"), true);
 				break;
 			}
+			GiveLantern(p);
 			g_kit[a_cls] = true;
 			Kit::OnKitGiven(a_cls);
 			logger::info("classes: {} starter kit given", coffer::kClassName[a_cls]);
@@ -388,45 +402,67 @@ namespace bo3z::Classes
 			if (auto* si = SKSE::GetSerializationInterface(); si && si->ResolveFormID(a_id, n)) return n;
 			return 0;
 		}
+		// (Noah: "each class its own loadout and inventory - weapons, magic, armour sets, all of it"; "potions, food and crafting
+		// materials should be shared") a class's own: its weapons, ammunition, armour and clothing, scrolls and spell tomes.
+		// Shared by every class: gold, potions, food, ingredients and crafting materials, keys, quest items, books and notes,
+		// the night's relics (our plugin's own pieces, the Belt Lantern among them), and your underwear
 		bool ClassGear(RE::TESBoundObject* a_obj, const RE::InventoryEntryData* a_entry)
 		{
 			if (!a_obj || (a_entry && a_entry->IsQuestObject())) return false;
 			const auto t = a_obj->GetFormType();
-			if (t != RE::FormType::Weapon && t != RE::FormType::Armor && t != RE::FormType::Ammo && t != RE::FormType::Scroll) return false;
+			if (t == RE::FormType::Book) {
+				auto* bk = a_obj->As<RE::TESObjectBOOK>();
+				if (!bk || !bk->TeachesSpell()) return false;
+			} else if (t != RE::FormType::Weapon && t != RE::FormType::Armor && t != RE::FormType::Ammo && t != RE::FormType::Scroll) {
+				return false;
+			}
 			if (a_obj == Underwear()) return false;  // (worn by every class)
 			// our own plugin's pieces are the night's rewards (Alduin's Bane, the hall's relics), kept by every class - but the
 			// class weapons it makes (wands, tomes, bows, the Conjurer's Staff) belong to their class
 			// (the audit: the Ranger's altar bows and the Subsuming Vortex followed you into every class) they are class gear too
 			auto* dh = RE::TESDataHandler::GetSingleton();
 			const bool vortex = dh && (a_obj == dh->LookupForm(gen::kVortexWeap, gen::kPlugin) || a_obj == dh->LookupForm(gen::kVortexAmmo, gen::kPlugin));
-			if (auto* f = a_obj->GetFile(0); f && std::string_view(f->GetFilename()) == gen::kPlugin && Forms::GunIndexOf(a_obj) < 0 && Bows::IndexOf(a_obj) < 0 && !vortex && ElemCrossbowIndex(a_obj) < 0 && a_obj != dh->LookupForm(gen::kRiftblade, gen::kPlugin)) return false;  // (Noah: the Ranger's Ember / Rime / Storm Crossbows went into every class)
+			const bool blade = dh && (a_obj == dh->LookupForm(gen::kRiftblade, gen::kPlugin) || a_obj == dh->LookupForm(gen::kMadnessSword, gen::kPlugin));
+			if (auto* f = a_obj->GetFile(0); f && std::string_view(f->GetFilename()) == gen::kPlugin && Forms::GunIndexOf(a_obj) < 0 && Bows::IndexOf(a_obj) < 0 && !vortex && ElemCrossbowIndex(a_obj) < 0 && !blade) return false;  // (Noah: the Ranger's Ember / Rime / Storm Crossbows went into every class)
 			return true;
 		}
+		// (Noah: "I switched from Summoner to Spellsword and still kept all of my Summoner stuff") a class's things wait in its
+		// own hidden chest; should the chest not be had, they are held in the co-save instead (the item and its count), so a
+		// switch always takes them off you
+		std::array<std::vector<std::pair<RE::FormID, std::int32_t>>, 4> g_held;
+		std::array<std::vector<RE::FormID>, 4>                          g_spellStash;  // per class: its other spells (learned from tomes, other mods)
 		RE::TESObjectREFR* ChestOf(int a_cls, bool a_make)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p || a_cls < 0 || a_cls >= 4) return nullptr;
+			auto* base = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kClassChest, gen::kPlugin);
 			if (g_chest[a_cls]) {
-				static auto* chestBase = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kClassChest, gen::kPlugin);
-				if (auto* r = RE::TESForm::LookupByID<RE::TESObjectREFR>(g_chest[a_cls]); r && !r->IsDeleted() && r->GetBaseObject() == chestBase) return r;  // (only our own chest - never a reused ID)
+				if (auto* r = RE::TESForm::LookupByID<RE::TESObjectREFR>(g_chest[a_cls]); r && !r->IsDeleted() && base && r->GetBaseObject() == base) return r;  // (only our own chest - never a reused ID)
+				logger::info("classes: {}'s chest {:08X} is gone", Name(a_cls), g_chest[a_cls]);
 				g_chest[a_cls] = 0;
 			}
 			if (!a_make) return nullptr;
-			auto* base = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kClassChest, gen::kPlugin);
-			auto  ref = base ? p->PlaceObjectAtMe(base, true) : nullptr;
-			if (!ref) return nullptr;
+			if (!base) {
+				logger::warn("classes: the class chest (UN_ClassChest) not found - {}'s things held in the save instead", Name(a_cls));
+				return nullptr;
+			}
+			auto ref = p->PlaceObjectAtMe(base, true);
+			if (!ref) {
+				logger::warn("classes: {}'s chest could not be set down - its things held in the save instead", Name(a_cls));
+				return nullptr;
+			}
 			ref->Disable();
 			g_chest[a_cls] = ref->GetFormID();
 			logger::info("classes: {}'s chest made ({:08X})", Name(a_cls), ref->GetFormID());
 			return ref.get();
 		}
-		// everything the class you leave was carrying (its weapons, armour, ammunition and scrolls; the night's relics, quest
-		// items and your underwear stay) into its chest; what it had on, and its weapon slots, noted
+		// everything the class you leave was carrying of its own (above) into its chest; what it had on, and its weapon slots,
+		// noted
 		void StashGear(int a_cls)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || a_cls < 0 || a_cls >= 4) return;
 			auto* chest = ChestOf(a_cls, true);
-			if (!p || !chest) return;
 			g_wornStash[a_cls].clear();
 			for (int s = 0; s < 3; ++s) g_slotStash[a_cls][s] = Save::GetSlot(s), Save::SetSlot(s, {});
 			struct Move { RE::TESBoundObject* obj; std::int32_t count; RE::ExtraDataList* x; };
@@ -437,7 +473,7 @@ namespace bo3z::Classes
 				std::int32_t left = e.first;
 				if (e.second && e.second->extraLists) {
 					for (auto* x : *e.second->extraLists) {
-						if (!x) continue;
+						if (!x || left <= 0) continue;
 						const std::int32_t c = std::max<std::int32_t>(1, x->GetCount());
 						moves.push_back({ obj, std::min(c, left), x });
 						left -= std::min(c, left);
@@ -445,31 +481,48 @@ namespace bo3z::Classes
 				}
 				if (left > 0) moves.push_back({ obj, left, nullptr });
 			}
-			for (auto& m : moves) p->RemoveItem(m.obj, m.count, RE::ITEM_REMOVE_REASON::kStoreInContainer, m.x, chest);
-			logger::info("classes: {}'s gear put away ({} stacks)", Name(a_cls), moves.size());
+			int items = 0;
+			for (auto& m : moves) {
+				items += m.count;
+				if (chest) {
+					p->RemoveItem(m.obj, m.count, RE::ITEM_REMOVE_REASON::kStoreInContainer, m.x, chest);
+				} else {
+					p->RemoveItem(m.obj, m.count, RE::ITEM_REMOVE_REASON::kRemove, m.x, nullptr);
+					g_held[a_cls].push_back({ m.obj->GetFormID(), m.count });
+				}
+			}
+			logger::info("classes: {}'s gear put away ({} stacks, {} items, {})", Name(a_cls), moves.size(), items, chest ? "in its chest" : "held in the save");
 		}
-		// a class you come back to: its chest emptied back into your pack, its pieces back on, its slots back
+		// a class you come back to: its chest (and anything held for it in the save) emptied back into your pack, its pieces
+		// back on, its slots back
 		bool RestoreGear(int a_cls)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || a_cls < 0 || a_cls >= 4) return false;
 			auto* chest = ChestOf(a_cls, false);
-			if (!p || !chest) return false;
 			struct Move { RE::TESBoundObject* obj; std::int32_t count; RE::ExtraDataList* x; };
 			std::vector<Move> moves;
-			for (auto& [obj, e] : chest->GetInventory()) {
-				if (!obj || e.first <= 0) continue;
-				std::int32_t left = e.first;
-				if (e.second && e.second->extraLists) {
-					for (auto* x : *e.second->extraLists) {
-						if (!x) continue;
-						const std::int32_t c = std::max<std::int32_t>(1, x->GetCount());
-						moves.push_back({ obj, std::min(c, left), x });
-						left -= std::min(c, left);
+			if (chest) {
+				for (auto& [obj, e] : chest->GetInventory()) {
+					if (!obj || e.first <= 0) continue;
+					std::int32_t left = e.first;
+					if (e.second && e.second->extraLists) {
+						for (auto* x : *e.second->extraLists) {
+							if (!x || left <= 0) continue;
+							const std::int32_t c = std::max<std::int32_t>(1, x->GetCount());
+							moves.push_back({ obj, std::min(c, left), x });
+							left -= std::min(c, left);
+						}
 					}
+					if (left > 0) moves.push_back({ obj, left, nullptr });
 				}
-				if (left > 0) moves.push_back({ obj, left, nullptr });
+				for (auto& m : moves) chest->RemoveItem(m.obj, m.count, RE::ITEM_REMOVE_REASON::kStoreInContainer, m.x, p);
 			}
-			for (auto& m : moves) chest->RemoveItem(m.obj, m.count, RE::ITEM_REMOVE_REASON::kStoreInContainer, m.x, p);
+			int held = 0;
+			for (auto [id, n] : g_held[a_cls]) {
+				if (auto* o = RE::TESForm::LookupByID<RE::TESBoundObject>(id); o && n > 0) p->AddObjectToContainer(o, nullptr, n, nullptr), held += n;
+			}
+			g_held[a_cls].clear();
 			for (int s = 0; s < 3; ++s) Save::SetSlot(s, g_slotStash[a_cls][s]);
 			if (auto* em = RE::ActorEquipManager::GetSingleton()) {
 				for (auto id : g_wornStash[a_cls]) {
@@ -477,7 +530,7 @@ namespace bo3z::Classes
 					if (o && (o->IsArmor() || o->GetFormType() == RE::FormType::Ammo || (o->IsWeapon() && Forms::GunIndexOf(o) < 0)) && p->GetItemCount(o) > 0) em->EquipObject(p, o, nullptr, 1, nullptr, false, false, false, true);
 				}
 			}
-			logger::info("classes: {}'s gear taken back out ({} stacks)", Name(a_cls), moves.size());
+			logger::info("classes: {}'s gear taken back out ({} stacks from its chest, {} items from the save)", Name(a_cls), moves.size(), held);
 			return true;
 		}
 
@@ -496,12 +549,25 @@ namespace bo3z::Classes
 				if (a_from != a_to) {
 					if (auto* p = RE::PlayerCharacter::GetSingleton()) {
 						for (auto id : g_extra[a_from]) if (auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(id)) p->RemoveSpell(sp);
+						// (Noah: "magic" goes with its class too) every other spell you had learned as this class (from a tome,
+						// another mod's gift) - spells only: your race's powers, abilities and shouts stay with you
+						g_spellStash[a_from].clear();
+						std::vector<RE::SpellItem*> other;
+						for (auto* sp : p->GetActorRuntimeData().addedSpells) {
+							if (!sp || sp->GetSpellType() != RE::MagicSystem::SpellType::kSpell || Arcana::IndexOf(sp) >= 0) continue;
+							if (std::find(g_extra[a_from].begin(), g_extra[a_from].end(), sp->GetFormID()) != g_extra[a_from].end()) continue;
+							other.push_back(sp);
+						}
+						for (auto* sp : other) g_spellStash[a_from].push_back(sp->GetFormID()), p->RemoveSpell(sp);
+						if (!other.empty()) logger::info("classes: {} of {}'s other spells put away", other.size(), Name(a_from));
 					}
 				}
 			}
 			if (a_to >= 0 && a_to < 4 && a_from != a_to) {
 				if (auto* p = RE::PlayerCharacter::GetSingleton()) {
 					for (auto id : g_extra[a_to]) if (auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(id)) p->AddSpell(sp);
+					for (auto id : g_spellStash[a_to]) if (auto* sp = RE::TESForm::LookupByID<RE::SpellItem>(id)) p->AddSpell(sp);
+					g_spellStash[a_to].clear();
 				}
 			}
 			if (!g_kit[a_to]) {
@@ -1077,6 +1143,25 @@ namespace bo3z::Classes
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded() && !ItemMenusOpen()) Purge();  // (the audit: never under the Magic menu)
 		TuneCorrosion();
 		TuneSpellswordGear();
+		// (Noah: the belt lantern is an item now) a character from before it is handed one, worn
+		if (g_class.load() >= 0 && !g_lanternGiven && p->Is3DLoaded() && !ItemMenusOpen()) {
+			GiveLantern(p);
+			Hud::Banner("The Belt Lantern hangs at your hip - take it off and it goes dark", 5.0f);
+		}
+		// (Noah: the Madness Sword for the Spellsword) a Spellsword from before it trades the Bolgan Sword for it, once
+		if (static bool madGiven = false; !madGiven && g_class.load() == coffer::kSpellsword && p->Is3DLoaded() && !ItemMenusOpen()) {
+			madGiven = true;
+			auto* mad = SpellswordBlade();
+			auto* bolgan = Lookup(0x065CAF, "mihailhighfantasypack.esp");
+			auto* old = bolgan ? bolgan->As<RE::TESBoundObject>() : nullptr;
+			if (mad && old && mad != old && p->GetItemCount(mad) == 0 && p->GetItemCount(old) > 0) {
+				const bool held = p->GetEquippedObject(false) == old;
+				p->RemoveItem(old, p->GetItemCount(old), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				GiveItem(p, mad, 1, held);
+				Hud::Banner("The Madness Sword is your blade now", 5.0f);
+				logger::info("classes: the Bolgan Sword traded for the Madness Sword");
+			}
+		}
 		// (Noah) a Ranger from before the elemental crossbows is handed the Ember Crossbow and its bolts, once
 		if (static bool xbowGiven = false; !xbowGiven && g_class.load() == coffer::kRanger && p->Is3DLoaded()) {
 			xbowGiven = true;
@@ -2438,6 +2523,20 @@ namespace bo3z::Classes
 			v.push_back(static_cast<std::uint8_t>(n));
 			for (std::size_t i = 0; i < n; ++i) u32(g_extra[c][i]);
 		}
+		v.push_back(0xAA);  // each class's other spells: per class [n u8][n x u32]
+		for (int c = 0; c < 4; ++c) {
+			const auto n = std::min<std::size_t>(g_spellStash[c].size(), 255);
+			v.push_back(static_cast<std::uint8_t>(n));
+			for (std::size_t i = 0; i < n; ++i) u32(g_spellStash[c][i]);
+		}
+		v.push_back(0xAB);  // each class's things held in the save (no chest): per class [n u16][n x (u32 form, i32 count)]
+		for (int c = 0; c < 4; ++c) {
+			const auto n = std::min<std::size_t>(g_held[c].size(), 65535);
+			v.push_back(static_cast<std::uint8_t>(n & 0xFF)), v.push_back(static_cast<std::uint8_t>(n >> 8));
+			for (std::size_t i = 0; i < n; ++i) u32(g_held[c][i].first), u32(static_cast<std::uint32_t>(g_held[c][i].second));
+		}
+		v.push_back(0xAC);  // the Belt Lantern given
+		v.push_back(g_lanternGiven ? 1 : 0);
 		return v;
 	}
 	void SetState(const std::vector<std::uint8_t>& a_v)
@@ -2451,6 +2550,9 @@ namespace bo3z::Classes
 		for (auto& w : g_wornStash) w.clear();
 		for (auto& ps : g_perkStash) ps.clear();
 		for (auto& e : g_extra) e.clear();
+		for (auto& e : g_spellStash) e.clear();
+		for (auto& e : g_held) e.clear();
+		g_lanternGiven = false;
 		g_xbow.clear();
 		if (a_v.empty()) return;
 		g_class = static_cast<int>(a_v[0]) - 1;
@@ -2545,6 +2647,23 @@ namespace bo3z::Classes
 				for (int i = 0; i < n && k + 4 <= a_v.size(); ++i, k += 4) g_extra[c].push_back(static_cast<RE::FormID>(a_v[k] | (a_v[k + 1] << 8) | (a_v[k + 2] << 16) | (static_cast<std::uint32_t>(a_v[k + 3]) << 24)));
 			}
 		}
+		auto rd32 = [&](std::size_t at) { return static_cast<std::uint32_t>(a_v[at] | (a_v[at + 1] << 8) | (a_v[at + 2] << 16) | (static_cast<std::uint32_t>(a_v[at + 3]) << 24)); };
+		if (k < a_v.size() && a_v[k] == 0xAA) {
+			++k;
+			for (int c = 0; c < 4 && k < a_v.size(); ++c) {
+				const int n = a_v[k++];
+				for (int i = 0; i < n && k + 4 <= a_v.size(); ++i, k += 4) if (const auto r = ResolveId(rd32(k))) g_spellStash[c].push_back(r);
+			}
+		}
+		if (k < a_v.size() && a_v[k] == 0xAB) {
+			++k;
+			for (int c = 0; c < 4 && k + 2 <= a_v.size(); ++c) {
+				const int n = a_v[k] | (a_v[k + 1] << 8);
+				k += 2;
+				for (int i = 0; i < n && k + 8 <= a_v.size(); ++i, k += 8) if (const auto r = ResolveId(rd32(k))) g_held[c].push_back({ r, static_cast<std::int32_t>(rd32(k + 4)) });
+			}
+		}
+		if (k + 1 < a_v.size() && a_v[k] == 0xAC) g_lanternGiven = a_v[k + 1] != 0, k += 2;
 		if (g_wStep[coffer::kSummoner] > kWonderSteps) TuneWyrm();
 		logger::info("classes: loaded ({})", Name(g_class));
 	}
@@ -2595,7 +2714,9 @@ namespace bo3z::Classes
 	// (Noah: "the Spellsword should be a one-hand sword selected from one of the weapon mods to look unique") its blade
 	RE::TESObjectWEAP* SpellswordBlade()
 	{
-		static constexpr std::pair<std::string_view, std::uint32_t> kBlade[] = { { "mihailhighfantasypack.esp", 0x065CAF }, { "Spellsword.esp", 0x00B550 } };  // (Noah: the Bolgan Sword; the Steel Spellsword if the High Fantasy Pack is missing)
+		// (Noah: "use the Madness Sword for the Spellsword class's weapon") our copy of Saints & Seducers' Madness Sword; the
+		// Bolgan Sword, then the Steel Spellsword, should its model be missing
+		static constexpr std::pair<std::string_view, std::uint32_t> kBlade[] = { { gen::kPlugin, gen::kMadnessSword }, { "mihailhighfantasypack.esp", 0x065CAF }, { "Spellsword.esp", 0x00B550 } };
 		for (const auto& [plugin, id] : kBlade) {
 			if (auto* f = Lookup(id, plugin)) {
 				if (auto* w = f->As<RE::TESObjectWEAP>()) return w;

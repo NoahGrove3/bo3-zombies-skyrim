@@ -4160,40 +4160,42 @@ namespace bo3z
 		// out of the world, so nothing of the night can hurt them), and walks back out at dawn. Followers, other players
 		// and creatures stay. Every player's game does this for itself.
 		// ---- (Noah: immersion) the belt lantern, dread, the townsfolk's words and offerings, the dawn's ash ----
-		// the belt lantern: from dusk to dawn a warm light 20 m round you (snuffed by Shadow of Nocturnal)
-		RE::ObjectRefHandle g_lantern;
-		void TickLantern(RE::PlayerCharacter* a_player)
+		// (Noah: "the belt lantern should be an equipable item like the book for battle mage classes - when unequipped it
+		// shouldn't give illumination, when equipped it should"; "a soft, warm light ... within 15 meters") while the Belt
+		// Lantern is worn its light is on you: Candlelight's kind of light effect, which the game itself carries with you
+		// (the old light, set down and moved after you, lagged a step behind and jumped). Snuffed by Shadow of Nocturnal.
+		RE::ObjectRefHandle g_lantern;  // (the old placed light, from a save before: put out)
+		void TickLantern(RE::PlayerCharacter* a_player, float a_delta)
 		{
-			// (Noah: "it's really dark in caves and dungeons - each character needs the belt lamp lighting 20 m round them") by
-			// night, and in any interior by day or night
-			const bool inside = a_player->GetParentCell() && a_player->GetParentCell()->IsInteriorCell();
-			const bool want = (g_phase != Phase::Day || inside) && Save::Flag(Save::kFlagStarted) && !PowerUps::Shadow() && a_player->Is3DLoaded();
-			if (static int wasWant = -1; wasWant != static_cast<int>(want)) {  // (Noah: "I don't see the belt lamp") why it is or isn't lit
-				wasWant = want;
-				logger::info("lantern: {} (phase {}, started {}, shadow {})", want ? "wanted" : "not wanted", static_cast<int>(g_phase), Save::Flag(Save::kFlagStarted), PowerUps::Shadow());
+			if (auto l = g_lantern.get()) l->Disable(), l->SetDelete(true), g_lantern = {};
+			static float wait = 0;
+			if ((wait -= a_delta) > 0) return;  // (a few times a second is plenty)
+			wait = 0.5f;
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			auto* item = dh->LookupForm<RE::TESObjectARMO>(gen::kLanternItem, gen::kPlugin);
+			auto* spell = dh->LookupForm<RE::SpellItem>(gen::kLanternSpell, gen::kPlugin);
+			auto* fx = dh->LookupForm<RE::EffectSetting>(gen::kLanternEffect, gen::kPlugin);
+			auto* mt = a_player->AsMagicTarget();
+			if (!item || !spell || !fx || !mt) {
+				if (static bool told = false; !told) told = true, logger::warn("lantern: its item, spell or effect not found");
+				return;
 			}
-			auto l = g_lantern.get();
-			if (l && (!want || l->GetParentCell() != a_player->GetParentCell())) {
-				l->Disable();
-				l->SetDelete(true);
-				g_lantern = {};
-				l = nullptr;
+			const bool worn = a_player->GetWornArmor(item->GetFormID()) != nullptr;
+			const bool want = worn && !PowerUps::Shadow() && a_player->Is3DLoaded();
+			const bool lit = mt->HasMagicEffect(fx);
+			if (static int was = -1; was != static_cast<int>(want)) {
+				was = want;
+				logger::info("lantern: {} (worn {}, shadow {})", want ? "lit" : "dark", worn, PowerUps::Shadow());
 			}
-			if (!want) return;
-			if (!l) {
-				auto* base = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectLIGH>(gen::kLanternLight, gen::kPlugin);
-				if (!base) {
-					if (static bool told = false; !told) told = true, logger::warn("lantern: its light (UN_lantern) not found");
-					return;
+			if (want && !lit) {
+				if (auto* caster = a_player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) caster->CastSpellImmediate(spell, false, a_player, 1.0f, false, 0.0f, a_player);
+			} else if (!want && lit) {
+				if (auto* list = mt->GetActiveEffectList()) {
+					std::vector<RE::ActiveEffect*> off;
+					for (auto* ae : *list) if (ae && ae->GetBaseObject() == fx) off.push_back(ae);
+					for (auto* ae : off) ae->Dispel(true);
 				}
-				if (auto r = a_player->PlaceObjectAtMe(base, false)) g_lantern = r->CreateRefHandle(), l = r;
-				if (!l) {
-					if (static int told = 0; told++ < 3) logger::warn("lantern: the light could not be set down");
-					return;
-				}
-				logger::info("lantern: lit");
 			}
-			l->SetPosition(a_player->GetPosition() + RE::NiPoint3{ 0, 0, 105.0f });
 		}
 		// dread: six or more of the dead within 8 m - the screen's edges darken, slowly (really subtle)
 		void TickDread(RE::PlayerCharacter* a_player, float a_delta)
@@ -4990,7 +4992,7 @@ namespace bo3z
 			TickTruce(player, a_delta);
 			TickPeace(player, a_delta);
 			TickShelter(player, a_delta);
-			TickLantern(player);
+			TickLantern(player, a_delta);
 			TickDread(player, a_delta);
 			TickAsh();
 			TickOfferings(player);

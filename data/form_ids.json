@@ -1310,6 +1310,21 @@
   "ENCH:riftfire2": "0xd1a",
   "EFSH:riftshader3": "0xd1b",
   "MGEF:riftfire3": "0xd1c",
-  "ENCH:riftfire3": "0xd1d"
+  "ENCH:riftfire3": "0xd1d",
+  "WEAP:madness": "0xd1e",
+  "STAT:madness_1st": "0xd1f",
+  "ARMO:lantern": "0xd20",
+  "ARMA:lantern": "0xd21",
+  "MGEF:lanternlight": "0xd22",
+  "SPEL:lanternlight": "0xd23",
+  "EFSH:madshader1": "0xd24",
+  "MGEF:madglow1": "0xd25",
+  "ENCH:madglow1": "0xd26",
+  "EFSH:madshader2": "0xd27",
+  "MGEF:madglow2": "0xd28",
+  "ENCH:madglow2": "0xd29",
+  "EFSH:madshader3": "0xd2a",
+  "MGEF:madglow3": "0xd2b",
+  "ENCH:madglow3": "0xd2c"
  }
 }
