@@ -3415,7 +3415,12 @@ namespace bo3z
 				float       aim = g_ads;
 				if (pl) {
 					const auto as = pl->AsActorState()->GetAttackState();
-					if (as == RE::ATTACK_STATE_ENUM::kBowDraw || as == RE::ATTACK_STATE_ENUM::kBowAttached || as == RE::ATTACK_STATE_ENUM::kBowDrawn) aim = 1.0f;
+					// (Noah: "the look sensitivity while holding the crossbow should be the same as the bow - it's very slow")
+					// a crossbow sits loaded - Skyrim's "drawn" - the whole time it is in hand, so only a bow's draw counts as aiming
+					auto* held = pl->GetEquippedObject(false);
+					auto* hw = held ? held->As<RE::TESObjectWEAP>() : nullptr;
+					const bool crossbow = hw && hw->IsCrossbow();
+					if (!crossbow && (as == RE::ATTACK_STATE_ENUM::kBowDraw || as == RE::ATTACK_STATE_ENUM::kBowAttached || as == RE::ATTACK_STATE_ENUM::kBowDrawn)) aim = 1.0f;
 				}
 				auto* ui = RE::UI::GetSingleton();
 				const bool menus = ui && (ui->GameIsPaused() || ui->IsMenuOpen(RE::JournalMenu::MENU_NAME) || ui->IsMenuOpen(RE::MainMenu::MENU_NAME));

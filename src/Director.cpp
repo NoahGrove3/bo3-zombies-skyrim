@@ -658,11 +658,32 @@ namespace bo3z
 		void Resurface(RE::Actor* a_a, RE::PlayerCharacter* a_player)
 		{
 			std::erase_if(g_risers, [&](const Riser& r) { return r.h.get().get() == a_a; });
-			ShowRiser(a_a, true), a_a->SetCollision(true), a_a->EnableAI(true);  // (the audit: should StartRise refuse, it isn't left hidden, AI off)
-			a_a->SetPosition(SpawnSpot(a_player), true);
-			a_a->MoveToNearestNavmesh();
-			StartRise(a_a, a_player);
-			a_a->StartCombat(a_player);
+			// (Noah's crash at night 4, wave 5: a pathing worker thread read a freed path right after one of the dead "caught on
+			// something" was set down near you - six of them in seven seconds) its AI is stopped first, so its path requests
+			// are dropped; it is moved a moment later, and woken again a moment after that
+			a_a->StopCombat();
+			a_a->EnableAI(false);
+			const auto spot = SpawnSpot(a_player);
+			const auto h = a_a->GetHandle();
+			Tasks::Later(0.15f, [h, spot] {
+				auto a = h.get();
+				auto* pc = RE::PlayerCharacter::GetSingleton();
+				if (!a || !pc || a->IsDead() || !a->Is3DLoaded()) {
+					if (a && !a->IsDead()) a->EnableAI(true);
+					return;
+				}
+				ShowRiser(a.get(), true), a->SetCollision(true);  // (the audit: should StartRise refuse, it isn't left hidden)
+				a->SetPosition(spot, true);
+				a->MoveToNearestNavmesh();
+				Tasks::Later(0.15f, [h] {
+					auto a = h.get();
+					auto* pc = RE::PlayerCharacter::GetSingleton();
+					if (!a || !pc || a->IsDead()) return;
+					a->EnableAI(true);
+					StartRise(a.get(), pc);
+					a->StartCombat(pc);
+				});
+			});
 		}
 		void ShowRiser(RE::Actor* a_a, bool a_show)
 		{
@@ -2365,34 +2386,16 @@ namespace bo3z
 				}
 			}
 			// Dawn: the dead (standing or fallen) are gone with the light.
-			// (Noah: "aftermath at dawn") each leaves a pile of ash where it stood, gone by midday
-			std::vector<RE::NiPoint3> ash;
-			auto* pl = RE::PlayerCharacter::GetSingleton();
-			const auto keepAsh = [&](RE::Actor* a) {
-				if (pl && ash.size() < 40 && a->Is3DLoaded() && a->GetParentCell() == pl->GetParentCell() && a->GetPosition().GetDistance(pl->GetPosition()) < 6000.0f) ash.push_back(a->GetPosition());
-			};
+			// (Noah: "remove the ash piles at the end of the night") the dead simply go with the light
 			for (auto& s : g_alive) {
 				if (auto a = s.handle.get()) {
-					keepAsh(a.get());
 					Vanish(a.get());
 					++n;
 				}
 			}
 			g_alive.clear();
 			for (auto& h : g_corpses) {
-				if (auto a = h.get()) {
-					keepAsh(a.get());
-					Vanish(a.get());
-				}
-			}
-			if (static auto* ashBase = RE::TESForm::LookupByID<RE::TESBoundObject>(0x0000001B); ashBase && pl) {  // DefaultAshPile1
-				for (const auto& at : ash) {
-					if (auto r = pl->PlaceObjectAtMe(ashBase, false)) {
-						r->SetPosition(at);
-						g_ashPiles.push_back(r->CreateRefHandle());
-					}
-				}
-				if (!ash.empty()) logger::info("dawn: {} piles of ash left where the dead fell", ash.size());
+				if (auto a = h.get()) Vanish(a.get());
 			}
 			g_corpses.clear();
 			g_settle.clear();
@@ -3188,7 +3191,7 @@ namespace bo3z
 					inView = facing > 0.45f && dist < 2500.0f && !RayBlocked(a_player->GetParentCell(), pp + RE::NiPoint3{ 0, 0, 110.0f }, zp + RE::NiPoint3{ 0, 0, 90.0f });
 				}
 				if ((pinned || s.stuck >= 10.0f) && !inView && grounded >= 1.5f && relocGap <= 0 && !IsRising(a.get())) {
-					relocGap = 0.5f, s.stuck = 0, s.stall = 0, s.still = 0, s.lastDist = -1;
+					relocGap = 1.2f, s.stuck = 0, s.stall = 0, s.still = 0, s.lastDist = -1;  // (no more than one set down every 1.2 s)
 					Resurface(a.get(), a_player);
 					s.lastPos = a->GetPosition();
 					logger::info("night: {} {} ({:.0f} away) - risen again near you", gen::kEnemies[s.enemy].id, pinned ? "caught on something" : "not getting closer", dist);

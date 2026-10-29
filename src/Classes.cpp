@@ -2306,7 +2306,8 @@ namespace bo3z::Classes
 	bool IsOwnSummon(RE::Actor* a_actor)
 	{
 		return a_actor && (std::any_of(g_ownSummons.begin(), g_ownSummons.end(), [&](const auto& e) { return e.first.get().get() == a_actor; }) ||
-		                   std::any_of(g_thralls.begin(), g_thralls.end(), [&](const auto& e) { return e.first.get().get() == a_actor; }));
+		                   std::any_of(g_thralls.begin(), g_thralls.end(), [&](const auto& e) { return e.first.get().get() == a_actor; }) ||
+		                   IsRiftSummon(a_actor));  // (the Riftblade's atronachs are your summons too: the Pact of the Host counts their kills)
 	}
 	void NoteCast(RE::FormID a_spell)
 	{

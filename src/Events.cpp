@@ -479,6 +479,7 @@ namespace bo3z
 			}
 		};
 
+		bool SummonStruckLast(RE::Actor* a_z);
 		class DeathWatch : public RE::BSTEventSink<RE::TESDeathEvent>
 		{
 		public:
@@ -520,7 +521,12 @@ namespace bo3z
 				if (dying && dying != player && Director::IsFoe(dying)) {  // (the classes overhaul) a kill by you or your summons trains what you hold
 					auto* killer = a_event->actorKiller.get() ? a_event->actorKiller->As<RE::Actor>() : nullptr;
 					const bool mine = killer == player;
-					const bool summon = killer && killer != player && ((killer->IsCommandedActor() && killer->GetCommandingActor().get() == player) || Classes::IsOwnSummon(killer));
+					bool summon = killer && killer != player && ((killer->IsCommandedActor() && killer->GetCommandingActor().get() == player) || Classes::IsOwnSummon(killer));
+					// (Noah: "the Pact of the Host isn't progressing when my summons kill") a death Skyrim gives no killer, or
+					// gives you, while one of your summons struck it last (and you didn't since): your summon's kill
+					if (!summon && (!killer || killer == player) && SummonStruckLast(dying)) summon = true;
+					static int told = 0;
+					if (summon && told < 6) ++told, logger::info("classes: a summon's kill ({}, killer {})", dying->GetName(), killer ? killer->GetName() : "none");
 					if (mine || summon) Classes::OnKill(summon, dying, killer);
 				}
 				if (dying && dying != player && !Director::IsRoundUndead(dying) && a_event->actorKiller.get() == player && Director::IsFoe(dying)) {
@@ -644,6 +650,19 @@ namespace bo3z
 			return true;
 		}
 
+		// who struck each of the dead last: one of your summons, or you (the Pact of the Host's kills)
+		std::unordered_map<RE::FormID, std::pair<bool, std::chrono::steady_clock::time_point>> g_struckBy;
+		void NoteStruck(RE::Actor* a_z, bool a_bySummon)
+		{
+			if (!a_z) return;
+			if (g_struckBy.size() > 400) g_struckBy.clear();
+			g_struckBy[a_z->GetFormID()] = { a_bySummon, std::chrono::steady_clock::now() };
+		}
+		bool SummonStruckLast(RE::Actor* a_z)
+		{
+			auto it = a_z ? g_struckBy.find(a_z->GetFormID()) : g_struckBy.end();
+			return it != g_struckBy.end() && it->second.first && std::chrono::steady_clock::now() - it->second.second < std::chrono::seconds(3);
+		}
 		void HurtUndead(RE::Actor* a_actor, float a_damage, RE::Actor* a_by = nullptr)
 		{
 			// (Noah: "the class quests aren't progressing - summon kills don't count") the blow's own maker is the killer: a
@@ -876,6 +895,7 @@ namespace bo3z
 								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
 								if (const int rt = Kit::TierOfSpell(src); rt >= 0) share *= UpgradeMult(rt);  // (a relic's support spell: its tiers)
 							}
+							NoteStruck(z, false);
 							HurtUndead(z, Director::RoundHealth() * share * (0.7f + 0.3f * Arcana::Power()));  // (the night's power curve)
 							Undead::OnHit(z);
 							MarkHit(z);
@@ -913,6 +933,7 @@ namespace bo3z
 						if (beat.size() > 300) beat.clear();
 						if (!mySummon || now - b >= std::chrono::milliseconds(550)) {  // (Noah: "my summons should deal more damage": 0.55x a blade, every 0.55 s)
 							b = now;
+							if (mySummon) NoteStruck(z, true);
 							HurtUndead(z, Director::RoundHealth() * gen::kShareMelee * tierMult * (0.7f + 0.3f * Arcana::Power()), ally);
 							if (mySummon) Kit::OnSummonHit(ally, z);  // (its family's Infusion)
 						}
