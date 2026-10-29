@@ -126,7 +126,7 @@ namespace bo3z
 			const auto now = std::chrono::steady_clock::now();
 			if (now - last[a_left] < std::chrono::milliseconds(150)) return;
 			last[a_left] = now;
-			p->AsActorValueOwner()->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kStamina, -std::min(cost, std::max(0.0f, Stamina(p))));
+			p->AsActorValueOwner()->DamageActorValue(RE::ActorValue::kStamina, std::min(cost, std::max(0.0f, Stamina(p))));
 		}
 		// the attack button: refused while there isn't stamina for the swing
 		bool MeleeRefused(RE::InputEvent* a_event)

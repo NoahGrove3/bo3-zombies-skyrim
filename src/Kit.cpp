@@ -15,7 +15,7 @@ namespace bo3z::Kit
 		enum class Kind : std::uint8_t { Ladder, Bow, Crossbow, Blade };
 		struct Def { Kind kind; const char* ref; int at; };  // ref: a ladder's label, a bow's id, a crossbow's element ("0".."2"), a blade's id; at: cities freed (-1: the start)
 		constexpr Def kSummoner[] = { { Kind::Blade, "riftblade", -1 }, { Kind::Ladder, "Beasts", -1 }, { Kind::Ladder, "The Dead", -1 },
-			{ Kind::Ladder, "Daedra", 1 }, { Kind::Ladder, "The Wild", 3 }, { Kind::Ladder, "Dwemer", 5 } };
+			{ Kind::Ladder, "Daedra", 5 }, { Kind::Ladder, "The Wild", 3 }, { Kind::Ladder, "Dwemer", 1 } };  // (Noah: the Dwarven Spider at 1 city freed, the Spriggan at 3, the Dremora - the strongest - at 5) (the list's order is the save's: the Armory shows them by when they open)
 		constexpr Def kDestruction[] = { { Kind::Ladder, "Fire", -1 }, { Kind::Ladder, "Frost", -1 }, { Kind::Ladder, "Shock", 1 }, { Kind::Ladder, "Sun", 3 },
 			{ Kind::Ladder, "Blood", 5 }, { Kind::Ladder, "Runes", 7 } };
 		constexpr Def kRanger[] = { { Kind::Crossbow, "0", -1 }, { Kind::Bow, "emberstring", -1 }, { Kind::Crossbow, "1", 1 }, { Kind::Bow, "rimehorn", 2 },
@@ -568,7 +568,10 @@ namespace bo3z::Kit
 		const auto defs = Defs(c);
 		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (g_cls[c].owned >> i & 1) out.push_back(40 + i);
 		for (int r = 0; r < RelicCount(c) && r < kMaxRelics; ++r) if (g_cls[c].relics >> r & 1) out.push_back(40 + kRelicBase + r);
-		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (!(g_cls[c].owned >> i & 1)) out.push_back(100 + i);
+		std::vector<int> locked;
+		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (!(g_cls[c].owned >> i & 1)) locked.push_back(i);
+		std::stable_sort(locked.begin(), locked.end(), [&](int a, int b) { return defs[a].at < defs[b].at; });
+		for (const int i : locked) out.push_back(100 + i);
 		return out;
 	}
 
@@ -611,8 +614,10 @@ namespace bo3z::Kit
 		};
 		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (st.owned >> i & 1) line(40 + i, i, false);
 		for (int r = 0; r < RelicCount(c) && r < kMaxRelics; ++r) if (st.relics >> r & 1) line(40 + kRelicBase + r, kRelicBase + r, true);
-		for (int i = 0; i < static_cast<int>(defs.size()); ++i) {
-			if (st.owned >> i & 1) continue;
+		std::vector<int> locked;
+		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (!(st.owned >> i & 1)) locked.push_back(i);
+		std::stable_sort(locked.begin(), locked.end(), [&](int a, int b) { return defs[a].at < defs[b].at; });  // (first to open, first)
+		for (const int i : locked) {
 			Hud::State::KitLine l;
 			l.id = 100 + i;
 			l.name = ItemName(c, i);
