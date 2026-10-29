@@ -4168,10 +4168,23 @@ namespace bo3z
 		void TickLantern(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			if (auto l = g_lantern.get()) l->Disable(), l->SetDelete(true), g_lantern = {};
-			static float wait = 0;
+			static float wait = 0, sweep = 0;
 			if ((wait -= a_delta) > 0) return;  // (a few times a second is plenty)
 			wait = 0.5f;
 			auto* dh = RE::TESDataHandler::GetSingleton();
+			// (a save from before: the old light was saved where it last stood) any of it round you put out, every few seconds
+			if ((sweep -= 0.5f) <= 0) {
+				sweep = 5.0f;
+				if (auto* old = dh->LookupForm<RE::TESObjectLIGH>(gen::kLanternLight, gen::kPlugin); old && RE::TES::GetSingleton()) {
+					std::vector<RE::TESObjectREFR*> stray;
+					RE::TES::GetSingleton()->ForEachReferenceInRange(a_player, 8000.0f, [&](RE::TESObjectREFR* a_r) {
+						if (a_r && a_r->GetBaseObject() == old && !a_r->IsDisabled()) stray.push_back(a_r);
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
+					for (auto* r : stray) r->Disable(), r->SetDelete(true);
+					if (!stray.empty()) logger::info("lantern: {} old light(s) put out", stray.size());
+				}
+			}
 			auto* item = dh->LookupForm<RE::TESObjectARMO>(gen::kLanternItem, gen::kPlugin);
 			auto* spell = dh->LookupForm<RE::SpellItem>(gen::kLanternSpell, gen::kPlugin);
 			auto* fx = dh->LookupForm<RE::EffectSetting>(gen::kLanternEffect, gen::kPlugin);
