@@ -215,10 +215,11 @@ namespace bo3z::Classes
 				// (Noah: "remove the staff the Summoner comes with - an upgradable spell of an element no other class uses")
 				// Corrosion in the right hand (its bolts tell your summons what to kill), the Beasts in the left, the Dead in
 				// the book
+				// (Noah, the altar rework: "only the summons and the Riftblade") the Beasts in the left hand, the Dead in the
+				// book, the Riftblade in the right
 				Arcana::Give(Rung1(a_cls, "The Dead"), false);
-				GiveSpell(Rung1(a_cls, "Reanimate"), false);
 				GiveSpell(Rung1(a_cls, "Beasts"), true);
-				GiveItem(p, RE::TESDataHandler::GetSingleton()->LookupForm(gen::kRiftblade, gen::kPlugin), 1, false);  // (Noah: the Riftblade - Rift Stab)
+				GiveItem(p, Riftblade(), 1, true);
 				if (female) {
 					for (std::uint32_t id : { 0xE58u, 0xE5Bu, 0xE5Du, 0xE5Fu, 0xE63u }) {
 						GiveItem(p, Lookup(id, "Wandering Summoner Outfit.esp"), 1, true);
@@ -247,6 +248,8 @@ namespace bo3z::Classes
 				} else {
 					for (auto id : kDawnguardLight) GiveItem(p, Lookup(id, "Dawnguard.esm"), 1, true);
 				}
+				// (Noah, the altar rework) the Emberstring bow beside the Ember Crossbow
+				for (int b = 0; b < Bows::Count(); ++b) if (gen::kBows[b].id == std::string_view("emberstring")) Bows::Give(b);
 				if (auto* xb = ElemCrossbow(0)) {
 					GiveItem(p, xb, 1, true);
 					GiveItem(p, ElemBolts(0), BoltCap(0), true);
@@ -259,12 +262,14 @@ namespace bo3z::Classes
 				for (std::uint32_t id : { 0x800u, 0x802u, 0x805u }) {  // (Noah) the Practical Pirate outfit
 					GiveItem(p, Lookup(id, "practical_pirate.esp"), 1, true);
 				}
-				GiveItem(p, Lookup(0x00B550, "Spellsword.esp"), 1, true);   // Steel Spellsword
-				GiveItem(p, Lookup(0x00B569, "Spellsword.esp"), 1, false);  // Steel Spellshield
+				// (Noah, the altar rework: "remove shields entirely - a one-hand sword from one of the weapon mods, and a fire
+				// touch") the blade in the right hand, Burning Touch in the left
+				GiveItem(p, SpellswordBlade(), 1, true);
 				GiveSpell(Rung1(a_cls, "Fire"), true);
 				break;
 			}
 			g_kit[a_cls] = true;
+			Kit::OnKitGiven(a_cls);
 			logger::info("classes: {} starter kit given", coffer::kClassName[a_cls]);
 		}
 
@@ -760,6 +765,7 @@ namespace bo3z::Classes
 	// the Spellsword, and your summons' kills (or your own, a summon spell in hand) for the Summoner
 	void OnKill(bool a_bySummon, RE::Actor* a_dying, RE::Actor* a_killer)
 	{
+		Kit::OnKill(a_dying);  // (the altar rework: on-kill Infusions, the Legendary Riftblade's thralls)
 		int killHow = -1;
 		// the wonder trial: what made the kill
 		if (const int c = g_class.load(); c >= 0) {
@@ -992,11 +998,10 @@ namespace bo3z::Classes
 		}
 		out.push_back(fmt::format("<b>Echo Altars freed: {} of {}</b>{}", freed, gen::kTowns.size(), towns.empty() ? std::string(" - none yet. Start with Riverwood's altar.") : " (" + towns + ")."));
 		// (the consistency pass: every class was told of a Legendary row only the Summoner has) the forge's gates, as they are
-		out.push_back(fmt::format("The altar's forge (raising your spells and bows): {}. Third rungs: {}. Legendary rungs{}: {}.",
-			freed >= 3 ? std::string("<b>open</b>") : fmt::format("opens at 3 freed altars ({} to go)", 3 - freed),
-			freed >= 4 ? std::string("<b>open</b>") : fmt::format("at 4 freed altars ({} to go)", 4 - freed),
-			g_class.load() == coffer::kSummoner ? " and your hero pacts" : "",
-			freed >= 6 ? std::string("<b>open</b>") : fmt::format("at 6 freed altars ({} to go)", 6 - freed)));
+		out.push_back(fmt::format("Your kit's tiers (the Echo Altar): Tier I open. Tier II: {}. Tier III (Legendary): {}. Ascends: {}. Armour from your upgrades: +{:.0f}%.",
+			freed >= 2 ? std::string("<b>open</b>") : fmt::format("at 2 freed cities ({} to go)", 2 - freed),
+			freed >= 4 ? std::string("<b>open</b>") : fmt::format("at 4 freed cities ({} to go)", 4 - freed),
+			freed >= 6 ? std::string("<b>open</b>") : fmt::format("at 6 freed cities ({} to go)", 6 - freed), Kit::ArmorResist() * 100.0f));
 		// the spells you carry: where each stands on its ladder, and the kills it still needs
 		bool any = false;
 		for (int i : Arcana::Carried()) {
@@ -1405,6 +1410,7 @@ namespace bo3z::Classes
 	}
 	int AltarGearUpgrades(const RE::TESForm* a_w)
 	{
+		if (const int kt = Kit::TierOfWeapon(a_w); kt >= 0) return kt;  // (the altar rework: a kit or relic blade's own tiers)
 		auto* b = a_w ? a_w->As<RE::TESBoundObject>() : nullptr;
 		if (!b || !b->GetFile(0)) return -1;
 		bool altar = b->GetFile(0)->GetFilename() == "Spellsword.esp";
@@ -1801,6 +1807,7 @@ namespace bo3z::Classes
 		struct PendingThrall { RE::ActorHandle h; float wait; int level; };
 		std::vector<PendingThrall>                        g_pendingThrall;  // struck by Reanimate: does it fall?
 		std::vector<std::pair<RE::ActorHandle, float>>    g_thralls;        // the risen dead and the Riftblade's atronachs: seconds left
+		std::mt19937                                      g_summonRng{ std::random_device{}() };
 		std::vector<RE::ActorHandle> g_summonMarks;  // (the Summoner's staff) the ones your summons are told to kill
 		int CommandedNow(RE::PlayerCharacter* a_p)
 		{
@@ -1917,6 +1924,12 @@ namespace bo3z::Classes
 					}
 				}
 				static auto* playerFaction = RE::TESForm::LookupByID<RE::TESFaction>(0x00000DB1);
+				std::vector<RE::NiPoint3> friends;  // (Noah, co-op: "your summons also guard your partner")
+				if (Net::InLobby()) {
+					for (auto& fh : RE::ProcessLists::GetSingleton()->highActorHandles) {
+						if (auto f = fh.get(); f && !f->IsDead() && Party::IsFriend(f.get()) && f->GetPosition().GetDistance(p->GetPosition()) < 4000.0f) friends.push_back(f->GetPosition());
+					}
+				}
 				for (auto* s : mine) {
 					if (s->IsDead() || s->IsDisabled()) continue;
 					// (Noah: "my summons start to kill me if I am damaging them") a stray blow of yours never turns one on you
@@ -1979,7 +1992,8 @@ namespace bo3z::Classes
 							s->EvaluatePackage(true, false);
 							continue;
 						}
-						if (auto t = s->GetActorRuntimeData().currentCombatTarget.get(); t && t->GetPosition().GetDistance(p->GetPosition()) > 1500.0f) {
+						if (auto t = s->GetActorRuntimeData().currentCombatTarget.get(); t && t->GetPosition().GetDistance(p->GetPosition()) > 1500.0f &&
+							std::none_of(friends.begin(), friends.end(), [&](const RE::NiPoint3& f) { return t->GetPosition().GetDistance(f) <= 1500.0f; })) {
 							s->StopCombat();  // (its quarry ran past your 20 m: let it go)
 						}
 					}
@@ -2019,7 +2033,8 @@ namespace bo3z::Classes
 					for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 						auto z = h.get();
 						if (!z || z->IsDead() || z->IsDisabled() || !z->Is3DLoaded() || !Director::IsFoe(z.get()) || Director::Rising(z.get())) continue;  // (not one still in the ground)
-						if (z->GetPosition().GetDistance(p->GetPosition()) > 1400.0f) continue;  // (only what comes within 20 m of you)
+						if (z->GetPosition().GetDistance(p->GetPosition()) > 1400.0f &&
+							std::none_of(friends.begin(), friends.end(), [&](const RE::NiPoint3& f) { return z->GetPosition().GetDistance(f) <= 1400.0f; })) continue;  // (only what comes within 20 m of you - or, co-op, of a friend: the Summoner's aura)
 						if (z->IsCommandedActor() && z->GetCommandingActor().get() == p) continue;
 						if (const float d = z->GetPosition().GetDistance(s->GetPosition()); d < bestD) bestD = d, best = z.get();
 					}
@@ -2151,22 +2166,50 @@ namespace bo3z::Classes
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !a_target || !Director::IsFoe(a_target)) return;
-		static int hits = 0;
+		static int hits = 0, bigHits = 0;
 		static std::chrono::steady_clock::time_point last{};
 		const auto now = std::chrono::steady_clock::now();
 		if (now - last < std::chrono::milliseconds(120)) return;  // (one swing, one count)
 		last = now;
-		if (++hits < 5) return;
-		hits = 0;
-		auto* base = RE::TESForm::LookupByID<RE::TESNPC>(0x000204C0);  // SummonAtronachFlame
+		// (Noah: "the Riftblade hits mark that enemy, and your summons go after it")
+		if (!a_target->IsDead()) g_summonMarks = { a_target->GetHandle() };
+		// (Noah, the altar rework: its three tiers) Base every 5th hit a Flame Atronach for 10 s; I every 4th, 15 s; II every
+		// 3rd, a Flame, Frost or Storm Atronach, three at once; III (Legendary) as II, and every 10th hit a Dremora steps out
+		const int t = std::clamp(Kit::RiftTier(), 0, 3);
+		static constexpr int   kEvery[4] = { 5, 4, 3, 3 }, kCap[4] = { 2, 2, 3, 3 };
+		static constexpr float kSecs[4] = { 10.0f, 15.0f, 15.0f, 15.0f };
 		const float yaw = std::atan2(p->GetPosition().x - a_target->GetPosition().x, p->GetPosition().y - a_target->GetPosition().y);
 		const RE::NiPoint3 at = a_target->GetPosition() + RE::NiPoint3{ std::sin(yaw) * 110.0f, std::cos(yaw) * 110.0f, 0.0f };
-		Tasks::Add([base, at] {  // (out of the hit event: set down on the main thread's own turn)
+		if (t >= 3 && ++bigHits >= 10) {
+			bigHits = 0;
+			RE::TESNPC* lord = nullptr;  // the Daedra's first rung's Dremora (Calling of the Conjurer)
+			for (int i = 0; i < static_cast<int>(coffer::kSpells.size()) && !lord; ++i) {
+				if (coffer::kSpells[i].cls != coffer::kSummoner || coffer::kSpells[i].rung != 1 || std::string_view(coffer::kSpells[i].ladderLabel) != "Daedra") continue;
+				if (auto* sp = Arcana::Spell(i)) for (auto* e : sp->effects) if (e && e->baseEffect && e->baseEffect->data.associatedForm) lord = e->baseEffect->data.associatedForm->As<RE::TESNPC>();
+			}
+			if (lord) {
+				Tasks::Add([lord, at] {
+					Gun::FxBlast("darkmassive", at + RE::NiPoint3{ 0, 0, 60.0f });
+					if (auto* d = RaiseAlly(RE::PlayerCharacter::GetSingleton(), lord, at, 15.0f, 0.0f, 4)) logger::info("classes: Riftblade - a great rift, {} steps out for 15 s", d->GetName());
+				});
+			}
+		}
+		if (++hits < kEvery[t]) return;
+		hits = 0;
+		static constexpr std::uint32_t kAtronach[3] = { 0x000204C0, 0x000204C3, 0x000204C4 };  // the summoned Flame, Frost and Storm Atronachs (Skyrim.esm)
+		int kind = 0;
+		if (t >= 2) kind = std::uniform_int_distribution<int>(0, 2)(g_summonRng);
+		auto* base = RE::TESForm::LookupByID<RE::TESNPC>(kAtronach[kind]);
+		if (!base) base = RE::TESForm::LookupByID<RE::TESNPC>(kAtronach[0]);
+		static constexpr const char* kLook[3] = { "fireball", "frost", "runeshock" };
+		const float secs = kSecs[t];
+		const int   cap = kCap[t];
+		Tasks::Add([base, at, secs, cap, kind] {  // (out of the hit event: set down on the main thread's own turn)
 			auto* pl = RE::PlayerCharacter::GetSingleton();
-			Gun::FxBlast("fireball", at + RE::NiPoint3{ 0, 0, 60.0f });
-			if (auto* t = RaiseAlly(pl, base, at, 10.0f, 0.0f, 2)) {
+			Gun::FxBlast(kLook[kind], at + RE::NiPoint3{ 0, 0, 60.0f });
+			if (auto* a = RaiseAlly(pl, base, at, secs, 0.0f, cap)) {
 				static int told = 0;
-				if (told++ < 10) logger::info("classes: Riftblade - a rift opens, {} steps out for 10 s", t->GetName());
+				if (told++ < 10) logger::info("classes: Riftblade - a rift opens, {} steps out for {:.0f} s", a->GetName(), secs);
 			}
 		});
 	}
@@ -2515,5 +2558,60 @@ namespace bo3z::Classes
 		SetState({});
 		g_open = false, g_mastery.fill(0), g_staffChecked = false;
 		g_summonMarks.clear(), g_pendingSummon.clear(), g_ownSummons.clear(), g_thralls.clear(), g_pendingThrall.clear(), g_lastBlade.clear(), g_powerHit.clear(), g_vortexArrows.clear();
+	}
+
+	// ---- (the altar rework) what Kit.cpp builds a class's kit from ----
+	RE::TESObjectWEAP* CrossbowForm(int a_elem) { return a_elem >= 0 && a_elem < 3 ? ElemCrossbow(a_elem) : nullptr; }
+	void TakeCrossbow(int a_elem)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* w = CrossbowForm(a_elem);
+		if (!p || !w || ItemMenusOpen()) return;
+		KeepOnlyCrossbow(a_elem);
+		if (p->GetItemCount(w) <= 0) GiveItem(p, w, 1, false);
+		if (auto* b = ElemBolts(a_elem)) {
+			const int want = BoltCap(std::clamp(CrossbowLevel(w), 0, 3)), have = p->GetItemCount(b);
+			if (have < want) GiveItem(p, b, want - have, false);
+			GiveItem(p, b, 0, true);
+		}
+		GiveItem(p, w, 0, true);
+	}
+	void SetCrossbowLevel(const RE::TESForm* a_w, int a_level)
+	{
+		if (!a_w) return;
+		g_xbow[a_w->GetFormID()].first = static_cast<std::uint8_t>(std::clamp(a_level, 0, 3));
+		TopUpBolts(0);
+	}
+	void GiveGear(RE::TESForm* a_form, int a_count, bool a_equip)
+	{
+		if (auto* p = RE::PlayerCharacter::GetSingleton(); p && a_form) GiveItem(p, a_form, a_count, a_equip);
+	}
+	void LearnSpell(RE::SpellItem* a_sp) { Learn(a_sp); }
+	void QueueThrall(RE::Actor* a_struck, int a_level)
+	{
+		if (a_struck && Director::IsRoundUndead(a_struck) && !Director::IsBoss(a_struck)) g_pendingThrall.push_back({ a_struck->GetHandle(), 0.6f, a_level });
+	}
+	RE::TESObjectWEAP* Riftblade()
+	{
+		auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kRiftblade, gen::kPlugin);
+		return f ? f->As<RE::TESObjectWEAP>() : nullptr;
+	}
+	// (Noah: "the Spellsword should be a one-hand sword selected from one of the weapon mods to look unique") its blade
+	RE::TESObjectWEAP* SpellswordBlade()
+	{
+		static constexpr std::pair<std::string_view, std::uint32_t> kBlade[] = { { "Spellsword.esp", 0x00B550 } };  // (the first of these found)
+		for (const auto& [plugin, id] : kBlade) {
+			if (auto* f = Lookup(id, plugin)) {
+				if (auto* w = f->As<RE::TESObjectWEAP>()) return w;
+			}
+		}
+		return nullptr;
+	}
+	int TwoHanderCount() { return static_cast<int>(std::size(kTwoHanders)); }
+	RE::TESObjectWEAP* TwoHander(int a_i)
+	{
+		if (a_i < 0 || a_i >= TwoHanderCount()) return nullptr;
+		auto* f = Lookup(kTwoHanders[a_i].id, kTwoHanders[a_i].plugin);
+		return f ? f->As<RE::TESObjectWEAP>() : nullptr;
 	}
 }

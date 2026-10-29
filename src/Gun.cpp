@@ -3764,6 +3764,12 @@ namespace bo3z
 			}
 			BowsImpl::ApplyAllSpeeds();
 		}
+		void SetLevel(int a_i, int a_level)
+		{
+			if (a_i < 0 || a_i >= BowsImpl::kN) return;
+			BowsImpl::g_level[a_i] = static_cast<std::uint8_t>(std::clamp(a_level, 0, 3));
+			BowsImpl::ApplyAllSpeeds();
+		}
 	}
 }
 

@@ -404,6 +404,9 @@ namespace bo3z
 					const std::uint32_t one = 1;
 					a_s->WriteRecordData(&one, sizeof(one));
 				}
+				if (const auto ks = Kit::State(); a_s->OpenRecord('KIT1', 1)) {  // (the altar rework) your kit, relics, Infusions, armour
+					a_s->WriteRecordData(ks.data(), static_cast<std::uint32_t>(ks.size()));
+				}
 				if (const auto cs = Classes::State(); a_s->OpenRecord('CLAS', 1)) {  // your class, and the spells of the ones you left
 					a_s->WriteRecordData(cs.data(), static_cast<std::uint32_t>(cs.size()));
 				}
@@ -420,7 +423,7 @@ namespace bo3z
 			}
 			void OnLoad(SKSE::SerializationInterface* a_s)
 			{
-				bool          found = false, crs2 = false;
+				bool          found = false, crs2 = false, kit = false;
 				std::uint32_t type = 0, version = 0, length = 0;
 				while (a_s->GetNextRecordInfo(type, version, length)) {
 					if (type == kRecord && length == sizeof(int) * g_val.size()) {
@@ -445,6 +448,11 @@ namespace bo3z
 							id = a_s->ResolveFormID(id, n) ? n : 0;
 						}
 						Director::Unshelter(ids);
+					} else if (type == 'KIT1' && version == 1) {
+						std::vector<std::uint8_t> ks(length);
+						a_s->ReadRecordData(ks.data(), length);
+						Kit::SetState(ks);
+						kit = true;
 					} else if (type == 'CLAS' && version == 1) {
 						std::vector<std::uint8_t> cs(length);
 						a_s->ReadRecordData(cs.data(), length);
@@ -470,6 +478,10 @@ namespace bo3z
 				if (!crs2) {
 					Tasks::Add([] { Curse::MigrateRites(); });
 				}
+				if (!kit && found) {  // (the altar rework: a character from before it)
+					logger::warn("save: a character from before the altar rework - its kit can't carry over");
+					Tasks::Later(6.0f, [] { Hud::Banner("This character is from before the Echo Altar rework - start a new game for your class's kit", 8.0f); });
+				}
 				if (!g_stacksLoaded) {  // an older save: one of each blessing it carries
 					for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 32; ++i) {
 						g_stacks[i] = 0;
@@ -481,7 +493,7 @@ namespace bo3z
 					Migrate();
 				}
 			}
-			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}), Bows::SetLevels({}), Shops::SetRollState({}), Curse::SetMineState({}), Classes::Revert(), Party::OnLoad(); }
+			void OnRevert(SKSE::SerializationInterface*) { g_val.fill(0), g_stacks.fill(0), g_stacksLoaded = false, g_stamBonus = 0, g_bond = 0, Arcana::SetLevels({}), Bows::SetLevels({}), Shops::SetRollState({}), Curse::SetMineState({}), Classes::Revert(), Kit::Revert(), Party::OnLoad(); }
 		}
 
 		void InstallCoSave()

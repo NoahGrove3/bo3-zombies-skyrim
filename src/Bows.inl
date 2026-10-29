@@ -184,7 +184,7 @@ namespace BowsImpl
 	constexpr float kBowOverBolt = 1.6f;  // a bow's arrow against a crossbow's bolt (the bolt flies more often)
 	float ShotDamage(int i, float a_draw)
 	{
-		const float tier = UpgradeMult(std::clamp<int>(g_level[i], 0, 3));  // (Noah: the one upgrade curve every altar item grows by)
+		const float tier = UpgradeMult(std::clamp<int>(g_level[i], 0, 3) + Kit::BowAscends(i));  // (Noah: the one upgrade curve every altar item grows by - its Ascends too)
 		const float pull = 0.35f + 0.65f * std::clamp(a_draw, 0.0f, 1.0f);
 		// (the balance pass) it keeps up with the night as Skyrim's own bows do: a full draw takes 55% of a zombie's
 		// night health at tier 0 (never less than the old 30) - two full draws a body, a tier sooner each 25% more
@@ -339,7 +339,7 @@ namespace BowsImpl
 	// the bows; each upgrade 1 metre more") 350 units, 70 more a tier; every foe in it but the one struck takes the shot's
 	// full damage and its element
 	// (a bow's arrow: 7 metres, a crossbow's bolt 5; a metre more each reforge for both)
-	float SplashRadius(int a_tier, bool a_bow) { return (a_bow ? 490.0f : 350.0f) + 70.0f * static_cast<float>(std::clamp(a_tier, 0, 3)); }
+	float SplashRadius(int a_tier, bool a_bow) { return ((a_bow ? 490.0f : 350.0f) + 70.0f * static_cast<float>(std::clamp(a_tier, 0, 3))) * Kit::QuiverRadiusMult(); }  // (the Ranger's relic quivers: wider)
 	int EffectFor(Kind a_k, int a_t, bool a_full)
 	{
 		switch (a_k) {
@@ -562,7 +562,7 @@ namespace BowsImpl
 		if (auto& t = last[a_hit->GetFormID()]; now - t < std::chrono::milliseconds(150)) return; else t = now;
 		Spellcraft::Shot s{};
 		s.row = gen::kBows[b].spellRow, s.gun = GunOf(b), s.bow = b, s.tier = std::clamp(a_tier, 0, 3), s.full = true, s.arrow = false;
-		s.damage = FullShotAt(s.tier);  // (a bolt is a full draw: a crossbow has no half pull)
+		s.damage = FullShotAt(s.tier) * UpgradeMult(s.tier + Kit::CrossbowAscends(a_elem)) / UpgradeMult(s.tier);  // (a bolt is a full draw: a crossbow has no half pull; its Ascends on top)
 		auto* pl = RE::PlayerCharacter::GetSingleton();
 		const auto p = a_hit->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f };
 		s.vel = pl ? (p - pl->GetPosition()) : RE::NiPoint3{ 0, 1, 0 };
@@ -594,6 +594,7 @@ namespace BowsImpl
 		Impact(s, p);
 		Splash(s, p, a);
 		ApplySpecial(s, p, a);
+		if (s.arrow && s.bow >= 0 && a) Kit::OnBowHit(s.bow, a);  // (the altar rework: the bow's Infusion)
 		if (s.arrow && killed && Rand(0, 1) < 0.35f) {  // (finite arrows) a third of the time the arrow comes back out of the dead
 			if (auto* am = Ammo(s.bow); am) {
 				RE::PlayerCharacter::GetSingleton()->AddObjectToContainer(am, nullptr, 1, nullptr);
@@ -1620,9 +1621,9 @@ namespace BowsImpl
 			return;
 		}
 		const bool sap = Save::PerkStacks(gen::kPerk_fletcher) > 0;
-		if (sinceShot < (sap ? 2.0f : 5.0f)) return;
+		if (sinceShot < (sap ? 2.0f : 5.0f) * Kit::AuraAmmoMult()) return;  // (co-op: a Ranger in the party - sooner)
 		if ((tick -= a_delta) > 0) return;
-		tick = sap ? 0.5f : 1.0f;
+		tick = (sap ? 0.5f : 1.0f) * Kit::AuraAmmoMult();
 		if (ItemMenusOpen()) return;  // (the audit: the quiver grows back only with no item menu open)
 		p->AddObjectToContainer(am, nullptr, 1, nullptr);
 		lastCount = have + 1;

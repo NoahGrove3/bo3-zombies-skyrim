@@ -11,8 +11,8 @@ namespace bo3z::coffer
 	inline constexpr const char* kClassName[kClasses] = { "Summoner", "Destruction", "Ranger", "Spellsword" };
 	struct Spell { const char* plugin; std::uint32_t id; const char* name; Element element; std::uint8_t tier; std::uint16_t cost; bool concentration; float power;
 		Class cls; std::uint8_t ladder, rung, rungs; const char* ladderLabel; };   // rung 1 is what the altar rolls; the last rung is Legendary
-	inline constexpr int kLadders = 23;
-	inline constexpr std::array<Spell, 76> kSpells{ {
+	inline constexpr int kLadders = 22;
+	inline constexpr std::array<Spell, 73> kSpells{ {
 		{ "Skyrim.esm", 0x012FD0, "Firebolt", kFire, 0, 11, false, 1.0f, kDestruction, 0, 1, 4, "Fire" },
 		{ "Skyrim.esm", 0x01C789, "Fireball", kFire, 1, 33, false, 1.0f, kDestruction, 0, 2, 4, "Fire" },
 		{ "Skyrim.esm", 0x10F7ED, "Incinerate", kFire, 2, 60, false, 1.0f, kDestruction, 0, 3, 4, "Fire" },
@@ -86,8 +86,5 @@ namespace bo3z::coffer
 		{ "MysticismMagic.esp", 0x9606AC, "Miasma", kPoison, 3, 46, true, 1.0f, kSpellsword, 20, 2, 2, "Poison Breath" },
 		{ "MysticismMagic.esp", 0x445FB7, "Drain Life", kBlood, 0, 17, true, 1.0f, kSpellsword, 21, 1, 2, "Blood Breath" },
 		{ "MysticismMagic.esp", 0x440E99, "Leech Life", kBlood, 3, 52, true, 1.0f, kSpellsword, 21, 2, 2, "Blood Breath" },
-		{ "CurseOfAlduin.esp", 0x000D12, "Reanimate", kArcane, 0, 22, false, 1.0f, kSummoner, 22, 1, 3, "Reanimate" },
-		{ "CurseOfAlduin.esp", 0x000D13, "Raise the Fallen", kArcane, 1, 35, false, 1.0f, kSummoner, 22, 2, 3, "Reanimate" },
-		{ "CurseOfAlduin.esp", 0x000D14, "Army of the Grave", kArcane, 3, 50, false, 1.0f, kSummoner, 22, 3, 3, "Reanimate" },
 	} };
 }

@@ -55,10 +55,8 @@ LADDERS = [
     ('spellsword', 'shock_breath', 'Storm Breath', 'shock', [(MYST, 'Greater Sparks'), (MYST, 'Electrocute')]),
     ('spellsword', 'poison_breath', 'Poison Breath', 'poison', [(MYST, 'Poison Spray'), (MYST, 'Miasma')]),
     ('spellsword', 'blood_breath', 'Blood Breath', 'blood', [(MYST, 'Drain Life'), (MYST, 'Leech Life')]),
-    # (Noah: "change the summoner spell to something more fitting for the class" - Reanimate) the ladder that was Corrosion
-    # (its place kept: the indices before it stay as they were): our own dark bolts in Skyrim's Reanimate look. Each strikes
-    # what it hits, marks it for your summons, and any of the dead it kills rises as your thrall (Classes::ConjurerStaffHit)
-    ('summoner', 'corrosion', 'Reanimate', 'arcane', [(OURS, 'Reanimate'), (OURS, 'Raise the Fallen'), (OURS, 'Army of the Grave')]),
+    # (Noah, the altar rework: "remove the summoner magic damage starting spell - only the summons and the Riftblade")
+    # Reanimate is gone from the pool (its records stay in the plugin, unused)
 ]
 ELEMENTS = ['fire', 'frost', 'shock', 'poison', 'corrosion', 'sun', 'blood', 'arcane']  # (corrosion took disease's place: nothing used it)
 

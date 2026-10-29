@@ -71,6 +71,7 @@ namespace bo3z
 		int   g_waves = 0, g_wave = 0, g_waveSize = 0, g_waveSpawned = 0;
 		float g_waveRest = 0;
 		bool  g_nightCleared = false;
+		bool  g_bossNight = false;  // tonight a boss walks (its dawn leaves a power-up)
 		float                   g_spawnTimer = 0;
 		float                   g_breakTimer = 0;
 		bool                    g_special = false;
@@ -2031,6 +2032,7 @@ namespace bo3z
 			if (!g_boss.handle.get()) g_wantHerald = false;
 			if (const int row = BossRow(); !Coop::Client() && row >= 0 && a_round >= gen::kEnemies[row].minRound && a_round % gen::kEnemies[row].bossEvery == 0) {
 				g_boss.spawnIn = gen::boss::spawnDelay;
+				g_bossNight = true;  // (Noah: a boss night every 5th night - a power-up waits at its dawn)
 			}
 			{
 				std::scoped_lock l(Hud::Lock());
@@ -2403,6 +2405,13 @@ namespace bo3z
 				// Dawn ends the round: one more night survived (one more tally on the board).
 				Save::Set(gen::kAV_round, g_current);
 				Points::Add(gen::kPoints_round_survived);
+				if (g_bossNight) {  // (Noah) the boss night's reward: a power-up at your feet as the light comes
+					g_bossNight = false;
+					if (auto* pl = RE::PlayerCharacter::GetSingleton()) {
+						const float yaw = pl->GetAngleZ();
+						PowerUps::MaybeDrop(pl->GetPosition() + RE::NiPoint3{ std::sin(yaw) * 160.0f, std::cos(yaw) * 160.0f, 0.0f }, true);
+					}
+				}
 				Forms::Play(gen::Sound::night_end);
 				Stats::NightEnds(g_current);
 				logger::info("dawn: night {} survived, {} undead crumbled", g_current, n);
@@ -5106,7 +5115,7 @@ namespace bo3z
 		// (Noah: "power-ups drop on the bodies: walk into one before it's gone in 20 s, blinking faster as it goes; a low
 		// chance, like 2%, on any kill")
 		constexpr bool kDropsOn = true;
-		void MaybeDrop(const RE::NiPoint3& a_at)
+		void MaybeDrop(const RE::NiPoint3& a_at, bool a_force)
 		{
 			if (!kDropsOn) return;
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -5119,7 +5128,7 @@ namespace bo3z
 			}
 			// like BO3: a few per round, never two on the ground at once
 			// (Noah: a 10% drop chance for any enemy) no cap a night; at most three lying about at once
-			if (g_drops.size() >= 3 || std::uniform_real_distribution<float>(0, 1)(g_prng) > 0.02f) {
+			if (!a_force && (g_drops.size() >= 3 || std::uniform_real_distribution<float>(0, 1)(g_prng) > 0.02f)) {
 				return;
 			}
 			const int kind = std::discrete_distribution<int>(std::begin(kWeight), std::end(kWeight))(g_prng);

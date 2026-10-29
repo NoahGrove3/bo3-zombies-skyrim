@@ -226,7 +226,7 @@ namespace bo3z
 					T("gun");
 					{ Scope q(Perf::kGun); Gun::Tick(a_delta); }
 					T("shops");
-					{ Scope q(Perf::kShops); Shops::Tick(a_delta); }
+					{ Scope q(Perf::kShops); Shops::Tick(a_delta); Kit::Tick(a_delta); }
 					{ Scope q(Perf::kClasses); Classes::Tick(); Classes::TickFast(a_delta); }
 					{  // (your summons' health this frame: a blow of yours on one is given back - HitWatch)
 						g_summonHp.clear();
@@ -680,7 +680,7 @@ namespace bo3z
 				return;
 			}
 			// (Noah: the one upgrade curve) its rung and its Ascends are its upgrades
-			const int   ups = std::clamp(Arcana::TierOf(a_index), 0, 3) + std::max(0, Arcana::Level(a_index));
+			const int   ups = std::max(0, Arcana::RungOf(a_index) - 1) + std::max(0, Arcana::Level(a_index));  // (the altar rework: each rung, then each Ascend)
 			const float grow = UpgradeMult(ups) * (1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike)) * (0.7f + 0.3f * Arcana::Power());
 			// (Noah's plan, Destruction) dual-casting one element: the same spell in both hands hits a third harder
 			const auto  hands = Arcana::Hands();
@@ -740,6 +740,7 @@ namespace bo3z
 					if (auto* t = a_event->target->As<RE::Actor>()) Gun::OnStaffHit(t, a_event->source);
 					if (auto* t = a_event->target->As<RE::Actor>()) Classes::ConjurerStaffHit(t, a_event->source);
 					if (auto* t = a_event->target->As<RE::Actor>(); t && Classes::IsRiftblade(a_event->source)) Classes::RiftHit(t);
+					if (auto* t = a_event->target->As<RE::Actor>(); t && a_event->source) Kit::OnPlayerHit(t, RE::TESForm::LookupByID(a_event->source));  // (the altar rework: the item's Infusion)
 					if (auto* t = a_event->target->As<RE::Actor>()) Classes::NoteHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));
 					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
 					const bool spellHit = src && src->As<RE::MagicItem>();  // (the charge's own lightning never sets off another charge)
@@ -826,9 +827,10 @@ namespace bo3z
 							if (auto* w = src->As<RE::TESObjectWEAP>()) {
 								// (Noah: the one upgrade curve) a crossbow by its reforges, an altar spell-weapon by its steel
 								const int gear = Classes::AltarGearUpgrades(w);
-								share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow * UpgradeMult(Classes::CrossbowLevel(w)) : gen::kShareMelee * (gear >= 0 ? UpgradeMult(gear) : 1.0f);
+								share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow * UpgradeMult(Classes::CrossbowLevel(w) + Kit::CrossbowAscends(Classes::CrossbowElement(w))) : gen::kShareMelee * (gear >= 0 ? UpgradeMult(gear) : 1.0f);
 							} else if (src->Is(RE::FormType::Spell)) {
 								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
+								if (const int rt = Kit::TierOfSpell(src); rt >= 0) share *= UpgradeMult(rt);  // (a relic's support spell: its tiers)
 							}
 							HurtUndead(z, Director::RoundHealth() * share * (0.7f + 0.3f * Arcana::Power()));  // (the night's power curve)
 							Undead::OnHit(z);
@@ -852,6 +854,8 @@ namespace bo3z
 							if (const int fam = Classes::SummonFamily(ally); fam >= 0) {
 								best = Arcana::RungOf(fam), asc = Arcana::Level(fam);
 								for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0 && Arcana::LadderName(i) == Arcana::LadderName(fam)) best = std::max(best, Arcana::RungOf(i)), asc = std::max(asc, Arcana::Level(i));
+							} else if (const int rt = Kit::TierOfSummon(ally); rt >= 0) {
+								best = 1, asc = rt;  // (a Dragon Priest's relic, a hero or an army: its own tiers)
 							} else {
 								for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0) best = std::max(best, Arcana::RungOf(i)), asc = std::max(asc, Arcana::Level(i));
 							}
@@ -866,6 +870,7 @@ namespace bo3z
 						if (!mySummon || now - b >= std::chrono::milliseconds(700)) {
 							b = now;
 							HurtUndead(z, Director::RoundHealth() * gen::kShareMelee * tierMult * (0.7f + 0.3f * Arcana::Power()), ally);
+							if (mySummon) Kit::OnSummonHit(ally, z);  // (its family's Infusion)
 						}
 					}
 				}

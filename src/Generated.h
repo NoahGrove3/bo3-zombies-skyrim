@@ -40,10 +40,10 @@ namespace bo3z::gen
 		Enemy{ "reaper", "Thane of the Mound", { "The Restless Dead.esp", 0x5DE8BD, "zzEnc_DC_Skeleton06Warrior1H" }, false, 7, 0, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.9f, false },
 		Enemy{ "brute", "Bone Jotunn", { "mihailgiantfamily.esp", 0x000804, "mihailgiantyoungling" }, false, 9, 0, false, "NPC Head [Head]", true, 0, false, 1, 3.5f, 0.9f, false },
 		Enemy{ "herald", "Grimmvar, Alduin's Herald", { "DiverseDragonsCollectionSE.esp", 0x023F3F, "ogdd_EncDragonDark01" }, false, 1, 0, false, "NPC Head", true, 10, false, 0, 1.0f, 1.0f, false },
-		Enemy{ "boss", "Haugrisi, the Mound-Giant", { "mihailesobonecolossus.esp", 0x0008D2, "SUMMONmihailbonecolossusFIRE" }, false, 10, 0, false, "NPC Head [Head]", true, 10, false, 0, 1.0f, 1.0f, false },
-		Enemy{ "boss2", "The Elk-Crowned", { "mihailoldgod.esp", 0x000867, "mihailleshenNPC4" }, false, 20, 0, false, "NPC Head [Head]", true, 10, false, 0, 1.0f, 1.0f, false },
-		Enemy{ "boss3", "Mother of Mounds", { "mihailgiantfamily.esp", 0x000821, "mihailgiantesses_NPC3" }, false, 30, 0, false, "NPC Head [Head]", true, 10, false, 0, 1.0f, 1.0f, false },
-		Enemy{ "boss4", "Grahzah, Alduin's Grave-Wing", { "DiverseDragonsCollectionSE.esp", 0x09D809, "ogdd_EncDragonNecro01" }, false, 40, 0, false, "NPC Head", true, 10, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "boss", "Haugrisi, the Mound-Giant", { "mihailesobonecolossus.esp", 0x0008D2, "SUMMONmihailbonecolossusFIRE" }, false, 5, 0, false, "NPC Head [Head]", true, 5, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "boss2", "The Elk-Crowned", { "mihailoldgod.esp", 0x000867, "mihailleshenNPC4" }, false, 10, 0, false, "NPC Head [Head]", true, 5, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "boss3", "Mother of Mounds", { "mihailgiantfamily.esp", 0x000821, "mihailgiantesses_NPC3" }, false, 15, 0, false, "NPC Head [Head]", true, 5, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "boss4", "Grahzah, Alduin's Grave-Wing", { "DiverseDragonsCollectionSE.esp", 0x09D809, "ogdd_EncDragonNecro01" }, false, 20, 0, false, "NPC Head", true, 5, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "skeleton", "Bone Thrall", { "The Restless Dead.esp", 0x5793C9, "zzEnc_DC_Skeleton01Warrior2H" }, false, 99, 0, false, "NPC Head [Head]", true, 0, false, 3, 0.5f, 1.1f, false },
 		Enemy{ "king", "The Gatekeeper", { "The Restless Dead.esp", 0x013ED9, "zzTRD_CD_DraugrBoss_Gatekeeper_02" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.85f, false },
 		Enemy{ "knight", "Thorgar the Skulltaker", { "The Restless Dead.esp", 0xC0FED4, "zzTRD_DC_DraugrBoss_BleakFallsBarrow_02" }, false, 1, 0, false, "NPC Head [Head]", true, 0, false, 1, 3.0f, 0.9f, false },
@@ -900,9 +900,9 @@ namespace bo3z::gen
 	inline constexpr std::array<int, 409> kSoundLayer{ { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 } };  // a second sound played with each (-1 none)
 	inline constexpr std::uint32_t kMusicBoss = 0xB09, kMusicFreed = 0xB0B, kMusicIntro = 0xB15, kMusicNight = 0xD03;  // our MUSC records
 	inline constexpr int kPoints_start = 500;  // new_game_after_intro
-	inline constexpr int kPoints_hit = 10;  // gun_hit_round_undead
-	inline constexpr int kPoints_kill = 40;  // kill_round_undead
-	inline constexpr int kPoints_headshot_kill = 70;  // headshot_kill_round_undead
+	inline constexpr int kPoints_hit = 0;  // gun_hit_round_undead
+	inline constexpr int kPoints_kill = 75;  // kill_round_undead
+	inline constexpr int kPoints_headshot_kill = 75;  // headshot_kill_round_undead
 	inline constexpr int kPoints_melee_kill = 75;  // skyrim_weapon_or_spell_kill_round_undead
 	inline constexpr int kPoints_round_survived = 250;  // round_cleared
 	inline constexpr std::uint32_t kKey_fire = 0;  // mouse: fire_gun
@@ -1093,28 +1093,28 @@ namespace bo3z::gen
 	inline constexpr KnifeDef kKnife{ 47, 150.0f, 170.0f, 45.0f, 650 };
 	struct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };
 	inline constexpr std::array<PerkDef, 22> kPerks{ {
-		PerkDef{ "trollshide", "Troll's Hide Mead", 2500, 0, 100.0f, 0x800, 0x820 },
-		PerkDef{ "quicksilver", "Quicksilver Draught", 3000, 1, 0.6f, 0x801, 0x821 },
-		PerkDef{ "twinstrike", "Twin Strike Ale", 2000, 2, 2.0f, 0x802, 0x822 },
-		PerkDef{ "hearthfire", "Hearthfire Tonic", 500, 3, 1.0f, 0x803, 0x823 },
-		PerkDef{ "windrunner", "Windrunner Brew", 2000, 4, 27.0f, 0x804, 0x824 },
-		PerkDef{ "hawkeye", "Hawkeye Tincture", 1500, 5, 1.5f, 0x805, 0x825 },
-		PerkDef{ "mammoth", "Mammoth Back Porter", 4000, 6, 3.0f, 0x806, 0x826 },
-		PerkDef{ "frostbite", "Frostbite Venom", 4000, 7, 4.0f, 0x827, 0x82B },
-		PerkDef{ "stormcrown", "Stormcrown Cider", 2000, 8, 500.0f, 0x828, 0x82C },
-		PerkDef{ "fletcher", "Fletcher's Sap Draught", 1500, 9, 1.0f, 0xCB3, 0xCB4 },
-		PerkDef{ "bonebinder", "Bonebinder's Brew", 2500, 10, 1.5f, 0xCB8, 0xCC3 },
-		PerkDef{ "soultether", "Soul-Tether Wine", 2000, 11, 0.05f, 0xCB9, 0xCC4 },
-		PerkDef{ "command", "Conjurer's Command Mead", 3500, 12, 1.0f, 0xCBA, 0xCC5 },
-		PerkDef{ "emberheart", "Ember Heart Ale", 3000, 13, 0.35f, 0xCBB, 0xCC6 },
-		PerkDef{ "arcanist", "Arcanist's Focus Tea", 2500, 14, 25.0f, 0xCBC, 0xCC7 },
-		PerkDef{ "siphon", "Mana-Siphon Draught", 2000, 15, 0.06f, 0xCBD, 0xCC8 },
-		PerkDef{ "eagleeye", "Eagle-Eye Draught", 2500, 16, 1.25f, 0xCBE, 0xCC9 },
-		PerkDef{ "dawnwatch", "Dawnwatch Tonic", 3000, 17, 0.25f, 0xCBF, 0xCCA },
-		PerkDef{ "bladesong", "Bladesong Mead", 2500, 18, 0.02f, 0xCC0, 0xCCB },
-		PerkDef{ "spellbind", "Spellbinder's Draught", 2000, 19, 0.1f, 0xCC1, 0xCCC },
-		PerkDef{ "steelwind", "Steel-Wind Ale", 3000, 20, 1.2f, 0xCC2, 0xCCD },
-		PerkDef{ "splitshot", "Splitting Draught", 3500, 21, 0.5f, 0xD07, 0xD08 },
+		PerkDef{ "trollshide", "Troll's Hide Mead", 3200, 0, 100.0f, 0x800, 0x820 },
+		PerkDef{ "quicksilver", "Quicksilver Draught", 3900, 1, 0.6f, 0x801, 0x821 },
+		PerkDef{ "twinstrike", "Twin Strike Ale", 2600, 2, 2.0f, 0x802, 0x822 },
+		PerkDef{ "hearthfire", "Hearthfire Tonic", 600, 3, 1.0f, 0x803, 0x823 },
+		PerkDef{ "windrunner", "Windrunner Brew", 2600, 4, 27.0f, 0x804, 0x824 },
+		PerkDef{ "hawkeye", "Hawkeye Tincture", 2000, 5, 1.5f, 0x805, 0x825 },
+		PerkDef{ "mammoth", "Mammoth Back Porter", 5200, 6, 3.0f, 0x806, 0x826 },
+		PerkDef{ "frostbite", "Frostbite Venom", 5200, 7, 4.0f, 0x827, 0x82B },
+		PerkDef{ "stormcrown", "Stormcrown Cider", 2600, 8, 500.0f, 0x828, 0x82C },
+		PerkDef{ "fletcher", "Fletcher's Sap Draught", 2000, 9, 1.0f, 0xCB3, 0xCB4 },
+		PerkDef{ "bonebinder", "Bonebinder's Brew", 3200, 10, 1.5f, 0xCB8, 0xCC3 },
+		PerkDef{ "soultether", "Soul-Tether Wine", 2600, 11, 0.05f, 0xCB9, 0xCC4 },
+		PerkDef{ "command", "Conjurer's Command Mead", 4600, 12, 1.0f, 0xCBA, 0xCC5 },
+		PerkDef{ "emberheart", "Ember Heart Ale", 3900, 13, 0.35f, 0xCBB, 0xCC6 },
+		PerkDef{ "arcanist", "Arcanist's Focus Tea", 3200, 14, 25.0f, 0xCBC, 0xCC7 },
+		PerkDef{ "siphon", "Mana-Siphon Draught", 2600, 15, 0.06f, 0xCBD, 0xCC8 },
+		PerkDef{ "eagleeye", "Eagle-Eye Draught", 3200, 16, 1.25f, 0xCBE, 0xCC9 },
+		PerkDef{ "dawnwatch", "Dawnwatch Tonic", 3900, 17, 0.25f, 0xCBF, 0xCCA },
+		PerkDef{ "bladesong", "Bladesong Mead", 3200, 18, 0.02f, 0xCC0, 0xCCB },
+		PerkDef{ "spellbind", "Spellbinder's Draught", 2600, 19, 0.1f, 0xCC1, 0xCCC },
+		PerkDef{ "steelwind", "Steel-Wind Ale", 3900, 20, 1.2f, 0xCC2, 0xCCD },
+		PerkDef{ "splitshot", "Splitting Draught", 4600, 21, 0.5f, 0xD07, 0xD08 },
 	} };
 	inline constexpr int kPerk_trollshide = 0;
 	inline constexpr int kPerk_quicksilver = 1;

@@ -33,7 +33,7 @@ namespace bo3z::Net
 		using u64 = std::uint64_t;
 		constexpr int kChannel = 7;
 		constexpr std::uint8_t kVersion = 1;
-		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7, kEgg = 8, kAltar = 9 };
+		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7, kEgg = 8, kAltar = 9, kClass = 10 };
 #ifndef UN_BUILD
 #	define UN_BUILD "dev"
 #endif
@@ -507,6 +507,13 @@ namespace bo3z::Net
 							Tasks::Add([town, on, who] { Shops::HeardBusy(town, who.empty() ? std::string("A friend") : who, on); });
 						}
 						break;
+					case kClass:  // (the altar rework: the party's class auras) who plays what
+						if (sz >= 2 && d[1] < 4) {
+							const int cls = d[1];
+							const std::uint64_t who = from;
+							Tasks::Add([who, cls] { Kit::HeardClass(who, cls); });
+						}
+						break;
 					case kEgg:
 						if (sz >= 2) {
 							const int town = d[1];
@@ -694,6 +701,14 @@ namespace bo3z::Net
 		}
 		const std::uint8_t m[2]{ kEgg, static_cast<std::uint8_t>(a_town) };
 		ToAll(m, 2, true);
+	}
+	void TellClass(int a_cls)
+	{
+		if (!g_lobby || a_cls < 0 || a_cls > 3) {
+			return;
+		}
+		const std::uint8_t m[2]{ kClass, static_cast<std::uint8_t>(a_cls) };
+		ToAll(m, 2, false);
 	}
 	void PowerUpTaken(int a_kind)
 	{

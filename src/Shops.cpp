@@ -1869,7 +1869,7 @@ namespace bo3z
 		int                 g_sel = 0;
 		int                 g_trialSel = 0;  // the controller's pick among the altar's trials
 		// (Noah: one way to drive the altar) a focus moved up and down its rows - D-pad or W/S - and A / Enter to take it
-		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowOutfit, kRowSpecial };
+		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowOutfit, kRowSpecial, kRowInfuse = 32, kRowRelic = 33 };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
 		int g_focus = kRowSpell;
 		RE::ObjectRefHandle g_pickAltar;  // the altar whose class picker is up (no class yet): it opens when one is chosen
 
@@ -2244,12 +2244,15 @@ namespace bo3z
 				const int t = r ? TownOf(r) : -1;
 				// (Noah: "the echo altar changes depending on which class the player is using") the Ranger has one roll - bows
 				// and crossbows both - the other classes their roll and their second wheel
+				// (Noah, the altar rework) the class; your kit (each item: its next upgrade); the Armory; the Infusion; a
+				// Dragon Priest's relic when one waits; then the brews, the Thu'um, the dragon, the trials
 				std::vector<int> rows{ kRowClass };  // (Noah: the class is chosen and changed at the altar)
-				if (Classes::Get() >= 0) rows.push_back(kRowOutfit);
-				if (Classes::Get() == 2) rows.push_back(kRowSpecial);  // (the Ranger's special ammo)
-				rows.push_back(kRowSpell);
-				if (Classes::Get() != 2) rows.push_back(kRowBow);
-				rows.push_back(kRowForge), rows.push_back(kRowPerk);
+				if (Classes::Get() >= 0) {
+					for (int id : Kit::Rows()) rows.push_back(id);
+					rows.push_back(kRowInfuse);
+					if (Kit::RelicTokens() > 0) rows.push_back(kRowRelic);
+				}
+				rows.push_back(kRowPerk);
 				if (t >= 0 && Curse::ClaimableShout(t) >= 0) rows.push_back(kRowShout);
 				if (!Movement::BondLocked()) rows.push_back(kRowBond);  // (Noah: the dragon's bond unseen until Whiterun is freed)
 				const bool trials = t >= 0 && Curse::Altar(t).on;
@@ -2265,8 +2268,10 @@ namespace bo3z
 				} else if (side) {
 					if (g_focus == kRowPerk) {
 						g_sel = (g_sel + side + n) % n;
-					} else if (g_focus == kRowSpecial) {
-						g_specialSel = (g_specialSel + side + 4) % 4;  // left / right: which special ammo
+					} else if (g_focus == kRowInfuse) {
+						Kit::InfuseSide(side);  // left / right: which item the Infusion is set on
+					} else if (g_focus == kRowRelic) {
+						Kit::RelicSide(side);   // left / right: which of the two relics
 					} else if (trials && g_focus >= kRowTrial && g_focus < kRowTrial + 5) {
 						g_focus = kRowSpell;  // back to the altar's own column
 					} else if (trials) {
@@ -2280,6 +2285,7 @@ namespace bo3z
 					const auto ph0 = g_show.phase;
 					const bool menu0 = g_menu;
 					const int  trial0 = g_trialSel;
+					bool       kitOk = false;
 					switch (g_focus) {
 					case kRowClass:
 						if (g_show.phase != Show::Idle) {
@@ -2290,8 +2296,8 @@ namespace bo3z
 							Classes::OpenPicker(Classes::Get() >= 0);  // (the first is free; a change costs)
 						}
 						break;
-					case kRowOutfit: Classes::NextOutfit(); break;
-					case kRowSpecial: Bows::BuySpecial(g_specialSel); break;
+					case kRowInfuse: kitOk = Kit::Infuse(); break;
+					case kRowRelic: kitOk = Kit::TakeRelic(); break;
 					case kRowSpell: act(Classes::Get() == 2 ? 6 : 0); break;  // (the Ranger's one roll: a bow or a crossbow)
 					case kRowBow: act(6); break;
 					case kRowForge: act(1); break;
@@ -2300,10 +2306,20 @@ namespace bo3z
 					case kRowBond: act(5); break;
 					case kRowLeave: act(4); break;
 					default:
-						if (g_focus >= kRowTrial && g_focus < kRowTrial + 5) {
+						if (g_focus >= 40) {
+							kitOk = Kit::Select(g_focus, ref);
+						} else if (g_focus >= kRowTrial && g_focus < kRowTrial + 5) {
 							g_trialSel = g_focus - kRowTrial;
 							act(7);
 						}
+					}
+					if (kitOk) {
+						PlayUi(UiSnd::kChoose);
+						return true;
+					}
+					if (g_focus >= 40 || g_focus == kRowInfuse || g_focus == kRowRelic) {
+						PlayUi(UiSnd::kFail);
+						return true;
 					}
 					(void)trial0;
 					if (g_focus == kRowLeave || (menu0 && !g_menu)) {
@@ -2319,7 +2335,8 @@ namespace bo3z
 			if (dev == RE::INPUT_DEVICE::kKeyboard) {
 				for (int k = 0; k < Settings::kKeys; ++k) {  // 1 2 3 4 Backspace unless rebound (Mod Configuration > The Curse of Alduin)
 					if (static_cast<int>(code) == Settings::Key(k)) {
-						act(k == 0 && Classes::Get() == 2 ? 6 : k);  // (the Ranger's call is its row's: a bow, or four times in ten a crossbow)
+						if (k == 0 || k == 1 || k == 6) return true;  // (the altar rework: no roll, no reforge key - the rows do it)
+						act(k);
 						return true;
 					}
 				}
@@ -2533,6 +2550,7 @@ namespace bo3z
 				}
 				h.shrineShout = -1;
 				h.specialSel = g_specialSel, h.specialKind = Bows::SpecialKind(), h.specialLeft = Bows::SpecialLeft();
+				Kit::Fill(h);  // (the altar rework: your kit, the Armory, the Infusion, the relic)
 				h.dragonBond = Save::DragonBond();
 				h.bondLocked = Movement::BondLocked();
 				h.trialsOn = false;
@@ -2773,7 +2791,7 @@ namespace bo3z
 					Classes::OpenPicker(false);
 				} else {
 					g_menu = true;
-					g_focus = Classes::Get() < 0 ? kRowClass : kRowSpell, g_chooseFocus = 0;
+					g_focus = kRowClass, g_chooseFocus = 0;
 					g_menuRef = a_ref->CreateRefHandle();
 					Forms::PlayAt(gen::Sound::coffer_open, a_ref);
 					PlayUi(UiSnd::kOpen, 0.6f);
@@ -2782,7 +2800,7 @@ namespace bo3z
 			case 1: BuyPerk(o.ref, a_ref); break;
 			case 4:
 				if (!g_menu) {
-					g_menu = true, g_sel = 0, g_focus = Classes::Get() < 0 ? kRowClass : kRowSpell, g_chooseFocus = 0;
+					g_menu = true, g_sel = 0, g_focus = kRowClass, g_chooseFocus = 0;
 					g_menuRef = a_ref->CreateRefHandle();
 					Forms::Play(gen::Sound::coffer_open);
 				} else {

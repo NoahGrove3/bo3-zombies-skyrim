@@ -64,7 +64,7 @@ namespace bo3z::Arcana
 			}
 			float firstDmg = -1.0f;
 			if (const int d = g_dmgEffect[first]; d >= 0 && d < static_cast<int>(g_baseMag[first].size())) firstDmg = g_baseMag[first][d];
-			const int   ups = std::clamp(static_cast<int>(me.tier), 0, 3) + std::max(0, lv);
+			const int   ups = std::max(0, static_cast<int>(me.rung) - 1) + std::max(0, lv);  // (the altar rework: every rung climbed, then every Ascend - one tier each)
 			const float mult = kPower * AltarPower();
 			auto&       base = g_baseMag[a_index];
 			for (std::size_t e = 0; e < sp->effects.size() && e < base.size(); ++e) {
@@ -74,7 +74,7 @@ namespace bo3z::Arcana
 			}
 			// (Noah: "the Summoner's starting spells' magicka cost needs to be half") the first rung of each summoner ladder
 			const float firstSummon = me.cls == coffer::kSummoner && me.rung == 1 ? 0.5f : 1.0f;
-			sp->data.costOverride = std::max(1, static_cast<int>(std::lround(coffer::kSpells[a_index].cost * kCost * (1.0f - 0.1f * lv) * Difficulty::Mana() * firstSummon)));
+			sp->data.costOverride = std::max(1, static_cast<int>(std::lround(coffer::kSpells[a_index].cost * kCost * (1.0f - 0.1f * lv) * Difficulty::Mana() * firstSummon * Kit::AuraCostMult())));
 		}
 	}
 
@@ -217,7 +217,8 @@ namespace bo3z::Arcana
 		return out;
 	}
 	// how many you may carry: two - three for the Summoner (its Corrosion took the staff's place beside its two summons)
-	std::size_t CarryCap() { return Classes::Get() == coffer::kSummoner ? 3 : 2; }
+	std::size_t CarryCap() { return 64; }  // (the altar rework: you keep everything your class owns)
+	void ReapplyAll() { for (int i = 0; i < static_cast<int>(g_spell.size()); ++i) Apply(i); }
 	// one of them gone for good: out of your hands, out of the Magic menu, its reforging lost
 	void Forget(int a_index)
 	{
@@ -416,14 +417,14 @@ namespace bo3z::Arcana
 		if (a_index < 0 || a_index >= static_cast<int>(g_level.size())) {
 			return;
 		}
-		g_level[a_index] = static_cast<std::uint8_t>(std::clamp(a_level, 0, gen::kForgeMax));
+		g_level[a_index] = static_cast<std::uint8_t>(std::clamp(a_level, 0, 16));  // (the altar rework: Ascends past the forge's three)
 		Apply(a_index);
 	}
 	std::vector<std::uint8_t> Levels() { return { g_level.begin(), g_level.end() }; }
 	void SetLevels(const std::vector<std::uint8_t>& a_levels)
 	{
 		for (std::size_t i = 0; i < g_level.size(); ++i) {
-			g_level[i] = i < a_levels.size() ? static_cast<std::uint8_t>(std::min<int>(a_levels[i], gen::kForgeMax)) : 0;
+			g_level[i] = i < a_levels.size() ? static_cast<std::uint8_t>(std::min<int>(a_levels[i], 16)) : 0;
 			Apply(static_cast<int>(i));
 		}
 	}

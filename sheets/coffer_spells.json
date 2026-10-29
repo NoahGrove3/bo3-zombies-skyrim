@@ -20,7 +20,7 @@
   "cost",
   "power"
  ],
- "count": 76,
+ "count": 73,
  "rows": [
   {
    "id": "destruction_fire_1",
@@ -1407,63 +1407,6 @@
    "tier": 3,
    "baseCost": 209,
    "cost": 52,
-   "power": 1.0
-  },
-  {
-   "id": "summoner_corrosion_1",
-   "plugin": "CurseOfAlduin.esp",
-   "formId": "000D12",
-   "name": "Reanimate",
-   "mod": "CurseOfAlduin.esp",
-   "element": "arcane",
-   "school": "conjuration",
-   "cast": "fire-and-forget",
-   "cls": "summoner",
-   "ladder": "summoner_corrosion",
-   "ladderLabel": "Reanimate",
-   "rung": 1,
-   "rungs": 3,
-   "tier": 0,
-   "baseCost": 90,
-   "cost": 22,
-   "power": 1.0
-  },
-  {
-   "id": "summoner_corrosion_2",
-   "plugin": "CurseOfAlduin.esp",
-   "formId": "000D13",
-   "name": "Raise the Fallen",
-   "mod": "CurseOfAlduin.esp",
-   "element": "arcane",
-   "school": "conjuration",
-   "cast": "fire-and-forget",
-   "cls": "summoner",
-   "ladder": "summoner_corrosion",
-   "ladderLabel": "Reanimate",
-   "rung": 2,
-   "rungs": 3,
-   "tier": 1,
-   "baseCost": 140,
-   "cost": 35,
-   "power": 1.0
-  },
-  {
-   "id": "summoner_corrosion_3",
-   "plugin": "CurseOfAlduin.esp",
-   "formId": "000D14",
-   "name": "Army of the Grave",
-   "mod": "CurseOfAlduin.esp",
-   "element": "arcane",
-   "school": "conjuration",
-   "cast": "fire-and-forget",
-   "cls": "summoner",
-   "ladder": "summoner_corrosion",
-   "ladderLabel": "Reanimate",
-   "rung": 3,
-   "rungs": 3,
-   "tier": 3,
-   "baseCost": 200,
-   "cost": 50,
    "power": 1.0
   }
  ]

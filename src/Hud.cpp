@@ -746,14 +746,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			struct Card { const char* name; const char* lore; ImU32 col; const char* tag; const char* arms; const char* grow; const char* kit; };
 			static const Card kCards[4] = {
-				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild - and Reanimate",
-				  "Bind Pact: raise each family's summon at the altar", "Conjure Wolf, Reanimate, Conjure Skeleton, the Riftblade, summoner's robes" },
+				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild - and the Riftblade",
+				  "Your kit grows at the altar: every family and the Riftblade to Legendary", "Conjure Wolf, Conjure Skeleton, the Riftblade, summoner's robes" },
 				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Ranged spells: fire, frost, shock, sun, blood and runes",
-				  "Reforge: climb each element's ladder to its Legendary spell", "Firebolt, Ice Spike, the Wild Witch's hat and gown" },
-				{ "RANGER", "Sworn to the Dawnguard", IM_COL32(110, 210, 120, 255), "Bows and crossbows - and every arrow counts", "The six elemental bows, crossbows and their bolts",
-				  "Mastery: a bow's kills raise its tier; special ammo at the altars", "The Ember Crossbow, 40 fire bolts, the Drifter Outfit" },
-				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "Spell-weapons, spellshields, touch spells, The Wizard Warrior",
-				  "Imbue: raise each element's touch spell; every blade hit casts it", "Steel Spellsword, Steel Spellshield, Burning Touch, the Practical Pirate outfit" } };
+				  "Your kit grows at the altar: each element climbs to its Legendary spell", "Firebolt, Ice Spike, the Wild Witch's hat and gown" },
+				{ "RANGER", "Sworn to the Dawnguard", IM_COL32(110, 210, 120, 255), "Bows and crossbows - and every arrow counts", "The six elemental bows, three crossbows and their bolts",
+				  "Your kit grows at the altar: each bow and crossbow to Legendary", "The Ember Crossbow and its bolts, Emberstring, the Drifter Outfit" },
+				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "A one-handed blade, touch and breath spells",
+				  "Your kit grows at the altar: the blade and each spell to Legendary", "A one-handed sword, Burning Touch, the Practical Pirate outfit" } };
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));
 			TxtC(dl, g_title, 46 * k, size.x * 0.5f, size.y * 0.12f, kParch, Classes::Switching() ? "CHANGE YOUR PATH" : "CHOOSE YOUR PATH", 3 * k, Fade(kGold, 0.6f));
 			const std::string sub = Classes::Switching() ? "Switching costs " + std::to_string(Classes::SwitchCost()) + " Cursed Essence. Each class keeps its own spells and progress."
@@ -2978,164 +2978,77 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						cls < 0 ? std::string("Summoner, Destruction, Ranger or Spellsword - free, your first path") : std::string("Change class - each keeps its own spells and progress"));
 					if (cls >= 0) price(y + 2 * k, Classes::SwitchCost(), s.points >= Classes::SwitchCost());
 					y += 64 * k;
-					if (cls >= 0) {  // (Noah: the outfit its own row) any outfit for any class
-						const auto on = Classes::OutfitName();
-						focusRow(31, y - 6 * k, y + 52 * k);
-						bullet({ L, y + 2 * k }, 31, true);
-						Txt(dl, g_title, 20 * k, { L + 36 * k, y + 3 * k }, kParch, "CHANGE OUTFIT");
-						Txt(dl, g_body, 16 * k, { L + 36 * k, y + 30 * k }, IM_COL32(196, 182, 160, 235), on.empty() ? std::string("Select for the next look") : "Now: " + on + "  -  select for the next");
-						y += 58 * k;
+					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
+					y += 14 * k;
+				}
+				// (Noah, the altar rework) your kit - each item, its tier stars, its next upgrade and price - then the Armory,
+				// the Infusion roll and a Dragon Priest's relic
+				if (altarCls >= 0) {
+					auto stars = [&](float sx, float sy, int a_tier, int a_asc, ImU32 col) {
+						for (int q = 0; q < 3; ++q) {
+							const ImVec2 pc{ sx + q * 15 * k, sy };
+							dl->AddQuadFilled({ pc.x, pc.y - 6 * k }, { pc.x + 5 * k, pc.y }, { pc.x, pc.y + 6 * k }, { pc.x - 5 * k, pc.y }, q < a_tier ? col : IM_COL32(60, 52, 46, 220));
+						}
+						if (a_asc > 0) Txt(dl, g_body, 14 * k, { sx + 48 * k, sy - 9 * k }, kGold, "+" + std::to_string(a_asc));
+					};
+					auto rgb = [](std::uint32_t c, int a) { return IM_COL32((c >> 16) & 255, (c >> 8) & 255, c & 255, a); };
+					TxtC(dl, g_title, 18 * k, cx, y, kGoldDim, "YOUR KIT", 0.0f, 0);
+					if (s.armorBonus > 0.001f) Txt(dl, g_body, 14 * k, { Rr - Measure(g_body, 14 * k, fmt::format("armour +{:.0f}%", s.armorBonus * 100.0f)).x, y + 2 * k }, kGoldDim, fmt::format("armour +{:.0f}%", s.armorBonus * 100.0f));
+					y += 28 * k;
+					for (const auto& l : s.kitLines) {
+						focusRow(l.id, y - 6 * k, y + 52 * k);
+						bullet({ L, y + 2 * k }, l.id, l.can);
+						const ImU32 col = rgb(l.color, 255);
+						Txt(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, l.carried ? kParch : IM_COL32(170, 160, 140, 230), Upper(l.name) + (l.relic ? "  (RELIC)" : ""));
+						stars(L + 36 * k + Measure(g_title, 19 * k, Upper(l.name) + (l.relic ? "  (RELIC)" : "")).x + 16 * k, y + 14 * k, l.tier, l.asc, col);
+						Txt(dl, g_body, 15 * k, { L + 36 * k, y + 29 * k }, IM_COL32(196, 182, 160, 235), l.info + (l.infusion.empty() ? std::string() : "   -   " + l.infusion));
+						if (l.cost > 0) price(y + 2 * k, l.cost, l.can);
+						y += 56 * k;
 					}
-					if (cls == 2) {  // (Noah: the special ammo its own row) the Ranger's alone
-						static constexpr const char* kWhat[4] = { "through every foe in a line", "three blasts", "freezes all in the blast", "the struck fight for you 20 s" };
-						const int sel = std::clamp(s.specialSel, 0, 3);
-						focusRow(32, y - 6 * k, y + 74 * k);
-						bullet({ L, y + 2 * k }, 32, true);
-						Txt(dl, g_title, 20 * k, { L + 36 * k, y + 3 * k }, kParch, std::string("SPECIAL AMMO:  \xE2\x80\xB9 ") + Upper(std::string(Bows::SpecialName(sel))) + " \xE2\x80\xBA");
-						Txt(dl, g_body, 16 * k, { L + 36 * k, y + 30 * k }, IM_COL32(196, 182, 160, 235), std::string(kWhat[sel]) + "  -  ten, " + (g_padLast ? "left / right" : "A / D") + " to pick");
-						if (s.specialKind >= 0) Txt(dl, g_body, 14 * k, { L + 36 * k, y + 52 * k }, kGoldDim, fmt::format("Loaded: {} x{}", Bows::SpecialName(s.specialKind), s.specialLeft));
-						price(y + 2 * k, Bows::SpecialCost(sel), s.points >= Bows::SpecialCost(sel));
-						y += 80 * k;
-						if (const auto bl = Classes::BoltLine(); !bl.empty()) {  // (the Ranger's crossbow mastery)
-							Txt(dl, g_body, 15 * k, { L + 36 * k, y - 4 * k }, kGoldDim, bl);
-							y += 22 * k;
+					if (!s.armoryLines.empty()) {
+						Divider(dl, cx, y, w * 0.30f, k, 0.6f);
+						y += 12 * k;
+						TxtC(dl, g_title, 18 * k, cx, y, kGoldDim, "THE ARMORY", 0.0f, 0);
+						y += 28 * k;
+						for (const auto& l : s.armoryLines) {
+							const bool open = l.cost > 0;
+							focusRow(l.id, y - 6 * k, y + 46 * k);
+							bullet({ L, y + 2 * k }, l.id, l.can);
+							Txt(dl, g_title, 18 * k, { L + 36 * k, y + 3 * k }, open ? kParch : kLockedCol, Upper(l.name));
+							Txt(dl, g_body, 15 * k, { L + 36 * k, y + 27 * k }, open ? IM_COL32(196, 182, 160, 235) : kLockedCol, l.info);
+							if (open) price(y + 2 * k, l.cost, l.can);
+							y += 50 * k;
 						}
 					}
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
 					y += 14 * k;
-				}
-				// [1] roll - or, with an offer waiting, the choice: take it, roll again, or leave it
-				if (s.chooseOn) {
-					// (Noah: "I couldn't choose to reroll or take the rolled one") every offer: take it (a spell: in place of
-					// which of your two), roll again, or leave it for half the roll back
-					const bool spell = s.chooseKind == 0;
-					Txt(dl, g_title, 21 * k, { L, y + 2 * k }, kParch, (spell ? "A THIRD SPELL: " : "THE ALTAR OFFERS: ") + Upper(s.chooseName));
-					Txt(dl, g_body, 16 * k, { L, y + 32 * k }, IM_COL32(196, 182, 160, 235), spell ? (s.chooseC >= 0 ? "You carry three of the altar's spells. Give one back, or roll again:" : "You carry two of the altar's spells. Give one back, or roll again:") : std::string("Take it, roll again, or leave it:"));
-					float cy = y + 60 * k;
-					struct Opt { int id; std::string text, key; };
-					std::vector<Opt> opts;
-					const bool ps = Settings::PlayStationIcons();
-					if (spell) {
-						if (s.chooseA >= 0) opts.push_back({ 0, "Replace " + ArmsName(Arcana::kIdBase + s.chooseA) + (Arcana::RungOf(s.chooseA) > 1 ? "  (its climb is lost)" : ""), g_padLast ? (ps ? "Square" : "X") : Settings::KeyName(0) });
-						if (s.chooseB >= 0) opts.push_back({ 1, "Replace " + ArmsName(Arcana::kIdBase + s.chooseB) + (Arcana::RungOf(s.chooseB) > 1 ? "  (its climb is lost)" : ""), g_padLast ? (ps ? "Triangle" : "Y") : Settings::KeyName(1) });
-						if (s.chooseC >= 0) opts.push_back({ 4, "Replace " + ArmsName(Arcana::kIdBase + s.chooseC) + (Arcana::RungOf(s.chooseC) > 1 ? "  (its climb is lost)" : ""), std::string() });
-					} else {
-						opts.push_back({ 0, "Take " + s.chooseName + (s.chooseOld.empty() ? std::string() : "  (" + s.chooseOld + " goes back)"), g_padLast ? (ps ? "Square" : "X") : Settings::KeyName(0) });
+					// the Infusion: the altar's roll
+					{
+						focusRow(32, y - 6 * k, y + 56 * k);
+						bullet({ L, y + 2 * k }, 32, s.infuseCan);
+						const std::string head = s.infuseSpinning ? "INFUSING...  " + Upper(s.infuseSpin) : std::string("INFUSE:  \xE2\x80\xB9 ") + Upper(s.infuseItem) + " \xE2\x80\xBA";
+						Txt(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, s.infuseSpinning ? kGold : kParch, head);
+						Txt(dl, g_body, 15 * k, { L + 36 * k, y + 30 * k }, IM_COL32(196, 182, 160, 235), s.infuseItem.empty() ? std::string("Nothing to infuse yet") : "Now: " + s.infuseNow + "   (" + (g_padLast ? "left / right" : "A / D") + " picks the item)");
+						if (!s.infuseItem.empty() && !s.infuseSpinning) price(y + 2 * k, s.infuseCost, s.infuseCan);
+						y += 60 * k;
 					}
-					opts.push_back({ 2, "Roll again  (" + std::to_string(s.chooseReroll) + " Cursed Essence)", g_padLast ? (spell ? "" : (ps ? "Triangle" : "Y")) : std::string("R") });
-					opts.push_back({ 3, "Leave it  -  half the roll back (" + std::to_string(s.chooseRefund) + ")", g_padLast ? (ps ? "O" : "B") : Settings::KeyName(4) });
-					for (const auto& o : opts) {
-						const bool on = s.chooseFocus == o.id;
-						if (on) {
-							if (Hud::kEdgeHud) {
-								dl->AddRectFilledMultiColor({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, IM_COL32(196, 170, 112, 52), IM_COL32(196, 170, 112, 0), IM_COL32(196, 170, 112, 0), IM_COL32(196, 170, 112, 52));
-								dl->AddRectFilled({ a.x + 10 * k, cy - 4 * k }, { a.x + 12.5f * k, cy + 30 * k }, tint);
-							} else {
-								dl->AddRectFilled({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, IM_COL32(200, 160, 92, 34), 4 * k);
-								dl->AddRect({ a.x + 10 * k, cy - 4 * k }, { b.x - 10 * k, cy + 30 * k }, kGold, 4 * k, 0, 1.5f * k);
-							}
+					// a Dragon Priest's relic, one of two
+					if (s.relicTokens > 0) {
+						focusRow(33, y - 6 * k, y + 78 * k);
+						bullet({ L, y + 2 * k }, 33, true);
+						TxtGold(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, s.relicTokens > 1 ? fmt::format("A DRAGON PRIEST'S RELIC  ({} waiting)", s.relicTokens) : std::string("A DRAGON PRIEST'S RELIC"));
+						const bool two = !s.relicB.empty();
+						for (int o = 0; o < (two ? 2 : 1); ++o) {
+							const bool on = (two ? s.relicSel : 0) == o;
+							const std::string& nm = o == 0 ? s.relicA : s.relicB;
+							const std::string& ds = o == 0 ? s.relicDescA : s.relicDescB;
+							Txt(dl, g_body, 16 * k, { L + 36 * k, y + 30 * k + o * 22 * k }, on ? kGold : IM_COL32(170, 160, 140, 220), (on ? "\xE2\x80\xBA " : "   ") + nm + "  -  " + ds);
 						}
-						dl->AddQuadFilled({ L + 13 * k, cy + 5 * k }, { L + 21 * k, cy + 13 * k }, { L + 13 * k, cy + 21 * k }, { L + 5 * k, cy + 13 * k }, on ? kGold : IM_COL32(150, 112, 60, 230));
-						float tx = L + 36 * k;
-						if (spell && (o.id == 0 || o.id == 1)) {
-							DrawEmblem(dl, Arcana::kIdBase + (o.id == 0 ? s.chooseA : s.chooseB), { L + 52 * k, cy + 13 * k }, 13 * k, 1.0f, now, 0.5f);
-							tx = L + 74 * k;
-						}
-						TxtWrap(dl, g_body, 17 * k, { tx, cy + 2 * k }, o.id == 3 ? IM_COL32(200, 186, 160, 235) : IM_COL32(236, 222, 196, 255), o.text, b.x - 50 * k - tx, 1);
-						if (!o.key.empty()) Txt(dl, g_body, 15 * k, { b.x - 40 * k, cy + 4 * k }, IM_COL32(200, 186, 160, 220), o.key);
-						cy += 34 * k;
+						y += (two ? 82 : 60) * k;
 					}
-					y = cy + 8 * k;
-				} else
-				{
-					const float R = 46 * k;
-					focusRow(0, y - 6 * k, y + 2 * R + 14 * k);
-					rollOrb({ L + R, y + R + 4 * k }, R);
-					const float tx = L + 2 * R + 16 * k;
-					bullet({ tx, y + 4 * k }, 0, s.rollPhase == 0);
-					if (s.rollPhase == 3 && !s.rollPrize.empty()) Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPrize);
-					else if (s.rollPhase == 3 && Legendary(s.rollGun)) TxtGold(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, ArmsName(s.rollGun));
-					else Txt(dl, g_title, 21 * k, { tx + 36 * k, y + 5 * k }, kParch, s.rollPhase == 0 ? (altarCls == 2 ? "CALL A BOW OR CROSSBOW" : altarCls == 0 ? "CALL A SUMMON" : "CALL A SPELL") : s.rollPhase == 1 ? "THE ALTAR GATHERS..." : s.rollPhase == 2 ? (s.rollBow ? "THE BOWS TURN..." : "THE ALTAR TURNS...") : ArmsName(s.rollGun));
-					std::string rollLine;
-					if (s.rollPhase == 3) rollLine = "Activate the altar: take it, roll again, or leave it";
-					else if (altarCls == 2) rollLine = s.bowCarried >= 0 ? "Carrying " + ArmsName(Bows::kIdBase + s.bowCarried) + " - a new one takes its place" : std::string("Six elemental bows, or a crossbow");
-					else if (altarCls == 0) rollLine = "Three spells at a time";
-					else rollLine = "Two of the altar's spells at a time";
-					TxtWrap(dl, g_body, 17 * k, { tx, y + 38 * k }, IM_COL32(196, 182, 160, 235), rollLine, Rr - tx - 70 * k, 2);
-					if (s.rollPhase == 0) {
-						const int rc = altarCls == 2 ? s.bowRollCost : s.rollCost;
-						price(y + 66 * k, rc, s.points >= rc);
-					}
-					y += 2 * R + 22 * k;
-				}
-				Divider(dl, cx, y, w * 0.30f, k, 0.6f);
-				y += 14 * k;
-				// [1b] the class's second wheel (the Ranger's bows and crossbows share the one roll above)
-				if (altarCls != 2 && altarCls >= 0) {
-					const bool heroLocked = Classes::Get() == 0 && s.freedCount < s.legendAt && !Gun::TestKitOn();  // (Noah: no Legendary until six altars are freed)
-					const bool idle = s.rollPhase == 0 && !heroLocked;
-					focusRow(1, y - 6 * k, y + 58 * k);
-					bullet({ L, y + 2 * k }, 1, idle);
-					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, heroLocked ? kLockedCol : kParch, altarCls == 3 ? "CALL A SPELL-WEAPON" : altarCls == 1 ? "CALL A SUPPORT SPELL" : "BIND A HERO (LEGENDARY)");
-					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, heroLocked ? kLockedCol : IM_COL32(196, 182, 160, 235),
-						heroLocked ? "Locked until six Echo Altars are freed (" + std::to_string(s.freedCount) + " of " + std::to_string(s.legendAt) + ")"
-						: altarCls == 0 ? std::string("A hero or an army sworn to you") : altarCls == 3 ? std::string("A spell-weapon, a spellshield or a unique greatweapon") : std::string("Storms and novas to fight beside your fire"));
-					if (idle) {
-						price(y + 30 * k, s.bowRollCost, s.points >= s.bowRollCost);
-					}
-					y += 64 * k;
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
 					y += 14 * k;
 				}
-				// [2] reforge the spell in hand
-				{
-					const int  act = s.activeSlot >= 0 && s.activeSlot < s.slotCount ? s.activeSlot : -1;
-					const int  gw = act >= 0 ? s.slotGun[act] : -1;
-					const int  sp = gw >= 0 ? -1 : (s.handSpell[1] >= 0 ? s.handSpell[1] : s.handSpell[0]);  // else a Coffer spell in hand
-					const int  g = s.bowHeld >= 0 ? Bows::kIdBase + s.bowHeld : gw >= 0 ? gw : sp >= 0 ? Arcana::kIdBase + sp : -1;
-					// (the consistency pass) a class spell climbs its ladder: its rung, its next rung's name and its real price, the
-					// row named as the class names it - Bind Pact, Reforge, Imbue
-					const bool ladder = s.bowHeld < 0 && gw < 0 && sp >= 0;
-					const int  nextSp = ladder ? Arcana::NextRung(sp) : -1;
-					const int  marks = ladder ? std::max(0, Arcana::Rungs(sp) - 1) : gen::kForgeMax;
-					const int  lvl = s.bowHeld >= 0 ? Bows::Level(s.bowHeld) : gw >= 0 ? std::clamp(s.slotLevel[act], 0, gen::kForgeMax) : sp >= 0 ? Arcana::RungOf(sp) - 1 : 0;
-					const int  asc = ladder && nextSp < 0 ? Arcana::Level(sp) : -1;  // (the top rung: its Ascends, 0..3)
-					const bool maxed = ladder ? (nextSp < 0 && asc >= gen::kForgeMax) : lvl >= gen::kForgeMax;
-					const int  cost = asc >= 0 ? gen::kForgeCost[std::clamp(asc, 0, gen::kForgeMax - 1)] : ladder ? (nextSp >= 0 && Arcana::TierOf(nextSp) >= 3 ? gen::kForgeCost[2] : gen::kForgeCost[std::clamp(lvl, 0, 1)]) : gen::kForgeCost[std::clamp(lvl, 0, gen::kForgeMax - 1)];
-					const bool locked = s.freedCount < s.forgeAt && !Gun::TestKitOn();  // (Noah: the reforge opens once three altars are freed)
-					const bool can = !locked && g >= 0 && !maxed;
-					static constexpr const char* kRowName[4] = { "BIND PACT", "REFORGE", "REFORGE", "IMBUE" };
-					const char* rowName = altarCls >= 0 && altarCls < 4 ? kRowName[altarCls] : "REFORGE";
-					focusRow(2, y - 6 * k, y + 58 * k);
-					bullet({ L, y + 2 * k }, 2, can);
-					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, locked ? kLockedCol : kParch, rowName);
-					const char* holdWhat = altarCls == 2 ? "Hold an elemental bow to reforge it" : altarCls == 0 ? "Hold a summon spell to bind its next pact" : altarCls == 3 ? "Hold a touch to imbue it (and your blade)" : "Hold a spell to reforge it";
-					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, locked ? kLockedCol : IM_COL32(196, 182, 160, 235),
-						locked ? "Locked until three Echo Altars are freed (" + std::to_string(s.freedCount) + " of " + std::to_string(s.forgeAt) + ")" : g < 0 ? std::string(holdWhat)
-						: ArmsName(g) + (maxed ? std::string("  -  fully ascended") : s.bowHeld >= 0 ? "  -  next: " + std::string(Bows::TierName(s.bowHeld, lvl + 1)) : asc >= 0 ? "  -  next: Ascend " + std::to_string(asc + 1) + " of 3 (six freed altars)" : ladder ? "  -  next: " + std::string(Arcana::Name(nextSp)) : std::string("  -  more power, less magicka")));
-					for (int q = 0; q < (locked ? 0 : marks); ++q) {  // the forge marks
-						const ImVec2 pc{ L + 150 * k + q * 18 * k, y + 14 * k };
-						dl->AddQuadFilled({ pc.x, pc.y - 6 * k }, { pc.x + 5 * k, pc.y }, { pc.x, pc.y + 6 * k }, { pc.x - 5 * k, pc.y }, q < lvl ? spellCol(g, 1.0f) : IM_COL32(60, 52, 46, 220));
-					}
-					if (can) {
-						price(y + 2 * k, cost, s.points >= cost);
-					}
-					// the kills its next reforge still needs, as a bar in the class's colour
-					if (!locked && lvl < gen::kForgeMax && (s.bowHeld >= 0 || sp >= 0)) {
-						const int have = s.bowHeld >= 0 ? Classes::BowMastery(s.bowHeld) : Classes::Mastery(sp);
-						const int need = std::max(1, s.bowHeld >= 0 ? Classes::BowMasteryNeed(s.bowHeld) : Classes::MasteryNeed(sp));
-						const float fr = std::clamp(static_cast<float>(have) / static_cast<float>(need), 0.0f, 1.0f);
-						const float bx = L + 36 * k, bw = Rr - bx - 120 * k, by = y + 56 * k;
-						dl->AddRectFilled({ bx, by }, { bx + bw, by + 3 * k }, IM_COL32(30, 26, 22, 200));
-						dl->AddRectFilled({ bx, by }, { bx + bw * fr, by + 3 * k }, tint);
-						const std::string kl = std::to_string(std::min(have, need)) + " / " + std::to_string(need) + " kills";
-						Txt(dl, g_body, 14 * k, { Rr - Measure(g_body, 14 * k, kl).x, by - 8 * k }, have >= need ? tint : IM_COL32(170, 156, 132, 220), kl);
-						y += 10 * k;
-					}
-					y += 64 * k;
-				}
-				Divider(dl, cx, y, w * 0.30f, k, 0.6f);
-				y += 14 * k;
 				// [3] brews: a row of medallions, the chosen one described under it
 				{
 					const auto menu = Perks::Menu();  // (Noah: each class its own perks) the shared draughts, then your class's

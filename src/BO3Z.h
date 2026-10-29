@@ -83,7 +83,7 @@ namespace bo3z
 	namespace PowerUps
 	{
 		void Tick(float a_delta);
-		void MaybeDrop(const RE::NiPoint3& a_at);
+		void MaybeDrop(const RE::NiPoint3& a_at, bool a_force = false);  // (a_force: always one - the boss night's dawn)
 		bool InstaKill();
 		float PointsMult();
 		bool FireSale();
@@ -101,6 +101,7 @@ namespace bo3z
 	}
 
 	namespace Net { struct State; }
+	namespace Hud { struct State; }
 
 	// (the audit: inventories changed with the inventory open crash Skyrim - and with Skyrim Souls the world goes on while
 	// it is) any menu that shows items or spells, or the game paused: no adding, removing or equipping now
@@ -310,6 +311,7 @@ namespace bo3z
 		void        LeaveLobby();
 		std::vector<FriendGame> FriendsInParties();  // friends in Skyrim with a party open
 		void        PowerUpTaken(int a_kind);
+		void        TellClass(int a_cls);   // (the altar rework) your class, for the party's auras
 		void        AltarBusy(int a_town, bool a_on);  // our roll holds that altar (one roller at a time)
 		void        EggDone(int a_town);  // a hidden quest finished: the party near that altar shares it
 		std::vector<int> TakeRemotePowerUps();
@@ -371,6 +373,17 @@ namespace bo3z
 		void             MarkForSummons(RE::Actor* a_target);  // (the Summoner's staff) every summon of yours turns on it until it dies or another is marked
 		void             RiftHit(RE::Actor* a_target);     // (the Summoner's Riftblade) every fifth strike: a Flame Atronach for 10 s
 		bool             IsRiftblade(RE::FormID a_source);
+		// (the altar rework: Kit.cpp) the pieces a class's kit is made of
+		RE::TESObjectWEAP* CrossbowForm(int a_elem);   // the Ember (0), Rime (1) or Storm (2) Crossbow
+		void             TakeCrossbow(int a_elem);    // in hand with a full quiver of its bolts; the others back in the chest
+		void             SetCrossbowLevel(const RE::TESForm* a_w, int a_level);
+		void             GiveGear(RE::TESForm* a_form, int a_count, bool a_equip);
+		void             LearnSpell(RE::SpellItem* a_sp);  // taught and kept with your class (it goes with it when you switch)
+		void             QueueThrall(RE::Actor* a_struck, int a_level);  // should it fall now, it rises as your thrall
+		RE::TESObjectWEAP* Riftblade();
+		RE::TESObjectWEAP* SpellswordBlade();         // the Spellsword's one-handed sword
+		int              TwoHanderCount();            // the Spellsword's relic two-handers
+		RE::TESObjectWEAP* TwoHander(int a_i);
 		void             ConjurerStaffHit(RE::Actor* a_target, RE::FormID a_source);  // the Conjurer's Staff's bolt struck: a burst, and the marks
 		void             TickFast(float a_delta);      // where the Subsuming Vortex's arrows come down
 		int              RestockWonder();              // the Vortex's arrows topped up (quivers, Max Ammo)
@@ -434,6 +447,7 @@ namespace bo3z
 		std::array<int, 2> Hands();                      // the Coffer spell in each hand (0 left, 1 right; -1 none)
 		int                Level(int a_index);           // reforged 0..gen::kForgeMax
 		void               SetLevel(int a_index, int a_level);
+		void               ReapplyAll();                 // every spell's power and cost set again (a party aura came or went)
 		std::vector<std::uint8_t> Levels();               // for the co-save
 		void               SetLevels(const std::vector<std::uint8_t>& a_levels);
 	}
@@ -455,6 +469,7 @@ namespace bo3z
 		int                       Roll();             // one you don't carry, of the tiers the altars allow (-1)
 		std::vector<std::uint8_t> Levels();           // for the co-save
 		void                      SetLevels(const std::vector<std::uint8_t>& a_levels);
+		void                      SetLevel(int a_i, int a_level);  // (Kit.cpp) its tier, 0..3
 		bool                      IsStrikeSpell(const RE::MagicItem* a_item);
 		int                       SpecialKind();      // the special ammo loaded (-1 none: 0 piercing, 1 cluster, 2 frost-lock, 3 soul-bind)
 		int                       SpecialLeft();
@@ -934,7 +949,16 @@ namespace bo3z
 			float       beamGrow{ 0 };  // how far the newest beam has reached from its stone toward the heart (0..1)  // the altar's focused row (Shops Row) and, a third spell won, the choice in focus
 			// the shrine: its roll (0 idle, 1 charging, 2 spinning, 3 offering), progress 0..1, the spell shown, the price; a Thu'um to learn there
 			int         rollPhase{ 0 }, rollGun{ -1 }, rollCost{ 0 }, shrineShout{ -1 };
-			int         specialSel{ 0 }, specialKind{ -1 }, specialLeft{ 0 };  // (the Ranger's special ammo: picked at the altar, loaded)
+			int         specialSel{ 0 }, specialKind{ -1 }, specialLeft{ 0 };
+			// (the altar rework) your kit, the Armory, the Infusion roll and the Dragon Priests' relics (Kit.cpp)
+			struct KitLine { int id{ 0 }; std::string name, info; int tier{ 0 }, asc{ 0 }, cost{ -1 }; bool can{ false }, carried{ true }, relic{ false }; std::string infusion; std::uint32_t color{ 0xC8B48C }; };
+			std::vector<KitLine> kitLines, armoryLines;
+			std::string          infuseItem, infuseNow, infuseSpin;  // the item the roll is set on, its infusion now, the name flashing while it spins
+			int                  infuseCost{ 0 };
+			bool                 infuseCan{ false }, infuseSpinning{ false };
+			int                  relicTokens{ 0 }, relicSel{ 0 };
+			std::string          relicA, relicB, relicDescA, relicDescB;
+			float                armorBonus{ 0 };   // the class's armour from its upgrades (0..0.3)  // (the Ranger's special ammo: picked at the altar, loaded)
 			std::array<float, 8> puLeft{};  // power-ups running: seconds left, by kind
 			int         dragonBond{ 0 };   // the glider's dragon: its bond (0-3)
 			bool        bondLocked{ false };
@@ -1083,5 +1107,48 @@ namespace bo3z
 	{
 		void InstallMenuWatch();
 		void InstallLoadGuard();  // (a save holding an extra twice no longer crashes as it loads)
+	}
+
+	// (Noah: "each class has its set starting gear that can be scaled as the player progresses") the altar rework: your
+	// class's kit and Armory, every item on one tier curve (Base, I, II, III Legendary, then Ascends), gated by cities freed;
+	// the altar's roll is the Infusion on an item; each Dragon Priest's relic; your armour from your upgrades (Kit.cpp)
+	namespace Kit
+	{
+		inline constexpr int kRelicBase = 32;      // item ids: 0.. the class's kit and Armory, 32.. its relics
+		inline constexpr int kInfusions = 8;       // 1 Blast Furnace, 2 Dead Wire, 3 Thunder Wall, 4 Cryo-Lock, 5 Turned, 6 Cluster, 7 Piercing, 8 Soul Siphon
+		std::string_view InfusionName(int a_kind);
+		void  OnKitGiven(int a_cls);              // a class's starting kit handed over: those items are owned
+		void  Fill(Hud::State& a_h);              // the altar's lines (under the Hud lock)
+		std::vector<int> Rows();                  // the altar's rows for the kit (their ids, in order: kit, Armory)
+		bool  Select(int a_id, RE::TESObjectREFR* a_altar);  // a kit row taken: upgrade (or take it out of the chest); an Armory row: buy
+		void  InfuseSide(int a_dir);              // the Infusion row: which item
+		bool  Infuse();                           // roll the Infusion
+		void  RelicSide(int a_dir);
+		bool  TakeRelic();
+		int   RelicTokens();
+		void  OnPriestSlain();                    // a Dragon Priest fell: one relic to take at an altar
+		int   Tier(int a_item);                   // its upgrades (0 Base .. 3 Legendary, then Ascends); -1 not owned
+		int   TierOfWeapon(const RE::TESForm* a_w);   // a kit or relic weapon's upgrades (-1: not one)
+		int   TierOfSpell(const RE::TESForm* a_sp);   // a relic spell's (a support spell, a hero's pact) upgrades (-1)
+		int   TierOfSummon(RE::Actor* a_summon);      // a hero or army a relic called up (-1)
+		int   BowAscends(int a_bow);
+		int   CrossbowAscends(int a_elem);
+		int   RiftTier();                         // the Riftblade's upgrades (0..)
+		float QuiverRadiusMult();                 // the Ranger's relic quivers: its bows' and crossbows' blasts this much wider
+		float ArmorResist();                      // 0 .. 0.30 of the night's blows taken off
+		float AuraCostMult();                     // (co-op) a Destruction mage in the party: spells cost less
+		float AuraAmmoMult();                     // (co-op) a Ranger in the party: ammo grows back sooner
+		float AuraMeleeTaken();                   // (co-op) a Spellsword in the party: blows land softer
+		bool  PartyHas(int a_cls);                // another player in the party plays that class
+		void  HeardClass(std::uint64_t a_from, int a_cls);
+		void  OnPlayerHit(RE::Actor* a_target, const RE::TESForm* a_source);  // your blow or spell landed: its item's Infusion
+		void  OnBowHit(int a_bow, RE::Actor* a_target);
+		void  OnSummonHit(RE::Actor* a_summon, RE::Actor* a_target);
+		void  OnKill(RE::Actor* a_dying);
+		void  Tick(float a_delta);
+		std::vector<std::uint8_t> State();        // co-save 'KIT1'
+		void  SetState(const std::vector<std::uint8_t>& a_v);
+		void  Revert();
+		bool  Loaded();                           // this save carries the rework's record
 	}
 }
