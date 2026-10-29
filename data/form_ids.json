@@ -1301,6 +1301,15 @@
   "MGEF:reanimatebolt": "0xd11",
   "SPEL:reanimate_1": "0xd12",
   "SPEL:reanimate_2": "0xd13",
-  "SPEL:reanimate_3": "0xd14"
+  "SPEL:reanimate_3": "0xd14",
+  "EFSH:riftshader1": "0xd15",
+  "MGEF:riftfire1": "0xd16",
+  "ENCH:riftfire1": "0xd17",
+  "EFSH:riftshader2": "0xd18",
+  "MGEF:riftfire2": "0xd19",
+  "ENCH:riftfire2": "0xd1a",
+  "EFSH:riftshader3": "0xd1b",
+  "MGEF:riftfire3": "0xd1c",
+  "ENCH:riftfire3": "0xd1d"
  }
 }

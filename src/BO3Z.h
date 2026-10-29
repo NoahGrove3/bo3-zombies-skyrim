@@ -373,6 +373,7 @@ namespace bo3z
 		void             MarkForSummons(RE::Actor* a_target);  // (the Summoner's staff) every summon of yours turns on it until it dies or another is marked
 		void             RiftHit(RE::Actor* a_target);     // (the Summoner's Riftblade) every fifth strike: a Flame Atronach for 10 s
 		bool             IsRiftblade(RE::FormID a_source);
+		bool             IsRiftSummon(RE::Actor* a_actor);  // one of the Riftblade's atronachs
 		// (the altar rework: Kit.cpp) the pieces a class's kit is made of
 		RE::TESObjectWEAP* CrossbowForm(int a_elem);   // the Ember (0), Rime (1) or Storm (2) Crossbow
 		void             TakeCrossbow(int a_elem);    // in hand with a full quiver of its bolts; the others back in the chest

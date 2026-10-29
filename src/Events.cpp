@@ -177,6 +177,50 @@ namespace bo3z
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
+		// (Noah: "make any of my attacks deal zero damage to my summons") one of your summons (Skyrim's own, ours called up
+		// here, the risen and the Riftblade's atronachs) is never hurt by you: what your blow took is given straight back,
+		// and a killing blow of yours is turned aside
+		bool MySummon(RE::Actor* a_this)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!a_this || !p || a_this == p) return false;
+			if (a_this->IsCommandedActor()) {
+				if (auto c = a_this->GetCommandingActor(); c && c.get() == p) return true;
+			}
+			return Classes::IsOwnSummon(a_this);
+		}
+		bool ByPlayer(RE::Actor* a_attacker)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			return a_attacker && p && a_attacker == p;
+		}
+		struct SummonHarm
+		{
+			static void thunk(RE::Actor* a_this, RE::Actor* a_attacker, float a_damage)
+			{
+				func(a_this, a_attacker, a_damage);
+				if (ByPlayer(a_attacker) && MySummon(a_this) && !a_this->IsDead()) {
+					auto* av = a_this->AsActorValueOwner();
+					av->RestoreActorValue(RE::ActorValue::kHealth, std::abs(a_damage));  // (the blow given back)
+				}
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
+		struct SummonKill
+		{
+			static void thunk(RE::Actor* a_this, RE::Actor* a_attacker, float a_damage, bool a_sendEvent, bool a_ragdollInstant)
+			{
+				if (a_this && !a_this->IsDead() && ByPlayer(a_attacker) && MySummon(a_this)) {
+					auto*       av = a_this->AsActorValueOwner();
+					const float hp = av->GetActorValue(RE::ActorValue::kHealth), top = av->GetPermanentActorValue(RE::ActorValue::kHealth);
+					if (hp < top * 0.5f) av->RestoreActorValue(RE::ActorValue::kHealth, top * 0.5f - hp);
+					if (static int said = 0; said++ < 10) logger::info("summons: your blow on {} turned aside", a_this->GetName());
+					return;
+				}
+				func(a_this, a_attacker, a_damage, a_sendEvent, a_ragdollInstant);
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
 		struct PlayerUpdate
 		{
 			static void thunk(RE::PlayerCharacter* a_this, float a_delta)
@@ -1202,6 +1246,12 @@ namespace bo3z
 			PlayerUpdate::func = vtbl.write_vfunc(0xAD, PlayerUpdate::thunk);
 			PlayerKill::func = vtbl.write_vfunc(0x10E, PlayerKill::thunk);
 			logger::info("hooked PlayerCharacter::Update");
+			{
+				REL::Relocation<std::uintptr_t> ch{ RE::VTABLE_Character[0] };
+				SummonHarm::func = ch.write_vfunc(0x104, SummonHarm::thunk);
+				SummonKill::func = ch.write_vfunc(0x10E, SummonKill::thunk);
+				logger::info("hooked Character::HandleHealthDamage / Kill: your summons never take your blows");
+			}
 			REL::Relocation<std::uintptr_t> hud{ RE::VTABLE_HUDMenu[0] };
 			NoticeFilter::func = hud.write_vfunc(0x4, NoticeFilter::thunk);
 			if (const auto v = MagicTargetVtbl(RE::VTABLE_Character)) {

@@ -479,6 +479,64 @@ namespace bo3z::Kit
 		constexpr RE::FormID kUiMove = 0x0006CC6F, kUiLand = 0x00068D83;
 	}
 
+	namespace
+	{
+		std::string TierSuffix(int a_t)
+		{
+			static constexpr const char* kS[4] = { "", " I", " II", " III" };
+			return a_t <= 3 ? kS[std::max(0, a_t)] : fmt::format(" III +{}", a_t - 3);
+		}
+		struct BaseLook { std::string name; std::uint16_t damage{ 0 }; RE::EnchantmentItem* ench{ nullptr }; };
+		std::unordered_map<RE::FormID, BaseLook> g_base;
+		void Look(RE::TESObjectWEAP* a_w, int a_tier)
+		{
+			if (!a_w || a_tier < 0) return;
+			auto [it, fresh] = g_base.try_emplace(a_w->GetFormID());
+			if (fresh) it->second = { a_w->GetName() ? a_w->GetName() : "", a_w->attackDamage, a_w->formEnchanting };
+			const auto& b = it->second;
+			const std::string name = b.name + TierSuffix(a_tier);
+			if (name != (a_w->GetName() ? a_w->GetName() : "")) a_w->fullName = name;
+			a_w->attackDamage = static_cast<std::uint16_t>(std::clamp<float>(std::round(b.damage * UpgradeMult(a_tier)), 1.0f, 9999.0f));
+		}
+	}
+	// (Noah) the kit's weapons as their tiers make them: name, damage, and the Riftblade's fire
+	void SyncWeapons(bool a_reequip)
+	{
+		const int c = Cls();
+		if (c < 0) return;
+		const auto defs = Defs(c);
+		for (int i = 0; i < static_cast<int>(defs.size()); ++i) {
+			if (!(g_cls[c].owned >> i & 1)) continue;
+			const int t = ItemTier(c, i);
+			switch (defs[i].kind) {
+			case Kind::Blade: {
+				const bool rift = std::string_view(defs[i].ref) == "riftblade";
+				auto*      w = rift ? Classes::Riftblade() : Classes::SpellswordBlade();
+				Look(w, t);
+				if (rift && w) {
+					auto*       orig = g_base[w->GetFormID()].ench;
+					auto*       want = t <= 0 ? orig : RE::TESDataHandler::GetSingleton()->LookupForm<RE::EnchantmentItem>(gen::kRiftEnch[std::clamp(t, 1, 3) - 1], gen::kPlugin);
+					if (want && w->formEnchanting != want) {
+						w->formEnchanting = want;
+						// (the blade in hand: taken off and on again, so its new fire shows)
+						auto* p = RE::PlayerCharacter::GetSingleton();
+						auto* em = RE::ActorEquipManager::GetSingleton();
+						if (a_reequip && p && em && !ItemMenusOpen() && p->GetEquippedObject(false) == w) {
+							em->UnequipObject(p, w, nullptr, 1, nullptr, false, false, false, true);
+							em->EquipObject(p, w, nullptr, 1, nullptr, false, false, false, true);
+						}
+					}
+				}
+				break;
+			}
+			case Kind::Bow: if (const int b = BowIndex(defs[i].ref); b >= 0) if (auto* f = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kBows[b].weap, gen::kPlugin)) Look(f, t); break;
+			case Kind::Crossbow: Look(Classes::CrossbowForm(Elem(defs[i])), t); break;
+			default: break;
+			}
+		}
+		if (c == 3) for (int r = 0; r < RelicCount(3) && r < kMaxRelics; ++r) if (g_cls[3].relics >> r & 1) Look(Classes::TwoHander(r), g_cls[3].relicTier[r]);
+	}
+
 	std::string_view InfusionName(int a_kind) { return a_kind >= 0 && a_kind <= kInfusions ? kInfName[a_kind] : "None"; }
 
 	void OnKitGiven(int a_cls)
@@ -631,6 +689,7 @@ namespace bo3z::Kit
 		if (!Step(c, item)) { Points::Refund(UpgradeCost(t + 1)); return false; }
 		st.upgrades = static_cast<std::uint8_t>(std::min(255, st.upgrades + 1));
 		if (a_altar) Forms::PlayAt(gen::Sound::forge_upgrade, a_altar);
+		SyncWeapons(true);
 		const std::string now = ItemName(c, item);
 		Hud::Banner((now != was ? was + "  ->  " + now : now) + "  -  " + (t + 1 <= 3 ? std::string(TierLabel(t + 1)) : "Ascend " + std::to_string(t + 1 - 3)) + fmt::format("   (armour +{:.0f}%)", ArmorResist() * 100.0f), 4.5f);
 		logger::info("kit: {} -> tier {} ({})", now, t + 1, Classes::Name(c));
@@ -729,6 +788,7 @@ namespace bo3z::Kit
 	}
 	int TierOfSummon(RE::Actor* a_summon)
 	{
+		if (a_summon && Classes::IsRiftSummon(a_summon)) return RiftTier();  // (the Riftblade's atronachs hit by its tier)
 		auto* base = a_summon ? a_summon->GetActorBase() : nullptr;
 		if (!base || Cls() != 0) return -1;
 		for (int r = 0; r < RelicCount(0) && r < kMaxRelics; ++r) {
@@ -835,8 +895,6 @@ namespace bo3z::Kit
 		if (it == g_last.end() || std::chrono::steady_clock::now() - it->second.at > std::chrono::seconds(3)) return;
 		const int item = it->second.item;
 		g_last.erase(it);
-		// (Noah: the Riftblade's Legendary tier) the dead it kills rise as your thralls
-		if (c == 0 && item == 0 && RiftTier() >= 3) Classes::QueueThrall(a_dying, 0);
 		auto* inf = InfusionOf(c, item);
 		const int kind = inf ? *inf : 0;
 		const float share = ProcShare(TierOfItem(c, item));
@@ -882,36 +940,15 @@ namespace bo3z::Kit
 			static float costWas = 1.0f;
 			if (const float cm = AuraCostMult(); cm != costWas) costWas = cm, Arcana::ReapplyAll();
 		}
-		// (the tier glows) a blade of the kit in hand and drawn, past its Base: its element's light at the hand
-		static float glow = 0;
-		if ((glow -= a_delta) <= 0) {
-			glow = 2.0f;
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			const int c = Cls();
-			if (p && c >= 0 && p->AsActorState()->IsWeaponDrawn() && !ItemMenusOpen()) {
-				auto* held = p->GetEquippedObject(false);
-				const int t = held ? TierOfWeapon(held) : -1;
-				if (t >= 1) {
-					// fire for the Riftblade; for the Spellsword the element of the spell its blade carries
-					std::string_view row = "flamerepeater";
-					if (c == 3) {
-						const int bs = Classes::BladeSpell();
-						const int el = bs >= 0 ? Arcana::ElementOf(bs) : coffer::kArcane;
-						row = el == coffer::kFrost ? "frostlancer" : el == coffer::kShock ? "stormcaller" : el == coffer::kFire ? "flamerepeater" : "aetherium";
-					}
-					for (const auto& r : gen::kSpellcraft) {
-						if (r.id != row) continue;
-						if (auto* art = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSArtObject>(r.handArt, gen::kPlugin)) {
-							p->ApplyArtObject(art, 2.4f);
-							if (t >= 3) p->ApplyArtObject(art, 2.4f);  // (Legendary: twice as bright)
-						}
-						break;
-					}
-				}
-			}
+		// (Noah: "upgrading the Riftblade didn't change anything on the inventory stats", "the effects should enhance the
+		// current detail") every kit weapon's card follows its tier - its name and its damage - and the Riftblade's own fire
+		// burns brighter each tier
+		static float look = 0;
+		if ((look -= a_delta) <= 0) {
+			look = 1.0f;
+			SyncWeapons(false);
 		}
 	}
-
 	// ---- the co-save ----
 	std::vector<std::uint8_t> State()
 	{

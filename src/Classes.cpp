@@ -1808,6 +1808,7 @@ namespace bo3z::Classes
 		std::vector<PendingThrall>                        g_pendingThrall;  // struck by Reanimate: does it fall?
 		std::vector<std::pair<RE::ActorHandle, float>>    g_thralls;        // the risen dead and the Riftblade's atronachs: seconds left
 		std::mt19937                                      g_summonRng{ std::random_device{}() };
+		std::unordered_set<RE::FormID>                    g_riftSummons;     // the Riftblade's atronachs (they hit by its tier)
 		std::vector<RE::ActorHandle> g_summonMarks;  // (the Summoner's staff) the ones your summons are told to kill
 		int CommandedNow(RE::PlayerCharacter* a_p)
 		{
@@ -2173,46 +2174,40 @@ namespace bo3z::Classes
 		last = now;
 		// (Noah: "the Riftblade hits mark that enemy, and your summons go after it")
 		if (!a_target->IsDead()) g_summonMarks = { a_target->GetHandle() };
-		// (Noah, the altar rework: its three tiers) Base every 5th hit a Flame Atronach for 10 s; I every 4th, 15 s; II every
-		// 3rd, a Flame, Frost or Storm Atronach, three at once; III (Legendary) as II, and every 10th hit a Dremora steps out
+		// (Noah: "the abilities should change per level to a stronger form of the base") always the Flame Atronach, stronger
+		// each tier: Base every 5th hit one for 10 s; I every 4th, 15 s, larger and tougher; II every 3rd, the potent
+		// atronach, 20 s, two at once; III (Legendary) every 3rd, a great potent atronach, 25 s, three at once, and the
+		// rift it steps out of bursts into flame
 		const int t = std::clamp(Kit::RiftTier(), 0, 3);
-		static constexpr int   kEvery[4] = { 5, 4, 3, 3 }, kCap[4] = { 2, 2, 3, 3 };
-		static constexpr float kSecs[4] = { 10.0f, 15.0f, 15.0f, 15.0f };
-		const float yaw = std::atan2(p->GetPosition().x - a_target->GetPosition().x, p->GetPosition().y - a_target->GetPosition().y);
-		const RE::NiPoint3 at = a_target->GetPosition() + RE::NiPoint3{ std::sin(yaw) * 110.0f, std::cos(yaw) * 110.0f, 0.0f };
-		if (t >= 3 && ++bigHits >= 10) {
-			bigHits = 0;
-			RE::TESNPC* lord = nullptr;  // the Daedra's first rung's Dremora (Calling of the Conjurer)
-			for (int i = 0; i < static_cast<int>(coffer::kSpells.size()) && !lord; ++i) {
-				if (coffer::kSpells[i].cls != coffer::kSummoner || coffer::kSpells[i].rung != 1 || std::string_view(coffer::kSpells[i].ladderLabel) != "Daedra") continue;
-				if (auto* sp = Arcana::Spell(i)) for (auto* e : sp->effects) if (e && e->baseEffect && e->baseEffect->data.associatedForm) lord = e->baseEffect->data.associatedForm->As<RE::TESNPC>();
-			}
-			if (lord) {
-				Tasks::Add([lord, at] {
-					Gun::FxBlast("darkmassive", at + RE::NiPoint3{ 0, 0, 60.0f });
-					if (auto* d = RaiseAlly(RE::PlayerCharacter::GetSingleton(), lord, at, 15.0f, 0.0f, 4)) logger::info("classes: Riftblade - a great rift, {} steps out for 15 s", d->GetName());
-				});
-			}
-		}
+		static constexpr int   kEvery[4] = { 5, 4, 3, 3 }, kCap[4] = { 1, 2, 2, 3 };
+		static constexpr float kSecs[4] = { 10.0f, 15.0f, 20.0f, 25.0f }, kScale[4] = { 1.0f, 1.1f, 1.2f, 1.35f }, kHp[4] = { 1.0f, 1.4f, 1.8f, 2.4f };
 		if (++hits < kEvery[t]) return;
 		hits = 0;
-		static constexpr std::uint32_t kAtronach[3] = { 0x000204C0, 0x000204C1, 0x000204C2 };  // the summoned Flame, Frost and Storm Atronachs (Skyrim.esm)
-		int kind = 0;
-		if (t >= 2) kind = std::uniform_int_distribution<int>(0, 2)(g_summonRng);
-		auto* base = RE::TESForm::LookupByID<RE::TESNPC>(kAtronach[kind]);
-		if (!base) base = RE::TESForm::LookupByID<RE::TESNPC>(kAtronach[0]);
-		static constexpr const char* kLook[3] = { "fireball", "frost", "runeshock" };
-		const float secs = kSecs[t];
-		const int   cap = kCap[t];
-		Tasks::Add([base, at, secs, cap, kind] {  // (out of the hit event: set down on the main thread's own turn)
+		(void)bigHits;
+		const float yaw = std::atan2(p->GetPosition().x - a_target->GetPosition().x, p->GetPosition().y - a_target->GetPosition().y);
+		const RE::NiPoint3 at = a_target->GetPosition() + RE::NiPoint3{ std::sin(yaw) * 110.0f, std::cos(yaw) * 110.0f, 0.0f };
+		auto* base = RE::TESForm::LookupByID<RE::TESNPC>(t >= 2 ? 0x0004E940 : 0x000204C0);  // (the Flame Atronach; from Tier II the potent one)
+		if (!base) base = RE::TESForm::LookupByID<RE::TESNPC>(0x000204C0);
+		const float secs = kSecs[t], scale = kScale[t], hpMul = kHp[t];
+		const int   cap = kCap[t], tier = t;
+		Tasks::Add([base, at, secs, cap, scale, hpMul, tier] {  // (out of the hit event: set down on the main thread's own turn)
 			auto* pl = RE::PlayerCharacter::GetSingleton();
-			Gun::FxBlast(kLook[kind], at + RE::NiPoint3{ 0, 0, 60.0f });
+			Gun::FxBlast(tier >= 2 ? "firestorm" : "fireball", at + RE::NiPoint3{ 0, 0, 60.0f });
+			if (tier >= 3) Gun::AreaHurt(at, 260.0f, 0.6f, "");  // (the Legendary rift bursts into flame)
 			if (auto* a = RaiseAlly(pl, base, at, secs, 0.0f, cap)) {
+				g_riftSummons.insert(a->GetFormID());
+				if (g_riftSummons.size() > 200) g_riftSummons.clear();
+				a->SetScale(scale);
+				auto* av = a->AsActorValueOwner();
+				const float top = av->GetPermanentActorValue(RE::ActorValue::kHealth);
+				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, top * (hpMul - 1.0f));
+				av->RestoreActorValue(RE::ActorValue::kHealth, 1.0e6f);
 				static int told = 0;
-				if (told++ < 10) logger::info("classes: Riftblade - a rift opens, {} steps out for {:.0f} s", a->GetName(), secs);
+				if (told++ < 10) logger::info("classes: Riftblade (tier {}) - a rift opens, {} steps out for {:.0f} s", tier, a->GetName(), secs);
 			}
 		});
 	}
+	bool IsRiftSummon(RE::Actor* a_actor) { return a_actor && g_riftSummons.contains(a_actor->GetFormID()); }
 	bool IsRiftblade(RE::FormID a_source)
 	{
 		static auto* w = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kRiftblade, gen::kPlugin);

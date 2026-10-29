@@ -221,6 +221,7 @@ o.append(f'\tinline constexpr std::array<AudioMix, {len(_AM)}> kAudioMix{{ {{' +
 o.append(f'\tinline constexpr std::uint32_t kClassChest = 0x{IDS[("CONT", "classchest")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kMuzzleLight = 0x{IDS[("LIGH", "muzzle")]:03X}, kLanternLight = 0x{IDS[("LIGH", "lantern")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kRiftblade = 0x{IDS[("WEAP", "riftblade")]:03X};  // the Summoner dagger: Rift Stab')
+o.append('\tinline constexpr std::uint32_t kRiftEnch[3] = { ' + ', '.join(f'0x{IDS[("ENCH", f"riftfire{n}")]:03X}' for n in (1, 2, 3)) + ' };  // its fire, brighter each tier')
 o.append(f'\tinline constexpr std::uint32_t kStandStat = 0x{IDS[("STAT", "stand")]:03X};  // the station platform (dressing on the Coffer)')
 o.append('\tinline constexpr float kStandHalfX = 220.0f, kStandFrontY = -220.0f, kStandBackY = 220.0f, kStandMaxSlope = 70.0f;  // footprint in plan space (tools/stand.py)')
 o.append(f'\tinline constexpr float kRegenDelay = {F(S["rounds"]["rows"][0]["regenDelaySeconds"])}, kRegenPerSecond = {F(S["rounds"]["rows"][0]["regenPerSecond"])};')

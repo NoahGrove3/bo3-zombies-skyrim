@@ -1522,6 +1522,7 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kClassChest = 0xD01;
 	inline constexpr std::uint32_t kMuzzleLight = 0x8DC, kLanternLight = 0xD0F;
 	inline constexpr std::uint32_t kRiftblade = 0xD10;  // the Summoner dagger: Rift Stab
+	inline constexpr std::uint32_t kRiftEnch[3] = { 0xD17, 0xD1A, 0xD1D };  // its fire, brighter each tier
 	inline constexpr std::uint32_t kStandStat = 0x926;  // the station platform (dressing on the Coffer)
 	inline constexpr float kStandHalfX = 220.0f, kStandFrontY = -220.0f, kStandBackY = 220.0f, kStandMaxSlope = 70.0f;  // footprint in plan space (tools/stand.py)
 	inline constexpr float kRegenDelay = 5.0f, kRegenPerSecond = 0.35f;

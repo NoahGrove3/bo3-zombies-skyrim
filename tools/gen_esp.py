@@ -5,7 +5,7 @@ import json, struct, pathlib
 from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing, blasts
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
-T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger']}
+T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger', 'efsh_enchfire', 'mgef_enchfire', 'ench_fire05']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
 def z(s): return s.encode('cp1252') + b'\0'
 def sub(name, data):
@@ -18,7 +18,7 @@ def group(label, recs):
     data = b''.join(recs)
     return b'GRUP' + struct.pack('<I', 24 + len(data)) + label.encode() + struct.pack('<iHHHH', 0, 0, 0, 44, 0) + data
 fid = lambda kind, key: SELF | IDS[(kind, key)]
-recs = {'WOOP': [], 'SHOU': [], 'GLOB': [], 'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': [], 'MUSC': [], 'MUST': [], 'VTYP': [], 'FSTS': [], 'LSCR': [], 'ARTO': [], 'QUST': [], 'PERK': []}
+recs = {'EFSH': [], 'WOOP': [], 'SHOU': [], 'GLOB': [], 'FACT': [], 'AMMO': [], 'PROJ': [], 'ENCH': [], 'SPEL': [], 'ARMA': [], 'ARMO': [], 'NPC_': [], 'STAT': [], 'LIGH': [], 'SNDR': [], 'MGEF': [], 'ACTI': [], 'WEAP': [], 'ALCH': [], 'MUSC': [], 'MUST': [], 'VTYP': [], 'FSTS': [], 'LSCR': [], 'ARTO': [], 'QUST': [], 'PERK': []}
 
 for p in S['perks']['rows']:
     data = bytearray(tsub('mgef', 'DATA'))
@@ -322,10 +322,44 @@ for name, hx in T['weap_daedricdagger']['subs']:
     b = bytes.fromhex(hx)
     if name == 'EDID': b = z('UN_Riftblade')
     elif name == 'FULL': b = z('Riftblade')
-    elif name == 'DESC': b = z('A Daedric blade that burns. Every fifth strike tears a rift on the foe, and a Flame Atronach steps out to fight for you.')
+    elif name == 'DESC': b = z('A Daedric blade that burns. Its strikes tear rifts: a Flame Atronach steps out to fight for you. Base: every 5th strike, 10 s. I: every 4th, 15 s, larger. II: every 3rd, a potent atronach, 20 s, two at once. III: a great one, 25 s, three at once - the rift bursts into flame.')
     elif name == 'DATA': b = struct.pack('<IfH', 900, 6.0, 14)
     subs.append(sub(name, b))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'riftblade'), subs))
+
+# (Noah: "the weapon effects when upgrading should enhance the current detail - the Riftblade is black and red with a red
+# ember breathing effect: make that brighter or a different colour") the Riftblade's fire enchantment's own shader,
+# three times over: brighter and steadier each tier; from Tier II its embers fly off the blade; Legendary burns gold-white
+# into crimson (src/Kit.cpp swaps the blade's enchantment to its tier's)
+RIFT_TIERS = [
+    dict(persist=0.75, pulse=0.6, particles=False),
+    dict(persist=0.95, pulse=0.45, particles=True, birth=55.0, alpha=(0.05, 0.30, 0.05), scale2=8.0, keys=((255, 236, 210), (255, 190, 130), (250, 140, 80))),
+    dict(persist=1.15, pulse=0.3, particles=True, birth=95.0, alpha=(0.10, 0.55, 0.10), scale2=10.0, life=0.75, keys=((255, 250, 235), (255, 196, 70), (235, 50, 40)), edge=(255, 70, 30)),
+]
+for n, t in enumerate(RIFT_TIERS, start=1):
+    d = bytearray(tsub('efsh_enchfire', 'DATA'))
+    if t['particles']: d[0] &= ~0x08                       # its embers on (the vanilla shader keeps them off)
+    struct.pack_into('<f', d, 0x20, t['persist'])           # the fill's glow, brighter
+    struct.pack_into('<f', d, 0x24, t['pulse'])             # its breathing, steadier
+    if t['particles']:
+        struct.pack_into('<f', d, 0x7C, t['birth'])
+        struct.pack_into('<fff', d, 0xC8, *t['alpha'])
+        struct.pack_into('<f', d, 0xB0, t['scale2'])
+        for k, rgb in enumerate(t['keys']): d[0xBC + 4 * k:0xBC + 4 * k + 3] = bytes(rgb)
+        if 'life' in t: struct.pack_into('<f', d, 0x84, t['life'])
+    if 'edge' in t:
+        d[0x38:0x3B] = bytes(t['edge'])
+    subs = [sub('EDID', z(f'UN_RiftShader{n}'))]
+    for name, hx in T['efsh_enchfire']['subs']:
+        if name == 'EDID': continue
+        subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
+    recs['EFSH'].append(record('EFSH', fid('EFSH', f'riftshader{n}'), subs))
+    md = bytearray(tsub('mgef_enchfire', 'DATA'))
+    struct.pack_into('<I', md, 36, fid('EFSH', f'riftshader{n}'))   # its enchantment shader: ours
+    recs['MGEF'].append(record('MGEF', fid('MGEF', f'riftfire{n}'), [sub('EDID', z(f'UN_RiftFire{n}')), sub('FULL', z('Fire Damage')), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
+        sub('KSIZ', tsub('mgef_enchfire', 'KSIZ')), sub('KWDA', tsub('mgef_enchfire', 'KWDA')), sub('DATA', bytes(md)), sub('DNAM', z('Burns the target for <mag> points.'))]))
+    recs['ENCH'].append(record('ENCH', fid('ENCH', f'riftfire{n}'), [sub('EDID', z(f'UN_RiftEnch{n}')), sub('OBND', bytes(12)), sub('FULL', z('Fire Damage')),
+        sub('ENIT', tsub('ench_fire05', 'ENIT')), sub('EFID', struct.pack('<I', fid('MGEF', f'riftfire{n}'))), sub('EFIT', tsub('ench_fire05', 'EFIT'))]))
 
 # (Noah: "change the summoner spell to something more fitting" - Reanimate) a dark bolt: Skyrim's own Reanimate look (its
 # projectile, its hand and hit art, its sounds), but aimed at the living; it barely hurts by itself - Classes::ConjurerStaffHit
