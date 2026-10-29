@@ -892,6 +892,8 @@ namespace bo3z::Classes
 		for (int e = 0; e < 3; ++e) if (a_w == ElemCrossbow(e)) return e;
 		return -1;
 	}
+	RE::TESAmmo* CrossbowBolts(int a_e) { return ElemBolts(a_e); }
+	int          CrossbowQuiver(int a_level) { return BoltCap(a_level); }
 	// (Noah: "one crossbow and one bow at a time - the Storm Crossbow should have replaced my fire one and its bolts")
 	// every elemental crossbow but this one goes back, with its bolts
 	void KeepOnlyCrossbow(int a_keep)
@@ -1268,14 +1270,7 @@ namespace bo3z::Classes
 			g_progress = std::move(prog);
 			g_progressCls = g_class.load();
 		}
-		// (Noah's plan, the Ranger's brew) Fletcher's Sap Draught: the arrows or bolts in use grow back, one every 20 s, faster each draught
-		if (const int fl = Save::PerkStacks(gen::kPerk_fletcher); fl > 0) {
-			static int tick = 0;
-			if (++tick >= std::max(4, 20 / fl)) {
-				tick = 0;
-				if (auto* ammo = p->GetCurrentAmmo(); ammo && p->GetItemCount(ammo) < (Bows::Held() >= 0 ? 200 : 60)) p->AddObjectToContainer(ammo, nullptr, 1, nullptr);
-			}
-		}
+		// (Fletcher's Sap Draught: the quiver's regrowth comes sooner and faster - Bows.inl TickRegen)
 		// (Noah's plan, the Spellsword) Imbue unlocks The Wizard Warrior's Enchantment Powers 1 to 4, one per rung climbed
 		// (the audit: the Spellsword's Enchantment Powers and the Summoner's Indrik mounts followed you into every class)
 		// another class's are taken off; coming back gives them again, without the banner a second time

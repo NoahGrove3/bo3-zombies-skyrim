@@ -1092,7 +1092,7 @@ namespace bo3z::gen
 	struct KnifeDef { std::uint32_t key; float damage, range, coneDeg; int cooldownMs; };
 	inline constexpr KnifeDef kKnife{ 47, 150.0f, 170.0f, 45.0f, 650 };
 	struct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };
-	inline constexpr std::array<PerkDef, 21> kPerks{ {
+	inline constexpr std::array<PerkDef, 22> kPerks{ {
 		PerkDef{ "trollshide", "Troll's Hide Mead", 2500, 0, 100.0f, 0x800, 0x820 },
 		PerkDef{ "quicksilver", "Quicksilver Draught", 3000, 1, 0.6f, 0x801, 0x821 },
 		PerkDef{ "twinstrike", "Twin Strike Ale", 2000, 2, 2.0f, 0x802, 0x822 },
@@ -1114,6 +1114,7 @@ namespace bo3z::gen
 		PerkDef{ "bladesong", "Bladesong Mead", 2500, 18, 0.02f, 0xCC0, 0xCCB },
 		PerkDef{ "spellbind", "Spellbinder's Draught", 2000, 19, 0.1f, 0xCC1, 0xCCC },
 		PerkDef{ "steelwind", "Steel-Wind Ale", 3000, 20, 1.2f, 0xCC2, 0xCCD },
+		PerkDef{ "splitshot", "Splitting Draught", 3500, 21, 0.5f, 0xD07, 0xD08 },
 	} };
 	inline constexpr int kPerk_trollshide = 0;
 	inline constexpr int kPerk_quicksilver = 1;
@@ -1136,9 +1137,10 @@ namespace bo3z::gen
 	inline constexpr int kPerk_bladesong = 18;
 	inline constexpr int kPerk_spellbind = 19;
 	inline constexpr int kPerk_steelwind = 20;
-	inline constexpr std::array<std::string_view, 21> kPerkDesc{ { "+100 maximum health.", "Your spells cost 15% less magicka.", "Your spells deal 50% more damage.", "Saves you from one death: instead of dying, you get back up. Each tonic is one save.", "You move 30% faster and your stamina refills 30% faster.", "Your magicka refills 50% faster.", "+50 maximum magicka.", "When an enemy hits you, frost webs burst out and slow every enemy nearby.", "Every 12th spell you cast sends out a lightning burst around you. Each cider makes it come sooner and hit harder.", "Your arrows and bolts slowly grow back in your quiver.", "Your summons have 50% more health and deal 50% more damage.", "Each time one of your summons kills an enemy, you heal 5% of your maximum health.", "You can have one more summon out at a time (up to 8).", "Enemies you kill with Destruction spells explode, hurting the enemies around them.", "Destruction spells cost 25% less magicka.", "Each kill with a Destruction spell gives you back 6% of your magicka.", "You draw bows and reload crossbows 25% faster.", "While you hold a bow or crossbow, enemies' hits do 25% less damage to you.", "Each melee hit you land on an enemy heals you 2% of your maximum health.", "Each melee kill gives you back 10% of your magicka.", "Your melee attacks are 20% faster." } };
+	inline constexpr int kPerk_splitshot = 21;
+	inline constexpr std::array<std::string_view, 22> kPerkDesc{ { "+100 maximum health.", "Your spells cost 15% less magicka.", "Your spells deal 50% more damage.", "Saves you from one death: instead of dying, you get back up. Each tonic is one save.", "You move 30% faster and your stamina refills 30% faster.", "Your magicka refills 50% faster.", "+50 maximum magicka.", "When an enemy hits you, frost webs burst out and slow every enemy nearby.", "Every 12th spell you cast sends out a lightning burst around you. Each cider makes it come sooner and hit harder.", "Your arrows and bolts grow back sooner and faster: 2 seconds after your last shot instead of 5, two a second.", "Your summons have 50% more health and deal 50% more damage.", "Each time one of your summons kills an enemy, you heal 5% of your maximum health.", "You can have one more summon out at a time (up to 8).", "Enemies you kill with Destruction spells explode, hurting the enemies around them.", "Destruction spells cost 25% less magicka.", "Each kill with a Destruction spell gives you back 6% of your magicka.", "You draw bows and reload crossbows 25% faster.", "While you hold a bow or crossbow, enemies' hits do 25% less damage to you.", "Each melee hit you land on an enemy heals you 2% of your maximum health.", "Each melee kill gives you back 10% of your magicka.", "Your melee attacks are 20% faster.", "Your arrows, bolts and bolt spells fly in pairs - two at once, each at half the damage." } };
 	inline constexpr int kMaxPerks = 12;
-	inline constexpr std::array<int, 21> kPerkClass{ { -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3 } };  // the class a perk belongs to (-1: every class)
+	inline constexpr std::array<int, 22> kPerkClass{ { -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3, -1 } };  // the class a perk belongs to (-1: every class)
 	struct CrewDef { std::string_view id, label, quote; int passive; float value; std::string_view passiveText; };
 	inline constexpr std::array<CrewDef, 4> kCrew{ {
 		CrewDef{ "halvard", "Halvard Stone-Fist", "Legion taught me to march. The dead taught me to run.", 0, 1.1f, "+10% weapon damage" },
@@ -1276,7 +1278,7 @@ namespace bo3z::gen
 	inline constexpr std::array<std::uint32_t, 3> kDanceWords{ { 0xCF1, 0xCF3, 0xCF5 } }, kDanceSpells{ { 0xCF2, 0xCF4, 0xCF6 } };
 	inline constexpr float kSkullScale = 0.3f;
 	inline constexpr float kShowRise = 45.0f, kShowSpin = 4.2f, kShowOffer = 12.0f;
-	inline constexpr std::array<std::uint32_t, 21> kPerkColor{ { 0xD02020FF, 0x30C040FF, 0xE0A020FF, 0x3070F0FF, 0xF0D840FF, 0xB0B8C0FF, 0x7AA040FF, 0x9040E0FF, 0x40D0F0FF, 0x6FBF4AFF, 0x9A6BFFFF, 0xC070E0FF, 0x7A50D0FF, 0xFF7A30FF, 0x5090FFFF, 0x40B8E0FF, 0xC8D870FF, 0xE8C060FF, 0xE05050FF, 0x60A0FFFF, 0xA0C8E8FF } };
+	inline constexpr std::array<std::uint32_t, 22> kPerkColor{ { 0xD02020FF, 0x30C040FF, 0xE0A020FF, 0x3070F0FF, 0xF0D840FF, 0xB0B8C0FF, 0x7AA040FF, 0x9040E0FF, 0x40D0F0FF, 0x6FBF4AFF, 0x9A6BFFFF, 0xC070E0FF, 0x7A50D0FF, 0xFF7A30FF, 0x5090FFFF, 0x40B8E0FF, 0xC8D870FF, 0xE8C060FF, 0xE05050FF, 0x60A0FFFF, 0xA0C8E8FF, 0x40C8C0FF } };
 	inline constexpr std::array<std::string_view, 10> kTowns{ { "Riverwood", "Whiterun", "Solitude", "Windhelm", "Markarth", "Riften", "Falkreath", "Morthal", "Dawnstar", "Winterhold" } };
 	struct SlotDef { float x, y, faceDeg; };
 	inline constexpr std::array<SlotDef, 8> kSlots{ { SlotDef{ 0.0f, 0.0f, 0.0f }, SlotDef{ 175.0f, 0.0f, 90.0f }, SlotDef{ 0.0f, 0.0f, 180.0f }, SlotDef{ 0.0f, 175.0f, 0.0f }, SlotDef{ -200.0f, -120.0f, 180.0f }, SlotDef{ 200.0f, -120.0f, 180.0f }, SlotDef{ 0.0f, -150.0f, 180.0f }, SlotDef{ -175.0f, 0.0f, 270.0f } } };
@@ -1511,7 +1513,7 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kWonderTomeSpell = 0xCB1;   // the Destruction wonder (Classes::OnCast)
 	inline constexpr std::uint32_t kVortexWeap = 0xCD0, kVortexAmmo = 0xCD1, kVortexFx = 0xCD3;   // the Ranger's wonder, the Subsuming Vortex
 	inline constexpr std::array<std::uint32_t, 4> kClassGuides{ 0xCD4, 0xCD5, 0xCD6, 0xCD7 };   // each class's guide book
-	inline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 5> kPowerups{ {{ 0x96D, 0x96E }, { 0x96F, 0x970 }, { 0x971, 0x972 }, { 0x973, 0x974 }, { 0xCAB, 0xCAC }} };
+	inline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 8> kPowerups{ {{ 0x96D, 0x96E }, { 0x96F, 0x970 }, { 0x971, 0x972 }, { 0x973, 0x974 }, { 0xCAB, 0xCAC }, { 0xD09, 0xD0A }, { 0xD0B, 0xD0C }, { 0xD0D, 0xD0E }} };
 	inline constexpr std::uint32_t kReaperScythe = 0x96C;
 	inline constexpr std::uint32_t kWyrmClaws = 0x9DD, kShadowClaws = 0x9DE, kZombieClaws = 0x9DF;
 	inline constexpr std::uint32_t kUndeadFaction = 0x93B;

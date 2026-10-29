@@ -622,6 +622,43 @@ namespace bo3z
 		// their round health (rarer spells more, a reforge adds its step, each Twin Strike Ale half again - their own
 		// magnitudes don't reach the dead); any other enemy is hurt by the spell's own effects, and a spell with none
 		// that take health (paralysis, a drain of magicka...) takes a part of its health instead.
+		// (Noah: the Splitting Draught) a bolt spell of the altar's flies in pairs: a second copy at another of the foes in
+		// front of you, and while the pair is in the air each lands at half its damage (no second foe: one, at full)
+		std::chrono::steady_clock::time_point g_splitUntil{};
+		bool                                   g_splitting = false;
+		void SplitCast(RE::SpellItem* a_spell)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p || !a_spell || g_splitting || Save::PerkStacks(gen::kPerk_splitshot) <= 0) return;
+			if (a_spell->GetCastingType() != RE::MagicSystem::CastingType::kFireAndForget || a_spell->GetDelivery() != RE::MagicSystem::Delivery::kAimed) return;
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (!cam || !cam->cameraRoot) return;
+			const auto& w = cam->cameraRoot->world;
+			const RE::NiPoint3 eye = w.translate, fwd{ w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] };
+			RE::Actor* best = nullptr;
+			float      bestAng = 0.0f;
+			int        seen = 0;
+			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+				auto a = h.get();
+				if (!a || a->IsDead() || a.get() == p || !Director::IsFoe(a.get())) continue;
+				RE::NiPoint3 d = a->GetPosition() + RE::NiPoint3{ 0, 0, 80 } - eye;
+				const float len = d.Length();
+				if (len < 100.0f || len > 2200.0f) continue;
+				const float c = (d.x * fwd.x + d.y * fwd.y + d.z * fwd.z) / len;
+				if (c < 0.92f) continue;  // (within about 23 degrees of where you look)
+				++seen;
+				if (c > 0.995f) continue;  // (the one in the crosshair takes the first)
+				if (c > bestAng) bestAng = c, best = a.get();
+			}
+			if (!best) return;
+			auto* mc = p->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant);
+			if (!mc) return;
+			g_splitting = true;
+			mc->CastSpellImmediate(a_spell, false, best, 1.0f, false, 0.0f, p);
+			g_splitting = false;
+			g_splitUntil = std::chrono::steady_clock::now() + std::chrono::milliseconds(1500);
+			(void)seen;
+		}
 		void CofferHit(RE::Actor* a_actor, int a_index)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -633,7 +670,7 @@ namespace bo3z
 			const float grow = UpgradeMult(ups) * (1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike)) * (0.7f + 0.3f * Arcana::Power());
 			// (Noah's plan, Destruction) dual-casting one element: the same spell in both hands hits a third harder
 			const auto  hands = Arcana::Hands();
-			const float twin = Classes::Get() == 1 && hands[0] == a_index && hands[1] == a_index ? 1.35f : 1.0f;
+			const float twin = (Classes::Get() == 1 && hands[0] == a_index && hands[1] == a_index ? 1.35f : 1.0f) * (std::chrono::steady_clock::now() < g_splitUntil ? 0.5f : 1.0f);
 			if (Director::IsRoundUndead(a_actor)) {
 				if (Limit(a_actor)) {
 					// (the balance pass) a concentration spell lands four times a second: each touch takes a third of a
@@ -884,6 +921,7 @@ namespace bo3z
 					} else if (Arcana::IndexOf(RE::TESForm::LookupByID(a_event->spell)) >= 0) {
 						static int casts = 0;
 						Perks::OnCast(++casts);  // Stormcrown counts the Coffer's spells
+						SplitCast(RE::TESForm::LookupByID<RE::SpellItem>(a_event->spell));
 					}
 				}
 				return RE::BSEventNotifyControl::kContinue;

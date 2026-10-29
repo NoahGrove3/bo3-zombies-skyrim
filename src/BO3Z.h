@@ -87,6 +87,7 @@ namespace bo3z
 		bool InstaKill();
 		float PointsMult();
 		bool FireSale();
+		bool Shadow();  // Shadow of Nocturnal: the dead have lost you
 		float Timer(int a_kind);
 		void  SetTimer(int a_kind, float a_seconds);
 	}
@@ -348,6 +349,8 @@ namespace bo3z
 		int              SummonFamily(RE::Actor* a_actor);  // the Summoner spell (kSpells index) that called it up (-1)
 		int              CrossbowLevel(const RE::TESForm* a_w);  // a crossbow's reforges (0..3)
 		int              CrossbowElement(const RE::TESForm* a_w);
+		RE::TESAmmo*     CrossbowBolts(int a_elem);   // an elemental crossbow's bolts
+		int              CrossbowQuiver(int a_level);  // its quiver at a reforge level
 		int              AltarGearUpgrades(const RE::TESForm* a_w);  // an altar spell-weapon's steel as upgrades (0..3), -1 when it isn't altar gear  // the Ember (0), Rime (1) or Storm (2) Crossbow, else -1
 		int              ReforgeCrossbow(int a_freed, bool& a_spent);  // the one in hand (-1: none held; 0 refused; 1 done)
 		int              BladeSpell();  // the Spellsword spell your blade carries (in a hand, or the last held with a two-handed blade; -1)
@@ -437,6 +440,11 @@ namespace bo3z
 		std::vector<std::uint8_t> Levels();           // for the co-save
 		void                      SetLevels(const std::vector<std::uint8_t>& a_levels);
 		bool                      IsStrikeSpell(const RE::MagicItem* a_item);
+		int                       SpecialKind();      // the special ammo loaded (-1 none: 0 piercing, 1 cluster, 2 frost-lock, 3 soul-bind)
+		int                       SpecialLeft();
+		std::string_view          SpecialName(int a_kind);
+		int                       SpecialCost(int a_kind);  // (half in a Merchant's Blessing)
+		bool                      BuySpecial(int a_kind);   // ten of it, for Cursed Essence
 		void                      CrossbowStrike(int a_elem, int a_tier, RE::Actor* a_hit, float a_damage);  // an elemental crossbow's bolt landing: its element's blast, grown by tier
 		int                       Restock();          // every quiver full (bow arrows, crossbow bolts): Max Ammo, the altar's quiver  // the mods' spells our bows and the Storm Staff loose (they never hurt you)
 	}
@@ -484,6 +492,7 @@ namespace bo3z
 		void Tick(float a_delta);  // game thread: the heading and the marks round you, for the HUD's compass
 		void Heading();            // game thread, every frame: just the heading
 		void OnCast(RE::FormID a_spell);  // a spell you cast: one of your equipped shout's words starts its cooldown
+		void ClearShout();                // (Thu'um Unbound, Refill Stats) the shout ready again
 	}
 
 	// (Noah: everything balanced by Skyrim's own difficulty setting) what the mod scripts itself - bows, staffs, shouts,
@@ -507,7 +516,7 @@ namespace bo3z
 		bool  IsFriend(RE::Actor* a_actor);              // another player's figure (Skyrim Together)
 		bool  SoloFallen();                              // alone and on the death screen
 		bool  HoldsDeath();                              // the player falls instead of dying (a killing blow is turned aside)
-		inline constexpr std::uint32_t kGhostRoll = 1, kGhostFall = 2;
+		inline constexpr std::uint32_t kGhostRoll = 1, kGhostFall = 2, kGhostShadow = 4;
 		void  Ghost(std::uint32_t a_why, bool a_on);     // untouchable while any reason holds (setghost, counted)
 		enum class Life : std::uint8_t { Alive = 0, Down = 1, Dead = 2 };
 		struct Fallen { std::string name; float left, dist; };
@@ -904,6 +913,8 @@ namespace bo3z
 			float       beamGrow{ 0 };  // how far the newest beam has reached from its stone toward the heart (0..1)  // the altar's focused row (Shops Row) and, a third spell won, the choice in focus
 			// the shrine: its roll (0 idle, 1 charging, 2 spinning, 3 offering), progress 0..1, the spell shown, the price; a Thu'um to learn there
 			int         rollPhase{ 0 }, rollGun{ -1 }, rollCost{ 0 }, shrineShout{ -1 };
+			int         specialSel{ 0 }, specialKind{ -1 }, specialLeft{ 0 };  // (the Ranger's special ammo: picked at the altar, loaded)
+			std::array<float, 8> puLeft{};  // power-ups running: seconds left, by kind
 			int         dragonBond{ 0 };   // the glider's dragon: its bond (0-3)
 			bool        bondLocked{ false };
 			std::vector<std::array<float, 3>> motes;  // (Noah: the dead give up their essence) screen x, y (0-1) where a kill fell, its age in seconds

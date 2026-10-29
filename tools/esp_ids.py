@@ -61,7 +61,7 @@ def blasts():
     return sorted(q.stem for q in (ROOT / 'tools' / 'templates' / 'expl').glob('*.json'))
 MASTERS = ['Skyrim.esm', 'Update.esm', 'Dawnguard.esm']
 
-POWERUPS = [('instakill', 'FF3030'), ('double', 'FFD040'), ('kaboom', 'FF8A20'), ('firesale', 'B060FF'), ('maxammo', '46C8FF')]
+POWERUPS = [('instakill', 'FF3030'), ('double', 'FFD040'), ('kaboom', 'FF8A20'), ('firesale', 'B060FF'), ('maxammo', '46C8FF'), ('shadow', '8040E0'), ('thuum', 'D0E8FF'), ('mercy', '50E070')]
 
 def dressing(S):
     """Expand the dressing sheet into concrete pieces: one per (dressing row x town object it applies to)

@@ -214,6 +214,7 @@ namespace bo3z
 		}
 		void OnZombieHit(RE::Actor* a_zombie)
 		{
+			if (PowerUps::Shadow()) return;  // (Shadow of Nocturnal: the dead have lost you)
 			auto& last = g_zombieHitAt;
 			const auto now = std::chrono::steady_clock::now();
 			auto& t = last[a_zombie->GetFormID()];

@@ -1287,6 +1287,14 @@
   "MUSC:night": "0xd03",
   "WEAP:xbow_fire": "0xd04",
   "WEAP:xbow_frost": "0xd05",
-  "WEAP:xbow_shock": "0xd06"
+  "WEAP:xbow_shock": "0xd06",
+  "MGEF:splitshot": "0xd07",
+  "ALCH:splitshot": "0xd08",
+  "STAT:pu_shadow": "0xd09",
+  "LIGH:pu_shadow": "0xd0a",
+  "STAT:pu_thuum": "0xd0b",
+  "LIGH:pu_thuum": "0xd0c",
+  "STAT:pu_mercy": "0xd0d",
+  "LIGH:pu_mercy": "0xd0e"
  }
 }

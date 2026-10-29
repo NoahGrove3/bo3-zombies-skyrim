@@ -284,6 +284,7 @@ namespace Spellcraft
 		bool         arrow = false;  // one of the altar's bows' arrows (its own mesh; a small glow at its head)
 		int          bow = -1, tier = 0;  // ...which bow, at which reforge tier (Bows.inl: its hit and its landing)
 		bool         full = false;        // ...loosed at full draw
+		int          special = -1;        // ...the altar's special ammo it carries (Bows.inl: 0 piercing, 1 cluster, 2 frost-lock, 3 soul-bind)
 		int          effect = -2;         // the effect it lays on what it strikes (-2: the spell's own)
 		int          ult = -1;  // a charged attack's carrier (mortar, wind ball, singularity, soul wisp) or -1 for a tap
 		std::vector<RE::FormID> struck;

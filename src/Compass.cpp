@@ -136,6 +136,11 @@ namespace bo3z::Compass
 		}
 	}
 
+	void ClearShout()
+	{
+		g_cdLeft = 0;
+		if (auto* pl = RE::PlayerCharacter::GetSingleton()) pl->GetActorRuntimeData().voiceTimer = 0.0f;
+	}
 	void OnCast(RE::FormID a_spell)
 	{
 		auto* pl = RE::PlayerCharacter::GetSingleton();

@@ -3725,6 +3725,24 @@ namespace bo3z
 		}
 		std::vector<std::uint8_t> Levels() { return { BowsImpl::g_level.begin(), BowsImpl::g_level.end() }; }
 		int Restock() { return BowsImpl::Restock(); }
+		int              SpecialKind() { return BowsImpl::g_specialKind; }
+		int              SpecialLeft() { return BowsImpl::g_specialLeft; }
+		std::string_view SpecialName(int a_k) { return a_k >= 0 && a_k < 4 ? BowsImpl::kSpecialName[a_k] : ""; }
+		int              SpecialCost(int a_k) { return a_k >= 0 && a_k < 4 ? BowsImpl::kSpecialCost[a_k] / (PowerUps::FireSale() ? 2 : 1) : 0; }
+		bool BuySpecial(int a_k)
+		{
+			if (a_k < 0 || a_k >= 4) return false;
+			const int cost = SpecialCost(a_k);
+			if (!Points::Spend(cost)) {
+				Hud::Banner(fmt::format("{} ammo costs {} Cursed Essence", BowsImpl::kSpecialName[a_k], cost), 2.0f);
+				return false;
+			}
+			if (BowsImpl::g_specialKind == a_k) BowsImpl::g_specialLeft += 10;
+			else BowsImpl::g_specialKind = a_k, BowsImpl::g_specialLeft = 10;
+			Forms::Play(gen::Sound::reload_mag);
+			Hud::Banner(fmt::format("{} ammo  x{}  (-{}) - your next shots carry it", BowsImpl::kSpecialName[a_k], BowsImpl::g_specialLeft, cost), 3.0f);
+			return true;
+		}
 		void CrossbowStrike(int a_elem, int a_tier, RE::Actor* a_hit, float a_damage) { BowsImpl::CrossbowStrike(a_elem, a_tier, a_hit, a_damage); }
 		bool IsStrikeSpell(const RE::MagicItem* a_item)
 		{

@@ -111,14 +111,14 @@
      "paras": [
       "<b>Call a Bow or Crossbow</b> - one roll: six times in ten an elemental bow, four times in ten a crossbow. You carry one elemental bow; a new one takes its place.",
       "The bows: <b>Emberstring</b> (fire), <b>Rimehorn</b> (frost), <b>Stormreach</b> (shock), <b>Skyhowl</b> (wind), <b>Dawnspire</b> (sun), <b>Thirstbow</b> (blood). A full draw hits hardest.",
-      "Better crossbows come as cities are freed (Dwarven and Elven at one, Glass and Ebony at two, Daedric and Dragonbone at three). <b>Q</b> / <b>R3</b> at the altar fills your quivers."
+      "Better crossbows come as cities are freed (Dwarven and Elven at one, Glass and Ebony at two, Daedric and Dragonbone at three). At the altar <b>Q</b> / <b>R3</b> picks a special ammo and <b>R</b> / <b>Y</b> buys ten: <b>Piercing</b> (through every foe in a line), <b>Cluster</b> (three blasts), <b>Frost-Lock</b> (all in the blast frozen) or <b>Soul-bind</b> (the struck fight for you 20 s) - for bows and crossbows alike."
      ]
     },
     {
      "title": "Getting Stronger",
      "paras": [
       "<b>Kills fill it, the altar raises it.</b> Every class grows on the same curve: an altar weapon, spell, bow, crossbow or summon does 2.5 times its first damage after one upgrade, 5 times after two, 6.5 times after three, and 1.5 times more with each Ascend after that. Kills with a bow count toward its next tier - <b>25</b>, <b>60</b>, then <b>120</b> - once three Echo Altars are freed. Then hold it and take the altar's <b>Reforge</b> row: <b>5,000</b>, <b>8,000</b>, <b>12,000</b> Cursed Essence, once a night.",
-      "Each tier: more damage, a new attack and a bigger quiver - <b>60</b>, <b>100</b>, <b>150</b>, <b>200</b> arrows - that regrows one arrow every <b>8</b>, <b>6</b>, <b>4</b>, then <b>2</b> seconds.",
+      "Each tier: more damage, a new attack and a bigger quiver - <b>60</b>, <b>100</b>, <b>150</b>, <b>200</b> arrows. You never run dry: an empty quiver grows back one a second once you have stopped shooting for 5 seconds.",
       "<b>Crossbows</b>: kills unlock elemental bolts - fire at 25, ice at 60, shock at 120."
      ]
     },
@@ -193,7 +193,7 @@
     "The night's dead come in four kinds: the <b>Risen Dead</b> sprint at you and claw fast - hurt one past half and it turns frenzied; the <b>Shambling Maiden</b> is slower but tougher, and her blows come slow; the <b>Grave Witch</b> keeps back, hurls fire and calls more Risen Dead out of the ground - kill her first; the <b>Volatile</b>, a bladed brute, is slow but hits hardest and shrugs off half of every blow unless you hit its head or its back, and it leaps at you from a distance.",
     "Some nights bring a <b>Volatile</b>: an elite night-runner, far faster than the rest, that comes through a portal and pounces.",
     "Busy with a quest? Open the wait menu at night, once the countdown has ended, and choose <b>Skip the Night</b>. It passes the whole night to dawn and does not count: no night survived, and the next dusk brings the same night again.",
-    "<b>Cursed Essence</b> drops from every kill - spend it at the Echo Altars. Watch for tokens: skull (Insta-Kill), coin (Double Points), falling star (destroys tonight's corpses), chest (Fire Sale).",
+    "<b>Cursed Essence</b> drops from every kill - spend it at the Echo Altars. Now and then a body drops a glowing token (1 kill in 50): walk into it before it blinks out (20 s). Nuke (the dead around you turn to ash), Double Essence (30 s), Refill Stats (ammo, health, magicka, stamina and your shout), Merchant's Blessing (the altars at half price, 45 s), Shadow of Nocturnal (the dead lose you, 15 s), Thu'um Unbound (no shout cooldown, 20 s) and Kynareth's Mercy (everyone healed, a fallen friend lifted). In a party, what one takes everyone gets.",
     "Your health, magicka and stamina sit on one plate at the bottom; its rim glows blue while your shout recovers."
    ]
   },

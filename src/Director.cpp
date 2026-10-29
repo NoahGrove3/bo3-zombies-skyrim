@@ -4907,25 +4907,32 @@ namespace bo3z
 				float               left;
 			};
 			std::vector<Drop> g_drops;
-			float             g_timers[4] = {};   // seconds left: insta-kill, double points, (kaboom), fire sale
+			// (Noah's power-ups, by kind - the tokens' order in tools/esp_ids.py POWERUPS): 0 (Insta-Kill, retired), 1 Double
+			// Essence 30 s, 2 Nuke, 3 Merchant's Blessing 45 s, 4 Refill Stats, 5 Shadow of Nocturnal 15 s, 6 Thu'um
+			// Unbound 20 s, 7 Kynareth's Mercy
+			float             g_timers[8] = {};   // seconds left, by kind
 			int               g_dropsThisNight = 0, g_night = -1;
 			std::mt19937      g_prng{ std::random_device{}() };
-			constexpr const char* kNames[5] = { "INSTA-KILL", "DOUBLE POINTS", "NUKE", "FIRE SALE", "MAX AMMO" };
+			constexpr const char* kNames[8] = { "INSTA-KILL", "DOUBLE ESSENCE", "NUKE", "MERCHANT'S BLESSING", "REFILL STATS", "SHADOW OF NOCTURNAL", "THU'UM UNBOUND", "KYNARETH'S MERCY" };
+			constexpr int         kWeight[8] = { 0, 25, 15, 15, 25, 7, 7, 6 };  // (how often each drops: the strong ones rare)
+			constexpr int         kKinds = 8;
 		}
 
 		bool InstaKill() { return g_timers[0] > 0; }
-		float Timer(int a_kind) { return a_kind >= 0 && a_kind < 4 ? g_timers[a_kind] : 0.0f; }
+		float Timer(int a_kind) { return a_kind >= 0 && a_kind < kKinds ? g_timers[a_kind] : 0.0f; }
+		bool  Shadow() { return g_timers[5] > 0; }
 		void  SetTimer(int a_kind, float a_seconds)
 		{
-			if (a_kind >= 0 && a_kind < 4) {
+			if (a_kind >= 0 && a_kind < kKinds) {
 				g_timers[a_kind] = a_seconds;
 			}
 		}
 		float PointsMult() { return (g_timers[1] > 0 ? 2.0f : 1.0f) * Director::EventPointsMult(); }
 		bool FireSale() { return g_timers[3] > 0; }
 
-		// (Noah: "remove the BO3 power-up drops from the game for now") nothing drops; set true to bring them back
-		constexpr bool kDropsOn = false;
+		// (Noah: "power-ups drop on the bodies: walk into one before it's gone in 20 s, blinking faster as it goes; a low
+		// chance, like 2%, on any kill")
+		constexpr bool kDropsOn = true;
 		void MaybeDrop(const RE::NiPoint3& a_at)
 		{
 			if (!kDropsOn) return;
@@ -4939,17 +4946,18 @@ namespace bo3z
 			}
 			// like BO3: a few per round, never two on the ground at once
 			// (Noah: a 10% drop chance for any enemy) no cap a night; at most three lying about at once
-			if (g_drops.size() >= 3 || std::uniform_real_distribution<float>(0, 1)(g_prng) > 0.10f) {
+			if (g_drops.size() >= 3 || std::uniform_real_distribution<float>(0, 1)(g_prng) > 0.02f) {
 				return;
 			}
-			const int kind = std::uniform_int_distribution<int>(0, 4)(g_prng);
+			const int kind = std::discrete_distribution<int>(std::begin(kWeight), std::end(kWeight))(g_prng);
+			if (kind < 0 || kind >= static_cast<int>(gen::kPowerups.size())) return;
 			auto*     dh = RE::TESDataHandler::GetSingleton();
 			auto*     stat = dh->LookupForm<RE::TESBoundObject>(gen::kPowerups[kind].first, gen::kPlugin);
 			auto*     ligh = dh->LookupForm<RE::TESBoundObject>(gen::kPowerups[kind].second, gen::kPlugin);
 			if (!stat) {
 				return;
 			}
-			Drop d{ {}, {}, kind, 26.0f };
+			Drop d{ {}, {}, kind, 20.0f };
 			if (auto t = player->PlaceObjectAtMe(stat, false)) {
 				t->SetPosition(a_at + RE::NiPoint3{ 0, 0, 10.0f });
 				d.token = t->GetHandle();
@@ -5013,28 +5021,48 @@ namespace bo3z
 					Hud::Edit().nukeFlash = 1.0f, Director::g_nukeLeft = 20.0f;
 				}
 				logger::info("powerup: nuke took {}, 20 s before they rise again", n);
-			} else if (a_kind == 4) {  // (the classes overhaul) Max Ammo: every quiver, bolt bundle and weapon full
+			} else if (a_kind == 4) {  // Refill Stats: every quiver and weapon, health, magicka, stamina and the shout
 				for (int g = 0; g < static_cast<int>(gen::kGuns.size()); ++g) {
 					if (Gun::Owns(g)) Gun::RefillAmmo(g);
 				}
 				Bows::Restock();
+				auto* av = a_player->AsActorValueOwner();
+				for (auto v : { RE::ActorValue::kHealth, RE::ActorValue::kMagicka, RE::ActorValue::kStamina }) av->RestoreActorValue(v, av->GetPermanentActorValue(v));
+				Compass::ClearShout();
 				Forms::Play(gen::Sound::reload_mag);
+			} else if (a_kind == 7) {  // Kynareth's Mercy: everyone whole again, a fallen friend lifted
+				auto* av = a_player->AsActorValueOwner();
+				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth));
+				Party::ReviveAt(a_player->GetPosition(), 1.0e9f);
 			} else {
-				g_timers[a_kind] = 45.0f;  // (Noah: Insta-Kill and Double Points last 45 s)
+				static constexpr float kSecs[8] = { 0, 30.0f, 0, 45.0f, 0, 15.0f, 20.0f, 0 };
+				g_timers[a_kind] = kSecs[a_kind];
+				if (a_kind == 5) {  // Shadow of Nocturnal: the dead lose you
+					Party::Ghost(Party::kGhostShadow, true);
+					for (auto& h : Director::AliveHandles()) if (auto a = h.get(); a && !a->IsDead()) a->StopCombat();
+				}
+				if (a_kind == 6) Compass::ClearShout();
 			}
 		}
 
 		void Tick(float a_delta)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
+			const bool shadowWas = g_timers[5] > 0;
 			for (auto& t : g_timers) {
 				t = std::max(0.0f, t - a_delta);
+			}
+			if (shadowWas && g_timers[5] <= 0) Party::Ghost(Party::kGhostShadow, false);
+			if (g_timers[6] > 0) Compass::ClearShout();  // (Thu'um Unbound: no cooldown at all)
+			{
+				std::scoped_lock l(Hud::Lock());
+				for (int k = 0; k < kKinds; ++k) Hud::Edit().puLeft[k] = g_timers[k];
 			}
 			if (!player) {
 				return;
 			}
 			for (int k : Net::TakeRemotePowerUps()) {  // taken by a friend in the party
-				if (k >= 0 && k < 5) {
+				if (k >= 0 && k < kKinds) {
 					Grab(k, player, true);
 				}
 			}
@@ -5050,7 +5078,9 @@ namespace bo3z
 					const float yaw = d.left * 1.6f;
 					n->local.rotate.SetEulerAnglesXYZ(0.0f, 0.0f, yaw);
 					n->local.translate.z = std::sin(d.left * 3.0f) * 4.0f;
-					const bool hidden = d.left < 5.0f && std::fmod(d.left, 0.5f) < 0.2f;
+					// (Noah: blinking faster as it nears its end) from 10 s left, slowly; from 5 s faster; the last 2 s quickest
+					const float period = d.left < 2.0f ? 0.16f : d.left < 5.0f ? 0.35f : 0.7f;
+					const bool  hidden = d.left < 10.0f && std::fmod(d.left, period) < period * 0.4f;
 					if (hidden) {
 						n->GetFlags().set(RE::NiAVObject::Flag::kHidden);
 					} else {

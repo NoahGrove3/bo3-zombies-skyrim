@@ -415,7 +415,7 @@ LOADING_TIPS = [
     "You carry five perks at most. Choose them well.",
     "Wake a city's Echo Altar and its dead sleep again. Its Thu'um waits for you there.",
     "A spell reforged three times is Ascendant: its great strike falls twice.",
-    "Watch the dead for tokens: a skull, a coin, a falling star, a chest.",
+    "Walk into a glowing token on a body before it blinks out: Nuke, Double Essence, Refill Stats, Merchant's Blessing, Shadow of Nocturnal, Thu'um Unbound, Kynareth's Mercy.",
     "The altars take no gold - only the Cursed Essence the dead leave behind.",
     "Every spell the Echo Altar gives is the echo of a fallen mage's last. Carry it well.",
     "The violet fire in the altar is Alduin's own Thu'um, caught and turned back. The blue runes hold it there.",
@@ -678,7 +678,7 @@ def guide_text():
            "[pagebreak]", h("Cursed Essence"),
            p("Every risen thing you kill leaves Cursed Essence. A headshot leaves more, and a kill with a blade or a spell more still. "
              "Cursed Essence is the only coin the Echo Altars take."),
-           p("Watch the dead for tokens: a skull (Insta-Kill), a coin (Double Points), a falling star (it destroys every corpse risen tonight) and a chest (a Fire Sale at the altar)."),
+           p("Now and then a body drops a glowing token (1 kill in 50): walk into it before it blinks out (20 s). Nuke (the dead around you turn to ash), Double Essence (30 s), Refill Stats (ammo, health, magicka, stamina and your shout), Merchant's Blessing (the altars at half price, 45 s), Shadow of Nocturnal (the dead lose you, 15 s), Thu'um Unbound (no shout cooldown, 20 s) and Kynareth's Mercy (everyone healed, a fallen friend lifted). In a party, what one takes everyone gets."),
            "[pagebreak]", h("The Echo Altar"),
            p("Every city has one. Look into its star and press Activate. Its menu does not stop the night. Move through it with the D-pad (or W and S) and take a row with A (or Enter); B leaves."),
            p("<b>Your class</b> - Summoner, Battle-mage, Ranger or Spellsword, chosen at the top of the altar. Each keeps its own gear, spells and blessings when you change."),

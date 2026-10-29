@@ -103,7 +103,7 @@ o.append('\tstruct KnifeDef { std::uint32_t key; float damage, range, coneDeg; i
 o.append(f'\tinline constexpr KnifeDef kKnife{{ {k["key"]}, {F(k["damage"])}, {F(k["range"])}, {F(k["coneDeg"])}, {k["cooldownMs"]} }};')
 effects = {'health': 0, 'charge_speed': 1, 'fire_rate_and_damage': 2, 'self_revive': 3, 'speed_and_stamina': 4, 'headshots': 5, 'third_gun': 6, 'web_grenade': 7, 'cast_shock': 8, 'regrow_arrows': 9,
            'summon_might': 10, 'summon_tether': 11, 'summon_command': 12, 'dest_echo': 13, 'dest_focus': 14, 'dest_siphon': 15,
-           'ranger_draw': 16, 'ranger_ward': 17, 'ss_bladesong': 18, 'ss_spellbind': 19, 'ss_tempo': 20}
+           'ranger_draw': 16, 'ranger_ward': 17, 'ss_bladesong': 18, 'ss_spellbind': 19, 'ss_tempo': 20, 'split_shot': 21}
 P = S['perks']['rows']
 o.append('\tstruct PerkDef { std::string_view id, label; int cost, effect; float value; std::uint32_t mgefId, alchId; };')
 o.append(f'\tinline constexpr std::array<PerkDef, {len(P)}> kPerks{{ {{')
@@ -210,7 +210,7 @@ o.append(f'\tinline constexpr std::uint32_t kSteadyPerk = 0x{IDS[("PERK", "stead
 o.append(f'\tinline constexpr std::uint32_t kWonderTomeSpell = 0x{IDS[("SPEL", "wonder_tome")]:03X};   // the Destruction wonder (Classes::OnCast)')
 o.append(f'\tinline constexpr std::uint32_t kVortexWeap = 0x{IDS[("WEAP", "vortex")]:03X}, kVortexAmmo = 0x{IDS[("AMMO", "vortexarrow")]:03X}, kVortexFx = 0x{IDS[("ACTI", "vortexfx")]:03X};   // the Ranger\'s wonder, the Subsuming Vortex')
 o.append('\tinline constexpr std::array<std::uint32_t, 4> kClassGuides{ ' + ', '.join(f'0x{IDS[("BOOK", "guide_" + c)]:03X}' for c in ('summoner', 'destruction', 'ranger', 'spellsword')) + ' };   // each class\'s guide book')
-o.append('\tinline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, 5> kPowerups{ {' + ', '.join(f'{{ 0x{IDS[("STAT", "pu_" + k)]:03X}, 0x{IDS[("LIGH", "pu_" + k)]:03X} }}' for k, _ in _pu.POWERUPS) + '} };')
+o.append('\tinline constexpr std::array<std::pair<std::uint32_t, std::uint32_t>, ' + str(len(_pu.POWERUPS)) + '> kPowerups{ {' + ', '.join(f'{{ 0x{IDS[("STAT", "pu_" + k)]:03X}, 0x{IDS[("LIGH", "pu_" + k)]:03X} }}' for k, _ in _pu.POWERUPS) + '} };')
 o.append(f'\tinline constexpr std::uint32_t kReaperScythe = 0x{IDS[("WEAP", "reaper_scythe")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kWyrmClaws = 0x{IDS[("WEAP", "wyrm_claws")]:03X}, kShadowClaws = 0x{IDS[("WEAP", "shadow_claws")]:03X}, kZombieClaws = 0x{IDS[("WEAP", "zombie_claws")]:03X};')
 o.append(f'\tinline constexpr std::uint32_t kUndeadFaction = 0x{IDS[("FACT", "undead")]:03X};')

@@ -2008,7 +2008,7 @@ namespace bo3z
 						return true;
 					}
 				}
-				return code == 0x12 || code == 0xCB || code == 0xCD || code == 0xC8 || code == 0xD0 || code == 0x11 || code == 0x1E || code == 0x1F || code == 0x20 || code == 0x1C || code == 0x9C;
+				return code == 0x12 || code == 0xCB || code == 0xCD || code == 0xC8 || code == 0xD0 || code == 0x11 || code == 0x1E || code == 0x1F || code == 0x20 || code == 0x1C || code == 0x9C || code == 0x10 || code == 0x13;
 			case RE::INPUT_DEVICE::kMouse: return code == 8 || code == 9;
 			case RE::INPUT_DEVICE::kGamepad: return code == 0x4000 || code == 0x8000 || code == 0x1000 || code == 0x2000 || code == 0x0001 || code == 0x0002 || code == 0x0004 || code == 0x0008 || code == 0x0100 || code == 0x0200 || code == 0x000A || code == 0x0009 || code == 0x0020 || code == 0x0040 || code == 0x0080;  // (+ Back, L3, R3, LT: the altar's change-class / outfit / quivers must not also wait, sneak or turn the camera)
 			default: return false;
@@ -2016,6 +2016,7 @@ namespace bo3z
 		}
 		// (a key that closed the menu is still eaten a moment after, so Activate does not open it again behind you)
 		std::chrono::steady_clock::time_point g_closedAt{};
+		int g_specialSel = 0;  // the special ammo the altar shows (Q / R3 picks, R / Y buys)
 		bool MenuEats(RE::InputEvent* a_event)
 		{
 			auto* b = a_event ? a_event->AsButtonEvent() : nullptr;
@@ -2092,18 +2093,15 @@ namespace bo3z
 				Classes::NextOutfit();
 				return true;
 			}
-			// (the Ranger's ammo) Q on the keyboard, the right stick click on a pad: a full quiver and bolt bundles
-			if (!g_choosing && ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x10) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x0080))) {
-				const int cost = 400 + 100 * std::max(0, Save::Get(gen::kAV_round));
-				if (Points::Get() < cost) {
-					Hud::Banner("A quiver costs " + std::to_string(cost) + " Cursed Essence", 2.0f);
-				} else if (Bows::Restock() <= 0) {
-					Hud::Banner("Your quivers are full (or you carry no bow or crossbow)", 2.5f);
-				} else {
-					Points::Spend(cost);
-					Forms::Play(gen::Sound::reload_mag);
-					Hud::Banner("Quivers filled  (-" + std::to_string(cost) + ")", 2.5f);
-				}
+			// (Noah: "remove the quiver refill at the altar; special bolts and arrows instead") the Ranger's special ammo: Q on
+			// the keyboard or the right stick click picks which, R or Y buys ten
+			if (!g_choosing && Classes::Get() == 2 && ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x10) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x0080))) {
+				g_specialSel = (g_specialSel + 1) % 4;
+				PlayUi(UiSnd::kMove, 0.6f);
+				return true;
+			}
+			if (!g_choosing && Classes::Get() == 2 && ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x13) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x8000))) {
+				Bows::BuySpecial(g_specialSel);
 				return true;
 			}
 			auto*      ref = g_menuRef.get().get();
@@ -2542,6 +2540,7 @@ namespace bo3z
 					g_pulse.reset();
 				}
 				h.shrineShout = -1;
+				h.specialSel = g_specialSel, h.specialKind = Bows::SpecialKind(), h.specialLeft = Bows::SpecialLeft();
 				h.dragonBond = Save::DragonBond();
 				h.bondLocked = Movement::BondLocked();
 				h.trialsOn = false;

@@ -331,6 +331,66 @@ namespace BowsImpl
 		default: return gen::kFxDrain;
 		}
 	}
+	// (Noah: "the special bolts and arrows at the altar - for crossbows and bows") ten at a time, fired before your own,
+	// each keeping your weapon's element: Piercing (through every foe in a line), Cluster (three blasts), Frost-Lock (all in
+	// the blast frozen solid), Soul-bind (the struck turns on its own kind for 20 s)
+	constexpr const char* kSpecialName[4] = { "Piercing", "Cluster", "Frost-Lock", "Soul-bind" };
+	constexpr int         kSpecialCost[4] = { 800, 1200, 1000, 1500 };
+	int g_specialKind = -1, g_specialLeft = 0;
+	int TakeSpecial()
+	{
+		if (g_specialKind < 0 || g_specialLeft <= 0) return -1;
+		const int k = g_specialKind;
+		if (--g_specialLeft <= 0) g_specialKind = -1, g_specialLeft = 0;
+		return k;
+	}
+	void Splash(const Spellcraft::Shot& s, const RE::NiPoint3& p, RE::Actor* a_struck);
+	void Impact(const Spellcraft::Shot& s, const RE::NiPoint3& p);
+	void ApplySpecial(const Spellcraft::Shot& s, const RE::NiPoint3& p, RE::Actor* a_struck)
+	{
+		switch (s.special) {
+		case 0: {  // Piercing (a bolt: everything on the line on through the strike; an arrow pierces in flight)
+			if (s.arrow) break;
+			auto* pl = RE::PlayerCharacter::GetSingleton();
+			if (!pl) break;
+			RE::NiPoint3 dir = p - pl->GetPosition();
+			dir.z = 0;
+			const float len = dir.Length();
+			if (len < 1) break;
+			dir = dir * (1.0f / len);
+			for (auto* f : Foes(p + dir * 750.0f, 800.0f)) {
+				if (f == a_struck || f->IsDead()) continue;
+				const RE::NiPoint3 d = f->GetPosition() - p;
+				const float along = d.x * dir.x + d.y * dir.y;
+				const float off = std::abs(d.x * dir.y - d.y * dir.x);
+				if (along > 0 && along < 1500.0f && off < 90.0f) Spellcraft::Strike(s.row, f, s.damage, false, gen::kFxNone, f->GetPosition());
+			}
+			Spellcraft::StreakAt(s.row, p, p + dir * 1500.0f, 1.0f, 0.4f, false);
+			break;
+		}
+		case 1: {  // Cluster: two more blasts either side
+			RE::NiPoint3 side{ -s.vel.y, s.vel.x, 0 };
+			if (const float l = side.Length(); l > 1) side = side * (240.0f / l); else side = { 240.0f, 0, 0 };
+			for (const auto& at : { p + side, p - side }) {
+				Spellcraft::Shot c = s;
+				c.special = -1;
+				Impact(c, at);
+				Splash(c, at, nullptr);
+			}
+			break;
+		}
+		case 2:  // Frost-Lock: everything in the blast frozen solid
+			for (auto* f : Foes(p, SplashRadius(s.tier, s.arrow))) {
+				if (!f->IsDead()) Spellcraft::Strike(s.row, f, 1.0f, false, gen::kFxFreeze, p);
+			}
+			Gun::FxBlast("frost", p);
+			break;
+		case 3:  // Soul-bind: the struck fights for you a while
+			if (a_struck && !a_struck->IsDead() && !Director::IsBoss(a_struck)) Director::Frenzy(a_struck, 20.0f);
+			break;
+		default: break;
+		}
+	}
 	void Splash(const Spellcraft::Shot& s, const RE::NiPoint3& p, RE::Actor* a_struck)
 	{
 		const int eff = EffectFor(KindOf(s.bow), s.tier, s.full);
@@ -475,6 +535,7 @@ namespace BowsImpl
 	// as the matching bow's arrow would at the crossbow's reforge tier: the element's burst (wider, fuller each tier), the
 	// tier-II spell where it strikes, and at tier III the element's great spell
 	void OnHit(const Spellcraft::Shot& s, RE::Actor* a, const RE::NiPoint3& p, bool killed);
+	void OnGround(const Spellcraft::Shot& s, const RE::NiPoint3& p);
 	// (Noah: "the crossbow and the bows do the same base damage, just a different element") a full draw's damage at a tier
 	float FullShotAt(int a_tier)
 	{
@@ -499,13 +560,32 @@ namespace BowsImpl
 		s.vel = pl ? (p - pl->GetPosition()) : RE::NiPoint3{ 0, 1, 0 };
 		if (const float l = s.vel.Length(); l > 1) s.vel = s.vel * (4800.0f / l);
 		s.pos = p;
+		s.special = TakeSpecial();
+		const bool split = (Save::PerkStacks(gen::kPerk_splitshot) > 0);
+		if (split) s.damage *= 0.5f;  // (the Splitting Draught: a second bolt lands beside the first, each at half)
 		const bool killed = Spellcraft::Strike(s.row, a_hit, s.damage, false, EffectFor(want, s.tier, true), p);
 		OnHit(s, a_hit, p, killed);
+		if (split) {
+			RE::NiPoint3 side{ -s.vel.y, s.vel.x, 0 };
+			if (const float l = side.Length(); l > 1) side = side * (140.0f / l);
+			const RE::NiPoint3 at = p + side;
+			RE::Actor* other = nullptr;
+			for (auto* f : Foes(at, 160.0f)) if (f != a_hit && !f->IsDead()) { other = f; break; }
+			Spellcraft::Shot s2 = s;
+			s2.special = -1;
+			if (other) {
+				const bool k2 = Spellcraft::Strike(s2.row, other, s2.damage, false, EffectFor(want, s2.tier, true), at);
+				OnHit(s2, other, at, k2);
+			} else {
+				OnGround(s2, at);
+			}
+		}
 	}
 	void OnHit(const Spellcraft::Shot& s, RE::Actor* a, const RE::NiPoint3& p, bool killed)
 	{
 		Impact(s, p);
 		Splash(s, p, a);
+		ApplySpecial(s, p, a);
 		if (s.arrow && killed && Rand(0, 1) < 0.35f) {  // (finite arrows) a third of the time the arrow comes back out of the dead
 			if (auto* am = Ammo(s.bow); am) {
 				RE::PlayerCharacter::GetSingleton()->AddObjectToContainer(am, nullptr, 1, nullptr);
@@ -609,6 +689,7 @@ namespace BowsImpl
 		}
 		Impact(s, p);
 		Splash(s, p, nullptr);
+		ApplySpecial(s, p, nullptr);
 		TierTwoAt(s, p, nullptr);
 		TornadoOf(s, p);
 		const int t = s.tier, row = s.row;
@@ -772,15 +853,22 @@ namespace BowsImpl
 		case Kind::Blood: effect = gen::kFxDrain; break;
 		}
 		Spellcraft::BurstAt(row, from + dir * 30.0f, full ? 26.0f : 16.0f, 0.18f);  // (the string's snap: a flash off the arrow's head)
-		Spellcraft::Launch(row, gun, from, dir, 4800.0f, dmg, 30.0f, 1, full ? 1.25f : 1.0f, -1, true);  // (Noah: only some hits counted - a wider body to strike with)
+		// (Noah: the Splitting Draught) two arrows a little apart, each at half the damage; (the altar's special ammo) carried by both
+		const int  special = TakeSpecial();
+		const bool split = (Save::PerkStacks(gen::kPerk_splitshot) > 0);
+		const RE::NiPoint3 side = RE::NiPoint3{ -dir.y, dir.x, 0 } * 0.045f;
+		for (int n = 0; n < (split ? 2 : 1); ++n) {
+			RE::NiPoint3 d = split ? dir + (n == 0 ? side : side * -1.0f) : dir;
+			Spellcraft::Launch(row, gun, from, d, 4800.0f, split ? dmg * 0.5f : dmg, 30.0f, special == 0 ? 99 : 1, full ? 1.25f : 1.0f, -1, true);  // (Noah: only some hits counted - a wider body to strike with)
+			auto& sh = Spellcraft::g_shots2.back();
+			sh.bow = i, sh.tier = t, sh.full = full, sh.effect = effect, sh.special = special;
+			if (full && t >= 3) {
+				sh.homing = 9.0f;  // (Noah: every bow's last upgrade seeks the nearest of the dead)
+			}
+		}
 		static int said = 0;
 		if (said++ < 8) {
 			logger::info("bows: arrow away from ({:.0f},{:.0f},{:.0f}) toward ({:.0f},{:.0f},{:.0f}), {} shots in flight", from.x, from.y, from.z, aim.hit.x, aim.hit.y, aim.hit.z, Spellcraft::g_shots2.size());
-		}
-		auto& sh = Spellcraft::g_shots2.back();
-		sh.bow = i, sh.tier = t, sh.full = full, sh.effect = effect;
-		if (full && t >= 3) {
-			sh.homing = 9.0f;  // (Noah: every bow's last upgrade seeks the nearest of the dead)
 		}
 	}
 
@@ -1488,12 +1576,60 @@ namespace BowsImpl
 	RE::NiAVObject* g_watched = nullptr;
 	float         g_sinceFire = 10.0f;
 
+	// (Noah: "the quiver refills 1 a second once it hits 0, after 5 seconds of no shooting - it never runs dry for good,
+	// but you can't hold the trigger") what you hold, an altar bow or an elemental crossbow: empty, it waits 5 s from
+	// your last shot (2 with Fletcher's Sap) and then grows back one a second (two with it) until full
+	void TickRegen(RE::PlayerCharacter* p, float a_delta)
+	{
+		static RE::TESAmmo* watched = nullptr;
+		static int          lastCount = -1;
+		static float        sinceShot = 0, tick = 0;
+		static bool         regrowing = false;
+		RE::TESAmmo* am = nullptr;
+		int          cap = 0;
+		if (const int b = Held(); b >= 0) {
+			am = Ammo(b), cap = Quiver(b);
+		} else {
+			for (bool left : { false, true }) {
+				auto* o = p->GetEquippedObject(left);
+				if (auto* w = o ? o->As<RE::TESObjectWEAP>() : nullptr; w && w->IsCrossbow()) {
+					if (const int e = Classes::CrossbowElement(w); e >= 0) am = Classes::CrossbowBolts(e), cap = Classes::CrossbowQuiver(Classes::CrossbowLevel(w));
+				}
+			}
+		}
+		if (!am || cap <= 0) {
+			watched = nullptr, regrowing = false;
+			return;
+		}
+		const int have = p->GetItemCount(am);
+		if (am != watched) watched = am, lastCount = have, sinceShot = 99.0f, regrowing = have <= 0;
+		if (have < lastCount) sinceShot = 0;  // (a shot loosed)
+		lastCount = have;
+		sinceShot += a_delta;
+		if (have <= 0) regrowing = true;
+		if (!regrowing || have >= cap) {
+			regrowing = regrowing && have < cap;
+			return;
+		}
+		const bool sap = Save::PerkStacks(gen::kPerk_fletcher) > 0;
+		if (sinceShot < (sap ? 2.0f : 5.0f)) return;
+		if ((tick -= a_delta) > 0) return;
+		tick = sap ? 0.5f : 1.0f;
+		p->AddObjectToContainer(am, nullptr, 1, nullptr);
+		lastCount = have + 1;
+		auto* ui = RE::UI::GetSingleton();
+		if (p->GetCurrentAmmo() != am && ui && !ui->GameIsPaused() && !ui->IsMenuOpen(RE::InventoryMenu::MENU_NAME) && !ui->IsMenuOpen(RE::FavoritesMenu::MENU_NAME)) {
+			if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(p, am, nullptr, 1, nullptr, false, false, false, true);  // (an empty quiver's ammo came off the string)
+		}
+		if (have + 1 >= cap) regrowing = false;
+	}
 	void Tick(float a_delta)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !p->Is3DLoaded()) {
 			return;
 		}
+		TickRegen(p, a_delta);
 		static float reequip = -1;
 		// (the third-person body only: Get3D() flips with the camera, and every flip re-equipped the bow - Noah's fast
 		// unequip/re-equip)
@@ -1520,12 +1656,7 @@ namespace BowsImpl
 		TickCards(a_delta);
 		g_sinceFire += a_delta;
 		const int i = Held();
-		// (the arrows grow back - one every 8 s as rolled (Noah), 6 s at tier I, 4 s at II, 2 s at III, up to a full quiver)
-		static float regrow = 0;
-		if (i >= 0 && (regrow += a_delta) >= (g_level[i] >= 3 ? 2.0f : g_level[i] == 2 ? 4.0f : g_level[i] == 1 ? 6.0f : 8.0f)) {
-			regrow = 0;
-			if (auto* am = Ammo(i); am && p->GetItemCount(am) < Quiver(i)) p->AddObjectToContainer(am, nullptr, 1, nullptr);
-		}
+		// (the arrows grow back only once the quiver is empty: TickRegen)
 		static float quiver = 0;
 		if (i >= 0 && (quiver -= a_delta) <= 0) {
 			quiver = 1.0f;

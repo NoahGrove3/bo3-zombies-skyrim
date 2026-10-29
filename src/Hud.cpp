@@ -750,7 +750,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Ranged spells: fire, frost, shock, sun, blood and runes",
 				  "Reforge: climb each element's ladder to its Legendary spell", "Firebolt, Ice Spike, the Wild Witch's hat and gown" },
 				{ "RANGER", "Sworn to the Dawnguard", IM_COL32(110, 210, 120, 255), "Bows and crossbows - and every arrow counts", "The six elemental bows, crossbows and their bolts",
-				  "Mastery: a bow's kills raise its tier; buy ammo at the altars", "The Ember Crossbow, 40 fire bolts, the Drifter Outfit" },
+				  "Mastery: a bow's kills raise its tier; special ammo at the altars", "The Ember Crossbow, 40 fire bolts, the Drifter Outfit" },
 				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "Spell-weapons, spellshields, touch spells, The Wizard Warrior",
 				  "Imbue: raise each element's touch spell; every blade hit casts it", "Steel Spellsword, Steel Spellshield, Burning Touch, the Practical Pirate outfit" } };
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));
@@ -998,6 +998,24 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (const auto rest = Director::RestNow(); rest.open) {  // (the rest screen, in place of Skyrim's wait menu)
 				DrawRest(dl, rest, size, k, now);
 				return;
+			}
+			if (s.deathT < 0.0f) {
+				// (Noah's power-ups) what's running, over the bars: its name and the seconds left, blinking in the last five
+				static constexpr const char* kPu[8] = { "", "DOUBLE ESSENCE", "", "MERCHANT'S BLESSING", "", "SHADOW OF NOCTURNAL", "THU'UM UNBOUND", "" };
+				static constexpr ImU32 kPuCol[8] = { 0, IM_COL32(255, 205, 70, 255), 0, IM_COL32(190, 120, 255, 255), 0, IM_COL32(170, 110, 240, 255), IM_COL32(210, 235, 255, 255), 0 };
+				float py = size.y - 150 * k;
+				for (int i = 0; i < 8; ++i) {
+					const float left = s.puLeft[i];
+					if (left <= 0 || !kPu[i][0]) continue;
+					if (left < 5.0f && std::fmod(left, 0.5f) < 0.18f) { py -= 26 * k; continue; }
+					TxtC(dl, g_title, 20 * k, size.x * 0.5f, py, kPuCol[i], fmt::format("{}  {}", kPu[i], static_cast<int>(std::ceil(left))), 2 * k, Fade(kPuCol[i], 0.5f));
+					py -= 26 * k;
+				}
+				// (the Ranger's special ammo, loaded) beside the quiver
+				if (s.specialKind >= 0 && s.specialLeft > 0) {
+					const std::string t = fmt::format("{} x{}", Upper(std::string(Bows::SpecialName(s.specialKind))), s.specialLeft);
+					Txt(dl, g_title, 18 * k, { size.x - 210 * k - Measure(g_title, 18 * k, t).x, size.y - 92 * k }, IM_COL32(255, 220, 140, 240), t, 1.5f * k, Fade(kGold, 0.5f));
+				}
 			}
 			if (s.deathT >= 0.0f) {  // (you fell: the fall's screen over everything)
 				DrawDeath(dl, s, size, k, now);
@@ -3241,8 +3259,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "Back" : "C") + "   Change class  (" + std::to_string(Classes::SwitchCost()) + " Cursed Essence)  -  now " + std::string(Classes::Name(Classes::Get())));
 					y += 26 * k;
 					if (altarCls == 2) {  // (the Ranger's alone)
-						Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "R3" : "Q") + "   Fill your quivers  (" + std::to_string(400 + 100 * std::max(0, s.round)) + " Cursed Essence)");
-						y += 26 * k;
+						Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "R3" : "Q") + "   Special ammo: " + std::string(Bows::SpecialName(s.specialSel)) + "   " +
+							std::string(g_padLast ? "Y" : "R") + "  buy ten  (" + std::to_string(Bows::SpecialCost(s.specialSel)) + " Cursed Essence)");
+						y += 22 * k;
+						static constexpr const char* kWhat[4] = { "through every foe in a line", "three blasts", "freezes all in the blast", "the struck fight for you 20 s" };
+						Txt(dl, g_body, 14 * k, { L + 24 * k, y }, kGoldDim, std::string(kWhat[std::clamp(s.specialSel, 0, 3)]) + (s.specialKind >= 0 ? fmt::format("   -   loaded: {} x{}", Bows::SpecialName(s.specialKind), s.specialLeft) : std::string()));
+						y += 24 * k;
 					}
 					if (const auto bl = Classes::BoltLine(); !bl.empty()) {  // (the Ranger's crossbow mastery)
 						Txt(dl, g_body, 15 * k, { L + 24 * k, y - 4 * k }, kGoldDim, bl);
