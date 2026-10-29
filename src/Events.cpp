@@ -680,7 +680,7 @@ namespace bo3z
 				return;
 			}
 			// (Noah: the one upgrade curve) its rung and its Ascends are its upgrades
-			const int   ups = std::max(0, Arcana::RungOf(a_index) - 1) + std::max(0, Arcana::Level(a_index));  // (the altar rework: each rung, then each Ascend)
+			const int   ups = Arcana::Ups(a_index);  // (the altar rework: its tier on the one curve)
 			const float grow = UpgradeMult(ups) * (1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike)) * (0.7f + 0.3f * Arcana::Power());
 			// (Noah's plan, Destruction) dual-casting one element: the same spell in both hands hits a third harder
 			const auto  hands = Arcana::Hands();

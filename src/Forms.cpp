@@ -478,9 +478,9 @@ namespace bo3z
 				if (!crs2) {
 					Tasks::Add([] { Curse::MigrateRites(); });
 				}
-				if (!kit && found) {  // (the altar rework: a character from before it)
-					logger::warn("save: a character from before the altar rework - its kit can't carry over");
-					Tasks::Later(6.0f, [] { Hud::Banner("This character is from before the Echo Altar rework - start a new game for your class's kit", 8.0f); });
+				if (!kit && found) {  // (the altar rework: a character from before it - its classes' starting kits counted as owned)
+					for (int c = 0; c < 4; ++c) if (Classes::KitGiven(c)) Kit::OnKitGiven(c);
+					logger::info("save: a character from before the altar rework - its starting kits taken as its own");
 				}
 				if (!g_stacksLoaded) {  // an older save: one of each blessing it carries
 					for (int i = 0; i < static_cast<int>(gen::kPerks.size()) && i < 32; ++i) {

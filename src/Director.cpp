@@ -2029,6 +2029,7 @@ namespace bo3z
 			g_phase = Phase::Fighting;
 			g_boss.slainTonight = false;
 			g_champ.slainTonight = false;
+			g_bossNight = false;
 			if (!g_boss.handle.get()) g_wantHerald = false;
 			if (const int row = BossRow(); !Coop::Client() && row >= 0 && a_round >= gen::kEnemies[row].minRound && a_round % gen::kEnemies[row].bossEvery == 0) {
 				g_boss.spawnIn = gen::boss::spawnDelay;

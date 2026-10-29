@@ -380,6 +380,7 @@ namespace bo3z
 		void             GiveGear(RE::TESForm* a_form, int a_count, bool a_equip);
 		void             LearnSpell(RE::SpellItem* a_sp);  // taught and kept with your class (it goes with it when you switch)
 		void             QueueThrall(RE::Actor* a_struck, int a_level);  // should it fall now, it rises as your thrall
+		bool             KitGiven(int a_cls);         // that class's starting kit has been handed over
 		RE::TESObjectWEAP* Riftblade();
 		RE::TESObjectWEAP* SpellswordBlade();         // the Spellsword's one-handed sword
 		int              TwoHanderCount();            // the Spellsword's relic two-handers
@@ -438,6 +439,8 @@ namespace bo3z
 		int                ClassOf(int a_index);         // coffer::Class
 		int                RungOf(int a_index);          // 1 = what the altar rolls
 		int                Rungs(int a_index);           // how many rungs its ladder has
+		int                Ups(int a_index);             // (the altar rework) its tier on the one curve: its rung's, plus its steps on it
+		int                TierOfRung(int a_index);      // its rung's tier alone (4 rungs 0..3, 3 rungs 0 2 3, 2 rungs 0 3)
 		int                NextRung(int a_index);        // the same ladder one rung up (-1: the top)
 		std::string_view   LadderName(int a_index);
 		bool               Concentration(int a_index);

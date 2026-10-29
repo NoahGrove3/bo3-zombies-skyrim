@@ -2591,6 +2591,7 @@ namespace bo3z::Classes
 	{
 		if (a_struck && Director::IsRoundUndead(a_struck) && !Director::IsBoss(a_struck)) g_pendingThrall.push_back({ a_struck->GetHandle(), 0.6f, a_level });
 	}
+	bool KitGiven(int a_cls) { return a_cls >= 0 && a_cls < 4 && g_kit[a_cls]; }
 	RE::TESObjectWEAP* Riftblade()
 	{
 		auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kRiftblade, gen::kPlugin);

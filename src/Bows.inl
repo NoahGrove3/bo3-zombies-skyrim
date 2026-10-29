@@ -159,10 +159,8 @@ namespace BowsImpl
 			}
 			if (auto* ow = Weap(k); ow && p->GetItemCount(ow) > 0) {
 				p->RemoveItem(ow, p->GetItemCount(ow), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-				g_level[k] = 0;
-				Classes::SpendBowMastery(k);  // (its kills go back with it: rolled again, it starts from nothing, as its tier does)
-				ApplySpeed(k);
-				logger::info("bows: {} given back", gen::kBows[k].label);
+				// (the altar rework: the bow stays yours, in your kit - its tiers kept for when you take it up again)
+				logger::info("bows: {} back in the class's chest", gen::kBows[k].label);
 			}
 			if (auto* oa = Ammo(k); oa && p->GetItemCount(oa) > 0) {
 				p->RemoveItem(oa, p->GetItemCount(oa), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);

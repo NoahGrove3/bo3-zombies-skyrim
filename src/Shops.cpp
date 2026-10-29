@@ -1869,8 +1869,8 @@ namespace bo3z
 		int                 g_sel = 0;
 		int                 g_trialSel = 0;  // the controller's pick among the altar's trials
 		// (Noah: one way to drive the altar) a focus moved up and down its rows - D-pad or W/S - and A / Enter to take it
-		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowOutfit, kRowSpecial, kRowInfuse = 32, kRowRelic = 33 };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
-		int g_focus = kRowSpell;
+		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowOutfit, kRowInfuse = 32, kRowRelic = 33 };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
+		int g_focus = kRowClass;
 		RE::ObjectRefHandle g_pickAltar;  // the altar whose class picker is up (no class yet): it opens when one is chosen
 
 		void BuyPerk(int perk, RE::TESObjectREFR* a_ref)
@@ -2273,7 +2273,7 @@ namespace bo3z
 					} else if (g_focus == kRowRelic) {
 						Kit::RelicSide(side);   // left / right: which of the two relics
 					} else if (trials && g_focus >= kRowTrial && g_focus < kRowTrial + 5) {
-						g_focus = kRowSpell;  // back to the altar's own column
+						g_focus = kRowClass;  // back to the altar's own column
 					} else if (trials) {
 						g_focus = kRowTrial + std::clamp(g_trialSel, 0, 4);  // over to its trials
 					}
@@ -2297,10 +2297,7 @@ namespace bo3z
 						}
 						break;
 					case kRowInfuse: kitOk = Kit::Infuse(); break;
-					case kRowRelic: kitOk = Kit::TakeRelic(); break;
-					case kRowSpell: act(Classes::Get() == 2 ? 6 : 0); break;  // (the Ranger's one roll: a bow or a crossbow)
-					case kRowBow: act(6); break;
-					case kRowForge: act(1); break;
+					case kRowRelic: kitOk = Kit::TakeRelic(); if (kitOk && Kit::RelicTokens() <= 0) g_focus = kRowInfuse; break;
 					case kRowPerk: act(2); break;
 					case kRowShout: act(3); break;
 					case kRowBond: act(5); break;
@@ -2308,6 +2305,7 @@ namespace bo3z
 					default:
 						if (g_focus >= 40) {
 							kitOk = Kit::Select(g_focus, ref);
+							if (kitOk && g_focus >= 100) g_focus = g_focus - 100 + 40;  // (bought: the focus stays on it, now in your kit)
 						} else if (g_focus >= kRowTrial && g_focus < kRowTrial + 5) {
 							g_trialSel = g_focus - kRowTrial;
 							act(7);
@@ -2409,7 +2407,7 @@ namespace bo3z
 				g_pickAltar.reset();
 				if (pr && Classes::Get() >= 0 && OnAltarBase(pr.get()) && !g_menu) {
 					g_menu = true;
-					g_focus = kRowSpell, g_chooseFocus = 0, g_sel = 0;
+					g_focus = kRowClass, g_chooseFocus = 0, g_sel = 0;
 					g_menuRef = pr->CreateRefHandle();
 					PlayUi(UiSnd::kOpen, 0.6f);
 				}
@@ -2550,7 +2548,7 @@ namespace bo3z
 				}
 				h.shrineShout = -1;
 				h.specialSel = g_specialSel, h.specialKind = Bows::SpecialKind(), h.specialLeft = Bows::SpecialLeft();
-				Kit::Fill(h);  // (the altar rework: your kit, the Armory, the Infusion, the relic)
+				if (g_menu) Kit::Fill(h);  // (the altar rework: your kit, the Armory, the Infusion, the relic - only with the altar open)
 				h.dragonBond = Save::DragonBond();
 				h.bondLocked = Movement::BondLocked();
 				h.trialsOn = false;

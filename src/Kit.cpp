@@ -88,11 +88,12 @@ namespace bo3z::Kit
 		std::array<ClassState, 4> g_cls{};
 		int  g_tokens = 0;          // relics waiting to be taken
 		int  g_offer[2] = { -1, -1 };  // the relic offer: a relic index, or 100 + an item (a free upgrade)
+		int  g_offerCls = -1;       // the class it was made for
 		int  g_relicSel = 0;
 		int  g_infuseSel = 0;       // the Infusion row's item (an index into InfusableItems())
 		int  g_rollsTonight = 0, g_rollNight = -1;
 		bool g_loaded = false;
-		struct Spin { float left{ 0 }, flick{ 0 }; int item{ -1 }, result{ 0 }, shown{ 1 }; };
+		struct Spin { float left{ 0 }, flick{ 0 }; int item{ -1 }, result{ 0 }, shown{ 1 }, cls{ -1 }; };
 		Spin g_spin;
 		std::mt19937 g_rng{ std::random_device{}() };
 
@@ -177,7 +178,7 @@ namespace bo3z::Kit
 			switch (d.kind) {
 			case Kind::Ladder: {
 				const int k = a_cls == Cls() ? LadderKnown(a_cls, d.ref) : -1;
-				return k >= 0 ? (Arcana::RungOf(k) - 1) + Arcana::Level(k) : 0;
+				return k >= 0 ? Arcana::Ups(k) : 0;
 			}
 			case Kind::Bow: { const int b = BowIndex(d.ref); return b >= 0 ? std::clamp(Bows::Level(b), 0, 3) + st.tier[a_i] : 0; }
 			case Kind::Crossbow: return std::clamp(Classes::CrossbowLevel(Classes::CrossbowForm(Elem(d))), 0, 3) + st.tier[a_i];
@@ -225,14 +226,22 @@ namespace bo3z::Kit
 		bool Step(int a_cls, int a_i)
 		{
 			const auto defs = Defs(a_cls);
+			if (a_cls < 0 || a_cls > 3 || a_cls != Cls() || a_i < 0 || a_i >= static_cast<int>(defs.size())) return false;
 			auto&      st = g_cls[a_cls];
 			const auto& d = defs[a_i];
 			switch (d.kind) {
 			case Kind::Ladder: {
 				const int k = LadderKnown(a_cls, d.ref);
 				if (k < 0) return false;
-				if (const int nx = Arcana::NextRung(k); nx >= 0) Arcana::Replace(k, nx);
-				else Arcana::SetLevel(k, Arcana::Level(k) + 1);
+				// the next tier: the next rung once its own tier is reached (a short ladder's rungs are spread over the
+				// four tiers), else one more step on this one
+				const int want = Arcana::Ups(k) + 1;
+				if (const int nx = Arcana::NextRung(k); nx >= 0 && Arcana::TierOfRung(nx) <= want) {
+					Arcana::Replace(k, nx);
+					Arcana::SetLevel(nx, want - Arcana::TierOfRung(nx));
+				} else {
+					Arcana::SetLevel(k, Arcana::Level(k) + 1);
+				}
 				return true;
 			}
 			case Kind::Bow: {
@@ -257,6 +266,7 @@ namespace bo3z::Kit
 		void Grant(int a_cls, int a_i, bool a_inHand)
 		{
 			const auto defs = Defs(a_cls);
+			if (a_i < 0 || a_i >= static_cast<int>(defs.size())) return;
 			const auto& d = defs[a_i];
 			switch (d.kind) {
 			case Kind::Ladder: if (LadderKnown(a_cls, d.ref) < 0) Arcana::Give(LadderRung1(a_cls, d.ref), false); break;
@@ -287,6 +297,7 @@ namespace bo3z::Kit
 		{
 			const int c = Cls();
 			g_offer[0] = g_offer[1] = -1;
+			g_offerCls = c;
 			if (c < 0 || g_tokens <= 0) return;
 			auto left = RelicsLeft(c);
 			std::shuffle(left.begin(), left.end(), g_rng);
@@ -367,7 +378,7 @@ namespace bo3z::Kit
 		}
 		float Roll01() { return std::uniform_real_distribution<float>(0.0f, 1.0f)(g_rng); }
 		// a proc's share of one of the dead's health, grown by the item's tier
-		float ProcShare(int a_tier) { return 0.12f * UpgradeMult(a_tier) * (0.7f + 0.3f * Arcana::Power()); }
+		float ProcShare(int a_tier) { return 0.12f * UpgradeMult(std::min(a_tier, 5)) * (0.7f + 0.3f * Arcana::Power()); }  // (capped: Ascends grow the item's own blows, not its procs past two)
 		std::vector<RE::Actor*> FoesNear(const RE::NiPoint3& a_at, float a_r, RE::Actor* a_skip = nullptr, std::size_t a_max = 64)
 		{
 			std::vector<RE::Actor*> out;
@@ -557,9 +568,10 @@ namespace bo3z::Kit
 		// the relic waiting
 		a_h.relicTokens = g_tokens;
 		if (g_tokens > 0) {
-			if (g_offer[0] < 0) MakeOffer();
+			if (g_offer[0] < 0 || g_offerCls != c) MakeOffer();
 			a_h.relicA = OfferName(g_offer[0]), a_h.relicB = OfferName(g_offer[1]);
 			a_h.relicDescA = OfferDesc(g_offer[0]), a_h.relicDescB = OfferDesc(g_offer[1]);
+			if (g_offer[0] < 0) a_h.relicA = "Nothing to take yet", a_h.relicDescA = "your items wait for more freed cities - it keeps";
 			a_h.relicSel = g_offer[1] < 0 ? 0 : g_relicSel;
 		}
 		a_h.armorBonus = ArmorResist();
@@ -643,7 +655,7 @@ namespace bo3z::Kit
 		auto* cur = InfusionOf(c, it);
 		int   r = 1 + std::uniform_int_distribution<int>(0, kInfusions - 1)(g_rng);
 		if (cur && r == *cur) r = r % kInfusions + 1;  // (never the same twice in a row)
-		g_spin = { 1.6f, 0.0f, it, r, 1 };
+		g_spin = { 1.6f, 0.0f, it, r, 1, c };
 		Ui(kUiLand, 0.6f);
 		return true;
 	}
@@ -654,18 +666,19 @@ namespace bo3z::Kit
 	bool TakeRelic()
 	{
 		const int c = Cls();
-		if (c < 0 || g_tokens <= 0) return false;
-		if (g_offer[0] < 0) MakeOffer();
+		if (c < 0 || g_tokens <= 0 || ItemMenusOpen()) return false;
+		if (g_offer[0] < 0 || g_offerCls != c) MakeOffer();
 		const int o = g_offer[std::clamp(g_offer[1] < 0 ? 0 : g_relicSel, 0, 1)];
 		if (o < 0) return false;
 		auto& st = g_cls[c];
 		if (o >= 100) {  // a free upgrade
 			const int i = o - 100;
 			const std::string was = ItemName(c, i);
-			if (!Step(c, i)) return false;
+			if (!Step(c, i)) { MakeOffer(); return false; }
 			st.upgrades = static_cast<std::uint8_t>(std::min(255, st.upgrades + 1));
 			Hud::Banner("THE PRIEST'S BLESSING - " + was + " grows", 4.5f);
 		} else {
+			if (o >= RelicCount(c) || o >= kMaxRelics) { MakeOffer(); return false; }
 			st.relics |= 1u << o;
 			if (auto* sp = RelicSpell(c, o)) Classes::LearnSpell(sp);
 			if (c == 3) if (auto* w = Classes::TwoHander(o)) Classes::GiveGear(w, 1, false);
@@ -852,7 +865,7 @@ namespace bo3z::Kit
 				Ui(kUiMove, 0.5f);
 			}
 			if (g_spin.left <= 0) {
-				const int c = Cls();
+				const int c = g_spin.cls;  // (the class it was rolled for, even if it changed mid-spin)
 				if (auto* p = InfusionOf(c, g_spin.item)) *p = static_cast<std::uint8_t>(g_spin.result);
 				g_spin.shown = g_spin.result;
 				Forms::Play(gen::Sound::forge_upgrade);
@@ -942,7 +955,7 @@ namespace bo3z::Kit
 	void Revert()
 	{
 		g_cls = {};
-		g_tokens = 0, g_offer[0] = g_offer[1] = -1, g_relicSel = 0, g_infuseSel = 0, g_rollsTonight = 0, g_rollNight = -1, g_loaded = false;
+		g_tokens = 0, g_offer[0] = g_offer[1] = -1, g_offerCls = -1, g_relicSel = 0, g_infuseSel = 0, g_rollsTonight = 0, g_rollNight = -1, g_loaded = false;
 		g_spin = {};
 		g_last.clear(), g_procCool.clear();
 	}

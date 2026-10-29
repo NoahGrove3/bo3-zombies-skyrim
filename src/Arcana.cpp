@@ -21,6 +21,8 @@ namespace bo3z::Arcana
 		std::array<std::uint8_t, coffer::kSpells.size()>    g_level{};
 		std::array<std::vector<float>, coffer::kSpells.size()> g_baseMag;  // each effect's magnitude as the mod made it
 		std::array<int, coffer::kSpells.size()>                g_dmgEffect{};  // its first health-damage effect (-1 none)
+		// (the altar rework: a short ladder's top spell is its Legendary too) a rung's tier on the one curve: 4 rungs 0 1 2 3, 3 rungs 0 2 3, 2 rungs 0 3
+		int RungTier(int a_rung, int a_rungs) { return a_rungs <= 1 ? 0 : static_cast<int>(std::lround(3.0 * (a_rung - 1) / (a_rungs - 1))); }
 		bool IsDamageEffect(const RE::Effect* e)
 		{
 			auto* mg = e ? e->baseEffect : nullptr;
@@ -64,7 +66,7 @@ namespace bo3z::Arcana
 			}
 			float firstDmg = -1.0f;
 			if (const int d = g_dmgEffect[first]; d >= 0 && d < static_cast<int>(g_baseMag[first].size())) firstDmg = g_baseMag[first][d];
-			const int   ups = std::max(0, static_cast<int>(me.rung) - 1) + std::max(0, lv);  // (the altar rework: every rung climbed, then every Ascend - one tier each)
+			const int   ups = RungTier(me.rung, me.rungs) + std::max(0, lv);  // (the altar rework: its rung's tier, then every step on it - one tier each)
 			const float mult = kPower * AltarPower();
 			auto&       base = g_baseMag[a_index];
 			for (std::size_t e = 0; e < sp->effects.size() && e < base.size(); ++e) {
@@ -74,7 +76,7 @@ namespace bo3z::Arcana
 			}
 			// (Noah: "the Summoner's starting spells' magicka cost needs to be half") the first rung of each summoner ladder
 			const float firstSummon = me.cls == coffer::kSummoner && me.rung == 1 ? 0.5f : 1.0f;
-			sp->data.costOverride = std::max(1, static_cast<int>(std::lround(coffer::kSpells[a_index].cost * kCost * (1.0f - 0.1f * lv) * Difficulty::Mana() * firstSummon * Kit::AuraCostMult())));
+			sp->data.costOverride = std::max(1, static_cast<int>(std::lround(coffer::kSpells[a_index].cost * kCost * (1.0f - 0.1f * std::min(lv, 3)) * Difficulty::Mana() * firstSummon * Kit::AuraCostMult())));
 		}
 	}
 
@@ -337,6 +339,8 @@ namespace bo3z::Arcana
 	}
 	int ClassOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].cls : -1; }
 	int RungOf(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].rung : 0; }
+	int Ups(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? RungTier(coffer::kSpells[a_index].rung, coffer::kSpells[a_index].rungs) + Level(a_index) : 0; }
+	int TierOfRung(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? RungTier(coffer::kSpells[a_index].rung, coffer::kSpells[a_index].rungs) : 0; }
 	int Rungs(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].rungs : 0; }
 	std::string_view LadderName(int a_index) { return a_index >= 0 && a_index < static_cast<int>(coffer::kSpells.size()) ? coffer::kSpells[a_index].ladderLabel : ""; }
 	int NextRung(int a_index)
