@@ -18,6 +18,7 @@ MYST = 'MysticismMagic.esp'
 COTC = 'Calling of the Conjurer.esp'
 SPRIG = 'ConjureSpriggans.esp'
 SKY = 'Skyrim.esm'
+OURS = 'CurseOfAlduin.esp'
 # Skyrim's own bolts (not in a tome list): form id, cost, concentration, school
 VANILLA = {'Firebolt': (0x012FD0, 45), 'Fireball': (0x01C789, 132), 'Incinerate': (0x10F7ED, 240), 'Ice Spike': (0x02B96C, 40), 'Ice Storm': (0x045F9C, 124),
            'Icy Spear': (0x10F7EC, 228), 'Lightning Bolt': (0x02DD29, 50), 'Chain Lightning': (0x045F9D, 144), 'Thunderbolt': (0x10F7EE, 252)}
@@ -54,11 +55,10 @@ LADDERS = [
     ('spellsword', 'shock_breath', 'Storm Breath', 'shock', [(MYST, 'Greater Sparks'), (MYST, 'Electrocute')]),
     ('spellsword', 'poison_breath', 'Poison Breath', 'poison', [(MYST, 'Poison Spray'), (MYST, 'Miasma')]),
     ('spellsword', 'blood_breath', 'Blood Breath', 'blood', [(MYST, 'Drain Life'), (MYST, 'Leech Life')]),
-    # (Noah: "remove the staff the Summoner comes with - a spell that's upgradable instead, of an element no other class
-    # uses") Corrosion: Mysticism's metal-eating bolts. Each strikes a burst round what it hits and marks everyone in it for
-    # your summons (Classes::CorrosionHit); Bind Pact climbs it, each rung a wider, harder burst. (last: the indices before
-    # it stay as they were)
-    ('summoner', 'corrosion', 'Corrosion', 'corrosion', [(MYST, 'Corrode Armor'), (MYST, 'Armoreater'), (MYST, 'Swordbreaker')]),
+    # (Noah: "change the summoner spell to something more fitting for the class" - Reanimate) the ladder that was Corrosion
+    # (its place kept: the indices before it stay as they were): our own dark bolts in Skyrim's Reanimate look. Each strikes
+    # what it hits, marks it for your summons, and any of the dead it kills rises as your thrall (Classes::ConjurerStaffHit)
+    ('summoner', 'corrosion', 'Reanimate', 'arcane', [(OURS, 'Reanimate'), (OURS, 'Raise the Fallen'), (OURS, 'Army of the Grave')]),
 ]
 ELEMENTS = ['fire', 'frost', 'shock', 'poison', 'corrosion', 'sun', 'blood', 'arcane']  # (corrosion took disease's place: nothing used it)
 
@@ -71,6 +71,10 @@ def load():
         out.setdefault((COTC, x['name']), (int(x['spell'], 16), x['cost'], x['cast'] == 'concentration', 'Conjuration'))
     for x in json.load(open(D / 'spriggans_spells.json')):
         out[(SPRIG, x['name'])] = (int(x['fid'], 16), x['cost'], x['cast'] == 'concentration', 'Conjuration')
+    import sys; sys.path.insert(0, str(ROOT / 'tools')); import esp_ids
+    ids, _ = esp_ids.assign()
+    for key, name, cost in (('reanimate_1', 'Reanimate', 90), ('reanimate_2', 'Raise the Fallen', 140), ('reanimate_3', 'Army of the Grave', 200)):
+        out[(OURS, name)] = (ids[('SPEL', key)], cost, False, 'Conjuration')
     for n, (fid, cost) in VANILLA.items():
         out[(SKY, n)] = (fid, cost, False, 'Destruction')
     return out

@@ -893,8 +893,8 @@ namespace bo3z
 				St fs = Get(a_town);
 				fs.prog = 1;
 				Put(a_town, fs);
-				Hud::Banner(Upper(std::string(BossName(a_town))) + " FALLS - slay the night's last waves to free " + std::string(gen::kTowns[a_town]), 5.0f);
-				logger::info("curse: {}'s Dragon Priest slain - freed when the night's waves are done", gen::kTowns[a_town]);
+				Hud::Banner(Upper(std::string(BossName(a_town))) + " FALLS - " + Upper(std::string(gen::kTowns[a_town])) + " IS FREE", 5.0f);
+				logger::info("curse: {}'s Dragon Priest slain - the night ends, the city is freed", gen::kTowns[a_town]);
 			}
 		}
 		void OnNightCleared()

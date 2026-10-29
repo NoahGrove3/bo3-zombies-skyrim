@@ -1296,6 +1296,11 @@
   "LIGH:pu_thuum": "0xd0c",
   "STAT:pu_mercy": "0xd0d",
   "LIGH:pu_mercy": "0xd0e",
-  "LIGH:lantern": "0xd0f"
+  "LIGH:lantern": "0xd0f",
+  "WEAP:riftblade": "0xd10",
+  "MGEF:reanimatebolt": "0xd11",
+  "SPEL:reanimate_1": "0xd12",
+  "SPEL:reanimate_2": "0xd13",
+  "SPEL:reanimate_3": "0xd14"
  }
 }

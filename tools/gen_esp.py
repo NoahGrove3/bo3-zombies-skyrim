@@ -5,7 +5,7 @@ import json, struct, pathlib
 from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing, blasts
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
-T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow']}
+T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
 def z(s): return s.encode('cp1252') + b'\0'
 def sub(name, data):
@@ -313,6 +313,44 @@ for el, (label, text) in XBOWS.items():
         elif name == 'DATA': b = struct.pack('<IfH', 600, 14.0, 22)
         subs.append(sub(name, b))
     recs['WEAP'].append(record('WEAP', fid('WEAP', 'xbow_' + el), subs))
+
+# (Noah: "an enchanted dagger with a special ability" - Rift Stab) the Summoner's Riftblade: Skyrim's Daedric dagger with its
+# fire enchantment; every fifth hit tears a small rift on the foe and a Flame Atronach steps out for 10 s
+# (src/Classes.cpp RiftHit)
+subs = []
+for name, hx in T['weap_daedricdagger']['subs']:
+    b = bytes.fromhex(hx)
+    if name == 'EDID': b = z('UN_Riftblade')
+    elif name == 'FULL': b = z('Riftblade')
+    elif name == 'DESC': b = z('A Daedric blade that burns. Every fifth strike tears a rift on the foe, and a Flame Atronach steps out to fight for you.')
+    elif name == 'DATA': b = struct.pack('<IfH', 900, 6.0, 14)
+    subs.append(sub(name, b))
+recs['WEAP'].append(record('WEAP', fid('WEAP', 'riftblade'), subs))
+
+# (Noah: "change the summoner spell to something more fitting" - Reanimate) a dark bolt: Skyrim's own Reanimate look (its
+# projectile, its hand and hit art, its sounds), but aimed at the living; it barely hurts by itself - Classes::ConjurerStaffHit
+# deals the blow, marks the struck for your summons, and any of the dead it kills rises as your thrall
+md = bytearray(tsub('mgef_firebolt', 'DATA'))
+struct.pack_into('<I', md, 12, 0x13)                  # Conjuration
+struct.pack_into('<I', md, 16, 0xFFFFFFFF)            # no resistance
+struct.pack_into('<I', md, 24, 0x075347)              # Reanimate's casting light
+struct.pack_into('<I', md, 32, 0x075272)              # Reanimate's hit shader
+struct.pack_into('<I', md, 36, 0)
+struct.pack_into('<I', md, 72, 0x075348)              # ReanimateProjectile
+struct.pack_into('<I', md, 76, 0)                     # no explosion
+for off, v in ((92, 0x05CBFF), (96, 0x075271), (100, 0x075346), (108, 0)): struct.pack_into('<I', md, off, v)
+recs['MGEF'].append(record('MGEF', fid('MGEF', 'reanimatebolt'), [
+    sub('EDID', z('UN_ReanimateBolt')), sub('FULL', z('Reanimate')), sub('MDOB', struct.pack('<I', 0x1097CC)), sub('DATA', bytes(md)),
+    sub('SNDD', bytes.fromhex('0000000069f2030001000000f9c8030002000000fac8030003000000b1f20300')), sub('DNAM', z(''))]))
+REANIMATE = [('reanimate_1', 'Reanimate', 90, 'Strikes one of the dead with grave-magic and marks it for your summons. Any of the dead it kills rises as your thrall for 20 seconds.'),
+             ('reanimate_2', 'Raise the Fallen', 140, 'A harder bolt of grave-magic. Any of the dead it kills rises as your thrall for 25 seconds, stronger.'),
+             ('reanimate_3', 'Army of the Grave', 200, 'The Legendary bolt of grave-magic. Any of the dead it kills rises as your thrall for 30 seconds, stronger still - three may walk at once.')]
+for key, name, cost, text in REANIMATE:
+    spit = bytearray(tsub('spel_firebolt', 'SPIT'))
+    struct.pack_into('<I', spit, 0, cost); struct.pack_into('<I', spit, 32, 0)
+    recs['SPEL'].append(record('SPEL', fid('SPEL', key), [
+        sub('EDID', z('UN_' + key)), sub('OBND', bytes(12)), sub('FULL', z(name)), sub('MDOB', struct.pack('<I', 0x1097CC)), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
+        sub('DESC', z(text)), sub('SPIT', bytes(spit)), sub('EFID', struct.pack('<I', fid('MGEF', 'reanimatebolt'))), sub('EFIT', struct.pack('<fII', 5.0, 0, 0))]))
 
 # (Noah: the Ranger's wonder is a purple bow, the Subsuming Vortex) a real bow - its arrows hit as arrows - whose every
 # arrow opens a black hole where it lands (src/Classes.cpp TickFast finds where it struck; src/Gun.cpp BlackHole)
@@ -687,7 +725,7 @@ def guide_text():
            p("<b>Reforge, Bind Pact, Imbue</b> - once three altars are freed, kills raise the spell or bow in your hands to its next rung or tier. A third rung waits for four freed altars, a Legendary for six."),
            p("<b>Perks</b> - lasting gifts: twelve at most."),
            p("<b>Trials</b> - the quest that wakes the altar. It sets four; win all four, in any order (step over to them with D-pad left or right, or A and D). "
-             "Then the city's Dragon Priest rises at night near the altar. Slay it, clear the night's waves, and the city is safe for good. Skyrim's difficulty sets how hard the trials are."),
+             "Then the city's Dragon Priest rises at night near the altar. Slay it and the night ends at once - dawn breaks and the city is safe for good. Skyrim's difficulty sets how hard the trials are."),
            "[pagebreak]", h("The Four Trials"),
            p("<b>Ward of the Tongues</b> - stand in the runic circle round the altar while the dead come faster. Step out and the count waits for you."),
            p("<b>The Culling</b> - kill a number of the risen in the city."),

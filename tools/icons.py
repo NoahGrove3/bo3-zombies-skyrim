@@ -121,8 +121,19 @@ def steelwind(d):    # a blade with speed lines behind it
     d.line(P((.4, .76), (.74, .3)), fill=W, width=18)
     for k in range(3):
         y = .38 + k * .12; d.line(P((.2, y), (.42 - k * .04, y)), fill=W, width=10)
+def splitshot(d):    # one arrow splitting into two: shots fly in pairs
+    bx, by = .46, .54
+    d.line(P((.24, .76), (bx, by)), fill=W, width=18)
+    for tx, ty in ((.78, .4), (.6, .22)):
+        d.line(P((bx, by), (tx, ty)), fill=W, width=14)
+        L = math.hypot(tx - bx, ty - by); ux, uy = (tx - bx) / L, (ty - by) / L
+        d.polygon(P((tx + ux * .08, ty + uy * .08), (tx - uy * .055, ty + ux * .055), (tx + uy * .055, ty - ux * .055)), fill=W)
+    for k in range(2):  # fletching: two feathers at the tail
+        x, y = .27 + k * .06, .73 - k * .06
+        d.line(P((x, y), (x - .07, y - .01)), fill=W, width=9)
+        d.line(P((x, y), (x + .01, y + .07)), fill=W, width=9)
 
-DRAW = {'bonebinder': bonebinder, 'soultether': soultether, 'command': command, 'emberheart': emberheart, 'arcanist': arcanist,
+DRAW = {'splitshot': splitshot, 'bonebinder': bonebinder, 'soultether': soultether, 'command': command, 'emberheart': emberheart, 'arcanist': arcanist,
         'siphon': siphon, 'eagleeye': eagleeye, 'dawnwatch': dawnwatch, 'bladesong': bladesong, 'spellbind': spellbind, 'steelwind': steelwind,
         'fletcher': fletcher, 'trollshide': trollshide, 'quicksilver': quicksilver, 'twinstrike': twinstrike, 'hearthfire': hearthfire,
         'windrunner': windrunner, 'hawkeye': hawkeye, 'mammoth': mammoth, 'frostbite': frostbite, 'stormcrown': stormcrown}

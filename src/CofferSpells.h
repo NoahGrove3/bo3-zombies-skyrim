@@ -86,8 +86,8 @@ namespace bo3z::coffer
 		{ "MysticismMagic.esp", 0x9606AC, "Miasma", kPoison, 3, 46, true, 1.0f, kSpellsword, 20, 2, 2, "Poison Breath" },
 		{ "MysticismMagic.esp", 0x445FB7, "Drain Life", kBlood, 0, 17, true, 1.0f, kSpellsword, 21, 1, 2, "Blood Breath" },
 		{ "MysticismMagic.esp", 0x440E99, "Leech Life", kBlood, 3, 52, true, 1.0f, kSpellsword, 21, 2, 2, "Blood Breath" },
-		{ "MysticismMagic.esp", 0x29C8AB, "Corrode Armor", kCorrosion, 0, 32, false, 1.0f, kSummoner, 22, 1, 3, "Corrosion" },
-		{ "MysticismMagic.esp", 0x2A19B9, "Armoreater", kCorrosion, 1, 60, false, 1.0f, kSummoner, 22, 2, 3, "Corrosion" },
-		{ "MysticismMagic.esp", 0x9E9213, "Swordbreaker", kCorrosion, 3, 60, false, 1.0f, kSummoner, 22, 3, 3, "Corrosion" },
+		{ "CurseOfAlduin.esp", 0x000D12, "Reanimate", kArcane, 0, 22, false, 1.0f, kSummoner, 22, 1, 3, "Reanimate" },
+		{ "CurseOfAlduin.esp", 0x000D13, "Raise the Fallen", kArcane, 1, 35, false, 1.0f, kSummoner, 22, 2, 3, "Reanimate" },
+		{ "CurseOfAlduin.esp", 0x000D14, "Army of the Grave", kArcane, 3, 50, false, 1.0f, kSummoner, 22, 3, 3, "Reanimate" },
 	} };
 }

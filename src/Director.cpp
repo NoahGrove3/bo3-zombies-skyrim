@@ -1261,6 +1261,8 @@ namespace bo3z
 				Hud::Banner(g_champ.name + " falls! +1000", 5.0f);
 				logger::info("champion: {} slain", g_champ.name);
 				const int town = g_champ.town;
+				std::string champName = g_champ.name;
+				for (auto& ch : champName) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
 				g_champ.handle = {};
 				g_champ.slainTonight = true;
 				{
@@ -1271,6 +1273,15 @@ namespace bo3z
 				}
 				if (town >= 0) {
 					Curse::OnChampionSlain(town);
+					// (Noah: "the echo altar Dragon Priest should end the night after defeat") its fall frees the city and
+					// brings the dawn at once - the rest of the night's waves are not needed
+					if (g_phase == Phase::Fighting && !g_nightCleared && !Coop::Client()) {
+						g_nightCleared = true;
+						g_waveTheme = -1;
+						Curse::OnNightCleared();
+						Forms::Play(gen::Sound::round_end);
+						SkipToDawn(fmt::format("{} FALLS - DAWN BREAKS", champName).c_str());
+					}
 				} else if (town == -2) {
 					MiniBossSlain();  // (Noah: the mini-boss's wonder part)
 				} else if (town <= -10) {
@@ -3109,19 +3120,8 @@ namespace bo3z
 						}
 						if (a->IsDisabled()) a->Enable(false);
 						if (!a->IsAIEnabled()) a->EnableAI(true);
-						// (Noah: "my spells stop working and the dead on the compass can't be seen - everything freezes") when the
-						// game stops building new bodies altogether (three without one in ten seconds), its cell buffers are
-						// purged once - Skyrim's own "pcb" - to free the loader, at most once a minute and a half
-						static std::deque<std::chrono::steady_clock::time_point> noBody;
-						static auto lastPurge = std::chrono::steady_clock::now() - std::chrono::minutes(5);
-						const auto nb = std::chrono::steady_clock::now();
-						noBody.push_back(nb);
-						while (!noBody.empty() && nb - noBody.front() > std::chrono::seconds(10)) noBody.pop_front();
-						if (noBody.size() >= 3 && nb - lastPurge > std::chrono::seconds(90)) {
-							lastPurge = nb, noBody.clear();
-							Gun::Console("pcb");
-							logger::warn("night: new bodies have stopped loading - cell buffers purged (pcb)");
-						}
+						// (the night 4 freeze: the game hung for good inside Skyrim's own "pcb", which waits on the very loader
+						// that was busy building these bodies) the cell buffers are never purged from here any more
 					}
 					static std::deque<std::chrono::steady_clock::time_point> recent;
 					const auto nowR = std::chrono::steady_clock::now();
@@ -4485,6 +4485,7 @@ namespace bo3z
 			}
 		}
 
+		RE::TESFaction* UndeadFactionForm() { return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESFaction>(gen::kUndeadFaction, gen::kPlugin); }
 		void Frenzy(RE::Actor* a_actor, float a_seconds)
 		{
 			for (auto& s : g_alive) {

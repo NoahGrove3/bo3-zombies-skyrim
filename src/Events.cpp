@@ -739,6 +739,7 @@ namespace bo3z
 				if (a_event && player && a_event->cause.get() == player && a_event->target && a_event->target.get() != player) {
 					if (auto* t = a_event->target->As<RE::Actor>()) Gun::OnStaffHit(t, a_event->source);
 					if (auto* t = a_event->target->As<RE::Actor>()) Classes::ConjurerStaffHit(t, a_event->source);
+					if (auto* t = a_event->target->As<RE::Actor>(); t && Classes::IsRiftblade(a_event->source)) Classes::RiftHit(t);
 					if (auto* t = a_event->target->As<RE::Actor>()) Classes::NoteHit(t, a_event->source, a_event->flags.any(RE::TESHitEvent::Flag::kPowerAttack));
 					auto* src = a_event->source ? RE::TESForm::LookupByID(a_event->source) : nullptr;
 					const bool spellHit = src && src->As<RE::MagicItem>();  // (the charge's own lightning never sets off another charge)

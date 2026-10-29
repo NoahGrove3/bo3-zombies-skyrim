@@ -139,6 +139,7 @@ namespace bo3z
 		void             Frenzy(RE::Actor* a_actor, float a_seconds);  // Mindbreaker: turns on its own kind  // night truce: townsfolk and followers can't be hurt
 		bool             NightNow();  // night hours (the undead are out)
 		float            RoundHealth();  // a zombie's full health this round (Skyrim units)
+		RE::TESFaction*  UndeadFactionForm();  // the Curse's own faction (the night's dead)
 		bool             IsElite(RE::Actor* a_actor);
 		bool             IsBoss(RE::Actor* a_actor);
 		struct RestView
@@ -355,6 +356,8 @@ namespace bo3z
 		int              ReforgeCrossbow(int a_freed, bool& a_spent);  // the one in hand (-1: none held; 0 refused; 1 done)
 		int              BladeSpell();  // the Spellsword spell your blade carries (in a hand, or the last held with a two-handed blade; -1)
 		void             MarkForSummons(RE::Actor* a_target);  // (the Summoner's staff) every summon of yours turns on it until it dies or another is marked
+		void             RiftHit(RE::Actor* a_target);     // (the Summoner's Riftblade) every fifth strike: a Flame Atronach for 10 s
+		bool             IsRiftblade(RE::FormID a_source);
 		void             ConjurerStaffHit(RE::Actor* a_target, RE::FormID a_source);  // the Conjurer's Staff's bolt struck: a burst, and the marks
 		void             TickFast(float a_delta);      // where the Subsuming Vortex's arrows come down
 		int              RestockWonder();              // the Vortex's arrows topped up (quivers, Max Ammo)

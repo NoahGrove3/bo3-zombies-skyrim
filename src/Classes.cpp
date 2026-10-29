@@ -75,6 +75,20 @@ namespace bo3z::Classes
 			return -1;
 		}
 		RE::TESObjectWEAP* ElemCrossbow(int a_e);  // (the Ranger's elemental crossbows: below)
+	// (Noah: "the Dremora's voice lines kept repeating over and over just before the crash") every StartCombat is a new
+	// combat bark: a summon is sent at a foe at most once in 2 s, and at the same foe again only after 8 s
+	static bool SummonMayEngage(RE::Actor* a_s, RE::Actor* a_t)
+	{
+		struct Last { RE::FormID t = 0; std::chrono::steady_clock::time_point at{}; };
+		static std::unordered_map<RE::FormID, Last> last;
+		if (last.size() > 300) last.clear();
+		const auto now = std::chrono::steady_clock::now();
+		auto& l = last[a_s->GetFormID()];
+		if (now - l.at < std::chrono::seconds(2)) return false;
+		if (l.t == a_t->GetFormID() && now - l.at < std::chrono::seconds(8)) return false;
+		l.t = a_t->GetFormID(), l.at = now;
+		return true;
+	}
 		int ElemCrossbowIndex(const RE::TESForm* a_obj) { for (int e = 0; e < 3; ++e) if (a_obj && a_obj == ElemCrossbow(e)) return e; return -1; }
 		RE::TESAmmo*       ElemBolts(int a_e);
 		int                BoltCap(int a_level);
@@ -169,14 +183,14 @@ namespace bo3z::Classes
 			if (done) return;
 			done = true;
 			for (int k = 0; k < static_cast<int>(coffer::kSpells.size()); ++k) {
-				if (std::string_view(coffer::kSpells[k].ladderLabel) != "Corrosion" || coffer::kSpells[k].cls != coffer::kSummoner) continue;
+				if (std::string_view(coffer::kSpells[k].ladderLabel) != "Reanimate" || coffer::kSpells[k].cls != coffer::kSummoner) continue;
 				auto* sp = Arcana::Spell(k);
 				if (!sp) continue;
 				const float radius = 210.0f + 70.0f * static_cast<float>(coffer::kSpells[k].rung - 1);
 				for (auto* e : sp->effects) {
 					if (!e) continue;
-					e->effectItem.area = static_cast<std::uint32_t>(radius / 21.33f + 0.5f);
-					if (auto* m = e->baseEffect; m && m->data.explosion) {
+					if (auto* m = e->baseEffect; m && m->data.explosion) {  // (Reanimate's bolts have no burst: left single-target)
+						e->effectItem.area = static_cast<std::uint32_t>(radius / 21.33f + 0.5f);
 						if (auto* q = Gun::Quiet(m->data.explosion)) {
 							q->data.radius = std::min(q->data.radius, radius);
 							m->data.explosion = q;
@@ -202,8 +216,9 @@ namespace bo3z::Classes
 				// Corrosion in the right hand (its bolts tell your summons what to kill), the Beasts in the left, the Dead in
 				// the book
 				Arcana::Give(Rung1(a_cls, "The Dead"), false);
-				GiveSpell(Rung1(a_cls, "Corrosion"), false);
+				GiveSpell(Rung1(a_cls, "Reanimate"), false);
 				GiveSpell(Rung1(a_cls, "Beasts"), true);
+				GiveItem(p, RE::TESDataHandler::GetSingleton()->LookupForm(gen::kRiftblade, gen::kPlugin), 1, false);  // (Noah: the Riftblade - Rift Stab)
 				if (female) {
 					for (std::uint32_t id : { 0xE58u, 0xE5Bu, 0xE5Du, 0xE5Fu, 0xE63u }) {
 						GiveItem(p, Lookup(id, "Wandering Summoner Outfit.esp"), 1, true);
@@ -379,7 +394,7 @@ namespace bo3z::Classes
 			// (the audit: the Ranger's altar bows and the Subsuming Vortex followed you into every class) they are class gear too
 			auto* dh = RE::TESDataHandler::GetSingleton();
 			const bool vortex = dh && (a_obj == dh->LookupForm(gen::kVortexWeap, gen::kPlugin) || a_obj == dh->LookupForm(gen::kVortexAmmo, gen::kPlugin));
-			if (auto* f = a_obj->GetFile(0); f && std::string_view(f->GetFilename()) == gen::kPlugin && Forms::GunIndexOf(a_obj) < 0 && Bows::IndexOf(a_obj) < 0 && !vortex && ElemCrossbowIndex(a_obj) < 0) return false;  // (Noah: the Ranger's Ember / Rime / Storm Crossbows went into every class)
+			if (auto* f = a_obj->GetFile(0); f && std::string_view(f->GetFilename()) == gen::kPlugin && Forms::GunIndexOf(a_obj) < 0 && Bows::IndexOf(a_obj) < 0 && !vortex && ElemCrossbowIndex(a_obj) < 0 && a_obj != dh->LookupForm(gen::kRiftblade, gen::kPlugin)) return false;  // (Noah: the Ranger's Ember / Rime / Storm Crossbows went into every class)
 			return true;
 		}
 		RE::TESObjectREFR* ChestOf(int a_cls, bool a_make)
@@ -1250,14 +1265,21 @@ namespace bo3z::Classes
 			if (g_class.load() == coffer::kSummoner && g_kit[coffer::kSummoner]) {
 				bool knows = false;
 				for (int i = 0; i < static_cast<int>(coffer::kSpells.size()); ++i) {
-					if (coffer::kSpells[i].cls == coffer::kSummoner && std::string_view(coffer::kSpells[i].ladderLabel) == "Corrosion" && Arcana::Spell(i) && p->HasSpell(Arcana::Spell(i))) knows = true;
+					if (coffer::kSpells[i].cls == coffer::kSummoner && std::string_view(coffer::kSpells[i].ladderLabel) == "Reanimate" && Arcana::Spell(i) && p->HasSpell(Arcana::Spell(i))) knows = true;
 				}
-				if (!knows) GiveSpell(Rung1(coffer::kSummoner, "Corrosion"), false);
+				if (!knows) GiveSpell(Rung1(coffer::kSummoner, "Reanimate"), false);
+				// (Noah: Reanimate in Corrosion's place) Mysticism's old Corrosion bolts are taken back
+				auto* dh0 = RE::TESDataHandler::GetSingleton();
+				for (std::uint32_t id : { 0x29C8ABu, 0x2A19B9u, 0x9E9213u }) {
+					if (auto* old = dh0 ? dh0->LookupForm<RE::SpellItem>(id, "MysticismMagic.esp") : nullptr; old && p->HasSpell(old)) p->RemoveSpell(old);
+				}
+				// (Noah: the Summoner's enchanted dagger) a Summoner from before is given the Riftblade
+				if (auto* rift = dh0 ? dh0->LookupForm<RE::TESBoundObject>(gen::kRiftblade, gen::kPlugin) : nullptr; rift && p->GetItemCount(rift) <= 0) GiveItem(p, rift, 1, false);
 			} else if (g_kit[coffer::kSummoner]) {
 				// (the audit) a Summoner waiting in its stash gets Corrosion there, for when you come back to it
 				auto& st = g_stash[coffer::kSummoner];
-				const bool has = std::any_of(st.begin(), st.end(), [](const auto& e) { return e.first >= 0 && e.first < static_cast<int>(coffer::kSpells.size()) && std::string_view(coffer::kSpells[e.first].ladderLabel) == "Corrosion"; });
-				if (!has && Rung1(coffer::kSummoner, "Corrosion") >= 0) st.insert(st.begin(), { Rung1(coffer::kSummoner, "Corrosion"), 0 });
+				const bool has = std::any_of(st.begin(), st.end(), [](const auto& e) { return e.first >= 0 && e.first < static_cast<int>(coffer::kSpells.size()) && std::string_view(coffer::kSpells[e.first].ladderLabel) == "Reanimate"; });
+				if (!has && Rung1(coffer::kSummoner, "Reanimate") >= 0) st.insert(st.begin(), { Rung1(coffer::kSummoner, "Reanimate"), 0 });
 			}
 		}
 		// (Noah: no movement-blocking hits) the night's dead never stagger you: the Steady perk (Mod Incoming Stagger x0)
@@ -1775,6 +1797,9 @@ namespace bo3z::Classes
 		struct PendingSummon { RE::TESBoundObject* what = nullptr; float wait = 0, seconds = 60; int before = 0; std::string name; };
 		std::vector<PendingSummon>                        g_pendingSummon;
 		std::vector<std::pair<RE::ActorHandle, float>>    g_ownSummons;  // the ones called up here: seconds left
+		struct PendingThrall { RE::ActorHandle h; float wait; int level; };
+		std::vector<PendingThrall>                        g_pendingThrall;  // struck by Reanimate: does it fall?
+		std::vector<std::pair<RE::ActorHandle, float>>    g_thralls;        // the risen dead and the Riftblade's atronachs: seconds left
 		std::vector<RE::ActorHandle> g_summonMarks;  // (the Summoner's staff) the ones your summons are told to kill
 		int CommandedNow(RE::PlayerCharacter* a_p)
 		{
@@ -1792,10 +1817,71 @@ namespace bo3z::Classes
 			}
 			return 1;
 		}
+		// a body of the night's dead (or a Flame Atronach) stood up on your side for a while: a teammate, out of the Curse's
+		// faction, in yours; when its time is up it crumbles back into the dark
+		static auto* PlayerFaction() { static auto* f = RE::TESForm::LookupByID<RE::TESFaction>(0x00000DB1); return f; }
+		void EndThrall(RE::Actor* a)
+		{
+			if (!a) return;
+			Gun::FxBlast("dark", a->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f });
+			Console(a, "SetPlayerTeammate 0");
+			a->Disable();
+			a->SetDelete(true);
+		}
+		RE::Actor* RaiseAlly(RE::PlayerCharacter* p, RE::TESNPC* a_base, const RE::NiPoint3& a_at, float a_seconds, float a_health, int a_cap)
+		{
+			if (!p || !a_base || !p->Is3DLoaded() || !p->GetParentCell()) return nullptr;
+			std::erase_if(g_thralls, [](const auto& e) { auto a = e.first.get(); return !a || a->IsDisabled(); });
+			while (static_cast<int>(g_thralls.size()) >= a_cap && !g_thralls.empty()) {  // (the oldest goes)
+				EndThrall(g_thralls.front().first.get().get());
+				g_thralls.erase(g_thralls.begin());
+			}
+			auto ref = p->PlaceObjectAtMe(a_base, false);
+			auto* a = ref ? ref->As<RE::Actor>() : nullptr;
+			if (!a) return nullptr;
+			a->SetPosition(a_at, true);
+			if (auto* fac = Director::UndeadFactionForm()) a->RemoveFromFaction(fac);
+			if (auto* pf = PlayerFaction()) a->AddToFaction(pf, 0);
+			Console(a, "SetPlayerTeammate 1");
+			if (a_health > 0) {
+				auto* av = a->AsActorValueOwner();
+				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, a_health - av->GetPermanentActorValue(RE::ActorValue::kHealth));
+			}
+			g_thralls.push_back({ a->GetHandle(), a_seconds });
+			return a;
+		}
+		void TickThralls(RE::PlayerCharacter* p, float a_delta)
+		{
+			for (auto& pt : g_pendingThrall) {
+				pt.wait -= a_delta;
+				auto a = pt.h.get();
+				if (!a) { pt.wait = 0; continue; }
+				if (!a->IsDead()) continue;
+				pt.wait = 0;
+				auto* base = a->GetActorBase();
+				const float secs = 20.0f + 5.0f * static_cast<float>(pt.level);
+				const float hp = Director::RoundHealth() * gen::kRounds.hpScale * (1.5f + 1.0f * static_cast<float>(pt.level));
+				const RE::NiPoint3 at = a->GetPosition();
+				if (auto* t = RaiseAlly(p, base, at, secs, hp, pt.level >= 2 ? 3 : 2)) {
+					Gun::FxBlast("dark", at + RE::NiPoint3{ 0, 0, 40.0f });
+					a->Disable();  // (the body it rose from is gone)
+					static int told = 0;
+					if (told++ < 10) logger::info("classes: Reanimate - {} rises as your thrall for {:.0f} s", t->GetName(), secs);
+				}
+			}
+			std::erase_if(g_pendingThrall, [](const PendingThrall& pt) { return pt.wait <= 0; });
+			for (auto& [h, t] : g_thralls) {
+				auto a = h.get();
+				if (!a || a->IsDisabled()) { t = 0; continue; }
+				if ((t -= a_delta) <= 0 || a->IsDead()) { EndThrall(a.get()); t = 0; }
+			}
+			std::erase_if(g_thralls, [](const auto& e) { return e.second <= 0; });
+		}
 		void TickSummons(float a_delta)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p) return;
+			TickThralls(p, a_delta);
 			// (the staff is gone: its bolt is no longer dressed each frame)
 			for (auto& [h, t] : g_ownSummons) {
 				auto a = h.get();
@@ -1815,6 +1901,7 @@ namespace bo3z::Classes
 				look = 0;
 				std::vector<RE::Actor*> mine;
 				for (auto& [h, t] : g_ownSummons) if (auto a = h.get()) mine.push_back(a.get());
+				for (auto& [h, t] : g_thralls) if (auto a = h.get(); a && !a->IsDead()) mine.push_back(a.get());  // (the risen and the atronachs fight as summons)
 				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 					if (auto a = h.get(); a && a.get() != p && !a->IsDead() && a->IsCommandedActor() && a->GetCommandingActor().get() == p) mine.push_back(a.get());
 				}
@@ -1916,7 +2003,7 @@ namespace bo3z::Classes
 						}
 					}
 					if (m) {
-						if (cur.get() != m.get()) {
+						if (cur.get() != m.get() && SummonMayEngage(s, m.get())) {
 							if (auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton()) {
 								const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(s->GetFormType(), s);
 								RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
@@ -1935,7 +2022,7 @@ namespace bo3z::Classes
 						if (z->IsCommandedActor() && z->GetCommandingActor().get() == p) continue;
 						if (const float d = z->GetPosition().GetDistance(s->GetPosition()); d < bestD) bestD = d, best = z.get();
 					}
-					if (best) {
+					if (best && SummonMayEngage(s, best)) {
 						if (auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton()) {
 							const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(s->GetFormType(), s);
 							RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
@@ -1996,6 +2083,8 @@ namespace bo3z::Classes
 			}
 			g_ownSummons.clear();
 			g_pendingSummon.clear();
+			for (auto& [h, t] : g_thralls) EndThrall(h.get().get());
+			g_thralls.clear(), g_pendingThrall.clear();
 			if (auto* mt = p->AsMagicTarget()) {  // (Skyrim's own summon spells on you: ended)
 				std::vector<RE::ActiveEffect*> ends;
 				if (auto* list = mt->GetActiveEffectList()) {
@@ -2036,7 +2125,7 @@ namespace bo3z::Classes
 		// (Noah: the staff's work is Corrosion's now) one of Corrosion's bolts struck: its rung sets the burst
 		int level = -1;
 		for (int k = 0; k < static_cast<int>(coffer::kSpells.size()); ++k) {
-			if (std::string_view(coffer::kSpells[k].ladderLabel) != "Corrosion" || coffer::kSpells[k].cls != coffer::kSummoner) continue;
+			if (std::string_view(coffer::kSpells[k].ladderLabel) != "Reanimate" || coffer::kSpells[k].cls != coffer::kSummoner) continue;
 			if (auto* sp = Arcana::Spell(k); sp && sp->GetFormID() == a_source) level = coffer::kSpells[k].rung - 1;
 		}
 		if (level < 0 || !a_target) return;
@@ -2044,26 +2133,43 @@ namespace bo3z::Classes
 		const auto now = std::chrono::steady_clock::now();
 		if (now - last < std::chrono::milliseconds(200)) return;  // (one bolt, one burst)
 		last = now;
-		// (Noah: "the Echo Altar should increase the area of damage on impact, and the damage itself - and any enemy within
-		// the damage area gets marked for the summons") a burst round what it hit: 3 m and a fifth of one of the dead's
-		// health at first, each reforge 1 m wider and harder; everyone in it is marked
-		const float radius = 210.0f + 70.0f * static_cast<float>(level);
-		const float share = 0.2f + 0.1f * static_cast<float>(level);
-		const auto  at = a_target->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f };
-		Gun::AreaHurt(at, radius, share, "");
-		// the rust burst grown to the splash's own reach (a reforged staff's wider ring shows as wider)
-		// (the bolt's own burst is the look now, sized to this reach - TuneCorrosion; no second one on top)
-		std::vector<RE::ActorHandle> marks;
-		for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
-			auto z = h.get();
-			if (z && !z->IsDead() && !z->IsDisabled() && Director::IsFoe(z.get()) && z->GetPosition().GetDistance(at) <= radius + 40.0f) marks.push_back(z->GetHandle());
-		}
-		if (Director::IsFoe(a_target) && !a_target->IsDead() && std::none_of(marks.begin(), marks.end(), [&](const RE::ActorHandle& m) { return m.get().get() == a_target; })) marks.push_back(a_target->GetHandle());
-		if (!marks.empty()) {
-			g_summonMarks = std::move(marks);
+		// (Noah: "Reanimate - a dark bolt; any undead it kills rises for 20 s as your thrall") the bolt strikes what it hit
+		// (two fifths of one of the dead's health at first, on the one upgrade curve each rung), marks it for your summons,
+		// and if that blow kills one of the night's dead it rises again on your side (TickThralls)
+		const int   tier = level >= 2 ? 3 : level;
+		const float share = 0.4f * UpgradeMult(tier);
+		const auto  at = a_target->GetPosition();
+		const bool  undead = Director::IsRoundUndead(a_target) && !Director::IsBoss(a_target);
+		Gun::AreaHurt(at, 70.0f, share, "");
+		if (Director::IsFoe(a_target) && !a_target->IsDead()) g_summonMarks = { a_target->GetHandle() };
+		if (undead) g_pendingThrall.push_back({ a_target->GetHandle(), 0.6f, level });
+	}
+	// (Noah: "an enchanted dagger with a special ability" - Rift Stab) every fifth strike of the Riftblade on one of the night's
+	// foes tears a small rift there: a Flame Atronach steps out and fights for you for 10 s (two at most)
+	void RiftHit(RE::Actor* a_target)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p || !a_target || !Director::IsFoe(a_target)) return;
+		static int hits = 0;
+		static std::chrono::steady_clock::time_point last{};
+		const auto now = std::chrono::steady_clock::now();
+		if (now - last < std::chrono::milliseconds(120)) return;  // (one swing, one count)
+		last = now;
+		if (++hits < 5) return;
+		hits = 0;
+		auto* base = RE::TESForm::LookupByID<RE::TESNPC>(0x000204C0);  // SummonAtronachFlame
+		const float yaw = std::atan2(p->GetPosition().x - a_target->GetPosition().x, p->GetPosition().y - a_target->GetPosition().y);
+		const RE::NiPoint3 at = a_target->GetPosition() + RE::NiPoint3{ std::sin(yaw) * 110.0f, std::cos(yaw) * 110.0f, 0.0f };
+		Gun::FxBlast("fireball", at + RE::NiPoint3{ 0, 0, 60.0f });
+		if (auto* t = RaiseAlly(p, base, at, 10.0f, 0.0f, 2)) {
 			static int told = 0;
-			if (told++ < 10) logger::info("classes: your summons turn on {} marked (Corrosion rung {})", g_summonMarks.size(), level + 1);
+			if (told++ < 10) logger::info("classes: Riftblade - a rift opens, {} steps out for 10 s", t->GetName());
 		}
+	}
+	bool IsRiftblade(RE::FormID a_source)
+	{
+		static auto* w = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kRiftblade, gen::kPlugin);
+		return w && w->GetFormID() == a_source;
 	}
 	void MarkForSummons(RE::Actor* a_target)
 	{
@@ -2072,7 +2178,8 @@ namespace bo3z::Classes
 	}
 	bool IsOwnSummon(RE::Actor* a_actor)
 	{
-		return a_actor && std::any_of(g_ownSummons.begin(), g_ownSummons.end(), [&](const auto& e) { return e.first.get().get() == a_actor; });
+		return a_actor && (std::any_of(g_ownSummons.begin(), g_ownSummons.end(), [&](const auto& e) { return e.first.get().get() == a_actor; }) ||
+		                   std::any_of(g_thralls.begin(), g_thralls.end(), [&](const auto& e) { return e.first.get().get() == a_actor; }));
 	}
 	void NoteCast(RE::FormID a_spell)
 	{
@@ -2403,6 +2510,6 @@ namespace bo3z::Classes
 	{
 		SetState({});
 		g_open = false, g_mastery.fill(0), g_staffChecked = false;
-		g_summonMarks.clear(), g_pendingSummon.clear(), g_ownSummons.clear(), g_lastBlade.clear(), g_powerHit.clear(), g_vortexArrows.clear();
+		g_summonMarks.clear(), g_pendingSummon.clear(), g_ownSummons.clear(), g_thralls.clear(), g_pendingThrall.clear(), g_lastBlade.clear(), g_powerHit.clear(), g_vortexArrows.clear();
 	}
 }

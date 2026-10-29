@@ -241,6 +241,26 @@ namespace BowsImpl
 		return e == "fire" ? Kind::Fire : e == "frost" ? Kind::Frost : e == "shock" ? Kind::Shock : e == "wind" ? Kind::Wind : e == "sun" ? Kind::Sun : Kind::Blood;
 	}
 
+	// (Noah: "the bolt explosions use an old spell animation we made - use the actual spells' animations") every burst
+	// of a bow or crossbow is Skyrim's own explosion of its element now, never our hand-made burst models; the tiny
+	// flashes (the string's snap) are left out
+	void RealBurst(int a_row, const RE::NiPoint3& a_at, float a_radius, float a_dur = 0.45f)
+	{
+		(void)a_dur;
+		if (a_radius < 60.0f) return;
+		static constexpr const char* kSmall[6] = { "fireball", "frost", "runeshock", "shoutarea", "light", "bloodplague" };
+		static constexpr const char* kBig[6] = { "firestorm", "icevolley", "shockmass", "giantslam", "lightmassive", "darkmassive" };
+		int k = 0;
+		for (std::size_t b = 0; b < std::size(gen::kBows); ++b) {
+			if (gen::kBows[b].spellRow == a_row) { k = static_cast<int>(KindOf(static_cast<int>(b))); break; }
+		}
+		static int  burst = 0;
+		static auto since = std::chrono::steady_clock::now();
+		if (const auto now = std::chrono::steady_clock::now(); now - since > std::chrono::milliseconds(50)) since = now, burst = 0;
+		if (++burst > 6) return;  // (at most 6 in 50 ms: a volley never floods the world with explosions)
+		Gun::FxBlast(a_radius >= 200.0f ? kBig[k] : kSmall[k], a_at);
+	}
+
 	struct Patch { int row; RE::NiPoint3 at; float r, t, tick, dps; };            // cinders on the ground
 	struct Mark { RE::ActorHandle a; int row; float t, tick, dmg; };               // a storm mark
 	struct Cyclone { int row; RE::NiPoint3 at; float r, t, tick, spin; };          // a whirlwind that drags the dead in
@@ -297,7 +317,7 @@ namespace BowsImpl
 	void AddCyclone(int row, const RE::NiPoint3& at, float r, float secs)
 	{
 		g_cyclones.push_back({ row, at, r, secs, 0.0f, 0.0f });
-		Spellcraft::BurstAt(row, at, r * 0.6f, 0.5f);
+		RealBurst(row, at, r * 0.6f, 0.5f);
 	}
 	void Dawnbreak(int row, const RE::NiPoint3& at, float dmg)
 	{
@@ -310,8 +330,8 @@ namespace BowsImpl
 				Spellcraft::Strike(row, f, dmg * 1.2f, false, gen::kFxHoly, at);
 			}
 		}
-		Spellcraft::BurstAt(row, at, 260.0f, 0.8f);
-		Spellcraft::BurstAt(row, at + RE::NiPoint3{ 0, 0, 60 }, 160.0f, 0.5f);
+		RealBurst(row, at, 260.0f, 0.8f);
+		RealBurst(row, at + RE::NiPoint3{ 0, 0, 60 }, 160.0f, 0.5f);
 		Blast(BlastIndex("turnundead"), at, 0.0f, 0.8f);
 	}
 
@@ -411,20 +431,8 @@ namespace BowsImpl
 		// tier: I a ring of sparks of it round the burst, II Skyrim's great blast of the element and a second, wider wave;
 		// III all of that and the tornado (TornadoOf)
 		const int t = std::clamp(s.tier, 0, 3);
-		Gun::FxBlast(t >= 2 ? kBig[k] : kSmall[k], p);
-		Spellcraft::BurstAt(s.row, p, 130.0f + 45.0f * t, 0.4f + 0.08f * t);
-		if (t >= 1) {
-			const int   n = t >= 2 ? 6 : 4;
-			const float rr = 70.0f + 30.0f * t;
-			for (int j = 0; j < n; ++j) {
-				const float a = 6.2832f * j / n + Rand(0, 0.5f);
-				Spellcraft::BurstAt(s.row, p + RE::NiPoint3{ std::cos(a) * rr, std::sin(a) * rr, 10.0f }, 30.0f + 8.0f * t, 0.3f);
-			}
-		}
-		if (t >= 2) {
-			Spellcraft::BurstAt(s.row, p, 230.0f + 40.0f * (t - 2), 0.7f);  // the second, wider wave
-			Gun::FxBlast(kSmall[k], p + RE::NiPoint3{ 0, 0, 30.0f });
-		}
+		Gun::FxBlast(t >= 2 ? kBig[k] : kSmall[k], p);  // (Skyrim's own explosion of the element: the real spell's look)
+		if (t >= 2) Gun::FxBlast(kSmall[k], p + RE::NiPoint3{ 0, 0, 30.0f });
 	}
 
 	// (Noah: each bow's last upgrade is a spell of the party's mods, loosed where the arrow strikes) Fire: Fiery Torrent,
@@ -599,7 +607,7 @@ namespace BowsImpl
 		case Kind::Fire:
 			if (t >= 1) {  // Flare Shot: it bursts into a fireball
 				Spellcraft::Area(row, p, 190.0f, dmg * 0.5f, gen::kFxIgnite);
-				Spellcraft::BurstAt(row, p, 110.0f, 0.4f);
+				RealBurst(row, p, 110.0f, 0.4f);
 			}
 			if (t >= 2) {  // Cinder Trail: the ground behind it burns
 				const RE::NiPoint3 back = s.vel.Length() > 1 ? s.vel * (1.0f / s.vel.Length()) : RE::NiPoint3{ 0, 1, 0 };
@@ -615,7 +623,7 @@ namespace BowsImpl
 			if (t >= 2 && Spellcraft::g_hitPreFrozen && !killed) {  // Shatter: the one already frozen bursts into shards
 				DamageAs(row, a, dmg * 1.5f, false, false);
 				Spellcraft::Area(row, p, 220.0f, dmg * 0.6f, gen::kFxNone);
-				Spellcraft::BurstAt(row, p, 140.0f, 0.5f);
+				RealBurst(row, p, 140.0f, 0.5f);
 			}
 			break;
 		case Kind::Shock:
@@ -631,7 +639,7 @@ namespace BowsImpl
 					Spellcraft::Strike(row, f, dmg * 1.5f, false, gen::kFxNone, p);
 					Stagger(f, 1.0f);
 				}
-				Spellcraft::BurstAt(row, p, 220.0f, 0.6f);
+				RealBurst(row, p, 220.0f, 0.6f);
 				Blast(BlastIndex("skybolt"), p, 0.0f, 0.7f);
 			}
 			break;
@@ -655,7 +663,7 @@ namespace BowsImpl
 						Spellcraft::Strike(row, f, dmg * (t >= 2 ? 0.55f : 0.4f), false, gen::kFxHoly, p);
 					}
 				}
-				Spellcraft::BurstAt(row, p, rr * 0.6f, 0.4f);
+				RealBurst(row, p, rr * 0.6f, 0.4f);
 			}
 			if (t >= 3 && s.full && Story::AlduinFallen()) {  // (the classes' growth: back as the bow's Legendary strike after Sovngarde)
 				Dawnbreak(row, p, dmg);
@@ -697,7 +705,7 @@ namespace BowsImpl
 		case Kind::Fire:
 			if (t >= 1) {
 				Spellcraft::Area(row, p, 190.0f, s.damage * 0.5f, gen::kFxIgnite);
-				Spellcraft::BurstAt(row, p, 110.0f, 0.4f);
+				RealBurst(row, p, 110.0f, 0.4f);
 			}
 			if (t >= 2) {
 				g_patches.push_back({ row, p, 120.0f, 5.0f, 0.0f, s.damage * 0.18f });
@@ -720,7 +728,7 @@ namespace BowsImpl
 					Spellcraft::Strike(row, f, s.damage * 1.5f, false, gen::kFxNone, p);
 					Stagger(f, 1.0f);
 				}
-				Spellcraft::BurstAt(row, p, 220.0f, 0.6f);
+				RealBurst(row, p, 220.0f, 0.6f);
 			}
 			break;
 		default:
@@ -736,7 +744,7 @@ namespace BowsImpl
 	void Fizzle(int i)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
-		Spellcraft::BurstAt(gen::kBows[i].spellRow, HeadAt(p), 10.0f, 0.2f);
+		RealBurst(gen::kBows[i].spellRow, HeadAt(p), 10.0f, 0.2f);
 		g_hideArrow = 0.6f;
 		static int told = 0;
 		if (told++ < 2) {
@@ -786,7 +794,7 @@ namespace BowsImpl
 		Spellcraft::g_bowHit = &OnHit;
 		Spellcraft::g_bowGround = &OnGround;
 		if (full) {
-			Spellcraft::BurstAt(row, from, 22.0f, 0.18f);  // (a flash off the string)
+			RealBurst(row, from, 22.0f, 0.18f);  // (a flash off the string)
 		}
 		// the spell's own voice as the arrow leaves: its cast, or at full draw its unleash
 		Forms::Play(full ? gen::kGuns[gun].chargeSnd : gen::kGuns[gun].fireSnd);
@@ -803,7 +811,7 @@ namespace BowsImpl
 				}
 			}
 			for (int k = 1; k <= (tempest ? 6 : 4); ++k) {
-				Spellcraft::BurstAt(row, aim.eye + aim.dir * (260.0f * k), 70.0f + 34.0f * k, 0.5f);
+				RealBurst(row, aim.eye + aim.dir * (260.0f * k), 70.0f + 34.0f * k, 0.5f);
 			}
 			if (tempest) {
 				AddCyclone(row, aim.eye + aim.dir * std::min(900.0f, aim.hit.GetDistance(aim.eye)), 420.0f, 4.0f);
@@ -826,7 +834,7 @@ namespace BowsImpl
 				Spellcraft::Strike(row, f, dmg * 1.2f, false, gen::kFxFreeze, HeadPos(f));
 			}
 			Spellcraft::StreakAt(row, from, aim.eye + aim.dir * std::min(2400.0f, aim.hit.GetDistance(aim.eye)), 1.2f, 0.5f, false);
-			Spellcraft::BurstAt(row, aim.hit, 120.0f, 0.5f);
+			RealBurst(row, aim.hit, 120.0f, 0.5f);
 			Spellcraft::PlayAt(Spellcraft::Snd(gun, &gen::GunSounds::boom), from);
 			return;
 		}
@@ -852,7 +860,7 @@ namespace BowsImpl
 		case Kind::Sun: effect = gen::kFxHoly; break;
 		case Kind::Blood: effect = gen::kFxDrain; break;
 		}
-		Spellcraft::BurstAt(row, from + dir * 30.0f, full ? 26.0f : 16.0f, 0.18f);  // (the string's snap: a flash off the arrow's head)
+		RealBurst(row, from + dir * 30.0f, full ? 26.0f : 16.0f, 0.18f);  // (the string's snap: a flash off the arrow's head)
 		// (Noah: the Splitting Draught) two arrows a little apart, each at half the damage; (the altar's special ammo) carried by both
 		const int  special = TakeSpecial();
 		const bool split = (Save::PerkStacks(gen::kPerk_splitshot) > 0);
@@ -896,7 +904,7 @@ namespace BowsImpl
 				for (auto* f : Foes(c.at, c.r)) {
 					DamageAs(c.row, f, c.dps * 0.5f, false, false, true);
 				}
-				Spellcraft::BurstAt(c.row, c.at + RE::NiPoint3{ Rand(-30, 30), Rand(-30, 30), 10 }, c.r * 0.5f, 0.45f);
+				RealBurst(c.row, c.at + RE::NiPoint3{ Rand(-30, 30), Rand(-30, 30), 10 }, c.r * 0.5f, 0.45f);
 			}
 		}
 		std::erase_if(g_patches, [](const Patch& c) { return c.t <= 0; });
@@ -930,7 +938,7 @@ namespace BowsImpl
 					}
 					Director::Web(f->GetPosition(), 50.0f, 0.4f, 95.0f);
 				}
-				Spellcraft::BurstAt(c.row, c.at + RE::NiPoint3{ 0, 0, 40.0f + 60.0f * std::fmod(c.spin, 1.0f) }, 90.0f, 0.3f);
+				RealBurst(c.row, c.at + RE::NiPoint3{ 0, 0, 40.0f + 60.0f * std::fmod(c.spin, 1.0f) }, 90.0f, 0.3f);
 			}
 		}
 		std::erase_if(g_cyclones, [](const Cyclone& c) { return c.t <= 0; });

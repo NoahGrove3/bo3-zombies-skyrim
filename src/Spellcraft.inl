@@ -847,7 +847,7 @@ namespace Spellcraft
 		}
 		default:
 			PlayAt(Snd(s.gun, &gen::GunSounds::hit), at, 0.9f);
-			BurstAt(s.row, at, std::max(40.0f, s.radius * 2.5f), 0.3f);
+			if (s.bow < 0) BurstAt(s.row, at, std::max(40.0f, s.radius * 2.5f), 0.3f);  // (Noah: a bow's or crossbow's strike shows Skyrim's own explosion, not ours)
 			break;
 		}
 	}
@@ -901,7 +901,7 @@ namespace Spellcraft
 				s.spark -= a_dt;
 				if (s.spark <= 0) {  // and motes of it shed as it goes
 					s.spark = 0.03f;
-					BurstAt(s.row, tail, 24.0f, 0.5f);
+					if (s.bow < 0) BurstAt(s.row, tail, 24.0f, 0.5f);  // (Noah: a bow's or crossbow's strike shows Skyrim's own explosion, not ours)
 				}
 			}
 			const RE::NiPoint3 end = wf <= 1.0f ? from + (to - from) * wf : to;
@@ -930,7 +930,7 @@ namespace Spellcraft
 				}
 				PlayAt(Snd(s.gun, &gen::GunSounds::hit), p, 0.85f);
 				if (static_cast<int>(s.struck.size()) >= s.pierce) {
-					BurstAt(s.row, p, std::max(36.0f, s.radius * 2.0f), 0.25f);
+					if (s.bow < 0) BurstAt(s.row, p, std::max(36.0f, s.radius * 2.0f), 0.25f);  // (Noah: a bow's or crossbow's strike shows Skyrim's own explosion, not ours)
 					s.life = 0;
 					s.pos = p;
 					return true;
