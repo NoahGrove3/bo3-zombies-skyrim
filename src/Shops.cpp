@@ -1858,7 +1858,7 @@ namespace bo3z
 		int                 g_sel = 0;
 		int                 g_trialSel = 0;  // the controller's pick among the altar's trials
 		// (Noah: one way to drive the altar) a focus moved up and down its rows - D-pad or W/S - and A / Enter to take it
-		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30 };
+		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowOutfit, kRowSpecial };
 		int g_focus = kRowSpell;
 		RE::ObjectRefHandle g_pickAltar;  // the altar whose class picker is up (no class yet): it opens when one is chosen
 
@@ -2008,9 +2008,9 @@ namespace bo3z
 						return true;
 					}
 				}
-				return code == 0x12 || code == 0xCB || code == 0xCD || code == 0xC8 || code == 0xD0 || code == 0x11 || code == 0x1E || code == 0x1F || code == 0x20 || code == 0x1C || code == 0x9C || code == 0x10 || code == 0x13;
+				return code == 0x12 || code == 0xCB || code == 0xCD || code == 0xC8 || code == 0xD0 || code == 0x11 || code == 0x1E || code == 0x1F || code == 0x20 || code == 0x1C || code == 0x9C;
 			case RE::INPUT_DEVICE::kMouse: return code == 8 || code == 9;
-			case RE::INPUT_DEVICE::kGamepad: return code == 0x4000 || code == 0x8000 || code == 0x1000 || code == 0x2000 || code == 0x0001 || code == 0x0002 || code == 0x0004 || code == 0x0008 || code == 0x0100 || code == 0x0200 || code == 0x000A || code == 0x0009 || code == 0x0020 || code == 0x0040 || code == 0x0080;  // (+ Back, L3, R3, LT: the altar's change-class / outfit / quivers must not also wait, sneak or turn the camera)
+			case RE::INPUT_DEVICE::kGamepad: return code == 0x4000 || code == 0x8000 || code == 0x1000 || code == 0x2000 || code == 0x0001 || code == 0x0002 || code == 0x0004 || code == 0x0008 || code == 0x0100 || code == 0x0200 || code == 0x000A || code == 0x0009;
 			default: return false;
 			}
 		}
@@ -2077,33 +2077,7 @@ namespace bo3z
 					if (!wantReroll) return true;
 				}
 			}
-			// (the classes overhaul) C on the keyboard, Back on a pad: change class here, for septims
-			if (!g_choosing && ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x2E) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x0020))) {
-				if (g_show.phase != Show::Idle) {
-					Hud::Banner("Wait for the altar to finish its roll", 2.0f);
-				} else {
-					g_menu = false;
-					g_closedAt = std::chrono::steady_clock::now();
-					Classes::OpenPicker(Classes::Get() >= 0);
-				}
-				return true;
-			}
-			// (the class framework's outfit picker) O on the keyboard, the left stick click on a pad: the next outfit, any class
-			if (!g_choosing && ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x18) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x0040))) {
-				Classes::NextOutfit();
-				return true;
-			}
-			// (Noah: "remove the quiver refill at the altar; special bolts and arrows instead") the Ranger's special ammo: Q on
-			// the keyboard or the right stick click picks which, R or Y buys ten
-			if (!g_choosing && Classes::Get() == 2 && ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x10) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x0080))) {
-				g_specialSel = (g_specialSel + 1) % 4;
-				PlayUi(UiSnd::kMove, 0.6f);
-				return true;
-			}
-			if (!g_choosing && Classes::Get() == 2 && ((dev == RE::INPUT_DEVICE::kKeyboard && code == 0x13) || (dev == RE::INPUT_DEVICE::kGamepad && code == 0x8000))) {
-				Bows::BuySpecial(g_specialSel);
-				return true;
-			}
+			// (Noah: "give the special ammo, outfit change and class change their own tabs instead of keybinds") - rows now
 			auto*      ref = g_menuRef.get().get();
 			auto act = [&](int a) {
 				if ((a == 0 || a == 6) && g_show.phase == Show::Idle) g_lastRollRow = a;
@@ -2259,7 +2233,10 @@ namespace bo3z
 				const int t = r ? TownOf(r) : -1;
 				// (Noah: "the echo altar changes depending on which class the player is using") the Ranger has one roll - bows
 				// and crossbows both - the other classes their roll and their second wheel
-				std::vector<int> rows{ kRowClass, kRowSpell };  // (Noah: the class is chosen and changed at the altar)
+				std::vector<int> rows{ kRowClass };  // (Noah: the class is chosen and changed at the altar)
+				if (Classes::Get() >= 0) rows.push_back(kRowOutfit);
+				if (Classes::Get() == 2) rows.push_back(kRowSpecial);  // (the Ranger's special ammo)
+				rows.push_back(kRowSpell);
 				if (Classes::Get() != 2) rows.push_back(kRowBow);
 				rows.push_back(kRowForge), rows.push_back(kRowPerk);
 				if (t >= 0 && Curse::ClaimableShout(t) >= 0) rows.push_back(kRowShout);
@@ -2277,6 +2254,8 @@ namespace bo3z
 				} else if (side) {
 					if (g_focus == kRowPerk) {
 						g_sel = (g_sel + side + n) % n;
+					} else if (g_focus == kRowSpecial) {
+						g_specialSel = (g_specialSel + side + 4) % 4;  // left / right: which special ammo
 					} else if (trials && g_focus >= kRowTrial && g_focus < kRowTrial + 5) {
 						g_focus = kRowSpell;  // back to the altar's own column
 					} else if (trials) {
@@ -2300,6 +2279,8 @@ namespace bo3z
 							Classes::OpenPicker(Classes::Get() >= 0);  // (the first is free; a change costs)
 						}
 						break;
+					case kRowOutfit: Classes::NextOutfit(); break;
+					case kRowSpecial: Bows::BuySpecial(g_specialSel); break;
 					case kRowSpell: act(Classes::Get() == 2 ? 6 : 0); break;  // (the Ranger's one roll: a bow or a crossbow)
 					case kRowBow: act(6); break;
 					case kRowForge: act(1); break;
@@ -2316,7 +2297,7 @@ namespace bo3z
 					(void)trial0;
 					if (g_focus == kRowLeave || (menu0 && !g_menu)) {
 						PlayUi(UiSnd::kLeave);
-					} else if (Points::Get() != pts0 || g_show.phase != ph0 || (g_focus >= kRowTrial && g_focus < kRowTrial + 5) || g_focus == kRowShout) {
+					} else if (Points::Get() != pts0 || g_show.phase != ph0 || (g_focus >= kRowTrial && g_focus < kRowTrial + 5) || g_focus == kRowShout || g_focus == kRowOutfit) {
 						PlayUi(UiSnd::kChoose);
 					} else {
 						PlayUi(UiSnd::kFail);

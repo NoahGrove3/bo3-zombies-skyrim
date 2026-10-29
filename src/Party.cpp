@@ -203,6 +203,12 @@ namespace bo3z::Party
 				RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
 				vm->DispatchMethodCall(hd, "ObjectReference", "PushActorAway", RE::MakeFunctionArguments(static_cast<RE::Actor*>(p), 1.0f), none);
 			}
+			// (Noah: "my character stands up again after dying") held limp on the ground until you rise: paralysed
+			p->AsActorValueOwner()->SetActorValue(RE::ActorValue::kParalysis, 1.0f);
+		}
+		void Uncollapse(RE::PlayerCharacter* p)
+		{
+			if (p && p->AsActorValueOwner()->GetActorValue(RE::ActorValue::kParalysis) > 0.0f) p->AsActorValueOwner()->SetActorValue(RE::ActorValue::kParalysis, 0.0f);
 		}
 		void SoloFall(RE::PlayerCharacter* p)
 		{
@@ -254,6 +260,7 @@ namespace bo3z::Party
 			}
 			++g_fallGen, g_soloLoading = false;
 			FallControls(false);
+			Uncollapse(p);
 			if (g_fallFirstPerson) {
 				g_fallFirstPerson = false;
 				if (auto* cam = RE::PlayerCamera::GetSingleton()) cam->ForceFirstPerson();
@@ -544,7 +551,7 @@ namespace bo3z::Party
 		FallControls(false);
 		// (the audit: a wiped party's load kept you "dead" and pinned at 1 health) the party's life state starts over too
 		g_life = Life::Alive, g_left = 0, g_reviveIn.clear(), g_watch = 0, g_wasFighting = false, g_riteSum = -1;
-		if (auto* p = RE::PlayerCharacter::GetSingleton()) p->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery);
+		if (auto* p = RE::PlayerCharacter::GetSingleton()) p->GetActorRuntimeData().boolFlags.reset(RE::Actor::BOOL_FLAGS::kNoBleedoutRecovery), Uncollapse(p);  // (and never paralysed by a fall a save carried)
 		g_ghostWhy = 0;
 		Tasks::Add([] { Gun::Console("setghost 0"); });  // (a quicksave made mid-roll or mid-fall carried the ghost flag)
 		std::scoped_lock l(Hud::Lock());

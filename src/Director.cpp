@@ -2549,9 +2549,15 @@ namespace bo3z
 				if (t >= 0) {
 					if ((t -= a_delta) < 0) {
 						// (Noah: "the damage at the end of their contact swing, not the beginning") it waits for the claws to meet you
-						if (const float wait = Undead::HitDelay(a.get()); wait > 0.02f) {
-							t = wait;
-							continue;
+						// (at most a third of a second more, once: a swing's clip begun again never holds it longer)
+						if (static std::unordered_set<RE::FormID> waited; !waited.contains(a->GetFormID())) {
+							if (const float wait = std::min(0.3f, Undead::HitDelay(a.get())); wait > 0.02f) {
+								waited.insert(a->GetFormID());
+								t = wait;
+								continue;
+							}
+						} else {
+							waited.erase(a->GetFormID());
 						}
 						if (dist < reach + 15.0f && dz < 160.0f && Perks::SinceZombieHit(a->GetFormID()) > 0.5f) {
 							Perks::OnZombieHit(a.get());

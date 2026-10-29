@@ -588,18 +588,18 @@ for c in CU['cities']:
             sub('DNAM', struct.pack('<HBBII', 0x0000, 60, 0xFF, 0, 10)), sub('NEXT', b'')]
     # (Noah: "update the Echo Altar's quest description") the journal shows the latest entry only: each one opens with what
     # the altar asks as a whole, then the trial in hand
-    overview = (f"The Echo Altar of {c['town']} is only half awake: Alduin's echo still holds the city and raises its dead each night. "
-                f"The altar sets four trials - the Ward of the Tongues, the Culling, the Long Night's Breath and my class's own - to be won in any order (in a party, each player wins their own class trial). When all four are done, {boss['name']}, the Dragon Priest "
-                f"who silenced the altar, rises at nightfall. Slay it and the altar wakes: {c['town']}'s dead sleep again, its spells grow "
-                f"stronger and its Thu'um is mine to learn.")
-    stages = [(10, overview + " Choose a trial at the altar.")]
-    stages += [(20 + i, overview + f"\n\nTrial under way - {tr['title']}: " + fill(unnumbered(tr['text']), c).replace('clear Wave upon wave', 'clear wave upon wave').replace('. Wave upon wave', '. Wave upon wave')) for i, tr in enumerate(CU['trials'])]
-    stages += [(100, f"{boss['name']}: {boss['text']} It walks the night near the Echo Altar. Strike it down and the altar wakes.")]
+    # (Noah: "much shorter text, and the steps you still need to do in view - no check mark until it's done") a line or two;
+    # the steps themselves are the objectives below (ticked only once won)
+    overview = (f"Win the four trials at the Echo Altar of {c['town']}, in any order. Then {boss['name']}, its Dragon Priest, rises - "
+                f"slay it to free the city.")
+    stages = [(10, overview)]
+    stages += [(20 + i, overview + f"\n\nNow: {tr['title']} - {fill(tr['goal'], c)}.") for i, tr in enumerate(CU['trials'])]
+    stages += [(100, f"The trials are won. {boss['name']} walks the night near the Echo Altar of {c['town']} - slay it and the altar wakes.")]
     for st, text in stages:
         assert '{' not in text, text
         subs += [sub('INDX', struct.pack('<HBB', st, 0, 0)), sub('QSDT', b'\x00'), sub('CNAM', z(text))]
     subs += [sub('INDX', struct.pack('<HBB', 200, 0, 0)), sub('QSDT', b'\x01'), sub('CNAM', z(c['town'] + ' is free. ' + CU['liftedText'].replace('{city}', c['town'])))]
-    objectives = [f"Choose a trial at the Echo Altar of {c['town']}"] + [fill(tr['goal'], c) for tr in CU['trials']] + [f"Slay {boss['name']}"]
+    objectives = [f"Choose a trial at the Echo Altar of {c['town']}"] + [f"{tr['title']}: {fill(tr['goal'], c)}" for tr in CU['trials']] + [f"Slay {boss['name']}, the Dragon Priest"]
     for i, text in enumerate(objectives):
         subs += [sub('QOBJ', struct.pack('<H', i)), sub('FNAM', struct.pack('<I', 0)), sub('NNAM', z(text)),
                  sub('QSTA', struct.pack('<iI', 0, 1))]

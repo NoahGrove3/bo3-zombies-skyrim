@@ -2977,6 +2977,29 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						cls < 0 ? std::string("Summoner, Destruction, Ranger or Spellsword - free, your first path") : std::string("Change class - each keeps its own spells and progress"));
 					if (cls >= 0) price(y + 2 * k, Classes::SwitchCost(), s.points >= Classes::SwitchCost());
 					y += 64 * k;
+					if (cls >= 0) {  // (Noah: the outfit its own row) any outfit for any class
+						const auto on = Classes::OutfitName();
+						focusRow(31, y - 6 * k, y + 52 * k);
+						bullet({ L, y + 2 * k }, 31, true);
+						Txt(dl, g_title, 20 * k, { L + 36 * k, y + 3 * k }, kParch, "CHANGE OUTFIT");
+						Txt(dl, g_body, 16 * k, { L + 36 * k, y + 30 * k }, IM_COL32(196, 182, 160, 235), on.empty() ? std::string("Select for the next look") : "Now: " + on + "  -  select for the next");
+						y += 58 * k;
+					}
+					if (cls == 2) {  // (Noah: the special ammo its own row) the Ranger's alone
+						static constexpr const char* kWhat[4] = { "through every foe in a line", "three blasts", "freezes all in the blast", "the struck fight for you 20 s" };
+						const int sel = std::clamp(s.specialSel, 0, 3);
+						focusRow(32, y - 6 * k, y + 74 * k);
+						bullet({ L, y + 2 * k }, 32, true);
+						Txt(dl, g_title, 20 * k, { L + 36 * k, y + 3 * k }, kParch, std::string("SPECIAL AMMO:  \xE2\x80\xB9 ") + Upper(std::string(Bows::SpecialName(sel))) + " \xE2\x80\xBA");
+						Txt(dl, g_body, 16 * k, { L + 36 * k, y + 30 * k }, IM_COL32(196, 182, 160, 235), std::string(kWhat[sel]) + "  -  ten, " + (g_padLast ? "left / right" : "A / D") + " to pick");
+						if (s.specialKind >= 0) Txt(dl, g_body, 14 * k, { L + 36 * k, y + 52 * k }, kGoldDim, fmt::format("Loaded: {} x{}", Bows::SpecialName(s.specialKind), s.specialLeft));
+						price(y + 2 * k, Bows::SpecialCost(sel), s.points >= Bows::SpecialCost(sel));
+						y += 80 * k;
+						if (const auto bl = Classes::BoltLine(); !bl.empty()) {  // (the Ranger's crossbow mastery)
+							Txt(dl, g_body, 15 * k, { L + 36 * k, y - 4 * k }, kGoldDim, bl);
+							y += 22 * k;
+						}
+					}
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
 					y += 14 * k;
 				}
@@ -3270,26 +3293,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					bullet({ L, y + 2 * k }, 20, true);
 					Txt(dl, g_title, 20 * k, { L + 36 * k, y + 4 * k }, IM_COL32(210, 196, 170, 255), "LEAVE THE ALTAR");
 					y += 44 * k;
-					// (the classes overhaul) changing class here
-					Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "Back" : "C") + "   Change class  (" + std::to_string(Classes::SwitchCost()) + " Cursed Essence)  -  now " + std::string(Classes::Name(Classes::Get())));
-					y += 26 * k;
-					if (altarCls == 2) {  // (the Ranger's alone)
-						Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "R3" : "Q") + "   Special ammo: " + std::string(Bows::SpecialName(s.specialSel)) + "   " +
-							std::string(g_padLast ? "Y" : "R") + "  buy ten  (" + std::to_string(Bows::SpecialCost(s.specialSel)) + " Cursed Essence)");
-						y += 22 * k;
-						static constexpr const char* kWhat[4] = { "through every foe in a line", "three blasts", "freezes all in the blast", "the struck fight for you 20 s" };
-						Txt(dl, g_body, 14 * k, { L + 24 * k, y }, kGoldDim, std::string(kWhat[std::clamp(s.specialSel, 0, 3)]) + (s.specialKind >= 0 ? fmt::format("   -   loaded: {} x{}", Bows::SpecialName(s.specialKind), s.specialLeft) : std::string()));
-						y += 24 * k;
-					}
-					if (const auto bl = Classes::BoltLine(); !bl.empty()) {  // (the Ranger's crossbow mastery)
-						Txt(dl, g_body, 15 * k, { L + 24 * k, y - 4 * k }, kGoldDim, bl);
-						y += 22 * k;
-					}
-					{  // (the outfit picker: any outfit for any class)
-						const auto on = Classes::OutfitName();
-						Txt(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 182, 166, 230), std::string(g_padLast ? "L3" : "O") + "   Change outfit" + (on.empty() ? std::string() : "  -  now " + on));
-						y += 26 * k;
-					}
 					if (const auto wl = Classes::WonderLine(); !wl.empty()) {  // (your class's wonder weapon: its trial)
 						TxtGold(dl, g_body, 16 * k, { L, y }, wl);
 						y += 26 * k;
@@ -3315,7 +3318,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				{
 					const bool        ps = Settings::PlayStationIcons();
 					const std::string hint = g_padLast ? std::string("D-pad: move   \xC2\xB7   ") + (ps ? "X" : "A") + ": select   \xC2\xB7   " + (ps ? "O" : "B") + ": leave"
-					                                   : std::string("W S: move   \xC2\xB7   A D: choose a perk   \xC2\xB7   Enter: select");
+					                                   : std::string("W S: move   \xC2\xB7   A D: perk / ammo   \xC2\xB7   Enter: select");
 					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), hint);
 				}
 			} else if (s.rollPhase > 0) {

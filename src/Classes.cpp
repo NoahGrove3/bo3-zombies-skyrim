@@ -75,6 +75,7 @@ namespace bo3z::Classes
 			return -1;
 		}
 		RE::TESObjectWEAP* ElemCrossbow(int a_e);  // (the Ranger's elemental crossbows: below)
+		int ElemCrossbowIndex(const RE::TESForm* a_obj) { for (int e = 0; e < 3; ++e) if (a_obj && a_obj == ElemCrossbow(e)) return e; return -1; }
 		RE::TESAmmo*       ElemBolts(int a_e);
 		int                BoltCap(int a_level);
 		void GiveItem(RE::PlayerCharacter* a_p, RE::TESForm* a_form, int a_count, bool a_equip)
@@ -378,7 +379,7 @@ namespace bo3z::Classes
 			// (the audit: the Ranger's altar bows and the Subsuming Vortex followed you into every class) they are class gear too
 			auto* dh = RE::TESDataHandler::GetSingleton();
 			const bool vortex = dh && (a_obj == dh->LookupForm(gen::kVortexWeap, gen::kPlugin) || a_obj == dh->LookupForm(gen::kVortexAmmo, gen::kPlugin));
-			if (auto* f = a_obj->GetFile(0); f && std::string_view(f->GetFilename()) == gen::kPlugin && Forms::GunIndexOf(a_obj) < 0 && Bows::IndexOf(a_obj) < 0 && !vortex) return false;
+			if (auto* f = a_obj->GetFile(0); f && std::string_view(f->GetFilename()) == gen::kPlugin && Forms::GunIndexOf(a_obj) < 0 && Bows::IndexOf(a_obj) < 0 && !vortex && ElemCrossbowIndex(a_obj) < 0) return false;  // (Noah: the Ranger's Ember / Rime / Storm Crossbows went into every class)
 			return true;
 		}
 		RE::TESObjectREFR* ChestOf(int a_cls, bool a_make)
@@ -1069,6 +1070,20 @@ namespace bo3z::Classes
 		}
 		auto* uiN = RE::UI::GetSingleton();
 		const bool menus = !uiN || uiN->GameIsPaused() || uiN->IsMenuOpen(RE::InventoryMenu::MENU_NAME) || uiN->IsMenuOpen(RE::FavoritesMenu::MENU_NAME) || uiN->IsMenuOpen(RE::ContainerMenu::MENU_NAME) || uiN->IsMenuOpen(RE::BarterMenu::MENU_NAME);
+		// (Noah: "switching from Ranger to Spellsword I still had the Ranger's things") an elemental crossbow and its bolts
+		// carried by another class go back into the Ranger's chest
+		if (!menus && g_class.load() >= 0 && g_class.load() != coffer::kRanger) {
+			for (int e = 0; e < 3; ++e) {
+				for (RE::TESBoundObject* o : { static_cast<RE::TESBoundObject*>(ElemCrossbow(e)), static_cast<RE::TESBoundObject*>(ElemBolts(e)) }) {
+					if (!o || p->GetItemCount(o) <= 0) continue;
+					if (auto* chest = ChestOf(coffer::kRanger, true)) {
+						if (auto* em = RE::ActorEquipManager::GetSingleton()) em->UnequipObject(p, o, nullptr, 1, nullptr, false, false, false, true);
+						p->RemoveItem(o, p->GetItemCount(o), RE::ITEM_REMOVE_REASON::kStoreInContainer, nullptr, chest);
+						logger::info("classes: {} put back in the Ranger's chest", o->GetName());
+					}
+				}
+			}
+		}
 		// (one crossbow at a time) more than one carried from before: the one in hand stays, else the last of them
 		if (!menus) {
 			int owned = 0, keep = -1;

@@ -1044,10 +1044,12 @@ namespace bo3z
 				if (g_journalKey[t] == v || q->IsCompleted()) {
 					continue;
 				}
+				// (Noah: "no check mark until it's completed") each objective's state set on the quest itself: shown and open,
+				// shown and ticked, or hidden
 				auto shown = [&](int i, bool on, bool done) {
-					Gun::Console(fmt::format("setobjectivedisplayed {} {} {}", edid, i, on ? 1 : 0));
-					if (on) {
-						Gun::Console(fmt::format("setobjectivecompleted {} {} {}", edid, i, done ? 1 : 0));
+					for (auto* o : q->objectives) {
+						if (!o || o->index != i) continue;
+						o->state = !on ? RE::QUEST_OBJECTIVE_STATE::kDormant : done ? RE::QUEST_OBJECTIVE_STATE::kCompletedDisplayed : RE::QUEST_OBJECTIVE_STATE::kDisplayed;
 					}
 				};
 				Gun::Console(fmt::format("setstage {} 10", edid));

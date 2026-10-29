@@ -134,11 +134,16 @@ DEFAULTS = {
     'CharacterMenu': {'iOpenMenu': 49, 'bBlur': 1},
 }
 # Experience: XP a kill gives (a quarter of what the creatures give in the wilds)
-XP = {'zombie': 1, 'hollow2': 1, 'hollow3': 1, 'ash1': 1, 'ash2': 1, 'runner': 1, 'marksman': 2, 'necro': 2, 'hexer_rime': 2,
+XP_FULL = {'zombie': 1, 'hollow2': 1, 'hollow3': 1, 'ash1': 1, 'ash2': 1, 'runner': 1, 'marksman': 2, 'necro': 2, 'hexer_rime': 2,
       'hexer_storm': 2, 'wailer': 2, 'death_hound': 1, 'shadow': 4, 'reaper': 4, 'brute': 5, 'boss': 20, 'boss2': 20, 'boss3': 20,
       'hf_goblin': 1, 'hf_goblin_archer': 1, 'hf_centipede': 1, 'hf_arachling': 1, 'hf_goblin_shaman': 2, 'hf_harpy': 2, 'hf_imp_fire': 2,
       'hf_imp_shock': 2, 'hf_ooze': 2, 'hf_troll': 3, 'hf_ogre': 4, 'hf_minotaur': 5, 'hf_ettin': 5,
-      'boss4': 20, 'herald': 25, 'skeleton': 0, 'king': 6, 'knight': 6, 'lich': 6, 'bloater': 6}
+      'boss4': 20, 'herald': 25, 'skeleton': 0, 'king': 6, 'knight': 6, 'lich': 6, 'bloater': 6,
+      'volatile': 4, 'girl': 2, 'mage': 2, 'bonebrute': 5}
+# (Noah: "half the XP from the Curse of Alduin - I'm levelling too quickly") Experience reads whole numbers only: the
+# bigger kills give half, and of the 1-XP dead every second kind gives none - about half over a night's mixed horde
+_ones = [k for k, v in XP_FULL.items() if v == 1]
+XP = {k: (v // 2 if v >= 2 else (1 if _ones.index(k) % 2 == 0 else 0) if v == 1 else 0) for k, v in XP_FULL.items()}
 
 
 def main():
@@ -158,11 +163,11 @@ def main():
     rows = json.load(open(ROOT / 'sheets' / 'enemies.json'))['rows']
     by = {}
     for r in rows:
-        if r['plugin'] != 'CurseOfAlduin.esp' and r['id'] in XP:
+        if r['id'] in XP and str(r.get('localId', '')).startswith('0x'):  # (our own dead too: they gave Experience's full XP before)
             by.setdefault(r['plugin'], []).append(f"; {r['label']} ({r['id']})\n{int(r['localId'], 16):08X} = {XP[r['id']]}")
     exp = OUT / 'SKSE' / 'Plugins' / 'Experience' / 'Actors'
     exp.mkdir(parents=True, exist_ok=True)
-    (exp / 'CurseOfAlduin.ini').write_text('; The Curse of Alduin: the night\'s dead give a quarter of the usual XP (tools/mcm.py)\n' +
+    (exp / 'CurseOfAlduin.ini').write_text('; The Curse of Alduin: the night\'s dead give an eighth of the usual XP (tools/mcm.py)\n' +
                                            '\n'.join(f'[{p}]\n' + '\n'.join(v) + '\n' for p, v in by.items()))
     print('mcm: wrote', cfg, 'and', exp / 'CurseOfAlduin.ini')
 

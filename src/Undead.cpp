@@ -1281,9 +1281,12 @@ namespace bo3z
 		// after a lost chase) still count: they scale the pace wanted, and the legs speed up or slow down with them
 		void SyncGait(RE::Actor* a, Mind& m, float dt, float dist)
 		{
+			// (Noah: "they keep speeding up and slowing down instead of a clean, set pace") the pace is read over a full
+			// second, not a quarter, and only a quarter of any gap is closed at a time; a body slowed by a turn or a wall
+			// (far under its pace) is left alone rather than whipped faster - so it settles on one steady speed
 			if ((m.gaitT -= dt) > 0) return;
-			const float span = 0.25f - m.gaitT;
-			m.gaitT = 0.25f;
+			const float span = 1.0f - m.gaitT;
+			m.gaitT = 1.0f;
 			const auto pos = a->GetPosition();
 			const float pace = std::hypot(pos.x - m.gaitPos.x, pos.y - m.gaitPos.y) / std::max(0.05f, span);
 			m.gaitPos = pos;
@@ -1305,7 +1308,10 @@ namespace bo3z
 			const float want = std::clamp(cur * target / pace - other, -0.9f * other, 3.0f * other);
 			const bool  changed = cap != m.lastCap;
 			m.lastCap = cap;
-			const float step = (want - m.gaitMod) * (changed ? 1.0f : 0.5f);
+			if (!changed && pace < target * 0.6f) return;  // (held up by a turn or a wall: not its pace)
+			const float gap = want - m.gaitMod;
+			if (!changed && std::abs(gap) < 0.08f * base) return;  // (close enough: steady)
+			const float step = gap * (changed ? 1.0f : 0.25f);
 			if (std::abs(step) < 1.5f) return;
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kSpeedMult, step);
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.01f);  // (so the new speed takes at once)

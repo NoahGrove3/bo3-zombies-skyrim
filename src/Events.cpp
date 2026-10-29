@@ -42,6 +42,7 @@ namespace bo3z
 		// from a corpse or a hazard, or from someone not fighting you is dropped (the night's dead always count as foes, even
 		// as they burst). Your own spells only hurt those who are fighting you (and the night's dead): townsfolk, followers
 		// and anyone not hostile are spared.
+		std::unordered_map<RE::FormID, float> g_summonHp;  // your summons' health a moment ago (SnapshotSummons, each frame)
 		bool SelfHarm(RE::MagicTarget* a_this, const RE::MagicTarget::AddTargetData& a_data)
 		{
 			auto* me = a_this ? a_this->GetTargetStatsObject() : nullptr;
@@ -57,6 +58,10 @@ namespace bo3z
 			}
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			auto* caster = a_data.caster ? a_data.caster->As<RE::Actor>() : nullptr;
+			// (Noah: "the summons shouldn't take damage from their owner") your harmful spells never land on your own summons
+			if (player && caster == player && me != player) {
+				if (auto* sm = me->As<RE::Actor>(); sm && ((sm->IsCommandedActor() && sm->GetCommandingActor().get() == player) || Classes::IsOwnSummon(sm))) return true;
+			}
 			if (player && me == player && Bows::IsStrikeSpell(a_data.magicItem)) {
 				return true;  // (Noah: the charged bow hurt me at night) our bows' spells never touch you, whoever they count as cast by
 			}
@@ -223,6 +228,15 @@ namespace bo3z
 					T("shops");
 					{ Scope q(Perf::kShops); Shops::Tick(a_delta); }
 					{ Scope q(Perf::kClasses); Classes::Tick(); Classes::TickFast(a_delta); }
+					{  // (your summons' health this frame: a blow of yours on one is given back - HitWatch)
+						g_summonHp.clear();
+						auto* pc = RE::PlayerCharacter::GetSingleton();
+						for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+							auto a = h.get();
+							if (a && pc && a.get() != pc && !a->IsDead() && ((a->IsCommandedActor() && a->GetCommandingActor().get() == pc) || Classes::IsOwnSummon(a.get())))
+								g_summonHp[a->GetFormID()] = a->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth);
+						}
+					}
 					T("perks");
 					{ Scope q(Perf::kPerks); Perks::Tick(); }
 					T("party");
@@ -709,6 +723,11 @@ namespace bo3z
 				// against you (just after the hit, when the fight it picked would begin)
 				if (a_event && player && a_event->cause.get() == player && a_event->target) {
 					if (auto* sm = a_event->target->As<RE::Actor>(); sm && sm != player && ((sm->IsCommandedActor() && sm->GetCommandingActor().get() == player) || Classes::IsOwnSummon(sm))) {
+						// (Noah: no damage from their owner) a blade or an arrow of yours: what it took is given straight back
+						if (auto it = g_summonHp.find(sm->GetFormID()); it != g_summonHp.end()) {
+							auto* av = sm->AsActorValueOwner();
+							if (const float now = av->GetActorValue(RE::ActorValue::kHealth); now < it->second && !sm->IsDead()) av->RestoreActorValue(RE::ActorValue::kHealth, it->second - now);
+						}
 						Tasks::Add([h = sm->GetHandle()] {
 							auto* pc = RE::PlayerCharacter::GetSingleton();
 							if (auto a = h.get(); a && pc && !a->IsDead()) {
@@ -877,9 +896,9 @@ namespace bo3z
 						if ((ours ? saidOurs++ : saidOther++) < 15) logger::info("hurt: hit by {} (ours {}, foe {})", z->GetName(), ours, Director::IsFoe(z));
 					}
 					if (auto* z = a_event->cause->As<RE::Actor>(); z && Director::IsRoundUndead(z)) {
-						// (Noah: the damage at the end of the contact swing) held until the claws meet you
-						if (const float wait = Undead::HitDelay(z); wait > 0.02f) Director::QueueZombieHit(z, wait);
-						else Perks::OnZombieHit(z);
+						// (Noah: "I hear the contact sound, then the damage 2 seconds later") Skyrim's own blow IS the contact:
+						// its damage lands with it, never held
+						Perks::OnZombieHit(z);
 					}
 				}
 				return RE::BSEventNotifyControl::kContinue;
