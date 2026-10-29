@@ -2196,7 +2196,7 @@ namespace bo3z::Classes
 		}
 		if (++hits < kEvery[t]) return;
 		hits = 0;
-		static constexpr std::uint32_t kAtronach[3] = { 0x000204C0, 0x000204C3, 0x000204C4 };  // the summoned Flame, Frost and Storm Atronachs (Skyrim.esm)
+		static constexpr std::uint32_t kAtronach[3] = { 0x000204C0, 0x000204C1, 0x000204C2 };  // the summoned Flame, Frost and Storm Atronachs (Skyrim.esm)
 		int kind = 0;
 		if (t >= 2) kind = std::uniform_int_distribution<int>(0, 2)(g_summonRng);
 		auto* base = RE::TESForm::LookupByID<RE::TESNPC>(kAtronach[kind]);
