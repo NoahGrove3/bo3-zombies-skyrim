@@ -4324,9 +4324,17 @@ namespace bo3z
 			}
 			// (Noah: townsfolk who live through it) those already told to go in fade out one by one, not all at once
 			for (auto& f : g_fading) {
-				if ((f.second -= a_delta) <= 0 && f.second > -50.0f) {
-					f.second = -99.0f;
+				if (f.second > -50.0f && (f.second -= a_delta) <= 0) {
+					f.second = -60.0f;  // (faded; checked again in 4 s)
 					if (auto r = f.first.get(); r && !r->IsDisabled()) FadeShow(r.get(), false);
+				} else if (f.second <= -60.0f && f.second > -90.0f && (f.second -= a_delta) <= -64.0f) {
+					f.second = -99.0f;
+					// (Noah: "the guards didn't disappear when the night started - they kept walking around") one the fade
+					// didn't take (Whiterun's guards) is taken out at once
+					if (auto r = f.first.get(); r && !r->IsDisabled()) {
+						r->Disable();
+						if (static int told = 0; told++ < 20) logger::info("shelter: {} hadn't gone in - taken in now", r->GetName());
+					}
 				}
 			}
 			if ((scan -= a_delta) > 0) {
@@ -4358,6 +4366,10 @@ namespace bo3z
 				}
 				auto* race = a->GetRace();
 				if (!race || (npcKw && !race->HasKeyword(npcKw)) || a->IsHostileToActor(a_player) || !inTown(a.get())) {
+					if (const char* nm = a->GetName(); nm && std::string_view(nm).find("Guard") != std::string_view::npos) {
+						static int told = 0;
+						if (told++ < 12) logger::info("shelter: {} {:08X} stays out (race {}, hostile {}, in town {})", nm, a->GetFormID(), race && (!npcKw || race->HasKeyword(npcKw)), a->IsHostileToActor(a_player), inTown(a.get()));
+					}
 					continue;
 				}
 				a->StopCombat();
