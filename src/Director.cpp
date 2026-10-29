@@ -4164,7 +4164,10 @@ namespace bo3z
 		RE::ObjectRefHandle g_lantern;
 		void TickLantern(RE::PlayerCharacter* a_player)
 		{
-			const bool want = g_phase != Phase::Day && Save::Flag(Save::kFlagStarted) && !PowerUps::Shadow() && a_player->Is3DLoaded();
+			// (Noah: "it's really dark in caves and dungeons - each character needs the belt lamp lighting 20 m round them") by
+			// night, and in any interior by day or night
+			const bool inside = a_player->GetParentCell() && a_player->GetParentCell()->IsInteriorCell();
+			const bool want = (g_phase != Phase::Day || inside) && Save::Flag(Save::kFlagStarted) && !PowerUps::Shadow() && a_player->Is3DLoaded();
 			if (static int wasWant = -1; wasWant != static_cast<int>(want)) {  // (Noah: "I don't see the belt lamp") why it is or isn't lit
 				wasWant = want;
 				logger::info("lantern: {} (phase {}, started {}, shadow {})", want ? "wanted" : "not wanted", static_cast<int>(g_phase), Save::Flag(Save::kFlagStarted), PowerUps::Shadow());
@@ -4188,7 +4191,7 @@ namespace bo3z
 					if (static int told = 0; told++ < 3) logger::warn("lantern: the light could not be set down");
 					return;
 				}
-				logger::info("lantern: lit for the night");
+				logger::info("lantern: lit");
 			}
 			l->SetPosition(a_player->GetPosition() + RE::NiPoint3{ 0, 0, 105.0f });
 		}
