@@ -3305,7 +3305,7 @@ namespace bo3z
 			g_slowLeft = 0;
 			g_pause = 0;
 			// (the audit: a hazard pending at the load erupted at the old spot on the first night's tick)
-			g_hazards.clear(), g_purge.clear(), g_fading.clear(), g_settle.clear(), g_fx.clear(), g_roused.clear();
+			g_hazards.clear(), g_purge.clear(), g_bossNight = false, g_fading.clear(), g_settle.clear(), g_fx.clear(), g_roused.clear();
 			g_spawnMarks.clear(), g_spotBaseSet = false;
 			EndEvent();
 			Undead::Reset();
