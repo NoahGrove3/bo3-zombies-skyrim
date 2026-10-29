@@ -385,7 +385,7 @@ namespace bo3z::Kit
 			if (!vm || !a_from || !a_who) return;
 			const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(a_from->GetFormType(), a_from);
 			RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
-			vm->DispatchMethodCall(hd, "ObjectReference", "PushActorAway", RE::MakeFunctionArguments(static_cast<RE::Actor*>(a_who), a_force), none);
+			vm->DispatchMethodCall(hd, "ObjectReference", "PushActorAway", RE::MakeFunctionArguments(static_cast<RE::Actor*>(a_who), static_cast<float>(a_force)), none);
 		}
 		void OnHitItem(int a_cls, int a_item, RE::Actor* a_target)
 		{
