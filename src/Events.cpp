@@ -903,7 +903,7 @@ namespace bo3z
 							} else {
 								for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0) best = std::max(best, Arcana::RungOf(i)), asc = std::max(asc, Arcana::Level(i));
 							}
-							tierMult = 0.3f * UpgradeMult(std::max(0, best - 1) + std::max(0, asc)) * (Perks::SummonMight() ? gen::kPerks[gen::kPerk_bonebinder].value : 1.0f);  // (Noah: the one upgrade curve - rungs past the first and Ascends)  // (the Brew: its own half again, as it says)
+							tierMult = 0.55f * UpgradeMult(std::max(0, best - 1) + std::max(0, asc)) * (Perks::SummonMight() ? gen::kPerks[gen::kPerk_bonebinder].value : 1.0f);  // (Noah: the one upgrade curve - rungs past the first and Ascends)  // (the Brew: its own half again, as it says)
 						}
 						// (Noah: "summons are too strong") a summon lands its share at most once every 0.7 s, however fast it bites
 						// or how many bolts it throws, and that share is a third of a blade's at the first rung
@@ -911,7 +911,7 @@ namespace bo3z
 						auto&      b = beat[ally->GetFormID()];
 						const auto now = std::chrono::steady_clock::now();
 						if (beat.size() > 300) beat.clear();
-						if (!mySummon || now - b >= std::chrono::milliseconds(700)) {
+						if (!mySummon || now - b >= std::chrono::milliseconds(550)) {  // (Noah: "my summons should deal more damage": 0.55x a blade, every 0.55 s)
 							b = now;
 							HurtUndead(z, Director::RoundHealth() * gen::kShareMelee * tierMult * (0.7f + 0.3f * Arcana::Power()), ally);
 							if (mySummon) Kit::OnSummonHit(ally, z);  // (its family's Infusion)

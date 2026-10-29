@@ -1975,7 +1975,7 @@ namespace bo3z::Classes
 						// (Noah: "the Dremora and the Dwarven Spider are particularly strong") Skyrim's own weapon damage is
 						// turned down as the dead's is: what a summon does to them is the share counted on its hit (src/Events.cpp)
 						auto* sav0 = s->AsActorValueOwner();
-						sav0->SetActorValue(RE::ActorValue::kAttackDamageMult, 0.1f);
+						sav0->SetActorValue(RE::ActorValue::kAttackDamageMult, 1.0f);  // (Noah: "my summons don't do anything other than sponge damage" - their own blows at full against Skyrim's foes; the night's dead count the share)
 						logger::info("summons: {} {:08X} ({:.0f} health) joined", s->GetName(), s->GetFormID(), sav0->GetPermanentActorValue(RE::ActorValue::kHealth));
 					}
 					// (Noah: "summons stay within 20 meters of the player at all times - they wander off and fight") past 20 m it

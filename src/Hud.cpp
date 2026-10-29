@@ -1003,7 +1003,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (s.deathT < 0.0f && s.dread > 0.01f) {
 				// (Noah: "really subtle") surrounded: the screen's edges darken a little, breathing slowly
 				const float d = std::clamp(s.dread, 0.0f, 1.0f) * (0.85f + 0.15f * std::sin(now * 2.2f));
-				const ImU32 e = IM_COL32(8, 0, 2, static_cast<int>(70 * d)), z = IM_COL32(8, 0, 2, 0);
+				const ImU32 e = IM_COL32(8, 0, 2, static_cast<int>(120 * d)), z = IM_COL32(8, 0, 2, 0);
 				const float w = size.y * 0.30f;
 				dl->AddRectFilledMultiColor({ 0, 0 }, { size.x, w }, e, e, z, z);
 				dl->AddRectFilledMultiColor({ 0, size.y - w }, size, z, z, e, e);

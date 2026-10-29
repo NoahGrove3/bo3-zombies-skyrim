@@ -4165,6 +4165,10 @@ namespace bo3z
 		void TickLantern(RE::PlayerCharacter* a_player)
 		{
 			const bool want = g_phase != Phase::Day && Save::Flag(Save::kFlagStarted) && !PowerUps::Shadow() && a_player->Is3DLoaded();
+			if (static int wasWant = -1; wasWant != static_cast<int>(want)) {  // (Noah: "I don't see the belt lamp") why it is or isn't lit
+				wasWant = want;
+				logger::info("lantern: {} (phase {}, started {}, shadow {})", want ? "wanted" : "not wanted", static_cast<int>(g_phase), Save::Flag(Save::kFlagStarted), PowerUps::Shadow());
+			}
 			auto l = g_lantern.get();
 			if (l && (!want || l->GetParentCell() != a_player->GetParentCell())) {
 				l->Disable();
@@ -4174,10 +4178,16 @@ namespace bo3z
 			}
 			if (!want) return;
 			if (!l) {
-				static auto* base = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kLanternLight, gen::kPlugin);
-				if (!base) return;
+				auto* base = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectLIGH>(gen::kLanternLight, gen::kPlugin);
+				if (!base) {
+					if (static bool told = false; !told) told = true, logger::warn("lantern: its light (UN_lantern) not found");
+					return;
+				}
 				if (auto r = a_player->PlaceObjectAtMe(base, false)) g_lantern = r->CreateRefHandle(), l = r;
-				if (!l) return;
+				if (!l) {
+					if (static int told = 0; told++ < 3) logger::warn("lantern: the light could not be set down");
+					return;
+				}
 				logger::info("lantern: lit for the night");
 			}
 			l->SetPosition(a_player->GetPosition() + RE::NiPoint3{ 0, 0, 105.0f });
@@ -4190,10 +4200,11 @@ namespace bo3z
 			if (g_phase == Phase::Fighting) {
 				const auto pp = a_player->GetPosition();
 				for (auto& s : g_alive) {
-					if (auto a = s.handle.get(); a && !a->IsDead() && a->GetPosition().GetDistance(pp) < 560.0f) ++n;
+					if (auto a = s.handle.get(); a && !a->IsDead() && a->GetPosition().GetDistance(pp) < 700.0f) ++n;
 				}
 			}
-			const float want = std::clamp((static_cast<float>(n) - 5.0f) / 6.0f, 0.0f, 1.0f);
+			// (Noah: "I'm not seeing how it's darker") from four of the dead within 10 m, full at nine
+			const float want = std::clamp((static_cast<float>(n) - 3.0f) / 6.0f, 0.0f, 1.0f);
 			now += (want - now) * std::min(1.0f, a_delta * (want > now ? 1.2f : 0.6f));
 			std::scoped_lock l(Hud::Lock());
 			Hud::Edit().dread = now;
