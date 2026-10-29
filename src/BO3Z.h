@@ -643,6 +643,7 @@ namespace bo3z
 	namespace Intro
 	{
 		void OnMainMenu();  // the next new game moves its character again
+		bool FreshGame();  // this is a new game's new character (seen starting since the main menu, or level 1 on its first days)
 		bool NewGameThisSession();  // a new game was started from the main menu and its character made (not Continue / Load)
 		void Install();                 // data loaded: set MQQuickstart
 		void Tick();

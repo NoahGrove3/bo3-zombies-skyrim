@@ -13,6 +13,7 @@ namespace bo3z
 		bool  g_skip = false;        // Helgen skipped this game: once it is done, the move to Riverwood's gate
 		bool  g_skipRace = false;    // ... waiting for the character creator to close first
 		bool  reachedHelgen = false;
+		bool  g_freshGame = false;  // (Noah: a new game made after loading another character stayed in Helgen's cave) Helgen seen unplayed since the main menu: a new game, whatever its level or clock say
 		bool  g_creatorDeferred = false;  // the quick start's own creator closed, to open at Riverwood  // the cart has rolled into Helgen: no more skip
 		bool  g_raceSeen = false;    // the character creator has been and gone this game
 		int   g_raceAfterSkip = 0;   // (Noah: skip first, then the creator at Riverwood) 1 wanted, 2 shown
@@ -73,7 +74,7 @@ namespace bo3z
 		{
 			auto* cal = RE::Calendar::GetSingleton();
 			const float days = cal && cal->gameDaysPassed ? cal->gameDaysPassed->value : 99.0f;
-			return a_player->GetLevel() <= 1 && days < 2.0f;
+			return g_freshGame || (a_player->GetLevel() <= 1 && days < 2.0f);
 		}
 
 		// Survival Mode stays off in The Curse of Alduin: hunger/cold/fatigue fight the nights' own pacing, and its attribute
@@ -152,7 +153,8 @@ namespace bo3z
 			}
 		}
 		bool NewGameThisSession() { return g_moved; }
-		void OnMainMenu() { g_moved = false, g_settle = 0, g_skip = false, g_skipRace = false, g_raceSeen = false, reachedHelgen = false, g_creatorDeferred = false, g_skipHold = 0, g_skipHeld = false, g_raceAfterSkip = 0; }  // the BO3 crew picker is gone: you play your own character
+		bool FreshGame() { auto* p = RE::PlayerCharacter::GetSingleton(); return p && FreshQuickstartGame(p); }
+		void OnMainMenu() { g_freshGame = false, g_moved = false, g_settle = 0, g_skip = false, g_skipRace = false, g_raceSeen = false, reachedHelgen = false, g_creatorDeferred = false, g_skipHold = 0, g_skipHeld = false, g_raceAfterSkip = 0; }  // the BO3 crew picker is gone: you play your own character
 
 		void Tick()
 		{
@@ -263,6 +265,10 @@ namespace bo3z
 			if (g_skipRace && g_raceSeen && !raceOpen) {
 				g_skipRace = false;
 				DoSkip();
+			}
+			if (!g_freshGame && !Forms::IntroDone() && intro->IsRunning() && intro->GetCurrentStageID() < 1000 && !Save::Flag(Save::kFlagMoved)) {
+				g_freshGame = true;
+				logger::info("intro: a new game (Helgen unplayed) - its character goes to Riverwood");
 			}
 			// (Noah) the skip is offered on the cart ride only: it ends for good once the cart rolls into Helgen
 			if (!reachedHelgen) {

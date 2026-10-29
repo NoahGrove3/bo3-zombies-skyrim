@@ -389,7 +389,7 @@ namespace bo3z
 					auto* pl = RE::PlayerCharacter::GetSingleton();
 					auto* cal = RE::Calendar::GetSingleton();
 					const float days = cal && cal->gameDaysPassed ? cal->gameDaysPassed->value : 99.0f;
-					if (pl && pl->GetLevel() <= 1 && days < 2.0f) {
+					if (pl && (Intro::FreshGame() || (pl->GetLevel() <= 1 && days < 2.0f))) {
 						if (Intro::NewGameThisSession()) {
 							Hud::AfterCharacterMade();  // (already in Riverwood: just a moment of black)
 						} else {
