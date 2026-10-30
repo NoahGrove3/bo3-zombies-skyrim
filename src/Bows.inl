@@ -1425,7 +1425,7 @@ namespace BowsImpl
 			logger::info("bows: nocked arrow {} ({})", arrow ? arrow->name.c_str() : "not found", ahost ? ahost->name.c_str() : "-");
 		}
 		if (ahost) {
-			if (g_tip.parent != ahost) {
+			if (g_tip.obj->parent != ahost) {  // (the audit: the stored parent could be a loosed arrow's freed node)
 				if (auto* o = g_tip.obj.get(); o->parent) {
 					o->parent->DetachChild2(o);
 				}
@@ -1436,7 +1436,7 @@ namespace BowsImpl
 			SetLocal(g_tip, at, RE::NiMatrix3{}, grow * flick);
 		} else if (ArrowTip(p, hand, tip) && hand->AsNode()) {
 			auto* host = hand->AsNode();
-			if (g_tip.parent != host) {
+			if (g_tip.obj->parent != host) {  // (the audit: the stored parent could be a loosed arrow's freed node)
 				if (auto* o = g_tip.obj.get(); o->parent) {
 					o->parent->DetachChild2(o);
 				}

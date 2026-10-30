@@ -462,6 +462,8 @@ namespace bo3z
 			a_amount *= WardMult();  // (the Ranger's Dawnwatch Tonic)
 			Stats::OnHurt();
 			auto*       av = p->AsActorValueOwner();
+			// (the audit: a Gloomstalker's swipe took 91% on Legendary) no single blow of the night takes more than 45% of your health
+			a_amount = std::min(a_amount, 0.45f * av->GetPermanentActorValue(RE::ActorValue::kHealth));
 			const float hp = av->GetActorValue(RE::ActorValue::kHealth);
 			if (a_amount > 0.15f * av->GetPermanentActorValue(RE::ActorValue::kHealth)) {  // (hit feedback: a big blow is felt)
 				std::scoped_lock l(Hud::Lock());

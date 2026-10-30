@@ -2170,9 +2170,19 @@ namespace bo3z::Classes
 					{
 						const float pd = s->GetPosition().GetDistance(p->GetPosition());
 						if (pd > 2400.0f || (pd > 1400.0f && !s->Is3DLoaded())) {
+							if (!s->IsAIEnabled()) continue;  // (already on its way)
 							const float yaw = p->GetAngleZ() + 2.4f;
 							s->StopCombat();
-							s->SetPosition(p->GetPosition() + RE::NiPoint3{ std::sin(yaw) * 180.0f, std::cos(yaw) * 180.0f, 0.0f }, true);
+							// (the stability audit: moved with its AI running - the pathing crash) asleep, set down, woken
+							s->EnableAI(false);
+							const auto to = p->GetPosition() + RE::NiPoint3{ std::sin(yaw) * 180.0f, std::cos(yaw) * 180.0f, 0.0f };
+							Tasks::Later(0.05f, [h = s->GetHandle(), to] {
+								auto a = h.get();
+								if (!a || a->IsDead() || a->IsDeleted()) return;
+								if (a->IsDisabled()) { a->EnableAI(true); return; }
+								a->SetPosition(to, true);
+								Tasks::Later(0.1f, [h] { if (auto b = h.get(); b && !b->IsDead() && !b->IsDisabled()) b->EnableAI(true); });
+							});
 							continue;
 						}
 						if (pd > 1400.0f) {
@@ -2659,6 +2669,7 @@ namespace bo3z::Classes
 		g_xbow.clear();
 		if (a_v.empty()) return;
 		g_class = static_cast<int>(a_v[0]) - 1;
+		if (g_class < -1 || g_class > 3) g_class = -1;  // (the audit: a corrupt co-save indexed the four-class arrays)
 		std::size_t k = 1;
 		g_mastery.fill(0);
 		if (k < a_v.size()) {

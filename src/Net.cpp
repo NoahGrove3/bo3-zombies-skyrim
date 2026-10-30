@@ -564,11 +564,13 @@ namespace bo3z::Net
 						break;
 					case kCurse:
 						if (IsHost() && sz >= 1 + 4 * static_cast<int>(gen::kCurseCities.size())) {
-							for (std::size_t t = 0; t < gen::kCurseCities.size(); ++t) {
-								std::int32_t v;
-								std::memcpy(&v, d + 1 + 4 * t, 4);
-								Curse::SetRaw(static_cast<int>(t), v);  // (only a friend's Dragon Priest and freeing count: trials are each player's own)
-							}
+							// (the stability audit: read here on the render hook - the freeing it can run belongs to the game's thread)
+							std::array<std::int32_t, 16> vals{};
+							const std::size_t n = std::min<std::size_t>(gen::kCurseCities.size(), vals.size());
+							for (std::size_t t = 0; t < n; ++t) std::memcpy(&vals[t], d + 1 + 4 * t, 4);
+							Tasks::Add([vals, n] {
+								for (std::size_t t = 0; t < n; ++t) Curse::SetRaw(static_cast<int>(t), vals[t]);  // (only a friend's Dragon Priest and freeing count: trials are each player's own)
+							});
 						}
 						break;
 					default: break;

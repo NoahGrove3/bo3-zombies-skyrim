@@ -405,6 +405,7 @@ namespace bo3z
 		void RaiseWave(RE::PlayerCharacter* a_p, int a_w)
 		{
 			const auto& W = gen::kWords[a_w];
+			if (g_siege.wave < 0 || g_siege.wave >= W.nWaves) return;
 			const auto  at = WordAt(a_w);
 			const int   n = W.waves[g_siege.wave], el = W.elites[g_siege.wave];
 			for (int i = 0; i < n + el; ++i) {
@@ -507,8 +508,12 @@ namespace bo3z
 				return;
 			}
 			if (g_siege.stage == 1 && g_siege.dead.empty()) {
-				if (++g_siege.wave < W.nWaves) {
+				// (the audit: a crowded field raised nobody, and the next tick counted the wave as fallen) a wave that rose no
+				// one is raised again in a moment; the count never runs past the last wave
+				if (g_siege.wave + 1 < W.nWaves) {
+					++g_siege.wave;
 					RaiseWave(a_p, w);
+					if (g_siege.dead.empty()) --g_siege.wave, g_siege.retry = 2.0f;
 					return;
 				}
 				// the waves are down: the dragon comes

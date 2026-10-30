@@ -158,6 +158,7 @@ namespace bo3z
 		RE::TESFaction*  UndeadFactionForm();  // the Curse's own faction (the night's dead)
 		bool             IsElite(RE::Actor* a_actor);
 		bool             IsBoss(RE::Actor* a_actor);
+		bool             IsGreat(RE::Actor* a_actor);  // the boss, the champion of the moment, or any dragon
 		struct RestView
 		{
 			bool  open = false, night = false, canSkip = false, armed = false, waiting = false, stopsAtDusk = false;

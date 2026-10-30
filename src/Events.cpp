@@ -516,6 +516,7 @@ namespace bo3z
 		};
 
 		bool SummonStruckLast(RE::Actor* a_z);
+		bool PlayerStruckLast(RE::Actor* a_z);
 		class DeathWatch : public RE::BSTEventSink<RE::TESDeathEvent>
 		{
 		public:
@@ -556,7 +557,9 @@ namespace bo3z
 				}
 				if (dying && dying != player && Director::IsFoe(dying)) {  // (the classes overhaul) a kill by you or your summons trains what you hold
 					auto* killer = a_event->actorKiller.get() ? a_event->actorKiller->As<RE::Actor>() : nullptr;
-					const bool mine = killer == player;
+					// (a killing blow of ours lands a task pass late: should Skyrim take the body first, with no killer, it was
+					// still yours when you struck it last)
+					const bool mine = killer == player || (!killer && PlayerStruckLast(dying));
 					bool summon = killer && killer != player && ((killer->IsCommandedActor() && killer->GetCommandingActor().get() == player) || Classes::IsOwnSummon(killer));
 					// (Noah: "the Pact of the Host isn't progressing when my summons kill") a death Skyrim gives no killer, or
 					// gives you, while one of your summons struck it last (and you didn't since): your summon's kill
@@ -699,6 +702,11 @@ namespace bo3z
 			auto it = a_z ? g_struckBy.find(a_z->GetFormID()) : g_struckBy.end();
 			return it != g_struckBy.end() && it->second.first && std::chrono::steady_clock::now() - it->second.second < std::chrono::seconds(3);
 		}
+		bool PlayerStruckLast(RE::Actor* a_z)
+		{
+			auto it = a_z ? g_struckBy.find(a_z->GetFormID()) : g_struckBy.end();
+			return it != g_struckBy.end() && !it->second.first && std::chrono::steady_clock::now() - it->second.second < std::chrono::seconds(3);
+		}
 		void HurtUndead(RE::Actor* a_actor, float a_damage, RE::Actor* a_by = nullptr)
 		{
 			// (Noah: "the class quests aren't progressing - summon kills don't count") the blow's own maker is the killer: a
@@ -709,7 +717,15 @@ namespace bo3z
 			a_damage *= Director::TakenMult(a_actor) * Kit::ArmorAscendMult() * Echo::SetDamageMult();  // (a brute dazed or berserk; your armor's Ascends; the First Dragonborn's Regalia)
 			av->DamageActorValue(RE::ActorValue::kHealth, a_damage);
 			if (av->GetActorValue(RE::ActorValue::kHealth) <= 0) {
-				a_actor->KillImpl(player, a_damage, true, false);
+				// (the stability audit: a kill from inside the hit event - one per magic effect, mid-apply - can tear down the
+				// effect list the engine is walking) the killing blow lands on the next task pass, with its maker
+				if (player == RE::PlayerCharacter::GetSingleton()) NoteStruck(a_actor, false);
+				Tasks::Add([h = a_actor->GetHandle(), k = player ? player->GetHandle() : RE::ActorHandle{}, a_damage] {
+					auto a = h.get();
+					if (!a || a->IsDead() || a->IsDeleted() || a->IsDisabled()) return;
+					auto by = k.get();
+					a->KillImpl(by ? by.get() : nullptr, a_damage, true, false);
+				});
 			}
 		}
 
@@ -911,8 +927,11 @@ namespace bo3z
 				}
 				// (Noah: Insta-Kill means one hit) any blow of yours - blade, fist, Skyrim's bows and spells - drops a wave undead
 				if (a_event && player && a_event->cause.get() == player && a_event->target && PowerUps::InstaKill()) {
-					if (auto* z = a_event->target->As<RE::Actor>(); z && z != player && !z->IsDead() && Director::IsRoundUndead(z)) {
-						z->KillImpl(player, 9999.0f, true, false);
+					if (auto* z = a_event->target->As<RE::Actor>(); z && z != player && !z->IsDead() && Director::IsRoundUndead(z) && !Director::IsGreat(z)) {
+						Tasks::Add([h = z->GetHandle()] {
+							auto a = h.get();
+							if (a && !a->IsDead() && !a->IsDeleted()) a->KillImpl(RE::PlayerCharacter::GetSingleton(), 9999.0f, true, false);
+						});
 					}
 				}
 				// Skyrim weapons and spells keep up with the rounds: each hit takes a share of a zombie's round health.
@@ -1023,7 +1042,14 @@ namespace bo3z
 						const float hurt = sav->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.08f / (1.0f + 0.35f * static_cast<float>(best - 1)) / might * (big ? 2.0f : 1.0f) * Settings::UndeadDamageMult() *
 						                   (Kit::ArmourTier(0) >= 1 && Classes::Get() == 0 ? 0.8f : 1.0f);  // (the Arcane Conjurer's robes, Tier I: your summons take a fifth less)
 						sav->DamageActorValue(RE::ActorValue::kHealth, hurt);
-						if (sav->GetActorValue(RE::ActorValue::kHealth) <= 0 && !sm->IsDead()) sm->KillImpl(z, hurt, true, false);
+						if (sav->GetActorValue(RE::ActorValue::kHealth) <= 0 && !sm->IsDead()) {
+							Tasks::Add([h = sm->GetHandle(), k = z->GetHandle(), hurt] {
+								auto a = h.get();
+								if (!a || a->IsDead() || a->IsDeleted()) return;
+								auto by = k.get();
+								a->KillImpl(by ? by.get() : nullptr, hurt, true, false);
+							});
+						}
 					}
 				}
 				if (a_event && a_event->target.get() == RE::PlayerCharacter::GetSingleton() && a_event->cause) {

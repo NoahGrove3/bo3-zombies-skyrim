@@ -513,6 +513,8 @@ namespace bo3z::Party
 					Camera(Puppet(r));
 				} else {
 					g_watchName.clear();
+					// (the stability audit: the camera left on a friend's puppet that was deleted)
+					if (auto* cam = RE::PlayerCamera::GetSingleton(); cam && cam->cameraTarget.get().get() != P()) Camera(nullptr);
 				}
 			}
 		}

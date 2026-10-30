@@ -94,21 +94,27 @@ namespace Spellcraft
 		RE::NiPointer<RE::NiAVObject> obj;
 		RE::NiNode*                   parent = nullptr;
 
+		// (the audit: the stored parent outlived a body rebuilt on load or an arrow loosed, and Detach wrote into freed
+		// memory) the object's own live parent is the only one trusted: a freed node has already let go of it
 		void Attach(RE::NiNode* a_parent)
 		{
-			if (!obj || a_parent == parent) {
+			if (!obj) return;
+			if (!a_parent) {
+				Detach();
+				return;
+			}
+			if (obj->parent == a_parent) {
+				parent = a_parent;
 				return;
 			}
 			Detach();
-			if (a_parent) {
-				a_parent->AttachChild(obj.get(), true);
-				parent = a_parent;
-			}
+			a_parent->AttachChild(obj.get(), true);
+			parent = a_parent;
 		}
 		void Detach()
 		{
-			if (obj && parent) {
-				parent->DetachChild2(obj.get());
+			if (obj && obj->parent) {
+				obj->parent->DetachChild2(obj.get());
 			}
 			parent = nullptr;
 		}
@@ -121,10 +127,10 @@ namespace Spellcraft
 		// place in world space (the parent's transform is undone)
 		void Place(const RE::NiPoint3& a_at, const RE::NiMatrix3& a_rot, float a_scale)
 		{
-			if (!obj || !parent) {
+			if (!obj || !obj->parent) {
 				return;
 			}
-			const auto&        pw = parent->world;
+			const auto&        pw = obj->parent->world;
 			const RE::NiMatrix3 inv = pw.rotate.Transpose();
 			const float        s = std::max(0.0001f, pw.scale);
 			obj->local.translate = (inv * (a_at - pw.translate)) / s;
@@ -1049,7 +1055,7 @@ namespace Spellcraft
 			const float u = b.t / b.dur;
 			// swells fast, then folds away
 			const float sz = u < 0.7f ? EaseOut(u / 0.7f) : 1.0f - EaseInOut((u - 0.7f) / 0.3f);
-			if (b.fx.parent) {
+			if (b.fx.obj && b.fx.obj->parent) {
 				b.fx.Place(b.at, Spin(b.spin + b.t * 2.0f), std::max(0.01f, b.size * sz));
 			}
 		}

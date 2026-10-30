@@ -74,8 +74,12 @@ namespace bo3z
 				return;
 			}
 			{
-				std::scoped_lock l(g_timedLock);
-				if (g_timed.size() > 2000) return;  // (never unbounded)
+				std::unique_lock l(g_timedLock);
+				if (g_timed.size() > 2000) {  // (never unbounded - and never dropped: a "wake its AI" task lost left the dead frozen)
+					l.unlock();
+					Add(std::move(a_task));
+					return;
+				}
 				g_timed.push_back({ std::chrono::steady_clock::now() + std::chrono::milliseconds(static_cast<int>(std::max(0.0f, a_seconds) * 1000.0f)), std::move(a_task) });
 			}
 			g_timedCv.notify_one();

@@ -238,7 +238,7 @@
     "bearer": {
      "row": "wyrm_slen",
      "name": "Slenvahrin, the Flesh-Wyrm",
-     "health": 12.0,
+     "health": 18.0,
      "scale": 1.0
     },
     "waves": [
@@ -269,7 +269,7 @@
     "bearer": {
      "row": "wyrm_tiid",
      "name": "Tiidrah, the Time-Wyrm",
-     "health": 14.0,
+     "health": 21.0,
      "scale": 1.0
     },
     "waves": [
@@ -302,7 +302,7 @@
     "bearer": {
      "row": "wyrm_vo",
      "name": "Vonahlok, the Undoing",
-     "health": 16.0,
+     "health": 24.0,
      "scale": 1.0
     },
     "waves": [
@@ -333,7 +333,7 @@
     "bearer": {
      "row": "echo_alduin",
      "name": "The Echo of Alduin",
-     "health": 24.0,
+     "health": 40.0,
      "scale": 1.0
     },
     "waves": [

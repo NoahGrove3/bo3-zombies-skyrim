@@ -32,6 +32,7 @@ namespace bo3z
 			float           hook{ 6.0f };      // Iron Reaper: next chain hook (mid range)
 			float           hookWind{ -1.0f }; // Iron Reaper: the hook is thrown
 			bool            enraged{ false };
+			bool            mute{ false };     // (Tame) held from shouting: its voice never recovers
 			float           frenzy{ 0 };       // Mindbreaker: seconds left fighting its own kind
 			float           tear{ 0 };
 			float           loaded{ 0 };       // seconds it has had its body (nothing is taken off a body still being built)
@@ -671,8 +672,8 @@ namespace bo3z
 			Tasks::Later(0.15f, [h, spot] {
 				auto a = h.get();
 				auto* pc = RE::PlayerCharacter::GetSingleton();
-				if (!a || !pc || a->IsDead() || !a->Is3DLoaded()) {
-					if (a && !a->IsDead()) a->EnableAI(true);
+				if (!a || !pc || a->IsDead() || a->IsDisabled() || a->IsDeleted() || !a->Is3DLoaded()) {
+					if (a && !a->IsDead() && !a->IsDisabled() && !a->IsDeleted()) a->EnableAI(true);
 					return;
 				}
 				ShowRiser(a.get(), true), a->SetCollision(true);  // (the audit: should StartRise refuse, it isn't left hidden)
@@ -681,7 +682,7 @@ namespace bo3z
 				Tasks::Later(0.15f, [h] {
 					auto a = h.get();
 					auto* pc = RE::PlayerCharacter::GetSingleton();
-					if (!a || !pc || a->IsDead()) return;
+					if (!a || !pc || a->IsDead() || a->IsDisabled() || a->IsDeleted() || !a->Is3DLoaded()) return;  // (the audit: put away between the two steps)
 					a->EnableAI(true);
 					StartRise(a.get(), pc);
 					a->StartCombat(pc);
@@ -817,10 +818,10 @@ namespace bo3z
 						const auto h = a->GetHandle();
 						Tasks::Later(0.12f, [h, at] {
 							auto b = h.get();
-							if (!b || b->IsDead() || !b->Is3DLoaded()) { if (b && !b->IsDead()) b->EnableAI(true); return; }
+							if (!b || b->IsDead() || b->IsDisabled() || b->IsDeleted() || !b->Is3DLoaded()) { if (b && !b->IsDead() && !b->IsDisabled()) b->EnableAI(true); return; }
 							b->SetPosition(at, true);
 							b->SetCollision(true);
-							Tasks::Later(0.12f, [h] { if (auto c = h.get(); c && !c->IsDead()) c->EnableAI(true); });
+							Tasks::Later(0.12f, [h] { if (auto c = h.get(); c && !c->IsDead() && !c->IsDisabled() && !c->IsDeleted()) c->EnableAI(true); });
 						});
 						static int told = 0;
 						if (told++ < 10) logger::info("night: {:08X} sank into the ground after rising - set back on the floor", a->GetFormID());
@@ -937,7 +938,7 @@ namespace bo3z
 			for (auto* e : a_m->effects) if (e && e->baseEffect && e->baseEffect->GetArchetype() == a_a) return true;
 			return false;
 		}
-		void Tame(RE::Actor* a_actor, int a_kind)
+		bool Tame(RE::Actor* a_actor, int a_kind)
 		{
 			auto* base = a_actor ? a_actor->GetActorBase() : nullptr;
 			auto* list = base ? base->actorEffects : nullptr;
@@ -965,9 +966,14 @@ namespace bo3z
 					if (told++ < 12) logger::info("night: {} - {} spells and {} shouts of its own taken away", a_actor->GetName(), drop.size(), gone.size());
 				}
 			}
-			if (shouts && std::uniform_int_distribution<int>(1, 5)(g_rng) != 1) {
-				a_actor->GetActorRuntimeData().voiceTimer = 1.0e7f;  // (its voice never recovers: it can't shout)
-			}
+			// (the audit: the AI reads the high process's voice recovery time, not the actor's voiceTimer) held each pass in
+			// KeepThemComing; dragons keep their breath
+			return shouts && a_actor && !a_actor->HasKeywordString("ActorTypeDragon") && std::uniform_int_distribution<int>(1, 5)(g_rng) != 1;
+		}
+		void HoldVoice(RE::Actor* a_actor)
+		{
+			auto* proc = a_actor ? a_actor->GetActorRuntimeData().currentProcess : nullptr;
+			if (proc && proc->high) proc->high->voiceRecoveryTime = 1.0e6f;
 		}
 		bool SpawnOne(RE::PlayerCharacter* a_player, int a_force = -1, const RE::NiPoint3* a_at = nullptr)
 		{
@@ -1161,7 +1167,7 @@ namespace bo3z
 			}
 			g_ours[actor->GetFormID()] = *pick;
 			if (auto* base = actor->GetActorBase()) MakeHeadlong(base->GetCombatStyle());  // (its levelled copy's own style too)
-			Tame(actor, kindRow.kind);
+			const bool mute = kindRow.bossEvery <= 0 && Tame(actor, kindRow.kind);
 			av->SetActorValue(RE::ActorValue::kConfidence, 4.0f);  // (foolhardy: never hangs back)
 			av->SetActorValue(RE::ActorValue::kAggression, 2.0f);
 			if (const float hm = Director::HarmMult(actor); hm < 0.999f) {  // (Noah: the harpies hit far too hard) its blows weaker too
@@ -1169,6 +1175,9 @@ namespace bo3z
 			}
 			g_alive.push_back({ actor->GetHandle(), *pick });
 			g_alive.back().fid = actor->GetFormID();
+			g_alive.back().mute = mute;
+			if (kindRow.kind == 2) g_alive.back().hook = Uniform(2.0f, 7.0f);  // (the audit: casters raised together hexed in step)
+			if (mute) HoldVoice(actor);
 			if (type) {
 				Undead::Assign(actor, *type);
 			}
@@ -1196,8 +1205,33 @@ namespace bo3z
 			bool             stagger;
 		};
 		std::vector<Hazard> g_hazards;
+		// (the stability audit: actors teleported with their AI running - the pathing crash on a worker thread) a blink: its AI
+		// stopped first, set down a moment later, woken a moment after that (then a_after)
+		void Blink(RE::Actor* a_a, RE::NiPoint3 a_at, bool a_wake = true, std::function<void(RE::Actor*)> a_after = {})
+		{
+			if (!a_a) return;
+			a_a->EnableAI(false);
+			Tasks::Later(0.05f, [h = a_a->GetHandle(), a_at, a_wake, after = std::move(a_after)]() mutable {
+				auto a = h.get();
+				if (!a || a->IsDead() || a->IsDisabled() || a->IsDeleted() || !a->Is3DLoaded()) {
+					if (a && !a->IsDead() && !a->IsDisabled()) a->EnableAI(true);
+					return;
+				}
+				a->SetPosition(a_at, true);
+				if (!a_wake) return;
+				Tasks::Later(0.1f, [h, after = std::move(after)] {
+					auto b = h.get();
+					if (!b || b->IsDead() || b->IsDisabled() || b->IsDeleted()) return;
+					b->EnableAI(true);
+					if (after) after(b.get());
+				});
+			});
+		}
 		void Hazards(RE::PlayerCharacter* a_player, float a_delta)
 		{
+			// (the audit: six casters' hexes and the Ash Fall's overlapping blasts landed together) one hazard's hurt every 0.35 s
+			static float gap = 0;
+			gap -= a_delta;
 			for (auto& h : g_hazards) {
 				if ((h.t -= a_delta) > 0) {
 					continue;
@@ -1205,7 +1239,8 @@ namespace bo3z
 				Gun::FxBlast(h.look, h.at);
 				const auto  pp = a_player->GetPosition();
 				const float d = std::hypot(pp.x - h.at.x, pp.y - h.at.y);
-				if (d < h.radius && std::abs(pp.z - h.at.z) < 220.0f && !a_player->IsDead()) {
+				if (d < h.radius && std::abs(pp.z - h.at.z) < 220.0f && !a_player->IsDead() && gap <= 0) {
+					gap = 0.35f;
 					auto* pav = a_player->AsActorValueOwner();
 					Perks::DamagePlayer(pav->GetPermanentActorValue(RE::ActorValue::kHealth) * h.share * Settings::UndeadDamageMult());
 					if (h.stagger) {
@@ -1477,7 +1512,8 @@ namespace bo3z
 				if ((e.lunge -= a_delta) <= 0 && dist > gen::elite::lungeMin && dist < gen::elite::lungeMax) {
 					const auto  p = a_player->GetPosition();
 					const float ang = a_player->GetAngleZ() + Uniform(-1.8f, 1.8f);
-					a->SetPosition({ p.x + std::sin(ang) * 150.0f, p.y + std::cos(ang) * 150.0f, p.z + 20.0f }, true);
+					Blink(a.get(), { p.x + std::sin(ang) * 150.0f, p.y + std::cos(ang) * 150.0f, p.z + 20.0f }, true,
+						[](RE::Actor* b) { b->NotifyAnimationGraph("attackPowerStartForward"); });
 					Forms::PlayAt(gen::Sound::champ_telegraph, a.get());
 					if (auto* fx = Forms::Ours(gen::kRiseFx)) {
 						if (auto puff = a->PlaceObjectAtMe(fx, false)) {
@@ -1486,7 +1522,6 @@ namespace bo3z
 					}
 					// Umbral Pounce: out of the shadow straight into a flurry; the dark claws up where you stand
 					g_hazards.push_back({ OnGround(p), 0.45f, 150.0f, 0.10f, "tentacle", false });  // (Noah: no movement-blocking hits)
-					a->NotifyAnimationGraph("attackPowerStartForward");
 					e.lunge = gen::elite::lungeEvery;
 				}
 				// Terror Shriek: slows and wounds the player nearby.
@@ -1635,7 +1670,7 @@ namespace bo3z
 				Points::Add(static_cast<int>(gen::boss::killPoints));
 				Forms::PlayAt(gen::Sound::boss_death, boss.get());
 				Audio::BossMusic(false);
-				Hud::Banner("The Undying Wyrm falls! +" + std::to_string(static_cast<int>(gen::boss::killPoints)), 6.0f);
+				Hud::Banner(fmt::format("{} slain - +{} Cursed Essence", BossName(), static_cast<int>(gen::boss::killPoints)), 6.0f);
 				logger::info("boss: slain");
 				g_boss.handle = {};
 				g_boss.spawnIn = -1;
@@ -1718,8 +1753,13 @@ namespace bo3z
 			// Wyrm Leap: he springs into the air, his shadow follows you, then he crashes down where it falls
 			if (g_boss.leapT >= 0) {
 				if ((g_boss.leapT -= a_delta) < 0) {
-					boss->SetPosition(g_boss.leapAt + RE::NiPoint3{ 0, 0, 30.0f }, true);
-					boss->NotifyAnimationGraph("attackPowerStartForward");
+					boss->SetPosition(g_boss.leapAt + RE::NiPoint3{ 0, 0, 30.0f }, true);  // (its AI off since the leap)
+					Tasks::Later(0.1f, [h = boss->GetHandle()] {
+						if (auto b = h.get(); b && !b->IsDead() && !b->IsDisabled()) {
+							b->EnableAI(true);
+							b->NotifyAnimationGraph("attackPowerStartForward");
+						}
+					});
 					for (int k = 0; k < 6; ++k) {
 						const float a = k * 1.0472f;
 						Gun::FxBlast("dragonfire", OnGround(g_boss.leapAt + RE::NiPoint3{ std::cos(a) * 170.0f, std::sin(a) * 170.0f, 0 }), 0.05f + 0.03f * k);
@@ -1737,7 +1777,7 @@ namespace bo3z
 						g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
 					}
 				}
-				boss->SetPosition(boss->GetPosition() + RE::NiPoint3{ 0, 0, 2400.0f }, false);  // gone into the night sky
+				Blink(boss.get(), boss->GetPosition() + RE::NiPoint3{ 0, 0, 2400.0f }, false);  // gone into the night sky (asleep till it lands)
 				Hud::Banner(BossName() + " leaps - move!", 1.4f);
 				Audio::AtPoint(gen::Sound::boss_leap_wind, g_boss.leapAt);  // from where he will land: the shadow growls
 				g_boss.roar = gen::boss::roarEvery * cd;
@@ -1794,7 +1834,8 @@ namespace bo3z
 			}
 			if ((g_boss.summon -= a_delta) <= 0) {
 				const auto bp = boss->GetPosition();
-				for (int i = 0; i < static_cast<int>(gen::boss::summonCount); ++i) {
+				// (the audit: no cap - about 21 of the dead a minute, each holding the wave) only while the field has room
+				for (int i = 0; i < static_cast<int>(gen::boss::summonCount) && static_cast<int>(g_alive.size()) < R.maxAlive; ++i) {
 					const float a = i * 2.0f * RE::NI_PI / gen::boss::summonCount;
 					RE::NiPoint3 at{ bp.x + std::sin(a) * 220.0f, bp.y + std::cos(a) * 220.0f, bp.z + 40.0f };
 					SpawnOne(a_player, 0, &at);
@@ -1808,7 +1849,7 @@ namespace bo3z
 				// Wyrm Step: sinks away and bursts out of the ground beside you.
 				const auto p = a_player->GetPosition();
 				const float a = a_player->GetAngleZ() + Uniform(-2.5f, 2.5f);
-				boss->SetPosition({ p.x + std::sin(a) * 300.0f, p.y + std::cos(a) * 300.0f, p.z + 40.0f }, true);
+				Blink(boss.get(), { p.x + std::sin(a) * 300.0f, p.y + std::cos(a) * 300.0f, p.z + 40.0f });
 				if (auto* fx = Forms::Ours(gen::kRiseFx)) {
 					if (auto puff = boss->PlaceObjectAtMe(fx, false)) {
 						g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
@@ -2169,6 +2210,8 @@ namespace bo3z
 		{
 			std::erase_if(g_risers, [&](const Riser& r) { return r.h.get().get() == a; });  // (no longer rising: nothing more is done to it)
 			g_ours.erase(a->GetFormID()), g_summoned.erase(a->GetFormID()), g_elites.erase(a->GetFormID());
+			// (the audit: a champion put away at dawn or on your fall kept its slot - no dragon, priest or quest foe could rise after)
+			if (auto c = g_champ.handle.get(); c && c.get() == a) g_champ.handle = {};
 			a->StopCombat();
 			a->Disable();
 			g_purge.push_back({ a->GetHandle(), 2.0f });
@@ -2276,6 +2319,9 @@ namespace bo3z
 				Hud::Banner(fmt::format("WAVE {} OF {}", g_wave, g_waves), 3.0f);
 				Atmos::Lightning(0.35f);
 			}
+			if (g_wave == g_miniWave && !Coop::Client() && g_champ.handle.get() && g_miniWave < g_waves) {
+				++g_miniWave;  // (the audit: a champion already up silently cost the night its mini-boss) it waits a wave
+			}
 			if (g_wave == g_miniWave && !Coop::Client() && !g_champ.handle.get()) {  // the mini-boss's warning
 				g_miniWarn = 3.0f;
 				Audio::Game(0x0003F35F, RE::PlayerCharacter::GetSingleton(), 0.6f);  // (a roar out in the dark: a dragon's, far off)
@@ -2312,13 +2358,20 @@ namespace bo3z
 				static int   lastSpawned = -1, lastAlive = -1, lastWave = -1;
 				static float still = 0;
 				const int alive = static_cast<int>(g_alive.size());
-				if (g_waveSpawned != lastSpawned || alive != lastAlive || g_wave != lastWave || g_boss.handle.get() || g_champ.handle.get()) {
+				// (the audit: a champion out held the watchdog off for good) with the boss or a champion up it waits four minutes,
+				// and the great are brought to you, never crumbled
+				const bool great = g_boss.handle.get() || g_champ.handle.get();
+				if (g_waveSpawned != lastSpawned || alive != lastAlive || g_wave != lastWave) {
 					lastSpawned = g_waveSpawned, lastAlive = alive, lastWave = g_wave, still = 0;
-				} else if ((still += a_delta) >= 120.0f) {
+				} else if ((still += a_delta) >= (great ? 240.0f : 120.0f)) {
 					still = 0;
 					int gone = 0;
 					for (auto& z : g_alive) {
 						auto a = z.handle.get();
+						if (a && !a->IsDead() && Director::IsGreat(a.get())) {
+							if (a->Is3DLoaded() && a->GetWorldspace() == a_player->GetWorldspace() && !a->HasKeywordString("ActorTypeDragon")) Resurface(a.get(), a_player);
+							continue;
+						}
 						if (a && !a->IsDead() && a->Is3DLoaded() && a->GetPosition().GetDistance(a_player->GetPosition()) < 1500.0f) continue;
 						if (a) Vanish(a.get());
 						++gone;
@@ -2469,6 +2522,7 @@ namespace bo3z
 		void Dawn()
 		{
 			int n = 0;
+			g_boss.spawnIn = -1, g_wantHerald = false;  // (the audit: a boss still waiting to rise came the next night, with no reward)
 			// Anyone still fighting our undead lets go first.
 			for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 				if (auto npc = h.get(); npc && !IsOursRaw(npc.get()) && npc->IsInCombat()) {
@@ -3205,8 +3259,20 @@ namespace bo3z
 				if (s.frenzy > 0) {
 					continue;  // turned on its own kind (TickFrenzy)
 				}
-				const bool  boss = gen::kEnemies[s.enemy].bossEvery > 0;
+				// (the audit: a Dragon Priest holding its range was "stuck" and set back down every 10 s - it looked like fleeing;
+				// a champion out of its cell was replaced by a plain copy with no reward) champions and dragons are kept like the boss
+				const bool  champ = static_cast<bool>(g_champ.handle) && g_champ.handle.get().get() == a.get();
+				if (s.mute) {
+					if (champ) s.mute = false;  // (a champion keeps its Thu'um)
+					else HoldVoice(a.get());
+				}
+				const bool  dragon = a->HasKeywordString("ActorTypeDragon");
+				const bool  boss = gen::kEnemies[s.enemy].bossEvery > 0 || champ || dragon;
 				const float dist = a->GetPosition().GetDistance(a_player->GetPosition());
+				if (dragon && a->Is3DLoaded() && a->GetWorldspace() == a_player->GetWorldspace()) {
+					s.behind = 0, s.stuck = 0, s.still = 0;
+					continue;  // (a dragon circles and lands on its own: never set down through the ground)
+				}
 				// Left behind (too far, or its cell unloaded): climb out of the ground again near the player, BO3-style.
 				// (Noah: "6 enemies left but they were nowhere to be seen" - the log: the dead replaced again and again, each
 				// one "unloaded" though it stood a few steps away, its body still loading - a churn that never let one arrive)
@@ -3477,7 +3543,7 @@ namespace bo3z
 		bool RaiseChampion(int a_town, std::string_view a_row, std::string_view a_name, float a_healthMult, const RE::NiPoint3& a_at)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p || g_phase != Phase::Fighting || Coop::Client() || g_champ.handle.get()) {
+			if (!p || g_phase != Phase::Fighting || Coop::Client() || ChampionAlive()) {
 				return false;
 			}
 			int row = -1;
@@ -3629,8 +3695,9 @@ namespace bo3z
 			}
 			std::optional<std::size_t> row;
 			if (a_elite) {
-				static constexpr std::string_view kElite[] = { "reaper", "brute", "bonebrute" };
-				const std::string_view pick = kElite[std::uniform_int_distribution<int>(0, 2)(g_rng)];
+				// (the audit: "bonebrute" is no row - a third of the elites never rose) the sheet's four brutes
+				static constexpr std::string_view kElite[] = { "reaper", "brute", "frost_brute", "wrath_brute" };
+				const std::string_view pick = kElite[std::uniform_int_distribution<int>(0, 3)(g_rng)];
 				for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
 					if (gen::kEnemies[i].id == pick) {
 						row = i;
@@ -3648,6 +3715,15 @@ namespace bo3z
 			return a ? a->GetHandle() : RE::ActorHandle{};
 		}
 		bool  IsBoss(RE::Actor* a_actor) { auto b = g_boss.handle.get(); return a_actor && b && b.get() == a_actor; }
+		// (the audit) the boss, the champion of the moment (a Dragon Priest, a mini-boss, an Act III dragon, the Echo) or any
+		// dragon: never taken by a Nuke, a sanctuary's crumbling or the chase's replacing
+		bool  IsGreat(RE::Actor* a_actor)
+		{
+			if (!a_actor) return false;
+			if (IsBoss(a_actor) || a_actor->HasKeywordString("ActorTypeDragon")) return true;
+			auto c = g_champ.handle.get();
+			return c && c.get() == a_actor;
+		}
 		// ---- (Noah: "Make it a shout and can be used once per wave. Make it last 20 seconds and make the name of it Dance Of
 		// Death. It should only work on enemies of The Curse Of Alduin") every one of the night's dead within 20 m (1400
 		// units) dances for 20 s - a dance of the four at random each - unable to move or strike, taking half again as much
@@ -4190,8 +4266,8 @@ namespace bo3z
 			auto boss = g_boss.handle.get();
 			for (auto& sp : g_alive) {
 				auto a = sp.handle.get();
-				if (a && !a->IsDead() && a != boss && a->GetPosition().GetDistance(a_at) < a_radius) {
-					if (auto* fx = Forms::Ours(gen::kRiseFx)) {
+				if (a && !a->IsDead() && a != boss && !Director::IsGreat(a.get()) && a->GetPosition().GetDistance(a_at) < a_radius) {
+					if (auto* fx = g_fx.size() < 24 ? Forms::Ours(gen::kRiseFx) : nullptr) {  // (the audit: no flood of art in one frame)
 						if (auto puff = a->PlaceObjectAtMe(fx, false)) {
 							g_fx.push_back({ puff->CreateRefHandle(), 3.0f });
 						}
@@ -5426,14 +5502,20 @@ namespace bo3z
 					return;
 				}
 				// (Noah: the nuke takes the whole wave) every living thing the night sent, near or far, the wyrms too
+				// (the audit: one Nuke during a siege or a priest's fight broke the curse) the great take a sixth of their health
 				for (auto& h : Director::AliveHandles()) {
 					if (auto a = h.get(); a && !a->IsDead()) {
+						if (Director::IsGreat(a.get())) {
+							auto* av = a->AsActorValueOwner();
+							av->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, -0.15f * av->GetPermanentActorValue(RE::ActorValue::kHealth));
+							continue;
+						}
 						a->KillImpl(a_player, 9999.0f, true, false);
 						++n;
 					}
 				}
 				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {  // (and any stray of ours the list lost)
-					if (auto a = h.get(); a && !a->IsDead() && Director::IsRoundUndead(a.get())) {
+					if (auto a = h.get(); a && !a->IsDead() && Director::IsRoundUndead(a.get()) && !Director::IsGreat(a.get())) {
 						a->KillImpl(a_player, 9999.0f, true, false);
 						++n;
 					}
