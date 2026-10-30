@@ -36,6 +36,7 @@ int main(int argc, char** argv)
 	std::vector<std::string> bones;
 	nif.GetShapeBoneList(cape, bones);
 	const size_t B0 = bones.size();
+	for (auto& b : bones) printf("skinbone %s\n", b.c_str());  // (the physics file declares every one: the collar's too)
 	// per vertex weights: [vertex][bone] (old bones)
 	std::vector<std::map<int, float>> w(N);
 	std::vector<MatTransform> skinToBone(B0);

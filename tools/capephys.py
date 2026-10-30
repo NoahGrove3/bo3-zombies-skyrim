@@ -8,7 +8,9 @@ Fabric: a heavy wool cape (it moves with you and settles; it doesn't flutter lik
 import re, sys
 
 grid = {}
+skin = []
 for line in open(sys.argv[1]):
+    if line.startswith('skinbone '): skin.append(line[9:].rstrip('\n'))
     m = re.match(r'bone CAPE_C(\d+)_R(\d+) ', line)
     if m: grid[(int(m[1]), int(m[2]))] = True
 C = max(c for c, r in grid) + 1
@@ -26,7 +28,8 @@ o = ['<?xml version="1.0" encoding="UTF-8"?>',
      '  <bone-default><mass>0</mass><inertia x="0" y="0" z="0"/><centerOfMassTransform><basis x="0" y="0" z="0" w="1"/><origin x="0" y="0" z="0"/></centerOfMassTransform>'
      '<linearDamping>0</linearDamping><angularDamping>0</angularDamping><friction>0.5</friction><rollingFriction>0</rollingFriction><restitution>0</restitution><margin-multiplier>1</margin-multiplier></bone-default>']
 for b in ['NPC Spine2 [Spn2]', 'NPC Spine1 [Spn1]', 'NPC Pelvis [Pelv]', 'NPC L Thigh [LThg]', 'NPC R Thigh [RThg]', 'NPC L Calf [LClf]', 'NPC R Calf [RClf]',
-          'NPC L Foot [Lft ]', 'NPC R Foot [Rft ]', 'NPC L Forearm [LLar]', 'NPC R Forearm [RLar]', 'NPC L Hand [LHnd]', 'NPC R Hand [RHnd]']:
+          'NPC L Foot [Lft ]', 'NPC R Foot [Rft ]', 'NPC L Forearm [LLar]', 'NPC R Forearm [RLar]', 'NPC L Hand [LHnd]', 'NPC R Hand [RHnd]'] + \
+        [b for b in skin if b not in ('NPC Spine2 [Spn2]', 'NPC Spine1 [Spn1]')]:  # (Noah: "a dark sheet above my head") every bone the cape is skinned to: SMP takes over the shape's skinning, and an undeclared bone (the collar's neck, head, clavicles, arms) threw its vertices up
     o.append(f'  <bone name="{b}"/>')
 # the cloth: heavier at the top, the hem calmed by damping
 o.append('  <bone-default><mass>1.8</mass><inertia x="32" y="32" z="14"/><centerOfMassTransform><basis x="0" y="0" z="0" w="1"/><origin x="0" y="0" z="-6"/></centerOfMassTransform>'
