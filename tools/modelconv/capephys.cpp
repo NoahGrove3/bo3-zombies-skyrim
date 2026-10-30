@@ -1,4 +1,4 @@
-// capephys <cape.nif> <collision-source.nif> <out.nif> <xml path in game> [cols] [rows]
+// capephys <cape.nif> <collision-source.nif> <out.nif> <xml path in game> [cols] [rows] [top z] [blend]
 // (Noah: "make the cape flow as I'm moving around ... similar physics to the hair, instead of just being a straight sheet")
 // Gives a cape that hangs stiff on the skirt bones a grid of cloth bones for FSMP (HDT-SMP) to swing:
 //  - the cape's hanging part (whatever was weighted to SkirtBBone01-03) is reweighted onto a cols x rows grid of bones
@@ -21,7 +21,10 @@ using namespace nifly;
 int main(int argc, char** argv)
 {
 	if (argc < 5) { fprintf(stderr, "usage: capephys <cape.nif> <collision.nif> <out.nif> <xmlpath> [cols] [rows]\n"); return 1; }
-	const int C = argc > 5 ? std::stoi(argv[5]) : 5, R = argc > 6 ? std::stoi(argv[6]) : 5;
+	const int C = argc > 5 ? std::stoi(argv[5]) : 5, R = argc > 6 ? std::stoi(argv[6]) : 6;
+	// (Noah: "I also want the cape to be animated above the waist, all the way up until about shoulder height") the grid
+	// starts at ztopArg (just under the shoulders); above it the cape keeps its own weights, blended over `blend` units
+	const float ztopArg = argc > 7 ? std::stof(argv[7]) : 100.0f, blend = argc > 8 ? std::stof(argv[8]) : 8.0f;
 	NifFile nif;
 	if (nif.Load(argv[1])) { fprintf(stderr, "cape load failed\n"); return 1; }
 	NiShape* cape = nullptr;
@@ -46,34 +49,42 @@ int main(int argc, char** argv)
 	nif.CalcShapeTransformGlobalToSkin(cape, globalToSkin);
 	const MatTransform skinToGlobal = globalToSkin.InverseTransform();
 	auto isSkirt = [&](int b) { return bones[b].rfind("Skirt", 0) == 0; };
-	// the hanging part, in the body's (global) space
+	// the moving part: everything below the shoulders (ws = how much of the vertex the grid takes: 1 below ztop, fading
+	// to 0 over `blend` above it)
 	std::vector<Vector3> P(N);
 	std::vector<float> ws(N, 0);
-	float xmin = 1e9, xmax = -1e9, ztop = -1e9, zbot = 1e9;
+	float zbot = 1e9;
 	for (size_t v = 0; v < N; ++v) {
 		P[v] = skinToGlobal.ApplyTransform(verts[v]);
-		for (auto& [b, x] : w[v]) if (isSkirt(b)) ws[v] += x;
-		if (ws[v] > 0.01f) xmin = std::min(xmin, P[v].x), xmax = std::max(xmax, P[v].x), zbot = std::min(zbot, P[v].z);
-		if (ws[v] > 0.5f) ztop = std::max(ztop, P[v].z);
+		ws[v] = std::clamp(1.0f - (P[v].z - ztopArg) / blend, 0.0f, 1.0f);
+		if (ws[v] > 0) zbot = std::min(zbot, P[v].z);
 	}
-	if (xmin > xmax) { fprintf(stderr, "no skirt-weighted vertices\n"); return 1; }
-	printf("cape '%s': %zu verts, hanging part x %.1f..%.1f, z %.1f (top) .. %.1f (hem)\n", capeName.c_str(), N, xmin, xmax, ztop, zbot);
-	// the grid: column c at x, row r at height z; y = the cape's own surface there (average of the nearest vertices)
-	const float colW = (xmax - xmin) / (C - 1), rowH = (ztop - zbot) / R;
-	auto gx = [&](int c) { return xmin + colW * c; };
+	const float ztop = ztopArg;
+	// the cloth's width at a height (it flares towards the hem): the extremes of the vertices near that height
+	auto extent = [&](float z, float& lo, float& hi) {
+		lo = 1e9, hi = -1e9;
+		for (float win = 4.0f; lo > hi && win < 60.0f; win *= 1.6f)
+			for (size_t v = 0; v < N; ++v)
+				if (std::fabs(P[v].z - z) <= win && P[v].y < 0) lo = std::min(lo, P[v].x), hi = std::max(hi, P[v].x);
+	};
+	printf("cape '%s': %zu verts, moving part z %.1f (top) .. %.1f (hem)\n", capeName.c_str(), N, ztop, zbot);
+	const float rowH = (ztop - zbot) / R;
 	auto gz = [&](int r) { return ztop - rowH * r; };
+	std::vector<float> rlo(R), rhi(R);
+	for (int r = 0; r < R; ++r) extent(gz(r) - rowH * 0.5f, rlo[r], rhi[r]);
+	auto gx = [&](int r, int c) { return rlo[r] + (rhi[r] - rlo[r]) * c / (C - 1); };
 	std::vector<Vector3> G(C * R);
 	for (int r = 0; r < R; ++r)
 		for (int c = 0; c < C; ++c) {
+			const float colW = (rhi[r] - rlo[r]) / (C - 1);
 			float sy = 0, sw = 0;
 			for (size_t v = 0; v < N; ++v) {
-				if (ws[v] < 0.01f) continue;
-				const float dx = (P[v].x - gx(c)) / colW, dz = (P[v].z - gz(r)) / rowH, d2 = dx * dx + dz * dz;
+				if (ws[v] <= 0 || P[v].y > 0) continue;
+				const float dx = (P[v].x - gx(r, c)) / colW, dz = (P[v].z - gz(r)) / rowH, d2 = dx * dx + dz * dz;
 				const float k = std::exp(-d2 * 2.0f);
 				sy += P[v].y * k, sw += k;
 			}
-			// (a little inside the cloth, so the bone sits in it rather than behind it)
-			G[r * C + c] = Vector3(gx(c), sw > 0 ? sy / sw + 0.5f : -10.0f, gz(r));
+			G[r * C + c] = Vector3(gx(r, c), sw > 0 ? sy / sw + 0.5f : -10.0f, gz(r));
 		}
 	// the bones: each column a chain under NPC Spine2
 	const std::string kSpine = "NPC Spine2 [Spn2]";
@@ -101,16 +112,22 @@ int main(int argc, char** argv)
 	// the row above and blends into the next; across, between its two columns)
 	std::vector<std::map<int, float>> nw(N);  // bone index in the new list
 	for (size_t v = 0; v < N; ++v) {
-		for (auto& [b, x] : w[v]) if (!isSkirt(b)) nw[v][b] += x;
-		if (ws[v] <= 0) continue;
-		const float fx = std::clamp((P[v].x - xmin) / colW, 0.0f, float(C - 1));
+		// (the skirt bones are let go entirely: whatever they held now hangs on the grid)
+		float skirt = 0;
+		for (auto& [b, x] : w[v]) (isSkirt(b) ? skirt : nw[v][b]) += isSkirt(b) ? x : x * (1.0f - ws[v]);
+		const float share = ws[v] + skirt * (1.0f - ws[v]);
+		if (share <= 0) continue;
 		const float fz = std::clamp((ztop - P[v].z) / rowH, 0.0f, float(R - 1));
-		const int c0 = std::min(int(fx), C - 2), r0 = std::min(int(fz), R - 1);
-		const float tx = fx - c0, tz = r0 < R - 1 ? fz - r0 : 0.0f;
-		const int r1 = std::min(r0 + 1, R - 1);
+		const int r0 = std::min(int(fz), R - 1), r1 = std::min(r0 + 1, R - 1);
+		const float tz = r0 < R - 1 ? fz - r0 : 0.0f;
+		// across: the vertex's place between this row's (and the next's) edges
+		const float lo = rlo[r0] + (rlo[r1] - rlo[r0]) * tz, hi = rhi[r0] + (rhi[r1] - rhi[r0]) * tz;
+		const float fx = std::clamp((P[v].x - lo) / std::max(1.0f, hi - lo) * (C - 1), 0.0f, float(C - 1));
+		const int c0 = std::min(int(fx), C - 2);
+		const float tx = fx - c0;
 		const float k[4] = { (1 - tx) * (1 - tz), tx * (1 - tz), (1 - tx) * tz, tx * tz };
 		const int idx[4] = { r0 * C + c0, r0 * C + c0 + 1, r1 * C + c0, r1 * C + c0 + 1 };
-		for (int j = 0; j < 4; ++j) if (k[j] > 0) nw[v][int(B0) + idx[j]] += ws[v] * k[j];
+		for (int j = 0; j < 4; ++j) if (k[j] > 0) nw[v][int(B0) + idx[j]] += share * k[j];
 	}
 	// at most 4 bones a vertex, renormalised
 	for (auto& m : nw) {
