@@ -3118,7 +3118,7 @@ namespace bo3z
 			const float  spMax = av->GetPermanentActorValue(RE::ActorValue::kStamina), sp = av->GetActorValue(RE::ActorValue::kStamina);
 			spQuiet = (lastSp >= 0 && sp < lastSp - 0.01f) || p->AsActorState()->IsSprinting() ? 0 : spQuiet + a_delta;
 			if (spQuiet >= 1.5f && sp < spMax) {
-				av->RestoreActorValue(RE::ActorValue::kStamina, std::min(spMax - sp, spMax * 0.6f * a_delta));
+				av->RestoreActorValue(RE::ActorValue::kStamina, std::min(spMax - sp, spMax * 0.36f * a_delta));  // (Noah: "decrease the stamina regen speed by 40%, it's way too fast": 0.6 -> 0.36 of it a second)
 			}
 			lastSp = av->GetActorValue(RE::ActorValue::kStamina);
 		}

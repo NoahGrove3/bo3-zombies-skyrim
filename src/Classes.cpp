@@ -1069,7 +1069,7 @@ namespace bo3z::Classes
 		}
 		out.push_back(fmt::format("<b>Echo Altars freed: {} of {}</b>{}", freed, gen::kTowns.size(), towns.empty() ? std::string(" - none yet. Start with Riverwood's altar.") : " (" + towns + ")."));
 		// (the consistency pass: every class was told of a Legendary row only the Summoner has) the forge's gates, as they are
-		out.push_back(fmt::format("Your kit's tiers (the Echo Altar): Tier I open. Tier II: {}. Tier III (Legendary): {}. Ascends: {}. Armour from your upgrades: +{:.0f}%.",
+		out.push_back(fmt::format("Your kit's tiers (the Echo Altar): Tier I open. Tier II: {}. Tier III (Legendary): {}. Ascends: {}. Your armour set's damage reduction: +{:.0f}%.",
 			freed >= 2 ? std::string("<b>open</b>") : fmt::format("at 2 freed cities ({} to go)", 2 - freed),
 			freed >= 4 ? std::string("<b>open</b>") : fmt::format("at 4 freed cities ({} to go)", 4 - freed),
 			freed >= 6 ? std::string("<b>open</b>") : fmt::format("at 6 freed cities ({} to go)", 6 - freed), Kit::ArmorResist() * 100.0f));

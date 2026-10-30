@@ -2993,7 +2993,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					};
 					auto rgb = [](std::uint32_t c, int a) { return IM_COL32((c >> 16) & 255, (c >> 8) & 255, c & 255, a); };
 					TxtC(dl, g_title, 18 * k, cx, y, kGoldDim, "YOUR KIT", 0.0f, 0);
-					if (s.armorBonus > 0.001f) Txt(dl, g_body, 14 * k, { Rr - Measure(g_body, 14 * k, fmt::format("armour +{:.0f}%", s.armorBonus * 100.0f)).x, y + 2 * k }, kGoldDim, fmt::format("armour +{:.0f}%", s.armorBonus * 100.0f));
+					if (s.armorBonus > 0.001f) Txt(dl, g_body, 14 * k, { Rr - Measure(g_body, 14 * k, fmt::format("damage reduction +{:.0f}%", s.armorBonus * 100.0f)).x, y + 2 * k }, kGoldDim, fmt::format("damage reduction +{:.0f}%", s.armorBonus * 100.0f));
 					y += 28 * k;
 					for (const auto& l : s.kitLines) {
 						focusRow(l.id, y - 6 * k, y + 52 * k);

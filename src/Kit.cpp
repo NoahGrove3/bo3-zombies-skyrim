@@ -733,7 +733,7 @@ namespace bo3z::Kit
 		SyncWeapons(true);
 		const std::string now = ItemName(c, item);
 		Hud::Banner((now != was ? was + "  ->  " + now : now) + "  -  " + (t + 1 <= 3 ? std::string(TierLabel(t + 1)) : "Ascend " + std::to_string(t + 1 - 3)) +
-		                (defs[item].kind == Kind::Armour ? fmt::format("   (armour {})", ArmourRating(c)) : std::string()), 4.5f);
+		                (defs[item].kind == Kind::Armour ? fmt::format("   (damage reduction +{:.0f}%)", ArmorResist() * 100.0f) : std::string()), 4.5f);
 		logger::info("kit: {} -> tier {} ({})", now, t + 1, Classes::Name(c));
 		return true;
 	}
@@ -874,7 +874,9 @@ namespace bo3z::Kit
 		return a_cls >= 0 && a_cls < 4 && i >= 0 && (g_cls[a_cls].owned >> i & 1) ? g_cls[a_cls].tier[i] : -1;
 	}
 	int ArmourRating(int a_cls) { const int t = ArmourTier(a_cls); return t < 0 ? 0 : 10 + 10 * t; }
-	float ArmorResist() { return std::min(0.80f, 0.0012f * static_cast<float>(ArmourRating(Cls()))); }
+	// (Noah: "I want the armor to say damage reduction +5% and go up by 5% per upgrade maxing at 20%") the class's set takes
+	// 5% off every blow, 5% more a tier, 20% at Tier III (Ascends don't add more)
+	float ArmorResist() { const int t = ArmourTier(Cls()); return t < 0 ? 0.0f : std::min(0.20f, 0.05f * static_cast<float>(t + 1)); }
 
 	// ---- co-op auras ----
 	bool PartyHas(int a_cls)

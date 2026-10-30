@@ -1146,7 +1146,7 @@ namespace bo3z
 		float QuiverRadiusMult();                 // the Ranger's relic quivers: its bows' and crossbows' blasts this much wider
 		int   ArmourTier(int a_cls);              // (the class armour sets) the set's upgrades (0..), -1 not owned
 		int   ArmourRating(int a_cls);            // 10, and 10 more for each of its upgrades
-		float ArmorResist();                      // 0 .. 0.30 of the night's blows taken off
+		float ArmorResist();                      // 0 .. 0.20 of the night's blows taken off (5% a set tier)
 		float AuraCostMult();                     // (co-op) a Destruction mage in the party: spells cost less
 		float AuraAmmoMult();                     // (co-op) a Ranger in the party: ammo grows back sooner
 		float AuraMeleeTaken();                   // (co-op) a Spellsword in the party: blows land softer
