@@ -122,9 +122,10 @@ namespace bo3z
 	// summon family's rungs and Ascends, a spell-weapon's steel)
 	inline float UpgradeMult(int a_upgrades)
 	{
-		// (Noah: "tier 1 1.5 times, tier 2 3 times, tier 3 5 times - Ascend is fine the way it is": +1.5 each)
-		static constexpr float kCurve[4] = { 1.0f, 1.5f, 3.0f, 5.0f };
-		return a_upgrades <= 0 ? 1.0f : a_upgrades <= 3 ? kCurve[a_upgrades] : 5.0f + 1.5f * static_cast<float>(a_upgrades - 3);
+		// (Noah: "I was pretty much unstoppable by night three - even with just one upgrade on the spell I was obliterating
+		// everything ... the upgrades need to be more balanced") a gentler curve: Tier I 1.3x, II 1.7x, III 2.2x, +0.3 an Ascend
+		static constexpr float kCurve[4] = { 1.0f, 1.3f, 1.7f, 2.2f };
+		return a_upgrades <= 0 ? 1.0f : a_upgrades <= 3 ? kCurve[a_upgrades] : 2.2f + 0.3f * static_cast<float>(a_upgrades - 3);
 	}
 
 	namespace Director

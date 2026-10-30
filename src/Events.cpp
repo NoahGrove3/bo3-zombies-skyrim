@@ -767,7 +767,7 @@ namespace bo3z
 			}
 			// (Noah: the one upgrade curve) its rung and its Ascends are its upgrades
 			const int   ups = Arcana::Ups(a_index);  // (the altar rework: its tier on the one curve)
-			const float grow = UpgradeMult(ups) * (1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike)) * (0.7f + 0.3f * Arcana::Power());
+			const float grow = UpgradeMult(ups) * (1.0f + 0.25f * Save::PerkStacks(gen::kPerk_twinstrike)) * (0.7f + 0.3f * Arcana::Power());
 			// (Noah's plan, Destruction) dual-casting one element: the same spell in both hands hits a third harder
 			const auto  hands = Arcana::Hands();
 			const float twin = (Classes::Get() == 1 && hands[0] == a_index && hands[1] == a_index ? 1.35f : 1.0f) * (std::chrono::steady_clock::now() < g_splitUntil ? 0.5f : 1.0f);
@@ -775,7 +775,7 @@ namespace bo3z
 				if (Limit(a_actor)) {
 					// (the balance pass) a concentration spell lands four times a second: each touch takes a third of a
 					// cast's share, so a stream and a bolt kill about as fast for the magicka
-					const float stream = (Arcana::Concentration(a_index) || a_cloak) ? 0.35f : 1.0f;
+					const float stream = (Arcana::Concentration(a_index) || a_cloak) ? 0.25f : 1.0f;  // (the balance pass 2: storms and streams a little gentler)
 					HurtUndead(a_actor, Director::RoundHealth() * gen::kShareSpell * grow * twin * stream);
 				}
 				return;
@@ -1278,6 +1278,12 @@ namespace bo3z
 					++n;
 				}
 				logger::info("night: {} weathers' nights darkened", n);
+			}
+			// (Noah: "the volume of all magic sound effects turned down for players and enemies") Skyrim's magic sound
+			// category (AudioCategoryMAG: every spell's cast, flight and impact, whoever casts it) at 55% of its own level
+			if (auto* mag = RE::TESForm::LookupByID<RE::BGSSoundCategory>(0x0001A0BD)) {
+				mag->SetStaticVolumeMultiplier(mag->GetStaticVolumeMultiplier() * 0.55f);
+				logger::info("audio: magic sounds at {:.2f}", mag->GetStaticVolumeMultiplier());
 			}
 			// Skyrim's own floating quest markers give way to ours (src/Hud.cpp: drawn in the game's style)
 			if (auto* prefs = RE::INIPrefSettingCollection::GetSingleton()) {

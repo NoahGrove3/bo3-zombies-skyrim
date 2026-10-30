@@ -65,8 +65,8 @@
         0.7,
         0.9
       ],
-      "hpStart": 150,
-      "hpLinearPerRound": 100,
+      "hpStart": 225,
+      "hpLinearPerRound": 150,
       "hpLinearUntil": 9,
       "hpMultAfter": 1.1,
       "hpScale": 8.0,
@@ -122,9 +122,9 @@
       "hpCapRound": 60,
       "hpGrowthAfterCap": 1.03,
       "skyrimHitShare": {
-        "melee": 0.34,
-        "bow": 0.5,
-        "spell": 0.2
+        "melee": 0.2,
+        "bow": 0.3,
+        "spell": 0.12
       },
       "chaseRelocateDist": 4000,
       "chaseRelocateSeconds": 3.0,

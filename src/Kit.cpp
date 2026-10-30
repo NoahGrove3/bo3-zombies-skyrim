@@ -402,7 +402,7 @@ namespace bo3z::Kit
 		}
 		float Roll01() { return std::uniform_real_distribution<float>(0.0f, 1.0f)(g_rng); }
 		// a proc's share of one of the dead's health, grown by the item's tier
-		float ProcShare(int a_tier) { return 0.12f * UpgradeMult(std::min(a_tier, 5)) * (0.7f + 0.3f * Arcana::Power()); }  // (capped: Ascends grow the item's own blows, not its procs past two)
+		float ProcShare(int a_tier) { return 0.07f * UpgradeMult(std::min(a_tier, 5)) * (0.7f + 0.3f * Arcana::Power()); }  // (capped: Ascends grow the item's own blows, not its procs past two)
 		std::vector<RE::Actor*> FoesNear(const RE::NiPoint3& a_at, float a_r, RE::Actor* a_skip = nullptr, std::size_t a_max = 64)
 		{
 			std::vector<RE::Actor*> out;
@@ -436,26 +436,26 @@ namespace bo3z::Kit
 			const bool  boss = Director::IsBoss(a_target);
 			switch (kind) {
 			case 2:  // Dead Wire: lightning leaps to four more
-				if (Roll01() < 0.20f && Ready(2, 250)) {
+				if (Roll01() < 0.12f && Ready(2, 900)) {  // (Noah: "the imbue is way too strong": rarer, slower)
 					Gun::FxBlast("runeshock", at + RE::NiPoint3{ 0, 0, 60.0f });
-					for (auto* f : FoesNear(at, 550.0f, a_target, 4)) {
+					for (auto* f : FoesNear(at, 550.0f, a_target, 3)) {
 						Gun::AreaHurt(f->GetPosition(), 40.0f, share, "");
 						Gun::FxBlast("runeshock", f->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f });
 					}
 				}
 				break;
 			case 3:  // Thunder Wall: a shockwave hurls them back
-				if (Roll01() < 0.15f && Ready(3, 3000)) {
+				if (Roll01() < 0.10f && Ready(3, 5000)) {
 					Gun::FxBlast("shoutarea", at);
 					Gun::AreaHurt(at, 350.0f, share * 0.5f, "");
 					for (auto* f : FoesNear(at, 350.0f, nullptr, 10)) if (!Director::IsBoss(f)) Push(RE::PlayerCharacter::GetSingleton(), f, 4.0f);
 				}
 				break;
 			case 4:  // Cryo-Lock: everything round it frozen
-				if (Roll01() < 0.15f && Ready(4, 400)) Director::Web(at, 260.0f, 3.0f, 95.0f, true);
+				if (Roll01() < 0.08f && Ready(4, 3000)) Director::Web(at, 220.0f, 2.0f, 60.0f, false);  // (slowed, not frozen; no spell storm of ice spikes)
 				break;
 			case 5:  // Turned: it fights for you
-				if (!boss && Director::IsRoundUndead(a_target) && Roll01() < 0.08f && Ready(5, 300)) {
+				if (!boss && Director::IsRoundUndead(a_target) && Roll01() < 0.05f && Ready(5, 2000)) {
 					Director::Frenzy(a_target, 15.0f);
 					Gun::FxBlast("dark", at + RE::NiPoint3{ 0, 0, 70.0f });
 				}
@@ -1012,14 +1012,14 @@ namespace bo3z::Kit
 		const int kind = inf ? *inf : 0;
 		const float share = ProcShare(TierOfItem(c, item));
 		const auto  at = a_dying->GetPosition();
-		if (kind == 1 && Ready(1, 150)) {  // Blast Furnace
-			Gun::AreaHurt(at, 300.0f, share * 1.5f, "");
+		if (kind == 1 && Ready(1, 700)) {  // Blast Furnace
+			Gun::AreaHurt(at, 260.0f, share, "");
 			Gun::FxBlast("fireball", at + RE::NiPoint3{ 0, 0, 50.0f });
 		} else if (kind == 8) {  // Soul Siphon
 			if (auto* p = RE::PlayerCharacter::GetSingleton(); p && !p->IsDead()) {
 				auto* av = p->AsActorValueOwner();
-				av->RestoreActorValue(RE::ActorValue::kMagicka, av->GetPermanentActorValue(RE::ActorValue::kMagicka) * 0.08f);
-				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.03f);
+				av->RestoreActorValue(RE::ActorValue::kMagicka, av->GetPermanentActorValue(RE::ActorValue::kMagicka) * 0.04f);
+				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.015f);
 			}
 		}
 	}

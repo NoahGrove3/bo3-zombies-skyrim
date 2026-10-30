@@ -18,7 +18,7 @@ namespace bo3z::gen
 		float spawnDelayStart, spawnDelayDecay, spawnDelayMin; int specialEveryRounds, specialFirstRound;
 		std::array<float, 2> spawnRingExterior, spawnRingInterior; float spawnHeightOffset; int maxCorpses; };
 	inline constexpr Rounds kRounds{ 21.0f, 5.6f, 15.0f, 15.0f, 64, 24, 6,
-		{ 0.25f, 0.3f, 0.5f, 0.7f, 0.9f }, 150, 100, 9, 1.1f, 8.0f,
+		{ 0.25f, 0.3f, 0.5f, 0.7f, 0.9f }, 225, 150, 9, 1.1f, 8.0f,
 		1.0f, 0.95f, 0.15f, 6, 10,
 		{ 3400.f, 4600.f }, { 1400.f, 2100.f }, 120.f, 18 };
 	inline constexpr FormRef kIntroQuest{ "Skyrim.esm", 0x03372B, "MQ101" };
@@ -1147,25 +1147,25 @@ namespace bo3z::gen
 	inline constexpr std::array<PerkDef, 22> kPerks{ {
 		PerkDef{ "trollshide", "Troll's Hide Mead", 3200, 0, 100.0f, 0x800, 0x820 },
 		PerkDef{ "quicksilver", "Quicksilver Draught", 3900, 1, 0.6f, 0x801, 0x821 },
-		PerkDef{ "twinstrike", "Twin Strike Ale", 2600, 2, 2.0f, 0x802, 0x822 },
+		PerkDef{ "twinstrike", "Twin Strike Ale", 2600, 2, 1.25f, 0x802, 0x822 },
 		PerkDef{ "hearthfire", "Hearthfire Tonic", 600, 3, 1.0f, 0x803, 0x823 },
 		PerkDef{ "windrunner", "Windrunner Brew", 2600, 4, 27.0f, 0x804, 0x824 },
-		PerkDef{ "hawkeye", "Hawkeye Tincture", 2000, 5, 1.5f, 0x805, 0x825 },
+		PerkDef{ "hawkeye", "Hawkeye Tincture", 2000, 5, 1.3f, 0x805, 0x825 },
 		PerkDef{ "mammoth", "Mammoth Back Porter", 5200, 6, 3.0f, 0x806, 0x826 },
 		PerkDef{ "frostbite", "Frostbite Venom", 5200, 7, 4.0f, 0x827, 0x82B },
 		PerkDef{ "stormcrown", "Stormcrown Cider", 2600, 8, 500.0f, 0x828, 0x82C },
 		PerkDef{ "fletcher", "Fletcher's Sap Draught", 2000, 9, 1.0f, 0xCB3, 0xCB4 },
-		PerkDef{ "bonebinder", "Bonebinder's Brew", 3200, 10, 1.5f, 0xCB8, 0xCC3 },
-		PerkDef{ "soultether", "Soul-Tether Wine", 2600, 11, 0.05f, 0xCB9, 0xCC4 },
+		PerkDef{ "bonebinder", "Bonebinder's Brew", 3200, 10, 1.3f, 0xCB8, 0xCC3 },
+		PerkDef{ "soultether", "Soul-Tether Wine", 2600, 11, 0.03f, 0xCB9, 0xCC4 },
 		PerkDef{ "command", "Conjurer's Command Mead", 4600, 12, 1.0f, 0xCBA, 0xCC5 },
-		PerkDef{ "emberheart", "Ember Heart Ale", 3900, 13, 0.35f, 0xCBB, 0xCC6 },
+		PerkDef{ "emberheart", "Ember Heart Ale", 3900, 13, 0.2f, 0xCBB, 0xCC6 },
 		PerkDef{ "arcanist", "Arcanist's Focus Tea", 3200, 14, 25.0f, 0xCBC, 0xCC7 },
-		PerkDef{ "siphon", "Mana-Siphon Draught", 2600, 15, 0.06f, 0xCBD, 0xCC8 },
-		PerkDef{ "eagleeye", "Eagle-Eye Draught", 3200, 16, 1.25f, 0xCBE, 0xCC9 },
-		PerkDef{ "dawnwatch", "Dawnwatch Tonic", 3900, 17, 0.25f, 0xCBF, 0xCCA },
-		PerkDef{ "bladesong", "Bladesong Mead", 3200, 18, 0.02f, 0xCC0, 0xCCB },
-		PerkDef{ "spellbind", "Spellbinder's Draught", 2600, 19, 0.1f, 0xCC1, 0xCCC },
-		PerkDef{ "steelwind", "Steel-Wind Ale", 3900, 20, 1.2f, 0xCC2, 0xCCD },
+		PerkDef{ "siphon", "Mana-Siphon Draught", 2600, 15, 0.04f, 0xCBD, 0xCC8 },
+		PerkDef{ "eagleeye", "Eagle-Eye Draught", 3200, 16, 1.2f, 0xCBE, 0xCC9 },
+		PerkDef{ "dawnwatch", "Dawnwatch Tonic", 3900, 17, 0.2f, 0xCBF, 0xCCA },
+		PerkDef{ "bladesong", "Bladesong Mead", 3200, 18, 0.015f, 0xCC0, 0xCCB },
+		PerkDef{ "spellbind", "Spellbinder's Draught", 2600, 19, 0.06f, 0xCC1, 0xCCC },
+		PerkDef{ "steelwind", "Steel-Wind Ale", 3900, 20, 1.15f, 0xCC2, 0xCCD },
 		PerkDef{ "splitshot", "Splitting Draught", 4600, 21, 0.5f, 0xD07, 0xD08 },
 	} };
 	inline constexpr int kPerk_trollshide = 0;
@@ -1190,7 +1190,7 @@ namespace bo3z::gen
 	inline constexpr int kPerk_spellbind = 19;
 	inline constexpr int kPerk_steelwind = 20;
 	inline constexpr int kPerk_splitshot = 21;
-	inline constexpr std::array<std::string_view, 22> kPerkDesc{ { "+100 maximum health.", "Your spells cost 15% less magicka.", "Your spells deal 50% more damage.", "Saves you from one death: instead of dying, you get back up. Each tonic is one save.", "You move 30% faster and your stamina refills 30% faster.", "Your magicka refills 50% faster.", "+50 maximum magicka.", "When an enemy hits you, frost webs burst out and slow every enemy nearby.", "Every 12th spell you cast sends out a lightning burst around you. Each cider makes it come sooner and hit harder.", "Your arrows and bolts grow back sooner and faster: 2 seconds after your last shot instead of 5, two a second.", "Your summons have 50% more health and deal 50% more damage.", "Each time one of your summons kills an enemy, you heal 5% of your maximum health.", "You can have one more summon out at a time (up to 8).", "Enemies you kill with Destruction spells explode, hurting the enemies around them.", "Destruction spells cost 25% less magicka.", "Each kill with a Destruction spell gives you back 6% of your magicka.", "You draw bows and reload crossbows 25% faster.", "While you hold a bow or crossbow, enemies' hits do 25% less damage to you.", "Each melee hit you land on an enemy heals you 2% of your maximum health.", "Each melee kill gives you back 10% of your magicka.", "Your melee attacks are 20% faster.", "Your arrows, bolts and bolt spells fly in pairs - two at once, each at half the damage." } };
+	inline constexpr std::array<std::string_view, 22> kPerkDesc{ { "+100 maximum health.", "Your spells cost 15% less magicka.", "Your spells deal 25% more damage.", "Saves you from one death: instead of dying, you get back up. Each tonic is one save.", "You move 30% faster and your stamina refills 30% faster.", "Your magicka refills 30% faster.", "+50 maximum magicka.", "When an enemy hits you, frost webs burst out and slow every enemy nearby.", "Every 12th spell you cast sends out a lightning burst around you. Each cider makes it come sooner and hit harder.", "Your arrows and bolts grow back sooner and faster: 2 seconds after your last shot instead of 5, two a second.", "Your summons have 30% more health and deal 30% more damage.", "Each time one of your summons kills an enemy, you heal 3% of your maximum health.", "You can have one more summon out at a time (up to 8).", "Enemies you kill with Destruction spells explode, hurting the enemies around them.", "Destruction spells cost 25% less magicka.", "Each kill with a Destruction spell gives you back 4% of your magicka.", "You draw bows and reload crossbows 20% faster.", "While you hold a bow or crossbow, enemies' hits do 20% less damage to you.", "Each melee hit you land on an enemy heals you 1.5% of your maximum health.", "Each melee kill gives you back 6% of your magicka.", "Your melee attacks are 15% faster.", "Your arrows, bolts and bolt spells fly in pairs - two at once, each at half the damage." } };
 	inline constexpr int kMaxPerks = 12;
 	inline constexpr std::array<int, 22> kPerkClass{ { -1, -1, -1, -1, -1, -1, -1, -1, -1, 2, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3, -1 } };  // the class a perk belongs to (-1: every class)
 	struct CrewDef { std::string_view id, label, quote; int passive; float value; std::string_view passiveText; };
@@ -1552,7 +1552,7 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kKey2_crew3 = 4;
 	inline constexpr std::uint32_t kKey2_crew4 = 5;
 	inline constexpr std::uint32_t kKey2_confirm = 28;
-	inline constexpr float kHpCapRound = 60.0f, kHpGrowthAfterCap = 1.03f, kShareMelee = 0.34f, kShareBow = 0.5f, kShareSpell = 0.2f;
+	inline constexpr float kHpCapRound = 60.0f, kHpGrowthAfterCap = 1.03f, kShareMelee = 0.2f, kShareBow = 0.3f, kShareSpell = 0.12f;
 	namespace boss { inline constexpr float spawnDelay = 10.0f; inline constexpr float healthMult = 30.0f; inline constexpr float minHealth = 18000.0f; inline constexpr float breathEvery = 9.0f; inline constexpr float breathRange = 1400.0f; inline constexpr float roarEvery = 12.0f; inline constexpr float roarRange = 1800.0f; inline constexpr float summonEvery = 22.0f; inline constexpr float summonCount = 5.0f; inline constexpr float stepEvery = 26.0f; inline constexpr float slamEvery = 5.0f; inline constexpr float slamRange = 260.0f; inline constexpr float slamDamage = 0.18f; inline constexpr float enrageAt = 0.5f; inline constexpr float enrageSpeed = 35.0f; inline constexpr float enrageCooldownMult = 0.65f; inline constexpr float comboEvery = 6.0f; inline constexpr float clawHit = 0.05f; inline constexpr float clawLast = 0.1f; inline constexpr float leapDamage = 0.14f; inline constexpr float eruptionDamage = 0.08f; inline constexpr float breathStrength = 0.45f; inline constexpr float meleeShare = 0.14f; inline constexpr float killPoints = 2875.0f; }
 	inline constexpr int kForgeMax = 3; inline constexpr float kForgeStep = 0.6f;
 	inline constexpr std::array<int, 3> kForgeCost{ { 5000, 8000, 12000 } };

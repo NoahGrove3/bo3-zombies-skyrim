@@ -3282,6 +3282,14 @@ namespace bo3z
 			if (!player || !m || !a_target) {
 				return;
 			}
+			// (Noah: "spamming the ice storm got really laggy - 3 FPS - and my other spells stopped working") the effect
+			// spells the night casts for show (ice spikes, bolts) are held to eight a second: dozens at once choked the
+			// game's magic and its frame rate
+			static auto win = std::chrono::steady_clock::now();
+			static int  inWin = 0;
+			const auto  now = std::chrono::steady_clock::now();
+			if (now - win > std::chrono::seconds(1)) win = now, inWin = 0;
+			if (++inWin > 8) return;
 			if (auto* caster = player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
 				caster->CastSpellImmediate(m, false, a_target, 1.0f, false, 0.0f, player);
 			}
@@ -4277,6 +4285,27 @@ namespace bo3z
 				}
 			}
 		}
+		// (Noah: "I also want the magic spell visual effects to be smaller for the player") your spells' projectiles (bolts,
+		// storms, clouds, the bursts they carry) are drawn at 60% of their size; each is shrunk once, the moment it is seen
+		void ShrinkSpellFx(RE::PlayerCharacter* a_player)
+		{
+			auto* mgr = RE::Projectile::Manager::GetSingleton();
+			if (!mgr) return;
+			static std::unordered_set<std::uint32_t> done;
+			if (done.size() > 2000) done.clear();
+			RE::BSSpinLockGuard g(mgr->projectileLock);
+			for (auto* arr : { &mgr->limited, &mgr->unlimited }) {
+				for (auto& h : *arr) {
+					auto pr = h.get();
+					if (!pr) continue;
+					auto& rd = pr->GetProjectileRuntimeData();
+					if (!rd.spell || rd.shooter.get().get() != a_player) continue;
+					auto* o = pr->Get3D();
+					if (!o || !done.insert(h.native_handle()).second) continue;
+					o->local.scale *= 0.6f;
+				}
+			}
+		}
 		// dread: six or more of the dead within 8 m - the screen's edges darken, slowly (really subtle)
 		void TickDread(RE::PlayerCharacter* a_player, float a_delta)
 		{
@@ -5079,6 +5108,7 @@ namespace bo3z
 			TickPeace(player, a_delta);
 			TickShelter(player, a_delta);
 			TickLantern(player, a_delta);
+			ShrinkSpellFx(player);
 			TickDread(player, a_delta);
 			TickAsh();
 			TickOfferings(player);
