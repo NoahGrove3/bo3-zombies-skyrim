@@ -481,6 +481,7 @@ namespace bo3z
 				if (a_event->menuName == RE::LoadingMenu::MENU_NAME && a_event->opening) {
 					Save::ForgetSnapshot();  // whatever comes next may be another game
 					Shops::BeforeLoad();     // (the crash on every in-game load: our hand-made map markers off first)
+					Hud::ClearMessages();    // (the review: the last game's messages never replay in the next)
 				}
 				if (a_event->menuName == RE::LoadingMenu::MENU_NAME && !a_event->opening && dataLoaded) {
 					// After a new game, a save from the main menu, or a save loaded in game.
@@ -974,7 +975,7 @@ namespace bo3z
 								ourSpell = true;
 							}
 						}
-						if (src && !ourSpell && Forms::GunIndexOf(src) < 0 && !(fangId && src->GetFormID() == fangId) && Limit(z)) {  // (the Fang's blows are FangHit's alone)
+						if (src && !ourSpell && Forms::GunIndexOf(src) < 0 && !(fangId && src->GetFormID() == fangId) && Limit(z, nullptr, src->Is(RE::FormType::Spell) ? 0x6u : 0u)) {  // (a spell its own window beside the blade's)  // (the Fang's blows are FangHit's alone)
 							float share = gen::kShareSpell;
 							if (auto* w = src->As<RE::TESObjectWEAP>()) {
 								// (Noah: the one upgrade curve) a crossbow by its reforges, an altar spell-weapon by its steel

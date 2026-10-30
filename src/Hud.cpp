@@ -20,6 +20,7 @@ namespace bo3z
 		Hud::State           g_state;
 		std::deque<std::pair<std::string, float>>                    g_bannerQ;  // (messages waiting their turn)
 		std::deque<std::tuple<std::string, std::string, float>>     g_loreQ;
+		bool                                                       g_drewHud = false;  // the HUD (and its messages) drawn last frame
 		bool                 g_init = false, g_failed = false;
 		ID3D11Device*        g_device = nullptr;
 		ID3D11DeviceContext* g_context = nullptr;
@@ -1027,17 +1028,19 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						if (!ln.empty() && Measure(g_body, px, t).x > w - 48 * k) ++n, ln = wd;
 						else ln = t;
 					}
-					n = std::min(n + 1, 9);
+					n = std::min(n + 1, 7);
 				}
 				const bool   titled = !s.loreTitle.empty();
 				const float  head = titled ? 60 * k : 18 * k;
-				const ImVec2 A{ x0, std::max(below, size.y * 0.33f) }, B{ x0 + w, A.y + head + static_cast<float>(n) * px * 1.25f + 16 * k };
+				// (the review: over the crosshair it hid the foe in front of you) in the lower third, clear of the HUD's bottom row
+				(void)below;
+				const ImVec2 A{ x0, size.y * 0.60f }, B{ x0 + w, A.y + head + static_cast<float>(n) * px * 1.25f + 16 * k };
 				Panel(dl, A, B, k, 0.88f * a);
 				if (titled) {
 					TxtC(dl, g_title, 22 * k, size.x * 0.5f, A.y + 14 * k, Fade(kGold, a), Upper(s.loreTitle), 0.0f, 0);
 					Divider(dl, size.x * 0.5f, A.y + 46 * k, w * 0.3f, k, a);
 				}
-				TxtWrap(dl, g_body, px, { x0 + 24 * k, A.y + head }, Fade(kParch, a), s.loreText, w - 48 * k, 9);
+				TxtWrap(dl, g_body, px, { x0 + 24 * k, A.y + head }, Fade(kParch, a), s.loreText, w - 48 * k, 7);
 			}
 		}
 		void DrawBody(const Hud::State& s, ImVec2 size);
@@ -5880,11 +5883,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			{
 				std::scoped_lock l(g_lock);
 				// (the UI audit: messages ran out unseen behind menus, the Wait menu or the class picker) they wait while the HUD is hidden
-				const bool hudLive = InGame() && !DevTools::HudOff() && !Classes::Open();
-				if (hudLive) {
+				// (the review: the film and the perk menu too) only the frames the messages were drawn on count
+				if (g_drewHud) {
 					g_state.bannerTime = std::max(0.0f, g_state.bannerTime - dt);
-					g_state.loreTime = std::max(0.0f, g_state.loreTime - dt);
+					if (!g_state.perkMenu) g_state.loreTime = std::max(0.0f, g_state.loreTime - dt);
 				}
+				g_drewHud = false;
 				if (g_state.bannerTime <= 0 && !g_bannerQ.empty()) {
 					g_state.banner = std::move(g_bannerQ.front().first);
 					g_state.bannerTime = g_state.bannerTotal = g_bannerQ.front().second;
@@ -6141,6 +6145,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			} else if (InGame() && !DevTools::HudOff()) {
 				Draw(s, io.DisplaySize);
+				g_drewHud = !Classes::Open();
 				// looking at the Echo Altar: Skyrim's own "Commune" prompt gives way to ours (s.orbAim), back for everything else
 				if (static bool dumped = false; !dumped) {
 					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
@@ -6423,7 +6428,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				S.bannerTime = std::max(S.bannerTime, a_seconds);
 				return;
 			}
-			if (busy && S.bannerTotal >= 2.0f && a_seconds < 2.0f) return;
+			if (busy && S.bannerTotal >= 2.0f && a_seconds < 1.0f) return;  // (a cosmetic callout - CRUSHED, GORED - never wipes a message)
+			if (busy && S.bannerTotal >= 2.0f && a_seconds < 2.0f) {
+				// (the review: a boss's telegraph - "draws breath", "leaps - move!" - must be seen) it takes over for its moment, and
+				// the message showing comes back after it
+				if (S.bannerTime > 1.0f && g_bannerQ.size() < 6) g_bannerQ.emplace_front(S.banner, S.bannerTime);
+				S.banner = std::move(a_text);
+				S.bannerTime = S.bannerTotal = a_seconds;
+				return;
+			}
 			if (busy && S.bannerTotal >= 2.0f) {
 				if (std::none_of(g_bannerQ.begin(), g_bannerQ.end(), [&](const auto& q) { return q.first == a_text; }) && g_bannerQ.size() < 4) g_bannerQ.emplace_back(std::move(a_text), a_seconds);
 				S.bannerTime = std::min(S.bannerTime, 2.5f);  // (and the line showing makes way soon)
@@ -6629,6 +6642,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			g_state.revealName = sh.label;
 			g_state.revealColor = sh.color;
 			g_state.revealTime = 8.0f;
+		}
+		void ClearMessages()
+		{
+			std::scoped_lock l(g_lock);
+			g_bannerQ.clear(), g_loreQ.clear();
+			g_state.banner.clear(), g_state.loreTitle.clear(), g_state.loreText.clear();
+			g_state.bannerTime = g_state.bannerTotal = g_state.loreTime = g_state.loreTotal = 0;
 		}
 		void Lore(std::string a_title, std::string a_text, float a_seconds)
 		{

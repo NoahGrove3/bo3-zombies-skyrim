@@ -1103,6 +1103,7 @@ namespace bo3z
 		void        Say(std::string a_who, std::string a_line, float a_seconds = 4.5f);  // a townsperson's words, as a subtitle
 		void        Essence(const RE::NiPoint3& a_at);  // a kill's essence flies from the body to your count
 		void        Lore(std::string a_title, std::string a_text, float a_seconds = 14.0f);
+		void        ClearMessages();  // the Banner, the Lore card and their queues emptied (a load)
 		void        WordReveal(int a_shout);
 		bool        PadLast();                                // the last input was a controller (prompts follow it)
 		void        NotePad();                                // a stick moved: the player is on a controller

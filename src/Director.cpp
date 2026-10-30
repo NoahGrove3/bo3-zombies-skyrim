@@ -682,7 +682,11 @@ namespace bo3z
 				Tasks::Later(0.15f, [h] {
 					auto a = h.get();
 					auto* pc = RE::PlayerCharacter::GetSingleton();
-					if (!a || !pc || a->IsDead() || a->IsDisabled() || a->IsDeleted() || !a->Is3DLoaded()) return;  // (the audit: put away between the two steps)
+					if (!a || !pc || a->IsDead() || a->IsDisabled() || a->IsDeleted()) return;  // (the audit: put away between the two steps)
+					if (!a->Is3DLoaded()) {
+						a->EnableAI(true);  // (its body let go between the steps: awake, the chase finds it again)
+						return;
+					}
 					a->EnableAI(true);
 					StartRise(a.get(), pc);
 					a->StartCombat(pc);
@@ -1167,7 +1171,8 @@ namespace bo3z
 			}
 			g_ours[actor->GetFormID()] = *pick;
 			if (auto* base = actor->GetActorBase()) MakeHeadlong(base->GetCombatStyle());  // (its levelled copy's own style too)
-			const bool mute = kindRow.bossEvery <= 0 && Tame(actor, kindRow.kind);
+			const bool tamed = Tame(actor, kindRow.kind);
+			const bool mute = kindRow.bossEvery <= 0 && tamed;
 			av->SetActorValue(RE::ActorValue::kConfidence, 4.0f);  // (foolhardy: never hangs back)
 			av->SetActorValue(RE::ActorValue::kAggression, 2.0f);
 			if (const float hm = Director::HarmMult(actor); hm < 0.999f) {  // (Noah: the harpies hit far too hard) its blows weaker too
@@ -2369,7 +2374,8 @@ namespace bo3z
 					for (auto& z : g_alive) {
 						auto a = z.handle.get();
 						if (a && !a->IsDead() && Director::IsGreat(a.get())) {
-							if (a->Is3DLoaded() && a->GetWorldspace() == a_player->GetWorldspace() && !a->HasKeywordString("ActorTypeDragon")) Resurface(a.get(), a_player);
+							if (a->Is3DLoaded() && a->GetWorldspace() == a_player->GetWorldspace() && !a->HasKeywordString("ActorTypeDragon") &&
+								a->GetPosition().GetDistance(a_player->GetPosition()) >= 1500.0f) Resurface(a.get(), a_player);  // (only one out of reach)
 							continue;
 						}
 						if (a && !a->IsDead() && a->Is3DLoaded() && a->GetPosition().GetDistance(a_player->GetPosition()) < 1500.0f) continue;

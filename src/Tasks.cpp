@@ -75,10 +75,11 @@ namespace bo3z
 			}
 			{
 				std::unique_lock l(g_timedLock);
-				if (g_timed.size() > 2000) {  // (never unbounded - and never dropped: a "wake its AI" task lost left the dead frozen)
-					l.unlock();
-					Add(std::move(a_task));
-					return;
+				// (never dropped: a "wake its AI" task lost left the dead frozen; never run early either - the AI-off, move, wake
+				// steps must keep their gaps) past 2000 it is said, once in a while
+				if (g_timed.size() > 2000) {
+					static int told = 0;
+					if (told++ % 500 == 0) logger::warn("tasks: {} timed tasks waiting", g_timed.size());
 				}
 				g_timed.push_back({ std::chrono::steady_clock::now() + std::chrono::milliseconds(static_cast<int>(std::max(0.0f, a_seconds) * 1000.0f)), std::move(a_task) });
 			}

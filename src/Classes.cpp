@@ -1529,7 +1529,7 @@ namespace bo3z::Classes
 	{
 		// (the class audit: the Dragon Slayer, the Spellsword's wonder, never grew - four times weaker than its Madness Sword)
 		// it stands two tiers above your blade (Tier III at the least), three once the three dragons fall
-		if (auto* sl = Slayer(); a_w && sl && a_w == sl) return std::max(3, Kit::TierOfWeapon(SpellswordBlade())) + (AfterSovngarde() ? 3 : 2);
+		if (auto* sl = Slayer(); a_w && sl && a_w == sl) return std::max(3, Kit::TierOfWeapon(SpellswordBlade()) + (AfterSovngarde() ? 3 : 2));
 		if (const int kt = Kit::TierOfWeapon(a_w); kt >= 0) return kt;  // (the altar rework: a kit or relic blade's own tiers)
 		auto* b = a_w ? a_w->As<RE::TESBoundObject>() : nullptr;
 		if (!b || !b->GetFile(0)) return -1;

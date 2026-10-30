@@ -396,6 +396,7 @@ namespace bo3z
 			int                          wave{ 0 };
 			std::vector<RE::ActorHandle> dead;
 			float                        retry{ 0 };
+			bool                         owed{ false };  // (the wave of this index rose no one yet: raised again)
 			int                          night{ -1 };
 			std::array<bool, 4>          told{};
 			int                          flying{ -1 };  // the row whose dragon is up (credited when it dies, wherever the siege is)
@@ -405,7 +406,7 @@ namespace bo3z
 			if (g_siege.stage != 0) {
 				logger::info("words: the siege of {} ends ({})", g_siege.word >= 0 ? gen::kWords[g_siege.word].word : "?", a_why);
 			}
-			g_siege.stage = 0, g_siege.wave = 0, g_siege.dead.clear();
+			g_siege.stage = 0, g_siege.wave = 0, g_siege.dead.clear(), g_siege.owed = false;
 		}
 		void RaiseWave(RE::PlayerCharacter* a_p, int a_w)
 		{
@@ -419,6 +420,11 @@ namespace bo3z
 				if (auto h = Director::RaiseTrial(spot ? *spot : at, i >= n); h) {
 					g_siege.dead.push_back(h);
 				}
+			}
+			g_siege.owed = g_siege.dead.empty();
+			if (g_siege.owed) {
+				g_siege.retry = 2.0f;  // (the field is full: in a moment)
+				return;
 			}
 			Forms::Play(gen::Sound::champ_arrive);
 			Hud::Banner(fmt::format("{} - WAVE {} OF {}", W.word, g_siege.wave + 1, W.nWaves), 3.5f);
@@ -515,10 +521,14 @@ namespace bo3z
 			if (g_siege.stage == 1 && g_siege.dead.empty()) {
 				// (the audit: a crowded field raised nobody, and the next tick counted the wave as fallen) a wave that rose no
 				// one is raised again in a moment; the count never runs past the last wave
+				if ((g_siege.retry -= a_dt) > 0) return;
+				if (g_siege.owed) {
+					RaiseWave(a_p, w);
+					return;
+				}
 				if (g_siege.wave + 1 < W.nWaves) {
 					++g_siege.wave;
 					RaiseWave(a_p, w);
-					if (g_siege.dead.empty()) --g_siege.wave, g_siege.retry = 2.0f;
 					return;
 				}
 				// the waves are down: the dragon comes
@@ -552,7 +562,7 @@ namespace bo3z
 					"the Bone-Wyrm's Skull for your dragon, the Brazier of the Endless Night - and the Seat of the Awakened, for when you would face it all again.",
 					22.0f);
 				Hud::Banner("THE CURSE OF ALDUIN IS BROKEN", 8.0f);
-				Director::SkipToDawn("THE ECHO OF ALDUIN FALLS - THE CURSE IS BROKEN");
+				if (!Coop::Client()) Director::SkipToDawn("THE ECHO OF ALDUIN FALLS - THE CURSE IS BROKEN");
 				logger::info("words: the Echo of Alduin is slain - the curse is broken (cycle {})", Cycle() + 1);
 				return;
 			}
@@ -617,14 +627,17 @@ namespace bo3z
 		int  DragonMask() { return Glob(gen::kEchoGlobWords) ? (Read(gen::kEchoGlobWords) & 0x7) : 0; }
 		void HeardWords(int a_mask, bool a_live)
 		{
-			if (!Glob(gen::kEchoGlobWords)) return;
+			// (the review: the lobby works on the main menu - words heard there were written into the game before a load)
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* ui = RE::UI::GetSingleton();
+			if (!Glob(gen::kEchoGlobWords) || !p || !p->Is3DLoaded() || !ui || ui->IsMenuOpen(RE::MainMenu::MENU_NAME) || ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) return;
 			for (int w = 0; w < kDragons; ++w) {
 				if ((a_mask >> w) & 1 && !Silenced(w)) {
 					logger::info("words: {} silenced in the host's game - silenced here too", gen::kWords[w].word);
 					SilenceWord(w);
 				}
 			}
-			if (a_live && ((a_mask >> kEchoRow) & 1) && !Silenced(kEchoRow)) {
+			if (a_live && ((a_mask >> kEchoRow) & 1) && Awake(kEchoRow)) {  // (only where the Echo waits in this game's own cycle)
 				logger::info("words: the Echo of Alduin fell in the host's game - the curse is broken here too");
 				SilenceWord(kEchoRow);
 			}
