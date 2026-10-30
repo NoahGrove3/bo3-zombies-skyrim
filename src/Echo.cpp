@@ -133,6 +133,7 @@ namespace bo3z
 		{
 			RE::ActorHandle h;
 			float           t;
+			bool            thrall{ false };  // (Alduin's Bane's: counted against its own cap)
 		};
 		std::vector<Ally> g_allies;
 		void TickAllies(float a_dt)
@@ -159,7 +160,7 @@ namespace bo3z
 		// and its flags
 		constexpr int kWordCount = static_cast<int>(gen::kWords.size());
 		constexpr int kDragons = 3, kEchoRow = 3;
-		constexpr int kWordsTold = 1 << 8, kFlagBone = 1 << 9, kFlagEndless = 1 << 10, kFlagRobes = 1 << 11, kFlagHallOpen = 1 << 17;
+		constexpr int kWordsTold = 1 << 21, kFlagBone = 1 << 9, kFlagEndless = 1 << 10, kFlagRobes = 1 << 11, kFlagHallOpen = 1 << 17;
 		constexpr int kFlagWondersAll = 1 << 18, kFlagEchoTold = 1 << 19, kFlagCleaned = 1 << 20;
 		constexpr int kNgShift = 12, kNgMask = 0xF << kNgShift;
 		bool Flag(int a_f) { return (Read(gen::kEchoGlobWords) & a_f) != 0; }
@@ -185,13 +186,13 @@ namespace bo3z
 			}
 			return false;
 		}
-		// a row awake: a dragon once the four wonders are won; the Echo once the three dragons are dead (in a cycle begun
-		// again at the Seat, once every altar is freed again too)
+		// a row awake: a dragon once the four wonders are won; the Echo once the three dragons are dead and every altar is
+		// free (in a cycle begun again at the Seat, freed again)
 		bool Awake(int a_w)
 		{
 			if (a_w < 0 || a_w >= kWordCount || Silenced(a_w)) return false;
 			if (a_w < kDragons) return AllWonders();
-			return DragonsDead() && (Cycle() == 0 || FreedCount() >= kTownCount);
+			return DragonsDead() && FreedCount() >= kTownCount;  // (the curse's nights end with it: no city may be left under the curse)
 		}
 		RE::TESObjectWEAP* Bane() { return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); }
 		RE::TESObjectARMO* RegaliaBody() { return RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectARMO>(0x02B0F7, "Dragonborn.esm"); }
@@ -319,6 +320,10 @@ namespace bo3z
 			const std::string name(Classes::WonderName(a_c));
 			const int         st = Classes::WonderState(a_c);
 			const int         mine = Classes::Get();
+			if (st == 4 && mine != a_c) {
+				Hud::Banner(name + " is yours - it answers only to the " + std::string(coffer::kClassName[a_c]) + ".", 4.0f);
+				return;
+			}
 			if (st == 5 || st == 4) {
 				if (mine != a_c) {
 					Hud::Banner(name + " answers only to the " + std::string(coffer::kClassName[a_c]) + ". Change your path at an Echo Altar to take it up.", 5.0f);
@@ -388,6 +393,7 @@ namespace bo3z
 			float                        retry{ 0 };
 			int                          night{ -1 };
 			std::array<bool, 4>          told{};
+			int                          flying{ -1 };  // the row whose dragon is up (credited when it dies, wherever the siege is)
 		} g_siege;
 		void EndSiege(const char* a_why)
 		{
@@ -434,7 +440,7 @@ namespace bo3z
 				Hud::Lore("THE THREE DRAGONS",
 					"All four wonders are won, and Alduin's three words answer them. Each was given to a dragon to keep: SLEN to Slenvahrin at the cult's old shrine in "
 					"the Reach, TIID to Tiidrah in the courtyard of Labyrinthian, VO to Vonahlok on Mount Anthor. Go to them at night - the dead will gather first. "
-					"Slay all three and only Alduin's echo is left.",
+					"Slay all three, wake every Echo Altar, and only Alduin's echo is left.",
 					18.0f);
 				logger::info("words: Act III begins - the three dragons wake");
 			}
@@ -477,7 +483,10 @@ namespace bo3z
 				return;
 			}
 			g_siege.told[w] = false;
-			if (g_siege.stage != 0 && d > gen::kWordLeash) {
+			if (g_siege.stage == 2 && g_siege.flying >= 0 && !Director::ChampionAlive()) {
+				EndSiege("its dragon is gone");  // (fallen - it is credited by its row - or vanished: the siege can begin again)
+			}
+			if (g_siege.stage == 1 && d > gen::kWordLeash) {  // (a dragon in the air follows you: only the waves are left behind)
 				EndSiege("you left");
 				Hud::Banner(std::string(W.word) + " falls quiet - you left its place", 4.0f);
 				return;
@@ -505,10 +514,8 @@ namespace bo3z
 				// the waves are down: the dragon comes
 				const auto spot = Walkable(a_p, at, 700.0f);
 				if (Director::RaiseChampion(-1, W.bearerRow, W.bearerName, W.health, (spot ? *spot : at) + RE::NiPoint3{ 0, 0, 60.0f })  /* (out of the Curse's portal on the ground, as Grimmvar comes: then it takes wing) */) {
-					g_siege.stage = 2;
-					Forms::Play(gen::Sound::boss_arrive);
+					g_siege.stage = 2, g_siege.flying = w;
 					if (Settings::ScreenShake()) RE::ShakeCamera(0.6f, a_p->GetPosition(), 1.5f);
-					Hud::Banner(Upper(std::string(W.bearerName)) + " COMES", 5.0f);
 					logger::info("words: {} - {} comes", W.word, W.bearerName);
 				} else {
 					g_siege.retry = 2.0f;
@@ -543,7 +550,8 @@ namespace bo3z
 			Hud::Lore(std::string(W.word) + " IS SILENCED",
 				std::string(W.silenced) + "  " + std::string(W.power) +
 					(left > 0 ? fmt::format("  {} {} still {}.", left, left == 1 ? "dragon" : "dragons", left == 1 ? "flies" : "fly")
-					          : std::string("  The three dragons are dead, and your wonders wake to their Legendary form. Only Alduin's echo is left - on the summit of the Throat of the World.")),
+					          : FreedCount() >= kTownCount ? std::string("  The three dragons are dead, and your wonders wake to their Legendary form. Only Alduin's echo is left - on the summit of the Throat of the World.")
+					                                       : fmt::format("  The three dragons are dead, and your wonders wake to their Legendary form. Only Alduin's echo is left - and it waits until every Echo Altar is awake ({} of {} freed).", FreedCount(), kTownCount)),
 				16.0f);
 			Hud::Banner(std::string(W.word) + " IS SILENCED - " + std::string(W.power), 8.0f);
 			logger::info("words: {} silenced ({} dragons left)", W.word, left);
@@ -588,6 +596,7 @@ namespace bo3z
 			g_allies.clear();
 			g_clear = false, g_slow = 0;
 			g_siege = Siege{};
+			Party::ResetWonders();  // (a friend's wonders count only in the game they were heard in)
 		}
 
 		bool WordSilenced(int a_w) { return Glob(gen::kEchoGlobWords) && a_w >= 0 && a_w < kWordCount && Silenced(a_w); }
@@ -608,9 +617,9 @@ namespace bo3z
 		float SetDamageMult() { return WearsRobes() ? 1.25f : 1.0f; }
 		void OnBearerSlain()
 		{
-			if (g_siege.stage == 2) {
-				SilenceWord(g_siege.word);
-			}
+			const int w = g_siege.flying >= 0 ? g_siege.flying : g_siege.stage == 2 ? g_siege.word : -1;
+			g_siege.flying = -1;
+			SilenceWord(w);
 		}
 		bool IsAlly(RE::Actor* a_actor)
 		{
@@ -699,7 +708,7 @@ namespace bo3z
 			static auto* playerFaction = RE::TESForm::LookupByID<RE::TESFaction>(0x00000DB1);
 			int alive = 0;
 			for (auto& al : g_allies) {
-				if (auto a = al.h.get(); a && !a->IsDead() && a->GetActorBase() == a_npc) ++alive;
+				if (auto a = al.h.get(); a && !a->IsDead() && al.thrall) ++alive;
 			}
 			for (int i = 0; i < a_count && alive < a_max; ++i, ++alive) {
 				const auto spot = Walkable(p, a_at, 400.0f);
@@ -711,7 +720,7 @@ namespace bo3z
 				RunOn(actor, "SetPlayerTeammate 1");
 				RunOn(actor, "SetAV Aggression 1");
 				Gun::FxBlast("dark", actor->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f });
-				g_allies.push_back({ actor->GetHandle(), a_seconds });
+				g_allies.push_back({ actor->GetHandle(), a_seconds, true });
 			}
 		}
 
@@ -809,7 +818,7 @@ namespace bo3z
 					Forms::Play(gen::Sound::shout_learned);
 					Hud::Lore("THE FIRST DRAGONBORN'S REGALIA",
 						"Robes, gloves, boots and mask of the first who devoured a dragon's soul - the strongest gear in Skyrim, for every path. While you wear the robes, everything "
-						"you wield hits 25% harder, every blow on you is 25% softer, and your magic costs a quarter less and returns a quarter faster.",
+						"you wield hits 25% harder, every blow on you is 25% softer, and your magic costs a quarter less and returns faster.",
 						12.0f);
 				} else {
 					Hud::Banner("The Regalia is already yours.", 3.0f);
@@ -860,7 +869,7 @@ namespace bo3z
 				return false;
 			}
 			int waiting = -1;
-			for (int c = 0; c < kWonders; ++c) if (Waiting(c)) waiting = c;
+			for (int c = 0; c < kWonders; ++c) if (Waiting(c) && (waiting < 0 || c == Classes::Get())) waiting = c;  // (your own path's first)
 			// at High Hrothgar: the sealed door; in the Reliquary, the pedestal of a wonder waiting to be taken up
 			if (a_p->GetParentCell() == HH()) {
 				if (InRoom(a_p)) {

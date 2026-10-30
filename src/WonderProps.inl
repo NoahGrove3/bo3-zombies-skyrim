@@ -336,7 +336,9 @@ namespace Props
 	}
 	RE::TESNPC* OverlordNpc()
 	{
-		static RE::TESNPC* npc = [] {
+		static RE::TESNPC* npc = nullptr;
+		if (npc) return npc;
+		npc = [] {
 			auto* sp = CofferSpell("Conjure Draugr Death Overlord");
 			if (sp) {
 				for (auto* e : sp->effects) {

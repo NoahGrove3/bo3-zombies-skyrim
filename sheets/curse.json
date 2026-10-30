@@ -5,7 +5,7 @@
   "prologue": "Helgen burned, and you lived. But Alduin did not flee: as he rose from the ash he shouted three words into the earth - SLEN TIID VO, Flesh, Time, Undo - the shout that raises the dead, and every barrow in Skyrim answered. His mist rolled over the door of Sovngarde, and now the dead of Skyrim cannot pass to Shor's hall: they lie restless in the ground, and when the sun goes down they claw their way up. The Dragon Priests who swore themselves to Alduin in the Merethic Era remember their oaths and wake with them. Only the Echo Altars the ancient Tongues raised in every hold can still his voice, and they have gone dark. Wake them, city by city, and their dead will sleep again.",
   "liftedBanner": "THE ECHO ALTAR OF {CITY} AWAKENS",
   "liftedText": "The altar of {city} rings with the old Tongues' answer, and Alduin's voice falls silent here. Its dead sleep again - none of the curse's dead will rise within its bounds.",
-  "freedAll": "Every Echo Altar in Skyrim is awake. Alduin's voice lingers only in the wild places now - in his three dragons, and in the echo he left on the Throat of the World.",
+  "freedAll": "Every Echo Altar in Skyrim is awake. Alduin's voice lingers only in the wild places now - and in the echo he left on the Throat of the World.",
   "zoneRadius": 6500,
   "holdRadius": 900,
   "cities": [

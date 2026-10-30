@@ -788,7 +788,7 @@ def lore_text():
            "<p>Free six cities and each path's <b>secret</b> wakes. Win it and the Greybeards call you to <b>High Hrothgar</b>: your path's <b>wonder</b> waits on its pedestal "
            "in the Reliquary beneath the great hall.</p>",
            "<p>With all four wonders won - alone or with friends - Alduin's three Words wake as <b>dragons</b>: <b>SLEN</b> in the Reach, <b>TIID</b> at Labyrinthian and "
-           "<b>VO</b> on Mount Anthor. Slay all three and only his <b>Echo</b> is left, on the summit of the Throat of the World. End it, and the Curse is broken.</p>",
+           "<b>VO</b> on Mount Anthor. Slay all three, wake every altar, and only his <b>Echo</b> is left, on the summit of the Throat of the World. End it, and the Curse is broken.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>VI. The Voices of the Holds</font></p>",
            "<p><b>Whiterun</b>: <i>Dragon's Updraft</i>. A whirlwind lifts you high - and a dragon to carry you.</p>",
            "<p><b>Solitude</b>: <i>Dance of Death</i>. The dead near you dance, helpless, and take half again as much harm. Once a wave.</p>"]
@@ -851,7 +851,7 @@ def guide_text():
              "<b>SLEN</b> - everything you wield hits 15% harder; <b>TIID</b> - the night's blows hurt you 20% less; <b>VO</b> - your magicka returns half again as fast."),
            p("Leave the place, or let dawn come, and the siege falls quiet until you return."),
            "[pagebreak]", h("The Echo of Alduin"),
-           p("With the three dragons dead, the <b>Echo of Alduin</b> waits on the summit of the Throat of the World. Climb it at night: the dead of all Skyrim answer him one last time. "
+           p("With the three dragons dead and every Echo Altar awake, the <b>Echo of Alduin</b> waits on the summit of the Throat of the World. Climb it at night: the dead of all Skyrim answer him one last time. "
              "Kill the Echo and the Curse of Alduin is broken - the nights are only nights again."),
            "[pagebreak]", h("The Hall of the Awakened"),
            p("With the curse broken, the Reliquary becomes the <b>Hall of the Awakened</b>. Its stations:"),

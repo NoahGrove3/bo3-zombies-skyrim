@@ -1083,6 +1083,8 @@ namespace bo3z::Kit
 			if (Net::InLobby() && Cls() >= 0) Net::TellClass(Cls());
 			static float costWas = 1.0f;
 			if (const float cm = AuraCostMult(); cm != costWas) costWas = cm, Arcana::ReapplyAll();
+			static bool robesWas = false;  // (the First Dragonborn's Regalia put on or taken off: the altar spells' price follows)
+			if (const bool rb = Echo::WearsRobes(); rb != robesWas) robesWas = rb, Arcana::ReapplyAll();
 		}
 		// (Noah: "upgrading the Riftblade didn't change anything on the inventory stats", "the effects should enhance the
 		// current detail") every kit weapon's card follows its tier - its name and its damage - and the Riftblade's own fire

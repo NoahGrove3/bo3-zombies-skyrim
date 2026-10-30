@@ -614,9 +614,11 @@ namespace bo3z::Party
 	// (Noah: "I want all 4 to be done for coop or in solo") the wonders each of us has won, as bits (class order): told to
 	// the party, and every friend's heard is pooled for the night - the three dragons wake when the four are won between us
 	void SetWonder(int a_mask) { g_wonder = a_mask; }
+	namespace { int g_pooled = 0; }
+	void ResetWonders() { g_pooled = 0; }
 	int  PartyWonders()
 	{
-		static int pooled = 0;
+		int& pooled = g_pooled;
 		std::scoped_lock l(g_lock);
 		for (auto& [id, r] : g_remote) {
 			if (r.wonder > 0) pooled |= r.wonder & 0xF;

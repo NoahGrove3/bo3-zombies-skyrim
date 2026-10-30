@@ -32,7 +32,7 @@ namespace bo3z::Net
 	{
 		using u64 = std::uint64_t;
 		constexpr int kChannel = 7;
-		constexpr std::uint8_t kVersion = 1;
+		constexpr std::uint8_t kVersion = 2;  // (2: a player's wonder field is the class wonders won, as bits)
 		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7, kEgg = 8, kAltar = 9, kClass = 10 };
 #ifndef UN_BUILD
 #	define UN_BUILD "dev"

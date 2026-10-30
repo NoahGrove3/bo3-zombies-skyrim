@@ -208,6 +208,7 @@ namespace bo3z
 		bool             RaiseChampion(int a_town, std::string_view a_row, std::string_view a_name, float a_healthMult, const RE::NiPoint3& a_at);  // a city's named champion
 		bool             ChampionActive(int a_town);  // walking, or slain this night
 		bool             ChampionPos(RE::NiPoint3& a_at);          // a city freed: dawn comes now, the next night brings the next round
+		bool             ChampionAlive();  // a champion (a city's, a dragon's) is up and alive
 	}
 
 	// The new dead (Undead.cpp): body language and attacks of our own on the draugr skeleton
@@ -398,7 +399,7 @@ namespace bo3z
 		bool             WonderEarned();               // any class's wonder won
 		int              WonderState(int a_cls);       // 0 shut, 1-3 its secret under way, 4 taken up, 5 won and waiting in the Reliquary
 		std::string_view WonderName(int a_cls);
-		int              WonderMask();                 // bit per class: its wonder won (taken up)
+		int              WonderMask();                 // bit per class: its wonder won (waiting in the Reliquary or taken up)
 		bool             TakeWonder(int a_cls);        // (the Reliquary's pedestal) a waiting wonder taken up - or a lost one given again
 		bool             WonderOpen();                 // your class's secret quest is open (six cities freed) and the wonder not yet won
 		void             EarnWonder(int a_cls);        // (Eggs) the quest done: the wonder
@@ -589,7 +590,8 @@ namespace bo3z
 		int  FriendCount();                                // other players in the party now
 		std::string WonderHolder(int a_wonder);         // (retired: always '')
 		void        SetWonder(int a_mask);              // the class wonders we have won (bits): told to the party
-		int         PartyWonders();                     // the class wonders our friends have won (bits, pooled while the game runs)
+		int         PartyWonders();                     // the class wonders our friends have won (bits, pooled while this game is played)
+		void        ResetWonders();                     // (a load or a new game: the pool starts empty)
 		void Revived(std::uint64_t a_by);
 		void Forget(std::uint64_t a_who);
 		// The party's save points: every dawn (and the dawn a freed city brings) each game saves itself a few seconds

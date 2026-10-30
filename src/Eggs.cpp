@@ -488,7 +488,7 @@ namespace bo3z::Eggs
 			const auto& d = gen::kEggs[e];
 			if (d.cls != c) continue;
 			if (Done(e) || Gifted(e)) {
-				out.push_back(std::string(d.title) + " - done. " + std::string(d.rewardText));
+				out.push_back(std::string(d.title) + " - done. " + (Classes::WonderState(d.cls) == 4 ? std::string(Classes::WonderName(d.cls)) + " is yours." : std::string(d.rewardText)));
 			} else if (Classes::WonderOpen()) {
 				const int shown = std::clamp(Step(e) + 1, 1, d.nSteps);
 				for (int i = 0; i < shown; ++i) out.push_back(std::string(d.steps[i].hint));

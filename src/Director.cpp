@@ -3414,6 +3414,11 @@ namespace bo3z
 			return true;
 		}
 		bool ChampionActive(int a_town) { return g_champ.town == a_town && (g_champ.handle.get() || g_champ.slainTonight); }
+		bool ChampionAlive()
+		{
+			auto c = g_champ.handle.get();
+			return c && !c->IsDead() && !c->IsDisabled();
+		}
 		bool ChampionPos(RE::NiPoint3& a_at)
 		{
 			auto c = g_champ.handle.get();

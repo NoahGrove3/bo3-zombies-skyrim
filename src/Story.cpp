@@ -115,6 +115,6 @@ namespace bo3z::Story
 	}
 	bool BarrowJarlsOpen() { return Stage() >= 2; }
 	bool ElitesOpen() { return Stage() >= 3; }
-	bool AlduinFallen() { return Echo::CurseBroken(); }  // (the Echo of Alduin slain: the curse's own end, not Sovngarde)
+	bool AlduinFallen() { return Echo::DragonsSlain(); }  // (the story's height, not Sovngarde: the three dragons slain - it stays through the Seat's cycles)
 	bool GrimmvarOpen() { return Echo::WondersAll(); }  // (Director: only the Herald waits for it - he hunts once the three dragons wake)
 }
