@@ -1603,7 +1603,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const bool        rising = shownPts < s.points - 0.5f;
 				const std::string num = std::to_string(static_cast<int>(std::lround(shownPts)));
 				const float       numW = Measure(g_num, 26 * k, num).x;
-				const float       foot = Hud::kEdgeHud ? size.y - 112 * k : size.y;  // (Noah: clear of Edge UI's bars in the bottom-left corner)
+				const float       foot = size.y;  // (Noah: "move the cursed essence box down to the bottom corner" - Edge UI's shout meter is gone from it)
 				const ImVec2      coin{ 40 * k, foot - 36 * k };
 				const float       w = 70 * k + std::max(numW, Measure(g_body, 11 * k, "CURSED ESSENCE").x);
 				dl->AddRectFilledMultiColor({ 0, foot - 76 * k }, { w + 70 * k, foot }, IM_COL32(0, 0, 0, Hud::kEdgeHud ? 60 : 90), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, 0), IM_COL32(0, 0, 0, Hud::kEdgeHud ? 90 : 140));
@@ -1742,7 +1742,47 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 					}
 				}
-				// (Noah: "just keep Edge's shout meter") no shout glow on the plate's rim any more
+				// (Noah: "the new shout meter should be a blue rim around my stat bar ... and when the shout is cast, it should
+				// light up blue around the border and fade from the center out to the tips of the stats bar") the plate's rim is
+				// the shout meter: blue creeps out from the middle to both points as the shout recharges (full: the whole rim
+				// burns blue, breathing); spoken, the whole rim flares and the light drains from the middle out to the points
+				if (!s.shoutName.empty()) {
+					const float t = y - 13 * k, b = y + h + 13 * k, m = (t + b) * 0.5f;
+					// the four runs, each from the middle of an edge out to a point: top right, bottom right, top left, bottom left
+					const ImVec2 runs[4][3] = { { { cx, t }, { R, t }, { R + 18 * k, m } }, { { cx, b }, { R, b }, { R + 18 * k, m } },
+						{ { cx, t }, { L, t }, { L - 18 * k, m } }, { { cx, b }, { L, b }, { L - 18 * k, m } } };
+					const auto seg = [&](const ImVec2* r, float s0, float s1, ImU32 col, float th) {
+						if (s1 <= s0 + 0.001f) return;
+						const float l0 = std::hypot(r[1].x - r[0].x, r[1].y - r[0].y), l1 = std::hypot(r[2].x - r[1].x, r[2].y - r[1].y), L01 = l0 + l1;
+						const auto at = [&](float u) {
+							const float d = u * L01;
+							if (d <= l0) { const float q = l0 > 0 ? d / l0 : 0; return ImVec2{ r[0].x + (r[1].x - r[0].x) * q, r[0].y + (r[1].y - r[0].y) * q }; }
+							const float q = l1 > 0 ? (d - l0) / l1 : 0;
+							return ImVec2{ r[1].x + (r[2].x - r[1].x) * q, r[1].y + (r[2].y - r[1].y) * q };
+						};
+						ImVec2 pts[4];
+						int n = 0;
+						pts[n++] = at(s0);
+						if (s0 * L01 < l0 && s1 * L01 > l0) pts[n++] = r[1];
+						pts[n++] = at(s1);
+						dl->AddPolyline(pts, n, col, 0, th);
+					};
+					const auto run = [&](float s0, float s1, float a) {  // a soft blue glow under a bright core, on all four runs
+						for (const auto& r : runs) {
+							seg(r, s0, s1, IM_COL32(60, 150, 255, static_cast<int>(70 * a)), 5.0f * k);
+							seg(r, s0, s1, IM_COL32(150, 205, 255, static_cast<int>(235 * a)), 1.8f * k);
+						}
+					};
+					static float lastCd = 0, castT = 9;
+					if (s.shoutCd > 0.9f && lastCd < 0.5f) castT = 0;  // just spoken
+					lastCd = s.shoutCd;
+					castT += dt;
+					const float fill = std::clamp(1.0f - s.shoutCd, 0.0f, 1.0f);
+					if (fill >= 0.999f) run(0.0f, 1.0f, 0.7f + 0.3f * (0.5f + 0.5f * std::sin(now * 2.4f)));  // ready: the whole rim, breathing
+					else run(0.0f, fill, 0.75f);                                                             // recharging: out from the middle
+					if (castT < 0.9f) run(castT / 0.9f, 1.0f, 1.0f - 0.4f * castT / 0.9f);                   // spoken: the flare drains to the points
+					if (s.shoutReady > 0.001f) run(0.0f, 1.0f, s.shoutReady);                                 // ready again: a flash
+				}
 				{  // (Noah: "move the perk icons to above my health bar, centered")
 				// perk row: sockets, the draughts in them; a new draught bursts in
 				static std::array<int, 32>   lastStacks{};
@@ -6076,6 +6116,25 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							     "_root.HUDMovieBaseInstance.RolloverGrayBar._alpha", "_root.HUDMovieBaseInstance.GrayBarInstance._alpha",
 							     "_root.HUDMovieBaseInstance.ActivateButton_tf._alpha", "_root.HUDMovieBaseInstance.ActivateButton._alpha" }) {
 							hud->uiMovie->SetVariable(v, off);
+						}
+					}
+				}
+				// (Noah: "remove the shout meter from Edge's UI on the bottom left") every frame (the HUD's own script shows its
+				// parts again): the shout meter's bar, its alternate bar and both warnings - the compass they share a holder
+				// with stays
+				if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
+					for (const char* v : { "_root.HUDMovieBaseInstance.CompassShoutMeterHolder.ShoutMeterInstance", "_root.HUDMovieBaseInstance.CompassShoutMeterHolder.ShoutMeterBarAlt",
+						     "_root.HUDMovieBaseInstance.CompassShoutMeterHolder.ShoutWarningInstance", "_root.HUDMovieBaseInstance.CompassShoutMeterHolder.ShoutWarningInstanceAlt",
+						     "_root.HUDMovieBaseInstance.ShoutMeter_mc", "_root.HUDMovieBaseInstance.ShoutMeterAlt_mc" }) {
+						hud->uiMovie->SetVariable((std::string(v) + "._alpha").c_str(), RE::GFxValue(0.0));
+						hud->uiMovie->SetVariable((std::string(v) + "._visible").c_str(), RE::GFxValue(false));
+					}
+					if (static bool told = false; !told) {
+						told = true;
+						for (const char* v : { "_root.HUDMovieBaseInstance.CompassShoutMeterHolder.ShoutMeterInstance", "_root.HUDMovieBaseInstance.CompassShoutMeterHolder.ShoutMeterBarAlt" }) {
+							RE::GFxValue x, yv;
+							const bool ok = hud->uiMovie->GetVariable(&x, (std::string(v) + "._x").c_str()) && hud->uiMovie->GetVariable(&yv, (std::string(v) + "._y").c_str());
+							logger::info("hud: Edge UI's {} {} at {:.0f},{:.0f} - hidden", v, ok ? "found" : "not found", ok && x.IsNumber() ? x.GetNumber() : 0.0, ok && yv.IsNumber() ? yv.GetNumber() : 0.0);
 						}
 					}
 				}

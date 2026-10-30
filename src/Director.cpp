@@ -4221,7 +4221,13 @@ namespace bo3z
 				if (static bool told = false; !told) told = true, logger::warn("lantern: its item, spell or effect not found");
 				return;
 			}
-			const bool worn = a_player->GetWornArmor(item->GetFormID()) != nullptr;
+			// (Noah: "when I sheath my weapons, take them out or swap spells, it sometimes turns off my lantern ... the only way
+			// to turn a lantern on or off is by equipping or unequipping it") an equip shuffle drops the worn armour for a
+			// moment: the lantern only counts as taken off once it has been off for a second and a half
+			static float offFor = 0;
+			const bool wornNow = a_player->GetWornArmor(item->GetFormID()) != nullptr;
+			offFor = wornNow ? 0.0f : offFor + 0.5f;
+			const bool worn = wornNow || (offFor < 1.5f && a_player->GetItemCount(item) > 0);
 			const bool want = worn && !PowerUps::Shadow() && a_player->Is3DLoaded();
 			if (static int was = -1; was != static_cast<int>(want)) {
 				was = want;
@@ -4244,7 +4250,10 @@ namespace bo3z
 			auto* root = want ? a_player->Get3D(false) : nullptr;  // (Noah: "also work in first person") always the 3rd-person body: it walks on under the first-person view, the light with it
 			auto* rootNode = root ? root->AsNode() : nullptr;
 			auto* ssn = RE::BSShaderManager::State::GetSingleton().shadowSceneNode[0];
-			if (light && (!want || on.get() != rootNode)) {
+			// (and a light the game took down on its own - an equip or a 3D refresh clears an actor's lights: hung again)
+			const bool dropped = light && ssn && !ssn->GetLight(light.get());
+			if (dropped) logger::info("lantern: its light was taken down by the game - hung again");
+			if (light && (!want || on.get() != rootNode || dropped)) {
 				if (ssn) ssn->RemoveLight(light.get());
 				if (auto* parent = light->parent) parent->DetachChild(light.get());
 				light.reset(), on.reset();
@@ -4252,7 +4261,7 @@ namespace bo3z
 			if (want && !light && rootNode) {
 				auto* ligh = dh->LookupForm<RE::TESObjectLIGH>(gen::kLanternLight, gen::kPlugin);
 				if (auto* l = ligh ? ligh->GenDynamic(a_player, rootNode, 1, 1, 0) : nullptr) {
-					l->local.translate = RE::NiPoint3(-14.0f, 2.0f, 70.0f);  // (the left hip, in the body's own frame)
+					l->local.translate = RE::NiPoint3(-20.0f, 1.6f, 57.0f);  // (at the lantern's candles, on the left hip, in the body's own frame)
 					light.reset(l), on.reset(rootNode);
 					logger::info("lantern: light hung (radius {}, on {})", ligh->data.radius, RE::PlayerCamera::GetSingleton()->IsInFirstPerson() ? "1st person" : "3rd person");
 				} else if (static bool told = false; !told) {
