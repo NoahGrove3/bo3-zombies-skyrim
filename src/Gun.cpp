@@ -943,8 +943,8 @@ namespace bo3z
 			if (auto r = m->PlaceObjectAtMe(ex, false)) {
 				// (Noah: "the visual effects are still overwhelming, especially when casting spells at the feet") every burst
 				// a fifth smaller, and one at your own feet smaller again
-				const float near = std::clamp((b.at.GetDistance(player->GetPosition()) - 150.0f) / 350.0f, 0.0f, 1.0f);
-				const float sc = b.scale * 0.8f * (0.6f + 0.4f * near);
+				const float atFeet = std::clamp((b.at.GetDistance(player->GetPosition()) - 150.0f) / 350.0f, 0.0f, 1.0f);
+				const float sc = b.scale * 0.8f * (0.6f + 0.4f * atFeet);
 				r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(sc, 0.1f, 5.0f) * 100.0f);
 				g_shrink.push_back({ r->CreateRefHandle(), { sc, 0.6f } });
 				if (g_shrink.size() > 64) {
