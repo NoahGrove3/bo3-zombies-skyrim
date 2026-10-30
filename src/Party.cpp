@@ -166,22 +166,33 @@ namespace bo3z::Party
 
 	// (Noah: "when I died, it respawned me in the save that I was using for a different character") the newest save of
 	// the character you are playing - never another's, however recent; false when it has none yet
+	namespace { std::string g_lastSave; }  // the newest of our dawn saves: a wiped party (and a fall) comes back to it
 	bool LoadOwnLatest()
 	{
 		auto* sl = RE::BGSSaveLoadManager::GetSingleton();
 		if (!sl) return false;
 		sl->PopulateSaveList();
 		const std::uint32_t me = sl->currentCharacterID;
+		const std::string   tag = fmt::format("{:08X}", me);
 		RE::BGSSaveLoadFileEntry* best = nullptr;
 		std::uint64_t             bestWhen = 0;
 		for (auto* e : sl->saveGameList) {
 			if (!e) continue;
 			if (!e->loaded) e->PopulateFileEntryData();
-			if (e->characterID != me || !e->fileName.c_str() || !*e->fileName.c_str()) continue;
+			const std::string fn = e->fileName.c_str() ? e->fileName.c_str() : "";
+			// (the save list's own character number didn't match the game's: our dawn saves carry it in their name too)
+			if (fn.empty() || (e->characterID != me && fn.find(tag) == std::string::npos)) continue;
 			const std::uint64_t when = (static_cast<std::uint64_t>(e->fileTime.hi) << 32) | e->fileTime.lo;
 			if (!best || when > bestWhen) best = e, bestWhen = when;
 		}
 		if (!best) {
+			if (!g_lastSave.empty()) {  // (this session's own dawn save, whatever the list says)
+				logger::info("fallen: loading this session's dawn save '{}'", g_lastSave);
+				sl->Load(g_lastSave.c_str());
+				return true;
+			}
+			int n = 0;
+			for (auto* e : sl->saveGameList) if (e && n++ < 6) logger::info("fallen: in the list: '{}' character {:08X}", e->fileName.c_str() ? e->fileName.c_str() : "", e->characterID);
 			logger::info("fallen: no save of this character ({:08X}) yet", me);
 			return false;
 		}
@@ -298,6 +309,17 @@ namespace bo3z::Party
 			}
 			Hud::Banner("YOU RISE AGAIN", 3.0f);
 			Forms::Play(gen::Sound::round_start);
+			// (Noah: "my character was just running in place on the ground") the body could stay in its fall's ragdoll with the
+			// legs still walking: a moment on, you are set down where you lie, whole and standing (a move onto yourself
+			// rebuilds the body's state), and your controls are yours again
+			Tasks::Later(0.6f, [] {
+				auto* pl = RE::PlayerCharacter::GetSingleton();
+				if (!pl || pl->IsDead() || g_soloT >= 0.0f) return;
+				pl->MoveTo(pl);
+				pl->NotifyAnimationGraph("IdleForceDefaultState");
+				FallControls(false);
+				logger::info("fallen: stood up (knock state was {})", static_cast<int>(pl->AsActorState()->GetKnockState()));
+			});
 			g_soloT = -1.0f;
 			// a breath of safety as you stand: ghostly another two seconds
 			Tasks::Later(2.0f, [] { if (g_soloT < 0.0f) Ghost(kGhostFall, false); });
@@ -362,7 +384,6 @@ namespace bo3z::Party
 	// ---- the party's save points (dawn, and a freed city's dawn) ----
 	namespace
 	{
-		std::string           g_lastSave;      // the newest of our dawn saves: a wiped party comes back to it
 		std::string           g_freedName;     // the city whose freeing brings this dawn
 		std::atomic<bool>     g_saving{ false };
 	}

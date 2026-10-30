@@ -34,8 +34,8 @@ namespace bo3z::gen
 		Enemy{ "tb_mangled", "Thriceborn Mangled Zombie", { "CurseOfAlduin.esp", 0x000D2D, "UN_tb_mangled" }, false, 1, 3, false, "auto", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "tb_foul", "Thriceborn Foul Zombie", { "CurseOfAlduin.esp", 0x000D30, "UN_tb_foul" }, false, 1, 3, false, "auto", true, 0, false, 0, 1.0f, 1.0f, false },
 		Enemy{ "tb_putrid", "Thriceborn Putrid Zombie", { "CurseOfAlduin.esp", 0x000D33, "UN_tb_putrid" }, false, 2, 2, false, "auto", true, 0, false, 0, 1.0f, 1.0f, false },
-		Enemy{ "rag_draugr", "Rag Draugr", { "Skyrim Immersive Creatures Special Edition.esp", 0x46B108, "_00EncDraugrMummyVarM01" }, false, 1, 3, false, "auto", true, 0, false, 0, 1.0f, 1.0f, false },
-		Enemy{ "rag_restless", "Restless Rag Draugr", { "Skyrim Immersive Creatures Special Edition.esp", 0x46B109, "_00EncDraugrMummyVarM02" }, false, 2, 2, false, "auto", true, 0, false, 0, 1.1f, 1.0f, false },
+		Enemy{ "rag_draugr", "Rag Draugr", { "Skyrim Immersive Creatures Special Edition.esp", 0x46B108, "_00EncDraugrMummyVarM01" }, false, 1, 1, false, "auto", true, 0, false, 0, 1.0f, 1.0f, false },
+		Enemy{ "rag_restless", "Restless Rag Draugr", { "Skyrim Immersive Creatures Special Edition.esp", 0x46B109, "_00EncDraugrMummyVarM02" }, false, 2, 1, false, "auto", true, 0, false, 0, 1.1f, 1.0f, false },
 		Enemy{ "sk_rotten", "Rotten Skeleton", { "Skyrim Immersive Creatures Special Edition.esp", 0x551F9D, "_00EncSkeletonVarA01Melee1H" }, false, 1, 3, false, "auto", true, 0, false, 0, 0.8f, 1.05f, false },
 		Enemy{ "sk_bloody", "Bloody Skeleton", { "Skyrim Immersive Creatures Special Edition.esp", 0x3B3C1E, "_00EncSkeletonBloody01Melee1H" }, false, 2, 2, false, "auto", true, 0, false, 0, 0.9f, 1.05f, false },
 		Enemy{ "plague_wolf", "Plague Wolf", { "Skyrim Immersive Creatures Special Edition.esp", 0x420C91, "_00EncPlagueWolf01" }, false, 1, 2, false, "auto", true, 0, false, 0, 0.7f, 1.0f, false },
@@ -54,8 +54,8 @@ namespace bo3z::gen
 		Enemy{ "tb_malignant", "Thriceborn Malignant Zombie", { "CurseOfAlduin.esp", 0x000D36, "UN_tb_malignant" }, false, 3, 2, false, "auto", true, 0, false, 0, 1.1f, 1.0f, false },
 		Enemy{ "tb_relentless", "Thriceborn Relentless Zombie", { "CurseOfAlduin.esp", 0x000D39, "UN_tb_relentless" }, false, 4, 2, false, "auto", true, 0, false, 0, 1.2f, 1.05f, false },
 		Enemy{ "bloater", "Hulking Draugr", { "Skyrim Immersive Creatures Special Edition.esp", 0x6E3739, "_00DLC2EncDraugrHulkingM00" }, false, 5, 1, false, "auto", true, 0, false, 1, 1.8f, 0.95f, false },
-		Enemy{ "rag_scourge", "Draugr Rag Scourge", { "Skyrim Immersive Creatures Special Edition.esp", 0x46B10B, "_00EncDraugrMummyVarM04" }, false, 5, 2, false, "auto", true, 0, false, 0, 1.2f, 1.0f, false },
-		Enemy{ "rag_champion", "Draugr Rag Champion", { "Skyrim Immersive Creatures Special Edition.esp", 0x46B10F, "_00EncDraugrMummyVarM08" }, false, 6, 2, false, "auto", true, 0, false, 0, 1.3f, 1.0f, false },
+		Enemy{ "rag_scourge", "Draugr Rag Scourge", { "Skyrim Immersive Creatures Special Edition.esp", 0x46B10B, "_00EncDraugrMummyVarM04" }, false, 5, 1, false, "auto", true, 0, false, 0, 1.2f, 1.0f, false },
+		Enemy{ "rag_champion", "Draugr Rag Champion", { "Skyrim Immersive Creatures Special Edition.esp", 0x46B10F, "_00EncDraugrMummyVarM08" }, false, 6, 1, false, "auto", true, 0, false, 0, 1.3f, 1.0f, false },
 		Enemy{ "rag_reaper", "Draugr Rag Reaper", { "Skyrim Immersive Creatures Special Edition.esp", 0x46B10D, "_00EncDraugrMummyVarM06" }, false, 7, 1, false, "auto", true, 0, false, 0, 1.4f, 1.0f, false },
 		Enemy{ "king", "Draugr Lich", { "Skyrim Immersive Creatures Special Edition.esp", 0x095435, "_00EncDraugrLich01_lvl03" }, false, 5, 1, false, "auto", true, 0, false, 2, 1.3f, 1.0f, false },
 		Enemy{ "ancestor_ghost", "Ancestor Ghost", { "Skyrim Immersive Creatures Special Edition.esp", 0x020C5A, "_00EncSkeletonAncestorGhostA_lvl20" }, false, 6, 1, false, "auto", true, 0, false, 0, 1.1f, 1.0f, false },
@@ -1579,6 +1579,7 @@ namespace bo3z::gen
 	inline constexpr std::uint32_t kMadnessSword = 0xD1E, kLanternItem = 0xD20, kLanternSpell = 0xD23, kLanternEffect = 0xD22, kSetSwift = 0xD40;  // the Spellsword's blade; the belt lantern, its light
 	inline constexpr std::uint32_t kRiftblade = 0xD10;  // the Summoner dagger: Rift Stab
 	inline constexpr std::uint32_t kMadEnch[3] = { 0xD26, 0xD29, 0xD2C };  // the Madness Sword's violet fire, brighter each tier
+	inline constexpr std::uint32_t kMadShader[3] = { 0xD24, 0xD27, 0xD2A };  // the Madness Sword's violet fire, drawn on the blade itself (src/Kit.cpp)
 	inline constexpr std::uint32_t kRiftEnch[3] = { 0xD17, 0xD1A, 0xD1D };  // its fire, brighter each tier
 	inline constexpr std::uint32_t kStandStat = 0x926;  // the station platform (dressing on the Coffer)
 	inline constexpr float kStandHalfX = 220.0f, kStandFrontY = -220.0f, kStandBackY = 220.0f, kStandMaxSlope = 70.0f;  // footprint in plan space (tools/stand.py)

@@ -27,7 +27,7 @@ namespace bo3z
 		// runic symbol grow above the altar") a freed altar's moment, in three parts: the charge (the six rune stones strike
 		// the heart one after another with the roll's lightning, its runes burning brighter), the burst (the curse breaks:
 		// the freed look is put up), then the motes fade in and the golden rune circle grows from nothing over the altar
-		struct Pulse { RE::ObjectRefHandle shrine; float t; int town; bool burst; };
+		struct Pulse { RE::ObjectRefHandle shrine; float t; int town; bool burst; bool started; };
 		std::optional<Pulse>                     g_pulse;  // a freed shrine's moment (FreedPulse); t counts down
 		constexpr float                          kPulseSeconds = 9.0f, kPulseCharge = 3.6f, kPulseGrow = 3.2f;
 		// the freed look waits for the burst (the charge plays on the cursed altar)
@@ -2544,7 +2544,27 @@ namespace bo3z
 					}
 				}
 				h.pulseOn = false;
-				if (g_pulse && (g_pulse->t -= a_delta) > 0) {
+				// (Noah: "the Echo Altar did not have the city being free animation" - its Dragon Priest fell 60 m away, as the clock
+				// leapt to dawn) the altar waits for you: its awakening plays once you're back within 25 m of it
+				if (g_pulse && !g_pulse->started) {
+					auto r = g_pulse->shrine.get();
+					auto* pl = RE::PlayerCharacter::GetSingleton();
+					if (r && pl && r->Is3DLoaded() && pl->GetPosition().GetDistance(r->GetPosition()) < 2500.0f) {
+						g_pulse->started = true;
+						Forms::PlayAt(gen::Sound::coffer_charge, r.get());
+						std::string city(gen::kTowns[g_pulse->town]);
+						for (auto& ch : city) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
+						Hud::Banner("THE ECHO ALTAR OF " + city + " WAKES", 4.0f);
+						logger::info("shops: {}'s altar wakes before you", gen::kTowns[g_pulse->town]);
+					} else if (!r) {
+						for (std::size_t i = 0; i < gen::kLocations.size(); ++i)
+							if (gen::kLocations[i].town == g_pulse->town) g_dressed[i] = false;
+						g_pulse.reset();
+					}
+				}
+				if (g_pulse && !g_pulse->started) {
+					// (still waiting for you)
+				} else if (g_pulse && (g_pulse->t -= a_delta) > 0) {
 					h.pulseT = g_pulse->t;
 					auto r = g_pulse->shrine.get();
 					const float el = kPulseSeconds - g_pulse->t;
@@ -2822,10 +2842,12 @@ namespace bo3z
 					if (gen::kLocations[i].town == a_town) g_dressed[i] = false;
 				return;
 			}
-			// the charge first (the burst and the freed look follow it: Tick)
-			Forms::PlayAt(gen::Sound::coffer_charge, shrine);
+			// the charge first (the burst and the freed look follow it: Tick) - once you are at the altar
 			EndBeams();
-			g_pulse = Pulse{ shrine->CreateRefHandle(), kPulseSeconds, a_town, false };
+			g_pulse = Pulse{ shrine->CreateRefHandle(), kPulseSeconds, a_town, false, false };
+			if (auto* pl = RE::PlayerCharacter::GetSingleton(); pl && pl->GetPosition().GetDistance(shrine->GetPosition()) > 2500.0f) {
+				Tasks::Later(6.0f, [] { if (g_pulse && !g_pulse->started) Hud::Banner("Return to the Echo Altar to see it wake", 5.0f); });
+			}
 			logger::info("shops: {}'s shrine gathers its light - the Curse is lifted", gen::kTowns[a_town]);
 		}
 

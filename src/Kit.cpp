@@ -47,17 +47,34 @@ namespace bo3z::Kit
 			return -1;
 		}
 		// the Dragon Priests' relics, by class: the Summoner's heroes and armies (Calling of the Conjurer), Destruction's support
-		// spells (Mysticism), the Spellsword's legendary two-handers (Classes::TwoHander), the Ranger's relic quivers
+		// spells (Mysticism), the Spellsword's Vigilant spells (below), the Ranger's relic quivers
 		constexpr std::uint32_t kHeroes[] = { 0x019D7C, 0x0290A4, 0x0290A3, 0x0290A6, 0x0CB318, 0x103618, 0x019D66, 0x09370D, 0x0A2A1D, 0x0CB311, 0x0C61F9 };
 		constexpr std::uint32_t kSupport[] = { 0x1901E5, 0x4B065B, 0x25FBFF, 0xFF19E0 };
 		constexpr const char*   kQuivers[] = { "Quiver of Embers", "Quiver of Rime", "Quiver of Storms" };
+		// (Noah: "keep the madness sword as the main weapon for this class. I think the relics should be unique spells that are
+		// mixed between range and close range, but are slightly stronger than what's in the armory") the Spellsword's relics:
+		// spells of the old Vigilants, none of them in any altar's pool - four close (the three cloaks and Stendarr's Aura) and
+		// four reaching (Vampire's Bane, two walls sprayed down the line, a fire rune). Each hits the night's dead 15% harder
+		// than an Armory spell of its tier
+		struct RelicSpellDef { const char* plugin; std::uint32_t id; const char* name; const char* what; };
+		constexpr RelicSpellDef kBladeRelics[] = {
+			{ "Skyrim.esm", 0x03AE9F, "Vigilant's Flame Cloak", "close: a cloak of fire burns every foe that comes near you" },
+			{ "Skyrim.esm", 0x03AEA2, "Vigilant's Frost Cloak", "close: a cloak of ice slows and chills every foe near you" },
+			{ "Skyrim.esm", 0x03AEA3, "Vigilant's Storm Cloak", "close: a cloak of lightning strikes every foe near you and drains their magic" },
+			{ "Dawnguard.esm", 0x0038B5, "Stendarr's Aura", "close: a ring of sunlight about you that sears the dead" },
+			{ "Dawnguard.esm", 0x0038B6, "Vampire's Bane", "ranged: a bolt of sunlight that bursts on the dead" },
+			{ "Skyrim.esm", 0x035D81, "Wall of the Tempest", "ranged: a wall of storms sprayed down the line" },
+			{ "Skyrim.esm", 0x035D80, "Wall of the Winter", "ranged: a wall of frost sprayed down the line" },
+			{ "Skyrim.esm", 0x05DB90, "Pyre Rune", "ranged: a rune of fire thrown onto the ground that bursts when the dead step on it" },
+		};
+
 		int RelicCount(int a_cls)
 		{
 			switch (a_cls) {
 			case 0: return static_cast<int>(std::size(kHeroes));
 			case 1: return static_cast<int>(std::size(kSupport));
 			case 2: return static_cast<int>(std::size(kQuivers));
-			case 3: return Classes::TwoHanderCount();
+			case 3: return static_cast<int>(std::size(kBladeRelics));
 			default: return 0;
 			}
 		}
@@ -67,12 +84,13 @@ namespace bo3z::Kit
 			if (!dh || a_r < 0) return nullptr;
 			if (a_cls == 0 && a_r < static_cast<int>(std::size(kHeroes))) return dh->LookupForm<RE::SpellItem>(kHeroes[a_r], "Calling of the Conjurer.esp");
 			if (a_cls == 1 && a_r < static_cast<int>(std::size(kSupport))) return dh->LookupForm<RE::SpellItem>(kSupport[a_r], "MysticismMagic.esp");
+			if (a_cls == 3 && a_r < static_cast<int>(std::size(kBladeRelics))) return dh->LookupForm<RE::SpellItem>(kBladeRelics[a_r].id, kBladeRelics[a_r].plugin);
 			return nullptr;
 		}
 		std::string RelicName(int a_cls, int a_r)
 		{
 			if (a_cls == 2) return a_r >= 0 && a_r < 3 ? kQuivers[a_r] : "";
-			if (a_cls == 3) { auto* w = Classes::TwoHander(a_r); return w && w->GetName() ? w->GetName() : ""; }
+			if (a_cls == 3) return a_r >= 0 && a_r < static_cast<int>(std::size(kBladeRelics)) ? kBladeRelics[a_r].name : "";
 			auto* sp = RelicSpell(a_cls, a_r);
 			return sp && sp->GetName() ? sp->GetName() : "";
 		}
@@ -82,7 +100,7 @@ namespace bo3z::Kit
 			case 0: return "A Legendary pact: a hero or an army answers your call";
 			case 1: return "A support spell of the old masters";
 			case 2: return "Your bows' and crossbows' blasts reach wider";
-			case 3: return "A legendary two-handed weapon";
+			case 3: return "A spell of the old Vigilants, a step above the Armory's";
 			default: return "";
 			}
 		}
@@ -310,7 +328,7 @@ namespace bo3z::Kit
 			for (int r = 0; r < RelicCount(a_cls) && r < kMaxRelics; ++r) {
 				if (g_cls[a_cls].relics >> r & 1) continue;
 				if ((a_cls == 0 || a_cls == 1) && !RelicSpell(a_cls, r)) continue;  // (its mod missing)
-				if (a_cls == 3 && !Classes::TwoHander(r)) continue;
+				if (a_cls == 3 && !RelicSpell(3, r)) continue;  // (its add-on missing)
 				out.push_back(r);
 			}
 			return out;
@@ -538,7 +556,10 @@ namespace bo3z::Kit
 				auto*      w = rift ? Classes::Riftblade() : Classes::SpellswordBlade();
 				Look(w, t);
 				// (the Riftblade's fire, the Madness Sword's violet fire: brighter each tier)
-				const bool mad = !rift && w && w == RE::TESDataHandler::GetSingleton()->LookupForm(gen::kMadnessSword, gen::kPlugin);
+				// (Noah: "the Madness Sword also isn't getting its animation or enchantment effect after upgrading") its violet fire
+				// is drawn on the blade itself now (TickMadGlow), never by swapping its enchantment - that swap needed the blade
+				// taken off and on again, which broke your swing's momentum for a moment
+				const bool mad = false;
 				if ((rift || mad) && w) {
 					// (Noah: "remove the charge bar - it doesn't even use charge") no charge on it, nor on the one you carry
 					w->amountofEnchantment = 0;
@@ -570,7 +591,6 @@ namespace bo3z::Kit
 			default: break;
 			}
 		}
-		if (c == 3) for (int r = 0; r < RelicCount(3) && r < kMaxRelics; ++r) if (g_cls[3].relics >> r & 1) Look(Classes::TwoHander(r), g_cls[3].relicTier[r]);
 	}
 
 	std::string_view InfusionName(int a_kind) { return a_kind >= 0 && a_kind <= kInfusions ? kInfName[a_kind] : "None"; }
@@ -733,7 +753,7 @@ namespace bo3z::Kit
 		SyncWeapons(true);
 		const std::string now = ItemName(c, item);
 		Hud::Banner((now != was ? was + "  ->  " + now : now) + "  -  " + (t + 1 <= 3 ? std::string(TierLabel(t + 1)) : "Ascend " + std::to_string(t + 1 - 3)) +
-		                (defs[item].kind == Kind::Armour ? (ArmorAscendMult() > 1.001f ? fmt::format("   (damage reduction +{:.0f}%, damage +{:.0f}%)", ArmorResist() * 100.0f, (ArmorAscendMult() - 1.0f) * 100.0f) : fmt::format("   (damage reduction +{:.0f}%)", ArmorResist() * 100.0f)) : std::string()), 4.5f);
+		                (defs[item].kind == Kind::Armour ? (ArmorAscendMult() > 1.001f ? fmt::format("   (damage reduction +{:.0f}%, damage +{:.0f}%)", ArmorResist() * 100.0f, (ArmorAscendMult() - 1.0f) * 100.0f) : fmt::format("   (damage reduction +{:.0f}%)", ArmorResist() * 100.0f)) : fmt::format("   (damage x{:.1f})", UpgradeMult(t + 1))), 4.5f);  // (Noah: "I upgraded my Fire Touch - it didn't seem like it changed anything": what it gained, said)
 		logger::info("kit: {} -> tier {} ({})", now, t + 1, Classes::Name(c));
 		return true;
 	}
@@ -784,9 +804,17 @@ namespace bo3z::Kit
 			if (o >= RelicCount(c) || o >= kMaxRelics) { MakeOffer(); return false; }
 			st.relics |= 1u << o;
 			if (auto* sp = RelicSpell(c, o)) Classes::LearnSpell(sp);
-			if (c == 3) if (auto* w = Classes::TwoHander(o)) Classes::GiveGear(w, 1, false);
 			Forms::Play(gen::Sound::shout_learned);
-			Hud::Banner("A DRAGON PRIEST'S RELIC - " + RelicName(c, o), 5.0f);
+			// (Noah: "an indicator to tell me that I received one of the relics after picking it up") a card: its name and
+			// what it does, and where it went
+			{
+				std::string up = RelicName(c, o);
+				for (auto& ch : up) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
+				std::string what = c == 3 && o < static_cast<int>(std::size(kBladeRelics)) ? std::string(kBladeRelics[o].what) + "." : RelicDesc(c) + ".";
+				if (!what.empty()) what[0] = static_cast<char>(std::toupper(static_cast<unsigned char>(what[0])));
+				const char* where = c == 0 ? " It is in your spells (Conjuration): bind it to a hand to call it." : c == 2 ? " It rides your bows and crossbows from now on." : " It is in your spells: equip it in your off hand.";
+				Hud::Lore("RELIC CLAIMED - " + up, what + where + " Upgrade it at any Echo Altar like the rest of your kit.", 9.0f);
+			}
 			logger::info("kit: relic {} taken ({})", RelicName(c, o), Classes::Name(c));
 		}
 		--g_tokens;
@@ -858,17 +886,12 @@ namespace bo3z::Kit
 			auto* w = std::string_view(defs[i].ref) == "riftblade" ? Classes::Riftblade() : Classes::SpellswordBlade();
 			if (w && w == a_w) return g_cls[c].tier[i];
 		}
-		if (c == 3) {
-			for (int r = 0; r < RelicCount(3) && r < kMaxRelics; ++r) {
-				if ((g_cls[3].relics >> r & 1) && Classes::TwoHander(r) == a_w) return g_cls[3].relicTier[r];
-			}
-		}
 		return -1;
 	}
 	int TierOfSpell(const RE::TESForm* a_sp)
 	{
 		const int c = Cls();
-		if (!a_sp || (c != 0 && c != 1)) return -1;
+		if (!a_sp || (c != 0 && c != 1 && c != 3)) return -1;
 		for (int r = 0; r < RelicCount(c) && r < kMaxRelics; ++r) {
 			if ((g_cls[c].relics >> r & 1) && RelicSpell(c, r) == a_sp) return g_cls[c].relicTier[r];
 		}
@@ -969,7 +992,6 @@ namespace bo3z::Kit
 				                (d.kind == Kind::Crossbow && w == Classes::CrossbowForm(Elem(d)));
 				if (me) return OnHitItem(c, i, a_target);
 			}
-			if (c == 3) for (int r = 0; r < RelicCount(3) && r < kMaxRelics; ++r) if ((g_cls[3].relics >> r & 1) && Classes::TwoHander(r) == w) return OnHitItem(c, kRelicBase + r, a_target);
 			return;
 		}
 		if (const int si = Arcana::IndexOf(a_source); si >= 0) {
@@ -978,7 +1000,7 @@ namespace bo3z::Kit
 			}
 			return;
 		}
-		if (c == 1) for (int r = 0; r < RelicCount(1) && r < kMaxRelics; ++r) if ((g_cls[1].relics >> r & 1) && RelicSpell(1, r) == a_source) return OnHitItem(c, kRelicBase + r, a_target);
+		if (c == 1 || c == 3) for (int r = 0; r < RelicCount(c) && r < kMaxRelics; ++r) if ((g_cls[c].relics >> r & 1) && RelicSpell(c, r) == a_source) return OnHitItem(c, kRelicBase + r, a_target);
 	}
 	void OnBowHit(int a_bow, RE::Actor* a_target)
 	{
@@ -1046,6 +1068,31 @@ namespace bo3z::Kit
 			Hud::Banner(fmt::format("Cluster and Piercing are gone from the Infusions - {} Cursed Essence back", 4000 * refunds), 5.0f);
 			logger::info("kit: {} Cluster/Piercing Infusions taken off, refunded", refunds);
 		}
+		// the Spellsword's relic spells: their names, a castable price (never above 100), and a save from the two-handers'
+		// time - the two-handers go back, the spells their relics now are are known
+		if (static bool tuned = false; !tuned) {
+			tuned = true;
+			for (int r = 0; r < static_cast<int>(std::size(kBladeRelics)); ++r) {
+				auto* sp = RelicSpell(3, r);
+				if (!sp) continue;
+				sp->fullName = kBladeRelics[r].name;
+				float was = 0;
+				for (auto* e : sp->effects) if (e) was += e->cost;
+				sp->data.costOverride = std::clamp(static_cast<std::int32_t>(std::lround(was * 0.4f)), 35, 100);
+				sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
+			}
+		}
+		if (c == 3 && Classes::KitGiven(3)) {
+			for (int r = 0; r < Classes::TwoHanderCount(); ++r) {
+				if (auto* w = Classes::TwoHander(r); w && p->GetItemCount(w) > 0) {
+					p->RemoveItem(w, p->GetItemCount(w), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+					logger::info("kit: {} taken back (the Spellsword's relics are spells now)", w->GetName());
+				}
+			}
+			for (int r = 0; r < RelicCount(3) && r < kMaxRelics; ++r) {
+				if (auto* sp = RelicSpell(3, r); sp && (g_cls[3].relics >> r & 1) && !p->HasSpell(sp)) Classes::LearnSpell(sp);
+			}
+		}
 		auto* av = p->AsActorValueOwner();
 		if (c == 3 && ArmourTier(3) >= 1 && p->IsInCombat()) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.006f);  // (Tier I: mending in a fight)
 		if (c == 1 && ArmourTier(1) >= 2) av->RestoreActorValue(RE::ActorValue::kMagicka, av->GetPermanentActorValue(RE::ActorValue::kMagicka) * 0.012f);          // (Tier II: magicka comes back faster)
@@ -1089,11 +1136,38 @@ namespace bo3z::Kit
 		// (Noah: "upgrading the Riftblade didn't change anything on the inventory stats", "the effects should enhance the
 		// current detail") every kit weapon's card follows its tier - its name and its damage - and the Riftblade's own fire
 		// burns brighter each tier
+		TickMadGlow(a_delta);
 		static float look = 0;
 		if ((look -= a_delta) <= 0) {
 			look = 1.0f;
-			SyncWeapons(true);  // (a blade whose tier fire changed - a load, a reforge - is drawn again so the fire shows)
+			SyncWeapons(false);
 			TickSets();
+		}
+	}
+	// the Madness Sword's violet fire, on the blade in your hand while it is drawn: its tier's flame (I-III, brighter each),
+	// laid on the weapon itself - in third person and in first - and renewed before it fades
+	void TickMadGlow(float a_delta)
+	{
+		static float since = 99.0f;
+		static int   was = 0;  // the tier lit last time (0: none)
+		since += a_delta;
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		const int c = Cls();
+		int t = 0;
+		auto* w = Classes::SpellswordBlade();
+		if (p && c == 3 && p->Is3DLoaded() && p->AsActorState()->IsWeaponDrawn() && w && p->GetEquippedObject(false) == w) {
+			const auto defs = Defs(c);
+			for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (defs[i].kind == Kind::Blade && (g_cls[c].owned >> i & 1)) t = std::clamp(ItemTier(c, i), 0, 3);
+		}
+		if (t < 1) { was = 0; return; }
+		if (t == was && since < 3.0f) return;  // (renewed just before it fades; at once when drawn or reforged)
+		since = 0, was = t;
+		auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kMadShader[t - 1], gen::kPlugin);
+		if (!fx) return;
+		for (const bool first : { false, true }) {
+			auto* root = p->Get3D(first);
+			auto* node = root ? root->GetObjectByName("WEAPON") : nullptr;
+			if (node) p->ApplyEffectShader(fx, 3.3f, nullptr, false, false, node, false);
 		}
 	}
 	// ---- the co-save ----

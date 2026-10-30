@@ -926,6 +926,49 @@ namespace bo3z
 			cs->flightData.groundAttackChance = 1.0f, cs->flightData.groundAttackTimeMult = 3.0f;
 			cs->flightData.perchAttackChance = 0.0f, cs->flightData.diveBombChance = 0.0f, cs->flightData.hoverChance = 0.1f;
 		}
+		// (Noah: "when a restless ragdrogger spawns, it summons this really loud green orb ... it doesn't do anything"; "I don't
+		// want them to use the disarm shout at all ... the push shout is okay for 1 in 5 Draugr at random") the mod creatures'
+		// own extras trimmed: no conjuring (Immersive Creatures' Rag Draugr carry a rat-swarm summon that never comes), never
+		// the disarming shout, never a ward (a Dragon Priest hid behind his while he backed away); of those left with a shout,
+		// one in five may use it - the rest are held from it
+		bool HasArchetype(RE::MagicItem* a_m, RE::EffectSetting::Archetype a_a)
+		{
+			if (!a_m) return false;
+			for (auto* e : a_m->effects) if (e && e->baseEffect && e->baseEffect->GetArchetype() == a_a) return true;
+			return false;
+		}
+		void Tame(RE::Actor* a_actor, int a_kind)
+		{
+			auto* base = a_actor ? a_actor->GetActorBase() : nullptr;
+			auto* list = base ? base->actorEffects : nullptr;
+			bool  shouts = false;
+			if (list) {
+				std::vector<RE::SpellItem*> drop;
+				for (std::uint32_t i = 0; list->spells && i < list->numSpells; ++i) {
+					auto* sp = list->spells[i];
+					if (!sp) continue;
+					if ((a_kind != 2 && HasArchetype(sp, RE::EffectSetting::Archetype::kSummonCreature)) || HasArchetype(sp, RE::EffectSetting::Archetype::kAccumulateMagnitude)) drop.push_back(sp);
+				}
+				for (auto* sp : drop) list->RemoveSpell(sp);
+				std::vector<RE::TESShout*> gone;
+				for (std::uint32_t i = 0; list->shouts && i < list->numShouts; ++i) {
+					auto* sh = list->shouts[i];
+					if (!sh) continue;
+					bool disarm = false;
+					for (auto& v : sh->variations) disarm |= HasArchetype(v.spell, RE::EffectSetting::Archetype::kDisarm);
+					if (disarm) gone.push_back(sh);
+					else shouts = true;
+				}
+				for (auto* sh : gone) list->RemoveShout(sh);
+				if (!drop.empty() || !gone.empty()) {
+					static int told = 0;
+					if (told++ < 12) logger::info("night: {} - {} spells and {} shouts of its own taken away", a_actor->GetName(), drop.size(), gone.size());
+				}
+			}
+			if (shouts && std::uniform_int_distribution<int>(1, 5)(g_rng) != 1) {
+				a_actor->GetActorRuntimeData().voiceTimer = 1.0e7f;  // (its voice never recovers: it can't shout)
+			}
+		}
 		bool SpawnOne(RE::PlayerCharacter* a_player, int a_force = -1, const RE::NiPoint3* a_at = nullptr)
 		{
 			auto pick = a_force >= 0 ? std::optional<std::size_t>(static_cast<std::size_t>(a_force)) : PickEnemy();
@@ -1118,6 +1161,7 @@ namespace bo3z
 			}
 			g_ours[actor->GetFormID()] = *pick;
 			if (auto* base = actor->GetActorBase()) MakeHeadlong(base->GetCombatStyle());  // (its levelled copy's own style too)
+			Tame(actor, kindRow.kind);
 			av->SetActorValue(RE::ActorValue::kConfidence, 4.0f);  // (foolhardy: never hangs back)
 			av->SetActorValue(RE::ActorValue::kAggression, 2.0f);
 			if (const float hm = Director::HarmMult(actor); hm < 0.999f) {  // (Noah: the harpies hit far too hard) its blows weaker too
@@ -2984,7 +3028,9 @@ namespace bo3z
 					if ((s.hook -= a_delta) <= 0 && dist > 250.0f && dist < 1800.0f) {
 						s.hook = s.enraged ? 3.0f : 4.5f;
 						const auto at = OnGround(a_player->GetPosition());
-						Gun::FxBlast("paralyze", at + RE::NiPoint3{ 0, 0, 8 }, 0.0f);
+						// (Noah: "these green pulses with like a red effect after ... pretty annoying") its mark is a small dark
+						// ripple now, not the paralysis dome
+						Gun::FxBlast("dark", at + RE::NiPoint3{ 0, 0, 8 }, 0.0f);
 						g_hazards.push_back({ at, 0.9f, 120.0f, 0.07f, "dark", false });
 						Forms::PlayAt(gen::Sound::vo_necro_attack, a.get());
 						Audio::AtPoint(gen::Sound::boom_animunculi, at, 0.9f, 0.8f);
@@ -3452,6 +3498,15 @@ namespace bo3z
 			const float want = std::max(HealthFor(g_current) * a_healthMult, 6000.0f / R.hpScale) * Settings::UndeadHealthMult();
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, want - av->GetPermanentActorValue(RE::ActorValue::kHealth));
 			c->SetScale(1.35f);
+			// (Noah: "the Dragon Priest wasn't able to deal any damage to me ... then it started fleeing") a champion caster fights
+			// at full strength - the night's casters are held to a novice's skill, he is not - and stands his ground
+			if (gen::kEnemies[row].kind == 2) {
+				for (auto skill : { RE::ActorValue::kDestruction, RE::ActorValue::kConjuration, RE::ActorValue::kAlteration }) av->SetActorValue(skill, 100.0f);
+				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kMagicka, 2000.0f);
+				av->SetActorValue(RE::ActorValue::kMagickaRate, 25.0f);
+			}
+			av->SetActorValue(RE::ActorValue::kConfidence, 4.0f);
+			av->SetActorValue(RE::ActorValue::kAggression, 2.0f);
 			g_champ = { c->GetHandle(), a_town, std::string(a_name), want, false };
 			Forms::Play(gen::Sound::champ_arrive);
 			Forms::PlayAt(gen::Sound::champ_enrage, c.get());

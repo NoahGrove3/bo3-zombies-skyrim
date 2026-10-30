@@ -954,7 +954,11 @@ namespace bo3z
 								share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow * UpgradeMult(Classes::CrossbowLevel(w) + Kit::CrossbowAscends(Classes::CrossbowElement(w))) : gen::kShareMelee * (gear >= 0 ? UpgradeMult(gear) : 1.0f);
 							} else if (src->Is(RE::FormType::Spell)) {
 								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
-								if (const int rt = Kit::TierOfSpell(src); rt >= 0) share *= UpgradeMult(rt);  // (a relic's support spell: its tiers)
+								if (const int rt = Kit::TierOfSpell(src); rt >= 0) {
+									share *= UpgradeMult(rt);  // (a relic's spell: its tiers)
+									if (Classes::Get() == 3) share *= 1.15f;  // (the Spellsword's Vigilant spells: a step above the Armory's)
+								}
+								if (auto* sp = src->As<RE::SpellItem>(); sp && sp->GetCastingType() == RE::MagicSystem::CastingType::kConcentration) share *= 0.3f;  // (a stream or a wall lands many times a second)
 							}
 							NoteStruck(z, false);
 							HurtUndead(z, Director::RoundHealth() * share * (0.7f + 0.3f * Arcana::Power()));  // (the night's power curve)

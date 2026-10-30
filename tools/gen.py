@@ -224,6 +224,7 @@ o.append(f'\tinline constexpr std::uint32_t kMuzzleLight = 0x{IDS[("LIGH", "muzz
 o.append(f'\tinline constexpr std::uint32_t kMadnessSword = 0x{IDS[("WEAP", "madness")]:03X}, kLanternItem = 0x{IDS[("ARMO", "lantern")]:03X}, kLanternSpell = 0x{IDS[("SPEL", "lanternlight")]:03X}, kLanternEffect = 0x{IDS[("MGEF", "lanternlight")]:03X}, kSetSwift = 0x{IDS[("SPEL", "set_swift")]:03X};  // the Spellsword\'s blade; the belt lantern, its light')
 o.append(f'\tinline constexpr std::uint32_t kRiftblade = 0x{IDS[("WEAP", "riftblade")]:03X};  // the Summoner dagger: Rift Stab')
 o.append('\tinline constexpr std::uint32_t kMadEnch[3] = { ' + ', '.join(f'0x{IDS[("ENCH", f"madglow{n}")]:03X}' for n in (1, 2, 3)) + ' };  // the Madness Sword\'s violet fire, brighter each tier')
+o.append('\tinline constexpr std::uint32_t kMadShader[3] = { ' + ', '.join(f'0x{IDS[("EFSH", f"madshader{n}")]:03X}' for n in (1, 2, 3)) + ' };  // the Madness Sword\'s violet fire, drawn on the blade itself (src/Kit.cpp)')
 o.append('\tinline constexpr std::uint32_t kRiftEnch[3] = { ' + ', '.join(f'0x{IDS[("ENCH", f"riftfire{n}")]:03X}' for n in (1, 2, 3)) + ' };  // its fire, brighter each tier')
 o.append(f'\tinline constexpr std::uint32_t kStandStat = 0x{IDS[("STAT", "stand")]:03X};  // the station platform (dressing on the Coffer)')
 o.append('\tinline constexpr float kStandHalfX = 220.0f, kStandFrontY = -220.0f, kStandBackY = 220.0f, kStandMaxSlope = 70.0f;  // footprint in plan space (tools/stand.py)')
