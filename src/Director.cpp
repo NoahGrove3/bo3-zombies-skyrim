@@ -806,8 +806,18 @@ namespace bo3z
 					if (at.z < ground - 35.0f && r.resets < 2) {
 						++r.resets;
 						at.z = ground + 4.0f;
-						a->SetPosition(at, true);
-						a->SetCollision(true);
+						// (Noah's crash: a worker thread's pathing/animation job read freed memory 0.7 s after one of these) set
+						// back the way the stuck are: its AI stopped first (its path requests dropped), moved a moment later,
+						// woken a moment after that
+						a->EnableAI(false);
+						const auto h = a->GetHandle();
+						Tasks::Later(0.12f, [h, at] {
+							auto b = h.get();
+							if (!b || b->IsDead() || !b->Is3DLoaded()) { if (b && !b->IsDead()) b->EnableAI(true); return; }
+							b->SetPosition(at, true);
+							b->SetCollision(true);
+							Tasks::Later(0.12f, [h] { if (auto c = h.get(); c && !c->IsDead()) c->EnableAI(true); });
+						});
 						static int told = 0;
 						if (told++ < 10) logger::info("night: {:08X} sank into the ground after rising - set back on the floor", a->GetFormID());
 					}
