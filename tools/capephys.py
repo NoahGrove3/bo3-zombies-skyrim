@@ -33,26 +33,29 @@ for b in ['NPC Spine2 [Spn2]', 'NPC Spine1 [Spn1]', 'NPC Pelvis [Pelv]', 'NPC L 
     o.append(f'  <bone name="{b}"/>')
 # the cloth: heavier at the top, the hem calmed by damping
 o.append('  <bone-default><mass>1.8</mass><inertia x="32" y="32" z="14"/><centerOfMassTransform><basis x="0" y="0" z="0" w="1"/><origin x="0" y="0" z="-6"/></centerOfMassTransform>'
-         '<linearDamping>0.45</linearDamping><angularDamping>0.74</angularDamping><friction>0.15</friction><rollingFriction>0</rollingFriction><restitution>0</restitution><margin-multiplier>1</margin-multiplier></bone-default>')
+         '<linearDamping>0.65</linearDamping><angularDamping>0.88</angularDamping><friction>0.15</friction><rollingFriction>0</rollingFriction><restitution>0</restitution><margin-multiplier>1</margin-multiplier></bone-default>')
 for r in range(R):
     for c in range(C):
-        extra = '<linearDamping>0.6</linearDamping><angularDamping>0.86</angularDamping>' if r >= R - 2 else ''
+        extra = '<linearDamping>0.75</linearDamping><angularDamping>0.92</angularDamping>' if r >= R - 2 else ''
         o.append(f'  <bone name="{name(c, r)}"><mass>{2.2 - 0.12 * r:.2f}</mass>{extra}</bone>')
-# hanging joints: each bone from the one above (row 0 from the upper back); looser towards the hem
+# hanging joints: each bone from the one above (row 0 from the upper back). (Noah: "it should just flare backwards when I'm
+# running straight, or to the side a little, depending on which direction I'm moving. It should be subtle, not flying all
+# over the place") small swings, held stiff: x (back/forward) a tenth of a radian a joint - the hem can lift ~35 degrees
+# at a sprint - y (sideways) a third of that, almost no twist; the top row, at the shoulder blades, barely moves
 for r in range(R):
-    lim = (0.20 + 0.05 * r, 0.10 + 0.04 * r, 0.06 + 0.02 * r)
-    stiff = (70 - 10 * r, 75 - 9 * r, 80 - 8 * r) if r else (85, 85, 85)
+    lim = (0.10 + 0.01 * r, 0.035 + 0.005 * r, 0.02) if r else (0.04, 0.02, 0.02)
+    stiff = (140 - 12 * r, 160 - 12 * r, 180) if r else (200, 200, 200)
     o.append('  <generic-constraint-default>')
     o += ['    <frameInA><basis x="0" y="0" z="0" w="1"/><origin x="0" y="0" z="0"/></frameInA>', '    <useLinearReferenceFrameA>false</useLinearReferenceFrameA>',
           '    ' + v3('linearLowerLimit', 0), '    ' + v3('linearUpperLimit', 0),
           '    ' + v3('angularLowerLimit', -lim[0], -lim[1], -lim[2]), '    ' + v3('angularUpperLimit', lim[0], lim[1], lim[2]),
-          '    ' + v3('linearStiffness', 0), '    ' + v3('angularStiffness', *stiff), '    ' + v3('linearDamping', 0), '    ' + v3('angularDamping', 1, 1, 1.2),
+          '    ' + v3('linearStiffness', 0), '    ' + v3('angularStiffness', *stiff), '    ' + v3('linearDamping', 0), '    ' + v3('angularDamping', 1.5, 1.5, 1.6),
           '    ' + v3('linearEquilibrium', 0), '    ' + v3('angularEquilibrium', 0), '    ' + v3('linearBounce', 0), '    ' + v3('angularBounce', 0)]
     o.append('  </generic-constraint-default>')
     for c in range(C):
         o.append(f'  <generic-constraint bodyA="{name(c, r)}" bodyB="{name(c, r - 1) if r else "NPC Spine2 [Spn2]"}"/>')
 # across and diagonally: the cloth holds together (no columns sliding past each other)
-o.append('  <stiffspring-constraint-default><minDistanceFactor>0.9</minDistanceFactor><maxDistanceFactor>1.04</maxDistanceFactor><stiffness>60</stiffness><damping>0.9</damping><equilibrium>0.5</equilibrium></stiffspring-constraint-default>')
+o.append('  <stiffspring-constraint-default><minDistanceFactor>0.95</minDistanceFactor><maxDistanceFactor>1.02</maxDistanceFactor><stiffness>90</stiffness><damping>0.9</damping><equilibrium>0.5</equilibrium></stiffspring-constraint-default>')
 for r in range(R):
     for c in range(C - 1):
         o.append(f'  <stiffspring-constraint bodyA="{name(c, r)}" bodyB="{name(c + 1, r)}"/>')
