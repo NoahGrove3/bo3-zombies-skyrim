@@ -162,6 +162,41 @@ namespace bo3z
 		// (Noah: "sometimes when I die I don't get the death screen at all - just the normal Skyrim death") a blow that
 		// lands in the instant the essential flag is off (something clears it each frame; it is set back) killed you for
 		// real. Skyrim's kill itself is turned aside now: you are left on 1 health and the fall takes it from there.
+		// (Noah: "the visual effects are still overwhelming, especially when casting spells at the feet from the explosion")
+		// the explosions your own spells set off are drawn at half size, their flash a little dimmer and tighter (the
+		// damage and its reach are untouched)
+		struct SmallExplosions
+		{
+			static void thunk(RE::Explosion* a_this, float a_delta)
+			{
+				func(a_this, a_delta);
+				if (!a_this) return;
+				auto& rd = a_this->GetExplosionRuntimeData();
+				auto* player = RE::PlayerCharacter::GetSingleton();
+				bool mine = rd.actorOwner.get().get() == player;
+				if (!mine && rd.actorCause) mine = rd.actorCause->actor.get().get() == player;
+				if (!mine) return;
+				auto* o = a_this->Get3D();
+				if (!o) return;
+				// (held every update: the game puts the model back to the ref's own size)
+				const float want = std::max(0.1f, a_this->GetReferenceRuntimeData().refScale / 100.0f) * 0.5f;
+				if (std::abs(o->local.scale - want) > 0.01f) o->local.scale = want;
+				static std::mutex                        m;
+				static std::unordered_set<std::uint32_t> dimmed;
+				{
+					std::scoped_lock l(m);
+					if (dimmed.size() > 500) dimmed.clear();
+					if (!dimmed.insert(a_this->GetFormID()).second) return;
+				}
+				if (rd.light) {
+					auto& ld = rd.light->GetLightRuntimeData();
+					ld.diffuse.red *= 0.6f, ld.diffuse.green *= 0.6f, ld.diffuse.blue *= 0.6f;
+					rd.light->SetLightAttenuation(ld.radius.x * 0.6f);
+				}
+				if (static int said = 0; said++ < 5) logger::info("explosions: one of yours drawn at half size");
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
 		struct PlayerKill
 		{
 			static void thunk(RE::Actor* a_this, RE::Actor* a_attacker, float a_damage, bool a_sendEvent, bool a_ragdollInstant)
@@ -1322,6 +1357,10 @@ namespace bo3z
 			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
 			PlayerUpdate::func = vtbl.write_vfunc(0xAD, PlayerUpdate::thunk);
 			PlayerKill::func = vtbl.write_vfunc(0x10E, PlayerKill::thunk);
+			{
+				REL::Relocation<std::uintptr_t> ex{ RE::VTABLE_Explosion[0] };
+				SmallExplosions::func = ex.write_vfunc(0xA3, SmallExplosions::thunk);
+			}
 			logger::info("hooked PlayerCharacter::Update");
 			{
 				REL::Relocation<std::uintptr_t> ch{ RE::VTABLE_Character[0] };
