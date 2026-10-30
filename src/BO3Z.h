@@ -980,6 +980,7 @@ namespace bo3z
 			bool        bossEnraged{ false };
 			int         perkSel{ 0 };
 			int         altarFocus{ 0 }, chooseFocus{ 0 };
+			int         altarOpen{ 210 };  // the Echo Altar's open section (210 kit, 211 Armory, 212 perks, 213 Thu'um and dragon, 214 trials, 215 whispers; 0 none)
 			// the roll's beams: from each column's rune stone into the heart stone (screen 0..1), how many are lit (0..6)
 			std::array<float, 12> beamFrom{};
 			float       beamToX{ 0 }, beamToY{ 0 };

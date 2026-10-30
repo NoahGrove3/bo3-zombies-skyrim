@@ -1900,6 +1900,9 @@ namespace bo3z
 		// (Noah: one way to drive the altar) a focus moved up and down its rows - D-pad or W/S - and A / Enter to take it
 		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowOutfit, kRowInfuse = 32, kRowRelic = 33 };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
 		int g_focus = kRowClass;
+		// (Noah: "different sections that show a drop down of what's in that section") the one section open (0: none)
+		enum Sec { kSecKit = 210, kSecArmory = 211, kSecPerks = 212, kSecVoice = 213, kSecTrials = 214, kSecWhispers = 215 };
+		int g_open = kSecKit;
 		RE::ObjectRefHandle g_pickAltar;  // the altar whose class picker is up (no class yet): it opens when one is chosen
 
 		void BuyPerk(int perk, RE::TESObjectREFR* a_ref)
@@ -2275,17 +2278,49 @@ namespace bo3z
 				// and crossbows both - the other classes their roll and their second wheel
 				// (Noah, the altar rework) the class; your kit (each item: its next upgrade); the Armory; the Infusion; a
 				// Dragon Priest's relic when one waits; then the brews, the Thu'um, the dragon, the trials
+				// (Noah: "redesign the Echo Altar UI so it's easier to navigate without having to scroll as much") sections, one
+				// open at a time: the class, a waiting relic, then the kit, the Armory, the perks, the Thu'um and dragon, the trials,
+				// the whispers - each a header that opens to its rows - and leave
 				std::vector<int> rows{ kRowClass };  // (Noah: the class is chosen and changed at the altar)
+				const auto sectionOf = [](int id) {
+					if (id >= 40 && id < 100) return static_cast<int>(kSecKit);
+					if (id >= 100 && id < 200) return static_cast<int>(kSecArmory);
+					if (id == kRowPerk) return static_cast<int>(kSecPerks);
+					if (id == kRowShout || id == kRowBond) return static_cast<int>(kSecVoice);
+					if (id >= kRowTrial && id < kRowTrial + 5) return static_cast<int>(kSecTrials);
+					return 0;
+				};
 				if (Classes::Get() >= 0) {
-					for (int id : Kit::Rows()) rows.push_back(id);  // (Noah: "remove the infusion entirely")
 					if (Kit::RelicTokens() > 0) rows.push_back(kRowRelic);
+					const auto kit = Kit::Rows();  // (Noah: "remove the infusion entirely")
+					rows.push_back(kSecKit);
+					if (g_open == kSecKit) for (int id : kit) if (id < 100) rows.push_back(id);
+					if (std::any_of(kit.begin(), kit.end(), [](int id) { return id >= 100; })) {
+						rows.push_back(kSecArmory);
+						if (g_open == kSecArmory) for (int id : kit) if (id >= 100) rows.push_back(id);
+					}
 				}
-				rows.push_back(kRowPerk);
-				if (t >= 0 && Curse::ClaimableShout(t) >= 0) rows.push_back(kRowShout);
-				if (!Movement::BondLocked()) rows.push_back(kRowBond);  // (Noah: the dragon's bond unseen until Whiterun is freed)
+				rows.push_back(kSecPerks);
+				if (g_open == kSecPerks) rows.push_back(kRowPerk);
+				const bool shoutRow = t >= 0 && Curse::ClaimableShout(t) >= 0, bondRow = !Movement::BondLocked();  // (Noah: the dragon's bond unseen until Whiterun is freed)
+				if (shoutRow || bondRow) {
+					rows.push_back(kSecVoice);
+					if (g_open == kSecVoice) {
+						if (shoutRow) rows.push_back(kRowShout);
+						if (bondRow) rows.push_back(kRowBond);
+					}
+				}
 				const bool trials = t >= 0 && Curse::Altar(t).on;
-				if (trials) for (int q : { 0, 1, 4, 3 }) rows.push_back(kRowTrial + q);  // (the Unbroken folded into the Breath; 3 is the class trial)
+				if (trials) {
+					rows.push_back(kSecTrials);
+					if (g_open == kSecTrials) for (int q : { 0, 1, 4, 3 }) rows.push_back(kRowTrial + q);  // (the Unbroken folded into the Breath; 3 is the class trial)
+				}
+				if (r && !Eggs::Whispers(TownOf(r)).empty()) rows.push_back(kSecWhispers);
 				rows.push_back(kRowLeave);
+				if (std::find(rows.begin(), rows.end(), g_focus) == rows.end()) {  // (its section shut: back to its header)
+					const int sec = sectionOf(g_focus);
+					g_focus = sec && std::find(rows.begin(), rows.end(), sec) != rows.end() ? sec : kRowClass;
+				}
 				auto at = std::find(rows.begin(), rows.end(), g_focus);
 				int  i = at == rows.end() ? 0 : static_cast<int>(at - rows.begin());
 				if (nav) {
@@ -2293,6 +2328,10 @@ namespace bo3z
 					g_focus = rows[i];
 					if (g_focus >= kRowTrial && g_focus < kRowTrial + 5) g_trialSel = g_focus - kRowTrial;
 					PlayUi(UiSnd::kMove, 0.7f);  // (a soft stone tick)
+				} else if (side && g_focus >= kSecKit && g_focus <= kSecWhispers) {
+					// right opens the section in focus, left shuts it
+					g_open = side > 0 ? g_focus : (g_open == g_focus ? 0 : g_open);
+					PlayUi(UiSnd::kMove, 0.7f);
 				} else if (side) {
 					if (g_focus == kRowPerk) {
 						g_sel = (g_sel + side + n) % n;
@@ -2300,10 +2339,8 @@ namespace bo3z
 						Kit::InfuseSide(side);  // left / right: which item the Infusion is set on
 					} else if (g_focus == kRowRelic) {
 						Kit::RelicSide(side);   // left / right: which of the two relics
-					} else if (trials && g_focus >= kRowTrial && g_focus < kRowTrial + 5) {
-						g_focus = kRowClass;  // back to the altar's own column
-					} else if (trials) {
-						g_focus = kRowTrial + std::clamp(g_trialSel, 0, 4);  // over to its trials
+					} else if (sectionOf(g_focus) && side < 0) {
+						g_focus = sectionOf(g_focus);  // (left: back up to its header)
 					}
 					PlayUi(UiSnd::kMove, 0.7f);
 				} else {
@@ -2314,6 +2351,11 @@ namespace bo3z
 					const bool menu0 = g_menu;
 					const int  trial0 = g_trialSel;
 					bool       kitOk = false;
+					if (g_focus >= kSecKit && g_focus <= kSecWhispers) {  // a header: open it (shutting the one open), or shut it
+						g_open = g_open == g_focus ? 0 : g_focus;
+						PlayUi(UiSnd::kChoose);
+						return true;
+					}
 					switch (g_focus) {
 					case kRowClass:
 						if (g_show.phase != Show::Idle) {
@@ -2325,7 +2367,7 @@ namespace bo3z
 						}
 						break;
 					case kRowInfuse: kitOk = Kit::Infuse(); break;
-					case kRowRelic: kitOk = Kit::TakeRelic(); if (kitOk && Kit::RelicTokens() <= 0) g_focus = kRowPerk; break;
+					case kRowRelic: kitOk = Kit::TakeRelic(); if (kitOk && Kit::RelicTokens() <= 0) g_focus = kSecKit, g_open = kSecKit; break;
 					case kRowPerk: act(2); break;
 					case kRowShout: act(3); break;
 					case kRowBond: act(5); break;
@@ -2455,7 +2497,7 @@ namespace bo3z
 				auto& h = Hud::Edit();
 				h.perkMenu = g_menu;
 				h.perkSel = g_sel;
-				h.altarFocus = g_focus, h.chooseFocus = g_chooseFocus;
+				h.altarFocus = g_focus, h.chooseFocus = g_chooseFocus, h.altarOpen = g_open;
 				h.rollPhase = static_cast<int>(g_show.phase);
 				h.rollT = g_show.phase == Show::Charging ? std::min(1.0f, g_show.t / kChargeTime) : g_show.phase == Show::Spinning ? std::min(1.0f, g_show.t / gen::kShowSpin) : g_show.phase == Show::Offering ? std::min(1.0f, g_show.t / gen::kShowOffer) : 0.0f;
 				h.rollGun = g_show.phase == Show::Idle || g_show.phase == Show::Charging || g_show.shown < 0 ? -1 : (g_show.bow ? Bows::kIdBase : Arcana::kIdBase) + g_show.shown;

@@ -3049,6 +3049,24 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->AddCircleFilled(coin, 5.5f * k, Fade(IM_COL32(150, 200, 255, 255), can ? 1.0f : 0.5f), 16);
 					dl->AddCircleFilled(coin, 3 * k, Fade(IM_COL32(230, 242, 255, 255), can ? 1.0f : 0.5f), 12);
 				};
+				// (Noah: "make different sections that show a drop down of what's in that section, then you can select what's in it after
+				// expanding it") a section's header: a chevron, its name, one line of what's in it; open, its rows below it
+				const auto section = [&](int id, const std::string& title, const std::string& summary, bool hot) {
+					const bool open = s.altarOpen == id;
+					focusRow(id, y - 6 * k, y + 38 * k);
+					const ImVec2 c{ L + 13 * k, y + 14 * k };
+					const ImU32  cc = s.altarFocus == id && !s.chooseOn ? kGold : hot ? tint : IM_COL32(170, 160, 140, 220);
+					if (open) dl->AddTriangleFilled({ c.x - 7 * k, c.y - 4 * k }, { c.x + 7 * k, c.y - 4 * k }, { c.x, c.y + 5 * k }, cc);   // open: pointing down
+					else dl->AddTriangleFilled({ c.x - 4 * k, c.y - 7 * k }, { c.x - 4 * k, c.y + 7 * k }, { c.x + 5 * k, c.y }, cc);       // shut: pointing right
+					Txt(dl, g_title, 20 * k, { L + 36 * k, y + 3 * k }, open ? kParch : IM_COL32(222, 210, 186, 245), title);
+					if (!summary.empty()) Txt(dl, g_body, 15 * k, { Rr - Measure(g_body, 15 * k, summary).x, y + 7 * k }, hot ? Fade(tint, 0.95f) : IM_COL32(170, 156, 132, 220), summary);
+					y += 42 * k;
+					if (!open) {
+						dl->AddLine({ L, y - 4 * k }, { Rr, y - 4 * k }, IM_COL32(120, 104, 80, 70), 1.0f * k);
+						y += 4 * k;
+					}
+					return open;
+				};
 				// [0] (Noah: "the class chooser built into the Echo Altar") your class - chosen here the first time, changed here after
 				if (!s.chooseOn) {
 					const int  cls = Classes::Get();
@@ -3074,77 +3092,63 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						if (a_asc > 0) Txt(dl, g_body, 14 * k, { sx + 48 * k, sy - 9 * k }, kGold, "+" + std::to_string(a_asc));
 					};
 					auto rgb = [](std::uint32_t c, int a) { return IM_COL32((c >> 16) & 255, (c >> 8) & 255, c & 255, a); };
-					TxtC(dl, g_title, 18 * k, cx, y, kGoldDim, "YOUR KIT", 0.0f, 0);
-					if (s.armorBonus > 0.001f) Txt(dl, g_body, 14 * k, { Rr - Measure(g_body, 14 * k, fmt::format("damage reduction +{:.0f}%", s.armorBonus * 100.0f)).x, y + 2 * k }, kGoldDim, fmt::format("damage reduction +{:.0f}%", s.armorBonus * 100.0f));
-					y += 28 * k;
-					for (const auto& l : s.kitLines) {
-						focusRow(l.id, y - 6 * k, y + 52 * k);
-						bullet({ L, y + 2 * k }, l.id, l.can);
-						const ImU32 col = rgb(l.color, 255);
-						Txt(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, l.carried ? kParch : IM_COL32(170, 160, 140, 230), Upper(l.name) + (l.relic ? "  (RELIC)" : ""));
-						stars(L + 36 * k + Measure(g_title, 19 * k, Upper(l.name) + (l.relic ? "  (RELIC)" : "")).x + 16 * k, y + 14 * k, l.tier, l.asc, col);
-						Txt(dl, g_body, 15 * k, { L + 36 * k, y + 29 * k }, IM_COL32(196, 182, 160, 235), l.info + (l.infusion.empty() ? std::string() : "   -   " + l.infusion));
-						if (l.cost > 0) price(y + 2 * k, l.cost, l.can);
-						y += 56 * k;
-					}
-					if (!s.armoryLines.empty()) {
-						Divider(dl, cx, y, w * 0.30f, k, 0.6f);
-						y += 12 * k;
-						TxtC(dl, g_title, 18 * k, cx, y, kGoldDim, "THE ARMORY", 0.0f, 0);
-						y += 28 * k;
-						for (const auto& l : s.armoryLines) {
-							const bool open = l.cost > 0;
-							focusRow(l.id, y - 6 * k, y + 46 * k);
-							bullet({ L, y + 2 * k }, l.id, l.can);
-							Txt(dl, g_title, 18 * k, { L + 36 * k, y + 3 * k }, open ? kParch : kLockedCol, Upper(l.name));
-							Txt(dl, g_body, 15 * k, { L + 36 * k, y + 27 * k }, open ? IM_COL32(196, 182, 160, 235) : kLockedCol, l.info);
-							if (open) price(y + 2 * k, l.cost, l.can);
-							y += 50 * k;
-						}
-					}
-					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
-					y += 14 * k;
-					// (Noah: "remove the infusion entirely") the Infusion row is gone
-					if (false) {
-						focusRow(32, y - 6 * k, y + 56 * k);
-						bullet({ L, y + 2 * k }, 32, s.infuseCan);
-						const std::string head = s.infuseSpinning ? "INFUSING...  " + Upper(s.infuseSpin) : std::string("INFUSE:  \xE2\x80\xB9 ") + Upper(s.infuseItem) + " \xE2\x80\xBA";
-						Txt(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, s.infuseSpinning ? kGold : kParch, head);
-						Txt(dl, g_body, 15 * k, { L + 36 * k, y + 30 * k }, IM_COL32(196, 182, 160, 235), s.infuseItem.empty() ? std::string("Nothing to infuse yet") : "Now: " + s.infuseNow + "   (" + (g_padLast ? "left / right" : "A / D") + " picks the item)");
-						if (!s.infuseItem.empty() && !s.infuseSpinning) price(y + 2 * k, s.infuseCost, s.infuseCan);
-						y += 60 * k;
-					}
-					// a Dragon Priest's relic, one of two
+					// a Dragon Priest's relic: it waits at the top, never inside a section
 					if (s.relicTokens > 0) {
-						focusRow(33, y - 6 * k, y + 78 * k);
+						focusRow(33, y - 6 * k, y + 56 * k);
 						bullet({ L, y + 2 * k }, 33, true);
 						TxtGold(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, s.relicTokens > 1 ? fmt::format("A DRAGON PRIEST'S RELIC  ({} waiting)", s.relicTokens) : std::string("A DRAGON PRIEST'S RELIC"));
-						const bool two = !s.relicB.empty();
-						for (int o = 0; o < (two ? 2 : 1); ++o) {
-							const bool on = (two ? s.relicSel : 0) == o;
-							const std::string& nm = o == 0 ? s.relicA : s.relicB;
-							const std::string& ds = o == 0 ? s.relicDescA : s.relicDescB;
-							Txt(dl, g_body, 16 * k, { L + 36 * k, y + 30 * k + o * 22 * k }, on ? kGold : IM_COL32(170, 160, 140, 220), (on ? "\xE2\x80\xBA " : "   ") + nm + "  -  " + ds);
-						}
-						y += (two ? 82 : 60) * k;
+						Txt(dl, g_body, 16 * k, { L + 36 * k, y + 30 * k }, kGold, s.relicA + "  -  " + s.relicDescA);
+						y += 62 * k;
 					}
-					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
-					y += 14 * k;
+					int ready = 0;
+					for (const auto& l : s.kitLines) ready += l.can ? 1 : 0;
+					std::string kitSum = fmt::format("{} items", s.kitLines.size()) + (ready ? fmt::format("  -  {} to upgrade", ready) : std::string());
+					if (s.armorBonus > 0.001f) kitSum += fmt::format("  -  armor {:.0f}%", s.armorBonus * 100.0f);
+					if (section(210, "YOUR KIT", kitSum, ready > 0)) {
+						for (const auto& l : s.kitLines) {
+							focusRow(l.id, y - 6 * k, y + 52 * k);
+							bullet({ L, y + 2 * k }, l.id, l.can);
+							const ImU32 col = rgb(l.color, 255);
+							Txt(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, l.carried ? kParch : IM_COL32(170, 160, 140, 230), Upper(l.name) + (l.relic ? "  (RELIC)" : ""));
+							stars(L + 36 * k + Measure(g_title, 19 * k, Upper(l.name) + (l.relic ? "  (RELIC)" : "")).x + 16 * k, y + 14 * k, l.tier, l.asc, col);
+							Txt(dl, g_body, 15 * k, { L + 36 * k, y + 29 * k }, IM_COL32(196, 182, 160, 235), l.info);
+							if (l.cost > 0) price(y + 2 * k, l.cost, l.can);
+							y += 56 * k;
+						}
+						y += 6 * k;
+					}
+					if (!s.armoryLines.empty()) {
+						int openN = 0, canN = 0;
+						for (const auto& l : s.armoryLines) openN += l.cost > 0 ? 1 : 0, canN += l.can ? 1 : 0;
+						const std::string armSum = fmt::format("{} to unlock", s.armoryLines.size()) + (openN ? fmt::format("  -  {} open now", openN) : std::string());
+						if (section(211, "THE ARMORY", armSum, canN > 0)) {
+							for (const auto& l : s.armoryLines) {
+								const bool open = l.cost > 0;
+								focusRow(l.id, y - 6 * k, y + 46 * k);
+								bullet({ L, y + 2 * k }, l.id, l.can);
+								Txt(dl, g_title, 18 * k, { L + 36 * k, y + 3 * k }, open ? kParch : kLockedCol, Upper(l.name));
+								Txt(dl, g_body, 15 * k, { L + 36 * k, y + 27 * k }, open ? IM_COL32(196, 182, 160, 235) : kLockedCol, l.info);
+								if (open) price(y + 2 * k, l.cost, l.can);
+								y += 50 * k;
+							}
+							y += 6 * k;
+						}
+					}
 				}
 				// [3] brews: a row of medallions, the chosen one described under it
-				{
-					const auto menu = Perks::Menu();  // (Noah: each class its own perks) the shared draughts, then your class's
+				const auto perkMenu = Perks::Menu();
+				int perksOwned = 0;
+				for (int q : perkMenu) perksOwned += s.perkStacks[q] > 0 ? 1 : 0;
+				if (section(212, "PERKS", fmt::format("{} of {} taken", perksOwned, perkMenu.size()), false)) {
+					const auto& menu = perkMenu;  // (Noah: each class its own perks) the shared draughts, then your class's
 					const int  n = std::max(1, static_cast<int>(menu.size()));
-					int owned = 0;
-					for (int q : menu) {
-						owned += s.perkStacks[q] > 0 ? 1 : 0;
-					}
+					const int  owned = perksOwned;
 					const int  sel = menu.empty() ? 0 : menu[std::clamp(s.perkSel, 0, n - 1)];
 					const auto& p = gen::kPerks[sel];
 					const int  have = s.perkStacks[sel];
 					focusRow(3, y - 6 * k, y + 36 * k + std::min(44 * k, (Rr - L) / n - 4 * k) + 12 * k + 72 * k);
 					bullet({ L, y + 2 * k }, 3, s.points >= p.cost && have == 0);
-					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, kParch, "TAKE A PERK");
+					Txt(dl, g_title, 19 * k, { L + 36 * k, y + 3 * k }, kParch, "TAKE A PERK");
 					const std::string rule = owned >= n ? "every perk taken - death takes them all" : "one of each a life - death takes them all";
 					Txt(dl, g_body, 16 * k, { Rr - Measure(g_body, 16 * k, rule).x, y + 6 * k }, IM_COL32(170, 156, 132, 220), rule);
 					y += 36 * k;
@@ -3180,12 +3184,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					TxtWrap(dl, g_body, 16 * k, { L, y + 28 * k }, IM_COL32(190, 178, 156, 230), std::string(gen::kPerkDesc[sel]), Rr - L, 2);
 					y += 78 * k;
 				}
-				// [4] the freed city's Thu'um
-				if (shout) {
+				// [4]-[5] the freed city's Thu'um and the dragon: one section
+				const bool voiceOpen = (shout || !s.bondLocked) && section(213, shout ? "THU'UM AND DRAGON" : "YOUR DRAGON", shout ? std::string("a Thu'um to learn") : fmt::format("bond {} of 3", std::clamp(s.dragonBond, 0, 3)), shout);
+				if (shout && voiceOpen) {
 					const auto& sh = gen::kShouts[s.shrineShout];
 					const ImU32 scol = IM_COL32((sh.color >> 16) & 0xFF, (sh.color >> 8) & 0xFF, sh.color & 0xFF, 255);
-					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
-					y += 14 * k;
 					focusRow(4, y - 6 * k, y + 58 * k);
 					bullet({ L, y + 2 * k }, 4, true);
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, scol, "LEARN THE THU'UM: " + std::string(sh.label), 1.5f * k, scol);
@@ -3193,7 +3196,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					y += 64 * k;
 				}
 				// [5] the glider's dragon: its next bond (Noah: unseen until Whiterun is freed)
-				if (!s.bondLocked) {
+				if (!s.bondLocked && voiceOpen) {
 					static constexpr const char* kBond[4] = { "", "WIND-RIDER", "TALON STRIKE", "ALDUIN'S THRALL" };
 					static constexpr const char* kWhat[4] = { "",
 						"Jump mid-glide: two quick wing-beats and a great one to climb - its fire turns blue",
@@ -3202,8 +3205,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					static constexpr ImU32 kCol[4] = { IM_COL32(220, 214, 200, 255), IM_COL32(170, 225, 255, 255), IM_COL32(120, 190, 255, 255), IM_COL32(255, 92, 48, 255) };
 					const int  have = std::clamp(s.dragonBond, 0, 3), next = have + 1;
 					const bool maxed = have >= 3;
-					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
-					y += 14 * k;
 					const bool can = !maxed && !s.bondLocked && s.points >= Movement::kBondCost[std::min(have, 2)];
 					focusRow(5, y - 6 * k, y + 66 * k);
 					bullet({ L, y + 2 * k }, 5, can);
@@ -3222,17 +3223,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					y += 72 * k;
 				}
 				// [5b] the city's trials: any three of the five, then its Dragon Priest
-				if (s.trialsOn) {
+				int trialsDone = 0;
+				for (int q = 0; q < 5; ++q) trialsDone += (s.trialDone >> q) & 1;
+				if (s.trialsOn && section(214, "TRIALS OF " + Upper(s.trialCity), s.trialActive == 6 ? std::string("the Dragon Priest walks") : fmt::format("{} of 4 done", std::min(trialsDone, 4)), s.trialActive > 0)) {
 					const float TL = L, TR = Rr, tcx = cx;
-					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
-					y += 14 * k;
-					TxtC(dl, g_title, 23 * k, tcx, y, IM_COL32(232, 214, 176, 255), "TRIALS OF " + Upper(s.trialCity), 2.0f * k, IM_COL32(0, 0, 0, 200));
-					int doneCount = 0;
-					for (int q = 0; q < 5; ++q) {
-						doneCount += (s.trialDone >> q) & 1;
-					}
+					const int doneCount = trialsDone;
 					const bool party = Party::FriendCount() > 0;  // (in a party: three of your own each, then the night's waves together)
 					const bool full = doneCount >= 4 || s.trialActive == 6;
+					y -= 34 * k;  // (the section's header names the city)
 					TxtC(dl, g_body, 16 * k, tcx, y + 34 * k, IM_COL32(196, 182, 160, 235), party ? "The three shared trials with your party's help, your class's trial on your own  -  " + std::to_string(std::min(doneCount, 4)) + " of 4 done"
 					                                                                                     : "Three shared trials and your class's own, in any order  -  " + std::to_string(std::min(doneCount, 4)) + " of 4 done");
 					float ty = y + 66 * k;
@@ -3270,11 +3268,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					y = ty + 88 * k;
 				}
 				// [5c] (Noah) the hidden quest's whispers: never told outright - a line more for each step found
-				if (!s.whispers.empty()) {
-					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
-					y += 14 * k;
-					TxtC(dl, g_title, 21 * k, cx, y, kIce, "WHISPERS", 2.0f * k, kRune);
-					y += 36 * k;
+				if (!s.whispers.empty() && section(215, "WHISPERS", fmt::format("{} heard", s.whispers.size()), false)) {
 					for (const auto& wsp : s.whispers) {
 						TxtWrap(dl, g_body, 16 * k, { L, y }, IM_COL32(190, 210, 240, 235), "\xE2\x80\x9C" + wsp + "\xE2\x80\x9D", Rr - L, 2);
 						y += 46 * k;
@@ -3313,8 +3307,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Divider(dl, cx, b.y - 58 * k, w * 0.38f, k, 0.7f);
 				{
 					const bool        ps = Settings::PlayStationIcons();
-					const std::string hint = g_padLast ? std::string("D-pad: move   \xC2\xB7   ") + (ps ? "X" : "A") + ": select   \xC2\xB7   " + (ps ? "O" : "B") + ": leave"
-					                                   : std::string("W S: move   \xC2\xB7   A D: change item   \xC2\xB7   Enter: select");
+					const std::string hint = g_padLast ? std::string("D-pad: move, open / shut   \xC2\xB7   ") + (ps ? "X" : "A") + ": select   \xC2\xB7   " + (ps ? "O" : "B") + ": leave"
+					                                   : std::string("W S: move   \xC2\xB7   D / A: open / shut   \xC2\xB7   Enter: select");
 					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), hint);
 				}
 			} else if (s.rollPhase > 0) {
