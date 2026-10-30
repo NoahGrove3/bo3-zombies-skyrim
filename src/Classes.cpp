@@ -2766,7 +2766,8 @@ namespace bo3z::Classes
 				}
 			case coffer::kRanger: return { { "GondorianRangerArmor.esp", 0x000D64 }, { "GondorianRangerArmor.esp", 0x000D66 }, { "GondorianRangerArmor.esp", 0x000D65 }, { "GondorianRangerArmor.esp", 0x000D63 }, { "GondorianRangerArmor.esp", 0x000D79 } };
 			case coffer::kSpellsword:
-				if (a_female) return { { "ValkyrieSwordShield.esp", 0x00285D }, { "ValkyrieSwordShield.esp", 0x00285A }, { "ValkyrieSwordShield.esp", 0x00285B }, { "ValkyrieSwordShield.esp", 0x002859 }, { "ValkyrieSwordShield.esp", 0x003890 } };
+				// (Noah: "remove the cape from the [Spellsword] class, just so that we don't have to worry about it anymore")
+				if (a_female) return { { "ValkyrieSwordShield.esp", 0x00285D }, { "ValkyrieSwordShield.esp", 0x00285A }, { "ValkyrieSwordShield.esp", 0x00285B }, { "ValkyrieSwordShield.esp", 0x002859 } };
 				return { { "DragonLordSwords.esp", 0x0012D3 }, { "DragonLordSwords.esp", 0x0012D2 }, { "DragonLordSwords.esp", 0x0012CE }, { "DragonLordSwords.esp", 0x0012CD } };
 			default: return {};
 			}
@@ -2841,6 +2842,13 @@ namespace bo3z::Classes
 		if (!p || c < 0) return;
 		const int  rating = Kit::ArmourRating(c);
 		const auto set = SetForms(c, std::max(0, Kit::ArmourTier(c)));
+		// (the Valkyrie cape, no longer the set's: taken back from a character given it before)
+		if (static auto* cape = Lookup(0x003890, "ValkyrieSwordShield.esp"); cape) {
+			if (auto* ca = cape->As<RE::TESObjectARMO>(); ca && p->GetItemCount(ca) > 0 && !ItemMenusOpen()) {
+				p->RemoveItem(ca, p->GetItemCount(ca), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				logger::info("classes: the Valkyrie cape taken back (no longer part of the set)");
+			}
+		}
 		static auto* lightKw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x06BBD3);  // ArmorLight
 		static auto* heavyKw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x06BBD2);  // ArmorHeavy (no heavy armour's weight on you)
 		for (int k = 0; k < 4; ++k) {
