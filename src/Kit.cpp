@@ -793,6 +793,50 @@ namespace bo3z::Kit
 		g_offer[0] = g_offer[1] = -1;
 		return true;
 	}
+	// (Noah: "when I killed the Minotaur mini boss it said all wonder weapon parts acquired, 5,000 cursed essence instead -
+	// that's still the old system ... bosses drop based on where the game's currently at") a mini-boss's spoils follow where
+	// your class stands: the next Armory item that is open to you and not yet yours, free; failing that, a free upgrade of
+	// your lowest-tier item that may climb (its freed-city gate met); with every item at its height, Cursed Essence that
+	// grows with the night
+	std::string MiniBossSpoils(int a_night)
+	{
+		const int c = Cls();
+		if (c < 0) return {};
+		auto&      st = g_cls[c];
+		const auto defs = Defs(c);
+		const int  freed = Freed();
+		int best = -1;
+		for (int i = 0; i < static_cast<int>(defs.size()); ++i) {
+			if ((st.owned >> i & 1) || defs[i].at >= kGone || (freed < defs[i].at && !Testing())) continue;
+			if (best < 0 || defs[i].at < defs[best].at) best = i;
+		}
+		if (best >= 0) {
+			st.owned |= 1u << best;
+			Grant(c, best, false);
+			logger::info("kit: a mini-boss's spoils - {} ({}) free", ItemName(c, best), Classes::Name(c));
+			return ItemName(c, best) + " - added to your kit";
+		}
+		int low = -1;
+		for (int i = 0; i < static_cast<int>(defs.size()); ++i) {
+			if (!(st.owned >> i & 1) || defs[i].at >= kGone) continue;
+			const int t = ItemTier(c, i);
+			if (t < 0 || t >= kMaxTier || (freed < UpgradeGate(t + 1) && !Testing())) continue;
+			if (low < 0 || t < ItemTier(c, low)) low = i;
+		}
+		if (low >= 0) {
+			const std::string was = ItemName(c, low);
+			const int t = ItemTier(c, low);
+			if (Step(c, low)) {
+				st.upgrades = static_cast<std::uint8_t>(std::min(255, st.upgrades + 1));
+				SyncWeapons(true);
+				logger::info("kit: a mini-boss's spoils - {} up to tier {} ({})", was, t + 1, Classes::Name(c));
+				return was + " - " + (t + 1 <= 3 ? std::string(TierLabel(t + 1)) : "Ascend " + std::to_string(t + 1 - 3)) + ", free";
+			}
+		}
+		const int pts = 5000 + 1000 * std::max(0, a_night);
+		Points::Add(pts);
+		return fmt::format("{} Cursed Essence", pts);
+	}
 	int  RelicTokens() { return g_tokens; }
 	void OnPriestSlain()
 	{

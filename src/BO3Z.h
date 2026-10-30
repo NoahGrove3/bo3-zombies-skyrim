@@ -1147,6 +1147,7 @@ namespace bo3z
 		int   ArmourTier(int a_cls);              // (the class armour sets) the set's upgrades (0..), -1 not owned
 		int   ArmourRating(int a_cls);            // 10, and 10 more for each of its upgrades
 		float ArmorResist();                      // 0 .. 0.20 of the night's blows taken off (5% a set tier)
+		std::string MiniBossSpoils(int a_night);  // a mini-boss's spoils by where your class stands: an open Armory item, else a free upgrade, else essence
 		float ArmorAscendMult();                  // 1 + 5% for each Ascend of the class's armor set (on all your side deals the dead)
 		float AuraCostMult();                     // (co-op) a Destruction mage in the party: spells cost less
 		float AuraAmmoMult();                     // (co-op) a Ranger in the party: ammo grows back sooner

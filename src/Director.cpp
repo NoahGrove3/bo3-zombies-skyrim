@@ -1266,10 +1266,8 @@ namespace bo3z
 		std::uint8_t g_miniSeen = 0;
 		void MiniBossReward()
 		{
-			if (!Echo::AwardNextPart()) {
-				Points::Refund(5000);
-				Hud::Banner("Every wonder part is yours - 5,000 Cursed Essence instead", 5.0f);
-			}
+			const std::string got = Kit::MiniBossSpoils(g_current);
+			if (!got.empty()) Hud::Banner("THE MINI-BOSS'S SPOILS: " + got, 5.0f);
 		}
 		void MiniBossSlain()
 		{
@@ -1962,7 +1960,7 @@ namespace bo3z
 				primed = true, g_miniSeen = s.pad[1];  // (joined late: only what falls from now on)
 			} else if (s.pad[1] != g_miniSeen) {
 				g_miniSeen = s.pad[1];
-				Hud::Banner("THE MINI-BOSS FALLS - A WONDER PART FOR THE PARTY", 5.0f);
+				Hud::Banner("THE MINI-BOSS FALLS - SPOILS FOR THE PARTY", 5.0f);
 				MiniBossReward();
 			}
 			if (s.phase == 2) {
@@ -4387,6 +4385,12 @@ namespace bo3z
 			if (night && !wasNight) DuskWords(a_player);
 			wasNight = night;
 			if (dawnTalk > 0 && (dawnTalk -= a_delta) <= 0) DawnWords(a_player);
+			// (Noah: "the NPCs respawning delayed by like 15 seconds after a night has been completed - I killed the last zombie
+			// and my lingering spell was hurting NPCs because they spawned in instantly") they wait 15 s after the night ends
+			static float backIn = 0;
+			if (night) backIn = 15.0f;
+			else if (backIn > 0) backIn -= a_delta;
+			if (!night && backIn > 0) return;
 			if (!night) {
 				if (!g_sheltered.empty()) {
 					for (auto& h : g_sheltered) {
