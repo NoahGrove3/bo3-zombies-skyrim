@@ -1097,6 +1097,7 @@ namespace bo3z::Kit
 		if (c == 3 && ArmourTier(3) >= 1 && p->IsInCombat()) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.006f);  // (Tier I: mending in a fight)
 		if (c == 1 && ArmourTier(1) >= 2) av->RestoreActorValue(RE::ActorValue::kMagicka, av->GetPermanentActorValue(RE::ActorValue::kMagicka) * 0.012f);          // (Tier II: magicka comes back faster)
 	}
+	void TickMadGlow(float a_delta);
 	void Tick(float a_delta)
 	{
 		// the Infusion's spin: the names flicker, slowing, then it lands
