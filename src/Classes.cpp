@@ -2834,7 +2834,7 @@ namespace bo3z::Classes
 
 	// ---- (Noah: the class armour sets - "each armour set its own way of gaining power, just like their weapons") ----
 	// Summoner: the Arcane Conjurer Robes; Destruction: the Black Mage's robes, its look growing with the set's tiers;
-	// Ranger: the Gondorian Ranger's; Spellsword: the Valkyrie's (a woman) or the DragonLord's robe armour and plume helm
+	// Ranger: the Gondorian Ranger's; Spellsword: the Valkyrie's (a woman) or the DragonLord's robe armour and helmet
 	// (a man). Every piece light armour weighing 1 (no slowing, no noise); the set's armour 10 at the start and 10 more for
 	// each of its upgrades, shared out over its pieces (Kit::ArmourRating)
 	namespace
@@ -2855,7 +2855,9 @@ namespace bo3z::Classes
 			case coffer::kSpellsword:
 				// (Noah: "remove the cape from the [Spellsword] class, just so that we don't have to worry about it anymore")
 				if (a_female) return { { "ValkyrieSwordShield.esp", 0x00285D }, { "ValkyrieSwordShield.esp", 0x00285A }, { "ValkyrieSwordShield.esp", 0x00285B }, { "ValkyrieSwordShield.esp", 0x002859 } };
-				return { { "DragonLordSwords.esp", 0x0012D3 }, { "DragonLordSwords.esp", 0x0012D2 }, { "DragonLordSwords.esp", 0x0012CE }, { "DragonLordSwords.esp", 0x0012CD } };
+				// (Noah: "change the spell sword helmet for the male character to the other option ... I don't like the way the Dragon Lord
+				// plume helmet looks") the DragonLord Helmet, not the plume
+				return { { "DragonLordSwords.esp", 0x0012D3 }, { "DragonLordSwords.esp", 0x0012CF }, { "DragonLordSwords.esp", 0x0012CE }, { "DragonLordSwords.esp", 0x0012CD } };
 			default: return {};
 			}
 		}
@@ -2934,6 +2936,16 @@ namespace bo3z::Classes
 			if (auto* ca = cape->As<RE::TESObjectARMO>(); ca && p->GetItemCount(ca) > 0 && !ItemMenusOpen()) {
 				p->RemoveItem(ca, p->GetItemCount(ca), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 				logger::info("classes: the Valkyrie cape taken back (no longer part of the set)");
+			}
+		}
+		// (the DragonLord plume helmet, no longer the set's: the plain helmet in its place - worn if the plume was)
+		if (static auto* plume = Lookup(0x0012D2, "DragonLordSwords.esp"); plume && !ItemMenusOpen()) {
+			if (auto* pa = plume->As<RE::TESObjectARMO>(); pa && p->GetItemCount(pa) > 0) {
+				const bool worn = p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kHead) == pa || p->GetWornArmor(RE::BGSBipedObjectForm::BipedObjectSlot::kHair) == pa;
+				p->RemoveItem(pa, p->GetItemCount(pa), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				auto* helm = Lookup(0x0012CF, "DragonLordSwords.esp");
+				if (auto* hb = helm ? helm->As<RE::TESBoundObject>() : nullptr; hb && c == coffer::kSpellsword && !PlayerFemale()) GiveItem(p, hb, p->GetItemCount(hb) > 0 ? 0 : 1, worn);
+				logger::info("classes: the DragonLord plume helmet swapped for the plain helmet{}", worn ? " (worn)" : "");
 			}
 		}
 		static auto* lightKw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x06BBD3);  // ArmorLight
