@@ -241,7 +241,7 @@ namespace bo3z::Kit
 		// the price and the gate of an item's next upgrade (a_next: the tier it would reach)
 		int UpgradeCost(int a_next)
 		{
-			const int base = a_next <= 1 ? 2000 : a_next == 2 ? 5000 : a_next == 3 ? 12000 : 15000 + 4000 * (a_next - 4);
+			const int base = a_next <= 1 ? 4000 : a_next == 2 ? 6000 : a_next == 3 ? 8000 : 10000 + 2000 * (a_next - 4);  // (Noah: 4,000 / 6,000 / 8,000, then 10,000 and 2,000 more each Ascend)
 			return PowerUps::FireSale() ? base / 2 : base;  // (Merchant's Blessing: half)
 		}
 		int UpgradeGate(int a_next) { return a_next <= 1 ? 0 : a_next == 2 ? 2 : a_next == 3 ? 4 : 6; }
@@ -341,16 +341,18 @@ namespace bo3z::Kit
 			if (c < 0 || g_tokens <= 0) return;
 			auto left = RelicsLeft(c);
 			std::shuffle(left.begin(), left.end(), g_rng);
+			// (Noah: "Dragon Priests should drop one relic for the class the player is using, retrieved at the Echo Altar") one
+			// relic, no choice of two
 			int n = 0;
-			for (int r : left) if (n < 2) g_offer[n++] = r;
-			if (n < 2) {  // (every relic of your class won: a free upgrade of one of your items instead)
+			for (int r : left) if (n < 1) g_offer[n++] = r;
+			if (n < 1) {  // (every relic of your class won: a free upgrade of one of your items instead)
 				std::vector<int> items;
 				for (int i = 0; i < static_cast<int>(Defs(c).size()); ++i) {
 					const int t = ItemTier(c, i);
 					if (t >= 0 && t < kMaxTier && (Freed() >= UpgradeGate(t + 1) || Testing())) items.push_back(i);
 				}
 				std::shuffle(items.begin(), items.end(), g_rng);
-				for (int i : items) if (n < 2) g_offer[n++] = 100 + i;
+				for (int i : items) if (n < 1) g_offer[n++] = 100 + i;
 			}
 			g_relicSel = 0;
 		}
@@ -1067,15 +1069,16 @@ namespace bo3z::Kit
 			Classes::GiveArmourSet(c, 0, true);
 			Hud::Banner(Classes::ArmourSetName(c, 0) + " - your class's armor, upgradable at the Echo Altar", 5.0f);
 		}
+		// (Noah: "remove the infusion entirely") every Infusion a save still carries comes off, its price back
 		int refunds = 0;
 		for (auto& st : g_cls) {
-			for (auto& f : st.infusion) if (f == 6 || f == 7) f = 0, ++refunds;
-			for (auto& f : st.relicInfusion) if (f == 6 || f == 7) f = 0, ++refunds;
+			for (auto& f : st.infusion) if (f) f = 0, ++refunds;
+			for (auto& f : st.relicInfusion) if (f) f = 0, ++refunds;
 		}
 		if (refunds) {
 			Points::Add(4000 * refunds);
-			Hud::Banner(fmt::format("Cluster and Piercing are gone from the Infusions - {} Cursed Essence back", 4000 * refunds), 5.0f);
-			logger::info("kit: {} Cluster/Piercing Infusions taken off, refunded", refunds);
+			Hud::Banner(fmt::format("The Infusions are gone from the altars - {} Cursed Essence back", Num(4000 * refunds)), 5.0f);
+			logger::info("kit: {} Infusions taken off, refunded", refunds);
 		}
 		// the Spellsword's relic spells: their names, a castable price (never above 100), and a save from the two-handers'
 		// time - the two-handers go back, the spells their relics now are are known

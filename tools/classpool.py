@@ -21,6 +21,7 @@ SKY = 'Skyrim.esm'
 OURS = 'CurseOfAlduin.esp'
 DB = 'Dragonborn.esm'
 DG = 'Dawnguard.esm'
+APOC = 'Apocalypse - Magic of Skyrim.esp'
 # Skyrim's own bolts (not in a tome list): form id, cost, concentration, school
 VANILLA = {'Firebolt': (0x012FD0, 45), 'Fireball': (0x01C789, 132), 'Incinerate': (0x10F7ED, 240), 'Ice Spike': (0x02B96C, 40), 'Ice Storm': (0x045F9C, 124),
            'Icy Spear': (0x10F7EC, 228), 'Lightning Bolt': (0x02DD29, 50), 'Chain Lightning': (0x045F9D, 144), 'Thunderbolt': (0x10F7EE, 252)}
@@ -76,6 +77,14 @@ EXTRA = {(SKY, 'Conjure Flame Atronach'): (0x0204C3, 150, False), (SKY, 'Conjure
          (SKY, 'Flame Cloak'): (0x03AE9F, 268, False), (SKY, 'Frost Cloak'): (0x03AEA2, 243, False), (SKY, 'Lightning Cloak'): (0x03AEA3, 274, False),
          (SKY, 'Wall of Flames'): (0x035D7F, 96, True), (SKY, 'Wall of Frost'): (0x035D80, 88, True), (SKY, 'Wall of Storms'): (0x035D81, 101, True),
          (SKY, 'Lightning Storm'): (0x07E8E5, 184, True), (SKY, 'Blizzard'): (0x07E8E4, 520, False), (SKY, 'Fire Storm'): (0x07A82B, 665, False)}
+# (Noah: "some of the spells don't go to tier 3 - new 4th spells where possible") the short Destruction ladders' fourth,
+# Legendary rungs from Apocalypse - appended after every other spell (a spell's index is in the saves); their damage comes
+# from the scripted spells they cast (PROCS: those hit as the rung itself)
+APPEND = {('destruction', 'shock'): [(APOC, 'Lightning Strike')], ('destruction', 'cloaks'): [(APOC, 'Ravaging Storm', 'shock')],
+          ('destruction', 'walls'): [(APOC, 'Volcano', 'fire')], ('destruction', 'storms'): [(APOC, 'Flamestrike', 'fire')]}
+EXTRA.update({(APOC, 'Lightning Strike'): (0x002878, 361, False), (APOC, 'Ravaging Storm'): (0x15E728, 431, False),
+              (APOC, 'Volcano'): (0x04733C, 636, False), (APOC, 'Flamestrike'): (0x02E0C0, 664, False)})
+PROCS = {(APOC, 'Ravaging Storm'): [0x15E725], (APOC, 'Volcano'): [0x0834B3], (APOC, 'Flamestrike'): [0x02E0BD]}
 ELEMENTS = ['fire', 'frost', 'shock', 'poison', 'corrosion', 'sun', 'blood', 'arcane']  # (corrosion took disease's place: nothing used it)
 
 
@@ -101,16 +110,22 @@ def load():
 def main():
     known = load()
     rows = []
+    def row(cls, lad, label, elem, r, key, total):
+        rel = key[2] if len(key) > 2 else elem
+        key = key[:2]
+        fid, cost, conc, school = known[key]
+        last = r == total - 1
+        return dict(id=f'{cls}_{lad}_{r + 1}', plugin=key[0], formId=f'{fid:06X}', name=key[1], mod=key[0], element=rel,
+                    school=school.lower() if school else 'destruction', cast='concentration' if conc else 'fire-and-forget',
+                    cls=cls, ladder=f'{cls}_{lad}', ladderLabel=label, rung=r + 1, rungs=total,
+                    tier=3 if last else min(r, 2), baseCost=cost, cost=max(8, min(60, round(cost * 0.25))), power=1.0)
     for cls, lad, label, elem, rungs in LADDERS:
+        total = len(rungs) + len(APPEND.get((cls, lad), []))
         for r, key in enumerate(rungs):
-            rel = key[2] if len(key) > 2 else elem
-            key = key[:2]
-            fid, cost, conc, school = known[key]
-            last = r == len(rungs) - 1
-            rows.append(dict(id=f'{cls}_{lad}_{r + 1}', plugin=key[0], formId=f'{fid:06X}', name=key[1], mod=key[0], element=rel,
-                             school=school.lower() if school else 'destruction', cast='concentration' if conc else 'fire-and-forget',
-                             cls=cls, ladder=f'{cls}_{lad}', ladderLabel=label, rung=r + 1, rungs=len(rungs),
-                             tier=3 if last else min(r, 2), baseCost=cost, cost=max(8, min(60, round(cost * 0.25))), power=1.0))
+            rows.append(row(cls, lad, label, elem, r, key, total))
+    for cls, lad, label, elem, rungs in LADDERS:
+        for k, key in enumerate(APPEND.get((cls, lad), [])):
+            rows.append(row(cls, lad, label, elem, len(rungs) + k, key, len(rungs) + len(APPEND[(cls, lad)])))
     sheet = dict(sheet='coffer_spells', about='The Echo Altar\'s spells, one pool per class (tools/classpool.py): the altar rolls a ladder\'s first rung; '
                  'the class\'s own upgrade climbs it, its last rung Legendary.', columns=list(rows[0].keys()), count=len(rows), rows=rows)
     (ROOT / 'sheets' / 'coffer_spells.json').write_text(json.dumps(sheet, indent=1, ensure_ascii=False) + '\n')
@@ -132,6 +147,15 @@ def main():
         name = r['name'].replace('"', '\\"')
         h.append(f'\t\t{{ "{r["plugin"]}", 0x{r["formId"]}, "{name}", k{r["element"].capitalize()}, {r["tier"]}, {r["cost"]}, {str(r["cast"] == "concentration").lower()}, 1.0f, '
                  f'k{r["cls"].capitalize()}, {ladders.index(r["ladder"])}, {r["rung"]}, {r["rungs"]}, "{r["ladderLabel"]}" }},')
+    h += ['\t} };']
+    procs = []
+    for (plugin, name), ids in PROCS.items():
+        idx = next(i for i, r in enumerate(rows) if r['plugin'] == plugin and r['name'] == name)
+        procs += [(idx, plugin, pid) for pid in ids]
+    h.append('\t// the spells a rung casts by script (their hits are the rung\'s): its index in kSpells, the proc\'s plugin and id')
+    h.append('\tstruct Proc { int spell; const char* plugin; std::uint32_t id; };')
+    h.append(f'\tinline constexpr std::array<Proc, {len(procs)}> kProcs{{ {{')
+    h += [f'\t\t{{ {i}, "{pl}", 0x{pid:06X} }},' for i, pl, pid in procs]
     h += ['\t} };', '}', '']
     (ROOT / 'src' / 'CofferSpells.h').write_text('\n'.join(h))
     print(f'classpool: {len(rows)} spells in {len(ladders)} ladders')

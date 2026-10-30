@@ -908,17 +908,7 @@ namespace bo3z
 								if (g_rider.size() > 256) g_rider.clear();
 								g_rider[t->GetFormID()] = now;
 								Forms::CastOnce(player, sp, t, 1.0f, player);
-								// (Noah: "only the one I'm holding - multiple spells from one weapon as an upgrade") Twin Resonance is
-								// earned: a Legendary touch on the blade brings your other touch along, a quarter as strong
-								if (Arcana::Ups(bi) >= 3) {  // (the altar rework: Tier III and up)
-									for (int other : Arcana::Carried()) {
-										if (other == bi || Arcana::ClassOf(other) != 3) continue;
-										if (auto* sp2 = Arcana::Spell(other); sp2 && sp2->GetSpellType() == RE::MagicSystem::SpellType::kSpell) {
-											Forms::CastOnce(player, sp2, t, 0.25f, player);
-											break;
-										}
-									}
-								}
+								// (Noah: "remove twin resonance from the spellsword class") only the one spell rides the blade
 								static int told = 0;
 								if (told++ < 5) logger::info("spellsword: the blade struck with {}", sp->GetName());
 							}
@@ -983,7 +973,7 @@ namespace bo3z
 								share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow * UpgradeMult(Classes::CrossbowLevel(w) + Kit::CrossbowAscends(Classes::CrossbowElement(w))) : gen::kShareMelee * (gear >= 0 ? UpgradeMult(gear) : 1.0f);
 								// (the class audit: the Spellsword's blade, single-target, trailed every other class) its blade a half
 								// again; a two-handed wonder's slower swing made up for
-								if (Classes::Get() == 3 && w == Classes::SpellswordBlade()) share *= 1.5f;
+								if (Classes::Get() == 3 && w == Classes::SpellswordBlade()) share *= 1.5f * (Kit::ArmourTier(3) >= 3 ? 1.15f : 1.0f);  // (its set's Tier III: 15% more)
 								else if (Classes::Get() == 3 && gear >= 0 && w->IsTwoHandedSword()) share *= 1.6f;
 							} else if (src->Is(RE::FormType::Spell)) {
 								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);

@@ -3104,8 +3104,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);
 					y += 14 * k;
-					// the Infusion: the altar's roll
-					{
+					// (Noah: "remove the infusion entirely") the Infusion row is gone
+					if (false) {
 						focusRow(32, y - 6 * k, y + 56 * k);
 						bullet({ L, y + 2 * k }, 32, s.infuseCan);
 						const std::string head = s.infuseSpinning ? "INFUSING...  " + Upper(s.infuseSpin) : std::string("INFUSE:  \xE2\x80\xB9 ") + Upper(s.infuseItem) + " \xE2\x80\xBA";

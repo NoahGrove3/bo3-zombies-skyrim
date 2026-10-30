@@ -856,8 +856,7 @@ def guide_text():
              "Kill the Echo and the Curse of Alduin is broken - the nights are only nights again."),
            "[pagebreak]", h("The Hall of the Awakened"),
            p("With the curse broken, the Reliquary becomes the <b>Hall of the Awakened</b>. Its stations:"),
-           p("<b>Alduin's Bane</b> - a blade of dragon bone whose magic answers your path: the Summoner raises Draugr Death Overlords from what it kills, the Battle-mage looses a master Destruction spell on every hit, "
-             "the Spellsword a master Grasp, and the Ranger's every swing sends a wind slash that hurls the dead far away. Its kills fill it with souls; full, Alduin's shade rains meteors round you. "
+           p("<b>Alduin's Bane</b> - a blade of dragon bone: every swing sends a wind slash down the line that hurls the dead far away. Its kills fill it with souls; full, Alduin's shade rains meteors round you. "
              "<b>The First Dragonborn's Regalia</b> - while you wear its robes, everything you wield hits 25% harder, every blow on you is 25% softer, and your magic costs a quarter less and returns faster. "
              "<b>The Bone-Wyrm's Skull</b> - your dragon wears Alduin's bones (touch it again to change back)."),
            p("<b>Brazier of the Endless Night</b> - while it burns the curse comes back and never sleeps: each night's last wave brings the next night at once. A freed city is still safe. "
@@ -990,7 +989,7 @@ for name, hx in T['weap_draugr_gs']['subs']:
     elif name == 'FULL': b = z("Alduin's Bane")
     elif name == 'MODL': b = z('CurseOfAlduin\\wonder\\bane.nif')
     elif name == 'MODT': continue
-    elif name == 'DESC': b = z("A blade of dragon bone, cut from the Echo of Alduin. Its magic answers your path: the Summoner's blows raise Draugr Death Overlords from what they kill, the Battle-mage's loose a master Destruction spell, the Spellsword's a master Grasp, and the Ranger's every swing sends a wind slash that hurls the dead far away. Its kills fill it with souls: full, Alduin's shade rains meteors round you. While you hold it, kills heal you and your shouts return twice as fast.")
+    elif name == 'DESC': b = z("A blade of dragon bone, cut from the Echo of Alduin. Every swing sends a wind slash down the line that hurls the dead far away. Its kills fill it with souls: full, Alduin's shade rains meteors round you. While you hold it, kills heal you and your shouts return twice as fast.")
     elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_fang'))
     elif name == 'DATA': b = bytearray(struct.pack('<IfH', 5000, 16.0, 38))
     ws.append(sub(name, bytes(b)))

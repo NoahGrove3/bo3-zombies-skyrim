@@ -380,30 +380,8 @@ namespace Props
 		const bool  killed = Damage(a_z, base * BaneMult() * (a_power ? 2.0f : 1.0f), false, true);
 		if (killed && p) BaneKilled(p);
 		if (!p) return;
-		switch (cls) {
-		case coffer::kSummoner:
-			{
-				auto* av = p->AsActorValueOwner();
-				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * (a_power ? 0.03f : 0.015f));
-				Blast(BlastIndex("dark"), at + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, 0.35f);
-				if (killed || a_z->IsDead()) {
-					Echo::Thralls(OverlordNpc(), 1, 40.0f, at, 3);
-				}
-				break;
-			}
-		case coffer::kDestruction:
-			BaneCast(p, a_z, { "Immolate", "Throat of the World", "Finger of the Mountain", "Daybreak" }, a_power ? 2 : 1);
-			break;
-		case coffer::kSpellsword:
-			BaneCast(p, a_z, { "Fiery Grasp", "Freezing Grasp", "Thundering Grasp", "Searing Grasp", "Touch of Death", "Viper's Grasp" }, a_power ? 2 : 1);
-			break;
-		case coffer::kRanger:
-			break;  // (the Ranger's magic is the swing's wind)
-		default:
-			g_dots.push_back({ a_z->GetHandle(), base * 0.25f, 4.0f });  // (no path yet: plain dragonfire)
-			Blast(BlastIndex("dragonfire"), at + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, 0.4f);
-			break;
-		}
+		// (Noah: "Alduin's Bane - the same moves for any class") every class: the wind slash from each swing (BaneWind), the souls
+		(void)cls, (void)at;
 	}
 	// the Ranger's wind slash: a crescent of wind down the line from every swing - hit or not - that hurls the dead far away
 	void BaneWind(RE::PlayerCharacter* p, bool a_power)
@@ -480,7 +458,7 @@ namespace Props
 			auto* proc = p->GetActorRuntimeData().currentProcess;
 			auto* high = proc ? proc->high : nullptr;
 			const bool power = high && high->attackData && high->attackData->data.flags.any(RE::AttackData::AttackFlag::kPowerAttack);
-			if (Classes::Get() == coffer::kRanger) BaneWind(p, power);  // (the Ranger's needs no contact: every swing)
+			BaneWind(p, power);  // (Noah: every class's every swing - wind slashes down the line that blow the dead FAR away)
 		}
 		for (auto& t : g_twisters) {
 			if (t.chase) {  // turn, slowly, toward the nearest of the dead

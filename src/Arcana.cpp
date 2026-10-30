@@ -171,6 +171,15 @@ namespace bo3z::Arcana
 				sp->data.chargeTime = 0.0f;  // released the moment you cast
 			}
 		}
+		// (the Apocalypse rungs) the spells they cast by script hit as the rung itself
+		for (const auto& pr : coffer::kProcs) {
+			if (pr.spell < 0 || pr.spell >= static_cast<int>(coffer::kSpells.size()) || !g_spell[pr.spell]) continue;
+			if (auto* ps = dh->LookupForm<RE::SpellItem>(pr.id, pr.plugin)) {
+				g_index[ps->GetFormID()] = pr.spell;
+				g_damages[pr.spell] = true;
+				for (auto* e : ps->effects) if (e && e->baseEffect) g_byEffect.try_emplace(e->baseEffect->GetFormID(), pr.spell);
+			}
+		}
 		logger::info("arcana: {} of {} Coffer spells found", g_found, coffer::kSpells.size());
 		for (auto& [plugin, n] : missing) {
 			logger::warn("arcana: {} spells missing ({} not installed?)", n, plugin);

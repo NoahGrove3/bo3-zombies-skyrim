@@ -841,10 +841,9 @@ namespace bo3z
 						p->AddObjectToContainer(bane, nullptr, 1, nullptr);
 						Forms::Play(gen::Sound::shout_learned);
 						Hud::Lore("ALDUIN'S BANE",
-							"A blade of dragon bone, cut from the Echo of Alduin. Its magic answers your path: as a Summoner, what it kills rises as a Draugr Death Overlord to fight "
-							"for you; as a Battle-mage, every blow looses a master Destruction spell; as a Spellsword, every blow carries a master Grasp; as a Ranger, every swing "
-							"sends a wind slash down the line that hurls the dead far away. Its kills fill it with souls - full, Alduin's shade rains meteors round you. While you "
-							"hold it, kills heal you and your shouts return twice as fast. Return it to its stand whenever you like.",
+							"A blade of dragon bone, cut from the Echo of Alduin. Every swing sends a wind slash down the line that hurls the dead far away. Its kills fill it with "
+							"souls - full, Alduin's shade rains meteors round you. While you hold it, kills heal you and your shouts return twice as fast. Return it to its stand "
+							"whenever you like.",
 							16.0f);
 					}
 					BuildReliquary(p);

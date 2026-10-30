@@ -166,7 +166,7 @@
       "effect": "summon_command",
       "value": 1,
       "potionModel": "Clutter\\Potions\\PotionFortifyMagickaExtreme.nif",
-      "description": "You can have one more summon out at a time (up to 8).",
+      "description": "You can have one more summon out at a time (up to 4).",
       "color": "7A50D0",
       "verify": ""
     },

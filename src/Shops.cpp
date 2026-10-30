@@ -2277,8 +2277,7 @@ namespace bo3z
 				// Dragon Priest's relic when one waits; then the brews, the Thu'um, the dragon, the trials
 				std::vector<int> rows{ kRowClass };  // (Noah: the class is chosen and changed at the altar)
 				if (Classes::Get() >= 0) {
-					for (int id : Kit::Rows()) rows.push_back(id);
-					rows.push_back(kRowInfuse);
+					for (int id : Kit::Rows()) rows.push_back(id);  // (Noah: "remove the infusion entirely")
 					if (Kit::RelicTokens() > 0) rows.push_back(kRowRelic);
 				}
 				rows.push_back(kRowPerk);
@@ -2326,7 +2325,7 @@ namespace bo3z
 						}
 						break;
 					case kRowInfuse: kitOk = Kit::Infuse(); break;
-					case kRowRelic: kitOk = Kit::TakeRelic(); if (kitOk && Kit::RelicTokens() <= 0) g_focus = kRowInfuse; break;
+					case kRowRelic: kitOk = Kit::TakeRelic(); if (kitOk && Kit::RelicTokens() <= 0) g_focus = kRowPerk; break;
 					case kRowPerk: act(2); break;
 					case kRowShout: act(3); break;
 					case kRowBond: act(5); break;

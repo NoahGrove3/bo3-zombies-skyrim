@@ -1103,7 +1103,7 @@ namespace bo3z::Classes
 				for (int k = 8; k >= 2; --k) {
 					if (auto* perk = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSPerk>(gen::kSummonCapPerks[k - 2], gen::kPlugin); perk && p->HasPerk(perk)) { cap = k; break; }
 				}
-				out.push_back(fmt::format("<b>Summon slots: {}.</b> You start with 2 and get one more for every 2 Echo Altars you free, up to 7 - and the Conjurer's Command Mead adds one more, up to 8.", cap));
+				out.push_back(fmt::format("<b>Summon slots: {} of 4.</b> You start with 2; the Conjurer's Command Mead adds one, and your robes' Tier II one more.", cap));
 				out.push_back(fmt::format("Indrik mounts: {} of 10 - one for each altar you free.", std::min(freed, 10)));
 				out.push_back(freed >= 6 ? std::string("<b>Hero's Pact</b> is open: bind a hero or an army at any altar's second row.") : fmt::format("Hero's Pact: opens at 6 freed altars ({} to go).", 6 - freed));
 			}
@@ -1481,9 +1481,11 @@ namespace bo3z::Classes
 		// (Noah: "summoner should start with 2 summon slots and go up for every 2 echo altars freed - max 7")
 		int cap = 1;
 		if (g_class.load() == coffer::kSummoner) {
-			cap = std::min(7, 2 + FreedCount() / 2);
-			if (Save::PerkStacks(gen::kPerk_command) > 0) cap = std::min(8, cap + 1);  // (the Conjurer's Command Mead: one more - 8 at most)
-			if (Kit::ArmourTier(coffer::kSummoner) >= 2) cap = std::min(8, cap + 1);  // (the Arcane Conjurer's robes, Tier II: one more)
+			// (Noah: "make the max minions 4, which include the starting 2 slots, the perk that increases it by 1 slot, and the
+			// summoner armor upgrade") 2, the Mead one more, the robes' Tier II one more - no more from freed cities
+			cap = 2;
+			if (Save::PerkStacks(gen::kPerk_command) > 0) ++cap;  // (the Conjurer's Command Mead)
+			if (Kit::ArmourTier(coffer::kSummoner) >= 2) ++cap;   // (the Arcane Conjurer's robes, Tier II)
 		}
 		for (int n = 2; n <= 8; ++n) {
 			auto* perk = dh->LookupForm<RE::BGSPerk>(gen::kSummonCapPerks[n - 2], gen::kPlugin);
@@ -2867,12 +2869,7 @@ namespace bo3z::Classes
 		// Bolgan Sword, then the Steel Spellsword, should its model be missing
 		// (Noah: "the Valkyrie armour for a female Spellsword - it comes with a weapon, use it") a woman's blade is Odin's Wrath,
 		// Awoken once her set reaches Tier III; a man's the Madness Sword
-		if (PlayerFemale()) {
-			const bool awoken = Kit::ArmourTier(coffer::kSpellsword) >= 3;
-			if (auto* f = Lookup(awoken ? 0x000D62 : 0x00435A, "ValkyrieSwordShield.esp")) {
-				if (auto* w = f->As<RE::TESObjectWEAP>()) return w;
-			}
-		}
+		// (Noah: "for the Spellsword class the female should have the madness sword as well") one blade for every Spellsword
 		static constexpr std::pair<std::string_view, std::uint32_t> kBlade[] = { { gen::kPlugin, gen::kMadnessSword }, { "mihailhighfantasypack.esp", 0x065CAF }, { "Spellsword.esp", 0x00B550 } };
 		for (const auto& [plugin, id] : kBlade) {
 			if (auto* f = Lookup(id, plugin)) {
@@ -2951,6 +2948,25 @@ namespace bo3z::Classes
 		for (auto* a : SetForms(a_cls, a_tier)) if (p->GetItemCount(a) > 0) return true;
 		return false;
 	}
+	// (Noah: the Madness Sword for a woman Spellsword too) Odin's Wrath, plain or awoken, goes back; the Madness Sword in its place
+	void ReplaceOdinsWrath(RE::PlayerCharacter* p)
+	{
+		if (!p) return;
+		bool held = false, had = false;
+		for (const std::uint32_t id : { 0x00435Au, 0x000D62u }) {
+			auto* f = Lookup(id, "ValkyrieSwordShield.esp");
+			auto* w = f ? f->As<RE::TESBoundObject>() : nullptr;
+			if (w && p->GetItemCount(w) > 0) {
+				held |= p->GetEquippedObject(false) == w;
+				had = true;
+				p->RemoveItem(w, p->GetItemCount(w), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+			}
+		}
+		if (had) {
+			if (auto* blade = SpellswordBlade(); blade && p->GetItemCount(blade) <= 0) GiveItem(p, blade, 1, held);
+			logger::info("classes: Odin's Wrath taken back - the Madness Sword in its place");
+		}
+	}
 	void GiveArmourSet(int a_cls, int a_tier, bool a_wear)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -2966,18 +2982,7 @@ namespace bo3z::Classes
 			if (const int n = p->GetItemCount(a); n > 0) p->RemoveItem(a, n, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 		}
 		for (auto* a : want) GiveItem(p, a, p->GetItemCount(a) > 0 ? 0 : 1, a_wear);
-		// (a woman Spellsword's Odin's Wrath awakens with her set's Tier III)
-		if (a_cls == coffer::kSpellsword && PlayerFemale() && a_tier >= 3) {
-			auto* plain = Lookup(0x00435A, "ValkyrieSwordShield.esp");
-			auto* awoken = Lookup(0x000D62, "ValkyrieSwordShield.esp");
-			auto* pw = plain ? plain->As<RE::TESBoundObject>() : nullptr;
-			if (pw && awoken && p->GetItemCount(pw) > 0) {
-				const bool held = p->GetEquippedObject(false) == pw;
-				p->RemoveItem(pw, p->GetItemCount(pw), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-				GiveItem(p, awoken, 1, held);
-				Hud::Banner("Odin's Wrath awakens", 4.0f);
-			}
-		}
+		if (a_cls == coffer::kSpellsword) ReplaceOdinsWrath(p);
 		logger::info("classes: {} - {} (tier {}) given{}", Name(a_cls), ArmourSetName(a_cls, a_tier), a_tier, a_wear ? ", worn" : "");
 	}
 	// every second: the set's pieces as the rules want them (light, weight 1, the set's armour shared out), the Ranger's stride
@@ -2986,6 +2991,7 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		const int c = g_class.load();
 		if (!p || c < 0) return;
+		if (c == coffer::kSpellsword && p->Is3DLoaded() && !ItemMenusOpen()) ReplaceOdinsWrath(p);
 		const int  rating = Kit::ArmourRating(c);
 		const auto set = SetForms(c, std::max(0, Kit::ArmourTier(c)));
 		// (the Valkyrie cape, no longer the set's: taken back from a character given it before)
