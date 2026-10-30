@@ -12,17 +12,24 @@ namespace bo3z::Kit
 {
 	namespace
 	{
-		enum class Kind : std::uint8_t { Ladder, Bow, Crossbow, Blade };
+		enum class Kind : std::uint8_t { Ladder, Bow, Crossbow, Blade, Armour };
+		// (Noah: "remove Poison, Poison Breath and Blood Breath from the Armory") an item no longer offered: kept in the list
+		// (its place is in the saves), never shown unless a save already owns it
+		constexpr int kGone = 100;
 		struct Def { Kind kind; const char* ref; int at; };  // ref: a ladder's label, a bow's id, a crossbow's element ("0".."2"), a blade's id; at: cities freed (-1: the start)
 		constexpr Def kSummoner[] = { { Kind::Blade, "riftblade", -1 }, { Kind::Ladder, "Beasts", -1 }, { Kind::Ladder, "The Dead", -1 },
-			{ Kind::Ladder, "Daedra", 5 }, { Kind::Ladder, "The Wild", 3 }, { Kind::Ladder, "Dwemer", 1 } };  // (Noah: the Dwarven Spider at 1 city freed, the Spriggan at 3, the Dremora - the strongest - at 5) (the list's order is the save's: the Armory shows them by when they open)
+			{ Kind::Ladder, "Daedra", 5 }, { Kind::Ladder, "The Wild", 3 }, { Kind::Ladder, "Dwemer", 1 },
+			{ Kind::Armour, "armour", -1 }, { Kind::Ladder, "Atronachs", 2 }, { Kind::Ladder, "Ash", 4 }, { Kind::Ladder, "The Night", 7 }, { Kind::Ladder, "The Wrath", 9 } };  // (Noah: "I want them all to be 7")  // (Noah: the Dwarven Spider at 1 city freed, the Spriggan at 3, the Dremora - the strongest - at 5) (the list's order is the save's: the Armory shows them by when they open)
 		constexpr Def kDestruction[] = { { Kind::Ladder, "Fire", -1 }, { Kind::Ladder, "Frost", -1 }, { Kind::Ladder, "Shock", 1 }, { Kind::Ladder, "Sun", 3 },
-			{ Kind::Ladder, "Blood", 5 }, { Kind::Ladder, "Runes", 7 } };
+			{ Kind::Ladder, "Blood", 5 }, { Kind::Ladder, "Runes", 7 },
+			{ Kind::Armour, "armour", -1 }, { Kind::Ladder, "Cloaks", 2 }, { Kind::Ladder, "Walls", 4 }, { Kind::Ladder, "Storms", 9 } };
 		constexpr Def kRanger[] = { { Kind::Crossbow, "0", -1 }, { Kind::Bow, "emberstring", -1 }, { Kind::Crossbow, "1", 1 }, { Kind::Bow, "rimehorn", 2 },
-			{ Kind::Crossbow, "2", 3 }, { Kind::Bow, "stormreach", 4 }, { Kind::Bow, "skyhowl", 6 }, { Kind::Bow, "dawnspire", 8 }, { Kind::Bow, "thirstbow", 9 } };
+			{ Kind::Crossbow, "2", 3 }, { Kind::Bow, "stormreach", 4 }, { Kind::Bow, "skyhowl", 6 }, { Kind::Bow, "dawnspire", 8 }, { Kind::Bow, "thirstbow", 9 },
+			{ Kind::Armour, "armour", -1 } };
 		constexpr Def kSpellsword[] = { { Kind::Blade, "sword", -1 }, { Kind::Ladder, "Fire", -1 }, { Kind::Ladder, "Frost", 1 }, { Kind::Ladder, "Flame Breath", 2 },
 			{ Kind::Ladder, "Shock", 3 }, { Kind::Ladder, "Frost Breath", 4 }, { Kind::Ladder, "Sun", 5 }, { Kind::Ladder, "Storm Breath", 6 },
-			{ Kind::Ladder, "Blood", 7 }, { Kind::Ladder, "Poison", 8 }, { Kind::Ladder, "Blood Breath", 9 }, { Kind::Ladder, "Poison Breath", 10 } };
+			{ Kind::Ladder, "Blood", 7 }, { Kind::Ladder, "Poison", kGone }, { Kind::Ladder, "Blood Breath", kGone }, { Kind::Ladder, "Poison Breath", kGone },
+			{ Kind::Armour, "armour", -1 } };
 		std::span<const Def> Defs(int a_cls)
 		{
 			switch (a_cls) {
@@ -32,6 +39,12 @@ namespace bo3z::Kit
 			case 3: return kSpellsword;
 			default: return {};
 			}
+		}
+		int ArmourIndex(int a_cls)
+		{
+			const auto d = Defs(a_cls);
+			for (int i = 0; i < static_cast<int>(d.size()); ++i) if (d[i].kind == Kind::Armour) return i;
+			return -1;
 		}
 		// the Dragon Priests' relics, by class: the Summoner's heroes and armies (Calling of the Conjurer), Destruction's support
 		// spells (Mysticism), the Spellsword's legendary two-handers (Classes::TwoHander), the Ranger's relic quivers
@@ -154,6 +167,7 @@ namespace bo3z::Kit
 				auto* w = std::string_view(d.ref) == "riftblade" ? Classes::Riftblade() : Classes::SpellswordBlade();
 				return w && w->GetName() ? w->GetName() : "Blade";
 			}
+			case Kind::Armour: return Classes::ArmourSetName(a_cls, g_cls[a_cls].tier[a_i]);
 			}
 			return "";
 		}
@@ -165,6 +179,7 @@ namespace bo3z::Kit
 			if (d.kind == Kind::Ladder) return Arcana::ElementColor(Arcana::ElementOf(LadderRung1(a_cls, d.ref)));
 			if (d.kind == Kind::Bow) { const int b = BowIndex(d.ref); return b >= 0 ? gen::kBows[b].color : 0xC8B48C; }
 			if (d.kind == Kind::Crossbow) { static constexpr std::uint32_t kC[3] = { 0xFF6A1E, 0x6FC8FF, 0x8C7CFF }; return kC[std::clamp(Elem(d), 0, 2)]; }
+			if (d.kind == Kind::Armour) return 0xD2C8B4;
 			return std::string_view(d.ref) == "riftblade" ? 0xFF5A28 : 0xB4C8FF;
 		}
 
@@ -183,6 +198,7 @@ namespace bo3z::Kit
 			case Kind::Bow: { const int b = BowIndex(d.ref); return b >= 0 ? std::clamp(Bows::Level(b), 0, 3) + st.tier[a_i] : 0; }
 			case Kind::Crossbow: return std::clamp(Classes::CrossbowLevel(Classes::CrossbowForm(Elem(d))), 0, 3) + st.tier[a_i];
 			case Kind::Blade: return st.tier[a_i];
+			case Kind::Armour: return st.tier[a_i];
 			}
 			return 0;
 		}
@@ -200,6 +216,7 @@ namespace bo3z::Kit
 				auto* w = std::string_view(d.ref) == "riftblade" ? Classes::Riftblade() : Classes::SpellswordBlade();
 				return w && p->GetItemCount(w) > 0;
 			}
+			case Kind::Armour: return Classes::ArmourCarried(a_cls, g_cls[a_cls].tier[a_i]);
 			}
 			return false;
 		}
@@ -259,6 +276,10 @@ namespace bo3z::Kit
 				return true;
 			}
 			case Kind::Blade: ++st.tier[a_i]; return true;
+			case Kind::Armour:
+				++st.tier[a_i];
+				Classes::GiveArmourSet(a_cls, st.tier[a_i], true);  // (the Battle-mage's set changes its look at each tier)
+				return true;
 			}
 			return false;
 		}
@@ -278,6 +299,7 @@ namespace bo3z::Kit
 				if (w && p && p->GetItemCount(w) <= 0) Classes::GiveGear(w, 1, a_inHand);
 				break;
 			}
+			case Kind::Armour: Classes::GiveArmourSet(a_cls, g_cls[a_cls].tier[a_i], true); break;
 			}
 		}
 
@@ -331,6 +353,8 @@ namespace bo3z::Kit
 
 		// ---- the Infusions ----
 		constexpr const char* kInfName[kInfusions + 1] = { "None", "Blast Furnace", "Dead Wire", "Thunder Wall", "Cryo-Lock", "Turned", "Cluster", "Piercing", "Soul Siphon" };
+		// (Noah: "remove Cluster and Piercing from the infusion pool") the six the roll lands on
+		constexpr int kInfPool[] = { 1, 2, 3, 4, 5, 8 };
 		constexpr const char* kInfWhat[kInfusions + 1] = { "", "kills burst into flame", "hits chain lightning to four", "hits hurl the dead back",
 			"hits freeze all round", "the struck fight for you", "hits split into three blasts", "through every foe in a line", "kills restore magicka and health" };
 		// the items an Infusion can be set on: your kit's owned items (0..) and your relics (kRelicBase..)
@@ -339,7 +363,7 @@ namespace bo3z::Kit
 			std::vector<int> out;
 			const int c = Cls();
 			if (c < 0) return out;
-			for (int i = 0; i < static_cast<int>(Defs(c).size()); ++i) if (g_cls[c].owned >> i & 1) out.push_back(i);
+			for (int i = 0; i < static_cast<int>(Defs(c).size()); ++i) if ((g_cls[c].owned >> i & 1) && Defs(c)[i].kind != Kind::Armour) out.push_back(i);  // (armour carries none)
 			if (c != 2) for (int r = 0; r < RelicCount(c) && r < kMaxRelics; ++r) if (g_cls[c].relics >> r & 1) out.push_back(kRelicBase + r);  // (the quivers carry none)
 			return out;
 		}
@@ -569,7 +593,7 @@ namespace bo3z::Kit
 		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (g_cls[c].owned >> i & 1) out.push_back(40 + i);
 		for (int r = 0; r < RelicCount(c) && r < kMaxRelics; ++r) if (g_cls[c].relics >> r & 1) out.push_back(40 + kRelicBase + r);
 		std::vector<int> locked;
-		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (!(g_cls[c].owned >> i & 1)) locked.push_back(i);
+		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (!(g_cls[c].owned >> i & 1) && defs[i].at < kGone) locked.push_back(i);
 		std::stable_sort(locked.begin(), locked.end(), [&](int a, int b) { return defs[a].at < defs[b].at; });
 		for (const int i : locked) out.push_back(100 + i);
 		return out;
@@ -615,7 +639,7 @@ namespace bo3z::Kit
 		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (st.owned >> i & 1) line(40 + i, i, false);
 		for (int r = 0; r < RelicCount(c) && r < kMaxRelics; ++r) if (st.relics >> r & 1) line(40 + kRelicBase + r, kRelicBase + r, true);
 		std::vector<int> locked;
-		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (!(st.owned >> i & 1)) locked.push_back(i);
+		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (!(st.owned >> i & 1) && defs[i].at < kGone) locked.push_back(i);
 		std::stable_sort(locked.begin(), locked.end(), [&](int a, int b) { return defs[a].at < defs[b].at; });  // (first to open, first)
 		for (const int i : locked) {
 			Hud::State::KitLine l;
@@ -661,7 +685,7 @@ namespace bo3z::Kit
 		const int  freed = Freed();
 		if (a_id >= 100) {  // the Armory: buy it
 			const int i = a_id - 100;
-			if (i < 0 || i >= static_cast<int>(defs.size()) || (st.owned >> i & 1)) return false;
+			if (i < 0 || i >= static_cast<int>(defs.size()) || (st.owned >> i & 1) || defs[i].at >= kGone) return false;
 			if (freed < defs[i].at && !Testing()) {
 				Hud::Banner(fmt::format("{} opens once {} cities are freed ({} of {})", ItemName(c, i), defs[i].at, freed, defs[i].at), 3.0f);
 				return false;
@@ -708,7 +732,8 @@ namespace bo3z::Kit
 		if (a_altar) Forms::PlayAt(gen::Sound::forge_upgrade, a_altar);
 		SyncWeapons(true);
 		const std::string now = ItemName(c, item);
-		Hud::Banner((now != was ? was + "  ->  " + now : now) + "  -  " + (t + 1 <= 3 ? std::string(TierLabel(t + 1)) : "Ascend " + std::to_string(t + 1 - 3)) + fmt::format("   (armour +{:.0f}%)", ArmorResist() * 100.0f), 4.5f);
+		Hud::Banner((now != was ? was + "  ->  " + now : now) + "  -  " + (t + 1 <= 3 ? std::string(TierLabel(t + 1)) : "Ascend " + std::to_string(t + 1 - 3)) +
+		                (defs[item].kind == Kind::Armour ? fmt::format("   (armour {})", ArmourRating(c)) : std::string()), 4.5f);
 		logger::info("kit: {} -> tier {} ({})", now, t + 1, Classes::Name(c));
 		return true;
 	}
@@ -729,8 +754,10 @@ namespace bo3z::Kit
 		if (!Points::Spend(cost)) return false;
 		++g_rollsTonight;
 		auto* cur = InfusionOf(c, it);
-		int   r = 1 + std::uniform_int_distribution<int>(0, kInfusions - 1)(g_rng);
-		if (cur && r == *cur) r = r % kInfusions + 1;  // (never the same twice in a row)
+		constexpr int n = static_cast<int>(std::size(kInfPool));
+		int   pick = std::uniform_int_distribution<int>(0, n - 1)(g_rng);
+		if (cur && kInfPool[pick] == *cur) pick = (pick + 1) % n;  // (never the same twice in a row)
+		const int r = kInfPool[pick];
 		g_spin = { 1.6f, 0.0f, it, r, 1, c };
 		Ui(kUiLand, 0.6f);
 		return true;
@@ -839,7 +866,15 @@ namespace bo3z::Kit
 		for (int r = 0; r < 3; ++r) if (g_cls[2].relics >> r & 1) m += 0.15f + 0.05f * g_cls[2].relicTier[r];
 		return std::min(m, 2.5f);
 	}
-	float ArmorResist() { auto* s = Me(); return s ? std::min(0.30f, 0.015f * s->upgrades) : 0.0f; }
+	// (Noah: "the upgrade shouldn't increase armour rating"; "each set starts at 10 for the whole set, +10 for each upgrade
+	// of the set") the class's set: its armour rating, and Skyrim's own reading of it (0.12% of a blow per point)
+	int ArmourTier(int a_cls)
+	{
+		const int i = ArmourIndex(a_cls);
+		return a_cls >= 0 && a_cls < 4 && i >= 0 && (g_cls[a_cls].owned >> i & 1) ? g_cls[a_cls].tier[i] : -1;
+	}
+	int ArmourRating(int a_cls) { const int t = ArmourTier(a_cls); return t < 0 ? 0 : 10 + 10 * t; }
+	float ArmorResist() { return std::min(0.80f, 0.0012f * static_cast<float>(ArmourRating(Cls()))); }
 
 	// ---- co-op auras ----
 	bool PartyHas(int a_cls)
@@ -855,8 +890,13 @@ namespace bo3z::Kit
 		std::scoped_lock l(g_partyLock);
 		g_party[a_from] = { a_cls, std::chrono::steady_clock::now() };
 	}
-	float AuraCostMult() { return PartyHas(1) ? 0.9f : 1.0f; }
-	float AuraAmmoMult() { return PartyHas(2) ? 0.8f : 1.0f; }
+	float AuraCostMult()
+	{
+		// (the Black Mage's set) spells cost 10% less from Tier I, 25% from Tier III
+		const int t = Cls() == 1 ? ArmourTier(1) : -1;
+		return (PartyHas(1) ? 0.9f : 1.0f) * (t >= 3 ? 0.75f : t >= 1 ? 0.9f : 1.0f);
+	}
+	float AuraAmmoMult() { return (PartyHas(2) ? 0.8f : 1.0f) * (Cls() == 2 && ArmourTier(2) >= 2 ? 0.67f : 1.0f); }  // (the Gondorian set, Tier II: ammo grows back faster)
 	float AuraMeleeTaken() { return PartyHas(3) ? 0.9f : 1.0f; }
 
 	// ---- the Infusions' hooks ----
@@ -869,6 +909,13 @@ namespace bo3z::Kit
 			for (int i = 0; i < static_cast<int>(defs.size()); ++i) {
 				if (!(g_cls[c].owned >> i & 1)) continue;
 				const auto& d = defs[i];
+				// (the Spellsword's set, Tier II: the blade's hits put magicka back)
+				if (c == 3 && d.kind == Kind::Blade && w == Classes::SpellswordBlade() && ArmourTier(3) >= 2) {
+					if (auto* p = RE::PlayerCharacter::GetSingleton()) {
+						auto* av = p->AsActorValueOwner();
+						av->RestoreActorValue(RE::ActorValue::kMagicka, av->GetPermanentActorValue(RE::ActorValue::kMagicka) * 0.03f);
+					}
+				}
 				const bool me = (d.kind == Kind::Blade && w == (std::string_view(d.ref) == "riftblade" ? Classes::Riftblade() : Classes::SpellswordBlade())) ||
 				                (d.kind == Kind::Crossbow && w == Classes::CrossbowForm(Elem(d)));
 				if (me) return OnHitItem(c, i, a_target);
@@ -928,6 +975,32 @@ namespace bo3z::Kit
 		}
 	}
 
+	// (the class armour sets, once a second) a class from before them gets its set (owned, worn); the Infusions that left
+	// the pool come off their items, paid back; the Spellsword's mending and the Battle-mage's quickened magicka
+	void TickSets()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		const int c = Cls();
+		if (!p || c < 0 || !p->Is3DLoaded() || ItemMenusOpen()) return;
+		if (const int i = ArmourIndex(c); i >= 0 && Classes::KitGiven(c) && !(g_cls[c].owned >> i & 1)) {
+			g_cls[c].owned |= 1u << i;
+			Classes::GiveArmourSet(c, 0, true);
+			Hud::Banner(Classes::ArmourSetName(c, 0) + " - your class's armour, upgradable at the Echo Altar", 5.0f);
+		}
+		int refunds = 0;
+		for (auto& st : g_cls) {
+			for (auto& f : st.infusion) if (f == 6 || f == 7) f = 0, ++refunds;
+			for (auto& f : st.relicInfusion) if (f == 6 || f == 7) f = 0, ++refunds;
+		}
+		if (refunds) {
+			Points::Add(4000 * refunds);
+			Hud::Banner(fmt::format("Cluster and Piercing are gone from the Infusions - {} Cursed Essence back", 4000 * refunds), 5.0f);
+			logger::info("kit: {} Cluster/Piercing Infusions taken off, refunded", refunds);
+		}
+		auto* av = p->AsActorValueOwner();
+		if (c == 3 && ArmourTier(3) >= 1 && p->IsInCombat()) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.006f);  // (Tier I: mending in a fight)
+		if (c == 1 && ArmourTier(1) >= 2) av->RestoreActorValue(RE::ActorValue::kMagicka, av->GetPermanentActorValue(RE::ActorValue::kMagicka) * 0.012f);          // (Tier II: magicka comes back faster)
+	}
 	void Tick(float a_delta)
 	{
 		// the Infusion's spin: the names flicker, slowing, then it lands
@@ -936,7 +1009,12 @@ namespace bo3z::Kit
 			g_spin.flick -= a_delta;
 			if (g_spin.flick <= 0) {
 				g_spin.flick = 0.06f + 0.18f * (1.0f - std::clamp(g_spin.left / 1.6f, 0.0f, 1.0f));
-				g_spin.shown = g_spin.shown % kInfusions + 1;
+				{
+					constexpr int n = static_cast<int>(std::size(kInfPool));
+					int at = 0;
+					for (int q = 0; q < n; ++q) if (kInfPool[q] == g_spin.shown) at = q;
+					g_spin.shown = kInfPool[(at + 1) % n];
+				}
 				Ui(kUiMove, 0.5f);
 			}
 			if (g_spin.left <= 0) {
@@ -964,6 +1042,7 @@ namespace bo3z::Kit
 		if ((look -= a_delta) <= 0) {
 			look = 1.0f;
 			SyncWeapons(false);
+			TickSets();
 		}
 	}
 	// ---- the co-save ----

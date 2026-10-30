@@ -1352,13 +1352,16 @@ namespace bo3z
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 1.4f);  // (the row is already a brute's 2.5x: ~6x a runner's)
 			av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kSpeedMult, 45.0f);                                              // far faster than the rest
 			av->SetActorValue(RE::ActorValue::kAttackDamageMult, av->GetActorValue(RE::ActorValue::kAttackDamageMult) * 1.5f);
-			v->SetDisplayName("Volatile", true);
+			// (Noah, the creature overhaul: "use the name the mod gives it") it keeps its own name
 			Undead::SetVolatile(v.get());
 			// (Noah: "remove any taunting or roaring - combat only") it comes through straight into the hunt, no scream
 			g_summoned.insert(v->GetFormID());
 			g_volatiles.push_back(v->GetHandle());
-			Forms::PlayAt(gen::Sound::wailer_scream, v.get());
-			Hud::Banner("A VOLATILE HEARS YOU", 3.5f);
+			{
+				std::string nm = v->GetName() ? v->GetName() : "Something";
+				for (auto& ch : nm) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
+				Hud::Banner("A " + nm + " HEARS YOU", 3.5f);
+			}
 			if (Settings::ScreenShake()) RE::ShakeCamera(0.35f, a_player->GetPosition(), 0.8f);
 			logger::info("night: a Volatile rises (noise {:.0f})", g_noise);
 		}
@@ -1372,7 +1375,7 @@ namespace bo3z
 				auto a = h.get();
 				if (a && a->IsDead()) {
 					Points::Add(500);
-					Hud::Banner("Volatile slain  +500", 2.5f);
+					Hud::Banner(std::string(a->GetName() ? a->GetName() : "Hunter") + " slain  +500", 2.5f);
 				}
 				return !a || a->IsDead() || a->IsDeleted();
 			});
@@ -2159,7 +2162,8 @@ namespace bo3z
 		// (Noah) the mini-boss: a warning (a roar, the sky flashing, a banner), then it rises near you
 		void RaiseMiniBoss(RE::PlayerCharacter* a_player)
 		{
-			static constexpr std::string_view kRows[] = { "mb_minotaur_lord", "mb_ogre_chief", "mb_ice_titan", "mb_vile_imp", "mb_harpy_matriarch", "brute", "bonebrute" };
+			// (Noah, the creature overhaul) the mini-bosses: Skyrim Immersive Creatures' greatest
+			static constexpr std::string_view kRows[] = { "knight", "mb_deathlord", "lich", "mb_vargrbrute", "mb_minotaur_lord", "mb_giant_brute", "mb_daedroth_lord", "mb_ogrim_lord", "mb_bone_wrath", "mb_wrathman", "mb_mistman", "mb_nether_lich" };
 			std::vector<std::string_view> ok;
 			for (auto r : kRows) {
 				for (std::size_t i = 0; i < gen::kEnemies.size(); ++i) {
@@ -2172,7 +2176,6 @@ namespace bo3z
 			for (const auto& e : gen::kEnemies) {
 				if (e.id == row) name = std::string(e.label);
 			}
-			if (row == "brute") name = "The Bone Jotunn";
 			// at a spawn point toward you (not on top of you)
 			RE::NiPoint3 at = a_player->GetPosition();
 			float best = 1e9f;
@@ -2565,6 +2568,20 @@ namespace bo3z
 				const int kind = gen::kEnemies[s.enemy].kind;
 				if (Director::IsBoss(a.get()) || s.dash > 0 || s.stun > 0 || (kind == 1 && s.windup >= 0)) continue;  // (the bosses have their own blows; a brute mid-move is busy)
 				auto&       t = swing.try_emplace(a->GetFormID(), -1.0f).first->second;
+				// (Noah: "Thunder Wall knocked enemies on the ground, but they could still swing at me while they were on the
+				// ground - make them stand up before dealing damage") knocked down, getting up, or a moment after: no blow
+				{
+					static std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> downAt;
+					const auto now = std::chrono::steady_clock::now();
+					if (a->AsActorState()->GetKnockState() != RE::KNOCK_STATE_ENUM::kNormal || a->IsInRagdollState()) {
+						downAt[a->GetFormID()] = now, t = -1.0f;
+						continue;
+					}
+					if (auto it = downAt.find(a->GetFormID()); it != downAt.end()) {
+						if (now - it->second < std::chrono::milliseconds(700)) { t = -1.0f; continue; }
+						downAt.erase(it);
+					}
+				}
 				const auto  ap = a->GetPosition();
 				const float dist = std::hypot(ap.x - pp.x, ap.y - pp.y), dz = std::abs(ap.z - pp.z);
 				// (Noah: "they can hit me before I'm in range to hit them with my sword - make their melee range closer") a
@@ -2610,7 +2627,7 @@ namespace bo3z
 				if ((q.second -= a_delta) > 0) continue;
 				q.second = -99.0f;
 				auto z = q.first.get();
-				if (!z || z->IsDead() || z->IsDisabled()) continue;
+				if (!z || z->IsDead() || z->IsDisabled() || z->AsActorState()->GetKnockState() != RE::KNOCK_STATE_ENUM::kNormal || z->IsInRagdollState()) continue;  // (knocked down: no blow)
 				const auto zp = z->GetPosition();
 				if (std::hypot(zp.x - pp.x, zp.y - pp.y) < 95.0f + z->GetBoundRadius() * 0.5f + 80.0f && std::abs(zp.z - pp.z) < 180.0f && Perks::SinceZombieHit(z->GetFormID()) > 0.4f) Perks::OnZombieHit(z.get());
 			}
@@ -3060,7 +3077,7 @@ namespace bo3z
 				s.loaded = a->Is3DLoaded() ? s.loaded + kStep : 0.0f;
 				// (the audit: the crash came the frame the outfit went back on, HDT-SMP still building it) only a body that
 				// has stood whole for two seconds, out of its portal, is disarmed
-				if (const std::string_view rid = gen::kEnemies[s.enemy].id; s.loaded >= 2.0f && !IsRising(a.get()) && (rid == "zombie" || rid == "runner" || rid == "wailer" || rid == "bloater" || rid == "volatile" || rid == "mage" || rid == "girl")) {
+				if (const std::string_view rid = gen::kEnemies[s.enemy].id; gen::kEnemies[s.enemy].rig && s.loaded >= 2.0f && !IsRising(a.get()) && (rid == "zombie" || rid == "runner" || rid == "wailer" || rid == "bloater" || rid == "volatile" || rid == "mage" || rid == "girl")) {
 					auto* claws = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kZombieClaws, gen::kPlugin);
 					auto* em = RE::ActorEquipManager::GetSingleton();
 					bool  armed = false;

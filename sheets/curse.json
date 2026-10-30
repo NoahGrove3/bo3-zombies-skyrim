@@ -180,61 +180,61 @@
   "bosses": {
     "Riverwood": {
       "name": "Vahlok the Jailor",
-      "row": "knight",
+      "row": "priest_draugr",
       "health": 20,
       "text": "Vahlok kept the cult's prisoners in the Merethic Era, and his oath to Alduin was the last he swore. It has brought him out of his tomb and across the sea to the barrow above Riverwood, to keep the valley's altar dark."
     },
     "Whiterun": {
       "name": "Nahkriin, Warden of Skuldafn",
-      "row": "king",
+      "row": "priest_draman",
       "health": 26,
       "text": "Nahkriin guarded Skuldafn, the gate to Sovngarde, for Alduin, and the mist that bars Sovngarde's door is his to keep. He has come down from the mountains to the plains, so that Whiterun's dead never find the way home."
     },
     "Solitude": {
       "name": "Volsung of Volskygge",
-      "row": "lich",
+      "row": "priest_draugr2",
       "health": 26,
       "text": "Volsung ruled the peaks above Haafingar from Volskygge, and his mask let him breathe where no man could. He climbs down to Solitude now, and the dead of the Blue Palace's crypts rise at his word."
     },
     "Windhelm": {
       "name": "Zahkriisos the Frost-Priest",
-      "row": "hexer_rime",
+      "row": "priest_draman2",
       "health": 28,
       "text": "Zahkriisos lay in his tomb on Solstheim until Alduin's shout crossed the Sea of Ghosts. He walked over the ice to Windhelm's docks, and the cold he carries stops a heart."
     },
     "Markarth": {
       "name": "Otar the Mad",
-      "row": "reaper",
+      "row": "priest_ancient",
       "health": 24,
       "text": "Otar was so cruel that his own cult sealed him alive in Ragnvald. His oath to Alduin outlived his reason. He climbs out of the Reach's stone beneath Markarth to guard its altar."
     },
     "Riften": {
       "name": "Rahgot of Forelhost",
-      "row": "wailer",
+      "row": "priest_draman_anc",
       "health": 22,
       "text": "Rahgot's followers poisoned themselves in Forelhost rather than surrender him to the Tongues. They rise with him now, and the Rift's dead follow them down to Riften's altar."
     },
     "Falkreath": {
       "name": "Krosis of Shearpoint",
-      "row": "brute",
+      "row": "priest_ancient2",
       "health": 26,
       "text": "Krosis guarded the word at Shearpoint, mourning, for a thousand years. Alduin's shout gave him something to do with his sorrow: he comes down to Falkreath's graveyard to keep its children in the ground no longer."
     },
     "Morthal": {
       "name": "Hevnoraak of Valthume",
-      "row": "bloater",
+      "row": "priest_draman_anc2",
       "health": 24,
       "text": "Hevnoraak's servants sealed him in Valthume to stop him rising. The seal could not hold against SLEN TIID VO: he walks out of the marsh fog, and Hjaalmarch's drowned dead follow him."
     },
     "Dawnstar": {
       "name": "Vokun of High Gate",
-      "row": "shadow",
+      "row": "priest_mythic",
       "health": 22,
       "text": "Vokun was a priest of shadows, and the Nightcaller's dreamers in Dawnstar dreamed his return a thousand years before it came. Kill him, and Dawnstar's nightmares end."
     },
     "Winterhold": {
       "name": "Morokei of Labyrinthian",
-      "row": "hexer_storm",
+      "row": "priest_draman_myth",
       "health": 24,
       "text": "Morokei once held the Staff of Magnus in Labyrinthian, and the College has feared him ever since. He has come to the cliffs above Winterhold, and the storm he calls has not finished yet."
     }

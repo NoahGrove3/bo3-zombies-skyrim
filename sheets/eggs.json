@@ -338,9 +338,9 @@
      "nodamage": false,
      "seconds": 0,
      "name": "The Matriarch of the Black Sky",
-     "row": "mb_harpy_matriarch",
+     "row": "winged_twilight",
      "dark": false,
-     "hint": "Something circles above the altars. Look up."
+     "hint": "Something winged circles above the altars. Look up."
     }
    ]
   },

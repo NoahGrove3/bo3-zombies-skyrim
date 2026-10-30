@@ -223,6 +223,7 @@ namespace bo3z::Classes
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (!p) return;
 			const bool female = p->GetActorBase() && p->GetActorBase()->IsFemale();
+			(void)female;
 			switch (a_cls) {
 			case coffer::kSummoner:
 				// (Noah: "remove the staff the Summoner comes with - an upgradable spell of an element no other class uses")
@@ -233,34 +234,15 @@ namespace bo3z::Classes
 				Arcana::Give(Rung1(a_cls, "The Dead"), false);
 				GiveSpell(Rung1(a_cls, "Beasts"), true);
 				GiveItem(p, Riftblade(), 1, true);
-				if (female) {
-					for (std::uint32_t id : { 0xE58u, 0xE5Bu, 0xE5Du, 0xE5Fu, 0xE63u }) {
-						GiveItem(p, Lookup(id, "Wandering Summoner Outfit.esp"), 1, true);
-					}
-				} else {  // (Noah: a male Summoner wears a man's summoner robes) the hooded necromancer's robes of conjuration and boots
-					GiveItem(p, RE::TESForm::LookupByID(0x10900E), 1, true);
-					GiveItem(p, RE::TESForm::LookupByID(0x0C36E8), 1, true);
-				}
 				break;
 			case coffer::kDestruction:
 				GiveSpell(Rung1(a_cls, "Fire"), false);
 				GiveSpell(Rung1(a_cls, "Frost"), true);
-				for (std::uint32_t id : { 0x808u, 0x809u, 0x80Bu, 0x811u, 0x80Du }) {
-					GiveItem(p, Lookup(id, "ksws03.esp"), 1, true);
-				}
-				GiveItem(p, Lookup(0x812, "ksws03.esp"), 1, false);  // Sweeper of the Sorceress
 				if (auto* tome = Lookup(0x817, "Equipable Tomes - Redone.esp")) GiveItem(p, tome, 1, true);  // a Destruction tome at the hip
 				break;
 			case coffer::kRanger:
 				// (Noah: "they should start with only the crossbow, the armour and the bolts - the bows stay at the altar") the
 				// Ember Crossbow and its fire bolts, the bolts nocked
-				if (female) {
-					for (std::uint32_t id : { 0x857u, 0x858u, 0x859u }) {  // (Noah) the Drifter Outfit, light armoured
-						GiveItem(p, Lookup(id, "DrifterArmorAndOutfitByXtudo.esp"), 1, true);
-					}
-				} else {
-					for (auto id : kDawnguardLight) GiveItem(p, Lookup(id, "Dawnguard.esm"), 1, true);
-				}
 				// (Noah, the altar rework) the Emberstring bow beside the Ember Crossbow
 				for (int b = 0; b < Bows::Count(); ++b) if (gen::kBows[b].id == std::string_view("emberstring")) Bows::Give(b);
 				if (auto* xb = ElemCrossbow(0)) {
@@ -272,15 +254,14 @@ namespace bo3z::Classes
 				}
 				break;
 			case coffer::kSpellsword:
-				for (std::uint32_t id : { 0x800u, 0x802u, 0x805u }) {  // (Noah) the Practical Pirate outfit
-					GiveItem(p, Lookup(id, "practical_pirate.esp"), 1, true);
-				}
 				// (Noah, the altar rework: "remove shields entirely - a one-hand sword from one of the weapon mods, and a fire
 				// touch") the blade in the right hand, Burning Touch in the left
 				GiveItem(p, SpellswordBlade(), 1, true);
 				GiveSpell(Rung1(a_cls, "Fire"), true);
 				break;
 			}
+			// (Noah: "each class's armour set part of its starting kit") the set, worn (Kit owns it as an upgradable item)
+			GiveArmourSet(a_cls, 0, true);
 			GiveLantern(p);
 			g_kit[a_cls] = true;
 			Kit::OnKitGiven(a_cls);
@@ -417,6 +398,7 @@ namespace bo3z::Classes
 				return false;
 			}
 			if (a_obj == Underwear()) return false;  // (worn by every class)
+			if (auto* f = a_obj->GetFile(0); f && std::string_view(f->GetFilename()) == "Paragliding.esp") return false;  // (Noah: "the dragon glider shared on all classes")
 			// our own plugin's pieces are the night's rewards (Alduin's Bane, the hall's relics), kept by every class - but the
 			// class weapons it makes (wands, tomes, bows, the Conjurer's Staff) belong to their class
 			// (the audit: the Ranger's altar bows and the Subsuming Vortex followed you into every class) they are class gear too
@@ -871,6 +853,13 @@ namespace bo3z::Classes
 			if (const int ci = src ? Arcana::IndexOf(src) : -1; ci >= 0) element = coffer::kSpells[ci].element;
 			const float dist = a_dying && p ? a_dying->GetPosition().GetDistance(p->GetPosition()) : 0.0f;
 			if (how >= 0) Curse::OnClassKill(how, element, dist);
+			// (the class sets' powers) the Arcane Conjurer's Tier III: your summons' kills heal you a little; the Gondorian's
+			// Tier III: a kill from 30 m or more puts stamina back
+			if (p && !p->IsDead()) {
+				auto* av = p->AsActorValueOwner();
+				if (how == 0 && c == coffer::kSummoner && Kit::ArmourTier(c) >= 3) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.02f);
+				if (how == 2 && c == coffer::kRanger && dist >= 2100.0f && Kit::ArmourTier(c) >= 3) av->RestoreActorValue(RE::ActorValue::kStamina, av->GetPermanentActorValue(RE::ActorValue::kStamina) * 0.15f);
+			}
 			if (how >= 0) Perks::OnClassKill(how, a_dying);  // (the class perks: Soul-Tether, Ember Heart, Mana-Siphon, Spellbinder)
 		}
 		if (const int c2 = g_class.load(); c2 >= 0 && c2 < 4) {
@@ -1143,6 +1132,20 @@ namespace bo3z::Classes
 		if (static int purge = 0; ++purge % 3 == 0 && p->Is3DLoaded() && !ItemMenusOpen()) Purge();  // (the audit: never under the Magic menu)
 		TuneCorrosion();
 		TuneSpellswordGear();
+		TickArmour();
+		// (Noah: "for the destruction class there should only be a 1 second delay before the mana starts regenerating after
+		// firing - 5 seconds is fine for the others"; "sprinting should cost a little more stamina for all players")
+		if (auto* gs = RE::GameSettingCollection::GetSingleton()) {
+			static float regenWas = -1.0f, sprintWas = -1.0f;
+			if (auto* st = gs->GetSetting("fMagickaRegenDelay")) {
+				if (regenWas < 0) regenWas = st->data.f;
+				const float want = g_class.load() == coffer::kDestruction ? 1.0f : regenWas;
+				if (st->data.f != want) st->data.f = want, logger::info("classes: magicka comes back {:.0f} s after a cast", want);
+			}
+			if (auto* st = gs->GetSetting("fSprintStaminaDrainMult")) {
+				if (sprintWas < 0) sprintWas = st->data.f, st->data.f = sprintWas * 1.5f, logger::info("classes: sprinting drains stamina {:.1f} (was {:.1f})", st->data.f, sprintWas);
+			}
+		}
 		// (Noah: the belt lantern is an item now) a character from before it is handed one, worn
 		if (g_class.load() >= 0 && !g_lanternGiven && p->Is3DLoaded() && !ItemMenusOpen()) {
 			GiveLantern(p);
@@ -1445,6 +1448,7 @@ namespace bo3z::Classes
 		if (g_class.load() == coffer::kSummoner) {
 			cap = std::min(7, 2 + FreedCount() / 2);
 			if (Save::PerkStacks(gen::kPerk_command) > 0) cap = std::min(8, cap + 1);  // (the Conjurer's Command Mead: one more - 8 at most)
+			if (Kit::ArmourTier(coffer::kSummoner) >= 2) cap = std::min(8, cap + 1);  // (the Arcane Conjurer's robes, Tier II: one more)
 		}
 		for (int n = 2; n <= 8; ++n) {
 			auto* perk = dh->LookupForm<RE::BGSPerk>(gen::kSummonCapPerks[n - 2], gen::kPlugin);
@@ -2717,6 +2721,14 @@ namespace bo3z::Classes
 	{
 		// (Noah: "use the Madness Sword for the Spellsword class's weapon") our copy of Saints & Seducers' Madness Sword; the
 		// Bolgan Sword, then the Steel Spellsword, should its model be missing
+		// (Noah: "the Valkyrie armour for a female Spellsword - it comes with a weapon, use it") a woman's blade is Odin's Wrath,
+		// Awoken once her set reaches Tier III; a man's the Madness Sword
+		if (PlayerFemale()) {
+			const bool awoken = Kit::ArmourTier(coffer::kSpellsword) >= 3;
+			if (auto* f = Lookup(awoken ? 0x000D62 : 0x00435A, "ValkyrieSwordShield.esp")) {
+				if (auto* w = f->As<RE::TESObjectWEAP>()) return w;
+			}
+		}
 		static constexpr std::pair<std::string_view, std::uint32_t> kBlade[] = { { gen::kPlugin, gen::kMadnessSword }, { "mihailhighfantasypack.esp", 0x065CAF }, { "Spellsword.esp", 0x00B550 } };
 		for (const auto& [plugin, id] : kBlade) {
 			if (auto* f = Lookup(id, plugin)) {
@@ -2731,5 +2743,128 @@ namespace bo3z::Classes
 		if (a_i < 0 || a_i >= TwoHanderCount()) return nullptr;
 		auto* f = Lookup(kTwoHanders[a_i].id, kTwoHanders[a_i].plugin);
 		return f ? f->As<RE::TESObjectWEAP>() : nullptr;
+	}
+
+	// ---- (Noah: the class armour sets - "each armour set its own way of gaining power, just like their weapons") ----
+	// Summoner: the Arcane Conjurer Robes; Destruction: the Black Mage's robes, its look growing with the set's tiers;
+	// Ranger: the Gondorian Ranger's; Spellsword: the Valkyrie's (a woman) or the DragonLord's robe armour and plume helm
+	// (a man). Every piece light armour weighing 1 (no slowing, no noise); the set's armour 10 at the start and 10 more for
+	// each of its upgrades, shared out over its pieces (Kit::ArmourRating)
+	namespace
+	{
+		struct Piece { const char* plugin; std::uint32_t id; };
+		std::vector<Piece> SetPieces(int a_cls, int a_tier, bool a_female)
+		{
+			switch (a_cls) {
+			case coffer::kSummoner: return { { "ArcaneConjurerRobes.esp", 0x000802 } };
+			case coffer::kDestruction:
+				switch (std::clamp(a_tier, 0, 3)) {
+				case 0: return { { "Black Mage Armor SE.esp", 0x0146A5 }, { "Black Mage Armor SE.esp", 0x0146A7 }, { "Black Mage Armor SE.esp", 0x014C0B }, { "Black Mage Armor SE.esp", 0x0146A6 } };  // College robes, hood and scarf, handwraps, boots
+				case 1: return { { "Black Mage Armor SE.esp", 0x002869 }, { "Black Mage Armor SE.esp", 0x008411 }, { "Black Mage Armor SE.esp", 0x002867 }, { "Black Mage Armor SE.esp", 0x002866 } };  // the mantled robes
+				case 2: return { { "Black Mage Armor SE.esp", 0x005E4D }, { "Black Mage Armor SE.esp", 0x00EABA }, { "Black Mage Armor SE.esp", 0x00EAB9 }, { "Black Mage Armor SE.esp", 0x00EAB8 } };  // the plate
+				default: return { { "Black Mage Armor SE.esp", 0x00DA78 }, { "Black Mage Armor SE.esp", 0x00DFDC }, { "Black Mage Armor SE.esp", 0x00EAA3 }, { "Black Mage Armor SE.esp", 0x00EAA2 } };  // the Black Archmage's ebony
+				}
+			case coffer::kRanger: return { { "GondorianRangerArmor.esp", 0x000D64 }, { "GondorianRangerArmor.esp", 0x000D66 }, { "GondorianRangerArmor.esp", 0x000D65 }, { "GondorianRangerArmor.esp", 0x000D63 }, { "GondorianRangerArmor.esp", 0x000D79 } };
+			case coffer::kSpellsword:
+				if (a_female) return { { "ValkyrieSwordShield.esp", 0x00285D }, { "ValkyrieSwordShield.esp", 0x00285A }, { "ValkyrieSwordShield.esp", 0x00285B }, { "ValkyrieSwordShield.esp", 0x002859 }, { "ValkyrieSwordShield.esp", 0x003890 } };
+				return { { "DragonLordSwords.esp", 0x0012D3 }, { "DragonLordSwords.esp", 0x0012D2 }, { "DragonLordSwords.esp", 0x0012CE }, { "DragonLordSwords.esp", 0x0012CD } };
+			default: return {};
+			}
+		}
+		std::vector<RE::TESObjectARMO*> SetForms(int a_cls, int a_tier)
+		{
+			std::vector<RE::TESObjectARMO*> out;
+			for (const auto& pc : SetPieces(a_cls, a_tier, PlayerFemale())) {
+				if (auto* f = Lookup(pc.id, pc.plugin)) if (auto* a = f->As<RE::TESObjectARMO>()) out.push_back(a);
+			}
+			return out;
+		}
+		// every piece of every tier the class's set has had (the Battle-mage's earlier looks)
+		std::vector<RE::TESObjectARMO*> AllSetForms(int a_cls)
+		{
+			std::vector<RE::TESObjectARMO*> out;
+			for (int t = 0; t <= (a_cls == coffer::kDestruction ? 3 : 0); ++t) for (auto* a : SetForms(a_cls, t)) out.push_back(a);
+			return out;
+		}
+	}
+	std::string ArmourSetName(int a_cls, int a_tier)
+	{
+		switch (a_cls) {
+		case coffer::kSummoner: return "Arcane Conjurer Robes";
+		case coffer::kDestruction: { static constexpr const char* kN[4] = { "Black Mage Robes", "Black Mage Mantled Robes", "Black Mage Plate", "Black Archmage Ebony" }; return kN[std::clamp(a_tier, 0, 3)]; }
+		case coffer::kRanger: return "Gondorian Ranger Armour";
+		case coffer::kSpellsword: return PlayerFemale() ? "Valkyrie Armour" : "DragonLord Armour";
+		default: return "Armour";
+		}
+	}
+	bool ArmourCarried(int a_cls, int a_tier)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return false;
+		for (auto* a : SetForms(a_cls, a_tier)) if (p->GetItemCount(a) > 0) return true;
+		return false;
+	}
+	void GiveArmourSet(int a_cls, int a_tier, bool a_wear)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p || ItemMenusOpen()) return;
+		const auto want = SetForms(a_cls, a_tier);
+		if (want.empty()) {
+			logger::warn("classes: {}'s armour set not found (its mod missing?)", Name(a_cls));
+			return;
+		}
+		// (the Battle-mage's set: the earlier look's pieces go as the new ones come)
+		for (auto* a : AllSetForms(a_cls)) {
+			if (std::find(want.begin(), want.end(), a) != want.end()) continue;
+			if (const int n = p->GetItemCount(a); n > 0) p->RemoveItem(a, n, RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+		}
+		for (auto* a : want) GiveItem(p, a, p->GetItemCount(a) > 0 ? 0 : 1, a_wear);
+		// (a woman Spellsword's Odin's Wrath awakens with her set's Tier III)
+		if (a_cls == coffer::kSpellsword && PlayerFemale() && a_tier >= 3) {
+			auto* plain = Lookup(0x00435A, "ValkyrieSwordShield.esp");
+			auto* awoken = Lookup(0x000D62, "ValkyrieSwordShield.esp");
+			auto* pw = plain ? plain->As<RE::TESBoundObject>() : nullptr;
+			if (pw && awoken && p->GetItemCount(pw) > 0) {
+				const bool held = p->GetEquippedObject(false) == pw;
+				p->RemoveItem(pw, p->GetItemCount(pw), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+				GiveItem(p, awoken, 1, held);
+				Hud::Banner("Odin's Wrath awakens", 4.0f);
+			}
+		}
+		logger::info("classes: {} - {} (tier {}) given{}", Name(a_cls), ArmourSetName(a_cls, a_tier), a_tier, a_wear ? ", worn" : "");
+	}
+	// every second: the set's pieces as the rules want them (light, weight 1, the set's armour shared out), the Ranger's stride
+	void TickArmour()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		const int c = g_class.load();
+		if (!p || c < 0) return;
+		const int  rating = Kit::ArmourRating(c);
+		const auto set = SetForms(c, std::max(0, Kit::ArmourTier(c)));
+		static auto* lightKw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x06BBD3);  // ArmorLight
+		static auto* heavyKw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x06BBD2);  // ArmorHeavy (no heavy armour's weight on you)
+		for (int k = 0; k < 4; ++k) {
+			for (auto* a : AllSetForms(k)) {
+				if (!a) continue;
+				a->bipedModelData.armorType = RE::BIPED_MODEL::ArmorType::kLightArmor;
+				a->weight = 1.0f;
+				if (lightKw && !a->HasKeyword(lightKw)) a->AddKeyword(lightKw);
+				if (heavyKw && a->HasKeyword(heavyKw)) a->RemoveKeyword(heavyKw);
+				if (k != c) continue;
+				const bool inSet = std::find(set.begin(), set.end(), a) != set.end();
+				const auto want = static_cast<std::uint32_t>(inSet && !set.empty() ? std::lround(100.0 * rating / static_cast<double>(set.size())) : 0);
+				if (a->armorRating != want) a->armorRating = want;
+			}
+		}
+		// (the Gondorian set, Tier I) the Ranger's stride: 10% faster
+		if (auto* swift = RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(gen::kSetSwift, gen::kPlugin)) {
+			const bool want = c == coffer::kRanger && Kit::ArmourTier(c) >= 1;
+			if (want != p->HasSpell(swift)) {
+				if (want) p->AddSpell(swift); else p->RemoveSpell(swift);
+				auto* av = p->AsActorValueOwner();  // (a speed change shows once the carry weight is touched)
+				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.1f);
+				av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.1f);
+			}
+		}
 	}
 }

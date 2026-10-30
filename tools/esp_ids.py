@@ -29,7 +29,7 @@ def assign(S=None, write=False):
              [('GLOB', 'egg_' + e['id']) for e in S.get('eggs', {}).get('rows', [])] + [('GLOB', 'egg_' + e['id'] + '_town') for e in S.get('eggs', {}).get('rows', [])] + [('GLOB', 'egg_gifts'), ('GLOB', 'test_kit'), ('GLOB', 'ritual_souls'), ('GLOB', 'ritual_stand')] + [('MGEF', 'altarbeam'), ('SPEL', 'altarbeam')] + \
              [('PERK', f'summon_cap_{n}') for n in (2, 3, 4, 5, 6, 7, 8)] + [('MGEF', 'tomecast'), ('SPEL', 'wonder_tome')] + \
              [('WEAP', 'vortex'), ('AMMO', 'vortexarrow'), ('PROJ', 'vortexarrow'), ('ACTI', 'vortexfx')] + [('BOOK', 'guide_' + c) for c in ('summoner', 'destruction', 'ranger', 'spellsword')] + [('PERK', 'steady'), ('CONT', 'classchest')] + [('MUST', 'night'), ('MUSC', 'night')] + [('WEAP', 'xbow_' + e) for e in ('fire', 'frost', 'shock')] + [('LIGH', 'lantern')] + [('WEAP', 'riftblade'), ('MGEF', 'reanimatebolt')] + [(k, f'rift{w}{n}') for n in (1, 2, 3) for k, w in (('EFSH', 'shader'), ('MGEF', 'fire'), ('ENCH', 'fire'))] + [('SPEL', f'reanimate_{n}') for n in (1, 2, 3)] + \
-             [('WEAP', 'madness'), ('STAT', 'madness_1st'), ('ARMO', 'lantern'), ('ARMA', 'lantern'), ('MGEF', 'lanternlight'), ('SPEL', 'lanternlight')] + [(k, f'mad{w}{n}') for n in (1, 2, 3) for k, w in (('EFSH', 'shader'), ('MGEF', 'glow'), ('ENCH', 'glow'))]
+             [('WEAP', 'madness'), ('STAT', 'madness_1st'), ('ARMO', 'lantern'), ('ARMA', 'lantern'), ('MGEF', 'lanternlight'), ('SPEL', 'lanternlight')] + [(k, f'mad{w}{n}') for n in (1, 2, 3) for k, w in (('EFSH', 'shader'), ('MGEF', 'glow'), ('ENCH', 'glow'))] + [(k, 'tb_' + v) for v in ('mangled', 'foul', 'putrid', 'malignant', 'relentless', 'dread_putrid') for k in ('NPC_', 'ARMO', 'ARMA')] + [('MGEF', 'set_swift'), ('SPEL', 'set_swift')]
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:
@@ -60,7 +60,7 @@ def echo_ids(S):
 def blasts():
     """Spell blasts: no-damage copies of Skyrim's explosions (tools/templates/expl/<name>.json)."""
     return sorted(q.stem for q in (ROOT / 'tools' / 'templates' / 'expl').glob('*.json'))
-MASTERS = ['Skyrim.esm', 'Update.esm', 'Dawnguard.esm']
+MASTERS = ['Skyrim.esm', 'Update.esm', 'Dawnguard.esm', 'Dragonborn.esm', 'mihailzombies.esp']  # (the creature overhaul: the Thriceborn stand on Mihail's zombie race)
 
 POWERUPS = [('instakill', 'FF3030'), ('double', 'FFD040'), ('kaboom', 'FF8A20'), ('firesale', 'B060FF'), ('maxammo', '46C8FF'), ('shadow', '8040E0'), ('thuum', 'D0E8FF'), ('mercy', '50E070')]
 

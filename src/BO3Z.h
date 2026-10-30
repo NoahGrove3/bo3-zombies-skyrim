@@ -122,8 +122,9 @@ namespace bo3z
 	// summon family's rungs and Ascends, a spell-weapon's steel)
 	inline float UpgradeMult(int a_upgrades)
 	{
-		static constexpr float kCurve[4] = { 1.0f, 2.5f, 5.0f, 6.5f };
-		return a_upgrades <= 0 ? 1.0f : a_upgrades <= 3 ? kCurve[a_upgrades] : 6.5f + 1.5f * static_cast<float>(a_upgrades - 3);
+		// (Noah: "tier 1 1.5 times, tier 2 3 times, tier 3 5 times - Ascend is fine the way it is": +1.5 each)
+		static constexpr float kCurve[4] = { 1.0f, 1.5f, 3.0f, 5.0f };
+		return a_upgrades <= 0 ? 1.0f : a_upgrades <= 3 ? kCurve[a_upgrades] : 5.0f + 1.5f * static_cast<float>(a_upgrades - 3);
 	}
 
 	namespace Director
@@ -383,6 +384,10 @@ namespace bo3z
 		void             QueueThrall(RE::Actor* a_struck, int a_level);  // should it fall now, it rises as your thrall
 		bool             KitGiven(int a_cls);         // that class's starting kit has been handed over
 		RE::TESObjectWEAP* Riftblade();
+		std::string        ArmourSetName(int a_cls, int a_tier);   // (the class armour sets) its name at that tier
+		bool               ArmourCarried(int a_cls, int a_tier);   // a piece of it in your pack
+		void               GiveArmourSet(int a_cls, int a_tier, bool a_wear);  // handed over (the Battle-mage's earlier look taken back)
+		void               TickArmour();                           // its pieces' armour, light and weightless; the Ranger's stride
 		RE::TESObjectWEAP* SpellswordBlade();         // the Spellsword's one-handed sword
 		int              TwoHanderCount();            // the Spellsword's relic two-handers
 		RE::TESObjectWEAP* TwoHander(int a_i);
@@ -1139,6 +1144,8 @@ namespace bo3z
 		int   CrossbowAscends(int a_elem);
 		int   RiftTier();                         // the Riftblade's upgrades (0..)
 		float QuiverRadiusMult();                 // the Ranger's relic quivers: its bows' and crossbows' blasts this much wider
+		int   ArmourTier(int a_cls);              // (the class armour sets) the set's upgrades (0..), -1 not owned
+		int   ArmourRating(int a_cls);            // 10, and 10 more for each of its upgrades
 		float ArmorResist();                      // 0 .. 0.30 of the night's blows taken off
 		float AuraCostMult();                     // (co-op) a Destruction mage in the party: spells cost less
 		float AuraAmmoMult();                     // (co-op) a Ranger in the party: ammo grows back sooner

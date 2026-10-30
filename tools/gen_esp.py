@@ -5,7 +5,7 @@ import json, struct, pathlib
 from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing, blasts
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
-T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger', 'efsh_enchfire', 'mgef_enchfire', 'ench_fire05', 'weap_madness', 'stat_madness1st', 'efsh_enchpurple']}
+T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger', 'efsh_enchfire', 'mgef_enchfire', 'ench_fire05', 'weap_madness', 'stat_madness1st', 'efsh_enchpurple', 'npc_mihailzombie']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
 def z(s): return s.encode('cp1252') + b'\0'
 def sub(name, data):
@@ -1021,6 +1021,48 @@ recs['ARMO'].append(record('ARMO', fid('ARMO', 'lantern'), [sub('EDID', z('UN_Be
     sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x08F95B)),   # (ArmorClothing)
     sub('DESC', z('A small iron lantern on a chain at your hip. Worn, its candle lights everything within fifteen metres of you; taken off, it goes dark.')),
     sub('MODL', struct.pack('<I', fid('ARMA', 'lantern'))), sub('DATA', struct.pack('<If', 25, 1.0)), sub('DNAM', struct.pack('<I', 0))]))
+
+# (Noah: the creature overhaul - "combine both zombie mods") the Thriceborn: Mihail's CC Zombies' bodies (its plugin needs
+# the Creation Club's Zombies, so its records are ours) on Mihail's own zombie race (mihailzombies.esp), its claws, its AI.
+# No script: they do not rise again (Noah: "the coming back to life up to 3 times should be turned off")
+MZ = 4 << 24   # (mihailzombies.esp's place among our masters; Dragonborn.esm is 3)
+def mz_fid(v):  # one of mihailzombies.esp's form ids, as our plugin sees it
+    hi = v >> 24
+    return v if hi <= 2 else ((3 << 24) | (v & 0xFFFFFF)) if hi == 4 else (MZ | (v & 0xFFFFFF)) if hi == 5 else v
+CCZ = 'Mihail Monsters and Animals\\CC stuff\\Zombies\\actors\\zombies\\'
+THRICEBORN = [('mangled', 'Thriceborn Mangled Zombie', 'zombie01.nif'), ('foul', 'Thriceborn Foul Zombie', 'zombie02.nif'),
+              ('putrid', 'Thriceborn Putrid Zombie', 'zombie03putrid.nif'), ('malignant', 'Thriceborn Malignant Zombie', 'zombie02dread.nif'),
+              ('relentless', 'Thriceborn Relentless Zombie', 'zombie03.nif'), ('dread_putrid', 'Thriceborn Dread Putrid Zombie', 'zombie01putrid.nif')]
+for key, label, nif in THRICEBORN:
+    recs['ARMA'].append(record('ARMA', fid('ARMA', 'tb_' + key), [sub('EDID', z('UN_tb_' + key + 'AA')), sub('BOD2', struct.pack('<II', 4, 2)), sub('RNAM', struct.pack('<I', MZ | 0x800)),
+        sub('DNAM', bytes.fromhex('000000000000001100000000')), sub('MOD2', z(CCZ + nif)), sub('MOD3', z(CCZ + nif)), sub('SNDD', struct.pack('<I', 0x0C0D36))]))
+    recs['ARMO'].append(record('ARMO', fid('ARMO', 'tb_' + key), [sub('EDID', z('UN_tb_' + key + 'Skin')), sub('OBND', bytes(12)), sub('BOD2', struct.pack('<II', 4, 2)),
+        sub('RNAM', struct.pack('<I', MZ | 0x800)), sub('MODL', struct.pack('<I', fid('ARMA', 'tb_' + key))), sub('DATA', bytes(8)), sub('DNAM', bytes(4))]))
+    subs = []
+    for name, hx in T['npc_mihailzombie']['subs']:
+        b = bytearray(bytes.fromhex(hx))
+        if name == 'EDID': b = z('UN_tb_' + key)
+        elif name == 'FULL': b = z(label)
+        elif name == 'WNAM': b = struct.pack('<I', fid('ARMO', 'tb_' + key))
+        elif name in ('SNAM', 'CNTO') or (name in ('VTCK', 'RNAM', 'ATKR', 'CNAM', 'ZNAM', 'CSCR', 'DPLT') and len(b) == 4):
+            struct.pack_into('<I', b, 0, mz_fid(struct.unpack_from('<I', b, 0)[0]))
+        subs.append(sub(name, bytes(b)))
+    recs['NPC_'].append(record('NPC_', fid('NPC_', 'tb_' + key), subs))
+
+# (Noah: the class sets' powers) the Gondorian Ranger's set, Tier I: 10% faster on your feet (an ability while the
+# Ranger's set has its first tier: src/Classes.cpp)
+md = bytearray(tsub('mgef', 'DATA'))
+struct.pack_into('<I', md, 0, 0x2)       # recover: off again when taken away
+struct.pack_into('<I', md, 32, 0)        # no shader
+struct.pack_into('<I', md, 64, 0)        # value modifier
+struct.pack_into('<i', md, 68, 30)       # SpeedMult
+struct.pack_into('<I', md, 80, 0)        # constant
+struct.pack_into('<I', md, 84, 0)        # self
+recs['MGEF'].append(record('MGEF', fid('MGEF', 'set_swift'), [sub('EDID', z('UN_SetSwiftFX')), sub('FULL', z('Ranger\'s Stride')), sub('MDOB', tsub('mgef', 'MDOB')),
+    sub('DATA', bytes(md)), sub('DNAM', z('You move 10% faster.'))]))
+recs['SPEL'].append(record('SPEL', fid('SPEL', 'set_swift'), [sub('EDID', z('UN_SetSwift')), sub('OBND', bytes(12)), sub('FULL', z('Ranger\'s Stride')),
+    sub('ETYP', struct.pack('<I', 0x013F44)), sub('DESC', z('')), sub('SPIT', struct.pack('<IIIfIIffI', 0, 0x1, 4, 0.0, 0, 0, 0.0, 0.0, 0)),
+    sub('EFID', struct.pack('<I', fid('MGEF', 'set_swift'))), sub('EFIT', struct.pack('<fII', 10.0, 0, 0))]))
 
 # (spell blasts are cloned from Skyrim's explosions at runtime: EXPL records in an ESL crashed the game at load)
 # (the Codex's chapter parser, shared by the class guides' book text and src/Codex.h below)

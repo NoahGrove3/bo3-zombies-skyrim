@@ -249,6 +249,9 @@ namespace bo3z::Audio
 			if (row < 0) {
 				return -1;
 			}
+			// (Noah, the creature overhaul: "the creatures will have their own animations") a creature from the party's mods
+			// keeps its own voice and footfalls; ours were for our own bodies
+			if (!gen::kEnemies[row].rig) return -1;
 			const std::string_view id = gen::kEnemies[row].id;
 			if (id == "zombie") return 0;
 			if (id == "runner") return 1;

@@ -1,6 +1,6 @@
 {
  "sheet": "economy",
- "about": "Points, BO3 Zombies values. One row per way of earning or spending. (Noah 2026-10-26: \"make enemies drop more cursed essence\" - kills about double, spell and blade kills 75, a night survived 250) (Noah 2026-10-29, the altar rework: no wands - every kill 75, no headshot or hit bonus)",
+ "about": "Points, BO3 Zombies values. One row per way of earning or spending. (Noah 2026-10-26: \"make enemies drop more cursed essence\" - kills about double, spell and blade kills 75, a night survived 250) (Noah 2026-10-29, the altar rework: no wands - every kill 75, no headshot or hit bonus) (Noah 2026-10-29: \"make enemies drop more cursed essence - like 15% more\" - every kill 86, elites and bosses 15% more)",
  "columns": [
   "id",
   "event",
@@ -23,19 +23,19 @@
   {
    "id": "kill",
    "event": "kill_round_undead",
-   "points": 75,
+   "points": 86,
    "verify": []
   },
   {
    "id": "headshot_kill",
    "event": "headshot_kill_round_undead",
-   "points": 75,
+   "points": 86,
    "verify": []
   },
   {
    "id": "melee_kill",
    "event": "skyrim_weapon_or_spell_kill_round_undead",
-   "points": 75,
+   "points": 86,
    "verify": []
   },
   {

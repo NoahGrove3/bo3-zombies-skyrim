@@ -19,6 +19,8 @@ COTC = 'Calling of the Conjurer.esp'
 SPRIG = 'ConjureSpriggans.esp'
 SKY = 'Skyrim.esm'
 OURS = 'CurseOfAlduin.esp'
+DB = 'Dragonborn.esm'
+DG = 'Dawnguard.esm'
 # Skyrim's own bolts (not in a tome list): form id, cost, concentration, school
 VANILLA = {'Firebolt': (0x012FD0, 45), 'Fireball': (0x01C789, 132), 'Incinerate': (0x10F7ED, 240), 'Ice Spike': (0x02B96C, 40), 'Ice Storm': (0x045F9C, 124),
            'Icy Spear': (0x10F7EC, 228), 'Lightning Bolt': (0x02DD29, 50), 'Chain Lightning': (0x045F9D, 144), 'Thunderbolt': (0x10F7EE, 252)}
@@ -57,7 +59,23 @@ LADDERS = [
     ('spellsword', 'blood_breath', 'Blood Breath', 'blood', [(MYST, 'Drain Life'), (MYST, 'Leech Life')]),
     # (Noah, the altar rework: "remove the summoner magic damage starting spell - only the summons and the Riftblade")
     # Reanimate is gone from the pool (its records stay in the plugin, unused)
+    # (Noah: "I want them all to be 7" - every class's Armory seven items) the Summoner's four more and Destruction's three
+    # (appended: a ladder's index is in the saves)
+    ('summoner', 'atronachs', 'Atronachs', 'arcane', [(SKY, 'Conjure Flame Atronach'), (SKY, 'Conjure Frost Atronach'), (SKY, 'Conjure Storm Atronach'), (SKY, 'Conjure Storm Monarch')]),
+    ('summoner', 'ash', 'Ash', 'arcane', [(DB, 'Conjure Ash Spawn'), (MYST, 'Conjure Ash Husk'), (COTC, 'Conjure Ash Spawn Immolator'), (MYST, 'Conjure Ash Guardian')]),
+    ('summoner', 'night', 'The Night', 'arcane', [(MYST, 'Conjure Death Hound'), (MYST, 'Conjure Volkihar Hound'), (MYST, 'Conjure Gargoyle'), (MYST, 'Conjure Gargoyle Brute')]),
+    ('summoner', 'wrath', 'The Wrath', 'arcane', [(DG, 'Conjure Mistman'), (DG, 'Conjure Wrathman'), (MYST, 'Conjure Wrathman Marksman'), (MYST, 'Conjure Wrathman Warlock')]),
+    ('destruction', 'cloaks', 'Cloaks', 'fire', [(SKY, 'Flame Cloak'), (SKY, 'Frost Cloak', 'frost'), (SKY, 'Lightning Cloak', 'shock')]),
+    ('destruction', 'walls', 'Walls', 'fire', [(SKY, 'Wall of Flames'), (SKY, 'Wall of Frost', 'frost'), (SKY, 'Wall of Storms', 'shock')]),
+    ('destruction', 'storms', 'Storms', 'shock', [(SKY, 'Lightning Storm'), (SKY, 'Blizzard', 'frost'), (SKY, 'Fire Storm', 'fire')]),
 ]
+# (the new ladders) Skyrim's and the DLCs' own spells (Mysticism reworks them): form id, cost, concentration
+EXTRA = {(SKY, 'Conjure Flame Atronach'): (0x0204C3, 150, False), (SKY, 'Conjure Frost Atronach'): (0x0204C4, 260, False), (SKY, 'Conjure Storm Atronach'): (0x0204C5, 383, False),
+         (SKY, 'Conjure Storm Monarch'): (0x07E5D7, 632, False), (DB, 'Conjure Ash Spawn'): (0x01CDF6, 240, False), (MYST, 'Conjure Ash Guardian'): (0xE7ADBD, 383, False),
+         (DG, 'Conjure Mistman'): (0x0045B8, 358, False), (DG, 'Conjure Wrathman'): (0x0045B3, 661, False),
+         (SKY, 'Flame Cloak'): (0x03AE9F, 268, False), (SKY, 'Frost Cloak'): (0x03AEA2, 243, False), (SKY, 'Lightning Cloak'): (0x03AEA3, 274, False),
+         (SKY, 'Wall of Flames'): (0x035D7F, 96, True), (SKY, 'Wall of Frost'): (0x035D80, 88, True), (SKY, 'Wall of Storms'): (0x035D81, 101, True),
+         (SKY, 'Lightning Storm'): (0x07E8E5, 184, True), (SKY, 'Blizzard'): (0x07E8E4, 520, False), (SKY, 'Fire Storm'): (0x07A82B, 665, False)}
 ELEMENTS = ['fire', 'frost', 'shock', 'poison', 'corrosion', 'sun', 'blood', 'arcane']  # (corrosion took disease's place: nothing used it)
 
 
@@ -75,6 +93,8 @@ def load():
         out[(OURS, name)] = (ids[('SPEL', key)], cost, False, 'Conjuration')
     for n, (fid, cost) in VANILLA.items():
         out[(SKY, n)] = (fid, cost, False, 'Destruction')
+    for key, (fid, cost, conc) in EXTRA.items():
+        out.setdefault(key, (fid, cost, conc, 'Conjuration' if key[1].startswith('Conjure') else 'Destruction'))
     return out
 
 

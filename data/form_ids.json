@@ -1325,6 +1325,26 @@
   "ENCH:madglow2": "0xd29",
   "EFSH:madshader3": "0xd2a",
   "MGEF:madglow3": "0xd2b",
-  "ENCH:madglow3": "0xd2c"
+  "ENCH:madglow3": "0xd2c",
+  "NPC_:tb_mangled": "0xd2d",
+  "ARMO:tb_mangled": "0xd2e",
+  "ARMA:tb_mangled": "0xd2f",
+  "NPC_:tb_foul": "0xd30",
+  "ARMO:tb_foul": "0xd31",
+  "ARMA:tb_foul": "0xd32",
+  "NPC_:tb_putrid": "0xd33",
+  "ARMO:tb_putrid": "0xd34",
+  "ARMA:tb_putrid": "0xd35",
+  "NPC_:tb_malignant": "0xd36",
+  "ARMO:tb_malignant": "0xd37",
+  "ARMA:tb_malignant": "0xd38",
+  "NPC_:tb_relentless": "0xd39",
+  "ARMO:tb_relentless": "0xd3a",
+  "ARMA:tb_relentless": "0xd3b",
+  "NPC_:tb_dread_putrid": "0xd3c",
+  "ARMO:tb_dread_putrid": "0xd3d",
+  "ARMA:tb_dread_putrid": "0xd3e",
+  "MGEF:set_swift": "0xd3f",
+  "SPEL:set_swift": "0xd40"
  }
 }

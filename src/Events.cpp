@@ -1,4 +1,5 @@
 #include "BO3Z.h"
+#include "CofferSpells.h"
 #include "Perf.h"
 
 namespace bo3z
@@ -736,7 +737,29 @@ namespace bo3z
 			g_splitUntil = std::chrono::steady_clock::now() + std::chrono::milliseconds(1500);
 			(void)seen;
 		}
-		void CofferHit(RE::Actor* a_actor, int a_index)
+		// (the altar's Cloaks) a cloak strikes through a spell of its own (the cloak effect's associated spell): its blows
+		// are its cloak's, a stream's share at a time
+		int CloakOf(const RE::TESForm* a_src)
+		{
+			static std::unordered_map<RE::FormID, int> map;
+			static bool built = false;
+			if (!built) {
+				built = true;
+				for (int i = 0; i < static_cast<int>(coffer::kSpells.size()); ++i) {
+					auto* sp = Arcana::Spell(i);
+					if (!sp) continue;
+					for (auto* e : sp->effects) {
+						auto* m = e ? e->baseEffect : nullptr;
+						if (m && m->GetArchetype() == RE::EffectSetting::Archetype::kCloak && m->data.associatedForm) map[m->data.associatedForm->GetFormID()] = i;
+					}
+				}
+				logger::info("arcana: {} cloak spells known", map.size());
+			}
+			if (!a_src) return -1;
+			auto it = map.find(a_src->GetFormID());
+			return it == map.end() ? -1 : it->second;
+		}
+		void CofferHit(RE::Actor* a_actor, int a_index, bool a_cloak = false)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
 			if (!a_actor || !player || a_actor == player || a_actor->IsDead()) {
@@ -752,7 +775,7 @@ namespace bo3z
 				if (Limit(a_actor)) {
 					// (the balance pass) a concentration spell lands four times a second: each touch takes a third of a
 					// cast's share, so a stream and a bolt kill about as fast for the magicka
-					const float stream = Arcana::Concentration(a_index) ? 0.35f : 1.0f;
+					const float stream = (Arcana::Concentration(a_index) || a_cloak) ? 0.35f : 1.0f;
 					HurtUndead(a_actor, Director::RoundHealth() * gen::kShareSpell * grow * twin * stream);
 				}
 				return;
@@ -878,6 +901,9 @@ namespace bo3z
 					} else if (const int ci = Arcana::IndexOf(src); z && ci >= 0) {
 						CofferHit(z, ci);  // the Coffer's spells: every one of them hurts every enemy
 						if (Director::IsRoundUndead(z)) MarkHit(z);
+					} else if (const int cl = CloakOf(src); z && cl >= 0) {
+						CofferHit(z, cl, true);
+						if (Director::IsRoundUndead(z)) MarkHit(z);
 					} else if (z && !z->IsDead() && Director::IsRoundUndead(z)) {
 						bool ourSpell = false;
 						for (int i = 0; i < static_cast<int>(gen::kSpells.size()); ++i) {
@@ -955,7 +981,8 @@ namespace bo3z
 						int best = 1;
 						for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == 0) best = std::max(best, Arcana::RungOf(i));
 						const float might = Perks::SummonMight() ? gen::kPerks[gen::kPerk_bonebinder].value : 1.0f;
-						const float hurt = sav->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.08f / (1.0f + 0.35f * static_cast<float>(best - 1)) / might * (big ? 2.0f : 1.0f) * Settings::UndeadDamageMult();
+						const float hurt = sav->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.08f / (1.0f + 0.35f * static_cast<float>(best - 1)) / might * (big ? 2.0f : 1.0f) * Settings::UndeadDamageMult() *
+						                   (Kit::ArmourTier(0) >= 1 && Classes::Get() == 0 ? 0.8f : 1.0f);  // (the Arcane Conjurer's robes, Tier I: your summons take a fifth less)
 						sav->DamageActorValue(RE::ActorValue::kHealth, hurt);
 						if (sav->GetActorValue(RE::ActorValue::kHealth) <= 0 && !sm->IsDead()) sm->KillImpl(z, hurt, true, false);
 					}

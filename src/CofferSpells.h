@@ -11,8 +11,8 @@ namespace bo3z::coffer
 	inline constexpr const char* kClassName[kClasses] = { "Summoner", "Destruction", "Ranger", "Spellsword" };
 	struct Spell { const char* plugin; std::uint32_t id; const char* name; Element element; std::uint8_t tier; std::uint16_t cost; bool concentration; float power;
 		Class cls; std::uint8_t ladder, rung, rungs; const char* ladderLabel; };   // rung 1 is what the altar rolls; the last rung is Legendary
-	inline constexpr int kLadders = 22;
-	inline constexpr std::array<Spell, 73> kSpells{ {
+	inline constexpr int kLadders = 29;
+	inline constexpr std::array<Spell, 98> kSpells{ {
 		{ "Skyrim.esm", 0x012FD0, "Firebolt", kFire, 0, 11, false, 1.0f, kDestruction, 0, 1, 4, "Fire" },
 		{ "Skyrim.esm", 0x01C789, "Fireball", kFire, 1, 33, false, 1.0f, kDestruction, 0, 2, 4, "Fire" },
 		{ "Skyrim.esm", 0x10F7ED, "Incinerate", kFire, 2, 60, false, 1.0f, kDestruction, 0, 3, 4, "Fire" },
@@ -86,5 +86,30 @@ namespace bo3z::coffer
 		{ "MysticismMagic.esp", 0x9606AC, "Miasma", kPoison, 3, 46, true, 1.0f, kSpellsword, 20, 2, 2, "Poison Breath" },
 		{ "MysticismMagic.esp", 0x445FB7, "Drain Life", kBlood, 0, 17, true, 1.0f, kSpellsword, 21, 1, 2, "Blood Breath" },
 		{ "MysticismMagic.esp", 0x440E99, "Leech Life", kBlood, 3, 52, true, 1.0f, kSpellsword, 21, 2, 2, "Blood Breath" },
+		{ "Skyrim.esm", 0x0204C3, "Conjure Flame Atronach", kArcane, 0, 38, false, 1.0f, kSummoner, 22, 1, 4, "Atronachs" },
+		{ "Skyrim.esm", 0x0204C4, "Conjure Frost Atronach", kArcane, 1, 60, false, 1.0f, kSummoner, 22, 2, 4, "Atronachs" },
+		{ "Skyrim.esm", 0x0204C5, "Conjure Storm Atronach", kArcane, 2, 60, false, 1.0f, kSummoner, 22, 3, 4, "Atronachs" },
+		{ "Skyrim.esm", 0x07E5D7, "Conjure Storm Monarch", kArcane, 3, 60, false, 1.0f, kSummoner, 22, 4, 4, "Atronachs" },
+		{ "Dragonborn.esm", 0x01CDF6, "Conjure Ash Spawn", kArcane, 0, 60, false, 1.0f, kSummoner, 23, 1, 4, "Ash" },
+		{ "MysticismMagic.esp", 0x45F595, "Conjure Ash Husk", kArcane, 1, 60, false, 1.0f, kSummoner, 23, 2, 4, "Ash" },
+		{ "Calling of the Conjurer.esp", 0x2A792B, "Conjure Ash Spawn Immolator", kArcane, 2, 44, false, 1.0f, kSummoner, 23, 3, 4, "Ash" },
+		{ "MysticismMagic.esp", 0xE7ADBD, "Conjure Ash Guardian", kArcane, 3, 60, false, 1.0f, kSummoner, 23, 4, 4, "Ash" },
+		{ "MysticismMagic.esp", 0xE7FEC6, "Conjure Death Hound", kArcane, 0, 36, false, 1.0f, kSummoner, 24, 1, 4, "The Night" },
+		{ "MysticismMagic.esp", 0xE7FECB, "Conjure Volkihar Hound", kArcane, 1, 60, false, 1.0f, kSummoner, 24, 2, 4, "The Night" },
+		{ "MysticismMagic.esp", 0xE7FED0, "Conjure Gargoyle", kArcane, 2, 60, false, 1.0f, kSummoner, 24, 3, 4, "The Night" },
+		{ "MysticismMagic.esp", 0xE7FED5, "Conjure Gargoyle Brute", kArcane, 3, 60, false, 1.0f, kSummoner, 24, 4, 4, "The Night" },
+		{ "Dawnguard.esm", 0x0045B8, "Conjure Mistman", kArcane, 0, 60, false, 1.0f, kSummoner, 25, 1, 4, "The Wrath" },
+		{ "Dawnguard.esm", 0x0045B3, "Conjure Wrathman", kArcane, 1, 60, false, 1.0f, kSummoner, 25, 2, 4, "The Wrath" },
+		{ "MysticismMagic.esp", 0x01F2FA, "Conjure Wrathman Marksman", kArcane, 2, 60, false, 1.0f, kSummoner, 25, 3, 4, "The Wrath" },
+		{ "MysticismMagic.esp", 0x01F2FB, "Conjure Wrathman Warlock", kArcane, 3, 60, false, 1.0f, kSummoner, 25, 4, 4, "The Wrath" },
+		{ "Skyrim.esm", 0x03AE9F, "Flame Cloak", kFire, 0, 60, false, 1.0f, kDestruction, 26, 1, 3, "Cloaks" },
+		{ "Skyrim.esm", 0x03AEA2, "Frost Cloak", kFrost, 1, 60, false, 1.0f, kDestruction, 26, 2, 3, "Cloaks" },
+		{ "Skyrim.esm", 0x03AEA3, "Lightning Cloak", kShock, 3, 60, false, 1.0f, kDestruction, 26, 3, 3, "Cloaks" },
+		{ "Skyrim.esm", 0x035D7F, "Wall of Flames", kFire, 0, 24, true, 1.0f, kDestruction, 27, 1, 3, "Walls" },
+		{ "Skyrim.esm", 0x035D80, "Wall of Frost", kFrost, 1, 22, true, 1.0f, kDestruction, 27, 2, 3, "Walls" },
+		{ "Skyrim.esm", 0x035D81, "Wall of Storms", kShock, 3, 25, true, 1.0f, kDestruction, 27, 3, 3, "Walls" },
+		{ "Skyrim.esm", 0x07E8E5, "Lightning Storm", kShock, 0, 46, true, 1.0f, kDestruction, 28, 1, 3, "Storms" },
+		{ "Skyrim.esm", 0x07E8E4, "Blizzard", kFrost, 1, 60, false, 1.0f, kDestruction, 28, 2, 3, "Storms" },
+		{ "Skyrim.esm", 0x07A82B, "Fire Storm", kFire, 3, 60, false, 1.0f, kDestruction, 28, 3, 3, "Storms" },
 	} };
 }
