@@ -502,9 +502,9 @@ namespace bo3z
 					RaiseWave(a_p, w);
 					return;
 				}
-				// the waves are down: the dragon comes, high over the place
+				// the waves are down: the dragon comes
 				const auto spot = Walkable(a_p, at, 700.0f);
-				if (Director::RaiseChampion(-1, W.bearerRow, W.bearerName, W.health, (spot ? *spot : at) + RE::NiPoint3{ 0, 0, 900.0f })) {
+				if (Director::RaiseChampion(-1, W.bearerRow, W.bearerName, W.health, (spot ? *spot : at) + RE::NiPoint3{ 0, 0, 60.0f })  /* (out of the Curse's portal on the ground, as Grimmvar comes: then it takes wing) */) {
 					g_siege.stage = 2;
 					Forms::Play(gen::Sound::boss_arrive);
 					if (Settings::ScreenShake()) RE::ShakeCamera(0.6f, a_p->GetPosition(), 1.5f);
