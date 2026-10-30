@@ -1887,6 +1887,17 @@ namespace bo3z::Classes
 		});
 		logger::info("classes: wonder {} won - it waits in the Reliquary", kWonderName[a_cls]);
 	}
+	void DevWonder(int a_cls, int a_st)
+	{
+		if (a_cls < 0 || a_cls >= 4) return;
+		if (a_st == kWonderWaiting) {
+			g_wStep[a_cls] = 0;
+			EarnWonder(a_cls);
+		} else {
+			g_wStep[a_cls] = static_cast<std::uint8_t>(std::clamp(a_st, 0, 5));
+		}
+		logger::info("dev: wonder {} state {}", kWonderName[a_cls], g_wStep[a_cls]);
+	}
 	int  WonderState(int a_cls) { return a_cls >= 0 && a_cls < 4 ? g_wStep[a_cls] : 0; }
 	std::string_view WonderName(int a_cls) { return a_cls >= 0 && a_cls < 4 ? kWonderName[a_cls] : ""; }
 	int  WonderMask()

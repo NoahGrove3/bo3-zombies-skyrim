@@ -458,6 +458,52 @@ namespace bo3z
 						player ? player->GetPositionX() : 0.f, player ? player->GetPositionY() : 0.f, player ? player->GetPositionZ() : 0.f,
 						player && player->GetParentCell() ? player->GetParentCell()->GetFormEditorID() : "");
 				}
+			} else if (cmd == "class") {  // class <0-3>: that class chosen now (no cost)
+				int c = -1;
+				in >> c;
+				Classes::Choose(c);
+			} else if (cmd == "wonder") {  // wonder <class> <state 0-5>
+				int c = -1, st = 0;
+				in >> c >> st;
+				Classes::DevWonder(c, st);
+			} else if (cmd == "spells" && player) {  // spells: what you know and hold (relic checks)
+				std::string known;
+				for (auto* sp : player->GetActorRuntimeData().addedSpells) {
+					if (sp) known += fmt::format("{} [{:08X} cost {:.0f}], ", sp->GetName(), sp->GetFormID(), sp->CalculateMagickaCost(player));
+				}
+				auto nm = [&](bool a_left) {
+					auto* o = player->GetEquippedObject(a_left);
+					return o ? fmt::format("{} {:08X}", o->GetName(), o->GetFormID()) : std::string("-");
+				};
+				logger::info("dev: spells known: {} | right {} | left {} | magicka {:.0f}/{:.0f}", known, nm(false), nm(true),
+					player->AsActorValueOwner()->GetActorValue(RE::ActorValue::kMagicka), player->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kMagicka));
+			} else if (cmd == "foes" && player) {  // foes: the undead round you - their spells, shouts and voice
+				int n = 0;
+				const auto at = player->GetPosition();
+				if (auto* pl = RE::ProcessLists::GetSingleton()) {
+					for (auto& h : pl->highActorHandles) {
+						auto a = h.get();
+						if (!a || a->IsDead() || a.get() == player || a->GetPosition().GetDistance(at) > 6000.0f || n >= 24) continue;
+						auto* base = a->GetActorBase();
+						std::string sps;
+						int shouts = 0;
+						if (auto* spl = base ? base->GetSpellList() : nullptr) {
+							for (std::uint32_t i = 0; i < spl->numSpells; ++i) {
+								if (spl->spells[i]) sps += fmt::format("{}|", spl->spells[i]->GetName());
+							}
+							shouts = static_cast<int>(spl->numShouts);
+						}
+						for (auto* sp : a->GetActorRuntimeData().addedSpells) {
+							if (sp) sps += fmt::format("+{}|", sp->GetName());
+						}
+						++n;
+						logger::info("dev: foe {} [{:08X}] d {:.0f} hp {:.0f} voice {:.0f} shouts {} spells {} | conf {:.0f} aggr {:.0f} destr {:.0f}", a->GetName(), a->GetFormID(),
+							a->GetPosition().GetDistance(at), a->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth),
+							a->GetActorRuntimeData().voiceTimer, shouts, sps, a->AsActorValueOwner()->GetActorValue(RE::ActorValue::kConfidence),
+							a->AsActorValueOwner()->GetActorValue(RE::ActorValue::kAggression), a->AsActorValueOwner()->GetActorValue(RE::ActorValue::kDestruction));
+					}
+				}
+				logger::info("dev: foes {}", n);
 			} else if (cmd == "crew") {
 				int c = 0;
 				in >> c;

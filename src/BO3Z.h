@@ -400,6 +400,7 @@ namespace bo3z
 		int              WonderState(int a_cls);       // 0 shut, 1-3 its secret under way, 4 taken up, 5 won and waiting in the Reliquary
 		std::string_view WonderName(int a_cls);
 		int              WonderMask();                 // bit per class: its wonder won (waiting in the Reliquary or taken up)
+		void             DevWonder(int a_cls, int a_st);  // dev: set a wonder's state (5 = won now, with the call)
 		bool             TakeWonder(int a_cls);        // (the Reliquary's pedestal) a waiting wonder taken up - or a lost one given again
 		bool             WonderOpen();                 // your class's secret quest is open (six cities freed) and the wonder not yet won
 		void             EarnWonder(int a_cls);        // (Eggs) the quest done: the wonder
