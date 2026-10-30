@@ -65,7 +65,10 @@ namespace bo3z
 		// more each night after (to 40), and each wave after it brings a quarter more than the first:
 		//   night 1: 6 8 9 (23)   night 2: 8 10 12 14 (44)   night 3: 10 13 15 18 (56)   night 5: 14 ... 28 (105)
 		int WavesFor(int a_round) { return std::min(8, 3 + std::max(1, a_round) / 2); }
-		int WaveStep() { return std::min(40, 6 + 2 * (std::max(1, g_current) - 1)); }  // (the night's first wave)
+		// (Noah: "there needs to be a lot more enemies per wave because the trials require a lot of kills. For the first night,
+		// have the first wave 20, second wave 30, and third wave 40. And have each wave increase by 5 every night after the
+		// first night") wave w of night n: 20 + 10 per wave before it + 5 per night before it
+		int WaveStep() { return 20 + 5 * (std::max(1, g_current) - 1); }  // (the night's first wave)
 		int AtOnceMin(int a_round) { return std::min(12, 4 + 2 * std::max(1, a_round)); }
 		constexpr float kWaveRest = 8.0f;
 		int   g_waves = 0, g_wave = 0, g_waveSize = 0, g_waveSpawned = 0;
@@ -131,7 +134,7 @@ namespace bo3z
 			const int   players = Net::InLobby() ? Net::Members() + 1 : 1;
 			const float party = 1.0f + 0.5f * static_cast<float>(std::max(0, players - 1));  // (each friend: half again)
 			const int   th = ThemeNowImpl();
-			const float size = WaveStep() * (1.0f + 0.25f * static_cast<float>(std::max(1, a_wave) - 1)) * party * (th >= 0 ? gen::kEvents[th].waveCount : 1.0f);
+			const float size = static_cast<float>(WaveStep() + 10 * (std::max(1, a_wave) - 1)) * party * (th >= 0 ? gen::kEvents[th].waveCount : 1.0f);
 			return std::max(1, static_cast<int>(std::lround(std::min(size, static_cast<float>(kNightCapPerPlayer)))));
 		}
 
@@ -2095,7 +2098,7 @@ namespace bo3z
 				Hud::Banner(fmt::format("NIGHT {} - WAVE 1 OF {}{}", a_round, g_waves, g_special ? " - THE HOUNDS ARE LOOSE" : ""));
 			}
 			Stats::NightBegins(a_round);
-			logger::info("round {} starts: {} waves (the first of {}, 20 more each), up to {} undead at once, {:.0f} Skyrim health each{}", a_round, g_waves, g_waveSize, g_toSpawn, HealthFor(a_round), g_special ? " (hound night)" : "");
+			logger::info("round {} starts: {} waves (the first of {}, 10 more each), up to {} undead at once, {:.0f} Skyrim health each{}", a_round, g_waves, g_waveSize, g_toSpawn, HealthFor(a_round), g_special ? " (hound night)" : "");
 		}
 
 		// Despawning: out of combat and hidden now, deleted a moment later (deleting an actor others are still
@@ -4222,6 +4225,23 @@ namespace bo3z
 			}
 			if (want && !lit) {
 				if (auto* caster = a_player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) caster->CastSpellImmediate(spell, false, a_player, 1.0f, false, 0.0f, a_player);
+			} else if (want && lit) {
+				// (Noah: "it's not producing any light") the game sizes a light effect's light by the spell's magnitude, not by
+				// the light's own radius - it came out a small patch at your feet. So the light itself is given the lantern's
+				// radius, brightness and warmth: everything within fifteen metres
+				auto* ligh = dh->LookupForm<RE::TESObjectLIGH>(gen::kLanternLight, gen::kPlugin);
+				if (auto* list = mt->GetActiveEffectList(); list && ligh) {
+					for (auto* ae : *list) {
+						auto* le = ae && ae->GetBaseObject() == fx ? skyrim_cast<RE::LightEffect*>(ae) : nullptr;
+						if (!le || !le->light) continue;
+						auto& d = le->light->GetLightRuntimeData();
+						const float r = static_cast<float>(ligh->data.radius);
+						if (static bool told = false; !told) told = true, logger::info("lantern: the light came out radius {:.0f} fade {:.2f}; set to {:.0f}", d.radius.x, d.fade, r);
+						d.radius = RE::NiPoint3(r, r, r);
+						d.fade = ligh->fade;
+						d.diffuse = RE::NiColor(ligh->data.color.red / 255.0f, ligh->data.color.green / 255.0f, ligh->data.color.blue / 255.0f);
+					}
+				}
 			} else if (!want && lit) {
 				if (auto* list = mt->GetActiveEffectList()) {
 					std::vector<RE::ActiveEffect*> off;
