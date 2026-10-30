@@ -33,7 +33,7 @@ namespace bo3z::Net
 		using u64 = std::uint64_t;
 		constexpr int kChannel = 7;
 		constexpr std::uint8_t kVersion = 2;  // (2: a player's wonder field is the class wonders won, as bits)
-		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7, kEgg = 8, kAltar = 9, kClass = 10 };
+		enum : std::uint8_t { kHello = 1, kState = 2, kPowerUp = 3, kCurse = 4, kPlayer = 5, kRevive = 6, kStats = 7, kEgg = 8, kAltar = 9, kClass = 10, kWord = 11 };
 #ifndef UN_BUILD
 #	define UN_BUILD "dev"
 #endif
@@ -507,6 +507,12 @@ namespace bo3z::Net
 							Tasks::Add([town, on, who] { Shops::HeardBusy(town, who.empty() ? std::string("A friend") : who, on); });
 						}
 						break;
+					case kWord:  // (the story audit: a party member never got the dragons or the Echo) the host's silenced words
+						if (!IsHost() && sz >= 3) {
+							const int mask = d[1], live = d[2];
+							Tasks::Add([mask, live] { Echo::HeardWords(mask, live != 0); });
+						}
+						break;
 					case kClass:  // (the altar rework: the party's class auras) who plays what
 						if (sz >= 2 && d[1] < 4) {
 							const int cls = d[1];
@@ -704,6 +710,12 @@ namespace bo3z::Net
 		const std::uint8_t m[2]{ kEgg, static_cast<std::uint8_t>(a_town) };
 		ToAll(m, 2, true);
 	}
+	void TellWord(int a_w)
+	{
+		if (!g_lobby || !IsHost() || a_w < 0 || a_w > 7) return;
+		const std::uint8_t m[3]{ kWord, static_cast<std::uint8_t>(1 << a_w), 1 };
+		ToAll(m, 3, true);
+	}
 	void TellClass(int a_cls)
 	{
 		if (!g_lobby || a_cls < 0 || a_cls > 3) {
@@ -777,6 +789,10 @@ namespace bo3z::Net
 		if ((g_memberTimer -= a_delta) <= 0) {
 			g_memberTimer = 1.0f;
 			RefreshMembers();
+			if (static int beat = 0; IsHost() && ++beat % 15 == 0) {  // (the dragons the host's game has slain, for those who joined late)
+				const std::uint8_t m[3]{ kWord, static_cast<std::uint8_t>(Echo::DragonMask()), 0 };
+				ToAll(m, 3, true);
+			}
 			auto* pl = RE::PlayerCharacter::GetSingleton();
 			if (!IsHost() && pl && pl->Is3DLoaded()) {  // our Curse progress to the host (the larger counts)
 				std::vector<std::uint8_t> m(1 + 4 * gen::kCurseCities.size());

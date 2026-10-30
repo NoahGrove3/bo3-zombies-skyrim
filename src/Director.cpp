@@ -2411,6 +2411,9 @@ namespace bo3z
 			if (!g_alive.empty()) {
 				return;
 			}
+			if (g_wave >= g_waves && Echo::SiegeActive()) {
+				return;  // (the story audit: the night's last wave cleared between a siege's waves ended it before its dragon came)
+			}
 			Curse::OnWave(true);
 			Stats::Note(Stats::kWave);
 			SlowBeat(0.55f, 0.3f);  // (the last of the wave falls in slow time)
@@ -5507,7 +5510,7 @@ namespace bo3z
 					if (auto a = h.get(); a && !a->IsDead()) {
 						if (Director::IsGreat(a.get())) {
 							auto* av = a->AsActorValueOwner();
-							av->RestoreActorValue(RE::ACTOR_VALUE_MODIFIER::kDamage, RE::ActorValue::kHealth, -0.15f * av->GetPermanentActorValue(RE::ActorValue::kHealth));
+							av->DamageActorValue(RE::ActorValue::kHealth, 0.15f * av->GetPermanentActorValue(RE::ActorValue::kHealth));
 							continue;
 						}
 						a->KillImpl(a_player, 9999.0f, true, false);

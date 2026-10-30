@@ -339,7 +339,10 @@ namespace bo3z
 				return;
 			}
 			if ((Party::PartyWonders() >> a_c) & 1) {
-				Hud::Banner(name + " was won by your party. Win it on your own path to carry it.", 4.0f);
+				// (the story audit: after the curse breaks there are no nights to win it in - the Brazier brings them back)
+				Hud::Banner(name + " was won by your party. Win it on your own path to carry it." +
+				                (Broken() && !Flag(kFlagEndless) ? std::string(" Light the Brazier of the Endless Night in the Hall to bring the nights back.") : std::string()),
+					6.0f);
 				return;
 			}
 			const auto line = Classes::WonderLine();
@@ -534,6 +537,7 @@ namespace bo3z
 				return;
 			}
 			Write(gen::kEchoGlobWords, Read(gen::kEchoGlobWords) | (1 << a_w));
+			Net::TellWord(a_w);
 			const auto& W = gen::kWords[a_w];
 			Forms::Play(gen::Sound::shout_learned);
 			Forms::Play(gen::Sound::curse_lifted);
@@ -606,6 +610,23 @@ namespace bo3z
 
 		bool WordSilenced(int a_w) { return Glob(gen::kEchoGlobWords) && a_w >= 0 && a_w < kWordCount && Silenced(a_w); }
 		bool DragonsSlain() { return Glob(gen::kEchoGlobWords) && DragonsDead(); }
+		bool SiegeActive() { return g_siege.stage != 0; }
+		bool EchoAwake() { return Glob(gen::kEchoGlobWords) && Awake(kEchoRow); }
+		int  DragonMask() { return Glob(gen::kEchoGlobWords) ? (Read(gen::kEchoGlobWords) & 0x7) : 0; }
+		void HeardWords(int a_mask, bool a_live)
+		{
+			if (!Glob(gen::kEchoGlobWords)) return;
+			for (int w = 0; w < kDragons; ++w) {
+				if ((a_mask >> w) & 1 && !Silenced(w)) {
+					logger::info("words: {} silenced in the host's game - silenced here too", gen::kWords[w].word);
+					SilenceWord(w);
+				}
+			}
+			if (a_live && ((a_mask >> kEchoRow) & 1) && !Silenced(kEchoRow)) {
+				logger::info("words: the Echo of Alduin fell in the host's game - the curse is broken here too");
+				SilenceWord(kEchoRow);
+			}
+		}
 		bool WondersAll() { return Glob(gen::kEchoGlobWords) && AllWonders(); }
 		bool CurseBroken() { return Glob(gen::kEchoGlobWords) && Broken(); }
 		bool HallOpen() { return Glob(gen::kEchoGlobWords) && Flag(kFlagHallOpen); }

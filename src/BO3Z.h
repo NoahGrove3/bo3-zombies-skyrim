@@ -316,6 +316,7 @@ namespace bo3z
 		std::vector<FriendGame> FriendsInParties();  // friends in Skyrim with a party open
 		void        PowerUpTaken(int a_kind);
 		void        TellClass(int a_cls);   // (the altar rework) your class, for the party's auras
+		void        TellWord(int a_w);      // (host) a word silenced: the party's games silence it too
 		void        AltarBusy(int a_town, bool a_on);  // our roll holds that altar (one roller at a time)
 		void        EggDone(int a_town);  // a hidden quest finished: the party near that altar shares it
 		std::vector<int> TakeRemotePowerUps();
@@ -655,6 +656,10 @@ namespace bo3z
 	namespace Echo
 	{
 		void Tick(float a_delta);
+		void HeardWords(int a_mask, bool a_live);  // (Net) the host's silenced words: dragons always, the Echo only as it falls
+		int  DragonMask();                         // the three dragons slain (bits 0-2)
+		bool SiegeActive();                        // a dragon's (or the Echo's) siege under way
+		bool EchoAwake();                          // the Echo of Alduin waits on the Throat (not slain this cycle)
 		void Reset();
 		void OnUndeadDeath(RE::Actor* a_actor);                // a kill near a barrow that wants the dead
 		bool OnActivate(RE::TESObjectREFR* a_ref);             // the Reliquary's doors and pedestals (true: handled)

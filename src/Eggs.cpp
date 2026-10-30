@@ -306,7 +306,17 @@ namespace bo3z::Eggs
 				{
 					// (the class review: these steps are played in a freed city, where no waves run and the dead crumble - the
 					// count could never move) while the step is live at night, the dead keep coming for you here, a few at a time
-					if (!night || !Director::Fighting() || Coop::Client()) {
+					if (night && Director::Fighting() && Coop::Client()) {
+						// (the story audit: a friend's game raises nothing and the host's crumbles the dead in a freed city - the
+						// count could never move) as the survive steps: hold the altar's ground ninety seconds at night instead
+						g_live.foes.clear();
+						if (pp.GetDistance(c) < 2200.0f && (g_live.holdT += a_dt) > 90.0f) {
+							g_live.holdT = 0;
+							Advance(e);
+						}
+						break;
+					}
+					if (!night || !Director::Fighting()) {
 						g_live.foes.clear();
 						break;
 					}

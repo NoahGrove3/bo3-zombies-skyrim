@@ -94,7 +94,9 @@ namespace bo3z::Story
 		if (InPlace(p, "Sovngarde")) return true;
 		if (Running("Dragon Rising") && InPlace(p, "Western Watchtower")) return true;
 		if (Running("The Fallen") && InPlace(p, "Dragonsreach")) return true;
-		if (Running("Alduin's Bane") && InPlace(p, "Throat of the World")) return true;
+		// (the story audit: the Echo of Alduin waits on this summit - a player stalled mid-quest could never fight it) held only
+		// until the Echo wakes
+		if (Running("Alduin's Bane") && InPlace(p, "Throat of the World") && !Echo::EchoAwake()) return true;
 		if (Running("Season Unending") && InPlace(p, "High Hrothgar")) return true;
 		return false;
 	}

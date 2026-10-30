@@ -2467,11 +2467,18 @@ namespace bo3z::Classes
 			Hud::Banner("The Six Fires find nothing to burn", 2.0f);
 			return true;
 		}
-		g_tomeCool = 12.0f;
+		// (the class audit: nine casts on the same bodies within a quarter second took one share between them - the wonder hit
+		// softer than a plain bolt) its six fires each burst on their foe for a real share, every 8 s; only the six element
+		// ladders (Fire, Frost, Shock, Sun, Blood, Runes), as its name says
+		g_tomeCool = 8.0f;
 		int k = 0;
 		const bool legend = AfterSovngarde();
+		const float pf = 0.7f + 0.3f * Arcana::Power();
+		for (auto* f : foes) {
+			if (f && !f->IsDead()) Gun::AreaHurt(f->GetPosition(), 150.0f, 0.6f * UpgradeMult(legend ? 6 : 4) * pf, "");
+		}
 		for (const auto& s : coffer::kSpells) {
-			if (s.cls != coffer::kDestruction) continue;
+			if (s.cls != coffer::kDestruction || s.ladder > 5) continue;
 			const int idx = static_cast<int>(&s - coffer::kSpells.data());
 			RE::Actor* t = foes[k % foes.size()];
 			if (s.rung == s.rungs) CastFrom(p, Arcana::Spell(idx), t), ++k;
