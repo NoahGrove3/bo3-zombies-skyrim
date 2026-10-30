@@ -519,6 +519,22 @@ namespace bo3z::Classes
 		// the class's spells off you (kept for when you come back to it), the new class's back on
 		void Swap(int a_from, int a_to)
 		{
+			// (Noah: "when switching from spellsword to another class, the orange rune from the hand casting animation gets
+			// stuck on my hand") a spell in a hand is put down properly before the class's spells are taken: its cast
+			// stopped and the spell unequipped, so its hand art (the Spellsword's rune) goes with it - taking the spell
+			// away while it was held left its art behind
+			if (a_from != a_to) {
+				if (auto* p = RE::PlayerCharacter::GetSingleton()) {
+					auto* em = RE::ActorEquipManager::GetSingleton();
+					for (bool left : { true, false }) {
+						auto* sp = p->GetEquippedObject(left) ? p->GetEquippedObject(left)->As<RE::SpellItem>() : nullptr;
+						if (!sp) continue;
+						if (auto* mc = p->GetMagicCaster(left ? RE::MagicSystem::CastingSource::kLeftHand : RE::MagicSystem::CastingSource::kRightHand)) mc->InterruptCast(false);
+						if (em) em->UnequipObject(p, sp, nullptr, 1, nullptr, false, true, false, true);
+						logger::info("classes: {} put down from the {} hand", sp->GetName(), left ? "left" : "right");
+					}
+				}
+			}
 			if (a_from == coffer::kSummoner && a_to != coffer::kSummoner) DismissSummons();
 			if (a_from >= 0 && a_from < 4 && a_from != a_to) StashGear(a_from), g_perkStash[a_from] = Perks::TakeAll();
 			if (a_from >= 0 && a_from < 4) {
