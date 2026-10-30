@@ -13,7 +13,7 @@
    "id": "frostbinder",
    "label": "Tome of the Six Fires",
    "color": "8FE6FF",
-   "text": "One cast looses the top spell of all six of your element ladders on the dead round you. Once the three dragons fall, their runes and storms are left burning on the ground too.",
+   "text": "One cast looses the top spell of your six element ladders - Fire, Frost, Shock, Sun, Blood and Runes - on the dead round you, each burst on its foe. Once the three dragons fall, the fires burn hotter and their third rungs come too.",
    "cls": "Destruction"
   },
   {
@@ -220,7 +220,7 @@
   }
  },
  "words": {
-  "about": "Act III and IV (src/Echo.cpp): rows 0-2 are Alduin's three words, each a dragon; row 3 is the Echo of Alduin. Once all four class wonders are won the three dragons wake together, each at its own place and only at night: come near and its siege begins (waves of the dead round the place), and when the last wave falls the dragon comes. Kill it and its word is silenced for good - a power that stays with you. With all three dead the Echo of Alduin waits on the summit of the Throat of the World. Saved in UN_EchoWords (bit per row; bit 8: Act III told). waves/elites per wave, health: x a zombie's night health.",
+  "about": "Act III and IV (src/Echo.cpp): rows 0-2 are Alduin's three words, each a dragon; row 3 is the Echo of Alduin. Once all four class wonders are won the three dragons wake together, each at its own place and only at night: come near and its siege begins (waves of the dead round the place), and when the last wave falls the dragon comes. Kill it and its word is silenced for good - a power that stays with you. With all three dead the Echo of Alduin waits on the summit of the Throat of the World. Saved in UN_EchoWords (bit per row; bit 21: Act III told (bit 8 reserved)). waves/elites per wave, health: x a zombie's night health.",
   "wakeRange": 3200,
   "leashRange": 6500,
   "rows": [

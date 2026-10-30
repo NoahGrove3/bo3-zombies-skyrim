@@ -1374,7 +1374,7 @@ namespace bo3z
 				g_champDying = false;
 				Points::Add(1000);
 				Forms::Play(gen::Sound::night_end);
-				Hud::Banner(g_champ.name + " falls! +1000", 5.0f);
+				Hud::Banner(g_champ.name + " slain - +1,000 Cursed Essence", 5.0f);
 				logger::info("champion: {} slain", g_champ.name);
 				const int town = g_champ.town;
 				std::string champName = g_champ.name;
@@ -1469,7 +1469,7 @@ namespace bo3z
 				auto a = h.get();
 				if (a && a->IsDead()) {
 					Points::Add(500);
-					Hud::Banner(std::string(a->GetName() ? a->GetName() : "Hunter") + " slain  +500", 2.5f);
+					Hud::Banner(std::string(a->GetName() ? a->GetName() : "Hunter") + " slain - +500 Cursed Essence", 2.5f);
 				}
 				return !a || a->IsDead() || a->IsDeleted();
 			});
@@ -1502,7 +1502,7 @@ namespace bo3z
 					if (!e.paid) {
 						e.paid = true;
 						Points::Add(static_cast<int>(gen::elite::killPoints));
-						Hud::Banner("Gloomstalker banished +" + std::to_string(static_cast<int>(gen::elite::killPoints)), 2.5f);
+						Hud::Banner(fmt::format("Gloomstalker banished - +{} Cursed Essence", static_cast<int>(gen::elite::killPoints)), 2.5f);
 					}
 					it = g_elites.erase(it);
 					continue;
@@ -3266,7 +3266,10 @@ namespace bo3z
 				// a champion out of its cell was replaced by a plain copy with no reward) champions and dragons are kept like the boss
 				const bool  champ = static_cast<bool>(g_champ.handle) && g_champ.handle.get().get() == a.get();
 				if (s.mute) {
-					if (champ) s.mute = false;  // (a champion keeps its Thu'um)
+					if (champ) {  // (a champion keeps its Thu'um)
+						s.mute = false;
+						if (auto* pr = a->GetActorRuntimeData().currentProcess; pr && pr->high) pr->high->voiceRecoveryTime = 0.0f;
+					}
 					else HoldVoice(a.get());
 				}
 				const bool  dragon = a->HasKeywordString("ActorTypeDragon");
@@ -3479,6 +3482,7 @@ namespace bo3z
 		void Reset()
 		{
 			Story::Reset();
+			Eggs::Reset();
 			Audio::BossMusic(false);
 			g_phase = Phase::Day;
 			EndRisers();
@@ -3562,6 +3566,10 @@ namespace bo3z
 			auto c = g_alive.back().handle.get();
 			if (!c) {
 				return false;
+			}
+			if (g_alive.back().mute) {  // (a champion keeps its Thu'um)
+				g_alive.back().mute = false;
+				if (auto* pr = c->GetActorRuntimeData().currentProcess; pr && pr->high) pr->high->voiceRecoveryTime = 0.0f;
 			}
 			auto*       av = c->AsActorValueOwner();
 			const float want = std::max(HealthFor(g_current) * a_healthMult, 6000.0f / R.hpScale) * Settings::UndeadHealthMult();

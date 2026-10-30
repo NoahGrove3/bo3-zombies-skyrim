@@ -26,8 +26,8 @@ namespace bo3z::Kit
 		constexpr Def kRanger[] = { { Kind::Crossbow, "0", -1 }, { Kind::Bow, "emberstring", -1 }, { Kind::Crossbow, "1", 1 }, { Kind::Bow, "rimehorn", 2 },
 			{ Kind::Crossbow, "2", 3 }, { Kind::Bow, "stormreach", 4 }, { Kind::Bow, "skyhowl", 6 }, { Kind::Bow, "dawnspire", 8 }, { Kind::Bow, "thirstbow", 9 },
 			{ Kind::Armour, "armour", -1 } };
-		constexpr Def kSpellsword[] = { { Kind::Blade, "sword", -1 }, { Kind::Ladder, "Fire", -1 }, { Kind::Ladder, "Frost", 1 }, { Kind::Ladder, "Flame Breath", 2 },
-			{ Kind::Ladder, "Shock", 3 }, { Kind::Ladder, "Frost Breath", 4 }, { Kind::Ladder, "Sun", 5 }, { Kind::Ladder, "Storm Breath", 6 },
+		constexpr Def kSpellsword[] = { { Kind::Blade, "sword", -1 }, { Kind::Ladder, "Fire", -1 }, { Kind::Ladder, "Frost", 1 }, { Kind::Ladder, "Flame Breath", kGone },
+			{ Kind::Ladder, "Shock", 3 }, { Kind::Ladder, "Frost Breath", kGone }, { Kind::Ladder, "Sun", 5 }, { Kind::Ladder, "Storm Breath", kGone },
 			{ Kind::Ladder, "Blood", 7 }, { Kind::Ladder, "Poison", kGone }, { Kind::Ladder, "Blood Breath", kGone }, { Kind::Ladder, "Poison Breath", kGone },
 			{ Kind::Armour, "armour", -1 } };
 		std::span<const Def> Defs(int a_cls)
@@ -893,7 +893,14 @@ namespace bo3z::Kit
 		const int c = Cls();
 		if (!a_sp || (c != 0 && c != 1 && c != 3)) return -1;
 		for (int r = 0; r < RelicCount(c) && r < kMaxRelics; ++r) {
-			if ((g_cls[c].relics >> r & 1) && RelicSpell(c, r) == a_sp) return g_cls[c].relicTier[r];
+			auto* sp = (g_cls[c].relics >> r & 1) ? RelicSpell(c, r) : nullptr;
+			if (!sp) continue;
+			if (sp == a_sp) return g_cls[c].relicTier[r];
+			// (the class audit: a cloak's touches come from its associated spell - the relic's tiers never reached them)
+			for (auto* e : sp->effects) {
+				auto* m = e ? e->baseEffect : nullptr;
+				if (m && m->GetArchetype() == RE::EffectSetting::Archetype::kCloak && m->data.associatedForm == a_sp) return g_cls[c].relicTier[r];
+			}
 		}
 		return -1;
 	}
@@ -994,6 +1001,8 @@ namespace bo3z::Kit
 			}
 			return;
 		}
+		// (the class audit: a Vigilant relic that is also a Destruction spell returned above before its own Infusions) relics first
+		if (c == 1 || c == 3) for (int r = 0; r < RelicCount(c) && r < kMaxRelics; ++r) if ((g_cls[c].relics >> r & 1) && RelicSpell(c, r) == a_source) return OnHitItem(c, kRelicBase + r, a_target);
 		if (const int si = Arcana::IndexOf(a_source); si >= 0) {
 			for (int i = 0; i < static_cast<int>(defs.size()); ++i) {
 				if ((g_cls[c].owned >> i & 1) && defs[i].kind == Kind::Ladder && Arcana::LadderName(si) == defs[i].ref && Arcana::ClassOf(si) == c) return OnHitItem(c, i, a_target);
@@ -1070,12 +1079,15 @@ namespace bo3z::Kit
 		}
 		// the Spellsword's relic spells: their names, a castable price (never above 100), and a save from the two-handers'
 		// time - the two-handers go back, the spells their relics now are are known
-		if (static bool tuned = false; !tuned) {
-			tuned = true;
+		// (the class audit: five of them are Destruction's own spells - their Vigilant names only while you walk the Spellsword's path)
+		if (static int tunedFor = -2; tunedFor != c) {
+			tunedFor = c;
+			static std::unordered_map<RE::FormID, std::string> plain;
 			for (int r = 0; r < static_cast<int>(std::size(kBladeRelics)); ++r) {
 				auto* sp = RelicSpell(3, r);
 				if (!sp) continue;
-				sp->fullName = kBladeRelics[r].name;
+				if (!plain.contains(sp->GetFormID())) plain[sp->GetFormID()] = sp->GetFullName();
+				sp->fullName = c == 3 ? std::string(kBladeRelics[r].name) : plain[sp->GetFormID()];
 				float was = 0;
 				for (auto* e : sp->effects) if (e) was += e->cost;
 				sp->data.costOverride = std::clamp(static_cast<std::int32_t>(std::lround(was * 0.4f)), 35, 100);

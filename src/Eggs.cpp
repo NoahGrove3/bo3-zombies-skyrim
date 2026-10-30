@@ -487,6 +487,13 @@ namespace bo3z::Eggs
 
 	bool OnSpellCast(RE::FormID) { return false; }  // (the city quests' summon powers are retired)
 
+	// (the story audit: another save loaded on the same step kept this one's marks and its boss half-started)
+	void Reset()
+	{
+		Clear();
+		g_hintKey = -1, g_lastProg = 0, g_stuck = 0, g_plain = false, g_beamCd = 0;
+	}
+
 	void Heard(int) {}  // (each class keeps its own quest: a friend's isn't yours)
 
 	std::vector<std::string> Whispers(int a_town)

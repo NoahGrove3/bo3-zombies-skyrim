@@ -2184,7 +2184,7 @@ namespace bo3z
 				a_player->AddObjectToContainer(item, nullptr, 1, nullptr);
 				logger::info("glider: the dragon harness put in your pack");
 				if (wasUnlocked == 0) {
-					Hud::Banner("Whiterun's shrine is won - a dragon answers your call (jump, then Activate mid-air)", 6.0f);
+					Hud::Banner("Whiterun's Echo Altar is awake - a dragon answers your call (jump, then Activate mid-air)", 6.0f);
 				}
 			}
 			wasUnlocked = 1;

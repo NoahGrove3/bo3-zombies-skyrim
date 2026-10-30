@@ -471,7 +471,7 @@ namespace bo3z::Party
 		const float hp = av->GetActorValue(RE::ActorValue::kHealth);
 		if (g_life == Life::Alive && (hp <= 1.0f || p->AsActorState()->IsBleedingOut())) {
 			g_life = Life::Down, g_left = kDownSeconds;
-			Hud::Banner("YOU ARE DOWN", 3.0f);
+			// ("YOU ARE DOWN" is on the screen itself)
 			logger::info("party: down");
 		}
 		if (g_life == Life::Down) {
@@ -483,7 +483,7 @@ namespace bo3z::Party
 			if (g_life == Life::Down && (g_left -= a_delta) <= 0) {
 				g_life = Life::Dead;
 				Perks::LoseAll();  // death takes every blessing
-				Hud::Banner("YOU DIED - watch the living", 4.0f);
+				// ("YOU DIED" is on the screen itself)
 				logger::info("party: dead (spectating)");
 			}
 		}

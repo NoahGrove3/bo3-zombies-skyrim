@@ -2257,7 +2257,10 @@ namespace bo3z
 				at.z = std::max(at.z, land + 70.0f);  // (hanging just over the ground, never in it)
 			}
 			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
-			Well w{ at, a_legendary ? 3.0f : 2.2f, whole * (a_legendary ? 0.32f : 0.22f), 0.15f };
+			// (the class audit: a flat share - the plain bow outgrew the wonder from about night 20) on the one curve: a Tier III
+			// item's, a Legendary's three Ascends more, with the night's power
+			const float grow = UpgradeMult(a_legendary ? 6 : 3) * (0.7f + 0.3f * Arcana::Power());
+			Well w{ at, a_legendary ? 3.0f : 2.2f, whole * (a_legendary ? 0.32f : 0.22f) * grow, 0.15f };
 			w.vortex = true;
 			w.reach = a_legendary ? 1300.0f : 800.0f;
 			w.pull = a_legendary ? 620.0f : 360.0f;

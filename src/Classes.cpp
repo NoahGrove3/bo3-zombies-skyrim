@@ -718,10 +718,10 @@ namespace bo3z::Classes
 		g_wStep[a_cls] = kWonderTaken;
 			Forms::Play(gen::Sound::shout_learned);
 			static constexpr const char* kText[4] = {
-				"A horn of dragon bone. Blow it and Calling of the Conjurer's Spectral Dragon fights at your side for a minute. Once the three dragons fall, it stays until it is slain.",
-				"One cast looses the top spell of all six of your element ladders on the dead round you. Once the three dragons fall, each cast also leaves their runes and storms burning on the ground.",
+				"A horn of dragon bone. Blow it and Calling of the Conjurer's Spectral Dragon fights at your side for a minute. Once the three dragons fall, it stays for an hour, or until it is slain.",
+				"One cast looses the top spell of your six element ladders - Fire, Frost, Shock, Sun, Blood and Runes - on the dead round you, each burst on its foe. Once the three dragons fall, the fires burn hotter and their third rungs come too.",
 				"A bow of black-violet steel. Every arrow tears open a black hole where it lands: the dead are dragged in, then it bursts. Once the three dragons fall, the holes grow wider and pull harder. More arrows: at any Echo Altar, or from a Max Ammo.",
-				"The Akaviri dragon slayer. Every hit carries the spell in your other hand. Once the three dragons fall, a power attack sends that spell down the line." };
+				"The Akaviri dragon slayer, two tiers above your blade. Every hit carries the last Spellsword spell you held. Once the three dragons fall it grows stronger again, and a power attack looses that spell on the dead round you." };
 			std::string up(kWonderName[a_cls]);
 			for (auto& ch : up) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
 			Hud::Lore(up, kText[a_cls], 12.0f);
@@ -1121,9 +1121,11 @@ namespace bo3z::Classes
 			break;
 		case coffer::kSpellsword:
 			{
-				int imbued = 0;
-				for (int i : Arcana::Carried()) if (Arcana::ClassOf(i) == coffer::kSpellsword) imbued += Arcana::RungOf(i) - 1;
-				out.push_back(fmt::format("<b>Imbues: {}.</b> Enchantment Powers unlocked: {} of 4 (one for each imbue, in your Powers).", imbued, std::min(imbued, 4)));
+				// (the audit: the old two-hander's Enchantment Powers line) your blade's tier
+				const int bt = Kit::TierOfWeapon(SpellswordBlade());
+				static constexpr const char* kTierName[4] = { "Base", "Tier I", "Tier II", "Tier III - Legendary" };
+				out.push_back(bt < 0 ? std::string("<b>Your blade:</b> not yet upgraded.")
+				                     : bt <= 3 ? fmt::format("<b>Your blade:</b> {}.", kTierName[bt]) : fmt::format("<b>Your blade:</b> Legendary, Ascend {}.", bt - 3));
 			}
 			break;
 		}
@@ -1135,6 +1137,14 @@ namespace bo3z::Classes
 		}
 		if (!perks.empty()) out.push_back("Your class's perks at the altar: " + perks + ".");
 		out.push_back("<b>Wonder:</b> " + WonderLineNow() + ".");
+		// (the story audit: nothing tracked Acts III and IV)
+		if (Echo::WondersAll()) {
+			const int m = Echo::DragonMask(), n = (m & 1) + ((m >> 1) & 1) + ((m >> 2) & 1);
+			out.push_back(fmt::format("<b>Alduin's words silenced:</b> {} of 3{}.", n, n < 3 ? " - SLEN in the Reach, TIID at Labyrinthian, VO on Mount Anthor, each at night" : ""));
+			if (Echo::CurseBroken()) out.push_back("<b>The Echo of Alduin:</b> slain - the curse is broken.");
+			else if (Echo::EchoAwake()) out.push_back("<b>The Echo of Alduin:</b> waits on the summit of the Throat of the World, at night.");
+			else if (n == 3) out.push_back("<b>The Echo of Alduin:</b> waits until every Echo Altar is awake.");
+		}
 		return out;
 	}
 	std::string WonderLineNow();
@@ -1291,8 +1301,9 @@ namespace bo3z::Classes
 			}
 		}
 		// (the Summoner review) the three dragons' fall mid-session turns the Horn of the Spectral Wyrm Legendary at once, not at the next load
-		if (static bool was = AfterSovngarde(); AfterSovngarde() != was) {
-			was = AfterSovngarde();
+		// (the story audit: tuned while the co-save loaded, perhaps before the game's globals were back) checked every second
+		if (static int was = -1; static_cast<int>(AfterSovngarde()) != was) {
+			was = AfterSovngarde() ? 1 : 0;
 			if (g_wStep[coffer::kSummoner] > kWonderSteps) TuneWyrm();
 		}
 		// (Noah: "random Dremora at the Echo Altar attack me and my summons") a conjured creature with no master - a summon
@@ -1356,15 +1367,15 @@ namespace bo3z::Classes
 			if ((wait -= 1.0f) <= 0) {
 				const bool fighting = Director::Fighting();
 				if (g_class.load() < 0) {
-					card(0, "THE ECHO ALTAR", "Walk to Riverwood's Echo Altar and press Activate to choose your class. Every city has an altar: it is where you spend septims on spells, blessings and upgrades.");
+					card(0, "THE ECHO ALTAR", "Walk to Riverwood's Echo Altar and press Activate to choose your class. Every city has an altar: it is where you spend Cursed Essence on your kit, perks and upgrades.");
 				} else if (!fighting && !(g_guide & 2)) {
-					card(1, "SEPTIMS", "Every hit and every kill on the dead earns septims - your total sits at the top of the screen. Spend them at an Echo Altar between waves and by day.");
+					card(1, "CURSED ESSENCE", "Every hit and every kill on the dead earns Cursed Essence - your total sits in the bottom-left corner. Spend it at an Echo Altar between waves and by day.");
 				} else if (fighting && hs.wave <= 1 && !(g_guide & 4)) {
 					card(2, "THE NIGHT", "At dusk the dead rise in waves. The counter at the top shows how many are left in this wave. Clear every wave and dawn breaks. Fall, and the wave begins again - and your blessings are lost.");
 				} else if (fighting && hs.wave >= 2 && !(g_guide & 8)) {
 					card(3, "BETWEEN WAVES", "A few seconds' breath before the next wave rises: heal, reload, find better ground, or run for an altar. The last few of every wave come straight for you.");
 				} else if (!fighting && hs.round >= 1 && (g_guide & 4) && !(g_guide & 16)) {
-					card(4, "DAWN", "The dead crumble at first light. Spend your septims, then rest until dusk - every night is harder than the last.");
+					card(4, "DAWN", "The dead crumble at first light. Spend your Cursed Essence, then rest until dusk - every night is harder than the last.");
 				}
 			}
 		}
@@ -1516,6 +1527,9 @@ namespace bo3z::Classes
 	}
 	int AltarGearUpgrades(const RE::TESForm* a_w)
 	{
+		// (the class audit: the Dragon Slayer, the Spellsword's wonder, never grew - four times weaker than its Madness Sword)
+		// it stands two tiers above your blade (Tier III at the least), three once the three dragons fall
+		if (auto* sl = Slayer(); a_w && sl && a_w == sl) return std::max(3, Kit::TierOfWeapon(SpellswordBlade())) + (AfterSovngarde() ? 3 : 2);
 		if (const int kt = Kit::TierOfWeapon(a_w); kt >= 0) return kt;  // (the altar rework: a kit or relic blade's own tiers)
 		auto* b = a_w ? a_w->As<RE::TESBoundObject>() : nullptr;
 		if (!b || !b->GetFile(0)) return -1;

@@ -1676,7 +1676,7 @@ namespace BowsImpl
 				static auto told = std::chrono::steady_clock::now() - std::chrono::seconds(60);
 				if (std::chrono::steady_clock::now() - told > std::chrono::seconds(20)) {
 					told = std::chrono::steady_clock::now();
-					Hud::Banner("Out of arrows - buy a quiver at an Echo Altar (Q), or pull them from the dead", 3.5f);
+					Hud::Banner("Out of arrows - they grow back once you stop shooting for a few seconds", 3.5f);
 				}
 			}
 		}

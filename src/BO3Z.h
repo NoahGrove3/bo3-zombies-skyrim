@@ -843,6 +843,7 @@ namespace bo3z
 		void  OnBossSlain(int a_town);           // its named foe fell (Director's champion, town -10 - city)
 		bool  OnSpellCast(RE::FormID a_spell);   // (retired: false)
 		void  Heard(int a_town);                 // (retired)
+		void  Reset();                           // a save loaded or a new game: the live step forgotten
 		std::vector<std::string> Whispers(int a_town);  // the altar's hints: a line more for each step found
 		std::string Line();                      // your class's quest, for the guide
 		float DamageMult();                      // (retired: 1)
@@ -932,6 +933,7 @@ namespace bo3z
 			float       ads{ 0 };
 			std::string banner;
 			float       bannerTime{ 0 };
+			float       bannerTotal{ 0 };
 			std::string sayWho, sayLine;  // (a townsperson speaks: a subtitle)
 			float       sayTime{ 0 };
 			float       dread{ 0 };       // (surrounded: 0..1, the screen's edges darken a little)

@@ -675,12 +675,12 @@ namespace bo3z
 
 		// one hit a quarter second on each body (a spell's several effects and its hit all land at once)
 		// (the audit: one window per body swallowed your blows while your summons bit it) one window per attacker and body
-		bool Limit(RE::Actor* a_actor, RE::Actor* a_by = nullptr)
+		bool Limit(RE::Actor* a_actor, RE::Actor* a_by = nullptr, std::uint32_t a_salt = 0)
 		{
 			static std::unordered_map<std::uint64_t, std::chrono::steady_clock::time_point> last;
 			const auto now = std::chrono::steady_clock::now();
 			if (last.size() > 512) std::erase_if(last, [&](const auto& e) { return now - e.second > 2s; });
-			const std::uint64_t key = (static_cast<std::uint64_t>(a_by ? a_by->GetFormID() : 0x14) << 32) | a_actor->GetFormID();
+			const std::uint64_t key = (static_cast<std::uint64_t>((a_by ? a_by->GetFormID() : 0x14) ^ (a_salt << 24)) << 32) | a_actor->GetFormID();
 			auto&      t = last[key];
 			if (now - t <= 250ms) {
 				return false;
@@ -810,6 +810,9 @@ namespace bo3z
 			auto it = map.find(a_src->GetFormID());
 			return it == map.end() ? -1 : it->second;
 		}
+		// (the class audit: the spell riding the Spellsword's blade took the blade's own quarter-second window, so one of the
+		// two never landed) a foe the blade just struck: the spell it carries has its own window
+		std::unordered_map<RE::FormID, std::chrono::steady_clock::time_point> g_rider;
 		void CofferHit(RE::Actor* a_actor, int a_index, bool a_cloak = false)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -822,8 +825,10 @@ namespace bo3z
 			// (Noah's plan, Destruction) dual-casting one element: the same spell in both hands hits a third harder
 			const auto  hands = Arcana::Hands();
 			const float twin = (Classes::Get() == 1 && hands[0] == a_index && hands[1] == a_index ? 1.35f : 1.0f) * (std::chrono::steady_clock::now() < g_splitUntil ? 0.5f : 1.0f);
+			const auto riderIt = g_rider.find(a_actor->GetFormID());
+			const bool rider = riderIt != g_rider.end() && std::chrono::steady_clock::now() - riderIt->second < std::chrono::milliseconds(600);
 			if (Director::IsRoundUndead(a_actor)) {
-				if (Limit(a_actor)) {
+				if (rider ? Limit(a_actor, nullptr, 0x5) : Limit(a_actor)) {
 					// (the balance pass) a concentration spell lands four times a second: each touch takes a third of a
 					// cast's share, so a stream and a bolt kill about as fast for the magicka
 					const float stream = (Arcana::Concentration(a_index) || a_cloak) ? 0.25f : 1.0f;  // (the balance pass 2: storms and streams a little gentler)
@@ -899,6 +904,8 @@ namespace bo3z
 							RE::SpellItem* sp = bi >= 0 ? Arcana::Spell(bi) : nullptr;
 							if (sp && sp->GetSpellType() == RE::MagicSystem::SpellType::kSpell) {
 								last = now;
+								if (g_rider.size() > 256) g_rider.clear();
+								g_rider[t->GetFormID()] = now;
 								Forms::CastOnce(player, sp, t, 1.0f, player);
 								// (Noah: "only the one I'm holding - multiple spells from one weapon as an upgrade") Twin Resonance is
 								// earned: a Legendary touch on the blade brings your other touch along, a quarter as strong
@@ -952,10 +959,12 @@ namespace bo3z
 							Bows::CrossbowStrike(xe, Classes::CrossbowLevel(src), z, 0.0f);
 							if (Director::IsRoundUndead(z)) MarkHit(z);
 						}
-					} else if (const int ci = Arcana::IndexOf(src); z && ci >= 0) {
+					} else if (const int ci = Arcana::IndexOf(src); z && ci >= 0 && !(Classes::Get() == 3 && Kit::TierOfSpell(src) >= 0)) {
+						// (the class audit: five of the Spellsword's Vigilant relics are the same spells as Destruction's ladders -
+						// cast by a Spellsword they hit as relics, below, with the relic's own tiers)
 						CofferHit(z, ci);  // the Coffer's spells: every one of them hurts every enemy
 						if (Director::IsRoundUndead(z)) MarkHit(z);
-					} else if (const int cl = CloakOf(src); z && cl >= 0) {
+					} else if (const int cl = CloakOf(src); z && cl >= 0 && !(Classes::Get() == 3 && Kit::TierOfSpell(src) >= 0)) {
 						CofferHit(z, cl, true);
 						if (Director::IsRoundUndead(z)) MarkHit(z);
 					} else if (z && !z->IsDead() && Director::IsRoundUndead(z)) {
@@ -971,13 +980,18 @@ namespace bo3z
 								// (Noah: the one upgrade curve) a crossbow by its reforges, an altar spell-weapon by its steel
 								const int gear = Classes::AltarGearUpgrades(w);
 								share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow * UpgradeMult(Classes::CrossbowLevel(w) + Kit::CrossbowAscends(Classes::CrossbowElement(w))) : gen::kShareMelee * (gear >= 0 ? UpgradeMult(gear) : 1.0f);
+								// (the class audit: the Spellsword's blade, single-target, trailed every other class) its blade a half
+								// again; a two-handed wonder's slower swing made up for
+								if (Classes::Get() == 3 && w == Classes::SpellswordBlade()) share *= 1.5f;
+								else if (Classes::Get() == 3 && gear >= 0 && w->IsTwoHandedSword()) share *= 1.6f;
 							} else if (src->Is(RE::FormType::Spell)) {
 								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
 								if (const int rt = Kit::TierOfSpell(src); rt >= 0) {
 									share *= UpgradeMult(rt);  // (a relic's spell: its tiers)
 									if (Classes::Get() == 3) share *= 1.15f;  // (the Spellsword's Vigilant spells: a step above the Armory's)
+									if (CloakOf(src) >= 0) share *= 0.25f;  // (a cloak's touch lands four times a second, as CofferHit's)
 								}
-								if (auto* sp = src->As<RE::SpellItem>(); sp && sp->GetCastingType() == RE::MagicSystem::CastingType::kConcentration) share *= 0.3f;  // (a stream or a wall lands many times a second)
+								if (auto* sp = src->As<RE::SpellItem>(); sp && sp->GetCastingType() == RE::MagicSystem::CastingType::kConcentration) share *= 0.25f;  // (a stream or a wall lands many times a second - as CofferHit)
 							}
 							NoteStruck(z, false);
 							HurtUndead(z, Director::RoundHealth() * share * (0.7f + 0.3f * Arcana::Power()));  // (the night's power curve)

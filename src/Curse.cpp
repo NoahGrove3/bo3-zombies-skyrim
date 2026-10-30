@@ -168,10 +168,10 @@ namespace bo3z
 		// Quest news lives in the tracker (top right): a line under the goal for a few seconds. No pop-ups.
 		void Note(std::string a_text, float a_seconds = 5.0f)
 		{
-			std::scoped_lock l(Hud::Lock());
-			Hud::Edit().questNote = std::move(a_text);
-			Hud::Edit().questNoteTime = a_seconds;
+			// (the UI audit: the tracker this wrote to is off - every city freed, every book notice went unseen) a card under the Banner
+			Hud::Lore("", std::move(a_text), std::max(5.0f, a_seconds));
 		}
+
 		// The lore lives in a book, "The Curse of Alduin", in the player's pack from the moment the character is made;
 		// (Noah: two books) how to play is in the class guide, given when a class is chosen (src/Classes.cpp)
 		bool GiveBook(RE::PlayerCharacter* a_player)
@@ -350,7 +350,10 @@ namespace bo3z
 				all &= Get(t).freed;
 			}
 			if (all) {
-				Note(std::string(gen::kCurseFreedAll), 12.0f);
+				// (the story audit: it pointed to the Echo while the dragons still flew)
+				Note(Echo::DragonsSlain() ? std::string(gen::kCurseFreedAll)
+				                          : std::string("Every Echo Altar in Skyrim is awake. Alduin's three dragons still fly - silence them, and his echo will wait for you on the Throat of the World."),
+					12.0f);
 			}
 		}
 

@@ -275,6 +275,9 @@ namespace Props
 	};
 	std::vector<Twister> g_twisters;
 	float FangBase() { return Director::RoundHealth() * gen::kRounds.hpScale; }  // a zombie's whole night health, in BO3 units
+	// (the class audit: a flat one zombie a hit - weaker than an ascended Madness Sword by the end) the endgame's blade stands
+	// above every kit's best: a fully ascended item's curve, with the night's power
+	float BaneMult() { return 0.3f * UpgradeMult(14) * (0.7f + 0.3f * Arcana::Power()); }
 	void Tornado(int a_kind, const RE::NiPoint3& a_at, RE::NiPoint3 a_dir, float a_seconds, float a_damage, bool a_chase, int a_row)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -374,7 +377,7 @@ namespace Props
 		const float base = FangBase();
 		const int   cls = Classes::Get();
 		const auto  at = a_z->GetPosition();
-		const bool  killed = Damage(a_z, base * (a_power ? 2.0f : 1.0f), false, true);
+		const bool  killed = Damage(a_z, base * BaneMult() * (a_power ? 2.0f : 1.0f), false, true);
 		if (killed && p) BaneKilled(p);
 		if (!p) return;
 		switch (cls) {
@@ -420,7 +423,7 @@ namespace Props
 		}
 		Audio::AtPoint(gen::Sound::unleash_hearth, at0 + dir * 200.0f);
 		for (auto* f : InLine(aim, range, width)) {
-			if (Damage(f, FangBase() * (a_power ? 1.6f : 0.8f), false, false, true)) BaneKilled(p);
+			if (Damage(f, FangBase() * BaneMult() * (a_power ? 1.6f : 0.8f), false, false, true)) BaneKilled(p);
 			Spellcraft::Fling(f, f->GetPosition() - dir * 120.0f - RE::NiPoint3{ 0, 0, 80.0f }, a_power ? 24.0f : 16.0f);  // (VERY far)
 		}
 	}

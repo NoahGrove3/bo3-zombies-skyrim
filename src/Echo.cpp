@@ -210,6 +210,8 @@ namespace bo3z
 			const float a = 1.5708f + 6.2832f * a_k / 3.0f;
 			return Turn(Room(s.x, s.y, s.z), s.yaw, 28.0f * std::cos(a), 28.0f * std::sin(a), 106.0f);
 		}
+		// (the UI audit: "the Destruction") the path as a person: the Summoner, the Battle-mage, the Ranger, the Spellsword
+		std::string PathName(int a_c) { static constexpr const char* k[4] = { "Summoner", "Battle-mage", "Ranger", "Spellsword" }; return a_c >= 0 && a_c < 4 ? k[a_c] : "?"; }
 		bool Won(int a_c) { return Classes::WonderState(a_c) >= 4 || ((Party::PartyWonders() >> a_c) & 1); }
 		bool Waiting(int a_c) { return Classes::WonderState(a_c) == 5; }
 		bool AnyCalled()  // the Greybeards have called you at least once: the sealed door opens
@@ -321,12 +323,12 @@ namespace bo3z
 			const int         st = Classes::WonderState(a_c);
 			const int         mine = Classes::Get();
 			if (st == 4 && mine != a_c) {
-				Hud::Banner(name + " is yours - it answers only to the " + std::string(coffer::kClassName[a_c]) + ".", 4.0f);
+				Hud::Banner(name + " is yours - it answers only to the " + PathName(a_c) + ".", 4.0f);
 				return;
 			}
 			if (st == 5 || st == 4) {
 				if (mine != a_c) {
-					Hud::Banner(name + " answers only to the " + std::string(coffer::kClassName[a_c]) + ". Change your path at an Echo Altar to take it up.", 5.0f);
+					Hud::Banner(name + " answers only to the " + PathName(a_c) + ". Change your path at an Echo Altar to take it up.", 5.0f);
 					return;
 				}
 				if (Classes::TakeWonder(a_c)) {
@@ -346,7 +348,7 @@ namespace bo3z
 				return;
 			}
 			const auto line = Classes::WonderLine();
-			Hud::Banner(name + " - the " + std::string(coffer::kClassName[a_c]) + "'s wonder. " +
+			Hud::Banner(name + " - the " + PathName(a_c) + "'s wonder. " +
 			                (mine == a_c && !line.empty() ? line : std::string("It waits for that path's secret to be won.")),
 				6.0f);
 		}
@@ -958,7 +960,7 @@ namespace bo3z
 				if (best >= 0) {
 					const int st = Classes::WonderState(best);
 					a_title = Upper(std::string(Classes::WonderName(best))) + "  -  " + Upper(std::string(coffer::kClassName[best]));
-					a_goal = st == 5 ? (Classes::Get() == best ? std::string("Won - activate the pedestal to take it up") : "Won - it answers only to the " + std::string(coffer::kClassName[best]))
+					a_goal = st == 5 ? (Classes::Get() == best ? std::string("Won - activate the pedestal to take it up") : "Won - it answers only to the " + PathName(best))
 					         : st == 4                         ? std::string("Won and taken up")
 					         : ((Party::PartyWonders() >> best) & 1) ? std::string("Won by your party")
 					         : st >= 1                         ? std::string("Its path's secret is under way")

@@ -1670,7 +1670,7 @@ namespace bo3z::gen
 	struct EchoWonder { std::string_view id, label, text; std::uint32_t color, pedestal, gem; };
 	inline constexpr std::array<EchoWonder, 4> kEchoWonders{ {
 		EchoWonder{ "gravecaller", "Horn of the Spectral Wyrm", "A horn of dragon bone. Blow it and Calling of the Conjurer's Spectral Dragon answers, fighting at your side for a minute - until the three dragons fall, then it stays until it is slain.", 0xB070FF, 0xC44, 0xC4A },
-		EchoWonder{ "frostbinder", "Tome of the Six Fires", "One cast looses the top spell of all six of your element ladders on the dead round you. Once the three dragons fall, their runes and storms are left burning on the ground too.", 0x8FE6FF, 0xC45, 0xC4B },
+		EchoWonder{ "frostbinder", "Tome of the Six Fires", "One cast looses the top spell of your six element ladders - Fire, Frost, Shock, Sun, Blood and Runes - on the dead round you, each burst on its foe. Once the three dragons fall, the fires burn hotter and their third rungs come too.", 0x8FE6FF, 0xC45, 0xC4B },
 		EchoWonder{ "wolfcrown", "Subsuming Vortex", "A bow of black-violet steel. Every arrow tears open a black hole where it lands: the dead are dragged in, then it bursts. Once the three dragons fall, the holes grow wider and pull harder.", 0xA88CFF, 0xC46, 0xC4C },
 		EchoWonder{ "barrowhorn", "Dragon Slayer", "The Akaviri dragon slayer. Every hit carries the spell in your other hand. Once the three dragons fall, a power attack sends that spell down the line.", 0xFF7A3C, 0xC47, 0xC4D },
 	} };

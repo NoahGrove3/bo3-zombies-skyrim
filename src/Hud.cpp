@@ -18,6 +18,8 @@ namespace bo3z
 		PresentFn            g_present = nullptr;
 		std::mutex           g_lock;
 		Hud::State           g_state;
+		std::deque<std::pair<std::string, float>>                    g_bannerQ;  // (messages waiting their turn)
+		std::deque<std::tuple<std::string, std::string, float>>     g_loreQ;
 		bool                 g_init = false, g_failed = false;
 		ID3D11Device*        g_device = nullptr;
 		ID3D11DeviceContext* g_context = nullptr;
@@ -747,13 +749,13 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			struct Card { const char* name; const char* lore; ImU32 col; const char* tag; const char* arms; const char* grow; const char* kit; };
 			static const Card kCards[4] = {
 				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild - and the Riftblade",
-				  "Your kit grows at the altar: every family and the Riftblade to Legendary", "Conjure Wolf, Conjure Skeleton, the Riftblade, summoner's robes" },
+				  "Your kit grows at the altar: every family and the Riftblade to Legendary", "Conjure Wolf, Conjure Skeleton, the Riftblade, the Arcane Conjurer Robes" },
 				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Ranged spells: fire, frost, shock, sun, blood and runes",
-				  "Your kit grows at the altar: each element climbs to its Legendary spell", "Firebolt, Ice Spike, the Wild Witch's hat and gown" },
+				  "Your kit grows at the altar: each element climbs to its Legendary spell", "Firebolt, Ice Spike, the Black Mage Robes" },
 				{ "RANGER", "Sworn to the Dawnguard", IM_COL32(110, 210, 120, 255), "Bows and crossbows - and every arrow counts", "The six elemental bows, three crossbows and their bolts",
-				  "Your kit grows at the altar: each bow and crossbow to Legendary", "The Ember Crossbow and its bolts, Emberstring, the Drifter Outfit" },
-				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "A one-handed blade, touch and breath spells",
-				  "Your kit grows at the altar: the blade and each spell to Legendary", "A one-handed sword, Burning Touch, the Practical Pirate outfit" } };
+				  "Your kit grows at the altar: each bow and crossbow to Legendary", "The Ember Crossbow and its bolts, Emberstring, the Gondorian Ranger Armor" },
+				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "A one-handed blade and touch spells - and the Vigilants' relic spells",
+				  "Your kit grows at the altar: the blade and each spell to Legendary", "Your blade, Burning Touch, the Valkyrie or DragonLord Armor" } };
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));
 			TxtC(dl, g_title, 46 * k, size.x * 0.5f, size.y * 0.12f, kParch, Classes::Switching() ? "CHANGE YOUR PATH" : "CHOOSE YOUR PATH", 3 * k, Fade(kGold, 0.6f));
 			const std::string sub = Classes::Switching() ? "Switching costs " + std::to_string(Classes::SwitchCost()) + " Cursed Essence. Each class keeps its own spells and progress."
@@ -821,7 +823,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const float pw = 860 * k, ph = 170 * k, px = size.x * 0.5f - pw * 0.5f, py = size.y * 0.47f;
 			Panel(dl, { px, py }, { px + pw, py + ph }, k, in);
 			struct Col { const char* label; int value; ImU32 col; };
-			const Col cols[4] = { { "KILLS", s.deathKills, kParch }, { "HEADSHOTS", s.deathHeads, kCoin }, { "BEST STREAK", s.deathBest, kParch }, { "SEPTIMS EARNED", s.deathSeptims, kCoin } };
+			const Col cols[4] = { { "KILLS", s.deathKills, kParch }, { "HEADSHOTS", s.deathHeads, kCoin }, { "BEST STREAK", s.deathBest, kParch }, { "ESSENCE EARNED", s.deathSeptims, kCoin } };
 			for (int i = 0; i < 4; ++i) {
 				const float cx = px + pw * (0.125f + 0.25f * i);
 				const float ci = EaseOut(std::clamp((t - 1.1f - 0.18f * i) / 0.8f, 0.0f, 1.0f));
@@ -979,7 +981,72 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			}
 			if (!v.night && !v.waiting) TxtC(dl, g_body, 15 * k, c.x, y + 30 * k, IM_COL32(170, 160, 140, 200), "Skip the Night opens at night, once the countdown has ended and the dead have risen.");
 		}
+		// (the UI audit: the Echo Altar's panel was drawn over the Banner, a long Banner ran off the screen, and the Lore cards -
+		// a relic claimed, a wonder won, the Greybeards' call, the dragons' words - were never drawn at all) the Banner wraps to
+		// two or three lines, and the Lore card shows under it; both last, over every panel
+		void DrawMessages(const Hud::State& s, ImVec2 size)
+		{
+			auto*       dl = ImGui::GetForegroundDrawList();
+			const float k = size.y / 1080.0f;
+			float       below = size.y * 0.27f;
+			if (s.bannerTime > 0 && !s.banner.empty()) {
+				const float a = std::min(1.0f, s.bannerTime * 2), y = size.y * 0.27f + (1.0f - a) * 10 * k;
+				const float px = 26 * k, maxW = std::min(size.x * 0.8f, 1400 * k);
+				std::vector<std::string> ls;
+				{
+					std::istringstream in(Upper(s.banner));
+					std::string        wd, ln;
+					while (in >> wd) {
+						const std::string t = ln.empty() ? wd : ln + " " + wd;
+						if (!ln.empty() && Measure(g_title, px, t).x > maxW) ls.push_back(ln), ln = wd;
+						else ln = t;
+					}
+					if (!ln.empty()) ls.push_back(ln);
+					if (ls.size() > 3) ls.resize(3);
+				}
+				float tw = 0;
+				for (const auto& x : ls) tw = std::max(tw, Measure(g_title, px, x).x);
+				const float lh = px * 1.25f, half = std::min(size.x * 0.48f, tw * 0.5f + 140 * k), cx = size.x * 0.5f;
+				const float top = y - 12 * k, bot = y + lh * static_cast<float>(ls.size()) + 8 * k;
+				dl->AddRectFilledMultiColor({ cx - half, top }, { cx, bot }, IM_COL32(8, 8, 8, 0), Fade(IM_COL32(8, 8, 8, 200), a), Fade(IM_COL32(8, 8, 8, 200), a), IM_COL32(8, 8, 8, 0));
+				dl->AddRectFilledMultiColor({ cx, top }, { cx + half, bot }, Fade(IM_COL32(8, 8, 8, 200), a), IM_COL32(8, 8, 8, 0), IM_COL32(8, 8, 8, 0), Fade(IM_COL32(8, 8, 8, 200), a));
+				Divider(dl, cx, top, half * 0.8f, k, a);
+				Divider(dl, cx, bot, half * 0.8f, k, a);
+				for (std::size_t i = 0; i < ls.size(); ++i) TxtC(dl, g_title, px, cx, y + static_cast<float>(i) * lh, Fade(kParch, a), ls[i], 0.0f, 0);
+				below = bot + 14 * k;
+			}
+			if (s.loreTime > 0 && !s.loreText.empty() && !s.perkMenu) {
+				const float a = std::min({ 1.0f, s.loreTime / 0.6f, std::max(0.0f, s.loreTotal - s.loreTime) / 0.4f });
+				const float w = std::min(size.x * 0.9f, 760 * k), x0 = size.x * 0.5f - w * 0.5f, px = 18 * k;
+				int n = 0;
+				{
+					std::istringstream in(s.loreText);
+					std::string        wd, ln;
+					while (in >> wd) {
+						const std::string t = ln.empty() ? wd : ln + " " + wd;
+						if (!ln.empty() && Measure(g_body, px, t).x > w - 48 * k) ++n, ln = wd;
+						else ln = t;
+					}
+					n = std::min(n + 1, 9);
+				}
+				const bool   titled = !s.loreTitle.empty();
+				const float  head = titled ? 60 * k : 18 * k;
+				const ImVec2 A{ x0, std::max(below, size.y * 0.33f) }, B{ x0 + w, A.y + head + static_cast<float>(n) * px * 1.25f + 16 * k };
+				Panel(dl, A, B, k, 0.88f * a);
+				if (titled) {
+					TxtC(dl, g_title, 22 * k, size.x * 0.5f, A.y + 14 * k, Fade(kGold, a), Upper(s.loreTitle), 0.0f, 0);
+					Divider(dl, size.x * 0.5f, A.y + 46 * k, w * 0.3f, k, a);
+				}
+				TxtWrap(dl, g_body, px, { x0 + 24 * k, A.y + head }, Fade(kParch, a), s.loreText, w - 48 * k, 9);
+			}
+		}
+		void DrawBody(const Hud::State& s, ImVec2 size);
 		void Draw(const Hud::State& s, ImVec2 size)
+		{
+			DrawBody(s, size);
+			if (!Classes::Open()) DrawMessages(s, size);
+		}
+		void DrawBody(const Hud::State& s, ImVec2 size)
 		{
 			auto*       dl = ImGui::GetForegroundDrawList();
 			const float k = size.y / 1080.0f;
@@ -2382,7 +2449,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float a = std::clamp(hintT / 1.0f, 0.0f, 1.0f);
 					const std::string t = g_padLast ? std::string("D-pad right  next weapon (hold: put away)     D-pad down  knife     tap ") + Hud::PadWord("LB") + "  dodge"
 					                                : std::string("G  next weapon (hold: put away)     V  knife     Left Alt  dodge");
-					TxtC(dl, g_body, 17 * k, size.x * 0.5f, size.y - 150 * k, Fade(IM_COL32(230, 220, 200, 235), a), t, 1.2f * k, Fade(IM_COL32(0, 0, 0, 220), a));
+					TxtC(dl, g_body, 17 * k, size.x * 0.5f, size.y - 118 * k, Fade(IM_COL32(230, 220, 200, 235), a), t, 1.2f * k, Fade(IM_COL32(0, 0, 0, 220), a));
 				}
 			}
 			// (Noah: the Helgen skip never showed) its standing line at the foot of the screen, a gold bar filling as it is held
@@ -2456,28 +2523,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const std::string txt = "NUKE  -  THE DEAD REGROUP  " + std::to_string(static_cast<int>(std::ceil(s.nukeLeft)));
 				TxtC(dl, g_body, 22 * k, size.x * 0.5f, size.y - 236 * k, IM_COL32(255, 160, 60, 255), txt);
 			}
-			// Banner: centred line between ornaments, fades and drifts in.
-			if (s.bannerTime > 0 && !s.banner.empty()) {
-				// (Noah: boxes overlapped) below the stack under the compass (a trial's line, the sanctuary, the wave dial)
-				const float a = std::min(1.0f, s.bannerTime * 2), y = size.y * 0.27f + (1.0f - a) * 10 * k;
-				if (Hud::kEdgeHud) {
-					// (Noah: the messages in Edge UI's look) a smoked band that fades out to both sides, gold hairlines over and
-					// under it, the words in Edge's Futura, upper case, warm white
-					const std::string up = Upper(s.banner);
-					const float       px = 26 * k;
-					const auto        ts = Measure(g_title, px, up);
-					const float       half = std::min(size.x * 0.45f, ts.x * 0.5f + 140 * k), cx = size.x * 0.5f, top = y - 12 * k, bot = y + ts.y + 12 * k;
-					dl->AddRectFilledMultiColor({ cx - half, top }, { cx, bot }, IM_COL32(8, 8, 8, 0), Fade(IM_COL32(8, 8, 8, 200), a), Fade(IM_COL32(8, 8, 8, 200), a), IM_COL32(8, 8, 8, 0));
-					dl->AddRectFilledMultiColor({ cx, top }, { cx + half, bot }, Fade(IM_COL32(8, 8, 8, 200), a), IM_COL32(8, 8, 8, 0), IM_COL32(8, 8, 8, 0), Fade(IM_COL32(8, 8, 8, 200), a));
-					Divider(dl, cx, top, half * 0.8f, k, a);
-					Divider(dl, cx, bot, half * 0.8f, k, a);
-					TxtC(dl, g_title, px, cx, y, Fade(kParch, a), up, 0.0f, 0);
-				} else {
-					const auto ts = Measure(g_title, 32 * k, s.banner);
-					TxtC(dl, g_title, 32 * k, size.x * 0.5f, y, Fade(kParch, a), s.banner, 2 * k, IM_COL32(0, 0, 0, 255));
-					Divider(dl, size.x * 0.5f, y + ts.y + 10 * k, std::min(size.x * 0.4f, ts.x * 0.6f + 40 * k), k, a);
-				}
-			}
+			// (the Banner and the Lore card: drawn last, over every panel - DrawMessages)
 
 			// health bars over the wounded: black iron plates with chamfered ends and bronze caps, the blood (always red)
 			// draining from the right with a pale wound that follows it down; the tougher the foe, the hotter the red fire
@@ -3265,7 +3311,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				{
 					const bool        ps = Settings::PlayStationIcons();
 					const std::string hint = g_padLast ? std::string("D-pad: move   \xC2\xB7   ") + (ps ? "X" : "A") + ": select   \xC2\xB7   " + (ps ? "O" : "B") + ": leave"
-					                                   : std::string("W S: move   \xC2\xB7   A D: perk / ammo   \xC2\xB7   Enter: select");
+					                                   : std::string("W S: move   \xC2\xB7   A D: change item   \xC2\xB7   Enter: select");
 					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), hint);
 				}
 			} else if (s.rollPhase > 0) {
@@ -3688,7 +3734,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			y += 22 * k;
 			Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(220, 230, 245, 235), fmt::format("best night {}   nights survived {}   kills {}   headshots {}", rec.bestNight, rec.nights, rec.kills, rec.heads));
 			y += 22 * k;
-			Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(220, 230, 245, 235), fmt::format("best streak {}   mini-bosses {}   wonders forged {}   hidden quests {}", rec.bestStreak, rec.minis, rec.wonders, rec.quests));
+			Txt(dl, g_body, 15 * k, { L, y }, IM_COL32(220, 230, 245, 235), fmt::format("best streak {}   mini-bosses {}   wonders won {}   path secrets {}", rec.bestStreak, rec.minis, rec.wonders, rec.quests));
 			// the keys, both ways
 			y += 30 * k;
 			dl->AddLine({ L, y - 6 * k }, { b.x - 20 * k, y - 6 * k }, kRuneDim, 1.0f * k);
@@ -5361,7 +5407,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			auto& io = ImGui::GetIO();
 			io.IniFilename = nullptr;
 			io.LogFilename = nullptr;
-			static const ImWchar kRanges[] = { 0x0020, 0x00FF, 0x2190, 0x21FF, 0x2200, 0x22FF, 0 };  // Latin + arrows + math (the wand's infinity)
+			static const ImWchar kRanges[] = { 0x0020, 0x00FF, 0x2010, 0x205E, 0x2190, 0x21FF, 0x2200, 0x22FF, 0x25B2, 0x25C0, 0 };  // Latin + arrows + math (the wand's infinity)
 			auto font = [&](const char* a_file) -> ImFont* {
 				const std::string p = std::string("C:\\Windows\\Fonts\\") + a_file;
 				return ::GetFileAttributesA(p.c_str()) != INVALID_FILE_ATTRIBUTES ? io.Fonts->AddFontFromFileTTF(p.c_str(), 64.0f, nullptr, kRanges) : nullptr;
@@ -5833,7 +5879,23 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			Hud::State s;
 			{
 				std::scoped_lock l(g_lock);
-				g_state.bannerTime = std::max(0.0f, g_state.bannerTime - dt);
+				// (the UI audit: messages ran out unseen behind menus, the Wait menu or the class picker) they wait while the HUD is hidden
+				const bool hudLive = InGame() && !DevTools::HudOff() && !Classes::Open();
+				if (hudLive) {
+					g_state.bannerTime = std::max(0.0f, g_state.bannerTime - dt);
+					g_state.loreTime = std::max(0.0f, g_state.loreTime - dt);
+				}
+				if (g_state.bannerTime <= 0 && !g_bannerQ.empty()) {
+					g_state.banner = std::move(g_bannerQ.front().first);
+					g_state.bannerTime = g_state.bannerTotal = g_bannerQ.front().second;
+					g_bannerQ.pop_front();
+				}
+				if (g_state.loreTime <= 0 && !g_loreQ.empty()) {
+					auto& q = g_loreQ.front();
+					g_state.loreTitle = std::move(std::get<0>(q)), g_state.loreText = std::move(std::get<1>(q));
+					g_state.loreTime = g_state.loreTotal = std::get<2>(q);
+					g_loreQ.pop_front();
+				}
 				g_state.sayTime = std::max(0.0f, g_state.sayTime - dt);
 				g_state.gainTime = std::max(0.0f, g_state.gainTime - dt);
 				g_state.hitTime = std::max(0.0f, g_state.hitTime - dt);
@@ -5843,7 +5905,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				g_state.styleTime = std::max(0.0f, g_state.styleTime - dt);
 				g_state.lightningT = std::max(0.0f, g_state.lightningT - dt);
 				g_state.hurtTime = std::max(0.0f, g_state.hurtTime - dt);
-				g_state.loreTime = std::max(0.0f, g_state.loreTime - dt);
 				g_state.revealTime = std::max(0.0f, g_state.revealTime - dt);
 				g_state.questNoteTime = std::max(0.0f, g_state.questNoteTime - dt);
 				g_state.nukeFlash = std::max(0.0f, g_state.nukeFlash - dt * 1.25f);
@@ -6351,11 +6412,25 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			std::scoped_lock l(g_lock);
 			g_state.sayWho = std::move(a_who), g_state.sayLine = std::move(a_line), g_state.sayTime = a_seconds;
 		}
+		// (the UI audit: last write won - a trial's progress, the relic's line, the curse broken were wiped by the next line a
+		// moment later) a message waits its turn behind another (four at most), and a short callout never wipes a message
 		void Banner(std::string a_text, float a_seconds)
 		{
 			std::scoped_lock l(g_lock);
-			g_state.banner = std::move(a_text);
-			g_state.bannerTime = a_seconds;
+			auto&      S = g_state;
+			const bool busy = S.bannerTime > 0.5f;
+			if (busy && S.banner == a_text) {
+				S.bannerTime = std::max(S.bannerTime, a_seconds);
+				return;
+			}
+			if (busy && S.bannerTotal >= 2.0f && a_seconds < 2.0f) return;
+			if (busy && S.bannerTotal >= 2.0f) {
+				if (std::none_of(g_bannerQ.begin(), g_bannerQ.end(), [&](const auto& q) { return q.first == a_text; }) && g_bannerQ.size() < 4) g_bannerQ.emplace_back(std::move(a_text), a_seconds);
+				S.bannerTime = std::min(S.bannerTime, 2.5f);  // (and the line showing makes way soon)
+				return;
+			}
+			S.banner = std::move(a_text);
+			S.bannerTime = S.bannerTotal = a_seconds;
 		}
 
 		void OnClick() { ++g_clicks; }
@@ -6558,6 +6633,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		void Lore(std::string a_title, std::string a_text, float a_seconds)
 		{
 			std::scoped_lock l(g_lock);
+			a_seconds = std::clamp(a_seconds, 4.0f, 14.0f);  // (long enough to read, never in the way for long)
+			if (g_state.loreTime > 1.0f) {
+				if (g_loreQ.size() < 3) g_loreQ.emplace_back(std::move(a_title), std::move(a_text), a_seconds);
+				return;
+			}
 			g_state.loreTitle = std::move(a_title);
 			g_state.loreText = std::move(a_text);
 			g_state.loreTime = g_state.loreTotal = a_seconds;
