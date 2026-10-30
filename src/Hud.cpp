@@ -1742,10 +1742,10 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 					}
 				}
-				// (Noah: "the new shout meter should be a blue rim around my stat bar ... and when the shout is cast, it should
-				// light up blue around the border and fade from the center out to the tips of the stats bar") the plate's rim is
-				// the shout meter: blue creeps out from the middle to both points as the shout recharges (full: the whole rim
-				// burns blue, breathing); spoken, the whole rim flares and the light drains from the middle out to the points
+				// (Noah: "the border should only turn blue after using a shout, and then it will fade away, starting from the center
+				// of the bar to the tips of the edges. That blue border fading is the cooldown for the shout") the plate's rim is
+				// the shout's cooldown: dark while the shout is ready; spoken, the whole rim lights blue, and as the cooldown runs
+				// the blue goes out from the middle towards both points - the last of it at the tips is the last of the wait
 				if (!s.shoutName.empty()) {
 					const float t = y - 13 * k, b = y + h + 13 * k, m = (t + b) * 0.5f;
 					// the four runs, each from the middle of an edge out to a point: top right, bottom right, top left, bottom left
@@ -1773,15 +1773,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							seg(r, s0, s1, IM_COL32(150, 205, 255, static_cast<int>(235 * a)), 1.8f * k);
 						}
 					};
-					static float lastCd = 0, castT = 9;
-					if (s.shoutCd > 0.9f && lastCd < 0.5f) castT = 0;  // just spoken
-					lastCd = s.shoutCd;
-					castT += dt;
-					const float fill = std::clamp(1.0f - s.shoutCd, 0.0f, 1.0f);
-					if (fill >= 0.999f) run(0.0f, 1.0f, 0.7f + 0.3f * (0.5f + 0.5f * std::sin(now * 2.4f)));  // ready: the whole rim, breathing
-					else run(0.0f, fill, 0.75f);                                                             // recharging: out from the middle
-					if (castT < 0.9f) run(castT / 0.9f, 1.0f, 1.0f - 0.4f * castT / 0.9f);                   // spoken: the flare drains to the points
-					if (s.shoutReady > 0.001f) run(0.0f, 1.0f, s.shoutReady);                                 // ready again: a flash
+					// what is left of the cooldown is what is still lit, from the tips in: s in [1 - cd, 1] of each run
+					if (s.shoutCd > 0.001f) run(std::clamp(1.0f - s.shoutCd, 0.0f, 1.0f), 1.0f, 0.9f);
 				}
 				{  // (Noah: "move the perk icons to above my health bar, centered")
 				// perk row: sockets, the draughts in them; a new draught bursts in
