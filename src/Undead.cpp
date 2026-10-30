@@ -1023,14 +1023,17 @@ namespace bo3z
 			static std::unordered_map<std::string, RE::NiPointer<RE::NiNode>> cache;
 			auto& c = cache[e.id];
 			if (!c) {
-				const std::string path = "CurseOfAlduin\\eyes\\" + e.id + "_glow.nif";
+				// (Noah: red eyes "in the actual eye sockets" of the ones it suits - the zombies with heads, the skeletons and
+				// liches, the vampire - the draugr keep their own blue) each row's glow sits in its model's sockets, found from
+				// the head mesh itself (tools/eyes2.py); a row without one has none
+				const std::string path = "CurseOfAlduin\\eyes2\\" + e.id + "_glow.nif";
 				RE::BSModelDB::DBTraits::ArgsType args{};
 				if (RE::BSModelDB::Demand(path.c_str(), c, args) != RE::BSResource::ErrorCode::kNone || !c) {
 					c.reset();
 					e.root = root;  // (no glow for this one: don't ask every frame)
 					static int warned = 0;
 					if (warned++ < 4) {
-						logger::warn("undead: no eye glow {}", path);
+						logger::info("undead: no eye glow for {} (not one of the red-eyed)", e.id);
 					}
 					return;
 				}
