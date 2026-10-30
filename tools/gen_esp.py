@@ -767,12 +767,10 @@ def lore_text():
            "[pagebreak]", "<p align='center'><font size='24'>II. The Dead</font></p>", img('graves', 300, 176),
            "<p>Each night the dead come in <b>waves</b>, more of them and harder to kill as the nights go on. They claw up out of open ground - "
            "roads and fields, never inside a house - and come at you from every side. Dawn comes only when the last wave falls.</p>",
-           "<p>Four kinds make up the horde:</p>",
-           "<p><b>Risen Dead</b> - the most common. Fast, and quick with their claws. Wound one past half and it turns frenzied.</p>",
-           "<p><b>Shambling Maidens</b> - slower, tougher, their blows slow and heavy.</p>",
-           "<p><b>Grave Witches</b> - they hang back, hurl fire and call more Risen Dead out of the earth. Kill them first.</p>",
-           "<p><b>Volatiles</b> - bladed brutes, slow but the hardest hitters. Their hide turns half of every blow unless you strike the head or the back, and they leap at you from a distance.</p>",
-           "<p>Some nights bring an elite Volatile, faster still, that comes through a portal and pounces. "
+           "<p>The curse's whole host walks with them, each under its own name. Mihail's zombies and the Thriceborn come first with the Rag Draugr, rotten skeletons and plague wolves; "
+           "then Bonemen, skeleton mages and the necromancers who serve the curse - kill those first, for they raise more; then Hulking Draugr, Draugr Liches, Draman Brutes, Ash Spawn and werewolves; "
+           "and at the last the Daedra and the Overlords.</p>",
+           "<p>Some nights the noise you make draws a hunter that comes through a portal and pounces. "
            "The Curse's champions and great ones step out of portals too - and their names burn gold over their heads.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>III. The Echo Altars</font></p>", img('wards', 300, 176),
            "<p>Long ago the <b>Tongues</b>, the first masters of the Voice, raised an altar in every hold to hold Alduin's shout back. "
@@ -804,9 +802,9 @@ def guide_text():
     out = ["<font face='$HandwrittenFont'>", "<p align='center'><font size='28'>A SURVIVOR'S GUIDE TO THE LONG NIGHT</font></p>",
            "<p align='center'>Notes left at the Sleeping Giant Inn by one who made it this far. Read them before dusk.</p>",
            "[pagebreak]", h("Day and Night"),
-           p("A day lasts about fifteen minutes. By day the dead sleep: rest, explore, spend what you earned. "
+           p("A day lasts about twenty minutes. By day the dead sleep: rest, explore, spend what you earned. "
              "At dusk they rise in <b>waves</b>, clawing up out of the ground at the same places every night. Each wave brings a few more than the last, and each night a few more again: "
-             "the first night is three small waves, and a wave is added every second night, up to eight. The day lasts about 18 minutes. The night does not end until the last wave is down - then dawn breaks."),
+             "the first night is three small waves, and a wave is added every second night, up to eight. The night does not end until the last wave is down - then dawn breaks."),
            p("You cannot rest while the dead walk - but once they have risen, the wait menu can skip the whole night (it does not count)."),
            "[pagebreak]", h("Cursed Essence"),
            p("Every risen thing you kill leaves Cursed Essence. A headshot leaves more, and a kill with a blade or a spell more still. "
@@ -814,11 +812,12 @@ def guide_text():
            p("Now and then a body drops a glowing token (1 kill in 50): walk into it before it blinks out (20 s). Nuke (the dead around you turn to ash), Double Essence (30 s), Refill Stats (ammo, health, magicka, stamina and your shout), Merchant's Blessing (the altars at half price, 45 s), Shadow of Nocturnal (the dead lose you, 15 s), Thu'um Unbound (no shout cooldown, 20 s) and Kynareth's Mercy (everyone healed, a fallen friend lifted). In a party, what one takes everyone gets."),
            "[pagebreak]", h("The Echo Altar"),
            p("Every city has one. Look into its star and press Activate. Its menu does not stop the night. Move through it with the D-pad (or W and S) and take a row with A (or Enter); B leaves."),
-           p("<b>Your class</b> - Summoner, Battle-mage, Ranger or Spellsword, chosen at the top of the altar. Each keeps its own gear, spells and blessings when you change."),
-           p("<b>Call</b> - the altar turns and gives you the first rung of one of your class's spells (the Ranger: a bow, or now and then a crossbow). Each call costs more than the last until dawn. You carry two of its spells (the Summoner three); one more asks which it replaces."),
-           p("<b>Your class's row</b> - the Summoner binds heroes and armies (six freed altars), the Battle-mage learns storms and novas, the Ranger calls crossbows, the Spellsword spell-weapons and spellshields."),
-           p("<b>Reforge, Bind Pact, Imbue</b> - once three altars are freed, kills raise the spell or bow in your hands to its next rung or tier. A third rung waits for four freed altars, a Legendary for six."),
-           p("<b>Perks</b> - lasting gifts: twelve at most."),
+           p("<b>Your class</b> - Summoner, Battle-mage, Ranger or Spellsword, chosen at the top of the altar. Each keeps its own gear and spells when you change."),
+           p("<b>Your kit</b> - every item your class carries, with its tier and the price of its next upgrade: Tier I, Tier II, Tier III (Legendary), then Ascends."),
+           p("<b>The Armory</b> - more of your class's spells, summons or bows open as you free cities."),
+           p("<b>Infuse</b> - the altar's roll: a random Infusion on one of your items."),
+           p("<b>Relics</b> - every Dragon Priest you slay leaves a relic for your class: take one of two at any altar."),
+           p("<b>Perks</b> - one of each a life: death takes them all."),
            p("<b>Trials</b> - the quest that wakes the altar. It sets four; win all four, in any order (step over to them with D-pad left or right, or A and D). "
              "Then the city's Dragon Priest rises at night near the altar. Slay it and the night ends at once - dawn breaks and the city is safe for good. Skyrim's difficulty sets how hard the trials are."),
            "[pagebreak]", h("The Four Trials"),
@@ -842,9 +841,9 @@ def guide_text():
              "A wonder answers only to its own path: change class and come back to claim another."),
            "[pagebreak]", h("The Wonder Weapons"),
            p("<b>Horn of the Spectral Wyrm</b> (Summoner) - blow it and a spectral dragon fights at your side."),
-           p("<b>Tome of the Six Fires</b> (Battle-mage) - one cast looses the top spell of all six of your elements on the dead round you."),
+           p("<b>Tome of the Six Fires</b> (Battle-mage) - one cast looses the top spell of all six of your elements on the dead round you, every 8 seconds."),
            p("<b>Subsuming Vortex</b> (Ranger) - every arrow tears open a black hole that drags the dead in, then bursts."),
-           p("<b>Dragon Slayer</b> (Spellsword) - every hit carries the spell in your other hand."),
+           p("<b>Dragon Slayer</b> (Spellsword) - two tiers above your blade, and every hit carries the last Spellsword spell you held."),
            p("When the three dragons fall, every wonder wakes to its <b>Legendary</b> form."),
            "[pagebreak]", h("The Three Dragons"),
            p("With all four wonders won (a party pools theirs), Alduin's three words wake as dragons, each at its own place: <b>SLEN</b> - Slenvahrin, at the cult's old shrine in the Reach; "
@@ -871,7 +870,7 @@ def guide_text():
            "[pagebreak]", h("Event Nights and Themed Waves"),
            p("From night 8, about one night in eight is an <b>event night</b>: a Goblin Raid, a Harpy Swarm, Armored Champions or a Blood Fog. The whole night belongs to it - and it pays <b>double Cursed Essence</b>, with the dead coming twice as fast."),
            p("On ordinary nights, from the third wave, about one wave in six is <b>themed</b> the same way. Its name shows on the wave dial under the compass."),
-           p("About one night in five, halfway through, <b>something stirs in the dark</b>: a mini-boss, with a purse of septims for everyone in the party."),
+           p("About one night in five, halfway through, <b>something stirs in the dark</b>: a mini-boss, with spoils for everyone in the party."),
            "[pagebreak]", h("Falling"),
            p("At every dawn, and whenever an altar wakes, the day is saved. If you fall, you wake at that dawn. In a party, stand over a fallen friend and hold Activate to lift them."),
            p("Good luck. Stay out of the barrows after dark."), "</font>"]

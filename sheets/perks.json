@@ -56,7 +56,7 @@
       "cost": 600,
       "effect": "self_revive",
       "value": 1,
-      "description": "Saves you from one death: instead of dying, you get back up - but the save spends every blessing you carry, this tonic too.",
+      "description": "Saves you from one death: instead of dying, you get back up - but the save spends every perk you carry, this tonic too.",
       "potionModel": "Clutter\\Potions\\PotionMagickaLesser.nif",
       "verify": [],
       "color": "3070F0",
@@ -117,7 +117,7 @@
       "effect": "cast_shock",
       "value": 500,
       "potionModel": "Clutter\\Potions\\PotionFortifyMagickaExtreme.nif",
-      "description": "Every 12th spell you cast sends out a lightning burst around you. Each cider makes it come sooner and hit harder.",
+      "description": "Every 12th spell you cast sends out a lightning burst around you.",
       "verify": [],
       "color": "40D0F0",
       "cls": ""

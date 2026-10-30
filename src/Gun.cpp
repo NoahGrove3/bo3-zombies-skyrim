@@ -2925,7 +2925,7 @@ namespace bo3z
 			}
 			auto s = Save::GetSlot(slot);
 			if (IsStaffWonder(gun) && s.level >= gen::kForgeMax - 1 && s.level < gen::kForgeMax) {  // (Noah: the staffs' last step is a ritual)
-				Hud::Banner(std::string(gen::kGuns[gun].label) + ": its last power can't be bought - set it on its pedestal in High Hrothgar by day and feed it 50 souls", 6.0f);
+				Hud::Banner(std::string(gen::kGuns[gun].label) + ": it has grown as far as it can", 6.0f);
 				return false;
 			}
 			if (s.level >= gen::kForgeMax) {

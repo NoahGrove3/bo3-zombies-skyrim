@@ -831,6 +831,13 @@ namespace bo3z::Classes
 	void OnKill(bool a_bySummon, RE::Actor* a_dying, RE::Actor* a_killer)
 	{
 		Kit::OnKill(a_dying);  // (the altar rework: on-kill Infusions, the Legendary Riftblade's thralls)
+		// (the class guide: the Summoner alone lent the party nothing) a Summoner in your party: each of your kills heals you 2%
+		if (g_class.load() != coffer::kSummoner && Kit::PartyHas(coffer::kSummoner)) {
+			if (auto* p = RE::PlayerCharacter::GetSingleton(); p && !p->IsDead()) {
+				auto* av = p->AsActorValueOwner();
+				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.02f);
+			}
+		}
 		int killHow = -1;
 		// the wonder trial: what made the kill
 		if (const int c = g_class.load(); c >= 0) {
@@ -880,7 +887,7 @@ namespace bo3z::Classes
 			if (how >= 0) Perks::OnClassKill(how, a_dying);  // (the class perks: Soul-Tether, Ember Heart, Mana-Siphon, Spellbinder)
 		}
 		if (const int c2 = g_class.load(); c2 >= 0 && c2 < 4) {
-			if (g_wStep[c2] >= 1 && g_wStep[c2] <= kWonderSteps && FreedCount() < kWonderOpensAt) g_wStep[c2] = 0;  // (an old save's three-city trial: shut again until six)
+			if (g_wStep[c2] >= 1 && g_wStep[c2] <= kWonderSteps && FreedCount() < kWonderOpensAt && !Echo::HallOpen()) g_wStep[c2] = 0;  // (the audit: never in a new cycle begun at the Seat)  // (an old save's three-city trial: shut again until six)
 			if (g_wStep[c2] == 0 && FreedCount() >= kWonderOpensAt) {
 				g_wStep[c2] = 1;
 				Forms::Play(gen::Sound::quest_start);
@@ -1371,7 +1378,7 @@ namespace bo3z::Classes
 				} else if (!fighting && !(g_guide & 2)) {
 					card(1, "CURSED ESSENCE", "Every hit and every kill on the dead earns Cursed Essence - your total sits in the bottom-left corner. Spend it at an Echo Altar between waves and by day.");
 				} else if (fighting && hs.wave <= 1 && !(g_guide & 4)) {
-					card(2, "THE NIGHT", "At dusk the dead rise in waves. The counter at the top shows how many are left in this wave. Clear every wave and dawn breaks. Fall, and the wave begins again - and your blessings are lost.");
+					card(2, "THE NIGHT", "At dusk the dead rise in waves. The counter at the top shows how many are left in this wave. Clear every wave and dawn breaks. Fall, and the wave begins again - and your perks are lost.");
 				} else if (fighting && hs.wave >= 2 && !(g_guide & 8)) {
 					card(3, "BETWEEN WAVES", "A few seconds' breath before the next wave rises: heal, reload, find better ground, or run for an altar. The last few of every wave come straight for you.");
 				} else if (!fighting && hs.round >= 1 && (g_guide & 4) && !(g_guide & 16)) {
@@ -1856,7 +1863,7 @@ namespace bo3z::Classes
 		if (a_out) {
 			a_out->name = sp->GetName();
 			FillReel(a_out, pool, sp, "Legendary Pact", true);
-			a_out->give = [sp] { Learn(sp); Forms::Play(gen::Sound::shout_learned); Hud::Banner(std::string(sp->GetName()) + "  -  a Legendary pact, learned", 5.0f); logger::info("classes: hero pact {}", sp->GetName()); };
+			a_out->give = [sp] { Learn(sp); Forms::Play(gen::Sound::shout_learned); Hud::Banner(std::string(sp->GetName()) + " - a Hero's Pact, learned", 5.0f); logger::info("classes: hero pact {}", sp->GetName()); };
 			return true;
 		}
 		Learn(sp);
@@ -1932,6 +1939,13 @@ namespace bo3z::Classes
 			const bool have = a_cls == coffer::kSummoner ? (WyrmSpell() && p->HasSpell(WyrmSpell())) : a_cls == coffer::kDestruction ? (TomeSpell() && p->HasSpell(TomeSpell()))
 			                : a_cls == coffer::kRanger ? (Vortex() && p->GetItemCount(Vortex()) > 0) : (Slayer() && p->GetItemCount(Slayer()) > 0);
 			if (!have) {
+				// (the audit: a dropped bow or blade was given again for free - copies without end) a lost weapon is made
+				// again for 5,000 Cursed Essence; the spells cost nothing (they can't be copied)
+				const bool weapon = a_cls == coffer::kRanger || a_cls == coffer::kSpellsword;
+				if (weapon && !Points::Spend(5000)) {
+					Hud::Banner(std::string(kWonderName[a_cls]) + " is out in the world. Its pedestal makes it again for 5,000 Cursed Essence.", 5.0f);
+					return true;
+				}
 				GrantWonder(a_cls);
 				return true;
 			}

@@ -1170,7 +1170,16 @@ namespace bo3z
 				g_elites[actor->GetFormID()] = { actor->GetHandle(), 3.0f, 5.0f, false };
 			}
 			g_ours[actor->GetFormID()] = *pick;
-			if (auto* base = actor->GetActorBase()) MakeHeadlong(base->GetCombatStyle());  // (its levelled copy's own style too)
+			// (the audit: a combat style is shared - a vanilla human style edited here made followers and townsfolk fight
+			// headlong too) a person's vanilla style is left alone; creatures' and the mods' own styles are made headlong
+			if (auto* base = actor->GetActorBase()) {
+				auto* cs = base->GetCombatStyle();
+				auto* file = cs ? cs->GetFile(0) : nullptr;
+				const std::string_view fn = file ? file->GetFilename() : std::string_view{};
+				const bool vanilla = fn == "Skyrim.esm" || fn == "Update.esm" || fn == "Dawnguard.esm" || fn == "HearthFires.esm" || fn == "Dragonborn.esm";
+				const bool person = actor->GetRace() && actor->GetRace()->GetPlayable();
+				if (!(vanilla && person)) MakeHeadlong(cs);
+			}
 			const bool tamed = Tame(actor, kindRow.kind);
 			const bool mute = kindRow.bossEvery <= 0 && tamed;
 			av->SetActorValue(RE::ActorValue::kConfidence, 4.0f);  // (foolhardy: never hangs back)

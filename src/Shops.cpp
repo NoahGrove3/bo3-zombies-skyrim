@@ -1873,7 +1873,7 @@ namespace bo3z
 			}
 			const int pick = Arcana::Roll();  // one of the Coffer's spells you don't know yet
 			if (pick < 0) {
-				Hud::Banner(Classes::Get() < 0 ? std::string("Choose a class first") : Arcana::Count() ? "You carry every ladder of the " + std::string(Classes::Name(Classes::Get())) + " - raise them with the altar's upgrade" : std::string("The altar is silent (the spell mods aren't installed)"), 3.0f);
+				Hud::Banner(Classes::Get() < 0 ? std::string("Choose your class at the top of the altar first") : Arcana::Count() ? "You carry every ladder of your path - raise them in your kit" : std::string("The altar is silent (the spell mods aren't installed)"), 3.0f);
 				return;
 			}
 			const int town = TownOfAltar(a_ref);
@@ -2124,7 +2124,7 @@ namespace bo3z
 				switch (a) {
 				case 0:
 					if (Classes::Get() < 0 && g_show.phase == Show::Idle) {
-						Hud::Banner("Choose your class first - the top of the altar", 2.5f);
+						Hud::Banner("Choose your class at the top of the altar first", 2.5f);
 						break;
 					}
 					if (!TakeOffer(ref)) {
@@ -2166,7 +2166,7 @@ namespace bo3z
 								SpinPrize(ref, std::move(pz));
 								g_menu = false, g_closedAt = std::chrono::steady_clock::now();
 							} else if (Points::Get() < cost) {
-								Hud::Banner("It costs " + std::to_string(cost) + " Cursed Essence", 2.0f);
+								Hud::Banner("It costs " + Num(cost) + " Cursed Essence", 2.0f);
 							} else if (cls == 2) {
 								SpinBow(ref);  // (no crossbow left to give: the bows turn instead)
 							}
@@ -2174,7 +2174,7 @@ namespace bo3z
 						} else if (cls == 1) {  // (Destruction's side-picks: its support spells)
 							const int town = TownOfAltar(ref), cost = BowRollCost(town);
 							if (Points::Get() < cost) {
-								Hud::Banner("It costs " + std::to_string(cost) + " Cursed Essence", 2.0f);
+								Hud::Banner("It costs " + Num(cost) + " Cursed Essence", 2.0f);
 							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollSupport(&pz)) {
 								Points::Spend(cost);
 								g_lastRollCost = cost;
@@ -2186,9 +2186,9 @@ namespace bo3z
 						} else if (cls == 0) {  // (the Summoner's late Legendaries: heroes and armies)
 							const int town = TownOfAltar(ref), cost = BowRollCost(town) * 2;
 							if (const int fc = FreedCount(); fc < kLegendAt && !Gun::TestKitOn()) {  // (Noah: no Legendary until six altars are freed)
-								Hud::Banner("A hero's pact waits until six Echo Altars are freed (" + std::to_string(fc) + " of 6)", 3.0f);
+								Hud::Banner("A Hero's Pact waits until six cities are freed (" + std::to_string(fc) + " of 6)", 3.0f);
 							} else if (Points::Get() < cost) {
-								Hud::Banner("A hero's pact costs " + std::to_string(cost) + " Cursed Essence", 2.0f);
+								Hud::Banner("A Hero's Pact costs " + Num(cost) + " Cursed Essence", 2.0f);
 							} else if (Classes::Prize pz; g_show.phase == Show::Idle && ref && Classes::RollHero(&pz)) {
 								Points::Spend(cost);
 								g_lastRollCost = cost;
@@ -2198,7 +2198,7 @@ namespace bo3z
 							}
 							break;
 						} else if (cls != 2) {
-							Hud::Banner("Choose a class first", 2.5f);
+							Hud::Banner("Choose your class at the top of the altar first", 2.5f);
 							break;
 						}
 						SpinBow(ref);
@@ -2230,7 +2230,7 @@ namespace bo3z
 				const int row = g_lastRollRow;
 				const int cost = row == 6 ? BowRollCost() * (Classes::Get() == 0 ? 2 : 1) : (Classes::Get() == 2 ? BowRollCost() : RollCost());
 				if (Points::Get() < cost) {  // (too few: the offer stays where it is)
-					Hud::Banner("Rolling again costs " + std::to_string(cost) + " Cursed Essence", 2.0f);
+					Hud::Banner("Rolling again costs " + Num(cost) + " Cursed Essence", 2.0f);
 					PlayUi(UiSnd::kFail);
 					return;
 				}

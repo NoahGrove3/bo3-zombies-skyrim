@@ -697,7 +697,7 @@ namespace bo3z
 		bool Spend(int a_points)
 		{
 			if (Get() < a_points) {
-				Hud::Banner("Not enough points (" + std::to_string(a_points) + ")", 2.0f);
+				Hud::Banner("Not enough Cursed Essence (" + Num(a_points) + " needed)", 2.0f);
 				return false;
 			}
 			Save::Set(gen::kAV_points, Get() - a_points);

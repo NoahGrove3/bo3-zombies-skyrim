@@ -435,7 +435,7 @@ namespace bo3z
 			}
 			g_grace = 3.0f;
 			Director::Pause(2.0f);  // (the dead around you reel back a moment)
-			Hud::Banner("THE HEARTH CALLS YOU BACK  -  your blessings are spent", 3.5f);
+			Hud::Banner("THE HEARTH CALLS YOU BACK - your perks are spent", 3.5f);
 			logger::info("perk: hearthfire revive used{}", a_falling ? " (from the ground)" : " (before the blow could land)");
 		}
 		// every wound the night deals the player goes through here: a blow that would kill you is caught - by the

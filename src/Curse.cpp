@@ -717,7 +717,7 @@ namespace bo3z
 				return;
 			}
 			if (a_trial == gen::kTrial_steel && Classes::Get() < 0) {
-				Hud::Banner("Choose a class first: the fourth trial is your class's own", 3.0f);
+				Hud::Banner("Choose your class at the top of the altar first - the fourth trial is your class's own", 3.0f);
 				return;
 			}
 			if (s.Boss() || s.Count() >= kNeeded) {

@@ -162,6 +162,7 @@ namespace bo3z
 		constexpr int kDragons = 3, kEchoRow = 3;
 		constexpr int kWordsTold = 1 << 21, kFlagBone = 1 << 9, kFlagEndless = 1 << 10, kFlagRobes = 1 << 11, kFlagHallOpen = 1 << 17;
 		constexpr int kFlagWondersAll = 1 << 18, kFlagEchoTold = 1 << 19, kFlagCleaned = 1 << 20;
+		constexpr int kFlagBaneOut = 1 << 16;  // (Alduin's Bane taken from its stand and not put back)
 		constexpr int kNgShift = 12, kNgMask = 0xF << kNgShift;
 		bool Flag(int a_f) { return (Read(gen::kEchoGlobWords) & a_f) != 0; }
 		void SetFlag(int a_f, bool a_on) { Write(gen::kEchoGlobWords, a_on ? (Read(gen::kEchoGlobWords) | a_f) : (Read(gen::kEchoGlobWords) & ~a_f)); }
@@ -284,7 +285,7 @@ namespace bo3z
 				// Alduin's Bane stands on its pedestal, blade up, while it isn't in your pack
 				auto* bane = Bane();
 				const auto baneAt = Room(0.0f, 430.0f, 175.0f);
-				if (bane && a_p->GetItemCount(bane) <= 0) {
+				if (bane && a_p->GetItemCount(bane) <= 0 && !Flag(kFlagBaneOut)) {
 					if (auto* r = Ensure(a_p, cell, gen::kHallFangShow, baneAt, 180.0f)) {
 						r->SetAngle({ -1.5708f, 0, Rad(180.0f) });
 					}
@@ -826,8 +827,17 @@ namespace bo3z
 				if (auto* bane = Bane()) {
 					if (p->GetItemCount(bane) > 0) {
 						p->RemoveItem(bane, p->GetItemCount(bane), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+						SetFlag(kFlagBaneOut, false);
 						Hud::Banner("ALDUIN'S BANE RESTS ON ITS STAND", 3.5f);
 					} else {
+						// (the audit: dropped or stashed, a new one was free - as many as you liked) a lost Bane is forged again
+						// for 10,000 Cursed Essence
+						constexpr int kReforge = 10000;
+						if (Flag(kFlagBaneOut) && !Points::Spend(kReforge)) {
+							Hud::Banner("Your Bane is out in the world. Bring it back to the stand, or forge it again for 10,000 Cursed Essence.", 5.0f);
+							return true;
+						}
+						SetFlag(kFlagBaneOut, true);
 						p->AddObjectToContainer(bane, nullptr, 1, nullptr);
 						Forms::Play(gen::Sound::shout_learned);
 						Hud::Lore("ALDUIN'S BANE",
@@ -848,8 +858,13 @@ namespace bo3z
 					return true;
 				}
 				int given = 0;
+				const bool again = Flag(kFlagRobes);  // (the audit: once given, a missing piece is made again for 2,500 Cursed Essence)
 				for (const RE::FormID id : { 0x02B0F7u, 0x02B0F9u, 0x03D2AFu, 0x029A62u }) {  // the First Dragonborn's robes, gloves, boots and mask
 					if (auto* a = dh->LookupForm<RE::TESObjectARMO>(id, "Dragonborn.esm"); a && p->GetItemCount(a) <= 0) {
+						if (again && !Points::Spend(2500)) {
+							Hud::Banner("A lost piece of the Regalia is made again for 2,500 Cursed Essence.", 4.0f);
+							break;
+						}
 						p->AddObjectToContainer(a, nullptr, 1, nullptr);
 						++given;
 					}

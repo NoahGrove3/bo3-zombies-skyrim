@@ -97,7 +97,7 @@ namespace bo3z::Kit
 		std::string RelicDesc(int a_cls)
 		{
 			switch (a_cls) {
-			case 0: return "A Legendary pact: a hero or an army answers your call";
+			case 0: return "A Hero's Pact: a hero or an army answers your call";
 			case 1: return "A support spell of the old masters";
 			case 2: return "Your bows' and crossbows' blasts reach wider";
 			case 3: return "A spell of the old Vigilants, a step above the Armory's";
@@ -358,7 +358,7 @@ namespace bo3z::Kit
 		{
 			const int c = Cls();
 			if (a_o < 0 || c < 0) return "";
-			if (a_o >= 100) return "Blessing: " + ItemName(c, a_o - 100) + " - a free upgrade";
+			if (a_o >= 100) return "Gift: " + ItemName(c, a_o - 100) + " - a free upgrade";
 			return RelicName(c, a_o);
 		}
 		std::string OfferDesc(int a_o)
@@ -724,7 +724,7 @@ namespace bo3z::Kit
 			if (r < 0 || r >= kMaxRelics || !(st.relics >> r & 1)) return false;
 			const int t = st.relicTier[r];
 			if (t >= kMaxTier) { Hud::Banner(RelicName(c, r) + " has ascended as far as it goes", 2.5f); return false; }
-			if (freed < UpgradeGate(t + 1) && !Testing()) { Hud::Banner(fmt::format("Its next tier waits for {} cities freed ({} of {})", UpgradeGate(t + 1), freed, UpgradeGate(t + 1)), 3.0f); return false; }
+			if (freed < UpgradeGate(t + 1) && !Testing()) { Hud::Banner(fmt::format("{}'s next tier waits until {} cities are freed ({} of {})", RelicName(c, r), UpgradeGate(t + 1), freed, UpgradeGate(t + 1)), 3.0f); return false; }
 			if (!Points::Spend(UpgradeCost(t + 1))) return false;
 			++st.relicTier[r];
 			st.upgrades = static_cast<std::uint8_t>(std::min(255, st.upgrades + 1));

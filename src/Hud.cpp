@@ -759,7 +759,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				  "Your kit grows at the altar: the blade and each spell to Legendary", "Your blade, Burning Touch, the Valkyrie or DragonLord Armor" } };
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));
 			TxtC(dl, g_title, 46 * k, size.x * 0.5f, size.y * 0.12f, kParch, Classes::Switching() ? "CHANGE YOUR PATH" : "CHOOSE YOUR PATH", 3 * k, Fade(kGold, 0.6f));
-			const std::string sub = Classes::Switching() ? "Switching costs " + std::to_string(Classes::SwitchCost()) + " Cursed Essence. Each class keeps its own spells and progress."
+			const std::string sub = Classes::Switching() ? "Switching costs " + Num(Classes::SwitchCost()) + " Cursed Essence. Each class keeps its own spells and progress."
 			                                             : "Each player picks their own path. Duplicates are allowed.";
 			TxtC(dl, g_body, 20 * k, size.x * 0.5f, size.y * 0.12f + 58 * k, IM_COL32(210, 200, 180, 230), sub);
 			const float cw = 330 * k, ch = 430 * k, gap = 26 * k;
@@ -3039,7 +3039,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					dl->AddQuadFilled({ c.x, c.y - r }, { c.x + r, c.y }, { c.x, c.y + r }, { c.x - r, c.y }, on ? kGold : live ? (Hud::kEdgeHud ? IM_COL32(170, 160, 140, 200) : IM_COL32(80, 130, 190, 230)) : IM_COL32(50, 55, 65, 200));
 				};
 				auto price = [&](float py, int cost, bool can) {
-					const std::string pr = std::to_string(cost);
+					const std::string pr = Num(cost);
 					const float pw = Measure(g_num, 21 * k, pr).x;
 					const ImU32 pc = can ? IM_COL32(170, 210, 255, 255) : IM_COL32(190, 70, 56, 255);
 					Txt(dl, g_num, 21 * k, { Rr - pw, py }, pc, pr);

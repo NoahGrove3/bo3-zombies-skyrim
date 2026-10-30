@@ -120,6 +120,13 @@ namespace bo3z
 	// upgrade: 10, then 25 reforged, then 50, then 65, and so on") the one curve every altar item grows by: what it does
 	// unforged, times this for the upgrades it has had (a spell's rungs and Ascends, a bow's or crossbow's reforges, a
 	// summon family's rungs and Ascends, a spell-weapon's steel)
+	// (the audit: 12000 here, 12,000 in the guides) a count as people write it
+	inline std::string Num(long long a_v)
+	{
+		std::string s = std::to_string(a_v < 0 ? -a_v : a_v);
+		for (int i = static_cast<int>(s.size()) - 3; i > 0; i -= 3) s.insert(static_cast<std::size_t>(i), ",");
+		return (a_v < 0 ? "-" : "") + s;
+	}
 	inline float UpgradeMult(int a_upgrades)
 	{
 		// (Noah: "I was pretty much unstoppable by night three - even with just one upgrade on the spell I was obliterating
