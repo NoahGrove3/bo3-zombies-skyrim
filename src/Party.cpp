@@ -36,7 +36,7 @@ namespace bo3z::Party
 			Clock::time_point heard{};
 			RE::ActorHandle  puppet;      // Skyrim Together's figure of that player in our world
 			std::string      name;
-			std::int8_t      wonder{ -1 };  // the wonder weapon they hold (-1 none)
+			std::int8_t      wonder{ -1 };  // the class wonders they have won (bits, class order; -1 not heard)
 			std::int8_t      cls{ -1 };     // their class (-1 none chosen)
 			std::uint32_t    credit{ 0 };   // their own trials per city (3 bits a city)
 		};
@@ -47,7 +47,7 @@ namespace bo3z::Party
 		std::vector<std::uint8_t>                      g_outRevive;  // a revive to send (target id, 8 bytes)
 		Life                                           g_life = Life::Alive;
 		float                                          g_left = 0;     // seconds left while down
-		std::atomic<int>                               g_wonder{ -1 }; // the wonder weapon we hold
+		std::atomic<int>                               g_wonder{ 0 };  // the class wonders we have won (bits)
 		RE::NiPoint3                                   g_at{};
 		float                                          g_reviveT = 0;  // our hold on a fallen friend
 		std::uint64_t                                  g_reviveWho = 0;
@@ -611,18 +611,19 @@ namespace bo3z::Party
 		return o;
 	}
 
-	void SetWonder(int a_wonder) { g_wonder = a_wonder; }
-	std::string WonderHolder(int a_wonder)
+	// (Noah: "I want all 4 to be done for coop or in solo") the wonders each of us has won, as bits (class order): told to
+	// the party, and every friend's heard is pooled for the night - the three dragons wake when the four are won between us
+	void SetWonder(int a_mask) { g_wonder = a_mask; }
+	int  PartyWonders()
 	{
+		static int pooled = 0;
 		std::scoped_lock l(g_lock);
 		for (auto& [id, r] : g_remote) {
-			if (r.wonder == a_wonder && Clock::now() - r.heard < std::chrono::seconds(10)) {
-				return r.name.empty() ? std::string("a friend") : r.name;
-			}
+			if (r.wonder > 0) pooled |= r.wonder & 0xF;
 		}
-		return {};
+		return pooled;
 	}
-
+	std::string WonderHolder(int) { return {}; }  // (retired: the staffs' one-wielder rule)
 	void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder, std::int8_t a_cls, std::uint32_t a_credit)
 	{
 		std::scoped_lock l(g_lock);

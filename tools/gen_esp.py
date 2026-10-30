@@ -537,15 +537,15 @@ recs['FSTS'].append(record('FSTS', fid('FSTS', 'silent'), [sub('EDID', z('UN_Sil
 LOADING_TIPS = [
     "Alduin shouted three words into the earth at Helgen - SLEN TIID VO, Flesh, Time, Undo - and every barrow answered.",
     "Alduin's mist lies on the door of Sovngarde. The dead cannot pass to Shor's hall, so they rise instead.",
-    "A woken altar's heart-stone is cut with its city's words. Stand at it, and the runes give them up to you.",
+    "Free six cities and your path's secret wakes. When it is won, the Greybeards call - your wonder waits beneath High Hrothgar.",
     "An Echo Altar stands in every city. Call a spell, reforge the one in your hands or take a perk - the night does not wait while you bargain.",
     "Fen-Wailers call the horde to them with their scream. Kill them first.",
     "Sewn Thralls burst when they fall. Strike them from afar.",
     "Hold right mouse to gather a spell's full power in both hands. Let go too soon and the power gutters out.",
     "When the runic circle wakes round the altar, stand inside it until its count runs out. The dead come harder while you do.",
-    "You carry five perks at most. Choose them well.",
-    "Wake a city's Echo Altar and its dead sleep again. Its Thu'um waits for you there.",
-    "A spell reforged three times is Ascendant: its great strike falls twice.",
+    "Solitude's bards remember a song the dead cannot resist. Free their city and the Dance of Death is yours.",
+    "Wake a city's Echo Altar and its dead sleep again: no curse-dead rise inside a freed city, by night or by day.",
+    "Three dragons carry Alduin's words. Slay them and only his echo is left, on the summit of the Throat of the World.",
     "Walk into a glowing token on a body before it blinks out: Nuke, Double Essence, Refill Stats, Merchant's Blessing, Shadow of Nocturnal, Thu'um Unbound, Kynareth's Mercy.",
     "The altars take no gold - only the Cursed Essence the dead leave behind.",
     "Every spell the Echo Altar gives is the echo of a fallen mage's last. Carry it well.",
@@ -780,19 +780,19 @@ def lore_text():
            "<p>Stand at an altar and it sets you <b>trials</b>: hold its rune circle, cull the dead in its streets, hold the altar through a night's waves, "
            "and pass the trial of your own path. "
            "Finish them and its Dragon Priest rises at night. Kill him and the altar wakes.</p>",
-           "<p>A woken altar makes its city a <b>sanctuary</b> - no dead rise inside it. If you have walked the <b>Way of the Voice</b> at High Hrothgar, "
-           "its heart-stone also teaches you the city's own <b>shout</b>.</p>",
+           "<p>A woken altar makes its city a <b>sanctuary</b>: none of the curse's dead rise inside it, by night or by day. Step outside its walls and they find you again.</p>",
            "[pagebreak]", "<p align='center'><font size='24'>V. The Dragonborn's Road</font></p>",
            "<p>The Curse walks beside your own story; it does not replace it.</p>",
-           "<p><b>Riverwood's</b> altar, nearest Helgen, wakes first. <b>Whiterun's</b> answers your first dragon soul and gives you a dragon to ride. "
-           "At <b>High Hrothgar</b>, the Way of the Voice opens the altars' shouts, and the <b>Reliquary</b> forges what the Dragon Priests leave behind into wonders.</p>",
-           "<p>Win your path's <b>wonder</b> and Alduin's three Words wake, one at a time, at old places of the Dragon Cult. Silence <b>SLEN</b>, <b>TIID</b> and <b>VO</b> "
-           "and the Curse is broken for good. And when you follow Alduin to Sovngarde and he falls, the mist thins and your wonder wakes to its <b>Legendary</b> form.</p>",
-           "[pagebreak]", "<p align='center'><font size='24'>VI. The Voices of the Holds</font></p>"]
-    for h in S['shouts']['rows']:
-        if h.get('town'):
-            out.append(f"<p><b>{h['town']}</b>: <i>{h['label']}</i> ({' '.join(h['words'])}). {h['text']}.</p>")
-    out += ["<p><b>Whiterun</b>: <i>Dragon's Updraft</i>. A whirlwind lifts you high - and a dragon to carry you.</p>",
+           "<p><b>Riverwood's</b> altar, nearest Helgen, wakes first. <b>Whiterun's</b> answers your first dragon soul and gives you a dragon to ride - and its Thu'um, "
+           "<i>Dragon's Updraft</i>. <b>Solitude's</b> bards give you the <i>Dance of Death</i>.</p>",
+           "<p>Free six cities and each path's <b>secret</b> wakes. Win it and the Greybeards call you to <b>High Hrothgar</b>: your path's <b>wonder</b> waits on its pedestal "
+           "in the Reliquary beneath the great hall.</p>",
+           "<p>With all four wonders won - alone or with friends - Alduin's three Words wake as <b>dragons</b>: <b>SLEN</b> in the Reach, <b>TIID</b> at Labyrinthian and "
+           "<b>VO</b> on Mount Anthor. Slay all three and only his <b>Echo</b> is left, on the summit of the Throat of the World. End it, and the Curse is broken.</p>",
+           "[pagebreak]", "<p align='center'><font size='24'>VI. The Voices of the Holds</font></p>",
+           "<p><b>Whiterun</b>: <i>Dragon's Updraft</i>. A whirlwind lifts you high - and a dragon to carry you.</p>",
+           "<p><b>Solitude</b>: <i>Dance of Death</i>. The dead near you dance, helpless, and take half again as much harm. Once a wave.</p>"]
+    out += [
             "[pagebreak]", f"<p>{S['curse']['freedAll']}</p>", "<p align='right'><i>- written in the silence of High Hrothgar</i></p>", "</font>"]
     return '\n'.join(out)
 
@@ -828,38 +828,42 @@ def guide_text():
            p("Tap the attack to throw a bolt. Hold it, and both hands gather the spell's full power: the longer you hold, the harder it strikes. "
              "Let go too soon and the power gutters out. Magicka comes back fast."),
            "[pagebreak]", h("Shouts"),
-           p("Once you have walked the Way of the Voice, the runes on a woken altar's heart-stone teach you its city's Thu'um - no Word Wall needed. Equip it like any shout. Its cooldown shows under your spells, bottom right."),
+           p("Two cities teach a Thu'um of their own. Free <b>Whiterun</b> and <i>Dragon's Updraft</i> is yours; free <b>Solitude</b> and its bards give you the <i>Dance of Death</i>. Equip them like any shout. A shout's cooldown shows on the rim of your stat plate."),
            "[pagebreak]", h("The Dragon"),
            p("Wake Whiterun's altar and a dragon will answer you. Jump and press Activate in mid-air: it swoops down and you take hold of its harness."),
            p("Steer with the stick or WASD. Forward dives, back climbs. Attack to make it breathe fire on the dead below - only the dead, never your friends. "
              "At the altar you can make deeper bonds with it."),
-           "[pagebreak]", h("Echo Stones and the Reliquary"),
-           p("When a city's altar is freed and its night won, its heart-stone turns to blue light. Step onto the altar and it gives you a page: <i>The Broken Words</i>, one for each city - "
-             "a Tongue's writing on that city's Dragon Priest and on the words cut into its heart-stone. Once you have walked the Way of the Voice, the heart-stone's runes teach you the city's Thu'um."),
-           p("Some parts fall from the Dragon Priests. Some wait in reliquaries at old barrows, guarded, and only wake at night. Some must be earned by killing the dead near a barrow's door."),
-           p("Take them to <b>High Hrothgar</b>: a sealed door in the great hall leads down to the Reliquary, where each wonder is forged on its pedestal once its three parts are found."),
+           "[pagebreak]", h("The Reliquary"),
+           p("Behind a sealed door in the great hall of <b>High Hrothgar</b> lies the Reliquary of the Tongues: four pedestals, one for each path's wonder. "
+             "It opens the first time the Greybeards call you."),
+           p("Win your path's secret and the Greybeards' shout rolls across Skyrim - your <b>wonder</b> waits on its pedestal. Go and take it up. "
+             "A wonder answers only to its own path: change class and come back to claim another."),
            "[pagebreak]", h("The Wonder Weapons"),
-           p("A forged wonder is taken up from its pedestal and cast from your hands like the altar's spells: tap to strike, hold both hands to unleash it. One at a time - return it to take another."),
-           p("<b>Gravecaller</b> - grave-wisps hunt the dead and feed you their life. Unleashed: three bone warriors claw out of the earth to fight for you."),
-           p("<b>Frostbinder Gauntlets</b> - ice binds what it strikes; strike a bound foe and it shatters, cutting those round it. Unleashed: everything near you freezes, then bursts."),
-           p("<b>Wolf Queen's Crown</b> - spirit-wolves run down the dead in pairs. Unleashed: the Queen howls and her spectral pack runs at your side."),
-           p("<b>Horn of the Dragon Priests</b> - a war-cry hurls the dead back. Unleashed: the old war-host charges down the line in front of you."),
-           "[pagebreak]", h("The Three Words"),
-           p("With your class's wonder in hand, Alduin's three words wake one after another: <b>SLEN</b> at the cult's old shrine in the Reach, <b>TIID</b> in the courtyard of Labyrinthian, "
-             "<b>VO</b> on the summit of the Throat of the World. Your compass marks the word that is awake."),
-           p("Go there at night. Its dead rise round you in waves; when the last wave falls, the word's bearer rises. Kill it and the word is silenced for good, and its power stays with you: "
+           p("<b>Horn of the Spectral Wyrm</b> (Summoner) - blow it and a spectral dragon fights at your side."),
+           p("<b>Tome of the Six Fires</b> (Battle-mage) - one cast looses the top spell of all six of your elements on the dead round you."),
+           p("<b>Subsuming Vortex</b> (Ranger) - every arrow tears open a black hole that drags the dead in, then bursts."),
+           p("<b>Dragon Slayer</b> (Spellsword) - every hit carries the spell in your other hand."),
+           p("When the three dragons fall, every wonder wakes to its <b>Legendary</b> form."),
+           "[pagebreak]", h("The Three Dragons"),
+           p("With all four wonders won (a party pools theirs), Alduin's three words wake as dragons, each at its own place: <b>SLEN</b> - Slenvahrin, at the cult's old shrine in the Reach; "
+             "<b>TIID</b> - Tiidrah, in the courtyard of Labyrinthian; <b>VO</b> - Vonahlok, on Mount Anthor. Your compass marks them."),
+           p("Go there at night. The dead rise round you in waves; when the last wave falls, the dragon comes. Slay it and its word is silenced for good, its power yours: "
              "<b>SLEN</b> - everything you wield hits 15% harder; <b>TIID</b> - the night's blows hurt you 20% less; <b>VO</b> - your magicka returns half again as fast."),
-           p("Leave the place, or let dawn come, and the word falls quiet until you return. Silence all three and the curse of Alduin is broken."),
+           p("Leave the place, or let dawn come, and the siege falls quiet until you return."),
+           "[pagebreak]", h("The Echo of Alduin"),
+           p("With the three dragons dead, the <b>Echo of Alduin</b> waits on the summit of the Throat of the World. Climb it at night: the dead of all Skyrim answer him one last time. "
+             "Kill the Echo and the Curse of Alduin is broken - the nights are only nights again."),
            "[pagebreak]", h("The Hall of the Awakened"),
-           p("With the curse broken, the Reliquary under High Hrothgar becomes the <b>Hall of the Awakened</b>. Its stations:"),
-           p("<b>Alduin's Bane</b> - the story's last weapon, a greatsword forged from the World-Eater's defeat: dragonfire on every blow, a crescent of golden fire on a power attack, and when its soul meter fills, Alduin's shade rains meteors round you. While you hold it, kills heal you and your shouts return twice as fast. "
-             "<b>Robes of the First Dragonborn</b> - wear them and spells and wonders cost a quarter less magicka, and it returns faster. "
-             "<b>The Bone-Wyrm's Skull</b> - your glider's dragon wears Alduin's bones (touch it again to change back)."),
-           p("<b>Brazier of the Endless Night</b> - while it burns, the night never ends: wave after wave, until you put it out. "
+           p("With the curse broken, the Reliquary becomes the <b>Hall of the Awakened</b>. Its stations:"),
+           p("<b>Alduin's Bane</b> - a blade of dragon bone whose magic answers your path: the Summoner raises Draugr Death Overlords from what it kills, the Battle-mage looses a master Destruction spell on every hit, "
+             "the Spellsword a master Grasp, and the Ranger's every swing sends a wind slash that hurls the dead far away. Its kills fill it with souls; full, Alduin's shade rains meteors round you. "
+             "<b>The First Dragonborn's Regalia</b> - while you wear its robes, everything you wield hits 25% harder, every blow on you is 25% softer, and your magic costs a quarter less and returns faster. "
+             "<b>The Bone-Wyrm's Skull</b> - your dragon wears Alduin's bones (touch it again to change back)."),
+           p("<b>Brazier of the Endless Night</b> - while it burns the curse comes back and never sleeps: each night's last wave brings the next night at once. A freed city is still safe. "
              "<b>Seat of the Awakened</b> - begin again: every city falls back under the curse and the nights start over, the dead half again as tough each cycle. "
-             "Your wonders, bows, powers and the words' gifts stay yours."),
+             "Your wonders, powers and gear stay yours; free the altars again and the Echo returns."),
            "[pagebreak]", h("Whispers of the Altars"),
-           p("Each path keeps a secret, and it is the only road to the path's <b>wonder</b>. It wakes once six cities are free, and nobody will tell you what to do. Stand at a freed altar and its <b>whispers</b> show in its menu - another line for each step you find. "
+           p("Each path keeps a secret, and it is the only road to the path's <b>wonder</b>. It wakes once six cities are free, and nobody will tell you what to do. Stand at a freed altar and its <b>whispers</b> show in its menu - another line for each step you find. When it is won, the Greybeards call you to High Hrothgar. "
              "Each step is found at a freed altar, never in the same city as the step before. These are the first whispers:"),
            ] + [p(f"<b>{ {'summoner': 'The Summoner', 'destruction': 'The Battle-mage', 'ranger': 'The Ranger', 'spellsword': 'The Spellsword'}[e['cls']] }</b> - {e['steps'][0]['hint']}") for e in S['eggs']['rows']] + [
            "[pagebreak]", h("Event Nights and Themed Waves"),
@@ -883,7 +887,7 @@ for key, edid, name, text, model in (('dirge', 'UN_UndyingDirgeBook', 'The Curse
 # class is chosen; read in the Codex (src/Hud.cpp), which adds the live 'Your Progress' page. The book's own text is the
 # same chapters, should the Codex ever not show.
 G = S['guides']
-GUIDE_KEEP = ['The Dragon', 'Echo Stones and the Reliquary', 'The Wonder Weapons', 'The Three Words', 'The Hall of the Awakened',
+GUIDE_KEEP = ['The Dragon', 'The Reliquary', 'The Wonder Weapons', 'The Three Dragons', 'The Echo of Alduin', 'The Hall of the Awakened',
               'Whispers of the Altars', 'Event Nights and Themed Waves', 'Falling']   # (the old Survivor's Guide's chapters still true)
 def guide_chapters(cls):
     out = [(c['title'], '', c['paras']) for c in cls['chapters']]
@@ -959,12 +963,12 @@ def rel_acti(key, name, verb, model, r):
 rel_acti('rel_door_in', 'Sealed Door of the Tongues', 'Enter', 'door.nif', 190)
 rel_acti('rel_door_out', 'Sealed Door of the Tongues', 'Leave', 'door.nif', 190)
 for w in E['wonders']:
-    rel_acti('rel_ped_' + w['id'], w['label'] + "'s Pedestal", 'Forge', 'pedestal.nif', 60)
+    rel_acti('rel_ped_' + w['id'], w['label'], 'Take', 'pedestal.nif', 60)   # (Act II: each class's wonder waits here once its secret is won)
 for key, model, r in [('rel_room', 'room.nif', 640), ('rel_relic', 'relic.nif', 80), ('rel_brazier', 'tonguefire.nif', 60), ('rel_banner', 'banner.nif', 120)] + [('rel_gem_' + w['id'], f"gem_{w['id']}.nif", 8) for w in E['wonders']]:
     recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
         sub('MODL', z(RQ + model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
 # Stage 5 (src/Echo.cpp Hall): the Hall of the Awakened's stations, and Alduin's Fang
-for key, name, verb in (('hall_fang', "Alduin's Bane", 'Take'), ('hall_robes', 'Robes of the First Dragonborn', 'Take'),
+for key, name, verb in (('hall_fang', "Alduin's Bane", 'Take'), ('hall_robes', "The First Dragonborn's Regalia", 'Take'),
                         ('hall_skull', "The Bone-Wyrm's Skull", 'Bind'), ('hall_endless', 'Brazier of the Endless Night', 'Kindle'),
                         ('hall_throne', 'Seat of the Awakened', 'Begin again')):
     rel_acti(key, name, verb, 'pedestal.nif', 60)
@@ -985,7 +989,7 @@ for name, hx in T['weap_draugr_gs']['subs']:
     elif name == 'FULL': b = z("Alduin's Bane")
     elif name == 'MODL': b = z('CurseOfAlduin\\wonder\\bane.nif')
     elif name == 'MODT': continue
-    elif name == 'DESC': b = z("Forged from the World-Eater's own defeat. Every blow burns with dragonfire and its kills fill it with souls; a power attack looses a crescent of golden fire. Full, it calls Alduin's shade to rain meteors round you. While you hold it, kills heal you and your shouts return twice as fast.")
+    elif name == 'DESC': b = z("A blade of dragon bone, cut from the Echo of Alduin. Its magic answers your path: the Summoner's blows raise Draugr Death Overlords from what they kill, the Battle-mage's loose a master Destruction spell, the Spellsword's a master Grasp, and the Ranger's every swing sends a wind slash that hurls the dead far away. Its kills fill it with souls: full, Alduin's shade rains meteors round you. While you hold it, kills heal you and your shouts return twice as fast.")
     elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_fang'))
     elif name == 'DATA': b = bytearray(struct.pack('<IfH', 5000, 16.0, 38))
     ws.append(sub(name, bytes(b)))

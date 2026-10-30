@@ -706,7 +706,7 @@ namespace bo3z
 			auto* player = a_by ? a_by : RE::PlayerCharacter::GetSingleton();
 			auto* av = a_actor->AsActorValueOwner();
 			if (Undead::IsDancing(a_actor)) a_damage *= 1.5f;  // (the Dance Of Death: half again as hard)
-			a_damage *= Director::TakenMult(a_actor) * Kit::ArmorAscendMult();  // (a brute dazed or berserk; your armor's Ascends)
+			a_damage *= Director::TakenMult(a_actor) * Kit::ArmorAscendMult() * Echo::SetDamageMult();  // (a brute dazed or berserk; your armor's Ascends; the First Dragonborn's Regalia)
 			av->DamageActorValue(RE::ActorValue::kHealth, a_damage);
 			if (av->GetActorValue(RE::ActorValue::kHealth) <= 0) {
 				a_actor->KillImpl(player, a_damage, true, false);

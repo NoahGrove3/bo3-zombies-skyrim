@@ -76,7 +76,7 @@ namespace bo3z::Arcana
 			}
 			// (Noah: "the Summoner's starting spells' magicka cost needs to be half") the first rung of each summoner ladder
 			const float firstSummon = me.cls == coffer::kSummoner && me.rung == 1 ? 0.5f : 1.0f;
-			sp->data.costOverride = std::max(1, static_cast<int>(std::lround(coffer::kSpells[a_index].cost * kCost * (1.0f - 0.1f * std::min(lv, 3)) * Difficulty::Mana() * firstSummon * Kit::AuraCostMult())));
+			sp->data.costOverride = std::max(1, static_cast<int>(std::lround(coffer::kSpells[a_index].cost * kCost * (1.0f - 0.1f * std::min(lv, 3)) * Difficulty::Mana() * firstSummon * Kit::AuraCostMult() * (Echo::WearsRobes() ? 0.75f : 1.0f))));
 		}
 	}
 

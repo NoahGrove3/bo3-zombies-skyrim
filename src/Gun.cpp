@@ -1,4 +1,5 @@
 #include "BO3Z.h"
+#include "CofferSpells.h"
 
 // The arsenal (sheet: weapons). Wands are staff-type weapons with a free concentration enchantment; tomes and
 // grimoires are concentration spells held in the right hand. Skyrim plays the cast (staff thrust / open hand) from
@@ -597,7 +598,7 @@ namespace bo3z
 				if (!behind) damage *= 0.5f;
 			}
 			if (Undead::IsDancing(a_target)) damage *= 1.5f;  // (the Dance Of Death: half again as hard)
-			damage *= Director::TakenMult(a_target) * Kit::ArmorAscendMult();  // (a brute dazed or berserk; your armor's Ascends)
+			damage *= Director::TakenMult(a_target) * Kit::ArmorAscendMult() * Echo::SetDamageMult();  // (a brute dazed or berserk; your armor's Ascends; the First Dragonborn's Regalia)
 			if (PowerUps::InstaKill() && Director::IsRoundUndead(a_target)) {
 				damage = av->GetActorValue(RE::ActorValue::kHealth) + 1.0f;  // Insta-Kill (every one of them, one hit)
 			}
@@ -2541,20 +2542,7 @@ namespace bo3z
 			if (auto* bane = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); bane && p->GetItemCount(bane) <= 0) {
 				p->AddObjectToContainer(bane, nullptr, 1, nullptr);  // Alduin's Bane
 			}
-			for (int i = 0; i < static_cast<int>(gen::kGuns.size()); ++i) {  // the four Falmer staffs (the wonder weapons)
-				const std::string_view id = gen::kGuns[i].id;
-				if (id == "gravecaller" || id == "frostbinder" || id == "wolfcrown" || id == "barrowhorn") {
-					if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kGuns[i].weapId, gen::kPlugin); w && p->GetItemCount(w) <= 0) {
-						p->AddObjectToContainer(w, nullptr, 1, nullptr);
-					}
-					if (LevelOf(i) >= 0) SetLevelOf(i, gen::kForgeMax);  // (Noah: tier 3 staffs to test; unslotted ones get it as they're taken up)
-				}
-			}
-			for (int i = 0; i < static_cast<int>(gen::kShouts.size()); ++i) {
-				if (!KnowsShout(i)) {
-					LearnShout(i);
-				}
-			}
+			// (the story's overhaul: the Falmer staffs are cut, and the altars teach no shouts - Updraft comes with the dragon below)
 			for (int i = 0; i < 64; ++i) {  // every Echo Altar spell (all 17)
 				if (Arcana::Spell(i)) {
 					if (!Arcana::Known(i)) Arcana::Give(i, false);
@@ -2569,10 +2557,10 @@ namespace bo3z
 			if (const int have = Points::Get(); have < 150000) {
 				Points::Refund(150000 - have);
 			}
-			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every bow, every shout, the glider, 150,000 Cursed Essence", spells), 7.0f);
+			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every bow, Alduin's Bane, the glider, 150,000 Cursed Essence", spells), 7.0f);
 			std::string list;
 			for (auto& [el, c] : byEl) list += fmt::format("{} {}, ", el, c);
-			logger::info("testkit: {} altar spells ({}) - {} others taken away; bows {}, shouts {}, essence {}", spells, list, removed, Bows::Count(), gen::kShouts.size(), Points::Get());
+			logger::info("testkit: {} altar spells ({}) - {} others taken away; bows {}, essence {}", spells, list, removed, Bows::Count(), Points::Get());
 		}
 		bool TestKitOn()
 		{

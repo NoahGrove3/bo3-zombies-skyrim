@@ -303,9 +303,8 @@ namespace Props
 		logger::info("tornado: kind {} for {:.0f} s{}", a_kind, a_seconds, a_chase ? ", hunting the dead" : "");
 	}
 	// ---- Alduin's Bane (the story's last weapon, in the Fang's slot) -------------------------------------------------
-	// every blow burns with dragonfire and the fire leaps; kills fill its soul meter (20), heal you a little; a power
-	// attack looses a crescent of golden fire down the line; a full meter calls Alduin's shade - meteors fall on the
-	// dead round you for 10 s; while it is in your hands your shouts return twice as fast
+	// its magic is your path's (below); kills fill its soul meter (20) and heal you a little; a full meter calls Alduin's
+	// shade - meteors fall on the dead round you for 10 s; while it is in your hands your shouts return twice as fast
 	int   g_baneSouls = 0;
 	float g_baneStorm = 0, g_baneMeteor = 0;
 	void BaneKilled(RE::PlayerCharacter* p)
@@ -321,6 +320,49 @@ namespace Props
 			Hud::Banner(fmt::format("Alduin's Bane - {} of 20 souls", g_baneSouls), 1.5f);
 		}
 	}
+	// (Noah: "One fixed weapon ... I want the magic abilities to depend on which class is selected while holding it") the
+	// Bane's magic answers your path. Summoner: the strongest necromancy - what it kills rises as a Draugr Death Overlord
+	// to fight for you (three at most, 40 s each), and every blow drinks a little life. Battle-mage: every blow looses a
+	// master Destruction spell on what it struck (Immolate, Throat of the World, Finger of the Mountain, Daybreak in turn).
+	// Spellsword: every blow carries a master Grasp (Fiery, Freezing, Thundering, Searing, Touch of Death, Viper's - in
+	// turn). These strike on contact only; the Ranger's needs none: every swing sends a wind slash down the line that hurls
+	// the dead VERY far (a power attack: a wider, longer one).
+	RE::SpellItem* CofferSpell(std::string_view a_name)
+	{
+		for (int i = 0; i < static_cast<int>(coffer::kSpells.size()); ++i) {
+			if (a_name == coffer::kSpells[i].name) return Arcana::Spell(i);
+		}
+		return nullptr;
+	}
+	RE::TESNPC* OverlordNpc()
+	{
+		static RE::TESNPC* npc = [] {
+			auto* sp = CofferSpell("Conjure Draugr Death Overlord");
+			if (sp) {
+				for (auto* e : sp->effects) {
+					if (auto* m = e ? e->baseEffect : nullptr; m && m->data.associatedForm) {
+						if (auto* n = m->data.associatedForm->As<RE::TESNPC>()) return n;
+					}
+				}
+			}
+			return static_cast<RE::TESNPC*>(nullptr);
+		}();
+		return npc;
+	}
+	float g_baneCast = 0;  // (one master spell a third of a second at most: the screen never drowns)
+	int   g_baneTurn = 0;
+	void BaneCast(RE::PlayerCharacter* p, RE::Actor* a_z, std::initializer_list<std::string_view> a_names, int a_n)
+	{
+		if (g_baneCast > 0) return;
+		g_baneCast = 0.33f;
+		std::vector<RE::SpellItem*> pool;
+		for (auto nm : a_names) if (auto* sp = CofferSpell(nm)) pool.push_back(sp);
+		if (pool.empty()) return;
+		auto* mc = p->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant);
+		for (int k = 0; mc && k < a_n; ++k) {
+			mc->CastSpellImmediate(pool[static_cast<std::size_t>(g_baneTurn++) % pool.size()], false, a_z, 1.0f, false, 0.0f, p);
+		}
+	}
 	void FangHit(RE::Actor* a_z, bool a_power)
 	{
 		if (!a_z || a_z->IsDead()) {
@@ -328,61 +370,57 @@ namespace Props
 		}
 		auto*       p = RE::PlayerCharacter::GetSingleton();
 		const float base = FangBase();
-		if (Damage(a_z, base * (a_power ? 2.0f : 1.0f), false, true) && p) BaneKilled(p);
-		g_dots.push_back({ a_z->GetHandle(), base * 0.25f, 4.0f });  // dragonfire: it burns
-		Blast(BlastIndex("dragonfire"), a_z->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, 0.45f);
-		int n = 0;
-		for (auto* f : Foes(a_z->GetPosition(), 300.0f)) {  // and the fire leaps
-			if (f == a_z || n >= (a_power ? 5 : 2)) {
-				continue;
+		const int   cls = Classes::Get();
+		const auto  at = a_z->GetPosition();
+		const bool  killed = Damage(a_z, base * (a_power ? 2.0f : 1.0f), false, true);
+		if (killed && p) BaneKilled(p);
+		if (!p) return;
+		switch (cls) {
+		case coffer::kSummoner:
+			{
+				auto* av = p->AsActorValueOwner();
+				av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * (a_power ? 0.03f : 0.015f));
+				Blast(BlastIndex("dark"), at + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, 0.35f);
+				if (killed || a_z->IsDead()) {
+					Echo::Thralls(OverlordNpc(), 1, 40.0f, at, 3);
+				}
+				break;
 			}
-			if (Damage(f, base * 0.4f, false, false, true) && p) BaneKilled(p);
-			g_dots.push_back({ f->GetHandle(), base * 0.12f, 3.0f });
-			Blast(BlastIndex("fireball"), f->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f }, 0.08f * ++n, 0.3f);
+		case coffer::kDestruction:
+			BaneCast(p, a_z, { "Immolate", "Throat of the World", "Finger of the Mountain", "Daybreak" }, a_power ? 2 : 1);
+			break;
+		case coffer::kSpellsword:
+			BaneCast(p, a_z, { "Fiery Grasp", "Freezing Grasp", "Thundering Grasp", "Searing Grasp", "Touch of Death", "Viper's Grasp" }, a_power ? 2 : 1);
+			break;
+		case coffer::kRanger:
+			break;  // (the Ranger's magic is the swing's wind)
+		default:
+			g_dots.push_back({ a_z->GetHandle(), base * 0.25f, 4.0f });  // (no path yet: plain dragonfire)
+			Blast(BlastIndex("dragonfire"), at + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, 0.4f);
+			break;
 		}
 	}
-	// (Noah: a fire slash on every swing, hitting or not) a light swing looses a short arc of fire ahead of you
-	void BaneSlash(RE::PlayerCharacter* p)
+	// the Ranger's wind slash: a crescent of wind down the line from every swing - hit or not - that hurls the dead far away
+	void BaneWind(RE::PlayerCharacter* p, bool a_power)
 	{
-		const Aim aim = AimAt(700.0f);
+		const float range = a_power ? 2600.0f : 1800.0f, width = a_power ? 260.0f : 170.0f;
+		const Aim aim = AimAt(range);
 		RE::NiPoint3 dir = aim.dir; dir.z = 0;
 		if (dir.Length() < 0.01f) dir = { 0, 1, 0 };
 		dir.Unitize();
 		const RE::NiPoint3 side{ -dir.y, dir.x, 0 };
-		const RE::NiPoint3 at0 = p->GetPosition() + RE::NiPoint3{ 0, 0, 80.0f };
-		for (int k = 1; k <= 4; ++k) {
-			for (int j = -1; j <= 1; ++j) {
-				Blast(BlastIndex(j == 0 ? "dragonfire" : "fireball"), at0 + dir * (120.0f * k - std::abs(j) * 30.0f) + side * (j * (40.0f + 10.0f * k)), 0.04f * k, j == 0 ? 0.4f : 0.25f);
-			}
+		const RE::NiPoint3 at0 = p->GetPosition() + RE::NiPoint3{ 0, 0, 90.0f };
+		const int steps = a_power ? 6 : 4;
+		for (int k = 1; k <= steps; ++k) {  // (the crescent races out: a burst of wind a step further each beat)
+			const float d = range / steps * k;
+			Blast(BlastIndex("shoutarea"), at0 + dir * d, 0.035f * k, a_power ? 0.5f : 0.35f);
+			if (a_power) Blast(BlastIndex("shoutarea"), at0 + dir * (d - 60.0f) + side * 140.0f * ((k & 1) ? 1.0f : -1.0f), 0.035f * k + 0.02f, 0.3f);
 		}
-		for (auto* f : InLine(aim, 520.0f, 150.0f)) {
-			if (Damage(f, FangBase() * 0.9f, false, false, true)) BaneKilled(p);
-			else g_dots.push_back({ f->GetHandle(), FangBase() * 0.15f, 3.0f });
+		Audio::AtPoint(gen::Sound::unleash_hearth, at0 + dir * 200.0f);
+		for (auto* f : InLine(aim, range, width)) {
+			if (Damage(f, FangBase() * (a_power ? 1.6f : 0.8f), false, false, true)) BaneKilled(p);
+			Spellcraft::Fling(f, f->GetPosition() - dir * 120.0f - RE::NiPoint3{ 0, 0, 80.0f }, a_power ? 24.0f : 16.0f);  // (VERY far)
 		}
-	}
-	void FangTornado(RE::PlayerCharacter* p)  // (the power attack: a crescent of golden fire down the line)
-	{
-		const Aim aim = AimAt(1000.0f);
-		RE::NiPoint3 dir = aim.dir; dir.z = 0;
-		if (dir.Length() < 0.01f) dir = { 0, 1, 0 };
-		dir.Unitize();
-		const RE::NiPoint3 side{ -dir.y, dir.x, 0 };
-		const RE::NiPoint3 at0 = p->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f };
-		for (int k = 1; k <= 7; ++k) {  // the arc races out: three across, a step further each beat
-			const float d = 130.0f * k;
-			for (int j = -1; j <= 1; ++j) {
-				const RE::NiPoint3 q = at0 + dir * (d - std::abs(j) * 40.0f) + side * (j * (50.0f + 14.0f * k));
-				Blast(BlastIndex(j == 0 ? "dragonfire" : "fireball"), q, 0.045f * k, j == 0 ? 0.55f : 0.35f);
-			}
-		}
-		for (auto* f : InLine(aim, 950.0f, 190.0f)) {
-			if (Damage(f, FangBase() * 2.5f, false, false, true)) BaneKilled(p);
-			else {
-				g_dots.push_back({ f->GetHandle(), FangBase() * 0.3f, 4.0f });
-				Stagger(f, 0.8f);
-			}
-		}
-		Audio::AtPoint(gen::Sound::unleash_hearth, at0);
 	}
 	RE::ObjectRefHandle g_skyMark;
 	void SkyFireball(const RE::NiPoint3& a_at)
@@ -409,6 +447,7 @@ namespace Props
 	}
 	void TickBane(RE::PlayerCharacter* p, float a_delta)
 	{
+		g_baneCast = std::max(0.0f, g_baneCast - a_delta);
 		// your shouts return twice as fast while you hold it: the shout's cooldown runs down a second time each frame
 		// (the audit: halving ShoutRecoveryMult was saved with the game and halved again on every load - a lasting change)
 		if (FangInHand(p)) {
@@ -435,11 +474,8 @@ namespace Props
 		if (g_weaponSwing.exchange(false) && FangInHand(p)) {
 			auto* proc = p->GetActorRuntimeData().currentProcess;
 			auto* high = proc ? proc->high : nullptr;
-			if (high && high->attackData && high->attackData->data.flags.any(RE::AttackData::AttackFlag::kPowerAttack)) {
-				FangTornado(p);
-			} else {
-				BaneSlash(p);
-			}
+			const bool power = high && high->attackData && high->attackData->data.flags.any(RE::AttackData::AttackFlag::kPowerAttack);
+			if (Classes::Get() == coffer::kRanger) BaneWind(p, power);  // (the Ranger's needs no contact: every swing)
 		}
 		for (auto& t : g_twisters) {
 			if (t.chase) {  // turn, slowly, toward the nearest of the dead

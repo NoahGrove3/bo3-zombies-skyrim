@@ -598,7 +598,8 @@ namespace bo3z::Classes
 	//   Spellsword   Dragon Slayer              each hit carries the spell in your other hand (Legendary: a power attack sends it down the line)
 	namespace
 	{
-		constexpr int kWonderSteps = 3, kWonderOpensAt = 6;  // (g_wStep: 0 shut, 1-3 its quest open, 4 won)
+		constexpr int kWonderSteps = 3, kWonderOpensAt = 6;  // (g_wStep: 0 shut, 1-3 its quest open, 4 won and taken up, 5 won - waiting on its pedestal)
+		constexpr int kWonderTaken = kWonderSteps + 1, kWonderWaiting = kWonderSteps + 2;
 		constexpr const char* kWonderName[4] = { "Horn of the Spectral Wyrm", "Tome of the Six Fires", "Subsuming Vortex", "Dragon Slayer" };
 		std::array<std::uint8_t, 4>  g_wStep{};    // per class: 0 not open, 1..3 the step under way, 4 earned
 		std::array<std::uint16_t, 4> g_wKills{};
@@ -647,7 +648,7 @@ namespace bo3z::Classes
 			for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) n += Curse::Freed(t) ? 1 : 0;
 			return n;
 		}
-		bool AfterSovngarde() { return Story::AlduinFallen(); }
+		bool AfterSovngarde() { return Echo::DragonsSlain(); }  // (the story: the wonders' Legendary form - once the three dragons fall)
 		RE::SpellItem* WyrmSpell() { auto* f = Lookup(0x019D74, "Calling of the Conjurer.esp"); return f ? f->As<RE::SpellItem>() : nullptr; }
 		RE::SpellItem* TomeSpell() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::SpellItem>(gen::kWonderTomeSpell, gen::kPlugin) : nullptr; }
 		RE::TESObjectWEAP* Vortex() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::TESObjectWEAP>(gen::kVortexWeap, gen::kPlugin) : nullptr; }
@@ -714,13 +715,13 @@ namespace bo3z::Classes
 				GiveItem(p, Slayer(), 1, true);
 				break;
 			}
-			g_wStep[a_cls] = kWonderSteps + 1;
+		g_wStep[a_cls] = kWonderTaken;
 			Forms::Play(gen::Sound::shout_learned);
 			static constexpr const char* kText[4] = {
-				"A horn of bone that answers with a dragon: Calling of the Conjurer's Spectral Dragon fights at your side for a minute. After Sovngarde it stays until it falls.",
-				"One cast looses the top spell of all six of your element ladders on the dead round you. After Sovngarde each cast also leaves their runes and storms on the ground.",
-				"A bow of black-violet steel. Every arrow tears open a black hole where it lands: the dead are dragged in, then it bursts. After Sovngarde the holes grow wider and pull harder. More arrows: Q at an Echo Altar, or a Max Ammo.",
-				"The Akaviri dragon slayer. Every hit carries the spell in your other hand. After Sovngarde a power attack sends that spell down the line." };
+				"A horn of dragon bone. Blow it and Calling of the Conjurer's Spectral Dragon fights at your side for a minute. Once the three dragons fall, it stays until it is slain.",
+				"One cast looses the top spell of all six of your element ladders on the dead round you. Once the three dragons fall, each cast also leaves their runes and storms burning on the ground.",
+				"A bow of black-violet steel. Every arrow tears open a black hole where it lands: the dead are dragged in, then it bursts. Once the three dragons fall, the holes grow wider and pull harder. More arrows: at any Echo Altar, or from a Max Ammo.",
+				"The Akaviri dragon slayer. Every hit carries the spell in your other hand. Once the three dragons fall, a power attack sends that spell down the line." };
 			std::string up(kWonderName[a_cls]);
 			for (auto& ch : up) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
 			Hud::Lore(up, kText[a_cls], 12.0f);
@@ -1289,7 +1290,7 @@ namespace bo3z::Classes
 				break;
 			}
 		}
-		// (the Summoner review) Alduin's fall mid-session turns the Horn of the Spectral Wyrm Legendary at once, not at the next load
+		// (the Summoner review) the three dragons' fall mid-session turns the Horn of the Spectral Wyrm Legendary at once, not at the next load
 		if (static bool was = AfterSovngarde(); AfterSovngarde() != was) {
 			was = AfterSovngarde();
 			if (g_wStep[coffer::kSummoner] > kWonderSteps) TuneWyrm();
@@ -1856,13 +1857,65 @@ namespace bo3z::Classes
 		const int c = g_class.load();
 		return c >= 0 && c < 4 && g_wStep[c] >= 1 && g_wStep[c] <= kWonderSteps;
 	}
+	// (Noah: "the sound effect that the grey beards use to call the dragon born should play when the Easter egg for the class
+	// wonder weapon is completed ... They should be retrieved at the reliquary in high hrothgar") a path's secret won: the
+	// Greybeards' "Dovahkiin!" rolls over Skyrim, and the wonder waits on its pedestal in the Reliquary
+	void GreybeardsCall()
+	{
+		auto* am = RE::BSAudioManager::GetSingleton();
+		for (const RE::FormID id : { 0x0C3CABu, 0x10F85Eu }) {  // Skyrim.esm: QSTGreybeardCall's and QSTGreybeardRumble's sounds (MQ104: the Greybeards summon you)
+			auto* d = RE::TESForm::LookupByID<RE::BGSSoundDescriptorForm>(id);
+			RE::BSSoundHandle h;
+			if (d && am && am->GetSoundHandle(h, static_cast<RE::BSISoundDescriptor*>(d))) {
+				h.SetVolume(1.0f);
+				h.Play();
+			}
+		}
+		if (auto* p = RE::PlayerCharacter::GetSingleton(); p && Settings::ScreenShake()) RE::ShakeCamera(0.5f, p->GetPosition(), 2.5f);
+	}
 	void EarnWonder(int a_cls)
 	{
-		if (a_cls >= 0 && a_cls < 4 && g_wStep[a_cls] <= kWonderSteps) GrantWonder(a_cls);
+		if (a_cls < 0 || a_cls >= 4 || g_wStep[a_cls] >= kWonderTaken) return;
+		g_wStep[a_cls] = kWonderWaiting;
+		GreybeardsCall();
+		Stats::Note(Stats::kWonder);
+		Points::Add(3000);
+		Tasks::Later(2.5f, [a_cls] {
+			Hud::Lore("DOVAHKIIN! THE GREYBEARDS CALL",
+				fmt::format("Your path's secret is won. The Greybeards' Voice rolls across Skyrim: the {} waits for you on its pedestal in the Reliquary of the Tongues, behind the sealed door in High Hrothgar's great hall.", kWonderName[a_cls]),
+				14.0f);
+		});
+		logger::info("classes: wonder {} won - it waits in the Reliquary", kWonderName[a_cls]);
+	}
+	int  WonderState(int a_cls) { return a_cls >= 0 && a_cls < 4 ? g_wStep[a_cls] : 0; }
+	std::string_view WonderName(int a_cls) { return a_cls >= 0 && a_cls < 4 ? kWonderName[a_cls] : ""; }
+	int  WonderMask()
+	{
+		int m = 0;
+		for (int c = 0; c < 4; ++c) m |= g_wStep[c] >= kWonderTaken ? 1 << c : 0;
+		return m;
+	}
+	bool TakeWonder(int a_cls)
+	{
+		if (a_cls < 0 || a_cls >= 4) return false;
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (g_wStep[a_cls] == kWonderWaiting) {
+			GrantWonder(a_cls);
+			return true;
+		}
+		if (g_wStep[a_cls] == kWonderTaken && p) {  // (lost from the pack, or a new copy wanted: given again)
+			const bool have = a_cls == coffer::kSummoner ? (WyrmSpell() && p->HasSpell(WyrmSpell())) : a_cls == coffer::kDestruction ? (TomeSpell() && p->HasSpell(TomeSpell()))
+			                : a_cls == coffer::kRanger ? (Vortex() && p->GetItemCount(Vortex()) > 0) : (Slayer() && p->GetItemCount(Slayer()) > 0);
+			if (!have) {
+				GrantWonder(a_cls);
+				return true;
+			}
+		}
+		return false;
 	}
 	bool WonderEarned()
 	{
-		for (auto s : g_wStep) if (s > kWonderSteps) return true;
+		for (auto s : g_wStep) if (s >= kWonderTaken) return true;
 		return false;
 	}
 	std::vector<std::string> Progress(int& a_cls)
@@ -1881,6 +1934,7 @@ namespace bo3z::Classes
 		const int c = g_class.load();
 		if (c < 0) return {};
 		const int st = g_wStep[c];
+		if (st == kWonderWaiting) return std::string(kWonderName[c]) + " waits on its pedestal in the Reliquary beneath High Hrothgar";
 		if (st > kWonderSteps) return std::string(kWonderName[c]) + " is yours";
 		if (st == 0) return fmt::format("{}: free {} more {} to wake your path's secret", kWonderName[c], std::max(0, kWonderOpensAt - FreedCount()), kWonderOpensAt - FreedCount() == 1 ? "city" : "cities");
 		return std::string(kWonderName[c]) + ": " + Eggs::Line();

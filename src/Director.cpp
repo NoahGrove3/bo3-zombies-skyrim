@@ -1957,6 +1957,7 @@ namespace bo3z
 
 		void StartRound(int a_round);
 		void Dawn();
+		void KeepTheDark();
 		// A friend's game: the night, the event, the boss bar and the city quests follow the host's.
 		void NetFollow()
 		{
@@ -2322,8 +2323,17 @@ namespace bo3z
 				Stats::Style("LAST STAND", 100);  // (Noah: style - a wave survived on the last of your health)
 			}
 			logger::info("night {}: wave {} of {} cleared{}", g_current, g_wave, g_waves, g_waveTheme >= 0 ? fmt::format(" ({})", gen::kEvents[g_waveTheme].id) : std::string());
+			// (Noah: "the brazier of endless nights should just continue a new night after each wave is completed for the current
+			// night") its night won, the next begins at once: the dark holds, a short breath, and the countdown starts again
 			if (g_wave >= g_waves && Echo::EndlessNight() && !Coop::Client()) {
-				++g_waves;  // (Stage 5: the Endless Night - one more wave, always)
+				g_waveTheme = -1;
+				Curse::OnNightCleared();
+				Forms::Play(gen::Sound::round_end);
+				const int won = g_current;
+				Dawn();
+				KeepTheDark();
+				Hud::Banner(fmt::format("NIGHT {} CLEARED - THE ENDLESS NIGHT GOES ON", won), 5.0f);
+				return;
 			}
 			if (g_wave >= g_waves) {
 				g_nightCleared = true;
@@ -2357,6 +2367,18 @@ namespace bo3z
 			Hud::Banner(fmt::format("WAVE {} CLEARED - {} MORE", g_wave - 1, g_waves - g_wave + 1), 3.5f);
 		}
 
+		// (the Endless Night) the clock set back to the evening's first dark hour, so the next night follows the last at once
+		void KeepTheDark()
+		{
+			auto* cal = RE::Calendar::GetSingleton();
+			if (!cal || !cal->gameHour) return;
+			const float now = cal->gameHour->value;
+			const float want = std::fmod(DuskHour() + 1.0f, 24.0f);
+			const float ahead = std::fmod(want - now + 24.0f, 24.0f);  // (forward, never back: the days keep their count)
+			cal->gameHour->value = want;
+			if (cal->gameDaysPassed) cal->gameDaysPassed->value += ahead / 24.0f;
+			if (want < now && cal->gameDay) cal->gameDay->value += 1.0f;  // (past midnight into the next day)
+		}
 		// the night holds while waves remain: the clock never reaches dawn (it slows near the end and stops just short)
 		void HoldNight(RE::PlayerCharacter* a_player)
 		{
@@ -5167,6 +5189,14 @@ namespace bo3z
 			if (!Allowed(player)) {
 				return;
 			}
+			// (Noah: "the nights to be normal Skyrim nights no more curse of Alduin enemies spawn after defeating echo of Alduin")
+			// the curse broken: no more of its nights - unless the Brazier of the Endless Night burns
+			if (Echo::CurseBroken() && !Echo::EndlessNight() && !Net::Fresh()) {
+				if (g_phase != Phase::Day) {
+					Dawn();
+				}
+				return;
+			}
 			if (Net::Fresh()) {
 				NetFollow();  // the host's night (its clock, its events)
 				if (g_phase != Phase::Fighting) {
@@ -5180,12 +5210,6 @@ namespace bo3z
 			}
 			switch (g_phase) {
 			case Phase::Day:
-				// (Noah: "if nightfall happens within a free city's limits, it skips the night. Automatically") a freed city's
-				// people bar the doors and the dead never come: the clock runs on to dawn (the night is not counted)
-				if (!Coop::Client() && Curse::SafeHere(player)) {
-					SkipToDawn("NIGHT PASSES IN PEACE - THE DEAD CANNOT RISE IN A FREED CITY");
-					break;
-				}
 				g_phase = Phase::Break;
 				g_breakTimer = R.firstBreakSeconds;
 				// (Noah: "two pop-ups when a night is starting") the night's own title under the circle says it - no banner over it

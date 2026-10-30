@@ -172,10 +172,11 @@ namespace bo3z::Eggs
 			SetGift(e);
 			const auto& d = gen::kEggs[e];
 			if (a_loud) {
-				Hud::Lore(std::string(d.title), std::string(d.rewardText), 9.0f);
-				Forms::Play(gen::Sound::curse_lifted);
+				std::string t(d.title);
+				for (auto& ch : t) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
+				Hud::Banner(t + " - COMPLETE", 5.0f);
 			}
-			Classes::EarnWonder(d.cls);  // (the quest's end is the wonder)
+			Classes::EarnWonder(d.cls);  // (the quest's end: the Greybeards call, and the wonder waits in the Reliquary)
 			logger::info("eggs: {} rewarded", d.id);
 		}
 		void Complete(int e)

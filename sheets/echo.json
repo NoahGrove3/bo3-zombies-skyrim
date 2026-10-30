@@ -1,30 +1,34 @@
 {
  "sheet": "echo",
- "about": "Stage 2 of the story (src/Echo.cpp): the Echo Stones and the Reliquary. A freed city's altar raises an Echo Stone; walk up to it and it gives you that city's page, The Broken Words: <City> (a BOOK each), which says plainly which wonder-weapon part waits where and how to take it - and from then on your compass marks it. Parts: boss = dropped by that city's Dragon Priest; relic = a glowing reliquary at a landmark that only wakes at night, guarded (kill the guardians, then take it); kill = strike down the dead near a landmark at night until the barrow is fed. Each wonder needs its three parts, forged on its pedestal in the Reliquary behind the sealed door at High Hrothgar. Positions in Skyrim units (Tamriel or the HighHrothgar cell); yaw in degrees, clockwise from north.",
+ "about": "The story after the altars (src/Echo.cpp). Act II: once six cities are free each class's hidden quest wakes (sheet: eggs); finishing it makes the Greybeards call and the class's wonder waits on its pedestal in the Reliquary beneath High Hrothgar (wonders: one per class, in class order Summoner, Destruction, Ranger, Spellsword - the ids are the pedestals' old keys). Act III: with all four wonders won (a party pools theirs), three dragons wake at their places (words rows 0-2); each comes at night after a siege of the dead and gives a lasting power. Act IV: with the three dead, the Echo of Alduin waits on the Throat of the World (row 3); its fall breaks the curse and opens the Hall of the Awakened. Positions in Skyrim units (Tamriel or the HighHrothgar cell); yaw in degrees, clockwise from north.",
  "wonders": [
   {
    "id": "gravecaller",
-   "label": "Void Staff",
+   "label": "Horn of the Spectral Wyrm",
    "color": "B070FF",
-   "text": "A Falmer shaman's staff of black chitin and a violet eye that drinks the light: its orbs drag the dead together and crush them, and what it kills rises as spectral spiders that fight for you."
+   "text": "A horn of dragon bone. Blow it and Calling of the Conjurer's Spectral Dragon answers, fighting at your side for a minute - until the three dragons fall, then it stays until it is slain.",
+   "cls": "Summoner"
   },
   {
    "id": "frostbinder",
-   "label": "Rime Staff",
+   "label": "Tome of the Six Fires",
    "color": "8FE6FF",
-   "text": "A Falmer staff whose blue eye still holds the cold of Blackreach: its shards slow and freeze the dead, its blizzard locks a whole crowd in ice, and what is frozen shatters."
+   "text": "One cast looses the top spell of all six of your element ladders on the dead round you. Once the three dragons fall, their runes and storms are left burning on the ground too.",
+   "cls": "Destruction"
   },
   {
    "id": "wolfcrown",
-   "label": "Storm Staff",
+   "label": "Subsuming Vortex",
    "color": "A88CFF",
-   "text": "A Falmer staff with a purple storm-eye: its lightning leaps between four of the dead, and its storm ball hangs in the air zapping everything near it."
+   "text": "A bow of black-violet steel. Every arrow tears open a black hole where it lands: the dead are dragged in, then it bursts. Once the three dragons fall, the holes grow wider and pull harder.",
+   "cls": "Ranger"
   },
   {
    "id": "barrowhorn",
-   "label": "Ember Staff",
+   "label": "Dragon Slayer",
    "color": "FF7A3C",
-   "text": "A Falmer staff with a red ember-eye that never cooled: its bolts burst into fire, and held it calls down a meteor that leaves the ground burning."
+   "text": "The Akaviri dragon slayer. Every hit carries the spell in your other hand. Once the three dragons fall, a power attack sends that spell down the line.",
+   "cls": "Spellsword"
   }
  ],
  "parts": [
@@ -216,7 +220,7 @@
   }
  },
  "words": {
-  "about": "Stage 4 (src/Words.cpp): the Three Words. Once all four wonders are forged, Alduin's three words must be silenced one after another, each at its own place in the wilds and only at night: come near and the word's siege begins (waves of its dead round the place), and when the last wave falls the word's bearer rises. Kill it and the word is silenced for good - a power that stays with you, and the next word wakes. Saved in UN_EchoWords (bit per word; bit 8: the arc told). waves/elites per wave, health: x a zombie's night health (like the Dragon Priests).",
+  "about": "Act III and IV (src/Echo.cpp): rows 0-2 are Alduin's three words, each a dragon; row 3 is the Echo of Alduin. Once all four class wonders are won the three dragons wake together, each at its own place and only at night: come near and its siege begins (waves of the dead round the place), and when the last wave falls the dragon comes. Kill it and its word is silenced for good - a power that stays with you. With all three dead the Echo of Alduin waits on the summit of the Throat of the World. Saved in UN_EchoWords (bit per row; bit 8: Act III told). waves/elites per wave, health: x a zombie's night health.",
   "wakeRange": 3200,
   "leashRange": 6500,
   "rows": [
@@ -232,10 +236,10 @@
     ],
     "yaw": 148,
     "bearer": {
-     "row": "lich",
-     "name": "Slen-Vaaz, the Flesh-Warden",
-     "health": 9.0,
-     "scale": 1.45
+     "row": "wyrm_slen",
+     "name": "Slenvahrin, the Flesh-Wyrm",
+     "health": 12.0,
+     "scale": 1.0
     },
     "waves": [
      8,
@@ -247,8 +251,8 @@
      1,
      2
     ],
-    "wake": "SLEN. The first word shakes the ground under the Reach. A dragon priest who served Alduin in the Merethic Era answers it, and puts flesh back on his barrow-dead around the shrine where the word was first spoken.",
-    "silenced": "The Flesh-Warden falls and the shrine goes dark. SLEN is silenced: the strength Alduin poured into the dead now runs in you.",
+    "wake": "SLEN. The ground shakes under the Reach. Slenvahrin, the dragon who carried Alduin's first word, circles the cult's old shrine - and the barrow-dead around it grow new flesh to meet you.",
+    "silenced": "Slenvahrin crashes onto the shrine and burns away to bone. SLEN is silenced: the strength Alduin poured into the dead now runs in you.",
     "power": "Flesh Remade: every weapon, bow, spell and wonder hits 15% harder."
    },
    {
@@ -263,10 +267,10 @@
     ],
     "yaw": 186,
     "bearer": {
-     "row": "knight",
-     "name": "Tiid-Vaaldar, the Time-Thane",
-     "health": 11.0,
-     "scale": 1.5
+     "row": "wyrm_tiid",
+     "name": "Tiidrah, the Time-Wyrm",
+     "health": 14.0,
+     "scale": 1.0
     },
     "waves": [
      10,
@@ -280,24 +284,24 @@
      2,
      3
     ],
-    "wake": "TIID. The second word lies under Labyrinthian, the great tomb of Bromjunaar, where the dragon cult laid its dead by the thousand. It gives them back the years the grave took, and every one of them hears it.",
-    "silenced": "The Time-Thane crumbles in the courtyard of Bromjunaar. TIID is silenced: the time the dead stole is yours now.",
+    "wake": "TIID. Under Labyrinthian, the great tomb of Bromjunaar, the dragon cult laid its dead by the thousand. Tiidrah, keeper of the second word, gives them back the years the grave took - and every one of them hears it.",
+    "silenced": "Tiidrah falls across the courtyard of Bromjunaar. TIID is silenced: the time the dead stole is yours now.",
     "power": "Borrowed Time: the night's blows hurt you 20% less."
    },
    {
     "id": "lein",
     "word": "VO",
     "meaning": "Undo",
-    "site": "the summit of the Throat of the World",
+    "site": "the dragon lair on Mount Anthor",
     "at": [
-     56044,
-     -47760,
-     36055
+     95163,
+     67275,
+     259
     ],
     "yaw": 0,
     "bearer": {
-     "row": "boss4",
-     "name": "The Echo of Alduin",
+     "row": "wyrm_vo",
+     "name": "Vonahlok, the Undoing",
      "health": 16.0,
      "scale": 1.0
     },
@@ -311,9 +315,42 @@
      2,
      3
     ],
-    "wake": "VO. The last word was shouted from the top of the world, where the Tongues once cast Alduin out of time. Climb the Throat of the World at night: his echo still circles the summit, undoing every death in Skyrim.",
-    "silenced": "The Echo of Alduin breaks apart over the summit and its shout dies on the wind. SLEN, TIID, VO - all three words are silenced, and the dead can rest. The rest is Sovngarde's to finish.",
+    "wake": "VO. On the frozen peak of Mount Anthor, Vonahlok - the Undoing - keeps the last of Alduin's words. Where it flies, death itself comes undone, and the dead of the Pale climb the mountain to its call.",
+    "silenced": "Vonahlok's shout dies on the wind over Mount Anthor. VO is silenced: the Undoing has undone its last.",
     "power": "The Curse Undone: your magicka returns half again as fast."
+   },
+   {
+    "id": "echo",
+    "word": "ALDUIN",
+    "meaning": "The World-Eater's Echo",
+    "site": "the summit of the Throat of the World",
+    "at": [
+     56044,
+     -47760,
+     36055
+    ],
+    "yaw": 0,
+    "bearer": {
+     "row": "echo_alduin",
+     "name": "The Echo of Alduin",
+     "health": 24.0,
+     "scale": 1.0
+    },
+    "waves": [
+     10,
+     12,
+     14,
+     16
+    ],
+    "elites": [
+     2,
+     2,
+     3,
+     3
+    ],
+    "wake": "The three words are silent, and only their maker is left. On the summit of the Throat of the World, where the Tongues once cast Alduin out of time, his echo still circles - and the dead of all Skyrim answer it one last time. Climb the mountain at night and end the curse.",
+    "silenced": "The Echo of Alduin breaks apart over the summit and its voice is gone from the world. The Curse of Alduin is broken: the dead of Skyrim sleep, and the nights are only nights again.",
+    "power": "The Curse Broken: the Hall of the Awakened opens beneath High Hrothgar."
    }
   ]
  },

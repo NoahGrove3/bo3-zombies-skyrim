@@ -287,16 +287,11 @@ namespace bo3z
 		}
 
 		// The city's shout (sheet: shouts): what freeing it earns, claimed at the Echo Altar.
-		int ShoutOf(int a_town)
+		// (Noah: "remove the shouts from the echo alter rewards but keep the dance of death shout and dragons updraft") no
+		// altar teaches a shout now: Whiterun's Dragon's Updraft comes with the dragon (src/Movement.cpp EnsureUpdraft) and
+		// Solitude's Dance of Death from its bards (src/Director.cpp TickDanceShout), both the moment the city is freed
+		int ShoutOf(int)
 		{
-			if (a_town == 1) {
-				return -1;  // (Noah) Whiterun's Thu'um is Dragon's Updraft, given with the dragon (src/Movement.cpp EnsureUpdraft)
-			}
-			for (int i = 0; i < static_cast<int>(gen::kShouts.size()); ++i) {
-				if (gen::kShouts[i].town == a_town) {
-					return i;
-				}
-			}
 			return -1;
 		}
 
@@ -355,7 +350,7 @@ namespace bo3z
 				all &= Get(t).freed;
 			}
 			if (all) {
-				Note("Every altar is awake. Alduin's voice echoes only in the wilds now.", 12.0f);
+				Note(std::string(gen::kCurseFreedAll), 12.0f);
 			}
 		}
 

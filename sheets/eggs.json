@@ -7,7 +7,7 @@
    "cls": "summoner",
    "title": "The Wyrm's Calling",
    "reward": "wonder",
-   "rewardText": "The Horn of the Spectral Wyrm is yours: a horn of bone that answers with a dragon.",
+   "rewardText": "The Greybeards call you to High Hrothgar: the Horn of the Spectral Wyrm waits on its pedestal in the Reliquary.",
    "steps": [
     {
      "type": "touch",
@@ -121,7 +121,7 @@
    "cls": "destruction",
    "title": "The Six Fires",
    "reward": "wonder",
-   "rewardText": "The Tome of the Six Fires is yours: one cast looses the top spell of all six elements.",
+   "rewardText": "The Greybeards call you to High Hrothgar: the Tome of the Six Fires waits on its pedestal in the Reliquary.",
    "steps": [
     {
      "type": "touch",
@@ -235,7 +235,7 @@
    "cls": "ranger",
    "title": "The Vortex's Eye",
    "reward": "wonder",
-   "rewardText": "The Subsuming Vortex is yours: every arrow tears open a black hole.",
+   "rewardText": "The Greybeards call you to High Hrothgar: the Subsuming Vortex waits on its pedestal in the Reliquary.",
    "steps": [
     {
      "type": "touch",
@@ -349,7 +349,7 @@
    "cls": "spellsword",
    "title": "The Slayer's Oath",
    "reward": "wonder",
-   "rewardText": "Dragon Slayer is yours: the Akaviri blade that carries the spell in your other hand.",
+   "rewardText": "The Greybeards call you to High Hrothgar: Dragon Slayer waits on its pedestal in the Reliquary.",
    "steps": [
     {
      "type": "kills",

@@ -48,7 +48,7 @@
      "title": "Your Trial and Wonder",
      "paras": [
       "<b>Pact of the Host</b> (your city trial): let your summons make the kills - 20 on Novice up to 60 on Legendary.",
-      "<b>Horn of the Spectral Wyrm</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. Its last step hands you the wonder. It calls a spectral dragon for a minute - until it falls once Alduin is slain."
+      "<b>Horn of the Spectral Wyrm</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder waits on its pedestal in the Reliquary beneath High Hrothgar. It calls a spectral dragon for a minute - once the three dragons fall, it stays until it is slain."
      ]
     }
    ]
@@ -92,7 +92,7 @@
      "title": "Your Trial and Wonder",
      "paras": [
       "<b>Trial of the Elements</b> (your city trial): kill with two or more elements - 20 on Novice up to 60 on Legendary.",
-      "<b>Tome of the Six Fires</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. Its last step hands you the wonder. One cast looses the top spell of all six elements around you."
+      "<b>Tome of the Six Fires</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder waits on its pedestal in the Reliquary beneath High Hrothgar. One cast looses the top spell of all six elements around you - once the three dragons fall, their runes and storms too."
      ]
     }
    ]
@@ -138,7 +138,7 @@
      "title": "Your Trial and Wonder",
      "paras": [
       "<b>Trial of the Long Shot</b> (your city trial): bow or crossbow kills from 30 m or more - 10 on Novice up to 30 on Legendary.",
-      "<b>The Subsuming Vortex</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. Its last step hands you the wonder. Its arrows open black holes that drag the dead in, then burst - wider and stronger once Alduin is slain."
+      "<b>The Subsuming Vortex</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder waits on its pedestal in the Reliquary beneath High Hrothgar. Its arrows open black holes that drag the dead in, then burst - wider and stronger once the three dragons fall."
      ]
     }
    ]
@@ -183,7 +183,7 @@
      "title": "Your Trial and Wonder",
      "paras": [
       "<b>Trial of Steel</b> (your city trial): melee kills with a spell in your other hand - 10 on Novice up to 30 on Legendary.",
-      "<b>Dragon Slayer</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. Its last step hands you the wonder. Every hit carries your off-hand spell; once Alduin is slain, power attacks send it down the line."
+      "<b>Dragon Slayer</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder waits on its pedestal in the Reliquary beneath High Hrothgar. Every hit carries your off-hand spell; once the three dragons fall, power attacks send it down the line."
      ]
     }
    ]
@@ -207,7 +207,7 @@
    "paras": [
     "Every city has one. Step onto it and activate it. Move with the D-pad or W/S, choose with A or Enter, leave with B.",
     "From the top: <b>your class</b> (change it for Cursed Essence - each class keeps its own kit and progress), <b>your kit</b> (select an item to upgrade it), <b>the Armory</b> (new items, opened by freed cities), <b>Infuse</b> (the roll), a <b>Dragon Priest's relic</b> when one waits, <b>perks</b>, then the city's <b>trials</b>.",
-    "<b>Freeing a city</b>: finish four trials (three shared, one your class's), then slay its <b>Dragon Priest</b>, who rises at night. Its fall ends the night and leaves a relic. A freed city is a sanctuary, teaches you its Thu'um, and Whiterun gives you a dragon to ride.",
+    "<b>Freeing a city</b>: finish four trials (three shared, one your class's), then slay its <b>Dragon Priest</b>, who rises at night. Its fall ends the night and leaves a relic. A freed city is a sanctuary: none of the curse's dead rise inside it. Whiterun gives you a dragon to ride and Dragon's Updraft; Solitude gives you the Dance of Death.",
     "<b>Every 5th night</b> a great boss walks with the dead - and its dawn leaves a power-up at your feet."
    ]
   },

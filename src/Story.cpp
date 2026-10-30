@@ -6,10 +6,11 @@
 //   1 Before the Storm     the first nights; every city's trials but Whiterun's, Solitude's and Windhelm's
 //   2 Bleak Falls Barrow   (the Dragon Priests no longer wait for it: they rise once a city's trials are done)
 //   3 Dragon Rising        the nights' elites; Whiterun's trials
-//   4 The Way of the Voice  the freed cities' shouts at their altars
+//   4 The Way of the Voice  (the Greybeards know you: they will call when your path's secret is won)
 //   5 Diplomatic Immunity / Season Unending   Solitude's and Windhelm's trials
-//   6 Alduin's Bane         Grimmvar, Alduin's Herald (a Diverse Dragons dragon), comes on the Fog Nights
-//   7 Sovngarde            the class wonders take their Legendary form; the Seat of the Awakened (Stage 5) wakes
+// (Noah: "Skyrim quests not requiring Sovngarde") the rest of the curse follows its own story, not the main quest's:
+// the wonders (src/Eggs.cpp, src/Classes.cpp), the three dragons and the Echo of Alduin (src/Echo.cpp). Grimmvar,
+// Alduin's Herald, hunts on the Fog Nights once the three dragons wake; the wonders' Legendary form comes with their fall.
 // and the story's set pieces are never interrupted: no night begins while you're in one (the Watchtower's dragon,
 // Dragonsreach's trap, the Throat of the World, the Peace Council, Sovngarde).
 namespace bo3z::Story
@@ -59,8 +60,6 @@ namespace bo3z::Story
 		int  Compute()
 		{
 			if (!Forms::IntroDone()) return 0;
-			if (Done("Sovngarde") || Done("Dragonslayer")) return 7;
-			if (Done("Alduin's Bane")) return 6;
 			if (Done("Diplomatic Immunity") || Done("Season Unending")) return 5;
 			if (Done("The Way of the Voice")) return 4;
 			if (Done("Dragon Rising")) return 3;
@@ -75,9 +74,9 @@ namespace bo3z::Story
 			g_checked = std::chrono::steady_clock::now();
 			const int now = Compute();
 			if (g_stage >= 0 && now > g_stage) {
-				static constexpr const char* kNews[8] = { "", "Night falls on Skyrim: the dead rise",
+				static constexpr const char* kNews[6] = { "", "Night falls on Skyrim: the dead rise",
 					"The Dragonstone named the burial mounds of the old Dragon Cult", "The dragon is slain - Whiterun's trials open, and the nights bring their elites",
-					"Arngeir speaks of the Echo Altars - the words on their heart-stones are yours to learn", "Solitude's and Windhelm's trials open", "Grimmvar, Alduin's Herald, hunts on the Fog Nights", "Alduin is fallen - your class's wonder takes its full form" };
+					"Arngeir speaks of the Echo Altars - the Greybeards will call when your path's secret is won", "Solitude's and Windhelm's trials open" };
 				Forms::Play(gen::Sound::quest_start);
 				Hud::Banner(std::string("THE CURSE DEEPENS - ") + kNews[now], 6.0f);
 			}
@@ -116,6 +115,6 @@ namespace bo3z::Story
 	}
 	bool BarrowJarlsOpen() { return Stage() >= 2; }
 	bool ElitesOpen() { return Stage() >= 3; }
-	bool AlduinFallen() { return Stage() >= 7; }
-	bool GrimmvarOpen() { return Stage() >= 6; }  // (Director: only the Herald waits for it; the other bosses keep their nights)
+	bool AlduinFallen() { return Echo::CurseBroken(); }  // (the Echo of Alduin slain: the curse's own end, not Sovngarde)
+	bool GrimmvarOpen() { return Echo::WondersAll(); }  // (Director: only the Herald waits for it - he hunts once the three dragons wake)
 }

@@ -447,7 +447,8 @@ namespace bo3z
 		{
 			a_amount *= Difficulty::Taken();  // (the night's own blows follow Skyrim's difficulty)
 			a_amount *= 0.7f;  // (Noah: "enemy health increased but their damage decreased") every blow of the night 30% softer
-			a_amount *= (1.0f - Kit::ArmorResist()) * Kit::AuraMeleeTaken();  // (the altar rework: your class's armour from its upgrades; a Spellsword's aura)
+			a_amount *= (1.0f - Kit::ArmorResist()) * Kit::AuraMeleeTaken();
+			if (Echo::WearsRobes()) a_amount *= 0.75f;  // (the First Dragonborn's Regalia: every blow a quarter softer)  // (the altar rework: your class's armour from its upgrades; a Spellsword's aura)
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			if (a_amount <= 0 || std::chrono::steady_clock::now() < g_dodgeUntil) {
 				if (static int said = 0; said++ < 8) logger::info("hurt: a blow of {:.1f} missed (dodging {})", a_amount, std::chrono::steady_clock::now() < g_dodgeUntil);

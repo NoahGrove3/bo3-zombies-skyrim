@@ -395,7 +395,11 @@ namespace bo3z
 		void             ConjurerStaffHit(RE::Actor* a_target, RE::FormID a_source);  // the Conjurer's Staff's bolt struck: a burst, and the marks
 		void             TickFast(float a_delta);      // where the Subsuming Vortex's arrows come down
 		int              RestockWonder();              // the Vortex's arrows topped up (quivers, Max Ammo)
-		bool             WonderEarned();               // any class's wonder won (the Three Words follow)
+		bool             WonderEarned();               // any class's wonder won
+		int              WonderState(int a_cls);       // 0 shut, 1-3 its secret under way, 4 taken up, 5 won and waiting in the Reliquary
+		std::string_view WonderName(int a_cls);
+		int              WonderMask();                 // bit per class: its wonder won (taken up)
+		bool             TakeWonder(int a_cls);        // (the Reliquary's pedestal) a waiting wonder taken up - or a lost one given again
 		bool             WonderOpen();                 // your class's secret quest is open (six cities freed) and the wonder not yet won
 		void             EarnWonder(int a_cls);        // (Eggs) the quest done: the wonder
 		std::string      WonderLine();                 // the altar's line: your class wonder's trial
@@ -583,8 +587,9 @@ namespace bo3z
 		void Heard(std::uint64_t a_from, const std::string& a_name, std::uint8_t a_life, const RE::NiPoint3& a_at, float a_left, std::int8_t a_wonder = -1, std::int8_t a_cls = -1, std::uint32_t a_credit = 0);
 		int  FriendsShort(int a_town, int a_need, std::string* a_names = nullptr);  // (co-op altars) friends in the party with fewer than a_need own trials there
 		int  FriendCount();                                // other players in the party now
-		std::string WonderHolder(int a_wonder);         // the friend in the party holding that wonder weapon ('' none)
-		void        SetWonder(int a_wonder);            // ours (-1 none): told to the party
+		std::string WonderHolder(int a_wonder);         // (retired: always '')
+		void        SetWonder(int a_mask);              // the class wonders we have won (bits): told to the party
+		int         PartyWonders();                     // the class wonders our friends have won (bits, pooled while the game runs)
 		void Revived(std::uint64_t a_by);
 		void Forget(std::uint64_t a_who);
 		// The party's save points: every dawn (and the dawn a freed city brings) each game saves itself a few seconds
@@ -654,16 +659,20 @@ namespace bo3z
 		bool Strip(std::string& a_title, std::string& a_goal, float& a_frac);                  // a hunt under way (under the compass)
 		void Allies(int a_kind, int a_count, float a_seconds, const RE::NiPoint3& a_at);       // the wonders' summons: 0 the barrow's bone warriors, 1 the Queen's spirit-wolves
 		bool IsAlly(RE::Actor* a_actor);
-		int  WonderHeld();                                     // the wonder weapon in your hands (-1)
-		bool WordSilenced(int a_w);                            // Stage 4: 0 SLEN (flesh remade), 1 TIID (borrowed time), 2 VO (the curse undone)
-		bool CurseBroken();                                    // all three words silenced (Stage 5's rewards open)
-		void OnBearerSlain();                                  // a word's bearer fell (Director's champion with no city)
-		bool AwardNextPart();                                  // the mini-boss's drop: the next missing wonder part (false: all yours)
+		bool WordSilenced(int a_w);                            // a word's dragon slain: 0 SLEN (flesh remade), 1 TIID (borrowed time), 2 VO (the curse undone); 3 the Echo of Alduin
+		bool DragonsSlain();                                   // Act III done: the three dragons dead (the wonders' Legendary form)
+		bool WondersAll();                                     // Act III open: all four class wonders won (yours, or pooled with your party)
+		bool CurseBroken();                                    // the Echo of Alduin slain this cycle: the curse's nights are over (unless the Brazier burns)
+		bool HallOpen();                                       // the Hall of the Awakened's rewards (once the Echo has fallen in any cycle)
+		void OnBearerSlain();                                  // a word's dragon (or the Echo) fell (Director's champion with no city)
+		bool AwardNextPart();                                  // (retired: the parts are gone - always false)
 		std::vector<RE::ActorHandle> Summon(std::string_view a_plugin, RE::FormID a_id, int a_count, const RE::NiPoint3& a_at);  // allies for the night (the hidden quests' summons)
-		bool BoneDragon();                                     // Stage 5: the glider's dragon wears Alduin's bones
-		bool EndlessNight();                                   // Stage 5: the nights don't end while the brazier burns
-		int  NewGamePlus();                                    // Stage 5: cycles begun again at the Seat of the Awakened (0 = the first)
-		bool WearsRobes();                                     // Stage 5: the Robes of the First Dragonborn are on
+		void Thralls(RE::TESNPC* a_npc, int a_count, float a_seconds, const RE::NiPoint3& a_at, int a_max);  // (Alduin's Bane, the Summoner) raised for a while, a_max at once
+		bool BoneDragon();                                     // the Hall: the glider's dragon wears Alduin's bones
+		bool EndlessNight();                                   // the Hall: the curse's nights never end while the brazier burns
+		int  NewGamePlus();                                    // cycles begun again at the Seat of the Awakened (0 = the first)
+		float SetDamageMult();                                 // the First Dragonborn's Regalia worn: 1.25
+		bool WearsRobes();                                     // the First Dragonborn's Regalia (its robes) are on
 	}
 
 	namespace Intro
