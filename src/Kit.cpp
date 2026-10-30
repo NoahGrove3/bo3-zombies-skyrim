@@ -1092,7 +1092,7 @@ namespace bo3z::Kit
 		static float look = 0;
 		if ((look -= a_delta) <= 0) {
 			look = 1.0f;
-			SyncWeapons(false);
+			SyncWeapons(true);  // (a blade whose tier fire changed - a load, a reforge - is drawn again so the fire shows)
 			TickSets();
 		}
 	}

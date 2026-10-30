@@ -366,8 +366,10 @@ for n, t in enumerate(RIFT_TIERS, start=1):
 # stats and look, its first-person model a static of ours, so the class needs only the model and its textures (the
 # Party Pack carries them loose), not the Creation Club plugin itself
 MAD_GLOW = [  # its tiers: the blade's own violet fire, brighter each tier (src/Kit.cpp swaps the enchantment); no damage of its own
-    dict(persist=0.7, pulse=0.6, particles=False, fill=(190, 140, 255)),
-    dict(persist=0.95, pulse=0.45, particles=True, birth=50.0, alpha=(0.05, 0.30, 0.05), scale2=7.0, fill=(205, 160, 255), keys=((245, 230, 255), (200, 150, 255), (150, 80, 235))),
+    # (Noah: "I didn't notice any weapon effects for the spell sword class after reforging once") tier I was a glow alone, too
+    # faint to see: now its own violet flames too, a little lower than tier II's
+    dict(persist=0.85, pulse=0.5, particles=True, birth=30.0, alpha=(0.05, 0.25, 0.05), scale2=6.0, fill=(200, 150, 255), keys=((240, 220, 255), (190, 140, 255), (140, 70, 230))),
+    dict(persist=0.95, pulse=0.45, particles=True, birth=60.0, alpha=(0.05, 0.35, 0.05), scale2=7.5, fill=(205, 160, 255), keys=((245, 230, 255), (200, 150, 255), (150, 80, 235))),
     dict(persist=1.2, pulse=0.3, particles=True, birth=90.0, alpha=(0.10, 0.55, 0.10), scale2=9.0, life=0.75, fill=(235, 215, 255), keys=((255, 250, 255), (220, 170, 255), (190, 60, 220)), edge=(220, 90, 255)),
 ]
 subs = []
@@ -394,7 +396,7 @@ for n, t in enumerate(MAD_GLOW, start=1):
     d[0] = d[0] & ~0x08 if t['particles'] else d[0]
     struct.pack_into('<f', d, 0x20, t['persist'])
     struct.pack_into('<f', d, 0x24, t['pulse'])
-    d[0x10:0x13] = bytes(c // 5 for c in t['fill'])       # (Skyrim's purple enchantment's fill, a touch of violet in it)
+    d[0x10:0x13] = bytes(c // 3 for c in t['fill'])       # (Skyrim's purple enchantment's fill, violet through it)
     if t['particles']:
         struct.pack_into('<f', d, 0x7C, t['birth'])
         struct.pack_into('<fff', d, 0xC8, *t['alpha'])

@@ -164,6 +164,33 @@ namespace bo3z::Party
 		}
 	}
 
+	// (Noah: "when I died, it respawned me in the save that I was using for a different character") the newest save of
+	// the character you are playing - never another's, however recent; false when it has none yet
+	bool LoadOwnLatest()
+	{
+		auto* sl = RE::BGSSaveLoadManager::GetSingleton();
+		if (!sl) return false;
+		sl->PopulateSaveList();
+		const std::uint32_t me = sl->currentCharacterID;
+		RE::BGSSaveLoadFileEntry* best = nullptr;
+		std::uint64_t             bestWhen = 0;
+		for (auto* e : sl->saveGameList) {
+			if (!e) continue;
+			if (!e->loaded) e->PopulateFileEntryData();
+			if (e->characterID != me || !e->fileName.c_str() || !*e->fileName.c_str()) continue;
+			const std::uint64_t when = (static_cast<std::uint64_t>(e->fileTime.hi) << 32) | e->fileTime.lo;
+			if (!best || when > bestWhen) best = e, bestWhen = when;
+		}
+		if (!best) {
+			logger::info("fallen: no save of this character ({:08X}) yet", me);
+			return false;
+		}
+		const std::string file = best->fileName.c_str();
+		logger::info("fallen: loading this character's newest save '{}'", file);
+		sl->Load(file.c_str());
+		return true;
+	}
+
 	// ---- (Noah: "BO3 death style instead of reloading a save, so we don't experience that crashing anymore") alone, you
 	// never die: at zero health you fall, the world slows and darkens, the night's tally comes up (Hud: DrawDeath), and
 	// you rise where you fell - your blessings gone, the wave's dead gone with them and the wave begun again. No save is
@@ -317,7 +344,7 @@ namespace bo3z::Party
 				Tasks::Later(1.2f, [gen = g_fallGen.load()] {
 						auto* ui = RE::UI::GetSingleton();
 						if (gen != g_fallGen.load() || !g_soloLoading || g_soloT < 0.0f || (ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME))) return;
-						if (auto* sl = RE::BGSSaveLoadManager::GetSingleton()) sl->LoadMostRecentSaveGame();
+						LoadOwnLatest();  // (none yet: you rise where you fell, a few seconds on)
 				});
 			}
 			if (g_soloLoading && g_soloT - g_soloLoadAt > 6.0f) {
@@ -365,7 +392,8 @@ namespace bo3z::Party
 					return;
 				}
 				// (audit: a new file every dawn piled up) one dawn save per character, written over each morning
-				const std::string name = std::string("CurseOfAlduin - ") + pl->GetName() + " - Dawn";
+				// (and one per character, not per name: two characters called the same never share a file)
+				const std::string name = fmt::format("CurseOfAlduin - {} - Dawn - {:08X}", pl->GetName(), sl->currentCharacterID);
 				sl->Save(name.c_str());
 				g_lastSave = name;
 				Hud::Banner("GAME SAVED - " + what, 3.0f);
@@ -486,7 +514,7 @@ namespace bo3z::Party
 								logger::info("party: loading the dawn save '{}'", g_lastSave);
 								sl->Load(g_lastSave.c_str());
 							} else {
-								sl->LoadMostRecentSaveGame();
+								LoadOwnLatest();
 							}
 						}
 				});
