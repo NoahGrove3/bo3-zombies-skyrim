@@ -1689,12 +1689,29 @@ namespace bo3z::Classes
 		return g_outfitName;
 	}
 
+	namespace
+	{
+		constexpr std::uint32_t kSupport[] = { 0x1901E5, 0x4B065B, 0x25FBFF, 0xFF19E0 };  // Ash Cloud, Cinder Storm, Charged Nova, Symmetry
+	}
+	// (Noah: "I'm not able to cast it because it costs too much mana" - Ash Cloud at 282) the support relics cost about a
+	// third of Mysticism's price, never more than 100 magicka
+	void TameSupport()
+	{
+		for (auto id : kSupport) {
+			auto* sp = Myst(id);
+			if (!sp || sp->data.flags.any(RE::SpellItem::SpellFlag::kCostOverride)) continue;
+			float was = 0;
+			for (auto* e : sp->effects) if (e) was += e->cost;
+			sp->data.costOverride = std::clamp(static_cast<std::int32_t>(std::lround(was * 0.35f)), 40, 100);
+			sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
+			logger::info("classes: support relic {} costs {} (was {:.0f})", sp->GetName(), sp->data.costOverride, was);
+		}
+	}
 	// (Noah's plan, Destruction) its support spells come as the altar's side-pick, for this class only
 	bool RollSupport(Prize* a_out)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return false;
-		static constexpr std::uint32_t kSupport[] = { 0x1901E5, 0x4B065B, 0x25FBFF, 0xFF19E0 };  // Ash Cloud, Cinder Storm, Charged Nova, Symmetry
 		std::vector<RE::SpellItem*> pool;
 		for (auto id : kSupport) {
 			if (auto* sp = Myst(id); sp && !p->HasSpell(sp)) pool.push_back(sp);

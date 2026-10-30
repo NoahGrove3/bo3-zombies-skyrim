@@ -1397,7 +1397,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// A freed shrine's wave: golden rings rolling out from it across the screen, a soft gold wash as it passes.
 			if (s.pulseOn && s.pulseT > 0) {
 				const ImVec2 c{ s.pulseX * size.x, s.pulseY * size.y };
-				const float  life = 5.0f, el = life - s.pulseT;  // (Shops kPulseSeconds)
+				const float  el = 9.0f - 3.6f - s.pulseT;  // (Shops kPulseSeconds, kPulseCharge: shown from the burst)
 				(void)c;  // (Noah: no gold rings any more - the wash, the sound and the music stay)
 				const float wash = std::clamp(1.0f - el / 1.2f, 0.0f, 1.0f);
 				dl->AddRectFilled({ 0, 0 }, size, IM_COL32(255, 220, 150, static_cast<int>(70 * wash)));

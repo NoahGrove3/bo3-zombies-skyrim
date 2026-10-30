@@ -22,9 +22,16 @@ namespace bo3z
 			RE::NiNode*         node{ nullptr };  // (a fresh 3D after a reload is based again)
 		};
 		std::array<bool, gen::kLocations.size()> g_dressed{};
-		struct Pulse { RE::ObjectRefHandle shrine; float t; };
-		std::optional<Pulse>                     g_pulse;  // a freed shrine's wave (FreedPulse)
-		constexpr float                          kPulseSeconds = 5.0f;
+		// (Noah: "when I freed the altar, it didn't get the altar freeing animation. I wanted to use the same lightning charge
+		// up effect that we used when we had the roll for weapons. And then I want the particles to fade in and the golden
+		// runic symbol grow above the altar") a freed altar's moment, in three parts: the charge (the six rune stones strike
+		// the heart one after another with the roll's lightning, its runes burning brighter), the burst (the curse breaks:
+		// the freed look is put up), then the motes fade in and the golden rune circle grows from nothing over the altar
+		struct Pulse { RE::ObjectRefHandle shrine; float t; int town; bool burst; };
+		std::optional<Pulse>                     g_pulse;  // a freed shrine's moment (FreedPulse); t counts down
+		constexpr float                          kPulseSeconds = 9.0f, kPulseCharge = 3.6f, kPulseGrow = 3.2f;
+		// the freed look waits for the burst (the charge plays on the cursed altar)
+		bool PulseHolds(int a_town) { return g_pulse && g_pulse->town == a_town && !g_pulse->burst; }
 		std::vector<Spinner>                     g_spinners;
 		RE::ObjectRefHandle                      g_orbAim;  // the shrine whose orb is in the crosshair (Activate opens it)
 		bool                                     g_humming = false;  // the shrine's hum is playing (a load stops every loop)
@@ -78,7 +85,7 @@ namespace bo3z
 			// and no night being fought
 			// (its last night ends the moment the Dragon Priest falls: freed is complete; the night's own fighting elsewhere
 			// no longer hides it - Noah: the freed rune circle stood still on later nights)
-			const bool freed = Curse::Freed(gen::kLocations[a_index].town);
+			const bool freed = Curse::Freed(gen::kLocations[a_index].town) && !PulseHolds(gen::kLocations[a_index].town);
 			for (const auto& d : gen::kDress) {
 				if (d.object != obj) {
 					continue;
@@ -202,6 +209,28 @@ namespace bo3z
 					return RE::BSVisit::BSVisitControl::kContinue;
 				});
 			}
+		}
+		// a freed piece's light, k times its own (0: unseen, 1: as made) - an effect shader's colour scale, a lit shader's glow
+		void Fade(RE::NiAVObject* a_root, float a_k)
+		{
+			static std::unordered_map<void*, float> base;
+			if (!a_root) return;
+			RE::BSVisit::TraverseScenegraphGeometries(a_root, [&](RE::BSGeometry* g) {
+				auto* prop = g->GetGeometryRuntimeData().shaderProperty.get();
+				auto* rtti = prop ? prop->GetRTTI() : nullptr;
+				if (!rtti) return RE::BSVisit::BSVisitControl::kContinue;
+				const std::string_view kind = rtti->GetName();
+				if (kind == "BSEffectShaderProperty") {
+					if (auto* m = static_cast<RE::BSEffectShaderMaterial*>(static_cast<RE::BSShaderProperty*>(prop)->material)) {
+						auto [it, fresh] = base.try_emplace(m, m->baseColorScale);
+						m->baseColorScale = it->second * a_k;
+					}
+				} else if (auto* lp = netimmerse_cast<RE::BSLightingShaderProperty*>(prop)) {
+					auto [it, fresh] = base.try_emplace(lp, lp->emissiveMult);
+					lp->emissiveMult = it->second * a_k;
+				}
+				return RE::BSVisit::BSVisitControl::kContinue;
+			});
 		}
 		// (Noah: the prompt only on the altar itself) standing on its platform: within its round floor, at its height
 		bool OnAltarBase(RE::TESObjectREFR* a_altar)
@@ -2517,25 +2546,60 @@ namespace bo3z
 				h.pulseOn = false;
 				if (g_pulse && (g_pulse->t -= a_delta) > 0) {
 					h.pulseT = g_pulse->t;
-					if (auto r = g_pulse->shrine.get(); r) {
-						// (Noah: "the freeing didn't have the rune and particle effects on the stone itself") all six column
-						// stones beam into the heart-stone, its runes flare white-hot and settle, and sparks of light burst off it
-						const float u = std::clamp(1.0f - g_pulse->t / kPulseSeconds, 0.0f, 1.0f);
-						TickBeams(r.get(), a_delta, std::min(1.0f, u * 1.6f));  // (the six strike one after another)
-						if (const auto parts = FindAltarParts(r.get()); parts.heart) {
-							HeartGlow(parts.heart, 1.0f + 7.0f * std::sin(u * RE::NI_PI) + 3.0f * std::max(0.0f, std::sin(u * 40.0f)));
-							g_glowHeart = parts.heart->CreateRefHandle();
-							static float spark = 0;
-							if ((spark -= a_delta) <= 0) {
-								spark = 0.45f;
-								const auto hp = parts.heart->Get3D() ? parts.heart->Get3D()->world.translate : parts.heart->GetPosition();
-								Gun::FxBlast("light", hp);
+					auto r = g_pulse->shrine.get();
+					const float el = kPulseSeconds - g_pulse->t;
+					if (r && r->Is3DLoaded()) {
+						if (el < kPulseCharge) {
+							// the charge: the roll's lightning, stone after stone into the heart, its runes climbing
+							const float u = el / kPulseCharge;
+							TickBeams(r.get(), a_delta, std::min(1.0f, u * 1.15f));
+							if (const auto parts = FindAltarParts(r.get()); parts.heart) {
+								HeartGlow(parts.heart, 1.0f + 6.0f * u + 2.5f * std::max(0.0f, std::sin(el * 38.0f)));
+								g_glowHeart = parts.heart->CreateRefHandle();
 							}
+						} else if (!g_pulse->burst) {
+							// the burst: the curse breaks and the freed look goes up (its motes and runes held at nothing, to grow)
+							g_pulse->burst = true;
+							EndBeams();
+							if (auto hr = g_glowHeart.get()) HeartGlow(hr.get(), 1.0f);
+							g_glowHeart = {};
+							const auto at = r->GetPosition() + RE::NiPoint3{ 0, 0, 175.0f };
+							Gun::FxBlast("lightmassive", at);
+							Gun::FxBlast("shoutarea", at, 0.3f);
+							Forms::Play(gen::Sound::nuke);
+							Forms::PlayAt(gen::Sound::shout_toll, r.get());
+							for (std::size_t i = 0; i < gen::kLocations.size(); ++i) {
+								if (gen::kLocations[i].town == g_pulse->town) {
+									g_dressed[i] = false;
+									if (g_placed[i].get().get() == r.get()) Dress(i, r.get());
+								}
+							}
+							logger::info("shops: {}'s altar bursts - the freed look rises", gen::kTowns[g_pulse->town]);
 						}
+						if (g_pulse->burst) {
+							// the motes fade in, the golden runes grow (eased: quick at first, settling into place)
+							const float g = std::clamp((el - kPulseCharge - 0.2f) / kPulseGrow, 0.0f, 1.0f);
+							const float ease = 1.0f - (1.0f - g) * (1.0f - g) * (1.0f - g);
+							RE::TES::GetSingleton()->ForEachReferenceInRange(r.get(), 500.0f, [&](RE::TESObjectREFR* x) {
+								auto* b = x ? x->GetBaseObject() : nullptr;
+								const bool runes = b && b == Forms::Ours(gen::kFreedRunes), motes = b && b == Forms::Ours(gen::kHeartMotes);
+								if (!runes && !motes) return RE::BSContainer::ForEachResult::kContinue;
+								if (auto* o = x->Get3D()) {
+									const float full = x->GetScale();
+									o->local.scale = full * (runes ? std::max(0.001f, ease) : 1.0f);
+									Fade(o, runes ? std::min(1.0f, g * 2.5f) : g);
+									RE::NiUpdateData ud;
+									o->Update(ud);
+								}
+								return RE::BSContainer::ForEachResult::kContinue;
+							});
+						}
+					}
+					if (r) {
 						if (auto* cam = RE::Main::WorldRootCamera()) {
 							float x = 0, y = 0, z = 0;
 							cam->WorldPtToScreenPt3(r->GetPosition() + RE::NiPoint3{ 0, 0, 175.0f }, x, y, z, 1e-5f);
-							h.pulseOn = true, h.pulseX = z > 0 ? x : 0.5f, h.pulseY = z > 0 ? 1.0f - y : 0.5f;
+							h.pulseOn = el >= kPulseCharge, h.pulseX = z > 0 ? x : 0.5f, h.pulseY = z > 0 ? 1.0f - y : 0.5f;
 						}
 					}
 				} else {
@@ -2543,6 +2607,18 @@ namespace bo3z
 						EndBeams();
 						if (auto hr = g_glowHeart.get()) HeartGlow(hr.get(), 1.0f);
 						g_glowHeart = {};
+						if (auto r = g_pulse->shrine.get()) {  // (everything at its own size and light)
+							RE::TES::GetSingleton()->ForEachReferenceInRange(r.get(), 500.0f, [&](RE::TESObjectREFR* x) {
+								auto* b = x ? x->GetBaseObject() : nullptr;
+								if (b && (b == Forms::Ours(gen::kFreedRunes) || b == Forms::Ours(gen::kHeartMotes)))
+									if (auto* o = x->Get3D()) o->local.scale = x->GetScale(), Fade(o, 1.0f);
+								return RE::BSContainer::ForEachResult::kContinue;
+							});
+						}
+						if (!g_pulse->burst) {  // (never reached the burst - the cell unloaded: the freed look goes up anyway)
+							for (std::size_t i = 0; i < gen::kLocations.size(); ++i)
+								if (gen::kLocations[i].town == g_pulse->town) g_dressed[i] = false;
+						}
 					}
 					g_pulse.reset();
 				}
@@ -2742,22 +2818,15 @@ namespace bo3z
 		{
 			auto* shrine = Placed(a_town, 0);
 			if (!shrine) {
+				for (std::size_t i = 0; i < gen::kLocations.size(); ++i)
+					if (gen::kLocations[i].town == a_town) g_dressed[i] = false;
 				return;
 			}
-			const auto at = shrine->GetPosition() + RE::NiPoint3{ 0, 0, 175.0f };
-			Gun::FxBlast("lightmassive", at);
-			Gun::FxBlast("shoutarea", at, 0.4f);
-			Gun::FxBlast("lightmassive", at, 1.4f);
-			Gun::FxBlast("turnundead", at, 2.4f);
-			Forms::Play(gen::Sound::nuke);
-			Forms::PlayAt(gen::Sound::shout_toll, shrine);
-			g_pulse = Pulse{ shrine->CreateRefHandle(), kPulseSeconds };
-			for (std::size_t i = 0; i < gen::kLocations.size(); ++i) {
-				if (gen::kLocations[i].town == a_town) {
-					g_dressed[i] = false;  // dress it again now: the gold glow and the beam
-				}
-			}
-			logger::info("shops: {}'s shrine pulses - the Curse is lifted", gen::kTowns[a_town]);
+			// the charge first (the burst and the freed look follow it: Tick)
+			Forms::PlayAt(gen::Sound::coffer_charge, shrine);
+			EndBeams();
+			g_pulse = Pulse{ shrine->CreateRefHandle(), kPulseSeconds, a_town, false };
+			logger::info("shops: {}'s shrine gathers its light - the Curse is lifted", gen::kTowns[a_town]);
 		}
 
 		void OnActivate(RE::TESObjectREFR* a_ref)

@@ -403,6 +403,7 @@ namespace bo3z
 		void             ImbueWeapon();                // the Spellsword's Imbue: the held spell-weapon one material up, its element kept
 		void             OnBlock(RE::Actor* a_attacker, bool a_spell);  // a blow blocked with a spellshield: reflect / stagger
 		bool             RollHero(Prize* a_out = nullptr);                   // the Summoner's late Legendaries: a hero or an army (needs a Legendary summon)
+		void             TameSupport();                // the support relics' magicka cost, cut to castable (data loaded)
 		bool             RollSupport(Prize* a_out = nullptr);                // Destruction's altar side-pick: Ash Cloud, Cinder Storm, Charged Nova or Symmetry
 		std::string      BoltLine();                   // the Ranger's crossbow mastery, for the altar ('' other classes)
 		void             NextOutfit();                 // the altar's outfit picker: the next outfit (any class), worn

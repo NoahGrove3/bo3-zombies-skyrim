@@ -954,6 +954,7 @@ namespace bo3z
 			}
 			if (!before.freed && after.freed) {
 				Forms::Play(gen::Sound::curse_lifted);
+				Shops::FreedPulse(a_town);  // (the altar's freeing: the charge, the burst, the runes grow - for the party too)
 				Audio::FreedMusic();
 				std::string text = Fill(gen::kCurseLiftedBanner, a_town);
 				if (const int sh = ShoutOf(a_town); sh >= 0) {

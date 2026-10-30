@@ -699,8 +699,12 @@ namespace bo3z
 		{
 			for (auto& r : g_risers) {
 				auto a = r.h.get();
-				if (!a) {
+				// (Noah's crash: a freed city crumbled the dead as they rose, and one stepping out of its portal was sent after
+				// you - StartCombat on a body already put away) a riser that was put away is let go
+				if (!a || a->IsDisabled() || a->IsDeleted()) {
 					r.t = 99;
+					r.anim = 9;
+					r.hidden = false;
 					continue;
 				}
 				r.t += a_delta;
@@ -1568,6 +1572,9 @@ namespace bo3z
 			if (g_boss.spawnIn > 0 && g_wantHerald && !Story::GrimmvarOpen()) {
 				g_boss.spawnIn = -1, g_wantHerald = false;  // (the story: Grimmvar, Alduin's Herald, hunts only after Alduin's Bane)
 			}
+			if (g_boss.spawnIn > 0 && Curse::SafeHere(a_player)) {
+				g_boss.spawnIn = std::max(g_boss.spawnIn, 3.0f);  // (Noah: the boss rose in a freed city) never in a sanctuary: it waits for you outside
+			}
 			if (g_boss.spawnIn > 0 && (g_boss.spawnIn -= a_delta) <= 0) {
 				g_boss.spawnIn = -1;
 				if (!SpawnBoss(a_player)) {
@@ -2115,6 +2122,7 @@ namespace bo3z
 		std::vector<std::pair<RE::ActorHandle, float>> g_fading;  // the fallen: seconds until the body crumbles
 		void Vanish(RE::Actor* a)
 		{
+			std::erase_if(g_risers, [&](const Riser& r) { return r.h.get().get() == a; });  // (no longer rising: nothing more is done to it)
 			g_ours.erase(a->GetFormID()), g_summoned.erase(a->GetFormID()), g_elites.erase(a->GetFormID());
 			a->StopCombat();
 			a->Disable();
@@ -5172,6 +5180,12 @@ namespace bo3z
 			}
 			switch (g_phase) {
 			case Phase::Day:
+				// (Noah: "if nightfall happens within a free city's limits, it skips the night. Automatically") a freed city's
+				// people bar the doors and the dead never come: the clock runs on to dawn (the night is not counted)
+				if (!Coop::Client() && Curse::SafeHere(player)) {
+					SkipToDawn("NIGHT PASSES IN PEACE - THE DEAD CANNOT RISE IN A FREED CITY");
+					break;
+				}
 				g_phase = Phase::Break;
 				g_breakTimer = R.firstBreakSeconds;
 				// (Noah: "two pop-ups when a night is starting") the night's own title under the circle says it - no banner over it

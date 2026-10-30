@@ -567,7 +567,7 @@ namespace BowsImpl
 		if (const float l = s.vel.Length(); l > 1) s.vel = s.vel * (4800.0f / l);
 		s.pos = p;
 		s.special = TakeSpecial();
-		const bool split = (Save::PerkStacks(gen::kPerk_splitshot) > 0);
+		const bool split = false /* (the Splitting Draught: removed) */;
 		if (split) s.damage *= 0.5f;  // (the Splitting Draught: a second bolt lands beside the first, each at half)
 		const bool killed = Spellcraft::Strike(s.row, a_hit, s.damage, false, EffectFor(want, s.tier, true), p);
 		OnHit(s, a_hit, p, killed);
@@ -862,7 +862,7 @@ namespace BowsImpl
 		RealBurst(row, from + dir * 30.0f, full ? 26.0f : 16.0f, 0.18f);  // (the string's snap: a flash off the arrow's head)
 		// (Noah: the Splitting Draught) two arrows a little apart, each at half the damage; (the altar's special ammo) carried by both
 		const int  special = TakeSpecial();
-		const bool split = (Save::PerkStacks(gen::kPerk_splitshot) > 0);
+		const bool split = false /* (the Splitting Draught: removed) */;
 		const RE::NiPoint3 side = RE::NiPoint3{ -dir.y, dir.x, 0 } * 0.045f;
 		for (int n = 0; n < (split ? 2 : 1); ++n) {
 			RE::NiPoint3 d = split ? dir + (n == 0 ? side : side * -1.0f) : dir;

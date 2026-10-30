@@ -56,7 +56,7 @@
       "cost": 600,
       "effect": "self_revive",
       "value": 1,
-      "description": "Saves you from one death: instead of dying, you get back up. Each tonic is one save.",
+      "description": "Saves you from one death: instead of dying, you get back up - but the save spends every blessing you carry, this tonic too.",
       "potionModel": "Clutter\\Potions\\PotionMagickaLesser.nif",
       "verify": [],
       "color": "3070F0",
@@ -264,18 +264,6 @@
       "potionModel": "Clutter\\Potions\\PotionMagickaLesser.nif",
       "description": "Your melee attacks are 15% faster.",
       "color": "A0C8E8",
-      "verify": ""
-    },
-    {
-      "id": "splitshot",
-      "label": "Splitting Draught",
-      "cls": "",
-      "cost": 4600,
-      "effect": "split_shot",
-      "value": 0.5,
-      "potionModel": "Clutter\\Potions\\PotionFortifyMagicka01.nif",
-      "description": "Your arrows, bolts and bolt spells fly in pairs - two at once, each at half the damage.",
-      "color": "40C8C0",
       "verify": ""
     }
   ],

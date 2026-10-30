@@ -742,7 +742,7 @@ namespace bo3z
 		void SplitCast(RE::SpellItem* a_spell)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			if (!p || !a_spell || g_splitting || Save::PerkStacks(gen::kPerk_splitshot) <= 0) return;
+			if (!p || !a_spell || g_splitting || true /* (Noah: "remove splitting draught from the perks. I think it's too strong") */) return;
 			if (a_spell->GetCastingType() != RE::MagicSystem::CastingType::kFireAndForget || a_spell->GetDelivery() != RE::MagicSystem::Delivery::kAimed) return;
 			auto* cam = RE::PlayerCamera::GetSingleton();
 			if (!cam || !cam->cameraRoot) return;
@@ -1347,6 +1347,7 @@ namespace bo3z
 			Arcana::Load();
 			Fantasy::HushAltarEchoes();
 			Fantasy::TameSpellSounds();
+			Classes::TameSupport();
 			Director::HeadlongCombat();
 			Settings::ApplyMods();
 			if (auto* ini = RE::INIPrefSettingCollection::GetSingleton()) {  // (and no tutorials at all)

@@ -424,6 +424,9 @@ namespace bo3z
 				}
 				g_rearm = 0.6f;
 			}
+			// (Noah: "if the revive perk saves my life and gets used, should remove any current perks I have. So I'll have to
+			// rebuy them") the save costs every blessing, the tonic with them - taken first, so you rise at the new full health
+			LoseAll();
 			auto* av = a_player->AsActorValueOwner();
 			const float max = av->GetPermanentActorValue(RE::ActorValue::kHealth);
 			av->RestoreActorValue(RE::ActorValue::kHealth, max);
@@ -432,8 +435,7 @@ namespace bo3z
 			}
 			g_grace = 3.0f;
 			Director::Pause(2.0f);  // (the dead around you reel back a moment)
-			Save::SetPerkStacks(gen::kPerk_hearthfire, N(gen::kPerk_hearthfire) - 1);  // one revive per draught
-			Hud::Banner("THE HEARTH CALLS YOU BACK", 3.0f);
+			Hud::Banner("THE HEARTH CALLS YOU BACK  -  your blessings are spent", 3.5f);
 			logger::info("perk: hearthfire revive used{}", a_falling ? " (from the ground)" : " (before the blow could land)");
 		}
 		// every wound the night deals the player goes through here: a blow that would kill you is caught - by the
