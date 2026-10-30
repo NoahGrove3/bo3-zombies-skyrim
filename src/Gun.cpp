@@ -3091,17 +3091,20 @@ namespace bo3z
 			// back while it waits; a potion (a big jump at once) is kept.
 			{
 				static float last = -1;
+				// (Noah: "the battle mage class still recovers mana after 5 seconds without casting but it should be 1s after
+				// not casting - this is the class perk, it's more loved by mana") the Destruction class: 1 second
+				const float  delay = Classes::Get() == 1 ? 1.0f : gen::kManaRegenDelay;  // (1: Destruction - src/CofferSpells.h)
 				const float  max = av->GetPermanentActorValue(RE::ActorValue::kMagicka), cur = av->GetActorValue(RE::ActorValue::kMagicka);
 				if (last >= 0 && cur < last - 0.01f) {
 					g_manaQuiet = 0;  // spent
 				} else {
 					g_manaQuiet += a_delta;
 				}
-				if (last >= 0 && cur > last + 0.001f && cur - last < 0.02f * max + 0.5f && g_manaQuiet < gen::kManaRegenDelay) {
+				if (last >= 0 && cur > last + 0.001f && cur - last < 0.02f * max + 0.5f && g_manaQuiet < delay) {
 					av->DamageActorValue(RE::ActorValue::kMagicka, cur - last);  // Skyrim's own regeneration: not yet
 				}
 				const float now = av->GetActorValue(RE::ActorValue::kMagicka);
-				if (g_manaQuiet >= gen::kManaRegenDelay && now < max) {
+				if (g_manaQuiet >= delay && now < max) {
 					av->RestoreActorValue(RE::ActorValue::kMagicka, std::min(max - now, max * gen::kManaRegenPerSecond * Perks::RegenMult() / Perks::ManaMult() * a_delta));
 				}
 				last = av->GetActorValue(RE::ActorValue::kMagicka);

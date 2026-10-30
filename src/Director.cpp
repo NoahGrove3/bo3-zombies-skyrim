@@ -4241,7 +4241,7 @@ namespace bo3z
 			// the body you're seen in (first or third person), at the left hip; taken down when the lantern comes off
 			static RE::NiPointer<RE::NiLight> light;
 			static RE::NiPointer<RE::NiNode>  on;
-			auto* root = want ? a_player->Get3D() : nullptr;
+			auto* root = want ? a_player->Get3D(false) : nullptr;  // (Noah: "also work in first person") always the 3rd-person body: it walks on under the first-person view, the light with it
 			auto* rootNode = root ? root->AsNode() : nullptr;
 			auto* ssn = RE::BSShaderManager::State::GetSingleton().shadowSceneNode[0];
 			if (light && (!want || on.get() != rootNode)) {

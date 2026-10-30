@@ -1256,6 +1256,29 @@ namespace bo3z
 					logger::info("spells: Hoarfrost's hands dimmed to Frostbite's ({} effects)", n);
 				}
 			}
+			// (Noah: "the light is working so can you make everything darker at night so the light is more helpful?") every
+			// weather's night is dimmed: the moonlight, the ambient and its six directions, the effect lighting and the fog
+			// to 40%, the sky itself to 65% (still a sky, not a black ceiling). Lights - the lantern, torches, fires, the
+			// altar's glow - aren't touched, so they carry further against the dark. Dawn and dusk are left as they were
+			{
+				constexpr float kLit = 0.40f, kSky = 0.65f;
+				using CT = RE::TESWeather::ColorTypes::ColorType;
+				constexpr auto kN = RE::TESWeather::ColorTimes::kNight;
+				auto dim = [](RE::Color& c, float f) {
+					c.red = static_cast<std::uint8_t>(c.red * f), c.green = static_cast<std::uint8_t>(c.green * f), c.blue = static_cast<std::uint8_t>(c.blue * f);
+				};
+				int n = 0;
+				auto* data = RE::TESDataHandler::GetSingleton();
+				if (data) for (auto* w : data->GetFormArray<RE::TESWeather>()) {
+					if (!w) continue;
+					for (auto t : { CT::kAmbient, CT::kSunlight, CT::kEffectLighting, CT::kFogNear, CT::kFogFar, CT::kSkyStatics, CT::kCloudLODDiffuse, CT::kCloudLODAmbient }) dim(w->colorData[t][kN], kLit);
+					for (auto t : { CT::kSkyUpper, CT::kSkyLower, CT::kHorizon }) dim(w->colorData[t][kN], kSky);
+					auto& d = w->directionalAmbientLightingColors[kN].directional;
+					for (auto* mm : { &d.x, &d.y, &d.z }) dim(mm->max, kLit), dim(mm->min, kLit);
+					++n;
+				}
+				logger::info("night: {} weathers' nights darkened", n);
+			}
 			// Skyrim's own floating quest markers give way to ours (src/Hud.cpp: drawn in the game's style)
 			if (auto* prefs = RE::INIPrefSettingCollection::GetSingleton()) {
 				if (auto* st = prefs->GetSetting("bShowFloatingQuestMarkers:GamePlay")) {
