@@ -1147,6 +1147,7 @@ namespace bo3z
 		int   ArmourTier(int a_cls);              // (the class armour sets) the set's upgrades (0..), -1 not owned
 		int   ArmourRating(int a_cls);            // 10, and 10 more for each of its upgrades
 		float ArmorResist();                      // 0 .. 0.20 of the night's blows taken off (5% a set tier)
+		float ArmorAscendMult();                  // 1 + 5% for each Ascend of the class's armor set (on all your side deals the dead)
 		float AuraCostMult();                     // (co-op) a Destruction mage in the party: spells cost less
 		float AuraAmmoMult();                     // (co-op) a Ranger in the party: ammo grows back sooner
 		float AuraMeleeTaken();                   // (co-op) a Spellsword in the party: blows land softer

@@ -597,7 +597,7 @@ namespace bo3z
 				if (!behind) damage *= 0.5f;
 			}
 			if (Undead::IsDancing(a_target)) damage *= 1.5f;  // (the Dance Of Death: half again as hard)
-			damage *= Director::TakenMult(a_target);  // (a brute dazed or berserk)
+			damage *= Director::TakenMult(a_target) * Kit::ArmorAscendMult();  // (a brute dazed or berserk; your armor's Ascends)
 			if (PowerUps::InstaKill() && Director::IsRoundUndead(a_target)) {
 				damage = av->GetActorValue(RE::ActorValue::kHealth) + 1.0f;  // Insta-Kill (every one of them, one hit)
 			}

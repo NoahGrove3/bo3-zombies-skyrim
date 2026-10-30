@@ -733,7 +733,7 @@ namespace bo3z::Kit
 		SyncWeapons(true);
 		const std::string now = ItemName(c, item);
 		Hud::Banner((now != was ? was + "  ->  " + now : now) + "  -  " + (t + 1 <= 3 ? std::string(TierLabel(t + 1)) : "Ascend " + std::to_string(t + 1 - 3)) +
-		                (defs[item].kind == Kind::Armour ? fmt::format("   (damage reduction +{:.0f}%)", ArmorResist() * 100.0f) : std::string()), 4.5f);
+		                (defs[item].kind == Kind::Armour ? (ArmorAscendMult() > 1.001f ? fmt::format("   (damage reduction +{:.0f}%, damage +{:.0f}%)", ArmorResist() * 100.0f, (ArmorAscendMult() - 1.0f) * 100.0f) : fmt::format("   (damage reduction +{:.0f}%)", ArmorResist() * 100.0f)) : std::string()), 4.5f);
 		logger::info("kit: {} -> tier {} ({})", now, t + 1, Classes::Name(c));
 		return true;
 	}
@@ -877,6 +877,9 @@ namespace bo3z::Kit
 	// (Noah: "I want the armor to say damage reduction +5% and go up by 5% per upgrade maxing at 20%") the class's set takes
 	// 5% off every blow, 5% more a tier, 20% at Tier III (Ascends don't add more)
 	float ArmorResist() { const int t = ArmourTier(Cls()); return t < 0 ? 0.0f : std::min(0.20f, 0.05f * static_cast<float>(t + 1)); }
+	// (Noah: "the armor ascending should increase class damage by 5% and cost more each ascend like the other armor sets")
+	// every Ascend of the set past Tier III: +5% to everything your side deals the dead (the price climbs as every Ascend's)
+	float ArmorAscendMult() { return 1.0f + 0.05f * static_cast<float>(std::max(0, ArmourTier(Cls()) - 3)); }
 
 	// ---- co-op auras ----
 	bool PartyHas(int a_cls)
@@ -987,7 +990,7 @@ namespace bo3z::Kit
 		if (const int i = ArmourIndex(c); i >= 0 && Classes::KitGiven(c) && !(g_cls[c].owned >> i & 1)) {
 			g_cls[c].owned |= 1u << i;
 			Classes::GiveArmourSet(c, 0, true);
-			Hud::Banner(Classes::ArmourSetName(c, 0) + " - your class's armour, upgradable at the Echo Altar", 5.0f);
+			Hud::Banner(Classes::ArmourSetName(c, 0) + " - your class's armor, upgradable at the Echo Altar", 5.0f);
 		}
 		int refunds = 0;
 		for (auto& st : g_cls) {

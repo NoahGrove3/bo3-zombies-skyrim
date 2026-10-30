@@ -1069,7 +1069,7 @@ namespace bo3z::Classes
 		}
 		out.push_back(fmt::format("<b>Echo Altars freed: {} of {}</b>{}", freed, gen::kTowns.size(), towns.empty() ? std::string(" - none yet. Start with Riverwood's altar.") : " (" + towns + ")."));
 		// (the consistency pass: every class was told of a Legendary row only the Summoner has) the forge's gates, as they are
-		out.push_back(fmt::format("Your kit's tiers (the Echo Altar): Tier I open. Tier II: {}. Tier III (Legendary): {}. Ascends: {}. Your armour set's damage reduction: +{:.0f}%.",
+		out.push_back(fmt::format("Your kit's tiers (the Echo Altar): Tier I open. Tier II: {}. Tier III (Legendary): {}. Ascends: {}. Your armor set's damage reduction: +{:.0f}%.",
 			freed >= 2 ? std::string("<b>open</b>") : fmt::format("at 2 freed cities ({} to go)", 2 - freed),
 			freed >= 4 ? std::string("<b>open</b>") : fmt::format("at 4 freed cities ({} to go)", 4 - freed),
 			freed >= 6 ? std::string("<b>open</b>") : fmt::format("at 6 freed cities ({} to go)", 6 - freed), Kit::ArmorResist() * 100.0f));
@@ -1256,7 +1256,7 @@ namespace bo3z::Classes
 					auto* b = f ? f->As<RE::TESBoundObject>() : nullptr;
 					if (b) GiveItem(p, b, p->GetItemCount(b) > 0 ? 0 : 1, true);
 				}
-				Hud::Banner("The Drifter Outfit is made for a woman's body - the Dawnguard's light armour in its place", 4.0f);
+				Hud::Banner("The Drifter Outfit is made for a woman's body - the Dawnguard's light armor in its place", 4.0f);
 			}
 		}
 		// (the shells the Spell-weapon row once gave - Flame Shield's 600 magicka and the like - are taken back)
@@ -2809,9 +2809,9 @@ namespace bo3z::Classes
 		switch (a_cls) {
 		case coffer::kSummoner: return "Arcane Conjurer Robes";
 		case coffer::kDestruction: { static constexpr const char* kN[4] = { "Black Mage Robes", "Black Mage Mantled Robes", "Black Mage Plate", "Black Archmage Ebony" }; return kN[std::clamp(a_tier, 0, 3)]; }
-		case coffer::kRanger: return "Gondorian Ranger Armour";
-		case coffer::kSpellsword: return PlayerFemale() ? "Valkyrie Armour" : "DragonLord Armour";
-		default: return "Armour";
+		case coffer::kRanger: return "Gondorian Ranger Armor";
+		case coffer::kSpellsword: return PlayerFemale() ? "Valkyrie Armor" : "DragonLord Armor";
+		default: return "Armor";
 		}
 	}
 	bool ArmourCarried(int a_cls, int a_tier)
