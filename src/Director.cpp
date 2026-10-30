@@ -2271,7 +2271,12 @@ namespace bo3z
 			}
 			if (g_waveSpawned < g_waveSize) {
 				const float boost = Curse::SpawnBoost() * (g_event >= 0 ? gen::kEvents[g_event].spawnMult : 1.0f);
-				const int   want = std::min(static_cast<int>(g_toSpawn * Curse::SpawnBoost()), R.maxAlive * 3 / 2);
+				// (Noah: "each wave [should] spawn more zombies at a time ... the rotation of the spawn points should last longer
+				// each wave, so there are more enemies in the field") how many walk at once: 10 on the night's first wave, 4 more
+				// each wave after it, 2 more each night (and never fewer than the night's old count); they still rise one by one,
+				// each at the next spawn point in turn
+				const int   field = std::max(g_toSpawn, 10 + 4 * (std::max(1, g_wave) - 1) + 2 * (std::max(1, g_current) - 1));
+				const int   want = std::min({ static_cast<int>(field * Curse::SpawnBoost()), R.maxAlive * 3 / 2, g_waveSize });
 				if (g_pause <= 0 && (g_spawnTimer -= a_delta) <= 0 && static_cast<int>(g_alive.size()) < want && !Movement::Gliding() && !a_player->IsInMidair()) {  // (none dropped in under you while you fly: the crash)
 					const int th = ThemeNowImpl();
 					const int fin = th >= 0 ? gen::kEvents[th].finale : -1;
