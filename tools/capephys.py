@@ -48,7 +48,10 @@ for r in range(R):
     o.append('  <generic-constraint-default>')
     o += ['    <frameInA><basis x="0" y="0" z="0" w="1"/><origin x="0" y="0" z="0"/></frameInA>', '    <useLinearReferenceFrameA>false</useLinearReferenceFrameA>',
           '    ' + v3('linearLowerLimit', 0), '    ' + v3('linearUpperLimit', 0),
-          '    ' + v3('angularLowerLimit', -lim[0], -lim[1], -lim[2]), '    ' + v3('angularUpperLimit', lim[0], lim[1], lim[2]),
+          # (Noah: "it shouldn't be able to go through my legs or back") the swing is one way: back, never forward. The
+          # joint's angle is the parent's turn seen from the bone (Bullet: A^-1 * B, A = this bone), so a hem lifted
+          # behind you (the bone turned -x) reads +x: up to lim back, a hair (0.015) forward
+          '    ' + v3('angularLowerLimit', -0.015 if r else -0.01, -lim[1], -lim[2]), '    ' + v3('angularUpperLimit', lim[0], lim[1], lim[2]),
           '    ' + v3('linearStiffness', 0), '    ' + v3('angularStiffness', *stiff), '    ' + v3('linearDamping', 0), '    ' + v3('angularDamping', 1.5, 1.5, 1.6),
           '    ' + v3('linearEquilibrium', 0), '    ' + v3('angularEquilibrium', 0), '    ' + v3('linearBounce', 0), '    ' + v3('angularBounce', 0)]
     o.append('  </generic-constraint-default>')
@@ -65,10 +68,10 @@ for r in range(1, R):
         o.append(f'  <stiffspring-constraint bodyA="{name(c, r)}" bodyB="{name(c + 1, r - 1)}"/>')
         o.append(f'  <stiffspring-constraint bodyA="{name(c + 1, r)}" bodyB="{name(c, r - 1)}"/>')
 # collision: the cape against the body's hidden proxies (margin = their radius)
-o += [f'  <per-vertex-shape name="{shape}"><margin>1.0</margin><shared>private</shared><tag>ca_cape</tag><can-collide-with-tag>ca_body</can-collide-with-tag></per-vertex-shape>']
+o += [f'  <per-vertex-shape name="{shape}"><margin>1.5</margin><shared>private</shared><tag>ca_cape</tag><can-collide-with-tag>ca_body</can-collide-with-tag></per-vertex-shape>']
 # (Noah: "it was deforming my character") this cape hangs close to the back: the cloak mod's proxies, sized for its fuller
 # cloaks, sat inside it and shoved it out of shape. Smaller here: they reach just short of where the cape hangs
-for s, m in (('CC_BodyCollision', 4.0), ('CC_ColThighs', 5.5), ('CC_ColCalves', 4.0), ('CC_ColFeet', 3.5), ('CC_ColForearms', 2.5), ('CC_ColHands', 2.2)):
+for s, m in (('CC_BodyCollision', 5.0), ('CC_ColThighs', 6.5), ('CC_ColCalves', 5.0), ('CC_ColFeet', 4.0), ('CC_ColForearms', 3.0), ('CC_ColHands', 2.5)):
     o.append(f'  <per-vertex-shape name="{s}"><margin>{m}</margin><shared>private</shared><tag>ca_body</tag><can-collide-with-tag>ca_cape</can-collide-with-tag></per-vertex-shape>')
 o.append('</system>')
 open(sys.argv[2], 'w', newline='\r\n').write('\n'.join(o) + '\n')

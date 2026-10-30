@@ -4223,35 +4223,40 @@ namespace bo3z
 			}
 			const bool worn = a_player->GetWornArmor(item->GetFormID()) != nullptr;
 			const bool want = worn && !PowerUps::Shadow() && a_player->Is3DLoaded();
-			const bool lit = mt->HasMagicEffect(fx);
 			if (static int was = -1; was != static_cast<int>(want)) {
 				was = want;
 				logger::info("lantern: {} (worn {}, shadow {})", want ? "lit" : "dark", worn, PowerUps::Shadow());
 			}
-			if (want && !lit) {
-				if (auto* caster = a_player->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) caster->CastSpellImmediate(spell, false, a_player, 1.0f, false, 0.0f, a_player);
-			} else if (want && lit) {
-				// (Noah: "it's not producing any light") the game sizes a light effect's light by the spell's magnitude, not by
-				// the light's own radius - it came out a small patch at your feet. So the light itself is given the lantern's
-				// radius, brightness and warmth: everything within fifteen metres
-				auto* ligh = dh->LookupForm<RE::TESObjectLIGH>(gen::kLanternLight, gen::kPlugin);
-				if (auto* list = mt->GetActiveEffectList(); list && ligh) {
-					for (auto* ae : *list) {
-						auto* le = ae && ae->GetBaseObject() == fx ? skyrim_cast<RE::LightEffect*>(ae) : nullptr;
-						if (!le || !le->light) continue;
-						auto& d = le->light->GetLightRuntimeData();
-						const float r = static_cast<float>(ligh->data.radius);
-						if (static bool told = false; !told) told = true, logger::info("lantern: the light came out radius {:.0f} fade {:.2f}; set to {:.0f}", d.radius.x, d.fade, r);
-						d.radius = RE::NiPoint3(r, r, r);
-						d.fade = ligh->fade;
-						d.diffuse = RE::NiColor(ligh->data.color.red / 255.0f, ligh->data.color.green / 255.0f, ligh->data.color.blue / 255.0f);
-					}
-				}
-			} else if (!want && lit) {
+			// (an older build's light effect, still on you from a save: off)
+			if (mt->HasMagicEffect(fx)) {
 				if (auto* list = mt->GetActiveEffectList()) {
 					std::vector<RE::ActiveEffect*> off;
 					for (auto* ae : *list) if (ae && ae->GetBaseObject() == fx) off.push_back(ae);
 					for (auto* ae : off) ae->Dispel(true);
+				}
+			}
+			// (Noah: "the belt lantern isn't producing any light. It should produce light during the daytime and the
+			// nighttime, as long as I have it equipped") the light effect never took. Now the lantern's light is hung on
+			// you the way a torch's is: a real light, made from the lantern's LIGH (its radius, warmth and brightness), on
+			// the body you're seen in (first or third person), at the left hip; taken down when the lantern comes off
+			static RE::NiPointer<RE::NiLight> light;
+			static RE::NiPointer<RE::NiNode>  on;
+			auto* root = want ? a_player->Get3D() : nullptr;
+			auto* rootNode = root ? root->AsNode() : nullptr;
+			auto* ssn = RE::BSShaderManager::State::GetSingleton().shadowSceneNode[0];
+			if (light && (!want || on.get() != rootNode)) {
+				if (ssn) ssn->RemoveLight(light.get());
+				if (auto* parent = light->parent) parent->DetachChild(light.get());
+				light.reset(), on.reset();
+			}
+			if (want && !light && rootNode) {
+				auto* ligh = dh->LookupForm<RE::TESObjectLIGH>(gen::kLanternLight, gen::kPlugin);
+				if (auto* l = ligh ? ligh->GenDynamic(a_player, rootNode, 1, 1, 0) : nullptr) {
+					l->local.translate = RE::NiPoint3(-14.0f, 2.0f, 70.0f);  // (the left hip, in the body's own frame)
+					light.reset(l), on.reset(rootNode);
+					logger::info("lantern: light hung (radius {}, on {})", ligh->data.radius, RE::PlayerCamera::GetSingleton()->IsInFirstPerson() ? "1st person" : "3rd person");
+				} else if (static bool told = false; !told) {
+					told = true, logger::warn("lantern: could not make its light");
 				}
 			}
 		}
