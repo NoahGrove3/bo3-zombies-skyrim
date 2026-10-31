@@ -1009,6 +1009,8 @@ namespace bo3z
 			int         chooseKind{ 0 }, chooseReroll{ 0 };  // the offer: 0 a spell, 1 a bow, 2 a class win; what rolling again costs
 			std::string chooseName, chooseOld;              // what is offered; the bow it would replace
 			bool        trialsOn{ false };
+			bool        altarFreed{ false };  // (Noah: "Curse Lifted") this altar's city is freed
+			std::vector<std::array<float, 3>> freedAltars;  // the freed cities' Echo Altar map icons (world x, y, z): gold on the world map
 			int         trialDone{ 0 }, trialActive{ 0 }, trialSel{ 0 };
 			std::array<std::string, 5> trialDesc;
 			std::string trialCity, trialBoss, trialBossLine;

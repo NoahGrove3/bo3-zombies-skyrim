@@ -1294,6 +1294,7 @@ namespace bo3z
 		std::string MarkerName(int a_town)
 		{
 			std::string name = std::string(gen::kText_station_marker) + " - " + std::string(gen::kTowns[a_town]);
+			if (Curse::Freed(a_town)) name += " - Curse Lifted";  // (Noah: show on the map that it's freed)
 			return name;
 		}
 
@@ -2695,7 +2696,16 @@ namespace bo3z
 				h.dragonBond = Save::DragonBond();
 				h.bondLocked = Movement::BondLocked();
 				h.trialsOn = false;
+				h.altarFreed = false;
 				h.whispers.clear();
+				h.freedAltars.clear();
+				for (int t = 0; t < static_cast<int>(gen::kTowns.size()); ++t) {  // (Noah: "make the map Echo Altar icons gold when freed")
+					if (!Curse::Freed(t)) continue;
+					if (auto r = g_markers[t].get()) {
+						const auto p = r->GetPosition();
+						h.freedAltars.push_back({ p.x, p.y, p.z });
+					}
+				}
 				h.chooseOn = g_choosing && g_show.phase == Show::Offering;
 				if (h.chooseOn) {
 					const auto have = Arcana::Carried();
@@ -2714,6 +2724,7 @@ namespace bo3z
 						const int t = TownOf(r.get());
 						h.shrineShout = Curse::ClaimableShout(t);
 						h.whispers = Eggs::Whispers(t);  // (Noah: the hidden quest's whispers, a line more for each step found)
+						h.altarFreed = Curse::Freed(t);
 						if (const auto v = Curse::Altar(t); v.on) {  // the city still held: its trials
 							h.trialsOn = true;
 							h.trialDone = v.done, h.trialActive = v.active, h.trialSel = g_trialSel;

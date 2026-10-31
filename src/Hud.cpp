@@ -3031,6 +3031,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					TxtC(dl, g_body, 15 * k, cx, y - 8 * k, Fade(tint, 0.95f), kCalling[altarCls], 0.0f, 0);
 					y += 18 * k;
 				}
+				if (s.altarFreed) {  // (Noah: "something to show it's freed - Curse Lifted") a gold seal under the title
+					const float sy = y + 2 * k, tw = Measure(g_title, 17 * k, "CURSE LIFTED").x;
+					for (const float sx : { cx - tw * 0.5f - 22 * k, cx + tw * 0.5f + 22 * k }) {
+						dl->AddQuadFilled({ sx, sy + 3 * k }, { sx + 5 * k, sy + 9 * k }, { sx, sy + 15 * k }, { sx - 5 * k, sy + 9 * k }, kGold);
+					}
+					TxtGoldC(dl, g_title, 17 * k, cx, sy, "CURSE LIFTED", 1.0f);
+					y += 26 * k;
+				}
 				const float L = a.x + 20 * k, Rr = b.x - 20 * k;
 				// (Noah: one way through the altar) the row in focus - D-pad / W S to move, A / Enter to take it
 				const auto focusRow = [&](int row, float y0, float y1) {
@@ -3525,6 +3533,46 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// Our cursor, in the quest ping's style (the burning diamond over quest targets): a tall diamond tipped up and
 		// to the left so its point is the hotspot, a dark heart, an amber rim, a soft glow round it and a hot core near
 		// the tip that breathes - on the main menu and in every Skyrim menu with a cursor.
+		// (Noah: "make the map Echo Altar icons gold when freed") on the world map a freed city's Echo Altar icon is drawn over
+		// in gold, a soft gold glow round it. Its place on screen: the map's own camera (under MapMenu's camera root),
+		// the icon at the height Flat Map Markers lifts every map icon to on the flat paper map (180000; the true height
+		// without that plugin)
+		void DrawFreedOnMap(ImDrawList* a_dl, const Hud::State& a_s, ImVec2 a_size, float k, float a_now)
+		{
+			if (a_s.freedAltars.empty()) return;
+			auto* ui = RE::UI::GetSingleton();
+			auto  menu = ui ? ui->GetMenu<RE::MapMenu>() : RE::GPtr<RE::MapMenu>{};
+			auto* d2 = menu ? menu->GetRuntimeData2() : nullptr;
+			if (!d2 || !d2->worldSpace) return;
+			RE::NiCamera* cam = nullptr;
+			if (auto* root = d2->camera.cameraRoot.get()) {
+				for (auto& ch : root->GetChildren()) {
+					if (auto* c = ch ? netimmerse_cast<RE::NiCamera*>(ch.get()) : nullptr) { cam = c; break; }
+				}
+			}
+			if (!cam) cam = RE::Main::WorldRootCamera();
+			if (!cam) return;
+			static const bool flat = ::GetModuleHandleW(L"FlatMapMarkersSSE.dll") != nullptr;
+			const float pulse = 0.85f + 0.15f * std::sin(a_now * 2.4f);
+			for (const auto& p : a_s.freedAltars) {
+				float x = 0, y = 0, z = 0;
+				if (!cam->WorldPtToScreenPt3(RE::NiPoint3{ p[0], p[1], flat ? 180000.0f : p[2] }, x, y, z, 1e-5f) || z < 0) continue;
+				if (x < -0.05f || x > 1.05f || y < -0.05f || y > 1.05f) continue;
+				const ImVec2 c{ x * a_size.x, (1.0f - y) * a_size.y };
+				const float  r = 17.0f * k;
+				for (int i = 4; i >= 1; --i) {  // the glow: rings of gold, fainter outward
+					a_dl->AddCircleFilled(c, r * (1.0f + 0.32f * i), IM_COL32(255, 196, 70, static_cast<int>(22 * pulse)), 32);
+				}
+				a_dl->AddCircleFilled(c, r * 1.05f, IM_COL32(40, 26, 6, 200), 32);
+				a_dl->AddCircle(c, r * 1.12f, IM_COL32(255, 214, 120, static_cast<int>(230 * pulse)), 32, 1.8f * k);
+				if (g_mapIcons) {
+					constexpr int kShrine = 34;  // (RE::MARKER_TYPE::kShrine: the Echo Altars' icon)
+					const ImVec2 uv0{ (kShrine % 8) / 8.0f, (kShrine / 8) / 8.0f }, uv1{ uv0.x + 0.125f, uv0.y + 0.125f };
+					const float  ir = r * 0.82f;
+					a_dl->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_mapIcons)), { c.x - ir, c.y - ir }, { c.x + ir, c.y + ir }, uv0, uv1, IM_COL32(255, 206, 96, 255));
+				}
+			}
+		}
 		void DrawPingCursor(ImDrawList* a_dl, ImVec2 a_tip, float k, float a_now, bool a_always = false)
 		{
 			if (g_padLast && !a_always) return;  // (Noah: "hide the mouse cursor when I'm using a controller") it shows again with the mouse or keyboard
@@ -6297,6 +6345,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					written = { -1, -1 };
 				}
 			}
+			if (onMap && !g_filmOn) DrawFreedOnMap(ImGui::GetForegroundDrawList(), s, io.DisplaySize, io.DisplaySize.y / 1080.0f, static_cast<float>(ImGui::GetTime()));
 			if (cursorUp && !mainMenu && !codex && !g_filmOn && (g_skCursor.x >= 0 || onMap)) {  // in Skyrim's own menus: ours, right where its cursor is
 				const ImVec2 at = g_skCursor.x < 0 ? ImVec2{ io.DisplaySize.x * 0.5f, io.DisplaySize.y * 0.5f } : g_skCursor;  // (the map moves Skyrim's cursor by the left stick: ours follows it)
 				DrawPingCursor(ImGui::GetForegroundDrawList(), at, io.DisplaySize.y / 1080.0f, static_cast<float>(ImGui::GetTime()), onMap);
