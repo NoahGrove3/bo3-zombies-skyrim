@@ -144,6 +144,32 @@ namespace bo3z
 				if (best) {
 					best->ActivateRef(player, 0, nullptr, 1, false);
 				}
+			} else if (cmd == "mount" && player) {
+				// mount [base hex]: ride the nearest horse; with none near, place one (default Shadowmere) - run it again to climb on
+				std::string hex;
+				in >> hex;
+				RE::Actor* best = nullptr;
+				float      bestD = 3000.0f;
+				RE::TES::GetSingleton()->ForEachReferenceInRange(player, 3000.0f, [&](RE::TESObjectREFR* r) {
+					if (auto* a = r ? r->As<RE::Actor>() : nullptr; a && a != player && a->IsHorse() && !a->IsDead()) {
+						if (const float d = a->GetPosition().GetDistance(player->GetPosition()); d < bestD) {
+							bestD = d, best = a;
+						}
+					}
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				if (best) {
+					best->ActivateRef(player, 0, nullptr, 1, false);
+					logger::info("dev: mount ref {:08X} at {:.0f}", best->GetFormID(), bestD);
+				} else {
+					const RE::FormID id = hex.empty() ? 0x0009CCD7 : static_cast<RE::FormID>(std::stoul(hex, nullptr, 16));
+					if (auto* base = RE::TESForm::LookupByID<RE::TESBoundObject>(id)) {
+						auto h = player->PlaceObjectAtMe(base, false);
+						logger::info("dev: mount placed horse {:08X} - mount again to ride", h ? h->GetFormID() : 0);
+					} else {
+						logger::info("dev: mount: no base {:08X}", id);
+					}
+				}
 			} else if (cmd == "anim" && player) {
 				std::string ev;
 				in >> ev;
