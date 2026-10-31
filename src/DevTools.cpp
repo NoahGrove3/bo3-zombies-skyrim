@@ -856,7 +856,7 @@ namespace bo3z
 				fc->rotation.x = (A.pitch0 + (A.pitch1 - A.pitch0) * u) * kRad;
 			} else if (A.mode == 3) {
 				auto* t = RE::TESForm::LookupByID<RE::Actor>(A.target);
-				if (!t || !t->Get3D()) return;
+				if (!t || !t->Get3D() || t->IsDisabled()) return;
 				if (A.onPlayer) {
 					if (auto* p = RE::PlayerCharacter::GetSingleton()) fc->translation = p->GetPosition() + RE::NiPoint3{ 0, 0, A.height };
 				} else {
@@ -867,6 +867,7 @@ namespace bo3z
 				else if (auto* n2 = t->Get3D()->GetObjectByName("NPC Head")) h = n2->world.translate;
 				else h.z += 300.0f;
 				const RE::NiPoint3 d = h - fc->translation;
+				if (!(d.Length() > 1.0f)) return;  // (never a NaN aim)
 				const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
 				fc->rotation.y = std::atan2(d.x, d.y);
 				fc->rotation.x = -std::atan2(d.z, std::max(1.0f, flat));

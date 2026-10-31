@@ -2814,7 +2814,7 @@ namespace bo3z
 			g_chaseOn = a_on;
 			if (!a_on) {
 				auto* pc = RE::PlayerCamera::GetSingleton();
-				if (pc && pc->currentState && pc->currentState->id == RE::CameraState::kThirdPerson) {
+				if (pc && pc->currentState && (pc->currentState->id == RE::CameraState::kThirdPerson || pc->currentState->id == RE::CameraState::kMount)) {
 					auto* tp = static_cast<RE::ThirdPersonState*>(pc->currentState.get());
 					tp->freeRotation = { 0, 0 };
 				}
@@ -2824,7 +2824,8 @@ namespace bo3z
 		{
 			if (!g_chase.on) return;
 			auto* pc = RE::PlayerCamera::GetSingleton();
-			if (!pc || !pc->currentState || pc->currentState->id != RE::CameraState::kThirdPerson) return;
+			// (the horse's camera is the same over-the-shoulder camera: a rider filmed from the front as he gallops at you)
+			if (!pc || !pc->currentState || (pc->currentState->id != RE::CameraState::kThirdPerson && pc->currentState->id != RE::CameraState::kMount)) return;
 			g_chase.yaw += g_chase.spin * a_delta;
 			auto* tp = static_cast<RE::ThirdPersonState*>(pc->currentState.get());
 			tp->freeRotationEnabled = true;
