@@ -2806,11 +2806,11 @@ namespace bo3z
 		}
 
 		// dev: a camera that follows you (the free camera, placed each frame) - for filming the dragon
-		struct Chase { bool on = false; float dist = 600, yaw = 0, pitch = 15, height = 0, spin = 0; } g_chase;
+		struct Chase { bool on = false; float dist = 600, yaw = 0, pitch = 15, height = 0, spin = 0; float heading = 0; bool held = false; } g_chase;
 		// (the free camera stops you flying: this turns the ordinary over-the-shoulder camera round you instead)
 		void DevChase(bool a_on, float a_dist, float a_yaw, float a_pitch, float a_height, float a_spin)
 		{
-			g_chase = { a_on, a_dist, a_yaw, a_pitch, a_height, a_spin };
+			g_chase = { a_on, a_dist, a_yaw, a_pitch, a_height, a_spin, 0.0f, false };
 			g_chaseOn = a_on;
 			if (!a_on) {
 				auto* pc = RE::PlayerCamera::GetSingleton();
@@ -2820,9 +2820,16 @@ namespace bo3z
 				}
 			}
 		}
-		void ChaseTick(RE::PlayerCharacter*, float a_delta)
+		void ChaseTick(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			if (!g_chase.on) return;
+			// (filming a rider from the front) the horse steers toward where the camera looks, so with the camera turned
+			// round it would wheel about forever: hold the horse to the heading it had when the chase began
+			if (RE::NiPointer<RE::Actor> mount; a_player && a_player->GetMount(mount) && mount) {
+				if (!g_chase.held) g_chase.heading = mount->data.angle.z, g_chase.held = true;
+				mount->data.angle.z = g_chase.heading;
+				a_player->data.angle.z = g_chase.heading;
+			}
 			auto* pc = RE::PlayerCamera::GetSingleton();
 			// (the horse's camera is the same over-the-shoulder camera: a rider filmed from the front as he gallops at you)
 			if (!pc || !pc->currentState || (pc->currentState->id != RE::CameraState::kThirdPerson && pc->currentState->id != RE::CameraState::kMount)) return;
