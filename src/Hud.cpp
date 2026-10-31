@@ -3283,10 +3283,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					bullet({ L, y + 2 * k }, 20, true);
 					Txt(dl, g_title, 20 * k, { L + 36 * k, y + 4 * k }, IM_COL32(210, 196, 170, 255), "LEAVE THE ALTAR");
 					y += 44 * k;
-					if (const auto wl = Classes::WonderLine(); !wl.empty()) {  // (your class's wonder weapon: its trial)
-						TxtGold(dl, g_body, 16 * k, { L, y }, wl);
-						y += 26 * k;
-					}
+					// (Noah: "the Easter egg clues should be in the Whispers tab") no secret's line under Leave
 				}
 				measuredH = y + scroll - a.y;
 				dl->PopClipRect();
