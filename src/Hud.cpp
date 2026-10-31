@@ -2996,7 +2996,22 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float contentH = measuredH > 0 ? measuredH + 40 * k : guessH;
 				const float h = std::min(contentH, size.y - 60 * k);
 				const ImVec2 a{ size.x * 0.5f - w * 0.5f, std::max(24 * k, size.y * 0.5f - h * 0.5f - 10 * k) }, b{ a.x + w, a.y + h };  // (Noah: centred, clear of the HUD)
-				Panel(dl, a, b, k, 0.92f);
+				// (Noah: "make the box a transparent gradient for the background and match Edge's UI style") no box: a smoked band
+				// that is darkest behind the rows and fades to nothing at both sides, a gold hairline over and under it that fades too
+				{
+					const float  pad = 150 * k, mid = 0.62f;
+					const ImVec2 A{ a.x - pad, a.y }, B{ b.x + pad, b.y };
+					const float  x1 = a.x + 30 * k, x2 = b.x - 30 * k;
+					const ImU32  clear = IM_COL32(6, 6, 7, 0), dark = IM_COL32(6, 6, 7, static_cast<int>(255 * mid));
+					dl->AddRectFilledMultiColor(A, { x1, B.y }, clear, dark, dark, clear);
+					dl->AddRectFilled({ x1, A.y }, { x2, B.y }, dark);
+					dl->AddRectFilledMultiColor({ x2, A.y }, B, dark, clear, clear, dark);
+					for (const float hy : { a.y, b.y }) {
+						const float hw = (B.x - A.x) * 0.5f, hx = (A.x + B.x) * 0.5f;
+						dl->AddRectFilledMultiColor({ hx - hw, hy - 0.6f * k }, { hx, hy + 0.6f * k }, IM_COL32(196, 170, 112, 0), IM_COL32(196, 170, 112, 170), IM_COL32(196, 170, 112, 170), IM_COL32(196, 170, 112, 0));
+						dl->AddRectFilledMultiColor({ hx, hy - 0.6f * k }, { hx + hw, hy + 0.6f * k }, IM_COL32(196, 170, 112, 170), IM_COL32(196, 170, 112, 0), IM_COL32(196, 170, 112, 0), IM_COL32(196, 170, 112, 170));
+					}
+				}
 				static float scroll = 0, scrollGoal = 0;
 				static float focusY0 = 0, focusY1 = 0;
 				scrollGoal = std::clamp(scrollGoal, 0.0f, std::max(0.0f, contentH - h));
