@@ -24,7 +24,6 @@
           "anyOf": [
             "MysticismMagic.esp|1D7020",
             "MysticismMagic.esp|2E8870",
-            "MysticismMagic.esp|1DC141",
             "MysticismMagic.esp|7BC311",
             "MysticismMagic.esp|1B8A09",
             "MysticismMagic.esp|1FA75F",
@@ -48,9 +47,10 @@
             "MysticismMagic.esp|E7ADBD",
             "MysticismMagic.esp|E7FED5",
             "MysticismMagic.esp|1F2FB",
-            "Skyrim.esm|3AEA3",
-            "Skyrim.esm|35D81",
-            "Skyrim.esm|7A82B"
+            "Apocalypse - Magic of Skyrim.esp|2878",
+            "Apocalypse - Magic of Skyrim.esp|15E728",
+            "Apocalypse - Magic of Skyrim.esp|4733C",
+            "Apocalypse - Magic of Skyrim.esp|2E0C0"
           ]
         }
       },

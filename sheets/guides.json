@@ -24,7 +24,6 @@
      "paras": [
       "<b>Your kit</b> - each item with its tier and the price of its next upgrade. Select one to upgrade it.",
       "<b>The Armory</b> - more summon families open as you free cities: <b>Dwemer</b> at 1, <b>Atronachs</b> at 2, <b>the Wild</b> at 3, <b>Ash</b> at 4, <b>Daedra</b> at 5, <b>the Night</b> at 7, <b>the Wrath</b> at 9. You keep every family you buy.",
-      "<b>Infuse</b> - the altar's roll: a random Infusion on one of your items (left / right picks which). Blast Furnace, Dead Wire, Thunder Wall, Cryo-Lock, Turned or Soul Siphon. One per item; rolling again replaces it. 4,000 Cursed Essence, 2,000 more for each extra roll the same night.",
       "<b>Dragon Priest relics</b> - every Dragon Priest you slay leaves a relic for your class. Take it at any Echo Altar. The Summoner's relics are the heroes and armies of old: Ysgramor, Gormlaith, Felldir, Hakon, Miraak, Karstaag, the Ebony Warrior, and four great armies."
      ]
     },
@@ -69,7 +68,6 @@
      "paras": [
       "<b>Your kit</b> - each element with its tier and the price of its next upgrade: each tier is the next spell of its ladder (Firebolt, Fireball, Incinerate, Immolate).",
       "<b>The Armory</b> - more elements open as you free cities: <b>Shock</b> at 1, <b>Cloaks</b> at 2, <b>Sun</b> at 3, <b>Walls</b> at 4, <b>Blood</b> at 5, <b>Runes</b> at 7, <b>Storms</b> at 9.",
-      "<b>Infuse</b> - the altar's roll: a random Infusion on one of your items (left / right picks which). Blast Furnace, Dead Wire, Thunder Wall, Cryo-Lock, Turned or Soul Siphon. One per item; rolling again replaces it. 4,000 Cursed Essence, 2,000 more for each extra roll the same night.",
       "<b>Dragon Priest relics</b> - every Dragon Priest you slay leaves a relic for your class. Take it at any Echo Altar. Destruction's relics are the support spells: Ash Cloud, Cinder Storm, Charged Nova and Symmetry."
      ]
     },
@@ -113,7 +111,6 @@
      "paras": [
       "<b>Your kit</b> - each bow and crossbow with its tier and the price of its next upgrade.",
       "<b>The Armory</b> - as you free cities: the <b>Rime Crossbow</b> at 1, <b>Rimehorn</b> at 2, the <b>Storm Crossbow</b> at 3, <b>Stormreach</b> at 4, <b>Skyhowl</b> at 6, <b>Dawnspire</b> at 8, <b>Thirstbow</b> at 9.",
-      "<b>Infuse</b> - the altar's roll: a random Infusion on one of your items (left / right picks which). Blast Furnace, Dead Wire, Thunder Wall, Cryo-Lock, Turned or Soul Siphon. One per item; rolling again replaces it. 4,000 Cursed Essence, 2,000 more for each extra roll the same night. (Cryo-Lock and Turned are the old special ammo.)",
       "<b>Dragon Priest relics</b> - every Dragon Priest you slay leaves a relic for your class. Take it at any Echo Altar. The Ranger's relics are three quivers that make your bows' and crossbows' blasts reach wider."
      ]
     },
@@ -159,7 +156,6 @@
      "paras": [
       "<b>Your kit</b> - the blade and each spell with its tier and the price of its next upgrade.",
       "<b>The Armory</b> - more touch spells open as you free cities: Frost touch at 1, Shock touch at 3, Sun touch at 5, Blood touch at 7.",
-      "<b>Infuse</b> - the altar's roll: a random Infusion on one of your items (left / right picks which). Blast Furnace, Dead Wire, Thunder Wall, Cryo-Lock, Turned or Soul Siphon. One per item; rolling again replaces it. 4,000 Cursed Essence, 2,000 more for each extra roll the same night.",
       "<b>Dragon Priest relics</b> - every Dragon Priest you slay leaves a relic for your class. Take it at any Echo Altar. The Spellsword's relics are the old Vigilants' spells, a step above the Armory's - four close (Flame, Frost and Storm Cloaks, Stendarr's Aura) and four reaching (Vampire's Bane, the Walls of the Tempest and the Winter, the Pyre Rune). Your blade stays your own."
      ]
     },
@@ -205,7 +201,7 @@
    "title": "The Echo Altar",
    "paras": [
     "Every city has one. Step onto it and activate it. Move with the D-pad or W/S, choose with A or Enter, leave with B.",
-    "From the top: <b>your class</b> (change it for Cursed Essence - each class keeps its own kit and progress), <b>your kit</b> (select an item to upgrade it), <b>the Armory</b> (new items, opened by freed cities), <b>Infuse</b> (the roll), a <b>Dragon Priest's relic</b> when one waits, <b>perks</b>, then the city's <b>trials</b>.",
+    "From the top: <b>your class</b> (change it for Cursed Essence - each class keeps its own kit and progress), a <b>Dragon Priest's relic</b> when one waits, then sections that open one at a time: <b>Your Kit</b> (select an item to upgrade it), <b>the Armory</b> (new items, opened by freed cities), <b>Perks</b>, <b>Your Dragon</b>, the city's <b>Trials</b> and the <b>Whispers</b> of your path's secret.",
     "<b>Freeing a city</b>: finish four trials (three shared, one your class's), then slay its <b>Dragon Priest</b>, who rises at night. Its fall ends the night and leaves a relic. A freed city is a sanctuary: none of the curse's dead rise inside it. Whiterun gives you a dragon to ride and Dragon's Updraft; Solitude gives you the Dance of Death.",
     "<b>Every 5th night</b> a great boss walks with the dead - and its dawn leaves a power-up at your feet."
    ]

@@ -540,7 +540,7 @@ LOADING_TIPS = [
     "Alduin shouted three words into the earth at Helgen - SLEN TIID VO, Flesh, Time, Undo - and every barrow answered.",
     "Alduin's mist lies on the door of Sovngarde. The dead cannot pass to Shor's hall, so they rise instead.",
     "Free six cities and your path's secret wakes. When it is won, the Greybeards call - your wonder waits beneath High Hrothgar.",
-    "An Echo Altar stands in every city. Upgrade your kit, roll an Infusion or take a perk - the night does not wait while you bargain.",
+    "An Echo Altar stands in every city. Upgrade your kit, take a relic or a perk - the night does not wait while you bargain.",
     "Gloomstalkers shriek to wound everyone near them. Kill them first.",
     "Necromancers hang back and raise more dead. Kill them first.",
     "Hold right mouse to gather a spell's full power in both hands. Let go too soon and the power gutters out.",
@@ -815,8 +815,7 @@ def guide_text():
            p("<b>Your class</b> - Summoner, Battle-mage, Ranger or Spellsword, chosen at the top of the altar. Each keeps its own gear and spells when you change."),
            p("<b>Your kit</b> - every item your class carries, with its tier and the price of its next upgrade: Tier I, Tier II, Tier III (Legendary), then Ascends."),
            p("<b>The Armory</b> - more of your class's spells, summons or bows open as you free cities."),
-           p("<b>Infuse</b> - the altar's roll: a random Infusion on one of your items."),
-           p("<b>Relics</b> - every Dragon Priest you slay leaves a relic for your class: take one of two at any altar."),
+                      p("<b>Relics</b> - every Dragon Priest you slay leaves a relic for your class: take it at any altar."),
            p("<b>Perks</b> - one of each a life: death takes them all."),
            p("<b>Trials</b> - the quest that wakes the altar. It sets four; win all four, in any order (step over to them with D-pad left or right, or A and D). "
              "Then the city's Dragon Priest rises at night near the altar. Slay it and the night ends at once - dawn breaks and the city is safe for good. Skyrim's difficulty sets how hard the trials are."),
