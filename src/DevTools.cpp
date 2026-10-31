@@ -81,7 +81,10 @@ namespace bo3z
 		// Present each frame, so it moves smoothly whatever the game is doing
 		struct CamAnim
 		{
-			int          mode = 0;  // 0 off, 1 path, 2 orbit
+			int          mode = 0;  // 0 off, 1 path, 2 orbit, 3 track (a fixed camera that keeps an actor's head in frame)
+			RE::FormID   target = 0;
+			bool         onPlayer = false;
+			float        lastLog = 0;
 			RE::NiPoint3 a, b, c;
 			float        yaw0 = 0, yaw1 = 0, pitch0 = 0, pitch1 = 0, dur = 1, radius = 0, height = 0, deg0 = 0, degPerSec = 0, tilt = 0;
 			bool         ease = true;
@@ -466,6 +469,23 @@ namespace bo3z
 				A.mode = 2, A.t0 = std::chrono::steady_clock::now();
 				if (FreeCam()) g_camAnim = A;
 				logger::info("dev: orbit r {:.0f} at {:.1f} deg/s", A.radius, A.degPerSec);
+			} else if (cmd == "camtrack") {
+				// camtrack <ref hex> <x y z | p dz>: the free camera stays put (or rides at the player's head, dz above) and keeps
+				// that actor's head in the middle of the frame - a dragon flying at the lens. Logs the distance as it goes
+				CamAnim     A;
+				std::string hex, w;
+				in >> hex >> w;
+				A.target = static_cast<RE::FormID>(std::stoul(hex, nullptr, 16));
+				if (w == "p") {
+					A.onPlayer = true;
+					in >> A.height;
+				} else {
+					A.a.x = std::stof(w);
+					in >> A.a.y >> A.a.z;
+				}
+				A.mode = 3, A.t0 = std::chrono::steady_clock::now();
+				if (FreeCam()) g_camAnim = A;
+				logger::info("dev: camtrack {:08X}", A.target);
 			} else if (cmd == "camstop") {
 				g_camAnim.mode = 0;
 				logger::info("dev: camstop");
@@ -834,6 +854,27 @@ namespace bo3z
 				while (dy < -180.0f) dy += 360.0f;
 				fc->rotation.y = (A.yaw0 + dy * u) * kRad;
 				fc->rotation.x = (A.pitch0 + (A.pitch1 - A.pitch0) * u) * kRad;
+			} else if (A.mode == 3) {
+				auto* t = RE::TESForm::LookupByID<RE::Actor>(A.target);
+				if (!t || !t->Get3D()) return;
+				if (A.onPlayer) {
+					if (auto* p = RE::PlayerCharacter::GetSingleton()) fc->translation = p->GetPosition() + RE::NiPoint3{ 0, 0, A.height };
+				} else {
+					fc->translation = A.a;
+				}
+				RE::NiPoint3 h = t->GetPosition();
+				if (auto* n = t->Get3D()->GetObjectByName("NPC Head [Head]")) h = n->world.translate;
+				else if (auto* n2 = t->Get3D()->GetObjectByName("NPC Head")) h = n2->world.translate;
+				else h.z += 300.0f;
+				const RE::NiPoint3 d = h - fc->translation;
+				const float        flat = std::sqrt(d.x * d.x + d.y * d.y);
+				fc->rotation.y = std::atan2(d.x, d.y);
+				fc->rotation.x = -std::atan2(d.z, std::max(1.0f, flat));
+				if (el - A.lastLog > 0.25f) {
+					A.lastLog = el;
+					logger::info("dev: camtrack t {:.2f} dist {:.0f}", el, d.Length());
+				}
+				return;
 			} else {
 				const float deg = A.deg0 + A.degPerSec * el;
 				fc->translation = { A.c.x + std::sin(deg * kRad) * A.radius, A.c.y + std::cos(deg * kRad) * A.radius, A.c.z + A.height };
