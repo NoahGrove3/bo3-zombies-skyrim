@@ -3066,21 +3066,58 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				};
 				// (Noah: "make different sections that show a drop down of what's in that section, then you can select what's in it after
 				// expanding it") a section's header: a chevron, its name, one line of what's in it; open, its rows below it
+				// (Noah: "make the tabs have a drop down animation when you expand the tab, so it's not instant") each section eases
+				// open over a quarter second: its rows slide down from under the header and fade in, the ones below it pushed down
+				// as it grows; shutting runs the same in reverse. The rows' height comes from the last frame they were drawn.
+				static float openT[6] = { 1, 0, 0, 0, 0, 0 }, bodyH[6] = {};
+				struct Body { int i = -1; float y0 = 0, top = 0, e = 1; int vtx = 0; } body;
+				const auto ease = [](float t) { t = std::clamp(t, 0.0f, 1.0f); return 1.0f - (1.0f - t) * (1.0f - t) * (1.0f - t); };  // (out-cubic)
 				const auto section = [&](int id, const std::string& title, const std::string& summary, bool hot) {
 					const bool open = s.altarOpen == id;
+					const int  i = std::clamp(id - 210, 0, 5);
+					openT[i] = std::clamp(openT[i] + (open ? 1.0f : -1.0f) * std::min(dt, 0.05f) / 0.26f, 0.0f, 1.0f);
+					const float e = ease(openT[i]);
 					focusRow(id, y - 6 * k, y + 38 * k);
 					const ImVec2 c{ L + 13 * k, y + 14 * k };
 					const ImU32  cc = s.altarFocus == id && !s.chooseOn ? kGold : hot ? tint : IM_COL32(170, 160, 140, 220);
-					if (open) dl->AddTriangleFilled({ c.x - 7 * k, c.y - 4 * k }, { c.x + 7 * k, c.y - 4 * k }, { c.x, c.y + 5 * k }, cc);   // open: pointing down
-					else dl->AddTriangleFilled({ c.x - 4 * k, c.y - 7 * k }, { c.x - 4 * k, c.y + 7 * k }, { c.x + 5 * k, c.y }, cc);       // shut: pointing right
+					{  // the chevron turns from pointing right (shut) to pointing down (open) as the section opens
+						const float th = e * 1.5707963f, cs = std::cos(th), sn = std::sin(th);
+						const auto  rot = [&](float px, float py) { return ImVec2{ c.x + (px * cs - py * sn) * k, c.y + (px * sn + py * cs) * k }; };
+						dl->AddTriangleFilled(rot(-4, -7), rot(-4, 7), rot(5, 0), cc);
+					}
 					Txt(dl, g_title, 20 * k, { L + 36 * k, y + 3 * k }, open ? kParch : IM_COL32(222, 210, 186, 245), title);
 					if (!summary.empty()) Txt(dl, g_body, 15 * k, { Rr - Measure(g_body, 15 * k, summary).x, y + 7 * k }, hot ? Fade(tint, 0.95f) : IM_COL32(170, 156, 132, 220), summary);
 					y += 42 * k;
-					if (!open) {
+					if (openT[i] <= 0.0f) {
 						dl->AddLine({ L, y - 4 * k }, { Rr, y - 4 * k }, IM_COL32(120, 104, 80, 70), 1.0f * k);
 						y += 4 * k;
+						return false;
 					}
-					return open;
+					// the rows: drawn whole, but clipped to the part that has dropped down so far, and slid up under the header
+					body.i = i, body.y0 = y, body.e = e, body.vtx = dl->VtxBuffer.Size;
+					dl->PushClipRect({ a.x, y - 2 * k }, { b.x, e >= 0.999f ? y + 100000.0f : y + e * bodyH[i] + 2 * k }, true);  // (fully open: no cut, the rows may grow)
+					y -= (1.0f - e) * bodyH[i] * 0.45f;
+					body.top = y;
+					return true;
+				};
+				const auto endSection = [&]() {
+					if (body.i < 0) return;
+					bodyH[body.i] = std::max(0.0f, y - body.top);
+					if (body.e < 0.999f) {  // the rows fade in behind the drop
+						const float f = std::clamp(body.e * 1.15f, 0.0f, 1.0f);
+						for (int v = body.vtx; v < dl->VtxBuffer.Size; ++v) {
+							ImU32& col = dl->VtxBuffer[v].col;
+							const ImU32 al = (col >> IM_COL32_A_SHIFT) & 0xFF;
+							col = (col & ~IM_COL32_A_MASK) | (static_cast<ImU32>(al * f) << IM_COL32_A_SHIFT);
+						}
+					}
+					dl->PopClipRect();
+					y = body.y0 + body.e * bodyH[body.i];
+					if (body.e < 0.999f) {  // the shut section's rule, fading out as it opens
+						dl->AddLine({ L, y - 4 * k }, { Rr, y - 4 * k }, IM_COL32(120, 104, 80, static_cast<int>(70 * (1.0f - body.e))), 1.0f * k);
+						y += 4 * k * (1.0f - body.e);
+					}
+					body.i = -1;
 				};
 				// [0] (Noah: "the class chooser built into the Echo Altar") your class - chosen here the first time, changed here after
 				if (!s.chooseOn) {
@@ -3131,6 +3168,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							y += 56 * k;
 						}
 						y += 6 * k;
+						endSection();
 					}
 					if (!s.armoryLines.empty()) {
 						int openN = 0, canN = 0;
@@ -3147,6 +3185,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 								y += 50 * k;
 							}
 							y += 6 * k;
+							endSection();
 						}
 					}
 				}
@@ -3198,6 +3237,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					TxtWrap(dl, g_body, 16 * k, { L, y + 28 * k }, IM_COL32(190, 178, 156, 230), std::string(gen::kPerkDesc[sel]), Rr - L, 2);
 					y += 78 * k;
+					endSection();
 				}
 				// [4]-[5] the freed city's Thu'um and the dragon: one section
 				const bool voiceOpen = (shout || !s.bondLocked) && section(213, shout ? "THU'UM AND DRAGON" : "YOUR DRAGON", shout ? std::string("a Thu'um to learn") : fmt::format("bond {} of 3", std::clamp(s.dragonBond, 0, 3)), shout);
@@ -3237,6 +3277,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 					y += 72 * k;
 				}
+				if (voiceOpen) endSection();
 				// [5b] the city's trials: any three of the five, then its Dragon Priest
 				int trialsDone = 0;
 				for (int q = 0; q < 5; ++q) trialsDone += (s.trialDone >> q) & 1;
@@ -3281,6 +3322,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Txt(dl, g_title, 20 * k, { TL, ty }, bc, "THE DRAGON PRIEST: " + s.trialBoss, bossUp ? 1.5f * k : 0.0f, bc);
 					TxtWrap(dl, g_body, 16 * k, { TL, ty + 30 * k }, IM_COL32(196, 182, 160, 235), s.trialBossLine, TR - TL, 2);
 					y = ty + 88 * k;
+					endSection();
 				}
 				// [5c] (Noah) the hidden quest's whispers: never told outright - a line more for each step found
 				if (!s.whispers.empty() && section(215, "WHISPERS", fmt::format("{} heard", s.whispers.size()), false)) {
@@ -3289,6 +3331,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						y += 46 * k;
 					}
 					y += 6 * k;
+					endSection();
 				}
 				// [6] leave
 				{
