@@ -1910,6 +1910,18 @@ namespace bo3z::Classes
 		});
 		logger::info("classes: wonder {} won - it waits in the Reliquary", kWonderName[a_cls]);
 	}
+	void DevGiveWonder(int a_cls)
+	{
+		if (a_cls < 0 || a_cls >= 4) return;
+		GrantWonder(a_cls);
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* em = RE::ActorEquipManager::GetSingleton();
+		auto* sp = a_cls == coffer::kSummoner ? WyrmSpell() : a_cls == coffer::kDestruction ? TomeSpell() : nullptr;
+		if (p && em && sp) em->EquipSpell(p, sp, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x13F42));  // (the right hand)
+		auto* w = a_cls == coffer::kRanger ? Vortex() : a_cls == coffer::kSpellsword ? Slayer() : nullptr;
+		if (p && em && w) em->EquipObject(p, w);
+		logger::info("dev: wonder {} given", kWonderName[a_cls]);
+	}
 	void DevWonder(int a_cls, int a_st)
 	{
 		if (a_cls < 0 || a_cls >= 4) return;

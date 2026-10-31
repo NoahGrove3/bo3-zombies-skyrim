@@ -1018,4 +1018,14 @@ namespace bo3z
 			return false;
 		}
 	}
+
+	void DevGiveBane()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (auto* bane = Bane(); p && bane) {
+			p->AddObjectToContainer(bane, nullptr, 1, nullptr);
+			RE::ActorEquipManager::GetSingleton()->EquipObject(p, bane);
+			logger::info("dev: Alduin's Bane given");
+		}
+	}
 }

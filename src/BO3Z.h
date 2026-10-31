@@ -410,6 +410,7 @@ namespace bo3z
 		std::string_view WonderName(int a_cls);
 		int              WonderMask();                 // bit per class: its wonder won (waiting in the Reliquary or taken up)
 		void             DevWonder(int a_cls, int a_st);  // dev: set a wonder's state (5 = won now, with the call)
+		void             DevGiveWonder(int a_cls);        // dev (trailer filming): the class's wonder straight into your hands, no Reliquary
 		bool             TakeWonder(int a_cls);        // (the Reliquary's pedestal) a waiting wonder taken up - or a lost one given again
 		bool             WonderOpen();                 // your class's secret quest is open (six cities freed) and the wonder not yet won
 		void             EarnWonder(int a_cls);        // (Eggs) the quest done: the wonder
@@ -622,6 +623,7 @@ namespace bo3z
 	// Alduin's Curse (sheet: curse): four night quests per city; a freed city is a sanctuary.
 	namespace Curse
 	{
+		void  DevSet(int a_town, int a_value);  // dev (trailer filming): a city's curse value as is (1010000 = Ward under way, 3760000 = its Dragon Priest walks)
 		void  Tick(float a_delta);
 		void  Reset();
 		void  OnUndeadDeath(RE::Actor* a_actor);
@@ -662,6 +664,7 @@ namespace bo3z
 	// Stage 2 (src/Echo.cpp): the Echo Stones, the wonder weapons' parts, the Reliquary under High Hrothgar
 	namespace Echo
 	{
+		void DevGiveBane();  // dev (trailer filming): Alduin's Bane into your hands
 		void Tick(float a_delta);
 		void HeardWords(int a_mask, bool a_live);  // (Net) the host's silenced words: dragons always, the Echo only as it falls
 		int  DragonMask();                         // the three dragons slain (bits 0-2)

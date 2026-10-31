@@ -462,6 +462,15 @@ namespace bo3z
 				int c = -1;
 				in >> c;
 				Classes::Choose(c);
+			} else if (cmd == "wondergive") {  // wondergive <0-3 class wonder | 4 Alduin's Bane>: into your hands (trailer filming)
+				int c = -1;
+				in >> c;
+				if (c == 4) Echo::DevGiveBane();
+				else Classes::DevGiveWonder(c);
+			} else if (cmd == "curse") {  // curse <town index> <value>: a city's curse state as is (trailer filming)
+				int t = -1, v = 0;
+				in >> t >> v;
+				Curse::DevSet(t, v);
 			} else if (cmd == "wonder") {  // wonder <class> <state 0-5>
 				int c = -1, st = 0;
 				in >> c >> st;

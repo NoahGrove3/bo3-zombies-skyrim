@@ -971,6 +971,12 @@ namespace bo3z
 			}
 		}
 
+		void DevSet(int a_town, int a_value)
+		{
+			if (a_town < 0 || a_town >= static_cast<int>(gen::kCurseCities.size())) return;
+			SetValue(a_town, a_value);
+			logger::info("dev: curse {} set to {}", gen::kTowns[a_town], a_value);
+		}
 		bool Freed(int a_town) { return a_town >= 0 && a_town < static_cast<int>(gen::kCurseCities.size()) && Get(a_town).freed; }
 		std::uint32_t CreditBits()
 		{
