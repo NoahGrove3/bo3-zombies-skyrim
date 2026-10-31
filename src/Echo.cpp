@@ -1019,7 +1019,7 @@ namespace bo3z
 		}
 	}
 
-	void DevGiveBane()
+	void Echo::DevGiveBane()
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (auto* bane = Bane(); p && bane) {
