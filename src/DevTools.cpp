@@ -77,6 +77,24 @@ namespace bo3z
 			return dir ? std::optional{ *dir } : std::nullopt;
 		}
 
+		// (trailer filming) the free camera on the move: a glide between two set-ups, or an orbit round a point. Driven from
+		// Present each frame, so it moves smoothly whatever the game is doing
+		struct CamAnim
+		{
+			int          mode = 0;  // 0 off, 1 path, 2 orbit
+			RE::NiPoint3 a, b, c;
+			float        yaw0 = 0, yaw1 = 0, pitch0 = 0, pitch1 = 0, dur = 1, radius = 0, height = 0, deg0 = 0, degPerSec = 0, tilt = 0;
+			bool         ease = true;
+			std::chrono::steady_clock::time_point t0{};
+		};
+		CamAnim g_camAnim;
+		RE::FreeCameraState* FreeCam()
+		{
+			auto* pc = RE::PlayerCamera::GetSingleton();
+			if (!pc) return nullptr;
+			if (!pc->IsInFreeCameraMode()) pc->ToggleFreeCameraMode(false);
+			return pc->IsInFreeCameraMode() && pc->currentState ? static_cast<RE::FreeCameraState*>(pc->currentState.get()) : nullptr;
+		}
 		void RunMain(const std::string& a_line)
 		{
 			std::istringstream in(a_line);
@@ -384,6 +402,7 @@ namespace bo3z
 				auto* pc = RE::PlayerCamera::GetSingleton();
 				std::string first;
 				in >> first;
+				g_camAnim.mode = 0;
 				if (first == "off") {
 					if (pc && pc->IsInFreeCameraMode()) {
 						pc->ToggleFreeCameraMode(false);
@@ -404,6 +423,26 @@ namespace bo3z
 					fc->rotation.y = yaw * 0.0174533f;
 					logger::info("dev: cam at {:.0f},{:.0f},{:.0f} yaw {:.1f} pitch {:.1f}", at.x, at.y, at.z, yaw, pitch);
 				}
+			} else if (cmd == "campath") {
+				// campath x1 y1 z1 yaw1 pitch1 x2 y2 z2 yaw2 pitch2 seconds [ease 1|0]: the free camera glides from one set-up to the other
+				CamAnim A;
+				int     ease = 1;
+				in >> A.a.x >> A.a.y >> A.a.z >> A.yaw0 >> A.pitch0 >> A.b.x >> A.b.y >> A.b.z >> A.yaw1 >> A.pitch1 >> A.dur >> ease;
+				A.ease = ease != 0, A.mode = 1, A.t0 = std::chrono::steady_clock::now();
+				if (FreeCam()) g_camAnim = A;
+				logger::info("dev: campath {:.1f} s", A.dur);
+			} else if (cmd == "orbit") {
+				// orbit cx cy cz radius height startDeg degPerSec [tiltDeg] [seconds, 0 = until camstop]: the free camera circles a point, looking at it
+				CamAnim A;
+				in >> A.c.x >> A.c.y >> A.c.z >> A.radius >> A.height >> A.deg0 >> A.degPerSec;
+				if (!(in >> A.tilt)) A.tilt = 0;
+				if (!(in >> A.dur)) A.dur = 0;
+				A.mode = 2, A.t0 = std::chrono::steady_clock::now();
+				if (FreeCam()) g_camAnim = A;
+				logger::info("dev: orbit r {:.0f} at {:.1f} deg/s", A.radius, A.degPerSec);
+			} else if (cmd == "camstop") {
+				g_camAnim.mode = 0;
+				logger::info("dev: camstop");
 			} else if (cmd == "fp") {
 				// fp 0|1: hide/show your first-person arms (art captures from your own eyes)
 				int v = 1;
@@ -751,9 +790,37 @@ namespace bo3z
 			}
 		}
 
+		void TickCamAnim()
+		{
+			auto& A = g_camAnim;
+			if (A.mode == 0) return;
+			auto* pc = RE::PlayerCamera::GetSingleton();
+			if (!pc || !pc->IsInFreeCameraMode() || !pc->currentState) { A.mode = 0; return; }
+			auto*       fc = static_cast<RE::FreeCameraState*>(pc->currentState.get());
+			const float el = std::chrono::duration<float>(std::chrono::steady_clock::now() - A.t0).count();
+			constexpr float kRad = 0.0174533f;
+			if (A.mode == 1) {
+				float u = std::clamp(el / std::max(0.05f, A.dur), 0.0f, 1.0f);
+				if (A.ease) u = u * u * (3.0f - 2.0f * u);
+				fc->translation = A.a + (A.b - A.a) * u;
+				float dy = A.yaw1 - A.yaw0;
+				while (dy > 180.0f) dy -= 360.0f;
+				while (dy < -180.0f) dy += 360.0f;
+				fc->rotation.y = (A.yaw0 + dy * u) * kRad;
+				fc->rotation.x = (A.pitch0 + (A.pitch1 - A.pitch0) * u) * kRad;
+			} else {
+				const float deg = A.deg0 + A.degPerSec * el;
+				fc->translation = { A.c.x + std::sin(deg * kRad) * A.radius, A.c.y + std::cos(deg * kRad) * A.radius, A.c.z + A.height };
+				fc->rotation.y = (deg + 180.0f) * kRad;
+				fc->rotation.x = (std::atan2(A.height, std::max(1.0f, A.radius)) / kRad + A.tilt) * kRad;
+			}
+			if (A.dur > 0 && el > A.dur + (A.mode == 2 ? 0.0f : 30.0f)) A.mode = A.mode == 2 ? 0 : A.mode;  // (an orbit with a length stops; a path holds its end)
+		}
+
 		void RunQueuedOnMain()
 		{
 			FeedKeys();
+			TickCamAnim();
 			// the game queue normally runs from the player's update; when that stops (free camera, a stuck menu)
 			// its lines still run from here after a moment, so the test channel can never lock itself out
 			if (std::chrono::steady_clock::now() - g_lastGameTick > std::chrono::milliseconds(1500)) {
