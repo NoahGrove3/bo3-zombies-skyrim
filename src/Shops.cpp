@@ -2052,7 +2052,7 @@ namespace bo3z
 					}
 				}
 				return code == 0x12 || code == 0xCB || code == 0xCD || code == 0xC8 || code == 0xD0 || code == 0x11 || code == 0x1E || code == 0x1F || code == 0x20 || code == 0x1C || code == 0x9C;
-			case RE::INPUT_DEVICE::kMouse: return code == 8 || code == 9;
+			case RE::INPUT_DEVICE::kMouse: return code == 0 || code == 8 || code == 9;  // (left click: select)
 			case RE::INPUT_DEVICE::kGamepad: return code == 0x4000 || code == 0x8000 || code == 0x1000 || code == 0x2000 || code == 0x0001 || code == 0x0002 || code == 0x0004 || code == 0x0008 || code == 0x0100 || code == 0x0200 || code == 0x000A || code == 0x0009;
 			default: return false;
 			}
@@ -2227,7 +2227,7 @@ namespace bo3z
 			               : (kb && (code == 0x1F || code == 0xD0)) || (pad && code == 0x0002) || (dev == RE::INPUT_DEVICE::kMouse && code == 9) ? 1
 			                                                                                                                                 : 0;
 			const int  side = (kb && (code == 0x1E || code == 0xCB)) || (pad && code == 0x0004) ? -1 : (kb && (code == 0x20 || code == 0xCD)) || (pad && code == 0x0008) ? 1 : 0;
-			const bool pick = (kb && (code == 0x1C || code == 0x9C)) || (pad && code == 0x1000);
+			const bool pick = (kb && (code == 0x1C || code == 0x9C)) || (pad && code == 0x1000) || (dev == RE::INPUT_DEVICE::kMouse && code == 0);  // (Noah: Enter or left click; A / X on a pad)
 			// roll again: the offer goes back (no refund) and the same roll turns once more, at its next price
 			const auto reroll = [&] {
 				const int row = g_lastRollRow;

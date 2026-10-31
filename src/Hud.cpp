@@ -2993,7 +2993,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float trialsH = (s.trialsOn ? 112 * k + 5 * 70 * k + 104 * k : 0.0f) + (s.whispers.empty() ? 0.0f : 56 * k + 46 * k * s.whispers.size());
 				static float measuredH = 0;  // (Noah: "five white dots under Leave the Altar" - the tops of the lines below it, cut by a short guess) the panel's real height, from the last frame
 				const float guessH = (shout ? 610 : 532) * k + 86 * k + 78 * k + 56 * k + (s.chooseOn ? 52 * k : 0.0f) + trialsH;
-				const float contentH = measuredH > 0 ? measuredH + 92 * k : guessH;
+				const float contentH = measuredH > 0 ? measuredH + 40 * k : guessH;
 				const float h = std::min(contentH, size.y - 60 * k);
 				const ImVec2 a{ size.x * 0.5f - w * 0.5f, std::max(24 * k, size.y * 0.5f - h * 0.5f - 10 * k) }, b{ a.x + w, a.y + h };  // (Noah: centred, clear of the HUD)
 				Panel(dl, a, b, k, 0.92f);
@@ -3002,7 +3002,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				scrollGoal = std::clamp(scrollGoal, 0.0f, std::max(0.0f, contentH - h));
 				scroll += (scrollGoal - scroll) * std::min(1.0f, dt * 10.0f);
 				const float cx = (a.x + b.x) * 0.5f;
-				dl->PushClipRect({ a.x, a.y + 6 * k }, { b.x, b.y - 66 * k }, true);
+				dl->PushClipRect({ a.x, a.y + 6 * k }, { b.x, b.y - 16 * k }, true);  // (no key line under it now)
 				// (Noah: "a complete rework of the echo altar UI so it changes depending on which class the player is using")
 				// the class's own colour runs through it - its name under the title, its rows' marks, its progress bars
 				const int   altarCls = Classes::Get();
@@ -3290,7 +3290,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (s.altarFocus == 20 && !s.chooseOn) scrollGoal = std::max(0.0f, contentH - h);  // (Leave in focus: all the way down, the lines under it in view)
 				// keep the row in focus in view (next frame)
 				// (focusY0/1: the focused row in the content's own space; on screen it stands at focusY - scroll)
-				if (focusY1 - scrollGoal > b.y - 80 * k) scrollGoal = focusY1 - (b.y - 80 * k);
+				if (focusY1 - scrollGoal > b.y - 30 * k) scrollGoal = focusY1 - (b.y - 30 * k);
 				if (focusY0 - scrollGoal < a.y + 20 * k) scrollGoal = focusY0 - (a.y + 20 * k);
 				// (Noah: "the D-pad doesn't scroll all the way to the top or the bottom - it stops just short and cuts off words")
 				// the first rows in focus show the panel from its very top (the title too); the last ones, to its very end
@@ -3301,13 +3301,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const float bh = std::max(30 * k, track * h / contentH);
 					dl->AddRectFilled({ b.x - 9 * k, a.y + 20 * k + (track - bh) * frac }, { b.x - 5 * k, a.y + 20 * k + (track - bh) * frac + bh }, Fade(kGold, 0.6f), 2 * k);
 				}
-				Divider(dl, cx, b.y - 58 * k, w * 0.38f, k, 0.7f);
-				{
-					const bool        ps = Settings::PlayStationIcons();
-					const std::string hint = g_padLast ? std::string("D-pad: move, open / shut   \xC2\xB7   ") + (ps ? "X" : "A") + ": select   \xC2\xB7   " + (ps ? "O" : "B") + ": leave"
-					                                   : std::string("W S: move   \xC2\xB7   D / A: open / shut   \xC2\xB7   Enter: select");
-					TxtC(dl, g_body, 16 * k, cx, b.y - 44 * k, IM_COL32(200, 186, 160, 225), hint);
-				}
+				// (Noah: "remove the controls on the bottom - it should be self-explanatory") no key line: the D-pad or W S moves, A / X,
+				// Enter or a left click selects
 			} else if (s.rollPhase > 0) {
 				// the roll with the menu closed: a small strip under the crosshair
 				const float R = 30 * k;
