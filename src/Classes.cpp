@@ -2164,8 +2164,8 @@ namespace bo3z::Classes
 					circle += dt * 0.6f;
 					RE::NiPoint3 want = foes.empty() ? me + RE::NiPoint3{ std::sin(circle) * 700.0f, std::cos(circle) * 700.0f, 650.0f }
 					                                 : foes[0]->GetPosition() + (me - foes[0]->GetPosition()) * 0.35f + RE::NiPoint3{ 0, 0, 520.0f };
-					const float far = at.GetDistance(me);
-					if (far > 4500.0f) {
+					const float away = at.GetDistance(me);
+					if (away > 4500.0f) {
 						a->SetPosition(want, true);  // (left far behind: it catches up at once)
 					} else {
 						RE::NiPoint3 step = want - at;
