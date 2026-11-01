@@ -1039,6 +1039,8 @@ namespace bo3z
 		std::vector<Well> g_wells;
 		struct VFlash { RE::ObjectRefHandle fx; float t, scale; };
 		std::vector<VFlash> g_vflash;  // (the Vortex's burst: its hole swelling out as a shockwave, then gone)
+		struct PFire { RE::ObjectRefHandle fx; float t, life, delay, scale; RE::NiPoint3 at; };
+		std::vector<PFire> g_pfire;  // (the Horn's dragon's violet breath: bursts placed along its line, gone a moment later)
 
 		// Time Stop (Chronos Hourglass): frozen zombies take the stored blow when time starts again.
 		struct Frozen
@@ -1821,6 +1823,24 @@ namespace bo3z
 				}
 			}
 			std::erase_if(g_vflash, [](const VFlash& f) { return f.t > 0.45f; });
+			for (auto& f : g_pfire) {
+				f.t += a_delta;
+				if (f.t < f.delay) continue;
+				if (!f.fx.get()) {
+					auto* p = RE::PlayerCharacter::GetSingleton();
+					auto* base = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kPurpleFire, gen::kPlugin);
+					auto  ref = p && base ? p->PlaceObjectAtMe(base, false) : nullptr;
+					if (!ref) { f.t = 99.0f; continue; }
+					ref->SetPosition(f.at);
+					ref->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(f.scale, 0.1f, 9.0f) * 100.0f);
+					f.fx = ref->CreateRefHandle();
+				}
+				if (f.t > f.delay + f.life) {
+					if (auto r = f.fx.get()) { r->Disable(); r->SetDelete(true); }
+					f.t = 99.0f;
+				}
+			}
+			std::erase_if(g_pfire, [](const PFire& f) { return f.t >= 99.0f; });
 		}
 
 		void StartRelease(const gen::GunDef& g);
@@ -2285,7 +2305,9 @@ namespace bo3z
 			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
 			// (the class audit: a flat share - the plain bow outgrew the wonder from about night 20) on the one curve: a Tier III
 			// item's, a Legendary's three Ascends more, with the night's power
-			const float grow = UpgradeMult(a_legendary ? 6 : 3) * (0.7f + 0.3f * Arcana::Power());
+			// (Noah: "the wonder weapons should be the strongest weapons for their class") above every bow and crossbow's
+			// highest tier (13): the curve's 15th step, the 16th Legendary
+			const float grow = UpgradeMult(a_legendary ? 16 : 15) * (0.7f + 0.3f * Arcana::Power());
 			Well w{ at, a_legendary ? 3.0f : 2.2f, whole * (a_legendary ? 0.32f : 0.22f) * grow, 0.15f };
 			w.vortex = true;
 			w.reach = a_legendary ? 1300.0f : 800.0f;
@@ -2300,6 +2322,11 @@ namespace bo3z
 			Audio::AtPoint(gen::Sound::unleash_hearth, at);
 			g_wells.push_back(std::move(w));
 			logger::info("vortex: a black hole opens{}", a_legendary ? " (Legendary)" : "");
+		}
+		void  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life)
+		{
+			if (g_pfire.size() > 40) return;  // (never a screen of it)
+			g_pfire.push_back({ {}, 0.0f, a_life, a_delay, a_scale, a_at });
 		}
 		float AdsBlend() { return g_ads; }
 		bool  Owns(int a_gun) { return SlotOf(a_gun) >= 0; }
@@ -2785,7 +2812,7 @@ namespace bo3z
 			Spellcraft::Reset();
 			BowsImpl::Reset();
 			// (the audit: a load mid-unleash let the old game's stars fall, wells pull and storms crackle in the new one)
-			g_detonations.clear(), g_arcs.clear(), g_dots.clear(), g_shrink.clear(), g_blasts.clear(), g_wells.clear(), g_vflash.clear(), g_frozen.clear(), g_prisms.clear();
+			g_detonations.clear(), g_arcs.clear(), g_dots.clear(), g_shrink.clear(), g_blasts.clear(), g_wells.clear(), g_vflash.clear(), g_pfire.clear(), g_frozen.clear(), g_prisms.clear();
 			g_hexed.clear(), g_doomed.clear(), g_plagued.clear();
 			g_zones.clear(), g_chill.clear(), g_frozenUntil.clear();
 			Props::g_world.clear(), Props::g_twisters.clear();

@@ -1345,6 +1345,7 @@
   "ARMO:tb_dread_putrid": "0xd3d",
   "ARMA:tb_dread_putrid": "0xd3e",
   "MGEF:set_swift": "0xd3f",
-  "SPEL:set_swift": "0xd40"
+  "SPEL:set_swift": "0xd40",
+  "ACTI:purplefire": "0xd41"
  }
 }

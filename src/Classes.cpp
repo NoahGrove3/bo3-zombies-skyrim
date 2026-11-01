@@ -1550,7 +1550,7 @@ namespace bo3z::Classes
 	{
 		// (the class audit: the Dragon Slayer, the Spellsword's wonder, never grew - four times weaker than its Madness Sword)
 		// it stands two tiers above your blade (Tier III at the least), three once the three dragons fall
-		if (auto* sl = Slayer(); a_w && sl && a_w == sl) return std::max(3, Kit::TierOfWeapon(SpellswordBlade()) + (AfterSovngarde() ? 3 : 2));
+		if (auto* sl = Slayer(); a_w && sl && a_w == sl) return std::max(AfterSovngarde() ? 16 : 15, Kit::TierOfWeapon(SpellswordBlade()) + (AfterSovngarde() ? 3 : 2));  // (Noah: the wonders the strongest of their class - above the blade's highest tier, 13)
 		if (const int kt = Kit::TierOfWeapon(a_w); kt >= 0) return kt;  // (the altar rework: a kit or relic blade's own tiers)
 		auto* b = a_w ? a_w->As<RE::TESBoundObject>() : nullptr;
 		if (!b || !b->GetFile(0)) return -1;
@@ -2175,11 +2175,21 @@ namespace bo3z::Classes
 					if (!foes.empty()) {
 						const auto tgt = foes[0]->GetPosition();
 						a->SetHeading(std::atan2(tgt.x - at.x, tgt.y - at.y));
+						// (Noah: "the Horn of the Spectral Wyrm should shoot purple fire and deal the most DPS out of all the summons")
+						// violet fire rolled down onto them every 1.2 s: what it lands on loses about three times what a fully
+						// Ascended summon's bites take in that time - and all round it, not one at a time
 						if (breathT <= 0) {
-							breathT = 2.5f;
+							breathT = 1.2f;
 							const RE::NiPoint3 mouth = a->GetPosition() + RE::NiPoint3{ 0, 0, 120.0f };
-							for (int k = 1; k <= 4; ++k) Gun::FxBlast("dragonfire", mouth + (tgt - mouth) * (k / 4.0f));
-							Gun::AreaHurt(tgt, 280.0f, 1.1f * UpgradeMult(AfterSovngarde() ? 6 : 4) * (0.7f + 0.3f * Arcana::Power()), "fireball");
+							const float pf = 0.7f + 0.3f * Arcana::Power();
+							const float top = UpgradeMult(AfterSovngarde() ? 16 : 15);  // (above every kit item's highest tier, 13)
+							for (int k = 1; k <= 6; ++k) {
+								const RE::NiPoint3 at = mouth + (tgt - mouth) * (k / 6.0f);
+								Gun::PurpleFire(at, 0.6f + 0.12f * k, 0.05f * k, 0.9f);
+								if (k < 6) Gun::AreaHurt(at, 170.0f, 0.15f * top * pf, "");
+							}
+							Gun::PurpleFire(tgt + RE::NiPoint3{ 0, 0, 10.0f }, 2.0f, 0.32f, 1.4f);
+							Gun::AreaHurt(tgt, 320.0f, 0.6f * top * pf, "");
 						}
 					}
 				}
@@ -2565,9 +2575,9 @@ namespace bo3z::Classes
 		int k = 0;
 		const bool legend = AfterSovngarde();
 		const float pf = 0.7f + 0.3f * Arcana::Power();
-		constexpr int kTopTier = 13;  // (Kit: Tier III and ten Ascends)
+		const int kTopTier = legend ? 16 : 15;  // (Noah: "the wonder weapons should be the strongest weapons for their class") above any kit spell's highest tier (13)
 		for (auto* f : foes) {
-			if (f && !f->IsDead()) Gun::AreaHurt(f->GetPosition(), 150.0f, 0.6f * UpgradeMult(kTopTier) * pf * (legend ? 1.15f : 1.0f), "");
+			if (f && !f->IsDead()) Gun::AreaHurt(f->GetPosition(), 150.0f, 0.6f * UpgradeMult(kTopTier) * pf, "");
 		}
 		for (const auto& s : coffer::kSpells) {
 			if (s.cls != coffer::kDestruction || s.ladder > 5) continue;

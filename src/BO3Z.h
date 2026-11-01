@@ -739,7 +739,8 @@ namespace bo3z
 		void                  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay = 0.0f);  // a no-damage Skyrim explosion (look only)
 		void                  FxFrom(RE::BGSExplosion* a_src, const RE::NiPoint3& a_at, float a_scale);  // any mod's burst, quieted (look only), at a_scale
 		RE::BGSExplosion*     Quiet(RE::BGSExplosion* a_src);  // that burst's quiet copy (no damage, no knockdown, no tint)
-		void                  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast);  // the night's dead round a point lose a share of a whole zombie's health
+		void                  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast);
+		void                  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);  // the Horn's dragon's violet flame, here a moment  // the night's dead round a point lose a share of a whole zombie's health
 		void                  BlackHole(const RE::NiPoint3& a_at, bool a_legendary);  // the Subsuming Vortex: a purple singularity pulls the dead in, then bursts
 		void                  DevCast(const std::string& a_mode);  // dev: 'cast tap|full|ult|orb|hand' with a spell in hand
 	}

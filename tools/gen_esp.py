@@ -472,6 +472,8 @@ for name, hx in T['weap_longbow']['subs']:
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'vortex'), subs))
 recs['ACTI'].append(record('ACTI', fid('ACTI', 'vortexfx'), [sub('EDID', z('UN_VortexFx')), sub('OBND', struct.pack('<6h', -170, -170, -150, 170, 170, 150)),
     sub('MODL', z('CurseOfAlduin\\fx\\vortex.nif')), sub('FNAM', b'\0\0')]))
+recs['ACTI'].append(record('ACTI', fid('ACTI', 'purplefire'), [sub('EDID', z('UN_PurpleFire')), sub('OBND', struct.pack('<6h', -120, -120, -40, 120, 120, 140)),   # (the Horn's dragon's violet breath)
+    sub('MODL', z('CurseOfAlduin\\fx\\purplefire.nif')), sub('FNAM', b'\0\0')]))
 
 # (the classes overhaul) the Summoner's command: hidden perks that set how many summons you may hold (2, 3, 4) -
 # Twin Souls' own entry point (Mod Commanded Actor Limit, Set Value), without its conditions, above it in priority
