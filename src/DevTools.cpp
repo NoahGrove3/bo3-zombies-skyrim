@@ -147,6 +147,15 @@ namespace bo3z
 				if (best) {
 					best->ActivateRef(player, 0, nullptr, 1, false);
 				}
+			} else if (cmd == "allkit" && player) {
+				// allkit: (trailer filming) every class's kit and Armory at its top tier, every relic, the four wonders, Alduin's
+				// Bane, the glider at its last bond with Dragon's Updraft, and Cursed Essence to spend
+				Kit::DevAll();
+				for (int c = 0; c < 4; ++c) Classes::DevGiveWonder(c);
+				Echo::DevGiveBane();
+				Movement::TestKit();
+				if (const int have = Points::Get(); have < 150000) Points::Refund(150000 - have);
+				logger::info("dev: allkit given");
 			} else if (cmd == "mount" && player) {
 				// mount [base hex]: ride the nearest horse; with none near, place one (default Shadowmere) - run it again to climb on
 				std::string hex;

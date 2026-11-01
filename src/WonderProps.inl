@@ -405,6 +405,41 @@ namespace Props
 			Spellcraft::Fling(f, f->GetPosition() - dir * 120.0f - RE::NiPoint3{ 0, 0, 80.0f }, a_power ? 24.0f : 16.0f);  // (VERY far)
 		}
 	}
+	// (Noah: "the dragon slayer sword ... is supposed to send lightning slashes similar to Alduin's Bane but not as strong in
+	// damage") the Spellsword's wonder: every swing looses a crescent of lightning down the line - a power attack a wider,
+	// longer one - at about two fifths of the Bane's wind, and it knocks the dead back rather than hurling them away
+	RE::TESObjectWEAP* SlayerForm()
+	{
+		static RE::TESObjectWEAP* w = nullptr;
+		if (!w) if (auto* dh = RE::TESDataHandler::GetSingleton()) w = dh->LookupForm<RE::TESObjectWEAP>(0x00083D, "Ultra Greatswords.esp");
+		return w;
+	}
+	bool SlayerInHand(RE::PlayerCharacter* p)
+	{
+		auto* w = SlayerForm();
+		return p && w && (p->GetEquippedObject(false) == w || p->GetEquippedObject(true) == w);
+	}
+	void SlayerSlash(RE::PlayerCharacter* p, bool a_power)
+	{
+		const float range = a_power ? 2000.0f : 1400.0f, width = a_power ? 220.0f : 150.0f;
+		const Aim aim = AimAt(range);
+		RE::NiPoint3 dir = aim.dir; dir.z = 0;
+		if (dir.Length() < 0.01f) dir = { 0, 1, 0 };
+		dir.Unitize();
+		const RE::NiPoint3 side{ -dir.y, dir.x, 0 };
+		const RE::NiPoint3 at0 = p->GetPosition() + RE::NiPoint3{ 0, 0, 90.0f };
+		const int steps = a_power ? 5 : 4;
+		for (int k = 1; k <= steps; ++k) {  // (the crescent races out: a crack of lightning a step further each beat)
+			const float dd = range / steps * k;
+			Blast(BlastIndex("shockmass"), at0 + dir * dd, 0.04f * k, a_power ? 0.45f : 0.32f);
+			if (a_power || (k & 1)) Blast(BlastIndex("runeshock"), at0 + dir * (dd - 50.0f) + side * 110.0f * ((k & 1) ? 1.0f : -1.0f), 0.04f * k + 0.02f, 0.28f);
+		}
+		Audio::AtPoint(gen::Sound::unleash_stormcaller, at0 + dir * 200.0f);
+		for (auto* f : InLine(aim, range, width)) {
+			Damage(f, FangBase() * BaneMult() * (a_power ? 0.65f : 0.32f), false, false, true);
+			Spellcraft::Fling(f, f->GetPosition() - dir * 120.0f - RE::NiPoint3{ 0, 0, 80.0f }, a_power ? 7.0f : 4.0f);
+		}
+	}
 	RE::ObjectRefHandle g_skyMark;
 	void SkyFireball(const RE::NiPoint3& a_at)
 	{
@@ -413,7 +448,7 @@ namespace Props
 		auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(0x0000003B);
 		if (!p || !ball || !xm) return;
 		auto m = g_skyMark.get();
-		if (!m || m->IsDeleted() || m->GetParentCell() != p->GetParentCell()) {
+		if (!m || m->IsDeleted() || m->IsDisabled() || !m->GetParentCell() || !m->GetParentCell()->IsAttached() || m->GetParentCell() != p->GetParentCell()) {
 			auto ref = p->PlaceObjectAtMe(xm, false);
 			if (!ref) return;
 			g_skyMark = ref->CreateRefHandle();
@@ -424,6 +459,9 @@ namespace Props
 		for (auto* f : Foes(a_at, 120.0f)) { tgt = f; break; }
 		m->SetPosition(a_at + RE::NiPoint3{ Rand(-250.0f, 250.0f), Rand(-250.0f, 250.0f), 1800.0f });
 		m->SetAngle({ 1.45f, 0.0f, Rand(0.0f, 6.28f) });  // (facing down, a little slanted: with no one there it falls on the spot)
+		// (Noah: a crash some way into Alduin's shade) never a fireball loosed at one of the dead that is dying, gone or
+		// unloaded - it falls on the spot instead
+		if (tgt && (tgt->IsDead() || tgt->IsDisabled() || !tgt->Is3DLoaded())) tgt = nullptr;
 		if (auto* c = m->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) {
 			c->CastSpellImmediate(ball, false, tgt, 1.0f, false, 0.0f, p);
 		}
@@ -440,7 +478,7 @@ namespace Props
 		if (g_baneStorm > 0) {  // Alduin's shade: meteors on the dead round you
 			g_baneStorm -= a_delta;
 			if ((g_baneMeteor -= a_delta) <= 0) {
-				g_baneMeteor = 0.55f;
+				g_baneMeteor = 0.8f;  // (fewer in the air at once)
 				auto foes = Foes(p->GetPosition(), 1400.0f);
 				const RE::NiPoint3 at = foes.empty() ? p->GetPosition() + RE::NiPoint3{ Rand(-600, 600), Rand(-600, 600), 0 } : foes[static_cast<std::size_t>(Rand(0, static_cast<float>(foes.size()) - 0.01f))]->GetPosition();
 				// (Noah: the meteors themselves should be seen falling) Skyrim's fireball loosed from high above, falling on
@@ -454,11 +492,12 @@ namespace Props
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (p) TickBane(p, a_delta);
-		if (g_weaponSwing.exchange(false) && FangInHand(p)) {
+		if (g_weaponSwing.exchange(false) && p) {
 			auto* proc = p->GetActorRuntimeData().currentProcess;
 			auto* high = proc ? proc->high : nullptr;
 			const bool power = high && high->attackData && high->attackData->data.flags.any(RE::AttackData::AttackFlag::kPowerAttack);
-			BaneWind(p, power);  // (Noah: every class's every swing - wind slashes down the line that blow the dead FAR away)
+			if (FangInHand(p)) BaneWind(p, power);  // (Noah: every class's every swing - wind slashes down the line that blow the dead FAR away)
+			else if (SlayerInHand(p)) SlayerSlash(p, power);
 		}
 		for (auto& t : g_twisters) {
 			if (t.chase) {  // turn, slowly, toward the nearest of the dead

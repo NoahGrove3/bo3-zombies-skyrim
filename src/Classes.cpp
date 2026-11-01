@@ -639,6 +639,8 @@ namespace bo3z::Classes
 			return n;
 		}
 		float g_tomeCool = 0, g_bladeCool = 0, g_vortexCool = 0;
+		float g_tomeHold = 0;  // (the Six Fires: their spells held at the top tier until it runs out)
+		std::vector<std::pair<int, int>> g_tomeHeld;  // a spell and the level it had
 		struct VortexArrowState { RE::NiPoint3 last; bool done, hit; };
 		std::unordered_map<RE::FormID, VortexArrowState> g_vortexArrows;  // the Subsuming Vortex's arrows in flight
 
@@ -671,6 +673,16 @@ namespace bo3z::Classes
 		{
 			if (auto* sp = WyrmSpell()) {
 				sp->fullName = kWonderName[0];
+				// (Noah: "reduce the mana required to cast to 100 and no cast cooldown") a plain spell in the hand at 100 magicka,
+				// never a once-a-day power, cast at once
+				if (sp->data.spellType != RE::MagicSystem::SpellType::kSpell) {
+					logger::info("classes: the Horn's spell was type {} - made a spell in the hand", static_cast<int>(sp->data.spellType));
+					sp->data.spellType = RE::MagicSystem::SpellType::kSpell;
+					if (auto* either = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F44)) sp->SetEquipSlot(either);
+				}
+				sp->data.costOverride = 100;
+				sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
+				sp->data.chargeTime = 0.25f;
 				for (auto* e : sp->effects) {
 					if (e) e->effectItem.duration = AfterSovngarde() ? 3600 : 60;
 				}
@@ -2500,10 +2512,7 @@ namespace bo3z::Classes
 		if (!tome || a_spell != tome->GetFormID()) return false;
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p) return true;
-		if (g_tomeCool > 0) {
-			Hud::Banner(fmt::format("The Six Fires gather again ({:.0f} s)", g_tomeCool), 2.0f);
-			return true;
-		}
+		// (Noah: "no cast cooldown") as often as your magicka allows
 		const auto foes = NearFoes(p->GetPosition(), 2600.0f, 6);
 		if (foes.empty()) {
 			Hud::Banner("The Six Fires find nothing to burn", 2.0f);
@@ -2512,20 +2521,28 @@ namespace bo3z::Classes
 		// (the class audit: nine casts on the same bodies within a quarter second took one share between them - the wonder hit
 		// softer than a plain bolt) its six fires each burst on their foe for a real share, every 8 s; only the six element
 		// ladders (Fire, Frost, Shock, Sun, Blood, Runes), as its name says
-		g_tomeCool = 8.0f;
+		// (Noah: "the tome of six fires needs to be updated with the current max tier for all the element spells") every fire at
+		// the top of the curve - the ladder's last rung, fully Ascended (a kit item's highest tier) - whatever your own are
 		int k = 0;
 		const bool legend = AfterSovngarde();
 		const float pf = 0.7f + 0.3f * Arcana::Power();
+		constexpr int kTopTier = 13;  // (Kit: Tier III and ten Ascends)
 		for (auto* f : foes) {
-			if (f && !f->IsDead()) Gun::AreaHurt(f->GetPosition(), 150.0f, 0.6f * UpgradeMult(legend ? 6 : 4) * pf, "");
+			if (f && !f->IsDead()) Gun::AreaHurt(f->GetPosition(), 150.0f, 0.6f * UpgradeMult(kTopTier) * pf * (legend ? 1.15f : 1.0f), "");
 		}
 		for (const auto& s : coffer::kSpells) {
 			if (s.cls != coffer::kDestruction || s.ladder > 5) continue;
 			const int idx = static_cast<int>(&s - coffer::kSpells.data());
 			RE::Actor* t = foes[k % foes.size()];
-			if (s.rung == s.rungs) CastFrom(p, Arcana::Spell(idx), t), ++k;
-			else if (legend && s.rung == 3) CastFrom(p, Arcana::Spell(idx), foes[(k + 1) % foes.size()]);
+			const bool top = s.rung == s.rungs, third = legend && s.rung == 3;
+			if (!top && !third) continue;
+			// the spell held at its highest tier until its fire has landed (a few seconds), then given back as it was
+			if (auto it = std::find_if(g_tomeHeld.begin(), g_tomeHeld.end(), [&](auto& h) { return h.first == idx; }); it == g_tomeHeld.end()) g_tomeHeld.push_back({ idx, Arcana::Level(idx) });
+			Arcana::SetLevel(idx, kTopTier - Arcana::TierOfRung(idx));
+			if (top) CastFrom(p, Arcana::Spell(idx), t), ++k;
+			else CastFrom(p, Arcana::Spell(idx), foes[(k + 1) % foes.size()]);
 		}
+		g_tomeHold = 3.0f;
 		Gun::FxBlast("fireball", p->GetPosition() + RE::NiPoint3{ 0, 0, 90.0f });
 		logger::info("classes: the Six Fires on {} foes{}", foes.size(), legend ? " (Legendary)" : "");
 		return true;
@@ -2549,6 +2566,10 @@ namespace bo3z::Classes
 	{
 		TickSummons(a_delta);
 		g_tomeCool = std::max(0.0f, g_tomeCool - a_delta);
+		if (g_tomeHold > 0 && (g_tomeHold -= a_delta) <= 0) {
+			for (auto& [idx, lv] : g_tomeHeld) Arcana::SetLevel(idx, lv);
+			g_tomeHeld.clear();
+		}
 		g_bladeCool = std::max(0.0f, g_bladeCool - a_delta);
 		g_vortexCool = std::max(0.0f, g_vortexCool - a_delta);
 		auto* bow = Vortex();

@@ -1198,6 +1198,7 @@ namespace bo3z
 		std::vector<std::uint8_t> State();        // co-save 'KIT1'
 		void  SetState(const std::vector<std::uint8_t>& a_v);
 		void  Revert();
+		void  DevAll();                          // dev: every class's whole kit at its highest tier, every relic
 		bool  Loaded();                           // this save carries the rework's record
 	}
 }

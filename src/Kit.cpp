@@ -1234,4 +1234,73 @@ namespace bo3z::Kit
 		g_last.clear(), g_procCool.clear();
 	}
 	bool Loaded() { return g_loaded; }
+
+	// dev (trailer filming, Noah: "give my character everything from all classes") every class's whole kit and Armory at its
+	// highest tier, every relic, every bow and crossbow, the four wonders and Alduin's Bane - your class stays as it is
+	void DevAll()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return;
+		constexpr int kTop = kMaxTier;
+		int n = 0;
+		for (int c = 0; c < 4; ++c) {
+			const auto defs = Defs(c);
+			auto&      st = g_cls[c];
+			for (int i = 0; i < static_cast<int>(defs.size()) && i < kMaxItems; ++i) {
+				const auto& d = defs[i];
+				if (d.at == kGone) continue;
+				st.owned |= 1u << i;
+				switch (d.kind) {
+				case Kind::Ladder: {
+					int top = -1;
+					for (int j = 0; j < static_cast<int>(coffer::kSpells.size()); ++j) {
+						const auto& sp = coffer::kSpells[j];
+						if (sp.cls == c && d.ref == std::string_view(sp.ladderLabel) && (top < 0 || sp.rung > coffer::kSpells[top].rung)) top = j;
+					}
+					if (top < 0 || !Arcana::Spell(top)) break;
+					if (!Arcana::Known(top)) Arcana::Give(top, false);
+					Arcana::SetLevel(top, kTop - Arcana::TierOfRung(top));
+					++n;
+					break;
+				}
+				case Kind::Bow: {
+					const int b = BowIndex(d.ref);
+					if (b < 0) break;
+					if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kBows[b].weap, gen::kPlugin); w && p->GetItemCount(w) <= 0) p->AddObjectToContainer(w, nullptr, 1, nullptr);
+					Bows::SetLevel(b, 3);
+					st.tier[i] = static_cast<std::uint8_t>(kTop - 3);
+					++n;
+					break;
+				}
+				case Kind::Crossbow: {
+					auto* w = Classes::CrossbowForm(Elem(d));
+					if (!w) break;
+					if (p->GetItemCount(w) <= 0) Classes::GiveGear(w, 1, false);
+					Classes::SetCrossbowLevel(w, 3);
+					st.tier[i] = static_cast<std::uint8_t>(kTop - 3);
+					++n;
+					break;
+				}
+				case Kind::Blade:
+					st.tier[i] = static_cast<std::uint8_t>(kTop);
+					Grant(c, i, false);
+					++n;
+					break;
+				case Kind::Armour:
+					st.tier[i] = 3;
+					Classes::GiveArmourSet(c, 3, false);
+					++n;
+					break;
+				}
+			}
+			for (int r = 0; r < RelicCount(c) && r < kMaxRelics; ++r) {
+				st.relics |= 1u << r;
+				st.relicTier[r] = static_cast<std::uint8_t>(kTop);
+				if (auto* sp = RelicSpell(c, r)) Classes::LearnSpell(sp);
+			}
+		}
+		Classes::RestockWonder();  // (the crossbows' bolts, the Vortex's arrows)
+		SyncWeapons(false);
+		logger::info("dev: everything from every class - {} kit items at tier {}, every relic", n, kTop);
+	}
 }

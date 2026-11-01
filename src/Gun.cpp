@@ -1775,10 +1775,15 @@ namespace bo3z
 					}
 				}
 				if (w.left <= 0) {  // collapse
-					Blast(BlastIndex("darkmassive"), w.at + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, w.vortex ? std::clamp(w.burst / 420.0f, 0.5f, 2.0f) : kBlastScale);
+					// (Noah: "the after explosion effect looks fine but should be colored purple instead of red") the Vortex's burst in
+					// the void's own violet: the Daedric orb's blast, swelled, with the starfield's flash inside it
 					if (w.vortex) {
+						const float sc = std::clamp(w.burst / 420.0f, 0.5f, 2.0f);
+						Blast(BlastIndex("daedraball"), w.at + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, 1.1f * sc);
 						Blast(BlastIndex("constellation"), w.at + RE::NiPoint3{ 0, 0, 60.0f }, 0.05f, std::clamp(w.burst / 500.0f, 0.4f, 1.6f));
-						Blast(BlastIndex("daedraball"), w.at + RE::NiPoint3{ 0, 0, 80.0f }, 0.1f, 0.6f);
+						Blast(BlastIndex("daedramouth"), w.at + RE::NiPoint3{ 0, 0, 80.0f }, 0.1f, 0.8f * sc);
+					} else {
+						Blast(BlastIndex("darkmassive"), w.at + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, kBlastScale);
 					}
 					Forms::Play(gen::Sound::cast_heavy);
 					for (auto* f : Foes(w.at, w.burst)) {
