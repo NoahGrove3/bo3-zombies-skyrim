@@ -166,7 +166,34 @@ def fx_blood(t, f):
     return rgb, inten
 
 
-FX = {'fire': fx_fire, 'frost': fx_frost, 'shock': fx_shock, 'wind': fx_wind, 'sun': fx_sun, 'blood': fx_blood}
+def fx_void(t, f):
+    """(the Subsuming Vortex, the Ranger's wonder) a little black hole: a dark heart with a thin white-violet photon ring
+    round it, spiral arms of violet light winding in toward it, and motes of light dragged in, spinning faster as they
+    fall (loops seamlessly: every motion a whole number of turns over the 64 frames)"""
+    lr = np.log(R + 0.04)
+    arms = 0.5 + 0.5 * np.sin(3 * ANG + 5.5 * lr + t * 2 * np.pi * 3)          # (lr grows outward, the phase sends them in)
+    arms = arms ** 3
+    turb = samp(A, (ANG / (2 * np.pi)) % 1.0 * 2 + t * 2, lr * 0.6 + t * 1)
+    disc = np.clip(1 - R / 0.92, 0, 1) ** 1.3 * np.clip((R - 0.13) / 0.12, 0, 1)
+    swirl = disc * (0.25 + 0.75 * arms) * (0.6 + 0.8 * turb)
+    ring = 0.7 * np.exp(-((R - 0.15) / 0.014) ** 2) * (0.85 + 0.15 * np.sin(ANG * 2 - t * 2 * np.pi * 4))
+    glow = 0.35 * np.exp(-((R - 0.2) / 0.12) ** 2)
+    rng = np.random.default_rng(91)
+    motes = np.zeros_like(R)
+    for k in range(14):
+        a0 = rng.uniform(0, 2 * np.pi); sp = int(rng.integers(1, 3)); ph = (t * sp + k / 14) % 1.0
+        rad = 0.16 + 0.78 * (1 - ph) ** 1.4
+        ang = a0 + 0.9 / rad + t * 2 * np.pi        # (faster the nearer the heart)
+        mx, my = math.cos(ang) * rad, math.sin(ang) * rad
+        sz = 0.018 + 0.012 * (1 - ph)
+        motes += np.exp(-(((X - mx) / sz) ** 2 + ((Y - my) / sz) ** 2)) * min(1.0, ph * 5) * (0.6 + 0.4 * (1 - ph))
+    heart = np.clip((R - 0.11) / 0.03, 0, 1)                                     # (nothing comes out of the middle)
+    inten = np.clip((swirl * 1.25 + ring + glow + motes * 0.8) * heart, 0, 1)
+    rgb = ramp(inten, [(0, (20, 4, 40)), (0.3, (110, 36, 210)), (0.6, (170, 90, 255)), (0.85, (220, 180, 255)), (1, (255, 245, 255))])
+    return rgb, np.clip(inten * 1.15, 0, 1)
+
+
+FX = {'fire': fx_fire, 'frost': fx_frost, 'shock': fx_shock, 'wind': fx_wind, 'sun': fx_sun, 'blood': fx_blood, 'void': fx_void}
 
 
 def head_texture(seed):

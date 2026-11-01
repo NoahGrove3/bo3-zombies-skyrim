@@ -218,8 +218,11 @@ def build(bid):
         P[idx, 2] = cz_ + (P[idx, 2] - cz_) * 0.28
     N = normals(P, F)
     kind = BODY_KIND[bid]
-    d, n, gl = bowart.body_maps(kind, body_col, glow, seed=len(bid), element=ELEMENT[bid])   # (Noah: 2K, hand-worked: runes, knotwork, scrollwork, leather)
-    td, tn, tg = bowart.trim_maps(ELEMENT[bid], glow, seed=len(bid) + 40)
+    if bid in WONDERS:   # (Noah: the Vortex needs higher-quality textures) 4K x 2K limb, 2K x 2K blades, its own void pattern
+        d, n, gl, td, tn, tg = void_maps(kind, body_col, glow, seed=len(bid))
+    else:
+        d, n, gl = bowart.body_maps(kind, body_col, glow, seed=len(bid), element=ELEMENT[bid])   # (Noah: 2K, hand-worked: runes, knotwork, scrollwork, leather)
+        td, tn, tg = bowart.trim_maps(ELEMENT[bid], glow, seed=len(bid) + 40)
     tex = {'d': save_mips(d, f'{bid}_d.dds'), 'n': save_mips(n, f'{bid}_n.dds', True), 'g': save_mips(gl, f'{bid}_g.dds'),
            'td': save_mips(td, f'{bid}_trim_d.dds'), 'tn': save_mips(tn, f'{bid}_trim_n.dds', True), 'tg': save_mips(tg, f'{bid}_trim_g.dds'),
            'flat': save_dds(Image.new('RGBA', (32, 32), (128, 128, 255, 200)), 'flat_n.dds', True)}
@@ -274,6 +277,98 @@ def build(bid):
     if r.returncode:
         raise SystemExit(f'bowconv failed for {bid}')
     print(f'{bid}: {src} flip={flip} depth x{k:.2f} string {len(groups["string"])} trim {len(groups["trim"])} body {len(groups["body"])} tris')
+    if bid in WONDERS:
+        void_fx(bid, glow)
+
+
+# ---- the Subsuming Vortex's finish and living effects (Noah: "needs higher quality textures and animated FX like the
+# other elemental bows do") - the same treatment tools/bowmodels.py gives the altar's bows, in the void's black-violet
+SPECTRAL = '/home/claude/work/dl/Spectral Bow - Fire/data/meshes/weapons/boundweapons/wte_specbow.nif'
+
+
+def void_pattern(element, W, H, seed):
+    """the void alive in the limb, drawn to the map's own size (bowart's is laid out for 2K x 1K): a nebula of violet
+    seams with whirlpools along it, each curling into a black heart, and pin-prick stars"""
+    if element != 'void':
+        return _element_pattern(element, W, H, seed)
+    from PIL import ImageDraw
+    rng = np.random.default_rng(seed)
+    k = H / 1024.0
+    im = Image.new('L', (W, H), 0); dr = ImageDraw.Draw(im)
+    for _ in range(int(60 * k * k)):                     # whirlpools, 3 arms each
+        cx, cy = rng.uniform(0, W), rng.uniform(0, H); s = rng.uniform(26, 60) * k; turn = rng.choice([-1, 1])
+        for arm in range(3):
+            pts = []
+            for t in np.linspace(0, 1, 70):
+                a = arm * 2.094 + turn * t * 2.6 * np.pi
+                r = s * (1 - t) + 4 * k
+                pts.append((cx + math.cos(a) * r * 1.6, cy + math.sin(a) * r * 0.75))
+            dr.line(pts, fill=255, width=max(3, int(4 * k)))
+        dr.ellipse([cx - 6 * k, cy - 4 * k, cx + 6 * k, cy + 4 * k], fill=0)
+    m = np.asarray(im.filter(ImageFilter.GaussianBlur(1.5 * k)), np.float32) / 255
+    neb = bowart.fbm(W, H, 10, seed + 1, 5, stretch=(4, 1))                 # nebula seams, long along the limb
+    seam = np.clip(1 - np.abs(neb - 0.5) / 0.035, 0, 1) ** 1.5 * 0.7
+    stars = (rng.random((H, W)) > 0.9993).astype(np.float32)
+    stars = np.clip(np.asarray(Image.fromarray((stars * 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.0 * k)), np.float32) / 255 * 6, 0, 1)
+    return np.clip(np.maximum(m, seam) + stars, 0, 1)
+
+
+_element_pattern = bowart.element_pattern
+
+
+def void_maps(kind, body_col, glow, seed):
+    bowart.element_pattern = void_pattern
+    try:
+        d, n, g = bowart.body_maps(kind, body_col, glow, seed=seed, W=4096, H=2048, element='void')
+        td, tn, tg = bowart.trim_maps('void', glow, seed=seed + 40, W=2048, H=2048)
+    finally:
+        bowart.element_pattern = _element_pattern
+    return d, n, g, td, tn, tg
+
+
+def void_palette(bid, glow):
+    """the flowing skin's colour ramp: black-violet at the bottom, the void's violet, a pale lilac at the hot top"""
+    x = np.linspace(0, 1, 256)
+    g = np.array(glow, np.float32); deep = g * 0.25; hot = g * 0.35 + 0.65
+    col = np.where(x[:, None] < 0.6, deep + (g - deep) * (x[:, None] / 0.6), g + (hot - g) * ((x[:, None] - 0.6) / 0.4))
+    alpha = np.clip((x - 0.08) / 0.92, 0, 1) ** 0.9; alpha[x < 0.08] = 0
+    img = np.repeat(np.hstack([col * 255, alpha[:, None] * 255])[None], 64, 0).clip(0, 255).astype(np.uint8)
+    work = ROOT / 'build' / 'bows'; work.mkdir(parents=True, exist_ok=True)
+    tmp = work / f'{bid}_flamegrad.png'; Image.fromarray(img, 'RGBA').save(tmp)
+    p = OUT / 'Textures' / 'CurseOfAlduin' / 'bow' / f'{bid}_flamegrad.dds'
+    subprocess.run(['convert', str(tmp), '-define', 'dds:compression=none', '-define', 'dds:mipmaps=1', str(p)], check=True)
+    return f'textures\\CurseOfAlduin\\bow\\{bid}_flamegrad.dds'
+
+
+def void_fx(bid, glow):
+    """1. as the altar's bows (bowmodels.py): the Spectral Bow's flowing swirl shader on a skin a hair outside the limb and
+    blades, its palette the void's (fxshell) - the dark swirls course along the bow
+    2. a little black hole turning at each limb tip, hung on the limb's outer bone so it rides the draw, and one on the
+    back of the riser: the void flipbook (tools/bowarrows.py fx_void, 8x8 at 24 fps) on three crossed cards each"""
+    import bowarrows
+    bowarrows.OUT = OUT   # (bowarrows reads its out dir from argv - ours differ)
+    nif = OUT / 'Meshes/CurseOfAlduin/bow' / (bid + '.nif')
+    r = subprocess.run(['/home/claude/tools/fxshell', str(nif), SPECTRAL, '6', str(nif), void_palette(bid, glow), '1', '1', '1', '0.42', '0.12', '0.025', '0.08'], capture_output=True, text=True)
+    print('  ', r.stdout.strip(), r.stderr.strip())
+    if r.returncode: raise SystemExit(f'fxshell failed for {bid}')
+    fxtex = bowarrows.save_dds(bowarrows.atlas(bowarrows.fx_void), f'{bid}_arrowfx.dds')
+    g = ','.join(f'{c:.3f}' for c in glow)
+    job = [f'base {nif}', f'out {nif}']
+    C = bowarrows.COLS
+    # (bone, centre in its own space, half size, phase): the limb tips sit 31 along the outer limb bones' +X (the nocks)
+    spots = [('Bow_UpBone2', (31.5, 0.0, 0.0), 3.2, 0.0), ('Bow_LoBone2', (31.5, 0.0, 0.0), 3.2, 1.3), ('Bow_MidBone', (6.4, 4.6, 0.0), 2.4, 0.6)]
+    for i, (bone, (cx, cy, cz), s, ph) in enumerate(spots):
+        for j, (ax, ay) in enumerate((((1, 0, 0), (0, 1, 0)), ((1, 0, 0), (0, 0, 1)), ((0, 1, 0), (0, 0, 1)))):
+            job.append(f'shape {bid}_void{i}{j}_flame tex={fxtex} color={g},1 scale=1.6 blend=add parent={bone} flip={C}x{bowarrows.ROWS} fps=24 phase={ph + 0.4 * j:.2f}')
+            for du, dv, u, v in ((-1, 1, 0, 0), (1, 1, 1 / C, 0), (1, -1, 1 / C, 1 / bowarrows.ROWS), (-1, -1, 0, 1 / bowarrows.ROWS)):
+                x = cx + s * (du * ax[0] + dv * ay[0]); y = cy + s * (du * ax[1] + dv * ay[1]); z = cz + s * (du * ax[2] + dv * ay[2])
+                job.append(f'v {x:.3f} {y:.3f} {z:.3f} {u} {v} 1 1 1 1')
+            job += ['t 0 1 2', 't 0 2 3']
+    work = ROOT / 'build' / 'bows'
+    jf = work / f'{bid}_void.job'; jf.write_text('\n'.join(job) + '\n')
+    r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
+    print('  ', r.stdout.strip(), r.stderr.strip())
+    if r.returncode: raise SystemExit(f'fxwrite failed for {bid}')
 
 if __name__ == '__main__':
     only = sys.argv[4:]   # (optional: just these bows)

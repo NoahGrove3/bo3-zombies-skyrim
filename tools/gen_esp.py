@@ -971,7 +971,7 @@ for key, name, verb in (('hall_fang', "Alduin's Bane", 'Take'), ('hall_robes', "
                         ('hall_skull', "The Bone-Wyrm's Skull", 'Bind'), ('hall_endless', 'Brazier of the Endless Night', 'Kindle'),
                         ('hall_throne', 'Seat of the Awakened', 'Begin again')):
     rel_acti(key, name, verb, 'pedestal.nif', 60)
-for key, model, r in (('hall_fang_show', 'CurseOfAlduin\\wonder\\bane.nif', 70), ('1st_fang', 'CurseOfAlduin\\wonder\\bane.nif', 70)):
+for key, model, r in (('hall_fang_show', 'CurseOfAlduin\\wonder\\bane_static.nif', 70), ('1st_fang', 'CurseOfAlduin\\wonder\\bane.nif', 70)):
     recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
         sub('MODL', z(model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
 for key, model in (('summon', 'emptysummonfx_instant.nif'), ('crystal', 'diamondwallspawnexp.nif'), ('orb', 'lightningrail_orb.nif'),

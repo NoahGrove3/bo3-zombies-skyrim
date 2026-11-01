@@ -128,6 +128,57 @@ def matopts(D, N, G, emit, mult, spec=1.0, gloss=60, alpha=0):
     return f'diffuse={D} normal={N} glow={G} emit={e} emitmult={mult} spec={spec} gloss={gloss} alpha={alpha} doublesided={1 if alpha else 0}'
 
 
+GS_TEMPLATE = '/home/claude/work/vanilla/steelgreatsword.nif'   # Skyrim's own Meshes\weapons\steel\steelgreatsword.nif
+WRAP = '/home/claude/tools/weaponwrap'                            # tools/modelconv/weaponwrap.cpp
+
+
+def blade_hull(V, maxpts=10):
+    """the weapon's havok hull: its outline seen flat-on (x, y: the blade along +Y, edges +-X) as a convex polygon of at
+    most maxpts corners, pushed out through its thickness (z) - the shape Skyrim's own greatswords collide with"""
+    from scipy.spatial import ConvexHull
+    xy = V[:, :2]
+    h = ConvexHull(xy); poly = xy[h.vertices]                       # counter-clockwise
+    keep = [0]
+    for i in range(1, len(poly)):                                   # (corners crowded together: one is enough)
+        if np.linalg.norm(poly[i] - poly[keep[-1]]) > 2.0: keep.append(i)
+    if len(keep) > 3 and np.linalg.norm(poly[keep[-1]] - poly[0]) <= 2.0: keep.pop()
+    poly = poly[keep]
+    while len(poly) > maxpts:                                       # drop the corner whose removal loses least area
+        n = len(poly)
+        a = [abs(np.cross(poly[(i + 1) % n] - poly[i - 1], poly[i] - poly[i - 1])) for i in range(n)]
+        poly = np.delete(poly, int(np.argmin(a)), 0)
+    # (the dropped corners poke out of the simplified outline: grow it a touch so the hull still holds the model)
+    c = poly.mean(0)
+    out = 0.0
+    for p in xy[h.vertices]:
+        for i in range(len(poly)):
+            a, b = poly[i], poly[(i + 1) % len(poly)]
+            e = b - a; nrm = np.array([e[1], -e[0]]) / (np.linalg.norm(e) + 1e-9)
+            out = max(out, (p - a) @ nrm)
+    poly = c + (poly - c) * (1 + out / max(1e-3, np.min(np.linalg.norm(poly - c, axis=1))))
+    z0, z1 = np.percentile(V[:, 2], 1), np.percentile(V[:, 2], 99)
+    z0, z1 = min(z0, -1.5), max(z1, 1.5)                            # never thinner than 3 units (a blade lies on its flat)
+    lines = [f'v {x:.3f} {y:.3f} {z:.3f}' for x, y in poly for z in (z0, z1)]
+    lines += [f'p 0 0 1 0 0 {z1:.3f}', f'p 0 0 -1 0 0 {z0:.3f}']
+    for i in range(len(poly)):
+        a, b = poly[i], poly[(i + 1) % len(poly)]
+        e = b - a
+        lines.append(f'p {e[1]:.5f} {-e[0]:.5f} 0 {a[0]:.3f} {a[1]:.3f} 0')   # outward for a counter-clockwise outline
+    return lines
+
+
+def weapon_frame(nif, V, name, inv=(4712, 6283, 0, 1.0), mass=9.0):
+    """(Noah: Alduin's Bane floats when dropped, won't sheathe, points at you in the inventory) the model put in Skyrim's
+    own greatsword frame (tools/modelconv/weaponwrap): its BSFadeNode root, BSX 194 (havok), Prn WeaponBack and a
+    dynamic havok body on the weapon layer (5, mass 9) - here round our blade's own outline - and a BSInvMarker standing
+    it upright in the inventory and item preview (4712 6283 0: as Dawnbreaker's and nifly's default; the 1st-person
+    static is this same model, and the inventory shows the 1st-person model)"""
+    hull = WORK / f'{name}_hull.txt'; hull.write_text('\n'.join(blade_hull(V)) + '\n')
+    r = subprocess.run([WRAP, GS_TEMPLATE, str(nif), str(nif), name, str(hull), *map(str, inv), str(mass)], capture_output=True, text=True)
+    print('  ', r.stdout.strip(), r.stderr.strip())
+    if r.returncode: raise SystemExit(f'weaponwrap failed for {name}')
+
+
 def build(pid):
     if pid == 'gravecaller':   # the staff: long axis (source y) up +Y, trident up; 120 long, grip 45 % up from the butt
         parts = gather('gravecaller')
@@ -224,10 +275,16 @@ def build(pid):
         P = []
         for V0, T, F, M in parts:
             Q = (V0 - c) * s
-            P.append((np.stack([Q[:, 0], -Q[:, 1], -Q[:, 2]], 1), T, F, M))
+            # (Noah: the skull on the hilt faced away from me) turned half round the blade (x, z both flipped - a rotation,
+            # not a mirror, so the faces keep their winding): the skull on the guard now on the +Z face, toward you
+            P.append((np.stack([-Q[:, 0], -Q[:, 1], Q[:, 2]], 1), T, F, M))
         # (Noah: not in my hands when swinging) a weapon's model must say where it hangs (Prn): without it Skyrim leaves
         # it at the body's root, by the feet - so the greatsword's own: WeaponBack, and drawn, the hand
         write(pid, P, {'m0': matopts(D, N, G, (1.0, 0.78, 0.35), 0.9, 1.6, 110)}, 'CurseOfAlduin/wonder/bane.nif', ['prn WeaponBack'])
+        # the hall's display (a STAT on its pedestal) gets a copy without the havok body, so it can never fall off its stand
+        import shutil
+        shutil.copyfile(OUT / 'Meshes/CurseOfAlduin/wonder/bane.nif', OUT / 'Meshes/CurseOfAlduin/wonder/bane_static.nif')
+        weapon_frame(OUT / 'Meshes/CurseOfAlduin/wonder/bane.nif', np.vstack([p[0] for p in P]), 'AlduinsBane')
 
 
 if __name__ == '__main__':
