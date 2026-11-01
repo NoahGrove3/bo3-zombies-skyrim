@@ -2145,6 +2145,45 @@ namespace bo3z::Classes
 				}
 			}
 			std::erase_if(g_ownSummons, [](const auto& e) { return e.second <= 0; });
+			// (Noah: "for the spectral worm wonder it doesn't follow me or attack enemies") a dragon called up by hand has no
+			// flight to follow you with and seldom gets its breath off: the Horn's dragon is flown here - kept over you, turned
+			// on the nearest of the dead, and every 2.5 s its breath rolls down onto them
+			if (static float wyrmT = 0, breathT = 0; (wyrmT += a_delta) > 0.25f) {
+				const float dt = wyrmT;
+				wyrmT = 0;
+				breathT -= dt;
+				for (auto& [h, t] : g_ownSummons) {
+					auto a = h.get();
+					if (!a || a->IsDead() || a->IsDisabled() || !a->Is3DLoaded()) continue;
+					if (std::string_view(a->GetName()).find("Dragon") == std::string_view::npos) continue;
+					const auto me = p->GetPosition();
+					auto       at = a->GetPosition();
+					const auto foes = NearFoes(me, 2600.0f, 1);
+					// where it wants to be: over the foe it hunts (a little short of it), else circling above you
+					static float circle = 0;
+					circle += dt * 0.6f;
+					RE::NiPoint3 want = foes.empty() ? me + RE::NiPoint3{ std::sin(circle) * 700.0f, std::cos(circle) * 700.0f, 650.0f }
+					                                 : foes[0]->GetPosition() + (me - foes[0]->GetPosition()) * 0.35f + RE::NiPoint3{ 0, 0, 520.0f };
+					const float far = at.GetDistance(me);
+					if (far > 4500.0f) {
+						a->SetPosition(want, true);  // (left far behind: it catches up at once)
+					} else {
+						RE::NiPoint3 step = want - at;
+						const float  d = step.Length();
+						if (d > 40.0f) a->SetPosition(at + step * std::min(1.0f, 900.0f * dt / d), true);
+					}
+					if (!foes.empty()) {
+						const auto tgt = foes[0]->GetPosition();
+						a->SetHeading(std::atan2(tgt.x - at.x, tgt.y - at.y));
+						if (breathT <= 0) {
+							breathT = 2.5f;
+							const RE::NiPoint3 mouth = a->GetPosition() + RE::NiPoint3{ 0, 0, 120.0f };
+							for (int k = 1; k <= 4; ++k) Gun::FxBlast("dragonfire", mouth + (tgt - mouth) * (k / 4.0f));
+							Gun::AreaHurt(tgt, 280.0f, 1.1f * UpgradeMult(AfterSovngarde() ? 6 : 4) * (0.7f + 0.3f * Arcana::Power()), "fireball");
+						}
+					}
+				}
+			}
 			// (Noah: "they aren't attacking the Curse's enemies") every summon of yours not already fighting goes for the
 			// nearest of the night's dead within reach
 			if (static float look = 0; (look += a_delta) > 1.0f) {

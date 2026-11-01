@@ -123,6 +123,12 @@ DISC_COL = [(0.0, (1.0, 0.92, 1.0, 0.0)), (0.04, (1.0, 0.9, 1.0, 1.0)), (0.18, (
             (0.75, (0.36, 0.1, 0.72, 0.45)), (1.0, (0.18, 0.04, 0.4, 0.0))]
 
 
+def shift(c):
+    # (Noah: in game it read blue, not purple - additive violet with blue at full and little red washes to blue under the
+    # game's tonemap) more red, a little less blue: a clear magenta-violet
+    return (min(1.0, c[0] * 1.4 + 0.05), c[1] * 0.8, c[2] * 0.85) + tuple(c[3:])
+
+
 def disc(L, name, tex, r0, r1, tilt, twist, uscroll, vscroll, scale, cols=DISC_COL, urep=3, na=72, nr=14, lift=0.0):
     """a flat ring round Z (tilted about X), u round it (urep turns of texture), v inward, the streaks wound into a
     spiral by 'twist'; per-vertex colour and fade from the inner edge out. lift: a funnel's rise at the rim"""
@@ -131,7 +137,7 @@ def disc(L, name, tex, r0, r1, tilt, twist, uscroll, vscroll, scale, cols=DISC_C
     for j in range(nr + 1):
         t = j / nr
         r = r0 + (r1 - r0) * t ** 1.3
-        c = ramp(t, cols)
+        c = shift(ramp(t, cols))
         for i in range(na + 1):
             a = 2 * math.pi * i / na
             x, y, z = r * math.cos(a), r * math.sin(a), lift * t ** 2
@@ -144,7 +150,8 @@ def disc(L, name, tex, r0, r1, tilt, twist, uscroll, vscroll, scale, cols=DISC_C
 
 
 def card(L, name, tex, half, col, scale):
-    L.append(f'shape {name} tex={tex} color={col[0]},{col[1]},{col[2]},1 scale={scale} blend=add billboard=1')
+    col = shift(col)
+    L.append(f'shape {name} tex={tex} color={col[0]:.3f},{col[1]:.3f},{col[2]:.3f},1 scale={scale} blend=add billboard=1')
     h = half
     L += [f'v {-h} {-h} 0 0 1', f'v {h} {-h} 0 1 1', f'v {h} {h} 0 1 0', f'v {-h} {h} 0 0 0', 't 0 1 2', 't 0 2 3']
 

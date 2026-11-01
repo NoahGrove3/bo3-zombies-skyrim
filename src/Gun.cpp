@@ -1037,6 +1037,8 @@ namespace bo3z
 			float        life = 0;       // how long it has stood (the look swells in, then spins)
 		};
 		std::vector<Well> g_wells;
+		struct VFlash { RE::ObjectRefHandle fx; float t, scale; };
+		std::vector<VFlash> g_vflash;  // (the Vortex's burst: its hole swelling out as a shockwave, then gone)
 
 		// Time Stop (Chronos Hourglass): frozen zombies take the stored blow when time starts again.
 		struct Frozen
@@ -1769,7 +1771,7 @@ namespace bo3z
 				}
 				if (w.pulse <= 0) {
 					w.pulse = 0.5f;
-					Blast(BlastIndex(w.vortex ? "daedraball" : "dark"), w.at + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, w.vortex ? 0.35f : kBlastScale);
+					if (!w.vortex) Blast(BlastIndex("dark"), w.at + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, kBlastScale);  // (the Vortex: its hole is the look - no blue puffs over it)
 					for (auto* f : Foes(w.at, w.vortex ? w.burst * 0.55f : 260.0f)) {
 						Damage(f, w.base * 0.4f, false, false, true);
 					}
@@ -1779,9 +1781,10 @@ namespace bo3z
 					// the void's own violet: the Daedric orb's blast, swelled, with the starfield's flash inside it
 					if (w.vortex) {
 						const float sc = std::clamp(w.burst / 420.0f, 0.5f, 2.0f);
-						Blast(BlastIndex("daedraball"), w.at + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, 1.1f * sc);
+						// the hole itself flares out as a violet shockwave (its own model, so its own colour), the starfield's flash inside
 						Blast(BlastIndex("constellation"), w.at + RE::NiPoint3{ 0, 0, 60.0f }, 0.05f, std::clamp(w.burst / 500.0f, 0.4f, 1.6f));
-						Blast(BlastIndex("daedramouth"), w.at + RE::NiPoint3{ 0, 0, 80.0f }, 0.1f, 0.8f * sc);
+						if (w.fx.get()) g_vflash.push_back({ w.fx, 0.0f, sc });
+						w.fx = {};
 					} else {
 						Blast(BlastIndex("darkmassive"), w.at + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, kBlastScale);
 					}
@@ -1800,6 +1803,24 @@ namespace bo3z
 				}
 			}
 			std::erase_if(g_wells, [](const Well& w) { return w.left <= 0; });
+			for (auto& f : g_vflash) {
+				f.t += a_delta;
+				auto r = f.fx.get();
+				if (!r) { f.t = 9.0f; continue; }
+				if (f.t > 0.45f) {
+					r->Disable();
+					r->SetDelete(true);
+					continue;
+				}
+				const float k = f.scale * (1.0f + 6.0f * f.t / 0.45f);
+				r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(k, 0.05f, 30.0f) * 100.0f);
+				if (auto* n = r->Get3D()) {
+					n->local.scale = k;
+					RE::NiUpdateData ud;
+					n->Update(ud);
+				}
+			}
+			std::erase_if(g_vflash, [](const VFlash& f) { return f.t > 0.45f; });
 		}
 
 		void StartRelease(const gen::GunDef& g);
@@ -2276,7 +2297,6 @@ namespace bo3z
 				ref->GetReferenceRuntimeData().refScale = 5;
 				w.fx = ref->CreateRefHandle();
 			}
-			Blast(BlastIndex("daedramouth"), at, 0.0f, 0.4f);
 			Audio::AtPoint(gen::Sound::unleash_hearth, at);
 			g_wells.push_back(std::move(w));
 			logger::info("vortex: a black hole opens{}", a_legendary ? " (Legendary)" : "");
@@ -2765,7 +2785,7 @@ namespace bo3z
 			Spellcraft::Reset();
 			BowsImpl::Reset();
 			// (the audit: a load mid-unleash let the old game's stars fall, wells pull and storms crackle in the new one)
-			g_detonations.clear(), g_arcs.clear(), g_dots.clear(), g_shrink.clear(), g_blasts.clear(), g_wells.clear(), g_frozen.clear(), g_prisms.clear();
+			g_detonations.clear(), g_arcs.clear(), g_dots.clear(), g_shrink.clear(), g_blasts.clear(), g_wells.clear(), g_vflash.clear(), g_frozen.clear(), g_prisms.clear();
 			g_hexed.clear(), g_doomed.clear(), g_plagued.clear();
 			g_zones.clear(), g_chill.clear(), g_frozenUntil.clear();
 			Props::g_world.clear(), Props::g_twisters.clear();

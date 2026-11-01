@@ -453,10 +453,10 @@ pd = bytearray(tsub('proj_arrow', 'DATA'))
 struct.pack_into('<I', pd, 16, 0)                     # no light
 recs['PROJ'].append(record('PROJ', fid('PROJ', 'vortexarrow'), [
     sub('EDID', z('UN_VortexArrowProj')), sub('OBND', tsub('proj_arrow', 'OBND')), sub('FULL', z('Vortex Arrow')),
-    sub('MODL', z('Weapons\\BoundWeapons\\BoundArrowFlight.nif')), sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', tsub('proj_arrow', 'VNAM'))]))
+    sub('MODL', z('CurseOfAlduin\\arrows\\arrowthunderflight.nif')), sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', tsub('proj_arrow', 'VNAM'))]))   # (Noah: like the elemental bows - the violet Elemental Arrow)
 recs['AMMO'].append(record('AMMO', fid('AMMO', 'vortexarrow'), [
     sub('EDID', z('UN_VortexArrow')), sub('OBND', tsub('ammo_iron', 'OBND')), sub('FULL', z('Vortex Arrow')),
-    sub('MODL', z('Weapons\\BoundWeapons\\BoundArrow.nif')), sub('YNAM', tsub('ammo_iron', 'YNAM')), sub('ZNAM', tsub('ammo_iron', 'ZNAM')),
+    sub('MODL', z('CurseOfAlduin\\arrows\\arrowthunderquiver.nif')), sub('YNAM', tsub('ammo_iron', 'YNAM')), sub('ZNAM', tsub('ammo_iron', 'ZNAM')),
     sub('KSIZ', tsub('ammo_iron', 'KSIZ')), sub('KWDA', tsub('ammo_iron', 'KWDA')), sub('DATA', struct.pack('<IIfIf', fid('PROJ', 'vortexarrow'), 0x4, 20.0, 0, 0.0))]))
 subs = []
 for name, hx in T['weap_longbow']['subs']:
