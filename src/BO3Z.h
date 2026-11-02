@@ -140,6 +140,18 @@ namespace bo3z
 		if (a_cost <= 50.0f) return std::max(1, static_cast<int>(std::lround(a_cost)));
 		return static_cast<int>(std::lround(std::min(150.0f, 50.0f + (a_cost - 50.0f) * 0.19f)));
 	}
+	// (the crash of 2 Nov: a straggler moved under the ground - disabled for its move - was sent into combat: StartCombat on an
+	// actor with no 3D / process reads null) combat started only on an actor that is really there
+	inline void SafeCombat(RE::Actor* a_actor, RE::Actor* a_target)
+	{
+		if (!a_actor || !a_target || a_actor->IsDisabled() || a_target->IsDisabled() || !a_actor->Is3DLoaded() || a_actor->IsDead()) return;
+		auto* proc = a_actor->GetActorRuntimeData().currentProcess;
+		if (!proc || !proc->middleHigh || !a_actor->GetParentCell()) return;
+		a_actor->StartCombat(a_target);
+	}
+	inline void SafeCombat(const RE::NiPointer<RE::Actor>& a_actor, RE::Actor* a_target) { SafeCombat(a_actor.get(), a_target); }
+	inline void SafeCombat(RE::Actor* a_actor, const RE::NiPointer<RE::Actor>& a_target) { SafeCombat(a_actor, a_target.get()); }
+	inline void SafeCombat(const RE::NiPointer<RE::Actor>& a_actor, const RE::NiPointer<RE::Actor>& a_target) { SafeCombat(a_actor.get(), a_target.get()); }
 	inline float UpgradeMult(int a_upgrades)
 	{
 		// (Noah: "I was pretty much unstoppable by night three - even with just one upgrade on the spell I was obliterating
@@ -757,7 +769,8 @@ namespace bo3z
 		void                  FxFrom(RE::BGSExplosion* a_src, const RE::NiPoint3& a_at, float a_scale);  // any mod's burst, quieted (look only), at a_scale
 		RE::BGSExplosion*     Quiet(RE::BGSExplosion* a_src);  // that burst's quiet copy (no damage, no knockdown, no tint)
 		void                  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast);
-		void                  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);  // the Horn's dragon's violet flame, here a moment  // the night's dead round a point lose a share of a whole zombie's health
+		void                  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);
+		void                  ElemBurst(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);  // an element's impact burst (0 fire 1 frost 2 shock 3 wind 4 sun 5 blood 6 void), here a moment  // the Horn's dragon's violet flame, here a moment  // the night's dead round a point lose a share of a whole zombie's health
 		void                  BlackHole(const RE::NiPoint3& a_at, bool a_legendary);  // the Subsuming Vortex: a purple singularity pulls the dead in, then bursts
 		void                  DevCast(const std::string& a_mode);  // dev: 'cast tap|full|ult|orb|hand' with a spell in hand
 	}

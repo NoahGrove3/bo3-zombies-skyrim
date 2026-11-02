@@ -689,7 +689,7 @@ namespace bo3z
 					ShowRiser(a.get(), true), a->SetCollision(true);
 					a->EnableAI(true);
 					StartRise(a.get(), pc);
-					a->StartCombat(pc);
+					SafeCombat(a, pc);
 				});
 			});
 		}
@@ -850,7 +850,7 @@ namespace bo3z
 							const auto d = pc->GetPosition() - a->GetPosition();
 							a->SetAngle({ 0.0f, 0.0f, std::atan2(d.x, d.y) });
 							a->StopCombat();
-							a->StartCombat(pc);
+							SafeCombat(a, pc);
 						}
 						r.anim = 9, r.t = 0;  // (then watched a moment: it must stay on the floor)
 					}
@@ -2273,7 +2273,7 @@ namespace bo3z
 				}
 				if (auto t = a->GetActorRuntimeData().currentCombatTarget.get(); !t || t.get() != a_player) {
 					a->StopCombat();
-					a->StartCombat(a_player);
+					SafeCombat(a, a_player);
 				}
 			}
 		}
@@ -2841,7 +2841,7 @@ namespace bo3z
 					if (auto g = h.get(); g && !g->IsDead()) {
 						g->AsActorValueOwner()->SetActorValue(RE::ActorValue::kConfidence, 0);
 						g->StopCombat();
-						g->StartCombat(a_player);  // (cowardly now: it runs)
+						SafeCombat(g, a_player);  // (cowardly now: it runs)
 						fleeing.push_back({ h, 5.0f });
 					}
 				}
@@ -3154,7 +3154,7 @@ namespace bo3z
 						a->AddToFaction(fac, 0);
 					}
 					a->StopCombat();
-					a->StartCombat(a_player);
+					SafeCombat(a, a_player);
 					continue;
 				}
 				if ((s.tear -= a_delta) > 0) {
@@ -3177,7 +3177,7 @@ namespace bo3z
 				auto tgt = a->GetActorRuntimeData().currentCombatTarget.get();
 				if (!tgt || tgt.get() != best) {
 					a->StopCombat();
-					a->StartCombat(best);
+					SafeCombat(a, best);
 				}
 				if (bd < 220.0f) {  // in reach: it tears into the other one
 					auto*       bav = best->AsActorValueOwner();
@@ -3402,7 +3402,7 @@ namespace bo3z
 					s.inCombat = true;
 					// (Noah: "the enemies aren't attacking my summons") a summon of yours at its throat: it turns on the summon
 					if (auto sm = NearestSummon(a.get(), a_player, 260.0f)) {
-						a->StartCombat(sm);
+						SafeCombat(a, sm);
 					}
 					continue;
 				}
@@ -3416,7 +3416,7 @@ namespace bo3z
 					a->StopCombat();  // fighting an NPC or searching: back to the player
 				}
 				s.stall = 0;
-				a->StartCombat(a_player);
+				SafeCombat(a, a_player);
 				a->EvaluatePackage(true, false);
 			}
 			// NPCs that picked a fight with our undead drop it.

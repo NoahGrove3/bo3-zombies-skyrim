@@ -1361,6 +1361,13 @@
   "MGEF:throwdagger": "0xd4d",
   "SPEL:throwdagger": "0xd4e",
   "MGEF:throwdaggers": "0xd4f",
-  "SPEL:throwdaggers": "0xd50"
+  "SPEL:throwdaggers": "0xd50",
+  "ACTI:burst_fire": "0xd51",
+  "ACTI:burst_frost": "0xd52",
+  "ACTI:burst_shock": "0xd53",
+  "ACTI:burst_wind": "0xd54",
+  "ACTI:burst_sun": "0xd55",
+  "ACTI:burst_blood": "0xd56",
+  "ACTI:burst_void": "0xd57"
  }
 }

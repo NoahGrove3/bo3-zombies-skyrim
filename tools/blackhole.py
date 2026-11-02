@@ -126,7 +126,8 @@ DISC_COL = [(0.0, (1.0, 0.92, 1.0, 0.0)), (0.04, (1.0, 0.9, 1.0, 1.0)), (0.18, (
 def shift(c):
     # (Noah: in game it read blue, not purple - additive violet with blue at full and little red washes to blue under the
     # game's tonemap) more red, a little less blue: a clear magenta-violet
-    return (min(1.0, c[0] * 1.4 + 0.05), c[1] * 0.8, c[2] * 0.85) + tuple(c[3:])
+    # (Noah, 2 Nov: still read as a blue ring of fire) pushed to hot magenta-pink: red full, blue held back
+    return (min(1.0, c[0] * 1.9 + 0.2), c[1] * 0.6, c[2] * 0.62) + tuple(c[3:])
 
 
 def disc(L, name, tex, r0, r1, tilt, twist, uscroll, vscroll, scale, cols=DISC_COL, urep=3, na=72, nr=14, lift=0.0):
@@ -168,7 +169,7 @@ def job(data):
     for k, (tilt, sp) in enumerate(((math.radians(35), 0.7), (math.radians(-55), 0.55), (math.radians(80), 0.8))):
         disc(L, f'BH_fall{k}', T['dots'], 34, 230, tilt, 0.9, 1.6 + 0.4 * k, sp, 0.8,
              cols=[(0.0, (1, 1, 1, 0)), (0.1, (0.95, 0.85, 1.0, 1.0)), (0.6, (0.7, 0.4, 1.0, 0.8)), (1.0, (0.5, 0.2, 0.9, 0.0))], urep=4, na=48, nr=10, lift=-25.0)
-    card(L, 'BH_photon', T['photon'], 100, (0.92, 0.8, 1.0), 1.5)
+    card(L, 'BH_photon', T['photon'], 100, (0.92, 0.8, 1.0), 2.6)  # (the bright ring hugging the shadow: what makes it read as a black hole)
     card(L, 'BH_lens', T['lens'], 100, (0.72, 0.38, 1.0), 1.5)
     card(L, 'BH_halo', T['halo'], 150, VIOLET, 0.4)
     WORK.mkdir(parents=True, exist_ok=True)

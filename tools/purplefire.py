@@ -32,12 +32,12 @@ def main():
     for i in range(9):
         a = 2 * math.pi * i / 9 + random.uniform(-0.2, 0.2)
         r = random.uniform(28, 60)
-        card(L, f'pf{k}', random.choice(('0.85,0.25,1', '0.7,0.15,1', '1,0.3,0.9')), 1.7, random.uniform(22, 32), random.uniform(40, 66),
+        card(L, f'pf{k}', random.choice(('1,0.3,0.85', '1,0.2,0.75', '1,0.4,0.95')), 1.7, random.uniform(22, 32), random.uniform(40, 66),
              (r * math.cos(a), r * math.sin(a), random.uniform(-4, 14)), (k * 0.37) % 2.4); k += 1
     # the fringe: deep violet, low and wide
     for i in range(6):
         a = 2 * math.pi * i / 6 + 0.4
-        card(L, f'pf{k}', '0.45,0.08,0.9', 1.4, 40, 34, (82 * math.cos(a), 82 * math.sin(a), -6), (k * 0.53) % 2.4, fps=20); k += 1
+        card(L, f'pf{k}', '0.8,0.08,0.65', 1.4, 40, 34, (82 * math.cos(a), 82 * math.sin(a), -6), (k * 0.53) % 2.4, fps=20); k += 1
     jf = WORK / 'purplefire.job'
     jf.write_text('\n'.join(L) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)

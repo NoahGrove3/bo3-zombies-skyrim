@@ -94,8 +94,10 @@ namespace BowsImpl
 		if (!p || !am) {
 			return;
 		}
+		// (Noah: "I'm still receiving the received-arrow message") the quiver filled deep and seldom: 999 when it falls under
+		// the tier's quiver, so no notice of arrows every half second
 		if (const int n = p->GetItemCount(am); a_fill && n < Quiver(i)) {
-			p->AddObjectToContainer(am, nullptr, Quiver(i) - n, nullptr);
+			p->AddObjectToContainer(am, nullptr, 999 - n, nullptr);
 		}
 		if (p->GetItemCount(am) > 0 && !ItemMenusOpen() && (a_equip || (Held() == i && p->GetCurrentAmmo() != am))) {  // (Noah: a quiver bought put a bow's arrows on the crossbow in your hands)
 			if (auto* em = RE::ActorEquipManager::GetSingleton()) {
@@ -429,8 +431,34 @@ namespace BowsImpl
 		// tier: I a ring of sparks of it round the burst, II Skyrim's great blast of the element and a second, wider wave;
 		// III all of that and the tornado (TornadoOf)
 		const int t = std::clamp(s.tier, 0, 3);
-		Gun::FxBlast(t >= 2 ? kBig[k] : kSmall[k], p);  // (Skyrim's own explosion of the element: the real spell's look)
-		if (t >= 2) Gun::FxBlast(kSmall[k], p + RE::NiPoint3{ 0, 0, 30.0f });
+		// (Noah: "the colour of the arrow's magical attack after impact should match the weapon's colour theme - the sunbow
+		// shouldn't have a green explosion, it should have a gold one") the burst is the bow's own element in its own colour
+		// (tools/elemburst.py: its arrowhead's flipbook, a ball of it), Skyrim's explosion under it only where its colour is
+		// the bow's (Sun's and Blood's vanilla blasts are green and violet: theirs is ours alone)
+		Gun::ElemBurst(k, p + RE::NiPoint3{ 0, 0, -20.0f }, 0.8f + 0.3f * static_cast<float>(t), 0.0f, 0.85f);
+		if (k != static_cast<int>(Kind::Sun) && k != static_cast<int>(Kind::Blood)) {
+			Gun::FxBlast(t >= 2 ? kBig[k] : kSmall[k], p);  // (Skyrim's own explosion of the element: the real spell's look)
+			if (t >= 2) Gun::FxBlast(kSmall[k], p + RE::NiPoint3{ 0, 0, 30.0f });
+		} else if (k == static_cast<int>(Kind::Blood)) {
+			Gun::FxBlast("bloodplague", p);
+		}
+		if (t >= 2) Gun::ElemBurst(k, p + RE::NiPoint3{ 0, 0, 10.0f }, 0.6f + 0.25f * static_cast<float>(t), 0.12f, 0.7f);
+	}
+	// (Noah: "it shoots a second projectile after arrow impact that goes into a random direction") a tier's great spell no
+	// longer flies from the strike: it bursts there - the element's burst, big, and a ring of it round - our numbers hit
+	void StrikeBurst(Kind a_k, int a_tier, const RE::NiPoint3& p)
+	{
+		const int   k = static_cast<int>(a_k);
+		const float big = a_tier >= 3 ? 2.6f : 1.8f;
+		Gun::ElemBurst(k, p + RE::NiPoint3{ 0, 0, -30.0f }, big, 0.0f, 1.1f);
+		const int ring = a_tier >= 3 ? 6 : 4;
+		const float r = a_tier >= 3 ? 230.0f : 150.0f;
+		for (int i = 0; i < ring; ++i) {
+			const float a = 6.2832f * static_cast<float>(i) / static_cast<float>(ring);
+			Gun::ElemBurst(k, p + RE::NiPoint3{ std::cos(a) * r, std::sin(a) * r, -20.0f }, big * 0.45f, 0.08f + 0.03f * static_cast<float>(i), 0.8f);
+		}
+		static constexpr const char* kUnder[6] = { "firestorm", "icevolley", "shockmass", "giantslam", "", "bloodplague" };
+		if (kUnder[k][0]) Gun::FxBlast(kUnder[k], p);
 	}
 
 	// (Noah: each bow's last upgrade is a spell of the party's mods, loosed where the arrow strikes) Fire: Fiery Torrent,
@@ -519,7 +547,8 @@ namespace BowsImpl
 				if (!f->IsDead()) Spellcraft::Fling(f, p - RE::NiPoint3{ 0, 0, 60.0f }, 9.0f);
 			}
 		}
-		if (CastAtStrike(TierSpell(k, 3), p, s.vel, target, true)) {
+		(void)target;
+		if (StrikeBurst(k, 3, p), true) {
 			Spellcraft::Area(s.row, p, 260.0f, s.damage * 1.2f, gen::kFxNone);  // (the spell's look and sweep; our numbers hit)
 			logger::info("bows: {} - {} cast where it struck", gen::kBows[s.bow].label, kTierNames[static_cast<int>(k)][3]);
 			if (k == Kind::Sun) Props::Tornado(static_cast<int>(k), p, s.vel, 5.0f, s.damage * 0.2f, true, s.row);
@@ -537,7 +566,8 @@ namespace BowsImpl
 		if (!target) {
 			for (auto* f : Foes(p, 500.0f)) { target = f; break; }
 		}
-		if (CastAtStrike(TierSpell(KindOf(s.bow), 2), p, s.vel, target, false)) {
+		(void)target;
+		if (StrikeBurst(KindOf(s.bow), 2, p), true) {
 			Spellcraft::Area(s.row, p, 200.0f, s.damage * 0.45f, gen::kFxNone);
 		}
 	}
@@ -1427,7 +1457,7 @@ namespace BowsImpl
 			g_tip.Show(false);
 			return;
 		}
-		const int row = gen::kBows[i].spellRow;
+		const int row = i == kVortexMote ? VortexRow() : gen::kBows[i].spellRow;  // (Noah: "the vortex bow needs an animated tip like the other elemental bows") its little black hole (tools/bowarrows.py void)
 		if (g_tipRow != row) {
 			g_tip.Detach();
 			g_tip = Spellcraft::Fx{ Spellcraft::Load(gen::kSpellcraft[row].id, "tip") };
@@ -1724,11 +1754,17 @@ namespace BowsImpl
 			std::vector<RE::TESAmmo*> ours;
 			for (int k = 0; k < kN; ++k) ours.push_back(Ammo(k));
 			ours.push_back(dh->LookupForm<RE::TESAmmo>(gen::kVortexAmmo, gen::kPlugin));
-			for (int e = 0; e < 3; ++e) ours.push_back(dh->LookupForm<RE::TESAmmo>(0x020B05 + e, "Faction Crossbows.esp"));
 			int n = 0;
 			// (Noah: "the arrows for the elemental bows are invisible" - made non-playable, Skyrim no longer drew them on the
 			// string or in flight) they stay playable: seen when loosed, never running out
-			(void)ours, (void)n;
+			// (Noah: "as a player, I shouldn't see the quiver or arrows in my inventory") nameless instead: the inventory lists
+			// no item without a name, nor do the pickup notices, and the arrow is still drawn on the string and in flight
+			for (auto* am : ours) {
+				if (!am) continue;
+				am->fullName = "";
+				++n;
+			}
+			logger::info("bows: {} of our arrows kept off the inventory (nameless)", n);
 		}
 		static float quiver = 0;
 		if ((quiver -= a_delta) <= 0 && !ItemMenusOpen()) {
@@ -1854,7 +1890,17 @@ namespace BowsImpl
 		}
 		g_wasDrawing = drawing;
 		TickMotes(p, i >= 0 ? i : (VortexHeld(p) ? kVortexMote : -1), a_delta);
-		TickTip(p, i, drawing, a_delta);
+		if (i < 0 && VortexHeld(p)) {  // (the Subsuming Vortex: its arrow's tip as the altar bows', at full dress once drawn)
+			const bool vd = st == S::kBowDraw || st == S::kBowAttached || st == S::kBowDrawn;
+			static float vdraw = 0;
+			vdraw = vd ? (st == S::kBowDrawn ? 1.0f : std::min(0.95f, vdraw + a_delta * 1.2f)) : 0.0f;
+			const float keep = g_draw;
+			g_draw = vdraw;
+			TickTip(p, kVortexMote, vd, a_delta);
+			g_draw = keep;
+		} else {
+			TickTip(p, i, drawing, a_delta);
+		}
 		TickTiers(a_delta);
 		TickSeek(a_delta);
 		std::scoped_lock l(Hud::Lock());

@@ -647,7 +647,7 @@ namespace bo3z
 					Undead::OnHit(a_target);         // (its flinch, now and then)
 				}
 				if (!a_target->IsInCombat()) {
-					a_target->StartCombat(player);
+					SafeCombat(a_target, player);
 				}
 			}
 			if (!a_quiet || kill) {
@@ -1039,7 +1039,7 @@ namespace bo3z
 		std::vector<Well> g_wells;
 		struct VFlash { RE::ObjectRefHandle fx; float t, scale; };
 		std::vector<VFlash> g_vflash;  // (the Vortex's burst: its hole swelling out as a shockwave, then gone)
-		struct PFire { RE::ObjectRefHandle fx; float t, life, delay, scale; RE::NiPoint3 at; };
+		struct PFire { RE::ObjectRefHandle fx; float t, life, delay, scale; RE::NiPoint3 at; std::uint32_t form = 0; };  // (form: 0 the violet fire, else an element's burst)
 		std::vector<PFire> g_pfire;  // (the Horn's dragon's violet breath: bursts placed along its line, gone a moment later)
 
 		// Time Stop (Chronos Hourglass): frozen zombies take the stored blow when time starts again.
@@ -1838,7 +1838,7 @@ namespace bo3z
 				if (f.t < f.delay) continue;
 				if (!f.fx.get()) {
 					auto* p = RE::PlayerCharacter::GetSingleton();
-					auto* base = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kPurpleFire, gen::kPlugin);
+					auto* base = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(f.form ? f.form : gen::kPurpleFire, gen::kPlugin);
 					auto  ref = p && base ? p->PlaceObjectAtMe(base, false) : nullptr;
 					if (!ref) { f.t = 99.0f; continue; }
 					ref->SetPosition(f.at);
@@ -2339,6 +2339,11 @@ namespace bo3z
 		{
 			if (g_pfire.size() > 40) return;  // (never a screen of it)
 			g_pfire.push_back({ {}, 0.0f, a_life, a_delay, a_scale, a_at });
+		}
+		void  ElemBurst(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life)
+		{
+			if (a_elem < 0 || a_elem >= static_cast<int>(gen::kBurst.size()) || g_pfire.size() > 48) return;
+			g_pfire.push_back({ {}, 0.0f, a_life, a_delay, a_scale, a_at, gen::kBurst[a_elem] });
 		}
 		float AdsBlend() { return g_ads; }
 		bool  Owns(int a_gun) { return SlotOf(a_gun) >= 0; }

@@ -636,7 +636,7 @@ namespace bo3z::Classes
 		float g_tomeCool = 0, g_bladeCool = 0, g_vortexCool = 0;
 		float g_tomeHold = 0;  // (the Six Fires: their spells held at the top tier until it runs out)
 		std::vector<std::pair<int, int>> g_tomeHeld;  // a spell and the level it had
-		struct VortexArrowState { RE::NiPoint3 last; bool done, hit; };
+		struct VortexArrowState { RE::NiPoint3 last; bool done, hit; bool seen = false; };
 		std::unordered_map<RE::FormID, VortexArrowState> g_vortexArrows;  // the Subsuming Vortex's arrows in flight
 
 		int FreedCount()
@@ -2588,7 +2588,7 @@ namespace bo3z::Classes
 		if (!p || !bow || !ar || p->GetItemCount(bow) <= 0) return n;
 		const int have = p->GetItemCount(ar);
 		if (have >= 60) return n;
-		p->AddObjectToContainer(ar, nullptr, 60 - have, nullptr);
+		p->AddObjectToContainer(ar, nullptr, 999 - have, nullptr);  // (Noah: no "arrows received" every few shots - a deep quiver, filled seldom)
 		return n + 1;
 	}
 
@@ -2650,11 +2650,14 @@ namespace bo3z::Classes
 		for (auto& [id, a] : g_vortexArrows) {
 			auto it = now.find(id);
 			const bool gone = it == now.end();
-			if (!a.done && (gone || it->second.second < 60.0f)) {
+			// (Noah: "even if I'm shooting it at the floor, I should still see the magical ability of it go off") an arrow
+			// stuck in the ground keeps its flight speed on paper: one that has stopped moving has landed
+			const bool still = !gone && a.seen && (it->second.first - a.last).Length() < 3.0f && !RE::UI::GetSingleton()->GameIsPaused();
+			if (!a.done && (gone || it->second.second < 60.0f || still)) {
 				a.done = true;
 				if (!a.hit) OpenVortex(gone ? a.last : it->second.first, false);
 			}
-			if (!gone) a.last = it->second.first;
+			if (!gone) a.last = it->second.first, a.seen = true;
 		}
 		std::erase_if(g_vortexArrows, [&](const auto& e) { return !now.contains(e.first); });
 		for (auto& [id, pv] : now) {
