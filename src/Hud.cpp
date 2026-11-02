@@ -3077,12 +3077,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// (Noah: "make the tabs have a drop down animation when you expand the tab, so it's not instant") each section eases
 				// open over a quarter second: its rows slide down from under the header and fade in, the ones below it pushed down
 				// as it grows; shutting runs the same in reverse. The rows' height comes from the last frame they were drawn.
-				static float openT[6] = { 1, 0, 0, 0, 0, 0 }, bodyH[6] = {};
+				static float openT[7] = { 1, 0, 0, 0, 0, 0, 0 }, bodyH[7] = {};
 				struct Body { int i = -1; float y0 = 0, top = 0, e = 1; int vtx = 0; } body;
 				const auto ease = [](float t) { t = std::clamp(t, 0.0f, 1.0f); return 1.0f - (1.0f - t) * (1.0f - t) * (1.0f - t); };  // (out-cubic)
 				const auto section = [&](int id, const std::string& title, const std::string& summary, bool hot) {
 					const bool open = s.altarOpen == id;
-					const int  i = std::clamp(id - 210, 0, 5);
+					const int  i = std::clamp(id - 210, 0, 6);
 					openT[i] = std::clamp(openT[i] + (open ? 1.0f : -1.0f) * std::min(dt, 0.05f) / 0.26f, 0.0f, 1.0f);
 					const float e = ease(openT[i]);
 					focusRow(id, y - 6 * k, y + 38 * k);
@@ -3196,6 +3196,37 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 							endSection();
 						}
 					}
+					// (Noah: "the glider should have its own tab in the kit ... viewable after selecting a class, locked until [Whiterun's]
+					// altar is freed - that way players can see the current level of the dragon glider")
+					const int  bondNow = std::clamp(s.dragonBond, 0, 3);
+					const bool bondCan = !s.bondLocked && bondNow < 3 && s.points >= Movement::kBondCost[std::min(bondNow, 2)];
+					if (section(216, "DRAGON GLIDER", s.bondLocked ? std::string("locked - free Whiterun's Echo Altar") : fmt::format("bond {} of 3", bondNow), bondCan)) {
+					static constexpr const char* kBond[4] = { "", "WIND-RIDER", "TALON STRIKE", "ALDUIN'S THRALL" };
+					static constexpr const char* kWhat[4] = { "",
+						"Jump mid-glide: two quick wing-beats and a great one to climb - its fire turns blue",
+						"Shout Dragon's Updraft: a whirlwind lifts you, then glide - attack looking down to dive-bomb",
+						"Turned black, eyes like embers - its fire burns hotter, and green" };
+					static constexpr ImU32 kCol[4] = { IM_COL32(220, 214, 200, 255), IM_COL32(170, 225, 255, 255), IM_COL32(120, 190, 255, 255), IM_COL32(255, 92, 48, 255) };
+					const int  have = std::clamp(s.dragonBond, 0, 3), next = have + 1;
+					const bool maxed = have >= 3;
+					const bool can = !maxed && !s.bondLocked && s.points >= Movement::kBondCost[std::min(have, 2)];
+					focusRow(5, y - 6 * k, y + 66 * k);
+					bullet({ L, y + 2 * k }, 5, can);
+					const ImU32 tc = kCol[maxed ? 3 : next];
+					static constexpr const char* kNum[4] = { "", "I", "II", "III" };
+					Txt(dl, g_title, 19 * k, { L + 36 * k, y + 4 * k }, s.bondLocked ? kLockedCol : tc, (s.bondLocked ? std::string("LOCKED  -  ") : std::string()) + "DRAGON BOND " + std::string(kNum[maxed ? 3 : next]) + ": " + kBond[maxed ? 3 : next], 1.5f * k, s.bondLocked ? kLockedCol : tc);
+					for (int q = 0; q < 3; ++q) {  // the bonds: three scales, lit by those made
+						const ImVec2 pc{ L + 12 * k + q * 16 * k, y + 50 * k };
+						dl->AddTriangleFilled({ pc.x - 6 * k, pc.y - 5 * k }, { pc.x + 6 * k, pc.y - 5 * k }, { pc.x, pc.y + 7 * k }, q < have ? kCol[q + 1] : IM_COL32(60, 52, 46, 220));
+					}
+					const std::string what = maxed ? std::string("Every bond made - it is yours to the end") : s.bondLocked ? fmt::format("Free Whiterun's Echo Altar to unlock the dragon glider  -  bond {} of 3 now", have) : std::string(kWhat[next]);
+					TxtWrap(dl, g_body, 16 * k, { L + 60 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235), what, Rr - L - 60 * k, 2);
+					if (!maxed && !s.bondLocked) {
+						price(y + 2 * k, Movement::kBondCost[have], s.points >= Movement::kBondCost[have]);
+					}
+					y += 72 * k;
+						endSection();
+					}
 				}
 				// [3] brews: a row of medallions, the chosen one described under it
 				const auto perkMenu = Perks::Menu();
@@ -3248,7 +3279,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					endSection();
 				}
 				// [4]-[5] the freed city's Thu'um and the dragon: one section
-				const bool voiceOpen = (shout || !s.bondLocked) && section(213, shout ? "THU'UM AND DRAGON" : "YOUR DRAGON", shout ? std::string("a Thu'um to learn") : fmt::format("bond {} of 3", std::clamp(s.dragonBond, 0, 3)), shout);
+				const bool voiceOpen = shout && section(213, "THU'UM", std::string("a Thu'um to learn"), shout);  // (the dragon glider has its own section now, under the kit)
 				if (shout && voiceOpen) {
 					const auto& sh = gen::kShouts[s.shrineShout];
 					const ImU32 scol = IM_COL32((sh.color >> 16) & 0xFF, (sh.color >> 8) & 0xFF, sh.color & 0xFF, 255);
@@ -3257,33 +3288,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, scol, "LEARN THE THU'UM: " + std::string(sh.label), 1.5f * k, scol);
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(210, 196, 170, 235), std::string(sh.w1) + "  " + std::string(sh.w2) + "  " + std::string(sh.w3) + "  -  freely given");
 					y += 64 * k;
-				}
-				// [5] the glider's dragon: its next bond (Noah: unseen until Whiterun is freed)
-				if (!s.bondLocked && voiceOpen) {
-					static constexpr const char* kBond[4] = { "", "WIND-RIDER", "TALON STRIKE", "ALDUIN'S THRALL" };
-					static constexpr const char* kWhat[4] = { "",
-						"Jump mid-glide: two quick wing-beats and a great one to climb - its fire turns blue",
-						"Shout Dragon's Updraft: a whirlwind lifts you, then glide - attack looking down to dive-bomb",
-						"Turned black, eyes like embers - its fire burns hotter, and green" };
-					static constexpr ImU32 kCol[4] = { IM_COL32(220, 214, 200, 255), IM_COL32(170, 225, 255, 255), IM_COL32(120, 190, 255, 255), IM_COL32(255, 92, 48, 255) };
-					const int  have = std::clamp(s.dragonBond, 0, 3), next = have + 1;
-					const bool maxed = have >= 3;
-					const bool can = !maxed && !s.bondLocked && s.points >= Movement::kBondCost[std::min(have, 2)];
-					focusRow(5, y - 6 * k, y + 66 * k);
-					bullet({ L, y + 2 * k }, 5, can);
-					const ImU32 tc = kCol[maxed ? 3 : next];
-					static constexpr const char* kNum[4] = { "", "I", "II", "III" };
-					Txt(dl, g_title, 19 * k, { L + 36 * k, y + 4 * k }, tc, "DRAGON BOND " + std::string(kNum[maxed ? 3 : next]) + ": " + kBond[maxed ? 3 : next], 1.5f * k, tc);
-					for (int q = 0; q < 3; ++q) {  // the bonds: three scales, lit by those made
-						const ImVec2 pc{ L + 12 * k + q * 16 * k, y + 50 * k };
-						dl->AddTriangleFilled({ pc.x - 6 * k, pc.y - 5 * k }, { pc.x + 6 * k, pc.y - 5 * k }, { pc.x, pc.y + 7 * k }, q < have ? kCol[q + 1] : IM_COL32(60, 52, 46, 220));
-					}
-					const std::string what = maxed ? std::string("Every bond made - it is yours to the end") : s.bondLocked ? std::string("Win Whiterun's Echo Altar first") : std::string(kWhat[next]);
-					TxtWrap(dl, g_body, 16 * k, { L + 60 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235), what, Rr - L - 60 * k, 2);
-					if (!maxed && !s.bondLocked) {
-						price(y + 2 * k, Movement::kBondCost[have], s.points >= Movement::kBondCost[have]);
-					}
-					y += 72 * k;
 				}
 				if (voiceOpen) endSection();
 				// [5b] the city's trials: any three of the five, then its Dragon Priest

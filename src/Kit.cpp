@@ -1268,6 +1268,49 @@ namespace bo3z::Kit
 
 	// dev (trailer filming, Noah: "give my character everything from all classes") every class's whole kit and Armory at its
 	// highest tier, every relic, every bow and crossbow, the four wonders and Alduin's Bane - your class stays as it is
+	// dev (Noah: "for the full kit, when testing everything, give me everything at its base level ... so I can try out each tier
+	// of each weapon") every class's whole kit and Armory owned at Base - each ladder at its first rung, each blade and flask
+	// at Base, each set at its first look - to be raised at the altar one tier at a time
+	void DevBase()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return;
+		int n = 0;
+		for (int c = 0; c < 4; ++c) {
+			const auto defs = Defs(c);
+			auto&      st = g_cls[c];
+			for (int i = 0; i < static_cast<int>(defs.size()) && i < kMaxItems; ++i) {
+				const auto& d = defs[i];
+				if (d.at == kGone) continue;
+				st.owned |= 1u << i;
+				st.tier[i] = 0;
+				switch (d.kind) {
+				case Kind::Ladder: {
+					const int r1 = LadderRung1(c, d.ref);
+					if (r1 < 0 || !Arcana::Spell(r1)) break;
+					const int k = LadderKnown(c, d.ref);
+					if (k >= 0 && k != r1) Arcana::Replace(k, r1);
+					else if (k < 0) Arcana::Give(r1, false);
+					Arcana::SetLevel(r1, 0);
+					++n;
+					break;
+				}
+				case Kind::Bomb:
+				case Kind::Blade:
+					Grant(c, i, false);
+					++n;
+					break;
+				case Kind::Armour:
+					Classes::GiveArmourSet(c, 0, false);
+					++n;
+					break;
+				default: break;
+				}
+			}
+		}
+		SyncWeapons(false);
+		logger::info("dev: everything from every class at Base - {} kit items", n);
+	}
 	void DevAll()
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();

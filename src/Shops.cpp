@@ -1902,7 +1902,7 @@ namespace bo3z
 		enum Row { kRowSpell = 0, kRowBow, kRowForge, kRowPerk, kRowShout, kRowBond, kRowTrial = 10, kRowLeave = 20, kRowClass = 30, kRowOutfit, kRowInfuse = 32, kRowRelic = 33 };  // (the altar rework: Kit rows are 40.. your kit, 100.. the Armory)
 		int g_focus = kRowClass;
 		// (Noah: "different sections that show a drop down of what's in that section") the one section open (0: none)
-		enum Sec { kSecKit = 210, kSecArmory = 211, kSecPerks = 212, kSecVoice = 213, kSecTrials = 214, kSecWhispers = 215 };
+		enum Sec { kSecKit = 210, kSecArmory = 211, kSecPerks = 212, kSecVoice = 213, kSecTrials = 214, kSecWhispers = 215, kSecGlider = 216 };
 		int g_open = kSecKit;
 		RE::ObjectRefHandle g_pickAltar;  // the altar whose class picker is up (no class yet): it opens when one is chosen
 
@@ -2288,7 +2288,8 @@ namespace bo3z
 					if (id >= 40 && id < 100) return static_cast<int>(kSecKit);
 					if (id >= 100 && id < 200) return static_cast<int>(kSecArmory);
 					if (id == kRowPerk) return static_cast<int>(kSecPerks);
-					if (id == kRowShout || id == kRowBond) return static_cast<int>(kSecVoice);
+					if (id == kRowShout) return static_cast<int>(kSecVoice);
+					if (id == kRowBond) return static_cast<int>(kSecGlider);
 					if (id >= kRowTrial && id < kRowTrial + 5) return static_cast<int>(kSecTrials);
 					return 0;
 				};
@@ -2301,16 +2302,16 @@ namespace bo3z
 						rows.push_back(kSecArmory);
 						if (g_open == kSecArmory) for (int id : kit) if (id >= 100) rows.push_back(id);
 					}
+					// (Noah: the dragon glider its own section under the kit, seen once a class is chosen, locked until Whiterun is freed)
+					rows.push_back(kSecGlider);
+					if (g_open == kSecGlider) rows.push_back(kRowBond);
 				}
 				rows.push_back(kSecPerks);
 				if (g_open == kSecPerks) rows.push_back(kRowPerk);
-				const bool shoutRow = t >= 0 && Curse::ClaimableShout(t) >= 0, bondRow = !Movement::BondLocked();  // (Noah: the dragon's bond unseen until Whiterun is freed)
-				if (shoutRow || bondRow) {
+				const bool shoutRow = t >= 0 && Curse::ClaimableShout(t) >= 0;
+				if (shoutRow) {
 					rows.push_back(kSecVoice);
-					if (g_open == kSecVoice) {
-						if (shoutRow) rows.push_back(kRowShout);
-						if (bondRow) rows.push_back(kRowBond);
-					}
+					if (g_open == kSecVoice) rows.push_back(kRowShout);
 				}
 				const bool trials = t >= 0 && Curse::Altar(t).on;
 				if (trials) {
@@ -2330,7 +2331,7 @@ namespace bo3z
 					g_focus = rows[i];
 					if (g_focus >= kRowTrial && g_focus < kRowTrial + 5) g_trialSel = g_focus - kRowTrial;
 					PlayUi(UiSnd::kMove, 0.7f);  // (a soft stone tick)
-				} else if (side && g_focus >= kSecKit && g_focus <= kSecWhispers) {
+				} else if (side && g_focus >= kSecKit && g_focus <= kSecGlider) {
 					// right opens the section in focus, left shuts it
 					g_open = side > 0 ? g_focus : (g_open == g_focus ? 0 : g_open);
 					PlayUi(UiSnd::kMove, 0.7f);
@@ -2353,7 +2354,7 @@ namespace bo3z
 					const bool menu0 = g_menu;
 					const int  trial0 = g_trialSel;
 					bool       kitOk = false;
-					if (g_focus >= kSecKit && g_focus <= kSecWhispers) {  // a header: open it (shutting the one open), or shut it
+					if (g_focus >= kSecKit && g_focus <= kSecGlider) {  // a header: open it (shutting the one open), or shut it
 						g_open = g_open == g_focus ? 0 : g_focus;
 						PlayUi(UiSnd::kChoose);
 						return true;

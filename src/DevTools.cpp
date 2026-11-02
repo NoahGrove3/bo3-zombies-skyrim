@@ -160,6 +160,16 @@ namespace bo3z
 				Movement::TestKit();
 				if (const int have = Points::Get(); have < 150000) Points::Refund(150000 - have);
 				logger::info("dev: allkit given");
+			} else if (cmd == "basekit" && player) {
+				// basekit: (Noah's tier testing) every class's kit and Armory at Base, the four wonders, Alduin's Bane, the glider
+				// back to no bond (its bonds bought at the altar), and exactly 200,000 Cursed Essence to raise it all with
+				Kit::DevBase();
+				for (int c = 0; c < 4; ++c) Classes::DevGiveWonder(c);
+				Echo::DevGiveBane();
+				Save::SetDragonBond(0);
+				if (const int have = Points::Get(); have < 200000) Points::Refund(200000 - have);
+				else if (have > 200000) Points::Spend(have - 200000);
+				logger::info("dev: basekit given ({} Cursed Essence)", Points::Get());
 			} else if (cmd == "mount" && player) {
 				// mount [base hex]: ride the nearest horse; with none near, place one (default Shadowmere) - run it again to climb on
 				std::string hex;
