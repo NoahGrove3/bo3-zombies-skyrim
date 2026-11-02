@@ -2309,7 +2309,7 @@ namespace bo3z
 			// item's, a Legendary's three Ascends more, with the night's power
 			// (Noah: "the wonder weapons should be the strongest weapons for their class") above every bow and crossbow's
 			// highest tier (13): the curve's 15th step, the 16th Legendary
-			const float grow = UpgradeMult(a_legendary ? 16 : 15) * (0.7f + 0.3f * Arcana::Power());
+			const float grow = UpgradeMult(a_legendary ? kWonderUps + 1 : kWonderUps) * (0.7f + 0.3f * Arcana::Power());
 			Well w{ at, a_legendary ? 3.0f : 2.2f, whole * (a_legendary ? 0.32f : 0.22f) * grow, 0.15f };
 			w.vortex = true;
 			w.reach = a_legendary ? 1300.0f : 800.0f;

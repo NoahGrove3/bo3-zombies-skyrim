@@ -72,11 +72,13 @@ namespace bo3z::Arcana
 			for (std::size_t e = 0; e < sp->effects.size() && e < base.size(); ++e) {
 				if (!sp->effects[e]) continue;
 				const bool dmg = static_cast<int>(e) == g_dmgEffect[a_index] || (g_dmgEffect[a_index] >= 0 && base[e] == base[g_dmgEffect[a_index]] && IsDamageEffect(sp->effects[e]));
-				sp->effects[e]->effectItem.magnitude = dmg && firstDmg > 0 ? firstDmg * UpgradeMult(ups) * mult : base[e] * mult;
+				// (Noah: "each spell ... the same base level damage") every damaging spell from the one base, on the one curve
+				constexpr float kBaseDamage = 20.0f;
+				sp->effects[e]->effectItem.magnitude = dmg && firstDmg > 0 ? kBaseDamage * UpgradeMult(ups) * mult : base[e] * mult;
 			}
 			// (Noah: "the Summoner's starting spells' magicka cost needs to be half") the first rung of each summoner ladder
 			const float firstSummon = me.cls == coffer::kSummoner && me.rung == 1 ? 0.5f : 1.0f;
-			sp->data.costOverride = CapSpellCost(coffer::kSpells[a_index].cost * kCost * (1.0f - 0.1f * std::min(lv, 3)) * Difficulty::Mana() * firstSummon * Kit::AuraCostMult() * (Echo::WearsRobes() ? 0.75f : 1.0f));
+			sp->data.costOverride = std::max(1, static_cast<int>(std::lround(TierSpellCost(ups) * (Concentration(a_index) ? 0.2f : 1.0f) * Difficulty::Mana() * firstSummon * Kit::AuraCostMult() * (Echo::WearsRobes() ? 0.75f : 1.0f))));  // (one cost for every spell at a tier; a stream's is a second's)
 		}
 	}
 
@@ -430,14 +432,14 @@ namespace bo3z::Arcana
 		if (a_index < 0 || a_index >= static_cast<int>(g_level.size())) {
 			return;
 		}
-		g_level[a_index] = static_cast<std::uint8_t>(std::clamp(a_level, 0, 16));  // (the altar rework: Ascends past the forge's three)
+		g_level[a_index] = static_cast<std::uint8_t>(std::clamp(a_level, 0, 32));  // (the altar rework: Ascends past the forge's three; the Six Fires reach the wonders' step)
 		Apply(a_index);
 	}
 	std::vector<std::uint8_t> Levels() { return { g_level.begin(), g_level.end() }; }
 	void SetLevels(const std::vector<std::uint8_t>& a_levels)
 	{
 		for (std::size_t i = 0; i < g_level.size(); ++i) {
-			g_level[i] = i < a_levels.size() ? static_cast<std::uint8_t>(std::min<int>(a_levels[i], 16)) : 0;
+			g_level[i] = i < a_levels.size() ? static_cast<std::uint8_t>(std::min<int>(a_levels[i], 32)) : 0;
 			Apply(static_cast<int>(i));
 		}
 	}

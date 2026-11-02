@@ -1550,7 +1550,7 @@ namespace bo3z::Classes
 	{
 		// (the class audit: the Dragon Slayer, the Spellsword's wonder, never grew - four times weaker than its Madness Sword)
 		// it stands two tiers above your blade (Tier III at the least), three once the three dragons fall
-		if (auto* sl = Slayer(); a_w && sl && a_w == sl) return std::max(AfterSovngarde() ? 16 : 15, Kit::TierOfWeapon(SpellswordBlade()) + (AfterSovngarde() ? 3 : 2));  // (Noah: the wonders the strongest of their class - above the blade's highest tier, 13)
+		if (auto* sl = Slayer(); a_w && sl && a_w == sl) return AfterSovngarde() ? kWonderUps + 1 : kWonderUps;  // (Noah: the wonders the strongest of their class - above the blade's highest tier, 13)
 		if (const int kt = Kit::TierOfWeapon(a_w); kt >= 0) return kt;  // (the altar rework: a kit or relic blade's own tiers)
 		auto* b = a_w ? a_w->As<RE::TESBoundObject>() : nullptr;
 		if (!b || !b->GetFile(0)) return -1;
@@ -2182,7 +2182,7 @@ namespace bo3z::Classes
 							breathT = 1.2f;
 							const RE::NiPoint3 mouth = a->GetPosition() + RE::NiPoint3{ 0, 0, 120.0f };
 							const float pf = 0.7f + 0.3f * Arcana::Power();
-							const float top = UpgradeMult(AfterSovngarde() ? 16 : 15);  // (above every kit item's highest tier, 13)
+							const float top = UpgradeMult(AfterSovngarde() ? kWonderUps + 1 : kWonderUps);  // (twice a kit item's highest tier)
 							for (int k = 1; k <= 6; ++k) {
 								const RE::NiPoint3 at = mouth + (tgt - mouth) * (k / 6.0f);
 								Gun::PurpleFire(at, 0.6f + 0.12f * k, 0.05f * k, 0.9f);
@@ -2575,7 +2575,7 @@ namespace bo3z::Classes
 		int k = 0;
 		const bool legend = AfterSovngarde();
 		const float pf = 0.7f + 0.3f * Arcana::Power();
-		const int kTopTier = legend ? 16 : 15;  // (Noah: "the wonder weapons should be the strongest weapons for their class") above any kit spell's highest tier (13)
+		const int kTopTier = legend ? kWonderUps + 1 : kWonderUps;  // (Noah: "the wonder weapons should be the strongest weapons for their class") above any kit spell's highest tier (13)
 		for (auto* f : foes) {
 			if (f && !f->IsDead()) Gun::AreaHurt(f->GetPosition(), 150.0f, 0.6f * UpgradeMult(kTopTier) * pf, "");
 		}
@@ -2625,8 +2625,10 @@ namespace bo3z::Classes
 					if (sp == WyrmSpell() || sp == TomeSpell()) continue;  // (the wonders: 100, as Noah set them)
 					auto [it, fresh] = base.try_emplace(sp, 0.0f);
 					if (fresh) it->second = sp->CalculateMagickaCost(nullptr);
-					if (it->second <= 50.0f) continue;
-					const int want = CapSpellCost(it->second);
+					// a relic's (a hero's pact, a support spell, a Vigilant's) by its own tier on the one cost; the rest drawn in
+					const int rt = Kit::TierOfSpell(sp);
+					if (rt < 0 && it->second <= 50.0f) continue;
+					const int want = rt >= 0 ? TierSpellCost(rt) : CapSpellCost(it->second);
 					if (!sp->data.flags.all(RE::SpellItem::SpellFlag::kCostOverride) || sp->data.costOverride != want) {
 						sp->data.costOverride = want;
 						sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);

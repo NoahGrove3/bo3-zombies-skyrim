@@ -127,6 +127,12 @@ namespace bo3z
 		for (int i = static_cast<int>(s.size()) - 3; i > 0; i -= 3) s.insert(static_cast<std::size_t>(i), ",");
 		return (a_v < 0 ? "-" : "") + s;
 	}
+	// (Noah: "the wonders should have more damage than max upgrade by 2x") the class wonders hit on the curve's 30th step -
+	// about twice an item at its highest tier (13: 5.2x -> 10.3x); 31 once the three dragons fall
+	inline constexpr int kWonderUps = 30;
+	// (Noah: "each spell the Curse of Alduin uses should have the same base level damage and spell cost") one cost for every
+	// spell at a tier: 25 magicka at the base, 9 more each step up, never past 150
+	inline int TierSpellCost(int a_ups) { return std::min(150, 25 + 9 * std::max(0, a_ups)); }
 	// (Noah: "all the spells' costs are very very high - the max for the strongest spells should be 150") a spell's magicka on
 	// one gentle curve: cheap spells as they are, dearer ones drawn in, nothing above 150
 	inline int CapSpellCost(float a_cost)
