@@ -1726,8 +1726,9 @@ namespace BowsImpl
 			ours.push_back(dh->LookupForm<RE::TESAmmo>(gen::kVortexAmmo, gen::kPlugin));
 			for (int e = 0; e < 3; ++e) ours.push_back(dh->LookupForm<RE::TESAmmo>(0x020B05 + e, "Faction Crossbows.esp"));
 			int n = 0;
-			for (auto* am : ours) if (am) am->GetRuntimeData().data.flags.set(RE::AMMO_DATA::Flag::kNonPlayable), ++n;
-			logger::info("bows: {} of our bows' and crossbows' ammunition kept off the inventory", n);
+			// (Noah: "the arrows for the elemental bows are invisible" - made non-playable, Skyrim no longer drew them on the
+			// string or in flight) they stay playable: seen when loosed, never running out
+			(void)ours, (void)n;
 		}
 		static float quiver = 0;
 		if ((quiver -= a_delta) <= 0 && !ItemMenusOpen()) {

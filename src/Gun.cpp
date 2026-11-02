@@ -1763,8 +1763,16 @@ namespace bo3z
 				}
 				if (auto r = w.fx.get()) {  // the hole: swells in, spins, and shrinks to a point just before it bursts
 					const float grow = std::min(1.0f, w.life / 0.35f) * (w.left < 0.25f ? std::max(0.05f, w.left / 0.25f) : 1.0f);
-					r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(grow * w.burst / 420.0f * (1.0f + 0.06f * std::sin(w.life * 9.0f)), 0.05f, 9.0f) * 100.0f);
-					r->SetAngle({ 0.0f, 0.0f, w.life * 2.4f });
+					// (Noah: the black hole too small and flat to read) twice the size, its disc tipped toward you (a third of the way
+					// up) so it reads as the render does - a black heart in a burning violet ring - still spinning
+					r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(2.2f * grow * w.burst / 420.0f * (1.0f + 0.06f * std::sin(w.life * 9.0f)), 0.05f, 9.0f) * 100.0f);
+					float tip = 0.0f, face = 0.0f;
+					if (auto* pc = RE::PlayerCharacter::GetSingleton()) {
+						const auto d = pc->GetPosition() - w.at;
+						face = std::atan2(d.x, d.y);
+						tip = 0.55f;
+					}
+					r->SetAngle({ tip * std::cos(face), tip * std::sin(face), w.life * 2.4f });
 					if (auto* n = r->Get3D()) {
 						n->local.scale = r->GetReferenceRuntimeData().refScale / 100.0f;
 						RE::NiUpdateData ud;
