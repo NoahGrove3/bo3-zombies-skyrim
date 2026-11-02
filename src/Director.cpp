@@ -663,30 +663,30 @@ namespace bo3z
 		{
 			std::erase_if(g_risers, [&](const Riser& r) { return r.h.get().get() == a_a; });
 			// (Noah's crash at night 4, wave 5: a pathing worker thread read a freed path right after one of the dead "caught on
-			// something" was set down near you - six of them in seven seconds) its AI is stopped first, so its path requests
-			// are dropped; it is moved a moment later, and woken again a moment after that
+			// something" was set down near you) (and again, Nov 1: the same worker crash half a second after a set-down, with its
+			// AI already stopped) - it is now taken out of the world altogether while it moves: AI stopped, the body disabled
+			// (its path, its character controller and its havok let go cleanly), set down while disabled, enabled a moment
+			// later and woken once its body is back
 			a_a->StopCombat();
 			a_a->EnableAI(false);
+			a_a->Disable();
 			const auto spot = SpawnSpot(a_player);
 			const auto h = a_a->GetHandle();
-			Tasks::Later(0.15f, [h, spot] {
+			Tasks::Later(0.35f, [h, spot] {
 				auto a = h.get();
-				auto* pc = RE::PlayerCharacter::GetSingleton();
-				if (!a || !pc || a->IsDead() || a->IsDisabled() || a->IsDeleted() || !a->Is3DLoaded()) {
-					if (a && !a->IsDead() && !a->IsDisabled() && !a->IsDeleted()) a->EnableAI(true);
-					return;
-				}
-				ShowRiser(a.get(), true), a->SetCollision(true);  // (the audit: should StartRise refuse, it isn't left hidden)
+				if (!a || a->IsDead() || a->IsDeleted()) return;
 				a->SetPosition(spot, true);
-				a->MoveToNearestNavmesh();
-				Tasks::Later(0.15f, [h] {
+				a->Enable(false);
+				Tasks::Later(0.5f, [h] {
 					auto a = h.get();
 					auto* pc = RE::PlayerCharacter::GetSingleton();
-					if (!a || !pc || a->IsDead() || a->IsDisabled() || a->IsDeleted()) return;  // (the audit: put away between the two steps)
+					if (!a || !pc || a->IsDead() || a->IsDisabled() || a->IsDeleted()) return;
 					if (!a->Is3DLoaded()) {
-						a->EnableAI(true);  // (its body let go between the steps: awake, the chase finds it again)
+						a->EnableAI(true);  // (its body not back yet: awake, the chase finds it again)
 						return;
 					}
+					a->MoveToNearestNavmesh();
+					ShowRiser(a.get(), true), a->SetCollision(true);
 					a->EnableAI(true);
 					StartRise(a.get(), pc);
 					a->StartCombat(pc);
@@ -3387,7 +3387,7 @@ namespace bo3z
 					inView = facing > 0.45f && dist < 2500.0f && !RayBlocked(a_player->GetParentCell(), pp + RE::NiPoint3{ 0, 0, 110.0f }, zp + RE::NiPoint3{ 0, 0, 90.0f });
 				}
 				if ((pinned || s.stuck >= 10.0f) && !inView && grounded >= 1.5f && relocGap <= 0 && !IsRising(a.get())) {
-					relocGap = 1.2f, s.stuck = 0, s.stall = 0, s.still = 0, s.lastDist = -1;  // (no more than one set down every 1.2 s)
+					relocGap = 2.5f, s.stuck = 0, s.stall = 0, s.still = 0, s.lastDist = -1;  // (no more than one set down every 2.5 s)
 					Resurface(a.get(), a_player);
 					s.lastPos = a->GetPosition();
 					logger::info("night: {} {} ({:.0f} away) - risen again near you", gen::kEnemies[s.enemy].id, pinned ? "caught on something" : "not getting closer", dist);
