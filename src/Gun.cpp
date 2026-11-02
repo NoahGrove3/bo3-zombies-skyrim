@@ -3864,6 +3864,14 @@ namespace bo3z
 			return true;
 		}
 		void CrossbowStrike(int a_elem, int a_tier, RE::Actor* a_hit, float a_damage) { BowsImpl::CrossbowStrike(a_elem, a_tier, a_hit, a_damage); }
+		bool OursInHand()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return false;
+			if (BowsImpl::Held() >= 0 || BowsImpl::VortexHeld(p)) return true;
+			for (int e = 0; e < 3; ++e) if (auto* xb = Classes::CrossbowForm(e); xb && (p->GetEquippedObject(false) == xb || p->GetEquippedObject(true) == xb)) return true;
+			return false;
+		}
 		bool IsStrikeSpell(const RE::MagicItem* a_item)
 		{
 			if (!a_item) return false;

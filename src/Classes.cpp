@@ -2613,6 +2613,27 @@ namespace bo3z::Classes
 	// every frame: cooldowns, and where the Subsuming Vortex's arrows come down
 	void TickFast(float a_delta)
 	{
+		// every other spell you know (relics, heroes and armies, tomes, other mods' spells): its cost on the same curve,
+		// worked from its own first cost (kept, so it is never drawn in twice)
+		if (static float costT = 0; (costT -= a_delta) <= 0) {
+			costT = 2.0f;
+			static std::unordered_map<RE::SpellItem*, float> base;
+			if (auto* p = RE::PlayerCharacter::GetSingleton()) {
+				for (auto* sp : p->GetActorRuntimeData().addedSpells) {
+					if (!sp || sp->GetSpellType() != RE::MagicSystem::SpellType::kSpell || Arcana::IndexOf(sp) >= 0) continue;
+					if (sp->GetCastingType() == RE::MagicSystem::CastingType::kConcentration) continue;  // (a stream's cost is a second's: already small)
+					if (sp == WyrmSpell() || sp == TomeSpell()) continue;  // (the wonders: 100, as Noah set them)
+					auto [it, fresh] = base.try_emplace(sp, 0.0f);
+					if (fresh) it->second = sp->CalculateMagickaCost(nullptr);
+					if (it->second <= 50.0f) continue;
+					const int want = CapSpellCost(it->second);
+					if (!sp->data.flags.all(RE::SpellItem::SpellFlag::kCostOverride) || sp->data.costOverride != want) {
+						sp->data.costOverride = want;
+						sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
+					}
+				}
+			}
+		}
 		// (Noah: "I want to make the Dragon Slayer sword one-handed") swung as a sword in one hand, the other hand free for its
 		// spell - the record changed once, at the first frame (an equipped one is put on again so the hands take it up)
 		if (static bool oneHand = false; !oneHand) {

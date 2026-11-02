@@ -6289,6 +6289,12 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 					}
 				}
+				// (Noah: "I can still see a quiver count on the bottom right when these weapons don't have one") with one of our
+				// bows or crossbows in hand (they never run dry) Skyrim's arrow count is hidden; any other bow shows it
+				if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {
+					const bool ours = Bows::OursInHand();
+					hud->uiMovie->SetVariable("_root.HUDMovieBaseInstance.ArrowInfoInstance._alpha", RE::GFxValue(ours ? 0.0 : 100.0));
+				}
 				// Skyrim's enemy bar under the compass gives way to ours over each foe
 				if (static int vb = 0; vb++ % 15 == 0) {
 					if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) {

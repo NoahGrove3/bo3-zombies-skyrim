@@ -78,6 +78,25 @@ namespace bo3z
 				++n;
 			}
 			logger::info("audio: {} magic sounds brought down (draw and readied loops 16 dB, charge 6, release and hit 4)", n);
+			// (Noah: "the blood/life drain spell sound effects are way too loud") every drain, absorb and blood effect's sounds
+			// another 12 dB down - the Vampiric and Blood ladders, Thirstbow's spells, the Bane's drink
+			{
+				std::unordered_set<RE::BGSSoundDescriptorForm*> blood;
+				for (auto* mg : dh->GetFormArray<RE::EffectSetting>()) {
+					if (!mg) continue;
+					std::string nm = mg->GetFullName() ? mg->GetFullName() : "";
+					for (auto& ch : nm) ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
+					const bool drain = mg->GetArchetype() == RE::EffectArchetypes::ArchetypeID::kAbsorb || nm.find("vampir") != std::string::npos || nm.find("blood") != std::string::npos ||
+					                   nm.find("drain") != std::string::npos || nm.find("absorb") != std::string::npos || nm.find("life") != std::string::npos;
+					if (!drain) continue;
+					for (auto& sp : mg->effectSounds) if (sp.sound) blood.insert(sp.sound);
+				}
+				for (auto* sd : blood) {
+					if (auto* sdef = sd->soundDescriptor ? skyrim_cast<RE::BGSStandardSoundDef*>(sd->soundDescriptor) : nullptr)
+						sdef->soundCharacteristics.staticAttenuation = static_cast<std::uint16_t>(std::min(10000, sdef->soundCharacteristics.staticAttenuation + 1200));
+				}
+				logger::info("audio: {} blood and drain sounds 12 dB further down", blood.size());
+			}
 			// (Noah: "the drawing spell sound when drawing a weapon is still really loud") the Spellsword mod's own sound when a
 			// blade takes up its spell (a bright magic whoosh, played as the weapon is drawn): 24 dB down
 			if (auto* sd = dh->LookupForm<RE::BGSSoundDescriptorForm>(0x009F88, "Spellsword.esp"); sd && sd->soundDescriptor) {

@@ -1168,12 +1168,13 @@ namespace bo3z::Kit
 		static int   was = 0;  // the tier lit last time (0: none)
 		since += a_delta;
 		auto* p = RE::PlayerCharacter::GetSingleton();
-		const int c = Cls();
+		(void)Cls();
 		int t = 0;
 		auto* w = Classes::SpellswordBlade();
-		if (p && c == 3 && p->Is3DLoaded() && p->AsActorState()->IsWeaponDrawn() && w && p->GetEquippedObject(false) == w) {
-			const auto defs = Defs(c);
-			for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (defs[i].kind == Kind::Blade && (g_cls[c].owned >> i & 1)) t = std::clamp(ItemTier(c, i), 0, 3);
+		if (p && p->Is3DLoaded() && p->AsActorState()->IsWeaponDrawn() && w && (p->GetEquippedObject(false) == w || p->GetEquippedObject(true) == w)) {
+			t = 1;
+			const auto defs = Defs(3);
+			for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (defs[i].kind == Kind::Blade && (g_cls[3].owned >> i & 1)) t = std::clamp(ItemTier(3, i), 1, 3);  // (Noah: flaming dark red from the first - hotter each tier)
 		}
 		if (t < 1) { was = 0; return; }
 		if (t == was && since < 3.0f) return;  // (renewed just before it fades; at once when drawn or reforged)

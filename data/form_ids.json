@@ -1346,6 +1346,13 @@
   "ARMA:tb_dread_putrid": "0xd3e",
   "MGEF:set_swift": "0xd3f",
   "SPEL:set_swift": "0xd40",
-  "ACTI:purplefire": "0xd41"
+  "ACTI:purplefire": "0xd41",
+  "EFSH:bowskin_fire": "0xd42",
+  "EFSH:bowskin_frost": "0xd43",
+  "EFSH:bowskin_shock": "0xd44",
+  "EFSH:bowskin_wind": "0xd45",
+  "EFSH:bowskin_sun": "0xd46",
+  "EFSH:bowskin_blood": "0xd47",
+  "EFSH:bowskin_void": "0xd48"
  }
 }

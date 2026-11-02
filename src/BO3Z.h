@@ -127,6 +127,13 @@ namespace bo3z
 		for (int i = static_cast<int>(s.size()) - 3; i > 0; i -= 3) s.insert(static_cast<std::size_t>(i), ",");
 		return (a_v < 0 ? "-" : "") + s;
 	}
+	// (Noah: "all the spells' costs are very very high - the max for the strongest spells should be 150") a spell's magicka on
+	// one gentle curve: cheap spells as they are, dearer ones drawn in, nothing above 150
+	inline int CapSpellCost(float a_cost)
+	{
+		if (a_cost <= 50.0f) return std::max(1, static_cast<int>(std::lround(a_cost)));
+		return static_cast<int>(std::lround(std::min(150.0f, 50.0f + (a_cost - 50.0f) * 0.19f)));
+	}
 	inline float UpgradeMult(int a_upgrades)
 	{
 		// (Noah: "I was pretty much unstoppable by night three - even with just one upgrade on the spell I was obliterating
@@ -498,6 +505,7 @@ namespace bo3z
 		void                      SetLevels(const std::vector<std::uint8_t>& a_levels);
 		void                      SetLevel(int a_i, int a_level);  // (Kit.cpp) its tier, 0..3
 		bool                      IsStrikeSpell(const RE::MagicItem* a_item);
+		bool                      OursInHand();       // one of our bows, crossbows or the Vortex in your hands (infinite ammo)
 		int                       SpecialKind();      // the special ammo loaded (-1 none: 0 piercing, 1 cluster, 2 frost-lock, 3 soul-bind)
 		int                       SpecialLeft();
 		std::string_view          SpecialName(int a_kind);

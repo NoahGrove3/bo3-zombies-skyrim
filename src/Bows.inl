@@ -532,6 +532,7 @@ namespace BowsImpl
 	void TierTwoAt(const Spellcraft::Shot& s, const RE::NiPoint3& p, RE::Actor* a_hit)
 	{
 		if (s.tier < 2) return;
+		if (s.tier >= 3 && s.full) return;  // (Noah: "it casts 2 spells instead of 1" - a full draw at tier III looses the great spell alone)
 		RE::Actor* target = a_hit;
 		if (!target) {
 			for (auto* f : Foes(p, 500.0f)) { target = f; break; }
@@ -1226,15 +1227,36 @@ namespace BowsImpl
 		}
 	}
 
+	// (Noah: "for all the bows' animations in hand they should be high quality and flow with the model of the bow, not
+	// circulating orbs on some parts of the bow") the element as a living skin over the whole bow: its enchantment shader
+	// (membrane and particles running over the model as it bends) laid on the bow in your hands, renewed before it fades
+	void TickSkin(RE::PlayerCharacter* p, int i, float a_delta)
+	{
+		static float since = 99.0f;
+		static int   was = -1;
+		since += a_delta;
+		if (i < 0) { was = -1; return; }
+		int el = 6;  // (the Vortex: the void)
+		if (i != kVortexMote) {
+			const std::string_view e = gen::kBows[i].element;
+			el = e == "fire" ? 0 : e == "frost" ? 1 : e == "shock" ? 2 : e == "wind" ? 3 : e == "sun" ? 4 : 5;
+		}
+		if (el == was && since < 2.8f) return;
+		since = 0, was = el;
+		auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kBowSkin[el], gen::kPlugin);
+		if (!fx) return;
+		for (const bool first : { false, true }) {
+			auto* root = p->Get3D(first);
+			auto* node = root ? root->GetObjectByName("WEAPON") : nullptr;
+			if (node) p->ApplyEffectShader(fx, 3.2f, nullptr, false, false, node, false);
+		}
+	}
 	void TickMotes(RE::PlayerCharacter* p, int i, float a_delta)
 	{
 		const bool out = i >= 0 && p->AsActorState()->IsWeaponDrawn();
-		if (!out) {
-			if (!g_motes.empty()) {
-				ClearMotes();
-			}
-			return;
-		}
+		TickSkin(p, out ? i : -1, a_delta);
+		if (!g_motes.empty()) ClearMotes();  // (the orbs are gone: the skin is the bow's life now)
+		return;
 		if (g_moteBow != i || g_moteTier != MoteTier(i)) {
 			BuildMotes(i);
 		}

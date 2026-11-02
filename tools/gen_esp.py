@@ -365,12 +365,11 @@ for n, t in enumerate(RIFT_TIERS, start=1):
 # (Noah: "use the Madness Sword for the Spellsword's weapon") Saints & Seducers' Madness Sword as a record of our own: its
 # stats and look, its first-person model a static of ours, so the class needs only the model and its textures (the
 # Party Pack carries them loose), not the Creation Club plugin itself
-MAD_GLOW = [  # its tiers: the blade's own violet fire, brighter each tier (src/Kit.cpp swaps the enchantment); no damage of its own
-    # (Noah: "I didn't notice any weapon effects for the spell sword class after reforging once") tier I was a glow alone, too
-    # faint to see: now its own violet flames too, a little lower than tier II's
-    dict(persist=0.85, pulse=0.5, particles=True, birth=30.0, alpha=(0.05, 0.25, 0.05), scale2=6.0, fill=(200, 150, 255), keys=((240, 220, 255), (190, 140, 255), (140, 70, 230))),
-    dict(persist=0.95, pulse=0.45, particles=True, birth=60.0, alpha=(0.05, 0.35, 0.05), scale2=7.5, fill=(205, 160, 255), keys=((245, 230, 255), (200, 150, 255), (150, 80, 235))),
-    dict(persist=1.2, pulse=0.3, particles=True, birth=90.0, alpha=(0.10, 0.55, 0.10), scale2=9.0, life=0.75, fill=(235, 215, 255), keys=((255, 250, 255), (220, 170, 255), (190, 60, 220)), edge=(220, 90, 255)),
+MAD_GLOW = [  # its tiers: the blade's own fire, brighter each tier (src/Kit.cpp TickMadGlow); no damage of its own
+    # (Noah: "make it look like it's flaming in a dark red color") dark red flame from the base blade up, hotter each tier
+    dict(persist=1.0, pulse=0.4, particles=True, birth=70.0, alpha=(0.08, 0.45, 0.08), scale2=8.0, fill=(170, 20, 12), keys=((255, 120, 60), (200, 30, 15), (90, 0, 0)), edge=(200, 25, 10)),
+    dict(persist=1.1, pulse=0.35, particles=True, birth=100.0, alpha=(0.10, 0.55, 0.10), scale2=9.5, fill=(190, 25, 14), keys=((255, 140, 70), (215, 35, 18), (100, 0, 0)), edge=(220, 30, 12)),
+    dict(persist=1.3, pulse=0.3, particles=True, birth=140.0, alpha=(0.12, 0.65, 0.12), scale2=11.0, life=0.8, fill=(215, 35, 18), keys=((255, 170, 90), (230, 45, 20), (120, 0, 0)), edge=(240, 40, 15)),
 ]
 subs = []
 for name, hx in T['stat_madness1st']['subs']:
@@ -415,12 +414,42 @@ for n, t in enumerate(MAD_GLOW, start=1):
     struct.pack_into('<I', md, 36, fid('EFSH', f'madshader{n}'))
     struct.pack_into('<I', md, 96, 0)
     struct.pack_into('<I', md, 0, struct.unpack_from('<I', md, 0)[0] | 0x8000)   # hidden in the effects list
-    recs['MGEF'].append(record('MGEF', fid('MGEF', f'madglow{n}'), [sub('EDID', z(f'UN_MadGlow{n}')), sub('FULL', z('Violet Fire')), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
+    recs['MGEF'].append(record('MGEF', fid('MGEF', f'madglow{n}'), [sub('EDID', z(f'UN_MadGlow{n}')), sub('FULL', z('Madfire')), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
         sub('DATA', bytes(md)), sub('DNAM', z(''))]))
     en = bytearray(tsub('ench_fire05', 'ENIT'))
     struct.pack_into('<I', en, 0, 0); struct.pack_into('<I', en, 4, struct.unpack_from('<I', en, 4)[0] | 0x1)   # costs no charge
-    recs['ENCH'].append(record('ENCH', fid('ENCH', f'madglow{n}'), [sub('EDID', z(f'UN_MadGlowEnch{n}')), sub('OBND', bytes(12)), sub('FULL', z('Violet Fire')),
+    recs['ENCH'].append(record('ENCH', fid('ENCH', f'madglow{n}'), [sub('EDID', z(f'UN_MadGlowEnch{n}')), sub('OBND', bytes(12)), sub('FULL', z('Madfire')),
         sub('ENIT', bytes(en)), sub('EFID', struct.pack('<I', fid('MGEF', f'madglow{n}'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+
+# (Noah: "for all the bows' animations in hand they should be high quality and flow with the model of the bow, not circulating
+# orbs") each bow's element as a living skin over the whole bow - the enchantment shader's membrane and its particles running
+# over the model as it bends (src/Bows.inl TickSkin lays it on the bow in your hands)
+BOW_SKIN = {
+    'fire':  dict(fill=(255, 110, 30), edge=(255, 70, 10), keys=((255, 230, 150), (255, 120, 30), (160, 20, 0))),
+    'frost': dict(fill=(140, 210, 255), edge=(90, 180, 255), keys=((240, 250, 255), (150, 210, 255), (40, 110, 220))),
+    'shock': dict(fill=(150, 170, 255), edge=(120, 140, 255), keys=((255, 255, 255), (170, 190, 255), (70, 80, 240))),
+    'wind':  dict(fill=(170, 255, 225), edge=(120, 240, 210), keys=((240, 255, 250), (160, 245, 220), (60, 170, 150))),
+    'sun':   dict(fill=(255, 215, 110), edge=(255, 190, 60), keys=((255, 255, 220), (255, 210, 100), (200, 120, 20))),
+    'blood': dict(fill=(200, 10, 20), edge=(230, 20, 30), keys=((255, 120, 120), (200, 20, 30), (90, 0, 5))),
+    'void':  dict(fill=(170, 60, 255), edge=(190, 80, 255), keys=((240, 210, 255), (170, 70, 255), (60, 0, 140))),
+}
+for el, t in BOW_SKIN.items():
+    d = bytearray(tsub('efsh_enchpurple', 'DATA'))
+    d[0] = d[0] & ~0x08
+    struct.pack_into('<f', d, 0x20, 1.1)
+    struct.pack_into('<f', d, 0x24, 0.35)
+    d[0x10:0x13] = bytes(c // 3 for c in t['fill'])
+    struct.pack_into('<f', d, 0x7C, 80.0)
+    struct.pack_into('<fff', d, 0xC8, 0.08, 0.5, 0.08)
+    struct.pack_into('<f', d, 0xB0, 6.5)
+    struct.pack_into('<f', d, 0x84, 0.7)
+    for k, rgb in enumerate(t['keys']): d[0xBC + 4 * k:0xBC + 4 * k + 3] = bytes(rgb)
+    d[0x38:0x3B] = bytes(t['edge'])
+    subs = [sub('EDID', z(f'UN_BowSkin_{el}'))]
+    for name, hx in T['efsh_enchpurple']['subs']:
+        if name == 'EDID': continue
+        subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
+    recs['EFSH'].append(record('EFSH', fid('EFSH', f'bowskin_{el}'), subs))
 
 # (Noah: "change the summoner spell to something more fitting" - Reanimate) a dark bolt: Skyrim's own Reanimate look (its
 # projectile, its hand and hit art, its sounds), but aimed at the living; it barely hurts by itself - Classes::ConjurerStaffHit
