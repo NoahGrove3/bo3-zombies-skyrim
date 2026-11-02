@@ -430,7 +430,7 @@ namespace Props
 	RE::TESObjectWEAP* SlayerForm()
 	{
 		static RE::TESObjectWEAP* w = nullptr;
-		if (!w) if (auto* dh = RE::TESDataHandler::GetSingleton()) w = dh->LookupForm<RE::TESObjectWEAP>(0x00083D, "Ultra Greatswords.esp");
+		if (!w) if (auto* dh = RE::TESDataHandler::GetSingleton()) w = dh->LookupForm<RE::TESObjectWEAP>(gen::kSlayerWeap, gen::kPlugin);
 		return w;
 	}
 	bool SlayerInHand(RE::PlayerCharacter* p)

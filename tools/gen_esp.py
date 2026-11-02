@@ -65,6 +65,42 @@ def cast_mgef(key, label, cast=2):
         sub('EDID', z('UN_' + key)), sub('FULL', z(label)), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
 cast_mgef('wandcast', 'Wand Cast', 1)
 
+# (Noah: "replace the crossbows with ... throwing daggers") the Ranger's Throwing Daggers: a hand spell (fire-and-forget,
+# self: only the throw's animation) - on each cast src/Classes.cpp ThrowDaggers launches the knives themselves: a spinning
+# steel knife (tools/throwdagger.py) carrying an ember strike (Firebolt's burn on what it hits; its magnitude set by the
+# daggers' tier at each throw, on the one damage curve every spell shares)
+pd = bytearray(tsub('proj_bullet', 'DATA'))
+struct.pack_into('<H', pd, 0, 0x0)                    # a plain magic missile
+struct.pack_into('<f', pd, 4, 0.25)                   # a little drop
+struct.pack_into('<f', pd, 8, 3800.0)                 # speed
+struct.pack_into('<I', pd, 16, 0); struct.pack_into('<I', pd, 20, 0)
+struct.pack_into('<I', pd, 36, 0); struct.pack_into('<I', pd, 40, 0)
+struct.pack_into('<I', pd, 56, 0); struct.pack_into('<I', pd, 60, 0)
+recs['PROJ'].append(record('PROJ', fid('PROJ', 'throwdagger'), [
+    sub('EDID', z('UN_ThrowDaggerProj')), sub('OBND', tsub('proj_bullet', 'OBND')), sub('MODL', z('CurseOfAlduin\\ranger\\throwdagger.nif')),
+    sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', struct.pack('<I', 0))]))
+md = bytearray(tsub('mgef_firebolt', 'DATA'))
+struct.pack_into('<I', md, 16, 0xFFFFFFFF)            # no resistance: steel and ember
+struct.pack_into('<I', md, 24, 0)                     # no light in the hand
+struct.pack_into('<I', md, 72, fid('PROJ', 'throwdagger'))
+struct.pack_into('<I', md, 76, 0)
+struct.pack_into('<I', md, 92, 0)                     # no casting art
+recs['MGEF'].append(record('MGEF', fid('MGEF', 'throwdagger'), [
+    sub('EDID', z('UN_ThrowDaggerHit')), sub('FULL', z('Throwing Dagger')), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+sp = bytearray(tsub('spel_firebolt', 'SPIT'))
+struct.pack_into('<I', sp, 0, 0); struct.pack_into('<I', sp, 4, 0x1)
+recs['SPEL'].append(record('SPEL', fid('SPEL', 'throwdagger'), [
+    sub('EDID', z('UN_ThrowDaggerHitSpell')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
+    sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'throwdagger'))), sub('EFIT', struct.pack('<fII', 20.0, 0, 0))]))
+cast_mgef('throwdaggers', 'Throwing Daggers', 1)
+sp = bytearray(tsub('spel_firebolt', 'SPIT'))
+struct.pack_into('<IIIfIIffI', sp, 0, 0, 0x1, 0, 0.0, 1, 0, 0.0, 0.0, 0)   # no magicka (a throw spends stamina), no charge, fire-and-forget, self
+recs['SPEL'].append(record('SPEL', fid('SPEL', 'throwdaggers'), [
+    sub('EDID', z('UN_ThrowingDaggers')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Throwing Daggers')),
+    sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
+    sub('DESC', z('The Ranger\'s steel: each throw looses ember-hot knives at what you aim at, for a little stamina. Tier I throws three in a fan, Tier II five, Legendary a second volley on the first.')),
+    sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'throwdaggers'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+
 # ---- the Echo Altar's roll (src/Shops.cpp): each column's rune stone strikes the heart stone with Skyrim's own lightning
 # bolt beam (Skyrim.esm ShockBoltAim, its MAGShock02 impacts), cast from a marker at the stone to a marker in the heart;
 # ShockDamageFFAimed's data with no sounds (Shops plays a vanilla trap bolt once, on each strike), no harm, no hit art
@@ -325,6 +361,9 @@ for name, hx in T['weap_daedricdagger']['subs']:
     elif name == 'DESC': b = z('A Daedric blade that burns. Its strikes tear rifts: a Flame Atronach steps out to fight for you. Base: every 5th strike, 10 s. I: every 4th, 15 s, larger. II: every 3rd, a potent atronach, 20 s, two at once. III: a great one, 25 s, three at once - the rift bursts into flame.')
     elif name == 'DATA': b = struct.pack('<IfH', 900, 6.0, 14)
     elif name == 'EAMT': b = struct.pack('<H', 0)   # (Noah: "remove the charge bar - it doesn't even use charge") no charge to run down
+    elif name == 'MODL': b = z('CurseOfAlduin\\wonder\\riftblade.nif')   # (Noah: the Abyssal Heart's model)
+    elif name == 'MODT': continue
+    elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_riftblade'))
     subs.append(sub(name, b))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'riftblade'), subs))
 
@@ -390,6 +429,23 @@ for name, hx in T['weap_madness']['subs']:
     subs.append(sub(name, b))
     if name == 'MODT': subs.append(sub('EAMT', struct.pack('<H', 0)))   # (Noah: "remove the charge bar - it doesn't even use charge") no charge: its tier fire never runs down
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'madness'), subs))
+# (Noah: "make the Dragon Slayer sword one-handed ... use the sword I attached") the Spellsword's wonder: a one-handed sword (the
+# Madness Sword's record) with the Ayleid Crystal Saber's model (tools/wonderprops.py slayer); its spell-on-hit, lightning
+# slashes and tier in src/Classes.cpp and src/WonderProps.inl
+subs = []
+for name, hx in T['weap_madness']['subs']:
+    b = bytes.fromhex(hx)
+    if name == 'EDID': b = z('UN_DragonSlayer')
+    elif name == 'FULL': b = z('Dragon Slayer')
+    elif name == 'MODL': b = z('CurseOfAlduin\\wonder\\slayer.nif')
+    elif name == 'MODT': continue
+    elif name == 'DESC': b = z('A blade of living crystal from the Ayleid deep. Every swing cracks lightning round it; a power attack sends a slash of lightning down the line. Every hit carries the last Spellsword spell you held.')
+    elif name == 'KSIZ': b = struct.pack('<I', 2)
+    elif name == 'KWDA': b = bytes.fromhex(hx)[:8]
+    elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_slayer'))
+    elif name == 'DATA': b = struct.pack('<IfH', 6000, 9.0, 24)
+    subs.append(sub(name, b))
+recs['WEAP'].append(record('WEAP', fid('WEAP', 'slayer'), subs))
 for n, t in enumerate(MAD_GLOW, start=1):
     d = bytearray(tsub('efsh_enchpurple', 'DATA'))
     d[0] = d[0] & ~0x08 if t['particles'] else d[0]

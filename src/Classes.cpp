@@ -246,6 +246,7 @@ namespace bo3z::Classes
 				// (Noah, the altar rework) the Emberstring bow beside the Ember Crossbow
 				// (Noah: "remove the crossbows from the ranger class entirely") the Emberstring alone
 				for (int b = 0; b < Bows::Count(); ++b) if (gen::kBows[b].id == std::string_view("emberstring")) Bows::Give(b);
+				GiveDaggers();  // (Noah: "replace the crossbows with ... throwing daggers")
 				break;
 			case coffer::kSpellsword:
 				// (Noah, the altar rework: "remove shields entirely - a one-hand sword from one of the weapon mods, and a fire
@@ -649,7 +650,7 @@ namespace bo3z::Classes
 		RE::SpellItem* TomeSpell() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::SpellItem>(gen::kWonderTomeSpell, gen::kPlugin) : nullptr; }
 		RE::TESObjectWEAP* Vortex() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::TESObjectWEAP>(gen::kVortexWeap, gen::kPlugin) : nullptr; }
 		RE::TESAmmo* VortexArrow() { auto* dh = RE::TESDataHandler::GetSingleton(); return dh ? dh->LookupForm<RE::TESAmmo>(gen::kVortexAmmo, gen::kPlugin) : nullptr; }
-		RE::TESObjectWEAP* Slayer() { auto* f = Lookup(0x00083D, "Ultra Greatswords.esp"); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }
+		RE::TESObjectWEAP* Slayer() { auto* f = Lookup(gen::kSlayerWeap, gen::kPlugin); return f ? f->As<RE::TESObjectWEAP>() : nullptr; }  // (our own one-handed sword: the Ayleid Crystal Saber)
 		RE::SpellItem* Myst(std::uint32_t a_id) { auto* f = Lookup(a_id, "MysticismMagic.esp"); return f ? f->As<RE::SpellItem>() : nullptr; }
 
 		// (the Subsuming Vortex) a hole where an arrow came down - one a moment, however fast you loose
@@ -1173,6 +1174,7 @@ namespace bo3z::Classes
 		TuneCorrosion();
 		TuneSpellswordGear();
 		TickArmour();
+		if (g_class.load() == coffer::kRanger && Kit::DaggerTier() >= 0) GiveDaggers();  // (a Ranger's save from before the Throwing Daggers)
 		// (Noah: "for the destruction class there should only be a 1 second delay before the mana starts regenerating after
 		// firing - 5 seconds is fine for the others"; "sprinting should cost a little more stamina for all players")
 		if (auto* gs = RE::GameSettingCollection::GetSingleton()) {
@@ -2533,8 +2535,10 @@ namespace bo3z::Classes
 		}
 	}
 
+	bool ThrowDaggers(RE::FormID a_spell);  // (below: the Ranger's Throwing Daggers)
 	bool OnCast(RE::FormID a_spell)
 	{
+		if (ThrowDaggers(a_spell)) return true;
 		auto* tome = TomeSpell();
 		if (!tome || a_spell != tome->GetFormID()) return false;
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -2614,25 +2618,7 @@ namespace bo3z::Classes
 				}
 			}
 		}
-		// (Noah: "I want to make the Dragon Slayer sword one-handed") swung as a sword in one hand, the other hand free for its
-		// spell - the record changed once, at the first frame (an equipped one is put on again so the hands take it up)
-		if (static bool oneHand = false; !oneHand) {
-			if (auto* sl = Slayer()) {
-				oneHand = true;
-				sl->weaponData.animationType = RE::WEAPON_TYPE::kOneHandSword;
-				if (auto* either = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F44)) sl->SetEquipSlot(either);
-				if (auto* kw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x0006D931)) sl->RemoveKeyword(kw);  // (WeapTypeGreatsword)
-				if (auto* kw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x0001E711)) sl->AddKeyword(kw);     // (WeapTypeSword)
-				auto* p = RE::PlayerCharacter::GetSingleton();
-				if (p && (p->GetEquippedObject(false) == sl || p->GetEquippedObject(true) == sl)) {
-					if (auto* em = RE::ActorEquipManager::GetSingleton()) {
-						em->UnequipObject(p, sl, nullptr, 1, nullptr, false, false, false, true);
-						em->EquipObject(p, sl, nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42), false, false, false, true);
-					}
-				}
-				logger::info("classes: the Dragon Slayer is a one-handed sword");
-			}
-		}
+
 		TickSummons(a_delta);
 		g_tomeCool = std::max(0.0f, g_tomeCool - a_delta);
 		if (g_tomeHold > 0 && (g_tomeHold -= a_delta) <= 0) {
@@ -2959,6 +2945,68 @@ namespace bo3z::Classes
 		if (a_struck && Director::IsRoundUndead(a_struck) && !Director::IsBoss(a_struck)) g_pendingThrall.push_back({ a_struck->GetHandle(), 0.6f, a_level });
 	}
 	bool KitGiven(int a_cls) { return a_cls >= 0 && a_cls < 4 && g_kit[a_cls]; }
+	// ---- (Noah: "replace the crossbows with ... throwing daggers") the Ranger's Throwing Daggers ----
+	RE::SpellItem* DaggerSpell() { auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kDaggerSpell, gen::kPlugin); return f ? f->As<RE::SpellItem>() : nullptr; }
+	RE::SpellItem* DaggerHitSpell() { auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kDaggerHit, gen::kPlugin); return f ? f->As<RE::SpellItem>() : nullptr; }
+	void GiveDaggers()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* sp = DaggerSpell();
+		if (!p || !sp || p->HasSpell(sp)) return;
+		p->AddSpell(sp);
+		logger::info("classes: the Throwing Daggers learned");
+	}
+	namespace
+	{
+		// one volley: a knife per lane, fanned round where you aim, each carrying an ember strike at the daggers' tier (the
+		// same base damage and curve as every spell: 20 at Base). Base one knife, Tier I three, Tier II five; Legendary
+		// throws a second volley a breath after the first. A volley spends 8 stamina
+		void DaggerVolley(int a_tier)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* hit = DaggerHitSpell();
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			auto* proj = hit && !hit->effects.empty() && hit->effects[0] && hit->effects[0]->baseEffect ? hit->effects[0]->baseEffect->data.projectileBase : nullptr;
+			if (!p || !proj || !cam || !cam->cameraRoot) return;
+			hit->effects[0]->effectItem.magnitude = 20.0f * UpgradeMult(a_tier);
+			const auto& w = cam->cameraRoot->world;
+			RE::NiPoint3 dir{ w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] };
+			dir.Unitize();
+			const RE::NiPoint3 from = w.translate + dir * 70.0f + RE::NiPoint3{ 0.0f, 0.0f, -12.0f };
+			const float pitch = -std::asin(std::clamp(dir.z, -1.0f, 1.0f));
+			const float yaw = std::atan2(dir.x, dir.y);
+			const int   n = a_tier >= 2 ? 5 : a_tier >= 1 ? 3 : 1;
+			constexpr float kSpread = 0.09f;  // (about 5 degrees between knives)
+			for (int i = 0; i < n; ++i) {
+				const float off = (static_cast<float>(i) - static_cast<float>(n - 1) * 0.5f) * kSpread;
+				RE::Projectile::ProjectileRot rot{ pitch, yaw + off };
+				RE::Projectile::LaunchData    ld(proj, p, from, rot);
+				ld.useOrigin = true;
+				ld.autoAim = false;
+				ld.spell = hit;
+				ld.castingSource = RE::MagicSystem::CastingSource::kLeftHand;
+				RE::ProjectileHandle h;
+				RE::Projectile::Launch(&h, ld);
+			}
+		}
+	}
+	bool ThrowDaggers(RE::FormID a_spell)
+	{
+		auto* sp = DaggerSpell();
+		if (!sp || a_spell != sp->GetFormID()) return false;
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return true;
+		auto* av = p->AsActorValueOwner();
+		if (av->GetActorValue(RE::ActorValue::kStamina) < 8.0f) {
+			Hud::Banner("Too winded to throw", 1.2f);
+			return true;
+		}
+		av->DamageActorValue(RE::ActorValue::kStamina, 8.0f);
+		const int t = std::max(0, Kit::DaggerTier());
+		DaggerVolley(t);
+		if (t >= 3) Tasks::Later(0.18f, [t]() { DaggerVolley(t); });
+		return true;
+	}
 	RE::TESObjectWEAP* Riftblade()
 	{
 		auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kRiftblade, gen::kPlugin);

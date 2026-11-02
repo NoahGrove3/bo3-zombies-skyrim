@@ -408,6 +408,9 @@ namespace bo3z
 		void             QueueThrall(RE::Actor* a_struck, int a_level);  // should it fall now, it rises as your thrall
 		bool             KitGiven(int a_cls);         // that class's starting kit has been handed over
 		RE::TESObjectWEAP* Riftblade();
+		RE::SpellItem*     DaggerSpell();     // the Ranger's Throwing Daggers (the hand spell)
+		RE::SpellItem*     DaggerHitSpell();  // what each thrown knife carries
+		void               GiveDaggers();     // learned, and readied in the left hand when nothing is there
 		std::string        ArmourSetName(int a_cls, int a_tier);   // (the class armour sets) its name at that tier
 		bool               ArmourCarried(int a_cls, int a_tier);   // a piece of it in your pack
 		void               GiveArmourSet(int a_cls, int a_tier, bool a_wear);  // handed over (the Battle-mage's earlier look taken back)
@@ -1194,6 +1197,7 @@ namespace bo3z
 		int   TierOfSummon(RE::Actor* a_summon);      // a hero or army a relic called up (-1)
 		int   BowAscends(int a_bow);
 		int   CrossbowAscends(int a_elem);
+		int   DaggerTier();  // the Ranger's Throwing Daggers' tier (-1: not owned)
 		int   RiftTier();                         // the Riftblade's upgrades (0..)
 		float QuiverRadiusMult();                 // the Ranger's relic quivers: its bows' and crossbows' blasts this much wider
 		int   ArmourTier(int a_cls);              // (the class armour sets) the set's upgrades (0..), -1 not owned

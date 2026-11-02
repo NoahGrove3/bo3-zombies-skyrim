@@ -753,8 +753,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				  "Your kit grows at the altar: every family and the Riftblade to Legendary", "Conjure Wolf, Conjure Skeleton, the Riftblade, the Arcane Conjurer Robes" },
 				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Ranged spells: fire, frost, shock, sun, blood and runes",
 				  "Your kit grows at the altar: each element climbs to its Legendary spell", "Firebolt, Ice Spike, the Black Mage Robes" },
-				{ "RANGER", "Sworn to the Dawnguard", IM_COL32(110, 210, 120, 255), "Bows and crossbows - and every arrow counts", "The six elemental bows, three crossbows and their bolts",
-				  "Your kit grows at the altar: each bow and crossbow to Legendary", "The Ember Crossbow and its bolts, Emberstring, the Gondorian Ranger Armor" },
+				{ "RANGER", "Sworn to the Dawnguard", IM_COL32(110, 210, 120, 255), "Bows and thrown steel - and every arrow counts", "The six elemental bows and the Throwing Daggers",
+				  "Your kit grows at the altar: each bow and the daggers to Legendary", "Emberstring, the Throwing Daggers, the Gondorian Ranger Armor" },
 				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "A one-handed blade and touch spells - and the Vigilants' relic spells",
 				  "Your kit grows at the altar: the blade and each spell to Legendary", "Your blade, Burning Touch, the Valkyrie or DragonLord Armor" } };
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));

@@ -1353,6 +1353,14 @@
   "EFSH:bowskin_wind": "0xd45",
   "EFSH:bowskin_sun": "0xd46",
   "EFSH:bowskin_blood": "0xd47",
-  "EFSH:bowskin_void": "0xd48"
+  "EFSH:bowskin_void": "0xd48",
+  "STAT:1st_slayer": "0xd49",
+  "STAT:1st_riftblade": "0xd4a",
+  "WEAP:slayer": "0xd4b",
+  "PROJ:throwdagger": "0xd4c",
+  "MGEF:throwdagger": "0xd4d",
+  "SPEL:throwdagger": "0xd4e",
+  "MGEF:throwdaggers": "0xd4f",
+  "SPEL:throwdaggers": "0xd50"
  }
 }

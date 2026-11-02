@@ -371,13 +371,13 @@ def build(pid):
         # the crystal: its opacity map is clear through the middle and thick at the facets - lifted so the clearest is
         # still a third opaque (glass, not nothing), blended; lit faintly all over in blue-white, brightest on its facets
         D, N, G = textures('slayer_blade', tx / 'Blade_albedo.jpeg', tx / 'Blade_normal.png', tx / 'Blade_roughness.jpeg', None,
-                           glow=ice, opacity=tx / 'Blade_opacity.jpeg', alpha_floor=0.35, glow_base=0.35, glow_floor=1.0,
+                           glow=ice, opacity=tx / 'Blade_opacity.jpeg', alpha_floor=0.35, glow_base=0.22, glow_floor=1.0,
                            metal=tx / 'Blade_metallic.jpeg', size=1024)
         # the hilt: dark Ayleid metal; its little cyan crystals glow too
         gem = hue_mask(tx / 'Handle_albedo.jpeg', 2048, lambda r, g, b: (np.minimum(g, b) - r - 35) / 70)
         D2, N2, G2 = textures('slayer_hilt', tx / 'Handle_albedo.jpeg', tx / 'Handle_normal.png', tx / 'Handle_roughness.jpeg', gem,
                               glow=ice, metal=tx / 'Handle_metallic.jpeg', ao=tx / 'Handle_AO.jpeg')
-        mats = {'m0': matopts(D, N, G, ice, 1.6, 2.0, 140, alpha='blend'), 'm1': matopts(D2, N2, G2, ice, 1.4, 1.2, 80)}
+        mats = {'m0': matopts(D, N, G, ice, 1.3, 2.0, 140, alpha='blend'), 'm1': matopts(D2, N2, G2, ice, 1.4, 1.2, 80)}
         write(pid, P, mats, 'CurseOfAlduin/wonder/slayer.nif', ['prn WeaponSword'])
         import shutil
         shutil.copyfile(OUT / 'Meshes/CurseOfAlduin/wonder/slayer.nif', OUT / 'Meshes/CurseOfAlduin/wonder/slayer_static.nif')
