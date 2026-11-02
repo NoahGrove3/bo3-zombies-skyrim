@@ -50,16 +50,22 @@ namespace bo3z
 		}
 		// a class perk counts only while you are of its class (a switch keeps it, asleep, until you come back or die)
 		bool Live(int a_perk) { return N(a_perk) > 0 && (gen::kPerkClass[a_perk] < 0 || gen::kPerkClass[a_perk] == Classes::Get()); }
-		float DrawSpeedMult() { return Live(gen::kPerk_eagleeye) ? gen::kPerks[gen::kPerk_eagleeye].value : 1.0f; }
+		// (Noah: the Ranger's perks became the Alchemist's) Quickhand Elixir: flasks cost less; Volatile Tincture: their bursts
+		// reach wider; Philter of Iron Skin: with a flask in hand the dead hurt you less
+		float DrawSpeedMult() { return 1.0f; }
 		float SwingSpeedMult() { return Live(gen::kPerk_steelwind) ? gen::kPerks[gen::kPerk_steelwind].value : 1.0f; }
+		float FlaskCostMult() { return Live(gen::kPerk_eagleeye) ? gen::kPerks[gen::kPerk_eagleeye].value : 1.0f; }
+		float FlaskRadiusMult() { return Live(gen::kPerk_fletcher) ? gen::kPerks[gen::kPerk_fletcher].value : 1.0f; }
 		float WardMult()
 		{
 			if (!Live(gen::kPerk_dawnwatch)) return 1.0f;
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			auto* held = p ? p->GetEquippedObject(false) : nullptr;
-			auto* w = held ? held->As<RE::TESObjectWEAP>() : nullptr;
-			const bool offhand = w && w->GetFile(0) && std::string_view(w->GetFile(0)->GetFilename()) == "OffhandBows.esp";  // (one-hand crossbows: staves to Skyrim)
-			return w && (w->IsBow() || w->IsCrossbow() || offhand) ? 1.0f - gen::kPerks[gen::kPerk_dawnwatch].value : 1.0f;
+			bool flask = false;
+			for (const bool left : { false, true }) {
+				auto* held = p ? p->GetEquippedObject(left) : nullptr;
+				for (int e = 0; e < 7 && held; ++e) if (held == Classes::FlaskSpell(e)) flask = true;
+			}
+			return flask ? 1.0f - gen::kPerks[gen::kPerk_dawnwatch].value : 1.0f;
 		}
 		bool SummonMight() { return Live(gen::kPerk_bonebinder); }
 		// a kill: what your class's perks make of it (how: 0 your summon, 1 a Destruction spell, 2 bow or crossbow, 3 melee)

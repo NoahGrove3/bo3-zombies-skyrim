@@ -3371,6 +3371,7 @@ namespace bo3z
 			SlotUnslotted();
 			TickStorm(a_delta);
 			Props::Tick(a_delta, GunOut() ? CurrentGun() : -1);
+			Props::TickMad();
 			Props::TickWorld(a_delta);
 			Props::TickFang(a_delta);
 			TickStaffs(a_delta);

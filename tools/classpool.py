@@ -25,7 +25,7 @@ APOC = 'Apocalypse - Magic of Skyrim.esp'
 # Skyrim's own bolts (not in a tome list): form id, cost, concentration, school
 VANILLA = {'Firebolt': (0x012FD0, 45), 'Fireball': (0x01C789, 132), 'Incinerate': (0x10F7ED, 240), 'Ice Spike': (0x02B96C, 40), 'Ice Storm': (0x045F9C, 124),
            'Icy Spear': (0x10F7EC, 228), 'Lightning Bolt': (0x02DD29, 50), 'Chain Lightning': (0x045F9D, 144), 'Thunderbolt': (0x10F7EE, 252)}
-CLASSES = ['summoner', 'destruction', 'ranger', 'spellsword']
+CLASSES = ['summoner', 'destruction', 'alchemist', 'spellsword']
 
 # (class, ladder id, label, element, [(plugin, spell name), ... rung 1 .. last])
 LADDERS = [
@@ -137,8 +137,8 @@ def main():
          'namespace bo3z::coffer', '{',
          '\tenum Element : std::uint8_t { ' + ', '.join(f'k{e.capitalize()}' for e in ELEMENTS) + ', kElements };',
          '\tinline constexpr const char* kElementName[kElements] = { ' + ', '.join(f'"{e}"' for e in ELEMENTS) + ' };',
-         '\tenum Class : std::uint8_t { kSummoner, kDestruction, kRanger, kSpellsword, kClasses };',
-         '\tinline constexpr const char* kClassName[kClasses] = { "Summoner", "Destruction", "Ranger", "Spellsword" };',
+         '\tenum Class : std::uint8_t { kSummoner, kDestruction, kAlchemist, kSpellsword, kClasses };',
+         '\tinline constexpr const char* kClassName[kClasses] = { "Summoner", "Destruction", "Alchemist", "Spellsword" };',
          '\tstruct Spell { const char* plugin; std::uint32_t id; const char* name; Element element; std::uint8_t tier; std::uint16_t cost; bool concentration; float power;',
          '\t\tClass cls; std::uint8_t ladder, rung, rungs; const char* ladderLabel; };   // rung 1 is what the altar rolls; the last rung is Legendary',
          f'\tinline constexpr int kLadders = {len(ladders)};',

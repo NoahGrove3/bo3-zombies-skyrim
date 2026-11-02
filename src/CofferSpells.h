@@ -7,8 +7,8 @@ namespace bo3z::coffer
 {
 	enum Element : std::uint8_t { kFire, kFrost, kShock, kPoison, kCorrosion, kSun, kBlood, kArcane, kElements };
 	inline constexpr const char* kElementName[kElements] = { "fire", "frost", "shock", "poison", "corrosion", "sun", "blood", "arcane" };
-	enum Class : std::uint8_t { kSummoner, kDestruction, kRanger, kSpellsword, kClasses };
-	inline constexpr const char* kClassName[kClasses] = { "Summoner", "Destruction", "Ranger", "Spellsword" };
+	enum Class : std::uint8_t { kSummoner, kDestruction, kAlchemist, kSpellsword, kClasses };
+	inline constexpr const char* kClassName[kClasses] = { "Summoner", "Destruction", "Alchemist", "Spellsword" };
 	struct Spell { const char* plugin; std::uint32_t id; const char* name; Element element; std::uint8_t tier; std::uint16_t cost; bool concentration; float power;
 		Class cls; std::uint8_t ladder, rung, rungs; const char* ladderLabel; };   // rung 1 is what the altar rolls; the last rung is Legendary
 	inline constexpr int kLadders = 29;

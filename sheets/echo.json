@@ -4,24 +4,24 @@
  "wonders": [
   {
    "id": "gravecaller",
-   "label": "Horn of the Spectral Wyrm",
-   "color": "B070FF",
-   "text": "A horn of dragon bone. Blow it and Calling of the Conjurer's Spectral Dragon answers, fighting at your side for a minute - until the three dragons fall, then it stays until it is slain.",
+   "label": "Bone-Throne Horn",
+   "color": "9CFF6A",
+   "text": "A horn carved from a dragon's throne of bone. Blow it and a dragon of bare bone claws its way up beside you, fighting on the ground at your side and breathing green grave-fire for a minute - an hour once the three dragons fall.",
    "cls": "Summoner"
   },
   {
    "id": "frostbinder",
-   "label": "Tome of the Six Fires",
-   "color": "8FE6FF",
-   "text": "One cast looses the top spell of your six element ladders - Fire, Frost, Shock, Sun, Blood and Runes - on the dead round you, each burst on its foe. Once the three dragons fall, the fires burn hotter and their third rungs come too.",
+   "label": "Staff of Magnus",
+   "color": "9FD8FF",
+   "text": "The Staff of Magnus. Its beam drains the dead and feeds your magicka, and erupts where it lets go; held two seconds, the eruption leaves an orb of searing light pulsing on everything round it.",
    "cls": "Destruction"
   },
   {
    "id": "wolfcrown",
-   "label": "Subsuming Vortex",
-   "color": "A88CFF",
-   "text": "A bow of black-violet steel. Every arrow tears open a black hole where it lands: the dead are dragged in, then it bursts. Once the three dragons fall, the holes grow wider and pull harder.",
-   "cls": "Ranger"
+   "label": "Philosopher's Flask",
+   "color": "FFD24A",
+   "text": "A flask of molten gold. Where it shatters a gold cloud hangs: the dead inside are gilded and torn apart, and each one that dies in it drops extra Cursed Essence. Wider and longer once the three dragons fall.",
+   "cls": "Alchemist"
   },
   {
    "id": "barrowhorn",

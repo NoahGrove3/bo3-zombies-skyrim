@@ -12,7 +12,7 @@ namespace bo3z::Kit
 {
 	namespace
 	{
-		enum class Kind : std::uint8_t { Ladder, Bow, Crossbow, Blade, Armour, Knives };  // (Knives: the Ranger's Throwing Daggers)
+		enum class Kind : std::uint8_t { Ladder, Bow, Crossbow, Blade, Armour, Bomb };  // (Bomb: an Alchemist's flask - ref its element, "0" fire .. "5" blood)
 		// (Noah: "remove Poison, Poison Breath and Blood Breath from the Armory") an item no longer offered: kept in the list
 		// (its place is in the saves), never shown unless a save already owns it
 		constexpr int kGone = 100;
@@ -23,9 +23,10 @@ namespace bo3z::Kit
 		constexpr Def kDestruction[] = { { Kind::Ladder, "Fire", -1 }, { Kind::Ladder, "Frost", -1 }, { Kind::Ladder, "Shock", 1 }, { Kind::Ladder, "Sun", 3 },
 			{ Kind::Ladder, "Blood", 5 }, { Kind::Ladder, "Runes", 7 },
 			{ Kind::Armour, "armour", -1 }, { Kind::Ladder, "Cloaks", 2 }, { Kind::Ladder, "Walls", 4 }, { Kind::Ladder, "Storms", 9 } };
-		constexpr Def kRanger[] = { { Kind::Crossbow, "0", kGone }, { Kind::Bow, "emberstring", -1 }, { Kind::Crossbow, "1", kGone }, { Kind::Bow, "rimehorn", 2 },  // (Noah: the crossbows retired)
-			{ Kind::Crossbow, "2", kGone }, { Kind::Bow, "stormreach", 4 }, { Kind::Bow, "skyhowl", 6 }, { Kind::Bow, "dawnspire", 8 }, { Kind::Bow, "thirstbow", 9 },
-			{ Kind::Armour, "armour", -1 }, { Kind::Knives, "daggers", -1 } };  // (Noah: "replace the crossbows with ... throwing daggers") (last: the saves' order)
+		// (Noah: "remove everything from the Ranger class ... and replace it with the Alchemist class") the knife, six flasks
+		// opening with the cities freed, and the Drifter's outfit
+		constexpr Def kAlchemist[] = { { Kind::Blade, "knife", -1 }, { Kind::Bomb, "0", -1 }, { Kind::Bomb, "1", 2 }, { Kind::Bomb, "2", 4 },
+			{ Kind::Bomb, "3", 6 }, { Kind::Bomb, "4", 8 }, { Kind::Bomb, "5", 9 }, { Kind::Armour, "armour", -1 } };  // (Noah: "replace the crossbows with ... throwing daggers") (last: the saves' order)
 		constexpr Def kSpellsword[] = { { Kind::Blade, "sword", -1 }, { Kind::Ladder, "Fire", -1 }, { Kind::Ladder, "Frost", 1 }, { Kind::Ladder, "Flame Breath", kGone },
 			{ Kind::Ladder, "Shock", 3 }, { Kind::Ladder, "Frost Breath", kGone }, { Kind::Ladder, "Sun", 5 }, { Kind::Ladder, "Storm Breath", kGone },
 			{ Kind::Ladder, "Blood", 7 }, { Kind::Ladder, "Poison", kGone }, { Kind::Ladder, "Blood Breath", kGone }, { Kind::Ladder, "Poison Breath", kGone },
@@ -35,7 +36,7 @@ namespace bo3z::Kit
 			switch (a_cls) {
 			case 0: return kSummoner;
 			case 1: return kDestruction;
-			case 2: return kRanger;
+			case 2: return kAlchemist;
 			case 3: return kSpellsword;
 			default: return {};
 			}
@@ -118,6 +119,7 @@ namespace bo3z::Kit
 		};
 		std::array<ClassState, 4> g_cls{};
 		int  g_tokens = 0;          // relics waiting to be taken
+		std::array<std::uint32_t, 4> g_relicPurge{};  // (the relics retired) a loaded save's relic spells, to take off
 		int  g_offer[2] = { -1, -1 };  // the relic offer: a relic index, or 100 + an item (a free upgrade)
 		int  g_offerCls = -1;       // the class it was made for
 		int  g_relicSel = 0;
@@ -167,6 +169,8 @@ namespace bo3z::Kit
 			return -1;
 		}
 		int Elem(const Def& d) { return d.ref[0] - '0'; }
+		// a class's blade: the Summoner's Riftblade, the Alchemist's knife, the Spellsword's Madness Sword
+		RE::TESObjectWEAP* BladeOf(std::string_view a_ref) { return a_ref == "riftblade" ? Classes::Riftblade() : a_ref == "knife" ? Classes::AlchemistKnife() : Classes::SpellswordBlade(); }
 
 		std::string ItemName(int a_cls, int a_i)
 		{
@@ -182,11 +186,11 @@ namespace bo3z::Kit
 			case Kind::Bow: { const int b = BowIndex(d.ref); return b >= 0 ? std::string(gen::kBows[b].label) : ""; }
 			case Kind::Crossbow: { auto* w = Classes::CrossbowForm(Elem(d)); return w && w->GetName() ? w->GetName() : "Crossbow"; }
 			case Kind::Blade: {
-				auto* w = std::string_view(d.ref) == "riftblade" ? Classes::Riftblade() : Classes::SpellswordBlade();
+				auto* w = BladeOf(d.ref);
 				return w && w->GetName() ? w->GetName() : "Blade";
 			}
 			case Kind::Armour: return Classes::ArmourSetName(a_cls, g_cls[a_cls].tier[a_i]);
-			case Kind::Knives: return "Throwing Daggers";
+			case Kind::Bomb: { auto* sp = Classes::FlaskSpell(Elem(d)); return sp && sp->GetName() ? sp->GetName() : "Flask"; }
 			}
 			return "";
 		}
@@ -199,7 +203,7 @@ namespace bo3z::Kit
 			if (d.kind == Kind::Bow) { const int b = BowIndex(d.ref); return b >= 0 ? gen::kBows[b].color : 0xC8B48C; }
 			if (d.kind == Kind::Crossbow) { static constexpr std::uint32_t kC[3] = { 0xFF6A1E, 0x6FC8FF, 0x8C7CFF }; return kC[std::clamp(Elem(d), 0, 2)]; }
 			if (d.kind == Kind::Armour) return 0xD2C8B4;
-			if (d.kind == Kind::Knives) return 0xFF8A3C;
+			if (d.kind == Kind::Bomb) { static constexpr std::uint32_t kC[6] = { 0xFF6A1E, 0x8FD8FF, 0xA88CFF, 0x7CFF3C, 0xFFD24A, 0xE0202A }; return kC[std::clamp(Elem(d), 0, 5)]; }
 			return std::string_view(d.ref) == "riftblade" ? 0xFF5A28 : 0xB4C8FF;
 		}
 
@@ -219,7 +223,7 @@ namespace bo3z::Kit
 			case Kind::Crossbow: return std::clamp(Classes::CrossbowLevel(Classes::CrossbowForm(Elem(d))), 0, 3) + st.tier[a_i];
 			case Kind::Blade: return st.tier[a_i];
 			case Kind::Armour: return st.tier[a_i];
-			case Kind::Knives: return st.tier[a_i];
+			case Kind::Bomb: return st.tier[a_i];
 			}
 			return 0;
 		}
@@ -234,11 +238,11 @@ namespace bo3z::Kit
 			case Kind::Bow: return Bows::Carried() == BowIndex(d.ref);
 			case Kind::Crossbow: { auto* w = Classes::CrossbowForm(Elem(d)); return w && p->GetItemCount(w) > 0; }
 			case Kind::Blade: {
-				auto* w = std::string_view(d.ref) == "riftblade" ? Classes::Riftblade() : Classes::SpellswordBlade();
+				auto* w = BladeOf(d.ref);
 				return w && p->GetItemCount(w) > 0;
 			}
 			case Kind::Armour: return Classes::ArmourCarried(a_cls, g_cls[a_cls].tier[a_i]);
-			case Kind::Knives: { auto* sp = Classes::DaggerSpell(); return sp && p->HasSpell(sp); }
+			case Kind::Bomb: { auto* sp = Classes::FlaskSpell(Elem(d)); return sp && p->HasSpell(sp); }
 			}
 			return false;
 		}
@@ -298,7 +302,7 @@ namespace bo3z::Kit
 				return true;
 			}
 			case Kind::Blade: ++st.tier[a_i]; return true;
-			case Kind::Knives: ++st.tier[a_i]; return true;
+			case Kind::Bomb: ++st.tier[a_i]; return true;
 			case Kind::Armour:
 				++st.tier[a_i];
 				Classes::GiveArmourSet(a_cls, st.tier[a_i], true);  // (the Battle-mage's set changes its look at each tier)
@@ -317,13 +321,13 @@ namespace bo3z::Kit
 			case Kind::Bow: if (const int b = BowIndex(d.ref); b >= 0) Bows::Give(b); break;
 			case Kind::Crossbow: Classes::TakeCrossbow(Elem(d)); break;
 			case Kind::Blade: {
-				auto* w = std::string_view(d.ref) == "riftblade" ? Classes::Riftblade() : Classes::SpellswordBlade();
+				auto* w = BladeOf(d.ref);
 				auto* p = RE::PlayerCharacter::GetSingleton();
 				if (w && p && p->GetItemCount(w) <= 0) Classes::GiveGear(w, 1, a_inHand);
 				break;
 			}
 			case Kind::Armour: Classes::GiveArmourSet(a_cls, g_cls[a_cls].tier[a_i], true); break;
-			case Kind::Knives: Classes::GiveDaggers(); break;
+			case Kind::Bomb: Classes::GiveFlask(Elem(d)); break;
 			}
 		}
 
@@ -561,7 +565,7 @@ namespace bo3z::Kit
 			switch (defs[i].kind) {
 			case Kind::Blade: {
 				const bool rift = std::string_view(defs[i].ref) == "riftblade";
-				auto*      w = rift ? Classes::Riftblade() : Classes::SpellswordBlade();
+				auto*      w = BladeOf(defs[i].ref);
 				Look(w, t);
 				// (the Riftblade's fire, the Madness Sword's violet fire: brighter each tier)
 				// (Noah: "the Madness Sword also isn't getting its animation or enchantment effect after upgrading") its violet fire
@@ -874,12 +878,12 @@ namespace bo3z::Kit
 		return fmt::format("{} Cursed Essence", pts);
 	}
 	int  RelicTokens() { return g_tokens; }
+	// (Noah: "remove all the relics that drop from the Dragon Priest ... the Dragon Priest should drop 3,000 essence instead")
 	void OnPriestSlain()
 	{
-		++g_tokens;
-		g_offer[0] = g_offer[1] = -1;
-		Hud::Banner("THE DRAGON PRIEST'S RELIC - take it at an Echo Altar", 5.0f);
-		logger::info("kit: a Dragon Priest's relic to take ({} waiting)", g_tokens);
+		Points::Add(3000);
+		Hud::Banner("THE DRAGON PRIEST FALLS - 3,000 CURSED ESSENCE", 5.0f);
+		logger::info("kit: a Dragon Priest's 3,000 Essence");
 	}
 
 	int Tier(int a_item) { return TierOfItem(Cls(), a_item); }
@@ -891,7 +895,7 @@ namespace bo3z::Kit
 		const auto defs = Defs(c);
 		for (int i = 0; i < static_cast<int>(defs.size()); ++i) {
 			if (defs[i].kind != Kind::Blade || !(g_cls[c].owned >> i & 1)) continue;
-			auto* w = std::string_view(defs[i].ref) == "riftblade" ? Classes::Riftblade() : Classes::SpellswordBlade();
+			auto* w = BladeOf(defs[i].ref);
 			if (w && w == a_w) return g_cls[c].tier[i];
 		}
 		return -1;
@@ -934,13 +938,20 @@ namespace bo3z::Kit
 		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (defs[i].kind == Kind::Bow && BowIndex(defs[i].ref) == a_bow) return g_cls[2].tier[i];
 		return 0;
 	}
-	// (the Throwing Daggers) their tier, -1 not owned (not the Ranger, or not yet)
-	int DaggerTier()
+	// (the Alchemist) a flask's tier (0 fire .. 5 blood), -1 not owned (not the Alchemist, or not yet)
+	int FlaskTier(int a_el)
 	{
 		if (Cls() != 2) return -1;
 		const auto defs = Defs(2);
-		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (defs[i].kind == Kind::Knives) return ItemTier(2, i);
+		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (defs[i].kind == Kind::Bomb && Elem(defs[i]) == a_el) return ItemTier(2, i);
 		return -1;
+	}
+	// a flask's burst struck a body: its kit item's hooks (the class's on-hit and on-kill rules)
+	void OnFlaskHit(int a_el, RE::Actor* a_target)
+	{
+		if (Cls() != 2 || !a_target) return;
+		const auto defs = Defs(2);
+		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if ((g_cls[2].owned >> i & 1) && defs[i].kind == Kind::Bomb && Elem(defs[i]) == a_el) return OnHitItem(2, i, a_target);
 	}
 	int CrossbowAscends(int a_elem)
 	{
@@ -991,7 +1002,7 @@ namespace bo3z::Kit
 		const int t = Cls() == 1 ? ArmourTier(1) : -1;
 		return (PartyHas(1) ? 0.9f : 1.0f) * (t >= 3 ? 0.75f : t >= 1 ? 0.9f : 1.0f);
 	}
-	float AuraAmmoMult() { return (PartyHas(2) ? 0.8f : 1.0f) * (Cls() == 2 && ArmourTier(2) >= 2 ? 0.67f : 1.0f); }  // (the Gondorian set, Tier II: ammo grows back faster)
+	float AuraAmmoMult() { return 1.0f; }  // (the Ranger's quivers: gone with the Ranger)
 	float AuraMeleeTaken() { return PartyHas(3) ? 0.9f : 1.0f; }
 
 	// ---- the Infusions' hooks ----
@@ -1011,7 +1022,7 @@ namespace bo3z::Kit
 						av->RestoreActorValue(RE::ActorValue::kMagicka, av->GetPermanentActorValue(RE::ActorValue::kMagicka) * 0.03f);
 					}
 				}
-				const bool me = (d.kind == Kind::Blade && w == (std::string_view(d.ref) == "riftblade" ? Classes::Riftblade() : Classes::SpellswordBlade())) ||
+				const bool me = (d.kind == Kind::Blade && w == (BladeOf(d.ref))) ||
 				                (d.kind == Kind::Crossbow && w == Classes::CrossbowForm(Elem(d)));
 				if (me) return OnHitItem(c, i, a_target);
 			}
@@ -1019,10 +1030,6 @@ namespace bo3z::Kit
 		}
 		// (the class audit: a Vigilant relic that is also a Destruction spell returned above before its own Infusions) relics first
 		if (c == 1 || c == 3) for (int r = 0; r < RelicCount(c) && r < kMaxRelics; ++r) if ((g_cls[c].relics >> r & 1) && RelicSpell(c, r) == a_source) return OnHitItem(c, kRelicBase + r, a_target);
-		if (c == 2 && a_source == Classes::DaggerHitSpell()) {  // (a thrown dagger: its own Infusion)
-			for (int i = 0; i < static_cast<int>(defs.size()); ++i) if ((g_cls[c].owned >> i & 1) && defs[i].kind == Kind::Knives) return OnHitItem(c, i, a_target);
-			return;
-		}
 		if (const int si = Arcana::IndexOf(a_source); si >= 0) {
 			for (int i = 0; i < static_cast<int>(defs.size()); ++i) {
 				if ((g_cls[c].owned >> i & 1) && defs[i].kind == Kind::Ladder && Arcana::LadderName(si) == defs[i].ref && Arcana::ClassOf(si) == c) return OnHitItem(c, i, a_target);
@@ -1122,12 +1129,20 @@ namespace bo3z::Kit
 					logger::info("kit: {} taken back (the Spellsword's relics are spells now)", w->GetName());
 				}
 			}
-			for (int r = 0; r < RelicCount(3) && r < kMaxRelics; ++r) {
-				if (auto* sp = RelicSpell(3, r); sp && (g_cls[3].relics >> r & 1) && !p->HasSpell(sp)) Classes::LearnSpell(sp);
+		}
+		for (int pc = 0; pc < 4; ++pc) {  // (the relics retired: a loaded save's relic spells taken off)
+			if (!g_relicPurge[pc]) continue;
+			for (int r = 0; r < RelicCount(pc) && r < kMaxRelics; ++r) {
+				if (auto* sp = (g_relicPurge[pc] >> r & 1) ? RelicSpell(pc, r) : nullptr; sp && p->HasSpell(sp)) {
+					p->RemoveSpell(sp);
+					logger::info("kit: relic {} taken off (relics retired)", sp->GetName());
+				}
 			}
+			g_relicPurge[pc] = 0;
 		}
 		auto* av = p->AsActorValueOwner();
 		if (c == 3 && ArmourTier(3) >= 1 && p->IsInCombat()) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.006f);  // (Tier I: mending in a fight)
+		if (c != 2 && PartyHas(2) && p->IsInCombat()) av->RestoreActorValue(RE::ActorValue::kHealth, av->GetPermanentActorValue(RE::ActorValue::kHealth) * 0.005f);  // (an Alchemist in your party: you mend slowly in a fight)
 		if (c == 1 && ArmourTier(1) >= 2) av->RestoreActorValue(RE::ActorValue::kMagicka, av->GetPermanentActorValue(RE::ActorValue::kMagicka) * 0.012f);          // (Tier II: magicka comes back faster)
 	}
 	void TickMadGlow(float a_delta);
@@ -1180,30 +1195,19 @@ namespace bo3z::Kit
 	}
 	// the Madness Sword's violet fire, on the blade in your hand while it is drawn: its tier's flame (I-III, brighter each),
 	// laid on the weapon itself - in third person and in first - and renewed before it fades
-	void TickMadGlow(float a_delta)
+	// (Noah: "I still want the Madness Sword to have an animated enchantment effect ... I have yet to see what that looks
+	// like") the effect-shader fire never showed on the blade: its fire is a model hung on the blade now (WonderProps.inl
+	// Props::TickMad), from Base, stronger each tier
+	void TickMadGlow(float) {}
+	int MadTier()
 	{
-		static float since = 99.0f;
-		static int   was = 0;  // the tier lit last time (0: none)
-		since += a_delta;
 		auto* p = RE::PlayerCharacter::GetSingleton();
-		(void)Cls();
-		int t = 0;
 		auto* w = Classes::SpellswordBlade();
-		if (p && p->Is3DLoaded() && p->AsActorState()->IsWeaponDrawn() && w && (p->GetEquippedObject(false) == w || p->GetEquippedObject(true) == w)) {
-			t = 1;
-			const auto defs = Defs(3);
-			for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (defs[i].kind == Kind::Blade && (g_cls[3].owned >> i & 1)) t = std::clamp(ItemTier(3, i), 1, 3);  // (Noah: flaming dark red from the first - hotter each tier)
-		}
-		if (t < 1) { was = 0; return; }
-		if (t == was && since < 3.0f) return;  // (renewed just before it fades; at once when drawn or reforged)
-		since = 0, was = t;
-		auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kMadShader[t - 1], gen::kPlugin);
-		if (!fx) return;
-		for (const bool first : { false, true }) {
-			auto* root = p->Get3D(first);
-			auto* node = root ? root->GetObjectByName("WEAPON") : nullptr;
-			if (node) p->ApplyEffectShader(fx, 3.3f, nullptr, false, false, node, false);
-		}
+		if (!p || !w || !p->Is3DLoaded() || !p->AsActorState()->IsWeaponDrawn() || (p->GetEquippedObject(false) != w && p->GetEquippedObject(true) != w)) return -1;
+		int t = 0;
+		const auto defs = Defs(3);
+		for (int i = 0; i < static_cast<int>(defs.size()); ++i) if (defs[i].kind == Kind::Blade && (g_cls[3].owned >> i & 1)) t = std::max(0, ItemTier(3, i));
+		return t;
 	}
 	// ---- the co-save ----
 	std::vector<std::uint8_t> State()
@@ -1238,15 +1242,17 @@ namespace bo3z::Kit
 			getArr(s.relicTier);
 			getArr(s.relicInfusion);
 			s.upgrades = k < a_v.size() ? a_v[k++] : 0;
-			for (auto& i : s.infusion) if (i > kInfusions) i = 0;
-			for (auto& i : s.relicInfusion) if (i > kInfusions) i = 0;
+			// (Noah: "the infusions ... shouldn't be in the game anymore"; "remove all the relics") a save's are cleared - its
+			// relic spells taken off at the next tick (g_relicPurge)
+			s.infusion = {}, s.relicInfusion = {};
+			g_relicPurge[&s - g_cls.data()] = s.relics;
+			s.relics = 0, s.relicTier = {};
 		}
 		g_tokens = k < a_v.size() ? a_v[k++] : 0;
+		g_tokens = 0;
 		{  // (Noah: the crossbows retired) a save's crossbows are no longer the Ranger's
 			const auto rd = Defs(2);
 			for (int i = 0; i < static_cast<int>(rd.size()); ++i) if (rd[i].kind == Kind::Crossbow) g_cls[2].owned &= ~(1u << i);
-			// (the Throwing Daggers in their place: a Ranger's save from before them owns them now)
-			if (g_cls[2].owned) for (int i = 0; i < static_cast<int>(rd.size()); ++i) if (rd[i].kind == Kind::Knives) g_cls[2].owned |= 1u << i;
 		}
 		g_loaded = true;
 		logger::info("kit: loaded ({} relics waiting)", g_tokens);
@@ -1306,7 +1312,7 @@ namespace bo3z::Kit
 					++n;
 					break;
 				}
-				case Kind::Knives:
+				case Kind::Bomb:
 				case Kind::Blade:
 					st.tier[i] = static_cast<std::uint8_t>(kTop);
 					Grant(c, i, false);
@@ -1318,11 +1324,6 @@ namespace bo3z::Kit
 					++n;
 					break;
 				}
-			}
-			for (int r = 0; r < RelicCount(c) && r < kMaxRelics; ++r) {
-				st.relics |= 1u << r;
-				st.relicTier[r] = static_cast<std::uint8_t>(kTop);
-				if (auto* sp = RelicSpell(c, r)) Classes::LearnSpell(sp);
 			}
 		}
 		Classes::RestockWonder();  // (the crossbows' bolts, the Vortex's arrows)

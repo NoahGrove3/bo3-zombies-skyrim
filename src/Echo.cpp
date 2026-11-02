@@ -212,7 +212,7 @@ namespace bo3z
 			return Turn(Room(s.x, s.y, s.z), s.yaw, 28.0f * std::cos(a), 28.0f * std::sin(a), 106.0f);
 		}
 		// (the UI audit: "the Destruction") the path as a person: the Summoner, the Battle-mage, the Ranger, the Spellsword
-		std::string PathName(int a_c) { static constexpr const char* k[4] = { "Summoner", "Battle-mage", "Ranger", "Spellsword" }; return a_c >= 0 && a_c < 4 ? k[a_c] : "?"; }
+		std::string PathName(int a_c) { static constexpr const char* k[4] = { "Summoner", "Battle-mage", "Alchemist", "Spellsword" }; return a_c >= 0 && a_c < 4 ? k[a_c] : "?"; }
 		bool Won(int a_c) { return Classes::WonderState(a_c) >= 4 || ((Party::PartyWonders() >> a_c) & 1); }
 		bool Waiting(int a_c) { return Classes::WonderState(a_c) == 5; }
 		bool AnyCalled()  // the Greybeards have called you at least once: the sealed door opens

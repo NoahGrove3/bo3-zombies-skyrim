@@ -233,9 +233,9 @@
   {
    "id": "vortex",
    "cls": "ranger",
-   "title": "The Vortex's Eye",
+   "title": "The Philosopher's Stone",
    "reward": "wonder",
-   "rewardText": "The Greybeards call you to High Hrothgar: the Subsuming Vortex waits on its pedestal in the Reliquary.",
+   "rewardText": "The Greybeards call you to High Hrothgar: the Philosopher's Flask waits on its pedestal in the Reliquary.",
    "steps": [
     {
      "type": "touch",
@@ -255,7 +255,7 @@
     {
      "type": "classkills",
      "n": 40,
-     "text": "Feed the dark: 40 of the dead slain with a bow or crossbow, in another freed city at night",
+     "text": "Feed the dark: 40 of the dead slain with your flasks, in another freed city at night",
      "element": "any",
      "night": true,
      "r0": 0,

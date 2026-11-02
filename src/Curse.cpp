@@ -152,7 +152,7 @@ namespace bo3z
 			return fmt::format("{}:{:02}", t / 60, t % 60);
 		}
 		// (the classes overhaul) the steel slot is the class trial: its name and goal follow the class of whoever takes it
-		constexpr const char* kClassTrial[4] = { "Pact of the Host", "Trial of the Elements", "Trial of the Long Shot", "Trial of Steel" };
+		constexpr const char* kClassTrial[4] = { "Pact of the Host", "Trial of the Elements", "Trial of the Crucible", "Trial of Steel" };
 		std::string_view Title(int a_trial)
 		{
 			if (a_trial == gen::kTrial_steel) {
@@ -317,7 +317,7 @@ namespace bo3z
 				switch (Classes::Get()) {
 				case 0: return fmt::format("{} kills by your summons", n * 2);
 				case 1: return fmt::format("{} kills with Destruction spells, of two elements or more", n * 2);
-				case 2: return fmt::format("{} bow or crossbow kills from 30 m or more", n);
+				case 2: return fmt::format("{} kills with your flasks", n);
 				case 3: return fmt::format("{} melee kills with a spell in your other hand", n);
 				default: return "Choose a class first";
 				}
@@ -594,7 +594,7 @@ namespace bo3z
 			case gen::kTrial_steel:
 				{
 					const int need = Classes::Get() <= 1 ? n * 2 : n;
-					static constexpr const char* kWhat[4] = { "Kills by your summons", "Destruction kills", "Kills from 30 m", "Melee kills, a spell in hand" };
+					static constexpr const char* kWhat[4] = { "Kills by your summons", "Destruction kills", "Flask kills", "Melee kills, a spell in hand" };
 					const int c = Classes::Get();
 					h.questGoal = fmt::format("{}  {} / {}{}", c >= 0 && c < 4 ? kWhat[c] : "Choose a class", s.prog, need,
 						c == 1 && s.prog >= need ? "  (kill with a second element)" : "");
@@ -805,7 +805,7 @@ namespace bo3z
 			switch (c) {
 			case 0: ok = a_how == 0; break;
 			case 1: ok = a_how == 1; break;
-			case 2: ok = a_how == 2 && a_dist >= kLongShot; break;
+			case 2: ok = a_how == 2; break;  // (the Alchemist: a flask kill)
 			case 3: {  // a melee kill with a spell in either hand (an altar spell, or any spell)
 				auto* pl = RE::PlayerCharacter::GetSingleton();
 				const auto h = Arcana::Hands();

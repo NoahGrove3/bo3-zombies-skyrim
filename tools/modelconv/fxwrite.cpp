@@ -8,7 +8,8 @@
 //     billboard: the shape always faces the camera (under a NiBillboardNode)
 //     flip: the texture is a flipbook atlas played in a loop (the shape's UVs span one cell)
 //     rim: the falloff the other way round (clear where it faces you, bright at its edge: a glow round a shape)
-//     parent=<node>: under that node of the base NIF (e.g. a bone: the shape moves with it)
+//     parent=<node>: under that node of the base NIF (e.g. a bone: the shape moves with it; with billboard, the
+//                    billboard node hangs there and at= is in that node's space)
 //     vscroll / uscroll: the texture slides one whole turn in that many seconds (a looping shader controller)
 //   v x y z u v [r g b a]        (vertex colours optional: per-vertex tint and fade)
 //   n x y z                      (optional, after its v: that vertex's normal - needed by falloff / rim)
@@ -269,7 +270,9 @@ int main(int argc, char** argv)
 			}
 			auto* bbp = bb.get();
 			const auto bbRef = nif.GetHeader().AddBlock(std::move(bb));
-			nif.GetRootNode()->childRefs.AddBlockRef(bbRef);
+			// under the shape's parent= node when it has one (a card riding a spinning / moving node), else the root
+			NiNode* host = s.parent.empty() ? nullptr : nif.FindBlockByName<NiNode>(s.parent);
+			(host ? host : nif.GetRootNode())->childRefs.AddBlockRef(bbRef);
 			nif.SetParentNode(sh, bbp);
 		}
 		ts->ShaderPropertyRef()->index = ref;

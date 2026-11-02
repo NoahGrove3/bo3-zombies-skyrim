@@ -319,7 +319,7 @@ namespace bo3z::Arcana
 		// (the classes overhaul) the altar rolls your class's base spells (each ladder's first rung) of ladders you
 		// don't carry yet; the Ranger rolls bows instead (Shops), so it gets none
 		const int cls = Classes::Get();
-		if (cls < 0 || cls == coffer::kRanger) {
+		if (cls < 0 || cls == coffer::kAlchemist) {
 			return -1;
 		}
 		std::array<bool, coffer::kLadders> carried{};

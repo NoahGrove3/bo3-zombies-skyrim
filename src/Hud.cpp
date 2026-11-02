@@ -753,8 +753,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				  "Your kit grows at the altar: every family and the Riftblade to Legendary", "Conjure Wolf, Conjure Skeleton, the Riftblade, the Arcane Conjurer Robes" },
 				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Ranged spells: fire, frost, shock, sun, blood and runes",
 				  "Your kit grows at the altar: each element climbs to its Legendary spell", "Firebolt, Ice Spike, the Black Mage Robes" },
-				{ "RANGER", "Sworn to the Dawnguard", IM_COL32(110, 210, 120, 255), "Bows and thrown steel - and every arrow counts", "The six elemental bows and the Throwing Daggers",
-				  "Your kit grows at the altar: each bow and the daggers to Legendary", "Emberstring, the Throwing Daggers, the Gondorian Ranger Armor" },
+				{ "ALCHEMIST", "A wanderer of the Drifter's road", IM_COL32(150, 230, 90, 255), "Flasks of fire, frost, storm, acid and blood", "Thrown flask bombs that burst where they land - and a knife",
+				  "Your kit grows at the altar: each flask and the knife to Legendary", "The Alchemist's Knife, the Fire Flask, the Drifter's outfit" },
 				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "A one-handed blade and touch spells - and the Vigilants' relic spells",
 				  "Your kit grows at the altar: the blade and each spell to Legendary", "Your blade, Burning Touch, the Valkyrie or DragonLord Armor" } };
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));
@@ -3027,7 +3027,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				Divider(dl, cx, a.y + 54 * k - scroll, w * 0.38f, k);
 				float y = a.y + 68 * k - scroll;
 				if (altarCls >= 0) {
-					static constexpr const char* kCalling[4] = { "THE SUMMONER'S ALTAR", "THE DESTRUCTION MAGE'S ALTAR", "THE RANGER'S ALTAR", "THE SPELLSWORD'S ALTAR" };
+					static constexpr const char* kCalling[4] = { "THE SUMMONER'S ALTAR", "THE DESTRUCTION MAGE'S ALTAR", "THE ALCHEMIST'S ALTAR", "THE SPELLSWORD'S ALTAR" };
 					TxtC(dl, g_body, 15 * k, cx, y - 8 * k, Fade(tint, 0.95f), kCalling[altarCls], 0.0f, 0);
 					y += 18 * k;
 				}
@@ -3135,7 +3135,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					const ImU32 cc = cls < 0 ? IM_COL32(255, 210, 120, 255) : kParch;
 					Txt(dl, g_title, 21 * k, { L + 36 * k, y + 3 * k }, cc, cls < 0 ? std::string("CHOOSE YOUR CLASS") : "CLASS: " + Upper(std::string(Classes::Name(cls))));
 					Txt(dl, g_body, 17 * k, { L + 36 * k, y + 32 * k }, IM_COL32(196, 182, 160, 235),
-						cls < 0 ? std::string("Summoner, Destruction, Ranger or Spellsword - free, your first path") : std::string("Change class - each keeps its own spells and progress"));
+						cls < 0 ? std::string("Summoner, Destruction, Alchemist or Spellsword - free, your first path") : std::string("Change class - each keeps its own spells and progress"));
 					if (cls >= 0) price(y + 2 * k, Classes::SwitchCost(), s.points >= Classes::SwitchCost());
 					y += 64 * k;
 					Divider(dl, cx, y, w * 0.30f, k, 0.6f);

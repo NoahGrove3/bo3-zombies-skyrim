@@ -135,7 +135,7 @@
       "title": "Your Class's Trial",
       "short": "The trial of your own class",
       "goal": "Win your class's trial in {city}",
-      "text": "The altar of {city} asks each who comes of their own craft. A Summoner, a conjurer of the College, lets the host make the kills (Pact of the Host); a Destruction mage, a College battle-mage, kills with two elements or more (Trial of the Elements); a Ranger of the Dawnguard kills from 30 m or more with bow or crossbow (Trial of the Long Shot); a Spellsword of the Vigilants kills in melee with a spell in the other hand (Trial of Steel).",
+      "text": "The altar of {city} asks each who comes of their own craft. A Summoner, a conjurer of the College, lets the host make the kills (Pact of the Host); a Destruction mage, a College battle-mage, kills with two elements or more (Trial of the Elements); an Alchemist kills with flasks (Trial of the Crucible); a Spellsword of the Vigilants kills in melee with a spell in the other hand (Trial of Steel).",
       "n": [
         10,
         12,

@@ -93,6 +93,59 @@ recs['SPEL'].append(record('SPEL', fid('SPEL', 'throwdagger'), [
     sub('EDID', z('UN_ThrowDaggerHitSpell')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
     sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'throwdagger'))), sub('EFIT', struct.pack('<fII', 20.0, 0, 0))]))
 cast_mgef('throwdaggers', 'Throwing Daggers', 1)
+
+# (Noah: "replace the Ranger class with the Alchemist") the Alchemist's flasks: each a hand spell (fire-and-forget, self:
+# only the throw's animation) - src/Classes.cpp ThrowFlask lobs the flask itself (a tumbling glass flask, tools/flasks.py,
+# carrying nothing: where it comes down our code bursts it); the Philosopher's Flask is the class's wonder
+cast_mgef('flaskcast', 'Flask', 1)
+FLASKS = [('fire', 'Fire Flask', 'A flask of liquid fire. It bursts where it lands, burning everything round it.'),
+          ('frost', 'Frost Flask', 'A flask of frozen brine. It bursts into killing cold where it lands.'),
+          ('shock', 'Shock Flask', 'A flask of bottled storm. It bursts into arcing lightning where it lands.'),
+          ('poison', 'Acid Flask', 'A flask of green acid. It bursts into a corroding splash where it lands.'),
+          ('sun', 'Holy Water', 'Blessed water of Stendarr. It bursts into searing light where it lands; the dead burn in it.'),
+          ('blood', 'Bloodbloom Flask', 'A flask of vampire\'s blood. It bursts where it lands, and what it drains comes back to you.'),
+          ('philosopher', "Philosopher's Flask", 'The Alchemist\'s wonder. Where it shatters a cloud of molten gold hangs: the dead inside are gilded and torn apart, and every one that dies in it drops extra Essence.')]
+FLASK_TIERS = ' Tier I: a pool of it lingers where it lands. Tier II: it splits into three. Legendary: a far greater blast.'
+for e, label, text in FLASKS:
+    pd = bytearray(tsub('proj_bullet', 'DATA'))
+    struct.pack_into('<H', pd, 0, 0x0)                    # a plain magic missile
+    struct.pack_into('<f', pd, 4, 1.0)                    # a full lob: it arcs
+    struct.pack_into('<f', pd, 8, 1700.0 if e != 'philosopher' else 1500.0)
+    struct.pack_into('<I', pd, 16, 0); struct.pack_into('<I', pd, 20, 0)
+    struct.pack_into('<I', pd, 36, 0); struct.pack_into('<I', pd, 40, 0)
+    struct.pack_into('<I', pd, 56, 0); struct.pack_into('<I', pd, 60, 0)
+    recs['PROJ'].append(record('PROJ', fid('PROJ', 'flask_' + e), [
+        sub('EDID', z('UN_FlaskProj_' + e)), sub('OBND', tsub('proj_bullet', 'OBND')), sub('MODL', z('CurseOfAlduin\\alchemist\\flask_' + e + '.nif')),
+        sub('DATA', bytes(pd)), sub('NAM1', b'\0'), sub('VNAM', struct.pack('<I', 0))]))
+    md = bytearray(tsub('mgef_firebolt', 'DATA'))
+    struct.pack_into('<I', md, 0, 0x200 | 0x400 | 0x800)  # not hostile: the flask itself does nothing (its burst is ours)
+    struct.pack_into('<I', md, 24, 0); struct.pack_into('<I', md, 32, 0)
+    struct.pack_into('<I', md, 64, 1); struct.pack_into('<i', md, 68, -1)
+    struct.pack_into('<I', md, 72, fid('PROJ', 'flask_' + e))
+    for off in (76, 92, 96, 100): struct.pack_into('<I', md, off, 0)
+    recs['MGEF'].append(record('MGEF', fid('MGEF', 'flask_' + e), [
+        sub('EDID', z('UN_FlaskFlight_' + e)), sub('MDOB', tsub('mgef_firebolt', 'MDOB')), sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+    sp = bytearray(tsub('spel_firebolt', 'SPIT'))
+    struct.pack_into('<I', sp, 0, 0); struct.pack_into('<I', sp, 4, 0x1)
+    recs['SPEL'].append(record('SPEL', fid('SPEL', 'flask_' + e), [
+        sub('EDID', z('UN_FlaskFlightSpell_' + e)), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
+        sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'flask_' + e))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+    sp = bytearray(tsub('spel_firebolt', 'SPIT'))
+    struct.pack_into('<IIIfIIffI', sp, 0, 100 if e == 'philosopher' else 25, 0x1, 0, 0.0, 1, 0, 0.0, 0.0, 0)  # (its magicka the code spends: the class spells' one cost)
+    recs['SPEL'].append(record('SPEL', fid('SPEL', 'throw_' + e), [
+        sub('EDID', z('UN_Throw_' + e)), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(label)),
+        sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
+        sub('DESC', z(text + ('' if e == 'philosopher' else FLASK_TIERS))),
+        sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'flaskcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+# (Noah: the Summoner's new wonder, "Bone-Throne Horn: an undead bone dragon that lands and fights beside you") a hand spell
+# at 100 magicka: src/Classes.cpp calls the dragon up itself (Skyrim's skeletal dragon) and keeps it on the ground
+sp = bytearray(tsub('spel_firebolt', 'SPIT'))
+struct.pack_into('<IIIfIIffI', sp, 0, 100, 0x1, 0, 0.25, 1, 0, 0.0, 0.0, 0)
+recs['SPEL'].append(record('SPEL', fid('SPEL', 'bonehorn'), [
+    sub('EDID', z('UN_BoneThroneHorn')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Bone-Throne Horn')),
+    sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
+    sub('DESC', z('The Summoner\'s wonder. Blow it and a dragon of bare bone claws its way up beside you: it lands, fights on the ground at your side and breathes green grave-fire on the dead for a minute. Once the three dragons fall it stays for an hour.')),
+    sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'flaskcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 sp = bytearray(tsub('spel_firebolt', 'SPIT'))
 struct.pack_into('<IIIfIIffI', sp, 0, 0, 0x1, 0, 0.0, 1, 0, 0.0, 0.0, 0)   # no magicka (a throw spends stamina), no charge, fire-and-forget, self
 recs['SPEL'].append(record('SPEL', fid('SPEL', 'throwdaggers'), [
@@ -366,6 +419,17 @@ for name, hx in T['weap_daedricdagger']['subs']:
     elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_riftblade'))
     subs.append(sub(name, b))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'riftblade'), subs))
+# (Noah: the Alchemist) its knife: a dagger (Skyrim's Daedric dagger's record and look), on the one tier curve
+subs = []
+for name, hx in T['weap_daedricdagger']['subs']:
+    b = bytes.fromhex(hx)
+    if name == 'EDID': b = z('UN_AlchemistKnife')
+    elif name == 'FULL': b = z("Alchemist's Knife")
+    elif name in ('EITM', 'EAMT'): continue
+    elif name == 'DESC': b = z("An alchemist's working blade, for when the dead come too close for a flask.")
+    elif name == 'DATA': b = struct.pack('<IfH', 300, 2.0, 10)
+    subs.append(sub(name, b))
+recs['WEAP'].append(record('WEAP', fid('WEAP', 'alchknife'), subs))
 
 # (Noah: "the weapon effects when upgrading should enhance the current detail - the Riftblade is black and red with a red
 # ember breathing effect: make that brighter or a different colour") the Riftblade's fire enchantment's own shader,
@@ -559,7 +623,7 @@ recs['ACTI'].append(record('ACTI', fid('ACTI', 'vortexfx'), [sub('EDID', z('UN_V
     sub('MODL', z('CurseOfAlduin\\fx\\vortex.nif')), sub('FNAM', b'\0\0')]))
 recs['ACTI'].append(record('ACTI', fid('ACTI', 'purplefire'), [sub('EDID', z('UN_PurpleFire')), sub('OBND', struct.pack('<6h', -120, -120, -40, 120, 120, 140)),   # (the Horn's dragon's violet breath)
     sub('MODL', z('CurseOfAlduin\\fx\\purplefire.nif')), sub('FNAM', b'\0\0')]))
-for e in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood', 'void'):  # (Noah: the arrows land as impact grenades, in the bow's own colour - tools/elemburst.py)
+for e in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood', 'void', 'poison', 'gold'):  # (Noah: the arrows land as impact grenades, in the bow's own colour - tools/elemburst.py)
     recs['ACTI'].append(record('ACTI', fid('ACTI', 'burst_' + e), [sub('EDID', z('UN_Burst_' + e)), sub('OBND', struct.pack('<6h', -130, -130, -20, 130, 130, 140)),
         sub('MODL', z('CurseOfAlduin\\fx\\burst_' + e + '.nif')), sub('FNAM', b'\0\0')]))
 
@@ -954,7 +1018,7 @@ def guide_text():
            "[pagebreak]", h("Whispers of the Altars"),
            p("Each path keeps a secret, and it is the only road to the path's <b>wonder</b>. It wakes once six cities are free, and nobody will tell you what to do. Stand at a freed altar and its <b>whispers</b> show in its menu - another line for each step you find. When it is won, the Greybeards call you to High Hrothgar. "
              "Each step is found at a freed altar, never in the same city as the step before. These are the first whispers:"),
-           ] + [p(f"<b>{ {'summoner': 'The Summoner', 'destruction': 'The Battle-mage', 'ranger': 'The Ranger', 'spellsword': 'The Spellsword'}[e['cls']] }</b> - {e['steps'][0]['hint']}") for e in S['eggs']['rows']] + [
+           ] + [p(f"<b>{ {'summoner': 'The Summoner', 'destruction': 'The Battle-mage', 'ranger': 'The Alchemist', 'spellsword': 'The Spellsword'}[e['cls']] }</b> - {e['steps'][0]['hint']}") for e in S['eggs']['rows']] + [
            "[pagebreak]", h("Event Nights and Themed Waves"),
            p("From night 8, about one night in eight is an <b>event night</b>: a Goblin Raid, a Harpy Swarm, Armored Champions or a Blood Fog. The whole night belongs to it - and it pays <b>double Cursed Essence</b>, with the dead coming twice as fast."),
            p("On ordinary nights, from the third wave, about one wave in six is <b>themed</b> the same way. Its name shows on the wave dial under the compass."),

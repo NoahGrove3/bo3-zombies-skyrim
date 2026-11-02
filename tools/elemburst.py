@@ -21,6 +21,8 @@ EL = {
     'sun':   ('dawnspire', '1,0.95,0.7', ('1,0.78,0.2', '1,0.68,0.12', '1,0.86,0.35'), '1,0.55,0.05'),
     'blood': ('thirstbow', '1,0.6,0.55', ('0.95,0.1,0.12', '0.8,0.04,0.08', '1,0.2,0.18'), '0.55,0.02,0.04'),
     'void':  ('vortex', '1,0.8,1', ('1,0.3,0.85', '0.95,0.2,0.8', '1,0.4,0.95'), '0.75,0.08,0.65'),
+    'poison': ('thirstbow', '0.8,1,0.6', ('0.45,1,0.15', '0.3,0.85,0.1', '0.6,1,0.25'), '0.2,0.6,0.05'),
+    'gold':  ('dawnspire', '1,0.97,0.75', ('1,0.82,0.25', '1,0.75,0.15', '1,0.9,0.45'), '0.95,0.6,0.08'),
 }
 
 
@@ -34,7 +36,7 @@ def card(L, name, tex, col, sc, w, h, at, phase, fps=26):
 def build(el):
     bid, core, body, fringe = EL[el]
     tex = f'CurseOfAlduin\\bow\\{bid}_arrowfx.dds'
-    random.seed(hash(el) & 0xffff)
+    random.seed(sum(map(ord, el)))
     out = OUT / f'burst_{el}.nif'
     L = [f'out {out}']
     k = 0

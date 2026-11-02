@@ -28,6 +28,31 @@ namespace Props
 		return w;
 	}
 
+	// (Noah: "the Madness Sword ... an animated enchantment effect ... animated from the start, and ... stronger as it's
+	// upgraded") its dark-red fire (tools/madflame.py) on the WEAPON node of both bodies while it is drawn: Base, I, II,
+	// Legendary each their own, the Ascends burning a little bigger still
+	struct MadFire { Spellcraft::Fx fx; RE::NiNode* on = nullptr; };
+	MadFire g_mad[2];
+	int     g_madLook = -1;
+	void TickMad()
+	{
+		auto*     p = RE::PlayerCharacter::GetSingleton();
+		const int t = p ? Kit::MadTier() : -1;
+		const int look = t < 0 ? -1 : std::min(t, 3);
+		for (int b = 0; b < 2; ++b) {
+			auto& m = g_mad[b];
+			auto* root = (p && t >= 0) ? p->Get3D(b == 0) : nullptr;
+			auto* wn = root ? root->GetObjectByName("WEAPON") : nullptr;
+			auto* node = wn ? wn->AsNode() : nullptr;
+			if (!node || look < 0) { m.fx.Detach(); m.on = nullptr; continue; }
+			if (look != g_madLook || !m.fx.obj) m.fx.Detach(), m.fx = Spellcraft::Fx{ Spellcraft::LoadPath("CurseOfAlduin\\fx\\madflame_" + std::to_string(look) + ".nif") };
+			if (!m.fx.obj) continue;
+			if (m.fx.obj->parent != node) m.fx.Attach(node), m.on = node;
+			m.fx.obj->local.scale = 1.0f + 0.04f * static_cast<float>(std::max(0, t - 3));
+		}
+		g_madLook = look;
+	}
+
 	void ChargedLook(int a_w);
 	struct Hung
 	{
