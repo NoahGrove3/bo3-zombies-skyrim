@@ -1212,8 +1212,9 @@ namespace bo3z
 		int   TierOfSummon(RE::Actor* a_summon);      // a hero or army a relic called up (-1)
 		int   BowAscends(int a_bow);
 		int   CrossbowAscends(int a_elem);
-		int   DaggerTier();
-		int   MadTier();     // the Madness Sword drawn in your hand: its tier (-1: not drawn)  // the Ranger's Throwing Daggers' tier (-1: not owned)
+		int   FlaskTier(int a_el);  // an Alchemist's flask's tier (-1: not owned)
+		void  OnFlaskHit(int a_el, RE::Actor* a_target);
+		int   MadTier();     // the Madness Sword drawn in your hand: its tier (-1: not drawn)
 		int   RiftTier();                         // the Riftblade's upgrades (0..)
 		float QuiverRadiusMult();                 // the Ranger's relic quivers: its bows' and crossbows' blasts this much wider
 		int   ArmourTier(int a_cls);              // (the class armour sets) the set's upgrades (0..), -1 not owned
