@@ -2697,6 +2697,7 @@ namespace bo3z
 				h.dragonBond = Save::DragonBond();
 				h.bondLocked = Movement::BondLocked();
 				h.trialsOn = false;
+				h.trialLock.clear();
 				h.altarFreed = false;
 				h.whispers.clear();
 				h.freedAltars.clear();
@@ -2732,6 +2733,7 @@ namespace bo3z
 							h.trialDesc = v.desc;
 							h.trialCity = std::string(gen::kTowns[t]);
 							h.trialBoss = v.boss, h.trialBossLine = v.bossLine;
+							if (std::string why; !Story::TrialsOpen(t, &why)) h.trialLock = why.empty() ? std::string("the altar sleeps") : why;  // (Noah: each altar locked until its city's quest is done)
 						}
 					}
 				}

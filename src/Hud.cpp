@@ -3293,13 +3293,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// [5b] the city's trials: any three of the five, then its Dragon Priest
 				int trialsDone = 0;
 				for (int q = 0; q < 5; ++q) trialsDone += (s.trialDone >> q) & 1;
-				if (s.trialsOn && section(214, "TRIALS OF " + Upper(s.trialCity), s.trialActive == 6 ? std::string("the Dragon Priest walks") : fmt::format("{} of 4 done", std::min(trialsDone, 4)), s.trialActive > 0)) {
+				if (s.trialsOn && section(214, "TRIALS OF " + Upper(s.trialCity), !s.trialLock.empty() ? std::string("LOCKED") : s.trialActive == 6 ? std::string("the Dragon Priest walks") : fmt::format("{} of 4 done", std::min(trialsDone, 4)), s.trialActive > 0)) {
 					const float TL = L, TR = Rr, tcx = cx;
 					const int doneCount = trialsDone;
 					const bool party = Party::FriendCount() > 0;  // (in a party: three of your own each, then the night's waves together)
 					const bool full = doneCount >= 4 || s.trialActive == 6;
 					y -= 34 * k;  // (the section's header names the city)
-					TxtC(dl, g_body, 16 * k, tcx, y + 34 * k, IM_COL32(196, 182, 160, 235), party ? "The three shared trials with your party's help, your class's trial on your own  -  " + std::to_string(std::min(doneCount, 4)) + " of 4 done"
+					if (!s.trialLock.empty()) TxtC(dl, g_body, 16 * k, tcx, y + 34 * k, kLockedCol, "LOCKED  -  " + s.trialLock);
+					else TxtC(dl, g_body, 16 * k, tcx, y + 34 * k, IM_COL32(196, 182, 160, 235), party ? "The three shared trials with your party's help, your class's trial on your own  -  " + std::to_string(std::min(doneCount, 4)) + " of 4 done"
 					                                                                                     : "Three shared trials and your class's own, in any order  -  " + std::to_string(std::min(doneCount, 4)) + " of 4 done");
 					float ty = y + 66 * k;
 					static constexpr const char* kRoman[5] = { "I", "II", "III", "IV", "V" };

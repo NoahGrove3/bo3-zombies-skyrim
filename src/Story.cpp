@@ -3,11 +3,11 @@
 // (Noah: the Curse synced with the main story) Alduin's return at Helgen starts the Curse and his fall ends it; each
 // main-quest step opens the next part of it:
 //   0 Unbound              no nights yet (Helgen plays, or is skipped)
-//   1 Before the Storm     the first nights; every city's trials but Whiterun's, Solitude's and Windhelm's
+//   1 Before the Storm     the first nights; Riverwood's altar (every other city's waits on its own quest: TrialsOpen)
 //   2 Bleak Falls Barrow   (the Dragon Priests no longer wait for it: they rise once a city's trials are done)
 //   3 Dragon Rising        the nights' elites; Whiterun's trials
 //   4 The Way of the Voice  (the Greybeards know you: they will call when your path's secret is won)
-//   5 Diplomatic Immunity / Season Unending   Solitude's and Windhelm's trials
+//   5 Diplomatic Immunity / Season Unending
 // (Noah: "Skyrim quests not requiring Sovngarde") the rest of the curse follows its own story, not the main quest's:
 // the wonders (src/Eggs.cpp, src/Classes.cpp), the three dragons and the Echo of Alduin (src/Echo.cpp). Grimmvar,
 // Alduin's Herald, hunts on the Fog Nights once the three dragons wake; the wonders' Legendary form comes with their fall.
@@ -76,7 +76,7 @@ namespace bo3z::Story
 			if (g_stage >= 0 && now > g_stage) {
 				static constexpr const char* kNews[6] = { "", "Night falls on Skyrim: the dead rise",
 					"The Dragonstone named the burial mounds of the old Dragon Cult", "The dragon is slain - Whiterun's trials open, and the nights bring their elites",
-					"Arngeir speaks of the Echo Altars - the Greybeards will call when your path's secret is won", "Solitude's and Windhelm's trials open" };
+					"Arngeir speaks of the Echo Altars - the Greybeards will call when your path's secret is won", "The Greybeards' peace is made" };
 				Forms::Play(gen::Sound::quest_start);
 				Hud::Banner(std::string("THE CURSE DEEPENS - ") + kNews[now], 6.0f);
 			}
@@ -101,19 +101,66 @@ namespace bo3z::Story
 		return false;
 	}
 
+	// (Noah: "I want each Echo Altar to be locked until the main quest for that city is completed ... other than Whiterun, the
+	// rest of them should have the city's own quest"; Riften and Winterhold neutral - no guild to join) Riverwood's altar
+	// wakes with the first night; Whiterun's with Dragon Rising; every other city's once its own quest is done
+	struct CityQuest { std::string_view town, quest, editorID; };
+	constexpr CityQuest kCityQuests[] = {
+		{ "Solitude", "The Wolf Queen Awakened", "" },
+		{ "Windhelm", "The White Phial", "" },
+		{ "Markarth", "The Forsworn Conspiracy", "" },
+		{ "Riften", "The Book of Love", "T02" },
+		{ "Falkreath", "Ill Met By Moonlight", "" },
+		{ "Morthal", "Laid to Rest", "" },
+		{ "Dawnstar", "Waking Nightmare", "" },
+		{ "Winterhold", "Dungeon Delving", "Favor158" },  // (the Jarl's favour: the Helm of Winterhold from Yngol Barrow)
+	};
+	namespace
+	{
+		RE::TESQuest* CityQuestForm(const CityQuest& a_c)
+		{
+			static std::unordered_map<std::string, RE::TESQuest*> cache;
+			const std::string key(a_c.town);
+			if (auto it = cache.find(key); it != cache.end()) return it->second;
+			RE::TESQuest* found = nullptr;
+			if (auto* dh = RE::TESDataHandler::GetSingleton()) {
+				auto lower = [](std::string_view v) { std::string o(v); for (auto& ch : o) ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch))); return o; };
+				const std::string want = lower(a_c.quest);
+				for (auto* q : dh->GetFormArray<RE::TESQuest>()) {
+					if (!q) continue;
+					if (!a_c.editorID.empty() && a_c.editorID == q->GetFormEditorID()) { found = q; break; }
+					if (const char* n = q->GetName(); n && lower(n) == want && (!found || std::string_view(q->GetFormEditorID()).size())) found = q;
+				}
+			}
+			logger::info("story: {}'s altar waits on {} - {}", a_c.town, a_c.quest, found ? fmt::format("{:08X} {}", found->GetFormID(), found->GetFormEditorID()) : std::string("not found"));
+			cache[key] = found;
+			return found;
+		}
+	}
+	std::string_view CityQuestName(int a_town)
+	{
+		const std::string_view t = a_town >= 0 && a_town < static_cast<int>(gen::kTowns.size()) ? gen::kTowns[a_town] : "";
+		if (t == "Whiterun") return "Dragon Rising";
+		for (const auto& c : kCityQuests) if (c.town == t) return c.quest;
+		return "";
+	}
 	bool TrialsOpen(int a_town, std::string* a_why)
 	{
 		const std::string_view t = a_town >= 0 && a_town < static_cast<int>(gen::kTowns.size()) ? gen::kTowns[a_town] : "";
 		const int st = Stage();
-		if (t == "Whiterun" && st < 3) {
-			if (a_why) *a_why = "Whiterun's trials open once the dragon at the Western Watchtower falls (Dragon Rising)";
-			return false;
+		if (st < 1) return false;
+		if (t == "Whiterun") {
+			if (st < 3 && a_why) *a_why = "Whiterun's Echo Altar wakes once the dragon at the Western Watchtower falls (Dragon Rising)";
+			return st >= 3;
 		}
-		if ((t == "Solitude" || t == "Windhelm") && st < 5) {
-			if (a_why) *a_why = std::string(t) + "'s trials open after Diplomatic Immunity or Season Unending";
-			return false;
+		for (const auto& c : kCityQuests) {
+			if (c.town != t) continue;
+			auto* q = CityQuestForm(c);
+			const bool done = q && (q->IsCompleted() || (!q->IsRunning() && q->GetCurrentStageID() > 0));
+			if (!done && a_why) *a_why = fmt::format("{}'s Echo Altar wakes once {} is done", t, c.quest);
+			return done || !q;  // (its quest missing from the game: never locked for ever)
 		}
-		return st >= 1;
+		return true;  // Riverwood
 	}
 	bool BarrowJarlsOpen() { return Stage() >= 2; }
 	bool ElitesOpen() { return Stage() >= 3; }

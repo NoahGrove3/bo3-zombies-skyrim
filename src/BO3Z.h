@@ -363,6 +363,7 @@ namespace bo3z
 		void Reset();             // a load / a new game
 		bool SceneHold();         // a set piece of the main quest is playing out here: no night begins
 		bool TrialsOpen(int a_town, std::string* a_why = nullptr);
+		std::string_view CityQuestName(int a_town);  // the quest that wakes a city's Echo Altar (empty: Riverwood)
 		bool BarrowJarlsOpen();   // after Bleak Falls Barrow
 		bool ElitesOpen();        // after Dragon Rising
 		bool AlduinFallen();      // after Sovngarde
@@ -1049,7 +1050,7 @@ namespace bo3z
 			std::vector<std::array<float, 3>> freedAltars;  // the freed cities' Echo Altar map icons (world x, y, z): gold on the world map
 			int         trialDone{ 0 }, trialActive{ 0 }, trialSel{ 0 };
 			std::array<std::string, 5> trialDesc;
-			std::string trialCity, trialBoss, trialBossLine;
+			std::string trialCity, trialBoss, trialBossLine, trialLock;  // (trialLock: why the altar's trials are shut)
 			int         bowHeld{ -1 };    // the altar's bow in hand (Bows index), and how far it is drawn
 			float       bowDraw{ 0 };
 			bool        rollBow{ false };  // the altar's roll is the bow wheel
