@@ -2613,6 +2613,25 @@ namespace bo3z::Classes
 	// every frame: cooldowns, and where the Subsuming Vortex's arrows come down
 	void TickFast(float a_delta)
 	{
+		// (Noah: "I want to make the Dragon Slayer sword one-handed") swung as a sword in one hand, the other hand free for its
+		// spell - the record changed once, at the first frame (an equipped one is put on again so the hands take it up)
+		if (static bool oneHand = false; !oneHand) {
+			if (auto* sl = Slayer()) {
+				oneHand = true;
+				sl->weaponData.animationType = RE::WEAPON_TYPE::kOneHandSword;
+				if (auto* either = RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F44)) sl->SetEquipSlot(either);
+				if (auto* kw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x0006D931)) sl->RemoveKeyword(kw);  // (WeapTypeGreatsword)
+				if (auto* kw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x0001E711)) sl->AddKeyword(kw);     // (WeapTypeSword)
+				auto* p = RE::PlayerCharacter::GetSingleton();
+				if (p && (p->GetEquippedObject(false) == sl || p->GetEquippedObject(true) == sl)) {
+					if (auto* em = RE::ActorEquipManager::GetSingleton()) {
+						em->UnequipObject(p, sl, nullptr, 1, nullptr, false, false, false, true);
+						em->EquipObject(p, sl, nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F42), false, false, false, true);
+					}
+				}
+				logger::info("classes: the Dragon Slayer is a one-handed sword");
+			}
+		}
 		TickSummons(a_delta);
 		g_tomeCool = std::max(0.0f, g_tomeCool - a_delta);
 		if (g_tomeHold > 0 && (g_tomeHold -= a_delta) <= 0) {

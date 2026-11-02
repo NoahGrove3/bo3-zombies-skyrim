@@ -6743,8 +6743,39 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			g_state.banner.clear(), g_state.loreTitle.clear(), g_state.loreText.clear();
 			g_state.bannerTime = g_state.bannerTotal = g_state.loreTime = g_state.loreTotal = 0;
 		}
+		// (Noah: "hide the one time pop ups from the Curse of Alduin") the cards can be switched off - kept off across restarts
+		// by a flag file beside the log (dev: popups 0 / popups 1)
+		std::filesystem::path LoreFlag()
+		{
+			auto dir = SKSE::log::log_directory();
+			return dir ? *dir / "CurseOfAlduin-nopopups.flag" : std::filesystem::path("CurseOfAlduin-nopopups.flag");
+		}
+		std::atomic<int> g_loreOff{ -1 };
+		bool LoreOff()
+		{
+			if (g_loreOff.load() < 0) {
+				std::error_code ec;
+				g_loreOff = std::filesystem::exists(LoreFlag(), ec) ? 1 : 0;
+			}
+			return g_loreOff.load() == 1;
+		}
+		void SetPopups(bool a_on)
+		{
+			std::error_code ec;
+			if (a_on) std::filesystem::remove(LoreFlag(), ec);
+			else std::ofstream(LoreFlag()) << "the Curse of Alduin's one-time cards are off\n";
+			g_loreOff = a_on ? 0 : 1;
+			if (!a_on) {
+				std::scoped_lock l(g_lock);
+				g_loreQ.clear();
+				g_state.loreTitle.clear(), g_state.loreText.clear();
+				g_state.loreTime = g_state.loreTotal = 0;
+			}
+			logger::info("hud: one-time cards {}", a_on ? "on" : "off");
+		}
 		void Lore(std::string a_title, std::string a_text, float a_seconds)
 		{
+			if (LoreOff()) return;
 			std::scoped_lock l(g_lock);
 			a_seconds = std::clamp(a_seconds, 4.0f, 14.0f);  // (long enough to read, never in the way for long)
 			if (g_state.loreTime > 1.0f) {

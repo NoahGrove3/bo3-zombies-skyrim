@@ -312,14 +312,24 @@ namespace bo3z::Party
 			// (Noah: "my character was just running in place on the ground") the body could stay in its fall's ragdoll with the
 			// legs still walking: a moment on, you are set down where you lie, whole and standing (a move onto yourself
 			// rebuilds the body's state), and your controls are yours again
-			Tasks::Later(0.6f, [] {
-				auto* pl = RE::PlayerCharacter::GetSingleton();
-				if (!pl || pl->IsDead() || g_soloT >= 0.0f) return;
-				pl->MoveTo(pl);
-				pl->NotifyAnimationGraph("IdleForceDefaultState");
-				FallControls(false);
-				logger::info("fallen: stood up (knock state was {})", static_cast<int>(pl->AsActorState()->GetKnockState()));
-			});
+			// (Noah, again: "when I died my character was stuck running in place on the floor" - the knockdown was still queued,
+			// state 5) the queued knockdown is cleared and the body told to get up, and it is looked at again until it stands
+			for (float when : { 0.6f, 1.5f, 2.8f, 4.5f }) {
+				Tasks::Later(when, [when] {
+					auto* pl = RE::PlayerCharacter::GetSingleton();
+					if (!pl || pl->IsDead() || g_soloT >= 0.0f) return;
+					const auto ks = pl->AsActorState()->GetKnockState();
+					const bool down = ks != RE::KNOCK_STATE_ENUM::kNormal || pl->IsInRagdollState();
+					if (!down && when > 0.7f) return;
+					pl->AsActorState()->actorState1.knockState = RE::KNOCK_STATE_ENUM::kNormal;
+					pl->NotifyAnimationGraph("GetUpBegin");
+					pl->NotifyAnimationGraph("GetUpStart");
+					pl->MoveTo(pl);
+					pl->NotifyAnimationGraph("IdleForceDefaultState");
+					FallControls(false);
+					logger::info("fallen: stood up at {:.1f} s (knock state was {}, ragdoll {})", when, static_cast<int>(ks), down);
+				});
+			}
 			g_soloT = -1.0f;
 			// a breath of safety as you stand: ghostly another two seconds
 			Tasks::Later(2.0f, [] { if (g_soloT < 0.0f) Ghost(kGhostFall, false); });

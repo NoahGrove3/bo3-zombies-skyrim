@@ -242,6 +242,20 @@ namespace bo3z
 			}
 			static inline REL::Relocation<decltype(thunk)> func;
 		};
+		// (Noah: "I died to my own spell when using the fully upgraded ice bow") whatever of yours lands on you - a bow's strike
+		// spell, its blast, its frost - is given straight back: nothing you loose can hurt you
+		struct PlayerSelfHarm
+		{
+			static void thunk(RE::Actor* a_this, RE::Actor* a_attacker, float a_damage)
+			{
+				func(a_this, a_attacker, a_damage);
+				if (a_this && a_attacker == a_this && !a_this->IsDead() && a_damage != 0.0f) {
+					a_this->AsActorValueOwner()->RestoreActorValue(RE::ActorValue::kHealth, std::abs(a_damage));
+					if (static int said = 0; said++ < 10) logger::info("hurt: your own {:.0f} damage given back", std::abs(a_damage));
+				}
+			}
+			static inline REL::Relocation<decltype(thunk)> func;
+		};
 		struct SummonKill
 		{
 			static void thunk(RE::Actor* a_this, RE::Actor* a_attacker, float a_damage, bool a_sendEvent, bool a_ragdollInstant)
@@ -1393,6 +1407,7 @@ namespace bo3z
 			REL::Relocation<std::uintptr_t> vtbl{ RE::VTABLE_PlayerCharacter[0] };
 			PlayerUpdate::func = vtbl.write_vfunc(0xAD, PlayerUpdate::thunk);
 			PlayerKill::func = vtbl.write_vfunc(0x10E, PlayerKill::thunk);
+			PlayerSelfHarm::func = vtbl.write_vfunc(0x104, PlayerSelfHarm::thunk);
 			{
 				REL::Relocation<std::uintptr_t> ex{ RE::VTABLE_Explosion[0] };
 				SmallExplosions::func = ex.write_vfunc(0xA3, SmallExplosions::thunk);

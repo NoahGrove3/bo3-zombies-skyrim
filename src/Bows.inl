@@ -97,7 +97,7 @@ namespace BowsImpl
 		if (const int n = p->GetItemCount(am); a_fill && n < Quiver(i)) {
 			p->AddObjectToContainer(am, nullptr, Quiver(i) - n, nullptr);
 		}
-		if (p->GetItemCount(am) > 0 && (a_equip || (Held() == i && p->GetCurrentAmmo() != am))) {  // (Noah: a quiver bought put a bow's arrows on the crossbow in your hands)
+		if (p->GetItemCount(am) > 0 && !ItemMenusOpen() && (a_equip || (Held() == i && p->GetCurrentAmmo() != am))) {  // (Noah: a quiver bought put a bow's arrows on the crossbow in your hands)
 			if (auto* em = RE::ActorEquipManager::GetSingleton()) {
 				em->EquipObject(p, am, nullptr, 1, nullptr, false, false, false, true);
 			}
@@ -480,12 +480,15 @@ namespace BowsImpl
 			g_t3Marker = ref->CreateRefHandle();
 			m = ref;
 		}
-		const float len = a_vel.Length();
-		const RE::NiPoint3 dir = len > 1 ? a_vel * (1.0f / len) : RE::NiPoint3{ 0, 1, 0 };
-		m->SetPosition(p - dir * 140.0f + RE::NiPoint3{ 0, 0, 60.0f });
+		// (Noah: "the charged attack spell that shoots after the arrow lands [should explode] on impact where the arrow lands and
+		// not fly off in a random direction") loosed from just over the strike, straight down onto it: it bursts where the
+		// arrow came down, on the one it struck if it struck one - no seeking, no flight
+		(void)a_vel, (void)a_seek;
+		RE::Actor* on = a_target && !a_target->IsDead() && a_target->GetPosition().GetDistance(p) < 220.0f ? a_target : nullptr;
+		m->SetPosition(p + RE::NiPoint3{ 0, 0, 70.0f });
+		m->SetAngle({ 1.5707f, 0.0f, 0.0f });  // (facing down)
 		if (!m->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant)) return false;
-		Forms::CastOnce(m.get(), a_spell, a_target, 1.0f, pl);
-		if (a_seek) g_seekSpell = a_spell, g_seekLeft = 10.0f;
+		Forms::CastOnce(m.get(), a_spell, on, 1.0f, pl);
 		return true;
 	}
 	// each bow's last upgrade, where a full-draw arrow strikes (Noah):
@@ -1039,11 +1042,26 @@ namespace BowsImpl
 		m.bone = a_bone, m.x0 = a_x0, m.x1 = a_x1, m.kind = a_kind, m.phase = Rand(0.0f, 6.28f);
 		g_motes.push_back(std::move(m));
 	}
+	// (Noah: "the vortex bow ... doesn't have any animations on the bow") the Subsuming Vortex wakes like the altar bows: the
+	// wonder's own violet (its spellcraft row, wolfcrown) hung on the limbs at the full tier-III dress
+	constexpr int kVortexMote = 100;
+	bool VortexHeld(RE::PlayerCharacter* p)
+	{
+		static RE::TESObjectWEAP* v = nullptr;
+		if (!v) v = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kVortexWeap, gen::kPlugin);
+		return p && v && (p->GetEquippedObject(false) == v || p->GetEquippedObject(true) == v);
+	}
+	int VortexRow()
+	{
+		for (int r = 0; r < static_cast<int>(gen::kSpellcraft.size()); ++r) if (gen::kSpellcraft[r].id == "wolfcrown") return r;
+		return 0;
+	}
+	int MoteTier(int i) { return i == kVortexMote ? 3 : g_level[i]; }
 	void BuildMotes(int i)
 	{
 		ClearMotes();
-		const auto id = gen::kSpellcraft[gen::kBows[i].spellRow].id;
-		const std::string_view el = gen::kBows[i].element;
+		const auto id = gen::kSpellcraft[i == kVortexMote ? VortexRow() : gen::kBows[i].spellRow].id;
+		const std::string_view el = i == kVortexMote ? std::string_view("void") : std::string_view(gen::kBows[i].element);
 		for (int b = 0; b < 4; ++b) {
 			const float L = kBoneLen[b];
 			if (el == "shock") {
@@ -1065,6 +1083,10 @@ namespace BowsImpl
 				AddMote(id, "hand", b, L * 0.25f, L * 0.25f, 0);
 				AddMote(id, "hand", b, L * 0.7f, L * 0.7f, 0);
 				AddMote(id, "aura", b, L * 0.95f, L * 0.95f, 1);
+			} else if (el == "void") {  // the Vortex: violet motes spun round each limb, a glow breathing at each tip
+				AddMote(id, "aura", b, L * 0.4f, L * 0.4f, 1);
+				AddMote(id, "hand", b, L * 0.75f, L * 0.75f, 0);
+				AddMote(id, "aura", b, L * 0.95f, L * 0.95f, 1);
 			} else {  // blood: drops welling at the grip and running down each limb
 				AddMote(id, "hand", b, 0.0f, L, 3);
 				AddMote(id, "hand", b, 0.0f, L, 3);
@@ -1073,7 +1095,7 @@ namespace BowsImpl
 		}
 		// (Noah: more of the bow wakes with every reforge) tier I: a band of runes lights along every limb; II: a runic
 		// crest of light off each tip and a ring of runes turning round the inner limbs; III: rings round the tips too
-		const int t = g_level[i];
+		const int t = MoteTier(i);
 		if (t < 1) {  // (the base bow: one touch of its element per limb; the rest wake with the first reforge)
 			std::vector<Mote> keep;
 			for (int b = 0; b < 4; ++b) {
@@ -1213,10 +1235,10 @@ namespace BowsImpl
 			}
 			return;
 		}
-		if (g_moteBow != i || g_moteTier != g_level[i]) {
+		if (g_moteBow != i || g_moteTier != MoteTier(i)) {
 			BuildMotes(i);
 		}
-		TickShell(p, i, a_delta);
+		if (i != kVortexMote) TickShell(p, i, a_delta);
 		// the bow's limb bones, in the view the player sees (first person: the arms' own skeleton)
 		auto* root = p->Get3D(Spellcraft::FirstPerson());
 		for (int b = 0; b < 4; ++b) {
@@ -1228,7 +1250,7 @@ namespace BowsImpl
 		if (rejit) {
 			g_arcJitter = 0.055f;  // (lightning: a new path every few frames)
 		}
-		const float pull = (1.0f + 0.8f * g_draw) * (1.0f + 0.12f * g_level[i]);  // everything flares as the bow is drawn (and burns brighter each tier)
+		const float pull = (1.0f + 0.8f * g_draw) * (1.0f + 0.12f * MoteTier(i));  // everything flares as the bow is drawn (and burns brighter each tier)
 		for (auto& m : g_motes) {
 			auto* bone = g_bones[m.bone];
 			if (!bone) {
@@ -1668,15 +1690,41 @@ namespace BowsImpl
 		g_sinceFire += a_delta;
 		const int i = Held();
 		// (the arrows grow back only once the quiver is empty: TickRegen)
+		// (Noah: "make all of the bows & crossbows from the Curse of Alduin infinite ammo") the quiver never runs low: each of
+		// our bows and crossbows in your hands keeps its own arrows full and on the string - and only its own (Noah: the game
+		// crashed when the Vortex's arrows were put on an altar bow). Never while an item menu is open
+		// (Noah: "each bow and crossbow should have their own unique arrows and bolts, but they shouldn't be visible from the
+		// inventory, only when firing") their ammunition is made non-playable once: kept off the inventory's lists, still
+		// nocked and loosed (as Skyrim's own bound arrows are)
+		if (static bool hidden = false; !hidden) {
+			hidden = true;
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			std::vector<RE::TESAmmo*> ours;
+			for (int k = 0; k < kN; ++k) ours.push_back(Ammo(k));
+			ours.push_back(dh->LookupForm<RE::TESAmmo>(gen::kVortexAmmo, gen::kPlugin));
+			for (int e = 0; e < 3; ++e) ours.push_back(dh->LookupForm<RE::TESAmmo>(0x020B05 + e, "Faction Crossbows.esp"));
+			int n = 0;
+			for (auto* am : ours) if (am) am->GetRuntimeData().data.flags.set(RE::AMMO_DATA::Flag::kNonPlayable), ++n;
+			logger::info("bows: {} of our bows' and crossbows' ammunition kept off the inventory", n);
+		}
 		static float quiver = 0;
-		if (i >= 0 && (quiver -= a_delta) <= 0) {
-			quiver = 1.0f;
-			TopUp(i, false);  // (keeps the arrows on the string; never fills)
-			if (auto* am = Ammo(i); am && p->GetItemCount(am) <= 0) {
-				static auto told = std::chrono::steady_clock::now() - std::chrono::seconds(60);
-				if (std::chrono::steady_clock::now() - told > std::chrono::seconds(20)) {
-					told = std::chrono::steady_clock::now();
-					Hud::Banner("Out of arrows - they grow back once you stop shooting for a few seconds", 3.5f);
+		if ((quiver -= a_delta) <= 0 && !ItemMenusOpen()) {
+			quiver = 0.5f;
+			if (i >= 0) {
+				TopUp(i, false, true);
+			} else if (VortexHeld(p)) {
+				Classes::RestockWonder();
+				if (auto* va = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESAmmo>(gen::kVortexAmmo, gen::kPlugin); va && p->GetCurrentAmmo() != va && p->GetItemCount(va) > 0) {
+					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(p, va, nullptr, 1, nullptr, false, false, false, true);
+				}
+			} else {
+				for (int e = 0; e < 3; ++e) {
+					auto* xb = Classes::CrossbowForm(e);
+					if (!xb || (p->GetEquippedObject(false) != xb && p->GetEquippedObject(true) != xb)) continue;
+					Classes::RestockWonder();  // (its bolts back to a full quiver)
+					if (auto* b = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESAmmo>(0x020B05 + e, "Faction Crossbows.esp"); b && p->GetCurrentAmmo() != b && p->GetItemCount(b) > 0) {
+						if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(p, b, nullptr, 1, nullptr, false, false, false, true);
+					}
 				}
 			}
 		}
@@ -1782,7 +1830,7 @@ namespace BowsImpl
 			g_draw = 0, g_fullSaid = false;
 		}
 		g_wasDrawing = drawing;
-		TickMotes(p, i, a_delta);
+		TickMotes(p, i >= 0 ? i : (VortexHeld(p) ? kVortexMote : -1), a_delta);
 		TickTip(p, i, drawing, a_delta);
 		TickTiers(a_delta);
 		TickSeek(a_delta);

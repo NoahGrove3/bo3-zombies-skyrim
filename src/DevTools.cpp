@@ -147,6 +147,10 @@ namespace bo3z
 				if (best) {
 					best->ActivateRef(player, 0, nullptr, 1, false);
 				}
+			} else if (cmd == "popups") {  // popups 0|1: the one-time cards off / on (remembered)
+				int on = 1;
+				in >> on;
+				Hud::SetPopups(on != 0);
 			} else if (cmd == "allkit" && player) {
 				// allkit: (trailer filming) every class's kit and Armory at its top tier, every relic, the four wonders, Alduin's
 				// Bane, the glider at its last bond with Dragon's Updraft, and Cursed Essence to spend

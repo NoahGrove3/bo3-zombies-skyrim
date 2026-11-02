@@ -384,9 +384,28 @@ namespace Props
 		(void)cls, (void)at;
 	}
 	// the Ranger's wind slash: a crescent of wind down the line from every swing - hit or not - that hurls the dead far away
+	// (Noah: "for Alduin's Bane and the Dragon Slayer, their light attacks should be a close-range area of damage, and the
+	// charged attack longer range") a light swing: a burst of wind round the blade's arc that throws back all near you; a
+	// power attack: the long crescent down the line
+	void BaneClose(RE::PlayerCharacter* p)
+	{
+		const Aim aim = AimAt(400.0f);
+		RE::NiPoint3 dir = aim.dir; dir.z = 0;
+		if (dir.Length() < 0.01f) dir = { 0, 1, 0 };
+		dir.Unitize();
+		const RE::NiPoint3 at = p->GetPosition() + dir * 150.0f + RE::NiPoint3{ 0, 0, 80.0f };
+		Blast(BlastIndex("shoutarea"), at, 0.0f, 0.45f);
+		Blast(BlastIndex("shoutarea"), at + dir * 120.0f, 0.05f, 0.35f);
+		Audio::AtPoint(gen::Sound::unleash_hearth, at);
+		for (auto* f : Foes(p->GetPosition() + dir * 120.0f, 380.0f)) {
+			if (Damage(f, FangBase() * BaneMult() * 0.9f, false, false, true)) BaneKilled(p);
+			Spellcraft::Fling(f, p->GetPosition() - RE::NiPoint3{ 0, 0, 80.0f }, 10.0f);
+		}
+	}
 	void BaneWind(RE::PlayerCharacter* p, bool a_power)
 	{
-		const float range = a_power ? 2600.0f : 1800.0f, width = a_power ? 260.0f : 170.0f;
+		if (!a_power) { BaneClose(p); return; }
+		const float range = 3200.0f, width = 280.0f;
 		const Aim aim = AimAt(range);
 		RE::NiPoint3 dir = aim.dir; dir.z = 0;
 		if (dir.Length() < 0.01f) dir = { 0, 1, 0 };
@@ -421,7 +440,22 @@ namespace Props
 	}
 	void SlayerSlash(RE::PlayerCharacter* p, bool a_power)
 	{
-		const float range = a_power ? 2000.0f : 1400.0f, width = a_power ? 220.0f : 150.0f;
+		if (!a_power) {  // a light swing: a crack of lightning round the blade's arc, close in
+			const Aim aim0 = AimAt(400.0f);
+			RE::NiPoint3 dir0 = aim0.dir; dir0.z = 0;
+			if (dir0.Length() < 0.01f) dir0 = { 0, 1, 0 };
+			dir0.Unitize();
+			const RE::NiPoint3 c = p->GetPosition() + dir0 * 140.0f + RE::NiPoint3{ 0, 0, 80.0f };
+			Blast(BlastIndex("shockmass"), c, 0.0f, 0.4f);
+			Blast(BlastIndex("runeshock"), c + dir0 * 110.0f, 0.04f, 0.3f);
+			Audio::AtPoint(gen::Sound::unleash_stormcaller, c);
+			for (auto* f : Foes(p->GetPosition() + dir0 * 110.0f, 340.0f)) {
+				Damage(f, FangBase() * BaneMult() * 0.4f, false, false, true);
+				Spellcraft::Fling(f, p->GetPosition() - RE::NiPoint3{ 0, 0, 80.0f }, 4.0f);
+			}
+			return;
+		}
+		const float range = 2600.0f, width = 230.0f;
 		const Aim aim = AimAt(range);
 		RE::NiPoint3 dir = aim.dir; dir.z = 0;
 		if (dir.Length() < 0.01f) dir = { 0, 1, 0 };

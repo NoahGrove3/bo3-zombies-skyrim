@@ -1786,6 +1786,8 @@ namespace bo3z
 						// the hole itself flares out as a violet shockwave (its own model, so its own colour), the starfield's flash inside
 						Blast(BlastIndex("constellation"), w.at + RE::NiPoint3{ 0, 0, 60.0f }, 0.05f, std::clamp(w.burst / 500.0f, 0.4f, 1.6f));
 						if (w.fx.get()) g_vflash.push_back({ w.fx, 0.0f, sc });
+						PurpleFire(w.at, 2.6f * sc, 0.0f, 0.9f);
+						PurpleFire(w.at + RE::NiPoint3{ 0, 0, 40.0f }, 1.6f * sc, 0.12f, 0.8f);
 						w.fx = {};
 					} else {
 						Blast(BlastIndex("darkmassive"), w.at + RE::NiPoint3{ 0, 0, 60.0f }, 0.0f, kBlastScale);
@@ -2319,6 +2321,8 @@ namespace bo3z
 				ref->GetReferenceRuntimeData().refScale = 5;
 				w.fx = ref->CreateRefHandle();
 			}
+			// (Noah: "the impact ... animations are invisible, but it sucks in zombies") violet fire flares where it opens
+			PurpleFire(at, 1.6f, 0.0f, 0.7f);
 			Audio::AtPoint(gen::Sound::unleash_hearth, at);
 			g_wells.push_back(std::move(w));
 			logger::info("vortex: a black hole opens{}", a_legendary ? " (Legendary)" : "");
