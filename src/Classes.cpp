@@ -244,14 +244,8 @@ namespace bo3z::Classes
 				// (Noah: "they should start with only the crossbow, the armour and the bolts - the bows stay at the altar") the
 				// Ember Crossbow and its fire bolts, the bolts nocked
 				// (Noah, the altar rework) the Emberstring bow beside the Ember Crossbow
+				// (Noah: "remove the crossbows from the ranger class entirely") the Emberstring alone
 				for (int b = 0; b < Bows::Count(); ++b) if (gen::kBows[b].id == std::string_view("emberstring")) Bows::Give(b);
-				if (auto* xb = ElemCrossbow(0)) {
-					GiveItem(p, xb, 1, true);
-					GiveItem(p, ElemBolts(0), BoltCap(0), true);
-				} else {  // (our plugin's crossbow missing: Faction Crossbows' own)
-					GiveItem(p, Lookup(0x002F9A, "Faction Crossbows.esp"), 1, false);
-					GiveItem(p, Lookup(0x020B04, "Faction Crossbows.esp"), 30, false);
-				}
 				break;
 			case coffer::kSpellsword:
 				// (Noah, the altar rework: "remove shields entirely - a one-hand sword from one of the weapon mods, and a fire
@@ -1211,30 +1205,17 @@ namespace bo3z::Classes
 				logger::info("classes: the Bolgan Sword traded for the Madness Sword");
 			}
 		}
-		// (Noah) a Ranger from before the elemental crossbows is handed the Ember Crossbow and its bolts, once
-		if (static bool xbowGiven = false; !xbowGiven && g_class.load() == coffer::kRanger && p->Is3DLoaded()) {
-			xbowGiven = true;
-			bool any = false;
-			for (int e = 0; e < 3; ++e) if (auto* w = ElemCrossbow(e); w && p->GetItemCount(w) > 0) any = true;
-			if (!any && ElemCrossbow(0)) {
-				GiveItem(p, ElemCrossbow(0), 1, false);
-				GiveItem(p, ElemBolts(0), BoltCap(0), false);
-				Hud::Banner("The Ember Crossbow and its fire bolts are in your pack - the Rime and Storm Crossbows wait at the Echo Altar", 6.0f);
-			}
-		}
 		auto* uiN = RE::UI::GetSingleton();
 		const bool menus = !uiN || uiN->GameIsPaused() || uiN->IsMenuOpen(RE::InventoryMenu::MENU_NAME) || uiN->IsMenuOpen(RE::FavoritesMenu::MENU_NAME) || uiN->IsMenuOpen(RE::ContainerMenu::MENU_NAME) || uiN->IsMenuOpen(RE::BarterMenu::MENU_NAME);
-		// (Noah: "switching from Ranger to Spellsword I still had the Ranger's things") an elemental crossbow and its bolts
-		// carried by another class go back into the Ranger's chest
-		if (!menus && g_class.load() >= 0 && g_class.load() != coffer::kRanger) {
+		// (Noah: "remove the crossbows from the ranger class entirely") the elemental crossbows and their bolts are taken
+		// away from any character that still carries them
+		if (!menus && p->Is3DLoaded()) {
 			for (int e = 0; e < 3; ++e) {
 				for (RE::TESBoundObject* o : { static_cast<RE::TESBoundObject*>(ElemCrossbow(e)), static_cast<RE::TESBoundObject*>(ElemBolts(e)) }) {
 					if (!o || p->GetItemCount(o) <= 0) continue;
-					if (auto* chest = ChestOf(coffer::kRanger, true)) {
-						if (auto* em = RE::ActorEquipManager::GetSingleton()) em->UnequipObject(p, o, nullptr, 1, nullptr, false, false, false, true);
-						p->RemoveItem(o, p->GetItemCount(o), RE::ITEM_REMOVE_REASON::kStoreInContainer, nullptr, chest);
-						logger::info("classes: {} put back in the Ranger's chest", o->GetName());
-					}
+					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->UnequipObject(p, o, nullptr, 1, nullptr, false, false, false, true);
+					p->RemoveItem(o, p->GetItemCount(o), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
+					logger::info("classes: {} taken away (the Ranger's crossbows are retired)", o->GetName());
 				}
 			}
 		}
@@ -1596,10 +1577,7 @@ namespace bo3z::Classes
 			std::unordered_set<std::string> names;
 			std::erase_if(pool, [&](RE::TESBoundObject* f) { return !names.insert(f->GetName() ? f->GetName() : "").second; });
 		} else if (a_cls == coffer::kRanger) {
-			// (Noah) the Ranger's crossbows are the three elemental ones (Ember, Rime, Storm): one of each, the bows beside them
-			for (int e = 0; e < 3; ++e) {
-				if (auto* w = ElemCrossbow(e); w && p->GetItemCount(w) <= 0) pool.push_back(w);
-			}
+			// (Noah: the crossbows retired) the altar no longer hands out the elemental crossbows
 			// (Noah: "the wristbow broke my crossbow, doesn't work properly, and does 45 frost") OffhandBows' one-hand
 			// crossbows are staves to Skyrim: one in the off hand can't be held with the Ranger's two-handed bows and
 			// crossbows, and it fires on enchantment charge - the altar no longer gives them

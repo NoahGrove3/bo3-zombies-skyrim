@@ -23,8 +23,8 @@ namespace bo3z::Kit
 		constexpr Def kDestruction[] = { { Kind::Ladder, "Fire", -1 }, { Kind::Ladder, "Frost", -1 }, { Kind::Ladder, "Shock", 1 }, { Kind::Ladder, "Sun", 3 },
 			{ Kind::Ladder, "Blood", 5 }, { Kind::Ladder, "Runes", 7 },
 			{ Kind::Armour, "armour", -1 }, { Kind::Ladder, "Cloaks", 2 }, { Kind::Ladder, "Walls", 4 }, { Kind::Ladder, "Storms", 9 } };
-		constexpr Def kRanger[] = { { Kind::Crossbow, "0", -1 }, { Kind::Bow, "emberstring", -1 }, { Kind::Crossbow, "1", 1 }, { Kind::Bow, "rimehorn", 2 },
-			{ Kind::Crossbow, "2", 3 }, { Kind::Bow, "stormreach", 4 }, { Kind::Bow, "skyhowl", 6 }, { Kind::Bow, "dawnspire", 8 }, { Kind::Bow, "thirstbow", 9 },
+		constexpr Def kRanger[] = { { Kind::Crossbow, "0", kGone }, { Kind::Bow, "emberstring", -1 }, { Kind::Crossbow, "1", kGone }, { Kind::Bow, "rimehorn", 2 },  // (Noah: the crossbows retired)
+			{ Kind::Crossbow, "2", kGone }, { Kind::Bow, "stormreach", 4 }, { Kind::Bow, "skyhowl", 6 }, { Kind::Bow, "dawnspire", 8 }, { Kind::Bow, "thirstbow", 9 },
 			{ Kind::Armour, "armour", -1 } };
 		constexpr Def kSpellsword[] = { { Kind::Blade, "sword", -1 }, { Kind::Ladder, "Fire", -1 }, { Kind::Ladder, "Frost", 1 }, { Kind::Ladder, "Flame Breath", kGone },
 			{ Kind::Ladder, "Shock", 3 }, { Kind::Ladder, "Frost Breath", kGone }, { Kind::Ladder, "Sun", 5 }, { Kind::Ladder, "Storm Breath", kGone },
@@ -1224,6 +1224,10 @@ namespace bo3z::Kit
 			for (auto& i : s.relicInfusion) if (i > kInfusions) i = 0;
 		}
 		g_tokens = k < a_v.size() ? a_v[k++] : 0;
+		{  // (Noah: the crossbows retired) a save's crossbows are no longer the Ranger's
+			const auto rd = Defs(2);
+			for (int i = 0; i < static_cast<int>(rd.size()); ++i) if (rd[i].kind == Kind::Crossbow) g_cls[2].owned &= ~(1u << i);
+		}
 		g_loaded = true;
 		logger::info("kit: loaded ({} relics waiting)", g_tokens);
 	}
