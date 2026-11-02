@@ -1,10 +1,12 @@
-// weaponwrap <template.nif> <in.nif> <out.nif> <rootName> <hull.txt|-> [invRx invRy invRz zoom] [mass]
+// weaponwrap <template.nif> <in.nif> <out.nif> <rootName> <hull.txt|-> [invRx invRy invRz zoom] [mass] [prn]
 // weaponwrap dump <nif>
 // A melee weapon's model put in a vanilla weapon's frame (e.g. Skyrim's steelgreatsword.nif): its BSFadeNode root, BSX
 // flags, Prn (where it hangs sheathed) and its havok body (weapon layer, a dynamic body, so it falls and rests when
 // dropped) are kept; the template's own shapes are thrown away and ours cloned in; the body's convex hull is replaced by
 // the one in hull.txt (game units: "v x y z" corners and "p nx ny nz px py pz" outward face planes through a point), its
-// centre of mass moved to the hull's middle; a BSInvMarker (inventory / item-preview pose) set or added.
+// centre of mass moved to the hull's middle; a BSInvMarker (inventory / item-preview pose) set or added; with [prn], the
+// template's Prn (sheath node: WeaponBack for a greatsword) replaced, e.g. WeaponSword or WeaponDagger - the one-handed
+// sword / dagger then keeps the greatsword's frame (BSX 194, weapon layer 5, dynamic body) with its own hull and sheath.
 #include "NifFile.hpp"
 #include "bhk.hpp"
 #include <cstdio>
@@ -49,7 +51,7 @@ static int dump(const char* path)
 int main(int argc, char** argv)
 {
 	if (argc >= 3 && !strcmp(argv[1], "dump")) return dump(argv[2]);
-	if (argc < 6) { fprintf(stderr, "usage: weaponwrap <template.nif> <in.nif> <out.nif> <rootName> <hull.txt|-> [rx ry rz zoom] [mass]\n"); return 1; }
+	if (argc < 6) { fprintf(stderr, "usage: weaponwrap <template.nif> <in.nif> <out.nif> <rootName> <hull.txt|-> [rx ry rz zoom] [mass] [prn]\n"); return 1; }
 	NifFile nif, src;
 	if (nif.Load(argv[1])) { fprintf(stderr, "cannot load template %s\n", argv[1]); return 1; }
 	if (src.Load(argv[2])) { fprintf(stderr, "cannot load %s\n", argv[2]); return 1; }
@@ -126,6 +128,18 @@ int main(int argc, char** argv)
 		inv->rotationY = (uint16_t)std::atoi(argv[7]);
 		inv->rotationZ = (uint16_t)std::atoi(argv[8]);
 		inv->zoom = std::atof(argv[9]);
+	}
+	if (argc >= 12 && argv[11][0]) {
+		bool set = false;
+		for (auto& r : root->extraDataRefs)
+			if (auto* e = h.GetBlock<NiStringExtraData>(r)) if (e->name.get() == "Prn") e->stringData.get() = argv[11], set = true;
+		if (!set) {
+			auto x = std::make_unique<NiStringExtraData>();
+			x->name.get() = "Prn";
+			x->stringData.get() = argv[11];
+			nif.AssignExtraData(root, std::move(x));
+		}
+		printf("Prn %s\n", argv[11]);
 	}
 	if (nif.Save(argv[3])) { fprintf(stderr, "save failed\n"); return 1; }
 	printf("wrote %s (%d shapes)\n", argv[3], n);

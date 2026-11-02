@@ -7,6 +7,10 @@ the Dragon Priests, Alduin's Fang) as static NIFs posed for the node each hangs 
   wolfcrown    NPC Head [Head] (third person; in first person a small one floats over the left hand)
   barrowhorn   SHIELD node (left hand): the bell forward (+Y), the curve up (-X), held at its middle
   fang         WEAPON node: the blade up +Y, the grip at the origin (Stage 5's sword)
+  bane         Alduin's Bane, a greatsword (Gold Skull Glory Sword): WEAPON node, blade up +Y, grip at the origin; Prn
+               WeaponBack, Skyrim's steelgreatsword frame + havok hull (bane.nif), and bane_static.nif for the pedestal
+  slayer       Dragon Slayer, a one-handed sword (Ayleid Crystal Saber): the same, Prn WeaponSword (slayer.nif / _static)
+  riftblade    Summoner's Riftblade, a dagger (Abyssal Heart): the same, Prn WeaponDagger (riftblade.nif / _static)
 
 Textures: each model's own (base colour, normal + specular from roughness, glow from its emissive), recoloured to the
 wonder's colour where the source says otherwise.     python tools/wonderprops.py [id ...]"""
@@ -44,15 +48,20 @@ def dds(img, rel, alpha=False, size=2048):
 
 
 def textures(tag, base, normal=None, rough=None, emissive=None, glow=(1, 1, 1), tint=None, tint_amt=0.0, opacity=None,
-             dx=False, glow_floor=0.0, size=2048):
-    """base / normal / roughness / emissive image paths -> (diffuse, normal+spec, glow) dds paths"""
+             dx=False, glow_floor=0.0, size=2048, alpha_floor=0.0, glow_base=0.0, metal=None, ao=None):
+    """base / normal / roughness / emissive image paths -> (diffuse, normal+spec, glow) dds paths
+    (alpha_floor: the opacity map lifted so its clearest is still this opaque - glass; glow_base: the whole surface lit at
+    least this much; metal: a metallic map - bare metal shines more than the rest; ao: ambient occlusion darkens the base)"""
     b = Image.open(base).convert('RGB'); b = b.resize((min(size, b.size[0]),) * 2, Image.LANCZOS); W = b.size
     da = np.asarray(b, np.float32)
+    if ao:
+        da = da * (0.4 + 0.6 * np.asarray(Image.open(ao).convert('L').resize(W, Image.LANCZOS), np.float32)[..., None] / 255)
     if tint is not None:
         lum = da.mean(2, keepdims=True) / 255
         da = da * (1 - tint_amt) + np.array(tint, np.float32) * (0.3 + 1.2 * lum) * tint_amt
     if opacity:
-        a = np.asarray(Image.open(opacity).convert('L').resize(W, Image.LANCZOS), np.uint8)
+        a = np.asarray(Image.open(opacity).convert('L').resize(W, Image.LANCZOS), np.float32)
+        a = (alpha_floor * 255 + a * (1 - alpha_floor)).clip(0, 255).astype(np.uint8)
         D = dds(Image.fromarray(np.dstack([da.clip(0, 255).astype(np.uint8), a]), 'RGBA'), f'{tag}_d.dds', True)
     else:
         D = dds(Image.fromarray(da.clip(0, 255).astype(np.uint8)), f'{tag}_d.dds')
@@ -67,6 +76,8 @@ def textures(tag, base, normal=None, rough=None, emissive=None, glow=(1, 1, 1), 
         sa = (1 - ra) * 220 + 20
     else:
         sa = np.full(na.shape[:2], 120.0)
+    if metal:
+        sa = sa * (0.55 + 0.45 * np.asarray(Image.open(metal).convert('L').resize(W, Image.LANCZOS), np.float32) / 255)
     N = dds(Image.fromarray(np.dstack([na, sa.clip(0, 255).astype(np.uint8)]), 'RGBA'), f'{tag}_n.dds', True)
     gc = np.array(glow, np.float32) * 255
     if emissive:
@@ -78,6 +89,8 @@ def textures(tag, base, normal=None, rough=None, emissive=None, glow=(1, 1, 1), 
     if glow_floor:   # the brightest of the base colour lit faintly in the wonder's colour too (its inlays)
         lum = da.mean(2) / 255
         em = np.maximum(em, np.clip((lum - 0.55) / 0.35, 0, 1) ** 2 * glow_floor)
+    if glow_base:
+        em = np.maximum(em, glow_base)
     G = dds(Image.fromarray((em[..., None] * gc).clip(0, 255).astype(np.uint8)), f'{tag}_g.dds')
     return D, N, G
 
@@ -124,12 +137,17 @@ def gather(d, skip=()):
 
 
 def matopts(D, N, G, emit, mult, spec=1.0, gloss=60, alpha=0):
+    """alpha: 0 opaque, 1 alpha test (cut-outs), 'blend' see-through (glass)"""
     e = ','.join(f'{c:.3f}' for c in emit)
     return f'diffuse={D} normal={N} glow={G} emit={e} emitmult={mult} spec={spec} gloss={gloss} alpha={alpha} doublesided={1 if alpha else 0}'
 
 
 GS_TEMPLATE = '/home/claude/work/vanilla/steelgreatsword.nif'   # Skyrim's own Meshes\weapons\steel\steelgreatsword.nif
 WRAP = '/home/claude/tools/weaponwrap'                            # tools/modelconv/weaponwrap.cpp
+
+
+def cross2(a, b):
+    return a[0] * b[1] - a[1] * b[0]   # (numpy 2's np.cross takes 3-vectors only)
 
 
 def blade_hull(V, maxpts=10):
@@ -145,7 +163,7 @@ def blade_hull(V, maxpts=10):
     poly = poly[keep]
     while len(poly) > maxpts:                                       # drop the corner whose removal loses least area
         n = len(poly)
-        a = [abs(np.cross(poly[(i + 1) % n] - poly[i - 1], poly[i] - poly[i - 1])) for i in range(n)]
+        a = [abs(cross2(poly[(i + 1) % n] - poly[i - 1], poly[i] - poly[i - 1])) for i in range(n)]
         poly = np.delete(poly, int(np.argmin(a)), 0)
     # (the dropped corners poke out of the simplified outline: grow it a touch so the hull still holds the model)
     c = poly.mean(0)
@@ -167,16 +185,76 @@ def blade_hull(V, maxpts=10):
     return lines
 
 
-def weapon_frame(nif, V, name, inv=(4712, 6283, 0, 1.0), mass=9.0):
+def weapon_frame(nif, V, name, inv=(4712, 6283, 0, 1.0), mass=9.0, prn=''):
     """(Noah: Alduin's Bane floats when dropped, won't sheathe, points at you in the inventory) the model put in Skyrim's
     own greatsword frame (tools/modelconv/weaponwrap): its BSFadeNode root, BSX 194 (havok), Prn WeaponBack and a
     dynamic havok body on the weapon layer (5, mass 9) - here round our blade's own outline - and a BSInvMarker standing
     it upright in the inventory and item preview (4712 6283 0: as Dawnbreaker's and nifly's default; the 1st-person
-    static is this same model, and the inventory shows the 1st-person model)"""
+    static is this same model, and the inventory shows the 1st-person model). prn: another sheath node in place of the
+    greatsword's WeaponBack (WeaponSword, WeaponDagger) - no vanilla one-handed sword / dagger NIF with a convex hull
+    body is to hand, and their frames are the greatsword's otherwise (BSX 194, layer 5, a dynamic body of mass 9)"""
     hull = WORK / f'{name}_hull.txt'; hull.write_text('\n'.join(blade_hull(V)) + '\n')
-    r = subprocess.run([WRAP, GS_TEMPLATE, str(nif), str(nif), name, str(hull), *map(str, inv), str(mass)], capture_output=True, text=True)
+    r = subprocess.run([WRAP, GS_TEMPLATE, str(nif), str(nif), name, str(hull), *map(str, inv), str(mass)] + ([prn] if prn else []),
+                       capture_output=True, text=True)
     print('  ', r.stdout.strip(), r.stderr.strip())
     if r.returncode: raise SystemExit(f'weaponwrap failed for {name}')
+
+
+NW = pathlib.Path('/home/claude/work/newweapons')   # Noah's 2026-11 sword downloads, unpacked (see newweapon())
+UPLOADS = pathlib.Path('/mnt/user-data/uploads')
+NEWWEAPONS = {   # tag: (download zip, the model inside it, OBJ parts objexp writes)
+    'A': ('skyrim-ayleid-crystal-saber_1.zip', 'source/model.zip', ['Blade_Cylinder.001', 'Handle_Cylinder']),
+    'B': ('abyssal-heart-runic-demon-sword-free.zip', 'source/resault.rar', ['Sphere']),
+    'C': ('free-gold-skull-glory-sword-game-ready.zip', 'source/resault.rar', ['GlorySwordLP']),
+}
+
+
+def newweapon(tag):
+    """-> the download's OBJ parts (load_obj tuples, the source's own axes and units) and its textures folder; unpacks the
+    zip (textures + the model only - the archives' duplicate texture sets are left out) and runs objexp the first time"""
+    zipname, inner, objs = NEWWEAPONS[tag]
+    d = NW / tag; od = NW / f'obj{tag}'
+    if not all((od / f'{o}.obj').exists() for o in objs):
+        d.mkdir(parents=True, exist_ok=True); od.mkdir(parents=True, exist_ok=True)
+        if not (d / 'textures').exists():
+            subprocess.run(['unzip', '-q', '-o', str(UPLOADS / zipname), 'textures/*', '-d', str(d)], check=True)
+        subprocess.run(['unzip', '-q', '-o', str(UPLOADS / zipname), inner, '-d', str(d)], check=True)
+        arc = d / inner
+        if inner.endswith('.zip'):   # (A: a zip in the zip - only its .dae; the textures beside it are the outer ones)
+            subprocess.run(['unzip', '-q', '-o', str(arc), 'model/model.dae', '-d', str(arc.parent)], check=True)
+            model = arc.parent / 'model/model.dae'
+        else:                        # (B, C: a rar - libarchive's bsdtar reads it; only the .fbx)
+            names = subprocess.run([BSDTAR, '-tf', str(arc)], capture_output=True, text=True, check=True).stdout.split('\n')
+            fbx = next(n for n in names if n.lower().endswith('.fbx'))
+            subprocess.run([BSDTAR, '-xf', str(arc), '-C', str(arc.parent), fbx], check=True)
+            model = arc.parent / fbx
+        arc.unlink()
+        subprocess.run([OBJEXP, str(model), str(od)], check=True, capture_output=True)
+    return [load_obj(od / f'{o}.obj') for o in objs], d / 'textures'
+
+
+BSDTAR = '/home/claude/tools/libarchive/build/bin/bsdtar'
+OBJEXP = '/home/claude/tools/objexp'                            # tools/modelconv/objexp.cpp
+
+
+def hue_mask(path, size, fn):
+    """an emissive image made from a base colour: fn(r, g, b) (0..255 floats) -> 0..1, saved as a png in WORK"""
+    a = np.asarray(Image.open(path).convert('RGB').resize((size, size), Image.LANCZOS), np.float32)
+    m = np.clip(fn(a[..., 0], a[..., 1], a[..., 2]), 0, 1)
+    WORK.mkdir(parents=True, exist_ok=True)
+    out = WORK / (pathlib.Path(path).stem + '_emask.png'); Image.fromarray((m * 255).astype(np.uint8)).save(out)
+    return out
+
+
+def posed(parts, c, s, flip):
+    """parts moved so c is the origin, scaled by s; flip: half a turn round Z ((x, y) -> (-x, -y) - a rotation, the faces
+    keep their winding) for a model whose hilt is up its +Y"""
+    P = []
+    for V0, T, F, M in parts:
+        Q = (V0 - c) * s
+        if flip: Q = np.stack([-Q[:, 0], -Q[:, 1], Q[:, 2]], 1)
+        P.append((Q, T, F, M))
+    return P
 
 
 def build(pid):
@@ -265,19 +343,16 @@ def build(pid):
         r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
         print('fang fire |', r.stdout.strip() or r.stderr.strip())
 
-    elif pid == 'bane':         # Alduin's Bane (the story's last weapon): a greatsword, blade along source -y -> +Y, the grip
-        parts = gather('bane')  # (source y 148..232, under the guard at 127) at the origin, 150 long
-        V = np.vstack([p[0] for p in parts]); L = np.ptp(V[:, 1]); s = 150.0 / L
-        c = np.array([0.0, 190.0, np.median(V[:, 2])])
-        tx = DL / 'bane/textures'
+    elif pid == 'bane':         # Alduin's Bane (the story's last weapon): a greatsword - (Noah, 2026-11) the Gold Skull Glory
+        # Sword download (NW/C): its hilt up source +Y (pommel 219..274, grip 150..219, guard 96..150, the point at -274),
+        # turned half round Z so the blade runs up +Y, the grip's middle (y 185) at the origin, 150 long
+        parts, tx = newweapon('C')
+        V = np.vstack([p[0] for p in parts]); s = 150.0 / np.ptp(V[:, 1])
+        # (Noah: the skull on the hilt faced away from me) the skull bulges out of the guard's source +Z face; the half
+        # turn round Z keeps it there: on the +Z face, toward you in the hand
+        P = posed(parts, np.array([0.0, 185.0, np.median(V[:, 2])]), s, True)
         D, N, G = textures('bane', tx / 'DefaultMaterial_Base_color.png', tx / 'DefaultMaterial_Normal_OpenGL.png', tx / 'DefaultMaterial_Roughness.png',
-                           None, glow=(1.0, 0.78, 0.35), glow_floor=0.3)
-        P = []
-        for V0, T, F, M in parts:
-            Q = (V0 - c) * s
-            # (Noah: the skull on the hilt faced away from me) turned half round the blade (x, z both flipped - a rotation,
-            # not a mirror, so the faces keep their winding): the skull on the guard now on the +Z face, toward you
-            P.append((np.stack([-Q[:, 0], -Q[:, 1], Q[:, 2]], 1), T, F, M))
+                           None, glow=(1.0, 0.78, 0.35), glow_floor=0.3, metal=tx / 'DefaultMaterial_Metallic.png', ao=tx / 'DefaultMaterial_Mixed_AO.png')
         # (Noah: not in my hands when swinging) a weapon's model must say where it hangs (Prn): without it Skyrim leaves
         # it at the body's root, by the feet - so the greatsword's own: WeaponBack, and drawn, the hand
         write(pid, P, {'m0': matopts(D, N, G, (1.0, 0.78, 0.35), 0.9, 1.6, 110)}, 'CurseOfAlduin/wonder/bane.nif', ['prn WeaponBack'])
@@ -285,6 +360,46 @@ def build(pid):
         import shutil
         shutil.copyfile(OUT / 'Meshes/CurseOfAlduin/wonder/bane.nif', OUT / 'Meshes/CurseOfAlduin/wonder/bane_static.nif')
         weapon_frame(OUT / 'Meshes/CurseOfAlduin/wonder/bane.nif', np.vstack([p[0] for p in P]), 'AlduinsBane')
+
+    elif pid == 'slayer':       # Dragon Slayer: a one-handed sword - the Ayleid Crystal Saber download (NW/A): a slim round
+        # rod already up source +Y (0.02 long: the blade -0.0043..0.01, guard collar -0.005..-0.003, grip -0.009..-0.005,
+        # pommel below), the grip's middle (y -0.007) at the origin, 95 long (Skyrim's one-handed swords: 90-100)
+        parts, tx = newweapon('A')    # (Blade_Cylinder.001: material m0 'Blade'; Handle_Cylinder: m1 'Handle')
+        V = np.vstack([p[0] for p in parts]); s = 95.0 / np.ptp(V[:, 1])
+        P = posed(parts, np.array([0.0, -0.007, 0.0]), s, False)
+        ice = (0.72, 0.9, 1.0)
+        # the crystal: its opacity map is clear through the middle and thick at the facets - lifted so the clearest is
+        # still a third opaque (glass, not nothing), blended; lit faintly all over in blue-white, brightest on its facets
+        D, N, G = textures('slayer_blade', tx / 'Blade_albedo.jpeg', tx / 'Blade_normal.png', tx / 'Blade_roughness.jpeg', None,
+                           glow=ice, opacity=tx / 'Blade_opacity.jpeg', alpha_floor=0.35, glow_base=0.35, glow_floor=1.0,
+                           metal=tx / 'Blade_metallic.jpeg', size=1024)
+        # the hilt: dark Ayleid metal; its little cyan crystals glow too
+        gem = hue_mask(tx / 'Handle_albedo.jpeg', 2048, lambda r, g, b: (np.minimum(g, b) - r - 35) / 70)
+        D2, N2, G2 = textures('slayer_hilt', tx / 'Handle_albedo.jpeg', tx / 'Handle_normal.png', tx / 'Handle_roughness.jpeg', gem,
+                              glow=ice, metal=tx / 'Handle_metallic.jpeg', ao=tx / 'Handle_AO.jpeg')
+        mats = {'m0': matopts(D, N, G, ice, 1.6, 2.0, 140, alpha='blend'), 'm1': matopts(D2, N2, G2, ice, 1.4, 1.2, 80)}
+        write(pid, P, mats, 'CurseOfAlduin/wonder/slayer.nif', ['prn WeaponSword'])
+        import shutil
+        shutil.copyfile(OUT / 'Meshes/CurseOfAlduin/wonder/slayer.nif', OUT / 'Meshes/CurseOfAlduin/wonder/slayer_static.nif')
+        weapon_frame(OUT / 'Meshes/CurseOfAlduin/wonder/slayer.nif', np.vstack([p[0] for p in P]), 'DragonSlayer', prn='WeaponSword')
+
+    elif pid == 'riftblade':    # Summoner's Riftblade: a dagger - the Abyssal Heart download (NW/B): hilt up source +Y (pommel
+        # ring 195..225, grip 135..195, guard with its eye 76..135, the point at -220), turned half round Z, the grip's
+        # middle (y 163) at the origin, 60 long (a short blade in the dagger animations)
+        parts, tx = newweapon('B')    # m0 Material.003 (the eye: emissive), m1 'Eye' (the pommel ring: DefaultMaterial's
+        V = np.vstack([p[0] for p in parts]); s = 60.0 / np.ptp(V[:, 1])   # set), m2 Material.002 (blade, guard), m3 Material.001 (grip)
+        P = posed(parts, np.array([0.0, 163.0, np.median(V[:, 2])]), s, True)
+        red = (1.0, 0.22, 0.12)
+        mats = {}
+        for m, t, emi in (('m0', 'Material.003', True), ('m1', 'DefaultMaterial', False), ('m2', 'Material.002', False), ('m3', 'Material.001', False)):
+            D, N, G = textures(f'riftblade_{t.lower().replace(".", "")}', tx / f'{t}_Base_color.png', tx / f'{t}_Normal_OpenGL.png', tx / f'{t}_Roughness.png',
+                               tx / f'{t}_Emissive.png' if emi else None, glow=red, metal=tx / f'{t}_Metallic.png', ao=tx / f'{t}_Mixed_AO.png',
+                               size=2048 if t == 'Material.002' else 1024)
+            mats[m] = matopts(D, N, G, red, 2.2 if emi else 1.0, 1.4, 90)
+        write(pid, P, mats, 'CurseOfAlduin/wonder/riftblade.nif', ['prn WeaponDagger'])
+        import shutil
+        shutil.copyfile(OUT / 'Meshes/CurseOfAlduin/wonder/riftblade.nif', OUT / 'Meshes/CurseOfAlduin/wonder/riftblade_static.nif')
+        weapon_frame(OUT / 'Meshes/CurseOfAlduin/wonder/riftblade.nif', np.vstack([p[0] for p in P]), 'SummonersRiftblade', prn='WeaponDagger')
 
 
 if __name__ == '__main__':
