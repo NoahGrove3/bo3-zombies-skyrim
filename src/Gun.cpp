@@ -2521,7 +2521,7 @@ namespace bo3z
 		// 15 meters ... animated circulating and showing light beams, visually lighting up my surroundings") the Light Orb:
 		// its model (tools/lightorb.py) hung in the scene a little over your head, drifting round in a slow circle and bobbing,
 		// and the lantern's real light (shadow-casting, 15 m) carried inside it
-		struct LightOrb { Spellcraft::Fx fx; RE::NiPointer<RE::NiNode> holder; RE::NiPointer<RE::NiLight> light; bool want = false; float t = 0; RE::NiPoint3 at; bool placed = false; };
+		struct LightOrb { Spellcraft::Fx fx; RE::NiPointer<RE::NiLight> light; bool want = false; float t = 0; RE::NiPoint3 at; bool placed = false; };
 		LightOrb g_orb;
 		void OrbDown()
 		{
@@ -2531,8 +2531,6 @@ namespace bo3z
 				if (auto* parent = g_orb.light->parent) parent->DetachChild(g_orb.light.get());
 				g_orb.light.reset();
 			}
-			if (g_orb.holder && g_orb.holder->parent) g_orb.holder->parent->DetachChild2(g_orb.holder.get());
-			g_orb.holder.reset();
 			g_orb.fx.Detach();
 			g_orb.fx = {};
 			g_orb.placed = false;
@@ -2559,30 +2557,21 @@ namespace bo3z
 			RE::NiMatrix3 turn;
 			turn.SetEulerAnglesXYZ(0.0f, 0.0f, t * 0.6f);
 			g_orb.fx.Place(g_orb.at, turn, 1.5f);
-			// (the orb drew nothing while its light hung inside it: the light rides its own node beside it)
-			if (!g_orb.holder) {
-				if (auto* n = RE::NiNode::Create(1); n && Spellcraft::WorldRoot()) {
-					g_orb.holder.reset(n);
-					Spellcraft::WorldRoot()->AttachChild(n, true);
-				}
-			}
-			if (g_orb.holder) {
-				g_orb.holder->local.translate = g_orb.at - (g_orb.holder->parent ? g_orb.holder->parent->world.translate : RE::NiPoint3{});
-				RE::NiUpdateData ud;
-				ud.time = 0.0f;
-				g_orb.holder->UpdateDownwardPass(ud, 0);
-			}
-			// the light, inside the orb: hung again if the game took it down
+			// (Noah: the game crashed twice a few seconds after loading into Dragonsreach - the light had been moved onto a node of
+			// our own hung on the scene's root) the light rides your body's own root, as the belt lantern's did for weeks without
+			// trouble, a little over your head in the body's frame; hung again when the game takes it down or the body is rebuilt
 			auto* ssn = RE::BSShaderManager::State::GetSingleton().shadowSceneNode[0];
-			if (g_orb.light && ssn && !ssn->GetLight(g_orb.light.get())) {
+			auto* body = root->AsNode();
+			const bool dropped = g_orb.light && ssn && !ssn->GetLight(g_orb.light.get());
+			if (g_orb.light && (dropped || g_orb.light->parent != body)) {
+				if (ssn) ssn->RemoveLight(g_orb.light.get());
 				if (auto* parent = g_orb.light->parent) parent->DetachChild(g_orb.light.get());
 				g_orb.light.reset();
 			}
-			if (!g_orb.light) {
+			if (!g_orb.light && body) {
 				auto* ligh = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectLIGH>(gen::kLanternLight, gen::kPlugin);
-				auto* node = g_orb.holder.get();
-				if (auto* l = ligh && node ? ligh->GenDynamic(p, node, 1, 1, 0) : nullptr) {
-					l->local.translate = RE::NiPoint3{ 0, 0, 0 };
+				if (auto* l = ligh ? ligh->GenDynamic(p, body, 1, 1, 0) : nullptr) {
+					l->local.translate = RE::NiPoint3{ 0.0f, 0.0f, 175.0f };
 					g_orb.light.reset(l);
 					logger::info("light orb: lit (radius {})", ligh->data.radius);
 				}
@@ -3231,6 +3220,7 @@ namespace bo3z
 			g_reload = g_cooldown = 0;
 			g_burstLeft = 0;
 			Spellcraft::Reset();
+			OrbDown();  // (the Light Orb and its light hung again on the new game's body, never carried over a load)
 			BowsImpl::Reset();
 			// (the audit: a load mid-unleash let the old game's stars fall, wells pull and storms crackle in the new one)
 			g_detonations.clear(), g_arcs.clear(), g_dots.clear(), g_shrink.clear(), g_blasts.clear(), g_wells.clear(), g_vflash.clear(), g_pfire.clear(), (void)std::for_each(g_eb.begin(), g_eb.end(), [](EBurst& b) { b.fx.Detach(); }), g_eb.clear(), (void)std::for_each(g_lobs.begin(), g_lobs.end(), [](Lobbed& l) { l.fx.Detach(); }), g_lobs.clear(), g_frozen.clear(), g_prisms.clear();
