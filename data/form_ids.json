@@ -1420,6 +1420,20 @@
   "EFSH:armglow_2_3": "0xd88",
   "EFSH:armglow_3_1": "0xd89",
   "EFSH:armglow_3_2": "0xd8a",
-  "EFSH:armglow_3_3": "0xd8b"
+  "EFSH:armglow_3_3": "0xd8b",
+  "STAT:1st_flask_fire": "0xd8c",
+  "STAT:1st_flask_frost": "0xd8d",
+  "STAT:1st_flask_shock": "0xd8e",
+  "STAT:1st_flask_poison": "0xd8f",
+  "STAT:1st_flask_sun": "0xd90",
+  "STAT:1st_flask_blood": "0xd91",
+  "STAT:1st_flask_philosopher": "0xd92",
+  "WEAP:flaskweap_fire": "0xd93",
+  "WEAP:flaskweap_frost": "0xd94",
+  "WEAP:flaskweap_shock": "0xd95",
+  "WEAP:flaskweap_poison": "0xd96",
+  "WEAP:flaskweap_sun": "0xd97",
+  "WEAP:flaskweap_blood": "0xd98",
+  "WEAP:flaskweap_philosopher": "0xd99"
  }
 }

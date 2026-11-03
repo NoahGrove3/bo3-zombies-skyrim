@@ -38,7 +38,8 @@ TEXDIR = OUT / 'Textures' / 'CurseOfAlduin' / 'alchemist'
 TEXREL = 'CurseOfAlduin\\alchemist\\'
 WORK = ROOT / 'build' / 'flasks'
 TOOLS = pathlib.Path('/home/claude/tools')
-SPIN_TPS = 2.0
+HELD = '--held' in sys.argv   # (Noah: "hold it in my left or right hand") the held copies: still, flask_<el>_held.nif
+SPIN_TPS = 0.0001 if HELD else 2.0  # (spinwrap needs a rate: one turn in hours)
 
 # element: liquid colour, liquid pattern, neck wrap, fizz flipbook (its bow), fizz tint, fizz colour scale
 EL = {
@@ -433,7 +434,7 @@ def build(el, tex):
     spun = WORK / 'spun.nif'
     r = subprocess.run([tool('spinwrap'), str(WORK / 'static.nif'), str(spun), 'FlaskSpin', '1', '0', '0', str(SPIN_TPS), '24'], capture_output=True, text=True)
     if r.returncode: print(r.stdout, r.stderr); raise SystemExit('spinwrap failed')
-    nif = MESHDIR / f'flask_{el}.nif'
+    nif = MESHDIR / f'flask_{el}{"_held" if HELD else ""}.nif'
     MESHDIR.mkdir(parents=True, exist_ok=True)
     L = [f'base {spun}', f'out {nif}']
     cards = fx_cards(el, anchors)

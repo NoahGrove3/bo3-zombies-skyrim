@@ -2180,6 +2180,74 @@ namespace bo3z
 #include "Staffs.inl"
 #include "WonderProps.inl"
 
+		// (Noah: "an underhand throwing animation") a flask thrown: the arm that holds it swung back and down, then forward and up
+		// through the release (the flask leaves the hand at the top of the swing), then home - laid over the animation on the
+		// upper arm and forearm of the body you're seen in; the flask in the hand hidden from the release until the next is in it
+		struct ThrowPose { bool on = false, left = false, released = false; float t = 0; std::function<void()> release; };
+		ThrowPose g_throw;
+		constexpr float kThrowLen = 0.62f, kThrowRelease = 0.30f;
+		float ThrowAngle(float t)  // about your right: + forward and up, - back and down (radians)
+		{
+			if (t < 0.18f) return -1.0f * std::sin((t / 0.18f) * 1.5708f);                        // back and down
+			if (t < 0.36f) { const float k = (t - 0.18f) / 0.18f; return -1.0f + 2.2f * (k * k * (3.0f - 2.0f * k)); }  // the swing through
+			const float k = std::min(1.0f, (t - 0.36f) / (kThrowLen - 0.36f));
+			return 1.2f * (1.0f - k * k * (3.0f - 2.0f * k));                                        // and home
+		}
+		void PoseThrow(RE::PlayerCharacter* a_player)
+		{
+			if (!g_throw.on) return;
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			const bool first = cam && cam->IsInFirstPerson();
+			auto* root = a_player->Get3D(first);
+			if (!root) return;
+			const float a = ThrowAngle(g_throw.t);
+			const float pitch = a_player->data.angle.x, yaw = a_player->data.angle.z;
+			const RE::NiPoint3 r{ std::cos(yaw), -std::sin(yaw), 0 };
+			(void)pitch;
+			const char* ua = g_throw.left ? "NPC L UpperArm [LUar]" : "NPC R UpperArm [RUar]";
+			const char* fa = g_throw.left ? "NPC L Forearm [LLar]" : "NPC R Forearm [RLar]";
+			int k = 0;
+			for (const char* name : { ua, fa }) {
+				auto* bone = root->GetObjectByName(name);
+				if (!bone || !bone->parent) continue;
+				const RE::NiMatrix3 D = AxisAngle(r, (k == 0 ? 1.0f : 0.35f) * a * (first ? 0.8f : 1.0f));
+				const RE::NiMatrix3 P = bone->parent->world.rotate;
+				bone->local.rotate = P.Transpose() * D * P * bone->local.rotate;
+				RE::NiUpdateData ud;
+				ud.time = 0.0f;
+				bone->UpdateDownwardPass(ud, 0);
+				++k;
+			}
+			// the flask in that hand: hidden from the release until the throw is over (the next one is in your hand)
+			for (const bool p1 : { false, true }) {
+				auto* rt = a_player->Get3D(p1);
+				if (auto* node = rt ? rt->GetObjectByName(g_throw.left ? "SHIELD" : "WEAPON") : nullptr) node->SetAppCulled(g_throw.released && g_throw.t < kThrowLen);
+			}
+		}
+		void TickThrow(float a_delta)
+		{
+			if (!g_throw.on) return;
+			g_throw.t += a_delta;
+			if (!g_throw.released && g_throw.t >= kThrowRelease) {
+				g_throw.released = true;
+				if (g_throw.release) g_throw.release();
+			}
+			if (g_throw.t >= kThrowLen + 0.05f) {
+				auto* p = RE::PlayerCharacter::GetSingleton();
+				for (const bool p1 : { false, true }) {
+					auto* rt = p ? p->Get3D(p1) : nullptr;
+					if (auto* node = rt ? rt->GetObjectByName(g_throw.left ? "SHIELD" : "WEAPON") : nullptr) node->SetAppCulled(false);
+				}
+				g_throw = {};
+			}
+		}
+		void StartThrow(bool a_left, std::function<void()> a_release)
+		{
+			if (g_throw.on) return;
+			g_throw.on = true, g_throw.left = a_left, g_throw.released = false, g_throw.t = 0, g_throw.release = std::move(a_release);
+		}
+		bool Throwing() { return g_throw.on; }
+
 		struct PoseHook
 		{
 			static void thunk(RE::PlayerCharacter* a_this, float a_delta)
@@ -2187,6 +2255,7 @@ namespace bo3z
 				func(a_this, a_delta);
 				try {
 					PoseArm(a_this);
+					PoseThrow(a_this);
 					Spellcraft::OnPose(a_this);
 					Movement::PoseGlideArms(a_this);
 					Movement::SwingBody(a_this);
@@ -2468,7 +2537,13 @@ namespace bo3z
 			if (g_lobs.size() > 40) return;
 			Lobbed l;
 			l.fx = Spellcraft::Fx{ Spellcraft::LoadPath(a_model) };
-			if (l.fx.obj) l.fx.Attach(Spellcraft::WorldRoot());
+			// (Noah: "its model through the air is also invisible") a lit model hung straight on the scene's root draws nothing:
+			// it flies in the cell you're in, among the cell's own objects
+			RE::NiNode* host = nullptr;
+			if (auto* pl = RE::PlayerCharacter::GetSingleton(); pl && pl->GetParentCell()) {
+				if (auto* ld = pl->GetParentCell()->GetRuntimeData().loadedData) host = ld->cell3D.get();
+			}
+			if (l.fx.obj) l.fx.Attach(host ? host : Spellcraft::WorldRoot());
 			l.p = a_from, l.v = a_vel, l.scale = a_scale, l.land = std::move(a_land);
 			g_lobs.push_back(std::move(l));
 		}
@@ -3195,6 +3270,14 @@ namespace bo3z
 				Knife();
 				return true;
 			}
+			// (Noah: the Alchemist's flasks "should feel like a weapon") a flask held in a hand: that hand's attack throws it
+			if (IsFireButton(a_event) || IsAimButton(a_event)) {
+				const bool left = IsAimButton(a_event);
+				if (Classes::FlaskInHand(left)) {
+					if (down) Classes::FlaskAttack(left);
+					return true;
+				}
+			}
 			if (!GunOut()) {
 				g_trigger = g_adsHeld = g_dualHeld = false;
 				return false;
@@ -3599,6 +3682,7 @@ namespace bo3z
 			TickEBursts(a_delta);
 			TickLobs(a_delta);
 			TickLightOrb(a_delta);
+			TickThrow(a_delta);
 			if (out) {
 				const auto& g = gen::kGuns[gun];
 				if (g_burstLeft > 0 && (g_burstTimer -= a_delta) <= 0) {

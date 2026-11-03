@@ -148,6 +148,22 @@ for e, label, text in FLASKS:
         sub('KSIZ', tsub('alch', 'KSIZ')), sub('KWDA', tsub('alch', 'KWDA')), sub('MODL', z('CurseOfAlduin\\alchemist\\flask_' + e + '.nif')),
         sub('YNAM', tsub('alch', 'YNAM')), sub('ZNAM', tsub('alch', 'ZNAM')), sub('DATA', struct.pack('<f', 0.0)),
         sub('ENIT', bytes(enit)), sub('EFID', struct.pack('<I', fid('MGEF', 'flaskcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+# (Noah: "I want to be able to hold it in my left or right hand with an underhand throwing animation. It should feel like a
+# weapon") each flask a weapon held in either hand (a dagger's record, the still flask its model): its attack throws it
+# underhand (src/Gun.cpp catches the button and the arm's swing; src/Classes.cpp lobs it) - never used up
+for e, label, text in FLASKS:
+    subs = []
+    for name, hx in T['weap_daedricdagger']['subs']:
+        b = bytes.fromhex(hx)
+        if name == 'EDID': b = z('UN_Flask_' + e)
+        elif name == 'FULL': b = z(label)
+        elif name == 'MODL': b = z('CurseOfAlduin\\alchemist\\flask_' + e + '_held.nif')
+        elif name in ('MODT', 'EITM', 'EAMT'): continue
+        elif name == 'DESC': b = z(text + ('' if e == 'philosopher' else FLASK_TIERS) + ' Hold it in either hand: attack to throw it. It never runs out.')
+        elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_flask_' + e))
+        elif name == 'DATA': b = struct.pack('<IfH', 0, 0.5, 0)
+        subs.append(sub(name, b))
+    recs['WEAP'].append(record('WEAP', fid('WEAP', 'flaskweap_' + e), subs))
 # (Noah: the Summoner's new wonder, "Bone-Throne Horn: an undead bone dragon that lands and fights beside you") a hand spell
 # at 100 magicka: src/Classes.cpp calls the dragon up itself (Skyrim's skeletal dragon) and keeps it on the ground
 sp = bytearray(tsub('spel_firebolt', 'SPIT'))

@@ -244,6 +244,7 @@ namespace bo3z::Classes
 				// (Noah: "replace it with the Alchemist class") the knife in the right hand, the Fire Flask in your pack (a hotkey throws it)
 				GiveItem(p, AlchemistKnife(), 1, true);
 				GiveFlask(0);
+				if (auto* em = RE::ActorEquipManager::GetSingleton(); em && FlaskItem(0)) em->EquipObject(p, FlaskItem(0), nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43));  // (the Fire Flask in the left hand)
 				break;
 			case coffer::kSpellsword:
 				// (Noah, the altar rework: "remove shields entirely - a one-hand sword from one of the weapon mods, and a fire
@@ -3155,7 +3156,7 @@ namespace bo3z::Classes
 	namespace
 	{
 		float g_flaskCool = 0, g_philCool = 0;
-		void ThrowFlaskEl(int el)
+		void ThrowFlaskEl(int el, bool a_left)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* cam = RE::PlayerCamera::GetSingleton();
@@ -3166,10 +3167,44 @@ namespace bo3z::Classes
 			dir.Unitize();
 			RE::NiPoint3 right{ dir.y, -dir.x, 0.0f };
 			if (const float l = right.Length(); l > 1e-3f) right = right * (1.0f / l);
-			const RE::NiPoint3 from = w.translate + dir * 45.0f + right * 18.0f + RE::NiPoint3{ 0.0f, 0.0f, -14.0f };
+			RE::NiPoint3 from = w.translate + dir * 45.0f + right * (a_left ? -18.0f : 18.0f) + RE::NiPoint3{ 0.0f, 0.0f, -14.0f };
+			if (auto* root = p->Get3D(cam->IsInFirstPerson())) {  // (out of the hand that threw it)
+				if (auto* hand = root->GetObjectByName(a_left ? "NPC L Hand [LHnd]" : "NPC R Hand [RHnd]")) {
+					const RE::NiPoint3 hp = hand->world.translate;
+					if (hp.GetDistance(w.translate) < 150.0f) from = hp + dir * 12.0f;
+				}
+			}
 			const float speed = el == 6 ? 1350.0f : 1500.0f;
 			LaunchFlask(el, t, from, dir * speed + RE::NiPoint3{ 0.0f, 0.0f, 260.0f }, false);  // (a little up: it arcs onto where you aim)
 		}
+		int FlaskHeld(bool a_left)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* o = p ? p->GetEquippedObject(a_left) : nullptr;
+			if (!o) return -1;
+			for (int el = 0; el < 7; ++el) if (o == FlaskItem(el)) return el;
+			return -1;
+		}
+	}
+	bool FlaskInHand(bool a_left)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		return p && p->AsActorState()->IsWeaponDrawn() && FlaskHeld(a_left) >= 0;
+	}
+	// (Noah: "hold it in my left or right hand with an underhand throwing animation ... it should feel like a weapon") the
+	// hand's attack: the arm swings it underhand and lets it go at the top of the swing; a breath between throws
+	void FlaskAttack(bool a_left)
+	{
+		const int el = FlaskHeld(a_left);
+		if (el < 0 || Gun::Throwing()) return;
+		if (el == 6 && g_class.load() != coffer::kAlchemist) { Hud::Banner("The Philosopher's Flask answers only to an Alchemist", 2.0f); return; }
+		float& cool = el == 6 ? g_philCool : g_flaskCool;
+		if (cool > 0) {
+			if (el == 6) Hud::Banner(fmt::format("The Philosopher's Flask is still brewing ({:.0f} s)", std::ceil(cool)), 1.5f);
+			return;
+		}
+		cool = el == 6 ? 12.0f : 0.9f * (Kit::ArmourTier(coffer::kAlchemist) >= 1 ? 0.85f : 1.0f) * Perks::FlaskCostMult();
+		Gun::StartThrow(a_left, [el, a_left]() { ThrowFlaskEl(el, a_left); });
 	}
 	// (Noah: "an item that you actually throw") a flask that leaves your pack was used (its hotkey, or Use in the pack): it is
 	// thrown and put back - an Alchemist's flasks never run out, a breath between throws (the Philosopher's Flask twelve seconds)
@@ -3178,22 +3213,16 @@ namespace bo3z::Classes
 		TickGoldClouds(a_delta);
 		g_flaskCool = std::max(0.0f, g_flaskCool - a_delta), g_philCool = std::max(0.0f, g_philCool - a_delta);
 		auto* p = RE::PlayerCharacter::GetSingleton();
-		if (!p || !p->Is3DLoaded() || p->IsDead() || ItemMenusOpen() || RE::UI::GetSingleton()->GameIsPaused()) return;
+		if (!p || !p->Is3DLoaded() || p->IsDead() || ItemMenusOpen()) return;
 		static float look = 0;
 		if ((look -= a_delta) > 0) return;
-		look = 0.05f;
-		for (int el = 0; el < 7; ++el) {
+		look = 1.0f;
+		for (int el = 0; el < 7; ++el) {  // an Alchemist's flasks never leave you (dropped or sold: back in the pack)
 			auto* it = FlaskItem(el);
-			const bool owned = el == 6 ? (WonderState(coffer::kAlchemist) >= 4 && g_class.load() == coffer::kAlchemist) : Kit::FlaskTier(el) >= 0;
-			if (!it || !owned || p->GetItemCount(it) > 0) continue;
-			p->AddObjectToContainer(it, nullptr, 1, nullptr);
-			float& cool = el == 6 ? g_philCool : g_flaskCool;
-			if (cool > 0) {
-				if (el == 6) Hud::Banner(fmt::format("The Philosopher's Flask is still brewing ({:.0f} s)", std::ceil(cool)), 1.5f);
-				continue;
-			}
-			cool = el == 6 ? 12.0f : 0.9f * (Kit::ArmourTier(coffer::kAlchemist) >= 1 ? 0.85f : 1.0f) * Perks::FlaskCostMult();
-			ThrowFlaskEl(el);
+			const bool owned = el == 6 ? WonderState(coffer::kAlchemist) >= 4 : Kit::FlaskTier(el) >= 0;
+			if (it && owned && p->GetItemCount(it) <= 0) p->AddObjectToContainer(it, nullptr, 1, nullptr);
+			// (the flasks were potions for a build: those taken back)
+			if (auto* old = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESBoundObject>(gen::kFlaskPotion[el], gen::kPlugin); old && p->GetItemCount(old) > 0) p->RemoveItem(old, p->GetItemCount(old), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 		}
 	}
 	RE::TESObjectWEAP* Riftblade()

@@ -423,6 +423,8 @@ namespace bo3z
 		RE::TESObjectWEAP* Riftblade();
 		RE::TESBoundObject* FlaskItem(int a_el);  // the Alchemist's flasks, items in the pack (0 fire 1 frost 2 shock 3 acid 4 holy water 5 bloodbloom 6 the Philosopher's Flask)
 		void               GiveFlask(int a_el);   // put in your pack
+		bool               FlaskInHand(bool a_left);  // a flask held, drawn, in that hand
+		void               FlaskAttack(bool a_left);  // its throw
 		RE::TESObjectWEAP* AlchemistKnife();
 		std::string        ArmourSetName(int a_cls, int a_tier);   // (the class armour sets) its name at that tier
 		bool               ArmourCarried(int a_cls, int a_tier);   // a piece of it in your pack
@@ -773,7 +775,9 @@ namespace bo3z
 		void                  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);
 		void                  ElemBurst(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);  // an element's impact burst (0 fire 1 frost 2 shock 3 wind 4 sun 5 blood 6 void), here a moment  // the Horn's dragon's violet flame, here a moment  // the night's dead round a point lose a share of a whole zombie's health
 		void                  Puddle(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_life);  // a pool of an element on the ground (0 fire 1 frost 2 shock 3 acid 4 sun 5 blood)
-		void                  SetLightOrb(bool a_on);  // the Light Orb over your head, lit or put away
+		void                  SetLightOrb(bool a_on);
+		void                  StartThrow(bool a_left, std::function<void()> a_release);  // the underhand throw on that arm; a_release at the top of the swing
+		bool                  Throwing();  // the Light Orb over your head, lit or put away
 		void                  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land);  // a thrown thing flown on its arc; a_land where it comes down
 		void                  BlackHole(const RE::NiPoint3& a_at, bool a_legendary);  // the Subsuming Vortex: a purple singularity pulls the dead in, then bursts
 		void                  DevCast(const std::string& a_mode);  // dev: 'cast tap|full|ult|orb|hand' with a spell in hand
