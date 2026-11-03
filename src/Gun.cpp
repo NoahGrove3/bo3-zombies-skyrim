@@ -2241,12 +2241,12 @@ namespace bo3z
 				g_throw = {};
 			}
 		}
-		void StartThrow(bool a_left, std::function<void()> a_release)
+		void StartThrowImpl(bool a_left, std::function<void()> a_release)
 		{
 			if (g_throw.on) return;
 			g_throw.on = true, g_throw.left = a_left, g_throw.released = false, g_throw.t = 0, g_throw.release = std::move(a_release);
 		}
-		bool Throwing() { return g_throw.on; }
+		bool ThrowingImpl() { return g_throw.on; }
 
 		struct PoseHook
 		{
@@ -2489,6 +2489,8 @@ namespace bo3z
 			}
 		}
 		void  SetLightOrb(bool a_on) { g_orb.want = a_on; }
+		void  StartThrow(bool a_left, std::function<void()> a_release) { StartThrowImpl(a_left, std::move(a_release)); }
+		bool  Throwing() { return ThrowingImpl(); }
 		// (Noah: the Alchemist's flasks "explode right in front of my face - there's no travel, it doesn't arc") a thrown
 		// flask is flown here: its model hung in the scene, carried along its arc under gravity, tumbling; it comes down on
 		// the first body or wall or ground its path crosses, and its burst is called there
