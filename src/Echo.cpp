@@ -385,10 +385,10 @@ namespace bo3z
 		struct Floater { RE::NiPoint3 at; float yaw; };
 		const std::array<Floater, 5>& FloatSpots()
 		{
-			// the four benches (the wonders in class order), each a little out from its wall; Alduin's Bane over the fire pit
+			// the four benches (the wonders in class order), each a little out from its wall; Alduin's Bane over the ember bowl past the centre pillar
 			static const std::array<Floater, 5> k{ { { { 440.0f, -1744.0f, kHallFloor + 95.0f }, 270.0f }, { { 440.0f, -584.0f, kHallFloor + 95.0f }, 270.0f },
 				{ { -752.0f, -1744.0f, kHallFloor + 95.0f }, 90.0f }, { { -752.0f, -584.0f, kHallFloor + 95.0f }, 90.0f },
-				{ { -160.0f, -440.0f, kHallFloor + 105.0f }, 180.0f } } };
+				{ { -160.0f, -1880.0f, kHallFloor + 135.0f }, 0.0f } } };  // (over the raised ember bowl ringed with candles - HHLightHolder01 at -160,-1870,-928)
 			return k;
 		}
 		const RE::NiPoint3 kPillarAt{ -155.0f, -1547.0f, kHallFloor };
@@ -447,7 +447,7 @@ namespace bo3z
 				return false;
 			}
 			g_throneAsk = 0;
-			const int ng = std::min(15, NewGamePlus() + 1);
+			const int ng = std::min(15, Cycle() + 1);
 			Write(gen::kEchoGlobWords, ((Read(gen::kEchoGlobWords) & ~kNgMask) | (ng << kNgShift)) & ~(1 << kEchoRow) & ~kFlagEchoTold);
 			Curse::NewGamePlus();
 			Forms::Play(gen::Sound::quest_start);
@@ -490,7 +490,7 @@ namespace bo3z
 			r.push_back({ "BEGIN AGAIN", again ? (g_throneAsk > 0 ? "Press again to begin: every city falls back under the curse, the dead stronger. Your wonders, powers and gear stay yours"
 			                                                      : "New Game+: the nights start over with the dead stronger - you keep your wonders, powers and gear")
 			                               : "Wakes when the Echo of Alduin falls",
-				!again ? "LOCKED" : "CYCLE " + std::to_string(NewGamePlus() + 1), again });
+				!again ? std::string("LOCKED") : "CYCLE " + std::to_string(Cycle() + 1), again });
 			r.push_back({ "LEAVE THE FLAME", "", "", true });
 			return r;
 		}
