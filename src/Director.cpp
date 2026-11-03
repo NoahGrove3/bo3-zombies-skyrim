@@ -3987,6 +3987,8 @@ namespace bo3z
 		// ---- (Noah: "the wait screen in 12-hour time, the circle marking when the Curse wakes, when the dead start and
 		// stop rising, and a Skip the Night button - only at night, after the countdown - that goes through the whole
 		// night and doesn't count") the Curse's own rest screen, in place of Skyrim's wait menu once your nights have begun
+		struct Bed { RE::ObjectRefHandle ref; RE::TESFurniture* base = nullptr; int stage = 0; float t = 0; bool flagOff = false; };
+		Bed g_bed;
 		struct Rest
 		{
 			bool  open = false, waiting = false, armed = false;
@@ -4020,6 +4022,14 @@ namespace bo3z
 			}
 			g_restClosed = std::chrono::steady_clock::now();
 			RestControls(false);
+			// (the bed's bug) a sleep Skyrim began and never finished, with no bed of ours under way: you're set on your feet
+			if (auto* p = RE::PlayerCharacter::GetSingleton(); p && !g_bed.stage) {
+				const auto st = p->AsActorState()->GetSitSleepState();
+				if (st == RE::SIT_SLEEP_STATE::kWantToSleep || st == RE::SIT_SLEEP_STATE::kWaitingForSleepAnim || st == RE::SIT_SLEEP_STATE::kIsSleeping || st == RE::SIT_SLEEP_STATE::kWantToWake) {
+					p->AsActorState()->actorState1.sitSleepState = RE::SIT_SLEEP_STATE::kNormal;
+					logger::warn("rest: a sleep left half-begun ({}) - set on your feet", static_cast<int>(st));
+				}
+			}
 		}
 		void AddHours(float a_hours)
 		{
@@ -4203,6 +4213,85 @@ namespace bo3z
 			if (doSkip) {
 				CloseRest();
 				Tasks::Add([] { SkipNightNow(); });
+			}
+			return true;
+		}
+		// ---- (Noah: "My character got stuck after waiting at the bed ... I also want the sleep animation to be in the game where my
+		// player goes into the bed and comes out of the bed") a bed's Activate is ours: Skyrim's own sleep is never begun (its menu,
+		// closed under it for the rest screen, left you half asleep on your feet). You lie down in the bed - the bed's own
+		// furniture, used as a seat for a moment so Skyrim plays its lying-down animation instead of its sleep menu - the rest
+		// screen opens while you lie there, and when it closes you get up ----
+		using SSS = RE::SIT_SLEEP_STATE;
+		SSS SitState(RE::PlayerCharacter* a_p) { return a_p->AsActorState()->GetSitSleepState(); }
+		void BedFlag(bool a_restore)
+		{
+			if (!g_bed.base) return;
+			if (a_restore && g_bed.flagOff) g_bed.base->furnFlags.set(RE::TESFurniture::ActiveMarker::kCanSleep), g_bed.flagOff = false;
+			else if (!a_restore && g_bed.base->furnFlags.all(RE::TESFurniture::ActiveMarker::kCanSleep)) g_bed.base->furnFlags.reset(RE::TESFurniture::ActiveMarker::kCanSleep), g_bed.flagOff = true;
+		}
+		RE::TESObjectREFR* BedInSights()
+		{
+			auto* pick = RE::CrosshairPickData::GetSingleton();
+			auto  ref = pick ? pick->GetActiveTarget().get() : RE::NiPointer<RE::TESObjectREFR>{};
+			auto* f = ref && ref->GetBaseObject() ? ref->GetBaseObject()->As<RE::TESFurniture>() : nullptr;
+			return f && f->furnFlags.all(RE::TESFurniture::ActiveMarker::kCanSleep) ? ref.get() : nullptr;
+		}
+		void GoToBed(RE::ObjectRefHandle a_bed)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto  bed = a_bed.get();
+			if (!p || !bed || g_bed.stage || RestOpen()) return;
+			if (g_phase != Phase::Day || IsNight() || p->IsInCombat()) {  // (at night: the rest screen alone - Skip the Night - no lying down)
+				OpenRest();
+				return;
+			}
+			g_bed = {};
+			g_bed.ref = a_bed, g_bed.base = bed->GetBaseObject()->As<RE::TESFurniture>(), g_bed.stage = 1;
+			BedFlag(false);
+			bed->ActivateRef(p, 0, nullptr, 1, false);  // (as a seat: you walk to it and lie down)
+			logger::info("rest: lying down in {}", bed->GetDisplayFullName());
+		}
+		void TickBed(float a_dt)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!g_bed.stage || !p) return;
+			g_bed.t += a_dt;
+			const auto st = SitState(p);
+			if (g_bed.stage == 1) {  // lying down: the rest screen once you're in (or after a few seconds whatever happened)
+				if (st == SSS::kIsSitting || st == SSS::kIsSleeping || g_bed.t > 4.5f) {
+					BedFlag(true);
+					logger::info("rest: {} in bed (state {})", st == SSS::kIsSitting || st == SSS::kIsSleeping ? "lying" : "not", static_cast<int>(st));
+					OpenRest();
+					g_bed.stage = 2, g_bed.t = 0;
+				}
+				return;
+			}
+			if (g_bed.stage == 2) {  // resting: when the screen closes, up you get
+				if (RestOpen()) return;
+				if (st != SSS::kNormal) p->AsActorState()->actorState1.sitSleepState = SSS::kWantToStand;
+				g_bed.stage = 3, g_bed.t = 0;
+				return;
+			}
+			if (st == SSS::kNormal || g_bed.t > 5.0f) {  // up (or, should anything hold you, set on your feet)
+				if (st != SSS::kNormal) {
+					p->AsActorState()->actorState1.sitSleepState = SSS::kNormal;
+					logger::warn("rest: stood up by force (state {})", static_cast<int>(st));
+				}
+				BedFlag(true);
+				g_bed = {};
+			}
+		}
+		bool BedEats(RE::InputEvent* a_event)
+		{
+			auto* b = a_event ? a_event->AsButtonEvent() : nullptr;
+			auto* ue = RE::UserEvents::GetSingleton();
+			if (!b || !ue || b->QUserEvent() != ue->activate || !Save::Flag(Save::kFlagStarted) || Coop::Client()) return false;
+			if (g_bed.stage) return true;  // (lying down or getting up: Activate does nothing more)
+			auto* bed = BedInSights();
+			if (!bed) return false;
+			if (b->IsDown()) {
+				auto h = bed->CreateRefHandle();
+				Tasks::Add([h] { GoToBed(h); });
 			}
 			return true;
 		}
@@ -5297,6 +5386,7 @@ namespace bo3z
 				}
 			}
 			TickRest();
+			TickBed(std::clamp(RE::GetSecondsSinceLastFrame(), 0.0f, 0.1f));
 			Audio::NightMusic(g_phase != Phase::Day && !Scouting());  // (the night's song, from the countdown to dawn)
 			// a rest that runs into dusk ends there (the countdown has begun)
 			if (auto* ui = RE::UI::GetSingleton(); ui && g_phase != Phase::Day && ui->IsMenuOpen(RE::SleepWaitMenu::MENU_NAME)) {

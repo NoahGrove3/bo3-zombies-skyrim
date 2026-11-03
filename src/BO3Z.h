@@ -203,6 +203,7 @@ namespace bo3z
 		bool             RestOpen();
 		bool             WaitKey(RE::InputEvent* a_event);  // the Wait key: the rest screen (true: taken)
 		bool             RestEats(RE::InputEvent* a_event);
+		bool             BedEats(RE::InputEvent* a_event);  // Activate on a bed: ours (you lie down in it, the rest screen, you get up)
 		bool             RestButton(const RE::ButtonEvent* a_b);  // its keys (true: taken)
 		RestView         RestNow();
 		void             QueueZombieHit(RE::Actor* a_zombie, float a_seconds);  // its blow lands when its swing does
