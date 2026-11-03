@@ -61,8 +61,6 @@ namespace bo3z
 			if (!Live(gen::kPerk_dawnwatch)) return 1.0f;
 			return 1.0f - gen::kPerks[gen::kPerk_dawnwatch].value;
 		}
-			return flask ? 1.0f - gen::kPerks[gen::kPerk_dawnwatch].value : 1.0f;
-		}
 		bool SummonMight() { return Live(gen::kPerk_bonebinder); }
 		// a kill: what your class's perks make of it (how: 0 your summon, 1 a Destruction spell, 2 bow or crossbow, 3 melee)
 		void OnClassKill(int a_how, RE::Actor* a_dying)
