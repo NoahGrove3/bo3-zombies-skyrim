@@ -56,6 +56,8 @@ def echo_ids(S):
     # the wonders' charged looks and Alduin's Fang's tornado (Elemental Mastery Magic's models, placed and moved by code)
     ids += [('ACTI', 'emm_' + k) for k in ('summon', 'crystal', 'orb', 'storm', 'tornado')]
     ids += [('ACTI', 'tornado_' + k) for k in ('frost', 'shock', 'wind', 'sun', 'blood')]   # the bows' third tier
+    # (Noah: the wonders and Alduin's Bane floating in High Hrothgar's great hall, a fiery pillar for the Hall's rewards)
+    ids += [('ACTI', 'hf_' + k) for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane', 'glow', 'glowtall', 'pillar')]
     return ids
 def blasts():
     """Spell blasts: no-damage copies of Skyrim's explosions (tools/templates/expl/<name>.json)."""

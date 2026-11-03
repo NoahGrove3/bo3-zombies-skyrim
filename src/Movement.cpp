@@ -2792,6 +2792,22 @@ namespace bo3z
 
 		void PoseGlideArms(RE::PlayerCharacter* a_player)
 		{
+			// (Noah: "the dragon glider should hide the weapons in hand while gliding") what's in your hands is put out of sight
+			// while the dragon carries you, back the moment it lets go
+			{
+				static bool hid = false;
+				const bool want = g_hadDragon;
+				if (want || hid) {
+					for (const bool first : { false, true }) {
+						auto* root = a_player ? a_player->Get3D(first) : nullptr;
+						if (!root) continue;
+						for (const char* n : { "WEAPON", "SHIELD", "NPC R MagicNode [RMag]", "NPC L MagicNode [LMag]" }) {
+							if (auto* node = root->GetObjectByName(n)) node->SetAppCulled(want);
+						}
+					}
+					hid = want;
+				}
+			}
 			// (Noah: no gliding before it has you - the whole body, not just the arms, keeps its fall until the talons close)
 			constexpr int                kN = 15;
 			static constexpr const char* kBones[kN] = { "NPC Pelvis [Pelv]", "NPC L Clavicle [LClv]", "NPC R Clavicle [RClv]", "NPC L UpperArm [LUar]",

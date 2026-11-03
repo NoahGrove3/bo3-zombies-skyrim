@@ -1441,6 +1441,14 @@
   "SNDR:alch_shatter": "0xd9d",
   "STAT:rel_portal": "0xd9e",
   "ACTI:rel_portal": "0xd9f",
-  "SNDR:alch_uncork": "0xda0"
+  "SNDR:alch_uncork": "0xda0",
+  "ACTI:hf_gravecaller": "0xda1",
+  "ACTI:hf_frostbinder": "0xda2",
+  "ACTI:hf_wolfcrown": "0xda3",
+  "ACTI:hf_barrowhorn": "0xda4",
+  "ACTI:hf_bane": "0xda5",
+  "ACTI:hf_glow": "0xda6",
+  "ACTI:hf_glowtall": "0xda7",
+  "ACTI:hf_pillar": "0xda8"
  }
 }

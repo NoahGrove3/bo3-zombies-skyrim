@@ -1135,6 +1135,60 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 
+			// (Noah: the wonders and Alduin's Bane float in High Hrothgar's hall - "press X on PS5, A on Xbox, or left click") the
+			// thing in your sights and what taking it does
+			if (!s.hallAim.empty() && !s.hallMenu && !s.perkMenu) {
+				const float ty = size.y * 0.5f + 40 * k;
+				if (g_padLast) {
+					const float w = Measure(g_title, 20 * k, s.hallAim).x;
+					PadGlyph(dl, { size.x * 0.5f - w * 0.5f - 6 * k, ty + 12 * k }, 12 * k, "A");
+					TxtC(dl, g_title, 20 * k, size.x * 0.5f + 12 * k, ty, kParch, s.hallAim, 2 * k, IM_COL32(255, 170, 60, 255));
+				} else {
+					TxtC(dl, g_title, 20 * k, size.x * 0.5f, ty, kParch, "E / Click   " + s.hallAim, 2 * k, IM_COL32(255, 170, 60, 255));
+				}
+			}
+			// the fiery pillar's menu: the Hall of the Awakened's rewards, each row its state; the Echo Altar's look
+			if (s.hallMenu && !s.hallRows.empty()) {
+				const float w = 470 * k, rowH = 70 * k;
+				const float h = 96 * k + rowH * s.hallRows.size() + 20 * k;
+				const ImVec2 a{ size.x * 0.5f - w * 0.5f, std::max(24 * k, size.y * 0.5f - h * 0.5f - 10 * k) }, b{ a.x + w, a.y + h };
+				{
+					const float  pad = 150 * k;
+					const ImVec2 A{ a.x - pad, a.y }, B{ b.x + pad, b.y };
+					const float  x1 = a.x + 30 * k, x2 = b.x - 30 * k;
+					const ImU32  clear = IM_COL32(6, 6, 7, 0), dark = IM_COL32(6, 6, 7, 158);
+					dl->AddRectFilledMultiColor(A, { x1, B.y }, clear, dark, dark, clear);
+					dl->AddRectFilled({ x1, A.y }, { x2, B.y }, dark);
+					dl->AddRectFilledMultiColor({ x2, A.y }, B, dark, clear, clear, dark);
+					for (const float hy : { a.y, b.y }) {
+						const float hw = (B.x - A.x) * 0.5f, hx = (A.x + B.x) * 0.5f;
+						dl->AddRectFilledMultiColor({ hx - hw, hy - 0.6f * k }, { hx, hy + 0.6f * k }, IM_COL32(196, 170, 112, 0), IM_COL32(196, 170, 112, 170), IM_COL32(196, 170, 112, 170), IM_COL32(196, 170, 112, 0));
+						dl->AddRectFilledMultiColor({ hx, hy - 0.6f * k }, { hx + hw, hy + 0.6f * k }, IM_COL32(196, 170, 112, 170), IM_COL32(196, 170, 112, 0), IM_COL32(196, 170, 112, 0), IM_COL32(196, 170, 112, 170));
+					}
+				}
+				const float cx = (a.x + b.x) * 0.5f, L = a.x + 20 * k, Rr = b.x - 20 * k;
+				TxtC(dl, g_title, 27 * k, cx, a.y + 16 * k, IM_COL32(232, 214, 176, 255), s.hallTitle, 0.0f, 0);
+				Divider(dl, cx, a.y + 54 * k, w * 0.38f, k);
+				float y = a.y + 72 * k;
+				for (int i = 0; i < static_cast<int>(s.hallRows.size()); ++i) {
+					const auto& r = s.hallRows[i];
+					const bool  on = s.hallFocus == i;
+					const bool  leave = i + 1 == static_cast<int>(s.hallRows.size());
+					if (on) {
+						dl->AddRectFilledMultiColor({ L - 8 * k, y - 6 * k }, { Rr + 8 * k, y + (leave ? 34 : 58) * k }, IM_COL32(196, 170, 112, 46), IM_COL32(196, 170, 112, 8), IM_COL32(196, 170, 112, 8), IM_COL32(196, 170, 112, 46));
+						dl->AddLine({ L - 8 * k, y - 6 * k }, { L - 8 * k, y + (leave ? 34 : 58) * k }, kGold, 2.0f * k);
+					}
+					const ImVec2 d{ L + 8 * k, y + 13 * k };
+					dl->AddQuadFilled({ d.x, d.y - 6 * k }, { d.x + 6 * k, d.y }, { d.x, d.y + 6 * k }, { d.x - 6 * k, d.y }, on ? kGold : IM_COL32(120, 104, 80, 200));
+					const ImU32 tc = !r.live ? IM_COL32(140, 130, 116, 220) : on ? kGold : kParch;
+					Txt(dl, g_title, 20 * k, { L + 36 * k, y + 3 * k }, tc, r.title);
+					if (!r.state.empty()) Txt(dl, g_body, 15 * k, { Rr - Measure(g_body, 15 * k, r.state).x, y + 7 * k }, r.live ? kGold : IM_COL32(150, 136, 120, 230), r.state);
+					if (!leave) TxtWrap(dl, g_body, 16 * k, { L + 36 * k, y + 31 * k }, IM_COL32(196, 182, 160, 235), r.desc, Rr - L - 40 * k, 1);
+					y += leave ? 44 * k : rowH;
+					if (i + 2 == static_cast<int>(s.hallRows.size())) Divider(dl, cx, y - 6 * k, w * 0.30f, k, 0.6f), y += 8 * k;
+				}
+			}
+
 			if (s.compassOn && !s.perkMenu && s.bossName.empty()) {  // (a boss's bar takes the top of the screen while it lives)
 				if (!Hud::kEdgeHud) DrawCompass(dl, s, size, k, now);
 			}
@@ -6539,8 +6593,16 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 		// (the UI audit: last write won - a trial's progress, the relic's line, the curse broken were wiped by the next line a
 		// moment later) a message waits its turn behind another (four at most), and a short callout never wipes a message
+		// (Noah: "the in-game pop-ups ... Can you remove all of those pop-ups? ... the notifications should be just the items that
+		// we receive and the objective displayed in the Echo Altar") no banner across the screen any more: the line goes to the
+		// log only; what you're given shows in the HUD's item feed (Forms::Give), what you're after on the compass and at the altar
+		bool g_banners = false;  // (kept for a dev who wants them back)
 		void Banner(std::string a_text, float a_seconds)
 		{
+			if (!g_banners) {
+				logger::info("banner (not shown): {}", a_text);
+				return;
+			}
 			std::scoped_lock l(g_lock);
 			auto&      S = g_state;
 			const bool busy = S.bannerTime > 0.5f;

@@ -96,7 +96,7 @@ namespace bo3z::Classes
 		{
 			auto* obj = a_form ? a_form->As<RE::TESBoundObject>() : nullptr;
 			if (!obj) return;
-			if (a_count > 0) a_p->AddObjectToContainer(obj, nullptr, a_count, nullptr);
+			if (a_count > 0) Forms::Give(a_p, obj, a_count);
 			if (a_equip) {
 				if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(a_p, obj, nullptr, 1, nullptr, false, false, false, true);
 			}
@@ -1878,7 +1878,7 @@ namespace bo3z::Classes
 		Points::Add(3000);
 		Tasks::Later(2.5f, [a_cls] {
 			Hud::Lore("DOVAHKIIN! THE GREYBEARDS CALL",
-				fmt::format("Your path's secret is won. The Greybeards' Voice rolls across Skyrim: the {} waits for you on its pedestal in the Reliquary of the Tongues, through the portal just outside the back of High Hrothgar.", kWonderName[a_cls]),
+				fmt::format("Your path's secret is won. The Greybeards' Voice rolls across Skyrim: the {} waits for you, floating in the great hall of High Hrothgar.", kWonderName[a_cls]),
 				14.0f);
 		});
 		logger::info("classes: wonder {} won - it waits in the Reliquary", kWonderName[a_cls]);
@@ -1960,7 +1960,7 @@ namespace bo3z::Classes
 		const int c = g_class.load();
 		if (c < 0) return {};
 		const int st = g_wStep[c];
-		if (st == kWonderWaiting) return std::string(kWonderName[c]) + " waits in the Reliquary - through the portal behind High Hrothgar";
+		if (st == kWonderWaiting) return std::string(kWonderName[c]) + " waits in High Hrothgar's great hall";
 		if (st > kWonderSteps) return std::string(kWonderName[c]) + " is yours";
 		if (st == 0) return fmt::format("{}: free {} more {} to wake your path's secret", kWonderName[c], std::max(0, kWonderOpensAt - FreedCount()), kWonderOpensAt - FreedCount() == 1 ? "city" : "cities");
 		return std::string(kWonderName[c]) + ": " + Eggs::Line();
@@ -3004,7 +3004,7 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* it = FlaskItem(a_el);
 		if (!p || !it || p->GetItemCount(it) > 0) return;
-		p->AddObjectToContainer(it, nullptr, 1, nullptr);
+		Forms::Give(p, it, 1);
 		logger::info("classes: {} in your pack", it->GetName());
 	}
 	RE::TESObjectWEAP* AlchemistKnife()
@@ -3206,9 +3206,9 @@ namespace bo3z::Classes
 	{
 		const int el = FlaskHeld(a_left);
 		if (el < 0) return false;
-		const float cool = el == 6 ? g_philCool : g_flaskCool;
-		const auto since = std::chrono::duration<float>(std::chrono::steady_clock::now() - g_throwAt).count();
-		return cool > 0.0f && since > 0.15f;  // (the throw just started lets its own swing through)
+		// (Noah: "my character is still making swing grunt sounds when throwing") Skyrim's own swing never plays with a flask in
+		// hand - its grunt came with it, whatever voice you had; the throw is all ours (the arm posed by hand, Gun's PoseThrow)
+		return true;
 	}
 	bool FlaskInHand(bool a_left)
 	{
@@ -3250,6 +3250,29 @@ namespace bo3z::Classes
 			static auto* mute = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSVoiceType>(gen::kSilentVoice, gen::kPlugin);
 			if (flask && !quiet && mute) saved = base->voiceType, base->voiceType = mute, quiet = true;
 			else if (!flask && quiet) base->voiceType = saved, quiet = false;
+		}
+		// (Noah: "when putting my flask away, the potion sitting on my waist is upside down") a flask hangs from its neck in the
+		// hand (tools/flasks.py: the bottle down its -Y), and Skyrim's dagger sheath turns -Y up: on the hip it is turned over,
+		// the cork up and the bottle down
+		for (const bool left : { false, true }) {
+			if (FlaskHeld(left) < 0) continue;
+			for (const bool first : { false, true }) {
+				auto* root = p->Get3D(first);
+				auto* sheath = root ? root->GetObjectByName(left ? "WeaponDaggerLeft" : "WeaponDagger") : nullptr;
+				auto* node = sheath ? sheath->AsNode() : nullptr;
+				if (!node) continue;
+				for (auto& kid : node->GetChildren()) {
+					if (!kid) continue;
+					RE::NiMatrix3 flip;
+					flip.entry[0][0] = -1.0f, flip.entry[1][1] = -1.0f, flip.entry[2][2] = 1.0f;  // (half a turn about its Z)
+					flip.entry[0][1] = flip.entry[0][2] = flip.entry[1][0] = flip.entry[1][2] = flip.entry[2][0] = flip.entry[2][1] = 0.0f;
+					if (kid->local.rotate.entry[0][0] > -0.99f || kid->local.rotate.entry[1][1] > -0.99f) {
+						kid->local.rotate = flip;
+						RE::NiUpdateData ud;
+						kid->Update(ud);
+					}
+				}
+			}
 		}
 		static float look = 0;
 		if ((look -= a_delta) > 0) return;

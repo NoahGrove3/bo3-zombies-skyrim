@@ -263,6 +263,28 @@ namespace bo3z
 			return cache[a_spell];
 		}
 
+		// (Noah: "new loot ... should be viewed as if I were picking up other weapons or items on the bottom right of my screen")
+		// a thing given is picked up the way one off the ground is: set down at your feet and taken at once, so every item
+		// feed sees it come in; anything that can't be set down goes straight into the pack
+		void Give(RE::Actor* a_to, RE::TESBoundObject* a_obj, int a_count)
+		{
+			if (!a_to || !a_obj || a_count <= 0) return;
+			const auto t = a_obj->GetFormType();
+			const bool settable = t == RE::FormType::Weapon || t == RE::FormType::Armor || t == RE::FormType::Misc || t == RE::FormType::Book ||
+			                      t == RE::FormType::AlchemyItem || t == RE::FormType::Ammo || t == RE::FormType::Ingredient || t == RE::FormType::SoulGem;
+			if (auto* pc = a_to->As<RE::PlayerCharacter>(); pc && settable) {
+				for (int n = 0; n < a_count; ++n) {
+					auto ref = pc->PlaceObjectAtMe(a_obj, false);
+					if (!ref) {
+						pc->AddObjectToContainer(a_obj, nullptr, a_count - n, nullptr);
+						return;
+					}
+					pc->PickUpObject(ref.get(), 1, false, true);
+				}
+				return;
+			}
+			a_to->AddObjectToContainer(a_obj, nullptr, a_count, nullptr);
+		}
 		RE::TESBoundObject* Ours(std::uint32_t a_localId)
 		{
 			static std::unordered_map<std::uint32_t, RE::TESBoundObject*> cache;

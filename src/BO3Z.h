@@ -27,6 +27,7 @@ namespace bo3z
 		RE::TESObjectACTI*   Object(int a_object);
 		int                  ObjectIndexOf(const RE::TESForm* a_base); // -1
 		RE::TESBoundObject*  Ours(std::uint32_t a_localId);              // any record in our plugin
+		void                 Give(RE::Actor* a_to, RE::TESBoundObject* a_obj, int a_count);  // into the pack as a pickup is (the HUD's item feed shows it)
 		RE::SpellItem*       GunSpell(int a_gun);                        // tomes/grimoires: the spell held in the hand
 		RE::MagicItem*       Spell(int a_spell);                         // sheet: spells (a WEAP row = its enchantment)
 		void                 Play(gen::Sound a_sound);
@@ -709,6 +710,8 @@ namespace bo3z
 		void Reset();
 		void OnUndeadDeath(RE::Actor* a_actor);                // a kill near a barrow that wants the dead
 		bool OnActivate(RE::TESObjectREFR* a_ref);             // the Reliquary's doors and pedestals (true: handled)
+		bool OnButton(const RE::ButtonEvent* a_b);             // High Hrothgar's hall: taking a floating wonder / the Bane, the pillar's menu (true: handled)
+		bool Eats(RE::InputEvent* a_event);                    // those keys kept from Skyrim (no swing, no Activate prompt of its own)
 		bool StoneWaits(int a_town);                           // a freed city whose Echo Stone still holds its page
 		bool Target(RE::PlayerCharacter* a_player, RE::NiPoint3& a_at, std::string& a_label);  // where the story wants you
 		bool Strip(std::string& a_title, std::string& a_goal, float& a_frac);                  // a hunt under way (under the compass)
@@ -1141,6 +1144,13 @@ namespace bo3z
 			struct LootItem { std::string name; int count, value; float weight; int kind; };  // kind: 0 misc, 1 gold, 2 weapon, 3 armor, 4 potion, 5 ingredient, 6 book, 7 scroll, 8 ammo, 9 soul gem, 10 key
 			bool        lootOn{ false };
 			bool        ownAim{ false };   // something of ours under the crosshair: Skyrim's own prompt hidden
+			// (Noah: High Hrothgar's hall - the wonders and Alduin's Bane floating to be taken up, the fiery pillar's menu)
+			std::string hallAim;            // the floating thing in your sights: what Activate / left click does ("" none)
+			struct HallRow { std::string title, desc, state; bool live; };
+			bool        hallMenu{ false };
+			std::string hallTitle;
+			std::vector<HallRow> hallRows;  // the last is Leave
+			int         hallFocus{ 0 };
 			std::string lootTitle, lootNote;
 			std::vector<LootItem> loot;
 			int         lootSel{ 0 };

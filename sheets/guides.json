@@ -47,7 +47,7 @@
      "title": "Your Trial and Wonder",
      "paras": [
       "<b>Pact of the Host</b> (your city trial): let your summons make the kills - 20 on Novice up to 60 on Legendary.",
-      "<b>The Bone-Throne Horn</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder waits on its pedestal in the Reliquary beneath High Hrothgar. Blow it and a dragon of bare bone claws its way up beside you: it stays on the ground at your side and breathes green grave-fire on the dead - the strongest of any summon. A minute at a time, an hour once the three dragons fall."
+      "<b>The Bone-Throne Horn</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder floats waiting in High Hrothgar's great hall. Blow it and a dragon of bare bone claws its way up beside you: it stays on the ground at your side and breathes green grave-fire on the dead - the strongest of any summon. A minute at a time, an hour once the three dragons fall."
      ]
     }
    ]
@@ -90,7 +90,7 @@
      "title": "Your Trial and Wonder",
      "paras": [
       "<b>Trial of the Elements</b> (your city trial): kill with two or more elements - 20 on Novice up to 60 on Legendary.",
-      "<b>The Staff of Magnus</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder waits on its pedestal in the Reliquary beneath High Hrothgar. Hold its beam on the dead to drain them and feed your magicka; where the beam lets go it erupts. Hold it two seconds or more and the eruption leaves an orb of searing light pulsing on everything round it. Hotter still once the three dragons fall."
+      "<b>The Staff of Magnus</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder floats waiting in High Hrothgar's great hall. Hold its beam on the dead to drain them and feed your magicka; where the beam lets go it erupts. Hold it two seconds or more and the eruption leaves an orb of searing light pulsing on everything round it. Hotter still once the three dragons fall."
      ]
     }
    ]
@@ -135,7 +135,7 @@
      "title": "Your Trial and Wonder",
      "paras": [
       "<b>Trial of the Crucible</b> (your city trial): kills with your flasks - 10 on Novice up to 30 on Legendary.",
-      "<b>The Philosopher's Flask</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder waits on its pedestal in the Reliquary beneath High Hrothgar. Where it shatters a cloud of molten gold hangs: the dead inside are gilded and torn apart, and each one that dies in it drops extra Cursed Essence."
+      "<b>The Philosopher's Flask</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder floats waiting in High Hrothgar's great hall. Where it shatters a cloud of molten gold hangs: the dead inside are gilded and torn apart, and each one that dies in it drops extra Cursed Essence."
      ]
     }
    ]
@@ -178,7 +178,7 @@
      "title": "Your Trial and Wonder",
      "paras": [
       "<b>Trial of Steel</b> (your city trial): melee kills with a spell in your other hand - 10 on Novice up to 30 on Legendary.",
-      "<b>Dragon Slayer</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder waits on its pedestal in the Reliquary beneath High Hrothgar. It stands two tiers above your blade, and every hit carries the last Spellsword spell you held; once the three dragons fall it grows stronger again, and power attacks loose that spell on the dead round you."
+      "<b>Dragon Slayer</b> (your wonder): it can't be rolled or bought. Once six cities are freed, your path's <b>secret</b> wakes - a long hidden quest played from altar to altar, never twice in a row in the same city. Listen to the freed altars' whispers. When it is won the Greybeards call: the wonder floats waiting in High Hrothgar's great hall. It stands two tiers above your blade, and every hit carries the last Spellsword spell you held; once the three dragons fall it grows stronger again, and power attacks loose that spell on the dead round you."
      ]
     }
    ]
@@ -210,9 +210,9 @@
   {
    "title": "The Road to the Echo",
    "paras": [
-    "<b>The Reliquary</b>: once six cities are free, your path's <b>secret</b> wakes. Win it and the Greybeards call you - your <b>wonder</b> waits on its pedestal in the Reliquary, through the portal just outside the back of High Hrothgar. A wonder answers only to its own path.",
+    "<b>High Hrothgar's hall</b>: once six cities are free, your path's <b>secret</b> wakes. Win it and the Greybeards call you - your <b>wonder</b> floats waiting in High Hrothgar's great hall. Look at it and press Activate or left click to take it up. A wonder answers only to its own path.",
     "<b>The three dragons</b>: with all four paths' wonders won (change class to win each, or pool them with your party), Alduin's three words wake as dragons - <b>SLEN</b> at the cult's shrine in the Reach, <b>TIID</b> at Labyrinthian, <b>VO</b> on Mount Anthor. Go at night: the dead come first, then the dragon. Each one slain gives a lasting power, and with all three dead your wonders take their <b>Legendary</b> form.",
-    "<b>The Echo of Alduin</b>: last of all, once the three dragons are dead and every Echo Altar is awake, on the summit of the Throat of the World. Slay it and the curse is broken - the nights are only nights again, and the Reliquary becomes the <b>Hall of the Awakened</b>: Alduin's Bane, the First Dragonborn's Regalia, the Bone-Wyrm's Skull, the Brazier of the Endless Night and the Seat of the Awakened."
+    "<b>The Echo of Alduin</b>: last of all, once the three dragons are dead and every Echo Altar is awake, on the summit of the Throat of the World. Slay it and the curse is broken - the nights are only nights again, and High Hrothgar becomes the <b>Hall of the Awakened</b>: Alduin's Bane floats over the fire at the hall's end, and the <b>Endless Flame</b> burning on the centre pillar holds the rest - the First Dragonborn's Regalia, Alduin's Bones for your dragon, the Endless Night and Begin Again (New Game+)."
    ]
   },
   {

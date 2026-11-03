@@ -1,8 +1,7 @@
 // The story after the altars (sheet: echo).
 //
 // Act II - the Reliquary: once six cities are free each path's secret wakes (src/Eggs.cpp). Win it and the Greybeards
-// call: the path's wonder waits on its pedestal in the Reliquary of the Tongues, a hall under High Hrothgar reached
-// through a portal just outside its back (walk in; the room's door brings you back out to it). A wonder answers only
+// call: the path's wonder floats waiting in High Hrothgar's great hall, in front of a dragon relief over a bench (TickHall). A wonder answers only
 // to its own path.
 // Act III - the three dragons: with all four wonders won (yours, or pooled with your party), Alduin's three words wake
 // as dragons at their places - each comes at night after a siege of the dead, and each slain gives a lasting power.
@@ -22,6 +21,7 @@ namespace bo3z
 		constexpr RE::FormID kHighHrothgar = 0x00087764;   // Skyrim.esm: the HighHrothgar interior
 		constexpr RE::FormID kTamriel = 0x0000003C;
 		constexpr RE::FormID kXMarker = 0x0000003B;
+		const RE::NiPoint3   kHHFront{ 53664.0f, -36000.0f, 23581.0f };  // High Hrothgar's front doors, outside (Tamriel)
 		constexpr int        kWonders = static_cast<int>(gen::kEchoWonders.size());  // the Reliquary's four pedestals, in class order
 		constexpr int        kTownCount = static_cast<int>(gen::kTowns.size());
 
@@ -355,61 +355,18 @@ namespace bo3z
 			});
 			return out;
 		}
-		void TickPortal(RE::PlayerCharacter* a_p, float a_dt)
+		// (Noah: "forget the portal idea") any portal left standing behind High Hrothgar from an earlier build is taken away
+		void TickPortal(RE::PlayerCharacter* a_p, float)
 		{
-			g_portalCd = std::max(0.0f, g_portalCd - a_dt);
-			const RE::NiPoint3 at = P(gen::kRelPortal);
-			const float        yaw = Rad(gen::kRelPortal.yaw);
-			const RE::NiPoint3 front{ std::sin(yaw), std::cos(yaw), 0.0f };
-			if (g_toRoom && a_p->GetParentCell() == HH()) {
-				g_toRoom = false;
-				BuildReliquary(a_p);
-				Go(a_p, g_arrive);
-				Hud::Banner(Flag(kFlagHallOpen) ? "THE HALL OF THE AWAKENED" : "THE RELIQUARY OF THE TONGUES", 3.5f);
-				return;
+			static bool cleared = false;
+			if (cleared || a_p->GetWorldspace() != Tamriel() || a_p->GetPosition().GetDistance(P(gen::kRelPortal)) > 6000.0f) return;
+			cleared = true;
+			if (auto* st = Forms::Ours(gen::kRelPortalActi)) {
+				RE::TES::GetSingleton()->ForEachReferenceInRange(a_p, 9500.0f, [&](RE::TESObjectREFR* x) {
+					if (x && x->GetBaseObject() == st && !x->IsDeleted()) x->Disable(), x->SetDelete(true);
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
 			}
-			if (a_p->GetWorldspace() != Tamriel()) return;
-			if (g_toPortal) {
-				g_toPortal = false;
-				a_p->SetPosition(at + front * 190.0f + RE::NiPoint3{ 0, 0, 10.0f }, true);
-				a_p->SetAngle({ 0, 0, yaw + 3.14159f });
-				g_portalCd = 3.0f;
-				return;
-			}
-			if (a_p->GetPosition().GetDistance(at) > 9000.0f) return;
-			if (auto r = g_portal.get(); !r || r->IsDeleted() || r->IsDisabled() || !r->GetParentCell()) {
-				if (auto* st = Forms::Ours(gen::kRelPortalActi)) {
-					// (one from an earlier session, saved where it stood: that one, not another)
-					RE::TESObjectREFR* found = nullptr;
-					RE::TES::GetSingleton()->ForEachReferenceInRange(a_p, 9500.0f, [&](RE::TESObjectREFR* x) {
-						if (x && x->GetBaseObject() == st && !x->IsDeleted()) {
-							if (!found && x->GetPosition().GetDistance(at) < 80.0f) found = x;
-							else if (x != found) x->Disable(), x->SetDelete(true);
-						}
-						return RE::BSContainer::ForEachResult::kContinue;
-					});
-					if (found) { if (found->IsDisabled()) found->Enable(false); g_portal = found->CreateRefHandle(); }
-					else if (auto h = Gun::PlaceAt(st, at, yaw); h) {
-						g_portal = h;
-						logger::info("echo: the Reliquary's portal stands behind High Hrothgar");
-					}
-				}
-			}
-			const RE::NiPoint3 d = a_p->GetPosition() - at;
-			if (g_portalCd > 0 || std::hypot(d.x, d.y) > 95.0f || std::abs(d.z) > 260.0f) return;
-			g_portalCd = 4.0f;
-			if (!AnyCalled()) {
-				Hud::Banner("The portal's light holds you back. It opens when the Greybeards call you.", 5.0f);
-				return;
-			}
-			auto in = WayIntoHH(a_p);
-			if (!in) {
-				logger::warn("echo: the portal found no way into High Hrothgar");
-				return;
-			}
-			Forms::Play(gen::Sound::ward_lit);
-			g_toRoom = true;
-			a_p->MoveTo(in.get());
 		}
 		void Go(RE::PlayerCharacter* a_p, RE::ObjectRefHandle& a_to)
 		{
@@ -417,6 +374,245 @@ namespace bo3z
 				Forms::Play(gen::Sound::ward_lit);
 				a_p->MoveTo(m.get());
 			}
+		}
+
+		// ---- (Noah: "just use High Hrothgar's building") the great hall: each wonder waiting to be taken up floats in front of
+		// a dragon relief over its bench, slowly turning and bobbing in a soft glow; Alduin's Bane floats blade-up over the fire
+		// at the hall's end; the centre pillar burns, and the Hall of the Awakened's rewards are taken there. Look at one and
+		// press Activate (E, A on Xbox, X on PS5) or left click. Positions are High Hrothgar's own (its benches HHFurnitureBench01,
+		// its fire pit, its centre pillar HHLightPedestal02, read from Skyrim.esm) ----
+		constexpr float kHallFloor = -992.0f;
+		struct Floater { RE::NiPoint3 at; float yaw; };
+		const std::array<Floater, 5>& FloatSpots()
+		{
+			// the four benches (the wonders in class order), each a little out from its wall; Alduin's Bane over the fire pit
+			static const std::array<Floater, 5> k{ { { { 440.0f, -1744.0f, kHallFloor + 95.0f }, 270.0f }, { { 440.0f, -584.0f, kHallFloor + 95.0f }, 270.0f },
+				{ { -752.0f, -1744.0f, kHallFloor + 95.0f }, 90.0f }, { { -752.0f, -584.0f, kHallFloor + 95.0f }, 90.0f },
+				{ { -160.0f, -440.0f, kHallFloor + 105.0f }, 180.0f } } };
+			return k;
+		}
+		const RE::NiPoint3 kPillarAt{ -155.0f, -1547.0f, kHallFloor };
+		struct HallRefs { std::array<RE::ObjectRefHandle, 5> item, glow; RE::ObjectRefHandle pillar; };
+		HallRefs g_hall;
+		float    g_hallT = 0, g_hallSlow = 0;
+		bool     g_hallSwept = false;  // (what a save kept standing in the hall: taken away once, made again fresh)
+		int      g_aim = -1;        // 0-3 a wonder, 4 the Bane, 5 the pillar; -1 nothing
+		bool     g_hallMenu = false;
+		int      g_hallFocus = 0;
+		RE::NiPoint3 BaneFloatAt() { return FloatSpots()[4].at; }
+		void Drop(RE::ObjectRefHandle& a_h)
+		{
+			if (auto r = a_h.get()) r->Disable(), r->SetDelete(true);
+			a_h = {};
+		}
+		bool BaneShown(RE::PlayerCharacter* a_p)
+		{
+			auto* bane = Bane();
+			return Flag(kFlagHallOpen) && bane && a_p->GetItemCount(bane) <= 0;
+		}
+		bool FloatShown(RE::PlayerCharacter* a_p, int a_i) { return a_i == 4 ? BaneShown(a_p) : Waiting(a_i); }
+		// the Hall's rewards (the pillar's rows, and the old stations' activators)
+		std::string HallRegalia(RE::PlayerCharacter* a_p)
+		{
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			if (!dh->LookupModByName("Dragonborn.esm")) return "needs Dragonborn";
+			int given = 0;
+			const bool again = Flag(kFlagRobes);  // (the audit: once given, a missing piece is made again for 2,500 Cursed Essence)
+			for (const RE::FormID id : { 0x02B0F7u, 0x02B0F9u, 0x03D2AFu, 0x029A62u }) {  // the First Dragonborn's robes, gloves, boots and mask
+				if (auto* a = dh->LookupForm<RE::TESObjectARMO>(id, "Dragonborn.esm"); a && a_p->GetItemCount(a) <= 0) {
+					if (again && !Points::Spend(2500)) return "2,500 Cursed Essence a lost piece";
+					Forms::Give(a_p, a, 1);
+					++given;
+				}
+			}
+			SetFlag(kFlagRobes, true);
+			if (given) Forms::Play(gen::Sound::shout_learned);
+			return given ? "TAKEN" : "YOURS";
+		}
+		void HallBones()
+		{
+			SetFlag(kFlagBone, !Flag(kFlagBone));
+			Forms::Play(gen::Sound::ward_lit);
+		}
+		void HallEndless()
+		{
+			SetFlag(kFlagEndless, !Flag(kFlagEndless));
+			Forms::Play(Flag(kFlagEndless) ? gen::Sound::curse_lifted : gen::Sound::ward_lit);
+		}
+		bool HallBeginAgain()  // (asks twice: a first press warns, a second within a few seconds begins again)
+		{
+			if (!Broken()) return false;
+			if (g_throneAsk <= 0) {
+				g_throneAsk = 8.0f;
+				return false;
+			}
+			g_throneAsk = 0;
+			const int ng = std::min(15, NewGamePlus() + 1);
+			Write(gen::kEchoGlobWords, ((Read(gen::kEchoGlobWords) & ~kNgMask) | (ng << kNgShift)) & ~(1 << kEchoRow) & ~kFlagEchoTold);
+			Curse::NewGamePlus();
+			Forms::Play(gen::Sound::quest_start);
+			logger::info("echo: new game plus, cycle {}", ng + 1);
+			return true;
+		}
+		bool TakeBane(RE::PlayerCharacter* a_p)
+		{
+			auto* bane = Bane();
+			if (!bane || a_p->GetItemCount(bane) > 0) return false;
+			// (the audit: dropped or stashed, a new one was free - as many as you liked) a lost Bane is forged again for 10,000
+			constexpr int kReforge = 10000;
+			if (Flag(kFlagBaneOut) && !Points::Spend(kReforge)) return false;
+			SetFlag(kFlagBaneOut, true);
+			Forms::Give(a_p, bane, 1);
+			Forms::Play(gen::Sound::shout_learned);
+			return true;
+		}
+		std::string AimLabel(RE::PlayerCharacter* a_p, int a_i)
+		{
+			if (a_i == 5) return "The Endless Flame";
+			if (a_i == 4) return Flag(kFlagBaneOut) ? "Forge Alduin's Bane again (10,000 Cursed Essence)" : "Take Alduin's Bane";
+			const std::string name(Classes::WonderName(a_i));
+			if (Classes::Get() != a_i) return name + " - it answers only to the " + PathName(a_i);
+			(void)a_p;
+			return "Take " + name;
+		}
+		std::vector<Hud::State::HallRow> HallRows()
+		{
+			const bool open = Flag(kFlagHallOpen);
+			const std::string locked = "Wakes when the Echo of Alduin falls";
+			std::vector<Hud::State::HallRow> r;
+			r.push_back({ "THE FIRST DRAGONBORN'S REGALIA", open ? "Robes, gloves, boots and mask: everything you wield hits 25% harder, every blow on you is 25% softer, magic costs a quarter less" : locked,
+				!open ? "LOCKED" : Flag(kFlagRobes) ? "TAKEN" : "", open });
+			r.push_back({ "ALDUIN'S BONES", open ? "Your glider's dragon wears Alduin's own bones, or its own scales again" : locked,
+				!open ? "LOCKED" : Flag(kFlagBone) ? "WORN" : "", open });
+			r.push_back({ "THE ENDLESS NIGHT", open ? "Light it and the curse returns: each night's last wave brings the next. A freed city stays safe" : locked,
+				!open ? "LOCKED" : Flag(kFlagEndless) ? "BURNING" : "COLD", open });
+			const bool again = open && Broken();
+			r.push_back({ "BEGIN AGAIN", again ? (g_throneAsk > 0 ? "Press again to begin: every city falls back under the curse, the dead stronger. Your wonders, powers and gear stay yours"
+			                                                      : "New Game+: the nights start over with the dead stronger - you keep your wonders, powers and gear")
+			                               : "Wakes when the Echo of Alduin falls",
+				!again ? "LOCKED" : "CYCLE " + std::to_string(NewGamePlus() + 1), again });
+			r.push_back({ "LEAVE THE FLAME", "", "", true });
+			return r;
+		}
+		void PushHallHud(RE::PlayerCharacter* a_p)
+		{
+			std::scoped_lock l(Hud::Lock());
+			auto& h = Hud::Edit();
+			h.hallAim = g_aim >= 0 && !g_hallMenu ? AimLabel(a_p, g_aim) : std::string();
+			h.hallMenu = g_hallMenu;
+			if (g_hallMenu) {
+				h.hallTitle = "THE ENDLESS FLAME";
+				h.hallRows = HallRows();
+				h.hallFocus = g_hallFocus;
+			}
+		}
+		void ClearHall()
+		{
+			for (auto& x : g_hall.item) Drop(x);
+			for (auto& x : g_hall.glow) Drop(x);
+			Drop(g_hall.pillar);
+		}
+		// every frame in the hall: the floating things turn and bob, and what's in your sights is found
+		void TickHall(RE::PlayerCharacter* a_p, float a_dt)
+		{
+			const bool here = a_p->GetParentCell() == HH() && !InRoom(a_p);
+			if (!here) {
+				g_hallSwept = false;
+				if (g_hall.pillar || g_aim >= 0 || g_hallMenu) {
+					ClearHall();
+					g_aim = -1, g_hallMenu = false;
+					PushHallHud(a_p);
+				}
+				return;
+			}
+			g_hallT += a_dt;
+			if (!g_hallSwept) {
+				g_hallSwept = true;
+				std::vector<RE::TESBoundObject*> ours;
+				for (auto id : gen::kHallFloat) ours.push_back(Forms::Ours(id));
+				for (auto id : { gen::kHallGlow, gen::kHallGlowTall, gen::kHallPillar }) ours.push_back(Forms::Ours(id));
+				a_p->GetParentCell()->ForEachReference([&](RE::TESObjectREFR* r) {
+					if (r && !r->IsDeleted() && std::find(ours.begin(), ours.end(), r->GetBaseObject()) != ours.end()) r->Disable(), r->SetDelete(true);
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+				g_hall = {};
+			}
+			if ((g_hallSlow -= a_dt) <= 0) {  // what stands, twice a second
+				g_hallSlow = 0.5f;
+				for (int i = 0; i < 5; ++i) {
+					const bool want = FloatShown(a_p, i);
+					auto r = g_hall.item[i].get();
+					if (want && (!r || r->IsDeleted() || r->GetParentCell() != a_p->GetParentCell())) {
+						if (auto* b = Forms::Ours(gen::kHallFloat[i])) g_hall.item[i] = Gun::PlaceAt(b, FloatSpots()[i].at, 0);
+						if (auto* g = Forms::Ours(i == 4 ? gen::kHallGlowTall : gen::kHallGlow)) g_hall.glow[i] = Gun::PlaceAt(g, FloatSpots()[i].at + RE::NiPoint3{ 0, 0, i == 4 ? 75.0f : 40.0f }, 0);
+					} else if (!want && r) {
+						Drop(g_hall.item[i]), Drop(g_hall.glow[i]);
+					}
+				}
+				auto pr = g_hall.pillar.get();
+				if (!pr || pr->IsDeleted() || pr->GetParentCell() != a_p->GetParentCell()) {
+					if (auto* b = Forms::Ours(gen::kHallPillar)) g_hall.pillar = Gun::PlaceAt(b, kPillarAt, 0);
+				}
+			}
+			for (int i = 0; i < 5; ++i) {  // slowly turning, bobbing up and down
+				auto r = g_hall.item[i].get();
+				if (!r) continue;
+				const float bob = 5.0f * std::sin(g_hallT * 1.4f + i * 1.3f);
+				r->SetPosition(FloatSpots()[i].at + RE::NiPoint3{ 0, 0, bob });
+				r->SetAngle({ -1.5708f, 0, std::fmod(g_hallT * 0.55f + i, 6.2832f) });  // (each model's long axis is its +Y: stood up)
+				if (auto gl = g_hall.glow[i].get()) gl->SetPosition(FloatSpots()[i].at + RE::NiPoint3{ 0, 0, (i == 4 ? 75.0f : 40.0f) + bob });
+			}
+			// in your sights: the nearest along your look, close enough to reach
+			g_aim = -1;
+			if (!g_hallMenu) {
+				auto* cam = RE::PlayerCamera::GetSingleton();
+				if (cam && cam->cameraRoot) {
+					const auto& m = cam->cameraRoot->world.rotate;
+					const RE::NiPoint3 fwd{ m.entry[0][1], m.entry[1][1], m.entry[2][1] };
+					const RE::NiPoint3 eye = cam->cameraRoot->world.translate;
+					float best = FLT_MAX;
+					for (int i = 0; i < 6; ++i) {
+						if (i < 5 && !g_hall.item[i]) continue;
+						const RE::NiPoint3 c = i < 5 ? FloatSpots()[i].at + RE::NiPoint3{ 0, 0, i == 4 ? 75.0f : 40.0f } : kPillarAt + RE::NiPoint3{ 0, 0, 110.0f };
+						const RE::NiPoint3 to = c - eye;
+						const float along = to.Dot(fwd);
+						if (along <= 0 || a_p->GetPosition().GetDistance(c) > (i == 5 ? 320.0f : 260.0f)) continue;
+						const float off = (eye + fwd * along).GetDistance(c);
+						if (off < (i == 5 ? 90.0f : i == 4 ? 70.0f : 50.0f) && along < best) best = along, g_aim = i;
+					}
+				}
+			} else if (a_p->GetPosition().GetDistance(kPillarAt) > 420.0f) {
+				g_hallMenu = false;  // (walking away closes it)
+			}
+			PushHallHud(a_p);
+		}
+		void UseAim(RE::PlayerCharacter* a_p)
+		{
+			if (g_aim == 5) {
+				g_hallMenu = true, g_hallFocus = 0;
+				Forms::Play(gen::Sound::ward_lit);
+			} else if (g_aim == 4) {
+				if (TakeBane(a_p)) Drop(g_hall.item[4]), Drop(g_hall.glow[4]);
+			} else if (g_aim >= 0 && Classes::Get() == g_aim && Classes::TakeWonder(g_aim)) {
+				Drop(g_hall.item[g_aim]), Drop(g_hall.glow[g_aim]);
+				logger::info("echo: {} taken up in the hall", Classes::WonderName(g_aim));
+			}
+			PushHallHud(a_p);
+		}
+		void HallPick(RE::PlayerCharacter* a_p)
+		{
+			const int last = static_cast<int>(HallRows().size()) - 1;
+			if (g_hallFocus == last) {
+				g_hallMenu = false;
+			} else if (Flag(kFlagHallOpen)) {
+				switch (g_hallFocus) {
+				case 0: (void)HallRegalia(a_p); break;
+				case 1: HallBones(); break;
+				case 2: HallEndless(); break;
+				case 3: if (HallBeginAgain()) g_hallMenu = false; break;
+				}
+			}
+			PushHallHud(a_p);
 		}
 		// a pedestal: its wonder taken up (it answers only to its own path), or how far that path's secret has come
 		void Pedestal(RE::PlayerCharacter* a_p, int a_c)
@@ -710,6 +906,7 @@ namespace bo3z
 		void Reset()
 		{
 			g_probe = {}, g_arrive = {}, g_leave = {};
+			g_hall = {}, g_hallSwept = false, g_aim = -1, g_hallMenu = false;
 			for (auto& al : g_allies) {
 				if (auto a = al.h.get()) {
 					a->Disable();
@@ -876,6 +1073,7 @@ namespace bo3z
 			if (!p || !p->Is3DLoaded() || !Glob(gen::kEchoGlobWords)) {
 				return;
 			}
+			TickHall(p, a_delta);
 			if ((g_slow -= a_delta) > 0) {
 				return;
 			}
@@ -884,10 +1082,7 @@ namespace bo3z
 			TickAllies(0.5f);
 			CleanUp(p);
 			Party::SetWonder(Classes::WonderMask());  // (the party pools its wonders)
-			if (p->GetParentCell() == HH()) {
-				BuildReliquary(p);
-			}
-			TickPortal(p, 0.5f);
+			TickPortal(p, 0.5f);  // (the Reliquary room and its portal are retired: the hall itself holds everything - TickHall)
 			TickSky();
 			TickWords(p, 0.5f);
 		}
@@ -934,98 +1129,11 @@ namespace bo3z
 			if (!Flag(kFlagHallOpen)) {
 				return false;
 			}
-			if (base == Forms::Ours(gen::kHallFang)) {
-				if (auto* bane = Bane()) {
-					if (p->GetItemCount(bane) > 0) {
-						p->RemoveItem(bane, p->GetItemCount(bane), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
-						SetFlag(kFlagBaneOut, false);
-						Hud::Banner("ALDUIN'S BANE RESTS ON ITS STAND", 3.5f);
-					} else {
-						// (the audit: dropped or stashed, a new one was free - as many as you liked) a lost Bane is forged again
-						// for 10,000 Cursed Essence
-						constexpr int kReforge = 10000;
-						if (Flag(kFlagBaneOut) && !Points::Spend(kReforge)) {
-							Hud::Banner("Your Bane is out in the world. Bring it back to the stand, or forge it again for 10,000 Cursed Essence.", 5.0f);
-							return true;
-						}
-						SetFlag(kFlagBaneOut, true);
-						p->AddObjectToContainer(bane, nullptr, 1, nullptr);
-						Forms::Play(gen::Sound::shout_learned);
-						Hud::Lore("ALDUIN'S BANE",
-							"A blade of dragon bone, cut from the Echo of Alduin. Every swing sends a wind slash down the line that hurls the dead far away. Its kills fill it with "
-							"souls - full, Alduin's shade rains meteors round you. While you hold it, kills heal you and your shouts return twice as fast. Return it to its stand "
-							"whenever you like.",
-							16.0f);
-					}
-					BuildReliquary(p);
-				}
-				return true;
-			}
-			if (base == Forms::Ours(gen::kHallRobes)) {
-				auto* dh = RE::TESDataHandler::GetSingleton();
-				if (!dh->LookupModByName("Dragonborn.esm")) {
-					Hud::Banner("The Regalia needs Dragonborn (the Solstheim add-on).", 4.0f);
-					return true;
-				}
-				int given = 0;
-				const bool again = Flag(kFlagRobes);  // (the audit: once given, a missing piece is made again for 2,500 Cursed Essence)
-				for (const RE::FormID id : { 0x02B0F7u, 0x02B0F9u, 0x03D2AFu, 0x029A62u }) {  // the First Dragonborn's robes, gloves, boots and mask
-					if (auto* a = dh->LookupForm<RE::TESObjectARMO>(id, "Dragonborn.esm"); a && p->GetItemCount(a) <= 0) {
-						if (again && !Points::Spend(2500)) {
-							Hud::Banner("A lost piece of the Regalia is made again for 2,500 Cursed Essence.", 4.0f);
-							break;
-						}
-						p->AddObjectToContainer(a, nullptr, 1, nullptr);
-						++given;
-					}
-				}
-				SetFlag(kFlagRobes, true);
-				if (given) {
-					Forms::Play(gen::Sound::shout_learned);
-					Hud::Lore("THE FIRST DRAGONBORN'S REGALIA",
-						"Robes, gloves, boots and mask of the first who devoured a dragon's soul - the strongest gear in Skyrim, for every path. While you wear the robes, everything "
-						"you wield hits 25% harder, every blow on you is 25% softer, and your magic costs a quarter less and returns faster.",
-						12.0f);
-				} else {
-					Hud::Banner("The Regalia is already yours.", 3.0f);
-				}
-				return true;
-			}
-			if (base == Forms::Ours(gen::kHallSkull)) {
-				SetFlag(kFlagBone, !Flag(kFlagBone));
-				Forms::Play(gen::Sound::ward_lit);
-				Hud::Banner(Flag(kFlagBone) ? "YOUR DRAGON WEARS ALDUIN'S BONES" : "YOUR DRAGON WEARS ITS OWN SCALES AGAIN", 4.0f);
-				return true;
-			}
-			if (base == Forms::Ours(gen::kHallEndless)) {
-				SetFlag(kFlagEndless, !Flag(kFlagEndless));
-				Forms::Play(Flag(kFlagEndless) ? gen::Sound::curse_lifted : gen::Sound::ward_lit);
-				Hud::Banner(Flag(kFlagEndless) ? "THE ENDLESS NIGHT BURNS - the curse returns, and each night's last wave brings the next. A freed city is still safe."
-				                               : (Broken() ? "THE BRAZIER IS COLD - the nights are only nights again" : "THE BRAZIER IS COLD - dawn comes when the waves are cleared"),
-					7.0f);
-				return true;
-			}
-			if (base == Forms::Ours(gen::kHallThrone)) {
-				if (!Broken()) {
-					Hud::Banner("The Seat of the Awakened is cold. It wakes when the Echo of Alduin falls again.", 5.0f);
-					return true;
-				}
-				if (g_throneAsk <= 0) {
-					g_throneAsk = 8.0f;
-					Hud::Banner("BEGIN AGAIN? Every city falls back under the curse and the nights start over, the dead stronger. Your wonders, powers and gear stay yours. Touch the Seat again to begin.", 8.0f);
-					return true;
-				}
-				g_throneAsk = 0;
-				const int ng = std::min(15, NewGamePlus() + 1);
-				Write(gen::kEchoGlobWords, ((Read(gen::kEchoGlobWords) & ~kNgMask) | (ng << kNgShift)) & ~(1 << kEchoRow) & ~kFlagEchoTold);
-				Curse::NewGamePlus();
-				Forms::Play(gen::Sound::quest_start);
-				Hud::Lore("THE AWAKENED - CYCLE " + std::to_string(ng + 1),
-					"The altars go dark again, every one, and the dead rise stronger than before - but you rise with all you won. Wake the Echo Altars anew, and the Echo of Alduin will be waiting on the Throat of the World.",
-					12.0f);
-				logger::info("echo: new game plus, cycle {}", ng + 1);
-				return true;
-			}
+			if (base == Forms::Ours(gen::kHallFang)) { (void)TakeBane(p); return true; }
+			if (base == Forms::Ours(gen::kHallRobes)) { (void)HallRegalia(p); return true; }
+			if (base == Forms::Ours(gen::kHallSkull)) { HallBones(); return true; }
+			if (base == Forms::Ours(gen::kHallEndless)) { HallEndless(); return true; }
+			if (base == Forms::Ours(gen::kHallThrone)) { (void)HallBeginAgain(); return true; }
 			return false;
 		}
 
@@ -1036,23 +1144,17 @@ namespace bo3z
 			}
 			int waiting = -1;
 			for (int c = 0; c < kWonders; ++c) if (Waiting(c) && (waiting < 0 || c == Classes::Get())) waiting = c;  // (your own path's first)
-			// at High Hrothgar: the door out to the portal; in the Reliquary, the pedestal of a wonder waiting to be taken up
+			// in High Hrothgar's hall: your own wonder waiting over its bench, or Alduin's Bane over the fire
 			if (a_p->GetParentCell() == HH()) {
-				if (InRoom(a_p)) {
-					if (waiting >= 0) {
-						const auto& s = gen::kRelPedestals[waiting];
-						a_at = Room(s.x, s.y, s.z + 160.0f);
-						a_label = "Take up " + std::string(Classes::WonderName(waiting));
-						return true;
-					}
-					return false;
+				const int mine = Classes::Get();
+				if (mine >= 0 && mine < kWonders && Waiting(mine)) {
+					a_at = FloatSpots()[mine].at + RE::NiPoint3{ 0, 0, 90.0f };
+					a_label = "Take up " + std::string(Classes::WonderName(mine));
+					return true;
 				}
-				if (waiting >= 0 || (Flag(kFlagHallOpen) && Bane() && a_p->GetItemCount(Bane()) <= 0)) {
-					// (the way in is the portal outside the back now: point at the door out to it)
-					auto* in = DoorOutOfHH();
-					if (!in) return false;
-					a_at = in->GetPosition() + RE::NiPoint3{ 0, 0, 200.0f };
-					a_label = std::string(Flag(kFlagHallOpen) ? "The Hall of the Awakened" : "The Reliquary") + " - through the portal outside";
+				if (BaneShown(a_p) && !Flag(kFlagBaneOut)) {
+					a_at = BaneFloatAt() + RE::NiPoint3{ 0, 0, 200.0f };
+					a_label = "Alduin's Bane";
 					return true;
 				}
 				return false;
@@ -1068,10 +1170,10 @@ namespace bo3z
 				}
 			};
 			if (waiting >= 0) {
-				consider(P(gen::kRelPortal) + RE::NiPoint3{ 0, 0, 250.0f }, "The portal behind High Hrothgar - " + std::string(Classes::WonderName(waiting)) + " waits in the Reliquary");
+				consider(kHHFront + RE::NiPoint3{ 0, 0, 250.0f }, "High Hrothgar - " + std::string(Classes::WonderName(waiting)) + " waits in the great hall");
 			}
 			if (Flag(kFlagHallOpen) && Bane() && a_p->GetItemCount(Bane()) <= 0 && !Flag(kFlagRobes)) {
-				consider(P(gen::kRelPortal) + RE::NiPoint3{ 0, 0, 250.0f }, "The portal behind High Hrothgar - the Hall of the Awakened");
+				consider(kHHFront + RE::NiPoint3{ 0, 0, 250.0f }, "High Hrothgar - Alduin's Bane and the Endless Flame");
 			}
 			for (int w = 0; w < kWordCount; ++w) {
 				if (!Awake(w)) continue;
@@ -1131,6 +1233,55 @@ namespace bo3z
 			}
 			return false;
 		}
+	}
+
+	namespace
+	{
+		enum class HallKey { kNone, kUp, kDown, kPick, kBack };
+		HallKey HallKeyOf(const RE::ButtonEvent* a_b)
+		{
+			if (!a_b) return HallKey::kNone;
+			const auto dev = a_b->GetDevice();
+			const auto code = a_b->GetIDCode();
+			const bool kb = dev == RE::INPUT_DEVICE::kKeyboard, pad = dev == RE::INPUT_DEVICE::kGamepad;
+			if ((kb && (code == 0x11 || code == 0xC8)) || (pad && code == 0x0001)) return HallKey::kUp;
+			if ((kb && (code == 0x1F || code == 0xD0)) || (pad && code == 0x0002)) return HallKey::kDown;
+			if (a_b->QUserEvent() == RE::UserEvents::GetSingleton()->activate || (kb && (code == 0x1C || code == 0x9C)) || (dev == RE::INPUT_DEVICE::kMouse && code == 0) || (pad && code == 0x1000))
+				return HallKey::kPick;
+			if ((kb && (code == 0x01 || code == 0x0F)) || (pad && code == 0x2000)) return HallKey::kBack;
+			return HallKey::kNone;
+		}
+	}
+	// (Noah: "to pick it up, players just need to press X on PS5 controller, A on Xbox controller, or left click on keyboard
+	// mouse") the hall's keys: what's in your sights is taken with Activate or a left click; the pillar's menu has W/S and the
+	// D-pad, Activate / Enter / left click / A, and Esc / B
+	bool Echo::OnButton(const RE::ButtonEvent* a_b)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p || !a_b || (!g_hallMenu && g_aim < 0)) return false;
+		const auto key = HallKeyOf(a_b);
+		if (key == HallKey::kNone) return g_hallMenu;
+		if (!a_b->IsDown()) return true;
+		if (!g_hallMenu) {
+			if (key != HallKey::kPick) return false;
+			UseAim(p);
+			return true;
+		}
+		const int n = static_cast<int>(HallRows().size());
+		if (key == HallKey::kUp) g_hallFocus = (g_hallFocus + n - 1) % n;
+		else if (key == HallKey::kDown) g_hallFocus = (g_hallFocus + 1) % n;
+		else if (key == HallKey::kBack) g_hallMenu = false;
+		else HallPick(p);
+		PushHallHud(p);
+		return true;
+	}
+	bool Echo::Eats(RE::InputEvent* a_event)
+	{
+		auto* b = a_event ? a_event->AsButtonEvent() : nullptr;
+		if (!b || (!g_hallMenu && g_aim < 0)) return false;
+		const auto key = HallKeyOf(b);
+		if (g_hallMenu) return key != HallKey::kNone;
+		return key == HallKey::kPick;
 	}
 
 	void Echo::DevGiveBane()

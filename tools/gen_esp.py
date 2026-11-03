@@ -1178,6 +1178,14 @@ for key, model, r in [('rel_room', 'room.nif', 640), ('rel_relic', 'relic.nif', 
 # draws the way the flask bursts do
 recs['ACTI'].append(record('ACTI', fid('ACTI', 'rel_portal'), [sub('EDID', z('UN_rel_portal')), sub('OBND', struct.pack('<6h', -130, -20, 0, 130, 20, 360)),
     sub('MODL', z(RQ + 'portal.nif')), sub('FNAM', b'\0\0')]))
+# (Noah: "just use High Hrothgar's building") the wonders and Alduin's Bane float in the great hall to be taken up, each in a soft
+# glow, and a fiery pillar holds the Hall's rewards: nameless activators (no prompt of Skyrim's - src/Echo.cpp aims and takes them)
+for key, model, r in (('hf_gravecaller', RQ.replace('reliquary', 'wonder') + 'barrowhorn.nif', 40), ('hf_frostbinder', 'Weapons\\StaffofMagnus\\StaffofMagnus.nif', 80),
+                      ('hf_wolfcrown', 'CurseOfAlduin\\alchemist\\flask_philosopher.nif', 20), ('hf_barrowhorn', 'CurseOfAlduin\\wonder\\slayer_static.nif', 60),
+                      ('hf_bane', 'CurseOfAlduin\\wonder\\bane_static.nif', 90), ('hf_glow', 'CurseOfAlduin\\fx\\hall_glow.nif', 60),
+                      ('hf_glowtall', 'CurseOfAlduin\\fx\\hall_glow_tall.nif', 120), ('hf_pillar', 'CurseOfAlduin\\fx\\pillar_fire.nif', 120)):
+    recs['ACTI'].append(record('ACTI', fid('ACTI', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, -r, r, r, r * 2)),
+        sub('MODL', z(model)), sub('FNAM', b'\0\0')]))
 # Stage 5 (src/Echo.cpp Hall): the Hall of the Awakened's stations, and Alduin's Fang
 for key, name, verb in (('hall_fang', "Alduin's Bane", 'Take'), ('hall_robes', "The First Dragonborn's Regalia", 'Take'),
                         ('hall_skull', "The Bone-Wyrm's Skull", 'Bind'), ('hall_endless', 'Brazier of the Endless Night', 'Kindle'),

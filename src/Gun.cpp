@@ -160,6 +160,7 @@ namespace bo3z
 					const auto& ue = b->QUserEvent();
 					if (uev && (ue == uev->leftAttack || ue == uev->rightAttack) && Classes::FlaskSwingBlocked(ue == uev->leftAttack)) return false;
 				}
+				if (Echo::Eats(a_event)) return false;  // (the hall: a left click takes what's in your sights, no swing)
 				if (MeleeRefused(a_event)) return false;
 				if (GunOut()) {
 					// The fire button goes through: Skyrim plays the staff/hand cast. Right mouse (left-hand
@@ -322,7 +323,7 @@ namespace bo3z
 				if (GunOut() && b && b->GetDevice() == RE::INPUT_DEVICE::kGamepad && (b->GetIDCode() == kPadRight || b->GetIDCode() == kPadDown)) {
 					return false;
 				}
-				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event)) {  // the shrine's keys (1-4, D-pad) and the loot list's never reach the hotkeys
+				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event) || Echo::Eats(a_event)) {  // the shrine's keys (1-4, D-pad) and the loot list's never reach the hotkeys
 					return false;
 				}
 				return func(a_this, a_event);
@@ -336,7 +337,7 @@ namespace bo3z
 		{
 			static bool thunk(void* a_this, RE::InputEvent* a_event)
 			{
-				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event)) {
+				if (Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event) || Echo::Eats(a_event)) {
 					return false;
 				}
 				if constexpr (N == 2) {  // (the menu-open handler) the Wait key opens the Curse's rest screen - Skyrim's "enemies nearby" never stops it
@@ -351,7 +352,7 @@ namespace bo3z
 		{
 			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
 			{
-				if (GunOut() || Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event)) {
+				if (GunOut() || Shops::MenuEats(a_event) || Classes::MenuEats(a_event) || Director::RestEats(a_event) || Loot::Eats(a_event) || Echo::Eats(a_event)) {
 					return false;
 				}
 				return func(a_this, a_event);
@@ -2562,7 +2563,7 @@ namespace bo3z
 			g_orb.placed = true;
 			RE::NiMatrix3 turn;
 			turn.SetEulerAnglesXYZ(0.0f, 0.0f, t * 0.6f);
-			g_orb.fx.Place(g_orb.at, turn, 1.5f);
+			g_orb.fx.Place(g_orb.at, turn, 1.05f);  // (Noah: "a little bit smaller" - 1.5 before; its light is its own, the same 15 m)
 			// (Noah: the game crashed twice a few seconds after loading into Dragonsreach - the light had been moved onto a node of
 			// our own hung on the scene's root) the light rides your body's own root, as the belt lantern's did for weeks without
 			// trouble, a little over your head in the body's frame; hung again when the game takes it down or the body is rebuilt

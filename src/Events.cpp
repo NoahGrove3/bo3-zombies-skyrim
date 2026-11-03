@@ -665,7 +665,7 @@ namespace bo3z
 							continue;
 						}
 						if (!Intro::OnButton(b) && !Party::OnButton(b)) {  // (down or dead: your hands are still)
-							if (Shops::OnButton(b) || Loot::OnButton(b)) {
+							if (Echo::OnButton(b) || Shops::OnButton(b) || Loot::OnButton(b)) {
 								continue;
 							}
 							Movement::OnButton(b);
