@@ -943,9 +943,15 @@ namespace bo3z
 			RE::BGSHazard* hz = nullptr;
 			if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::BGSHazard>(); factory && (hz = factory->Create())) {
 				hz->SetModel(a_path.c_str());
-				hz->data.limit = 24, hz->data.radius = 1.0f, hz->data.lifetime = a_life, hz->data.imageSpaceRadius = 0.0f, hz->data.targetInterval = 1.0f;
+				// (Noah: the game crashed a second after a flask landed - and twice in Dragonsreach: the pool's hazard went to cast
+				// its spell on whoever stood in it, and it had none) it carries the flasks' own do-nothing spell, and never
+				// looks for anyone to cast it on within its lifetime (the hurting is ours)
+				hz->data.limit = 24, hz->data.radius = 1.0f, hz->data.lifetime = a_life, hz->data.imageSpaceRadius = 0.0f, hz->data.targetInterval = a_life + 60.0f;
 				hz->data.flags.set(RE::BGSHazardData::BGSHazardFlags::kDropToGround);
-				hz->data.spell = nullptr, hz->data.light = nullptr, hz->data.impactDataSet = nullptr, hz->data.sound = nullptr;
+				hz->data.spell = RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(gen::kFlaskSpell[0], gen::kPlugin);
+				hz->data.light = nullptr, hz->data.impactDataSet = nullptr, hz->data.sound = nullptr;
+				hz->boundData.boundMin.x = hz->boundData.boundMin.y = -8, hz->boundData.boundMin.z = -2;
+				hz->boundData.boundMax.x = hz->boundData.boundMax.y = hz->boundData.boundMax.z = 8;
 			}
 			logger::info("hazard: {} ({:.1f} s) {}", a_path, a_life, hz ? "ready" : "MISSING");
 			made[key] = hz;
