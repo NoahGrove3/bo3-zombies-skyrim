@@ -137,6 +137,17 @@ for e, label, text in FLASKS:
         sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
         sub('DESC', z(text + ('' if e == 'philosopher' else FLASK_TIERS))),
         sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'flaskcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+# (Noah: "I want the flasks to not use mana, and I want it to be an item that you actually throw, not a destruction spell")
+# each flask an item in your pack (a potion to Skyrim, so a favourite and a hotkey): used, it is thrown - src/Classes.cpp
+# sees it leave your pack, lobs it, and puts it back (an Alchemist's flasks never run out; a short breath between throws)
+for e, label, text in FLASKS:
+    enit = bytearray(tsub('alch', 'ENIT'))
+    struct.pack_into('<iIIfI', enit, 0, 0, 0x1, 0, 0.0, 0)   # value 0, no auto-calc, no addiction, no drinking sound
+    recs['ALCH'].append(record('ALCH', fid('ALCH', 'flaskitem_' + e), [
+        sub('EDID', z('UN_FlaskItem_' + e)), sub('OBND', tsub('alch', 'OBND')), sub('FULL', z(label)),
+        sub('KSIZ', tsub('alch', 'KSIZ')), sub('KWDA', tsub('alch', 'KWDA')), sub('MODL', z('CurseOfAlduin\\alchemist\\flask_' + e + '.nif')),
+        sub('YNAM', tsub('alch', 'YNAM')), sub('ZNAM', tsub('alch', 'ZNAM')), sub('DATA', struct.pack('<f', 0.0)),
+        sub('ENIT', bytes(enit)), sub('EFID', struct.pack('<I', fid('MGEF', 'flaskcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 # (Noah: the Summoner's new wonder, "Bone-Throne Horn: an undead bone dragon that lands and fights beside you") a hand spell
 # at 100 magicka: src/Classes.cpp calls the dragon up itself (Skyrim's skeletal dragon) and keeps it on the ground
 sp = bytearray(tsub('spel_firebolt', 'SPIT'))
@@ -144,7 +155,7 @@ struct.pack_into('<IIIfIIffI', sp, 0, 100, 0x1, 0, 0.25, 1, 0, 0.0, 0.0, 0)
 recs['SPEL'].append(record('SPEL', fid('SPEL', 'bonehorn'), [
     sub('EDID', z('UN_BoneThroneHorn')), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z('Bone-Throne Horn')),
     sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
-    sub('DESC', z('The Summoner\'s wonder. Blow it and a dragon of bare bone claws its way up beside you: it lands, fights on the ground at your side and breathes green grave-fire on the dead for a minute. Once the three dragons fall it stays for an hour.')),
+    sub('DESC', z('The Summoner\'s wonder. Blow it and a little dragon of bare bone answers: it flies at your side, never more than 15 m off, and rains green grave-fire on the dead for a minute. Once the three dragons fall it stays for an hour.')),
     sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'flaskcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 sp = bytearray(tsub('spel_firebolt', 'SPIT'))
 struct.pack_into('<IIIfIIffI', sp, 0, 0, 0x1, 0, 0.0, 1, 0, 0.0, 0.0, 0)   # no magicka (a throw spends stamina), no charge, fire-and-forget, self

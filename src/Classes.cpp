@@ -241,10 +241,9 @@ namespace bo3z::Classes
 				if (auto* tome = Lookup(0x817, "Equipable Tomes - Redone.esp")) GiveItem(p, tome, 1, true);  // a Destruction tome at the hip
 				break;
 			case coffer::kAlchemist:
-				// (Noah: "replace it with the Alchemist class") the knife in the right hand, the Fire Flask in the left
+				// (Noah: "replace it with the Alchemist class") the knife in the right hand, the Fire Flask in your pack (a hotkey throws it)
 				GiveItem(p, AlchemistKnife(), 1, true);
 				GiveFlask(0);
-				if (auto* em = RE::ActorEquipManager::GetSingleton(); em && FlaskSpell(0)) em->EquipSpell(p, FlaskSpell(0), RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x013F43));
 				break;
 			case coffer::kSpellsword:
 				// (Noah, the altar rework: "remove shields entirely - a one-hand sword from one of the weapon mods, and a fire
@@ -697,7 +696,7 @@ namespace bo3z::Classes
 				GiveItem(p, Magnus(), 1, true);
 				break;
 			case coffer::kAlchemist:
-				if (auto* sp = FlaskSpell(6)) Learn(sp);
+				GiveFlask(6);
 				break;
 			case coffer::kSpellsword:
 				GiveItem(p, Slayer(), 1, true);
@@ -706,7 +705,7 @@ namespace bo3z::Classes
 		g_wStep[a_cls] = kWonderTaken;
 			Forms::Play(gen::Sound::shout_learned);
 			static constexpr const char* kText[4] = {
-				"A horn carved from a dragon's throne of bone. Blow it and a dragon of bare bone claws its way up beside you: it stays on the ground at your side and breathes green grave-fire on the dead for a minute. Once the three dragons fall it stays for an hour, or until it is slain.",
+				"A horn carved from a dragon's throne of bone. Blow it and a little dragon of bare bone answers: it flies at your side, never more than 15 m off, and rains green grave-fire on the dead for a minute. Once the three dragons fall it stays for an hour, or until it is slain.",
 				"The Staff of Magnus. Hold its beam on the dead: it drains them and feeds your magicka, and erupts where it ends. Hold it two seconds or more and the eruption leaves an orb of searing light that pulses on everything round it. Once the three dragons fall it burns hotter still.",
 				"The Philosopher's Flask. Where it shatters a cloud of molten gold hangs for twelve seconds: the dead inside are gilded and torn apart, and each one that dies in it shatters into gold and drops extra Cursed Essence. Once the three dragons fall the cloud is wider and lasts longer.",
 				"The Akaviri dragon slayer, two tiers above your blade. Every hit carries the last Spellsword spell you held. Once the three dragons fall it grows stronger again, and a power attack looses that spell on the dead round you." };
@@ -1149,13 +1148,9 @@ namespace bo3z::Classes
 		TuneCorrosion();
 		TuneSpellswordGear();
 		TickArmour();
-		// (the Alchemist's flasks: the class spells' one cost by each flask's tier, the Drifter's set Tier I 15% off)
-		for (int e = 0; e < 6; ++e) {
-			auto* sp = FlaskSpell(e);
-			const int t = Kit::FlaskTier(e);
-			if (!sp || t < 0) continue;
-			const auto want = static_cast<std::int32_t>(std::lround(TierSpellCost(t) * (Kit::ArmourTier(coffer::kAlchemist) >= 1 ? 0.85f : 1.0f) * Perks::FlaskCostMult()));
-			if (sp->data.costOverride != want || !sp->data.flags.all(RE::SpellItem::SpellFlag::kCostOverride)) sp->data.costOverride = want, sp->data.flags.set(RE::SpellItem::SpellFlag::kCostOverride);
+		// (Noah: the flasks are items now, thrown for nothing) a character given the old flask spells: taken off
+		for (const auto id : gen::kFlaskSpell) {
+			if (auto* sp = RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(id, gen::kPlugin); sp && p->HasSpell(sp)) p->RemoveSpell(sp);
 		}
 		// (Noah: "for the destruction class there should only be a 1 second delay before the mana starts regenerating after
 		// firing - 5 seconds is fine for the others"; "sprinting should cost a little more stamina for all players")
@@ -1890,7 +1885,7 @@ namespace bo3z::Classes
 		GrantWonder(a_cls);
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* em = RE::ActorEquipManager::GetSingleton();
-		auto* sp = a_cls == coffer::kSummoner ? WyrmSpell() : a_cls == coffer::kAlchemist ? FlaskSpell(6) : nullptr;
+		auto* sp = a_cls == coffer::kSummoner ? WyrmSpell() : nullptr;
 		if (p && em && sp) em->EquipSpell(p, sp, RE::TESForm::LookupByID<RE::BGSEquipSlot>(0x13F42));  // (the right hand)
 		auto* w = a_cls == coffer::kDestruction ? Magnus() : a_cls == coffer::kSpellsword ? Slayer() : nullptr;
 		if (p && em && w) em->EquipObject(p, w);
@@ -1925,7 +1920,7 @@ namespace bo3z::Classes
 		}
 		if (g_wStep[a_cls] == kWonderTaken && p) {  // (lost from the pack, or a new copy wanted: given again)
 			const bool have = a_cls == coffer::kSummoner ? (WyrmSpell() && p->HasSpell(WyrmSpell())) : a_cls == coffer::kDestruction ? (Magnus() && p->GetItemCount(Magnus()) > 0)
-			                : a_cls == coffer::kAlchemist ? (FlaskSpell(6) && p->HasSpell(FlaskSpell(6))) : (Slayer() && p->GetItemCount(Slayer()) > 0);
+			                : a_cls == coffer::kAlchemist ? (FlaskItem(6) && p->GetItemCount(FlaskItem(6)) > 0) : (Slayer() && p->GetItemCount(Slayer()) > 0);
 			if (!have) {
 				// (the audit: a dropped bow or blade was given again for free - copies without end) a lost weapon is made
 				// again for 5,000 Cursed Essence; the spells cost nothing (they can't be copied)
@@ -2161,37 +2156,44 @@ namespace bo3z::Classes
 				}
 			}
 			std::erase_if(g_ownSummons, [](const auto& e) { return e.second <= 0; });
-			// (Noah: the Summoner's wonder, "Bone-Throne Horn: an undead bone dragon that lands and fights on the ground beside
-			// you") kept on the ground at your side - brought back when it strays, turned on the nearest of the dead - and every
-			// 1.2 s its green grave-fire rolls along the ground onto them, the strongest of any summon's (the old Horn's numbers)
-			if (static float boneT = 0, breathT = 0; (boneT += a_delta) > 0.25f) {
+			// (Noah: "a mini dragon that can fly around within 15 meters of the player and kill any enemies, with flying breath
+			// attacks or fighting or shouts") the Bone-Throne's little dragon flies and fights as a dragon does; strayed past
+			// 15 m it is drawn back toward you; and every 1.2 s it breathes green grave-fire down onto the nearest of the dead,
+			// its stream seen from its jaws to where it lands - the strongest of any summon's
+			if (static float boneT = 0, breathT = 0; (boneT += a_delta) > 0.1f) {
 				const float dt = boneT;
 				boneT = 0;
 				breathT -= dt;
 				if (auto a = g_boneDragon.get(); a && !a->IsDead() && !a->IsDisabled() && a->Is3DLoaded()) {
 					const auto me = p->GetPosition();
-					const auto at = a->GetPosition();
-					if (at.GetDistance(me) > 1900.0f || at.z > me.z + 600.0f) {  // (strayed, or up in the air: set down at your side)
+					auto       at = a->GetPosition();
+					RE::NiPoint3 flat = at - me;
+					flat.z = 0;
+					if (flat.Length() > 3000.0f) {  // (left far behind: at your side at once)
 						const float yaw = p->GetAngleZ() + 1.2f;
-						a->SetPosition(me + RE::NiPoint3{ std::sin(yaw) * 420.0f, std::cos(yaw) * 420.0f, 20.0f }, true);
+						a->SetPosition(me + RE::NiPoint3{ std::sin(yaw) * 400.0f, std::cos(yaw) * 400.0f, 250.0f }, true);
+					} else if (flat.Length() > 1050.0f) {  // (past 15 m: drawn back toward you)
+						const RE::NiPoint3 want = me + flat * (900.0f / flat.Length()) + RE::NiPoint3{ 0, 0, std::clamp(at.z - me.z, 80.0f, 600.0f) };
+						RE::NiPoint3 step = want - at;
+						if (const float d = step.Length(); d > 10.0f) a->SetPosition(at + step * std::min(1.0f, 700.0f * dt / d), true);
 					}
-					const auto foes = NearFoes(a->GetPosition(), 1700.0f, 1);
-					if (!foes.empty()) {
+					const auto foes = NearFoes(me, 1500.0f, 1);
+					if (!foes.empty() && breathT <= 0) {
+						breathT = 1.2f;
+						SafeCombat(a.get(), foes[0]);
+						at = a->GetPosition();
 						const auto tgt = foes[0]->GetPosition();
-						a->SetHeading(std::atan2(tgt.x - at.x, tgt.y - at.y));
-						if (breathT <= 0) {
-							breathT = 1.2f;
-							const RE::NiPoint3 mouth = a->GetPosition() + RE::NiPoint3{ 0, 0, 160.0f };
-							const float pf = 0.7f + 0.3f * Arcana::Power();
-							const float top = UpgradeMult(AfterSovngarde() ? kWonderUps + 1 : kWonderUps);
-							for (int k = 1; k <= 6; ++k) {
-								const RE::NiPoint3 pt = mouth + (tgt - mouth) * (k / 6.0f);
-								Gun::ElemBurst(7, pt, 0.5f + 0.1f * k, 0.05f * k, 0.9f);
-								if (k < 6) Gun::AreaHurt(pt, 170.0f, 0.15f * top * pf, "");
-							}
-							Gun::ElemBurst(7, tgt + RE::NiPoint3{ 0, 0, -10.0f }, 1.8f, 0.32f, 1.3f);
-							Gun::AreaHurt(tgt, 320.0f, 0.6f * top * pf, "");
+						RE::NiPoint3 mouth = at + RE::NiPoint3{ 0, 0, 40.0f };
+						if (auto* root = a->Get3D()) if (auto* head = root->GetObjectByName("NPC Head")) mouth = head->world.translate;
+						const float pf = 0.7f + 0.3f * Arcana::Power();
+						const float top = UpgradeMult(AfterSovngarde() ? kWonderUps + 1 : kWonderUps);
+						for (int k = 1; k <= 8; ++k) {
+							const RE::NiPoint3 pt = mouth + (tgt - mouth) * (k / 8.0f);
+							Gun::ElemBurst(7, pt, 0.25f + 0.08f * k, 0.04f * k, 0.8f);
 						}
+						for (int k = 2; k <= 6; k += 2) Gun::AreaHurt(mouth + (tgt - mouth) * (k / 8.0f), 150.0f, 0.15f * top * pf, "");
+						Gun::ElemBurst(7, tgt + RE::NiPoint3{ 0, 0, -10.0f }, 1.4f, 0.32f, 1.2f);
+						Gun::AreaHurt(tgt, 300.0f, 0.6f * top * pf, "");
 					}
 				}
 			}
@@ -2631,7 +2633,7 @@ namespace bo3z::Classes
 				for (auto* sp : p->GetActorRuntimeData().addedSpells) {
 					if (!sp || sp->GetSpellType() != RE::MagicSystem::SpellType::kSpell || Arcana::IndexOf(sp) >= 0) continue;
 					if (sp->GetCastingType() == RE::MagicSystem::CastingType::kConcentration) continue;  // (a stream's cost is a second's: already small)
-					if (sp == WyrmSpell() || sp == TomeSpell() || sp == FlaskSpell(6)) continue;  // (the wonders: 100, as Noah set them)
+					if (sp == WyrmSpell() || sp == TomeSpell()) continue;  // (the wonders: 100, as Noah set them)
 					auto [it, fresh] = base.try_emplace(sp, 0.0f);
 					if (fresh) it->second = sp->CalculateMagickaCost(nullptr);
 					// a relic's (a hero's pact, a support spell, a Vigilant's) by its own tier on the one cost; the rest drawn in
@@ -2982,19 +2984,19 @@ namespace bo3z::Classes
 	// little up so it arcs; where it comes down - a body, the ground, a wall - it bursts (FlaskBurst). The damage is the class
 	// spells' one curve; Tier I leaves a pool of it a few seconds, Tier II splits it into three, Legendary a far greater
 	// blast. The Philosopher's Flask (the class's wonder) hangs a cloud of molten gold where it shatters (TickGoldClouds)
-	RE::SpellItem* FlaskSpell(int a_el)
+	RE::TESBoundObject* FlaskItem(int a_el)
 	{
-		if (a_el < 0 || a_el >= static_cast<int>(gen::kFlaskSpell.size())) return nullptr;
-		auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kFlaskSpell[a_el], gen::kPlugin);
-		return f ? f->As<RE::SpellItem>() : nullptr;
+		if (a_el < 0 || a_el >= static_cast<int>(gen::kFlaskItem.size())) return nullptr;
+		auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kFlaskItem[a_el], gen::kPlugin);
+		return f ? f->As<RE::TESBoundObject>() : nullptr;
 	}
 	void GiveFlask(int a_el)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
-		auto* sp = FlaskSpell(a_el);
-		if (!p || !sp || p->HasSpell(sp)) return;
-		p->AddSpell(sp);
-		logger::info("classes: {} learned", sp->GetName());
+		auto* it = FlaskItem(a_el);
+		if (!p || !it || p->GetItemCount(it) > 0) return;
+		p->AddObjectToContainer(it, nullptr, 1, nullptr);
+		logger::info("classes: {} in your pack", it->GetName());
 	}
 	RE::TESObjectWEAP* AlchemistKnife()
 	{
@@ -3010,22 +3012,13 @@ namespace bo3z::Classes
 		std::vector<GoldCloud> g_gold;
 		float FlaskRadius(int a_tier) { return 230.0f * (1.0f + 0.08f * static_cast<float>(std::min(a_tier, 3))) * (a_tier >= 3 ? 1.45f : 1.0f) * (Kit::ArmourTier(coffer::kAlchemist) >= 2 ? 1.2f : 1.0f) * Perks::FlaskRadiusMult(); }
 		float FlaskShare(int a_tier) { return 0.5f * UpgradeMult(a_tier) * (0.7f + 0.3f * Arcana::Power()) * (a_tier >= 3 ? 1.3f : 1.0f); }
-		void LaunchFlask(int a_el, int a_tier, const RE::NiPoint3& a_from, float a_pitch, float a_yaw, bool a_child)
+		void FlaskBurst(const FlaskShot& f, const RE::NiPoint3& a_at);
+		void LaunchFlask(int a_el, int a_tier, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, bool a_child)
 		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			auto* raw = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kFlaskProj[a_el], gen::kPlugin);
-			auto* carrier = raw ? raw->As<RE::SpellItem>() : nullptr;
-			auto* proj = carrier && !carrier->effects.empty() && carrier->effects[0] && carrier->effects[0]->baseEffect ? carrier->effects[0]->baseEffect->data.projectileBase : nullptr;
-			if (!p || !proj) return;
-			RE::Projectile::ProjectileRot rot{ a_pitch, a_yaw };
-			RE::Projectile::LaunchData    ld(proj, p, a_from, rot);
-			ld.useOrigin = true;
-			ld.autoAim = false;
-			ld.spell = carrier;
-			ld.castingSource = RE::MagicSystem::CastingSource::kRightHand;
-			RE::ProjectileHandle h;
-			RE::Projectile::Launch(&h, ld);
-			g_flasks.push_back({ h, a_el, a_tier, a_from, false, a_child, 0.0f });
+			static constexpr const char* kModel[7] = { "fire", "frost", "shock", "poison", "sun", "blood", "philosopher" };
+			FlaskShot shot{ {}, a_el, a_tier, a_from, false, a_child, 0.0f };
+			Gun::Lob(std::string("CurseOfAlduin\\alchemist\\flask_") + kModel[a_el] + ".nif", a_from, a_vel, a_child ? 0.7f : 1.0f,
+				[shot](const RE::NiPoint3& at) { FlaskBurst(shot, at); });
 		}
 		void FlaskBlast(int a_el, int a_tier, const RE::NiPoint3& a_at, float a_size, float a_share, float a_radius)
 		{
@@ -3059,8 +3052,7 @@ namespace bo3z::Classes
 				const bool legend = AfterSovngarde();
 				GoldCloud g;
 				g.at = a_at, g.left = legend ? 16.0f : 12.0f, g.radius = legend ? 560.0f : 450.0f, g.legend = legend;
-				Gun::ElemBurst(8, a_at, 3.0f, 0.0f, 1.2f);
-				Gun::FxBlast("lightmassive", a_at);
+				Gun::ElemBurst(8, a_at, 3.0f, 0.0f, 1.2f);  // (Noah: "the philosopher's flask also casts a green ball" - Skyrim's light blast: gone)
 				g_gold.push_back(std::move(g));
 				logger::info("alchemist: the Philosopher's Flask shatters");
 				return;
@@ -3071,10 +3063,11 @@ namespace bo3z::Classes
 			FlaskBlast(f.el, t, a_at, (f.child ? 0.6f : 1.0f) * (0.9f + 0.3f * static_cast<float>(std::min(t, 3))), share, r);
 			if (f.child) return;
 			if (t >= 1) {  // Tier I: a pool of it lingers, three more bites
+				Gun::Puddle(f.el, a_at, r / 100.0f, 3.0f);
 				for (int k = 1; k <= 3; ++k) {
 					const int el = f.el;
 					Tasks::Later(0.8f * static_cast<float>(k), [el, a_at, r, share]() {
-						Gun::ElemBurst(kFlaskBurst[el], a_at + RE::NiPoint3{ 0, 0, -35.0f }, 0.7f, 0.0f, 0.9f);
+						Gun::ElemBurst(kFlaskBurst[el], a_at + RE::NiPoint3{ 0, 0, -35.0f }, 0.5f, 0.0f, 0.7f);
 						for (auto* f : NearFoes(a_at, r * 0.8f, 16)) g_flaskMark[f->GetFormID()] = std::chrono::steady_clock::now();
 						Gun::AreaHurt(a_at, r * 0.8f, share * 0.2f, "");
 					});
@@ -3083,30 +3076,9 @@ namespace bo3z::Classes
 			if (t >= 2) {  // Tier II: it splits into three, thrown out from the burst
 				for (int k = 0; k < 3; ++k) {
 					const float yaw = 2.094f * static_cast<float>(k) + 0.5f;
-					LaunchFlask(f.el, t, a_at + RE::NiPoint3{ 0, 0, 40.0f }, -0.9f, yaw, true);
+					LaunchFlask(f.el, t, a_at + RE::NiPoint3{ 0, 0, 40.0f }, RE::NiPoint3{ std::sin(yaw) * 320.0f, std::cos(yaw) * 320.0f, 420.0f }, true);
 				}
 			}
-		}
-		void TickFlasks(float a_delta)
-		{
-			std::vector<std::pair<FlaskShot, RE::NiPoint3>> burst;
-			for (auto& f : g_flasks) {
-				f.life += a_delta;
-				auto pr = f.h.get();
-				if (!pr || pr->IsDeleted() || pr->IsDisabled()) { burst.push_back({ f, f.last }); f.life = 99.0f; continue; }
-				const auto now = pr->GetPosition();
-				const bool still = f.seen && (now - f.last).Length() < 3.0f && !RE::UI::GetSingleton()->GameIsPaused();
-				if (still || f.life > 6.0f) {
-					burst.push_back({ f, now });
-					pr->Disable();
-					pr->SetDelete(true);
-					f.life = 99.0f;
-					continue;
-				}
-				f.last = now, f.seen = true;
-			}
-			std::erase_if(g_flasks, [](const FlaskShot& f) { return f.life >= 99.0f; });
-			for (auto& [f, at] : burst) FlaskBurst(f, at);
 		}
 		void TickGoldClouds(float a_delta)
 		{
@@ -3168,12 +3140,9 @@ namespace bo3z::Classes
 		auto* av = a->AsActorValueOwner();
 		const float hp = Director::RoundHealth() * gen::kRounds.hpScale * 30.0f;
 		av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, std::max(0.0f, hp - av->GetPermanentActorValue(RE::ActorValue::kHealth)));
-		// (kept on the ground: Papyrus's own SetAllowFlying, for its flight AI)
-		if (auto* vm = RE::BSScript::Internal::VirtualMachine::GetSingleton()) {
-			const auto hd = vm->GetObjectHandlePolicy()->GetHandleForObject(a->GetFormType(), a);
-			RE::BSTSmartPointer<RE::BSScript::IStackCallbackFunctor> none;
-			vm->DispatchMethodCall(hd, "Actor", "SetAllowFlying", RE::MakeFunctionArguments(false), none);
-		}
+		// (Noah: "make the dragon a quarter of the size ... with the ability to fly around within 15 meters of the player") a
+		// little dragon: a quarter of its size, free to fly - TickSummons keeps it within 15 m of you
+		a->SetScale(0.25f);
 		g_boneDragon = a->GetHandle();
 		g_ownSummons.push_back({ a->GetHandle(), AfterSovngarde() ? 3600.0f : 60.0f });
 		Gun::ElemBurst(7, at, 3.0f, 0.0f, 1.4f);
@@ -3181,27 +3150,50 @@ namespace bo3z::Classes
 		Hud::Banner("THE BONE-THRONE DRAGON RISES", 3.0f);
 		logger::info("classes: the Bone-Throne dragon called up");
 	}
-	bool ThrowFlask(RE::FormID a_spell)
+	bool ThrowFlask(RE::FormID) { return false; }  // (the flasks were spells: items now - TickAlchemy)
+	namespace
 	{
-		int el = -1;
-		for (int e = 0; e < static_cast<int>(gen::kFlaskSpell.size()); ++e) if (auto* sp = FlaskSpell(e); sp && sp->GetFormID() == a_spell) el = e;
-		if (el < 0) return false;
-		auto* p = RE::PlayerCharacter::GetSingleton();
-		auto* cam = RE::PlayerCamera::GetSingleton();
-		if (!p || !cam || !cam->cameraRoot) return true;
-		const int t = el == 6 ? 0 : std::max(0, Kit::FlaskTier(el));
-		const auto& w = cam->cameraRoot->world;
-		RE::NiPoint3 dir{ w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] };
-		dir.Unitize();
-		const RE::NiPoint3 from = w.translate + dir * 60.0f + RE::NiPoint3{ 0.0f, 0.0f, -10.0f };
-		const float pitch = -std::asin(std::clamp(dir.z, -1.0f, 1.0f)) - 0.14f;  // (a little up: it arcs onto where you aim)
-		LaunchFlask(el, t, from, pitch, std::atan2(dir.x, dir.y), false);
-		return true;
+		float g_flaskCool = 0, g_philCool = 0;
+		void ThrowFlaskEl(int el)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			if (!p || !cam || !cam->cameraRoot) return;
+			const int t = el == 6 ? 0 : std::max(0, Kit::FlaskTier(el));
+			const auto& w = cam->cameraRoot->world;
+			RE::NiPoint3 dir{ w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] };
+			dir.Unitize();
+			RE::NiPoint3 right{ dir.y, -dir.x, 0.0f };
+			if (const float l = right.Length(); l > 1e-3f) right = right * (1.0f / l);
+			const RE::NiPoint3 from = w.translate + dir * 45.0f + right * 18.0f + RE::NiPoint3{ 0.0f, 0.0f, -14.0f };
+			const float speed = el == 6 ? 1350.0f : 1500.0f;
+			LaunchFlask(el, t, from, dir * speed + RE::NiPoint3{ 0.0f, 0.0f, 260.0f }, false);  // (a little up: it arcs onto where you aim)
+		}
 	}
+	// (Noah: "an item that you actually throw") a flask that leaves your pack was used (its hotkey, or Use in the pack): it is
+	// thrown and put back - an Alchemist's flasks never run out, a breath between throws (the Philosopher's Flask twelve seconds)
 	void TickAlchemy(float a_delta)
 	{
-		TickFlasks(a_delta);
 		TickGoldClouds(a_delta);
+		g_flaskCool = std::max(0.0f, g_flaskCool - a_delta), g_philCool = std::max(0.0f, g_philCool - a_delta);
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p || !p->Is3DLoaded() || p->IsDead() || ItemMenusOpen() || RE::UI::GetSingleton()->GameIsPaused()) return;
+		static float look = 0;
+		if ((look -= a_delta) > 0) return;
+		look = 0.05f;
+		for (int el = 0; el < 7; ++el) {
+			auto* it = FlaskItem(el);
+			const bool owned = el == 6 ? (WonderState(coffer::kAlchemist) >= 4 && g_class.load() == coffer::kAlchemist) : Kit::FlaskTier(el) >= 0;
+			if (!it || !owned || p->GetItemCount(it) > 0) continue;
+			p->AddObjectToContainer(it, nullptr, 1, nullptr);
+			float& cool = el == 6 ? g_philCool : g_flaskCool;
+			if (cool > 0) {
+				if (el == 6) Hud::Banner(fmt::format("The Philosopher's Flask is still brewing ({:.0f} s)", std::ceil(cool)), 1.5f);
+				continue;
+			}
+			cool = el == 6 ? 12.0f : 0.9f * (Kit::ArmourTier(coffer::kAlchemist) >= 1 ? 0.85f : 1.0f) * Perks::FlaskCostMult();
+			ThrowFlaskEl(el);
+		}
 	}
 	RE::TESObjectWEAP* Riftblade()
 	{

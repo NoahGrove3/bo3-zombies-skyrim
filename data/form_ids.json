@@ -1401,6 +1401,13 @@
   "SPEL:throw_philosopher": "0xd75",
   "MGEF:flaskcast": "0xd76",
   "WEAP:alchknife": "0xd77",
-  "SPEL:bonehorn": "0xd78"
+  "SPEL:bonehorn": "0xd78",
+  "ALCH:flaskitem_fire": "0xd79",
+  "ALCH:flaskitem_frost": "0xd7a",
+  "ALCH:flaskitem_shock": "0xd7b",
+  "ALCH:flaskitem_poison": "0xd7c",
+  "ALCH:flaskitem_sun": "0xd7d",
+  "ALCH:flaskitem_blood": "0xd7e",
+  "ALCH:flaskitem_philosopher": "0xd7f"
  }
 }

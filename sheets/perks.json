@@ -214,7 +214,7 @@
       "effect": "ranger_draw",
       "value": 0.75,
       "potionModel": "Clutter\\Potions\\PotionInvisibiltyGreat.nif",
-      "description": "Your flasks cost 25% less magicka.",
+      "description": "You throw your flasks 25% faster.",
       "color": "C8D870",
       "verify": ""
     },
@@ -226,7 +226,7 @@
       "effect": "ranger_ward",
       "value": 0.2,
       "potionModel": "Clutter\\Potions\\PotionStaminaGreat.nif",
-      "description": "While you hold a flask, enemies' hits do 20% less damage to you.",
+      "description": "Enemies' hits do 20% less damage to you.",
       "color": "E8C060",
       "verify": ""
     },

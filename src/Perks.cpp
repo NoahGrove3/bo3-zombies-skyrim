@@ -56,15 +56,11 @@ namespace bo3z
 		float SwingSpeedMult() { return Live(gen::kPerk_steelwind) ? gen::kPerks[gen::kPerk_steelwind].value : 1.0f; }
 		float FlaskCostMult() { return Live(gen::kPerk_eagleeye) ? gen::kPerks[gen::kPerk_eagleeye].value : 1.0f; }
 		float FlaskRadiusMult() { return Live(gen::kPerk_fletcher) ? gen::kPerks[gen::kPerk_fletcher].value : 1.0f; }
-		float WardMult()
+		float WardMult()  // (Philter of Iron Skin: an Alchemist takes less from the dead's blows)
 		{
 			if (!Live(gen::kPerk_dawnwatch)) return 1.0f;
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			bool flask = false;
-			for (const bool left : { false, true }) {
-				auto* held = p ? p->GetEquippedObject(left) : nullptr;
-				for (int e = 0; e < 7 && held; ++e) if (held == Classes::FlaskSpell(e)) flask = true;
-			}
+			return 1.0f - gen::kPerks[gen::kPerk_dawnwatch].value;
+		}
 			return flask ? 1.0f - gen::kPerks[gen::kPerk_dawnwatch].value : 1.0f;
 		}
 		bool SummonMight() { return Live(gen::kPerk_bonebinder); }

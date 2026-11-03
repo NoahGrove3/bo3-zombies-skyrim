@@ -2335,15 +2335,106 @@ namespace bo3z
 			g_wells.push_back(std::move(w));
 			logger::info("vortex: a black hole opens{}", a_legendary ? " (Legendary)" : "");
 		}
+		// (Noah: "the dragon's current attacks are invisible ... the lingering acid is invisible") the bursts placed as world
+		// objects never showed: they are hung in the scene by hand now (as the spells' and the bows' own looks are), each
+		// its model, its place and scale, gone when its time is up
+		struct EBurst { Spellcraft::Fx fx; std::string path; RE::NiPoint3 at; float t = 0, delay = 0, life = 1, scale = 1; bool flat = false; };
+		std::vector<EBurst> g_eb;
+		void QueueFx(std::string a_path, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life, bool a_flat)
+		{
+			if (g_eb.size() > 90) return;  // (never a screen of it)
+			EBurst b;
+			b.path = std::move(a_path), b.at = a_at, b.delay = a_delay, b.life = a_life, b.scale = a_scale, b.flat = a_flat;
+			g_eb.push_back(std::move(b));
+		}
+		void TickEBursts(float a_delta)
+		{
+			for (auto& b : g_eb) {
+				b.t += a_delta;
+				if (b.t < b.delay) continue;
+				if (!b.fx.obj) {
+					b.fx = Spellcraft::Fx{ Spellcraft::LoadPath(b.path) };
+					if (!b.fx.obj) { b.t = 1.0e9f; continue; }
+					b.fx.Attach(Spellcraft::WorldRoot());
+					b.fx.Place(b.at, RE::NiMatrix3{}, b.scale);
+				}
+				if (b.t > b.delay + b.life) {
+					b.fx.Detach();
+					b.t = 1.0e9f;
+				}
+			}
+			std::erase_if(g_eb, [](const EBurst& b) { return b.t >= 1.0e9f; });
+		}
+		// (Noah: the Alchemist's flasks "explode right in front of my face - there's no travel, it doesn't arc") a thrown
+		// flask is flown here: its model hung in the scene, carried along its arc under gravity, tumbling; it comes down on
+		// the first body or wall or ground its path crosses, and its burst is called there
+		struct Lobbed { Spellcraft::Fx fx; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; };
+		std::vector<Lobbed> g_lobs;
+		void TickLobs(float a_delta)
+		{
+			if (g_lobs.empty()) return;
+			const float dt = std::min(a_delta, 0.05f);
+			std::vector<RE::Actor*> foes;
+			for (auto h : Director::AliveHandles()) if (auto a = h.get(); a && !a->IsDead()) foes.push_back(a.get());
+			std::vector<std::pair<std::function<void(const RE::NiPoint3&)>, RE::NiPoint3>> landed;
+			for (auto& l : g_lobs) {
+				l.t += dt;
+				l.v.z -= 900.0f * dt;
+				const RE::NiPoint3 next = l.p + l.v * dt;
+				RE::NiPoint3 hit = next;
+				bool down = l.t > 8.0f;
+				if (!down && l.t > 0.04f) {  // (out of your own hand first)
+					if (const float wf = Spellcraft::WorldHit(l.p, next); wf <= 1.0f) hit = l.p + (next - l.p) * wf, down = true;
+					for (auto* f : foes) {
+						if (down) break;
+						const RE::NiPoint3 c = f->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f };
+						if (c.GetDistance(l.p) > 400.0f) continue;
+						if (Spellcraft::PointSeg(c, l.p, next) < 62.0f) hit = c, down = true;
+					}
+				}
+				if (down) {
+					l.fx.Detach();
+					l.done = true;
+					landed.push_back({ l.land, hit });
+					continue;
+				}
+				l.p = next;
+				if (l.fx.obj) {
+					RE::NiMatrix3 tumble;
+					tumble.SetEulerAnglesXYZ(l.t * l.spin, 0.0f, 0.0f);
+					l.fx.Place(l.p, Spellcraft::Facing(l.v) * tumble, l.scale);
+				}
+			}
+			std::erase_if(g_lobs, [](const Lobbed& l) { return l.done; });
+			for (auto& [fn, at] : landed) if (fn) fn(at);
+		}
+		void  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land)
+		{
+			if (g_lobs.size() > 40) return;
+			Lobbed l;
+			l.fx = Spellcraft::Fx{ Spellcraft::LoadPath(a_model) };
+			if (l.fx.obj) l.fx.Attach(Spellcraft::WorldRoot());
+			l.p = a_from, l.v = a_vel, l.scale = a_scale, l.land = std::move(a_land);
+			g_lobs.push_back(std::move(l));
+		}
 		void  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life)
 		{
-			if (g_pfire.size() > 40) return;  // (never a screen of it)
-			g_pfire.push_back({ {}, 0.0f, a_life, a_delay, a_scale, a_at });
+			QueueFx("CurseOfAlduin\\fx\\purplefire.nif", a_at, a_scale, a_delay, a_life, false);
 		}
 		void  ElemBurst(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life)
 		{
-			if (a_elem < 0 || a_elem >= static_cast<int>(gen::kBurst.size()) || g_pfire.size() > 48) return;
-			g_pfire.push_back({ {}, 0.0f, a_life, a_delay, a_scale, a_at, gen::kBurst[a_elem] });
+			static constexpr const char* kName[9] = { "fire", "frost", "shock", "wind", "sun", "blood", "void", "poison", "gold" };
+			if (a_elem < 0 || a_elem >= 9) return;
+			QueueFx(std::string("CurseOfAlduin\\fx\\burst_") + kName[a_elem] + ".nif", a_at, a_scale, a_delay, a_life, false);
+		}
+		// a pool of the element on the ground (tools/puddle.py): the Alchemist's flasks' Tier I
+		void  Puddle(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_life)
+		{
+			static constexpr const char* kName[6] = { "fire", "frost", "shock", "poison", "sun", "blood" };
+			if (a_elem < 0 || a_elem >= 6) return;
+			RE::NiPoint3 at = a_at;
+			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && land > at.z - 250.0f && land < at.z + 80.0f) at.z = land + 2.0f;
+			QueueFx(std::string("CurseOfAlduin\\fx\\puddle_") + kName[a_elem] + ".nif", at, a_scale, 0.0f, a_life, true);
 		}
 		float AdsBlend() { return g_ads; }
 		bool  Owns(int a_gun) { return SlotOf(a_gun) >= 0; }
@@ -2829,7 +2920,7 @@ namespace bo3z
 			Spellcraft::Reset();
 			BowsImpl::Reset();
 			// (the audit: a load mid-unleash let the old game's stars fall, wells pull and storms crackle in the new one)
-			g_detonations.clear(), g_arcs.clear(), g_dots.clear(), g_shrink.clear(), g_blasts.clear(), g_wells.clear(), g_vflash.clear(), g_pfire.clear(), g_frozen.clear(), g_prisms.clear();
+			g_detonations.clear(), g_arcs.clear(), g_dots.clear(), g_shrink.clear(), g_blasts.clear(), g_wells.clear(), g_vflash.clear(), g_pfire.clear(), (void)std::for_each(g_eb.begin(), g_eb.end(), [](EBurst& b) { b.fx.Detach(); }), g_eb.clear(), (void)std::for_each(g_lobs.begin(), g_lobs.end(), [](Lobbed& l) { l.fx.Detach(); }), g_lobs.clear(), g_frozen.clear(), g_prisms.clear();
 			g_hexed.clear(), g_doomed.clear(), g_plagued.clear();
 			g_zones.clear(), g_chill.clear(), g_frozenUntil.clear();
 			Props::g_world.clear(), Props::g_twisters.clear();
@@ -3450,6 +3541,8 @@ namespace bo3z
 			TickMarks(a_delta);
 			Spellcraft::Tick(a_delta);
 			BowsImpl::Tick(a_delta);
+			TickEBursts(a_delta);
+			TickLobs(a_delta);
 			if (out) {
 				const auto& g = gen::kGuns[gun];
 				if (g_burstLeft > 0 && (g_burstTimer -= a_delta) <= 0) {

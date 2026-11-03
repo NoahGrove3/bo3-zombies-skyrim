@@ -190,7 +190,7 @@ namespace bo3z::Kit
 				return w && w->GetName() ? w->GetName() : "Blade";
 			}
 			case Kind::Armour: return Classes::ArmourSetName(a_cls, g_cls[a_cls].tier[a_i]);
-			case Kind::Bomb: { auto* sp = Classes::FlaskSpell(Elem(d)); return sp && sp->GetName() ? sp->GetName() : "Flask"; }
+			case Kind::Bomb: { auto* it = Classes::FlaskItem(Elem(d)); return it && it->GetName() ? it->GetName() : "Flask"; }
 			}
 			return "";
 		}
@@ -242,7 +242,7 @@ namespace bo3z::Kit
 				return w && p->GetItemCount(w) > 0;
 			}
 			case Kind::Armour: return Classes::ArmourCarried(a_cls, g_cls[a_cls].tier[a_i]);
-			case Kind::Bomb: { auto* sp = Classes::FlaskSpell(Elem(d)); return sp && p->HasSpell(sp); }
+			case Kind::Bomb: { auto* it = Classes::FlaskItem(Elem(d)); return it && p->GetItemCount(it) > 0; }
 			}
 			return false;
 		}
