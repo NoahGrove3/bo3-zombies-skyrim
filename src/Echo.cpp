@@ -515,6 +515,7 @@ namespace bo3z
 		// every frame in the hall: the floating things turn and bob, and what's in your sights is found
 		void TickHall(RE::PlayerCharacter* a_p, float a_dt)
 		{
+			if (Save::SinceWorldReady() < 4.0f) return;  // (nothing placed while a save is still coming up)
 			const bool here = a_p->GetParentCell() == HH() && !InRoom(a_p);
 			if (!here) {
 				g_hallSwept = false;

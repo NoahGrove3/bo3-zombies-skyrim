@@ -71,6 +71,7 @@ namespace bo3z
 		void Guard();           // every tick: puts the mod's values back if something wiped them (see Forms.cpp)
 		void ForgetSnapshot();  // a load or the main menu: the next values are a different game's
 		void OnWorldReady();
+		float SinceWorldReady();  // seconds since the save came up (huge before the first)
 		void InstallCoSave();  // SKSE serialization: the values live in the co-save
 		int  PerkStacks(int a_perk);
 		int  StaminaBonus();  // extra stamina already given to this character

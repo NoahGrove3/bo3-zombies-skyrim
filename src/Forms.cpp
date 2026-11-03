@@ -272,7 +272,10 @@ namespace bo3z
 			const auto t = a_obj->GetFormType();
 			const bool settable = t == RE::FormType::Weapon || t == RE::FormType::Armor || t == RE::FormType::Misc || t == RE::FormType::Book ||
 			                      t == RE::FormType::AlchemyItem || t == RE::FormType::Ammo || t == RE::FormType::Ingredient || t == RE::FormType::SoulGem;
-			if (auto* pc = a_to->As<RE::PlayerCharacter>(); pc && settable) {
+			// (Noah's game crashed loading a save: nothing is set down in the world while the save is still coming up)
+			auto* ui = RE::UI::GetSingleton();
+			const bool settled = Save::SinceWorldReady() > 6.0f && a_to->Is3DLoaded() && !(ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME));
+			if (auto* pc = a_to->As<RE::PlayerCharacter>(); pc && settable && settled) {
 				for (int n = 0; n < a_count; ++n) {
 					auto ref = pc->PlaceObjectAtMe(a_obj, false);
 					if (!ref) {
@@ -650,8 +653,17 @@ namespace bo3z
 			}
 		}
 
+		std::atomic<std::int64_t> g_readyAtMs{ 0 };
+		float SinceWorldReady()
+		{
+			const auto t = g_readyAtMs.load();
+			if (!t) return 1.0e9f;
+			const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+			return (now - t) / 1000.0f;
+		}
 		void OnWorldReady()
 		{
+			g_readyAtMs = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 			if (!Flag(kFlagInit)) {
 				SetFlags(1 << kFlagInit);
 				Set(gen::kAV_round, 0);

@@ -2547,6 +2547,9 @@ namespace bo3z
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* root = p && p->Is3DLoaded() ? p->Get3D(false) : nullptr;
 			if (!g_orb.want || !root) { if (g_orb.fx.obj || g_orb.light) OrbDown(); return; }
+			// (Noah's game crashed twice the moment a save came up, in the renderer: the orb and its light were hung on the body
+			// that same first frame) it waits until the world has settled
+			if (Save::SinceWorldReady() < 4.0f) return;
 			if (!g_orb.fx.obj) {
 				g_orb.fx = Spellcraft::Fx{ Spellcraft::LoadPath("CurseOfAlduin\\fx\\lightorb.nif") };
 				if (!g_orb.fx.obj) return;

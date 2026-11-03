@@ -3255,7 +3255,7 @@ namespace bo3z::Classes
 		// hand (tools/flasks.py: the bottle down its -Y), and Skyrim's dagger sheath turns -Y up: on the hip it is turned over,
 		// the cork up and the bottle down
 		for (const bool left : { false, true }) {
-			if (FlaskHeld(left) < 0) continue;
+			if (FlaskHeld(left) < 0 || Save::SinceWorldReady() < 6.0f) continue;  // (never while the save is still coming up)
 			for (const bool first : { false, true }) {
 				auto* root = p->Get3D(first);
 				auto* sheath = root ? root->GetObjectByName(left ? "WeaponDaggerLeft" : "WeaponDagger") : nullptr;
@@ -3266,11 +3266,7 @@ namespace bo3z::Classes
 					RE::NiMatrix3 flip;
 					flip.entry[0][0] = -1.0f, flip.entry[1][1] = -1.0f, flip.entry[2][2] = 1.0f;  // (half a turn about its Z)
 					flip.entry[0][1] = flip.entry[0][2] = flip.entry[1][0] = flip.entry[1][2] = flip.entry[2][0] = flip.entry[2][1] = 0.0f;
-					if (kid->local.rotate.entry[0][0] > -0.99f || kid->local.rotate.entry[1][1] > -0.99f) {
-						kid->local.rotate = flip;
-						RE::NiUpdateData ud;
-						kid->Update(ud);
-					}
+					if (kid->local.rotate.entry[0][0] > -0.99f || kid->local.rotate.entry[1][1] > -0.99f) kid->local.rotate = flip;  // (the body's own update carries it)
 				}
 			}
 		}
