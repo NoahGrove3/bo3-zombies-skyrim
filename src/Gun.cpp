@@ -2438,7 +2438,7 @@ namespace bo3z
 		// 15 meters ... animated circulating and showing light beams, visually lighting up my surroundings") the Light Orb:
 		// its model (tools/lightorb.py) hung in the scene a little over your head, drifting round in a slow circle and bobbing,
 		// and the lantern's real light (shadow-casting, 15 m) carried inside it
-		struct LightOrb { Spellcraft::Fx fx; RE::NiPointer<RE::NiLight> light; bool want = false; float t = 0; RE::NiPoint3 at; bool placed = false; };
+		struct LightOrb { Spellcraft::Fx fx; RE::NiPointer<RE::NiNode> holder; RE::NiPointer<RE::NiLight> light; bool want = false; float t = 0; RE::NiPoint3 at; bool placed = false; };
 		LightOrb g_orb;
 		void OrbDown()
 		{
@@ -2448,6 +2448,8 @@ namespace bo3z
 				if (auto* parent = g_orb.light->parent) parent->DetachChild(g_orb.light.get());
 				g_orb.light.reset();
 			}
+			if (g_orb.holder && g_orb.holder->parent) g_orb.holder->parent->DetachChild2(g_orb.holder.get());
+			g_orb.holder.reset();
 			g_orb.fx.Detach();
 			g_orb.fx = {};
 			g_orb.placed = false;
@@ -2472,6 +2474,19 @@ namespace bo3z
 			RE::NiMatrix3 turn;
 			turn.SetEulerAnglesXYZ(0.0f, 0.0f, t * 0.6f);
 			g_orb.fx.Place(g_orb.at, turn, 1.0f);
+			// (the orb drew nothing while its light hung inside it: the light rides its own node beside it)
+			if (!g_orb.holder) {
+				if (auto* n = RE::NiNode::Create(1); n && Spellcraft::WorldRoot()) {
+					g_orb.holder.reset(n);
+					Spellcraft::WorldRoot()->AttachChild(n, true);
+				}
+			}
+			if (g_orb.holder) {
+				g_orb.holder->local.translate = g_orb.at - (g_orb.holder->parent ? g_orb.holder->parent->world.translate : RE::NiPoint3{});
+				RE::NiUpdateData ud;
+				ud.time = 0.0f;
+				g_orb.holder->UpdateDownwardPass(ud, 0);
+			}
 			// the light, inside the orb: hung again if the game took it down
 			auto* ssn = RE::BSShaderManager::State::GetSingleton().shadowSceneNode[0];
 			if (g_orb.light && ssn && !ssn->GetLight(g_orb.light.get())) {
@@ -2480,7 +2495,7 @@ namespace bo3z
 			}
 			if (!g_orb.light) {
 				auto* ligh = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectLIGH>(gen::kLanternLight, gen::kPlugin);
-				auto* node = g_orb.fx.obj ? g_orb.fx.obj->AsNode() : nullptr;
+				auto* node = g_orb.holder.get();
 				if (auto* l = ligh && node ? ligh->GenDynamic(p, node, 1, 1, 0) : nullptr) {
 					l->local.translate = RE::NiPoint3{ 0, 0, 0 };
 					g_orb.light.reset(l);

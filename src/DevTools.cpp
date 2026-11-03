@@ -690,6 +690,12 @@ namespace bo3z
 			if (!std::filesystem::exists(file, ec)) {
 				return;
 			}
+			// (a second Skyrim left running in the background read the same file and took half the commands) only the
+			// game in front answers
+			if (DWORD pid = 0; ::GetWindowThreadProcessId(::GetForegroundWindow(), &pid), pid != ::GetCurrentProcessId()) {
+				if (static int told = 0; told++ % 200 == 0) logger::info("dev: a command waits - this game isn't the window in front (pid {})", ::GetCurrentProcessId());
+				return;
+			}
 			std::ifstream in(file);
 			std::string   line;
 			std::vector<std::string> lines;
