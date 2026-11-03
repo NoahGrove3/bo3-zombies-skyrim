@@ -1202,7 +1202,9 @@ recs['WEAP'].append(record('WEAP', fid('WEAP', 'fang'), ws))
 for key, col, radius in (('rel_blue', '5AA8FF', 620), ('rel_warm', 'FFD9A0', 1100), ('rel_relic', '6AB8FF', 700), ('lantern', 'FFD48A', 1050)):  # (Noah: "a soft, warm light that makes everywhere around me visible, but not blindingly bright, within 15 meters")
     data = bytearray(tsub('ligh', 'DATA')); c = int(col, 16)
     struct.pack_into('<I', data, 4, radius); struct.pack_into('<BBBB', data, 8, c >> 16, (c >> 8) & 255, c & 255, 0)
-    if key == 'lantern': struct.pack_into('<I', data, 12, 0x1 | 0x1000)  # (the Light Orb: a steady light, no flicker, casting shadows all round - Noah: "visually lighting up my surroundings")
+    # (the Light Orb: a steady light, no flicker. Its omnidirectional shadows (0x1000, added with the orb) went with the crash
+    # that came after a while in a lamp-heavy interior (Dragonsreach, three times): a plain dynamic light, as the belt lantern's was)
+    if key == 'lantern': struct.pack_into('<I', data, 12, 0x1)
     recs['LIGH'].append(record('LIGH', fid('LIGH', key), [sub('EDID', z('UN_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.5 if key == 'lantern' else 1.0))]))  # (soft: a warm fill, not a glare)
 
 # (Noah: "the belt lantern should be an equipable item like the book for battle mage classes - when unequipped it shouldn't
