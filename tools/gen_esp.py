@@ -163,8 +163,10 @@ for e, label, text in FLASKS:
         elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_flask_' + e))
         # (Noah: "it still makes dagger sound effects when drawing ... the alchemist class should have its own combat noises")
         # glass and liquid drawing and putting away (tools/alchsfx.py), no blade's failed-swing or steel impact set
-        elif name == 'NAM9': b = struct.pack('<I', fid('SNDR', 'alch_draw'))
-        elif name == 'NAM8': b = struct.pack('<I', fid('SNDR', 'alch_sheath'))
+        # (Noah: "the equip and unequip sound ... should be a potion noise, not a high-pitched chime") Skyrim's own potion
+        # sounds: picking a potion up and putting it down
+        elif name == 'NAM9': b = tsub('alch', 'YNAM')
+        elif name == 'NAM8': b = tsub('alch', 'ZNAM')
         elif name in ('TNAM', 'INAM'): b = struct.pack('<I', 0)
         elif name == 'DATA': b = struct.pack('<IfH', 0, 0.5, 0)
         subs.append(sub(name, b))

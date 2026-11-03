@@ -2679,8 +2679,14 @@ namespace bo3z
 						if (auto r = g_pulse->shrine.get()) {  // (everything at its own size and light)
 							RE::TES::GetSingleton()->ForEachReferenceInRange(r.get(), 500.0f, [&](RE::TESObjectREFR* x) {
 								auto* b = x ? x->GetBaseObject() : nullptr;
-								if (b && (b == Forms::Ours(gen::kFreedRunes) || b == Forms::Ours(gen::kHeartMotes)))
+								if (b && (b == Forms::Ours(gen::kFreedRunes) || b == Forms::Ours(gen::kHeartMotes))) {
 									if (auto* o = x->Get3D()) o->local.scale = x->GetScale(), Fade(o, 1.0f);
+									// (Noah: "the particles and rune floating above the altar is missing ... if I walk away and come back
+									// it spawns in") its model made again, as a return to the city would: off and straight back on
+									x->Disable();
+									const auto h = x->CreateRefHandle();
+									Tasks::Later(0.2f, [h] { if (auto rr = h.get()) rr->Enable(false); });
+								}
 								return RE::BSContainer::ForEachResult::kContinue;
 							});
 						}

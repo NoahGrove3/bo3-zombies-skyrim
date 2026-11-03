@@ -2730,7 +2730,9 @@ namespace bo3z
 			if (a_elem < 0 || a_elem >= 6) return;
 			RE::NiPoint3 at = a_at;
 			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && land > at.z - 250.0f && land < at.z + 80.0f) at.z = land + 2.0f;
-			QueueFx(std::string("CurseOfAlduin\\fx\\puddle_") + kName[a_elem] + ".nif", at, a_scale, 0.0f, a_life, true);
+			// (Noah: "remove the puddle effect on the floor and just keep it elemental effects") its element burning low over
+			// the ground - fire, frost-mist, arcs, sun, blood - not a pool of liquid (tools/motes.py ground_*)
+			QueueFx(std::string("CurseOfAlduin\\fx\\ground_") + kName[a_elem] + ".nif", at, a_scale, 0.0f, a_life, true);
 			static constexpr int kMote[6] = { 0, 1, 2, 7, 4, 5 };
 			Motes(kMote[a_elem], at, a_scale * 0.9f, a_life);  // (fine motes of it rising off the pool)
 		}

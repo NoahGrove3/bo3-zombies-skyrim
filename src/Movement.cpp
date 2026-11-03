@@ -1099,6 +1099,14 @@ namespace bo3z
 				return;
 			}
 			if (a_player->HasShout(sh)) {
+				// (Noah: "to use the dragon updraft shout, I need a dragon soul") the bond's gift is the whole shout, every
+				// word unlocked - spoken again once a session, so a word still waiting on a soul is opened
+				if (static bool opened = false; !opened) {
+					opened = true;
+					for (auto w : gen::kUpdraftWords)
+						if (auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(w, gen::kPlugin)) Gun::Console(fmt::format("player.teachword {:08X}", f->GetFormID())), Gun::Console(fmt::format("player.unlockword {:08X}", f->GetFormID()));
+					logger::info("glider: Dragon's Updraft - its words unlocked");
+				}
 				return;
 			}
 			for (auto w : gen::kUpdraftWords) {

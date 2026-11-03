@@ -185,12 +185,44 @@ def spark_nif(el, out_name):
     fxwrite(L, MESH / out_name)
 
 
+# (Noah: "remove the puddle effect on the floor and just keep it elemental effects - the lightning bottle should leave lightning on
+# the ground instead of just a blue puddle") each flask's ground effect: its element's own flipbook (the altar bows' arrowhead
+# fire, frost-mist, arcs, sun-rays, blood-mist - tools/bowarrows.py) burning low over the area in many small cards, each its own
+# phase and size, with the fine motes rising through it
+GROUND = {
+    'fire':   ('emberstring', ('1,0.55,0.15', '1,0.4,0.08', '1,0.7,0.25'), 1.6, 1.0),
+    'frost':  ('rimehorn', ('0.6,0.88,1', '0.75,0.95,1', '0.5,0.8,1'), 1.4, 0.8),
+    'shock':  ('stormreach', ('0.75,0.6,1', '0.6,0.55,1', '0.9,0.8,1'), 1.8, 0.7),
+    'poison': ('thirstbow', ('0.45,1,0.15', '0.3,0.85,0.1', '0.6,1,0.3'), 1.4, 0.9),
+    'sun':    ('dawnspire', ('1,0.85,0.35', '1,0.75,0.2', '1,0.92,0.55'), 1.3, 0.8),
+    'blood':  ('thirstbow', ('0.7,0.03,0.04', '0.55,0.01,0.03', '0.85,0.08,0.06'), 1.5, 0.9),
+}
+
+
+def ground_nif(el):
+    fb, cols, sc, hmul = GROUND[el]
+    tex = f'CurseOfAlduin\\bow\\{fb}_arrowfx.dds'
+    random.seed(sum(map(ord, el)) * 7)
+    L = []
+    k = 0
+    for ring, n, rad in ((0, 4, 22.0), (1, 8, 55.0), (2, 10, 88.0)):
+        for i in range(n):
+            a = 2 * math.pi * (i + random.uniform(-0.35, 0.35)) / n + ring * 0.9
+            r = rad * random.uniform(0.7, 1.12)
+            w = random.uniform(10, 17) * (1.15 - 0.15 * ring)
+            card(L, f'e{k}', tex, random.choice(cols), sc, w, -w * 0.15, w * 2.0 * hmul,
+                 (r * math.cos(a), r * math.sin(a), 0.0), True, random.uniform(18, 26), random.uniform(0, 2.6))
+            k += 1
+    fxwrite(L, MESH / f'ground_{el}.nif')
+
+
 def main():
     WORK.mkdir(parents=True, exist_ok=True); MESH.mkdir(parents=True, exist_ok=True)
     motes_rise(); sparks_burst(); glow_disc()
     for el in EL: motes_nif(el)
     spark_nif('sun', 'burst_sun.nif')
     spark_nif('gold', 'burst_gold.nif')
+    for el in GROUND: ground_nif(el)
 
 
 if __name__ == '__main__':

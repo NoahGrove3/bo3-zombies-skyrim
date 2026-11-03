@@ -377,7 +377,7 @@ namespace bo3z
 			Points::Add(500 * s.Count());
 			const std::string head = Upper(std::string(Title(tr))) + " - COMPLETE";
 			if (s.Boss()) {
-				Hud::Banner(head + "   " + std::string(BossName(a_town)) + (Director::Fighting() ? " rises with the next wave" : " rises when night falls"), 7.0f);
+				Hud::Banner(head + "   " + std::string(BossName(a_town)) + (Director::Fighting() ? " rises when this night's last wave falls" : " rises at the end of the next night"), 7.0f);
 			} else if (InParty()) {
 				Hud::Banner(head + (SharedDone(s) ? std::string("   the party's three trials are done") : std::string()) + (wait.empty() ? std::string() : "   class trials still to win: " + wait), 6.0f);
 			} else {
@@ -569,7 +569,7 @@ namespace bo3z
 				h.questTitle = "THE DRAGON PRIEST";
 				// (Noah: "the Dragon Priest never spawned at the end of my night") it only wakes once the story reaches Bleak
 				// Falls Barrow - now it says so, wherever it waits
-				h.questGoal = PriestDue(a_zone) ? "Slay " + std::string(BossName(a_zone)) : std::string(BossName(a_zone)) + (Director::Fighting() ? " rises with the next wave" : " rises when night falls");
+				h.questGoal = Director::PriestHold() ? "Slay " + std::string(BossName(a_zone)) : std::string(BossName(a_zone)) + (Director::Fighting() ? " rises when the night's last wave falls" : " rises at the end of the next night");
 				h.questWarn = false;
 				return;
 			}
@@ -751,7 +751,7 @@ namespace bo3z
 				v.desc[i] = Ask(i);
 			}
 			v.boss = std::string(BossName(a_town));
-			v.bossLine = s.Boss() ? std::string(PriestDue(a_town) ? "Rises near the altar at night - slay it to wake the altar" : Director::Fighting() ? "Rises with the next wave - slay it to wake the altar" : "Rises when night falls - slay it to wake the altar") : fmt::format("Rises when the four trials are done ({} of {})", s.Count(), kNeeded);
+			v.bossLine = s.Boss() ? std::string(Director::PriestHold() ? "Risen - slay it to wake the altar" : "Rises when the night's last wave falls - slay it to wake the altar") : fmt::format("Rises when the four trials are done ({} of {})", s.Count(), kNeeded);
 			return v;
 		}
 
@@ -895,6 +895,14 @@ namespace bo3z
 				Hud::Banner(Upper(std::string(BossName(a_town))) + " FALLS - " + Upper(std::string(gen::kTowns[a_town])) + " IS FREE", 5.0f);
 				logger::info("curse: {}'s Dragon Priest slain - the night ends, the city is freed", gen::kTowns[a_town]);
 			}
+		}
+		bool PriestWaits()
+		{
+			if (g_zone < 0) return false;
+			const St s = Get(g_zone);
+			RE::NiPoint3 c; float yaw = 0; RE::TESWorldSpace* ws = nullptr;
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			return !s.freed && s.Boss() && s.prog == 0 && p && Shops::StandFrame(g_zone, c, yaw, ws) && ws == p->GetWorldspace();
 		}
 		void OnNightCleared()
 		{
@@ -1276,7 +1284,7 @@ namespace bo3z
 			case gen::kTrial_steel:
 				break;
 			default:
-				if (s.Boss() && s.prog == 0 && here && PriestDue(z) && !Director::ChampionActive(z)) {  // (no story gate: from the wave after its trials)  // the Dragon Priest rises out in the city, once a night until it falls
+				if (s.Boss() && s.prog == 0 && here && Director::PriestHold() && !Director::ChampionActive(z)) {  // (Noah: the night's last foe - he rises once its last wave is down)  // (no story gate: from the wave after its trials)  // the Dragon Priest rises out in the city, once a night until it falls
 					static float retry = 0;
 					if ((retry -= a_delta) <= 0) {
 						retry = 4.0f;

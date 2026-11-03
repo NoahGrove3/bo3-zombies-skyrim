@@ -1398,6 +1398,10 @@ namespace bo3z
 		// (Noah: the boss's wonder part was lost when its body crumbled before you reached it) its death is heard the moment
 		// it falls, and the reward is yours then - straight to you, wherever the body goes
 		bool g_champDying = false;
+		// (Noah: "the dragon priest would spawn as the final enemy of the night that the trials were completed") the night's
+		// last wave down with a city's trials done: the dawn waits for its Dragon Priest, who rises then; his fall brings it
+		bool  g_priestHold = false;
+		float g_priestHoldT = 0;
 		void TickChampion()
 		{
 			auto c = g_champ.handle.get();
@@ -1426,6 +1430,7 @@ namespace bo3z
 					Curse::OnChampionSlain(town);
 					// (Noah: "the echo altar Dragon Priest should end the night after defeat") its fall frees the city and
 					// brings the dawn at once - the rest of the night's waves are not needed
+					g_priestHold = false;
 					if (g_phase == Phase::Fighting && !g_nightCleared && !Coop::Client()) {
 						g_nightCleared = true;
 						g_waveTheme = -1;
@@ -2186,7 +2191,7 @@ namespace bo3z
 			g_special = a_round >= R.specialFirstRound && (a_round - R.specialFirstRound) % R.specialEveryRounds == 0;
 			// One round per night: the dead keep coming until dawn. How many walk at once grows night by night.
 			g_toSpawn = std::clamp(static_cast<int>(std::ceil(TotalFor(PaceRound(a_round)) * gen::kSpawnMultiplier / 3.0f)), AtOnceMin(a_round), PaceRound(a_round) < 4 ? AtOnceMin(a_round) : R.maxAlive);
-			g_waves = WavesFor(a_round), g_wave = 1, g_waveSize = WaveSize(1), g_waveSpawned = 0, g_waveRest = 0, g_nightCleared = false;
+			g_waves = WavesFor(a_round), g_wave = 1, g_waveSize = WaveSize(1), g_waveSpawned = 0, g_waveRest = 0, g_nightCleared = false, g_priestHold = false;
 			Curse::OnWave(false);
 			g_spawnTimer = 0;
 			g_phase = Phase::Fighting;
@@ -2450,6 +2455,20 @@ namespace bo3z
 			if (g_wave >= g_waves && Echo::SiegeActive()) {
 				return;  // (the story audit: the night's last wave cleared between a siege's waves ended it before its dragon came)
 			}
+			if (g_priestHold) {  // (the night's last wave is down: its Dragon Priest is the last of it)
+				static auto since = std::chrono::steady_clock::now();
+				if (g_champ.handle.get() || g_priestHoldT < 0.01f) since = std::chrono::steady_clock::now(), g_priestHoldT = 1.0f;
+				if (std::chrono::steady_clock::now() - since < std::chrono::minutes(4)) return;
+				// (he never found ground to rise on, or you left the city: the dawn comes; he waits for the next night)
+				g_priestHold = false;
+				logger::info("night {}: the Dragon Priest never rose - the dawn comes", g_current);
+				g_nightCleared = true;
+				g_waveTheme = -1;
+				Curse::OnNightCleared();
+				Forms::Play(gen::Sound::round_end);
+				Director::SkipToDawn(fmt::format("NIGHT {} CLEARED - DAWN BREAKS", g_current).c_str());
+				return;
+			}
 			Curse::OnWave(true);
 			Stats::Note(Stats::kWave);
 			SlowBeat(0.55f, 0.3f);  // (the last of the wave falls in slow time)
@@ -2469,6 +2488,13 @@ namespace bo3z
 				Dawn();
 				KeepTheDark();
 				Hud::Banner(fmt::format("NIGHT {} CLEARED - THE ENDLESS NIGHT GOES ON", won), 5.0f);
+				return;
+			}
+			if (g_wave >= g_waves && Curse::PriestWaits() && !Coop::Client()) {
+				g_priestHold = true, g_priestHoldT = 0.0f;
+				Forms::Play(gen::Sound::quest_step);
+				Hud::Banner(fmt::format("NIGHT {} - THE LAST WAVE FALLS   THE DRAGON PRIEST RISES", g_current), 6.0f);
+				logger::info("night {}: the last wave is down - the night waits for its Dragon Priest", g_current);
 				return;
 			}
 			if (g_wave >= g_waves) {
@@ -3568,6 +3594,7 @@ namespace bo3z
 			a_at = b->GetPosition() + RE::NiPoint3{ 0, 0, 260.0f };
 			return true;
 		}
+		bool PriestHold() { return g_priestHold; }
 		bool ChampionActive(int a_town) { return g_champ.town == a_town && (g_champ.handle.get() || g_champ.slainTonight); }
 		bool ChampionAlive()
 		{

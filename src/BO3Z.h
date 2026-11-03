@@ -240,6 +240,7 @@ namespace bo3z
 		bool             BossPos(RE::NiPoint3& a_at);  // Grimmvar, if he walks
 		bool             RaiseChampion(int a_town, std::string_view a_row, std::string_view a_name, float a_healthMult, const RE::NiPoint3& a_at);  // a city's named champion
 		bool             ChampionActive(int a_town);  // walking, or slain this night
+		bool             PriestHold();                // the night's last wave is down and its Dragon Priest is still to come (the night waits for it)
 		bool             ChampionPos(RE::NiPoint3& a_at);          // a city freed: dawn comes now, the next night brings the next round
 		bool             ChampionAlive();  // a champion (a city's, a dragon's) is up and alive
 	}
@@ -664,6 +665,7 @@ namespace bo3z
 		void  OnBossSlain();
 		void  OnWave(bool a_cleared);       // the night's waves: one begins (false) or is cleared (true)
 		void  OnChampionSlain(int a_town);  // a city's champion fell (Director)
+		bool  PriestWaits();        // here, a city whose trials are done waits for its Dragon Priest (the night's last foe)
 		void  OnNightCleared();     // the night's last wave fell: a city whose Dragon Priest fell tonight is freed now
 		void  ForgetPendingLift();  // a load: no Jarl's fall is waiting
 		void  MigrateRites();               // a save from the four-rite cities: freed stays freed, the rest begin the trials
