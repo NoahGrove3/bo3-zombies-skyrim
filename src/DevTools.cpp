@@ -158,6 +158,7 @@ namespace bo3z
 				for (int c = 0; c < 4; ++c) Classes::DevGiveWonder(c);
 				Echo::DevGiveBane();
 				Movement::TestKit();
+				Movement::DevUnlockGlider();
 				if (const int have = Points::Get(); have < 150000) Points::Refund(150000 - have);
 				logger::info("dev: allkit given");
 			} else if (cmd == "basekit" && player) {
@@ -167,6 +168,7 @@ namespace bo3z
 				for (int c = 0; c < 4; ++c) Classes::DevGiveWonder(c);
 				Echo::DevGiveBane();
 				Save::SetDragonBond(0);
+				Movement::DevUnlockGlider();  // (Noah: the glider and the shout, for clips)
 				if (const int have = Points::Get(); have < 200000) Points::Refund(200000 - have);
 				else if (have > 200000) Points::Spend(have - 200000);
 				logger::info("dev: basekit given ({} Cursed Essence)", Points::Get());

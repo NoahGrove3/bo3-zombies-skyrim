@@ -60,7 +60,7 @@
      "title": "The Battle-mage",
      "paras": [
       "A battle-mage of the <b>College of Winterhold</b>: a different element in each hand, struck from afar - bolts, beams, storms and runes.",
-      "<b>You start with</b> Firebolt (right hand), Ice Spike (left hand), a Destruction tome and the <b>Black Mage Robes</b> - your armor set, its look growing at each tier (Mantled Robes, Plate, then the Black Archmage's ebony): Tier I spells cost 10% less, Tier II magicka comes back faster, Tier III spells cost a quarter less. Your magicka starts coming back 1 second after a cast."
+      "<b>You start with</b> Firebolt (right hand), Ice Spike (left hand), a Destruction tome and the <b>Black Mage Robes</b> - your armor set (it keeps its look and glows ember-orange, enchanted, from Tier I - brighter each tier): Tier I spells cost 10% less, Tier II magicka comes back faster, Tier III spells cost a quarter less. Your magicka starts coming back 1 second after a cast."
      ]
     },
     {
@@ -103,7 +103,7 @@
      "title": "The Alchemist",
      "paras": [
       "A wandering <b>alchemist</b>: flasks of fire, frost, storm, acid, holy water and blood, lobbed into the dead - every flask bursts where it lands, on a body, a wall or the ground.",
-      "<b>You start with</b> the <b>Alchemist's Knife</b> (right hand), the <b>Fire Flask</b> (in your pack - put it on a hotkey and use it to throw) and the <b>Drifter's</b> outfit - your armor set, its look growing at each tier (leathers, armor, then closed armor): Tier I you throw 15% faster, Tier II their bursts reach 20% wider, Tier III each flask kill heals you 2%.",
+      "<b>You start with</b> the <b>Alchemist's Knife</b> (right hand), the <b>Fire Flask</b> (in your pack - put it on a hotkey and use it to throw) and the <b>Drifter's</b> outfit - your armor set (it keeps its look and glows green, enchanted, from Tier I - brighter each tier): Tier I you throw 15% faster, Tier II their bursts reach 20% wider, Tier III each flask kill heals you 2%.",
       "An Alchemist in your party lets everyone mend slowly in a fight."
      ]
     },

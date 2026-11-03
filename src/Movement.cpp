@@ -1116,6 +1116,39 @@ namespace bo3z
 			Hud::Banner("WHITERUN'S THU'UM: Dragon's Updraft - shout it and a whirlwind lifts you; open your glider at the top", 5.0f);
 			logger::info("glider: Dragon's Updraft learned ({:08X})", sh->GetFormID());
 		}
+		// (Noah: "the test kit to unlock the glider and shout for me so I can get clips") the glider unlocked on this computer
+		// without Whiterun's altar (a flag file beside the log, set by the dev 'basekit' and 'allkit')
+		bool DevGliderFlag()
+		{
+			static bool on = false;
+			static auto checked = std::chrono::steady_clock::now() - std::chrono::seconds(10);
+			if (std::chrono::steady_clock::now() - checked > std::chrono::seconds(3)) {
+				checked = std::chrono::steady_clock::now();
+				std::error_code ec;
+				auto dir = SKSE::log::log_directory();
+				on = dir && std::filesystem::exists(*dir / "CurseOfAlduin-glider.flag", ec);
+			}
+			return on;
+		}
+		void DevUnlockGlider()
+		{
+			if (auto dir = SKSE::log::log_directory()) std::ofstream(*dir / "CurseOfAlduin-glider.flag") << "glider unlocked for testing\n";
+			GiveUpdraft();
+		}
+		void GiveUpdraft()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* sh = UpdraftShout();
+			if (!p || !sh || p->HasShout(sh)) return;
+			for (auto w : gen::kUpdraftWords) {
+				if (auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(w, gen::kPlugin)) {
+					Gun::Console(fmt::format("player.teachword {:08X}", f->GetFormID()));
+					Gun::Console(fmt::format("player.unlockword {:08X}", f->GetFormID()));
+				}
+			}
+			p->AddShout(sh);
+			logger::info("dev: Dragon's Updraft given");
+		}
 		void TestKit()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -2166,7 +2199,7 @@ namespace bo3z
 			const auto have = a_player->GetInventoryCounts([](RE::TESBoundObject& o) { return &o == item; });
 			// (Noah) the dragon is yours once Whiterun's shrine is won - its Curse lifted - not before
 			constexpr int kWhiterun = 1;
-			const bool    unlocked = Curse::Freed(kWhiterun) || Gun::TestKitOn();
+			const bool    unlocked = Curse::Freed(kWhiterun) || Gun::TestKitOn() || DevGliderFlag();
 			static int    wasUnlocked = -1;
 			if (!unlocked) {
 				if (!have.empty() && !ItemMenusOpen()) {
@@ -2196,7 +2229,7 @@ namespace bo3z
 
 		// (Noah) no dragon bond, no Updraft, no glider, before Whiterun's Echo Altar is won
 		constexpr int kWhiterunTown = 1;
-		bool BondLocked() { return !Curse::Freed(kWhiterunTown) && !Gun::TestKitOn(); }
+		bool BondLocked() { return !Curse::Freed(kWhiterunTown) && !Gun::TestKitOn() && !DevGliderFlag(); }
 
 		void BuyBond(RE::TESObjectREFR* a_shrine)
 		{

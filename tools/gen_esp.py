@@ -521,6 +521,26 @@ for name, hx in T['weap_madness']['subs']:
     elif name == 'DATA': b = struct.pack('<IfH', 6000, 9.0, 24)
     subs.append(sub(name, b))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'slayer'), subs))
+# (Noah: "I want the armor kits for all classes to stay the same visually through all the upgrades ... the upgraded version
+# to make the item look enchanted") each class's set glows with its colour from Tier I, stronger each tier (Classes::TickArmour
+# lays it on you): Summoner violet, Destruction ember-orange, Alchemist green, Spellsword blue
+ARM_COL = [((150, 90, 255), (210, 170, 255)), ((255, 110, 30), (255, 190, 110)), ((90, 230, 60), (190, 255, 150)), ((80, 150, 255), (170, 210, 255))]
+for c, (fill, edge) in enumerate(ARM_COL):
+    for t in (1, 2, 3):
+        d = bytearray(tsub('efsh_enchpurple', 'DATA'))
+        d[0x10:0x13] = bytes(int(x * (0.18 + 0.12 * t)) for x in fill)   # its fill, brighter each tier
+        d[0x38:0x3B] = bytes(int(x * (0.45 + 0.18 * t)) for x in edge)   # its edge glow
+        struct.pack_into('<f', d, 0x20, 0.8 + 0.2 * t)                    # (persistence)
+        struct.pack_into('<f', d, 0x24, 0.5 - 0.1 * t)                    # (pulse)
+        if t < 3: d[0] = d[0] | 0x08                                      # no particles below Legendary
+        else:
+            struct.pack_into('<f', d, 0x7C, 40.0)
+            for k, rgb in enumerate((edge, fill, tuple(x // 3 for x in fill))): d[0xBC + 4 * k:0xBC + 4 * k + 3] = bytes(rgb)
+        subs = [sub('EDID', z(f'UN_ArmGlow_{c}_{t}'))]
+        for name, hx in T['efsh_enchpurple']['subs']:
+            if name == 'EDID': continue
+            subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
+        recs['EFSH'].append(record('EFSH', fid('EFSH', f'armglow_{c}_{t}'), subs))
 for n, t in enumerate(MAD_GLOW, start=1):
     d = bytearray(tsub('efsh_enchpurple', 'DATA'))
     d[0] = d[0] & ~0x08 if t['particles'] else d[0]

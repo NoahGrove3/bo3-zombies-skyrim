@@ -2172,11 +2172,12 @@ namespace bo3z::Classes
 					if (flat.Length() > 3000.0f) {  // (left far behind: at your side at once)
 						const float yaw = p->GetAngleZ() + 1.2f;
 						a->SetPosition(me + RE::NiPoint3{ std::sin(yaw) * 400.0f, std::cos(yaw) * 400.0f, 250.0f }, true);
-					} else if (flat.Length() > 1050.0f) {  // (past 15 m: drawn back toward you)
-						const RE::NiPoint3 want = me + flat * (900.0f / flat.Length()) + RE::NiPoint3{ 0, 0, std::clamp(at.z - me.z, 80.0f, 600.0f) };
+					} else if (flat.Length() > 1400.0f) {  // (Noah: a 20 m leash - past it, drawn back toward you)
+						const RE::NiPoint3 want = me + flat * (1200.0f / flat.Length()) + RE::NiPoint3{ 0, 0, std::clamp(at.z - me.z, 80.0f, 600.0f) };
 						RE::NiPoint3 step = want - at;
 						if (const float d = step.Length(); d > 10.0f) a->SetPosition(at + step * std::min(1.0f, 700.0f * dt / d), true);
 					}
+					if (auto t = a->GetActorRuntimeData().currentCombatTarget.get(); t && Director::PlayerSide(t.get(), p)) a->StopCombat();  // (never on you or a friend)
 					const auto foes = NearFoes(me, 1500.0f, 1);
 					if (!foes.empty() && breathT <= 0) {
 						breathT = 1.2f;
@@ -3259,10 +3260,20 @@ namespace bo3z::Classes
 			default: return {};
 			}
 		}
-		std::vector<RE::TESObjectARMO*> SetForms(int a_cls, int a_tier)
+		// (Noah: "the armor kits for all classes to stay the same visually through all the upgrades") every tier wears the
+		// set's first look; an upgrade makes it glow as if enchanted (TickArmour)
+		std::vector<RE::TESObjectARMO*> SetFormsAt(int a_cls, int a_look)
 		{
 			std::vector<RE::TESObjectARMO*> out;
-			for (const auto& pc : SetPieces(a_cls, a_tier, PlayerFemale())) {
+			for (const auto& pc : SetPieces(a_cls, a_look, PlayerFemale())) {
+				if (auto* f = Lookup(pc.id, pc.plugin)) if (auto* a = f->As<RE::TESObjectARMO>()) out.push_back(a);
+			}
+			return out;
+		}
+		std::vector<RE::TESObjectARMO*> SetForms(int a_cls, int)
+		{
+			std::vector<RE::TESObjectARMO*> out;
+			for (const auto& pc : SetPieces(a_cls, 0, PlayerFemale())) {
 				if (auto* f = Lookup(pc.id, pc.plugin)) if (auto* a = f->As<RE::TESObjectARMO>()) out.push_back(a);
 			}
 			return out;
@@ -3271,7 +3282,7 @@ namespace bo3z::Classes
 		std::vector<RE::TESObjectARMO*> AllSetForms(int a_cls)
 		{
 			std::vector<RE::TESObjectARMO*> out;
-			for (int t = 0; t <= (a_cls == coffer::kDestruction || a_cls == coffer::kAlchemist ? 3 : 0); ++t) for (auto* a : SetForms(a_cls, t)) if (std::find(out.begin(), out.end(), a) == out.end()) out.push_back(a);
+			for (int t = 0; t <= (a_cls == coffer::kDestruction || a_cls == coffer::kAlchemist ? 3 : 0); ++t) for (auto* a : SetFormsAt(a_cls, t)) if (std::find(out.begin(), out.end(), a) == out.end()) out.push_back(a);  // (the earlier tiers' looks, taken back)
 			return out;
 		}
 	}
@@ -3279,8 +3290,8 @@ namespace bo3z::Classes
 	{
 		switch (a_cls) {
 		case coffer::kSummoner: return "Arcane Conjurer Robes";
-		case coffer::kDestruction: { static constexpr const char* kN[4] = { "Black Mage Robes", "Black Mage Mantled Robes", "Black Mage Plate", "Black Archmage Ebony" }; return kN[std::clamp(a_tier, 0, 3)]; }
-		case coffer::kAlchemist: { static constexpr const char* kN[4] = { "Drifter's Clothes", "Drifter's Leathers", "Drifter's Armor", "Drifter's Closed Armor" }; return kN[std::clamp(a_tier, 0, 3)]; }
+		case coffer::kDestruction: return a_tier >= 1 ? fmt::format("Black Mage Robes (Enchanted {})", a_tier >= 3 ? "III" : a_tier == 2 ? "II" : "I") : std::string("Black Mage Robes");
+		case coffer::kAlchemist: return a_tier >= 1 ? fmt::format("Drifter's Clothes (Enchanted {})", a_tier >= 3 ? "III" : a_tier == 2 ? "II" : "I") : std::string("Drifter's Clothes");
 		case coffer::kSpellsword: return PlayerFemale() ? "Valkyrie Armor" : "DragonLord Armor";
 		default: return "Armor";
 		}
@@ -3368,6 +3379,16 @@ namespace bo3z::Classes
 				const bool inSet = std::find(set.begin(), set.end(), a) != set.end();
 				const auto want = static_cast<std::uint32_t>(inSet && !set.empty() ? std::lround(100.0 * rating / static_cast<double>(set.size())) : 0);
 				if (a->armorRating != want) a->armorRating = want;
+			}
+		}
+		// (Noah: "the upgraded version to make the item look enchanted") the set's glow, its class's colour, from Tier I
+		if (const int at = std::min(3, Kit::ArmourTier(c)); at >= 1 && p->Is3DLoaded() && !p->IsDead()) {
+			static float renew = 0;
+			static int   was = 0;
+			renew -= 1.0f;
+			if (renew <= 0 || at != was) {
+				renew = 2.0f, was = at;
+				if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kArmGlow[c * 3 + at - 1], gen::kPlugin)) p->ApplyEffectShader(fx, 3.2f, nullptr, false, false, nullptr, false);
 			}
 		}
 		// (the Gondorian set, Tier I) the Ranger's stride: 10% faster

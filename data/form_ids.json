@@ -1408,6 +1408,18 @@
   "ALCH:flaskitem_poison": "0xd7c",
   "ALCH:flaskitem_sun": "0xd7d",
   "ALCH:flaskitem_blood": "0xd7e",
-  "ALCH:flaskitem_philosopher": "0xd7f"
+  "ALCH:flaskitem_philosopher": "0xd7f",
+  "EFSH:armglow_0_1": "0xd80",
+  "EFSH:armglow_0_2": "0xd81",
+  "EFSH:armglow_0_3": "0xd82",
+  "EFSH:armglow_1_1": "0xd83",
+  "EFSH:armglow_1_2": "0xd84",
+  "EFSH:armglow_1_3": "0xd85",
+  "EFSH:armglow_2_1": "0xd86",
+  "EFSH:armglow_2_2": "0xd87",
+  "EFSH:armglow_2_3": "0xd88",
+  "EFSH:armglow_3_1": "0xd89",
+  "EFSH:armglow_3_2": "0xd8a",
+  "EFSH:armglow_3_3": "0xd8b"
  }
 }

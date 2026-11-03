@@ -65,12 +65,25 @@ namespace bo3z
 		// 3 waves on the first night, one more every second night to 8; a night's first wave is 6 dead on night 1 and two
 		// more each night after (to 40), and each wave after it brings a quarter more than the first:
 		//   night 1: 6 8 9 (23)   night 2: 8 10 12 14 (44)   night 3: 10 13 15 18 (56)   night 5: 14 ... 28 (105)
-		int WavesFor(int a_round) { return std::min(8, 3 + std::max(1, a_round) / 2); }
+		// (Noah: "the difference between night 1 and night 4 is so big ... pace it for longer nights to be slower from nights
+		// 1-10, and pick up the pace gradually from 10-100") the night the dead are as strong as: from night 1 to 10 it climbs
+		// at four tenths of a night a night (night 10 fights like the old 4.6), then a little faster every night after -
+		// half a night a night at 10, about 1.2 a night by 100 (night 100 fights like the old 81). Their health, speed, how
+		// fast they rise, how many at once and how many waves follow it; each wave's count keeps Noah's own +5 a night
+		float Pace(int a_round)
+		{
+			const float n = static_cast<float>(std::max(1, a_round));
+			if (n <= 10.0f) return 1.0f + 0.4f * (n - 1.0f);
+			const float k = n - 10.0f;
+			return 4.6f + 0.5f * k + (0.7f / 180.0f) * k * k;
+		}
+		int PaceRound(int a_round) { return std::max(1, static_cast<int>(std::lround(Pace(a_round)))); }
+		int WavesFor(int a_round) { return std::min(8, 3 + PaceRound(a_round) / 2); }
 		// (Noah: "there needs to be a lot more enemies per wave because the trials require a lot of kills. For the first night,
 		// have the first wave 20, second wave 30, and third wave 40. And have each wave increase by 5 every night after the
 		// first night") wave w of night n: 20 + 10 per wave before it + 5 per night before it
 		int WaveStep() { return 20 + 5 * (std::max(1, g_current) - 1); }  // (the night's first wave)
-		int AtOnceMin(int a_round) { return std::min(12, 4 + 2 * std::max(1, a_round)); }
+		int AtOnceMin(int a_round) { return std::min(12, 4 + 2 * PaceRound(a_round)); }
 		constexpr float kWaveRest = 8.0f;
 		int   g_waves = 0, g_wave = 0, g_waveSize = 0, g_waveSpawned = 0;
 		float g_waveRest = 0;
@@ -158,7 +171,15 @@ namespace bo3z
 			return std::max(1, max);
 		}
 
-		float HealthFor(int a_round)
+		float HealthAt(int a_round);
+		float HealthFor(int a_round)  // (the paced night: between its two whole nights' health)
+		{
+			const float e = Pace(a_round);
+			const int   lo = static_cast<int>(std::floor(e));
+			const float f = e - static_cast<float>(lo);
+			return HealthAt(lo) * (1.0f - f) + HealthAt(lo + 1) * f;
+		}
+		float HealthAt(int a_round)
 		{
 			// Classic curve up to the cap round, then only gentle growth: the horde's size is the threat.
 			const int cap = static_cast<int>(gen::kHpCapRound);
@@ -178,7 +199,7 @@ namespace bo3z
 
 		float SpawnDelay(int a_round)
 		{
-			return std::max(R.spawnDelayMin, R.spawnDelayStart * std::pow(R.spawnDelayDecay, static_cast<float>(a_round - 1)));
+			return std::max(R.spawnDelayMin, R.spawnDelayStart * std::pow(R.spawnDelayDecay, Pace(a_round) - 1.0f));
 		}
 
 		// (Noah: the night starts the moment the sun sets) dusk is when the sun reaches the horizon in this place's
@@ -1072,7 +1093,7 @@ namespace bo3z
 			// and no faction ties so they only go for players and NPCs leave them alone.
 			float speed = 100.0f;
 			for (const auto& tier : gen::kSpeedTiers) {
-				if (g_current >= static_cast<int>(tier[0])) {
+				if (Pace(g_current) >= tier[0]) {  // (the paced night)
 					speed = tier[1];
 				}
 			}
@@ -2164,7 +2185,7 @@ namespace bo3z
 			g_current = a_round;
 			g_special = a_round >= R.specialFirstRound && (a_round - R.specialFirstRound) % R.specialEveryRounds == 0;
 			// One round per night: the dead keep coming until dawn. How many walk at once grows night by night.
-			g_toSpawn = std::clamp(static_cast<int>(std::ceil(TotalFor(a_round) * gen::kSpawnMultiplier / 3.0f)), AtOnceMin(a_round), a_round < 4 ? AtOnceMin(a_round) : R.maxAlive);
+			g_toSpawn = std::clamp(static_cast<int>(std::ceil(TotalFor(PaceRound(a_round)) * gen::kSpawnMultiplier / 3.0f)), AtOnceMin(a_round), PaceRound(a_round) < 4 ? AtOnceMin(a_round) : R.maxAlive);
 			g_waves = WavesFor(a_round), g_wave = 1, g_waveSize = WaveSize(1), g_waveSpawned = 0, g_waveRest = 0, g_nightCleared = false;
 			Curse::OnWave(false);
 			g_spawnTimer = 0;

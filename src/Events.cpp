@@ -234,6 +234,12 @@ namespace bo3z
 		{
 			static void thunk(RE::Actor* a_this, RE::Actor* a_attacker, float a_damage)
 			{
+				// (Noah: "the bone dragon started fighting me - make sure it can't hurt the host or other players") a summon of
+				// yours never harms a friend of the party: the blow does nothing, and its fight with them is dropped
+				if (a_this && a_attacker && a_damage != 0.0f && Party::IsFriend(a_this) && MySummon(a_attacker)) {
+					a_attacker->StopCombat();
+					return;
+				}
 				func(a_this, a_attacker, a_damage);
 				if (ByPlayer(a_attacker) && MySummon(a_this) && !a_this->IsDead()) {
 					auto* av = a_this->AsActorValueOwner();
@@ -248,6 +254,11 @@ namespace bo3z
 		{
 			static void thunk(RE::Actor* a_this, RE::Actor* a_attacker, float a_damage)
 			{
+				if (a_this && a_attacker && a_attacker != a_this && MySummon(a_attacker)) {  // (your own summons - the Bone-Throne's dragon - never hurt you)
+					a_attacker->StopCombat();
+					if (static int said = 0; said++ < 10) logger::info("hurt: {}'s blow on you turned aside (your summon)", a_attacker->GetName());
+					return;
+				}
 				func(a_this, a_attacker, a_damage);
 				if (a_this && a_attacker == a_this && !a_this->IsDead() && a_damage != 0.0f) {
 					a_this->AsActorValueOwner()->RestoreActorValue(RE::ActorValue::kHealth, std::abs(a_damage));

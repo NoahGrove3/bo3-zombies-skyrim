@@ -867,6 +867,9 @@ namespace bo3z
 		void DevTakeOff();  // dev: Bond II's Updraft shout
 		bool OnSpellCast(RE::FormID a_spell);  // the Updraft shout spoken: true if it was
 		void TestKit();     // dev: Dragon's Updraft and all three bonds
+		void DevUnlockGlider();  // dev: the glider unlocked on this computer (a flag file) and Dragon's Updraft
+		void GiveUpdraft();
+		bool DevGliderFlag();
 		void DevFlyOff();   // dev: the fly-off dragon, in front of you  // after the animation: arms down until the glider's dragon reaches you
 	}
 
