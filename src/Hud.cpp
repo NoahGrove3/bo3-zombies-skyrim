@@ -14,6 +14,22 @@ namespace bo3z
 {
 	namespace
 	{
+		// (Noah: "make the shout meter ... a smoother animation so it's not draining in jitters") the cooldown comes in a few
+		// times a second: what's drawn glides to it every frame (a new shout's full rim at once)
+		float ShoutCdShown(float a_target)
+		{
+			static float shown = 0;
+			static int   frame = -1;
+			if (const int f = ImGui::GetFrameCount(); f != frame) {
+				frame = f;
+				const float dt = std::clamp(ImGui::GetIO().DeltaTime, 0.0f, 0.1f);
+				if (a_target > shown + 0.02f) shown = a_target;
+				else shown += (a_target - shown) * std::min(1.0f, dt * 9.0f);
+				if (a_target <= 0.0f && shown < 0.004f) shown = 0.0f;
+			}
+			return shown;
+		}
+
 		using PresentFn = HRESULT(WINAPI*)(IDXGISwapChain*, UINT, UINT);
 		PresentFn            g_present = nullptr;
 		std::mutex           g_lock;
@@ -1844,7 +1860,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 						}
 					};
 					// what is left of the cooldown is what is still lit, from the tips in: s in [1 - cd, 1] of each run
-					if (s.shoutCd > 0.001f) run(std::clamp(1.0f - s.shoutCd, 0.0f, 1.0f), 1.0f, 0.9f);
+					if (ShoutCdShown(s.shoutCd) > 0.001f) run(std::clamp(1.0f - ShoutCdShown(s.shoutCd), 0.0f, 1.0f), 1.0f, 0.9f);
 				}
 				{  // (Noah: "move the perk icons to above my health bar, centered")
 				// perk row: sockets, the draughts in them; a new draught bursts in
@@ -2001,7 +2017,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				static float shownSh = 0;
 				shownSh += (1.0f - shownSh) * std::min(1.0f, dt * 6);
 				const float  al = shownSh;
-				const bool   cooling = s.shoutCd > 0.001f;
+				const bool   cooling = ShoutCdShown(s.shoutCd) > 0.001f;
 				const ImVec2 a{ size.x - 400 * k, size.y - 98 * k }, b{ size.x - 40 * k, size.y - 46 * k };  // (the spell cards' size)
 				const float  h = b.y - a.y, cy = (a.y + b.y) * 0.5f, cut = 9 * k;
 				const ImU32  bronze = Fade(kGold, al), bronzeDim = Fade(kGoldDim, al);
@@ -2055,7 +2071,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 				}
 				if (cooling) {  // what is left of the cooldown: the rim's bronze, bright, from the top round
-					const float a0 = -RE::NI_PI * 0.5f, a1 = a0 + 2 * RE::NI_PI * s.shoutCd;
+					const float a0 = -RE::NI_PI * 0.5f, a1 = a0 + 2 * RE::NI_PI * ShoutCdShown(s.shoutCd);
 					dl->PathArcTo(c, er - 3 * k, a0, a1, 48);
 					dl->PathStroke(Fade(IM_COL32(255, 200, 120, 255), 0.35f * al), ImDrawFlags_None, 6.0f * k);
 					dl->PathArcTo(c, er - 3 * k, a0, a1, 48);
