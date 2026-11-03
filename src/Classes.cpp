@@ -1878,7 +1878,7 @@ namespace bo3z::Classes
 		Points::Add(3000);
 		Tasks::Later(2.5f, [a_cls] {
 			Hud::Lore("DOVAHKIIN! THE GREYBEARDS CALL",
-				fmt::format("Your path's secret is won. The Greybeards' Voice rolls across Skyrim: the {} waits for you on its pedestal in the Reliquary of the Tongues, behind the sealed door in High Hrothgar's great hall.", kWonderName[a_cls]),
+				fmt::format("Your path's secret is won. The Greybeards' Voice rolls across Skyrim: the {} waits for you on its pedestal in the Reliquary of the Tongues, through the portal just outside the back of High Hrothgar.", kWonderName[a_cls]),
 				14.0f);
 		});
 		logger::info("classes: wonder {} won - it waits in the Reliquary", kWonderName[a_cls]);
@@ -1960,7 +1960,7 @@ namespace bo3z::Classes
 		const int c = g_class.load();
 		if (c < 0) return {};
 		const int st = g_wStep[c];
-		if (st == kWonderWaiting) return std::string(kWonderName[c]) + " waits on its pedestal in the Reliquary beneath High Hrothgar";
+		if (st == kWonderWaiting) return std::string(kWonderName[c]) + " waits in the Reliquary - through the portal behind High Hrothgar";
 		if (st > kWonderSteps) return std::string(kWonderName[c]) + " is yours";
 		if (st == 0) return fmt::format("{}: free {} more {} to wake your path's secret", kWonderName[c], std::max(0, kWonderOpensAt - FreedCount()), kWonderOpensAt - FreedCount() == 1 ? "city" : "cities");
 		return std::string(kWonderName[c]) + ": " + Eggs::Line();

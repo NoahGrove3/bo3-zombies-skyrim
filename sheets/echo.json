@@ -445,6 +445,13 @@
     315
    ]
   ],
-  "useRange": 190
+  "useRange": 190,
+  "portal": [
+   54610,
+   -37009,
+   23589
+  ],
+  "portalYaw": 167,
+  "portalNote": "(Noah, 2026-11-03: the Reliquary's way in is a portal just outside the back of High Hrothgar, on the Tamriel side) walk into it; the old sealed door in the great hall is gone"
  }
 }

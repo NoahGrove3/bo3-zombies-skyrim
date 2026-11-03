@@ -1720,6 +1720,8 @@ namespace bo3z::gen
 	inline constexpr RelSpot kRelDoor{ -690.0f, -2363.0f, -992.0f, 90.0f }, kRelRoomAt{ -160.0f, -1200.0f, -6000.0f, 0.0f }, kRelArrive{ 0.0f, -380.0f, 0.0f, 0.0f }, kRelExit{ 0.0f, -600.0f, 0.0f, 0.0f }, kRelLeave{ -560.0f, -2363.0f, -992.0f, 90.0f };  // door/leave: in the cell; arrive/exit: in the room's frame
 	inline constexpr std::array<RelSpot, 4> kRelPedestals{ { { -390.0f, 330.0f, 0.0f, 135.0f }, { 390.0f, 330.0f, 0.0f, 225.0f }, { -390.0f, -230.0f, 0.0f, 45.0f }, { 390.0f, -230.0f, 0.0f, 315.0f } } };
 	inline constexpr float kRelUse = 190.0f;
+	inline constexpr RelSpot kRelPortal{ 54610.0f, -37009.0f, 23589.0f, 167.0f };  // in Tamriel, outside High Hrothgar's back
+	inline constexpr std::uint32_t kRelPortalStat = 0xD9E;
 	inline constexpr std::uint32_t kRelDoorIn = 0xC42, kRelDoorOut = 0xC43, kRelRoom = 0xC48, kRelRelic = 0xC49, kRelBlue = 0xC4E, kRelWarm = 0xC4F, kRelRelicLight = 0xC50, kRelBeam = 0xBFB, kRelBrazier = 0xC85, kRelStone = 0xC27, kRelBanner = 0xC86;
 	struct EggStep { int type, n, element; bool night; float r0, r1; bool nodamage; float seconds; std::string_view name, text; int row; bool dark; std::string_view hint; };
 	enum EggStepType : int { kEggTouch = 0, kEggOrder = 1, kEggAltar = 2, kEggKills = 3, kEggSurvive = 4, kEggBoss = 5, kEggClasskills = 6 };

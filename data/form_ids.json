@@ -1438,6 +1438,7 @@
   "SNDR:alch_draw": "0xd9a",
   "SNDR:alch_sheath": "0xd9b",
   "SNDR:alch_throw": "0xd9c",
-  "SNDR:alch_shatter": "0xd9d"
+  "SNDR:alch_shatter": "0xd9d",
+  "STAT:rel_portal": "0xd9e"
  }
 }

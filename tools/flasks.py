@@ -393,11 +393,14 @@ def rootname_exe():
     return str(exe)
 
 
+ALCHFX = {'emberstring': 'fire', 'rimehorn': 'frost', 'stormreach': 'shock', 'skyhowl': 'wind', 'dawnspire': 'sun', 'thirstbow': 'blood', 'vortex': 'void'}
+
+
 def fx_cards(el, anchors):
     """(name, texture, tint, scale, half-size, position, flipbook?, phase) for the halo and the neck's fizz"""
     col, _, _, bid, tint, sc = EL[el]
     phil = el == 'philosopher'
-    fxtex = f'CurseOfAlduin\\bow\\{bid}_arrowfx.dds'
+    fxtex = f'CurseOfAlduin\\fx\\alch_{ALCHFX[bid]}.dds'   # (60 fps: tools/alchfx.py)
     halo = ','.join(f'{min(1.0, c):.2f}' for c in col)
     cards = [('halo', TEXREL + 'halo.dds', halo, 0.9 if phil else 0.6, anchors['belly_r'] * 1.9, anchors['belly'], False, 0.0)]
     fz = anchors['fizz']
@@ -446,10 +449,10 @@ def build(el, tex):
     cards = fx_cards(el, anchors)
     for name, t, tint, sc, hs, at, flip, phase in cards:
         if HELD and flip: hs *= HELD_SCALE
-        extra = f' flip=8x8 fps=24 phase={phase:.2f}' if flip else ''
+        extra = f' flip=16x10 fps=60 phase={phase:.2f}' if flip else ''
         L.append(f'shape {name} tex={t} color={tint},1 scale={sc} blend=add billboard=2 parent=FlaskSpin at={at[0]:.2f},{at[1]:.2f},{at[2]:.2f}{extra}')
-        cu = 1 / 8 if flip else 1
-        for X, Y, uu, vv in ((-hs, hs, 0, 0), (hs, hs, cu, 0), (hs, -hs, cu, cu), (-hs, -hs, 0, cu)):
+        cu, cv = (1 / 16, 1 / 10) if flip else (1, 1)
+        for X, Y, uu, vv in ((-hs, hs, 0, 0), (hs, hs, cu, 0), (hs, -hs, cu, cv), (-hs, -hs, 0, cv)):
             L.append(f'v {X:.2f} {Y:.2f} 0 {uu} {vv} 1 1 1 1')
         L += ['t 0 1 2', 't 0 2 3']
     (WORK / 'fx.job').write_text('\n'.join(L) + '\n')

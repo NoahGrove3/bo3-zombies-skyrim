@@ -2,9 +2,9 @@
 small animated hyper realistic particles from the area of damage coming from the ground in the colour of the effect"; the
 sun and gold bursts read as big blobby stars) fine particles, drawn here frame by frame:
 
-  motes_rise.dds   a looping flipbook (8x8) of tiny glowing motes rising off the ground - each a hot pin-point with a soft
+  motes_rise.dds   a looping flipbook (16x16, 60 fps) of tiny glowing motes rising off the ground - each a hot pin-point with a soft
                    halo, drifting and flickering, born at the bottom, gone near the top
-  sparks_burst.dds a one-shot flipbook (8x8) of a burst of fine sparks: a white flash, then streaks thrown out and falling
+  sparks_burst.dds a one-shot flipbook (16x8, 60 fps) of a burst of fine sparks: a white flash, then streaks thrown out and falling
                    under their own weight, cooling as they go
   glow_disc.dds    a soft round glow for the ground under the motes
 
@@ -23,7 +23,10 @@ MESH = ROOT / 'assets' / 'fx' / 'Meshes' / 'CurseOfAlduin' / 'fx'
 TEX = ROOT / 'assets' / 'fx' / 'Textures' / 'CurseOfAlduin' / 'fx'
 WORK = ROOT / 'build' / 'motes'
 TEXREL = 'CurseOfAlduin\\fx\\'
-G = 8  # flipbook grid
+# (Noah: "I want them to be 60 FPS. So it looks smooth") every flipbook here plays at 60 frames a second
+MOTES = (16, 16)   # motes_rise: 256 frames, a 4.3 s loop
+SPARKS = (16, 8)   # sparks_burst: 128 frames, the burst over in about a second, the rest dark
+GROUNDG = (16, 10)  # ground_<element> (tools/alchfx.py)
 
 # element: (mote colour, glow colour) - a little warm-pushed (the tonemap drifts additive light blue)
 EL = {
@@ -57,10 +60,11 @@ def streak(img, p0, p1, core, a):
         splat(img, p0[0] + (p1[0] - p0[0]) * t, p0[1] + (p1[1] - p0[1]) * t, core, core * 2.2, a * (0.35 + 0.65 * t) / n * 2.2)
 
 
-def save_dds(frames, fw, fh, name):
-    sheet = np.zeros((fh * G, fw * G), np.float32)
+def save_dds(frames, fw, fh, name, grid):
+    cols, rows = grid
+    sheet = np.zeros((fh * rows, fw * cols), np.float32)
     for i, f in enumerate(frames):
-        r, c = divmod(i, G)
+        r, c = divmod(i, cols)
         sheet[r * fh:(r + 1) * fh, c * fw:(c + 1) * fw] = f
     v = np.clip(1 - np.exp(-sheet * 1.6), 0, 1)  # (a soft shoulder: hot points stay round, never a clipped block)
     g = (v * 255).astype(np.uint8)
@@ -73,11 +77,12 @@ def save_dds(frames, fw, fh, name):
 
 
 def motes_rise():
-    fw, fh, N = 128, 256, 64
+    fw, fh, N = 96, 192, MOTES[0] * MOTES[1]
+    px = 0.75  # (frames 3/4 the old size)
     rng = np.random.default_rng(42)
     parts = []
     for _ in range(90):
-        parts.append(dict(x=rng.uniform(12, fw - 12), ph=rng.uniform(0, 1), k=int(rng.choice([1, 1, 2])), sway=rng.uniform(1, 4),
+        parts.append(dict(x=rng.uniform(9, fw - 9), ph=rng.uniform(0, 1), k=int(rng.choice([1, 1, 2])), sway=rng.uniform(1, 4),
                           sf=int(rng.integers(1, 4)), sp=rng.uniform(0, 6.28), core=rng.uniform(0.55, 1.25), fl=int(rng.integers(3, 9)),
                           fp=rng.uniform(0, 6.28), top=rng.uniform(0.55, 0.95), b=rng.uniform(0.5, 1.0)))
     frames = []
@@ -87,18 +92,19 @@ def motes_rise():
         for p in parts:
             u = (p['ph'] + p['k'] * t) % 1.0               # its rise, 0 at the ground .. 1 at its top
             hgt = u * p['top']
-            y = fh - 6 - hgt * (fh - 12)
-            x = p['x'] + p['sway'] * math.sin(2 * math.pi * p['sf'] * t + p['sp']) * (0.4 + u)
+            y = fh - 5 - hgt * (fh - 10)
+            x = p['x'] + px * p['sway'] * math.sin(2 * math.pi * p['sf'] * t + p['sp']) * (0.4 + u)
             env = min(1.0, u / 0.12) * (1 - max(0.0, (u - 0.6) / 0.4)) ** 1.5
             flick = 0.7 + 0.3 * math.sin(2 * math.pi * p['fl'] * t + p['fp'])
-            splat(img, x, y, p['core'] * (1.0 - 0.35 * u), 2.6, 0.9 * p['b'] * env * flick)
+            splat(img, x, y, max(0.5, px * p['core'] * (1.0 - 0.35 * u)), 2.0, 0.9 * p['b'] * env * flick)
         frames.append(img)
-    save_dds(frames, fw, fh, 'motes_rise')
+    save_dds(frames, fw, fh, 'motes_rise', MOTES)
 
 
 def sparks_burst():
-    fw = fh = 256
-    N = 64
+    fw = fh = 192
+    N = SPARKS[0] * SPARKS[1]
+    q = 0.75  # (frames 3/4 the old size)
     rng = np.random.default_rng(7)
     sp = []
     for _ in range(110):
@@ -106,22 +112,22 @@ def sparks_burst():
         up = rng.uniform(-0.2, 1.0)
         v = rng.uniform(180, 480)
         sp.append(dict(vx=math.cos(a) * v, vy=-(up * 0.8 + 0.2) * v * rng.uniform(0.6, 1.2), life=rng.uniform(0.45, 1.0), core=rng.uniform(0.45, 0.9), b=rng.uniform(0.25, 0.55)))
-    dt = 1.0 / 40.0  # (played at 40 fps: the burst is over in about a second, the rest of the loop dark)
+    dt = 1.0 / 60.0  # (played at 60 fps: the burst is over in about a second, the rest of the loop dark)
     frames = []
     for i in range(N):
         img = np.zeros((fh, fw), np.float32)
         t0, t1 = max(0.0, (i - 1.0) * dt), i * dt
-        if i < 5:  # the flash
-            splat(img, fw / 2, fh / 2, 5.0 + 3 * i, 18.0, (1.0 - i / 5.0) * 2.2)
+        if i < 12:  # the flash
+            splat(img, fw / 2, fh / 2, q * (5.0 + 1.25 * i), q * 18.0, (1.0 - i / 12.0) * 2.2)
         for s in sp:
             if t1 > s['life']: continue
             def pos(t):
                 dr = (1 - math.exp(-2.2 * t)) / 2.2  # drag
-                return (fw / 2 + s['vx'] * dr, fh / 2 + s["vy"] * dr + 230 * t * t)
+                return (fw / 2 + q * s['vx'] * dr, fh / 2 + q * (s["vy"] * dr + 230 * t * t))
             heat = 1 - t1 / s['life']
-            streak(img, pos(t0), pos(t1), s['core'] * (0.5 + 0.5 * heat), s['b'] * heat ** 1.3)
+            streak(img, pos(t0), pos(t1), max(0.45, q * s['core'] * (0.5 + 0.5 * heat)), s['b'] * heat ** 1.3 * 1.25)
         frames.append(img)
-    save_dds(frames, fw, fh, 'sparks_burst')
+    save_dds(frames, fw, fh, 'sparks_burst', SPARKS)
 
 
 def glow_disc():
@@ -137,9 +143,10 @@ def glow_disc():
 
 
 def card(L, name, tex, col, sc, w, h0, h1, at, flip, fps, phase, bb=2):
-    L.append(f'shape {name} tex={tex} color={col},1 scale={sc} blend=add billboard={bb} ' + (f'flip={G}x{G} fps={fps} phase={phase:.2f} ' if flip else '') + f'at={at[0]:.1f},{at[1]:.1f},{at[2]:.1f}')
-    cu = 1 / G if flip else 1
-    for X, Y, u, v in ((-w, h1, 0, 0), (w, h1, cu, 0), (w, h0, cu, cu), (-w, h0, 0, cu)):
+    """flip: the flipbook's (cols, rows), or None"""
+    L.append(f'shape {name} tex={tex} color={col},1 scale={sc} blend=add billboard={bb} ' + (f'flip={flip[0]}x{flip[1]} fps={fps} phase={phase:.2f} ' if flip else '') + f'at={at[0]:.1f},{at[1]:.1f},{at[2]:.1f}')
+    cu, cv = (1 / flip[0], 1 / flip[1]) if flip else (1, 1)
+    for X, Y, u, v in ((-w, h1, 0, 0), (w, h1, cu, 0), (w, h0, cu, cv), (-w, h0, 0, cv)):
         L.append(f'v {X:.2f} {Y:.2f} 0 {u} {v} 1 1 1 1')
     L += ['t 0 1 2', 't 0 2 3']
 
@@ -168,7 +175,7 @@ def motes_nif(el):
             r = rad * random.uniform(0.75, 1.1)
             w = random.uniform(16, 24)
             card(L, f'm{k}', TEXREL + 'motes_rise.dds', col, random.uniform(1.4, 1.9), w, 0.0, w * 2.4,
-                 (r * math.cos(a), r * math.sin(a), random.uniform(-4, 4)), True, random.uniform(14, 20), random.uniform(0, 2.6))
+                 (r * math.cos(a), r * math.sin(a), random.uniform(-4, 4)), MOTES, random.uniform(54, 66), random.uniform(0, 4.2))
             k += 1
     fxwrite(L, MESH / f'motes_{el}.nif')
 
@@ -179,9 +186,9 @@ def spark_nif(el, out_name):
     L = []
     for i, (sz, sc, ph) in enumerate(((60, 2.0, 0.0), (48, 1.7, 0.06), (72, 1.4, 0.12))):
         card(L, f's{i}', TEXREL + 'sparks_burst.dds', col, sc, sz, -sz, sz,
-             (random.uniform(-6, 6), random.uniform(-6, 6), 40 + random.uniform(-6, 6)), True, 40, ph)
+             (random.uniform(-6, 6), random.uniform(-6, 6), 40 + random.uniform(-6, 6)), SPARKS, 60, ph)
     # a small hot glint at the heart for the first instant (the flipbook's flash), and its light on the ground
-    card(L, 'g', TEXREL + 'glow_disc.dds', glow, 1.3, 70, -70, 70, (0, 0, 40), False, 0, 0)
+    card(L, 'g', TEXREL + 'glow_disc.dds', glow, 1.3, 70, -70, 70, (0, 0, 40), None, 0, 0)
     fxwrite(L, MESH / out_name)
 
 
@@ -201,7 +208,7 @@ GROUND = {
 
 def ground_nif(el):
     fb, cols, sc, hmul = GROUND[el]
-    tex = f'CurseOfAlduin\\bow\\{fb}_arrowfx.dds'
+    tex = f'{TEXREL}ground_{el}.dds'  # (its own 60 fps flipbook: tools/alchfx.py)
     random.seed(sum(map(ord, el)) * 7)
     L = []
     k = 0
@@ -211,7 +218,7 @@ def ground_nif(el):
             r = rad * random.uniform(0.7, 1.12)
             w = random.uniform(10, 17) * (1.15 - 0.15 * ring)
             card(L, f'e{k}', tex, random.choice(cols), sc, w, -w * 0.15, w * 2.0 * hmul,
-                 (r * math.cos(a), r * math.sin(a), 0.0), True, random.uniform(18, 26), random.uniform(0, 2.6))
+                 (r * math.cos(a), r * math.sin(a), 0.0), GROUNDG, random.uniform(54, 66), random.uniform(0, 2.6))
             k += 1
     fxwrite(L, MESH / f'ground_{el}.nif')
 

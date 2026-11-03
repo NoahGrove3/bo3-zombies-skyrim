@@ -1,8 +1,8 @@
 // The story after the altars (sheet: echo).
 //
 // Act II - the Reliquary: once six cities are free each path's secret wakes (src/Eggs.cpp). Win it and the Greybeards
-// call: the path's wonder waits on its pedestal in the Reliquary of the Tongues, a hall under High Hrothgar behind a
-// sealed door in the Greybeards' great hall (both doors move you between the hall and the room). A wonder answers only
+// call: the path's wonder waits on its pedestal in the Reliquary of the Tongues, a hall under High Hrothgar reached
+// through a portal just outside its back (walk in; the room's door brings you back out to it). A wonder answers only
 // to its own path.
 // Act III - the three dragons: with all four wonders won (yours, or pooled with your party), Alduin's three words wake
 // as dragons at their places - each comes at night after a siege of the dead, and each slain gives a lasting power.
@@ -22,7 +22,6 @@ namespace bo3z
 		constexpr RE::FormID kHighHrothgar = 0x00087764;   // Skyrim.esm: the HighHrothgar interior
 		constexpr RE::FormID kTamriel = 0x0000003C;
 		constexpr RE::FormID kXMarker = 0x0000003B;
-		const RE::NiPoint3   kHHFront{ 53664.0f, -36000.0f, 23581.0f };  // High Hrothgar's front doors, outside (Tamriel)
 		constexpr int        kWonders = static_cast<int>(gen::kEchoWonders.size());  // the Reliquary's four pedestals, in class order
 		constexpr int        kTownCount = static_cast<int>(gen::kTowns.size());
 
@@ -251,7 +250,7 @@ namespace bo3z
 			if (a_p->GetParentCell() != cell) {
 				return;
 			}
-			Ensure(a_p, cell, gen::kRelDoorIn, P(gen::kRelDoor), gen::kRelDoor.yaw);
+			Unplace(cell, gen::kRelDoorIn, P(gen::kRelDoor));  // (Noah: the way in is the portal outside the back of High Hrothgar now - the hall's sealed door is gone)
 			Ensure(a_p, cell, gen::kRelRoom, Room(0, 0, 0), 0);
 			Ensure(a_p, cell, gen::kRelDoorOut, Room(gen::kRelExit.x, gen::kRelExit.y + 52.0f, gen::kRelExit.z), gen::kRelExit.yaw);
 			Unplace(cell, gen::kRelStone, Room(0, 150, 0));  // (the old Echo Stone: gone with the parts)
@@ -309,6 +308,74 @@ namespace bo3z
 			};
 			marker(g_arrive, Room(gen::kRelArrive.x, gen::kRelArrive.y, gen::kRelArrive.z + 4.0f), gen::kRelArrive.yaw);
 			marker(g_leave, P(gen::kRelLeave) + RE::NiPoint3{ 0, 0, 4.0f }, gen::kRelLeave.yaw);
+		}
+		// (Noah: "I want the entrance to the room ... to be a portal ... just outside the back of High Hrothgar. The portal should
+		// bring us to a different room") the Reliquary's portal (tools/portal.py) stands on the mountain behind the monastery;
+		// walk into it and you come out in the Reliquary, its exit brings you back out in front of it
+		void Go(RE::PlayerCharacter* a_p, RE::ObjectRefHandle& a_to);
+		RE::ObjectRefHandle g_portal;
+		bool                g_toRoom = false, g_toPortal = false;
+		float               g_portalCd = 0;
+		RE::TESWorldSpace* Tamriel() { return RE::TESForm::LookupByID<RE::TESWorldSpace>(0x0000003C); }
+		RE::TESObjectREFR* HallDoorOut() { return RE::TESForm::LookupByID<RE::TESObjectREFR>(0x000A85EA); }  // High Hrothgar's door, outside
+		void TickPortal(RE::PlayerCharacter* a_p, float a_dt)
+		{
+			g_portalCd = std::max(0.0f, g_portalCd - a_dt);
+			const RE::NiPoint3 at = P(gen::kRelPortal);
+			const float        yaw = Rad(gen::kRelPortal.yaw);
+			const RE::NiPoint3 front{ std::sin(yaw), std::cos(yaw), 0.0f };
+			if (g_toRoom && a_p->GetParentCell() == HH()) {
+				g_toRoom = false;
+				BuildReliquary(a_p);
+				Go(a_p, g_arrive);
+				Hud::Banner(Flag(kFlagHallOpen) ? "THE HALL OF THE AWAKENED" : "THE RELIQUARY OF THE TONGUES", 3.5f);
+				return;
+			}
+			if (a_p->GetWorldspace() != Tamriel()) return;
+			if (g_toPortal) {
+				g_toPortal = false;
+				a_p->SetPosition(at + front * 190.0f + RE::NiPoint3{ 0, 0, 10.0f }, true);
+				a_p->SetAngle({ 0, 0, yaw + 3.14159f });
+				g_portalCd = 3.0f;
+				return;
+			}
+			if (a_p->GetPosition().GetDistance(at) > 9000.0f) return;
+			if (auto r = g_portal.get(); !r || r->IsDeleted() || r->IsDisabled() || !r->GetParentCell()) {
+				if (auto* st = Forms::Ours(gen::kRelPortalStat)) {
+					// (one from an earlier session, saved where it stood: that one, not another)
+					RE::TESObjectREFR* found = nullptr;
+					RE::TES::GetSingleton()->ForEachReferenceInRange(a_p, 9500.0f, [&](RE::TESObjectREFR* x) {
+						if (x && x->GetBaseObject() == st && !x->IsDeleted()) {
+							if (!found && x->GetPosition().GetDistance(at) < 80.0f) found = x;
+							else if (x != found) x->Disable(), x->SetDelete(true);
+						}
+						return RE::BSContainer::ForEachResult::kContinue;
+					});
+					if (found) { if (found->IsDisabled()) found->Enable(false); g_portal = found->CreateRefHandle(); }
+					else if (auto ref = a_p->PlaceObjectAtMe(st, false)) {
+						ref->SetPosition(at);
+						ref->SetAngle({ 0, 0, yaw });
+						g_portal = ref->CreateRefHandle();
+						logger::info("echo: the Reliquary's portal stands behind High Hrothgar");
+					}
+				}
+			}
+			const RE::NiPoint3 d = a_p->GetPosition() - at;
+			if (g_portalCd > 0 || std::hypot(d.x, d.y) > 95.0f || std::abs(d.z) > 260.0f) return;
+			g_portalCd = 4.0f;
+			if (!AnyCalled()) {
+				Hud::Banner("The portal's light holds you back. It opens when the Greybeards call you.", 5.0f);
+				return;
+			}
+			auto* door = HallDoorOut();
+			auto  in = door ? door->extraList.GetTeleportLinkedDoor().get() : RE::NiPointer<RE::TESObjectREFR>{};
+			if (!in) {
+				logger::warn("echo: the portal found no way into High Hrothgar");
+				return;
+			}
+			Forms::Play(gen::Sound::ward_lit);
+			g_toRoom = true;
+			a_p->MoveTo(in.get());
 		}
 		void Go(RE::PlayerCharacter* a_p, RE::ObjectRefHandle& a_to)
 		{
@@ -786,6 +853,7 @@ namespace bo3z
 			if (p->GetParentCell() == HH()) {
 				BuildReliquary(p);
 			}
+			TickPortal(p, 0.5f);
 			TickSky();
 			TickWords(p, 0.5f);
 		}
@@ -809,9 +877,15 @@ namespace bo3z
 				Hud::Banner(Flag(kFlagHallOpen) ? "THE HALL OF THE AWAKENED" : "THE RELIQUARY OF THE TONGUES", 3.5f);
 				return true;
 			}
-			if (base == Forms::Ours(gen::kRelDoorOut)) {
-				BuildReliquary(p);
-				Go(p, g_leave);
+			if (base == Forms::Ours(gen::kRelDoorOut)) {  // (out through the portal: in front of it on the mountain)
+				if (auto* door = HallDoorOut()) {
+					Forms::Play(gen::Sound::ward_lit);
+					g_toPortal = true;
+					p->MoveTo(door);
+				} else {
+					BuildReliquary(p);
+					Go(p, g_leave);
+				}
 				return true;
 			}
 			for (int w = 0; w < kWonders; ++w) {
@@ -925,7 +999,7 @@ namespace bo3z
 			}
 			int waiting = -1;
 			for (int c = 0; c < kWonders; ++c) if (Waiting(c) && (waiting < 0 || c == Classes::Get())) waiting = c;  // (your own path's first)
-			// at High Hrothgar: the sealed door; in the Reliquary, the pedestal of a wonder waiting to be taken up
+			// at High Hrothgar: the door out to the portal; in the Reliquary, the pedestal of a wonder waiting to be taken up
 			if (a_p->GetParentCell() == HH()) {
 				if (InRoom(a_p)) {
 					if (waiting >= 0) {
@@ -937,8 +1011,12 @@ namespace bo3z
 					return false;
 				}
 				if (waiting >= 0 || (Flag(kFlagHallOpen) && Bane() && a_p->GetItemCount(Bane()) <= 0)) {
-					a_at = P(gen::kRelDoor) + RE::NiPoint3{ 0, 0, 300.0f };
-					a_label = Flag(kFlagHallOpen) ? "The Hall of the Awakened" : "The Reliquary";
+					// (the way in is the portal outside the back now: point at the door out to it)
+					auto* out = HallDoorOut();
+					auto* in = out ? out->extraList.GetTeleportLinkedDoor().get().get() : nullptr;
+					if (!in) return false;
+					a_at = in->GetPosition() + RE::NiPoint3{ 0, 0, 200.0f };
+					a_label = std::string(Flag(kFlagHallOpen) ? "The Hall of the Awakened" : "The Reliquary") + " - through the portal outside";
 					return true;
 				}
 				return false;
@@ -954,10 +1032,10 @@ namespace bo3z
 				}
 			};
 			if (waiting >= 0) {
-				consider(kHHFront + RE::NiPoint3{ 0, 0, 250.0f }, "High Hrothgar - " + std::string(Classes::WonderName(waiting)) + " waits in the Reliquary");
+				consider(P(gen::kRelPortal) + RE::NiPoint3{ 0, 0, 250.0f }, "The portal behind High Hrothgar - " + std::string(Classes::WonderName(waiting)) + " waits in the Reliquary");
 			}
 			if (Flag(kFlagHallOpen) && Bane() && a_p->GetItemCount(Bane()) <= 0 && !Flag(kFlagRobes)) {
-				consider(kHHFront + RE::NiPoint3{ 0, 0, 250.0f }, "High Hrothgar - the Hall of the Awakened");
+				consider(P(gen::kRelPortal) + RE::NiPoint3{ 0, 0, 250.0f }, "The portal behind High Hrothgar - the Hall of the Awakened");
 			}
 			for (int w = 0; w < kWordCount; ++w) {
 				if (!Awake(w)) continue;

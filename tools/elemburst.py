@@ -26,17 +26,20 @@ EL = {
     'gold':  ('dawnspire', '1,0.97,0.75', ('1,0.82,0.25', '1,0.75,0.15', '1,0.9,0.45'), '0.95,0.6,0.08'),
 }
 
+# the flipbook's element (tools/alchfx.py draws each at 60 fps)
+ALCHFX = {'emberstring': 'fire', 'rimehorn': 'frost', 'stormreach': 'shock', 'skyhowl': 'wind', 'dawnspire': 'sun', 'thirstbow': 'blood', 'vortex': 'void'}
 
-def card(L, name, tex, col, sc, w, h, at, phase, fps=26):
-    L.append(f'shape {name} tex={tex} color={col},1 scale={sc} blend=add billboard=2 flip=8x8 fps={fps} phase={phase:.2f} at={at[0]:.1f},{at[1]:.1f},{at[2]:.1f}')
-    for X, Y, u, v in ((-w, h, 0, 0), (w, h, 1 / 8, 0), (w, -h, 1 / 8, 1 / 8), (-w, -h, 0, 1 / 8)):
+
+def card(L, name, tex, col, sc, w, h, at, phase, fps=60):
+    L.append(f'shape {name} tex={tex} color={col},1 scale={sc} blend=add billboard=2 flip=16x10 fps={fps} phase={phase:.2f} at={at[0]:.1f},{at[1]:.1f},{at[2]:.1f}')
+    for X, Y, u, v in ((-w, h, 0, 0), (w, h, 1 / 16, 0), (w, -h, 1 / 16, 1 / 10), (-w, -h, 0, 1 / 10)):
         L.append(f'v {X:.2f} {Y:.2f} 0 {u} {v} 1 1 1 1')
     L += ['t 0 1 2', 't 0 2 3']
 
 
 def build(el):
     bid, core, body, fringe = EL[el]
-    tex = f'CurseOfAlduin\\bow\\{bid}_arrowfx.dds'
+    tex = f'CurseOfAlduin\\fx\\alch_{ALCHFX[bid]}.dds'  # (Noah: "60 FPS" - tools/alchfx.py)
     random.seed(sum(map(ord, el)))
     out = OUT / f'burst_{el}.nif'
     L = [f'out {out}']
@@ -50,7 +53,7 @@ def build(el):
              (r * math.cos(a), r * math.sin(a), random.uniform(5, 70)), (k * 0.37) % 2.4); k += 1
     for i in range(6):  # the fringe: low and wide, the blast spreading on the ground
         a = 2 * math.pi * i / 6 + 0.4
-        card(L, f'b{k}', tex, fringe, 1.3, 44, 30, (88 * math.cos(a), 88 * math.sin(a), 6), (k * 0.53) % 2.4, fps=20); k += 1
+        card(L, f'b{k}', tex, fringe, 1.3, 44, 30, (88 * math.cos(a), 88 * math.sin(a), 6), (k * 0.53) % 2.4, fps=48); k += 1
     jf = WORK / f'burst_{el}.job'
     jf.write_text('\n'.join(L) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
