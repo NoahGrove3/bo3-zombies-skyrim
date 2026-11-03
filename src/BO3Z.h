@@ -786,6 +786,7 @@ namespace bo3z
 		void                  StartThrow(bool a_left, std::function<void()> a_release);  // the underhand throw on that arm; a_release at the top of the swing
 		bool                  Throwing();  // the Light Orb over your head, lit or put away
 		void                  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land);  // a thrown thing flown on its arc; a_land where it comes down
+		RE::ObjectRefHandle   PlaceAt(RE::TESBoundObject* a_obj, const RE::NiPoint3& a_at, float a_yaw);  // a placed object made at the point itself (its 3D drawn there, not made at the player and moved)
 		void                  BlackHole(const RE::NiPoint3& a_at, bool a_legendary);  // the Subsuming Vortex: a purple singularity pulls the dead in, then bursts
 		void                  DevCast(const std::string& a_mode);  // dev: 'cast tap|full|ult|orb|hand' with a spell in hand
 	}

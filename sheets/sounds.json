@@ -7796,6 +7796,26 @@
       "use": "Alchemist: a flask thrown (air, slosh)"
     },
     {
+      "id": "alch_uncork",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_alch_uncork",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\CurseOfAlduin\\un\\alch_uncork_0.wav",
+      "files": [
+        "fx\\CurseOfAlduin\\un\\alch_uncork_0.wav",
+        "fx\\CurseOfAlduin\\un\\alch_uncork_1.wav",
+        "fx\\CurseOfAlduin\\un\\alch_uncork_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 8,
+      "loop": false,
+      "use": "Alchemist: the wind-up of a throw - the cork popped, a fizz (in place of a grunt)"
+    },
+    {
       "id": "alch_shatter",
       "plugin": "CurseOfAlduin.esp",
       "localId": "auto",

@@ -566,9 +566,10 @@ namespace bo3z::gen
 		alch_draw = 409,
 		alch_sheath = 410,
 		alch_throw = 411,
-		alch_shatter = 412,
+		alch_uncork = 412,
+		alch_shatter = 413,
 	};
-	inline constexpr std::array<FormRef, 413> kSounds{ {
+	inline constexpr std::array<FormRef, 414> kSounds{ {
 		FormRef{ "CurseOfAlduin.esp", 0x000927, "UN_cast_sidearm" },
 		FormRef{ "CurseOfAlduin.esp", 0x000A88, "UN_charge_sidearm" },
 		FormRef{ "CurseOfAlduin.esp", 0x000958, "UN_unleash_sidearm" },
@@ -981,9 +982,10 @@ namespace bo3z::gen
 		FormRef{ "CurseOfAlduin.esp", 0x000D9A, "UN_alch_draw" },
 		FormRef{ "CurseOfAlduin.esp", 0x000D9B, "UN_alch_sheath" },
 		FormRef{ "CurseOfAlduin.esp", 0x000D9C, "UN_alch_throw" },
+		FormRef{ "CurseOfAlduin.esp", 0x000DA0, "UN_alch_uncork" },
 		FormRef{ "CurseOfAlduin.esp", 0x000D9D, "UN_alch_shatter" },
 	} };
-	inline constexpr std::array<int, 413> kSoundLayer{ { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 } };  // a second sound played with each (-1 none)
+	inline constexpr std::array<int, 414> kSoundLayer{ { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 } };  // a second sound played with each (-1 none)
 	inline constexpr std::uint32_t kMusicBoss = 0xB09, kMusicFreed = 0xB0B, kMusicIntro = 0xB15, kMusicNight = 0xD03;  // our MUSC records
 	inline constexpr int kPoints_start = 500;  // new_game_after_intro
 	inline constexpr int kPoints_hit = 0;  // gun_hit_round_undead
@@ -1743,7 +1745,8 @@ namespace bo3z::gen
 	inline constexpr std::array<RelSpot, 4> kRelPedestals{ { { -390.0f, 330.0f, 0.0f, 135.0f }, { 390.0f, 330.0f, 0.0f, 225.0f }, { -390.0f, -230.0f, 0.0f, 45.0f }, { 390.0f, -230.0f, 0.0f, 315.0f } } };
 	inline constexpr float kRelUse = 190.0f;
 	inline constexpr RelSpot kRelPortal{ 54610.0f, -37009.0f, 23589.0f, 167.0f };  // in Tamriel, outside High Hrothgar's back
-	inline constexpr std::uint32_t kRelPortalStat = 0xD9E;
+	inline constexpr std::uint32_t kRelPortalActi = 0xD9F;  // (an activator: a static placed and moved never drew)
+	inline constexpr std::uint32_t kSilentVoice = 0xB07;  // a voice with nothing to say (no grunts)
 	inline constexpr std::uint32_t kRelDoorIn = 0xC42, kRelDoorOut = 0xC43, kRelRoom = 0xC48, kRelRelic = 0xC49, kRelBlue = 0xC4E, kRelWarm = 0xC4F, kRelRelicLight = 0xC50, kRelBeam = 0xBFB, kRelBrazier = 0xC85, kRelStone = 0xC27, kRelBanner = 0xC86;
 	struct EggStep { int type, n, element; bool night; float r0, r1; bool nodamage; float seconds; std::string_view name, text; int row; bool dark; std::string_view hint; };
 	enum EggStepType : int { kEggTouch = 0, kEggOrder = 1, kEggAltar = 2, kEggKills = 3, kEggSurvive = 4, kEggBoss = 5, kEggClasskills = 6 };

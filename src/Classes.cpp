@@ -3229,6 +3229,7 @@ namespace bo3z::Classes
 		}
 		cool = el == 6 ? 12.0f : 0.9f * (Kit::ArmourTier(coffer::kAlchemist) >= 1 ? 0.85f : 1.0f) * Perks::FlaskCostMult();
 		g_throwAt = std::chrono::steady_clock::now();
+		if (!Gun::Throwing()) Audio::AtPoint(gen::Sound::alch_uncork, RE::PlayerCharacter::GetSingleton()->GetPosition() + RE::NiPoint3{ 0, 0, 110.0f });  // (a cork popped, not a grunt)
 		Gun::StartThrow(a_left, [el, a_left]() { ThrowFlaskEl(el, a_left); });
 	}
 	// (Noah: "an item that you actually throw") a flask that leaves your pack was used (its hotkey, or Use in the pack): it is
@@ -3245,7 +3246,9 @@ namespace bo3z::Classes
 			static RE::BGSVoiceType* saved = nullptr;
 			static bool               quiet = false;
 			const bool flask = FlaskInHand(false) || FlaskInHand(true);
-			if (flask && !quiet) saved = base->voiceType, base->voiceType = nullptr, quiet = true;
+			// (a voice type of none falls back to the race's own - the grunts went on - so a voice with nothing to say instead)
+			static auto* mute = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSVoiceType>(gen::kSilentVoice, gen::kPlugin);
+			if (flask && !quiet && mute) saved = base->voiceType, base->voiceType = mute, quiet = true;
 			else if (!flask && quiet) base->voiceType = saved, quiet = false;
 		}
 		static float look = 0;

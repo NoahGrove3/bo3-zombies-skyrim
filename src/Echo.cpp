@@ -318,6 +318,43 @@ namespace bo3z
 		float               g_portalCd = 0;
 		RE::TESWorldSpace* Tamriel() { return RE::TESForm::LookupByID<RE::TESWorldSpace>(0x0000003C); }
 		RE::TESObjectREFR* HallDoorOut() { return RE::TESForm::LookupByID<RE::TESObjectREFR>(0x000A85EA); }  // High Hrothgar's door, outside
+		// a way into High Hrothgar: the far side of one of its doors standing near you (Tamriel's doors into the cell)
+		RE::NiPointer<RE::TESObjectREFR> WayIntoHH(RE::PlayerCharacter* a_p)
+		{
+			RE::NiPointer<RE::TESObjectREFR> in;
+			if (auto* door = HallDoorOut()) {
+				if (auto x = door->extraList.GetTeleportLinkedDoor().get(); x && x->GetParentCell() == HH()) in = x;
+			}
+			if (!in) {
+				RE::TES::GetSingleton()->ForEachReferenceInRange(a_p, 9500.0f, [&](RE::TESObjectREFR* x) {
+					if (x && x->GetBaseObject() && x->GetBaseObject()->Is(RE::FormType::Door)) {
+						if (auto y = x->extraList.GetTeleportLinkedDoor().get(); y && y->GetParentCell() == HH()) {
+							in = y;
+							return RE::BSContainer::ForEachResult::kStop;
+						}
+					}
+					return RE::BSContainer::ForEachResult::kContinue;
+				});
+			}
+			return in;
+		}
+		// High Hrothgar's own door out to the mountain (one of the hall's doors whose far side is in Tamriel), while you're inside
+		RE::TESObjectREFR* DoorOutOfHH()
+		{
+			auto* cell = HH();
+			RE::TESObjectREFR* out = nullptr;
+			if (!cell) return nullptr;
+			cell->ForEachReference([&](RE::TESObjectREFR* x) {
+				if (x && x->GetBaseObject() && x->GetBaseObject()->Is(RE::FormType::Door)) {
+					if (auto y = x->extraList.GetTeleportLinkedDoor().get(); y && y->GetWorldspace() == Tamriel()) {
+						out = x;
+						return RE::BSContainer::ForEachResult::kStop;
+					}
+				}
+				return RE::BSContainer::ForEachResult::kContinue;
+			});
+			return out;
+		}
 		void TickPortal(RE::PlayerCharacter* a_p, float a_dt)
 		{
 			g_portalCd = std::max(0.0f, g_portalCd - a_dt);
@@ -341,7 +378,7 @@ namespace bo3z
 			}
 			if (a_p->GetPosition().GetDistance(at) > 9000.0f) return;
 			if (auto r = g_portal.get(); !r || r->IsDeleted() || r->IsDisabled() || !r->GetParentCell()) {
-				if (auto* st = Forms::Ours(gen::kRelPortalStat)) {
+				if (auto* st = Forms::Ours(gen::kRelPortalActi)) {
 					// (one from an earlier session, saved where it stood: that one, not another)
 					RE::TESObjectREFR* found = nullptr;
 					RE::TES::GetSingleton()->ForEachReferenceInRange(a_p, 9500.0f, [&](RE::TESObjectREFR* x) {
@@ -352,10 +389,8 @@ namespace bo3z
 						return RE::BSContainer::ForEachResult::kContinue;
 					});
 					if (found) { if (found->IsDisabled()) found->Enable(false); g_portal = found->CreateRefHandle(); }
-					else if (auto ref = a_p->PlaceObjectAtMe(st, false)) {
-						ref->SetPosition(at);
-						ref->SetAngle({ 0, 0, yaw });
-						g_portal = ref->CreateRefHandle();
+					else if (auto h = Gun::PlaceAt(st, at, yaw); h) {
+						g_portal = h;
 						logger::info("echo: the Reliquary's portal stands behind High Hrothgar");
 					}
 				}
@@ -367,8 +402,7 @@ namespace bo3z
 				Hud::Banner("The portal's light holds you back. It opens when the Greybeards call you.", 5.0f);
 				return;
 			}
-			auto* door = HallDoorOut();
-			auto  in = door ? door->extraList.GetTeleportLinkedDoor().get() : RE::NiPointer<RE::TESObjectREFR>{};
+			auto in = WayIntoHH(a_p);
 			if (!in) {
 				logger::warn("echo: the portal found no way into High Hrothgar");
 				return;
@@ -878,11 +912,14 @@ namespace bo3z
 				return true;
 			}
 			if (base == Forms::Ours(gen::kRelDoorOut)) {  // (out through the portal: in front of it on the mountain)
-				if (auto* door = HallDoorOut()) {
+				auto* in = DoorOutOfHH();
+				auto  door = in ? in->extraList.GetTeleportLinkedDoor().get() : RE::NiPointer<RE::TESObjectREFR>{};
+				if (door) {
 					Forms::Play(gen::Sound::ward_lit);
 					g_toPortal = true;
-					p->MoveTo(door);
+					p->MoveTo(door.get());
 				} else {
+					logger::warn("echo: no door out of High Hrothgar - leaving by the hall");
 					BuildReliquary(p);
 					Go(p, g_leave);
 				}
@@ -1012,8 +1049,7 @@ namespace bo3z
 				}
 				if (waiting >= 0 || (Flag(kFlagHallOpen) && Bane() && a_p->GetItemCount(Bane()) <= 0)) {
 					// (the way in is the portal outside the back now: point at the door out to it)
-					auto* out = HallDoorOut();
-					auto* in = out ? out->extraList.GetTeleportLinkedDoor().get().get() : nullptr;
+					auto* in = DoorOutOfHH();
 					if (!in) return false;
 					a_at = in->GetPosition() + RE::NiPoint3{ 0, 0, 200.0f };
 					a_label = std::string(Flag(kFlagHallOpen) ? "The Hall of the Awakened" : "The Reliquary") + " - through the portal outside";

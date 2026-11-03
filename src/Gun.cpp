@@ -2713,6 +2713,13 @@ namespace bo3z
 			logger::info("lob: {} ({})", a_model, l.ref ? "placed" : "NOT PLACED");
 			g_lobs.push_back(std::move(l));
 		}
+		RE::ObjectRefHandle PlaceAt(RE::TESBoundObject* a_obj, const RE::NiPoint3& a_at, float a_yaw)
+		{
+			auto r = PlaceAtPoint(a_obj, a_at);
+			if (!r) return {};
+			r->SetAngle({ 0, 0, a_yaw });
+			return r->GetHandle();
+		}
 		void  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life)
 		{
 			QueueFx("CurseOfAlduin\\fx\\purplefire.nif", a_at, a_scale, a_delay, a_life, false);

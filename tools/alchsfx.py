@@ -85,6 +85,21 @@ def main():
         wh = bandnoise(sec, 300 + 60 * k, 2600) * np.exp(-((t - 0.22) / 0.11) ** 2)
         s = np.zeros(len(t)); place(s, wh, 0.0); place(s, slosh(0.4, 0.5, 11.0), 0.05)
         save(f'alch_throw_{k}.wav', norm(s, 0.65))
+    # (Noah: "instead of the player grunting when throwing ... a potion-y sound effect") the wind-up: the cork thumbed off with a
+    # soft pop, a quick fizz of bubbles rising, the liquid rocking as the arm comes back
+    for k in range(3):
+        sec = 0.7
+        t = t_(sec)
+        s = np.zeros(len(t))
+        f0 = 520 + 70 * k                                                   # the pop: a short hollow tone falling, a puff of air
+        pop = np.sin(2 * np.pi * (f0 * t[: int(0.07 * SR)] - 1800 * t[: int(0.07 * SR)] ** 2)) * np.exp(-60 * t[: int(0.07 * SR)])
+        place(s, pop * 0.9, 0.0)
+        place(s, bandnoise(0.05, 800, 5000) * np.exp(-90 * t_(0.05)) * 0.35, 0.0)
+        for _ in range(26):                                                 # the fizz
+            at = rng.uniform(0.04, 0.5); f = rng.uniform(1400, 3800); n = int(0.03 * SR); tt = t_(0.03)
+            place(s, np.sin(2 * np.pi * (f + 3000 * tt) * tt) * np.exp(-140 * tt) * rng.uniform(0.08, 0.2) * (1 - at / 0.6), at)
+        place(s, slosh(0.45, 0.4, 9.0), 0.12)
+        save(f'alch_uncork_{k}.wav', norm(s, 0.6))
     # shatter: the crack, a spray of shards tinkling down, the contents splashing out
     for k in range(3):
         sec = 1.3
