@@ -7753,7 +7753,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 2,
+      "atten": 6,
       "loop": false,
       "use": "Alchemist: a flask drawn (glass, liquid)"
     },
@@ -7771,7 +7771,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 2,
+      "atten": 6,
       "loop": false,
       "use": "Alchemist: a flask put away"
     },
@@ -7791,7 +7791,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 2,
+      "atten": 8,
       "loop": false,
       "use": "Alchemist: a flask thrown (air, slosh)"
     },
@@ -7811,7 +7811,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 0,
+      "atten": 7,
       "loop": false,
       "use": "Alchemist: a flask shatters where it lands"
     }

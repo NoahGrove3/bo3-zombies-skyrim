@@ -2002,6 +2002,7 @@ namespace bo3z::Classes
 					const bool charged = g_magnus.held >= 2.0f;
 					const float top = MagnusTop();
 					Gun::ElemBurst(4, g_magnus.at, charged ? 2.6f : 1.4f, 0.0f, 1.0f);
+					Gun::Motes(4, g_magnus.at, charged ? 2.2f : 1.3f, charged ? 3.0f : 2.0f);  // (Noah: fine motes off the ground where it struck)
 					Gun::ElemBurst(2, g_magnus.at + RE::NiPoint3{ 0, 0, 30.0f }, charged ? 1.8f : 1.0f, 0.08f, 0.8f);
 					Gun::FxBlast(charged ? "shockmass" : "runeshock", g_magnus.at);
 					Gun::AreaHurt(g_magnus.at, charged ? 380.0f : 230.0f, (charged ? 1.2f : 0.45f) * top, "");
@@ -2182,6 +2183,9 @@ namespace bo3z::Classes
 						if (const float d = step.Length(); d > 10.0f) a->SetPosition(at + step * std::min(1.0f, 700.0f * dt / d), true);
 					}
 					if (auto t = a->GetActorRuntimeData().currentCombatTarget.get(); t && Director::PlayerSide(t.get(), p)) a->StopCombat();  // (never on you or a friend)
+					// (Noah: "cast green fire breath not ice breath") its own shouts held back (the frost, the drain, the
+					// Soul Cairn's summons): its breath is the green grave-fire below
+					if (auto* pr = a->GetActorRuntimeData().currentProcess; pr && pr->high) pr->high->voiceRecoveryTime = 1.0e6f;
 					const auto foes = NearFoes(me, 1500.0f, 1);
 					if (!foes.empty() && breathT <= 0) {
 						breathT = 1.2f;
@@ -3059,8 +3063,9 @@ namespace bo3z::Classes
 				GoldCloud g;
 				g.at = a_at, g.left = legend ? 16.0f : 12.0f, g.radius = legend ? 560.0f : 450.0f, g.legend = legend;
 				Audio::AtPoint(gen::Sound::alch_shatter, a_at);
-				Gun::ElemBurst(8, a_at, 3.0f, 0.0f, 1.2f);  // (Noah: "the philosopher's flask also casts a green ball" - Skyrim's light blast: gone)
+				Gun::ElemBurst(8, a_at, 1.6f, 0.0f, 1.2f);  // (Noah: "the philosopher's flask also casts a green ball" - Skyrim's light blast: gone)
 				Gun::Puddle(4, a_at, g.radius / 100.0f, g.left);  // (a pool of molten gold lies where it broke, as long as the cloud)
+				Gun::Motes(8, a_at, g.radius / 100.0f, g.left);  // (its gold rising off the ground as fine motes, the cloud's whole life)
 				g_gold.push_back(std::move(g));
 				logger::info("alchemist: the Philosopher's Flask shatters");
 				return;
@@ -3096,10 +3101,7 @@ namespace bo3z::Classes
 				if ((g.tick -= a_delta) > 0) continue;
 				g.tick = 0.5f;
 				const float top = UpgradeMult(g.legend ? kWonderUps + 1 : kWonderUps) * (0.7f + 0.3f * Arcana::Power());
-				Gun::ElemBurst(8, g.at + RE::NiPoint3{ 0, 0, -30.0f }, g.legend ? 3.4f : 2.8f, 0.0f, 0.9f);
-				static std::mt19937 rng{ 5 };
-				std::uniform_real_distribution<float> u(-1.0f, 1.0f);
-				for (int k = 0; k < 3; ++k) Gun::ElemBurst(8, g.at + RE::NiPoint3{ u(rng) * g.radius * 0.7f, u(rng) * g.radius * 0.7f, -30.0f }, 1.2f, 0.1f * k, 0.8f);
+				// (Noah: the cloud's big gold stars were low quality) its look is the gold pool and the fine motes rising off it (FlaskBurst)
 				auto* gild = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kBowSkin[4], gen::kPlugin);  // (the sun bow's gold)
 				const auto inside = NearFoes(g.at, g.radius, 24);
 				for (auto* a : inside) {
@@ -3113,7 +3115,7 @@ namespace bo3z::Classes
 					auto* a = RE::TESForm::LookupByID<RE::Actor>(*it);
 					if (!a) { it = g.gilded.erase(it); continue; }
 					if (a->IsDead()) {
-						Gun::ElemBurst(8, a->GetPosition() + RE::NiPoint3{ 0, 0, 30.0f }, 1.1f, 0.0f, 0.8f);
+						Gun::ElemBurst(8, a->GetPosition() + RE::NiPoint3{ 0, 0, 30.0f }, 0.7f, 0.0f, 0.8f);
 						Points::Add(g.legend ? 150 : 100);
 						it = g.gilded.erase(it);
 						continue;
@@ -3128,7 +3130,11 @@ namespace bo3z::Classes
 	void SummonBoneDragon()
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
-		auto* base = Lookup(0x09192C, "Skyrim.esm");
+		// (Noah: "it only stays in one position, it doesn't fly around or walk") Labyrinthian's skeletal dragon is made to stay
+		// grounded in its courtyard: Durnehviir as Dawnguard summons him - the undead dragon that circles you in the air and
+		// dives on your foes - is the body now (Labyrinthian's only if Dawnguard's is missing)
+		auto* base = Lookup(0x00C71A, "Dawnguard.esm");
+		if (!base || !base->As<RE::TESNPC>()) base = Lookup(0x09192C, "Skyrim.esm");
 		auto* npc = base ? base->As<RE::TESNPC>() : nullptr;
 		if (!p || !npc || !p->GetParentCell()) { logger::warn("classes: the bone dragon not called (npc {})", npc != nullptr); return; }
 		if (auto old = g_boneDragon.get(); old && !old->IsDead()) {  // (one at a time: the old one crumbles)
@@ -3233,6 +3239,15 @@ namespace bo3z::Classes
 		g_flaskCool = std::max(0.0f, g_flaskCool - a_delta), g_philCool = std::max(0.0f, g_philCool - a_delta);
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !p->Is3DLoaded() || p->IsDead() || ItemMenusOpen()) return;
+		// (Noah: "turn off player voice grunts while casting the flasks") with a flask in hand your voice is quiet: its voice
+		// type set aside while one is drawn, given back the moment none is
+		if (auto* base = p->GetActorBase()) {
+			static RE::BGSVoiceType* saved = nullptr;
+			static bool               quiet = false;
+			const bool flask = FlaskInHand(false) || FlaskInHand(true);
+			if (flask && !quiet) saved = base->voiceType, base->voiceType = nullptr, quiet = true;
+			else if (!flask && quiet) base->voiceType = saved, quiet = false;
+		}
 		static float look = 0;
 		if ((look -= a_delta) > 0) return;
 		look = 1.0f;

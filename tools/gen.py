@@ -374,6 +374,11 @@ _rules = [
     {"match": {"formType": "MiscItem", "formId": {"anyOf": ["Paragliding.esp|802"]}},
      "assign": {"subTypeDisplay": "Dragon", "iconSource": "skyui/icons_item_psychosteve.swf", "iconLabel": "misc_dragonclaw", "iconColor": "#e0b060"}},
 ]
+# (Noah: "in the inventory can you give the flasks potion icons instead of dagger? for the damage type it should say Alchemist")
+_FLASKCOL = {'fire': '#ff7a2a', 'frost': '#9fdcff', 'shock': '#b48cff', 'poison': '#7cff3a', 'sun': '#ffe08a', 'blood': '#c8202a', 'philosopher': '#ffc94a'}
+for _e, _c in _FLASKCOL.items():
+    _rules.append({"match": {"formType": "Weapon", "formId": {"anyOf": [f'CurseOfAlduin.esp|{IDS[("WEAP", "flaskweap_" + _e)]:X}']}},
+                   "assign": {"subTypeDisplay": "Alchemist", "iconSource": "skyui/icons_item_psychosteve.swf", "iconLabel": "default_potion", "iconColor": _c}})
 _leg = [f'{r["plugin"]}|{int(r["formId"], 16):X}' for r in S['coffer_spells']['rows'] if int(r.get('tier', 0)) >= 3]
 if _leg:
     _rules.append({"match": {"formType": "Spell", "formId": {"anyOf": _leg}},

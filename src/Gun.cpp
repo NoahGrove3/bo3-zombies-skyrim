@@ -2682,6 +2682,9 @@ namespace bo3z
 					tumble.SetEulerAnglesXYZ(l.t * l.spin, 0.0f, 0.0f);
 					r->SetPosition(l.p);
 					if (auto* o = r->Get3D()) {
+						// (Noah: "visible but only at halfway flights as it fades in") drawn whole from the hand: no fade-in
+						o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
+						if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
 						o->local.translate = l.p;
 						o->local.rotate = Spellcraft::Facing(l.v) * tumble;
 						o->local.scale = l.scale;
@@ -2709,6 +2712,7 @@ namespace bo3z
 			if (!f) {
 				if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::TESObjectACTI>(); factory && (f = factory->Create())) f->SetModel(a_model.c_str());
 			}
+			(void)Spellcraft::LoadPath(a_model);  // (its model in memory before it's placed: drawn the first frame, not a beat later)
 			if (auto r = f ? PlaceAtPoint(f, a_from) : RE::NiPointer<RE::TESObjectREFR>{}) l.ref = r->GetHandle();
 			l.p = a_from, l.v = a_vel, l.scale = a_scale, l.land = std::move(a_land);
 			logger::info("lob: {} ({})", a_model, l.ref ? "placed" : "NOT PLACED");
@@ -2732,6 +2736,18 @@ namespace bo3z
 			RE::NiPoint3 at = a_at;
 			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && land > at.z - 250.0f && land < at.z + 80.0f) at.z = land + 2.0f;
 			QueueFx(std::string("CurseOfAlduin\\fx\\puddle_") + kName[a_elem] + ".nif", at, a_scale, 0.0f, a_life, true);
+			static constexpr int kMote[6] = { 0, 1, 2, 7, 4, 5 };
+			Motes(kMote[a_elem], at, a_scale * 0.9f, a_life);  // (fine motes of it rising off the pool)
+		}
+		// (Noah: "very small animated hyper realistic particles from the area of damage coming from the ground in the colour of
+		// the effect") tools/motes.py: a field of tiny motes rising off the ground over the area, its faint glow beneath
+		void  Motes(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_life)
+		{
+			static constexpr const char* kName[9] = { "fire", "frost", "shock", "wind", "sun", "blood", "void", "poison", "gold" };
+			if (a_elem < 0 || a_elem >= 9) return;
+			RE::NiPoint3 at = a_at;
+			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && land > at.z - 250.0f && land < at.z + 80.0f) at.z = land + 1.0f;
+			QueueFx(std::string("CurseOfAlduin\\fx\\motes_") + kName[a_elem] + ".nif", at, a_scale, 0.0f, a_life, true);
 		}
 		float AdsBlend() { return g_ads; }
 		bool  Owns(int a_gun) { return SlotOf(a_gun) >= 0; }

@@ -19,6 +19,118 @@
     },
     {
       "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|D93"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Alchemist",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "default_potion",
+        "iconColor": "#ff7a2a"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|D94"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Alchemist",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "default_potion",
+        "iconColor": "#9fdcff"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|D95"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Alchemist",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "default_potion",
+        "iconColor": "#b48cff"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|D96"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Alchemist",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "default_potion",
+        "iconColor": "#7cff3a"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|D97"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Alchemist",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "default_potion",
+        "iconColor": "#ffe08a"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|D98"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Alchemist",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "default_potion",
+        "iconColor": "#c8202a"
+      }
+    },
+    {
+      "match": {
+        "formType": "Weapon",
+        "formId": {
+          "anyOf": [
+            "CurseOfAlduin.esp|D99"
+          ]
+        }
+      },
+      "assign": {
+        "subTypeDisplay": "Alchemist",
+        "iconSource": "skyui/icons_item_psychosteve.swf",
+        "iconLabel": "default_potion",
+        "iconColor": "#ffc94a"
+      }
+    },
+    {
+      "match": {
         "formType": "Spell",
         "formId": {
           "anyOf": [

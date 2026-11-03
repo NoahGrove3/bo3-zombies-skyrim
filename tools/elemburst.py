@@ -61,7 +61,9 @@ def build(el):
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     WORK.mkdir(parents=True, exist_ok=True)
-    for el in EL: build(el)
+    for el in EL:
+        if el in ('sun', 'gold'): continue  # (their fine spark bursts are tools/motes.py's)
+        build(el)
 
 
 if __name__ == '__main__':

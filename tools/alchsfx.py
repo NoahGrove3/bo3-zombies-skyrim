@@ -90,11 +90,12 @@ def main():
         sec = 1.3
         t = t_(sec)
         s = np.zeros(len(t))
-        place(s, bandnoise(0.25, 1800, 16000) * np.exp(-28 * t_(0.25)) * 1.2, 0.0)
-        place(s, bandnoise(0.12, 150, 900) * np.exp(-40 * t_(0.12)) * 0.9, 0.0)
-        for _ in range(26):
-            place(s, clink(rng.uniform(3200, 7800), 0.25, rng.uniform(0.08, 0.3), 0.6), rng.uniform(0.01, 0.75))
-        place(s, slosh(0.7, 0.55, 5.0), 0.03)
+        # (Noah: "a satisfying and quiet ... impact") a soft glassy pop and a muffled whump, a few fine tinkles, the splash
+        place(s, bandnoise(0.18, 1500, 8000) * np.exp(-38 * t_(0.18)) * 0.45, 0.0)
+        place(s, bandnoise(0.22, 60, 320) * np.exp(-22 * t_(0.22)) * 1.1, 0.0)
+        for _ in range(12):
+            place(s, clink(rng.uniform(3000, 6200), 0.22, rng.uniform(0.05, 0.16), 0.45), rng.uniform(0.02, 0.6))
+        place(s, slosh(0.7, 0.6, 5.0), 0.02)
         save(f'alch_shatter_{k}.wav', norm(s, 0.85))
 
 

@@ -105,7 +105,7 @@ FLASKS = [('fire', 'Fire Flask', 'A flask of liquid fire. It bursts where it lan
           ('sun', 'Holy Water', 'Blessed water of Stendarr. It bursts into searing light where it lands; the dead burn in it.'),
           ('blood', 'Bloodbloom Flask', 'A flask of vampire\'s blood. It bursts where it lands, and what it drains comes back to you.'),
           ('philosopher', "Philosopher's Flask", 'The Alchemist\'s wonder. Where it shatters a cloud of molten gold hangs: the dead inside are gilded and torn apart, and every one that dies in it drops extra Essence.')]
-FLASK_TIERS = ' Tier I: a pool of it lingers where it lands. Tier II: it splits into three. Legendary: a far greater blast.'
+FLASK_TIERS = ' It always leaves a little of itself on the ground. Tier I: its pool lingers and bites three more times. Tier II: it splits into three. Legendary: a far greater blast.'
 for e, label, text in FLASKS:
     pd = bytearray(tsub('proj_bullet', 'DATA'))
     struct.pack_into('<H', pd, 0, 0x0)                    # a plain magic missile
