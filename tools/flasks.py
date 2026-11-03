@@ -449,6 +449,8 @@ def build(el, tex):
     r = subprocess.run([str(TOOLS / 'fxwrite'), str(WORK / 'fx.job')], capture_output=True, text=True)
     if r.returncode or 'no node' in r.stderr: print(r.stdout, r.stderr); raise SystemExit('fxwrite failed')
     subprocess.run([rootname_exe(), str(nif), 'AlchemistFlask'], check=True)
+    if HELD:  # (held, it is a weapon: without a Prn - its sheath node - Skyrim never hangs it in the hand; tools/modelconv/addprn.cpp)
+        subprocess.run(['/home/claude/tools/addprn', str(nif), str(nif), 'WeaponDagger'], check=True)
     lo, hi = M.bounds()
     print(f'{nif.name}: {hi[1] - lo[1]:.1f} tall (Y), {hi[0] - lo[0]:.1f} x {hi[2] - lo[2]:.1f}; Y {lo[1]:.1f}..{hi[1]:.1f}')
     return cards
