@@ -2468,7 +2468,7 @@ namespace bo3z
 			RE::NiPoint3 head = p->GetPosition() + RE::NiPoint3{ 0, 0, 128.0f };
 			if (auto* h = root->GetObjectByName("NPC Head [Head]")) head = h->world.translate;
 			const float t = g_orb.t;
-			const RE::NiPoint3 want = head + RE::NiPoint3{ std::cos(t * 0.9f) * 9.0f, std::sin(t * 0.9f) * 9.0f, 30.0f + std::sin(t * 1.7f) * 2.5f };
+			const RE::NiPoint3 want = head + RE::NiPoint3{ std::cos(t * 0.9f) * 9.0f, std::sin(t * 0.9f) * 9.0f, 52.0f + std::sin(t * 1.7f) * 2.5f };  // (at 30 it sat in the hair: unseen)
 			g_orb.at = g_orb.placed ? g_orb.at + (want - g_orb.at) * std::min(1.0f, a_delta * 12.0f) : want;  // (it follows you a touch softly)
 			g_orb.placed = true;
 			RE::NiMatrix3 turn;
