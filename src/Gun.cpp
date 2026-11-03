@@ -2365,6 +2365,61 @@ namespace bo3z
 			}
 			std::erase_if(g_eb, [](const EBurst& b) { return b.t >= 1.0e9f; });
 		}
+		// (Noah: "change the belt lantern to a small golden orb that sits just above my head and lights up my surroundings within
+		// 15 meters ... animated circulating and showing light beams, visually lighting up my surroundings") the Light Orb:
+		// its model (tools/lightorb.py) hung in the scene a little over your head, drifting round in a slow circle and bobbing,
+		// and the lantern's real light (shadow-casting, 15 m) carried inside it
+		struct LightOrb { Spellcraft::Fx fx; RE::NiPointer<RE::NiLight> light; bool want = false; float t = 0; RE::NiPoint3 at; bool placed = false; };
+		LightOrb g_orb;
+		void OrbDown()
+		{
+			auto* ssn = RE::BSShaderManager::State::GetSingleton().shadowSceneNode[0];
+			if (g_orb.light) {
+				if (ssn) ssn->RemoveLight(g_orb.light.get());
+				if (auto* parent = g_orb.light->parent) parent->DetachChild(g_orb.light.get());
+				g_orb.light.reset();
+			}
+			g_orb.fx.Detach();
+			g_orb.fx = {};
+			g_orb.placed = false;
+		}
+		void TickLightOrb(float a_delta)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* root = p && p->Is3DLoaded() ? p->Get3D(false) : nullptr;
+			if (!g_orb.want || !root) { if (g_orb.fx.obj || g_orb.light) OrbDown(); return; }
+			if (!g_orb.fx.obj) {
+				g_orb.fx = Spellcraft::Fx{ Spellcraft::LoadPath("CurseOfAlduin\\fx\\lightorb.nif") };
+				if (!g_orb.fx.obj) return;
+				g_orb.fx.Attach(Spellcraft::WorldRoot());
+			}
+			g_orb.t += a_delta;
+			RE::NiPoint3 head = p->GetPosition() + RE::NiPoint3{ 0, 0, 128.0f };
+			if (auto* h = root->GetObjectByName("NPC Head [Head]")) head = h->world.translate;
+			const float t = g_orb.t;
+			const RE::NiPoint3 want = head + RE::NiPoint3{ std::cos(t * 0.9f) * 9.0f, std::sin(t * 0.9f) * 9.0f, 30.0f + std::sin(t * 1.7f) * 2.5f };
+			g_orb.at = g_orb.placed ? g_orb.at + (want - g_orb.at) * std::min(1.0f, a_delta * 12.0f) : want;  // (it follows you a touch softly)
+			g_orb.placed = true;
+			RE::NiMatrix3 turn;
+			turn.SetEulerAnglesXYZ(0.0f, 0.0f, t * 0.6f);
+			g_orb.fx.Place(g_orb.at, turn, 1.0f);
+			// the light, inside the orb: hung again if the game took it down
+			auto* ssn = RE::BSShaderManager::State::GetSingleton().shadowSceneNode[0];
+			if (g_orb.light && ssn && !ssn->GetLight(g_orb.light.get())) {
+				if (auto* parent = g_orb.light->parent) parent->DetachChild(g_orb.light.get());
+				g_orb.light.reset();
+			}
+			if (!g_orb.light) {
+				auto* ligh = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectLIGH>(gen::kLanternLight, gen::kPlugin);
+				auto* node = g_orb.fx.obj ? g_orb.fx.obj->AsNode() : nullptr;
+				if (auto* l = ligh && node ? ligh->GenDynamic(p, node, 1, 1, 0) : nullptr) {
+					l->local.translate = RE::NiPoint3{ 0, 0, 0 };
+					g_orb.light.reset(l);
+					logger::info("light orb: lit (radius {})", ligh->data.radius);
+				}
+			}
+		}
+		void  SetLightOrb(bool a_on) { g_orb.want = a_on; }
 		// (Noah: the Alchemist's flasks "explode right in front of my face - there's no travel, it doesn't arc") a thrown
 		// flask is flown here: its model hung in the scene, carried along its arc under gravity, tumbling; it comes down on
 		// the first body or wall or ground its path crosses, and its burst is called there
@@ -3543,6 +3598,7 @@ namespace bo3z
 			BowsImpl::Tick(a_delta);
 			TickEBursts(a_delta);
 			TickLobs(a_delta);
+			TickLightOrb(a_delta);
 			if (out) {
 				const auto& g = gen::kGuns[gun];
 				if (g_burstLeft > 0 && (g_burstTimer -= a_delta) <= 0) {

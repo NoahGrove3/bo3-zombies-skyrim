@@ -1178,11 +1178,11 @@ for name, hx in T['weap_draugr_gs']['subs']:
     elif name == 'DATA': b = bytearray(struct.pack('<IfH', 5000, 16.0, 38))
     ws.append(sub(name, bytes(b)))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'fang'), ws))
-for key, col, radius in (('rel_blue', '5AA8FF', 620), ('rel_warm', 'FFD9A0', 1100), ('rel_relic', '6AB8FF', 700), ('lantern', 'FFC890', 1050)):  # (Noah: "a soft, warm light that makes everywhere around me visible, but not blindingly bright, within 15 meters")
+for key, col, radius in (('rel_blue', '5AA8FF', 620), ('rel_warm', 'FFD9A0', 1100), ('rel_relic', '6AB8FF', 700), ('lantern', 'FFD48A', 1050)):  # (Noah: "a soft, warm light that makes everywhere around me visible, but not blindingly bright, within 15 meters")
     data = bytearray(tsub('ligh', 'DATA')); c = int(col, 16)
     struct.pack_into('<I', data, 4, radius); struct.pack_into('<BBBB', data, 8, c >> 16, (c >> 8) & 255, c & 255, 0)
-    if key == 'lantern': struct.pack_into('<I', data, 12, 1)  # (the lantern: a steady light, no flicker)
-    recs['LIGH'].append(record('LIGH', fid('LIGH', key), [sub('EDID', z('UN_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.2 if key == 'lantern' else 1.0))]))  # (soft: a warm fill, not a glare)
+    if key == 'lantern': struct.pack_into('<I', data, 12, 0x1 | 0x1000)  # (the Light Orb: a steady light, no flicker, casting shadows all round - Noah: "visually lighting up my surroundings")
+    recs['LIGH'].append(record('LIGH', fid('LIGH', key), [sub('EDID', z('UN_' + key)), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 1.5 if key == 'lantern' else 1.0))]))  # (soft: a warm fill, not a glare)
 
 # (Noah: "the belt lantern should be an equipable item like the book for battle mage classes - when unequipped it shouldn't
 # give illumination, when equipped it should"; "a Skyrim-looking smaller lantern attached by a chain from your body at your
@@ -1202,12 +1202,12 @@ recs['SPEL'].append(record('SPEL', fid('SPEL', 'lanternlight'), [sub('EDID', z('
     sub('EFID', struct.pack('<I', fid('MGEF', 'lanternlight'))), sub('EFIT', struct.pack('<fII', 5.0, 0, 3600))]))
 LANTERN_NIF = 'CurseOfAlduin\\lantern\\beltlantern.nif'
 recs['ARMA'].append(record('ARMA', fid('ARMA', 'lantern'), [sub('EDID', z('UN_BeltLanternAA')), sub('BOD2', struct.pack('<II', 1 << 30, 2)), sub('RNAM', struct.pack('<I', 0x19)),
-    sub('DNAM', bytes.fromhex('0a0a00000000000000000000')), sub('MOD2', z(LANTERN_NIF)), sub('MOD3', z(LANTERN_NIF))] +
+    sub('DNAM', bytes.fromhex('0a0a00000000000000000000'))] +   # (Noah: the Light Orb - nothing worn on the body: the orb floats over your head, src/Gun.cpp)
     [sub('MODL', bytes.fromhex(h)) for h in '40370100 3a880800 41370100 3c880800 3d7a0900 42370100 3d880800 d87c0600 ba820a00 43370100 40880800 44370100 44880800 45370100 45880800 0a761000 46370100 94870800 47370100 b9820a00 48370100 46880800 49370100 84880800'.split()]))
-recs['ARMO'].append(record('ARMO', fid('ARMO', 'lantern'), [sub('EDID', z('UN_BeltLantern')), sub('OBND', struct.pack('<6h', -6, -6, 0, 6, 6, 18)), sub('FULL', z('Belt Lantern')),
-    sub('MOD2', z('Clutter\\Common\\CandleLanternWithCandle01.nif')), sub('BOD2', struct.pack('<II', 1 << 30, 2)), sub('RNAM', struct.pack('<I', 0x19)),
+recs['ARMO'].append(record('ARMO', fid('ARMO', 'lantern'), [sub('EDID', z('UN_BeltLantern')), sub('OBND', struct.pack('<6h', -6, -6, 0, 6, 6, 18)), sub('FULL', z('Light Orb')),
+    sub('MOD2', z('CurseOfAlduin\\fx\\lightorb.nif')), sub('BOD2', struct.pack('<II', 1 << 30, 2)), sub('RNAM', struct.pack('<I', 0x19)),
     sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x08F95B)),   # (ArmorClothing)
-    sub('DESC', z('A small iron lantern on a chain at your hip. Worn, its candle lights everything within fifteen metres of you; taken off, it goes dark.')),
+    sub('DESC', z('A small orb of golden light. Worn, it floats just above your head and lights everything within fifteen metres of you; taken off, it goes dark.')),
     sub('MODL', struct.pack('<I', fid('ARMA', 'lantern'))), sub('DATA', struct.pack('<If', 25, 1.0)), sub('DNAM', struct.pack('<I', 0))]))
 
 # (Noah: the creature overhaul - "combine both zombie mods") the Thriceborn: Mihail's CC Zombies' bodies (its plugin needs

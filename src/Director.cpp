@@ -4474,29 +4474,9 @@ namespace bo3z
 			// nighttime, as long as I have it equipped") the light effect never took. Now the lantern's light is hung on
 			// you the way a torch's is: a real light, made from the lantern's LIGH (its radius, warmth and brightness), on
 			// the body you're seen in (first or third person), at the left hip; taken down when the lantern comes off
-			static RE::NiPointer<RE::NiLight> light;
-			static RE::NiPointer<RE::NiNode>  on;
-			auto* root = want ? a_player->Get3D(false) : nullptr;  // (Noah: "also work in first person") always the 3rd-person body: it walks on under the first-person view, the light with it
-			auto* rootNode = root ? root->AsNode() : nullptr;
-			auto* ssn = RE::BSShaderManager::State::GetSingleton().shadowSceneNode[0];
-			// (and a light the game took down on its own - an equip or a 3D refresh clears an actor's lights: hung again)
-			const bool dropped = light && ssn && !ssn->GetLight(light.get());
-			if (dropped) logger::info("lantern: its light was taken down by the game - hung again");
-			if (light && (!want || on.get() != rootNode || dropped)) {
-				if (ssn) ssn->RemoveLight(light.get());
-				if (auto* parent = light->parent) parent->DetachChild(light.get());
-				light.reset(), on.reset();
-			}
-			if (want && !light && rootNode) {
-				auto* ligh = dh->LookupForm<RE::TESObjectLIGH>(gen::kLanternLight, gen::kPlugin);
-				if (auto* l = ligh ? ligh->GenDynamic(a_player, rootNode, 1, 1, 0) : nullptr) {
-					l->local.translate = RE::NiPoint3(-20.0f, 1.6f, 57.0f);  // (at the lantern's candles, on the left hip, in the body's own frame)
-					light.reset(l), on.reset(rootNode);
-					logger::info("lantern: light hung (radius {}, on {})", ligh->data.radius, RE::PlayerCamera::GetSingleton()->IsInFirstPerson() ? "1st person" : "3rd person");
-				} else if (static bool told = false; !told) {
-					told = true, logger::warn("lantern: could not make its light");
-				}
-			}
+			// (Noah: the belt lantern became the Light Orb) its light is carried in the orb over your head (Gun::TickLightOrb);
+			// an older build's light hung at the hip is never made again
+			Gun::SetLightOrb(want);
 		}
 		// (Noah: "I also want the magic spell visual effects to be smaller for the player") your spells' projectiles (bolts,
 		// storms, clouds, the bursts they carry) are drawn at 60% of their size; each is shrunk once, the moment it is seen

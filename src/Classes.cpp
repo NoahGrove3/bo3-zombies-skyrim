@@ -216,7 +216,7 @@ namespace bo3z::Classes
 			g_lanternGiven = true;
 			if (a_p->GetItemCount(l) > 0) return;
 			GiveItem(a_p, l, 1, true);
-			logger::info("classes: the Belt Lantern given, worn");
+			logger::info("classes: the Light Orb given, worn");
 		}
 		void GiveKit(int a_cls)
 		{
@@ -1168,7 +1168,7 @@ namespace bo3z::Classes
 		// (Noah: the belt lantern is an item now) a character from before it is handed one, worn
 		if (g_class.load() >= 0 && !g_lanternGiven && p->Is3DLoaded() && !ItemMenusOpen()) {
 			GiveLantern(p);
-			Hud::Banner("The Belt Lantern hangs at your hip - take it off and it goes dark", 5.0f);
+			Hud::Banner("The Light Orb floats over your head - take it off and it goes dark", 5.0f);
 		}
 		// (Noah: the Madness Sword for the Spellsword) a Spellsword from before it trades the Bolgan Sword for it, once
 		if (static bool madGiven = false; !madGiven && g_class.load() == coffer::kSpellsword && p->Is3DLoaded() && !ItemMenusOpen()) {
