@@ -2489,6 +2489,47 @@ namespace bo3z
 			}
 		}
 		void  SetLightOrb(bool a_on) { g_orb.want = a_on; }
+		// (testing) a model hung still in front of you for 30 s, under the scene root (w), the cell (c) or the player (p)
+		struct DevFxItem { Spellcraft::Fx fx; float left = 30.0f; };
+		std::vector<DevFxItem> g_devFx;
+		void DevFx(const std::string& a_path, const std::string& a_root, float a_side)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			DevFxItem it;
+			it.fx = Spellcraft::Fx{ Spellcraft::LoadPath(a_path) };
+			RE::NiNode* host = Spellcraft::WorldRoot();
+			if (a_root == "c" && p->GetParentCell() && p->GetParentCell()->GetRuntimeData().loadedData) host = p->GetParentCell()->GetRuntimeData().loadedData->cell3D.get();
+			if (a_root == "p" && p->Get3D(false)) host = p->Get3D(false)->AsNode();
+			if (it.fx.obj && host) it.fx.Attach(host);
+			const float yaw = p->GetAngleZ();
+			const RE::NiPoint3 fwd{ std::sin(yaw), std::cos(yaw), 0 }, side{ std::cos(yaw), -std::sin(yaw), 0 };
+			const RE::NiPoint3 at = p->GetPosition() + fwd * 220.0f + side * a_side + RE::NiPoint3{ 0, 0, 110.0f };
+			RE::NiMatrix3 rot;
+			rot.SetEulerAnglesXYZ(0, 0, 0);
+			it.fx.Place(at, rot, 1.0f);
+			logger::info("dev: fx {} under {} ({}) at ({:.0f},{:.0f},{:.0f})", a_path, a_root, it.fx.obj ? "loaded" : "MISSING", at.x, at.y, at.z);
+			g_devFx.push_back(std::move(it));
+		}
+		void DevNodes()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			for (const bool first : { false, true }) {
+				auto* rt = p->Get3D(first);
+				for (const char* n : { "WEAPON", "SHIELD" }) {
+					auto* node = rt ? rt->GetObjectByName(n) : nullptr;
+					std::string kids;
+					if (auto* nn = node ? node->AsNode() : nullptr) for (auto& c : nn->GetChildren()) if (c) kids += fmt::format("{}{} ", c->name.c_str(), c->GetAppCulled() ? "(culled)" : "");
+					logger::info("dev: {} {} node {} culled {} children: {}", first ? "1st" : "3rd", n, node ? "found" : "missing", node && node->GetAppCulled(), kids);
+				}
+			}
+			if (g_orb.fx.obj) {
+				const auto& w = g_orb.fx.obj->world.translate;
+				logger::info("dev: orb at ({:.0f},{:.0f},{:.0f}) player ({:.0f},{:.0f},{:.0f}) parent {} culled {} light {}", w.x, w.y, w.z,
+					p->GetPositionX(), p->GetPositionY(), p->GetPositionZ(), g_orb.fx.obj->parent ? g_orb.fx.obj->parent->name.c_str() : "none", g_orb.fx.obj->GetAppCulled(), g_orb.light ? "on" : "off");
+			} else logger::info("dev: orb not hung (want {})", g_orb.want);
+		}
 		void  StartThrow(bool a_left, std::function<void()> a_release) { StartThrowImpl(a_left, std::move(a_release)); }
 		bool  Throwing() { return ThrowingImpl(); }
 		// (Noah: the Alchemist's flasks "explode right in front of my face - there's no travel, it doesn't arc") a thrown
@@ -3685,6 +3726,8 @@ namespace bo3z
 			TickEBursts(a_delta);
 			TickLobs(a_delta);
 			TickLightOrb(a_delta);
+			for (auto& d : g_devFx) if ((d.left -= a_delta) <= 0) d.fx.Detach();
+			std::erase_if(g_devFx, [](auto& d) { return d.left <= 0; });
 			TickThrow(a_delta);
 			if (out) {
 				const auto& g = gen::kGuns[gun];

@@ -598,6 +598,13 @@ namespace bo3z
 				in >> hand;
 				logger::info("dev: flask attack ({} hand, held {})", hand == "l" ? "left" : "right", Classes::FlaskInHand(hand == "l"));
 				Classes::FlaskAttack(hand == "l");
+			} else if (cmd == "fx") {  // fx <mesh path under Meshes> <w|c|p> <sideways>
+				std::string path, root;
+				float side = 0;
+				in >> path >> root >> side;
+				Gun::DevFx(path, root, side);
+			} else if (cmd == "nodes") {
+				Gun::DevNodes();
 			} else if (cmd == "horn") {
 				Classes::DevHorn();
 			} else if (cmd == "wonder") {  // wonder <class> <state 0-5>
