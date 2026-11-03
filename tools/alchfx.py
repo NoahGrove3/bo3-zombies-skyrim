@@ -2,7 +2,7 @@
 flipbooks, drawn at 60 frames a second (the bows' were 24 and stepped visibly):
 
   alch_<element>.dds    the element's own living ball (tools/bowarrows.py's drawing - flame, frost-mist, arcs, gusts,
-                        sun-rays, blood-mist, the void) re-drawn 160 frames to its loop instead of 64: the flasks' fizz,
+                        sun-rays, blood-mist, the void) re-drawn 128 frames to its loop instead of 64: the flasks' fizz,
                         the shatter bursts (tools/flasks.py, tools/elemburst.py)
   ground_<element>.dds  what a flask leaves burning on the ground, each element its own: tongues of flame licking up,
                         cold mist creeping low with frost glinting in it, arcs of lightning crawling over the ground,
@@ -23,8 +23,9 @@ import bowarrows as BA  # noqa: E402
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 TEX = ROOT / 'assets' / 'fx' / 'Textures' / 'CurseOfAlduin' / 'fx'
 WORK = ROOT / 'build' / 'alchfx'
-COLS, ROWS = 16, 10
-F = COLS * ROWS          # 160 frames: played at 60 fps, 2.67 s a loop (the bows' 64 at 24 fps)
+COLS, ROWS = 16, 8
+F = COLS * ROWS          # 128 frames: played at 60 fps, 2.13 s a loop (the bows' 64 at 24 fps); the atlases
+# a power of two on each side - a 2048x1280 or 1536x960 one crashed the game as it loaded the texture
 FPS = 60
 
 
@@ -76,7 +77,7 @@ def smooth(n, beta, seed):
 A, B, C = smooth(256, 2.4, 31), smooth(256, 2.2, 32), smooth(256, 2.0, 33)
 
 
-def ground_frames(fn, n=96):
+def ground_frames(fn, n=128):
     xx, yy, X, Y = grid(n)
     h = 1 - yy                                  # height above the ground, 0..1
     side = np.clip(1 - np.abs(X) ** 2.2, 0, 1)  # (fades out at the card's sides, so the cards blend into one another)
@@ -207,7 +208,7 @@ def main():
     balls() if not only or 'balls' in only else None
     for el, fn in GROUND.items():
         if only and el not in only and 'ground' not in only: continue
-        save(ground_frames(fn), 96, f'ground_{el}')
+        save(ground_frames(fn), 128, f'ground_{el}')
 
 
 if __name__ == '__main__':

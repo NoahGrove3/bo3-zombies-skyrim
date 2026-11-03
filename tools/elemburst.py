@@ -31,8 +31,8 @@ ALCHFX = {'emberstring': 'fire', 'rimehorn': 'frost', 'stormreach': 'shock', 'sk
 
 
 def card(L, name, tex, col, sc, w, h, at, phase, fps=60):
-    L.append(f'shape {name} tex={tex} color={col},1 scale={sc} blend=add billboard=2 flip=16x10 fps={fps} phase={phase:.2f} at={at[0]:.1f},{at[1]:.1f},{at[2]:.1f}')
-    for X, Y, u, v in ((-w, h, 0, 0), (w, h, 1 / 16, 0), (w, -h, 1 / 16, 1 / 10), (-w, -h, 0, 1 / 10)):
+    L.append(f'shape {name} tex={tex} color={col},1 scale={sc} blend=add billboard=2 flip=16x8 fps={fps} phase={phase:.2f} at={at[0]:.1f},{at[1]:.1f},{at[2]:.1f}')
+    for X, Y, u, v in ((-w, h, 0, 0), (w, h, 1 / 16, 0), (w, -h, 1 / 16, 1 / 8), (-w, -h, 0, 1 / 8)):
         L.append(f'v {X:.2f} {Y:.2f} 0 {u} {v} 1 1 1 1')
     L += ['t 0 1 2', 't 0 2 3']
 

@@ -26,7 +26,7 @@ TEXREL = 'CurseOfAlduin\\fx\\'
 # (Noah: "I want them to be 60 FPS. So it looks smooth") every flipbook here plays at 60 frames a second
 MOTES = (16, 16)   # motes_rise: 256 frames, a 4.3 s loop
 SPARKS = (16, 8)   # sparks_burst: 128 frames, the burst over in about a second, the rest dark
-GROUNDG = (16, 10)  # ground_<element> (tools/alchfx.py)
+GROUNDG = (16, 8)  # ground_<element> (tools/alchfx.py)
 
 # element: (mote colour, glow colour) - a little warm-pushed (the tonemap drifts additive light blue)
 EL = {
@@ -77,12 +77,12 @@ def save_dds(frames, fw, fh, name, grid):
 
 
 def motes_rise():
-    fw, fh, N = 96, 192, MOTES[0] * MOTES[1]
-    px = 0.75  # (frames 3/4 the old size)
+    fw, fh, N = 64, 128, MOTES[0] * MOTES[1]   # (a 1024x2048 atlas: a power of two each way)
+    px = 0.5  # (frames half the old size)
     rng = np.random.default_rng(42)
     parts = []
     for _ in range(90):
-        parts.append(dict(x=rng.uniform(9, fw - 9), ph=rng.uniform(0, 1), k=int(rng.choice([1, 1, 2])), sway=rng.uniform(1, 4),
+        parts.append(dict(x=rng.uniform(6, fw - 6), ph=rng.uniform(0, 1), k=int(rng.choice([1, 1, 2])), sway=rng.uniform(1, 4),
                           sf=int(rng.integers(1, 4)), sp=rng.uniform(0, 6.28), core=rng.uniform(0.55, 1.25), fl=int(rng.integers(3, 9)),
                           fp=rng.uniform(0, 6.28), top=rng.uniform(0.55, 0.95), b=rng.uniform(0.5, 1.0)))
     frames = []
@@ -92,19 +92,19 @@ def motes_rise():
         for p in parts:
             u = (p['ph'] + p['k'] * t) % 1.0               # its rise, 0 at the ground .. 1 at its top
             hgt = u * p['top']
-            y = fh - 5 - hgt * (fh - 10)
+            y = fh - 3 - hgt * (fh - 6)
             x = p['x'] + px * p['sway'] * math.sin(2 * math.pi * p['sf'] * t + p['sp']) * (0.4 + u)
             env = min(1.0, u / 0.12) * (1 - max(0.0, (u - 0.6) / 0.4)) ** 1.5
             flick = 0.7 + 0.3 * math.sin(2 * math.pi * p['fl'] * t + p['fp'])
-            splat(img, x, y, max(0.5, px * p['core'] * (1.0 - 0.35 * u)), 2.0, 0.9 * p['b'] * env * flick)
+            splat(img, x, y, max(0.45, px * p['core'] * (1.0 - 0.35 * u)), 1.4, 0.9 * p['b'] * env * flick)
         frames.append(img)
     save_dds(frames, fw, fh, 'motes_rise', MOTES)
 
 
 def sparks_burst():
-    fw = fh = 192
+    fw = fh = 128   # (a 2048x1024 atlas: a power of two each way)
     N = SPARKS[0] * SPARKS[1]
-    q = 0.75  # (frames 3/4 the old size)
+    q = 0.5  # (frames half the old size)
     rng = np.random.default_rng(7)
     sp = []
     for _ in range(110):
@@ -125,7 +125,7 @@ def sparks_burst():
                 dr = (1 - math.exp(-2.2 * t)) / 2.2  # drag
                 return (fw / 2 + q * s['vx'] * dr, fh / 2 + q * (s["vy"] * dr + 230 * t * t))
             heat = 1 - t1 / s['life']
-            streak(img, pos(t0), pos(t1), max(0.45, q * s['core'] * (0.5 + 0.5 * heat)), s['b'] * heat ** 1.3 * 1.25)
+            streak(img, pos(t0), pos(t1), max(0.4, q * s['core'] * (0.5 + 0.5 * heat)), s['b'] * heat ** 1.3 * 1.25)
         frames.append(img)
     save_dds(frames, fw, fh, 'sparks_burst', SPARKS)
 

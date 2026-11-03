@@ -449,9 +449,9 @@ def build(el, tex):
     cards = fx_cards(el, anchors)
     for name, t, tint, sc, hs, at, flip, phase in cards:
         if HELD and flip: hs *= HELD_SCALE
-        extra = f' flip=16x10 fps=60 phase={phase:.2f}' if flip else ''
+        extra = f' flip=16x8 fps=60 phase={phase:.2f}' if flip else ''
         L.append(f'shape {name} tex={t} color={tint},1 scale={sc} blend=add billboard=2 parent=FlaskSpin at={at[0]:.2f},{at[1]:.2f},{at[2]:.2f}{extra}')
-        cu, cv = (1 / 16, 1 / 10) if flip else (1, 1)
+        cu, cv = (1 / 16, 1 / 8) if flip else (1, 1)
         for X, Y, uu, vv in ((-hs, hs, 0, 0), (hs, hs, cu, 0), (hs, -hs, cu, cv), (-hs, -hs, 0, cv)):
             L.append(f'v {X:.2f} {Y:.2f} 0 {uu} {vv} 1 1 1 1')
         L += ['t 0 1 2', 't 0 2 3']
