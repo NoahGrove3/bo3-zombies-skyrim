@@ -23,6 +23,14 @@ int main(int argc, char** argv)
 		inv->rotationX = 4712, inv->rotationY = 6283, inv->rotationZ = 0, inv->zoom = 1.0f;
 		root->extraDataRefs.AddBlockRef(h.AddBlock(std::move(inv)));
 	}
+	// (Noah: the flasks stood at odd angles in the inventory and the hand) a held model keeps no spin: its turning node's
+	// transform controller (made for the flying copy, run by the game's clock) is taken off, the node left upright
+	for (uint32_t i = 0; i < h.GetNumBlocks(); ++i) {
+		auto* n = h.GetBlock<NiNode>(i);
+		if (!n || n->controllerRef.IsEmpty()) continue;
+		if (h.GetBlock<NiTransformController>(n->controllerRef)) n->controllerRef.Clear();
+	}
+	nif.DeleteUnreferencedBlocks();
 	if (nif.Save(argv[2])) { fprintf(stderr, "cannot save %s\n", argv[2]); return 1; }
 	printf("%s: Prn %s\n", argv[2], argv[3]);
 	return 0;
