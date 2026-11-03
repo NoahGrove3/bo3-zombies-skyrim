@@ -106,12 +106,15 @@ namespace bo3z::Classes
 		bool Fits(const RE::TESObjectARMO* a_armo, bool a_female)
 		{
 			if (!a_armo) return true;
+			// (a piece with no body model for either sex at all - the Light Orb, drawn by the plugin over your head - is
+			// meant to be unseen on the body, and fits everyone)
 			bool any = false;
 			for (auto* aa : a_armo->armorAddons) {
 				if (!aa) continue;
-				any = true;
 				const char* m = aa->bipedModels[a_female ? RE::SEXES::kFemale : RE::SEXES::kMale].GetModel();
 				if (m && *m) return true;
+				const char* o = aa->bipedModels[a_female ? RE::SEXES::kMale : RE::SEXES::kFemale].GetModel();
+				any |= o && *o;
 			}
 			return !any;
 		}
@@ -3186,6 +3189,7 @@ namespace bo3z::Classes
 			return -1;
 		}
 	}
+	void DevHorn() { SummonBoneDragon(); }
 	bool FlaskInHand(bool a_left)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();

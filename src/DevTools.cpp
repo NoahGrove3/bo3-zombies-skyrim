@@ -581,6 +581,25 @@ namespace bo3z
 				int t = -1, v = 0;
 				in >> t >> v;
 				Curse::DevSet(t, v);
+			} else if (cmd == "equip" && player) {  // equip <hex form id, load-order form> <l|r>: as the pack would
+				std::string hex, hand;
+				in >> hex >> hand;
+				const bool left = hand == "l";
+				auto* f = RE::TESForm::LookupByID(static_cast<RE::FormID>(std::stoul(hex, nullptr, 16)));
+				auto* b = f ? f->As<RE::TESBoundObject>() : nullptr;
+				if (auto* em = RE::ActorEquipManager::GetSingleton(); b && em) em->EquipObject(player, b, nullptr, 1, RE::TESForm::LookupByID<RE::BGSEquipSlot>(left ? 0x013F43 : 0x013F42), false, true, false, true);
+				logger::info("dev: equip {} ({}) in the {} hand", hex, b ? b->GetName() : "not found", left ? "left" : "right");
+			} else if (cmd == "hands" && player) {
+				auto name = [](RE::TESForm* o) { return o ? fmt::format("{} [{:08X}]", o->GetName(), o->GetFormID()) : std::string("empty"); };
+				logger::info("dev: hands right {} | left {} | drawn {} | throwing {}", name(player->GetEquippedObject(false)), name(player->GetEquippedObject(true)),
+					player->AsActorState()->IsWeaponDrawn(), Gun::Throwing());
+			} else if (cmd == "flask") {  // flask <l|r>: the held flask's attack, as the button would
+				std::string hand;
+				in >> hand;
+				logger::info("dev: flask attack ({} hand, held {})", hand == "l" ? "left" : "right", Classes::FlaskInHand(hand == "l"));
+				Classes::FlaskAttack(hand == "l");
+			} else if (cmd == "horn") {
+				Classes::DevHorn();
 			} else if (cmd == "wonder") {  // wonder <class> <state 0-5>
 				int c = -1, st = 0;
 				in >> c >> st;

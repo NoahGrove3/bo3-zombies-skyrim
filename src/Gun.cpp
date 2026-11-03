@@ -2547,6 +2547,7 @@ namespace bo3z
 			}
 			if (l.fx.obj) l.fx.Attach(host ? host : Spellcraft::WorldRoot());
 			l.p = a_from, l.v = a_vel, l.scale = a_scale, l.land = std::move(a_land);
+			logger::info("lob: {} (model {}, under {})", a_model, l.fx.obj ? "loaded" : "MISSING", host ? "the cell" : "the world root");
 			g_lobs.push_back(std::move(l));
 		}
 		void  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life)
