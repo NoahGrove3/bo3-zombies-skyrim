@@ -4007,7 +4007,7 @@ namespace bo3z
 		void RestControls(bool a_off)
 		{
 			static bool off = false;
-			if (a_off == off) return;
+			if (a_off == off && a_off) return;  // (handing them back is always done: never left locked)
 			off = a_off;
 			if (auto* cm = RE::ControlMap::GetSingleton()) cm->ToggleControls(kRestControls, !a_off, false);
 		}
@@ -4072,6 +4072,15 @@ namespace bo3z
 				CloseRest();
 				return;
 			}
+			// (the bed's bug) Skyrim's sleep menu, still up behind ours: shut again; and a rest screen left standing when the night
+			// came (its countdown begun) is closed - nothing locks you in as the dead arrive
+			if (ui && ui->IsMenuOpen(RE::SleepWaitMenu::MENU_NAME)) {
+				if (auto* q = RE::UIMessageQueue::GetSingleton()) q->AddMessage(RE::SleepWaitMenu::MENU_NAME, RE::UI_MESSAGE_TYPE::kForceHide, nullptr);
+			}
+			if (g_phase == Phase::Break) {
+				CloseRest();
+				return;
+			}
 			RestControls(true);
 			if (!r.waiting) return;
 			// the hours run by in about two seconds (the hand sweeps the dial), stopping at dusk
@@ -4102,6 +4111,7 @@ namespace bo3z
 				return;
 			}
 			std::scoped_lock l(g_restLock);
+			if (g_rest.open) return;  // (the bed and the sleep menu both open it: once)
 			g_rest = {};
 			g_rest.open = true, g_rest.hours = 1;
 			logger::info("rest: the rest screen opened ({})", g_phase == Phase::Fighting ? "night" : "day");

@@ -891,15 +891,35 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 		// (Noah) the Curse's rest screen: a day's dial in 12-hour time - the night in blood, the Curse waking at dusk, the
 		// dead rising after the countdown and crumbling at dawn - with Wait, and Skip the Night once the dead have risen
+		// (Noah: "redo the UI for resting and waiting - match Edge's UI's fonts and color theme and design") Edge's look, as the
+		// Echo Altar has it: no box - a smoked band across the screen, darkest in the middle and fading to nothing at its sides,
+		// bronze hairlines over and under it; a thin dial on the left, what waiting does on the right, the keys under it
 		void DrawRest(ImDrawList* dl, const Director::RestView& v, ImVec2 size, float k, float now)
 		{
-			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 190));
-			const ImVec2 c{ size.x * 0.5f, size.y * 0.44f };
-			const float  R = 230 * k;
-			TxtC(dl, g_title, 44 * k, c.x, c.y - R - 128 * k, kParch, v.night ? fmt::format("NIGHT {}", v.nightNo) : "REST", 3 * k, Fade(kGold, 0.6f));
-			TxtC(dl, g_body, 19 * k, c.x, c.y - R - 72 * k, IM_COL32(210, 200, 180, 230),
-				v.night ? "The dead walk. Rest is not possible until dawn." : fmt::format("Night {} falls at dusk. Waiting stops when the Curse wakes.", v.nightNo));
-			// the hour's angle: midnight at the foot, noon at the top, the hours running clockwise
+			const ImU32 kHead = IM_COL32(232, 214, 176, 255), kSoft = IM_COL32(196, 182, 160, 235), kDim = IM_COL32(150, 138, 120, 200);
+			const ImU32 kWake = IM_COL32(222, 150, 70, 255), kRise = IM_COL32(205, 70, 58, 255);
+			const float bandH = 560 * k;
+			const float y0 = size.y * 0.5f - bandH * 0.5f, y1 = y0 + bandH;
+			{  // the band
+				const float  mid = 0.66f, edge = size.x * 0.16f;
+				const ImU32  clear = IM_COL32(6, 6, 7, 0), dark = IM_COL32(6, 6, 7, static_cast<int>(255 * mid));
+				dl->AddRectFilledMultiColor({ 0, y0 }, { edge, y1 }, clear, dark, dark, clear);
+				dl->AddRectFilled({ edge, y0 }, { size.x - edge, y1 }, dark);
+				dl->AddRectFilledMultiColor({ size.x - edge, y0 }, { size.x, y1 }, dark, clear, clear, dark);
+				for (const float hy : { y0, y1 }) {
+					const float hx = size.x * 0.5f, hw = size.x * 0.42f;
+					dl->AddRectFilledMultiColor({ hx - hw, hy - 0.6f * k }, { hx, hy + 0.6f * k }, Fade(kGold, 0), Fade(kGold, 0.67f), Fade(kGold, 0.67f), Fade(kGold, 0));
+					dl->AddRectFilledMultiColor({ hx, hy - 0.6f * k }, { hx + hw, hy + 0.6f * k }, Fade(kGold, 0.67f), Fade(kGold, 0), Fade(kGold, 0), Fade(kGold, 0.67f));
+				}
+			}
+			// the title
+			const float cx = size.x * 0.5f;
+			TxtC(dl, g_title, 30 * k, cx, y0 + 22 * k, kHead, v.night ? fmt::format("NIGHT {}", v.nightNo) : std::string("REST"), 0.0f, 0);
+			Divider(dl, cx, y0 + 64 * k, 190 * k, k);
+			TxtC(dl, g_body, 16 * k, cx, y0 + 74 * k, kSoft, v.night ? std::string("The dead walk. There is no rest until dawn.") : fmt::format("Night {} falls at dusk - waiting stops when the Curse wakes", v.nightNo));
+			// the dial: midnight at its foot, noon at its top, the hours running clockwise
+			const ImVec2 c{ cx - 230 * k, y0 + 300 * k };
+			const float  R = 150 * k;
 			const auto ang = [](float h) { return 1.5708f + std::fmod(h + 24.0f, 24.0f) / 24.0f * 6.2832f; };
 			const auto at = [&](float h, float r) { const float a = ang(h); return ImVec2{ c.x + std::cos(a) * r, c.y + std::sin(a) * r }; };
 			const auto arc = [&](float h0, float h1, float r, ImU32 col, float w) {
@@ -908,95 +928,93 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				dl->PathArcTo(c, r, a0, a1, 96);
 				dl->PathStroke(col, 0, w);
 			};
-			Panel(dl, { c.x - R - 40 * k, c.y - R - 40 * k }, { c.x + R + 40 * k, c.y + R + 40 * k }, k, 0.55f);
-			dl->AddCircle(c, R, Fade(kRuneDim, 1.0f), 96, 10 * k);
-			arc(v.dawn, v.dusk, R, IM_COL32(196, 170, 112, 70), 10 * k);                  // the day
-			arc(v.dusk, v.rise, R, IM_COL32(230, 140, 40, 220), 12 * k);                  // the countdown
-			arc(v.rise, v.dawn, R, Fade(kBlood, 0.95f), 12 * k);                          // the dead walk
-			for (int h = 0; h < 24; ++h) {  // the hours' ticks
+			dl->AddCircle(c, R, Fade(kGold, 0.22f), 96, 1.2f * k);
+			arc(v.dawn, v.dusk, R, Fade(kGold, 0.45f), 3 * k);   // the day
+			arc(v.dusk, v.rise, R, kWake, 4 * k);                 // the countdown
+			arc(v.rise, v.dawn, R, kRise, 4 * k);                 // the dead walk
+			for (int h = 0; h < 24; ++h) {
 				const bool big = h % 6 == 0;
-				dl->AddLine(at(static_cast<float>(h), R - (big ? 26 : 16) * k), at(static_cast<float>(h), R - 9 * k), Fade(kParch, big ? 0.6f : 0.25f), (big ? 2.0f : 1.0f) * k);
+				dl->AddLine(at(static_cast<float>(h), R - (big ? 14 : 8) * k), at(static_cast<float>(h), R - 3 * k), Fade(kParch, big ? 0.55f : 0.22f), (big ? 1.6f : 1.0f) * k);
 			}
 			for (int h = 0; h < 24; h += 6) {
-				const ImVec2 p = at(static_cast<float>(h), R - 50 * k);
-				TxtC(dl, g_body, 15 * k, p.x, p.y - 9 * k, Fade(kParch, 0.55f), h == 0 ? "12 AM" : h == 12 ? "12 PM" : h < 12 ? fmt::format("{} AM", h) : fmt::format("{} PM", h - 12));
+				const ImVec2 q = at(static_cast<float>(h), R - 32 * k);
+				TxtC(dl, g_body, 13 * k, q.x, q.y - 8 * k, Fade(kParch, 0.5f), h == 0 ? "12 AM" : h == 12 ? "12 PM" : h < 12 ? fmt::format("{} AM", h) : fmt::format("{} PM", h - 12));
 			}
-			// the three marks, labelled outside the ring
+			if (!v.night && std::fmod(v.target - v.now + 24.0f, 24.0f) > 0.01f) arc(v.now, v.target, R + 10 * k, Fade(kGold, 0.95f), 2.5f * k);  // the wait ahead
+			dl->AddLine(c, at(v.now, R - 18 * k), Fade(kParch, 0.85f), 2 * k);
+			dl->AddCircleFilled(at(v.now, R), 5.5f * k, kParch, 20);
+			if (!v.night) dl->AddCircleFilled(at(v.target, R + 10 * k), 4.5f * k, kGold, 20);
+			dl->AddCircleFilled(c, 4 * k, kGold, 16);
+			// what's on it: the three marks, as a key on the right
+			const float L = cx - 20 * k, Rr = cx + 380 * k;
+			float y = y0 + 136 * k;
+			TxtWrap(dl, g_body, 14 * k, { L, y }, kDim, "NOW", 200 * k, 1);
+			Txt(dl, g_num, 48 * k, { L, y + 16 * k }, kParch, Clock12(v.now));
+			y += 86 * k;
 			struct Mark { float h; const char* name; ImU32 col; };
-			const Mark marks[3] = { { v.dusk, "THE CURSE WAKES", IM_COL32(230, 140, 40, 255) }, { v.rise, "THE DEAD RISE", IM_COL32(220, 60, 50, 255) }, { v.dawn, "DAWN - THE DEAD CRUMBLE", kGold } };
-			for (int i = 0; i < 3; ++i) {
-				const auto& m = marks[i];
-				dl->AddLine(at(m.h, R - 14 * k), at(m.h, R + 22 * k), m.col, 3 * k);
-				dl->AddCircleFilled(at(m.h, R), 6 * k, m.col, 16);
-				// (the Curse wakes and the dead rise only minutes apart: their labels are pushed apart)
-				const float  push = i == 0 ? -0.9f : i == 1 ? 0.9f : 0.0f;
-				const ImVec2 p = at(m.h + push, R + 62 * k);
-				const bool   left = p.x < c.x - 10 * k;
-				const std::string t1 = m.name, t2 = Clock12(m.h);
-				const float  w = std::max(Measure(g_body, 15 * k, t1).x, Measure(g_num, 17 * k, t2).x);
-				const float  x = left ? p.x - w : p.x;
-				Txt(dl, g_body, 15 * k, { x, p.y - 18 * k }, m.col, t1);
-				Txt(dl, g_num, 17 * k, { x, p.y + 1 * k }, Fade(kParch, 0.9f), t2);
+			const Mark marks[3] = { { v.dusk, "The Curse wakes", kWake }, { v.rise, "The dead rise", kRise }, { v.dawn, "Dawn - the dead crumble", kGold } };
+			for (const auto& m : marks) {
+				dl->AddCircleFilled({ L + 5 * k, y + 10 * k }, 4.5f * k, m.col, 16);
+				Txt(dl, g_body, 16 * k, { L + 20 * k, y + 1 * k }, kSoft, m.name);
+				const std::string t = Clock12(m.h);
+				Txt(dl, g_num, 16 * k, { Rr - Measure(g_num, 16 * k, t).x, y + 1 * k }, Fade(kParch, 0.9f), t);
+				y += 28 * k;
 			}
-			// the wait ahead, in gold, and the hands
-			if (!v.night && std::fmod(v.target - v.now + 24.0f, 24.0f) > 0.01f) arc(v.now, v.target, R - 22 * k, Fade(kCoin, 0.9f), 6 * k);
-			dl->AddLine(c, at(v.now, R - 30 * k), Fade(kParch, 0.9f), 3 * k);
-			dl->AddCircleFilled(at(v.now, R), 9 * k, kParch, 20);
-			if (!v.night) dl->AddCircleFilled(at(v.target, R - 22 * k), 7 * k, kCoin, 20);
-			dl->AddCircleFilled(c, 8 * k, kGold, 20);
-			// the centre: the time now, and what waiting will do
-			TxtC(dl, g_num, 54 * k, c.x, c.y - 92 * k, kParch, Clock12(v.now));
+			dl->AddLine({ L, y + 6 * k }, { Rr, y + 6 * k }, Fade(kGold, 0.35f), 1.0f * k);
+			y += 22 * k;
 			if (v.night) {
-				TxtC(dl, g_body, 18 * k, c.x, c.y + 36 * k, IM_COL32(230, 120, 100, 235), "Skip the Night passes all of it, to dawn.");
-				TxtC(dl, g_body, 16 * k, c.x, c.y + 60 * k, IM_COL32(200, 190, 170, 220), fmt::format("It does not count: night {} comes again next dusk.", v.nightNo));
+				Txt(dl, g_title, 22 * k, { L, y }, v.armed ? IM_COL32(240, 120, 100, 255) : kHead, v.armed ? "PRESS AGAIN TO SKIP THE NIGHT" : "SKIP THE NIGHT");
+				TxtWrap(dl, g_body, 15 * k, { L, y + 32 * k }, kSoft, fmt::format("Passes all of it, to dawn. It does not count: night {} comes again next dusk.", v.nightNo), Rr - L, 2);
 			} else if (v.waiting) {
-				TxtC(dl, g_title, 22 * k, c.x, c.y + 36 * k, Fade(kCoin, 0.75f + 0.25f * std::sin(now * 5.0f)), "WAITING...", 2 * k, Fade(kGold, 0.5f));
+				Txt(dl, g_title, 22 * k, { L, y }, Fade(kGold, 0.7f + 0.3f * std::sin(now * 5.0f)), "WAITING...");
+				TxtWrap(dl, g_body, 15 * k, { L, y + 32 * k }, kSoft, "until " + Clock12(v.target) + (v.stopsAtDusk ? " - dusk" : ""), Rr - L, 1);
 			} else {
-				TxtC(dl, g_title, 26 * k, c.x, c.y + 30 * k, kCoin, fmt::format("WAIT {} HOUR{}", v.hours, v.hours == 1 ? "" : "S"), 2 * k, Fade(kGold, 0.5f));
-				TxtC(dl, g_body, 17 * k, c.x, c.y + 66 * k, IM_COL32(220, 210, 192, 235), v.stopsAtDusk ? "until " + Clock12(v.target) + " - dusk" : "until " + Clock12(v.target));
+				// the hours, chosen with left / right: a small stepper
+				const std::string hrs = fmt::format("{} HOUR{}", v.hours, v.hours == 1 ? "" : "S");
+				Txt(dl, g_title, 22 * k, { L + 22 * k, y }, kHead, hrs);
+				const float hw = Measure(g_title, 22 * k, hrs).x;
+				for (const float sx : { L + 6 * k, L + 38 * k + hw }) {
+					const bool lt = sx < L + 20 * k;
+					const ImVec2 t{ sx, y + 13 * k };
+					dl->AddTriangleFilled({ t.x + (lt ? 5 : -5) * k, t.y - 6 * k }, { t.x + (lt ? 5 : -5) * k, t.y + 6 * k }, { t.x + (lt ? -4 : 4) * k, t.y }, Fade(kGold, 0.9f));
+				}
+				TxtWrap(dl, g_body, 15 * k, { L, y + 32 * k }, kSoft, "until " + Clock12(v.target) + (v.stopsAtDusk ? " - dusk, when the Curse wakes" : ""), Rr - L, 1);
 			}
-			// the keys
-			const float y = c.y + R + 108 * k;
+			// the keys, small, along the band's foot
 			struct Key { const char* pad; const char* kb; const char* label; bool on; };
 			std::vector<Key> keys;
-			if (v.night) {
-				keys.push_back({ "A", "Enter", v.armed ? "PRESS AGAIN - SKIP THE NIGHT" : "SKIP THE NIGHT", v.canSkip });
-			} else if (!v.waiting) {
-				keys.push_back({ "<>", "A / D", "HOURS", true });
-				keys.push_back({ "A", "Enter", "WAIT", true });
-				keys.push_back({ "X", "R", "SKIP THE NIGHT", false });
-			}
+			if (v.night) keys.push_back({ "A", "Enter", "SKIP THE NIGHT", v.canSkip });
+			else if (!v.waiting) keys.push_back({ "<>", "A / D", "HOURS", true }), keys.push_back({ "A", "Enter", "WAIT", true });
 			keys.push_back({ "B", "Esc", v.waiting ? "STOP" : "BACK", true });
 			float total = 0;
 			std::vector<float> ws;
 			for (auto& kk : keys) {
-				const float w = 46 * k + Measure(g_title, 19 * k, kk.label).x + (g_padLast ? 0 : Measure(g_num, 15 * k, kk.kb).x);
-				ws.push_back(w), total += w + 40 * k;
+				const float w = (g_padLast ? (std::string_view(kk.pad) == "<>" ? 66 * k : 32 * k) : Measure(g_num, 13 * k, kk.kb).x + 22 * k) + Measure(g_title, 16 * k, kk.label).x;
+				ws.push_back(w), total += w + 34 * k;
 			}
-			float x = c.x - (total - 40 * k) * 0.5f;
+			float x = cx - (total - 34 * k) * 0.5f;
+			const float ky = y1 - 40 * k;
 			for (std::size_t i = 0; i < keys.size(); ++i) {
 				const auto& kk = keys[i];
 				const float al = kk.on ? 1.0f : 0.35f;
 				float gx = x;
 				if (g_padLast) {
 					if (std::string_view(kk.pad) == "<>") {
-						TxtC(dl, g_num, 18 * k, gx + 14 * k, y - 11 * k, Fade(kParch, al), "D-PAD");
-						gx += 30 * k;
+						Txt(dl, g_num, 14 * k, { gx, ky - 9 * k }, Fade(kParch, al), "D-PAD");
+						gx += 66 * k;
 					} else {
-						PadGlyph(dl, { gx + 14 * k, y }, 14 * k, kk.pad, al);
+						PadGlyph(dl, { gx + 11 * k, ky }, 11 * k, kk.pad, al);
+						gx += 32 * k;
 					}
-					gx += 36 * k;
 				} else {
-					const ImVec2 tsz = Measure(g_num, 15 * k, kk.kb);
-					dl->AddRect({ gx, y - 14 * k }, { gx + tsz.x + 16 * k, y + 14 * k }, Fade(kGold, 0.8f * al), 4 * k, 0, 1.5f * k);
-					Txt(dl, g_num, 15 * k, { gx + 8 * k, y - 10 * k }, Fade(kParch, al), kk.kb);
-					gx += tsz.x + 28 * k;
+					const ImVec2 tsz = Measure(g_num, 13 * k, kk.kb);
+					dl->AddRect({ gx, ky - 11 * k }, { gx + tsz.x + 12 * k, ky + 11 * k }, Fade(kGold, 0.7f * al), 3 * k, 0, 1.0f * k);
+					Txt(dl, g_num, 13 * k, { gx + 6 * k, ky - 8 * k }, Fade(kParch, al), kk.kb);
+					gx += tsz.x + 22 * k;
 				}
-				const ImU32 col = kk.on ? (std::string_view(kk.label).find("SKIP") != std::string_view::npos ? IM_COL32(240, 120, 100, 255) : kParch) : IM_COL32(150, 140, 125, 160);
-				Txt(dl, g_title, 19 * k, { gx, y - 12 * k }, col, kk.label);
-				x += ws[i] + 40 * k;
+				Txt(dl, g_title, 16 * k, { gx, ky - 10 * k }, kk.on ? kHead : kDim, kk.label);
+				x += ws[i] + 34 * k;
 			}
-			if (!v.night && !v.waiting) TxtC(dl, g_body, 15 * k, c.x, y + 30 * k, IM_COL32(170, 160, 140, 200), "Skip the Night opens at night, once the countdown has ended and the dead have risen.");
 		}
 		// (the UI audit: the Echo Altar's panel was drawn over the Banner, a long Banner ran off the screen, and the Lore cards -
 		// a relic claimed, a wonder won, the Greybeards' call, the dragons' words - were never drawn at all) the Banner wraps to
@@ -6030,6 +6048,9 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					 RE::JournalMenu::MENU_NAME, RE::ContainerMenu::MENU_NAME, RE::BarterMenu::MENU_NAME, RE::GiftMenu::MENU_NAME, RE::BookMenu::MENU_NAME,
 					 RE::LockpickingMenu::MENU_NAME, RE::Console::MENU_NAME, RE::MessageBoxMenu::MENU_NAME, RE::FavoritesMenu::MENU_NAME, RE::SleepWaitMenu::MENU_NAME,
 					 RE::TrainingMenu::MENU_NAME, RE::CraftingMenu::MENU_NAME, RE::LevelUpMenu::MENU_NAME, RE::RaceSexMenu::MENU_NAME, RE::DialogueMenu::MENU_NAME }) {
+				// (Noah: "when I tried to sleep in the bed ... it glitched my character out") a bed opens Skyrim's sleep menu; we close
+				// it for our rest screen, but while it's still counted open it mustn't hide the rest screen too
+				if (name == RE::SleepWaitMenu::MENU_NAME && Director::RestOpen()) continue;
 				if (ui->IsMenuOpen(name)) {
 					return false;
 				}
