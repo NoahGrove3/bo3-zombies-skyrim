@@ -2519,7 +2519,14 @@ namespace bo3z
 			if (it.fx.obj && host) it.fx.Attach(host);
 			const float yaw = p->GetAngleZ();
 			const RE::NiPoint3 fwd{ std::sin(yaw), std::cos(yaw), 0 }, side{ std::cos(yaw), -std::sin(yaw), 0 };
-			const RE::NiPoint3 at = p->GetPosition() + fwd * 220.0f + side * a_side + RE::NiPoint3{ 0, 0, 110.0f };
+			RE::NiPoint3 at = p->GetPosition() + fwd * 220.0f + side * a_side + RE::NiPoint3{ 0, 0, 110.0f };
+			if (a_root == "h") {  // (over the head, as the Light Orb hangs: side is the height above the head)
+				host = Spellcraft::WorldRoot();
+				it.fx.Attach(host);
+				auto* r3 = p->Get3D(false);
+				auto* h = r3 ? r3->GetObjectByName("NPC Head [Head]") : nullptr;
+				at = (h ? h->world.translate : p->GetPosition() + RE::NiPoint3{ 0, 0, 120.0f }) + RE::NiPoint3{ 0, 0, a_side };
+			}
 			RE::NiMatrix3 rot;
 			rot.SetEulerAnglesXYZ(0, 0, 0);
 			it.fx.Place(at, rot, 1.0f);
@@ -2541,6 +2548,9 @@ namespace bo3z
 			}
 			if (g_orb.fx.obj) {
 				const auto& w = g_orb.fx.obj->world.translate;
+				const auto& wb = g_orb.fx.obj->worldBound;
+				logger::info("dev: orb scale {:.2f} bound c({:.0f},{:.0f},{:.0f}) r {:.1f} flags {:08X} app-culled kids {}", g_orb.fx.obj->world.scale, wb.center.x, wb.center.y, wb.center.z, wb.radius,
+					g_orb.fx.obj->GetFlags().underlying(), g_orb.fx.obj->AsNode() ? g_orb.fx.obj->AsNode()->GetChildren().size() : 0);
 				logger::info("dev: orb at ({:.0f},{:.0f},{:.0f}) player ({:.0f},{:.0f},{:.0f}) parent {} culled {} light {}", w.x, w.y, w.z,
 					p->GetPositionX(), p->GetPositionY(), p->GetPositionZ(), g_orb.fx.obj->parent ? g_orb.fx.obj->parent->name.c_str() : "none", g_orb.fx.obj->GetAppCulled(), g_orb.light ? "on" : "off");
 			} else logger::info("dev: orb not hung (want {})", g_orb.want);
