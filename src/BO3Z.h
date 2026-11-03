@@ -425,6 +425,7 @@ namespace bo3z
 		void               GiveFlask(int a_el);   // put in your pack
 		bool               FlaskInHand(bool a_left);  // a flask held, drawn, in that hand
 		void               FlaskAttack(bool a_left);  // its throw
+		bool               FlaskSwingBlocked(bool a_left);  // a flask in that hand whose next throw isn't ready (its swing held back)
 		void               DevHorn();  // the Bone-Throne Horn's dragon, called up (dev)
 		RE::TESObjectWEAP* AlchemistKnife();
 		std::string        ArmourSetName(int a_cls, int a_tier);   // (the class armour sets) its name at that tier

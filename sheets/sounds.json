@@ -7736,6 +7736,84 @@
       "atten": 9,
       "loop": true,
       "use": "the Echo Altar hums when you stand close to it (loop while near)"
+    },
+    {
+      "id": "alch_draw",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_alch_draw",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\CurseOfAlduin\\un\\alch_draw_0.wav",
+      "files": [
+        "fx\\CurseOfAlduin\\un\\alch_draw_0.wav",
+        "fx\\CurseOfAlduin\\un\\alch_draw_1.wav",
+        "fx\\CurseOfAlduin\\un\\alch_draw_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "Alchemist: a flask drawn (glass, liquid)"
+    },
+    {
+      "id": "alch_sheath",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_alch_sheath",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\CurseOfAlduin\\un\\alch_sheath.wav",
+      "files": [
+        "fx\\CurseOfAlduin\\un\\alch_sheath.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "Alchemist: a flask put away"
+    },
+    {
+      "id": "alch_throw",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_alch_throw",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\CurseOfAlduin\\un\\alch_throw_0.wav",
+      "files": [
+        "fx\\CurseOfAlduin\\un\\alch_throw_0.wav",
+        "fx\\CurseOfAlduin\\un\\alch_throw_1.wav",
+        "fx\\CurseOfAlduin\\un\\alch_throw_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 2,
+      "loop": false,
+      "use": "Alchemist: a flask thrown (air, slosh)"
+    },
+    {
+      "id": "alch_shatter",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_alch_shatter",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\CurseOfAlduin\\un\\alch_shatter_0.wav",
+      "files": [
+        "fx\\CurseOfAlduin\\un\\alch_shatter_0.wav",
+        "fx\\CurseOfAlduin\\un\\alch_shatter_1.wav",
+        "fx\\CurseOfAlduin\\un\\alch_shatter_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 0,
+      "loop": false,
+      "use": "Alchemist: a flask shatters where it lands"
     }
   ]
 }

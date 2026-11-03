@@ -3028,6 +3028,7 @@ namespace bo3z::Classes
 		void FlaskBlast(int a_el, int a_tier, const RE::NiPoint3& a_at, float a_size, float a_share, float a_radius)
 		{
 			Gun::ElemBurst(kFlaskBurst[a_el], a_at + RE::NiPoint3{ 0, 0, -20.0f }, a_size, 0.0f, 0.9f);
+			Audio::AtPoint(gen::Sound::alch_shatter, a_at);
 			static constexpr const char* kVanilla[6] = { "fireball", "frost", "runeshock", "poisongas", "", "bloodplague" };
 			if (a_el < 6 && kVanilla[a_el][0]) Gun::FxBlast(kVanilla[a_el], a_at);
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -3057,7 +3058,9 @@ namespace bo3z::Classes
 				const bool legend = AfterSovngarde();
 				GoldCloud g;
 				g.at = a_at, g.left = legend ? 16.0f : 12.0f, g.radius = legend ? 560.0f : 450.0f, g.legend = legend;
+				Audio::AtPoint(gen::Sound::alch_shatter, a_at);
 				Gun::ElemBurst(8, a_at, 3.0f, 0.0f, 1.2f);  // (Noah: "the philosopher's flask also casts a green ball" - Skyrim's light blast: gone)
+				Gun::Puddle(4, a_at, g.radius / 100.0f, g.left);  // (a pool of molten gold lies where it broke, as long as the cloud)
 				g_gold.push_back(std::move(g));
 				logger::info("alchemist: the Philosopher's Flask shatters");
 				return;
@@ -3067,6 +3070,7 @@ namespace bo3z::Classes
 			const float share = FlaskShare(t) * (f.child ? 0.5f : 1.0f);
 			FlaskBlast(f.el, t, a_at, (f.child ? 0.6f : 1.0f) * (0.9f + 0.3f * static_cast<float>(std::min(t, 3))), share, r);
 			if (f.child) return;
+			if (t < 1) Gun::Puddle(f.el, a_at, r / 130.0f, 3.0f);  // (Noah: every flask leaves its residue on the floor - at Base a small pool, no extra bites)
 			if (t >= 1) {  // Tier I: a pool of it lingers, three more bites
 				Gun::Puddle(f.el, a_at, r / 100.0f, 3.0f);
 				for (int k = 1; k <= 3; ++k) {
@@ -3159,6 +3163,7 @@ namespace bo3z::Classes
 	namespace
 	{
 		float g_flaskCool = 0, g_philCool = 0;
+		std::chrono::steady_clock::time_point g_throwAt{};
 		void ThrowFlaskEl(int el, bool a_left)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -3178,7 +3183,8 @@ namespace bo3z::Classes
 				}
 			}
 			const float speed = el == 6 ? 1350.0f : 1500.0f;
-			LaunchFlask(el, t, from, dir * speed + RE::NiPoint3{ 0.0f, 0.0f, 260.0f }, false);  // (a little up: it arcs onto where you aim)
+			LaunchFlask(el, t, from, dir * speed + RE::NiPoint3{ 0.0f, 0.0f, 260.0f }, false);
+			Audio::AtPoint(gen::Sound::alch_throw, from);  // (its own throw: air and a slosh, no blade)  // (a little up: it arcs onto where you aim)
 		}
 		int FlaskHeld(bool a_left)
 		{
@@ -3190,6 +3196,14 @@ namespace bo3z::Classes
 		}
 	}
 	void DevHorn() { SummonBoneDragon(); }
+	bool FlaskSwingBlocked(bool a_left)
+	{
+		const int el = FlaskHeld(a_left);
+		if (el < 0) return false;
+		const float cool = el == 6 ? g_philCool : g_flaskCool;
+		const auto since = std::chrono::duration<float>(std::chrono::steady_clock::now() - g_throwAt).count();
+		return cool > 0.0f && since > 0.15f;  // (the throw just started lets its own swing through)
+	}
 	bool FlaskInHand(bool a_left)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -3208,6 +3222,7 @@ namespace bo3z::Classes
 			return;
 		}
 		cool = el == 6 ? 12.0f : 0.9f * (Kit::ArmourTier(coffer::kAlchemist) >= 1 ? 0.85f : 1.0f) * Perks::FlaskCostMult();
+		g_throwAt = std::chrono::steady_clock::now();
 		Gun::StartThrow(a_left, [el, a_left]() { ThrowFlaskEl(el, a_left); });
 	}
 	// (Noah: "an item that you actually throw") a flask that leaves your pack was used (its hotkey, or Use in the pack): it is
@@ -3221,6 +3236,24 @@ namespace bo3z::Classes
 		static float look = 0;
 		if ((look -= a_delta) > 0) return;
 		look = 1.0f;
+		// (the Alchemist's set changed from the Drifter's outfit to the Black Mage's) an Alchemist still carrying the Drifter's
+		// pieces has them taken back and the robes given at the set's tier, worn
+		if (static bool swapped = false; !swapped && g_class.load() == coffer::kAlchemist && g_kit[coffer::kAlchemist]) {
+			swapped = true;
+			int had = 0;
+			for (std::uint32_t id : { 0x831u, 0x830u, 0x832u, 0x80Eu, 0x80Du, 0x84Du, 0x81Du, 0x81Cu, 0x84Cu, 0x841u }) {
+				auto* f = Lookup(id, "DrifterArmorAndOutfitByXtudo.esp");
+				auto* b = f ? f->As<RE::TESBoundObject>() : nullptr;
+				if (b && p->GetItemCount(b) > 0) {
+					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->UnequipObject(p, b, nullptr, 1, nullptr, false, false, false, true);
+					p->RemoveItem(b, p->GetItemCount(b), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr), ++had;
+				}
+			}
+			if (had) {
+				GiveArmourSet(coffer::kAlchemist, Kit::ArmourTier(coffer::kAlchemist), true);
+				logger::info("classes: the Alchemist's Drifter pieces ({}) traded for the Black Mage Robes", had);
+			}
+		}
 		for (int el = 0; el < 7; ++el) {  // an Alchemist's flasks never leave you (dropped or sold: back in the pack)
 			auto* it = FlaskItem(el);
 			const bool owned = el == 6 ? WonderState(coffer::kAlchemist) >= 4 : Kit::FlaskTier(el) >= 0;
@@ -3277,13 +3310,9 @@ namespace bo3z::Classes
 				case 2: return { { "Black Mage Armor SE.esp", 0x005E4D }, { "Black Mage Armor SE.esp", 0x00EABA }, { "Black Mage Armor SE.esp", 0x00EAB9 }, { "Black Mage Armor SE.esp", 0x00EAB8 } };  // the plate
 				default: return { { "Black Mage Armor SE.esp", 0x00DA78 }, { "Black Mage Armor SE.esp", 0x00DFDC }, { "Black Mage Armor SE.esp", 0x00EAA3 }, { "Black Mage Armor SE.esp", 0x00EAA2 } };  // the Black Archmage's ebony
 				}
-			case coffer::kAlchemist:  // (Noah: the Alchemist) the Drifter's outfit, its look growing with the set's tiers: cloth, leather, metal, closed metal
-				switch (std::clamp(a_tier, 0, 3)) {
-				case 0: return { { "DrifterArmorAndOutfitByXtudo.esp", 0x000831 }, { "DrifterArmorAndOutfitByXtudo.esp", 0x000830 }, { "DrifterArmorAndOutfitByXtudo.esp", 0x000832 } };
-				case 1: return { { "DrifterArmorAndOutfitByXtudo.esp", 0x00080E }, { "DrifterArmorAndOutfitByXtudo.esp", 0x00080D }, { "DrifterArmorAndOutfitByXtudo.esp", 0x00084D } };
-				case 2: return { { "DrifterArmorAndOutfitByXtudo.esp", 0x00081D }, { "DrifterArmorAndOutfitByXtudo.esp", 0x00081C }, { "DrifterArmorAndOutfitByXtudo.esp", 0x00084C } };
-				default: return { { "DrifterArmorAndOutfitByXtudo.esp", 0x000841 }, { "DrifterArmorAndOutfitByXtudo.esp", 0x00081C }, { "DrifterArmorAndOutfitByXtudo.esp", 0x00084C } };
-				}
+			case coffer::kAlchemist:  // (Noah: "Could we use the destruction class armor set for male and female alchemist class?") the
+				// Black Mage's robes, as the Destruction class wears them - made for both bodies (the Drifter's outfit had no man's)
+				return SetPieces(coffer::kDestruction, a_tier, a_female);
 			case coffer::kSpellsword:
 				// (Noah: "remove the cape from the [Spellsword] class, just so that we don't have to worry about it anymore")
 				if (a_female) return { { "ValkyrieSwordShield.esp", 0x00285D }, { "ValkyrieSwordShield.esp", 0x00285A }, { "ValkyrieSwordShield.esp", 0x00285B }, { "ValkyrieSwordShield.esp", 0x002859 } };
@@ -3324,7 +3353,7 @@ namespace bo3z::Classes
 		switch (a_cls) {
 		case coffer::kSummoner: return "Arcane Conjurer Robes";
 		case coffer::kDestruction: return a_tier >= 1 ? fmt::format("Black Mage Robes (Enchanted {})", a_tier >= 3 ? "III" : a_tier == 2 ? "II" : "I") : std::string("Black Mage Robes");
-		case coffer::kAlchemist: return a_tier >= 1 ? fmt::format("Drifter's Clothes (Enchanted {})", a_tier >= 3 ? "III" : a_tier == 2 ? "II" : "I") : std::string("Drifter's Clothes");
+		case coffer::kAlchemist: return a_tier >= 1 ? fmt::format("Black Mage Robes (Enchanted {})", a_tier >= 3 ? "III" : a_tier == 2 ? "II" : "I") : std::string("Black Mage Robes");
 		case coffer::kSpellsword: return PlayerFemale() ? "Valkyrie Armor" : "DragonLord Armor";
 		default: return "Armor";
 		}

@@ -1434,6 +1434,10 @@
   "WEAP:flaskweap_poison": "0xd96",
   "WEAP:flaskweap_sun": "0xd97",
   "WEAP:flaskweap_blood": "0xd98",
-  "WEAP:flaskweap_philosopher": "0xd99"
+  "WEAP:flaskweap_philosopher": "0xd99",
+  "SNDR:alch_draw": "0xd9a",
+  "SNDR:alch_sheath": "0xd9b",
+  "SNDR:alch_throw": "0xd9c",
+  "SNDR:alch_shatter": "0xd9d"
  }
 }

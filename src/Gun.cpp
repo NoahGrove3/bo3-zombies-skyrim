@@ -153,6 +153,13 @@ namespace bo3z
 		{
 			static bool thunk(RE::PlayerInputHandler* a_this, RE::InputEvent* a_event)
 			{
+				// (Noah: "make the swing speed match the delayed casting speed so it only swings when the next cast is ready") a
+				// flask's hand swings only when its next throw is ready
+				if (auto* b = a_event ? a_event->AsButtonEvent() : nullptr) {
+					auto* uev = RE::UserEvents::GetSingleton();
+					const auto& ue = b->QUserEvent();
+					if (uev && (ue == uev->leftAttack || ue == uev->rightAttack) && Classes::FlaskSwingBlocked(ue == uev->leftAttack)) return false;
+				}
 				if (MeleeRefused(a_event)) return false;
 				if (GunOut()) {
 					// The fire button goes through: Skyrim plays the staff/hand cast. Right mouse (left-hand
@@ -830,6 +837,7 @@ namespace bo3z
 			int          expl;
 			float        scale;
 			RE::BGSExplosion* form = nullptr;  // (FxFrom: another mod's burst, quieted)
+			bool              exact = false;   // (our own models: the size asked, never shrunk at your feet)
 		};
 		// Skyrim's explosions are built for dragons and Dragonborn shouts: ours are shrunk so a hit reads as a hit,
 		// not a screen-filling burst. Shots use the small size, signature moves the larger one.
@@ -871,6 +879,9 @@ namespace bo3z
 						// the spell's own (quieter, layered) sound plays instead
 						ex->data.sound1 = nullptr;
 						ex->data.sound2 = nullptr;
+						// (Noah: "all blood/life drain magic to be a dark red pulse/explosion, not the flesh explosion") the
+						// Dragonborn gore burst wears our dark-red pulse (tools/elemburst.py, blood) everywhere it's used
+						if (nm == "bloodplague") ex->SetModel("CurseOfAlduin\\fx\\burst_blood.nif"), ex->data.impactDataSet = nullptr, ex->data.impactPlacedObject = nullptr;
 						made[a_index] = ex;
 					}
 				}
@@ -900,6 +911,62 @@ namespace bo3z
 			}
 			made[a_src] = ex;
 			return ex;
+		}
+		// (Noah: "I can see the impact of the flasks hitting things but ... I can't see the flasks flying"; the bursts and pools
+		// hung loose in the scene were dropped by the renderer) our effect models go into the world the way Skyrim's own do:
+		// a burst is an explosion wearing our model, a pool a hazard (it lies there its lifetime, then the game clears it)
+		int BlastIndex(std::string_view a_name);
+		RE::BGSExplosion* ModelExplosion(const std::string& a_path)
+		{
+			static std::unordered_map<std::string, RE::BGSExplosion*> made;
+			if (auto it = made.find(a_path); it != made.end()) return it->second;
+			RE::BGSExplosion* ex = nullptr;
+			auto* tpl = BlastForm(BlastIndex("fireball"));
+			if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::BGSExplosion>(); tpl && factory && (ex = factory->Create())) {
+				ex->boundData = tpl->boundData;
+				ex->SetModel(a_path.c_str());
+				ex->data = tpl->data;
+				ex->data.light = nullptr, ex->data.sound1 = nullptr, ex->data.sound2 = nullptr;
+				ex->data.impactDataSet = nullptr, ex->data.impactPlacedObject = nullptr, ex->data.spawnProjectile = nullptr;
+				ex->data.damage = 0.0f, ex->data.force = 0.0f, ex->data.radius = 1.0f, ex->data.imageSpaceRadius = 0.0f;
+				ex->formEnchanting = nullptr, ex->imageSpaceModifying = nullptr;
+			}
+			logger::info("blast: {} as an explosion {}", a_path, ex ? "ready" : "MISSING");
+			made[a_path] = ex;
+			return ex;
+		}
+		RE::BGSHazard* ModelHazard(const std::string& a_path, float a_life)
+		{
+			static std::map<std::pair<std::string, int>, RE::BGSHazard*> made;
+			const auto key = std::make_pair(a_path, static_cast<int>(a_life * 10.0f));
+			if (auto it = made.find(key); it != made.end()) return it->second;
+			RE::BGSHazard* hz = nullptr;
+			if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::BGSHazard>(); factory && (hz = factory->Create())) {
+				hz->SetModel(a_path.c_str());
+				hz->data.limit = 24, hz->data.radius = 1.0f, hz->data.lifetime = a_life, hz->data.imageSpaceRadius = 0.0f, hz->data.targetInterval = 1.0f;
+				hz->data.flags.set(RE::BGSHazardData::BGSHazardFlags::kDropToGround);
+				hz->data.spell = nullptr, hz->data.light = nullptr, hz->data.impactDataSet = nullptr, hz->data.sound = nullptr;
+			}
+			logger::info("hazard: {} ({:.1f} s) {}", a_path, a_life, hz ? "ready" : "MISSING");
+			made[key] = hz;
+			return hz;
+		}
+		// anything placed at a point (the blast marker carried there first)
+		RE::NiPointer<RE::TESObjectREFR> PlaceAtPoint(RE::TESBoundObject* a_obj, const RE::NiPoint3& a_at)
+		{
+			auto* player = RE::PlayerCharacter::GetSingleton();
+			if (!player || !a_obj || !player->GetParentCell()) return {};
+			auto m = g_blastMarker.get();
+			if (!m || m->IsDeleted() || m->GetParentCell() != player->GetParentCell()) {
+				if (m) m->Disable(), m->SetDelete(true);
+				auto* xm = RE::TESForm::LookupByID<RE::TESBoundObject>(0x3B);  // XMarker
+				auto  r = xm ? player->PlaceObjectAtMe(xm, false) : nullptr;
+				if (!r) return {};
+				g_blastMarker = r->GetHandle();
+				m = r;
+			}
+			m->SetPosition(a_at);
+			return m->PlaceObjectAtMe(a_obj, false);
 		}
 		int BlastIndex(std::string_view a_name)
 		{
@@ -945,7 +1012,7 @@ namespace bo3z
 				// (Noah: "the visual effects are still overwhelming, especially when casting spells at the feet") every burst
 				// a fifth smaller, and one at your own feet smaller again
 				const float atFeet = std::clamp((b.at.GetDistance(player->GetPosition()) - 150.0f) / 350.0f, 0.0f, 1.0f);
-				const float sc = b.scale * 0.8f * (0.6f + 0.4f * atFeet);
+				const float sc = b.exact ? b.scale : b.scale * 0.8f * (0.6f + 0.4f * atFeet);
 				r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(sc, 0.1f, 5.0f) * 100.0f);
 				g_shrink.push_back({ r->CreateRefHandle(), { sc, 0.6f } });
 				if (g_shrink.size() > 64) {
@@ -2411,6 +2478,22 @@ namespace bo3z
 		std::vector<EBurst> g_eb;
 		void QueueFx(std::string a_path, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life, bool a_flat)
 		{
+			// a burst: an explosion wearing our model; a pool: a hazard lying its lifetime (see ModelExplosion)
+			if (!a_flat) {
+				if (auto* ex = ModelExplosion(a_path); ex && g_blasts.size() < 48) {
+					PendingBlast pb{ a_at, a_delay, -1, a_scale, ex };
+					pb.exact = true;
+					g_blasts.push_back(pb);
+					return;
+				}
+			} else if (auto* hz = ModelHazard(a_path, a_life)) {
+				const std::string path = a_path;
+				auto place = [hz, a_at, a_scale]() {
+					if (auto r = PlaceAtPoint(hz, a_at)) r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(a_scale, 0.1f, 9.0f) * 100.0f);
+				};
+				if (a_delay <= 0) place(); else Tasks::Later(a_delay, place);
+				return;
+			}
 			if (g_eb.size() > 90) return;  // (never a screen of it)
 			EBurst b;
 			b.path = std::move(a_path), b.at = a_at, b.delay = a_delay, b.life = a_life, b.scale = a_scale, b.flat = a_flat;
@@ -2562,7 +2645,7 @@ namespace bo3z
 		// (Noah: the Alchemist's flasks "explode right in front of my face - there's no travel, it doesn't arc") a thrown
 		// flask is flown here: its model hung in the scene, carried along its arc under gravity, tumbling; it comes down on
 		// the first body or wall or ground its path crosses, and its burst is called there
-		struct Lobbed { Spellcraft::Fx fx; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; };
+		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; };
 		std::vector<Lobbed> g_lobs;
 		void TickLobs(float a_delta)
 		{
@@ -2588,12 +2671,25 @@ namespace bo3z
 				}
 				if (down) {
 					l.fx.Detach();
+					if (auto r = l.ref.get()) r->Disable(), r->SetDelete(true);
 					l.done = true;
 					landed.push_back({ l.land, hit });
 					continue;
 				}
 				l.p = next;
-				if (l.fx.obj) {
+				if (auto r = l.ref.get()) {
+					RE::NiMatrix3 tumble;
+					tumble.SetEulerAnglesXYZ(l.t * l.spin, 0.0f, 0.0f);
+					r->SetPosition(l.p);
+					if (auto* o = r->Get3D()) {
+						o->local.translate = l.p;
+						o->local.rotate = Spellcraft::Facing(l.v) * tumble;
+						o->local.scale = l.scale;
+						RE::NiUpdateData ud;
+						ud.time = 0.0f;
+						o->Update(ud);
+					}
+				} else if (l.fx.obj) {
 					RE::NiMatrix3 tumble;
 					tumble.SetEulerAnglesXYZ(l.t * l.spin, 0.0f, 0.0f);
 					l.fx.Place(l.p, Spellcraft::Facing(l.v) * tumble, l.scale);
@@ -2606,16 +2702,16 @@ namespace bo3z
 		{
 			if (g_lobs.size() > 40) return;
 			Lobbed l;
-			l.fx = Spellcraft::Fx{ Spellcraft::LoadPath(a_model) };
-			// (Noah: "its model through the air is also invisible") a lit model hung straight on the scene's root draws nothing:
-			// it flies in the cell you're in, among the cell's own objects
-			RE::NiNode* host = nullptr;
-			if (auto* pl = RE::PlayerCharacter::GetSingleton(); pl && pl->GetParentCell()) {
-				if (auto* ld = pl->GetParentCell()->GetRuntimeData().loadedData) host = ld->cell3D.get();
+			// (Noah: "I can't see the flasks flying through the air" - hung in the scene by hand it never drew) it flies as a
+			// real placed object wearing the flask's model (a nameless activator made once per model), carried along the arc
+			static std::unordered_map<std::string, RE::TESObjectACTI*> forms;
+			auto& f = forms[a_model];
+			if (!f) {
+				if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::TESObjectACTI>(); factory && (f = factory->Create())) f->SetModel(a_model.c_str());
 			}
-			if (l.fx.obj) l.fx.Attach(host ? host : Spellcraft::WorldRoot());
+			if (auto r = f ? PlaceAtPoint(f, a_from) : RE::NiPointer<RE::TESObjectREFR>{}) l.ref = r->GetHandle();
 			l.p = a_from, l.v = a_vel, l.scale = a_scale, l.land = std::move(a_land);
-			logger::info("lob: {} (model {}, under {})", a_model, l.fx.obj ? "loaded" : "MISSING", host ? "the cell" : "the world root");
+			logger::info("lob: {} ({})", a_model, l.ref ? "placed" : "NOT PLACED");
 			g_lobs.push_back(std::move(l));
 		}
 		void  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life)

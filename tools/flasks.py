@@ -38,7 +38,8 @@ TEXDIR = OUT / 'Textures' / 'CurseOfAlduin' / 'alchemist'
 TEXREL = 'CurseOfAlduin\\alchemist\\'
 WORK = ROOT / 'build' / 'flasks'
 TOOLS = pathlib.Path('/home/claude/tools')
-HELD = '--held' in sys.argv   # (Noah: "hold it in my left or right hand") the held copies: still, flask_<el>_held.nif
+HELD = '--held' in sys.argv
+HELD_SCALE = 0.72   # (Noah: "hold it in my left or right hand") the held copies: still, flask_<el>_held.nif
 SPIN_TPS = 0.0001 if HELD else 2.0  # (spinwrap needs a rate: one turn in hours)
 
 # element: liquid colour, liquid pattern, neck wrap, fizz flipbook (its bow), fizz tint, fizz colour scale
@@ -413,6 +414,11 @@ def build(el, tex):
     yc = (lo[1] + hi[1]) / 2                                  # the height centred; the axis stays on Y
     for g in M.groups: g[2][:, 1] -= yc
     anchors = {k: ((v[0], v[1] - yc, v[2]) if isinstance(v, tuple) else v) for k, v in anchors.items()}
+    if HELD:  # (Noah: "my player's hands clipping into the flask bottles") held, the fist closes on the neck (the grip at the
+        # origin), the bottle hangs below it, a little smaller - nothing for the fingers to sink into
+        h = (hi[1] - lo[1]); neck = (hi[1] - yc) - 0.17 * h
+        for g in M.groups: g[2][:, 1] -= neck; g[2][:] *= HELD_SCALE
+        anchors = {k: (((v[0]) * HELD_SCALE, (v[1] - neck) * HELD_SCALE, v[2] * HELD_SCALE) if isinstance(v, tuple) else v * HELD_SCALE) for k, v in anchors.items()}
     obj = WORK / f'flask_{el}.obj'; M.write_obj(obj)
     col = EL[el][0]
     ec = ','.join(f'{c:.2f}' for c in col)
@@ -439,6 +445,7 @@ def build(el, tex):
     L = [f'base {spun}', f'out {nif}']
     cards = fx_cards(el, anchors)
     for name, t, tint, sc, hs, at, flip, phase in cards:
+        if HELD and flip: hs *= HELD_SCALE
         extra = f' flip=8x8 fps=24 phase={phase:.2f}' if flip else ''
         L.append(f'shape {name} tex={t} color={tint},1 scale={sc} blend=add billboard=2 parent=FlaskSpin at={at[0]:.2f},{at[1]:.2f},{at[2]:.2f}{extra}')
         cu = 1 / 8 if flip else 1
