@@ -2462,8 +2462,10 @@ namespace bo3z
 			if (!g_orb.fx.obj) {
 				g_orb.fx = Spellcraft::Fx{ Spellcraft::LoadPath("CurseOfAlduin\\fx\\lightorb.nif") };
 				if (!g_orb.fx.obj) return;
-				g_orb.fx.Attach(Spellcraft::WorldRoot());
 			}
+			// (hung loose in the scene it was dropped by the renderer in third person) it rides your body's own root, drawn
+			// whenever you are; Fx::Attach does nothing when it's already there, and hangs it again on a rebuilt body
+			if (auto* body = root->AsNode()) g_orb.fx.Attach(body);
 			g_orb.t += a_delta;
 			RE::NiPoint3 head = p->GetPosition() + RE::NiPoint3{ 0, 0, 128.0f };
 			if (auto* h = root->GetObjectByName("NPC Head [Head]")) head = h->world.translate;
@@ -2473,7 +2475,7 @@ namespace bo3z
 			g_orb.placed = true;
 			RE::NiMatrix3 turn;
 			turn.SetEulerAnglesXYZ(0.0f, 0.0f, t * 0.6f);
-			g_orb.fx.Place(g_orb.at, turn, 1.0f);
+			g_orb.fx.Place(g_orb.at, turn, 1.5f);
 			// (the orb drew nothing while its light hung inside it: the light rides its own node beside it)
 			if (!g_orb.holder) {
 				if (auto* n = RE::NiNode::Create(1); n && Spellcraft::WorldRoot()) {
