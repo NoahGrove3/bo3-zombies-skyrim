@@ -605,7 +605,11 @@ namespace bo3z
 				Gun::DevFx(path, root, side);
 			} else if (cmd == "nodes") {
 				Gun::DevNodes();
+			} else if (cmd == "quit") {  // the game closed to the desktop (so a new build can go in)
+				logger::info("dev: quitting to the desktop");
+				if (auto* m = RE::Main::GetSingleton()) m->quitGame = true;
 			} else if (cmd == "horn") {
+				logger::info("dev: horn");
 				Classes::DevHorn();
 			} else if (cmd == "wonder") {  // wonder <class> <state 0-5>
 				int c = -1, st = 0;

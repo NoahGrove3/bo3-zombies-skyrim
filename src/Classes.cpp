@@ -3126,7 +3126,7 @@ namespace bo3z::Classes
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		auto* base = Lookup(0x09192C, "Skyrim.esm");
 		auto* npc = base ? base->As<RE::TESNPC>() : nullptr;
-		if (!p || !npc || !p->GetParentCell()) return;
+		if (!p || !npc || !p->GetParentCell()) { logger::warn("classes: the bone dragon not called (npc {})", npc != nullptr); return; }
 		if (auto old = g_boneDragon.get(); old && !old->IsDead()) {  // (one at a time: the old one crumbles)
 			Gun::ElemBurst(7, old->GetPosition(), 2.0f, 0.0f, 1.0f);
 			Console(old.get(), "SetPlayerTeammate 0");
@@ -3134,7 +3134,7 @@ namespace bo3z::Classes
 		}
 		auto ref = p->PlaceObjectAtMe(npc, false);
 		auto* a = ref ? ref->As<RE::Actor>() : nullptr;
-		if (!a) return;
+		if (!a) { logger::warn("classes: the bone dragon not placed"); return; }
 		const float yaw = p->GetAngleZ() + 0.9f;
 		const RE::NiPoint3 at = p->GetPosition() + RE::NiPoint3{ std::sin(yaw) * 450.0f, std::cos(yaw) * 450.0f, 20.0f };
 		a->SetPosition(at, true);
