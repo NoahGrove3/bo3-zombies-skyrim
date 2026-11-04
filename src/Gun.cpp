@@ -2577,7 +2577,9 @@ namespace bo3z
 					const int t = std::clamp(Kit::TierOfWeapon(eq), 0, 3);
 					// (Noah: "the flames should look like real fire that are purple in color") the mace burns with Skyrim's own purple
 					// fire - Nocturnal's, from the game's files - on its crystal; the Madness Sword keeps its sheath of red flame
-					want = mace ? std::string("effects\\tg09nocturnalfxfirepurple.nif") : fmt::format("CurseOfAlduin\\fx\\madflame_{}.nif", t);
+					// (Noah: "a weird circle thing in the mace head" - Nocturnal's fire brings its bed of embers; its flames left behind in
+					// the world in gaps as you swung) the mace's own violet fire, in its own space: it moves with every swing
+					want = fmt::format("CurseOfAlduin\\fx\\{}flame_{}.nif", mace ? "mace" : "mad", t);
 					g_wflameScale = mace ? 0.19f + 0.04f * static_cast<float>(t) : 1.0f;  // (Noah: "I can only see the after images of the effect" - at 0.11 it was a smudge)
 				}
 			}

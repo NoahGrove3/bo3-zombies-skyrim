@@ -54,23 +54,29 @@ def sheath(L, name, tex, tint, sc, y0, y1, w, rep, scroll, ang, fade_in=0.15, fa
 
 
 def mace(t):
-    """(Noah: "a shadow flame mace ... the purple flame should look hyper realistic on the mace itself") shadowflame wrapped
-    round the mace's head and its crystal (y 48.4, radius 7.5): five sheets close about the haft rising out of the cage, an inner
-    core of hot pale violet licking up out of the crystal itself, and thin wisps trailing off the top - every edge faded to
-    nothing; taller, fuller and brighter each tier; from Tier II embers drifting off"""
+    """(Noah: "the purple fire after images should follow the mace smoothly, not spaced out ... a weird circle thing in the mace
+    head ... the glow effect should be much higher quality, not a solid purple line") the Shadowflame mace's fire, all in the
+    mace's own space so it moves with every swing, no gaps: tongues of violet flame (tools/alchfx.py's soft-edged pillar_flame,
+    recoloured) rising out of the cage round the crystal (30.6..41.8 up the haft, the head's top at 44.7), on camera-facing
+    cards so it always reads as fire; inside the crystal a churning heart of the same flame and a soft glow. Bigger and
+    brighter each tier; from Tier II embers drifting up"""
     random.seed(100 + t)
     L = []
-    cy = 48.4
-    w, top, sc = [(4.2, 10.0, 0.9), (5.0, 13.0, 1.1), (5.8, 17.0, 1.3), (6.6, 22.0, 1.55)][t]
-    for k in range(5):   # the body of the fire, close round the head
-        sheath(L, f'f{k}', FX + 'blade_flame_violet.dds', '0.95,0.85,1', sc, cy - 7.5, cy + top, w, 1.1, -1.5 - 0.17 * k, 36 * k + 8, 0.22, 0.5, 12)
-    for k in range(3):   # the core: hot, pale, tight to the crystal
-        sheath(L, f'c{k}', FX + 'blade_flame_violet.dds', '1,0.92,1', sc * 0.8, cy - 4, cy + top * 0.7, w * 0.55, 1.6, -2.1, 60 * k + 20, 0.25, 0.45, 10)
-    for k in range(2):   # wisps trailing off its top
-        sheath(L, f'w{k}', FX + 'blade_flame_violet.dds', '0.6,0.45,0.9', sc * 0.55, cy + top * 0.4, cy + top * 1.5, w * 1.2, 0.8, -1.0, 90 * k + 45, 0.3, 0.7, 8)
+    cy = 36.2
+    tex = FX + 'pillar_flame_violet.dds'
+    w, top, sc = [(4.2, 11.0, 1.15), (5.0, 14.0, 1.3), (5.8, 17.0, 1.45), (6.8, 21.0, 1.65)][t]
+    n = 4 + t
+    for k in range(n):   # the fire round the head
+        a = 2 * math.pi * k / n
+        card(L, f'f{k}', tex, random.choice(('1,1,1', '0.95,0.9,1', '1,0.95,1')), sc, w * random.uniform(0.85, 1.1), -2.0, top * random.uniform(0.85, 1.1),
+             (math.cos(a) * 1.6, cy + 2.5 + random.uniform(-1, 1), math.sin(a) * 1.6), (16, 8), random.uniform(52, 64), random.uniform(0, 2.1))
+    # inside the crystal: its heart, a small flame turning in the glass, and a soft violet glow
+    card(L, 'heart', tex, '1,0.9,1', 1.5, 2.0, -5.0, 5.5, (0, cy - 1.5, 0), (16, 8), 48, 0.7)
+    card(L, 'heart2', tex, '0.85,0.7,1', 1.3, 1.6, -4.0, 4.5, (0, cy - 0.5, 0), (16, 8), 40, 1.6)
+    card(L, 'glow', FX + 'glow_disc.dds', '0.55,0.22,0.9', 1.2, 7.5 + t, -8.5 - t, 8.5 + t, (0, cy, 0))
     if t >= 2:
         for k in range(t):
-            card(L, f'e{k}', FX + 'motes_rise.dds', '0.6,0.35,1', 1.3, 6, 0, 22 + 5 * t, (0, cy, 0), (16, 16), random.uniform(54, 66), k * 0.9)
+            card(L, f'e{k}', FX + 'motes_rise.dds', '0.6,0.35,1', 1.3, 6, 0, 22 + 5 * t, (0, cy + 4, 0), (16, 16), random.uniform(54, 66), k * 0.9)
     write(L, f'maceflame_{t}.nif')
 
 

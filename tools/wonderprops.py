@@ -499,20 +499,7 @@ def build(pid):
         for _nf in ('mace.nif', 'mace_static.nif'):   # (the metal made reflective, as it is in Blender)
             _f = str(OUT / 'Meshes/CurseOfAlduin/alchemist' / _nf)
             subprocess.run(['/home/claude/tools/envnif', _f, _f, 'mace_metal_d', 'cubemaps\\ore_steel_e.dds', ENVM, '0.45'], check=True)
-        # (Noah: "no ... flaming animation") a purple flame alive inside the crystal, seen through its glass: tongues of it
-        # rising and flowing (tools/bladefx.py's sheaths, blade_flame_violet) and a hot heart of it churning
-        sys.path.insert(0, str(ROOT / 'tools')); import bladefx
-        ylo, yhi, R = CRYSTAL; FXP = 'CurseOfAlduin\\fx\\'
-        L = []
-        for k, ang in enumerate((0, 45, 90, 135)):
-            bladefx.sheath(L, f'cf{k}', FXP + 'blade_flame_violet.dds', '1,0.85,1', 1.4, ylo + 1.0, yhi - 0.6, R * 0.62, 1.8, -1.9 - 0.2 * k, ang, 0.2, 0.3, 10)
-        bladefx.card(L, 'cheart', FXP + 'alch_void.dds', '1,0.6,1', 1.6, R * 0.9, -R * 1.1, R * 1.1, (0, (ylo + yhi) / 2, 0), (16, 8), 50, 0.0)
-        bladefx.write(L, 'mace_crystalflame.nif')
-        src = str(bladefx.MESH / 'mace_crystalflame.nif')
-        for _nf in ('mace.nif', 'mace_static.nif'):
-            _f = str(OUT / 'Meshes/CurseOfAlduin/alchemist' / _nf)
-            for nm in ['cf0', 'cf1', 'cf2', 'cf3', 'cheart']:
-                subprocess.run(['/home/claude/tools/fxgraft', _f, src, nm, _f, 'crystal_' + nm, '-', '1', '0', '0', '0'], check=True, capture_output=True)
+        # (the crystal's living flame is the mace's fire model now - tools/bladefx.py mace - hung on it by Gun.cpp)
         hv = np.vstack([P[1][0]]); print('   crystal centre', np.round(hv.mean(0), 1), 'radius', round(float(np.ptp(hv[:, 1]) / 2), 1))
 
     elif pid == 'lightorb':     # (Noah's game crashed on the Light Orb in his inventory: its item model was the floating light -
