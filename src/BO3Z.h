@@ -257,6 +257,7 @@ namespace bo3z
 		void Voice(std::optional<gen::Sound> a_s);                                     // the intro narrator (one line at a time; nullopt stops it)
 		void At(gen::Sound a_s, RE::TESObjectREFR* a_ref, float a_vol = 1.0f);         // 3D, follows the reference
 		void AtPoint(gen::Sound a_s, const RE::NiPoint3& a_at, float a_delay = 0.0f, float a_vol = 1.0f);
+		void Mine(gen::Sound a_s, const RE::NiPoint3& a_at, float a_vol = 1.0f);         // your own sound at a point (never held back by the horde's budget)
 		void LoopStart(std::uint64_t a_key, gen::Sound a_s, RE::TESObjectREFR* a_owner = nullptr);
 		void LoopStop(std::uint64_t a_key, int a_fadeMs = 200);
 		void LoopVolume(std::uint64_t a_key, float a_vol);  // a playing loop's loudness (0..1)

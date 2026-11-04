@@ -1377,7 +1377,8 @@ namespace bo3z
 			// (Noah: "the volume of all magic sound effects turned down for players and enemies") Skyrim's magic sound
 			// category (AudioCategoryMAG: every spell's cast, flight and impact, whoever casts it) at 55% of its own level
 			if (auto* mag = RE::TESForm::LookupByID<RE::BGSSoundCategory>(0x0001A0BD)) {
-				mag->SetStaticVolumeMultiplier(mag->GetStaticVolumeMultiplier() * 0.55f);
+				// (set, never multiplied again: at every load it was taken down another 45% - in a long session it reached nothing)
+				mag->SetStaticVolumeMultiplier(0.55f);
 				logger::info("audio: magic sounds at {:.2f}", mag->GetStaticVolumeMultiplier());
 			}
 			// Skyrim's own floating quest markers give way to ours (src/Hud.cpp: drawn in the game's style)

@@ -7851,7 +7851,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 7,
+      "atten": 1,
       "loop": false,
       "use": "Alchemist: a fire flask breaking - glass and fire"
     },
@@ -7871,7 +7871,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 7,
+      "atten": 1,
       "loop": false,
       "use": "Alchemist: a frost flask breaking - glass and frost"
     },
@@ -7891,7 +7891,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 7,
+      "atten": 1,
       "loop": false,
       "use": "Alchemist: a shock flask breaking - glass and lightning"
     },
@@ -7911,7 +7911,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 7,
+      "atten": 1,
       "loop": false,
       "use": "Alchemist: a poison flask breaking - glass and poison"
     },
@@ -7931,7 +7931,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 7,
+      "atten": 1,
       "loop": false,
       "use": "Alchemist: a sun flask breaking - glass and holy light"
     },
@@ -7951,7 +7951,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 7,
+      "atten": 1,
       "loop": false,
       "use": "Alchemist: a blood flask breaking - glass and blood"
     },
@@ -7971,7 +7971,7 @@
       ],
       "shift": 0,
       "layer": "none",
-      "atten": 7,
+      "atten": 1,
       "loop": false,
       "use": "Alchemist: a gold flask breaking - glass and molten gold"
     }

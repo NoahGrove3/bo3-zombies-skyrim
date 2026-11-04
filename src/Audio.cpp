@@ -163,6 +163,14 @@ namespace bo3z::Audio
 		RE::BSSoundHandle h;
 		Start(h, a_s, nullptr, &a_at, a_vol);
 	}
+	// (Noah: "I also wasn't able to hear the flask impact sound effects") your own sounds at a point - a flask breaking, thrown,
+	// uncorked - never wait on the horde's budget (the undead's own sounds had spent it in every fight)
+	void Mine(gen::Sound a_s, const RE::NiPoint3& a_at, float a_vol)
+	{
+		if (!Allow(a_s, false)) return;
+		RE::BSSoundHandle h;
+		if (!Start(h, a_s, nullptr, &a_at, a_vol)) logger::warn("audio: {} would not start", static_cast<int>(a_s));
+	}
 
 	void LoopStart(std::uint64_t a_key, gen::Sound a_s, RE::TESObjectREFR* a_owner)
 	{
