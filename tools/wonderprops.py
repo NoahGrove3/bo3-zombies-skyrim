@@ -27,16 +27,34 @@ CONV = '/home/claude/tools/modelconv'
 
 
 def load_obj(path):
-    V, T, F, M = [], [], [], []
+    """(Noah: the mace "looks poor quality" - its texture smeared into stripes) an OBJ's faces read with their own texture
+    coordinates: a vertex used with two different UVs (on a seam) becomes two vertices - before, each face corner's UV index
+    was dropped and the position's index used for both, which tore the texture across every seam whenever the two differ"""
+    V0, T0, F, M = [], [], [], []
     mat = 'm0'
     for l in open(path):
-        if l.startswith('v '): V.append([float(x) for x in l.split()[1:4]])
-        elif l.startswith('vt '): T.append([float(x) for x in l.split()[1:3]])
+        if l.startswith('v '): V0.append([float(x) for x in l.split()[1:4]])
+        elif l.startswith('vt '): T0.append([float(x) for x in l.split()[1:3]])
         elif l.startswith('usemtl'): mat = l.split()[1]
         elif l.startswith('f '):
-            ids = [int(x.split('/')[0]) - 1 for x in l.split()[1:]]
-            for i in range(1, len(ids) - 1): F.append((ids[0], ids[i], ids[i + 1])); M.append(mat)
-    return np.array(V, float), np.array(T, float), np.array(F, int), M
+            c = []
+            for x in l.split()[1:]:
+                k = x.split('/')
+                c.append((int(k[0]) - 1, int(k[1]) - 1 if len(k) > 1 and k[1] else int(k[0]) - 1))
+            F.append(c); M.append(mat)
+    if not T0:
+        tris = [(f[0][0], f[i][0], f[i + 1][0]) for f in F for i in range(1, len(f) - 1)]
+        mats = [m for f, m in zip(F, M) for i in range(1, len(f) - 1)]
+        return np.array(V0, float), np.zeros((0, 2)), np.array(tris, int), mats
+    idx, V, T, tris, mats = {}, [], [], [], []
+    def vid(pair):
+        if pair not in idx:
+            idx[pair] = len(V); V.append(V0[pair[0]]); T.append(T0[pair[1]] if pair[1] < len(T0) else [0.0, 0.0])
+        return idx[pair]
+    for f, m in zip(F, M):
+        ids = [vid(c) for c in f]
+        for i in range(1, len(ids) - 1): tris.append((ids[0], ids[i], ids[i + 1])); mats.append(m)
+    return np.array(V, float), np.array(T, float), np.array(tris, int), mats
 
 
 def dds(img, rel, alpha=False, size=2048):
