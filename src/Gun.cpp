@@ -2435,6 +2435,18 @@ namespace bo3z
 			if (auto* q = QuietClone(a_src); q && g_blasts.size() < 32) g_blasts.push_back({ a_at, 0.0f, -1, a_scale, q });
 		}
 		RE::BGSExplosion* Quiet(RE::BGSExplosion* a_src) { return QuietClone(a_src); }
+		// (Noah: "use the spell sound effect that the potion is casting - if it's fire it'll sound like fire") a Skyrim spell
+		// explosion's own sound (its impact: the fireball's roar, the frost's crackle, the rune's thunder), carried on you at a
+		// volume set by how far away it went off (a sound set at a bare point played to no one)
+		void  BlastSound(std::string_view a_name, const RE::NiPoint3& a_at, float a_vol)
+		{
+			auto* ex = BlastForm(BlastIndex(a_name));
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!ex || !p) return;
+			const float d = p->GetPosition().GetDistance(a_at);
+			const float v = std::clamp(1.0f - (d - 350.0f) / 2400.0f, 0.25f, 1.0f) * a_vol;
+			for (auto* snd : { ex->data.sound1, ex->data.sound2 }) if (snd) Audio::Game(snd->GetFormID(), p, std::min(1.0f, v));
+		}
 		// (the class perks: Ember Heart) the night's dead round a point lose a share of a whole zombie's health
 		// (Noah: the Alchemist's Shadowflame mace) a burn: a_perSecond of damage for a_seconds, the Gun's own damage-over-time
 		void  Burn(RE::Actor* a_target, float a_perSecond, float a_seconds)
@@ -2553,6 +2565,7 @@ namespace bo3z
 		// tier's fire (tools/bladefx.py) hung on the weapon itself - its WEAPON node, the weapon's own space - in both views
 		struct WeaponFlame { Spellcraft::Fx fx[2]; std::string path; };
 		WeaponFlame g_wflame;
+		float g_wflameScale = 1.0f;
 		void TickWeaponFlame()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -2562,7 +2575,10 @@ namespace bo3z
 				const bool mace = eq && eq == Classes::AlchemistKnife(), mad = eq && eq == Classes::SpellswordBlade();
 				if (mace || mad) {
 					const int t = std::clamp(Kit::TierOfWeapon(eq), 0, 3);
-					want = fmt::format("CurseOfAlduin\\fx\\{}flame_{}.nif", mace ? "mace" : "mad", t);
+					// (Noah: "the flames should look like real fire that are purple in color") the mace burns with Skyrim's own purple
+					// fire - Nocturnal's, from the game's files - on its crystal; the Madness Sword keeps its sheath of red flame
+					want = mace ? std::string("effects\\tg09nocturnalfxfirepurple.nif") : fmt::format("CurseOfAlduin\\fx\\madflame_{}.nif", t);
+					g_wflameScale = mace ? 0.11f + 0.035f * static_cast<float>(t) : 1.0f;
 				}
 			}
 			if (want != g_wflame.path) {
@@ -2578,6 +2594,16 @@ namespace bo3z
 				auto* root = p->Get3D(k == 1);
 				auto* node = root ? root->GetObjectByName("WEAPON") : nullptr;
 				g_wflame.fx[k].Attach(node ? node->AsNode() : nullptr);
+				// the mace's fire: on the crystal (48.4 up the haft), sized by tier, and always burning upward as real fire does,
+				// however the mace is held or swung
+				if (auto* o = g_wflame.fx[k].obj.get(); o && node && want.starts_with("effects\\")) {
+					const auto& pw = node->world;
+					o->local.rotate = pw.rotate.Transpose();
+					o->local.translate = RE::NiPoint3{ 0.0f, 48.4f, 0.0f };
+					o->local.scale = g_wflameScale / std::max(0.01f, pw.scale);
+					RE::NiUpdateData u;
+					o->Update(u);
+				}
 			}
 		}
 		void TickLightOrb(float a_delta)

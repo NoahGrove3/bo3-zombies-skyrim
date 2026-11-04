@@ -3040,10 +3040,17 @@ namespace bo3z::Classes
 			Gun::ElemBurst(kFlaskBurst[a_el], a_at + RE::NiPoint3{ 0, 0, -20.0f }, a_size, 0.0f, 0.9f);
 			// (Noah: "each flask to have its own impact sound effect, depending on the element") the bottle breaking and its element
 			// let loose (tools/alchsfx.py hits)
-			static constexpr gen::Sound kHit[7] = { gen::Sound::alch_hit_fire, gen::Sound::alch_hit_frost, gen::Sound::alch_hit_shock, gen::Sound::alch_hit_poison,
-				gen::Sound::alch_hit_sun, gen::Sound::alch_hit_blood, gen::Sound::alch_hit_gold };
-			Audio::Mine(a_el >= 0 && a_el < 7 ? kHit[a_el] : gen::Sound::alch_shatter, a_at, 1.0f);
-			logger::info("alchemist: a flask breaks - its impact sound {}", a_el);
+			// (Noah: "they sound really toony - use the spell sound effect that the potion is casting ... with a cork sound effect
+			// on impact ... as hyper realistic as possible") Skyrim's own: the element's spell striking (its explosion's sound),
+			// the glass of the bottle, and a cork's pop
+			static constexpr const char* kSpellSnd[7] = { "fireball", "frost", "runeshock", "poisongas", "light", "bloodplague", "lightmassive" };
+			Gun::BlastSound(kSpellSnd[std::clamp(a_el, 0, 6)], a_at, 1.0f);
+			if (auto* p = RE::PlayerCharacter::GetSingleton()) {
+				const float nearV = std::clamp(1.0f - (p->GetPosition().GetDistance(a_at) - 350.0f) / 2400.0f, 0.25f, 1.0f);
+				Audio::Game(0x0003F3D8, p, nearV);         // PHYBottleHSD: the bottle's glass
+				Audio::Game(0x000B6435, p, 0.7f * nearV);  // ITMPotionUse: the cork
+			}
+			logger::info("alchemist: a flask breaks - Skyrim's {} sound, glass and cork", kSpellSnd[std::clamp(a_el, 0, 6)]);
 			static constexpr const char* kVanilla[6] = { "fireball", "frost", "runeshock", "poisongas", "", "bloodplague" };
 			if (a_el < 6 && kVanilla[a_el][0]) Gun::FxBlast(kVanilla[a_el], a_at);
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -3072,6 +3079,9 @@ namespace bo3z::Classes
 		void MaceHit(RE::PlayerCharacter*, RE::Actor*, bool) {}
 		// Shadowflame: the fire's burn, at twice its damage - violet fire clinging to the one it's on. Caught again, it's
 		// renewed, never stacked
+		// (Noah: "swinging the mace, the fire effects should look like real fire that is purple") Skyrim's own purple fire
+		// (Nocturnal's, from the game's files), set burning a moment where it's wanted
+		void ShadowFire(const RE::NiPoint3& a_at, float a_scale, float a_life) { Gun::Hazard("effects\\tg09nocturnalfxfirepurple.nif", a_at, a_scale, a_life); }
 		struct Shadowflame { RE::ActorHandle who; float left = 0, tick = 0; };
 		std::vector<Shadowflame> g_shadow;
 		constexpr float kShadowSeconds = 4.0f;
@@ -3084,7 +3094,7 @@ namespace bo3z::Classes
 			const float perSec = Director::RoundHealth() * gen::kRounds.hpScale * 0.06f * 2.0f * UpgradeMult(a_t) * (0.7f + 0.3f * Arcana::Power());
 			Gun::Burn(a_f, perSec, kShadowSeconds);
 			g_shadow.push_back({ a_f->GetHandle(), kShadowSeconds, 0.0f });
-			Gun::ElemBurst(6, a_f->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.55f, 0.0f, 0.7f);
+			ShadowFire(a_f->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, 0.55f, 0.8f);
 		}
 		void TickShadow(float a_delta)
 		{
@@ -3094,7 +3104,7 @@ namespace bo3z::Classes
 				s.left -= a_delta;
 				if ((s.tick -= a_delta) <= 0) {  // (its violet fire on them, licking up their body)
 					s.tick = 0.45f;
-					Gun::ElemBurst(6, a->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f + 50.0f * static_cast<float>(std::rand() % 3) }, 0.42f, 0.0f, 0.6f);
+					ShadowFire(a->GetPosition() + RE::NiPoint3{ 0, 0, 10.0f + 35.0f * static_cast<float>(std::rand() % 3) }, 0.42f, 0.55f);
 				}
 			}
 			std::erase_if(g_shadow, [](const Shadowflame& s) { return s.left <= 0; });
@@ -3105,7 +3115,8 @@ namespace bo3z::Classes
 				const bool legend = AfterSovngarde();
 				GoldCloud g;
 				g.at = a_at, g.left = legend ? 16.0f : 12.0f, g.radius = legend ? 560.0f : 450.0f, g.legend = legend;
-				Audio::Mine(gen::Sound::alch_hit_gold, a_at, 1.0f);  // (molten gold: a struck bell of it, a long sizzle)
+				Gun::BlastSound("lightmassive", a_at, 1.0f);  // (Skyrim's own: a great burst of light)
+				if (auto* pl = RE::PlayerCharacter::GetSingleton()) Audio::Game(0x0003F3D8, pl, 1.0f), Audio::Game(0x000B6435, pl, 0.7f);
 				Gun::ElemBurst(8, a_at, 1.6f, 0.0f, 1.2f);  // (Noah: "the philosopher's flask also casts a green ball" - Skyrim's light blast: gone)
 				Gun::Puddle(4, a_at, g.radius / 100.0f, g.left);  // (a pool of molten gold lies where it broke, as long as the cloud)
 				Gun::Motes(8, a_at, g.radius / 100.0f, g.left);  // (its gold rising off the ground as fine motes, the cloud's whole life)
@@ -3250,7 +3261,7 @@ namespace bo3z::Classes
 			}
 			const float speed = el == 6 ? 1350.0f : 1500.0f;
 			LaunchFlask(el, t, from, dir * speed + RE::NiPoint3{ 0.0f, 0.0f, 260.0f }, false);
-			Audio::Mine(gen::Sound::alch_throw, from, 1.0f);  // (its own throw: air and a slosh, no blade)  // (a little up: it arcs onto where you aim)
+			// (a little up: it arcs onto where you aim)
 		}
 		int FlaskHeld(bool a_left)
 		{
@@ -3293,14 +3304,14 @@ namespace bo3z::Classes
 				if (!inFront(f, 300.0f, 0.5f)) continue;
 				if (const float d = f->GetPosition().GetDistance(me); d < bd) bd = d, best = f;
 			}
-			Gun::ElemBurst(6, best ? best->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f } : me + fwd * 150.0f + RE::NiPoint3{ 0, 0, 90.0f }, 0.5f, 0.0f, 0.55f);
+			ShadowFire(best ? best->GetPosition() + RE::NiPoint3{ 0, 0, 30.0f } : me + fwd * 150.0f + RE::NiPoint3{ 0, 0, 50.0f }, 0.45f, 0.6f);
 			if (best) Shadowburn(best, t);
 		} else {
 			// Tier II on: a fan of violet fire swept out in front of you, close - everything in it takes Shadowflame
 			for (int k = -2; k <= 2; ++k) {
 				const float a = yaw + 0.32f * static_cast<float>(k);
 				const RE::NiPoint3 at = me + RE::NiPoint3{ std::sin(a) * 200.0f, std::cos(a) * 200.0f, 80.0f };
-				Gun::ElemBurst(6, at, 0.6f + 0.1f * static_cast<float>(t), 0.02f * static_cast<float>(k + 2), 0.6f);
+				ShadowFire(at - RE::NiPoint3{ 0, 0, 40.0f }, 0.5f + 0.08f * static_cast<float>(t), 0.6f);
 			}
 			int caught = 0;
 			for (auto* f : NearFoes(me, 380.0f, 16)) {
@@ -3322,7 +3333,7 @@ namespace bo3z::Classes
 				const RE::NiPoint3 at = tgt ? tgt->GetPosition() : me + fwd * 500.0f;
 				Gun::SkyFall(at);
 				Tasks::Later(1.3f, [at, t]() {  // (where it lands, the fire it brings is shadowflame too)
-					Gun::ElemBurst(6, at + RE::NiPoint3{ 0, 0, 30.0f }, 1.6f, 0.0f, 1.1f);
+					ShadowFire(at, 1.6f, 3.0f);
 					Gun::AreaHurt(at, 360.0f, 0.5f * UpgradeMult(t), "");
 					for (auto* f : NearFoes(at, 360.0f, 16)) Shadowburn(f, t);
 				});
@@ -3359,7 +3370,7 @@ namespace bo3z::Classes
 		}
 		cool = el == 6 ? 12.0f : 0.9f * (Kit::ArmourTier(coffer::kAlchemist) >= 1 ? 0.85f : 1.0f) * Perks::FlaskCostMult();
 		g_throwAt = std::chrono::steady_clock::now();
-		if (!Gun::Throwing()) Audio::Mine(gen::Sound::alch_uncork, RE::PlayerCharacter::GetSingleton()->GetPosition() + RE::NiPoint3{ 0, 0, 110.0f }, 1.0f);  // (a cork popped, not a grunt)
+		// (Noah: the flasks' own synthesized sounds "really toony") the throw makes no sound of its own: the impact carries it
 		Gun::StartThrow(a_left, [el, a_left]() { ThrowFlaskEl(el, a_left); });
 	}
 	// (Noah: "an item that you actually throw") a flask that leaves your pack was used (its hotkey, or Use in the pack): it is

@@ -785,6 +785,7 @@ namespace bo3z
 		RE::BGSExplosion*     Quiet(RE::BGSExplosion* a_src);  // that burst's quiet copy (no damage, no knockdown, no tint)
 		void                  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast);
 		void                  Burn(RE::Actor* a_target, float a_perSecond, float a_seconds);  // damage over time
+		void                  BlastSound(std::string_view a_name, const RE::NiPoint3& a_at, float a_vol = 1.0f);  // a Skyrim spell explosion's own impact sound
 		void                  SkyFall(const RE::NiPoint3& a_at);  // a burning star from the sky onto a point
 		void                  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);
 		void                  Motes(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_life);  // fine motes rising off the ground over an area (the ElemBurst elements)
