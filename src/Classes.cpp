@@ -3041,6 +3041,7 @@ namespace bo3z::Classes
 			static constexpr gen::Sound kHit[7] = { gen::Sound::alch_hit_fire, gen::Sound::alch_hit_frost, gen::Sound::alch_hit_shock, gen::Sound::alch_hit_poison,
 				gen::Sound::alch_hit_sun, gen::Sound::alch_hit_blood, gen::Sound::alch_hit_gold };
 			Audio::AtPoint(a_el >= 0 && a_el < 7 ? kHit[a_el] : gen::Sound::alch_shatter, a_at);
+			logger::info("alchemist: a flask breaks - its impact sound {}", a_el);
 			static constexpr const char* kVanilla[6] = { "fireball", "frost", "runeshock", "poisongas", "", "bloodplague" };
 			if (a_el < 6 && kVanilla[a_el][0]) Gun::FxBlast(kVanilla[a_el], a_at);
 			auto* p = RE::PlayerCharacter::GetSingleton();

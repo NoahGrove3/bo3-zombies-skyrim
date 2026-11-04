@@ -3651,6 +3651,35 @@ namespace bo3z
 				}
 				if (p->AsActorState()->GetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal) spQuiet = 0;
 			}
+			// (Noah: "It drains it in the beginning for a second, and then it just refills the rest") Thunderchild's meditation
+			// (its MeditationInProgress effect, or you seated on its meditation marker): your stamina only goes down - whatever
+			// gives it back (Skyrim's own regeneration, a perk, another mod) is taken back at once
+			{
+				static RE::EffectSetting* med = nullptr;
+				static RE::TESFurniture*  marker = nullptr;
+				static bool               looked = false;
+				if (!looked) {
+					looked = true;
+					auto* dh = RE::TESDataHandler::GetSingleton();
+					med = dh->LookupForm<RE::EffectSetting>(0x06CAED, "Thunderchild - Epic Shout Package.esp");
+					marker = dh->LookupForm<RE::TESFurniture>(0x068E47, "Thunderchild - Epic Shout Package.esp");
+					logger::info("stamina: Thunderchild's meditation {}", med ? "known" : "not installed");
+				}
+				static float held = -1;
+				bool meditating = med && p->AsMagicTarget()->HasMagicEffect(med);
+				if (!meditating && marker) {
+					auto f = p->GetOccupiedFurniture().get();
+					meditating = f && f->GetBaseObject() == marker;
+				}
+				if (meditating) {
+					spQuiet = 0;
+					const float now = av->GetActorValue(RE::ActorValue::kStamina);
+					if (held >= 0 && now > held + 0.001f) av->DamageActorValue(RE::ActorValue::kStamina, now - held);
+					held = std::min(held < 0 ? now : held, av->GetActorValue(RE::ActorValue::kStamina));
+				} else {
+					held = -1;
+				}
+			}
 			if (spQuiet >= 1.5f && sp < spMax) {
 				av->RestoreActorValue(RE::ActorValue::kStamina, std::min(spMax - sp, spMax * 0.36f * a_delta));  // (Noah: "decrease the stamina regen speed by 40%, it's way too fast": 0.6 -> 0.36 of it a second)
 			}
