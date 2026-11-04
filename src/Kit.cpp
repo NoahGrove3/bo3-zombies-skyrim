@@ -1313,6 +1313,41 @@ namespace bo3z::Kit
 		SyncWeapons(false);
 		logger::info("dev: everything from every class at Base - {} kit items", n);
 	}
+	// (Noah: "update the test kit with the new items") the test kit's share of the classes: every class's crystal sword and
+	// flasks at Tier III (the arcs, the heavy attack's burst, its own power - all of it to try at once) and every class's Black
+	// Mage robes in its own colours, Tier III - the spell ladders left to the kit's own altar spells
+	void DevTestKit()
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return;
+		int n = 0;
+		for (int c = 0; c < 4; ++c) {
+			const auto defs = Defs(c);
+			auto&      st = g_cls[c];
+			for (int i = 0; i < static_cast<int>(defs.size()) && i < kMaxItems; ++i) {
+				const auto& d = defs[i];
+				if (d.at == kGone) continue;
+				switch (d.kind) {
+				case Kind::Bomb:
+				case Kind::Blade:
+					st.owned |= 1u << i;
+					st.tier[i] = 3;
+					Grant(c, i, false);
+					++n;
+					break;
+				case Kind::Armour:
+					st.owned |= 1u << i;
+					st.tier[i] = 3;
+					Classes::GiveArmourSet(c, 3, false);
+					++n;
+					break;
+				default: break;
+				}
+			}
+		}
+		SyncWeapons(false);
+		logger::info("testkit: every class's sword, flasks and robes at Tier III ({} items)", n);
+	}
 	void DevAll()
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();

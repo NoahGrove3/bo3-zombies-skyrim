@@ -1293,6 +1293,7 @@ namespace bo3z
 		void  Revert();
 		void  DevAll();                          // dev: every class's whole kit at its highest tier, every relic
 		void  DevBase();                         // dev: every class's whole kit owned, at Base
+		void  DevTestKit();                      // the test kit's: every class's sword, flasks and robes at Tier III
 		bool  Loaded();                           // this save carries the rework's record
 	}
 }

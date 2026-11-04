@@ -3378,7 +3378,7 @@ namespace bo3z
 		}
 
 		bool g_kitPending = false;
-		constexpr float kKitVersion = 4.0f;  // (raised whenever the kit gains something: test characters get the new things on load)
+		constexpr float kKitVersion = 5.0f;  // (raised whenever the kit gains something: test characters get the new things on load)
 		// (Noah: every spell from my mods that imbues a weapon or does direct damage, to choose the Echo Altar's from)
 		// every castable spell of a mod (not the base game's own) with a damaging effect on health, or one that imbues a
 		// weapon; each named for its element first ("Fire: ...") so the Magic menu lists them by element. The names are
@@ -3517,10 +3517,14 @@ namespace bo3z
 				RE::ActorEquipManager::GetSingleton()->EquipObject(p, bane);
 			}
 			Movement::TestKit();  // (Dragon's Updraft, the third bond, the glider)
+			Kit::DevTestKit();    // (the four crystal swords and every flask at Tier III, the four Black Mage robes)
+			if (auto* sl = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kSlayerWeap, gen::kPlugin); sl && p->GetItemCount(sl) <= 0) {
+				p->AddObjectToContainer(sl, nullptr, 1, nullptr);  // the Dragon Slayer greatsword
+			}
 			if (const int have = Points::Get(); have < 150000) {
 				Points::Refund(150000 - have);
 			}
-			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every bow, Alduin's Bane, the glider, 150,000 Cursed Essence", spells), 7.0f);
+			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every bow, the four crystal swords and every flask (Tier III), the Dragon Slayer, the four Black Mage robes, Alduin's Bane, the glider, 150,000 Cursed Essence", spells), 8.0f);
 			std::string list;
 			for (auto& [el, c] : byEl) list += fmt::format("{} {}, ", el, c);
 			logger::info("testkit: {} altar spells ({}) - {} others taken away; bows {}, essence {}", spells, list, removed, Bows::Count(), Points::Get());
