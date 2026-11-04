@@ -2262,14 +2262,14 @@ namespace bo3z
 		// release until the next is in it
 		struct ThrowPose { bool on = false, left = false, released = false, clinked = false, whooshed = false; float t = 0; std::function<void()> release; };
 		ThrowPose g_throw;
-		constexpr float kThrowLen = 0.72f, kThrowRelease = 0.34f;
+		constexpr float kThrowLen = 0.95f, kThrowRelease = 0.46f;   // (Noah: "a little more weight" - a slower draw back, a heavier swing)
 		float Ease(float k) { k = std::clamp(k, 0.0f, 1.0f); return k * k * (3.0f - 2.0f * k); }
 		// the throw's channels at time t: the upper arm about your right (+ forward and up), the elbow's bend, the wrist's
 		// cock (- back, + the flick), the shoulders' turn (+ toward the throwing side, back)
 		struct ThrowKeys { float arm, elbow, wrist, turn; };
 		ThrowKeys ThrowAt(float t)
 		{
-			constexpr float tBack = 0.20f, tRel = kThrowRelease, tFollow = 0.46f;
+			constexpr float tBack = 0.30f, tRel = kThrowRelease, tFollow = 0.62f;
 			if (t < tBack) {             // the draw back: arm back and down, elbow bending, wrist cocked, shoulders turning
 				const float k = Ease(t / tBack);
 				return { -1.05f * k, 0.55f * k, -0.55f * k, 0.32f * k };
@@ -2285,9 +2285,38 @@ namespace bo3z
 			const float k = Ease((t - tFollow) / (kThrowLen - tFollow));   // and home
 			return { 1.45f * (1 - k), 0.25f * (1 - k), 0.3f * (1 - k), -0.26f * (1 - k) };
 		}
+		// (Noah: "im seeing after images of the potion in my hand") a frame the animation does not rewrite a bone leaves our
+		// last turn on it - turned again on top, the hand jumped between two poses frame by frame. Every bone we turn is kept
+		// with what it was before us and what we left it: found as we left it, it is put back first (by name, in the body it
+		// is in - never a stale pointer)
+		struct KeptRot { std::string name; bool first; RE::NiMatrix3 orig, written; };
+		std::unordered_map<RE::NiAVObject*, KeptRot> g_kept, g_keptFrame;
+		bool g_turnFirst = false;
+		void PoseBegin(RE::PlayerCharacter* a_player)
+		{
+			RE::NiUpdateData ud;
+			ud.time = 0.0f;
+			for (auto& [bone, k] : g_kept) {
+				auto* root = a_player->Get3D(k.first);
+				auto* now = root ? root->GetObjectByName(k.name) : nullptr;
+				if (now != bone) continue;
+				if (std::memcmp(&bone->local.rotate, &k.written, sizeof(RE::NiMatrix3)) == 0) {
+					bone->local.rotate = k.orig;
+					bone->UpdateDownwardPass(ud, 0);
+				}
+			}
+			g_keptFrame.clear();
+		}
+		void PoseEnd()
+		{
+			for (auto& [bone, k] : g_keptFrame) k.written = bone->local.rotate;
+			g_kept.swap(g_keptFrame);
+			g_keptFrame.clear();
+		}
 		void TurnBone(RE::NiAVObject* a_bone, const RE::NiMatrix3& a_world)
 		{
 			if (!a_bone || !a_bone->parent) return;
+			if (!g_keptFrame.contains(a_bone)) g_keptFrame[a_bone] = { a_bone->name.c_str(), g_turnFirst, a_bone->local.rotate, {} };
 			const RE::NiMatrix3 P = a_bone->parent->world.rotate;
 			a_bone->local.rotate = P.Transpose() * a_world * P * a_bone->local.rotate;
 			RE::NiUpdateData ud;
@@ -2302,6 +2331,7 @@ namespace bo3z
 			const bool first = cam && cam->IsInFirstPerson();
 			auto* root = a_player->Get3D(first);
 			if (!root) return;
+			g_turnFirst = first;
 			const ThrowKeys k = ThrowAt(g_throw.t);
 			const float yaw = a_player->data.angle.z;
 			const RE::NiPoint3 r{ std::cos(yaw), -std::sin(yaw), 0 };
@@ -2382,6 +2412,7 @@ namespace bo3z
 				for (const bool first : { false, true }) {
 					auto* root = a_player->Get3D(first);
 					if (!root) continue;
+					g_turnFirst = first;
 					auto* fa = root->GetObjectByName(HandBone(L, "fa"));
 					auto* hand = root->GetObjectByName(HandBone(L, "hand"));
 					if (!fa || !hand) continue;
@@ -2420,7 +2451,7 @@ namespace bo3z
 							if (sn < 1e-3f) continue;
 							ax = ax * (1.0f / sn);
 							const float ang = std::atan2(sn, pd.Dot(sd));
-							const float k = (i == 0 ? 0.15f : j == 0 ? 0.2f : 0.5f) * ww;
+							const float k = (i == 0 ? 0.45f : j == 0 ? 0.65f : 0.85f) * ww;   // (Noah: "open palming the flask bottle not closed in a fist")
 							TurnBone(bone, AxisAngle(ax, -ang * k));
 						}
 					}
@@ -2508,8 +2539,10 @@ namespace bo3z
 				func(a_this, a_delta);
 				try {
 					PoseArm(a_this);
+					PoseBegin(a_this);
 					PoseFlaskHand(a_this, a_delta);
 					PoseThrow(a_this);
+					PoseEnd();
 					PlaceHeldFlask(a_this);
 					Spellcraft::OnPose(a_this);
 					Movement::PoseGlideArms(a_this);

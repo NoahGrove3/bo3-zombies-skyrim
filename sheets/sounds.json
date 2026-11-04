@@ -7985,15 +7985,13 @@
       "id": "alch_corkpop",
       "editorId": "UN_alch_corkpop",
       "space": "3d",
-      "file": "fx\\CurseOfAlduin\\un\\alch_corkpop_0.wav",
+      "file": "fx\\CurseOfAlduin\\un\\alch_cork_user.wav",
       "files": [
-        "fx\\CurseOfAlduin\\un\\alch_corkpop_0.wav",
-        "fx\\CurseOfAlduin\\un\\alch_corkpop_1.wav",
-        "fx\\CurseOfAlduin\\un\\alch_corkpop_2.wav"
+        "fx\\CurseOfAlduin\\un\\alch_cork_user.wav"
       ],
       "atten": 4,
       "loop": false,
-      "use": "Alchemist: the cork pulled as a flask is drawn back to throw (tools/corkpop.py)"
+      "use": "Alchemist: the cork pulled as a flask is drawn back to throw (Noah's own sound - installed beside the mod, not shipped in the repo)"
     },
     {
       "plugin": "CurseOfAlduin.esp",
@@ -8005,15 +8003,15 @@
       "id": "alch_glass",
       "editorId": "UN_alch_glass",
       "space": "3d",
-      "file": "fx\\trp\\oil\\lamp\\break\\trp_oillamp_break_01.wav",
+      "file": "fx\\CurseOfAlduin\\un\\alch_glass_user_0.wav",
       "files": [
-        "fx\\trp\\oil\\lamp\\break\\trp_oillamp_break_01.wav",
-        "fx\\trp\\oil\\lamp\\break\\trp_oillamp_break_02.wav",
-        "fx\\trp\\oil\\lamp\\break\\trp_oillamp_break_03.wav"
+        "fx\\CurseOfAlduin\\un\\alch_glass_user_0.wav",
+        "fx\\CurseOfAlduin\\un\\alch_glass_user_1.wav",
+        "fx\\CurseOfAlduin\\un\\alch_glass_user_2.wav"
       ],
       "atten": 0,
       "loop": false,
-      "use": "Alchemist: a flask's glass breaking (Skyrim's own oil-lamp trap shattering)"
+      "use": "Alchemist: a flask's glass breaking on impact (Noah's own sound, three takes - installed beside the mod, not shipped in the repo)"
     },
     {
       "plugin": "CurseOfAlduin.esp",

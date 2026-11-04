@@ -5,7 +5,7 @@ class's colour (the Summoner's violet, Destruction's ember orange, the Alchemist
 
 Built from the mod's own archives on this machine (never committed: they are its author's), into build/classarmor/Data:
     python3 tools/classarmor.py "<Black Mage Armor SE.bsa>" "<Black Mage Armor SE - Textures.bsa>"
--> Meshes/CurseOfAlduin/classarmor/<class>/*.nif, Textures/CurseOfAlduin/classarmor/<class>/*.dds"""
+-> Meshes/CurseOfAlduin/classarmor/<class>/*.nif, Textures/UNarmor_<A-D>/*.dds"""
 import json, pathlib, subprocess, sys
 import numpy as np
 from PIL import Image, ImageFilter
@@ -15,7 +15,22 @@ OUT = ROOT / 'build' / 'classarmor'
 RAW = OUT / 'raw'
 DATA = OUT / 'Data'
 COL = {'summoner': (0.62, 0.36, 1.0), 'destruction': (1.0, 0.43, 0.12), 'alchemist': (0.36, 0.92, 0.24), 'spellsword': (0.31, 0.6, 1.0)}   # (the classes' own colours: their cards, their armour's glow)
-RETEX = '/home/claude/tools/retex'
+# (Noah: "my characters body was invisible" - rewritten by nifly the robes no longer drew) the models are copied byte for
+# byte and only their colour maps' folder is changed, in place, to one of the same length: textures\BlackMage\ ->
+# textures\UNarmor_A\ (A-D the four classes) - nothing else in the file moves
+TEXDIR = {'summoner': 'UNarmor_A', 'destruction': 'UNarmor_B', 'alchemist': 'UNarmor_C', 'spellsword': 'UNarmor_D'}
+
+
+def retex(b, cls):
+    import re
+    new = ('textures\\' + TEXDIR[cls] + '\\').encode()
+    def sub(mm):
+        tail = b[mm.end():mm.end() + 80]
+        name = tail.split(b'.dds')[0].lower() if b'.dds' in tail.lower() else b''
+        return mm.group(0) if name.endswith(b'_n') else new
+    out = re.sub(rb'(?i)textures\\blackmage\\', sub, b)
+    assert len(out) == len(b)
+    return out
 BSAX = '/home/claude/tools/bsax.py'
 
 
@@ -61,12 +76,12 @@ def main(mesh_bsa, tex_bsa):
         for t in sorted(texs):
             src = RAW / t.replace('\\', '/')
             name = t.split('\\')[-1]
-            tint(src, cls, DATA / 'Textures' / 'CurseOfAlduin' / 'classarmor' / cls / name)
+            tint(src, cls, DATA / 'Textures' / TEXDIR[cls] / name)
         for m in sorted(models):
             src = RAW / 'meshes' / m.replace('\\', '/')
             dst = DATA / 'Meshes' / 'CurseOfAlduin' / 'classarmor' / cls / m.split('\\')[-1]
             dst.parent.mkdir(parents=True, exist_ok=True)
-            subprocess.run([RETEX, str(src), str(dst), 'textures\\blackmage\\', f'textures\\CurseOfAlduin\\classarmor\\{cls}\\'], check=True, capture_output=True)
+            dst.write_bytes(retex(src.read_bytes(), cls))
         print(cls, len(texs), 'maps', len(models), 'models')
 
 
