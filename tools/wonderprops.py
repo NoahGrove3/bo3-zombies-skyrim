@@ -114,20 +114,32 @@ def textures(tag, base, normal=None, rough=None, emissive=None, glow=(1, 1, 1), 
 
 
 def write(pid, parts, mats, nif_rel, extra=()):
-    """parts: list of (V, T, F, M) already in the prop's node space; mats: name -> modelconv mat line options"""
+    """parts: list of (V, T, F, M[, N]) already in the prop's node space; mats: name -> modelconv mat line options. When any
+    part brings its own normals (N - a cut gem's flat facets) every part's normals are written (the others' smoothed here),
+    so the converter keeps them instead of smoothing all"""
     WORK.mkdir(parents=True, exist_ok=True)
     obj = WORK / f'{pid}.obj'
-    allV = np.vstack([p[0] for p in parts])
-    lo, hi = allV.min(0), allV.max(0); centre = (lo + hi) / 2
+    allV = np.vstack([p[0] for p in parts]); lo, hi = allV.min(0), allV.max(0); centre = (lo + hi) / 2
+    withN = any(len(p) > 4 for p in parts)
+    def smooth(V, F):
+        N = np.zeros_like(V, dtype=float)
+        for a_, b_, c_ in F:
+            n = np.cross(V[b_] - V[a_], V[c_] - V[a_]); N[a_] += n; N[b_] += n; N[c_] += n
+        return N / (np.linalg.norm(N, axis=1, keepdims=True) + 1e-12)
     with open(obj, 'w') as f:
         base = 0
-        for V, T, F, M in parts:
+        for part in parts:
+            V, T, F, M = part[:4]
             f.writelines(f'v {x:.5f} {y:.5f} {z:.5f}\n' for x, y, z in V)
             f.writelines(f'vt {u:.5f} {v:.5f}\n' for u, v in (T if len(T) else np.zeros((len(V), 2))))
+            if withN:
+                N = part[4] if len(part) > 4 else smooth(V, F)
+                f.writelines(f'vn {x:.5f} {y:.5f} {z:.5f}\n' for x, y, z in N)
             cur = None
             for (a, b, c), m in zip(F, M):
                 if m != cur: f.write(f'usemtl {m}\n'); cur = m
-                f.write(f'f {a+1+base}/{a+1+base} {b+1+base}/{b+1+base} {c+1+base}/{c+1+base}\n')
+                if withN: f.write(f'f {a+1+base}/{a+1+base}/{a+1+base} {b+1+base}/{b+1+base}/{b+1+base} {c+1+base}/{c+1+base}/{c+1+base}\n')
+                else: f.write(f'f {a+1+base}/{a+1+base} {b+1+base}/{b+1+base} {c+1+base}/{c+1+base}\n')
             base += len(V)
     out = OUT / 'Meshes' / nif_rel; out.parent.mkdir(parents=True, exist_ok=True)
     job = [f'in {obj}', f'out {out}', 'scale 1', 'ground 0', f'offset {centre[0]:.4f} {centre[1]:.4f} {centre[2]:.4f}']
@@ -434,6 +446,38 @@ def build(pid):
         allV = np.vstack([p[0] for p in parts]); s = 52.5 / np.ptp(allV[:, 2])   # (Noah: "25% shorter/smaller so it's visible in first person" - 70 before)
         c = np.array([0.0, 0.0, 2.4])
         P = [(np.stack([(V - c)[:, 0] * s, (V - c)[:, 2] * s, -(V - c)[:, 1] * s], 1), T, F, M) for V, T, F, M in parts]
+        # (Noah: "the crystal looks low poly with no detail") the source's crystal is a plain 80-face ball: a cut gem in its
+        # place - eight sides a little irregular, a long body and a crown and point of facets at each end, each facet flat so
+        # it catches the light as a cut stone does - in the ball's own room in the head
+        cv = P[1][0]; ylo, yhi = cv[:, 1].min(), cv[:, 1].max(); R = float(np.abs(cv[:, [0, 2]]).max()) * 0.98
+        rng = np.random.default_rng(7)
+        nside = 8
+        rings = [(ylo, 0.0, 0.0), (ylo + 0.17 * (yhi - ylo), 0.78, 0.0), (ylo + 0.30 * (yhi - ylo), 1.0, 0.5),
+                 (ylo + 0.70 * (yhi - ylo), 1.0, 0.5), (ylo + 0.84 * (yhi - ylo), 0.74, 0.0), (yhi, 0.0, 0.0)]
+        jit = 1.0 + rng.uniform(-0.07, 0.07, nside)
+        def ring_pts(y, r, tw):
+            return [np.array([np.cos(2 * np.pi * (k + tw) / nside) * R * r * jit[k], y, np.sin(2 * np.pi * (k + tw) / nside) * R * r * jit[k]]) for k in range(nside)]
+        RP = [ring_pts(*r) for r in rings]
+        GV, GT, GF = [], [], []
+        def tri(a, b, c_):   # flat: each facet its own corners
+            for q in (a, b, c_):
+                ang = np.arctan2(q[2], q[0]) / (2 * np.pi) % 1.0
+                GV.append(q); GT.append([ang, (q[1] - ylo) / (yhi - ylo)])
+            n = len(GV); GF.append((n - 3, n - 2, n - 1))
+        for i in range(len(RP) - 1):
+            A, B = RP[i], RP[i + 1]
+            for k in range(nside):
+                a0, a1, b0, b1 = A[k], A[(k + 1) % nside], B[k], B[(k + 1) % nside]
+                if rings[i][1] == 0: tri(a0, b1, b0)
+                elif rings[i + 1][1] == 0: tri(a0, a1, b0)
+                else: tri(a0, b1, b0); tri(a0, a1, b1)
+        GV = np.array(GV); GF = np.array(GF); GN = np.zeros_like(GV)
+        for a_, b_, c_ in GF:   # each facet's own flat normal, pointing out
+            n = np.cross(GV[b_] - GV[a_], GV[c_] - GV[a_]); n /= np.linalg.norm(n) + 1e-12
+            if np.dot(n, (GV[a_] + GV[b_] + GV[c_]) / 3 - np.array([0, (ylo + yhi) / 2, 0])) < 0: n = -n
+            GN[a_] = GN[b_] = GN[c_] = n
+        P[1] = (GV, np.array(GT), GF, ['m1'] * len(GF), GN)
+        CRYSTAL = (ylo, yhi, R)
         violet = (0.72, 0.36, 1.0)
         # (Noah: "in game the mace textures look really low quality - in the model that I sent you, that's exactly how I want it to
         # look") as Blender draws it: its own colour map (with its AO), its normal map and roughness, and - what made it metal there
@@ -444,9 +488,10 @@ def build(pid):
         _m = np.asarray(Image.open(tx / 'Material.001_metallic.jpg').convert('L'), np.float32) / 255
         _r = np.asarray(Image.open(tx / 'Material.001_roughness.jpg').convert('L').resize(_m.shape[::-1]), np.float32) / 255
         ENVM = dds(Image.fromarray((np.clip(_m * (1 - _r) * 1.35, 0, 1) * 255).astype(np.uint8)).convert('RGB'), 'mace_metal_m.dds')
-        D2, N2, G2 = textures('mace_glass', tx / 'glass_albedo.jpg', tx / 'glass_normal.png', None, None, glow=violet, tint=(150, 70, 255), tint_amt=0.5,
-                              glow_base=0.55, size=1024)
-        mats = {'m0': matopts(D, N, G, violet, 0.0, 1.1, 60), 'm1': matopts(D2, N2, G2, violet, 2.6, 2.0, 140)}
+        Image.new('L', (64, 64), 150).save(WORK / 'mace_glass_alpha.png')
+        D2, N2, G2 = textures('mace_glass', tx / 'glass_albedo.jpg', tx / 'glass_normal.png', None, None, glow=violet, tint=(150, 70, 255), tint_amt=0.55,
+                              glow_base=0.35, size=1024, opacity=WORK / 'mace_glass_alpha.png')
+        mats = {'m0': matopts(D, N, G, violet, 0.0, 1.1, 60), 'm1': matopts(D2, N2, G2, violet, 1.8, 2.4, 220, 'blend')}
         write(pid, P, mats, 'CurseOfAlduin/alchemist/mace.nif', ['prn WeaponMace'])
         import shutil
         shutil.copyfile(OUT / 'Meshes/CurseOfAlduin/alchemist/mace.nif', OUT / 'Meshes/CurseOfAlduin/alchemist/mace_static.nif')
@@ -454,6 +499,20 @@ def build(pid):
         for _nf in ('mace.nif', 'mace_static.nif'):   # (the metal made reflective, as it is in Blender)
             _f = str(OUT / 'Meshes/CurseOfAlduin/alchemist' / _nf)
             subprocess.run(['/home/claude/tools/envnif', _f, _f, 'mace_metal_d', 'cubemaps\\ore_steel_e.dds', ENVM, '0.45'], check=True)
+        # (Noah: "no ... flaming animation") a purple flame alive inside the crystal, seen through its glass: tongues of it
+        # rising and flowing (tools/bladefx.py's sheaths, blade_flame_violet) and a hot heart of it churning
+        sys.path.insert(0, str(ROOT / 'tools')); import bladefx
+        ylo, yhi, R = CRYSTAL; FXP = 'CurseOfAlduin\\fx\\'
+        L = []
+        for k, ang in enumerate((0, 45, 90, 135)):
+            bladefx.sheath(L, f'cf{k}', FXP + 'blade_flame_violet.dds', '1,0.85,1', 1.4, ylo + 1.0, yhi - 0.6, R * 0.62, 1.8, -1.9 - 0.2 * k, ang, 0.2, 0.3, 10)
+        bladefx.card(L, 'cheart', FXP + 'alch_void.dds', '1,0.6,1', 1.6, R * 0.9, -R * 1.1, R * 1.1, (0, (ylo + yhi) / 2, 0), (16, 8), 50, 0.0)
+        bladefx.write(L, 'mace_crystalflame.nif')
+        src = str(bladefx.MESH / 'mace_crystalflame.nif')
+        for _nf in ('mace.nif', 'mace_static.nif'):
+            _f = str(OUT / 'Meshes/CurseOfAlduin/alchemist' / _nf)
+            for nm in ['cf0', 'cf1', 'cf2', 'cf3', 'cheart']:
+                subprocess.run(['/home/claude/tools/fxgraft', _f, src, nm, _f, 'crystal_' + nm, '-', '1', '0', '0', '0'], check=True, capture_output=True)
         hv = np.vstack([P[1][0]]); print('   crystal centre', np.round(hv.mean(0), 1), 'radius', round(float(np.ptp(hv[:, 1]) / 2), 1))
 
     elif pid == 'lightorb':     # (Noah's game crashed on the Light Orb in his inventory: its item model was the floating light -
