@@ -430,6 +430,8 @@ namespace bo3z
 		void               GiveFlask(int a_el);   // put in your pack
 		bool               FlaskInHand(bool a_left);  // a flask held, drawn, in that hand
 		void               FlaskAttack(bool a_left);  // its throw
+		void               MaceSwing(bool a_power);  // a swing of the Alchemist's Shadowflame mace (any swing: hit or miss)
+		void               TickShadowflame(float a_delta);
 		bool               FlaskSwingBlocked(bool a_left);  // a flask in that hand whose next throw isn't ready (its swing held back)
 		void               DevHorn();  // the Bone-Throne Horn's dragon, called up (dev)
 		RE::TESObjectWEAP* AlchemistKnife();
@@ -782,6 +784,8 @@ namespace bo3z
 		void                  FxFrom(RE::BGSExplosion* a_src, const RE::NiPoint3& a_at, float a_scale);  // any mod's burst, quieted (look only), at a_scale
 		RE::BGSExplosion*     Quiet(RE::BGSExplosion* a_src);  // that burst's quiet copy (no damage, no knockdown, no tint)
 		void                  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast);
+		void                  Burn(RE::Actor* a_target, float a_perSecond, float a_seconds);  // damage over time
+		void                  SkyFall(const RE::NiPoint3& a_at);  // a burning star from the sky onto a point
 		void                  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);
 		void                  Motes(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_life);  // fine motes rising off the ground over an area (the ElemBurst elements)
 		void                  ElemBurst(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);  // an element's impact burst (0 fire 1 frost 2 shock 3 wind 4 sun 5 blood 6 void), here a moment  // the Horn's dragon's violet flame, here a moment  // the night's dead round a point lose a share of a whole zombie's health

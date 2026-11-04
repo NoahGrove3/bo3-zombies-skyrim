@@ -417,11 +417,23 @@ def build(pid):
         c = np.array([0.0, 0.0, 2.4])
         P = [(np.stack([(V - c)[:, 0] * s, (V - c)[:, 2] * s, -(V - c)[:, 1] * s], 1), T, F, M) for V, T, F, M in parts]
         violet = (0.72, 0.36, 1.0)
-        D, N, G = textures('mace_metal', tx / 'Material.001_albedo.jpg', tx / 'Material.001_normal.png', tx / 'Material.001_roughness.jpg',
-                           tx / 'emissive_—_копия.jpg', glow=violet, metal=tx / 'Material.001_metallic.jpg', ao=tx / 'Material.001_AO.jpg', size=2048)
+        # (Noah: "the mace textures need to look hyper realistic too") its colour map is a grey detail bake, not a colour:
+        # rebuilt as blackened steel - the bake kept as soft engraving detail (its contrast pressed down), the bare raised
+        # metal (the metallic map) a little brighter and cooler, the hollows (AO) dark - so it reads as forged metal, not chrome
+        from PIL import ImageFilter as _IF
+        _a = np.asarray(Image.open(tx / 'Material.001_albedo.jpg').convert('L'), np.float32) / 255
+        _m = np.asarray(Image.open(tx / 'Material.001_metallic.jpg').convert('L').resize(_a.shape[::-1]), np.float32) / 255
+        _o = np.asarray(Image.open(tx / 'Material.001_AO.jpg').convert('L').resize(_a.shape[::-1]), np.float32) / 255
+        _det = 0.62 + 0.38 * _a
+        _col = np.array([62, 58, 64], np.float32) * (1 - _m[..., None]) + np.array([118, 116, 124], np.float32) * _m[..., None]
+        _alb = _col * _det[..., None] * (0.45 + 0.55 * _o[..., None])
+        _img = Image.fromarray(_alb.clip(0, 255).astype(np.uint8)).filter(_IF.UnsharpMask(2, 60, 2))
+        (WORK).mkdir(parents=True, exist_ok=True); _img.save(WORK / 'mace_albedo_real.png')
+        D, N, G = textures('mace_metal', WORK / 'mace_albedo_real.png', tx / 'Material.001_normal.png', tx / 'Material.001_roughness.jpg',
+                           tx / 'emissive_—_копия.jpg', glow=violet, metal=tx / 'Material.001_metallic.jpg', size=2048)
         D2, N2, G2 = textures('mace_glass', tx / 'glass_albedo.jpg', tx / 'glass_normal.png', None, None, glow=violet, tint=(150, 70, 255), tint_amt=0.5,
                               glow_base=0.55, size=1024)
-        mats = {'m0': matopts(D, N, G, violet, 1.6, 1.3, 80), 'm1': matopts(D2, N2, G2, violet, 2.6, 2.0, 140)}
+        mats = {'m0': matopts(D, N, G, violet, 1.2, 0.95, 48), 'm1': matopts(D2, N2, G2, violet, 2.6, 2.0, 140)}
         write(pid, P, mats, 'CurseOfAlduin/alchemist/mace.nif', ['prn WeaponMace'])
         import shutil
         shutil.copyfile(OUT / 'Meshes/CurseOfAlduin/alchemist/mace.nif', OUT / 'Meshes/CurseOfAlduin/alchemist/mace_static.nif')

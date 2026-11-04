@@ -2040,7 +2040,7 @@ namespace bo3z::Classes
 		if (auto* w = src->As<RE::TESObjectWEAP>(); w && !w->IsBow() && !w->IsCrossbow() && !w->IsStaff()) Perks::OnMeleeHit();  // (Bladesong Mead)
 		if (auto* mg = Magnus(); mg && (src == mg || (mg->formEnchanting && src == mg->formEnchanting))) {
 			MagnusHit(p, a_target);
-		} else if (src == AlchemistKnife()) {  // (the Alchemist's mace: its Catalyst)
+		} else if (src == AlchemistKnife()) {  // (the Shadowflame mace: its swings do the work - MaceSwing)
 			MaceHit(p, a_target, a_power);
 		} else if (src == Slayer() && g_bladeCool <= 0) {  // the spell in your other hand rides the blade
 			const int left = BladeSpell();  // (two-handed: the last Spellsword spell you held)
@@ -3019,7 +3019,7 @@ namespace bo3z::Classes
 	}
 	namespace
 	{
-		int g_lastFlaskEl = 0;  // the last flask thrown (the mace's Catalyst drives it in)
+		int g_lastFlaskEl = 0;  // the last flask thrown
 		constexpr int kFlaskBurst[7] = { 0, 1, 2, 7, 4, 5, 8 };  // a flask's burst look (Gun::ElemBurst): fire frost shock poison sun blood gold
 		struct FlaskShot { RE::ProjectileHandle h; int el = 0, tier = 0; RE::NiPoint3 last; bool seen = false, child = false; float life = 0; };
 		std::vector<FlaskShot> g_flasks;
@@ -3067,29 +3067,37 @@ namespace bo3z::Classes
 				});
 			}
 		}
-		// (Noah: "I want the mace to have some sort of ability that makes sense with the alchemy class") the Catalyst: every blow
-		// drives in a little of the last flask you threw - its element splashes off the target - and the third blow in a row
-		// (or a power attack) shatters a whole flask's burst on them; stronger each tier
-		struct MaceCombo { RE::FormID who = 0; int hits = 0; std::chrono::steady_clock::time_point at{}; };
-		MaceCombo g_mace;
-		void MaceHit(RE::PlayerCharacter* a_p, RE::Actor* a_target, bool a_power)
+		// (Noah: "the alchemist's mace ... a shadow flame mace") its blows themselves do nothing more - its swings carry it
+		// (MaceSwing, below): every swing from Tier I, contact or not
+		void MaceHit(RE::PlayerCharacter*, RE::Actor*, bool) {}
+		// Shadowflame: the fire's burn, at twice its damage - violet fire clinging to the one it's on. Caught again, it's
+		// renewed, never stacked
+		struct Shadowflame { RE::ActorHandle who; float left = 0, tick = 0; };
+		std::vector<Shadowflame> g_shadow;
+		constexpr float kShadowSeconds = 4.0f;
+		void Shadowburn(RE::Actor* a_f, int a_t)
 		{
-			auto* w = AlchemistKnife();
-			const int  t = std::clamp(w ? Kit::TierOfWeapon(w) : 0, 0, 3);
-			const int  el = g_lastFlaskEl;
-			const auto now = std::chrono::steady_clock::now();
-			if (g_mace.who != a_target->GetFormID() || now - g_mace.at > std::chrono::milliseconds(2500)) g_mace.hits = 0;
-			g_mace.who = a_target->GetFormID(), g_mace.at = now, ++g_mace.hits;
-			const RE::NiPoint3 at = a_target->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f };
-			if (a_power || g_mace.hits >= 3) {
-				g_mace.hits = 0;
-				FlaskBlast(el, t, at, 0.8f + 0.15f * t, 0.22f + 0.08f * t, 200.0f + 40.0f * t);
-				logger::info("alchemist: the mace's Catalyst shatters a {} flask (tier {})", el, t);
-				return;
+			if (!a_f || a_f->IsDead()) return;
+			for (auto& s : g_shadow) if (s.who.get().get() == a_f) { s.left = kShadowSeconds; return; }
+			// the fire's own burn (a fire flask's or a meteor arrow's: 6% of one of the night's dead a second), doubled,
+			// grown with the mace's tier and your Arcana
+			const float perSec = Director::RoundHealth() * gen::kRounds.hpScale * 0.06f * 2.0f * UpgradeMult(a_t) * (0.7f + 0.3f * Arcana::Power());
+			Gun::Burn(a_f, perSec, kShadowSeconds);
+			g_shadow.push_back({ a_f->GetHandle(), kShadowSeconds, 0.0f });
+			Gun::ElemBurst(6, a_f->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.55f, 0.0f, 0.7f);
+		}
+		void TickShadow(float a_delta)
+		{
+			for (auto& s : g_shadow) {
+				auto a = s.who.get();
+				if (!a || a->IsDead()) { s.left = 0; continue; }
+				s.left -= a_delta;
+				if ((s.tick -= a_delta) <= 0) {  // (its violet fire on them, licking up their body)
+					s.tick = 0.45f;
+					Gun::ElemBurst(6, a->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f + 50.0f * static_cast<float>(std::rand() % 3) }, 0.42f, 0.0f, 0.6f);
+				}
 			}
-			Gun::ElemBurst(kFlaskBurst[el], at, 0.45f + 0.1f * t, 0.0f, 0.5f);
-			Gun::AreaHurt(at, 110.0f + 25.0f * t, 0.05f + 0.025f * t, "");
-			(void)a_p;
+			std::erase_if(g_shadow, [](const Shadowflame& s) { return s.left <= 0; });
 		}
 		void FlaskBurst(const FlaskShot& f, const RE::NiPoint3& a_at)
 		{
@@ -3254,6 +3262,76 @@ namespace bo3z::Classes
 		}
 	}
 	void DevHorn() { SummonBoneDragon(); }
+	// (Noah: "Tier 1 ... applied to a single enemy at a time. Tier 2 ... a fan of purple flames each swing, close range to the
+	// player. Tier 3 ... a charged attack ability that summons one meteor from the sky for each charge attack swung. From tier one
+	// and on ... every swing, even if it's not in contact with an enemy") the Shadowflame mace's swing
+	void MaceSwing(bool a_power)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* w = AlchemistKnife();
+		if (!p || !w || p->GetEquippedObject(false) != w || !p->AsActorState()->IsWeaponDrawn()) return;
+		static auto last = std::chrono::steady_clock::now() - std::chrono::seconds(5);  // (one swing heard from both bodies)
+		const auto now = std::chrono::steady_clock::now();
+		if (now - last < std::chrono::milliseconds(200)) return;
+		last = now;
+		const int t = std::clamp(Kit::TierOfWeapon(w), 0, 3);
+		if (t < 1) return;  // (Base: a plain mace - no Shadowflame)
+		const float yaw = p->GetAngleZ();
+		const RE::NiPoint3 fwd{ std::sin(yaw), std::cos(yaw), 0.0f };
+		const RE::NiPoint3 me = p->GetPosition();
+		const auto inFront = [&](RE::Actor* f, float a_range, float a_cos) {
+			RE::NiPoint3 d = f->GetPosition() - me;
+			d.z = 0;
+			const float l = d.Length();
+			return l <= a_range && (l < 60.0f || (d.x * fwd.x + d.y * fwd.y) / l >= a_cos);
+		};
+		if (t == 1) {
+			// a tongue of shadowflame off the head, onto the one nearest in front (none there: it gutters out in the air)
+			RE::Actor* best = nullptr;
+			float bd = 1e9f;
+			for (auto* f : NearFoes(me, 300.0f, 12)) {
+				if (!inFront(f, 300.0f, 0.5f)) continue;
+				if (const float d = f->GetPosition().GetDistance(me); d < bd) bd = d, best = f;
+			}
+			Gun::ElemBurst(6, best ? best->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f } : me + fwd * 150.0f + RE::NiPoint3{ 0, 0, 90.0f }, 0.5f, 0.0f, 0.55f);
+			if (best) Shadowburn(best, t);
+		} else {
+			// Tier II on: a fan of violet fire swept out in front of you, close - everything in it takes Shadowflame
+			for (int k = -2; k <= 2; ++k) {
+				const float a = yaw + 0.32f * static_cast<float>(k);
+				const RE::NiPoint3 at = me + RE::NiPoint3{ std::sin(a) * 200.0f, std::cos(a) * 200.0f, 80.0f };
+				Gun::ElemBurst(6, at, 0.6f + 0.1f * static_cast<float>(t), 0.02f * static_cast<float>(k + 2), 0.6f);
+			}
+			int caught = 0;
+			for (auto* f : NearFoes(me, 380.0f, 16)) {
+				if (!inFront(f, 380.0f, 0.42f)) continue;
+				Shadowburn(f, t);
+				++caught;
+			}
+			Gun::AreaHurt(me + fwd * 200.0f, 220.0f, 0.06f * UpgradeMult(t), "");
+			(void)caught;
+			// Tier III: a charged swing calls one burning star down from the sky - onto the nearest of the dead ahead, else
+			// where you swung
+			if (t >= 3 && a_power) {
+				RE::Actor* tgt = nullptr;
+				float bd = 1e9f;
+				for (auto* f : NearFoes(me, 1500.0f, 24)) {
+					if (!inFront(f, 1500.0f, 0.6f)) continue;
+					if (const float d = f->GetPosition().GetDistance(me); d < bd) bd = d, tgt = f;
+				}
+				const RE::NiPoint3 at = tgt ? tgt->GetPosition() : me + fwd * 500.0f;
+				Gun::SkyFall(at);
+				Tasks::Later(1.3f, [at, t]() {  // (where it lands, the fire it brings is shadowflame too)
+					Gun::ElemBurst(6, at + RE::NiPoint3{ 0, 0, 30.0f }, 1.6f, 0.0f, 1.1f);
+					Gun::AreaHurt(at, 360.0f, 0.5f * UpgradeMult(t), "");
+					for (auto* f : NearFoes(at, 360.0f, 16)) Shadowburn(f, t);
+				});
+				logger::info("alchemist: the Shadowflame mace calls down a meteor");
+			}
+		}
+	}
+	void TickShadowflame(float a_delta) { TickShadow(a_delta); }
+
 	bool FlaskSwingBlocked(bool a_left)
 	{
 		const int el = FlaskHeld(a_left);
@@ -3289,6 +3367,7 @@ namespace bo3z::Classes
 	void TickAlchemy(float a_delta)
 	{
 		TickGoldClouds(a_delta);
+		TickShadow(a_delta);
 		g_flaskCool = std::max(0.0f, g_flaskCool - a_delta), g_philCool = std::max(0.0f, g_philCool - a_delta);
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !p->Is3DLoaded() || p->IsDead() || ItemMenusOpen()) return;

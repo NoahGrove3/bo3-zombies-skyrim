@@ -174,8 +174,8 @@ namespace bo3z::Audio
 		// fading to a quarter at 30 m
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		const float d = p ? p->GetPosition().GetDistance(a_at) : 0.0f;
-		const float near = std::clamp(1.0f - (d - 350.0f) / 2400.0f, 0.25f, 1.0f);
-		if (!Start(h, a_s, p, p ? nullptr : &a_at, std::min(1.0f, a_vol * near))) logger::warn("audio: {} would not start", static_cast<int>(a_s));
+		const float nearV = std::clamp(1.0f - (d - 350.0f) / 2400.0f, 0.25f, 1.0f);
+		if (!Start(h, a_s, p, p ? nullptr : &a_at, std::min(1.0f, a_vol * nearV))) logger::warn("audio: {} would not start", static_cast<int>(a_s));
 	}
 
 	void LoopStart(std::uint64_t a_key, gen::Sound a_s, RE::TESObjectREFR* a_owner)

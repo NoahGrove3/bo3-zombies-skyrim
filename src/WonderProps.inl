@@ -557,6 +557,7 @@ namespace Props
 			const bool power = high && high->attackData && high->attackData->data.flags.any(RE::AttackData::AttackFlag::kPowerAttack);
 			if (FangInHand(p)) BaneWind(p, power);  // (Noah: every class's every swing - wind slashes down the line that blow the dead FAR away)
 			else if (SlayerInHand(p)) SlayerSlash(p, power);
+			else Classes::MaceSwing(power);  // (the Alchemist's Shadowflame mace: its flames go out with every swing)
 		}
 		for (auto& t : g_twisters) {
 			if (t.chase) {  // turn, slowly, toward the nearest of the dead

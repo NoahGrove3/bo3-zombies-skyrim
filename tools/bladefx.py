@@ -54,20 +54,23 @@ def sheath(L, name, tex, tint, sc, y0, y1, w, rep, scroll, ang, fade_in=0.15, fa
 
 
 def mace(t):
-    """violet fire burning in the mace's head round its crystal (y 48.4): three sheets about the haft, rising out through the
-    cage and thinning above it - more and taller each tier; from Tier II embers drifting off"""
+    """(Noah: "a shadow flame mace ... the purple flame should look hyper realistic on the mace itself") shadowflame wrapped
+    round the mace's head and its crystal (y 48.4, radius 7.5): five sheets close about the haft rising out of the cage, an inner
+    core of hot pale violet licking up out of the crystal itself, and thin wisps trailing off the top - every edge faded to
+    nothing; taller, fuller and brighter each tier; from Tier II embers drifting off"""
     random.seed(100 + t)
     L = []
     cy = 48.4
-    w, top, sc = [(6.0, 12.0, 1.1), (7.2, 16.0, 1.3), (8.5, 21.0, 1.55), (10.0, 27.0, 1.85)][t]
-    for k, ang in enumerate((0, 60, 120)):
-        sheath(L, f'f{k}', FX + 'blade_flame_violet.dds', '1,1,1', sc, cy - 9, cy + top, w, 0.9, -1.6 - 0.2 * k, ang, 0.2, 0.55, 10)
-    if t >= 1:
-        for k, ang in enumerate((30, 90, 150)):
-            sheath(L, f'g{k}', FX + 'blade_flame_violet.dds', '0.8,0.75,1', sc * 0.7, cy - 5, cy + top * 1.25, w * 1.3, 1.4, -1.1, ang, 0.25, 0.6, 10)
+    w, top, sc = [(4.2, 10.0, 0.9), (5.0, 13.0, 1.1), (5.8, 17.0, 1.3), (6.6, 22.0, 1.55)][t]
+    for k in range(5):   # the body of the fire, close round the head
+        sheath(L, f'f{k}', FX + 'blade_flame_violet.dds', '0.95,0.85,1', sc, cy - 7.5, cy + top, w, 1.1, -1.5 - 0.17 * k, 36 * k + 8, 0.22, 0.5, 12)
+    for k in range(3):   # the core: hot, pale, tight to the crystal
+        sheath(L, f'c{k}', FX + 'blade_flame_violet.dds', '1,0.92,1', sc * 0.8, cy - 4, cy + top * 0.7, w * 0.55, 1.6, -2.1, 60 * k + 20, 0.25, 0.45, 10)
+    for k in range(2):   # wisps trailing off its top
+        sheath(L, f'w{k}', FX + 'blade_flame_violet.dds', '0.6,0.45,0.9', sc * 0.55, cy + top * 0.4, cy + top * 1.5, w * 1.2, 0.8, -1.0, 90 * k + 45, 0.3, 0.7, 8)
     if t >= 2:
-        for k in range(1 + t):
-            card(L, f'e{k}', FX + 'motes_rise.dds', '0.7,0.45,1', 1.5, 7, 0, 26 + 6 * t, (0, cy, 0), (16, 16), random.uniform(54, 66), k * 0.9)
+        for k in range(t):
+            card(L, f'e{k}', FX + 'motes_rise.dds', '0.6,0.35,1', 1.3, 6, 0, 22 + 5 * t, (0, cy, 0), (16, 16), random.uniform(54, 66), k * 0.9)
     write(L, f'maceflame_{t}.nif')
 
 

@@ -2436,6 +2436,12 @@ namespace bo3z
 		}
 		RE::BGSExplosion* Quiet(RE::BGSExplosion* a_src) { return QuietClone(a_src); }
 		// (the class perks: Ember Heart) the night's dead round a point lose a share of a whole zombie's health
+		// (Noah: the Alchemist's Shadowflame mace) a burn: a_perSecond of damage for a_seconds, the Gun's own damage-over-time
+		void  Burn(RE::Actor* a_target, float a_perSecond, float a_seconds)
+		{
+			if (a_target && !a_target->IsDead() && a_perSecond > 0 && a_seconds > 0) g_dots.push_back({ a_target->GetHandle(), a_perSecond, a_seconds });
+		}
+		void  SkyFall(const RE::NiPoint3& a_at) { Props::SkyFireball(a_at); }  // (a burning star from the sky onto a point)
 		void  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast)
 		{
 			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;

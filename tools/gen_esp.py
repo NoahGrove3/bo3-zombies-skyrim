@@ -455,18 +455,18 @@ for name, hx in T['weap_daedricdagger']['subs']:
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'riftblade'), subs))
 # (Noah, 2026-11: "change it from a dagger to a one-handed mace using the model I've attached") the Alchemist's starting weapon:
 # a one-handed mace (Skyrim's Daedric mace's record: its swings, its sounds) wearing his model (tools/wonderprops.py mace) - the
-# record keeps its old id (alchknife) so every kit that had the knife has the mace; its Catalyst and its purple fire are Gun.cpp's
+# record keeps its old id (alchknife) so every kit that had the knife has the mace; its Shadowflame (src/Classes.cpp MaceSwing) and its fire (Gun.cpp)
 subs = []
 for name, hx in T['weap_daedricmace']['subs']:
     b = bytes.fromhex(hx)
     if name == 'EDID': b = z('UN_AlchemistKnife')
-    elif name == 'FULL': b = z("Alchemist's Mace")
+    elif name == 'FULL': b = z("Shadowflame Mace")
     elif name in ('EITM', 'EAMT', 'MODT'): continue
     elif name == 'MODL': b = z('CurseOfAlduin\\alchemist\\mace.nif')
     elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_mace'))
     elif name == 'KSIZ': b = struct.pack('<I', 2)
     elif name == 'KWDA': b = bytes.fromhex(hx)[4:]   # (WeapTypeMace and the vendor's - the Daedric material's left out)
-    elif name == 'DESC': b = z("An alchemist's mace, its head a cage round a crystal of violet fire. Every blow drives in the last flask you threw; a third blow in a row shatters it on them.")
+    elif name == 'DESC': b = z("A mace of blackened steel, its head a cage round a crystal of shadowflame. Upgraded, every swing sets the nearest foe ahead burning with Shadowflame - fire's burn at twice the damage; at Tier II each swing fans violet fire out in front of you; at Tier III a charged swing calls a meteor down from the sky.")
     elif name == 'DATA': b = struct.pack('<IfH', 300, 12.0, 11)
     subs.append(sub(name, b))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'alchknife'), subs))
