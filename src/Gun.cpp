@@ -2454,6 +2454,56 @@ namespace bo3z
 			if (a_target && !a_target->IsDead() && a_perSecond > 0 && a_seconds > 0) g_dots.push_back({ a_target->GetHandle(), a_perSecond, a_seconds });
 		}
 		void  SkyFall(const RE::NiPoint3& a_at) { Props::SkyFireball(a_at); }  // (a burning star from the sky onto a point)
+		void  Slash(const SlashSpec& a_s)
+		{
+			if (g_slashes.size() > 24) return;
+			LiveSlash l;
+			l.s = a_s;
+			if (l.s.dir.Length() < 1e-3f) l.s.dir = { 0, 1, 0 };
+			l.s.dir.Unitize();
+			l.at = a_s.from;
+			g_slashes.push_back(std::move(l));
+		}
+		// where a swing flies: the camera's aim, kept from pointing far up or down
+		RE::NiPoint3 SwingDir()
+		{
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			RE::NiPoint3 d{ 0, 1, 0 };
+			if (cam && cam->cameraRoot) { const auto& w = cam->cameraRoot->world; d = { w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] }; }
+			d.z = std::clamp(d.z, -0.25f, 0.25f);
+			if (d.Length() < 1e-3f) d = { 0, 1, 0 };
+			d.Unitize();
+			return d;
+		}
+		// the angle the blade swept, about the flight: the blade's own line (its WEAPON node, in the body you're seen in) laid
+		// on the plane across the flight - a flat sweep lies the crescent level, an overhead chop stands it upright
+		float SwingRoll(const RE::NiPoint3& a_dir)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			auto* root = p ? p->Get3D(cam && cam->IsInFirstPerson()) : nullptr;
+			auto* node = root ? root->GetObjectByName("WEAPON") : nullptr;
+			if (!node) return 0.0f;
+			const auto& r = node->world.rotate;
+			RE::NiPoint3 b{ r.entry[0][1], r.entry[1][1], r.entry[2][1] };
+			RE::NiPoint3 d = a_dir; d.Unitize();
+			b = b - d * b.Dot(d);
+			if (b.Length() < 1e-3f) return 0.0f;
+			const auto f = Spellcraft::Facing(d);
+			const RE::NiPoint3 x{ f.entry[0][0], f.entry[1][0], f.entry[2][0] }, z{ f.entry[0][2], f.entry[1][2], f.entry[2][2] };
+			float roll = std::atan2(b.Dot(z), b.Dot(x));
+			if (roll > 1.5708f) roll -= 3.14159f; else if (roll < -1.5708f) roll += 3.14159f;   // (a crescent bows forward either way)
+			return -roll;
+		}
+		void  Halo(int a_count, const std::string& a_model, float a_scale, float a_period, std::function<void(RE::Actor*)> a_strike)
+		{
+			if (a_count <= 0) { for (auto& b : g_halo.blades) b.Detach(); g_halo.blades.clear(); return; }
+			if (static_cast<int>(g_halo.blades.size()) == a_count && g_halo.model == a_model) { g_halo.strike = std::move(a_strike); g_halo.period = a_period; return; }
+			for (auto& b : g_halo.blades) b.Detach();
+			g_halo.blades.assign(a_count, {});
+			g_halo.model = a_model, g_halo.scale = a_scale, g_halo.period = a_period, g_halo.strike = std::move(a_strike);
+		}
+
 		void  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast)
 		{
 			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
@@ -2565,6 +2615,98 @@ namespace bo3z
 		// tier's fire (tools/bladefx.py) hung on the weapon itself - its WEAPON node, the weapon's own space - in both views
 		struct WeaponFlame { Spellcraft::Fx fx[2]; std::string path; };
 		WeaponFlame g_wflame;
+		// (Noah: "tier 1 sends out arc slashes from the blade ... that pierce enemies, swing in the color of the sword"; the
+		// Bane's "white arc aligning with the blade swing angle") a crescent flying out from a swing: placed in the world each
+		// frame (tools/arcfx.py's models, hung on your body's root), turned to the angle the blade swept, cutting through every
+		// one of the dead it passes - each once - then fading at the end of its run
+		struct LiveSlash { Spellcraft::Fx fx; Gun::SlashSpec s; RE::NiPoint3 at; float gone = 0; std::unordered_set<RE::FormID> hit; };
+		std::vector<LiveSlash> g_slashes;
+		RE::NiMatrix3 RotY(float a)
+		{
+			RE::NiMatrix3 m;
+			const float c = std::cos(a), sn = std::sin(a);
+			m.entry[0][0] = c, m.entry[0][1] = 0, m.entry[0][2] = sn;
+			m.entry[1][0] = 0, m.entry[1][1] = 1, m.entry[1][2] = 0;
+			m.entry[2][0] = -sn, m.entry[2][1] = 0, m.entry[2][2] = c;
+			return m;
+		}
+		RE::NiMatrix3 RotZ(float a)
+		{
+			RE::NiMatrix3 m;
+			const float c = std::cos(a), sn = std::sin(a);
+			m.entry[0][0] = c, m.entry[0][1] = -sn, m.entry[0][2] = 0;
+			m.entry[1][0] = sn, m.entry[1][1] = c, m.entry[1][2] = 0;
+			m.entry[2][0] = 0, m.entry[2][1] = 0, m.entry[2][2] = 1;
+			return m;
+		}
+		RE::NiMatrix3 SlashTurn(const LiveSlash& l)
+		{
+			RE::NiMatrix3 r = Spellcraft::Facing(l.s.dir) * RotY(l.s.roll);
+			if (l.s.sideways) r = r * RotZ(-1.5708f);   // (a blade laid across its flight: the spectral greatsword sweeping)
+			return r;
+		}
+		void TickSlashes(float a_delta)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* root = p && p->Is3DLoaded() ? p->Get3D(false) : nullptr;
+			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
+			for (auto& l : g_slashes) {
+				if (!root) { l.gone = l.s.range + 1; continue; }
+				if (!l.fx.obj) {
+					l.fx = Spellcraft::Fx{ Spellcraft::LoadPath(l.s.model) };
+					if (!l.fx.obj) { l.gone = l.s.range + 1; continue; }
+				}
+				if (auto* body = root->AsNode()) l.fx.Attach(body);
+				const float step = l.s.speed * a_delta;
+				l.at = l.at + l.s.dir * step;
+				l.gone += step;
+				const float f = l.gone / std::max(1.0f, l.s.range);
+				const float sc = l.s.scale * (f < 0.12f ? 0.6f + 0.4f * f / 0.12f : f > 0.8f ? std::max(0.05f, 1.0f - (f - 0.8f) / 0.2f) : 1.0f);
+				l.fx.Place(l.at, SlashTurn(l), sc);
+				for (auto* a : Foes(l.at, l.s.radius * std::max(0.6f, sc / std::max(0.01f, l.s.scale)))) {
+					if (!l.hit.insert(a->GetFormID()).second) continue;
+					const bool killed = Damage(a, l.s.damage > 0 ? l.s.damage : whole * l.s.share, false, false, true);
+					if (l.s.onHit) l.s.onHit(a, killed);
+				}
+			}
+			for (auto& l : g_slashes) if (l.gone > l.s.range) l.fx.Detach();
+			std::erase_if(g_slashes, [](const LiveSlash& l) { return l.gone > l.s.range; });
+		}
+		// (Noah, the Summoner's Tier III: "three white light blades circle you and strike the dead that come near") blades of
+		// light turning round you at chest height; each in turn darts at the nearest of the dead in reach
+		struct HaloState { std::vector<Spellcraft::Fx> blades; std::string model; float scale = 1, period = 1.6f, t = 0, next = 0; int turn = 0; std::function<void(RE::Actor*)> strike; };
+		HaloState g_halo;
+		void TickHalo(float a_delta)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* root = p && p->Is3DLoaded() ? p->Get3D(false) : nullptr;
+			if (g_halo.blades.empty()) return;
+			if (!root || !root->AsNode()) { for (auto& b : g_halo.blades) b.Detach(); return; }
+			g_halo.t += a_delta;
+			const RE::NiPoint3 c = p->GetPosition() + RE::NiPoint3{ 0, 0, 95.0f };
+			const int n = static_cast<int>(g_halo.blades.size());
+			for (int i = 0; i < n; ++i) {
+				auto& b = g_halo.blades[i];
+				if (!b.obj) b = Spellcraft::Fx{ Spellcraft::LoadPath(g_halo.model) };
+				if (!b.obj) continue;
+				b.Attach(root->AsNode());
+				const float a = g_halo.t * 1.4f + 6.2832f * i / n;
+				const RE::NiPoint3 at = c + RE::NiPoint3{ std::cos(a) * 85.0f, std::sin(a) * 85.0f, std::sin(g_halo.t * 2.0f + i) * 8.0f };
+				// the blade upright-ish, its point leading round the circle
+				const RE::NiPoint3 tangent{ -std::sin(a), std::cos(a), 0.35f };
+				b.Place(at, Spellcraft::Facing(tangent), g_halo.scale);
+			}
+			if ((g_halo.next -= a_delta) <= 0) {
+				RE::Actor* best = nullptr;
+				float bd = 650.0f;
+				for (auto* f : Foes(p->GetPosition(), 650.0f)) if (const float d = f->GetPosition().GetDistance(p->GetPosition()); d < bd) bd = d, best = f;
+				if (best && g_halo.strike) {
+					g_halo.strike(best);
+					g_halo.next = g_halo.period / static_cast<float>(n);
+					++g_halo.turn;
+				} else g_halo.next = 0.25f;
+			}
+		}
 		float g_wflameScale = 1.0f;
 		void TickWeaponFlame()
 		{
@@ -2579,7 +2721,8 @@ namespace bo3z
 					// fire - Nocturnal's, from the game's files - on its crystal; the Madness Sword keeps its sheath of red flame
 					// (Noah: "a weird circle thing in the mace head" - Nocturnal's fire brings its bed of embers; its flames left behind in
 					// the world in gaps as you swung) the mace's own violet fire, in its own space: it moves with every swing
-					want = fmt::format("CurseOfAlduin\\fx\\{}flame_{}.nif", mace ? "mace" : "mad", t);
+					// (the class swords: their looks are enchantments now - Classes::BladeLook - nothing hung on the blade)
+					(void)mace; (void)mad; (void)t;
 					g_wflameScale = mace ? 0.19f + 0.04f * static_cast<float>(t) : 1.0f;  // (Noah: "I can only see the after images of the effect" - at 0.11 it was a smudge)
 				}
 			}
@@ -3987,6 +4130,8 @@ namespace bo3z
 			TickLobs(a_delta);
 			TickLightOrb(a_delta);
 			TickWeaponFlame();
+			TickSlashes(a_delta);
+			TickHalo(a_delta);
 			for (auto& d : g_devFx) if ((d.left -= a_delta) <= 0) d.fx.Detach();
 			std::erase_if(g_devFx, [](auto& d) { return d.left <= 0; });
 			TickThrow(a_delta);

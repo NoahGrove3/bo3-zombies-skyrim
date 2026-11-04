@@ -430,24 +430,24 @@ namespace Props
 	void BaneWind(RE::PlayerCharacter* p, bool a_power)
 	{
 		if (!a_power) { BaneClose(p); return; }
-		const float range = 3200.0f, width = 280.0f;
-		const Aim aim = AimAt(range);
-		RE::NiPoint3 dir = aim.dir; dir.z = 0;
-		if (dir.Length() < 0.01f) dir = { 0, 1, 0 };
-		dir.Unitize();
-		const RE::NiPoint3 side{ -dir.y, dir.x, 0 };
-		const RE::NiPoint3 at0 = p->GetPosition() + RE::NiPoint3{ 0, 0, 90.0f };
-		const int steps = a_power ? 6 : 4;
-		for (int k = 1; k <= steps; ++k) {  // (the crescent races out: a burst of wind a step further each beat)
-			const float d = range / steps * k;
-			Blast(BlastIndex("shoutarea"), at0 + dir * d, 0.035f * k, a_power ? 0.5f : 0.35f);
-			if (a_power) Blast(BlastIndex("shoutarea"), at0 + dir * (d - 60.0f) + side * 140.0f * ((k & 1) ? 1.0f : -1.0f), 0.035f * k + 0.02f, 0.3f);
-		}
-		Audio::AtPoint(gen::Sound::unleash_hearth, at0 + dir * 200.0f);
-		for (auto* f : InLine(aim, range, width)) {
-			if (Damage(f, FangBase() * BaneMult() * (a_power ? 1.6f : 0.8f), false, false, true)) BaneKilled(p);
-			Spellcraft::Fling(f, f->GetPosition() - dir * 120.0f - RE::NiPoint3{ 0, 0, 80.0f }, a_power ? 24.0f : 16.0f);  // (VERY far)
-		}
+		// (Noah: "Alduin's Bane's wind slashes should be a white arc aligning with the blade swing angle, not a cone of wind") a
+		// white crescent flown out down the line, turned to the angle the blade swept, cutting through all in its path and
+		// hurling them VERY far
+		const RE::NiPoint3 dir = Gun::SwingDir();
+		Gun::SlashSpec sl;
+		sl.model = "CurseOfAlduin\\fx\\arc_bane.nif";
+		sl.from = p->GetPosition() + RE::NiPoint3{ 0, 0, 100.0f } + dir * 80.0f;
+		sl.dir = dir;
+		sl.roll = Gun::SwingRoll(dir);
+		sl.speed = 2400.0f, sl.range = 3200.0f, sl.radius = 150.0f, sl.scale = 1.7f;
+		sl.damage = FangBase() * BaneMult() * 1.6f;
+		sl.onHit = [dir](RE::Actor* f, bool killed) {
+			auto* pl = RE::PlayerCharacter::GetSingleton();
+			if (killed && pl) BaneKilled(pl);
+			if (f) Spellcraft::Fling(f, f->GetPosition() - dir * 120.0f - RE::NiPoint3{ 0, 0, 80.0f }, 24.0f);  // (VERY far)
+		};
+		Gun::Slash(sl);
+		Audio::AtPoint(gen::Sound::unleash_hearth, sl.from + dir * 200.0f);
 	}
 	// (Noah: "the dragon slayer sword ... is supposed to send lightning slashes similar to Alduin's Bane but not as strong in
 	// damage") the Spellsword's wonder: every swing looses a crescent of lightning down the line - a power attack a wider,
@@ -556,7 +556,7 @@ namespace Props
 			auto* high = proc ? proc->high : nullptr;
 			const bool power = high && high->attackData && high->attackData->data.flags.any(RE::AttackData::AttackFlag::kPowerAttack);
 			if (FangInHand(p)) BaneWind(p, power);  // (Noah: every class's every swing - wind slashes down the line that blow the dead FAR away)
-			else if (SlayerInHand(p)) SlayerSlash(p, power);
+			else if (SlayerInHand(p)) Classes::SlayerSwing(power);  // (Dragonbreaker: its embers spent on a charged swing)
 			else Classes::MaceSwing(power);  // (the Alchemist's Shadowflame mace: its flames go out with every swing)
 		}
 		for (auto& t : g_twisters) {

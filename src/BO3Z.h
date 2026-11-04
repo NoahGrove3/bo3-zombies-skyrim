@@ -430,7 +430,13 @@ namespace bo3z
 		void               GiveFlask(int a_el);   // put in your pack
 		bool               FlaskInHand(bool a_left);  // a flask held, drawn, in that hand
 		void               FlaskAttack(bool a_left);  // its throw
-		void               MaceSwing(bool a_power);  // a swing of the Alchemist's Shadowflame mace (any swing: hit or miss)
+		void               MaceSwing(bool a_power);  // a swing of a class sword (any swing: hit or miss) - its tier's arc, burst and Tier III
+		void               SlayerSwing(bool a_power);  // the Dragon Slayer's swing: a charged one spends its dragon embers (Dragonbreaker)
+		void               SlayerKill();              // a kill by the Dragon Slayer: an ember
+		int                SlayerEmbers();
+		RE::TESObjectWEAP* CarianBlade();             // Destruction's Carian Blade
+		int                SwordClass(const RE::TESForm* a_w);   // whose class sword (0 Summoner, 1 Destruction, 2 Alchemist, 3 Spellsword; -1 none)
+		RE::EnchantmentItem* BladeLook(const RE::TESObjectWEAP* a_w, int a_tier);   // a sword's look at a tier (nullptr: bare)
 		void               TickShadowflame(float a_delta);
 		bool               FlaskSwingBlocked(bool a_left);  // a flask in that hand whose next throw isn't ready (its swing held back)
 		void               DevHorn();  // the Bone-Throne Horn's dragon, called up (dev)
@@ -785,6 +791,13 @@ namespace bo3z
 		RE::BGSExplosion*     Quiet(RE::BGSExplosion* a_src);  // that burst's quiet copy (no damage, no knockdown, no tint)
 		void                  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast);
 		void                  Burn(RE::Actor* a_target, float a_perSecond, float a_seconds);  // damage over time
+		// (the class swords) a crescent flying out from a swing, cutting through every one of the dead it passes (share: of one
+		// of the night's dead's health); its angle, where it flies; and the Summoner's circling blades of light
+		struct SlashSpec { std::string model; RE::NiPoint3 from, dir; float roll = 0, speed = 1700, range = 1500, radius = 110, share = 0.3f, scale = 1.0f, damage = 0; bool sideways = false; std::function<void(RE::Actor*, bool)> onHit; };
+		void                  Slash(const SlashSpec& a_s);
+		RE::NiPoint3          SwingDir();
+		float                 SwingRoll(const RE::NiPoint3& a_dir);
+		void                  Halo(int a_count, const std::string& a_model, float a_scale, float a_period, std::function<void(RE::Actor*)> a_strike);
 		void                  BlastSound(std::string_view a_name, const RE::NiPoint3& a_at, float a_vol = 1.0f);  // a Skyrim spell explosion's own impact sound
 		void                  SkyFall(const RE::NiPoint3& a_at);  // a burning star from the sky onto a point
 		void                  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);
@@ -1247,6 +1260,7 @@ namespace bo3z
 		void  OnPriestSlain();                    // a Dragon Priest fell: one relic to take at an altar
 		int   Tier(int a_item);                   // its upgrades (0 Base .. 3 Legendary, then Ascends); -1 not owned
 		int   TierOfWeapon(const RE::TESForm* a_w);   // a kit or relic weapon's upgrades (-1: not one)
+		void  SyncWeapons(bool a_reequip);            // the kit's weapons as their tiers make them (names, damage, looks)
 		int   TierOfSpell(const RE::TESForm* a_sp);   // a relic spell's (a support spell, a hero's pact) upgrades (-1)
 		int   TierOfSummon(RE::Actor* a_summon);      // a hero or army a relic called up (-1)
 		int   BowAscends(int a_bow);

@@ -225,6 +225,10 @@ o.append(f'\tinline constexpr std::uint32_t kMadnessSword = 0x{IDS[("WEAP", "mad
 o.append(f'\tinline constexpr std::uint32_t kRiftblade = 0x{IDS[("WEAP", "riftblade")]:03X};  // the Summoner dagger: Rift Stab')
 o.append('\tinline constexpr std::uint32_t kMadEnch[3] = { ' + ', '.join(f'0x{IDS[("ENCH", f"madglow{n}")]:03X}' for n in (1, 2, 3)) + ' };  // the Madness Sword\'s violet fire, brighter each tier')
 o.append('\tinline constexpr std::uint32_t kMadShader[3] = { ' + ', '.join(f'0x{IDS[("EFSH", f"madshader{n}")]:03X}' for n in (1, 2, 3)) + ' };  // the Madness Sword\'s violet fire, drawn on the blade itself (src/Kit.cpp)')
+o.append('\tinline constexpr std::uint32_t kCarianWeap = 0x' + f'{IDS[("WEAP", "carianblade")]:03X};  // Destruction\'s Carian Blade')
+from esp_ids import BLADE_VIZ
+o.append('\tinline constexpr std::uint32_t kBladeViz[' + str(len(BLADE_VIZ)) + '][3] = { ' + ', '.join('{ ' + ', '.join(f'0x{IDS[("ENCH", f"bv_{b}_{n}")]:03X}' for n in (1, 2, 3)) + ' }' for b in BLADE_VIZ) + ' };  // the swords\' tier looks: ' + ' '.join(BLADE_VIZ))
+o.append('\tinline constexpr std::uint32_t kBladeVizFx[' + str(len(BLADE_VIZ)) + '][3] = { ' + ', '.join('{ ' + ', '.join(f'0x{IDS[("MGEF", f"bv_{b}_{n}")]:03X}' for n in (1, 2, 3)) + ' }' for b in BLADE_VIZ) + ' };')
 o.append('\tinline constexpr std::uint32_t kRiftEnch[3] = { ' + ', '.join(f'0x{IDS[("ENCH", f"riftfire{n}")]:03X}' for n in (1, 2, 3)) + ' };  // its fire, brighter each tier')
 o.append(f'\tinline constexpr std::uint32_t kStandStat = 0x{IDS[("STAT", "stand")]:03X};  // the station platform (dressing on the Coffer)')
 o.append('\tinline constexpr float kStandHalfX = 220.0f, kStandFrontY = -220.0f, kStandBackY = 220.0f, kStandMaxSlope = 70.0f;  // footprint in plan space (tools/stand.py)')

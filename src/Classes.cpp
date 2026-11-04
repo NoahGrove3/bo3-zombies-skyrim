@@ -241,6 +241,7 @@ namespace bo3z::Classes
 			case coffer::kDestruction:
 				GiveSpell(Rung1(a_cls, "Fire"), false);
 				GiveSpell(Rung1(a_cls, "Frost"), true);
+				GiveItem(p, CarianBlade(), 1, true);  // (Noah: "destruction should get an elemental upgradable sword too") the Carian Blade in the right hand
 				if (auto* tome = Lookup(0x817, "Equipable Tomes - Redone.esp")) GiveItem(p, tome, 1, true);  // a Destruction tome at the hip
 				break;
 			case coffer::kAlchemist:
@@ -819,6 +820,7 @@ namespace bo3z::Classes
 
 	// (each class grows its own way) a kill trains the ladders of what you hold: the spell in each hand for Destruction and
 	// the Spellsword, and your summons' kills (or your own, a summon spell in hand) for the Summoner
+	void SlayerKill();
 	void OnKill(bool a_bySummon, RE::Actor* a_dying, RE::Actor* a_killer)
 	{
 		Kit::OnKill(a_dying);  // (the altar rework: on-kill Infusions, the Legendary Riftblade's thralls)
@@ -830,6 +832,8 @@ namespace bo3z::Classes
 			}
 		}
 		int killHow = -1;
+		// (Dragonbreaker) a kill made by the Dragon Slayer feeds it an ember
+		if (a_dying && !a_bySummon) if (auto it = g_lastHit.find(a_dying->GetFormID()); it != g_lastHit.end() && Slayer() && it->second == Slayer()->GetFormID()) SlayerKill();
 		// the wonder trial: what made the kill
 		if (const int c = g_class.load(); c >= 0) {
 			int& how = killHow;  // 0 summon, 1 destruction spell, 2 bow or crossbow, 3 melee
@@ -2040,19 +2044,10 @@ namespace bo3z::Classes
 		if (auto* w = src->As<RE::TESObjectWEAP>(); w && !w->IsBow() && !w->IsCrossbow() && !w->IsStaff()) Perks::OnMeleeHit();  // (Bladesong Mead)
 		if (auto* mg = Magnus(); mg && (src == mg || (mg->formEnchanting && src == mg->formEnchanting))) {
 			MagnusHit(p, a_target);
-		} else if (src == AlchemistKnife()) {  // (the Shadowflame mace: its swings do the work - MaceSwing)
-			MaceHit(p, a_target, a_power);
-		} else if (src == Slayer() && g_bladeCool <= 0) {  // the spell in your other hand rides the blade
-			const int left = BladeSpell();  // (two-handed: the last Spellsword spell you held)
-			auto* sp = left >= 0 ? Arcana::Spell(left) : nullptr;
-			if (!sp) return;
-			g_bladeCool = 0.35f;
-			CastFrom(p, sp, a_target);
-			if (a_power && AfterSovngarde()) {
-				for (auto* f : NearFoes(a_target->GetPosition(), 900.0f, 6)) if (f != a_target) CastFrom(p, sp, f);
-				Gun::FxBlast("light", a_target->GetPosition() + RE::NiPoint3{ 0, 0, 60.0f });
-			}
 		}
+		// (Noah: "the old weapon abilities ... would be fully replaced") the class swords' and the Dragon Slayer's work is done by
+		// their swings (MaceSwing, SlayerSwing)
+		(void)a_power;
 	}
 
 	// (Noah: "I get the casting animation and the sound, but nothing is spawning") a summon spell cast: if no new
@@ -2482,6 +2477,8 @@ namespace bo3z::Classes
 	// foes tears a small rift there: a Flame Atronach steps out and fights for you for 10 s (two at most)
 	void RiftHit(RE::Actor* a_target)
 	{
+		(void)a_target;
+		return;  // (Noah: the Riftblade is the Radiant Blade now - its rifts and atronachs replaced by the sword tier ladder)
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !a_target || !Director::IsFoe(a_target)) return;
 		static int hits = 0, bigHits = 0;
@@ -3084,30 +3081,48 @@ namespace bo3z::Classes
 		void ShadowFire(const RE::NiPoint3& a_at, float a_scale, float a_life) { Gun::Hazard("effects\\tg09nocturnalfxfirepurple.nif", a_at, a_scale, a_life); }
 		struct Shadowflame { RE::ActorHandle who; float left = 0, tick = 0; };
 		std::vector<Shadowflame> g_shadow;
-		constexpr float kShadowSeconds = 4.0f;
+		constexpr float kShadowSeconds = 5.0f;   // (Noah: "2x flame damage for 5 seconds")
+		bool g_shadowChain = false;               // the Shadowflame Sword's Tier III: the burning dead explode (set by TickSwords)
+		int  g_shadowTier = 1;
 		void Shadowburn(RE::Actor* a_f, int a_t)
 		{
 			if (!a_f || a_f->IsDead()) return;
-			for (auto& s : g_shadow) if (s.who.get().get() == a_f) { s.left = kShadowSeconds; return; }
-			// the fire's own burn (a fire flask's or a meteor arrow's: 6% of one of the night's dead a second), doubled,
-			// grown with the mace's tier and your Arcana
 			const float perSec = Director::RoundHealth() * gen::kRounds.hpScale * 0.06f * 2.0f * UpgradeMult(a_t) * (0.7f + 0.3f * Arcana::Power());
+			for (auto& s : g_shadow) if (s.who.get().get() == a_f) {   // (caught again: renewed to its full 5 s, never doubled)
+				if (s.left < kShadowSeconds - 0.25f) Gun::Burn(a_f, perSec, kShadowSeconds - s.left);
+				s.left = kShadowSeconds;
+				return;
+			}
+			// the fire's own burn (a fire flask's or a meteor arrow's: 6% of one of the night's dead a second), doubled,
+			// grown with the sword's tier and your Arcana
 			Gun::Burn(a_f, perSec, kShadowSeconds);
 			g_shadow.push_back({ a_f->GetHandle(), kShadowSeconds, 0.0f });
 			ShadowFire(a_f->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, 0.55f, 0.8f);
 		}
 		void TickShadow(float a_delta)
 		{
+			std::vector<RE::NiPoint3> blasts;
 			for (auto& s : g_shadow) {
 				auto a = s.who.get();
-				if (!a || a->IsDead()) { s.left = 0; continue; }
+				if (!a) { s.left = 0; continue; }
+				if (a->IsDead()) {   // (Noah, the Alchemist's Tier III: "chain reaction") died burning: it bursts and sets those round it alight
+					if (g_shadowChain && s.left > 0) blasts.push_back(a->GetPosition());
+					s.left = 0;
+					continue;
+				}
 				s.left -= a_delta;
-				if ((s.tick -= a_delta) <= 0) {  // (its violet fire on them, licking up their body)
+				if ((s.tick -= a_delta) <= 0) {  // (its violet fire on them, licking up their body - Skyrim's own fire, purple)
 					s.tick = 0.45f;
 					ShadowFire(a->GetPosition() + RE::NiPoint3{ 0, 0, 10.0f + 35.0f * static_cast<float>(std::rand() % 3) }, 0.42f, 0.55f);
 				}
 			}
 			std::erase_if(g_shadow, [](const Shadowflame& s) { return s.left <= 0; });
+			for (const auto& at : blasts) {
+				ShadowFire(at + RE::NiPoint3{ 0, 0, 10.0f }, 1.3f, 1.6f);
+				Gun::FxBlast("fireball", at + RE::NiPoint3{ 0, 0, 40.0f });
+				Gun::AreaHurt(at, 300.0f, 0.3f * UpgradeMult(g_shadowTier), "");
+				for (auto* f : NearFoes(at, 300.0f, 12)) Shadowburn(f, g_shadowTier);
+			}
 		}
 		void FlaskBurst(const FlaskShot& f, const RE::NiPoint3& a_at)
 		{
@@ -3273,72 +3288,233 @@ namespace bo3z::Classes
 		}
 	}
 	void DevHorn() { SummonBoneDragon(); }
-	// (Noah: "Tier 1 ... applied to a single enemy at a time. Tier 2 ... a fan of purple flames each swing, close range to the
-	// player. Tier 3 ... a charged attack ability that summons one meteor from the sky for each charge attack swung. From tier one
-	// and on ... every swing, even if it's not in contact with an enemy") the Shadowflame mace's swing
+	// ---- the class swords (Noah: "base should be the sword with no special effects or abilities yet. tier 1 sends out arc
+	// slashes from the blade ... that pierce enemies, swing in the color of the sword, on light attack swings. Tier 2 should give
+	// the heavy attack an AOE attack, and tier 3 should have a unique ability per class that matches the classes build")
+	RE::TESObjectWEAP* CarianBlade()
+	{
+		auto* f = RE::TESDataHandler::GetSingleton()->LookupForm(gen::kCarianWeap, gen::kPlugin);
+		return f ? f->As<RE::TESObjectWEAP>() : nullptr;
+	}
+	// which class's sword: 0 the Summoner's Radiant Blade, 1 Destruction's Carian Blade, 2 the Alchemist's Shadowflame Sword,
+	// 3 the Spellsword's Spellbound Blade (-1: none of them)
+	int SwordClass(const RE::TESForm* a_w)
+	{
+		if (!a_w) return -1;
+		if (a_w == Riftblade()) return 0;
+		if (a_w == CarianBlade()) return 1;
+		if (a_w == AlchemistKnife()) return 2;
+		if (a_w == SpellswordBlade()) return 3;
+		return -1;
+	}
+	namespace
+	{
+		// the element on the Spellsword's blade: the spell in the other hand (or the Spellsword spell it last carried)
+		int SpellswordElement()
+		{
+			int i = Arcana::Hands()[0];
+			if (i < 0) i = BladeSpell();
+			return i >= 0 ? Arcana::ElementOf(i) : -1;
+		}
+		int LookKey(int a_cls)   // its row in gen::kBladeViz (tools/esp_ids.py BLADE_VIZ)
+		{
+			switch (a_cls) {
+			case 0: return 2;
+			case 1: return 1;
+			case 2: return 0;
+			case 3:
+				switch (SpellswordElement()) {
+				case coffer::kFire: return 4;
+				case coffer::kFrost: return 5;
+				case coffer::kShock: return 6;
+				case coffer::kSun: return 7;
+				case coffer::kBlood: return 8;
+				default: return 3;
+				}
+			}
+			return -1;
+		}
+		const char* ArcModel(int a_key)
+		{
+			static constexpr const char* kArc[10] = { "purple", "carian", "white", "red", "fire", "frost", "shock", "sun", "blood", "gold" };
+			static std::string s[10];
+			if (a_key < 0 || a_key > 9) a_key = 3;
+			if (s[a_key].empty()) s[a_key] = std::string("CurseOfAlduin\\fx\\arc_") + kArc[a_key] + ".nif";
+			return s[a_key].c_str();
+		}
+		// (Visual Animated Enchants) its art on our looks' effects, set when first asked: the plugin needs no master of theirs;
+		// without the mod the looks keep only their glow
+		void PatchLookArt()
+		{
+			static bool done = false;
+			if (done) return;
+			done = true;
+			static constexpr std::uint32_t kArt[10] = { 0xD7D, 0xD7C, 0x438C, 0xD77, 0xD78, 0xD7B, 0x184C, 0xD79, 0xD77, 0x48F0 };   // violet, indigo, moon, red, orange, ice blue, violet-blue, yellow, red, Dawnbreaker's
+			auto* dh = RE::TESDataHandler::GetSingleton();
+			int n = 0;
+			for (int k = 0; k < 10; ++k) {
+				auto* art = dh->LookupForm<RE::BGSArtObject>(kArt[k], "VisualAnimatedEnchants.esp");
+				for (int t = 0; t < 3; ++t) {
+					if (auto* m = dh->LookupForm<RE::EffectSetting>(gen::kBladeVizFx[k][t], gen::kPlugin); m && art) { m->data.enchantEffectArt = art; ++n; }
+				}
+			}
+			logger::info("swords: {} tier looks wear Visual Animated Enchants' art", n);
+		}
+	}
+	RE::EnchantmentItem* BladeLook(const RE::TESObjectWEAP* a_w, int a_tier)
+	{
+		PatchLookArt();
+		int key = SwordClass(a_w) >= 0 ? LookKey(SwordClass(a_w)) : -1;
+		if (a_w && a_w == Slayer()) key = 9;
+		if (key < 0 || a_tier < 1) return nullptr;   // (Base: the bare sword)
+		return RE::TESDataHandler::GetSingleton()->LookupForm<RE::EnchantmentItem>(gen::kBladeViz[key][std::clamp(a_tier, 1, 3) - 1], gen::kPlugin);
+	}
+	// a swing of a class sword (any swing, hit or miss - WonderProps hears it)
 	void MaceSwing(bool a_power)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
-		auto* w = AlchemistKnife();
-		if (!p || !w || p->GetEquippedObject(false) != w || !p->AsActorState()->IsWeaponDrawn()) return;
+		auto* w = p ? p->GetEquippedObject(false) : nullptr;
+		const int cls = SwordClass(w);
+		if (!p || cls < 0 || !p->AsActorState()->IsWeaponDrawn()) return;
 		static auto last = std::chrono::steady_clock::now() - std::chrono::seconds(5);  // (one swing heard from both bodies)
 		const auto now = std::chrono::steady_clock::now();
 		if (now - last < std::chrono::milliseconds(200)) return;
 		last = now;
 		const int t = std::clamp(Kit::TierOfWeapon(w), 0, 3);
-		if (t < 1) return;  // (Base: a plain mace - no Shadowflame)
-		const float yaw = p->GetAngleZ();
-		const RE::NiPoint3 fwd{ std::sin(yaw), std::cos(yaw), 0.0f };
+		if (t < 1) return;
+		const float pw = UpgradeMult(t) * (0.7f + 0.3f * Arcana::Power());
+		const RE::NiPoint3 dir = Gun::SwingDir();
 		const RE::NiPoint3 me = p->GetPosition();
-		const auto inFront = [&](RE::Actor* f, float a_range, float a_cos) {
-			RE::NiPoint3 d = f->GetPosition() - me;
-			d.z = 0;
-			const float l = d.Length();
-			return l <= a_range && (l < 60.0f || (d.x * fwd.x + d.y * fwd.y) / l >= a_cos);
-		};
-		if (t == 1) {
-			// a tongue of shadowflame off the head, onto the one nearest in front (none there: it gutters out in the air)
-			RE::Actor* best = nullptr;
-			float bd = 1e9f;
-			for (auto* f : NearFoes(me, 300.0f, 12)) {
-				if (!inFront(f, 300.0f, 0.5f)) continue;
-				if (const float d = f->GetPosition().GetDistance(me); d < bd) bd = d, best = f;
+		const int key = LookKey(cls);
+		RE::SpellItem* spell = nullptr;
+		if (cls == 3) if (const int i = Arcana::Hands()[0] >= 0 ? Arcana::Hands()[0] : BladeSpell(); i >= 0) spell = Arcana::Spell(i);
+		if (!a_power) {
+			// Tier I on: the arc slash, in the sword's colour, through every one of the dead in its path
+			Gun::SlashSpec sl;
+			sl.model = ArcModel(key);
+			sl.from = me + RE::NiPoint3{ 0, 0, 100.0f } + dir * 70.0f;
+			sl.dir = dir;
+			sl.roll = Gun::SwingRoll(dir);
+			sl.range = 1400.0f + 200.0f * t;
+			sl.scale = 0.9f + 0.15f * t;
+			sl.share = 0.2f * pw;
+			sl.onHit = [cls, t, spell](RE::Actor* a, bool killed) {
+				if (killed || !a) return;
+				if (cls == 2) Shadowburn(a, t);                                   // shadowflame
+				else if (cls == 3 && t >= 3 && spell) CastFrom(RE::PlayerCharacter::GetSingleton(), spell, a);   // (Tier III: overcharged - the spell itself)
+				else if (cls == 1) Gun::ElemBurst(1, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.35f, 0.0f, 0.4f);   // (glinting blue: raw magic)
+			};
+			Gun::Slash(sl);
+			return;
+		}
+		if (t >= 2) {
+			// Tier II on: the heavy attack bursts round where it lands, in the sword's element
+			const RE::NiPoint3 at = me + dir * 190.0f + RE::NiPoint3{ 0, 0, 40.0f };
+			const float r = 320.0f + 40.0f * t;
+			switch (cls) {
+			case 2:
+				for (int k = 0; k < 4; ++k) { const float a = 1.5708f * k; ShadowFire(at + RE::NiPoint3{ std::cos(a) * 110.0f, std::sin(a) * 110.0f, -30.0f }, 0.8f, 1.2f); }
+				for (auto* f : NearFoes(at, r, 16)) Shadowburn(f, t);
+				break;
+			case 1: Gun::ElemBurst(1, at, 1.4f, 0.0f, 0.9f); Gun::FxBlast("light", at); break;            // (raw sorcery: a blue-white burst)
+			case 0: Gun::FxBlast("light", at); Gun::ElemBurst(4, at, 1.1f, 0.0f, 0.8f); break;             // (radiance)
+			case 3: {
+				static constexpr int kBurst[9] = { 0, 0, 0, 5, 0, 1, 2, 4, 5 };
+				Gun::ElemBurst(kBurst[key], at, 1.3f, 0.0f, 0.9f);
+				break;
 			}
-			ShadowFire(best ? best->GetPosition() + RE::NiPoint3{ 0, 0, 30.0f } : me + fwd * 150.0f + RE::NiPoint3{ 0, 0, 50.0f }, 0.45f, 0.6f);
-			if (best) Shadowburn(best, t);
-		} else {
-			// Tier II on: a fan of violet fire swept out in front of you, close - everything in it takes Shadowflame
-			for (int k = -2; k <= 2; ++k) {
-				const float a = yaw + 0.32f * static_cast<float>(k);
-				const RE::NiPoint3 at = me + RE::NiPoint3{ std::sin(a) * 200.0f, std::cos(a) * 200.0f, 80.0f };
-				ShadowFire(at - RE::NiPoint3{ 0, 0, 40.0f }, 0.5f + 0.08f * static_cast<float>(t), 0.6f);
 			}
-			int caught = 0;
-			for (auto* f : NearFoes(me, 380.0f, 16)) {
-				if (!inFront(f, 380.0f, 0.42f)) continue;
-				Shadowburn(f, t);
-				++caught;
-			}
-			Gun::AreaHurt(me + fwd * 200.0f, 220.0f, 0.06f * UpgradeMult(t), "");
-			(void)caught;
-			// Tier III: a charged swing calls one burning star down from the sky - onto the nearest of the dead ahead, else
-			// where you swung
-			if (t >= 3 && a_power) {
-				RE::Actor* tgt = nullptr;
-				float bd = 1e9f;
-				for (auto* f : NearFoes(me, 1500.0f, 24)) {
-					if (!inFront(f, 1500.0f, 0.6f)) continue;
-					if (const float d = f->GetPosition().GetDistance(me); d < bd) bd = d, tgt = f;
+			Gun::AreaHurt(at, r, 0.35f * pw, "");
+		}
+		if (t >= 3 && cls == 1) {
+			// (Noah, Destruction's Tier III: "a charged swing conjures a giant spectral greatsword that sweeps everything before
+			// you") the Carian Greatblade: its blue crystal greatsword, giant, swept flat through all in front, then shattering
+			Gun::SlashSpec gb;
+			gb.model = "kv\\crystalsword\\kv-crystalgreatsword_blue_1.nif";
+			gb.from = me + RE::NiPoint3{ 0, 0, 110.0f } + dir * 60.0f;
+			gb.dir = dir;
+			gb.sideways = true;
+			gb.speed = 1300.0f, gb.range = 1000.0f, gb.radius = 300.0f, gb.scale = 3.2f, gb.share = 0.9f * pw;
+			gb.onHit = [](RE::Actor* a, bool) { if (a) Gun::ElemBurst(1, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.5f, 0.0f, 0.5f); };
+			Gun::Slash(gb);
+			const RE::NiPoint3 end = gb.from + dir * 1000.0f;
+			Tasks::Later(0.75f, [end]() { Gun::ElemBurst(1, end, 2.0f, 0.0f, 1.1f); Gun::FxBlast("light", end); });   // (its shards)
+			logger::info("swords: the Carian Greatblade sweeps");
+		}
+	}
+	// (Noah, the Dragon Slayer: "every kill feeds it a dragon ember (five at most); a charged swing spends them all in one great
+	// arc of dragonfire, stronger for each") Dragonbreaker
+	namespace { int g_embers = 0; }
+	void SlayerKill()
+	{
+		if (g_embers >= 5) return;
+		++g_embers;
+		if (auto* p = RE::PlayerCharacter::GetSingleton()) Gun::ElemBurst(0, p->GetPosition() + RE::NiPoint3{ 0, 0, 100.0f }, 0.25f + 0.07f * g_embers, 0.0f, 0.5f);
+		logger::info("swords: the Dragon Slayer holds {} embers", g_embers);
+	}
+	int SlayerEmbers() { return g_embers; }
+	void SlayerSwing(bool a_power)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p || !a_power || g_embers <= 0) return;
+		static auto last = std::chrono::steady_clock::now() - std::chrono::seconds(5);
+		const auto now = std::chrono::steady_clock::now();
+		if (now - last < std::chrono::milliseconds(400)) return;
+		last = now;
+		const int e = g_embers;
+		g_embers = 0;
+		const float top = UpgradeMult(AfterSovngarde() ? kWonderUps + 1 : kWonderUps);
+		const RE::NiPoint3 dir = Gun::SwingDir();
+		Gun::SlashSpec sl;
+		sl.model = ArcModel(9);
+		sl.from = p->GetPosition() + RE::NiPoint3{ 0, 0, 100.0f } + dir * 80.0f;
+		sl.dir = dir;
+		sl.roll = Gun::SwingRoll(dir);
+		sl.speed = 1900.0f, sl.range = 2200.0f, sl.radius = 160.0f + 25.0f * e, sl.scale = 1.4f + 0.3f * e, sl.share = (0.4f + 0.35f * e) * top;
+		sl.onHit = [](RE::Actor* a, bool) { if (a) Gun::FxBlast("dragonfire", a->GetPosition() + RE::NiPoint3{ 0, 0, 50.0f }); };
+		Gun::Slash(sl);
+		for (int k = 1; k <= 3 + e / 2; ++k) Gun::FxBlast("dragonfire", sl.from + dir * (400.0f * k), 0.12f * k);
+		logger::info("swords: Dragonbreaker - {} embers in one arc of dragonfire", e);
+	}
+	// each frame's sword upkeep: the Summoner's circling blades of light (Tier III, drawn), the Alchemist's chain reaction
+	void TickSwords(float a_delta)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		auto* w = p ? p->GetEquippedObject(false) : nullptr;
+		const int cls = SwordClass(w);
+		const int t = cls >= 0 ? std::clamp(Kit::TierOfWeapon(w), 0, 3) : 0;
+		const bool drawn = p && p->AsActorState()->IsWeaponDrawn();
+		g_shadowChain = cls == 2 && t >= 3;
+		g_shadowTier = std::max(1, t);
+		// (Noah, the Summoner's Tier III: "halo blades") three blades of white light circle you and strike the dead that come near
+		if (cls == 0 && t >= 3 && drawn) {
+			const float pw = UpgradeMult(t) * (0.7f + 0.3f * Arcana::Power());
+			Gun::Halo(3, "kv\\crystalsword\\kv-crystalsword_white_1.nif", 0.55f, 1.8f, [pw](RE::Actor* a) {
+				Gun::FxBlast("light", a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f });
+				Gun::ElemBurst(4, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.5f, 0.0f, 0.5f);
+				Gun::AreaHurt(a->GetPosition(), 90.0f, 0.25f * pw, "");
+			});
+		} else Gun::Halo(0, "", 1.0f, 1.0f, nullptr);
+		// the Dragon Slayer, a wonder above every tier: its gold dragonfire look always
+		if (static float sl = 0; (sl -= a_delta) <= 0) {
+			sl = 2.0f;
+			if (auto* d = Slayer(); d && p) {
+				if (auto* want = BladeLook(d, 3); want && d->formEnchanting != want) {
+					d->formEnchanting = want;
+					d->amountofEnchantment = 0;
+					auto* em = RE::ActorEquipManager::GetSingleton();
+					if (em && p->GetEquippedObject(false) == d && !ItemMenusOpen()) {
+						em->UnequipObject(p, d, nullptr, 1, nullptr, false, false, false, true);
+						em->EquipObject(p, d, nullptr, 1, nullptr, false, false, false, true);
+					}
 				}
-				const RE::NiPoint3 at = tgt ? tgt->GetPosition() : me + fwd * 500.0f;
-				Gun::SkyFall(at);
-				Tasks::Later(1.3f, [at, t]() {  // (where it lands, the fire it brings is shadowflame too)
-					ShadowFire(at, 1.6f, 3.0f);
-					Gun::AreaHurt(at, 360.0f, 0.5f * UpgradeMult(t), "");
-					for (auto* f : NearFoes(at, 360.0f, 16)) Shadowburn(f, t);
-				});
-				logger::info("alchemist: the Shadowflame mace calls down a meteor");
 			}
+		}
+		// the Spellsword's blade takes the element of the spell in the other hand: its look follows (Kit swaps it when it can)
+		static float look = 0;
+		if (cls == 3 && t >= 1 && (look -= a_delta) <= 0) {
+			look = 0.5f;
+			if (auto* wp = w->As<RE::TESObjectWEAP>(); wp && wp->formEnchanting != BladeLook(wp, t)) Kit::SyncWeapons(true);
 		}
 	}
 	void TickShadowflame(float a_delta) { TickShadow(a_delta); }
@@ -3379,6 +3555,7 @@ namespace bo3z::Classes
 	{
 		TickGoldClouds(a_delta);
 		TickShadow(a_delta);
+		TickSwords(a_delta);
 		g_flaskCool = std::max(0.0f, g_flaskCool - a_delta), g_philCool = std::max(0.0f, g_philCool - a_delta);
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (!p || !p->Is3DLoaded() || p->IsDead() || ItemMenusOpen()) return;

@@ -22,7 +22,8 @@ namespace bo3z::Kit
 			{ Kind::Armour, "armour", -1 }, { Kind::Ladder, "Atronachs", 2 }, { Kind::Ladder, "Ash", 4 }, { Kind::Ladder, "The Night", 7 }, { Kind::Ladder, "The Wrath", 9 } };  // (Noah: "I want them all to be 7")  // (Noah: the Dwarven Spider at 1 city freed, the Spriggan at 3, the Dremora - the strongest - at 5) (the list's order is the save's: the Armory shows them by when they open)
 		constexpr Def kDestruction[] = { { Kind::Ladder, "Fire", -1 }, { Kind::Ladder, "Frost", -1 }, { Kind::Ladder, "Shock", 1 }, { Kind::Ladder, "Sun", 3 },
 			{ Kind::Ladder, "Blood", 5 }, { Kind::Ladder, "Runes", 7 },
-			{ Kind::Armour, "armour", -1 }, { Kind::Ladder, "Cloaks", 2 }, { Kind::Ladder, "Walls", 4 }, { Kind::Ladder, "Storms", 9 } };
+			{ Kind::Armour, "armour", -1 }, { Kind::Ladder, "Cloaks", 2 }, { Kind::Ladder, "Walls", 4 }, { Kind::Ladder, "Storms", 9 },
+			{ Kind::Blade, "carian", -1 } };  // (Noah: "destruction should get an elemental upgradable sword too" - last: the saves' order)
 		// (Noah: "remove everything from the Ranger class ... and replace it with the Alchemist class") the knife, six flasks
 		// opening with the cities freed, and the Drifter's outfit
 		constexpr Def kAlchemist[] = { { Kind::Blade, "knife", -1 }, { Kind::Bomb, "0", -1 }, { Kind::Bomb, "1", 2 }, { Kind::Bomb, "2", 4 },
@@ -170,7 +171,7 @@ namespace bo3z::Kit
 		}
 		int Elem(const Def& d) { return d.ref[0] - '0'; }
 		// a class's blade: the Summoner's Riftblade, the Alchemist's knife, the Spellsword's Madness Sword
-		RE::TESObjectWEAP* BladeOf(std::string_view a_ref) { return a_ref == "riftblade" ? Classes::Riftblade() : a_ref == "knife" ? Classes::AlchemistKnife() : Classes::SpellswordBlade(); }
+		RE::TESObjectWEAP* BladeOf(std::string_view a_ref) { return a_ref == "riftblade" ? Classes::Riftblade() : a_ref == "knife" ? Classes::AlchemistKnife() : a_ref == "carian" ? Classes::CarianBlade() : Classes::SpellswordBlade(); }
 
 		std::string ItemName(int a_cls, int a_i)
 		{
@@ -554,6 +555,7 @@ namespace bo3z::Kit
 		}
 	}
 	// (Noah) the kit's weapons as their tiers make them: name, damage, and the Riftblade's fire
+	bool g_lookPending = false;
 	void SyncWeapons(bool a_reequip)
 	{
 		const int c = Cls();
@@ -564,16 +566,12 @@ namespace bo3z::Kit
 			const int t = ItemTier(c, i);
 			switch (defs[i].kind) {
 			case Kind::Blade: {
-				const bool rift = std::string_view(defs[i].ref) == "riftblade";
-				auto*      w = BladeOf(defs[i].ref);
+				auto* w = BladeOf(defs[i].ref);
 				Look(w, t);
-				// (the Riftblade's fire, the Madness Sword's violet fire: brighter each tier)
-				// (Noah: "the Madness Sword also isn't getting its animation or enchantment effect after upgrading") its violet fire
-				// is drawn on the blade itself now (TickMadGlow), never by swapping its enchantment - that swap needed the blade
-				// taken off and on again, which broke your swing's momentum for a moment
-				const bool mad = false;
-				if ((rift || mad) && w) {
-					// (Noah: "remove the charge bar - it doesn't even use charge") no charge on it, nor on the one you carry
+				// (Noah: "each sword should have an elemental animation that changes and grows as the sword grows in strength from
+				// the tiers 1-3") the class swords wear their tier's look: an enchantment of looks only (Classes::BladeLook) - bare
+				// at Base; never any charge to run down
+				if (w) {
 					w->amountofEnchantment = 0;
 					if (auto* p = RE::PlayerCharacter::GetSingleton()) {
 						if (auto* inv = p->GetInventoryChanges(); inv && inv->entryList) {
@@ -583,16 +581,17 @@ namespace bo3z::Kit
 							}
 						}
 					}
-					auto*       orig = g_base[w->GetFormID()].ench;
-					auto*       want = t <= 0 ? orig : RE::TESDataHandler::GetSingleton()->LookupForm<RE::EnchantmentItem>((rift ? gen::kRiftEnch : gen::kMadEnch)[std::clamp(t, 1, 3) - 1], gen::kPlugin);
-					if (want && w->formEnchanting != want) {
+					auto* want = Classes::BladeLook(w, t);
+					if (w->formEnchanting != want) {
 						w->formEnchanting = want;
-						// (the blade in hand: taken off and on again, so its new fire shows)
+						// (the blade in hand: taken off and on again, so its new look shows; in a menu, once it closes)
 						auto* p = RE::PlayerCharacter::GetSingleton();
 						auto* em = RE::ActorEquipManager::GetSingleton();
-						if (a_reequip && p && em && !ItemMenusOpen() && p->GetEquippedObject(false) == w) {
-							em->UnequipObject(p, w, nullptr, 1, nullptr, false, false, false, true);
-							em->EquipObject(p, w, nullptr, 1, nullptr, false, false, false, true);
+						if (p && em && p->GetEquippedObject(false) == w) {
+							if (a_reequip && !ItemMenusOpen()) {
+								em->UnequipObject(p, w, nullptr, 1, nullptr, false, false, false, true);
+								em->EquipObject(p, w, nullptr, 1, nullptr, false, false, false, true);
+							} else g_lookPending = true;
 						}
 					}
 				}
@@ -1186,6 +1185,7 @@ namespace bo3z::Kit
 		// current detail") every kit weapon's card follows its tier - its name and its damage - and the Riftblade's own fire
 		// burns brighter each tier
 		TickMadGlow(a_delta);
+		if (g_lookPending && !ItemMenusOpen()) { g_lookPending = false; SyncWeapons(true); }  // (a sword's new look, once the menu is shut)
 		static float look = 0;
 		if ((look -= a_delta) <= 0) {
 			look = 1.0f;

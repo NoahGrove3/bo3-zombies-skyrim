@@ -437,39 +437,42 @@ for el, (label, text) in XBOWS.items():
         subs.append(sub(name, b))
     recs['WEAP'].append(record('WEAP', fid('WEAP', 'xbow_' + el), subs))
 
-# (Noah: "an enchanted dagger with a special ability" - Rift Stab) the Summoner's Riftblade: Skyrim's Daedric dagger with its
-# fire enchantment; every fifth hit tears a small rift on the foe and a Flame Atronach steps out for 10 s
-# (src/Classes.cpp RiftHit)
-subs = []
-for name, hx in T['weap_daedricdagger']['subs']:
-    b = bytes.fromhex(hx)
-    if name == 'EDID': b = z('UN_Riftblade')
-    elif name == 'FULL': b = z('Riftblade')
-    elif name == 'DESC': b = z('A Daedric blade that burns. Its strikes tear rifts: a Flame Atronach steps out to fight for you. Base: every 5th strike, 10 s. I: every 4th, 15 s, larger. II: every 3rd, a potent atronach, 20 s, two at once. III: a great one, 25 s, three at once - the rift bursts into flame.')
-    elif name == 'DATA': b = struct.pack('<IfH', 900, 6.0, 14)
-    elif name == 'EAMT': b = struct.pack('<H', 0)   # (Noah: "remove the charge bar - it doesn't even use charge") no charge to run down
-    elif name == 'MODL': b = z('CurseOfAlduin\\wonder\\riftblade.nif')   # (Noah: the Abyssal Heart's model)
-    elif name == 'MODT': continue
-    elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_riftblade'))
-    subs.append(sub(name, b))
-recs['WEAP'].append(record('WEAP', fid('WEAP', 'riftblade'), subs))
-# (Noah, 2026-11: "change it from a dagger to a one-handed mace using the model I've attached") the Alchemist's starting weapon:
-# a one-handed mace (Skyrim's Daedric mace's record: its swings, its sounds) wearing his model (tools/wonderprops.py mace) - the
-# record keeps its old id (alchknife) so every kit that had the knife has the mace; its Shadowflame (src/Classes.cpp MaceSwing) and its fire (Gun.cpp)
-subs = []
-for name, hx in T['weap_daedricmace']['subs']:
-    b = bytes.fromhex(hx)
-    if name == 'EDID': b = z('UN_AlchemistKnife')
-    elif name == 'FULL': b = z("Shadowflame Mace")
-    elif name in ('EITM', 'EAMT', 'MODT'): continue
-    elif name == 'MODL': b = z('CurseOfAlduin\\alchemist\\mace.nif')
-    elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_mace'))
-    elif name == 'KSIZ': b = struct.pack('<I', 2)
-    elif name == 'KWDA': b = bytes.fromhex(hx)[4:]   # (WeapTypeMace and the vendor's - the Daedric material's left out)
-    elif name == 'DESC': b = z("A mace of blackened steel, its head a cage round a crystal of shadowflame. Upgraded, every swing sets the nearest foe ahead burning with Shadowflame - fire's burn at twice the damage; at Tier II each swing fans violet fire out in front of you; at Tier III a charged swing calls a meteor down from the sky.")
-    elif name == 'DATA': b = struct.pack('<IfH', 300, 12.0, 11)
-    subs.append(sub(name, b))
-recs['WEAP'].append(record('WEAP', fid('WEAP', 'alchknife'), subs))
+
+# (Noah: "replace the madness sword ... replace the rift blade with the new white sword ... change the shadowflame mace to be a
+# shadowflame sword with a model from one of our mods ... destruction should get an elemental upgradable sword too") the four
+# class swords are Kv's Crystal Sword (its four colours; the Party Pack carries its models and textures loose), on the
+# Madness Sword's record (a one-handed sword); the Dragon Slayer is its white greatsword on the Draugr greatsword's. Their tier
+# looks are the bv_* enchantments below; their abilities src/Classes.cpp (the tier ladder)
+def crystal_weapon(key, edid, full, model, first, desc, data, tmpl='weap_madness'):
+    subs = []
+    for name, hx in T[tmpl]['subs']:
+        b = bytes.fromhex(hx)
+        if name == 'EDID': b = z(edid)
+        elif name == 'FULL': b = z(full)
+        elif name == 'MODL': b = z(model)
+        elif name in ('MODT', 'EITM', 'EAMT'): continue
+        elif name == 'DESC': b = z(desc)
+        elif name == 'KSIZ' and tmpl == 'weap_madness': b = struct.pack('<I', 2)
+        elif name == 'KWDA' and tmpl == 'weap_madness': b = bytes.fromhex(hx)[:8]
+        elif name == 'WNAM': b = struct.pack('<I', fid('STAT', first))
+        elif name == 'DATA': b = struct.pack('<IfH', *data)
+        subs.append(sub(name, b))
+        if name == 'MODL': subs.append(sub('EAMT', struct.pack('<H', 0)))   # (no charge bar: its looks never run down)
+    if tmpl == 'weap_draugr_gs' and not any(n == 'WNAM' for n, _ in T[tmpl]['subs']):
+        subs.append(sub('WNAM', struct.pack('<I', fid('STAT', first))))
+    recs['WEAP'].append(record('WEAP', fid('WEAP', key), subs))
+KV = 'kv\\crystalsword\\'
+crystal_weapon('riftblade', 'UN_Riftblade', 'Radiant Blade', KV + 'kv-crystalsword_white_1.nif', '1st_riftblade',
+    "The Summoner's sword of white crystal, alive with pale light as it grows. I: its light swings send out arcs of white light that pierce through the dead. II: its heavy attacks burst in radiance. III: three blades of light circle you and strike the dead that come near.",
+    (900, 10.0, 10))
+crystal_weapon('carianblade', 'UN_CarianBlade', 'Carian Blade', KV + 'kv-crystalsword_blue_1.nif', '1st_kvblue',
+    "Destruction's sword of blue crystal, its edge pure sorcery - raw magic no foe resists. I: its light swings send out arcs of glinting blue that pierce through the dead. II: its heavy attacks burst in raw magic. III: a charged swing conjures a giant spectral greatsword that sweeps everything before you.",
+    (900, 10.0, 10))
+
+crystal_weapon('alchknife', 'UN_AlchemistKnife', 'Shadowflame Sword', KV + 'kv-crystalsword_1.nif', '1st_mace',
+    "The Alchemist's sword of violet crystal, burning with shadowflame. I: its light swings send out arcs of shadowflame that pierce through the dead and set them burning - fire at twice its damage. II: its heavy attacks burst in shadowflame. III: the dead that die burning explode, setting those round them alight.",
+    (900, 10.0, 10))
+
 
 # (Noah: "the weapon effects when upgrading should enhance the current detail - the Riftblade is black and red with a red
 # ember breathing effect: make that brighter or a different colour") the Riftblade's fire enchantment's own shader,
@@ -520,36 +523,17 @@ for name, hx in T['stat_madness1st']['subs']:
     if name == 'EDID': b = z('UN_MadnessSword1st')
     subs.append(sub(name, b))
 recs['STAT'].append(record('STAT', fid('STAT', 'madness_1st'), subs))
-subs = []
-for name, hx in T['weap_madness']['subs']:
-    b = bytes.fromhex(hx)
-    if name == 'EDID': b = z('UN_MadnessSword')
-    elif name == 'FULL': b = z('Madness Sword')
-    elif name == 'MODL': b = z('CreationClub\\BGSSSE025\\Weapons\\Madness\\3rdPersonMadnessSword.nif')
-    elif name == 'DESC': b = z('A blade of the Shivering Isles, cut from Madness ore. Its violet fire burns brighter with each tier at the Echo Altar.')
-    elif name == 'KSIZ': b = struct.pack('<I', 2)
-    elif name == 'KWDA': b = bytes.fromhex(hx)[:8]   # (Skyrim's sword keywords; the Creation Club's own material keyword left out)
-    elif name == 'WNAM': b = struct.pack('<I', fid('STAT', 'madness_1st'))
-    subs.append(sub(name, b))
-    if name == 'MODT': subs.append(sub('EAMT', struct.pack('<H', 0)))   # (Noah: "remove the charge bar - it doesn't even use charge") no charge: its tier fire never runs down
-recs['WEAP'].append(record('WEAP', fid('WEAP', 'madness'), subs))
+crystal_weapon('madness', 'UN_MadnessSword', 'Spellbound Blade', KV + 'kv-crystalsword_red_1.nif', '1st_kvred',
+    "The Spellsword's sword of red crystal, taking the element of the spell in your other hand. I: its light swings send out arcs of that element that pierce through the dead. II: its heavy attacks burst in it. III: its arcs carry the spell itself.",
+    (900, 10.0, 10))
+
 # (Noah: "make the Dragon Slayer sword one-handed ... use the sword I attached") the Spellsword's wonder: a one-handed sword (the
 # Madness Sword's record) with the Ayleid Crystal Saber's model (tools/wonderprops.py slayer); its spell-on-hit, lightning
 # slashes and tier in src/Classes.cpp and src/WonderProps.inl
-subs = []
-for name, hx in T['weap_madness']['subs']:
-    b = bytes.fromhex(hx)
-    if name == 'EDID': b = z('UN_DragonSlayer')
-    elif name == 'FULL': b = z('Dragon Slayer')
-    elif name == 'MODL': b = z('CurseOfAlduin\\wonder\\slayer.nif')
-    elif name == 'MODT': continue
-    elif name == 'DESC': b = z('A blade of living crystal from the Ayleid deep. Every swing cracks lightning round it; a power attack sends a slash of lightning down the line. Every hit carries the last Spellsword spell you held.')
-    elif name == 'KSIZ': b = struct.pack('<I', 2)
-    elif name == 'KWDA': b = bytes.fromhex(hx)[:8]
-    elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_slayer'))
-    elif name == 'DATA': b = struct.pack('<IfH', 6000, 9.0, 24)
-    subs.append(sub(name, b))
-recs['WEAP'].append(record('WEAP', fid('WEAP', 'slayer'), subs))
+crystal_weapon('slayer', 'UN_DragonSlayer', 'Dragon Slayer', KV + 'kv-crystalgreatsword_white_1.nif', '1st_slayer',
+    "A greatsword of white crystal, gold dragonfire running through it. Every kill feeds it a dragon ember (five at most); a charged swing spends them all in one great arc of dragonfire, stronger for each.",
+    (6000, 16.0, 26), 'weap_draugr_gs')
+
 # (Noah: "I want the armor kits for all classes to stay the same visually through all the upgrades ... the upgraded version
 # to make the item look enchanted") each class's set glows with its colour from Tier I, stronger each tier (Classes::TickArmour
 # lays it on you): Summoner violet, Destruction ember-orange, Alchemist green, Spellsword blue
@@ -600,6 +584,56 @@ for n, t in enumerate(MAD_GLOW, start=1):
     struct.pack_into('<I', en, 0, 0); struct.pack_into('<I', en, 4, struct.unpack_from('<I', en, 4)[0] | 0x1)   # costs no charge
     recs['ENCH'].append(record('ENCH', fid('ENCH', f'madglow{n}'), [sub('EDID', z(f'UN_MadGlowEnch{n}')), sub('OBND', bytes(12)), sub('FULL', z('Madfire')),
         sub('ENIT', bytes(en)), sub('EFID', struct.pack('<I', fid('MGEF', f'madglow{n}'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+
+
+# (Noah: "each sword should have an elemental animation that changes and grows as the sword grows in strength from the tiers
+# 1-3") each sword's look per tier: an enchantment of nothing but looks - Visual Animated Enchants' art spilling off the blade
+# (set on these effects when the game loads, src/Kit.cpp: our plugin needs no master of theirs) and a glow of the sword's colour
+# over it, fuller each tier; from Tier II its sparks fly off the blade
+BV_COL = {   # fill, edge, spark keys (bright, mid, dark)
+    'alch':     ((150, 40, 255), (200, 110, 255), ((245, 220, 255), (185, 90, 255), (90, 10, 190))),
+    'carian':   ((70, 130, 255), (150, 200, 255), ((235, 245, 255), (120, 180, 255), (40, 70, 220))),
+    'radiant':  ((235, 238, 255), (255, 255, 255), ((255, 255, 255), (235, 240, 255), (190, 205, 255))),
+    'ss_none':  ((220, 30, 20), (255, 80, 50), ((255, 210, 180), (240, 60, 30), (140, 0, 0))),
+    'ss_fire':  ((255, 110, 20), (255, 170, 60), ((255, 240, 200), (255, 150, 40), (220, 50, 10))),
+    'ss_frost': ((120, 200, 255), (190, 235, 255), ((240, 250, 255), (150, 215, 255), (60, 140, 230))),
+    'ss_shock': ((150, 120, 255), (200, 190, 255), ((250, 245, 255), (175, 160, 255), (90, 70, 240))),
+    'ss_sun':   ((255, 210, 80), (255, 235, 150), ((255, 252, 230), (255, 215, 90), (230, 150, 20))),
+    'ss_blood': ((140, 0, 10), (200, 20, 20), ((230, 90, 80), (170, 10, 15), (70, 0, 0))),
+    'slayer':   ((255, 190, 70), (255, 225, 140), ((255, 250, 220), (255, 190, 70), (220, 90, 20))),
+}
+for bkey, (fill, edge, keys) in BV_COL.items():
+    for n in (1, 2, 3):
+        d = bytearray(tsub('efsh_enchpurple', 'DATA'))
+        sparks = n >= 2
+        d[0] = d[0] & ~0x08 if sparks else d[0] | 0x08
+        struct.pack_into('<f', d, 0x20, (0.55, 0.85, 1.15)[n - 1])     # its glow, fuller each tier
+        struct.pack_into('<f', d, 0x24, (0.6, 0.45, 0.3)[n - 1])       # its breathing, steadier
+        d[0x10:0x13] = bytes(int(c * (0.22, 0.32, 0.42)[n - 1]) for c in fill)
+        d[0x38:0x3B] = bytes(edge)
+        if sparks:
+            struct.pack_into('<f', d, 0x7C, (0, 70.0, 120.0)[n - 1])
+            struct.pack_into('<fff', d, 0xC8, *((0, (0.06, 0.4, 0.06), (0.12, 0.65, 0.12))[n - 1]))
+            struct.pack_into('<f', d, 0xB0, (0, 8.0, 11.0)[n - 1])
+            struct.pack_into('<f', d, 0x84, 0.8)
+            for k, rgb in enumerate(keys): d[0xBC + 4 * k:0xBC + 4 * k + 3] = bytes(rgb)
+        subs = [sub('EDID', z(f'UN_BladeLook_{bkey}{n}'))]
+        for name, hx in T['efsh_enchpurple']['subs']:
+            if name == 'EDID': continue
+            subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
+        recs['EFSH'].append(record('EFSH', fid('EFSH', f'bv_{bkey}_{n}'), subs))
+        md = bytearray(tsub('mgef_enchfire', 'DATA'))
+        struct.pack_into('<I', md, 24, 0); struct.pack_into('<I', md, 32, 0); struct.pack_into('<I', md, 96, 0); struct.pack_into('<I', md, 100, 0)
+        struct.pack_into('<I', md, 36, fid('EFSH', f'bv_{bkey}_{n}'))
+        struct.pack_into('<I', md, 64, 1)                     # a script effect with no script: looks only, nothing done on a hit
+        struct.pack_into('<I', md, 68, 0xFFFFFFFF)
+        struct.pack_into('<I', md, 0, struct.unpack_from('<I', md, 0)[0] | 0x8000)   # hidden in the effects list
+        recs['MGEF'].append(record('MGEF', fid('MGEF', f'bv_{bkey}_{n}'), [sub('EDID', z(f'UN_BladeLookFx_{bkey}{n}')), sub('FULL', z('Blade')), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
+            sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+        en = bytearray(tsub('ench_fire05', 'ENIT'))
+        struct.pack_into('<I', en, 0, 0); struct.pack_into('<I', en, 4, struct.unpack_from('<I', en, 4)[0] | 0x1)
+        recs['ENCH'].append(record('ENCH', fid('ENCH', f'bv_{bkey}_{n}'), [sub('EDID', z(f'UN_BladeLookEnch_{bkey}{n}')), sub('OBND', bytes(12)), sub('FULL', z('Blade')),
+            sub('ENIT', bytes(en)), sub('EFID', struct.pack('<I', fid('MGEF', f'bv_{bkey}_{n}'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
 # (Noah: "for all the bows' animations in hand they should be high quality and flow with the model of the bow, not circulating
 # orbs") each bow's element as a living skin over the whole bow - the enchantment shader's membrane and its particles running

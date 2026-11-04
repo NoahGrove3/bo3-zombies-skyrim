@@ -3,6 +3,10 @@ ELEMENTS = ['fire', 'frost', 'shock', 'poison', 'disease', 'sun', 'blood', 'arca
 import json, pathlib
 ROOT = pathlib.Path(__file__).parent.parent
 IDFILE = ROOT / 'data' / 'form_ids.json'
+# (Noah: "each sword should have an elemental animation that changes and grows ... tiers 1-3") the class swords' looks: the
+# Alchemist's shadowflame, Destruction's Carian blue, the Summoner's white light, the Spellsword's by the spell in its other
+# hand, the Dragon Slayer's gold dragonfire
+BLADE_VIZ = ('alch', 'carian', 'radiant', 'ss_none', 'ss_fire', 'ss_frost', 'ss_shock', 'ss_sun', 'ss_blood', 'slayer')
 def sheets():
     return {json.load(open(p))['sheet']: json.load(open(p)) for p in sorted((ROOT / 'sheets').glob('*.json'))}
 def assign(S=None, write=False):
@@ -29,7 +33,8 @@ def assign(S=None, write=False):
              [('GLOB', 'egg_' + e['id']) for e in S.get('eggs', {}).get('rows', [])] + [('GLOB', 'egg_' + e['id'] + '_town') for e in S.get('eggs', {}).get('rows', [])] + [('GLOB', 'egg_gifts'), ('GLOB', 'test_kit'), ('GLOB', 'ritual_souls'), ('GLOB', 'ritual_stand')] + [('MGEF', 'altarbeam'), ('SPEL', 'altarbeam')] + \
              [('PERK', f'summon_cap_{n}') for n in (2, 3, 4, 5, 6, 7, 8)] + [('MGEF', 'tomecast'), ('SPEL', 'wonder_tome')] + \
              [('WEAP', 'vortex'), ('AMMO', 'vortexarrow'), ('PROJ', 'vortexarrow'), ('ACTI', 'vortexfx'), ('ACTI', 'purplefire'), ('WEAP', 'slayer'), ('PROJ', 'throwdagger'), ('MGEF', 'throwdagger'), ('SPEL', 'throwdagger'), ('MGEF', 'throwdaggers'), ('SPEL', 'throwdaggers')] + [('EFSH', 'bowskin_' + e) for e in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood', 'void')] + [('ACTI', 'burst_' + e) for e in ('fire', 'frost', 'shock', 'wind', 'sun', 'blood', 'void', 'poison', 'gold')] + [(k, 'flask_' + e) for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher') for k in ('PROJ', 'MGEF', 'SPEL')] + [('SPEL', 'throw_' + e) for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher')] + [('MGEF', 'flaskcast'), ('WEAP', 'alchknife'), ('SPEL', 'bonehorn')] + [('ALCH', 'flaskitem_' + e) for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher')] + [('EFSH', f'armglow_{c}_{t}') for c in range(4) for t in (1, 2, 3)] + [('WEAP', 'flaskweap_' + e) for e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher')] + [('BOOK', 'guide_' + c) for c in ('summoner', 'destruction', 'ranger', 'spellsword')] + [('PERK', 'steady'), ('CONT', 'classchest')] + [('MUST', 'night'), ('MUSC', 'night')] + [('WEAP', 'xbow_' + e) for e in ('fire', 'frost', 'shock')] + [('LIGH', 'lantern')] + [('WEAP', 'riftblade'), ('MGEF', 'reanimatebolt')] + [(k, f'rift{w}{n}') for n in (1, 2, 3) for k, w in (('EFSH', 'shader'), ('MGEF', 'fire'), ('ENCH', 'fire'))] + [('SPEL', f'reanimate_{n}') for n in (1, 2, 3)] + \
-             [('WEAP', 'madness'), ('STAT', 'madness_1st'), ('ARMO', 'lantern'), ('ARMA', 'lantern'), ('MGEF', 'lanternlight'), ('SPEL', 'lanternlight')] + [(k, f'mad{w}{n}') for n in (1, 2, 3) for k, w in (('EFSH', 'shader'), ('MGEF', 'glow'), ('ENCH', 'glow'))] + [(k, 'tb_' + v) for v in ('mangled', 'foul', 'putrid', 'malignant', 'relentless', 'dread_putrid') for k in ('NPC_', 'ARMO', 'ARMA')] + [('MGEF', 'set_swift'), ('SPEL', 'set_swift')]
+             [('WEAP', 'madness'), ('STAT', 'madness_1st'), ('ARMO', 'lantern'), ('ARMA', 'lantern'), ('MGEF', 'lanternlight'), ('SPEL', 'lanternlight')] + [(k, f'mad{w}{n}') for n in (1, 2, 3) for k, w in (('EFSH', 'shader'), ('MGEF', 'glow'), ('ENCH', 'glow'))] + [(k, 'tb_' + v) for v in ('mangled', 'foul', 'putrid', 'malignant', 'relentless', 'dread_putrid') for k in ('NPC_', 'ARMO', 'ARMA')] + [('MGEF', 'set_swift'), ('SPEL', 'set_swift')] + \
+             [('WEAP', 'carianblade')] + [(k, f'bv_{b}_{t}') for b in BLADE_VIZ for t in (1, 2, 3) for k in ('EFSH', 'MGEF', 'ENCH')]   # (Noah: the four crystal swords and the Dragon Slayer - their tier looks)
     for kind, key in wanted:
         k = f'{kind}:{key}'
         if k not in frozen:
@@ -90,9 +95,12 @@ def dressing(S):
     records[('STAT', '1st_vortex')] = {'model': 'CurseOfAlduin\\bow\\vortex.nif', 'color': '', 'radius': 0}
     for _e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'):   # (Noah: the flasks held in the hand)
         records[('STAT', '1st_flask_' + _e)] = {'model': 'CurseOfAlduin\\alchemist\\flask_' + _e + '_held.nif', 'color': '', 'radius': 0}
-    records[('STAT', '1st_slayer')] = {'model': 'CurseOfAlduin\\wonder\\slayer.nif', 'color': '', 'radius': 0}        # (Noah) the Dragon Slayer: the Ayleid Crystal Saber
-    records[('STAT', '1st_mace')] = {'model': 'CurseOfAlduin\\alchemist\\mace.nif', 'color': '', 'radius': 0}  # (Noah) the Alchemist's mace
-    records[('STAT', '1st_riftblade')] = {'model': 'CurseOfAlduin\\wonder\\riftblade.nif', 'color': '', 'radius': 0}  # (Noah) the Riftblade: Abyssal Heart   # the Ranger's wonder: the Subsuming Vortex
+    records[('STAT', '1st_slayer')] = {'model': 'kv\\crystalsword\\kv-crystalgreatsword_white_1.nif', 'color': '', 'radius': 0}        # (Noah) the Dragon Slayer: the Ayleid Crystal Saber
+    records[('STAT', '1st_mace')] = {'model': 'kv\\crystalsword\\kv-crystalsword_1.nif', 'color': '', 'radius': 0}  # (Noah) the Alchemist's Shadowflame Sword: Kv's purple crystal sword
+    records[('STAT', '1st_kvred')] = {'model': 'kv\\crystalsword\\kv-crystalsword_red_1.nif', 'color': '', 'radius': 0}  # the Spellsword's
+    records[('STAT', '1st_kvblue')] = {'model': 'kv\\crystalsword\\kv-crystalsword_blue_1.nif', 'color': '', 'radius': 0}  # Destruction's Carian blade
+    records[('STAT', '1st_kvgswhite')] = {'model': 'kv\\crystalsword\\kv-crystalgreatsword_white_1.nif', 'color': '', 'radius': 0}  # the Dragon Slayer
+    records[('STAT', '1st_riftblade')] = {'model': 'kv\\crystalsword\\kv-crystalsword_white_1.nif', 'color': '', 'radius': 0}  # (Noah) the Riftblade: Abyssal Heart   # the Ranger's wonder: the Subsuming Vortex
     for b in S.get('bows', {}).get('rows', []):   # the altar's bows: their first-person model
         records[('STAT', '1st_bow_' + b['id'])] = {'model': f"CurseOfAlduin\\bow\\{b['id']}.nif", 'color': '', 'radius': 0}
     records[('STAT', 'show_cheese')] = {'model': S['dressing']['show']['cheeseModel'], 'color': '', 'radius': 0}
