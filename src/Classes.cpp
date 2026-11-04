@@ -2183,7 +2183,7 @@ namespace bo3z::Classes
 					} else if (flat.Length() > 1400.0f) {  // (Noah: a 20 m leash - past it, drawn back toward you)
 						const RE::NiPoint3 want = me + flat * (1200.0f / flat.Length()) + RE::NiPoint3{ 0, 0, std::clamp(at.z - me.z, 80.0f, 600.0f) };
 						RE::NiPoint3 step = want - at;
-						if (const float d = step.Length(); d > 10.0f) a->SetPosition(at + step * std::min(1.0f, 700.0f * dt / d), true);
+						if (const float d = step.Length(); d > 10.0f) a->SetPosition(at + step * std::min(1.0f, 220.0f * dt / d), true);  // (gently: a hard pull fought its flight)
 					}
 					if (auto t = a->GetActorRuntimeData().currentCombatTarget.get(); t && Director::PlayerSide(t.get(), p)) a->StopCombat();  // (never on you or a friend)
 					// (Noah: "cast green fire breath not ice breath") its own shouts held back (the frost, the drain, the
@@ -3166,7 +3166,15 @@ namespace bo3z::Classes
 		// (Noah: "it only stays in one position, it doesn't fly around or walk") Labyrinthian's skeletal dragon is made to stay
 		// grounded in its courtyard: Durnehviir as Dawnguard summons him - the undead dragon that circles you in the air and
 		// dives on your foes - is the body now (Labyrinthian's only if Dawnguard's is missing)
-		auto* base = Lookup(0x00C71A, "Dawnguard.esm");
+		// (Noah: "the dragon summon ... is literally Alduin - make it one of the dragons from our mods") Diverse Dragons
+		// Collection's Necromantic Dragon (its script-free copy: no soul to absorb, no dragon quest hooks), Durnehviir only
+		// if that mod is missing
+		RE::TESForm* base = nullptr;
+		for (RE::FormID id : { 0x09D80Au, 0x09D809u }) {
+			if (base = Lookup(id, "DiverseDragonsCollectionSE.esp"); base && base->As<RE::TESNPC>()) break;
+			base = nullptr;
+		}
+		if (!base) base = Lookup(0x00C71A, "Dawnguard.esm");
 		if (!base || !base->As<RE::TESNPC>()) base = Lookup(0x09192C, "Skyrim.esm");
 		auto* npc = base ? base->As<RE::TESNPC>() : nullptr;
 		if (!p || !npc || !p->GetParentCell()) { logger::warn("classes: the bone dragon not called (npc {})", npc != nullptr); return; }
@@ -3191,6 +3199,11 @@ namespace bo3z::Classes
 		// (Noah: "make the dragon a quarter of the size ... with the ability to fly around within 15 meters of the player") a
 		// little dragon: a quarter of its size, free to fly - TickSummons keeps it within 15 m of you
 		a->SetScale(0.25f);
+		// (Noah: "make the movement speed of it a lot slower so it doesn't glitch out") a third of a dragon's pace in the air
+		// and on the ground; the carry-weight nudge makes the engine take the new speed now
+		av->SetActorValue(RE::ActorValue::kSpeedMult, 35.0f);
+		av->ModActorValue(RE::ActorValue::kCarryWeight, 0.1f);
+		av->ModActorValue(RE::ActorValue::kCarryWeight, -0.1f);
 		g_boneDragon = a->GetHandle();
 		g_ownSummons.push_back({ a->GetHandle(), AfterSovngarde() ? 3600.0f : 60.0f });
 		Gun::ElemBurst(7, at, 3.0f, 0.0f, 1.4f);
