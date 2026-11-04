@@ -2199,12 +2199,14 @@ namespace bo3z::Classes
 						if (auto* root = a->Get3D()) if (auto* head = root->GetObjectByName("NPC Head")) mouth = head->world.translate;
 						const float pf = 0.7f + 0.3f * Arcana::Power();
 						const float top = UpgradeMult(AfterSovngarde() ? kWonderUps + 1 : kWonderUps);
-						for (int k = 1; k <= 8; ++k) {
-							const RE::NiPoint3 pt = mouth + (tgt - mouth) * (k / 8.0f);
-							Gun::ElemBurst(7, pt, 0.25f + 0.08f * k, 0.04f * k, 0.8f);
+						// (Noah: "the dragon's breath needs to look like dragon flames from the actual dragon, not the particle
+						// effects") Skyrim's own dragon fire breath (VoiceDragonFire01), breathed from its jaws at the foe
+						static auto* breath = RE::TESForm::LookupByID<RE::SpellItem>(0x000252C2);
+						if (auto* c = breath ? a->GetMagicCaster(RE::MagicSystem::CastingSource::kInstant) : nullptr) {
+							a->SetHeading(std::atan2(tgt.x - at.x, tgt.y - at.y));
+							c->CastSpellImmediate(breath, false, foes[0], 1.0f, false, 0.0f, a.get());
 						}
 						for (int k = 2; k <= 6; k += 2) Gun::AreaHurt(mouth + (tgt - mouth) * (k / 8.0f), 150.0f, 0.15f * top * pf, "");
-						Gun::ElemBurst(7, tgt + RE::NiPoint3{ 0, 0, -10.0f }, 1.4f, 0.32f, 1.2f);
 						Gun::AreaHurt(tgt, 300.0f, 0.6f * top * pf, "");
 					}
 				}
@@ -3193,6 +3195,9 @@ namespace bo3z::Classes
 		if (auto* pf = PlayerFaction()) a->AddToFaction(pf, 0);
 		Console(a, "SetPlayerTeammate 1");
 		a->SetDisplayName("Bone-Throne Dragon", true);
+		// (Noah: "the dragon I spawned also spoke with me, and it gave me the Saltair shout") a dragon's talk from another mod:
+		// yours can't be spoken to
+		a->SetActivationBlocked(true);
 		auto* av = a->AsActorValueOwner();
 		const float hp = Director::RoundHealth() * gen::kRounds.hpScale * 30.0f;
 		av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kPermanent, RE::ActorValue::kHealth, std::max(0.0f, hp - av->GetPermanentActorValue(RE::ActorValue::kHealth)));
@@ -3202,8 +3207,8 @@ namespace bo3z::Classes
 		// (Noah: "make the movement speed of it a lot slower so it doesn't glitch out") a third of a dragon's pace in the air
 		// and on the ground; the carry-weight nudge makes the engine take the new speed now
 		av->SetActorValue(RE::ActorValue::kSpeedMult, 35.0f);
-		av->ModActorValue(RE::ActorValue::kCarryWeight, 0.1f);
-		av->ModActorValue(RE::ActorValue::kCarryWeight, -0.1f);
+		av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, 0.1f);
+		av->ModActorValue(RE::ACTOR_VALUE_MODIFIER::kTemporary, RE::ActorValue::kCarryWeight, -0.1f);
 		g_boneDragon = a->GetHandle();
 		g_ownSummons.push_back({ a->GetHandle(), AfterSovngarde() ? 3600.0f : 60.0f });
 		Gun::ElemBurst(7, at, 3.0f, 0.0f, 1.4f);

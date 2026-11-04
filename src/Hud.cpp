@@ -829,30 +829,15 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			const float in = EaseOut(std::clamp((t - 0.6f) / 0.9f, 0.0f, 1.0f));
 			if (in <= 0.0f) return;
 			// the words
-			const float ty = size.y * 0.24f - (1.0f - in) * 24 * k;
+			const float ty = size.y * 0.36f - (1.0f - in) * 24 * k;
 			TxtC(dl, g_title, 70 * k, size.x * 0.5f, ty, Fade(kParch, in), "YOU HAVE FALLEN", 4 * k, Fade(kBlood, 0.85f * in));
 			const float rw = 260 * k;
 			dl->AddRectFilledMultiColor({ size.x * 0.5f - rw, ty + 92 * k }, { size.x * 0.5f, ty + 93.4f * k }, Fade(kGold, 0), Fade(kGold, in), Fade(kGold, in), Fade(kGold, 0));
 			dl->AddRectFilledMultiColor({ size.x * 0.5f, ty + 92 * k }, { size.x * 0.5f + rw, ty + 93.4f * k }, Fade(kGold, in), Fade(kGold, 0), Fade(kGold, 0), Fade(kGold, in));
-			const std::string where = s.deathWaves > 0 ? fmt::format("NIGHT {}     WAVE {} OF {}", s.deathNight, s.deathWave, s.deathWaves) : fmt::format("NIGHT {}", std::max(1, s.deathNight));
-			TxtC(dl, g_num, 22 * k, size.x * 0.5f, ty + 104 * k, Fade(kGold, in), where);
-			// the tally: four columns in Edge's pane, each number counting up as it appears
-			const float pw = 860 * k, ph = 170 * k, px = size.x * 0.5f - pw * 0.5f, py = size.y * 0.47f;
-			Panel(dl, { px, py }, { px + pw, py + ph }, k, in);
-			struct Col { const char* label; int value; ImU32 col; };
-			const Col cols[4] = { { "KILLS", s.deathKills, kParch }, { "HEADSHOTS", s.deathHeads, kCoin }, { "BEST STREAK", s.deathBest, kParch }, { "ESSENCE EARNED", s.deathSeptims, kCoin } };
-			for (int i = 0; i < 4; ++i) {
-				const float cx = px + pw * (0.125f + 0.25f * i);
-				const float ci = EaseOut(std::clamp((t - 1.1f - 0.18f * i) / 0.8f, 0.0f, 1.0f));
-				const int   shown = static_cast<int>(std::round(cols[i].value * ci));
-				TxtC(dl, g_num, 52 * k, cx, py + 34 * k, Fade(cols[i].col, ci), std::to_string(shown));
-				TxtC(dl, g_body, 15 * k, cx, py + 108 * k, Fade(kGold, 0.9f * ci), cols[i].label);
-				if (i > 0) dl->AddLine({ px + pw * 0.25f * i, py + 30 * k }, { px + pw * 0.25f * i, py + ph - 30 * k }, Fade(kRuneDim, ci), 1.0f * k);
-			}
-			// what it cost, and what comes next
-			const float ni = std::clamp((t - 2.0f) / 0.8f, 0.0f, 1.0f);
-			const std::string cost = "You return to your last save.";
-			TxtC(dl, g_body, 20 * k, size.x * 0.5f, py + ph + 30 * k, Fade(IM_COL32(220, 210, 192, 235), ni), cost);
+			// (Noah: "remove the stats that pop up on the You Have Fallen screen ... just a simple UI and visual. Only for the skip
+			// and the You Have Fallen with the screen getting darker") no night, no tally, no words under it: only the ring
+			const float ni = std::clamp((t - 1.2f) / 0.8f, 0.0f, 1.0f);
+			const float py = ty + 60 * k, ph = 0.0f;
 			// rising: a ring that fills on its own; once it may, a press rises at once
 			const ImVec2 rc{ size.x * 0.5f, py + ph + 118 * k };
 			const float  R = 26 * k;
@@ -866,7 +851,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				// (its ring turning while the save loads)
 				dl->PathArcTo(rc, R, now * 5.0f, now * 5.0f + 4.2f, 40);
 				dl->PathStroke(Fade(kGold, ni), 0, 3.0f * k);
-				TxtC(dl, g_title, 22 * k, size.x * 0.5f, rc.y + R + 14 * k, Fade(kParch, ni * pulse), "LOADING YOUR LAST SAVE", 2 * k, Fade(kGold, 0.5f * ni));
 			} else if (s.deathReady) {
 				if (g_padLast) {
 					PadGlyph(dl, rc, 13 * k, "A", ni);
@@ -874,8 +858,6 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					TxtC(dl, g_num, 18 * k, rc.x, rc.y - 12 * k, Fade(kParch, ni), "E");
 				}
 				TxtC(dl, g_title, 22 * k, size.x * 0.5f, rc.y + R + 14 * k, Fade(kParch, ni * pulse), "CONTINUE", 2 * k, Fade(kGold, 0.5f * ni));
-			} else {
-				TxtC(dl, g_title, 20 * k, size.x * 0.5f, rc.y + R + 14 * k, Fade(IM_COL32(200, 190, 170, 220), ni), "RETURNING TO YOUR LAST SAVE...");
 			}
 		}
 

@@ -169,7 +169,13 @@ namespace bo3z::Audio
 	{
 		if (!Allow(a_s, false)) return;
 		RE::BSSoundHandle h;
-		if (!Start(h, a_s, nullptr, &a_at, a_vol)) logger::warn("audio: {} would not start", static_cast<int>(a_s));
+		// (Noah: "I'm still unable to hear the Flask sound effects" - they started, logged, and stayed silent: a sound set at a
+		// bare point in the world plays to no one) carried on you instead, as loud as the break was near: full within 5 m,
+		// fading to a quarter at 30 m
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		const float d = p ? p->GetPosition().GetDistance(a_at) : 0.0f;
+		const float near = std::clamp(1.0f - (d - 350.0f) / 2400.0f, 0.25f, 1.0f);
+		if (!Start(h, a_s, p, p ? nullptr : &a_at, std::min(1.0f, a_vol * near))) logger::warn("audio: {} would not start", static_cast<int>(a_s));
 	}
 
 	void LoopStart(std::uint64_t a_key, gen::Sound a_s, RE::TESObjectREFR* a_owner)
