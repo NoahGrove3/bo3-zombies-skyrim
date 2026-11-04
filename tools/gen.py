@@ -228,6 +228,8 @@ o.append('\tinline constexpr std::uint32_t kMadShader[3] = { ' + ', '.join(f'0x{
 o.append('\tinline constexpr std::uint32_t kShadowburnShader = 0x' + f'{IDS[("EFSH", "shadowburn")]:03X};  // Shadowflame on its victim')
 o.append('\tinline constexpr std::uint32_t kCarianWeap = 0x' + f'{IDS[("WEAP", "carianblade")]:03X};  // Destruction\'s Carian Blade')
 from esp_ids import BLADE_VIZ
+from esp_ids import CLASS_ARMOUR, CLASS_PIECES
+o.append('\tinline constexpr std::uint32_t kClassArmour[4][4] = { ' + ', '.join('{ ' + ', '.join(f'0x{IDS[("ARMO", f"cm_{c}_{pc}")]:03X}' for pc in CLASS_PIECES) + ' }' for c in CLASS_ARMOUR) + ' };  // each class\'s Black Mage robes, hood, wraps, boots (its accents): ' + ' '.join(CLASS_ARMOUR))
 o.append('\tinline constexpr std::uint32_t kBladeViz[' + str(len(BLADE_VIZ)) + '][3] = { ' + ', '.join('{ ' + ', '.join(f'0x{IDS[("ENCH", f"bv_{b}_{n}")]:03X}' for n in (1, 2, 3)) + ' }' for b in BLADE_VIZ) + ' };  // the swords\' tier looks: ' + ' '.join(BLADE_VIZ))
 o.append('\tinline constexpr std::uint32_t kBladeVizFx[' + str(len(BLADE_VIZ)) + '][3] = { ' + ', '.join('{ ' + ', '.join(f'0x{IDS[("MGEF", f"bv_{b}_{n}")]:03X}' for n in (1, 2, 3)) + ' }' for b in BLADE_VIZ) + ' };')
 o.append('\tinline constexpr std::uint32_t kRiftEnch[3] = { ' + ', '.join(f'0x{IDS[("ENCH", f"riftfire{n}")]:03X}' for n in (1, 2, 3)) + ' };  // its fire, brighter each tier')

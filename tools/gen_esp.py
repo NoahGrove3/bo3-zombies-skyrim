@@ -1391,6 +1391,38 @@ for cls in G['rows']:
 
 count = sum(len(v) for v in recs.values())
 hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah Grove')), sub('SNAM', z('The Curse of Alduin: round-based undead survival for Skyrim'))]
+
+# (Noah: "have all the classes have the same armor (dark mage set the one given in the destruction and alchemist class) set
+# with different accent colors matching their color class") the Black Mage robes copied for each class (no master of theirs:
+# their records' own data, tools/templates/blackmage_set.json), worn with our copies of its models whose colour maps have
+# the class's accents (tools/classarmor.py); the ground models stay theirs
+from esp_ids import CLASS_ARMOUR, CLASS_PIECES
+_BM = json.load(open(ROOT / 'tools' / 'templates' / 'blackmage_set.json'))['pieces']
+for _c in CLASS_ARMOUR:
+    for _pc in CLASS_PIECES:
+        _p = _BM[_pc]
+        for _a in _p['armas']:
+            subs = []
+            for name, hx in _a['subs']:
+                b = bytes.fromhex(hx)
+                if name == 'EDID': b = z(f'UN_CA_{_c}_{_a["id"]}')
+                elif name in ('MOD2', 'MOD3', 'MOD4', 'MOD5'):
+                    base = b.rstrip(b'\0').decode('latin1').split('\\')[-1]
+                    b = z('CurseOfAlduin\\classarmor\\' + _c + '\\' + base)
+                elif name[:2] == 'MO' and name[3] in 'TS': continue   # (their texture hashes and texture swaps: not ours)
+                subs.append(sub(name, b))
+            recs['ARMA'].append(record('ARMA', fid('ARMA', f'cm_{_c}_{_a["id"]}'), subs))
+        subs = []
+        for name, hx in _p['subs']:
+            b = bytes.fromhex(hx)
+            if name == 'EDID': b = z(f'UN_CA_{_c}_{_pc}')
+            elif name == 'MODL' and len(b) == 4:
+                aid = '%06X' % (struct.unpack('<I', b)[0] & 0xFFFFFF)
+                b = struct.pack('<I', fid('ARMA', f'cm_{_c}_{aid}'))
+            elif name[:2] == 'MO' and name[3] in 'TS': continue
+            subs.append(sub(name, b))
+        recs['ARMO'].append(record('ARMO', fid('ARMO', f'cm_{_c}_{_pc}'), subs))
+
 for m in MASTERS: hdr += [sub('MAST', z(m)), sub('DATA', struct.pack('<Q', 0))]
 out = record('TES4', 0, hdr, flags=0x200)  # ESL flag
 # (Noah: "switching classes - an inventory swap, saveable") the hidden chest each class's gear waits in while another

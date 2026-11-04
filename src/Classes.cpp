@@ -3674,7 +3674,19 @@ namespace bo3z::Classes
 	namespace
 	{
 		struct Piece { const char* plugin; std::uint32_t id; };
-		std::vector<Piece> SetPieces(int a_cls, int a_tier, bool a_female)
+		// (Noah: "have all the classes have the same armor (dark mage set the one given in the destruction and alchemist class) set
+		// with different accent colors matching their color class") every class in the Black Mage robes, its stitching, lacing
+		// and trims in its own colour: the Summoner's white, Destruction's blue, the Alchemist's violet, the Spellsword's red
+		// (tools/classarmor.py; the records are ours, tools/gen_esp.py)
+		std::vector<Piece> SetPieces(int a_cls, int, bool)
+		{
+			if (a_cls < 0 || a_cls > 3) return {};
+			std::vector<Piece> out;
+			for (int i = 0; i < 4; ++i) out.push_back({ gen::kPlugin.data(), gen::kClassArmour[a_cls][i] });
+			return out;
+		}
+		// the sets the classes wore before (taken back from a character still carrying them)
+		std::vector<Piece> OldSetPieces(int a_cls, int a_tier, bool a_female)
 		{
 			switch (a_cls) {
 			case coffer::kSummoner: return { { "ArcaneConjurerRobes.esp", 0x000802 } };
@@ -3687,7 +3699,7 @@ namespace bo3z::Classes
 				}
 			case coffer::kAlchemist:  // (Noah: "Could we use the destruction class armor set for male and female alchemist class?") the
 				// Black Mage's robes, as the Destruction class wears them - made for both bodies (the Drifter's outfit had no man's)
-				return SetPieces(coffer::kDestruction, a_tier, a_female);
+				return OldSetPieces(coffer::kDestruction, a_tier, a_female);
 			case coffer::kSpellsword:
 				// (Noah: "remove the cape from the [Spellsword] class, just so that we don't have to worry about it anymore")
 				if (a_female) return { { "ValkyrieSwordShield.esp", 0x00285D }, { "ValkyrieSwordShield.esp", 0x00285A }, { "ValkyrieSwordShield.esp", 0x00285B }, { "ValkyrieSwordShield.esp", 0x002859 } };
@@ -3720,19 +3732,22 @@ namespace bo3z::Classes
 		{
 			std::vector<RE::TESObjectARMO*> out;
 			for (int t = 0; t <= (a_cls == coffer::kDestruction || a_cls == coffer::kAlchemist ? 3 : 0); ++t) for (auto* a : SetFormsAt(a_cls, t)) if (std::find(out.begin(), out.end(), a) == out.end()) out.push_back(a);  // (the earlier tiers' looks, taken back)
+			for (int t = 0; t <= 3; ++t) {   // (and the sets the classes wore before every class wore the Black Mage's)
+				for (const bool fem : { false, true }) {
+					for (const auto& pc : OldSetPieces(a_cls, t, fem)) {
+						if (auto* f = Lookup(pc.id, pc.plugin)) if (auto* a = f->As<RE::TESObjectARMO>(); a && std::find(out.begin(), out.end(), a) == out.end()) out.push_back(a);
+					}
+				}
+			}
 			return out;
 		}
 	}
 	std::string ArmourSetName(int a_cls, int a_tier)
 	{
-		switch (a_cls) {
-		case coffer::kSummoner: return "Arcane Conjurer Robes";
-		case coffer::kDestruction: return a_tier >= 1 ? fmt::format("Black Mage Robes (Enchanted {})", a_tier >= 3 ? "III" : a_tier == 2 ? "II" : "I") : std::string("Black Mage Robes");
-		case coffer::kAlchemist: return a_tier >= 1 ? fmt::format("Black Mage Robes (Enchanted {})", a_tier >= 3 ? "III" : a_tier == 2 ? "II" : "I") : std::string("Black Mage Robes");
-		case coffer::kSpellsword: return PlayerFemale() ? "Valkyrie Armor" : "DragonLord Armor";
-		default: return "Armor";
-		}
+		if (a_cls < 0 || a_cls > 3) return "Armor";
+		return a_tier >= 1 ? fmt::format("Black Mage Robes (Enchanted {})", a_tier >= 3 ? "III" : a_tier == 2 ? "II" : "I") : std::string("Black Mage Robes");
 	}
+
 	bool ArmourCarried(int a_cls, int a_tier)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
