@@ -2351,31 +2351,23 @@ namespace bo3z
 			else n = fmt::format("NPC {} Finger{} [{}F{}]", S, w, S, w);   // (w: "20" - the finger, the joint)
 			return names.emplace(key, n).first->second.c_str();
 		}
-		// the palm's side of the hand: the way the fingers curl, off the line from the wrist to the knuckles
+		// the palm's side of the hand: the hand bone's own -Y (both hands, both bodies - the skeleton's rest has each palm turned
+		// in to the thigh along it), its fingers along its +Z
+		// (Noah: "the potions in hand are broken" - read off the fingers' curl it came out sideways: the bottle lay on its side)
 		bool PalmNormal(RE::NiAVObject* a_root, bool a_left, RE::NiPoint3& a_n, RE::NiPoint3& a_fingers, RE::NiPoint3& a_centre)
 		{
 			auto* hand = a_root->GetObjectByName(HandBone(a_left, "hand"));
-			auto* b = a_root->GetObjectByName(HandBone(a_left, "20"));
-			auto* tip = a_root->GetObjectByName(HandBone(a_left, "22"));
 			auto* f1 = a_root->GetObjectByName(HandBone(a_left, "10"));
+			auto* f2 = a_root->GetObjectByName(HandBone(a_left, "20"));
 			auto* f4 = a_root->GetObjectByName(HandBone(a_left, "40"));
-			if (!hand || !b || !tip || !f1 || !f4) return false;
-			RE::NiPoint3 ax = b->world.translate - hand->world.translate;
-			if (ax.Length() < 1e-3f) return false;
-			ax.Unitize();
-			const RE::NiPoint3 c = (tip->world.translate + BoneZ(tip) * (1.5f * tip->world.scale)) - b->world.translate;
-			RE::NiPoint3 n = c - ax * c.Dot(ax);
-			if (n.Length() < 0.4f * b->world.scale) {   // (fingers straight: the palm off the knuckles' line and the thumb's side)
-				auto* th = a_root->GetObjectByName(HandBone(a_left, "00"));
-				if (!th) return false;
-				RE::NiPoint3 across = f1->world.translate - f4->world.translate;
-				n = across.Cross(ax);
-				const RE::NiPoint3 toThumb = th->world.translate - hand->world.translate;
-				if (n.Dot(toThumb) < 0) n = n * -1.0f;
-			}
-			n.Unitize();
+			if (!hand || !f1 || !f2 || !f4) return false;
+			const auto& r = hand->world.rotate;
+			RE::NiPoint3 n{ -r.entry[0][1], -r.entry[1][1], -r.entry[2][1] };
+			RE::NiPoint3 ax{ r.entry[0][2], r.entry[1][2], r.entry[2][2] };
+			if (n.Length() < 1e-3f || ax.Length() < 1e-3f) return false;
+			n.Unitize(), ax.Unitize();
 			a_n = n, a_fingers = ax;
-			const RE::NiPoint3 knuckles = (f1->world.translate + b->world.translate + f4->world.translate) * (1.0f / 3.0f);
+			const RE::NiPoint3 knuckles = (f1->world.translate + f2->world.translate + f4->world.translate) * (1.0f / 3.0f);
 			a_centre = hand->world.translate * 0.45f + knuckles * 0.55f + n * (1.2f * hand->world.scale);
 			return true;
 		}
@@ -2761,7 +2753,7 @@ namespace bo3z
 		// Bane's "white arc aligning with the blade swing angle") a crescent flying out from a swing: placed in the world each
 		// frame (tools/arcfx.py's models, hung on your body's root), turned to the angle the blade swept, cutting through every
 		// one of the dead it passes - each once - then fading at the end of its run
-		struct LiveSlash { Spellcraft::Fx fx; Gun::SlashSpec s; RE::NiPoint3 at; float gone = 0, wait = 0.05f; std::unordered_set<RE::FormID> hit; };
+		struct LiveSlash { Spellcraft::Fx fx; Gun::SlashSpec s; RE::NiPoint3 at; float gone = 0, wait = 0.08f; std::unordered_set<RE::FormID> hit; };
 		std::vector<LiveSlash> g_slashes;
 		std::unordered_map<RE::BSEffectShaderMaterial*, float> g_slashBase, g_slashFade;   // (each material's own brightness; this frame's)
 		RE::NiMatrix3 RotY(float a)
@@ -2955,20 +2947,10 @@ namespace bo3z
 			RE::NiPoint3 d = a_dir; d.Unitize();
 			const auto f = Spellcraft::Facing(d);
 			const RE::NiPoint3 x{ f.entry[0][0], f.entry[1][0], f.entry[2][0] }, z{ f.entry[0][2], f.entry[1][2], f.entry[2][2] };
+			// (Noah: "the sword slashes are facing the wrong direction" - the tip's motion read just before the slash took in the
+			// wind-up: a sideways cut stood the crescent upright) the blade's own line, a moment into the swing
 			RE::NiPoint3 b{};
-			if (g_tips.size() >= 2) {
-				const auto& last = g_tips.back();
-				const TipSample* from = &g_tips.front();
-				for (auto it = g_tips.rbegin(); it != g_tips.rend(); ++it) {
-					from = &*it;
-					if (last.t - it->t >= 0.09f) break;
-				}
-				RE::NiPoint3 v = last.at - from->at;
-				auto* cam = RE::PlayerCamera::GetSingleton();
-				if (last.first && cam && cam->cameraRoot) v = cam->cameraRoot->world.rotate * v;   // (the view's axes back into the world's)
-				b = v - d * v.Dot(d);
-			}
-			if (b.Length() < 6.0f) {
+			{
 				auto* p = RE::PlayerCharacter::GetSingleton();
 				auto* cam = RE::PlayerCamera::GetSingleton();
 				auto* root = p ? p->Get3D(cam && cam->IsInFirstPerson()) : nullptr;
