@@ -1187,7 +1187,7 @@ recs['ACTI'].append(record('ACTI', fid('ACTI', 'rel_portal'), [sub('EDID', z('UN
 # (Noah: "just use High Hrothgar's building") the wonders and Alduin's Bane float in the great hall to be taken up, each in a soft
 # glow, and a fiery pillar holds the Hall's rewards: nameless activators (no prompt of Skyrim's - src/Echo.cpp aims and takes them)
 for key, model, r in (('hf_gravecaller', RQ.replace('reliquary', 'wonder') + 'barrowhorn.nif', 40), ('hf_frostbinder', 'Weapons\\StaffofMagnus\\StaffofMagnus.nif', 80),
-                      ('hf_wolfcrown', 'CurseOfAlduin\\alchemist\\flask_philosopher.nif', 20), ('hf_barrowhorn', 'CurseOfAlduin\\wonder\\slayer_static.nif', 60),
+                      ('hf_wolfcrown', 'CurseOfAlduin\\alchemist\\flask_philosopher_held.nif', 20), ('hf_barrowhorn', 'CurseOfAlduin\\wonder\\slayer_static.nif', 60),
                       ('hf_bane', 'CurseOfAlduin\\wonder\\bane_static.nif', 90), ('hf_glow', 'CurseOfAlduin\\fx\\hall_glow.nif', 60),
                       ('hf_glowtall', 'CurseOfAlduin\\fx\\hall_glow_tall.nif', 120), ('hf_pillar', 'CurseOfAlduin\\fx\\pillar_fire.nif', 120)):
     recs['ACTI'].append(record('ACTI', fid('ACTI', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, -r, r, r, r * 2)),

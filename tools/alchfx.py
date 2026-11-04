@@ -200,12 +200,50 @@ def g_blood(t, f, xx, h, X, side):
     return white(mist * 0.95 + dr * 0.7)
 
 
+def pillar_frames(fw=128, fh=256):
+    """(Noah: "I can see the cutoff of the flame animations ... it looks really low quality") a tall sheet of fire for the
+    Endless Flame: many fine tongues licking up, curling as they rise, hot and dense at the foot, thinning to wisps at the
+    top - fading to nothing at every edge of its frame, so no card's border ever shows"""
+    yy, xx = np.mgrid[0:fh, 0:fw].astype(np.float32)
+    u, h = xx / fw, 1 - yy / fh                                       # across 0..1, up 0..1
+    X = u * 2 - 1
+    edge = np.clip(1 - np.abs(X) ** 2, 0, 1) ** 1.2 * np.clip(h / 0.06, 0, 1) * np.clip((1 - h) / 0.35, 0, 1) ** 1.5
+    out = []
+    for f in range(F):
+        t = f / F
+        wx = S(B, u * 0.8 + t, h * 0.5 - t * 2) * 0.05 + S(C, u * 1.6 - t, h * 1.0 - t * 3) * 0.025
+        n1 = S(A, u * 2.6 + wx, h * 0.7 - t * 3)
+        n2 = S(C, u * 5.2 + wx * 2, h * 1.5 - t * 5)
+        n3 = S(B, u * 9.0 + wx * 3, h * 2.6 - t * 8)
+        fl = n1 * 0.6 + n2 * 0.35 + n3 * 0.2
+        body = np.clip((fl * 0.45 + 0.62 - h * 1.25) * 2.2, 0, 1)
+        core = np.clip((fl * 0.4 + 0.35 - h * 1.6) * 2.5, 0, 1)
+        i = (body * 0.6 + core * 0.32) * edge
+        rgb = BA.ramp(np.clip(i, 0, 1), [(0, (60, 8, 0)), (0.35, (200, 50, 6)), (0.65, (250, 140, 30)), (0.88, (255, 215, 120)), (1, (255, 248, 225))])
+        out.append((rgb, np.clip(i * 1.15, 0, 1)))
+    return out
+
+
+def save_rect(frames, fw, fh, name):
+    at = np.zeros((fh * ROWS, fw * COLS, 4), np.float32)
+    for f, (rgb, a) in enumerate(frames):
+        cy, cx = divmod(f, COLS)
+        at[cy * fh:(cy + 1) * fh, cx * fw:(cx + 1) * fw] = np.dstack([rgb * a[..., None], a])
+    img = Image.fromarray((np.clip(at, 0, 1) * 255).astype(np.uint8), 'RGBA')
+    TEX.mkdir(parents=True, exist_ok=True); WORK.mkdir(parents=True, exist_ok=True)
+    png = WORK / (name + '.png'); img.save(png)
+    subprocess.run(['convert', str(png), '-define', 'dds:compression=dxt5', '-define', 'dds:mipmaps=8', str(TEX / (name + '.dds'))], check=True)
+    print(name, img.size)
+
+
 GROUND = {'fire': g_fire, 'frost': g_frost, 'shock': g_shock, 'poison': g_poison, 'sun': g_sun, 'blood': g_blood}
 
 
 def main():
     only = set(ARGS)
     balls() if not only or 'balls' in only else None
+    if not only or 'pillar' in only:
+        save_rect(pillar_frames(), 128, 256, 'pillar_flame')
     for el, fn in GROUND.items():
         if only and el not in only and 'ground' not in only: continue
         save(ground_frames(fn), 128, f'ground_{el}')

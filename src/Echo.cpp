@@ -386,12 +386,18 @@ namespace bo3z
 		const std::array<Floater, 5>& FloatSpots()
 		{
 			// the four benches (the wonders in class order), each a little out from its wall; Alduin's Bane over the ember bowl past the centre pillar
-			static const std::array<Floater, 5> k{ { { { 440.0f, -1744.0f, kHallFloor + 95.0f }, 270.0f }, { { 440.0f, -584.0f, kHallFloor + 95.0f }, 270.0f },
-				{ { -752.0f, -1744.0f, kHallFloor + 95.0f }, 90.0f }, { { -752.0f, -584.0f, kHallFloor + 95.0f }, 90.0f },
-				{ { -160.0f, -1880.0f, kHallFloor + 135.0f }, 0.0f } } };  // (over the raised ember bowl ringed with candles - HHLightHolder01 at -160,-1870,-928)
+			// (Noah: "centered with the statues on the wall and centered with the goblet") each one's middle: out from the relief
+			// over its bench, at the relief's own height; the Bane's over the ember bowl
+			static const std::array<Floater, 5> k{ { { { 455.0f, -1744.0f, kHallFloor + 165.0f }, 270.0f }, { { 455.0f, -584.0f, kHallFloor + 165.0f }, 270.0f },
+				{ { -767.0f, -1744.0f, kHallFloor + 165.0f }, 90.0f }, { { -767.0f, -584.0f, kHallFloor + 165.0f }, 90.0f },
+				{ { -160.0f, -1870.0f, kHallFloor + 200.0f }, 0.0f } } };  // (over the raised ember bowl ringed with candles - HHLightHolder01 at -160,-1870,-928)
 			return k;
 		}
 		const RE::NiPoint3 kPillarAt{ -155.0f, -1547.0f, kHallFloor };
+		// each model's middle along its long axis (+Y) and the size it floats at: the horn, the Staff of Magnus (Skyrim's: 175 long),
+		// the Philosopher's Flask (the hand's - no spin of its own), the Dragon Slayer, Alduin's Bane
+		constexpr float kFloatMid[5] = { 2.3f, -20.0f, -6.3f, 33.0f, 50.0f };
+		constexpr float kFloatScale[5] = { 1.6f, 0.75f, 2.6f, 1.1f, 0.95f };
 		struct HallRefs { std::array<RE::ObjectRefHandle, 5> item, glow; RE::ObjectRefHandle pillar; };
 		HallRefs g_hall;
 		float    g_hallT = 0, g_hallSlow = 0;
@@ -413,7 +419,10 @@ namespace bo3z
 			auto* bane = Bane();
 			return Flag(kFlagHallOpen) && bane && a_p->GetItemCount(bane) <= 0;
 		}
-		bool FloatShown(RE::PlayerCharacter* a_p, int a_i) { return a_i == 4 ? BaneShown(a_p) : Waiting(a_i); }
+		bool FloatShown(RE::PlayerCharacter* a_p, int a_i) { return a_i == 4 ? BaneShown(a_p) : Waiting(a_i); }  // (yours to take)
+		// (Noah: "a grayed out version so that I can see when I have it unlocked") in its colours once it's unlocked - won or waiting -
+		// grey until then
+		bool FloatLit(int a_i) { return a_i == 4 ? Flag(kFlagHallOpen) : (Won(a_i) || Waiting(a_i)); }
 		// the Hall's rewards (the pillar's rows, and the old stations' activators)
 		std::string HallRegalia(RE::PlayerCharacter* a_p)
 		{
@@ -472,10 +481,10 @@ namespace bo3z
 		std::string AimLabel(RE::PlayerCharacter* a_p, int a_i)
 		{
 			if (a_i == 5) return "The Endless Flame";
-			if (a_i < 5 && g_hallKind[a_i] == 2) {
+			if (a_i < 5 && !FloatShown(a_p, a_i)) {  // (nothing to take: its grey likeness, or one already yours)
 				if (a_i == 4) return a_p->GetItemCount(Bane()) > 0 ? "Alduin's Bane - in your hands" : "Alduin's Bane - wakes when the Echo of Alduin falls";
 				const int st = Classes::WonderState(a_i);
-				return std::string(Classes::WonderName(a_i)) + (st >= 4 ? " - yours" : " - not yet won");
+				return std::string(Classes::WonderName(a_i)) + (st >= 4 || Won(a_i) ? " - yours" : " - not yet won");
 			}
 			if (a_i == 4) return Flag(kFlagBaneOut) ? "Forge Alduin's Bane again (10,000 Cursed Essence)" : "Take Alduin's Bane";
 			const std::string name(Classes::WonderName(a_i));
@@ -553,7 +562,7 @@ namespace bo3z
 				// (Noah: "a grayed out version so that I can see when I have it unlocked") each spot always holds something: the
 				// wonder itself in its glow when it's yours to take, its grey likeness until then
 				for (int i = 0; i < 5; ++i) {
-					const int want = FloatShown(a_p, i) ? 1 : 2;
+					const int want = FloatLit(i) ? 1 : 2;
 					auto r = g_hall.item[i].get();
 					if (want != g_hallKind[i] || !r || r->IsDeleted() || r->GetParentCell() != a_p->GetParentCell()) {
 						Drop(g_hall.item[i]), Drop(g_hall.glow[i]);
@@ -573,7 +582,7 @@ namespace bo3z
 				}
 				for (int i = 0; i < 5; ++i) {
 					if (g_hallKind[i] != 1 || (g_glowT[i] -= 0.5f) > 0) continue;
-					Gun::Hazard(i == 4 ? "CurseOfAlduin\\fx\\hall_glow_tall.nif" : "CurseOfAlduin\\fx\\hall_glow.nif", FloatSpots()[i].at + RE::NiPoint3{ 0, 0, i == 4 ? 75.0f : 40.0f }, 1.0f, 20.0f);
+					Gun::Hazard(i == 4 ? "CurseOfAlduin\\fx\\hall_glow_tall.nif" : "CurseOfAlduin\\fx\\hall_glow.nif", FloatSpots()[i].at, 1.0f, 20.0f);
 					g_glowT[i] = 19.5f;
 				}
 				// (they never drew: a placed thing fades in from nothing, and a model of only light never finished) drawn whole, at once
@@ -586,13 +595,27 @@ namespace bo3z
 				};
 				for (int i = 0; i < 5; ++i) whole(g_hall.item[i]);
 			}
-			for (int i = 0; i < 5; ++i) {  // slowly turning, bobbing up and down
+			// (Noah: "slowly rotating, facing upright, and bobbing up and down slowly") each stood upright - its long axis (+Y) up -
+			// turning slowly about it and bobbing; its drawn model moved by hand every frame (as the thrown flasks are: a placed
+			// thing's own angle never reached its model)
+			for (int i = 0; i < 5; ++i) {
 				auto r = g_hall.item[i].get();
-				if (!r) continue;
-				const float bob = 5.0f * std::sin(g_hallT * 1.4f + i * 1.3f);
-				r->SetPosition(FloatSpots()[i].at + RE::NiPoint3{ 0, 0, bob });
-				r->SetAngle({ -1.5708f, 0, std::fmod(g_hallT * 0.55f + i, 6.2832f) });  // (each model's long axis is its +Y: stood up)
-				if (auto gl = g_hall.glow[i].get()) gl->SetPosition(FloatSpots()[i].at + RE::NiPoint3{ 0, 0, (i == 4 ? 75.0f : 40.0f) + bob });
+				auto* o = r ? r->Get3D() : nullptr;
+				if (!o) continue;
+				const float bob = 4.0f * std::sin(g_hallT * 0.9f + i * 1.3f);
+				const float a = std::fmod(g_hallT * 0.35f + i * 1.1f, 6.2832f), c = std::cos(a), sn = std::sin(a);
+				RE::NiMatrix3 R;  // Rz(a) * (Y up to Z)
+				R.entry[0][0] = c, R.entry[0][1] = 0, R.entry[0][2] = sn;
+				R.entry[1][0] = sn, R.entry[1][1] = 0, R.entry[1][2] = -c;
+				R.entry[2][0] = 0, R.entry[2][1] = 1, R.entry[2][2] = 0;
+				const float sc = kFloatScale[i];
+				const RE::NiPoint3 mid = FloatSpots()[i].at + RE::NiPoint3{ 0, 0, bob };
+				o->local.rotate = R;
+				o->local.scale = sc;
+				o->local.translate = mid - R * RE::NiPoint3{ 0, kFloatMid[i] * sc, 0 };
+				RE::NiUpdateData ud;
+				ud.time = 0.0f;
+				o->Update(ud);
 			}
 			// in your sights: the nearest along your look, close enough to reach
 			g_aim = -1;
@@ -605,7 +628,7 @@ namespace bo3z
 					float best = FLT_MAX;
 					for (int i = 0; i < 6; ++i) {
 						if (i < 5 && !g_hall.item[i]) continue;
-						const RE::NiPoint3 c = i < 5 ? FloatSpots()[i].at + RE::NiPoint3{ 0, 0, i == 4 ? 75.0f : 40.0f } : kPillarAt + RE::NiPoint3{ 0, 0, 110.0f };
+						const RE::NiPoint3 c = i < 5 ? FloatSpots()[i].at : kPillarAt + RE::NiPoint3{ 0, 0, 110.0f };
 						const RE::NiPoint3 to = c - eye;
 						const float along = to.Dot(fwd);
 						if (along <= 0 || a_p->GetPosition().GetDistance(c) > (i == 5 ? 320.0f : 260.0f)) continue;
@@ -620,14 +643,13 @@ namespace bo3z
 		}
 		void UseAim(RE::PlayerCharacter* a_p)
 		{
-			if (g_aim >= 0 && g_aim < 5 && g_hallKind[g_aim] == 2) return;  // (a grey likeness: nothing to take yet)
+			if (g_aim >= 0 && g_aim < 5 && !FloatShown(a_p, g_aim)) return;  // (nothing to take: grey, or yours already)
 			if (g_aim == 5) {
 				g_hallMenu = true, g_hallFocus = 0;
 				Forms::Play(gen::Sound::ward_lit);
 			} else if (g_aim == 4) {
-				if (TakeBane(a_p)) Drop(g_hall.item[4]), Drop(g_hall.glow[4]);
+				(void)TakeBane(a_p);  // (it keeps floating, lit: yours)
 			} else if (g_aim >= 0 && Classes::Get() == g_aim && Classes::TakeWonder(g_aim)) {
-				Drop(g_hall.item[g_aim]), Drop(g_hall.glow[g_aim]);
 				logger::info("echo: {} taken up in the hall", Classes::WonderName(g_aim));
 			}
 			PushHallHud(a_p);
