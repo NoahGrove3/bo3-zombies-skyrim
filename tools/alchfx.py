@@ -224,6 +224,33 @@ def pillar_frames(fw=128, fh=256):
     return out
 
 
+def blade_flame(name, stops, w=256, hh=1024):
+    """(Noah: "the effects on the Madness Sword need to look like it's attached to the sword's model, not clipping through it. I
+    can still see the flame hard lines") a sheath of fire for a blade: the blade down the middle of the image (u 0.5), tongues
+    licking out from it to both sides, fading to nothing well before the image's sides; seamless top to bottom, so it slides
+    along the blade forever (the model scrolls it) - never a card's edge, never a seam"""
+    yy, xx = np.mgrid[0:hh, 0:w].astype(np.float32)
+    u, v = xx / w, yy / hh
+    X = np.abs(u * 2 - 1)                                             # 0 at the blade, 1 at the image's sides
+    wx = S(B, u * 0.7, v * 4) * 0.03
+    n1 = S(A, u * 0.6 + wx, v * 9)                                    # (v: whole turns of the tileable noise - seamless)
+    n2 = S(C, u * 1.3 + wx * 2, v * 19)
+    n3 = S(B, u * 2.4, v * 37)
+    fl = n1 * 0.6 + n2 * 0.4 + n3 * 0.25
+    reach = np.clip(0.55 + 0.32 * fl, 0.12, 0.95)                     # how far each tongue licks out
+    body = np.clip(1 - X / reach, 0, 1) ** 1.1
+    wisp = np.clip(1 - X / np.clip(reach * 1.35, 0.1, 1.0), 0, 1) ** 2.5 * 0.35
+    core = np.exp(-(X / 0.09) ** 2) * (0.7 + 0.3 * np.clip(n2 * 0.5 + 0.5, 0, 1))
+    i = np.clip(body * 0.72 + wisp + core * 0.3, 0, 1) * np.clip((1 - X) / 0.2, 0, 1)
+    rgb = BA.ramp(i, stops)
+    a = np.clip(i * 1.1, 0, 1)
+    img = Image.fromarray((np.clip(np.dstack([rgb * a[..., None], a]), 0, 1) * 255).astype(np.uint8), 'RGBA')
+    TEX.mkdir(parents=True, exist_ok=True); WORK.mkdir(parents=True, exist_ok=True)
+    png = WORK / (name + '.png'); img.save(png)
+    subprocess.run(['convert', str(png), '-define', 'dds:compression=dxt5', '-define', 'dds:mipmaps=8', str(TEX / (name + '.dds'))], check=True)
+    print(name, img.size)
+
+
 def save_rect(frames, fw, fh, name):
     at = np.zeros((fh * ROWS, fw * COLS, 4), np.float32)
     for f, (rgb, a) in enumerate(frames):
@@ -242,6 +269,9 @@ GROUND = {'fire': g_fire, 'frost': g_frost, 'shock': g_shock, 'poison': g_poison
 def main():
     only = set(ARGS)
     balls() if not only or 'balls' in only else None
+    if not only or 'blade' in only:
+        blade_flame('blade_flame_red', [(0, (20, 0, 0)), (0.35, (95, 4, 2)), (0.65, (160, 14, 6)), (0.88, (205, 40, 14)), (1, (235, 95, 55))])
+        blade_flame('blade_flame_violet', [(0, (14, 0, 30)), (0.3, (70, 16, 150)), (0.6, (130, 50, 235)), (0.85, (185, 120, 255)), (1, (240, 215, 255))])
     if not only or 'pillar' in only:
         save_rect(pillar_frames(), 128, 256, 'pillar_flame')
     for el, fn in GROUND.items():

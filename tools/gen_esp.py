@@ -1251,7 +1251,7 @@ recs['ARMA'].append(record('ARMA', fid('ARMA', 'lantern'), [sub('EDID', z('UN_Be
     sub('DNAM', bytes.fromhex('0a0a00000000000000000000'))] +   # (Noah: the Light Orb - nothing worn on the body: the orb floats over your head, src/Gun.cpp)
     [sub('MODL', bytes.fromhex(h)) for h in '40370100 3a880800 41370100 3c880800 3d7a0900 42370100 3d880800 d87c0600 ba820a00 43370100 40880800 44370100 44880800 45370100 45880800 0a761000 46370100 94870800 47370100 b9820a00 48370100 46880800 49370100 84880800'.split()]))
 recs['ARMO'].append(record('ARMO', fid('ARMO', 'lantern'), [sub('EDID', z('UN_BeltLantern')), sub('OBND', struct.pack('<6h', -6, -6, 0, 6, 6, 18)), sub('FULL', z('Light Orb')),
-    sub('MOD2', z('CurseOfAlduin\\fx\\lightorb.nif')), sub('BOD2', struct.pack('<II', 1 << 30, 2)), sub('RNAM', struct.pack('<I', 0x19)),
+    sub('MOD2', z('CurseOfAlduin\\fx\\lightorb_item.nif')), sub('BOD2', struct.pack('<II', 1 << 30, 2)), sub('RNAM', struct.pack('<I', 0x19)),
     sub('KSIZ', struct.pack('<I', 1)), sub('KWDA', struct.pack('<I', 0x08F95B)),   # (ArmorClothing)
     sub('DESC', z('A small orb of golden light. Worn, it floats just above your head and lights everything within fifteen metres of you; taken off, it goes dark.')),
     sub('MODL', struct.pack('<I', fid('ARMA', 'lantern'))), sub('DATA', struct.pack('<If', 25, 1.0)), sub('DNAM', struct.pack('<I', 0))]))

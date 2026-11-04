@@ -428,6 +428,20 @@ def build(pid):
         weapon_frame(OUT / 'Meshes/CurseOfAlduin/alchemist/mace.nif', np.vstack([p[0] for p in P]), 'AlchemistsMace', prn='WeaponMace')
         hv = np.vstack([P[1][0]]); print('   crystal centre', np.round(hv.mean(0), 1), 'radius', round(float(np.ptp(hv[:, 1]) / 2), 1))
 
+    elif pid == 'lightorb':     # (Noah's game crashed on the Light Orb in his inventory: its item model was the floating light -
+        # billboards and nothing solid - and the item preview fell over drawing it) a small solid orb of glowing gold for the
+        # inventory and the ground; the light over your head is still Gun.cpp's
+        V, T, F, M = load_obj(pathlib.Path('/home/claude/models_in/mace/obj/Icosphere.obj'))
+        c = V.mean(0); r = np.max(np.linalg.norm(V - c, axis=1))
+        V = (V - c); V = V / np.linalg.norm(V, axis=1)[:, None]   # (the crystal's icosphere, made round)
+        T = np.stack([0.5 + np.arctan2(V[:, 1], V[:, 0]) / (2 * np.pi), 0.5 + np.arcsin(np.clip(V[:, 2], -1, 1)) / np.pi], 1)
+        P = [(V * 6.0, T, F, ['m0'] * len(F))]
+        WORK.mkdir(parents=True, exist_ok=True)
+        base = WORK / 'lightorb_base.png'; Image.new('RGB', (64, 64), (255, 214, 120)).save(base)
+        gold = (1.0, 0.82, 0.45)
+        D, N, G = textures('lightorb', base, None, None, None, glow=gold, glow_base=1.0, size=64)
+        write(pid, P, {'m0': matopts(D, N, G, gold, 3.0, 1.0, 60)}, 'CurseOfAlduin/fx/lightorb_item.nif')
+
 
 if __name__ == '__main__':
     for p in (sys.argv[1:] or ['gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'fang']):

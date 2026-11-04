@@ -34,43 +34,58 @@ def write(L, name):
     if r.returncode: raise SystemExit('fxwrite failed')
 
 
+def sheath(L, name, tex, tint, sc, y0, y1, w, rep, scroll, ang, fade_in=0.15, fade_out=0.3, segs=14):
+    """a sheet of fire lying along the weapon (its +Y): across it +-w turned ang degrees about Y, the flame sliding along
+    it forever (vscroll), fading to nothing at both ends by its vertex colours - it lies on the blade, it doesn't stand up
+    through it, and no edge of it ever shows"""
+    a = math.radians(ang); ax, az = math.cos(a), math.sin(a)
+    L.append(f'shape {name} tex={tex} color={tint},1 scale={sc} blend=add single=0 vscroll={scroll:.2f}')
+    for k in range(segs + 1):
+        f = k / segs
+        y = y0 + (y1 - y0) * f
+        fade = min(1.0, f / fade_in) * min(1.0, (1 - f) / fade_out)
+        fade = fade * fade * (3 - 2 * fade)
+        v = f * rep
+        for side, uu in ((-1, 0.0), (1, 1.0)):
+            L.append(f'v {side * w * ax:.3f} {y:.3f} {side * w * az:.3f} {uu} {v:.4f} {fade:.3f} {fade:.3f} {fade:.3f} 1')
+    for k in range(segs):
+        a0 = 2 * k
+        L += [f't {a0} {a0 + 1} {a0 + 3}', f't {a0} {a0 + 3} {a0 + 2}']
+
+
 def mace(t):
+    """violet fire burning in the mace's head round its crystal (y 48.4): three sheets about the haft, rising out through the
+    cage and thinning above it - more and taller each tier; from Tier II embers drifting off"""
     random.seed(100 + t)
     L = []
     cy = 48.4
-    n, w, sc = [(4, 4.5, 1.2), (6, 5.5, 1.45), (8, 6.8, 1.7), (10, 8.0, 2.0)][t]
-    cols = ('0.62,0.28,1', '0.5,0.2,1', '0.78,0.45,1')
-    for i in range(n):
-        a = 2 * math.pi * (i + random.uniform(-0.2, 0.2)) / n
-        r = random.uniform(2.5, 4.5)
-        card(L, f'f{i}', FX + 'ground_fire.dds', random.choice(cols), sc, w, -w * 0.4, w * (2.0 + 0.25 * t),
-             (r * math.cos(a), cy - 5 + random.uniform(-2, 2), r * math.sin(a)), (16, 8), random.uniform(54, 66), random.uniform(0, 2.1))
-    card(L, 'core', FX + 'glow_disc.dds', '0.55,0.25,1', 0.9 + 0.25 * t, 8 + 2.5 * t, -8 - 2.5 * t, 8 + 2.5 * t, (0, cy, 0))
+    w, top, sc = [(6.0, 12.0, 1.1), (7.2, 16.0, 1.3), (8.5, 21.0, 1.55), (10.0, 27.0, 1.85)][t]
+    for k, ang in enumerate((0, 60, 120)):
+        sheath(L, f'f{k}', FX + 'blade_flame_violet.dds', '1,1,1', sc, cy - 9, cy + top, w, 0.9, -1.6 - 0.2 * k, ang, 0.2, 0.55, 10)
+    if t >= 1:
+        for k, ang in enumerate((30, 90, 150)):
+            sheath(L, f'g{k}', FX + 'blade_flame_violet.dds', '0.8,0.75,1', sc * 0.7, cy - 5, cy + top * 1.25, w * 1.3, 1.4, -1.1, ang, 0.25, 0.6, 10)
     if t >= 2:
-        for i in range(2 + t):
-            card(L, f'e{i}', FX + 'motes_rise.dds', '0.7,0.4,1', 1.6, 8, 0, 28 + 6 * t, (0, cy - 2, 0), (16, 16), random.uniform(54, 66), i * 0.9)
+        for k in range(1 + t):
+            card(L, f'e{k}', FX + 'motes_rise.dds', '0.7,0.45,1', 1.5, 7, 0, 26 + 6 * t, (0, cy, 0), (16, 16), random.uniform(54, 66), k * 0.9)
     write(L, f'maceflame_{t}.nif')
 
 
 def madness(t):
+    """dark red fire sheathing the Madness Sword's blade (y 6..62): two crossed sheets along the blade, the flame flowing
+    along it; thicker and hotter each tier, a second, wilder layer from Tier I, embers from Tier II"""
     random.seed(200 + t)
     L = []
-    y0, y1 = 6.0, 62.0
-    n, w, sc = [(5, 3.6, 1.1), (7, 4.4, 1.35), (9, 5.4, 1.6), (12, 6.4, 1.9)][t]
-    cols = ('0.62,0.04,0.02', '0.5,0.02,0.02', '0.75,0.1,0.03')
-    for i in range(n):
-        y = y0 + (y1 - y0) * (i + 0.5) / n + random.uniform(-1.5, 1.5)
-        card(L, f'f{i}', FX + 'ground_fire.dds', random.choice(cols), sc, w * (1.1 - 0.35 * (y - y0) / (y1 - y0)), -w * 0.5, w * (1.8 + 0.3 * t),
-             (random.uniform(-1, 1), y, random.uniform(-0.6, 0.6)), (16, 8), random.uniform(54, 66), random.uniform(0, 2.1))
-    if t >= 1:   # a dark glow down the blade
-        for i, y in enumerate((18.0, 36.0, 54.0)):
-            card(L, f'g{i}', FX + 'glow_disc.dds', '0.35,0.02,0.01', 0.8 + 0.2 * t, 7 + 1.5 * t, -9 - 2 * t, 9 + 2 * t, (0, y, 0))
-    if t >= 2:   # embers streaming off
-        for i in range(t + 1):
-            card(L, f'e{i}', FX + 'motes_rise.dds', '0.85,0.15,0.05', 1.6, 6, 0, 26 + 6 * t, (0, y0 + 18 * i, 0), (16, 16), random.uniform(54, 66), i * 1.1)
-    if t >= 3:   # Legendary: a hot core along the edge
-        for i, y in enumerate((14.0, 26.0, 38.0, 50.0, 60.0)):
-            card(L, f'c{i}', FX + 'glow_disc.dds', '0.9,0.25,0.08', 0.9, 3.2, -4.5, 4.5, (0, y, 0))
+    y0, y1 = 7.0, 63.0
+    w, sc = [(4.6, 1.0), (5.6, 1.2), (6.8, 1.45), (8.0, 1.75)][t]
+    for k, ang in enumerate((0, 90)):
+        sheath(L, f'f{k}', FX + 'blade_flame_red.dds', '1,1,1', sc, y0, y1, w, 1.6, -1.3 - 0.25 * k, ang, 0.12, 0.25)
+    if t >= 1:
+        for k, ang in enumerate((45, 135)):
+            sheath(L, f'g{k}', FX + 'blade_flame_red.dds', '0.85,0.8,0.8', sc * 0.65, y0 + 3, y1 + 4, w * 1.35, 2.6, -0.9, ang, 0.15, 0.3)
+    if t >= 2:
+        for k in range(t + 1):
+            card(L, f'e{k}', FX + 'motes_rise.dds', '0.85,0.15,0.05', 1.5, 5, 0, 22 + 6 * t, (0, y0 + 16 * k + 6, 0), (16, 16), random.uniform(54, 66), k * 1.1)
     write(L, f'madflame_{t}.nif')
 
 
