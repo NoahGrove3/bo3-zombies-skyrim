@@ -431,7 +431,7 @@ def build(pid):
         for o, m in (('mace_low', 'm0'), ('Icosphere', 'm1')):
             V, T, F, M = load_obj(src / 'obj' / f'{o}.obj')
             parts.append((V, T, F, [m] * len(F)))
-        allV = np.vstack([p[0] for p in parts]); s = 70.0 / np.ptp(allV[:, 2])
+        allV = np.vstack([p[0] for p in parts]); s = 52.5 / np.ptp(allV[:, 2])   # (Noah: "25% shorter/smaller so it's visible in first person" - 70 before)
         c = np.array([0.0, 0.0, 2.4])
         P = [(np.stack([(V - c)[:, 0] * s, (V - c)[:, 2] * s, -(V - c)[:, 1] * s], 1), T, F, M) for V, T, F, M in parts]
         violet = (0.72, 0.36, 1.0)
@@ -453,7 +453,7 @@ def build(pid):
         weapon_frame(OUT / 'Meshes/CurseOfAlduin/alchemist/mace.nif', np.vstack([p[0] for p in P]), 'AlchemistsMace', prn='WeaponMace')
         for _nf in ('mace.nif', 'mace_static.nif'):   # (the metal made reflective, as it is in Blender)
             _f = str(OUT / 'Meshes/CurseOfAlduin/alchemist' / _nf)
-            subprocess.run(['/home/claude/tools/envnif', _f, _f, 'mace_metal_d', 'cubemaps\\ore_steel_e.dds', ENVM, '0.9'], check=True)
+            subprocess.run(['/home/claude/tools/envnif', _f, _f, 'mace_metal_d', 'cubemaps\\ore_steel_e.dds', ENVM, '0.45'], check=True)
         hv = np.vstack([P[1][0]]); print('   crystal centre', np.round(hv.mean(0), 1), 'radius', round(float(np.ptp(hv[:, 1]) / 2), 1))
 
     elif pid == 'lightorb':     # (Noah's game crashed on the Light Orb in his inventory: its item model was the floating light -

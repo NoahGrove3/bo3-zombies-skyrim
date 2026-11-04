@@ -2578,7 +2578,7 @@ namespace bo3z
 					// (Noah: "the flames should look like real fire that are purple in color") the mace burns with Skyrim's own purple
 					// fire - Nocturnal's, from the game's files - on its crystal; the Madness Sword keeps its sheath of red flame
 					want = mace ? std::string("effects\\tg09nocturnalfxfirepurple.nif") : fmt::format("CurseOfAlduin\\fx\\madflame_{}.nif", t);
-					g_wflameScale = mace ? 0.24f + 0.05f * static_cast<float>(t) : 1.0f;  // (Noah: "I can only see the after images of the effect" - at 0.11 it was a smudge)
+					g_wflameScale = mace ? 0.19f + 0.04f * static_cast<float>(t) : 1.0f;  // (Noah: "I can only see the after images of the effect" - at 0.11 it was a smudge)
 				}
 			}
 			if (want != g_wflame.path) {
@@ -2599,7 +2599,7 @@ namespace bo3z
 				if (auto* o = g_wflame.fx[k].obj.get(); o && node && want.starts_with("effects\\")) {
 					const auto& pw = node->world;
 					o->local.rotate = pw.rotate.Transpose();
-					o->local.translate = RE::NiPoint3{ 0.0f, 48.4f, 0.0f };
+					o->local.translate = RE::NiPoint3{ 0.0f, 36.3f, 0.0f };  // (the crystal, the mace 25% shorter)
 					o->local.scale = g_wflameScale / std::max(0.01f, pw.scale);
 					RE::NiUpdateData u;
 					o->Update(u);
