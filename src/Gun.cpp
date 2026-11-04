@@ -3640,6 +3640,17 @@ namespace bo3z
 			static float lastSp = -1, spQuiet = 0;
 			const float  spMax = av->GetPermanentActorValue(RE::ActorValue::kStamina), sp = av->GetActorValue(RE::ActorValue::kStamina);
 			spQuiet = (lastSp >= 0 && sp < lastSp - 0.01f) || p->AsActorState()->IsSprinting() ? 0 : spQuiet + a_delta;
+			// (Noah: "my stamina regenerates too quickly to meditate properly" - Thunderchild's meditation at Kyne's statue drains it
+			// a little each moment, too little for one frame to see) stamina falling at all over the last half second, or you
+			// seated or kneeling in something: none of ours comes back
+			{
+				static float ref = -1, since = 0;
+				if ((since += a_delta) >= 0.5f) {
+					if (ref >= 0 && sp < ref - 0.0005f) spQuiet = 0;
+					ref = sp, since = 0;
+				}
+				if (p->AsActorState()->GetSitSleepState() != RE::SIT_SLEEP_STATE::kNormal) spQuiet = 0;
+			}
 			if (spQuiet >= 1.5f && sp < spMax) {
 				av->RestoreActorValue(RE::ActorValue::kStamina, std::min(spMax - sp, spMax * 0.36f * a_delta));  // (Noah: "decrease the stamina regen speed by 40%, it's way too fast": 0.6 -> 0.36 of it a second)
 			}
