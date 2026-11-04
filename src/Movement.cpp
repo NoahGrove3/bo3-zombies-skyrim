@@ -1339,7 +1339,7 @@ namespace bo3z
 					}
 				} else if (cc) {
 					const float  yaw = a_player->GetAngleZ();
-					RE::NiPoint3 v{ std::sin(yaw) * 520.0f, std::cos(yaw) * 520.0f, -2600.0f };
+					RE::NiPoint3 v{ std::sin(yaw) * 600.0f, std::cos(yaw) * 600.0f, -3100.0f };
 					SetVel(cc, v);
 				}
 			}
@@ -1682,14 +1682,14 @@ namespace bo3z
 				// the swoop's length: 1.45 s - quicker after the Updraft, and never longer than your fall to the ground
 				// takes (so it always has you before you land)
 				quickSwoop = g_updraftAge < 4.0f;
-				float len = quickSwoop ? 0.65f : 1.0f;  // (Noah: no hanging in the air waiting for it)
+				float len = quickSwoop ? 0.5f : 0.72f;  // (Noah: no hanging in the air waiting for it; "the dragon pickup speed ... quicker too as if the dragon already has some speed")
 				const float h = HeightAboveGround(a_player);
 				if (h < 1e8f) {
 					RE::NiPoint3 v0{};
 					if (auto* cc0 = a_player->GetCharController()) GetVel(cc0, v0);
 					const float down = std::max(0.0f, -std::min(v0.z, preFallV));
 					const float tGround = (-down + std::sqrt(down * down + 2.0f * 980.0f * std::max(0.0f, h - 60.0f))) / 980.0f;
-					len = std::clamp(std::min(len, tGround * 0.8f), 0.45f, len);
+					len = std::clamp(std::min(len, tGround * 0.8f), 0.38f, len);
 				}
 				g_swoopLen = len;
 				PlayGameSound(DragonSound::kRoar, a_player, nullptr, 0.7f);
@@ -1811,7 +1811,7 @@ namespace bo3z
 			// a dive, swung forward with each downstroke of a climb and back as the wings rise
 			{
 				legT += a_delta;
-				g_grip = Smooth((u - 0.88f) / 0.12f);
+				g_grip = Smooth(Smooth((u - 0.7f) / 0.3f));   // (Noah: the catch smoother - the hands close on the bar as it comes up into them)
 				if (u >= 0.8f) {
 					HideHands(true);  // a moment before the bar reaches your hands
 				}
@@ -1857,7 +1857,7 @@ namespace bo3z
 			const int   bond = Bond();
 			const float cruise = bond >= 1 ? 950.0f : 820.0f;   // (Bond I glides quicker and sinks slower)
 			const float sinkG = bond >= 1 ? -0.11f : -0.15f;
-			const float top = 4800.0f + 500.0f * bond;  // (Noah: a dive builds a LOT more speed, and it carries on through the glide)
+			const float top = 5700.0f + 600.0f * bond;   // (Noah: "the dragon glider dive speed should be even faster but not too fast")  // (Noah: a dive builds a LOT more speed, and it carries on through the glide)
 			if (auto* cc = a_player->GetCharController(); cc && !g_dive) {
 				static RE::NiPoint3 fallH{}, glideV{};
 				static float        fallV = 0;
@@ -1909,7 +1909,7 @@ namespace bo3z
 					// bleeds away slowly, so a dive's speed carries far through the glide)
 					const float slope = std::sin(g_gamma) - std::sin(sinkG);
 					const float drag = g_speed > cruise ? 0.09f : 0.45f;
-					g_speed += ((slope < 0 ? -2900.0f : -1300.0f) * slope - drag * (g_speed - cruise)) * dt;
+					g_speed += ((slope < 0 ? -3600.0f : -1300.0f) * slope - drag * (g_speed - cruise)) * dt;
 					g_speed = std::clamp(g_speed, 600.0f, top);
 					// turning: up to 100 degrees a second
 					const float rate = 1.75f * g_inX * g_catchK;
@@ -2490,6 +2490,15 @@ namespace bo3z
 		void ArmReach(RE::NiAVObject* a_ua, RE::NiAVObject* a_fa, RE::NiAVObject* a_hand, const RE::NiPoint3& a_target, RE::NiPoint3 a_pole, float a_w, RE::NiUpdateData& a_ud)
 		{
 			if (!a_ua || !a_fa || !a_hand || a_w <= 0.001f) return;
+			// (Noah: "the glider arms look stretched and twist a little around the shoulder and elbows") the reach starts from the
+			// skeleton's own rest for the upper arm and forearm, not the fall's animation: swung up from there the arm keeps its
+			// natural turn - the fall's twist is not carried up over your head
+			for (auto* b : { a_ua, a_fa }) {
+				if (const auto* r = BindRot(b->name.c_str())) {
+					b->local.rotate = Slerp(b->local.rotate, *r, std::min(a_w, 1.0f));
+					b->UpdateDownwardPass(a_ud, 0);
+				}
+			}
 			const RE::NiPoint3 S = a_ua->world.translate, E = a_fa->world.translate, H = a_hand->world.translate;
 			const float        a = (E - S).Length(), b = (H - E).Length();
 			RE::NiPoint3       to = a_target - S;
@@ -2547,6 +2556,23 @@ namespace bo3z
 		void TurnHand(const Arm& a_arm, const RE::NiPoint3& a_fingers, const RE::NiPoint3& a_knuckles, float a_w, RE::NiUpdateData& a_ud)
 		{
 			if (a_w <= 0.001f || !a_arm.hand->parent) return;
+			// most of the hand's roll made by the forearm (its line from the elbow: the hand stays where it is), so the wrist
+			// is never wrung round
+			if (a_arm.fa && a_arm.fa->parent) {
+				RE::NiPoint3 ax = a_arm.hand->world.translate - a_arm.fa->world.translate;
+				RE::NiPoint3 kc = a_arm.f10->world.translate - a_arm.f40->world.translate, kt = a_knuckles;
+				if (ax.Length() > 1e-3f) {
+					ax.Unitize();
+					kc = kc - ax * kc.Dot(ax), kt = kt - ax * kt.Dot(ax);
+					if (kc.Length() > 1e-3f && kt.Length() > 1e-3f) {
+						kc.Unitize(), kt.Unitize();
+						const float phi = std::atan2(ax.Dot(kc.Cross(kt)), kc.Dot(kt)) * 0.7f * std::min(a_w, 1.0f);
+						const RE::NiMatrix3 P = a_arm.fa->parent->world.rotate;
+						a_arm.fa->local.rotate = P.Transpose() * AxisAngle(ax, phi) * P * a_arm.fa->local.rotate;
+						a_arm.fa->UpdateDownwardPass(a_ud, 0);
+					}
+				}
+			}
 			const RE::NiMatrix3 A = Frame(a_arm.f20->world.translate - a_arm.hand->world.translate, a_arm.f10->world.translate - a_arm.f40->world.translate);
 			const RE::NiMatrix3 B = Frame(a_fingers, a_knuckles);
 			const RE::NiMatrix3 R = Slerp(Rot(0, 0, 0), B * A.Transpose(), std::min(a_w, 1.0f));
@@ -2678,7 +2704,7 @@ namespace bo3z
 				hs[f].y = std::clamp(hs[f].y, -25.0f * rs, 25.0f * rs);
 				const float armLen = (L.fa->world.translate - L.ua->world.translate).Length() + (L.hand->world.translate - L.fa->world.translate).Length() +
 				                     0.8f * (L.f20->world.translate - L.hand->world.translate).Length();
-				const RE::NiPoint3 barAt = rootT + Ry * (hs[f] + RE::NiPoint3{ 0, 5.0f * rs, armLen * 0.93f });
+				const RE::NiPoint3 barAt = rootT + Ry * (hs[f] + RE::NiPoint3{ 0, 5.0f * rs, armLen * 0.82f });   // (Noah: the arms stretched - a hang's elbows a little bent, the bar in both hands' reach)
 				RE::NiTransform    W;
 				W.rotate = Ry;
 				W.scale = kDragonScale * rs;
@@ -2746,7 +2772,7 @@ namespace bo3z
 							other = mine == hl ? hr : hl;
 						}
 						const RE::NiPoint3 flail = Up * (1.2f * std::sin(clock * 5.3f + sd * 1.9f)) + F * (1.5f * std::sin(clock * 3.7f + sd * 0.8f));
-						const RE::NiPoint3 reach = sMid + Rt * (out * halfW * 1.05f) + Up * (armLen * 0.9f) + F * 6.0f + flail * (1 - g_grip);
+						const RE::NiPoint3 reach = sMid + Rt * (out * halfW * 1.05f) + Up * (armLen * 0.8f) + F * 6.0f + flail * (1 - g_grip);
 						const RE::NiPoint3 grip = mine ? mine->world.translate : reach;
 						const RE::NiPoint3 target = reach + (grip - reach) * g_grip;
 						// the hand's turn: fingers up (a little ahead), knuckles in along the bar toward the other hand
@@ -2767,9 +2793,9 @@ namespace bo3z
 						// (Noah: the arms bent the wrong way) a hang's elbows: a little out to the side and forward, as on a
 						// pull-up bar - never folded back behind you
 						const RE::NiPoint3 pole = Rt * out * 0.55f + F * 0.45f - Up * 0.1f;
-						if (A.clav && g_grip < 0.999f) {  // (the shoulder lifted as the arm reaches up)
+						if (A.clav) {  // (the shoulder lifted as the arm reaches up - and kept up while you hang: no stretched shoulder)
 							const RE::NiPoint3 c = A.ua->world.translate - A.clav->world.translate;
-							TurnBone(A.clav, c, c + Up * (c.Length() * 0.3f), reachW * (1 - g_grip) * 0.8f, u0);
+							TurnBone(A.clav, c, c + Up * (c.Length() * 0.3f), w * (0.8f - 0.3f * g_grip), u0);
 						}
 						ArmReach(A.ua, A.fa, A.hand, target - (GripPoint(A, left) - A.hand->world.translate), pole, w, u0);
 						TurnHand(A, fingers, inward, w, u0);

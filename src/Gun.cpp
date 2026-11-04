@@ -2763,6 +2763,7 @@ namespace bo3z
 		// one of the dead it passes - each once - then fading at the end of its run
 		struct LiveSlash { Spellcraft::Fx fx; Gun::SlashSpec s; RE::NiPoint3 at; float gone = 0, wait = 0.05f; std::unordered_set<RE::FormID> hit; };
 		std::vector<LiveSlash> g_slashes;
+		std::unordered_map<RE::BSEffectShaderMaterial*, float> g_slashBase, g_slashFade;   // (each material's own brightness; this frame's)
 		RE::NiMatrix3 RotY(float a)
 		{
 			RE::NiMatrix3 m;
@@ -2807,18 +2808,33 @@ namespace bo3z
 					if (!l.fx.obj) { l.gone = l.s.range + 1; continue; }
 				}
 				if (auto* body = root->AsNode()) l.fx.Attach(body);
-				const float step = l.s.speed * a_delta;
+				// (Noah: "the speed of the slashes should be a little faster too and stay the same shape the while flight time then
+				// fades out instead of shrinking") a third quicker, its size held the whole way, its light dying over the last quarter
+				const float step = l.s.speed * 1.35f * a_delta;
 				l.at = l.at + l.s.dir * step;
 				l.gone += step;
 				const float f = l.gone / std::max(1.0f, l.s.range);
-				const float sc = l.s.scale * (f < 0.12f ? 0.6f + 0.4f * f / 0.12f : f > 0.8f ? std::max(0.05f, 1.0f - (f - 0.8f) / 0.2f) : 1.0f);
+				const float sc = l.s.scale;
 				l.fx.Place(l.at, SlashTurn(l), sc);
-				for (auto* a : Foes(l.at, l.s.radius * std::max(0.6f, sc / std::max(0.01f, l.s.scale)))) {
+				const float fade = f > 0.72f ? std::max(0.0f, 1.0f - (f - 0.72f) / 0.28f) : 1.0f;
+				RE::BSVisit::TraverseScenegraphGeometries(l.fx.obj.get(), [&](RE::BSGeometry* g) {
+					if (auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get())) {
+						if (auto* m = static_cast<RE::BSEffectShaderMaterial*>(ep->material)) {
+							auto [it, fresh] = g_slashBase.try_emplace(m, m->baseColorScale);
+							float& want = g_slashFade[m];
+							want = std::max(want, it->second * fade);   // (a material two slashes share: the brighter of them)
+						}
+					}
+					return RE::BSVisit::BSVisitControl::kContinue;
+				});
+				for (auto* a : Foes(l.at, l.s.radius)) {
 					if (!l.hit.insert(a->GetFormID()).second) continue;
 					const bool killed = Damage(a, l.s.damage > 0 ? l.s.damage : whole * l.s.share, false, false, true);
 					if (l.s.onHit) l.s.onHit(a, killed);
 				}
 			}
+			for (auto& [m, v] : g_slashFade) m->baseColorScale = v;
+			g_slashFade.clear();
 			for (auto& l : g_slashes) if (l.gone > l.s.range) l.fx.Detach();
 			std::erase_if(g_slashes, [](const LiveSlash& l) { return l.gone > l.s.range; });
 		}
