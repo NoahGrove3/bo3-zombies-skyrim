@@ -7834,6 +7834,146 @@
       "atten": 7,
       "loop": false,
       "use": "Alchemist: a flask shatters where it lands"
+    },
+    {
+      "id": "alch_hit_fire",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_alch_hit_fire",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\CurseOfAlduin\\un\\alch_hit_fire_0.wav",
+      "files": [
+        "fx\\CurseOfAlduin\\un\\alch_hit_fire_0.wav",
+        "fx\\CurseOfAlduin\\un\\alch_hit_fire_1.wav",
+        "fx\\CurseOfAlduin\\un\\alch_hit_fire_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 7,
+      "loop": false,
+      "use": "Alchemist: a fire flask breaking - glass and fire"
+    },
+    {
+      "id": "alch_hit_frost",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_alch_hit_frost",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\CurseOfAlduin\\un\\alch_hit_frost_0.wav",
+      "files": [
+        "fx\\CurseOfAlduin\\un\\alch_hit_frost_0.wav",
+        "fx\\CurseOfAlduin\\un\\alch_hit_frost_1.wav",
+        "fx\\CurseOfAlduin\\un\\alch_hit_frost_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 7,
+      "loop": false,
+      "use": "Alchemist: a frost flask breaking - glass and frost"
+    },
+    {
+      "id": "alch_hit_shock",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_alch_hit_shock",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\CurseOfAlduin\\un\\alch_hit_shock_0.wav",
+      "files": [
+        "fx\\CurseOfAlduin\\un\\alch_hit_shock_0.wav",
+        "fx\\CurseOfAlduin\\un\\alch_hit_shock_1.wav",
+        "fx\\CurseOfAlduin\\un\\alch_hit_shock_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 7,
+      "loop": false,
+      "use": "Alchemist: a shock flask breaking - glass and lightning"
+    },
+    {
+      "id": "alch_hit_poison",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_alch_hit_poison",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\CurseOfAlduin\\un\\alch_hit_poison_0.wav",
+      "files": [
+        "fx\\CurseOfAlduin\\un\\alch_hit_poison_0.wav",
+        "fx\\CurseOfAlduin\\un\\alch_hit_poison_1.wav",
+        "fx\\CurseOfAlduin\\un\\alch_hit_poison_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 7,
+      "loop": false,
+      "use": "Alchemist: a poison flask breaking - glass and poison"
+    },
+    {
+      "id": "alch_hit_sun",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_alch_hit_sun",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\CurseOfAlduin\\un\\alch_hit_sun_0.wav",
+      "files": [
+        "fx\\CurseOfAlduin\\un\\alch_hit_sun_0.wav",
+        "fx\\CurseOfAlduin\\un\\alch_hit_sun_1.wav",
+        "fx\\CurseOfAlduin\\un\\alch_hit_sun_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 7,
+      "loop": false,
+      "use": "Alchemist: a sun flask breaking - glass and holy light"
+    },
+    {
+      "id": "alch_hit_blood",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_alch_hit_blood",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\CurseOfAlduin\\un\\alch_hit_blood_0.wav",
+      "files": [
+        "fx\\CurseOfAlduin\\un\\alch_hit_blood_0.wav",
+        "fx\\CurseOfAlduin\\un\\alch_hit_blood_1.wav",
+        "fx\\CurseOfAlduin\\un\\alch_hit_blood_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 7,
+      "loop": false,
+      "use": "Alchemist: a blood flask breaking - glass and blood"
+    },
+    {
+      "id": "alch_hit_gold",
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "editorId": "UN_alch_hit_gold",
+      "verify": [],
+      "space": "3d",
+      "cat": "sfx",
+      "file": "fx\\CurseOfAlduin\\un\\alch_hit_gold_0.wav",
+      "files": [
+        "fx\\CurseOfAlduin\\un\\alch_hit_gold_0.wav",
+        "fx\\CurseOfAlduin\\un\\alch_hit_gold_1.wav",
+        "fx\\CurseOfAlduin\\un\\alch_hit_gold_2.wav"
+      ],
+      "shift": 0,
+      "layer": "none",
+      "atten": 7,
+      "loop": false,
+      "use": "Alchemist: a gold flask breaking - glass and molten gold"
     }
   ]
 }

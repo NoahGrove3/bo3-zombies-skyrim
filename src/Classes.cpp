@@ -3032,7 +3032,11 @@ namespace bo3z::Classes
 		void FlaskBlast(int a_el, int a_tier, const RE::NiPoint3& a_at, float a_size, float a_share, float a_radius)
 		{
 			Gun::ElemBurst(kFlaskBurst[a_el], a_at + RE::NiPoint3{ 0, 0, -20.0f }, a_size, 0.0f, 0.9f);
-			Audio::AtPoint(gen::Sound::alch_shatter, a_at);
+			// (Noah: "each flask to have its own impact sound effect, depending on the element") the bottle breaking and its element
+			// let loose (tools/alchsfx.py hits)
+			static constexpr gen::Sound kHit[7] = { gen::Sound::alch_hit_fire, gen::Sound::alch_hit_frost, gen::Sound::alch_hit_shock, gen::Sound::alch_hit_poison,
+				gen::Sound::alch_hit_sun, gen::Sound::alch_hit_blood, gen::Sound::alch_hit_gold };
+			Audio::AtPoint(a_el >= 0 && a_el < 7 ? kHit[a_el] : gen::Sound::alch_shatter, a_at);
 			static constexpr const char* kVanilla[6] = { "fireball", "frost", "runeshock", "poisongas", "", "bloodplague" };
 			if (a_el < 6 && kVanilla[a_el][0]) Gun::FxBlast(kVanilla[a_el], a_at);
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -3062,7 +3066,7 @@ namespace bo3z::Classes
 				const bool legend = AfterSovngarde();
 				GoldCloud g;
 				g.at = a_at, g.left = legend ? 16.0f : 12.0f, g.radius = legend ? 560.0f : 450.0f, g.legend = legend;
-				Audio::AtPoint(gen::Sound::alch_shatter, a_at);
+				Audio::AtPoint(gen::Sound::alch_hit_gold, a_at);  // (molten gold: a struck bell of it, a long sizzle)
 				Gun::ElemBurst(8, a_at, 1.6f, 0.0f, 1.2f);  // (Noah: "the philosopher's flask also casts a green ball" - Skyrim's light blast: gone)
 				Gun::Puddle(4, a_at, g.radius / 100.0f, g.left);  // (a pool of molten gold lies where it broke, as long as the cloud)
 				Gun::Motes(8, a_at, g.radius / 100.0f, g.left);  // (its gold rising off the ground as fine motes, the cloud's whole life)

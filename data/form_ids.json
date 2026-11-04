@@ -1454,6 +1454,13 @@
   "ACTI:hg_frostbinder": "0xdaa",
   "ACTI:hg_wolfcrown": "0xdab",
   "ACTI:hg_barrowhorn": "0xdac",
-  "ACTI:hg_bane": "0xdad"
+  "ACTI:hg_bane": "0xdad",
+  "SNDR:alch_hit_fire": "0xdae",
+  "SNDR:alch_hit_frost": "0xdaf",
+  "SNDR:alch_hit_shock": "0xdb0",
+  "SNDR:alch_hit_poison": "0xdb1",
+  "SNDR:alch_hit_sun": "0xdb2",
+  "SNDR:alch_hit_blood": "0xdb3",
+  "SNDR:alch_hit_gold": "0xdb4"
  }
 }

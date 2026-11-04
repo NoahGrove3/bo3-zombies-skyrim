@@ -112,6 +112,80 @@ def main():
             place(s, clink(rng.uniform(3000, 6200), 0.22, rng.uniform(0.05, 0.16), 0.45), rng.uniform(0.02, 0.6))
         place(s, slosh(0.7, 0.6, 5.0), 0.02)
         save(f'alch_shatter_{k}.wav', norm(s, 0.85))
+    hits()
+
+
+def glass(sec):
+    """the bottle breaking: a glassy pop, a muffled whump, a few fine tinkles (the shatter's own, a touch shorter)"""
+    s = np.zeros(int(sec * SR))
+    place(s, bandnoise(0.16, 1500, 8000) * np.exp(-40 * t_(0.16)) * 0.42, 0.0)
+    place(s, bandnoise(0.2, 60, 320) * np.exp(-24 * t_(0.2)) * 0.9, 0.0)
+    for _ in range(9):
+        place(s, clink(rng.uniform(3000, 6200), 0.2, rng.uniform(0.05, 0.14), 0.45), rng.uniform(0.02, 0.45))
+    return s
+
+
+def env_swell(sec, attack, decay):
+    t = t_(sec)
+    return np.clip(t / attack, 0, 1) * np.exp(-np.maximum(0, t - attack) * decay)
+
+
+def hits():
+    """(Noah: "I want each flask to have its own impact sound effect, depending on the element ... if it's lightning, it should sound
+    like a lightning bottle breaking impact noise. Fire should sound like fire with a bottle breaking") the bottle breaking, and its
+    element let loose: alch_hit_<element>_<0-2>.wav"""
+    for k in range(3):
+        # fire: the spirit catching - a deep whoomp of flame swelling up, then crackling as it burns
+        sec = 1.6; t = t_(sec); s = glass(sec)
+        place(s, bandnoise(1.3, 80, 900) * env_swell(1.3, 0.08, 2.6) * 0.9, 0.03)
+        place(s, bandnoise(1.0, 600, 3500) * env_swell(1.0, 0.12, 3.2) * 0.35, 0.05)
+        for _ in range(26):  # crackles
+            at = rng.uniform(0.1, 1.4); n = bandnoise(0.012, 1500, 9000) * np.exp(-400 * t_(0.012))
+            place(s, n * rng.uniform(0.2, 0.5) * (1.3 - at / 1.4), at)
+        save(f'alch_hit_fire_{k}.wav', norm(s, 0.85))
+        # frost: the cold bursting out - a crystalline crack, ice spreading with fine high ticks, a cold breath
+        sec = 1.5; s = glass(sec)
+        place(s, bandnoise(0.06, 2500, 12000) * np.exp(-60 * t_(0.06)) * 0.6, 0.01)
+        for _ in range(30):
+            at = rng.uniform(0.04, 1.0); place(s, clink(rng.uniform(4500, 9000), 0.12, rng.uniform(0.04, 0.12), 0.8), at)
+        place(s, bandnoise(1.2, 2500, 9000) * env_swell(1.2, 0.15, 2.4) * 0.22, 0.05)
+        save(f'alch_hit_frost_{k}.wav', norm(s, 0.8))
+        # shock: lightning let out of the bottle - a hard snap, a buzzing arc, crackling sparks
+        sec = 1.4; t = t_(1.0); s = glass(sec)
+        place(s, bandnoise(0.04, 300, 12000) * np.exp(-80 * t_(0.04)) * 1.0, 0.0)
+        buzz = sum(np.sign(np.sin(2 * np.pi * (110 + 8 * k) * h * t)) / h for h in (1, 2, 3)) * bandnoise(1.0, 200, 4000) * 0.6
+        buzz *= env_swell(1.0, 0.02, 3.5) * (0.6 + 0.4 * (rng.random(len(t)) > 0.3))
+        place(s, buzz * 0.5, 0.02)
+        for _ in range(20):
+            at = rng.uniform(0.03, 1.1); place(s, bandnoise(0.008, 2000, 14000) * rng.uniform(0.3, 0.8), at)
+        save(f'alch_hit_shock_{k}.wav', norm(s, 0.85))
+        # poison: the brew spilling out - a wet splash, a hiss of fumes, bubbles popping
+        sec = 1.6; s = glass(sec)
+        place(s, slosh(0.6, 0.7, 6.0), 0.02)
+        place(s, bandnoise(1.3, 3000, 10000) * env_swell(1.3, 0.1, 2.0) * 0.3, 0.05)
+        for _ in range(22):
+            at = rng.uniform(0.15, 1.4); f = rng.uniform(300, 900); tt = t_(0.06)
+            place(s, np.sin(2 * np.pi * (f + 2500 * tt) * tt) * np.exp(-70 * tt) * rng.uniform(0.2, 0.45), at)
+        save(f'alch_hit_poison_{k}.wav', norm(s, 0.8))
+        # sun (holy water): light bursting out - a bright shimmering chord swelling and fading, sparkles over it
+        sec = 1.8; t = t_(1.6); s = glass(sec)
+        chord = sum(np.sin(2 * np.pi * f * (1 + 0.003 * k) * t + rng.uniform(0, 6)) * w for f, w in ((523, 1), (659, 0.7), (784, 0.6), (1047, 0.4)))
+        place(s, chord * env_swell(1.6, 0.06, 2.2) * 0.3, 0.02)
+        for _ in range(18):
+            place(s, clink(rng.uniform(5000, 9000), 0.15, rng.uniform(0.03, 0.09), 0.5), rng.uniform(0.05, 1.2))
+        save(f'alch_hit_sun_{k}.wav', norm(s, 0.8))
+        # blood: a thick wet burst - a heavy splat, a gush, drops spattering down
+        sec = 1.3; s = glass(sec)
+        place(s, bandnoise(0.25, 40, 260) * np.exp(-16 * t_(0.25)) * 1.2, 0.0)
+        place(s, slosh(0.55, 0.9, 4.0), 0.01)
+        for _ in range(14):
+            at = rng.uniform(0.15, 1.0); place(s, bandnoise(0.03, 300, 2500) * np.exp(-90 * t_(0.03)) * rng.uniform(0.2, 0.5), at)
+        save(f'alch_hit_blood_{k}.wav', norm(s, 0.85))
+        # the Philosopher's Flask: molten gold - a deep bell of struck gold, a long sizzle as it pools
+        sec = 2.2; t = t_(2.0); s = glass(sec)
+        place(s, clink(330 + 20 * k, 1.8, 0.9, 0.7), 0.0)
+        place(s, bandnoise(1.9, 2000, 8000) * env_swell(1.9, 0.2, 1.4) * 0.25, 0.05)
+        save(f'alch_hit_gold_{k}.wav', norm(s, 0.85))
 
 
 if __name__ == '__main__':
