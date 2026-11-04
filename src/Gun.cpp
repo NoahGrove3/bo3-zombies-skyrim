@@ -936,10 +936,10 @@ namespace bo3z
 			made[a_path] = ex;
 			return ex;
 		}
-		RE::BGSHazard* ModelHazard(const std::string& a_path, float a_life)
+		RE::BGSHazard* ModelHazard(const std::string& a_path, float a_life, bool a_drop = true)
 		{
 			static std::map<std::pair<std::string, int>, RE::BGSHazard*> made;
-			const auto key = std::make_pair(a_path, static_cast<int>(a_life * 10.0f));
+			const auto key = std::make_pair(a_path, static_cast<int>(a_life * 10.0f) * 2 + (a_drop ? 1 : 0));
 			if (auto it = made.find(key); it != made.end()) return it->second;
 			RE::BGSHazard* hz = nullptr;
 			if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::BGSHazard>(); factory && (hz = factory->Create())) {
@@ -948,7 +948,7 @@ namespace bo3z
 				// its spell on whoever stood in it, and it had none) it carries the flasks' own do-nothing spell, and never
 				// looks for anyone to cast it on within its lifetime (the hurting is ours)
 				hz->data.limit = 24, hz->data.radius = 1.0f, hz->data.lifetime = a_life, hz->data.imageSpaceRadius = 0.0f, hz->data.targetInterval = a_life + 60.0f;
-				hz->data.flags.set(RE::BGSHazardData::BGSHazardFlags::kDropToGround);
+				if (a_drop) hz->data.flags.set(RE::BGSHazardData::BGSHazardFlags::kDropToGround);  // (the hall's glows hang where they're set)
 				hz->data.spell = RE::TESDataHandler::GetSingleton()->LookupForm<RE::SpellItem>(gen::kFlaskSpell[0], gen::kPlugin);
 				hz->data.light = nullptr, hz->data.impactDataSet = nullptr, hz->data.sound = nullptr;
 				hz->boundData.boundMin.x = hz->boundData.boundMin.y = -8, hz->boundData.boundMin.z = -2;
@@ -2717,6 +2717,12 @@ namespace bo3z
 			logger::info("lob: {} ({})", a_model, l.ref ? "placed" : "NOT PLACED");
 			g_lobs.push_back(std::move(l));
 		}
+		void Hazard(const std::string& a_model, const RE::NiPoint3& a_at, float a_scale, float a_life)
+		{
+			if (auto* hz = ModelHazard(a_model, a_life, false)) {
+				if (auto r = PlaceAtPoint(hz, a_at)) r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(a_scale, 0.1f, 9.0f) * 100.0f);
+			}
+		}
 		RE::ObjectRefHandle PlaceAt(RE::TESBoundObject* a_obj, const RE::NiPoint3& a_at, float a_yaw)
 		{
 			auto r = PlaceAtPoint(a_obj, a_at);
@@ -4088,6 +4094,7 @@ namespace bo3z
 					}
 				}
 				logger::info("shout: learned {} from {} ({:08X})", gen::kShouts[a_i].id, gen::kShouts[a_i].extPlugin, sh->GetFormID());
+				Hud::ShoutLearned(gen::kShouts[a_i].label, std::string(gen::kShouts[a_i].w1) + " " + std::string(gen::kShouts[a_i].w2) + " " + std::string(gen::kShouts[a_i].w3));
 				return;
 			}
 			for (auto w : gen::kShouts[a_i].words) {
@@ -4098,6 +4105,7 @@ namespace bo3z
 			}
 			p->AddShout(sh);
 			logger::info("shout: learned {} ({:08X})", gen::kShouts[a_i].id, sh->GetFormID());
+			Hud::ShoutLearned(gen::kShouts[a_i].label, std::string(gen::kShouts[a_i].w1) + " " + std::string(gen::kShouts[a_i].w2) + " " + std::string(gen::kShouts[a_i].w3));
 		}
 		int ShoutOfSpell(RE::FormID a_spell, int& a_level)
 		{

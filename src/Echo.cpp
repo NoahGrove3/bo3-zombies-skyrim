@@ -396,6 +396,9 @@ namespace bo3z
 		HallRefs g_hall;
 		float    g_hallT = 0, g_hallSlow = 0;
 		bool     g_hallSwept = false;  // (what a save kept standing in the hall: taken away once, made again fresh)
+		std::array<int, 5> g_hallKind{};
+		std::array<float, 5> g_glowT{};
+		float g_pillarT = 0;  // (the fire's and the glows' next lighting)  // what each spot holds: 0 nothing yet, 1 the thing itself, 2 its grey likeness
 		int      g_aim = -1;        // 0-3 a wonder, 4 the Bane, 5 the pillar; -1 nothing
 		bool     g_hallMenu = false;
 		int      g_hallFocus = 0;
@@ -469,6 +472,11 @@ namespace bo3z
 		std::string AimLabel(RE::PlayerCharacter* a_p, int a_i)
 		{
 			if (a_i == 5) return "The Endless Flame";
+			if (a_i < 5 && g_hallKind[a_i] == 2) {
+				if (a_i == 4) return a_p->GetItemCount(Bane()) > 0 ? "Alduin's Bane - in your hands" : "Alduin's Bane - wakes when the Echo of Alduin falls";
+				const int st = Classes::WonderState(a_i);
+				return std::string(Classes::WonderName(a_i)) + (st >= 4 ? " - yours" : " - not yet won");
+			}
 			if (a_i == 4) return Flag(kFlagBaneOut) ? "Forge Alduin's Bane again (10,000 Cursed Essence)" : "Take Alduin's Bane";
 			const std::string name(Classes::WonderName(a_i));
 			if (Classes::Get() != a_i) return name + " - it answers only to the " + PathName(a_i);
@@ -508,6 +516,7 @@ namespace bo3z
 		}
 		void ClearHall()
 		{
+			g_hallKind = {}, g_glowT = {}, g_pillarT = 0;
 			for (auto& x : g_hall.item) Drop(x);
 			for (auto& x : g_hall.glow) Drop(x);
 			Drop(g_hall.pillar);
@@ -531,29 +540,51 @@ namespace bo3z
 				g_hallSwept = true;
 				std::vector<RE::TESBoundObject*> ours;
 				for (auto id : gen::kHallFloat) ours.push_back(Forms::Ours(id));
+				for (auto id : gen::kHallGhost) ours.push_back(Forms::Ours(id));
 				for (auto id : { gen::kHallGlow, gen::kHallGlowTall, gen::kHallPillar }) ours.push_back(Forms::Ours(id));
 				a_p->GetParentCell()->ForEachReference([&](RE::TESObjectREFR* r) {
 					if (r && !r->IsDeleted() && std::find(ours.begin(), ours.end(), r->GetBaseObject()) != ours.end()) r->Disable(), r->SetDelete(true);
 					return RE::BSContainer::ForEachResult::kContinue;
 				});
-				g_hall = {};
+				g_hall = {}, g_hallKind = {};
 			}
 			if ((g_hallSlow -= a_dt) <= 0) {  // what stands, twice a second
 				g_hallSlow = 0.5f;
+				// (Noah: "a grayed out version so that I can see when I have it unlocked") each spot always holds something: the
+				// wonder itself in its glow when it's yours to take, its grey likeness until then
 				for (int i = 0; i < 5; ++i) {
-					const bool want = FloatShown(a_p, i);
+					const int want = FloatShown(a_p, i) ? 1 : 2;
 					auto r = g_hall.item[i].get();
-					if (want && (!r || r->IsDeleted() || r->GetParentCell() != a_p->GetParentCell())) {
-						if (auto* b = Forms::Ours(gen::kHallFloat[i])) g_hall.item[i] = Gun::PlaceAt(b, FloatSpots()[i].at, 0);
-						if (auto* g = Forms::Ours(i == 4 ? gen::kHallGlowTall : gen::kHallGlow)) g_hall.glow[i] = Gun::PlaceAt(g, FloatSpots()[i].at + RE::NiPoint3{ 0, 0, i == 4 ? 75.0f : 40.0f }, 0);
-					} else if (!want && r) {
+					if (want != g_hallKind[i] || !r || r->IsDeleted() || r->GetParentCell() != a_p->GetParentCell()) {
 						Drop(g_hall.item[i]), Drop(g_hall.glow[i]);
+						if (auto* b = Forms::Ours(want == 1 ? gen::kHallFloat[i] : gen::kHallGhost[i])) g_hall.item[i] = Gun::PlaceAt(b, FloatSpots()[i].at, 0);
+						g_glowT[i] = 0;  // (its glow lit again at once)
+						g_hallKind[i] = want;
+						logger::info("echo: the hall's spot {} holds {} ({})", i, want == 1 ? "the thing itself" : "its grey likeness", g_hall.item[i] ? "placed" : "NOT PLACED");
 					}
 				}
-				auto pr = g_hall.pillar.get();
-				if (!pr || pr->IsDeleted() || pr->GetParentCell() != a_p->GetParentCell()) {
-					if (auto* b = Forms::Ours(gen::kHallPillar)) g_hall.pillar = Gun::PlaceAt(b, kPillarAt, 0);
+				// (Noah: "the Endless Flame pillar should be animated with flames" - placed as an object, a model of only light never
+				// drew) the fire and the glows burn as the flasks' ground fires do: lingering hazards wearing the model, lit again
+				// just before each burns out
+				if ((g_pillarT -= 0.5f) <= 0) {
+					Gun::Hazard("CurseOfAlduin\\fx\\pillar_fire.nif", kPillarAt, 1.0f, 60.0f);
+					g_pillarT = 59.5f;
+					logger::info("echo: the Endless Flame burns");
 				}
+				for (int i = 0; i < 5; ++i) {
+					if (g_hallKind[i] != 1 || (g_glowT[i] -= 0.5f) > 0) continue;
+					Gun::Hazard(i == 4 ? "CurseOfAlduin\\fx\\hall_glow_tall.nif" : "CurseOfAlduin\\fx\\hall_glow.nif", FloatSpots()[i].at + RE::NiPoint3{ 0, 0, i == 4 ? 75.0f : 40.0f }, 1.0f, 20.0f);
+					g_glowT[i] = 19.5f;
+				}
+				// (they never drew: a placed thing fades in from nothing, and a model of only light never finished) drawn whole, at once
+				const auto whole = [](RE::ObjectRefHandle& a_h) {
+					auto r = a_h.get();
+					auto* o = r ? r->Get3D() : nullptr;
+					if (!o) return;
+					o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
+					if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
+				};
+				for (int i = 0; i < 5; ++i) whole(g_hall.item[i]);
 			}
 			for (int i = 0; i < 5; ++i) {  // slowly turning, bobbing up and down
 				auto r = g_hall.item[i].get();
@@ -589,6 +620,7 @@ namespace bo3z
 		}
 		void UseAim(RE::PlayerCharacter* a_p)
 		{
+			if (g_aim >= 0 && g_aim < 5 && g_hallKind[g_aim] == 2) return;  // (a grey likeness: nothing to take yet)
 			if (g_aim == 5) {
 				g_hallMenu = true, g_hallFocus = 0;
 				Forms::Play(gen::Sound::ward_lit);
@@ -907,7 +939,7 @@ namespace bo3z
 		void Reset()
 		{
 			g_probe = {}, g_arrive = {}, g_leave = {};
-			g_hall = {}, g_hallSwept = false, g_aim = -1, g_hallMenu = false;
+			g_hall = {}, g_hallSwept = false, g_aim = -1, g_hallMenu = false, g_hallKind = {};
 			for (auto& al : g_allies) {
 				if (auto a = al.h.get()) {
 					a->Disable();

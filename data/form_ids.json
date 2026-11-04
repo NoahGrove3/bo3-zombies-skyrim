@@ -1449,6 +1449,11 @@
   "ACTI:hf_bane": "0xda5",
   "ACTI:hf_glow": "0xda6",
   "ACTI:hf_glowtall": "0xda7",
-  "ACTI:hf_pillar": "0xda8"
+  "ACTI:hf_pillar": "0xda8",
+  "ACTI:hg_gravecaller": "0xda9",
+  "ACTI:hg_frostbinder": "0xdaa",
+  "ACTI:hg_wolfcrown": "0xdab",
+  "ACTI:hg_barrowhorn": "0xdac",
+  "ACTI:hg_bane": "0xdad"
  }
 }

@@ -6618,12 +6618,24 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		// we receive and the objective displayed in the Echo Altar") no banner across the screen any more: the line goes to the
 		// log only; what you're given shows in the HUD's item feed (Forms::Give), what you're after on the compass and at the altar
 		bool g_banners = false;  // (kept for a dev who wants them back)
+		void ShowBanner(std::string a_text, float a_seconds);
 		void Banner(std::string a_text, float a_seconds)
 		{
 			if (!g_banners) {
 				logger::info("banner (not shown): {}", a_text);
 				return;
 			}
+			ShowBanner(std::move(a_text), a_seconds);
+		}
+		// (Noah: "I also want the learning a new shout pop up to appear so that players know which shout they learned ... the
+		// dragon's updraft shout as well") the one message across the screen still shown: a shout learned, its name and words
+		void ShoutLearned(std::string_view a_name, std::string_view a_words)
+		{
+			logger::info("hud: shout learned - {} ({})", a_name, a_words);
+			ShowBanner("SHOUT LEARNED: " + std::string(a_name) + (a_words.empty() ? std::string() : "  -  " + std::string(a_words)), 6.0f);
+		}
+		void ShowBanner(std::string a_text, float a_seconds)
+		{
 			std::scoped_lock l(g_lock);
 			auto&      S = g_state;
 			const bool busy = S.bannerTime > 0.5f;

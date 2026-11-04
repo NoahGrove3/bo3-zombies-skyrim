@@ -58,6 +58,7 @@ def echo_ids(S):
     ids += [('ACTI', 'tornado_' + k) for k in ('frost', 'shock', 'wind', 'sun', 'blood')]   # the bows' third tier
     # (Noah: the wonders and Alduin's Bane floating in High Hrothgar's great hall, a fiery pillar for the Hall's rewards)
     ids += [('ACTI', 'hf_' + k) for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane', 'glow', 'glowtall', 'pillar')]
+    ids += [('ACTI', 'hg_' + k) for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane')]   # (Noah: each one greyed out where it will float, until it's yours to take)
     return ids
 def blasts():
     """Spell blasts: no-damage copies of Skyrim's explosions (tools/templates/expl/<name>.json)."""

@@ -1735,6 +1735,7 @@ namespace bo3z::gen
 	inline constexpr std::array<std::uint32_t, 3> kElemCrossbows{ { 0xD04, 0xD05, 0xD06 } };  // the Ranger's elemental crossbows: fire, frost, shock
 	inline constexpr std::uint32_t kHallFang = 0xC72, kHallRobes = 0xC73, kHallSkull = 0xC74, kHallEndless = 0xC75, kHallThrone = 0xC76, kHallFangShow = 0xC77, kFangWeap = 0xC79;
 	inline constexpr std::array<std::uint32_t, 5> kHallFloat{ 0xDA1, 0xDA2, 0xDA3, 0xDA4, 0xDA5 };  // the four wonders (class order) and Alduin's Bane, floating in High Hrothgar's hall
+	inline constexpr std::array<std::uint32_t, 5> kHallGhost{ 0xDA9, 0xDAA, 0xDAB, 0xDAC, 0xDAD };  // the same, greyed out (tools/modelconv/ghostnif.cpp)
 	inline constexpr std::uint32_t kHallGlow = 0xDA6, kHallGlowTall = 0xDA7, kHallPillar = 0xDA8;
 	inline constexpr std::array<std::uint32_t, 5> kEmmFx{ 0xC7A, 0xC7B, 0xC7C, 0xC7D, 0xC7E };  // summon, crystal, orb, storm, tornado
 	inline constexpr std::array<std::uint32_t, 6> kTornado{ 0xC7E, 0xC7F, 0xC80, 0xC81, 0xC82, 0xC83 };  // by element (Bows Kind order)

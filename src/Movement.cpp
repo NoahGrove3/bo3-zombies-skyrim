@@ -1121,7 +1121,7 @@ namespace bo3z
 					em->EquipShout(a_player, sh);
 				}
 			}
-			Hud::Banner("WHITERUN'S THU'UM: Dragon's Updraft - shout it and a whirlwind lifts you; open your glider at the top", 5.0f);
+			Hud::ShoutLearned("Dragon's Updraft", "shout it and a whirlwind lifts you - open your glider at the top");
 			logger::info("glider: Dragon's Updraft learned ({:08X})", sh->GetFormID());
 		}
 		// (Noah: "the test kit to unlock the glider and shout for me so I can get clips") the glider unlocked on this computer

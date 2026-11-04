@@ -791,6 +791,7 @@ namespace bo3z
 		void                  StartThrow(bool a_left, std::function<void()> a_release);  // the underhand throw on that arm; a_release at the top of the swing
 		bool                  Throwing();  // the Light Orb over your head, lit or put away
 		void                  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land);  // a thrown thing flown on its arc; a_land where it comes down
+		void                  Hazard(const std::string& a_model, const RE::NiPoint3& a_at, float a_scale, float a_life);  // a model of light lingering a_life seconds where it's set (drawn as the flasks' ground fires are)
 		RE::ObjectRefHandle   PlaceAt(RE::TESBoundObject* a_obj, const RE::NiPoint3& a_at, float a_yaw);  // a placed object made at the point itself (its 3D drawn there, not made at the player and moved)
 		void                  BlackHole(const RE::NiPoint3& a_at, bool a_legendary);  // the Subsuming Vortex: a purple singularity pulls the dead in, then bursts
 		void                  DevCast(const std::string& a_mode);  // dev: 'cast tap|full|ult|orb|hand' with a spell in hand
@@ -1177,6 +1178,7 @@ namespace bo3z
 		State&      Edit();
 		std::mutex& Lock();
 		void        Banner(std::string a_text, float a_seconds = 4.0f);
+		void        ShoutLearned(std::string_view a_name, std::string_view a_words);  // the shout-learned pop-up (the one banner still shown)
 		void        Say(std::string a_who, std::string a_line, float a_seconds = 4.5f);  // a townsperson's words, as a subtitle
 		void        Essence(const RE::NiPoint3& a_at);  // a kill's essence flies from the body to your count
 		void        Lore(std::string a_title, std::string a_text, float a_seconds = 14.0f);
