@@ -3275,14 +3275,24 @@ namespace bo3z::Classes
 			RE::NiPoint3 right{ dir.y, -dir.x, 0.0f };
 			if (const float l = right.Length(); l > 1e-3f) right = right * (1.0f / l);
 			RE::NiPoint3 from = w.translate + dir * 45.0f + right * (a_left ? -18.0f : 18.0f) + RE::NiPoint3{ 0.0f, 0.0f, -14.0f };
-			if (auto* root = p->Get3D(cam->IsInFirstPerson())) {  // (out of the hand that threw it)
+			RE::NiPoint3 aim = dir;
+			// (Noah: "when throwing the potions in 3rd person the flasks itself aren't being thrown from the players arm it looks like
+			// its coming from the camera angle") out of the hand that threw it, in either view - and in third person flown from the
+			// hand at the crosshair's point ahead, not along the camera's line
+			if (auto* root = p->Get3D(cam->IsInFirstPerson())) {
 				if (auto* hand = root->GetObjectByName(a_left ? "NPC L Hand [LHnd]" : "NPC R Hand [RHnd]")) {
 					const RE::NiPoint3 hp = hand->world.translate;
-					if (hp.GetDistance(w.translate) < 150.0f) from = hp + dir * 12.0f;
+					if (hp.GetDistance(p->GetPosition()) < 250.0f) {
+						from = hp + dir * 10.0f;
+						if (!cam->IsInFirstPerson()) {
+							aim = (w.translate + dir * 1800.0f) - from;
+							if (aim.Length() > 1e-3f) aim.Unitize(); else aim = dir;
+						}
+					}
 				}
 			}
 			const float speed = el == 6 ? 1350.0f : 1500.0f;
-			LaunchFlask(el, t, from, dir * speed + RE::NiPoint3{ 0.0f, 0.0f, 260.0f }, false);
+			LaunchFlask(el, t, from, aim * speed + RE::NiPoint3{ 0.0f, 0.0f, 260.0f }, false);
 			// (a little up: it arcs onto where you aim)
 		}
 		int FlaskHeld(bool a_left)
@@ -3399,7 +3409,7 @@ namespace bo3z::Classes
 			// Tier I on: the arc slash, in the sword's colour, through every one of the dead in its path
 			Gun::SlashSpec sl;
 			sl.model = ArcModel(key);
-			sl.from = me + RE::NiPoint3{ 0, 0, 100.0f } + dir * 70.0f;
+			sl.from = Gun::SwingFrom();
 			sl.dir = dir;
 			sl.roll = Gun::SwingRoll(dir);
 			sl.range = 1400.0f + 200.0f * t;
@@ -3474,7 +3484,7 @@ namespace bo3z::Classes
 		const RE::NiPoint3 dir = Gun::SwingDir();
 		Gun::SlashSpec sl;
 		sl.model = ArcModel(9);
-		sl.from = p->GetPosition() + RE::NiPoint3{ 0, 0, 100.0f } + dir * 80.0f;
+		sl.from = Gun::SwingFrom();
 		sl.dir = dir;
 		sl.roll = Gun::SwingRoll(dir);
 		sl.speed = 1900.0f, sl.range = 2200.0f, sl.radius = 160.0f + 25.0f * e, sl.scale = 1.4f + 0.3f * e, sl.share = (0.4f + 0.35f * e) * top;
@@ -3534,6 +3544,7 @@ namespace bo3z::Classes
 		// hand - its grunt came with it, whatever voice you had; the throw is all ours (the arm posed by hand, Gun's PoseThrow)
 		return true;
 	}
+	int FlaskElementInHand(bool a_left) { return FlaskHeld(a_left); }
 	bool FlaskInHand(bool a_left)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -3593,6 +3604,7 @@ namespace bo3z::Classes
 					flip.entry[0][0] = -1.0f, flip.entry[1][1] = -1.0f, flip.entry[2][2] = 1.0f;  // (half a turn about its Z)
 					flip.entry[0][1] = flip.entry[0][2] = flip.entry[1][0] = flip.entry[1][2] = flip.entry[2][0] = flip.entry[2][1] = 0.0f;
 					if (kid->local.rotate.entry[0][0] > -0.99f || kid->local.rotate.entry[1][1] > -0.99f) kid->local.rotate = flip;  // (the body's own update carries it)
+					kid->local.translate = {}, kid->local.scale = 1.0f;   // (the hand's placement - in the palm, Gun's PlaceHeldFlask - left behind)
 				}
 			}
 		}

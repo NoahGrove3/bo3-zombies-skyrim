@@ -1,11 +1,20 @@
-"""(Noah: "tier 1 sends out arc slashes from the blade ... that pierce enemies, swing in the color of the sword"; "Alduin's Bane's
-wind slashes should be a white arc aligning with the blade swing angle not a cone of wind") the swords' crescent slashes: a
-blazing crescent bowed forward (+Y, the way it flies), its curve along X - turned to the swing's angle by src/Gun.cpp - drawn
-twice: a ribbon standing across the flight (seen from behind) and the same lying flat (seen from above), each a hot core and
-a soft streaked glow, fading to nothing at both tips. One model per colour.
+"""(Noah: "tier 1 sends out arc slashes from the blade ... that pierce enemies, swing in the color of the sword"; "the slashes
+from the swords should look hyper realistic") the swords' crescent slashes: a true crescent - its curve along X, bowed forward
+(+Y, the way it flies), thick in the middle and drawn out to nothing at both tips - turned to the swing's angle by
+src/Gun.cpp. Built in layers, all added light:
 
-    python3 tools/arcfx.py   ->  assets/fx/Meshes/CurseOfAlduin/fx/arc_<colour>.nif, Textures/.../arc_slash.dds"""
-import math, pathlib, subprocess
+  - the body: a white-hot cutting edge at the front fading back through the sword's colour into frayed, streaked trails,
+    drawn as a fan of planes tilted about the crescent's span (so it reads as a solid sweep from behind, above or the side;
+    each plane fades as you see it edge-on)
+  - the edge: a thin blazing line along the front, a little wider than the body's own
+  - the shimmer: a wider wake of fine streaks that slide along the curve as it flies
+  - the haze: a soft bloom round the whole of it
+
+One model per colour.
+
+    python3 tools/arcfx.py [--preview out.json]  ->  assets/fx/Meshes/CurseOfAlduin/fx/arc_<colour>.nif,
+                                                      Textures/CurseOfAlduin/fx/arc_slash.dds, arc_wisp.dds, arc_haze.dds"""
+import json, math, pathlib, subprocess, sys
 import numpy as np
 from PIL import Image
 
@@ -22,56 +31,137 @@ COLOURS = {   # glow, core
 }
 
 
-def texture():
-    """across the band (v) a hot thin core in a soft glow; along it (u) fine streaks, as a blade's trail smears"""
-    W, H = 512, 128
-    rng = np.random.default_rng(3)
-    v = np.linspace(-1, 1, H)[:, None]
-    streak = np.repeat(rng.random((1, W // 8)), 8, 1)
-    streak = np.convolve(streak[0], np.ones(9) / 9, 'same')[None, :]
-    streaks = 0.65 + 0.35 * (np.abs(np.sin(v * 9 + streak * 6)) ** 3)
-    glow = np.exp(-(v / 0.55) ** 2) * streaks
-    core = np.exp(-(v / 0.12) ** 2)
-    a = np.clip(glow * 0.75 + core, 0, 1)
-    img = np.repeat((a * 255).astype(np.uint8)[..., None], 3, 2)
+def fbm(n, octaves, rng, smooth=1.0):
+    """1D fractal noise, wrapping, 0..1"""
+    out = np.zeros(n)
+    amp, tot = 1.0, 0.0
+    for o in range(octaves):
+        k = 2 ** (o + 2)
+        pts = rng.random(k)
+        x = np.arange(n) * k / n
+        i = np.floor(x).astype(int)
+        f = x - i
+        f = f * f * (3 - 2 * f)
+        out += amp * (pts[i % k] * (1 - f) + pts[(i + 1) % k] * f)
+        tot += amp
+        amp *= 0.55 * smooth
+    return out / tot
+
+
+def save(img, name):
     TEX.mkdir(parents=True, exist_ok=True); WORK.mkdir(parents=True, exist_ok=True)
-    png = WORK / 'arc_slash.png'; Image.fromarray(img).save(png)
-    subprocess.run(['convert', str(png), '-define', 'dds:compression=dxt1', '-define', 'dds:mipmaps=8', str(TEX / 'arc_slash.dds')], check=True)
+    png = WORK / (name + '.png')
+    Image.fromarray(np.clip(img * 255, 0, 255).astype(np.uint8)).convert('RGB').save(png)
+    subprocess.run(['convert', str(png), '-define', 'dds:compression=dxt1', '-define', 'dds:mipmaps=9', str(TEX / (name + '.dds'))], check=True)
 
 
-def ribbon(L, name, col, scale, R, half_deg, w, standing, segs=24, vscroll=None):
-    L.append(f'shape {name} tex={FX}arc_slash.dds color={col},1 scale={scale} blend=add single=0' + (f' vscroll={vscroll}' if vscroll else ''))
+def textures():
+    rng = np.random.default_rng(11)
+    W, H = 1024, 256
+    u = np.linspace(0, 1, W)[None, :]
+    v = np.linspace(0, 1, H)[:, None]                   # 0: the leading edge .. 1: the trailing end
+    # streaks running along the sweep (u): each row of the band its own brightness, wobbling slowly along the curve
+    rows = fbm(H, 6, rng)[:, None]
+    wob = fbm(W, 4, rng)[None, :]
+    rows2 = fbm(H, 7, np.random.default_rng(5))[:, None]
+    streak = np.clip(0.3 + 1.6 * (rows - 0.5) + 1.0 * (rows2 - 0.5) * (0.6 + wob), 0, 1.5) ** 1.3
+    # the body: bright behind the edge, dying away to the back; frayed - its trails break into wisps as they fall behind
+    body = np.exp(-v * 3.0) * (0.45 + 0.55 * streak)
+    fray = np.clip((fbm(W, 6, np.random.default_rng(9))[None, :] * 0.9 + rows * 0.6) - v * 1.15 + 0.35, 0, 1)
+    body = body * (0.35 + 0.65 * fray)
+    edge = np.exp(-((v - 0.035) / 0.022) ** 2) * 1.0 + np.exp(-((v - 0.035) / 0.07) ** 2) * 0.35
+    a = np.clip(edge + body * 0.95, 0, 1)
+    a[0:2, :] = 0                                         # (a clean front)
+    save(a, 'arc_slash')
+    # the shimmer: fine streaks only (no edge), for the scrolling wake
+    s = np.clip((rows2 - 0.45) * 2.2, 0, 1) ** 1.6 * np.exp(-v * 1.6) * (0.5 + 0.5 * wob)
+    s = s * np.clip(np.sin(np.pi * v) * 1.6, 0, 1)
+    save(np.clip(s * 1.3, 0, 1), 'arc_wisp')
+    # the haze: a soft glow across the band
+    hz = np.exp(-((v - 0.32) / 0.3) ** 2) * np.ones_like(u)
+    save(hz * 0.9, 'arc_haze')
+    # the sparks: motes of light shed off the sweep, drawn out along it
+    sp = np.zeros((H, W))
+    r3 = np.random.default_rng(21)
+    for _ in range(420):
+        y = int(r3.beta(1.4, 3.0) * (H - 1)); x = int(r3.random() * W); ln = int(r3.integers(6, 40)); b = r3.random() ** 2
+        xs = (x + np.arange(ln)) % W
+        sp[y, xs] += b * np.linspace(1, 0, ln) ** 1.5
+    from PIL import ImageFilter
+    im = Image.fromarray(np.clip(sp * 255, 0, 255).astype(np.uint8)).filter(ImageFilter.GaussianBlur(1.1))
+    sp = np.asarray(im, dtype=np.float32) / 255
+    save(np.clip(sp * 3.5, 0, 1), 'arc_spark')
+
+
+def crescent(L, name, tex, col, scale, *, plane='face', tilt=0.0, ro=160.0, half=38.0, depth=24.0, v0=0.0, v1=1.0, segs=44,
+             rows=6, uscroll=None, bow=18.0, prev=None):
+    """a crescent band from its outer curve (v=v0, the hot edge) in toward its inner curve (v=v1), as deep as `depth` at its
+    middle and nothing at its tips. plane 'face': standing across the flight (X across, Z up - what you see from behind),
+    its middle bowed forward (+Y) by `bow`; 'flat': lying in the flight's plane (X across, Y forward). tilt: turned about X"""
+    L.append(f'shape {name} tex={FX}{tex} color={col},1 scale={scale} blend=add single=0 falloff=1' + (f' uscroll={uscroll}' if uscroll else ''))
+    c0 = math.cos(math.radians(half))
+    ca, sa = math.cos(tilt), math.sin(tilt)
+    def place(x, up, fwd):   # (x, up-in-its-plane, forward) -> the model's x, y, z, then tilted about X
+        y, z = (fwd, up) if plane == 'face' else (up, fwd)
+        return (x, y * ca - z * sa, y * sa + z * ca)
+    n0 = place(0, 0, 1) if plane == 'face' else place(0, 0, 1)
+    nrm = (0.0, -sa, ca) if plane == 'flat' else (0.0, ca, sa)
+    verts = []
     for k in range(segs + 1):
         f = k / segs
-        th = math.radians(-half_deg + 2 * half_deg * f)
-        x, y = R * math.sin(th), R * math.cos(th) - R * 0.55
-        fade = math.sin(math.pi * f) ** 0.8               # nothing at the tips
-        width = w * (0.35 + 0.65 * fade)                  # thinner toward the tips
-        if standing:   # across the flight: the band up and down (z)
-            pts = ((x, y, -width), (x, y, width))
-        else:          # flat: the band inward and outward along the curve's normal
-            nx, ny = math.sin(th), math.cos(th)
-            pts = ((x - nx * width, y - ny * width, 0), (x + nx * width, y + ny * width, 0))
-        for (px, py, pz), vv in zip(pts, (1.0, 0.0)):
-            L.append(f'v {px:.2f} {py:.2f} {pz:.2f} {f:.3f} {vv} {fade:.3f} {fade:.3f} {fade:.3f} 1')
+        th = math.radians(-half + 2 * half * f)
+        nx, nu = math.sin(th), math.cos(th)
+        m = (math.cos(th) - c0) / (1 - c0)               # 1 at the middle, 0 at the tips
+        x0, u0 = ro * nx, ro * (math.cos(th) - c0)
+        fwd = bow * m
+        fade = max(0.0, m) ** 0.55
+        w = depth * max(0.0, m) ** 0.9
+        for j in range(rows + 1):
+            g = j / rows
+            d = w * (v0 + (v1 - v0) * g)
+            p = place(x0 - nx * d, u0 - nu * d, fwd - 0.35 * d)
+            L.append(f'v {p[0]:.2f} {p[1]:.2f} {p[2]:.2f} {f * 2.0:.4f} {g:.4f} {fade:.3f} {fade:.3f} {fade:.3f} 1')
+            L.append(f'n {nrm[0]:.4f} {nrm[1]:.4f} {nrm[2]:.4f}')
+            verts.append((p, (f * 2.0, g), fade))
+    tris = []
     for k in range(segs):
-        a = 2 * k
-        L += [f't {a} {a + 1} {a + 3}', f't {a} {a + 3} {a + 2}']
+        for j in range(rows):
+            a0 = k * (rows + 1) + j
+            b0 = a0 + rows + 1
+            tris += [(a0, b0, b0 + 1), (a0, b0 + 1, a0 + 1)]
+    for t in tris: L.append(f't {t[0]} {t[1]} {t[2]}')
+    if prev is not None:
+        prev.append({'name': name, 'tex': tex, 'col': [float(c) for c in col.split(',')], 'scale': scale,
+                     'v': [p for p, _, _ in verts], 'uv': [uv for _, uv, _ in verts], 'c': [c for _, _, c in verts], 't': tris,
+                     'uscroll': uscroll or 0})
 
 
-def build(key, glow, core):
+def build(key, glow, core, prev=None):
     L = [f'out {MESH / ("arc_" + key + ".nif")}']
-    for stand in (True, False):
-        s = 's' if stand else 'f'
-        ribbon(L, f'g{s}', glow, 1.6, 95, 78, 22, stand)          # its glow
-        ribbon(L, f'c{s}', core, 1.3, 95, 70, 6, stand)           # its hot core
+    # what you see from behind: the crescent standing across the flight, two more a little tilted for its thickness
+    for i, (t, sc) in enumerate(((0.0, 1.45), (0.3, 0.7), (-0.3, 0.7))):
+        crescent(L, f'face{i}', 'arc_slash.dds', glow, sc, tilt=t, depth=16.0, prev=prev)
+    crescent(L, 'edge', 'arc_slash.dds', core, 1.7, depth=6.0, v0=0.0, v1=0.3, rows=2, half=37.0, prev=prev)
+    crescent(L, 'wisp', 'arc_wisp.dds', glow, 1.1, depth=30.0, uscroll=0.5, half=44.0, prev=prev)
+    crescent(L, 'spark', 'arc_spark.dds', core, 1.3, depth=44.0, uscroll=0.3, half=46.0, bow=10.0, prev=prev)
+    crescent(L, 'haze', 'arc_haze.dds', glow, 0.42, ro=166.0, depth=44.0, half=42.0, rows=4, prev=prev)
+    # from the side or above: the same sweep lying in the flight's plane
+    crescent(L, 'flat', 'arc_slash.dds', glow, 0.9, plane='flat', ro=150.0, half=40.0, depth=26.0, bow=0.0, prev=prev)
+    crescent(L, 'flatedge', 'arc_slash.dds', core, 0.8, plane='flat', ro=150.0, half=39.0, depth=8.0, v0=0, v1=0.3, rows=2, bow=0.0, prev=prev)
+    crescent(L, 'flatwisp', 'arc_wisp.dds', glow, 0.8, plane='flat', ro=150.0, half=44.0, depth=44.0, uscroll=0.5, bow=0.0, prev=prev)
     jf = WORK / f'arc_{key}.job'; jf.write_text('\n'.join(L) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
-    print(key, r.stdout.strip(), r.stderr.strip())
+    print(key, r.stdout.strip()[-200:], r.stderr.strip()[-400:])
     if r.returncode: raise SystemExit('fxwrite failed')
 
 
 if __name__ == '__main__':
-    texture()
+    textures()
     MESH.mkdir(parents=True, exist_ok=True)
-    for k, (g, c) in COLOURS.items(): build(k, g, c)
+    prev = {}
+    for k, (g, c) in COLOURS.items():
+        prev[k] = []
+        build(k, g, c, prev[k])
+    if '--preview' in sys.argv:
+        out = pathlib.Path(sys.argv[sys.argv.index('--preview') + 1])
+        out.write_text(json.dumps({k: prev[k] for k in ('carian', 'purple', 'white', 'red')}))

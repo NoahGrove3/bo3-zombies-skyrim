@@ -436,7 +436,7 @@ namespace Props
 		const RE::NiPoint3 dir = Gun::SwingDir();
 		Gun::SlashSpec sl;
 		sl.model = "CurseOfAlduin\\fx\\arc_bane.nif";
-		sl.from = p->GetPosition() + RE::NiPoint3{ 0, 0, 100.0f } + dir * 80.0f;
+		sl.from = Gun::SwingFrom();
 		sl.dir = dir;
 		sl.roll = Gun::SwingRoll(dir);
 		sl.speed = 2400.0f, sl.range = 3200.0f, sl.radius = 150.0f, sl.scale = 1.7f;

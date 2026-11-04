@@ -2254,19 +2254,47 @@ namespace bo3z
 #include "Staffs.inl"
 #include "WonderProps.inl"
 
-		// (Noah: "an underhand throwing animation") a flask thrown: the arm that holds it swung back and down, then forward and up
-		// through the release (the flask leaves the hand at the top of the swing), then home - laid over the animation on the
-		// upper arm and forearm of the body you're seen in; the flask in the hand hidden from the release until the next is in it
-		struct ThrowPose { bool on = false, left = false, released = false; float t = 0; std::function<void()> release; };
+		// (Noah: "an underhand throwing animation"; "realistic throwing animations and sound fx") a flask thrown underhand, the
+		// whole body in it: the arm drawn back and down with the elbow bent, the wrist cocked and the shoulders turned with it,
+		// then the arm swung through - the shoulders turning back, the elbow straightening - and the wrist flicked as the flask
+		// leaves the hand ahead of you; a follow-through up and out, then home. The glass clinks as it is drawn back, the air
+		// whips past as it goes. Laid over the animation in the body you're seen in; the flask in the hand hidden from the
+		// release until the next is in it
+		struct ThrowPose { bool on = false, left = false, released = false, clinked = false, whooshed = false; float t = 0; std::function<void()> release; };
 		ThrowPose g_throw;
-		constexpr float kThrowLen = 0.62f, kThrowRelease = 0.30f;
-		float ThrowAngle(float t)  // about your right: + forward and up, - back and down (radians)
+		constexpr float kThrowLen = 0.72f, kThrowRelease = 0.34f;
+		float Ease(float k) { k = std::clamp(k, 0.0f, 1.0f); return k * k * (3.0f - 2.0f * k); }
+		// the throw's channels at time t: the upper arm about your right (+ forward and up), the elbow's bend, the wrist's
+		// cock (- back, + the flick), the shoulders' turn (+ toward the throwing side, back)
+		struct ThrowKeys { float arm, elbow, wrist, turn; };
+		ThrowKeys ThrowAt(float t)
 		{
-			if (t < 0.18f) return -1.0f * std::sin((t / 0.18f) * 1.5708f);                        // back and down
-			if (t < 0.36f) { const float k = (t - 0.18f) / 0.18f; return -1.0f + 2.2f * (k * k * (3.0f - 2.0f * k)); }  // the swing through
-			const float k = std::min(1.0f, (t - 0.36f) / (kThrowLen - 0.36f));
-			return 1.2f * (1.0f - k * k * (3.0f - 2.0f * k));                                        // and home
+			constexpr float tBack = 0.20f, tRel = kThrowRelease, tFollow = 0.46f;
+			if (t < tBack) {             // the draw back: arm back and down, elbow bending, wrist cocked, shoulders turning
+				const float k = Ease(t / tBack);
+				return { -1.05f * k, 0.55f * k, -0.55f * k, 0.32f * k };
+			}
+			if (t < tRel) {              // the swing through, quickening: arm forward, elbow straightening, wrist flicking at the end
+				const float k = (t - tBack) / (tRel - tBack), e = k * k;
+				return { -1.05f + 2.25f * Ease(k), 0.55f - 0.5f * Ease(k), -0.55f + 1.0f * e, 0.32f - 0.52f * Ease(k) };
+			}
+			if (t < tFollow) {           // the follow-through: up and out, the wrist loose
+				const float k = Ease((t - tRel) / (tFollow - tRel));
+				return { 1.2f + 0.25f * k, 0.05f + 0.2f * k, 0.45f - 0.15f * k, -0.2f - 0.06f * k };
+			}
+			const float k = Ease((t - tFollow) / (kThrowLen - tFollow));   // and home
+			return { 1.45f * (1 - k), 0.25f * (1 - k), 0.3f * (1 - k), -0.26f * (1 - k) };
 		}
+		void TurnBone(RE::NiAVObject* a_bone, const RE::NiMatrix3& a_world)
+		{
+			if (!a_bone || !a_bone->parent) return;
+			const RE::NiMatrix3 P = a_bone->parent->world.rotate;
+			a_bone->local.rotate = P.Transpose() * a_world * P * a_bone->local.rotate;
+			RE::NiUpdateData ud;
+			ud.time = 0.0f;
+			a_bone->UpdateDownwardPass(ud, 0);
+		}
+		RE::NiPoint3 BoneZ(const RE::NiAVObject* o) { const auto& r = o->world.rotate; return { r.entry[0][2], r.entry[1][2], r.entry[2][2] }; }
 		void PoseThrow(RE::PlayerCharacter* a_player)
 		{
 			if (!g_throw.on) return;
@@ -2274,23 +2302,28 @@ namespace bo3z
 			const bool first = cam && cam->IsInFirstPerson();
 			auto* root = a_player->Get3D(first);
 			if (!root) return;
-			const float a = ThrowAngle(g_throw.t);
-			const float pitch = a_player->data.angle.x, yaw = a_player->data.angle.z;
+			const ThrowKeys k = ThrowAt(g_throw.t);
+			const float yaw = a_player->data.angle.z;
 			const RE::NiPoint3 r{ std::cos(yaw), -std::sin(yaw), 0 };
-			(void)pitch;
-			const char* ua = g_throw.left ? "NPC L UpperArm [LUar]" : "NPC R UpperArm [RUar]";
-			const char* fa = g_throw.left ? "NPC L Forearm [LLar]" : "NPC R Forearm [RLar]";
-			int k = 0;
-			for (const char* name : { ua, fa }) {
-				auto* bone = root->GetObjectByName(name);
-				if (!bone || !bone->parent) continue;
-				const RE::NiMatrix3 D = AxisAngle(r, (k == 0 ? 1.0f : 0.35f) * a * (first ? 0.8f : 1.0f));
-				const RE::NiMatrix3 P = bone->parent->world.rotate;
-				bone->local.rotate = P.Transpose() * D * P * bone->local.rotate;
-				RE::NiUpdateData ud;
-				ud.time = 0.0f;
-				bone->UpdateDownwardPass(ud, 0);
-				++k;
+			const RE::NiPoint3 up{ 0, 0, 1 };
+			const bool L = g_throw.left;
+			const float side = L ? -1.0f : 1.0f;
+			const float m = first ? 0.8f : 1.0f;
+			// the shoulders' turn (third person: the first-person body is only arms)
+			if (!first) TurnBone(root->GetObjectByName("NPC Spine2 [Spn2]"), AxisAngle(up, side * k.turn * 0.6f));
+			auto* ua = root->GetObjectByName(L ? "NPC L UpperArm [LUar]" : "NPC R UpperArm [RUar]");
+			auto* fa = root->GetObjectByName(L ? "NPC L Forearm [LLar]" : "NPC R Forearm [RLar]");
+			auto* hd = root->GetObjectByName(L ? "NPC L Hand [LHnd]" : "NPC R Hand [RHnd]");
+			TurnBone(ua, AxisAngle(r, k.arm * m));
+			if (fa && hd) {
+				// the elbow bends about the line across the arm's own bend (or your right, the arm straight)
+				RE::NiPoint3 hinge = r;
+				if (ua) {
+					RE::NiPoint3 x = BoneZ(ua).Cross(BoneZ(fa));
+					if (x.Length() > 0.05f) hinge = x * (1.0f / x.Length());
+				}
+				TurnBone(fa, AxisAngle(hinge, k.elbow * m));   // (about the bend's own line: more bend - it bends only one way)
+				TurnBone(hd, AxisAngle(r, k.wrist * m));
 			}
 			// the flask in that hand: hidden from the release until the throw is over (the next one is in your hand)
 			for (const bool p1 : { false, true }) {
@@ -2298,10 +2331,166 @@ namespace bo3z
 				if (auto* node = rt ? rt->GetObjectByName(g_throw.left ? "SHIELD" : "WEAPON") : nullptr) node->SetAppCulled(g_throw.released && g_throw.t < kThrowLen);
 			}
 		}
+		// (Noah: "my players hands should be holding the flask from the circle bowl part of the flask not the snout/cork area. the
+		// players palm should be facing up") a flask drawn sits upright in an open hand turned palm up: the forearm rolled over
+		// (most of the turn in the forearm, the rest in the wrist and the twist bone between, so the skin turns with it), the
+		// fingers eased open round the bottle's belly, and the bottle set on the palm, its neck up out of it
+		float g_holdW[2]{};
+		const char* HandBone(bool a_left, const char* a_what)
+		{
+			static std::unordered_map<std::string, std::string> names;
+			const std::string key = std::string(a_left ? "L" : "R") + a_what;
+			auto it = names.find(key);
+			if (it != names.end()) return it->second.c_str();
+			const char S = a_left ? 'L' : 'R';
+			std::string n;
+			const std::string w = a_what;
+			if (w == "fa") n = fmt::format("NPC {} Forearm [{}Lar]", S, S);
+			else if (w == "hand") n = fmt::format("NPC {} Hand [{}Hnd]", S, S);
+			else if (w == "twist") n = fmt::format("NPC {} ForearmTwist1 [{}Lt1]", S, S);
+			else n = fmt::format("NPC {} Finger{} [{}F{}]", S, w, S, w);   // (w: "20" - the finger, the joint)
+			return names.emplace(key, n).first->second.c_str();
+		}
+		// the palm's side of the hand: the way the fingers curl, off the line from the wrist to the knuckles
+		bool PalmNormal(RE::NiAVObject* a_root, bool a_left, RE::NiPoint3& a_n, RE::NiPoint3& a_fingers, RE::NiPoint3& a_centre)
+		{
+			auto* hand = a_root->GetObjectByName(HandBone(a_left, "hand"));
+			auto* b = a_root->GetObjectByName(HandBone(a_left, "20"));
+			auto* tip = a_root->GetObjectByName(HandBone(a_left, "22"));
+			auto* f1 = a_root->GetObjectByName(HandBone(a_left, "10"));
+			auto* f4 = a_root->GetObjectByName(HandBone(a_left, "40"));
+			if (!hand || !b || !tip || !f1 || !f4) return false;
+			RE::NiPoint3 ax = b->world.translate - hand->world.translate;
+			if (ax.Length() < 1e-3f) return false;
+			ax.Unitize();
+			const RE::NiPoint3 c = (tip->world.translate + BoneZ(tip) * (1.5f * tip->world.scale)) - b->world.translate;
+			RE::NiPoint3 n = c - ax * c.Dot(ax);
+			if (n.Length() < 0.4f * b->world.scale) {   // (fingers straight: the palm off the knuckles' line and the thumb's side)
+				auto* th = a_root->GetObjectByName(HandBone(a_left, "00"));
+				if (!th) return false;
+				RE::NiPoint3 across = f1->world.translate - f4->world.translate;
+				n = across.Cross(ax);
+				const RE::NiPoint3 toThumb = th->world.translate - hand->world.translate;
+				if (n.Dot(toThumb) < 0) n = n * -1.0f;
+			}
+			n.Unitize();
+			a_n = n, a_fingers = ax;
+			const RE::NiPoint3 knuckles = (f1->world.translate + b->world.translate + f4->world.translate) * (1.0f / 3.0f);
+			a_centre = hand->world.translate * 0.45f + knuckles * 0.55f + n * (1.2f * hand->world.scale);
+			return true;
+		}
+		void PoseFlaskHand(RE::PlayerCharacter* a_player, float a_delta)
+		{
+			for (const bool L : { false, true }) {
+				const bool want = Classes::FlaskInHand(L) && !Movement::Gliding();
+				float& w = g_holdW[L ? 1 : 0];
+				w = std::clamp(w + (want ? 1.0f : -1.0f) * a_delta * 5.0f, 0.0f, 1.0f);
+				if (w <= 0.001f) continue;
+				const float ww = Ease(w);
+				for (const bool first : { false, true }) {
+					auto* root = a_player->Get3D(first);
+					if (!root) continue;
+					auto* fa = root->GetObjectByName(HandBone(L, "fa"));
+					auto* hand = root->GetObjectByName(HandBone(L, "hand"));
+					if (!fa || !hand) continue;
+					RE::NiPoint3 n, fingers, centre;
+					if (!PalmNormal(root, L, n, fingers, centre)) continue;
+					// the roll: the palm turned to face up, about the forearm's line
+					RE::NiPoint3 a = hand->world.translate - fa->world.translate;
+					if (a.Length() > 1e-3f) {
+						a.Unitize();
+						const RE::NiPoint3 U{ 0, 0, 1 };
+						RE::NiPoint3 up = U - a * a.Dot(U), np = n - a * a.Dot(n);
+						if (up.Length() > 0.3f && np.Length() > 0.3f) {
+							up.Unitize(), np.Unitize();
+							float phi = std::atan2(a.Dot(np.Cross(up)), np.Dot(up));
+							phi = std::clamp(phi, -2.6f, 2.6f) * ww;
+							TurnBone(fa, AxisAngle(a, phi * 0.6f));
+							TurnBone(root->GetObjectByName(HandBone(L, "twist")), AxisAngle(a, phi * 0.2f));
+							TurnBone(hand, AxisAngle(a, phi * 0.4f));
+						}
+					}
+					// the fingers eased open round the bottle (the knuckles a little, the joints past them more), the thumb a touch
+					for (int i = 0; i < 5; ++i) {
+						for (int j = 0; j < 3; ++j) {
+							const char id[3] = { static_cast<char>('0' + i), static_cast<char>('0' + j), 0 };
+							auto* bone = root->GetObjectByName(HandBone(L, id));
+							if (!bone) continue;
+							RE::NiAVObject* prev = hand;
+							if (j > 0) {
+								const char pid[3] = { static_cast<char>('0' + i), static_cast<char>('0' + j - 1), 0 };
+								prev = root->GetObjectByName(HandBone(L, pid));
+							}
+							if (!prev) continue;
+							const RE::NiPoint3 pd = BoneZ(prev), sd = BoneZ(bone);
+							RE::NiPoint3 ax = pd.Cross(sd);
+							const float sn = ax.Length();
+							if (sn < 1e-3f) continue;
+							ax = ax * (1.0f / sn);
+							const float ang = std::atan2(sn, pd.Dot(sd));
+							const float k = (i == 0 ? 0.15f : j == 0 ? 0.2f : 0.5f) * ww;
+							TurnBone(bone, AxisAngle(ax, -ang * k));
+						}
+					}
+				}
+			}
+		}
+		// the bottle on the palm (after the throw's swing, so it rides the hand through it): its base where the palm is, its
+		// neck up out of the hand - the held model hangs from its neck (tools/flasks.py), its base this far down it
+		float FlaskBase(int a_el) { return a_el == 6 ? 15.76f : a_el == 0 ? 11.56f : 10.67f; }
+		void PlaceHeldFlask(RE::PlayerCharacter* a_player)
+		{
+			for (const bool L : { false, true }) {
+				const float w = g_holdW[L ? 1 : 0];
+				if (w <= 0.001f) continue;
+				const int el = Classes::FlaskElementInHand(L);
+				if (el < 0) continue;
+				const float ww = Ease(w);
+				for (const bool first : { false, true }) {
+					auto* root = a_player->Get3D(first);
+					auto* node = root ? root->GetObjectByName(L ? "SHIELD" : "WEAPON") : nullptr;
+					auto* nn = node ? node->AsNode() : nullptr;
+					if (!nn) continue;
+					RE::NiPoint3 n, fingers, centre;
+					if (!PalmNormal(root, L, n, fingers, centre)) continue;
+					RE::NiPoint3 z = fingers - n * fingers.Dot(n);
+					if (z.Length() < 1e-3f) continue;
+					z.Unitize();
+					const RE::NiPoint3 x = n.Cross(z);
+					RE::NiMatrix3 R;   // (the model's axes in the world: its +Y the bottle's neck)
+					R.entry[0][0] = x.x, R.entry[1][0] = x.y, R.entry[2][0] = x.z;
+					R.entry[0][1] = n.x, R.entry[1][1] = n.y, R.entry[2][1] = n.z;
+					R.entry[0][2] = z.x, R.entry[1][2] = z.y, R.entry[2][2] = z.z;
+					const auto& W = nn->world;
+					const float ws = std::max(0.01f, W.scale);
+					const RE::NiPoint3 at = centre + n * (FlaskBase(el) * ws);
+					const RE::NiMatrix3 Wt = W.rotate.Transpose();
+					const RE::NiMatrix3 lr = Wt * R;
+					const RE::NiPoint3 lt = (Wt * (at - W.translate)) * (1.0f / ws);
+					for (auto& kid : nn->GetChildren()) {
+						if (!kid) continue;
+						kid->local.rotate = ww >= 0.999f ? lr : Movement::SlerpRot(RE::NiMatrix3{}, lr, ww);
+						kid->local.translate = lt * ww;
+						kid->local.scale = 1.0f;
+						RE::NiUpdateData ud;
+						ud.time = 0.0f;
+						kid->Update(ud);
+					}
+				}
+			}
+		}
 		void TickThrow(float a_delta)
 		{
 			if (!g_throw.on) return;
 			g_throw.t += a_delta;
+			if (!g_throw.clinked) {
+				g_throw.clinked = true;
+				if (auto* pl = RE::PlayerCharacter::GetSingleton()) Audio::Game(0x0003EDBD, pl, 0.55f);   // ITMPotionUpSD: the glass, drawn back
+			}
+			if (!g_throw.released && g_throw.t >= kThrowRelease - 0.06f && !g_throw.whooshed) {
+				g_throw.whooshed = true;
+				if (auto* pl = RE::PlayerCharacter::GetSingleton()) Audio::Game(0x0003C730, pl, 0.8f);    // the dagger's swing: the air whipped past
+			}
 			if (!g_throw.released && g_throw.t >= kThrowRelease) {
 				g_throw.released = true;
 				if (g_throw.release) g_throw.release();
@@ -2329,7 +2518,9 @@ namespace bo3z
 				func(a_this, a_delta);
 				try {
 					PoseArm(a_this);
+					PoseFlaskHand(a_this, a_delta);
 					PoseThrow(a_this);
+					PlaceHeldFlask(a_this);
 					Spellcraft::OnPose(a_this);
 					Movement::PoseGlideArms(a_this);
 					Movement::SwingBody(a_this);
@@ -2570,7 +2761,7 @@ namespace bo3z
 		// Bane's "white arc aligning with the blade swing angle") a crescent flying out from a swing: placed in the world each
 		// frame (tools/arcfx.py's models, hung on your body's root), turned to the angle the blade swept, cutting through every
 		// one of the dead it passes - each once - then fading at the end of its run
-		struct LiveSlash { Spellcraft::Fx fx; Gun::SlashSpec s; RE::NiPoint3 at; float gone = 0; std::unordered_set<RE::FormID> hit; };
+		struct LiveSlash { Spellcraft::Fx fx; Gun::SlashSpec s; RE::NiPoint3 at; float gone = 0, wait = 0.05f; std::unordered_set<RE::FormID> hit; };
 		std::vector<LiveSlash> g_slashes;
 		RE::NiMatrix3 RotY(float a)
 		{
@@ -2606,6 +2797,11 @@ namespace bo3z
 			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
 			for (auto& l : g_slashes) {
 				if (!root) { l.gone = l.s.range + 1; continue; }
+				// (a breath into the swing before it leaves the blade: its angle is the sweep the blade really made)
+				if (l.wait > 0) {
+					if ((l.wait -= a_delta) > 0) continue;
+					l.s.roll = SwingRoll(l.s.dir);
+				}
 				if (!l.fx.obj) {
 					l.fx = Spellcraft::Fx{ Spellcraft::LoadPath(l.s.model) };
 					if (!l.fx.obj) { l.gone = l.s.range + 1; continue; }
@@ -2672,33 +2868,101 @@ namespace bo3z
 			l.at = a_s.from;
 			g_slashes.push_back(std::move(l));
 		}
-		// where a swing flies: the camera's aim, kept from pointing far up or down
-		RE::NiPoint3 SwingDir()
+		// (Noah: "the slashes ... should shoot wherever the player is looking matching the angle of the blade during the attack
+		// swing") a swing flies at the crosshair - up and down too - from just ahead of your eyes in first person, from your
+		// chest in third (aimed at the crosshair's point far ahead, so it crosses the view where you look)
+		RE::NiPoint3 CamFwd(RE::NiPoint3* a_pos = nullptr)
 		{
 			auto* cam = RE::PlayerCamera::GetSingleton();
 			RE::NiPoint3 d{ 0, 1, 0 };
-			if (cam && cam->cameraRoot) { const auto& w = cam->cameraRoot->world; d = { w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] }; }
-			d.z = std::clamp(d.z, -0.25f, 0.25f);
+			if (cam && cam->cameraRoot) {
+				const auto& w = cam->cameraRoot->world;
+				d = { w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] };
+				if (a_pos) *a_pos = w.translate;
+			}
 			if (d.Length() < 1e-3f) d = { 0, 1, 0 };
 			d.Unitize();
 			return d;
 		}
-		// the angle the blade swept, about the flight: the blade's own line (its WEAPON node, in the body you're seen in) laid
-		// on the plane across the flight - a flat sweep lies the crescent level, an overhead chop stands it upright
-		float SwingRoll(const RE::NiPoint3& a_dir)
+		RE::NiPoint3 SwingFrom()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* cam = RE::PlayerCamera::GetSingleton();
-			auto* root = p ? p->Get3D(cam && cam->IsInFirstPerson()) : nullptr;
+			RE::NiPoint3 cp{};
+			const RE::NiPoint3 d = CamFwd(&cp);
+			if (!p) return cp;
+			if (cam && cam->IsInFirstPerson() && cp.GetDistance(p->GetPosition()) < 250.0f) return cp + d * 55.0f + RE::NiPoint3{ 0, 0, -14.0f };
+			RE::NiPoint3 flat{ d.x, d.y, 0 };
+			if (flat.Length() > 1e-3f) flat.Unitize();
+			return p->GetPosition() + RE::NiPoint3{ 0, 0, 100.0f } + flat * 70.0f;
+		}
+		RE::NiPoint3 SwingDir()
+		{
+			RE::NiPoint3 cp{};
+			const RE::NiPoint3 d = CamFwd(&cp);
+			RE::NiPoint3 to = (cp + d * 2500.0f) - SwingFrom();
+			if (to.Length() < 1e-3f) to = d;
+			to.Unitize();
+			to.z = std::clamp(to.z, -0.9f, 0.9f);
+			to.Unitize();
+			return to;
+		}
+		// the blade's tip, frame by frame (the body you're seen in): how it moved the moment before a slash is the swing's
+		// sweep - a crescent lies along it
+		struct TipSample { RE::NiPoint3 at; float t; bool first; };
+		std::deque<TipSample> g_tips;
+		float g_tipClock = 0;
+		void TrackBlade(float a_delta)
+		{
+			g_tipClock += a_delta;
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			const bool first = cam && cam->IsInFirstPerson();
+			auto* root = p && p->Is3DLoaded() ? p->Get3D(first) : nullptr;
 			auto* node = root ? root->GetObjectByName("WEAPON") : nullptr;
-			if (!node) return 0.0f;
-			const auto& r = node->world.rotate;
-			RE::NiPoint3 b{ r.entry[0][1], r.entry[1][1], r.entry[2][1] };
+			if (!node) { g_tips.clear(); return; }
+			const auto& w = node->world;
+			RE::NiPoint3 tip = w.translate + RE::NiPoint3{ w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] } * (70.0f * w.scale);
+			// (in first person the whole arm turns with your view: kept in the view's own axes, so the sweep is the blade's own
+			// and not the view's turn; in third your own run is taken off)
+			if (first && cam->cameraRoot) tip = cam->cameraRoot->world.rotate.Transpose() * (tip - cam->cameraRoot->world.translate);
+			else tip = tip - p->GetPosition();
+			if (!g_tips.empty() && g_tips.back().first != first) g_tips.clear();
+			g_tips.push_back({ tip, g_tipClock, first });
+			while (g_tips.size() > 2 && g_tipClock - g_tips.front().t > 0.25f) g_tips.pop_front();
+		}
+		// the angle the blade swept, about the flight: its tip's sweep over the last moment laid on the plane across the flight
+		// (a flat sweep lies the crescent level, an overhead chop stands it upright, a diagonal cut lies it on its slant) -
+		// with no sweep yet, the blade's own line
+		float SwingRoll(const RE::NiPoint3& a_dir)
+		{
 			RE::NiPoint3 d = a_dir; d.Unitize();
-			b = b - d * b.Dot(d);
-			if (b.Length() < 1e-3f) return 0.0f;
 			const auto f = Spellcraft::Facing(d);
 			const RE::NiPoint3 x{ f.entry[0][0], f.entry[1][0], f.entry[2][0] }, z{ f.entry[0][2], f.entry[1][2], f.entry[2][2] };
+			RE::NiPoint3 b{};
+			if (g_tips.size() >= 2) {
+				const auto& last = g_tips.back();
+				const TipSample* from = &g_tips.front();
+				for (auto it = g_tips.rbegin(); it != g_tips.rend(); ++it) {
+					from = &*it;
+					if (last.t - it->t >= 0.09f) break;
+				}
+				RE::NiPoint3 v = last.at - from->at;
+				auto* cam = RE::PlayerCamera::GetSingleton();
+				if (last.first && cam && cam->cameraRoot) v = cam->cameraRoot->world.rotate * v;   // (the view's axes back into the world's)
+				b = v - d * v.Dot(d);
+			}
+			if (b.Length() < 6.0f) {
+				auto* p = RE::PlayerCharacter::GetSingleton();
+				auto* cam = RE::PlayerCamera::GetSingleton();
+				auto* root = p ? p->Get3D(cam && cam->IsInFirstPerson()) : nullptr;
+				auto* node = root ? root->GetObjectByName("WEAPON") : nullptr;
+				if (!node) return 0.0f;
+				const auto& r = node->world.rotate;
+				b = RE::NiPoint3{ r.entry[0][1], r.entry[1][1], r.entry[2][1] };
+				b = b - d * b.Dot(d);
+				if (b.Length() < 1e-3f) return 0.0f;
+			}
 			float roll = std::atan2(b.Dot(z), b.Dot(x));
 			if (roll > 1.5708f) roll -= 3.14159f; else if (roll < -1.5708f) roll += 3.14159f;   // (a crescent bows forward either way)
 			return -roll;
@@ -4134,6 +4398,7 @@ namespace bo3z
 			TickLobs(a_delta);
 			TickLightOrb(a_delta);
 			TickWeaponFlame();
+			TrackBlade(a_delta);
 			TickSlashes(a_delta);
 			TickHalo(a_delta);
 			for (auto& d : g_devFx) if ((d.left -= a_delta) <= 0) d.fx.Detach();

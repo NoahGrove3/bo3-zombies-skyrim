@@ -2963,6 +2963,40 @@ namespace bo3z
 			}
 		}
 
+		RE::NiMatrix3 SlerpRot(const RE::NiMatrix3& a_from, const RE::NiMatrix3& a_to, float a_t) { return Slerp(a_from, a_to, a_t); }
+		// (Noah: "sometimes when I land my character still does the falling animation when walking around for like 20 seconds"
+		// and "landing doesnt let me shout again for like 30 seconds even though the cooldown is gone") the glide's end left
+		// Skyrim's body in its jump state on solid ground - the fall's animation over a walk, and no shout while it thinks you
+		// are in the air: on the ground a moment and still "jumping", it is told you landed; still stuck, it is set back to
+		// standing
+		void LandUnstick(RE::PlayerCharacter* a_p, float a_delta)
+		{
+			static float stuckT = 0;
+			static int   step = 0;
+			auto* cc = a_p->GetCharController();
+			bool  jumpState = false;
+			a_p->GetGraphVariableBool("bInJumpState", jumpState);
+			const bool busy = g_hadDragon || g_liftOff != 0 || g_dive || Dodging() || a_p->IsInKillMove();
+			if (!cc || busy || !OnGround(a_p) || !(jumpState || a_p->IsInMidair())) {
+				stuckT = 0, step = 0;
+				return;
+			}
+			stuckT += a_delta;
+			if (step == 0 && stuckT > 0.35f) {
+				step = 1;
+				cc->fallTime = 0.0f;
+				cc->flags.reset(RE::CHARACTER_FLAGS::kJumping);
+				const bool took = a_p->NotifyAnimationGraph("JumpLand") || a_p->NotifyAnimationGraph("JumpLandEnd");
+				logger::info("land: still in the jump state on the ground (graph {}, midair {}) - told it landed ({})", jumpState, a_p->IsInMidair(), took ? "taken" : "not taken");
+			} else if (step == 1 && stuckT > 1.0f) {
+				step = 2;
+				cc->fallTime = 0.0f;
+				cc->flags.reset(RE::CHARACTER_FLAGS::kJumping);
+				if (!a_p->IsAttacking()) a_p->NotifyAnimationGraph("IdleForceDefaultState");
+				logger::info("land: still stuck - its animation set back to standing");
+			}
+		}
+
 		void Tick(float a_delta)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -2988,6 +3022,7 @@ namespace bo3z
 			auto*      cc = player->GetCharController();
 			const bool sprint = st->IsSprinting();
 			Glider(player, a_delta);
+			LandUnstick(player, a_delta);
 			BondTick(player, a_delta);
 			Dragon(player, a_delta);
 			if (g_dodgeT >= 0) {  // the dodge's push: a quick shove along the roll, easing off over its length

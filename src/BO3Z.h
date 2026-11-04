@@ -429,6 +429,7 @@ namespace bo3z
 		RE::TESBoundObject* FlaskItem(int a_el);  // the Alchemist's flasks, items in the pack (0 fire 1 frost 2 shock 3 acid 4 holy water 5 bloodbloom 6 the Philosopher's Flask)
 		void               GiveFlask(int a_el);   // put in your pack
 		bool               FlaskInHand(bool a_left);  // a flask held, drawn, in that hand
+		int                FlaskElementInHand(bool a_left);  // which flask that hand holds (drawn or not): 0-6, -1 none
 		void               FlaskAttack(bool a_left);  // its throw
 		void               MaceSwing(bool a_power);  // a swing of a class sword (any swing: hit or miss) - its tier's arc, burst and Tier III
 		void               SlayerSwing(bool a_power);  // the Dragon Slayer's swing: a charged one spends its dragon embers (Dragonbreaker)
@@ -796,6 +797,7 @@ namespace bo3z
 		struct SlashSpec { std::string model; RE::NiPoint3 from, dir; float roll = 0, speed = 1700, range = 1500, radius = 110, share = 0.3f, scale = 1.0f, damage = 0; bool sideways = false; std::function<void(RE::Actor*, bool)> onHit; };
 		void                  Slash(const SlashSpec& a_s);
 		RE::NiPoint3          SwingDir();
+		RE::NiPoint3          SwingFrom();  // where a swing's slash starts: ahead of your eyes (first person), your chest (third)
 		float                 SwingRoll(const RE::NiPoint3& a_dir);
 		void                  Halo(int a_count, const std::string& a_model, float a_scale, float a_period, std::function<void(RE::Actor*)> a_strike);
 		void                  BlastSound(std::string_view a_name, const RE::NiPoint3& a_at, float a_vol = 1.0f);  // a Skyrim spell explosion's own impact sound
@@ -886,6 +888,7 @@ namespace bo3z
 	{
 		bool Dodging();  // a dodge roll under way
 		bool Gliding();  // on the dragon glider (or just landed from a dive)
+		RE::NiMatrix3 SlerpRot(const RE::NiMatrix3& a_from, const RE::NiMatrix3& a_to, float a_t);
 
 		void OnButton(const RE::ButtonEvent* a_event);  // crouch/jump keys (Skyrim ignores crouch while sprinting)
 		void OnStick(const RE::ThumbstickEvent* a_event);  // the left stick (the dragon glide's steering)
