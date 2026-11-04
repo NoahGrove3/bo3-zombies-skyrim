@@ -4935,7 +4935,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				}
 			}
 			// Skyrim's questions and hints laid back over the picture: only the bright words
-			if (g_frameSrv && g_keyPs) {
+			// (filming mode, dev 'hud 0': the trailer's ending films the menu's picture alone - no buttons, no words)
+			if (g_frameSrv && g_keyPs && !DevTools::HudOff()) {
 				g_keyCursor = { -1000, -1000 };
 				fg->AddCallback(KeyOn, nullptr);
 				fg->AddImage(ImTextureID(reinterpret_cast<std::uintptr_t>(g_frameSrv)), { 0, 0 }, size, { 0, 0 }, { 1, 1 });
@@ -5193,8 +5194,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (fade < 1.0f) {
 				fg->AddRectFilled({ 0, 0 }, size, IM_COL32(0, 0, 0, static_cast<int>(255 * (1.0f - fade))));
 			}
-			// our cursor, the quest ping's diamond
-			if (cur.x >= 0) {
+			// our cursor, the quest ping's diamond (not while filming)
+			if (cur.x >= 0 && !DevTools::HudOff()) {
 				DrawPingCursor(fg, cur, k, now);
 			}
 		}
@@ -6293,7 +6294,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				const float kk = io.DisplaySize.y / 1080.0f;
 				bool        over = false;
 				static int  missing = 0;  // (frames the list could not be found: then our own tab, top left)
-				if (Net::Available()) {
+				if (Net::Available() && !DevTools::HudOff()) {
 					if (PartyInMainList(g_partyOpen ? 0 : clicks)) missing = 0;
 					else if (++missing > 90) over = PartyTab(ImGui::GetForegroundDrawList(), kk, clicks, "CO-OP PARTY");
 				}
