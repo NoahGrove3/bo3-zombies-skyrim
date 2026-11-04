@@ -572,7 +572,9 @@ namespace bo3z::Kit
 				// the tiers 1-3") the class swords wear their tier's look: an enchantment of looks only (Classes::BladeLook) - bare
 				// at Base; never any charge to run down
 				if (w) {
-					w->amountofEnchantment = 0;
+					// (Noah: "the sword itself in hand doesn't have the special FX") Skyrim draws no enchantment on a weapon out of
+					// charge - and none at all counts as out: a little charge, and its looks cost none, so it never runs down
+					w->amountofEnchantment = t >= 1 ? 100 : 0;
 					if (auto* p = RE::PlayerCharacter::GetSingleton()) {
 						if (auto* inv = p->GetInventoryChanges(); inv && inv->entryList) {
 							for (auto* e : *inv->entryList) {

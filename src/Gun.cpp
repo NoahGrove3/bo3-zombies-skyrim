@@ -2599,7 +2599,10 @@ namespace bo3z
 		void TickSlashes(float a_delta)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			auto* root = p && p->Is3DLoaded() ? p->Get3D(false) : nullptr;
+			// (Noah: "the arc slashes are also invisible in first person") hung on the body the camera shows: the third-person
+			// one isn't drawn in first person
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			auto* root = p && p->Is3DLoaded() ? p->Get3D(cam && cam->IsInFirstPerson()) : nullptr;
 			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
 			for (auto& l : g_slashes) {
 				if (!root) { l.gone = l.s.range + 1; continue; }
@@ -2630,7 +2633,8 @@ namespace bo3z
 		void TickHalo(float a_delta)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			auto* root = p && p->Is3DLoaded() ? p->Get3D(false) : nullptr;
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			auto* root = p && p->Is3DLoaded() ? p->Get3D(cam && cam->IsInFirstPerson()) : nullptr;
 			if (g_halo.blades.empty()) return;
 			if (!root || !root->AsNode()) { for (auto& b : g_halo.blades) b.Detach(); return; }
 			g_halo.t += a_delta;

@@ -3084,6 +3084,12 @@ namespace bo3z::Classes
 		constexpr float kShadowSeconds = 5.0f;   // (Noah: "2x flame damage for 5 seconds")
 		bool g_shadowChain = false;               // the Shadowflame Sword's Tier III: the burning dead explode (set by TickSwords)
 		int  g_shadowTier = 1;
+		// (Noah: "it should set enemies on fire with purple flames") the burning one wrapped in violet fire for as long as it burns
+		void ShadowCloak(RE::Actor* a_f)
+		{
+			static auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kShadowburnShader, gen::kPlugin);
+			if (fx && a_f && a_f->Is3DLoaded()) a_f->ApplyEffectShader(fx, kShadowSeconds, nullptr, false, false, nullptr, false);
+		}
 		void Shadowburn(RE::Actor* a_f, int a_t)
 		{
 			if (!a_f || a_f->IsDead()) return;
@@ -3091,13 +3097,14 @@ namespace bo3z::Classes
 			for (auto& s : g_shadow) if (s.who.get().get() == a_f) {   // (caught again: renewed to its full 5 s, never doubled)
 				if (s.left < kShadowSeconds - 0.25f) Gun::Burn(a_f, perSec, kShadowSeconds - s.left);
 				s.left = kShadowSeconds;
+				ShadowCloak(a_f);
 				return;
 			}
 			// the fire's own burn (a fire flask's or a meteor arrow's: 6% of one of the night's dead a second), doubled,
 			// grown with the sword's tier and your Arcana
 			Gun::Burn(a_f, perSec, kShadowSeconds);
 			g_shadow.push_back({ a_f->GetHandle(), kShadowSeconds, 0.0f });
-			ShadowFire(a_f->GetPosition() + RE::NiPoint3{ 0, 0, 20.0f }, 0.55f, 0.8f);
+			ShadowCloak(a_f);
 		}
 		void TickShadow(float a_delta)
 		{
@@ -3111,9 +3118,9 @@ namespace bo3z::Classes
 					continue;
 				}
 				s.left -= a_delta;
-				if ((s.tick -= a_delta) <= 0) {  // (its violet fire on them, licking up their body - Skyrim's own fire, purple)
-					s.tick = 0.45f;
-					ShadowFire(a->GetPosition() + RE::NiPoint3{ 0, 0, 10.0f + 35.0f * static_cast<float>(std::rand() % 3) }, 0.42f, 0.55f);
+				if ((s.tick -= a_delta) <= 0) {  // (Skyrim's own fire, purple, flaring at their feet now and then under the burning)
+					s.tick = 1.2f;
+					ShadowFire(a->GetPosition() + RE::NiPoint3{ 0, 0, 5.0f }, 0.5f, 1.0f);
 				}
 			}
 			std::erase_if(g_shadow, [](const Shadowflame& s) { return s.left <= 0; });
@@ -3501,7 +3508,7 @@ namespace bo3z::Classes
 			if (auto* d = Slayer(); d && p) {
 				if (auto* want = BladeLook(d, 3); want && d->formEnchanting != want) {
 					d->formEnchanting = want;
-					d->amountofEnchantment = 0;
+					d->amountofEnchantment = 100;   // (a weapon with no charge shows no enchantment; its look costs none)
 					auto* em = RE::ActorEquipManager::GetSingleton();
 					if (em && p->GetEquippedObject(false) == d && !ItemMenusOpen()) {
 						em->UnequipObject(p, d, nullptr, 1, nullptr, false, false, false, true);

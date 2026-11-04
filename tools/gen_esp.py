@@ -635,6 +635,26 @@ for bkey, (fill, edge, keys) in BV_COL.items():
         recs['ENCH'].append(record('ENCH', fid('ENCH', f'bv_{bkey}_{n}'), [sub('EDID', z(f'UN_BladeLookEnch_{bkey}{n}')), sub('OBND', bytes(12)), sub('FULL', z('Blade')),
             sub('ENIT', bytes(en)), sub('EFID', struct.pack('<I', fid('MGEF', f'bv_{bkey}_{n}'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
+# (Noah: "shadowflame ... should set enemies on fire with purple flames") Shadowflame on its victim: Skyrim's enchantment fire
+# wrapped round the whole body in violet - a burning membrane and a thick stream of violet flames rising off it - for as
+# long as it burns (src/Classes.cpp Shadowburn lays it on)
+d = bytearray(tsub('efsh_enchfire', 'DATA'))
+d[0] &= ~0x08                                   # its flames on
+struct.pack_into('<f', d, 0x20, 1.4)            # the membrane bright
+struct.pack_into('<f', d, 0x24, 0.25)
+d[0x10:0x13] = bytes((150, 40, 255))
+d[0x38:0x3B] = bytes((200, 90, 255))
+struct.pack_into('<f', d, 0x7C, 260.0)          # many flames
+struct.pack_into('<fff', d, 0xC8, 0.2, 0.9, 0.2)
+struct.pack_into('<f', d, 0xB0, 14.0)
+struct.pack_into('<f', d, 0x84, 0.9)
+for k, rgb in enumerate(((245, 215, 255), (170, 70, 255), (80, 0, 170))): d[0xBC + 4 * k:0xBC + 4 * k + 3] = bytes(rgb)
+subs = [sub('EDID', z('UN_ShadowburnShader'))]
+for name, hx in T['efsh_enchfire']['subs']:
+    if name == 'EDID': continue
+    subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
+recs['EFSH'].append(record('EFSH', fid('EFSH', 'shadowburn'), subs))
+
 # (Noah: "for all the bows' animations in hand they should be high quality and flow with the model of the bow, not circulating
 # orbs") each bow's element as a living skin over the whole bow - the enchantment shader's membrane and its particles running
 # over the model as it bends (src/Bows.inl TickSkin lays it on the bow in your hands)

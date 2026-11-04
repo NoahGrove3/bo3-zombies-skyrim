@@ -1556,6 +1556,7 @@
   "ENCH:bv_slayer_2": "0xe10",
   "EFSH:bv_slayer_3": "0xe11",
   "MGEF:bv_slayer_3": "0xe12",
-  "ENCH:bv_slayer_3": "0xe13"
+  "ENCH:bv_slayer_3": "0xe13",
+  "EFSH:shadowburn": "0xe14"
  }
 }
