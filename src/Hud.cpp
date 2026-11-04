@@ -765,14 +765,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		{
 			struct Card { const char* name; const char* lore; ImU32 col; const char* tag; const char* arms; const char* grow; const char* kit; };
 			static const Card kCards[4] = {
-				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild - and the Riftblade",
-				  "Your kit grows at the altar: every family and the Riftblade to Legendary", "Conjure Wolf, Conjure Skeleton, the Riftblade, the Arcane Conjurer Robes" },
+				{ "SUMMONER", "Conjurer of the College of Winterhold", IM_COL32(170, 120, 255, 255), "An army that grows family by family", "Summons - beasts, the dead, Daedra, Dwemer, the wild - and the Radiant Blade",
+				  "Your kit grows at the altar: every family and the Radiant Blade to Legendary", "Conjure Wolf, Conjure Skeleton, the Radiant Blade, the Black Mage Robes (violet)" },
 				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Ranged spells: fire, frost, shock, sun, blood and runes",
-				  "Your kit grows at the altar: each element, and the Carian Blade, to Legendary", "Firebolt, Ice Spike, the Carian Blade, the Black Mage Robes" },
+				  "Your kit grows at the altar: each element, and the Carian Blade, to Legendary", "Firebolt, Ice Spike, the Carian Blade, the Black Mage Robes (ember)" },
 				{ "ALCHEMIST", "A wanderer of the Drifter's road", IM_COL32(150, 230, 90, 255), "Flasks of fire, frost, storm, acid and blood", "Thrown flask bombs that burst where they land - and a sword of shadowflame",
-				  "Your kit grows at the altar: each flask and the sword to Legendary", "The Shadowflame Sword, the Fire Flask, the Black Mage Robes" },
+				  "Your kit grows at the altar: each flask and the sword to Legendary", "The Shadowflame Sword, the Fire Flask, the Black Mage Robes (green)" },
 				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "A one-handed blade and touch spells - and the Vigilants' relic spells",
-				  "Your kit grows at the altar: the blade and each spell to Legendary", "The Spellbound Blade, Burning Touch, the Valkyrie or DragonLord Armor" } };
+				  "Your kit grows at the altar: the blade and each spell to Legendary", "The Spellbound Blade, Burning Touch, the Black Mage Robes (blue)" } };
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));
 			TxtC(dl, g_title, 46 * k, size.x * 0.5f, size.y * 0.12f, kParch, Classes::Switching() ? "CHANGE YOUR PATH" : "CHOOSE YOUR PATH", 3 * k, Fade(kGold, 0.6f));
 			const std::string sub = Classes::Switching() ? "Switching costs " + Num(Classes::SwitchCost()) + " Cursed Essence. Each class keeps its own spells and progress."

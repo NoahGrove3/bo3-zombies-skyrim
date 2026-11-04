@@ -1,7 +1,7 @@
 """(Noah: "have all the classes have the same armor (dark mage set the one given in the destruction and alchemist class) set
 with different accent colors matching their color class") the Black Mage robes' models and colour maps, copied for each class
 with its accents - the stitching, lacing, trims and buckles, what stands out lighter than the black cloth round it - in the
-class's colour (the Summoner's white, Destruction's blue, the Alchemist's violet, the Spellsword's red), the cloth left black.
+class's colour (the Summoner's violet, Destruction's ember orange, the Alchemist's green, the Spellsword's blue), the cloth left black.
 
 Built from the mod's own archives on this machine (never committed: they are its author's), into build/classarmor/Data:
     python3 tools/classarmor.py "<Black Mage Armor SE.bsa>" "<Black Mage Armor SE - Textures.bsa>"
@@ -14,7 +14,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / 'build' / 'classarmor'
 RAW = OUT / 'raw'
 DATA = OUT / 'Data'
-COL = {'summoner': (0.95, 0.96, 1.0), 'destruction': (0.25, 0.55, 1.0), 'alchemist': (0.65, 0.22, 1.0), 'spellsword': (1.0, 0.14, 0.08)}
+COL = {'summoner': (0.62, 0.36, 1.0), 'destruction': (1.0, 0.43, 0.12), 'alchemist': (0.36, 0.92, 0.24), 'spellsword': (0.31, 0.6, 1.0)}   # (the classes' own colours: their cards, their armour's glow)
 RETEX = '/home/claude/tools/retex'
 BSAX = '/home/claude/tools/bsax.py'
 

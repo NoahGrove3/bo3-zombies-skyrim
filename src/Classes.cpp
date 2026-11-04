@@ -3676,7 +3676,7 @@ namespace bo3z::Classes
 		struct Piece { const char* plugin; std::uint32_t id; };
 		// (Noah: "have all the classes have the same armor (dark mage set the one given in the destruction and alchemist class) set
 		// with different accent colors matching their color class") every class in the Black Mage robes, its stitching, lacing
-		// and trims in its own colour: the Summoner's white, Destruction's blue, the Alchemist's violet, the Spellsword's red
+		// and trims in its own colour: the Summoner's violet, Destruction's ember orange, the Alchemist's green, the Spellsword's blue
 		// (tools/classarmor.py; the records are ours, tools/gen_esp.py)
 		std::vector<Piece> SetPieces(int a_cls, int, bool)
 		{
