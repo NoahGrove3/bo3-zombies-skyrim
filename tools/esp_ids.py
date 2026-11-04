@@ -91,6 +91,7 @@ def dressing(S):
     for _e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'):   # (Noah: the flasks held in the hand)
         records[('STAT', '1st_flask_' + _e)] = {'model': 'CurseOfAlduin\\alchemist\\flask_' + _e + '_held.nif', 'color': '', 'radius': 0}
     records[('STAT', '1st_slayer')] = {'model': 'CurseOfAlduin\\wonder\\slayer.nif', 'color': '', 'radius': 0}        # (Noah) the Dragon Slayer: the Ayleid Crystal Saber
+    records[('STAT', '1st_mace')] = {'model': 'CurseOfAlduin\\alchemist\\mace.nif', 'color': '', 'radius': 0}  # (Noah) the Alchemist's mace
     records[('STAT', '1st_riftblade')] = {'model': 'CurseOfAlduin\\wonder\\riftblade.nif', 'color': '', 'radius': 0}  # (Noah) the Riftblade: Abyssal Heart   # the Ranger's wonder: the Subsuming Vortex
     for b in S.get('bows', {}).get('rows', []):   # the altar's bows: their first-person model
         records[('STAT', '1st_bow_' + b['id'])] = {'model': f"CurseOfAlduin\\bow\\{b['id']}.nif", 'color': '', 'radius': 0}

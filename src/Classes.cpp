@@ -2021,6 +2021,7 @@ namespace bo3z::Classes
 		}
 	}
 
+	namespace { void MaceHit(RE::PlayerCharacter* a_p, RE::Actor* a_target, bool a_power); }
 	void NoteHit(RE::Actor* a_target, RE::FormID a_source, bool a_power)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -2039,6 +2040,8 @@ namespace bo3z::Classes
 		if (auto* w = src->As<RE::TESObjectWEAP>(); w && !w->IsBow() && !w->IsCrossbow() && !w->IsStaff()) Perks::OnMeleeHit();  // (Bladesong Mead)
 		if (auto* mg = Magnus(); mg && (src == mg || (mg->formEnchanting && src == mg->formEnchanting))) {
 			MagnusHit(p, a_target);
+		} else if (src == AlchemistKnife()) {  // (the Alchemist's mace: its Catalyst)
+			MaceHit(p, a_target, a_power);
 		} else if (src == Slayer() && g_bladeCool <= 0) {  // the spell in your other hand rides the blade
 			const int left = BladeSpell();  // (two-handed: the last Spellsword spell you held)
 			auto* sp = left >= 0 ? Arcana::Spell(left) : nullptr;
@@ -3014,6 +3017,7 @@ namespace bo3z::Classes
 	}
 	namespace
 	{
+		int g_lastFlaskEl = 0;  // the last flask thrown (the mace's Catalyst drives it in)
 		constexpr int kFlaskBurst[7] = { 0, 1, 2, 7, 4, 5, 8 };  // a flask's burst look (Gun::ElemBurst): fire frost shock poison sun blood gold
 		struct FlaskShot { RE::ProjectileHandle h; int el = 0, tier = 0; RE::NiPoint3 last; bool seen = false, child = false; float life = 0; };
 		std::vector<FlaskShot> g_flasks;
@@ -3059,6 +3063,30 @@ namespace bo3z::Classes
 					if (dead) pl->AsActorValueOwner()->RestoreActorValue(RE::ActorValue::kHealth, pl->AsActorValueOwner()->GetPermanentActorValue(RE::ActorValue::kHealth) * std::min(0.1f, 0.02f * static_cast<float>(dead)));
 				});
 			}
+		}
+		// (Noah: "I want the mace to have some sort of ability that makes sense with the alchemy class") the Catalyst: every blow
+		// drives in a little of the last flask you threw - its element splashes off the target - and the third blow in a row
+		// (or a power attack) shatters a whole flask's burst on them; stronger each tier
+		struct MaceCombo { RE::FormID who = 0; int hits = 0; std::chrono::steady_clock::time_point at{}; };
+		MaceCombo g_mace;
+		void MaceHit(RE::PlayerCharacter* a_p, RE::Actor* a_target, bool a_power)
+		{
+			auto* w = AlchemistKnife();
+			const int  t = std::clamp(w ? Kit::TierOfWeapon(w) : 0, 0, 3);
+			const int  el = g_lastFlaskEl;
+			const auto now = std::chrono::steady_clock::now();
+			if (g_mace.who != a_target->GetFormID() || now - g_mace.at > std::chrono::milliseconds(2500)) g_mace.hits = 0;
+			g_mace.who = a_target->GetFormID(), g_mace.at = now, ++g_mace.hits;
+			const RE::NiPoint3 at = a_target->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f };
+			if (a_power || g_mace.hits >= 3) {
+				g_mace.hits = 0;
+				FlaskBlast(el, t, at, 0.8f + 0.15f * t, 0.22f + 0.08f * t, 200.0f + 40.0f * t);
+				logger::info("alchemist: the mace's Catalyst shatters a {} flask (tier {})", el, t);
+				return;
+			}
+			Gun::ElemBurst(kFlaskBurst[el], at, 0.45f + 0.1f * t, 0.0f, 0.5f);
+			Gun::AreaHurt(at, 110.0f + 25.0f * t, 0.05f + 0.025f * t, "");
+			(void)a_p;
 		}
 		void FlaskBurst(const FlaskShot& f, const RE::NiPoint3& a_at)
 		{
@@ -3176,6 +3204,7 @@ namespace bo3z::Classes
 		std::chrono::steady_clock::time_point g_throwAt{};
 		void ThrowFlaskEl(int el, bool a_left)
 		{
+			if (el >= 0 && el < 6) g_lastFlaskEl = el;
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			auto* cam = RE::PlayerCamera::GetSingleton();
 			if (!p || !cam || !cam->cameraRoot) return;

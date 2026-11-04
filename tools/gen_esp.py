@@ -5,7 +5,7 @@ import json, struct, pathlib
 from esp_ids import ROOT, sheets, assign, PLUGIN, MASTERS, dressing, blasts
 S = sheets(); IDS, NEXT = assign(S, write=True)
 SELF = len(MASTERS) << 24
-T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger', 'efsh_enchfire', 'mgef_enchfire', 'ench_fire05', 'weap_madness', 'stat_madness1st', 'efsh_enchpurple', 'npc_mihailzombie']}
+T = {n: json.load(open(ROOT / 'tools/templates' / (n + '.json'))) for n in ['npc_necro_tmpl', 'weap_draugr_gs', 'mgef', 'alch', 'weap_crossbow', 'weap_dwarven', 'acti', 'sndr_ui', 'sndr_3d', 'ligh', 'weap_staff', 'arma_skin', 'armo_skin', 'npc_draugr', 'proj_bullet', 'spel_firebolt', 'mgef_firebolt', 'weap_longbow', 'ammo_iron', 'proj_arrow', 'weap_daedricdagger', 'efsh_enchfire', 'mgef_enchfire', 'ench_fire05', 'weap_madness', 'stat_madness1st', 'efsh_enchpurple', 'npc_mihailzombie', 'weap_daedricmace']}
 def tsub(t, name): return bytes.fromhex(dict(T[t]['subs'])[name])
 def z(s): return s.encode('cp1252') + b'\0'
 def sub(name, data):
@@ -453,15 +453,21 @@ for name, hx in T['weap_daedricdagger']['subs']:
     elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_riftblade'))
     subs.append(sub(name, b))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'riftblade'), subs))
-# (Noah: the Alchemist) its knife: a dagger (Skyrim's Daedric dagger's record and look), on the one tier curve
+# (Noah, 2026-11: "change it from a dagger to a one-handed mace using the model I've attached") the Alchemist's starting weapon:
+# a one-handed mace (Skyrim's Daedric mace's record: its swings, its sounds) wearing his model (tools/wonderprops.py mace) - the
+# record keeps its old id (alchknife) so every kit that had the knife has the mace; its Catalyst and its purple fire are Gun.cpp's
 subs = []
-for name, hx in T['weap_daedricdagger']['subs']:
+for name, hx in T['weap_daedricmace']['subs']:
     b = bytes.fromhex(hx)
     if name == 'EDID': b = z('UN_AlchemistKnife')
-    elif name == 'FULL': b = z("Alchemist's Knife")
-    elif name in ('EITM', 'EAMT'): continue
-    elif name == 'DESC': b = z("An alchemist's working blade, for when the dead come too close for a flask.")
-    elif name == 'DATA': b = struct.pack('<IfH', 300, 2.0, 10)
+    elif name == 'FULL': b = z("Alchemist's Mace")
+    elif name in ('EITM', 'EAMT', 'MODT'): continue
+    elif name == 'MODL': b = z('CurseOfAlduin\\alchemist\\mace.nif')
+    elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_mace'))
+    elif name == 'KSIZ': b = struct.pack('<I', 2)
+    elif name == 'KWDA': b = bytes.fromhex(hx)[4:]   # (WeapTypeMace and the vendor's - the Daedric material's left out)
+    elif name == 'DESC': b = z("An alchemist's mace, its head a cage round a crystal of violet fire. Every blow drives in the last flask you threw; a third blow in a row shatters it on them.")
+    elif name == 'DATA': b = struct.pack('<IfH', 300, 12.0, 11)
     subs.append(sub(name, b))
 recs['WEAP'].append(record('WEAP', fid('WEAP', 'alchknife'), subs))
 

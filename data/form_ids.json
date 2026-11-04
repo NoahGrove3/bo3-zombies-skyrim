@@ -1461,6 +1461,7 @@
   "SNDR:alch_hit_poison": "0xdb1",
   "SNDR:alch_hit_sun": "0xdb2",
   "SNDR:alch_hit_blood": "0xdb3",
-  "SNDR:alch_hit_gold": "0xdb4"
+  "SNDR:alch_hit_gold": "0xdb4",
+  "STAT:1st_mace": "0xdb5"
  }
 }

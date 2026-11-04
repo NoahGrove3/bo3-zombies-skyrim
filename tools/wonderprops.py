@@ -401,6 +401,33 @@ def build(pid):
         shutil.copyfile(OUT / 'Meshes/CurseOfAlduin/wonder/riftblade.nif', OUT / 'Meshes/CurseOfAlduin/wonder/riftblade_static.nif')
         weapon_frame(OUT / 'Meshes/CurseOfAlduin/wonder/riftblade.nif', np.vstack([p[0] for p in P]), 'SummonersRiftblade', prn='WeaponDagger')
 
+    elif pid == 'mace':         # (Noah, 2026-11: "change it from a dagger to a one-handed mace using the model I've attached") the
+        # Alchemist's mace - his download (a .blend: tools/blendread.py pulls its two objects out): the haft up source +Z
+        # (pommel 0.16, head with its glass crystal 11..15), turned to +Y, the grip (source z 2.4) at the origin, 70 long
+        # (Skyrim's one-handed maces: 65-75); m0 the metal, m1 the purple glass crystal in the head (its glow; the fire round it
+        # is Gun.cpp's, tools/bladefx.py)
+        src = pathlib.Path('/home/claude/models_in/mace'); tx = src / 'textures'
+        if not (src / 'obj' / 'mace_low.obj').exists():
+            subprocess.run(['python3', str(ROOT / 'tools' / 'blendread.py'), str(src / 'source' / 'mace.blend'), str(src / 'obj')], check=True)
+        parts = []
+        for o, m in (('mace_low', 'm0'), ('Icosphere', 'm1')):
+            V, T, F, M = load_obj(src / 'obj' / f'{o}.obj')
+            parts.append((V, T, F, [m] * len(F)))
+        allV = np.vstack([p[0] for p in parts]); s = 70.0 / np.ptp(allV[:, 2])
+        c = np.array([0.0, 0.0, 2.4])
+        P = [(np.stack([(V - c)[:, 0] * s, (V - c)[:, 2] * s, -(V - c)[:, 1] * s], 1), T, F, M) for V, T, F, M in parts]
+        violet = (0.72, 0.36, 1.0)
+        D, N, G = textures('mace_metal', tx / 'Material.001_albedo.jpg', tx / 'Material.001_normal.png', tx / 'Material.001_roughness.jpg',
+                           tx / 'emissive_—_копия.jpg', glow=violet, metal=tx / 'Material.001_metallic.jpg', ao=tx / 'Material.001_AO.jpg', size=2048)
+        D2, N2, G2 = textures('mace_glass', tx / 'glass_albedo.jpg', tx / 'glass_normal.png', None, None, glow=violet, tint=(150, 70, 255), tint_amt=0.5,
+                              glow_base=0.55, size=1024)
+        mats = {'m0': matopts(D, N, G, violet, 1.6, 1.3, 80), 'm1': matopts(D2, N2, G2, violet, 2.6, 2.0, 140)}
+        write(pid, P, mats, 'CurseOfAlduin/alchemist/mace.nif', ['prn WeaponMace'])
+        import shutil
+        shutil.copyfile(OUT / 'Meshes/CurseOfAlduin/alchemist/mace.nif', OUT / 'Meshes/CurseOfAlduin/alchemist/mace_static.nif')
+        weapon_frame(OUT / 'Meshes/CurseOfAlduin/alchemist/mace.nif', np.vstack([p[0] for p in P]), 'AlchemistsMace', prn='WeaponMace')
+        hv = np.vstack([P[1][0]]); print('   crystal centre', np.round(hv.mean(0), 1), 'radius', round(float(np.ptp(hv[:, 1]) / 2), 1))
+
 
 if __name__ == '__main__':
     for p in (sys.argv[1:] or ['gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'fang']):

@@ -2542,6 +2542,38 @@ namespace bo3z
 			g_orb.fx = {};
 			g_orb.placed = false;
 		}
+		// (Noah: the mace's crystal "to have purple flames that grow stronger each upgrade ... the Madness Sword should also have this
+		// same effect style ... a dark red flame surrounding the blade") the class weapon in your right hand, drawn, burns: its
+		// tier's fire (tools/bladefx.py) hung on the weapon itself - its WEAPON node, the weapon's own space - in both views
+		struct WeaponFlame { Spellcraft::Fx fx[2]; std::string path; };
+		WeaponFlame g_wflame;
+		void TickWeaponFlame()
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			std::string want;
+			if (p && p->Is3DLoaded() && Save::SinceWorldReady() > 4.0f && p->AsActorState()->IsWeaponDrawn()) {
+				auto* eq = p->GetEquippedObject(false);
+				const bool mace = eq && eq == Classes::AlchemistKnife(), mad = eq && eq == Classes::SpellswordBlade();
+				if (mace || mad) {
+					const int t = std::clamp(Kit::TierOfWeapon(eq), 0, 3);
+					want = fmt::format("CurseOfAlduin\\fx\\{}flame_{}.nif", mace ? "mace" : "mad", t);
+				}
+			}
+			if (want != g_wflame.path) {
+				for (auto& f : g_wflame.fx) { f.Detach(); f = {}; }
+				g_wflame.path = want;
+				if (!want.empty()) {
+					for (auto& f : g_wflame.fx) f = Spellcraft::Fx{ Spellcraft::LoadPath(want) };
+					logger::info("weapon fire: {}", want);
+				}
+			}
+			if (want.empty()) return;
+			for (int k = 0; k < 2; ++k) {
+				auto* root = p->Get3D(k == 1);
+				auto* node = root ? root->GetObjectByName("WEAPON") : nullptr;
+				g_wflame.fx[k].Attach(node ? node->AsNode() : nullptr);
+			}
+		}
 		void TickLightOrb(float a_delta)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -3880,6 +3912,7 @@ namespace bo3z
 			TickEBursts(a_delta);
 			TickLobs(a_delta);
 			TickLightOrb(a_delta);
+			TickWeaponFlame();
 			for (auto& d : g_devFx) if ((d.left -= a_delta) <= 0) d.fx.Detach();
 			std::erase_if(g_devFx, [](auto& d) { return d.left <= 0; });
 			TickThrow(a_delta);

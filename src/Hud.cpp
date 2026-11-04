@@ -769,8 +769,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				  "Your kit grows at the altar: every family and the Riftblade to Legendary", "Conjure Wolf, Conjure Skeleton, the Riftblade, the Arcane Conjurer Robes" },
 				{ "DESTRUCTION", "Battle-mage of the College of Winterhold", IM_COL32(255, 120, 60, 255), "Master the elements one at a time", "Ranged spells: fire, frost, shock, sun, blood and runes",
 				  "Your kit grows at the altar: each element climbs to its Legendary spell", "Firebolt, Ice Spike, the Black Mage Robes" },
-				{ "ALCHEMIST", "A wanderer of the Drifter's road", IM_COL32(150, 230, 90, 255), "Flasks of fire, frost, storm, acid and blood", "Thrown flask bombs that burst where they land - and a knife",
-				  "Your kit grows at the altar: each flask and the knife to Legendary", "The Alchemist's Knife, the Fire Flask, the Drifter's outfit" },
+				{ "ALCHEMIST", "A wanderer of the Drifter's road", IM_COL32(150, 230, 90, 255), "Flasks of fire, frost, storm, acid and blood", "Thrown flask bombs that burst where they land - and a mace whose blows drive them in",
+				  "Your kit grows at the altar: each flask and the mace to Legendary", "The Alchemist's Mace, the Fire Flask, the Black Mage Robes" },
 				{ "SPELLSWORD", "A Vigilant of Stendarr", IM_COL32(120, 180, 255, 255), "Steel in one hand, a spell in the other", "A one-handed blade and touch spells - and the Vigilants' relic spells",
 				  "Your kit grows at the altar: the blade and each spell to Legendary", "Your blade, Burning Touch, the Valkyrie or DragonLord Armor" } };
 			dl->AddRectFilled({ 0, 0 }, size, IM_COL32(4, 4, 8, 215));
