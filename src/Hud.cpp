@@ -6238,7 +6238,17 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			if (onMainMenu) sawMainMenu = true;
 			const bool bootScreen = !sawMainMenu && !g_filmOn;
 			// (a menu with a pointer - the world map, the inventory - still draws: our cursor is the only one there)
-			if (((!InGame() && !mainMenu && !journal && !escJournal && !cursorUp && !codex) || (DevTools::HudOff() && !mainMenu && !codex)) && !g_filmOn && g_veil <= 0 && !bootScreen) {
+			// (Noah: "only hide my gameplay HUD - keep my inventory HUDs available ... also keep the Echo Altar UI") filming
+			// mode hides the bars, the feed, the compass and Skyrim's own HUD - never a screen you work in: the Echo Altar, the
+			// High Hrothgar menu, the rest screen, the class and crew screens
+			const bool keepUi = s.perkMenu || s.hallMenu || s.crewScreen || Classes::Open() || Director::RestOpen();
+			if (static bool was = false; was != DevTools::HudOff()) {
+				was = DevTools::HudOff();
+				if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie) hud->uiMovie->SetVisible(!was);
+			} else if (was) {   // (Skyrim shows its HUD again on a load or a menu closing: kept hidden)
+				if (auto hud = uiM ? uiM->GetMenu(RE::HUDMenu::MENU_NAME) : nullptr; hud && hud->uiMovie && hud->uiMovie->GetVisible()) hud->uiMovie->SetVisible(false);
+			}
+			if (((!InGame() && !mainMenu && !journal && !escJournal && !cursorUp && !codex) || (DevTools::HudOff() && !keepUi && !mainMenu && !codex)) && !g_filmOn && g_veil <= 0 && !bootScreen) {
 				if (static int m = 0; m++ % 1200 == 0) {
 					auto* ui = RE::UI::GetSingleton();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
@@ -6313,7 +6323,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					g_partyOpen = false;
 					g_sys = {};  // (the journal closed: its list is gone)
 				}
-			} else if (InGame() && !DevTools::HudOff()) {
+			} else if (InGame() && (!DevTools::HudOff() || keepUi)) {
 				Draw(s, io.DisplaySize);
 				g_drewHud = !Classes::Open();
 				// looking at the Echo Altar: Skyrim's own "Commune" prompt gives way to ours (s.orbAim), back for everything else
