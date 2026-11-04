@@ -1601,6 +1601,9 @@
   "ARMO:cm_spellsword_robes": "0xe3d",
   "ARMO:cm_spellsword_hood": "0xe3e",
   "ARMO:cm_spellsword_wraps": "0xe3f",
-  "ARMO:cm_spellsword_boots": "0xe40"
+  "ARMO:cm_spellsword_boots": "0xe40",
+  "SNDR:alch_corkpop": "0xe41",
+  "SNDR:alch_glass": "0xe42",
+  "SNDR:alch_fireloop": "0xe43"
  }
 }
