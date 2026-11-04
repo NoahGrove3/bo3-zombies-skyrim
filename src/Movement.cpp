@@ -1096,6 +1096,12 @@ namespace bo3z
 				return;
 			}
 			if (!Curse::Freed(1)) {
+				// (Noah: "remove the glider and shout from my player - I want to play like a new player, so no cheats") not yet
+				// Whiterun's to give: a character holding it from a test kit, or the testing switch, has it taken back
+				if (a_player->HasShout(sh) && !Gun::TestKitOn() && !DevGliderFlag()) {
+					Gun::Console(fmt::format("player.removeshout {:08X}", sh->GetFormID()));
+					logger::info("glider: Dragon's Updraft taken back - Whiterun's altar not yet freed");
+				}
 				return;
 			}
 			if (a_player->HasShout(sh)) {
