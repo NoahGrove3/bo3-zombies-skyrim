@@ -2454,55 +2454,6 @@ namespace bo3z
 			if (a_target && !a_target->IsDead() && a_perSecond > 0 && a_seconds > 0) g_dots.push_back({ a_target->GetHandle(), a_perSecond, a_seconds });
 		}
 		void  SkyFall(const RE::NiPoint3& a_at) { Props::SkyFireball(a_at); }  // (a burning star from the sky onto a point)
-		void  Slash(const SlashSpec& a_s)
-		{
-			if (g_slashes.size() > 24) return;
-			LiveSlash l;
-			l.s = a_s;
-			if (l.s.dir.Length() < 1e-3f) l.s.dir = { 0, 1, 0 };
-			l.s.dir.Unitize();
-			l.at = a_s.from;
-			g_slashes.push_back(std::move(l));
-		}
-		// where a swing flies: the camera's aim, kept from pointing far up or down
-		RE::NiPoint3 SwingDir()
-		{
-			auto* cam = RE::PlayerCamera::GetSingleton();
-			RE::NiPoint3 d{ 0, 1, 0 };
-			if (cam && cam->cameraRoot) { const auto& w = cam->cameraRoot->world; d = { w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] }; }
-			d.z = std::clamp(d.z, -0.25f, 0.25f);
-			if (d.Length() < 1e-3f) d = { 0, 1, 0 };
-			d.Unitize();
-			return d;
-		}
-		// the angle the blade swept, about the flight: the blade's own line (its WEAPON node, in the body you're seen in) laid
-		// on the plane across the flight - a flat sweep lies the crescent level, an overhead chop stands it upright
-		float SwingRoll(const RE::NiPoint3& a_dir)
-		{
-			auto* p = RE::PlayerCharacter::GetSingleton();
-			auto* cam = RE::PlayerCamera::GetSingleton();
-			auto* root = p ? p->Get3D(cam && cam->IsInFirstPerson()) : nullptr;
-			auto* node = root ? root->GetObjectByName("WEAPON") : nullptr;
-			if (!node) return 0.0f;
-			const auto& r = node->world.rotate;
-			RE::NiPoint3 b{ r.entry[0][1], r.entry[1][1], r.entry[2][1] };
-			RE::NiPoint3 d = a_dir; d.Unitize();
-			b = b - d * b.Dot(d);
-			if (b.Length() < 1e-3f) return 0.0f;
-			const auto f = Spellcraft::Facing(d);
-			const RE::NiPoint3 x{ f.entry[0][0], f.entry[1][0], f.entry[2][0] }, z{ f.entry[0][2], f.entry[1][2], f.entry[2][2] };
-			float roll = std::atan2(b.Dot(z), b.Dot(x));
-			if (roll > 1.5708f) roll -= 3.14159f; else if (roll < -1.5708f) roll += 3.14159f;   // (a crescent bows forward either way)
-			return -roll;
-		}
-		void  Halo(int a_count, const std::string& a_model, float a_scale, float a_period, std::function<void(RE::Actor*)> a_strike)
-		{
-			if (a_count <= 0) { for (auto& b : g_halo.blades) b.Detach(); g_halo.blades.clear(); return; }
-			if (static_cast<int>(g_halo.blades.size()) == a_count && g_halo.model == a_model) { g_halo.strike = std::move(a_strike); g_halo.period = a_period; return; }
-			for (auto& b : g_halo.blades) b.Detach();
-			g_halo.blades.assign(a_count, {});
-			g_halo.model = a_model, g_halo.scale = a_scale, g_halo.period = a_period, g_halo.strike = std::move(a_strike);
-		}
 
 		void  AreaHurt(const RE::NiPoint3& a_at, float a_radius, float a_share, std::string_view a_blast)
 		{
@@ -2706,6 +2657,55 @@ namespace bo3z
 					++g_halo.turn;
 				} else g_halo.next = 0.25f;
 			}
+		}
+		void  Slash(const SlashSpec& a_s)
+		{
+			if (g_slashes.size() > 24) return;
+			LiveSlash l;
+			l.s = a_s;
+			if (l.s.dir.Length() < 1e-3f) l.s.dir = { 0, 1, 0 };
+			l.s.dir.Unitize();
+			l.at = a_s.from;
+			g_slashes.push_back(std::move(l));
+		}
+		// where a swing flies: the camera's aim, kept from pointing far up or down
+		RE::NiPoint3 SwingDir()
+		{
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			RE::NiPoint3 d{ 0, 1, 0 };
+			if (cam && cam->cameraRoot) { const auto& w = cam->cameraRoot->world; d = { w.rotate.entry[0][1], w.rotate.entry[1][1], w.rotate.entry[2][1] }; }
+			d.z = std::clamp(d.z, -0.25f, 0.25f);
+			if (d.Length() < 1e-3f) d = { 0, 1, 0 };
+			d.Unitize();
+			return d;
+		}
+		// the angle the blade swept, about the flight: the blade's own line (its WEAPON node, in the body you're seen in) laid
+		// on the plane across the flight - a flat sweep lies the crescent level, an overhead chop stands it upright
+		float SwingRoll(const RE::NiPoint3& a_dir)
+		{
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			auto* cam = RE::PlayerCamera::GetSingleton();
+			auto* root = p ? p->Get3D(cam && cam->IsInFirstPerson()) : nullptr;
+			auto* node = root ? root->GetObjectByName("WEAPON") : nullptr;
+			if (!node) return 0.0f;
+			const auto& r = node->world.rotate;
+			RE::NiPoint3 b{ r.entry[0][1], r.entry[1][1], r.entry[2][1] };
+			RE::NiPoint3 d = a_dir; d.Unitize();
+			b = b - d * b.Dot(d);
+			if (b.Length() < 1e-3f) return 0.0f;
+			const auto f = Spellcraft::Facing(d);
+			const RE::NiPoint3 x{ f.entry[0][0], f.entry[1][0], f.entry[2][0] }, z{ f.entry[0][2], f.entry[1][2], f.entry[2][2] };
+			float roll = std::atan2(b.Dot(z), b.Dot(x));
+			if (roll > 1.5708f) roll -= 3.14159f; else if (roll < -1.5708f) roll += 3.14159f;   // (a crescent bows forward either way)
+			return -roll;
+		}
+		void  Halo(int a_count, const std::string& a_model, float a_scale, float a_period, std::function<void(RE::Actor*)> a_strike)
+		{
+			if (a_count <= 0) { for (auto& b : g_halo.blades) b.Detach(); g_halo.blades.clear(); return; }
+			if (static_cast<int>(g_halo.blades.size()) == a_count && g_halo.model == a_model) { g_halo.strike = std::move(a_strike); g_halo.period = a_period; return; }
+			for (auto& b : g_halo.blades) b.Detach();
+			g_halo.blades.assign(a_count, {});
+			g_halo.model = a_model, g_halo.scale = a_scale, g_halo.period = a_period, g_halo.strike = std::move(a_strike);
 		}
 		float g_wflameScale = 1.0f;
 		void TickWeaponFlame()
