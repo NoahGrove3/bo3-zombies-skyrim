@@ -3042,12 +3042,18 @@ namespace bo3z::Classes
 			// the glass of the bottle, and a cork's pop
 			static constexpr const char* kSpellSnd[7] = { "fireball", "frost", "runeshock", "poisongas", "light", "bloodplague", "lightmassive" };
 			Gun::BlastSound(kSpellSnd[std::clamp(a_el, 0, 6)], a_at, 1.0f);
-			if (auto* p = RE::PlayerCharacter::GetSingleton()) {
-				const float nearV = std::clamp(1.0f - (p->GetPosition().GetDistance(a_at) - 350.0f) / 2400.0f, 0.25f, 1.0f);
-				Audio::Game(0x0003F3D8, p, nearV);         // PHYBottleHSD: the bottle's glass
-				Audio::Game(0x000B6435, p, 0.7f * nearV);  // ITMPotionUse: the cork
+			// (Noah: "the impact sound fx sounds like drinking a potion ... the impact a glass breaking sound with the element of the
+			// flask ... fire impact should sound like flames the duration of the effect and the glass break on impact") no potion's
+			// cork or gulp: the glass shattering (Skyrim's oil-lamp trap breaking), the element's own strike, and a fire flask's
+			// flames crackling on where it burns for as long as its fire lasts
+			Audio::Mine(gen::Sound::alch_glass, a_at, 1.0f);
+			if (a_el == 0) {
+				static std::uint64_t n = 0;
+				const std::uint64_t key = 0xF1A5C000ull + (n++ % 64);
+				Audio::LoopAt(key, gen::Sound::alch_fireloop, a_at, 0.85f);
+				Tasks::Later(3.0f, [key]() { Audio::LoopStop(key, 700); });
 			}
-			logger::info("alchemist: a flask breaks - Skyrim's {} sound, glass and cork", kSpellSnd[std::clamp(a_el, 0, 6)]);
+			logger::info("alchemist: a flask breaks - glass, Skyrim's {} sound{}", kSpellSnd[std::clamp(a_el, 0, 6)], a_el == 0 ? ", its flames for 3 s" : "");
 			static constexpr const char* kVanilla[6] = { "fireball", "frost", "runeshock", "poisongas", "", "bloodplague" };
 			if (a_el < 6 && kVanilla[a_el][0]) Gun::FxBlast(kVanilla[a_el], a_at);
 			auto* p = RE::PlayerCharacter::GetSingleton();

@@ -2475,13 +2475,11 @@ namespace bo3z
 		{
 			if (!g_throw.on) return;
 			g_throw.t += a_delta;
+			// (Noah: "the throwing sound also sounds like a blade cutting through the air like a dagger. make the throw sound a cork
+			// popping") the cork pulled as the flask is drawn back - no blade's whoosh
 			if (!g_throw.clinked) {
 				g_throw.clinked = true;
-				if (auto* pl = RE::PlayerCharacter::GetSingleton()) Audio::Game(0x0003EDBD, pl, 0.55f);   // ITMPotionUpSD: the glass, drawn back
-			}
-			if (!g_throw.released && g_throw.t >= kThrowRelease - 0.06f && !g_throw.whooshed) {
-				g_throw.whooshed = true;
-				if (auto* pl = RE::PlayerCharacter::GetSingleton()) Audio::Game(0x0003C730, pl, 0.8f);    // the dagger's swing: the air whipped past
+				if (auto* pl = RE::PlayerCharacter::GetSingleton()) Audio::At(gen::Sound::alch_corkpop, pl, 0.9f);
 			}
 			if (!g_throw.released && g_throw.t >= kThrowRelease) {
 				g_throw.released = true;

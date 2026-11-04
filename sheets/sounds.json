@@ -7974,6 +7974,64 @@
       "atten": 1,
       "loop": false,
       "use": "Alchemist: a gold flask breaking - glass and molten gold"
+    },
+    {
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "verify": [],
+      "cat": "sfx",
+      "shift": 0,
+      "layer": "none",
+      "id": "alch_corkpop",
+      "editorId": "UN_alch_corkpop",
+      "space": "3d",
+      "file": "fx\\CurseOfAlduin\\un\\alch_corkpop_0.wav",
+      "files": [
+        "fx\\CurseOfAlduin\\un\\alch_corkpop_0.wav",
+        "fx\\CurseOfAlduin\\un\\alch_corkpop_1.wav",
+        "fx\\CurseOfAlduin\\un\\alch_corkpop_2.wav"
+      ],
+      "atten": 4,
+      "loop": false,
+      "use": "Alchemist: the cork pulled as a flask is drawn back to throw (tools/corkpop.py)"
+    },
+    {
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "verify": [],
+      "cat": "sfx",
+      "shift": 0,
+      "layer": "none",
+      "id": "alch_glass",
+      "editorId": "UN_alch_glass",
+      "space": "3d",
+      "file": "fx\\trp\\oil\\lamp\\break\\trp_oillamp_break_01.wav",
+      "files": [
+        "fx\\trp\\oil\\lamp\\break\\trp_oillamp_break_01.wav",
+        "fx\\trp\\oil\\lamp\\break\\trp_oillamp_break_02.wav",
+        "fx\\trp\\oil\\lamp\\break\\trp_oillamp_break_03.wav"
+      ],
+      "atten": 0,
+      "loop": false,
+      "use": "Alchemist: a flask's glass breaking (Skyrim's own oil-lamp trap shattering)"
+    },
+    {
+      "plugin": "CurseOfAlduin.esp",
+      "localId": "auto",
+      "verify": [],
+      "cat": "sfx",
+      "shift": 0,
+      "layer": "none",
+      "id": "alch_fireloop",
+      "editorId": "UN_alch_fireloop",
+      "space": "3d",
+      "file": "fx\\fx\\fire\\fx_fire_medium_01_lp.wav",
+      "files": [
+        "fx\\fx\\fire\\fx_fire_medium_01_lp.wav"
+      ],
+      "atten": 2,
+      "loop": true,
+      "use": "Alchemist: a fire flask's flames, burning on as long as its fire does (Skyrim's own fire loop)"
     }
   ]
 }
