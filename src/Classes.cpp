@@ -3726,38 +3726,37 @@ namespace bo3z::Classes
 		if (now - last < std::chrono::milliseconds(200)) return;   // (one swing heard from both bodies)
 		last = now;
 		if (a_power) {
-			// (Noah: "golden fire tornado like tier 3 of the other swords but 2x damage to dragon type enemies and looks like golden
-			// flames") every heavy swing: a large cyclone of golden dragonfire, twice the harm to dragons
+			// (Noah: "the heavy attack should be Calling golden fireballs, three at a time per heavy swing") three fireballs of golden
+			// flame called down from the sky - on the three nearest of the dead before you, or spread ahead where there are fewer
 			const RE::NiPoint3 fwd = Flat(Gun::SwingDir(), p);
-			const RE::NiPoint3 from = OnGround(p->GetPosition() + fwd * 120.0f, p->GetPosition().z);
+			const RE::NiPoint3 me = p->GetPosition();
 			const float share = BladeShare(Slayer()) * (0.7f + 0.3f * Arcana::Power());
-			Gun::Ring("gold", from, 30.0f, 260.0f, 0.5f);
-			Gun::ElemBurst(8, from + RE::NiPoint3{ 0, 0, 40.0f }, 1.0f, 0.0f, 0.5f);
-			Gun::BlastSound("fireball", from, 0.8f);
-			Gun::CycloneSpec cs;
-			cs.model = "CurseOfAlduin\\fx\\cyclone_gold.nif";
-			cs.from = from, cs.fwd = fwd, cs.dist = 1100.0f, cs.life = 5.0f, cs.size = 1.0f;   // (Noah: cyclones "last 5 seconds")
-			cs.share = 0.09f * SlayerTop() * 0.8f, cs.fec = 0, cs.dragons = true;
-			cs.touch = [share](RE::Actor* a) { if (a && !a->IsDead()) { Gun::Knock(a, 0.3f); GoldBurn(a, share); } };
-			cs.burst = [share](const RE::NiPoint3& at) {
-				Gun::ElemBurst(8, at + RE::NiPoint3{ 0, 0, 80.0f }, 2.0f, 0.0f, 0.8f);
-				Gun::Ring("gold", at, 40.0f, 420.0f, 0.7f);
-				Gun::BlastSound("fireball", at, 1.0f);
-				for (auto* f : NearFoes(at, 330.0f, 20)) { GoldBurn(f, share); Gun::Knock(f, 0.6f); }
-			};
-			Gun::ElemCyclone(std::move(cs));
-			logger::info("swords: the Dragon Slayer's cyclone of golden dragonfire");
+			std::vector<RE::NiPoint3> spots;
+			for (auto* f : NearFoes(me + fwd * 600.0f, 900.0f, 3)) spots.push_back(f->GetPosition());
+			const RE::NiPoint3 right{ fwd.y, -fwd.x, 0 };
+			for (int k = static_cast<int>(spots.size()); k < 3; ++k) spots.push_back(OnGround(me + fwd * 700.0f + right * (static_cast<float>(k - 1) * 260.0f), me.z));
+			Gun::BlastSound("fireball", me, 0.7f);
+			int k = 0;
+			for (const auto& at : spots) {
+				Tasks::Later(0.15f * static_cast<float>(k++), [at, share]() {
+					Gun::Meteor(at, true, 1.0f, [share](const RE::NiPoint3& hit) {
+						Gun::MeteorImpact(hit, true, 0.8f);
+						for (auto* f : NearFoes(hit, 260.0f, 12)) GoldBurn(f, share * 1.6f);
+					});
+				});
+			}
+			logger::info("swords: the Dragon Slayer calls down three golden fireballs");
 			return;
 		}
-		// (Noah: "Dragonfire breath puffs") a light swing: a short breath of real dragonfire before you - Skyrim's Fire Breath shout,
-		// burning every one of the dead it rolls over
+		// (Noah: "Light attack for the Dragon Slayer sword should shoot a fireball that is golden flames and deals 2x damage to dragon
+		// type enemies") a light swing: a fireball of golden flame (Skyrim's own fireball, in gold), bursting on the first it strikes
 		const RE::NiPoint3 dir = Gun::SwingDir();
 		Gun::SlashSpec sl;
-		sl.model = "CurseOfAlduin\\fx\\slayer_breath.nif";
+		sl.model = ArcModel(9);
 		sl.from = Gun::SwingFrom();
 		sl.dir = dir;
 		sl.roll = 0.0f;
-		sl.speed = 1300.0f, sl.range = 650.0f, sl.radius = 190.0f, sl.scale = 1.0f;
+		sl.speed = 2000.0f, sl.range = 2200.0f, sl.radius = 90.0f, sl.scale = 1.0f, sl.stopOnHit = true;
 		const float share = BladeShare(Slayer()) * (0.7f + 0.3f * Arcana::Power());   // (its own light blow)
 		sl.share = share;
 		sl.flingKill = 16.0f;
@@ -3817,6 +3816,9 @@ namespace bo3z::Classes
 				p->AddSpell(want);
 				logger::info("swords: blade art {}", key);
 			}
+			// (Noah: "The green animation circling the sword, I want that to be changed to a golden color instead of green, but keep the
+			// same animation") the Dragon Slayer's art round the blade coloured gold, in both bodies
+			if (key == 9) for (const bool fp : { false, true }) if (auto* root = p->Get3D(fp)) Gun::TintGold(root->GetObjectByName("WEAPON"));
 			// (Noah, clips 301-302: the Shadowflame Sword and the Spellbound Blade unseen in the hand, in both views) a flask's
 			// throw hides the hand's weapon node from the release to the end of the throw: never left hidden once no throw is on
 			if (!Gun::Throwing()) {
@@ -3858,9 +3860,11 @@ namespace bo3z::Classes
 		if (static float sl = 0; (sl -= a_delta) <= 0) {
 			sl = 2.0f;
 			if (auto* d = Slayer(); d && p) {
-				if (auto* want = BladeLook(d, 3); want && d->formEnchanting != want) {
+				// (Noah: "remove the flames on the sword itself when holding it. So it's just the golden circular animation on the blade
+				// itself") no enchantment's flames on it: only its art circling the blade (TickSwords), in gold
+				if (RE::EnchantmentItem* want = nullptr; d->formEnchanting != want) {
 					d->formEnchanting = want;
-					d->amountofEnchantment = 100;   // (a weapon with no charge shows no enchantment; its look costs none)
+					d->amountofEnchantment = 0;
 					auto* em = RE::ActorEquipManager::GetSingleton();
 					if (em && p->GetEquippedObject(false) == d && !ItemMenusOpen()) {
 						em->UnequipObject(p, d, nullptr, 1, nullptr, false, false, false, true);

@@ -845,7 +845,7 @@ namespace bo3z
 		// instead; s= its size; r= degrees about x,y,z; z= raised; play: its own animation started; `none`: nothing drawn).
 		// Read at load and again on the dev command `fxreload`, so a look can be tried in the running game.
 		int BlastIndex(std::string_view a_name);
-		struct FxPart { std::string model, pal; RE::NiPoint3 col{ -1, -1, -1 }; float scale = 1.0f, dz = 0.0f; RE::NiMatrix3 rot; bool play = false, none = false, noparticles = false; int blast = -1; };
+		struct FxPart { std::string model, pal; RE::NiPoint3 col{ -1, -1, -1 }; float scale = 1.0f, dz = 0.0f; RE::NiMatrix3 rot; bool play = false, none = false, noparticles = false; int blast = -1; float orbitR = 0, orbitSpeed = 0, phase = 0; };
 		std::unordered_map<std::string, std::vector<FxPart>> g_fxMap;
 		std::string FxKey(std::string a)
 		{
@@ -895,7 +895,8 @@ namespace bo3z
 							else if (k == "z") fp.dz = std::stof(v);
 							else if (k == "noplay") fp.play = false;
 							else if (k == "play") fp.play = true;
-							else if (k == "noparticles") fp.noparticles = true;   // (its particles hidden: a whirlwind's thrown debris, flickering all round)   // (its controller manager's first sequence started: only where a model stands still without it)
+							else if (k == "noparticles") fp.noparticles = true;
+							else if (k == "orbit") std::sscanf(v.c_str(), "%f,%f,%f", &fp.orbitR, &fp.orbitSpeed, &fp.phase);   // (circling its middle: radius, turns a second, where it starts)   // (its particles hidden: a whirlwind's thrown debris, flickering all round)   // (its controller manager's first sequence started: only where a model stands still without it)
 							else if (k == "col") std::sscanf(v.c_str(), "%f,%f,%f", &fp.col.x, &fp.col.y, &fp.col.z);
 							else if (k == "r") std::sscanf(v.c_str(), "%f,%f,%f", &rx, &ry, &rz);
 						} catch (...) {}
@@ -2453,6 +2454,7 @@ namespace bo3z
 			struct Piece { RE::ObjectRefHandle ref; FxPart part; bool drawn = false; float len = 0; std::chrono::steady_clock::time_point played{}; };
 			std::vector<Piece> pieces;
 			std::vector<FxPart> blasts;
+			std::chrono::steady_clock::time_point born = std::chrono::steady_clock::now();
 			std::string        model;
 			bool               ok = false, drawn = false;
 			WorldFx() = default;
@@ -2486,8 +2488,13 @@ namespace bo3z
 					g_blasts.push_back(pb);
 				}
 				blasts.clear();
+				const float age = std::chrono::duration<float>(std::chrono::steady_clock::now() - born).count();
 				for (auto& pc : pieces) {
-					const RE::NiPoint3 at = a_at + RE::NiPoint3{ 0, 0, pc.part.dz * a_scale };
+					RE::NiPoint3 at = a_at + RE::NiPoint3{ 0, 0, pc.part.dz * a_scale };
+					if (pc.part.orbitR > 0) {   // (a piece circling the middle - a tornado's flames wound round it)
+						const float an = pc.part.phase * 6.2832f + pc.part.orbitSpeed * 6.2832f * age;
+						at += RE::NiPoint3{ std::cos(an), std::sin(an), 0 } * (pc.part.orbitR * a_scale);
+					}
 					if (!pc.ref) {
 						if (auto r = PlaceAtPoint(ModelActivator(pc.part.model), at)) pc.ref = r->GetHandle();
 						else { if (static int said = 0; said++ < 8) logger::warn("worldfx: {} could not be placed", pc.part.model); continue; }
@@ -3153,7 +3160,7 @@ namespace bo3z
 				const RE::NiPoint3 from = l.at;
 				RE::NiPoint3 to = l.at + l.s.dir * step;
 				// the ground or a wall in the way: it breaks there (after the first few centimetres - never on the blade itself)
-				bool broke = false;
+				bool broke = false, stopped = false;
 				if (l.gone > 20.0f) {
 					if (const float wf = Spellcraft::WorldHit(from, to + l.s.dir * 25.0f); wf <= 1.0f) {
 						to = from + (to + l.s.dir * 25.0f - from) * wf;
@@ -3219,7 +3226,9 @@ namespace bo3z
 					const bool killed = Damage(a, dmg, false, false, true);
 					g_fecElem = was;
 					if (l.s.onHit) l.s.onHit(a, killed);
+					if (l.s.stopOnHit) { stopped = true; break; }   // (a fireball: it bursts on the first it strikes)
 				}
+				if (stopped) broke = true, l.gone = l.s.range + 1.0f;
 				if (broke) {   // its shatter where it struck: a burst of its own colour
 					static const std::unordered_map<std::string_view, int> kElem{ { "purple", 9 }, { "carian", 1 }, { "white", 4 }, { "red", 0 }, { "fire", 0 }, { "frost", 1 },
 						{ "shock", 2 }, { "sun", 4 }, { "blood", 5 }, { "gold", 8 }, { "bane", 3 } };
@@ -3564,6 +3573,28 @@ namespace bo3z
 				if (l.t > l.life) l.fx.Detach();
 			}
 			std::erase_if(g_looks, [](const Look& l) { return l.t > l.life; });
+		}
+		// (the Dragon Slayer's art round its blade) every effect shader under a node coloured by the gold ramp - each only once
+		void TintGold(RE::NiAVObject* a_root)
+		{
+			if (!a_root) return;
+			static const std::string pal = "textures\\CurseOfAlduin\\fx\\pal_gold.dds";
+			bool any = false;
+			RE::BSVisit::TraverseScenegraphGeometries(a_root, [&](RE::BSGeometry* g) {
+				auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get());
+				auto* m = ep ? static_cast<RE::BSEffectShaderMaterial*>(ep->material) : nullptr;
+				if (m && std::string_view(m->greyscaleTexturePath.c_str() ? m->greyscaleTexturePath.c_str() : "") != pal) any = true;
+				return RE::BSVisit::BSVisitControl::kContinue;
+			});
+			if (!any) return;
+			FxPart fp;
+			fp.pal = pal;
+			TintTree(a_root, fp);
+			if (static int said = 0; said++ < 4) {
+				std::string names;
+				RE::BSVisit::TraverseScenegraphGeometries(a_root, [&](RE::BSGeometry* g) { names += std::string(g->name.c_str()) + " "; return RE::BSVisit::BSVisitControl::kContinue; });
+				logger::info("swords: the Dragon Slayer's art in gold: {}", names);
+			}
 		}
 		void DevFxReload() { FxMapLoad(); }
 		void DevSwing(int a_power) { g_devSwing = a_power ? 2 : 1; }

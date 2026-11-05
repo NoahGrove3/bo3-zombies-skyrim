@@ -797,7 +797,7 @@ namespace bo3z
 		void                  Burn(RE::Actor* a_target, float a_perSecond, float a_seconds);  // damage over time
 		// (the class swords) a crescent flying out from a swing, cutting through every one of the dead it passes (share: of one
 		// of the night's dead's health); its angle, where it flies; and the Summoner's circling blades of light
-		struct SlashSpec { std::string model; RE::NiPoint3 from, dir; float roll = 0, speed = 1700, range = 1500, radius = 110, share = 0.3f, scale = 1.0f, damage = 0; bool sideways = false; float flingKill = 0; int fec = -1;  /* the element its kills die by (FEC) */ std::function<void(RE::Actor*, bool)> onHit; };  // (flingKill: a blow that kills throws the body that hard)
+		struct SlashSpec { std::string model; RE::NiPoint3 from, dir; float roll = 0, speed = 1700, range = 1500, radius = 110, share = 0.3f, scale = 1.0f, damage = 0; bool sideways = false, stopOnHit = false; float flingKill = 0; int fec = -1;  /* the element its kills die by (FEC) */ std::function<void(RE::Actor*, bool)> onHit; };  // (flingKill: a blow that kills throws the body that hard)
 		void                  Slash(const SlashSpec& a_s);
 		RE::NiPoint3          SwingDir();
 		RE::NiPoint3          SwingFrom();  // where a swing's slash starts: ahead of your eyes (first person), your chest (third)
@@ -831,6 +831,7 @@ namespace bo3z
 		void                  DevNodes();
 		void                  DevLook(const std::string& a_model, const std::string& a_mode, float a_scale, const std::string& a_pal, float a_secs);
 		void                  DevFxReload();
+		void                  TintGold(RE::NiAVObject* a_root);   // every effect shader under a node in gold (once)
 		void                  DevSwing(int a_power);
 		void                  TickLooks(float a_delta);
 		void                  StartThrow(bool a_left, std::function<void()> a_release);  // the underhand throw on that arm; a_release at the top of the swing
