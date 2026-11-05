@@ -952,7 +952,7 @@ namespace bo3z
 					RE::NiControllerSequence* pick = nullptr;
 					for (const char* nm : { "mIdle", "Idle", "Play", "Start", "mStart", "Loop" })
 						if (!pick) pick = mgr->GetSequenceByName(nm);
-					if (!pick && !mgr->sequences.empty()) pick = mgr->sequences[0].get();
+					if (!pick && mgr->sequenceArray.size() > 0) pick = mgr->sequenceArray[0].get();
 					if (pick) a_ref->PlayAnimation(mgr, pick, nullptr);
 					return;
 				}
