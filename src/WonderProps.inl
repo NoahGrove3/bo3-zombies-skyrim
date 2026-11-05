@@ -445,12 +445,11 @@ namespace Props
 			sl.dir = dir;
 			sl.roll = Gun::SwingRoll(dir);
 			sl.speed = 1800.0f, sl.range = 1800.0f, sl.radius = 150.0f, sl.scale = 1.3f;
-			sl.damage = FangBase() * BaneMult() * 0.9f;
-			sl.onHit = [dir](RE::Actor* a, bool killed) {
+			sl.damage = FangBase() * BaneMult();   // (Noah: "the same damage as the swords light attack") its own light blow (FangHit)
+			sl.flingKill = 20.0f;                  // (the ones it kills go flying - the Bane's far)
+			sl.onHit = [](RE::Actor* a, bool killed) {
 				auto* pl = RE::PlayerCharacter::GetSingleton();
-				if (!a || !pl) return;
-				if (killed) { BaneKilled(pl); return; }
-				Spellcraft::Fling(a, a->GetPosition() - dir * 120.0f - RE::NiPoint3{ 0, 0, 80.0f }, 8.0f);
+				if (a && pl && killed) BaneKilled(pl);
 			};
 			Gun::Slash(sl);
 			return;

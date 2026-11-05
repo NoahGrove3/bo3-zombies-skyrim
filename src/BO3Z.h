@@ -410,6 +410,7 @@ namespace bo3z
 		int              CrossbowElement(const RE::TESForm* a_w);
 		RE::TESAmmo*     CrossbowBolts(int a_elem);   // an elemental crossbow's bolts
 		int              CrossbowQuiver(int a_level);  // its quiver at a reforge level
+		float            BladeShare(const RE::TESObjectWEAP* a_w);  // one light blow of a blade: its share of one of the night's dead, at its tiers (before the night's power)
 		int              AltarGearUpgrades(const RE::TESForm* a_w);  // an altar spell-weapon's steel as upgrades (0..3), -1 when it isn't altar gear  // the Ember (0), Rime (1) or Storm (2) Crossbow, else -1
 		int              ReforgeCrossbow(int a_freed, bool& a_spent);  // the one in hand (-1: none held; 0 refused; 1 done)
 		int              BladeSpell();  // the Spellsword spell your blade carries (in a hand, or the last held with a two-handed blade; -1)
@@ -795,7 +796,7 @@ namespace bo3z
 		void                  Burn(RE::Actor* a_target, float a_perSecond, float a_seconds);  // damage over time
 		// (the class swords) a crescent flying out from a swing, cutting through every one of the dead it passes (share: of one
 		// of the night's dead's health); its angle, where it flies; and the Summoner's circling blades of light
-		struct SlashSpec { std::string model; RE::NiPoint3 from, dir; float roll = 0, speed = 1700, range = 1500, radius = 110, share = 0.3f, scale = 1.0f, damage = 0; bool sideways = false; std::function<void(RE::Actor*, bool)> onHit; };
+		struct SlashSpec { std::string model; RE::NiPoint3 from, dir; float roll = 0, speed = 1700, range = 1500, radius = 110, share = 0.3f, scale = 1.0f, damage = 0; bool sideways = false; float flingKill = 0; std::function<void(RE::Actor*, bool)> onHit; };  // (flingKill: a blow that kills throws the body that hard)
 		void                  Slash(const SlashSpec& a_s);
 		RE::NiPoint3          SwingDir();
 		RE::NiPoint3          SwingFrom();  // where a swing's slash starts: ahead of your eyes (first person), your chest (third)

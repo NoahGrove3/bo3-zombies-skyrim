@@ -994,12 +994,7 @@ namespace bo3z
 							float share = gen::kShareSpell;
 							if (auto* w = src->As<RE::TESObjectWEAP>()) {
 								// (Noah: the one upgrade curve) a crossbow by its reforges, an altar spell-weapon by its steel
-								const int gear = Classes::AltarGearUpgrades(w);
-								share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow * UpgradeMult(Classes::CrossbowLevel(w) + Kit::CrossbowAscends(Classes::CrossbowElement(w))) : gen::kShareMelee * (gear >= 0 ? UpgradeMult(gear) : 1.0f);
-								// (the class audit: the Spellsword's blade, single-target, trailed every other class) its blade a half
-								// again; a two-handed wonder's slower swing made up for
-								if (Classes::Get() == 3 && w == Classes::SpellswordBlade()) share *= 1.5f * (Kit::ArmourTier(3) >= 3 ? 1.15f : 1.0f);  // (its set's Tier III: 15% more)
-								else if (Classes::Get() == 3 && gear >= 0 && w->IsTwoHandedSword()) share *= 1.6f;
+								share = (w->IsBow() || w->IsCrossbow()) ? gen::kShareBow * UpgradeMult(Classes::CrossbowLevel(w) + Kit::CrossbowAscends(Classes::CrossbowElement(w))) : Classes::BladeShare(w);
 							} else if (src->Is(RE::FormType::Spell)) {
 								share *= 1.0f + 0.5f * Save::PerkStacks(gen::kPerk_twinstrike);
 								if (const int rt = Kit::TierOfSpell(src); rt >= 0) {

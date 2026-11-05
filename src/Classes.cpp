@@ -1526,6 +1526,18 @@ namespace bo3z::Classes
 		for (const auto& u : kTwoHanders) altar |= b->GetLocalFormID() == u.id && b->GetFile(0)->GetFilename() == u.plugin;
 		return altar ? std::clamp(GearTier(b), 0, 3) : -1;
 	}
+	// one light blow of a blade: its share of one of the night's dead (before the night's power) - the one upgrade curve on its
+	// tiers. (Noah: "the sword slashes ... should do the same damage as the swords light attack that grows through the tiers")
+	float BladeShare(const RE::TESObjectWEAP* a_w)
+	{
+		const int gear = AltarGearUpgrades(a_w);
+		float share = gen::kShareMelee * (gear >= 0 ? UpgradeMult(gear) : 1.0f);
+		// (the class audit: the Spellsword's blade, single-target, trailed every other class) its blade a half again; a
+		// two-handed wonder's slower swing made up for
+		if (Get() == 3 && a_w && a_w == SpellswordBlade()) share *= 1.5f * (Kit::ArmourTier(3) >= 3 ? 1.15f : 1.0f);  // (its set's Tier III: 15% more)
+		else if (Get() == 3 && gear >= 0 && a_w && a_w->IsTwoHandedSword()) share *= 1.6f;
+		return share;
+	}
 	bool RollGear(int a_cls, Prize* a_out)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -3484,7 +3496,8 @@ namespace bo3z::Classes
 			sl.roll = Gun::SwingRoll(dir);
 			sl.range = 1400.0f + 200.0f * t;
 			sl.scale = 0.9f + 0.15f * t;
-			sl.share = 0.2f * pw;
+			sl.share = BladeShare(w->As<RE::TESObjectWEAP>()) * (0.7f + 0.3f * Arcana::Power());   // (the blade's own light blow, at its tier)
+			sl.flingKill = 16.0f;   // (Noah: "send enemies flying if the slash kills them")
 			sl.onHit = [cls, t, spell](RE::Actor* a, bool killed) {
 				if (killed || !a) return;
 				if (cls == 2) Shadowburn(a, t);                                   // shadowflame
@@ -3615,8 +3628,9 @@ namespace bo3z::Classes
 		sl.dir = dir;
 		sl.roll = Gun::SwingRoll(dir);
 		sl.speed = 1800.0f, sl.range = 2000.0f, sl.radius = 150.0f, sl.scale = 1.3f;
-		const float share = 0.3f * SlayerTop();
+		const float share = BladeShare(Slayer()) * (0.7f + 0.3f * Arcana::Power());   // (its own light blow)
 		sl.share = share;
+		sl.flingKill = 16.0f;
 		sl.onHit = [share](RE::Actor* a, bool killed) { if (a && !killed) GoldBurn(a, share); };
 		Gun::Slash(sl);
 	}

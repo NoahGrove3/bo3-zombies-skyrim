@@ -2855,7 +2855,12 @@ namespace bo3z
 				});
 				for (auto* a : Foes(l.at, l.s.radius)) {
 					if (!l.hit.insert(a->GetFormID()).second) continue;
-					const bool killed = Damage(a, l.s.damage > 0 ? l.s.damage : whole * l.s.share, false, false, true);
+					const float dmg = l.s.damage > 0 ? l.s.damage : whole * l.s.share;
+					// (Noah: "send enemies flying if the slash kills them") a blow that will kill: thrown along the slash's flight
+					// first, so the body goes flying as it dies
+					if (l.s.flingKill > 0 && Director::IsRoundUndead(a) && dmg / gen::kRounds.hpScale >= a->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth))
+						Spellcraft::Fling(a, a->GetPosition() - l.s.dir * 120.0f - RE::NiPoint3{ 0, 0, 70.0f }, l.s.flingKill);
+					const bool killed = Damage(a, dmg, false, false, true);
 					if (l.s.onHit) l.s.onHit(a, killed);
 				}
 			}
