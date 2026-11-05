@@ -3179,8 +3179,8 @@ namespace bo3z::Classes
 			if (t >= 3) {  // Legendary: a small cyclone of its element rises where it burst and rolls toward the nearest of the dead
 				static constexpr const char* kCyc[6] = { "fire", "frost", "shock", "poison", "white", "blood" };
 				static constexpr int kFec[6] = { 0, 1, 2, -1, -1, -1 };
-				const auto near = NearFoes(a_at, 1200.0f, 1);
-				RE::NiPoint3 fwd = near.empty() ? RE::NiPoint3{ 0, 1, 0 } : near[0]->GetPosition() - a_at;
+				const auto closest = NearFoes(a_at, 1200.0f, 1);
+				RE::NiPoint3 fwd = closest.empty() ? RE::NiPoint3{ 0, 1, 0 } : closest[0]->GetPosition() - a_at;
 				fwd.z = 0;
 				if (fwd.Length() < 1.0f) fwd = { 0, 1, 0 };
 				fwd.Unitize();
