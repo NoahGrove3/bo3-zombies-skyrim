@@ -979,60 +979,6 @@ namespace bo3z
 			m->SetPosition(a_at);
 			return m->PlaceObjectAtMe(a_obj, false);
 		}
-		// (Noah, clips 300-303: the slashes, the Shadowflame cyclone, the heavy attacks' rings and pillars never showed - hung loose
-		// in the scene the renderer drops them, as the flasks once were) one of our models standing in the world as a real placed
-		// object (a nameless activator wearing it, made once per model), posed every frame where it should be
-		RE::TESObjectACTI* ModelActivator(const std::string& a_model)
-		{
-			static std::unordered_map<std::string, RE::TESObjectACTI*> forms;
-			auto& f = forms[a_model];
-			if (!f) {
-				if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::TESObjectACTI>(); factory && (f = factory->Create())) f->SetModel(a_model.c_str());
-			}
-			return f;
-		}
-		struct WorldFx
-		{
-			RE::ObjectRefHandle ref;
-			std::string         model;
-			bool                ok = false;
-			WorldFx() = default;
-			explicit WorldFx(std::string a_model) : model(std::move(a_model))
-			{
-				ok = static_cast<bool>(Spellcraft::LoadPath(model)) && ModelActivator(model);   // (in memory before it's placed: drawn the first frame)
-			}
-			RE::NiAVObject* Obj() const
-			{
-				auto r = ref.get();
-				return r ? r->Get3D() : nullptr;
-			}
-			void Place(const RE::NiPoint3& a_at, const RE::NiMatrix3& a_rot, float a_scale)
-			{
-				if (!ok) return;
-				if (!ref) {
-					if (auto r = PlaceAtPoint(ModelActivator(model), a_at)) ref = r->GetHandle();
-					else return;
-				}
-				auto r = ref.get();
-				if (!r) return;
-				r->SetPosition(a_at);
-				if (auto* o = r->Get3D()) {
-					o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
-					if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
-					o->local.translate = a_at;
-					o->local.rotate = a_rot;
-					o->local.scale = std::max(0.0001f, a_scale);
-					RE::NiUpdateData ud;
-					ud.time = 0.0f;
-					o->Update(ud);
-				}
-			}
-			void Detach()
-			{
-				if (auto r = ref.get()) r->Disable(), r->SetDelete(true);
-				ref = {};
-			}
-		};
 		int BlastIndex(std::string_view a_name)
 		{
 			for (std::size_t i = 0; i < gen::kBlasts.size(); ++i) {
@@ -2304,6 +2250,60 @@ namespace bo3z
 		}
 
 #include "Spellcraft.inl"
+		// (Noah, clips 300-303: the slashes, the Shadowflame cyclone, the heavy attacks' rings and pillars never showed - hung loose
+		// in the scene the renderer drops them, as the flasks once were) one of our models standing in the world as a real placed
+		// object (a nameless activator wearing it, made once per model), posed every frame where it should be
+		RE::TESObjectACTI* ModelActivator(const std::string& a_model)
+		{
+			static std::unordered_map<std::string, RE::TESObjectACTI*> forms;
+			auto& f = forms[a_model];
+			if (!f) {
+				if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::TESObjectACTI>(); factory && (f = factory->Create())) f->SetModel(a_model.c_str());
+			}
+			return f;
+		}
+		struct WorldFx
+		{
+			RE::ObjectRefHandle ref;
+			std::string         model;
+			bool                ok = false;
+			WorldFx() = default;
+			explicit WorldFx(std::string a_model) : model(std::move(a_model))
+			{
+				ok = static_cast<bool>(Spellcraft::LoadPath(model)) && ModelActivator(model);   // (in memory before it's placed: drawn the first frame)
+			}
+			RE::NiAVObject* Obj() const
+			{
+				auto r = ref.get();
+				return r ? r->Get3D() : nullptr;
+			}
+			void Place(const RE::NiPoint3& a_at, const RE::NiMatrix3& a_rot, float a_scale)
+			{
+				if (!ok) return;
+				if (!ref) {
+					if (auto r = PlaceAtPoint(ModelActivator(model), a_at)) ref = r->GetHandle();
+					else return;
+				}
+				auto r = ref.get();
+				if (!r) return;
+				r->SetPosition(a_at);
+				if (auto* o = r->Get3D()) {
+					o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
+					if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
+					o->local.translate = a_at;
+					o->local.rotate = a_rot;
+					o->local.scale = std::max(0.0001f, a_scale);
+					RE::NiUpdateData ud;
+					ud.time = 0.0f;
+					o->Update(ud);
+				}
+			}
+			void Detach()
+			{
+				if (auto r = ref.get()) r->Disable(), r->SetDelete(true);
+				ref = {};
+			}
+		};
 		namespace Props
 		{
 			void Tornado(int a_kind, const RE::NiPoint3& a_at, RE::NiPoint3 a_dir, float a_seconds, float a_damage, bool a_chase, int a_row);
