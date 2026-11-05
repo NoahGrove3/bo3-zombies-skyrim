@@ -403,6 +403,7 @@ namespace bo3z
 		float    g_hallT = 0, g_hallSlow = 0;
 		bool     g_hallSwept = false;  // (what a save kept standing in the hall: taken away once, made again fresh)
 		std::array<int, 5> g_hallKind{};
+		std::array<bool, 5> g_hallFixed{};   // (held still, and its ghostly look laid on, once its 3D is in)
 		std::array<float, 5> g_glowT{};
 		float g_pillarT = 0;  // (the fire's and the glows' next lighting)  // what each spot holds: 0 nothing yet, 1 the thing itself, 2 its grey likeness
 		int      g_aim = -1;        // 0-3 a wonder, 4 the Bane, 5 the pillar; -1 nothing
@@ -567,6 +568,7 @@ namespace bo3z
 					if (want != g_hallKind[i] || !r || r->IsDeleted() || r->GetParentCell() != a_p->GetParentCell()) {
 						Drop(g_hall.item[i]), Drop(g_hall.glow[i]);
 						if (auto* b = Forms::Ours(want == 1 ? gen::kHallFloat[i] : gen::kHallGhost[i])) g_hall.item[i] = Gun::PlaceAt(b, FloatSpots()[i].at, 0);
+						g_hallFixed[i] = false;
 						g_glowT[i] = 0;  // (its glow lit again at once)
 						g_hallKind[i] = want;
 						logger::info("echo: the hall's spot {} holds {} ({})", i, want == 1 ? "the thing itself" : "its grey likeness", g_hall.item[i] ? "placed" : "NOT PLACED");
@@ -594,6 +596,17 @@ namespace bo3z
 					if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
 				};
 				for (int i = 0; i < 5; ++i) whole(g_hall.item[i]);
+				// (the Bane's and the Slayer's models are Light Greatswords' own, havok body and all) each held where it floats, never
+				// dropped by the physics; and until it's yours, a pale ghostly membrane over it - its grey likeness
+				for (int i = 0; i < 5; ++i) {
+					auto r = g_hall.item[i].get();
+					if (g_hallFixed[i] || !r || !r->Get3D()) continue;
+					r->SetMotionType(RE::hkpMotion::MotionType::kKeyframed);
+					if (g_hallKind[i] == 2 && i >= 3) {
+						if (auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kHallGhostShader, gen::kPlugin)) r->ApplyEffectShader(fx, 100000.0f);
+					}
+					g_hallFixed[i] = true;
+				}
 			}
 			// (Noah: "slowly rotating, facing upright, and bobbing up and down slowly") each stood upright - its long axis (+Y) up -
 			// turning slowly about it and bobbing; its drawn model moved by hand every frame (as the thrown flasks are: a placed

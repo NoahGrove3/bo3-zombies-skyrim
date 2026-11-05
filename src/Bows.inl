@@ -124,27 +124,7 @@ namespace BowsImpl
 				if (am && p->GetItemCount(am) > before) ++n;
 			}
 		}
-		auto* dh = RE::TESDataHandler::GetSingleton();
-		static constexpr std::uint32_t kBolts[] = { 0x020B04, 0x025A50, 0x025A58, 0x025A60, 0x025A68, 0x025A70 };  // Faction Crossbows' plain bolts
-		bool crossbow = false, elemental = false;
-		for (auto& [obj, data] : p->GetInventory()) {
-			if (auto* w = obj ? obj->As<RE::TESObjectWEAP>() : nullptr; w && (w->IsCrossbow() || (w->GetFile(0) && std::string_view(w->GetFile(0)->GetFilename()) == "OffhandBows.esp")) && data.first > 0) {
-				crossbow = true;
-				elemental |= Classes::CrossbowElement(w) >= 0;
-			}
-		}
-		if (crossbow && dh) {
-			for (auto id : kBolts) {
-				if (auto* b = dh->LookupForm<RE::TESAmmo>(id, "Faction Crossbows.esp"); b && p->GetItemCount(b) > 0 && p->GetItemCount(b) < 30) {
-					p->AddObjectToContainer(b, nullptr, 30 - p->GetItemCount(b), nullptr);
-					++n;
-				}
-			}
-			if (auto* dg = dh->LookupForm<RE::TESAmmo>(0x020B04, "Faction Crossbows.esp"); dg && !elemental && p->GetItemCount(dg) <= 0) {
-				p->AddObjectToContainer(dg, nullptr, 30, nullptr);
-				++n;
-			}
-		}
+		// (Noah: "remove the crossbows with the bows") no crossbow bolts to top up
 		n += Classes::RestockWonder();  // (the Subsuming Vortex: its arrows)
 		return n;
 	}
@@ -1777,14 +1757,7 @@ namespace BowsImpl
 					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(p, va, nullptr, 1, nullptr, false, false, false, true);
 				}
 			} else {
-				for (int e = 0; e < 3; ++e) {
-					auto* xb = Classes::CrossbowForm(e);
-					if (!xb || (p->GetEquippedObject(false) != xb && p->GetEquippedObject(true) != xb)) continue;
-					Classes::RestockWonder();  // (its bolts back to a full quiver)
-					if (auto* b = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESAmmo>(0x020B05 + e, "Faction Crossbows.esp"); b && p->GetCurrentAmmo() != b && p->GetItemCount(b) > 0) {
-						if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipObject(p, b, nullptr, 1, nullptr, false, false, false, true);
-					}
-				}
+				// (the crossbows are retired with the bows: nothing to nock)
 			}
 		}
 		using S = RE::ATTACK_STATE_ENUM;

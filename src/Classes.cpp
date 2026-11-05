@@ -58,13 +58,10 @@ namespace bo3z::Classes
 				a_out->reel.emplace_back(x && x->GetName() ? x->GetName() : "");
 			}
 		}
-		// a bow, a crossbow, or one of OffhandBows' one-hand crossbows (staves to Skyrim)
+		// a bow or a crossbow (Noah: "remove the crossbows with the bows" - OffhandBows is no longer part of the game)
 		bool IsRangerWeapon(const RE::TESObjectWEAP* a_w)
 		{
-			if (!a_w) return false;
-			if (a_w->IsBow() || a_w->IsCrossbow()) return true;
-			auto* f = a_w->GetFile(0);
-			return f && std::string_view(f->GetFilename()) == "OffhandBows.esp";
+			return a_w && (a_w->IsBow() || a_w->IsCrossbow());
 		}
 		int Rung1(int a_cls, std::string_view a_ladderLabel)
 		{
@@ -614,9 +611,9 @@ namespace bo3z::Classes
 		{
 			return a_e >= 0 && a_e < 3 ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kElemCrossbows[a_e], gen::kPlugin) : nullptr;
 		}
-		RE::TESAmmo* ElemBolts(int a_e)
+		RE::TESAmmo* ElemBolts(int)
 		{
-			return a_e >= 0 && a_e < 3 ? RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESAmmo>(0x020B05 + a_e, "Faction Crossbows.esp") : nullptr;
+			return nullptr;   // (Noah: "remove the crossbows with the bows" - Faction Crossbows' bolts are no longer part of the game)
 		}
 		int  BoltCap(int a_level) { return 40 + 20 * std::max(0, a_level); }
 		int  CrossbowLevelImpl(const RE::TESForm* a_w);
@@ -1093,7 +1090,6 @@ namespace bo3z::Classes
 					if (auto* perk = RE::TESDataHandler::GetSingleton()->LookupForm<RE::BGSPerk>(gen::kSummonCapPerks[k - 2], gen::kPlugin); perk && p->HasPerk(perk)) { cap = k; break; }
 				}
 				out.push_back(fmt::format("<b>Summon slots: {} of 4.</b> You start with 2; the Conjurer's Command Mead adds one, and your robes' Tier II one more.", cap));
-				out.push_back(fmt::format("Indrik mounts: {} of 10 - one for each altar you free.", std::min(freed, 10)));
 				out.push_back(freed >= 6 ? std::string("<b>Hero's Pact</b> is open: bind a hero or an army at any altar's second row.") : fmt::format("Hero's Pact: opens at 6 freed altars ({} to go).", 6 - freed));
 			}
 			break;
@@ -1406,7 +1402,7 @@ namespace bo3z::Classes
 			if (std::abs(av->GetBaseActorValue(RE::ActorValue::kWeaponSpeedMult) - want) > 0.01f) av->SetBaseActorValue(RE::ActorValue::kWeaponSpeedMult, want);
 			if (std::abs(av->GetBaseActorValue(RE::ActorValue::kLeftWeaponSpeedMultiply) - want) > 0.01f) av->SetBaseActorValue(RE::ActorValue::kLeftWeaponSpeedMultiply, want);
 		}  // (Noah: still there before the class was chosen - from the first moment now)
-		if (auto* ui = RE::UI::GetSingleton(); ui && !ui->IsMenuOpen(RE::InventoryMenu::MENU_NAME) && !ui->IsMenuOpen(RE::ContainerMenu::MENU_NAME)) DressUnder();  // (Noah: a bra and underwear, never bare)
+		DressUnder();  // (Noah: a bra and underwear, never bare - in the inventory too; the equip event dresses you the moment the robe comes off)
 		{
 			auto line = WonderLineNow();
 			auto prog = ProgressNow();
@@ -1417,17 +1413,13 @@ namespace bo3z::Classes
 		}
 		// (Fletcher's Sap Draught: the quiver's regrowth comes sooner and faster - Bows.inl TickRegen)
 		// (Noah's plan, the Spellsword) Imbue unlocks The Wizard Warrior's Enchantment Powers 1 to 4, one per rung climbed
-		// (the audit: the Spellsword's Enchantment Powers and the Summoner's Indrik mounts followed you into every class)
+		// (the audit: the Spellsword's Enchantment Powers followed you into every class)
 		// another class's are taken off; coming back gives them again, without the banner a second time
 		static std::unordered_set<RE::FormID> announced;
 		static constexpr std::uint32_t kPowers[4] = { 0x0008A0, 0x000893, 0x0008A1, 0x002F6A };
-		static constexpr std::uint32_t kIndrik[] = { 0x801, 0x847, 0x848, 0x849, 0x84A, 0x84B, 0x84C, 0x84D, 0x84E, 0x84F };
 		if (g_class.load() >= 0) {
 			if (g_class.load() != coffer::kSpellsword) {
 				for (auto id : kPowers) if (auto* sp = dh->LookupForm<RE::SpellItem>(id, "The Wizard Warrior.esp"); sp && p->HasSpell(sp)) p->RemoveSpell(sp);
-			}
-			if (g_class.load() != coffer::kSummoner) {
-				for (auto id : kIndrik) if (auto* sp = dh->LookupForm<RE::SpellItem>(id, "mihailindrikmounts.esp"); sp && p->HasSpell(sp)) p->RemoveSpell(sp);
 			}
 		}
 		if (g_class.load() == coffer::kSpellsword) {
@@ -1447,17 +1439,7 @@ namespace bo3z::Classes
 				}
 			}
 		}
-		// (Noah's plan, the Summoner's mounts) an Indrik mount for each freed city
-		if (g_class.load() == coffer::kSummoner) {
-			const int freed = FreedCount();
-			for (int n = 0; n < std::min<int>(freed, static_cast<int>(std::size(kIndrik))); ++n) {
-				auto* sp = dh->LookupForm<RE::SpellItem>(kIndrik[n], "mihailindrikmounts.esp");
-				if (sp && !p->HasSpell(sp)) {
-					p->AddSpell(sp);
-					if (announced.insert(sp->GetFormID()).second) Hud::Banner(std::string("A city's gift: ") + sp->GetName(), 4.0f);
-				}
-			}
-		}
+		// (Noah: "remove the indrik mounts mod, since we have our dragon glider for movement") no mounts for the Summoner
 		// (Noah: "summoner should start with 2 summon slots and go up for every 2 echo altars freed - max 7")
 		int cap = 1;
 		if (g_class.load() == coffer::kSummoner) {
@@ -3548,11 +3530,11 @@ namespace bo3z::Classes
 			// (Noah, Destruction's Tier III: "a charged swing conjures a giant spectral greatsword that sweeps everything before
 			// you") the Carian Greatblade: its blue crystal greatsword, giant, swept flat through all in front, then shattering
 			Gun::SlashSpec gb;
-			gb.model = "CurseOfAlduin\\swords\\carian.nif";   // (its own blade, giant)
+			gb.model = "Light Greatswords\\stahlrim\\LightGreatsword.nif";   // (its own blade - Light Greatswords' Stahlrim - giant)
 			gb.from = me + RE::NiPoint3{ 0, 0, 110.0f } + dir * 60.0f;
 			gb.dir = dir;
 			gb.sideways = true;
-			gb.speed = 1300.0f, gb.range = 1000.0f, gb.radius = 300.0f, gb.scale = 3.6f, gb.share = 0.9f * pw;
+			gb.speed = 1300.0f, gb.range = 1000.0f, gb.radius = 300.0f, gb.scale = 3.1f, gb.share = 0.9f * pw;
 			gb.onHit = [](RE::Actor* a, bool) { if (a) Gun::ElemBurst(1, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.5f, 0.0f, 0.5f); };
 			Gun::Slash(gb);
 			const RE::NiPoint3 end = gb.from + dir * 1000.0f;
@@ -3644,6 +3626,17 @@ namespace bo3z::Classes
 		const bool drawn = p && p->AsActorState()->IsWeaponDrawn();
 		TickGoldRain(p, a_delta);
 		TickWalls(a_delta);
+		// (Noah: "85% is good"; "make them required") the class swords are Light Greatswords' own models, drawn at 85% in the hand
+		// and at the side - a long sword in one hand - in both bodies, every frame (the game sets a model's size again as it
+		// moves between hand and sheath)
+		if (p) {
+			for (const bool fp : { false, true }) {
+				auto& bip = p->GetBiped(fp);
+				if (!bip) continue;
+				auto& o = bip->objects[RE::BIPED_OBJECT::kOneHandSword];
+				if (o.item && SwordClass(o.item) >= 0 && o.partClone && std::abs(o.partClone->local.scale - 0.85f) > 0.001f) o.partClone->local.scale = 0.85f;
+			}
+		}
 		// (Noah: "Both layered") the look's Vibrant Weapons art along the blade in your hand - an ability of ours, laid on while
 		// a class sword at Tier I or more (or the Dragon Slayer) is in your right hand, taken off as soon as it isn't
 		if (static float art = 0; p && (art -= a_delta) <= 0) {
@@ -3665,7 +3658,7 @@ namespace bo3z::Classes
 		// (Noah, the Summoner's Tier III: "halo blades") three blades of white light circle you and strike the dead that come near
 		if (cls == 0 && t >= 3 && drawn) {
 			const float pw = UpgradeMult(t) * (0.7f + 0.3f * Arcana::Power());
-			Gun::Halo(3, "CurseOfAlduin\\swords\\radiant.nif", 0.6f, 1.8f, [pw](RE::Actor* a) {
+			Gun::Halo(3, "Light Greatswords\\silver\\LightGreatsword.nif", 0.5f, 1.8f, [pw](RE::Actor* a) {
 				Gun::FxBlast("light", a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f });
 				Gun::ElemBurst(4, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.5f, 0.0f, 0.5f);
 				Gun::AreaHurt(a->GetPosition(), 90.0f, 0.25f * pw, "");
@@ -3836,7 +3829,7 @@ namespace bo3z::Classes
 		// (Noah: "have all the classes have the same armor (dark mage set the one given in the destruction and alchemist class) set
 		// with different accent colors matching their color class") every class in the Black Mage robes, its stitching, lacing
 		// and trims in its own colour: the Summoner's violet, Destruction's ember orange, the Alchemist's green, the Spellsword's blue
-		// (tools/classarmor.py; the records are ours, tools/gen_esp.py)
+		// (built on the player's PC from Black Mage Armor SE, src/ArmorForge.cpp; the records are ours, tools/gen_esp.py)
 		std::vector<Piece> SetPieces(int a_cls, int, bool)
 		{
 			if (a_cls < 0 || a_cls > 3) return {};

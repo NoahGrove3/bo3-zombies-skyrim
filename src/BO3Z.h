@@ -821,6 +821,11 @@ namespace bo3z
 		void                  DevCast(const std::string& a_mode);  // dev: 'cast tap|full|ult|orb|hand' with a spell in hand
 	}
 
+	namespace ArmorForge
+	{
+		void Build();  // the class robes built from Black Mage Armor SE's files on this PC (once per recipe)
+	}
+
 	namespace Shops
 	{
 		inline constexpr int kReelPass = 40;          // spells the roll's reel runs past before it stops on the one won

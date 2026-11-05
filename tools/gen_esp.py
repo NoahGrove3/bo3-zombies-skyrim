@@ -480,15 +480,18 @@ TIER_TEXT = {   # (the look's enchantment on the item card: what this tier adds)
     'slayer': ("Golden fire: twice the damage to dragons; heavy attacks rain golden meteors within 30 m.",) * 3,
 }
 TIER_NAME = {'radiant': 'Radiant Light', 'carian': 'Carian Sorcery', 'alch': 'Shadowflame', 'ss': 'Spellbound', 'slayer': 'Golden Dragonfire'}
-SW = 'CurseOfAlduin\\swords\\'   # (Noah: "use the swords from Light Greatswords" - tools/lgswords.py builds them from the download)
-crystal_weapon('riftblade', 'UN_Riftblade', 'Radiant Blade', SW + 'radiant.nif', '1st_riftblade',
+# (Noah: "use the swords from Light Greatswords"; "make them required") the swords are Light Greatswords' own models, read from
+# that mod (a requirement): the class swords drawn at 85% by src/Classes.cpp (one-handed), the Bane and the Slayer as they are
+LGS = {'radiant': 'silver', 'carian': 'stahlrim', 'shadowflame': 'daedric', 'spellbound': 'nordic', 'bane': 'dragonbone', 'slayer': 'akaviri'}
+def lgs(k): return f'Light Greatswords\\{LGS[k]}\\LightGreatsword.nif'
+crystal_weapon('riftblade', 'UN_Riftblade', 'Radiant Blade', lgs('radiant'), '1st_riftblade',
     SWORD_DESC['radiant'],
     (900, 10.0, 10))
-crystal_weapon('carianblade', 'UN_CarianBlade', 'Carian Blade', SW + 'carian.nif', '1st_kvblue',
+crystal_weapon('carianblade', 'UN_CarianBlade', 'Carian Blade', lgs('carian'), '1st_kvblue',
     SWORD_DESC['carian'],
     (900, 10.0, 10))
 
-crystal_weapon('alchknife', 'UN_AlchemistKnife', 'Shadowflame Sword', SW + 'shadowflame.nif', '1st_mace',
+crystal_weapon('alchknife', 'UN_AlchemistKnife', 'Shadowflame Sword', lgs('shadowflame'), '1st_mace',
     SWORD_DESC['alch'],
     (900, 10.0, 10))
 
@@ -536,20 +539,15 @@ MAD_GLOW = [  # its tiers: the blade's own fire, brighter each tier (src/Kit.cpp
     dict(persist=1.1, pulse=0.35, particles=True, birth=100.0, alpha=(0.10, 0.55, 0.10), scale2=9.5, fill=(190, 25, 14), keys=((255, 140, 70), (215, 35, 18), (100, 0, 0)), edge=(220, 30, 12)),
     dict(persist=1.3, pulse=0.3, particles=True, birth=140.0, alpha=(0.12, 0.65, 0.12), scale2=11.0, life=0.8, fill=(215, 35, 18), keys=((255, 170, 90), (230, 45, 20), (120, 0, 0)), edge=(240, 40, 15)),
 ]
-subs = []
-for name, hx in T['stat_madness1st']['subs']:
-    b = bytes.fromhex(hx)
-    if name == 'EDID': b = z('UN_MadnessSword1st')
-    subs.append(sub(name, b))
-recs['STAT'].append(record('STAT', fid('STAT', 'madness_1st'), subs))
-crystal_weapon('madness', 'UN_MadnessSword', 'Spellbound Blade', SW + 'spellbound.nif', '1st_kvred',
+# (the audit: the Madness Sword's first-person static pointed at Saints & Seducers' model - Creation Club content, never required: gone)
+crystal_weapon('madness', 'UN_MadnessSword', 'Spellbound Blade', lgs('spellbound'), '1st_kvred',
     SWORD_DESC['ss_none'],
     (900, 10.0, 10))
 
 # (Noah: "make the Dragon Slayer sword one-handed ... use the sword I attached") the Spellsword's wonder: a one-handed sword (the
 # Madness Sword's record) with the Ayleid Crystal Saber's model (tools/wonderprops.py slayer); its spell-on-hit, lightning
 # slashes and tier in src/Classes.cpp and src/WonderProps.inl
-crystal_weapon('slayer', 'UN_DragonSlayer', 'Dragon Slayer', SW + 'slayer.nif', '1st_slayer',
+crystal_weapon('slayer', 'UN_DragonSlayer', 'Dragon Slayer', lgs('slayer'), '1st_slayer',
     SWORD_DESC['slayer'],
     (6000, 16.0, 26), 'weap_draugr_gs', 0.75 * 1.5)   # (Noah: "make 2hand attacks faster by 50% only while holding those 2 weapons")
 
@@ -658,15 +656,19 @@ for bkey, (fill, edge, keys) in BV_COL.items():
         recs['ENCH'].append(record('ENCH', fid('ENCH', f'bv_{bkey}_{n}'), [sub('EDID', z(f'UN_BladeLookEnch_{bkey}{n}')), sub('OBND', bytes(12)), sub('FULL', z(TIER_NAME[tk] + ' ' + 'I' * n)),
             sub('ENIT', bytes(en)), sub('EFID', struct.pack('<I', fid('MGEF', f'bv_{bkey}_{n}'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
+# (Noah: "make them required") Vibrant Weapons' own art (its files, read from the mod): the one-handed swords its sword art, the
+# Dragon Slayer its greatsword art - each look the element nearest its colour
+VW_ART = {k: 'vibrant weapons\\magic\\' + v + '.nif' for k, v in {'alch': 'ShockSwordR', 'carian': 'ShockSwordR', 'radiant': 'FrostSwordR', 'ss_none': 'FireSwordR',
+          'ss_fire': 'FireSwordR', 'ss_frost': 'FrostSwordR', 'ss_shock': 'ShockSwordR', 'ss_sun': 'FireSwordR', 'ss_blood': 'FireSwordR', 'slayer': 'FireGreatsword'}.items()}
 # (Noah: "for the weapon effects around the swords in hand use the effects mod we downloaded for that" - "Both layered") each
-# look also wears Vibrant Weapons' art along the blade (their greatsword art in the look's colour, tools/lgswords.py) and a
+# look also wears Vibrant Weapons' art along the blade and a
 # small light of its colour: an ability of a light effect carrying the art, laid on you while the sword is in your hand
 # (src/Classes.cpp TickSwords) - Visual Animated Enchants' shader and art ride on the enchantment above
 for bkey, (fill, edge, keys) in BV_COL.items():
     data = bytearray(tsub('ligh', 'DATA'))
     struct.pack_into('<I', data, 4, 180); struct.pack_into('<BBBB', data, 8, *edge, 0)
     recs['LIGH'].append(record('LIGH', fid('LIGH', f'vw_{bkey}'), [sub('EDID', z(f'UN_SwordLight_{bkey}')), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 0.6))]))
-    arto(f'vw_{bkey}', f'CurseOfAlduin\\vw\\{bkey}.nif', 1)   # (a hit-effect art, as theirs)
+    arto(f'vw_{bkey}', VW_ART[bkey], 1)   # (a hit-effect art, as theirs)
     md = bytearray(bytes.fromhex('001040000000003f58fa030012000000ffffffff00000000091f040000000000000000000000000000000000000000000000003f0000000000000000000000000c000000ffffffff00000000000000000100000000000000ffffffff081f0400061f0400000000008fc2f53d000000000000803f000000000000000000000000000000000000000000000000000000000000000000000000'))
     struct.pack_into('<I', md, 0, struct.unpack_from('<I', md, 0)[0] | 0x8000)   # hidden
     struct.pack_into('<I', md, 8, fid('LIGH', f'vw_{bkey}'))
@@ -680,6 +682,20 @@ for bkey, (fill, edge, keys) in BV_COL.items():
     recs['SPEL'].append(record('SPEL', fid('SPEL', f'vw_{bkey}'), [sub('EDID', z(f'UN_SwordArt_{bkey}')), sub('OBND', bytes(12)), sub('FULL', z('Blade')),
         sub('DESC', z('')), sub('SPIT', struct.pack('<IIIfIIffI', 0, 0, 4, 0.0, 0, 0, 0.0, 0.0, 0)),   # an ability, constant, on yourself
         sub('EFID', struct.pack('<I', fid('MGEF', f'vw_{bkey}'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+
+# (the Reliquary's grey likenesses of the Bane and the Slayer: their models are Light Greatswords' own, so not greyed in the file -
+# a pale ghostly membrane laid over them instead, src/Echo.cpp)
+d = bytearray(tsub('efsh_enchpurple', 'DATA'))
+d[0] |= 0x08                                     # no particles
+struct.pack_into('<f', d, 0x20, 1.6)             # a full, steady fill
+struct.pack_into('<f', d, 0x24, 0.0)
+d[0x10:0x13] = bytes((150, 155, 165))
+d[0x38:0x3B] = bytes((210, 215, 225))
+subs = [sub('EDID', z('UN_HallGhostShader'))]
+for name, hx in T['efsh_enchpurple']['subs']:
+    if name == 'EDID': continue
+    subs.append(sub(name, bytes(d) if name == 'DATA' else bytes.fromhex(hx)))
+recs['EFSH'].append(record('EFSH', fid('EFSH', 'hallghost'), subs))
 
 # (Noah: "shadowflame ... should set enemies on fire with purple flames") Shadowflame on its victim: Skyrim's enchantment fire
 # wrapped round the whole body in violet - a burning membrane and a thick stream of violet flames rising off it - for as
@@ -1286,21 +1302,23 @@ recs['ACTI'].append(record('ACTI', fid('ACTI', 'rel_portal'), [sub('EDID', z('UN
     sub('MODL', z(RQ + 'portal.nif')), sub('FNAM', b'\0\0')]))
 # (Noah: "just use High Hrothgar's building") the wonders and Alduin's Bane float in the great hall to be taken up, each in a soft
 # glow, and a fiery pillar holds the Hall's rewards: nameless activators (no prompt of Skyrim's - src/Echo.cpp aims and takes them)
-for key, model, r in (('hf_gravecaller', RQ.replace('reliquary', 'wonder') + 'barrowhorn.nif', 40), ('hf_frostbinder', 'Weapons\\StaffofMagnus\\StaffofMagnus.nif', 80),
-                      ('hf_wolfcrown', 'CurseOfAlduin\\alchemist\\flask_philosopher_held.nif', 20), ('hf_barrowhorn', 'CurseOfAlduin\\swords\\slayer_static.nif', 60),
-                      ('hf_bane', 'CurseOfAlduin\\swords\\bane_static.nif', 90), ('hf_glow', 'CurseOfAlduin\\fx\\hall_glow.nif', 60),
+# (Noah: "skeleton dragon horn is from sketchfab so replace that with a spell model since its conjuration anyways") the Bone-Throne
+# Horn floats as a spell: its orb of green grave-fire (our own, tools/orbfx.py), not the horn
+for key, model, r in (('hf_gravecaller', 'CurseOfAlduin\\wonder\\bonehorn_show.nif', 40), ('hf_frostbinder', 'Weapons\\StaffofMagnus\\StaffofMagnus.nif', 80),
+                      ('hf_wolfcrown', 'CurseOfAlduin\\alchemist\\flask_philosopher_held.nif', 20), ('hf_barrowhorn', lgs('slayer'), 60),
+                      ('hf_bane', lgs('bane'), 90), ('hf_glow', 'CurseOfAlduin\\fx\\hall_glow.nif', 60),
                       ('hf_glowtall', 'CurseOfAlduin\\fx\\hall_glow_tall.nif', 120), ('hf_pillar', 'CurseOfAlduin\\fx\\pillar_fire.nif', 120)):
     recs['ACTI'].append(record('ACTI', fid('ACTI', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, -r, r, r, r * 2)),
         sub('MODL', z(model)), sub('FNAM', b'\0\0')]))
 for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane'):  # (greyed out, until it's yours: tools/modelconv/ghostnif.cpp; the Staff of Magnus's made on the machine from the game's own)
     recs['ACTI'].append(record('ACTI', fid('ACTI', 'hg_' + k), [sub('EDID', z('UN_hg_' + k)), sub('OBND', struct.pack('<6h', -80, -80, -80, 80, 80, 160)),
-        sub('MODL', z({'bane': 'CurseOfAlduin\\swords\\ghost_bane.nif', 'barrowhorn': 'CurseOfAlduin\\swords\\ghost_slayer.nif'}.get(k, 'CurseOfAlduin\\wonder\\ghost_' + k + '.nif'))), sub('FNAM', b'\0\0')]))   # (the Bane and the Slayer: Light Greatswords' models)
+        sub('MODL', z({'bane': lgs('bane'), 'barrowhorn': lgs('slayer'), 'gravecaller': 'CurseOfAlduin\\wonder\\ghost_bonehorn.nif'}.get(k, 'CurseOfAlduin\\wonder\\ghost_' + k + '.nif'))), sub('FNAM', b'\0\0')]))   # (the Bane and the Slayer: Light Greatswords' models)
 # Stage 5 (src/Echo.cpp Hall): the Hall of the Awakened's stations, and Alduin's Fang
 for key, name, verb in (('hall_fang', "Alduin's Bane", 'Take'), ('hall_robes', "The First Dragonborn's Regalia", 'Take'),
                         ('hall_skull', "The Bone-Wyrm's Skull", 'Bind'), ('hall_endless', 'Brazier of the Endless Night', 'Kindle'),
                         ('hall_throne', 'Seat of the Awakened', 'Begin again')):
     rel_acti(key, name, verb, 'pedestal.nif', 60)
-for key, model, r in (('hall_fang_show', 'CurseOfAlduin\\swords\\bane_static.nif', 70), ('1st_fang', 'CurseOfAlduin\\swords\\bane.nif', 70)):
+for key, model, r in (('hall_fang_show', lgs('bane'), 70), ('1st_fang', lgs('bane'), 70)):
     recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
         sub('MODL', z(model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
 for key, model in (('summon', 'emptysummonfx_instant.nif'), ('crystal', 'diamondwallspawnexp.nif'), ('orb', 'lightningrail_orb.nif'),
@@ -1315,7 +1333,7 @@ for name, hx in T['weap_draugr_gs']['subs']:
     b = bytearray(bytes.fromhex(hx))
     if name == 'EDID': b = z('UN_AlduinsFang')
     elif name == 'FULL': b = z("Alduin's Bane")
-    elif name == 'MODL': b = z('CurseOfAlduin\\swords\\bane.nif')   # (Noah: Light Greatswords' Dragonbone, tools/lgswords.py)
+    elif name == 'MODL': b = z(lgs('bane'))   # (Noah: Light Greatswords' Dragonbone - the mod's own model)
     elif name == 'MODT': continue
     elif name == 'DESC': b = z("A greatsword of dragon bone, cut from the Echo of Alduin. Swings 50% faster. Light swings loose long blades of pale light that cut through the dead and hurl them back. Heavy attacks bring a meteor down 5 m before you. Every 20 kills Alduin's shade answers: meteors rain on the dead round you for 10 seconds. While you hold it, kills heal you and your shouts return twice as fast.")
     elif name == 'DNAM': struct.pack_into('<f', b, 4, 0.75 * 1.5)   # (Noah: "make 2hand attacks faster by 50% only while holding those 2 weapons")
@@ -1442,7 +1460,7 @@ hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah 
 # (Noah: "have all the classes have the same armor (dark mage set the one given in the destruction and alchemist class) set
 # with different accent colors matching their color class") the Black Mage robes copied for each class (no master of theirs:
 # their records' own data, tools/templates/blackmage_set.json), worn with our copies of its models whose colour maps have
-# the class's accents (tools/classarmor.py); the ground models stay theirs
+# the class's accents (built on the player's PC, src/ArmorForge.cpp); the ground models stay theirs
 from esp_ids import CLASS_ARMOUR, CLASS_PIECES
 _BM = json.load(open(ROOT / 'tools' / 'templates' / 'blackmage_set.json'))['pieces']
 # (Noah: "the names for the armor sets should be different to match the class")
