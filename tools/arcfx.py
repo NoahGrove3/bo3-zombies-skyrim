@@ -160,18 +160,19 @@ def build(key, glow, core, prev=None):
     # 40 degrees, its leading curve rising: from behind your eyes a full crescent bowed up over its swing line, from the side
     # a blade leaning into its flight - its curve still leads the way it flies
     P = 0.7
-    for i, (t, sc) in enumerate(((P, 1.1), (P - 0.3, 0.55), (P + 0.3, 0.55))):
-        crescent(L, f'body{i}', 'arc_slash.dds', glow, sc * 1.4, plane='flat', tilt=t, ro=R, half=HALF, depth=22.0, bow=0.0, prev=prev)
-    # the razor: the white-hot line along its front
-    for i, t in enumerate((P, P - 0.45, P + 0.45)):
-        crescent(L, f'edge{i}', 'arc_slash.dds', core, 3.2 if t == P else 1.2, plane='flat', tilt=t, ro=R, half=HALF - 1, depth=5.0, v0=0, v1=0.25, rows=2, bow=0.0, prev=prev)
-    # the wake: fine streaks trailing well behind it, sliding along the curve as it flies, peeling into wisps
-    crescent(L, 'wisp', 'arc_wisp.dds', glow, 0.4, plane='flat', tilt=P - 0.12, ro=R - 4, half=HALF + 4, depth=90.0, uscroll=0.6, bow=0.0, prev=prev)
-    crescent(L, 'wisp2', 'arc_wisp.dds', glow, 0.2, plane='flat', tilt=P + 0.2, ro=R - 6, half=HALF + 2, depth=65.0, uscroll=-0.35, bow=0.0, prev=prev)
+    # (Noah: "update the slashes so theyre thinner and make more sense when coming from the blade") a thin blade of light: two
+    # close planes (not a fan of three), a third of the depth it had, the wake and the bloom drawn in tight round it
+    for i, (t, sc) in enumerate(((P, 1.2), (P + 0.14, 0.6))):
+        crescent(L, f'body{i}', 'arc_slash.dds', glow, sc * 1.4, plane='flat', tilt=t, ro=R, half=HALF, depth=8.0, bow=0.0, prev=prev)
+    # the razor: the hot line along its front
+    for i, t in enumerate((P, P + 0.14)):
+        crescent(L, f'edge{i}', 'arc_slash.dds', core, 3.0 if t == P else 1.2, plane='flat', tilt=t, ro=R, half=HALF - 1, depth=2.5, v0=0, v1=0.25, rows=2, bow=0.0, prev=prev)
+    # the wake: a few fine streaks just behind it, sliding along the curve as it flies
+    crescent(L, 'wisp', 'arc_wisp.dds', glow, 0.3, plane='flat', tilt=P - 0.06, ro=R - 2, half=HALF + 2, depth=26.0, uscroll=0.6, bow=0.0, prev=prev)
     # sparks shed off it, most at its ends
-    crescent(L, 'spark', 'arc_spark.dds', core, 0.9, plane='flat', tilt=P + 0.1, ro=R + 4, half=HALF + 8, depth=75.0, uscroll=0.3, bow=0.0, prev=prev)
-    # the bloom round it
-    crescent(L, 'haze', 'arc_haze.dds', glow, 0.75, plane='flat', tilt=P, ro=R + 8, half=HALF + 2, depth=50.0, rows=4, bow=0.0, prev=prev)
+    crescent(L, 'spark', 'arc_spark.dds', core, 0.7, plane='flat', tilt=P + 0.06, ro=R + 2, half=HALF + 5, depth=22.0, uscroll=0.3, bow=0.0, prev=prev)
+    # the bloom round it, close
+    crescent(L, 'haze', 'arc_haze.dds', glow, 0.6, plane='flat', tilt=P, ro=R + 4, half=HALF + 1, depth=16.0, rows=4, bow=0.0, prev=prev)
     jf = WORK / f'arc_{key}.job'; jf.write_text('\n'.join(L) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
     print(key, r.stdout.strip()[-200:], r.stderr.strip()[-400:])

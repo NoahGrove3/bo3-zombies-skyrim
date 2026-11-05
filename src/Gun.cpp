@@ -2918,10 +2918,32 @@ namespace bo3z
 						broke = true;
 					}
 				}
+				// (Noah: "make it smaller then grow in size before it disappears") it leaves the blade a third of its size and grows
+				// as it flies, quickly at first; it cuts as wide as it's drawn
+				const float f0 = std::min(1.0f, l.gone / std::max(1.0f, l.s.range));
+				const float grow = 0.32f + 0.83f * (1.0f - (1.0f - f0) * (1.0f - f0));
+				const float reach = l.s.radius * (0.45f + 0.55f * grow);
+				// anyone in its way who isn't fighting you (a guard, a passer-by): it breaks on them as on a wall - only your
+				// own side lets it through
+				if (!broke) {
+					for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+						auto ap = h.get();
+						auto* a = ap.get();
+						if (!a || a == p || a->IsDead() || !a->Is3DLoaded() || SlashTarget(a, p)) continue;
+						if (a->IsPlayerTeammate() || Party::IsFriend(a) || (a->IsCommandedActor() && a->GetCommandingActor().get() == p)) continue;
+						const RE::NiPoint3 c = a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f };
+						if (c.GetDistance(to) > reach + step + 200.0f) continue;
+						if (const float d = Spellcraft::PointSeg(c, from, to); d < reach * 0.6f) {
+							to = from + l.s.dir * std::max(0.0f, (c - from).Dot(l.s.dir) - 30.0f);
+							broke = true;
+							break;
+						}
+					}
+				}
 				l.at = to;
 				l.gone += broke ? l.s.range + 1 : step;
 				const float f = std::min(1.0f, l.gone / std::max(1.0f, l.s.range));
-				l.fx.Place(l.at, SlashTurn(l), l.s.scale);
+				l.fx.Place(l.at, SlashTurn(l), l.s.scale * grow);
 				const float fade = f > 0.72f ? std::max(0.0f, 1.0f - (f - 0.72f) / 0.28f) : 1.0f;
 				if (auto* o3 = l.fx.Obj()) RE::BSVisit::TraverseScenegraphGeometries(o3, [&](RE::BSGeometry* g) {
 					if (auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get())) {
@@ -2939,8 +2961,8 @@ namespace bo3z
 					auto* a = ap.get();
 					if (!SlashTarget(a, p)) continue;
 					const RE::NiPoint3 c = a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f };
-					if (c.GetDistance(to) > l.s.radius + step + 200.0f) continue;
-					if (Spellcraft::PointSeg(c, from, to) > l.s.radius) continue;
+					if (c.GetDistance(to) > reach + step + 200.0f) continue;
+					if (Spellcraft::PointSeg(c, from, to) > reach) continue;
 					if (!l.hit.insert(a->GetFormID()).second) continue;
 					const float dmg = l.s.damage > 0 ? l.s.damage : whole * l.s.share;
 					// (Noah: "send enemies flying if the slash kills them") a blow that will kill: thrown along the slash's flight
@@ -2958,7 +2980,7 @@ namespace bo3z
 						{ "shock", 2 }, { "sun", 4 }, { "blood", 5 }, { "gold", 8 }, { "bane", 3 } };
 					int el = 4;
 					for (auto& [k, e] : kElem) if (l.s.model.find(std::string("arc_") + std::string(k) + ".nif") != std::string::npos) el = e;
-					ElemBurst(el, l.at, 0.8f * l.s.scale, 0.0f, 0.45f);
+					ElemBurst(el, l.at, 0.8f * l.s.scale * grow, 0.0f, 0.45f);
 				}
 			}
 			for (auto& [m, v] : g_slashFade) m->baseColorScale = v;
