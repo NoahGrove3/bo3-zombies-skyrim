@@ -3187,7 +3187,7 @@ namespace bo3z::Classes
 				fwd.Unitize();
 				Gun::CycloneSpec cs;
 				cs.model = std::string("CurseOfAlduin\\fx\\cyclone_") + kCyc[std::clamp(f.el, 0, 5)] + ".nif";
-				cs.from = a_at, cs.fwd = fwd, cs.dist = 700.0f, cs.life = 5.0f, cs.size = 0.55f, cs.fec = kFec[std::clamp(f.el, 0, 5)];
+				cs.from = a_at, cs.fwd = fwd, cs.dist = 700.0f, cs.life = 5.0f, cs.size = 0.4f,   /* (seen in game: a flask thrown close, its 0.55 cyclone a white wall a third of the screen) */ cs.fec = kFec[std::clamp(f.el, 0, 5)];
 				cs.share = 0.05f * FlaskShare(t) * 0.8f;
 				const int el = f.el;
 				cs.burst = [el, t, r](const RE::NiPoint3& at) { FlaskShot child{ {}, el, t, at, false, true, 0.0f }; FlaskBurst(child, at); };
@@ -3572,7 +3572,7 @@ namespace bo3z::Classes
 		static constexpr const char* kSound[7] = { "lightmassive", "shockmass", "fireball", "fireball", "icevolley", "runeshock", "bloodplague" };
 		const bool big = a_t >= 3;
 		const RE::NiPoint3 fwd = Flat(a_dir, p);
-		const RE::NiPoint3 from = OnGround(a_me + fwd * 120.0f, a_me.z);
+		const RE::NiPoint3 from = OnGround(a_me + fwd * 380.0f, a_me.z);   // (seen in game: risen 120 units ahead, its funnel swallowed the camera - the whole screen white and orange)
 		if (a_cls == 0) {
 			// (Noah, the Radiant Blade reworked: "Sun pillar strike") Auriel's sunbeam slams down where the blow lands, searing all
 			// round it - Tier II smaller, Tier III great (fxmap.ini sun_strike: Dawnguard's own)
