@@ -3178,7 +3178,7 @@ namespace bo3z::Classes
 				});
 			}
 			if (t >= 3) {  // Legendary: a small cyclone of its element rises where it burst and rolls toward the nearest of the dead
-				static constexpr const char* kCyc[6] = { "fire", "frost", "shock", "poison", "white", "blood" };
+				static constexpr const char* kCyc[6] = { "fire", "frost", "shock", "poison", "gold", "blood" };   // (Holy Water's in gold: its cream one read as white smoke)
 				static constexpr int kFec[6] = { 0, 1, 2, -1, -1, -1 };
 				const auto closest = NearFoes(a_at, 1200.0f, 1);
 				RE::NiPoint3 fwd = closest.empty() ? RE::NiPoint3{ 0, 1, 0 } : closest[0]->GetPosition() - a_at;
@@ -3589,8 +3589,8 @@ namespace bo3z::Classes
 			logger::info("swords: the Radiant Blade's sun pillar ({})", big ? "great" : "small");
 			return;
 		}
-		Gun::Ring(kRing[el], from, 30.0f, big ? 260.0f : 180.0f, 0.5f);
-		Gun::ElemBurst(kBurst[el], from + RE::NiPoint3{ 0, 0, 40.0f }, big ? 1.0f : 0.7f, 0.0f, 0.5f);
+		// (seen in game: a burst and ring set off 120 units before your eyes filled the whole screen orange as the cyclone rose)
+		// the cyclone rises on its own, heard, not flashed
 		Gun::BlastSound(kSound[el], from, 0.8f);
 		const int t = a_t;
 		const float pw = a_pw;
@@ -3677,7 +3677,12 @@ namespace bo3z::Classes
 			sl.dir = dir;
 			sl.roll = Gun::SwingRoll(dir);
 			sl.range = 1400.0f + 200.0f * t;
-			sl.scale = 0.9f + 0.15f * t;
+			// (seen in game: the bolts left the blade at a third of their size at 2,300 a second - never seen) a bolt at its full
+			// size from the blade, at a spell's own pace - the Radiant Blade's spectral wave still a crescent that grows
+			const bool bolt = cls != 0;
+			sl.bolt = bolt;
+			if (bolt) sl.speed = 1150.0f;
+			sl.scale = (bolt ? 1.3f : 0.9f) + 0.15f * t;
 			sl.share = BladeShare(w->As<RE::TESObjectWEAP>()) * (0.7f + 0.3f * Arcana::Power());   // (the blade's own light blow, at its tier)
 			sl.flingKill = 16.0f;   // (Noah: "send enemies flying if the slash kills them")
 			if (cls == 2) sl.fec = 0;   // (the Shadowflame's dead die burning)
@@ -3778,7 +3783,7 @@ namespace bo3z::Classes
 		sl.from = Gun::SwingFrom();
 		sl.dir = dir;
 		sl.roll = 0.0f;
-		sl.speed = 2000.0f, sl.range = 2200.0f, sl.radius = 90.0f, sl.scale = 1.0f, sl.stopOnHit = true;
+		sl.speed = 1150.0f, sl.range = 2200.0f, sl.radius = 90.0f, sl.scale = 1.4f, sl.stopOnHit = true, sl.bolt = true;   // (seen in game: at a third of its size and 2,700 a second it was never seen)
 		const float share = BladeShare(Slayer()) * (0.7f + 0.3f * Arcana::Power());   // (its own light blow)
 		sl.share = share;
 		sl.flingKill = 16.0f;

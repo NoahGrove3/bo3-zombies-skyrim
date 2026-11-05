@@ -3174,7 +3174,7 @@ namespace bo3z
 				// (Noah: "make it smaller then grow in size before it disappears") it leaves the blade a third of its size and grows
 				// as it flies, quickly at first; it cuts as wide as it's drawn
 				const float f0 = std::min(1.0f, l.gone / std::max(1.0f, l.s.range));
-				const float grow = 0.32f + 0.83f * (1.0f - (1.0f - f0) * (1.0f - f0));
+				const float grow = l.s.bolt ? 1.0f : 0.32f + 0.83f * (1.0f - (1.0f - f0) * (1.0f - f0));   // (a bolt: its size from the first frame - a third of a small bolt was never seen)
 				const float reach = l.s.radius * (0.45f + 0.55f * grow);
 				// anyone in its way who isn't fighting you (a guard, a passer-by): it breaks on them as on a wall - only your
 				// own side lets it through
@@ -3582,6 +3582,14 @@ namespace bo3z
 		{
 			if (!a_root) return;
 			static const std::string pal = "textures\\CurseOfAlduin\\fx\\pal_gold.dds";
+			// (Noah: "remove the flames on the sword itself") the fire art a fire spell in the other hand lays on the blade
+			// (Skyrim's flame enchantment: its flames, glow and heat shimmer) is hidden - only the gold circling stays
+			RE::BSVisit::TraverseScenegraphGeometries(a_root, [&](RE::BSGeometry* g) {
+				const std::string_view n(g->name.c_str() ? g->name.c_str() : "");
+				if (n == "pFlames" || n == "pIncandescence" || n == "RefractionShape") g->GetFlags().set(RE::NiAVObject::Flag::kHidden);
+				return RE::BSVisit::BSVisitControl::kContinue;
+			});
+			for (const char* n : { "pFlames", "pIncandescence", "RefractionShape" }) if (auto* o = a_root->GetObjectByName(n)) o->GetFlags().set(RE::NiAVObject::Flag::kHidden);
 			bool any = false;
 			RE::BSVisit::TraverseScenegraphGeometries(a_root, [&](RE::BSGeometry* g) {
 				auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get());
