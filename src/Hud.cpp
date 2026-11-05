@@ -6052,6 +6052,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 
 			DevTools::PollFromRender();
 			DevTools::RunQueuedOnMain();  // Present runs on the main thread, also while menus pause the game
+			Classes::TickItemCard();      // (the swords' cards: their tier's line only, no charge bar)
 			if (auto* lui = RE::UI::GetSingleton(); !lui || !lui->IsMenuOpen(RE::LoadingMenu::MENU_NAME)) Tasks::Drain();  // (the audit: kept while a loading screen tears the world down)
 			Hud::State s;
 			{

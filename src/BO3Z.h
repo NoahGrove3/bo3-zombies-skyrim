@@ -377,6 +377,7 @@ namespace bo3z
 
 	namespace Classes
 	{
+		void TickItemCard();   // (Noah: the swords' item cards "way too long" - each tier's card tells only what it is and what that tier does; the charge bar hidden)
 		int              Get();            // -1 none chosen yet
 		RE::TESObjectARMO* Underwear();    // (Noah: no bare body) Underwear.esp's bra and underwear
 		void             DressUnder(bool a_anySex = false);  // nothing on the body slot: the underwear goes on (women; anyone with a_anySex)

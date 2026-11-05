@@ -3470,6 +3470,55 @@ namespace bo3z::Classes
 	// dragging the dead in and catching all it touches in the class's element, bursting at its end - small at Tier II, large
 	// at Tier III. Its look is the effects map's (fxmap.ini cyclone_<element>: Skyrim's Cyclone shout and the College's fire
 	// pillar, coloured)
+	// (Noah: "the weapon's description, it's way too long ... the base weapon should have its own description. The tier 1 should
+	// have the description for what the tier 1 does ... You can also still see the charge bar on the weapons") the inventory's
+	// item card for our swords: what the sword is, and what its tier does - and no charge bar (their tier looks are an
+	// enchantment of looks alone, with charge that never runs down). The card's own text is laid over with ours each time the
+	// game fills it, and redrawn
+	void TickItemCard()
+	{
+		auto* ui = RE::UI::GetSingleton();
+		if (!ui || !ui->IsMenuOpen(RE::InventoryMenu::MENU_NAME)) return;
+		auto menu = ui->GetMenu<RE::InventoryMenu>();
+		if (!menu || !menu->uiMovie) return;
+		auto* card = menu->GetRuntimeData().itemCard;
+		if (!card || !card->obj.IsObject() || !card->view) return;
+		RE::GFxValue name;
+		if (!card->obj.GetMember("name", &name) || !name.IsString() || !name.GetString()) return;
+		const std::string nm = name.GetString();
+		struct Card { const char* name; const char* base; const char* tier[3]; };
+		static const Card kCards[] = {
+			{ "Radiant Blade", "The Summoner's blade: pale silver, burning with white sunlight.",
+				{ "Tier I: light swings loose bolts of white light that cut through the dead.", "Tier II: heavy attacks loose a cyclone of white light.", "Tier III: heavy attacks loose a great cyclone of white light." } },
+			{ "Carian Blade", "Destruction's blade: stahlrim edged in raw sorcery.",
+				{ "Tier I: light swings loose bolts of fire, frost and lightning in turn.", "Tier II: heavy attacks loose a storm cyclone of fire, ice and lightning.", "Tier III: heavy attacks loose a great storm cyclone." } },
+			{ "Shadowflame Sword", "The Alchemist's blade: daedric steel wreathed in purple shadowflame.",
+				{ "Tier I: light swings loose bolts of shadowflame that set the dead burning.", "Tier II: heavy attacks loose a cyclone of purple fire.", "Tier III: heavy attacks loose a great cyclone of purple fire." } },
+			{ "Spellbound Blade", "The Spellsword's blade: it takes the element of the spell in your other hand.",
+				{ "Tier I: light swings loose bolts of your spell's element.", "Tier II: heavy attacks loose a cyclone of it, casting your spell on all it catches.", "Tier III: heavy attacks loose a great cyclone of it." } },
+		};
+		const Card* c = nullptr;
+		for (const auto& k : kCards) if (nm.rfind(k.name, 0) == 0) { c = &k; break; }
+		if (!c) return;
+		const std::string rest = nm.substr(std::strlen(c->name));
+		const int t = rest == " III" ? 3 : rest == " II" ? 2 : rest == " I" ? 1 : 0;
+		const std::string want = t == 0 ? std::string(c->base) : std::string(c->base) + " " + c->tier[t - 1];
+		// the field the card shows its text from: whichever holds the long one (or the effects line)
+		const char* field = "effects";
+		for (const char* f : { "description", "effects" }) {
+			RE::GFxValue v;
+			if (card->obj.GetMember(f, &v) && v.IsString() && v.GetString() && std::string(v.GetString()).find("Tier") != std::string::npos) { field = f; break; }
+		}
+		RE::GFxValue cur;
+		const bool same = card->obj.GetMember(field, &cur) && cur.IsString() && cur.GetString() && want == cur.GetString();
+		if (same && !card->obj.HasMember("charge")) return;
+		RE::GFxValue text;
+		card->view->CreateString(&text, want.c_str());
+		card->obj.SetMember(field, text);
+		card->obj.DeleteMember("charge");
+		menu->uiMovie->Invoke("_root.Menu_mc.UpdateItemCardInfo", nullptr, &card->obj, 1);
+		if (static int said = 0; said++ < 6) logger::info("cards: {} - its tier {} card ({} laid over, no charge)", nm, t, field);
+	}
 	void ClassCyclone(int a_cls, int a_key, int a_t, float a_pw, RE::SpellItem* a_spell, const RE::NiPoint3& a_me, const RE::NiPoint3& a_dir)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
