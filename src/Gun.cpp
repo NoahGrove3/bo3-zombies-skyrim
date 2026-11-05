@@ -2971,7 +2971,7 @@ namespace bo3z
 			else tip = tip - p->GetPosition();
 			if (!g_tips.empty() && g_tips.back().first != first) g_tips.clear();
 			g_tips.push_back({ tip, g_tipClock, first });
-			while (g_tips.size() > 2 && g_tipClock - g_tips.front().t > 0.25f) g_tips.pop_front();
+			while (g_tips.size() > 2 && g_tipClock - g_tips.front().t > 0.45f) g_tips.pop_front();
 		}
 		// the angle the blade swept, about the flight: its tip's sweep over the last moment laid on the plane across the flight
 		// (a flat sweep lies the crescent level, an overhead chop stands it upright, a diagonal cut lies it on its slant) -
@@ -2981,10 +2981,28 @@ namespace bo3z
 			RE::NiPoint3 d = a_dir; d.Unitize();
 			const auto f = Spellcraft::Facing(d);
 			const RE::NiPoint3 x{ f.entry[0][0], f.entry[1][0], f.entry[2][0] }, z{ f.entry[0][2], f.entry[1][2], f.entry[2][2] };
-			// (Noah: "the sword slashes are facing the wrong direction" - the tip's motion read just before the slash took in the
-			// wind-up: a sideways cut stood the crescent upright) the blade's own line, a moment into the swing
+			// (Noah, twice: the slashes faced the wrong way) the cut itself: the fastest the blade's tip moved in the last third of
+			// a second (the sweep, never the wind-up or the recovery around it), its direction laid across the flight - the
+			// crescent lies along it. With no sweep seen, the blade's own line
 			RE::NiPoint3 b{};
-			{
+			if (g_tips.size() >= 4) {
+				const float tEnd = g_tips.back().t;
+				float best = 0; std::size_t bi = 0;
+				for (std::size_t i = 1; i < g_tips.size(); ++i) {
+					if (tEnd - g_tips[i].t > 0.33f) continue;
+					const float dt = std::max(1e-3f, g_tips[i].t - g_tips[i - 1].t);
+					const float sp = (g_tips[i].at - g_tips[i - 1].at).Length() / dt;
+					if (sp > best) best = sp, bi = i;
+				}
+				if (bi > 0 && best > 250.0f) {
+					const std::size_t i0 = bi >= 2 ? bi - 2 : 0, i1 = std::min(g_tips.size() - 1, bi + 1);
+					RE::NiPoint3 v = g_tips[i1].at - g_tips[i0].at;
+					auto* cam = RE::PlayerCamera::GetSingleton();
+					if (g_tips.back().first && cam && cam->cameraRoot) v = cam->cameraRoot->world.rotate * v;   // (the view's axes back into the world's)
+					b = v - d * v.Dot(d);
+				}
+			}
+			if (b.Length() < 1.0f) {
 				auto* p = RE::PlayerCharacter::GetSingleton();
 				auto* cam = RE::PlayerCamera::GetSingleton();
 				auto* root = p ? p->Get3D(cam && cam->IsInFirstPerson()) : nullptr;

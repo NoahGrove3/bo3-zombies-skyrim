@@ -3365,23 +3365,44 @@ namespace bo3z::Classes
 			if (s[a_key].empty()) s[a_key] = std::string("CurseOfAlduin\\fx\\arc_") + kArc[a_key] + ".nif";
 			return s[a_key].c_str();
 		}
-		// (Visual Animated Enchants) its art on our looks' effects, set when first asked: the plugin needs no master of theirs;
-		// without the mod the looks keep only their glow
+		// (Visual Animated Enchants) (Noah: "I still dont see any weapon animations on the sword itself ... the sword effects should
+		// use the mods we installed for them. blue will have the lightning sword effect, red will have fire, white will have white
+		// colored sunlight, and purple should be purple flames") each look takes the whole of a Visual Animated Enchants effect's
+		// show - its enchantment shader on the blade and its animated art - from the effect of the mod's that looks that way (its
+		// own, or the vanilla enchantment it remade): the plugin needs no master of theirs; without the mod the looks keep their glow
 		void PatchLookArt()
 		{
 			static bool done = false;
 			if (done) return;
 			done = true;
-			static constexpr std::uint32_t kArt[10] = { 0xD7D, 0xD7C, 0x438C, 0xD77, 0xD78, 0xD7B, 0x184C, 0xD79, 0xD77, 0x48F0 };   // violet, indigo, moon, red, orange, ice blue, violet-blue, yellow, red, Dawnbreaker's
+			struct Src { std::uint32_t id; bool vae; const char* what; };
+			static constexpr Src kSrc[10] = {
+				{ 0x000D75, true, "purple flames" },            // alch: the Shadowflame Sword (zzOverflowingPurple1)
+				{ 0x04605C, false, "lightning" },               // carian: the Carian Blade (EnchShockDamageFFContact, remade)
+				{ 0x00438D, true, "white light" },              // radiant: the Radiant Blade (zzOverflowingmoon1)
+				{ 0x04605A, false, "fire" },                    // ss_none: the Spellbound Blade's red (EnchFireDamageFFContact)
+				{ 0x04605A, false, "fire" },                    // ss_fire
+				{ 0x04605B, false, "frost" },                   // ss_frost (EnchFrostDamageFFContact)
+				{ 0x04605C, false, "lightning" },               // ss_shock
+				{ 0x0FEFBC, false, "sunfire" },                 // ss_sun (Dawnbreaker's)
+				{ 0x000D70, true, "red" },                      // ss_blood (zzOverflowingRed1)
+				{ 0x0FEFBC, false, "sunfire" } };               // slayer (Dawnbreaker's)
 			auto* dh = RE::TESDataHandler::GetSingleton();
+			if (!dh->LookupModByName("VisualAnimatedEnchants.esp")) { logger::info("swords: Visual Animated Enchants is not installed - the looks keep their glow"); return; }
 			int n = 0;
 			for (int k = 0; k < 10; ++k) {
-				auto* art = dh->LookupForm<RE::BGSArtObject>(kArt[k], "VisualAnimatedEnchants.esp");
+				auto* from = kSrc[k].vae ? dh->LookupForm<RE::EffectSetting>(kSrc[k].id, "VisualAnimatedEnchants.esp") : RE::TESForm::LookupByID<RE::EffectSetting>(kSrc[k].id);
+				if (!from) { logger::warn("swords: Visual Animated Enchants' {} effect not found", kSrc[k].what); continue; }
 				for (int t = 0; t < 3; ++t) {
-					if (auto* m = dh->LookupForm<RE::EffectSetting>(gen::kBladeVizFx[k][t], gen::kPlugin); m && art) { m->data.enchantEffectArt = art; ++n; }
+					if (auto* m = dh->LookupForm<RE::EffectSetting>(gen::kBladeVizFx[k][t], gen::kPlugin)) {
+						if (from->data.enchantShader) m->data.enchantShader = from->data.enchantShader;
+						if (from->data.enchantEffectArt) m->data.enchantEffectArt = from->data.enchantEffectArt;
+						++n;
+					}
 				}
+				logger::info("swords: look {} - {} ({} shader {}, art {})", k, kSrc[k].what, from->GetFormEditorID(), from->data.enchantShader ? "yes" : "no", from->data.enchantEffectArt ? "yes" : "no");
 			}
-			logger::info("swords: {} tier looks wear Visual Animated Enchants' art", n);
+			logger::info("swords: {} tier looks wear Visual Animated Enchants' shaders and art", n);
 		}
 	}
 	RE::EnchantmentItem* BladeLook(const RE::TESObjectWEAP* a_w, int a_tier)
@@ -3435,10 +3456,48 @@ namespace bo3z::Classes
 			const RE::NiPoint3 at = me + dir * 190.0f + RE::NiPoint3{ 0, 0, 40.0f };
 			const float r = 320.0f + 40.0f * t;
 			switch (cls) {
-			case 2:
-				for (int k = 0; k < 4; ++k) { const float a = 1.5708f * k; ShadowFire(at + RE::NiPoint3{ std::cos(a) * 110.0f, std::sin(a) * 110.0f, -30.0f }, 0.8f, 1.2f); }
-				for (auto* f : NearFoes(at, r, 16)) Shadowburn(f, t);
+			case 2: {
+				// (Noah: "the shadowflame sword heavy attack effect should be a cone of purple flames that comes from the blade itself
+				// that deals shadowflame to any enemy within 15 meters in front of the player") a jet of Nocturnal's violet fire
+				// roaring out of the blade's tip, widening as it goes, to 15 m ahead; every one of the dead inside it set alight
+				RE::NiPoint3 tip = me + RE::NiPoint3{ 0, 0, 100.0f } + dir * 60.0f;
+				if (auto* cam = RE::PlayerCamera::GetSingleton()) {
+					if (auto* root = p->Get3D(cam->IsInFirstPerson()); root) {
+						if (auto* wn = root->GetObjectByName("WEAPON")) {
+							const auto& wr = wn->world.rotate;
+							tip = wn->world.translate + RE::NiPoint3{ wr.entry[0][1], wr.entry[1][1], wr.entry[2][1] } * (70.0f * wn->world.scale);
+						}
+					}
+				}
+				RE::NiPoint3 fwd{ dir.x, dir.y, 0 };
+				if (fwd.Length() < 1e-3f) fwd = { std::sin(p->GetAngleZ()), std::cos(p->GetAngleZ()), 0 };
+				fwd.Unitize();
+				const RE::NiPoint3 side{ fwd.y, -fwd.x, 0 };
+				constexpr float kReach = 1050.0f, kHalf = 0.44f;   // (15 m; about 25 degrees each side)
+				const RE::NiPoint3 ground{ tip.x, tip.y, me.z + 20.0f };
+				for (int k = 1; k <= 10; ++k) {
+					const float dd = kReach * k / 10.0f;
+					const float wide = dd * std::tan(kHalf);
+					const int   across = 1 + k / 3;
+					for (int j = 0; j < across; ++j) {
+						const float off = across == 1 ? 0.0f : wide * (2.0f * j / (across - 1) - 1.0f) * 0.8f;
+						const RE::NiPoint3 at2 = (k <= 2 ? tip + fwd * dd + RE::NiPoint3{ 0, 0, -30.0f * k } : ground + fwd * dd) + side * off;
+						const float sc = 0.55f + 0.09f * k;
+						Tasks::Later(0.025f * k, [at2, sc]() { ShadowFire(at2, sc, 1.1f); });
+					}
+				}
+				const RE::NiPoint3 from{ me.x, me.y, me.z };
+				for (auto* f : NearFoes(from + fwd * (kReach * 0.5f), kReach * 0.62f, 24)) {
+					RE::NiPoint3 to = f->GetPosition() - from; to.z = 0;
+					const float dd = to.Length();
+					if (dd > kReach || dd < 1.0f) continue;
+					if (to.Dot(fwd) / dd < std::cos(kHalf + 0.08f)) continue;
+					Shadowburn(f, t);
+				}
+				for (const float dd : { 260.0f, 560.0f, 880.0f }) Gun::AreaHurt(from + fwd * dd + RE::NiPoint3{ 0, 0, 40.0f }, 120.0f + dd * std::tan(kHalf) * 0.8f, 0.25f * pw, "");
+				logger::info("swords: the Shadowflame cone - 15 m of violet fire");
 				break;
+			}
 			case 1: Gun::ElemBurst(1, at, 1.4f, 0.0f, 0.9f); Gun::FxBlast("light", at); break;            // (raw sorcery: a blue-white burst)
 			case 0: Gun::FxBlast("light", at); Gun::ElemBurst(4, at, 1.1f, 0.0f, 0.8f); break;             // (radiance)
 			case 3: {
@@ -3447,7 +3506,7 @@ namespace bo3z::Classes
 				break;
 			}
 			}
-			Gun::AreaHurt(at, r, 0.35f * pw, "");
+			if (cls != 2) Gun::AreaHurt(at, r, 0.35f * pw, "");
 		}
 		if (t >= 3 && cls == 1) {
 			// (Noah, Destruction's Tier III: "a charged swing conjures a giant spectral greatsword that sweeps everything before

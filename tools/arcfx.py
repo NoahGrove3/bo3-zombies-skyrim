@@ -138,17 +138,18 @@ def crescent(L, name, tex, col, scale, *, plane='face', tilt=0.0, ro=160.0, half
 
 def build(key, glow, core, prev=None):
     L = [f'out {MESH / ("arc_" + key + ".nif")}']
-    # what you see from behind: the crescent standing across the flight, two more a little tilted for its thickness
-    for i, (t, sc) in enumerate(((0.0, 1.45), (0.3, 0.7), (-0.3, 0.7))):
-        crescent(L, f'face{i}', 'arc_slash.dds', glow, sc, tilt=t, depth=16.0, prev=prev)
-    crescent(L, 'edge', 'arc_slash.dds', core, 1.7, depth=6.0, v0=0.0, v1=0.3, rows=2, half=37.0, prev=prev)
-    crescent(L, 'wisp', 'arc_wisp.dds', glow, 1.1, depth=30.0, uscroll=0.5, half=44.0, prev=prev)
-    crescent(L, 'spark', 'arc_spark.dds', core, 1.3, depth=44.0, uscroll=0.3, half=46.0, bow=10.0, prev=prev)
-    crescent(L, 'haze', 'arc_haze.dds', glow, 0.42, ro=166.0, depth=44.0, half=42.0, rows=4, prev=prev)
-    # from the side or above: the same sweep lying in the flight's plane
-    crescent(L, 'flat', 'arc_slash.dds', glow, 0.9, plane='flat', ro=150.0, half=40.0, depth=26.0, bow=0.0, prev=prev)
-    crescent(L, 'flatedge', 'arc_slash.dds', core, 0.8, plane='flat', ro=150.0, half=39.0, depth=8.0, v0=0, v1=0.3, rows=2, bow=0.0, prev=prev)
-    crescent(L, 'flatwisp', 'arc_wisp.dds', glow, 0.8, plane='flat', ro=150.0, half=44.0, depth=44.0, uscroll=0.5, bow=0.0, prev=prev)
+    # (Noah: "the slashes are also facing the wrong way instead of facing where the slash is moving towards") the crescent lies
+    # in the swing's own plane, its curve bowed forward the way it flies - a fan of three planes tilted about its span gives it
+    # depth seen from behind
+    for i, (t, sc) in enumerate(((0.0, 1.5), (0.32, 0.8), (-0.32, 0.8))):
+        crescent(L, f'body{i}', 'arc_slash.dds', glow, sc, plane='flat', tilt=t, ro=150.0, half=40.0, depth=24.0, bow=0.0, prev=prev)
+    for i, t in enumerate((0.0, 0.45, -0.45)):
+        crescent(L, f'edge{i}', 'arc_slash.dds', core, 1.7 if t == 0 else 1.0, plane='flat', tilt=t, ro=150.0, half=39.0, depth=8.0, v0=0, v1=0.3, rows=2, bow=0.0, prev=prev)
+    crescent(L, 'wisp', 'arc_wisp.dds', glow, 1.0, plane='flat', ro=150.0, half=44.0, depth=44.0, uscroll=0.5, bow=0.0, prev=prev)
+    crescent(L, 'spark', 'arc_spark.dds', core, 1.2, plane='flat', tilt=0.2, ro=150.0, half=46.0, depth=52.0, uscroll=0.3, bow=0.0, prev=prev)
+    crescent(L, 'haze', 'arc_haze.dds', glow, 0.4, plane='flat', ro=156.0, half=44.0, depth=60.0, rows=4, bow=0.0, prev=prev)
+    # (a faint standing glow along its front, so a flat cut seen dead edge-on still shows its curve)
+    crescent(L, 'stand', 'arc_haze.dds', glow, 0.35, ro=160.0, half=40.0, depth=14.0, rows=3, bow=10.0, prev=prev)
     jf = WORK / f'arc_{key}.job'; jf.write_text('\n'.join(L) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
     print(key, r.stdout.strip()[-200:], r.stderr.strip()[-400:])
