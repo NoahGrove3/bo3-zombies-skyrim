@@ -238,7 +238,14 @@ def flask_mesh(el):
             C = np.stack([rr * np.cos(ang) * math.cos(a), c + rr * np.sin(ang), rr * np.cos(ang) * math.sin(a)], 1)
             M.add('Gold', 'gold', *tube(C, 0.2, 8, u_len=6))
         M.add('Gold', 'gold', *lathe([(0.2 * S, 0.0), (0.0, 1.0 * S), (0.0, 2.25 * S), (0.45 * S, 2.45 * S), (0.95 * S, 2.25 * S), (1.0 * S, 1.6 * S), (0.9, 0.0)], 40))
-    return M, anchors, top
+    # (Noah: "lets go back to holding the flask snout but make the bottles snout longer so it fits in the players hands
+    # better") the neck drawn out: everything above the shoulder lifted, the plain neck just above it stretched to bridge
+    # the gap - the fist closes round a neck long enough to hold, the cork and its wrap riding up on top
+    y0, y1, dy = 12.45 * S, 13.5 * S, 4.2 * S
+    def lift(y): return np.where(y <= y0, y, np.where(y >= y1, y + dy, y0 + (y - y0) * (1 + dy / (y1 - y0))))
+    for g in M.groups: g[2][:, 1] = lift(g[2][:, 1])
+    anchors = {k: ((v[0], float(lift(np.array([v[1]]))[0]), v[2]) if isinstance(v, tuple) else v) for k, v in anchors.items()}
+    return M, anchors, top + dy
 
 
 # ------------------------------------------------------------------ textures

@@ -61,7 +61,12 @@ def main(mesh_bsa, tex_bsa):
     for p in T.values():
         for a in p['armas']:
             for name, hx in a['subs']:
-                if name in ('MOD2', 'MOD3', 'MOD4', 'MOD5'): models.add(bytes.fromhex(hx).rstrip(b'\0').decode('latin1').lower())
+                if name in ('MOD2', 'MOD3', 'MOD4', 'MOD5'):
+                    m = bytes.fromhex(hx).rstrip(b'\0').decode('latin1').lower()
+                    models.add(m)
+                    # (Noah: "the alchemist class armor is still making my character invisible") a model with a weight
+                    # slider is two files, _0 and _1, and Skyrim draws nothing when the _0 is missing
+                    if m.endswith('_1.nif'): models.add(m[:-6] + '_0.nif')
     RAW.mkdir(parents=True, exist_ok=True)
     subprocess.run(['python3', BSAX, mesh_bsa, str(RAW)] + [m.split('\\')[-1] for m in models], check=True, capture_output=True)
     texs = set()

@@ -2365,6 +2365,7 @@ namespace bo3z
 		// players palm should be facing up") a flask drawn sits upright in an open hand turned palm up: the forearm rolled over
 		// (most of the turn in the forearm, the rest in the wrist and the twist bone between, so the skin turns with it), the
 		// fingers eased open round the bottle's belly, and the bottle set on the palm, its neck up out of it
+		constexpr bool kPalmHold = false;
 		float g_holdW[2]{};
 		const char* HandBone(bool a_left, const char* a_what)
 		{
@@ -2540,10 +2541,12 @@ namespace bo3z
 				try {
 					PoseArm(a_this);
 					PoseBegin(a_this);
-					PoseFlaskHand(a_this, a_delta);
+					// (Noah: "the new potion holding is still broken lets go back to holding the flask snout") the flask in the fist
+					// by its neck again (tools/flasks.py: the neck drawn out to fill the hand) - the palm-up hold is set aside
+					if constexpr (kPalmHold) PoseFlaskHand(a_this, a_delta);
 					PoseThrow(a_this);
 					PoseEnd();
-					PlaceHeldFlask(a_this);
+					if constexpr (kPalmHold) PlaceHeldFlask(a_this);
 					Spellcraft::OnPose(a_this);
 					Movement::PoseGlideArms(a_this);
 					Movement::SwingBody(a_this);

@@ -81,7 +81,15 @@ def ground_frames(fn, n=128):
     xx, yy, X, Y = grid(n)
     h = 1 - yy                                  # height above the ground, 0..1
     side = np.clip(1 - np.abs(X) ** 2.2, 0, 1)  # (fades out at the card's sides, so the cards blend into one another)
-    return [fn(f / F, f, xx, h, X, side) for f in range(F)]
+    # (Noah: "these square shapes on the flask floor effects ... it makes it look poorly done") every frame let fall to nothing
+    # at all four edges of its cell - the flames' bright foot ran right to the bottom edge, so each card showed as a box
+    ss = lambda v: np.clip(v, 0, 1) ** 2 * (3 - 2 * np.clip(v, 0, 1))
+    edge = ss(h / 0.16) * ss((1 - h) / 0.1) * ss((1 - np.abs(X)) / 0.12)
+    out = []
+    for f in range(F):
+        rgb, a = fn(f / F, f, xx, h, X, side)
+        out.append((rgb, a * edge))
+    return out
 
 
 def white(i):
