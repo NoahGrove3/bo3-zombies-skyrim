@@ -842,9 +842,10 @@ namespace bo3z
 		// Data/SKSE/Plugins/CurseOfAlduin/fxmap.ini, one line a model:
 		//     CurseOfAlduin\fx\arc_purple.nif = magic\voiceflamewaveproject01.nif pal=violet s=0.6 r=0,0,90 ; effects\x.nif s=2
 		// (pal=<fire|violet|gold|...> our ramp textures\CurseOfAlduin\fx\grad_<name>.dds, or a texture path; col=r,g,b its colour
-		// instead; s= its size; r= degrees about x,y,z; z= raised; noplay: its animation left alone; `none`: nothing drawn).
+		// instead; s= its size; r= degrees about x,y,z; z= raised; play: its own animation started; `none`: nothing drawn).
 		// Read at load and again on the dev command `fxreload`, so a look can be tried in the running game.
-		struct FxPart { std::string model, pal; RE::NiPoint3 col{ -1, -1, -1 }; float scale = 1.0f, dz = 0.0f; RE::NiMatrix3 rot; bool play = true, none = false; };
+		int BlastIndex(std::string_view a_name);
+		struct FxPart { std::string model, pal; RE::NiPoint3 col{ -1, -1, -1 }; float scale = 1.0f, dz = 0.0f; RE::NiMatrix3 rot; bool play = false, none = false; int blast = -1; };
 		std::unordered_map<std::string, std::vector<FxPart>> g_fxMap;
 		std::string FxKey(std::string a)
 		{
@@ -877,7 +878,15 @@ namespace bo3z
 					FxPart fp;
 					float rx = 0, ry = 0, rz = 0;
 					while (ws >> tok) {
-						if (fp.model.empty() && tok.find('=') == std::string::npos) { fp.model = tok; fp.none = tok == "none"; continue; }
+						if (fp.model.empty() && tok.find('=') == std::string::npos) {
+							fp.model = tok;
+							fp.none = tok == "none";
+							if (tok.rfind("blast:", 0) == 0) {   // (one of Skyrim's own explosions, whole: its look, light and sound)
+								fp.blast = BlastIndex(tok.substr(6));
+								if (fp.blast < 0) logger::warn("fxmap: no blast called {}", tok.substr(6)), fp.none = true;
+							}
+							continue;
+						}
 						const auto q = tok.find('=');
 						const std::string k = q == std::string::npos ? tok : tok.substr(0, q), v = q == std::string::npos ? "" : tok.substr(q + 1);
 						try {
@@ -885,6 +894,7 @@ namespace bo3z
 							else if (k == "s") fp.scale = std::stof(v);
 							else if (k == "z") fp.dz = std::stof(v);
 							else if (k == "noplay") fp.play = false;
+							else if (k == "play") fp.play = true;   // (its controller manager's first sequence started: only where a model stands still without it)
 							else if (k == "col") std::sscanf(v.c_str(), "%f,%f,%f", &fp.col.x, &fp.col.y, &fp.col.z);
 							else if (k == "r") std::sscanf(v.c_str(), "%f,%f,%f", &rx, &ry, &rz);
 						} catch (...) {}
@@ -953,7 +963,7 @@ namespace bo3z
 					for (const char* nm : { "mIdle", "Idle", "Play", "Start", "mStart", "Loop" })
 						if (!pick) pick = mgr->GetSequenceByName(nm);
 					if (!pick && mgr->sequenceArray.size() > 0) pick = mgr->sequenceArray[0].get();
-					if (pick) a_ref->PlayAnimation(mgr, pick, nullptr);
+					if (pick) a_ref->PlayAnimation(mgr, pick, pick);   // (from itself: the game reads the sequence it leaves)
 					return;
 				}
 			}
@@ -2418,6 +2428,7 @@ namespace bo3z
 		{
 			struct Piece { RE::ObjectRefHandle ref; FxPart part; bool drawn = false; };
 			std::vector<Piece> pieces;
+			std::vector<FxPart> blasts;
 			std::string        model;
 			bool               ok = false, drawn = false;
 			WorldFx() = default;
@@ -2426,6 +2437,7 @@ namespace bo3z
 				// (the effects map: Skyrim's own models, or an installed mod's, standing in for ours)
 				for (auto& fp : FxParts(model)) {
 					if (fp.none) { ok = true; continue; }
+					if (fp.blast >= 0) { ok = true; blasts.push_back(fp); continue; }   // (a whole explosion: set off where it's first placed)
 					if (Spellcraft::LoadPath(fp.model) && ModelActivator(fp.model)) pieces.push_back({ {}, std::move(fp) }), ok = true;   // (in memory before it's placed: drawn the first frame)
 					else if (static int said = 0; said++ < 12) logger::warn("worldfx: {} (for {}) is missing", fp.model, model);
 				}
@@ -2442,6 +2454,13 @@ namespace bo3z
 			void Place(const RE::NiPoint3& a_at, const RE::NiMatrix3& a_rot, float a_scale)
 			{
 				if (!ok) return;
+				for (auto& fp : blasts) {
+					PendingBlast pb{ a_at + RE::NiPoint3{ 0, 0, fp.dz }, 0.0f, fp.blast, fp.scale };
+					pb.exact = true;
+					pb.part = std::make_shared<FxPart>(fp);
+					g_blasts.push_back(pb);
+				}
+				blasts.clear();
 				for (auto& pc : pieces) {
 					const RE::NiPoint3 at = a_at + RE::NiPoint3{ 0, 0, pc.part.dz * a_scale };
 					if (!pc.ref) {
@@ -2959,7 +2978,15 @@ namespace bo3z
 				const RE::NiPoint3 at = a_at + RE::NiPoint3{ 0, 0, fp.dz * a_scale };
 				const float sc = a_scale * fp.scale;
 				auto part = std::make_shared<FxPart>(fp);
-				if (!a_flat) {
+				if (fp.blast >= 0) {
+					if (g_blasts.size() < 48) {
+						PendingBlast pb{ at, a_delay, fp.blast, sc };
+						pb.exact = true;
+						pb.part = part;
+						g_blasts.push_back(pb);
+					}
+					placed = true;
+				} else if (!a_flat) {
 					if (auto* ex = ModelExplosion(fp.model); ex && g_blasts.size() < 48) {
 						PendingBlast pb{ at, a_delay, -1, sc, ex };
 						pb.exact = true;
@@ -3478,7 +3505,7 @@ namespace bo3z
 			} else {
 				// (a one-off copy of the effects-map lookup: the model asked for, as it is, coloured as asked)
 				g_fxMap.erase("__look__");
-				fp.play = true;
+				fp.play = a_mode == "wp";
 				g_fxMap["__look__"] = { fp };
 				Look l{ WorldFx("__look__"), 0.0f, a_secs, at, a_scale };
 				g_fxMap.erase("__look__");
@@ -3596,7 +3623,7 @@ namespace bo3z
 			// (the effects map: the first stand-in named for it flies in its place)
 			const auto parts = FxParts(a_model0);
 			const FxPart& fp = parts.front();
-			const std::string a_model = fp.none ? a_model0 : fp.model;
+			const std::string a_model = fp.none || fp.blast >= 0 ? a_model0 : fp.model;
 			const float a_scale = a_scale0 * fp.scale;
 			l.turn = fp.rot;
 			// (Noah: "I can't see the flasks flying through the air" - hung in the scene by hand it never drew) it flies as a
@@ -3616,6 +3643,7 @@ namespace bo3z
 		{
 			for (const auto& fp : FxParts(a_model)) {
 				if (fp.none) continue;
+				if (fp.blast >= 0) { Blast(fp.blast, a_at, 0.0f, a_scale * fp.scale); continue; }
 				if (auto* hz = ModelHazard(fp.model, a_life, false)) {
 					if (auto r = PlaceAtPoint(hz, a_at + RE::NiPoint3{ 0, 0, fp.dz * a_scale })) {
 						r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(a_scale * fp.scale, 0.1f, 9.0f) * 100.0f);
