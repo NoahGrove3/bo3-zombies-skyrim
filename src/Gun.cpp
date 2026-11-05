@@ -979,6 +979,60 @@ namespace bo3z
 			m->SetPosition(a_at);
 			return m->PlaceObjectAtMe(a_obj, false);
 		}
+		// (Noah, clips 300-303: the slashes, the Shadowflame cyclone, the heavy attacks' rings and pillars never showed - hung loose
+		// in the scene the renderer drops them, as the flasks once were) one of our models standing in the world as a real placed
+		// object (a nameless activator wearing it, made once per model), posed every frame where it should be
+		RE::TESObjectACTI* ModelActivator(const std::string& a_model)
+		{
+			static std::unordered_map<std::string, RE::TESObjectACTI*> forms;
+			auto& f = forms[a_model];
+			if (!f) {
+				if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::TESObjectACTI>(); factory && (f = factory->Create())) f->SetModel(a_model.c_str());
+			}
+			return f;
+		}
+		struct WorldFx
+		{
+			RE::ObjectRefHandle ref;
+			std::string         model;
+			bool                ok = false;
+			WorldFx() = default;
+			explicit WorldFx(std::string a_model) : model(std::move(a_model))
+			{
+				ok = static_cast<bool>(Spellcraft::LoadPath(model)) && ModelActivator(model);   // (in memory before it's placed: drawn the first frame)
+			}
+			RE::NiAVObject* Obj() const
+			{
+				auto r = ref.get();
+				return r ? r->Get3D() : nullptr;
+			}
+			void Place(const RE::NiPoint3& a_at, const RE::NiMatrix3& a_rot, float a_scale)
+			{
+				if (!ok) return;
+				if (!ref) {
+					if (auto r = PlaceAtPoint(ModelActivator(model), a_at)) ref = r->GetHandle();
+					else return;
+				}
+				auto r = ref.get();
+				if (!r) return;
+				r->SetPosition(a_at);
+				if (auto* o = r->Get3D()) {
+					o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
+					if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
+					o->local.translate = a_at;
+					o->local.rotate = a_rot;
+					o->local.scale = std::max(0.0001f, a_scale);
+					RE::NiUpdateData ud;
+					ud.time = 0.0f;
+					o->Update(ud);
+				}
+			}
+			void Detach()
+			{
+				if (auto r = ref.get()) r->Disable(), r->SetDelete(true);
+				ref = {};
+			}
+		};
 		int BlastIndex(std::string_view a_name)
 		{
 			for (std::size_t i = 0; i < gen::kBlasts.size(); ++i) {
@@ -2791,7 +2845,7 @@ namespace bo3z
 		// Bane's "white arc aligning with the blade swing angle") a crescent flying out from a swing: placed in the world each
 		// frame (tools/arcfx.py's models, hung on your body's root), turned to the angle the blade swept, cutting through every
 		// one of the dead it passes - each once - then fading at the end of its run
-		struct LiveSlash { Spellcraft::Fx fx; Gun::SlashSpec s; RE::NiPoint3 at; float gone = 0, wait = 0.08f; std::unordered_set<RE::FormID> hit; };
+		struct LiveSlash { WorldFx fx; Gun::SlashSpec s; RE::NiPoint3 at; float gone = 0, wait = 0.08f; std::unordered_set<RE::FormID> hit; };
 		std::vector<LiveSlash> g_slashes;
 		std::unordered_map<RE::BSEffectShaderMaterial*, float> g_slashBase, g_slashFade;   // (each material's own brightness; this frame's)
 		RE::NiMatrix3 RotY(float a)
@@ -2847,11 +2901,10 @@ namespace bo3z
 					l.s.roll = SwingRoll(l.s.dir);
 					if (!l.s.sideways) l.at = SwingFrom();
 				}
-				if (!l.fx.obj) {
-					l.fx = Spellcraft::Fx{ Spellcraft::LoadPath(l.s.model) };
-					if (!l.fx.obj) { l.gone = l.s.range + 1; continue; }
+				if (!l.fx.ok) {
+					l.fx = WorldFx(l.s.model);
+					if (!l.fx.ok) { l.gone = l.s.range + 1; continue; }
 				}
-				l.fx.Attach(world);
 				// (Noah: "a little faster ... stay the same shape the whole flight time then fades out") its size held the whole
 				// way, its light dying over the last quarter
 				const float step = l.s.speed * 1.35f * a_delta;
@@ -2870,7 +2923,7 @@ namespace bo3z
 				const float f = std::min(1.0f, l.gone / std::max(1.0f, l.s.range));
 				l.fx.Place(l.at, SlashTurn(l), l.s.scale);
 				const float fade = f > 0.72f ? std::max(0.0f, 1.0f - (f - 0.72f) / 0.28f) : 1.0f;
-				RE::BSVisit::TraverseScenegraphGeometries(l.fx.obj.get(), [&](RE::BSGeometry* g) {
+				if (auto* o3 = l.fx.Obj()) RE::BSVisit::TraverseScenegraphGeometries(o3, [&](RE::BSGeometry* g) {
 					if (auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get())) {
 						if (auto* m = static_cast<RE::BSEffectShaderMaterial*>(ep->material)) {
 							auto [it, fresh] = g_slashBase.try_emplace(m, m->baseColorScale);
@@ -2901,7 +2954,7 @@ namespace bo3z
 					if (l.s.onHit) l.s.onHit(a, killed);
 				}
 				if (broke) {   // its shatter where it struck: a burst of its own colour
-					static const std::unordered_map<std::string_view, int> kElem{ { "purple", 6 }, { "carian", 2 }, { "white", 4 }, { "red", 0 }, { "fire", 0 }, { "frost", 1 },
+					static const std::unordered_map<std::string_view, int> kElem{ { "purple", 9 }, { "carian", 2 }, { "white", 4 }, { "red", 0 }, { "fire", 0 }, { "frost", 1 },
 						{ "shock", 2 }, { "sun", 4 }, { "blood", 5 }, { "gold", 8 }, { "bane", 3 } };
 					int el = 4;
 					for (auto& [k, e] : kElem) if (l.s.model.find(std::string("arc_") + std::string(k) + ".nif") != std::string::npos) el = e;
@@ -3312,14 +3365,14 @@ namespace bo3z
 		// (Noah: the heavy attacks redone) one of the heavy attacks' shapes of light set on the ground (tools/ringfx.py,
 		// tools/heavyfx.py): grown from s0 to s1 over its first `grow` seconds (fast, then settling), held, its light dying from
 		// `fadeFrom` to the end of its life - a shockwave ring is grown its whole life and fades as it goes
-		struct GrowFx { Spellcraft::Fx fx; RE::NiPoint3 at; float yaw, s0, s1, grow, life, fadeFrom, t = 0; };
+		struct GrowFx { WorldFx fx; RE::NiPoint3 at; float yaw, s0, s1, grow, life, fadeFrom, t = 0; };
 		std::vector<GrowFx> g_grows;
 		void Grow(const std::string& a_model, const RE::NiPoint3& a_at, float a_yaw, float a_s0, float a_s1, float a_grow, float a_life, float a_fadeFrom)
 		{
 			if (g_grows.size() > 48) return;
-			GrowFx r{ Spellcraft::Fx{ Spellcraft::LoadPath(a_model) }, a_at, a_yaw, a_s0, a_s1, std::max(0.01f, a_grow), std::max(0.1f, a_life), std::clamp(a_fadeFrom, 0.0f, a_life) };
+			GrowFx r{ WorldFx(a_model), a_at, a_yaw, a_s0, a_s1, std::max(0.01f, a_grow), std::max(0.1f, a_life), std::clamp(a_fadeFrom, 0.0f, a_life) };
 			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(r.at, land) && std::abs(land - r.at.z) < 200.0f) r.at.z = land + 2.0f;
-			if (r.fx.obj) g_grows.push_back(std::move(r));
+			if (r.fx.ok) g_grows.push_back(std::move(r));
 		}
 		void Ring(const char* a_colour, const RE::NiPoint3& a_at, float a_r0, float a_r1, float a_life)
 		{
@@ -3334,11 +3387,10 @@ namespace bo3z
 				if (!world) { r.t = r.life + 1; continue; }
 				const float g = std::min(1.0f, r.t / r.grow), e = 1.0f - (1.0f - g) * (1.0f - g);
 				const float light = r.t <= r.fadeFrom ? 1.0f : std::max(0.0f, 1.0f - (r.t - r.fadeFrom) / std::max(0.01f, r.life - r.fadeFrom));
-				r.fx.Attach(world);
 				RE::NiMatrix3 turn;
 				turn.SetEulerAnglesXYZ(0, 0, -r.yaw);
 				r.fx.Place(r.at, turn, r.s0 + (r.s1 - r.s0) * e);
-				RE::BSVisit::TraverseScenegraphGeometries(r.fx.obj.get(), [&](RE::BSGeometry* geo) {
+				if (auto* o3 = r.fx.Obj()) RE::BSVisit::TraverseScenegraphGeometries(o3, [&](RE::BSGeometry* geo) {
 					if (auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(geo->GetGeometryRuntimeData().shaderProperty.get()))
 						if (auto* m = static_cast<RE::BSEffectShaderMaterial*>(ep->material)) {
 							auto [it, fresh] = base.try_emplace(m, m->baseColorScale);
@@ -3361,7 +3413,7 @@ namespace bo3z
 		// each) and those in its heart burned every beat; at its end it bursts (a_burst)
 		struct Cyclone
 		{
-			Spellcraft::Fx fx; RE::NiPoint3 from, fwd, at; float dist, life, share, t = 0, beat = 0;
+			WorldFx fx; RE::NiPoint3 from, fwd, at; float dist, life, share, t = 0, beat = 0;
 			std::function<void(RE::Actor*)> touch; std::function<void(const RE::NiPoint3&)> burst; std::unordered_set<RE::FormID> seen;
 		};
 		std::vector<Cyclone> g_cyclones;
@@ -3369,9 +3421,9 @@ namespace bo3z
 			std::function<void(RE::Actor*)> a_touch, std::function<void(const RE::NiPoint3&)> a_burst)
 		{
 			if (g_cyclones.size() > 4) return;
-			Cyclone c{ Spellcraft::Fx{ Spellcraft::LoadPath("CurseOfAlduin\\fx\\firecyclone.nif") }, a_from, a_fwd, a_from, a_dist, std::max(0.3f, a_life), a_share };
+			Cyclone c{ WorldFx("CurseOfAlduin\\fx\\firecyclone.nif"), a_from, a_fwd, a_from, a_dist, std::max(0.3f, a_life), a_share };
 			c.touch = std::move(a_touch), c.burst = std::move(a_burst);
-			if (c.fx.obj) g_cyclones.push_back(std::move(c));
+			if (c.fx.ok) g_cyclones.push_back(std::move(c));
 		}
 		void TickCyclones(float a_delta)
 		{
@@ -3385,7 +3437,6 @@ namespace bo3z
 				c.at = c.from + c.fwd * (c.dist * go);
 				if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(c.at, land) && std::abs(land - c.at.z) < 160.0f) c.at.z = land;
 				if (world) {
-					c.fx.Attach(world);
 					RE::NiMatrix3 spin;
 					spin.SetEulerAnglesXYZ(0, 0, c.t * 9.0f);
 					const float grow = std::min(1.0f, c.t / 0.25f) * (f > 0.9f ? 1.0f + (f - 0.9f) * 3.0f : 1.0f);   // (swelling as it's about to burst)
@@ -3456,8 +3507,8 @@ namespace bo3z
 		}
 		void  ElemBurst(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life)
 		{
-			static constexpr const char* kName[9] = { "fire", "frost", "shock", "wind", "sun", "blood", "void", "poison", "gold" };
-			if (a_elem < 0 || a_elem >= 9) return;
+			static constexpr const char* kName[10] = { "fire", "frost", "shock", "wind", "sun", "blood", "void", "poison", "gold", "shadowfire" };
+			if (a_elem < 0 || a_elem >= 10) return;
 			QueueFx(std::string("CurseOfAlduin\\fx\\burst_") + kName[a_elem] + ".nif", a_at, a_scale, a_delay, a_life, false);
 		}
 		// a pool of the element on the ground (tools/puddle.py): the Alchemist's flasks' Tier I
@@ -3477,8 +3528,8 @@ namespace bo3z
 		// the effect") tools/motes.py: a field of tiny motes rising off the ground over the area, its faint glow beneath
 		void  Motes(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_life)
 		{
-			static constexpr const char* kName[9] = { "fire", "frost", "shock", "wind", "sun", "blood", "void", "poison", "gold" };
-			if (a_elem < 0 || a_elem >= 9) return;
+			static constexpr const char* kName[10] = { "fire", "frost", "shock", "wind", "sun", "blood", "void", "poison", "gold", "shadowfire" };
+			if (a_elem < 0 || a_elem >= 10) return;
 			RE::NiPoint3 at = a_at;
 			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && land > at.z - 250.0f && land < at.z + 80.0f) at.z = land + 1.0f;
 			QueueFx(std::string("CurseOfAlduin\\fx\\motes_") + kName[a_elem] + ".nif", at, a_scale, 0.0f, a_life, true);
@@ -3974,6 +4025,10 @@ namespace bo3z
 			BowsImpl::Reset();
 			// (the audit: a load mid-unleash let the old game's stars fall, wells pull and storms crackle in the new one)
 			g_detonations.clear(), g_arcs.clear(), g_dots.clear(), g_shrink.clear(), g_blasts.clear(), g_wells.clear(), g_vflash.clear(), g_pfire.clear(), (void)std::for_each(g_eb.begin(), g_eb.end(), [](EBurst& b) { b.fx.Detach(); }), g_eb.clear(), (void)std::for_each(g_lobs.begin(), g_lobs.end(), [](Lobbed& l) { l.fx.Detach(); }), g_lobs.clear(), g_frozen.clear(), g_prisms.clear();
+			for (auto& l : g_slashes) l.fx.Detach();
+			for (auto& r : g_grows) r.fx.Detach();
+			for (auto& c : g_cyclones) c.fx.Detach();
+			g_slashes.clear(), g_grows.clear(), g_cyclones.clear();
 			g_hexed.clear(), g_doomed.clear(), g_plagued.clear();
 			g_zones.clear(), g_chill.clear(), g_frozenUntil.clear();
 			Props::g_world.clear(), Props::g_twisters.clear();

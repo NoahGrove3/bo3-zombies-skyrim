@@ -3126,7 +3126,7 @@ namespace bo3z::Classes
 			}
 			std::erase_if(g_shadow, [](const Shadowflame& s) { return s.left <= 0; });
 			for (const auto& at : blasts) {
-				Gun::ElemBurst(6, at + RE::NiPoint3{ 0, 0, 40.0f }, 1.2f, 0.0f, 0.6f);
+				Gun::ElemBurst(9, at + RE::NiPoint3{ 0, 0, 40.0f }, 1.2f, 0.0f, 0.6f);
 				Gun::Ring("purple", at, 30.0f, 300.0f, 0.5f);
 				Gun::FxBlast("fireball", at + RE::NiPoint3{ 0, 0, 40.0f });
 				Gun::AreaHurt(at, 300.0f, 0.3f * UpgradeMult(g_shadowTier), "");
@@ -3487,13 +3487,13 @@ namespace bo3z::Classes
 				const RE::NiPoint3 fwd = Flat(dir, p);
 				const RE::NiPoint3 from = OnGround(me + fwd * 120.0f, me.z);
 				Gun::Ring("purple", from, 30.0f, 260.0f, 0.5f);
-				Gun::ElemBurst(6, from + RE::NiPoint3{ 0, 0, 40.0f }, 1.0f, 0.0f, 0.5f);
+				Gun::ElemBurst(9, from + RE::NiPoint3{ 0, 0, 40.0f }, 1.0f, 0.0f, 0.5f);
 				Audio::AtPoint(gen::Sound::alch_fireloop, from + fwd * 300.0f);
 				Gun::BlastSound("fireball", from, 0.8f);
 				Gun::FireCyclone(from, fwd, 700.0f, 1.8f, 0.07f * pw,
 					[t](RE::Actor* a) { Shadowburn(a, t); Gun::Knock(a, 0.3f); },
 					[t, pw](const RE::NiPoint3& at) {
-						Gun::ElemBurst(6, at + RE::NiPoint3{ 0, 0, 80.0f }, 2.0f, 0.0f, 0.8f);
+						Gun::ElemBurst(9, at + RE::NiPoint3{ 0, 0, 80.0f }, 2.0f, 0.0f, 0.8f);
 						Gun::ElemBurst(0, at + RE::NiPoint3{ 0, 0, 40.0f }, 1.2f, 0.0f, 0.6f);
 						Gun::Ring("purple", at, 40.0f, 420.0f, 0.7f);
 						Gun::FxBlast("fireball", at + RE::NiPoint3{ 0, 0, 40.0f });
@@ -3748,6 +3748,38 @@ namespace bo3z::Classes
 			if (want && !p->HasSpell(want)) {
 				p->AddSpell(want);
 				logger::info("swords: blade art {}", key);
+			}
+			// (Noah, clips 301-302: the Shadowflame Sword and the Spellbound Blade unseen in the hand, in both views) a flask's
+			// throw hides the hand's weapon node from the release to the end of the throw: never left hidden once no throw is on
+			if (!Gun::Throwing()) {
+				for (const bool fp : { false, true }) {
+					auto* root = p->Get3D(fp);
+					for (const char* nm : { "WEAPON", "SHIELD" }) {
+						if (auto* n = root ? root->GetObjectByName(nm) : nullptr; n && n->GetAppCulled()) {
+							n->SetAppCulled(false);
+							logger::warn("swords: {} {} node was left hidden - shown again", fp ? "1st" : "3rd", nm);
+						}
+					}
+				}
+			}
+			// and what the hand holds, written down each time the blade changes (its model, where it is, what of it is hidden)
+			static const RE::TESForm* seen = nullptr;
+			static float since = -1.0f;
+			if (w != seen) seen = w, since = 0.0f;
+			else if (since >= 0.0f && (since += 0.25f) >= 1.0f) {   // (a moment after: its model is in the hand by then)
+				since = -1.0f;
+				for (const bool fp : { false, true }) {
+					auto& bip = p->GetBiped(fp);
+					auto* clone = bip ? bip->objects[RE::BIPED_OBJECT::kOneHandSword].partClone.get() : nullptr;
+					if (!clone) { logger::info("swords: {} hand holds no model", fp ? "1st" : "3rd"); continue; }
+					int shapes = 0, hidden = 0;
+					std::string up;
+					for (auto* q = clone->parent; q; q = q->parent) if (q->GetAppCulled()) up += std::string(q->name.c_str()) + " ";
+					RE::BSVisit::TraverseScenegraphGeometries(clone, [&](RE::BSGeometry* g) { ++shapes; if (g->GetAppCulled()) ++hidden; return RE::BSVisit::BSVisitControl::kContinue; });
+					logger::info("swords: {} hand model '{}' culled {} scale {:.2f} world {:.2f} at ({:.0f},{:.0f},{:.0f}) parent '{}' shapes {} hidden {} hidden above: {}", fp ? "1st" : "3rd",
+						clone->name.c_str(), clone->GetAppCulled(), clone->local.scale, clone->world.scale, clone->world.translate.x, clone->world.translate.y, clone->world.translate.z,
+						clone->parent ? clone->parent->name.c_str() : "none", shapes, hidden, up.empty() ? "none" : up);
+				}
 			}
 		}
 		g_shadowChain = cls == 2 && t >= 3;

@@ -24,6 +24,9 @@ EL = {
     'blood': ('thirstbow', '0.85,0.1,0.08', ('0.7,0.03,0.04', '0.55,0.01,0.03', '0.8,0.06,0.05'), '0.4,0.0,0.02'),
     'void':  ('vortex', '1,0.8,1', ('1,0.3,0.85', '0.95,0.2,0.8', '1,0.4,0.95'), '0.75,0.08,0.65'),
     'poison': ('thirstbow', '0.8,1,0.6', ('0.45,1,0.15', '0.3,0.85,0.1', '0.6,1,0.25'), '0.2,0.6,0.05'),
+    # (Noah: the Shadowflame's purple pinwheels at every hit looked wrong) violet fire: Skyrim's own fire flipbook through
+    # tools/realfire.py's violet ramp
+    'shadowfire': ('emberstring', '0.95,0.8,1', ('0.62,0.3,1', '0.55,0.2,1', '0.7,0.4,1'), '0.45,0.1,0.9'),
     'gold':  ('dawnspire', '1,0.97,0.75', ('1,0.82,0.25', '1,0.75,0.15', '1,0.9,0.45'), '0.95,0.6,0.08'),
 }
 
