@@ -44,10 +44,13 @@ def tint(src, cls, dst):
     bl = blur(l, max(4, W // 128))
     detail = np.clip((l - bl - 0.022) / 0.08, 0, 1)            # lighter than its surround: stitches, laces, edges
     bright = np.clip((l - 0.18) / 0.22, 0, 1)                  # the light parts outright: buckles, trims
-    m = blur(np.clip(detail * 0.9 + bright * 0.75, 0, 1), max(1, W // 1024))
+    m = blur(np.clip(detail * 1.2 + bright * 1.0, 0, 1), max(1, W // 1024))
     c = np.array(COL[cls])
-    coloured = c * (np.maximum(l, 0.04)[..., None] * 2.8 + 0.06)
-    o = rgb * (1 - m[..., None]) + coloured * m[..., None]
+    # (Noah: "the armor per class also looks no different with their class colors") stronger: the accents lit up in the colour,
+    # and the black cloth itself dyed with it (its own light and shade kept)
+    coloured = c * (np.maximum(l, 0.05)[..., None] * 3.4 + 0.10)
+    dyed = rgb * 0.55 + (l[..., None] * c) * 1.25
+    o = dyed * (1 - m[..., None]) + coloured * m[..., None]
     res = np.concatenate([np.clip(o, 0, 1), al], -1)
     dst.parent.mkdir(parents=True, exist_ok=True)
     png = RAW / 'tmp.png'

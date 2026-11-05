@@ -1398,6 +1398,8 @@ hdr = [sub('HEDR', struct.pack('<fiI', 1.71, count, NEXT)), sub('CNAM', z('Noah 
 # the class's accents (tools/classarmor.py); the ground models stay theirs
 from esp_ids import CLASS_ARMOUR, CLASS_PIECES
 _BM = json.load(open(ROOT / 'tools' / 'templates' / 'blackmage_set.json'))['pieces']
+# (Noah: "the names for the armor sets should be different to match the class")
+CLASS_ARMOUR_NAMES = {'summoner': "Conjurer's Violet", 'destruction': "Battlemage's Ember", 'alchemist': "Alchemist's Verdant", 'spellsword': "Spellsword's Azure"}
 for _c in CLASS_ARMOUR:
     for _pc in CLASS_PIECES:
         _p = _BM[_pc]
@@ -1416,6 +1418,7 @@ for _c in CLASS_ARMOUR:
         for name, hx in _p['subs']:
             b = bytes.fromhex(hx)
             if name == 'EDID': b = z(f'UN_CA_{_c}_{_pc}')
+            elif name == 'FULL': b = z(CLASS_ARMOUR_NAMES[_c] + ' ' + {'robes': 'Robes', 'hood': 'Hood', 'wraps': 'Handwraps', 'boots': 'Boots'}[_pc])
             elif name == 'MODL' and len(b) == 4:
                 aid = '%06X' % (struct.unpack('<I', b)[0] & 0xFFFFFF)
                 b = struct.pack('<I', fid('ARMA', f'cm_{_c}_{aid}'))

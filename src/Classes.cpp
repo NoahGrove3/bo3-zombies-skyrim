@@ -3810,7 +3810,8 @@ namespace bo3z::Classes
 	std::string ArmourSetName(int a_cls, int a_tier)
 	{
 		if (a_cls < 0 || a_cls > 3) return "Armor";
-		return a_tier >= 1 ? fmt::format("Black Mage Robes (Enchanted {})", a_tier >= 3 ? "III" : a_tier == 2 ? "II" : "I") : std::string("Black Mage Robes");
+		static constexpr const char* kName[4] = { "Conjurer's Violet Robes", "Battlemage's Ember Robes", "Alchemist's Verdant Robes", "Spellsword's Azure Robes" };   // (tools/gen_esp.py CLASS_ARMOUR_NAMES)
+		return a_tier >= 1 ? fmt::format("{} (Enchanted {})", kName[a_cls], a_tier >= 3 ? "III" : a_tier == 2 ? "II" : "I") : std::string(kName[a_cls]);
 	}
 
 	bool ArmourCarried(int a_cls, int a_tier)

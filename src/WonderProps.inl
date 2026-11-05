@@ -430,24 +430,35 @@ namespace Props
 	void BaneWind(RE::PlayerCharacter* p, bool a_power)
 	{
 		if (!a_power) { BaneClose(p); return; }
-		// (Noah: "Alduin's Bane's wind slashes should be a white arc aligning with the blade swing angle, not a cone of wind") a
-		// white crescent flown out down the line, turned to the angle the blade swept, cutting through all in its path and
-		// hurling them VERY far
-		const RE::NiPoint3 dir = Gun::SwingDir();
-		Gun::SlashSpec sl;
-		sl.model = "CurseOfAlduin\\fx\\arc_bane.nif";
-		sl.from = Gun::SwingFrom();
-		sl.dir = dir;
-		sl.roll = Gun::SwingRoll(dir);
-		sl.speed = 2400.0f, sl.range = 3200.0f, sl.radius = 150.0f, sl.scale = 1.7f;
-		sl.damage = FangBase() * BaneMult() * 1.6f;
-		sl.onHit = [dir](RE::Actor* f, bool killed) {
-			auto* pl = RE::PlayerCharacter::GetSingleton();
-			if (killed && pl) BaneKilled(pl);
-			if (f) Spellcraft::Fling(f, f->GetPosition() - dir * 120.0f - RE::NiPoint3{ 0, 0, 80.0f }, 24.0f);  // (VERY far)
-		};
-		Gun::Slash(sl);
-		Audio::AtPoint(gen::Sound::unleash_hearth, sl.from + dir * 200.0f);
+		// (Noah: "alduins bane's heavy attack looks really underwhelming and should be a large cone of wind like the light attack
+		// but larger") the light attack's wind, as a gale: bursts of it rolling out ahead of you one after another, wider as they
+		// go, to 14 m - every one of the dead in the cone struck hard and hurled VERY far
+		const Aim aim = AimAt(900.0f);
+		RE::NiPoint3 dir = aim.dir; dir.z = 0;
+		if (dir.Length() < 0.01f) dir = { 0, 1, 0 };
+		dir.Unitize();
+		const RE::NiPoint3 side{ dir.y, -dir.x, 0 };
+		const RE::NiPoint3 base = p->GetPosition() + RE::NiPoint3{ 0, 0, 80.0f };
+		constexpr float kReach = 980.0f, kHalf = 0.5f;
+		for (int k = 1; k <= 7; ++k) {
+			const float dd = kReach * k / 7.0f;
+			const float wide = dd * std::tan(kHalf);
+			const int   across = k < 3 ? 1 : (k < 5 ? 2 : 3);
+			for (int j = 0; j < across; ++j) {
+				const float off = across == 1 ? 0.0f : wide * (2.0f * j / (across - 1) - 1.0f) * 0.75f;
+				Blast(BlastIndex("shoutarea"), base + dir * dd + side * off, 0.045f * k, 0.5f + 0.09f * k);
+			}
+		}
+		Audio::AtPoint(gen::Sound::unleash_hearth, base + dir * 200.0f);
+		Audio::AtPoint(gen::Sound::unleash_hearth, base + dir * 500.0f, 0.18f);
+		const RE::NiPoint3 me = p->GetPosition();
+		for (auto* f : Foes(me + dir * (kReach * 0.5f), kReach * 0.62f)) {
+			RE::NiPoint3 to = f->GetPosition() - me; to.z = 0;
+			const float dd = to.Length();
+			if (dd > kReach || dd < 1.0f || to.Dot(dir) / dd < std::cos(kHalf + 0.08f)) continue;
+			if (Damage(f, FangBase() * BaneMult() * 1.6f, false, false, true)) BaneKilled(p);
+			Spellcraft::Fling(f, f->GetPosition() - dir * 120.0f - RE::NiPoint3{ 0, 0, 80.0f }, 24.0f);  // (VERY far)
+		}
 	}
 	// (Noah: "the dragon slayer sword ... is supposed to send lightning slashes similar to Alduin's Bane but not as strong in
 	// damage") the Spellsword's wonder: every swing looses a crescent of lightning down the line - a power attack a wider,
