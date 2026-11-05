@@ -3010,7 +3010,8 @@ namespace bo3z::Classes
 		std::vector<FlaskShot> g_flasks;
 		struct GoldCloud { RE::NiPoint3 at; float left = 0, tick = 0, radius = 450; bool legend = false; std::unordered_set<RE::FormID> gilded; };
 		std::vector<GoldCloud> g_gold;
-		float FlaskRadius(int a_tier) { return 230.0f * (1.0f + 0.08f * static_cast<float>(std::min(a_tier, 3))) * (a_tier >= 3 ? 1.45f : 1.0f) * (Kit::ArmourTier(coffer::kAlchemist) >= 2 ? 1.2f : 1.0f) * Perks::FlaskRadiusMult(); }
+		// (Noah, the flasks redone: Tier I "Bigger burst radius" - half again as far)
+		float FlaskRadius(int a_tier) { return 230.0f * (a_tier >= 1 ? 1.5f : 1.0f) * (Kit::ArmourTier(coffer::kAlchemist) >= 2 ? 1.2f : 1.0f) * Perks::FlaskRadiusMult(); }
 		float FlaskShare(int a_tier) { return 0.5f * UpgradeMult(a_tier) * (0.7f + 0.3f * Arcana::Power()) * (a_tier >= 3 ? 1.3f : 1.0f); }
 		void FlaskBurst(const FlaskShot& f, const RE::NiPoint3& a_at);
 		void LaunchFlask(int a_el, int a_tier, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, bool a_child)
@@ -3022,7 +3023,8 @@ namespace bo3z::Classes
 		}
 		void FlaskBlast(int a_el, int a_tier, const RE::NiPoint3& a_at, float a_size, float a_share, float a_radius)
 		{
-			Gun::ElemBurst(kFlaskBurst[a_el], a_at + RE::NiPoint3{ 0, 0, -20.0f }, a_size, 0.0f, 0.9f);
+			// (the element's own spell blast: Skyrim's explosion for it - FxBlast below - or, for Holy Water, the effects map's sun)
+			if (a_el == 4 || a_el >= 6) Gun::ElemBurst(kFlaskBurst[a_el], a_at + RE::NiPoint3{ 0, 0, -20.0f }, a_size, 0.0f, 0.9f);
 			// (Noah: "each flask to have its own impact sound effect, depending on the element") the bottle breaking and its element
 			// let loose (tools/alchsfx.py hits)
 			// (Noah: "they sound really toony - use the spell sound effect that the potion is casting ... with a cork sound effect
@@ -3043,7 +3045,7 @@ namespace bo3z::Classes
 			}
 			logger::info("alchemist: a flask breaks - glass, Skyrim's {} sound{}", kSpellSnd[std::clamp(a_el, 0, 6)], a_el == 0 ? ", its flames for 3 s" : "");
 			static constexpr const char* kVanilla[6] = { "fireball", "frost", "runeshock", "poisongas", "", "bloodplague" };
-			if (a_el < 6 && kVanilla[a_el][0]) Gun::FxBlast(kVanilla[a_el], a_at);
+			if (a_el < 6 && kVanilla[a_el][0]) Gun::FxBlastSized(kVanilla[a_el], a_at, std::clamp(0.5f * a_size, 0.35f, 1.2f));
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			const auto caught = NearFoes(a_at, a_radius, 16);
 			if (g_flaskMark.size() > 400) g_flaskMark.clear();
@@ -3141,35 +3143,54 @@ namespace bo3z::Classes
 				g.at = a_at, g.left = legend ? 16.0f : 12.0f, g.radius = legend ? 560.0f : 450.0f, g.legend = legend;
 				Gun::BlastSound("lightmassive", a_at, 1.0f);  // (Skyrim's own: a great burst of light)
 				if (auto* pl = RE::PlayerCharacter::GetSingleton()) Audio::Game(0x0003F3D8, pl, 1.0f), Audio::Game(0x000B6435, pl, 0.7f);
-				Gun::ElemBurst(8, a_at, 1.6f, 0.0f, 1.2f);  // (Noah: "the philosopher's flask also casts a green ball" - Skyrim's light blast: gone)
-				Gun::Puddle(4, a_at, g.radius / 100.0f, g.left);  // (a pool of molten gold lies where it broke, as long as the cloud)
-				Gun::Motes(8, a_at, g.radius / 100.0f, g.left);  // (its gold rising off the ground as fine motes, the cloud's whole life)
+				// (Noah: "Gold sun burst + cloud") Dawnguard's sunburst in gold where it breaks, then the cloud of molten gold hanging
+				// there its whole life (fxmap.ini: philosopher_burst, philosopher_cloud)
+				Gun::QueueFx("CurseOfAlduin\\fx\\philosopher_burst.nif", a_at, 1.0f, 0.0f, 1.5f, false);
+				Gun::Hazard("CurseOfAlduin\\fx\\philosopher_cloud.nif", a_at, g.radius / 450.0f, g.left, 0.0f);
 				g_gold.push_back(std::move(g));
 				logger::info("alchemist: the Philosopher's Flask shatters");
 				return;
 			}
+			// (Noah, the flasks redone: "Glass shatter + spell blast + lingering pool"; Tier I a bigger burst, Tier II a chain reaction,
+			// Legendary an element cyclone) the glass breaks (Skyrim's oil lamp shattering), the element's own spell blast goes off,
+			// and a pool of it lingers on the ground
 			const int   t = f.tier;
 			const float r = FlaskRadius(t) * (f.child ? 0.6f : 1.0f);
 			const float share = FlaskShare(t) * (f.child ? 0.5f : 1.0f);
-			FlaskBlast(f.el, t, a_at, (f.child ? 0.6f : 1.0f) * (0.9f + 0.3f * static_cast<float>(std::min(t, 3))), share, r);
+			Gun::QueueFx("CurseOfAlduin\\fx\\flask_glass.nif", a_at + RE::NiPoint3{ 0, 0, 10.0f }, f.child ? 0.5f : 0.8f, 0.0f, 1.0f, false);
+			FlaskBlast(f.el, t, a_at, (f.child ? 0.6f : 1.0f) * 1.0f * (r / 230.0f), share, r);
+			Gun::Puddle(f.el, a_at, r / 130.0f, 4.0f);
 			if (f.child) return;
-			if (t < 1) Gun::Puddle(f.el, a_at, r / 130.0f, 3.0f);  // (Noah: every flask leaves its residue on the floor - at Base a small pool, no extra bites)
-			if (t >= 1) {  // Tier I: a pool of it lingers, three more bites
-				Gun::Puddle(f.el, a_at, r / 100.0f, 3.0f);
-				for (int k = 1; k <= 3; ++k) {
-					const int el = f.el;
-					Tasks::Later(0.8f * static_cast<float>(k), [el, a_at, r, share]() {
-						Gun::ElemBurst(kFlaskBurst[el], a_at + RE::NiPoint3{ 0, 0, -35.0f }, 0.5f, 0.0f, 0.7f);
-						for (auto* f : NearFoes(a_at, r * 0.8f, 16)) g_flaskMark[f->GetFormID()] = std::chrono::steady_clock::now();
-						Gun::AreaHurt(a_at, r * 0.8f, share * 0.2f, "");
-					});
-				}
+			if (t >= 2) {  // Tier II: a chain reaction - the dead it kills burst in its element themselves (once: no chain of chains)
+				const auto caught = NearFoes(a_at, r, 16);
+				std::vector<RE::ActorHandle> hs;
+				for (auto* c : caught) hs.push_back(c->GetHandle());
+				const int el = f.el;
+				Tasks::Later(0.3f, [hs, el, t]() {
+					int n = 0;
+					for (auto& h : hs) {
+						auto a = h.get();
+						if (!a || !a->IsDead() || n >= 6) continue;
+						FlaskShot child{ {}, el, t, a->GetPosition(), false, true, 0.0f };
+						Tasks::Later(0.08f * static_cast<float>(n++), [child, at = a->GetPosition()]() { FlaskBurst(child, at); });
+					}
+				});
 			}
-			if (t >= 2) {  // Tier II: it splits into three, thrown out from the burst
-				for (int k = 0; k < 3; ++k) {
-					const float yaw = 2.094f * static_cast<float>(k) + 0.5f;
-					LaunchFlask(f.el, t, a_at + RE::NiPoint3{ 0, 0, 40.0f }, RE::NiPoint3{ std::sin(yaw) * 320.0f, std::cos(yaw) * 320.0f, 420.0f }, true);
-				}
+			if (t >= 3) {  // Legendary: a small cyclone of its element rises where it burst and rolls toward the nearest of the dead
+				static constexpr const char* kCyc[6] = { "fire", "frost", "shock", "poison", "white", "blood" };
+				static constexpr int kFec[6] = { 0, 1, 2, -1, -1, -1 };
+				const auto near = NearFoes(a_at, 1200.0f, 1);
+				RE::NiPoint3 fwd = near.empty() ? RE::NiPoint3{ 0, 1, 0 } : near[0]->GetPosition() - a_at;
+				fwd.z = 0;
+				if (fwd.Length() < 1.0f) fwd = { 0, 1, 0 };
+				fwd.Unitize();
+				Gun::CycloneSpec cs;
+				cs.model = std::string("CurseOfAlduin\\fx\\cyclone_") + kCyc[std::clamp(f.el, 0, 5)] + ".nif";
+				cs.from = a_at, cs.fwd = fwd, cs.dist = 500.0f, cs.life = 2.0f, cs.size = 0.55f, cs.fec = kFec[std::clamp(f.el, 0, 5)];
+				cs.share = 0.05f * FlaskShare(t);
+				const int el = f.el;
+				cs.burst = [el, t, r](const RE::NiPoint3& at) { FlaskShot child{ {}, el, t, at, false, true, 0.0f }; FlaskBurst(child, at); };
+				Gun::ElemCyclone(std::move(cs));
 			}
 		}
 		void TickGoldClouds(float a_delta)
@@ -3437,6 +3458,85 @@ namespace bo3z::Classes
 			return a_c.GetDistance(a_a + ab * k);
 		}
 	}
+	// (Noah: "tier 2 should be a smaller cyclone tornado like the shadowflame one ... tier 3 ... the cyclone tornado"; "each class's
+	// own element"; the Destruction's "all the elements in one tornado, fire, ice, lightning"; the Spellsword's "the element in the
+	// opposite hand") every class sword's heavy attack: a cyclone rising where the blow lands and rolling on along the ground,
+	// dragging the dead in and catching all it touches in the class's element, bursting at its end - small at Tier II, large
+	// at Tier III. Its look is the effects map's (fxmap.ini cyclone_<element>: Skyrim's Cyclone shout and the College's fire
+	// pillar, coloured)
+	void ClassCyclone(int a_cls, int a_key, int a_t, float a_pw, RE::SpellItem* a_spell, const RE::NiPoint3& a_me, const RE::NiPoint3& a_dir)
+	{
+		auto* p = RE::PlayerCharacter::GetSingleton();
+		if (!p) return;
+		// its element: Summoner white light, Destruction the storm of all three, Shadowflame violet fire, the Spellsword the spell
+		// in its other hand (its blade's look key: 4 fire 5 frost 6 shock 7 sun 8 blood; a bare blade, fire)
+		enum El { kSun, kStorm, kShadow, kFire, kFrost, kShock, kBlood };
+		int el = a_cls == 0 ? kSun : a_cls == 1 ? kStorm : a_cls == 2 ? kShadow : kFire;
+		if (a_cls == 3) el = a_key == 5 ? kFrost : a_key == 6 ? kShock : a_key == 7 ? kSun : a_key == 8 ? kBlood : kFire;
+		static constexpr const char* kModel[7] = { "white", "storm", "violet", "fire", "frost", "shock", "blood" };
+		static constexpr const char* kRing[7] = { "white", "blue", "purple", "fire", "frost", "shock", "blood" };
+		static constexpr int kBurst[7] = { 4, 2, 9, 0, 1, 2, 5 };   // (Gun::ElemBurst: 0 fire 1 frost 2 shock 4 sun 5 blood 9 shadowfire)
+		static constexpr int kFec[7] = { -1, 2, 0, 0, 1, 2, -1 };     // (how its dead die: burning, frozen, shocked)
+		static constexpr const char* kSound[7] = { "lightmassive", "shockmass", "fireball", "fireball", "icevolley", "runeshock", "bloodplague" };
+		const bool big = a_t >= 3;
+		const RE::NiPoint3 fwd = Flat(a_dir, p);
+		const RE::NiPoint3 from = OnGround(a_me + fwd * 120.0f, a_me.z);
+		Gun::Ring(kRing[el], from, 30.0f, big ? 260.0f : 180.0f, 0.5f);
+		Gun::ElemBurst(kBurst[el], from + RE::NiPoint3{ 0, 0, 40.0f }, big ? 1.0f : 0.7f, 0.0f, 0.5f);
+		Gun::BlastSound(kSound[el], from, 0.8f);
+		const int t = a_t;
+		const float pw = a_pw;
+		auto* spell = a_spell;
+		Gun::CycloneSpec cs;
+		cs.model = std::string("CurseOfAlduin\\fx\\cyclone_") + kModel[el] + ".nif";
+		cs.from = from, cs.fwd = fwd;
+		cs.dist = big ? 900.0f : 550.0f, cs.life = big ? 2.2f : 1.5f, cs.size = big ? 1.0f : 0.6f;
+		cs.share = (big ? 0.09f : 0.06f) * pw;
+		cs.fec = kFec[el];
+		const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
+		cs.touch = [el, t, pw, whole, spell](RE::Actor* a) {
+			if (!a || a->IsDead()) return;
+			Gun::Knock(a, 0.3f);
+			switch (el) {
+			case kShadow: Shadowburn(a, t); break;
+			case kStorm: {   // (fire, ice and lightning in one: each it catches struck by one of the three in turn)
+				static int k = 0;
+				const int e = (k++) % 3;
+				Gun::ElemBurst(e, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.4f, 0.0f, 0.4f);
+				if (e == 0) Gun::Burn(a, whole * 0.04f * pw, 3.0f);
+				break;
+			}
+			case kSun: Gun::Burn(a, whole * 0.04f * pw, 3.0f); break;
+			default:
+				// (the Spellsword's: the spell in the other hand, cast on each it catches)
+				if (spell) CastFrom(RE::PlayerCharacter::GetSingleton(), spell, a);
+				else if (el == kFire) Gun::Burn(a, whole * 0.04f * pw, 3.0f);
+				break;
+			}
+		};
+		const int burstEl = kBurst[el], fec = kFec[el];
+		const char* ring = kRing[el];
+		const char* snd = kSound[el];
+		cs.burst = [el, burstEl, fec, ring, snd, big, t, pw](const RE::NiPoint3& at) {
+			const float sz = big ? 1.0f : 0.65f;
+			Gun::ElemBurst(burstEl, at + RE::NiPoint3{ 0, 0, 80.0f }, 2.0f * sz, 0.0f, 0.8f);
+			if (el == kStorm) {   // (its three elements bursting together)
+				Gun::ElemBurst(0, at + RE::NiPoint3{ 60, 0, 60.0f }, 1.2f * sz, 0.05f, 0.6f);
+				Gun::ElemBurst(1, at + RE::NiPoint3{ -40, 50, 60.0f }, 1.2f * sz, 0.1f, 0.6f);
+			}
+			Gun::Ring(ring, at, 40.0f, 420.0f * sz, 0.7f);
+			Gun::BlastSound(snd, at, 1.0f);
+			const int was = Gun::FecElem(fec);
+			Gun::AreaHurt(at, 330.0f * sz, 0.4f * pw, "");
+			Gun::FecElem(was);
+			for (auto* f : NearFoes(at, 330.0f * sz, 20)) {
+				if (el == kShadow) Shadowburn(f, t);
+				Gun::Knock(f, 0.6f);
+			}
+		};
+		Gun::ElemCyclone(std::move(cs));
+		logger::info("swords: a {} cyclone of {} (tier {})", big ? "large" : "small", kModel[el], a_t);
+	}
 	void MaceSwing(bool a_power)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -3458,7 +3558,11 @@ namespace bo3z::Classes
 		if (!a_power) {
 			// Tier I on: the arc slash, in the sword's colour, through every one of the dead in its path
 			Gun::SlashSpec sl;
-			sl.model = ArcModel(key);
+			// (Noah: "Compact magic projectiles" - each class's bolt in its element; the Destruction sword's fire, frost and lightning
+			// in turn, swing after swing)
+			static int turn = 0;
+			const int bolt = cls == 1 ? 4 + (turn++ % 3) : key;
+			sl.model = ArcModel(bolt);
 			sl.from = Gun::SwingFrom();
 			sl.dir = dir;
 			sl.roll = Gun::SwingRoll(dir);
@@ -3467,183 +3571,16 @@ namespace bo3z::Classes
 			sl.share = BladeShare(w->As<RE::TESObjectWEAP>()) * (0.7f + 0.3f * Arcana::Power());   // (the blade's own light blow, at its tier)
 			sl.flingKill = 16.0f;   // (Noah: "send enemies flying if the slash kills them")
 			if (cls == 2) sl.fec = 0;   // (the Shadowflame's dead die burning)
-			sl.onHit = [cls, t, spell](RE::Actor* a, bool killed) {
+			sl.onHit = [cls, t, bolt](RE::Actor* a, bool killed) {
 				if (killed && a && cls == 2) CorpseBurn(a);
 				if (killed || !a) return;
 				if (cls == 2) Shadowburn(a, t);                                   // shadowflame
-				else if (cls == 3 && t >= 3 && spell) CastFrom(RE::PlayerCharacter::GetSingleton(), spell, a);   // (Tier III: overcharged - the spell itself)
-				else if (cls == 1) Gun::ElemBurst(1, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.35f, 0.0f, 0.4f);   // (glinting blue: raw magic)
+				else if (cls == 1) Gun::ElemBurst(bolt - 4, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.35f, 0.0f, 0.4f);   // (its element bursting on each it passes through)
 			};
 			Gun::Slash(sl);
 			return;
 		}
-		if (t >= 2) {
-			// Tier II on: the heavy attack bursts round where it lands, in the sword's element
-			switch (cls) {
-			case 2: {
-				// (Noah, the Shadowflame Sword: "Fire cyclone" - a spinning tornado of violet fire travels 10 m forward, pulling
-				// enemies in and burning them, then bursts) it rises where the blow lands and runs on along the ground, dragging
-				// the dead in and setting all it touches alight with Shadowflame; at its end it bursts in violet fire
-				const RE::NiPoint3 fwd = Flat(dir, p);
-				const RE::NiPoint3 from = OnGround(me + fwd * 120.0f, me.z);
-				Gun::Ring("purple", from, 30.0f, 260.0f, 0.5f);
-				Gun::ElemBurst(9, from + RE::NiPoint3{ 0, 0, 40.0f }, 1.0f, 0.0f, 0.5f);
-				Audio::AtPoint(gen::Sound::alch_fireloop, from + fwd * 300.0f);
-				Gun::BlastSound("fireball", from, 0.8f);
-				Gun::FireCyclone(from, fwd, 700.0f, 1.8f, 0.07f * pw,
-					[t](RE::Actor* a) { Shadowburn(a, t); Gun::Knock(a, 0.3f); },
-					[t, pw](const RE::NiPoint3& at) {
-						Gun::ElemBurst(9, at + RE::NiPoint3{ 0, 0, 80.0f }, 2.0f, 0.0f, 0.8f);
-						Gun::ElemBurst(0, at + RE::NiPoint3{ 0, 0, 40.0f }, 1.2f, 0.0f, 0.6f);
-						Gun::Ring("purple", at, 40.0f, 420.0f, 0.7f);
-						Gun::FxBlast("fireball", at + RE::NiPoint3{ 0, 0, 40.0f });
-						Gun::BlastSound("fireball", at, 1.0f);
-						const int was = Gun::FecElem(0);
-						Gun::AreaHurt(at, 330.0f, 0.4f * pw, "");
-						Gun::FecElem(was);
-						for (auto* f : NearFoes(at, 330.0f, 20)) { Shadowburn(f, t); Gun::Knock(f, 0.6f); }
-					});
-				logger::info("swords: the Shadowflame cyclone - 10 m of violet fire");
-				break;
-			}
-			case 0: {
-				// (Noah, the Summoner: "Sunlight pillar + ring") a column of white sunlight comes down 4 m ahead, and a ring of light
-				// rolls out from it to 6 m: those in the column are seared, those the ring reaches are staggered and set burning
-				const RE::NiPoint3 pt = OnGround(me + Flat(dir, p) * 280.0f, me.z);
-				Gun::Grow("CurseOfAlduin\\fx\\sunpillar.nif", pt, 0.0f, 0.5f, 1.0f, 0.18f, 1.5f, 0.9f);
-				Gun::Ring("white", pt, 40.0f, 420.0f, 0.75f);
-				Gun::Ring("sun", pt, 20.0f, 300.0f, 0.6f);
-				Gun::ElemBurst(4, pt + RE::NiPoint3{ 0, 0, 40.0f }, 1.4f, 0.0f, 0.9f);
-				Gun::FxBlast("light", pt);
-				Gun::BlastSound("lightmassive", pt, 0.9f);
-				Gun::AreaHurt(pt, 140.0f, 0.45f * pw, "");
-				const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
-				for (auto* f : NearFoes(pt, 440.0f, 30)) {
-					RE::NiPoint3 d = f->GetPosition() - pt;
-					d.z = 0;
-					Tasks::Later(0.75f * std::min(1.0f, d.Length() / 420.0f), [h = f->GetHandle(), pw, whole] {
-						auto a = h.get();
-						if (!a || a->IsDead()) return;
-						Gun::Knock(a.get(), 0.6f);
-						Gun::Burn(a.get(), whole * 0.05f * pw, 3.0f);
-						Gun::AreaHurt(a->GetPosition(), 10.0f, 0.15f * pw, "");
-					});
-				}
-				logger::info("swords: the Radiant Blade's sunlight pillar and ring");
-				break;
-			}
-			case 1: {
-				// (Noah, the Destruction sword: "Lightning dome + chains") a dome of crackling blue lightning where the blow lands,
-				// and lightning leaping from it through up to five of the dead within 10 m, one to the next
-				const RE::NiPoint3 pt = OnGround(me + Flat(dir, p) * 200.0f, me.z);
-				Gun::Grow("CurseOfAlduin\\fx\\ldome.nif", pt, 0.0f, 0.6f, 4.6f, 0.22f, 1.1f, 0.55f);
-				Gun::Ring("blue", pt, 60.0f, 380.0f, 0.6f);
-				Gun::ElemBurst(2, pt + RE::NiPoint3{ 0, 0, 40.0f }, 0.6f, 0.0f, 0.5f);   // (clip 319: at full size its sparks were a mess of purple blots)
-				Gun::BlastSound("shockmass", pt, 0.9f);
-				Gun::AreaHurt(pt, 240.0f, 0.4f * pw, "");
-				for (auto* f : NearFoes(pt, 240.0f, 20)) Gun::Knock(f, 0.5f);
-				RE::NiPoint3 from = pt + RE::NiPoint3{ 0, 0, 200.0f };
-				float delay = 0.12f;
-				for (auto* f : NearFoes(pt, 700.0f, 5)) {
-					const RE::NiPoint3 to = f->GetPosition() + RE::NiPoint3{ 0, 0, 80.0f };
-					Gun::LightningArc(from, to, delay);
-					Tasks::Later(delay, [h = f->GetHandle(), pw, to] {
-						auto a = h.get();
-						if (!a || a->IsDead()) return;
-						Gun::ElemBurst(2, to, 0.5f, 0.0f, 0.45f);
-						Gun::Knock(a.get(), 0.4f);
-						Gun::AreaHurt(a->GetPosition(), 10.0f, 0.3f * pw, "");
-					});
-					from = to, delay += 0.09f;
-				}
-				logger::info("swords: the Carian sword's lightning dome and chains");
-				break;
-			}
-			case 3: {
-				// (Noah, the Spellsword: "Elemental shockwave line") the ground splits 8 m ahead of the blow in the spell's element -
-				// flames, ice spikes, lightning along the ground, pillars of light, crimson spikes - running out from your feet;
-				// all the dead along it are struck as it reaches them
-				// (Noah: "Remove the red mist") its plain red blade splits the ground in fire
-				static constexpr int kElem[9] = { 0, 0, 0, 0, 0, 1, 2, 4, 5 };
-				const int el = kElem[key];
-				const RE::NiPoint3 fwd = Flat(dir, p);
-				const RE::NiPoint3 side{ fwd.y, -fwd.x, 0 };
-				const RE::NiPoint3 start = me + fwd * 60.0f;
-				constexpr int kSteps = 8;
-				constexpr float kStep = 70.0f, kBeat = 0.05f;
-				RE::NiPoint3 prev = OnGround(start, me.z);
-				for (int i = 0; i < kSteps; ++i) {
-					const float jig = (i % 2 ? 1.0f : -1.0f) * (10.0f + 10.0f * static_cast<float>(std::rand() % 100) / 100.0f);
-					const RE::NiPoint3 pt = OnGround(start + fwd * (kStep * (i + 0.5f)) + side * jig, me.z);
-					const float yaw = static_cast<float>(std::rand() % 628) / 100.0f;
-					const float big = 0.8f + 0.35f * static_cast<float>(i) / kSteps;
-					Tasks::Later(kBeat * i, [el, pt, prev, yaw, big] {
-						switch (el) {
-						case 1:
-							Gun::Grow("CurseOfAlduin\\fx\\spike_frost.nif", pt, yaw, 0.15f, big, 0.12f, 1.8f, 1.3f);
-							Gun::ElemBurst(1, pt + RE::NiPoint3{ 0, 0, 30.0f }, 0.6f, 0.0f, 0.5f);
-							break;
-						case 2:
-							Gun::LightningArc(prev + RE::NiPoint3{ 0, 0, 15.0f }, pt + RE::NiPoint3{ 0, 0, 15.0f }, 0.0f);
-							Gun::Puddle(2, pt, 0.55f, 1.4f);
-							Gun::ElemBurst(2, pt + RE::NiPoint3{ 0, 0, 25.0f }, 0.55f, 0.0f, 0.45f);
-							break;
-						case 4:
-							Gun::Grow("CurseOfAlduin\\fx\\sunpillar.nif", pt, 0.0f, 0.15f, 0.3f * big, 0.12f, 1.1f, 0.7f);
-							Gun::ElemBurst(4, pt + RE::NiPoint3{ 0, 0, 30.0f }, 0.6f, 0.0f, 0.5f);
-							break;
-						case 5:
-							Gun::Grow("CurseOfAlduin\\fx\\spike_blood.nif", pt, yaw, 0.15f, big, 0.12f, 1.8f, 1.3f);
-							Gun::ElemBurst(5, pt + RE::NiPoint3{ 0, 0, 30.0f }, 0.55f, 0.0f, 0.5f);
-							break;
-						default:
-							Gun::Puddle(0, pt, 0.7f, 2.4f);
-							Gun::ElemBurst(0, pt + RE::NiPoint3{ 0, 0, 30.0f }, 0.75f, 0.0f, 0.55f);
-							break;
-						}
-					});
-					prev = pt;
-				}
-				static constexpr const char* kSound[6] = { "fireball", "icevolley", "runeshock", "fireball", "light", "bloodplague" };
-				Gun::BlastSound(kSound[el], me + fwd * 300.0f, 0.9f);
-				const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
-				const RE::NiPoint3 end = start + fwd * (kStep * kSteps);
-				for (auto* f : NearFoes(start + fwd * (kStep * kSteps * 0.5f), kStep * kSteps * 0.5f + 160.0f, 30)) {
-					const RE::NiPoint3 c = f->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f };
-					if (SegDist(c, start + RE::NiPoint3{ 0, 0, 40.0f }, end + RE::NiPoint3{ 0, 0, 40.0f }) > 150.0f) continue;
-					RE::NiPoint3 d = f->GetPosition() - start;
-					d.z = 0;
-					const float when = kBeat * std::clamp(d.Length() / kStep, 0.0f, static_cast<float>(kSteps));
-					Tasks::Later(when, [h = f->GetHandle(), pw, whole, el] {
-						auto a = h.get();
-						if (!a || a->IsDead()) return;
-						Gun::Knock(a.get(), 0.45f);
-						Gun::AreaHurt(a->GetPosition(), 10.0f, 0.4f * pw, "");
-						if (el == 0) Gun::Burn(a.get(), whole * 0.04f * pw, 3.0f);
-					});
-				}
-				logger::info("swords: the Spellsword's shockwave line (element {})", el);
-				break;
-			}
-			}
-		}
-		if (t >= 3 && cls == 1) {
-			// (Noah, Destruction's Tier III: "a charged swing conjures a giant spectral greatsword that sweeps everything before
-			// you") the Carian Greatblade: its blue crystal greatsword, giant, swept flat through all in front, then shattering
-			Gun::SlashSpec gb;
-			// (Noah: "I can see the sword model for a split second at my sword tip") a spectral blade, not the steel one: Skyrim's
-			// bound sword, in Carian blue (fxmap.ini), conjured two metres out rather than at your own blade's tip
-			gb.model = "CurseOfAlduin\\fx\\greatblade.nif";
-			gb.from = me + RE::NiPoint3{ 0, 0, 110.0f } + dir * 200.0f;
-			gb.dir = dir;
-			gb.sideways = true;
-			gb.speed = 1300.0f, gb.range = 1000.0f, gb.radius = 300.0f, gb.scale = 3.1f, gb.share = 0.9f * pw;
-			gb.onHit = [](RE::Actor* a, bool) { if (a) Gun::ElemBurst(1, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.5f, 0.0f, 0.5f); };
-			Gun::Slash(gb);
-			const RE::NiPoint3 end = gb.from + dir * 1000.0f;
-			Tasks::Later(0.75f, [end]() { Gun::ElemBurst(1, end, 2.0f, 0.0f, 1.1f); Gun::FxBlast("light", end); });   // (its shards)
-			logger::info("swords: the Carian Greatblade sweeps");
-		}
+		if (t >= 2) ClassCyclone(cls, key, t, pw, spell, me, dir);
 	}
 	// (Noah: "the dragon slayer sword's light attacks should send golden fire slashes that burn 2x damage to dragon enemies, and
 	// heavy attack should rain golden fire meteors on any enemies within 30 meters for 5s after each heavy attack swing")
@@ -3696,10 +3633,27 @@ namespace bo3z::Classes
 		if (now - last < std::chrono::milliseconds(200)) return;   // (one swing heard from both bodies)
 		last = now;
 		if (a_power) {
-			// every heavy swing: golden fire meteors on every enemy within 30 m for 5 s (a fresh swing starts the 5 s again)
-			g_goldRain = 5.0f, g_goldNext = 0.1f;
-			Gun::ElemBurst(8, p->GetPosition() + RE::NiPoint3{ 0, 0, 120.0f }, 0.9f, 0.0f, 0.6f);
-			logger::info("swords: the Dragon Slayer calls down golden fire for 5 s");
+			// (Noah: "golden fire tornado like tier 3 of the other swords but 2x damage to dragon type enemies and looks like golden
+			// flames") every heavy swing: a large cyclone of golden dragonfire, twice the harm to dragons
+			const RE::NiPoint3 fwd = Flat(Gun::SwingDir(), p);
+			const RE::NiPoint3 from = OnGround(p->GetPosition() + fwd * 120.0f, p->GetPosition().z);
+			const float share = BladeShare(Slayer()) * (0.7f + 0.3f * Arcana::Power());
+			Gun::Ring("gold", from, 30.0f, 260.0f, 0.5f);
+			Gun::ElemBurst(8, from + RE::NiPoint3{ 0, 0, 40.0f }, 1.0f, 0.0f, 0.5f);
+			Gun::BlastSound("fireball", from, 0.8f);
+			Gun::CycloneSpec cs;
+			cs.model = "CurseOfAlduin\\fx\\cyclone_gold.nif";
+			cs.from = from, cs.fwd = fwd, cs.dist = 900.0f, cs.life = 2.2f, cs.size = 1.0f;
+			cs.share = 0.09f * SlayerTop(), cs.fec = 0, cs.dragons = true;
+			cs.touch = [share](RE::Actor* a) { if (a && !a->IsDead()) { Gun::Knock(a, 0.3f); GoldBurn(a, share); } };
+			cs.burst = [share](const RE::NiPoint3& at) {
+				Gun::ElemBurst(8, at + RE::NiPoint3{ 0, 0, 80.0f }, 2.0f, 0.0f, 0.8f);
+				Gun::Ring("gold", at, 40.0f, 420.0f, 0.7f);
+				Gun::BlastSound("fireball", at, 1.0f);
+				for (auto* f : NearFoes(at, 330.0f, 20)) { GoldBurn(f, share); Gun::Knock(f, 0.6f); }
+			};
+			Gun::ElemCyclone(std::move(cs));
+			logger::info("swords: the Dragon Slayer's cyclone of golden dragonfire");
 			return;
 		}
 		// a light swing: a blade of golden fire through every one of the dead in its path, setting them alight
@@ -3802,18 +3756,10 @@ namespace bo3z::Classes
 				}
 			}
 		}
-		g_shadowChain = cls == 2 && t >= 3;
+		g_shadowChain = false;   // (Noah: the Tier III cyclone replaces the burning dead's explosions)
 		g_shadowTier = std::max(1, t);
-		// (Noah, the Summoner's Tier III: "halo blades") three blades of white light circle you and strike the dead that come near
-		if (cls == 0 && t >= 3 && drawn) {
-			const float pw = UpgradeMult(t) * (0.7f + 0.3f * Arcana::Power());
-			Gun::Halo(3, "CurseOfAlduin\\fx\\haloblade.nif",   // (fxmap.ini: Skyrim's bound sword, in white light)
-				 0.5f, 1.8f, [pw](RE::Actor* a) {
-				Gun::FxBlast("light", a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f });
-				Gun::ElemBurst(4, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.5f, 0.0f, 0.5f);
-				Gun::AreaHurt(a->GetPosition(), 90.0f, 0.25f * pw, "");
-			});
-		} else Gun::Halo(0, "", 1.0f, 1.0f, nullptr);
+		// (Noah: the Tier III cyclone replaces the Summoner's circling blades of light)
+		Gun::Halo(0, "", 1.0f, 1.0f, nullptr);
 		// the Dragon Slayer, a wonder above every tier: its gold dragonfire look always
 		if (static float sl = 0; (sl -= a_delta) <= 0) {
 			sl = 2.0f;

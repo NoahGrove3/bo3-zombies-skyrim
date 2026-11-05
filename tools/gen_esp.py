@@ -105,7 +105,7 @@ FLASKS = [('fire', 'Fire Flask', 'A flask of liquid fire. It bursts where it lan
           ('sun', 'Holy Water', 'Blessed water of Stendarr. It bursts into searing light where it lands; the dead burn in it.'),
           ('blood', 'Bloodbloom Flask', 'A flask of vampire\'s blood. It bursts where it lands, and what it drains comes back to you.'),
           ('philosopher', "Philosopher's Flask", 'The Alchemist\'s wonder. Where it shatters a cloud of molten gold hangs: the dead inside are gilded and torn apart, and every one that dies in it drops extra Essence.')]
-FLASK_TIERS = ' It always leaves a little of itself on the ground. Tier I: its pool lingers and bites three more times. Tier II: it splits into three. Legendary: a far greater blast.'
+FLASK_TIERS = ' The glass shatters, its element bursts, and a pool of it lingers on the ground. Tier I: a burst half again as wide. Tier II: a chain reaction - the dead it kills burst in its element too. Legendary: a cyclone of its element rises where it breaks and rolls into the dead.'
 for e, label, text in FLASKS:
     pd = bytearray(tsub('proj_bullet', 'DATA'))
     struct.pack_into('<H', pd, 0, 0x0)                    # a plain magic missile
@@ -466,18 +466,18 @@ KV = 'kv\\crystalsword\\'
 # (Noah: "all of the swords needs real work and attention to detail for inventory view and descriptions") what each sword is
 # and what each of its tiers does - its description, and (TIER_TEXT) the tier's own line on the item card
 SWORD_DESC = {
-    'radiant': "The Summoner's blade: pale silver, burning with white sunlight that grows with every tier. Tier I: light swings loose long blades of white light that cut through every one of the dead in their path. Tier II: heavy attacks burst in radiance. Tier III: three blades of light circle you and strike the dead that come near.",
-    'carian': "Destruction's blade: stahlrim edged in blue lightning - raw sorcery no foe resists. Tier I: light swings loose long blades of blue light that cut through every one of the dead in their path. Tier II: heavy attacks burst in raw magic. Tier III: a heavy attack conjures a giant spectral greatsword that sweeps everything before you.",
-    'alch': "The Alchemist's blade: daedric steel wreathed in purple shadowflame. Tier I: light swings loose long blades of shadowflame that cut through the dead and set them burning - fire at twice its damage. Tier II: heavy attacks loose a cyclone of purple fire that rolls 10 m before you, dragging the dead in and burning all it touches, then bursts. Tier III: the dead that die burning explode, setting those round them alight.",
-    'ss_none': "The Spellsword's blade: bright Nordic steel that takes the element of the spell in your other hand - fire, frost, lightning, sunlight or blood. Tier I: light swings loose long blades of that element that cut through every one of the dead in their path. Tier II: heavy attacks burst in it. Tier III: its blades carry the spell itself.",
-    'slayer': "The Akaviri blade of the old dragon-hunters, gold dragonfire running along its edge. Swings 50% faster. Light swings loose long blades of golden fire that burn the dead - dragons at twice the damage. Every heavy attack calls golden fire meteors down on every enemy within 30 m for 5 seconds.",
+    'radiant': "The Summoner's blade: pale silver, burning with white sunlight that grows with every tier. Tier I: light swings loose bolts of white light that cut through every one of the dead in their path. Tier II: heavy attacks loose a cyclone of white light that rolls before you, dragging the dead in and searing all it touches. Tier III: the cyclone grows great.",
+    'carian': "Destruction's blade: stahlrim edged in raw sorcery. Tier I: light swings loose bolts of fire, frost and lightning in turn that cut through every one of the dead in their path. Tier II: heavy attacks loose a storm cyclone of fire, ice and lightning in one that rolls before you, dragging the dead in. Tier III: the cyclone grows great.",
+    'alch': "The Alchemist's blade: daedric steel wreathed in purple shadowflame. Tier I: light swings loose bolts of shadowflame that cut through the dead and set them burning - fire at twice its damage. Tier II: heavy attacks loose a cyclone of purple fire that rolls before you, dragging the dead in and burning all it touches, then bursts. Tier III: the cyclone grows great.",
+    'ss_none': "The Spellsword's blade: bright Nordic steel that takes the element of the spell in your other hand - fire, frost, lightning, sunlight or blood. Tier I: light swings loose bolts of that element that cut through every one of the dead in their path. Tier II: heavy attacks loose a cyclone of that element, casting your spell on all it catches. Tier III: the cyclone grows great.",
+    'slayer': "The Akaviri blade of the old dragon-hunters, gold dragonfire running along its edge. Swings 50% faster. Light swings loose long blades of golden fire that burn the dead - dragons at twice the damage. Every heavy attack looses a great cyclone of golden dragonfire that rolls before you - dragons take twice its harm.",
 }
 TIER_TEXT = {   # (the look's enchantment on the item card: what this tier adds)
-    'radiant': ("Light swings loose blades of white light through the dead.", "Light swings loose blades of white light; heavy attacks burst in radiance.", "Blades of light from every swing, radiant heavy attacks, and three blades of light circling you."),
-    'carian': ("Light swings loose blades of blue light through the dead.", "Light swings loose blades of blue light; heavy attacks burst in raw magic.", "Blades of blue light, bursting heavy attacks, and a giant spectral greatsword on every heavy attack."),
-    'alch': ("Light swings loose blades of shadowflame that set the dead burning.", "Blades of shadowflame; heavy attacks loose a cyclone of purple fire.", "Blades of shadowflame, the cyclone of purple fire, and the burning dead explode."),
-    'ss': ("Light swings loose blades of your spell's element through the dead.", "Blades of your spell's element; heavy attacks burst in it.", "Blades of your spell's element that carry the spell itself; heavy attacks burst in it."),
-    'slayer': ("Golden fire: twice the damage to dragons; heavy attacks rain golden meteors within 30 m.",) * 3,
+    'radiant': ("Light swings loose bolts of white light through the dead.", "Bolts of white light; heavy attacks loose a cyclone of white light.", "Bolts of white light, and a great cyclone of white light on every heavy attack."),
+    'carian': ("Light swings loose bolts of fire, frost and lightning through the dead.", "Elemental bolts; heavy attacks loose a storm cyclone of fire, ice and lightning.", "Elemental bolts, and a great storm cyclone on every heavy attack."),
+    'alch': ("Light swings loose bolts of shadowflame that set the dead burning.", "Bolts of shadowflame; heavy attacks loose a cyclone of purple fire.", "Bolts of shadowflame, and a great cyclone of purple fire on every heavy attack."),
+    'ss': ("Light swings loose bolts of your spell's element through the dead.", "Bolts of your spell's element; heavy attacks loose a cyclone of it.", "Bolts of your spell's element, and a great cyclone of it on every heavy attack."),
+    'slayer': ("Golden fire: twice the damage to dragons; heavy attacks loose a cyclone of golden dragonfire.",) * 3,
 }
 TIER_NAME = {'radiant': 'Radiant Light', 'carian': 'Carian Sorcery', 'alch': 'Shadowflame', 'ss': 'Spellbound', 'slayer': 'Golden Dragonfire'}
 # (Noah: "use the swords from Light Greatswords"; "make them required") the swords are Light Greatswords' own models, read from
@@ -1185,7 +1185,7 @@ def guide_text():
              "Kill the Echo and the Curse of Alduin is broken - the nights are only nights again."),
            "[pagebreak]", h("The Hall of the Awakened"),
            p("With the curse broken, the Reliquary becomes the <b>Hall of the Awakened</b>. Its stations:"),
-           p("<b>Alduin's Bane</b> - a blade of dragon bone: every swing sends a wind slash down the line that hurls the dead far away. Its kills fill it with souls; full, Alduin's shade rains meteors round you. "
+           p("<b>Alduin's Bane</b> - a blade of dragon bone: every swing sends a wind slash down the line that hurls the dead far away, and a heavy swing raises a vortex that drags them together and blows them apart. Its kills fill it with souls; full, Alduin's shade rains fireballs round you. "
              "<b>The First Dragonborn's Regalia</b> - while you wear its robes, everything you wield hits 25% harder, every blow on you is 25% softer, and your magic costs a quarter less and returns faster. "
              "<b>The Bone-Wyrm's Skull</b> - your dragon wears Alduin's bones (touch it again to change back)."),
            p("<b>Brazier of the Endless Night</b> - while it burns the curse comes back and never sleeps: each night's last wave brings the next night at once. A freed city is still safe. "
@@ -1335,7 +1335,7 @@ for name, hx in T['weap_draugr_gs']['subs']:
     elif name == 'FULL': b = z("Alduin's Bane")
     elif name == 'MODL': b = z(lgs('bane'))   # (Noah: Light Greatswords' Dragonbone - the mod's own model)
     elif name == 'MODT': continue
-    elif name == 'DESC': b = z("A greatsword of dragon bone, cut from the Echo of Alduin. Swings 50% faster. Light swings loose long blades of pale light that cut through the dead and hurl them back. Heavy attacks bring a meteor down 5 m before you. Every 20 kills Alduin's shade answers: meteors rain on the dead round you for 10 seconds. While you hold it, kills heal you and your shouts return twice as fast.")
+    elif name == 'DESC': b = z("A greatsword of dragon bone, cut from the Echo of Alduin. Swings 50% faster. Light swings loose blades of wind that cut through the dead and hurl them far away. Heavy attacks raise a wind vortex 4 m before you that drags the dead together, then blows them apart. Every 20 kills Alduin's shade answers: fireballs rain on the dead round you for 10 seconds. While you hold it, kills heal you and your shouts return twice as fast.")
     elif name == 'DNAM': struct.pack_into('<f', b, 4, 0.75 * 1.5)   # (Noah: "make 2hand attacks faster by 50% only while holding those 2 weapons")
     elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_fang'))
     elif name == 'DATA': b = bytearray(struct.pack('<IfH', 5000, 16.0, 38))

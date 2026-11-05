@@ -1156,6 +1156,28 @@ namespace bo3z
 			}
 		}
 
+		// (Noah: "make sure all the flames are purple" - a fireball coloured violet still left Skyrim's own orange fire where it
+		// struck: its impact set and the fire it places) a copy of one of Skyrim's explosions that leaves nothing of its own
+		// behind - only its own model, which takes the colour
+		RE::BGSExplosion* TintableBlast(int a_expl)
+		{
+			static std::unordered_map<int, RE::BGSExplosion*> made;
+			if (auto it = made.find(a_expl); it != made.end()) return it->second;
+			auto* src = BlastForm(a_expl);
+			RE::BGSExplosion* ex = nullptr;
+			if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::BGSExplosion>(); src && factory && (ex = factory->Create())) {
+				ex->boundData = src->boundData;
+				ex->SetModel(src->GetModel());
+				ex->data = src->data;
+				ex->data.damage = 0.0f, ex->data.force = std::min(src->data.force, 40.0f);
+				ex->data.flags.reset(RE::BGSExplosionData::Flag::kKnockDown_Always, RE::BGSExplosionData::Flag::kKnockDown_ByFormula);
+				ex->data.impactDataSet = nullptr, ex->data.impactPlacedObject = nullptr, ex->data.spawnProjectile = nullptr;
+				ex->data.light = nullptr;   // (its orange light too)
+				ex->formEnchanting = nullptr, ex->imageSpaceModifying = nullptr, ex->data.imageSpaceRadius = 0.0f;
+			}
+			made[a_expl] = ex;
+			return ex;
+		}
 		void Detonate(const PendingBlast& b)
 		{
 			auto* player = RE::PlayerCharacter::GetSingleton();
@@ -2457,6 +2479,7 @@ namespace bo3z
 				for (auto& fp : blasts) {
 					PendingBlast pb{ a_at + RE::NiPoint3{ 0, 0, fp.dz }, 0.0f, fp.blast, fp.scale };
 					pb.exact = true;
+					if (!fp.pal.empty() || fp.col.x >= 0) pb.form = TintableBlast(fp.blast);
 					pb.part = std::make_shared<FxPart>(fp);
 					g_blasts.push_back(pb);
 				}
@@ -2895,6 +2918,7 @@ namespace bo3z
 	{
 		int   SlotCount() { return Save::HasPerk(gen::kPerk_mammoth) ? 3 : 2; }
 		void  FxBlast(std::string_view a_name, const RE::NiPoint3& a_at, float a_delay) { Blast(BlastIndex(a_name), a_at, a_delay, 0.6f); }
+		void  FxBlastSized(std::string_view a_name, const RE::NiPoint3& a_at, float a_scale) { Blast(BlastIndex(a_name), a_at, 0.0f, a_scale); }
 		void  FxFrom(RE::BGSExplosion* a_src, const RE::NiPoint3& a_at, float a_scale)
 		{
 			if (auto* q = QuietClone(a_src); q && g_blasts.size() < 32) g_blasts.push_back({ a_at, 0.0f, -1, a_scale, q });
@@ -2983,6 +3007,7 @@ namespace bo3z
 						PendingBlast pb{ at, a_delay, fp.blast, sc };
 						pb.exact = true;
 						pb.part = part;
+						if (!fp.pal.empty() || fp.col.x >= 0) pb.form = TintableBlast(fp.blast);   // (Noah: "make sure all the flames are purple")
 						g_blasts.push_back(pb);
 					}
 					placed = true;
@@ -3559,7 +3584,7 @@ namespace bo3z
 		// (Noah: the Alchemist's flasks "explode right in front of my face - there's no travel, it doesn't arc") a thrown
 		// flask is flown here: its model hung in the scene, carried along its arc under gravity, tumbling; it comes down on
 		// the first body or wall or ground its path crosses, and its burst is called there
-		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; bool meteor = false; RE::NiPoint3 target; RE::NiMatrix3 turn; };
+		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; bool meteor = false; RE::NiPoint3 target; RE::NiMatrix3 turn; std::vector<std::pair<RE::ObjectRefHandle, FxPart>> trail; };
 		std::vector<Lobbed> g_lobs;
 		void TickLobs(float a_delta)
 		{
@@ -3592,12 +3617,26 @@ namespace bo3z
 				if (down) {
 					l.fx.Detach();
 					if (auto r = l.ref.get()) r->Disable(), r->SetDelete(true);
+					for (auto& [h, fp] : l.trail) if (auto r = h.get()) r->Disable(), r->SetDelete(true);
 					l.done = true;
 					landed.push_back({ l.land, hit });
 					continue;
 				}
 				l.p = next;
 			placed:
+				// (Noah, the flasks: "Keep arc, add a trail") what flies with it - its element streaming behind - carried along too
+				for (auto& [h, fp] : l.trail) if (auto r = h.get()) {
+					r->SetPosition(l.p);
+					if (auto* o = r->Get3D()) {
+						o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
+						if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
+						o->local.translate = l.p;
+						o->local.rotate = Spellcraft::Facing(l.v) * fp.rot;
+						o->local.scale = std::max(0.01f, fp.scale);
+						RE::NiUpdateData ud;
+						o->Update(ud);
+					}
+				}
 				if (auto r = l.ref.get()) {
 					RE::NiMatrix3 tumble;
 					tumble.SetEulerAnglesXYZ(l.t * l.spin, 0.0f, 0.0f);
@@ -3641,6 +3680,11 @@ namespace bo3z
 			}
 			(void)Spellcraft::LoadPath(a_model);  // (its model in memory before it's placed: drawn the first frame, not a beat later)
 			if (auto r = f ? PlaceAtPoint(f, a_from) : RE::NiPointer<RE::TESObjectREFR>{}) l.ref = r->GetHandle(), WatchTint(r.get(), fp, true);
+			for (std::size_t i = 1; i < parts.size(); ++i) {   // (the rest of its stand-ins fly with it: a trail)
+				const auto& tp = parts[i];
+				if (tp.none || tp.blast >= 0 || !Spellcraft::LoadPath(tp.model)) continue;
+				if (auto r = PlaceAtPoint(ModelActivator(tp.model), a_from)) l.trail.push_back({ r->GetHandle(), tp }), WatchTint(r.get(), tp, true);
+			}
 			l.p = a_from, l.v = a_vel, l.scale = a_scale, l.spin = a_spin, l.land = std::move(a_land);
 			logger::info("lob: {} ({})", a_model, l.ref ? "placed" : "NOT PLACED");
 			g_lobs.push_back(std::move(l));
@@ -3707,15 +3751,24 @@ namespace bo3z
 		{
 			WorldFx fx; RE::NiPoint3 from, fwd, at; float dist, life, share, t = 0, beat = 0;
 			std::function<void(RE::Actor*)> touch; std::function<void(const RE::NiPoint3&)> burst; std::unordered_set<RE::FormID> seen;
+			float size = 1.0f; int fec = 0; bool dragons = false;   // (its size; how its dead die; twice the harm to dragons)
 		};
 		std::vector<Cyclone> g_cyclones;
 		void FireCyclone(const RE::NiPoint3& a_from, const RE::NiPoint3& a_fwd, float a_dist, float a_life, float a_share,
 			std::function<void(RE::Actor*)> a_touch, std::function<void(const RE::NiPoint3&)> a_burst)
 		{
+			ElemCyclone(CycloneSpec{ "CurseOfAlduin\\fx\\firecyclone.nif", a_from, a_fwd, a_dist, a_life, a_share, 1.0f, 0, false, std::move(a_touch), std::move(a_burst) });
+		}
+		// (Noah: every class sword's Tier II heavy a small cyclone, its Tier III a large one, each in the class's element; the Dragon
+		// Slayer's in golden flame, twice the harm to dragons) any cyclone: its look (an effects-map model), size, path and harm
+		void  ElemCyclone(CycloneSpec a_s)
+		{
 			if (g_cyclones.size() > 4) return;
-			Cyclone c{ WorldFx("CurseOfAlduin\\fx\\firecyclone.nif"), a_from, a_fwd, a_from, a_dist, std::max(0.3f, a_life), a_share };
-			c.touch = std::move(a_touch), c.burst = std::move(a_burst);
+			Cyclone c{ WorldFx(a_s.model), a_s.from, a_s.fwd, a_s.from, a_s.dist, std::max(0.3f, a_s.life), a_s.share };
+			c.touch = std::move(a_s.touch), c.burst = std::move(a_s.burst);
+			c.size = std::max(0.2f, a_s.size), c.fec = a_s.fec, c.dragons = a_s.dragons;
 			if (c.fx.ok) g_cyclones.push_back(std::move(c));
+			else logger::warn("cyclone: {} has no look", a_s.model);
 		}
 		void TickCyclones(float a_delta)
 		{
@@ -3732,25 +3785,31 @@ namespace bo3z
 					RE::NiMatrix3 spin;
 					spin.SetEulerAnglesXYZ(0, 0, c.t * 9.0f);
 					const float grow = std::min(1.0f, c.t / 0.25f) * (f > 0.9f ? 1.0f + (f - 0.9f) * 3.0f : 1.0f);   // (swelling as it's about to burst)
-					c.fx.Place(c.at, spin, grow * (1.0f + 0.05f * std::sin(c.t * 13.0f)));
+					c.fx.Place(c.at, spin, c.size * grow * (1.0f + 0.05f * std::sin(c.t * 13.0f)));
 				}
-				for (auto* a : Foes(c.at, 420.0f)) {
+				const float pull = 420.0f * c.size;
+				for (auto* a : Foes(c.at, pull)) {
 					auto pos = a->GetPosition();
 					RE::NiPoint3 to = c.at - pos;
 					to.z = 0;
 					const float d = to.Length();
 					if (d > 55.0f) {   // (dragged in, harder the nearer)
-						pos += to * (std::min(d - 45.0f, 560.0f * (1.0f + 1.5f * (1.0f - d / 420.0f)) * a_delta) / d);
+						pos += to * (std::min(d - 45.0f, 560.0f * (1.0f + 1.5f * (1.0f - d / pull)) * a_delta) / d);
 						a->SetPosition(pos, true);
 					}
-					if (d < 260.0f && c.seen.insert(a->GetFormID()).second && c.touch) c.touch(a);
+					if (d < 260.0f * c.size && c.seen.insert(a->GetFormID()).second && c.touch) c.touch(a);
 				}
 				if ((c.beat -= a_delta) <= 0) {
 					c.beat = 0.3f;
 					if (static int said = 0; said++ < 40) logger::info("cyclone: t {:.2f} at ({:.0f},{:.0f},{:.0f}) fwd ({:.2f},{:.2f}) drawn {}", c.t, c.at.x, c.at.y, c.at.z, c.fwd.x, c.fwd.y, c.fx.drawn);
 					const int was = g_fecElem;
-					g_fecElem = 0;   // (they die burning)
-					for (auto* a : Foes(c.at, 170.0f)) Damage(a, whole * c.share, false, false, true);
+					g_fecElem = c.fec;   // (they die as its element kills: burning, frozen, shocked)
+					static auto* dragonKw = RE::TESForm::LookupByID<RE::BGSKeyword>(0x035D59);   // ActorTypeDragon
+					for (auto* a : Foes(c.at, 170.0f * std::max(1.0f, c.size))) {
+						auto* race = a->GetRace();
+						const bool dragon = c.dragons && dragonKw && race && race->HasKeyword(dragonKw);
+						Damage(a, whole * c.share * (dragon ? 2.0f : 1.0f), false, false, true);
+					}
 					g_fecElem = was;
 				}
 				if (c.t >= c.life) burst.push_back({ c.burst, c.at });

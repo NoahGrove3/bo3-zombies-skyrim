@@ -449,28 +449,42 @@ namespace Props
 			sl.flingKill = 20.0f;                  // (the ones it kills go flying - the Bane's far)
 			sl.onHit = [](RE::Actor* a, bool killed) {
 				auto* pl = RE::PlayerCharacter::GetSingleton();
+				// (Noah: "there is a delay with the wind animation. Enemies fly away before the wind explosion goes off") the wind
+				// bursts on each one it strikes, the moment it strikes - as they're thrown, not after
+				if (a) Gun::ElemBurst(3, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.45f, 0.0f, 0.4f);
 				if (a && pl && killed) BaneKilled(pl);
 			};
 			Gun::Slash(sl);
 			return;
 		}
-		RE::NiPoint3 fwd = AimAt(900.0f).dir; fwd.z = 0;
-		if (fwd.Length() < 0.01f) fwd = { std::sin(p->GetAngleZ()), std::cos(p->GetAngleZ()), 0 };
-		fwd.Unitize();
-		RE::NiPoint3 at = p->GetPosition() + fwd * 350.0f;   // (5 m)
-		if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && std::abs(land - at.z) < 300.0f) at.z = land;
-		Gun::Meteor(at, false, 1.6f, [](const RE::NiPoint3& hit) {
-			auto* pl = RE::PlayerCharacter::GetSingleton();
-			Blast(BlastIndex("fireball"), hit + RE::NiPoint3{ 0, 0, 20.0f }, 0.0f, 0.7f);
-			Gun::MeteorImpact(hit, false, 1.2f);
-			if (!pl) return;
-			for (auto* f : Foes(hit, 360.0f)) {
-				if (Damage(f, FangBase() * BaneMult() * 2.4f, false, false, true)) { BaneKilled(pl); continue; }
-				g_dots.push_back({ f->GetHandle(), FangBase() * 0.4f, 3.0f, 0 });   // (burning)
-				Spellcraft::Fling(f, hit - RE::NiPoint3{ 0, 0, 60.0f }, 14.0f);
-			}
-		});
-		logger::info("swords: Alduin's Bane - a meteor 5 m ahead");
+		// (Noah: "Wind vortex" - "a whirlwind pulls the dead together, then blows them apart") the heavy swing: a whirlwind rises
+		// 4 m ahead and holds there, dragging the dead in round it, then bursts and hurls them all away
+		{
+			RE::NiPoint3 fwd = AimAt(900.0f).dir; fwd.z = 0;
+			if (fwd.Length() < 0.01f) fwd = { std::sin(p->GetAngleZ()), std::cos(p->GetAngleZ()), 0 };
+			fwd.Unitize();
+			RE::NiPoint3 at = p->GetPosition() + fwd * 280.0f;
+			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && std::abs(land - at.z) < 300.0f) at.z = land;
+			Gun::ElemBurst(3, at + RE::NiPoint3{ 0, 0, 40.0f }, 0.8f, 0.0f, 0.5f);
+			Gun::BlastSound("shoutarea", at, 0.8f);
+			Gun::CycloneSpec cs;
+			cs.model = "CurseOfAlduin\\fx\\cyclone_wind.nif";
+			cs.from = at, cs.fwd = fwd, cs.dist = 60.0f, cs.life = 1.6f, cs.size = 1.2f, cs.fec = -1;
+			cs.share = 0.05f * BaneMult();
+			cs.burst = [](const RE::NiPoint3& c) {
+				auto* pl = RE::PlayerCharacter::GetSingleton();
+				Gun::ElemBurst(3, c + RE::NiPoint3{ 0, 0, 60.0f }, 2.0f, 0.0f, 0.8f);
+				Gun::FxBlast("shoutarea", c);
+				Gun::BlastSound("shoutarea", c, 1.0f);
+				for (auto* f : Foes(c, 520.0f)) {
+					if (Damage(f, FangBase() * BaneMult() * 2.4f, false, false, true)) { if (pl) BaneKilled(pl); }
+					Spellcraft::Fling(f, c - RE::NiPoint3{ 0, 0, 60.0f }, 22.0f);   // (blown far apart)
+				}
+			};
+			Gun::ElemCyclone(std::move(cs));
+			logger::info("swords: Alduin's Bane - a wind vortex 4 m ahead");
+			return;
+		}
 	}
 	// (Noah: "the dragon slayer sword ... is supposed to send lightning slashes similar to Alduin's Bane but not as strong in
 	// damage") the Spellsword's wonder: every swing looses a crescent of lightning down the line - a power attack a wider,
