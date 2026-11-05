@@ -6514,7 +6514,7 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			float cap = gen::kFpsCap;
 			if (cap <= 0) {
 				auto* ui = RE::UI::GetSingleton();
-				if (ui && (ui->GameIsPaused() || ui->IsMenuOpen(RE::MainMenu::MENU_NAME))) cap = 60.0f;
+				if (ui && (ui->GameIsPaused() || ui->IsMenuOpen(RE::MainMenu::MENU_NAME) || ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME))) cap = 60.0f;   // (loading screens too: they'd spin the GPU at full tilt)
 			}
 			if (cap > 0) {
 				using C = std::chrono::steady_clock;

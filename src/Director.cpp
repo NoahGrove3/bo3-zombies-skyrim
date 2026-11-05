@@ -88,6 +88,7 @@ namespace bo3z
 		int   g_waves = 0, g_wave = 0, g_waveSize = 0, g_waveSpawned = 0;
 		float g_waveRest = 0;
 		bool  g_nightCleared = false;
+		bool  g_sunriseOn = false;     // (the sunrise time-lapse running: the clock is being run forward by hand)
 		bool  g_bossNight = false;  // tonight a boss walks (its dawn leaves a power-up)
 		float                   g_spawnTimer = 0;
 		float                   g_breakTimer = 0;
@@ -2545,7 +2546,7 @@ namespace bo3z
 		void HoldNight(RE::PlayerCharacter* a_player)
 		{
 			auto* cal = RE::Calendar::GetSingleton();
-			if (!cal || !cal->gameHour || g_phase != Phase::Fighting || g_nightCleared || Coop::Client() || Curse::SafeHere(a_player)) {
+			if (!cal || !cal->gameHour || g_phase != Phase::Fighting || g_nightCleared || g_sunriseOn || Coop::Client() || Curse::SafeHere(a_player)) {
 				return;
 			}
 			const float h = cal->GetHour();
@@ -2567,7 +2568,7 @@ namespace bo3z
 		void PaceNight(RE::PlayerCharacter* a_player, float a_delta)
 		{
 			auto* cal = RE::Calendar::GetSingleton();
-			if (!cal || !cal->gameHour || g_phase != Phase::Fighting || g_nightCleared || Coop::Client() || Curse::SafeHere(a_player) || g_waves <= 0) {
+			if (!cal || !cal->gameHour || g_phase != Phase::Fighting || g_nightCleared || g_sunriseOn || Coop::Client() || Curse::SafeHere(a_player) || g_waves <= 0) {
 				return;
 			}
 			const float nightHours = std::fmod(DawnHour() - DuskHour() + 24.0f, 24.0f);
@@ -3576,7 +3577,7 @@ namespace bo3z
 				}
 			}
 			if (f >= 1.0f) {
-				r.on = false;
+				r.on = false, g_sunriseOn = false;
 				r.crumble.clear();
 				Hud::Banner(r.banner.c_str(), 5.0f);
 				logger::info("night: the sunrise time-lapse is done ({:.1f} hours): {}", r.hours, r.banner);
@@ -3584,7 +3585,7 @@ namespace bo3z
 		}
 		void Reset()
 		{
-			g_sunrise = {};   // (a load mid-sunrise: the clock it ran on is gone)
+			g_sunrise = {}, g_sunriseOn = false;   // (a load mid-sunrise: the clock it ran on is gone)
 			Story::Reset();
 			Eggs::Reset();
 			Audio::BossMusic(false);
@@ -3709,6 +3710,7 @@ namespace bo3z
 				auto& r = g_sunrise;
 				r = {};
 				r.on = true, r.wait = kSunriseBreath, r.last = std::chrono::steady_clock::now();
+				g_sunriseOn = true;
 				r.hours = std::fmod(DawnHour() - h + 24.0f, 24.0f) + kSunriseAfterDawn;
 				r.banner = a_banner ? a_banner : "";
 				std::uniform_real_distribution<float> when(0.4f, kSunriseSeconds * 0.8f);
@@ -3716,7 +3718,7 @@ namespace bo3z
 				logger::info("night: ended - the sunrise time-lapse begins ({:.1f} hours over {:.0f} s)", r.hours, kSunriseSeconds);
 				return;
 			}
-			if (g_sunrise.on) g_sunrise.on = false, g_sunrise.crumble.clear();   // (skipped outright: no time-lapse after it)
+			if (g_sunrise.on) g_sunrise.on = false, g_sunriseOn = false, g_sunrise.crumble.clear();   // (skipped outright: no time-lapse after it)
 			if (!IsNight()) {
 				return;
 			}

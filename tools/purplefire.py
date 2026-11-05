@@ -40,7 +40,7 @@ def main():
         a = 2 * math.pi * i / 6 + 0.4
         card(L, f'pf{k}', '0.8,0.08,0.65', 1.4, 40, 34, (82 * math.cos(a), 82 * math.sin(a), -6), (k * 0.53) % 2.4, fps=20); k += 1
     jf = WORK / 'purplefire.job'
-    jf.write_text('\n'.join(realfire.fix(L)) + '\n')
+    jf.write_text('\n'.join(realfire.fix(L, 'violet')) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
     print(r.stdout.strip(), r.stderr.strip())
     if r.returncode: raise SystemExit('fxwrite failed')

@@ -733,7 +733,7 @@ namespace bo3z
 			auto it = a_z ? g_struckBy.find(a_z->GetFormID()) : g_struckBy.end();
 			return it != g_struckBy.end() && !it->second.first && std::chrono::steady_clock::now() - it->second.second < std::chrono::seconds(3);
 		}
-		void HurtUndead(RE::Actor* a_actor, float a_damage, RE::Actor* a_by = nullptr)
+		void HurtUndead(RE::Actor* a_actor, float a_damage, RE::Actor* a_by = nullptr, int a_fec = -1)
 		{
 			// (Noah: "the class quests aren't progressing - summon kills don't count") the blow's own maker is the killer: a
 			// summon's kill is the summon's (it was always counted as yours, and so never as a summon's)
@@ -746,10 +746,11 @@ namespace bo3z
 				// (the stability audit: a kill from inside the hit event - one per magic effect, mid-apply - can tear down the
 				// effect list the engine is walking) the killing blow lands on the next task pass, with its maker
 				if (player == RE::PlayerCharacter::GetSingleton()) NoteStruck(a_actor, false);
-				Tasks::Add([h = a_actor->GetHandle(), k = player ? player->GetHandle() : RE::ActorHandle{}, a_damage] {
+				Tasks::Add([h = a_actor->GetHandle(), k = player ? player->GetHandle() : RE::ActorHandle{}, a_damage, a_fec] {
 					auto a = h.get();
 					if (!a || a->IsDead() || a->IsDeleted() || a->IsDisabled()) return;
 					auto by = k.get();
+					if (a_fec >= 0) Gun::FireDeath(a.get(), a_fec);   // (Noah: the Shadowflame's dead burn to char - FEC's fire death)
 					a->KillImpl(by ? by.get() : nullptr, a_damage, true, false);
 				});
 			}
@@ -1005,7 +1006,8 @@ namespace bo3z
 								if (auto* sp = src->As<RE::SpellItem>(); sp && sp->GetCastingType() == RE::MagicSystem::CastingType::kConcentration) share *= 0.25f;  // (a stream or a wall lands many times a second - as CofferHit)
 							}
 							NoteStruck(z, false);
-							HurtUndead(z, Director::RoundHealth() * share * (0.7f + 0.3f * Arcana::Power()));  // (the night's power curve)
+							const auto* bw = src->As<RE::TESObjectWEAP>();
+							HurtUndead(z, Director::RoundHealth() * share * (0.7f + 0.3f * Arcana::Power()), nullptr, bw && Classes::SwordClass(bw) == 2 ? 0 : -1);  // (the night's power curve; the Shadowflame Sword's dead die by fire)
 							Undead::OnHit(z);
 							MarkHit(z);
 						}

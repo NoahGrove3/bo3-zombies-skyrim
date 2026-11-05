@@ -2845,9 +2845,8 @@ namespace bo3z
 		// Bane's "white arc aligning with the blade swing angle") a crescent flying out from a swing: placed in the world each
 		// frame (tools/arcfx.py's models, hung on your body's root), turned to the angle the blade swept, cutting through every
 		// one of the dead it passes - each once - then fading at the end of its run
-		struct LiveSlash { WorldFx fx; Gun::SlashSpec s; RE::NiPoint3 at; float gone = 0, wait = 0.08f; std::unordered_set<RE::FormID> hit; };
+		struct LiveSlash { WorldFx fx; Gun::SlashSpec s; RE::NiPoint3 at; float gone = 0, wait = 0.08f; std::unordered_set<RE::FormID> hit; std::unordered_map<RE::BSEffectShaderMaterial*, float> base; };
 		std::vector<LiveSlash> g_slashes;
-		std::unordered_map<RE::BSEffectShaderMaterial*, float> g_slashBase, g_slashFade;   // (each material's own brightness; this frame's)
 		RE::NiMatrix3 RotY(float a)
 		{
 			RE::NiMatrix3 m;
@@ -2945,12 +2944,13 @@ namespace bo3z
 				const float f = std::min(1.0f, l.gone / std::max(1.0f, l.s.range));
 				l.fx.Place(l.at, SlashTurn(l), l.s.scale * grow);
 				const float fade = f > 0.72f ? std::max(0.0f, 1.0f - (f - 0.72f) / 0.28f) : 1.0f;
+				// (each slash is its own placed copy of the model, with materials of its own: its first brightness is remembered
+				// on the slash itself, never in a table keyed by a pointer an old slash may have freed)
 				if (auto* o3 = l.fx.Obj()) RE::BSVisit::TraverseScenegraphGeometries(o3, [&](RE::BSGeometry* g) {
 					if (auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get())) {
 						if (auto* m = static_cast<RE::BSEffectShaderMaterial*>(ep->material)) {
-							auto [it, fresh] = g_slashBase.try_emplace(m, m->baseColorScale);
-							float& want = g_slashFade[m];
-							want = std::max(want, it->second * fade);   // (a material two slashes share: the brighter of them)
+							auto [it, fresh] = l.base.try_emplace(m, m->baseColorScale);
+							m->baseColorScale = it->second * fade;
 						}
 					}
 					return RE::BSVisit::BSVisitControl::kContinue;
@@ -2983,8 +2983,6 @@ namespace bo3z
 					ElemBurst(el, l.at, 0.8f * l.s.scale * grow, 0.0f, 0.45f);
 				}
 			}
-			for (auto& [m, v] : g_slashFade) m->baseColorScale = v;
-			g_slashFade.clear();
 			for (auto& l : g_slashes) if (l.gone > l.s.range) l.fx.Detach();
 			std::erase_if(g_slashes, [](const LiveSlash& l) { return l.gone > l.s.range; });
 		}
@@ -3387,7 +3385,7 @@ namespace bo3z
 		// (Noah: the heavy attacks redone) one of the heavy attacks' shapes of light set on the ground (tools/ringfx.py,
 		// tools/heavyfx.py): grown from s0 to s1 over its first `grow` seconds (fast, then settling), held, its light dying from
 		// `fadeFrom` to the end of its life - a shockwave ring is grown its whole life and fades as it goes
-		struct GrowFx { WorldFx fx; RE::NiPoint3 at; float yaw, s0, s1, grow, life, fadeFrom, t = 0; };
+		struct GrowFx { WorldFx fx; RE::NiPoint3 at; float yaw, s0, s1, grow, life, fadeFrom, t = 0; std::unordered_map<RE::BSEffectShaderMaterial*, float> base; };
 		std::vector<GrowFx> g_grows;
 		void Grow(const std::string& a_model, const RE::NiPoint3& a_at, float a_yaw, float a_s0, float a_s1, float a_grow, float a_life, float a_fadeFrom)
 		{
@@ -3402,11 +3400,8 @@ namespace bo3z
 		}
 		void TickGrows(float a_delta)
 		{
-			static std::unordered_map<RE::BSEffectShaderMaterial*, float> base, fade;
-			auto* world = Spellcraft::WorldRoot();
 			for (auto& r : g_grows) {
 				r.t += a_delta;
-				if (!world) { r.t = r.life + 1; continue; }
 				const float g = std::min(1.0f, r.t / r.grow), e = 1.0f - (1.0f - g) * (1.0f - g);
 				const float light = r.t <= r.fadeFrom ? 1.0f : std::max(0.0f, 1.0f - (r.t - r.fadeFrom) / std::max(0.01f, r.life - r.fadeFrom));
 				RE::NiMatrix3 turn;
@@ -3415,21 +3410,19 @@ namespace bo3z
 				if (auto* o3 = r.fx.Obj()) RE::BSVisit::TraverseScenegraphGeometries(o3, [&](RE::BSGeometry* geo) {
 					if (auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(geo->GetGeometryRuntimeData().shaderProperty.get()))
 						if (auto* m = static_cast<RE::BSEffectShaderMaterial*>(ep->material)) {
-							auto [it, fresh] = base.try_emplace(m, m->baseColorScale);
-							float& want = fade[m];   // (two of one model share it: the brighter of them)
-							want = std::max(want, it->second * light);
+							auto [it, fresh] = r.base.try_emplace(m, m->baseColorScale);
+							m->baseColorScale = it->second * light;
 						}
 					return RE::BSVisit::BSVisitControl::kContinue;
 				});
 			}
-			for (auto& [m, v] : fade) m->baseColorScale = v;
-			fade.clear();
 			for (auto& r : g_grows) if (r.t > r.life) r.fx.Detach();
 			std::erase_if(g_grows, [](const GrowFx& r) { return r.t > r.life; });
 		}
 		void LightningArc(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_delay) { g_arcs.push_back({ a_from, a_to, a_delay }); }
 		void Knock(RE::Actor* a_a, float a_mag) { if (a_a && !a_a->IsDead()) Stagger(a_a, a_mag); }
 		int  FecElem(int a_elem) { const int was = g_fecElem; g_fecElem = a_elem; return was; }
+		void FireDeath(RE::Actor* a_a, int a_elem) { FecMark(a_a, a_elem); }
 		// (Noah, the Shadowflame Sword: "Fire cyclone") a spinning tornado of violet fire (tools/firecyclone.py) carried along the
 		// ground from a point, slowing as it goes: the dead near it are dragged in, those it touches caught (a_touch, once
 		// each) and those in its heart burned every beat; at its end it bursts (a_burst)

@@ -76,7 +76,7 @@ def build(key):
         tail(L, f't{i}', tcol, 1.6, 420.0, 44.0, ang)
     for i in range(4):   # sparks thrown off it
         card(L, f's{i}', FX + 'sparks_burst.dds', flames[0], 1.1, 60, (0, -60 - 70 * i, 0), i * 0.5, flip=(16, 8), fps=30)
-    jf = WORK / f'meteor_{key}.job'; jf.write_text('\n'.join(realfire.fix(L)) + '\n')
+    jf = WORK / f'meteor_{key}.job'; jf.write_text('\n'.join(realfire.fix(L, 'gold' if key == 'gold' else 'fire')) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
     print(key, r.stdout.strip()[-120:], r.stderr.strip()[-300:])
     if r.returncode: raise SystemExit('fxwrite failed')

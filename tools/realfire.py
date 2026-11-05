@@ -55,7 +55,8 @@ def _palette(src, col):
     return 'fire'
 
 
-def fix(lines):
+def fix(lines, palette=None):
+    """palette: 'fire' | 'violet' | 'gold' for every fire card in these lines (else guessed from each card's colour)"""
     out, scale = [], None
     for ln in lines:
         if ln.startswith('shape '):
@@ -66,7 +67,7 @@ def fix(lines):
                 tex, grid, ours, fps = SWAP[key]
                 cm = re.search(r'color=([\d.]+),([\d.]+),([\d.]+)', ln)
                 col = tuple(float(c) for c in cm.groups()) if cm else (1, 1, 1)
-                pal = _palette(key, col)
+                pal = palette or _palette(key, col)
                 ln = ln.replace(m.group(0), f'tex={tex} palette={PAL.format(pal)}')
                 if cm:   # (the ramp gives the colour: what tint there was is kept only as brightness)
                     lum = max(col)

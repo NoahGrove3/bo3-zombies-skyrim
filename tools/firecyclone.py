@@ -84,7 +84,7 @@ def build():
     for i in range(3):   # embers thrown up off it
         card(L, f'e{i}', FX + 'motes_rise.dds', '0.62,0.3,1', 1.5, 110, 0, 560, (0, 0, 20), (16, 16), random.uniform(54, 66), i * 0.7)
     disc(L, 'glow', FX + 'glow_disc.dds', '0.5,0.15,0.95', 1.3, 230)
-    jf = WORK / 'firecyclone.job'; WORK.mkdir(parents=True, exist_ok=True); jf.write_text('\n'.join(realfire.fix(L)) + '\n')
+    jf = WORK / 'firecyclone.job'; WORK.mkdir(parents=True, exist_ok=True); jf.write_text('\n'.join(realfire.fix(L, 'violet')) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
     print(r.stdout.strip()[-120:], r.stderr.strip()[-300:])
     if r.returncode: raise SystemExit('fxwrite failed')

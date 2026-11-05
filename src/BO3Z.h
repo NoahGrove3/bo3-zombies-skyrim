@@ -809,6 +809,7 @@ namespace bo3z
 		void                  MeteorImpact(const RE::NiPoint3& a_at, bool a_gold, float a_size);  // a meteor's landing: flash, shockwave ring, burning scorch (no damage)
 		void                  Ring(const char* a_colour, const RE::NiPoint3& a_at, float a_r0, float a_r1, float a_life);  // a shockwave ring growing across the ground (ring_<colour>.nif)
 		void                  Knock(RE::Actor* a_a, float a_mag);  // a stagger
+		void                  FireDeath(RE::Actor* a_a, int a_elem);  // the element's touch laid on one about to die, so FEC gives it that death (0 fire)
 		int                   FecElem(int a_elem);  // the element the blows struck from now on kill with (FEC's death effects: 0 fire 1 frost 2 shock ...); returns the one before
 		void                  FireCyclone(const RE::NiPoint3& a_from, const RE::NiPoint3& a_fwd, float a_dist, float a_life, float a_share, std::function<void(RE::Actor*)> a_touch, std::function<void(const RE::NiPoint3&)> a_burst);  // a tornado of violet fire carried along the ground
 		void                  LightningArc(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_delay);  // a bolt of lightning between two points  // a meteor of ours (tools/meteorfx.py) falling from high above onto a point

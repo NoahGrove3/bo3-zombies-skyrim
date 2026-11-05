@@ -463,7 +463,7 @@ def build(el, tex):
         for X, Y, uu, vv in ((-hs, hs, 0, 0), (hs, hs, cu, 0), (hs, -hs, cu, cv), (-hs, -hs, 0, cv)):
             L.append(f'v {X:.2f} {Y:.2f} 0 {uu} {vv} 1 1 1 1')
         L += ['t 0 1 2', 't 0 2 3']
-    (WORK / 'fx.job').write_text('\n'.join(realfire.fix(L)) + '\n')
+    (WORK / 'fx.job').write_text('\n'.join(realfire.fix(L, 'fire')) + '\n')
     r = subprocess.run([str(TOOLS / 'fxwrite'), str(WORK / 'fx.job')], capture_output=True, text=True)
     if r.returncode or 'no node' in r.stderr: print(r.stdout, r.stderr); raise SystemExit('fxwrite failed')
     subprocess.run([rootname_exe(), str(nif), 'AlchemistFlask'], check=True)

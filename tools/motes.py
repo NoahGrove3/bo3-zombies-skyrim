@@ -153,7 +153,7 @@ def card(L, name, tex, col, sc, w, h0, h1, at, flip, fps, phase, bb=2):
 
 
 def fxwrite(L, out):
-    jf = WORK / (out.stem + '.job'); jf.write_text('\n'.join([f'out {out}'] + realfire.fix(L)) + '\n')
+    jf = WORK / (out.stem + '.job'); jf.write_text('\n'.join([f'out {out}'] + realfire.fix(L, 'fire')) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
     print(out.name, r.stdout.strip(), r.stderr.strip())
     if r.returncode: raise SystemExit('fxwrite failed')
