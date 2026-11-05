@@ -2814,34 +2814,57 @@ namespace bo3z
 			if (l.s.sideways) r = r * RotZ(-1.5708f);   // (a blade laid across its flight: the spectral greatsword sweeping)
 			return r;
 		}
+		// who a slash cuts: the night's dead and real enemies, and anyone else who is fighting you - never your own side
+		bool SlashTarget(RE::Actor* a, RE::PlayerCharacter* p)
+		{
+			if (!a || a == p || a->IsDead() || !a->Is3DLoaded() || a->IsPlayerTeammate() || Party::IsFriend(a)) return false;
+			if (a->IsCommandedActor() && a->GetCommandingActor().get() == p) return false;
+			if (Director::IsFoe(a)) return true;
+			if (a->IsHostileToActor(p)) return true;
+			auto t = a->GetActorRuntimeData().currentCombatTarget.get();
+			return t && t.get() == p;
+		}
+		// (Noah: "the slash from the weapons looks strange when sending it at the ground and when moving around while sending the
+		// slash. It needs to feel like a real magic slash that breaks on impact with the ground or walls but goes through enemies
+		// and has infinite pierce damage through enemies or anyone trying to fight my character") each slash flies in the world
+		// itself (not hung on your body, so your own running never drags it along), leaves from where the blade is at the moment it
+		// leaves, cuts every one it passes through - no limit - and shatters where it meets the ground, a wall or a rock
 		void TickSlashes(float a_delta)
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
-			// (Noah: "the arc slashes are also invisible in first person") hung on the body the camera shows: the third-person
-			// one isn't drawn in first person
-			auto* cam = RE::PlayerCamera::GetSingleton();
-			auto* root = p && p->Is3DLoaded() ? p->Get3D(cam && cam->IsInFirstPerson()) : nullptr;
+			auto* world = Spellcraft::WorldRoot();
 			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
 			for (auto& l : g_slashes) {
-				if (!root) { l.gone = l.s.range + 1; continue; }
-				// (a breath into the swing before it leaves the blade: its angle is the sweep the blade really made)
+				if (!world || !p || !p->Is3DLoaded()) { l.gone = l.s.range + 1; continue; }
+				// (a breath into the swing before it leaves the blade: its angle is the sweep the blade really made, and it sets
+				// out from where you are now, not where you were when the swing began)
 				if (l.wait > 0) {
 					if ((l.wait -= a_delta) > 0) continue;
 					l.s.roll = SwingRoll(l.s.dir);
+					if (!l.s.sideways) l.at = SwingFrom();
 				}
 				if (!l.fx.obj) {
 					l.fx = Spellcraft::Fx{ Spellcraft::LoadPath(l.s.model) };
 					if (!l.fx.obj) { l.gone = l.s.range + 1; continue; }
 				}
-				if (auto* body = root->AsNode()) l.fx.Attach(body);
-				// (Noah: "the speed of the slashes should be a little faster too and stay the same shape the while flight time then
-				// fades out instead of shrinking") a third quicker, its size held the whole way, its light dying over the last quarter
+				l.fx.Attach(world);
+				// (Noah: "a little faster ... stay the same shape the whole flight time then fades out") its size held the whole
+				// way, its light dying over the last quarter
 				const float step = l.s.speed * 1.35f * a_delta;
-				l.at = l.at + l.s.dir * step;
-				l.gone += step;
-				const float f = l.gone / std::max(1.0f, l.s.range);
-				const float sc = l.s.scale;
-				l.fx.Place(l.at, SlashTurn(l), sc);
+				const RE::NiPoint3 from = l.at;
+				RE::NiPoint3 to = l.at + l.s.dir * step;
+				// the ground or a wall in the way: it breaks there (after the first few centimetres - never on the blade itself)
+				bool broke = false;
+				if (l.gone > 20.0f) {
+					if (const float wf = Spellcraft::WorldHit(from, to + l.s.dir * 25.0f); wf <= 1.0f) {
+						to = from + (to + l.s.dir * 25.0f - from) * wf;
+						broke = true;
+					}
+				}
+				l.at = to;
+				l.gone += broke ? l.s.range + 1 : step;
+				const float f = std::min(1.0f, l.gone / std::max(1.0f, l.s.range));
+				l.fx.Place(l.at, SlashTurn(l), l.s.scale);
 				const float fade = f > 0.72f ? std::max(0.0f, 1.0f - (f - 0.72f) / 0.28f) : 1.0f;
 				RE::BSVisit::TraverseScenegraphGeometries(l.fx.obj.get(), [&](RE::BSGeometry* g) {
 					if (auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get())) {
@@ -2853,7 +2876,14 @@ namespace bo3z
 					}
 					return RE::BSVisit::BSVisitControl::kContinue;
 				});
-				for (auto* a : Foes(l.at, l.s.radius)) {
+				// everyone the blade passed through this frame (swept from where it was to where it is, so a fast one misses no one)
+				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
+					auto ap = h.get();
+					auto* a = ap.get();
+					if (!SlashTarget(a, p)) continue;
+					const RE::NiPoint3 c = a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f };
+					if (c.GetDistance(to) > l.s.radius + step + 200.0f) continue;
+					if (Spellcraft::PointSeg(c, from, to) > l.s.radius) continue;
 					if (!l.hit.insert(a->GetFormID()).second) continue;
 					const float dmg = l.s.damage > 0 ? l.s.damage : whole * l.s.share;
 					// (Noah: "send enemies flying if the slash kills them") a blow that will kill: thrown along the slash's flight
@@ -2862,6 +2892,13 @@ namespace bo3z
 						Spellcraft::Fling(a, a->GetPosition() - l.s.dir * 120.0f - RE::NiPoint3{ 0, 0, 70.0f }, l.s.flingKill);
 					const bool killed = Damage(a, dmg, false, false, true);
 					if (l.s.onHit) l.s.onHit(a, killed);
+				}
+				if (broke) {   // its shatter where it struck: a burst of its own colour
+					static const std::unordered_map<std::string_view, int> kElem{ { "purple", 6 }, { "carian", 2 }, { "white", 4 }, { "red", 0 }, { "fire", 0 }, { "frost", 1 },
+						{ "shock", 2 }, { "sun", 4 }, { "blood", 5 }, { "gold", 8 }, { "bane", 3 } };
+					int el = 4;
+					for (auto& [k, e] : kElem) if (l.s.model.find(std::string("arc_") + std::string(k) + ".nif") != std::string::npos) el = e;
+					ElemBurst(el, l.at, 0.8f * l.s.scale, 0.0f, 0.45f);
 				}
 			}
 			for (auto& [m, v] : g_slashFade) m->baseColorScale = v;

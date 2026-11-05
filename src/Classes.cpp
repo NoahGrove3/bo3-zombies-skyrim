@@ -1417,28 +1417,10 @@ namespace bo3z::Classes
 		// another class's are taken off; coming back gives them again, without the banner a second time
 		static std::unordered_set<RE::FormID> announced;
 		static constexpr std::uint32_t kPowers[4] = { 0x0008A0, 0x000893, 0x0008A1, 0x002F6A };
-		if (g_class.load() >= 0) {
-			if (g_class.load() != coffer::kSpellsword) {
-				for (auto id : kPowers) if (auto* sp = dh->LookupForm<RE::SpellItem>(id, "The Wizard Warrior.esp"); sp && p->HasSpell(sp)) p->RemoveSpell(sp);
-			}
-		}
-		if (g_class.load() == coffer::kSpellsword) {
-			int imbued = 0;
-			for (int i : Arcana::Carried()) {
-				if (Arcana::ClassOf(i) == coffer::kSpellsword) imbued += Arcana::RungOf(i) - 1;
-			}
-			for (int n = 0; n < std::min(imbued, 4); ++n) {
-				auto* sp = dh->LookupForm<RE::SpellItem>(kPowers[n], "The Wizard Warrior.esp");
-				if (sp && !p->HasSpell(sp)) {
-					p->AddSpell(sp);
-					if (announced.insert(sp->GetFormID()).second) {
-						Forms::Play(gen::Sound::shout_learned);
-						Hud::Banner(fmt::format("The Wizard Warrior: Enchantment Power {} unlocked (Powers menu)", n + 1), 4.0f);
-						logger::info("classes: Wizard Warrior enchantment power {}", n + 1);
-					}
-				}
-			}
-		}
+		// (Noah: "In the inventory remove the enchantment power 1-4") The Wizard Warrior's Enchantment Powers are no longer given -
+		// and taken from any character that has them
+		for (auto id : kPowers) if (auto* sp = dh->LookupForm<RE::SpellItem>(id, "The Wizard Warrior.esp"); sp && p->HasSpell(sp)) p->RemoveSpell(sp);
+		(void)announced;
 		// (Noah: "remove the indrik mounts mod, since we have our dragon glider for movement") no mounts for the Summoner
 		// (Noah: "summoner should start with 2 summon slots and go up for every 2 echo altars freed - max 7")
 		int cap = 1;

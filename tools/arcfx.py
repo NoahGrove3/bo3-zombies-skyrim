@@ -70,7 +70,7 @@ def textures():
     line = np.exp(-((v - 0.03) / 0.012) ** 2)
     glow = np.exp(-((v - 0.05) / 0.06) ** 2) * 0.45
     streak = np.clip((rows - 0.42) * 2.6, 0, 1) ** 1.4 * (0.6 + 0.4 * wob)
-    body = np.exp(-v * 6.0) * (0.25 + 0.75 * streak)
+    body = np.exp(-v * 5.0) * (0.7 + 0.3 * streak)   # (a solid blade of light, the streaks only a grain in it - not hair)
     a = np.clip(line * 1.1 + glow + body * 0.8, 0, 1)
     a[0:2, :] = 0
     save(a, 'arc_slash')
@@ -148,6 +148,10 @@ def crescent(L, name, tex, col, scale, *, plane='face', tilt=0.0, ro=160.0, half
 
 
 def build(key, glow, core, prev=None):
+    # (Noah, clips 287-291: the slashes read pale grey - a white core washed out by the game's light) the edge is the colour itself
+    # made hotter, never white
+    g = [float(x) for x in glow.split(',')]
+    core = ','.join(f'{min(1.0, c * 0.75 + 0.25):.2f}' for c in g)
     L = [f'out {MESH / ("arc_" + key + ".nif")}']
     # (Noah: the Wizard Warrior photo) a long thin blade of light about 3.6 m from tip to tip, lying in the swing's plane and
     # bowed the way it flies: three planes fanned about its span give it body from any side
@@ -157,17 +161,17 @@ def build(key, glow, core, prev=None):
     # a blade leaning into its flight - its curve still leads the way it flies
     P = 0.7
     for i, (t, sc) in enumerate(((P, 1.1), (P - 0.3, 0.55), (P + 0.3, 0.55))):
-        crescent(L, f'body{i}', 'arc_slash.dds', glow, sc, plane='flat', tilt=t, ro=R, half=HALF, depth=22.0, bow=0.0, prev=prev)
+        crescent(L, f'body{i}', 'arc_slash.dds', glow, sc * 1.4, plane='flat', tilt=t, ro=R, half=HALF, depth=22.0, bow=0.0, prev=prev)
     # the razor: the white-hot line along its front
     for i, t in enumerate((P, P - 0.45, P + 0.45)):
         crescent(L, f'edge{i}', 'arc_slash.dds', core, 3.2 if t == P else 1.2, plane='flat', tilt=t, ro=R, half=HALF - 1, depth=5.0, v0=0, v1=0.25, rows=2, bow=0.0, prev=prev)
     # the wake: fine streaks trailing well behind it, sliding along the curve as it flies, peeling into wisps
-    crescent(L, 'wisp', 'arc_wisp.dds', glow, 1.0, plane='flat', tilt=P - 0.12, ro=R - 4, half=HALF + 4, depth=90.0, uscroll=0.6, bow=0.0, prev=prev)
-    crescent(L, 'wisp2', 'arc_wisp.dds', core, 0.6, plane='flat', tilt=P + 0.2, ro=R - 6, half=HALF + 2, depth=65.0, uscroll=-0.35, bow=0.0, prev=prev)
+    crescent(L, 'wisp', 'arc_wisp.dds', glow, 0.4, plane='flat', tilt=P - 0.12, ro=R - 4, half=HALF + 4, depth=90.0, uscroll=0.6, bow=0.0, prev=prev)
+    crescent(L, 'wisp2', 'arc_wisp.dds', glow, 0.2, plane='flat', tilt=P + 0.2, ro=R - 6, half=HALF + 2, depth=65.0, uscroll=-0.35, bow=0.0, prev=prev)
     # sparks shed off it, most at its ends
-    crescent(L, 'spark', 'arc_spark.dds', core, 1.4, plane='flat', tilt=P + 0.1, ro=R + 4, half=HALF + 8, depth=75.0, uscroll=0.3, bow=0.0, prev=prev)
+    crescent(L, 'spark', 'arc_spark.dds', core, 0.9, plane='flat', tilt=P + 0.1, ro=R + 4, half=HALF + 8, depth=75.0, uscroll=0.3, bow=0.0, prev=prev)
     # the bloom round it
-    crescent(L, 'haze', 'arc_haze.dds', glow, 0.45, plane='flat', tilt=P, ro=R + 8, half=HALF + 2, depth=50.0, rows=4, bow=0.0, prev=prev)
+    crescent(L, 'haze', 'arc_haze.dds', glow, 0.75, plane='flat', tilt=P, ro=R + 8, half=HALF + 2, depth=50.0, rows=4, bow=0.0, prev=prev)
     jf = WORK / f'arc_{key}.job'; jf.write_text('\n'.join(L) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
     print(key, r.stdout.strip()[-200:], r.stderr.strip()[-400:])
