@@ -159,7 +159,9 @@ def build(key, glow, core, prev=None):
     # (lying flat in the swing's plane it showed only its edge to you from behind - "thin lines") pitched up about its span by
     # 40 degrees, its leading curve rising: from behind your eyes a full crescent bowed up over its swing line, from the side
     # a blade leaning into its flight - its curve still leads the way it flies
-    P = 0.7
+    # (Noah, test recordings 02:41: from behind your eyes the blade still read as a thin streak - its face was turned away)
+    # stood almost upright across its flight, its face to you as it leaves, still leaning a little into its swing
+    P = 1.35
     # (Noah: "update the slashes so theyre thinner and make more sense when coming from the blade") a thin blade of light: two
     # close planes (not a fan of three), a third of the depth it had, the wake and the bloom drawn in tight round it
     for i, (t, sc) in enumerate(((P, 1.2), (P + 0.14, 0.6))):
