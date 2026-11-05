@@ -78,7 +78,7 @@ namespace bo3z::Story
 					"The Dragonstone named the burial mounds of the old Dragon Cult", "The dragon is slain - Whiterun's trials open, and the nights bring their elites",
 					"Arngeir speaks of the Echo Altars - the Greybeards will call when your path's secret is won", "The Greybeards' peace is made" };
 				Forms::Play(gen::Sound::quest_start);
-				Hud::Banner(std::string("THE CURSE DEEPENS - ") + kNews[now], 6.0f);
+				Hud::QuestBanner(std::string("THE CURSE DEEPENS - ") + kNews[now], 6.0f);
 			}
 			if (now != g_stage) logger::info("story: stage {} -> {}", g_stage, now);
 			g_stage = now;

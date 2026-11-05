@@ -174,7 +174,7 @@ namespace bo3z::Eggs
 			if (a_loud) {
 				std::string t(d.title);
 				for (auto& ch : t) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
-				Hud::Banner(t + " - COMPLETE", 5.0f);
+				Hud::QuestBanner(t + " - COMPLETE", 5.0f);
 			}
 			Classes::EarnWonder(d.cls);  // (the quest's end: the Greybeards call, and the wonder waits in the Reliquary)
 			logger::info("eggs: {} rewarded", d.id);
@@ -198,7 +198,7 @@ namespace bo3z::Eggs
 			}
 			SetRaw(e, st * 1000);
 			SetTowns(e, (CurTown(e) + 1) * 100);  // (this city did its step: the next is found in another)
-			Hud::Banner(std::string(gen::kEggs[e].steps[st].text), 6.0f);  // (found the way on: the next step is told)
+			Hud::QuestBanner(std::string(gen::kEggs[e].steps[st].text), 6.0f);  // (found the way on: the next step is told)
 			logger::info("eggs: {} step {}", gen::kEggs[e].id, st);
 		}
 		void Bump(int e, int a_n, std::string_view a_what)
@@ -413,7 +413,7 @@ namespace bo3z::Eggs
 			if (key != g_hintKey) g_hintKey = key, g_stuck = 0, g_plain = false, g_lastProg = Prog(e);
 			if (town != lastTown || key != lastKey) {
 				lastTown = town, lastKey = key;
-				Hud::Banner("The altar whispers: " + std::string(gen::kEggs[e].steps[st].hint), 6.0f);
+				Hud::QuestBanner("The altar whispers: " + std::string(gen::kEggs[e].steps[st].hint), 6.0f);
 			}
 			if (Prog(e) != g_lastProg) g_lastProg = Prog(e), g_stuck = std::max(0.0f, g_stuck - 120.0f);
 			if (Director::NightNow() && !g_plain && (g_stuck += a_delta) > 480.0f) {

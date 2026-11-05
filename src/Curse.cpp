@@ -680,7 +680,7 @@ namespace bo3z
 			}
 			Gun::Give(relic);
 			Forms::Play(gen::Sound::buy);
-			Hud::Banner(name + " RECLAIMED", 3.0f);
+			Hud::QuestBanner(name + " RECLAIMED", 3.0f);
 			logger::info("curse: {} reclaimed at {}", gen::kGuns[relic].id, gen::kTowns[a_town]);
 		}
 		int ClaimableShout(int a_town)
@@ -701,11 +701,11 @@ namespace bo3z
 			St s = Get(a_town);
 			const std::string title(Title(a_trial));
 			if (s.freed) {
-				Hud::Banner("The Echo Altar of " + std::string(gen::kTowns[a_town]) + " is awake", 2.5f);
+				Hud::QuestBanner("The Echo Altar of " + std::string(gen::kTowns[a_town]) + " is awake", 2.5f);
 				return;
 			}
 			if ((s.done >> a_trial) & 1) {
-				Hud::Banner(title + " is done", 2.5f);
+				Hud::QuestBanner(title + " is done", 2.5f);
 				return;
 			}
 			if (std::string why; !Story::TrialsOpen(a_town, &why)) {
@@ -725,7 +725,7 @@ namespace bo3z
 				return;
 			}
 			if (s.Trial() == a_trial) {
-				Hud::Banner(title + " is under way", 2.5f);
+				Hud::QuestBanner(title + " is under way", 2.5f);
 				return;
 			}
 			const int was = s.Trial();
@@ -734,7 +734,7 @@ namespace bo3z
 			Put(a_town, s);
 			ClearRun();
 			Forms::Play(gen::Sound::quest_start);
-			Hud::Banner((was >= 0 ? std::string(Title(was)) + " set aside.   " : std::string()) + Upper(title) + ": " + Ask(a_trial) + (Director::Fighting() ? "" : " (at night)"), 6.0f);
+			Hud::QuestBanner((was >= 0 ? std::string(Title(was)) + " set aside.   " : std::string()) + Upper(title) + ": " + Ask(a_trial) + (Director::Fighting() ? "" : " (at night)"), 6.0f);
 			logger::info("curse: {} trial {} taken up (difficulty {})", gen::kTowns[a_town], gen::kTrials[a_trial].id, Diff());
 		}
 
@@ -872,7 +872,7 @@ namespace bo3z
 			} else {
 				Put(z, s);
 				Forms::Play(gen::Sound::quest_step);
-				Hud::Banner(fmt::format("{} - {} of {} waves", Upper(std::string(Title(tr))), s.prog, N(tr)), 3.5f);
+				Hud::QuestBanner(fmt::format("{} - {} of {} waves", Upper(std::string(Title(tr))), s.prog, N(tr)), 3.5f);
 			}
 		}
 
@@ -892,7 +892,7 @@ namespace bo3z
 				St fs = Get(a_town);
 				fs.prog = 1;
 				Put(a_town, fs);
-				Hud::Banner(Upper(std::string(BossName(a_town))) + " FALLS - " + Upper(std::string(gen::kTowns[a_town])) + " IS FREE", 5.0f);
+				Hud::QuestBanner(Upper(std::string(BossName(a_town))) + " FALLS - " + Upper(std::string(gen::kTowns[a_town])) + " IS FREE", 5.0f);
 				logger::info("curse: {}'s Dragon Priest slain - the night ends, the city is freed", gen::kTowns[a_town]);
 			}
 		}
@@ -950,7 +950,7 @@ namespace bo3z
 				if (((after.done >> i) & 1) && !((before.done >> i) & 1)) {
 					if (g_zone == a_town) g_mine[a_town] |= static_cast<std::uint8_t>(1 << i);  // (you were there: it is yours too)
 					Forms::Play(gen::Sound::quest_step);
-					Hud::Banner(Upper(std::string(Title(i))) + " - COMPLETE (your party)", 5.0f);
+					Hud::QuestBanner(Upper(std::string(Title(i))) + " - COMPLETE (your party)", 5.0f);
 					Points::Add(500 * after.Count());
 					logger::info("curse: {} trial {} done by the party", gen::kTowns[a_town], gen::kTrials[i].id);
 				}
@@ -1141,7 +1141,7 @@ namespace bo3z
 						cs.active = kBossActive;
 						Put(z, cs);
 						Forms::Play(gen::Sound::quest_step);
-						Hud::Banner("THE PARTY'S TRIALS ARE DONE   " + std::string(BossName(z)) + " rises at the altar when night falls - then finish the night's waves", 7.0f);
+						Hud::QuestBanner("THE PARTY'S TRIALS ARE DONE   " + std::string(BossName(z)) + " rises at the altar when night falls - then finish the night's waves", 7.0f);
 						logger::info("curse: {} - every player has three trials: the Dragon Priest", gen::kTowns[z]);
 					}
 				}

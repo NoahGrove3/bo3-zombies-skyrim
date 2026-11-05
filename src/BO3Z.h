@@ -1216,6 +1216,7 @@ namespace bo3z
 		State&      Edit();
 		std::mutex& Lock();
 		void        Banner(std::string a_text, float a_seconds = 4.0f);
+		void        QuestBanner(std::string a_text, float a_seconds);  // a quest's line across the screen (shown even with the other banners off)
 		void        ShoutLearned(std::string_view a_name, std::string_view a_words);  // the shout-learned pop-up (the one banner still shown)
 		void        Say(std::string a_who, std::string a_line, float a_seconds = 4.5f);  // a townsperson's words, as a subtitle
 		void        Essence(const RE::NiPoint3& a_at);  // a kill's essence flies from the body to your count

@@ -6632,6 +6632,14 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 		}
 		// (Noah: "I also want the learning a new shout pop up to appear so that players know which shout they learned ... the
 		// dragon's updraft shout as well") the one message across the screen still shown: a shout learned, its name and words
+		// (Noah: "I also want the quest & new shout unlocked UI to come back") the quests' own lines - a trial taken up, its
+		// progress, a trial or a hidden quest done, a city freed, a relic reclaimed - cross the screen again, as the shout learned
+		// does; every other banner stays in the log
+		void QuestBanner(std::string a_text, float a_seconds)
+		{
+			logger::info("quest: {}", a_text);
+			ShowBanner(std::move(a_text), a_seconds);
+		}
 		void ShoutLearned(std::string_view a_name, std::string_view a_words)
 		{
 			logger::info("hud: shout learned - {} ({})", a_name, a_words);
