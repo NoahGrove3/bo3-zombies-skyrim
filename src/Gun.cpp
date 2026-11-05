@@ -3213,7 +3213,7 @@ namespace bo3z
 		// (Noah: the Alchemist's flasks "explode right in front of my face - there's no travel, it doesn't arc") a thrown
 		// flask is flown here: its model hung in the scene, carried along its arc under gravity, tumbling; it comes down on
 		// the first body or wall or ground its path crosses, and its burst is called there
-		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; };
+		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; bool meteor = false; RE::NiPoint3 target; };
 		std::vector<Lobbed> g_lobs;
 		void TickLobs(float a_delta)
 		{
@@ -3228,6 +3228,12 @@ namespace bo3z
 				const RE::NiPoint3 next = l.p + l.v * dt;
 				RE::NiPoint3 hit = next;
 				bool down = l.t > 8.0f;
+				// (Noah, clip 291: the gold meteors burst in the treetops) a meteor falls onto its point: nothing stops it until the
+				// last few metres, and it comes down there even if it would miss the ground by a hair
+				if (l.meteor && !down) {
+					if (next.z <= l.target.z + 25.0f || next.GetDistance(l.target) < 60.0f) { hit = l.target; down = true; }
+					else if (l.p.z > l.target.z + 260.0f) { l.p = next; goto placed; }
+				}
 				if (!down && l.t > 0.04f) {  // (out of your own hand first)
 					if (const float wf = Spellcraft::WorldHit(l.p, next); wf <= 1.0f) hit = l.p + (next - l.p) * wf, down = true;
 					for (auto* f : foes) {
@@ -3245,6 +3251,7 @@ namespace bo3z
 					continue;
 				}
 				l.p = next;
+			placed:
 				if (auto r = l.ref.get()) {
 					RE::NiMatrix3 tumble;
 					tumble.SetEulerAnglesXYZ(l.t * l.spin, 0.0f, 0.0f);
@@ -3295,6 +3302,65 @@ namespace bo3z
 				}
 			}
 		}
+		// (Noah: the heavy attacks redone) one of the heavy attacks' shapes of light set on the ground (tools/ringfx.py,
+		// tools/heavyfx.py): grown from s0 to s1 over its first `grow` seconds (fast, then settling), held, its light dying from
+		// `fadeFrom` to the end of its life - a shockwave ring is grown its whole life and fades as it goes
+		struct GrowFx { Spellcraft::Fx fx; RE::NiPoint3 at; float yaw, s0, s1, grow, life, fadeFrom, t = 0; };
+		std::vector<GrowFx> g_grows;
+		void Grow(const std::string& a_model, const RE::NiPoint3& a_at, float a_yaw, float a_s0, float a_s1, float a_grow, float a_life, float a_fadeFrom)
+		{
+			if (g_grows.size() > 48) return;
+			GrowFx r{ Spellcraft::Fx{ Spellcraft::LoadPath(a_model) }, a_at, a_yaw, a_s0, a_s1, std::max(0.01f, a_grow), std::max(0.1f, a_life), std::clamp(a_fadeFrom, 0.0f, a_life) };
+			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(r.at, land) && std::abs(land - r.at.z) < 200.0f) r.at.z = land + 2.0f;
+			if (r.fx.obj) g_grows.push_back(std::move(r));
+		}
+		void Ring(const char* a_colour, const RE::NiPoint3& a_at, float a_r0, float a_r1, float a_life)
+		{
+			Grow(std::string("CurseOfAlduin\\fx\\ring_") + a_colour + ".nif", a_at, 0.0f, a_r0 / 50.0f, a_r1 / 50.0f, a_life, a_life, 0.0f);
+		}
+		void TickGrows(float a_delta)
+		{
+			static std::unordered_map<RE::BSEffectShaderMaterial*, float> base, fade;
+			auto* world = Spellcraft::WorldRoot();
+			for (auto& r : g_grows) {
+				r.t += a_delta;
+				if (!world) { r.t = r.life + 1; continue; }
+				const float g = std::min(1.0f, r.t / r.grow), e = 1.0f - (1.0f - g) * (1.0f - g);
+				const float light = r.t <= r.fadeFrom ? 1.0f : std::max(0.0f, 1.0f - (r.t - r.fadeFrom) / std::max(0.01f, r.life - r.fadeFrom));
+				r.fx.Attach(world);
+				RE::NiMatrix3 turn;
+				turn.SetEulerAnglesXYZ(0, 0, -r.yaw);
+				r.fx.Place(r.at, turn, r.s0 + (r.s1 - r.s0) * e);
+				RE::BSVisit::TraverseScenegraphGeometries(r.fx.obj.get(), [&](RE::BSGeometry* geo) {
+					if (auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(geo->GetGeometryRuntimeData().shaderProperty.get()))
+						if (auto* m = static_cast<RE::BSEffectShaderMaterial*>(ep->material)) {
+							auto [it, fresh] = base.try_emplace(m, m->baseColorScale);
+							float& want = fade[m];   // (two of one model share it: the brighter of them)
+							want = std::max(want, it->second * light);
+						}
+					return RE::BSVisit::BSVisitControl::kContinue;
+				});
+			}
+			for (auto& [m, v] : fade) m->baseColorScale = v;
+			fade.clear();
+			for (auto& r : g_grows) if (r.t > r.life) r.fx.Detach();
+			std::erase_if(g_grows, [](const GrowFx& r) { return r.t > r.life; });
+		}
+		void LightningArc(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_delay) { g_arcs.push_back({ a_from, a_to, a_delay }); }
+		void Knock(RE::Actor* a_a, float a_mag) { if (a_a && !a_a->IsDead()) Stagger(a_a, a_mag); }
+		// (Noah, the meteors: "Big single impacts") where one comes down: a blinding flash of its fire, a shockwave ring racing
+		// out across the ground, and the ground left scorched and burning a few seconds
+		void MeteorImpact(const RE::NiPoint3& a_at, bool a_gold, float a_size)
+		{
+			const int el = a_gold ? 8 : 0;
+			ElemBurst(el, a_at + RE::NiPoint3{ 0, 0, 40.0f }, 2.0f * a_size, 0.0f, 0.8f);
+			ElemBurst(4, a_at + RE::NiPoint3{ 0, 0, 60.0f }, 1.1f * a_size, 0.0f, 0.3f);   // (the white flash at its heart)
+			FxBlast(a_gold ? "dragonfire" : "fireball", a_at);
+			Ring(a_gold ? "gold" : "fire", a_at, 40.0f, 400.0f * a_size, 0.7f);
+			Ring("white", a_at, 20.0f, 220.0f * a_size, 0.35f);
+			Puddle(0, a_at, 0.9f * a_size, 4.0f);   // (the scorch, burning)
+			BlastSound("fireball", a_at, 0.85f);
+		}
 		// (Noah: the Bane's and the Dragon Slayer's meteors) one of ours falling from high over the point, a little slanted, nose
 		// first; a_land where it comes down (the first body, wall or ground it meets)
 		void Meteor(const RE::NiPoint3& a_at, bool a_gold, float a_scale, std::function<void(const RE::NiPoint3&)> a_land)
@@ -3308,6 +3374,7 @@ namespace bo3z
 			constexpr float t = 0.9f;
 			v = v * (1.0f / t) + RE::NiPoint3{ 0, 0, 0.5f * 900.0f * t };
 			Lob(a_gold ? "CurseOfAlduin\\fx\\meteor_gold.nif" : "CurseOfAlduin\\fx\\meteor_fire.nif", from, v, a_scale, std::move(a_land), 0.0f);
+			if (!g_lobs.empty()) g_lobs.back().meteor = true, g_lobs.back().target = a_at;
 		}
 		RE::ObjectRefHandle PlaceAt(RE::TESBoundObject* a_obj, const RE::NiPoint3& a_at, float a_yaw)
 		{
@@ -4510,6 +4577,7 @@ namespace bo3z
 			BowsImpl::Tick(a_delta);
 			TickEBursts(a_delta);
 			TickLobs(a_delta);
+			TickGrows(a_delta);
 			TickLightOrb(a_delta);
 			TickWeaponFlame();
 			TrackBlade(a_delta);

@@ -238,7 +238,7 @@ namespace bo3z
 		void             DevSpawnAt(std::string_view a_row, const RE::NiPoint3& a_at, float a_yawDeg);  // DevTools: ...at a point, facing yaw
 		void             DevShowUndead(bool a_show);  // DevTools: hide/show every undead we raised (clean plates for art captures)
 		void             EndNight();
-		void             SkipToDawn(const char* a_banner);  // the clock jumps to first light (the night counts as survived)
+		void             SkipToDawn(const char* a_banner, bool a_lapse = true);  // first light: a sunrise time-lapse (a_lapse false: the clock jumps)  // the clock jumps to first light (the night counts as survived)
 		bool             MayRest(std::string& a_why);  // waiting / sleeping: not at night, and only the host's clock moves
 		bool             BossPos(RE::NiPoint3& a_at);  // Grimmvar, if he walks
 		bool             RaiseChampion(int a_town, std::string_view a_row, std::string_view a_name, float a_healthMult, const RE::NiPoint3& a_at);  // a city's named champion
@@ -804,7 +804,12 @@ namespace bo3z
 		void                  Halo(int a_count, const std::string& a_model, float a_scale, float a_period, std::function<void(RE::Actor*)> a_strike);
 		void                  BlastSound(std::string_view a_name, const RE::NiPoint3& a_at, float a_vol = 1.0f);  // a Skyrim spell explosion's own impact sound
 		void                  SkyFall(const RE::NiPoint3& a_at);  // a burning star from the sky onto a point
-		void                  Meteor(const RE::NiPoint3& a_at, bool a_gold, float a_scale, std::function<void(const RE::NiPoint3&)> a_land);  // a meteor of ours (tools/meteorfx.py) falling from high above onto a point
+		void                  Meteor(const RE::NiPoint3& a_at, bool a_gold, float a_scale, std::function<void(const RE::NiPoint3&)> a_land);
+		void                  Grow(const std::string& a_model, const RE::NiPoint3& a_at, float a_yaw, float a_s0, float a_s1, float a_grow, float a_life, float a_fadeFrom);  // a shape of light set on the ground: grown, held, faded
+		void                  MeteorImpact(const RE::NiPoint3& a_at, bool a_gold, float a_size);  // a meteor's landing: flash, shockwave ring, burning scorch (no damage)
+		void                  Ring(const char* a_colour, const RE::NiPoint3& a_at, float a_r0, float a_r1, float a_life);  // a shockwave ring growing across the ground (ring_<colour>.nif)
+		void                  Knock(RE::Actor* a_a, float a_mag);  // a stagger
+		void                  LightningArc(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_delay);  // a bolt of lightning between two points  // a meteor of ours (tools/meteorfx.py) falling from high above onto a point
 		void                  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);
 		void                  Motes(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_life);  // fine motes rising off the ground over an area (the ElemBurst elements)
 		void                  ElemBurst(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);  // an element's impact burst (0 fire 1 frost 2 shock 3 wind 4 sun 5 blood 6 void), here a moment  // the Horn's dragon's violet flame, here a moment  // the night's dead round a point lose a share of a whole zombie's health

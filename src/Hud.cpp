@@ -1196,7 +1196,8 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			// The crosshair: a small white dot (Skyrim's own is hidden), and while you sneak a small clean eye just over
 			// it - a thin almond that opens as the most watchful one grows suspicious, white while hidden, amber when
 			// they wonder, red when you are seen
-			if (!Hud::kEdgeHud && !s.perkMenu && !s.lootOn) {
+			constexpr bool kCrosshairDot = false;  // (Noah: "remove the crosshair from the UI it looks cleaner without it")
+			if (kCrosshairDot && !Hud::kEdgeHud && !s.perkMenu && !s.lootOn) {
 				const ImVec2 cc{ size.x * 0.5f, size.y * 0.5f };
 				dl->AddCircleFilled(cc, 3.2f * k, IM_COL32(0, 0, 0, 90), 16);
 				dl->AddCircleFilled(cc, 2.2f * k, IM_COL32(255, 255, 255, 235), 16);
@@ -2309,9 +2310,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 					}
 				}
 				// (no charge ring: a full charge shows in the spell itself, which pulses and flashes in the hands)
-				// crosshair: four ticks that tighten when aiming, a dot at full aim
+				// crosshair: four ticks that tighten when aiming, a dot at full aim (Noah: "remove the crosshair" - off)
+				constexpr bool kCrosshairTicks = false;
 				const ImVec2 c{ size.x * 0.5f, size.y * 0.5f };
-				if (s.ads < 0.95f) {
+				if (!kCrosshairTicks) {
+				} else if (s.ads < 0.95f) {
 					const float g = 10 * k * (1.0f - s.ads * 0.6f), l = 8 * k;
 					const ImU32 col = IM_COL32(255, 245, 225, static_cast<int>(220 * (1.0f - s.ads)));
 					dl->AddLine({ c.x - g - l, c.y }, { c.x - g, c.y }, col, 2 * k);

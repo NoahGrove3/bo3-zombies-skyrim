@@ -462,8 +462,7 @@ namespace Props
 		Gun::Meteor(at, false, 1.6f, [](const RE::NiPoint3& hit) {
 			auto* pl = RE::PlayerCharacter::GetSingleton();
 			Blast(BlastIndex("fireball"), hit + RE::NiPoint3{ 0, 0, 20.0f }, 0.0f, 0.7f);
-			Gun::ElemBurst(0, hit + RE::NiPoint3{ 0, 0, 40.0f }, 2.2f, 0.0f, 0.8f);
-			Gun::Motes(0, hit, 2.0f, 2.0f);
+			Gun::MeteorImpact(hit, false, 1.2f);
 			if (!pl) return;
 			for (auto* f : Foes(hit, 360.0f)) {
 				if (Damage(f, FangBase() * BaneMult() * 2.4f, false, false, true)) { BaneKilled(pl); continue; }
@@ -568,7 +567,8 @@ namespace Props
 				// the spot; the strike (ours) lands as it does
 				// (Noah: "every 20 kills rains meteors on enemies for 10 seconds") ours, its fire tail seen the whole way down; its
 				// strike where it lands
-				Gun::Meteor(at, false, 1.0f, [](const RE::NiPoint3& hit) {
+				Gun::Meteor(at, false, 1.2f, [](const RE::NiPoint3& hit) {
+					Gun::MeteorImpact(hit, false, 0.9f);
 					g_zones.push_back({ 4, hit, 240.0f, 0.15f, 0.0f, FangBase() * 2.0f, 0, false, 0 });   // (struck at once: it has landed)
 				});
 			}

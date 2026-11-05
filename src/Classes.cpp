@@ -3433,6 +3433,31 @@ namespace bo3z::Classes
 		}
 	}
 	// a swing of a class sword (any swing, hit or miss - WonderProps hears it)
+	namespace
+	{
+		// the swing's heading along the ground
+		RE::NiPoint3 Flat(const RE::NiPoint3& a_dir, RE::PlayerCharacter* a_p)
+		{
+			RE::NiPoint3 f{ a_dir.x, a_dir.y, 0 };
+			if (f.Length() < 1e-3f) f = { std::sin(a_p->GetAngleZ()), std::cos(a_p->GetAngleZ()), 0 };
+			f.Unitize();
+			return f;
+		}
+		// a point set down on the ground under it (or left at your feet's height where there's no land under it, indoors)
+		RE::NiPoint3 OnGround(RE::NiPoint3 a_at, float a_feet)
+		{
+			a_at.z = a_feet;
+			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(a_at, land) && std::abs(land - a_feet) < 150.0f) a_at.z = land;
+			return a_at;
+		}
+		float SegDist(const RE::NiPoint3& a_c, const RE::NiPoint3& a_a, const RE::NiPoint3& a_b)
+		{
+			const RE::NiPoint3 ab = a_b - a_a;
+			const float L = ab.SqrLength();
+			const float k = L > 1e-4f ? std::clamp((a_c - a_a).Dot(ab) / L, 0.0f, 1.0f) : 0.0f;
+			return a_c.GetDistance(a_a + ab * k);
+		}
+	}
 	void MaceSwing(bool a_power)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
@@ -3473,8 +3498,6 @@ namespace bo3z::Classes
 		}
 		if (t >= 2) {
 			// Tier II on: the heavy attack bursts round where it lands, in the sword's element
-			const RE::NiPoint3 at = me + dir * 190.0f + RE::NiPoint3{ 0, 0, 40.0f };
-			const float r = 320.0f + 40.0f * t;
 			switch (cls) {
 			case 2: {
 				// (Noah: "the shadow flame effect on enemies looks like a bunch of small ash piles with purple flames when it should
@@ -3497,16 +3520,126 @@ namespace bo3z::Classes
 				logger::info("swords: the Shadowflame wall - a 90 degree fan of violet fire to 15 m for {:.0f} s", kWallSeconds);
 				break;
 			}
-			case 1: Gun::ElemBurst(1, at, 1.4f, 0.0f, 0.9f); Gun::FxBlast("light", at); break;            // (raw sorcery: a blue-white burst)
-			case 0: Gun::FxBlast("light", at); Gun::ElemBurst(4, at, 1.1f, 0.0f, 0.8f); break;             // (radiance)
+			case 0: {
+				// (Noah, the Summoner: "Sunlight pillar + ring") a column of white sunlight comes down 4 m ahead, and a ring of light
+				// rolls out from it to 6 m: those in the column are seared, those the ring reaches are staggered and set burning
+				const RE::NiPoint3 pt = OnGround(me + Flat(dir, p) * 280.0f, me.z);
+				Gun::Grow("CurseOfAlduin\\fx\\sunpillar.nif", pt, 0.0f, 0.5f, 1.0f, 0.18f, 1.5f, 0.9f);
+				Gun::Ring("white", pt, 40.0f, 420.0f, 0.75f);
+				Gun::Ring("sun", pt, 20.0f, 300.0f, 0.6f);
+				Gun::ElemBurst(4, pt + RE::NiPoint3{ 0, 0, 40.0f }, 1.4f, 0.0f, 0.9f);
+				Gun::FxBlast("light", pt);
+				Gun::BlastSound("lightmassive", pt, 0.9f);
+				Gun::AreaHurt(pt, 140.0f, 0.45f * pw, "");
+				const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
+				for (auto* f : NearFoes(pt, 440.0f, 30)) {
+					RE::NiPoint3 d = f->GetPosition() - pt;
+					d.z = 0;
+					Tasks::Later(0.75f * std::min(1.0f, d.Length() / 420.0f), [h = f->GetHandle(), pw, whole] {
+						auto a = h.get();
+						if (!a || a->IsDead()) return;
+						Gun::Knock(a.get(), 0.6f);
+						Gun::Burn(a.get(), whole * 0.05f * pw, 3.0f);
+						Gun::AreaHurt(a->GetPosition(), 10.0f, 0.15f * pw, "");
+					});
+				}
+				logger::info("swords: the Radiant Blade's sunlight pillar and ring");
+				break;
+			}
+			case 1: {
+				// (Noah, the Destruction sword: "Lightning dome + chains") a dome of crackling blue lightning where the blow lands,
+				// and lightning leaping from it through up to five of the dead within 10 m, one to the next
+				const RE::NiPoint3 pt = OnGround(me + Flat(dir, p) * 200.0f, me.z);
+				Gun::Grow("CurseOfAlduin\\fx\\ldome.nif", pt, 0.0f, 0.6f, 4.6f, 0.22f, 1.1f, 0.55f);
+				Gun::Ring("blue", pt, 60.0f, 380.0f, 0.6f);
+				Gun::ElemBurst(2, pt + RE::NiPoint3{ 0, 0, 60.0f }, 1.6f, 0.0f, 0.9f);
+				Gun::BlastSound("shockmass", pt, 0.9f);
+				Gun::AreaHurt(pt, 240.0f, 0.4f * pw, "");
+				for (auto* f : NearFoes(pt, 240.0f, 20)) Gun::Knock(f, 0.5f);
+				RE::NiPoint3 from = pt + RE::NiPoint3{ 0, 0, 200.0f };
+				float delay = 0.12f;
+				for (auto* f : NearFoes(pt, 700.0f, 5)) {
+					const RE::NiPoint3 to = f->GetPosition() + RE::NiPoint3{ 0, 0, 80.0f };
+					Gun::LightningArc(from, to, delay);
+					Tasks::Later(delay, [h = f->GetHandle(), pw, to] {
+						auto a = h.get();
+						if (!a || a->IsDead()) return;
+						Gun::ElemBurst(2, to, 0.5f, 0.0f, 0.45f);
+						Gun::Knock(a.get(), 0.4f);
+						Gun::AreaHurt(a->GetPosition(), 10.0f, 0.3f * pw, "");
+					});
+					from = to, delay += 0.09f;
+				}
+				logger::info("swords: the Carian sword's lightning dome and chains");
+				break;
+			}
 			case 3: {
-				// (Noah: "Remove the red mist") its plain red blade bursts in fire - the blood burst's low red mist was it
-				static constexpr int kBurst[9] = { 0, 0, 0, 0, 0, 1, 2, 4, 5 };
-				Gun::ElemBurst(kBurst[key], at, 1.3f, 0.0f, 0.9f);
+				// (Noah, the Spellsword: "Elemental shockwave line") the ground splits 8 m ahead of the blow in the spell's element -
+				// flames, ice spikes, lightning along the ground, pillars of light, crimson spikes - running out from your feet;
+				// all the dead along it are struck as it reaches them
+				// (Noah: "Remove the red mist") its plain red blade splits the ground in fire
+				static constexpr int kElem[9] = { 0, 0, 0, 0, 0, 1, 2, 4, 5 };
+				const int el = kElem[key];
+				const RE::NiPoint3 fwd = Flat(dir, p);
+				const RE::NiPoint3 side{ fwd.y, -fwd.x, 0 };
+				const RE::NiPoint3 start = me + fwd * 60.0f;
+				constexpr int kSteps = 8;
+				constexpr float kStep = 70.0f, kBeat = 0.05f;
+				RE::NiPoint3 prev = OnGround(start, me.z);
+				for (int i = 0; i < kSteps; ++i) {
+					const float jig = (i % 2 ? 1.0f : -1.0f) * (10.0f + 10.0f * static_cast<float>(std::rand() % 100) / 100.0f);
+					const RE::NiPoint3 pt = OnGround(start + fwd * (kStep * (i + 0.5f)) + side * jig, me.z);
+					const float yaw = static_cast<float>(std::rand() % 628) / 100.0f;
+					const float big = 0.8f + 0.35f * static_cast<float>(i) / kSteps;
+					Tasks::Later(kBeat * i, [el, pt, prev, yaw, big] {
+						switch (el) {
+						case 1:
+							Gun::Grow("CurseOfAlduin\\fx\\spike_frost.nif", pt, yaw, 0.15f, big, 0.12f, 1.8f, 1.3f);
+							Gun::ElemBurst(1, pt + RE::NiPoint3{ 0, 0, 30.0f }, 0.6f, 0.0f, 0.5f);
+							break;
+						case 2:
+							Gun::LightningArc(prev + RE::NiPoint3{ 0, 0, 15.0f }, pt + RE::NiPoint3{ 0, 0, 15.0f }, 0.0f);
+							Gun::Puddle(2, pt, 0.55f, 1.4f);
+							Gun::ElemBurst(2, pt + RE::NiPoint3{ 0, 0, 25.0f }, 0.55f, 0.0f, 0.45f);
+							break;
+						case 4:
+							Gun::Grow("CurseOfAlduin\\fx\\sunpillar.nif", pt, 0.0f, 0.15f, 0.3f * big, 0.12f, 1.1f, 0.7f);
+							Gun::ElemBurst(4, pt + RE::NiPoint3{ 0, 0, 30.0f }, 0.6f, 0.0f, 0.5f);
+							break;
+						case 5:
+							Gun::Grow("CurseOfAlduin\\fx\\spike_blood.nif", pt, yaw, 0.15f, big, 0.12f, 1.8f, 1.3f);
+							Gun::ElemBurst(5, pt + RE::NiPoint3{ 0, 0, 30.0f }, 0.55f, 0.0f, 0.5f);
+							break;
+						default:
+							Gun::Puddle(0, pt, 0.7f, 2.4f);
+							Gun::ElemBurst(0, pt + RE::NiPoint3{ 0, 0, 30.0f }, 0.75f, 0.0f, 0.55f);
+							break;
+						}
+					});
+					prev = pt;
+				}
+				static constexpr const char* kSound[6] = { "fireball", "icevolley", "runeshock", "fireball", "light", "bloodplague" };
+				Gun::BlastSound(kSound[el], me + fwd * 300.0f, 0.9f);
+				const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
+				const RE::NiPoint3 end = start + fwd * (kStep * kSteps);
+				for (auto* f : NearFoes(start + fwd * (kStep * kSteps * 0.5f), kStep * kSteps * 0.5f + 160.0f, 30)) {
+					const RE::NiPoint3 c = f->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f };
+					if (SegDist(c, start + RE::NiPoint3{ 0, 0, 40.0f }, end + RE::NiPoint3{ 0, 0, 40.0f }) > 150.0f) continue;
+					RE::NiPoint3 d = f->GetPosition() - start;
+					d.z = 0;
+					const float when = kBeat * std::clamp(d.Length() / kStep, 0.0f, static_cast<float>(kSteps));
+					Tasks::Later(when, [h = f->GetHandle(), pw, whole, el] {
+						auto a = h.get();
+						if (!a || a->IsDead()) return;
+						Gun::Knock(a.get(), 0.45f);
+						Gun::AreaHurt(a->GetPosition(), 10.0f, 0.4f * pw, "");
+						if (el == 0) Gun::Burn(a.get(), whole * 0.04f * pw, 3.0f);
+					});
+				}
+				logger::info("swords: the Spellsword's shockwave line (element {})", el);
 				break;
 			}
 			}
-			if (cls != 2) Gun::AreaHurt(at, r, 0.35f * pw, "");
 		}
 		if (t >= 3 && cls == 1) {
 			// (Noah, Destruction's Tier III: "a charged swing conjures a giant spectral greatsword that sweeps everything before
@@ -3555,11 +3688,8 @@ namespace bo3z::Classes
 			if (foes.empty()) return;
 			auto* f = foes[static_cast<std::size_t>(std::rand()) % foes.size()];
 			const float share = 0.35f * SlayerTop();
-			Gun::Meteor(f->GetPosition(), true, 1.0f, [share](const RE::NiPoint3& at) {
-				Gun::ElemBurst(8, at + RE::NiPoint3{ 0, 0, 30.0f }, 1.5f, 0.0f, 0.7f);
-				Gun::FxBlast("dragonfire", at, 0.0f);
-				Gun::Motes(8, at, 1.4f, 1.5f);
-				Gun::BlastSound("fireball", at, 0.7f);
+			Gun::Meteor(f->GetPosition(), true, 1.2f, [share](const RE::NiPoint3& at) {
+				Gun::MeteorImpact(at, true, 0.9f);
 				for (auto* g : NearFoes(at, 230.0f, 12)) {
 					Gun::AreaHurt(g->GetPosition(), 10.0f, share, "");
 					GoldBurn(g, IsDragon(g) ? share : 0.0f);

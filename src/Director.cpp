@@ -3541,8 +3541,50 @@ namespace bo3z
 			}
 		}
 
+		// (Noah: "make the ending of the night when killing the last enemy a smoother transition instead of it being so sudden"
+		// - the sunrise time-lapse) the last of the night falls in slow time; a breath; then the hours run on over eight
+		// seconds, slow to start and slow to settle, the sky lightening and the sun coming up over the hills; the fallen
+		// crumble into light one by one as it comes, and the night's banner shows as the sun breaks
+		struct Sunrise
+		{
+			bool        on = false;
+			float       wait = 0, t = 0, hours = 0, done = 0;
+			std::string banner;
+			std::vector<std::pair<RE::ActorHandle, float>> crumble;   // (each fallen one, and when it goes)
+			std::chrono::steady_clock::time_point last{};
+		};
+		Sunrise g_sunrise;
+		constexpr float kSunriseBreath = 2.0f, kSunriseSeconds = 8.0f, kSunriseAfterDawn = 0.75f;
+		void TickSunrise()
+		{
+			auto& r = g_sunrise;
+			if (!r.on) return;
+			const auto now = std::chrono::steady_clock::now();
+			const float dt = std::clamp(std::chrono::duration<float>(now - r.last).count(), 0.0f, 0.1f);   // (real seconds: the slow beat doesn't stretch it)
+			r.last = now;
+			if (r.wait > 0) { r.wait -= dt; return; }
+			r.t += dt;
+			const float f = std::min(1.0f, r.t / kSunriseSeconds), e = f * f * (3.0f - 2.0f * f);
+			if (const float want = r.hours * e; want > r.done) ShiftClock(want - r.done), r.done = want;
+			for (auto& [h, at] : r.crumble) {
+				if (at < 0 || r.t < at) continue;
+				at = -1.0f;
+				if (auto a = h.get(); a && !a->IsDisabled()) {
+					Gun::ElemBurst(4, a->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f }, 0.55f, 0.0f, 0.7f);   // (into light)
+					std::erase_if(g_corpses, [&](const RE::ActorHandle& c) { return c == h; });
+					Vanish(a.get());
+				}
+			}
+			if (f >= 1.0f) {
+				r.on = false;
+				r.crumble.clear();
+				Hud::Banner(r.banner.c_str(), 5.0f);
+				logger::info("night: the sunrise time-lapse is done ({:.1f} hours): {}", r.hours, r.banner);
+			}
+		}
 		void Reset()
 		{
+			g_sunrise = {};   // (a load mid-sunrise: the clock it ran on is gone)
 			Story::Reset();
 			Eggs::Reset();
 			Audio::BossMusic(false);
@@ -3655,10 +3697,27 @@ namespace bo3z
 			return true;
 		}
 		void EndNight() { SkipToDawn("THE CITY IS FREE - DAWN BREAKS"); }
-		void SkipToDawn(const char* a_banner)
+		void SkipToDawn(const char* a_banner, bool a_lapse)
 		{
 			auto* cal = RE::Calendar::GetSingleton();
-			if (!cal || !IsNight() || Coop::Client()) {
+			if (!cal || Coop::Client()) {
+				return;
+			}
+			if (a_lapse) {
+				if (g_sunrise.on || !IsNight()) return;
+				const float h = cal->GetHour();
+				auto& r = g_sunrise;
+				r = {};
+				r.on = true, r.wait = kSunriseBreath, r.last = std::chrono::steady_clock::now();
+				r.hours = std::fmod(DawnHour() - h + 24.0f, 24.0f) + kSunriseAfterDawn;
+				r.banner = a_banner ? a_banner : "";
+				std::uniform_real_distribution<float> when(0.4f, kSunriseSeconds * 0.8f);
+				for (auto& c : g_corpses) r.crumble.push_back({ c, when(g_rng) });
+				logger::info("night: ended - the sunrise time-lapse begins ({:.1f} hours over {:.0f} s)", r.hours, kSunriseSeconds);
+				return;
+			}
+			if (g_sunrise.on) g_sunrise.on = false, g_sunrise.crumble.clear();   // (skipped outright: no time-lapse after it)
+			if (!IsNight()) {
 				return;
 			}
 			// the clock jumps to first light; the night's round counts as survived (Dawn, from the Director's tick)
@@ -4057,7 +4116,7 @@ namespace bo3z
 			if (Coop::Client() || g_phase != Phase::Fighting || !IsNight()) return;
 			logger::info("night: night {} skipped from the rest screen - it will not count", g_current);
 			g_skipped = true;
-			SkipToDawn("THE NIGHT PASSES YOU BY - IT DOES NOT COUNT");
+			SkipToDawn("THE NIGHT PASSES YOU BY - IT DOES NOT COUNT", false);
 			if (!IsNight()) Dawn();
 		}
 		void TickRest()
@@ -5471,6 +5530,7 @@ namespace bo3z
 				}
 			}
 			TickSlow();
+			TickSunrise();
 			g_pause = std::max(0.0f, g_pause - a_delta);
 			g_nukeLeft = std::max(0.0f, g_nukeLeft - a_delta);
 			Curse::Tick(a_delta);
