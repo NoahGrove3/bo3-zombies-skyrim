@@ -890,7 +890,7 @@ namespace bo3z
 						const auto q = tok.find('=');
 						const std::string k = q == std::string::npos ? tok : tok.substr(0, q), v = q == std::string::npos ? "" : tok.substr(q + 1);
 						try {
-							if (k == "pal") fp.pal = v.find('\\') == std::string::npos ? "textures\\CurseOfAlduin\\fx\\grad_" + v + ".dds" : v;
+							if (k == "pal") fp.pal = v.find('\\') == std::string::npos ? "textures\\CurseOfAlduin\\fx\\pal_" + v + ".dds" : v;
 							else if (k == "s") fp.scale = std::stof(v);
 							else if (k == "z") fp.dz = std::stof(v);
 							else if (k == "noplay") fp.play = false;
@@ -3492,7 +3492,7 @@ namespace bo3z
 			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && std::abs(land - at.z) < 300.0f) at.z = land;
 			FxPart fp;
 			fp.model = a_model;
-			if (!a_pal.empty() && a_pal != "-") fp.pal = a_pal.find('\\') == std::string::npos ? "textures\\CurseOfAlduin\\fx\\grad_" + a_pal + ".dds" : a_pal;
+			if (!a_pal.empty() && a_pal != "-") fp.pal = a_pal.find('\\') == std::string::npos ? "textures\\CurseOfAlduin\\fx\\pal_" + a_pal + ".dds" : a_pal;
 			auto part = std::make_shared<FxPart>(fp);
 			if (a_mode == "x") {
 				if (auto* ex = ModelExplosion(a_model)) {

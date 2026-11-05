@@ -93,5 +93,27 @@ def fix(lines, palette=None):
     return out
 
 
+def palettes():
+    """(the effects map, src/Gun.cpp TintTree) the ramps laid over Skyrim's own effects - shaped as Skyrim's own gradients are:
+    across, the greyscale of the effect's texture; down, the vertex/fade alpha (the top row its faintest, the bottom its
+    fullest), and the alpha carried in the palette (the average of two of the game's own: GradIceStorm, GradFireCloak01,
+    tools/data) - so a tinted effect keeps its own softness and fades as it was made to"""
+    import pathlib
+    from PIL import Image
+    data = pathlib.Path(__file__).resolve().parent / 'data'
+    alpha = np.load(data / 'pal_alpha.npy').astype(float) / 255   # (their two alphas averaged - the game's own files kept out of the repo)
+    x = (np.arange(256) + 0.5) / 256
+    v = (np.arange(64) + 0.5) / 64
+    for name, stops in RAMPS.items():
+        pos = x[None, :] * (0.4 + 0.6 * v[:, None])
+        img = np.zeros((64, 256, 4), np.uint8)
+        for c in range(3):
+            img[..., c] = np.interp(pos, [s[0] for s in stops], [s[1][c] for s in stops]).astype(np.uint8)
+        img[..., 3] = (np.clip(alpha, 0, 1) * 255).astype(np.uint8)
+        Image.fromarray(img, 'RGBA').save(TEX / f'pal_{name}.dds')
+        print(TEX / f'pal_{name}.dds')
+
+
 if __name__ == '__main__':
     ramps()
+    palettes()
