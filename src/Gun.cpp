@@ -3793,6 +3793,7 @@ namespace bo3z
 			WorldFx fx; RE::NiPoint3 from, fwd, at; float dist, life, share, t = 0, beat = 0;
 			std::function<void(RE::Actor*)> touch; std::function<void(const RE::NiPoint3&)> burst; std::unordered_set<RE::FormID> seen;
 			float size = 1.0f; int fec = 0; bool dragons = false;   // (its size; how its dead die; twice the harm to dragons)
+			float trail = 0;   // (the time to the next of what it leaves burning on the ground behind it)
 		};
 		std::vector<Cyclone> g_cyclones;
 		void FireCyclone(const RE::NiPoint3& a_from, const RE::NiPoint3& a_fwd, float a_dist, float a_life, float a_share,
@@ -3827,6 +3828,19 @@ namespace bo3z
 					spin.SetEulerAnglesXYZ(0, 0, c.t * 9.0f);
 					const float grow = std::min(1.0f, c.t / 0.25f) * (f > 0.9f ? 1.0f + (f - 0.9f) * 3.0f : 1.0f);   // (swelling as it's about to burst)
 					c.fx.Place(c.at, spin, c.size * grow * (1.0f + 0.05f * std::sin(c.t * 13.0f)));
+				}
+				// (Noah: "hyper realistic ... in the element") the ground it passes over left burning in its element - Skyrim's own real
+				// fire, frost, light (fxmap.ini cyclone_<element>_trail.nif), every third of a second
+				if ((c.trail -= a_delta) <= 0) {
+					c.trail = 0.33f;
+					static std::unordered_map<std::string, std::string> trails;
+					auto [it, fresh] = trails.try_emplace(c.fx.model);
+					if (fresh) {
+						std::string k = c.fx.model;
+						if (auto d = k.rfind(".nif"); d != std::string::npos) k.insert(d, "_trail");
+						it->second = g_fxMap.count(FxKey(k)) ? k : std::string{};
+					}
+					if (!it->second.empty()) QueueFx(it->second, c.at, c.size, 0.0f, 2.5f, true);
 				}
 				const float pull = 420.0f * c.size;
 				for (auto* a : Foes(c.at, pull)) {
