@@ -3005,7 +3005,7 @@ namespace bo3z::Classes
 	namespace
 	{
 		int g_lastFlaskEl = 0;  // the last flask thrown
-		constexpr int kFlaskBurst[7] = { 0, 1, 2, 7, 4, 5, 8 };  // a flask's burst look (Gun::ElemBurst): fire frost shock poison sun blood gold
+		constexpr int kFlaskBurst[7] = { 0, 1, 2, 7, 10, 5, 8 };   // (Holy Water: its own golden light - Gun::ElemBurst 10)  // a flask's burst look (Gun::ElemBurst): fire frost shock poison sun blood gold
 		struct FlaskShot { RE::ProjectileHandle h; int el = 0, tier = 0; RE::NiPoint3 last; bool seen = false, child = false; float life = 0; };
 		std::vector<FlaskShot> g_flasks;
 		struct GoldCloud { RE::NiPoint3 at; float left = 0, tick = 0, radius = 450, puff = 0; bool legend = false; std::unordered_set<RE::FormID> gilded; };
@@ -3024,7 +3024,9 @@ namespace bo3z::Classes
 		void FlaskBlast(int a_el, int a_tier, const RE::NiPoint3& a_at, float a_size, float a_share, float a_radius)
 		{
 			// (the element's own spell blast: Skyrim's explosion for it - FxBlast below - or, for Holy Water, the effects map's sun)
-			if (a_el == 4 || a_el >= 6) Gun::ElemBurst(kFlaskBurst[a_el], a_at + RE::NiPoint3{ 0, 0, -20.0f }, a_size, 0.0f, 0.9f);
+			// (Noah: flasks "way too big ... take up my whole screen"; "Burst only, no pool") the element's own spell impact (fxmap.ini
+			// burst_*): small by make - a whole Skyrim explosion keeps its flames' size however it's scaled
+			Gun::ElemBurst(kFlaskBurst[std::clamp(a_el, 0, 6)], a_at + RE::NiPoint3{ 0, 0, 10.0f }, std::clamp(a_size, 0.8f, 1.6f), 0.0f, 0.9f);
 			// (Noah: "each flask to have its own impact sound effect, depending on the element") the bottle breaking and its element
 			// let loose (tools/alchsfx.py hits)
 			// (Noah: "they sound really toony - use the spell sound effect that the potion is casting ... with a cork sound effect
@@ -3045,7 +3047,7 @@ namespace bo3z::Classes
 			}
 			logger::info("alchemist: a flask breaks - glass, Skyrim's {} sound{}", kSpellSnd[std::clamp(a_el, 0, 6)], a_el == 0 ? ", its flames for 3 s" : "");
 			static constexpr const char* kVanilla[6] = { "fireball", "frost", "runeshock", "poisongas", "", "bloodplague" };
-			if (a_el < 6 && kVanilla[a_el][0]) Gun::FxBlastSized(kVanilla[a_el], a_at, std::clamp(0.5f * a_size, 0.35f, 1.2f));
+			(void)kVanilla;
 			auto* p = RE::PlayerCharacter::GetSingleton();
 			const auto caught = NearFoes(a_at, a_radius, 16);
 			if (g_flaskMark.size() > 400) g_flaskMark.clear();
@@ -3146,7 +3148,7 @@ namespace bo3z::Classes
 				// (Noah: "Gold sun burst + cloud") Dawnguard's sunburst in gold where it breaks, then the cloud of molten gold hanging
 				// there its whole life (fxmap.ini: philosopher_burst, philosopher_cloud)
 				Gun::QueueFx("CurseOfAlduin\\fx\\philosopher_burst.nif", a_at, 1.0f, 0.0f, 1.5f, false);
-				Gun::Puddle(4, a_at, g.radius / 130.0f, g.left);   // (molten gold lying where it broke - fxmap.ini ground_sun)
+
 				g_gold.push_back(std::move(g));
 				logger::info("alchemist: the Philosopher's Flask shatters");
 				return;
@@ -3159,7 +3161,6 @@ namespace bo3z::Classes
 			const float share = FlaskShare(t) * (f.child ? 0.5f : 1.0f);
 			Gun::QueueFx("CurseOfAlduin\\fx\\flask_glass.nif", a_at + RE::NiPoint3{ 0, 0, 10.0f }, f.child ? 0.5f : 0.8f, 0.0f, 1.0f, false);
 			FlaskBlast(f.el, t, a_at, (f.child ? 0.6f : 1.0f) * 1.0f * (r / 230.0f), share, r);
-			Gun::Puddle(f.el, a_at, r / 130.0f, 4.0f);
 			if (f.child) return;
 			if (t >= 2) {  // Tier II: a chain reaction - the dead it kills burst in its element themselves (once: no chain of chains)
 				const auto caught = NearFoes(a_at, r, 16);
@@ -3489,7 +3490,7 @@ namespace bo3z::Classes
 		struct Card { const char* name; const char* base; const char* tier[3]; };
 		static const Card kCards[] = {
 			{ "Radiant Blade", "The Summoner's blade: pale silver, burning with white sunlight.",
-				{ "Tier I: light swings loose bolts of white light that cut through the dead.", "Tier II: heavy attacks loose a cyclone of white light.", "Tier III: heavy attacks loose a great cyclone of white light." } },
+				{ "Tier I: light swings loose spectral blade waves that cut through the dead.", "Tier II: heavy attacks call a pillar of sunlight down where they land.", "Tier III: heavy attacks call a great pillar of sunlight down." } },
 			{ "Carian Blade", "Destruction's blade: stahlrim edged in raw sorcery.",
 				{ "Tier I: light swings loose bolts of fire, frost and lightning in turn.", "Tier II: heavy attacks loose a storm cyclone of fire, ice and lightning.", "Tier III: heavy attacks loose a great storm cyclone." } },
 			{ "Shadowflame Sword", "The Alchemist's blade: daedric steel wreathed in purple shadowflame.",
@@ -3500,10 +3501,10 @@ namespace bo3z::Classes
 		// (Noah: "Now do the same thing for the flasks and the armor for each class") the flasks: what each is, and its tier's
 		// gift; the class sets: what each is, and the power its tier has woken
 		static const Card kFlasks[] = {
-			{ "Fire Flask", "A flask of liquid fire: it shatters and bursts in flame, leaving fire burning where it lands.", {} },
-			{ "Frost Flask", "A flask of frozen brine: it shatters into killing cold, leaving frost where it lands.", {} },
-			{ "Shock Flask", "A flask of bottled storm: it shatters into arcing lightning, leaving it crackling where it lands.", {} },
-			{ "Acid Flask", "A flask of green acid: it shatters into a corroding splash, leaving a pool of it.", {} },
+			{ "Fire Flask", "A flask of liquid fire: it shatters and bursts in flame.", {} },
+			{ "Frost Flask", "A flask of frozen brine: it shatters into killing cold.", {} },
+			{ "Shock Flask", "A flask of bottled storm: it shatters into arcing lightning.", {} },
+			{ "Acid Flask", "A flask of green acid: it shatters into a corroding splash.", {} },
 			{ "Holy Water", "Blessed water of Stendarr: it shatters into searing light; the dead burn in it.", {} },
 			{ "Bloodbloom Flask", "A flask of vampire's blood: it shatters, and what it drains comes back to you.", {} },
 		};
@@ -3572,6 +3573,22 @@ namespace bo3z::Classes
 		const bool big = a_t >= 3;
 		const RE::NiPoint3 fwd = Flat(a_dir, p);
 		const RE::NiPoint3 from = OnGround(a_me + fwd * 120.0f, a_me.z);
+		if (a_cls == 0) {
+			// (Noah, the Radiant Blade reworked: "Sun pillar strike") Auriel's sunbeam slams down where the blow lands, searing all
+			// round it - Tier II smaller, Tier III great (fxmap.ini sun_strike: Dawnguard's own)
+			const RE::NiPoint3 at = OnGround(a_me + fwd * (big ? 650.0f : 480.0f), a_me.z);
+			const float sz = big ? 1.0f : 0.65f, r = big ? 420.0f : 280.0f;
+			Gun::QueueFx("CurseOfAlduin\\fx\\sun_strike.nif", at, sz, 0.0f, 2.5f, false);
+			Gun::BlastSound("lightmassive", at, 0.9f);
+			const float pw = a_pw, whole = Director::RoundHealth() * gen::kRounds.hpScale;
+			Tasks::Later(0.3f, [at, r, pw, whole, big]() {
+				Gun::Ring("white", at, 30.0f, r, 0.6f);
+				Gun::AreaHurt(at, r, (big ? 0.55f : 0.4f) * pw, "");
+				for (auto* f : NearFoes(at, r, 20)) { Gun::Burn(f, whole * 0.04f * pw, 3.0f); Gun::Knock(f, 0.6f); }
+			});
+			logger::info("swords: the Radiant Blade's sun pillar ({})", big ? "great" : "small");
+			return;
+		}
 		Gun::Ring(kRing[el], from, 30.0f, big ? 260.0f : 180.0f, 0.5f);
 		Gun::ElemBurst(kBurst[el], from + RE::NiPoint3{ 0, 0, 40.0f }, big ? 1.0f : 0.7f, 0.0f, 0.5f);
 		Gun::BlastSound(kSound[el], from, 0.8f);
@@ -3731,18 +3748,23 @@ namespace bo3z::Classes
 			const RE::NiPoint3 fwd = Flat(Gun::SwingDir(), p);
 			const RE::NiPoint3 me = p->GetPosition();
 			const float share = BladeShare(Slayer()) * (0.7f + 0.3f * Arcana::Power());
-			std::vector<RE::NiPoint3> spots;
-			for (auto* f : NearFoes(me + fwd * 600.0f, 900.0f, 3)) spots.push_back(f->GetPosition());
+			// (Noah: "homing ... realistic, smaller fireballs that home in on enemies") each one chasing one of the three nearest of the
+			// dead before you; where there are fewer, falling ahead
+			std::vector<RE::ActorHandle> marks;
+			for (auto* f : NearFoes(me + fwd * 600.0f, 1100.0f, 3)) marks.push_back(f->GetHandle());
 			const RE::NiPoint3 right{ fwd.y, -fwd.x, 0 };
-			for (int k = static_cast<int>(spots.size()); k < 3; ++k) spots.push_back(OnGround(me + fwd * 700.0f + right * (static_cast<float>(k - 1) * 260.0f), me.z));
 			Gun::BlastSound("fireball", me, 0.7f);
-			int k = 0;
-			for (const auto& at : spots) {
-				Tasks::Later(0.15f * static_cast<float>(k++), [at, share]() {
-					Gun::Meteor(at, true, 1.0f, [share](const RE::NiPoint3& hit) {
-						Gun::MeteorImpact(hit, true, 0.8f);
-						for (auto* f : NearFoes(hit, 260.0f, 12)) GoldBurn(f, share * 1.6f);
-					});
+			auto land = [share](const RE::NiPoint3& hit) {
+				Gun::FxBlastSized("fireball", hit, 0.45f);
+				Gun::ElemBurst(8, hit + RE::NiPoint3{ 0, 0, 30.0f }, 0.5f, 0.0f, 0.5f);
+				for (auto* f : NearFoes(hit, 240.0f, 12)) GoldBurn(f, share * 1.6f);
+			};
+			for (int k = 0; k < 3; ++k) {
+				const RE::ActorHandle h = k < static_cast<int>(marks.size()) ? marks[k] : RE::ActorHandle{};
+				const RE::NiPoint3 at = OnGround(me + fwd * 700.0f + right * (static_cast<float>(k - 1) * 260.0f), me.z);
+				Tasks::Later(0.15f * static_cast<float>(k), [h, at, land]() {
+					if (auto a = h.get(); a && !a->IsDead()) Gun::MeteorAt(a.get(), true, 0.8f, land);
+					else Gun::Meteor(at, true, 0.8f, land);
 				});
 			}
 			logger::info("swords: the Dragon Slayer calls down three golden fireballs");

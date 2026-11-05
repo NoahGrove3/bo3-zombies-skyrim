@@ -938,6 +938,9 @@ namespace bo3z
 				auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get());
 				auto* m = ep ? static_cast<RE::BSEffectShaderMaterial*>(ep->material) : nullptr;
 				if (!m) return RE::BSVisit::BSVisitControl::kContinue;
+				// (Noah: a Dragon Slayer kill "my whole screen just blew up with random lighting effects") a heat-shimmer layer bends
+				// what's behind it: coloured by a ramp it painted the whole screen - left as it was
+				if (ep->flags.any(RE::BSShaderProperty::EShaderPropertyFlag::kRefraction)) return RE::BSVisit::BSVisitControl::kContinue;
 				if (auto* nm = static_cast<RE::BSEffectShaderMaterial*>(m->Create())) {
 					nm->CopyMembers(m);
 					if (pal) {
@@ -3583,7 +3586,7 @@ namespace bo3z
 			RE::BSVisit::TraverseScenegraphGeometries(a_root, [&](RE::BSGeometry* g) {
 				auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get());
 				auto* m = ep ? static_cast<RE::BSEffectShaderMaterial*>(ep->material) : nullptr;
-				if (m && std::string_view(m->greyscaleTexturePath.c_str() ? m->greyscaleTexturePath.c_str() : "") != pal) any = true;
+				if (m && !ep->flags.any(RE::BSShaderProperty::EShaderPropertyFlag::kRefraction) && std::string_view(m->greyscaleTexturePath.c_str() ? m->greyscaleTexturePath.c_str() : "") != pal) any = true;
 				return RE::BSVisit::BSVisitControl::kContinue;
 			});
 			if (!any) return;
@@ -3625,7 +3628,7 @@ namespace bo3z
 		// (Noah: the Alchemist's flasks "explode right in front of my face - there's no travel, it doesn't arc") a thrown
 		// flask is flown here: its model hung in the scene, carried along its arc under gravity, tumbling; it comes down on
 		// the first body or wall or ground its path crosses, and its burst is called there
-		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; bool meteor = false; RE::NiPoint3 target; RE::NiMatrix3 turn; std::vector<std::pair<RE::ObjectRefHandle, FxPart>> trail; };
+		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; bool meteor = false; RE::NiPoint3 target; RE::NiMatrix3 turn; std::vector<std::pair<RE::ObjectRefHandle, FxPart>> trail; RE::ActorHandle chase; };
 		std::vector<Lobbed> g_lobs;
 		void TickLobs(float a_delta)
 		{
@@ -3636,7 +3639,19 @@ namespace bo3z
 			std::vector<std::pair<std::function<void(const RE::NiPoint3&)>, RE::NiPoint3>> landed;
 			for (auto& l : g_lobs) {
 				l.t += dt;
-				l.v.z -= 900.0f * dt;
+				// (Noah: "The Dragon Slayer's meteors should be homing ... realistic, smaller fireballs that home in on enemies") one
+				// chasing one of the dead: steered onto it as it moves, no falling
+				if (auto ca = l.chase.get(); ca && !ca->IsDead()) {
+					l.target = ca->GetPosition() + RE::NiPoint3{ 0, 0, 40.0f };
+					RE::NiPoint3 want = l.target - l.p;
+					const float d = want.Length();
+					if (d > 1.0f) {
+						const float sp = std::max(900.0f, l.v.Length());
+						want = want * (sp / d);
+						const float k = std::min(1.0f, 5.0f * dt);
+						l.v = l.v + (want - l.v) * k;
+					}
+				} else l.v.z -= 900.0f * dt;
 				const RE::NiPoint3 next = l.p + l.v * dt;
 				RE::NiPoint3 hit = next;
 				bool down = l.t > 8.0f;
@@ -3888,6 +3903,12 @@ namespace bo3z
 		}
 		// (Noah: the Bane's and the Dragon Slayer's meteors) one of ours falling from high over the point, a little slanted, nose
 		// first; a_land where it comes down (the first body, wall or ground it meets)
+		void MeteorAt(RE::Actor* a_target, bool a_gold, float a_scale, std::function<void(const RE::NiPoint3&)> a_land)
+		{
+			if (!a_target) return;
+			Meteor(a_target->GetPosition(), a_gold, a_scale, std::move(a_land));
+			if (!g_lobs.empty()) g_lobs.back().chase = a_target->GetHandle();
+		}
 		void Meteor(const RE::NiPoint3& a_at, bool a_gold, float a_scale, std::function<void(const RE::NiPoint3&)> a_land)
 		{
 			const float a = static_cast<float>(std::rand() % 628) / 100.0f;
@@ -3914,8 +3935,8 @@ namespace bo3z
 		}
 		void  ElemBurst(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life)
 		{
-			static constexpr const char* kName[10] = { "fire", "frost", "shock", "wind", "sun", "blood", "void", "poison", "gold", "shadowfire" };
-			if (a_elem < 0 || a_elem >= 10) return;
+			static constexpr const char* kName[11] = { "fire", "frost", "shock", "wind", "sun", "blood", "void", "poison", "gold", "shadowfire", "holy" };
+			if (a_elem < 0 || a_elem >= 11) return;
 			QueueFx(std::string("CurseOfAlduin\\fx\\burst_") + kName[a_elem] + ".nif", a_at, a_scale, a_delay, a_life, false);
 		}
 		// a pool of the element on the ground (tools/puddle.py): the Alchemist's flasks' Tier I

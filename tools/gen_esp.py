@@ -473,7 +473,7 @@ SWORD_DESC = {   # (Noah: "way too long" - the card tells what the sword is; eac
     'slayer': "The Akaviri dragon-hunters' blade. Swings 50% faster. Light swings: golden fire, twice the damage to dragons. Heavy attacks: a cyclone of golden dragonfire.",
 }
 TIER_TEXT = {   # (the look's enchantment on the item card: what this tier adds)
-    'radiant': ("Light swings loose bolts of white light through the dead.", "Bolts of white light; heavy attacks loose a cyclone of white light.", "Bolts of white light, and a great cyclone of white light on every heavy attack."),
+    'radiant': ("Light swings loose spectral blade waves through the dead.", "Spectral blades; heavy attacks call a pillar of sunlight down.", "Spectral blades, and a great pillar of sunlight on every heavy attack."),
     'carian': ("Light swings loose bolts of fire, frost and lightning through the dead.", "Elemental bolts; heavy attacks loose a storm cyclone of fire, ice and lightning.", "Elemental bolts, and a great storm cyclone on every heavy attack."),
     'alch': ("Light swings loose bolts of shadowflame that set the dead burning.", "Bolts of shadowflame; heavy attacks loose a cyclone of purple fire.", "Bolts of shadowflame, and a great cyclone of purple fire on every heavy attack."),
     'ss': ("Light swings loose bolts of your spell's element through the dead.", "Bolts of your spell's element; heavy attacks loose a cyclone of it.", "Bolts of your spell's element, and a great cyclone of it on every heavy attack."),
