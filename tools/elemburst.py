@@ -7,6 +7,7 @@ strikes and taken away a moment later (src/Gun.cpp ElemBurst; src/Bows.inl Impac
 
     python3 tools/elemburst.py   ->  assets/fx/Meshes/CurseOfAlduin/fx/burst_<element>.nif"""
 import math, pathlib, random, subprocess
+import realfire  # (Noah: Skyrim's own fire flipbooks - realistic with Ultimate HD Fire Effects)
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / 'assets' / 'fx' / 'Meshes' / 'CurseOfAlduin' / 'fx'
@@ -55,7 +56,7 @@ def build(el):
         a = 2 * math.pi * i / 6 + 0.4
         card(L, f'b{k}', tex, fringe, 1.3, 44, 30, (88 * math.cos(a), 88 * math.sin(a), 6), (k * 0.53) % 2.4, fps=48); k += 1
     jf = WORK / f'burst_{el}.job'
-    jf.write_text('\n'.join(L) + '\n')
+    jf.write_text('\n'.join(realfire.fix(L)) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
     print(el, r.stdout.strip(), r.stderr.strip())
     if r.returncode: raise SystemExit('fxwrite failed')

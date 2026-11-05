@@ -9,6 +9,7 @@ great hall:
 
 All flipbooks at 60 fps (tools/alchfx.py, tools/motes.py).     python3 tools/hallfx.py"""
 import math, pathlib, random, subprocess
+import realfire  # (Noah: Skyrim's own fire flipbooks - realistic with Ultimate HD Fire Effects)
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 MESH = ROOT / 'assets' / 'fx' / 'Meshes' / 'CurseOfAlduin' / 'fx'
@@ -27,7 +28,7 @@ def card(L, name, tex, col, sc, w, h0, h1, at, flip=None, fps=60, phase=0.0, bb=
 def write(L, name):
     WORK.mkdir(parents=True, exist_ok=True); MESH.mkdir(parents=True, exist_ok=True)
     out = MESH / name
-    jf = WORK / (out.stem + '.job'); jf.write_text('\n'.join([f'out {out}'] + L) + '\n')
+    jf = WORK / (out.stem + '.job'); jf.write_text('\n'.join([f'out {out}'] + realfire.fix(L)) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
     print(name, r.stdout.strip(), r.stderr.strip())
     if r.returncode: raise SystemExit('fxwrite failed')

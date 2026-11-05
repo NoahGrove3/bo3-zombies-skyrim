@@ -27,7 +27,7 @@ using namespace nifly;
 
 struct Shape
 {
-	std::string          name, tex, blend = "add";
+	std::string          name, tex, blend = "add", palette;
 	float                col[4]{ 1, 1, 1, 1 }, scale = 1.0f;
 	bool                 falloff = false, vcol = false, rim = false, single = false;
 	float                vscroll = 0.0f, uscroll = 0.0f;
@@ -80,6 +80,7 @@ int main(int argc, char** argv)
 				auto e = kv.find('='); if (e == std::string::npos) continue;
 				auto key = kv.substr(0, e), val = kv.substr(e + 1);
 				if (key == "tex") s.tex = val;
+				else if (key == "palette") s.palette = val;
 				else if (key == "color") sscanf(val.c_str(), "%f,%f,%f,%f", &s.col[0], &s.col[1], &s.col[2], &s.col[3]);
 				else if (key == "scale") s.scale = std::stof(val);
 				else if (key == "blend") s.blend = val;
@@ -182,7 +183,8 @@ int main(int argc, char** argv)
 		fx->sourceTexture.get() = s.tex;
 		fx->baseColor = Color4(s.col[0], s.col[1], s.col[2], s.col[3]);
 		fx->baseColorScale = s.scale;
-		fx->shaderFlags1 = 0x80000000u | (s.falloff || s.rim ? 0x40u : 0u) | (s.skin.empty() ? 0u : 0x2u);    // ZBuffer test (+ falloff, + skinned)
+		fx->shaderFlags1 = 0x80000000u | (s.falloff || s.rim ? 0x40u : 0u) | (s.skin.empty() ? 0u : 0x2u) | (s.palette.empty() ? 0u : 0x10u);    // ZBuffer test (+ falloff, + skinned, + greyscale to palette colour)
+		if (!s.palette.empty()) fx->greyscaleTexture.get() = s.palette;  // (Skyrim's own fire: a greyscale flipbook coloured by a gradient)
 		fx->shaderFlags2 = (s.single ? 0u : 0x10u) | 0x20u * (s.vcol ? 1u : 0u);  // double-sided (+ vertex colours)
 		fx->falloffStartAngle = 1.0f, fx->falloffStopAngle = 0.0f, fx->falloffStartOpacity = 1.0f, fx->falloffStopOpacity = 0.0f;
 		if (s.rim) {

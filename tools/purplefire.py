@@ -5,6 +5,7 @@ core, each card its own phase so the burst churns. Placed along the breath's lin
 
     python3 tools/purplefire.py   ->  assets/fx/Meshes/CurseOfAlduin/fx/purplefire.nif"""
 import math, pathlib, random, subprocess
+import realfire  # (Noah: Skyrim's own fire flipbooks - realistic with Ultimate HD Fire Effects)
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / 'assets' / 'fx' / 'Meshes' / 'CurseOfAlduin' / 'fx' / 'purplefire.nif'
@@ -39,7 +40,7 @@ def main():
         a = 2 * math.pi * i / 6 + 0.4
         card(L, f'pf{k}', '0.8,0.08,0.65', 1.4, 40, 34, (82 * math.cos(a), 82 * math.sin(a), -6), (k * 0.53) % 2.4, fps=20); k += 1
     jf = WORK / 'purplefire.job'
-    jf.write_text('\n'.join(L) + '\n')
+    jf.write_text('\n'.join(realfire.fix(L)) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
     print(r.stdout.strip(), r.stderr.strip())
     if r.returncode: raise SystemExit('fxwrite failed')

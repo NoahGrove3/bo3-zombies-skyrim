@@ -15,6 +15,7 @@ sun and gold bursts read as big blobby stars) fine particles, drawn here frame b
 
     python3 tools/motes.py"""
 import math, pathlib, random, subprocess
+import realfire  # (Noah: Skyrim's own fire flipbooks - realistic with Ultimate HD Fire Effects)
 import numpy as np
 from PIL import Image
 
@@ -152,7 +153,7 @@ def card(L, name, tex, col, sc, w, h0, h1, at, flip, fps, phase, bb=2):
 
 
 def fxwrite(L, out):
-    jf = WORK / (out.stem + '.job'); jf.write_text('\n'.join([f'out {out}'] + L) + '\n')
+    jf = WORK / (out.stem + '.job'); jf.write_text('\n'.join([f'out {out}'] + realfire.fix(L)) + '\n')
     r = subprocess.run(['/home/claude/tools/fxwrite', str(jf)], capture_output=True, text=True)
     print(out.name, r.stdout.strip(), r.stderr.strip())
     if r.returncode: raise SystemExit('fxwrite failed')
@@ -217,7 +218,8 @@ def ground_nif(el):
             a = 2 * math.pi * (i + random.uniform(-0.35, 0.35)) / n + ring * 0.9
             r = rad * random.uniform(0.7, 1.12)
             w = random.uniform(10, 17) * (1.15 - 0.15 * ring)
-            card(L, f'e{k}', tex, random.choice(cols), sc, w, -w * 0.15, w * 2.0 * hmul,
+            tall = 2.0 if el == 'fire' else 1.0   # (Skyrim's tall flame frames: tools/realfire.py)
+            card(L, f'e{k}', tex, random.choice(cols), sc, w * (0.8 if el == 'fire' else 1.0), -w * 0.15, w * 2.0 * hmul * tall,
                  (r * math.cos(a), r * math.sin(a), 0.0), GROUNDG, random.uniform(54, 66), random.uniform(0, 2.6))
             k += 1
     fxwrite(L, MESH / f'ground_{el}.nif')
