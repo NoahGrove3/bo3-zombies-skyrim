@@ -3902,10 +3902,10 @@ namespace bo3z::Classes
 	{
 		const int el = FlaskHeld(a_left);
 		if (el < 0 || Gun::Throwing()) return;
-		if (el == 6 && g_class.load() != coffer::kAlchemist) { Hud::Banner("The Philosopher's Flask answers only to an Alchemist", 2.0f); return; }
+		if (el == 6 && g_class.load() != coffer::kAlchemist) { Hud::QuestBanner("The Philosopher's Flask answers only to an Alchemist", 2.5f)   /* (Noah: "it won't let me throw it" - and nothing said why: always shown) */; return; }
 		float& cool = el == 6 ? g_philCool : g_flaskCool;
 		if (cool > 0) {
-			if (el == 6) Hud::Banner(fmt::format("The Philosopher's Flask is still brewing ({:.0f} s)", std::ceil(cool)), 1.5f);
+			if (el == 6) Hud::QuestBanner(fmt::format("The Philosopher's Flask is still brewing ({:.0f} s)", std::ceil(cool)), 1.5f);
 			return;
 		}
 		cool = el == 6 ? 12.0f : 0.9f * (Kit::ArmourTier(coffer::kAlchemist) >= 1 ? 0.85f : 1.0f) * Perks::FlaskCostMult();
