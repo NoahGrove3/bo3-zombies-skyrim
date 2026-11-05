@@ -135,7 +135,7 @@ for e, label, text in FLASKS:
     recs['SPEL'].append(record('SPEL', fid('SPEL', 'throw_' + e), [
         sub('EDID', z('UN_Throw_' + e)), sub('OBND', tsub('spel_firebolt', 'OBND')), sub('FULL', z(label)),
         sub('MDOB', tsub('spel_firebolt', 'MDOB')), sub('ETYP', tsub('spel_firebolt', 'ETYP')),
-        sub('DESC', z(text + ('' if e == 'philosopher' else FLASK_TIERS))),
+        sub('DESC', z(text)),
         sub('SPIT', bytes(sp)), sub('EFID', struct.pack('<I', fid('MGEF', 'flaskcast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 # (Noah: "I want the flasks to not use mana, and I want it to be an item that you actually throw, not a destruction spell")
 # each flask an item in your pack (a potion to Skyrim, so a favourite and a hotkey): used, it is thrown - src/Classes.cpp
@@ -159,7 +159,7 @@ for e, label, text in FLASKS:
         elif name == 'FULL': b = z(label)
         elif name == 'MODL': b = z('CurseOfAlduin\\alchemist\\flask_' + e + '_held.nif')
         elif name in ('MODT', 'EITM', 'EAMT'): continue
-        elif name == 'DESC': b = z(text + ('' if e == 'philosopher' else FLASK_TIERS) + ' Hold it in either hand: attack to throw it. It never runs out.')
+        elif name == 'DESC': b = z(text + ' Attack to throw it; it never runs out.')   # (Noah: short - its tier's line added by src/Classes.cpp TickItemCard)
         elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_flask_' + e))
         # (Noah: "it still makes dagger sound effects when drawing ... the alchemist class should have its own combat noises")
         # glass and liquid drawing and putting away (tools/alchsfx.py), no blade's failed-swing or steel impact set

@@ -457,32 +457,30 @@ namespace Props
 			Gun::Slash(sl);
 			return;
 		}
-		// (Noah: "Wind vortex" - "a whirlwind pulls the dead together, then blows them apart") the heavy swing: a whirlwind rises
-		// 4 m ahead and holds there, dragging the dead in round it, then bursts and hurls them all away
+		// (Noah: "Dragon shout blast" - "a huge Unrelenting Force shockwave in a cone, flinging all the dead far away") the heavy
+		// swing: the Thu'um itself - Skyrim's Unrelenting Force wave, huge, tearing down the line before you and throwing every
+		// one of the dead it meets far away
 		{
-			RE::NiPoint3 fwd = AimAt(900.0f).dir; fwd.z = 0;
-			if (fwd.Length() < 0.01f) fwd = { std::sin(p->GetAngleZ()), std::cos(p->GetAngleZ()), 0 };
-			fwd.Unitize();
-			RE::NiPoint3 at = p->GetPosition() + fwd * 280.0f;
-			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && std::abs(land - at.z) < 300.0f) at.z = land;
-			Gun::ElemBurst(3, at + RE::NiPoint3{ 0, 0, 40.0f }, 0.8f, 0.0f, 0.5f);
-			Gun::BlastSound("shoutarea", at, 0.8f);
-			Gun::CycloneSpec cs;
-			cs.model = "CurseOfAlduin\\fx\\cyclone_wind.nif";
-			cs.from = at, cs.fwd = fwd, cs.dist = 60.0f, cs.life = 10.0f, cs.size = 1.2f, cs.fec = -1;   // (Noah: cyclones "last ... 10 seconds")
-			cs.share = 0.05f * BaneMult() * 0.4f;
-			cs.burst = [](const RE::NiPoint3& c) {
+			const RE::NiPoint3 dir = Gun::SwingDir();
+			Gun::SlashSpec sl;
+			sl.model = "CurseOfAlduin\\fx\\bane_shout.nif";
+			sl.from = Gun::SwingFrom();
+			sl.dir = dir;
+			sl.roll = 0.0f;
+			sl.speed = 2400.0f, sl.range = 1500.0f, sl.radius = 340.0f, sl.scale = 1.6f;
+			sl.share = 0.0f, sl.damage = FangBase() * BaneMult() * 2.4f;
+			sl.flingKill = 26.0f;
+			const RE::NiPoint3 me = p->GetPosition();
+			sl.onHit = [me](RE::Actor* a, bool killed) {
 				auto* pl = RE::PlayerCharacter::GetSingleton();
-				Gun::ElemBurst(3, c + RE::NiPoint3{ 0, 0, 60.0f }, 2.0f, 0.0f, 0.8f);
-				Gun::FxBlast("shoutarea", c);
-				Gun::BlastSound("shoutarea", c, 1.0f);
-				for (auto* f : Foes(c, 520.0f)) {
-					if (Damage(f, FangBase() * BaneMult() * 2.4f, false, false, true)) { if (pl) BaneKilled(pl); }
-					Spellcraft::Fling(f, c - RE::NiPoint3{ 0, 0, 60.0f }, 22.0f);   // (blown far apart)
-				}
+				if (!a) return;
+				if (!killed) Spellcraft::Fling(a, me - RE::NiPoint3{ 0, 0, 80.0f }, 18.0f);   // (the living thrown too)
+				else if (pl) BaneKilled(pl);
 			};
-			Gun::ElemCyclone(std::move(cs));
-			logger::info("swords: Alduin's Bane - a wind vortex 4 m ahead");
+			Gun::Slash(sl);
+			Gun::FxBlast("shoutarea", p->GetPosition() + dir * 120.0f);
+			Gun::BlastSound("shoutarea", p->GetPosition(), 1.0f);
+			logger::info("swords: Alduin's Bane - the Thu'um");
 			return;
 		}
 	}

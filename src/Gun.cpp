@@ -845,7 +845,7 @@ namespace bo3z
 		// instead; s= its size; r= degrees about x,y,z; z= raised; play: its own animation started; `none`: nothing drawn).
 		// Read at load and again on the dev command `fxreload`, so a look can be tried in the running game.
 		int BlastIndex(std::string_view a_name);
-		struct FxPart { std::string model, pal; RE::NiPoint3 col{ -1, -1, -1 }; float scale = 1.0f, dz = 0.0f; RE::NiMatrix3 rot; bool play = false, none = false; int blast = -1; };
+		struct FxPart { std::string model, pal; RE::NiPoint3 col{ -1, -1, -1 }; float scale = 1.0f, dz = 0.0f; RE::NiMatrix3 rot; bool play = false, none = false, noparticles = false; int blast = -1; };
 		std::unordered_map<std::string, std::vector<FxPart>> g_fxMap;
 		std::string FxKey(std::string a)
 		{
@@ -894,7 +894,8 @@ namespace bo3z
 							else if (k == "s") fp.scale = std::stof(v);
 							else if (k == "z") fp.dz = std::stof(v);
 							else if (k == "noplay") fp.play = false;
-							else if (k == "play") fp.play = true;   // (its controller manager's first sequence started: only where a model stands still without it)
+							else if (k == "play") fp.play = true;
+							else if (k == "noparticles") fp.noparticles = true;   // (its particles hidden: a whirlwind's thrown debris, flickering all round)   // (its controller manager's first sequence started: only where a model stands still without it)
 							else if (k == "col") std::sscanf(v.c_str(), "%f,%f,%f", &fp.col.x, &fp.col.y, &fp.col.z);
 							else if (k == "r") std::sscanf(v.c_str(), "%f,%f,%f", &rx, &ry, &rz);
 						} catch (...) {}
@@ -953,10 +954,10 @@ namespace bo3z
 		}
 		// its own animation run from the start (Skyrim's effect models keep theirs in a controller manager: placed as an object
 		// it would stand at its first frame)
-		void PlayOwn(RE::TESObjectREFR* a_ref, RE::NiAVObject* a_root)
+		float PlayOwn(RE::TESObjectREFR* a_ref, RE::NiAVObject* a_root)
 		{
 			auto* node = a_root ? a_root->AsNode() : nullptr;
-			if (!a_ref || !node) return;
+			if (!a_ref || !node) return 0.0f;
 			for (auto* c = node->GetControllers(); c; c = c->next.get()) {
 				if (auto* mgr = netimmerse_cast<RE::NiControllerManager*>(c)) {
 					RE::NiControllerSequence* pick = nullptr;
@@ -964,9 +965,10 @@ namespace bo3z
 						if (!pick) pick = mgr->GetSequenceByName(nm);
 					if (!pick && mgr->sequenceArray.size() > 0) pick = mgr->sequenceArray[0].get();
 					if (pick) a_ref->PlayAnimation(mgr, pick, pick);   // (from itself: the game reads the sequence it leaves)
-					return;
+					return pick ? std::max(0.0f, pick->endKeyTime - pick->beginKeyTime) : 0.0f;
 				}
 			}
+			return 0.0f;
 		}
 		// placed references whose models aren't in yet: coloured (and set going) the moment they are
 		struct TintWatch { RE::ObjectRefHandle h; FxPart part; bool play = false; float age = 0; };
@@ -2448,7 +2450,7 @@ namespace bo3z
 		}
 		struct WorldFx
 		{
-			struct Piece { RE::ObjectRefHandle ref; FxPart part; bool drawn = false; };
+			struct Piece { RE::ObjectRefHandle ref; FxPart part; bool drawn = false; float len = 0; std::chrono::steady_clock::time_point played{}; };
 			std::vector<Piece> pieces;
 			std::vector<FxPart> blasts;
 			std::string        model;
@@ -2497,9 +2499,17 @@ namespace bo3z
 						if (!pc.drawn) {
 							pc.drawn = drawn = true;
 							TintTree(o, pc.part);
-							if (pc.part.play) PlayOwn(r.get(), o);
+							if (pc.part.play) pc.len = PlayOwn(r.get(), o), pc.played = std::chrono::steady_clock::now();
+							if (pc.part.noparticles) RE::BSVisit::TraverseScenegraphObjects(o, [](RE::NiAVObject* x) {
+								if (netimmerse_cast<RE::NiParticleSystem*>(x)) x->GetFlags().set(RE::NiAVObject::Flag::kHidden);
+								return RE::BSVisit::BSVisitControl::kContinue;
+							});
 							if (static int said = 0; said++ < 40) logger::info("worldfx: {}{} drawn at ({:.0f},{:.0f},{:.0f}) scale {:.2f}", pc.part.model, pc.part.model == model ? "" : " (for " + model + ")", at.x, at.y, at.z, a_scale * pc.part.scale);
 						}
+						// (Noah: "the tornado disappears while the pillar stays") a model whose own animation plays once - Skyrim's
+						// Cyclone whirlwind - set going again each time it ends, for as long as it's held
+						if (pc.part.play && pc.len > 0.2f && std::chrono::duration<float>(std::chrono::steady_clock::now() - pc.played).count() > pc.len * 0.92f)
+							PlayOwn(r.get(), o), pc.played = std::chrono::steady_clock::now();
 						o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
 						if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
 						o->local.translate = at;

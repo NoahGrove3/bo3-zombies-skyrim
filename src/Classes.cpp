@@ -3186,8 +3186,8 @@ namespace bo3z::Classes
 				fwd.Unitize();
 				Gun::CycloneSpec cs;
 				cs.model = std::string("CurseOfAlduin\\fx\\cyclone_") + kCyc[std::clamp(f.el, 0, 5)] + ".nif";
-				cs.from = a_at, cs.fwd = fwd, cs.dist = 700.0f, cs.life = 10.0f, cs.size = 0.55f, cs.fec = kFec[std::clamp(f.el, 0, 5)];
-				cs.share = 0.05f * FlaskShare(t) * 0.4f;
+				cs.from = a_at, cs.fwd = fwd, cs.dist = 700.0f, cs.life = 5.0f, cs.size = 0.55f, cs.fec = kFec[std::clamp(f.el, 0, 5)];
+				cs.share = 0.05f * FlaskShare(t) * 0.8f;
 				const int el = f.el;
 				cs.burst = [el, t, r](const RE::NiPoint3& at) { FlaskShot child{ {}, el, t, at, false, true, 0.0f }; FlaskBurst(child, at); };
 				Gun::ElemCyclone(std::move(cs));
@@ -3497,18 +3497,54 @@ namespace bo3z::Classes
 			{ "Spellbound Blade", "The Spellsword's blade: it takes the element of the spell in your other hand.",
 				{ "Tier I: light swings loose bolts of your spell's element.", "Tier II: heavy attacks loose a cyclone of it, casting your spell on all it catches.", "Tier III: heavy attacks loose a great cyclone of it." } },
 		};
+		// (Noah: "Now do the same thing for the flasks and the armor for each class") the flasks: what each is, and its tier's
+		// gift; the class sets: what each is, and the power its tier has woken
+		static const Card kFlasks[] = {
+			{ "Fire Flask", "A flask of liquid fire: it shatters and bursts in flame, leaving fire burning where it lands.", {} },
+			{ "Frost Flask", "A flask of frozen brine: it shatters into killing cold, leaving frost where it lands.", {} },
+			{ "Shock Flask", "A flask of bottled storm: it shatters into arcing lightning, leaving it crackling where it lands.", {} },
+			{ "Acid Flask", "A flask of green acid: it shatters into a corroding splash, leaving a pool of it.", {} },
+			{ "Holy Water", "Blessed water of Stendarr: it shatters into searing light; the dead burn in it.", {} },
+			{ "Bloodbloom Flask", "A flask of vampire's blood: it shatters, and what it drains comes back to you.", {} },
+		};
+		static constexpr const char* kFlaskTier[3] = { "Tier I: its burst reaches half again as wide.", "Tier II: a chain reaction - the dead it kills burst in its element too.",
+			"Legendary: a cyclone of its element rises where it breaks and rolls into the dead." };
+		static const Card kSets[] = {
+			{ "Conjurer's Violet", "The Summoner's set: the Black Mage's robes in violet.", { "Tier I: your summons take a fifth less harm.", "Tier II: one more summon slot.", "Tier III: your summons' kills heal you." } },
+			{ "Battlemage's Ember", "The Battle-mage's set: the Black Mage's robes in ember orange.", { "Tier I: your spells cost 10% less.", "Tier II: your magicka comes back faster.", "Tier III: your spells cost a quarter less." } },
+			{ "Alchemist's Verdant", "The Alchemist's set: the Black Mage's robes in green.", { "Tier I: you throw 15% faster.", "Tier II: your flasks' bursts reach 20% wider.", "Tier III: each flask kill heals you 2%." } },
+			{ "Spellsword's Azure", "The Spellsword's set: the Black Mage's robes in azure.", { "Tier I: you mend in a fight.", "Tier II: your blade's hits put magicka back.", "Tier III: your blade hits 15% harder." } },
+		};
+		std::string want;
 		const Card* c = nullptr;
 		for (const auto& k : kCards) if (nm.rfind(k.name, 0) == 0) { c = &k; break; }
+		if (c) {
+			const std::string rest = nm.substr(std::strlen(c->name));
+			const int t = rest == " III" ? 3 : rest == " II" ? 2 : rest == " I" ? 1 : 0;
+			want = t == 0 ? std::string(c->base) : std::string(c->base) + " " + c->tier[t - 1];
+		}
+		for (int e = 0; !c && e < 6; ++e) if (nm == kFlasks[e].name) {
+			c = &kFlasks[e];
+			const int t = std::clamp(Kit::FlaskTier(e), 0, 3);
+			want = std::string(c->base) + (t >= 1 ? std::string(" ") + kFlaskTier[t - 1] : std::string{}) + " Attack to throw it; it never runs out.";
+		}
+		for (int k = 0; !c && k < 4; ++k) if (nm.rfind(kSets[k].name, 0) == 0) {
+			c = &kSets[k];
+			const int t = std::clamp(Kit::ArmourTier(k), 0, 3);
+			want = std::string(c->base) + " " + std::to_string(5 + 5 * t) + "% less harm taken." + (t >= 1 ? std::string(" ") + c->tier[t - 1] : std::string{});
+		}
 		if (!c) return;
-		const std::string rest = nm.substr(std::strlen(c->name));
-		const int t = rest == " III" ? 3 : rest == " II" ? 2 : rest == " I" ? 1 : 0;
-		const std::string want = t == 0 ? std::string(c->base) : std::string(c->base) + " " + c->tier[t - 1];
 		// the field the card shows its text from: whichever holds the long one (or the effects line)
-		const char* field = "effects";
-		for (const char* f : { "description", "effects" }) {
+		const char* field = nullptr;
+		for (const char* f : { "description", "effects" }) {   // (the one with tiers in it, else the one with any text, else effects)
 			RE::GFxValue v;
 			if (card->obj.GetMember(f, &v) && v.IsString() && v.GetString() && std::string(v.GetString()).find("Tier") != std::string::npos) { field = f; break; }
 		}
+		for (const char* f : { "description", "effects" }) {
+			RE::GFxValue v;
+			if (!field && card->obj.GetMember(f, &v) && v.IsString() && v.GetString() && v.GetString()[0]) field = f;
+		}
+		if (!field) field = "effects";
 		RE::GFxValue cur;
 		const bool same = card->obj.GetMember(field, &cur) && cur.IsString() && cur.GetString() && want == cur.GetString();
 		if (same && !card->obj.HasMember("charge")) return;
@@ -3517,7 +3553,7 @@ namespace bo3z::Classes
 		card->obj.SetMember(field, text);
 		card->obj.DeleteMember("charge");
 		menu->uiMovie->Invoke("_root.Menu_mc.UpdateItemCardInfo", nullptr, &card->obj, 1);
-		if (static int said = 0; said++ < 6) logger::info("cards: {} - its tier {} card ({} laid over, no charge)", nm, t, field);
+		if (static int said = 0; said++ < 12) logger::info("cards: {} - its card laid over ({}, no charge): {}", nm, field, want);
 	}
 	void ClassCyclone(int a_cls, int a_key, int a_t, float a_pw, RE::SpellItem* a_spell, const RE::NiPoint3& a_me, const RE::NiPoint3& a_dir)
 	{
@@ -3545,10 +3581,10 @@ namespace bo3z::Classes
 		Gun::CycloneSpec cs;
 		cs.model = std::string("CurseOfAlduin\\fx\\cyclone_") + kModel[el] + ".nif";
 		cs.from = from, cs.fwd = fwd;
-		// (Noah: "make the tornadoes / cyclones last. For 10 seconds") ten seconds rolling on: each beat of it a little lighter, the
+		// (Noah: "make the tornadoes / cyclones last. For 10 seconds", then "Make the tornadoes last 5 seconds") five seconds rolling on: each beat of it a little lighter, the
 		// whole of it about twice what the old two-second one did
-		cs.dist = big ? 1100.0f : 750.0f, cs.life = 10.0f, cs.size = big ? 1.0f : 0.6f;
-		cs.share = (big ? 0.09f : 0.06f) * pw * 0.4f;
+		cs.dist = big ? 1100.0f : 750.0f, cs.life = 5.0f, cs.size = big ? 1.0f : 0.6f;
+		cs.share = (big ? 0.09f : 0.06f) * pw * 0.8f;
 		cs.fec = kFec[el];
 		const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
 		cs.touch = [el, t, pw, whole, spell](RE::Actor* a) {
@@ -3700,8 +3736,8 @@ namespace bo3z::Classes
 			Gun::BlastSound("fireball", from, 0.8f);
 			Gun::CycloneSpec cs;
 			cs.model = "CurseOfAlduin\\fx\\cyclone_gold.nif";
-			cs.from = from, cs.fwd = fwd, cs.dist = 1100.0f, cs.life = 10.0f, cs.size = 1.0f;   // (Noah: cyclones "last ... 10 seconds")
-			cs.share = 0.09f * SlayerTop() * 0.4f, cs.fec = 0, cs.dragons = true;
+			cs.from = from, cs.fwd = fwd, cs.dist = 1100.0f, cs.life = 5.0f, cs.size = 1.0f;   // (Noah: cyclones "last 5 seconds")
+			cs.share = 0.09f * SlayerTop() * 0.8f, cs.fec = 0, cs.dragons = true;
 			cs.touch = [share](RE::Actor* a) { if (a && !a->IsDead()) { Gun::Knock(a, 0.3f); GoldBurn(a, share); } };
 			cs.burst = [share](const RE::NiPoint3& at) {
 				Gun::ElemBurst(8, at + RE::NiPoint3{ 0, 0, 80.0f }, 2.0f, 0.0f, 0.8f);
@@ -3713,14 +3749,15 @@ namespace bo3z::Classes
 			logger::info("swords: the Dragon Slayer's cyclone of golden dragonfire");
 			return;
 		}
-		// a light swing: a blade of golden fire through every one of the dead in its path, setting them alight
+		// (Noah: "Dragonfire breath puffs") a light swing: a short breath of real dragonfire before you - Skyrim's Fire Breath shout,
+		// burning every one of the dead it rolls over
 		const RE::NiPoint3 dir = Gun::SwingDir();
 		Gun::SlashSpec sl;
-		sl.model = ArcModel(9);
+		sl.model = "CurseOfAlduin\\fx\\slayer_breath.nif";
 		sl.from = Gun::SwingFrom();
 		sl.dir = dir;
-		sl.roll = Gun::SwingRoll(dir);
-		sl.speed = 1800.0f, sl.range = 2000.0f, sl.radius = 150.0f, sl.scale = 1.3f;
+		sl.roll = 0.0f;
+		sl.speed = 1300.0f, sl.range = 650.0f, sl.radius = 190.0f, sl.scale = 1.0f;
 		const float share = BladeShare(Slayer()) * (0.7f + 0.3f * Arcana::Power());   // (its own light blow)
 		sl.share = share;
 		sl.flingKill = 16.0f;
