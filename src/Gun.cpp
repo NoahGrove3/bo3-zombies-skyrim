@@ -3212,14 +3212,20 @@ namespace bo3z
 			const int n = static_cast<int>(g_halo.blades.size());
 			for (int i = 0; i < n; ++i) {
 				auto& b = g_halo.blades[i];
-				if (!b.obj) b = Spellcraft::Fx{ Spellcraft::LoadPath(g_halo.model) };
+				// (the effects map: its stand-in's model, colour and size - blades of light, not steel)
+				const auto parts = FxParts(g_halo.model);
+				const FxPart& hp = parts.front();
+				if (!b.obj) {
+					b = Spellcraft::Fx{ Spellcraft::LoadPath(hp.none || hp.blast >= 0 ? g_halo.model : hp.model) };
+					if (b.obj) TintTree(b.obj.get(), hp);
+				}
 				if (!b.obj) continue;
 				b.Attach(root->AsNode());
 				const float a = g_halo.t * 1.4f + 6.2832f * i / n;
 				const RE::NiPoint3 at = c + RE::NiPoint3{ std::cos(a) * 85.0f, std::sin(a) * 85.0f, std::sin(g_halo.t * 2.0f + i) * 8.0f };
 				// the blade upright-ish, its point leading round the circle
 				const RE::NiPoint3 tangent{ -std::sin(a), std::cos(a), 0.35f };
-				b.Place(at, Spellcraft::Facing(tangent), g_halo.scale);
+				b.Place(at, Spellcraft::Facing(tangent) * hp.rot, g_halo.scale * hp.scale);
 			}
 			if ((g_halo.next -= a_delta) <= 0) {
 				RE::Actor* best = nullptr;

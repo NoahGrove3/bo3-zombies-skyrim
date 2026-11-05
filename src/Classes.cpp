@@ -3631,8 +3631,10 @@ namespace bo3z::Classes
 			// (Noah, Destruction's Tier III: "a charged swing conjures a giant spectral greatsword that sweeps everything before
 			// you") the Carian Greatblade: its blue crystal greatsword, giant, swept flat through all in front, then shattering
 			Gun::SlashSpec gb;
-			gb.model = "Light Greatswords\\stahlrim\\LightGreatsword.nif";   // (its own blade - Light Greatswords' Stahlrim - giant)
-			gb.from = me + RE::NiPoint3{ 0, 0, 110.0f } + dir * 60.0f;
+			// (Noah: "I can see the sword model for a split second at my sword tip") a spectral blade, not the steel one: Skyrim's
+			// bound sword, in Carian blue (fxmap.ini), conjured two metres out rather than at your own blade's tip
+			gb.model = "CurseOfAlduin\\fx\\greatblade.nif";
+			gb.from = me + RE::NiPoint3{ 0, 0, 110.0f } + dir * 200.0f;
 			gb.dir = dir;
 			gb.sideways = true;
 			gb.speed = 1300.0f, gb.range = 1000.0f, gb.radius = 300.0f, gb.scale = 3.1f, gb.share = 0.9f * pw;
@@ -3805,7 +3807,8 @@ namespace bo3z::Classes
 		// (Noah, the Summoner's Tier III: "halo blades") three blades of white light circle you and strike the dead that come near
 		if (cls == 0 && t >= 3 && drawn) {
 			const float pw = UpgradeMult(t) * (0.7f + 0.3f * Arcana::Power());
-			Gun::Halo(3, "Light Greatswords\\silver\\LightGreatsword.nif", 0.5f, 1.8f, [pw](RE::Actor* a) {
+			Gun::Halo(3, "CurseOfAlduin\\fx\\haloblade.nif",   // (fxmap.ini: Skyrim's bound sword, in white light)
+				 0.5f, 1.8f, [pw](RE::Actor* a) {
 				Gun::FxBlast("light", a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f });
 				Gun::ElemBurst(4, a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f }, 0.5f, 0.0f, 0.5f);
 				Gun::AreaHurt(a->GetPosition(), 90.0f, 0.25f * pw, "");

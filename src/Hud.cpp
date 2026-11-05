@@ -6256,8 +6256,11 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 				if (static int m = 0; m++ % 1200 == 0) {
 					auto* ui = RE::UI::GetSingleton();
 					auto* pl = RE::PlayerCharacter::GetSingleton();
-					logger::info("hud: hidden (paused={} mainMenu={} loading={} player3D={})", ui && ui->GameIsPaused(), ui && ui->IsMenuOpen(RE::MainMenu::MENU_NAME),
-						ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME), pl && pl->Is3DLoaded());
+					// (Noah: "my character also went invisible in third person" - the HUD hid with it: which menu stood open)
+					std::string open;
+					if (ui) for (auto& [name, entry] : ui->menuMap) if (entry.menu && ui->IsMenuOpen(name)) open += std::string(name.c_str()) + " ";
+					logger::info("hud: hidden (paused={} mainMenu={} loading={} player3D={} culled={}) menus: {}", ui && ui->GameIsPaused(), ui && ui->IsMenuOpen(RE::MainMenu::MENU_NAME),
+						ui && ui->IsMenuOpen(RE::LoadingMenu::MENU_NAME), pl && pl->Is3DLoaded(), pl && pl->Get3D(false) && pl->Get3D(false)->GetAppCulled(), open);
 				}
 				DevTools::CaptureIfRequested(g_context, a_swap);  // menus and loading screens too
 				return;
