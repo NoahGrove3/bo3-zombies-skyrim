@@ -3227,7 +3227,7 @@ namespace bo3z
 			std::erase_if(g_lobs, [](const Lobbed& l) { return l.done; });
 			for (auto& [fn, at] : landed) if (fn) fn(at);
 		}
-		void  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land)
+		void  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land, float a_spin)
 		{
 			if (g_lobs.size() > 40) return;
 			Lobbed l;
@@ -3240,15 +3240,32 @@ namespace bo3z
 			}
 			(void)Spellcraft::LoadPath(a_model);  // (its model in memory before it's placed: drawn the first frame, not a beat later)
 			if (auto r = f ? PlaceAtPoint(f, a_from) : RE::NiPointer<RE::TESObjectREFR>{}) l.ref = r->GetHandle();
-			l.p = a_from, l.v = a_vel, l.scale = a_scale, l.land = std::move(a_land);
+			l.p = a_from, l.v = a_vel, l.scale = a_scale, l.spin = a_spin, l.land = std::move(a_land);
 			logger::info("lob: {} ({})", a_model, l.ref ? "placed" : "NOT PLACED");
 			g_lobs.push_back(std::move(l));
 		}
-		void Hazard(const std::string& a_model, const RE::NiPoint3& a_at, float a_scale, float a_life)
+		void Hazard(const std::string& a_model, const RE::NiPoint3& a_at, float a_scale, float a_life, float a_yaw)
 		{
 			if (auto* hz = ModelHazard(a_model, a_life, false)) {
-				if (auto r = PlaceAtPoint(hz, a_at)) r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(a_scale, 0.1f, 9.0f) * 100.0f);
+				if (auto r = PlaceAtPoint(hz, a_at)) {
+					r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(a_scale, 0.1f, 9.0f) * 100.0f);
+					if (a_yaw != 0.0f) r->SetAngle({ 0.0f, 0.0f, a_yaw });
+				}
 			}
+		}
+		// (Noah: the Bane's and the Dragon Slayer's meteors) one of ours falling from high over the point, a little slanted, nose
+		// first; a_land where it comes down (the first body, wall or ground it meets)
+		void Meteor(const RE::NiPoint3& a_at, bool a_gold, float a_scale, std::function<void(const RE::NiPoint3&)> a_land)
+		{
+			const float a = static_cast<float>(std::rand() % 628) / 100.0f;
+			const RE::NiPoint3 from = a_at + RE::NiPoint3{ std::cos(a) * 420.0f, std::sin(a) * 420.0f, 1500.0f };
+			RE::NiPoint3 v = a_at - from;
+			const float d = v.Length();
+			if (d < 1.0f) return;
+			// (falling under the lob's gravity: started fast enough to reach it in about 0.9 s)
+			constexpr float t = 0.9f;
+			v = v * (1.0f / t) + RE::NiPoint3{ 0, 0, 0.5f * 900.0f * t };
+			Lob(a_gold ? "CurseOfAlduin\\fx\\meteor_gold.nif" : "CurseOfAlduin\\fx\\meteor_fire.nif", from, v, a_scale, std::move(a_land), 0.0f);
 		}
 		RE::ObjectRefHandle PlaceAt(RE::TESBoundObject* a_obj, const RE::NiPoint3& a_at, float a_yaw)
 		{
@@ -3432,7 +3449,7 @@ namespace bo3z
 		}
 
 		bool g_kitPending = false;
-		constexpr float kKitVersion = 5.0f;  // (raised whenever the kit gains something: test characters get the new things on load)
+		constexpr float kKitVersion = 6.0f;  // (raised whenever the kit gains something: test characters get the new things on load)
 		// (Noah: every spell from my mods that imbues a weapon or does direct damage, to choose the Echo Altar's from)
 		// every castable spell of a mod (not the base game's own) with a damaging effect on health, or one that imbues a
 		// weapon; each named for its element first ("Fire: ...") so the Magic menu lists them by element. The names are
@@ -3550,10 +3567,10 @@ namespace bo3z
 				}
 				RestoreNames();
 			}
-			// the weapons: every elemental bow (with its arrows)
+			// (Noah: "it had all the old bows we aren't going to use anymore") no bows - and the ones an older kit gave are taken back
 			for (int i = Bows::Count() - 1; i >= 0; --i) {
-				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kBows[i].weap, gen::kPlugin); w && p->GetItemCount(w) <= 0) {
-					p->AddObjectToContainer(w, nullptr, 1, nullptr);
+				if (auto* w = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kBows[i].weap, gen::kPlugin); w && p->GetItemCount(w) > 0) {
+					p->RemoveItem(w, p->GetItemCount(w), RE::ITEM_REMOVE_REASON::kRemove, nullptr, nullptr);
 				}
 			}
 			if (auto* bane = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kFangWeap, gen::kPlugin); bane && p->GetItemCount(bane) <= 0) {
@@ -3572,13 +3589,14 @@ namespace bo3z
 			}
 			Movement::TestKit();  // (Dragon's Updraft, the third bond, the glider)
 			Kit::DevTestKit();    // (the four crystal swords and every flask at Tier III, the four Black Mage robes)
+			Classes::KitWonders();   // (the Staff of Magnus, the Philosopher's Flask)
 			if (auto* sl = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESObjectWEAP>(gen::kSlayerWeap, gen::kPlugin); sl && p->GetItemCount(sl) <= 0) {
 				p->AddObjectToContainer(sl, nullptr, 1, nullptr);  // the Dragon Slayer greatsword
 			}
 			if (const int have = Points::Get(); have < 150000) {
 				Points::Refund(150000 - have);
 			}
-			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, every bow, the four crystal swords and every flask (Tier III), the Dragon Slayer, the four Black Mage robes, Alduin's Bane, the glider, 150,000 Cursed Essence", spells), 8.0f);
+			Hud::Banner(fmt::format("TEST KIT: the Echo Altar's {} spells, the four class swords and every flask (Tier III), the Dragon Slayer, the Staff of Magnus, the Philosopher's Flask, the four class robes, Alduin's Bane, the glider, 150,000 Cursed Essence", spells), 8.0f);
 			std::string list;
 			for (auto& [el, c] : byEl) list += fmt::format("{} {}, ", el, c);
 			logger::info("testkit: {} altar spells ({}) - {} others taken away; bows {}, essence {}", spells, list, removed, Bows::Count(), Points::Get());

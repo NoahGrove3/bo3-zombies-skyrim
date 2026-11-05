@@ -457,6 +457,7 @@ namespace bo3z
 		std::string_view WonderName(int a_cls);
 		int              WonderMask();                 // bit per class: its wonder won (waiting in the Reliquary or taken up)
 		void             DevWonder(int a_cls, int a_st);  // dev: set a wonder's state (5 = won now, with the call)
+		void             KitWonders();                    // the test kit: the Staff of Magnus and the Philosopher's Flask
 		void             DevGiveWonder(int a_cls);        // dev (trailer filming): the class's wonder straight into your hands, no Reliquary
 		bool             TakeWonder(int a_cls);        // (the Reliquary's pedestal) a waiting wonder taken up - or a lost one given again
 		bool             WonderOpen();                 // your class's secret quest is open (six cities freed) and the wonder not yet won
@@ -802,6 +803,7 @@ namespace bo3z
 		void                  Halo(int a_count, const std::string& a_model, float a_scale, float a_period, std::function<void(RE::Actor*)> a_strike);
 		void                  BlastSound(std::string_view a_name, const RE::NiPoint3& a_at, float a_vol = 1.0f);  // a Skyrim spell explosion's own impact sound
 		void                  SkyFall(const RE::NiPoint3& a_at);  // a burning star from the sky onto a point
+		void                  Meteor(const RE::NiPoint3& a_at, bool a_gold, float a_scale, std::function<void(const RE::NiPoint3&)> a_land);  // a meteor of ours (tools/meteorfx.py) falling from high above onto a point
 		void                  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);
 		void                  Motes(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_life);  // fine motes rising off the ground over an area (the ElemBurst elements)
 		void                  ElemBurst(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);  // an element's impact burst (0 fire 1 frost 2 shock 3 wind 4 sun 5 blood 6 void), here a moment  // the Horn's dragon's violet flame, here a moment  // the night's dead round a point lose a share of a whole zombie's health
@@ -811,8 +813,8 @@ namespace bo3z
 		void                  DevNodes();
 		void                  StartThrow(bool a_left, std::function<void()> a_release);  // the underhand throw on that arm; a_release at the top of the swing
 		bool                  Throwing();  // the Light Orb over your head, lit or put away
-		void                  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land);  // a thrown thing flown on its arc; a_land where it comes down
-		void                  Hazard(const std::string& a_model, const RE::NiPoint3& a_at, float a_scale, float a_life);  // a model of light lingering a_life seconds where it's set (drawn as the flasks' ground fires are)
+		void                  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land, float a_spin = 12.0f);  // (a_spin 0: it flies nose first - a meteor)  // a thrown thing flown on its arc; a_land where it comes down
+		void                  Hazard(const std::string& a_model, const RE::NiPoint3& a_at, float a_scale, float a_life, float a_yaw = 0.0f);  // a model of light lingering a_life seconds where it's set (drawn as the flasks' ground fires are)
 		RE::ObjectRefHandle   PlaceAt(RE::TESBoundObject* a_obj, const RE::NiPoint3& a_at, float a_yaw);  // a placed object made at the point itself (its 3D drawn there, not made at the player and moved)
 		void                  BlackHole(const RE::NiPoint3& a_at, bool a_legendary);  // the Subsuming Vortex: a purple singularity pulls the dead in, then bursts
 		void                  DevCast(const std::string& a_mode);  // dev: 'cast tap|full|ult|orb|hand' with a spell in hand

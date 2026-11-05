@@ -231,6 +231,7 @@ from esp_ids import BLADE_VIZ
 from esp_ids import CLASS_ARMOUR, CLASS_PIECES
 o.append('\tinline constexpr std::uint32_t kClassArmour[4][4] = { ' + ', '.join('{ ' + ', '.join(f'0x{IDS[("ARMO", f"cm_{c}_{pc}")]:03X}' for pc in CLASS_PIECES) + ' }' for c in CLASS_ARMOUR) + ' };  // each class\'s Black Mage robes, hood, wraps, boots (its accents): ' + ' '.join(CLASS_ARMOUR))
 o.append('\tinline constexpr std::uint32_t kBladeViz[' + str(len(BLADE_VIZ)) + '][3] = { ' + ', '.join('{ ' + ', '.join(f'0x{IDS[("ENCH", f"bv_{b}_{n}")]:03X}' for n in (1, 2, 3)) + ' }' for b in BLADE_VIZ) + ' };  // the swords\' tier looks: ' + ' '.join(BLADE_VIZ))
+o.append('\tinline constexpr std::uint32_t kBladeVizArt[' + str(len(BLADE_VIZ)) + '] = { ' + ', '.join(f'0x{IDS[("SPEL", f"vw_{b}")]:03X}' for b in BLADE_VIZ) + ' };  // each look\'s Vibrant Weapons art on the blade (an ability, laid on while the sword is in your hand)')
 o.append('\tinline constexpr std::uint32_t kBladeVizFx[' + str(len(BLADE_VIZ)) + '][3] = { ' + ', '.join('{ ' + ', '.join(f'0x{IDS[("MGEF", f"bv_{b}_{n}")]:03X}' for n in (1, 2, 3)) + ' }' for b in BLADE_VIZ) + ' };')
 o.append('\tinline constexpr std::uint32_t kRiftEnch[3] = { ' + ', '.join(f'0x{IDS[("ENCH", f"riftfire{n}")]:03X}' for n in (1, 2, 3)) + ' };  // its fire, brighter each tier')
 o.append(f'\tinline constexpr std::uint32_t kStandStat = 0x{IDS[("STAT", "stand")]:03X};  // the station platform (dressing on the Coffer)')

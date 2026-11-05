@@ -443,7 +443,7 @@ for el, (label, text) in XBOWS.items():
 # class swords are Kv's Crystal Sword (its four colours; the Party Pack carries its models and textures loose), on the
 # Madness Sword's record (a one-handed sword); the Dragon Slayer is its white greatsword on the Draugr greatsword's. Their tier
 # looks are the bv_* enchantments below; their abilities src/Classes.cpp (the tier ladder)
-def crystal_weapon(key, edid, full, model, first, desc, data, tmpl='weap_madness'):
+def crystal_weapon(key, edid, full, model, first, desc, data, tmpl='weap_madness', speed=None):
     subs = []
     for name, hx in T[tmpl]['subs']:
         b = bytes.fromhex(hx)
@@ -456,21 +456,40 @@ def crystal_weapon(key, edid, full, model, first, desc, data, tmpl='weap_madness
         elif name == 'KWDA' and tmpl == 'weap_madness': b = bytes.fromhex(hx)[:8]
         elif name == 'WNAM': b = struct.pack('<I', fid('STAT', first))
         elif name == 'DATA': b = struct.pack('<IfH', *data)
+        elif name == 'DNAM' and speed: b = bytearray(b); struct.pack_into('<f', b, 4, speed); b = bytes(b)
         subs.append(sub(name, b))
         if name == 'MODL': subs.append(sub('EAMT', struct.pack('<H', 0)))   # (no charge bar: its looks never run down)
     if tmpl == 'weap_draugr_gs' and not any(n == 'WNAM' for n, _ in T[tmpl]['subs']):
         subs.append(sub('WNAM', struct.pack('<I', fid('STAT', first))))
     recs['WEAP'].append(record('WEAP', fid('WEAP', key), subs))
 KV = 'kv\\crystalsword\\'
-crystal_weapon('riftblade', 'UN_Riftblade', 'Radiant Blade', KV + 'kv-crystalsword_white_1.nif', '1st_riftblade',
-    "The Summoner's sword of white crystal, alive with pale light as it grows. I: its light swings send out arcs of white light that pierce through the dead. II: its heavy attacks burst in radiance. III: three blades of light circle you and strike the dead that come near.",
+# (Noah: "all of the swords needs real work and attention to detail for inventory view and descriptions") what each sword is
+# and what each of its tiers does - its description, and (TIER_TEXT) the tier's own line on the item card
+SWORD_DESC = {
+    'radiant': "The Summoner's blade: pale silver, burning with white sunlight that grows with every tier. Tier I: light swings loose long blades of white light that cut through every one of the dead in their path. Tier II: heavy attacks burst in radiance. Tier III: three blades of light circle you and strike the dead that come near.",
+    'carian': "Destruction's blade: stahlrim edged in blue lightning - raw sorcery no foe resists. Tier I: light swings loose long blades of blue light that cut through every one of the dead in their path. Tier II: heavy attacks burst in raw magic. Tier III: a heavy attack conjures a giant spectral greatsword that sweeps everything before you.",
+    'alch': "The Alchemist's blade: daedric steel wreathed in purple shadowflame. Tier I: light swings loose long blades of shadowflame that cut through the dead and set them burning - fire at twice its damage. Tier II: heavy attacks raise a 15 m wall of purple fire in a wide fan before you, burning all inside it for 3 seconds. Tier III: the dead that die burning explode, setting those round them alight.",
+    'ss_none': "The Spellsword's blade: bright Nordic steel that takes the element of the spell in your other hand - fire, frost, lightning, sunlight or blood. Tier I: light swings loose long blades of that element that cut through every one of the dead in their path. Tier II: heavy attacks burst in it. Tier III: its blades carry the spell itself.",
+    'slayer': "The Akaviri blade of the old dragon-hunters, gold dragonfire running along its edge. Swings 50% faster. Light swings loose long blades of golden fire that burn the dead - dragons at twice the damage. Every heavy attack calls golden fire meteors down on every enemy within 30 m for 5 seconds.",
+}
+TIER_TEXT = {   # (the look's enchantment on the item card: what this tier adds)
+    'radiant': ("Light swings loose blades of white light through the dead.", "Light swings loose blades of white light; heavy attacks burst in radiance.", "Blades of light from every swing, radiant heavy attacks, and three blades of light circling you."),
+    'carian': ("Light swings loose blades of blue light through the dead.", "Light swings loose blades of blue light; heavy attacks burst in raw magic.", "Blades of blue light, bursting heavy attacks, and a giant spectral greatsword on every heavy attack."),
+    'alch': ("Light swings loose blades of shadowflame that set the dead burning.", "Blades of shadowflame; heavy attacks raise a 15 m wall of purple fire.", "Blades of shadowflame, the wall of purple fire, and the burning dead explode."),
+    'ss': ("Light swings loose blades of your spell's element through the dead.", "Blades of your spell's element; heavy attacks burst in it.", "Blades of your spell's element that carry the spell itself; heavy attacks burst in it."),
+    'slayer': ("Golden fire: twice the damage to dragons; heavy attacks rain golden meteors within 30 m.",) * 3,
+}
+TIER_NAME = {'radiant': 'Radiant Light', 'carian': 'Carian Sorcery', 'alch': 'Shadowflame', 'ss': 'Spellbound', 'slayer': 'Golden Dragonfire'}
+SW = 'CurseOfAlduin\\swords\\'   # (Noah: "use the swords from Light Greatswords" - tools/lgswords.py builds them from the download)
+crystal_weapon('riftblade', 'UN_Riftblade', 'Radiant Blade', SW + 'radiant.nif', '1st_riftblade',
+    SWORD_DESC['radiant'],
     (900, 10.0, 10))
-crystal_weapon('carianblade', 'UN_CarianBlade', 'Carian Blade', KV + 'kv-crystalsword_blue_1.nif', '1st_kvblue',
-    "Destruction's sword of blue crystal, its edge pure sorcery - raw magic no foe resists. I: its light swings send out arcs of glinting blue that pierce through the dead. II: its heavy attacks burst in raw magic. III: a charged swing conjures a giant spectral greatsword that sweeps everything before you.",
+crystal_weapon('carianblade', 'UN_CarianBlade', 'Carian Blade', SW + 'carian.nif', '1st_kvblue',
+    SWORD_DESC['carian'],
     (900, 10.0, 10))
 
-crystal_weapon('alchknife', 'UN_AlchemistKnife', 'Shadowflame Sword', KV + 'kv-crystalsword_1.nif', '1st_mace',
-    "The Alchemist's sword of violet crystal, burning with shadowflame. I: its light swings send out arcs of shadowflame that pierce through the dead and set them burning - fire at twice its damage. II: its heavy attacks burst in shadowflame. III: the dead that die burning explode, setting those round them alight.",
+crystal_weapon('alchknife', 'UN_AlchemistKnife', 'Shadowflame Sword', SW + 'shadowflame.nif', '1st_mace',
+    SWORD_DESC['alch'],
     (900, 10.0, 10))
 
 
@@ -523,16 +542,16 @@ for name, hx in T['stat_madness1st']['subs']:
     if name == 'EDID': b = z('UN_MadnessSword1st')
     subs.append(sub(name, b))
 recs['STAT'].append(record('STAT', fid('STAT', 'madness_1st'), subs))
-crystal_weapon('madness', 'UN_MadnessSword', 'Spellbound Blade', KV + 'kv-crystalsword_red_1.nif', '1st_kvred',
-    "The Spellsword's sword of red crystal, taking the element of the spell in your other hand. I: its light swings send out arcs of that element that pierce through the dead. II: its heavy attacks burst in it. III: its arcs carry the spell itself.",
+crystal_weapon('madness', 'UN_MadnessSword', 'Spellbound Blade', SW + 'spellbound.nif', '1st_kvred',
+    SWORD_DESC['ss_none'],
     (900, 10.0, 10))
 
 # (Noah: "make the Dragon Slayer sword one-handed ... use the sword I attached") the Spellsword's wonder: a one-handed sword (the
 # Madness Sword's record) with the Ayleid Crystal Saber's model (tools/wonderprops.py slayer); its spell-on-hit, lightning
 # slashes and tier in src/Classes.cpp and src/WonderProps.inl
-crystal_weapon('slayer', 'UN_DragonSlayer', 'Dragon Slayer', KV + 'kv-crystalgreatsword_white_1.nif', '1st_slayer',
-    "A greatsword of white crystal, gold dragonfire running through it. Every kill feeds it a dragon ember (five at most); a charged swing spends them all in one great arc of dragonfire, stronger for each.",
-    (6000, 16.0, 26), 'weap_draugr_gs')
+crystal_weapon('slayer', 'UN_DragonSlayer', 'Dragon Slayer', SW + 'slayer.nif', '1st_slayer',
+    SWORD_DESC['slayer'],
+    (6000, 16.0, 26), 'weap_draugr_gs', 0.75 * 1.5)   # (Noah: "make 2hand attacks faster by 50% only while holding those 2 weapons")
 
 # (Noah: "I want the armor kits for all classes to stay the same visually through all the upgrades ... the upgraded version
 # to make the item look enchanted") each class's set glows with its colour from Tier I, stronger each tier (Classes::TickArmour
@@ -628,12 +647,39 @@ for bkey, (fill, edge, keys) in BV_COL.items():
         struct.pack_into('<I', md, 64, 1)                     # a script effect with no script: looks only, nothing done on a hit
         struct.pack_into('<I', md, 68, 0xFFFFFFFF)
         struct.pack_into('<I', md, 0, struct.unpack_from('<I', md, 0)[0] | 0x8000)   # hidden in the effects list
-        recs['MGEF'].append(record('MGEF', fid('MGEF', f'bv_{bkey}_{n}'), [sub('EDID', z(f'UN_BladeLookFx_{bkey}{n}')), sub('FULL', z('Blade')), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
-            sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+        # (Noah: "attention to detail for inventory view and descriptions") the look shows on the item card: its name and what
+        # this tier adds (no magnitude, duration or area to print)
+        tk = 'ss' if bkey.startswith('ss_') else bkey
+        struct.pack_into('<I', md, 0, (struct.unpack_from('<I', md, 0)[0] & ~0x8000) | 0x200 | 0x400 | 0x800)
+        recs['MGEF'].append(record('MGEF', fid('MGEF', f'bv_{bkey}_{n}'), [sub('EDID', z(f'UN_BladeLookFx_{bkey}{n}')), sub('FULL', z(TIER_NAME[tk] + ' ' + 'I' * n)), sub('MDOB', tsub('mgef_enchfire', 'MDOB')),
+            sub('DATA', bytes(md)), sub('DNAM', z(TIER_TEXT[tk][n - 1]))]))
         en = bytearray(tsub('ench_fire05', 'ENIT'))
         struct.pack_into('<I', en, 0, 0); struct.pack_into('<I', en, 4, struct.unpack_from('<I', en, 4)[0] | 0x1)
-        recs['ENCH'].append(record('ENCH', fid('ENCH', f'bv_{bkey}_{n}'), [sub('EDID', z(f'UN_BladeLookEnch_{bkey}{n}')), sub('OBND', bytes(12)), sub('FULL', z('Blade')),
+        recs['ENCH'].append(record('ENCH', fid('ENCH', f'bv_{bkey}_{n}'), [sub('EDID', z(f'UN_BladeLookEnch_{bkey}{n}')), sub('OBND', bytes(12)), sub('FULL', z(TIER_NAME[tk] + ' ' + 'I' * n)),
             sub('ENIT', bytes(en)), sub('EFID', struct.pack('<I', fid('MGEF', f'bv_{bkey}_{n}'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
+
+# (Noah: "for the weapon effects around the swords in hand use the effects mod we downloaded for that" - "Both layered") each
+# look also wears Vibrant Weapons' art along the blade (their greatsword art in the look's colour, tools/lgswords.py) and a
+# small light of its colour: an ability of a light effect carrying the art, laid on you while the sword is in your hand
+# (src/Classes.cpp TickSwords) - Visual Animated Enchants' shader and art ride on the enchantment above
+for bkey, (fill, edge, keys) in BV_COL.items():
+    data = bytearray(tsub('ligh', 'DATA'))
+    struct.pack_into('<I', data, 4, 180); struct.pack_into('<BBBB', data, 8, *edge, 0)
+    recs['LIGH'].append(record('LIGH', fid('LIGH', f'vw_{bkey}'), [sub('EDID', z(f'UN_SwordLight_{bkey}')), sub('OBND', tsub('ligh', 'OBND')), sub('DATA', bytes(data)), sub('FNAM', struct.pack('<f', 0.6))]))
+    arto(f'vw_{bkey}', f'CurseOfAlduin\\vw\\{bkey}.nif', 1)   # (a hit-effect art, as theirs)
+    md = bytearray(bytes.fromhex('001040000000003f58fa030012000000ffffffff00000000091f040000000000000000000000000000000000000000000000003f0000000000000000000000000c000000ffffffff00000000000000000100000000000000ffffffff081f0400061f0400000000008fc2f53d000000000000803f000000000000000000000000000000000000000000000000000000000000000000000000'))
+    struct.pack_into('<I', md, 0, struct.unpack_from('<I', md, 0)[0] | 0x8000)   # hidden
+    struct.pack_into('<I', md, 8, fid('LIGH', f'vw_{bkey}'))
+    struct.pack_into('<I', md, 24, 0)
+    struct.pack_into('<I', md, 80, 0)                                              # constant effect
+    struct.pack_into('<I', md, 84, 0)                                              # on yourself
+    struct.pack_into('<I', md, 92, 0)
+    struct.pack_into('<I', md, 96, fid('ARTO', f'vw_{bkey}'))                      # the art on you (Vibrant's: hung on the WEAPON node)
+    recs['MGEF'].append(record('MGEF', fid('MGEF', f'vw_{bkey}'), [sub('EDID', z(f'UN_SwordArtFx_{bkey}')), sub('FULL', z('Blade')), sub('MDOB', struct.pack('<I', 0)),
+        sub('DATA', bytes(md)), sub('DNAM', z(''))]))
+    recs['SPEL'].append(record('SPEL', fid('SPEL', f'vw_{bkey}'), [sub('EDID', z(f'UN_SwordArt_{bkey}')), sub('OBND', bytes(12)), sub('FULL', z('Blade')),
+        sub('DESC', z('')), sub('SPIT', struct.pack('<IIIfIIffI', 0, 0, 4, 0.0, 0, 0, 0.0, 0.0, 0)),   # an ability, constant, on yourself
+        sub('EFID', struct.pack('<I', fid('MGEF', f'vw_{bkey}'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 
 # (Noah: "shadowflame ... should set enemies on fire with purple flames") Shadowflame on its victim: Skyrim's enchantment fire
 # wrapped round the whole body in violet - a burning membrane and a thick stream of violet flames rising off it - for as
@@ -1241,20 +1287,20 @@ recs['ACTI'].append(record('ACTI', fid('ACTI', 'rel_portal'), [sub('EDID', z('UN
 # (Noah: "just use High Hrothgar's building") the wonders and Alduin's Bane float in the great hall to be taken up, each in a soft
 # glow, and a fiery pillar holds the Hall's rewards: nameless activators (no prompt of Skyrim's - src/Echo.cpp aims and takes them)
 for key, model, r in (('hf_gravecaller', RQ.replace('reliquary', 'wonder') + 'barrowhorn.nif', 40), ('hf_frostbinder', 'Weapons\\StaffofMagnus\\StaffofMagnus.nif', 80),
-                      ('hf_wolfcrown', 'CurseOfAlduin\\alchemist\\flask_philosopher_held.nif', 20), ('hf_barrowhorn', 'CurseOfAlduin\\wonder\\slayer_static.nif', 60),
-                      ('hf_bane', 'CurseOfAlduin\\wonder\\bane_static.nif', 90), ('hf_glow', 'CurseOfAlduin\\fx\\hall_glow.nif', 60),
+                      ('hf_wolfcrown', 'CurseOfAlduin\\alchemist\\flask_philosopher_held.nif', 20), ('hf_barrowhorn', 'CurseOfAlduin\\swords\\slayer_static.nif', 60),
+                      ('hf_bane', 'CurseOfAlduin\\swords\\bane_static.nif', 90), ('hf_glow', 'CurseOfAlduin\\fx\\hall_glow.nif', 60),
                       ('hf_glowtall', 'CurseOfAlduin\\fx\\hall_glow_tall.nif', 120), ('hf_pillar', 'CurseOfAlduin\\fx\\pillar_fire.nif', 120)):
     recs['ACTI'].append(record('ACTI', fid('ACTI', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, -r, r, r, r * 2)),
         sub('MODL', z(model)), sub('FNAM', b'\0\0')]))
 for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane'):  # (greyed out, until it's yours: tools/modelconv/ghostnif.cpp; the Staff of Magnus's made on the machine from the game's own)
     recs['ACTI'].append(record('ACTI', fid('ACTI', 'hg_' + k), [sub('EDID', z('UN_hg_' + k)), sub('OBND', struct.pack('<6h', -80, -80, -80, 80, 80, 160)),
-        sub('MODL', z('CurseOfAlduin\\wonder\\ghost_' + k + '.nif')), sub('FNAM', b'\0\0')]))
+        sub('MODL', z({'bane': 'CurseOfAlduin\\swords\\ghost_bane.nif', 'barrowhorn': 'CurseOfAlduin\\swords\\ghost_slayer.nif'}.get(k, 'CurseOfAlduin\\wonder\\ghost_' + k + '.nif'))), sub('FNAM', b'\0\0')]))   # (the Bane and the Slayer: Light Greatswords' models)
 # Stage 5 (src/Echo.cpp Hall): the Hall of the Awakened's stations, and Alduin's Fang
 for key, name, verb in (('hall_fang', "Alduin's Bane", 'Take'), ('hall_robes', "The First Dragonborn's Regalia", 'Take'),
                         ('hall_skull', "The Bone-Wyrm's Skull", 'Bind'), ('hall_endless', 'Brazier of the Endless Night', 'Kindle'),
                         ('hall_throne', 'Seat of the Awakened', 'Begin again')):
     rel_acti(key, name, verb, 'pedestal.nif', 60)
-for key, model, r in (('hall_fang_show', 'CurseOfAlduin\\wonder\\bane_static.nif', 70), ('1st_fang', 'CurseOfAlduin\\wonder\\bane.nif', 70)):
+for key, model, r in (('hall_fang_show', 'CurseOfAlduin\\swords\\bane_static.nif', 70), ('1st_fang', 'CurseOfAlduin\\swords\\bane.nif', 70)):
     recs['STAT'].append(record('STAT', fid('STAT', key), [sub('EDID', z('UN_' + key)), sub('OBND', struct.pack('<6h', -r, -r, 0, r, r, r)),
         sub('MODL', z(model)), sub('DNAM', struct.pack('<fI', 90.0, 0))]))
 for key, model in (('summon', 'emptysummonfx_instant.nif'), ('crystal', 'diamondwallspawnexp.nif'), ('orb', 'lightningrail_orb.nif'),
@@ -1269,9 +1315,10 @@ for name, hx in T['weap_draugr_gs']['subs']:
     b = bytearray(bytes.fromhex(hx))
     if name == 'EDID': b = z('UN_AlduinsFang')
     elif name == 'FULL': b = z("Alduin's Bane")
-    elif name == 'MODL': b = z('CurseOfAlduin\\wonder\\bane.nif')
+    elif name == 'MODL': b = z('CurseOfAlduin\\swords\\bane.nif')   # (Noah: Light Greatswords' Dragonbone, tools/lgswords.py)
     elif name == 'MODT': continue
-    elif name == 'DESC': b = z("A blade of dragon bone, cut from the Echo of Alduin. Every swing sends a wind slash down the line that hurls the dead far away. Its kills fill it with souls: full, Alduin's shade rains meteors round you. While you hold it, kills heal you and your shouts return twice as fast.")
+    elif name == 'DESC': b = z("A greatsword of dragon bone, cut from the Echo of Alduin. Swings 50% faster. Light swings loose long blades of pale light that cut through the dead and hurl them back. Heavy attacks bring a meteor down 5 m before you. Every 20 kills Alduin's shade answers: meteors rain on the dead round you for 10 seconds. While you hold it, kills heal you and your shouts return twice as fast.")
+    elif name == 'DNAM': struct.pack_into('<f', b, 4, 0.75 * 1.5)   # (Noah: "make 2hand attacks faster by 50% only while holding those 2 weapons")
     elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_fang'))
     elif name == 'DATA': b = bytearray(struct.pack('<IfH', 5000, 16.0, 38))
     ws.append(sub(name, bytes(b)))

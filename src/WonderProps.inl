@@ -427,38 +427,52 @@ namespace Props
 			Spellcraft::Fling(f, p->GetPosition() - RE::NiPoint3{ 0, 0, 80.0f }, 10.0f);
 		}
 	}
+	// (Noah: "I want alduins bane's light attack to send the slashes like we are talking about and heavy attacks send a medium
+	// size meteor in 5m in front of the player and every 20 kills rains meteors on enemies for 10 seconds") a light swing: a
+	// long blade of pale light down the line through every one of the dead in its path, throwing them back; a heavy one: a
+	// meteor out of the sky 5 m before you, the dead round it struck hard and hurled away (the 20 souls' rain: TickBane)
 	void BaneWind(RE::PlayerCharacter* p, bool a_power)
 	{
-		if (!a_power) { BaneClose(p); return; }
-		// (Noah: "alduins bane's heavy attack looks really underwhelming and should be a large cone of wind like the light attack
-		// but larger") the light attack's wind, as a gale: bursts of it rolling out ahead of you one after another, wider as they
-		// go, to 14 m - every one of the dead in the cone struck hard and hurled VERY far
-		const Aim aim = AimAt(900.0f);
-		RE::NiPoint3 dir = aim.dir; dir.z = 0;
-		if (dir.Length() < 0.01f) dir = { 0, 1, 0 };
-		dir.Unitize();
-		const RE::NiPoint3 side{ dir.y, -dir.x, 0 };
-		const RE::NiPoint3 base = p->GetPosition() + RE::NiPoint3{ 0, 0, 80.0f };
-		constexpr float kReach = 980.0f, kHalf = 0.5f;
-		for (int k = 1; k <= 7; ++k) {
-			const float dd = kReach * k / 7.0f;
-			const float wide = dd * std::tan(kHalf);
-			const int   across = k < 3 ? 1 : (k < 5 ? 2 : 3);
-			for (int j = 0; j < across; ++j) {
-				const float off = across == 1 ? 0.0f : wide * (2.0f * j / (across - 1) - 1.0f) * 0.75f;
-				Blast(BlastIndex("shoutarea"), base + dir * dd + side * off, 0.045f * k, 0.5f + 0.09f * k);
+		static auto last = std::chrono::steady_clock::now() - std::chrono::seconds(5);
+		const auto now = std::chrono::steady_clock::now();
+		if (now - last < std::chrono::milliseconds(200)) return;   // (one swing heard from both bodies)
+		last = now;
+		if (!a_power) {
+			const RE::NiPoint3 dir = Gun::SwingDir();
+			Gun::SlashSpec sl;
+			sl.model = "CurseOfAlduin\\fx\\arc_bane.nif";
+			sl.from = Gun::SwingFrom();
+			sl.dir = dir;
+			sl.roll = Gun::SwingRoll(dir);
+			sl.speed = 1800.0f, sl.range = 1800.0f, sl.radius = 150.0f, sl.scale = 1.3f;
+			sl.damage = FangBase() * BaneMult() * 0.9f;
+			sl.onHit = [dir](RE::Actor* a, bool killed) {
+				auto* pl = RE::PlayerCharacter::GetSingleton();
+				if (!a || !pl) return;
+				if (killed) { BaneKilled(pl); return; }
+				Spellcraft::Fling(a, a->GetPosition() - dir * 120.0f - RE::NiPoint3{ 0, 0, 80.0f }, 8.0f);
+			};
+			Gun::Slash(sl);
+			return;
+		}
+		RE::NiPoint3 fwd = AimAt(900.0f).dir; fwd.z = 0;
+		if (fwd.Length() < 0.01f) fwd = { std::sin(p->GetAngleZ()), std::cos(p->GetAngleZ()), 0 };
+		fwd.Unitize();
+		RE::NiPoint3 at = p->GetPosition() + fwd * 350.0f;   // (5 m)
+		if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && std::abs(land - at.z) < 300.0f) at.z = land;
+		Gun::Meteor(at, false, 1.6f, [](const RE::NiPoint3& hit) {
+			auto* pl = RE::PlayerCharacter::GetSingleton();
+			Blast(BlastIndex("fireball"), hit + RE::NiPoint3{ 0, 0, 20.0f }, 0.0f, 0.7f);
+			Gun::ElemBurst(0, hit + RE::NiPoint3{ 0, 0, 40.0f }, 2.2f, 0.0f, 0.8f);
+			Gun::Motes(0, hit, 2.0f, 2.0f);
+			if (!pl) return;
+			for (auto* f : Foes(hit, 360.0f)) {
+				if (Damage(f, FangBase() * BaneMult() * 2.4f, false, false, true)) { BaneKilled(pl); continue; }
+				g_dots.push_back({ f->GetHandle(), FangBase() * 0.4f, 3.0f });   // (burning)
+				Spellcraft::Fling(f, hit - RE::NiPoint3{ 0, 0, 60.0f }, 14.0f);
 			}
-		}
-		Audio::AtPoint(gen::Sound::unleash_hearth, base + dir * 200.0f);
-		Audio::AtPoint(gen::Sound::unleash_hearth, base + dir * 500.0f, 0.18f);
-		const RE::NiPoint3 me = p->GetPosition();
-		for (auto* f : Foes(me + dir * (kReach * 0.5f), kReach * 0.62f)) {
-			RE::NiPoint3 to = f->GetPosition() - me; to.z = 0;
-			const float dd = to.Length();
-			if (dd > kReach || dd < 1.0f || to.Dot(dir) / dd < std::cos(kHalf + 0.08f)) continue;
-			if (Damage(f, FangBase() * BaneMult() * 1.6f, false, false, true)) BaneKilled(p);
-			Spellcraft::Fling(f, f->GetPosition() - dir * 120.0f - RE::NiPoint3{ 0, 0, 80.0f }, 24.0f);  // (VERY far)
-		}
+		});
+		logger::info("swords: Alduin's Bane - a meteor 5 m ahead");
 	}
 	// (Noah: "the dragon slayer sword ... is supposed to send lightning slashes similar to Alduin's Bane but not as strong in
 	// damage") the Spellsword's wonder: every swing looses a crescent of lightning down the line - a power attack a wider,
@@ -548,13 +562,16 @@ namespace Props
 		if (g_baneStorm > 0) {  // Alduin's shade: meteors on the dead round you
 			g_baneStorm -= a_delta;
 			if ((g_baneMeteor -= a_delta) <= 0) {
-				g_baneMeteor = 0.8f;  // (fewer in the air at once)
+				g_baneMeteor = 0.6f;  // (fewer in the air at once)
 				auto foes = Foes(p->GetPosition(), 1400.0f);
 				const RE::NiPoint3 at = foes.empty() ? p->GetPosition() + RE::NiPoint3{ Rand(-600, 600), Rand(-600, 600), 0 } : foes[static_cast<std::size_t>(Rand(0, static_cast<float>(foes.size()) - 0.01f))]->GetPosition();
 				// (Noah: the meteors themselves should be seen falling) Skyrim's fireball loosed from high above, falling on
 				// the spot; the strike (ours) lands as it does
-				SkyFireball(at);
-				g_zones.push_back({ 4, at, 240.0f, 0.95f, 0.9f, FangBase() * 2.0f, 0, false, 0 });
+				// (Noah: "every 20 kills rains meteors on enemies for 10 seconds") ours, its fire tail seen the whole way down; its
+				// strike where it lands
+				Gun::Meteor(at, false, 1.0f, [](const RE::NiPoint3& hit) {
+					g_zones.push_back({ 4, hit, 240.0f, 0.15f, 0.0f, FangBase() * 2.0f, 0, false, 0 });   // (struck at once: it has landed)
+				});
 			}
 		}
 	}
