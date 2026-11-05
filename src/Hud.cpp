@@ -6509,12 +6509,19 @@ float4 main(float4 pos : SV_POSITION, float4 col : COLOR0, float2 uv : TEXCOORD0
 			} catch (...) {
 			}
 			// Frame cap (sheet: movement.fps_cap): sleep most of the gap, spin the last bit for an even pace.
-			if (gen::kFpsCap > 0) {
+			// (Noah: "make the fps cap in the menu 60fps so i dont overwork my pc with unlimited") the menus - the main menu, the
+			// game paused under any menu (inventory, map, the altars) - held to 60; play itself stays unlimited
+			float cap = gen::kFpsCap;
+			if (cap <= 0) {
+				auto* ui = RE::UI::GetSingleton();
+				if (ui && (ui->GameIsPaused() || ui->IsMenuOpen(RE::MainMenu::MENU_NAME))) cap = 60.0f;
+			}
+			if (cap > 0) {
 				using C = std::chrono::steady_clock;
 				static C::time_point next = C::now();
 				static const bool fineTimer = (::timeBeginPeriod(1) == TIMERR_NOERROR);  // 1 ms sleeps
 				(void)fineTimer;
-				const auto frame = std::chrono::duration_cast<C::duration>(std::chrono::duration<double>(1.0 / std::max(1.0, static_cast<double>(gen::kFpsCap))));
+				const auto frame = std::chrono::duration_cast<C::duration>(std::chrono::duration<double>(1.0 / std::max(1.0, static_cast<double>(cap))));
 				auto now = C::now();
 				if (next > now) {
 					if (next - now > 2ms) {
