@@ -603,6 +603,18 @@ namespace bo3z
 				float side = 0;
 				in >> path >> root >> side;
 				Gun::DevFx(path, root, side);
+			} else if (cmd == "look") {  // look <model> [w|x|h] [scale] [pal|-] [seconds]
+				std::string model, mode = "w", pal = "-";
+				float scale = 1.0f, secs = 4.0f;
+				in >> model >> mode >> scale >> pal >> secs;
+				Gun::DevLook(model, mode.empty() ? "w" : mode, scale, pal, secs);
+			} else if (cmd == "fxreload") {
+				Gun::DevFxReload();
+			} else if (cmd == "swing") {  // swing <0 light|1 heavy>: the weapon in hand's swing effects
+				int pw = 0;
+				in >> pw;
+				Gun::DevSwing(pw);
+				logger::info("dev: swing {}", pw ? "heavy" : "light");
 			} else if (cmd == "nodes") {
 				Gun::DevNodes();
 			} else if (cmd == "quit") {  // the game closed to the desktop (so a new build can go in)

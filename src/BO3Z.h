@@ -820,6 +820,10 @@ namespace bo3z
 		void                  SetLightOrb(bool a_on);
 		void                  DevFx(const std::string& a_path, const std::string& a_root, float a_side);
 		void                  DevNodes();
+		void                  DevLook(const std::string& a_model, const std::string& a_mode, float a_scale, const std::string& a_pal, float a_secs);
+		void                  DevFxReload();
+		void                  DevSwing(int a_power);
+		void                  TickLooks(float a_delta);
 		void                  StartThrow(bool a_left, std::function<void()> a_release);  // the underhand throw on that arm; a_release at the top of the swing
 		bool                  Throwing();  // the Light Orb over your head, lit or put away
 		void                  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land, float a_spin = 12.0f);  // (a_spin 0: it flies nose first - a meteor)  // a thrown thing flown on its arc; a_land where it comes down

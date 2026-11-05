@@ -1,5 +1,6 @@
 #include "BO3Z.h"
 #include "CofferSpells.h"
+#include <sstream>
 
 // The arsenal (sheet: weapons). Wands are staff-type weapons with a free concentration enchantment; tomes and
 // grimoires are concentration spells held in the right hand. Skyrim plays the cast (staff thrust / open hand) from
@@ -464,6 +465,7 @@ namespace bo3z
 		StormCharge g_storm;
 		float       g_propKickT = -1.0f;  // a wonder weapon just fired (src/WonderProps.inl: its model's attack motion)
 		bool        g_propKickBig = false;
+		std::atomic<int>  g_devSwing{ 0 };          // (dev: `swing 0|1` - a light or heavy swing's effects, no animation needed)
 		std::atomic<bool> g_weaponSwing{ false };  // (any swing of the weapon in hand, heard by Bows' animation sink: Alduin's Fang's charged swing)
 		bool        g_stormBusy = false;   // (while the lightning or a shout itself is dealing damage: no charge spent)
 		struct Arc
@@ -832,6 +834,152 @@ namespace bo3z
 		}
 
 
+		// ================================================================ the effects map
+		// (Noah: "I want the effects for all the weapons and their attacks/abilities to be compiled of Skyrim mods from nexus or
+		// base Skyrim stuff ... Don't make your stuff from scratch it's higher quality from the mods") every one of our effect
+		// models can be stood in for by Skyrim's own (or an installed magic mod's) - one or several of them, each coloured by
+		// one of our greyscale-to-palette ramps, sized, turned and raised as it needs - named in
+		// Data/SKSE/Plugins/CurseOfAlduin/fxmap.ini, one line a model:
+		//     CurseOfAlduin\fx\arc_purple.nif = magic\voiceflamewaveproject01.nif pal=violet s=0.6 r=0,0,90 ; effects\x.nif s=2
+		// (pal=<fire|violet|gold|...> our ramp textures\CurseOfAlduin\fx\grad_<name>.dds, or a texture path; col=r,g,b its colour
+		// instead; s= its size; r= degrees about x,y,z; z= raised; noplay: its animation left alone; `none`: nothing drawn).
+		// Read at load and again on the dev command `fxreload`, so a look can be tried in the running game.
+		struct FxPart { std::string model, pal; RE::NiPoint3 col{ -1, -1, -1 }; float scale = 1.0f, dz = 0.0f; RE::NiMatrix3 rot; bool play = true, none = false; };
+		std::unordered_map<std::string, std::vector<FxPart>> g_fxMap;
+		std::string FxKey(std::string a)
+		{
+			std::transform(a.begin(), a.end(), a.begin(), [](unsigned char c) { return c == '/' ? '\\' : static_cast<char>(std::tolower(c)); });
+			if (a.rfind("meshes\\", 0) == 0) a.erase(0, 7);
+			return a;
+		}
+		std::string Trim(std::string a)
+		{
+			const auto b = a.find_first_not_of(" \t\r\n"), e = a.find_last_not_of(" \t\r\n");
+			return b == std::string::npos ? std::string{} : a.substr(b, e - b + 1);
+		}
+		int FxMapLoad()
+		{
+			g_fxMap.clear();
+			std::ifstream in("Data/SKSE/Plugins/CurseOfAlduin/fxmap.ini");
+			std::string line;
+			int n = 0;
+			while (std::getline(in, line)) {
+				if (const auto c = line.find('#'); c != std::string::npos) line.erase(c);
+				const auto eq = line.find('=');
+				if (eq == std::string::npos) continue;
+				const std::string src = FxKey(Trim(line.substr(0, eq)));
+				std::vector<FxPart> parts;
+				std::stringstream all(line.substr(eq + 1));
+				std::string one;
+				while (std::getline(all, one, ';')) {
+					std::stringstream ws(one);
+					std::string tok;
+					FxPart fp;
+					float rx = 0, ry = 0, rz = 0;
+					while (ws >> tok) {
+						if (fp.model.empty() && tok.find('=') == std::string::npos) { fp.model = tok; fp.none = tok == "none"; continue; }
+						const auto q = tok.find('=');
+						const std::string k = q == std::string::npos ? tok : tok.substr(0, q), v = q == std::string::npos ? "" : tok.substr(q + 1);
+						try {
+							if (k == "pal") fp.pal = v.find('\\') == std::string::npos ? "textures\\CurseOfAlduin\\fx\\grad_" + v + ".dds" : v;
+							else if (k == "s") fp.scale = std::stof(v);
+							else if (k == "z") fp.dz = std::stof(v);
+							else if (k == "noplay") fp.play = false;
+							else if (k == "col") std::sscanf(v.c_str(), "%f,%f,%f", &fp.col.x, &fp.col.y, &fp.col.z);
+							else if (k == "r") std::sscanf(v.c_str(), "%f,%f,%f", &rx, &ry, &rz);
+						} catch (...) {}
+					}
+					if (fp.model.empty()) continue;
+					constexpr float kDeg = 0.01745329f;
+					fp.rot.SetEulerAnglesXYZ(rx * kDeg, ry * kDeg, rz * kDeg);
+					parts.push_back(std::move(fp));
+				}
+				if (!src.empty() && !parts.empty()) g_fxMap[src] = std::move(parts), ++n;
+			}
+			logger::info("fxmap: {} of our effect models stood in for by Skyrim's own or installed mods'", n);
+			return n;
+		}
+		// the stand-ins for one of our models (itself, plain, when it has none)
+		std::vector<FxPart> FxParts(const std::string& a_model)
+		{
+			static bool loaded = false;
+			if (!loaded) loaded = true, FxMapLoad();
+			if (auto it = g_fxMap.find(FxKey(a_model)); it != g_fxMap.end()) return it->second;
+			FxPart fp;
+			fp.model = a_model;
+			fp.play = false;
+			return { fp };
+		}
+		// a model's effect shaders coloured: by a greyscale-to-palette ramp (every material its own copy - the one it came with
+		// is shared by every copy of the model in the game) or by a colour laid over its own
+		void TintTree(RE::NiAVObject* a_root, const FxPart& a_part)
+		{
+			if (!a_root || (a_part.pal.empty() && a_part.col.x < 0)) return;
+			static std::unordered_map<std::string, RE::NiPointer<RE::NiTexture>> pals;
+			RE::NiPointer<RE::NiTexture> pal;
+			if (!a_part.pal.empty()) {
+				auto& t = pals[a_part.pal];
+				if (!t) RE::BSShaderManager::GetTexture(a_part.pal.c_str(), true, t, false);
+				pal = t;
+			}
+			RE::BSVisit::TraverseScenegraphGeometries(a_root, [&](RE::BSGeometry* g) {
+				auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get());
+				auto* m = ep ? static_cast<RE::BSEffectShaderMaterial*>(ep->material) : nullptr;
+				if (!m) return RE::BSVisit::BSVisitControl::kContinue;
+				if (auto* nm = static_cast<RE::BSEffectShaderMaterial*>(m->Create())) {
+					nm->CopyMembers(m);
+					if (pal) {
+						nm->greyscaleTexture = RE::NiPointer<RE::NiSourceTexture>(static_cast<RE::NiSourceTexture*>(pal.get()));
+						nm->greyscaleTexturePath = a_part.pal.c_str();
+					}
+					if (a_part.col.x >= 0) nm->baseColor = { a_part.col.x, a_part.col.y, a_part.col.z, nm->baseColor.alpha };
+					ep->SetMaterial(nm, true);
+					nm->~BSEffectShaderMaterial();
+					RE::free(nm);
+				}
+				if (pal) ep->flags.set(RE::BSShaderProperty::EShaderPropertyFlag::kGrayscaleToPaletteColor);
+				return RE::BSVisit::BSVisitControl::kContinue;
+			});
+		}
+		// its own animation run from the start (Skyrim's effect models keep theirs in a controller manager: placed as an object
+		// it would stand at its first frame)
+		void PlayOwn(RE::TESObjectREFR* a_ref, RE::NiAVObject* a_root)
+		{
+			auto* node = a_root ? a_root->AsNode() : nullptr;
+			if (!a_ref || !node) return;
+			for (auto* c = node->GetControllers(); c; c = c->next.get()) {
+				if (auto* mgr = netimmerse_cast<RE::NiControllerManager*>(c)) {
+					RE::NiControllerSequence* pick = nullptr;
+					for (const char* nm : { "mIdle", "Idle", "Play", "Start", "mStart", "Loop" })
+						if (!pick) pick = mgr->GetSequenceByName(nm);
+					if (!pick && !mgr->sequences.empty()) pick = mgr->sequences[0].get();
+					if (pick) a_ref->PlayAnimation(mgr, pick, nullptr);
+					return;
+				}
+			}
+		}
+		// placed references whose models aren't in yet: coloured (and set going) the moment they are
+		struct TintWatch { RE::ObjectRefHandle h; FxPart part; bool play = false; float age = 0; };
+		std::vector<TintWatch> g_tintWatch;
+		void WatchTint(RE::TESObjectREFR* a_ref, const FxPart& a_part, bool a_play = false)
+		{
+			a_play = a_play && a_part.play;
+			if (a_ref && (!a_part.pal.empty() || a_part.col.x >= 0 || a_play) && g_tintWatch.size() < 96) g_tintWatch.push_back({ a_ref->GetHandle(), a_part, a_play });
+		}
+		void TickTints(float a_delta)
+		{
+			for (auto& w : g_tintWatch) {
+				w.age += a_delta;
+				auto r = w.h.get();
+				auto* o = r ? r->Get3D() : nullptr;
+				if (!o) continue;
+				TintTree(o, w.part);
+				if (w.play) PlayOwn(r.get(), o);
+				w.age = 99.0f;
+			}
+			std::erase_if(g_tintWatch, [](const TintWatch& w) { return w.age > 3.0f; });
+		}
+
 		// ================================================================ spell blasts
 		// Skyrim's own explosion looks (no-damage copies in our plugin) at a point: the impact of every shot and the
 		// finale of every signature move. A marker is moved to the spot and the blast is placed on it.
@@ -843,6 +991,7 @@ namespace bo3z
 			float        scale;
 			RE::BGSExplosion* form = nullptr;  // (FxFrom: another mod's burst, quieted)
 			bool              exact = false;   // (our own models: the size asked, never shrunk at your feet)
+			std::shared_ptr<FxPart> part;      // (a stand-in for one of ours: its colour, set on it once it's in)
 		};
 		// Skyrim's explosions are built for dragons and Dragonborn shouts: ours are shrunk so a hit reads as a hit,
 		// not a screen-filling burst. Shots use the small size, signature moves the larger one.
@@ -1025,6 +1174,7 @@ namespace bo3z
 				const float atFeet = std::clamp((b.at.GetDistance(player->GetPosition()) - 150.0f) / 350.0f, 0.0f, 1.0f);
 				const float sc = b.exact ? b.scale : b.scale * 0.8f * (0.6f + 0.4f * atFeet);
 				r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(sc, 0.1f, 5.0f) * 100.0f);
+				if (b.part) WatchTint(r.get(), *b.part);
 				g_shrink.push_back({ r->CreateRefHandle(), { sc, 0.6f } });
 				if (g_shrink.size() > 64) {
 					g_shrink.erase(g_shrink.begin());
@@ -1067,6 +1217,8 @@ namespace bo3z
 				Detonate(b);
 			}
 			TickShrink(a_delta);
+			TickTints(a_delta);
+			Gun::TickLooks(a_delta);
 		}
 
 		float BoltDelay(const gen::GunDef& g, const RE::NiPoint3& a_from, const RE::NiPoint3& a_to)
@@ -2264,45 +2416,63 @@ namespace bo3z
 		}
 		struct WorldFx
 		{
-			RE::ObjectRefHandle ref;
-			std::string         model;
-			bool                ok = false, drawn = false;
+			struct Piece { RE::ObjectRefHandle ref; FxPart part; bool drawn = false; };
+			std::vector<Piece> pieces;
+			std::string        model;
+			bool               ok = false, drawn = false;
 			WorldFx() = default;
 			explicit WorldFx(std::string a_model) : model(std::move(a_model))
 			{
-				ok = static_cast<bool>(Spellcraft::LoadPath(model)) && ModelActivator(model);   // (in memory before it's placed: drawn the first frame)
+				// (the effects map: Skyrim's own models, or an installed mod's, standing in for ours)
+				for (auto& fp : FxParts(model)) {
+					if (fp.none) { ok = true; continue; }
+					if (Spellcraft::LoadPath(fp.model) && ModelActivator(fp.model)) pieces.push_back({ {}, std::move(fp) }), ok = true;   // (in memory before it's placed: drawn the first frame)
+					else if (static int said = 0; said++ < 12) logger::warn("worldfx: {} (for {}) is missing", fp.model, model);
+				}
 			}
 			RE::NiAVObject* Obj() const
 			{
-				auto r = ref.get();
-				return r ? r->Get3D() : nullptr;
+				for (auto& pc : pieces) if (auto r = pc.ref.get()) if (auto* o = r->Get3D()) return o;
+				return nullptr;
+			}
+			template <class F> void Each(F&& a_fn) const
+			{
+				for (auto& pc : pieces) if (auto r = pc.ref.get()) if (auto* o = r->Get3D()) a_fn(o);
 			}
 			void Place(const RE::NiPoint3& a_at, const RE::NiMatrix3& a_rot, float a_scale)
 			{
 				if (!ok) return;
-				if (!ref) {
-					if (auto r = PlaceAtPoint(ModelActivator(model), a_at)) ref = r->GetHandle();
-					else { if (static int said = 0; said++ < 8) logger::warn("worldfx: {} could not be placed", model); return; }
-				}
-				auto r = ref.get();
-				if (!r) return;
-				r->SetPosition(a_at);
-				if (auto* o = r->Get3D()) {
-					if (!drawn) { drawn = true; if (static int said = 0; said++ < 20) logger::info("worldfx: {} drawn at ({:.0f},{:.0f},{:.0f}) scale {:.2f}", model, a_at.x, a_at.y, a_at.z, a_scale); }
-					o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
-					if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
-					o->local.translate = a_at;
-					o->local.rotate = a_rot;
-					o->local.scale = std::max(0.0001f, a_scale);
-					RE::NiUpdateData ud;
-					ud.time = 0.0f;
-					o->Update(ud);
+				for (auto& pc : pieces) {
+					const RE::NiPoint3 at = a_at + RE::NiPoint3{ 0, 0, pc.part.dz * a_scale };
+					if (!pc.ref) {
+						if (auto r = PlaceAtPoint(ModelActivator(pc.part.model), at)) pc.ref = r->GetHandle();
+						else { if (static int said = 0; said++ < 8) logger::warn("worldfx: {} could not be placed", pc.part.model); continue; }
+					}
+					auto r = pc.ref.get();
+					if (!r) continue;
+					r->SetPosition(at);
+					if (auto* o = r->Get3D()) {
+						if (!pc.drawn) {
+							pc.drawn = drawn = true;
+							TintTree(o, pc.part);
+							if (pc.part.play) PlayOwn(r.get(), o);
+							if (static int said = 0; said++ < 40) logger::info("worldfx: {}{} drawn at ({:.0f},{:.0f},{:.0f}) scale {:.2f}", pc.part.model, pc.part.model == model ? "" : " (for " + model + ")", at.x, at.y, at.z, a_scale * pc.part.scale);
+						}
+						o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
+						if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
+						o->local.translate = at;
+						o->local.rotate = a_rot * pc.part.rot;
+						o->local.scale = std::max(0.0001f, a_scale * pc.part.scale);
+						RE::NiUpdateData ud;
+						ud.time = 0.0f;
+						o->Update(ud);
+					}
 				}
 			}
 			void Detach()
 			{
-				if (auto r = ref.get()) r->Disable(), r->SetDelete(true);
-				ref = {};
+				for (auto& pc : pieces) if (auto r = pc.ref.get()) r->Disable(), r->SetDelete(true);
+				for (auto& pc : pieces) pc.ref = {};
 			}
 		};
 		namespace Props
@@ -2780,22 +2950,32 @@ namespace bo3z
 		std::vector<EBurst> g_eb;
 		void QueueFx(std::string a_path, const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life, bool a_flat)
 		{
-			// a burst: an explosion wearing our model; a pool: a hazard lying its lifetime (see ModelExplosion)
-			if (!a_flat) {
-				if (auto* ex = ModelExplosion(a_path); ex && g_blasts.size() < 48) {
-					PendingBlast pb{ a_at, a_delay, -1, a_scale, ex };
-					pb.exact = true;
-					g_blasts.push_back(pb);
-					return;
+			// a burst: an explosion wearing our model; a pool: a hazard lying its lifetime (see ModelExplosion) - or the
+			// stand-ins named for it in the effects map, each its own
+			const auto parts = FxParts(a_path);
+			bool placed = false;
+			for (const auto& fp : parts) {
+				if (fp.none) { placed = true; continue; }
+				const RE::NiPoint3 at = a_at + RE::NiPoint3{ 0, 0, fp.dz * a_scale };
+				const float sc = a_scale * fp.scale;
+				auto part = std::make_shared<FxPart>(fp);
+				if (!a_flat) {
+					if (auto* ex = ModelExplosion(fp.model); ex && g_blasts.size() < 48) {
+						PendingBlast pb{ at, a_delay, -1, sc, ex };
+						pb.exact = true;
+						pb.part = part;
+						g_blasts.push_back(pb);
+						placed = true;
+					}
+				} else if (auto* hz = ModelHazard(fp.model, a_life)) {
+					auto place = [hz, at, sc, part]() {
+						if (auto r = PlaceAtPoint(hz, at)) r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(sc, 0.1f, 9.0f) * 100.0f), WatchTint(r.get(), *part, true);
+					};
+					if (a_delay <= 0) place(); else Tasks::Later(a_delay, place);
+					placed = true;
 				}
-			} else if (auto* hz = ModelHazard(a_path, a_life)) {
-				const std::string path = a_path;
-				auto place = [hz, a_at, a_scale]() {
-					if (auto r = PlaceAtPoint(hz, a_at)) r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(a_scale, 0.1f, 9.0f) * 100.0f);
-				};
-				if (a_delay <= 0) place(); else Tasks::Later(a_delay, place);
-				return;
 			}
+			if (placed) return;
 			if (g_eb.size() > 90) return;  // (never a screen of it)
 			EBurst b;
 			b.path = std::move(a_path), b.at = a_at, b.delay = a_delay, b.life = a_life, b.scale = a_scale, b.flat = a_flat;
@@ -2949,7 +3129,7 @@ namespace bo3z
 				const float fade = f > 0.72f ? std::max(0.0f, 1.0f - (f - 0.72f) / 0.28f) : 1.0f;
 				// (each slash is its own placed copy of the model, with materials of its own: its first brightness is remembered
 				// on the slash itself, never in a table keyed by a pointer an old slash may have freed)
-				if (auto* o3 = l.fx.Obj()) RE::BSVisit::TraverseScenegraphGeometries(o3, [&](RE::BSGeometry* g) {
+				l.fx.Each([&](RE::NiAVObject* o3) { RE::BSVisit::TraverseScenegraphGeometries(o3, [&](RE::BSGeometry* g) {
 					if (auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(g->GetGeometryRuntimeData().shaderProperty.get())) {
 						if (auto* m = static_cast<RE::BSEffectShaderMaterial*>(ep->material)) {
 							auto [it, fresh] = l.base.try_emplace(m, m->baseColorScale);
@@ -2957,7 +3137,7 @@ namespace bo3z
 						}
 					}
 					return RE::BSVisit::BSVisitControl::kContinue;
-				});
+				}); });
 				// everyone the blade passed through this frame (swept from where it was to where it is, so a fast one misses no one)
 				for (auto& h : RE::ProcessLists::GetSingleton()->highActorHandles) {
 					auto ap = h.get();
@@ -3270,6 +3450,55 @@ namespace bo3z
 			logger::info("dev: fx {} under {} ({}) at ({:.0f},{:.0f},{:.0f})", a_path, a_root, it.fx.obj ? "loaded" : "MISSING", at.x, at.y, at.z);
 			g_devFx.push_back(std::move(it));
 		}
+		// (dev: trying Skyrim's own effects) `look <model> [w|x|h] [scale] [pal] [seconds]` - a model set down 3.5 m ahead of you
+		// on the ground, as a placed object (w), an explosion (x) or a hazard (h), coloured by a ramp; `fxreload` reads the
+		// effects map again
+		struct Look { WorldFx fx; float t = 0, life = 4; RE::NiPoint3 at; float scale = 1; };
+		std::vector<Look> g_looks;
+		void DevLook(const std::string& a_model, const std::string& a_mode, float a_scale, const std::string& a_pal, float a_secs)
+		{
+			(void)FxParts("");   // (the map read first: never read over the look's own entry)
+			auto* p = RE::PlayerCharacter::GetSingleton();
+			if (!p) return;
+			const float yaw = p->GetAngleZ();
+			RE::NiPoint3 at = p->GetPosition() + RE::NiPoint3{ std::sin(yaw), std::cos(yaw), 0 } * 350.0f;
+			if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(at, land) && std::abs(land - at.z) < 300.0f) at.z = land;
+			FxPart fp;
+			fp.model = a_model;
+			if (!a_pal.empty() && a_pal != "-") fp.pal = a_pal.find('\\') == std::string::npos ? "textures\\CurseOfAlduin\\fx\\grad_" + a_pal + ".dds" : a_pal;
+			auto part = std::make_shared<FxPart>(fp);
+			if (a_mode == "x") {
+				if (auto* ex = ModelExplosion(a_model)) {
+					PendingBlast pb{ at, 0.0f, -1, a_scale, ex };
+					pb.exact = true, pb.part = part;
+					g_blasts.push_back(pb);
+				}
+			} else if (a_mode == "h") {
+				if (auto* hz = ModelHazard(a_model, a_secs, true)) if (auto r = PlaceAtPoint(hz, at)) r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(a_scale, 0.1f, 9.0f) * 100.0f), WatchTint(r.get(), fp, true);
+			} else {
+				// (a one-off copy of the effects-map lookup: the model asked for, as it is, coloured as asked)
+				g_fxMap.erase("__look__");
+				fp.play = true;
+				g_fxMap["__look__"] = { fp };
+				Look l{ WorldFx("__look__"), 0.0f, a_secs, at, a_scale };
+				g_fxMap.erase("__look__");
+				if (l.fx.ok) g_looks.push_back(std::move(l));
+			}
+			logger::info("dev: look {} as {} scale {:.2f} pal {} for {:.1f} s at ({:.0f},{:.0f},{:.0f}) - {}", a_model, a_mode, a_scale, fp.pal.empty() ? "-" : fp.pal, a_secs, at.x, at.y, at.z,
+				Spellcraft::LoadPath(a_model) ? "loaded" : "MISSING");
+		}
+		void TickLooks(float a_delta)
+		{
+			for (auto& l : g_looks) {
+				l.t += a_delta;
+				RE::NiMatrix3 r;
+				l.fx.Place(l.at, r, l.scale);
+				if (l.t > l.life) l.fx.Detach();
+			}
+			std::erase_if(g_looks, [](const Look& l) { return l.t > l.life; });
+		}
+		void DevFxReload() { FxMapLoad(); }
+		void DevSwing(int a_power) { g_devSwing = a_power ? 2 : 1; }
 		void DevNodes()
 		{
 			auto* p = RE::PlayerCharacter::GetSingleton();
@@ -3297,7 +3526,7 @@ namespace bo3z
 		// (Noah: the Alchemist's flasks "explode right in front of my face - there's no travel, it doesn't arc") a thrown
 		// flask is flown here: its model hung in the scene, carried along its arc under gravity, tumbling; it comes down on
 		// the first body or wall or ground its path crosses, and its burst is called there
-		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; bool meteor = false; RE::NiPoint3 target; };
+		struct Lobbed { Spellcraft::Fx fx; RE::ObjectRefHandle ref; RE::NiPoint3 p, v; float t = 0, spin = 12.0f, scale = 1.0f; std::function<void(const RE::NiPoint3&)> land; bool done = false; bool meteor = false; RE::NiPoint3 target; RE::NiMatrix3 turn; };
 		std::vector<Lobbed> g_lobs;
 		void TickLobs(float a_delta)
 		{
@@ -3345,7 +3574,7 @@ namespace bo3z
 						o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
 						if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
 						o->local.translate = l.p;
-						o->local.rotate = Spellcraft::Facing(l.v) * tumble;
+						o->local.rotate = Spellcraft::Facing(l.v) * tumble * l.turn;
 						o->local.scale = l.scale;
 						RE::NiUpdateData ud;
 						ud.time = 0.0f;
@@ -3360,10 +3589,16 @@ namespace bo3z
 			std::erase_if(g_lobs, [](const Lobbed& l) { return l.done; });
 			for (auto& [fn, at] : landed) if (fn) fn(at);
 		}
-		void  Lob(const std::string& a_model, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale, std::function<void(const RE::NiPoint3&)> a_land, float a_spin)
+		void  Lob(const std::string& a_model0, const RE::NiPoint3& a_from, const RE::NiPoint3& a_vel, float a_scale0, std::function<void(const RE::NiPoint3&)> a_land, float a_spin)
 		{
 			if (g_lobs.size() > 40) return;
 			Lobbed l;
+			// (the effects map: the first stand-in named for it flies in its place)
+			const auto parts = FxParts(a_model0);
+			const FxPart& fp = parts.front();
+			const std::string a_model = fp.none ? a_model0 : fp.model;
+			const float a_scale = a_scale0 * fp.scale;
+			l.turn = fp.rot;
 			// (Noah: "I can't see the flasks flying through the air" - hung in the scene by hand it never drew) it flies as a
 			// real placed object wearing the flask's model (a nameless activator made once per model), carried along the arc
 			static std::unordered_map<std::string, RE::TESObjectACTI*> forms;
@@ -3372,17 +3607,21 @@ namespace bo3z
 				if (auto* factory = RE::IFormFactory::GetConcreteFormFactoryByType<RE::TESObjectACTI>(); factory && (f = factory->Create())) f->SetModel(a_model.c_str());
 			}
 			(void)Spellcraft::LoadPath(a_model);  // (its model in memory before it's placed: drawn the first frame, not a beat later)
-			if (auto r = f ? PlaceAtPoint(f, a_from) : RE::NiPointer<RE::TESObjectREFR>{}) l.ref = r->GetHandle();
+			if (auto r = f ? PlaceAtPoint(f, a_from) : RE::NiPointer<RE::TESObjectREFR>{}) l.ref = r->GetHandle(), WatchTint(r.get(), fp, true);
 			l.p = a_from, l.v = a_vel, l.scale = a_scale, l.spin = a_spin, l.land = std::move(a_land);
 			logger::info("lob: {} ({})", a_model, l.ref ? "placed" : "NOT PLACED");
 			g_lobs.push_back(std::move(l));
 		}
 		void Hazard(const std::string& a_model, const RE::NiPoint3& a_at, float a_scale, float a_life, float a_yaw)
 		{
-			if (auto* hz = ModelHazard(a_model, a_life, false)) {
-				if (auto r = PlaceAtPoint(hz, a_at)) {
-					r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(a_scale, 0.1f, 9.0f) * 100.0f);
-					if (a_yaw != 0.0f) r->SetAngle({ 0.0f, 0.0f, a_yaw });
+			for (const auto& fp : FxParts(a_model)) {
+				if (fp.none) continue;
+				if (auto* hz = ModelHazard(fp.model, a_life, false)) {
+					if (auto r = PlaceAtPoint(hz, a_at + RE::NiPoint3{ 0, 0, fp.dz * a_scale })) {
+						r->GetReferenceRuntimeData().refScale = static_cast<std::uint16_t>(std::clamp(a_scale * fp.scale, 0.1f, 9.0f) * 100.0f);
+						if (a_yaw != 0.0f) r->SetAngle({ 0.0f, 0.0f, a_yaw });
+						WatchTint(r.get(), fp, true);
+					}
 				}
 			}
 		}
@@ -3411,14 +3650,14 @@ namespace bo3z
 				RE::NiMatrix3 turn;
 				turn.SetEulerAnglesXYZ(0, 0, -r.yaw);
 				r.fx.Place(r.at, turn, r.s0 + (r.s1 - r.s0) * e);
-				if (auto* o3 = r.fx.Obj()) RE::BSVisit::TraverseScenegraphGeometries(o3, [&](RE::BSGeometry* geo) {
+				r.fx.Each([&](RE::NiAVObject* o3) { RE::BSVisit::TraverseScenegraphGeometries(o3, [&](RE::BSGeometry* geo) {
 					if (auto* ep = netimmerse_cast<RE::BSEffectShaderProperty*>(geo->GetGeometryRuntimeData().shaderProperty.get()))
 						if (auto* m = static_cast<RE::BSEffectShaderMaterial*>(ep->material)) {
 							auto [it, fresh] = r.base.try_emplace(m, m->baseColorScale);
 							m->baseColorScale = it->second * light;
 						}
 					return RE::BSVisit::BSVisitControl::kContinue;
-				});
+				}); });
 			}
 			for (auto& r : g_grows) if (r.t > r.life) r.fx.Detach();
 			std::erase_if(g_grows, [](const GrowFx& r) { return r.t > r.life; });

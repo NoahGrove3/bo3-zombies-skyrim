@@ -578,10 +578,11 @@ namespace Props
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
 		if (p) TickBane(p, a_delta);
-		if (g_weaponSwing.exchange(false) && p) {
+		const int dev = g_devSwing.exchange(0);
+		if ((g_weaponSwing.exchange(false) || dev) && p) {
 			auto* proc = p->GetActorRuntimeData().currentProcess;
 			auto* high = proc ? proc->high : nullptr;
-			const bool power = high && high->attackData && high->attackData->data.flags.any(RE::AttackData::AttackFlag::kPowerAttack);
+			const bool power = dev ? dev == 2 : high && high->attackData && high->attackData->data.flags.any(RE::AttackData::AttackFlag::kPowerAttack);
 			if (FangInHand(p)) BaneWind(p, power);  // (Noah: every class's every swing - wind slashes down the line that blow the dead FAR away)
 			else if (SlayerInHand(p)) Classes::SlayerSwing(power);  // (Dragonbreaker: its embers spent on a charged swing)
 			else Classes::MaceSwing(power);  // (the Alchemist's Shadowflame mace: its flames go out with every swing)
