@@ -2266,7 +2266,7 @@ namespace bo3z
 		{
 			RE::ObjectRefHandle ref;
 			std::string         model;
-			bool                ok = false;
+			bool                ok = false, drawn = false;
 			WorldFx() = default;
 			explicit WorldFx(std::string a_model) : model(std::move(a_model))
 			{
@@ -2282,12 +2282,13 @@ namespace bo3z
 				if (!ok) return;
 				if (!ref) {
 					if (auto r = PlaceAtPoint(ModelActivator(model), a_at)) ref = r->GetHandle();
-					else return;
+					else { if (static int said = 0; said++ < 8) logger::warn("worldfx: {} could not be placed", model); return; }
 				}
 				auto r = ref.get();
 				if (!r) return;
 				r->SetPosition(a_at);
 				if (auto* o = r->Get3D()) {
+					if (!drawn) { drawn = true; if (static int said = 0; said++ < 20) logger::info("worldfx: {} drawn at ({:.0f},{:.0f},{:.0f}) scale {:.2f}", model, a_at.x, a_at.y, a_at.z, a_scale); }
 					o->GetFlags().set(RE::NiAVObject::Flag::kAlwaysDraw, RE::NiAVObject::Flag::kIgnoreFade);
 					if (auto* fn = o->AsFadeNode()) fn->GetRuntimeData().currentFade = 1.0f;
 					o->local.translate = a_at;
@@ -2915,6 +2916,7 @@ namespace bo3z
 					if (const float wf = Spellcraft::WorldHit(from, to + l.s.dir * 25.0f); wf <= 1.0f) {
 						to = from + (to + l.s.dir * 25.0f - from) * wf;
 						broke = true;
+						if (static int said = 0; said++ < 20) logger::info("slash: shattered on the world {:.0f} units out", l.gone);
 					}
 				}
 				// (Noah: "make it smaller then grow in size before it disappears") it leaves the blade a third of its size and grows
@@ -2929,12 +2931,13 @@ namespace bo3z
 						auto ap = h.get();
 						auto* a = ap.get();
 						if (!a || a == p || a->IsDead() || !a->Is3DLoaded() || SlashTarget(a, p)) continue;
-						if (a->IsPlayerTeammate() || Party::IsFriend(a) || (a->IsCommandedActor() && a->GetCommandingActor().get() == p)) continue;
+						if (a->IsPlayerTeammate() || Party::IsFriend(a) || Classes::IsOwnSummon(a) || (a->IsCommandedActor() && a->GetCommandingActor().get() == p)) continue;
 						const RE::NiPoint3 c = a->GetPosition() + RE::NiPoint3{ 0, 0, 70.0f };
 						if (c.GetDistance(to) > reach + step + 200.0f) continue;
 						if (const float d = Spellcraft::PointSeg(c, from, to); d < reach * 0.6f) {
 							to = from + l.s.dir * std::max(0.0f, (c - from).Dot(l.s.dir) - 30.0f);
 							broke = true;
+							if (static int said = 0; said++ < 20) logger::info("slash: broke on {} ({:.0f} units out)", a->GetName(), l.gone);
 							break;
 						}
 					}
@@ -3025,6 +3028,7 @@ namespace bo3z
 		void  Slash(const SlashSpec& a_s)
 		{
 			if (g_slashes.size() > 24) return;
+			if (static int said = 0; said++ < 30) logger::info("slash: {} from ({:.0f},{:.0f},{:.0f}) dir ({:.2f},{:.2f},{:.2f}) range {:.0f} scale {:.2f}", a_s.model, a_s.from.x, a_s.from.y, a_s.from.z, a_s.dir.x, a_s.dir.y, a_s.dir.z, a_s.range, a_s.scale);
 			LiveSlash l;
 			l.s = a_s;
 			if (l.s.dir.Length() < 1e-3f) l.s.dir = { 0, 1, 0 };
@@ -3470,6 +3474,7 @@ namespace bo3z
 				}
 				if ((c.beat -= a_delta) <= 0) {
 					c.beat = 0.3f;
+					if (static int said = 0; said++ < 40) logger::info("cyclone: t {:.2f} at ({:.0f},{:.0f},{:.0f}) fwd ({:.2f},{:.2f}) drawn {}", c.t, c.at.x, c.at.y, c.at.z, c.fwd.x, c.fwd.y, c.fx.drawn);
 					const int was = g_fecElem;
 					g_fecElem = 0;   // (they die burning)
 					for (auto* a : Foes(c.at, 170.0f)) Damage(a, whole * c.share, false, false, true);
