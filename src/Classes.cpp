@@ -3008,7 +3008,7 @@ namespace bo3z::Classes
 		constexpr int kFlaskBurst[7] = { 0, 1, 2, 7, 4, 5, 8 };  // a flask's burst look (Gun::ElemBurst): fire frost shock poison sun blood gold
 		struct FlaskShot { RE::ProjectileHandle h; int el = 0, tier = 0; RE::NiPoint3 last; bool seen = false, child = false; float life = 0; };
 		std::vector<FlaskShot> g_flasks;
-		struct GoldCloud { RE::NiPoint3 at; float left = 0, tick = 0, radius = 450; bool legend = false; std::unordered_set<RE::FormID> gilded; };
+		struct GoldCloud { RE::NiPoint3 at; float left = 0, tick = 0, radius = 450, puff = 0; bool legend = false; std::unordered_set<RE::FormID> gilded; };
 		std::vector<GoldCloud> g_gold;
 		// (Noah, the flasks redone: Tier I "Bigger burst radius" - half again as far)
 		float FlaskRadius(int a_tier) { return 230.0f * (a_tier >= 1 ? 1.5f : 1.0f) * (Kit::ArmourTier(coffer::kAlchemist) >= 2 ? 1.2f : 1.0f) * Perks::FlaskRadiusMult(); }
@@ -3146,7 +3146,7 @@ namespace bo3z::Classes
 				// (Noah: "Gold sun burst + cloud") Dawnguard's sunburst in gold where it breaks, then the cloud of molten gold hanging
 				// there its whole life (fxmap.ini: philosopher_burst, philosopher_cloud)
 				Gun::QueueFx("CurseOfAlduin\\fx\\philosopher_burst.nif", a_at, 1.0f, 0.0f, 1.5f, false);
-				Gun::Hazard("CurseOfAlduin\\fx\\philosopher_cloud.nif", a_at, g.radius / 450.0f, g.left, 0.0f);
+				Gun::Puddle(4, a_at, g.radius / 130.0f, g.left);   // (molten gold lying where it broke - fxmap.ini ground_sun)
 				g_gold.push_back(std::move(g));
 				logger::info("alchemist: the Philosopher's Flask shatters");
 				return;
@@ -3186,8 +3186,8 @@ namespace bo3z::Classes
 				fwd.Unitize();
 				Gun::CycloneSpec cs;
 				cs.model = std::string("CurseOfAlduin\\fx\\cyclone_") + kCyc[std::clamp(f.el, 0, 5)] + ".nif";
-				cs.from = a_at, cs.fwd = fwd, cs.dist = 500.0f, cs.life = 2.0f, cs.size = 0.55f, cs.fec = kFec[std::clamp(f.el, 0, 5)];
-				cs.share = 0.05f * FlaskShare(t);
+				cs.from = a_at, cs.fwd = fwd, cs.dist = 700.0f, cs.life = 10.0f, cs.size = 0.55f, cs.fec = kFec[std::clamp(f.el, 0, 5)];
+				cs.share = 0.05f * FlaskShare(t) * 0.4f;
 				const int el = f.el;
 				cs.burst = [el, t, r](const RE::NiPoint3& at) { FlaskShot child{ {}, el, t, at, false, true, 0.0f }; FlaskBurst(child, at); };
 				Gun::ElemCyclone(std::move(cs));
@@ -3197,6 +3197,12 @@ namespace bo3z::Classes
 		{
 			for (auto& g : g_gold) {
 				g.left -= a_delta;
+				// (Noah: "Philosopher's Flask doesn't do anything when I throw it") the cloud kept rolling the whole of its life: Skyrim's
+				// poison cloud in molten gold, billowing up again every 2.5 s (fxmap.ini philosopher_cloud)
+				if ((g.puff -= a_delta) <= 0) {
+					g.puff = 2.5f;
+					Gun::QueueFx("CurseOfAlduin\\fx\\philosopher_cloud.nif", g.at + RE::NiPoint3{ 0, 0, 30.0f }, g.radius / 450.0f, 0.0f, 3.0f, false);
+				}
 				if ((g.tick -= a_delta) > 0) continue;
 				g.tick = 0.5f;
 				const float top = UpgradeMult(g.legend ? kWonderUps + 1 : kWonderUps) * (0.7f + 0.3f * Arcana::Power());
@@ -3490,8 +3496,10 @@ namespace bo3z::Classes
 		Gun::CycloneSpec cs;
 		cs.model = std::string("CurseOfAlduin\\fx\\cyclone_") + kModel[el] + ".nif";
 		cs.from = from, cs.fwd = fwd;
-		cs.dist = big ? 900.0f : 550.0f, cs.life = big ? 2.2f : 1.5f, cs.size = big ? 1.0f : 0.6f;
-		cs.share = (big ? 0.09f : 0.06f) * pw;
+		// (Noah: "make the tornadoes / cyclones last. For 10 seconds") ten seconds rolling on: each beat of it a little lighter, the
+		// whole of it about twice what the old two-second one did
+		cs.dist = big ? 1100.0f : 750.0f, cs.life = 10.0f, cs.size = big ? 1.0f : 0.6f;
+		cs.share = (big ? 0.09f : 0.06f) * pw * 0.4f;
 		cs.fec = kFec[el];
 		const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
 		cs.touch = [el, t, pw, whole, spell](RE::Actor* a) {
@@ -3643,8 +3651,8 @@ namespace bo3z::Classes
 			Gun::BlastSound("fireball", from, 0.8f);
 			Gun::CycloneSpec cs;
 			cs.model = "CurseOfAlduin\\fx\\cyclone_gold.nif";
-			cs.from = from, cs.fwd = fwd, cs.dist = 900.0f, cs.life = 2.2f, cs.size = 1.0f;
-			cs.share = 0.09f * SlayerTop(), cs.fec = 0, cs.dragons = true;
+			cs.from = from, cs.fwd = fwd, cs.dist = 1100.0f, cs.life = 10.0f, cs.size = 1.0f;   // (Noah: cyclones "last ... 10 seconds")
+			cs.share = 0.09f * SlayerTop() * 0.4f, cs.fec = 0, cs.dragons = true;
 			cs.touch = [share](RE::Actor* a) { if (a && !a->IsDead()) { Gun::Knock(a, 0.3f); GoldBurn(a, share); } };
 			cs.burst = [share](const RE::NiPoint3& at) {
 				Gun::ElemBurst(8, at + RE::NiPoint3{ 0, 0, 80.0f }, 2.0f, 0.0f, 0.8f);

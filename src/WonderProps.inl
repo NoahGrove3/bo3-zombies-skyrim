@@ -469,8 +469,8 @@ namespace Props
 			Gun::BlastSound("shoutarea", at, 0.8f);
 			Gun::CycloneSpec cs;
 			cs.model = "CurseOfAlduin\\fx\\cyclone_wind.nif";
-			cs.from = at, cs.fwd = fwd, cs.dist = 60.0f, cs.life = 1.6f, cs.size = 1.2f, cs.fec = -1;
-			cs.share = 0.05f * BaneMult();
+			cs.from = at, cs.fwd = fwd, cs.dist = 60.0f, cs.life = 10.0f, cs.size = 1.2f, cs.fec = -1;   // (Noah: cyclones "last ... 10 seconds")
+			cs.share = 0.05f * BaneMult() * 0.4f;
 			cs.burst = [](const RE::NiPoint3& c) {
 				auto* pl = RE::PlayerCharacter::GetSingleton();
 				Gun::ElemBurst(3, c + RE::NiPoint3{ 0, 0, 60.0f }, 2.0f, 0.0f, 0.8f);
