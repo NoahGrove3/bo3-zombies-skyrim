@@ -3679,10 +3679,10 @@ namespace bo3z::Classes
 			sl.range = 1400.0f + 200.0f * t;
 			// (seen in game: the bolts left the blade at a third of their size at 2,300 a second - never seen) a bolt at its full
 			// size from the blade, at a spell's own pace - the Radiant Blade's spectral wave still a crescent that grows
-			const bool bolt = cls != 0;
-			sl.bolt = bolt;
-			if (bolt) sl.speed = 1150.0f;
-			sl.scale = (bolt ? 1.3f : 0.9f) + 0.15f * t;
+			const bool isBolt = cls != 0;
+			sl.bolt = isBolt;
+			if (isBolt) sl.speed = 1150.0f;
+			sl.scale = (isBolt ? 1.3f : 0.9f) + 0.15f * t;
 			sl.share = BladeShare(w->As<RE::TESObjectWEAP>()) * (0.7f + 0.3f * Arcana::Power());   // (the blade's own light blow, at its tier)
 			sl.flingKill = 16.0f;   // (Noah: "send enemies flying if the slash kills them")
 			if (cls == 2) sl.fec = 0;   // (the Shadowflame's dead die burning)
