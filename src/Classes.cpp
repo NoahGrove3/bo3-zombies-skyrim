@@ -3538,7 +3538,7 @@ namespace bo3z::Classes
 				const RE::NiPoint3 pt = OnGround(me + Flat(dir, p) * 200.0f, me.z);
 				Gun::Grow("CurseOfAlduin\\fx\\ldome.nif", pt, 0.0f, 0.6f, 4.6f, 0.22f, 1.1f, 0.55f);
 				Gun::Ring("blue", pt, 60.0f, 380.0f, 0.6f);
-				Gun::ElemBurst(2, pt + RE::NiPoint3{ 0, 0, 60.0f }, 1.6f, 0.0f, 0.9f);
+				Gun::ElemBurst(2, pt + RE::NiPoint3{ 0, 0, 40.0f }, 0.6f, 0.0f, 0.5f);   // (clip 319: at full size its sparks were a mess of purple blots)
 				Gun::BlastSound("shockmass", pt, 0.9f);
 				Gun::AreaHurt(pt, 240.0f, 0.4f * pw, "");
 				for (auto* f : NearFoes(pt, 240.0f, 20)) Gun::Knock(f, 0.5f);
@@ -3726,12 +3726,30 @@ namespace bo3z::Classes
 		// (Noah: "85% is good"; "make them required") the class swords are Light Greatswords' own models, drawn at 85% in the hand
 		// and at the side - a long sword in one hand - in both bodies, every frame (the game sets a model's size again as it
 		// moves between hand and sheath)
+		// (Noah, clips 315-321: "the alchemist sword was stuck on my character's back"; the class swords unseen in the hand) Light
+		// Greatswords' models are greatswords: each names the back as its sheath (its Prn), so the game hangs our one-handed
+		// sword there - and a one-handed draw only ever takes a sword from the hip, so it stayed on the back, in both bodies, and
+		// the first-person body has no back to see. Ours is moved by hand: in the hand from the moment it's drawn to the moment
+		// it's put away, on the back the rest of the time
 		if (p) {
+			const auto ws = p->AsActorState()->GetWeaponState();
+			const bool inHand = ws == RE::WEAPON_STATE::kDrawing || ws == RE::WEAPON_STATE::kDrawn || ws == RE::WEAPON_STATE::kWantToSheathe;
 			for (const bool fp : { false, true }) {
 				auto& bip = p->GetBiped(fp);
 				if (!bip) continue;
 				auto& o = bip->objects[RE::BIPED_OBJECT::kOneHandSword];
-				if (o.item && SwordClass(o.item) >= 0 && o.partClone && std::abs(o.partClone->local.scale - 0.85f) > 0.001f) o.partClone->local.scale = 0.85f;
+				if (!o.item || SwordClass(o.item) < 0 || !o.partClone) continue;
+				if (std::abs(o.partClone->local.scale - 0.85f) > 0.001f) o.partClone->local.scale = 0.85f;
+				auto* root = p->Get3D(fp);
+				auto* want = root ? root->GetObjectByName(inHand ? "WEAPON" : "WeaponBack") : nullptr;
+				auto* node = want ? want->AsNode() : nullptr;
+				RE::NiPointer<RE::NiAVObject> blade = o.partClone;
+				if (node && blade->parent != node) {
+					if (blade->parent) blade->parent->DetachChild2(blade.get());
+					node->AttachChild(blade.get(), true);
+					static int said = 0;
+					if (said++ < 6) logger::info("swords: {} blade moved to {} (weapon state {})", fp ? "1st" : "3rd", inHand ? "the hand" : "the back", static_cast<int>(ws));
+				}
 			}
 		}
 		// (Noah: "Both layered") the look's Vibrant Weapons art along the blade in your hand - an ability of ours, laid on while

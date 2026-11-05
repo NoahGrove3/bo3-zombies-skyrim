@@ -2976,7 +2976,7 @@ namespace bo3z
 					if (l.s.onHit) l.s.onHit(a, killed);
 				}
 				if (broke) {   // its shatter where it struck: a burst of its own colour
-					static const std::unordered_map<std::string_view, int> kElem{ { "purple", 9 }, { "carian", 2 }, { "white", 4 }, { "red", 0 }, { "fire", 0 }, { "frost", 1 },
+					static const std::unordered_map<std::string_view, int> kElem{ { "purple", 9 }, { "carian", 1 }, { "white", 4 }, { "red", 0 }, { "fire", 0 }, { "frost", 1 },
 						{ "shock", 2 }, { "sun", 4 }, { "blood", 5 }, { "gold", 8 }, { "bane", 3 } };
 					int el = 4;
 					for (auto& [k, e] : kElem) if (l.s.model.find(std::string("arc_") + std::string(k) + ".nif") != std::string::npos) el = e;
