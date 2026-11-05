@@ -796,7 +796,7 @@ namespace bo3z
 		void                  Burn(RE::Actor* a_target, float a_perSecond, float a_seconds);  // damage over time
 		// (the class swords) a crescent flying out from a swing, cutting through every one of the dead it passes (share: of one
 		// of the night's dead's health); its angle, where it flies; and the Summoner's circling blades of light
-		struct SlashSpec { std::string model; RE::NiPoint3 from, dir; float roll = 0, speed = 1700, range = 1500, radius = 110, share = 0.3f, scale = 1.0f, damage = 0; bool sideways = false; float flingKill = 0; std::function<void(RE::Actor*, bool)> onHit; };  // (flingKill: a blow that kills throws the body that hard)
+		struct SlashSpec { std::string model; RE::NiPoint3 from, dir; float roll = 0, speed = 1700, range = 1500, radius = 110, share = 0.3f, scale = 1.0f, damage = 0; bool sideways = false; float flingKill = 0; int fec = -1;  /* the element its kills die by (FEC) */ std::function<void(RE::Actor*, bool)> onHit; };  // (flingKill: a blow that kills throws the body that hard)
 		void                  Slash(const SlashSpec& a_s);
 		RE::NiPoint3          SwingDir();
 		RE::NiPoint3          SwingFrom();  // where a swing's slash starts: ahead of your eyes (first person), your chest (third)
@@ -809,6 +809,8 @@ namespace bo3z
 		void                  MeteorImpact(const RE::NiPoint3& a_at, bool a_gold, float a_size);  // a meteor's landing: flash, shockwave ring, burning scorch (no damage)
 		void                  Ring(const char* a_colour, const RE::NiPoint3& a_at, float a_r0, float a_r1, float a_life);  // a shockwave ring growing across the ground (ring_<colour>.nif)
 		void                  Knock(RE::Actor* a_a, float a_mag);  // a stagger
+		int                   FecElem(int a_elem);  // the element the blows struck from now on kill with (FEC's death effects: 0 fire 1 frost 2 shock ...); returns the one before
+		void                  FireCyclone(const RE::NiPoint3& a_from, const RE::NiPoint3& a_fwd, float a_dist, float a_life, float a_share, std::function<void(RE::Actor*)> a_touch, std::function<void(const RE::NiPoint3&)> a_burst);  // a tornado of violet fire carried along the ground
 		void                  LightningArc(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_delay);  // a bolt of lightning between two points  // a meteor of ours (tools/meteorfx.py) falling from high above onto a point
 		void                  PurpleFire(const RE::NiPoint3& a_at, float a_scale, float a_delay, float a_life);
 		void                  Motes(int a_elem, const RE::NiPoint3& a_at, float a_scale, float a_life);  // fine motes rising off the ground over an area (the ElemBurst elements)

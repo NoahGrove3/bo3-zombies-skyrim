@@ -673,6 +673,7 @@ namespace bo3z
 		{
 			RE::ActorHandle target;
 			float           perSecond, left;
+			int             fec = -1;  // (Noah: "their death effect animations should use the mod ... from dying by fire") a burn kills by fire (0)
 		};
 		std::vector<Dot> g_dots;
 		void TickDots(float a_delta)
@@ -684,7 +685,10 @@ namespace bo3z
 					continue;
 				}
 				const float step = std::min(a_delta, d.left);
+				const int was = g_fecElem;
+				g_fecElem = d.fec;
 				Damage(a.get(), d.perSecond * step, false, false, true);
+				g_fecElem = was;
 				d.left -= step;
 			}
 			std::erase_if(g_dots, [](const Dot& d) { return d.left <= 0; });
@@ -2668,7 +2672,7 @@ namespace bo3z
 		// (Noah: the Alchemist's Shadowflame mace) a burn: a_perSecond of damage for a_seconds, the Gun's own damage-over-time
 		void  Burn(RE::Actor* a_target, float a_perSecond, float a_seconds)
 		{
-			if (a_target && !a_target->IsDead() && a_perSecond > 0 && a_seconds > 0) g_dots.push_back({ a_target->GetHandle(), a_perSecond, a_seconds });
+			if (a_target && !a_target->IsDead() && a_perSecond > 0 && a_seconds > 0) g_dots.push_back({ a_target->GetHandle(), a_perSecond, a_seconds, 0 });
 		}
 		void  SkyFall(const RE::NiPoint3& a_at) { Props::SkyFireball(a_at); }  // (a burning star from the sky onto a point)
 
@@ -2890,7 +2894,10 @@ namespace bo3z
 					// first, so the body goes flying as it dies
 					if (l.s.flingKill > 0 && Director::IsRoundUndead(a) && dmg / gen::kRounds.hpScale >= a->AsActorValueOwner()->GetActorValue(RE::ActorValue::kHealth))
 						Spellcraft::Fling(a, a->GetPosition() - l.s.dir * 120.0f - RE::NiPoint3{ 0, 0, 70.0f }, l.s.flingKill);
+					const int was = g_fecElem;
+					if (l.s.fec >= 0) g_fecElem = l.s.fec;
 					const bool killed = Damage(a, dmg, false, false, true);
+					g_fecElem = was;
 					if (l.s.onHit) l.s.onHit(a, killed);
 				}
 				if (broke) {   // its shatter where it struck: a burst of its own colour
@@ -3348,6 +3355,66 @@ namespace bo3z
 		}
 		void LightningArc(const RE::NiPoint3& a_from, const RE::NiPoint3& a_to, float a_delay) { g_arcs.push_back({ a_from, a_to, a_delay }); }
 		void Knock(RE::Actor* a_a, float a_mag) { if (a_a && !a_a->IsDead()) Stagger(a_a, a_mag); }
+		int  FecElem(int a_elem) { const int was = g_fecElem; g_fecElem = a_elem; return was; }
+		// (Noah, the Shadowflame Sword: "Fire cyclone") a spinning tornado of violet fire (tools/firecyclone.py) carried along the
+		// ground from a point, slowing as it goes: the dead near it are dragged in, those it touches caught (a_touch, once
+		// each) and those in its heart burned every beat; at its end it bursts (a_burst)
+		struct Cyclone
+		{
+			Spellcraft::Fx fx; RE::NiPoint3 from, fwd, at; float dist, life, share, t = 0, beat = 0;
+			std::function<void(RE::Actor*)> touch; std::function<void(const RE::NiPoint3&)> burst; std::unordered_set<RE::FormID> seen;
+		};
+		std::vector<Cyclone> g_cyclones;
+		void FireCyclone(const RE::NiPoint3& a_from, const RE::NiPoint3& a_fwd, float a_dist, float a_life, float a_share,
+			std::function<void(RE::Actor*)> a_touch, std::function<void(const RE::NiPoint3&)> a_burst)
+		{
+			if (g_cyclones.size() > 4) return;
+			Cyclone c{ Spellcraft::Fx{ Spellcraft::LoadPath("CurseOfAlduin\\fx\\firecyclone.nif") }, a_from, a_fwd, a_from, a_dist, std::max(0.3f, a_life), a_share };
+			c.touch = std::move(a_touch), c.burst = std::move(a_burst);
+			if (c.fx.obj) g_cyclones.push_back(std::move(c));
+		}
+		void TickCyclones(float a_delta)
+		{
+			if (g_cyclones.empty()) return;
+			auto* world = Spellcraft::WorldRoot();
+			const float whole = Director::RoundHealth() * gen::kRounds.hpScale;
+			std::vector<std::pair<std::function<void(const RE::NiPoint3&)>, RE::NiPoint3>> burst;
+			for (auto& c : g_cyclones) {
+				c.t += a_delta;
+				const float f = std::min(1.0f, c.t / c.life), go = 1.0f - std::pow(1.0f - f, 1.6f);
+				c.at = c.from + c.fwd * (c.dist * go);
+				if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(c.at, land) && std::abs(land - c.at.z) < 160.0f) c.at.z = land;
+				if (world) {
+					c.fx.Attach(world);
+					RE::NiMatrix3 spin;
+					spin.SetEulerAnglesXYZ(0, 0, c.t * 9.0f);
+					const float grow = std::min(1.0f, c.t / 0.25f) * (f > 0.9f ? 1.0f + (f - 0.9f) * 3.0f : 1.0f);   // (swelling as it's about to burst)
+					c.fx.Place(c.at, spin, grow * (1.0f + 0.05f * std::sin(c.t * 13.0f)));
+				}
+				for (auto* a : Foes(c.at, 420.0f)) {
+					auto pos = a->GetPosition();
+					RE::NiPoint3 to = c.at - pos;
+					to.z = 0;
+					const float d = to.Length();
+					if (d > 55.0f) {   // (dragged in, harder the nearer)
+						pos += to * (std::min(d - 45.0f, 560.0f * (1.0f + 1.5f * (1.0f - d / 420.0f)) * a_delta) / d);
+						a->SetPosition(pos, true);
+					}
+					if (d < 260.0f && c.seen.insert(a->GetFormID()).second && c.touch) c.touch(a);
+				}
+				if ((c.beat -= a_delta) <= 0) {
+					c.beat = 0.3f;
+					const int was = g_fecElem;
+					g_fecElem = 0;   // (they die burning)
+					for (auto* a : Foes(c.at, 170.0f)) Damage(a, whole * c.share, false, false, true);
+					g_fecElem = was;
+				}
+				if (c.t >= c.life) burst.push_back({ c.burst, c.at });
+			}
+			for (auto& c : g_cyclones) if (c.t >= c.life) c.fx.Detach();
+			std::erase_if(g_cyclones, [](const Cyclone& c) { return c.t >= c.life; });
+			for (auto& [fn, at] : burst) if (fn) fn(at);
+		}
 		// (Noah, the meteors: "Big single impacts") where one comes down: a blinding flash of its fire, a shockwave ring racing
 		// out across the ground, and the ground left scorched and burning a few seconds
 		void MeteorImpact(const RE::NiPoint3& a_at, bool a_gold, float a_size)
@@ -4578,6 +4645,7 @@ namespace bo3z
 			TickEBursts(a_delta);
 			TickLobs(a_delta);
 			TickGrows(a_delta);
+			TickCyclones(a_delta);
 			TickLightOrb(a_delta);
 			TickWeaponFlame();
 			TrackBlade(a_delta);

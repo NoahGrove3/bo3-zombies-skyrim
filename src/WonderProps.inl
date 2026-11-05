@@ -466,7 +466,7 @@ namespace Props
 			if (!pl) return;
 			for (auto* f : Foes(hit, 360.0f)) {
 				if (Damage(f, FangBase() * BaneMult() * 2.4f, false, false, true)) { BaneKilled(pl); continue; }
-				g_dots.push_back({ f->GetHandle(), FangBase() * 0.4f, 3.0f });   // (burning)
+				g_dots.push_back({ f->GetHandle(), FangBase() * 0.4f, 3.0f, 0 });   // (burning)
 				Spellcraft::Fling(f, hit - RE::NiPoint3{ 0, 0, 60.0f }, 14.0f);
 			}
 		});
@@ -644,7 +644,7 @@ namespace Props
 				for (auto* f : Foes(t.at, 230.0f)) {
 					Damage(f, t.dmg, false, false, true);
 					if (t.kind == 0) {
-						g_dots.push_back({ f->GetHandle(), t.dmg * 0.5f, 3.0f });  // (fire: it burns on)
+						g_dots.push_back({ f->GetHandle(), t.dmg * 0.5f, 3.0f, 0 });  // (fire: it burns on)
 					}
 					if (!f->IsDead() && !t.chase) {
 						Stagger(f, 0.4f);

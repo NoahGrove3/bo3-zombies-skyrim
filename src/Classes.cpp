@@ -3072,7 +3072,6 @@ namespace bo3z::Classes
 		// renewed, never stacked
 		// (Noah: "swinging the mace, the fire effects should look like real fire that is purple") Skyrim's own purple fire
 		// (Nocturnal's, from the game's files), set burning a moment where it's wanted
-		void ShadowFire(const RE::NiPoint3& a_at, float a_scale, float a_life) { Gun::Hazard("effects\\tg09nocturnalfxfirepurple.nif", a_at, a_scale, a_life); }
 		struct Shadowflame { RE::ActorHandle who; float left = 0, tick = 0; };
 		std::vector<Shadowflame> g_shadow;
 		constexpr float kShadowSeconds = 5.0f;   // (Noah: "2x flame damage for 5 seconds")
@@ -3083,6 +3082,15 @@ namespace bo3z::Classes
 		{
 			static auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kShadowburnShader, gen::kPlugin);
 			if (fx && a_f && a_f->Is3DLoaded()) a_f->ApplyEffectShader(fx, kShadowSeconds, nullptr, false, false, nullptr, false);
+		}
+		// (Noah: "their death effect animations should use the mod we already do from dying by fire - the enemy should slowly
+		// burn to a char just before despawning") one of the Shadowflame's dead: it died a fire death (its burn's killing blow
+		// tells Frozen Electrocuted Combustion so - the body chars), and the violet fire goes on burning it down until it's
+		// nearly time for the body to go
+		void CorpseBurn(RE::Actor* a_f)
+		{
+			static auto* fx = RE::TESDataHandler::GetSingleton()->LookupForm<RE::TESEffectShader>(gen::kShadowburnShader, gen::kPlugin);
+			if (fx && a_f && a_f->Is3DLoaded()) a_f->ApplyEffectShader(fx, std::max(2.0f, Settings::CorpseSeconds() * 0.8f), nullptr, false, false, nullptr, false);
 		}
 		void Shadowburn(RE::Actor* a_f, int a_t)
 		{
@@ -3108,18 +3116,18 @@ namespace bo3z::Classes
 				if (!a) { s.left = 0; continue; }
 				if (a->IsDead()) {   // (Noah, the Alchemist's Tier III: "chain reaction") died burning: it bursts and sets those round it alight
 					if (g_shadowChain && s.left > 0) blasts.push_back(a->GetPosition());
+					CorpseBurn(a.get());
 					s.left = 0;
 					continue;
 				}
 				s.left -= a_delta;
-				if ((s.tick -= a_delta) <= 0) {  // (Skyrim's own fire, purple, flaring at their feet now and then under the burning)
-					s.tick = 1.2f;
-					ShadowFire(a->GetPosition() + RE::NiPoint3{ 0, 0, 5.0f }, 0.5f, 1.0f);
-				}
+				// (Noah: "remove the purple ash pile" - Nocturnal's fire flaring at their feet brought its bed of embers, a pile of
+				// ash with violet flames on it) the violet fire on the body alone
 			}
 			std::erase_if(g_shadow, [](const Shadowflame& s) { return s.left <= 0; });
 			for (const auto& at : blasts) {
-				ShadowFire(at + RE::NiPoint3{ 0, 0, 10.0f }, 1.3f, 1.6f);
+				Gun::ElemBurst(6, at + RE::NiPoint3{ 0, 0, 40.0f }, 1.2f, 0.0f, 0.6f);
+				Gun::Ring("purple", at, 30.0f, 300.0f, 0.5f);
 				Gun::FxBlast("fireball", at + RE::NiPoint3{ 0, 0, 40.0f });
 				Gun::AreaHurt(at, 300.0f, 0.3f * UpgradeMult(g_shadowTier), "");
 				for (auto* f : NearFoes(at, 300.0f, 12)) Shadowburn(f, g_shadowTier);
@@ -3403,35 +3411,6 @@ namespace bo3z::Classes
 		if (key < 0 || a_tier < 1) return nullptr;   // (Base: the bare sword)
 		return RE::TESDataHandler::GetSingleton()->LookupForm<RE::EnchantmentItem>(gen::kBladeViz[key][std::clamp(a_tier, 1, 3) - 1], gen::kPlugin);
 	}
-	namespace
-	{
-		// the Shadowflame wall standing (Tier II heavy attack): its fan, how long it has left, its next beat
-		constexpr float kWallSeconds = 3.0f, kWallReach = 1050.0f, kWallHalf = 0.7854f;   // (3 s; 15 m; 45 degrees each side)
-		struct Wall { RE::NiPoint3 apex, fwd; float left, tick; int tier; float share; bool struck = false; };
-		std::vector<Wall> g_walls;
-		bool InWall(const Wall& a_w, const RE::NiPoint3& a_at)
-		{
-			RE::NiPoint3 to = a_at - a_w.apex; to.z = 0;
-			const float d = to.Length();
-			return d <= kWallReach && (d < 40.0f || to.Dot(a_w.fwd) / d >= std::cos(kWallHalf + 0.06f));
-		}
-		void TickWalls(float a_delta)
-		{
-			for (auto& w : g_walls) {
-				w.left -= a_delta;
-				if ((w.tick -= a_delta) > 0) continue;
-				const bool first = !w.struck;
-				w.struck = true;
-				w.tick = 0.3f;
-				for (auto* f : NearFoes(w.apex + w.fwd * (kWallReach * 0.5f), kWallReach * 0.75f, 40)) {
-					if (!InWall(w, f->GetPosition())) continue;
-					Shadowburn(f, w.tier);   // (its burn renewed while it stands in the fire)
-					if (first) Gun::AreaHurt(f->GetPosition(), 10.0f, w.share, "");   // (the wall's first lick: a blow as it rises)
-				}
-			}
-			std::erase_if(g_walls, [](const Wall& w) { return w.left <= 0; });
-		}
-	}
 	// a swing of a class sword (any swing, hit or miss - WonderProps hears it)
 	namespace
 	{
@@ -3487,7 +3466,9 @@ namespace bo3z::Classes
 			sl.scale = 0.9f + 0.15f * t;
 			sl.share = BladeShare(w->As<RE::TESObjectWEAP>()) * (0.7f + 0.3f * Arcana::Power());   // (the blade's own light blow, at its tier)
 			sl.flingKill = 16.0f;   // (Noah: "send enemies flying if the slash kills them")
+			if (cls == 2) sl.fec = 0;   // (the Shadowflame's dead die burning)
 			sl.onHit = [cls, t, spell](RE::Actor* a, bool killed) {
+				if (killed && a && cls == 2) CorpseBurn(a);
 				if (killed || !a) return;
 				if (cls == 2) Shadowburn(a, t);                                   // shadowflame
 				else if (cls == 3 && t >= 3 && spell) CastFrom(RE::PlayerCharacter::GetSingleton(), spell, a);   // (Tier III: overcharged - the spell itself)
@@ -3500,24 +3481,29 @@ namespace bo3z::Classes
 			// Tier II on: the heavy attack bursts round where it lands, in the sword's element
 			switch (cls) {
 			case 2: {
-				// (Noah: "the shadow flame effect on enemies looks like a bunch of small ash piles with purple flames when it should
-				// be one large wall of purple flames in a fan 15 meters in front of the attack swing" - a 90 degree fan, burning 3 s)
-				// one solid wall of violet fire (tools/firewall.py) rolling out from your feet in five bands to 15 m, the fan opening
-				// where you swung; every one of the dead inside it burns with Shadowflame, caught again each beat while it stands
-				RE::NiPoint3 fwd{ dir.x, dir.y, 0 };
-				if (fwd.Length() < 1e-3f) fwd = { std::sin(p->GetAngleZ()), std::cos(p->GetAngleZ()), 0 };
-				fwd.Unitize();
-				RE::NiPoint3 apex = me + fwd * 30.0f;
-				if (float land = 0; RE::TES::GetSingleton()->GetLandHeight(apex, land) && std::abs(land - apex.z) < 120.0f) apex.z = land;
-				const float yaw = std::atan2(fwd.x, fwd.y);
-				for (int b = 0; b < 5; ++b) {
-					const float delay = 0.065f * b;
-					Tasks::Later(delay, [apex, yaw, b, delay]() { Gun::Hazard(std::string("CurseOfAlduin\\fx\\firewall_") + std::to_string(b) + ".nif", apex, 1.0f, kWallSeconds - delay, yaw); });
-				}
-				Audio::AtPoint(gen::Sound::alch_fireloop, apex + fwd * 300.0f);
-				Gun::BlastSound("fireball", apex + fwd * 200.0f, 0.8f);
-				g_walls.push_back({ apex, fwd, kWallSeconds, 0.0f, t, 0.25f * pw });
-				logger::info("swords: the Shadowflame wall - a 90 degree fan of violet fire to 15 m for {:.0f} s", kWallSeconds);
+				// (Noah, the Shadowflame Sword: "Fire cyclone" - a spinning tornado of violet fire travels 10 m forward, pulling
+				// enemies in and burning them, then bursts) it rises where the blow lands and runs on along the ground, dragging
+				// the dead in and setting all it touches alight with Shadowflame; at its end it bursts in violet fire
+				const RE::NiPoint3 fwd = Flat(dir, p);
+				const RE::NiPoint3 from = OnGround(me + fwd * 120.0f, me.z);
+				Gun::Ring("purple", from, 30.0f, 260.0f, 0.5f);
+				Gun::ElemBurst(6, from + RE::NiPoint3{ 0, 0, 40.0f }, 1.0f, 0.0f, 0.5f);
+				Audio::AtPoint(gen::Sound::alch_fireloop, from + fwd * 300.0f);
+				Gun::BlastSound("fireball", from, 0.8f);
+				Gun::FireCyclone(from, fwd, 700.0f, 1.8f, 0.07f * pw,
+					[t](RE::Actor* a) { Shadowburn(a, t); Gun::Knock(a, 0.3f); },
+					[t, pw](const RE::NiPoint3& at) {
+						Gun::ElemBurst(6, at + RE::NiPoint3{ 0, 0, 80.0f }, 2.0f, 0.0f, 0.8f);
+						Gun::ElemBurst(0, at + RE::NiPoint3{ 0, 0, 40.0f }, 1.2f, 0.0f, 0.6f);
+						Gun::Ring("purple", at, 40.0f, 420.0f, 0.7f);
+						Gun::FxBlast("fireball", at + RE::NiPoint3{ 0, 0, 40.0f });
+						Gun::BlastSound("fireball", at, 1.0f);
+						const int was = Gun::FecElem(0);
+						Gun::AreaHurt(at, 330.0f, 0.4f * pw, "");
+						Gun::FecElem(was);
+						for (auto* f : NearFoes(at, 330.0f, 20)) { Shadowburn(f, t); Gun::Knock(f, 0.6f); }
+					});
+				logger::info("swords: the Shadowflame cyclone - 10 m of violet fire");
 				break;
 			}
 			case 0: {
@@ -3737,7 +3723,6 @@ namespace bo3z::Classes
 		const int t = cls >= 0 ? std::clamp(Kit::TierOfWeapon(w), 0, 3) : 0;
 		const bool drawn = p && p->AsActorState()->IsWeaponDrawn();
 		TickGoldRain(p, a_delta);
-		TickWalls(a_delta);
 		// (Noah: "85% is good"; "make them required") the class swords are Light Greatswords' own models, drawn at 85% in the hand
 		// and at the side - a long sword in one hand - in both bodies, every frame (the game sets a model's size again as it
 		// moves between hand and sheath)
