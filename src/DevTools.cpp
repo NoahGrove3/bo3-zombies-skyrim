@@ -16,6 +16,7 @@
 //   state         write round, points, gun and player position to the log
 namespace bo3z
 {
+	static std::vector<RE::SpellItem*>& DevAddedSpells() { static std::vector<RE::SpellItem*> v; return v; }   // (arequip: the spells it taught, for arclean)
 	namespace
 	{
 		std::mutex               g_lock;
@@ -608,6 +609,21 @@ namespace bo3z
 				float scale = 1.0f, secs = 4.0f;
 				in >> model >> mode >> scale >> pal >> secs;
 				Gun::DevLook(model, mode.empty() ? "w" : mode, scale, pal, secs);
+			} else if (cmd == "arequip" && player) {  // arequip <Echo Altar spell index> [l|r]: that spell in hand to cast (the spell-look tests)
+				int i = -1;
+				std::string hand;
+				in >> i >> hand;
+				auto* sp = Arcana::Spell(i);
+				if (sp) {
+					if (!player->HasSpell(sp)) player->AddSpell(sp), DevAddedSpells().push_back(sp);
+					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipSpell(player, sp, RE::TESForm::LookupByID<RE::BGSEquipSlot>(hand == "l" ? 0x013F43 : 0x013F42));
+				}
+				logger::info("dev: arequip {} -> {} [{:08X}]", i, sp ? sp->GetName() : "none", sp ? sp->GetFormID() : 0);
+			} else if (cmd == "arclean" && player) {  // the spells arequip taught taken back
+				int n = 0;
+				for (auto* sp : DevAddedSpells()) if (sp && player->HasSpell(sp)) player->RemoveSpell(sp), ++n;
+				DevAddedSpells().clear();
+				logger::info("dev: arclean - {} spells taken back", n);
 			} else if (cmd == "fxreload") {
 				Gun::DevFxReload();
 			} else if (cmd == "swing") {  // swing <0 light|1 heavy>: the weapon in hand's swing effects
