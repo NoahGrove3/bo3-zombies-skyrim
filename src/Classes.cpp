@@ -3608,7 +3608,10 @@ namespace bo3z::Classes
 						// Spellbound Blade's looks (3-8) wear the mod's element art alone, no glow over the blade
 						if (k >= 3 && k <= 8) m->data.enchantShader = nullptr;
 						else if (from->data.enchantShader) m->data.enchantShader = from->data.enchantShader;
-						if (from->data.enchantEffectArt) m->data.enchantEffectArt = from->data.enchantEffectArt;
+						// (Noah: "the red glow on the blade removed") the mod's animated art stayed on the Spellbound Blade, glowing
+						// red whatever its element, after its spell was gone: its looks keep Vibrant Weapons' element art alone
+						if (k >= 3 && k <= 8) m->data.enchantEffectArt = nullptr;
+						else if (from->data.enchantEffectArt) m->data.enchantEffectArt = from->data.enchantEffectArt;
 						++n;
 					}
 				}
