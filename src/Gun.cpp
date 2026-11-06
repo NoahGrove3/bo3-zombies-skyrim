@@ -3035,8 +3035,6 @@ namespace bo3z
 					// by its neck again (tools/flasks.py: the neck drawn out to fill the hand) - the palm-up hold is set aside
 					if constexpr (kPalmHold) PoseFlaskHand(a_this, a_delta);
 					PoseThrow(a_this);
-					PoseGauntletHand(a_this, a_delta);
-					PoseGauntletBeam(a_this, a_delta);
 					PoseEnd();
 					if constexpr (kPalmHold) PlaceHeldFlask(a_this);
 					Spellcraft::OnPose(a_this);
@@ -4985,7 +4983,8 @@ namespace bo3z
 				if (Classes::FlaskInHand(left)) {
 					if (down) Classes::FlaskAttack(left);
 					else if (up) Classes::FlaskAttackUp(left);
-					return true;
+					// (the Mutagen Staff: Skyrim's own staff cast plays while the attack is held - the beam is ours)
+					if (Classes::FlaskElementInHand(left) != 6) return true;
 				}
 			}
 			if (!GunOut()) {

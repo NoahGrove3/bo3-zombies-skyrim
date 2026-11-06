@@ -69,6 +69,7 @@ def echo_ids(S):
     ids += [('ACTI', 'hg_' + k) for k in ('gravecaller', 'frostbinder', 'wolfcrown', 'barrowhorn', 'bane')]   # (Noah: each one greyed out where it will float, until it's yours to take)
     # (Noah, 2026-11-05: Blood made Arcane) the Destruction ladder's three spells of ours and the Spellsword's arcane blade
     ids += [(k, 'arcane_' + n) for n in ('bolt', 'orb', 'tide', 'blade1', 'blade2', 'blade3') for k in ('MGEF', 'SPEL')]
+    ids += [('MGEF', 'mutagencast'), ('ENCH', 'mutagenstaff')]   # (Noah: the Mutagen Gauntlet made a staff: its beam held as Skyrim's staff cast)
     return ids
 def blasts():
     """Spell blasts: no-damage copies of Skyrim's explosions (tools/templates/expl/<name>.json)."""
@@ -99,7 +100,7 @@ def dressing(S):
         records[('STAT', 'show_' + w['id'])] = {'model': f"CurseOfAlduin\\fx\\{w['id']}_icon.nif" if w['id'] in sc_ids else w['standinModel'], 'color': '', 'radius': 0}  # the roll shows the spell's logo
     records[('STAT', '1st_vortex')] = {'model': 'CurseOfAlduin\\bow\\vortex.nif', 'color': '', 'radius': 0}
     for _e in ('fire', 'frost', 'shock', 'poison', 'sun', 'blood', 'philosopher'):   # (Noah: the flasks held in the hand)
-        records[('STAT', '1st_flask_' + _e)] = {'model': 'CurseOfAlduin\\alchemist\\gauntlet_hold.nif' if _e == 'philosopher' else 'CurseOfAlduin\\alchemist\\flask_' + _e + '_held.nif', 'color': '', 'radius': 0}
+        records[('STAT', '1st_flask_' + _e)] = {'model': 'CurseOfAlduin\\alchemist\\mutagen_staff.nif' if _e == 'philosopher' else 'CurseOfAlduin\\alchemist\\flask_' + _e + '_held.nif', 'color': '', 'radius': 0}
     records[('STAT', '1st_slayer')] = {'model': 'Light Greatswords\\akaviri\\LightGreatsword.nif', 'color': '', 'radius': 0}        # (Noah) the Dragon Slayer: the Ayleid Crystal Saber
     records[('STAT', '1st_mace')] = {'model': 'Light Greatswords\\daedric\\LightGreatsword.nif', 'color': '', 'radius': 0}  # (Noah) the Alchemist's Shadowflame Sword: Kv's purple crystal sword
     records[('STAT', '1st_kvred')] = {'model': 'Light Greatswords\\nordic\\LightGreatsword.nif', 'color': '', 'radius': 0}  # the Spellsword's

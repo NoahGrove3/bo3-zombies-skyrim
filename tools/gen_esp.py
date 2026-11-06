@@ -104,7 +104,7 @@ FLASKS = [('fire', 'Fire Flask', 'A flask of liquid fire. It bursts where it lan
           ('poison', 'Acid Flask', 'A flask of green acid. It bursts into a corroding splash where it lands.'),
           ('sun', 'Holy Water', 'Blessed water of Stendarr. It bursts into searing light where it lands; the dead burn in it.'),
           ('blood', 'Voidglass Flask', 'A flask of bottled void. It shatters and drags the dead in to where it broke.'),
-          ('philosopher', "Mutagen Gauntlet", 'The Alchemist\'s wonder: an alchemist\'s glove fed by six vials of the elements. Hold attack to loose a beam from the orb in your palm that pierces the dead, pouring each vial in turn for 5 seconds; let go and the emptied vials refill.')]
+          ('philosopher', "Mutagen Staff", 'The Alchemist\'s wonder: a staff whose orb is fed by six vials of the elements. Hold attack to loose a beam from the orb that pierces the dead, pouring each vial in turn for 5 seconds; let go and the emptied vials refill.')]
 FLASK_TIERS = ' The glass shatters, its element bursts, and a pool of it lingers on the ground. Tier I: a burst half again as wide. Tier II: a chain reaction - the dead it kills burst in its element too. Legendary: a cyclone of its element rises where it breaks and rolls into the dead.'
 for e, label, text in FLASKS:
     pd = bytearray(tsub('proj_bullet', 'DATA'))
@@ -166,8 +166,30 @@ for e, label, text in FLASKS:
 # (Noah: "I want to be able to hold it in my left or right hand with an underhand throwing animation. It should feel like a
 # weapon") each flask a weapon held in either hand (a dagger's record, the still flask its model): its attack throws it
 # underhand (src/Gun.cpp catches the button and the arm's swing; src/Classes.cpp lobs it) - never used up
+# (Noah: the Mutagen Gauntlet made a staff - "Hold attack, staff thrust") its enchantment: concentration, on yourself (nothing
+# launched natively), a staff's, free - only so Skyrim plays its staff cast while the attack is held; the beam is ours
+cast_mgef('mutagencast', 'Mutagen Beam', 2)
+recs['ENCH'].append(record('ENCH', fid('ENCH', 'mutagenstaff'), [
+    sub('EDID', z('UN_MutagenStaffEnch')), sub('OBND', bytes(12)), sub('FULL', z('Mutagen Beam')),
+    sub('ENIT', struct.pack('<iIIiIIfII', 0, 0x1, 2, 3000, 0, 0x0C, 0.0, 0, 0)),
+    sub('EFID', struct.pack('<I', fid('MGEF', 'mutagencast'))), sub('EFIT', struct.pack('<fII', 0.0, 0, 0))]))
 for e, label, text in FLASKS:
     subs = []
+    if e == 'philosopher':   # the staff: Skyrim's staff record, our model and enchantment (the same form: old saves keep it)
+        for name, hx in T['weap_staff']['subs']:
+            b = bytes.fromhex(hx)
+            if name == 'EDID': b = z('UN_Flask_' + e)
+            elif name == 'FULL': b = z('Mutagen Staff')
+            elif name == 'MODL': b = z('CurseOfAlduin\\alchemist\\mutagen_staff.nif')
+            elif name == 'EITM': b = struct.pack('<I', fid('ENCH', 'mutagenstaff'))
+            elif name == 'EAMT': b = struct.pack('<H', 3000)
+            elif name == 'WNAM': b = struct.pack('<I', fid('STAT', '1st_flask_' + e))
+            elif name == 'DESC': b = z(text)
+            elif name == 'MODT': continue
+            elif name == 'DATA': b = struct.pack('<IfH', 0, 1.0, 0)
+            subs.append(sub(name, b))
+        recs['WEAP'].append(record('WEAP', fid('WEAP', 'flaskweap_' + e), subs))
+        continue
     for name, hx in T['weap_daedricdagger']['subs']:
         b = bytes.fromhex(hx)
         if name == 'EDID': b = z('UN_Flask_' + e)

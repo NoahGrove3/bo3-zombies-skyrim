@@ -129,41 +129,36 @@ namespace Props
 	struct Glove { Spellcraft::Fx fx; RE::NiNode* on = nullptr; };
 	Glove g_glove[2][2];   // [hand: right, left][body: third, first]
 	float g_glDelta = 0.016f;
+	// (Noah: the Mutagen Gauntlet made a staff - "Orb in a cage of vials") its model (tools/mutagenstaff.py, root MutagenStaff)
+	// is the weapon itself, drawn by Skyrim in either body: found there each frame, its vials' levels, tubes and orb shown
+	RE::NiAVObject* g_staff[2]{};   // [body: third, first]
 	void TickGauntlet(float a_delta)
 	{
 		auto* p = RE::PlayerCharacter::GetSingleton();
-		for (int h = 0; h < 2; ++h) {
-			const bool L = h == 1;
-			g_glDelta = a_delta;
-			const bool want = p && Classes::FlaskElementInHand(L) == 6;
-			for (int b = 0; b < 2; ++b) {
-				auto& g = g_glove[h][b];
-				auto* root = want ? p->Get3D(b == 1) : nullptr;
-				auto* bone = root ? root->GetObjectByName(L ? "NPC L Hand [LHnd]" : "NPC R Hand [RHnd]") : nullptr;
-				auto* node = bone ? bone->AsNode() : nullptr;
-				if (!node) { if (g.fx.obj) g.fx.Detach(); g.on = nullptr; continue; }
-				if (!g.fx.obj) g.fx = Spellcraft::Fx{ Spellcraft::LoadPath(L ? "CurseOfAlduin\\alchemist\\gauntlet_l.nif" : "CurseOfAlduin\\alchemist\\gauntlet_r.nif") };
-				if (!g.fx.obj) continue;
-				if (g.fx.obj->parent != node) {
-					g.fx.Attach(node), g.on = node;
-					g.fx.obj->local = RE::NiTransform{};
-					logger::info("gauntlet: the glove on the {} hand ({} person)", L ? "left" : "right", b == 1 ? "first" : "third");
-				}
-				auto& gp = g_parts[h][b];
-				if (gp.root != g.fx.obj.get()) FindParts(gp, g.fx.obj.get());
-				ShowParts(gp, g_glDelta);
+		g_glDelta = a_delta;
+		const bool held = p && (Classes::FlaskElementInHand(false) == 6 || Classes::FlaskElementInHand(true) == 6);
+		for (int b = 0; b < 2; ++b) {
+			auto* root = held ? p->Get3D(b == 1) : nullptr;
+			auto* st = root ? root->GetObjectByName("MutagenStaff") : nullptr;
+			g_staff[b] = st;
+			if (!st) continue;
+			auto& gp = g_parts[0][b];
+			if (gp.root != st) {
+				FindParts(gp, st);
+				logger::info("mutagen staff: found in the {} body (orb {}, vials {})", b == 1 ? "first-person" : "third-person", gp.core != nullptr,
+					std::count_if(std::begin(gp.top), std::end(gp.top), [](auto* x) { return x != nullptr; }));
 			}
+			ShowParts(gp, g_glDelta);
 		}
 	}
 
-	// the palm orb's place in the world: the glove on the hand that holds it, in the body you are seeing
+	// the orb's place in the world: the staff in the body you are seeing
 	bool PalmOrb(RE::NiPoint3& a_at)
 	{
 		auto* cam = RE::PlayerCamera::GetSingleton();
 		const int b = cam && cam->IsInFirstPerson() ? 1 : 0;
-		const int h = g_gs.left ? 1 : 0;
-		auto* core = g_parts[h][b].core;
-		if (!core || !g_glove[h][b].fx.obj || !g_glove[h][b].fx.obj->parent) return false;
+		auto* core = g_staff[b] ? g_parts[0][b].core : nullptr;
+		if (!core) return false;
 		a_at = core->world.translate;
 		return true;
 	}

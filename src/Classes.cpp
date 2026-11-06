@@ -594,7 +594,7 @@ namespace bo3z::Classes
 	{
 		constexpr int kWonderSteps = 3, kWonderOpensAt = 6;  // (g_wStep: 0 shut, 1-3 its quest open, 4 won and taken up, 5 won - waiting on its pedestal)
 		constexpr int kWonderTaken = kWonderSteps + 1, kWonderWaiting = kWonderSteps + 2;
-		constexpr const char* kWonderName[4] = { "Bone-Throne Horn", "Staff of Magnus", "Mutagen Gauntlet", "Dragon Slayer" };  // (Noah: the Summoner's, Destruction's and the Alchemist's remade)
+		constexpr const char* kWonderName[4] = { "Bone-Throne Horn", "Staff of Magnus", "Mutagen Staff", "Dragon Slayer" };  // (Noah: the Summoner's, Destruction's and the Alchemist's remade)
 		std::array<std::uint8_t, 4>  g_wStep{};    // per class: 0 not open, 1..3 the step under way, 4 earned
 		std::array<std::uint16_t, 4> g_wKills{};
 		std::array<std::uint32_t, 4> g_wTowns{};   // cities where a step was done (bits)
@@ -709,7 +709,7 @@ namespace bo3z::Classes
 			static constexpr const char* kText[4] = {
 				"A horn carved from a dragon's throne of bone. Blow it and a little dragon of bare bone answers: it flies at your side, never more than 15 m off, and rains green grave-fire on the dead for a minute. Once the three dragons fall it stays for an hour, or until it is slain.",
 				"The Staff of Magnus. Hold its beam on the dead: it drains them and feeds your magicka, and erupts where it ends. Hold it two seconds or more and the eruption leaves an orb of searing light that pulses on everything round it. Once the three dragons fall it burns hotter still.",
-				"The Mutagen Gauntlet. An alchemist's glove fed by six vials of the elements. Hold attack to gather their light and loose a beam from the orb in your palm: it pierces every one of the dead in its path, pouring each vial in turn for five seconds - fire, frost, lightning, acid, holy light and the void. Let go and the emptied vials refill; empty all six and they must refill completely. Once the three dragons fall, the beam burns stronger.",
+				"The Mutagen Staff. A staff whose glass orb is fed by six vials of the elements. Hold attack to loose a beam from the orb: it pierces every one of the dead in its path, pouring each vial in turn for five seconds - fire, frost, lightning, acid, holy light and the void. Let go and the emptied vials refill; empty all six and they must refill completely. Once the three dragons fall, the beam burns stronger.",
 				"The Akaviri dragon slayer, two tiers above your blade. Every hit carries the last Spellsword spell you held. Once the three dragons fall it grows stronger again, and a power attack looses that spell on the dead round you." };
 			std::string up(kWonderName[a_cls]);
 			for (auto& ch : up) ch = static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
@@ -4097,7 +4097,7 @@ namespace bo3z::Classes
 	bool FlaskSwingBlocked(bool a_left)
 	{
 		const int el = FlaskHeld(a_left);
-		if (el < 0) return false;
+		if (el < 0 || el == 6) return false;   // (the Mutagen Staff: Skyrim's staff cast plays)
 		// (Noah: "my character is still making swing grunt sounds when throwing") Skyrim's own swing never plays with a flask in
 		// hand - its grunt came with it, whatever voice you had; the throw is all ours (the arm posed by hand, Gun's PoseThrow)
 		return true;
@@ -4120,7 +4120,7 @@ namespace bo3z::Classes
 	{
 		const int el = FlaskHeld(a_left);
 		if (el < 0 || Gun::Throwing()) return;
-		if (el == 6 && g_class.load() != coffer::kAlchemist) { Hud::QuestBanner("The Mutagen Gauntlet answers only to an Alchemist", 2.5f)   /* (Noah: "it won't let me throw it" - and nothing said why: always shown) */; return; }
+		if (el == 6 && g_class.load() != coffer::kAlchemist) { Hud::QuestBanner("The Mutagen Staff answers only to an Alchemist", 2.5f)   /* (Noah: "it won't let me throw it" - and nothing said why: always shown) */; return; }
 		if (el == 6) { GauntletPress(a_left); return; }   // (Noah: the Mutagen Gauntlet's beam - held, not thrown)
 		float& cool = el == 6 ? g_philCool : g_flaskCool;
 		if (cool > 0) {
