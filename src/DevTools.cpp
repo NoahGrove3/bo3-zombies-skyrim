@@ -614,6 +614,13 @@ namespace bo3z
 				std::string hand;
 				in >> i >> hand;
 				auto* sp = Arcana::Spell(i);
+				// (the spell-look tests' alternatives: any spell by its load-order form id, "arequip x1B00186D r")
+				if (std::string(in.str()).find(" x") != std::string::npos) {
+					std::istringstream again(in.str());
+					std::string c2, hex;
+					again >> c2 >> hex >> hand;
+					if (hex.size() > 1 && hex[0] == 'x') sp = RE::TESForm::LookupByID<RE::SpellItem>(static_cast<RE::FormID>(std::stoul(hex.substr(1), nullptr, 16)));
+				}
 				if (sp) {
 					if (!player->HasSpell(sp)) player->AddSpell(sp), DevAddedSpells().push_back(sp);
 					if (auto* em = RE::ActorEquipManager::GetSingleton()) em->EquipSpell(player, sp, RE::TESForm::LookupByID<RE::BGSEquipSlot>(hand == "l" ? 0x013F43 : 0x013F42));
